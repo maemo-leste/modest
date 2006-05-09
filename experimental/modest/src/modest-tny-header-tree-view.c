@@ -146,7 +146,7 @@ modest_tny_header_tree_view_set_folder (ModestTnyHeaderTreeView *self,
 	if (folder) {
 		tny_msg_header_list_model_set_folder (
 			TNY_MSG_HEADER_LIST_MODEL(priv->header_tree_model),
-			folder);
+			folder, TRUE);
 
 		sortable = gtk_tree_model_sort_new_with_model (priv->header_tree_model);
 		
