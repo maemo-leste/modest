@@ -1,0 +1,180 @@
+<refentry id="modest-ModestWindowMgr">
+<refmeta>
+<refentrytitle id="top_of_page">ModestWindowMgr</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo>MODEST Library</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>ModestWindowMgr</refname>
+<refpurpose></refpurpose>
+<!--[<xref linkend="desc" endterm="desc.title"/>]-->
+</refnamediv>
+
+<refsynopsisdiv id="synopsis">
+<title id="synopsis.title">Synopsis</title>
+
+<synopsis>
+
+
+
+typedef     <link linkend="ModestWindowType">ModestWindowType</link>;
+            <link linkend="ModestOpenWindow">ModestOpenWindow</link>;
+            <link linkend="ModestWindowMgr">ModestWindowMgr</link>;
+<link linkend="GObject">GObject</link>*    <link linkend="modest-window-mgr-new">modest_window_mgr_new</link>           (void);
+<link linkend="gboolean">gboolean</link>    <link linkend="modest-window-mgr-register">modest_window_mgr_register</link>      (<link linkend="ModestWindowMgr">ModestWindowMgr</link> *self,
+                                             <link linkend="GObject">GObject</link> *win,
+                                             <link linkend="ModestWindowType">ModestWindowType</link> type,
+                                             <link linkend="guint">guint</link> window_id);
+<link linkend="gboolean">gboolean</link>    <link linkend="modest-window-mgr-unregister">modest_window_mgr_unregister</link>    (<link linkend="ModestWindowMgr">ModestWindowMgr</link> *self,
+                                             <link linkend="GObject">GObject</link> *win);
+<link linkend="GObject">GObject</link>*    <link linkend="modest-window-mgr-find-by-type">modest_window_mgr_find_by_type</link>  (<link linkend="ModestWindowMgr">ModestWindowMgr</link> *self,
+                                             <link linkend="ModestWindowType">ModestWindowType</link> type);
+<link linkend="GObject">GObject</link>*    <link linkend="modest-window-mgr-find-by-id">modest_window_mgr_find_by_id</link>    (<link linkend="ModestWindowMgr">ModestWindowMgr</link> *self,
+                                             <link linkend="gint">gint</link> window_id);
+
+</synopsis>
+</refsynopsisdiv>
+
+
+
+
+
+
+
+
+
+<refsect1 id="desc">
+<title id="desc.title">Description</title>
+<para>
+
+</para>
+</refsect1>
+
+<refsect1 id="details">
+<title id="details.title">Details</title>
+<refsect2>
+<title><anchor id="ModestWindowType" role="typedef"/>ModestWindowType</title>
+<indexterm><primary>ModestWindowType</primary></indexterm><programlisting>typedef guint ModestWindowType;
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="ModestOpenWindow" role="struct"/>ModestOpenWindow</title>
+<indexterm><primary>ModestOpenWindow</primary></indexterm><programlisting>typedef struct {
+	GObject          *win;
+	ModestWindowType type;
+	guint            id;
+} ModestOpenWindow;
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="ModestWindowMgr" role="struct"/>ModestWindowMgr</title>
+<indexterm><primary>ModestWindowMgr</primary></indexterm><programlisting>typedef struct {
+	GObject parent;
+} ModestWindowMgr;
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="modest-window-mgr-new" role="function"/>modest_window_mgr_new ()</title>
+<indexterm><primary>modest_window_mgr_new</primary></indexterm><programlisting><link linkend="GObject">GObject</link>*    modest_window_mgr_new           (void);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><emphasis>Returns</emphasis>&nbsp;:</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="modest-window-mgr-register" role="function"/>modest_window_mgr_register ()</title>
+<indexterm><primary>modest_window_mgr_register</primary></indexterm><programlisting><link linkend="gboolean">gboolean</link>    modest_window_mgr_register      (<link linkend="ModestWindowMgr">ModestWindowMgr</link> *self,
+                                             <link linkend="GObject">GObject</link> *win,
+                                             <link linkend="ModestWindowType">ModestWindowType</link> type,
+                                             <link linkend="guint">guint</link> window_id);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>self</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>win</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>type</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>window_id</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&nbsp;:</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="modest-window-mgr-unregister" role="function"/>modest_window_mgr_unregister ()</title>
+<indexterm><primary>modest_window_mgr_unregister</primary></indexterm><programlisting><link linkend="gboolean">gboolean</link>    modest_window_mgr_unregister    (<link linkend="ModestWindowMgr">ModestWindowMgr</link> *self,
+                                             <link linkend="GObject">GObject</link> *win);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>self</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>win</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&nbsp;:</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="modest-window-mgr-find-by-type" role="function"/>modest_window_mgr_find_by_type ()</title>
+<indexterm><primary>modest_window_mgr_find_by_type</primary></indexterm><programlisting><link linkend="GObject">GObject</link>*    modest_window_mgr_find_by_type  (<link linkend="ModestWindowMgr">ModestWindowMgr</link> *self,
+                                             <link linkend="ModestWindowType">ModestWindowType</link> type);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>self</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>type</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&nbsp;:</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="modest-window-mgr-find-by-id" role="function"/>modest_window_mgr_find_by_id ()</title>
+<indexterm><primary>modest_window_mgr_find_by_id</primary></indexterm><programlisting><link linkend="GObject">GObject</link>*    modest_window_mgr_find_by_id    (<link linkend="ModestWindowMgr">ModestWindowMgr</link> *self,
+                                             <link linkend="gint">gint</link> window_id);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>self</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>window_id</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&nbsp;:</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+
+</refsect1>
+
+
+
+
+</refentry>

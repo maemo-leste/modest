@@ -1,0 +1,135 @@
+<refentry id="modest-ModestUI">
+<refmeta>
+<refentrytitle id="top_of_page">ModestUI</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo>MODEST Library</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>ModestUI</refname>
+<refpurpose></refpurpose>
+<!--[<xref linkend="desc" endterm="desc.title"/>]-->
+</refnamediv>
+
+<refsynopsisdiv id="synopsis">
+<title id="synopsis.title">Synopsis</title>
+
+<synopsis>
+
+
+
+            <link linkend="ModestUI">ModestUI</link>;
+<link linkend="GObject">GObject</link>*    <link linkend="modest-ui-new">modest_ui_new</link>                   (<link linkend="ModestConf">ModestConf</link> *modest_conf);
+<link linkend="gboolean">gboolean</link>    <link linkend="modest-ui-show-main-window">modest_ui_show_main_window</link>      (<link linkend="ModestUI">ModestUI</link> *ui);
+<link linkend="gboolean">gboolean</link>    <link linkend="modest-ui-show-edit-window">modest_ui_show_edit_window</link>      (<link linkend="ModestUI">ModestUI</link> *ui,
+                                             const <link linkend="gchar">gchar</link> *to,
+                                             const <link linkend="gchar">gchar</link> *cc,
+                                             const <link linkend="gchar">gchar</link> *bcc,
+                                             const <link linkend="gchar">gchar</link> *subject,
+                                             const <link linkend="gchar">gchar</link> *body,
+                                             const <link linkend="GSList">GSList</link> *att);
+
+</synopsis>
+</refsynopsisdiv>
+
+
+
+
+
+
+
+
+
+<refsect1 id="desc">
+<title id="desc.title">Description</title>
+<para>
+
+</para>
+</refsect1>
+
+<refsect1 id="details">
+<title id="details.title">Details</title>
+<refsect2>
+<title><anchor id="ModestUI" role="struct"/>ModestUI</title>
+<indexterm><primary>ModestUI</primary></indexterm><programlisting>typedef struct {
+	 GObject parent;
+	/* insert public members, if any */
+} ModestUI;
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="modest-ui-new" role="function"/>modest_ui_new ()</title>
+<indexterm><primary>modest_ui_new</primary></indexterm><programlisting><link linkend="GObject">GObject</link>*    modest_ui_new                   (<link linkend="ModestConf">ModestConf</link> *modest_conf);</programlisting>
+<para>
+</para>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>modest_conf</parameter>&nbsp;:</term>
+<listitem><simpara> a ModestConf instance 
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&nbsp;:</term><listitem><simpara> a new ModestUI, or NULL in case of error
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="modest-ui-show-main-window" role="function"/>modest_ui_show_main_window ()</title>
+<indexterm><primary>modest_ui_show_main_window</primary></indexterm><programlisting><link linkend="gboolean">gboolean</link>    modest_ui_show_main_window      (<link linkend="ModestUI">ModestUI</link> *ui);</programlisting>
+<para>
+</para>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ui</parameter>&nbsp;:</term>
+<listitem><simpara> a ModestUI instance 
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&nbsp;:</term><listitem><simpara> TRUE if succeeded, FALSE otherwise
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="modest-ui-show-edit-window" role="function"/>modest_ui_show_edit_window ()</title>
+<indexterm><primary>modest_ui_show_edit_window</primary></indexterm><programlisting><link linkend="gboolean">gboolean</link>    modest_ui_show_edit_window      (<link linkend="ModestUI">ModestUI</link> *ui,
+                                             const <link linkend="gchar">gchar</link> *to,
+                                             const <link linkend="gchar">gchar</link> *cc,
+                                             const <link linkend="gchar">gchar</link> *bcc,
+                                             const <link linkend="gchar">gchar</link> *subject,
+                                             const <link linkend="gchar">gchar</link> *body,
+                                             const <link linkend="GSList">GSList</link> *att);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ui</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>to</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>cc</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>bcc</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>subject</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>body</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>att</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&nbsp;:</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+
+</refsect1>
+
+
+
+
+</refentry>

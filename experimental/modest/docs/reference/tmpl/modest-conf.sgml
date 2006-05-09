@@ -1,0 +1,136 @@
+<!-- ##### SECTION Title ##### -->
+ModestConf
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### STRUCT ModestConf ##### -->
+<para>
+
+</para>
+
+@parent: 
+
+<!-- ##### FUNCTION modest_conf_new ##### -->
+<para>
+
+</para>
+
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_conf_get_string ##### -->
+<para>
+
+</para>
+
+@self: 
+@key: 
+@err: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_conf_get_int ##### -->
+<para>
+
+</para>
+
+@self: 
+@key: 
+@err: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_conf_get_bool ##### -->
+<para>
+
+</para>
+
+@self: 
+@key: 
+@err: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_conf_set_string ##### -->
+<para>
+
+</para>
+
+@self: 
+@key: 
+@val: 
+@err: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_conf_set_int ##### -->
+<para>
+
+</para>
+
+@self: 
+@key: 
+@val: 
+@err: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_conf_set_bool ##### -->
+<para>
+
+</para>
+
+@self: 
+@key: 
+@val: 
+@err: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_conf_list_subkeys ##### -->
+<para>
+
+</para>
+
+@self: 
+@key: 
+@err: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_conf_remove_key ##### -->
+<para>
+
+</para>
+
+@self: 
+@key: 
+@err: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_conf_key_exists ##### -->
+<para>
+
+</para>
+
+@self: 
+@key: 
+@err: 
+@Returns: 
+
+

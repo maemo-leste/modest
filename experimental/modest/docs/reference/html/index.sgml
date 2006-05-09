@@ -1,0 +1,12 @@
+<ANCHOR id="modest-ModestConf" href="modest/modest-ModestConf.html">
+<ANCHOR id="ModestConf" href="modest/modest-ModestConf.html#ModestConf">
+<ANCHOR id="modest-conf-new" href="modest/modest-ModestConf.html#modest-conf-new">
+<ANCHOR id="modest-conf-get-string" href="modest/modest-ModestConf.html#modest-conf-get-string">
+<ANCHOR id="modest-conf-get-int" href="modest/modest-ModestConf.html#modest-conf-get-int">
+<ANCHOR id="modest-conf-get-bool" href="modest/modest-ModestConf.html#modest-conf-get-bool">
+<ANCHOR id="modest-conf-set-string" href="modest/modest-ModestConf.html#modest-conf-set-string">
+<ANCHOR id="modest-conf-set-int" href="modest/modest-ModestConf.html#modest-conf-set-int">
+<ANCHOR id="modest-conf-set-bool" href="modest/modest-ModestConf.html#modest-conf-set-bool">
+<ANCHOR id="modest-conf-list-subkeys" href="modest/modest-ModestConf.html#modest-conf-list-subkeys">
+<ANCHOR id="modest-conf-remove-key" href="modest/modest-ModestConf.html#modest-conf-remove-key">
+<ANCHOR id="modest-conf-key-exists" href="modest/modest-ModestConf.html#modest-conf-key-exists">

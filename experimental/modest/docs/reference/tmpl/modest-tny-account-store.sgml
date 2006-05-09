@@ -1,0 +1,35 @@
+<!-- ##### SECTION Title ##### -->
+ModestTnyAccountStore
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### STRUCT ModestTnyAccountStore ##### -->
+<para>
+
+</para>
+
+@parent: 
+
+<!-- ##### FUNCTION modest_tny_account_store_new ##### -->
+<para>
+
+</para>
+
+@modest_acc_mgr: 
+@Returns: 
+
+

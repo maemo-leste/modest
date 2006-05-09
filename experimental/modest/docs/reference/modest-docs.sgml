@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" 
+               "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [
+
+<!ENTITY modest-ModestConf SYSTEM  "xml/modest-conf.xml">
+
+<!ENTITY index-Object-Tree SYSTEM "xml/tree_index.sgml">
+<!ENTITY index-Object-Index SYSTEM "xml/object_index.sgml">
+]>
+
+<book id="index">
+  <bookinfo>
+    <title>modest reference manual</title>
+  </bookinfo>
+
+  <preface>
+    <title>Introduction</title>
+    <para>modest is a lightweight e-mail program, built on top of
+    tinymail and libcamel</para>
+  </preface>
+
+  <reference>
+    <title>Object Index</title>
+	&index-Object-Index;
+	&index-Object-Tree;
+  </reference>
+
+  <reference>
+    <title>API Reference</title>
+
+	<chapter id="modest-core">
+		<title>modest general</title>
+		&modest-ModestConf;
+	</chapter>
+
+  </reference>
+
+  <index>
+    <title>Index</title>
+  </index>
+  
+</book>
+

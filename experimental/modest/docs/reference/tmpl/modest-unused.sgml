@@ -1,0 +1,30 @@
+<!-- ##### SECTION ./tmpl/modest-conf-defs.sgml:Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION ./tmpl/modest-conf-defs.sgml:See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION ./tmpl/modest-conf-defs.sgml:Short_Description ##### -->
+
+
+
+<!-- ##### SECTION ./tmpl/modest-conf-defs.sgml:Stability_Level ##### -->
+
+
+
+<!-- ##### SECTION ./tmpl/modest-conf-defs.sgml:Title ##### -->
+modest-conf-defs
+
+
+<!-- ##### MACRO MODEST_CONF_FOO_BAR ##### -->
+<para>
+
+</para>
+
+

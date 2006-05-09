@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE book PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "">
+<book xmlns="http://www.devhelp.net/book" title="modest reference manual" link="index.html" author="" name="modest" version="2">
+  <chapters>
+    <sub name="Introduction" link="pr01.html"/>
+    <sub name="Object Index" link="rn01.html"/>
+    <sub name="API Reference" link="rn02.html">
+      <sub name="modest general" link="modest-core.html">
+        <sub name="ModestConf" link="modest-ModestConf.html"/>
+      </sub>
+    </sub>
+    <sub name="Index" link="ix01.html"/>
+  </chapters>
+  <functions>
+    <keyword type="struct" name="ModestConf" link="modest-ModestConf.html#ModestConf"/>
+    <keyword type="function" name="modest_conf_new ()" link="modest-ModestConf.html#modest-conf-new"/>
+    <keyword type="function" name="modest_conf_get_string ()" link="modest-ModestConf.html#modest-conf-get-string"/>
+    <keyword type="function" name="modest_conf_get_int ()" link="modest-ModestConf.html#modest-conf-get-int"/>
+    <keyword type="function" name="modest_conf_get_bool ()" link="modest-ModestConf.html#modest-conf-get-bool"/>
+    <keyword type="function" name="modest_conf_set_string ()" link="modest-ModestConf.html#modest-conf-set-string"/>
+    <keyword type="function" name="modest_conf_set_int ()" link="modest-ModestConf.html#modest-conf-set-int"/>
+    <keyword type="function" name="modest_conf_set_bool ()" link="modest-ModestConf.html#modest-conf-set-bool"/>
+    <keyword type="function" name="modest_conf_list_subkeys ()" link="modest-ModestConf.html#modest-conf-list-subkeys"/>
+    <keyword type="function" name="modest_conf_remove_key ()" link="modest-ModestConf.html#modest-conf-remove-key"/>
+    <keyword type="function" name="modest_conf_key_exists ()" link="modest-ModestConf.html#modest-conf-key-exists"/>
+  </functions>
+</book>
