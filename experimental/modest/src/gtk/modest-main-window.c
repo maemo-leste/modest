@@ -503,6 +503,7 @@ static void
 on_quit_clicked (GtkToolButton *button, gpointer data)
 {
 	g_warning (__FUNCTION__);
+	gtk_main_quit();
 }
 
 
