@@ -4,6 +4,7 @@
 <glade-interface>
 
 <widget class="GtkWindow" id="main">
+  <property name="visible">True</property>
   <property name="title" translatable="yes">Modest</property>
   <property name="type">GTK_WINDOW_TOPLEVEL</property>
   <property name="window_position">GTK_WIN_POS_NONE</property>
@@ -812,6 +813,7 @@
 </widget>
 
 <widget class="GtkWindow" id="new_mail">
+  <property name="visible">True</property>
   <property name="title" translatable="yes">Modest - New message</property>
   <property name="type">GTK_WINDOW_TOPLEVEL</property>
   <property name="window_position">GTK_WIN_POS_NONE</property>
@@ -1651,6 +1653,7 @@
 </widget>
 
 <widget class="GtkWindow" id="viewer">
+  <property name="visible">True</property>
   <property name="title" translatable="yes">Modest - Message viewer</property>
   <property name="type">GTK_WINDOW_TOPLEVEL</property>
   <property name="window_position">GTK_WIN_POS_NONE</property>
