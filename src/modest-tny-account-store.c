@@ -361,10 +361,21 @@ modest_tny_account_store_get_transport_accounts (TnyAccountStoreIface *iface)
 }
 	
 
+/*
+ * Returns gchar* to the path of the cache directory
+ * pointer has to be freed by caller
+ */
 static const gchar*
 modest_tny_account_store_get_cache_dir (TnyAccountStoreIface *self)
 {
-	return g_strdup("/home/djcb/.modest/cache/"); /* FIXME */
+gchar *cache_dir;
+
+	if (g_getenv("HOME") != NULL)
+		cache_dir = g_strconcat(g_getenv("HOME"), "/.modest/cache/");
+	else
+		cache_dir = NULL;
+
+	return cache_dir;
 }
 
 
