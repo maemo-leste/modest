@@ -137,21 +137,38 @@ modest_account_mgr_add_account (ModestAccountMgr *self, const gchar* name,
 	 */
 	priv = MODEST_ACCOUNT_MGR_GET_PRIVATE(self);
 
-	key = get_account_keyname (name, MODEST_ACCOUNT_DISPLAY_NAME);
+	/* SMF:
+	 * key = get_account_keyname (name, MODEST_ACCOUNT_DISPLAY_NAME);
+         * doesn't work this way, instead use:
+         */
+	key = g_strconcat (MODEST_ACCOUNT_NAMESPACE, "/",
+			      name, MODEST_ACCOUNT_DISPLAY_NAME, NULL);
+
 	modest_conf_set_string (priv->modest_conf, key, name, err);
 	g_free (key);
 
 	if (store_account) {
-		key = get_account_keyname (name, MODEST_ACCOUNT_STORE_ACCOUNT);
-		modest_conf_set_string (priv->modest_conf, key, store_account, err);
+		/* SMF:
+		 * key = get_account_keyname (name, MODEST_ACCOUNT_STORE_ACCOUNT);
+		 * as above, does not work.
+                 */
+		key = g_strconcat (MODEST_ACCOUNT_NAMESPACE, "/",
+				   name, MODEST_ACCOUNT_STORE_ACCOUNT, NULL);
+
+                modest_conf_set_string (priv->modest_conf, key, store_account, err);
 		g_free (key);
 	}
 
 	if (transport_account) {
-		key = get_account_keyname (name, MODEST_ACCOUNT_TRANSPORT_ACCOUNT);
+		/* SMF:
+		 * key = get_account_keyname (name, MODEST_ACCOUNT_TRANSPORT_ACCOUNT);
+		 * ...
+		 */
+		key = g_strconcat (MODEST_ACCOUNT_NAMESPACE, "/",
+				   name, MODEST_ACCOUNT_TRANSPORT_ACCOUNT, NULL);
 		modest_conf_set_string (priv->modest_conf, key, transport_account, err);
 		g_free (key);
-	}
+        }
 
 	return TRUE; /* TODO: error handling */
 }
@@ -358,127 +375,12 @@ modest_account_mgr_get_account_string (ModestAccountMgr *self, const gchar *name
 
 	keyname = get_account_keyname (name, key);
 
-	g_warning ("===> %s", keyname);
+        g_warning ("modest_account_mgr_get_account_string > %s", keyname);
 
 	priv = MODEST_ACCOUNT_MGR_GET_PRIVATE(self);
 
 	retval = modest_conf_get_string (priv->modest_conf,
 					 keyname, err);
-
-	g_free (keyname);
-	return retval;
-}
-
-
-
-gint
-modest_account_mgr_get_account_int (ModestAccountMgr *self, const gchar *name,
-				    const gchar *key, GError **err)
-{
-	ModestAccountMgrPrivate *priv;
-
-	gchar *keyname;
-	gint retval;
-
-	g_return_val_if_fail (self, -1);
-	g_return_val_if_fail (name, -1);
-	g_return_val_if_fail (key, -1);
-
-	keyname = get_account_keyname (name, key);
-	priv = MODEST_ACCOUNT_MGR_GET_PRIVATE(self);
-	retval = modest_conf_get_int (priv->modest_conf,keyname,err);
-
-	g_free (keyname);
-	return retval;
-}
-
-
-gboolean modest_account_mgr_get_account_bool (ModestAccountMgr *self, const gchar *name,
-					      const gchar *key, GError **err)
-{
-	ModestAccountMgrPrivate *priv;
-
-	gchar *keyname;
-	gboolean retval;
-
-	g_return_val_if_fail (self, FALSE);
-	g_return_val_if_fail (name, FALSE);
-	g_return_val_if_fail (key, FALSE);
-
-	keyname = get_account_keyname (name, key);
-	priv = MODEST_ACCOUNT_MGR_GET_PRIVATE(self);
-	retval = modest_conf_get_bool (priv->modest_conf,keyname,err);
-
-	g_free (keyname);
-	return retval;
-}
-
-
-
-gboolean
-modest_account_mgr_set_account_string  (ModestAccountMgr *self, const gchar *name,
-					const gchar *key, const gchar* val,
-					GError **err)
-{
-	ModestAccountMgrPrivate *priv;
-
-	gchar *keyname;
-	gboolean retval;
-
-	g_return_val_if_fail (self, FALSE);
-	g_return_val_if_fail (name, FALSE);
-	g_return_val_if_fail (key, FALSE);
-
-	keyname = get_account_keyname (name, key);
-	priv = MODEST_ACCOUNT_MGR_GET_PRIVATE(self);
-	retval = modest_conf_set_string (priv->modest_conf,keyname,val,err);
-
-	g_free (keyname);
-	return retval;
-}
-
-
-
-gboolean
-modest_account_mgr_set_account_int  (ModestAccountMgr *self, const gchar *name,
-				     const gchar *key, gint val, GError **err)
-{
-	ModestAccountMgrPrivate *priv;
-
-	gchar *keyname;
-	gboolean retval;
-
-	g_return_val_if_fail (self, -1);
-	g_return_val_if_fail (name, -1);
-	g_return_val_if_fail (key, -1);
-
-	keyname = get_account_keyname (name, key);
-	priv = MODEST_ACCOUNT_MGR_GET_PRIVATE(self);
-	retval = modest_conf_set_int (priv->modest_conf,keyname,val,err);
-
-	g_free (keyname);
-	return retval;
-}
-
-
-
-
-gboolean
-modest_account_mgr_set_account_bool  (ModestAccountMgr *self, const gchar *name,
-				      const gchar *key, gboolean val, GError **err)
-{
-	ModestAccountMgrPrivate *priv;
-
-	gchar *keyname;
-	gboolean retval;
-
-	g_return_val_if_fail (self, FALSE);
-	g_return_val_if_fail (name, FALSE);
-	g_return_val_if_fail (key, FALSE);
-
-	keyname = get_account_keyname (name, key);
-	priv = MODEST_ACCOUNT_MGR_GET_PRIVATE(self);
-	retval = modest_conf_set_bool (priv->modest_conf,keyname,val,err);
 
 	g_free (keyname);
 	return retval;
@@ -514,9 +416,10 @@ get_account_keyname (const gchar *accname, const gchar *name)
 {
 	if (name)
 		return g_strconcat
-			(MODEST_ACCOUNT_NAMESPACE, "/", accname, "/", name, NULL);
+			(accname, "/", name, NULL);
 	else
 		return g_strconcat
+			/* SMF: I think, this has to be done somewhere else. For now it's a quick fix. */
 			(MODEST_ACCOUNT_NAMESPACE, "/", accname, NULL);
 }
 
