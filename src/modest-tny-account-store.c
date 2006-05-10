@@ -378,7 +378,7 @@ modest_tny_account_store_get_cache_dir (TnyAccountStoreIface *self)
 gchar *cache_dir;
 
 	if (g_getenv("HOME") != NULL)
-		cache_dir = g_strconcat(g_getenv("HOME"), "/.modest/cache/");
+		cache_dir = g_strconcat(g_getenv("HOME"), "/.modest/cache/", NULL);
 	else
 		cache_dir = NULL;
 
