@@ -20,7 +20,7 @@ GLADE_SOURCE=\
 	modest.glade.h
 
 GLADE_FILES=\
-	modest.glade
+	modest.glade pixmaps/*.png
 
 libmodest_ui_la_SOURCES=\
 	modest-ui.c\
