@@ -10,7 +10,8 @@ INCLUDES=\
 	$(MODEST_GSTUFF_CFLAGS) \
 	$(MODEST_GTK_CFLAGS) \
 	$(MODEST_GLADE_CFLAGS) \
-	$(MODEST_TINYMAIL_CFLAGS)
+	$(MODEST_TINYMAIL_CFLAGS)\
+	-DPREFIX=\"@prefix@\"
 
 noinst_LTLIBRARIES=\
 	libmodest-ui.la
@@ -35,3 +36,6 @@ EXTRA_DIST=pixmaps/*.png modest.glade modest.gladep
 
 $(GLADE_SOURCE): $(GLADE_FILES)
 	$(top_srcdir)/scripts/txt2doth $< > $@ 
+
+gladedir = $(prefix)/share/modest/glade
+glade_DATA = $(GLADE_FILES)

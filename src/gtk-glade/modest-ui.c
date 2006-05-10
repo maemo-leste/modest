@@ -22,7 +22,7 @@
 
 //#include "modest.glade.h"
 
-#define MODEST_GLADE          "modest.glade"
+#define MODEST_GLADE          PREFIX "/share/modest/glade/modest.glade"
 #define MODEST_GLADE_MAIN_WIN "main"
 #define MODEST_GLADE_EDIT_WIN "new_mail"
 
