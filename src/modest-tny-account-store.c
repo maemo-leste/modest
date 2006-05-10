@@ -361,8 +361,15 @@ modest_tny_account_store_get_transport_accounts (TnyAccountStoreIface *iface)
 }
 	
 
-/*
- * Returns gchar* to the path of the cache directory
+/**
+ * modest_tny_account_store_get_cache_dir:
+ * @self: self a TnyAccountStoreIface instance
+ * 
+ * returns the pathname of the cache directory
+ *
+ * Returns: a newly allocated string with the value of the pathname
+ * to the cache directory or NULL if the environment variable $HOME is
+ * not set,
  * pointer has to be freed by caller
  */
 static const gchar*
