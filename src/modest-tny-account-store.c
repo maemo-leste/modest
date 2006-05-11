@@ -324,7 +324,7 @@ modest_tny_account_store_get_store_accounts  (TnyAccountStoreIface *iface)
 
 	g_return_val_if_fail (iface, NULL);
 
-	g_warning ("i'm being called: %s", __FUNCTION__);
+	/* g_warning ("i'm being called: %s", __FUNCTION__); */
 
 	self = MODEST_TNY_ACCOUNT_STORE(iface);
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);

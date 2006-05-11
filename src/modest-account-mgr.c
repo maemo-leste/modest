@@ -675,10 +675,9 @@ get_account_keyname (const gchar *accname, const gchar *name)
 {
 	if (name)
 		return g_strconcat
-			(MODEST_ACCOUNT_NAMESPACE, "/", accname, "/", name, NULL);
+			(accname, "/", name, NULL);
 	else
-		return g_strconcat
-			(MODEST_ACCOUNT_NAMESPACE, "/", accname, NULL);
+		return g_strdup (accname);
 }
 
 
@@ -686,6 +685,7 @@ get_account_keyname (const gchar *accname, const gchar *name)
 static gchar*
 get_server_account_keyname (const gchar *accname, const gchar *name)
 {
+	g_printf("get_server_account_keyname('%s', '%s')\n", accname, name);
 	if (name)
 		return g_strconcat
 			(MODEST_SERVER_ACCOUNT_NAMESPACE, "/", accname, "/", name, NULL);
