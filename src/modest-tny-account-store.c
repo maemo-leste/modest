@@ -8,6 +8,7 @@
 #include <tny-account-store-iface.h>
 #include <tny-store-account-iface.h>
 #include <tny-transport-account-iface.h>
+//#include <tny-device-iface.h>
 
 #include <tny-store-account.h>
 #include <tny-transport-account.h>
@@ -39,7 +40,12 @@ enum {
 
 typedef struct _ModestTnyAccountStorePrivate ModestTnyAccountStorePrivate;
 struct _ModestTnyAccountStorePrivate {
-	ModestAccountMgr *modest_acc_mgr;
+
+	GList *store_accounts;
+	GList *transport_accounts;
+	gchar *cache_dir;
+
+	ModestAccountMgr *modest_acc_mgr;	
 };
 #define MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                       MODEST_TYPE_TNY_ACCOUNT_STORE, \
@@ -78,7 +84,6 @@ modest_tny_account_store_get_type (void)
 
                 g_type_add_interface_static (my_type, TNY_TYPE_ACCOUNT_STORE_IFACE,
 					     &iface_info);
-
 	}
 	return my_type;
 }
@@ -92,7 +97,8 @@ modest_tny_account_store_class_init (ModestTnyAccountStoreClass *klass)
 	parent_class            = g_type_class_peek_parent (klass);
 	gobject_class->finalize = modest_tny_account_store_finalize;
 
-	g_type_class_add_private (gobject_class, sizeof(ModestTnyAccountStorePrivate));
+	g_type_class_add_private (gobject_class,
+				  sizeof(ModestTnyAccountStorePrivate));
 
 	/* signal definitions go here, e.g.: */
 /* 	signals[MY_SIGNAL_1] = */
@@ -109,7 +115,31 @@ modest_tny_account_store_init (ModestTnyAccountStore *obj)
 		MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(obj);
 
 	priv->modest_acc_mgr         = NULL;
+
+	priv->store_accounts         = NULL;
+	priv->transport_accounts     = NULL;
+	priv->cache_dir              = NULL;
 }
+
+
+static void
+free_gobject (GObject *obj, gpointer user_data)
+{
+	if (obj)
+		g_object_unref (obj);
+}
+
+
+static GList*
+free_gobject_list (GList *list)
+{
+	if (list) {
+		g_list_foreach (list, (GFunc)free_gobject, NULL);
+		g_list_free (list);
+	}
+	return NULL;
+}
+
 
 static void
 modest_tny_account_store_finalize (GObject *obj)
@@ -122,6 +152,12 @@ modest_tny_account_store_finalize (GObject *obj)
 		g_object_unref (G_OBJECT(priv->modest_acc_mgr));
 		priv->modest_acc_mgr = NULL;
 	}
+
+	priv->store_accounts     = free_gobject_list (priv->store_accounts);
+	priv->transport_accounts = free_gobject_list (priv->store_accounts);
+	
+	g_free (priv->cache_dir);
+	priv->cache_dir = NULL;
 }
 
 GObject*
@@ -158,6 +194,8 @@ get_password (TnyAccountIface *account, const gchar *prompt)
 	/* SMF:
 	 * FIXME: if no password avail. in modest-conf, then we need to get the pw from
 	 * somewhere else.
+	 *
+	 * DJCB: good point: we should probably emit a signal for that..
 	 */
 
 	/* g_warning (val); */
@@ -242,42 +280,57 @@ tny_account_from_key (ModestTnyAccountStore *self, const gchar *key,
 
 	g_return_val_if_fail (self, NULL);
 	g_return_val_if_fail (key, NULL);
-
+	
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
-
+	
 	/* is it a store or a transport? */
 	if (is_store)
 		tny_account = TNY_ACCOUNT_IFACE(tny_store_account_new ());
 	else
 		tny_account = TNY_ACCOUNT_IFACE(tny_transport_account_new ());
 
-	tny_account_iface_set_account_store (tny_account,
+	if (!tny_account) {
+		g_warning ("failed to create new tny %s account",
+			   is_store ? "store" : "transport");
+		return NULL;
+	}
+	
+	tny_account_iface_set_account_store (TNY_ACCOUNT_IFACE(tny_account),
 					     TNY_ACCOUNT_STORE_IFACE(self));
 	/* id */
 	tny_account_iface_set_id (tny_account, key);
 
+	/* proto */
+	val = modest_account_mgr_get_server_account_string (priv->modest_acc_mgr, key,
+						     MODEST_ACCOUNT_PROTO, NULL);
+	if (val) {
+		tny_account_iface_set_proto (tny_account, val);
+		g_free (val);
+	} else {
+		g_warning ("protocol not defined for %s", key);
+		g_object_unref (G_OBJECT(tny_account));
+		return NULL;	
+	}
+
+	
 	/* hostname */
-	val = modest_account_mgr_get_account_string (priv->modest_acc_mgr, key,
+	val = modest_account_mgr_get_server_account_string (priv->modest_acc_mgr, key,
 						     MODEST_ACCOUNT_HOSTNAME, NULL);
-	g_warning (val);
-	tny_account_iface_set_hostname (tny_account, val);
-	g_free (val);
+	if (val) {
+		g_warning ("hostname: %s", val);
+		tny_account_iface_set_hostname (tny_account, val);
+		g_free (val);
+	}
+		
 
 	/* username */
 	val = modest_account_mgr_get_account_string (priv->modest_acc_mgr, key,
 						     MODEST_ACCOUNT_USERNAME, NULL);
-	g_warning (val);
-	tny_account_iface_set_user (tny_account, val);
-	g_free (val);
+	if (val) {
+		tny_account_iface_set_user (tny_account, val);
+		g_free (val);
+	}
 
-	/* proto */
-	val = modest_account_mgr_get_account_string (priv->modest_acc_mgr, key,
-						     MODEST_ACCOUNT_PROTO, NULL);
-	g_warning (val);
-	tny_account_iface_set_proto (tny_account, val);
-	g_free (val);
-
-	g_warning ("set_pass");
 	tny_account_iface_set_pass_func (tny_account, get_password);
 	tny_account_iface_set_forget_pass_func (tny_account, forget_password);
 
@@ -291,12 +344,12 @@ tny_accounts_from_server_accounts (ModestTnyAccountStore *self, GSList *accounts
 {
 	GSList *cursor = accounts;
 	GList *tny_accounts = NULL;
-
+	
 	g_return_val_if_fail (self, NULL);
-
+	
 	while (cursor) {
-                TnyAccountIface *tny_account;
-                tny_account = tny_account_from_key (self, (gchar*)cursor->data, is_store);
+		TnyAccountIface *tny_account;
+		tny_account = tny_account_from_key (self, (gchar*)cursor->data, is_store);
 		if (!tny_account) {
 			g_warning ("could not create tnyaccount for %s",
 				   (gchar*)cursor->data);
@@ -308,9 +361,12 @@ tny_accounts_from_server_accounts (ModestTnyAccountStore *self, GSList *accounts
 		cursor = cursor->next;
 	}
 
+	g_warning ("got %d %s account(s)", g_list_length(tny_accounts),
+		   is_store ? "store" : "transport");
+
+	
 	return tny_accounts;
 }
-
 
 
 
@@ -321,26 +377,32 @@ modest_tny_account_store_get_store_accounts  (TnyAccountStoreIface *iface)
 	ModestTnyAccountStorePrivate *priv;
 	GSList                       *accounts, *cursor;
 	GList                        *tny_accounts;
-
+	
 	g_return_val_if_fail (iface, NULL);
-
-	/* g_warning ("i'm being called: %s", __FUNCTION__); */
-
+	
 	self = MODEST_TNY_ACCOUNT_STORE(iface);
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
-
+	
 	accounts =
 		modest_account_mgr_server_account_names (priv->modest_acc_mgr,
 							 NULL,
 							 MODEST_PROTO_TYPE_STORE,
 							 NULL, FALSE);
 
-	g_warning ("accounts: %d", g_slist_length (accounts));
+	g_message ("accounts: %d", g_slist_length (accounts));
 	tny_accounts = tny_accounts_from_server_accounts (self, accounts, TRUE);
 	g_slist_free (accounts);
-	g_warning ("store accounts: %d", g_list_length (tny_accounts));
+	g_message ("store accounts: %d", g_list_length (tny_accounts));	
 
-	return tny_accounts; /* FIXME: who will free this? */
+
+	/*
+	 * FIXME: after gconf notification support is added,
+	 * we can simply return priv->store_account
+	 */
+	priv->store_accounts = free_gobject_list (priv->store_accounts);
+	priv->store_accounts = tny_accounts;
+	
+	return tny_accounts; 
 }
 
 
@@ -367,7 +429,14 @@ modest_tny_account_store_get_transport_accounts (TnyAccountStoreIface *iface)
 	g_warning ("transport accounts: %d", g_list_length (tny_accounts));
 
 	g_slist_free (accounts);
-
+	
+	/*
+	 * FIXME: after gconf notification support is added,
+	 * we can simply return priv->store_account
+	 */
+	priv->transport_accounts = free_gobject_list (priv->transport_accounts);
+	priv->transport_accounts = tny_accounts;
+	
 	return tny_accounts; /* FIXME: who will free this? */
 }
 
@@ -378,22 +447,33 @@ modest_tny_account_store_get_transport_accounts (TnyAccountStoreIface *iface)
  *
  * returns the pathname of the cache directory
  *
- * Returns: a newly allocated string with the value of the pathname
+ * Returns: a string with the value of the pathname
  * to the cache directory or NULL if the environment variable $HOME is
- * not set,
- * pointer has to be freed by caller
+ * not set. string should _not_ be freed by caller
  */
 static const gchar*
 modest_tny_account_store_get_cache_dir (TnyAccountStoreIface *self)
 {
-gchar *cache_dir;
+	ModestTnyAccountStorePrivate *priv;
+	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
 
-	if (g_getenv("HOME") != NULL)
-		cache_dir = g_strconcat(g_getenv("HOME"), "/.modest/cache/", NULL);
-	else
-		cache_dir = NULL;
+	gchar *cache_dir;
+	
+	if (!priv->cache_dir) {
+		if (g_getenv("HOME") != NULL)
+			priv->cache_dir = g_strconcat(g_getenv("HOME"),
+						      "/.modest/cache/", NULL);
+	}
+	return priv->cache_dir;
+}
 
-	return cache_dir;
+
+
+/* FIXME */
+static const TnyDeviceIface*
+modest_tny_account_store_get_device (TnyAccountStoreIface *self)
+{
+	return NULL;
 }
 
 
@@ -417,5 +497,8 @@ modest_tny_account_store_iface_init (gpointer g_iface, gpointer iface_data)
 		modest_tny_account_store_get_transport_accounts;
 	klass->get_cache_dir_func =
 		modest_tny_account_store_get_cache_dir;
+	klass->get_device_func =
+		modest_tny_account_store_get_device;	
+
 }
 
