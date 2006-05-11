@@ -48,6 +48,7 @@ main (int argc, char *argv[])
 		{ NULL }
 	};
 
+	
 	g_type_init ();
 	
 	context = g_option_context_new (NULL);
@@ -58,6 +59,10 @@ main (int argc, char *argv[])
 			 err ? err->message : "");
 		retval = 1;
 		goto cleanup;
+	}
+
+	if (debug) {
+		g_log_set_always_fatal (G_LOG_LEVEL_WARNING);
 	}
 
 	modest_conf = MODEST_CONF(modest_conf_new());
@@ -73,6 +78,8 @@ main (int argc, char *argv[])
 		goto cleanup;
 	}
 
+	
+	
 	gtk_init (&argc, &argv);		
 	modest_ui = MODEST_UI(modest_ui_new (modest_conf));
 	if (!modest_ui) {
@@ -164,7 +171,7 @@ install_test_account (ModestConf *conf)
 		g_warning ("failed to add test account");
 	
 	modest_account_mgr_add_server_account (acc_mgr, "mystore", "localhost", "djcb",
-					       NULL, "pop");
+					       NULL, "imap");
 	modest_account_mgr_add_server_account (acc_mgr, "mytransport", "localhost", NULL,
 					       NULL, "smtp");
 	g_object_unref (G_OBJECT(acc_mgr));
