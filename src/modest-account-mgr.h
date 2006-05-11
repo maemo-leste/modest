@@ -175,6 +175,10 @@ GSList*  modest_account_mgr_server_account_names   (ModestAccountMgr *self,
 gboolean	modest_account_mgr_account_exists	  (ModestAccountMgr *self,
 							   const gchar *name,
 							   GError **err);
+gboolean	modest_account_mgr_server_account_exists	  (ModestAccountMgr *self,
+								   const gchar *name,
+								   GError **err);
+
 
 /* account specific functions */
 
@@ -195,6 +199,12 @@ gboolean	modest_account_mgr_account_exists	  (ModestAccountMgr *self,
 gchar*	        modest_account_mgr_get_account_string     (ModestAccountMgr *self,
 							   const gchar *name,
 							   const gchar *key, GError **err);
+
+gchar*	        modest_account_mgr_get_server_account_string     (ModestAccountMgr *self,
+							   const gchar *name,
+							   const gchar *key, GError **err);
+
+
 /**
  * modest_account_mgr_get_account_int:
  * @self: self a ModestAccountMgr instance
@@ -209,6 +219,9 @@ gchar*	        modest_account_mgr_get_account_string     (ModestAccountMgr *self
  * @err gives details in case of error
  */
 gint	        modest_account_mgr_get_account_int        (ModestAccountMgr *self,
+							   const gchar *name,
+							   const gchar *key, GError **err);
+gint	        modest_account_mgr_get_server_account_int        (ModestAccountMgr *self,
 							   const gchar *name,
 							   const gchar *key, GError **err);
 
@@ -230,6 +243,9 @@ gboolean	modest_account_mgr_get_account_bool       (ModestAccountMgr *self,
 							   const gchar *name,
 							   const gchar *key, GError **err);
 
+gboolean	modest_account_mgr_get_server_account_bool       (ModestAccountMgr *self,
+								  const gchar *name,
+								  const gchar *key, GError **err);
 
 /**
  * modest_account_mgr_set_account_string:
@@ -248,6 +264,13 @@ gboolean	modest_account_mgr_set_account_string     (ModestAccountMgr *self,
 							   const gchar *name,
 							   const gchar *key, const gchar* val,
 							   GError **err);
+
+gboolean	modest_account_mgr_set_server_account_string     (ModestAccountMgr *self,
+							   const gchar *name,
+							   const gchar *key, const gchar* val,
+							   GError **err);
+
+
 /**
  * modest_account_mgr_set_account_int:
  * @self: self a ModestAccountMgr instance
@@ -265,6 +288,12 @@ gboolean	modest_account_mgr_set_account_int        (ModestAccountMgr *self,
 							   const gchar *name,
 							   const gchar *key, gint val,
 							   GError **err);
+gboolean	modest_account_mgr_set_server_account_int        (ModestAccountMgr *self,
+								  const gchar *name,
+								  const gchar *key, gint val,
+								  GError **err);
+
+
 
 /**
  * modest_account_mgr_set_account_bool:
@@ -283,6 +312,12 @@ gboolean	modest_account_mgr_set_account_bool       (ModestAccountMgr *self,
 							   const gchar *name,
 							   const gchar *key, gboolean val,
 							   GError **err);
+gboolean	modest_account_mgr_set_server_account_bool       (ModestAccountMgr *self,
+								  const gchar *name,
+								  const gchar *key, gboolean val,
+								  GError **err);
+
+
 G_END_DECLS
 
 #endif /* __MODEST_ACCOUNT_MGR_H__ */
