@@ -269,8 +269,6 @@ selection_changed (GtkTreeSelection *sel, gpointer user_data)
 	ModestTnyFolderTreeView *tree_view;
 	ModestTnyFolderTreeViewPrivate *priv;
 
-	g_warning ("selection changed");
-	
 	g_return_if_fail (sel);
 	g_return_if_fail (user_data);
 

@@ -141,13 +141,13 @@ modest_tny_header_tree_view_set_folder (ModestTnyHeaderTreeView *self,
 	if (priv->header_tree_model)
 		g_object_unref (G_OBJECT(priv->header_tree_model));
 	priv->header_tree_model = NULL;
-	priv->header_tree_model = GTK_TREE_MODEL (tny_msg_header_list_model_new());
 
+	priv->header_tree_model = GTK_TREE_MODEL (tny_msg_header_list_model_new());
 	if (folder) {
 		tny_msg_header_list_model_set_folder (
 			TNY_MSG_HEADER_LIST_MODEL(priv->header_tree_model),
-			folder, FALSE); /* FIXME: refresh?*/
-
+			folder, TRUE); /* FIXME: refresh?*/
+		
 		sortable = gtk_tree_model_sort_new_with_model (priv->header_tree_model);
 		
 	} else {
@@ -157,7 +157,7 @@ modest_tny_header_tree_view_set_folder (ModestTnyHeaderTreeView *self,
 
 		sortable = empty_model;
 	}
-	
+
 	gtk_tree_view_set_model (GTK_TREE_VIEW (self), sortable);
 
 	if (sortable)
