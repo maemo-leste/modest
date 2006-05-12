@@ -1558,7 +1558,7 @@
 	      </child>
 
 	      <child>
-		<widget class="GtkEntry" id="entry2">
+		<widget class="GtkEntry" id="to_entry">
 		  <property name="visible">True</property>
 		  <property name="can_focus">True</property>
 		  <property name="editable">True</property>
@@ -1579,7 +1579,7 @@
 	      </child>
 
 	      <child>
-		<widget class="GtkEntry" id="entry3">
+		<widget class="GtkEntry" id="subject_entry">
 		  <property name="visible">True</property>
 		  <property name="can_focus">True</property>
 		  <property name="editable">True</property>
@@ -1615,7 +1615,7 @@
 	      <property name="window_placement">GTK_CORNER_TOP_LEFT</property>
 
 	      <child>
-		<widget class="GtkTextView" id="textview1">
+		<widget class="GtkTextView" id="body_view">
 		  <property name="visible">True</property>
 		  <property name="can_focus">True</property>
 		  <property name="editable">True</property>
@@ -2543,7 +2543,6 @@
   <property name="border_width">10</property>
   <property name="width_request">400</property>
   <property name="height_request">350</property>
-  <property name="visible">True</property>
   <property name="title" translatable="yes">Mailbox setup 1/4</property>
   <property name="type">GTK_WINDOW_TOPLEVEL</property>
   <property name="window_position">GTK_WIN_POS_NONE</property>
@@ -2849,7 +2848,6 @@
   <property name="border_width">10</property>
   <property name="width_request">400</property>
   <property name="height_request">350</property>
-  <property name="visible">True</property>
   <property name="title" translatable="yes">Mailbox setup 2/4</property>
   <property name="type">GTK_WINDOW_TOPLEVEL</property>
   <property name="window_position">GTK_WIN_POS_NONE</property>
@@ -3153,7 +3151,6 @@
   <property name="border_width">10</property>
   <property name="width_request">400</property>
   <property name="height_request">350</property>
-  <property name="visible">True</property>
   <property name="title" translatable="yes">Advanced E-mail settings</property>
   <property name="type">GTK_WINDOW_TOPLEVEL</property>
   <property name="window_position">GTK_WIN_POS_NONE</property>
@@ -4416,7 +4413,6 @@
   <property name="border_width">10</property>
   <property name="width_request">400</property>
   <property name="height_request">350</property>
-  <property name="visible">True</property>
   <property name="title" translatable="yes">Mailbox setup 3/4</property>
   <property name="type">GTK_WINDOW_TOPLEVEL</property>
   <property name="window_position">GTK_WIN_POS_NONE</property>
@@ -4617,7 +4613,6 @@
   <property name="border_width">10</property>
   <property name="width_request">400</property>
   <property name="height_request">350</property>
-  <property name="visible">True</property>
   <property name="title" translatable="yes">Mailbox setup 4/4</property>
   <property name="type">GTK_WINDOW_TOPLEVEL</property>
   <property name="window_position">GTK_WIN_POS_NONE</property>

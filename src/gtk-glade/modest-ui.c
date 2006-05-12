@@ -19,6 +19,8 @@
 #include "../modest-tny-folder-tree-view.h"
 #include "../modest-tny-header-tree-view.h"
 #include "../modest-tny-msg-view.h"
+#include "../modest-tny-transport-actions.h"
+
 
 //#include "modest.glade.h"
 
@@ -36,8 +38,13 @@ static void    modest_ui_window_destroy    (GtkWidget *win, gpointer data);
 static void    modest_ui_last_window_closed (GObject *obj, gpointer data);
 
 static GtkWidget* modest_main_window_toolbar (void);
-static GtkWidget* modest_main_window_folder_tree (ModestAccountMgr *modest_acc_mgr);
+static GtkWidget* modest_main_window_folder_tree (ModestAccountMgr *modest_acc_mgr,
+						  TnyAccountStoreIface *account_store);
 static GtkWidget* modest_main_window_header_tree (TnyMsgFolderIface *folder);
+
+
+static void on_password_requested (ModestTnyAccountStore *account_store,
+				   const gchar *account_name, gpointer user_data);
 
 static void on_folder_clicked (ModestTnyFolderTreeView *folder_tree,
 			       TnyMsgFolderIface *folder,
@@ -45,6 +52,11 @@ static void on_folder_clicked (ModestTnyFolderTreeView *folder_tree,
 static void on_message_clicked (ModestTnyFolderTreeView *folder_tree,
 				TnyMsgIface *message,
 				gpointer data);
+static void on_new_mail_clicked (GtkWidget *widget, ModestUI *modest_ui);
+
+static void on_send_button_clicked (GtkWidget *widget, ModestUI *modest_ui);
+
+static void register_toolbar_callbacks (ModestUI *modest_ui);
 
 
 /* list my signals */
@@ -61,10 +73,9 @@ struct _ModestUIPrivate {
 	ModestConf           *modest_conf;
 	ModestAccountMgr     *modest_acc_mgr;
 	ModestWindowMgr      *modest_window_mgr;
+	TnyAccountStoreIface *account_store;
 	
 	GtkWindow	     *main_window;
-	GSList*		     *edit_window_list;	     
-
 	GladeXML             *glade_xml;
 
 
@@ -156,7 +167,8 @@ modest_ui_new (ModestConf *modest_conf)
 	GObject *obj;
 	ModestUIPrivate *priv;
 	ModestAccountMgr *modest_acc_mgr;
-
+	TnyAccountStoreIface *account_store_iface;
+	
 	g_return_val_if_fail (modest_conf, NULL);
 
 	obj = g_object_new(MODEST_TYPE_UI, NULL);	
@@ -169,11 +181,19 @@ modest_ui_new (ModestConf *modest_conf)
 		g_object_unref (obj);
 		return NULL;
 	}
-
+	
+	account_store_iface =
+		TNY_ACCOUNT_STORE_IFACE(modest_tny_account_store_new (modest_acc_mgr));
+	if (!account_store_iface) {
+		g_warning ("could not initialze ModestTnyAccountStore");
+		return NULL;
+	}
+	g_signal_connect (account_store_iface, "password_requested", 
+			  G_CALLBACK(on_password_requested),
+			  NULL);	
 	glade_init ();
 	priv->glade_xml = glade_xml_new (MODEST_GLADE,
-					 MODEST_GLADE_MAIN_WIN,
-					 NULL);
+					 NULL,NULL);
 	if (!priv->glade_xml) {
 		g_warning ("failed to do glade stuff");
 		g_object_unref (obj);
@@ -183,6 +203,8 @@ modest_ui_new (ModestConf *modest_conf)
 	priv->modest_acc_mgr = modest_acc_mgr;
 	g_object_ref (priv->modest_conf = modest_conf);
 
+	priv->account_store = account_store_iface;
+	
 	priv->modest_window_mgr = MODEST_WINDOW_MGR(modest_window_mgr_new());
 	g_signal_connect (priv->modest_window_mgr, "last_window_closed",
 			  G_CALLBACK(modest_ui_last_window_closed),
@@ -218,7 +240,8 @@ modest_ui_show_main_window (ModestUI *modest_ui)
 	}
 
 	folder_view =
-		GTK_WIDGET(modest_main_window_folder_tree(priv->modest_acc_mgr));
+		GTK_WIDGET(modest_main_window_folder_tree(priv->modest_acc_mgr,
+							  priv->account_store));
 	folder_view_holder = glade_xml_get_widget (priv->glade_xml, "folders");
 	if (!folder_view||!folder_view_holder) {
 		g_warning ("failed to create folder tree");
@@ -248,6 +271,8 @@ modest_ui_show_main_window (ModestUI *modest_ui)
 	g_signal_connect (header_view, "message_selected", 
 			  G_CALLBACK(on_message_clicked),
  			  modest_ui);
+
+	register_toolbar_callbacks (modest_ui);
 	
 	modest_window_mgr_register (priv->modest_window_mgr,
 				    G_OBJECT(win), MODEST_MAIN_WINDOW, 0);
@@ -261,6 +286,33 @@ modest_ui_show_main_window (ModestUI *modest_ui)
 }
 
 
+static void
+register_toolbar_callbacks (ModestUI *modest_ui)
+{
+	ModestUIPrivate *priv;
+	GtkWidget *button;
+	
+	g_return_if_fail (modest_ui);
+
+	priv = MODEST_UI_GET_PRIVATE (modest_ui);
+	
+	button = glade_xml_get_widget (priv->glade_xml, "toolb_new_mail");
+	if (button)
+		g_signal_connect (button, "clicked",
+				  G_CALLBACK(on_new_mail_clicked), modest_ui);
+}
+
+
+
+static void
+hide_edit_window (GtkWidget *win, gpointer data)
+{
+	gtk_widget_hide (win);
+}
+
+
+
+
 gboolean
 modest_ui_show_edit_window (ModestUI *modest_ui, const gchar* to,
 			    const gchar* cc, const gchar* bcc,
@@ -269,6 +321,7 @@ modest_ui_show_edit_window (ModestUI *modest_ui, const gchar* to,
 {
 	GtkWidget       *win;
 	ModestUIPrivate *priv;
+	GtkWidget       *btn;
 	
 	priv = MODEST_UI_GET_PRIVATE(modest_ui);
 	int height = modest_conf_get_int (priv->modest_conf,
@@ -278,19 +331,24 @@ modest_ui_show_edit_window (ModestUI *modest_ui, const gchar* to,
 
 	win = glade_xml_get_widget (priv->glade_xml, "new_mail");
 	if (!win) {
-		g_warning ("could not create edit window");
+		g_warning ("could not create new mail  window");
 		return FALSE;
 	}
 	
 	modest_window_mgr_register (priv->modest_window_mgr,
 				    G_OBJECT(win), MODEST_EDIT_WINDOW, 0);
 
-	g_signal_connect (win, "destroy", G_CALLBACK(modest_ui_window_destroy),
-			  modest_ui);
+	g_signal_connect (win, "destroy", G_CALLBACK(hide_edit_window),
+			  NULL);
 
 	gtk_widget_set_usize (GTK_WIDGET(win), height, width);
 	gtk_window_set_title (GTK_WINDOW(win),
 			      subject ? subject : "Untitled");
+
+	
+	btn = glade_xml_get_widget (priv->glade_xml, "toolb_send");
+	g_signal_connect (btn, "clicked", G_CALLBACK(on_send_button_clicked),
+			  modest_ui);
 
 	gtk_widget_show_all (win);
 
@@ -321,9 +379,10 @@ modest_ui_last_window_closed (GObject *obj, gpointer data)
 
 
 
-static void on_folder_clicked (ModestTnyFolderTreeView *folder_tree,
-			       TnyMsgFolderIface *folder,
-			       gpointer data)
+static void
+on_folder_clicked (ModestTnyFolderTreeView *folder_tree,
+		   TnyMsgFolderIface *folder,
+		   gpointer data)
 {
 	GtkWidget *win;
 	ModestTnyHeaderTreeView *tree_view;
@@ -335,13 +394,13 @@ static void on_folder_clicked (ModestTnyFolderTreeView *folder_tree,
 
 	priv = MODEST_UI_GET_PRIVATE(data);
 	scrollview = glade_xml_get_widget (priv->glade_xml,"mail_list");
-
+	
 	tree_view = MODEST_TNY_HEADER_TREE_VIEW(
 		gtk_bin_get_child(GTK_BIN(scrollview)));
 	win = glade_xml_get_widget (priv->glade_xml, "main");
 	gtk_window_set_title (GTK_WINDOW(win),
 			      tny_msg_folder_iface_get_name(folder));
-
+	
 	modest_tny_header_tree_view_set_folder (tree_view,
 						folder);	
 }
@@ -368,6 +427,28 @@ static void on_message_clicked (ModestTnyFolderTreeView *folder_tree,
 	modest_tny_msg_view_set_message (msg_view,
 					 message);
 }
+
+
+static void
+on_password_requested (ModestTnyAccountStore *account_store,
+		       const gchar *account_name, gpointer user_data)
+{
+
+	GtkWidget *dialog;
+	dialog = gtk_message_dialog_new_with_markup (NULL,
+					 GTK_DIALOG_MODAL|GTK_DIALOG_DESTROY_WITH_PARENT,
+					 GTK_MESSAGE_INFO,
+					 GTK_BUTTONS_CLOSE,
+						     "This dialog asks you for the password for account <b>%s</b>\n"
+						     "However, it's not working yet. So for now, use\n"
+						     "<i>gconf-editor</i>, and stay tuned!",
+						     account_name);
+	gtk_dialog_run (GTK_DIALOG(dialog));
+	gtk_widget_destroy (dialog);
+}
+	
+				       
+				     
 
 
 
@@ -418,19 +499,14 @@ modest_main_window_header_tree (TnyMsgFolderIface *folder)
 
 
 static GtkWidget*
-modest_main_window_folder_tree (ModestAccountMgr *modest_acc_mgr)
+modest_main_window_folder_tree (ModestAccountMgr *modest_acc_mgr,
+				TnyAccountStoreIface *account_store)
 {
 	GtkTreeViewColumn *column;
 	GtkCellRenderer *renderer = gtk_cell_renderer_text_new (); 
 	GtkWidget *folder_tree;
-	TnyAccountStoreIface *account_store_iface =
-		TNY_ACCOUNT_STORE_IFACE(modest_tny_account_store_new (modest_acc_mgr));
-	if (!account_store_iface) {
-		g_warning ("could not initialze ModestTnyAccountStore");
-		return NULL;
-	}
-	
-	folder_tree = modest_tny_folder_tree_view_new (account_store_iface);
+
+	folder_tree = modest_tny_folder_tree_view_new (account_store);
 	if (!folder_tree) {
 		g_warning ("could not create folder list");
 		return NULL;
@@ -455,4 +531,73 @@ modest_main_window_folder_tree (ModestAccountMgr *modest_acc_mgr)
 	gtk_tree_view_set_headers_clickable (GTK_TREE_VIEW(folder_tree), TRUE);
 
 	return folder_tree;
+}
+
+
+static void
+on_new_mail_clicked (GtkWidget *widget, ModestUI *modest_ui)
+{
+	g_return_if_fail (modest_ui);
+	modest_ui_show_edit_window (modest_ui, "", "", "", "", "", NULL);
+}
+
+
+/* FIXME: truly evil --> we cannot really assume that
+ * there is only one edit window open...
+ */
+static void
+on_send_button_clicked (GtkWidget *widget, ModestUI *modest_ui)
+{
+	ModestTnyTransportActions *actions;
+	ModestUIPrivate *priv;
+	GtkWidget *to_entry, *subject_entry, *body_view;
+	const gchar *to, *subject;
+	gchar *body;
+	GtkTextIter start, end;
+	GtkTextBuffer *buf;
+	TnyAccountStoreIface *account_store;
+	const GList *transport_accounts;
+	TnyTransportAccountIface *transport_account;
+	
+	g_return_if_fail (modest_ui);
+
+	actions = MODEST_TNY_TRANSPORT_ACTIONS
+		(modest_tny_transport_actions_new ());
+	priv = MODEST_UI_GET_PRIVATE(modest_ui);
+	
+	account_store = priv->account_store;
+	transport_accounts = 
+		tny_account_store_iface_get_transport_accounts (account_store);
+	if (!transport_accounts) {
+		g_message ("cannot send message: no transport account defined");
+		return;
+	} else /* take the first one! */
+		transport_account =
+			TNY_TRANSPORT_ACCOUNT_IFACE(transport_accounts->data);
+		
+	to_entry      = glade_xml_get_widget (priv->glade_xml, "to_entry");
+	subject_entry = glade_xml_get_widget (priv->glade_xml, "subject_entry");
+	body_view     = glade_xml_get_widget (priv->glade_xml, "body_view");
+					  
+	to      = gtk_entry_get_text (GTK_ENTRY(to_entry));
+	subject = gtk_entry_get_text (GTK_ENTRY(subject_entry));
+
+	buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(body_view));
+	gtk_text_buffer_get_bounds (buf, &start, &end);
+	body    = gtk_text_buffer_get_text (buf, &start, &end, FALSE);
+
+	g_message ("sending %s ==> %s", subject, to);
+	modest_tny_transport_actions_send_message (actions,
+						   transport_account,
+						   "dirk-jan.binnema@nokia.com", 
+						   to, "", "", subject,
+						   body);	
+	g_free (body);
+	g_object_unref (G_OBJECT(actions));
+
+	gtk_entry_set_text (GTK_ENTRY(to_entry), "");
+	gtk_entry_set_text (GTK_ENTRY(subject_entry), "");
+	gtk_text_buffer_set_text (buf, "", 0);
+
+	gtk_widget_hide (glade_xml_get_widget (priv->glade_xml, "new_mail"));
 }
