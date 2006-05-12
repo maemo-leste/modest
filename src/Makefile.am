@@ -34,9 +34,7 @@ modest_SOURCES=\
 	modest-tny-msg-view.c\
 	modest-proto.h\
 	modest-proto.c\
-	modest-ui.h\
-	tny-password-dialog.c\
-	tny-password-dialog.h
+	modest-ui.h
 
 modest_LDADD = \
 	$(MODEST_GSTUFF_LIBS) \
