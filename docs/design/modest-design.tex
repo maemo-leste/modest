@@ -1,6 +1,9 @@
 %
 % modest-design.tex
-% Time-stamp: <2006-05-04 17:21:51 (djcb)>
+% Time-stamp: <2006-05-12 18:47:13 (djcb)>
+%
+\documentclass{book}
+\usepackage{graphics}
 
 % macros
 \newcommand{\modest}{{\tt modest} } 
@@ -14,8 +17,6 @@
 \newcommand{\gtk}{{\sc GTK+} }
 \newcommand{\gconf}{{\sc GConf} }
 
-
-\documentclass{book}
 \author{Dirk-Jan C. Binnema\\\djcbemail}
 \title{{\huge \modest}\\
 an e-mail program for small devices\\
@@ -75,13 +76,13 @@ For \modest, the following:
 \end{itemize}
 
 
-
-
-
 \chapter{Design}
 In this chapter, we'll discuss the design of various parts of \modest. We'll
 not go into the details of various APIs. Please consult the documentation
 generated from the source code ({\tt gtk-doc}) for that.
+
+There are {\tt \#define}-definitions for many account keys in {\tt
+  modest-account-keys.h}. 
 
 \section {Configuration}
 Configuration is the part of \modest that deals with storing all
@@ -108,15 +109,61 @@ In practice, the following types are available:
 
 \subsection{Definitions}
 \begin{itemize}
-  \item A {\bf transport} describes the connection information (servername,
-    username, password etc.) for a transport server;
-  \item A {\bf store} describes the connection information for a store server;
-  \item An {\bf account} is a named entity consisting of a {\bf store} and a
+    \item An {\bf account} is a named entity consisting of a {\bf store} and a
     {\bf transport}.\footnote{For our mobile use-cases, the {\em transport}
       cannot be a static entity, but may depend on the network
       connection. That is however not part of Account Management, so not
       discussed here}
+    \item  A {\bf server account} is account describing the connection with a
+      specific server. Server accounts come in two type:
+      \begin{itemize}
+      \item A {\bf transport} describes the connection information (servername,
+        username, password etc.) for a transport server;
+      \item A {\bf store} describes the connection information for a store server;
+      \end{itemize}
 \end{itemize}
+
+\subsection{Code}
+The functions to deal with account and server accounts are located in {\tt
+  ModestAccountMgr}, ie. in {\tt modest-account-mgr.[ch]}. There function to
+add specific values for both, to list the available ones, etc. Please refer to
+the source code documentation for details.
+
+\subsection{Location in configuration database}
+{\em Accounts} can be found in {\tt /apps/modest/accounts}, while {\em server
+  accounts} can be found in {\tt /app/modest/server\_accounts}.
+
+The following image show an account {\em accountstest} with server accounts
+{\tt mystore} and {\tt mytransport}.
+
+\includegraphics{modest-account-mgr.png}
+
+For each of the stores, there are number of parameters specified:
+\begin{itemize}
+\item {\tt hostname} - the place where the server resides;
+\item {\tt username} - the username;
+\item {\tt password} - the password;
+\item {\tt proto} - the protocal for communication with this server - for
+  now these are the following valid values (literal strings):
+  \begin{itemize}
+  \item {\tt sendmail};
+  \item {\tt smtp};
+  \item {\tt pop}
+  \item {\tt imap}.
+  \end{itemize}
+\end{itemize}
+
+In the {\tt modest-proto.[ch]} there are various functions to check whether
+something is a valid protocol, and whether it is a transport of a store. 
+
+Note that server accounts and accounts are relatively independent. While
+accounts refer to two server accounts, these server accounts can be
+used by other accounts as well.
+
+The reason two keep accounts and server accounts separately, is a bit of
+flexibility. In mobile use-cases, quite often it's desirable to use a
+network-specific smtp-server. The chosen structure makes it easy to iterate
+over all smtp-servers and find the right one.
 
 \chapter{Finding the Transport}
 One of the interesting topics in designing a mobile e-mail client is to deal
