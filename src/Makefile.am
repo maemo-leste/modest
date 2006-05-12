@@ -34,6 +34,9 @@ modest_SOURCES=\
 	modest-tny-msg-view.c\
 	modest-proto.h\
 	modest-proto.c\
+	modest-ui.h\
+	modest-tny-transport-actions.c\
+	modest-tny-transport-actions.h\
 	modest-ui.h
 
 modest_LDADD = \
