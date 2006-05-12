@@ -8,7 +8,8 @@
 #include <tny-account-store-iface.h>
 #include <tny-store-account-iface.h>
 #include <tny-transport-account-iface.h>
-//#include <tny-device-iface.h>
+#include <tny-device-iface.h>
+#include <tny-account-store.h>
 
 #include <tny-store-account.h>
 #include <tny-transport-account.h>
@@ -33,8 +34,7 @@ static const GList*  modest_tny_account_store_get_transport_accounts  (TnyAccoun
 
 /* list my signals */
 enum {
-	/* MY_SIGNAL_1, */
-	/* MY_SIGNAL_2, */
+	PASSWORD_REQUESTED_SIGNAL,
 	LAST_SIGNAL
 };
 
@@ -45,6 +45,8 @@ struct _ModestTnyAccountStorePrivate {
 	GList *transport_accounts;
 	gchar *cache_dir;
 
+	TnySessionCamel *tny_session_camel;
+	
 	ModestAccountMgr *modest_acc_mgr;	
 };
 #define MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -53,8 +55,7 @@ struct _ModestTnyAccountStorePrivate {
 /* globals */
 static GObjectClass *parent_class = NULL;
 
-/* uncomment the following if you have defined any signals */
-/* static guint signals[LAST_SIGNAL] = {0}; */
+static guint signals[LAST_SIGNAL] = {0}; 
 
 GType
 modest_tny_account_store_get_type (void)
@@ -79,9 +80,10 @@ modest_tny_account_store_get_type (void)
 			NULL          /* interface_data */
                 };
 
-                my_type = g_type_register_static (G_TYPE_OBJECT,
-						  "ModestTnyAccountStore", &my_info, 0);
-
+		/* hack hack */
+		my_type = g_type_register_static (TNY_TYPE_ACCOUNT_STORE, 
+ 						  "ModestTnyAccountStore", &my_info, 0);
+		
                 g_type_add_interface_static (my_type, TNY_TYPE_ACCOUNT_STORE_IFACE,
 					     &iface_info);
 	}
@@ -100,14 +102,16 @@ modest_tny_account_store_class_init (ModestTnyAccountStoreClass *klass)
 	g_type_class_add_private (gobject_class,
 				  sizeof(ModestTnyAccountStorePrivate));
 
-	/* signal definitions go here, e.g.: */
-/* 	signals[MY_SIGNAL_1] = */
-/* 		g_signal_new ("my_signal_1",....); */
-/* 	signals[MY_SIGNAL_2] = */
-/* 		g_signal_new ("my_signal_2",....); */
-/* 	etc. */
+ 	signals[PASSWORD_REQUESTED_SIGNAL] = 
+ 		g_signal_new ("password_requested",
+			      G_TYPE_FROM_CLASS (gobject_class),
+			      G_SIGNAL_RUN_FIRST,
+			      G_STRUCT_OFFSET(ModestTnyAccountStoreClass,password_requested),
+			      NULL, NULL,
+			      g_cclosure_marshal_VOID__POINTER,
+			      G_TYPE_NONE, 1, G_TYPE_POINTER);
 }
-
+	
 static void
 modest_tny_account_store_init (ModestTnyAccountStore *obj)
 {
@@ -119,6 +123,8 @@ modest_tny_account_store_init (ModestTnyAccountStore *obj)
 	priv->store_accounts         = NULL;
 	priv->transport_accounts     = NULL;
 	priv->cache_dir              = NULL;
+
+	priv->tny_session_camel      = NULL;
 }
 
 
@@ -153,11 +159,19 @@ modest_tny_account_store_finalize (GObject *obj)
 		priv->modest_acc_mgr = NULL;
 	}
 
+	if (priv->tny_session_camel) {
+		g_object_unref (G_OBJECT(priv->tny_session_camel));
+		priv->tny_session_camel = NULL;
+	}
+	
 	priv->store_accounts     = free_gobject_list (priv->store_accounts);
 	priv->transport_accounts = free_gobject_list (priv->store_accounts);
 	
 	g_free (priv->cache_dir);
 	priv->cache_dir = NULL;
+
+	
+
 }
 
 GObject*
@@ -173,32 +187,44 @@ modest_tny_account_store_new (ModestAccountMgr *modest_acc_mgr)
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(obj);
 	g_object_ref(G_OBJECT(priv->modest_acc_mgr = modest_acc_mgr));
 
+
+	priv->tny_session_camel = tny_session_camel_new
+		(TNY_ACCOUNT_STORE_IFACE(obj));
+	if (!priv->tny_session_camel) {
+		g_warning ("cannot create TnySessionCamel instance");
+		g_object_unref (obj);
+		return NULL;
+	}
+	
 	return obj;
 }
 
 
-
-/* FIXME: tinymail needs to change here */
-/* a gpointer arg to get_password should be enough */
 static gchar*
 get_password (TnyAccountIface *account, const gchar *prompt)
 {
-	const gchar *key = tny_account_iface_get_id (account);
-	const TnyAccountStoreIface *AccountStore = tny_account_iface_get_account_store(account);
-	ModestTnyAccountStorePrivate *priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(AccountStore);
+	const gchar *key; 
+	const TnyAccountStoreIface *account_store; 
+	ModestTnyAccountStore *self;
+	ModestTnyAccountStorePrivate *priv;
 	gchar *val;
 
-	/* hostname */
-	val = modest_account_mgr_get_account_string (priv->modest_acc_mgr, key,
-						     MODEST_ACCOUNT_PASSWORD, NULL);
-	/* SMF:
-	 * FIXME: if no password avail. in modest-conf, then we need to get the pw from
-	 * somewhere else.
-	 *
-	 * DJCB: good point: we should probably emit a signal for that..
-	 */
+	g_message (__FUNCTION__);
+	
+	g_return_val_if_fail (account, NULL);
+	
+	key = tny_account_iface_get_id (account);
+	account_store = tny_account_iface_get_account_store(account);
 
-	/* g_warning (val); */
+	self = MODEST_TNY_ACCOUNT_STORE (account_store);
+	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
+
+	val = modest_account_mgr_get_server_account_string (priv->modest_acc_mgr, key,
+							    MODEST_ACCOUNT_PASSWORD,
+							    NULL);
+	if (!val)
+		g_signal_emit (G_OBJECT(self), signals[PASSWORD_REQUESTED_SIGNAL], 0,
+			       key); 
 
         return val;
 }
@@ -221,8 +247,6 @@ add_account  (TnyAccountStoreIface *self, TnyAccountIface *account)
 
 	const gchar* account_name;
 	const gchar *hostname, *username, *proto;
-
-	g_warning (__FUNCTION__);
 
 	g_return_val_if_fail (self, FALSE);
 	g_return_val_if_fail (account, FALSE);
@@ -269,7 +293,6 @@ modest_tny_account_store_add_transport_account  (TnyAccountStoreIface *self,
 
 
 
-
 static TnyAccountIface*
 tny_account_from_key (ModestTnyAccountStore *self, const gchar *key,
 		      gboolean is_store)
@@ -288,7 +311,7 @@ tny_account_from_key (ModestTnyAccountStore *self, const gchar *key,
 		tny_account = TNY_ACCOUNT_IFACE(tny_store_account_new ());
 	else
 		tny_account = TNY_ACCOUNT_IFACE(tny_transport_account_new ());
-
+	
 	if (!tny_account) {
 		g_warning ("failed to create new tny %s account",
 			   is_store ? "store" : "transport");
@@ -302,7 +325,7 @@ tny_account_from_key (ModestTnyAccountStore *self, const gchar *key,
 
 	/* proto */
 	val = modest_account_mgr_get_server_account_string (priv->modest_acc_mgr, key,
-						     MODEST_ACCOUNT_PROTO, NULL);
+							    MODEST_ACCOUNT_PROTO, NULL);
 	if (val) {
 		tny_account_iface_set_proto (tny_account, val);
 		g_free (val);
@@ -315,17 +338,18 @@ tny_account_from_key (ModestTnyAccountStore *self, const gchar *key,
 	
 	/* hostname */
 	val = modest_account_mgr_get_server_account_string (priv->modest_acc_mgr, key,
-						     MODEST_ACCOUNT_HOSTNAME, NULL);
+							    MODEST_ACCOUNT_HOSTNAME,
+							    NULL);
 	if (val) {
-		g_warning ("hostname: %s", val);
 		tny_account_iface_set_hostname (tny_account, val);
 		g_free (val);
 	}
 		
 
 	/* username */
-	val = modest_account_mgr_get_account_string (priv->modest_acc_mgr, key,
-						     MODEST_ACCOUNT_USERNAME, NULL);
+	val = modest_account_mgr_get_server_account_string (priv->modest_acc_mgr, key,
+							    MODEST_ACCOUNT_USERNAME,
+							    NULL);
 	if (val) {
 		tny_account_iface_set_user (tny_account, val);
 		g_free (val);
@@ -333,7 +357,7 @@ tny_account_from_key (ModestTnyAccountStore *self, const gchar *key,
 
 	tny_account_iface_set_pass_func (tny_account, get_password);
 	tny_account_iface_set_forget_pass_func (tny_account, forget_password);
-
+	
 	return tny_account;
 }
 
@@ -349,21 +373,18 @@ tny_accounts_from_server_accounts (ModestTnyAccountStore *self, GSList *accounts
 	
 	while (cursor) {
 		TnyAccountIface *tny_account;
-		tny_account = tny_account_from_key (self, (gchar*)cursor->data, is_store);
+		gchar *key = cursor->data;	
+		tny_account = tny_account_from_key (self, (gchar*)cursor->data,
+						    is_store);
 		if (!tny_account) {
 			g_warning ("could not create tnyaccount for %s",
 				   (gchar*)cursor->data);
 		} else {
-			g_warning ("added %s",(gchar*)cursor->data);
 			tny_accounts =
 				g_list_append (tny_accounts, tny_account);
 		}
 		cursor = cursor->next;
 	}
-
-	g_warning ("got %d %s account(s)", g_list_length(tny_accounts),
-		   is_store ? "store" : "transport");
-
 	
 	return tny_accounts;
 }
@@ -441,6 +462,24 @@ modest_tny_account_store_get_transport_accounts (TnyAccountStoreIface *iface)
 }
 
 
+
+
+TnySessionCamel*
+tny_account_store_get_session (TnyAccountStore *self)
+{
+	ModestTnyAccountStorePrivate *priv;
+	g_return_val_if_fail (self, NULL);
+
+	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
+
+	g_message ("returning tny session camel %p",
+		   priv->tny_session_camel);
+	
+	return priv->tny_session_camel;
+}
+
+
+
 /**
  * modest_tny_account_store_get_cache_dir:
  * @self: self a TnyAccountStoreIface instance
@@ -469,11 +508,10 @@ modest_tny_account_store_get_cache_dir (TnyAccountStoreIface *self)
 
 
 
-/* FIXME */
 static const TnyDeviceIface*
 modest_tny_account_store_get_device (TnyAccountStoreIface *self)
 {
-	return NULL;
+	return NULL; /* FIXME */
 }
 
 

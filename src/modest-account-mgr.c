@@ -275,6 +275,23 @@ modest_account_mgr_remove_server_account    (ModestAccountMgr *self,
 }
 
 
+/* strip the first /n/ character from each element */
+/* caller must make sure all elements are strings with
+ * length >= n, and also that data can be freed.
+ */
+static GSList*
+strip_prefix_from_elements (GSList *lst, guint n)
+{
+	GSList *cursor = lst;
+	while (cursor) {
+		gchar *str = (gchar*)cursor->data;
+		cursor->data = g_strdup (str + n);
+		g_free (str);
+		cursor = cursor->next;
+	}
+	return lst;
+}
+
 
 
 GSList*
@@ -287,7 +304,9 @@ modest_account_mgr_server_account_names   (ModestAccountMgr *self,
 	GSList *accounts;
 	GSList *cursor;
 	ModestAccountMgrPrivate *priv;
-
+	const size_t prefix_len =
+		strlen (MODEST_SERVER_ACCOUNT_NAMESPACE "/");
+	
 	g_return_val_if_fail (self, NULL);
 
 	priv = MODEST_ACCOUNT_MGR_GET_PRIVATE(self);
@@ -297,8 +316,8 @@ modest_account_mgr_server_account_names   (ModestAccountMgr *self,
 
 	/* no restrictions, return everything */
 	if (type == MODEST_PROTO_TYPE_ANY && !proto)
-		return accounts;
-
+		return strip_prefix_from_elements (accounts,prefix_len);
+	
 	/* otherwise, filter out the none-matching ones */
 	cursor = accounts;
 	while (cursor) {
@@ -323,7 +342,7 @@ modest_account_mgr_server_account_names   (ModestAccountMgr *self,
 			cursor = cursor->next;
 	}
 
-	return accounts;
+	return strip_prefix_from_elements (accounts, prefix_len);
 }
 
 
@@ -333,14 +352,18 @@ modest_account_mgr_account_names  (ModestAccountMgr *self, GError **err)
 {
 	GSList *accounts, *cursor;
 	ModestAccountMgrPrivate *priv;
+	const size_t prefix_len =
+		strlen (MODEST_ACCOUNT_NAMESPACE "/");
+
 
 	g_return_val_if_fail (self, NULL);
 
 	priv = MODEST_ACCOUNT_MGR_GET_PRIVATE(self);
 
-	return  modest_conf_list_subkeys (priv->modest_conf,
-					  MODEST_ACCOUNT_NAMESPACE,
-					  err);
+	accounts = modest_conf_list_subkeys (priv->modest_conf,
+					     MODEST_ACCOUNT_NAMESPACE,
+					     err);
+	return strip_prefix_from_elements (accounts, prefix_len);	
 }
 
 
@@ -363,7 +386,7 @@ get_account_string (ModestAccountMgr *self, const gchar *name,
 		keyname = get_server_account_keyname (name, key);
 	else
 		keyname = get_account_keyname (name, key);
-
+	
 	priv = MODEST_ACCOUNT_MGR_GET_PRIVATE(self);
 	retval = modest_conf_get_string (priv->modest_conf,keyname,err);
 	g_free (keyname);
@@ -685,11 +708,12 @@ get_account_keyname (const gchar *accname, const gchar *name)
 static gchar*
 get_server_account_keyname (const gchar *accname, const gchar *name)
 {
-	g_printf("get_server_account_keyname('%s', '%s')\n", accname, name);
 	if (name)
 		return g_strconcat
-			(MODEST_SERVER_ACCOUNT_NAMESPACE, "/", accname, "/", name, NULL);
+			(MODEST_SERVER_ACCOUNT_NAMESPACE, "/",
+			 accname, "/", name, NULL);
 	else
 		return g_strconcat
-			(MODEST_SERVER_ACCOUNT_NAMESPACE, "/", accname, NULL);
+			(MODEST_SERVER_ACCOUNT_NAMESPACE, "/",
+			 accname, NULL);
 }
