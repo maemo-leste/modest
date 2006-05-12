@@ -32,6 +32,11 @@ PKG_CHECK_MODULES(MODEST_TINYMAIL, libtinymail-1.0 libtinymail-camel-1.0 libtiny
 AC_SUBST(MODEST_TINYMAIL_CFLAGS)
 AC_SUBST(MODEST_TINYMAIL_LIBS)
 
+dnl # firefox-gtkmozembed => dependency from tinymail
+PKG_CHECK_MODULES(MODEST_LIBTINYMAIL_GNOME_DESKTOP, firefox-nss firefox-xpcom firefox-gtkmozembed libnm_glib glib-2.0 >= 2.8 gobject-2.0 libgnomeui-2.0 gtk+-2.0)
+AC_SUBST(MODEST_LIBTINYMAIL_GNOME_DESKTOP_CFLAGS)
+AC_SUBST(MODEST_LIBTINYMAIL_GNOME_DESKTOP_LIBS)
+
 dnl # GConf => mandatory
 PKG_CHECK_MODULES(MODEST_GCONF,gconf-2.0)
 AC_SUBST(MODEST_GCONF_CFLAGS)
