@@ -28,7 +28,7 @@ AC_SUBST(MODEST_GSTUFF_CFLAGS)
 AC_SUBST(MODEST_GSTUFF_LIBS)
 
 dnl # tinymail => mandatory
-PKG_CHECK_MODULES(MODEST_TINYMAIL, libtinymail-1.0 libtinymail-camel-1.0 libtinymailui-1.0 libtinymailui-gtk-1.0)
+PKG_CHECK_MODULES(MODEST_TINYMAIL, libtinymail-1.0 libtinymail-camel-1.0 libtinymailui-1.0 libtinymailui-gtk-1.0 libtinymail-gnome-desktop-1.0 camel-1.2)
 AC_SUBST(MODEST_TINYMAIL_CFLAGS)
 AC_SUBST(MODEST_TINYMAIL_LIBS)
 
