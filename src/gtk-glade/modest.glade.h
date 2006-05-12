@@ -4721,7 +4721,7 @@ static const char* MODEST_GLADE =
 "	      <property name=\"visible\">True</property>\r\n"
 "	      <property name=\"label\" translatable=\"yes\">Mailbox setup is complete.\r\n"
 "\r\n"
-"Tap 'Finnish' to save or 'Cancel' to discard the settings.\r\n"
+"Tap 'Finish' to save or 'Cancel' to discard the settings.\r\n"
 "Tap 'Advanced' to edit the advanced e-mail settings.</property>\r\n"
 "	      <property name=\"use_underline\">False</property>\r\n"
 "	      <property name=\"use_markup\">False</property>\r\n"

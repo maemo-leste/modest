@@ -4712,7 +4712,7 @@
 	      <property name="visible">True</property>
 	      <property name="label" translatable="yes">Mailbox setup is complete.
 
-Tap 'Finnish' to save or 'Cancel' to discard the settings.
+Tap 'Finish' to save or 'Cancel' to discard the settings.
 Tap 'Advanced' to edit the advanced e-mail settings.</property>
 	      <property name="use_underline">False</property>
 	      <property name="use_markup">False</property>
