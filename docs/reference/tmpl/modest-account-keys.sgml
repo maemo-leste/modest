@@ -2,11 +2,11 @@
 modest-account-keys
 
 <!-- ##### SECTION Short_Description ##### -->
-
+Configuration key definitions
 
 <!-- ##### SECTION Long_Description ##### -->
 <para>
-
+Definition of keys used to access account properties from the account store.
 </para>
 
 <!-- ##### SECTION See_Also ##### -->
@@ -91,6 +91,3 @@ modest-account-keys
 <para>
 
 </para>
-
-
-
