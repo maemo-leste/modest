@@ -63,6 +63,5 @@ misc items
    - make libcamel packages; remove unnecessary dependencies
    - make tinymail packages; make non-Maemo deps configurable
 - set up i18n stuff (po/ etc.)
-- get gtk-doc working with all the stuff
 - get some more stuff working through the cmdline for testing,
-  such as modest --list-accounts 
+  such as modest --list-accounts
