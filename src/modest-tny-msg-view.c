@@ -126,9 +126,11 @@ modest_tny_msg_view_set_message (ModestTnyMsgView *self, TnyMsgIface *msg)
 	priv = MODEST_TNY_MSG_VIEW_GET_PRIVATE(self);
 	buf = gtk_text_view_get_buffer (GTK_TEXT_VIEW(priv->text_view));
 
-	/* if msg is NULL, just delete the stuff */
+	/* clear the message view */
+	gtk_text_buffer_set_text (buf, "", 0);
+
+	/* if msg is NULL, do nothing else */
 	if (!msg) {
-		gtk_text_buffer_set_text (buf, NULL, 0);
 		return;
 	}
 	
