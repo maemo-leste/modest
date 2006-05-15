@@ -50,15 +50,60 @@ struct _ModestWindowMgrClass {
 /* member functions */
 GType        modest_window_mgr_get_type    (void) G_GNUC_CONST;
 
-/* typical parameter-less _new function */
-/* if this is a kind of GtkWidget, it should probably return at GtkWidget*, */
-/*    otherwise probably a GObject*. */
+/**
+ * modest_window_mgr_new:
+ *
+ * creates a new ModestWindowMgr instance
+ *
+ * Returns: a new ModestWindowMgr, or NULL in case of error
+ */
 GObject*    modest_window_mgr_new         (void);
 
+/**
+ * modest_window_mgr_register:
+ * @self: a ModestWindowMgr instance
+ * @win: the GObject of the window to register
+ * @type: ModestWindowType of the window to register
+ * @window_id: a guint window_id of the window
+ *
+ * register a window with the ModestWindowMgr instance *self
+ *
+ * Returns: TRUE on success, else FALSE
+ */
 gboolean    modest_window_mgr_register   (ModestWindowMgr *self, GObject *win,
 					  ModestWindowType type, guint window_id);
+
+/**
+ * modest_window_mgr_unregister:
+ * @self: a ModestWindowMgr instance
+ * @win: the GObject of the window to register
+ *
+ * unregister a window from the ModestWindowMgr instance *self
+ *
+ * Returns: TRUE on success, else FALSE
+ */
 gboolean    modest_window_mgr_unregister (ModestWindowMgr *self, GObject *win);
+
+/**
+ * modest_window_mgr_find_by_type:
+ * @self: a ModestWindowMgr instance
+ * @type: the ModestWindowType to search for
+ *
+ * search for a window of type 'type' in the ModestWindowMgr instance *self
+ *
+ * Returns: the GObject of the window, else NULL
+ */
 GObject*    modest_window_mgr_find_by_type (ModestWindowMgr *self, ModestWindowType type);
+
+/**
+ * modest_window_mgr_find_by_id:
+ * @self: a ModestWindowMgr instance
+ * @window_id: the ModestWindowType to search for
+ *
+ * search for a window with a specific 'window_id' in the ModestWindowMgr instance *self
+ *
+ * Returns: the GObject of the window, else NULL
+ */
 GObject*    modest_window_mgr_find_by_id (ModestWindowMgr *self, gint window_id);
 
 G_END_DECLS
