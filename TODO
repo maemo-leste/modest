@@ -1,19 +1,18 @@
-TODO
-====
+TODO -*-mode:text-*-
+====================
 
 Non-exhaustive list of Todo items
 ---------------------------------
 (I've you're working on something, please communicate with the others...)
 
-
 - update ModestTnyHeaderTreeView with sorting, showing/hiding of 
   columns, icons, d&d. Atm, the column code is the gtk/ and gtk-glade/ but
-  it should be in ModestTnyHeaderTreeView instead
-  interaction with tinymail requires some analysis
+  it should be in ModestTnyHeaderTreeView instead.
+  Interaction with tinymail requires some analysis
 
 - implement ModestTnyHeaderTreeActions, with all the actions for message
   headers - delete / move-to-folder / open / reply (these last will 
-  interface iwth ModestMessageActions
+  interface iwth ModestMessageActions.
 
 - update ModestTnyFolderTreeView with sorting, icons etc. As for
   ModestTnyHeaderTreeView, the UI-code for columns should be moved here.
@@ -60,7 +59,9 @@ misc items
 ----------
 - set up compilation in scratchbox
 - set up packaging of tinymail, camel and friends
-- make 770-packages
+- make 770-packages:
+   - make libcamel packages; remove unnecessary dependencies
+   - make tinymail packages; make non-Maemo deps configurable
 - set up i18n stuff (po/ etc.)
 - get gtk-doc working with all the stuff
 - get some more stuff working through the cmdline for testing,
