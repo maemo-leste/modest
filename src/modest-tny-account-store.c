@@ -187,7 +187,6 @@ modest_tny_account_store_new (ModestAccountMgr *modest_acc_mgr)
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(obj);
 	g_object_ref(G_OBJECT(priv->modest_acc_mgr = modest_acc_mgr));
 
-
 	priv->tny_session_camel = tny_session_camel_new
 		(TNY_ACCOUNT_STORE_IFACE(obj));
 	if (!priv->tny_session_camel) {
@@ -539,4 +538,3 @@ modest_tny_account_store_iface_init (gpointer g_iface, gpointer iface_data)
 		modest_tny_account_store_get_device;	
 
 }
-

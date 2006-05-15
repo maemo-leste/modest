@@ -38,15 +38,34 @@ struct _ModestTnyAccountStoreClass {
 };
 
 /* member functions */
+
+/**
+ * modest_tny_account_store_get_type:
+ *
+ * returns GType of account store ???
+ *
+ * Returns: ???
+ */
 GType        modest_tny_account_store_get_type    (void) G_GNUC_CONST;
 
-/* typical parameter-less _new function */
-/* if this is a kind of GtkWidget, it should probably return at GtkWidget*, */
-/*    otherwise probably a GObject*. */
+/**
+ * modest_tny_account_store_new:
+ * @modest_acc_mgr: account manager to use for new account store
+ *
+ * creates new tiny account store for account manager modest_acc_mgr
+ *
+ * Returns: GObject of newly created account store
+ */
 GObject*    modest_tny_account_store_new         (ModestAccountMgr *modest_acc_mgr);
 
-
-
+/**
+ * tny_account_store_get_session:
+ * @self: a TnyAccountStore instance
+ *
+ * retrieve current tinymail camel session
+ *
+ * Returns: current tinymail camel session
+ */
 TnySessionCamel* tny_account_store_get_session (TnyAccountStore *self);
 
 
