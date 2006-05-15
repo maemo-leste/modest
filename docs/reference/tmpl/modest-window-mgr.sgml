@@ -1,0 +1,91 @@
+<!-- ##### SECTION Title ##### -->
+ModestWindowMgr
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### TYPEDEF ModestWindowType ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### STRUCT ModestOpenWindow ##### -->
+<para>
+
+</para>
+
+@win: 
+@type: 
+@id: 
+
+<!-- ##### STRUCT ModestWindowMgr ##### -->
+<para>
+
+</para>
+
+@parent: 
+
+<!-- ##### FUNCTION modest_window_mgr_new ##### -->
+<para>
+
+</para>
+
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_window_mgr_register ##### -->
+<para>
+
+</para>
+
+@self: 
+@win: 
+@type: 
+@window_id: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_window_mgr_unregister ##### -->
+<para>
+
+</para>
+
+@self: 
+@win: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_window_mgr_find_by_type ##### -->
+<para>
+
+</para>
+
+@self: 
+@type: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_window_mgr_find_by_id ##### -->
+<para>
+
+</para>
+
+@self: 
+@window_id: 
+@Returns: 
+
+

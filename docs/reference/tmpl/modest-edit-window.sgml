@@ -1,0 +1,40 @@
+<!-- ##### SECTION Title ##### -->
+ModestEditWindow
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### STRUCT ModestEditWindow ##### -->
+<para>
+
+</para>
+
+@parent: 
+
+<!-- ##### FUNCTION modest_edit_window_new ##### -->
+<para>
+
+</para>
+
+@to: 
+@cc: 
+@bcc: 
+@subject: 
+@body: 
+@attachments: 
+@Returns: 
+
+

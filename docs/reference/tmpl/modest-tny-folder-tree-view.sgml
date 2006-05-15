@@ -1,0 +1,44 @@
+<!-- ##### SECTION Title ##### -->
+ModestTnyFolderTreeView
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### STRUCT ModestTnyFolderTreeView ##### -->
+<para>
+
+</para>
+
+@parent: 
+
+<!-- ##### FUNCTION modest_tny_folder_tree_view_new ##### -->
+<para>
+
+</para>
+
+@iface: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_tny_folder_tree_view_is_empty ##### -->
+<para>
+
+</para>
+
+@self: 
+@Returns: 
+
+

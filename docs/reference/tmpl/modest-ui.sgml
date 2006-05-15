@@ -1,0 +1,59 @@
+<!-- ##### SECTION Title ##### -->
+ModestUI
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### STRUCT ModestUI ##### -->
+<para>
+
+</para>
+
+@parent: 
+
+<!-- ##### FUNCTION modest_ui_new ##### -->
+<para>
+
+</para>
+
+@modest_conf: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_ui_show_main_window ##### -->
+<para>
+
+</para>
+
+@ui: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_ui_show_edit_window ##### -->
+<para>
+
+</para>
+
+@ui: 
+@to: 
+@cc: 
+@bcc: 
+@subject: 
+@body: 
+@att: 
+@Returns: 
+
+

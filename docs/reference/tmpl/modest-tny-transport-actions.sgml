@@ -1,0 +1,50 @@
+<!-- ##### SECTION Title ##### -->
+ModestTnyTransportActions
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### STRUCT ModestTnyTransportActions ##### -->
+<para>
+
+</para>
+
+@parent: 
+
+<!-- ##### FUNCTION modest_tny_transport_actions_new ##### -->
+<para>
+
+</para>
+
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_tny_transport_actions_send_message ##### -->
+<para>
+
+</para>
+
+@self: 
+@transport_account: 
+@from: 
+@to: 
+@cc: 
+@bcc: 
+@subject: 
+@body: 
+@Returns: 
+
+

@@ -1,0 +1,71 @@
+<!-- ##### SECTION Title ##### -->
+modest-proto
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### MACRO MODEST_PROTO_SENDMAIL ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO MODEST_PROTO_SMTP ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO MODEST_PROTO_POP ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO MODEST_PROTO_IMAP ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### TYPEDEF ModestProtoType ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### FUNCTION modest_proto_is_valid ##### -->
+<para>
+
+</para>
+
+@proto: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_proto_type ##### -->
+<para>
+
+</para>
+
+@proto: 
+@Returns: 
+
+
