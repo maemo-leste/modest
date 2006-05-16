@@ -66,7 +66,7 @@ GObject*    modest_tny_account_store_new         (ModestAccountMgr *modest_acc_m
  *
  * Returns: the account manager for self.
  */
-ModestAccountMgr *modest_tny_account_store_get_accout_mgr(TnyAccountStore *self);
+ModestAccountMgr *modest_tny_account_store_get_accout_mgr(ModestTnyAccountStore *self);
 
 /**
  * tny_account_store_get_session:
