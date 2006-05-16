@@ -446,16 +446,6 @@ on_password_requested (ModestTnyAccountStore *account_store,
 	GtkWidget *passentry;
 	gint retval;
 	const gchar *infostring=g_strconcat("Please enter the password for ", account_name, ".", NULL);
-        /*
-	dialog = gtk_message_dialog_new_with_markup (NULL,
-					 GTK_DIALOG_MODAL|GTK_DIALOG_DESTROY_WITH_PARENT,
-					 GTK_MESSAGE_INFO,
-					 GTK_BUTTONS_CLOSE,
-						     "This dialog asks you for the password for account <b>%s</b>\n"
-						     "However, it's not working yet. So for now, use\n"
-						     "<i>gconf-editor</i>, and stay tuned!",
-                                                     account_name);
-						     */
 
 
 	passdialog = gtk_dialog_new_with_buttons("MyDialog",
