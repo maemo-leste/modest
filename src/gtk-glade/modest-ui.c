@@ -226,7 +226,7 @@ modest_ui_show_main_window (ModestUI *modest_ui)
 
 	GtkWidget  *folder_view_holder,
 		*header_view_holder,
-		*message_view_holder;
+		*mail_paned;
 
 	priv = MODEST_UI_GET_PRIVATE(modest_ui);
 
@@ -263,12 +263,12 @@ modest_ui_show_main_window (ModestUI *modest_ui)
  			  G_CALLBACK(on_folder_clicked), modest_ui);
 
 	message_view  = GTK_WIDGET(modest_tny_msg_view_new (NULL));
-	message_view_holder = glade_xml_get_widget (priv->glade_xml, "mail_view");
+	mail_paned = glade_xml_get_widget (priv->glade_xml, "mail_paned");
 	if (!message_view) {
 		g_warning ("failed to create message view");
 		return FALSE;
 	}
-	gtk_container_add (GTK_CONTAINER(message_view_holder), message_view);
+	gtk_paned_add2 (GTK_PANED(mail_paned), message_view);
 
 	g_signal_connect (header_view, "message_selected",
 			  G_CALLBACK(on_message_clicked),
@@ -418,7 +418,7 @@ static void on_message_clicked (ModestTnyFolderTreeView *folder_tree,
 				TnyMsgIface *message,
 				gpointer data)
 {
-	GtkWidget *scrollview;
+	GtkWidget *paned;
 	ModestTnyMsgView *msg_view;
 	ModestUIPrivate *priv;
 
@@ -426,10 +426,8 @@ static void on_message_clicked (ModestTnyFolderTreeView *folder_tree,
 	g_return_if_fail (data);
 
 	priv = MODEST_UI_GET_PRIVATE(data);
-	scrollview = glade_xml_get_widget (priv->glade_xml,"mail_view");
-
-	msg_view = MODEST_TNY_MSG_VIEW(
-		gtk_bin_get_child(GTK_BIN(scrollview)));
+	paned = glade_xml_get_widget (priv->glade_xml,"mail_paned");
+	msg_view = MODEST_TNY_MSG_VIEW(gtk_paned_get_child2 (GTK_PANED(paned)));
 
 	modest_tny_msg_view_set_message (msg_view,
 					 message);
