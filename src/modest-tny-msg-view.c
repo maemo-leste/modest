@@ -46,7 +46,8 @@ modest_tny_msg_view_get_type (void)
 			1,		/* n_preallocs */
 			(GInstanceInitFunc) modest_tny_msg_view_init,
 		};
-		my_type = g_type_register_static (GTK_TYPE_FRAME,
+		//my_type = g_type_register_static (GTK_TYPE_FRAME,
+		my_type = g_type_register_static (GTK_TYPE_TEXT_VIEW,
 		                                  "ModestTnyMsgView",
 		                                  &my_info, 0);
 	}
