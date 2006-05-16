@@ -225,7 +225,7 @@ get_password (TnyAccountIface *account, const gchar *prompt)
 		g_signal_emit (G_OBJECT(self), signals[PASSWORD_REQUESTED_SIGNAL], 0,
 			       key); 
 
-        return val;
+	return val;
 }
 
 
