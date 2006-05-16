@@ -54,6 +54,8 @@ static void on_message_clicked (ModestTnyFolderTreeView *folder_tree,
 				gpointer data);
 static void on_new_mail_clicked (GtkWidget *widget, ModestUI *modest_ui);
 
+static void on_reply_clicked (GtkWidget *widget, ModestUI *modest_ui);
+
 static void on_send_button_clicked (GtkWidget *widget, ModestUI *modest_ui);
 
 static void register_toolbar_callbacks (ModestUI *modest_ui);
@@ -300,6 +302,11 @@ register_toolbar_callbacks (ModestUI *modest_ui)
 	if (button)
 		g_signal_connect (button, "clicked",
 				  G_CALLBACK(on_new_mail_clicked), modest_ui);
+
+	button = glade_xml_get_widget (priv->glade_xml, "toolb_reply");
+	if (button)
+		g_signal_connect (button, "clicked",
+				  G_CALLBACK(on_reply_clicked), modest_ui);
 }
 
 
@@ -580,6 +587,14 @@ on_new_mail_clicked (GtkWidget *widget, ModestUI *modest_ui)
 {
 	g_return_if_fail (modest_ui);
 	modest_ui_show_edit_window (modest_ui, "", "", "", "", "", NULL);
+}
+
+/* WIP, testing az */
+static void
+on_reply_clicked (GtkWidget *widget, ModestUI *modest_ui)
+{
+	g_return_if_fail (modest_ui);
+	modest_ui_show_edit_window (modest_ui, "replyto", "cc", "bcc", "sub", "body-quote", NULL);
 }
 
 
