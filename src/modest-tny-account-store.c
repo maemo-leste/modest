@@ -207,7 +207,7 @@ get_password (TnyAccountIface *account, const gchar *prompt)
 	ModestTnyAccountStorePrivate *priv;
 	gchar *val;
 
-	g_message (__FUNCTION__);
+        g_message (__FUNCTION__);
 
 	g_return_val_if_fail (account, NULL);
 
@@ -221,10 +221,13 @@ get_password (TnyAccountIface *account, const gchar *prompt)
 							    MODEST_ACCOUNT_PASSWORD,
 							    NULL);
 	if (!val || strlen(val)==0)
-	{
-		g_message("Key vor Aufruf: %s", key);
-		/* g_signal_emit (G_OBJECT(self), signals[PASSWORD_REQUESTED_SIGNAL], 0, key); */
-		g_signal_emit (G_OBJECT(self), signals[PASSWORD_REQUESTED_SIGNAL], 0, key);
+        {
+                /* FIXME:
+                 * append the prompt to the emitted signal,
+                 * so the password dialog shows the prompt supplied by the caller of this function.
+                 */
+                g_signal_emit (G_OBJECT(self), signals[PASSWORD_REQUESTED_SIGNAL], 0,
+                               key);
 
 	}
 
@@ -464,7 +467,8 @@ modest_tny_account_store_get_transport_accounts (TnyAccountStoreIface *iface)
 }
 
 
-ModestAccountMgr *modest_tny_account_store_get_accout_mgr(ModestTnyAccountStore *self)
+ModestAccountMgr
+*modest_tny_account_store_get_accout_mgr(ModestTnyAccountStore *self)
 {
 	ModestTnyAccountStorePrivate *priv;
 	g_return_val_if_fail (self, NULL);

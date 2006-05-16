@@ -447,7 +447,6 @@ on_password_requested (ModestTnyAccountStore *account_store,
 	gint retval;
 	const gchar *infostring=g_strconcat("Please enter the password for ", account_name, ".", NULL);
 
-
 	passdialog = gtk_dialog_new_with_buttons("MyDialog",
 						 NULL,
 						 GTK_DIALOG_MODAL|GTK_DIALOG_DESTROY_WITH_PARENT,
@@ -478,7 +477,9 @@ on_password_requested (ModestTnyAccountStore *account_store,
 							     NULL);
 		break;
 	case GTK_RESPONSE_CANCEL:
-		g_message("Dann halt nich!\n");
+		/* FIXME:
+		 * What happens, if canceled?"
+		 */
 		break;
 	}
 
