@@ -31,7 +31,7 @@ struct _ModestTnyAccountStore {
 struct _ModestTnyAccountStoreClass {
 	//TnyAccountStoreClass parent_class;
 	GObjectClass parent_class;
-	
+
 	void (*password_requested) (ModestTnyAccountStore *self,
 				    const gchar *account_name,
 				    gpointer user_data);
@@ -57,6 +57,16 @@ GType        modest_tny_account_store_get_type    (void) G_GNUC_CONST;
  * Returns: GObject of newly created account store
  */
 GObject*    modest_tny_account_store_new         (ModestAccountMgr *modest_acc_mgr);
+
+/**
+ * modest_tny_account_store_get_accout_mgr:
+ * @self: a TnyAccountStore instance
+ *
+ * retrieve the account manager associated with this account store.
+ *
+ * Returns: the account manager for self.
+ */
+ModestAccountMgr *modest_tny_account_store_get_accout_mgr(TnyAccountStore *self);
 
 /**
  * tny_account_store_get_session:
