@@ -46,8 +46,7 @@ modest_tny_msg_view_get_type (void)
 			1,		/* n_preallocs */
 			(GInstanceInitFunc) modest_tny_msg_view_init,
 		};
-		//my_type = g_type_register_static (GTK_TYPE_FRAME,
-		my_type = g_type_register_static (GTK_TYPE_TEXT_VIEW,
+		my_type = g_type_register_static (GTK_TYPE_SCROLLED_WINDOW,
 		                                  "ModestTnyMsgView",
 		                                  &my_info, 0);
 	}
@@ -99,6 +98,8 @@ modest_tny_msg_view_new (TnyMsgIface *msg)
 	obj  = G_OBJECT(g_object_new(MODEST_TYPE_TNY_MSG_VIEW, NULL));
 	self = MODEST_TNY_MSG_VIEW(obj);
 	priv = MODEST_TNY_MSG_VIEW_GET_PRIVATE(self);
+
+	gtk_scrolled_window_set_policy(self, GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
 	
 	priv->text_view = gtk_text_view_new ();
 	gtk_text_view_set_editable       (GTK_TEXT_VIEW(priv->text_view), FALSE);

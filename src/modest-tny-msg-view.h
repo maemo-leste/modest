@@ -24,14 +24,12 @@ typedef struct _ModestTnyMsgView      ModestTnyMsgView;
 typedef struct _ModestTnyMsgViewClass ModestTnyMsgViewClass;
 
 struct _ModestTnyMsgView {
-	//GtkFrame parent;
-	GtkTextView parent;
+	GtkScrolledWindow parent;
 	/* insert public members, if any */
 };
 
 struct _ModestTnyMsgViewClass {
-	//GtkFrameClass parent_class;
-	GtkTextViewClass parent_class;
+	GtkScrolledWindowClass parent_class;
 	/* insert signal callback declarations, eg. */
 	/* void (* my_event) (ModestTnyMsgView* obj); */
 };
