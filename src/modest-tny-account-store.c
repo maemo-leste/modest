@@ -9,6 +9,7 @@
 #include <tny-store-account-iface.h>
 #include <tny-transport-account-iface.h>
 #include <tny-device-iface.h>
+#include <tny-device.h>
 #include <tny-account-store.h>
 
 #include <tny-store-account.h>
@@ -46,6 +47,7 @@ struct _ModestTnyAccountStorePrivate {
 	gchar *cache_dir;
 
 	TnySessionCamel *tny_session_camel;
+	TnyDeviceIface  *device;
 
 	ModestAccountMgr *modest_acc_mgr;
 };
@@ -118,6 +120,7 @@ modest_tny_account_store_init (ModestTnyAccountStore *obj)
 		MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(obj);
 
 	priv->modest_acc_mgr         = NULL;
+	priv->device                 = NULL;
 
 	priv->store_accounts         = NULL;
 	priv->transport_accounts     = NULL;
@@ -162,6 +165,11 @@ modest_tny_account_store_finalize (GObject *obj)
 		g_object_unref (G_OBJECT(priv->tny_session_camel));
 		priv->tny_session_camel = NULL;
 	}
+	
+	if (priv->device) {
+		g_object_unref (G_OBJECT(priv->device));
+		priv->device = NULL;
+	}
 
 	priv->store_accounts     = free_gobject_list (priv->store_accounts);
 	priv->transport_accounts = free_gobject_list (priv->store_accounts);
@@ -186,10 +194,16 @@ modest_tny_account_store_new (ModestAccountMgr *modest_acc_mgr)
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(obj);
 	g_object_ref(G_OBJECT(priv->modest_acc_mgr = modest_acc_mgr));
 
+	priv->device = (TnyDeviceIface*)tny_device_new();
+	if (!priv->device) {
+		g_warning ("Cannot create Device instance");
+		g_object_unref (obj);
+		return NULL;
+	}
 	priv->tny_session_camel = tny_session_camel_new
 		(TNY_ACCOUNT_STORE_IFACE(obj));
 	if (!priv->tny_session_camel) {
-		g_warning ("cannot create TnySessionCamel instance");
+		g_warning ("Cannot create TnySessionCamel instance");
 		g_object_unref (obj);
 		return NULL;
 	}
@@ -527,7 +541,9 @@ modest_tny_account_store_get_cache_dir (TnyAccountStoreIface *self)
 static const TnyDeviceIface*
 modest_tny_account_store_get_device (TnyAccountStoreIface *self)
 {
-	return NULL; /* FIXME */
+	ModestTnyAccountStorePrivate *priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE (self);
+
+	return priv->device;
 }
 
 
