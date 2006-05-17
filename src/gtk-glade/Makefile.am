@@ -16,15 +16,11 @@ INCLUDES=\
 noinst_LTLIBRARIES=\
 	libmodest-ui.la
 
-GLADE_SOURCE=\
-	modest.glade.h
-
 GLADE_FILES=\
 	modest.glade pixmaps/*.png
 
 libmodest_ui_la_SOURCES=\
-	modest-ui.c\
-	$(GLADE_SOURCE)
+	modest-ui.c
 
 LDADD = \
 	$(MODEST_GSTUFF_LIBS) \
@@ -33,9 +29,6 @@ LDADD = \
 	$(MODEST_TINYMAIL_LIBS)
 
 EXTRA_DIST=pixmaps/*.png modest.glade modest.gladep
-
-$(GLADE_SOURCE): $(GLADE_FILES)
-	$(top_srcdir)/scripts/txt2doth $< > $@ 
 
 gladedir = $(prefix)/share/modest/glade
 glade_DATA = $(GLADE_FILES)
