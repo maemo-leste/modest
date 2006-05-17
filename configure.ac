@@ -1,5 +1,5 @@
 dnl configure.ac for modest 
-dnl Time-stamp: <2006-05-01 19:11:26 (djcb)>
+dnl Time-stamp: <2006-05-17 10:44:04 (djcb)>
 dnl written by Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>
 AC_INIT([modest],[0.0.9],[http://maemo.org])
 AC_CONFIG_SRCDIR(src/modest-main.c)
@@ -46,6 +46,11 @@ dnl # Gtk+ => mandatory
 PKG_CHECK_MODULES(MODEST_GTK,gtk+-2.0 >= 2.6)
 AC_SUBST(MODEST_GTK_CFLAGS)
 AC_SUBST(MODEST_GTK_LIBS)
+
+dnl # GtkHTML => mandatory (for now)
+PKG_CHECK_MODULES(MODEST_GTKHTML,libgtkhtml-3.8)
+AC_SUBST(MODEST_GTKHTML_CFLAGS)
+AC_SUBST(MODEST_GTKHTML_LIBS)
 
 dnl # Glade
 PKG_CHECK_MODULES(MODEST_GLADE,libglade-2.0,glade_support=yes,echo "no";glade_support=no)
