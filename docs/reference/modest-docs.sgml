@@ -8,9 +8,285 @@
 
   <preface>
     <title>Introduction</title>
-    <para>modest is a lightweight e-mail program, built on top of
-    tinymail and libcamel</para>
+
+    <para><application>modest</application> is a mail user agent
+      (<abbrev>MUA</abbrev>) targetting small devices, in particular Nokia's
+      <productname>Nokia 770 Internet Tablet</productname>. This document
+      describes the design and implementation of this software.
+    </para>
+    
+    <para><application>modest</application> lives at the top of a extensive
+      stack of software. It is built on top
+      of <application>tinymail</application>, and uses its libcamel
+      backend. It strives to the be a simple yet powerful program, geared
+      towards small devices, for example (but not limited
+      to) <productname>Nokia's 770 internet tablet</productname>. An important
+      goal is to minimize memory usage while still being able to handle
+      significant amounts of email quickly; much of that is achieved simply by
+      using <application>tinymail</application>, which uses a number of clever
+      tricks for that, such as the proxy design pattern for listing email
+      headers, and not needing memory for headers which are not currently
+      visible.
+    </para>
+    
+    <para>
+      <application>modest</application>, in turn, also tries to be efficient,
+      fast and scalable. That means that the <abbrev>MUA</abbrev> should
+      support multiple user-interfaces, perhaps making it even possible to
+      switch between them during runtime.
+    </para>
+    
+    <para>To summarize the goals for <application>modest</application>:
+    <itemizedlist>
+      <listitem>target devices with limited amounts of memory ('limited' in 2006
+	terms means less than 64Mb, and of which only part can be used for
+	e-mail);</listitem>
+      <listitem>target Linux/Unix-like environments with GLib/GTK+-based
+      support;</listitem>
+      <listitem>support multiple user-interface (UIs) with as much code
+	sharing as possible between the different UIs.</listitem>
+    </itemizedlist></para>
+    
+    <para>Like <application>tinymail</application>
+    and <application>libcamel</application>, <application>modest</application>
+    is programmed in C, using the <package>GObject</package>-system for
+    object-oriented (OO) features. For now, it specifically targets \gtk based
+    UIs (and derivatives like 'Hildon').</para>
+
   </preface>
+
+  <part>
+    <title>Architecture</title>
+    <partintro>
+      <para><application>modest</application> tries to be quite flexible in its
+	design. However, it's always important not to make things too
+	generic. Both for reasons of time limitations and keeping the software
+	understandable and 'modest', it's important to limit the scope.
+      </para>
+      
+      <para>
+	For <application>modest</application>, the following:
+	<itemizedlist>
+	  <listitem><application>modest</application> is a e-mail program
+	  using the <package>tinymail</package> and <package>camel</package>
+	  libraries;</listitem>
+	  <listitem><application>modest</application> targets gtk and
+	    gconf-based user-interfaces, including the Hildon
+	    environment;</listitem>
+	  <listitem><application>modest</application> main use-case is in
+	    small, mobile device such as the <productname>Nokia 770 Internet
+	    Tablet</productname>;</listitem>
+	  <listitem>However, effort is made also to
+	    make <application>modest</application> usable as a general-purpose
+	    e-mail client on normal desktop computer.</listitem>
+	</itemizedlist>
+      </para>
+    </partintro>
+  </part>
+      
+  <part>
+    <title>Design</title>
+    <partintro>
+      <para>In this part, we'll discuss the design of various parts of
+	<application>modest</application>. We'll not go into the details of
+	various APIs in this chapter.  Please consul the documentation generated
+	from the source code (<systemitem>gtk-doc</systemitem>) for that.</para>
+    </partintro>
+    
+    <chapter>
+      <title>Configuration</title>
+      <para>Configuration is the part of <application>modest</application>
+	that deals with storing all settings. While the design allows for
+	alternative implementations, currently
+	only <systemitem>GConf</systemitem> is supported as a backend.
+      </para>
+      
+      <para>
+	All dealing with configuration is done with
+	the <classname>ModestConf</classname>-class. It is declared
+	in <filename> modest-conf.h</filename>, and
+	the <systemitem>GConf</systemitem>-based implementation in 
+	<filename>modest-conf-gconf.c</filename>. As said, there could be
+	different implementations --
+	nothing <systemitem>GConf</systemitem>-specific is visible in the
+	<classname>ModestConf</classname>-<abbrev>API</abbrev>.
+      </para>
+    </chapter>
+    
+    <chapter>
+      <title>Account Management</title>
+      <para>
+	Account Management is the part of <application>modest</application>
+	that deals with the setting related to sending and receiving of
+	e-mail. We will follow the libcamel-convention of using the
+	term <emphasis> store</emphasis> for an e-mail storage/retrieval
+	server, and a <emphasis>transport</emphasis> for a server that
+	transports mail to its destination.
+      </para>
+      
+      <para>
+	In practice, the following types are available:
+	<itemizedlist>
+	  <listitem><emphasis>stores</emphasis>: <abbrev>POP</abbrev>
+	    and <abbrev>IMAP</abbrev>; </listitem>
+	  <listitem> <emphasis>transports</emphasis>: <systemitem>sendmail</systemitem>
+	    and <abbrev>SMTP</abbrev>.</listitem>
+	</itemizedlist>
+      </para>
+      
+      <sect1>
+	<title>Definitions</title>
+	<itemizedlist>
+	  <listitem>An <emphasis>account</emphasis> is a named entity
+	    consisting of a <emphasis>store</emphasis> and
+	    a <emphasis>transport</emphasis>. Note: For our mobile use-cases,
+	      the <emphasis>transport</emphasis> cannot be a static entity, but
+	      may depend on the network connection. That is however not part of
+	      Account Management, so not discussed here</listitem>
+	  <listitem>A <emphasis>server account</emphasis> is account
+	    describing the connection with a specific server. Server accounts
+	    come in two type:
+	    <itemizedlist>
+	      <listitem>A <emphasis>transport</emphasis> describes the connection information
+		(servername, username, password etc.) for a transport
+		server;</listitem>
+	      <listitem>A <emphasis>store</emphasis> describes the connection information for
+		a store server;</listitem>
+	    </itemizedlist>
+	  </listitem>
+	</itemizedlist>
+      </sect1>
+	      
+      <sect1>
+	<title>Code</title>
+	<para>The functions to deal with account and server accounts are
+	  located in <classname>ModestAccountMgr</classname>, ie. in 
+	  <filename>modest-account-mgr.[ch]</filename>. There function to add
+	  specific values for both, to list the available ones, etc. Please
+	  refer to the source code documentation for details.
+	</para>
+      </sect1>
+      
+      <sect1>
+	<title>Location in configuration database</title>
+	<para>
+	  <emphasis>Accounts</emphasis> can be found
+	  in <systemitem>/apps/modest/accounts</systemitem>,
+	  while <emphasis>server accounts</emphasis> can be found
+	  in <systemitem>/app/modest/server_accounts</systemitem>.
+	</para>
+	
+	<para>
+	  The following image show an
+	  account <systemitem>accountstest</systemitem> with server accounts
+	  <systemitem>mystore</systemitem>
+	  and <systemitem>mytransport</systemitem>.
+	  <imagedata fileref="modest-account-mgr.png"/>
+	</para>
+
+	<para>
+	  For each of the stores, there are number of parameters specified:
+	  <itemizedlist>
+	    <listitem><emphasis>hostname</emphasis> - the place where the server resides;</listitem>
+	    <listitem><emphasis>username</emphasis> - the username;</listitem>
+	    <listitem><emphasis>password</emphasis> - the password;</listitem>
+	    <listitem><emphasis>proto</emphasis> - the protocal for communication with this server - for
+	      now these are the following valid values (literal strings):
+	      <itemizedlist>
+		<listitem><emphasis>sendmail</emphasis>;</listitem>
+		<listitem><emphasis>smtp</emphasis>;</listitem>
+		<listitem><emphasis>pop</emphasis></listitem>
+		<listitem><emphasis>imap</emphasis>.</listitem>
+	      </itemizedlist>
+	    </listitem>
+	  </itemizedlist>
+	</para>
+	
+	<para>In the <filename>modest-proto.[ch]</filename> there are
+	  various functions to check whether something is a valid protocol, and whether
+	  it is a transport of a store.
+	</para>
+	
+	<para>Note that server accounts and accounts are relatively independent. While
+	  accounts refer to two server accounts, these server accounts can be
+	  used by other accounts as well.
+	</para>
+	
+	<para>The reason two keep accounts and server accounts separately, is a bit of
+	  flexibility. In mobile use-cases, quite often it's desirable to use a
+	  network-specific smtp-server. The chosen structure makes it easy to iterate
+	  over all smtp-servers and find the right one.
+	</para>
+      </sect1>
+    </chapter>
+
+    <chapter>
+      <title>Finding the right transport</title>
+      <para>
+	One of the interesting topics in designing a mobile e-mail client is
+	to deal with transports (in
+	particular, <acronym>SMTP</acronym>). The reason for that is that
+	the majority of <acronym>SMTP</acronym>-servers only allow e-mail
+	from the same network. That means that for example <systemitem>
+	smtp.some-isp.com</systemitem> will only accept mail from
+	(<command>MAIL FROM:</command>) <systemitem>
+	  user@some-isp.com</systemitem>, and refuse mail
+	from <systemitem>user@some-other-isp.com</systemitem>, unless the
+	recipient (<command>RCPT TO:</command>) is on the same network.
+      </para>
+    </chapter>
+  </part>
+  
+  <chapter>
+    <title>Coding guidelines</title>
+    <para>
+      When hacking on \modest, please honour these time-tested coding guidelines.
+      First, please follow the <emphasis>Linux CodingStyle guidelines</emphasis>
+      (<filename>/usr/src/linux/Documentation/CodingStyle</filename>).
+    </para>
+    
+    <para>
+      Here are only some additional notes.
+    </para>
+
+    <para>
+      Your editor may help you with this, for example for <application>emacs</application>:
+      <programlisting>
+      (c-set-style "K&amp;R")
+      (setq tab-width 8)
+      (setq indent-tabs-mode t)
+      (setq c-basic-offset 8)
+      </programlisting>
+    </para>
+    
+    <para>
+      Or the equivalent in your favourite editor.
+    </para>
+    
+    <para>
+      Lines should not exceed 100 characters.
+    </para>
+      
+    <para>Global functions (the ones in <filename>.h</filename>-files) should
+      be commented using
+      <systemitem>gtk-doc</systemitem>.
+    </para>
+    
+    <para>
+	Furthermore, please follow 'conventional wisdom' for programming with 
+	GLib/GTK+/GObject. Some things to remember:
+	<itemizedlist>
+	  <listitem> <function>g_new</function>, <function>g_malloc</function> and
+	    friends <emphasis>never</emphasis> return <function>NULL</function>. They terminate
+	    the application if it happens (normally).  No need to check
+	    for <function>NULL</function> returns;</listitem>
+	  <listitem> <function>g_return_if_fail</function> and friends may be
+	    'turned off', ie. they are to be used for error checking,
+	    but <emphasis>not</emphasis> for your programming logic
+	  </listitem>
+	</itemizedlist>
+    </para>
+  </chapter>
   
   <chapter>
     <title>Object Index</title>
