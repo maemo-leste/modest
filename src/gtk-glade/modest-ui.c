@@ -43,6 +43,8 @@ static GtkWidget* modest_main_window_folder_tree (ModestAccountMgr *modest_acc_m
 static GtkWidget* modest_main_window_header_tree (TnyMsgFolderIface *folder);
 
 
+static void on_account_settings1_activate (GtkMenuItem *,
+					   gpointer);
 static void on_password_requested (ModestTnyAccountStore *account_store,
 				   const gchar *account_name, gpointer user_data);
 
@@ -202,6 +204,10 @@ modest_ui_new (ModestConf *modest_conf)
 		return NULL;
 	}
 
+	/* FIXME: could be used, but doesn't work atm.
+	 * glade_xml_signal_autoconnect(priv->glade_xml);
+	 */
+
 	priv->modest_acc_mgr = modest_acc_mgr;
 	g_object_ref (priv->modest_conf = modest_conf);
 
@@ -223,6 +229,7 @@ modest_ui_show_main_window (ModestUI *modest_ui)
 	ModestUIPrivate *priv;
 	GtkWidget     *folder_view, *header_view;
 	GtkWidget     *message_view;
+	GtkWidget *account_settings_item;
 
 	GtkWidget  *folder_view_holder,
 		*header_view_holder,
@@ -272,7 +279,18 @@ modest_ui_show_main_window (ModestUI *modest_ui)
 
 	g_signal_connect (header_view, "message_selected",
 			  G_CALLBACK(on_message_clicked),
- 			  modest_ui);
+			  modest_ui);
+
+	account_settings_item = glade_xml_get_widget (priv->glade_xml, "account_settings1");
+	if (!account_settings_item)
+	{
+		g_warning ("The account settings item isn't available!\n");
+		return FALSE;
+	}
+
+	g_signal_connect (account_settings_item, "activate",
+			  G_CALLBACK(on_account_settings1_activate),
+			  modest_ui);
 
 	register_toolbar_callbacks (modest_ui);
 
@@ -384,6 +402,19 @@ modest_ui_last_window_closed (GObject *obj, gpointer data)
 }
 
 
+static void
+on_account_settings1_activate (GtkMenuItem *menuitem,
+			       gpointer user_data)
+{
+	GtkWidget *advanced_account_setup;
+	ModestUIPrivate *priv;
+
+	priv = MODEST_UI_GET_PRIVATE(MODEST_UI(user_data));
+
+	advanced_account_setup = glade_xml_get_widget(priv->glade_xml, "mailbox_setup_advanced");
+
+	gtk_widget_show_all(advanced_account_setup);
+}
 
 
 static void
