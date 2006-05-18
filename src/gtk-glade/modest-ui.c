@@ -22,8 +22,6 @@
 #include "../modest-tny-transport-actions.h"
 
 
-//#include "modest.glade.h"
-
 #define MODEST_GLADE          PREFIX "/share/modest/glade/modest.glade"
 #define MODEST_GLADE_MAIN_WIN "main"
 #define MODEST_GLADE_EDIT_WIN "new_mail"
@@ -528,8 +526,6 @@ on_password_requested (ModestTnyAccountStore *account_store,
 static GtkWidget*
 modest_main_window_header_tree (TnyMsgFolderIface *folder)
 {
-	GtkTreeViewColumn *column;
-	GtkCellRenderer *renderer = gtk_cell_renderer_text_new ();
 	GtkWidget *header_tree;
 
 	header_tree = GTK_WIDGET(modest_tny_header_tree_view_new(folder));
@@ -538,36 +534,8 @@ modest_main_window_header_tree (TnyMsgFolderIface *folder)
 		return NULL;
 	}
 
-	column =  gtk_tree_view_column_new_with_attributes(_("Date"), renderer,
-							   "text",
-							   TNY_MSG_HEADER_LIST_MODEL_DATE_RECEIVED_COLUMN,
- 							   NULL);
-	gtk_tree_view_column_set_resizable (column, TRUE);
-	gtk_tree_view_append_column (GTK_TREE_VIEW(header_tree), column);
-
-
-
-	column =  gtk_tree_view_column_new_with_attributes(_("From"), renderer,
-							   "text",
-							   TNY_MSG_HEADER_LIST_MODEL_FROM_COLUMN,
-							   NULL);
-	gtk_tree_view_column_set_resizable (column, TRUE);
-	gtk_tree_view_append_column (GTK_TREE_VIEW(header_tree), column);
-
-
-	column =  gtk_tree_view_column_new_with_attributes(_("Subject"), renderer,
-							   "text",
-							   TNY_MSG_HEADER_LIST_MODEL_SUBJECT_COLUMN,
-							   NULL);
-	gtk_tree_view_column_set_resizable (column, TRUE);
-	gtk_tree_view_append_column (GTK_TREE_VIEW(header_tree), column);
-
-	gtk_tree_view_set_headers_visible   (GTK_TREE_VIEW(header_tree), TRUE);
-	gtk_tree_view_set_headers_clickable (GTK_TREE_VIEW(header_tree), TRUE);
-
 	return GTK_WIDGET(header_tree);
 }
-
 
 
 
@@ -579,7 +547,7 @@ modest_main_window_folder_tree (ModestAccountMgr *modest_acc_mgr,
 	GtkCellRenderer *renderer = gtk_cell_renderer_text_new ();
 	GtkWidget *folder_tree;
 
-	folder_tree = modest_tny_folder_tree_view_new (account_store);
+	folder_tree = GTK_WIDGET(modest_tny_folder_tree_view_new (account_store));
 	if (!folder_tree) {
 		g_warning ("could not create folder list");
 		return NULL;

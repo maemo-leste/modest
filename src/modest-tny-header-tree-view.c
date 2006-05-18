@@ -1,7 +1,25 @@
-/* modest-tny-header-tree-view.c */
-
-/* insert (c)/licensing information) */
-
+/* modest-tny-header-tree-view.c 
+ *
+ * This file is part of modest.
+ *
+ * Copyright (C) 2006 Nokia Corporation
+ * 
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ *
+ */
+#include <glib/gi18n.h>
 #include "modest-tny-header-tree-view.h"
 
 /* 'private'/'protected' functions */
@@ -79,11 +97,42 @@ modest_tny_header_tree_view_class_init (ModestTnyHeaderTreeViewClass *klass)
 static void
 modest_tny_header_tree_view_init (ModestTnyHeaderTreeView *obj)
 {
+	GtkTreeViewColumn *column;
+	GtkCellRenderer *renderer = gtk_cell_renderer_text_new ();
  	ModestTnyHeaderTreeViewPrivate *priv;
+	
 	priv = MODEST_TNY_HEADER_TREE_VIEW_GET_PRIVATE(obj); 
 
 	priv->tny_msg_folder = NULL;
 	priv->header_tree_model = NULL;
+	
+	column =  gtk_tree_view_column_new_with_attributes(_("Date"), renderer,
+							   "text",
+							   TNY_MSG_HEADER_LIST_MODEL_DATE_RECEIVED_COLUMN,
+ 							   NULL);
+	gtk_tree_view_column_set_resizable (column, TRUE);
+	gtk_tree_view_append_column (GTK_TREE_VIEW(obj), column);
+
+
+
+	column =  gtk_tree_view_column_new_with_attributes(_("From"), renderer,
+							   "text",
+							   TNY_MSG_HEADER_LIST_MODEL_FROM_COLUMN,
+							   NULL);
+	gtk_tree_view_column_set_resizable (column, TRUE);
+	gtk_tree_view_append_column (GTK_TREE_VIEW(obj), column);
+
+
+	column =  gtk_tree_view_column_new_with_attributes(_("Subject"), renderer,
+							   "text",
+							   TNY_MSG_HEADER_LIST_MODEL_SUBJECT_COLUMN,
+							   NULL);
+	gtk_tree_view_column_set_resizable (column, TRUE);
+	gtk_tree_view_append_column (GTK_TREE_VIEW(obj), column);
+
+	gtk_tree_view_set_headers_visible   (GTK_TREE_VIEW(obj), TRUE);
+	gtk_tree_view_set_headers_clickable (GTK_TREE_VIEW(obj), TRUE);
+	
 }
 
 static void
