@@ -408,12 +408,17 @@ on_account_settings1_activate (GtkMenuItem *menuitem,
 {
 	GtkWidget *advanced_account_setup;
 	ModestUIPrivate *priv;
+	gint retval;
 
 	priv = MODEST_UI_GET_PRIVATE(MODEST_UI(user_data));
 
 	advanced_account_setup = glade_xml_get_widget(priv->glade_xml, "mailbox_setup_advanced");
 
-	gtk_widget_show_all(advanced_account_setup);
+	gtk_widget_show_all(GTK_WIDGET(advanced_account_setup));
+
+	retval=gtk_dialog_run(GTK_DIALOG(advanced_account_setup));
+
+        gtk_widget_hide(GTK_WIDGET(advanced_account_setup));
 }
 
 
