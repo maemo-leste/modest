@@ -7,6 +7,9 @@
 #include <glib/gi18n.h>
 #include <string.h>
 
+/* TODO: put in auto* */
+#include <tny-text-buffer-stream.h>
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif /*HAVE_CONFIG_H*/
@@ -268,11 +271,11 @@ modest_ui_show_main_window (ModestUI *modest_ui)
  			  G_CALLBACK(on_folder_clicked), modest_ui);
 
 	message_view  = GTK_WIDGET(modest_tny_msg_view_new (NULL));
-	mail_paned = glade_xml_get_widget (priv->glade_xml, "mail_paned");
 	if (!message_view) {
 		g_warning ("failed to create message view");
 		return FALSE;
 	}
+	mail_paned = glade_xml_get_widget (priv->glade_xml, "mail_paned");
 	gtk_paned_add2 (GTK_PANED(mail_paned), message_view);
 
 	g_signal_connect (header_view, "message_selected",
@@ -342,10 +345,12 @@ modest_ui_show_edit_window (ModestUI *modest_ui, const gchar* to,
 			    const gchar* subject, const gchar *body,
 			    const GSList* att)
 {
-	GtkWidget       *win;
+	GtkWidget       *win, *to_entry, *subject_entry, *body_view;
+
 	ModestUIPrivate *priv;
 	GtkWidget       *btn;
-
+	GtkTextBuffer	*buf;
+	
 	priv = MODEST_UI_GET_PRIVATE(modest_ui);
 	int height = modest_conf_get_int (priv->modest_conf,
 					  MODEST_CONF_EDIT_WINDOW_HEIGHT,NULL);
@@ -357,10 +362,19 @@ modest_ui_show_edit_window (ModestUI *modest_ui, const gchar* to,
 		g_warning ("could not create new mail  window");
 		return FALSE;
 	}
-
+	
 	modest_window_mgr_register (priv->modest_window_mgr,
 				    G_OBJECT(win), MODEST_EDIT_WINDOW, 0);
+	to_entry      = glade_xml_get_widget (priv->glade_xml, "to_entry");
+	subject_entry = glade_xml_get_widget (priv->glade_xml, "subject_entry");
+	body_view     = glade_xml_get_widget (priv->glade_xml, "body_view");
 
+	gtk_entry_set_text(GTK_ENTRY(subject_entry), subject);
+	gtk_entry_set_text(GTK_ENTRY(to_entry), to);
+	
+	buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(body_view));
+	gtk_text_buffer_set_text(buf, body, -1);
+		
 	g_signal_connect (win, "destroy", G_CALLBACK(hide_edit_window),
 			  NULL);
 
@@ -582,13 +596,248 @@ on_new_mail_clicked (GtkWidget *widget, ModestUI *modest_ui)
 	modest_ui_show_edit_window (modest_ui, "", "", "", "", "", NULL);
 }
 
+static gchar*
+modest_ui_quote_msg(const TnyMsgIface *src)
+{
+	GList *parts;
+	TnyMsgMimePartIface *part;
+	TnyStreamIface* stream;
+	TnyTextBufferStream *dest;
+	TnyMsgMimePartIface *body = NULL;
+	GtkTextBuffer *buf;
+	GtkTextIter begin, end, iter1, iter2, iter3;
+	gchar *txt, *line;
+	gint tmp;
+	gint indent;
+	gboolean break_line;
+		
+	buf = gtk_text_buffer_new(NULL);
+	dest = tny_text_buffer_stream_new(buf);
+	parts  = (GList*) tny_msg_iface_get_parts (src);
+	
+	while (parts) {
+		/* TODO: maybe we'd like to quote more than one part? */
+		TnyMsgMimePartIface *part =
+			TNY_MSG_MIME_PART_IFACE(parts->data);
+		if (tny_msg_mime_part_iface_content_type_is (part, "text/plain")) {
+			body = part;
+			break;
+		}
+		parts = parts->next;
+	}
+	if (!body) {
+		return "";
+	}
+	buf    = gtk_text_buffer_new (NULL);
+	stream = TNY_STREAM_IFACE(tny_text_buffer_stream_new (buf));
+		
+	tny_stream_iface_reset (stream);
+	tny_msg_mime_part_iface_decode_to_stream (body, stream);
+	tny_stream_iface_reset (stream);		
+	
+	gtk_text_buffer_get_iter_at_line(buf, &iter1, 0);
+	while (TRUE) {
+		/* at each beginning of this while, iter1 must be at the beginning of
+		   the (next) line to quote */
+		
+		/* debug */
+		iter2 = iter1;
+		gtk_text_iter_forward_to_line_end(&iter2);
+		txt = gtk_text_buffer_get_text (buf, &iter1, &iter2, FALSE);
+		printf("%s\n", txt);
+		/* check whether line is already quoted */
+		iter2 = iter1;
+		
+		gtk_text_iter_forward_word_end(&iter2);
+		txt = gtk_text_buffer_get_text (buf, &iter1, &iter2, FALSE);
+		
+		/* insert quotation mark */
+		tmp = gtk_text_iter_get_offset(&iter1);
+		gtk_text_buffer_insert(buf, &iter1, "> ", -1);
+		
+		/* still at the beginning of the line */
+		gtk_text_buffer_get_iter_at_offset(buf, &iter1, tmp);
+		iter2 = iter1;
+		
+		if (strcmp(txt, "> ") != 0) {
+			
+			/* line was not already quoted */
+			
+			/* now check whether the line must be broken: */
+			if (gtk_text_iter_get_chars_in_line(&iter2) >= 48) {
+			
+				gtk_text_iter_set_line_offset(&iter2, 48);
+				
+				/* move iter1 behind quote mark at the beginnig of the line */
+				gtk_text_iter_forward_word_end(&iter1);
+
+				/* save iter2 position */
+				iter3 = iter2;
+				
+				/* move iter2 back one word (from brakepoint in line) */
+				gtk_text_iter_backward_word_start(&iter2);
+				
+				/* check for one-word line (up to iter2), don't break then */
+				if (!gtk_text_iter_compare(&iter1, &iter2) < 0) {
+					gtk_text_iter_forward_word_end(&iter2); /*BUG*/
+				}
+				
+				tmp = gtk_text_iter_get_offset(&iter2);
+				gtk_text_buffer_insert(buf, &iter2, "\n#", -1);
+				
+				gtk_text_buffer_get_iter_at_offset(buf, &iter1, tmp);
+				
+				gtk_text_iter_forward_line(&iter1);
+				
+				/* kill 1 space */
+				iter2 = iter1;
+				gtk_text_iter_forward_char(&iter2);
+				txt = gtk_text_buffer_get_text(buf, &iter1, &iter2, FALSE);
+				if (strcmp(txt, " ") == 0) {
+					tmp = gtk_text_iter_get_offset(&iter1);
+					gtk_text_buffer_delete(buf, &iter1, &iter2);
+					gtk_text_buffer_get_iter_at_offset(buf, &iter1, tmp);
+				}
+				/* check whether the next line is mergable: */
+				iter3 = iter1;
+				if (!gtk_text_iter_forward_line(&iter3)) {
+					break;
+				}
+				
+				/* iter3 ist at the beginning of the next line.*/
+				/* check for empty line */
+				if (gtk_text_iter_get_chars_in_line(&iter3) < 2) {
+					continue;
+				}
+				
+				/* check for quote */
+				iter2 = iter3;
+				gtk_text_iter_forward_word_end(&iter2);
+				txt = gtk_text_buffer_get_text(buf, &iter3, &iter2, FALSE);
+				if (strcmp(txt, "> ") == 0) {
+					continue;
+				}
+				
+				/* now merge in the next line */					
+				if (!gtk_text_iter_forward_to_line_end(&iter1)) {
+					break;
+				}
+				iter2 = iter1;
+				gtk_text_iter_forward_char(&iter2);
+			
+				tmp = gtk_text_iter_get_offset(&iter1);
+				
+				/* do the merge */
+				gtk_text_buffer_delete (buf, &iter1, &iter2);
+				gtk_text_buffer_get_iter_at_offset(buf, &iter1, tmp);
+				
+				gtk_text_iter_set_line_offset(&iter1, 0);
+				
+			} else {
+				/* line must not be broken, we're done. */
+				if (!gtk_text_iter_forward_line(&iter1)) {
+					break;
+				}
+			}
+		} else {
+			/* line was already quoted */
+			if (!gtk_text_iter_forward_line(&iter1)) {
+				break;
+			}
+		}
+	}
+	
+	gtk_text_buffer_get_bounds (buf, &begin, &end);
+	txt = gtk_text_buffer_get_text (buf, &begin, &end, FALSE);
+ 	
+	return txt;
+}
+
+static void
+modest_ui_reply_to_msg (ModestUI *modest_ui, TnyMsgHeaderIface *header,
+						ModestTnyMsgView *msg_view) {
+	const gchar *subject, *from, *quoted;
+	const TnyMsgIface *msg;
+	const TnyMsgFolderIface *folder;
+	gchar *re_sub;
+
+	quoted = "";	
+	if (header) {
+		folder = tny_msg_header_iface_get_folder (TNY_MSG_HEADER_IFACE(header));
+		if (!folder) {
+			g_warning ("cannot find folder");
+			return;
+		}
+		
+		msg = tny_msg_folder_iface_get_message (TNY_MSG_FOLDER_IFACE(folder), header);
+		if (!msg) {
+			g_warning ("cannot find msg");
+			return;
+		}
+		subject = tny_msg_header_iface_get_subject(header);
+		/* TODO: checks, free */
+		re_sub = malloc(strlen(subject) + 5);
+		strcpy (re_sub, "Re: ");
+		strcat (re_sub, subject);
+		/* FIXME: honor replyto, cc */
+		from = tny_msg_header_iface_get_from(header);
+		quoted = modest_ui_quote_msg(msg);
+			
+	} else {
+		printf("no header\n");
+		return;
+	}
+	
+	modest_ui_show_edit_window (modest_ui, from, "FIXME:cc", /* bcc */ "", re_sub, quoted, NULL);
+}
+
+
 /* WIP, testing az */
 static void
 on_reply_clicked (GtkWidget *widget, ModestUI *modest_ui)
 {
+	GtkTreeSelection *sel;
+	GtkWidget *paned;
+	GtkTreeModel *model;
+	GtkTreeIter iter;
+	GtkScrolledWindow *scroll;
+
+	TnyMsgHeaderIface *header;
+
+	ModestTnyHeaderTreeView *header_view;
+	ModestTnyMsgView *msg_view;
+	ModestUIPrivate *priv;
+	
 	g_return_if_fail (modest_ui);
-	modest_ui_show_edit_window (modest_ui, "replyto", "cc", "bcc", "sub", "body-quote", NULL);
+
+	priv = MODEST_UI_GET_PRIVATE(modest_ui);
+	
+	paned = glade_xml_get_widget (priv->glade_xml,"mail_paned");
+	g_return_if_fail (paned);
+
+	scroll = GTK_SCROLLED_WINDOW(gtk_paned_get_child1 (GTK_PANED(paned)));
+	g_return_if_fail (scroll);
+
+	msg_view = MODEST_TNY_MSG_VIEW(gtk_paned_get_child2 (GTK_PANED(paned)));
+	g_return_if_fail (msg_view);
+
+	header_view = MODEST_TNY_HEADER_TREE_VIEW(gtk_bin_get_child (GTK_BIN(scroll)));
+	g_return_if_fail (header_view);
+	
+	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW(header_view));
+	g_return_if_fail (sel);
+	
+	if (!gtk_tree_selection_get_selected (sel, &model, &iter))
+		/* no message was selected. TODO: disable reply button in this case */
+		return;
+	
+	gtk_tree_model_get (model, &iter,
+			    TNY_MSG_HEADER_LIST_MODEL_INSTANCE_COLUMN,
+			    &header, -1);
+	
+	modest_ui_reply_to_msg (modest_ui, header, msg_view);
 }
+
 
 
 /* FIXME: truly evil --> we cannot really assume that
