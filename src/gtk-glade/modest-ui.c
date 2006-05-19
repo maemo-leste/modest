@@ -44,7 +44,7 @@ static GtkWidget* modest_main_window_folder_tree (ModestAccountMgr *modest_acc_m
 static GtkWidget* modest_main_window_header_tree (TnyMsgFolderIface *folder);
 
 
-static void on_account_settings1_activate (GtkMenuItem *,
+void on_account_settings1_activate (GtkMenuItem *,
 					   gpointer);
 static void on_password_requested (ModestTnyAccountStore *account_store,
 				   const gchar *account_name, gpointer user_data);
@@ -350,7 +350,7 @@ modest_ui_show_edit_window (ModestUI *modest_ui, const gchar* to,
 	ModestUIPrivate *priv;
 	GtkWidget       *btn;
 	GtkTextBuffer	*buf;
-	
+
 	priv = MODEST_UI_GET_PRIVATE(modest_ui);
 	int height = modest_conf_get_int (priv->modest_conf,
 					  MODEST_CONF_EDIT_WINDOW_HEIGHT,NULL);
@@ -362,7 +362,7 @@ modest_ui_show_edit_window (ModestUI *modest_ui, const gchar* to,
 		g_warning ("could not create new mail  window");
 		return FALSE;
 	}
-	
+
 	modest_window_mgr_register (priv->modest_window_mgr,
 				    G_OBJECT(win), MODEST_EDIT_WINDOW, 0);
 	to_entry      = glade_xml_get_widget (priv->glade_xml, "to_entry");
@@ -371,10 +371,10 @@ modest_ui_show_edit_window (ModestUI *modest_ui, const gchar* to,
 
 	gtk_entry_set_text(GTK_ENTRY(subject_entry), subject);
 	gtk_entry_set_text(GTK_ENTRY(to_entry), to);
-	
+
 	buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(body_view));
 	gtk_text_buffer_set_text(buf, body, -1);
-		
+
 	g_signal_connect (win, "destroy", G_CALLBACK(hide_edit_window),
 			  NULL);
 
@@ -413,24 +413,89 @@ modest_ui_last_window_closed (GObject *obj, gpointer data)
 	gtk_main_quit ();
 }
 
+void
+on_account_selector_selection_changed(GtkWidget *widget,
+       gpointer user_data)
+{
+	GtkTreeModel *model = gtk_combo_box_get_model(GTK_COMBO_BOX(widget));
+	GtkTreeIter iter;
 
-static void
+	gchar *account_name;
+
+	if (gtk_combo_box_get_active_iter(GTK_COMBO_BOX(widget), &iter))
+	{
+		gtk_tree_model_get(GTK_TREE_MODEL(model),
+				   &iter,
+				   0, &account_name,
+				   -1);
+	}
+	else
+	{
+		account_name="empty";
+	}
+
+	g_message("Value: '%s'\n", account_name);
+}
+
+void
 on_account_settings1_activate (GtkMenuItem *menuitem,
 			       gpointer user_data)
 {
+	GladeXML *glade_xml;
 	GtkWidget *advanced_account_setup;
 	ModestUIPrivate *priv;
 	gint retval;
+	GSList *account_name_list;
+	GSList *account_name_list_iter;
+	GtkListStore *account_names;
+	GtkTreeIter account_names_iter;
+	GtkWidget *account_selector;
+	GtkCellRenderer *renderer;
 
 	priv = MODEST_UI_GET_PRIVATE(MODEST_UI(user_data));
 
-	advanced_account_setup = glade_xml_get_widget(priv->glade_xml, "mailbox_setup_advanced");
+	glade_xml = glade_xml_new(MODEST_GLADE, "mailbox_setup_advanced", NULL);
+	advanced_account_setup = glade_xml_get_widget(glade_xml, "mailbox_setup_advanced");
+
+	account_name_list=modest_account_mgr_account_names(priv->modest_acc_mgr, NULL);
+	account_names = gtk_list_store_new(1, G_TYPE_STRING);
+
+	for (account_name_list_iter=account_name_list;
+	     account_name_list_iter!=NULL;
+	     account_name_list_iter=g_slist_next(account_name_list_iter))
+	{
+		gtk_list_store_append(account_names, &account_names_iter);
+		gtk_list_store_set(account_names, &account_names_iter,
+				   0, account_name_list_iter->data,
+				   -1);
+	}
+
+	g_slist_free(account_name_list);
+
+	account_selector = glade_xml_get_widget(glade_xml, "account_selector");
+	gtk_combo_box_set_model(GTK_COMBO_BOX(account_selector), GTK_TREE_MODEL(account_names));
+
+	renderer = gtk_cell_renderer_text_new ();
+	gtk_cell_layout_pack_start (GTK_CELL_LAYOUT (account_selector), renderer, TRUE);
+	gtk_cell_layout_set_attributes (GTK_CELL_LAYOUT (account_selector), renderer,
+					"text", 0,
+					NULL);
+
+	g_signal_connect(GTK_WIDGET(account_selector), "changed",
+			 G_CALLBACK(on_account_selector_selection_changed),
+			 GTK_WIDGET(advanced_account_setup));
+
+	gtk_combo_box_set_active(GTK_COMBO_BOX(account_selector), 0);
 
 	gtk_widget_show_all(GTK_WIDGET(advanced_account_setup));
 
 	retval=gtk_dialog_run(GTK_DIALOG(advanced_account_setup));
 
-        gtk_widget_hide(GTK_WIDGET(advanced_account_setup));
+	g_object_unref(account_names);
+
+	gtk_widget_destroy(GTK_WIDGET(advanced_account_setup));
+
+	g_object_unref(glade_xml);
 }
 
 
@@ -610,11 +675,11 @@ modest_ui_quote_msg(const TnyMsgIface *src)
 	gint tmp;
 	gint indent;
 	gboolean break_line;
-		
+
 	buf = gtk_text_buffer_new(NULL);
 	dest = tny_text_buffer_stream_new(buf);
 	parts  = (GList*) tny_msg_iface_get_parts (src);
-	
+
 	while (parts) {
 		/* TODO: maybe we'd like to quote more than one part? */
 		TnyMsgMimePartIface *part =
@@ -630,16 +695,16 @@ modest_ui_quote_msg(const TnyMsgIface *src)
 	}
 	buf    = gtk_text_buffer_new (NULL);
 	stream = TNY_STREAM_IFACE(tny_text_buffer_stream_new (buf));
-		
+
 	tny_stream_iface_reset (stream);
 	tny_msg_mime_part_iface_decode_to_stream (body, stream);
-	tny_stream_iface_reset (stream);		
-	
+	tny_stream_iface_reset (stream);
+
 	gtk_text_buffer_get_iter_at_line(buf, &iter1, 0);
 	while (TRUE) {
 		/* at each beginning of this while, iter1 must be at the beginning of
 		   the (next) line to quote */
-		
+
 		/* debug */
 		iter2 = iter1;
 		gtk_text_iter_forward_to_line_end(&iter2);
@@ -647,48 +712,48 @@ modest_ui_quote_msg(const TnyMsgIface *src)
 		printf("%s\n", txt);
 		/* check whether line is already quoted */
 		iter2 = iter1;
-		
+
 		gtk_text_iter_forward_word_end(&iter2);
 		txt = gtk_text_buffer_get_text (buf, &iter1, &iter2, FALSE);
-		
+
 		/* insert quotation mark */
 		tmp = gtk_text_iter_get_offset(&iter1);
 		gtk_text_buffer_insert(buf, &iter1, "> ", -1);
-		
+
 		/* still at the beginning of the line */
 		gtk_text_buffer_get_iter_at_offset(buf, &iter1, tmp);
 		iter2 = iter1;
-		
+
 		if (strcmp(txt, "> ") != 0) {
-			
+
 			/* line was not already quoted */
-			
+
 			/* now check whether the line must be broken: */
 			if (gtk_text_iter_get_chars_in_line(&iter2) >= 48) {
-			
+
 				gtk_text_iter_set_line_offset(&iter2, 48);
-				
+
 				/* move iter1 behind quote mark at the beginnig of the line */
 				gtk_text_iter_forward_word_end(&iter1);
 
 				/* save iter2 position */
 				iter3 = iter2;
-				
+
 				/* move iter2 back one word (from brakepoint in line) */
 				gtk_text_iter_backward_word_start(&iter2);
-				
+
 				/* check for one-word line (up to iter2), don't break then */
 				if (!gtk_text_iter_compare(&iter1, &iter2) < 0) {
 					gtk_text_iter_forward_word_end(&iter2); /*BUG*/
 				}
-				
+
 				tmp = gtk_text_iter_get_offset(&iter2);
 				gtk_text_buffer_insert(buf, &iter2, "\n#", -1);
-				
+
 				gtk_text_buffer_get_iter_at_offset(buf, &iter1, tmp);
-				
+
 				gtk_text_iter_forward_line(&iter1);
-				
+
 				/* kill 1 space */
 				iter2 = iter1;
 				gtk_text_iter_forward_char(&iter2);
@@ -703,13 +768,13 @@ modest_ui_quote_msg(const TnyMsgIface *src)
 				if (!gtk_text_iter_forward_line(&iter3)) {
 					break;
 				}
-				
+
 				/* iter3 ist at the beginning of the next line.*/
 				/* check for empty line */
 				if (gtk_text_iter_get_chars_in_line(&iter3) < 2) {
 					continue;
 				}
-				
+
 				/* check for quote */
 				iter2 = iter3;
 				gtk_text_iter_forward_word_end(&iter2);
@@ -717,22 +782,22 @@ modest_ui_quote_msg(const TnyMsgIface *src)
 				if (strcmp(txt, "> ") == 0) {
 					continue;
 				}
-				
-				/* now merge in the next line */					
+
+				/* now merge in the next line */
 				if (!gtk_text_iter_forward_to_line_end(&iter1)) {
 					break;
 				}
 				iter2 = iter1;
 				gtk_text_iter_forward_char(&iter2);
-			
+
 				tmp = gtk_text_iter_get_offset(&iter1);
-				
+
 				/* do the merge */
 				gtk_text_buffer_delete (buf, &iter1, &iter2);
 				gtk_text_buffer_get_iter_at_offset(buf, &iter1, tmp);
-				
+
 				gtk_text_iter_set_line_offset(&iter1, 0);
-				
+
 			} else {
 				/* line must not be broken, we're done. */
 				if (!gtk_text_iter_forward_line(&iter1)) {
@@ -746,10 +811,10 @@ modest_ui_quote_msg(const TnyMsgIface *src)
 			}
 		}
 	}
-	
+
 	gtk_text_buffer_get_bounds (buf, &begin, &end);
 	txt = gtk_text_buffer_get_text (buf, &begin, &end, FALSE);
- 	
+
 	return txt;
 }
 
@@ -761,14 +826,14 @@ modest_ui_reply_to_msg (ModestUI *modest_ui, TnyMsgHeaderIface *header,
 	const TnyMsgFolderIface *folder;
 	gchar *re_sub;
 
-	quoted = "";	
+	quoted = "";
 	if (header) {
 		folder = tny_msg_header_iface_get_folder (TNY_MSG_HEADER_IFACE(header));
 		if (!folder) {
 			g_warning ("cannot find folder");
 			return;
 		}
-		
+
 		msg = tny_msg_folder_iface_get_message (TNY_MSG_FOLDER_IFACE(folder), header);
 		if (!msg) {
 			g_warning ("cannot find msg");
@@ -782,12 +847,12 @@ modest_ui_reply_to_msg (ModestUI *modest_ui, TnyMsgHeaderIface *header,
 		/* FIXME: honor replyto, cc */
 		from = tny_msg_header_iface_get_from(header);
 		quoted = modest_ui_quote_msg(msg);
-			
+
 	} else {
 		printf("no header\n");
 		return;
 	}
-	
+
 	modest_ui_show_edit_window (modest_ui, from, "FIXME:cc", /* bcc */ "", re_sub, quoted, NULL);
 }
 
@@ -807,11 +872,11 @@ on_reply_clicked (GtkWidget *widget, ModestUI *modest_ui)
 	ModestTnyHeaderTreeView *header_view;
 	ModestTnyMsgView *msg_view;
 	ModestUIPrivate *priv;
-	
+
 	g_return_if_fail (modest_ui);
 
 	priv = MODEST_UI_GET_PRIVATE(modest_ui);
-	
+
 	paned = glade_xml_get_widget (priv->glade_xml,"mail_paned");
 	g_return_if_fail (paned);
 
@@ -823,18 +888,18 @@ on_reply_clicked (GtkWidget *widget, ModestUI *modest_ui)
 
 	header_view = MODEST_TNY_HEADER_TREE_VIEW(gtk_bin_get_child (GTK_BIN(scroll)));
 	g_return_if_fail (header_view);
-	
+
 	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW(header_view));
 	g_return_if_fail (sel);
-	
+
 	if (!gtk_tree_selection_get_selected (sel, &model, &iter))
 		/* no message was selected. TODO: disable reply button in this case */
 		return;
-	
+
 	gtk_tree_model_get (model, &iter,
 			    TNY_MSG_HEADER_LIST_MODEL_INSTANCE_COLUMN,
 			    &header, -1);
-	
+
 	modest_ui_reply_to_msg (modest_ui, header, msg_view);
 }
 
