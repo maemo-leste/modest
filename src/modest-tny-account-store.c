@@ -165,7 +165,7 @@ modest_tny_account_store_finalize (GObject *obj)
 		g_object_unref (G_OBJECT(priv->tny_session_camel));
 		priv->tny_session_camel = NULL;
 	}
-	
+
 	if (priv->device) {
 		g_object_unref (G_OBJECT(priv->device));
 		priv->device = NULL;
@@ -233,8 +233,8 @@ get_password (TnyAccountIface *account, const gchar *prompt)
 
 	val = modest_account_mgr_get_server_account_string (priv->modest_acc_mgr, key,
 							    MODEST_ACCOUNT_PASSWORD,
-							    NULL);
-	if (!val || strlen(val)==0)
+                                                            NULL);
+	if (!val)
         {
                 /* FIXME:
                  * append the prompt to the emitted signal,

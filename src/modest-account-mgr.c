@@ -230,10 +230,13 @@ modest_account_mgr_add_server_account    (ModestAccountMgr *self,
 	g_free (key);
 
 	/* password */
-	key = g_strconcat (acckey, "/", MODEST_ACCOUNT_PASSWORD, NULL);
-	modest_conf_set_string (priv->modest_conf, key,
-				null_means_empty(password), NULL);
-	g_free (key);
+        if (password)
+        {
+                key = g_strconcat (acckey, "/", MODEST_ACCOUNT_PASSWORD, NULL);
+                modest_conf_set_string (priv->modest_conf, key,
+                                        null_means_empty(password), NULL);
+                g_free (key);
+        }
 
 	/* proto */
 	key = g_strconcat (acckey, "/", MODEST_ACCOUNT_PROTO, NULL);

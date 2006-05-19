@@ -416,7 +416,7 @@ modest_ui_last_window_closed (GObject *obj, gpointer data)
 
 void
 on_account_selector_selection_changed (GtkWidget *widget,
-       gpointer user_data)
+				       gpointer user_data)
 {
 	GtkTreeModel *model = gtk_combo_box_get_model(GTK_COMBO_BOX(widget));
 	GtkTreeIter iter;
@@ -436,9 +436,7 @@ on_account_selector_selection_changed (GtkWidget *widget,
 	}
 
 	g_message("Value: '%s'\n", account_name);
-	fill_advanced_setup_dialog(GTK_DIALOG(user_data), account_name);
 }
-
 
 void
 on_account_settings1_activate (GtkMenuItem *menuitem,
@@ -500,7 +498,6 @@ on_account_settings1_activate (GtkMenuItem *menuitem,
 
 	g_object_unref(glade_xml);
 }
-
 
 static void
 on_folder_clicked (ModestTnyFolderTreeView *folder_tree,

@@ -5,7 +5,7 @@
 #include "modest-account-mgr.h"
 #include "modest-ui.h"
 
-#ifdef HAVE_CONFIG_H				
+#ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif /*HAVE_CONFIG_H*/
 #include <gtk/gtk.h>
@@ -23,10 +23,10 @@ main (int argc, char *argv[])
 
 	GError *err = NULL;
 	int retval  = 0;
-	
+
 	static gboolean update, debug, reinstall;
 	static gchar *mailto, *subject, *bcc, *cc, *body;
-	
+
 	static GOptionEntry options[] = {
 		{ "debug",  'd', 0, G_OPTION_ARG_NONE, &debug,
 		  "Run in debug mode" },
@@ -37,9 +37,9 @@ main (int argc, char *argv[])
 		{ "subject", 's', 0, G_OPTION_ARG_STRING, &subject,
 		  "Subject for a new mail"},
 		{ "body", 'b', 0, G_OPTION_ARG_STRING, &body,
-		  "Body for a new email"},	
+		  "Body for a new email"},
 		{ "cc",  0, 0, G_OPTION_ARG_STRING, &cc,
-		  "CC-addresses for a new mail (comma-separated)"},		
+		  "CC-addresses for a new mail (comma-separated)"},
 		{ "bcc", 0, 0, G_OPTION_ARG_STRING, &bcc,
 		  "BCC-adresses for a new mail (comma-separated)"},
 		{ "reinstall-factory-settings", 0, 0, G_OPTION_ARG_NONE, &reinstall,
@@ -48,12 +48,12 @@ main (int argc, char *argv[])
 		{ NULL }
 	};
 
-	
+
 	g_type_init ();
-	
+
 	context = g_option_context_new (NULL);
 	g_option_context_add_main_entries (context, options, NULL);
-	
+
 	if (!g_option_context_parse (context, &argc, &argv, &err)) {
 		g_printerr ("modest: error in command line parameter(s): %s\n",
 			 err ? err->message : "");
@@ -78,19 +78,19 @@ main (int argc, char *argv[])
 		goto cleanup;
 	}
 
-	
-	
-	gtk_init (&argc, &argv);		
+
+
+	gtk_init (&argc, &argv);
 	modest_ui = MODEST_UI(modest_ui_new (modest_conf));
 	if (!modest_ui) {
 		g_warning ("failed to initialize ui");
 		goto cleanup;
 	}
-	
+
 	{
 		gboolean ok;
 		gtk_init (&argc, &argv);
-		
+
 		if (mailto||cc||bcc||subject||body)
 			ok = modest_ui_show_edit_window (modest_ui,
 							 mailto,  /* to */
@@ -108,7 +108,7 @@ main (int argc, char *argv[])
 			gtk_main();
 	}
 
-	
+
 cleanup:
 	if (err)
 		g_error_free (err);
@@ -118,10 +118,10 @@ cleanup:
 
 	if (modest_ui)
 		g_object_unref (modest_ui);
-	
+
 	if (modest_conf)
 		g_object_unref (modest_conf);
-	
+
 	return retval;
 }
 
@@ -143,7 +143,7 @@ install_basic_conf_settings (ModestConf *conf)
 			     MODEST_CONF_EDIT_WINDOW_WIDTH_DEFAULT, NULL);
 	modest_conf_set_int (conf, MODEST_CONF_EDIT_WINDOW_HEIGHT,
 			     MODEST_CONF_EDIT_WINDOW_HEIGHT_DEFAULT, NULL);
-	
+
 	g_print ("modest: returned to factory settings\n");
 }
 
@@ -166,13 +166,16 @@ install_test_account (ModestConf *conf)
 			g_warning ("could not delete existing account");
 		}
 	}
-					
+
 	if (!modest_account_mgr_add_account (acc_mgr, acc_name, "mystore", "mytransport", NULL))
 		g_warning ("failed to add test account");
-	
-	modest_account_mgr_add_server_account (acc_mgr, "mystore", "localhost", "djcb",
-					       NULL, "imap");
-	modest_account_mgr_add_server_account (acc_mgr, "mytransport", "localhost", NULL,
-					       NULL, "smtp");
+	else
+	{
+		modest_account_mgr_add_server_account (acc_mgr, "mystore", "localhost", "djcb",
+						       NULL, "imap");
+		modest_account_mgr_add_server_account (acc_mgr, "mytransport", "localhost", NULL,
+						       NULL, "smtp");
+	}
 	g_object_unref (G_OBJECT(acc_mgr));
 }
+
