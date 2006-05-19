@@ -662,7 +662,7 @@ on_new_mail_clicked (GtkWidget *widget, ModestUI *modest_ui)
 }
 
 static gchar*
-modest_ui_quote_msg(const TnyMsgIface *src)
+modest_ui_quote_msg(const TnyMsgIface *src, const gchar *from, time_t sent_date)
 {
 	GList *parts;
 	TnyMsgMimePartIface *part;
@@ -675,13 +675,22 @@ modest_ui_quote_msg(const TnyMsgIface *src)
 	gint tmp;
 	gint indent;
 	gboolean break_line;
+<<<<<<< .mine
+	gchar sent_str[101];
+	gchar from_cut[82];
+	gchar reply_head[202];
+		
+=======
 
+>>>>>>> .r91
 	buf = gtk_text_buffer_new(NULL);
 	dest = tny_text_buffer_stream_new(buf);
 	parts  = (GList*) tny_msg_iface_get_parts (src);
 
 	while (parts) {
-		/* TODO: maybe we'd like to quote more than one part? */
+		/* TODO: maybe we'd like to quote more than one part?
+		 *       cleanup, fix leaks
+		 */
 		TnyMsgMimePartIface *part =
 			TNY_MSG_MIME_PART_IFACE(parts->data);
 		if (tny_msg_mime_part_iface_content_type_is (part, "text/plain")) {
@@ -700,13 +709,29 @@ modest_ui_quote_msg(const TnyMsgIface *src)
 	tny_msg_mime_part_iface_decode_to_stream (body, stream);
 	tny_stream_iface_reset (stream);
 
+	/* format sent_date */
+	strftime(sent_str, 100, "%c", localtime(&sent_date));
+	strncpy(from_cut, from, 80);
+	sprintf(reply_head, "On %s, %s wrote:\n", sent_str, from_cut);
+	
 	gtk_text_buffer_get_iter_at_line(buf, &iter1, 0);
+	gtk_text_buffer_insert(buf, &iter1, reply_head, -1);
+	gtk_text_buffer_get_iter_at_line(buf, &iter1, 1);
 	while (TRUE) {
 		/* at each beginning of this while, iter1 must be at the beginning of
 		   the (next) line to quote */
 
-		/* debug */
 		iter2 = iter1;
+<<<<<<< .mine
+		if (gtk_text_iter_get_chars_in_line(&iter1) > 1) {
+			/* check whether line is already quoted */
+			iter2 = iter1;
+			gtk_text_iter_forward_char (&iter2);
+			txt = gtk_text_buffer_get_text (buf, &iter1, &iter2, FALSE);
+		} else {
+			txt = "";
+		}
+=======
 		gtk_text_iter_forward_to_line_end(&iter2);
 		txt = gtk_text_buffer_get_text (buf, &iter1, &iter2, FALSE);
 		printf("%s\n", txt);
@@ -716,6 +741,7 @@ modest_ui_quote_msg(const TnyMsgIface *src)
 		gtk_text_iter_forward_word_end(&iter2);
 		txt = gtk_text_buffer_get_text (buf, &iter1, &iter2, FALSE);
 
+>>>>>>> .r91
 		/* insert quotation mark */
 		tmp = gtk_text_iter_get_offset(&iter1);
 		gtk_text_buffer_insert(buf, &iter1, "> ", -1);
@@ -724,14 +750,14 @@ modest_ui_quote_msg(const TnyMsgIface *src)
 		gtk_text_buffer_get_iter_at_offset(buf, &iter1, tmp);
 		iter2 = iter1;
 
-		if (strcmp(txt, "> ") != 0) {
+		if (strcmp(txt, ">") != 0) {
 
 			/* line was not already quoted */
 
 			/* now check whether the line must be broken: */
-			if (gtk_text_iter_get_chars_in_line(&iter2) >= 48) {
+			if (gtk_text_iter_get_chars_in_line(&iter2) >= 79) {
 
-				gtk_text_iter_set_line_offset(&iter2, 48);
+				gtk_text_iter_set_line_offset(&iter2, 79);
 
 				/* move iter1 behind quote mark at the beginnig of the line */
 				gtk_text_iter_forward_word_end(&iter1);
@@ -739,22 +765,28 @@ modest_ui_quote_msg(const TnyMsgIface *src)
 				/* save iter2 position */
 				iter3 = iter2;
 
-				/* move iter2 back one word (from brakepoint in line) */
+				/* move iter2 back one word (from breakpoint in line) */
 				gtk_text_iter_backward_word_start(&iter2);
 
-				/* check for one-word line (up to iter2), don't break then */
+				/* check for one-word line (up to iter2) */
 				if (!gtk_text_iter_compare(&iter1, &iter2) < 0) {
-					gtk_text_iter_forward_word_end(&iter2); /*BUG*/
+					gtk_text_iter_forward_word_end(&iter2); /* BUG? */
 				}
 
+				/* insert linebreak */
 				tmp = gtk_text_iter_get_offset(&iter2);
+<<<<<<< .mine
+				gtk_text_buffer_insert(buf, &iter2, "\n", -1);
+=======
 				gtk_text_buffer_insert(buf, &iter2, "\n#", -1);
 
+>>>>>>> .r91
 				gtk_text_buffer_get_iter_at_offset(buf, &iter1, tmp);
 
+				/* move to the beginning of the "new" line */
 				gtk_text_iter_forward_line(&iter1);
 
-				/* kill 1 space */
+				/* try to kill 1 space */
 				iter2 = iter1;
 				gtk_text_iter_forward_char(&iter2);
 				txt = gtk_text_buffer_get_text(buf, &iter1, &iter2, FALSE);
@@ -763,13 +795,18 @@ modest_ui_quote_msg(const TnyMsgIface *src)
 					gtk_text_buffer_delete(buf, &iter1, &iter2);
 					gtk_text_buffer_get_iter_at_offset(buf, &iter1, tmp);
 				}
-				/* check whether the next line is mergable: */
+				
+				/* check whether there is a next line to merge */
 				iter3 = iter1;
 				if (!gtk_text_iter_forward_line(&iter3)) {
-					break;
+					continue;
 				}
+<<<<<<< .mine
+				/* iter3 is now at the beginning of the next line.*/
+				
+=======
 
-				/* iter3 ist at the beginning of the next line.*/
+>>>>>>> .r91
 				/* check for empty line */
 				if (gtk_text_iter_get_chars_in_line(&iter3) < 2) {
 					continue;
@@ -777,38 +814,67 @@ modest_ui_quote_msg(const TnyMsgIface *src)
 
 				/* check for quote */
 				iter2 = iter3;
-				gtk_text_iter_forward_word_end(&iter2);
+				gtk_text_iter_forward_char (&iter2);
 				txt = gtk_text_buffer_get_text(buf, &iter3, &iter2, FALSE);
-				if (strcmp(txt, "> ") == 0) {
+				if (strcmp(txt, ">") == 0) {
+					/* iter1 is still at the beginning of the newly broken
+					 * so we don't have to cleanup */
 					continue;
 				}
+<<<<<<< .mine
+				
+=======
 
 				/* now merge in the next line */
+>>>>>>> .r91
 				if (!gtk_text_iter_forward_to_line_end(&iter1)) {
-					break;
+					/* no further lines to merge */
+					continue;
 				}
+				
+				/* "mark" newline */
 				iter2 = iter1;
 				gtk_text_iter_forward_char(&iter2);
+<<<<<<< .mine
+					
+				/* do the merge */
+=======
 
+>>>>>>> .r91
 				tmp = gtk_text_iter_get_offset(&iter1);
+<<<<<<< .mine
+=======
 
 				/* do the merge */
+>>>>>>> .r91
 				gtk_text_buffer_delete (buf, &iter1, &iter2);
-				gtk_text_buffer_get_iter_at_offset(buf, &iter1, tmp);
+				gtk_text_buffer_get_iter_at_offset (buf, &iter1, tmp);
 
+				/* insert space */
+				gtk_text_buffer_insert(buf, &iter1, " ", -1);
+				gtk_text_buffer_get_iter_at_offset (buf, &iter1, tmp);
+				
+				/* move to beginning of line and continue */
 				gtk_text_iter_set_line_offset(&iter1, 0);
+<<<<<<< .mine
+				continue;
+				
+=======
 
+>>>>>>> .r91
 			} else {
-				/* line must not be broken, we're done. */
+				/* line doesn't have to be broken, we're done. */
 				if (!gtk_text_iter_forward_line(&iter1)) {
 					break;
 				}
+				continue;
 			}
 		} else {
 			/* line was already quoted */
 			if (!gtk_text_iter_forward_line(&iter1)) {
 				break;
 			}
+			continue;
 		}
 	}
 
@@ -822,6 +888,7 @@ static void
 modest_ui_reply_to_msg (ModestUI *modest_ui, TnyMsgHeaderIface *header,
 						ModestTnyMsgView *msg_view) {
 	const gchar *subject, *from, *quoted;
+	time_t sent_date;
 	const TnyMsgIface *msg;
 	const TnyMsgFolderIface *folder;
 	gchar *re_sub;
@@ -846,7 +913,8 @@ modest_ui_reply_to_msg (ModestUI *modest_ui, TnyMsgHeaderIface *header,
 		strcat (re_sub, subject);
 		/* FIXME: honor replyto, cc */
 		from = tny_msg_header_iface_get_from(header);
-		quoted = modest_ui_quote_msg(msg);
+		sent_date = tny_msg_header_iface_get_date_sent(header);
+		quoted = modest_ui_quote_msg(msg, from, sent_date);
 
 	} else {
 		printf("no header\n");
