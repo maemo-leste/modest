@@ -85,7 +85,7 @@ modest_tny_account_store_get_type (void)
 		my_type = g_type_register_static (TNY_TYPE_ACCOUNT_STORE,
  						  "ModestTnyAccountStore", &my_info, 0);
 
-                g_type_add_interface_static (my_type, TNY_TYPE_ACCOUNT_STORE_IFACE,
+		g_type_add_interface_static (my_type, TNY_TYPE_ACCOUNT_STORE_IFACE,
 					     &iface_info);
 	}
 	return my_type;
