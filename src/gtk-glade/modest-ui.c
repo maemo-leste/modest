@@ -197,9 +197,9 @@ modest_ui_new (ModestConf *modest_conf)
 	g_signal_connect (account_store_iface, "password_requested",
 			  G_CALLBACK(on_password_requested),
 			  NULL);
+	
 	glade_init ();
-	priv->glade_xml = glade_xml_new (MODEST_GLADE,
-					 NULL,NULL);
+	priv->glade_xml = glade_xml_new (MODEST_GLADE, NULL,NULL);
 	if (!priv->glade_xml) {
 		g_warning ("failed to do glade stuff");
 		g_object_unref (obj);

@@ -28,6 +28,7 @@ static void modest_tny_header_tree_view_init        (ModestTnyHeaderTreeView *ob
 static void modest_tny_header_tree_view_finalize    (GObject *obj);
 
 static void selection_changed (GtkTreeSelection *sel, gpointer user_data);
+static void column_clicked (GtkTreeViewColumn *treeviewcolumn, gpointer user_data);
 	
 /* list my signals */
 enum {
@@ -111,7 +112,10 @@ modest_tny_header_tree_view_init (ModestTnyHeaderTreeView *obj)
 							   TNY_MSG_HEADER_LIST_MODEL_DATE_RECEIVED_COLUMN,
  							   NULL);
 	gtk_tree_view_column_set_resizable (column, TRUE);
+	gtk_tree_view_column_set_sort_column_id (column, TNY_MSG_HEADER_LIST_MODEL_DATE_RECEIVED_COLUMN);
+	gtk_tree_view_column_set_sort_indicator (column, TRUE);
 	gtk_tree_view_append_column (GTK_TREE_VIEW(obj), column);
+	g_signal_connect (G_OBJECT (column), "clicked", G_CALLBACK (column_clicked), obj);
 
 
 
@@ -120,7 +124,10 @@ modest_tny_header_tree_view_init (ModestTnyHeaderTreeView *obj)
 							   TNY_MSG_HEADER_LIST_MODEL_FROM_COLUMN,
 							   NULL);
 	gtk_tree_view_column_set_resizable (column, TRUE);
+	gtk_tree_view_column_set_sort_column_id (column, TNY_MSG_HEADER_LIST_MODEL_FROM_COLUMN);
+	gtk_tree_view_column_set_sort_indicator (column, TRUE);
 	gtk_tree_view_append_column (GTK_TREE_VIEW(obj), column);
+	g_signal_connect (G_OBJECT (column), "clicked", G_CALLBACK (column_clicked), obj);
 
 
 	column =  gtk_tree_view_column_new_with_attributes(_("Subject"), renderer,
@@ -128,7 +135,10 @@ modest_tny_header_tree_view_init (ModestTnyHeaderTreeView *obj)
 							   TNY_MSG_HEADER_LIST_MODEL_SUBJECT_COLUMN,
 							   NULL);
 	gtk_tree_view_column_set_resizable (column, TRUE);
+	gtk_tree_view_column_set_sort_column_id (column, TNY_MSG_HEADER_LIST_MODEL_SUBJECT_COLUMN);
+	gtk_tree_view_column_set_sort_indicator (column, TRUE);
 	gtk_tree_view_append_column (GTK_TREE_VIEW(obj), column);
+	g_signal_connect (G_OBJECT (column), "clicked", G_CALLBACK (column_clicked), obj);
 
 	gtk_tree_view_set_headers_visible   (GTK_TREE_VIEW(obj), TRUE);
 	gtk_tree_view_set_headers_clickable (GTK_TREE_VIEW(obj), TRUE);
@@ -202,7 +212,7 @@ modest_tny_header_tree_view_set_folder (ModestTnyHeaderTreeView *self,
 	} else {
 		static GtkTreeModel *empty_model = NULL;
 		if (!empty_model)
-			empty_model = GTK_TREE_MODEL(gtk_list_store_new(1,G_TYPE_STRING));
+			empty_model = GTK_TREE_MODEL(gtk_list_store_new(1, G_TYPE_STRING));
 
 		sortable = empty_model;
 	}
@@ -216,7 +226,7 @@ modest_tny_header_tree_view_set_folder (ModestTnyHeaderTreeView *self,
 }
 
 
-void
+static void
 selection_changed (GtkTreeSelection *sel, gpointer user_data)
 {
 	GtkTreeModel            *model;
@@ -255,4 +265,15 @@ selection_changed (GtkTreeSelection *sel, gpointer user_data)
 		g_signal_emit (G_OBJECT(tree_view), signals[MESSAGE_SELECTED_SIGNAL], 0,
 			       msg); 
 	}
+}
+
+static void
+column_clicked (GtkTreeViewColumn *treeviewcolumn, gpointer user_data)
+{
+	GtkTreeView *treeview = GTK_TREE_VIEW (user_data);
+	gint id;
+	
+	id = gtk_tree_view_column_get_sort_column_id (treeviewcolumn);
+	
+	gtk_tree_view_set_search_column (treeview, id);
 }
