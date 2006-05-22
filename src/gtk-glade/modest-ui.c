@@ -374,8 +374,11 @@ modest_ui_show_edit_window (ModestUI *modest_ui, const gchar* to,
 	gtk_entry_set_text(GTK_ENTRY(to_entry), to);
 
 	buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(body_view));
-	gtk_text_buffer_set_text(buf, body, -1);
-
+	if (body) {
+		gtk_text_buffer_set_text(buf, body, -1);
+	} else {
+		gtk_text_buffer_set_text(buf, "", -1);
+	}
 	g_signal_connect (win, "destroy", G_CALLBACK(hide_edit_window),
 			  NULL);
 
@@ -671,16 +674,16 @@ modest_ui_quote_msg(const TnyMsgIface *src, const gchar *from, time_t sent_date)
 	TnyMsgMimePartIface *body = NULL;
 	GtkTextBuffer *buf;
 	GtkTextIter begin, end, iter1, iter2, iter3;
-	gchar *txt, *line;
+	gchar *txt;
 	gint tmp;
 	gint indent;
-	gboolean break_line;
 	gchar sent_str[101];
-	gchar from_cut[82];
-	gchar reply_head[202];
+	GString *reply_head;
 
 	buf = gtk_text_buffer_new(NULL);
 	dest = tny_text_buffer_stream_new(buf);
+	
+	/* is the warning in this line due to a bug in tinymail? */
 	parts  = (GList*) tny_msg_iface_get_parts (src);
 
 	while (parts) {
@@ -696,7 +699,7 @@ modest_ui_quote_msg(const TnyMsgIface *src, const gchar *from, time_t sent_date)
 		parts = parts->next;
 	}
 	if (!body) {
-		return "";
+		return NULL;
 	}
 	buf    = gtk_text_buffer_new (NULL);
 	stream = TNY_STREAM_IFACE(tny_text_buffer_stream_new (buf));
@@ -707,25 +710,26 @@ modest_ui_quote_msg(const TnyMsgIface *src, const gchar *from, time_t sent_date)
 
 	/* format sent_date */
 	strftime(sent_str, 100, "%c", localtime(&sent_date));
-	strncpy(from_cut, from, 80);
-	sprintf(reply_head, "On %s, %s wrote:\n", sent_str, from_cut);
+	reply_head = g_string_new("");
+	g_string_printf(reply_head, "On %s, %s wrote:\n", sent_str, from);
 
 	gtk_text_buffer_get_iter_at_line(buf, &iter1, 0);
-	gtk_text_buffer_insert(buf, &iter1, reply_head, -1);
+	gtk_text_buffer_insert(buf, &iter1, reply_head->str, -1);
+	g_string_free(reply_head, TRUE);
 	gtk_text_buffer_get_iter_at_line(buf, &iter1, 1);
+	txt = g_malloc0(1);
 	while (TRUE) {
 		/* at each beginning of this while, iter1 must be at the beginning of
 		   the (next) line to quote */
 
 		iter2 = iter1;
-		if (gtk_text_iter_get_chars_in_line(&iter1) > 1) {
-			/* check whether line is already quoted */
-			iter2 = iter1;
-			gtk_text_iter_forward_char (&iter2);
-			txt = gtk_text_buffer_get_text (buf, &iter1, &iter2, FALSE);
-		} else {
-			txt = "";
-		}
+		/* check whether line is already quoted */
+		iter2 = iter1;
+		/* TODO: what happens if buf is empty? */
+		gtk_text_iter_forward_char (&iter2);
+		g_free(txt);
+		txt = gtk_text_buffer_get_text (buf, &iter1, &iter2, FALSE);
+		
 		/* insert quotation mark */
 		tmp = gtk_text_iter_get_offset(&iter1);
 		gtk_text_buffer_insert(buf, &iter1, "> ", -1);
@@ -768,6 +772,7 @@ modest_ui_quote_msg(const TnyMsgIface *src, const gchar *from, time_t sent_date)
 				/* try to kill 1 space */
 				iter2 = iter1;
 				gtk_text_iter_forward_char(&iter2);
+				g_free(txt);
 				txt = gtk_text_buffer_get_text(buf, &iter1, &iter2, FALSE);
 				if (strcmp(txt, " ") == 0) {
 					tmp = gtk_text_iter_get_offset(&iter1);
@@ -790,6 +795,7 @@ modest_ui_quote_msg(const TnyMsgIface *src, const gchar *from, time_t sent_date)
 				/* check for quote */
 				iter2 = iter3;
 				gtk_text_iter_forward_char (&iter2);
+				g_free(txt);
 				txt = gtk_text_buffer_get_text(buf, &iter3, &iter2, FALSE);
 				if (strcmp(txt, ">") == 0) {
 					/* iter1 is still at the beginning of the newly broken
@@ -836,6 +842,7 @@ modest_ui_quote_msg(const TnyMsgIface *src, const gchar *from, time_t sent_date)
 	}
 
 	gtk_text_buffer_get_bounds (buf, &begin, &end);
+	g_free(txt);
 	txt = gtk_text_buffer_get_text (buf, &begin, &end, FALSE);
 
 	return txt;
@@ -844,12 +851,13 @@ modest_ui_quote_msg(const TnyMsgIface *src, const gchar *from, time_t sent_date)
 static void
 modest_ui_reply_to_msg (ModestUI *modest_ui, TnyMsgHeaderIface *header,
 						ModestTnyMsgView *msg_view) {
-	const gchar *subject, *from, *quoted;
-	time_t sent_date;
 	const TnyMsgIface *msg;
 	const TnyMsgFolderIface *folder;
-	gchar *re_sub;
-
+	GString *re_sub;
+	const gchar *subject, *from;
+	gchar *quoted;
+	time_t sent_date;
+	
 	quoted = "";
 	if (header) {
 		folder = tny_msg_header_iface_get_folder (TNY_MSG_HEADER_IFACE(header));
@@ -864,25 +872,23 @@ modest_ui_reply_to_msg (ModestUI *modest_ui, TnyMsgHeaderIface *header,
 			return;
 		}
 		subject = tny_msg_header_iface_get_subject(header);
-		/* TODO: checks, free */
-		re_sub = malloc(strlen(subject) + 5);
-		strcpy (re_sub, "Re: ");
-		strcat (re_sub, subject);
+		re_sub = g_string_new(subject);
+		g_string_prepend(re_sub, "Re: ");
 		/* FIXME: honor replyto, cc */
 		from = tny_msg_header_iface_get_from(header);
 		sent_date = tny_msg_header_iface_get_date_sent(header);
 		quoted = modest_ui_quote_msg(msg, from, sent_date);
-
 	} else {
-		printf("no header\n");
+		g_warning("no header");
 		return;
 	}
 
-	modest_ui_show_edit_window (modest_ui, from, "FIXME:cc", /* bcc */ "", re_sub, quoted, NULL);
+	modest_ui_show_edit_window (modest_ui, from, /* cc */ "", /* bcc */ "", re_sub->str, quoted, NULL);
+	g_free(quoted);
+	g_string_free(re_sub, TRUE);
 }
 
 
-/* WIP, testing az */
 static void
 on_reply_clicked (GtkWidget *widget, ModestUI *modest_ui)
 {
@@ -917,9 +923,11 @@ on_reply_clicked (GtkWidget *widget, ModestUI *modest_ui)
 	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW(header_view));
 	g_return_if_fail (sel);
 
-	if (!gtk_tree_selection_get_selected (sel, &model, &iter))
+	if (!gtk_tree_selection_get_selected (sel, &model, &iter)) {
 		/* no message was selected. TODO: disable reply button in this case */
+		g_warning("nothing to reply to");
 		return;
+	}
 
 	gtk_tree_model_get (model, &iter,
 			    TNY_MSG_HEADER_LIST_MODEL_INSTANCE_COLUMN,
@@ -927,7 +935,6 @@ on_reply_clicked (GtkWidget *widget, ModestUI *modest_ui)
 
 	modest_ui_reply_to_msg (modest_ui, header, msg_view);
 }
-
 
 
 /* FIXME: truly evil --> we cannot really assume that
