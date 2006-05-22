@@ -142,6 +142,8 @@ modest_tny_header_tree_view_init (ModestTnyHeaderTreeView *obj)
 
 	gtk_tree_view_set_headers_visible   (GTK_TREE_VIEW(obj), TRUE);
 	gtk_tree_view_set_headers_clickable (GTK_TREE_VIEW(obj), TRUE);
+
+	gtk_tree_view_set_rules_hint (GTK_TREE_VIEW(obj), TRUE); /* alternating row colors */
 	
 }
 
@@ -251,17 +253,14 @@ selection_changed (GtkTreeSelection *sel, gpointer user_data)
 		const TnyMsgFolderIface *folder;
 		
 		folder = tny_msg_header_iface_get_folder (TNY_MSG_HEADER_IFACE(header));
-		if (!folder) {
-			g_warning ("cannot find folder");
-			return;
+		if (!folder)
+			g_message ("cannot find folder");
+		else {
+			msg = tny_msg_folder_iface_get_message (TNY_MSG_FOLDER_IFACE(folder),
+								header);
+			if (!msg) 
+				g_message ("cannot find msg");		
 		}
-		
-		msg = tny_msg_folder_iface_get_message (TNY_MSG_FOLDER_IFACE(folder), header);
-		if (!msg) {
-			g_warning ("cannot find msg");
-			return;
-		}
-		
 		g_signal_emit (G_OBJECT(tree_view), signals[MESSAGE_SELECTED_SIGNAL], 0,
 			       msg); 
 	}
