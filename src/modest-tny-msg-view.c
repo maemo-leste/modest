@@ -19,6 +19,13 @@ static void     modest_tny_msg_view_finalize     (GObject *obj);
 static GSList*  get_url_matches (GString *txt);
 static gboolean fill_gtkhtml_with_txt (GtkHTML* gtkhtml, const gchar* txt);
 
+static gboolean on_link_clicked (GtkWidget *widget, const gchar *uri,
+				 ModestTnyMsgView *msg_view);
+static gboolean on_url_requested (GtkWidget *widget, const gchar *uri,
+				  GtkHTMLStream *stream,
+				  ModestTnyMsgView *msg_view);
+
+
 /*
  * we need these regexps to find URLs in plain text e-mails
  */
@@ -26,7 +33,8 @@ typedef struct _UrlMatchPattern UrlMatchPattern;
 struct _UrlMatchPattern {
 	gchar   *regex;
 	regex_t *preg;
-	gchar   *prefix;	
+	gchar   *prefix;
+	
 };
 #define MAIL_VIEWER_URL_MATCH_PATTERNS  {\
 	{ "(file|http|ftp|https)://[-A-Za-z0-9_$.+!*(),;:@%&=?/~#]+[-A-Za-z0-9_$%&=?/~#]",\
@@ -54,6 +62,7 @@ enum {
 typedef struct _ModestTnyMsgViewPrivate ModestTnyMsgViewPrivate;
 struct _ModestTnyMsgViewPrivate {
 	GtkWidget *gtkhtml;
+	TnyMsgIface *msg;
 };
 #define MODEST_TNY_MSG_VIEW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                  MODEST_TYPE_TNY_MSG_VIEW, \
@@ -106,12 +115,20 @@ modest_tny_msg_view_init (ModestTnyMsgView *obj)
 	
 	priv = MODEST_TNY_MSG_VIEW_GET_PRIVATE(obj);
 
+	priv->msg = NULL;
+	
 	priv->gtkhtml = gtk_html_new();
 	gtk_html_set_editable        (GTK_HTML(priv->gtkhtml), FALSE);
         gtk_html_allow_selection     (GTK_HTML(priv->gtkhtml), TRUE);
         gtk_html_set_caret_mode      (GTK_HTML(priv->gtkhtml), FALSE);
         gtk_html_set_blocking        (GTK_HTML(priv->gtkhtml), FALSE);
         gtk_html_set_images_blocking (GTK_HTML(priv->gtkhtml), FALSE);
+	
+	g_signal_connect (G_OBJECT(priv->gtkhtml), "link_clicked",
+			  G_CALLBACK(on_link_clicked), obj);
+	
+	g_signal_connect (G_OBJECT(priv->gtkhtml), "url_requested",
+			  G_CALLBACK(on_url_requested), obj);
 }
 	
 
@@ -147,6 +164,70 @@ modest_tny_msg_view_new (TnyMsgIface *msg)
 		modest_tny_msg_view_set_message (self, msg);
 
 	return GTK_WIDGET(self);
+}
+
+
+
+static gboolean
+on_link_clicked (GtkWidget *widget, const gchar *uri,
+				 ModestTnyMsgView *msg_view)
+{
+	g_message ("link clicked: %s", uri); /* FIXME */
+}
+
+
+
+static TnyMsgMimePartIface *
+find_cid_image (TnyMsgIface *msg, const gchar *cid)
+{
+	TnyMsgMimePartIface *part = NULL;
+	GList *parts;
+
+	g_return_val_if_fail (msg, NULL);
+	g_return_val_if_fail (cid, NULL);
+	
+	parts  = (GList*) tny_msg_iface_get_parts (msg);
+	while (parts && !part) {
+		const gchar *part_cid;
+		part = TNY_MSG_MIME_PART_IFACE(parts->data);
+		part_cid = tny_msg_mime_part_iface_get_content_id (part);
+		if (part_cid && strcmp (cid, part_cid) == 0)
+			return part; /* we found it! */
+		
+		part = NULL;
+		parts = parts->next;
+	}
+	
+	return part;
+}
+
+
+static gboolean
+on_url_requested (GtkWidget *widget, const gchar *uri,
+		  GtkHTMLStream *stream,
+		  ModestTnyMsgView *msg_view)
+{
+	
+	ModestTnyMsgViewPrivate *priv;
+	priv = MODEST_TNY_MSG_VIEW_GET_PRIVATE (msg_view);
+
+	g_message ("url requested: %s", uri);
+	
+	if (g_str_has_prefix (uri, "cid:")) {
+		/* +4 ==> skip "cid:" */
+		
+		TnyMsgMimePartIface *part = find_cid_image (priv->msg, uri + 4);
+		if (!part) {
+			g_message ("%s not found", uri + 4);
+			gtk_html_stream_close (stream, GTK_HTML_STREAM_ERROR);
+		} else {
+			TnyStreamIface *tny_stream =
+				TNY_STREAM_IFACE(modest_tny_stream_gtkhtml_new(stream));
+			tny_msg_mime_part_iface_decode_to_stream (part,tny_stream);
+			gtk_html_stream_close (stream, GTK_HTML_STREAM_OK);
+		}
+	}
+	return TRUE;
 }
 
 
@@ -373,14 +454,15 @@ set_html_message (ModestTnyMsgView *self, TnyMsgMimePartIface *tny_body)
 {
 	TnyStreamIface *gtkhtml_stream;	
 	ModestTnyMsgViewPrivate *priv;
-
+	
 	g_return_val_if_fail (self, FALSE);
 	g_return_val_if_fail (tny_body, FALSE);
 	
 	priv = MODEST_TNY_MSG_VIEW_GET_PRIVATE(self);
 
 	gtkhtml_stream =
-		TNY_STREAM_IFACE(modest_tny_stream_gtkhtml_new(GTK_HTML(priv->gtkhtml)));
+		TNY_STREAM_IFACE(modest_tny_stream_gtkhtml_new
+				 (gtk_html_begin(GTK_HTML(priv->gtkhtml))));
 	
 	tny_stream_iface_reset (gtkhtml_stream);
 	tny_msg_mime_part_iface_decode_to_stream (tny_body, gtkhtml_stream);
@@ -407,7 +489,7 @@ set_text_message (ModestTnyMsgView *self, TnyMsgMimePartIface *tny_body)
 	g_return_val_if_fail (tny_body, FALSE);
 
 	priv           = MODEST_TNY_MSG_VIEW_GET_PRIVATE(self);
-
+	
 	buf            = gtk_text_buffer_new (NULL);
 	txt_stream     = TNY_STREAM_IFACE(tny_text_buffer_stream_new (buf));
 		
@@ -439,6 +521,8 @@ modest_tny_msg_view_set_message (ModestTnyMsgView *self, TnyMsgIface *msg)
 	
 	priv = MODEST_TNY_MSG_VIEW_GET_PRIVATE(self);
 
+	priv->msg = msg;
+	
 	fill_gtkhtml_with_txt (GTK_HTML(priv->gtkhtml), "");
 
 	if (!msg) 

@@ -22,7 +22,6 @@ enum {
 
 typedef struct _ModestTnyStreamGtkhtmlPrivate ModestTnyStreamGtkhtmlPrivate;
 struct _ModestTnyStreamGtkhtmlPrivate {
-	GtkHTML       *gtkhtml;
 	GtkHTMLStream *stream;
 };
 #define MODEST_TNY_STREAM_GTKHTML_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -85,8 +84,7 @@ modest_tny_stream_gtkhtml_init (ModestTnyStreamGtkhtml *obj)
 {
 	ModestTnyStreamGtkhtmlPrivate *priv;
 	priv = MODEST_TNY_STREAM_GTKHTML_GET_PRIVATE(obj);
-	
-	priv->gtkhtml = NULL;
+
 	priv->stream  = NULL;
 }
 
@@ -96,22 +94,21 @@ modest_tny_stream_gtkhtml_finalize (GObject *obj)
 	ModestTnyStreamGtkhtmlPrivate *priv;
 
 	priv = MODEST_TNY_STREAM_GTKHTML_GET_PRIVATE(obj);
-	priv->gtkhtml = NULL;
 	priv->stream = NULL;
 }
 
 GObject*
-modest_tny_stream_gtkhtml_new (GtkHTML *gtkhtml)
+modest_tny_stream_gtkhtml_new (GtkHTMLStream *stream)
 {
 	GObject *obj;
 	ModestTnyStreamGtkhtmlPrivate *priv;
-
-	g_return_val_if_fail (gtkhtml, NULL);
 	
 	obj  = G_OBJECT(g_object_new(MODEST_TYPE_TNY_STREAM_GTKHTML, NULL));
 	priv = MODEST_TNY_STREAM_GTKHTML_GET_PRIVATE(obj);
 
-	priv->gtkhtml = gtkhtml;
+	g_return_val_if_fail (stream, NULL);
+	
+	priv->stream = stream;
 
 	return obj;
 }
@@ -135,10 +132,10 @@ gtkhtml_write (TnyStreamIface *self, const char *buffer, size_t n)
 	g_return_val_if_fail (self, 0);
 
 	priv = MODEST_TNY_STREAM_GTKHTML_GET_PRIVATE(self);
-	if (!priv->stream) 
-		priv->stream = gtk_html_begin (GTK_HTML(priv->gtkhtml));
-		
-	gtk_html_stream_write (priv->stream, buffer, n);
+	if (!priv->stream)
+		g_warning ("cannot write to closed stream");
+	else
+		gtk_html_stream_write (priv->stream, buffer, n);
 	
 	return n; /* hmmm */
 }
@@ -147,11 +144,6 @@ gtkhtml_write (TnyStreamIface *self, const char *buffer, size_t n)
 static gint
 gtkhtml_flush (TnyStreamIface *self)
 {
-	ModestTnyStreamGtkhtmlPrivate *priv;
-	g_return_val_if_fail (self, 0);
-	priv = MODEST_TNY_STREAM_GTKHTML_GET_PRIVATE(self);
-	
-	gtk_html_flush (GTK_HTML(priv->gtkhtml));
 	return 0;
 }
 	
@@ -173,7 +165,6 @@ gtkhtml_close (TnyStreamIface *self)
 static gboolean
 gtkhtml_eos (TnyStreamIface *self)
 {
-	g_warning (__FUNCTION__);
 	return TRUE;
 }
 
@@ -182,15 +173,6 @@ gtkhtml_eos (TnyStreamIface *self)
 static gint
 gtkhtml_reset (TnyStreamIface *self)
 {
-	ModestTnyStreamGtkhtmlPrivate *priv;
-	g_return_val_if_fail (self, 0);
-	priv = MODEST_TNY_STREAM_GTKHTML_GET_PRIVATE(self);
-	
-	if (priv->stream) {
-		gtk_html_end (priv->gtkhtml, priv->stream, GTK_HTML_STREAM_OK);
-		priv->stream   = NULL;
-	}
-
 	return 0;
 }
 
@@ -198,7 +180,6 @@ gtkhtml_reset (TnyStreamIface *self)
 static ssize_t
 gtkhtml_write_to_stream (TnyStreamIface *self, TnyStreamIface *output)
 {
-	g_warning (__FUNCTION__);
 	return 0;
 }
 
