@@ -664,7 +664,100 @@ on_new_mail_clicked (GtkWidget *widget, ModestUI *modest_ui)
 	modest_ui_show_edit_window (modest_ui, "", "", "", "", "", NULL);
 }
 
-static gchar*
+
+static GString *
+get_next_line(GtkTextBuffer *b, GtkTextIter *iter)
+{
+	GtkTextIter iter2;
+	gchar *tmp;
+	gint debi;
+	
+	debi = gtk_text_iter_get_line(iter);
+	gtk_text_buffer_get_iter_at_line_offset(b,
+			&iter2,
+			gtk_text_iter_get_line(iter),
+			gtk_text_iter_get_chars_in_line(iter) -1
+		);
+	tmp = gtk_text_buffer_get_text(b, &iter2, iter, FALSE);
+	gtk_text_iter_forward_line(iter);
+	return g_string_new(tmp);
+}
+
+static int
+get_indent_level(const char *l)
+{
+	int indent = 0;
+	while (l[0]) {
+		if (l[0] == '>') {
+			indent++;
+			if (l[1] == ' ') {
+				l++;
+			}
+		} else {
+			break;
+		}
+		l++;
+		
+	}
+	return indent;
+}
+
+static void
+unquote_line(GString *l) {
+	GString *r;
+	gchar *p;
+	
+	p = l->str;
+	while (p[0]) {
+		if (p[0] == '>') {
+			if (p[1] == ' ') {
+				p++;
+			}
+		} else {
+			break;
+		}
+		p++;
+	}
+	g_string_erase (l, 0, p - l->str);
+}
+
+static void
+append_quoted(GString *buf, const int indent, const GString *str, const int cutpoint) {
+	int i;
+	
+	for (i=0; i<=indent; i++) {
+		g_string_append(buf, "> ");
+	}
+	if (cutpoint > 0) {
+		g_string_append_len(buf, str->str, cutpoint);
+	} else {
+		g_string_append(buf, str->str);
+	}
+	g_string_append(buf, "\n");
+}
+
+static gint
+get_breakpoint(const gchar *s, const gint indent, const gint limit) {
+	gint i, last;
+	
+	last = strlen(s);
+	if (last + 2 * indent < limit)
+		return last;
+	
+	i = strlen(s);
+	for ( ; i>0; i--) {
+		if (s[i] == ' ') {
+			if (i + 2 * indent <= limit) {
+				return i;
+			} else {
+				last = i;
+			}
+		}
+	}
+	return last;
+}
+	
+static gchar *
 modest_ui_quote_msg(const TnyMsgIface *src, const gchar *from, time_t sent_date)
 {
 	GList *parts;
@@ -676,9 +769,12 @@ modest_ui_quote_msg(const TnyMsgIface *src, const gchar *from, time_t sent_date)
 	GtkTextIter begin, end, iter1, iter2, iter3;
 	gchar *txt;
 	gint tmp;
-	gint indent;
+	gint limit = 76;
+	gint indent, breakpoint;
+	gint rem_indent;
 	gchar sent_str[101];
-	GString *reply_head;
+	GString *q, *l, *remaining;
+	
 
 	buf = gtk_text_buffer_new(NULL);
 	dest = tny_text_buffer_stream_new(buf);
@@ -710,142 +806,45 @@ modest_ui_quote_msg(const TnyMsgIface *src, const gchar *from, time_t sent_date)
 
 	/* format sent_date */
 	strftime(sent_str, 100, "%c", localtime(&sent_date));
-	reply_head = g_string_new("");
-	g_string_printf(reply_head, "On %s, %s wrote:\n", sent_str, from);
-
-	gtk_text_buffer_get_iter_at_line(buf, &iter1, 0);
-	gtk_text_buffer_insert(buf, &iter1, reply_head->str, -1);
-	g_string_free(reply_head, TRUE);
-	gtk_text_buffer_get_iter_at_line(buf, &iter1, 1);
-	txt = g_malloc0(1);
-	while (TRUE) {
-		/* at each beginning of this while, iter1 must be at the beginning of
-		   the (next) line to quote */
-
-		iter2 = iter1;
-		/* check whether line is already quoted */
-		iter2 = iter1;
-		/* TODO: what happens if buf is empty? */
-		gtk_text_iter_forward_char (&iter2);
-		g_free(txt);
-		txt = gtk_text_buffer_get_text (buf, &iter1, &iter2, FALSE);
+	q = g_string_new("");
+	g_string_printf(q, "On %s, %s wrote:\n", sent_str, from);
 		
-		/* insert quotation mark */
-		tmp = gtk_text_iter_get_offset(&iter1);
-		gtk_text_buffer_insert(buf, &iter1, "> ", -1);
-
-		/* still at the beginning of the line */
-		gtk_text_buffer_get_iter_at_offset(buf, &iter1, tmp);
-		iter2 = iter1;
-
-		if (strcmp(txt, ">") != 0) {
-
-			/* line was not already quoted */
-
-			/* now check whether the line must be broken: */
-			if (gtk_text_iter_get_chars_in_line(&iter2) >= 79) {
-
-				gtk_text_iter_set_line_offset(&iter2, 79);
-
-				/* move iter1 behind quote mark at the beginnig of the line */
-				gtk_text_iter_forward_word_end(&iter1);
-
-				/* save iter2 position */
-				iter3 = iter2;
-
-				/* move iter2 back one word (from breakpoint in line) */
-				gtk_text_iter_backward_word_start(&iter2);
-
-				/* check for one-word line (up to iter2) */
-				if (!gtk_text_iter_compare(&iter1, &iter2) < 0) {
-					gtk_text_iter_forward_word_end(&iter2); /* BUG? */
-				}
-
-				/* insert linebreak */
-				tmp = gtk_text_iter_get_offset(&iter2);
-				gtk_text_buffer_insert(buf, &iter2, "\n", -1);
-				gtk_text_buffer_get_iter_at_offset(buf, &iter1, tmp);
-
-				/* move to the beginning of the "new" line */
-				gtk_text_iter_forward_line(&iter1);
-
-				/* try to kill 1 space */
-				iter2 = iter1;
-				gtk_text_iter_forward_char(&iter2);
-				g_free(txt);
-				txt = gtk_text_buffer_get_text(buf, &iter1, &iter2, FALSE);
-				if (strcmp(txt, " ") == 0) {
-					tmp = gtk_text_iter_get_offset(&iter1);
-					gtk_text_buffer_delete(buf, &iter1, &iter2);
-					gtk_text_buffer_get_iter_at_offset(buf, &iter1, tmp);
-				}
-
-				/* check whether there is a next line to merge */
-				iter3 = iter1;
-				if (!gtk_text_iter_forward_line(&iter3)) {
-					continue;
-				}
-				/* iter3 is now at the beginning of the next line.*/
-
-				/* check for empty line */
-				if (gtk_text_iter_get_chars_in_line(&iter3) < 2) {
-					continue;
-				}
-
-				/* check for quote */
-				iter2 = iter3;
-				gtk_text_iter_forward_char (&iter2);
-				g_free(txt);
-				txt = gtk_text_buffer_get_text(buf, &iter3, &iter2, FALSE);
-				if (strcmp(txt, ">") == 0) {
-					/* iter1 is still at the beginning of the newly broken
-					 * so we don't have to cleanup */
-					continue;
-				}
-
-				if (!gtk_text_iter_forward_to_line_end(&iter1)) {
-					/* no further lines to merge */
-					continue;
-				}
-
-				/* "mark" newline */
-				iter2 = iter1;
-				gtk_text_iter_forward_char(&iter2);
-
-				/* do the merge */
-				tmp = gtk_text_iter_get_offset(&iter1);
-				gtk_text_buffer_delete (buf, &iter1, &iter2);
-				gtk_text_buffer_get_iter_at_offset (buf, &iter1, tmp);
-
-				/* insert space */
-				gtk_text_buffer_insert(buf, &iter1, " ", -1);
-				gtk_text_buffer_get_iter_at_offset (buf, &iter1, tmp);
-
-				/* move to beginning of line and continue */
-				gtk_text_iter_set_line_offset(&iter1, 0);
-				continue;
-
+	remaining = g_string_new("");
+	gtk_text_buffer_get_iter_at_line(buf, &iter1, 0);
+	do {
+		l = get_next_line(buf, &iter1);
+		indent = get_indent_level(l->str);
+		unquote_line(l);
+		
+		if (remaining->len) {
+			if (l->len && indent == rem_indent) {
+				g_string_prepend(l, " ");
+				g_string_prepend(l, remaining->str);
 			} else {
-				/* line doesn't have to be broken, we're done. */
-				if (!gtk_text_iter_forward_line(&iter1)) {
-					break;
-				}
-				continue;
+				do {
+					breakpoint = get_breakpoint(remaining->str, rem_indent, limit);
+					append_quoted(q, rem_indent, remaining, breakpoint);
+					g_string_erase(remaining, 0, breakpoint);
+					if (remaining->str[0] == ' ') {
+						g_string_erase(remaining, 0, 1);
+					}		
+				} while (remaining->len);
 			}
-		} else {
-			/* line was already quoted */
-			if (!gtk_text_iter_forward_line(&iter1)) {
-				break;
-			}
-			continue;
 		}
-	}
-
-	gtk_text_buffer_get_bounds (buf, &begin, &end);
-	g_free(txt);
-	txt = gtk_text_buffer_get_text (buf, &begin, &end, FALSE);
-
-	return txt;
+		g_string_free(remaining, TRUE);
+		breakpoint = get_breakpoint(l->str, indent, limit);
+		remaining = g_string_new(l->str + breakpoint);
+		if (remaining->str[0] == ' ') {
+			g_string_erase(remaining, 0, 1);
+		}
+		rem_indent = indent;
+		append_quoted(q, indent, l, breakpoint);
+		g_string_free(l, TRUE);
+	} while (!gtk_text_iter_is_end(&iter1));
+	
+	g_object_unref(stream);
+	g_object_unref(buf);
+	return g_string_free(q, FALSE);
 }
 
 static void
