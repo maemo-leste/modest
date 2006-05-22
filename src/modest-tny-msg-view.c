@@ -189,7 +189,7 @@ hyperlinkify_plain_text (GString *txt)
 
 
 static gchar *
-convert_to_html (gchar *data)
+convert_to_html (const gchar *data)
 {
 	int		 i;
 	gboolean	 first_space = TRUE;
@@ -330,7 +330,7 @@ get_url_matches (GString *txt)
 }
 
 static gboolean
-fill_gtkhtml_with_txt (GtkHTML* gtkhtml, gchar* txt)
+fill_gtkhtml_with_txt (GtkHTML* gtkhtml, const gchar* txt)
 {
 	gchar *html;
 	
@@ -338,7 +338,7 @@ fill_gtkhtml_with_txt (GtkHTML* gtkhtml, gchar* txt)
 	g_return_val_if_fail (txt, FALSE);
 
 	html = convert_to_html (txt);
-	gtk_html_load_from_string (gtkhtml, html, strlen(html));
+	gtk_html_load_from_string (gtkhtml, html,  strlen(html));
 	g_free (html);
 
 	return TRUE;
@@ -437,11 +437,11 @@ modest_tny_msg_view_set_message (ModestTnyMsgView *self, TnyMsgIface *msg)
 	
 	priv = MODEST_TNY_MSG_VIEW_GET_PRIVATE(self);
 
-	if (!msg) {
-		fill_gtkhtml_with_txt (GTK_HTML(priv->gtkhtml), "");
-		return;
-	}
+	fill_gtkhtml_with_txt (GTK_HTML(priv->gtkhtml), "");
 
+	if (!msg) 
+		return;
+	
 	body = find_body_part (msg, "text/html");
 	if (body) {
 		set_html_message (self, body);
