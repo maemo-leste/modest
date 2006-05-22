@@ -17,7 +17,7 @@ static void     modest_tny_msg_view_finalize     (GObject *obj);
 
 
 static GSList*  get_url_matches (GString *txt);
-
+static gboolean fill_gtkhtml_with_txt (GtkHTML* gtkhtml, const gchar* txt);
 
 /*
  * we need these regexps to find URLs in plain text e-mails
@@ -104,21 +104,14 @@ modest_tny_msg_view_init (ModestTnyMsgView *obj)
 {
  	ModestTnyMsgViewPrivate *priv;
 	
-	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(obj),
-				       GTK_POLICY_AUTOMATIC,
-				       GTK_POLICY_AUTOMATIC);
-	
-
 	priv = MODEST_TNY_MSG_VIEW_GET_PRIVATE(obj);
+
 	priv->gtkhtml = gtk_html_new();
 	gtk_html_set_editable        (GTK_HTML(priv->gtkhtml), FALSE);
         gtk_html_allow_selection     (GTK_HTML(priv->gtkhtml), TRUE);
-        gtk_html_set_caret_mode      (GTK_HTML(priv->gtkhtml), TRUE);
+        gtk_html_set_caret_mode      (GTK_HTML(priv->gtkhtml), FALSE);
         gtk_html_set_blocking        (GTK_HTML(priv->gtkhtml), FALSE);
         gtk_html_set_images_blocking (GTK_HTML(priv->gtkhtml), FALSE);
-
-	gtk_widget_show              (priv->gtkhtml);
-	gtk_container_add (GTK_CONTAINER(obj), priv->gtkhtml);	
 }
 	
 
@@ -137,9 +130,18 @@ modest_tny_msg_view_new (TnyMsgIface *msg)
 {
 	GObject *obj;
 	ModestTnyMsgView* self;
-
+	ModestTnyMsgViewPrivate *priv;
+	
 	obj  = G_OBJECT(g_object_new(MODEST_TYPE_TNY_MSG_VIEW, NULL));
 	self = MODEST_TNY_MSG_VIEW(obj);
+	priv = MODEST_TNY_MSG_VIEW_GET_PRIVATE (self);
+
+	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(self),
+				       GTK_POLICY_AUTOMATIC,
+				       GTK_POLICY_AUTOMATIC);
+
+	if (priv->gtkhtml) 
+		gtk_container_add (GTK_CONTAINER(obj), priv->gtkhtml);	
 	
 	if (msg)
 		modest_tny_msg_view_set_message (self, msg);

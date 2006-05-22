@@ -221,8 +221,6 @@ get_password (TnyAccountIface *account, const gchar *prompt)
 	ModestTnyAccountStorePrivate *priv;
 	gchar *val;
 
-        g_message (__FUNCTION__);
-
 	g_return_val_if_fail (account, NULL);
 
 	key = tny_account_iface_get_id (account);
@@ -429,12 +427,9 @@ modest_tny_account_store_get_store_accounts  (TnyAccountStoreIface *iface)
 							 MODEST_PROTO_TYPE_STORE,
 							 NULL, FALSE);
 
-	g_message ("accounts: %d", g_slist_length (accounts));
 	tny_accounts = tny_accounts_from_server_accounts (self, accounts, TRUE);
 	g_slist_free (accounts);
-	g_message ("store accounts: %d", g_list_length (tny_accounts));
-
-
+	
 	/*
 	 * FIXME: after gconf notification support is added,
 	 * we can simply return priv->store_account
@@ -501,9 +496,6 @@ tny_account_store_get_session (TnyAccountStore *self)
 	g_return_val_if_fail (self, NULL);
 
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
-
-	g_message ("returning tny session camel %p",
-		   priv->tny_session_camel);
 
 	return priv->tny_session_camel;
 }

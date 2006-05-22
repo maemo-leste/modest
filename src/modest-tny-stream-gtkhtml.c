@@ -112,6 +112,7 @@ modest_tny_stream_gtkhtml_new (GtkHTML *gtkhtml)
 	priv = MODEST_TNY_STREAM_GTKHTML_GET_PRIVATE(obj);
 
 	priv->gtkhtml = gtkhtml;
+
 	return obj;
 }
 
@@ -122,7 +123,6 @@ modest_tny_stream_gtkhtml_new (GtkHTML *gtkhtml)
 static ssize_t
 gtkhtml_read (TnyStreamIface *self, char *buffer, size_t n)
 {
-	g_warning (__FUNCTION__);
 	return -1; /* we cannot read */
 }
 
