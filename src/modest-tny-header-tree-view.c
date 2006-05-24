@@ -96,10 +96,23 @@ modest_tny_header_tree_view_class_init (ModestTnyHeaderTreeViewClass *klass)
 }
 
 static void
+map_flags (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
+           GtkTreeModel *tree_model,  GtkTreeIter *iter,  gpointer data)
+{
+	gint flags;
+	static gchar txt[10];
+	
+	gtk_tree_model_get (tree_model, iter, TNY_MSG_HEADER_LIST_MODEL_FLAGS_COLUMN, &flags, -1);
+	g_snprintf (txt, 10, "%d", flags);
+	g_object_set (G_OBJECT (renderer), "text", txt, NULL);
+}
+
+static void
 modest_tny_header_tree_view_init (ModestTnyHeaderTreeView *obj)
 {
 	GtkTreeViewColumn *column;
 	GtkCellRenderer *renderer = gtk_cell_renderer_text_new ();
+	GtkCellRenderer *renderer_toggle = gtk_cell_renderer_toggle_new ();
  	ModestTnyHeaderTreeViewPrivate *priv;
 	
 	priv = MODEST_TNY_HEADER_TREE_VIEW_GET_PRIVATE(obj); 
@@ -107,6 +120,14 @@ modest_tny_header_tree_view_init (ModestTnyHeaderTreeView *obj)
 	priv->tny_msg_folder = NULL;
 	priv->header_tree_model = NULL;
 	
+	column =  gtk_tree_view_column_new_with_attributes(_("F"), renderer, NULL);
+	gtk_tree_view_column_set_resizable (column, TRUE);
+	gtk_tree_view_column_set_sort_column_id (column, TNY_MSG_HEADER_LIST_MODEL_FLAGS_COLUMN);
+	gtk_tree_view_column_set_sort_indicator (column, FALSE);
+	gtk_tree_view_append_column (GTK_TREE_VIEW(obj), column);
+	gtk_tree_view_column_set_cell_data_func(column, renderer, map_flags, NULL, NULL);
+	
+	renderer = gtk_cell_renderer_text_new ();
 	column =  gtk_tree_view_column_new_with_attributes(_("Date"), renderer,
 							   "text",
 							   TNY_MSG_HEADER_LIST_MODEL_DATE_RECEIVED_COLUMN,
