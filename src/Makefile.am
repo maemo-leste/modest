@@ -36,6 +36,8 @@ modest_SOURCES=\
 	modest-proto.h\
 	modest-proto.c\
 	modest-ui.h\
+	modest-text-utils.h\
+	modest-text-utils.c\
 	modest-tny-stream-gtkhtml.h\
 	modest-tny-stream-gtkhtml.c\
 	modest-tny-transport-actions.c\
