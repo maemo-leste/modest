@@ -66,7 +66,11 @@ get_indent_level(const char *l)
 		l++;
 		
 	}
-	if (strcmp("-- ", l) == 0) {
+
+	/* 	if we hit the signature marker "-- ", we return -(indent + 1). This
+ 	* 	stops reformatting.
+ 	*/
+	if (strcmp(l, "-- ") == 0) {
 		return -1-indent;
 	} else {
 		return indent;
