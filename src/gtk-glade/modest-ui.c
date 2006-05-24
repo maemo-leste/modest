@@ -670,9 +670,7 @@ get_next_line(GtkTextBuffer *b, GtkTextIter *iter)
 {
 	GtkTextIter iter2;
 	gchar *tmp;
-	gint debi;
 	
-	debi = gtk_text_iter_get_line(iter);
 	gtk_text_buffer_get_iter_at_line_offset(b,
 			&iter2,
 			gtk_text_iter_get_line(iter),
@@ -736,16 +734,39 @@ append_quoted(GString *buf, const int indent, const GString *str, const int cutp
 	g_string_append(buf, "\n");
 }
 
-static gint
-get_breakpoint(const gchar *s, const gint indent, const gint limit) {
+static int
+get_breakpoint_utf8(const gchar *s, const gint indent, const gint limit) {
+	gint index = 0;
+	const gchar *pos, *last;
+	gunichar *uni;
+	
+	last = NULL;
+	pos = s;
+	uni = g_utf8_to_ucs4_fast(s, -1, NULL);
+	while (pos[0]) {
+		if ((index + 2 * indent > limit) && last) {
+			g_free(uni);
+			return last - s;
+		}
+		if (g_unichar_isspace(uni[index])) {
+			last = pos;
+		}
+		pos = g_utf8_next_char(pos);
+		index++;
+	}
+	g_free(uni);
+	return index;
+}
+
+static int
+get_breakpoint_ascii(const gchar *s, const gint indent, const gint limit) {
 	gint i, last;
 	
 	last = strlen(s);
 	if (last + 2 * indent < limit)
 		return last;
 	
-	i = strlen(s);
-	for ( ; i>0; i--) {
+	for ( i=strlen(s) ; i>0; i-- ) {
 		if (s[i] == ' ') {
 			if (i + 2 * indent <= limit) {
 				return i;
@@ -756,7 +777,18 @@ get_breakpoint(const gchar *s, const gint indent, const gint limit) {
 	}
 	return last;
 }
+
+static int
+get_breakpoint(const gchar *s, const gint indent, const gint limit) {
 	
+	if (g_utf8_validate(s, -1, NULL)) {
+		return get_breakpoint_utf8(s, indent, limit);
+	} else { /* assume ASCII */
+		g_warning("invalid UTF-8 in msg");
+		return get_breakpoint_ascii(s, indent, limit);
+	}
+}	
+
 static gchar *
 modest_ui_quote_msg(const TnyMsgIface *src, const gchar *from, time_t sent_date)
 {
@@ -766,14 +798,11 @@ modest_ui_quote_msg(const TnyMsgIface *src, const gchar *from, time_t sent_date)
 	TnyTextBufferStream *dest;
 	TnyMsgMimePartIface *body = NULL;
 	GtkTextBuffer *buf;
-	GtkTextIter begin, end, iter1, iter2, iter3;
-	gchar *txt;
-	gint tmp;
+	GtkTextIter iter;
 	gint limit = 76;
-	gint indent, breakpoint;
-	gint rem_indent;
+	gint indent, breakpoint, rem_indent;
 	gchar sent_str[101];
-	GString *q, *l, *remaining;
+	GString *q, *l, *remaining; /* quoted msg, line */
 	
 
 	buf = gtk_text_buffer_new(NULL);
@@ -783,9 +812,7 @@ modest_ui_quote_msg(const TnyMsgIface *src, const gchar *from, time_t sent_date)
 	parts  = (GList*) tny_msg_iface_get_parts (src);
 
 	while (parts) {
-		/* TODO: maybe we'd like to quote more than one part?
-		 *       cleanup, fix leaks
-		 */
+		/* TODO: maybe we'd like to quote more than one part? */
 		TnyMsgMimePartIface *part =
 			TNY_MSG_MIME_PART_IFACE(parts->data);
 		if (tny_msg_mime_part_iface_content_type_is (part, "text/plain")) {
@@ -808,11 +835,12 @@ modest_ui_quote_msg(const TnyMsgIface *src, const gchar *from, time_t sent_date)
 	strftime(sent_str, 100, "%c", localtime(&sent_date));
 	q = g_string_new("");
 	g_string_printf(q, "On %s, %s wrote:\n", sent_str, from);
-		
+	
+	/* remaining will store the rest of the line if we have to break it */
 	remaining = g_string_new("");
-	gtk_text_buffer_get_iter_at_line(buf, &iter1, 0);
+	gtk_text_buffer_get_iter_at_line(buf, &iter, 0);
 	do {
-		l = get_next_line(buf, &iter1);
+		l = get_next_line(buf, &iter);
 		indent = get_indent_level(l->str);
 		unquote_line(l);
 		
@@ -840,7 +868,7 @@ modest_ui_quote_msg(const TnyMsgIface *src, const gchar *from, time_t sent_date)
 		rem_indent = indent;
 		append_quoted(q, indent, l, breakpoint);
 		g_string_free(l, TRUE);
-	} while (!gtk_text_iter_is_end(&iter1));
+	} while (!gtk_text_iter_is_end(&iter));
 	
 	g_object_unref(stream);
 	g_object_unref(buf);
