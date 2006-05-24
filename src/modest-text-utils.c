@@ -53,6 +53,7 @@ static int
 get_indent_level(const char *l)
 {
 	int indent = 0;
+	
 	while (l[0]) {
 		if (l[0] == '>') {
 			indent++;
@@ -65,7 +66,11 @@ get_indent_level(const char *l)
 		l++;
 		
 	}
-	return indent;
+	if (strcmp("-- ", l) == 0) {
+		return -1-indent;
+	} else {
+		return indent;
+	}
 }
 
 static void
@@ -88,9 +93,10 @@ unquote_line(GString *l) {
 }
 
 static void
-append_quoted(GString *buf, const int indent, const GString *str, const int cutpoint) {
+append_quoted(GString *buf, int indent, const GString *str, const int cutpoint) {
 	int i;
 	
+	indent = indent < 0? abs(indent) -1 : indent;
 	for (i=0; i<=indent; i++) {
 		g_string_append(buf, "> ");
 	}
@@ -103,10 +109,12 @@ append_quoted(GString *buf, const int indent, const GString *str, const int cutp
 }
 
 static int
-get_breakpoint_utf8(const gchar *s, const gint indent, const gint limit) {
+get_breakpoint_utf8(const gchar *s, gint indent, const gint limit) {
 	gint index = 0;
 	const gchar *pos, *last;
 	gunichar *uni;
+	
+	indent = indent < 0? abs(indent) -1 : indent;
 	
 	last = NULL;
 	pos = s;
@@ -123,7 +131,7 @@ get_breakpoint_utf8(const gchar *s, const gint indent, const gint limit) {
 		index++;
 	}
 	g_free(uni);
-	return index;
+	return strlen(s);
 }
 
 static int
