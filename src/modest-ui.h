@@ -63,11 +63,11 @@ gboolean     modest_ui_show_main_window (ModestUI *ui);
 
 
 /**
- * modest_ui_show_new_edit_window:
+ * modest_ui_show_edit_window:
  * @ui: a ModestUI instance 
  * @to: people to send this to, ';' separated
- * @cc: people send carbon-copies (cc), ';' separated
- * @bcc people send blind-carbon-copies (bcc),';' separated
+ * @cc: people to send carbon-copies (cc), ';' separated
+ * @bcc people to send blind-carbon-copies (bcc),';' separated
  * @subject: the subject of the message
  * @body: the body text of the message
  * @att: a list with the filepaths for attachments
@@ -85,4 +85,3 @@ gboolean     modest_ui_show_edit_window (ModestUI *ui,
 G_END_DECLS
 
 #endif /* __MODEST_UI_H__ */
-
