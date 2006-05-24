@@ -93,17 +93,16 @@ gboolean        modest_account_mgr_remove_account         (ModestAccountMgr *sel
 /**
  * modest_account_mgr_add_server_account:
  * @self: a ModestAccountMgr instance
+ * @name: name (id) of the account
  * @hostname: the hostname
  * @username: the username
  * @password: the password
- * @proto:    the prototype
- * @err: a GError ptr, or NULL to ignore.
+ * @proto:    the protocol (imap, smtp, ...) used for this account
  * 
- * add a server account to the configuration
+ * add a server account to the configuration.
  * the server account with @name should not already exist
- *
- * Returns: TRUE if  succeeded, FALSE otherwise,
- * @err gives details in case of error
+ * 
+ * Returns: TRUE if succeeded, FALSE otherwise,
  */
 gboolean modest_account_mgr_add_server_account    (ModestAccountMgr *self,
 						   const gchar *name,
@@ -127,7 +126,47 @@ gboolean modest_account_mgr_add_server_account    (ModestAccountMgr *self,
 gboolean        modest_account_mgr_remove_server_account    (ModestAccountMgr *self,
 							     const gchar *name,
 							     GError **err);
+								 /**
+ * modest_account_mgr_remove_identity:
+ * @self: a ModestAccountMgr instance
+ * @name: the name for the identity
+ * @err: a GError ptr, or NULL to ignore.
+ * 
+ * remove aidentity from the configuration
+ * the identity with @name should exist
+ *
+ * Returns: TRUE if the removal succeeded, FALSE otherwise,
+ * @err gives details in case of error
+ */
+gboolean        modest_account_mgr_remove_identity (ModestAccountMgr *self,
+							     const gchar *name,
+							     GError **err);
 
+/**
+ * modest_account_mgr_add_identity:
+ * @self: a ModestAccountMgr instance
+ * @name: the name (id) for the identity
+ * @email: the user's email address
+ * @replyto: default replyto address
+ * @signature: the signature for this identity
+ * @use_signature: whether to use this signature instead of the default one
+ * @id_via: the transport to send emails for this identity via
+ * @use_id_via: whether to use this via insteda of the default one
+ * 
+ * add a user identity to the configuration
+ * 
+ * Returns: TRUE if  succeeded, FALSE otherwise,
+ */
+
+gboolean
+modest_account_mgr_add_identity (ModestAccountMgr *self,
+                      const gchar *name,
+					  const gchar *email,
+					  const gchar *replyto,
+					  const gchar *signature,
+                      const gboolean use_signature,
+                      const gchar *id_via,
+                      const gboolean use_id_via);
 
 /**
  * modest_account_mgr_account_names:
@@ -201,6 +240,9 @@ gchar*	        modest_account_mgr_get_account_string     (ModestAccountMgr *self
 							   const gchar *key, GError **err);
 
 gchar*	        modest_account_mgr_get_server_account_string     (ModestAccountMgr *self,
+							   const gchar *name,
+							   const gchar *key, GError **err);
+gchar*	        modest_account_mgr_get_identity_string     (ModestAccountMgr *self,
 							   const gchar *name,
 							   const gchar *key, GError **err);
 
@@ -321,4 +363,3 @@ gboolean	modest_account_mgr_set_server_account_bool       (ModestAccountMgr *sel
 G_END_DECLS
 
 #endif /* __MODEST_ACCOUNT_MGR_H__ */
-

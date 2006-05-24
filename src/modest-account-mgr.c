@@ -12,6 +12,7 @@ static void    modest_account_mgr_finalize      (GObject *obj);
 
 static gchar*   get_account_keyname (const gchar *accname, const gchar *name);
 static gchar*   get_server_account_keyname (const gchar *accname, const gchar *name);
+static gchar*   get_identity_keyname (const gchar *accname, const gchar *name);
 
 /* list my signals */
 enum {
@@ -244,7 +245,8 @@ modest_account_mgr_add_server_account    (ModestAccountMgr *self,
 				null_means_empty(proto),
 				NULL);
 	g_free (key);
-
+	g_free (acckey);
+		
 	return TRUE; /* FIXME: better error checking */
 }
 
@@ -277,6 +279,104 @@ modest_account_mgr_remove_server_account    (ModestAccountMgr *self,
 	return retval;
 }
 
+gboolean
+modest_account_mgr_remove_identity    (ModestAccountMgr *self,
+					     const gchar *name,
+					     GError **err)
+{
+	ModestAccountMgrPrivate *priv;
+	gchar *acckey, *key;
+	gboolean retval;
+
+	g_return_val_if_fail (self, FALSE);
+	g_return_val_if_fail (name, FALSE);
+
+	priv = MODEST_ACCOUNT_MGR_GET_PRIVATE(self);
+
+	acckey = g_strconcat (MODEST_IDENTITY_NAMESPACE, "/",
+			      name, NULL);
+
+	if (!modest_conf_key_exists(priv->modest_conf, acckey, NULL)) {
+		g_warning ("server account %s does not exist exist", name);
+		g_free (acckey);
+		return FALSE;
+	}
+
+	retval = modest_conf_remove_key (priv->modest_conf, acckey, NULL);
+	g_free (acckey);
+
+	return retval;
+}
+
+
+
+gboolean
+modest_account_mgr_add_identity (ModestAccountMgr *self,
+                      const gchar *name,
+					  const gchar *email,
+					  const gchar *replyto,
+					  const gchar *signature,
+                      const gboolean use_signature,
+                      const gchar *id_via,
+                      const gboolean use_id_via)
+{
+	ModestAccountMgrPrivate *priv;
+	gchar *id_key, *key;
+
+	g_return_val_if_fail (self, FALSE);
+	g_return_val_if_fail (name, FALSE);
+
+	/* TODO: check already exists */
+
+	priv = MODEST_ACCOUNT_MGR_GET_PRIVATE(self);
+	id_key = g_strconcat (MODEST_IDENTITY_NAMESPACE, "/",
+			      name, NULL);
+
+	if (modest_conf_key_exists(priv->modest_conf, id_key, NULL)) {
+		g_warning ("identity %s already exists", name);
+		g_free (id_key);
+		return FALSE;
+	}
+
+	/* email */
+	key = g_strconcat (id_key, "/", MODEST_ACCOUNT_EMAIL, NULL);
+	modest_conf_set_string (priv->modest_conf, key,
+				null_means_empty(email), NULL);
+	g_free (key);
+
+	/* replyto */
+	key = g_strconcat (id_key, "/", MODEST_ACCOUNT_REPLYTO, NULL);
+	modest_conf_set_string (priv->modest_conf, key,
+				null_means_empty(replyto), NULL);	
+	g_free (key);
+
+	/* signature */
+	key = g_strconcat (id_key, "/", MODEST_ACCOUNT_SIGNATURE, NULL);
+	modest_conf_set_string (priv->modest_conf, key,
+				null_means_empty(signature), NULL);	
+	g_free (key);
+	
+	/* use_signature */
+	key = g_strconcat (id_key, "/", MODEST_ACCOUNT_USE_SIGNATURE, NULL);
+	modest_conf_set_bool (priv->modest_conf, key,
+				use_signature, NULL);	
+	g_free (key);
+	
+	/* signature */
+	key = g_strconcat (id_key, "/", MODEST_ACCOUNT_ID_VIA, NULL);
+	modest_conf_set_string (priv->modest_conf, key,
+				null_means_empty(id_via), NULL);	
+	g_free (key);
+	
+	/* use_signature */
+	key = g_strconcat (id_key, "/", MODEST_ACCOUNT_USE_ID_VIA, NULL);
+	modest_conf_set_bool (priv->modest_conf, key,
+				use_id_via, NULL);	
+	g_free (key);
+	g_free (id_key);
+	
+	return TRUE; /* FIXME: better error checking */
+}
 
 /* strip the first /n/ character from each element */
 /* caller must make sure all elements are strings with
@@ -412,6 +512,27 @@ modest_account_mgr_get_account_string (ModestAccountMgr *self, const gchar *name
 	return get_account_string (self, name, key, FALSE, err);
 }
 
+gchar*
+modest_account_mgr_get_identity_string (ModestAccountMgr *self, const gchar *name,
+		    const gchar *key, GError **err)
+{
+	ModestAccountMgrPrivate *priv;
+
+	gchar *keyname;
+	gchar * retval;
+
+	g_return_val_if_fail (self, NULL);
+	g_return_val_if_fail (name, NULL);
+	g_return_val_if_fail (key, NULL);
+
+	keyname = get_identity_keyname (name, key);
+	
+	priv = MODEST_ACCOUNT_MGR_GET_PRIVATE(self);
+	retval = modest_conf_get_string (priv->modest_conf,keyname,err);
+	g_free (keyname);
+
+	return retval;
+}
 
 
 static gint
@@ -685,12 +806,18 @@ modest_account_mgr_server_account_exists (ModestAccountMgr *self, const gchar *n
 }
 
 
-
 gboolean
 modest_account_mgr_account_exists (ModestAccountMgr *self, const gchar *name,
 				   GError **err)
 {
 	return account_exists (self, name, FALSE, err);
+}
+
+gboolean
+modest_account_mgr_identity_exists (ModestAccountMgr *self, const gchar *name,
+				   GError **err)
+{
+	return account_exists (self, name, TRUE, err);
 }
 
 
@@ -721,5 +848,19 @@ get_server_account_keyname (const gchar *accname, const gchar *name)
 	else
 		return g_strconcat
 			(MODEST_SERVER_ACCOUNT_NAMESPACE, "/",
+			 accname, NULL);
+}
+
+/* must be freed by caller */
+static gchar*
+get_identity_keyname (const gchar *accname, const gchar *name)
+{
+	if (name)
+		return g_strconcat
+			(MODEST_IDENTITY_NAMESPACE "/",
+			 accname, "/", name, NULL);
+	else
+		return g_strconcat
+			(MODEST_IDENTITY_NAMESPACE, "/",
 			 accname, NULL);
 }

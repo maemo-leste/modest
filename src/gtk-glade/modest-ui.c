@@ -809,13 +809,15 @@ on_send_button_clicked (GtkWidget *widget, ModestUI *modest_ui)
 	ModestTnyTransportActions *actions;
 	ModestUIPrivate *priv;
 	GtkWidget *to_entry, *subject_entry, *body_view;
-	const gchar *to, *subject;
+	const gchar *to, *subject, *email_from;
 	gchar *body;
 	GtkTextIter start, end;
 	GtkTextBuffer *buf;
 	TnyAccountStoreIface *account_store;
 	const GList *transport_accounts;
 	TnyTransportAccountIface *transport_account;
+	ModestConf       *conf;
+	ModestAccountMgr *acc_mgr;
 
 	g_return_if_fail (modest_ui);
 
@@ -844,10 +846,20 @@ on_send_button_clicked (GtkWidget *widget, ModestUI *modest_ui)
 	gtk_text_buffer_get_bounds (buf, &start, &end);
 	body    = gtk_text_buffer_get_text (buf, &start, &end, FALSE);
 
-	g_message ("sending %s ==> %s", subject, to);
+	/* FIXME: HACK! */
+	conf = MODEST_CONF(modest_conf_new());
+	acc_mgr = MODEST_ACCOUNT_MGR(modest_account_mgr_new (conf));
+	if (!acc_mgr) {
+		g_warning ("failed to instantiate account mgr");
+		return;
+	}
+	email_from = modest_account_mgr_get_identity_string(acc_mgr, "myidentity", MODEST_ACCOUNT_EMAIL, NULL);
+	/* end HACK */
+	
+	g_message("sending \"%s\" %s ==> %s", subject, email_from, to);
 	modest_tny_transport_actions_send_message (actions,
 						   transport_account,
-						   "dirk-jan.binnema@nokia.com",
+						   email_from,
 						   to, "", "", subject,
 						   body);
 	g_free (body);

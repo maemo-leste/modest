@@ -175,7 +175,15 @@ install_test_account (ModestConf *conf)
 						       NULL, "imap");
 		modest_account_mgr_add_server_account (acc_mgr, "mytransport", "localhost", NULL,
 						       NULL, "smtp");
+		
 	}
+	if (modest_account_mgr_identity_exists(acc_mgr, "myidentity", NULL)) {
+		if (!modest_account_mgr_remove_identity(acc_mgr, "myidentity", NULL)) {
+			g_warning ("could not delete existing identity");
+		}
+	}
+	if (!modest_account_mgr_add_identity (acc_mgr, "myidentity", "user@localhost",
+		                       "", "", FALSE, NULL, FALSE ))
+		g_warning ("failed to add test account");
 	g_object_unref (G_OBJECT(acc_mgr));
 }
-
