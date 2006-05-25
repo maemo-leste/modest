@@ -214,8 +214,8 @@ modest_account_mgr_add_server_account    (ModestAccountMgr *self,
 
 	if (modest_conf_key_exists(priv->modest_conf, acckey, NULL)) {
 		g_warning ("server account %s already exists", name);
-		g_free (acckey);
-		return FALSE;
+		//g_free (acckey);
+		//return FALSE;
 	}
 
 	/* hostname */
@@ -334,8 +334,8 @@ modest_account_mgr_add_identity (ModestAccountMgr *self,
 
 	if (modest_conf_key_exists(priv->modest_conf, id_key, NULL)) {
 		g_warning ("identity %s already exists", name);
-		g_free (id_key);
-		return FALSE;
+		//g_free (id_key);
+		//return FALSE;
 	}
 
 	/* email */
