@@ -28,6 +28,8 @@
 static void                              modest_tny_transport_actions_class_init   (ModestTnyTransportActionsClass *klass);
 static void                              modest_tny_transport_actions_init         (ModestTnyTransportActions *obj);
 static void                              modest_tny_transport_actions_finalize     (GObject *obj);
+static gboolean                          is_ascii                                  (const gchar *s);
+static char *                            get_content_type                          (const gchar *s);
 
 /* list my signals */
 enum {
@@ -114,7 +116,34 @@ modest_tny_transport_actions_new (void)
 	return G_OBJECT(g_object_new(MODEST_TYPE_TNY_TRANSPORT_ACTIONS, NULL));
 }
 
+static gboolean
+is_ascii(const gchar *s)
+{
+	while (s[0]) {
+		if (s[0] & 128 || s[0] < 32)
+			return FALSE;
+		s++;
+	}
+	return TRUE;
+}
 
+static char *
+get_content_type(const gchar *s)
+{
+	GString *type;
+	
+	type = g_string_new("text/plain");
+	if (!is_ascii(s)) {
+		if (g_utf8_validate(s, -1, NULL)) {
+			g_string_append(type, "; charset=\"utf-8\"");
+		} else {
+			/* it should be impossible to reach this, but better safe than sorry */
+			g_warning("invalid utf8 in message");
+			g_string_append(type, "; charset=\"latin1\"");
+		}
+	}
+	return g_string_free(type, FALSE);
+}
 
 gboolean
 modest_tny_transport_actions_send_message (ModestTnyTransportActions *self,
@@ -130,6 +159,7 @@ modest_tny_transport_actions_send_message (ModestTnyTransportActions *self,
 	TnyMsgMimePartIface *body_part;
 	TnyMsgHeaderIface *headers;
 	TnyStreamIface *body_stream;
+	gchar *content_type;
 
 	new_msg     = TNY_MSG_IFACE(tny_msg_new ());
 	headers     = TNY_MSG_HEADER_IFACE(tny_msg_header_new ());
@@ -145,17 +175,19 @@ modest_tny_transport_actions_send_message (ModestTnyTransportActions *self,
 	tny_msg_header_iface_set_bcc (TNY_MSG_HEADER_IFACE (headers), bcc);
 	tny_msg_header_iface_set_subject (TNY_MSG_HEADER_IFACE (headers), subject);
 
+	content_type = get_content_type(body);
+		
 	tny_msg_iface_set_header (new_msg, headers);
 	tny_msg_mime_part_iface_construct_from_stream (body_part, body_stream,
-						       "text/plain");
-	tny_msg_mime_part_iface_set_content_type  (body_part,"text/plain");	
+						       content_type);
+	tny_msg_mime_part_iface_set_content_type  (body_part, content_type);	
 	
 	tny_msg_mime_part_iface_set_content_type (
-		TNY_MSG_MIME_PART_IFACE(new_msg), "text/plain");
+		TNY_MSG_MIME_PART_IFACE(new_msg), content_type);
 	tny_stream_iface_reset (body_stream);
 	
 	tny_msg_mime_part_iface_construct_from_stream (TNY_MSG_MIME_PART_IFACE(new_msg),
-						       body_stream, "text/plain");
+						       body_stream, content_type);
 	
 	tny_transport_account_iface_send (transport_account, new_msg);
 
@@ -163,9 +195,7 @@ modest_tny_transport_actions_send_message (ModestTnyTransportActions *self,
 	g_object_unref (G_OBJECT(body_part));
 	g_object_unref (G_OBJECT(headers));
 	g_object_unref (G_OBJECT(new_msg));
+	g_free(content_type);
 
 	return TRUE;	
 }
-
-
-
