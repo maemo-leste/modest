@@ -94,10 +94,24 @@ static void
 modest_tny_folder_tree_view_init (ModestTnyFolderTreeView *obj)
 {
 	ModestTnyFolderTreeViewPrivate *priv;
+	GtkTreeViewColumn *column;
+	GtkCellRenderer *renderer;
+	
 	priv =	MODEST_TNY_FOLDER_TREE_VIEW_GET_PRIVATE(obj);
 
 	priv->view_is_empty     = TRUE;
 	priv->tny_account_store = NULL;
+
+	renderer = gtk_cell_renderer_text_new ();
+	column = gtk_tree_view_column_new_with_attributes(_("All Mail Folders"),
+							  renderer,"text",
+							  TNY_ACCOUNT_TREE_MODEL_NAME_COLUMN,
+							  NULL);
+	gtk_tree_view_column_set_resizable (column, TRUE);
+	gtk_tree_view_append_column (GTK_TREE_VIEW(obj), column);
+	
+	gtk_tree_view_set_headers_visible   (GTK_TREE_VIEW(obj), TRUE);
+	gtk_tree_view_set_headers_clickable (GTK_TREE_VIEW(obj), TRUE);
 }
 
 
@@ -239,7 +253,7 @@ void
 selection_changed (GtkTreeSelection *sel, gpointer user_data)
 {
 	GtkTreeModel            *model;
-	TnyMsgFolderIface       *folder;
+	TnyMsgFolderIface       *folder = NULL;
 	GtkTreeIter             iter;
 	ModestTnyFolderTreeView *tree_view;
 	ModestTnyFolderTreeViewPrivate *priv;
@@ -262,8 +276,11 @@ selection_changed (GtkTreeSelection *sel, gpointer user_data)
 			    TNY_ACCOUNT_TREE_MODEL_INSTANCE_COLUMN,
 			    &folder, -1);
 	
- 	g_signal_emit (G_OBJECT(tree_view), signals[FOLDER_SELECTED_SIGNAL], 0,
-		       folder); 
+	/* folder will not be defined if you click eg. on the root node */
+	if (folder) {
+		g_signal_emit (G_OBJECT(tree_view), signals[FOLDER_SELECTED_SIGNAL], 0,
+		       folder);
+	}
 }
 
 

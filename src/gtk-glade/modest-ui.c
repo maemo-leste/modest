@@ -626,8 +626,6 @@ static GtkWidget*
 modest_main_window_folder_tree (ModestAccountMgr *modest_acc_mgr,
 				TnyAccountStoreIface *account_store)
 {
-	GtkTreeViewColumn *column;
-	GtkCellRenderer *renderer = gtk_cell_renderer_text_new ();
 	GtkWidget *folder_tree;
 
 	folder_tree = GTK_WIDGET(modest_tny_folder_tree_view_new (account_store));
@@ -635,25 +633,7 @@ modest_main_window_folder_tree (ModestAccountMgr *modest_acc_mgr,
 		g_warning ("could not create folder list");
 		return NULL;
 	}
-
-	column = gtk_tree_view_column_new_with_attributes(_("All Mail Folders"),
-							  renderer,"text",
-							  TNY_ACCOUNT_TREE_MODEL_NAME_COLUMN,
-							  NULL);
-	gtk_tree_view_column_set_resizable (column, TRUE);
-	gtk_tree_view_append_column (GTK_TREE_VIEW(folder_tree), column);
-
-	column = gtk_tree_view_column_new_with_attributes(_("Unread"),
-							  renderer, "text",
-							  TNY_ACCOUNT_TREE_MODEL_UNREAD_COLUMN,
-							  NULL);
-	gtk_tree_view_column_set_resizable (column, TRUE);
-	gtk_tree_view_append_column (GTK_TREE_VIEW(folder_tree), column);
-
-
-	gtk_tree_view_set_headers_visible   (GTK_TREE_VIEW(folder_tree), TRUE);
-	gtk_tree_view_set_headers_clickable (GTK_TREE_VIEW(folder_tree), TRUE);
-
+	
 	return folder_tree;
 }
 
