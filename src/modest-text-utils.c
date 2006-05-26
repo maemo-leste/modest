@@ -36,17 +36,30 @@ get_breakpoint(const gchar *s, const gint indent, const gint limit);
 static GString *
 get_next_line(GtkTextBuffer *b, GtkTextIter *iter)
 {
-	GtkTextIter iter2;
+	GtkTextIter iter2, iter3;
 	gchar *tmp;
+	GString *line;
+	
+	if (gtk_text_iter_is_end(iter))
+		return g_string_new("");
 	
 	gtk_text_buffer_get_iter_at_line_offset(b,
 			&iter2,
 			gtk_text_iter_get_line(iter),
-			gtk_text_iter_get_chars_in_line(iter) -1
+			gtk_text_iter_get_chars_in_line(iter) - 1
 		);
-	tmp = gtk_text_buffer_get_text(b, &iter2, iter, FALSE);
+	iter3 = iter2;
+	gtk_text_iter_forward_char(&iter2);
+	if (gtk_text_iter_is_end(&iter2)) {
+		tmp = gtk_text_buffer_get_text(b, &iter2, iter, FALSE);
+	} else {
+		tmp = gtk_text_buffer_get_text(b, &iter3, iter, FALSE);
+	}
+	line = g_string_new(tmp);
+		
 	gtk_text_iter_forward_line(iter);
-	return g_string_new(tmp);
+	
+	return line;
 }
 
 static int
@@ -215,7 +228,7 @@ modest_text_utils_quote(GtkTextBuffer *buf, const gchar *from, const time_t sent
 		rem_indent = indent;
 		append_quoted(q, indent, l, breakpoint);
 		g_string_free(l, TRUE);
-	} while (!gtk_text_iter_is_end(&iter));
+	} while (remaining->str[0] || !gtk_text_iter_is_end(&iter));
 	
 	return g_string_free(q, FALSE);
 }
