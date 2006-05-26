@@ -339,7 +339,8 @@ tny_account_from_key (ModestTnyAccountStore *self, const gchar *key,
 					     TNY_ACCOUNT_STORE_IFACE(self));
 	/* id */
 	tny_account_iface_set_id (tny_account, key);
-
+	tny_account_iface_set_name (tny_account, key);
+	
 	/* proto */
 	val = modest_account_mgr_get_server_account_string (priv->modest_acc_mgr, key,
 							    MODEST_ACCOUNT_PROTO, NULL);
@@ -351,7 +352,6 @@ tny_account_from_key (ModestTnyAccountStore *self, const gchar *key,
 		g_object_unref (G_OBJECT(tny_account));
 		return NULL;
 	}
-
 
 	/* hostname */
 	val = modest_account_mgr_get_server_account_string (priv->modest_acc_mgr, key,

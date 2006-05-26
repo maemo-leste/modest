@@ -16,7 +16,7 @@ static void modest_tny_folder_tree_view_class_init  (ModestTnyFolderTreeViewClas
 static void modest_tny_folder_tree_view_init        (ModestTnyFolderTreeView *obj);
 static void modest_tny_folder_tree_view_finalize    (GObject *obj);
 
-static void modest_tny_folder_tree_view_iface_init   (gpointer iface, gpointer data);
+//static void modest_tny_folder_tree_view_iface_init   (gpointer iface, gpointer data);
 static void modest_tny_folder_tree_view_set_account_store (TnySummaryWindowIface *self,
 							   TnyAccountStoreIface *account_store);
 static gboolean update_model (ModestTnyFolderTreeView *self,TnyAccountStoreIface *iface);
@@ -60,19 +60,10 @@ modest_tny_folder_tree_view_get_type (void)
 			1,		/* n_preallocs */
 			(GInstanceInitFunc) modest_tny_folder_tree_view_init,
 		};
-		
-		static const GInterfaceInfo iface_info = {
-			(GInterfaceInitFunc) modest_tny_folder_tree_view_iface_init,
-			NULL, /* finalize */
-			NULL /* data */
-		};
-		
+				
 		my_type = g_type_register_static (GTK_TYPE_TREE_VIEW,
 		                                  "ModestTnyFolderTreeView",
-		                                  &my_info, 0);
-		g_type_add_interface_static (my_type, TNY_TYPE_SUMMARY_WINDOW_IFACE,
-					     &iface_info);
-		
+		                                  &my_info, 0);		
 	}
 	return my_type;
 }
@@ -108,22 +99,6 @@ modest_tny_folder_tree_view_init (ModestTnyFolderTreeView *obj)
 	priv->view_is_empty     = TRUE;
 	priv->tny_account_store = NULL;
 }
-
-
-static void
-modest_tny_folder_tree_view_iface_init (gpointer iface, gpointer data)
-{
-	TnySummaryWindowIfaceClass *klass;
-
-	g_return_if_fail (iface);
-	
-	klass =	(TnySummaryWindowIfaceClass*) iface;
-		
-	klass->set_account_store_func =
-		modest_tny_folder_tree_view_set_account_store;
-}
-
-
 
 
 static void
