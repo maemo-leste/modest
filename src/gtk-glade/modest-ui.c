@@ -718,6 +718,7 @@ modest_ui_reply_to_msg (ModestUI *modest_ui, TnyMsgHeaderIface *header,
 	const TnyMsgFolderIface *folder;
 	GString *re_sub;
 	const gchar *subject, *from;
+	GtkTextBuffer *unquoted;
 	gchar *quoted;
 	time_t sent_date;
 	
@@ -740,7 +741,14 @@ modest_ui_reply_to_msg (ModestUI *modest_ui, TnyMsgHeaderIface *header,
 		/* FIXME: honor replyto, cc */
 		from = tny_msg_header_iface_get_from(header);
 		sent_date = tny_msg_header_iface_get_date_sent(header);
-		quoted = modest_ui_quote_msg(msg, from, sent_date);
+		
+		unquoted = modest_tny_msg_view_get_selected(msg_view);
+		
+		if (unquoted != NULL) {
+			quoted = modest_text_utils_quote (unquoted, from, sent_date, 66);
+		} else {
+			quoted = modest_ui_quote_msg(msg, from, sent_date);
+		}
 	} else {
 		g_warning("no header");
 		return;
