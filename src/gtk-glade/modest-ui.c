@@ -25,6 +25,7 @@
 #include "../modest-tny-transport-actions.h"
 
 #include "../modest-text-utils.h"
+#include "../modest-tny-msg-actions.h"
 
 #define MODEST_GLADE          PREFIX "/share/modest/glade/modest.glade"
 #define MODEST_GLADE_MAIN_WIN "main"
@@ -65,6 +66,8 @@ static void on_send_button_clicked (GtkWidget *widget, ModestUI *modest_ui);
 
 static void register_toolbar_callbacks (ModestUI *modest_ui);
 
+static void reply_to_msg (ModestUI *modest_ui, TnyMsgHeaderIface *header,
+						ModestTnyMsgView *msg_view);
 
 /* list my signals */
 enum {
@@ -645,54 +648,8 @@ on_new_mail_clicked (GtkWidget *widget, ModestUI *modest_ui)
 	modest_ui_show_edit_window (modest_ui, "", "", "", "", "", NULL);
 }
 
-
-static gchar *
-modest_ui_quote_msg(const TnyMsgIface *src, const gchar *from, time_t sent_date)
-{
-	GList *parts;
-	TnyMsgMimePartIface *part;
-	TnyStreamIface* stream;
-	TnyTextBufferStream *dest;
-	TnyMsgMimePartIface *body = NULL;
-	GtkTextBuffer *buf;
-	gint limit = 76; /* TODO: make configurable */
-	gchar *quoted;
-	
-	buf = gtk_text_buffer_new(NULL);
-	dest = tny_text_buffer_stream_new(buf);
-	
-	/* is the warning in this line due to a bug in tinymail? */
-	parts  = (GList*) tny_msg_iface_get_parts (src);
-
-	while (parts) {
-		/* TODO: maybe we'd like to quote more than one part? */
-		TnyMsgMimePartIface *part =
-			TNY_MSG_MIME_PART_IFACE(parts->data);
-		if (tny_msg_mime_part_iface_content_type_is (part, "text/plain")) {
-			body = part;
-			break;
-		}
-		parts = parts->next;
-	}
-	if (!body) {
-		return NULL;
-	}
-	buf    = gtk_text_buffer_new (NULL);
-	stream = TNY_STREAM_IFACE(tny_text_buffer_stream_new (buf));
-
-	tny_stream_iface_reset (stream);
-	tny_msg_mime_part_iface_decode_to_stream (body, stream);
-	tny_stream_iface_reset (stream);
-
-	quoted = modest_text_utils_quote (buf, from, sent_date, limit);
-		
-	g_object_unref(stream);
-	g_object_unref(buf);
-	return quoted;
-}
-
 static void
-modest_ui_reply_to_msg (ModestUI *modest_ui, TnyMsgHeaderIface *header,
+reply_to_msg (ModestUI *modest_ui, TnyMsgHeaderIface *header,
 						ModestTnyMsgView *msg_view) {
 	const TnyMsgIface *msg;
 	const TnyMsgFolderIface *folder;
@@ -701,41 +658,37 @@ modest_ui_reply_to_msg (ModestUI *modest_ui, TnyMsgHeaderIface *header,
 	GtkTextBuffer *unquoted;
 	gchar *quoted;
 	time_t sent_date;
+	gint line_limit = 76;
 	
-	quoted = "";
-	if (header) {
-		folder = tny_msg_header_iface_get_folder (TNY_MSG_HEADER_IFACE(header));
-		if (!folder) {
-			g_warning ("cannot find folder");
-			return;
-		}
-
-		msg = tny_msg_folder_iface_get_message (TNY_MSG_FOLDER_IFACE(folder), header);
-		if (!msg) {
-			g_warning ("cannot find msg");
-			return;
-		}
-		subject = tny_msg_header_iface_get_subject(header);
-		re_sub = g_string_new(subject);
-		g_string_prepend(re_sub, "Re: ");
-		/* FIXME: honor replyto, cc */
-		from = tny_msg_header_iface_get_from(header);
-		sent_date = tny_msg_header_iface_get_date_sent(header);
-		
-		unquoted = modest_tny_msg_view_get_selected(msg_view);
-		
-		if (unquoted != NULL) {
-			quoted = modest_text_utils_quote (unquoted, from, sent_date, 66);
-		} else {
-			quoted = modest_ui_quote_msg(msg, from, sent_date);
-		}
-	} else {
+	if (!header) {
 		g_warning("no header");
 		return;
 	}
+	folder = tny_msg_header_iface_get_folder (TNY_MSG_HEADER_IFACE(header));
+	if (!folder) {
+		g_warning ("cannot find folder");
+		return;
+	}
 
+	msg = tny_msg_folder_iface_get_message (TNY_MSG_FOLDER_IFACE(folder), header);
+	if (!msg) {
+		g_warning ("cannot find msg");
+		return;
+	}
+	subject = tny_msg_header_iface_get_subject(header);
+	re_sub = g_string_new(subject);
+	g_string_prepend(re_sub, "Re: ");
+	/* FIXME: honor replyto, cc */
+	from = tny_msg_header_iface_get_from(header);
+	sent_date = tny_msg_header_iface_get_date_sent(header);
+	
+	unquoted = modest_tny_msg_view_get_selected_text(msg_view);
+	quoted = modest_tny_msg_actions_quote(msg, from, sent_date, line_limit, unquoted);
+	
 	modest_ui_show_edit_window (modest_ui, from, /* cc */ "", /* bcc */ "", re_sub->str, quoted, NULL);
 	g_free(quoted);
+	if (unquoted != NULL)
+		g_object_unref(unquoted);
 	g_string_free(re_sub, TRUE);
 }
 
@@ -784,7 +737,7 @@ on_reply_clicked (GtkWidget *widget, ModestUI *modest_ui)
 			    TNY_MSG_HEADER_LIST_MODEL_INSTANCE_COLUMN,
 			    &header, -1);
 
-	modest_ui_reply_to_msg (modest_ui, header, msg_view);
+	reply_to_msg (modest_ui, header, msg_view);
 }
 
 

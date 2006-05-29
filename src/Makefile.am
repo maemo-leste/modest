@@ -33,6 +33,8 @@ modest_SOURCES=\
 	modest-tny-header-tree-view.c\
 	modest-tny-msg-view.h\
 	modest-tny-msg-view.c\
+	modest-tny-msg-actions.h\
+	modest-tny-msg-actions.c\
 	modest-proto.h\
 	modest-proto.c\
 	modest-ui.h\

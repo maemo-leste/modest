@@ -509,52 +509,8 @@ set_text_message (ModestTnyMsgView *self, TnyMsgMimePartIface *tny_body)
 	return TRUE;
 }
 
-/* WIP (az), unused */
-char *
-get_all_text(ModestTnyMsgView *self)
-{
-	GtkWidget *html;
-	ModestTnyMsgViewPrivate *priv;
-	GSList *list;
-	GString *str = g_string_new ("");
-	gchar *ptr;
-	gint id = 0;
-	GObject *obj;
-	//HtmlBoxText *text;
-	
-	g_return_if_fail (self);
-	priv = MODEST_TNY_MSG_VIEW_GET_PRIVATE(self);
-	html = priv->gtkhtml;
-	
-	//list = view->sel_list;
-	
-	//if (view->sel_list == NULL)
-		//	return NULL;
-	
-	while (obj = gtk_html_get_object_by_id(GTK_HTML(html), id)) {
-		//text = HTML_BOX_TEXT (obj->data);
-
-		//list = list->next;
-		/*
-		 * Some boxes may not have any text
-		 */
-		//if (text->canon_text == NULL)
-		//	continue;
-		//ptr = (gchar *)text->canon_text;
-		//g_string_append_len (str, ptr, text->length);
-		printf("obj#%d\n", id);
-		id++;
-			
-	}
-	ptr = str->str;
-	g_string_free (str, FALSE);
-	return ptr;
-
-}
-
-
 GtkTextBuffer *
-modest_tny_msg_view_get_selected (ModestTnyMsgView *self)
+modest_tny_msg_view_get_selected_text (ModestTnyMsgView *self)
 {
 	ModestTnyMsgViewPrivate *priv;
 	gchar *sel;
@@ -571,9 +527,8 @@ modest_tny_msg_view_get_selected (ModestTnyMsgView *self)
 	/* I'm sure there is a better way to check for selected text */
 	sel = gtk_html_get_selection_html(GTK_HTML(html), &len);
 	
-	/* and I hope we can get rid of this hack soon: */
 	if (sel == NULL)
-		gtk_html_select_all(GTK_HTML(html));
+		return NULL;
 	
 	clip = gtk_widget_get_clipboard(html, GDK_SELECTION_PRIMARY);
 	text = gtk_clipboard_wait_for_text(clip);
