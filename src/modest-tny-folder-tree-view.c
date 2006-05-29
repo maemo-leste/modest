@@ -89,7 +89,37 @@ modest_tny_folder_tree_view_class_init (ModestTnyFolderTreeViewClass *klass)
 			      g_cclosure_marshal_VOID__POINTER,
 			      G_TYPE_NONE, 1, G_TYPE_POINTER); 
 }
-		
+
+
+
+static void
+map_folder_text  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
+		  GtkTreeModel *tree_model,  GtkTreeIter *iter,  gpointer data)
+{
+	GObject *rendobj;
+	gchar *fname;
+	guint unread;
+	
+	gtk_tree_model_get (tree_model, iter,
+			    TNY_ACCOUNT_TREE_MODEL_NAME_COLUMN, &fname,
+			    TNY_ACCOUNT_TREE_MODEL_UNREAD_COLUMN, &unread, -1);
+	rendobj = G_OBJECT(renderer);
+
+	/* folders with unread messages are bold and with (%d) */
+	if (unread > 0) {
+		gchar *name_number = g_strdup_printf ("%s (%d)", fname, unread);
+		g_object_set (rendobj, "text", name_number, NULL);
+		g_free (name_number);
+		g_object_set (rendobj, "weight", 800, NULL);
+	} else
+		g_object_set (rendobj, "weight", 400, NULL); /* default, non-bold */
+
+
+	g_free (fname);
+}
+
+
+
 static void
 modest_tny_folder_tree_view_init (ModestTnyFolderTreeView *obj)
 {
@@ -107,6 +137,7 @@ modest_tny_folder_tree_view_init (ModestTnyFolderTreeView *obj)
 							  renderer,"text",
 							  TNY_ACCOUNT_TREE_MODEL_NAME_COLUMN,
 							  NULL);
+	gtk_tree_view_column_set_cell_data_func(column, renderer, map_folder_text, NULL, NULL);
 	gtk_tree_view_column_set_resizable (column, TRUE);
 	gtk_tree_view_append_column (GTK_TREE_VIEW(obj), column);
 	
@@ -277,10 +308,9 @@ selection_changed (GtkTreeSelection *sel, gpointer user_data)
 			    &folder, -1);
 	
 	/* folder will not be defined if you click eg. on the root node */
-	if (folder) {
+	if (folder)
 		g_signal_emit (G_OBJECT(tree_view), signals[FOLDER_SELECTED_SIGNAL], 0,
 		       folder);
-	}
 }
 
 

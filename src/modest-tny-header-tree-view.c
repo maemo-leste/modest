@@ -96,10 +96,10 @@ modest_tny_header_tree_view_class_init (ModestTnyHeaderTreeViewClass *klass)
 }
 
 static void
-map_flags (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
+map_header_icon (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
            GtkTreeModel *tree_model,  GtkTreeIter *iter,  gpointer data)
 {
-	gint flags;
+	TnyMsgHeaderFlags flags;
 	static gchar txt[10];
 	
 	gtk_tree_model_get (tree_model, iter, TNY_MSG_HEADER_LIST_MODEL_FLAGS_COLUMN, &flags, -1);
@@ -107,28 +107,51 @@ map_flags (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 	g_object_set (G_OBJECT (renderer), "text", txt, NULL);
 }
 
+
+static void
+map_header_text  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
+           GtkTreeModel *tree_model,  GtkTreeIter *iter,  gpointer data)
+{
+	GObject *rendobj;
+	TnyMsgHeaderFlags flags;
+
+	gtk_tree_model_get (tree_model, iter, TNY_MSG_HEADER_LIST_MODEL_FLAGS_COLUMN,
+			    &flags, -1);
+	rendobj = G_OBJECT(renderer);
+	
+	if (!(flags & TNY_MSG_HEADER_FLAG_SEEN))
+		g_object_set (rendobj, "weight", 800, NULL);
+	else
+		g_object_set (rendobj, "weight", 400, NULL); /* default, non-bold */
+}
+
+
 static void
 modest_tny_header_tree_view_init (ModestTnyHeaderTreeView *obj)
 {
 	GtkTreeViewColumn *column;
-	GtkCellRenderer *renderer = gtk_cell_renderer_text_new ();
-	GtkCellRenderer *renderer_toggle = gtk_cell_renderer_toggle_new ();
- 	ModestTnyHeaderTreeViewPrivate *priv;
+	GtkCellRenderer *renderer_icon, *renderer_header;
+
+	ModestTnyHeaderTreeViewPrivate *priv;
 	
 	priv = MODEST_TNY_HEADER_TREE_VIEW_GET_PRIVATE(obj); 
 
+	renderer_icon   = gtk_cell_renderer_text_new (); /* TODO */
+	renderer_header = gtk_cell_renderer_text_new (); 
+
 	priv->tny_msg_folder = NULL;
 	priv->header_tree_model = NULL;
-	
-	column =  gtk_tree_view_column_new_with_attributes(_("F"), renderer, NULL);
+
+	/* flags */
+	column =  gtk_tree_view_column_new_with_attributes(_("F"), renderer_icon, NULL);
 	gtk_tree_view_column_set_resizable (column, TRUE);
 	gtk_tree_view_column_set_sort_column_id (column, TNY_MSG_HEADER_LIST_MODEL_FLAGS_COLUMN);
 	gtk_tree_view_column_set_sort_indicator (column, FALSE);
 	gtk_tree_view_append_column (GTK_TREE_VIEW(obj), column);
-	gtk_tree_view_column_set_cell_data_func(column, renderer, map_flags, NULL, NULL);
-	
-	renderer = gtk_cell_renderer_text_new ();
-	column =  gtk_tree_view_column_new_with_attributes(_("Date"), renderer,
+	gtk_tree_view_column_set_cell_data_func(column, renderer_icon, map_header_icon, NULL, NULL);
+
+	/* date */
+	column =  gtk_tree_view_column_new_with_attributes(_("Date"), renderer_header,
 							   "text",
 							   TNY_MSG_HEADER_LIST_MODEL_DATE_RECEIVED_COLUMN,
  							   NULL);
@@ -136,11 +159,12 @@ modest_tny_header_tree_view_init (ModestTnyHeaderTreeView *obj)
 	gtk_tree_view_column_set_sort_column_id (column, TNY_MSG_HEADER_LIST_MODEL_DATE_RECEIVED_COLUMN);
 	gtk_tree_view_column_set_sort_indicator (column, TRUE);
 	gtk_tree_view_append_column (GTK_TREE_VIEW(obj), column);
+	gtk_tree_view_column_set_cell_data_func(column, renderer_header, map_header_text, NULL, NULL);
 	g_signal_connect (G_OBJECT (column), "clicked", G_CALLBACK (column_clicked), obj);
 
-
-
-	column =  gtk_tree_view_column_new_with_attributes(_("From"), renderer,
+	
+	/* from */
+	column =  gtk_tree_view_column_new_with_attributes(_("From"), renderer_header,
 							   "text",
 							   TNY_MSG_HEADER_LIST_MODEL_FROM_COLUMN,
 							   NULL);
@@ -148,10 +172,12 @@ modest_tny_header_tree_view_init (ModestTnyHeaderTreeView *obj)
 	gtk_tree_view_column_set_sort_column_id (column, TNY_MSG_HEADER_LIST_MODEL_FROM_COLUMN);
 	gtk_tree_view_column_set_sort_indicator (column, TRUE);
 	gtk_tree_view_append_column (GTK_TREE_VIEW(obj), column);
+	gtk_tree_view_column_set_cell_data_func(column, renderer_header, map_header_text, NULL, NULL);
 	g_signal_connect (G_OBJECT (column), "clicked", G_CALLBACK (column_clicked), obj);
 
 
-	column =  gtk_tree_view_column_new_with_attributes(_("Subject"), renderer,
+	/* subject */
+	column =  gtk_tree_view_column_new_with_attributes(_("Subject"), renderer_header,
 							   "text",
 							   TNY_MSG_HEADER_LIST_MODEL_SUBJECT_COLUMN,
 							   NULL);
@@ -161,9 +187,13 @@ modest_tny_header_tree_view_init (ModestTnyHeaderTreeView *obj)
 	gtk_tree_view_append_column (GTK_TREE_VIEW(obj), column);
 	g_signal_connect (G_OBJECT (column), "clicked", G_CALLBACK (column_clicked), obj);
 
+	
+	/* all cols */
 	gtk_tree_view_set_headers_visible   (GTK_TREE_VIEW(obj), TRUE);
 	gtk_tree_view_set_headers_clickable (GTK_TREE_VIEW(obj), TRUE);
+	gtk_tree_view_column_set_cell_data_func(column, renderer_header, map_header_text, NULL, NULL);
 
+	
 	gtk_tree_view_set_rules_hint (GTK_TREE_VIEW(obj), TRUE); /* alternating row colors */
 	
 }
@@ -270,6 +300,7 @@ selection_changed (GtkTreeSelection *sel, gpointer user_data)
 			    &header, -1);
 	
 	if (header) {
+		TnyMsgHeaderFlags flags;
 		const TnyMsgIface *msg;
 		const TnyMsgFolderIface *folder;
 		
@@ -282,18 +313,24 @@ selection_changed (GtkTreeSelection *sel, gpointer user_data)
 			if (!msg) 
 				g_message ("cannot find msg");		
 		}
+
+		/* mark message as seen; _set_flags crashes, bug in tinymail? */
+		//flags = tny_msg_header_iface_get_flags (TNY_MSG_HEADER_IFACE(header));
+		//tny_msg_header_iface_set_flags (header, flags | TNY_MSG_HEADER_FLAG_SEEN);
+						
 		g_signal_emit (G_OBJECT(tree_view), signals[MESSAGE_SELECTED_SIGNAL], 0,
 			       msg); 
 	}
 }
 
 static void
-column_clicked (GtkTreeViewColumn *treeviewcolumn, gpointer user_data)
+column_clicked (GtkTreeViewColumn *col, gpointer user_data)
 {
-	GtkTreeView *treeview = GTK_TREE_VIEW (user_data);
+	GtkTreeView *treeview;
 	gint id;
-	
-	id = gtk_tree_view_column_get_sort_column_id (treeviewcolumn);
+
+	treeview = GTK_TREE_VIEW (user_data);
+	id = gtk_tree_view_column_get_sort_column_id (col);
 	
 	gtk_tree_view_set_search_column (treeview, id);
 }
