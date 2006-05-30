@@ -118,6 +118,7 @@ modest_tny_msg_view_init (ModestTnyMsgView *obj)
 	priv->msg = NULL;
 	
 	priv->gtkhtml = gtk_html_new();
+
 	gtk_html_set_editable        (GTK_HTML(priv->gtkhtml), FALSE);
         gtk_html_allow_selection     (GTK_HTML(priv->gtkhtml), TRUE);
         gtk_html_set_caret_mode      (GTK_HTML(priv->gtkhtml), FALSE);
@@ -135,11 +136,7 @@ modest_tny_msg_view_init (ModestTnyMsgView *obj)
 static void
 modest_tny_msg_view_finalize (GObject *obj)
 {	
-	ModestTnyMsgViewPrivate *priv;
-	priv = MODEST_TNY_MSG_VIEW_GET_PRIVATE(obj);
-
-	if (priv->gtkhtml)
-		g_object_unref (G_OBJECT(priv->gtkhtml));
+	
 }
 
 GtkWidget*
