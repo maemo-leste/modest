@@ -3,6 +3,7 @@
 
 #include "modest-conf.h"
 #include "modest-account-mgr.h"
+#include "modest-identity-mgr.h"
 #include "modest-ui.h"
 
 #ifdef HAVE_CONFIG_H
@@ -152,6 +153,7 @@ static void
 install_test_account (ModestConf *conf)
 {
 	ModestAccountMgr *acc_mgr;
+	ModestIdentityMgr *id_mgr;
 	const gchar *acc_name = "test";
 	g_return_if_fail (conf);
 
@@ -177,13 +179,18 @@ install_test_account (ModestConf *conf)
 						       NULL, "smtp");
 		
 	}
-	if (modest_account_mgr_identity_exists(acc_mgr, "myidentity", NULL)) {
-		if (!modest_account_mgr_remove_identity(acc_mgr, "myidentity", NULL)) {
+	id_mgr = MODEST_IDENTITY_MGR(modest_identity_mgr_new (conf));
+	if (modest_identity_mgr_identity_exists(id_mgr, "myidentity", NULL)) {
+		if (!modest_identity_mgr_remove_identity(id_mgr, "myidentity", NULL)) {
 			g_warning ("could not delete existing identity");
 		}
 	}
-	if (!modest_account_mgr_add_identity (acc_mgr, "myidentity", "user@localhost",
-		                       "", "", FALSE, NULL, FALSE ))
-		g_warning ("failed to add test account");
+	if (!modest_identity_mgr_add_identity (id_mgr,
+										   MODEST_IDENTITY_DEFAULT_IDENTITY,
+										   "user@localhost",
+										   "", "", FALSE, NULL, FALSE ))
+		g_warning ("failed to add test identity");
+	
 	g_object_unref (G_OBJECT(acc_mgr));
+	g_object_unref (G_OBJECT(id_mgr));
 }

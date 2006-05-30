@@ -20,6 +20,9 @@ modest_SOURCES=\
 	modest-conf-keys.h\
 	modest-conf.h \
 	modest-conf-gconf.c\
+	modest-identity-keys.h\
+	modest-identity-mgr.h\
+	modest-identity-mgr.c\
 	modest-account-keys.h\
 	modest-account-mgr.h\
 	modest-account-mgr.c\

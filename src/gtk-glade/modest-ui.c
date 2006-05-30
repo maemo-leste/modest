@@ -17,6 +17,7 @@
 #include "../modest-ui.h"
 #include "../modest-window-mgr.h"
 #include "../modest-account-mgr.h"
+#include "../modest-identity-mgr.h"
 
 #include "../modest-tny-account-store.h"
 #include "../modest-tny-folder-tree-view.h"
@@ -82,6 +83,7 @@ struct _ModestUIPrivate {
 
 	ModestConf           *modest_conf;
 	ModestAccountMgr     *modest_acc_mgr;
+	ModestIdentityMgr    *modest_id_mgr;
 	ModestWindowMgr      *modest_window_mgr;
 	TnyAccountStoreIface *account_store;
 
@@ -147,6 +149,7 @@ modest_ui_init (ModestUI *obj)
  	ModestUIPrivate *priv = MODEST_UI_GET_PRIVATE(obj);
 
 	priv->modest_acc_mgr    = NULL;
+	priv->modest_id_mgr     = NULL;
 	priv->modest_conf       = NULL;
 	priv->modest_window_mgr = NULL;
 	priv->glade_xml         = NULL;
@@ -161,6 +164,10 @@ modest_ui_finalize (GObject *obj)
 	if (priv->modest_acc_mgr)
 		g_object_unref (priv->modest_acc_mgr);
 	priv->modest_acc_mgr = NULL;
+	
+	if (priv->modest_id_mgr)
+		g_object_unref (priv->modest_id_mgr);
+	priv->modest_id_mgr = NULL;
 
 	if (priv->modest_conf)
 		g_object_unref (priv->modest_conf);
@@ -177,6 +184,7 @@ modest_ui_new (ModestConf *modest_conf)
 	GObject *obj;
 	ModestUIPrivate *priv;
 	ModestAccountMgr *modest_acc_mgr;
+	ModestIdentityMgr *modest_id_mgr;
 	TnyAccountStoreIface *account_store_iface;
 
 	g_return_val_if_fail (modest_conf, NULL);
@@ -188,6 +196,14 @@ modest_ui_new (ModestConf *modest_conf)
 		MODEST_ACCOUNT_MGR(modest_account_mgr_new (modest_conf));
 	if (!modest_acc_mgr) {
 		g_warning ("could not create ModestAccountMgr instance");
+		g_object_unref (obj);
+		return NULL;
+	}
+	
+	modest_id_mgr =
+		MODEST_IDENTITY_MGR(modest_identity_mgr_new (modest_conf));
+	if (!modest_id_mgr) {
+		g_warning ("could not create ModestIdentityMgr instance");
 		g_object_unref (obj);
 		return NULL;
 	}
@@ -215,6 +231,7 @@ modest_ui_new (ModestConf *modest_conf)
 	 */
 
 	priv->modest_acc_mgr = modest_acc_mgr;
+	priv->modest_id_mgr  = modest_id_mgr;
 	g_object_ref (priv->modest_conf = modest_conf);
 
 	priv->account_store = account_store_iface;
@@ -756,7 +773,7 @@ on_send_button_clicked (GtkWidget *widget, ModestUI *modest_ui)
 	const GList *transport_accounts;
 	TnyTransportAccountIface *transport_account;
 	ModestConf       *conf;
-	ModestAccountMgr *acc_mgr;
+	ModestIdentityMgr *id_mgr;
 
 	g_return_if_fail (modest_ui);
 
@@ -785,16 +802,11 @@ on_send_button_clicked (GtkWidget *widget, ModestUI *modest_ui)
 	gtk_text_buffer_get_bounds (buf, &start, &end);
 	body    = gtk_text_buffer_get_text (buf, &start, &end, FALSE);
 
-	/* FIXME: HACK! */
-	conf = MODEST_CONF(modest_conf_new());
-	acc_mgr = MODEST_ACCOUNT_MGR(modest_account_mgr_new (conf));
-	if (!acc_mgr) {
-		g_warning ("failed to instantiate account mgr");
-		return;
-	}
-	email_from = modest_account_mgr_get_identity_string(acc_mgr, "myidentity", MODEST_ACCOUNT_EMAIL, NULL);
-	/* end HACK */
-	
+	id_mgr = priv->modest_id_mgr;
+	email_from = modest_identity_mgr_get_identity_string(id_mgr,
+														 MODEST_IDENTITY_DEFAULT_IDENTITY,
+														 MODEST_IDENTITY_EMAIL, NULL);
+			
 	g_message("sending \"%s\" %s ==> %s", subject, email_from, to);
 	modest_tny_transport_actions_send_message (actions,
 						   transport_account,
