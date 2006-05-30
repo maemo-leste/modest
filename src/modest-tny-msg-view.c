@@ -261,8 +261,10 @@ hyperlinkify_plain_text (GString *txt)
 		
 		g_free (url);
 		g_free (repl);
-		
+
+		g_free (cursor->data);	
 	}
+	
 	g_slist_free (match_list);
 }
 
