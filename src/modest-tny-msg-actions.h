@@ -16,7 +16,7 @@
 gchar *modest_tny_msg_actions_quote (const TnyMsgIface * self,
 				     const gchar * from,
 				     time_t sent_date,
-				     gint limit, char *to_quote);
+				     gint limit, gchar *to_quote);
 
 TnyMsgMimePartIface *modest_tny_msg_actions_find_body_part (TnyMsgIface * self,
 							    const gchar * mime_type);

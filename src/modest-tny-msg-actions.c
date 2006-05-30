@@ -21,12 +21,14 @@
 static gchar *quote_msg (const TnyMsgIface * src, const gchar * from,
 			 time_t sent_date, gint limit, gboolean textorhtml);
 static GtkTextBuffer *htmltotext (TnyMsgMimePartIface * body);
+
+
 static GtkTextBuffer *
 htmltotext (TnyMsgMimePartIface * body)
 {
 	GtkTextBuffer *buf;
 
-#ifdef ACTIVATE_HACKS
+#ifdef ACTIVATE_HACKS /* it still doesn't work, don't bother! */
 	GtkWidget *html, *win;
 	TnyStreamIface *stream;
 	GtkClipboard *clip;
@@ -49,7 +51,7 @@ htmltotext (TnyMsgMimePartIface * body)
 	gtk_widget_show_all (win);
 	gtk_html_select_all (GTK_HTML (html));
 	clip = gtk_widget_get_clipboard (html, GDK_SELECTION_PRIMARY);
-	//clip = gtk_widget_get_clipboard(html, GDK_SELECTION_CLIPBOARD);
+	/*clip = gtk_widget_get_clipboard(html, GDK_SELECTION_CLIPBOARD);*/
 	text = gtk_clipboard_wait_for_text (clip);
 
 	buf = gtk_text_buffer_new (NULL);
@@ -65,7 +67,7 @@ htmltotext (TnyMsgMimePartIface * body)
 gchar *
 modest_tny_msg_actions_quote (const TnyMsgIface * self, const gchar * from,
 			      time_t sent_date, gint limit,
-			      char * to_quote)
+			      gchar * to_quote)
 {
 	gchar *quoted;
 
@@ -94,6 +96,8 @@ quote_msg (const TnyMsgIface * src, const gchar * from, time_t sent_date,
 	TnyStreamIface *stream;
 	TnyMsgMimePartIface *body;
 	GtkTextBuffer *buf;
+	GtkTextIter start, end;
+	const gchar *to_quote;
 	gchar *quoted;
 
 	/* the cast makes me uneasy... */
@@ -113,9 +117,10 @@ quote_msg (const TnyMsgIface * src, const gchar * from, time_t sent_date,
 		tny_stream_iface_reset (stream);
 		g_object_unref (stream);
 	}
-
-	quoted = modest_text_utils_quote_text_buffer (buf, from, sent_date, limit);
-
+	
+	gtk_text_buffer_get_bounds (buf, &start, &end);
+	to_quote = gtk_text_buffer_get_text (buf, &start, &end, FALSE);
+	quoted = modest_text_utils_quote (to_quote, from, sent_date, limit);
 	g_object_unref (buf);
 	return quoted;
 }
