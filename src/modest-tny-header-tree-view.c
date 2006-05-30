@@ -21,6 +21,7 @@
  */
 #include <glib/gi18n.h>
 #include "modest-tny-header-tree-view.h"
+#include <tny-list-iface.h>
 
 
 /* 'private'/'protected' functions */
@@ -51,7 +52,7 @@ enum {
 typedef struct _ModestTnyHeaderTreeViewPrivate ModestTnyHeaderTreeViewPrivate;
 struct _ModestTnyHeaderTreeViewPrivate {
 	TnyMsgFolderIface *tny_msg_folder;
-	GtkTreeModel *header_tree_model;
+	TnyListIface      *headers;
 
 	GdkPixbuf *icons[HEADER_ICON_NUM];
 };
@@ -212,7 +213,7 @@ modest_tny_header_tree_view_init (ModestTnyHeaderTreeView *obj)
 	renderer_header = gtk_cell_renderer_text_new (); 
 
 	priv->tny_msg_folder = NULL;
-	priv->header_tree_model = NULL;
+	priv->headers        = NULL;
 
 	/* msgtype */
 	column =  gtk_tree_view_column_new_with_attributes(_("M"), renderer_msgtype, NULL);
@@ -220,7 +221,8 @@ modest_tny_header_tree_view_init (ModestTnyHeaderTreeView *obj)
 	gtk_tree_view_column_set_sort_column_id (column, TNY_MSG_HEADER_LIST_MODEL_FLAGS_COLUMN);
 	gtk_tree_view_column_set_sort_indicator (column, FALSE);
 	gtk_tree_view_append_column (GTK_TREE_VIEW(obj), column);
-	gtk_tree_view_column_set_cell_data_func(column, renderer_msgtype, msgtype_cell_data,
+	gtk_tree_view_column_set_cell_data_func(column, renderer_msgtype,
+						(GtkTreeCellDataFunc)msgtype_cell_data,
 						priv->icons, NULL);
 
 
@@ -230,7 +232,8 @@ modest_tny_header_tree_view_init (ModestTnyHeaderTreeView *obj)
 	gtk_tree_view_column_set_sort_column_id (column, TNY_MSG_HEADER_LIST_MODEL_FLAGS_COLUMN);
 	gtk_tree_view_column_set_sort_indicator (column, FALSE);
 	gtk_tree_view_append_column (GTK_TREE_VIEW(obj), column);
-	gtk_tree_view_column_set_cell_data_func(column, renderer_attach,attach_cell_data,
+	gtk_tree_view_column_set_cell_data_func(column, renderer_attach,
+						(GtkTreeCellDataFunc)attach_cell_data,
 						priv->icons, NULL);
 
 	/* date */
@@ -242,7 +245,9 @@ modest_tny_header_tree_view_init (ModestTnyHeaderTreeView *obj)
 	gtk_tree_view_column_set_sort_column_id (column, TNY_MSG_HEADER_LIST_MODEL_DATE_RECEIVED_COLUMN);
 	gtk_tree_view_column_set_sort_indicator (column, TRUE);
 	gtk_tree_view_append_column (GTK_TREE_VIEW(obj), column);
-	gtk_tree_view_column_set_cell_data_func(column, renderer_header, header_cell_data, NULL, NULL);
+	gtk_tree_view_column_set_cell_data_func(column, renderer_header,
+						(GtkTreeCellDataFunc)header_cell_data,
+						NULL, NULL);
 	g_signal_connect (G_OBJECT (column), "clicked", G_CALLBACK (column_clicked), obj);
 
 	
@@ -255,7 +260,9 @@ modest_tny_header_tree_view_init (ModestTnyHeaderTreeView *obj)
 	gtk_tree_view_column_set_sort_column_id (column, TNY_MSG_HEADER_LIST_MODEL_FROM_COLUMN);
 	gtk_tree_view_column_set_sort_indicator (column, TRUE);
 	gtk_tree_view_append_column (GTK_TREE_VIEW(obj), column);
-	gtk_tree_view_column_set_cell_data_func(column, renderer_header, header_cell_data, NULL, NULL);
+	gtk_tree_view_column_set_cell_data_func(column, renderer_header,
+						(GtkTreeCellDataFunc)header_cell_data,
+						NULL, NULL);
 	g_signal_connect (G_OBJECT (column), "clicked", G_CALLBACK (column_clicked), obj);
 
 
@@ -274,9 +281,10 @@ modest_tny_header_tree_view_init (ModestTnyHeaderTreeView *obj)
 	/* all cols */
 	gtk_tree_view_set_headers_visible   (GTK_TREE_VIEW(obj), TRUE);
 	gtk_tree_view_set_headers_clickable (GTK_TREE_VIEW(obj), TRUE);
-	gtk_tree_view_column_set_cell_data_func(column, renderer_header, header_cell_data, NULL, NULL);
+	gtk_tree_view_column_set_cell_data_func(column, renderer_header,
+						(GtkTreeCellDataFunc)header_cell_data,
+						NULL, NULL);
 
-	
 	gtk_tree_view_set_rules_hint (GTK_TREE_VIEW(obj), TRUE); /* alternating row colors */
 	
 }
@@ -291,10 +299,10 @@ modest_tny_header_tree_view_finalize (GObject *obj)
 	self = MODEST_TNY_HEADER_TREE_VIEW(obj);
 	priv = MODEST_TNY_HEADER_TREE_VIEW_GET_PRIVATE(self);
 
-	if (priv->header_tree_model)	
-		g_object_unref (G_OBJECT(priv->header_tree_model));
-
-	priv->header_tree_model = NULL;
+	if (priv->headers)	
+		g_object_unref (G_OBJECT(priv->headers));
+	
+	priv->headers = NULL;
 	priv->tny_msg_folder    = NULL;
 
 	/* cleanup our icons */
@@ -321,7 +329,7 @@ modest_tny_header_tree_view_new (TnyMsgFolderIface *folder)
 		g_object_unref (obj);
 		return NULL;
 	}
-		
+	
 	sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(self));
 	g_signal_connect (sel, "changed",
 			  G_CALLBACK(selection_changed), self);
@@ -334,39 +342,41 @@ gboolean
 modest_tny_header_tree_view_set_folder (ModestTnyHeaderTreeView *self,
 					TnyMsgFolderIface *folder)
 {
-	GtkTreeModel *sortable;
+	GtkTreeModel *oldsortable, *sortable, *oldmodel;
 	ModestTnyHeaderTreeViewPrivate *priv;
-
+	static GtkTreeModel *empty_model = NULL;
+	
 	g_return_val_if_fail (self, FALSE);
 
 	priv = MODEST_TNY_HEADER_TREE_VIEW_GET_PRIVATE(self);
-
-	/* clean up old stuff */
-	if (priv->header_tree_model)
-		g_object_unref (G_OBJECT(priv->header_tree_model));
-	priv->header_tree_model = NULL;
-
-	priv->header_tree_model = GTK_TREE_MODEL (tny_msg_header_list_model_new());
+	
 	if (folder) {
-		tny_msg_header_list_model_set_folder (
-			TNY_MSG_HEADER_LIST_MODEL(priv->header_tree_model),
-			folder, TRUE); /* FIXME: refresh?*/
-		
-		sortable = gtk_tree_model_sort_new_with_model (priv->header_tree_model);
-		
+		priv->headers = TNY_LIST_IFACE(tny_msg_header_list_model_new ());
+		tny_msg_folder_iface_get_headers (folder, priv->headers,
+						  FALSE);
+		tny_msg_header_list_model_set_folder (TNY_MSG_HEADER_LIST_MODEL(priv->headers),
+						      folder);
 	} else {
-		static GtkTreeModel *empty_model = NULL;
-		if (!empty_model)
+		if (!empty_model) 
 			empty_model = GTK_TREE_MODEL(gtk_list_store_new(1, G_TYPE_STRING));
-
-		sortable = empty_model;
 	}
+		
+	oldsortable = gtk_tree_view_get_model(GTK_TREE_VIEW (self));
+	if (oldsortable && GTK_IS_TREE_MODEL_SORT(oldsortable)) {
+		GtkTreeModel *oldmodel = gtk_tree_model_sort_get_model
+			(GTK_TREE_MODEL_SORT(oldsortable));
+		if (oldmodel)
+			g_object_unref (G_OBJECT(oldmodel));
+		g_object_unref (oldsortable);
+	}
+	
+	if (folder) 
+		sortable = gtk_tree_model_sort_new_with_model (GTK_TREE_MODEL(priv->headers));
+	else
+		sortable = gtk_tree_model_sort_new_with_model (GTK_TREE_MODEL(empty_model));
 
 	gtk_tree_view_set_model (GTK_TREE_VIEW (self), sortable);
 
-	if (sortable)
-		g_object_unref (G_OBJECT(sortable));
-	
 	return TRUE;
 }
 
