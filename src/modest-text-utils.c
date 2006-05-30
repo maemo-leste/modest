@@ -5,6 +5,8 @@
 #include <gtk/gtk.h>
 #include <string.h>
 
+#include "modest-text-utils.h"
+
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -182,15 +184,26 @@ get_breakpoint(const gchar *s, const gint indent, const gint limit) {
 	}
 }	
 
+
 gchar *
-modest_text_utils_quote(GtkTextBuffer *buf, const gchar *from, const time_t sent_date, const int limit)
+modest_text_utils_quote(const gchar *to_quote, const gchar *from, const time_t sent_date, const int limit)
 {
+	GtkTextBuffer *buf;
+	
+	buf = gtk_text_buffer_new (NULL);
+	gtk_text_buffer_set_text(buf, to_quote, -1);
+	return modest_text_utils_quote_text_buffer(buf, from, sent_date, limit);
+}
+
+gchar *
+modest_text_utils_quote_text_buffer(GtkTextBuffer *buf, const gchar *from, const time_t sent_date, const int limit)
+{
+	
 	GtkTextIter iter;
 	gint indent, breakpoint, rem_indent;
 	gchar sent_str[101];
 	GString *q, *l, *remaining; /* quoted msg, line */
 	
-
 	/* format sent_date */
 	strftime(sent_str, 100, "%c", localtime(&sent_date));
 	q = g_string_new("");
@@ -198,6 +211,8 @@ modest_text_utils_quote(GtkTextBuffer *buf, const gchar *from, const time_t sent
 	
 	/* remaining will store the rest of the line if we have to break it */
 	remaining = g_string_new("");
+	
+	
 	gtk_text_buffer_get_iter_at_line(buf, &iter, 0);
 	do {
 		l = get_next_line(buf, &iter);

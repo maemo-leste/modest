@@ -85,7 +85,7 @@ struct _ModestUIPrivate {
 	ModestWindowMgr      *modest_window_mgr;
 	TnyAccountStoreIface *account_store;
 
-	GtkWindow	     *main_window;
+	GtkWindow            *main_window;
 	GladeXML             *glade_xml;
 
 
@@ -655,8 +655,7 @@ reply_to_msg (ModestUI *modest_ui, TnyMsgHeaderIface *header,
 	const TnyMsgFolderIface *folder;
 	GString *re_sub;
 	const gchar *subject, *from;
-	GtkTextBuffer *unquoted;
-	gchar *quoted;
+	gchar *unquoted, *quoted;
 	time_t sent_date;
 	gint line_limit = 76;
 	
@@ -687,8 +686,7 @@ reply_to_msg (ModestUI *modest_ui, TnyMsgHeaderIface *header,
 	
 	modest_ui_show_edit_window (modest_ui, from, /* cc */ "", /* bcc */ "", re_sub->str, quoted, NULL);
 	g_free(quoted);
-	if (unquoted != NULL)
-		g_object_unref(unquoted);
+	g_free(unquoted);
 	g_string_free(re_sub, TRUE);
 }
 

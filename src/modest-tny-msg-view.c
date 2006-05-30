@@ -4,6 +4,8 @@
 
 #include "modest-tny-msg-view.h"
 #include "modest-tny-stream-gtkhtml.h"
+#include "modest-tny-msg-actions.h"
+
 #include <tny-text-buffer-stream.h>
 #include <string.h>
 #include <regex.h>
@@ -428,26 +430,6 @@ fill_gtkhtml_with_txt (GtkHTML* gtkhtml, const gchar* txt)
 
 
 
-static TnyMsgMimePartIface *
-find_body_part (TnyMsgIface *msg, const gchar *mime_type)
-{
-	TnyMsgMimePartIface *part = NULL;
-	GList *parts;
-
-	g_return_val_if_fail (msg, NULL);
-	g_return_val_if_fail (mime_type, NULL);
-
-	parts  = (GList*) tny_msg_iface_get_parts (msg);
-	while (parts && !part) {
-		part = TNY_MSG_MIME_PART_IFACE(parts->data);
-		if (!tny_msg_mime_part_iface_content_type_is (part, mime_type))
-			part = NULL;
-		parts = parts->next;
-	}
-	
-	return part;
-}
-
 static gboolean
 set_html_message (ModestTnyMsgView *self, TnyMsgMimePartIface *tny_body)
 {
@@ -508,7 +490,7 @@ set_text_message (ModestTnyMsgView *self, TnyMsgMimePartIface *tny_body)
 	return TRUE;
 }
 
-GtkTextBuffer *
+gchar *
 modest_tny_msg_view_get_selected_text (ModestTnyMsgView *self)
 {
 	ModestTnyMsgViewPrivate *priv;
@@ -525,19 +507,13 @@ modest_tny_msg_view_get_selected_text (ModestTnyMsgView *self)
 	
 	/* I'm sure there is a better way to check for selected text */
 	sel = gtk_html_get_selection_html(GTK_HTML(html), &len);
-	if (sel == NULL)
+	if (!sel)
 		return NULL;
+	
 	g_free(sel);
 	
 	clip = gtk_widget_get_clipboard(html, GDK_SELECTION_PRIMARY);
-	text = gtk_clipboard_wait_for_text(clip);
-	if (text == NULL)
-		return NULL;
-	
-	buf = gtk_text_buffer_new(NULL);
-	gtk_text_buffer_set_text(buf, text, -1);
-	g_free(text);
-	return buf;
+	return gtk_clipboard_wait_for_text(clip);
 }
 
 void
@@ -557,13 +533,13 @@ modest_tny_msg_view_set_message (ModestTnyMsgView *self, TnyMsgIface *msg)
 	if (!msg) 
 		return;
 	
-	body = find_body_part (msg, "text/html");
+	body = modest_tny_msg_actions_find_body_part (msg, "text/html");
 	if (body) {
 		set_html_message (self, body);
 		return;
 	}
 	
-	body = find_body_part (msg, "text/plain");
+	body = modest_tny_msg_actions_find_body_part (msg, "text/plain");
 	if (body) {
 		set_text_message (self, body);
 		return;

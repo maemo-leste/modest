@@ -66,7 +66,7 @@ GtkWidget*   modest_tny_msg_view_new          (TnyMsgIface *tny_msg);
 void         modest_tny_msg_view_set_message  (ModestTnyMsgView *self,
 						TnyMsgIface *tny_msg);
 						
-GtkTextBuffer *      modest_tny_msg_view_get_selected_text (ModestTnyMsgView *self);
+gchar *      modest_tny_msg_view_get_selected_text (ModestTnyMsgView *self);
 
 G_END_DECLS
 
