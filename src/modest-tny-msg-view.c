@@ -523,9 +523,9 @@ modest_tny_msg_view_get_selected_text (ModestTnyMsgView *self)
 	
 	/* I'm sure there is a better way to check for selected text */
 	sel = gtk_html_get_selection_html(GTK_HTML(html), &len);
-	
 	if (sel == NULL)
 		return NULL;
+	g_free(sel);
 	
 	clip = gtk_widget_get_clipboard(html, GDK_SELECTION_PRIMARY);
 	text = gtk_clipboard_wait_for_text(clip);
