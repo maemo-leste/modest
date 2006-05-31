@@ -261,9 +261,26 @@ modest_main_window_get_ui (ModestTnyFolderTreeView *folder_view,
 static GtkWidget*
 modest_main_window_header_tree (TnyMsgFolderIface *folder)
 {
+int i;
+	GSList *columns = NULL;
 	GtkWidget *header_tree;
+	ModestTnyHeaderTreeViewColumn cols[] = {
+		MODEST_TNY_HEADER_TREE_VIEW_COLUMN_FROM,
+		MODEST_TNY_HEADER_TREE_VIEW_COLUMN_TO,
+		MODEST_TNY_HEADER_TREE_VIEW_COLUMN_SUBJECT,
+		MODEST_TNY_HEADER_TREE_VIEW_COLUMN_SENT_DATE,
+		MODEST_TNY_HEADER_TREE_VIEW_COLUMN_RECEIVED_DATE,
+		MODEST_TNY_HEADER_TREE_VIEW_COLUMN_MSGTYPE,
+		MODEST_TNY_HEADER_TREE_VIEW_COLUMN_ATTACH
+	};
 	
-	header_tree = GTK_WIDGET(modest_tny_header_tree_view_new(folder));
+	for (i = 0 ; i != sizeof(cols)/sizeof(ModestTnyHeaderTreeViewColumn); ++i)
+		columns = g_slist_append (columns, GINT_TO_POINTER(cols[i]));
+	
+	header_tree = GTK_WIDGET(modest_tny_header_tree_view_new(folder, columns,
+					 MODEST_TNY_HEADER_TREE_VIEW_STYLE_NORMAL));
+	g_slist_free (columns);
+	
 	if (!header_tree) {
 		g_warning ("could not create header tree");
 		return NULL;
