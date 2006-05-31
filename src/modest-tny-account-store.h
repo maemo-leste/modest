@@ -42,9 +42,7 @@ struct _ModestTnyAccountStoreClass {
 /**
  * modest_tny_account_store_get_type:
  *
- * returns GType of account store ???
- *
- * Returns: ???
+ * Returns: GType of account store
  */
 GType        modest_tny_account_store_get_type    (void) G_GNUC_CONST;
 
@@ -52,19 +50,19 @@ GType        modest_tny_account_store_get_type    (void) G_GNUC_CONST;
  * modest_tny_account_store_new:
  * @modest_acc_mgr: account manager to use for new account store
  *
- * creates new tiny account store for account manager modest_acc_mgr
+ * creates new (tinymail) account store for account manager modest_acc_mgr
  *
  * Returns: GObject of newly created account store
  */
 GObject*    modest_tny_account_store_new         (ModestAccountMgr *modest_acc_mgr);
 
 /**
- * modest_tny_account_store_get_accout_mgr:
+ * modest_tny_account_store_get_account_mgr:
  * @self: a TnyAccountStore instance
  *
  * retrieve the account manager associated with this account store.
  *
- * Returns: the account manager for self.
+ * Returns: the account manager for @self.
  */
 ModestAccountMgr *modest_tny_account_store_get_accout_mgr(ModestTnyAccountStore *self);
 

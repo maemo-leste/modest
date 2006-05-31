@@ -55,9 +55,10 @@ GObject*     modest_ui_new             (ModestConf *modest_conf);
 /**
  * modest_ui_show_main_window:
  * @ui: a ModestUI instance 
- *  
- * Returns: TRUE if succeeded, FALSE otherwise
  * 
+ * show the application's main window
+ * 
+ * Returns: TRUE if succeeded, FALSE otherwise
  */
 gboolean     modest_ui_show_main_window (ModestUI *ui);
 

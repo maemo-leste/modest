@@ -65,7 +65,16 @@ GtkWidget*   modest_tny_msg_view_new          (TnyMsgIface *tny_msg);
  *  */
 void         modest_tny_msg_view_set_message  (ModestTnyMsgView *self,
 						TnyMsgIface *tny_msg);
-						
+
+
+/**
+ * modest_tny_msg_view_get_selected_text:
+ * @self: a ModestTnyMsgView instance
+ * 
+ * get the user selected part of the message
+ * 
+ * Returns: a newly allocated string of the user's selection or NULL if nothing is selected
+ */
 gchar *      modest_tny_msg_view_get_selected_text (ModestTnyMsgView *self);
 
 G_END_DECLS

@@ -55,7 +55,7 @@ GObject*     modest_conf_new         (void);
 
 /**
  * modest_conf_get_string:
- * @self: self a ModestConf instance
+ * @self: a ModestConf instance
  * @key: the key of the value to retrieve
  * @err: a GError ptr, or NULL to ignore.
  * 
@@ -69,7 +69,7 @@ gchar*       modest_conf_get_string  (ModestConf* self, const gchar* key, GError
 
 /** 
  * modest_conf_get_int:
- * @self: self a ModestConf instance
+ * @self: a ModestConf instance
  * @key: the key of the value to retrieve
  * @err: a GError ptr, or NULL to ignore.
  * 
@@ -84,7 +84,7 @@ int          modest_conf_get_int     (ModestConf* self, const gchar* key, GError
 
 /** 
  * modest_conf_get_bool:
- * @self: self a ModestConf instance
+ * @self: a ModestConf instance
  * @key: the key of the value to retrieve
  * @err: a GError ptr, or NULL to ignore.
  * 
@@ -181,7 +181,7 @@ gboolean   modest_conf_remove_key    (ModestConf* self, const gchar* key, GError
  *
  * checks if the given key exists in the configuration system
  * 
- * Returns: TRUE if exists, FALSE otherwise.
+ * Returns: TRUE if it exists, FALSE otherwise.
  * @err gives details in case of error
  */
 gboolean   modest_conf_key_exists   (ModestConf* self, const gchar* key, GError **err);

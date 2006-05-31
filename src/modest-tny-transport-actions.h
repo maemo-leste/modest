@@ -40,6 +40,21 @@ GType        modest_tny_transport_actions_get_type    (void) G_GNUC_CONST;
 GObject*    modest_tny_transport_actions_new         (void);
 
 
+/**
+ * modest_tny_transport_actions_send_message:
+ * @self: a ModestTnyTransportActions object
+ * @transport_account: the TnyTransportAccountIface to use for sending this message
+ * @from: the email address of the sender
+ * @to: the email address of the receiver
+ * @cc: the receivers of a copy of the message (comma-seperated)
+ * @bcc: the receivers of a blind copy of the message (comma-seperated)
+ * @subject: the Subject: of the message
+ * @body: a string containing the message body (text)
+ *
+ * send a email message to @to
+ *
+ * Returns: TRUE but this will change to whether sending was successful
+ */
 gboolean modest_tny_transport_actions_send_message (ModestTnyTransportActions *self,
 						    TnyTransportAccountIface *transport_account,
 						    const gchar *from,

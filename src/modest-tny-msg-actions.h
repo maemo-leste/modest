@@ -9,8 +9,16 @@
 /**
  * modest_tny_msg_actions_quote:
  * @self: the message to quote
+ * @from: the original sender of the message
+ * @sent_date: the date the original message was sent
+ * @limit: characters per line limit for the quoted message
+ * @to_quote: a string to quote instead of the message body
  * 
- * Returns: a string containing the quoted message
+ * reply-quotes a message or @to_quote if it's not NULL.
+
+ * Note: @from and @sent_date may be eliminated from the API in future versions
+ * 
+ * Returns: a newly allocated string containing the quoted message
  */
 
 gchar *modest_tny_msg_actions_quote (const TnyMsgIface * self,
@@ -18,6 +26,17 @@ gchar *modest_tny_msg_actions_quote (const TnyMsgIface * self,
 				     time_t sent_date,
 				     gint limit, gchar *to_quote);
 
+/**
+ * modest_tny_msg_actions_find_body_part:
+ * @self: a message
+ * @mime_type: the mime type to find
+ * 
+ * search a message for a body part of type @mime_type. @mime_type is a string
+ * like "text/plain".
+ * 
+ * Returns: the TnyMsgMimePartIface for the found part, or NULL if no matching part is found
+ */
+					 
 TnyMsgMimePartIface *modest_tny_msg_actions_find_body_part (TnyMsgIface * self,
 							    const gchar * mime_type);
 
