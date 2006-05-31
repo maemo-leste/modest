@@ -559,7 +559,6 @@ static void on_message_clicked (ModestTnyFolderTreeView *folder_tree,
 	ModestTnyMsgView *msg_view;
 	ModestUIPrivate *priv;
 
-	g_return_if_fail (message);
 	g_return_if_fail (data);
 
 	priv = MODEST_UI_GET_PRIVATE(data);
