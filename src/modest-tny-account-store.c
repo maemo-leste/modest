@@ -533,7 +533,9 @@ modest_tny_account_store_get_cache_dir (TnyAccountStoreIface *self)
 static const TnyDeviceIface*
 modest_tny_account_store_get_device (TnyAccountStoreIface *self)
 {
-	ModestTnyAccountStorePrivate *priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE (self);
+	ModestTnyAccountStorePrivate *priv;
+
+	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE (self);
 
 	return priv->device;
 }

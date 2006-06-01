@@ -96,8 +96,10 @@ modest_account_mgr_finalize (GObject * obj)
 	ModestAccountMgr *self = MODEST_ACCOUNT_MGR (obj);
 	ModestAccountMgrPrivate *priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
 
-	g_object_unref (G_OBJECT (priv->modest_conf));
-	priv->modest_conf = NULL;
+	if (priv->modest_conf) {
+		g_object_unref (G_OBJECT(priv->modest_conf));
+		priv->modest_conf = NULL;
+	}
 }
 
 GObject *
