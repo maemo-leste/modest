@@ -528,7 +528,7 @@ modest_tny_header_tree_view_set_folder (ModestTnyHeaderTreeView *self,
 		tny_msg_folder_iface_get_headers (folder, priv->headers,
 						  FALSE);
 		tny_msg_header_list_model_set_folder (TNY_MSG_HEADER_LIST_MODEL(priv->headers),
-						      folder);
+						      folder, TRUE);
 		
 		oldsortable = gtk_tree_view_get_model(GTK_TREE_VIEW (self));
 		if (oldsortable && GTK_IS_TREE_MODEL_SORT(oldsortable)) {
