@@ -1,6 +1,6 @@
 #
 # Makefile.am
-# Time-stamp: <2006-05-29 23:12:07 (djcb)>
+# Time-stamp: <2006-06-02 14:23:35 (djcb)>
 #
 #
 # use Automake 'trick' ==> convenience static libraries, which
@@ -8,9 +8,7 @@
 #
 INCLUDES=\
 	$(MODEST_GSTUFF_CFLAGS) \
-	$(MODEST_GTK_CFLAGS) \
-	$(MODEST_GLADE_CFLAGS) \
-	$(MODEST_TINYMAIL_CFLAGS)\
+	$(MODEST_LIBTINYMAIL_GNOME_DESKTOP_CFLAGS) \
 	-DPREFIX=\"@prefix@\"
 
 noinst_LTLIBRARIES=\
@@ -28,9 +26,7 @@ libmodest_ui_la_SOURCES=\
 
 LDADD = \
 	$(MODEST_GSTUFF_LIBS) \
-	$(MODEST_GTK_LIBS) \
-	$(MODEST_GLADE_LIBS) \
-	$(MODEST_TINYMAIL_LIBS)
+	$(MODEST_LIBTINYMAIL_GNOME_DESKTOP_LIBS)
 
 EXTRA_DIST=pixmaps/*.png pixmaps/*.xpm modest.glade modest.gladep
 

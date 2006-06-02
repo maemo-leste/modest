@@ -7,12 +7,12 @@
 #include <glib/gi18n.h>
 #include <string.h>
 
-/* TODO: put in auto* */
-#include <tny-text-buffer-stream.h>
-
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif /*HAVE_CONFIG_H*/
+
+/* TODO: put in auto* */
+#include <tny-text-buffer-stream.h>
 
 #include "../modest-ui.h"
 #include "../modest-window-mgr.h"
@@ -634,9 +634,7 @@ modest_main_window_header_tree (TnyMsgFolderIface *folder)
 	ModestTnyHeaderTreeViewColumn cols[] = {
 		MODEST_TNY_HEADER_TREE_VIEW_COLUMN_MSGTYPE,
 		MODEST_TNY_HEADER_TREE_VIEW_COLUMN_ATTACH,
-		MODEST_TNY_HEADER_TREE_VIEW_COLUMN_FROM,
-		MODEST_TNY_HEADER_TREE_VIEW_COLUMN_SUBJECT,
-		MODEST_TNY_HEADER_TREE_VIEW_COLUMN_RECEIVED_DATE
+		MODEST_TNY_HEADER_TREE_VIEW_COLUMN_COMPACT_HEADER
 	};
 	
 	for (i = 0 ; i != sizeof(cols)/sizeof(ModestTnyHeaderTreeViewColumn); ++i)
@@ -818,8 +816,8 @@ on_send_button_clicked (GtkWidget *widget, ModestUI *modest_ui)
 
 	id_mgr = priv->modest_id_mgr;
 	email_from = modest_identity_mgr_get_identity_string(id_mgr,
-														 MODEST_IDENTITY_DEFAULT_IDENTITY,
-														 MODEST_IDENTITY_EMAIL, NULL);
+							     MODEST_IDENTITY_DEFAULT_IDENTITY,
+							     MODEST_IDENTITY_EMAIL, NULL);
 			
 	g_message("sending \"%s\" %s ==> %s", subject, email_from, to);
 	modest_tny_transport_actions_send_message (actions,
