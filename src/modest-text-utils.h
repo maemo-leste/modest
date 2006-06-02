@@ -4,6 +4,8 @@
 #ifndef __MODEST_TEXT_UTILS_H__
 #define __MODEST_TEXT_UTILS_H__
 
+#include <time.h>
+
 /* public */
 
 /**
