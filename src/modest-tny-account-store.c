@@ -9,7 +9,6 @@
 #include <tny-store-account-iface.h>
 #include <tny-transport-account-iface.h>
 #include <tny-device-iface.h>
-#include <tny-device.h>
 #include <tny-account-store.h>
 
 #include <tny-store-account.h>
