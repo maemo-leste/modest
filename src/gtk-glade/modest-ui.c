@@ -29,10 +29,8 @@
 #include "../modest-text-utils.h"
 #include "../modest-tny-msg-actions.h"
 
-#define MODEST_GLADE          PREFIX "/share/modest/glade/modest.glade"
-#define MODEST_GLADE_MAIN_WIN "main"
-#define MODEST_GLADE_EDIT_WIN "new_mail"
-
+#include "modest-ui-glade.h"
+#include "modest-ui-wizzard.h"
 
 /* 'private'/'protected' functions */
 static void   modest_ui_class_init     (ModestUIClass *klass);
@@ -80,24 +78,6 @@ enum {
 	LAST_SIGNAL
 };
 
-
-typedef struct _ModestUIPrivate ModestUIPrivate;
-struct _ModestUIPrivate {
-
-	ModestConf           *modest_conf;
-	ModestAccountMgr     *modest_acc_mgr;
-	ModestIdentityMgr    *modest_id_mgr;
-	ModestWindowMgr      *modest_window_mgr;
-	TnyAccountStoreIface *account_store;
-
-	GtkWindow            *main_window;
-	GladeXML             *glade_xml;
-
-
-};
-#define MODEST_UI_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
-                                       MODEST_TYPE_UI, \
-                                       ModestUIPrivate))
 /* globals */
 static GObjectClass *parent_class = NULL;
 
@@ -167,7 +147,7 @@ modest_ui_finalize (GObject *obj)
 	if (priv->modest_acc_mgr)
 		g_object_unref (priv->modest_acc_mgr);
 	priv->modest_acc_mgr = NULL;
-	
+
 	if (priv->modest_id_mgr)
 		g_object_unref (priv->modest_id_mgr);
 	priv->modest_id_mgr = NULL;
@@ -202,7 +182,7 @@ modest_ui_new (ModestConf *modest_conf)
 		g_object_unref (obj);
 		return NULL;
 	}
-	
+
 	modest_id_mgr =
 		MODEST_IDENTITY_MGR(modest_identity_mgr_new (modest_conf));
 	if (!modest_id_mgr) {
@@ -220,7 +200,7 @@ modest_ui_new (ModestConf *modest_conf)
 	g_signal_connect (account_store_iface, "password_requested",
 			  G_CALLBACK(on_password_requested),
 			  NULL);
-	
+
 	glade_init ();
 	priv->glade_xml = glade_xml_new (MODEST_GLADE, NULL,NULL);
 	if (!priv->glade_xml) {
@@ -256,6 +236,8 @@ modest_ui_show_main_window (ModestUI *modest_ui)
 	GtkWidget     *folder_view, *header_view;
 	GtkWidget     *message_view;
 	GtkWidget     *account_settings_item;
+	GtkWidget     *new_account_item;
+	GtkWidget     *close_window_item;
 	GtkWidget     *delete_item;
 
 	GtkWidget  *folder_view_holder,
@@ -312,12 +294,29 @@ modest_ui_show_main_window (ModestUI *modest_ui)
 	if (!account_settings_item)
 	{
 		g_warning ("The account settings item isn't available!\n");
+                return FALSE;
+        }
+        g_signal_connect (account_settings_item, "activate",
+                          G_CALLBACK(on_account_settings1_activate),
+                          modest_ui);
+
+	new_account_item = glade_xml_get_widget (priv->glade_xml, "new_account1");
+	if (!new_account_item)
+	{
+		g_warning ("The new account item isn't available!\n");
 		return FALSE;
 	}
 
-	g_signal_connect (account_settings_item, "activate",
-			  G_CALLBACK(on_account_settings1_activate),
-			  modest_ui);
+        g_signal_connect (new_account_item, "activate",
+                          G_CALLBACK(on_new_account1_activate),
+                          modest_ui);
+
+        close_window_item = glade_xml_get_widget (priv->glade_xml, "about1");
+	if (!close_window_item)
+	{
+		g_warning ("The close_window item isn't available!\n");
+		return FALSE;
+	}
 
 	delete_item = glade_xml_get_widget (priv->glade_xml, "delete1");
 	if (!delete_item)
@@ -328,7 +327,7 @@ modest_ui_show_main_window (ModestUI *modest_ui)
 
 	g_signal_connect (delete_item, "activate", G_CALLBACK(on_delete_clicked),
 			  modest_ui);
-	
+
 	register_toolbar_callbacks (modest_ui);
 
 	modest_window_mgr_register (priv->modest_window_mgr,
@@ -337,6 +336,9 @@ modest_ui_show_main_window (ModestUI *modest_ui)
 			  modest_ui);
 	g_signal_connect (win, "delete-event", G_CALLBACK(modest_ui_window_destroy),
 			  modest_ui);
+        g_signal_connect (close_window_item, "activate",
+                          G_CALLBACK(modest_ui_window_destroy),
+                          modest_ui);
 	gtk_widget_set_usize (GTK_WIDGET(win), height, width);
 	gtk_window_set_title (GTK_WINDOW(win), PACKAGE_STRING);
 
@@ -728,14 +730,14 @@ modest_main_window_header_tree (TnyMsgFolderIface *folder)
 		MODEST_TNY_HEADER_TREE_VIEW_COLUMN_ATTACH,
 		MODEST_TNY_HEADER_TREE_VIEW_COLUMN_COMPACT_HEADER
 	};
-	
+
 	for (i = 0 ; i != sizeof(cols)/sizeof(ModestTnyHeaderTreeViewColumn); ++i)
 		columns = g_slist_append (columns, GINT_TO_POINTER(cols[i]));
-	
+
 	header_tree = GTK_WIDGET(modest_tny_header_tree_view_new(folder, columns,
 								 MODEST_TNY_HEADER_TREE_VIEW_STYLE_NORMAL));
 	g_slist_free (columns);
-	
+
 	if (!header_tree) {
 		g_warning ("could not create header tree");
 		return NULL;
@@ -756,7 +758,7 @@ modest_main_window_folder_tree (ModestAccountMgr *modest_acc_mgr,
 		g_warning ("could not create folder list");
 		return NULL;
 	}
-	
+
 	return folder_tree;
 }
 
@@ -779,7 +781,7 @@ reply_to_msg (ModestUI *modest_ui, TnyMsgHeaderIface *header,
 	gchar *unquoted, *quoted;
 	time_t sent_date;
 	gint line_limit = 76;
-	
+
 	if (!header) {
 		g_warning("no header");
 		return;
@@ -803,10 +805,10 @@ reply_to_msg (ModestUI *modest_ui, TnyMsgHeaderIface *header,
 	/* FIXME: honor replyto, cc */
 	from = tny_msg_header_iface_get_from(header);
 	sent_date = tny_msg_header_iface_get_date_sent(header);
-	
+
 	unquoted = modest_tny_msg_view_get_selected_text(msg_view);
 	quoted = modest_tny_msg_actions_quote(msg, from, sent_date, line_limit, unquoted);
-	
+
 	modest_ui_show_edit_window (modest_ui, from, /* cc */ "", /* bcc */ "", re_sub->str, quoted, NULL);
 	g_free(quoted);
 	g_free(unquoted);
@@ -912,7 +914,7 @@ on_send_button_clicked (GtkWidget *widget, ModestUI *modest_ui)
 	email_from = modest_identity_mgr_get_identity_string(id_mgr,
 							     MODEST_IDENTITY_DEFAULT_IDENTITY,
 							     MODEST_IDENTITY_EMAIL, NULL);
-			
+
 	g_message("sending \"%s\" %s ==> %s", subject, email_from, to);
 	modest_tny_transport_actions_send_message (actions,
 						   transport_account,
@@ -968,7 +970,7 @@ on_delete_clicked (GtkWidget *widget, ModestUI *modest_ui)
 	{
 		TnyMsgHeaderIface *header;
 
-		gtk_tree_model_get (model, &iter, TNY_MSG_HEADER_LIST_MODEL_INSTANCE_COLUMN, 
+		gtk_tree_model_get (model, &iter, TNY_MSG_HEADER_LIST_MODEL_INSTANCE_COLUMN,
 			&header, -1);
 
 		if (G_LIKELY (header))
@@ -978,9 +980,9 @@ on_delete_clicked (GtkWidget *widget, ModestUI *modest_ui)
 
 			if (GTK_IS_TREE_MODEL_SORT (model))
 			{
-				mymodel = gtk_tree_model_sort_get_model 
+				mymodel = gtk_tree_model_sort_get_model
 					(GTK_TREE_MODEL_SORT (model));
-			} else 
+			} else
 				mymodel = model;
 
 			folder = (TnyMsgFolderIface*)tny_msg_header_iface_get_folder (header);
