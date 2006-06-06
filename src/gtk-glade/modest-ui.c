@@ -70,8 +70,17 @@ static void on_send_button_clicked (GtkWidget *widget, ModestUI *modest_ui);
 
 static void register_toolbar_callbacks (ModestUI *modest_ui);
 
-static void reply_to_msg (ModestUI *modest_ui, TnyMsgHeaderIface *header,
-						ModestTnyMsgView *msg_view);
+
+typedef enum {
+	QUOTED_SEND_REPLY,
+	QUOTED_SEND_REPLY_ALL,
+	QUOTED_SEND_FORWARD
+} quoted_send_type;
+
+static void quoted_send_msg (ModestUI *modest_ui, TnyMsgHeaderIface *header,
+						ModestTnyMsgView *msg_view, quoted_send_type qstype);
+
+							
 
 /* list my signals */
 enum {
@@ -109,6 +118,7 @@ modest_ui_get_type (void)
 	return my_type;
 }
 
+
 static void
 modest_ui_class_init (ModestUIClass *klass)
 {
@@ -128,6 +138,7 @@ modest_ui_class_init (ModestUIClass *klass)
 /* 	etc. */
 }
 
+
 static void
 modest_ui_init (ModestUI *obj)
 {
@@ -140,6 +151,7 @@ modest_ui_init (ModestUI *obj)
 	priv->glade_xml         = NULL;
 
 }
+
 
 static void
 modest_ui_finalize (GObject *obj)
@@ -162,6 +174,7 @@ modest_ui_finalize (GObject *obj)
 		g_object_unref (priv->modest_window_mgr);
 	priv->modest_window_mgr = NULL;
 }
+
 
 GObject*
 modest_ui_new (ModestConf *modest_conf)
@@ -771,13 +784,6 @@ on_new_mail_clicked (GtkWidget *widget, ModestUI *modest_ui)
 	g_return_if_fail (modest_ui);
 	modest_ui_show_edit_window (modest_ui, "", "", "", "", "", NULL);
 }
-
-
-typedef enum {
-	QUOTED_SEND_REPLY,
-	QUOTED_SEND_REPLY_ALL,
-	QUOTED_SEND_FORWARD
-} quoted_send_type;
 
 
 static void
