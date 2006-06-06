@@ -252,7 +252,6 @@ modest_ui_show_main_window (ModestUI *modest_ui)
 	GtkWidget     *message_view;
 	GtkWidget     *account_settings_item;
 	GtkWidget     *new_account_item;
-	GtkWidget     *close_window_item;
 	GtkWidget     *delete_item;
 
 	GtkWidget  *folder_view_holder,
@@ -326,13 +325,6 @@ modest_ui_show_main_window (ModestUI *modest_ui)
                           G_CALLBACK(on_new_account1_activate),
                           modest_ui);
 
-        close_window_item = glade_xml_get_widget (priv->glade_xml, "about1");
-	if (!close_window_item)
-	{
-		g_warning ("The close_window item isn't available!\n");
-		return FALSE;
-	}
-
 	delete_item = glade_xml_get_widget (priv->glade_xml, "delete1");
 	if (!delete_item)
 	{
@@ -351,9 +343,6 @@ modest_ui_show_main_window (ModestUI *modest_ui)
 			  modest_ui);
 	g_signal_connect (win, "delete-event", G_CALLBACK(modest_ui_window_destroy),
 			  modest_ui);
-        g_signal_connect (close_window_item, "activate",
-                          G_CALLBACK(modest_ui_window_destroy),
-                          modest_ui);
 	gtk_widget_set_usize (GTK_WIDGET(win), height, width);
 	gtk_window_set_title (GTK_WINDOW(win), PACKAGE_STRING);
 
