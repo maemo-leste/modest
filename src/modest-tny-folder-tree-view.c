@@ -6,10 +6,14 @@
 #include <tny-account-tree-model.h>
 #include <tny-account-store-iface.h>
 #include <tny-account-iface.h>
+#include <tny-msg-folder-iface.h>
 #include <tny-summary-window-iface.h>
 
 #include "modest-tny-folder-tree-view.h"
-/* include other impl specific header files */
+
+#include <modest-icon-names.h>
+#include "modest-icon-factory.h"
+
 
 /* 'private'/'protected' functions */
 static void modest_tny_folder_tree_view_class_init  (ModestTnyFolderTreeViewClass *klass);
@@ -24,7 +28,6 @@ static gboolean update_model_empty (ModestTnyFolderTreeView *self);
 
 static void selection_changed (GtkTreeSelection *sel, gpointer data);
 
-/* list my signals */
 enum {
 	FOLDER_SELECTED_SIGNAL,
 	LAST_SIGNAL
@@ -34,7 +37,6 @@ typedef struct _ModestTnyFolderTreeViewPrivate ModestTnyFolderTreeViewPrivate;
 struct _ModestTnyFolderTreeViewPrivate {
 	TnyAccountStoreIface *tny_account_store;
 	gboolean view_is_empty;
-	
 };
 #define MODEST_TNY_FOLDER_TREE_VIEW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                          MODEST_TYPE_TNY_FOLDER_TREE_VIEW, \
@@ -93,32 +95,74 @@ modest_tny_folder_tree_view_class_init (ModestTnyFolderTreeViewClass *klass)
 
 
 static void
-map_folder_text  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
-		  GtkTreeModel *tree_model,  GtkTreeIter *iter,  gpointer data)
+text_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
+		   GtkTreeModel *tree_model,  GtkTreeIter *iter,  gpointer data)
 {
 	GObject *rendobj;
 	gchar *fname;
+	gchar *type_name;
 	guint unread;
+	TnyMsgFolderType type;
 	
 	gtk_tree_model_get (tree_model, iter,
 			    TNY_ACCOUNT_TREE_MODEL_NAME_COLUMN, &fname,
+			    TNY_ACCOUNT_TREE_MODEL_TYPE_COLUMN, &type,
 			    TNY_ACCOUNT_TREE_MODEL_UNREAD_COLUMN, &unread, -1);
 	rendobj = G_OBJECT(renderer);
 
-	/* folders with unread messages are bold and with (%d) */
 	if (unread > 0) {
-		gchar *name_number = g_strdup_printf ("%s (%d)", fname, unread);
-		g_object_set (rendobj, "text", name_number, NULL);
-		g_free (name_number);
-		g_object_set (rendobj, "weight", 800, NULL);
-	} else
-		g_object_set (rendobj, "weight", 400, NULL); /* default, non-bold */
-
-
+		gchar *folder_title = g_strdup_printf ("%s (%d)", fname, unread);
+		g_object_set (rendobj,"text", folder_title,  "weight", 800, NULL);
+		g_free (folder_title);
+	} else 
+		g_object_set (rendobj,"text", fname, "weight", 400, NULL);
+		
 	g_free (fname);
 }
 
 
+static void
+icon_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
+		 GtkTreeModel *tree_model,  GtkTreeIter *iter, gpointer data)
+{
+	GObject *rendobj;
+	GdkPixbuf *pixbuf;
+	TnyMsgFolderType type;
+	int unread;
+	
+	rendobj = G_OBJECT(renderer);
+	gtk_tree_model_get (tree_model, iter,
+			    TNY_ACCOUNT_TREE_MODEL_TYPE_COLUMN, &type,
+			    TNY_ACCOUNT_TREE_MODEL_UNREAD_COLUMN, &unread, -1);
+	rendobj = G_OBJECT(renderer);
+
+	switch (type) {
+        case TNY_MSG_FOLDER_TYPE_INBOX:
+                pixbuf = modest_icon_factory_get_icon (MODEST_FOLDER_ICON_INBOX);
+                break;
+        case TNY_MSG_FOLDER_TYPE_OUTBOX:
+                pixbuf = modest_icon_factory_get_icon (MODEST_FOLDER_ICON_OUTBOX);
+                break;
+        case TNY_MSG_FOLDER_TYPE_JUNK:
+                pixbuf = modest_icon_factory_get_icon (MODEST_FOLDER_ICON_JUNK);
+                break;
+        case TNY_MSG_FOLDER_TYPE_SENT:
+                pixbuf = modest_icon_factory_get_icon (MODEST_FOLDER_ICON_SENT);
+                break;
+	case TNY_MSG_FOLDER_TYPE_NORMAL:
+        default:
+                pixbuf = modest_icon_factory_get_icon (MODEST_FOLDER_ICON_NORMAL);
+                break;
+        }
+
+	g_object_set (rendobj,
+		      "pixbuf-expander-open",
+		      modest_icon_factory_get_icon (MODEST_FOLDER_ICON_OPEN),
+		      "pixbuf-expander-closed",
+		      modest_icon_factory_get_icon (MODEST_FOLDER_ICON_CLOSED),
+		      "pixbuf", pixbuf,
+		      NULL);
+}
 
 static void
 modest_tny_folder_tree_view_init (ModestTnyFolderTreeView *obj)
@@ -126,29 +170,46 @@ modest_tny_folder_tree_view_init (ModestTnyFolderTreeView *obj)
 	ModestTnyFolderTreeViewPrivate *priv;
 	GtkTreeViewColumn *column;
 	GtkCellRenderer *renderer;
+	GtkTreeSelection *sel;
 	
 	priv =	MODEST_TNY_FOLDER_TREE_VIEW_GET_PRIVATE(obj);
-
+	
 	priv->view_is_empty     = TRUE;
 	priv->tny_account_store = NULL;
 
-	renderer = gtk_cell_renderer_text_new ();
-	column = gtk_tree_view_column_new_with_attributes(_("All Mail Folders"),
-							  renderer,"text",
-							  TNY_ACCOUNT_TREE_MODEL_NAME_COLUMN,
-							  NULL);
-	gtk_tree_view_column_set_cell_data_func(column, renderer, map_folder_text, NULL, NULL);
-	gtk_tree_view_column_set_resizable (column, TRUE);
-	gtk_tree_view_append_column (GTK_TREE_VIEW(obj), column);
+	column = gtk_tree_view_column_new ();
+	gtk_tree_view_column_set_title (column,
+					_("All Mail Folders"));
 	
+	gtk_tree_view_append_column (GTK_TREE_VIEW(obj),
+				     column);
+	
+	renderer = gtk_cell_renderer_pixbuf_new();
+	gtk_tree_view_column_pack_start (column, renderer, FALSE);
+	gtk_tree_view_column_set_cell_data_func(column, renderer,
+						icon_cell_data, NULL, NULL);
+	
+	renderer = gtk_cell_renderer_text_new();
+	gtk_tree_view_column_pack_start (column, renderer, FALSE);
+	gtk_tree_view_column_set_cell_data_func(column, renderer,
+						text_cell_data, NULL, NULL);
+	
+	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW(obj));
+	gtk_tree_selection_set_mode (sel, GTK_SELECTION_SINGLE);
+
+	gtk_tree_view_column_set_spacing (column, 2);
+	gtk_tree_view_column_set_resizable (column, TRUE);
+	gtk_tree_view_column_set_fixed_width (column, TRUE);		
 	gtk_tree_view_set_headers_visible   (GTK_TREE_VIEW(obj), TRUE);
-	gtk_tree_view_set_headers_clickable (GTK_TREE_VIEW(obj), TRUE);
+	gtk_tree_view_set_headers_clickable (GTK_TREE_VIEW(obj), FALSE);
+
 }
 
 
 static void
 modest_tny_folder_tree_view_finalize (GObject *obj)
 {
+	int i;
 	ModestTnyFolderTreeViewPrivate *priv;
 
 	g_return_if_fail (obj);
@@ -158,7 +219,7 @@ modest_tny_folder_tree_view_finalize (GObject *obj)
 		g_object_unref (G_OBJECT(priv->tny_account_store));
 		priv->tny_account_store = NULL;
 	}
-	
+
 	(*parent_class->finalize)(obj);
 }
 
@@ -310,7 +371,7 @@ selection_changed (GtkTreeSelection *sel, gpointer user_data)
 	/* folder will not be defined if you click eg. on the root node */
 	if (folder)
 		g_signal_emit (G_OBJECT(tree_view), signals[FOLDER_SELECTED_SIGNAL], 0,
-		       folder);
+			       folder);
 }
 
 
