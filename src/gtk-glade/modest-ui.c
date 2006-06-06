@@ -361,15 +361,40 @@ register_toolbar_callbacks (ModestUI *modest_ui)
 				  G_CALLBACK(on_new_mail_clicked), modest_ui);
 
 	button = glade_xml_get_widget (priv->glade_xml, "toolb_reply");
-	if (button)
+	if (button) {
 		g_signal_connect (button, "clicked",
 				  G_CALLBACK(on_reply_clicked), modest_ui);
+		gtk_widget_set_sensitive(button, FALSE);
+	}
+
+	button = glade_xml_get_widget (priv->glade_xml, "toolb_reply_all");
+	if (button) {
+		//g_signal_connect (button, "clicked",
+		//		  G_CALLBACK(on_reply_all_clicked), modest_ui);
+		gtk_widget_set_sensitive(button, FALSE);
+	}
+
+	button = glade_xml_get_widget (priv->glade_xml, "toolb_forward");
+	if (button) {
+		//g_signal_connect (button, "clicked",
+		//		  G_CALLBACK(on_forward_clicked), modest_ui);
+		gtk_widget_set_sensitive(button, FALSE);
+	}
+
+	button = glade_xml_get_widget (priv->glade_xml, "toolb_move_to");
+	if (button) {
+		//g_signal_connect (button, "clicked",
+		//		  G_CALLBACK(on_forward_clicked), modest_ui);
+		gtk_widget_set_sensitive(button, FALSE);
+	}
+
 	button = glade_xml_get_widget (priv->glade_xml, "toolb_delete");
-	if (button)
+	if (button) {
 		g_signal_connect (button, "clicked",
 				  G_CALLBACK(on_delete_clicked), modest_ui);
+		gtk_widget_set_sensitive(button, FALSE);
+	}
 }
-
 
 
 static void
@@ -381,8 +406,6 @@ hide_edit_window (GtkWidget *win, GdkEvent *event, gpointer data)
 	gtk_widget_hide (win);
 	modest_window_mgr_unregister(priv->modest_window_mgr, G_OBJECT(win));
 }
-
-
 
 
 gboolean
@@ -464,8 +487,10 @@ modest_ui_window_destroy (GtkWidget *win, GdkEvent *event, gpointer data)
 static void
 modest_ui_last_window_closed (GObject *obj, gpointer data)
 {
+	/* FIXME: Other cleanups todo? Finalize Tinymail? */
 	gtk_main_quit ();
 }
+
 
 void
 on_account_selector_selection_changed (GtkWidget *widget,
@@ -490,6 +515,7 @@ on_account_selector_selection_changed (GtkWidget *widget,
 
 	g_message("Value: '%s'\n", account_name);
 }
+
 
 void
 on_account_settings1_activate (GtkMenuItem *menuitem,
@@ -552,12 +578,14 @@ on_account_settings1_activate (GtkMenuItem *menuitem,
 	g_object_unref(glade_xml);
 }
 
+
 static void
 on_folder_clicked (ModestTnyFolderTreeView *folder_tree,
 		   TnyMsgFolderIface *folder,
 		   gpointer data)
 {
 	GtkWidget *win;
+	GtkWidget *button;
 	ModestTnyHeaderTreeView *tree_view;
 	ModestUIPrivate *priv;
 	GtkWidget *scrollview;
@@ -576,8 +604,20 @@ on_folder_clicked (ModestTnyFolderTreeView *folder_tree,
 
 	modest_tny_header_tree_view_set_folder (tree_view,
 						folder);
-}
 
+	button = glade_xml_get_widget (priv->glade_xml, "toolb_reply");
+	if (button) {
+		gtk_widget_set_sensitive(button, FALSE);
+	}
+	button = glade_xml_get_widget (priv->glade_xml, "toolb_forward");
+	if (button) {
+		gtk_widget_set_sensitive(button, FALSE);
+	}
+	button = glade_xml_get_widget (priv->glade_xml, "toolb_delete");
+	if (button) {
+		gtk_widget_set_sensitive(button, FALSE);
+	}
+}
 
 
 static void on_message_clicked (ModestTnyFolderTreeView *folder_tree,
@@ -585,6 +625,7 @@ static void on_message_clicked (ModestTnyFolderTreeView *folder_tree,
 				gpointer data)
 {
 	GtkWidget *paned;
+	GtkWidget *button;
 	ModestTnyMsgView *msg_view;
 	ModestUIPrivate *priv;
 
@@ -596,7 +637,20 @@ static void on_message_clicked (ModestTnyFolderTreeView *folder_tree,
 
 	modest_tny_msg_view_set_message (msg_view,
 					 message);
+	button = glade_xml_get_widget (priv->glade_xml, "toolb_reply");
+	if (button) {
+		gtk_widget_set_sensitive(button, TRUE);
+	}
+	button = glade_xml_get_widget (priv->glade_xml, "toolb_forward");
+	if (button) {
+		gtk_widget_set_sensitive(button, TRUE);
+	}
+	button = glade_xml_get_widget (priv->glade_xml, "toolb_delete");
+	if (button) {
+		gtk_widget_set_sensitive(button, TRUE);
+	}
 }
+
 
 static void
 on_password_requested (ModestTnyAccountStore *account_store,
@@ -650,10 +704,6 @@ on_password_requested (ModestTnyAccountStore *account_store,
 }
 
 
-
-
-
-
 static GtkWidget*
 modest_main_window_header_tree (TnyMsgFolderIface *folder)
 {
@@ -682,7 +732,6 @@ modest_main_window_header_tree (TnyMsgFolderIface *folder)
 }
 
 
-
 static GtkWidget*
 modest_main_window_folder_tree (ModestAccountMgr *modest_acc_mgr,
 				TnyAccountStoreIface *account_store)
@@ -706,6 +755,7 @@ on_new_mail_clicked (GtkWidget *widget, ModestUI *modest_ui)
 	modest_ui_show_edit_window (modest_ui, "", "", "", "", "", NULL);
 }
 
+
 static void
 reply_to_msg (ModestUI *modest_ui, TnyMsgHeaderIface *header,
 						ModestTnyMsgView *msg_view) {
@@ -721,6 +771,7 @@ reply_to_msg (ModestUI *modest_ui, TnyMsgHeaderIface *header,
 		g_warning("no header");
 		return;
 	}
+
 	folder = tny_msg_header_iface_get_folder (TNY_MSG_HEADER_IFACE(header));
 	if (!folder) {
 		g_warning ("cannot find folder");
@@ -732,6 +783,7 @@ reply_to_msg (ModestUI *modest_ui, TnyMsgHeaderIface *header,
 		g_warning ("cannot find msg");
 		return;
 	}
+
 	subject = tny_msg_header_iface_get_subject(header);
 	re_sub = g_string_new(subject);
 	g_string_prepend(re_sub, "Re: ");
