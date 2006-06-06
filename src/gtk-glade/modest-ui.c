@@ -586,7 +586,9 @@ on_folder_clicked (ModestTnyFolderTreeView *folder_tree,
 {
 	GtkWidget *win;
 	GtkWidget *button;
+	GtkWidget *paned;
 	ModestTnyHeaderTreeView *tree_view;
+	ModestTnyMsgView *msg_view;
 	ModestUIPrivate *priv;
 	GtkWidget *scrollview;
 
@@ -609,18 +611,29 @@ on_folder_clicked (ModestTnyFolderTreeView *folder_tree,
 	if (button) {
 		gtk_widget_set_sensitive(button, FALSE);
 	}
+
 	button = glade_xml_get_widget (priv->glade_xml, "toolb_forward");
 	if (button) {
 		gtk_widget_set_sensitive(button, FALSE);
 	}
+
 	button = glade_xml_get_widget (priv->glade_xml, "toolb_delete");
 	if (button) {
 		gtk_widget_set_sensitive(button, FALSE);
 	}
+
+	paned = glade_xml_get_widget (priv->glade_xml,"mail_paned");
+	g_return_if_fail (paned);
+
+	msg_view = MODEST_TNY_MSG_VIEW(gtk_paned_get_child2 (GTK_PANED(paned)));
+	g_return_if_fail (msg_view);
+
+	modest_tny_msg_view_set_message  (msg_view, NULL);
 }
 
 
-static void on_message_clicked (ModestTnyFolderTreeView *folder_tree,
+static void
+on_message_clicked (ModestTnyFolderTreeView *folder_tree,
 				TnyMsgIface *message,
 				gpointer data)
 {
