@@ -39,7 +39,7 @@ static void   modest_ui_class_init     (ModestUIClass *klass);
 static void   modest_ui_init           (ModestUI *obj);
 static void   modest_ui_finalize       (GObject *obj);
 
-static void    modest_ui_window_destroy    (GtkWidget *win, gpointer data);
+static void    modest_ui_window_destroy    (GtkWidget *win, GdkEvent *event, gpointer data);
 static void    modest_ui_last_window_closed (GObject *obj, gpointer data);
 
 static GtkWidget* modest_main_window_toolbar (void);
@@ -333,7 +333,9 @@ modest_ui_show_main_window (ModestUI *modest_ui)
 
 	modest_window_mgr_register (priv->modest_window_mgr,
 				    G_OBJECT(win), MODEST_MAIN_WINDOW, 0);
-	g_signal_connect (win, "destroy", G_CALLBACK(modest_ui_window_destroy),
+	g_signal_connect (win, "destroy-event", G_CALLBACK(modest_ui_window_destroy),
+			  modest_ui);
+	g_signal_connect (win, "delete-event", G_CALLBACK(modest_ui_window_destroy),
 			  modest_ui);
 	gtk_widget_set_usize (GTK_WIDGET(win), height, width);
 	gtk_window_set_title (GTK_WINDOW(win), PACKAGE_STRING);
@@ -371,7 +373,7 @@ register_toolbar_callbacks (ModestUI *modest_ui)
 
 
 static void
-hide_edit_window (GtkWidget *win, gpointer data)
+hide_edit_window (GtkWidget *win, GdkEvent *event, gpointer data)
 {
 	gtk_widget_hide (win);
 }
@@ -418,7 +420,9 @@ modest_ui_show_edit_window (ModestUI *modest_ui, const gchar* to,
 	} else {
 		gtk_text_buffer_set_text(buf, "", -1);
 	}
-	g_signal_connect (win, "destroy", G_CALLBACK(hide_edit_window),
+	g_signal_connect (win, "destroy-event", G_CALLBACK(hide_edit_window),
+			  NULL);
+	g_signal_connect (win, "delete-event", G_CALLBACK(hide_edit_window),
 			  NULL);
 
 	gtk_widget_set_usize (GTK_WIDGET(win), height, width);
@@ -437,13 +441,14 @@ modest_ui_show_edit_window (ModestUI *modest_ui, const gchar* to,
 
 
 static void
-modest_ui_window_destroy (GtkWidget *win, gpointer data)
+modest_ui_window_destroy (GtkWidget *win, GdkEvent *event, gpointer data)
 {
 	ModestUIPrivate *priv;
 
 	g_return_if_fail (data);
-
-	priv = MODEST_UI_GET_PRIVATE((ModestUI*)data);
+	g_return_if_fail(MODEST_IS_UI(data));
+	priv = MODEST_UI_GET_PRIVATE((ModestUI *)data);
+	g_return_if_fail(priv);
 	if (!modest_window_mgr_unregister (priv->modest_window_mgr, G_OBJECT(win)))
 		g_warning ("modest window mgr: failed to unregister %p",
 			   G_OBJECT(win));
