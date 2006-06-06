@@ -100,7 +100,9 @@ msgtype_cell_data (GtkTreeViewColumn *column, GtkCellRenderer *renderer,
 	gtk_tree_model_get (tree_model, iter, TNY_MSG_HEADER_LIST_MODEL_FLAGS_COLUMN,
 			    &flags, -1);
 
-	if (flags & TNY_MSG_HEADER_FLAG_SEEN)
+	if (flags & TNY_MSG_HEADER_FLAG_DELETED)
+		pixbuf = modest_icon_factory_get_icon (MODEST_HEADER_ICON_DELETED);
+	else if (flags & TNY_MSG_HEADER_FLAG_SEEN)
 		pixbuf = modest_icon_factory_get_icon (MODEST_HEADER_ICON_READ);
 	else
 		pixbuf = modest_icon_factory_get_icon (MODEST_HEADER_ICON_UNREAD);

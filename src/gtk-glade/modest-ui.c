@@ -13,6 +13,7 @@
 
 /* TODO: put in auto* */
 #include <tny-text-buffer-stream.h>
+#include <tny-msg-folder.h>
 
 #include "../modest-ui.h"
 #include "../modest-window-mgr.h"
@@ -62,6 +63,8 @@ static void on_message_clicked (ModestTnyFolderTreeView *folder_tree,
 static void on_new_mail_clicked (GtkWidget *widget, ModestUI *modest_ui);
 
 static void on_reply_clicked (GtkWidget *widget, ModestUI *modest_ui);
+
+static void on_delete_clicked (GtkWidget *widget, ModestUI *modest_ui);
 
 static void on_send_button_clicked (GtkWidget *widget, ModestUI *modest_ui);
 
@@ -248,11 +251,12 @@ gboolean
 modest_ui_show_main_window (ModestUI *modest_ui)
 {
 	GtkWidget       *win;
-	int              height, width;
+	gint              height, width;
 	ModestUIPrivate *priv;
 	GtkWidget     *folder_view, *header_view;
 	GtkWidget     *message_view;
-	GtkWidget *account_settings_item;
+	GtkWidget     *account_settings_item;
+	GtkWidget     *delete_item;
 
 	GtkWidget  *folder_view_holder,
 		*header_view_holder,
@@ -315,6 +319,16 @@ modest_ui_show_main_window (ModestUI *modest_ui)
 			  G_CALLBACK(on_account_settings1_activate),
 			  modest_ui);
 
+	delete_item = glade_xml_get_widget (priv->glade_xml, "delete1");
+	if (!delete_item)
+	{
+		g_warning ("The delete item isn't available!\n");
+		return FALSE;
+	}
+
+	g_signal_connect (delete_item, "activate", G_CALLBACK(on_delete_clicked),
+			  modest_ui);
+	
 	register_toolbar_callbacks (modest_ui);
 
 	modest_window_mgr_register (priv->modest_window_mgr,
@@ -348,6 +362,10 @@ register_toolbar_callbacks (ModestUI *modest_ui)
 	if (button)
 		g_signal_connect (button, "clicked",
 				  G_CALLBACK(on_reply_clicked), modest_ui);
+	button = glade_xml_get_widget (priv->glade_xml, "toolb_delete");
+	if (button)
+		g_signal_connect (button, "clicked",
+				  G_CALLBACK(on_delete_clicked), modest_ui);
 }
 
 
@@ -833,4 +851,69 @@ on_send_button_clicked (GtkWidget *widget, ModestUI *modest_ui)
 	gtk_text_buffer_set_text (buf, "", 0);
 
 	gtk_widget_hide (glade_xml_get_widget (priv->glade_xml, "new_mail"));
+}
+
+
+static void
+on_delete_clicked (GtkWidget *widget, ModestUI *modest_ui)
+{
+	GtkTreeSelection *sel;
+	GtkWidget *paned;
+	GtkTreeModel *model;
+	GtkTreeIter iter;
+	GtkScrolledWindow *scroll;
+	GtkTreeModel *mymodel, *sortable;
+
+	ModestTnyHeaderTreeView *header_view;
+	ModestTnyMsgView *msg_view;
+	ModestUIPrivate *priv;
+
+	g_return_if_fail (modest_ui);
+
+	priv = MODEST_UI_GET_PRIVATE(modest_ui);
+
+	paned = glade_xml_get_widget (priv->glade_xml,"mail_paned");
+	g_return_if_fail (paned);
+
+	scroll = GTK_SCROLLED_WINDOW(gtk_paned_get_child1 (GTK_PANED(paned)));
+	g_return_if_fail (scroll);
+
+	msg_view = MODEST_TNY_MSG_VIEW(gtk_paned_get_child2 (GTK_PANED(paned)));
+	g_return_if_fail (msg_view);
+
+	header_view = MODEST_TNY_HEADER_TREE_VIEW(gtk_bin_get_child (GTK_BIN(scroll)));
+	g_return_if_fail (header_view);
+
+	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW(header_view));
+	g_return_if_fail (sel);
+
+	/* get all selected mails */
+	if (G_LIKELY (gtk_tree_selection_get_selected (sel, &model, &iter)))
+	{
+		TnyMsgHeaderIface *header;
+
+		gtk_tree_model_get (model, &iter, TNY_MSG_HEADER_LIST_MODEL_INSTANCE_COLUMN, 
+			&header, -1);
+
+		if (G_LIKELY (header))
+		{
+			TnyMsgFolderIface *folder;
+			const TnyMsgIface *msg;
+
+			if (GTK_IS_TREE_MODEL_SORT (model))
+			{
+				mymodel = gtk_tree_model_sort_get_model 
+					(GTK_TREE_MODEL_SORT (model));
+			} else 
+				mymodel = model;
+
+			folder = (TnyMsgFolderIface*)tny_msg_header_iface_get_folder (header);
+
+			/* this will make the message as deleted */
+			/* 	tny_msg_folder_iface_expunge (folder); will finally delete messages */
+			if (TNY_IS_MSG_FOLDER (folder))
+				tny_msg_folder_iface_remove_message (folder, header);
+			gtk_widget_queue_draw (GTK_WIDGET (header_view));
+		}
+	}
 }
