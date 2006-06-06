@@ -82,12 +82,15 @@ main (int argc, char *argv[])
 
 
 	gtk_init (&argc, &argv);
+
+	modest_icon_factory_init ();
+	
 	modest_ui = MODEST_UI(modest_ui_new (modest_conf));
 	if (!modest_ui) {
 		g_warning ("failed to initialize ui");
 		goto cleanup;
 	}
-
+	
 	{
 		gboolean ok;
 		gtk_init (&argc, &argv);
@@ -122,6 +125,8 @@ cleanup:
 
 	if (modest_conf)
 		g_object_unref (modest_conf);
+
+	modest_icon_factory_uninit ();
 
 	return retval;
 }
@@ -186,9 +191,9 @@ install_test_account (ModestConf *conf)
 		}
 	}
 	if (!modest_identity_mgr_add_identity (id_mgr,
-										   MODEST_IDENTITY_DEFAULT_IDENTITY,
-										   "user@localhost",
-										   "", "", FALSE, NULL, FALSE ))
+					       MODEST_IDENTITY_DEFAULT_IDENTITY,
+					       "user@localhost",
+					       "", "", FALSE, NULL, FALSE ))
 		g_warning ("failed to add test identity");
 	
 	g_object_unref (G_OBJECT(acc_mgr));

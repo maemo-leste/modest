@@ -22,7 +22,8 @@ PIXMAP_FILES=\
 	pixmaps/*.xpm
 
 libmodest_ui_la_SOURCES=\
-	modest-ui.c
+	modest-ui.c\
+	modest-icon-names.h
 
 LDADD = \
 	$(MODEST_GSTUFF_LIBS) \

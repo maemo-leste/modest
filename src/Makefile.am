@@ -7,6 +7,7 @@ INCLUDES=\
 	$(MODEST_GSTUFF_CFLAGS)\
 	$(MODEST_LIBTINYMAIL_GNOME_DESKTOP_CFLAGS) \
 	$(MODEST_LIBTINYMAIL_MAEMO_CFLAGS) \
+	-I$(MODEST_UI_DIR)\
 	-DPREFIX=\"@prefix@\"
 
 bin_PROGRAMS=\
@@ -25,6 +26,8 @@ modest_SOURCES=\
 	modest-account-mgr.c\
 	modest-window-mgr.h\
 	modest-window-mgr.c\
+	modest-icon-factory.c\
+	modest-icon-factory.h\
 	modest-tny-account-store.h\
 	modest-tny-account-store.c\
 	modest-tny-folder-tree-view.h\
