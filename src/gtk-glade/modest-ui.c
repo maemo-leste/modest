@@ -77,8 +77,7 @@ typedef enum {
 	QUOTED_SEND_FORWARD
 } quoted_send_type;
 
-static void quoted_send_msg (ModestUI *modest_ui, TnyMsgHeaderIface *header,
-						ModestTnyMsgView *msg_view, quoted_send_type qstype);
+static void quoted_send_msg (ModestUI *modest_ui, quoted_send_type qstype);
 
 							
 
@@ -776,8 +775,19 @@ on_new_mail_clicked (GtkWidget *widget, ModestUI *modest_ui)
 
 
 static void
-quoted_send_msg (ModestUI *modest_ui, TnyMsgHeaderIface *header,
-						ModestTnyMsgView *msg_view, quoted_send_type qstype) {
+quoted_send_msg (ModestUI *modest_ui, quoted_send_type qstype) {
+	GtkTreeSelection *sel;
+	GtkWidget *paned;
+	GtkTreeModel *model;
+	GtkTreeIter iter;
+	GtkScrolledWindow *scroll;
+
+	TnyMsgHeaderIface *header;
+
+	ModestTnyHeaderTreeView *header_view;
+	ModestTnyMsgView *msg_view;
+	ModestUIPrivate *priv;
+
 	const TnyMsgIface *msg;
 	const TnyMsgFolderIface *folder;
 	GString *re_sub;
@@ -785,6 +795,35 @@ quoted_send_msg (ModestUI *modest_ui, TnyMsgHeaderIface *header,
 	gchar *unquoted, *quoted;
 	time_t sent_date;
 	gint line_limit = 76;
+
+	g_return_if_fail (modest_ui);
+
+	priv = MODEST_UI_GET_PRIVATE(modest_ui);
+
+	paned = glade_xml_get_widget (priv->glade_xml,"mail_paned");
+	g_return_if_fail (paned);
+
+	scroll = GTK_SCROLLED_WINDOW(gtk_paned_get_child1 (GTK_PANED(paned)));
+	g_return_if_fail (scroll);
+
+	msg_view = MODEST_TNY_MSG_VIEW(gtk_paned_get_child2 (GTK_PANED(paned)));
+	g_return_if_fail (msg_view);
+
+	header_view = MODEST_TNY_HEADER_TREE_VIEW(gtk_bin_get_child (GTK_BIN(scroll)));
+	g_return_if_fail (header_view);
+
+	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW(header_view));
+	g_return_if_fail (sel);
+
+	if (!gtk_tree_selection_get_selected (sel, &model, &iter)) {
+		/* no message was selected. TODO: disable reply button in this case */
+		g_warning("nothing to reply to");
+		return;
+	}
+
+	gtk_tree_model_get (model, &iter,
+			    TNY_MSG_HEADER_LIST_MODEL_INSTANCE_COLUMN,
+			    &header, -1);
 
 	if (!header) {
 		g_warning("no header");
@@ -833,96 +872,14 @@ quoted_send_msg (ModestUI *modest_ui, TnyMsgHeaderIface *header,
 static void
 on_reply_clicked (GtkWidget *widget, ModestUI *modest_ui)
 {
-	GtkTreeSelection *sel;
-	GtkWidget *paned;
-	GtkTreeModel *model;
-	GtkTreeIter iter;
-	GtkScrolledWindow *scroll;
-
-	TnyMsgHeaderIface *header;
-
-	ModestTnyHeaderTreeView *header_view;
-	ModestTnyMsgView *msg_view;
-	ModestUIPrivate *priv;
-
-	g_return_if_fail (modest_ui);
-
-	priv = MODEST_UI_GET_PRIVATE(modest_ui);
-
-	paned = glade_xml_get_widget (priv->glade_xml,"mail_paned");
-	g_return_if_fail (paned);
-
-	scroll = GTK_SCROLLED_WINDOW(gtk_paned_get_child1 (GTK_PANED(paned)));
-	g_return_if_fail (scroll);
-
-	msg_view = MODEST_TNY_MSG_VIEW(gtk_paned_get_child2 (GTK_PANED(paned)));
-	g_return_if_fail (msg_view);
-
-	header_view = MODEST_TNY_HEADER_TREE_VIEW(gtk_bin_get_child (GTK_BIN(scroll)));
-	g_return_if_fail (header_view);
-
-	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW(header_view));
-	g_return_if_fail (sel);
-
-	if (!gtk_tree_selection_get_selected (sel, &model, &iter)) {
-		/* no message was selected. TODO: disable reply button in this case */
-		g_warning("nothing to reply to");
-		return;
-	}
-
-	gtk_tree_model_get (model, &iter,
-			    TNY_MSG_HEADER_LIST_MODEL_INSTANCE_COLUMN,
-			    &header, -1);
-
-	quoted_send_msg (modest_ui, header, msg_view, QUOTED_SEND_REPLY);
+	quoted_send_msg (modest_ui, QUOTED_SEND_REPLY);
 }
 
 
 static void
 on_forward_clicked (GtkWidget *widget, ModestUI *modest_ui)
 {
-	GtkTreeSelection *sel;
-	GtkWidget *paned;
-	GtkTreeModel *model;
-	GtkTreeIter iter;
-	GtkScrolledWindow *scroll;
-
-	TnyMsgHeaderIface *header;
-
-	ModestTnyHeaderTreeView *header_view;
-	ModestTnyMsgView *msg_view;
-	ModestUIPrivate *priv;
-
-	g_return_if_fail (modest_ui);
-
-	priv = MODEST_UI_GET_PRIVATE(modest_ui);
-
-	paned = glade_xml_get_widget (priv->glade_xml,"mail_paned");
-	g_return_if_fail (paned);
-
-	scroll = GTK_SCROLLED_WINDOW(gtk_paned_get_child1 (GTK_PANED(paned)));
-	g_return_if_fail (scroll);
-
-	msg_view = MODEST_TNY_MSG_VIEW(gtk_paned_get_child2 (GTK_PANED(paned)));
-	g_return_if_fail (msg_view);
-
-	header_view = MODEST_TNY_HEADER_TREE_VIEW(gtk_bin_get_child (GTK_BIN(scroll)));
-	g_return_if_fail (header_view);
-
-	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW(header_view));
-	g_return_if_fail (sel);
-
-	if (!gtk_tree_selection_get_selected (sel, &model, &iter)) {
-		/* no message was selected. TODO: disable reply button in this case */
-		g_warning("nothing to reply to");
-		return;
-	}
-
-	gtk_tree_model_get (model, &iter,
-			    TNY_MSG_HEADER_LIST_MODEL_INSTANCE_COLUMN,
-			    &header, -1);
-
-	quoted_send_msg (modest_ui, header, msg_view, QUOTED_SEND_FORWARD);
+	quoted_send_msg (modest_ui, QUOTED_SEND_FORWARD);
 }
 
 
