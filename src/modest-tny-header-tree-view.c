@@ -133,49 +133,51 @@ static void
 header_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 		  GtkTreeModel *tree_model,  GtkTreeIter *iter,  gpointer user_data)
 {
-	GObject *rendobj;
 	TnyMsgHeaderFlags flags;
 	
 	gtk_tree_model_get (tree_model, iter, TNY_MSG_HEADER_LIST_MODEL_FLAGS_COLUMN,
 			    &flags, -1);
-	rendobj = G_OBJECT(renderer);		
-	
-	if (!(flags & TNY_MSG_HEADER_FLAG_SEEN))
-		g_object_set (rendobj, "weight", 800, NULL);
-	else
-		g_object_set (rendobj, "weight", 400, NULL); /* default, non-bold */
+
+	g_object_set (G_OBJECT(renderer),
+		      "weight", (flags & TNY_MSG_HEADER_FLAG_SEEN) ? 400: 800,
+		      "style",  (flags & TNY_MSG_HEADER_FLAG_DELETED) ?
+		                 PANGO_STYLE_ITALIC : PANGO_STYLE_NORMAL,
+		      NULL);	
 }
 
 
 
 static void
-sender_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
-		   GtkTreeModel *tree_model,  GtkTreeIter *iter,  gpointer user_data)
+sender_receiver_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
+			    GtkTreeModel *tree_model,  GtkTreeIter *iter,  gboolean is_sender)
 {
 	GObject *rendobj;
 	TnyMsgHeaderFlags flags;
-	gchar *from;
-	gchar *address;
-	
-	gtk_tree_model_get (tree_model, iter,
-			    TNY_MSG_HEADER_LIST_MODEL_FROM_COLUMN,  &from,
-			    TNY_MSG_HEADER_LIST_MODEL_FLAGS_COLUMN, &flags,
-			    TNY_MSG_HEADER_LIST_MODEL_SUBJECT_COLUMN, &flags
-			    -1);
-	rendobj = G_OBJECT(renderer);		
+	gchar *addr1, *addr2;
+	gint sender_receiver_col;
 
-	/* simplistic --> remove <email@address> from display */
-	address = g_strstr_len (from, strlen(from), "<");
-	if (address) {
-		address[0]='\0';
-		g_object_set (rendobj, "text", from, NULL);
-		g_free (from);
-	}
-			     
-	if (!(flags & TNY_MSG_HEADER_FLAG_SEEN))
-		g_object_set (rendobj, "weight", 800, NULL);
+	if (is_sender)
+		sender_receiver_col = TNY_MSG_HEADER_LIST_MODEL_FROM_COLUMN;
 	else
-		g_object_set (rendobj, "weight", 400, NULL); /* default, non-bold */
+		sender_receiver_col = TNY_MSG_HEADER_LIST_MODEL_TO_COLUMN;
+		
+	gtk_tree_model_get (tree_model, iter,
+			    sender_receiver_col,  &addr1,
+			    TNY_MSG_HEADER_LIST_MODEL_FLAGS_COLUMN, &flags,
+			    -1);
+	
+	/* simplistic --> remove <email@address> from display */
+	addr2 = g_strstr_len (addr1, strlen(addr1), "<");
+	if (addr2) 
+		addr2[0]='\0';
+
+	g_object_set (G_OBJECT(renderer),
+		      "text", addr1,
+		      "weight", (flags & TNY_MSG_HEADER_FLAG_SEEN) ? 400 : 800,
+		      "style",  (flags & TNY_MSG_HEADER_FLAG_DELETED) ? PANGO_STYLE_ITALIC : PANGO_STYLE_NORMAL,
+		      NULL);
+
+	g_free (addr1);	
 }
 
 
@@ -233,16 +235,15 @@ compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer
 	
 	header = g_strdup_printf ("%s %s\n%s", from,
 				  display_date(date), subject);
-	g_object_set (rendobj, "text", header, NULL);
-
+	g_object_set (G_OBJECT(renderer),
+		      "text",  header,
+		      "weight", (flags & TNY_MSG_HEADER_FLAG_SEEN) ? 400: 800,
+		      "style",  (flags & TNY_MSG_HEADER_FLAG_DELETED) ?
+		                 PANGO_STYLE_ITALIC : PANGO_STYLE_NORMAL,
+		      NULL);	
 	g_free (header);
 	g_free (from);
 	g_free (subject);
-	
-	if (!(flags & TNY_MSG_HEADER_FLAG_SEEN))
-		g_object_set (rendobj, "weight", 800, NULL);
-	else
-		g_object_set (rendobj, "weight", 400, NULL); /* default, non-bold */
 }
 
 
@@ -345,10 +346,17 @@ init_columns (ModestTnyHeaderTreeView *obj)
 		case MODEST_TNY_HEADER_TREE_VIEW_COLUMN_FROM:
 			column = get_new_column (_("From"), renderer_header, TRUE,
 						 TNY_MSG_HEADER_LIST_MODEL_FROM_COLUMN,
-						 TRUE, (GtkTreeCellDataFunc)sender_cell_data,
-						 NULL);
+						 TRUE, (GtkTreeCellDataFunc)sender_receiver_cell_data,
+						 GINT_TO_POINTER(TRUE));
 			break;
 
+		case MODEST_TNY_HEADER_TREE_VIEW_COLUMN_TO:
+			column = get_new_column (_("To"), renderer_header, TRUE,
+						 TNY_MSG_HEADER_LIST_MODEL_TO_COLUMN,
+						 TRUE, (GtkTreeCellDataFunc)sender_receiver_cell_data,
+						 GINT_TO_POINTER(FALSE));
+			break;
+			
 		case MODEST_TNY_HEADER_TREE_VIEW_COLUMN_COMPACT_HEADER:
 			column = get_new_column (_("Header"), renderer_header, TRUE,
 						 TNY_MSG_HEADER_LIST_MODEL_FROM_COLUMN,
@@ -367,13 +375,6 @@ init_columns (ModestTnyHeaderTreeView *obj)
 		case MODEST_TNY_HEADER_TREE_VIEW_COLUMN_SENT_DATE:
 			column = get_new_column (_("Sent"), renderer_header, TRUE,
 						 TNY_MSG_HEADER_LIST_MODEL_DATE_SENT_COLUMN,
-						 TRUE, (GtkTreeCellDataFunc)header_cell_data,
-						 NULL);
-			break;
-			
-		case MODEST_TNY_HEADER_TREE_VIEW_COLUMN_TO:
-			column = get_new_column (_("To"), renderer_header, TRUE,
-						 TNY_MSG_HEADER_LIST_MODEL_TO_COLUMN,
 						 TRUE, (GtkTreeCellDataFunc)header_cell_data,
 						 NULL);
 			break;
@@ -657,11 +658,10 @@ modest_tny_header_tree_view_set_folder (ModestTnyHeaderTreeView *self,
 		}
 		gtk_tree_view_set_model (GTK_TREE_VIEW (self), sortable);
 		gtk_tree_view_set_headers_clickable (GTK_TREE_VIEW(self), TRUE);
-
 		/* no need to unref sortable */
 		
 	} else /* when there is no folder */
-		gtk_tree_view_set_headers_clickable (GTK_TREE_VIEW(self), FALSE);
+		gtk_tree_view_set_headers_visible (GTK_TREE_VIEW(self), FALSE);
 					 
 	return TRUE;
 }
@@ -700,7 +700,8 @@ selection_changed (GtkTreeSelection *sel, gpointer user_data)
 								header);
 			if (!msg) {
 				g_message ("cannot find msg");
-				/* FIXME: update display */
+ 				gtk_tree_store_remove (GTK_TREE_STORE(model), 
+ 						       &iter); 
 			}
 		}
 					
@@ -708,8 +709,8 @@ selection_changed (GtkTreeSelection *sel, gpointer user_data)
 			       msg);
 
 		/* mark message as seen; _set_flags crashes, bug in tinymail? */
-		flags = tny_msg_header_iface_get_flags (TNY_MSG_HEADER_IFACE(header));
-		//tny_msg_header_iface_set_flags (header, flags | TNY_MSG_HEADER_FLAG_SEEN);
+		//flags = tny_msg_header_iface_get_flags (TNY_MSG_HEADER_IFACE(header));
+		//tny_msg_header_iface_set_flags (header, TNY_MSG_HEADER_FLAG_SEEN);
 	}
 }
 
