@@ -62,6 +62,8 @@ static void on_new_mail_clicked (GtkWidget *widget, ModestUI *modest_ui);
 
 static void on_reply_clicked (GtkWidget *widget, ModestUI *modest_ui);
 
+static void on_forward_clicked (GtkWidget *widget, ModestUI *modest_ui);
+
 static void on_delete_clicked (GtkWidget *widget, ModestUI *modest_ui);
 
 static void on_send_button_clicked (GtkWidget *widget, ModestUI *modest_ui);
@@ -378,15 +380,15 @@ register_toolbar_callbacks (ModestUI *modest_ui)
 
 	button = glade_xml_get_widget (priv->glade_xml, "toolb_forward");
 	if (button) {
-		//g_signal_connect (button, "clicked",
-		//		  G_CALLBACK(on_forward_clicked), modest_ui);
+		g_signal_connect (button, "clicked",
+				  G_CALLBACK(on_forward_clicked), modest_ui);
 		gtk_widget_set_sensitive(button, FALSE);
 	}
 
 	button = glade_xml_get_widget (priv->glade_xml, "toolb_move_to");
 	if (button) {
 		//g_signal_connect (button, "clicked",
-		//		  G_CALLBACK(on_forward_clicked), modest_ui);
+		//		  G_CALLBACK(on_move_to_clicked), modest_ui);
 		gtk_widget_set_sensitive(button, FALSE);
 	}
 
@@ -771,9 +773,16 @@ on_new_mail_clicked (GtkWidget *widget, ModestUI *modest_ui)
 }
 
 
+typedef enum {
+	QUOTED_SEND_REPLY,
+	QUOTED_SEND_REPLY_ALL,
+	QUOTED_SEND_FORWARD
+} quoted_send_type;
+
+
 static void
-reply_to_msg (ModestUI *modest_ui, TnyMsgHeaderIface *header,
-						ModestTnyMsgView *msg_view) {
+quoted_send_msg (ModestUI *modest_ui, TnyMsgHeaderIface *header,
+						ModestTnyMsgView *msg_view, quoted_send_type qstype) {
 	const TnyMsgIface *msg;
 	const TnyMsgFolderIface *folder;
 	GString *re_sub;
@@ -801,7 +810,6 @@ reply_to_msg (ModestUI *modest_ui, TnyMsgHeaderIface *header,
 
 	subject = tny_msg_header_iface_get_subject(header);
 	re_sub = g_string_new(subject);
-	g_string_prepend(re_sub, "Re: ");
 	/* FIXME: honor replyto, cc */
 	from = tny_msg_header_iface_get_from(header);
 	sent_date = tny_msg_header_iface_get_date_sent(header);
@@ -809,7 +817,18 @@ reply_to_msg (ModestUI *modest_ui, TnyMsgHeaderIface *header,
 	unquoted = modest_tny_msg_view_get_selected_text(msg_view);
 	quoted = modest_tny_msg_actions_quote(msg, from, sent_date, line_limit, unquoted);
 
-	modest_ui_show_edit_window (modest_ui, from, /* cc */ "", /* bcc */ "", re_sub->str, quoted, NULL);
+	switch (qstype) {
+		case QUOTED_SEND_REPLY:
+			g_string_prepend(re_sub, _("Re: "));
+			modest_ui_show_edit_window (modest_ui, from, /* cc */ "", /* bcc */ "", re_sub->str, quoted, NULL);
+			break;
+		case QUOTED_SEND_FORWARD:
+			g_string_prepend(re_sub, _("Fwd: "));
+			modest_ui_show_edit_window (modest_ui, /* from */ "", /* cc */ "", /* bcc */ "", re_sub->str, quoted, NULL);
+			break;
+		default:
+			break;
+	}
 	g_free(quoted);
 	g_free(unquoted);
 	g_string_free(re_sub, TRUE);
@@ -860,8 +879,57 @@ on_reply_clicked (GtkWidget *widget, ModestUI *modest_ui)
 			    TNY_MSG_HEADER_LIST_MODEL_INSTANCE_COLUMN,
 			    &header, -1);
 
-	reply_to_msg (modest_ui, header, msg_view);
+	quoted_send_msg (modest_ui, header, msg_view, QUOTED_SEND_REPLY);
 }
+
+
+static void
+on_forward_clicked (GtkWidget *widget, ModestUI *modest_ui)
+{
+	GtkTreeSelection *sel;
+	GtkWidget *paned;
+	GtkTreeModel *model;
+	GtkTreeIter iter;
+	GtkScrolledWindow *scroll;
+
+	TnyMsgHeaderIface *header;
+
+	ModestTnyHeaderTreeView *header_view;
+	ModestTnyMsgView *msg_view;
+	ModestUIPrivate *priv;
+
+	g_return_if_fail (modest_ui);
+
+	priv = MODEST_UI_GET_PRIVATE(modest_ui);
+
+	paned = glade_xml_get_widget (priv->glade_xml,"mail_paned");
+	g_return_if_fail (paned);
+
+	scroll = GTK_SCROLLED_WINDOW(gtk_paned_get_child1 (GTK_PANED(paned)));
+	g_return_if_fail (scroll);
+
+	msg_view = MODEST_TNY_MSG_VIEW(gtk_paned_get_child2 (GTK_PANED(paned)));
+	g_return_if_fail (msg_view);
+
+	header_view = MODEST_TNY_HEADER_TREE_VIEW(gtk_bin_get_child (GTK_BIN(scroll)));
+	g_return_if_fail (header_view);
+
+	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW(header_view));
+	g_return_if_fail (sel);
+
+	if (!gtk_tree_selection_get_selected (sel, &model, &iter)) {
+		/* no message was selected. TODO: disable reply button in this case */
+		g_warning("nothing to reply to");
+		return;
+	}
+
+	gtk_tree_model_get (model, &iter,
+			    TNY_MSG_HEADER_LIST_MODEL_INSTANCE_COLUMN,
+			    &header, -1);
+
+	quoted_send_msg (modest_ui, header, msg_view, QUOTED_SEND_FORWARD);
+}
+
 
 
 /* FIXME: truly evil --> we cannot really assume that
