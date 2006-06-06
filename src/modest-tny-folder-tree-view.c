@@ -36,6 +36,7 @@ enum {
 typedef struct _ModestTnyFolderTreeViewPrivate ModestTnyFolderTreeViewPrivate;
 struct _ModestTnyFolderTreeViewPrivate {
 	TnyAccountStoreIface *tny_account_store;
+	TnyMsgFolderIface *cur_folder;
 	gboolean view_is_empty;
 };
 #define MODEST_TNY_FOLDER_TREE_VIEW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -176,6 +177,7 @@ modest_tny_folder_tree_view_init (ModestTnyFolderTreeView *obj)
 	
 	priv->view_is_empty     = TRUE;
 	priv->tny_account_store = NULL;
+	priv->cur_folder = NULL;
 
 	column = gtk_tree_view_column_new ();
 	gtk_tree_view_column_set_title (column,
@@ -359,15 +361,25 @@ selection_changed (GtkTreeSelection *sel, gpointer user_data)
 	if (priv->view_is_empty)
 		return;
 	
+	/* folder was _un_selected if true */
 	if (!gtk_tree_selection_get_selected (sel, &model, &iter))
-		return; /* folder was _un_selected */
+	{
+		if (priv->cur_folder) 
+			tny_msg_folder_iface_expunge (priv->cur_folder);
+		priv->cur_folder = NULL;
+		return; 
+	}
 
 	tree_view = MODEST_TNY_FOLDER_TREE_VIEW (user_data);
 
 	gtk_tree_model_get (model, &iter,
 			    TNY_ACCOUNT_TREE_MODEL_INSTANCE_COLUMN,
 			    &folder, -1);
-	
+
+	if (priv->cur_folder) 
+		tny_msg_folder_iface_expunge (priv->cur_folder);
+	priv->cur_folder = folder;
+
 	/* folder will not be defined if you click eg. on the root node */
 	if (folder)
 		g_signal_emit (G_OBJECT(tree_view), signals[FOLDER_SELECTED_SIGNAL], 0,
