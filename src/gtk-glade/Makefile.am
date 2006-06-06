@@ -1,6 +1,6 @@
 #
 # Makefile.am
-# Time-stamp: <2006-06-02 14:23:35 (djcb)>
+# Time-stamp: <2006-06-06 14:27:48 (djcb)>
 #
 #
 # use Automake 'trick' ==> convenience static libraries, which
@@ -16,10 +16,10 @@ noinst_LTLIBRARIES=\
 
 GLADE_FILES=\
 	modest.glade\
-	pixmaps/*.png 
+	glade/*.png 
 
 PIXMAP_FILES=\
-	pixmaps/*.xpm
+	pixmaps/*.png
 
 libmodest_ui_la_SOURCES=\
 	modest-ui.c\
@@ -29,7 +29,7 @@ LDADD = \
 	$(MODEST_GSTUFF_LIBS) \
 	$(MODEST_LIBTINYMAIL_GNOME_DESKTOP_LIBS)
 
-EXTRA_DIST=pixmaps/*.png pixmaps/*.xpm modest.glade modest.gladep
+EXTRA_DIST=pixmaps/* glade/* modest.glade modest.gladep
 
 gladedir = $(prefix)/share/modest/glade
 glade_DATA = $(GLADE_FILES)
