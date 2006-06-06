@@ -375,7 +375,11 @@ register_toolbar_callbacks (ModestUI *modest_ui)
 static void
 hide_edit_window (GtkWidget *win, GdkEvent *event, gpointer data)
 {
+	ModestUIPrivate *priv;
+
+	priv = MODEST_UI_GET_PRIVATE(data);
 	gtk_widget_hide (win);
+	modest_window_mgr_unregister(priv->modest_window_mgr, G_OBJECT(win));
 }
 
 
@@ -421,9 +425,9 @@ modest_ui_show_edit_window (ModestUI *modest_ui, const gchar* to,
 		gtk_text_buffer_set_text(buf, "", -1);
 	}
 	g_signal_connect (win, "destroy-event", G_CALLBACK(hide_edit_window),
-			  NULL);
+			  modest_ui);
 	g_signal_connect (win, "delete-event", G_CALLBACK(hide_edit_window),
-			  NULL);
+			  modest_ui);
 
 	gtk_widget_set_usize (GTK_WIDGET(win), height, width);
 	gtk_window_set_title (GTK_WINDOW(win),
@@ -452,6 +456,8 @@ modest_ui_window_destroy (GtkWidget *win, GdkEvent *event, gpointer data)
 	if (!modest_window_mgr_unregister (priv->modest_window_mgr, G_OBJECT(win)))
 		g_warning ("modest window mgr: failed to unregister %p",
 			   G_OBJECT(win));
+	else
+		gtk_widget_hide(win);
 }
 
 
