@@ -32,7 +32,7 @@ void wizard_missing_notification(GtkWindow *parent, gchar *info_message)
         gtk_widget_destroy(DenyDialog);
 }
 
-gchar *gtk_combo_box_get_entry_text (GtkWidget *combobox)
+gchar *get_text_from_combo_box (GtkWidget *combobox)
 {
         /* Remember to free the returned variable after usage! */
 
@@ -185,7 +185,56 @@ void on_new_account1_activate (GtkMenuItem *menuitem,
 
         if (result==GTK_RESPONSE_ACCEPT)
         {
-                /* Do someting with the DATA from the widget */
+		ModestAccountMgr *acc_mgr;
+		ModestIdentityMgr *id_mgr;
+		const gchar *account_name="default";
+		ModestConf *conf=priv->modest_conf;
+
+		g_return_if_fail (conf);
+
+		acc_mgr = MODEST_ACCOUNT_MGR(modest_account_mgr_new (conf));
+		if (!acc_mgr) {
+			g_warning ("failed to instantiate account mgr");
+			return;
+		}
+
+		if (modest_account_mgr_account_exists (acc_mgr, account_name, NULL)) {
+			if (!modest_account_mgr_remove_account(acc_mgr, account_name, NULL)) {
+				g_warning ("could not delete existing account");
+			}
+		}
+
+		if (!modest_account_mgr_add_account (acc_mgr, account_name, "defaultstore", "defaulttransport", NULL))
+			g_warning ("failed to add default account");
+		else
+		{
+			modest_account_mgr_add_server_account (acc_mgr, "defaultstore",
+							       gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "AWInServerComboEntry"))),
+							       gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "AWUserNameEntry"))),
+							       NULL,
+							       gtk_combo_box_get_entry_text (glade_xml_get_widget(glade_xml, "AWMailboxtypeComboBox")));
+			modest_account_mgr_add_server_account (acc_mgr, "defaulttransport",
+							       gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "AWOutServerComboEntry"))),
+							       NULL,
+							       NULL,
+							       "smtp");
+
+		}
+		id_mgr = MODEST_IDENTITY_MGR(modest_identity_mgr_new (conf));
+		if (modest_identity_mgr_identity_exists(id_mgr, "defaultidentity", NULL)) {
+			if (!modest_identity_mgr_remove_identity(id_mgr, "defaultidentity", NULL)) {
+				g_warning ("could not delete existing default identity");
+			}
+		}
+		if (!modest_identity_mgr_add_identity (id_mgr,
+						       MODEST_IDENTITY_DEFAULT_IDENTITY,
+						       gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "AWEMailAddressEntry"))),
+						       "", "", FALSE, NULL, FALSE ))
+			g_warning ("failed to add default identity");
+
+		g_object_unref (G_OBJECT(acc_mgr));
+		g_object_unref (G_OBJECT(id_mgr));
+
         }
 
 	gtk_widget_destroy(dialog);
