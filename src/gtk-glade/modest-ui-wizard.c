@@ -212,7 +212,7 @@ void on_new_account1_activate (GtkMenuItem *menuitem,
 							       gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "AWInServerComboEntry"))),
 							       gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "AWUserNameEntry"))),
 							       NULL,
-							       gtk_combo_box_get_entry_text (glade_xml_get_widget(glade_xml, "AWMailboxtypeComboBox")));
+							       gtk_combo_box_get_active_text (GTK_COMBO_BOX(glade_xml_get_widget(glade_xml, "AWMailboxtypeComboBox"))));
 			modest_account_mgr_add_server_account (acc_mgr, "defaulttransport",
 							       gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "AWOutServerComboEntry"))),
 							       NULL,
