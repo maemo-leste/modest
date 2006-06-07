@@ -1,4 +1,4 @@
-/* modest-ui-wizzard.c */
+/* modest-ui-wizard.c */
 
 /* insert (c)/licensing information) */
 
@@ -14,9 +14,9 @@
 #include "../modest-account-mgr.h"
 
 #include "modest-ui-glade.h"
-#include "modest-ui-wizzard.h"
+#include "modest-ui-wizard.h"
 
-void wizzard_missing_notification(GtkWindow *parent, gchar *info_message)
+void wizard_missing_notification(GtkWindow *parent, gchar *info_message)
 {
         GtkWidget *DenyDialog;
 
@@ -64,15 +64,15 @@ gboolean advance_sanity_check(GtkWindow *parent, GladeXML *glade_xml, gint cp)
                 if (strlen(gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "AWMailboxnameEntry"))))==0)
                 {
                         /* FIXME:
-                         * all calls to wizzard_missing_notification lack the parent window.
+                         * all calls to wizard_missing_notification lack the parent window.
                          */
-                        wizzard_missing_notification(NULL, "Please enter mailbox name");
+                        wizard_missing_notification(NULL, "Please enter mailbox name");
                         return FALSE;
                 }
                 bla=gtk_combo_box_get_active_text(GTK_COMBO_BOX(glade_xml_get_widget(glade_xml, "AWMailboxtypeComboBox")));
                 if (bla==NULL)
                 {
-                        wizzard_missing_notification(NULL, "Please select mailbox type");
+                        wizard_missing_notification(NULL, "Please select mailbox type");
                         return FALSE;
                 }
                 return TRUE;
@@ -101,9 +101,9 @@ void on_new_account1_activate (GtkMenuItem *menuitem,
 
 	priv = MODEST_UI_GET_PRIVATE(MODEST_UI(user_data));
 
-	glade_xml = glade_xml_new(MODEST_GLADE, "account_wizzard", NULL);
+	glade_xml = glade_xml_new(MODEST_GLADE, "account_wizard", NULL);
 
-        dialog = glade_xml_get_widget(glade_xml, "account_wizzard");
+        dialog = glade_xml_get_widget(glade_xml, "account_wizard");
 
         gtk_widget_show_all(dialog);
 
