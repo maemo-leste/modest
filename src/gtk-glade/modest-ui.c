@@ -30,7 +30,7 @@
 #include "../modest-tny-msg-actions.h"
 
 #include "modest-ui-glade.h"
-#include "modest-ui-wizzard.h"
+#include "modest-ui-wizard.h"
 
 /* 'private'/'protected' functions */
 static void   modest_ui_class_init     (ModestUIClass *klass);
