@@ -79,7 +79,7 @@ typedef enum {
 
 static void quoted_send_msg (ModestUI *modest_ui, quoted_send_type qstype);
 
-							
+
 
 /* list my signals */
 enum {
@@ -537,6 +537,8 @@ on_account_settings1_activate (GtkMenuItem *menuitem,
 	GtkWidget *account_selector;
 	GtkCellRenderer *renderer;
 
+
+        g_return_if_fail(MODEST_IS_UI(user_data));
 	priv = MODEST_UI_GET_PRIVATE(MODEST_UI(user_data));
 
 	glade_xml = glade_xml_new(MODEST_GLADE, "mailbox_setup_advanced", NULL);
