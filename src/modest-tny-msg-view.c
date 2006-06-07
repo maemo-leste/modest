@@ -19,7 +19,7 @@ static void     modest_tny_msg_view_finalize     (GObject *obj);
 
 
 static GSList*  get_url_matches (GString *txt);
-static gboolean fill_gtkhtml_with_txt (GtkHTML* gtkhtml, const gchar* txt);
+static gboolean fill_gtkhtml_with_txt (GtkHTML* gtkhtml, const gchar* txt, TnyMsgIface *msg);
 
 static gboolean on_link_clicked (GtkWidget *widget, const gchar *uri,
 				 ModestTnyMsgView *msg_view);
@@ -190,6 +190,7 @@ find_cid_image (TnyMsgIface *msg, const gchar *cid)
 		const gchar *part_cid;
 		part = TNY_MSG_MIME_PART_IFACE(parts->data);
 		part_cid = tny_msg_mime_part_iface_get_content_id (part);
+		printf("CMP:%s:%s\n", cid, part_cid);
 		if (part_cid && strcmp (cid, part_cid) == 0)
 			return part; /* we found it! */
 		
@@ -238,6 +239,39 @@ typedef struct  {
 	const gchar* prefix;
 } url_match_t;
 
+
+static gchar *
+attachments_as_html(TnyMsgIface *msg)
+{
+	gboolean attachments_found = FALSE;
+	GString *appendix;
+	const GList *attl;
+	const gchar *content_type, *filename;
+	if (!msg)
+		return g_malloc0(1);
+	appendix = g_string_new("<HTML><BODY>\n<h5>Attachments:</h5>\n");
+	attl = tny_msg_iface_get_parts(msg);
+	while (attl) {
+		filename = "";
+		content_type = tny_msg_mime_part_iface_get_content_type(
+										TNY_MSG_MIME_PART_IFACE(attl->data));
+		g_return_if_fail(content_type);
+		if (strcmp (content_type, "image/jpeg") == 0 || strcmp (content_type, "image/gif") == 0) {
+			filename = tny_msg_mime_part_iface_get_filename(
+										TNY_MSG_MIME_PART_IFACE(attl->data));
+			if (!filename)
+				filename = "unknown";
+			else
+				attachments_found = TRUE;
+			g_string_append_printf(appendix, "<A href=\"attachment:%s\">%s</A>: %s<BR>\n", filename, filename, content_type);
+		}
+		attl = attl->next;
+	}
+	g_string_append(appendix, "</BODY></HTML>");
+	if (!attachments_found)
+		g_string_assign(appendix, "");
+	return g_string_free(appendix, FALSE);
+}
 
 static void
 hyperlinkify_plain_text (GString *txt)
@@ -326,7 +360,7 @@ convert_to_html (const gchar *data)
 			}
 		}
 	}
-
+	
 	g_string_append (html, "</tt></body></html>");
 	hyperlinkify_plain_text (html);
 
@@ -414,16 +448,21 @@ get_url_matches (GString *txt)
 }
 
 static gboolean
-fill_gtkhtml_with_txt (GtkHTML* gtkhtml, const gchar* txt)
+fill_gtkhtml_with_txt (GtkHTML* gtkhtml, const gchar* txt, TnyMsgIface *msg)
 {
-	gchar *html;
+	GString *html;
+	gchar *html_attachments;
 	
 	g_return_val_if_fail (gtkhtml, FALSE);
 	g_return_val_if_fail (txt, FALSE);
 
-	html = convert_to_html (txt);
-	gtk_html_load_from_string (gtkhtml, html,  strlen(html));
-	g_free (html);
+	html = g_string_new(convert_to_html (txt));
+	html_attachments = attachments_as_html(msg);
+	g_string_append(html, html_attachments);
+
+	gtk_html_load_from_string (gtkhtml, html->str, html->len);
+	g_string_free (html, TRUE);
+	g_free(html_attachments);
 
 	return TRUE;
 }
@@ -431,8 +470,9 @@ fill_gtkhtml_with_txt (GtkHTML* gtkhtml, const gchar* txt)
 
 
 static gboolean
-set_html_message (ModestTnyMsgView *self, TnyMsgMimePartIface *tny_body)
+set_html_message (ModestTnyMsgView *self, TnyMsgMimePartIface *tny_body, TnyMsgIface *msg)
 {
+	gchar *html_attachments;
 	TnyStreamIface *gtkhtml_stream;	
 	ModestTnyMsgViewPrivate *priv;
 	
@@ -447,9 +487,13 @@ set_html_message (ModestTnyMsgView *self, TnyMsgMimePartIface *tny_body)
 	
 	tny_stream_iface_reset (gtkhtml_stream);
 	tny_msg_mime_part_iface_decode_to_stream (tny_body, gtkhtml_stream);
+	html_attachments = attachments_as_html(msg);
+	/* is this clean? */
+	gtkhtml_write(gtkhtml_stream, html_attachments, strlen(html_attachments));
 	tny_stream_iface_reset (gtkhtml_stream);
 
 	g_object_unref (G_OBJECT(gtkhtml_stream));
+	g_free (html_attachments);
 	
 	return TRUE;
 }
@@ -458,7 +502,7 @@ set_html_message (ModestTnyMsgView *self, TnyMsgMimePartIface *tny_body)
 /* this is a hack --> we use the tny_text_buffer_stream to
  * get the message text, then write to gtkhtml 'by hand' */
 static gboolean
-set_text_message (ModestTnyMsgView *self, TnyMsgMimePartIface *tny_body)
+set_text_message (ModestTnyMsgView *self, TnyMsgMimePartIface *tny_body, TnyMsgIface *msg)
 {
 	GtkTextBuffer *buf;
 	GtkTextIter begin, end;
@@ -481,8 +525,8 @@ set_text_message (ModestTnyMsgView *self, TnyMsgMimePartIface *tny_body)
 	gtk_text_buffer_get_bounds (buf, &begin, &end);
 	txt = gtk_text_buffer_get_text (buf, &begin, &end, FALSE);
 	
-	fill_gtkhtml_with_txt (GTK_HTML(priv->gtkhtml), txt);
-	
+	fill_gtkhtml_with_txt (GTK_HTML(priv->gtkhtml), txt, msg);
+
 	g_object_unref (G_OBJECT(txt_stream));
 	g_object_unref (G_OBJECT(buf));
 
@@ -528,24 +572,24 @@ modest_tny_msg_view_set_message (ModestTnyMsgView *self, TnyMsgIface *msg)
 
 	priv->msg = msg;
 	
-	fill_gtkhtml_with_txt (GTK_HTML(priv->gtkhtml), "");
+	fill_gtkhtml_with_txt (GTK_HTML(priv->gtkhtml), "", msg);
 
 	if (!msg) 
 		return;
 	
 	body = modest_tny_msg_actions_find_body_part (msg, "text/html");
 	if (body) {
-		set_html_message (self, body);
+		set_html_message (self, body, msg);
 		return;
 	}
 	
 	body = modest_tny_msg_actions_find_body_part (msg, "text/plain");
 	if (body) {
-		set_text_message (self, body);
+		set_text_message (self, body, msg);
 		return;
 	}
 
 	/* hmmmmm */
 	fill_gtkhtml_with_txt (GTK_HTML(priv->gtkhtml),
-				_("Unsupported message type"));
+				_("Unsupported message type"), msg);
 }

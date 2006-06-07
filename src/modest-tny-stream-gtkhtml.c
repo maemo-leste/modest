@@ -124,7 +124,7 @@ gtkhtml_read (TnyStreamIface *self, char *buffer, size_t n)
 }
 
 
-static ssize_t
+ssize_t
 gtkhtml_write (TnyStreamIface *self, const char *buffer, size_t n)
 {
 	ModestTnyStreamGtkhtmlPrivate *priv;
