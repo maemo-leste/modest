@@ -524,6 +524,8 @@ on_account_selector_selection_changed (GtkWidget *widget,
 	}
 
 	g_message("Value: '%s'\n", account_name);
+
+	free(account_name);
 }
 
 
