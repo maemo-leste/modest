@@ -58,26 +58,41 @@ gboolean advance_sanity_check(GtkWindow *parent, GladeXML *glade_xml, gint cp)
         GtkDialog *DenyDialog;
         gchar *bla;
 
+	/* FIXME:
+	 * all calls to wizard_missing_notification lack the parent window.
+	 */
+
         switch (cp)
         {
-        case 0:
-                if (strlen(gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "AWMailboxnameEntry"))))==0)
-                {
-                        /* FIXME:
-                         * all calls to wizard_missing_notification lack the parent window.
-                         */
-                        wizard_missing_notification(NULL, "Please enter mailbox name");
-                        return FALSE;
-                }
+	case 0:
+		/* Only needed if the "mailbox name" field is used in the first page of the wizard.
+                 *if (strlen(gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "AWMailboxnameEntry"))))==0)
+                 *{
+                 *        wizard_missing_notification(NULL, "Please enter mailbox name");
+                 *        return FALSE;
+		 *}
+		 */
                 bla=gtk_combo_box_get_active_text(GTK_COMBO_BOX(glade_xml_get_widget(glade_xml, "AWMailboxtypeComboBox")));
                 if (bla==NULL)
                 {
                         wizard_missing_notification(NULL, "Please select mailbox type");
                         return FALSE;
-                }
+		}
                 return TRUE;
-                break;
-
+		break;
+	case 1:
+		if (strlen(gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "AWUserNameEntry"))))==0)
+		{
+			wizard_missing_notification(NULL, "Please enter user name");
+			return FALSE;
+		}
+		if (strlen(gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "AWEMailAddressEntry"))))==0)
+		{
+			wizard_missing_notification(NULL, "Please enter the E-Mail address");
+			return FALSE;
+		}
+		return TRUE;
+		break;
         }
 
         return FALSE;

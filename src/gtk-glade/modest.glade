@@ -4001,9 +4001,8 @@
 		    <packing>
 		      <property name="left_attach">0</property>
 		      <property name="right_attach">1</property>
-		      <property name="top_attach">1</property>
-		      <property name="bottom_attach">2</property>
-		      <property name="x_options">fill</property>
+		      <property name="top_attach">0</property>
+		      <property name="bottom_attach">1</property>
 		    </packing>
 		  </child>
 
@@ -4129,7 +4128,7 @@ LOCAL</property>
 	      <property name="column_spacing">0</property>
 
 	      <child>
-		<widget class="GtkLabel" id="label16">
+		<widget class="GtkLabel" id="AWRealNameLabel">
 		  <property name="visible">True</property>
 		  <property name="label" translatable="yes" context="yes">Name:</property>
 		  <property name="use_underline">False</property>
@@ -4156,7 +4155,7 @@ LOCAL</property>
 	      </child>
 
 	      <child>
-		<widget class="GtkLabel" id="label17">
+		<widget class="GtkLabel" id="AWUserNameLabel">
 		  <property name="visible">True</property>
 		  <property name="label" translatable="yes" context="yes">User name:</property>
 		  <property name="use_underline">False</property>
@@ -4183,7 +4182,7 @@ LOCAL</property>
 	      </child>
 
 	      <child>
-		<widget class="GtkLabel" id="label19">
+		<widget class="GtkLabel" id="AWPasswordLabel">
 		  <property name="visible">True</property>
 		  <property name="label" translatable="yes" context="yes">Password:</property>
 		  <property name="use_underline">False</property>
@@ -4210,7 +4209,7 @@ LOCAL</property>
 	      </child>
 
 	      <child>
-		<widget class="GtkLabel" id="label20">
+		<widget class="GtkLabel" id="AWEMailAddressLabel">
 		  <property name="visible">True</property>
 		  <property name="label" translatable="yes" context="yes">E-mail address:</property>
 		  <property name="use_underline">False</property>
@@ -4237,7 +4236,7 @@ LOCAL</property>
 	      </child>
 
 	      <child>
-		<widget class="GtkEntry" id="entry5">
+		<widget class="GtkEntry" id="AWRealNameEntry">
 		  <property name="visible">True</property>
 		  <property name="editable">True</property>
 		  <property name="visibility">True</property>
@@ -4256,24 +4255,26 @@ LOCAL</property>
 	      </child>
 
 	      <child>
-		<widget class="GtkComboBoxEntry" id="comboboxentry2">
+		<widget class="GtkEntry" id="AWUserNameEntry">
 		  <property name="visible">True</property>
-		  <property name="add_tearoffs">False</property>
+		  <property name="editable">True</property>
+		  <property name="visibility">True</property>
+		  <property name="max_length">0</property>
+		  <property name="text" translatable="yes"></property>
 		  <property name="has_frame">True</property>
-		  <property name="focus_on_click">True</property>
+		  <property name="invisible_char">*</property>
+		  <property name="activates_default">False</property>
 		</widget>
 		<packing>
 		  <property name="left_attach">1</property>
 		  <property name="right_attach">2</property>
 		  <property name="top_attach">1</property>
 		  <property name="bottom_attach">2</property>
-		  <property name="x_options">fill</property>
-		  <property name="y_options">fill</property>
 		</packing>
 	      </child>
 
 	      <child>
-		<widget class="GtkEntry" id="entry6">
+		<widget class="GtkEntry" id="AWPasswordEntry">
 		  <property name="visible">True</property>
 		  <property name="editable">True</property>
 		  <property name="visibility">False</property>
@@ -4292,7 +4293,7 @@ LOCAL</property>
 	      </child>
 
 	      <child>
-		<widget class="GtkEntry" id="entry7">
+		<widget class="GtkEntry" id="AWEMailAddressEntry">
 		  <property name="visible">True</property>
 		  <property name="editable">True</property>
 		  <property name="visibility">True</property>
