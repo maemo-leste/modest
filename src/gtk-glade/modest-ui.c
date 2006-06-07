@@ -414,7 +414,7 @@ hide_edit_window (GtkWidget *win, GdkEvent *event, gpointer data)
 
 
 gboolean
-modest_ui_show_edit_window (ModestUI *modest_ui, const gchar* to,
+modest_ui_new_edit_window (ModestUI *modest_ui, const gchar* to,
 			    const gchar* cc, const gchar* bcc,
 			    const gchar* subject, const gchar *body,
 			    const GSList* att)
@@ -777,7 +777,7 @@ static void
 on_new_mail_clicked (GtkWidget *widget, ModestUI *modest_ui)
 {
 	g_return_if_fail (modest_ui);
-	modest_ui_show_edit_window (modest_ui, "", "", "", "", "", NULL);
+	modest_ui_new_edit_window (modest_ui, "", "", "", "", "", NULL);
 }
 
 
@@ -860,11 +860,11 @@ quoted_send_msg (ModestUI *modest_ui, quoted_send_type qstype) {
 	switch (qstype) {
 		case QUOTED_SEND_REPLY:
 			g_string_prepend(re_sub, _("Re: "));
-			modest_ui_show_edit_window (modest_ui, from, /* cc */ "", /* bcc */ "", re_sub->str, quoted, NULL);
+			modest_ui_new_edit_window (modest_ui, from, /* cc */ "", /* bcc */ "", re_sub->str, quoted, NULL);
 			break;
 		case QUOTED_SEND_FORWARD:
 			g_string_prepend(re_sub, _("Fwd: "));
-			modest_ui_show_edit_window (modest_ui, /* from */ "", /* cc */ "", /* bcc */ "", re_sub->str, quoted, NULL);
+			modest_ui_new_edit_window (modest_ui, /* from */ "", /* cc */ "", /* bcc */ "", re_sub->str, quoted, NULL);
 			break;
 		default:
 			break;

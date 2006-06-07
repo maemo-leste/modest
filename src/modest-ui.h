@@ -64,7 +64,7 @@ gboolean     modest_ui_show_main_window (ModestUI *ui);
 
 
 /**
- * modest_ui_show_edit_window:
+ * modest_ui_new_edit_window:
  * @ui: a ModestUI instance 
  * @to: people to send this to, ';' separated
  * @cc: people to send carbon-copies (cc), ';' separated
@@ -75,7 +75,7 @@ gboolean     modest_ui_show_main_window (ModestUI *ui);
  *  
  * Returns: TRUE if succeeded, FALSE otherwise
  */
-gboolean     modest_ui_show_edit_window (ModestUI *ui,
+gboolean     modest_ui_new_edit_window (ModestUI *ui,
 					 const gchar* to,
 					 const gchar* cc,
 					 const gchar* bcc,

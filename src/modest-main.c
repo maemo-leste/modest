@@ -96,7 +96,7 @@ main (int argc, char *argv[])
 		gtk_init (&argc, &argv);
 
 		if (mailto||cc||bcc||subject||body)
-			ok = modest_ui_show_edit_window (modest_ui,
+			ok = modest_ui_new_edit_window (modest_ui,
 							 mailto,  /* to */
 							 cc,      /* cc */
 							 bcc,     /* bcc */
