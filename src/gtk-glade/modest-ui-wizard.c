@@ -56,7 +56,7 @@ gchar *gtk_combo_box_get_entry_text (GtkWidget *combobox)
 gboolean advance_sanity_check(GtkWindow *parent, GladeXML *glade_xml, gint cp)
 {
         GtkDialog *DenyDialog;
-        gchar *bla;
+        gchar *tmptext;
 
 	/* FIXME:
 	 * all calls to wizard_missing_notification lack the parent window.
@@ -66,29 +66,43 @@ gboolean advance_sanity_check(GtkWindow *parent, GladeXML *glade_xml, gint cp)
         {
 	case 0:
 		/* Only needed if the "mailbox name" field is used in the first page of the wizard.
-                 *if (strlen(gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "AWMailboxnameEntry"))))==0)
-                 *{
-                 *        wizard_missing_notification(NULL, "Please enter mailbox name");
-                 *        return FALSE;
-		 *}
+                 * if (strlen(gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "AWMailboxnameEntry"))))==0)
+                 * {
+                 *         wizard_missing_notification(NULL, "Please enter mailbox name");
+                 *         return FALSE;
+		 * }
 		 */
-                bla=gtk_combo_box_get_active_text(GTK_COMBO_BOX(glade_xml_get_widget(glade_xml, "AWMailboxtypeComboBox")));
-                if (bla==NULL)
+                tmptext=gtk_combo_box_get_active_text(GTK_COMBO_BOX(glade_xml_get_widget(glade_xml, "AWMailboxtypeComboBox")));
+                if (tmptext==NULL)
                 {
-                        wizard_missing_notification(NULL, "Please select mailbox type");
+                        wizard_missing_notification(NULL, "Please select mailbox type.");
                         return FALSE;
 		}
+		free(tmptext);
                 return TRUE;
 		break;
 	case 1:
 		if (strlen(gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "AWUserNameEntry"))))==0)
 		{
-			wizard_missing_notification(NULL, "Please enter user name");
+			wizard_missing_notification(NULL, "Please enter user name.");
 			return FALSE;
 		}
 		if (strlen(gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "AWEMailAddressEntry"))))==0)
 		{
-			wizard_missing_notification(NULL, "Please enter the E-Mail address");
+			wizard_missing_notification(NULL, "Please enter the E-Mail address.");
+			return FALSE;
+		}
+		return TRUE;
+		break;
+	case 2:
+		if (strlen(gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "AWInServerComboEntry"))))==0)
+		{
+			wizard_missing_notification(NULL, "Please specify incoming server adress.");
+			return FALSE;
+		}
+		if (strlen(gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "AWOutServerComboEntry"))))==0)
+		{
+			wizard_missing_notification(NULL, "Please specify outgoing server address.");
 			return FALSE;
 		}
 		return TRUE;

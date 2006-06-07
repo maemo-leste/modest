@@ -4406,12 +4406,17 @@ LOCAL</property>
 	      </child>
 
 	      <child>
+          <widget class="GtkEntry" id="AWInServerComboEntry">
+            <property name="visible">True</property>
+          </widget>
+          <!--
           <widget class="GtkComboBoxEntry" id="AWInServerComboEntry">
             <property name="visible">True</property>
             <property name="add_tearoffs">False</property>
             <property name="has_frame">True</property>
             <property name="focus_on_click">True</property>
           </widget>
+          -->
           <packing>
             <property name="left_attach">1</property>
             <property name="right_attach">2</property>
@@ -4421,12 +4426,17 @@ LOCAL</property>
 	      </child>
 
 	      <child>
+          <widget class="GtkEntry" id="AWOutServerComboEntry">
+            <property name="visible">True</property>
+          </widget>
+          <!--
           <widget class="GtkComboBoxEntry" id="AWOutServerComboEntry">
             <property name="visible">True</property>
             <property name="add_tearoffs">False</property>
             <property name="has_frame">True</property>
             <property name="focus_on_click">True</property>
           </widget>
+          -->
           <packing>
             <property name="left_attach">1</property>
             <property name="right_attach">2</property>
