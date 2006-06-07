@@ -28,9 +28,8 @@ struct _ModestTnyHeaderTreeViewPrivate {
 	TnyMsgFolderIface *tny_msg_folder;
 	TnyListIface      *headers;
 
-	guint sort_columns[MODEST_TNY_HEADER_TREE_VIEW_COLUMN_NUM];
-
 	GSList *columns;
+	
 	ModestTnyHeaderTreeViewStyle style;
 };
 #define MODEST_TNY_HEADER_TREE_VIEW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -390,14 +389,7 @@ init_columns (ModestTnyHeaderTreeView *obj)
 static void
 modest_tny_header_tree_view_init (ModestTnyHeaderTreeView *obj)
 {
-	ModestTnyHeaderTreeViewPrivate *priv;
-	int i;
-
-	priv = MODEST_TNY_HEADER_TREE_VIEW_GET_PRIVATE(obj); 
 	
-	for (i = 0; i != MODEST_TNY_HEADER_TREE_VIEW_COLUMN_NUM; ++i)
-		priv->sort_columns[i] = -1;
-
 }
 
 static void
@@ -522,7 +514,7 @@ static int
 get_prefix_len (const gchar *sub)
 {
 	int i = 0;
-	const static gchar* prefix[] = {"Re:", "RE:", "Fwd:", "FWD:", NULL};
+	const static gchar* prefix[] = {"Re:", "RE:", "Fwd:", "FWD:", "FW:", NULL};
 
 	if (sub[0] != 'R' && sub[0] != 'F') /* optimization */
 		return 0;
@@ -530,10 +522,11 @@ get_prefix_len (const gchar *sub)
 	while (prefix[i]) {
 		if (g_str_has_prefix(sub, prefix[i])) {
 			int prefix_len = strlen(prefix[i]); 
-			if (sub[prefix_len + 1] == ' ')
+			if (sub[prefix_len] == ' ')
 				++prefix_len; /* ignore space after prefix as well */
 			return prefix_len; 
 		}
+		++i;
 	}
 	return 0;
 }
@@ -553,68 +546,109 @@ cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 	  gpointer user_data)
 {
 	gint col_id = GPOINTER_TO_INT (user_data);
+	gint t1, t2;
 	gint val1, val2;
-
+	gchar *s1, *s2;
+	gint cmp;
+	
 	g_return_val_if_fail (GTK_IS_TREE_MODEL(tree_model), -1);
 	
 	switch (col_id) {
 
+		/* first one, we decide based on the time */
 	case MODEST_TNY_HEADER_TREE_VIEW_COLUMN_COMPACT_HEADER:
 	case MODEST_TNY_HEADER_TREE_VIEW_COLUMN_RECEIVED_DATE:
-		gtk_tree_model_get (tree_model, iter1, TNY_MSG_HEADER_LIST_MODEL_DATE_RECEIVED_COLUMN,
-				    &val1,-1);
-		gtk_tree_model_get (tree_model, iter2, TNY_MSG_HEADER_LIST_MODEL_DATE_RECEIVED_COLUMN,
-				    &val2,-1);
-		return val1 - val2;
-
+		gtk_tree_model_get (tree_model, iter1, TNY_MSG_HEADER_LIST_MODEL_DATE_RECEIVED_TIME_T_COLUMN,
+				    &t1,-1);
+		gtk_tree_model_get (tree_model, iter2, TNY_MSG_HEADER_LIST_MODEL_DATE_RECEIVED_TIME_T_COLUMN,
+				    &t2,-1);
+		return t1 - t2;
 		
 	case MODEST_TNY_HEADER_TREE_VIEW_COLUMN_SENT_DATE:
-		gtk_tree_model_get (tree_model, iter1, TNY_MSG_HEADER_LIST_MODEL_DATE_SENT_COLUMN,
-				    &val1,-1);
-		gtk_tree_model_get (tree_model, iter2, TNY_MSG_HEADER_LIST_MODEL_DATE_SENT_COLUMN,
-				    &val2,-1);
-		return val1 - val2;
+		gtk_tree_model_get (tree_model, iter1, TNY_MSG_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN,
+				    &t1,-1);
+		gtk_tree_model_get (tree_model, iter2, TNY_MSG_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN,
+				    &t2,-1);
+		return t1 - t2;
 
+		
+		/* next ones, we try the search criteria first, if they're the same, then we use 'sent date' */
 	case MODEST_TNY_HEADER_TREE_VIEW_COLUMN_SUBJECT: {
-		gchar *sub1, *sub2;
-		int retval;
-		
-		gtk_tree_model_get (tree_model, iter1, TNY_MSG_HEADER_LIST_MODEL_SUBJECT_COLUMN,
-				    &sub1,-1);
-		gtk_tree_model_get (tree_model, iter2, TNY_MSG_HEADER_LIST_MODEL_SUBJECT_COLUMN,
-				    &sub2,-1);
-		
-		retval = cmp_normalized_subject(sub1, sub2);
 
-		g_free (sub1);
-		g_free (sub2);
+		gtk_tree_model_get (tree_model, iter1,
+				    TNY_MSG_HEADER_LIST_MODEL_SUBJECT_COLUMN, &s1,
+				    TNY_MSG_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN, &t1,
+				    -1);
+		gtk_tree_model_get (tree_model, iter2,
+				    TNY_MSG_HEADER_LIST_MODEL_SUBJECT_COLUMN, &s2,
+				    TNY_MSG_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN, &t2,
+				    -1);
 		
-		return retval;
+		cmp = cmp_normalized_subject(s1, s2);
+
+		g_free (s1);
+		g_free (s2);
+		
+		return cmp ? cmp : t1 - t2;
 	}
 		
-	case MODEST_TNY_HEADER_TREE_VIEW_COLUMN_ATTACH:
-		gtk_tree_model_get (tree_model, iter1, TNY_MSG_HEADER_LIST_MODEL_FLAGS_COLUMN,
-				    &val1,-1);
-		gtk_tree_model_get (tree_model, iter2, TNY_MSG_HEADER_LIST_MODEL_FLAGS_COLUMN,
-				    &val2,-1);
+	case MODEST_TNY_HEADER_TREE_VIEW_COLUMN_FROM:
 		
-		return (val1 & TNY_MSG_HEADER_FLAG_ATTACHMENTS) - (val2 & TNY_MSG_HEADER_FLAG_ATTACHMENTS);
-	
+		gtk_tree_model_get (tree_model, iter1,
+				    TNY_MSG_HEADER_LIST_MODEL_FROM_COLUMN, &s1,
+				    TNY_MSG_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN, &t1,
+				    -1);
+		gtk_tree_model_get (tree_model, iter2,
+				    TNY_MSG_HEADER_LIST_MODEL_FROM_COLUMN, &s2,
+				    TNY_MSG_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN, &t2,
+				    -1);
+		cmp = strcmp (s1, s2);
+		g_free (s1);
+		g_free (s2);
+		
+		return cmp ? cmp : t1 - t2;
+		
+	case MODEST_TNY_HEADER_TREE_VIEW_COLUMN_TO: 
+		
+		gtk_tree_model_get (tree_model, iter1,
+				    TNY_MSG_HEADER_LIST_MODEL_TO_COLUMN, &s1,
+				    TNY_MSG_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN, &t1,
+				    -1);
+		gtk_tree_model_get (tree_model, iter2,
+				    TNY_MSG_HEADER_LIST_MODEL_TO_COLUMN, &s2,
+				    TNY_MSG_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN, &t2,
+				    -1);
+		cmp = strcmp (s1, s2);
+		g_free (s1);
+		g_free (s2);
+		
+		return cmp ? cmp : t1 - t2;
 
+	case MODEST_TNY_HEADER_TREE_VIEW_COLUMN_ATTACH:
+
+		gtk_tree_model_get (tree_model, iter1, TNY_MSG_HEADER_LIST_MODEL_FLAGS_COLUMN, &val1,
+				    TNY_MSG_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN, &t1, -1);
+		gtk_tree_model_get (tree_model, iter2, TNY_MSG_HEADER_LIST_MODEL_FLAGS_COLUMN, &val2,
+				    TNY_MSG_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN, &t2, -1);
+		
+		cmp = (val1 & TNY_MSG_HEADER_FLAG_ATTACHMENTS) - (val2 & TNY_MSG_HEADER_FLAG_ATTACHMENTS);
+
+		return cmp ? cmp : t1 - t2;
+		
 	case MODEST_TNY_HEADER_TREE_VIEW_COLUMN_MSGTYPE:
-		gtk_tree_model_get (tree_model, iter1, TNY_MSG_HEADER_LIST_MODEL_FLAGS_COLUMN,
-				    &val1,-1);
-		gtk_tree_model_get (tree_model, iter2, TNY_MSG_HEADER_LIST_MODEL_FLAGS_COLUMN,
-				    &val2,-1);
+		gtk_tree_model_get (tree_model, iter1, TNY_MSG_HEADER_LIST_MODEL_FLAGS_COLUMN, &val1,
+				    TNY_MSG_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN, &t1,-1);
+		gtk_tree_model_get (tree_model, iter2, TNY_MSG_HEADER_LIST_MODEL_FLAGS_COLUMN, &val2,
+				    TNY_MSG_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN, &t2,-1);
+		cmp =  (val1 & TNY_MSG_HEADER_FLAG_SEEN) - (val2 & TNY_MSG_HEADER_FLAG_SEEN);
 
-		g_message ("%p %p", iter1, iter2);
-		return (val1 & TNY_MSG_HEADER_FLAG_SEEN) - (val2 & TNY_MSG_HEADER_FLAG_SEEN);
+		return cmp ? cmp : t1 - t2;
 
 	default:
-		g_message ("%p %p", iter1, iter2);
-		return &iter1 - &iter2;
+		return &iter1 - &iter2; /* oughhhh  */
 	}
 }
+
 
 
 gboolean
@@ -630,6 +664,8 @@ modest_tny_header_tree_view_set_folder (ModestTnyHeaderTreeView *self,
 	priv = MODEST_TNY_HEADER_TREE_VIEW_GET_PRIVATE(self);
 	
 	if (folder) {
+		GSList *col;
+		
 		priv->headers = TNY_LIST_IFACE(tny_msg_header_list_model_new ());
 		tny_msg_folder_iface_get_headers (folder, priv->headers,
 						  FALSE);
@@ -646,16 +682,17 @@ modest_tny_header_tree_view_set_folder (ModestTnyHeaderTreeView *self,
 		}
 	
 		sortable = gtk_tree_model_sort_new_with_model (GTK_TREE_MODEL(priv->headers));
-		
-		for (i = 0; i != MODEST_TNY_HEADER_TREE_VIEW_COLUMN_NUM; ++i) {
-			int col_id = priv->sort_columns[i];
-			if (col_id >= 0) {
-				g_message ("%d: %p: %p: %d", i, GTK_TREE_SORTABLE(sortable), sortable, col_id);
-				gtk_tree_sortable_set_sort_func (GTK_TREE_SORTABLE(sortable), col_id,
-								 (GtkTreeIterCompareFunc)cmp_rows,
-								 GINT_TO_POINTER(col_id), NULL);
-			}
+
+		/* install our special sorting functions */
+		col = priv->columns;
+		while (col) {
+			int col_id = GPOINTER_TO_INT (col->data);
+			gtk_tree_sortable_set_sort_func (GTK_TREE_SORTABLE(sortable), col_id,
+							 (GtkTreeIterCompareFunc)cmp_rows,
+							 GINT_TO_POINTER(col_id), NULL);
+			col = col->next;
 		}
+		
 		gtk_tree_view_set_model (GTK_TREE_VIEW (self), sortable);
 		gtk_tree_view_set_headers_clickable (GTK_TREE_VIEW(self), TRUE);
 		/* no need to unref sortable */
