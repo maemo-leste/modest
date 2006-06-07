@@ -422,7 +422,7 @@ modest_ui_show_edit_window (ModestUI *modest_ui, const gchar* to,
 	GtkWidget       *win, *to_entry, *subject_entry, *body_view;
 
 	ModestUIPrivate *priv;
-	GtkWidget       *btn;
+	GtkWidget       *btn, *dummy;
 	GtkTextBuffer	*buf;
 
 	priv = MODEST_UI_GET_PRIVATE(modest_ui);
@@ -437,8 +437,13 @@ modest_ui_show_edit_window (ModestUI *modest_ui, const gchar* to,
 		return FALSE;
 	}
 
-	modest_window_mgr_register (priv->modest_window_mgr,
-				    G_OBJECT(win), MODEST_EDIT_WINDOW, 0);
+	/* FIXME: this also assumes that there can be only one edit window! */
+	if (!modest_window_mgr_find_by_type(priv->modest_window_mgr, MODEST_EDIT_WINDOW)) {
+		/* there already is one edit win, maybe we should preserver its contents */
+		modest_window_mgr_register (priv->modest_window_mgr,
+									G_OBJECT(win), MODEST_EDIT_WINDOW, 0);
+	}
+	
 	to_entry      = glade_xml_get_widget (priv->glade_xml, "to_entry");
 	subject_entry = glade_xml_get_widget (priv->glade_xml, "subject_entry");
 	body_view     = glade_xml_get_widget (priv->glade_xml, "body_view");
@@ -818,7 +823,6 @@ quoted_send_msg (ModestUI *modest_ui, quoted_send_type qstype) {
 	g_return_if_fail (sel);
 
 	if (!gtk_tree_selection_get_selected (sel, &model, &iter)) {
-		/* no message was selected. TODO: disable reply button in this case */
 		g_warning("nothing to reply to");
 		return;
 	}
