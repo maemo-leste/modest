@@ -22,7 +22,7 @@
   <property name="urgency_hint">False</property>
 
   <child>
-    <widget class="GtkVBox" id="vbox1">
+    <widget class="GtkVBox" id="main_top_container">
       <property name="visible">True</property>
       <property name="homogeneous">False</property>
       <property name="spacing">0</property>
@@ -302,7 +302,7 @@
 		      <property name="visible">True</property>
 		      <property name="label" translatable="yes">Outbox</property>
 		      <property name="use_underline">True</property>
-		      <property name="active">True</property>
+		      <property name="active">False</property>
 		      <property name="group">inbox1</property>
 		      <signal name="activate" handler="on_outbox1_activate" last_modification_time="Fri, 28 Apr 2006 12:15:47 GMT"/>
 		    </widget>
@@ -313,7 +313,7 @@
 		      <property name="visible">True</property>
 		      <property name="label" translatable="yes">Drafts</property>
 		      <property name="use_underline">True</property>
-		      <property name="active">True</property>
+		      <property name="active">False</property>
 		      <property name="group">inbox1</property>
 		      <signal name="activate" handler="on_drafts1_activate" last_modification_time="Fri, 28 Apr 2006 12:15:47 GMT"/>
 		    </widget>
@@ -324,7 +324,7 @@
 		      <property name="visible">True</property>
 		      <property name="label" translatable="yes">Sent</property>
 		      <property name="use_underline">True</property>
-		      <property name="active">True</property>
+		      <property name="active">False</property>
 		      <property name="group">inbox1</property>
 		      <signal name="activate" handler="on_sent1_activate" last_modification_time="Fri, 28 Apr 2006 12:15:47 GMT"/>
 		    </widget>
@@ -335,7 +335,7 @@
 		      <property name="visible">True</property>
 		      <property name="label" translatable="yes">Archive</property>
 		      <property name="use_underline">True</property>
-		      <property name="active">True</property>
+		      <property name="active">False</property>
 		      <property name="group">inbox1</property>
 		      <signal name="activate" handler="on_archive1_activate" last_modification_time="Fri, 28 Apr 2006 12:15:47 GMT"/>
 		    </widget>
@@ -815,7 +815,7 @@
   <property name="urgency_hint">False</property>
 
   <child>
-    <widget class="GtkVBox" id="vbox2">
+    <widget class="GtkVBox" id="new_mail_top_container">
       <property name="visible">True</property>
       <property name="homogeneous">False</property>
       <property name="spacing">0</property>
@@ -1334,7 +1334,7 @@
 		      <property name="visible">True</property>
 		      <property name="label" translatable="yes">Encrypt</property>
 		      <property name="use_underline">True</property>
-		      <property name="active">True</property>
+		      <property name="active">False</property>
 		      <property name="group">none1</property>
 		      <signal name="activate" handler="on_encrypt1_activate" last_modification_time="Fri, 28 Apr 2006 13:32:29 GMT"/>
 		    </widget>
@@ -1345,7 +1345,7 @@
 		      <property name="visible">True</property>
 		      <property name="label" translatable="yes">Digitally sign</property>
 		      <property name="use_underline">True</property>
-		      <property name="active">True</property>
+		      <property name="active">False</property>
 		      <property name="group">none1</property>
 		      <signal name="activate" handler="on_digitally_sign1_activate" last_modification_time="Fri, 28 Apr 2006 13:32:29 GMT"/>
 		    </widget>
@@ -1356,7 +1356,7 @@
 		      <property name="visible">True</property>
 		      <property name="label" translatable="yes">Digitally sign and encrypt</property>
 		      <property name="use_underline">True</property>
-		      <property name="active">True</property>
+		      <property name="active">False</property>
 		      <property name="group">none1</property>
 		      <signal name="activate" handler="on_digitally_sign_and_encrypt1_activate" last_modification_time="Fri, 28 Apr 2006 13:32:29 GMT"/>
 		    </widget>
@@ -1654,7 +1654,7 @@
   <property name="urgency_hint">False</property>
 
   <child>
-    <widget class="GtkVBox" id="vbox3">
+    <widget class="GtkVBox" id="viewer_top_container">
       <property name="visible">True</property>
       <property name="homogeneous">False</property>
       <property name="spacing">0</property>
@@ -3817,7 +3817,7 @@
   <property name="has_separator">True</property>
 
   <child internal-child="vbox">
-    <widget class="GtkVBox" id="dialog1-vbox">
+    <widget class="GtkVBox" id="account_wizzard_top_container">
       <property name="visible">True</property>
       <property name="homogeneous">False</property>
       <property name="spacing">0</property>
