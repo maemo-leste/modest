@@ -4498,7 +4498,6 @@ Tap 'Advanced' to edit the advanced e-mail settings.</property>
 
 <widget class="GtkDialog" id="IdentitySetupDialog">
   <property name="border_width">10</property>
-  <property name="visible">True</property>
   <property name="title" translatable="yes">Identity setup</property>
   <property name="type">GTK_WINDOW_TOPLEVEL</property>
   <property name="window_position">GTK_WIN_POS_NONE</property>
