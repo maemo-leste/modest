@@ -1012,6 +1012,7 @@ on_new_mail_clicked (GtkWidget *widget, ModestUI *modest_ui)
 	g_signal_connect(w, "changed", G_CALLBACK(on_editor_entry_changed), edit_win);
 	w = glade_xml_get_widget (glade_xml, "body_view");
 	buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
+	gtk_text_buffer_set_text(buf, "", -1);
 	g_signal_connect(buf, "changed", G_CALLBACK(on_editor_buffer_changed), edit_win);
 
 	g_signal_connect (edit_win, "destroy-event", G_CALLBACK(close_edit_window),
