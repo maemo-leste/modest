@@ -29,6 +29,8 @@
 #include "../modest-text-utils.h"
 #include "../modest-tny-msg-actions.h"
 
+#include "../modest-editor-window.h"
+
 #include "modest-ui-glade.h"
 #include "modest-ui-wizard.h"
 
@@ -319,11 +321,11 @@ modest_ui_show_main_window (ModestUI *modest_ui)
 		g_warning ("The new account item isn't available!\n");
 		return FALSE;
 	}
-
+/*
         g_signal_connect (new_account_item, "activate",
-                          G_CALLBACK(new_wizard_account),
+                          G_CALLBACK(on_new_account1_activate),
                           modest_ui);
-
+*/
 	delete_item = glade_xml_get_widget (priv->glade_xml, "delete1");
 	if (!delete_item)
 	{
@@ -413,6 +415,52 @@ hide_edit_window (GtkWidget *win, GdkEvent *event, gpointer data)
 }
 
 
+GtkContainer
+*modest_ui_new_editor_window (ModestUI *modest_ui, gpointer *user_data)
+{
+	GtkWidget       *top_container, *to_entry, *subject_entry, *body_view;
+
+	ModestUIPrivate *priv;
+	GladeXML		*ui_ref;
+	GtkWidget       *btn, *dummy;
+	GtkTextBuffer	*buf;
+
+	priv = MODEST_UI_GET_PRIVATE(modest_ui);
+	int height = modest_conf_get_int (priv->modest_conf,
+					  MODEST_CONF_EDIT_WINDOW_HEIGHT,NULL);
+	int width  = modest_conf_get_int (priv->modest_conf,
+					  MODEST_CONF_EDIT_WINDOW_WIDTH,NULL);
+
+	ui_ref = glade_xml_new(MODEST_GLADE, "new_mail", NULL);
+	if (!ui_ref)
+		return NULL;
+
+	*user_data = ui_ref;
+
+	top_container = glade_xml_get_widget(ui_ref, "new_mail_top_container");
+	if (!top_container) {
+		g_object_unref(G_OBJECT(ui_ref));
+		return NULL;
+	}
+
+	return GTK_CONTAINER(top_container);
+}
+
+
+gboolean
+modest_ui_editor_window_set_to_header(ModestEditorWindow *edit_win, gchar *to)
+{
+	GladeXML *glade_xml;
+	GtkWidget *w;
+
+	glade_xml = (GladeXML *)modest_editor_window_get_data(edit_win);
+	w = glade_xml_get_widget(glade_xml, "to_entry");
+	gtk_entry_set_text(GTK_ENTRY(w), to);
+
+	return TRUE;
+}
+
+
 gboolean
 modest_ui_new_edit_window (ModestUI *modest_ui, const gchar* to,
 			    const gchar* cc, const gchar* bcc,
@@ -443,7 +491,7 @@ modest_ui_new_edit_window (ModestUI *modest_ui, const gchar* to,
 		modest_window_mgr_register (priv->modest_window_mgr,
 									G_OBJECT(win), MODEST_EDIT_WINDOW, 0);
 	}
-
+	
 	to_entry      = glade_xml_get_widget (priv->glade_xml, "to_entry");
 	subject_entry = glade_xml_get_widget (priv->glade_xml, "subject_entry");
 	body_view     = glade_xml_get_widget (priv->glade_xml, "body_view");

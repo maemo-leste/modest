@@ -5,7 +5,9 @@
 #define __MODEST_UI_H__
 
 #include <glib-object.h>
+#include <gtk/gtkcontainer.h>
 #include "modest-conf.h"
+// #include "modest-editor-window.h"
 
 G_BEGIN_DECLS
 
@@ -82,6 +84,11 @@ gboolean     modest_ui_new_edit_window (ModestUI *ui,
 					 const gchar* subject,
 					 const gchar* body,
 					 const GSList* att);
+
+
+GtkContainer *modest_ui_new_editor_window (ModestUI *modest_ui, gpointer *user_data);
+
+//gboolean modest_ui_editor_window_set_to_header(ModestEditorWindow *edit_win, gchar *to);
 
 G_END_DECLS
 
