@@ -10,6 +10,8 @@
 #include <tny-msg-iface.h>
 #include <tny-msg-mime-part-iface.h>
 
+#include "modest-conf.h"
+
 G_BEGIN_DECLS
 
 /* convenience macros */
@@ -52,7 +54,7 @@ GType        modest_tny_msg_view_get_type    (void) G_GNUC_CONST;
  *  
  * Returns: a new ModestTnyMsgView widget, or NULL if there's an error
  */
-GtkWidget*   modest_tny_msg_view_new          (TnyMsgIface *tny_msg);
+GtkWidget*   modest_tny_msg_view_new          (TnyMsgIface *tny_msg, ModestConf *conf);
 
 
 /**

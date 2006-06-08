@@ -304,7 +304,7 @@ modest_ui_show_main_window (ModestUI *modest_ui)
 	g_signal_connect (G_OBJECT(folder_view), "folder_selected",
  			  G_CALLBACK(on_folder_clicked), modest_ui);
 
-	message_view  = GTK_WIDGET(modest_tny_msg_view_new (NULL));
+	message_view  = GTK_WIDGET(modest_tny_msg_view_new (NULL, priv->modest_conf));
 	if (!message_view) {
 		g_warning ("failed to create message view");
 		return FALSE;
