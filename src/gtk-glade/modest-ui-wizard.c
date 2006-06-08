@@ -222,7 +222,7 @@ void wizard_account_dialog(ModestUI *modest_ui)
                         gtk_widget_set_sensitive(NextButton, FALSE);
                         break;
                 default:
-                        g_error("I'm on page %d of notebook AWNotebook, which shouldn't have happened. Pulling Emeregency breaks.", cp);
+                        g_error("I'm on page %d of notebook AWNotebook, which shouldn't have happened. Pulling emergency breaks.", cp);
                         break;
                 }
 

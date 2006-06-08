@@ -303,7 +303,7 @@ modest_ui_show_main_window (ModestUI *modest_ui)
 			  G_CALLBACK(on_message_clicked),
 			  modest_ui);
 
-	account_settings_item = glade_xml_get_widget (priv->glade_xml, "account_settings1");
+	account_settings_item = glade_xml_get_widget (priv->glade_xml, "AccountSettingsMenuItem");
 	if (!account_settings_item)
 	{
 		g_warning ("The account settings item isn't available!\n");
@@ -313,7 +313,7 @@ modest_ui_show_main_window (ModestUI *modest_ui)
                           G_CALLBACK(on_account_settings1_activate),
                           modest_ui);
 
-	new_account_item = glade_xml_get_widget (priv->glade_xml, "new_account1");
+	new_account_item = glade_xml_get_widget (priv->glade_xml, "NewAccountWizzardMenuItem");
 	if (!new_account_item)
 	{
 		g_warning ("The new account item isn't available!\n");
