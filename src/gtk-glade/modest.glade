@@ -292,7 +292,7 @@
 		      <property name="visible">True</property>
 		      <property name="label" translatable="yes">Inbox</property>
 		      <property name="use_underline">True</property>
-		      <property name="active">True</property>
+		      <property name="active">False</property>
 		      <signal name="activate" handler="on_inbox1_activate" last_modification_time="Fri, 28 Apr 2006 12:15:47 GMT"/>
 		    </widget>
 		  </child>
@@ -302,7 +302,7 @@
 		      <property name="visible">True</property>
 		      <property name="label" translatable="yes">Outbox</property>
 		      <property name="use_underline">True</property>
-		      <property name="active">True</property>
+		      <property name="active">False</property>
 		      <property name="group">inbox1</property>
 		      <signal name="activate" handler="on_outbox1_activate" last_modification_time="Fri, 28 Apr 2006 12:15:47 GMT"/>
 		    </widget>
@@ -313,7 +313,7 @@
 		      <property name="visible">True</property>
 		      <property name="label" translatable="yes">Drafts</property>
 		      <property name="use_underline">True</property>
-		      <property name="active">True</property>
+		      <property name="active">False</property>
 		      <property name="group">inbox1</property>
 		      <signal name="activate" handler="on_drafts1_activate" last_modification_time="Fri, 28 Apr 2006 12:15:47 GMT"/>
 		    </widget>
@@ -324,7 +324,7 @@
 		      <property name="visible">True</property>
 		      <property name="label" translatable="yes">Sent</property>
 		      <property name="use_underline">True</property>
-		      <property name="active">True</property>
+		      <property name="active">False</property>
 		      <property name="group">inbox1</property>
 		      <signal name="activate" handler="on_sent1_activate" last_modification_time="Fri, 28 Apr 2006 12:15:47 GMT"/>
 		    </widget>
@@ -494,24 +494,11 @@
 		  </child>
 
 		  <child>
-		    <widget class="GtkMenuItem" id="AccountWizardryMenuItem">
+		    <widget class="GtkMenuItem" id="NewAccountWizzardMenuItem">
 		      <property name="visible">True</property>
-		      <property name="label" translatable="yes">Account Wizardry</property>
+		      <property name="label" translatable="yes">New account...</property>
 		      <property name="use_underline">True</property>
-
-		      <child>
-			<widget class="GtkMenu" id="AccountWizardry_menu">
-
-			  <child>
-			    <widget class="GtkMenuItem" id="NewAccountWizardMenuItem">
-			      <property name="visible">True</property>
-			      <property name="label" translatable="yes">New account...</property>
-			      <property name="use_underline">True</property>
-			      <signal name="activate" handler="new_wizard_account" last_modification_time="Fri, 28 Apr 2006 12:23:17 GMT"/>
-			    </widget>
-			  </child>
-			</widget>
-		      </child>
+		      <signal name="activate" handler="on_new_account1_activate" last_modification_time="Fri, 28 Apr 2006 12:23:17 GMT"/>
 		    </widget>
 		  </child>
 
@@ -3830,7 +3817,7 @@
   <property name="has_separator">True</property>
 
   <child internal-child="vbox">
-    <widget class="GtkVBox" id="account_wizard_top_container">
+    <widget class="GtkVBox" id="account_wizzard_top_container">
       <property name="visible">True</property>
       <property name="homogeneous">False</property>
       <property name="spacing">0</property>
