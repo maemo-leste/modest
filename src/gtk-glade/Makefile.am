@@ -9,7 +9,8 @@
 INCLUDES=\
 	$(MODEST_GSTUFF_CFLAGS) \
 	$(MODEST_LIBTINYMAIL_GNOME_DESKTOP_CFLAGS) \
-	-DPREFIX=\"@prefix@\"
+	-DPREFIX=\"@prefix@\" \
+	-Wall
 
 noinst_LTLIBRARIES=\
 	libmodest-ui.la
