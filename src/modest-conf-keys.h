@@ -8,16 +8,16 @@
 #define MODEST_CONF_EXT_EDITOR	          MODEST_CONF_NAMESPACE "/ext_editor"	  /* string */
 
 #define MODEST_CONF_MAIN_WINDOW_HEIGHT	  MODEST_CONF_NAMESPACE "/main_window_height"    /* int */
-#define MODEST_CONF_MAIN_WINDOW_HEIGHT_DEFAULT 800                                       /* int */
+#define MODEST_CONF_MAIN_WINDOW_HEIGHT_DEFAULT 480                                       /* int */
 
 #define MODEST_CONF_MAIN_WINDOW_WIDTH	  MODEST_CONF_NAMESPACE "/main_window_width"     /* int */
-#define MODEST_CONF_MAIN_WINDOW_WIDTH_DEFAULT  480
+#define MODEST_CONF_MAIN_WINDOW_WIDTH_DEFAULT  800
 
 #define MODEST_CONF_EDIT_WINDOW_HEIGHT	  MODEST_CONF_NAMESPACE "/edit_window_height"    /* int */
-#define MODEST_CONF_EDIT_WINDOW_HEIGHT_DEFAULT 800                                       /* int */
+#define MODEST_CONF_EDIT_WINDOW_HEIGHT_DEFAULT 480                                       /* int */
 
 #define MODEST_CONF_EDIT_WINDOW_WIDTH	  MODEST_CONF_NAMESPACE "/edit_window_width"     /* int */
-#define MODEST_CONF_EDIT_WINDOW_WIDTH_DEFAULT  480
+#define MODEST_CONF_EDIT_WINDOW_WIDTH_DEFAULT  800
 
 
 

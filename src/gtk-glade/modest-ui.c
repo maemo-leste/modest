@@ -357,7 +357,7 @@ modest_ui_show_main_window (ModestUI *modest_ui)
 			  modest_ui);
 	g_signal_connect (win, "delete-event", G_CALLBACK(modest_ui_window_destroy),
 			  modest_ui);
-	gtk_widget_set_usize (GTK_WIDGET(win), height, width);
+	gtk_widget_set_usize (GTK_WIDGET(win), width, height);
 	gtk_window_set_title (GTK_WINDOW(win), PACKAGE_STRING);
 
 	gtk_widget_show_all (win);
