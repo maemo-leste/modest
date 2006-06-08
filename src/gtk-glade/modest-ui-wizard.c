@@ -32,7 +32,7 @@ void wizard_missing_notification(GtkWindow *parent, gchar *info_message)
         gtk_widget_destroy(DenyDialog);
 }
 
-gchar *get_text_from_combo_box (GtkWidget *combobox)
+gchar *get_text_from_combobox (GtkWidget *combobox)
 {
         /* Remember to free the returned variable after usage! */
 
@@ -126,7 +126,8 @@ void on_new_account1_activate (GtkMenuItem *menuitem,
         GtkWidget *awidget;
         gint cp;
         gint result;
-        gint finishallowed=0;
+	gint finishallowed=0;
+	gchar *tmptext;
 
 	priv = MODEST_UI_GET_PRIVATE(MODEST_UI(user_data));
 
@@ -208,11 +209,13 @@ void on_new_account1_activate (GtkMenuItem *menuitem,
 			g_warning ("failed to add default account");
 		else
 		{
+			tmptext=get_text_from_combobox(glade_xml_get_widget(glade_xml, "AWMailboxtypeComboBox"));
 			modest_account_mgr_add_server_account (acc_mgr, "defaultstore",
 							       gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "AWInServerComboEntry"))),
 							       gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "AWUserNameEntry"))),
 							       NULL,
-							       gtk_combo_box_get_active_text (GTK_COMBO_BOX(glade_xml_get_widget(glade_xml, "AWMailboxtypeComboBox"))));
+							       tmptext);
+			free(tmptext);
 			modest_account_mgr_add_server_account (acc_mgr, "defaulttransport",
 							       gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "AWOutServerComboEntry"))),
 							       NULL,
