@@ -7,7 +7,7 @@ INCLUDES=\
 	$(MODEST_GSTUFF_CFLAGS)\
 	$(MODEST_LIBTINYMAIL_GNOME_DESKTOP_CFLAGS) \
 	$(MODEST_LIBTINYMAIL_MAEMO_CFLAGS) \
-	-I$(MODEST_UI_DIR)\
+	-I$(MODEST_UI_DIR) -Wall\
 	-DPREFIX=\"@prefix@\" \
 	-Wall
 
@@ -48,6 +48,8 @@ modest_SOURCES=\
 	modest-tny-stream-gtkhtml.c\
 	modest-tny-transport-actions.c\
 	modest-tny-transport-actions.h\
+	modest-tny-store-actions.c\
+	modest-tny-store-actions.h\
 	modest-editor-window.c\
 	modest-editor-window.h\
 	modest-ui.h

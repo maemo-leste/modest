@@ -25,6 +25,7 @@
 #include "../modest-tny-header-tree-view.h"
 #include "../modest-tny-msg-view.h"
 #include "../modest-tny-transport-actions.h"
+#include "../modest-tny-store-actions.h"
 
 #include "../modest-text-utils.h"
 #include "../modest-tny-msg-actions.h"
@@ -69,6 +70,8 @@ static void on_forward_clicked (GtkWidget *widget, ModestUI *modest_ui);
 static void on_delete_clicked (GtkWidget *widget, ModestUI *modest_ui);
 
 static void on_send_button_clicked (GtkWidget *widget, ModestUI *modest_ui);
+
+static void on_sendreceive_button_clicked (GtkWidget *widget, ModestUI *modest_ui);
 
 static void register_toolbar_callbacks (ModestUI *modest_ui);
 
@@ -400,6 +403,13 @@ register_toolbar_callbacks (ModestUI *modest_ui)
 		g_signal_connect (button, "clicked",
 				  G_CALLBACK(on_delete_clicked), modest_ui);
 		gtk_widget_set_sensitive(button, FALSE);
+	}
+	
+	button = glade_xml_get_widget (priv->glade_xml, "toolb_send_receive");
+	if (button) {
+		g_signal_connect (button, "clicked",
+				  G_CALLBACK(on_sendreceive_button_clicked), modest_ui);
+		gtk_widget_set_sensitive(button, TRUE);
 	}
 }
 
@@ -1070,4 +1080,32 @@ on_delete_clicked (GtkWidget *widget, ModestUI *modest_ui)
 			gtk_widget_queue_draw (GTK_WIDGET (header_view));
 		}
 	}
+}
+
+static void
+on_sendreceive_button_clicked (GtkWidget *widget, ModestUI *modest_ui)
+{
+	ModestUIPrivate *priv;
+	ModestTnyStoreActions *store_actions;
+	TnyAccountStoreIface *account_store;
+	const GList *store_accounts;
+	const GList *iter;
+	
+	g_return_if_fail (modest_ui);
+
+	store_actions = MODEST_TNY_STORE_ACTIONS (modest_tny_store_actions_new ());
+	priv = MODEST_UI_GET_PRIVATE(modest_ui);
+
+	account_store = priv->account_store;
+	store_accounts =
+		tny_account_store_iface_get_store_accounts (account_store);
+		
+	for (iter = store_accounts; iter; iter = iter->next)
+		modest_tny_store_actions_update_folders (store_actions, 
+												 TNY_STORE_ACCOUNT_IFACE (iter->data));
+	
+	/* TODO, lock, refresh display */
+	
+	g_object_unref (store_actions);
+
 }
