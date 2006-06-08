@@ -9,3 +9,6 @@ SUBDIRS=\
 
 EXTRA_DIST=\
 	autogen.sh
+
+CFLAGS=\
+	-Wall
