@@ -91,6 +91,8 @@ modest_editor_window_finalize (GObject *obj)
 
 	if (priv->user_data)
 		g_free(priv->user_data);
+
+	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
 GtkWidget*

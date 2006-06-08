@@ -18,6 +18,7 @@
 #include "../modest-ui.h"
 #include "../modest-window-mgr.h"
 #include "../modest-account-mgr.h"
+#include "../modest-account-mgr.h"
 #include "../modest-identity-mgr.h"
 
 #include "../modest-tny-account-store.h"
@@ -449,7 +450,7 @@ close_edit_window (GtkWidget *win, GdkEvent *event, gpointer data)
 
 	gtk_widget_hide (GTK_WIDGET(edit_win));
 	modest_window_mgr_unregister(priv->modest_window_mgr, G_OBJECT(edit_win));
-	//gtk_widget_destroy(GTK_WIDGET(edit_win));
+	gtk_widget_destroy(GTK_WIDGET(edit_win));
 }
 
 
@@ -948,7 +949,7 @@ on_new_mail_clicked (GtkWidget *widget, ModestUI *modest_ui)
 	width  = modest_conf_get_int (priv->modest_conf,
 					  MODEST_CONF_EDIT_WINDOW_WIDTH, NULL);
 
-	g_message("new editor win@%dx%d", width, height);
+	// g_message("new editor win@%dx%d", width, height);
 
 	gtk_widget_set_usize (GTK_WIDGET(edit_win), width, height);
 	/*gtk_window_set_title (GTK_WINDOW(edit_win),
@@ -1092,6 +1093,7 @@ on_send_button_clicked (GtkWidget *widget, ModestEditorWindow *modest_editwin)
 
 	actions = MODEST_TNY_TRANSPORT_ACTIONS
 		(modest_tny_transport_actions_new ());
+
 	priv = MODEST_UI_GET_PRIVATE(modest_ui);
 #if 0
 	account_store = priv->account_store;
@@ -1121,18 +1123,22 @@ on_send_button_clicked (GtkWidget *widget, ModestEditorWindow *modest_editwin)
 							     MODEST_IDENTITY_EMAIL, NULL);
 
 	g_message("sending \"%s\" %s ==> %s", subject, email_from, to);
-#if 0
+/*
 	modest_tny_transport_actions_send_message (actions,
 						   transport_account,
 						   email_from,
 						   to, "", "", subject,
 						   body);
-#endif
+*/
 	g_free (body);
 	g_object_unref (G_OBJECT(actions));
 
 	gtk_widget_hide (GTK_WIDGET(modest_editwin));
-	gtk_widget_destroy(GTK_WIDGET(modest_editwin));
+	if (GTK_IS_WIDGET(modest_editwin)) {
+		gtk_widget_destroy(GTK_WIDGET(modest_editwin));
+	} else
+		g_warning("editor window has vanished!");
+	modest_window_mgr_unregister(priv->modest_window_mgr, G_OBJECT(modest_editwin));
 }
 
 
