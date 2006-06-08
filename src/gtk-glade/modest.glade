@@ -40,7 +40,7 @@
 	      <property name="use_underline">True</property>
 
 	      <child>
-		<widget class="GtkMenu" id="Message_menu">
+		<widget class="GtkMenu" id="MessageMenuItem_menu">
 
 		  <child>
 		    <widget class="GtkMenuItem" id="new_e-mail1">
@@ -136,7 +136,7 @@
 	      <property name="use_underline">True</property>
 
 	      <child>
-		<widget class="GtkMenu" id="Edit_menu">
+		<widget class="GtkMenu" id="EditMenuItem_menu">
 
 		  <child>
 		    <widget class="GtkMenuItem" id="undo1">
@@ -237,7 +237,7 @@
 	      <property name="use_underline">True</property>
 
 	      <child>
-		<widget class="GtkMenu" id="Folders_menu">
+		<widget class="GtkMenu" id="FoldersMenuItem_menu">
 
 		  <child>
 		    <widget class="GtkMenuItem" id="new_folder1">
@@ -302,7 +302,7 @@
 		      <property name="visible">True</property>
 		      <property name="label" translatable="yes">Outbox</property>
 		      <property name="use_underline">True</property>
-		      <property name="active">False</property>
+		      <property name="active">True</property>
 		      <property name="group">inbox1</property>
 		      <signal name="activate" handler="on_outbox1_activate" last_modification_time="Fri, 28 Apr 2006 12:15:47 GMT"/>
 		    </widget>
@@ -313,7 +313,7 @@
 		      <property name="visible">True</property>
 		      <property name="label" translatable="yes">Drafts</property>
 		      <property name="use_underline">True</property>
-		      <property name="active">False</property>
+		      <property name="active">True</property>
 		      <property name="group">inbox1</property>
 		      <signal name="activate" handler="on_drafts1_activate" last_modification_time="Fri, 28 Apr 2006 12:15:47 GMT"/>
 		    </widget>
@@ -324,7 +324,7 @@
 		      <property name="visible">True</property>
 		      <property name="label" translatable="yes">Sent</property>
 		      <property name="use_underline">True</property>
-		      <property name="active">False</property>
+		      <property name="active">True</property>
 		      <property name="group">inbox1</property>
 		      <signal name="activate" handler="on_sent1_activate" last_modification_time="Fri, 28 Apr 2006 12:15:47 GMT"/>
 		    </widget>
@@ -335,7 +335,7 @@
 		      <property name="visible">True</property>
 		      <property name="label" translatable="yes">Archive</property>
 		      <property name="use_underline">True</property>
-		      <property name="active">False</property>
+		      <property name="active">True</property>
 		      <property name="group">inbox1</property>
 		      <signal name="activate" handler="on_archive1_activate" last_modification_time="Fri, 28 Apr 2006 12:15:47 GMT"/>
 		    </widget>
@@ -352,7 +352,7 @@
 	      <property name="use_underline">True</property>
 
 	      <child>
-		<widget class="GtkMenu" id="View_menu">
+		<widget class="GtkMenu" id="ViewMenuItem_menu">
 
 		  <child>
 		    <widget class="GtkMenuItem" id="sort1">
@@ -435,7 +435,7 @@
 	      <signal name="activate" handler="on_e-mail1_activate" last_modification_time="Fri, 28 Apr 2006 12:12:02 GMT"/>
 
 	      <child>
-		<widget class="GtkMenu" id="EMail_menu">
+		<widget class="GtkMenu" id="EMailMenuItem_menu">
 
 		  <child>
 		    <widget class="GtkMenuItem" id="send_&amp;_receive1">
@@ -476,7 +476,7 @@
 	      <signal name="activate" handler="on_tools1_activate" last_modification_time="Fri, 28 Apr 2006 12:12:02 GMT"/>
 
 	      <child>
-		<widget class="GtkMenu" id="Tools_menu">
+		<widget class="GtkMenu" id="ToolsMenuItem_menu">
 
 		  <child>
 		    <widget class="GtkMenuItem" id="OpenContactsMenuItem">
@@ -494,11 +494,24 @@
 		  </child>
 
 		  <child>
-		    <widget class="GtkMenuItem" id="NewAccountWizzardMenuItem">
+		    <widget class="GtkMenuItem" id="AccountWizardryMenuItem">
 		      <property name="visible">True</property>
-		      <property name="label" translatable="yes">New account...</property>
+		      <property name="label" translatable="yes">Account Wizardry</property>
 		      <property name="use_underline">True</property>
-		      <signal name="activate" handler="on_new_account1_activate" last_modification_time="Fri, 28 Apr 2006 12:23:17 GMT"/>
+
+		      <child>
+			<widget class="GtkMenu" id="AccountWizardry_menu">
+
+			  <child>
+			    <widget class="GtkMenuItem" id="NewAccountWizardMenuItem">
+			      <property name="visible">True</property>
+			      <property name="label" translatable="yes">New account...</property>
+			      <property name="use_underline">True</property>
+			      <signal name="activate" handler="new_wizard_account" last_modification_time="Fri, 28 Apr 2006 12:23:17 GMT"/>
+			    </widget>
+			  </child>
+			</widget>
+		      </child>
 		    </widget>
 		  </child>
 
@@ -561,7 +574,7 @@
 	      <property name="use_underline">True</property>
 
 	      <child>
-		<widget class="GtkMenu" id="Close_menu">
+		<widget class="GtkMenu" id="CloseMenuItem_menu">
 
 		  <child>
 		    <widget class="GtkMenuItem" id="about1">
@@ -3817,7 +3830,7 @@
   <property name="has_separator">True</property>
 
   <child internal-child="vbox">
-    <widget class="GtkVBox" id="account_wizzard_top_container">
+    <widget class="GtkVBox" id="account_wizard_top_container">
       <property name="visible">True</property>
       <property name="homogeneous">False</property>
       <property name="spacing">0</property>

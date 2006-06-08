@@ -112,15 +112,19 @@ gboolean advance_sanity_check(GtkWindow *parent, GladeXML *glade_xml, gint cp)
         return FALSE;
 }
 
-gboolean wizard_account_add(GladeXML *glade_xml, ModestUIPrivate *priv)
+gboolean wizard_account_add(GladeXML *glade_xml, ModestUI *modest_ui)
 {
 	ModestAccountMgr *acc_mgr;
 	ModestIdentityMgr *id_mgr;
 	const gchar *account_name="default";
-	ModestConf *conf=priv->modest_conf;
+	ModestUIPrivate *priv;
+	ModestConf *conf;
 	gchar *tmptext;
 
-	g_return_if_fail (conf);
+	g_return_if_fail (MODEST_IS_UI(modest_ui));
+	priv = MODEST_UI_GET_PRIVATE(MODEST_UI(modest_ui));
+	conf = priv->modest_conf;
+
 
 	acc_mgr = MODEST_ACCOUNT_MGR(modest_account_mgr_new (conf));
 	if (!acc_mgr) {
@@ -186,6 +190,7 @@ void wizard_account_dialog(ModestUI *modest_ui)
 	gint finishallowed=0;
 	gboolean account_added_successfully;
 
+	g_return_if_fail(MODEST_IS_UI(modest_ui));
 	priv = MODEST_UI_GET_PRIVATE(MODEST_UI(modest_ui));
 
 	glade_xml = glade_xml_new(MODEST_GLADE, "account_wizard", NULL);
@@ -238,7 +243,7 @@ void wizard_account_dialog(ModestUI *modest_ui)
                         gtk_notebook_prev_page(GTK_NOTEBOOK(Notebook));
 			break;
 		case GTK_RESPONSE_ACCEPT:
-			account_added_successfully=wizard_account_add(glade_xml, priv);
+			account_added_successfully=wizard_account_add(glade_xml, modest_ui);
 			break;
 		default:
 			account_added_successfully=FALSE;
@@ -256,4 +261,35 @@ void new_wizard_account (GtkWidget *widget,
 	/* for now: */
 	wizard_account_dialog(MODEST_UI(user_data));
 }
+
+void setup_account_wizardry_menu (GtkWidget *menu,
+				  ModestUI *modest_ui)
+{
+	ModestUIPrivate *priv;
+	gint retval;
+	GSList *account_name_list;
+	GSList *account_name_list_iter;
+	GtkWidget *awidget;
+	gint menucounter;
+
+        g_return_if_fail(MODEST_IS_UI(modest_ui));
+	priv = MODEST_UI_GET_PRIVATE(MODEST_UI(modest_ui));
+
+	account_name_list=modest_account_mgr_account_names(priv->modest_acc_mgr, NULL);
+
+	menucounter=1; /* The first item is supposed to be the "New Account..." item. */
+	for (account_name_list_iter=account_name_list;
+	     account_name_list_iter!=NULL;
+	     account_name_list_iter=g_slist_next(account_name_list_iter))
+	{
+		awidget=gtk_menu_item_new_with_label(account_name_list_iter->data);
+		gtk_widget_show(awidget);
+		gtk_menu_attach(GTK_MENU(menu),
+				awidget,
+				0, 1, menucounter, menucounter+1);
+	}
+
+	g_slist_free(account_name_list);
+}
+
 

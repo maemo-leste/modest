@@ -256,7 +256,8 @@ modest_ui_show_main_window (ModestUI *modest_ui)
 	GtkWidget     *message_view;
 	GtkWidget     *account_settings_item;
 	GtkWidget     *new_account_item;
-	GtkWidget     *delete_item;
+        GtkWidget     *delete_item;
+        GtkWidget     *AccountWizardryMenu;
 
 	GtkWidget  *folder_view_holder,
 		*header_view_holder,
@@ -306,7 +307,10 @@ modest_ui_show_main_window (ModestUI *modest_ui)
 
 	g_signal_connect (header_view, "message_selected",
 			  G_CALLBACK(on_message_clicked),
-			  modest_ui);
+                          modest_ui);
+
+        AccountWizardryMenu=glade_xml_get_widget(priv->glade_xml, "AccountWizardry_menu");
+        setup_account_wizardry_menu(AccountWizardryMenu, modest_ui);
 
 	account_settings_item = glade_xml_get_widget (priv->glade_xml, "AccountSettingsMenuItem");
 	if (!account_settings_item)
@@ -318,17 +322,17 @@ modest_ui_show_main_window (ModestUI *modest_ui)
                           G_CALLBACK(on_account_settings1_activate),
                           modest_ui);
 
-	new_account_item = glade_xml_get_widget (priv->glade_xml, "NewAccountWizzardMenuItem");
+	new_account_item = glade_xml_get_widget (priv->glade_xml, "NewAccountWizardMenuItem");
 	if (!new_account_item)
 	{
 		g_warning ("The new account item isn't available!\n");
 		return FALSE;
 	}
-/*
+
         g_signal_connect (new_account_item, "activate",
-                          G_CALLBACK(on_new_account1_activate),
+                          G_CALLBACK(new_wizard_account),
                           modest_ui);
-*/
+
 	delete_item = glade_xml_get_widget (priv->glade_xml, "delete1");
 	if (!delete_item)
 	{
@@ -501,7 +505,7 @@ modest_ui_new_edit_window (ModestUI *modest_ui, const gchar* to,
 		modest_window_mgr_register (priv->modest_window_mgr,
 									G_OBJECT(win), MODEST_EDIT_WINDOW, 0);
 	}
-	
+
 	to_entry      = glade_xml_get_widget (priv->glade_xml, "to_entry");
 	subject_entry = glade_xml_get_widget (priv->glade_xml, "subject_entry");
 	body_view     = glade_xml_get_widget (priv->glade_xml, "body_view");
