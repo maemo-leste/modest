@@ -49,7 +49,7 @@ static GtkWidget* modest_main_window_folder_tree (ModestAccountMgr *modest_acc_m
 static GtkWidget* modest_main_window_header_tree (TnyMsgFolderIface *folder);
 
 
-void on_account_settings1_activate (GtkMenuItem *,
+static void on_account_settings1_activate (GtkMenuItem *,
 				    gpointer);
 
 static void on_password_requested (ModestTnyAccountStore *account_store,
@@ -69,12 +69,15 @@ static void on_forward_clicked (GtkWidget *widget, ModestUI *modest_ui);
 
 static void on_delete_clicked (GtkWidget *widget, ModestUI *modest_ui);
 
+#if 1
+static void on_send_button_clicked (GtkWidget *widget, ModestEditorWindow *modest_editwin);
+#else
 static void on_send_button_clicked (GtkWidget *widget, ModestUI *modest_ui);
+#endif
 
 static void on_sendreceive_button_clicked (GtkWidget *widget, ModestUI *modest_ui);
 
 static void register_toolbar_callbacks (ModestUI *modest_ui);
-
 
 typedef enum {
 	QUOTED_SEND_REPLY,
@@ -84,6 +87,12 @@ typedef enum {
 
 static void quoted_send_msg (ModestUI *modest_ui, quoted_send_type qstype);
 
+
+typedef struct {
+	ModestUI *modest_ui;
+	ModestEditorWindow *edit_win;
+	GladeXML *glade_xml;
+} EditWinData;
 
 
 /* list my signals */
@@ -426,31 +435,47 @@ hide_edit_window (GtkWidget *win, GdkEvent *event, gpointer data)
 }
 
 
+static void
+close_edit_window (GtkWidget *win, GdkEvent *event, gpointer data)
+{
+	ModestEditorWindow *edit_win;
+	ModestUI *modest_ui;
+	ModestUIPrivate *priv;
+	EditWinData *win_data;
+
+	edit_win = (ModestEditorWindow *)data;
+	win_data = modest_editor_window_get_data(edit_win);
+	priv = MODEST_UI_GET_PRIVATE(win_data->modest_ui);
+
+	gtk_widget_hide (GTK_WIDGET(edit_win));
+	modest_window_mgr_unregister(priv->modest_window_mgr, G_OBJECT(edit_win));
+	//gtk_widget_destroy(GTK_WIDGET(edit_win));
+}
+
+
 GtkContainer
 *modest_ui_new_editor_window (ModestUI *modest_ui, gpointer *user_data)
 {
 	GtkWidget       *top_container, *to_entry, *subject_entry, *body_view;
 
 	ModestUIPrivate *priv;
-	GladeXML		*ui_ref;
+	GladeXML		*glade_xml;
 	GtkWidget       *btn, *dummy;
 	GtkTextBuffer	*buf;
+	EditWinData		*win_data;
 
-	priv = MODEST_UI_GET_PRIVATE(modest_ui);
-	int height = modest_conf_get_int (priv->modest_conf,
-					  MODEST_CONF_EDIT_WINDOW_HEIGHT,NULL);
-	int width  = modest_conf_get_int (priv->modest_conf,
-					  MODEST_CONF_EDIT_WINDOW_WIDTH,NULL);
-
-	ui_ref = glade_xml_new(MODEST_GLADE, "new_mail", NULL);
-	if (!ui_ref)
+	glade_xml = glade_xml_new(MODEST_GLADE, "new_mail_top_container", NULL);
+	if (!glade_xml)
 		return NULL;
 
-	*user_data = ui_ref;
+	win_data = g_malloc(sizeof(EditWinData));
+	win_data->modest_ui = modest_ui;
+	win_data->glade_xml = glade_xml;
+	*user_data = win_data;
 
-	top_container = glade_xml_get_widget(ui_ref, "new_mail_top_container");
+	top_container = glade_xml_get_widget(glade_xml, "new_mail_top_container");
 	if (!top_container) {
-		g_object_unref(G_OBJECT(ui_ref));
+		g_object_unref(G_OBJECT(glade_xml));
 		return NULL;
 	}
 
@@ -459,14 +484,70 @@ GtkContainer
 
 
 gboolean
-modest_ui_editor_window_set_to_header(ModestEditorWindow *edit_win, gchar *to)
+modest_ui_editor_window_set_to_header(gchar *to, gpointer window_data)
 {
 	GladeXML *glade_xml;
 	GtkWidget *w;
 
-	glade_xml = (GladeXML *)modest_editor_window_get_data(edit_win);
+	glade_xml = (GladeXML *)window_data;
 	w = glade_xml_get_widget(glade_xml, "to_entry");
 	gtk_entry_set_text(GTK_ENTRY(w), to);
+
+	return TRUE;
+}
+
+
+gboolean
+modest_ui_editor_window_set_cc_header(gchar *cc, gpointer window_data)
+{
+	GladeXML *glade_xml;
+	GtkWidget *w;
+
+	glade_xml = (GladeXML *)window_data;
+	w = glade_xml_get_widget(glade_xml, "cc_entry");
+	gtk_entry_set_text(GTK_ENTRY(w), cc);
+
+	return TRUE;
+}
+
+
+gboolean
+modest_ui_editor_window_set_bcc_header(gchar *bcc, gpointer window_data)
+{
+	GladeXML *glade_xml;
+	GtkWidget *w;
+
+	glade_xml = (GladeXML *)window_data;
+	w = glade_xml_get_widget(glade_xml, "bcc_entry");
+	gtk_entry_set_text(GTK_ENTRY(w), bcc);
+
+	return TRUE;
+}
+
+
+gboolean
+modest_ui_editor_window_set_subject_header(gchar *subject, gpointer window_data)
+{
+	GladeXML *glade_xml;
+	GtkWidget *w;
+
+	glade_xml = (GladeXML *)window_data;
+	w = glade_xml_get_widget(glade_xml, "subject_entry");
+	gtk_entry_set_text(GTK_ENTRY(w), subject);
+
+	return TRUE;
+}
+
+
+gboolean
+modest_ui_editor_window_set_body(gchar *body, gpointer window_data)
+{
+	GladeXML *glade_xml;
+	GtkWidget *w;
+
+	glade_xml = (GladeXML *)window_data;
+	w = glade_xml_get_widget(glade_xml, "body_view");
+	gtk_text_buffer_set_text(GTK_TEXT_BUFFER(w), body, -1);
 
 	return TRUE;
 }
@@ -588,7 +669,7 @@ on_account_selector_selection_changed (GtkWidget *widget,
 }
 
 
-void
+static void
 on_account_settings1_activate (GtkMenuItem *menuitem,
 			       gpointer user_data)
 {
@@ -837,8 +918,43 @@ modest_main_window_folder_tree (ModestAccountMgr *modest_acc_mgr,
 static void
 on_new_mail_clicked (GtkWidget *widget, ModestUI *modest_ui)
 {
+	GtkWidget *edit_win;
+	GladeXML *glade_xml;
+	GtkWidget *btn;
+	EditWinData *windata;
+	ModestUIPrivate *priv;
+	gint height, width;
+
 	g_return_if_fail (modest_ui);
-	modest_ui_new_edit_window (modest_ui, "", "", "", "", "", NULL);
+	//modest_ui_new_edit_window (modest_ui, "", "", "", "", "", NULL);
+
+	edit_win = modest_editor_window_new(modest_ui);
+	windata = (EditWinData *)modest_editor_window_get_data(MODEST_EDITOR_WINDOW(edit_win));
+	g_return_if_fail(windata);
+
+	glade_xml = windata->glade_xml;
+	btn = glade_xml_get_widget (glade_xml, "toolb_send");
+	g_signal_connect (btn, "clicked", G_CALLBACK(on_send_button_clicked),
+			  edit_win);
+
+	g_signal_connect (edit_win, "destroy-event", G_CALLBACK(close_edit_window),
+			  edit_win);
+	g_signal_connect (edit_win, "delete-event", G_CALLBACK(close_edit_window),
+			  edit_win);
+
+	priv = MODEST_UI_GET_PRIVATE(windata->modest_ui);
+	height = modest_conf_get_int (priv->modest_conf,
+					  MODEST_CONF_EDIT_WINDOW_HEIGHT, NULL);
+	width  = modest_conf_get_int (priv->modest_conf,
+					  MODEST_CONF_EDIT_WINDOW_WIDTH, NULL);
+
+	g_message("new editor win@%dx%d", width, height);
+
+	gtk_widget_set_usize (GTK_WIDGET(edit_win), width, height);
+	/*gtk_window_set_title (GTK_WINDOW(edit_win),
+			      subject ? subject : "Untitled");*/
+	modest_window_mgr_register(priv->modest_window_mgr, G_OBJECT(edit_win), MODEST_EDIT_WINDOW, 0);
+	gtk_widget_show(edit_win);
 }
 
 
@@ -950,14 +1066,11 @@ on_forward_clicked (GtkWidget *widget, ModestUI *modest_ui)
 }
 
 
-
-/* FIXME: truly evil --> we cannot really assume that
- * there is only one edit window open...
- */
 static void
-on_send_button_clicked (GtkWidget *widget, ModestUI *modest_ui)
+on_send_button_clicked (GtkWidget *widget, ModestEditorWindow *modest_editwin)
 {
 	ModestTnyTransportActions *actions;
+	ModestUI *modest_ui;
 	ModestUIPrivate *priv;
 	GtkWidget *to_entry, *subject_entry, *body_view;
 	const gchar *to, *subject, *email_from;
@@ -969,13 +1082,18 @@ on_send_button_clicked (GtkWidget *widget, ModestUI *modest_ui)
 	TnyTransportAccountIface *transport_account;
 	ModestConf       *conf;
 	ModestIdentityMgr *id_mgr;
+	EditWinData *win_data;
+
+
+	win_data = modest_editor_window_get_data(modest_editwin);
+	modest_ui = win_data->modest_ui;
 
 	g_return_if_fail (modest_ui);
 
 	actions = MODEST_TNY_TRANSPORT_ACTIONS
 		(modest_tny_transport_actions_new ());
 	priv = MODEST_UI_GET_PRIVATE(modest_ui);
-
+#if 0
 	account_store = priv->account_store;
 	transport_accounts =
 		tny_account_store_iface_get_transport_accounts (account_store);
@@ -985,10 +1103,10 @@ on_send_button_clicked (GtkWidget *widget, ModestUI *modest_ui)
 	} else /* take the first one! */
 		transport_account =
 			TNY_TRANSPORT_ACCOUNT_IFACE(transport_accounts->data);
-
-	to_entry      = glade_xml_get_widget (priv->glade_xml, "to_entry");
-	subject_entry = glade_xml_get_widget (priv->glade_xml, "subject_entry");
-	body_view     = glade_xml_get_widget (priv->glade_xml, "body_view");
+#endif
+	to_entry      = glade_xml_get_widget (win_data->glade_xml, "to_entry");
+	subject_entry = glade_xml_get_widget (win_data->glade_xml, "subject_entry");
+	body_view     = glade_xml_get_widget (win_data->glade_xml, "body_view");
 
 	to      = gtk_entry_get_text (GTK_ENTRY(to_entry));
 	subject = gtk_entry_get_text (GTK_ENTRY(subject_entry));
@@ -1003,19 +1121,18 @@ on_send_button_clicked (GtkWidget *widget, ModestUI *modest_ui)
 							     MODEST_IDENTITY_EMAIL, NULL);
 
 	g_message("sending \"%s\" %s ==> %s", subject, email_from, to);
+#if 0
 	modest_tny_transport_actions_send_message (actions,
 						   transport_account,
 						   email_from,
 						   to, "", "", subject,
 						   body);
+#endif
 	g_free (body);
 	g_object_unref (G_OBJECT(actions));
 
-	gtk_entry_set_text (GTK_ENTRY(to_entry), "");
-	gtk_entry_set_text (GTK_ENTRY(subject_entry), "");
-	gtk_text_buffer_set_text (buf, "", 0);
-
-	gtk_widget_hide (glade_xml_get_widget (priv->glade_xml, "new_mail"));
+	gtk_widget_hide (GTK_WIDGET(modest_editwin));
+	gtk_widget_destroy(GTK_WIDGET(modest_editwin));
 }
 
 

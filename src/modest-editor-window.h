@@ -38,13 +38,25 @@ struct _ModestEditorWindowClass {
 GType        modest_editor_window_get_type    (void) G_GNUC_CONST;
 
 
-GtkWindow *modest_editor_window_new         (ModestUI *ui);
+GtkWidget *modest_editor_window_new         (ModestUI *ui);
+
+gpointer modest_editor_window_get_data(ModestEditorWindow *edit_win);
+
+gboolean modest_editor_window_get_modified(ModestEditorWindow *edit_win);
 
 /* fill in other public functions, eg.: */
 /* 	void       modest_editor_window_do_something (ModestEditorWindow *self, const gchar* param); */
 /* 	gboolean   modest_editor_window_has_foo      (ModestEditorWindow *self, gint value); */
 
 gboolean modest_editor_window_set_to_header(ModestEditorWindow *edit_win, gchar *to);
+
+gboolean modest_editor_window_set_cc_header(ModestEditorWindow *edit_win, gchar *to);
+
+gboolean modest_editor_window_set_bcc_header(ModestEditorWindow *edit_win, gchar *to);
+
+gboolean modest_editor_window_set_subject_header(ModestEditorWindow *edit_win, gchar *to);
+
+gboolean modest_editor_window_set_body(ModestEditorWindow *edit_win, gchar *to);
 
 G_END_DECLS
 

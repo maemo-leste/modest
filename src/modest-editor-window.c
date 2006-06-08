@@ -2,6 +2,7 @@
 
 /* insert (c)/licensing information) */
 
+#include "modest-ui.h"
 #include "modest-editor-window.h"
 
 /* 'private'/'protected' functions */
@@ -19,6 +20,7 @@ enum {
 typedef struct _ModestEditorWindowPrivate ModestEditorWindowPrivate;
 struct _ModestEditorWindowPrivate {
 	gpointer user_data;
+	gboolean modified;
 };
 #define MODEST_EDITOR_WINDOW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                   MODEST_TYPE_EDITOR_WINDOW, \
@@ -77,6 +79,7 @@ modest_editor_window_init (ModestEditorWindow *obj)
 	ModestEditorWindowPrivate *priv = MODEST_EDITOR_WINDOW_GET_PRIVATE(obj);
 
 	priv->user_data = NULL;
+	priv->modified = FALSE;
 }
 
 static void
@@ -86,10 +89,11 @@ modest_editor_window_finalize (GObject *obj)
 
 	priv = MODEST_EDITOR_WINDOW_GET_PRIVATE(obj);
 
-	/* FIXME: free GladeXML */
+	if (priv->user_data)
+		g_free(priv->user_data);
 }
 
-GtkWindow*
+GtkWidget*
 modest_editor_window_new (ModestUI *ui)
 {
 	GObject *self;
@@ -104,32 +108,108 @@ modest_editor_window_new (ModestUI *ui)
 
 	data = NULL;
 	w = GTK_WIDGET(modest_ui_new_editor_window(ui, &data));
+	// g_message("new data = %p", data);
 	if (!w)
 		return NULL;
+	if (!data)
+		g_message("editor window user data is emtpy");
 
 	gtk_container_add(GTK_CONTAINER(self), w);
 	priv->user_data = data;
+	// g_message("new priv->data = %p", priv->user_data);
 	
-	return GTK_WINDOW(self);
+	return GTK_WIDGET(self);
 }
 
-
+/*
+ * return user defined data from a ModestEditorWindow instance
+ * like e.g. a refernce to a GladeXML*
+ */
 gpointer modest_editor_window_get_data(ModestEditorWindow *edit_win)
 {
-	GObject *self;
 	ModestEditorWindowPrivate *priv;
 
-	
-	if (!edit_win)
+	if (!edit_win) {
 		return NULL;
-	self = G_OBJECT(g_object_new(MODEST_TYPE_EDITOR_WINDOW, NULL));
-	priv = MODEST_EDITOR_WINDOW_GET_PRIVATE(self);
+	}
+	priv = MODEST_EDITOR_WINDOW_GET_PRIVATE(edit_win);
+
+	// g_message("get priv->data = %p", priv->user_data);
 
 	return priv->user_data;
 }
 
+gboolean modest_editor_window_get_modified(ModestEditorWindow *edit_win)
+{
+	ModestEditorWindowPrivate *priv;
+
+	if (!edit_win) {
+		return NULL;
+	}
+	priv = MODEST_EDITOR_WINDOW_GET_PRIVATE(edit_win);
+
+	// g_message("get priv->data = %p", priv->user_data);
+
+	return priv->modified;
+}	
 
 gboolean modest_editor_window_set_to_header(ModestEditorWindow *edit_win, gchar *to)
 {
-	return modest_ui_editor_window_set_to_header(edit_win, to);
+	ModestEditorWindowPrivate *priv;
+
+	
+	if (!edit_win)
+		return FALSE;
+	priv = MODEST_EDITOR_WINDOW_GET_PRIVATE(edit_win);
+
+	return modest_ui_editor_window_set_to_header(to, priv->user_data);
+}
+
+
+gboolean modest_editor_window_set_cc_header(ModestEditorWindow *edit_win, gchar *cc)
+{
+	ModestEditorWindowPrivate *priv;
+
+	
+	if (!edit_win)
+		return FALSE;
+	priv = MODEST_EDITOR_WINDOW_GET_PRIVATE(edit_win);
+
+	return modest_ui_editor_window_set_cc_header(cc, priv->user_data);
+}
+
+gboolean modest_editor_window_set_bcc_header(ModestEditorWindow *edit_win, gchar *bcc)
+{
+	ModestEditorWindowPrivate *priv;
+
+	
+	if (!edit_win)
+		return FALSE;
+	priv = MODEST_EDITOR_WINDOW_GET_PRIVATE(edit_win);
+
+	return modest_ui_editor_window_set_bcc_header(bcc, priv->user_data);
+}
+
+gboolean modest_editor_window_set_subject_header(ModestEditorWindow *edit_win, gchar *subject)
+{
+	ModestEditorWindowPrivate *priv;
+
+	
+	if (!edit_win)
+		return FALSE;
+	priv = MODEST_EDITOR_WINDOW_GET_PRIVATE(edit_win);
+
+	return modest_ui_editor_window_set_subject_header(subject, priv->user_data);
+}
+
+gboolean modest_editor_window_set_body(ModestEditorWindow *edit_win, gchar *body)
+{
+	ModestEditorWindowPrivate *priv;
+
+	
+	if (!edit_win)
+		return FALSE;
+	priv = MODEST_EDITOR_WINDOW_GET_PRIVATE(edit_win);
+
+	return modest_ui_editor_window_set_body(body, priv->user_data);
 }

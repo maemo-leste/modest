@@ -7,7 +7,7 @@
 #include <glib-object.h>
 #include <gtk/gtkcontainer.h>
 #include "modest-conf.h"
-// #include "modest-editor-window.h"
+
 
 G_BEGIN_DECLS
 
@@ -88,7 +88,11 @@ gboolean     modest_ui_new_edit_window (ModestUI *ui,
 
 GtkContainer *modest_ui_new_editor_window (ModestUI *modest_ui, gpointer *user_data);
 
-//gboolean modest_ui_editor_window_set_to_header(ModestEditorWindow *edit_win, gchar *to);
+gboolean modest_ui_editor_window_set_to_header(gchar *to, gpointer window_data);
+gboolean modest_ui_editor_window_set_cc_header(gchar *to, gpointer window_data);
+gboolean modest_ui_editor_window_set_bcc_header(gchar *to, gpointer window_data);
+gboolean modest_ui_editor_window_set_subject_header(gchar *to, gpointer window_data);
+gboolean modest_ui_editor_window_set_body(gchar *to, gpointer window_data);
 
 G_END_DECLS
 
