@@ -440,7 +440,6 @@ static void
 close_edit_window (GtkWidget *win, GdkEvent *event, gpointer data)
 {
 	ModestEditorWindow *edit_win;
-	ModestUI *modest_ui;
 	ModestUIPrivate *priv;
 	EditWinData *win_data;
 
@@ -457,12 +456,9 @@ close_edit_window (GtkWidget *win, GdkEvent *event, gpointer data)
 GtkContainer
 *modest_ui_new_editor_window (ModestUI *modest_ui, gpointer *user_data)
 {
-	GtkWidget       *top_container, *to_entry, *subject_entry, *body_view;
+	GtkWidget       *top_container;
 
-	ModestUIPrivate *priv;
 	GladeXML		*glade_xml;
-	GtkWidget       *btn, *dummy;
-	GtkTextBuffer	*buf;
 	EditWinData		*win_data;
 
 	glade_xml = glade_xml_new(MODEST_GLADE, "new_mail_top_container", NULL);
@@ -504,7 +500,7 @@ gboolean
 modest_ui_editor_window_set_cc_header(const gchar *cc, gpointer window_data)
 {
 	GladeXML *glade_xml;
-	GtkWidget *w;
+	// GtkWidget *w;
 	EditWinData *win_data;
 
 	win_data = (EditWinData *)window_data;
@@ -521,7 +517,7 @@ gboolean
 modest_ui_editor_window_set_bcc_header(const gchar *bcc, gpointer window_data)
 {
 	GladeXML *glade_xml;
-	GtkWidget *w;
+	// GtkWidget *w;
 	EditWinData *win_data;
 
 	win_data = (EditWinData *)window_data;
@@ -580,7 +576,7 @@ modest_ui_new_edit_window (ModestUI *modest_ui, const gchar* to,
 	GtkWidget       *win, *to_entry, *subject_entry, *body_view;
 
 	ModestUIPrivate *priv;
-	GtkWidget       *btn, *dummy;
+	GtkWidget       *btn;
 	GtkTextBuffer	*buf;
 
 	priv = MODEST_UI_GET_PRIVATE(modest_ui);
@@ -1146,10 +1142,10 @@ on_send_button_clicked (GtkWidget *widget, ModestEditorWindow *modest_editwin)
 	gchar *body;
 	GtkTextIter start, end;
 	GtkTextBuffer *buf;
-	TnyAccountStoreIface *account_store;
+	/* TnyAccountStoreIface *account_store;
 	const GList *transport_accounts;
 	TnyTransportAccountIface *transport_account;
-	ModestConf       *conf;
+	ModestConf       *conf; */
 	ModestIdentityMgr *id_mgr;
 	EditWinData *win_data;
 
@@ -1218,7 +1214,7 @@ on_delete_clicked (GtkWidget *widget, ModestUI *modest_ui)
 	GtkTreeModel *model;
 	GtkTreeIter iter;
 	GtkScrolledWindow *scroll;
-	GtkTreeModel *mymodel, *sortable;
+	GtkTreeModel *mymodel;
 
 	ModestTnyHeaderTreeView *header_view;
 	ModestTnyMsgView *msg_view;
@@ -1254,7 +1250,7 @@ on_delete_clicked (GtkWidget *widget, ModestUI *modest_ui)
 		if (G_LIKELY (header))
 		{
 			TnyMsgFolderIface *folder;
-			const TnyMsgIface *msg;
+			// const TnyMsgIface *msg;
 
 			if (GTK_IS_TREE_MODEL_SORT (model))
 			{
