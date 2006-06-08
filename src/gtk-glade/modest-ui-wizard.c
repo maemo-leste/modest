@@ -55,7 +55,6 @@ gchar *get_text_from_combobox (GtkWidget *combobox)
 
 gboolean advance_sanity_check(GtkWindow *parent, GladeXML *glade_xml, gint cp)
 {
-        GtkDialog *DenyDialog;
         gchar *tmptext;
 
 	/* FIXME:
@@ -121,7 +120,7 @@ gboolean wizard_account_add(GladeXML *glade_xml, ModestUI *modest_ui)
 	ModestConf *conf;
 	gchar *tmptext;
 
-	g_return_if_fail (MODEST_IS_UI(modest_ui));
+	g_return_val_if_fail (MODEST_IS_UI(modest_ui), FALSE);
 	priv = MODEST_UI_GET_PRIVATE(MODEST_UI(modest_ui));
 	conf = priv->modest_conf;
 
@@ -129,7 +128,7 @@ gboolean wizard_account_add(GladeXML *glade_xml, ModestUI *modest_ui)
 	acc_mgr = MODEST_ACCOUNT_MGR(modest_account_mgr_new (conf));
 	if (!acc_mgr) {
 		g_warning ("failed to instantiate account mgr");
-		return;
+		return FALSE;
 	}
 
 	if (modest_account_mgr_account_exists (acc_mgr, account_name, NULL)) {
@@ -170,7 +169,7 @@ gboolean wizard_account_add(GladeXML *glade_xml, ModestUI *modest_ui)
 
 	g_object_unref (G_OBJECT(acc_mgr));
 	g_object_unref (G_OBJECT(id_mgr));
-
+	return TRUE;
 }
 
 
@@ -184,11 +183,9 @@ void wizard_account_dialog(ModestUI *modest_ui)
         GtkWidget *NextButton;
         GtkWidget *CancelButton;
         GtkWidget *Notebook;
-        GtkWidget *awidget;
         gint cp;
         gint result;
-	gint finishallowed=0;
-	gboolean account_added_successfully;
+	gboolean account_added_successfully=FALSE;
 
 	g_return_if_fail(MODEST_IS_UI(modest_ui));
 	priv = MODEST_UI_GET_PRIVATE(MODEST_UI(modest_ui));
