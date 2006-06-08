@@ -44,14 +44,12 @@ static void   modest_ui_finalize       (GObject *obj);
 static void    modest_ui_window_destroy    (GtkWidget *win, GdkEvent *event, gpointer data);
 static void    modest_ui_last_window_closed (GObject *obj, gpointer data);
 
-static GtkWidget* modest_main_window_toolbar (void);
 static GtkWidget* modest_main_window_folder_tree (ModestAccountMgr *modest_acc_mgr,
 						  TnyAccountStoreIface *account_store);
 static GtkWidget* modest_main_window_header_tree (TnyMsgFolderIface *folder);
 
-
-static void on_account_settings1_activate (GtkMenuItem *,
-				    gpointer);
+//static void on_account_settings1_activate (GtkMenuItem *,
+//				    gpointer);
 
 static void on_password_requested (ModestTnyAccountStore *account_store,
 				   const gchar *account_name, gpointer user_data);
@@ -425,7 +423,7 @@ register_toolbar_callbacks (ModestUI *modest_ui)
 	}
 }
 
-
+#if 0
 static void
 hide_edit_window (GtkWidget *win, GdkEvent *event, gpointer data)
 {
@@ -435,7 +433,7 @@ hide_edit_window (GtkWidget *win, GdkEvent *event, gpointer data)
 	gtk_widget_hide (win);
 	modest_window_mgr_unregister(priv->modest_window_mgr, G_OBJECT(win));
 }
-
+#endif
 
 static void
 close_edit_window (GtkWidget *win, GdkEvent *event, gpointer data)
@@ -447,6 +445,8 @@ close_edit_window (GtkWidget *win, GdkEvent *event, gpointer data)
 	edit_win = (ModestEditorWindow *)data;
 	win_data = modest_editor_window_get_data(edit_win);
 	priv = MODEST_UI_GET_PRIVATE(win_data->modest_ui);
+
+	g_message("window was %s modified", modest_editor_window_get_modified(edit_win) ? "" : "not");
 
 	gtk_widget_hide (GTK_WIDGET(edit_win));
 	modest_window_mgr_unregister(priv->modest_window_mgr, G_OBJECT(edit_win));
@@ -567,7 +567,7 @@ modest_ui_editor_window_set_body(const gchar *body, gpointer window_data)
 	return TRUE;
 }
 
-
+#if 0
 gboolean
 modest_ui_new_edit_window (ModestUI *modest_ui, const gchar* to,
 			    const gchar* cc, const gchar* bcc,
@@ -630,7 +630,7 @@ modest_ui_new_edit_window (ModestUI *modest_ui, const gchar* to,
 
 	return TRUE;
 }
-
+#endif
 
 static void
 modest_ui_window_destroy (GtkWidget *win, GdkEvent *event, gpointer data)
@@ -683,7 +683,7 @@ on_account_selector_selection_changed (GtkWidget *widget,
 	free(account_name);
 }
 
-
+#if 0
 static void
 on_account_settings1_activate (GtkMenuItem *menuitem,
 			       gpointer user_data)
@@ -746,6 +746,7 @@ on_account_settings1_activate (GtkMenuItem *menuitem,
 
 	g_object_unref(glade_xml);
 }
+#endif
 
 
 static void
@@ -929,13 +930,37 @@ modest_main_window_folder_tree (ModestAccountMgr *modest_acc_mgr,
 	return folder_tree;
 }
 
+static void on_editor_entry_changed(GtkEditable *editable,
+                                            gpointer     user_data)
+{
+	GtkWidget *edit_win;
+	EditWinData *windata;
+
+	edit_win = gtk_widget_get_toplevel(GTK_WIDGET(editable));
+	windata = (EditWinData *)modest_editor_window_get_data(MODEST_EDITOR_WINDOW(edit_win));
+
+	modest_editor_window_set_modified(MODEST_EDITOR_WINDOW(edit_win), TRUE);
+}
+
+static void on_editor_buffer_changed (GtkTextBuffer *textbuffer,
+                                            gpointer       user_data)
+{
+	GtkWidget *edit_win;
+	EditWinData *windata;
+
+	edit_win = gtk_widget_get_toplevel(GTK_WIDGET(textbuffer));
+	windata = (EditWinData *)modest_editor_window_get_data(MODEST_EDITOR_WINDOW(edit_win));
+
+	modest_editor_window_set_modified(MODEST_EDITOR_WINDOW(edit_win), TRUE);
+}
 
 static void
 on_new_mail_clicked (GtkWidget *widget, ModestUI *modest_ui)
 {
 	GtkWidget *edit_win;
 	GladeXML *glade_xml;
-	GtkWidget *btn;
+	GtkWidget *btn, *w;
+	GtkTextBuffer *buf;
 	EditWinData *windata;
 	ModestUIPrivate *priv;
 	gint height, width;
@@ -947,10 +972,19 @@ on_new_mail_clicked (GtkWidget *widget, ModestUI *modest_ui)
 	windata = (EditWinData *)modest_editor_window_get_data(MODEST_EDITOR_WINDOW(edit_win));
 	g_return_if_fail(windata);
 
+	windata->edit_win = MODEST_EDITOR_WINDOW(edit_win);
 	glade_xml = windata->glade_xml;
 	btn = glade_xml_get_widget (glade_xml, "toolb_send");
 	g_signal_connect (btn, "clicked", G_CALLBACK(on_send_button_clicked),
 			  edit_win);
+
+	w = glade_xml_get_widget (glade_xml, "to_entry");
+	g_signal_connect(w, "changed", G_CALLBACK(on_editor_entry_changed), edit_win);
+	w = glade_xml_get_widget (glade_xml, "subject_entry");
+	g_signal_connect(w, "changed", G_CALLBACK(on_editor_entry_changed), edit_win);
+	w = glade_xml_get_widget (glade_xml, "body_view");
+	buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
+	g_signal_connect(buf, "changed", G_CALLBACK(on_editor_buffer_changed), edit_win);
 
 	g_signal_connect (edit_win, "destroy-event", G_CALLBACK(close_edit_window),
 			  edit_win);
@@ -1017,6 +1051,8 @@ new_editor_with_presets (ModestUI *modest_ui, const gchar *to_header,
 	modest_editor_window_set_bcc_header(MODEST_EDITOR_WINDOW(edit_win), bcc_header);
 	modest_editor_window_set_subject_header(MODEST_EDITOR_WINDOW(edit_win), subject_header);
 	modest_editor_window_set_body(MODEST_EDITOR_WINDOW(edit_win), body);
+
+	modest_editor_window_set_modified(MODEST_EDITOR_WINDOW(edit_win), FALSE);
 
 	gtk_widget_show(edit_win);
 }
@@ -1101,12 +1137,10 @@ quoted_send_msg (ModestUI *modest_ui, quoted_send_type qstype) {
 	switch (qstype) {
 		case QUOTED_SEND_REPLY:
 			g_string_prepend(re_sub, _("Re: "));
-			// modest_ui_new_edit_window (modest_ui, from, /* cc */ "", /* bcc */ "", re_sub->str, quoted, NULL);
 			new_editor_with_presets(modest_ui, from, /* cc */ "", /* bcc */ "", re_sub->str, quoted);
 			break;
 		case QUOTED_SEND_FORWARD:
 			g_string_prepend(re_sub, _("Fwd: "));
-			// modest_ui_new_edit_window (modest_ui, /* from */ "", /* cc */ "", /* bcc */ "", re_sub->str, quoted, NULL);
 			new_editor_with_presets(modest_ui, /* from */ "", /* cc */ "", /* bcc */ "", re_sub->str, quoted);
 			break;
 		default:

@@ -141,6 +141,20 @@ gpointer modest_editor_window_get_data(ModestEditorWindow *edit_win)
 	return priv->user_data;
 }
 
+gboolean modest_editor_window_set_modified(ModestEditorWindow *edit_win, gboolean modified)
+{
+	ModestEditorWindowPrivate *priv;
+
+	if (!edit_win) {
+		return FALSE;
+	}
+	priv = MODEST_EDITOR_WINDOW_GET_PRIVATE(edit_win);
+
+	priv->modified = modified;
+
+	return priv->modified;
+}
+
 gboolean modest_editor_window_get_modified(ModestEditorWindow *edit_win)
 {
 	ModestEditorWindowPrivate *priv;

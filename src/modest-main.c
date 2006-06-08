@@ -96,7 +96,8 @@ main (int argc, char *argv[])
 		gboolean ok;
 		gtk_init (&argc, &argv);
 
-		if (mailto||cc||bcc||subject||body)
+		if (mailto||cc||bcc||subject||body) {
+#if 0
 			ok = modest_ui_new_edit_window (modest_ui,
 							 mailto,  /* to */
 							 cc,      /* cc */
@@ -104,7 +105,8 @@ main (int argc, char *argv[])
 							 subject,    /* subject */
 							 body,    /* body */
 							 NULL);   /* attachments */
-		else
+#endif
+		} else
 			ok = modest_ui_show_main_window (modest_ui);
 
 		if (!ok)

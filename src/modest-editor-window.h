@@ -42,6 +42,8 @@ GtkWidget *modest_editor_window_new         (ModestUI *ui);
 
 gpointer modest_editor_window_get_data(ModestEditorWindow *edit_win);
 
+gboolean modest_editor_window_set_modified(ModestEditorWindow *edit_win, gboolean modified);
+
 gboolean modest_editor_window_get_modified(ModestEditorWindow *edit_win);
 
 /* fill in other public functions, eg.: */

@@ -33,4 +33,3 @@ struct _ModestUIPrivate {
                                        ModestUIPrivate))
 
 #endif /* __MODEST_UI_GLADE_H__ */
-
