@@ -88,11 +88,11 @@ gboolean     modest_ui_new_edit_window (ModestUI *ui,
 
 GtkContainer *modest_ui_new_editor_window (ModestUI *modest_ui, gpointer *user_data);
 
-gboolean modest_ui_editor_window_set_to_header(gchar *to, gpointer window_data);
-gboolean modest_ui_editor_window_set_cc_header(gchar *to, gpointer window_data);
-gboolean modest_ui_editor_window_set_bcc_header(gchar *to, gpointer window_data);
-gboolean modest_ui_editor_window_set_subject_header(gchar *to, gpointer window_data);
-gboolean modest_ui_editor_window_set_body(gchar *to, gpointer window_data);
+gboolean modest_ui_editor_window_set_to_header(const gchar *to, gpointer window_data);
+gboolean modest_ui_editor_window_set_cc_header(const gchar *cc, gpointer window_data);
+gboolean modest_ui_editor_window_set_bcc_header(const gchar *bcc, gpointer window_data);
+gboolean modest_ui_editor_window_set_subject_header(const gchar *subject, gpointer window_data);
+gboolean modest_ui_editor_window_set_body(const gchar *body, gpointer window_data);
 
 G_END_DECLS
 

@@ -146,7 +146,7 @@ gboolean modest_editor_window_get_modified(ModestEditorWindow *edit_win)
 	ModestEditorWindowPrivate *priv;
 
 	if (!edit_win) {
-		return NULL;
+		return FALSE;
 	}
 	priv = MODEST_EDITOR_WINDOW_GET_PRIVATE(edit_win);
 
@@ -155,7 +155,7 @@ gboolean modest_editor_window_get_modified(ModestEditorWindow *edit_win)
 	return priv->modified;
 }	
 
-gboolean modest_editor_window_set_to_header(ModestEditorWindow *edit_win, gchar *to)
+gboolean modest_editor_window_set_to_header(ModestEditorWindow *edit_win, const gchar *to)
 {
 	ModestEditorWindowPrivate *priv;
 
@@ -168,7 +168,7 @@ gboolean modest_editor_window_set_to_header(ModestEditorWindow *edit_win, gchar 
 }
 
 
-gboolean modest_editor_window_set_cc_header(ModestEditorWindow *edit_win, gchar *cc)
+gboolean modest_editor_window_set_cc_header(ModestEditorWindow *edit_win, const gchar *cc)
 {
 	ModestEditorWindowPrivate *priv;
 
@@ -180,7 +180,7 @@ gboolean modest_editor_window_set_cc_header(ModestEditorWindow *edit_win, gchar 
 	return modest_ui_editor_window_set_cc_header(cc, priv->user_data);
 }
 
-gboolean modest_editor_window_set_bcc_header(ModestEditorWindow *edit_win, gchar *bcc)
+gboolean modest_editor_window_set_bcc_header(ModestEditorWindow *edit_win, const gchar *bcc)
 {
 	ModestEditorWindowPrivate *priv;
 
@@ -192,7 +192,7 @@ gboolean modest_editor_window_set_bcc_header(ModestEditorWindow *edit_win, gchar
 	return modest_ui_editor_window_set_bcc_header(bcc, priv->user_data);
 }
 
-gboolean modest_editor_window_set_subject_header(ModestEditorWindow *edit_win, gchar *subject)
+gboolean modest_editor_window_set_subject_header(ModestEditorWindow *edit_win, const gchar *subject)
 {
 	ModestEditorWindowPrivate *priv;
 
@@ -204,7 +204,7 @@ gboolean modest_editor_window_set_subject_header(ModestEditorWindow *edit_win, g
 	return modest_ui_editor_window_set_subject_header(subject, priv->user_data);
 }
 
-gboolean modest_editor_window_set_body(ModestEditorWindow *edit_win, gchar *body)
+gboolean modest_editor_window_set_body(ModestEditorWindow *edit_win, const gchar *body)
 {
 	ModestEditorWindowPrivate *priv;
 

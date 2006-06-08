@@ -48,15 +48,15 @@ gboolean modest_editor_window_get_modified(ModestEditorWindow *edit_win);
 /* 	void       modest_editor_window_do_something (ModestEditorWindow *self, const gchar* param); */
 /* 	gboolean   modest_editor_window_has_foo      (ModestEditorWindow *self, gint value); */
 
-gboolean modest_editor_window_set_to_header(ModestEditorWindow *edit_win, gchar *to);
+gboolean modest_editor_window_set_to_header(ModestEditorWindow *edit_win, const gchar *to);
 
-gboolean modest_editor_window_set_cc_header(ModestEditorWindow *edit_win, gchar *to);
+gboolean modest_editor_window_set_cc_header(ModestEditorWindow *edit_win, const gchar *cc);
 
-gboolean modest_editor_window_set_bcc_header(ModestEditorWindow *edit_win, gchar *to);
+gboolean modest_editor_window_set_bcc_header(ModestEditorWindow *edit_win, const gchar *bcc);
 
-gboolean modest_editor_window_set_subject_header(ModestEditorWindow *edit_win, gchar *to);
+gboolean modest_editor_window_set_subject_header(ModestEditorWindow *edit_win, const gchar *subject);
 
-gboolean modest_editor_window_set_body(ModestEditorWindow *edit_win, gchar *to);
+gboolean modest_editor_window_set_body(ModestEditorWindow *edit_win, const gchar *body);
 
 G_END_DECLS
 

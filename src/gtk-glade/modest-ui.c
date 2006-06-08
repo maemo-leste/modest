@@ -485,12 +485,14 @@ GtkContainer
 
 
 gboolean
-modest_ui_editor_window_set_to_header(gchar *to, gpointer window_data)
+modest_ui_editor_window_set_to_header(const gchar *to, gpointer window_data)
 {
 	GladeXML *glade_xml;
 	GtkWidget *w;
+	EditWinData *win_data;
 
-	glade_xml = (GladeXML *)window_data;
+	win_data = (EditWinData *)window_data;
+	glade_xml = win_data->glade_xml;
 	w = glade_xml_get_widget(glade_xml, "to_entry");
 	gtk_entry_set_text(GTK_ENTRY(w), to);
 
@@ -499,40 +501,49 @@ modest_ui_editor_window_set_to_header(gchar *to, gpointer window_data)
 
 
 gboolean
-modest_ui_editor_window_set_cc_header(gchar *cc, gpointer window_data)
+modest_ui_editor_window_set_cc_header(const gchar *cc, gpointer window_data)
 {
 	GladeXML *glade_xml;
 	GtkWidget *w;
+	EditWinData *win_data;
 
-	glade_xml = (GladeXML *)window_data;
+	win_data = (EditWinData *)window_data;
+	glade_xml = win_data->glade_xml;
+/*
 	w = glade_xml_get_widget(glade_xml, "cc_entry");
 	gtk_entry_set_text(GTK_ENTRY(w), cc);
-
+*/
 	return TRUE;
 }
 
 
 gboolean
-modest_ui_editor_window_set_bcc_header(gchar *bcc, gpointer window_data)
+modest_ui_editor_window_set_bcc_header(const gchar *bcc, gpointer window_data)
 {
 	GladeXML *glade_xml;
 	GtkWidget *w;
+	EditWinData *win_data;
 
-	glade_xml = (GladeXML *)window_data;
+	win_data = (EditWinData *)window_data;
+	glade_xml = win_data->glade_xml;
+/*
 	w = glade_xml_get_widget(glade_xml, "bcc_entry");
 	gtk_entry_set_text(GTK_ENTRY(w), bcc);
-
+*/
 	return TRUE;
 }
 
 
 gboolean
-modest_ui_editor_window_set_subject_header(gchar *subject, gpointer window_data)
+modest_ui_editor_window_set_subject_header(const gchar *subject, gpointer window_data)
 {
 	GladeXML *glade_xml;
 	GtkWidget *w;
+	EditWinData *win_data;
 
-	glade_xml = (GladeXML *)window_data;
+	win_data = (EditWinData *)window_data;
+	glade_xml = win_data->glade_xml;
+
 	w = glade_xml_get_widget(glade_xml, "subject_entry");
 	gtk_entry_set_text(GTK_ENTRY(w), subject);
 
@@ -541,14 +552,20 @@ modest_ui_editor_window_set_subject_header(gchar *subject, gpointer window_data)
 
 
 gboolean
-modest_ui_editor_window_set_body(gchar *body, gpointer window_data)
+modest_ui_editor_window_set_body(const gchar *body, gpointer window_data)
 {
 	GladeXML *glade_xml;
-	GtkWidget *w;
+	GtkWidget *body_view;
+	GtkTextBuffer *buf;
+	EditWinData *win_data;
 
-	glade_xml = (GladeXML *)window_data;
-	w = glade_xml_get_widget(glade_xml, "body_view");
-	gtk_text_buffer_set_text(GTK_TEXT_BUFFER(w), body, -1);
+	win_data = (EditWinData *)window_data;
+	glade_xml = win_data->glade_xml;
+
+	body_view = glade_xml_get_widget(glade_xml, "body_view");
+	buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(body_view));
+
+	gtk_text_buffer_set_text(GTK_TEXT_BUFFER(buf), body, -1);
 
 	return TRUE;
 }
@@ -952,9 +969,58 @@ on_new_mail_clicked (GtkWidget *widget, ModestUI *modest_ui)
 	// g_message("new editor win@%dx%d", width, height);
 
 	gtk_widget_set_usize (GTK_WIDGET(edit_win), width, height);
-	/*gtk_window_set_title (GTK_WINDOW(edit_win),
-			      subject ? subject : "Untitled");*/
+	gtk_window_set_title (GTK_WINDOW(edit_win), _("Untitled"));
 	modest_window_mgr_register(priv->modest_window_mgr, G_OBJECT(edit_win), MODEST_EDIT_WINDOW, 0);
+	gtk_widget_show(edit_win);
+}
+
+
+static void
+new_editor_with_presets (ModestUI *modest_ui, const gchar *to_header,
+							const gchar *cc_header, const gchar *bcc_header,
+							const gchar *subject_header, const gchar *body)
+{
+	GtkWidget *edit_win;
+	GladeXML *glade_xml;
+	GtkWidget *btn;
+	EditWinData *windata;
+	ModestUIPrivate *priv;
+	gint height, width;
+
+	g_return_if_fail (modest_ui);
+
+	edit_win = modest_editor_window_new(modest_ui);
+	windata = (EditWinData *)modest_editor_window_get_data(MODEST_EDITOR_WINDOW(edit_win));
+	g_return_if_fail(windata);
+
+	glade_xml = windata->glade_xml;
+	btn = glade_xml_get_widget (glade_xml, "toolb_send");
+	g_signal_connect (btn, "clicked", G_CALLBACK(on_send_button_clicked),
+			  edit_win);
+
+	g_signal_connect (edit_win, "destroy-event", G_CALLBACK(close_edit_window),
+			  edit_win);
+	g_signal_connect (edit_win, "delete-event", G_CALLBACK(close_edit_window),
+			  edit_win);
+
+	priv = MODEST_UI_GET_PRIVATE(windata->modest_ui);
+	height = modest_conf_get_int (priv->modest_conf,
+					  MODEST_CONF_EDIT_WINDOW_HEIGHT, NULL);
+	width  = modest_conf_get_int (priv->modest_conf,
+					  MODEST_CONF_EDIT_WINDOW_WIDTH, NULL);
+
+	// g_message("new editor win@%dx%d", width, height);
+
+	gtk_widget_set_usize (GTK_WIDGET(edit_win), width, height);
+	gtk_window_set_title (GTK_WINDOW(edit_win), _("Untitled"));
+	modest_window_mgr_register(priv->modest_window_mgr, G_OBJECT(edit_win), MODEST_EDIT_WINDOW, 0);
+
+	modest_editor_window_set_to_header(MODEST_EDITOR_WINDOW(edit_win), to_header);
+	modest_editor_window_set_cc_header(MODEST_EDITOR_WINDOW(edit_win), cc_header);
+	modest_editor_window_set_bcc_header(MODEST_EDITOR_WINDOW(edit_win), bcc_header);
+	modest_editor_window_set_subject_header(MODEST_EDITOR_WINDOW(edit_win), subject_header);
+	modest_editor_window_set_body(MODEST_EDITOR_WINDOW(edit_win), body);
+
 	gtk_widget_show(edit_win);
 }
 
@@ -1038,11 +1104,13 @@ quoted_send_msg (ModestUI *modest_ui, quoted_send_type qstype) {
 	switch (qstype) {
 		case QUOTED_SEND_REPLY:
 			g_string_prepend(re_sub, _("Re: "));
-			modest_ui_new_edit_window (modest_ui, from, /* cc */ "", /* bcc */ "", re_sub->str, quoted, NULL);
+			// modest_ui_new_edit_window (modest_ui, from, /* cc */ "", /* bcc */ "", re_sub->str, quoted, NULL);
+			new_editor_with_presets(modest_ui, from, /* cc */ "", /* bcc */ "", re_sub->str, quoted);
 			break;
 		case QUOTED_SEND_FORWARD:
 			g_string_prepend(re_sub, _("Fwd: "));
-			modest_ui_new_edit_window (modest_ui, /* from */ "", /* cc */ "", /* bcc */ "", re_sub->str, quoted, NULL);
+			// modest_ui_new_edit_window (modest_ui, /* from */ "", /* cc */ "", /* bcc */ "", re_sub->str, quoted, NULL);
+			new_editor_with_presets(modest_ui, /* from */ "", /* cc */ "", /* bcc */ "", re_sub->str, quoted);
 			break;
 		default:
 			break;
@@ -1134,11 +1202,11 @@ on_send_button_clicked (GtkWidget *widget, ModestEditorWindow *modest_editwin)
 	g_object_unref (G_OBJECT(actions));
 
 	gtk_widget_hide (GTK_WIDGET(modest_editwin));
+	modest_window_mgr_unregister(priv->modest_window_mgr, G_OBJECT(modest_editwin));
 	if (GTK_IS_WIDGET(modest_editwin)) {
 		gtk_widget_destroy(GTK_WIDGET(modest_editwin));
 	} else
 		g_warning("editor window has vanished!");
-	modest_window_mgr_unregister(priv->modest_window_mgr, G_OBJECT(modest_editwin));
 }
 
 
