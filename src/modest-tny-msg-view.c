@@ -12,6 +12,7 @@
 #include <ctype.h>
 #include <glib/gi18n.h>
 #include <gtkhtml/gtkhtml.h>
+#include <gtkhtml/gtkhtml-stream.h>
 
 /* 'private'/'protected' functions */
 static void     modest_tny_msg_view_class_init   (ModestTnyMsgViewClass *klass);

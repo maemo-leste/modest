@@ -213,7 +213,7 @@ modest_tny_account_store_new (ModestAccountMgr *modest_acc_mgr)
 
 
 static gchar*
-get_password (TnyAccountIface *account, const gchar *prompt)
+get_password (TnyAccountIface *account, const gchar *prompt, gboolean *cancel)
 {
 	const gchar *key;
 	const TnyAccountStoreIface *account_store;
@@ -230,20 +230,16 @@ get_password (TnyAccountIface *account, const gchar *prompt)
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
 
 	val = modest_account_mgr_get_server_account_string (priv->modest_acc_mgr, key,
-							    MODEST_ACCOUNT_PASSWORD,
-                                                            NULL);
-	if (!val)
-        {
-                /* FIXME:
-                 * append the prompt to the emitted signal,
-                 * so the password dialog shows the prompt supplied by the caller of this function.
-                 */
-                g_signal_emit (G_OBJECT(self), signals[PASSWORD_REQUESTED_SIGNAL], 0,
-                               key);
-
+												MODEST_ACCOUNT_PASSWORD, NULL);
+	if (!val) {
+		/* FIXME:
+		 * append the prompt to the emitted signal,
+		 * so the password dialog shows the prompt supplied by the caller of this function.
+		 */
+		g_signal_emit (G_OBJECT(self), signals[PASSWORD_REQUESTED_SIGNAL], 0, key);
 	}
 
-        return val;
+	return val;
 }
 
 
@@ -289,7 +285,6 @@ add_account  (TnyAccountStoreIface *self, TnyAccountIface *account)
 }
 
 
-
 static void
 modest_tny_account_store_add_store_account  (TnyAccountStoreIface *self,
 					     TnyStoreAccountIface *account)
@@ -299,7 +294,6 @@ modest_tny_account_store_add_store_account  (TnyAccountStoreIface *self,
 }
 
 
-
 static void
 modest_tny_account_store_add_transport_account  (TnyAccountStoreIface *self,
 						 TnyTransportAccountIface *account)
@@ -307,7 +301,6 @@ modest_tny_account_store_add_transport_account  (TnyAccountStoreIface *self,
 	if (!add_account (self, TNY_ACCOUNT_IFACE(account)))
 		g_warning ("failed to add transport account");
 }
-
 
 
 static TnyAccountIface*
@@ -406,7 +399,6 @@ tny_accounts_from_server_accounts (ModestTnyAccountStore *self, GSList *accounts
 }
 
 
-
 static const GList*
 modest_tny_account_store_get_store_accounts  (TnyAccountStoreIface *iface)
 {
@@ -438,7 +430,6 @@ modest_tny_account_store_get_store_accounts  (TnyAccountStoreIface *iface)
 
 	return tny_accounts;
 }
-
 
 
 static const GList*
@@ -487,7 +478,6 @@ ModestAccountMgr
 }
 
 
-
 TnySessionCamel*
 tny_account_store_get_session (TnyAccountStore *self)
 {
@@ -498,7 +488,6 @@ tny_account_store_get_session (TnyAccountStore *self)
 
 	return priv->tny_session_camel;
 }
-
 
 
 /**
@@ -526,7 +515,6 @@ modest_tny_account_store_get_cache_dir (TnyAccountStoreIface *self)
 }
 
 
-
 static const TnyDeviceIface*
 modest_tny_account_store_get_device (TnyAccountStoreIface *self)
 {
@@ -538,7 +526,6 @@ modest_tny_account_store_get_device (TnyAccountStoreIface *self)
 }
 
 
-
 static void
 modest_tny_account_store_iface_init (gpointer g_iface, gpointer iface_data)
 {
@@ -548,17 +535,16 @@ modest_tny_account_store_iface_init (gpointer g_iface, gpointer iface_data)
 
 	klass = (TnyAccountStoreIfaceClass *)g_iface;
 
-        klass->add_store_account_func      =
+	klass->add_store_account_func      =
 		modest_tny_account_store_add_store_account;
-        klass->get_store_accounts_func     =
+	klass->get_store_accounts_func     =
 		modest_tny_account_store_get_store_accounts;
-        klass->add_transport_account_func  =
+	klass->add_transport_account_func  =
 		modest_tny_account_store_add_transport_account;
-        klass->get_transport_accounts_func =
+	klass->get_transport_accounts_func =
 		modest_tny_account_store_get_transport_accounts;
 	klass->get_cache_dir_func =
 		modest_tny_account_store_get_cache_dir;
 	klass->get_device_func =
 		modest_tny_account_store_get_device;
-
 }

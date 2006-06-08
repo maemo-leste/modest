@@ -52,10 +52,11 @@ void
 modest_tny_store_actions_update_folders (ModestTnyStoreActions *self,
 					   TnyStoreAccountIface *storage_account)
 {
+#if 0
 	const TnyListIface* folders;
 	TnyIteratorIface* ifolders;
 	gpointer *cur_folder;
-#if 0	
+
 	folders = tny_store_account_iface_get_folders (storage_account, 
 												  TNY_STORE_ACCOUNT_FOLDER_TYPE_SUBSCRIBED);
 	
@@ -136,4 +137,3 @@ modest_tny_store_actions_new (void)
 {
 	return G_OBJECT(g_object_new(MODEST_TYPE_TNY_STORE_ACTIONS, NULL));
 }
-

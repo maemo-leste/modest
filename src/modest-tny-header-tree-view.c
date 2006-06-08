@@ -296,7 +296,7 @@ remove_all_columns (ModestTnyHeaderTreeView *obj)
 static void
 init_columns (ModestTnyHeaderTreeView *obj)
 {
-	GtkTreeViewColumn *column;
+	GtkTreeViewColumn *column=NULL;
 	GtkCellRenderer *renderer_msgtype,
 		*renderer_header,
 		*renderer_attach;
@@ -721,7 +721,7 @@ selection_changed (GtkTreeSelection *sel, gpointer user_data)
 			    &header, -1);
 	
 	if (header) {
-		const TnyMsgIface *msg;
+		const TnyMsgIface *msg = NULL;
 		const TnyMsgFolderIface *folder;
 		
 		folder = tny_msg_header_iface_get_folder (TNY_MSG_HEADER_IFACE(header));
