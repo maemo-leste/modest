@@ -435,6 +435,27 @@ hide_edit_window (GtkWidget *win, GdkEvent *event, gpointer data)
 }
 #endif
 
+
+static gboolean close_edit_confirm_dialog(ModestEditorWindow *edit_win)
+{
+	GtkWidget *mdialog;
+	gint res;
+
+	mdialog = gtk_message_dialog_new(GTK_WINDOW(edit_win),
+			GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
+			GTK_MESSAGE_QUESTION,
+			GTK_BUTTONS_YES_NO,
+			_("Message was modified.\nDiscard Changes?"));
+	gtk_widget_show_all (mdialog);
+
+	res=gtk_dialog_run(GTK_DIALOG(mdialog));
+	gtk_widget_destroy (mdialog);
+	if (res == GTK_RESPONSE_YES)
+		return TRUE;
+	else
+		return FALSE;
+}
+
 static void
 close_edit_window (GtkWidget *win, GdkEvent *event, gpointer data)
 {
@@ -446,11 +467,18 @@ close_edit_window (GtkWidget *win, GdkEvent *event, gpointer data)
 	win_data = modest_editor_window_get_data(edit_win);
 	priv = MODEST_UI_GET_PRIVATE(win_data->modest_ui);
 
-	g_message("window was %s modified", modest_editor_window_get_modified(edit_win) ? "" : "not");
+	// g_message("window was %s modified", modest_editor_window_get_modified(edit_win) ? "" : "not");
 
-	gtk_widget_hide (GTK_WIDGET(edit_win));
-	modest_window_mgr_unregister(priv->modest_window_mgr, G_OBJECT(edit_win));
-	gtk_widget_destroy(GTK_WIDGET(edit_win));
+	if (modest_editor_window_get_modified(edit_win)) {
+		if (close_edit_confirm_dialog(edit_win)) {
+			gtk_widget_hide (GTK_WIDGET(edit_win));
+			modest_window_mgr_unregister(priv->modest_window_mgr, G_OBJECT(edit_win));
+			gtk_widget_destroy(GTK_WIDGET(edit_win));
+			// g_message("closing window");
+		} /* else {
+			g_message("not closing window");
+		}*/
+	}
 }
 
 
@@ -936,7 +964,7 @@ static void on_editor_entry_changed(GtkEditable *editable,
 	GtkWidget *edit_win;
 	EditWinData *windata;
 
-	edit_win = gtk_widget_get_toplevel(GTK_WIDGET(editable));
+	edit_win = (GtkWidget *)user_data;
 	windata = (EditWinData *)modest_editor_window_get_data(MODEST_EDITOR_WINDOW(edit_win));
 
 	modest_editor_window_set_modified(MODEST_EDITOR_WINDOW(edit_win), TRUE);
@@ -948,7 +976,7 @@ static void on_editor_buffer_changed (GtkTextBuffer *textbuffer,
 	GtkWidget *edit_win;
 	EditWinData *windata;
 
-	edit_win = gtk_widget_get_toplevel(GTK_WIDGET(textbuffer));
+	edit_win = (GtkWidget *)user_data;
 	windata = (EditWinData *)modest_editor_window_get_data(MODEST_EDITOR_WINDOW(edit_win));
 
 	modest_editor_window_set_modified(MODEST_EDITOR_WINDOW(edit_win), TRUE);
@@ -1013,7 +1041,8 @@ new_editor_with_presets (ModestUI *modest_ui, const gchar *to_header,
 {
 	GtkWidget *edit_win;
 	GladeXML *glade_xml;
-	GtkWidget *btn;
+	GtkWidget *btn, *w;
+	GtkTextBuffer *buf;
 	EditWinData *windata;
 	ModestUIPrivate *priv;
 	gint height, width;
@@ -1028,6 +1057,14 @@ new_editor_with_presets (ModestUI *modest_ui, const gchar *to_header,
 	btn = glade_xml_get_widget (glade_xml, "toolb_send");
 	g_signal_connect (btn, "clicked", G_CALLBACK(on_send_button_clicked),
 			  edit_win);
+
+	w = glade_xml_get_widget (glade_xml, "to_entry");
+	g_signal_connect(w, "changed", G_CALLBACK(on_editor_entry_changed), edit_win);
+	w = glade_xml_get_widget (glade_xml, "subject_entry");
+	g_signal_connect(w, "changed", G_CALLBACK(on_editor_entry_changed), edit_win);
+	w = glade_xml_get_widget (glade_xml, "body_view");
+	buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
+	g_signal_connect(buf, "changed", G_CALLBACK(on_editor_buffer_changed), edit_win);
 
 	g_signal_connect (edit_win, "destroy-event", G_CALLBACK(close_edit_window),
 			  edit_win);
