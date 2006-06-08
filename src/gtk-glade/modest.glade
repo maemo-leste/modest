@@ -2708,9 +2708,9 @@
 		  <child>
 		    <widget class="GtkComboBox" id="AWMailboxtypeComboBox">
 		      <property name="visible">True</property>
-		      <property name="items" translatable="yes" context="yes">imap
-pop
-local</property>
+		      <property name="items" translatable="yes" context="yes">IMAP
+POP
+LOCAL</property>
 		      <property name="add_tearoffs">False</property>
 		      <property name="focus_on_click">True</property>
 		    </widget>
