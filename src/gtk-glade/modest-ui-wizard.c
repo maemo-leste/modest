@@ -112,8 +112,65 @@ gboolean advance_sanity_check(GtkWindow *parent, GladeXML *glade_xml, gint cp)
         return FALSE;
 }
 
-void on_new_account1_activate (GtkMenuItem *menuitem,
-                               gpointer user_data)
+gboolean wizard_account_add(GladeXML *glade_xml, ModestUIPrivate *priv)
+{
+	ModestAccountMgr *acc_mgr;
+	ModestIdentityMgr *id_mgr;
+	const gchar *account_name="default";
+	ModestConf *conf=priv->modest_conf;
+	gchar *tmptext;
+
+	g_return_if_fail (conf);
+
+	acc_mgr = MODEST_ACCOUNT_MGR(modest_account_mgr_new (conf));
+	if (!acc_mgr) {
+		g_warning ("failed to instantiate account mgr");
+		return;
+	}
+
+	if (modest_account_mgr_account_exists (acc_mgr, account_name, NULL)) {
+		if (!modest_account_mgr_remove_account(acc_mgr, account_name, NULL)) {
+			g_warning ("could not delete existing account");
+		}
+	}
+
+	if (!modest_account_mgr_add_account (acc_mgr, account_name, "defaultstore", "defaulttransport", NULL))
+		g_warning ("failed to add default account");
+	else
+	{
+		tmptext=get_text_from_combobox(glade_xml_get_widget(glade_xml, "AWMailboxtypeComboBox"));
+		modest_account_mgr_add_server_account (acc_mgr, "defaultstore",
+						       gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "AWInServerComboEntry"))),
+						       gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "AWUserNameEntry"))),
+						       NULL,
+						       tmptext);
+		free(tmptext);
+		modest_account_mgr_add_server_account (acc_mgr, "defaulttransport",
+						       gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "AWOutServerComboEntry"))),
+						       NULL,
+						       NULL,
+						       "smtp");
+
+	}
+	id_mgr = MODEST_IDENTITY_MGR(modest_identity_mgr_new (conf));
+	if (modest_identity_mgr_identity_exists(id_mgr, "defaultidentity", NULL)) {
+		if (!modest_identity_mgr_remove_identity(id_mgr, "defaultidentity", NULL)) {
+			g_warning ("could not delete existing default identity");
+		}
+	}
+	if (!modest_identity_mgr_add_identity (id_mgr,
+					       MODEST_IDENTITY_DEFAULT_IDENTITY,
+					       gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "AWEMailAddressEntry"))),
+					       "", "", FALSE, NULL, FALSE ))
+		g_warning ("failed to add default identity");
+
+	g_object_unref (G_OBJECT(acc_mgr));
+	g_object_unref (G_OBJECT(id_mgr));
+
+}
+
+
+void wizard_account_dialog(ModestUI *modest_ui)
 {
 	GladeXML *glade_xml;
 	GtkWidget *dialog;
@@ -127,9 +184,9 @@ void on_new_account1_activate (GtkMenuItem *menuitem,
         gint cp;
         gint result;
 	gint finishallowed=0;
-	gchar *tmptext;
+	gboolean account_added_successfully;
 
-	priv = MODEST_UI_GET_PRIVATE(MODEST_UI(user_data));
+	priv = MODEST_UI_GET_PRIVATE(MODEST_UI(modest_ui));
 
 	glade_xml = glade_xml_new(MODEST_GLADE, "account_wizard", NULL);
 
@@ -146,7 +203,7 @@ void on_new_account1_activate (GtkMenuItem *menuitem,
         gtk_widget_set_sensitive(FinishButton, FALSE);
 
         do
-        {
+	{
                 cp=gtk_notebook_get_current_page(GTK_NOTEBOOK(Notebook));
                 switch (cp)
                 {
@@ -179,68 +236,24 @@ void on_new_account1_activate (GtkMenuItem *menuitem,
                         break;
                 case 2:
                         gtk_notebook_prev_page(GTK_NOTEBOOK(Notebook));
-                        break;
+			break;
+		case GTK_RESPONSE_ACCEPT:
+			account_added_successfully=wizard_account_add(glade_xml, priv);
+			break;
+		default:
+			account_added_successfully=FALSE;
                 }
         }
-        while(result!=GTK_RESPONSE_DELETE_EVENT && result!=GTK_RESPONSE_ACCEPT && result!=GTK_RESPONSE_CANCEL);
-
-        if (result==GTK_RESPONSE_ACCEPT)
-        {
-		ModestAccountMgr *acc_mgr;
-		ModestIdentityMgr *id_mgr;
-		const gchar *account_name="default";
-		ModestConf *conf=priv->modest_conf;
-
-		g_return_if_fail (conf);
-
-		acc_mgr = MODEST_ACCOUNT_MGR(modest_account_mgr_new (conf));
-		if (!acc_mgr) {
-			g_warning ("failed to instantiate account mgr");
-			return;
-		}
-
-		if (modest_account_mgr_account_exists (acc_mgr, account_name, NULL)) {
-			if (!modest_account_mgr_remove_account(acc_mgr, account_name, NULL)) {
-				g_warning ("could not delete existing account");
-			}
-		}
-
-		if (!modest_account_mgr_add_account (acc_mgr, account_name, "defaultstore", "defaulttransport", NULL))
-			g_warning ("failed to add default account");
-		else
-		{
-			tmptext=get_text_from_combobox(glade_xml_get_widget(glade_xml, "AWMailboxtypeComboBox"));
-			modest_account_mgr_add_server_account (acc_mgr, "defaultstore",
-							       gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "AWInServerComboEntry"))),
-							       gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "AWUserNameEntry"))),
-							       NULL,
-							       tmptext);
-			free(tmptext);
-			modest_account_mgr_add_server_account (acc_mgr, "defaulttransport",
-							       gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "AWOutServerComboEntry"))),
-							       NULL,
-							       NULL,
-							       "smtp");
-
-		}
-		id_mgr = MODEST_IDENTITY_MGR(modest_identity_mgr_new (conf));
-		if (modest_identity_mgr_identity_exists(id_mgr, "defaultidentity", NULL)) {
-			if (!modest_identity_mgr_remove_identity(id_mgr, "defaultidentity", NULL)) {
-				g_warning ("could not delete existing default identity");
-			}
-		}
-		if (!modest_identity_mgr_add_identity (id_mgr,
-						       MODEST_IDENTITY_DEFAULT_IDENTITY,
-						       gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "AWEMailAddressEntry"))),
-						       "", "", FALSE, NULL, FALSE ))
-			g_warning ("failed to add default identity");
-
-		g_object_unref (G_OBJECT(acc_mgr));
-		g_object_unref (G_OBJECT(id_mgr));
-
-        }
+        while(result!=GTK_RESPONSE_DELETE_EVENT && result!=GTK_RESPONSE_CANCEL && account_added_successfully!=TRUE);
 
 	gtk_widget_destroy(dialog);
 	g_object_unref(glade_xml);
+}
+
+void new_wizard_account (GtkWidget *widget,
+			 gpointer user_data)
+{
+	/* for now: */
+	wizard_account_dialog(MODEST_UI(user_data));
 }
 

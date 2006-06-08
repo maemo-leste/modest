@@ -321,7 +321,7 @@ modest_ui_show_main_window (ModestUI *modest_ui)
 	}
 
         g_signal_connect (new_account_item, "activate",
-                          G_CALLBACK(on_new_account1_activate),
+                          G_CALLBACK(new_wizard_account),
                           modest_ui);
 
 	delete_item = glade_xml_get_widget (priv->glade_xml, "delete1");
@@ -443,7 +443,7 @@ modest_ui_new_edit_window (ModestUI *modest_ui, const gchar* to,
 		modest_window_mgr_register (priv->modest_window_mgr,
 									G_OBJECT(win), MODEST_EDIT_WINDOW, 0);
 	}
-	
+
 	to_entry      = glade_xml_get_widget (priv->glade_xml, "to_entry");
 	subject_entry = glade_xml_get_widget (priv->glade_xml, "subject_entry");
 	body_view     = glade_xml_get_widget (priv->glade_xml, "body_view");
