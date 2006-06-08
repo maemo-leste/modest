@@ -474,10 +474,10 @@ close_edit_window (GtkWidget *win, GdkEvent *event, gpointer data)
 			gtk_widget_hide (GTK_WIDGET(edit_win));
 			modest_window_mgr_unregister(priv->modest_window_mgr, G_OBJECT(edit_win));
 			gtk_widget_destroy(GTK_WIDGET(edit_win));
-			// g_message("closing window");
-		} /* else {
+			g_message("closing window");
+		} else {
 			g_message("not closing window");
-		}*/
+		}
 	}
 }
 
