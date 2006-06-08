@@ -243,7 +243,7 @@ strip_prefix_from_elements (GSList * lst, guint n)
 GSList *
 modest_identity_mgr_identity_names (ModestIdentityMgr * self, GError ** err)
 {
-	GSList *identities, *cursor;
+	GSList *identities;
 	ModestIdentityMgrPrivate *priv;
 	const size_t prefix_len = strlen (MODEST_IDENTITY_NAMESPACE "/");
 

@@ -11,6 +11,7 @@
 #include <regex.h>
 #include <ctype.h>
 #include <glib/gi18n.h>
+#include <gtkhtml/gtkhtml.h>
 
 /* 'private'/'protected' functions */
 static void     modest_tny_msg_view_class_init   (ModestTnyMsgViewClass *klass);
@@ -182,8 +183,11 @@ on_link_clicked (GtkWidget *widget, const gchar *uri,
 		priv = MODEST_TNY_MSG_VIEW_GET_PRIVATE(msg_view);
 		priv->show_attachments = !priv->show_attachments;
 		modest_tny_msg_view_set_message(msg_view, priv->msg);
+		return TRUE;
 	}
 	g_message ("link clicked: %s", uri); /* FIXME */
+	return FALSE;
+	
 }
 
 
@@ -311,7 +315,7 @@ attachments_as_html(ModestTnyMsgView *self, TnyMsgIface *msg)
 		filename = "";
 		content_type = tny_msg_mime_part_iface_get_content_type(
 										TNY_MSG_MIME_PART_IFACE(attachment->data));
-		g_return_if_fail(content_type);
+		g_return_val_if_fail(content_type, NULL);
 		if (      tny_msg_mime_part_iface_content_type_is(
 										TNY_MSG_MIME_PART_IFACE(attachment->data),
 										"image/jpeg")
@@ -607,10 +611,8 @@ modest_tny_msg_view_get_selected_text (ModestTnyMsgView *self)
 	GtkWidget *html;
 	int len;
 	GtkClipboard *clip;
-	gchar *text;
-	GtkTextBuffer *buf;
 
-	g_return_if_fail (self);
+	g_return_val_if_fail (self, NULL);
 	priv = MODEST_TNY_MSG_VIEW_GET_PRIVATE(self);
 	html = priv->gtkhtml;
 	

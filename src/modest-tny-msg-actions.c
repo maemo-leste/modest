@@ -8,6 +8,7 @@
 /* TODO: put in auto* */
 #include <tny-text-buffer-stream.h>
 #include <tny-msg-mime-part-iface.h>
+#include <tny-msg-iface.h>
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>

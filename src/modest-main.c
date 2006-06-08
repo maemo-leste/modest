@@ -5,6 +5,7 @@
 #include "modest-account-mgr.h"
 #include "modest-identity-mgr.h"
 #include "modest-ui.h"
+#include "modest-icon-factory.h"
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>

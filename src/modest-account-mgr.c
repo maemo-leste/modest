@@ -130,7 +130,6 @@ modest_account_mgr_add_account (ModestAccountMgr * self, const gchar * name,
 {
 	ModestAccountMgrPrivate *priv;
 	gchar *key;
-	gboolean retval;
 
 	g_return_val_if_fail (self, FALSE);
 	g_return_val_if_fail (name, FALSE);
@@ -264,7 +263,7 @@ modest_account_mgr_remove_server_account (ModestAccountMgr * self,
 					  const gchar * name, GError ** err)
 {
 	ModestAccountMgrPrivate *priv;
-	gchar *acckey, *key;
+	gchar *acckey;
 	gboolean retval;
 
 	g_return_val_if_fail (self, FALSE);
@@ -367,7 +366,7 @@ modest_account_mgr_server_account_names (ModestAccountMgr * self,
 GSList *
 modest_account_mgr_account_names (ModestAccountMgr * self, GError ** err)
 {
-	GSList *accounts, *cursor;
+	GSList *accounts;
 	ModestAccountMgrPrivate *priv;
 	const size_t prefix_len = strlen (MODEST_ACCOUNT_NAMESPACE "/");
 

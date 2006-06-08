@@ -9,6 +9,7 @@
 #include <tny-store-account-iface.h>
 #include <tny-transport-account-iface.h>
 #include <tny-device-iface.h>
+#include <tny-device.h>
 #include <tny-account-store.h>
 
 #include <tny-store-account.h>
@@ -389,7 +390,6 @@ tny_accounts_from_server_accounts (ModestTnyAccountStore *self, GSList *accounts
 
 	while (cursor) {
 		TnyAccountIface *tny_account;
-		gchar *key = cursor->data;
 		tny_account = tny_account_from_key (self, (gchar*)cursor->data,
 						    is_store);
 		if (!tny_account) {
@@ -412,7 +412,7 @@ modest_tny_account_store_get_store_accounts  (TnyAccountStoreIface *iface)
 {
 	ModestTnyAccountStore        *self;
 	ModestTnyAccountStorePrivate *priv;
-	GSList                       *accounts, *cursor;
+	GSList                       *accounts;
 	GList                        *tny_accounts;
 
 	g_return_val_if_fail (iface, NULL);
@@ -446,7 +446,7 @@ modest_tny_account_store_get_transport_accounts (TnyAccountStoreIface *iface)
 {
 	ModestTnyAccountStore        *self;
 	ModestTnyAccountStorePrivate *priv;
-	GSList                       *accounts, *cursor;
+	GSList                       *accounts;
 	GList                        *tny_accounts;
 
 	g_return_val_if_fail (iface, NULL);
@@ -516,8 +516,6 @@ modest_tny_account_store_get_cache_dir (TnyAccountStoreIface *self)
 {
 	ModestTnyAccountStorePrivate *priv;
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
-
-	gchar *cache_dir;
 
 	if (!priv->cache_dir) {
 		if (g_getenv("HOME") != NULL)

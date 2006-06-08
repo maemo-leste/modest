@@ -101,7 +101,6 @@ text_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 {
 	GObject *rendobj;
 	gchar *fname;
-	gchar *type_name;
 	guint unread;
 	TnyMsgFolderType type;
 	
@@ -211,7 +210,6 @@ modest_tny_folder_tree_view_init (ModestTnyFolderTreeView *obj)
 static void
 modest_tny_folder_tree_view_finalize (GObject *obj)
 {
-	int i;
 	ModestTnyFolderTreeViewPrivate *priv;
 
 	g_return_if_fail (obj);

@@ -150,7 +150,6 @@ static void
 sender_receiver_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 			    GtkTreeModel *tree_model,  GtkTreeIter *iter,  gboolean is_sender)
 {
-	GObject *rendobj;
 	TnyMsgHeaderFlags flags;
 	gchar *addr1, *addr2;
 	gint sender_receiver_col;
@@ -208,7 +207,7 @@ display_date (time_t date)
 }
 
 
-
+static void
 compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 			   GtkTreeModel *tree_model,  GtkTreeIter *iter,  gpointer user_data)
 {
@@ -397,7 +396,6 @@ modest_tny_header_tree_view_finalize (GObject *obj)
 {
 	ModestTnyHeaderTreeView        *self;
 	ModestTnyHeaderTreeViewPrivate *priv;
-	int i;
 	
 	self = MODEST_TNY_HEADER_TREE_VIEW(obj);
 	priv = MODEST_TNY_HEADER_TREE_VIEW_GET_PRIVATE(self);
@@ -475,7 +473,6 @@ const GSList*
 modest_tny_header_tree_view_get_columns (ModestTnyHeaderTreeView *self)
 {
 	ModestTnyHeaderTreeViewPrivate *priv;
-	GSList *cursor;
 
 	g_return_val_if_fail (self, FALSE);
 	
@@ -655,8 +652,7 @@ gboolean
 modest_tny_header_tree_view_set_folder (ModestTnyHeaderTreeView *self,
 					TnyMsgFolderIface *folder)
 {
-	int i;
-	GtkTreeModel *oldsortable, *sortable, *oldmodel;
+	GtkTreeModel *oldsortable, *sortable;
 	ModestTnyHeaderTreeViewPrivate *priv;
 	
 	g_return_val_if_fail (self, FALSE);
@@ -725,7 +721,6 @@ selection_changed (GtkTreeSelection *sel, gpointer user_data)
 			    &header, -1);
 	
 	if (header) {
-		TnyMsgHeaderFlags flags;
 		const TnyMsgIface *msg;
 		const TnyMsgFolderIface *folder;
 		

@@ -4,6 +4,7 @@
 
 #include <gtk/gtk.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "modest-text-utils.h"
 
@@ -74,7 +75,6 @@ get_indent_level (const char *l)
 static void
 unquote_line (GString * l)
 {
-	GString *r;
 	gchar *p;
 
 	p = l->str;
@@ -175,7 +175,7 @@ modest_text_utils_quote (const gchar * to_quote, const gchar * from,
 			 const time_t sent_date, const int limit)
 {
 	const gchar *iter;
-	gint indent, breakpoint, rem_indent;
+	gint indent, breakpoint, rem_indent = 0;
 	gchar sent_str[101];
 	GString *q, *l, *remaining;
 	gsize len;
