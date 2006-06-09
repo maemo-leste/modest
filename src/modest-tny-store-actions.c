@@ -52,7 +52,7 @@ void
 modest_tny_store_actions_update_folders (ModestTnyStoreActions *self,
 					   TnyStoreAccountIface *storage_account)
 {
-#if 0
+
 	const TnyListIface* folders;
 	TnyIteratorIface* ifolders;
 	gpointer *cur_folder;
@@ -67,9 +67,9 @@ modest_tny_store_actions_update_folders (ModestTnyStoreActions *self,
 	                  tny_iterator_iface_next (ifolders))
 	{
 		cur_folder = tny_iterator_iface_current (ifolders);
-//		tny_msg_folder_iface_refresh (cur_folder);
+		tny_msg_folder_iface_refresh (cur_folder);
 	}
-#endif
+	g_object_unref (ifolders);
 }
 
 
