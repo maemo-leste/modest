@@ -153,13 +153,15 @@ modest_tny_transport_actions_send_message (ModestTnyTransportActions *self,
 					   const gchar *cc,
 					   const gchar *bcc,
 					   const gchar *subject,
-					   const gchar *body)
+					   const gchar *body,
+					   const GList *attachments_list)
 {
 	TnyMsgIface *new_msg;
-	TnyMsgMimePartIface *body_part;
+	TnyMsgMimePartIface *body_part, *attachment_part;
 	TnyMsgHeaderIface *headers;
-	TnyStreamIface *body_stream;
-	gchar *content_type;
+	TnyStreamIface *body_stream, *attachment_stream;
+	gchar *content_type, *attachment_content_type;
+	GList *attachment;
 
 	new_msg     = TNY_MSG_IFACE(tny_msg_new ());
 	headers     = TNY_MSG_HEADER_IFACE(tny_msg_header_new ());
@@ -188,6 +190,40 @@ modest_tny_transport_actions_send_message (ModestTnyTransportActions *self,
 	
 	tny_msg_mime_part_iface_construct_from_stream (TNY_MSG_MIME_PART_IFACE(new_msg),
 						       body_stream, content_type);
+					
+	attachment = (GList *)attachments_list;
+	while (attachment) {
+		gchar * att_buf;
+		struct stat stat_data;
+		int file;
+		
+		printf("att: %s\n", (gchar *) attachment->data);
+		/* leaks galore! */
+		/* of course, the attachment should _not_ be read into mem... */
+		file = open(attachment->data, O_RDONLY);
+		fstat(file, &stat_data);
+		att_buf = g_malloc0(stat_data.st_size + 1);
+		read(file, att_buf, stat_data.st_size);
+		close(file);
+		
+		attachment_stream = TNY_STREAM_IFACE (tny_stream_camel_new
+											  (camel_stream_mem_new_with_buffer
+											   (att_buf, stat_data.st_size)));
+		
+		attachment_part = TNY_MSG_MIME_PART_IFACE (tny_msg_mime_part_new
+												   (camel_mime_part_new()));
+		
+		attachment_content_type = "image/jpeg"; /* later... */
+	
+		tny_msg_mime_part_iface_construct_from_stream (attachment_part, attachment_stream,
+													   content_type);
+
+	tny_stream_iface_reset (attachment_stream);
+		tny_msg_mime_part_iface_set_content_type(attachment_part, attachment_content_type);
+	tny_msg_iface_add_part (new_msg, attachment_part);
+	
+		attachment = attachment->next;
+	}
 	
 	tny_transport_account_iface_send (transport_account, new_msg);
 

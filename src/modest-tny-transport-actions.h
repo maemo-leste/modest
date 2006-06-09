@@ -62,7 +62,8 @@ gboolean modest_tny_transport_actions_send_message (ModestTnyTransportActions *s
 						    const gchar *cc,
 						    const gchar *bcc,
 						    const gchar *subject,
-						    const gchar *body);
+						    const gchar *body,
+						    const GList *attachments_list);
 
 G_END_DECLS
 

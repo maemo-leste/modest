@@ -60,6 +60,12 @@ gboolean modest_editor_window_set_subject_header(ModestEditorWindow *edit_win, c
 
 gboolean modest_editor_window_set_body(ModestEditorWindow *edit_win, const gchar *body);
 
+gboolean modest_editor_window_attach_file(ModestEditorWindow *edit_win, const gchar *filename);
+
+GList * modest_editor_window_set_attachments(ModestEditorWindow *edit_win, GList* attachments);
+
+GList * modest_editor_window_get_attachments(ModestEditorWindow *edit_win);
+
 G_END_DECLS
 
 #endif /* __MODEST_EDITOR_WINDOW_H__ */

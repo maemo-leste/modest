@@ -70,6 +70,8 @@ static void on_delete_clicked (GtkWidget *widget, ModestUI *modest_ui);
 
 static void on_view_attachments_toggled(GtkWidget *widget, ModestUI *modest_ui);
 
+static void on_attach_button_clicked (GtkWidget *widget, ModestEditorWindow *modest_editwin);
+
 #if 1
 static void on_send_button_clicked (GtkWidget *widget, ModestEditorWindow *modest_editwin);
 #else
@@ -93,6 +95,7 @@ typedef struct {
 	ModestUI *modest_ui;
 	ModestEditorWindow *edit_win;
 	GladeXML *glade_xml;
+	GList *attachments;
 } EditWinData;
 
 
@@ -539,6 +542,8 @@ GtkContainer
 		g_object_unref(G_OBJECT(glade_xml));
 		return NULL;
 	}
+	
+	win_data->attachments = NULL; /* redundant */
 
 	return GTK_CONTAINER(top_container);
 }
@@ -630,6 +635,18 @@ modest_ui_editor_window_set_body(const gchar *body, gpointer window_data)
 	return TRUE;
 }
 
+
+gboolean
+modest_ui_editor_window_update_attachments(gpointer window_data)
+{
+	GladeXML *glade_xml;
+	
+	glade_xml = ((EditWinData *) window_data)->glade_xml;
+
+	//body_view = glade_xml_get_widget(glade_xml, "body_view");
+	
+	return TRUE;
+}
 #if 0
 gboolean
 modest_ui_new_edit_window (ModestUI *modest_ui, const gchar* to,
@@ -1009,11 +1026,8 @@ static void on_editor_buffer_changed (GtkTextBuffer *textbuffer,
                                             gpointer       user_data)
 {
 	GtkWidget *edit_win;
-	EditWinData *windata;
-
+	
 	edit_win = (GtkWidget *)user_data;
-	windata = (EditWinData *)modest_editor_window_get_data(MODEST_EDITOR_WINDOW(edit_win));
-
 	modest_editor_window_set_modified(MODEST_EDITOR_WINDOW(edit_win), TRUE);
 }
 
@@ -1039,6 +1053,9 @@ on_new_mail_clicked (GtkWidget *widget, ModestUI *modest_ui)
 	glade_xml = windata->glade_xml;
 	btn = glade_xml_get_widget (glade_xml, "toolb_send");
 	g_signal_connect (btn, "clicked", G_CALLBACK(on_send_button_clicked),
+			  edit_win);
+	btn = glade_xml_get_widget (glade_xml, "toolb_attach");
+	g_signal_connect (btn, "clicked", G_CALLBACK(on_attach_button_clicked),
 			  edit_win);
 
 	w = glade_xml_get_widget (glade_xml, "to_entry");
@@ -1092,6 +1109,9 @@ new_editor_with_presets (ModestUI *modest_ui, const gchar *to_header,
 	glade_xml = windata->glade_xml;
 	btn = glade_xml_get_widget (glade_xml, "toolb_send");
 	g_signal_connect (btn, "clicked", G_CALLBACK(on_send_button_clicked),
+			  edit_win);
+	btn = glade_xml_get_widget (glade_xml, "toolb_attach");
+	g_signal_connect (btn, "clicked", G_CALLBACK(on_attach_button_clicked),
 			  edit_win);
 
 	w = glade_xml_get_widget (glade_xml, "to_entry");
@@ -1240,6 +1260,46 @@ on_forward_clicked (GtkWidget *widget, ModestUI *modest_ui)
 
 
 static void
+on_attach_button_clicked (GtkWidget *widget, ModestEditorWindow *modest_editwin)
+{
+	/* open file selector */
+	GtkWidget *dialog;
+	gchar *mime_type;
+	gchar *filename = NULL;
+	
+	dialog = gtk_file_chooser_dialog_new ("Open File",
+										  GTK_WINDOW(modest_editwin),
+										  GTK_FILE_CHOOSER_ACTION_OPEN,
+										  GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+										  GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
+										  NULL);
+
+	if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT)
+	{
+
+		filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog));
+		printf ("file:%s\n", filename);
+	}
+	gtk_widget_destroy (dialog);
+      
+	/* check file */
+	if (!filename)
+		return;
+	
+	g_return_if_fail(g_str_has_suffix(filename, ".jpg")); /* for now... */
+	
+	/* get mime type */
+	mime_type = "image/jpeg";
+	
+	/* attach file */
+	
+	modest_editor_window_attach_file(modest_editwin, filename);
+	
+	g_free (filename);
+}
+
+
+static void
 on_send_button_clicked (GtkWidget *widget, ModestEditorWindow *modest_editwin)
 {
 	ModestTnyTransportActions *actions;
@@ -1253,9 +1313,9 @@ on_send_button_clicked (GtkWidget *widget, ModestEditorWindow *modest_editwin)
 	TnyAccountStoreIface *account_store;
 	const GList *transport_accounts;
 	TnyTransportAccountIface *transport_account;
-	ModestConf       *conf;
 	ModestIdentityMgr *id_mgr;
 	EditWinData *win_data;
+	GList * attachments;
 
 
 	win_data = modest_editor_window_get_data(modest_editwin);
@@ -1293,7 +1353,11 @@ on_send_button_clicked (GtkWidget *widget, ModestEditorWindow *modest_editwin)
 	email_from = modest_identity_mgr_get_identity_string(id_mgr,
 							     MODEST_IDENTITY_DEFAULT_IDENTITY,
 							     MODEST_IDENTITY_EMAIL, NULL);
-
+	attachments = modest_editor_window_get_attachments(modest_editwin);
+	/* while (attachments) {
+		printf("att: %s\n", (gchar *) attachments->data);
+		attachments = attachments->next;
+	} */
 	if (!email_from)
 		email_from = "";
 	
@@ -1303,7 +1367,8 @@ on_send_button_clicked (GtkWidget *widget, ModestEditorWindow *modest_editwin)
 						   transport_account,
 						   email_from,
 						   to, "", "", subject,
-						   body);
+						   body,
+						   attachments);
 
 	g_free (body);
 	g_object_unref (G_OBJECT(actions));

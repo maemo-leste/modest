@@ -21,6 +21,7 @@ typedef struct _ModestEditorWindowPrivate ModestEditorWindowPrivate;
 struct _ModestEditorWindowPrivate {
 	gpointer user_data;
 	gboolean modified;
+	GList *attachments;
 };
 #define MODEST_EDITOR_WINDOW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                   MODEST_TYPE_EDITOR_WINDOW, \
@@ -80,6 +81,7 @@ modest_editor_window_init (ModestEditorWindow *obj)
 
 	priv->user_data = NULL;
 	priv->modified = FALSE;
+	priv->attachments = NULL;
 }
 
 static void
@@ -229,3 +231,41 @@ gboolean modest_editor_window_set_body(ModestEditorWindow *edit_win, const gchar
 
 	return modest_ui_editor_window_set_body(body, priv->user_data);
 }
+
+
+gboolean modest_editor_window_attach_file(ModestEditorWindow *edit_win, const gchar *filename)
+{
+	ModestEditorWindowPrivate *priv;
+
+	if (!edit_win)
+		return FALSE;
+	priv = MODEST_EDITOR_WINDOW_GET_PRIVATE(edit_win);
+	
+	priv->attachments = g_list_append(
+							priv->attachments, 
+							g_strdup(filename));
+	
+	return modest_ui_editor_window_update_attachments(priv->user_data);
+}
+
+GList * modest_editor_window_set_attachments(ModestEditorWindow *edit_win, GList* attachments)
+{
+	ModestEditorWindowPrivate *priv;
+
+	g_return_val_if_fail(edit_win, NULL);
+	
+	priv = MODEST_EDITOR_WINDOW_GET_PRIVATE(edit_win);
+
+	priv->attachments = attachments;
+	return priv->attachments;
+}
+
+GList * modest_editor_window_get_attachments(ModestEditorWindow *edit_win)
+{
+	ModestEditorWindowPrivate *priv;
+
+	g_return_val_if_fail(edit_win, NULL);
+	
+	priv = MODEST_EDITOR_WINDOW_GET_PRIVATE(edit_win);
+	return priv->attachments;
+}	

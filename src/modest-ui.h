@@ -93,6 +93,7 @@ gboolean modest_ui_editor_window_set_cc_header(const gchar *cc, gpointer window_
 gboolean modest_ui_editor_window_set_bcc_header(const gchar *bcc, gpointer window_data);
 gboolean modest_ui_editor_window_set_subject_header(const gchar *subject, gpointer window_data);
 gboolean modest_ui_editor_window_set_body(const gchar *body, gpointer window_data);
+gboolean modest_ui_editor_window_update_attachments(gpointer window_data);
 
 G_END_DECLS
 
