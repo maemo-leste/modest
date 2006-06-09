@@ -118,19 +118,14 @@ gchar *search_unused_account_or_idenitity_name(gpointer mgr, gchar *draft)
 
 	tmpaccount_name=g_string_new("");
 	g_string_printf(tmpaccount_name, "%s", draft);
-	g_message("mgr is account_mgr: %d", MODEST_IS_ACCOUNT_MGR(mgr));
 	if(MODEST_IS_ACCOUNT_MGR(mgr))
 	{
-		g_message("acc_mgr_acc_exists for '%s': %d", tmpaccount_name->str, modest_account_mgr_server_account_exists(mgr, tmpaccount_name->str, NULL));
-		for(counter=0; modest_account_mgr_account_exists(mgr, tmpaccount_name->str, NULL); counter++)
+		for(counter=0; modest_account_mgr_server_account_exists(mgr, tmpaccount_name->str, NULL); counter++)
 			g_string_printf(tmpaccount_name, "%s%d", draft, counter);
 	}
 	else
-	{
-		g_message("id_mgr_id_exists for '%s': %d", tmpaccount_name->str, modest_identity_mgr_identity_exists(mgr, tmpaccount_name->str, NULL));
 		for(counter=0;      modest_identity_mgr_identity_exists(mgr, tmpaccount_name->str, NULL); counter++)
 			g_string_printf(tmpaccount_name, "%s%d", draft, counter);
-	}
 
 	return g_string_free(tmpaccount_name, FALSE);
 }
@@ -149,12 +144,8 @@ gboolean wizard_account_add(GladeXML *glade_xml, ModestUI *modest_ui)
 	priv = MODEST_UI_GET_PRIVATE(MODEST_UI(modest_ui));
 	conf = priv->modest_conf;
 
-
-	acc_mgr = MODEST_ACCOUNT_MGR(modest_account_mgr_new (conf));
-	if (!acc_mgr) {
-		g_warning ("failed to instantiate account mgr");
-		return FALSE;
-	}
+	acc_mgr = priv->modest_acc_mgr;
+	id_mgr = priv->modest_id_mgr;
 
 	tmptext2=get_text_from_combobox(glade_xml_get_widget(glade_xml, "AWMailboxtypeComboBox"));
 	tmptext=g_utf8_strdown(tmptext2, -1);
@@ -179,7 +170,6 @@ gboolean wizard_account_add(GladeXML *glade_xml, ModestUI *modest_ui)
 					       "smtp");
 	g_free(tmpaccount_name);
 
-	id_mgr = MODEST_IDENTITY_MGR(modest_identity_mgr_new (conf));
 	tmpaccount_name=search_unused_account_or_idenitity_name(id_mgr, "default");
 	if (!modest_identity_mgr_add_identity (id_mgr,
 					       tmpaccount_name,
@@ -188,8 +178,6 @@ gboolean wizard_account_add(GladeXML *glade_xml, ModestUI *modest_ui)
 		g_warning ("failed to add default identity");
 
 	g_free(tmpaccount_name);
-	g_object_unref (G_OBJECT(acc_mgr));
-	g_object_unref (G_OBJECT(id_mgr));
 	return TRUE;
 }
 
