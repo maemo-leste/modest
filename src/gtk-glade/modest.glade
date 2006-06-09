@@ -496,7 +496,7 @@
 		  <child>
 		    <widget class="GtkMenuItem" id="NewAccountWizardMenuItem">
 		      <property name="visible">True</property>
-		      <property name="label" translatable="yes">New account...</property>
+		      <property name="label" translatable="yes">New Identity</property>
 		      <property name="use_underline">True</property>
 		      <signal name="activate" handler="on_new_account1_activate" last_modification_time="Fri, 28 Apr 2006 12:23:17 GMT"/>
 		    </widget>
