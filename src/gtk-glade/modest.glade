@@ -414,6 +414,16 @@
 		  </child>
 
 		  <child>
+		    <widget class="GtkCheckMenuItem" id="menu_view_attachments">
+		      <property name="visible">True</property>
+		      <property name="label" translatable="yes">Attachments</property>
+		      <property name="use_underline">True</property>
+		      <property name="active">True</property>
+		      <signal name="toggled" handler="on_view_attachments_toggled" last_modification_time="Fri, 09 Jun 2006 14:17:29 GMT"/>
+		    </widget>
+		  </child>
+
+		  <child>
 		    <widget class="GtkCheckMenuItem" id="full_screen1">
 		      <property name="visible">True</property>
 		      <property name="label" translatable="yes">Full screen</property>

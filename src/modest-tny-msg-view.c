@@ -183,23 +183,13 @@ on_link_clicked (GtkWidget *widget, const gchar *uri,
 	
 	
 	if (g_str_has_prefix(uri, "attachment:")) {
-		priv = MODEST_TNY_MSG_VIEW_GET_PRIVATE(msg_view);
-		/* toggle ...SHOW_ATTACHMENTS_INLINE */
-		modest_conf_set_bool(priv->conf,
-							 MODEST_CONF_MSG_VIEW_SHOW_ATTACHMENTS_INLINE,
-							 !modest_conf_get_bool(priv->conf,
-												   MODEST_CONF_MSG_VIEW_SHOW_ATTACHMENTS_INLINE,
-												   NULL),
-							 NULL);
-
-		modest_tny_msg_view_set_message(msg_view, priv->msg);
+		/* save or open attachment */
 		return TRUE;
 	}
 	g_message ("link clicked: %s", uri); /* FIXME */
 	return FALSE;
 	
 }
-
 
 
 static TnyMsgMimePartIface *
@@ -437,10 +427,9 @@ attachments_as_html(ModestTnyMsgView *self, TnyMsgIface *msg)
 			                 id, show_attachments_inline);
 			printf("VF:%s\n", virtual_filename);
 			if (show_attachments_inline) {
-				g_string_append_printf(appendix, "<IMG src=\"%s\">\n<BR><A href=\"attachment:%s\">%s</A>\n", virtual_filename, filename, filename);
-			} else {
-				g_string_append_printf(appendix, "<A href=\"attachment:%s\">%s</A>: %s<BR>\n", filename, filename, content_type);
+				g_string_append_printf(appendix, "<IMG src=\"%s\">\n<BR>", virtual_filename, filename, filename);
 			}
+			g_string_append_printf(appendix, "<A href=\"attachment:%s\">%s</A>: %s<BR>\n", filename, filename, content_type);
 			g_free(virtual_filename);
 		}
 		attachment = attachment->next;
@@ -768,4 +757,14 @@ modest_tny_msg_view_set_message (ModestTnyMsgView *self, TnyMsgIface *msg)
 	/* hmmmmm */
 	fill_gtkhtml_with_txt (self, GTK_HTML(priv->gtkhtml),
 				_("Unsupported message type"), msg);
+}
+
+void
+modest_tny_msg_view_redraw (ModestTnyMsgView *self)
+{
+	ModestTnyMsgViewPrivate *priv;
+
+	g_return_if_fail (self);
+	priv = MODEST_TNY_MSG_VIEW_GET_PRIVATE(self);
+	modest_tny_msg_view_set_message(self, priv->msg);
 }

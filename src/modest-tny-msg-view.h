@@ -68,6 +68,14 @@ GtkWidget*   modest_tny_msg_view_new          (TnyMsgIface *tny_msg, ModestConf 
 void         modest_tny_msg_view_set_message  (ModestTnyMsgView *self,
 						TnyMsgIface *tny_msg);
 
+/**
+ * modest_tny_msg_view_redraw
+ * @self: a ModestTnyMsgView instance
+ *
+ * re-display the current e-mail message.
+ */
+void         modest_tny_msg_view_redraw  (ModestTnyMsgView *self);
+
 
 /**
  * modest_tny_msg_view_get_selected_text:
