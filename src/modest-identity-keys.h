@@ -3,7 +3,7 @@
 
 #include "modest-conf-keys.h"
 
-#define MODEST_IDENTITY_DEFAULT_IDENTITY  "myidentity"
+#define MODEST_IDENTITY_DEFAULT_IDENTITY  "default"
 
 
 /* configuration key definitions for modest */

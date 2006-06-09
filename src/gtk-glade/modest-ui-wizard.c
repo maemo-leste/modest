@@ -111,7 +111,7 @@ gboolean advance_sanity_check(GtkWindow *parent, GladeXML *glade_xml, gint cp)
         return FALSE;
 }
 
-gchar *search_unused_account_or_idenitity_name(gpointer mgr, gchar *draft)
+gchar *search_unused_account_or_identity_name(gpointer mgr, gchar *draft)
 {
 	GString *tmpaccount_name;
 	gint counter;
@@ -151,7 +151,7 @@ gboolean wizard_account_add(GladeXML *glade_xml, ModestUI *modest_ui)
 	tmptext=g_utf8_strdown(tmptext2, -1);
 	g_free(tmptext2);
 
-	tmpaccount_name=search_unused_account_or_idenitity_name(acc_mgr, "incoming");
+	tmpaccount_name=search_unused_account_or_identity_name(acc_mgr, "incoming");
 	modest_account_mgr_add_server_account (acc_mgr,
 					       tmpaccount_name,
 					       gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "AWInServerComboEntry"))),
@@ -161,7 +161,7 @@ gboolean wizard_account_add(GladeXML *glade_xml, ModestUI *modest_ui)
 	g_free(tmpaccount_name);
 	g_free(tmptext);
 
-	tmpaccount_name=search_unused_account_or_idenitity_name(acc_mgr, "outgoing");
+	tmpaccount_name=search_unused_account_or_identity_name(acc_mgr, "outgoing");
 	modest_account_mgr_add_server_account (acc_mgr,
 					       tmpaccount_name,
 					       gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "AWOutServerComboEntry"))),
@@ -170,7 +170,7 @@ gboolean wizard_account_add(GladeXML *glade_xml, ModestUI *modest_ui)
 					       "smtp");
 	g_free(tmpaccount_name);
 
-	tmpaccount_name=search_unused_account_or_idenitity_name(id_mgr, "default");
+	tmpaccount_name=search_unused_account_or_identity_name(id_mgr, MODEST_IDENTITY_DEFAULT_IDENTITY);
 	if (!modest_identity_mgr_add_identity (id_mgr,
 					       tmpaccount_name,
 					       gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "AWEMailAddressEntry"))),
