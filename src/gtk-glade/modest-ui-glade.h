@@ -21,6 +21,8 @@ struct _ModestUIPrivate {
 	ModestIdentityMgr    *modest_id_mgr;
 	ModestWindowMgr      *modest_window_mgr;
 	TnyAccountStoreIface *account_store;
+	GtkWidget            *folder_view;
+	GtkWidget            *header_view;
 
 	GtkWindow            *main_window;
 	GladeXML             *glade_xml;
