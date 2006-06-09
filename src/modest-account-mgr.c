@@ -666,7 +666,6 @@ account_exists (ModestAccountMgr * self, const gchar * name,
 	gchar *keyname;
 	gboolean retval;
 
-        g_message("Da simmer dabei, dat is ");
 	g_return_val_if_fail (self, FALSE);
         g_return_val_if_fail (name, FALSE);
 
@@ -678,7 +677,6 @@ account_exists (ModestAccountMgr * self, const gchar * name,
 	priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
 	retval = modest_conf_key_exists (priv->modest_conf, keyname, err);
 
-        g_message("prihima, prima Colonia: %s, %d", keyname, retval);
 	g_free (keyname);
 	return retval;
 }
