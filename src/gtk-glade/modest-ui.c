@@ -196,6 +196,8 @@ modest_ui_new (ModestConf *modest_conf)
 	ModestAccountMgr *modest_acc_mgr;
 	ModestIdentityMgr *modest_id_mgr;
 	TnyAccountStoreIface *account_store_iface;
+	GSList *account_names_list;
+	GSList *identities_list;
 
 	g_return_val_if_fail (modest_conf, NULL);
 
@@ -250,6 +252,14 @@ modest_ui_new (ModestConf *modest_conf)
 	g_signal_connect (priv->modest_window_mgr, "last_window_closed",
 			  G_CALLBACK(modest_ui_last_window_closed),
 			  NULL);
+
+	account_names_list=modest_account_mgr_server_account_names(modest_acc_mgr, NULL, MODEST_PROTO_TYPE_ANY, NULL, FALSE);
+	identities_list=modest_identity_mgr_identity_names(modest_id_mgr, NULL);
+	if (!(account_names_list!=NULL || identities_list!=NULL))
+		wizard_account_dialog(obj);
+	g_slist_free(account_names_list);
+	g_slist_free(identities_list);
+
 	return obj;
 }
 

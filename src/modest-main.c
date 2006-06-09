@@ -73,25 +73,22 @@ main (int argc, char *argv[])
 		goto cleanup;
 	}
 
-	if (reinstall) {
-		modest_conf_remove_key (modest_conf, MODEST_CONF_NAMESPACE, NULL);
-		install_basic_conf_settings (modest_conf);
-		install_test_account (modest_conf);
-		goto cleanup;
-	}
-
-
-
 	gtk_init (&argc, &argv);
 
 	modest_icon_factory_init ();
-	
+
+	if (reinstall) {
+		modest_conf_remove_key (modest_conf, MODEST_CONF_NAMESPACE, NULL);
+		install_basic_conf_settings (modest_conf);
+		goto cleanup;
+	}
+
 	modest_ui = MODEST_UI(modest_ui_new (modest_conf));
 	if (!modest_ui) {
 		g_warning ("failed to initialize ui");
 		goto cleanup;
 	}
-	
+
 	{
 		gboolean ok;
 		gtk_init (&argc, &argv);
@@ -185,7 +182,7 @@ install_test_account (ModestConf *conf)
 						       NULL, "imap");
 		modest_account_mgr_add_server_account (acc_mgr, "mytransport", "localhost", NULL,
 						       NULL, "smtp");
-		
+
 	}
 	id_mgr = MODEST_IDENTITY_MGR(modest_identity_mgr_new (conf));
 	if (modest_identity_mgr_identity_exists(id_mgr, "myidentity", NULL)) {
@@ -198,7 +195,7 @@ install_test_account (ModestConf *conf)
 					       "user@localhost",
 					       "", "", FALSE, NULL, FALSE ))
 		g_warning ("failed to add test identity");
-	
+
 	g_object_unref (G_OBJECT(acc_mgr));
 	g_object_unref (G_OBJECT(id_mgr));
 }

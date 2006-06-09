@@ -6,6 +6,8 @@
 
 #include "modest-ui-glade.h"
 
+void wizard_account_dialog(ModestUI *);
+
 void new_wizard_account (GtkWidget *,
                          gpointer);
 
