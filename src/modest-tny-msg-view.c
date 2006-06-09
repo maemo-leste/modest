@@ -247,10 +247,13 @@ find_attachment_by_filename (TnyMsgIface *msg, const gchar *fn)
 	part = g_list_nth_data(parts, pos);
 	
 	dummy = construct_virtual_filename_from_mime_part(part, pos);
-	if (strcmp(dummy, fn) == 0)
+	if (strcmp(dummy, fn) == 0) {
+		g_free(dummy);
 		return part;
-	else
+	} else {
+		g_free(dummy);
 		return NULL;
+	}
 }
 
 
@@ -438,6 +441,7 @@ attachments_as_html(ModestTnyMsgView *self, TnyMsgIface *msg)
 			} else {
 				g_string_append_printf(appendix, "<A href=\"attachment:%s\">%s</A>: %s<BR>\n", filename, filename, content_type);
 			}
+			g_free(virtual_filename);
 		}
 		attachment = attachment->next;
 	}
