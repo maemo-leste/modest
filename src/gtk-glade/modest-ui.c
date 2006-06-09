@@ -258,7 +258,7 @@ modest_ui_new (ModestConf *modest_conf)
 	account_names_list=modest_account_mgr_server_account_names(modest_acc_mgr, NULL, MODEST_PROTO_TYPE_ANY, NULL, FALSE);
 	identities_list=modest_identity_mgr_identity_names(modest_id_mgr, NULL);
 	if (!(account_names_list!=NULL || identities_list!=NULL))
-		wizard_account_dialog(obj);
+		wizard_account_dialog(MODEST_UI(obj));
 	g_slist_free(account_names_list);
 	g_slist_free(identities_list);
 
@@ -361,25 +361,25 @@ modest_ui_show_main_window (ModestUI *modest_ui)
 
 	g_signal_connect (delete_item, "activate", G_CALLBACK(on_delete_clicked),
 			  modest_ui);
-	
+
 	view_attachments_item = glade_xml_get_widget (priv->glade_xml, "menu_view_attachments");
 	if (!view_attachments_item)
 	{
 		g_warning ("The view_attachments_item isn't available!");
 		return FALSE;
 	}
-	
+
 	gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(view_attachments_item),
 								   modest_conf_get_bool(priv->modest_conf,
 														MODEST_CONF_MSG_VIEW_SHOW_ATTACHMENTS_INLINE,
 														NULL)
 								   );
-	
+
 	g_signal_connect (view_attachments_item,
 					  "toggled",
 					  G_CALLBACK(on_view_attachments_toggled),
 					  modest_ui);
-	
+
 	register_toolbar_callbacks (modest_ui);
 
 	modest_window_mgr_register (priv->modest_window_mgr,
@@ -1315,16 +1315,16 @@ on_view_attachments_toggled(GtkWidget *widget, ModestUI *modest_ui)
 	GtkWidget *view_attachments_item, *paned;
 	ModestTnyMsgView *msg_view;
 	ModestUIPrivate *priv;
-	
+
 	priv = MODEST_UI_GET_PRIVATE(modest_ui);
 	view_attachments_item = glade_xml_get_widget (priv->glade_xml, "menu_view_attachments");
 	g_return_if_fail(view_attachments_item);
-	
+
 	modest_conf_set_bool(priv->modest_conf,
 							 MODEST_CONF_MSG_VIEW_SHOW_ATTACHMENTS_INLINE,
 							 gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(view_attachments_item)),
 							 NULL);
-	
+
 	/* refresh message view */
 	paned = glade_xml_get_widget (priv->glade_xml,"mail_paned");
 	msg_view = MODEST_TNY_MSG_VIEW(gtk_paned_get_child2 (GTK_PANED(paned)));
