@@ -156,7 +156,7 @@ gboolean wizard_account_add(GladeXML *glade_xml, ModestUI *modest_ui)
 					       tmpaccount_name,
 					       gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "AWInServerComboEntry"))),
 					       gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "AWUserNameEntry"))),
-					       NULL,
+					       gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "AWPasswordEntry"))),
 					       tmptext);
 	g_free(tmpaccount_name);
 	g_free(tmptext);
