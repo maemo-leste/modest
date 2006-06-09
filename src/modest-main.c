@@ -13,6 +13,8 @@
 #include <gtk/gtk.h>
 
 static void install_basic_conf_settings (ModestConf *conf);
+static void install_test_account        (ModestConf *conf);
+
 
 int
 main (int argc, char *argv[])
@@ -48,7 +50,8 @@ main (int argc, char *argv[])
 		{ NULL }
 	};
 
-	gtk_init (&argc, &argv);
+
+	g_type_init ();
 
 	context = g_option_context_new (NULL);
 	g_option_context_add_main_entries (context, options, NULL);
@@ -73,23 +76,27 @@ main (int argc, char *argv[])
 	if (reinstall) {
 		modest_conf_remove_key (modest_conf, MODEST_CONF_NAMESPACE, NULL);
 		install_basic_conf_settings (modest_conf);
+		install_test_account (modest_conf);
 		goto cleanup;
 	}
 
-	modest_icon_factory_init ();
 
+
+	gtk_init (&argc, &argv);
+
+	modest_icon_factory_init ();
+	
 	modest_ui = MODEST_UI(modest_ui_new (modest_conf));
 	if (!modest_ui) {
 		g_warning ("failed to initialize ui");
 		goto cleanup;
 	}
-
+	
 	{
 		gboolean ok;
 		gtk_init (&argc, &argv);
 
-                if (mailto||cc||bcc||subject||body) {
-                        ok = FALSE;
+		if (mailto||cc||bcc||subject||body) {
 #if 0
 			ok = modest_ui_new_edit_window (modest_ui,
 							 mailto,  /* to */
@@ -150,3 +157,48 @@ install_basic_conf_settings (ModestConf *conf)
 }
 
 
+static void
+install_test_account (ModestConf *conf)
+{
+	ModestAccountMgr *acc_mgr;
+	ModestIdentityMgr *id_mgr;
+	const gchar *acc_name = "test";
+	g_return_if_fail (conf);
+
+	acc_mgr = MODEST_ACCOUNT_MGR(modest_account_mgr_new (conf));
+	if (!acc_mgr) {
+		g_warning ("failed to instantiate account mgr");
+		return;
+	}
+
+	if (modest_account_mgr_account_exists (acc_mgr, acc_name, NULL)) {
+		if (!modest_account_mgr_remove_account(acc_mgr, acc_name, NULL)) {
+			g_warning ("could not delete existing account");
+		}
+	}
+
+	if (!modest_account_mgr_add_account (acc_mgr, acc_name, "mystore", "mytransport", NULL))
+		g_warning ("failed to add test account");
+	else
+	{
+		modest_account_mgr_add_server_account (acc_mgr, "mystore", "localhost", "djcb",
+						       NULL, "imap");
+		modest_account_mgr_add_server_account (acc_mgr, "mytransport", "localhost", NULL,
+						       NULL, "smtp");
+		
+	}
+	id_mgr = MODEST_IDENTITY_MGR(modest_identity_mgr_new (conf));
+	if (modest_identity_mgr_identity_exists(id_mgr, "myidentity", NULL)) {
+		if (!modest_identity_mgr_remove_identity(id_mgr, "myidentity", NULL)) {
+			g_warning ("could not delete existing identity");
+		}
+	}
+	if (!modest_identity_mgr_add_identity (id_mgr,
+					       MODEST_IDENTITY_DEFAULT_IDENTITY,
+					       "user@localhost",
+					       "", "", FALSE, NULL, FALSE ))
+		g_warning ("failed to add test identity");
+	
+	g_object_unref (G_OBJECT(acc_mgr));
+	g_object_unref (G_OBJECT(id_mgr));
+}
