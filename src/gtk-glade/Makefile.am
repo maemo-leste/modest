@@ -24,7 +24,9 @@ PIXMAP_FILES=\
 
 libmodest_ui_la_SOURCES=\
 	modest-ui.c\
+	modest-ui-glade.h\
 	modest-icon-names.h\
+	modest-ui-wizard.h\
 	modest-ui-wizard.c
 
 LDADD = \
