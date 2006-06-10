@@ -280,7 +280,6 @@ modest_ui_show_main_window (ModestUI *modest_ui)
 	GtkWidget     *folder_view, *header_view;
 	GtkWidget     *message_view;
 	GtkWidget     *account_settings_item;
-	GtkWidget     *new_account_item;
 	GtkWidget     *delete_item;
 	GtkWidget     *view_attachments_item;
 
@@ -348,17 +347,17 @@ modest_ui_show_main_window (ModestUI *modest_ui)
                           modest_ui);
         */
 
-	new_account_item = glade_xml_get_widget (priv->glade_xml, "NewAccountWizardMenuItem");
-	if (!new_account_item)
-	{
-		g_warning ("The new account item isn't available!\n");
-		return FALSE;
-	}
+//	new_account_item = glade_xml_get_widget (priv->glade_xml, "NewAccountWizardMenuItem");
+//	if (!new_account_item)
+//	{
+//		g_warning ("The new account item isn't available!\n");
+//		return FALSE;
+//	}
 
-        g_signal_connect (new_account_item, "activate",
-                          G_CALLBACK(new_wizard_account),
-                          modest_ui);
-
+//        g_signal_connect (new_account_item, "activate",
+//                         G_CALLBACK(new_wizard_account),
+//                         modest_ui);
+//
 	delete_item = glade_xml_get_widget (priv->glade_xml, "delete1");
 	if (!delete_item)
 	{
@@ -853,9 +852,8 @@ on_folder_clicked (ModestTnyFolderTreeView *folder_tree,
 	win = glade_xml_get_widget (priv->glade_xml, "main");
 	gtk_window_set_title (GTK_WINDOW(win),
 			      tny_msg_folder_iface_get_name(folder));
-
-	modest_tny_header_tree_view_set_folder (tree_view,
-						folder);
+	
+	modest_tny_header_tree_view_set_folder (tree_view, folder);
 
 	button = glade_xml_get_widget (priv->glade_xml, "toolb_reply");
 	if (button) {
@@ -893,7 +891,7 @@ on_message_clicked (ModestTnyFolderTreeView *folder_tree,
 	ModestUIPrivate *priv;
 
 	g_return_if_fail (data);
-
+	
 	priv = MODEST_UI_GET_PRIVATE(data);
 	paned = glade_xml_get_widget (priv->glade_xml,"mail_paned");
 	msg_view = MODEST_TNY_MSG_VIEW(gtk_paned_get_child2 (GTK_PANED(paned)));
@@ -976,7 +974,9 @@ modest_main_window_header_tree (TnyMsgFolderIface *folder)
 	ModestTnyHeaderTreeViewColumn cols[] = {
 		MODEST_TNY_HEADER_TREE_VIEW_COLUMN_MSGTYPE,
 		MODEST_TNY_HEADER_TREE_VIEW_COLUMN_ATTACH,
-		MODEST_TNY_HEADER_TREE_VIEW_COLUMN_COMPACT_HEADER
+		MODEST_TNY_HEADER_TREE_VIEW_COLUMN_FROM,	
+		MODEST_TNY_HEADER_TREE_VIEW_COLUMN_SUBJECT,
+		MODEST_TNY_HEADER_TREE_VIEW_COLUMN_RECEIVED_DATE
 	};
 
 	for (i = 0 ; i != sizeof(cols)/sizeof(ModestTnyHeaderTreeViewColumn); ++i)
@@ -1470,26 +1470,17 @@ static void
 on_sendreceive_button_clicked (GtkWidget *widget, ModestUI *modest_ui)
 {
 	ModestUIPrivate *priv;
-	ModestTnyStoreActions *store_actions;
 	TnyAccountStoreIface *account_store;
 	const GList *store_accounts;
 	const GList *iter;
 
 	g_return_if_fail (modest_ui);
-
-	store_actions = MODEST_TNY_STORE_ACTIONS (modest_tny_store_actions_new ());
 	priv = MODEST_UI_GET_PRIVATE(modest_ui);
 
 	account_store = priv->account_store;
 	store_accounts =
 		tny_account_store_iface_get_store_accounts (account_store);
-
+	
 	for (iter = store_accounts; iter; iter = iter->next)
-	{
-		modest_tny_store_actions_update_folders (store_actions,
-												 TNY_STORE_ACCOUNT_IFACE (iter->data));
-
-	}
-	g_object_unref (store_actions);
-
+		modest_tny_store_actions_update_folders (TNY_STORE_ACCOUNT_IFACE (iter->data));
 }
