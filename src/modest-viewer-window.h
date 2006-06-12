@@ -37,7 +37,8 @@ GType        modest_viewer_window_get_type    (void) G_GNUC_CONST;
 /* typical parameter-less _new function */
 /* if this is a kind of GtkWidget, it should probably return at GtkWidget*, */
 /*    otherwise probably a GObject*. */
-GtkWidget*   modest_viewer_window_new         (ModestUI *ui);
+GtkWidget*   modest_viewer_window_new (ModestUI *ui, TnyMsgIface *msg);
+
 
 /* fill in other public functions, eg.: */
 /* 	void       modest_viewer_window_do_something (ModestViewerWindow *self, const gchar* param); */

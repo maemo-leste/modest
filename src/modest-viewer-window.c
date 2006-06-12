@@ -3,8 +3,9 @@
 /* insert (c)/licensing information) */
 
 #include "modest-ui.h"
+#include "modest-tny-msg-view.h"
 #include "modest-viewer-window.h"
-/* include other impl specific header files */
+
 
 /* 'private'/'protected' functions */
 static void                      modest_viewer_window_class_init    (ModestViewerWindowClass *klass);
@@ -18,6 +19,7 @@ enum {
 
 typedef struct _ModestViewerWindowPrivate ModestViewerWindowPrivate;
 struct _ModestViewerWindowPrivate {
+	ModestTnyMsgView *msg_view;
 	gpointer user_data;
 };
 #define MODEST_VIEWER_WINDOW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -96,18 +98,21 @@ modest_viewer_window_finalize (GObject *obj)
 
 
 GtkWidget*
-modest_viewer_window_new (ModestUI *ui)
+modest_viewer_window_new (ModestUI *ui, TnyMsgIface *msg)
 {
 	GObject *self;
 	ModestViewerWindowPrivate *priv;
 	GtkWidget *w;
 	gpointer data;
+	GtkWidget *msg_view;
 
 	self = G_OBJECT(g_object_new(MODEST_TYPE_VIEWER_WINDOW, NULL));
 	priv = MODEST_VIEWER_WINDOW_GET_PRIVATE(self);
 
+	msg_view = modest_tny_msg_view_new(msg, FALSE);
+
 	data = NULL;
-	w = GTK_WIDGET(modest_ui_new_viewer_window(ui, &data));
+	w = GTK_WIDGET(modest_ui_new_viewer_window(ui, msg_view, msg, &data));
 	if (!w)
 		return NULL;
 	if (!data)
@@ -137,3 +142,5 @@ gpointer modest_viewer_window_get_data(ModestViewerWindow *viewer_win)
 
 	return priv->user_data;
 }
+
+

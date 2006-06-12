@@ -41,7 +41,7 @@ typedef struct {
 
 
 GtkContainer
-*modest_ui_new_viewer_window (ModestUI *modest_ui, gpointer *user_data)
+*modest_ui_new_viewer_window (ModestUI *modest_ui, GtkWidget *msg_view, TnyMsgIface *msg, gpointer *user_data)
 {
 	GtkWidget	*top_container;
 	GladeXML	*glade_xml;

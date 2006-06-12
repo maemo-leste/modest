@@ -7,7 +7,7 @@
 #include <glib-object.h>
 #include <gtk/gtkcontainer.h>
 #include "modest-conf.h"
-
+#include "modest-tny-msg-view.h"
 
 G_BEGIN_DECLS
 
@@ -95,7 +95,7 @@ gboolean modest_ui_editor_window_set_subject_header(const gchar *subject, gpoint
 gboolean modest_ui_editor_window_set_body(const gchar *body, gpointer window_data);
 gboolean modest_ui_editor_window_update_attachments(gpointer window_data);
 
-GtkContainer *modest_ui_new_viewer_window (ModestUI *modest_ui, gpointer *user_data);
+GtkContainer *modest_ui_new_viewer_window (ModestUI *modest_ui, GtkWidget *msg_view, TnyMsgIface *msg, gpointer *user_data);
 
 G_END_DECLS
 
