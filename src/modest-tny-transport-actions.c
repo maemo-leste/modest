@@ -14,6 +14,7 @@
 #include <tny-transport-account-iface.h>	
 #include <tny-transport-account.h>
 #include <tny-stream-camel.h>
+#include <tny-fs-stream.h>
 #include <string.h>
 #include <camel/camel-folder.h>
 #include <camel/camel.h>
@@ -157,18 +158,20 @@ modest_tny_transport_actions_send_message (ModestTnyTransportActions *self,
 					   const GList *attachments_list)
 {
 	TnyMsgIface *new_msg;
-	TnyMsgMimePartIface *body_part, *attachment_part;
+	TnyMsgMimePartIface *text_body_part, *attachment_part;
 	TnyMsgHeaderIface *headers;
-	TnyStreamIface *body_stream, *attachment_stream;
-	gchar *content_type, *attachment_content_type;
+	TnyStreamIface *text_body_stream, *attachment_stream;
 	GList *attachment;
+	gchar *content_type, *attachment_content_type;
+	gchar *filename, *attachment_filename;
+	int file;
 
-	new_msg     = TNY_MSG_IFACE(tny_msg_new ());
-	headers     = TNY_MSG_HEADER_IFACE(tny_msg_header_new ());
-	body_stream = TNY_STREAM_IFACE (tny_stream_camel_new
+	new_msg          = TNY_MSG_IFACE(tny_msg_new ());
+	headers          = TNY_MSG_HEADER_IFACE(tny_msg_header_new ());
+	text_body_stream = TNY_STREAM_IFACE (tny_stream_camel_new
 					(camel_stream_mem_new_with_buffer
 					 (body, strlen(body))));
-	body_part = TNY_MSG_MIME_PART_IFACE (tny_msg_mime_part_new
+	text_body_part   = TNY_MSG_MIME_PART_IFACE (tny_msg_mime_part_new
 					     (camel_mime_part_new()));
 
 	tny_msg_header_iface_set_from (TNY_MSG_HEADER_IFACE (headers), from);
@@ -176,59 +179,43 @@ modest_tny_transport_actions_send_message (ModestTnyTransportActions *self,
 	tny_msg_header_iface_set_cc (TNY_MSG_HEADER_IFACE (headers), cc);
 	tny_msg_header_iface_set_bcc (TNY_MSG_HEADER_IFACE (headers), bcc);
 	tny_msg_header_iface_set_subject (TNY_MSG_HEADER_IFACE (headers), subject);
+	tny_msg_iface_set_header (new_msg, headers);
 
 	content_type = get_content_type(body);
-		
-	tny_msg_iface_set_header (new_msg, headers);
-	tny_msg_mime_part_iface_construct_from_stream (body_part, body_stream,
-						       content_type);
-	tny_msg_mime_part_iface_set_content_type  (body_part, content_type);	
+	tny_msg_mime_part_iface_construct_from_stream (text_body_part, text_body_stream, content_type);
+	tny_stream_iface_reset (text_body_stream);
 	
-	tny_msg_mime_part_iface_set_content_type (
-		TNY_MSG_MIME_PART_IFACE(new_msg), content_type);
-	tny_stream_iface_reset (body_stream);
-	
-	tny_msg_mime_part_iface_construct_from_stream (TNY_MSG_MIME_PART_IFACE(new_msg),
-						       body_stream, content_type);
-					
-	attachment = (GList *)attachments_list;
-	while (attachment) {
-		gchar * att_buf;
-		struct stat stat_data;
-		int file;
-		
-		printf("att: %s\n", (gchar *) attachment->data);
-		/* leaks galore! */
-		/* of course, the attachment should _not_ be read into mem... */
-		file = open(attachment->data, O_RDONLY);
-		fstat(file, &stat_data);
-		att_buf = g_malloc0(stat_data.st_size + 1);
-		read(file, att_buf, stat_data.st_size);
-		close(file);
-		
-		attachment_stream = TNY_STREAM_IFACE (tny_stream_camel_new
-											  (camel_stream_mem_new_with_buffer
-											   (att_buf, stat_data.st_size)));
-		
-		attachment_part = TNY_MSG_MIME_PART_IFACE (tny_msg_mime_part_new
-												   (camel_mime_part_new()));
+	tny_msg_iface_add_part(new_msg, text_body_part);
+
+	for (attachment = (GList *)attachments_list; attachment; attachment = attachment->next) {
+		filename = attachment->data;
+		attachment_filename = g_path_get_basename(filename);
+		file = open(filename, O_RDONLY);
+		attachment_stream = TNY_STREAM_IFACE(tny_stream_camel_new(
+		                                    camel_stream_fs_new_with_fd(file)));
+
+		attachment_part = TNY_MSG_MIME_PART_IFACE (tny_msg_mime_part_new (
+		                                                camel_mime_part_new()));
 		
 		attachment_content_type = "image/jpeg"; /* later... */
-	
-		tny_msg_mime_part_iface_construct_from_stream (attachment_part, attachment_stream,
-													   content_type);
-
-	tny_stream_iface_reset (attachment_stream);
-		tny_msg_mime_part_iface_set_content_type(attachment_part, attachment_content_type);
-	tny_msg_iface_add_part (new_msg, attachment_part);
-	
-		attachment = attachment->next;
+		tny_msg_mime_part_iface_construct_from_stream (attachment_part,
+		                                               attachment_stream,
+		                                               attachment_content_type);
+		tny_stream_iface_reset (attachment_stream);
+		
+		tny_msg_mime_part_iface_set_filename(attachment_part, attachment_filename);
+		
+		tny_msg_iface_add_part (new_msg, attachment_part);
+		g_object_unref(G_OBJECT(attachment_stream));
+		//g_object_unref(G_OBJECT(attachment_part));
+		g_free(attachment_filename);
+		//close(file);
 	}
 	
 	tny_transport_account_iface_send (transport_account, new_msg);
 
-	g_object_unref (G_OBJECT(body_stream));
-	g_object_unref (G_OBJECT(body_part));
+	g_object_unref (G_OBJECT(text_body_stream));
+	//g_object_unref (G_OBJECT(text_body_part));
 	g_object_unref (G_OBJECT(headers));
 	g_object_unref (G_OBJECT(new_msg));
 	g_free(content_type);
