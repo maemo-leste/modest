@@ -16,8 +16,7 @@ static void   modest_conf_on_change	 (GConfClient *client, guint conn_id,
 					  GConfEntry *entry, gpointer data);
 /* list my signals */
 enum {
-	/* MY_SIGNAL_1, */
-	/* MY_SIGNAL_2, */
+	KEY_CHANGED_SIGNAL,
 	LAST_SIGNAL
 };
 
@@ -31,8 +30,46 @@ struct _ModestConfPrivate {
 /* globals */
 static GObjectClass *parent_class = NULL;
 
-/* uncomment the following if you have defined any signals */
-/* static guint signals[LAST_SIGNAL] = {0}; */
+static guint signals[LAST_SIGNAL] = {0};
+
+typedef void (*MarshalFunc_VOID__POINTER_POINTER) (gpointer data1, 
+	gpointer arg_1, gpointer arg_2, gpointer data2);
+						    
+  
+static void
+modest_marshal_VOID__POINTER_POINTER (GClosure     *closure,
+                                      GValue       *return_value,
+                                      guint         n_param_values,
+                                      const GValue *param_values,
+                                      gpointer      invocation_hint,
+                                      gpointer      marshal_data)
+{
+	MarshalFunc_VOID__POINTER_POINTER callback;
+	GCClosure *cc = (GCClosure*) closure;
+	gpointer data1, data2;
+
+	g_return_if_fail (n_param_values == 3);
+
+	if (G_CCLOSURE_SWAP_DATA (closure)) {
+		data1 = closure->data;
+		data2 = g_value_peek_pointer (param_values + 0);
+	} else {
+		data1 = g_value_peek_pointer (param_values + 0);
+		data2 = closure->data;
+	}
+	
+	callback = (MarshalFunc_VOID__POINTER_POINTER) (marshal_data ? marshal_data : cc->callback);
+
+	callback (data1, g_value_get_pointer (param_values + 1),
+	          g_value_get_pointer (param_values + 2), data2);
+}
+
+void 
+modest_conf_key_changed (ModestConf* self, const gchar *key, const gchar *new_value)
+{
+
+}
+
 
 GType
 modest_conf_get_type (void)
@@ -67,13 +104,16 @@ modest_conf_class_init (ModestConfClass *klass)
 	gobject_class->finalize = modest_conf_finalize;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestConfPrivate));
+	
+	klass->key_changed = modest_conf_key_changed;
 
-	/* signal definitions go here, e.g.: */
-/* 	signals[MY_SIGNAL_1] = */
-/* 		g_signal_new ("my_signal_1",....); */
-/* 	signals[MY_SIGNAL_2] = */
-/* 		g_signal_new ("my_signal_2",....); */
-/* 	etc. */
+ 	signals[KEY_CHANGED_SIGNAL] = 
+ 		g_signal_new ("key-changed", 
+	                      G_TYPE_FROM_CLASS (gobject_class), G_SIGNAL_RUN_LAST,
+		              G_STRUCT_OFFSET(ModestConfClass, key_changed),
+		              NULL, NULL,
+		              modest_marshal_VOID__POINTER_POINTER,
+		              G_TYPE_NONE, 2, G_TYPE_POINTER, G_TYPE_POINTER);
 }
 
 static void
@@ -92,8 +132,8 @@ modest_conf_init (ModestConf *obj)
 	}
 
 	/* FIXME: is PRELOAD_NONE the most efficient? */
-	gconf_client_add_dir (conf,MODEST_CONF_NAMESPACE,
-			      GCONF_CLIENT_PRELOAD_NONE,&err);
+	gconf_client_add_dir (conf, MODEST_CONF_NAMESPACE,
+			      GCONF_CLIENT_PRELOAD_NONE, &err);
 	if (err) {
 		g_warning ("error with gconf_client_add_dir: %d:%s",
 			   err->code, err->message);
@@ -302,15 +342,19 @@ static void
 modest_conf_on_change (GConfClient *client, guint conn_id, GConfEntry *entry,
 			gpointer data)
 {
-	/* FIXME: emit a signal here */
-
-	if (!entry->value)
+	ModestConf *modest_conf = data;
+	
+	if (!entry->value) {
 		g_print ("modest: key '%s' unset\n",
 			 gconf_entry_get_key (entry));
-	else {
+		g_signal_emit (modest_conf, signals[KEY_CHANGED_SIGNAL], 0, 
+		               gconf_entry_get_key (entry), NULL);
+	} else {
 		gchar *val = gconf_value_to_string (gconf_entry_get_value(entry));
 		g_print ("modest: key '%s' set to '%s'\n",
 			 gconf_entry_get_key (entry), val);
+		g_signal_emit (modest_conf, signals[KEY_CHANGED_SIGNAL], 0, 
+		               gconf_entry_get_key (entry), val);
 		g_free (val);
 	}
 }

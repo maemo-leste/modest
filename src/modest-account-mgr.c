@@ -35,6 +35,16 @@ static GObjectClass *parent_class = NULL;
 /* uncomment the following if you have defined any signals */
 /* static guint signals[LAST_SIGNAL] = {0}; */
 
+static void
+modest_account_mgr_check_change (ModestConf *conf, const gchar *key, 
+                                 const gchar *new_value, gpointer user_data)
+{
+	ModestAccountMgr *amgr = user_data;
+	
+	g_message ("value changed: %s %s\n", key, new_value);
+}
+
+
 GType
 modest_account_mgr_get_type (void)
 {
@@ -118,6 +128,9 @@ modest_account_mgr_new (ModestConf * conf)
 	 * ModestConf should outlive the ModestAccountMgr though
 	 */
 	g_object_ref (G_OBJECT (priv->modest_conf = conf));
+	
+	g_signal_connect (G_OBJECT (conf), "key-changed", 
+	                  G_CALLBACK (modest_account_mgr_check_change), obj);
 	return obj;
 }
 

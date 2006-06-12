@@ -107,7 +107,7 @@ modest_tny_account_store_class_init (ModestTnyAccountStoreClass *klass)
  		g_signal_new ("password_requested",
 			      G_TYPE_FROM_CLASS (gobject_class),
 			      G_SIGNAL_RUN_FIRST,
-			      G_STRUCT_OFFSET(ModestTnyAccountStoreClass,password_requested),
+			      G_STRUCT_OFFSET(ModestTnyAccountStoreClass, password_requested),
 			      NULL, NULL,
 			      g_cclosure_marshal_VOID__POINTER,
 			      G_TYPE_NONE, 1, G_TYPE_POINTER);

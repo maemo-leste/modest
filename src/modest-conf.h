@@ -27,8 +27,8 @@ struct _ModestConf {
 
 struct _ModestConfClass {
 	GObjectClass parent_class;
-	/* insert signal callback declarations, eg. */
-	/* void (* my_event) (ModestConf* obj); */
+	
+	void (* key_changed) (ModestConf* self, const gchar *key, const gchar *new_value);
 };
 
 
