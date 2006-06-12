@@ -305,6 +305,7 @@
     <xi:include href="xml/modest-tny-transport-actions.xml"/>
     <xi:include href="xml/modest-main-window.xml"/>
     <xi:include href="xml/modest-edit-window.xml"/>
+    <xi:include href="xml/modest-editor-window.xml"/>
     <xi:include href="xml/modest-proto.xml"/>
     <xi:include href="xml/modest-account-keys.xml"/>
     <xi:include href="xml/modest-conf-keys.xml"/>
