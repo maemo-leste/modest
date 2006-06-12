@@ -41,6 +41,7 @@ GtkWidget*   modest_viewer_window_new (ModestUI *ui, TnyMsgIface *msg);
 
 gpointer modest_viewer_window_get_data(ModestViewerWindow *viewer_win);
 
+ModestTnyMsgView *modest_viewer_window_get_tiny_msg_view(ModestViewerWindow *viewer_win);
 
 /* fill in other public functions, eg.: */
 /* 	void       modest_viewer_window_do_something (ModestViewerWindow *self, const gchar* param); */

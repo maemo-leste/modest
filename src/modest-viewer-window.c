@@ -80,6 +80,7 @@ modest_viewer_window_init (ModestViewerWindow *obj)
 	ModestViewerWindowPrivate *priv = MODEST_VIEWER_WINDOW_GET_PRIVATE(obj);
 
 	priv->user_data = NULL;
+	priv->msg_view = NULL;
 }
 
 
@@ -92,6 +93,9 @@ modest_viewer_window_finalize (GObject *obj)
 	        
 	if (priv->user_data)
 		g_free(priv->user_data);
+
+//	if (priv->msg_view)
+//		gtk_widget_destroy(GTK_WIDGET(priv->msg_view));
 
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
@@ -120,6 +124,7 @@ modest_viewer_window_new (ModestUI *ui, TnyMsgIface *msg)
 
 	gtk_container_add(GTK_CONTAINER(self), w);
 	priv->user_data = data;
+	priv->msg_view = msg_view;
 
 	return GTK_WIDGET(self);
 }
@@ -144,3 +149,17 @@ gpointer modest_viewer_window_get_data(ModestViewerWindow *viewer_win)
 }
 
 
+ModestTnyMsgView
+*modest_viewer_window_get_tiny_msg_view(ModestViewerWindow *viewer_win)
+{
+	ModestViewerWindowPrivate *priv;
+
+	if (!viewer_win) {
+		return NULL;
+	}
+	priv = MODEST_VIEWER_WINDOW_GET_PRIVATE(viewer_win);
+
+	// g_message("get priv->data = %p", priv->user_data);
+
+	return priv->msg_view;
+}

@@ -69,7 +69,7 @@ GtkContainer
 		return NULL;
 	paned = glade_xml_get_widget(glade_xml, "vpaned3");
 	gtk_paned_add2(GTK_PANED(paned), msg_view);
-	gtk_widget_show(msg_view);
+	gtk_widget_show_all(msg_view);
 
 	return GTK_CONTAINER(top_container);
 }
@@ -107,7 +107,7 @@ open_message_viewer_window(ModestUI *modest_ui)
 	ModestTnyHeaderTreeView *header_view;
 	TnyMsgHeaderIface *header;
 	const TnyMsgFolderIface *folder;
-	const TnyMsgIface *msg;
+	TnyMsgIface *msg;
 	const gchar *subject, *to, *from;
 	time_t sent_date;
 	gchar date_str[101];
