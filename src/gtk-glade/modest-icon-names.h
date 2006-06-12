@@ -19,11 +19,16 @@
 
 #define MODEST_FOLDER_ICON_INBOX		PIXMAP_PREFIX "qgn_list_messagin_inbox.png"
 #define MODEST_FOLDER_ICON_OUTBOX		PIXMAP_PREFIX "qgn_list_messagin_outbox.png"
-#define MODEST_FOLDER_ICON_SENT			PIXMAP_PREFIX "balsa-mbox-sent.png"
-#define MODEST_FOLDER_ICON_TRASH		PIXMAP_PREFIX "balsa-mbox-sent.png"
-#define MODEST_FOLDER_ICON_JUNK			PIXMAP_PREFIX "balsa-mbox-sent.png"
-#define MODEST_FOLDER_ICON_DRAFT		PIXMAP_PREFIX "balsa-mbox-draft.png"
+#define MODEST_FOLDER_ICON_SENT			PIXMAP_PREFIX "qgn_list_messagin_sent.png"
+#define MODEST_FOLDER_ICON_TRASH		PIXMAP_PREFIX "qgn_list_messagin_mail_deleted.png"
+#define MODEST_FOLDER_ICON_JUNK			PIXMAP_PREFIX "qgn_list_messagin_mail_deleted.png"
+#define MODEST_FOLDER_ICON_DRAFTS		PIXMAP_PREFIX "qgn_list_messagin_drafts.png"
 #define MODEST_FOLDER_ICON_NORMAL		PIXMAP_PREFIX "qgn_list_gene_fldr_cls.png"
+
+#define MODEST_FOLDER_ICON_CONTACTS		PIXMAP_PREFIX "qgn_addr_icon_user_group.png"
+#define MODEST_FOLDER_ICON_NOTES		PIXMAP_PREFIX "qgn_list_messagin_viewer.png"
+#define MODEST_FOLDER_ICON_CALENDAR     	PIXMAP_PREFIX "qgn_widg_datedit.png"
+
 
 
 #endif  /*__MODEST_TNY_ICON_NAMES_H__*/

@@ -2,6 +2,7 @@
 
 /* insert (c)/licensing information) */
 #include <glib/gi18n.h>
+#include <string.h>
 
 #include <tny-account-tree-model.h>
 #include <tny-account-store-iface.h>
@@ -120,6 +121,51 @@ text_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 	g_free (fname);
 }
 
+/* FIXME: move these to TnyMail */
+enum {
+
+	TNY_MSG_FOLDER_TYPE_NOTES = TNY_MSG_FOLDER_TYPE_SENT + 1, /* urgh */
+	TNY_MSG_FOLDER_TYPE_DRAFTS,
+	TNY_MSG_FOLDER_TYPE_CONTACTS,
+	TNY_MSG_FOLDER_TYPE_CALENDAR
+};
+	
+static TnyMsgFolderType
+guess_folder_type (const gchar* name)
+{
+	TnyMsgFolderType type;
+	gchar *folder;
+
+	g_return_val_if_fail (name, TNY_MSG_FOLDER_TYPE_NORMAL);
+	
+	type = TNY_MSG_FOLDER_TYPE_NORMAL;
+	folder = g_utf8_strdown (name, strlen(name));
+
+	if (strcmp (folder, "inbox") == 0 || strcmp (folder, _("inbox")) == 0)
+	    type = TNY_MSG_FOLDER_TYPE_INBOX;
+	else if (strcmp (folder, "outbox") == 0 || strcmp (folder, _("outbox")) == 0)
+		type = TNY_MSG_FOLDER_TYPE_OUTBOX;
+	else if (g_str_has_prefix(folder, "junk") || g_str_has_prefix(folder, _("junk")))
+		type = TNY_MSG_FOLDER_TYPE_JUNK;
+	else if (g_str_has_prefix(folder, "trash") || g_str_has_prefix(folder, _("trash")))
+		type = TNY_MSG_FOLDER_TYPE_JUNK;
+	else if (g_str_has_prefix(folder, "sent") || g_str_has_prefix(folder, _("sent")))
+		type = TNY_MSG_FOLDER_TYPE_SENT;
+
+	/* these are not *really* TNY_ types */
+	else if (g_str_has_prefix(folder, "draft") || g_str_has_prefix(folder, _("draft")))
+		type = TNY_MSG_FOLDER_TYPE_DRAFTS;
+	else if (g_str_has_prefix(folder, "notes") || g_str_has_prefix(folder, _("notes")))
+		type = TNY_MSG_FOLDER_TYPE_NOTES;
+	else if (g_str_has_prefix(folder, "contacts") || g_str_has_prefix(folder, _("contacts")))
+		type = TNY_MSG_FOLDER_TYPE_CONTACTS;
+	else if (g_str_has_prefix(folder, "calendar") || g_str_has_prefix(folder, _("calendar")))
+		type = TNY_MSG_FOLDER_TYPE_CALENDAR;
+	
+	g_free (folder);
+	return type;
+}
+
 
 static void
 icon_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
@@ -128,13 +174,20 @@ icon_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 	GObject *rendobj;
 	GdkPixbuf *pixbuf;
 	TnyMsgFolderType type;
+	gchar *fname;
 	int unread;
 	
 	rendobj = G_OBJECT(renderer);
 	gtk_tree_model_get (tree_model, iter,
 			    TNY_ACCOUNT_TREE_MODEL_TYPE_COLUMN, &type,
+			    TNY_ACCOUNT_TREE_MODEL_NAME_COLUMN, &fname,
 			    TNY_ACCOUNT_TREE_MODEL_UNREAD_COLUMN, &unread, -1);
 	rendobj = G_OBJECT(renderer);
+	
+	if (type == TNY_MSG_FOLDER_TYPE_NORMAL)
+		type = guess_folder_type (fname);
+
+	g_free (fname);
 
 	switch (type) {
         case TNY_MSG_FOLDER_TYPE_INBOX:
@@ -149,6 +202,19 @@ icon_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
         case TNY_MSG_FOLDER_TYPE_SENT:
                 pixbuf = modest_icon_factory_get_icon (MODEST_FOLDER_ICON_SENT);
                 break;
+	case TNY_MSG_FOLDER_TYPE_DRAFTS:
+		pixbuf = modest_icon_factory_get_icon (MODEST_FOLDER_ICON_DRAFTS);
+                break;
+	case TNY_MSG_FOLDER_TYPE_NOTES:
+		pixbuf = modest_icon_factory_get_icon (MODEST_FOLDER_ICON_NOTES);
+                break;
+	case TNY_MSG_FOLDER_TYPE_CALENDAR:
+		pixbuf = modest_icon_factory_get_icon (MODEST_FOLDER_ICON_CALENDAR);
+                break;
+	case TNY_MSG_FOLDER_TYPE_CONTACTS:
+                pixbuf = modest_icon_factory_get_icon (MODEST_FOLDER_ICON_CONTACTS);
+                break;
+		
 	case TNY_MSG_FOLDER_TYPE_NORMAL:
         default:
                 pixbuf = modest_icon_factory_get_icon (MODEST_FOLDER_ICON_NORMAL);
