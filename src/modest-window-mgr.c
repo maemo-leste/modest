@@ -108,8 +108,8 @@ modest_window_mgr_register (ModestWindowMgr *self, GObject *win,
 	ModestWindowMgrPrivate *priv;
 
 	g_return_val_if_fail (self, FALSE);
-	g_return_val_if_fail (type==MODEST_MAIN_WINDOW||type==MODEST_EDIT_WINDOW,
-			      FALSE);
+	g_return_val_if_fail (type==MODEST_MAIN_WINDOW || type==MODEST_EDIT_WINDOW
+				|| type == MODEST_VIEW_WINDOW, FALSE);
 
 	priv = MODEST_WINDOW_MGR_GET_PRIVATE(self);
 

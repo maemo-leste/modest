@@ -30,7 +30,8 @@
 #include "../modest-viewer-window.h"
 
 #include "modest-ui-glade.h"
-#include "modest-ui-wizard.h"
+#include "modest-ui-message-viewer.h"
+
 
 
 typedef struct {
@@ -46,6 +47,7 @@ GtkContainer
 	GtkWidget	*top_container;
 	GladeXML	*glade_xml;
 	ViewerWinData	*win_data;
+	GtkWidget	*paned;
 
 	glade_xml = glade_xml_new(MODEST_GLADE, "viewer_top_container", NULL);
 	if (!glade_xml)
@@ -63,6 +65,128 @@ GtkContainer
 		return NULL;
 	}
 
+	if (!GTK_IS_WIDGET(msg_view))
+		return NULL;
+	paned = glade_xml_get_widget(glade_xml, "vpaned3");
+	gtk_paned_add2(GTK_PANED(paned), msg_view);
+	gtk_widget_show(msg_view);
+
 	return GTK_CONTAINER(top_container);
 }
 
+
+static void
+close_viewer_window(GtkWidget *win, GdkEvent *event, gpointer data)
+{
+	ModestViewerWindow *viewer_win;
+	ModestUIPrivate *priv;
+	ViewerWinData *win_data;
+
+	viewer_win = (ModestViewerWindow *)data;
+	win_data = modest_viewer_window_get_data(viewer_win);
+	priv = MODEST_UI_GET_PRIVATE(win_data->modest_ui);
+
+	modest_window_mgr_unregister(priv->modest_window_mgr, G_OBJECT(viewer_win));
+	gtk_widget_hide (GTK_WIDGET(viewer_win));
+	gtk_widget_destroy(GTK_WIDGET(viewer_win));
+}
+
+
+static void
+open_message_viewer_window(ModestUI *modest_ui)
+{
+	GtkWidget *viewer_win;
+	ModestUIPrivate *priv;
+	gint width, height;
+	ViewerWinData *windata;
+	GtkWidget *paned;
+	GtkTreeSelection *sel;
+	GtkTreeModel *model;
+	GtkTreeIter iter;
+	GtkScrolledWindow *scroll;
+	ModestTnyHeaderTreeView *header_view;
+	TnyMsgHeaderIface *header;
+	const TnyMsgFolderIface *folder;
+	const TnyMsgIface *msg;
+	const gchar *subject, *to, *from;
+	time_t sent_date;
+	gchar date_str[101];
+	GtkWidget *w;
+
+	priv = MODEST_UI_GET_PRIVATE(modest_ui);
+	/* FIXME: maybe use seperate viewer defaults? */
+	height = modest_conf_get_int (priv->modest_conf, MODEST_CONF_EDIT_WINDOW_HEIGHT, NULL);
+	width  = modest_conf_get_int (priv->modest_conf, MODEST_CONF_EDIT_WINDOW_WIDTH, NULL);
+
+	paned = glade_xml_get_widget (priv->glade_xml,"mail_paned");
+	g_return_if_fail (paned);
+
+	scroll = GTK_SCROLLED_WINDOW(gtk_paned_get_child1 (GTK_PANED(paned)));
+        g_return_if_fail (scroll);
+
+	header_view = MODEST_TNY_HEADER_TREE_VIEW(gtk_bin_get_child (GTK_BIN(scroll)));
+	g_return_if_fail (header_view);
+
+	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW(header_view));
+	g_return_if_fail (sel);
+
+	if (!gtk_tree_selection_get_selected (sel, &model, &iter)) {
+		g_warning("nothing to display");
+		return;
+	}
+
+	gtk_tree_model_get (model, &iter,
+		TNY_MSG_HEADER_LIST_MODEL_INSTANCE_COLUMN, &header, -1);
+
+	if (!header) {
+		g_warning("no header");
+		return;
+	}
+
+	folder = tny_msg_header_iface_get_folder (TNY_MSG_HEADER_IFACE(header));
+	if (!folder) {
+		g_warning ("cannot find folder");
+		return;
+	}
+
+	msg = tny_msg_folder_iface_get_message (TNY_MSG_FOLDER_IFACE(folder), header);
+	if (!msg) {
+		g_warning ("cannot find msg");
+		return;
+	}
+
+	viewer_win = modest_viewer_window_new(modest_ui, msg);
+	windata = (ViewerWinData *)modest_viewer_window_get_data(MODEST_VIEWER_WINDOW(viewer_win));
+	g_return_if_fail(windata);
+
+	subject = tny_msg_header_iface_get_subject(header);
+	from = tny_msg_header_iface_get_from(header);
+	to = tny_msg_header_iface_get_to(header);
+	sent_date = tny_msg_header_iface_get_date_sent(header);
+	strftime (date_str, 100, "%c", localtime (&sent_date));
+
+	w = glade_xml_get_widget (windata->glade_xml, "from");
+	gtk_label_set_text(GTK_LABEL(w), from);
+	w = glade_xml_get_widget (windata->glade_xml, "to");
+	gtk_label_set_text(GTK_LABEL(w), to);
+	w = glade_xml_get_widget (windata->glade_xml, "subject");
+	gtk_label_set_text(GTK_LABEL(w), subject);
+	w = glade_xml_get_widget (windata->glade_xml, "date");
+	gtk_label_set_text(GTK_LABEL(w), date_str);
+
+	// g_message("new viewer win@%dx%d", width, height);
+	gtk_widget_set_usize (GTK_WIDGET(viewer_win), width, height);
+	gtk_widget_show(viewer_win);
+	modest_window_mgr_register(priv->modest_window_mgr, G_OBJECT(viewer_win), MODEST_VIEW_WINDOW, 0);
+	g_signal_connect (viewer_win, "destroy-event", G_CALLBACK(close_viewer_window), viewer_win);
+	g_signal_connect (viewer_win, "delete-event", G_CALLBACK(close_viewer_window), viewer_win);
+}
+
+
+void
+on_open_message_clicked (GtkWidget *widget, gpointer user_data)
+{
+	ModestUI *modest_ui = (ModestUI *)user_data;
+
+	open_message_viewer_window(modest_ui);
+}

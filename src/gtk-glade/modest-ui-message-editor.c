@@ -290,7 +290,7 @@ new_editor_with_presets (ModestUI *modest_ui, const gchar *to_header,
 	g_signal_connect (edit_win, "delete-event", G_CALLBACK(close_edit_window),
 			  edit_win);
 
-	priv = MODEST_UI_GET_PRIVATE(windata->modest_ui);
+	priv = MODEST_UI_GET_PRIVATE(modest_ui);
 	height = modest_conf_get_int (priv->modest_conf,
 					  MODEST_CONF_EDIT_WINDOW_HEIGHT, NULL);
 	width  = modest_conf_get_int (priv->modest_conf,

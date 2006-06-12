@@ -89,6 +89,7 @@ modest_ui_show_main_window (ModestUI *modest_ui)
 	GtkWidget     *message_view;
 	GtkWidget     *account_settings_item;
 	GtkWidget     *delete_item;
+	GtkWidget     *open_item;
 	GtkWidget     *view_attachments_item;
 	GtkWidget     *new_account_item;
 
@@ -168,12 +169,19 @@ modest_ui_show_main_window (ModestUI *modest_ui)
 	g_signal_connect (new_account_item, "activate",
 		G_CALLBACK(new_wizard_account), modest_ui);
 
+	open_item = glade_xml_get_widget (priv->glade_xml, "open1");
+	if (!open_item) {
+		g_warning ("The open item isn't available!\n");
+		return FALSE;
+	}
+	g_signal_connect (open_item, "activate", G_CALLBACK(on_open_message_clicked),
+			  modest_ui);
+
 	delete_item = glade_xml_get_widget (priv->glade_xml, "delete1");
 	if (!delete_item) {
 		g_warning ("The delete item isn't available!\n");
 		return FALSE;
 	}
-
 	g_signal_connect (delete_item, "activate", G_CALLBACK(on_delete_clicked),
 			  modest_ui);
 
