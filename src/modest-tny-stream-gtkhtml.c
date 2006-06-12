@@ -129,14 +129,17 @@ gtkhtml_write (TnyStreamIface *self, const char *buffer, size_t n)
 {
 	ModestTnyStreamGtkhtmlPrivate *priv;
 	
-	g_return_val_if_fail (self, 0);
-
 	priv = MODEST_TNY_STREAM_GTKHTML_GET_PRIVATE(self);
-	if (!priv->stream)
+
+	if (!priv->stream) {
 		g_warning ("cannot write to closed stream");
-	else
-		gtk_html_stream_write (priv->stream, buffer, n);
-	
+		return 0;
+	}
+
+	if (n == 0)
+		return 0;
+		
+	gtk_html_stream_write (priv->stream, buffer, n);
 	return n; /* hmmm */
 }
 
