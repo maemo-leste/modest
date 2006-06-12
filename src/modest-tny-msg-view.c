@@ -230,7 +230,8 @@ find_attachment_by_filename (TnyMsgIface *msg, const gchar *fn)
 	parts  = (GList*) tny_msg_iface_get_parts (msg);
 	pos = virtual_filename_get_pos(fn);
 	
-	g_return_val_if_fail(((pos >= 0) && (pos < g_list_length(parts))), NULL);
+	if ((pos < 0) || (pos >= g_list_length(parts)))
+		return NULL;
 	
 	part = g_list_nth_data(parts, pos);
 	
@@ -296,10 +297,15 @@ typedef struct  {
 
 
 static gchar *
-construct_virtual_filename(const gchar *filename, const gint position, const gchar *id, const gboolean active)
+construct_virtual_filename(const gchar *filename,
+                           const gint position,
+                           const gchar *id,
+                           const gboolean active)
 {
 	GString *s;
-	g_return_val_if_fail((position >= 0), "AttachmentInvalid");
+	
+	if (position < 0)
+		return "AttachmentInvalid";
 
 	s = g_string_new("");
 	if (active)
@@ -405,29 +411,28 @@ attachments_as_html(ModestTnyMsgView *self, TnyMsgIface *msg)
 		content_type = tny_msg_mime_part_iface_get_content_type(
 										TNY_MSG_MIME_PART_IFACE(attachment->data));
 		g_return_val_if_fail(content_type, NULL);
-		if (      tny_msg_mime_part_iface_content_type_is(
-										TNY_MSG_MIME_PART_IFACE(attachment->data),
-										"image/jpeg")
-			   || tny_msg_mime_part_iface_content_type_is(
-										TNY_MSG_MIME_PART_IFACE(attachment->data),
-										"image/gif")) {
+		if ((strcmp("image/jpeg", content_type) == 0) ||
+			(strcmp("image/gif",  content_type) == 0)) {
 			filename = tny_msg_mime_part_iface_get_filename(
-										TNY_MSG_MIME_PART_IFACE(attachment->data));
+			        TNY_MSG_MIME_PART_IFACE(attachment->data));
 			if (!filename)
 				filename = "[unknown]";
 			else
 				attachments_found = TRUE;
 			id = tny_msg_mime_part_iface_get_content_id(
 										TNY_MSG_MIME_PART_IFACE(attachment->data));
-			show_attachments_inline = modest_conf_get_bool(priv->conf, MODEST_CONF_MSG_VIEW_SHOW_ATTACHMENTS_INLINE, NULL);
+			show_attachments_inline = modest_conf_get_bool(priv->conf,
+			        MODEST_CONF_MSG_VIEW_SHOW_ATTACHMENTS_INLINE, NULL);
 			virtual_filename = construct_virtual_filename(filename,
-			                 g_list_position((GList *)attachment_list, (GList *) attachment),
-			                 id, show_attachments_inline);
+			        g_list_position((GList *)attachment_list, (GList *) attachment),
+			        id, show_attachments_inline);
 			printf("VF:%s\n", virtual_filename);
 			if (show_attachments_inline) {
 				g_string_append_printf(appendix, "<IMG src=\"%s\">\n<BR>", virtual_filename);
 			}
-			g_string_append_printf(appendix, "<A href=\"attachment:%s\">%s</A>: %s<BR>\n", filename, filename, content_type);
+			g_string_append_printf(appendix,
+			        "<A href=\"attachment:%s\">%s</A>: %s<BR>\n",
+			        filename, filename, content_type);
 			g_free(virtual_filename);
 		}
 		attachment = attachment->next;
