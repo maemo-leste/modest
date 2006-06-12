@@ -26,6 +26,12 @@ libmodest_ui_la_SOURCES=\
 	modest-ui.c\
 	modest-ui-glade.h\
 	modest-icon-names.h\
+	modest-ui-main-view.c\
+	modest-ui-main-view.h\
+	modest-ui-message-editor.c\
+	modest-ui-message-editor.h\
+	modest-ui-message-viewer.c\
+	modest-ui-message-viewer.h\
 	modest-ui-wizard.h\
 	modest-ui-wizard.c
 
