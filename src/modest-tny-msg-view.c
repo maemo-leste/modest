@@ -30,6 +30,10 @@ static gboolean on_url_requested (GtkWidget *widget, const gchar *uri,
 				  ModestTnyMsgView *msg_view);
 static gchar *construct_virtual_filename(const gchar *filename, const gint position, const gchar *id, const gboolean active);
 static gchar *construct_virtual_filename_from_mime_part(TnyMsgMimePartIface *msg, const gint position);
+
+#define ATTACHMENT_ID_INLINE "attachment-inline"
+#define ATTACHMENT_ID_LINK "attachment-link"
+
 gint virtual_filename_get_pos(const gchar *filename);
 /*
  * we need these regexps to find URLs in plain text e-mails
@@ -180,8 +184,9 @@ on_link_clicked (GtkWidget *widget, const gchar *uri,
 				 ModestTnyMsgView *msg_view)
 {
 	
-	if (g_str_has_prefix(uri, "attachment:")) {
+	if (g_str_has_prefix(uri, ATTACHMENT_ID_LINK)) {
 		/* save or open attachment */
+		g_message ("link-to-save: %s", uri); /* FIXME */
 		return TRUE;
 	}
 	g_message ("link clicked: %s", uri); /* FIXME */
@@ -257,6 +262,10 @@ on_url_requested (GtkWidget *widget, const gchar *uri,
 
 	g_message ("url requested: %s", uri);
 	
+	if (!modest_conf_get_bool(priv->conf,
+	            MODEST_CONF_MSG_VIEW_SHOW_ATTACHMENTS_INLINE, NULL))
+		return TRUE; /* debatable */
+	
 	if (g_str_has_prefix (uri, "cid:")) {
 		/* +4 ==> skip "cid:" */
 		
@@ -270,8 +279,9 @@ on_url_requested (GtkWidget *widget, const gchar *uri,
 			tny_msg_mime_part_iface_decode_to_stream (part,tny_stream);
 			gtk_html_stream_close (stream, GTK_HTML_STREAM_OK);
 		}
-	} else if (g_str_has_prefix (uri, "Attachment:")) {
-		TnyMsgMimePartIface *part = find_attachment_by_filename (priv->msg, uri);
+	} else if (g_str_has_prefix (uri, ATTACHMENT_ID_INLINE)) {
+		TnyMsgMimePartIface *part;
+		part = find_attachment_by_filename (priv->msg, uri);
 		if (!part) {
 			g_message ("%s not found", uri);
 			gtk_html_stream_close (stream, GTK_HTML_STREAM_ERROR);
@@ -286,14 +296,11 @@ on_url_requested (GtkWidget *widget, const gchar *uri,
 }
 
 
-
-
 typedef struct  {
 	guint offset;
 	guint len;
 	const gchar* prefix;
 } url_match_t;
-
 
 
 static gchar *
@@ -309,10 +316,10 @@ construct_virtual_filename(const gchar *filename,
 
 	s = g_string_new("");
 	if (active)
-		g_string_append(s, "Attachment:");
+		g_string_append(s, ATTACHMENT_ID_INLINE);
 	else
-		g_string_append(s, "attachment:");
-	g_string_append_printf(s, "%d:", position);
+		g_string_append(s, ATTACHMENT_ID_LINK);
+	g_string_append_printf(s, ":%d:", position);
 	if (id)
 		g_string_append(s, id);
 	g_string_append_c(s, ':');
@@ -365,13 +372,13 @@ virtual_filename_get_pos(const gchar *filename)
 	gint len, pos;
 	GString *dummy;
 	
-	i1 = filename;
-	i2 = filename;
-	
 	/* check prefix */
-	i2 = get_next_token(i2, &len);
-	if (strncmp(i1, "Attachment", len) != 0)
+	if ((!g_str_has_prefix(filename, ATTACHMENT_ID_INLINE ":")) &&
+	    (!g_str_has_prefix(filename, ATTACHMENT_ID_LINK ":")))
 		return -1;
+
+	i2 = filename;
+	i2 = get_next_token(i2, &len);
 	i1 = i2;
 		
 	/* get position */
@@ -401,8 +408,8 @@ attachments_as_html(ModestTnyMsgView *self, TnyMsgIface *msg)
 	
 	priv = MODEST_TNY_MSG_VIEW_GET_PRIVATE (self);
 	
-	/* CLEANUP: starting a new HTML may be unsupported */
-	appendix = g_string_new("<HTML><BODY>\n<hr><h5>Attachments:</h5>\n");
+	appendix = g_string_new("");
+	g_string_printf(appendix, "<HTML><BODY>\n<hr><h5>%s:</h5>\n", _("Attachments"));
 	
 	attachment_list = tny_msg_iface_get_parts(msg);
 	attachment = attachment_list;
@@ -425,16 +432,19 @@ attachments_as_html(ModestTnyMsgView *self, TnyMsgIface *msg)
 										TNY_MSG_MIME_PART_IFACE(attachment->data));
 			show_attachments_inline = modest_conf_get_bool(priv->conf,
 			        MODEST_CONF_MSG_VIEW_SHOW_ATTACHMENTS_INLINE, NULL);
-			virtual_filename = construct_virtual_filename(filename,
-			        g_list_position((GList *)attachment_list, (GList *) attachment),
-			        id, show_attachments_inline);
-			printf("VF:%s\n", virtual_filename);
 			if (show_attachments_inline) {
+				virtual_filename = construct_virtual_filename(filename,
+				        g_list_position((GList *)attachment_list, (GList *) attachment),
+				        id, TRUE);
 				g_string_append_printf(appendix, "<IMG src=\"%s\">\n<BR>", virtual_filename);
+				g_free(virtual_filename);
 			}
+			virtual_filename = construct_virtual_filename(filename,
+				        g_list_position((GList *)attachment_list, (GList *) attachment),
+				        id, FALSE);
 			g_string_append_printf(appendix,
-			        "<A href=\"attachment:%s\">%s</A>: %s<BR>\n",
-			        filename, filename, content_type);
+			        "<A href=\"%s\">%s</A>: %s<BR>\n",
+			        virtual_filename, filename, content_type);
 			g_free(virtual_filename);
 		}
 		attachment = attachment->next;
@@ -660,8 +670,7 @@ set_html_message (ModestTnyMsgView *self, TnyMsgMimePartIface *tny_body, TnyMsgI
 	tny_stream_iface_reset (gtkhtml_stream);
 	tny_msg_mime_part_iface_decode_to_stream (tny_body, gtkhtml_stream);
 	html_attachments = attachments_as_html(self, msg);
-	/* is this clean? */
-	gtkhtml_write(gtkhtml_stream, html_attachments, strlen(html_attachments));
+	tny_stream_iface_write (gtkhtml_stream, html_attachments, strlen(html_attachments));
 	tny_stream_iface_reset (gtkhtml_stream);
 
 	g_object_unref (G_OBJECT(gtkhtml_stream));
