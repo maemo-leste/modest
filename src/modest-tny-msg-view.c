@@ -410,7 +410,9 @@ attachments_as_html(ModestTnyMsgView *self, TnyMsgIface *msg)
 		filename = "";
 		content_type = tny_msg_mime_part_iface_get_content_type(
 										TNY_MSG_MIME_PART_IFACE(attachment->data));
-		g_return_val_if_fail(content_type, NULL);
+		if (!content_type)
+			continue;
+
 		if ((strcmp("image/jpeg", content_type) == 0) ||
 			(strcmp("image/gif",  content_type) == 0)) {
 			filename = tny_msg_mime_part_iface_get_filename(
