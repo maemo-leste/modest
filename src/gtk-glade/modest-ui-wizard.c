@@ -16,8 +16,25 @@
 #include "modest-ui-glade.h"
 #include "modest-ui-wizard.h"
 
-void wizard_missing_notification(GtkWindow *parent, gchar *info_message)
-{
+
+static void wizard_incoming_button_toggled(GtkWidget *button,
+					   gpointer userdata) {
+	GtkWidget *awidget;
+	if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON(button))==TRUE) {
+		awidget=glade_xml_get_widget(GLADE_XML(userdata), "AWOutUserNameEntry");
+		gtk_widget_set_sensitive(GTK_WIDGET(awidget), FALSE);
+		awidget=glade_xml_get_widget(GLADE_XML(userdata), "AWOutPasswordEntry");
+		gtk_widget_set_sensitive(GTK_WIDGET(awidget), FALSE);
+	}
+	else {
+		awidget=glade_xml_get_widget(GLADE_XML(userdata), "AWOutUserNameEntry");
+		gtk_widget_set_sensitive(GTK_WIDGET(awidget), TRUE);
+		awidget=glade_xml_get_widget(GLADE_XML(userdata), "AWOutPasswordEntry");
+		gtk_widget_set_sensitive(GTK_WIDGET(awidget), TRUE);
+	}
+}
+
+void wizard_missing_notification(GtkWindow *parent, gchar *info_message) {
         GtkWidget *DenyDialog;
 
         DenyDialog=gtk_message_dialog_new(parent,
@@ -32,8 +49,7 @@ void wizard_missing_notification(GtkWindow *parent, gchar *info_message)
         gtk_widget_destroy(DenyDialog);
 }
 
-gchar *get_text_from_combobox (GtkWidget *combobox)
-{
+gchar *get_text_from_combobox (GtkWidget *combobox){
         /* Remember to free the returned variable after usage! */
 
 	GtkTreeModel *model = gtk_combo_box_get_model(GTK_COMBO_BOX(combobox));
@@ -41,8 +57,7 @@ gchar *get_text_from_combobox (GtkWidget *combobox)
 
 	gchar *value;
 
-	if (gtk_combo_box_get_active_iter(GTK_COMBO_BOX(combobox), &iter))
-	{
+	if (gtk_combo_box_get_active_iter(GTK_COMBO_BOX(combobox), &iter)) {
 		gtk_tree_model_get(GTK_TREE_MODEL(model),
 				   &iter,
 				   0, &value,
@@ -53,17 +68,15 @@ gchar *get_text_from_combobox (GtkWidget *combobox)
 }
 
 
-gboolean advance_sanity_check(GtkWindow *parent, GladeXML *glade_xml, gint cp)
-{
+gboolean advance_sanity_check(GtkWindow *parent, GladeXML *glade_xml, gint cp) {
         gchar *tmptext;
 
 	/* FIXME:
 	 * all calls to wizard_missing_notification lack the parent window.
 	 */
 
-        switch (cp)
-        {
-	case 0:
+        switch (cp) {
+	case 1:
 		/* Only needed if the "mailbox name" field is used in the first page of the wizard.
                  * if (strlen(gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "AWMailboxnameEntry"))))==0)
                  * {
@@ -71,39 +84,40 @@ gboolean advance_sanity_check(GtkWindow *parent, GladeXML *glade_xml, gint cp)
                  *         return FALSE;
 		 * }
 		 */
+		if (strlen(gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "AWEMailAddressEntry"))))==0) {
+			wizard_missing_notification(NULL, "Please enter the E-Mail address.");
+			return FALSE;
+		}
+                return TRUE;
+		break;
+	case 2:
                 tmptext=gtk_combo_box_get_active_text(GTK_COMBO_BOX(glade_xml_get_widget(glade_xml, "AWMailboxtypeComboBox")));
-                if (tmptext==NULL)
-                {
+                if (tmptext==NULL) {
                         wizard_missing_notification(NULL, "Please select mailbox type.");
                         return FALSE;
 		}
-		free(tmptext);
-                return TRUE;
-		break;
-	case 1:
-		if (strlen(gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "AWUserNameEntry"))))==0)
-		{
-			wizard_missing_notification(NULL, "Please enter user name.");
+		g_free(tmptext);
+		if (strlen(gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "AWInServerComboEntry"))))==0) {
+			wizard_missing_notification(NULL, "Please specify incoming server adress.");
 			return FALSE;
 		}
-		if (strlen(gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "AWEMailAddressEntry"))))==0)
-		{
-			wizard_missing_notification(NULL, "Please enter the E-Mail address.");
+		if (strlen(gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "AWUserNameEntry"))))==0) {
+			wizard_missing_notification(NULL, "Please enter user name.");
 			return FALSE;
 		}
 		return TRUE;
 		break;
-	case 2:
-		if (strlen(gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "AWInServerComboEntry"))))==0)
-		{
-			wizard_missing_notification(NULL, "Please specify incoming server adress.");
-			return FALSE;
-		}
-		if (strlen(gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "AWOutServerComboEntry"))))==0)
-		{
+	case 3:
+		if (strlen(gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "AWOutServerComboEntry"))))==0) {
 			wizard_missing_notification(NULL, "Please specify outgoing server address.");
 			return FALSE;
 		}
+		if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(glade_xml_get_widget(glade_xml, "AWUseIncomingCheckButton")))==FALSE
+		    && strlen(gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "AWOutUserNameEntry"))))==0) {
+			wizard_missing_notification(NULL, "Please enter user name.");
+			return FALSE;
+		}
+
 		return TRUE;
 		break;
         }
@@ -111,15 +125,13 @@ gboolean advance_sanity_check(GtkWindow *parent, GladeXML *glade_xml, gint cp)
         return FALSE;
 }
 
-gchar *search_unused_account_or_identity_name(gpointer mgr, gchar *draft)
-{
+gchar *search_unused_account_or_identity_name(gpointer mgr, gchar *draft) {
 	GString *tmpaccount_name;
 	gint counter;
 
 	tmpaccount_name=g_string_new("");
 	g_string_printf(tmpaccount_name, "%s", draft);
-	if(MODEST_IS_ACCOUNT_MGR(mgr))
-	{
+	if(MODEST_IS_ACCOUNT_MGR(mgr)) {
 		for(counter=0; modest_account_mgr_server_account_exists(mgr, tmpaccount_name->str, NULL); counter++)
 			g_string_printf(tmpaccount_name, "%s%d", draft, counter);
 	}
@@ -162,12 +174,20 @@ gboolean wizard_account_add(GladeXML *glade_xml, ModestUI *modest_ui)
 	g_free(tmptext);
 
 	tmpaccount_name=search_unused_account_or_identity_name(acc_mgr, "outgoing");
-	modest_account_mgr_add_server_account (acc_mgr,
-					       tmpaccount_name,
-					       gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "AWOutServerComboEntry"))),
-					       NULL,
-					       NULL,
-					       "smtp");
+	if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(glade_xml_get_widget(glade_xml, "AWUseIncomingCheckButton")))==TRUE)
+		modest_account_mgr_add_server_account (acc_mgr,
+						       tmpaccount_name,
+						       gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "AWOutServerComboEntry"))),
+						       gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "AWUserNameEntry"))),
+						       gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "AWPasswordEntry"))),
+						       "smtp");
+	else
+		modest_account_mgr_add_server_account (acc_mgr,
+						       tmpaccount_name,
+						       gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "AWOutServerComboEntry"))),
+						       gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "AWOutUserNameEntry"))),
+						       gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "AWOutPasswordEntry"))),
+						       "smtp");
 	g_free(tmpaccount_name);
 
 	tmpaccount_name=search_unused_account_or_identity_name(id_mgr, MODEST_IDENTITY_DEFAULT_IDENTITY);
@@ -187,11 +207,12 @@ void wizard_account_dialog(ModestUI *modest_ui)
 	GladeXML *glade_xml;
 	GtkWidget *dialog;
         ModestUIPrivate *priv;
-        GtkWidget *FinishButton;
-        GtkWidget *BackButton;
-        GtkWidget *NextButton;
-        GtkWidget *CancelButton;
-        GtkWidget *Notebook;
+        GtkWidget *finish_button;
+        GtkWidget *back_button;
+        GtkWidget *next_button;
+        GtkWidget *cancel_button;
+	GtkWidget *notebook;
+	GtkWidget *use_incoming_button;
         gint cp;
         gint result;
 	gboolean account_added_successfully=FALSE;
@@ -205,32 +226,39 @@ void wizard_account_dialog(ModestUI *modest_ui)
 
         gtk_widget_show_all(dialog);
 
-        FinishButton=glade_xml_get_widget(glade_xml, "AWFinishButton");
-        BackButton=glade_xml_get_widget(glade_xml, "AWBackButton");
-        NextButton=glade_xml_get_widget(glade_xml, "AWNextButton");
-        CancelButton=glade_xml_get_widget(glade_xml, "AWCancelButton");
-        Notebook=glade_xml_get_widget(glade_xml, "AWNotebook");
+        finish_button=glade_xml_get_widget(glade_xml, "AWFinishButton");
+        back_button=glade_xml_get_widget(glade_xml, "AWBackButton");
+        next_button=glade_xml_get_widget(glade_xml, "AWNextButton");
+        cancel_button=glade_xml_get_widget(glade_xml, "AWCancelButton");
+        notebook=glade_xml_get_widget(glade_xml, "AWNotebook");
 
-        gtk_widget_set_sensitive(FinishButton, FALSE);
+	gtk_widget_set_sensitive(finish_button, FALSE);
 
-        do
-	{
-                cp=gtk_notebook_get_current_page(GTK_NOTEBOOK(Notebook));
-                switch (cp)
-                {
-                case 0:
-                        gtk_widget_set_sensitive(BackButton, FALSE);
-                        break;
+	use_incoming_button=glade_xml_get_widget(glade_xml, "AWUseIncomingCheckButton");
+	g_signal_connect(use_incoming_button,
+			 "toggled",
+			 G_CALLBACK(wizard_incoming_button_toggled),
+			 glade_xml);
+
+	/* First page not used currently. It's reserved for the account preset. */
+	gtk_notebook_set_current_page (GTK_NOTEBOOK(notebook), 1);
+
+        do {
+                cp=gtk_notebook_get_current_page(GTK_NOTEBOOK(notebook));
+                switch (cp) {
                 case 1:
-                        gtk_widget_set_sensitive(BackButton, TRUE);
+                        gtk_widget_set_sensitive(back_button, FALSE);
                         break;
                 case 2:
-                        gtk_widget_set_sensitive(FinishButton, FALSE);
-                        gtk_widget_set_sensitive(NextButton, TRUE);
+                        gtk_widget_set_sensitive(back_button, TRUE);
                         break;
                 case 3:
-                        gtk_widget_set_sensitive(FinishButton, TRUE);
-                        gtk_widget_set_sensitive(NextButton, FALSE);
+                        gtk_widget_set_sensitive(finish_button, FALSE);
+                        gtk_widget_set_sensitive(next_button, TRUE);
+                        break;
+                case 4:
+                        gtk_widget_set_sensitive(finish_button, TRUE);
+                        gtk_widget_set_sensitive(next_button, FALSE);
                         break;
                 default:
                         g_error("I'm on page %d of notebook AWNotebook, which shouldn't have happened. Pulling emergency breaks.", cp);
@@ -239,14 +267,13 @@ void wizard_account_dialog(ModestUI *modest_ui)
 
                 result=gtk_dialog_run(GTK_DIALOG(dialog));
 
-                switch (result)
-                {
+                switch (result) {
                 case 1:
                         if (advance_sanity_check(NULL, glade_xml, cp)==TRUE)
-                                gtk_notebook_next_page(GTK_NOTEBOOK(Notebook));
+                                gtk_notebook_next_page(GTK_NOTEBOOK(notebook));
                         break;
                 case 2:
-                        gtk_notebook_prev_page(GTK_NOTEBOOK(Notebook));
+                        gtk_notebook_prev_page(GTK_NOTEBOOK(notebook));
 			break;
 		case GTK_RESPONSE_ACCEPT:
 			account_added_successfully=wizard_account_add(glade_xml, modest_ui);
