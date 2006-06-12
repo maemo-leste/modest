@@ -52,6 +52,8 @@ modest_SOURCES=\
 	modest-tny-store-actions.h\
 	modest-editor-window.c\
 	modest-editor-window.h\
+	modest-viewer-window.c\
+	modest-viewer-window.h\
 	modest-ui.h
 
 modest_LDADD = \

@@ -27,7 +27,42 @@
 #include "../modest-text-utils.h"
 #include "../modest-tny-msg-actions.h"
 
-#include "../modest-editor-window.h"
+#include "../modest-viewer-window.h"
 
 #include "modest-ui-glade.h"
 #include "modest-ui-wizard.h"
+
+
+typedef struct {
+	ModestUI *modest_ui;
+	ModestViewerWindow *viewer_win;
+	GladeXML *glade_xml;
+} ViewerWinData;
+
+
+GtkContainer
+*modest_ui_new_viewer_window (ModestUI *modest_ui, gpointer *user_data)
+{
+	GtkWidget	*top_container;
+	GladeXML	*glade_xml;
+	ViewerWinData	*win_data;
+
+	glade_xml = glade_xml_new(MODEST_GLADE, "viewer_top_container", NULL);
+	if (!glade_xml)
+		return NULL;
+
+	win_data = g_malloc(sizeof(ViewerWinData));
+	win_data->modest_ui = modest_ui;
+	win_data->glade_xml = glade_xml;
+
+	*user_data = win_data;
+
+	top_container = glade_xml_get_widget(glade_xml, "viewer_top_container");
+	if (!top_container) {
+		g_object_unref(G_OBJECT(glade_xml));
+		return NULL;
+	}
+
+	return GTK_CONTAINER(top_container);
+}
+

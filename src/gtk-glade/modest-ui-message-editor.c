@@ -90,6 +90,11 @@ close_edit_window (GtkWidget *win, GdkEvent *event, gpointer data)
 		} else {
 			g_message("not closing window");
 		}
+	} else {
+		gtk_widget_hide (GTK_WIDGET(edit_win));
+		modest_window_mgr_unregister(priv->modest_window_mgr, G_OBJECT(edit_win));
+		gtk_widget_destroy(GTK_WIDGET(edit_win));
+		g_message("closing window");
 	}
 }
 
@@ -98,7 +103,6 @@ GtkContainer
 *modest_ui_new_editor_window (ModestUI *modest_ui, gpointer *user_data)
 {
 	GtkWidget       *top_container;
-
 	GladeXML		*glade_xml;
 	EditWinData		*win_data;
 
@@ -109,6 +113,8 @@ GtkContainer
 	win_data = g_malloc(sizeof(EditWinData));
 	win_data->modest_ui = modest_ui;
 	win_data->glade_xml = glade_xml;
+	win_data->attachments = NULL;
+
 	*user_data = win_data;
 
 	top_container = glade_xml_get_widget(glade_xml, "new_mail_top_container");
@@ -117,8 +123,6 @@ GtkContainer
 		return NULL;
 	}
 	
-	win_data->attachments = NULL; /* redundant */
-
 	return GTK_CONTAINER(top_container);
 }
 
@@ -299,6 +303,7 @@ new_editor_with_presets (ModestUI *modest_ui, const gchar *to_header,
 		gtk_window_set_title (GTK_WINDOW(edit_win), subject_header);
 	else
 		gtk_window_set_title (GTK_WINDOW(edit_win), _("Untitled"));
+
 	modest_window_mgr_register(priv->modest_window_mgr, G_OBJECT(edit_win), MODEST_EDIT_WINDOW, 0);
 
 	modest_editor_window_set_to_header(MODEST_EDITOR_WINDOW(edit_win), to_header);

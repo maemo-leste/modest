@@ -95,6 +95,8 @@ gboolean modest_ui_editor_window_set_subject_header(const gchar *subject, gpoint
 gboolean modest_ui_editor_window_set_body(const gchar *body, gpointer window_data);
 gboolean modest_ui_editor_window_update_attachments(gpointer window_data);
 
+GtkContainer *modest_ui_new_viewer_window (ModestUI *modest_ui, gpointer *user_data);
+
 G_END_DECLS
 
 #endif /* __MODEST_UI_H__ */

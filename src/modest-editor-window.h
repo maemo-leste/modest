@@ -81,7 +81,7 @@ gboolean modest_editor_window_set_modified(ModestEditorWindow *edit_win, gboolea
  *
  * Gets the state of the modified-flag of this instance. This flag can be used to store
  * information whether the contents of the editor window was modified by the
- * user or not. If it was modified (see also modest_editor_window_get_modified())
+ * user or not. If it was modified (see also modest_editor_window_set_modified())
  * a dialog can be presented to ask the user for confirmation.
  *
  * Returns: gboolean the new state of the modified flag
