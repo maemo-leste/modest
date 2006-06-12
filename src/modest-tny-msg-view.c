@@ -179,8 +179,6 @@ static gboolean
 on_link_clicked (GtkWidget *widget, const gchar *uri,
 				 ModestTnyMsgView *msg_view)
 {
-	ModestTnyMsgViewPrivate *priv;
-	
 	
 	if (g_str_has_prefix(uri, "attachment:")) {
 		/* save or open attachment */
@@ -427,7 +425,7 @@ attachments_as_html(ModestTnyMsgView *self, TnyMsgIface *msg)
 			                 id, show_attachments_inline);
 			printf("VF:%s\n", virtual_filename);
 			if (show_attachments_inline) {
-				g_string_append_printf(appendix, "<IMG src=\"%s\">\n<BR>", virtual_filename, filename, filename);
+				g_string_append_printf(appendix, "<IMG src=\"%s\">\n<BR>", virtual_filename);
 			}
 			g_string_append_printf(appendix, "<A href=\"attachment:%s\">%s</A>: %s<BR>\n", filename, filename, content_type);
 			g_free(virtual_filename);
