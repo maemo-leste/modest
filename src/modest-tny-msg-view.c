@@ -72,7 +72,7 @@ typedef struct _ModestTnyMsgViewPrivate ModestTnyMsgViewPrivate;
 struct _ModestTnyMsgViewPrivate {
 	GtkWidget *gtkhtml;
 	TnyMsgIface *msg;
-	ModestConf *conf;
+	gboolean show_attachments_inline;
 };
 #define MODEST_TNY_MSG_VIEW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                  MODEST_TYPE_TNY_MSG_VIEW, \
@@ -129,7 +129,7 @@ modest_tny_msg_view_init (ModestTnyMsgView *obj)
 	
 	priv->gtkhtml = gtk_html_new();
 	
-	priv->conf = NULL;
+	priv->show_attachments_inline = FALSE;
 
 	gtk_html_set_editable        (GTK_HTML(priv->gtkhtml), FALSE);
 	gtk_html_allow_selection     (GTK_HTML(priv->gtkhtml), TRUE);
@@ -148,11 +148,11 @@ modest_tny_msg_view_init (ModestTnyMsgView *obj)
 static void
 modest_tny_msg_view_finalize (GObject *obj)
 {	
-	
+	/* TODO! */
 }
 
 GtkWidget*
-modest_tny_msg_view_new (TnyMsgIface *msg, ModestConf *conf)
+modest_tny_msg_view_new (TnyMsgIface *msg, const gboolean show_attachments_inline)
 {
 	GObject *obj;
 	ModestTnyMsgView* self;
@@ -172,11 +172,10 @@ modest_tny_msg_view_new (TnyMsgIface *msg, ModestConf *conf)
 	if (msg)
 		modest_tny_msg_view_set_message (self, msg);
 	
-	priv->conf = conf;
+	priv->show_attachments_inline = show_attachments_inline;
 
 	return GTK_WIDGET(self);
 }
-
 
 
 static gboolean
@@ -262,8 +261,7 @@ on_url_requested (GtkWidget *widget, const gchar *uri,
 
 	g_message ("url requested: %s", uri);
 	
-	if (!modest_conf_get_bool(priv->conf,
-	            MODEST_CONF_MSG_VIEW_SHOW_ATTACHMENTS_INLINE, NULL))
+	if (!priv->show_attachments_inline)
 		return TRUE; /* debatable */
 	
 	if (g_str_has_prefix (uri, "cid:")) {
@@ -304,12 +302,23 @@ typedef struct  {
 
 
 static gchar *
+secure_filename(const gchar *fn)
+{
+	/* WIP */
+	gchar * s;
+	s = strdup(fn);
+	return s;
+}
+	
+	
+static gchar *
 construct_virtual_filename(const gchar *filename,
                            const gint position,
                            const gchar *id,
                            const gboolean active)
 {
 	GString *s;
+	gchar *fn;
 	
 	if (position < 0)
 		return "AttachmentInvalid";
@@ -323,8 +332,11 @@ construct_virtual_filename(const gchar *filename,
 	if (id)
 		g_string_append(s, id);
 	g_string_append_c(s, ':');
-	if (filename)
-		g_string_append(s, filename);
+	
+	fn = secure_filename(filename);
+	if (fn)
+		g_string_append(s, fn);
+	g_free(fn);
 	g_string_append_c(s, ':');
 	return g_string_free(s, FALSE);
 }
@@ -401,7 +413,6 @@ attachments_as_html(ModestTnyMsgView *self, TnyMsgIface *msg)
 	const GList *attachment_list, *attachment;
 	const gchar *content_type, *filename, *id;
 	gchar *virtual_filename;
-	gboolean show_attachments_inline;
 	
 	if (!msg)
 		return g_malloc0(1);
@@ -430,9 +441,7 @@ attachments_as_html(ModestTnyMsgView *self, TnyMsgIface *msg)
 				attachments_found = TRUE;
 			id = tny_msg_mime_part_iface_get_content_id(
 										TNY_MSG_MIME_PART_IFACE(attachment->data));
-			show_attachments_inline = modest_conf_get_bool(priv->conf,
-			        MODEST_CONF_MSG_VIEW_SHOW_ATTACHMENTS_INLINE, NULL);
-			if (show_attachments_inline) {
+			if (priv->show_attachments_inline) {
 				virtual_filename = construct_virtual_filename(filename,
 				        g_list_position((GList *)attachment_list, (GList *) attachment),
 				        id, TRUE);

@@ -54,7 +54,7 @@ GType        modest_tny_msg_view_get_type    (void) G_GNUC_CONST;
  *  
  * Returns: a new ModestTnyMsgView widget, or NULL if there's an error
  */
-GtkWidget*   modest_tny_msg_view_new          (TnyMsgIface *tny_msg, ModestConf *conf);
+GtkWidget*   modest_tny_msg_view_new          (TnyMsgIface *tny_msg, gboolean show_attachments_inline);
 
 
 /**
