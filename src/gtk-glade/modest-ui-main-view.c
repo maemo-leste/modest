@@ -90,6 +90,7 @@ modest_ui_show_main_window (ModestUI *modest_ui)
 	GtkWidget     *account_settings_item;
 	GtkWidget     *delete_item;
 	GtkWidget     *view_attachments_item;
+	GtkWidget     *new_account_item;
 
 	GtkWidget  *folder_view_holder,
 		*header_view_holder,
@@ -151,7 +152,7 @@ modest_ui_show_main_window (ModestUI *modest_ui)
 	g_signal_connect (account_settings_item, "activate",
 		G_CALLBACK(on_account_settings1_activate), modest_ui);
 	*/
-#if 0
+
 	new_account_item = glade_xml_get_widget (priv->glade_xml, "NewAccountWizardMenuItem");
 	if (!new_account_item) {
 		g_warning ("The new account item isn't available!\n");
@@ -160,7 +161,7 @@ modest_ui_show_main_window (ModestUI *modest_ui)
 
 	g_signal_connect (new_account_item, "activate",
 		G_CALLBACK(new_wizard_account), modest_ui);
-#endif
+
 	delete_item = glade_xml_get_widget (priv->glade_xml, "delete1");
 	if (!delete_item) {
 		g_warning ("The delete item isn't available!\n");
