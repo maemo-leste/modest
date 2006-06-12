@@ -172,7 +172,7 @@ modest_tny_msg_view_new (TnyMsgIface *msg, const gboolean show_attachments_inlin
 	if (msg)
 		modest_tny_msg_view_set_message (self, msg);
 	
-	priv->show_attachments_inline = show_attachments_inline;
+	modest_tny_msg_view_set_show_attachments_inline_flag(self, show_attachments_inline);
 
 	return GTK_WIDGET(self);
 }
@@ -261,7 +261,7 @@ on_url_requested (GtkWidget *widget, const gchar *uri,
 
 	g_message ("url requested: %s", uri);
 	
-	if (!priv->show_attachments_inline)
+	if (!modest_tny_msg_view_get_show_attachments_inline_flag(msg_view))
 		return TRUE; /* debatable */
 	
 	if (g_str_has_prefix (uri, "cid:")) {
@@ -304,10 +304,23 @@ typedef struct  {
 static gchar *
 secure_filename(const gchar *fn)
 {
-	/* WIP */
-	gchar * s;
-	s = strdup(fn);
-	return s;
+	gchar *tmp, *p;
+	GString *s;
+	
+	s = g_string_new("");
+#if 1 || DEBUG
+	tmp = g_strdup(fn);
+	for (p = tmp; p[0] ; p++ ) {
+		p[0] &= 0x5f; /* 01011111 */
+		p[0] |= 0x40; /* 01000000 */
+	}
+	g_string_printf(s, "0x%x:%s", g_str_hash(fn), tmp);
+	g_free(tmp);
+	return g_string_free(s, FALSE);
+#else
+	g_string_printf(s, "0x%x", g_str_hash(fn));
+	return g_string_free(s, FALSE);
+#endif
 }
 	
 	
@@ -321,7 +334,7 @@ construct_virtual_filename(const gchar *filename,
 	gchar *fn;
 	
 	if (position < 0)
-		return "AttachmentInvalid";
+		return g_strdup("AttachmentInvalid");
 
 	s = g_string_new("");
 	if (active)
@@ -441,7 +454,7 @@ attachments_as_html(ModestTnyMsgView *self, TnyMsgIface *msg)
 				attachments_found = TRUE;
 			id = tny_msg_mime_part_iface_get_content_id(
 										TNY_MSG_MIME_PART_IFACE(attachment->data));
-			if (priv->show_attachments_inline) {
+			if (modest_tny_msg_view_get_show_attachments_inline_flag(self)) {
 				virtual_filename = construct_virtual_filename(filename,
 				        g_list_position((GList *)attachment_list, (GList *) attachment),
 				        id, TRUE);
@@ -790,4 +803,29 @@ modest_tny_msg_view_redraw (ModestTnyMsgView *self)
 	g_return_if_fail (self);
 	priv = MODEST_TNY_MSG_VIEW_GET_PRIVATE(self);
 	modest_tny_msg_view_set_message(self, priv->msg);
+}
+
+gboolean
+modest_tny_msg_view_get_show_attachments_inline_flag (ModestTnyMsgView *self)
+{
+	ModestTnyMsgViewPrivate *priv;
+
+	g_return_val_if_fail (self, FALSE);
+	priv = MODEST_TNY_MSG_VIEW_GET_PRIVATE(self);
+	return priv->show_attachments_inline;
+}
+
+gboolean
+modest_tny_msg_view_set_show_attachments_inline_flag (ModestTnyMsgView *self, gboolean flag)
+{
+	ModestTnyMsgViewPrivate *priv;
+	gboolean oldflag;
+
+	g_return_val_if_fail (self, FALSE);
+	priv = MODEST_TNY_MSG_VIEW_GET_PRIVATE(self);
+	oldflag = priv->show_attachments_inline;
+	priv->show_attachments_inline = flag;
+	if (priv->show_attachments_inline != oldflag)
+		modest_tny_msg_view_redraw(self);
+	return priv->show_attachments_inline;
 }

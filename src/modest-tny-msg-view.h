@@ -87,6 +87,10 @@ void         modest_tny_msg_view_redraw  (ModestTnyMsgView *self);
  */
 gchar *      modest_tny_msg_view_get_selected_text (ModestTnyMsgView *self);
 
+gboolean modest_tny_msg_view_get_show_attachments_inline_flag (ModestTnyMsgView *self);
+
+gboolean modest_tny_msg_view_set_show_attachments_inline_flag (ModestTnyMsgView *self, gboolean flag);
+
 G_END_DECLS
 
 #endif /* __MODEST_TNY_MSG_VIEW_H__ */

@@ -95,6 +95,7 @@ modest_ui_show_main_window (ModestUI *modest_ui)
 	GtkWidget  *folder_view_holder,
 		*header_view_holder,
 		*mail_paned;
+	gboolean show_attachments_inline;
 
 	priv = MODEST_UI_GET_PRIVATE(modest_ui);
 
@@ -131,12 +132,16 @@ modest_ui_show_main_window (ModestUI *modest_ui)
 	g_signal_connect (G_OBJECT(folder_view), "folder_selected",
  			  G_CALLBACK(on_folder_clicked), modest_ui);
 
-	/* TODO: get view->attachments_inline from conf instead of TRUE */
-	message_view  = GTK_WIDGET(modest_tny_msg_view_new (NULL, TRUE));
+	show_attachments_inline = modest_conf_get_bool(priv->modest_conf,
+	                                     MODEST_CONF_MSG_VIEW_SHOW_ATTACHMENTS_INLINE,
+	                                     NULL);
+
+	message_view  = GTK_WIDGET(modest_tny_msg_view_new (NULL, show_attachments_inline));
 	if (!message_view) {
 		g_warning ("failed to create message view");
 		return FALSE;
 	}
+	
 	mail_paned = glade_xml_get_widget (priv->glade_xml, "mail_paned");
 	gtk_paned_add2 (GTK_PANED(mail_paned), message_view);
 
@@ -414,20 +419,24 @@ on_view_attachments_toggled(GtkWidget *widget, ModestUI *modest_ui)
 	GtkWidget *view_attachments_item, *paned;
 	ModestTnyMsgView *msg_view;
 	ModestUIPrivate *priv;
+	gboolean view_attachments_inline;
 
 	priv = MODEST_UI_GET_PRIVATE(modest_ui);
 	view_attachments_item = glade_xml_get_widget (priv->glade_xml, "menu_view_attachments");
 	g_return_if_fail(view_attachments_item);
-
-	modest_conf_set_bool(priv->modest_conf,
-							 MODEST_CONF_MSG_VIEW_SHOW_ATTACHMENTS_INLINE,
-							 gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(view_attachments_item)),
-							 NULL);
-
-	/* refresh message view */
+	
 	paned = glade_xml_get_widget (priv->glade_xml,"mail_paned");
 	msg_view = MODEST_TNY_MSG_VIEW(gtk_paned_get_child2 (GTK_PANED(paned)));
-	modest_tny_msg_view_redraw(MODEST_TNY_MSG_VIEW(msg_view));
+	
+	view_attachments_inline = gtk_check_menu_item_get_active(
+	                                GTK_CHECK_MENU_ITEM(view_attachments_item));
+	
+	modest_conf_set_bool(priv->modest_conf,
+	                     MODEST_CONF_MSG_VIEW_SHOW_ATTACHMENTS_INLINE,
+	                     view_attachments_inline,
+	                     NULL);
+	
+	modest_tny_msg_view_set_show_attachments_inline_flag(msg_view, view_attachments_inline);
 }
 
 
