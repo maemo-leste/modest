@@ -190,3 +190,11 @@ on_open_message_clicked (GtkWidget *widget, gpointer user_data)
 
 	open_message_viewer_window(modest_ui);
 }
+
+void
+on_message_activated (GtkTreeView *tree_view, GtkTreePath *path, GtkTreeViewColumn *column, gpointer user_data)
+{
+	ModestUI *modest_ui = (ModestUI *)user_data;
+
+	open_message_viewer_window(modest_ui);
+}

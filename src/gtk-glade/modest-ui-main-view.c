@@ -150,6 +150,10 @@ modest_ui_show_main_window (ModestUI *modest_ui)
 			  G_CALLBACK(on_message_clicked),
                           modest_ui);
 
+	g_signal_connect (header_view, "row-activated",
+			  G_CALLBACK(on_message_activated),
+                          modest_ui);
+
 	account_settings_item = glade_xml_get_widget (priv->glade_xml, "AccountSettingsMenuItem");
 	if (!account_settings_item) {
 		g_warning ("The account settings item isn't available!\n");
