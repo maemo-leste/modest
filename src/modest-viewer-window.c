@@ -124,7 +124,7 @@ modest_viewer_window_new (ModestUI *ui, TnyMsgIface *msg)
 
 	gtk_container_add(GTK_CONTAINER(self), w);
 	priv->user_data = data;
-	priv->msg_view = msg_view;
+	priv->msg_view = MODEST_TNY_MSG_VIEW(msg_view);
 
 	return GTK_WIDGET(self);
 }
