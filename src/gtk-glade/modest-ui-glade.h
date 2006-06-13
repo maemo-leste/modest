@@ -5,6 +5,7 @@
 #define __MODEST_UI_GLADE_H__
 
 #include "../modest-ui.h"
+#include "../modest-account-mgr.h"
 #include "../modest-identity-mgr.h"
 #include "../modest-window-mgr.h"
 #include "../modest-tny-account-store.h"
