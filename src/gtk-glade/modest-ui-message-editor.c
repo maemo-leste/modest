@@ -257,7 +257,8 @@ void on_editor_buffer_changed (GtkTextBuffer *textbuffer,
 static void
 new_editor_with_presets (ModestUI *modest_ui, const gchar *to_header,
 							const gchar *cc_header, const gchar *bcc_header,
-							const gchar *subject_header, const gchar *body)
+							const gchar *subject_header, const gchar *body,
+                            const GList *attachments)
 {
 	GtkWidget *edit_win;
 	GladeXML *glade_xml;
@@ -315,6 +316,7 @@ new_editor_with_presets (ModestUI *modest_ui, const gchar *to_header,
 	modest_editor_window_set_bcc_header(MODEST_EDITOR_WINDOW(edit_win), bcc_header);
 	modest_editor_window_set_subject_header(MODEST_EDITOR_WINDOW(edit_win), subject_header);
 	modest_editor_window_set_body(MODEST_EDITOR_WINDOW(edit_win), body);
+	modest_editor_window_set_attachments(MODEST_EDITOR_WINDOW(edit_win), attachments);
 
 	modest_editor_window_set_modified(MODEST_EDITOR_WINDOW(edit_win), FALSE);
 
@@ -327,7 +329,7 @@ on_new_mail_clicked (GtkWidget *widget, gpointer user_data)
 {
 	ModestUI *modest_ui = (ModestUI *) modest_ui;
 
-	new_editor_with_presets(modest_ui, "", "", "", "", "");
+	new_editor_with_presets(modest_ui, "", "", "", "", "", NULL);
 }
 
 
@@ -353,6 +355,8 @@ quoted_send_msg (ModestUI *modest_ui, quoted_send_type qstype)
 	gchar *unquoted, *quoted;
 	time_t sent_date;
 	gint line_limit = 76;
+	
+	GList *attachments = NULL;
 
 	g_return_if_fail (modest_ui);
 
@@ -411,11 +415,17 @@ quoted_send_msg (ModestUI *modest_ui, quoted_send_type qstype)
 	switch (qstype) {
 		case QUOTED_SEND_REPLY:
 			g_string_prepend(re_sub, _("Re: "));
-			new_editor_with_presets(modest_ui, from, /* cc */ "", /* bcc */ "", re_sub->str, quoted);
+			new_editor_with_presets(modest_ui, from, /* cc */ "", /* bcc */ "", re_sub->str, quoted, attachments);
 			break;
 		case QUOTED_SEND_FORWARD:
+			attachments = modest_tny_attachment_new_list_from_msg(msg, FALSE);
 			g_string_prepend(re_sub, _("Fwd: "));
-			new_editor_with_presets(modest_ui, /* from */ "", /* cc */ "", /* bcc */ "", re_sub->str, quoted);
+			new_editor_with_presets(modest_ui, /* from */ "", /* cc */ "", /* bcc */ "", re_sub->str, quoted, attachments);
+			break;
+		case QUOTED_SEND_FORWARD_ATTACHED:
+			attachments = modest_tny_attachment_new_list_from_msg(msg, TRUE);
+			g_string_prepend(re_sub, _("Fwd: "));
+			new_editor_with_presets(modest_ui, /* from */ "", /* cc */ "", /* bcc */ "", re_sub->str, "", attachments);
 			break;
 		default:
 			break;
@@ -518,10 +528,6 @@ on_send_button_clicked (GtkWidget *widget, ModestEditorWindow *modest_editwin)
 							     MODEST_IDENTITY_DEFAULT_IDENTITY,
 							     MODEST_IDENTITY_EMAIL, NULL);
 	attachments = modest_editor_window_get_attachments(modest_editwin);
-	/* while (attachments) {
-		printf("att: %s\n", (gchar *) attachments->data);
-		attachments = attachments->next;
-	} */
 	if (!email_from)
 		email_from = "";
 	
@@ -534,6 +540,7 @@ on_send_button_clicked (GtkWidget *widget, ModestEditorWindow *modest_editwin)
 						   body,
 						   attachments);
 
+	modest_tny_attachment_free_list(attachments);
 	g_free (body);
 	g_object_unref (G_OBJECT(actions));
 

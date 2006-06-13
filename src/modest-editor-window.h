@@ -159,11 +159,11 @@ gboolean modest_editor_window_attach_file(ModestEditorWindow *edit_win, ModestTn
  * @edit_win: a ModestEditorWindow instance
  * @attachments: a list of attachments
  *
- * Sets the list of attachments to *attachments
+ * Frees the current attachments, then sets the list of attachments to *attachments
  *
  * Returns: The new GList* of attachments.
  */
-GList * modest_editor_window_set_attachments(ModestEditorWindow *edit_win, GList* attachments);
+GList * modest_editor_window_set_attachments(ModestEditorWindow *edit_win, const GList* attachments);
 
 /**
  * modest_editor_window_get_attachments:

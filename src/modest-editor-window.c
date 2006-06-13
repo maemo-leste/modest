@@ -248,15 +248,19 @@ gboolean modest_editor_window_attach_file(ModestEditorWindow *edit_win, ModestTn
 	return modest_ui_editor_window_update_attachments(priv->user_data);
 }
 
-GList * modest_editor_window_set_attachments(ModestEditorWindow *edit_win, GList* attachments)
+GList * modest_editor_window_set_attachments(ModestEditorWindow *edit_win, const GList* attachments)
 {
 	ModestEditorWindowPrivate *priv;
+	GList *pos;
 
 	g_return_val_if_fail(edit_win, NULL);
 	
 	priv = MODEST_EDITOR_WINDOW_GET_PRIVATE(edit_win);
 
-	priv->attachments = attachments;
+	modest_tny_attachment_free_list(priv->attachments);
+	priv->attachments = g_list_copy((GList *)attachments);
+	for (pos = priv->attachments ; pos ; pos = pos->next )
+		g_object_ref(pos->data);
 	return priv->attachments;
 }
 

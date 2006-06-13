@@ -164,7 +164,7 @@ modest_tny_transport_actions_send_message (ModestTnyTransportActions *self,
 	GList *pos;
 	gchar *content_type;
 	const gchar *attachment_content_type;
-	gchar *attachment_filename;
+	const gchar *attachment_filename;
 	
 	new_msg          = TNY_MSG_IFACE(tny_msg_new ());
 	headers          = TNY_MSG_HEADER_IFACE(tny_msg_header_new ());
@@ -200,16 +200,16 @@ modest_tny_transport_actions_send_message (ModestTnyTransportActions *self,
 	}
 	
 	for (    pos = (GList *)attachments_list;
-		     pos;
+	         pos;
 	         pos = pos->next    ) {
 		attachment = pos->data;
-		attachment_filename = g_path_get_basename(
-		                                          modest_tny_attachment_get_filename(attachment));
+		attachment_filename = modest_tny_attachment_get_name(attachment);
 		attachment_stream = modest_tny_attachment_get_stream(attachment);
 		attachment_part = TNY_MSG_MIME_PART_IFACE (tny_msg_mime_part_new (
 		                                                camel_mime_part_new()));
 		
 		attachment_content_type = modest_tny_attachment_get_mime_type(attachment);
+				 
 		tny_msg_mime_part_iface_construct_from_stream (attachment_part,
 		                                               attachment_stream,
 		                                               attachment_content_type);
@@ -218,9 +218,7 @@ modest_tny_transport_actions_send_message (ModestTnyTransportActions *self,
 		tny_msg_mime_part_iface_set_filename(attachment_part, attachment_filename);
 		
 		tny_msg_iface_add_part (new_msg, attachment_part);
-		g_object_unref(G_OBJECT(attachment_stream));
 		//g_object_unref(G_OBJECT(attachment_part));
-		g_free(attachment_filename);
 		//close(file);
 	}
 	

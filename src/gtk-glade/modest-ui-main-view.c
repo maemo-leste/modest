@@ -61,6 +61,8 @@ static void on_view_attachments_toggled(GtkWidget *widget, gpointer user_data);
 
 static void on_sendreceive_button_clicked (GtkWidget *widget, gpointer user_data);
 
+static void on_forward_attached_activated (GtkWidget *widget, gpointer user_data);
+
 static void register_toolbar_callbacks (ModestUI *modest_ui);
 
 
@@ -90,6 +92,7 @@ modest_ui_show_main_window (ModestUI *modest_ui)
 	GtkWidget     *folder_view, *header_view;
 	GtkWidget     *message_view;
 	GtkWidget     *account_settings_item;
+	GtkWidget     *forward_attached_menu_item;
 	GtkWidget     *delete_item;
 	GtkWidget     *open_item;
 	GtkWidget     *view_attachments_item;
@@ -195,6 +198,14 @@ modest_ui_show_main_window (ModestUI *modest_ui)
 		g_warning ("The view_attachments_item isn't available!");
 		return FALSE;
 	}
+
+	forward_attached_menu_item = glade_xml_get_widget (priv->glade_xml, "forward_attached");
+	if (!forward_attached_menu_item) {
+		g_warning ("The forward_attached_menu_item isn't available!");
+		return FALSE;
+	}
+	g_signal_connect (forward_attached_menu_item, "activate", G_CALLBACK(on_forward_attached_activated),
+			  modest_ui);
 
 	gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(view_attachments_item),
 					modest_conf_get_bool(priv->modest_conf,
@@ -543,4 +554,11 @@ on_sendreceive_button_clicked (GtkWidget *widget, gpointer user_data)
 		// modest_tny_store_actions_update_folders (store_actions, TNY_STORE_ACCOUNT_IFACE (iter->data));
 	}
 	// g_object_unref (store_actions);
+}
+static void
+on_forward_attached_activated (GtkWidget *widget, gpointer user_data)
+{
+	ModestUI *modest_ui = (ModestUI *)user_data;
+
+	quoted_send_msg (modest_ui, QUOTED_SEND_FORWARD_ATTACHED);
 }

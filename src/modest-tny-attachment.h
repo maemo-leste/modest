@@ -6,6 +6,8 @@
 
 #include <glib-object.h>
 #include <tny-stream-iface.h>
+#include <tny-msg-iface.h>
+#include <tny-msg-mime-part-iface.h>
 /* other include files */
 
 G_BEGIN_DECLS
@@ -56,6 +58,10 @@ const gchar *modest_tny_attachment_get_mime_type (ModestTnyAttachment *self);
 void modest_tny_attachment_guess_mime_type (ModestTnyAttachment *self);
 
 TnyStreamIface * modest_tny_attachment_get_stream (ModestTnyAttachment *self);
+
+void modest_tny_attachment_free_list(GList *list);
+
+GList *modest_tny_attachment_new_list_from_msg(const TnyMsgIface *msg, gboolean with_body);
 
 G_END_DECLS
 

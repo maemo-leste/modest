@@ -3,9 +3,8 @@
 /* insert (c)/licensing information) */
 
 #include "modest-tny-attachment.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <fcntl.h>
+#include "modest-tny-msg-actions.h"
+
 #include <tny-stream-camel.h>
 #include <tny-fs-stream.h>
 #include <camel/camel.h>
@@ -108,7 +107,8 @@ modest_tny_attachment_finalize (GObject *obj)
 	g_free(priv->mime_type);
 	g_free(priv->disposition);
 	g_free(priv->content_id);
-	g_object_unref(G_OBJECT(priv->stream));
+	if (priv->stream)
+		g_object_unref(G_OBJECT(priv->stream));
 }
 
 ModestTnyAttachment *
@@ -134,6 +134,9 @@ modest_tny_attachment_get_name (ModestTnyAttachment *self)
 	ModestTnyAttachmentPrivate *priv;
 	
 	priv = MODEST_TNY_ATTACHMENT_GET_PRIVATE(self);
+	if (!priv->name)
+		if (priv->filename)
+			priv->name = g_path_get_basename(priv->filename);
 	return priv->name;
 }
 
@@ -198,7 +201,7 @@ modest_tny_attachment_guess_mime_type (ModestTnyAttachment *self)
 	
 	g_free(priv->mime_type);
 	if (suffixes[pos])
-		priv->mime_type = types[pos];
+		priv->mime_type = g_strdup(types[pos]);
 	else
 		priv->mime_type = NULL;
 }
@@ -215,6 +218,17 @@ make_stream_from_file(const gchar * filename)
 	return TNY_STREAM_IFACE(tny_stream_camel_new(camel_stream_fs_new_with_fd(file)));
 }
 
+void
+modest_tny_attachment_set_stream(ModestTnyAttachment *self, TnyStreamIface *thing)
+{
+	ModestTnyAttachmentPrivate *priv;
+	
+	priv = MODEST_TNY_ATTACHMENT_GET_PRIVATE(self);
+	if (priv->stream)
+		g_object_unref(G_OBJECT(priv->stream));
+	priv->stream = thing;
+}
+
 TnyStreamIface *
 modest_tny_attachment_get_stream (ModestTnyAttachment *self)
 {
@@ -225,4 +239,69 @@ modest_tny_attachment_get_stream (ModestTnyAttachment *self)
 		if (priv->filename)
 			priv->stream = make_stream_from_file(priv->filename);
 	return priv->stream;
+}
+
+
+void
+modest_tny_attachment_free_list(GList *list)
+{
+	GList *pos;
+	
+	for (pos = list; pos; pos = pos->next)
+		if (pos->data)
+			g_object_unref(pos->data);
+	g_list_free(list);
+	return;
+}
+
+
+ModestTnyAttachment *
+modest_tny_attachment_new_from_mime_part(TnyMsgMimePartIface *part)
+{
+	TnyStreamIface *mem_stream;
+	ModestTnyAttachment *self;
+	
+	mem_stream = TNY_STREAM_IFACE(tny_stream_camel_new(camel_stream_mem_new()));
+	self = modest_tny_attachment_new();
+	tny_msg_mime_part_iface_decode_to_stream(part, mem_stream);
+	tny_stream_iface_reset(mem_stream);
+	modest_tny_attachment_set_stream(self, mem_stream);
+	modest_tny_attachment_set_mime_type(self,
+	                                    tny_msg_mime_part_iface_get_content_type(part));
+	modest_tny_attachment_set_name(self,
+	                                    tny_msg_mime_part_iface_get_filename(part));
+	return self;
+}
+
+
+GList *
+modest_tny_attachment_new_list_from_msg(const TnyMsgIface *msg, gboolean with_body)
+{
+	GList *list = NULL;
+	const GList *attachments;
+	TnyMsgMimePartIface *part;
+	ModestTnyAttachment *att;
+	
+	if (with_body) {
+		/* TODO: make plain over html configurable */
+		part = modest_tny_msg_actions_find_body_part ((TnyMsgIface *)msg, "text/plain");
+		if (!part) 
+			part = modest_tny_msg_actions_find_body_part ((TnyMsgIface *)msg, "text/html");
+		if (part) {
+			att = modest_tny_attachment_new_from_mime_part(part);
+			/* TODO: i18n */
+			modest_tny_attachment_set_name(att, "original message");
+			list = g_list_append(list, att);
+		}
+	}
+	attachments = tny_msg_iface_get_parts((TnyMsgIface *)msg);
+	while (attachments) {
+		part = attachments->data;
+		if (tny_msg_mime_part_iface_is_attachment(part)) {
+			att = modest_tny_attachment_new_from_mime_part(part);
+			list = g_list_append(list, att);
+		}
+		attachments = attachments->next;
+	}
+	return list;
 }
