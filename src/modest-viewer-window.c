@@ -28,8 +28,6 @@ struct _ModestViewerWindowPrivate {
 /* globals */
 static GtkWindowClass *parent_class = NULL;
 
-/* uncomment the following if you have defined any signals */
-/* static guint signals[LAST_SIGNAL] = {0}; */
 
 GType
 modest_viewer_window_get_type (void)
@@ -94,9 +92,6 @@ modest_viewer_window_finalize (GObject *obj)
 	if (priv->user_data)
 		g_free(priv->user_data);
 
-//	if (priv->msg_view)
-//		gtk_widget_destroy(GTK_WIDGET(priv->msg_view));
-
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
@@ -143,8 +138,6 @@ gpointer modest_viewer_window_get_data(ModestViewerWindow *viewer_win)
 	}
 	priv = MODEST_VIEWER_WINDOW_GET_PRIVATE(viewer_win);
 
-	// g_message("get priv->data = %p", priv->user_data);
-
 	return priv->user_data;
 }
 
@@ -158,8 +151,6 @@ ModestTnyMsgView
 		return NULL;
 	}
 	priv = MODEST_VIEWER_WINDOW_GET_PRIVATE(viewer_win);
-
-	// g_message("get priv->data = %p", priv->user_data);
 
 	return priv->msg_view;
 }

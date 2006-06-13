@@ -5,7 +5,6 @@
 #define __MODEST_VIEWER_WINDOW_H__
 
 #include <gtk/gtkwindow.h>
-/* other include files */
 
 G_BEGIN_DECLS
 
@@ -22,30 +21,34 @@ typedef struct _ModestViewerWindowClass ModestViewerWindowClass;
 
 struct _ModestViewerWindow {
 	 GtkWindow parent;
-	/* insert public members, if any */
 };
 
 struct _ModestViewerWindowClass {
 	GtkWindowClass parent_class;
-	/* insert signal callback declarations, eg. */
-	/* void (* my_event) (ModestViewerWindow* obj); */
 };
 
 /* member functions */
 GType        modest_viewer_window_get_type    (void) G_GNUC_CONST;
 
-/* typical parameter-less _new function */
-/* if this is a kind of GtkWidget, it should probably return at GtkWidget*, */
-/*    otherwise probably a GObject*. */
 GtkWidget*   modest_viewer_window_new (ModestUI *ui, TnyMsgIface *msg);
 
+/**
+ * modest_viewer_window_get_data:
+ * @viewer_win: a ModestViewerWindow instance
+ *
+ * Retrieves the data pointer that was set at creation of this instance
+ *
+ * Returns: the data pointer
+ */
 gpointer modest_viewer_window_get_data(ModestViewerWindow *viewer_win);
 
+/**
+ * modest_viewer_window_get_tiny_msg_view:
+ * @viewer_win: a ModestViewerWindow instance
+ *
+ * Returns: the ModestTnyMsgView widget from the viewer instance
+ */
 ModestTnyMsgView *modest_viewer_window_get_tiny_msg_view(ModestViewerWindow *viewer_win);
-
-/* fill in other public functions, eg.: */
-/* 	void       modest_viewer_window_do_something (ModestViewerWindow *self, const gchar* param); */
-/* 	gboolean   modest_viewer_window_has_foo      (ModestViewerWindow *self, gint value); */
 
 
 G_END_DECLS
