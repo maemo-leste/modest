@@ -1,19 +1,13 @@
-/* modest-ui-wizzard.h */
+/* modest-ui-wizard.h */
 /* insert (c)/licensing information) */
 
-#ifndef __MODEST_UI_WIZZARD_H__
-#define __MODEST_UI_WIZZARD_H__
+#ifndef __MODEST_UI_WIZARD_H__
+#define __MODEST_UI_WIZARD_H__
 
 #include "modest-ui-glade.h"
-
-void wizard_account_dialog(ModestUI *);
 
 void new_wizard_account (GtkWidget *,
                          gpointer);
 
-void setup_account_wizardry_menu(GtkWidget *,
-                                 ModestUI *);
-
-
-#endif /* __MODEST_UI_WIZZARD_H__ */
+#endif /* __MODEST_UI_WIZARD_H__ */
 

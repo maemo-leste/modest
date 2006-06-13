@@ -46,11 +46,6 @@ static void   modest_ui_last_window_closed (GObject *obj, gpointer data);
 
 static void   on_password_requested (ModestTnyAccountStore *account_store, const gchar *account_name, gpointer user_data);
 
-
-//static void on_account_settings1_activate (GtkMenuItem *,
-//				    gpointer);
-
-
 /* list my signals */
 enum {
 	/* MY_SIGNAL_1, */
@@ -305,67 +300,4 @@ on_account_selector_selection_changed (GtkWidget *widget,
 	free(account_name);
 }
 
-#if 0
-static void
-on_account_settings1_activate (GtkMenuItem *menuitem,
-			       gpointer user_data)
-{
-	GladeXML *glade_xml;
-	GtkWidget *advanced_account_setup;
-	ModestUIPrivate *priv;
-	gint retval;
-	GSList *account_name_list;
-	GSList *account_name_list_iter;
-	GtkListStore *account_names;
-	GtkTreeIter account_names_iter;
-	GtkWidget *account_selector;
-	GtkCellRenderer *renderer;
 
-
-        g_return_if_fail(MODEST_IS_UI(user_data));
-	priv = MODEST_UI_GET_PRIVATE(MODEST_UI(user_data));
-
-	glade_xml = glade_xml_new(MODEST_GLADE, "mailbox_setup_advanced", NULL);
-	advanced_account_setup = glade_xml_get_widget(glade_xml, "mailbox_setup_advanced");
-
-	account_name_list=modest_account_mgr_account_names(priv->modest_acc_mgr, NULL);
-	account_names = gtk_list_store_new(1, G_TYPE_STRING);
-
-	for (account_name_list_iter=account_name_list;
-	     account_name_list_iter!=NULL;
-	     account_name_list_iter=g_slist_next(account_name_list_iter))
-	{
-		gtk_list_store_append(account_names, &account_names_iter);
-		gtk_list_store_set(account_names, &account_names_iter,
-				   0, account_name_list_iter->data,
-				   -1);
-	}
-
-	g_slist_free(account_name_list);
-
-	account_selector = glade_xml_get_widget(glade_xml, "account_selector");
-	gtk_combo_box_set_model(GTK_COMBO_BOX(account_selector), GTK_TREE_MODEL(account_names));
-
-	renderer = gtk_cell_renderer_text_new ();
-	gtk_cell_layout_pack_start (GTK_CELL_LAYOUT (account_selector), renderer, TRUE);
-	gtk_cell_layout_set_attributes (GTK_CELL_LAYOUT (account_selector), renderer,
-					"text", 0,
-					NULL);
-
-	g_signal_connect(GTK_WIDGET(account_selector), "changed",
-			 G_CALLBACK(on_account_selector_selection_changed),
-			 GTK_WIDGET(advanced_account_setup));
-
-	gtk_combo_box_set_active(GTK_COMBO_BOX(account_selector), 0);
-
-	gtk_widget_show_all(GTK_WIDGET(advanced_account_setup));
-
-	retval=gtk_dialog_run(GTK_DIALOG(advanced_account_setup));
-
-	g_object_unref(account_names);
-
-	gtk_widget_destroy(GTK_WIDGET(advanced_account_setup));
-
-	g_object_unref(glade_xml);
-}
-#endif

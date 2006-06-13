@@ -17,7 +17,7 @@ noinst_LTLIBRARIES=\
 
 GLADE_FILES=\
 	modest.glade\
-	glade/*.png 
+	glade/*.png
 
 PIXMAP_FILES=\
 	pixmaps/*.png
@@ -33,7 +33,9 @@ libmodest_ui_la_SOURCES=\
 	modest-ui-message-viewer.c\
 	modest-ui-message-viewer.h\
 	modest-ui-wizard.h\
-	modest-ui-wizard.c
+	modest-ui-wizard.c\
+	modest-ui-account-setup.h\
+	modest-ui-account-setup.c
 
 LDADD = \
 	$(MODEST_GSTUFF_LIBS) \

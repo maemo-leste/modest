@@ -31,6 +31,7 @@
 
 #include "modest-ui-glade.h"
 #include "modest-ui-wizard.h"
+#include "modest-ui-account-setup.h"
 
 #include "modest-ui-main-view.h"
 #include "modest-ui-message-editor.h"
@@ -142,7 +143,7 @@ modest_ui_show_main_window (ModestUI *modest_ui)
 		g_warning ("failed to create message view");
 		return FALSE;
 	}
-	
+
 	mail_paned = glade_xml_get_widget (priv->glade_xml, "mail_paned");
 	gtk_paned_add2 (GTK_PANED(mail_paned), message_view);
 
@@ -159,10 +160,9 @@ modest_ui_show_main_window (ModestUI *modest_ui)
 		g_warning ("The account settings item isn't available!\n");
 		return FALSE;
 	}
-	/*
-	g_signal_connect (account_settings_item, "activate",
-		G_CALLBACK(on_account_settings1_activate), modest_ui);
-	*/
+
+        g_signal_connect (account_settings_item, "activate",
+                          G_CALLBACK(account_settings), modest_ui);
 
 	new_account_item = glade_xml_get_widget (priv->glade_xml, "NewAccountWizardMenuItem");
 	if (!new_account_item) {
@@ -436,18 +436,18 @@ on_view_attachments_toggled(GtkWidget *widget, ModestUI *modest_ui)
 	priv = MODEST_UI_GET_PRIVATE(modest_ui);
 	view_attachments_item = glade_xml_get_widget (priv->glade_xml, "menu_view_attachments");
 	g_return_if_fail(view_attachments_item);
-	
+
 	paned = glade_xml_get_widget (priv->glade_xml,"mail_paned");
 	msg_view = MODEST_TNY_MSG_VIEW(gtk_paned_get_child2 (GTK_PANED(paned)));
-	
+
 	view_attachments_inline = gtk_check_menu_item_get_active(
 	                                GTK_CHECK_MENU_ITEM(view_attachments_item));
-	
+
 	modest_conf_set_bool(priv->modest_conf,
 	                     MODEST_CONF_MSG_VIEW_SHOW_ATTACHMENTS_INLINE,
 	                     view_attachments_inline,
 	                     NULL);
-	
+
 	modest_tny_msg_view_set_show_attachments_inline_flag(msg_view, view_attachments_inline);
 }
 
