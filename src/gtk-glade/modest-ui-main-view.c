@@ -46,19 +46,20 @@ static GtkWidget* modest_main_window_header_tree (TnyMsgFolderIface *folder);
 static void on_folder_clicked (ModestTnyFolderTreeView *folder_tree,
 			       TnyMsgFolderIface *folder,
 			       gpointer data);
+
 static void on_message_clicked (ModestTnyFolderTreeView *folder_tree,
 				TnyMsgIface *message,
 				gpointer data);
 
-static void on_reply_clicked (GtkWidget *widget, ModestUI *modest_ui);
+static void on_reply_clicked (GtkWidget *widget, gpointer user_data);
 
-static void on_forward_clicked (GtkWidget *widget, ModestUI *modest_ui);
+static void on_forward_clicked (GtkWidget *widget, gpointer user_data);
 
-static void on_delete_clicked (GtkWidget *widget, ModestUI *modest_ui);
+static void on_delete_clicked (GtkWidget *widget, gpointer user_data);
 
-static void on_view_attachments_toggled(GtkWidget *widget, ModestUI *modest_ui);
+static void on_view_attachments_toggled(GtkWidget *widget, gpointer user_data);
 
-static void on_sendreceive_button_clicked (GtkWidget *widget, ModestUI *modest_ui);
+static void on_sendreceive_button_clicked (GtkWidget *widget, gpointer user_data);
 
 static void register_toolbar_callbacks (ModestUI *modest_ui);
 
@@ -196,14 +197,12 @@ modest_ui_show_main_window (ModestUI *modest_ui)
 	}
 
 	gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(view_attachments_item),
-									modest_conf_get_bool(priv->modest_conf,
-									MODEST_CONF_MSG_VIEW_SHOW_ATTACHMENTS_INLINE,
-									NULL));
+					modest_conf_get_bool(priv->modest_conf,
+					MODEST_CONF_MSG_VIEW_SHOW_ATTACHMENTS_INLINE,
+					NULL));
 
-	g_signal_connect (view_attachments_item,
-					  "toggled",
-					  G_CALLBACK(on_view_attachments_toggled),
-					  modest_ui);
+	g_signal_connect (view_attachments_item, "toggled",
+				G_CALLBACK(on_view_attachments_toggled), modest_ui);
 
 	register_toolbar_callbacks (modest_ui);
 
@@ -412,22 +411,27 @@ modest_main_window_folder_tree (ModestAccountMgr *modest_acc_mgr,
 
 
 static void
-on_reply_clicked (GtkWidget *widget, ModestUI *modest_ui)
+on_reply_clicked (GtkWidget *widget, gpointer user_data)
 {
+	ModestUI *modest_ui = (ModestUI *)user_data;
+
 	quoted_send_msg (modest_ui, QUOTED_SEND_REPLY);
 }
 
 
 static void
-on_forward_clicked (GtkWidget *widget, ModestUI *modest_ui)
+on_forward_clicked (GtkWidget *widget, gpointer user_data)
 {
+	ModestUI *modest_ui = (ModestUI *)user_data;
+
 	quoted_send_msg (modest_ui, QUOTED_SEND_FORWARD);
 }
 
 
 static void
-on_view_attachments_toggled(GtkWidget *widget, ModestUI *modest_ui)
+on_view_attachments_toggled(GtkWidget *widget, gpointer user_data)
 {
+	ModestUI *modest_ui = (ModestUI *)user_data;
 	GtkWidget *view_attachments_item, *paned;
 	ModestTnyMsgView *msg_view;
 	ModestUIPrivate *priv;
@@ -453,8 +457,9 @@ on_view_attachments_toggled(GtkWidget *widget, ModestUI *modest_ui)
 
 
 static void
-on_delete_clicked (GtkWidget *widget, ModestUI *modest_ui)
+on_delete_clicked (GtkWidget *widget, gpointer user_data)
 {
+	ModestUI *modest_ui = (ModestUI *)user_data;
 	GtkTreeSelection *sel;
 	GtkWidget *paned;
 	GtkTreeModel *model;
@@ -515,8 +520,9 @@ on_delete_clicked (GtkWidget *widget, ModestUI *modest_ui)
 
 
 static void
-on_sendreceive_button_clicked (GtkWidget *widget, ModestUI *modest_ui)
+on_sendreceive_button_clicked (GtkWidget *widget, gpointer user_data)
 {
+	ModestUI *modest_ui = (ModestUI *)user_data;
 	ModestUIPrivate *priv;
 	// ModestTnyStoreActions *store_actions;
 	TnyAccountStoreIface *account_store;
