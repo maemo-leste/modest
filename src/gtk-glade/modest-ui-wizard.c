@@ -12,6 +12,7 @@
 #endif /*HAVE_CONFIG_H*/
 
 #include "../modest-account-mgr.h"
+#include "../modest-identity-mgr.h"
 
 #include "modest-ui-glade.h"
 #include "modest-ui-wizard.h"
