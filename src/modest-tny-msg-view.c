@@ -173,8 +173,6 @@ modest_tny_msg_view_new (TnyMsgIface *msg, const gboolean show_attachments_inlin
 	
 	if (msg)
 		modest_tny_msg_view_set_message (self, msg);
-	else
-		g_message("empty");
 	
 	modest_tny_msg_view_set_show_attachments_inline_flag(self, show_attachments_inline);
 
