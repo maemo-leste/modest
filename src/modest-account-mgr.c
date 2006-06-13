@@ -3,6 +3,8 @@
 /* insert (c)/licensing information) */
 
 #include <string.h>
+#include "modest-marshal.h"
+#include "modest-account-keys.h"
 #include "modest-account-mgr.h"
 
 /* 'private'/'protected' functions */
@@ -16,8 +18,9 @@ static gchar *get_server_account_keyname (const gchar * accname,
 
 /* list my signals */
 enum {
-	/* MY_SIGNAL_1, */
-	/* MY_SIGNAL_2, */
+	ACCOUNT_CHANGE_SIGNAL,
+	ACCOUNT_REMOVE_SIGNAL,
+	ACCOUNT_ADD_SIGNAL,
 	LAST_SIGNAL
 };
 
@@ -32,15 +35,20 @@ struct _ModestAccountMgrPrivate {
 /* globals */
 static GObjectClass *parent_class = NULL;
 
-/* uncomment the following if you have defined any signals */
-/* static guint signals[LAST_SIGNAL] = {0}; */
+static guint signals[LAST_SIGNAL] = {0};
 
+
+/* map configuration changes to account changes */
 static void
 modest_account_mgr_check_change (ModestConf *conf, const gchar *key, 
                                  const gchar *new_value, gpointer user_data)
 {
 	ModestAccountMgr *amgr = user_data;
 	
+	
+	
+	g_signal_emit (amgr, signals[ACCOUNT_CHANGE_SIGNAL], 0, key, new_value);
+		
 	g_message ("value changed: %s %s\n", key, new_value);
 }
 
@@ -74,6 +82,7 @@ static void
 modest_account_mgr_class_init (ModestAccountMgrClass * klass)
 {
 	GObjectClass *gobject_class;
+	GType paramtypes[2] = {G_TYPE_POINTER, G_TYPE_POINTER};
 
 	gobject_class = (GObjectClass *) klass;
 
@@ -83,12 +92,26 @@ modest_account_mgr_class_init (ModestAccountMgrClass * klass)
 	g_type_class_add_private (gobject_class,
 				  sizeof (ModestAccountMgrPrivate));
 
-	/* signal definitions go here, e.g.: */
-/* 	signals[MY_SIGNAL_1] = */
-/* 		g_signal_new ("my_signal_1",....); */
-/* 	signals[MY_SIGNAL_2] = */
-/* 		g_signal_new ("my_signal_2",....); */
-/* 	etc. */
+	/* signal definitions */
+	signals[ACCOUNT_ADD_SIGNAL] = 
+ 		g_signal_newv ("account-add", 
+	                       G_TYPE_FROM_CLASS (klass), G_SIGNAL_RUN_LAST,
+		               NULL, NULL, NULL,
+		               g_cclosure_marshal_VOID__POINTER,
+		               G_TYPE_NONE, 1, paramtypes);
+	
+	signals[ACCOUNT_REMOVE_SIGNAL] = 
+ 		g_signal_newv ("account-remove", 
+	                       G_TYPE_FROM_CLASS (klass), G_SIGNAL_RUN_LAST,
+		               NULL, NULL, NULL,
+		               g_cclosure_marshal_VOID__POINTER,
+		               G_TYPE_NONE, 1, paramtypes);
+	signals[ACCOUNT_CHANGE_SIGNAL] = 
+ 		g_signal_newv ("account-change", 
+	                       G_TYPE_FROM_CLASS (klass), G_SIGNAL_RUN_LAST,
+		               NULL, NULL, NULL,
+		               modest_marshal_VOID__POINTER_POINTER,
+		               G_TYPE_NONE, 2, paramtypes);
 }
 
 

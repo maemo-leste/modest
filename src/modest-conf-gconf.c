@@ -4,6 +4,7 @@
 /* insert (c)/licensing information) */
 
 #include "modest-conf.h"
+#include "modest-marshal.h"
 #include <gconf/gconf-client.h>
 
 
@@ -32,42 +33,10 @@ static GObjectClass *parent_class = NULL;
 
 static guint signals[LAST_SIGNAL] = {0};
 
-typedef void (*MarshalFunc_VOID__POINTER_POINTER) (gpointer data1, 
-	gpointer arg_1, gpointer arg_2, gpointer data2);
-						    
-  
-static void
-modest_marshal_VOID__POINTER_POINTER (GClosure     *closure,
-                                      GValue       *return_value,
-                                      guint         n_param_values,
-                                      const GValue *param_values,
-                                      gpointer      invocation_hint,
-                                      gpointer      marshal_data)
-{
-	MarshalFunc_VOID__POINTER_POINTER callback;
-	GCClosure *cc = (GCClosure*) closure;
-	gpointer data1, data2;
-
-	g_return_if_fail (n_param_values == 3);
-
-	if (G_CCLOSURE_SWAP_DATA (closure)) {
-		data1 = closure->data;
-		data2 = g_value_peek_pointer (param_values + 0);
-	} else {
-		data1 = g_value_peek_pointer (param_values + 0);
-		data2 = closure->data;
-	}
-	
-	callback = (MarshalFunc_VOID__POINTER_POINTER) (marshal_data ? marshal_data : cc->callback);
-
-	callback (data1, g_value_get_pointer (param_values + 1),
-	          g_value_get_pointer (param_values + 2), data2);
-}
-
 void 
 modest_conf_key_changed (ModestConf* self, const gchar *key, const gchar *new_value)
 {
-
+	g_signal_emit (self, signals[KEY_CHANGED_SIGNAL], 0, key, new_value);
 }
 
 
@@ -99,6 +68,7 @@ modest_conf_class_init (ModestConfClass *klass)
 {
 	GObjectClass *gobject_class;
 	gobject_class = (GObjectClass*) klass;
+	GType paramtypes[2] = {G_TYPE_POINTER, G_TYPE_POINTER};
 
 	parent_class            = g_type_class_peek_parent (klass);
 	gobject_class->finalize = modest_conf_finalize;
@@ -107,13 +77,12 @@ modest_conf_class_init (ModestConfClass *klass)
 	
 	klass->key_changed = modest_conf_key_changed;
 
- 	signals[KEY_CHANGED_SIGNAL] = 
- 		g_signal_new ("key-changed", 
-	                      G_TYPE_FROM_CLASS (gobject_class), G_SIGNAL_RUN_LAST,
-		              G_STRUCT_OFFSET(ModestConfClass, key_changed),
-		              NULL, NULL,
-		              modest_marshal_VOID__POINTER_POINTER,
-		              G_TYPE_NONE, 2, G_TYPE_POINTER, G_TYPE_POINTER);
+	signals[KEY_CHANGED_SIGNAL] = 
+ 		g_signal_newv ("key-changed", 
+	                       G_TYPE_FROM_CLASS (gobject_class), G_SIGNAL_RUN_LAST,
+		               NULL, NULL, NULL,
+		               modest_marshal_VOID__POINTER_POINTER,
+		               G_TYPE_NONE, 2, paramtypes);
 }
 
 static void

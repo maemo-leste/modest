@@ -24,12 +24,10 @@ typedef struct _ModestTnyAccountStore      ModestTnyAccountStore;
 typedef struct _ModestTnyAccountStoreClass ModestTnyAccountStoreClass;
 
 struct _ModestTnyAccountStore {
-	//TnyAccountStore parent;
 	GObject parent;
 };
 
 struct _ModestTnyAccountStoreClass {
-	//TnyAccountStoreClass parent_class;
 	GObjectClass parent_class;
 
 	void (*password_requested) (ModestTnyAccountStore *self,

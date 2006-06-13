@@ -11,6 +11,15 @@ INCLUDES=\
 	-DPREFIX=\"@prefix@\" \
 	-Wall
 
+BUILT_SOURCES = modest-marshal.c modest-marshal.h
+
+modest-marshal.c:
+	glib-genmarshal --body --prefix=modest_marshal < marshall.list > modest-marshal.c
+	
+modest-marshal.h:
+	glib-genmarshal --header --prefix=modest_marshal < marshall.list > modest-marshal.h
+
+
 bin_PROGRAMS=\
 	modest
 
@@ -54,7 +63,9 @@ modest_SOURCES=\
 	modest-editor-window.h\
 	modest-viewer-window.c\
 	modest-viewer-window.h\
-	modest-ui.h
+	modest-ui.h \
+	modest-marshal.c \
+	modest-marshal.h
 
 modest_LDADD = \
 	$(MODEST_GSTUFF_LIBS) \

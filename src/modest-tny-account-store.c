@@ -192,8 +192,10 @@ modest_tny_account_store_new (ModestAccountMgr *modest_acc_mgr)
 	obj  = G_OBJECT(g_object_new(MODEST_TYPE_TNY_ACCOUNT_STORE, NULL));
 
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(obj);
-	g_object_ref(G_OBJECT(priv->modest_acc_mgr = modest_acc_mgr));
-
+	
+	g_object_ref(G_OBJECT(modest_acc_mgr));
+	priv->modest_acc_mgr = modest_acc_mgr;
+	
 	priv->device = (TnyDeviceIface*)tny_device_new();
 	if (!priv->device) {
 		g_warning ("Cannot create Device instance");
@@ -258,7 +260,7 @@ add_account  (TnyAccountStoreIface *self, TnyAccountIface *account)
 	ModestTnyAccountStore *account_store;
 	ModestTnyAccountStorePrivate *priv;
 
-	const gchar* account_name;
+	const gchar *account_name;
 	const gchar *hostname, *username, *proto;
 
 	g_return_val_if_fail (self, FALSE);
