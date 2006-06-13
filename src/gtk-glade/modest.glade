@@ -1499,9 +1499,9 @@
 	      <child>
 		<widget class="GtkLabel" id="label1">
 		  <property name="visible">True</property>
-		  <property name="label" translatable="yes">To:</property>
+		  <property name="label" translatable="yes">&lt;b&gt;To:&lt;/b&gt;</property>
 		  <property name="use_underline">False</property>
-		  <property name="use_markup">False</property>
+		  <property name="use_markup">True</property>
 		  <property name="justify">GTK_JUSTIFY_RIGHT</property>
 		  <property name="wrap">False</property>
 		  <property name="selectable">False</property>
@@ -1527,9 +1527,9 @@
 	      <child>
 		<widget class="GtkLabel" id="label2">
 		  <property name="visible">True</property>
-		  <property name="label" translatable="yes">Subject:</property>
+		  <property name="label" translatable="yes">&lt;b&gt;Subject:&lt;/b&gt;</property>
 		  <property name="use_underline">False</property>
-		  <property name="use_markup">False</property>
+		  <property name="use_markup">True</property>
 		  <property name="justify">GTK_JUSTIFY_RIGHT</property>
 		  <property name="wrap">False</property>
 		  <property name="selectable">False</property>
@@ -2262,9 +2262,9 @@
 	      <child>
 		<widget class="GtkLabel" id="label_from">
 		  <property name="visible">True</property>
-		  <property name="label" translatable="yes">From:</property>
+		  <property name="label" translatable="yes">&lt;b&gt;From:&lt;/b&gt;</property>
 		  <property name="use_underline">False</property>
-		  <property name="use_markup">False</property>
+		  <property name="use_markup">True</property>
 		  <property name="justify">GTK_JUSTIFY_RIGHT</property>
 		  <property name="wrap">False</property>
 		  <property name="selectable">False</property>
@@ -2290,9 +2290,9 @@
 	      <child>
 		<widget class="GtkLabel" id="label_subject">
 		  <property name="visible">True</property>
-		  <property name="label" translatable="yes">Subject:</property>
+		  <property name="label" translatable="yes">&lt;b&gt;Subject:&lt;/b&gt;</property>
 		  <property name="use_underline">False</property>
-		  <property name="use_markup">False</property>
+		  <property name="use_markup">True</property>
 		  <property name="justify">GTK_JUSTIFY_RIGHT</property>
 		  <property name="wrap">False</property>
 		  <property name="selectable">False</property>
@@ -2318,9 +2318,9 @@
 	      <child>
 		<widget class="GtkLabel" id="label_date">
 		  <property name="visible">True</property>
-		  <property name="label" translatable="yes">Date:</property>
+		  <property name="label" translatable="yes">&lt;b&gt;Date:&lt;/b&gt;</property>
 		  <property name="use_underline">False</property>
-		  <property name="use_markup">False</property>
+		  <property name="use_markup">True</property>
 		  <property name="justify">GTK_JUSTIFY_RIGHT</property>
 		  <property name="wrap">False</property>
 		  <property name="selectable">False</property>
@@ -2458,9 +2458,9 @@
 	      <child>
 		<widget class="GtkLabel" id="label_to">
 		  <property name="visible">True</property>
-		  <property name="label" translatable="yes">To:</property>
+		  <property name="label" translatable="yes">&lt;b&gt;To:&lt;/b&gt;</property>
 		  <property name="use_underline">False</property>
-		  <property name="use_markup">False</property>
+		  <property name="use_markup">True</property>
 		  <property name="justify">GTK_JUSTIFY_RIGHT</property>
 		  <property name="wrap">False</property>
 		  <property name="selectable">False</property>
