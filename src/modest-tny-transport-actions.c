@@ -20,9 +20,8 @@
 #include <camel/camel.h>
 #include <camel/camel-folder-summary.h>
 
-
-
 #include "modest-tny-transport-actions.h"
+#include "modest-tny-attachment.h"
 /* include other impl specific header files */
 
 /* 'private'/'protected' functions */
@@ -161,11 +160,12 @@ modest_tny_transport_actions_send_message (ModestTnyTransportActions *self,
 	TnyMsgMimePartIface *attachment_part, *text_body_part;
 	TnyMsgHeaderIface *headers;
 	TnyStreamIface *text_body_stream, *attachment_stream;
-	GList *attachment;
-	gchar *content_type, *attachment_content_type;
-	gchar *filename, *attachment_filename;
-	int file;
-
+	ModestTnyAttachment *attachment;
+	GList *pos;
+	gchar *content_type;
+	const gchar *attachment_content_type;
+	gchar *attachment_filename;
+	
 	new_msg          = TNY_MSG_IFACE(tny_msg_new ());
 	headers          = TNY_MSG_HEADER_IFACE(tny_msg_header_new ());
 	text_body_stream = TNY_STREAM_IFACE (tny_stream_camel_new
@@ -199,19 +199,17 @@ modest_tny_transport_actions_send_message (ModestTnyTransportActions *self,
 		//g_object_unref (G_OBJECT(text_body_part));
 	}
 	
-	for (    attachment = (GList *)attachments_list;
-		     attachment;
-	         attachment = attachment->next    ) {
-		filename = attachment->data;
-		attachment_filename = g_path_get_basename(filename);
-		file = open(filename, O_RDONLY);
-		attachment_stream = TNY_STREAM_IFACE(tny_stream_camel_new(
-		                                    camel_stream_fs_new_with_fd(file)));
-
+	for (    pos = (GList *)attachments_list;
+		     pos;
+	         pos = pos->next    ) {
+		attachment = pos->data;
+		attachment_filename = g_path_get_basename(
+		                                          modest_tny_attachment_get_filename(attachment));
+		attachment_stream = modest_tny_attachment_get_stream(attachment);
 		attachment_part = TNY_MSG_MIME_PART_IFACE (tny_msg_mime_part_new (
 		                                                camel_mime_part_new()));
 		
-		attachment_content_type = "image/jpeg"; /* later... */
+		attachment_content_type = modest_tny_attachment_get_mime_type(attachment);
 		tny_msg_mime_part_iface_construct_from_stream (attachment_part,
 		                                               attachment_stream,
 		                                               attachment_content_type);

@@ -8,7 +8,7 @@
 #include <gtk/gtkwindow.h>
 
 #include "modest-ui.h"
-
+#include "modest-tny-attachment.h"
 
 G_BEGIN_DECLS
 
@@ -152,7 +152,7 @@ gboolean modest_editor_window_set_body(ModestEditorWindow *edit_win, const gchar
  *
  * Returns: TRUE on success, FALSE otherwise
  */
-gboolean modest_editor_window_attach_file(ModestEditorWindow *edit_win, const gchar *filename);
+gboolean modest_editor_window_attach_file(ModestEditorWindow *edit_win, ModestTnyAttachment *attachment);
 
 /**
  * modest_editor_window_set_attachments:

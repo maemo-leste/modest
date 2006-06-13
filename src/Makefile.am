@@ -40,6 +40,8 @@ modest_SOURCES=\
 	modest-icon-factory.h\
 	modest-tny-account-store.h\
 	modest-tny-account-store.c\
+	modest-tny-attachment.h\
+	modest-tny-attachment.c\
 	modest-tny-folder-tree-view.h\
 	modest-tny-folder-tree-view.c\
 	modest-tny-header-tree-view.h\

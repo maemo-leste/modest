@@ -233,7 +233,7 @@ gboolean modest_editor_window_set_body(ModestEditorWindow *edit_win, const gchar
 }
 
 
-gboolean modest_editor_window_attach_file(ModestEditorWindow *edit_win, const gchar *filename)
+gboolean modest_editor_window_attach_file(ModestEditorWindow *edit_win, ModestTnyAttachment *attachment)
 {
 	ModestEditorWindowPrivate *priv;
 
@@ -243,7 +243,7 @@ gboolean modest_editor_window_attach_file(ModestEditorWindow *edit_win, const gc
 	
 	priv->attachments = g_list_append(
 							priv->attachments, 
-							g_strdup(filename));
+							attachment);
 	
 	return modest_ui_editor_window_update_attachments(priv->user_data);
 }

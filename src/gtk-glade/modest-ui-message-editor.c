@@ -27,6 +27,8 @@
 #include "../modest-text-utils.h"
 #include "../modest-tny-msg-actions.h"
 
+#include "../modest-tny-attachment.h"
+
 #include "../modest-editor-window.h"
 
 #include "modest-ui-glade.h"
@@ -429,7 +431,7 @@ on_attach_button_clicked (GtkWidget *widget, ModestEditorWindow *modest_editwin)
 {
 	/* open file selector */
 	GtkWidget *dialog;
-	gchar *mime_type;
+	ModestTnyAttachment *attachment;
 	gchar *filename = NULL;
 	
 	dialog = gtk_file_chooser_dialog_new ("Open File",
@@ -451,14 +453,11 @@ on_attach_button_clicked (GtkWidget *widget, ModestEditorWindow *modest_editwin)
 	if (!filename)
 		return;
 	
-	g_return_if_fail(g_str_has_suffix(filename, ".jpg")); /* for now... */
+	attachment = modest_tny_attachment_new();
+	modest_tny_attachment_set_filename(attachment, filename);
+	modest_tny_attachment_guess_mime_type(attachment);
 	
-	/* get mime type */
-	mime_type = "image/jpeg";
-	
-	/* attach file */
-	
-	modest_editor_window_attach_file(modest_editwin, filename);
+	modest_editor_window_attach_file(modest_editwin, attachment);
 	
 	g_free (filename);
 }
