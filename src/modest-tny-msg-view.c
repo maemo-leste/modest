@@ -168,8 +168,6 @@ modest_tny_msg_view_new (TnyMsgIface *msg, const gboolean show_attachments_inlin
 
 	if (priv->gtkhtml) 
 		gtk_container_add (GTK_CONTAINER(obj), priv->gtkhtml);
-	else
-		g_error("argh1");
 	
 	if (msg)
 		modest_tny_msg_view_set_message (self, msg);
