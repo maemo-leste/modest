@@ -3850,6 +3850,8 @@ Tap 'Advanced' to edit the advanced e-mail settings.</property>
   <property name="type">GTK_WINDOW_TOPLEVEL</property>
   <property name="window_position">GTK_WIN_POS_NONE</property>
   <property name="modal">False</property>
+  <property name="default_width">500</property>
+  <property name="default_height">400</property>
   <property name="resizable">True</property>
   <property name="destroy_with_parent">False</property>
   <property name="decorated">True</property>
@@ -3935,7 +3937,7 @@ Tap 'Advanced' to edit the advanced e-mail settings.</property>
 		    <widget class="GtkTreeView" id="IdentitiesTreeview">
 		      <property name="visible">True</property>
 		      <property name="can_focus">True</property>
-		      <property name="headers_visible">False</property>
+		      <property name="headers_visible">True</property>
 		      <property name="rules_hint">False</property>
 		      <property name="reorderable">False</property>
 		      <property name="enable_search">True</property>
@@ -4061,7 +4063,7 @@ Tap 'Advanced' to edit the advanced e-mail settings.</property>
 		    <widget class="GtkTreeView" id="AccountsTreeview">
 		      <property name="visible">True</property>
 		      <property name="can_focus">True</property>
-		      <property name="headers_visible">False</property>
+		      <property name="headers_visible">True</property>
 		      <property name="rules_hint">False</property>
 		      <property name="reorderable">False</property>
 		      <property name="enable_search">True</property>
