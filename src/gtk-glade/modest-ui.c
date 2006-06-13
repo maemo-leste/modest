@@ -181,7 +181,7 @@ modest_ui_new (ModestConf *modest_conf)
 			  NULL);
 
 	glade_init ();
-	priv->glade_xml = glade_xml_new (MODEST_GLADE, NULL,NULL);
+	priv->glade_xml = glade_xml_new (MODEST_GLADE, NULL, NULL);
 	if (!priv->glade_xml) {
 		g_warning ("failed to do glade stuff");
 		g_object_unref (obj);
@@ -203,9 +203,10 @@ modest_ui_new (ModestConf *modest_conf)
 			  G_CALLBACK(modest_ui_last_window_closed),
 			  NULL);
 
-	account_names_list=modest_account_mgr_server_account_names(modest_acc_mgr, NULL, MODEST_PROTO_TYPE_ANY, NULL, FALSE);
-	identities_list=modest_identity_mgr_identity_names(modest_id_mgr, NULL);
-	if (!(account_names_list!=NULL || identities_list!=NULL))
+	account_names_list = modest_account_mgr_server_account_names(modest_acc_mgr,
+					NULL, MODEST_PROTO_TYPE_ANY, NULL, FALSE);
+	identities_list = modest_identity_mgr_identity_names(modest_id_mgr, NULL);
+	if (!(account_names_list != NULL || identities_list != NULL))
 		wizard_account_dialog(MODEST_UI(obj));
 	g_slist_free(account_names_list);
 	g_slist_free(identities_list);
@@ -232,9 +233,9 @@ on_password_requested (ModestTnyAccountStore *account_store,
 	GtkWidget *infolabel;
 	GtkWidget *passentry;
 	gint retval;
-	const gchar *infostring=g_strconcat("Please enter the password for ", account_name, ".", NULL);
+	const gchar *infostring = g_strconcat(_("Please enter the password for "), account_name, ".", NULL);
 
-	passdialog = gtk_dialog_new_with_buttons("MyDialog",
+	passdialog = gtk_dialog_new_with_buttons(_("Password"),
 						 NULL,
 						 GTK_DIALOG_MODAL|GTK_DIALOG_DESTROY_WITH_PARENT,
 						 GTK_STOCK_OK,
@@ -243,10 +244,10 @@ on_password_requested (ModestTnyAccountStore *account_store,
 						 GTK_RESPONSE_REJECT,
 						 NULL);
 
-	vbox=gtk_vbox_new(FALSE, 0);
+	vbox = gtk_vbox_new(FALSE, 0);
 
-	infolabel=gtk_label_new(infostring);
-	passentry=gtk_entry_new();
+	infolabel = gtk_label_new(infostring);
+	passentry = gtk_entry_new();
 
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(passdialog)->vbox), infolabel, FALSE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(passdialog)->vbox), passentry, FALSE, FALSE, 0);
@@ -254,20 +255,19 @@ on_password_requested (ModestTnyAccountStore *account_store,
 
 	retval = gtk_dialog_run (GTK_DIALOG(passdialog));
 
-	switch (retval)
-	{
-	case GTK_RESPONSE_ACCEPT:
-		modest_account_mgr_set_server_account_string(modest_tny_account_store_get_accout_mgr(account_store),
+	switch (retval) {
+		case GTK_RESPONSE_ACCEPT:
+			modest_account_mgr_set_server_account_string(modest_tny_account_store_get_accout_mgr(account_store),
 							     account_name,
 							     "password",
 							     gtk_entry_get_text(GTK_ENTRY(passentry)),
 							     NULL);
-		break;
-	case GTK_RESPONSE_CANCEL:
-		/* FIXME:
-		 * What happens, if canceled?"
-		 */
-		break;
+			break;
+		case GTK_RESPONSE_CANCEL:
+			/* FIXME:
+			 * What happens, if canceled?"
+			 */
+			break;
 	}
 
 	gtk_widget_destroy (passdialog);
@@ -275,23 +275,17 @@ on_password_requested (ModestTnyAccountStore *account_store,
 
 
 void
-on_account_selector_selection_changed (GtkWidget *widget,
-				       gpointer user_data)
+on_account_selector_selection_changed (GtkWidget *widget, gpointer user_data)
 {
 	GtkTreeModel *model = gtk_combo_box_get_model(GTK_COMBO_BOX(widget));
 	GtkTreeIter iter;
 
 	gchar *account_name;
 
-	if (gtk_combo_box_get_active_iter(GTK_COMBO_BOX(widget), &iter))
-	{
-		gtk_tree_model_get(GTK_TREE_MODEL(model),
-				   &iter,
-				   0, &account_name,
-				   -1);
-	}
-	else
-	{
+	if (gtk_combo_box_get_active_iter(GTK_COMBO_BOX(widget), &iter)) {
+		gtk_tree_model_get(GTK_TREE_MODEL(model), &iter,
+				   0, &account_name, -1);
+	} else {
 		account_name="empty";
 	}
 
