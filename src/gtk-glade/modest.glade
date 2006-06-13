@@ -3908,7 +3908,7 @@ Tap 'Advanced' to edit the advanced e-mail settings.</property>
 	  <property name="enable_popup">False</property>
 
 	  <child>
-	    <widget class="GtkHBox" id="hbox20">
+	    <widget class="GtkHBox" id="IdentitiesPage">
 	      <property name="visible">True</property>
 	      <property name="homogeneous">False</property>
 	      <property name="spacing">10</property>
@@ -3923,7 +3923,7 @@ Tap 'Advanced' to edit the advanced e-mail settings.</property>
 		  <property name="window_placement">GTK_CORNER_TOP_LEFT</property>
 
 		  <child>
-		    <widget class="GtkTreeView" id="treeview1">
+		    <widget class="GtkTreeView" id="IdentitiesTreeview">
 		      <property name="visible">True</property>
 		      <property name="can_focus">True</property>
 		      <property name="headers_visible">False</property>
@@ -4034,7 +4034,7 @@ Tap 'Advanced' to edit the advanced e-mail settings.</property>
 	  </child>
 
 	  <child>
-	    <widget class="GtkHBox" id="hbox21">
+	    <widget class="GtkHBox" id="AccountsPage">
 	      <property name="visible">True</property>
 	      <property name="homogeneous">False</property>
 	      <property name="spacing">10</property>
@@ -4049,7 +4049,7 @@ Tap 'Advanced' to edit the advanced e-mail settings.</property>
 		  <property name="window_placement">GTK_CORNER_TOP_LEFT</property>
 
 		  <child>
-		    <widget class="GtkTreeView" id="treeview2">
+		    <widget class="GtkTreeView" id="AccountsTreeview">
 		      <property name="visible">True</property>
 		      <property name="can_focus">True</property>
 		      <property name="headers_visible">False</property>
