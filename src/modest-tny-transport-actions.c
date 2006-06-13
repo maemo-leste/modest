@@ -158,7 +158,7 @@ modest_tny_transport_actions_send_message (ModestTnyTransportActions *self,
 					   const GList *attachments_list)
 {
 	TnyMsgIface *new_msg;
-	TnyMsgMimePartIface *text_body_part, *attachment_part;
+	TnyMsgMimePartIface *attachment_part, *text_body_part;
 	TnyMsgHeaderIface *headers;
 	TnyStreamIface *text_body_stream, *attachment_stream;
 	GList *attachment;
@@ -169,11 +169,9 @@ modest_tny_transport_actions_send_message (ModestTnyTransportActions *self,
 	new_msg          = TNY_MSG_IFACE(tny_msg_new ());
 	headers          = TNY_MSG_HEADER_IFACE(tny_msg_header_new ());
 	text_body_stream = TNY_STREAM_IFACE (tny_stream_camel_new
-					(camel_stream_mem_new_with_buffer
-					 (body, strlen(body))));
-	text_body_part   = TNY_MSG_MIME_PART_IFACE (tny_msg_mime_part_new
-					     (camel_mime_part_new()));
-
+	                                     (camel_stream_mem_new_with_buffer
+	                                      (body, strlen(body))));
+	
 	tny_msg_header_iface_set_from (TNY_MSG_HEADER_IFACE (headers), from);
 	tny_msg_header_iface_set_to (TNY_MSG_HEADER_IFACE (headers), to);
 	tny_msg_header_iface_set_cc (TNY_MSG_HEADER_IFACE (headers), cc);
@@ -181,13 +179,29 @@ modest_tny_transport_actions_send_message (ModestTnyTransportActions *self,
 	tny_msg_header_iface_set_subject (TNY_MSG_HEADER_IFACE (headers), subject);
 	tny_msg_iface_set_header (new_msg, headers);
 
-	content_type = get_content_type(body);
-	tny_msg_mime_part_iface_construct_from_stream (text_body_part, text_body_stream, content_type);
-	tny_stream_iface_reset (text_body_stream);
 	
-	tny_msg_iface_add_part(new_msg, text_body_part);
-
-	for (attachment = (GList *)attachments_list; attachment; attachment = attachment->next) {
+	content_type = get_content_type(body);
+	
+	if (attachments_list == NULL) {
+		tny_stream_iface_reset (text_body_stream);
+		tny_msg_mime_part_iface_construct_from_stream (TNY_MSG_MIME_PART_IFACE(new_msg),
+		                                               text_body_stream, content_type);
+		tny_stream_iface_reset (text_body_stream);
+	} else {
+		text_body_part = TNY_MSG_MIME_PART_IFACE (tny_msg_mime_part_new(
+		                                          camel_mime_part_new()));
+		tny_stream_iface_reset (text_body_stream);
+		tny_msg_mime_part_iface_construct_from_stream (text_body_part,
+		                                               text_body_stream,
+		                                               content_type);
+		tny_stream_iface_reset (text_body_stream);
+		tny_msg_iface_add_part(new_msg, text_body_part);
+		//g_object_unref (G_OBJECT(text_body_part));
+	}
+	
+	for (    attachment = (GList *)attachments_list;
+		     attachment;
+	         attachment = attachment->next    ) {
 		filename = attachment->data;
 		attachment_filename = g_path_get_basename(filename);
 		file = open(filename, O_RDONLY);
@@ -215,7 +229,6 @@ modest_tny_transport_actions_send_message (ModestTnyTransportActions *self,
 	tny_transport_account_iface_send (transport_account, new_msg);
 
 	g_object_unref (G_OBJECT(text_body_stream));
-	//g_object_unref (G_OBJECT(text_body_part));
 	g_object_unref (G_OBJECT(headers));
 	g_object_unref (G_OBJECT(new_msg));
 	g_free(content_type);
