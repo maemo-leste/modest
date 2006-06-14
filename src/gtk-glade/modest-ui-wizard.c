@@ -147,7 +147,9 @@ gboolean wizard_account_add(GladeXML *glade_xml, ModestUI *modest_ui)
 {
 	ModestAccountMgr *acc_mgr;
 	ModestIdentityMgr *id_mgr;
-	gchar *tmpaccount_name;
+        gchar *store;
+        gchar *transport;
+        gchar *identity;
 	ModestUIPrivate *priv;
 	ModestConf *conf;
 	gchar *tmptext;
@@ -164,41 +166,41 @@ gboolean wizard_account_add(GladeXML *glade_xml, ModestUI *modest_ui)
 	tmptext=g_utf8_strdown(tmptext2, -1);
 	g_free(tmptext2);
 
-	tmpaccount_name=search_unused_account_or_identity_name(acc_mgr, "incoming");
+	store=search_unused_account_or_identity_name(acc_mgr, "incoming");
 	modest_account_mgr_add_server_account (acc_mgr,
-					       tmpaccount_name,
+					       store,
 					       gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "AWInServerComboEntry"))),
 					       gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "AWUserNameEntry"))),
 					       gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "AWPasswordEntry"))),
 					       tmptext);
-	g_free(tmpaccount_name);
+	g_free(store);
 	g_free(tmptext);
 
-	tmpaccount_name=search_unused_account_or_identity_name(acc_mgr, "outgoing");
+        transport=search_unused_account_or_identity_name(acc_mgr, "outgoing");
 	if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(glade_xml_get_widget(glade_xml, "AWUseIncomingCheckButton")))==TRUE)
 		modest_account_mgr_add_server_account (acc_mgr,
-						       tmpaccount_name,
+						       transport,
 						       gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "AWOutServerComboEntry"))),
 						       gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "AWUserNameEntry"))),
 						       gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "AWPasswordEntry"))),
 						       "smtp");
 	else
 		modest_account_mgr_add_server_account (acc_mgr,
-						       tmpaccount_name,
+						       transport,
 						       gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "AWOutServerComboEntry"))),
 						       gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "AWOutUserNameEntry"))),
 						       gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "AWOutPasswordEntry"))),
 						       "smtp");
-	g_free(tmpaccount_name);
 
-	tmpaccount_name=search_unused_account_or_identity_name(id_mgr, MODEST_IDENTITY_DEFAULT_IDENTITY);
+	identity=search_unused_account_or_identity_name(id_mgr, MODEST_IDENTITY_DEFAULT_IDENTITY);
 	if (!modest_identity_mgr_add_identity (id_mgr,
-					       tmpaccount_name,
+					       identity,
 					       gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "AWEMailAddressEntry"))),
-					       "", "", FALSE, NULL, FALSE ))
+					       "", "", FALSE, transport, FALSE ))
 		g_warning ("failed to add default identity");
 
-	g_free(tmpaccount_name);
+	g_free(transport);
+	g_free(identity);
 	return TRUE;
 }
 
