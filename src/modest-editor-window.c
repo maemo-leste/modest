@@ -22,6 +22,8 @@ struct _ModestEditorWindowPrivate {
 	gpointer user_data;
 	gboolean modified;
 	GList *attachments;
+	gchar *identity;
+	gchar *transport;
 };
 #define MODEST_EDITOR_WINDOW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                   MODEST_TYPE_EDITOR_WINDOW, \
@@ -82,6 +84,8 @@ modest_editor_window_init (ModestEditorWindow *obj)
 	priv->user_data = NULL;
 	priv->modified = FALSE;
 	priv->attachments = NULL;
+	priv->identity = NULL;
+	priv->transport = NULL;
 }
 
 static void
@@ -94,6 +98,10 @@ modest_editor_window_finalize (GObject *obj)
 	if (priv->user_data)
 		g_free(priv->user_data);
 
+	modest_tny_attachment_free_list(priv->attachments);
+	g_free(priv->identity);
+	g_free(priv->transport);
+	
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
@@ -272,4 +280,58 @@ GList * modest_editor_window_get_attachments(ModestEditorWindow *edit_win)
 	
 	priv = MODEST_EDITOR_WINDOW_GET_PRIVATE(edit_win);
 	return priv->attachments;
+}
+
+
+void
+modest_editor_window_set_identity(ModestEditorWindow *edit_win, const gchar *identity)
+{
+	ModestEditorWindowPrivate *priv;
+
+	g_return_if_fail(edit_win);
+
+	priv = MODEST_EDITOR_WINDOW_GET_PRIVATE(edit_win);
+
+	g_free(priv->identity);
+	priv->identity = g_strdup(identity);
+}
+
+
+const gchar *
+modest_editor_window_get_identity(ModestEditorWindow *edit_win)
+{
+	ModestEditorWindowPrivate *priv;
+
+	g_return_val_if_fail(edit_win, NULL);
+
+	priv = MODEST_EDITOR_WINDOW_GET_PRIVATE(edit_win);
+
+	return priv->identity;
+}	
+
+
+void
+modest_editor_window_set_transport(ModestEditorWindow *edit_win, const gchar *transport)
+{
+	ModestEditorWindowPrivate *priv;
+
+	g_return_if_fail(edit_win);
+
+	priv = MODEST_EDITOR_WINDOW_GET_PRIVATE(edit_win);
+
+	g_free(priv->transport);
+	priv->transport = g_strdup(transport);
+}
+
+
+const gchar *
+modest_editor_window_get_transport(ModestEditorWindow *edit_win)
+{
+	ModestEditorWindowPrivate *priv;
+
+	g_return_val_if_fail(edit_win, NULL);
+
+	priv = MODEST_EDITOR_WINDOW_GET_PRIVATE(edit_win);
+
+	return priv->transport;
 }	
