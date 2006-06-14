@@ -273,15 +273,38 @@ modest_tny_attachment_new_from_mime_part(TnyMsgMimePartIface *part)
 	return self;
 }
 
+ModestTnyAttachment *
+modest_tny_attachment_new_from_message(const TnyMsgIface *msg)
+{
+	TnyStreamIface *mem_stream, *msg_stream;
+	ModestTnyAttachment *self;
+	gint res;
+	
+	mem_stream = TNY_STREAM_IFACE(tny_stream_camel_new(camel_stream_mem_new()));
+	msg_stream = tny_msg_mime_part_iface_get_stream(TNY_MSG_MIME_PART_IFACE(msg));
+	printf("ping\n");
+	tny_stream_iface_reset(msg_stream);
+	res = tny_stream_iface_write_to_stream(msg_stream, mem_stream);
+	//tny_msg_mime_part_iface_write_to_stream(TNY_MSG_MIME_PART_IFACE(msg), mem_stream);
+	printf("pong, %d\n", res);
+	tny_stream_iface_reset(msg_stream);
+	tny_stream_iface_reset(mem_stream);
+	self = modest_tny_attachment_new();
+	modest_tny_attachment_set_stream(self, mem_stream);
+	modest_tny_attachment_set_mime_type(self, "message/rfc822");
+	modest_tny_attachment_set_name(self, "original message");
+	return self;
+}
 
 GList *
 modest_tny_attachment_new_list_from_msg(const TnyMsgIface *msg, gboolean with_body)
 {
 	GList *list = NULL;
-	const GList *attachments;
+	const GList *attachments = NULL;
 	TnyMsgMimePartIface *part;
 	ModestTnyAttachment *att;
 	
+#if 0	
 	if (with_body) {
 		/* TODO: make plain over html configurable */
 		part = modest_tny_msg_actions_find_body_part ((TnyMsgIface *)msg, "text/plain");
@@ -294,7 +317,12 @@ modest_tny_attachment_new_list_from_msg(const TnyMsgIface *msg, gboolean with_bo
 			list = g_list_append(list, att);
 		}
 	}
-	attachments = tny_msg_iface_get_parts((TnyMsgIface *)msg);
+#endif
+	if (with_body) {
+		list = g_list_append(list, modest_tny_attachment_new_from_message(msg));
+	} else {
+		attachments = tny_msg_iface_get_parts((TnyMsgIface *)msg);
+	}
 	while (attachments) {
 		part = attachments->data;
 		if (tny_msg_mime_part_iface_is_attachment(part)) {
