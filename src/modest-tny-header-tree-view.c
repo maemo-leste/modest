@@ -661,8 +661,10 @@ modest_tny_header_tree_view_set_folder (ModestTnyHeaderTreeView *self,
 	
 	if (folder) {
 		GSList *col;
-		
+
+		#warning Looks like a memory leak.		
 		priv->headers = TNY_LIST_IFACE(tny_msg_header_list_model_new ());
+			
 		tny_msg_folder_iface_get_headers (folder, priv->headers,
 						  FALSE);
 		tny_msg_header_list_model_set_folder (TNY_MSG_HEADER_LIST_MODEL(priv->headers),

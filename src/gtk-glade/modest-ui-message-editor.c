@@ -337,10 +337,8 @@ void
 quoted_send_msg (ModestUI *modest_ui, quoted_send_type qstype)
 {
 	GtkTreeSelection *sel;
-	GtkWidget *paned;
 	GtkTreeModel *model;
 	GtkTreeIter iter;
-	GtkScrolledWindow *scroll;
 
 	TnyMsgHeaderIface *header;
 
@@ -362,16 +360,10 @@ quoted_send_msg (ModestUI *modest_ui, quoted_send_type qstype)
 
 	priv = MODEST_UI_GET_PRIVATE(modest_ui);
 
-	paned = glade_xml_get_widget (priv->glade_xml,"mail_paned");
-	g_return_if_fail (paned);
-
-	scroll = GTK_SCROLLED_WINDOW(gtk_paned_get_child1 (GTK_PANED(paned)));
-	g_return_if_fail (scroll);
-
-	msg_view = MODEST_TNY_MSG_VIEW(gtk_paned_get_child2 (GTK_PANED(paned)));
+	msg_view = MODEST_TNY_MSG_VIEW(priv->message_view);
 	g_return_if_fail (msg_view);
 
-	header_view = MODEST_TNY_HEADER_TREE_VIEW(gtk_bin_get_child (GTK_BIN(scroll)));
+	header_view = MODEST_TNY_HEADER_TREE_VIEW(priv->header_view);
 	g_return_if_fail (header_view);
 
 	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW(header_view));

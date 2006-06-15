@@ -27,6 +27,7 @@ enum {
 typedef struct _ModestAccountMgrPrivate ModestAccountMgrPrivate;
 struct _ModestAccountMgrPrivate {
 	ModestConf *modest_conf;
+	GSList *current_accounts;
 };
 
 #define MODEST_ACCOUNT_MGR_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -38,16 +39,85 @@ static GObjectClass *parent_class = NULL;
 static guint signals[LAST_SIGNAL] = {0};
 
 
-/* map configuration changes to account changes */
+static GSList *
+delete_account_from_list (GSList *list, const gchar *name)
+{
+	GSList *iter, *result;
+
+	iter = list;
+	result = list;
+	while (iter) {
+		if (!strcmp (name, iter->data)) {
+			result = g_slist_delete_link (list, iter);
+			break;
+		}
+			
+		iter = g_slist_next (iter);
+	}
+	return result;
+}
+
+static GSList *
+find_account_in_list (GSList *list, const gchar *name)
+{
+	GSList *iter, *result;
+
+	iter = list;
+	result = list;
+	while (iter) {
+		if (!strcmp (name, iter->data)) {
+			return iter;
+			break;
+		}
+			
+		iter = g_slist_next (iter);
+	}
+	return NULL;
+}
+
+/* Map configuration changes to account changes.
+ * Doing this here makes sure all changes are available and external changes 
+ * are covered as well. */
+
 static void
 modest_account_mgr_check_change (ModestConf *conf, const gchar *key, 
                                  const gchar *new_value, gpointer user_data)
 {
 	ModestAccountMgr *amgr = user_data;
+	ModestAccountMgrPrivate *priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (amgr);
 	
-	
-	
-	g_signal_emit (amgr, signals[ACCOUNT_CHANGE_SIGNAL], 0, key, new_value);
+	if ((strlen (key) > strlen (MODEST_SERVER_ACCOUNT_NAMESPACE "/") 
+	     && g_str_has_prefix (key, MODEST_SERVER_ACCOUNT_NAMESPACE))) {
+		gchar *subkey = key + strlen (MODEST_SERVER_ACCOUNT_NAMESPACE "/");
+		if (! strstr (subkey, "/")) {/* no more '/' means an account was modified */
+			if (new_value)	{
+				 /* covers only one case of two */
+				priv->current_accounts = 
+					g_slist_prepend (priv->current_accounts, g_strdup (subkey));
+				g_signal_emit (amgr, signals[ACCOUNT_ADD_SIGNAL], 0, subkey);
+			} else {
+				priv->current_accounts = 
+					delete_account_from_list (priv->current_accounts, subkey);
+					
+				g_signal_emit (amgr, signals[ACCOUNT_REMOVE_SIGNAL], 0, subkey);
+			}
+		} else {
+			gchar *param;
+			
+			param = strstr (subkey, "/");
+			param [0] = 0;
+			param++;
+			
+			/* that's the second case for a new account */
+			if (!find_account_in_list (priv->current_accounts, subkey)) {
+				priv->current_accounts = 
+					g_slist_prepend (priv->current_accounts, g_strdup (subkey));
+				g_signal_emit (amgr, signals[ACCOUNT_ADD_SIGNAL], 0, subkey);
+			}
+				
+			g_signal_emit (amgr, signals[ACCOUNT_CHANGE_SIGNAL], 0, subkey, param, new_value);
+		}
+	}	
 		
 	g_message ("value changed: %s %s\n", key, new_value);
 }
@@ -82,7 +152,7 @@ static void
 modest_account_mgr_class_init (ModestAccountMgrClass * klass)
 {
 	GObjectClass *gobject_class;
-	GType paramtypes[2] = {G_TYPE_POINTER, G_TYPE_POINTER};
+	GType paramtypes[3] = {G_TYPE_POINTER, G_TYPE_POINTER, G_TYPE_POINTER};
 
 	gobject_class = (GObjectClass *) klass;
 
@@ -110,8 +180,8 @@ modest_account_mgr_class_init (ModestAccountMgrClass * klass)
  		g_signal_newv ("account-change", 
 	                       G_TYPE_FROM_CLASS (klass), G_SIGNAL_RUN_LAST,
 		               NULL, NULL, NULL,
-		               modest_marshal_VOID__POINTER_POINTER,
-		               G_TYPE_NONE, 2, paramtypes);
+		               modest_marshal_VOID__POINTER_POINTER_POINTER,
+		               G_TYPE_NONE, 3, paramtypes);
 }
 
 
@@ -151,6 +221,8 @@ modest_account_mgr_new (ModestConf * conf)
 	 * ModestConf should outlive the ModestAccountMgr though
 	 */
 	g_object_ref (G_OBJECT (priv->modest_conf = conf));
+	
+	priv->current_accounts = modest_account_mgr_account_names (MODEST_ACCOUNT_MGR(obj), NULL);
 	
 	g_signal_connect (G_OBJECT (conf), "key-changed", 
 	                  G_CALLBACK (modest_account_mgr_check_change), obj);

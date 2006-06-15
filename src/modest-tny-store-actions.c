@@ -28,8 +28,8 @@ modest_tny_store_actions_update_folders (TnyStoreAccountIface *storage_account)
 	const TnyListIface* folders;
 	TnyIteratorIface* ifolders;
 	const TnyMsgFolderIface *cur_folder;
-
-	folders = tny_store_account_iface_get_folders (storage_account, 
+#warning TODO: This results in failure on folder change.
+/*	folders = tny_store_account_iface_get_folders (storage_account, 
 						       TNY_STORE_ACCOUNT_FOLDER_TYPE_SUBSCRIBED);
 	
 	ifolders = tny_list_iface_create_iterator (folders);
@@ -43,5 +43,5 @@ modest_tny_store_actions_update_folders (TnyStoreAccountIface *storage_account)
 	}
 	
 	g_object_unref (ifolders);
-}
+*/}
 

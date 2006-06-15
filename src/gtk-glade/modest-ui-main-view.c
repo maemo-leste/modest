@@ -143,6 +143,7 @@ modest_ui_show_main_window (ModestUI *modest_ui)
 	                                     NULL);
 
 	message_view  = GTK_WIDGET(modest_tny_msg_view_new (NULL, show_attachments_inline));
+	priv->message_view = message_view;
 	if (!message_view) {
 		g_warning ("failed to create message view");
 		return FALSE;
@@ -297,7 +298,6 @@ on_folder_clicked (ModestTnyFolderTreeView *folder_tree,
 {
 	GtkWidget *win;
 	GtkWidget *button;
-	GtkWidget *paned;
 	ModestTnyHeaderTreeView *tree_view;
 	ModestTnyMsgView *msg_view;
 	ModestUIPrivate *priv;
@@ -309,13 +309,14 @@ on_folder_clicked (ModestTnyFolderTreeView *folder_tree,
 	priv = MODEST_UI_GET_PRIVATE(data);
 	scrollview = glade_xml_get_widget (priv->glade_xml,"mail_list");
 
-	tree_view = MODEST_TNY_HEADER_TREE_VIEW(
-		gtk_bin_get_child(GTK_BIN(scrollview)));
+	tree_view = MODEST_TNY_HEADER_TREE_VIEW (priv->header_view);
+
 	win = glade_xml_get_widget (priv->glade_xml, "main");
 	gtk_window_set_title (GTK_WINDOW(win),
 			      tny_msg_folder_iface_get_name(folder));
 
 	modest_tny_header_tree_view_set_folder (tree_view, folder);
+	priv->current_folder = folder;
 
 	button = glade_xml_get_widget (priv->glade_xml, "toolb_reply");
 	if (button) {
@@ -332,10 +333,7 @@ on_folder_clicked (ModestTnyFolderTreeView *folder_tree,
 		gtk_widget_set_sensitive(button, FALSE);
 	}
 
-	paned = glade_xml_get_widget (priv->glade_xml,"mail_paned");
-	g_return_if_fail (paned);
-
-	msg_view = MODEST_TNY_MSG_VIEW(gtk_paned_get_child2 (GTK_PANED(paned)));
+	msg_view = MODEST_TNY_MSG_VIEW (priv->message_view);
 	g_return_if_fail (msg_view);
 
 	modest_tny_msg_view_set_message  (msg_view, NULL);
@@ -347,19 +345,17 @@ on_message_clicked (ModestTnyFolderTreeView *folder_tree,
 				TnyMsgIface *message,
 				gpointer data)
 {
-	GtkWidget *paned;
 	GtkWidget *button;
 	ModestTnyMsgView *msg_view;
 	ModestUIPrivate *priv;
 
 	g_return_if_fail (data);
 
-	priv = MODEST_UI_GET_PRIVATE(data);
-	paned = glade_xml_get_widget (priv->glade_xml,"mail_paned");
-	msg_view = MODEST_TNY_MSG_VIEW(gtk_paned_get_child2 (GTK_PANED(paned)));
+	priv = MODEST_UI_GET_PRIVATE (data);
+	msg_view = MODEST_TNY_MSG_VIEW (priv->message_view);
 
-	modest_tny_msg_view_set_message (msg_view,
-					 message);
+	modest_tny_msg_view_set_message (msg_view, message);
+	
 	button = glade_xml_get_widget (priv->glade_xml, "toolb_reply");
 	if (button) {
 		gtk_widget_set_sensitive(button, TRUE);
@@ -389,7 +385,7 @@ modest_main_window_header_tree (TnyMsgFolderIface *folder)
 		MODEST_TNY_HEADER_TREE_VIEW_COLUMN_RECEIVED_DATE
 	};
 
-	for (i = 0 ; i != sizeof(cols)/sizeof(ModestTnyHeaderTreeViewColumn); ++i)
+	for (i = 0 ; i != sizeof(cols) / sizeof(ModestTnyHeaderTreeViewColumn); ++i)
 		columns = g_slist_append (columns, GINT_TO_POINTER(cols[i]));
 
 	header_tree = GTK_WIDGET(modest_tny_header_tree_view_new(folder, columns,
@@ -411,7 +407,7 @@ modest_main_window_folder_tree (ModestAccountMgr *modest_acc_mgr,
 {
 	GtkWidget *folder_tree;
 
-	folder_tree = GTK_WIDGET(modest_tny_folder_tree_view_new (account_store));
+	folder_tree = GTK_WIDGET (modest_tny_folder_tree_view_new (account_store));
 	if (!folder_tree) {
 		g_warning ("could not create folder list");
 		return NULL;
@@ -443,7 +439,7 @@ static void
 on_view_attachments_toggled(GtkWidget *widget, gpointer user_data)
 {
 	ModestUI *modest_ui = (ModestUI *)user_data;
-	GtkWidget *view_attachments_item, *paned;
+	GtkWidget *view_attachments_item;
 	ModestTnyMsgView *msg_view;
 	ModestUIPrivate *priv;
 	gboolean view_attachments_inline;
@@ -452,8 +448,7 @@ on_view_attachments_toggled(GtkWidget *widget, gpointer user_data)
 	view_attachments_item = glade_xml_get_widget (priv->glade_xml, "menu_view_attachments");
 	g_return_if_fail(view_attachments_item);
 
-	paned = glade_xml_get_widget (priv->glade_xml,"mail_paned");
-	msg_view = MODEST_TNY_MSG_VIEW(gtk_paned_get_child2 (GTK_PANED(paned)));
+	msg_view = MODEST_TNY_MSG_VIEW(priv->message_view);
 
 	view_attachments_inline = gtk_check_menu_item_get_active(
 	                                GTK_CHECK_MENU_ITEM(view_attachments_item));
@@ -472,10 +467,8 @@ on_delete_clicked (GtkWidget *widget, gpointer user_data)
 {
 	ModestUI *modest_ui = (ModestUI *)user_data;
 	GtkTreeSelection *sel;
-	GtkWidget *paned;
 	GtkTreeModel *model;
 	GtkTreeIter iter;
-	GtkScrolledWindow *scroll;
 	GtkTreeModel *mymodel;
 
 	ModestTnyHeaderTreeView *header_view;
@@ -486,16 +479,10 @@ on_delete_clicked (GtkWidget *widget, gpointer user_data)
 
 	priv = MODEST_UI_GET_PRIVATE(modest_ui);
 
-	paned = glade_xml_get_widget (priv->glade_xml,"mail_paned");
-	g_return_if_fail (paned);
-
-	scroll = GTK_SCROLLED_WINDOW(gtk_paned_get_child1 (GTK_PANED(paned)));
-	g_return_if_fail (scroll);
-
-	msg_view = MODEST_TNY_MSG_VIEW(gtk_paned_get_child2 (GTK_PANED(paned)));
+	msg_view = MODEST_TNY_MSG_VIEW(priv->message_view);
 	g_return_if_fail (msg_view);
 
-	header_view = MODEST_TNY_HEADER_TREE_VIEW(gtk_bin_get_child (GTK_BIN(scroll)));
+	header_view = MODEST_TNY_HEADER_TREE_VIEW(priv->header_view);
 	g_return_if_fail (header_view);
 
 	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW(header_view));
@@ -535,25 +522,27 @@ on_sendreceive_button_clicked (GtkWidget *widget, gpointer user_data)
 {
 	ModestUI *modest_ui = (ModestUI *)user_data;
 	ModestUIPrivate *priv;
-	// ModestTnyStoreActions *store_actions;
 	TnyAccountStoreIface *account_store;
 	const GList *store_accounts;
 	const GList *iter;
 
 	g_return_if_fail (modest_ui);
-
-	// store_actions = MODEST_TNY_STORE_ACTIONS (modest_tny_store_actions_new ());
 	priv = MODEST_UI_GET_PRIVATE(modest_ui);
 
 	account_store = priv->account_store;
 	store_accounts =
 		tny_account_store_iface_get_store_accounts (account_store);
-
+		
 	for (iter = store_accounts; iter; iter = iter->next) {
 		modest_tny_store_actions_update_folders (TNY_STORE_ACCOUNT_IFACE (iter->data));
-		// modest_tny_store_actions_update_folders (store_actions, TNY_STORE_ACCOUNT_IFACE (iter->data));
+
 	}
-	// g_object_unref (store_actions);
+	
+	if (priv->header_view && priv->current_folder) {
+			
+		modest_tny_header_tree_view_set_folder (priv->header_view, priv->current_folder);
+		gtk_widget_queue_draw (priv->header_view);
+	}
 }
 static void
 on_forward_attached_activated (GtkWidget *widget, gpointer user_data)

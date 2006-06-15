@@ -181,6 +181,24 @@ modest_tny_account_store_finalize (GObject *obj)
 
 }
 
+
+static void 
+manager_new_account (ModestAccountMgr *modest_acc_mgr, gchar *name, gpointer data)
+{
+	g_print ("new account signal %s\n", name);
+}
+void 
+manager_remove_account (ModestAccountMgr *modest_acc_mgr,gchar *name, gpointer data)
+{
+	g_print ("remove account signal %s\n", name);
+}
+void 
+manager_change_account (ModestAccountMgr *modest_acc_mgr, gchar *accountname, 
+	gchar *key, gchar* value, gpointer data)
+{
+	g_print ("account change signal: account: %s key: %s value: %s\n", accountname, key, value);
+}
+
 GObject*
 modest_tny_account_store_new (ModestAccountMgr *modest_acc_mgr)
 {
@@ -209,6 +227,14 @@ modest_tny_account_store_new (ModestAccountMgr *modest_acc_mgr)
 		g_object_unref (obj);
 		return NULL;
 	}
+	
+#warning todo: disconnect on destruction
+	g_signal_connect (G_OBJECT (modest_acc_mgr), "account-add", 
+		G_CALLBACK(manager_new_account), NULL);
+	g_signal_connect (G_OBJECT (modest_acc_mgr), "account-remove", 
+		G_CALLBACK(manager_remove_account), NULL);
+	g_signal_connect (G_OBJECT (modest_acc_mgr), "account-change", 
+		G_CALLBACK(manager_change_account), NULL);
 
 	return obj;
 }
@@ -407,30 +433,24 @@ modest_tny_account_store_get_store_accounts  (TnyAccountStoreIface *iface)
 	ModestTnyAccountStore        *self;
 	ModestTnyAccountStorePrivate *priv;
 	GSList                       *accounts;
-	GList                        *tny_accounts;
 
 	g_return_val_if_fail (iface, NULL);
 
 	self = MODEST_TNY_ACCOUNT_STORE(iface);
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
 
-	accounts =
-		modest_account_mgr_server_account_names (priv->modest_acc_mgr,
-							 NULL,
-							 MODEST_PROTO_TYPE_STORE,
-							 NULL, FALSE);
+	if (!priv->store_accounts) {
+		accounts =
+			modest_account_mgr_server_account_names (priv->modest_acc_mgr,
+								 NULL,
+								 MODEST_PROTO_TYPE_STORE,
+								 NULL, FALSE);
 
-	tny_accounts = tny_accounts_from_server_accounts (self, accounts, TRUE);
-	g_slist_free (accounts);
-	
-	/*
-	 * FIXME: after gconf notification support is added,
-	 * we can simply return priv->store_account
-	 */
-	priv->store_accounts = free_gobject_list (priv->store_accounts);
-	priv->store_accounts = tny_accounts;
+		priv->store_accounts = tny_accounts_from_server_accounts (self, accounts, TRUE);
+		g_slist_free (accounts);
+	}	
 
-	return tny_accounts;
+	return priv->store_accounts;
 }
 
 
@@ -440,31 +460,25 @@ modest_tny_account_store_get_transport_accounts (TnyAccountStoreIface *iface)
 	ModestTnyAccountStore        *self;
 	ModestTnyAccountStorePrivate *priv;
 	GSList                       *accounts;
-	GList                        *tny_accounts;
 
 	g_return_val_if_fail (iface, NULL);
 
 	self = MODEST_TNY_ACCOUNT_STORE(iface);
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
 
-	accounts =
-		modest_account_mgr_server_account_names (priv->modest_acc_mgr,
-							 NULL,
-							 MODEST_PROTO_TYPE_TRANSPORT,
-							 NULL, FALSE);
-	tny_accounts = tny_accounts_from_server_accounts (self, accounts, FALSE);
-	g_warning ("transport accounts: %d", g_list_length (tny_accounts));
+	
+	if (!priv->transport_accounts) {
+		accounts =
+			modest_account_mgr_server_account_names (priv->modest_acc_mgr,
+								 NULL,
+								 MODEST_PROTO_TYPE_TRANSPORT,
+								 NULL, FALSE);
+		priv->transport_accounts = tny_accounts_from_server_accounts (self, accounts, FALSE);
+		g_slist_free (accounts);
+	}
 
-	g_slist_free (accounts);
 
-	/*
-	 * FIXME: after gconf notification support is added,
-	 * we can simply return priv->store_account
-	 */
-	priv->transport_accounts = free_gobject_list (priv->transport_accounts);
-	priv->transport_accounts = tny_accounts;
-
-	return tny_accounts; /* FIXME: who will free this? */
+	return priv->transport_accounts;
 }
 
 

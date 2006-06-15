@@ -24,11 +24,12 @@ struct _ModestUIPrivate {
 	TnyAccountStoreIface *account_store;
 	GtkWidget            *folder_view;
 	GtkWidget            *header_view;
+	GtkWidget            *message_view;
 
 	GtkWindow            *main_window;
 	GladeXML             *glade_xml;
 
-
+	TnyMsgFolderIface    *current_folder;
 };
 
 #define MODEST_UI_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \

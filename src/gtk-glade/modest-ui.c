@@ -113,7 +113,8 @@ modest_ui_init (ModestUI *obj)
 	priv->glade_xml         = NULL;
 	priv->folder_view       = NULL;
 	priv->header_view       = NULL;
-
+	priv->message_view      = NULL;
+	priv->current_folder    = NULL;
 }
 
 
