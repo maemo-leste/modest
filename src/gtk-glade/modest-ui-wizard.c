@@ -113,11 +113,12 @@ gboolean advance_sanity_check(GtkWindow *parent, GladeXML *glade_xml, gint cp) {
 			wizard_missing_notification(NULL, "Please specify outgoing server address.");
 			return FALSE;
 		}
+		/* smtp servers may work without a username 
 		if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(glade_xml_get_widget(glade_xml, "AWUseIncomingCheckButton")))==FALSE
 		    && strlen(gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "AWOutUserNameEntry"))))==0) {
 			wizard_missing_notification(NULL, "Please enter user name.");
 			return FALSE;
-		}
+		} */
 
 		return TRUE;
 		break;
