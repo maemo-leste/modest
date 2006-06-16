@@ -63,6 +63,10 @@ static void on_sendreceive_button_clicked (GtkWidget *widget, gpointer user_data
 
 static void on_forward_attached_activated (GtkWidget *widget, gpointer user_data);
 
+static void on_headers_status_update (GtkWidget *header_view, const gchar *msg, gint status,
+			  gpointer user_data);
+static void on_status_cleanup (gpointer user_data);
+
 static void register_toolbar_callbacks (ModestUI *modest_ui);
 
 
@@ -97,14 +101,14 @@ modest_ui_show_main_window (ModestUI *modest_ui)
 	GtkWidget     *open_item;
 	GtkWidget     *view_attachments_item;
 	GtkWidget     *new_account_item;
-
+	
 	GtkWidget  *folder_view_holder,
 		*header_view_holder,
 		*mail_paned;
 	gboolean show_attachments_inline;
 
 	priv = MODEST_UI_GET_PRIVATE(modest_ui);
-
+	
 	height = modest_conf_get_int (priv->modest_conf,
 				      MODEST_CONF_MAIN_WINDOW_HEIGHT,NULL);
 	width  = modest_conf_get_int (priv->modest_conf,
@@ -155,6 +159,9 @@ modest_ui_show_main_window (ModestUI *modest_ui)
 	g_signal_connect (header_view, "message_selected",
 			  G_CALLBACK(on_message_clicked),
                           modest_ui);
+
+	g_signal_connect (header_view, "status_update",
+			  G_CALLBACK(on_headers_status_update), modest_ui);
 
 	g_signal_connect (header_view, "row-activated",
 			  G_CALLBACK(on_message_activated),
@@ -540,7 +547,8 @@ on_sendreceive_button_clicked (GtkWidget *widget, gpointer user_data)
 	
 	if (priv->header_view && priv->current_folder) {
 			
-		modest_tny_header_tree_view_set_folder (priv->header_view, priv->current_folder);
+		modest_tny_header_tree_view_set_folder (MODEST_TNY_HEADER_TREE_VIEW(priv->header_view),
+							priv->current_folder);
 		gtk_widget_queue_draw (priv->header_view);
 	}
 }
@@ -551,3 +559,42 @@ on_forward_attached_activated (GtkWidget *widget, gpointer user_data)
 
 	quoted_send_msg (modest_ui, QUOTED_SEND_FORWARD_ATTACHED);
 }
+
+static void
+on_headers_status_update (GtkWidget *header_view, const gchar *msg, gint status_id,
+			  gpointer user_data)
+{
+	ModestUIPrivate *priv;
+	ModestUI *modest_ui;
+
+	GtkStatusbar *status_bar;
+	GtkProgressBar *progress_bar;
+	GtkWidget    *status_box;
+	
+	modest_ui = MODEST_UI (user_data);
+	priv      = MODEST_UI_GET_PRIVATE(modest_ui);
+
+	progress_bar = GTK_PROGRESS_BAR(glade_xml_get_widget
+					(priv->glade_xml, "progressbar"));
+	status_bar   = GTK_STATUSBAR  (glade_xml_get_widget
+				       (priv->glade_xml, "statusbar"));
+
+	
+	status_box   = glade_xml_get_widget (priv->glade_xml, "statusbox");
+	
+	
+	if (!status_bar || !progress_bar) {
+		g_warning ("failed to find status / progress bar");
+		return;
+	}
+
+	if (msg && status_id) {
+		gtk_widget_show (status_box);
+		gtk_progress_bar_pulse (progress_bar);
+		gtk_statusbar_push (status_bar, status_id, msg);
+	} else {
+		gtk_widget_hide   (status_box);
+		gtk_statusbar_pop (status_bar, status_id);
+	}
+}		
+

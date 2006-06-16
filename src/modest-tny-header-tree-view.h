@@ -35,6 +35,13 @@ struct _ModestTnyHeaderTreeViewClass {
 	void (*message_selected) (ModestTnyHeaderTreeView* self,
 				  TnyMsgIface *msg,
 				  gpointer user_data);
+
+	/* msg == NULL implies that the operation is finished, ie.
+	 * the progress indictation can be hidden */
+	void (*status_update) (ModestTnyHeaderTreeView* self,
+			       const gchar* msg,
+			       gint status,
+			       gpointer user_data);
 };
 
 

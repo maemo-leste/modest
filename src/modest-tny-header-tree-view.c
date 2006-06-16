@@ -5,6 +5,7 @@
 #include "modest-tny-header-tree-view.h"
 #include <tny-list-iface.h>
 #include <string.h>
+#include "modest-marshal.h"
 
 #include <modest-icon-names.h>
 #include "modest-icon-factory.h"
@@ -16,9 +17,11 @@ static void modest_tny_header_tree_view_finalize    (GObject *obj);
 
 static void selection_changed (GtkTreeSelection *sel, gpointer user_data);
 static void column_clicked (GtkTreeViewColumn *treeviewcolumn, gpointer user_data);
+static gboolean refresh_folder_finish_status_update (gpointer user_data);
 
 enum {
 	MESSAGE_SELECTED_SIGNAL,
+	STATUS_UPDATE_SIGNAL,
 	LAST_SIGNAL
 };
 
@@ -28,7 +31,8 @@ struct _ModestTnyHeaderTreeViewPrivate {
 	TnyMsgFolderIface *tny_msg_folder;
 	TnyListIface      *headers;
 
-	GSList *columns;
+	gint              status_id;
+	GSList            *columns;
 	
 	ModestTnyHeaderTreeViewStyle style;
 };
@@ -82,7 +86,16 @@ modest_tny_header_tree_view_class_init (ModestTnyHeaderTreeViewClass *klass)
 			      G_STRUCT_OFFSET (ModestTnyHeaderTreeViewClass,message_selected),
 			      NULL, NULL,
 			      g_cclosure_marshal_VOID__POINTER,
-			      G_TYPE_NONE, 1, G_TYPE_POINTER); 	
+			      G_TYPE_NONE, 1, G_TYPE_POINTER);
+	
+	signals[STATUS_UPDATE_SIGNAL] = 
+		g_signal_new ("status_update",
+			      G_TYPE_FROM_CLASS (gobject_class),
+			      G_SIGNAL_RUN_FIRST,
+			      G_STRUCT_OFFSET (ModestTnyHeaderTreeViewClass,message_selected),
+			      NULL, NULL,
+			      modest_marshal_VOID__STRING_INT,
+			      G_TYPE_NONE, 2, G_TYPE_STRING, G_TYPE_INT); 	
 }
 
 
@@ -388,7 +401,10 @@ init_columns (ModestTnyHeaderTreeView *obj)
 static void
 modest_tny_header_tree_view_init (ModestTnyHeaderTreeView *obj)
 {
-	
+	ModestTnyHeaderTreeViewPrivate *priv;
+	priv = MODEST_TNY_HEADER_TREE_VIEW_GET_PRIVATE(obj); 
+
+	priv->status_id = 0;
 }
 
 static void
@@ -438,7 +454,7 @@ modest_tny_header_tree_view_new (TnyMsgFolderIface *folder,
 	sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(self));
 	g_signal_connect (sel, "changed",
 			  G_CALLBACK(selection_changed), self);
-
+	
 	return GTK_WIDGET(self);
 }
 
@@ -647,19 +663,26 @@ cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 }
 
 
-
-gboolean
-modest_tny_header_tree_view_set_folder (ModestTnyHeaderTreeView *self,
-					TnyMsgFolderIface *folder)
+static void
+refresh_folder (TnyMsgFolderIface *folder, gboolean cancelled,
+				       gpointer user_data)
 {
 	GtkTreeModel *oldsortable, *sortable;
+	ModestTnyHeaderTreeView *self =
+		MODEST_TNY_HEADER_TREE_VIEW(user_data);
 	ModestTnyHeaderTreeViewPrivate *priv;
-	
-	g_return_val_if_fail (self, FALSE);
 
-	priv = MODEST_TNY_HEADER_TREE_VIEW_GET_PRIVATE(self);
+	g_return_if_fail (self);
 	
-	if (folder) {
+	if (cancelled)
+		return;
+	
+	priv = MODEST_TNY_HEADER_TREE_VIEW_GET_PRIVATE(self);
+
+	if (!folder)  /* when there is no folder */
+		gtk_tree_view_set_headers_visible (GTK_TREE_VIEW(self), FALSE);
+	
+	else { /* it's a new one or a refresh */
 		GSList *col;
 
 		#warning Looks like a memory leak.		
@@ -668,7 +691,7 @@ modest_tny_header_tree_view_set_folder (ModestTnyHeaderTreeView *self,
 		tny_msg_folder_iface_get_headers (folder, priv->headers,
 						  FALSE);
 		tny_msg_header_list_model_set_folder (TNY_MSG_HEADER_LIST_MODEL(priv->headers),
-						      folder, TRUE);
+						      folder, TRUE); /* async */
 		
 		oldsortable = gtk_tree_view_get_model(GTK_TREE_VIEW (self));
 		if (oldsortable && GTK_IS_TREE_MODEL_SORT(oldsortable)) {
@@ -695,11 +718,69 @@ modest_tny_header_tree_view_set_folder (ModestTnyHeaderTreeView *self,
 		gtk_tree_view_set_headers_clickable (GTK_TREE_VIEW(self), TRUE);
 		/* no need to unref sortable */
 		
-	} else /* when there is no folder */
+	} 
+}
+
+
+static void
+refresh_folder_status_update (TnyMsgFolderIface *folder, const gchar *msg,
+			      gint status_id, gpointer user_data)
+{
+	ModestTnyHeaderTreeView *self;
+	ModestTnyHeaderTreeViewPrivate *priv;
+	
+	self = MODEST_TNY_HEADER_TREE_VIEW (user_data);
+	priv = MODEST_TNY_HEADER_TREE_VIEW_GET_PRIVATE(self);
+
+	g_signal_emit (G_OBJECT(self),
+			       signals[STATUS_UPDATE_SIGNAL], 0,
+			       msg, status_id);
+	if (msg) 
+		g_timeout_add  (750,
+				(GSourceFunc)refresh_folder_finish_status_update,
+				self);
+	
+	priv->status_id = status_id;
+}
+
+
+static gboolean
+refresh_folder_finish_status_update (gpointer user_data)
+{
+	ModestTnyHeaderTreeView *self;
+	ModestTnyHeaderTreeViewPrivate *priv;
+	
+	self = MODEST_TNY_HEADER_TREE_VIEW (user_data);
+	priv = MODEST_TNY_HEADER_TREE_VIEW_GET_PRIVATE(self);
+
+	if (priv->status_id == 0)
+		return FALSE;
+	
+	refresh_folder_status_update (NULL, NULL, priv->status_id,
+				      user_data);
+	priv->status_id = 0;
+
+	return FALSE;	
+}
+
+
+gboolean
+modest_tny_header_tree_view_set_folder (ModestTnyHeaderTreeView *self,
+					TnyMsgFolderIface *folder)
+{
+	
+	if (!folder)  /* when there is no folder */
 		gtk_tree_view_set_headers_visible (GTK_TREE_VIEW(self), FALSE);
-					 
+	
+	else { /* it's a new one or a refresh */
+		tny_msg_folder_iface_refresh_async (folder,
+					    refresh_folder,
+						    refresh_folder_status_update,
+						    self);
+	}
 	return TRUE;
 }
+
 
 
 static void
