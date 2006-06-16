@@ -149,6 +149,28 @@ free_gobject_list (GList *list)
 }
 
 
+static void 
+manager_new_account (ModestAccountMgr *modest_acc_mgr, gchar *name, gpointer data)
+{
+	g_print ("new account signal %s\n", name);
+}
+
+
+static void 
+manager_remove_account (ModestAccountMgr *modest_acc_mgr,gchar *name, gpointer data)
+{
+	g_print ("remove account signal %s\n", name);
+}
+
+
+static void 
+manager_change_account (ModestAccountMgr *modest_acc_mgr, gchar *accountname, 
+	gchar *key, gchar* value, gpointer data)
+{
+	g_print ("account change signal: account: %s key: %s value: %s\n", accountname, key, value);
+}
+
+
 static void
 modest_tny_account_store_finalize (GObject *obj)
 {
@@ -156,6 +178,13 @@ modest_tny_account_store_finalize (GObject *obj)
 	ModestTnyAccountStorePrivate *priv =
 		MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
 
+	g_signal_handlers_disconnect_by_func (G_OBJECT (priv->modest_acc_mgr), 
+		G_CALLBACK(manager_new_account), NULL);
+	g_signal_handlers_disconnect_by_func (G_OBJECT (priv->modest_acc_mgr), 
+		G_CALLBACK(manager_remove_account), NULL);
+	g_signal_handlers_disconnect_by_func (G_OBJECT (priv->modest_acc_mgr), 
+		G_CALLBACK(manager_change_account), NULL);
+		
 	if (priv->modest_acc_mgr) {
 		g_object_unref (G_OBJECT(priv->modest_acc_mgr));
 		priv->modest_acc_mgr = NULL;
@@ -178,26 +207,8 @@ modest_tny_account_store_finalize (GObject *obj)
 	priv->cache_dir = NULL;
 
 
-
 }
 
-
-static void 
-manager_new_account (ModestAccountMgr *modest_acc_mgr, gchar *name, gpointer data)
-{
-	g_print ("new account signal %s\n", name);
-}
-void 
-manager_remove_account (ModestAccountMgr *modest_acc_mgr,gchar *name, gpointer data)
-{
-	g_print ("remove account signal %s\n", name);
-}
-void 
-manager_change_account (ModestAccountMgr *modest_acc_mgr, gchar *accountname, 
-	gchar *key, gchar* value, gpointer data)
-{
-	g_print ("account change signal: account: %s key: %s value: %s\n", accountname, key, value);
-}
 
 GObject*
 modest_tny_account_store_new (ModestAccountMgr *modest_acc_mgr)
@@ -228,7 +239,6 @@ modest_tny_account_store_new (ModestAccountMgr *modest_acc_mgr)
 		return NULL;
 	}
 	
-#warning todo: disconnect on destruction
 	g_signal_connect (G_OBJECT (modest_acc_mgr), "account-add", 
 		G_CALLBACK(manager_new_account), NULL);
 	g_signal_connect (G_OBJECT (modest_acc_mgr), "account-remove", 
