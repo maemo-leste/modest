@@ -43,13 +43,104 @@ static void
 identity_setup_dialog (ModestUI *, GtkListStore *, gchar *);
 
 static void
+account_setup_dialog (ModestUI *, gchar *);
+
+static void
 missing_notification(GtkWindow *, gchar *);
+
+static GtkTreeModel *
+create_identities_model(ModestIdentityMgr *);
+
+static GtkTreeModel *
+create_accounts_model(ModestAccountMgr *);
+
+static void
+refresh_identities(ModestIdentityMgr *,
+		   gpointer);
+
+static void
+refresh_accounts(ModestAccountMgr *, GladeXML *glade_xml);
 
 /* CALLBACKS */
 
 static void
-edit_action(GtkWidget *button,
-	    gpointer userdata)
+account_edit_action(GtkWidget *button,
+		    gpointer userdata)
+{
+	/* does nothing yet */
+}
+
+static void
+account_create_action(GtkWidget *button,
+		      gpointer userdata)
+{
+	CallbackData *cb_data;
+
+	cb_data = (CallbackData *) userdata;
+
+	account_setup_dialog(cb_data->modest_ui, NULL);
+}
+
+static void
+account_delete_action(GtkWidget *button,
+		      gpointer userdata)
+{
+	CallbackData *cb_data;
+	GtkTreeSelection *selection;
+	GtkTreeIter selected_iter;
+	GtkTreeModel *acc_liststore;
+	GtkWidget *confirmation_dialog;
+	GtkWidget *confirmation_message;
+	ModestUIPrivate *priv;
+	gchar *account_name;
+	gchar *message;
+	gint result;
+
+	cb_data = (CallbackData *) userdata;
+	priv = MODEST_UI_GET_PRIVATE(cb_data->modest_ui);
+	selection = gtk_tree_view_get_selection (GTK_TREE_VIEW(cb_data->acc_tree_view));
+
+	gtk_tree_selection_get_selected(selection,
+					&acc_liststore,
+					&selected_iter);
+	gtk_tree_model_get(GTK_TREE_MODEL(acc_liststore),
+			   &selected_iter,
+			   ACCOUNT_NAME, &account_name,
+			   -1);
+
+	confirmation_dialog = gtk_dialog_new_with_buttons ("Confirm removal of account",
+							   GTK_WINDOW(gtk_widget_get_toplevel(button)),
+							   GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
+							   GTK_STOCK_OK,
+							   GTK_RESPONSE_OK,
+							   GTK_STOCK_CANCEL,
+							   GTK_RESPONSE_CANCEL,
+							   NULL);
+
+	message = g_strdup_printf("Remove selected account '%s'?", account_name);
+	confirmation_message = gtk_label_new_with_mnemonic (message);
+
+	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(confirmation_dialog)->vbox), confirmation_message, FALSE, FALSE, 10);
+
+	gtk_widget_show_all(confirmation_dialog);
+
+	result=gtk_dialog_run(GTK_DIALOG(confirmation_dialog));
+	if (result==GTK_RESPONSE_OK)
+	{
+		modest_account_mgr_remove_server_account(priv->modest_acc_mgr,
+							 account_name,
+							 NULL);
+	}
+
+	gtk_widget_destroy(confirmation_dialog);
+	g_free(account_name);
+	g_free(message);
+}
+
+
+static void
+identity_edit_action(GtkWidget *button,
+		     gpointer userdata)
 {
 	CallbackData *cb_data;
 	GtkListStore *acc_liststore;
@@ -66,7 +157,7 @@ edit_action(GtkWidget *button,
 					&selected_iter);
 	gtk_tree_model_get(GTK_TREE_MODEL(id_liststore),
 			   &selected_iter,
-			   ACCOUNT_NAME, &identity_name,
+			   IDENTITY_NAME, &identity_name,
 			   -1);
 	acc_liststore=GTK_LIST_STORE(gtk_tree_view_get_model (GTK_TREE_VIEW(cb_data->acc_tree_view)));
 
@@ -75,8 +166,8 @@ edit_action(GtkWidget *button,
 }
 
 static void
-create_action(GtkWidget *button,
-	      gpointer userdata)
+identity_create_action(GtkWidget *button,
+		       gpointer userdata)
 {
 	CallbackData *cb_data;
 	GtkListStore *acc_liststore;
@@ -89,19 +180,22 @@ create_action(GtkWidget *button,
 }
 
 static void
-delete_action(GtkWidget *button,
-	      gpointer userdata)
+identity_delete_action(GtkWidget *button,
+		       gpointer userdata)
 {
 	CallbackData *cb_data;
 	GtkTreeSelection *selection;
 	GtkTreeIter selected_iter;
 	GtkTreeModel *id_liststore;
-	gchar *identity_name;
 	GtkWidget *confirmation_dialog;
 	GtkWidget *confirmation_message;
+	ModestUIPrivate *priv;
+	gchar *identity_name;
+	gchar *message;
 	gint result;
 
 	cb_data = (CallbackData *) userdata;
+	priv = MODEST_UI_GET_PRIVATE(cb_data->modest_ui);
 	selection = gtk_tree_view_get_selection (GTK_TREE_VIEW(cb_data->id_tree_view));
 
 	gtk_tree_selection_get_selected(selection,
@@ -121,25 +215,24 @@ delete_action(GtkWidget *button,
 							   GTK_RESPONSE_CANCEL,
 							   NULL);
 
-	gchar *messy = g_strdup_printf("Remove selected identity '%s'?", identity_name);
-	confirmation_message = gtk_label_new_with_mnemonic (messy);
+	message = g_strdup_printf("Remove selected identity '%s'?", identity_name);
+	confirmation_message = gtk_label_new_with_mnemonic (message);
 
-	gtk_container_add(GTK_CONTAINER(confirmation_dialog),
-			  confirmation_message);
+	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(confirmation_dialog)->vbox), confirmation_message, FALSE, FALSE, 10);
 
 	gtk_widget_show_all(confirmation_dialog);
 
 	result=gtk_dialog_run(GTK_DIALOG(confirmation_dialog));
 	if (result==GTK_RESPONSE_OK)
 	{
-		modest_identity_mgr_remove_identity(MODEST_UI_GET_PRIVATE(cb_data->modest_ui)->modest_id_mgr,
+		modest_identity_mgr_remove_identity(priv->modest_id_mgr,
 						    identity_name,
 						    NULL);
 	}
+
 	gtk_widget_destroy(confirmation_dialog);
 	g_free(identity_name);
-	g_free(messy);
-
+	g_free(message);
 }
 
 static void
@@ -158,6 +251,21 @@ activate_buttons_on_identity(GtkTreeView *tree_view,
 }
 
 static void
+activate_buttons_on_account(GtkTreeView *tree_view,
+			    gpointer user_data)
+{
+	GtkWidget *button;
+	GladeXML *glade_xml;
+
+	glade_xml=(GladeXML *) user_data;
+
+	button = glade_xml_get_widget(GLADE_XML(glade_xml), "AccountEditButton");
+	gtk_widget_set_sensitive(GTK_WIDGET(button), TRUE);
+	button = glade_xml_get_widget(GLADE_XML(glade_xml), "AccountDeleteButton");
+	gtk_widget_set_sensitive(GTK_WIDGET(button), TRUE);
+}
+
+static void
 use_sig_toggled(GtkToggleButton *button,
 		gpointer userdata) {
 
@@ -168,7 +276,83 @@ use_sig_toggled(GtkToggleButton *button,
 	gtk_widget_set_sensitive(awidget, gtk_toggle_button_get_active(button));
 }
 
+static void
+refresh_accounts_on_add(ModestAccountMgr *modest_acc_mgr,
+			void *nu1,
+			gpointer userdata)
+{
+	refresh_accounts(modest_acc_mgr, (GladeXML *) userdata);
+}
+
+static void
+refresh_accounts_on_remove(ModestAccountMgr *modest_acc_mgr,
+			void *nu1,
+			gpointer userdata)
+{
+	refresh_accounts(modest_acc_mgr, (GladeXML *) userdata);
+}
+
+static void
+refresh_accounts_on_change(ModestAccountMgr *modest_acc_mgr,
+			   void *nu1,
+			   void *nu2,
+			   void *nu3,
+			   gpointer userdata)
+{
+	refresh_accounts(modest_acc_mgr, (GladeXML *) userdata);
+}
+
+static void
+refresh_identities_on_add(ModestIdentityMgr *modest_id_mgr,
+			  void *nu1,
+			  gpointer userdata) {
+	refresh_identities(modest_id_mgr, (GladeXML *)userdata);
+}
+
+static void
+refresh_identities_on_remove(ModestIdentityMgr *modest_id_mgr,
+			     void *nu1,
+			     gpointer userdata) {
+	refresh_identities(modest_id_mgr, (GladeXML *)userdata);
+}
+
+static void
+refresh_identities_on_change(ModestIdentityMgr *modest_id_mgr,
+			     void *nu1,
+			     void *nu2,
+			     void *nu3,
+			     gpointer userdata) {
+	refresh_identities(modest_id_mgr, (GladeXML *)userdata);
+}
+
 /* METHODS */
+
+static void
+refresh_identities(ModestIdentityMgr *modest_id_mgr,
+		   gpointer userdata) {
+
+	GtkTreeModel *id_liststore;
+	GtkTreeView *id_treeview;
+	GladeXML *glade_xml = (GladeXML *) userdata;
+
+	id_treeview = GTK_TREE_VIEW(glade_xml_get_widget(glade_xml, "IdentitiesTreeview"));
+
+	id_liststore=create_identities_model(modest_id_mgr);
+	gtk_tree_view_set_model(GTK_TREE_VIEW(id_treeview), id_liststore);
+}
+
+static void
+refresh_accounts(ModestAccountMgr *modest_acc_mgr,
+		 GladeXML *glade_xml) {
+
+	GtkTreeModel *acc_liststore;
+	GtkTreeView *acc_treeview;
+
+	acc_treeview = GTK_TREE_VIEW(glade_xml_get_widget(glade_xml, "AccountsTreeview"));
+
+	acc_liststore=create_accounts_model(modest_acc_mgr);
+	gtk_tree_view_set_model(GTK_TREE_VIEW(acc_treeview), acc_liststore);
+}
 
 static void
 missing_notification(GtkWindow *parent, gchar *info_message) {
@@ -264,7 +448,7 @@ write_identity(GladeXML *glade_xml, ModestUI *modest_ui, GtkListStore *accounts_
 		return FALSE;
 	if (!modest_identity_mgr_set_identity_string(priv->modest_id_mgr,
 						     identity,
-						     MODEST_IDENTITY_REPLYTO,
+						     MODEST_IDENTITY_SIGNATURE,
 						     signature,
 						     NULL))
 		return FALSE;
@@ -291,6 +475,47 @@ write_identity(GladeXML *glade_xml, ModestUI *modest_ui, GtkListStore *accounts_
 	return TRUE;
 }
 
+static gboolean
+write_account(GladeXML *glade_xml, ModestUI *modest_ui, gboolean newaccount) {
+
+	ModestUIPrivate *priv;
+	const gchar *account;
+
+	priv = MODEST_UI_GET_PRIVATE(MODEST_UI(modest_ui));
+
+	account = gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "ASDisplaynameEntry")));
+
+	if (newaccount) {
+
+		if (modest_account_mgr_add_server_account (priv->modest_acc_mgr,
+							   account,
+							   gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "ASHostnameEntry"))),
+							   gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "ASUsernameEntry"))),
+							   gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "ASPasswordEntry"))),
+							   gtk_combo_box_get_active_text(GTK_COMBO_BOX(glade_xml_get_widget(glade_xml, "ASProtocolComboBox")))));
+		else
+			return FALSE;
+	}
+	if (!modest_account_mgr_set_server_account_string(priv->modest_acc_mgr,
+							  account,
+							  MODEST_ACCOUNT_HOSTNAME,
+							  gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "ASHostnameEntry"))),
+							  NULL));
+		return FALSE;
+	if (!modest_account_mgr_set_server_account_string(priv->modest_acc_mgr,
+							  account,
+							  MODEST_ACCOUNT_USERNAME,
+							  gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "ASUsernameEntry"))),
+							  NULL));
+	if (!modest_account_mgr_set_server_account_string(priv->modest_acc_mgr,
+							  account,
+							  MODEST_ACCOUNT_USERNAME,
+							  gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "ASPasswordEntry"))),
+							  NULL));
+		return FALSE;
+	return TRUE;
+}
+
 static void
 identity_setup_dialog (ModestUI *modest_ui, GtkListStore *accounts_model, gchar *identity)
 {
@@ -303,7 +528,7 @@ identity_setup_dialog (ModestUI *modest_ui, GtkListStore *accounts_model, gchar 
 	ModestIdentityMgr *id_mgr;
 	GtkTextBuffer *sigbuff;
 	gchar *tmptext;
-	gint account_added_successfully;
+	gint identity_added_successfully;
 	gint result;
 	gboolean newidentity;
 
@@ -401,7 +626,84 @@ identity_setup_dialog (ModestUI *modest_ui, GtkListStore *accounts_model, gchar 
 
 		switch (result) {
 		case GTK_RESPONSE_OK:
-			account_added_successfully = write_identity(glade_xml, modest_ui, accounts_model, newidentity);
+			identity_added_successfully = write_identity(glade_xml, modest_ui, accounts_model, newidentity);
+			break;
+		default:
+			identity_added_successfully = FALSE;
+			break;
+		}
+	} while(result!=GTK_RESPONSE_DELETE_EVENT && result!=GTK_RESPONSE_CANCEL && identity_added_successfully!=TRUE);
+
+	gtk_widget_destroy(id_dialog);
+	g_object_unref(glade_xml);
+}
+
+static void
+account_setup_dialog (ModestUI *modest_ui, gchar *account) {
+
+	GladeXML *glade_xml;
+	GtkWidget *acc_dialog;
+	GtkWidget *awidget;
+	ModestAccountMgr *acc_mgr;
+	gchar *tmptext;
+	gint account_added_successfully;
+	gint result;
+	gboolean newaccount;
+
+	glade_xml = glade_xml_new(MODEST_GLADE, "AccountSetupDialog", NULL);
+	acc_dialog = glade_xml_get_widget(glade_xml, "AccountSetupDialog");
+
+	newaccount = account==NULL;
+	if (!newaccount) {
+		acc_mgr = MODEST_UI_GET_PRIVATE(modest_ui)->modest_acc_mgr;
+
+		awidget=glade_xml_get_widget(glade_xml, "ASDisplaynameEntry");
+		gtk_widget_set_sensitive(awidget, FALSE);
+		gtk_entry_set_text(GTK_ENTRY(awidget), account);
+
+		tmptext = modest_account_mgr_get_account_string(acc_mgr,
+								  account,
+								  MODEST_ACCOUNT_PROTO,
+								  NULL);
+		awidget=glade_xml_get_widget(glade_xml, "ASTypeEntry");
+		gtk_entry_set_text(GTK_ENTRY(awidget), tmptext);
+		g_free(tmptext);
+
+		tmptext = modest_account_mgr_get_account_string(acc_mgr,
+								  account,
+								  MODEST_ACCOUNT_HOSTNAME,
+								  NULL);
+		awidget=glade_xml_get_widget(glade_xml, "ASHostnameEntry");
+		gtk_entry_set_text(GTK_ENTRY(awidget), tmptext);
+		g_free(tmptext);
+
+		tmptext = modest_account_mgr_get_account_string(acc_mgr,
+								  account,
+								  MODEST_ACCOUNT_USERNAME,
+								  NULL);
+		awidget=glade_xml_get_widget(glade_xml, "ASUsernameEntry");
+		gtk_entry_set_text(GTK_ENTRY(awidget), tmptext);
+		g_free(tmptext);
+
+		tmptext = modest_account_mgr_get_account_string(acc_mgr,
+								  account,
+								  MODEST_ACCOUNT_PASSWORD,
+								  NULL);
+		awidget=glade_xml_get_widget(glade_xml, "ASPasswordEntry");
+		gtk_entry_set_text(GTK_ENTRY(awidget), tmptext);
+
+		g_free(tmptext);
+
+	}
+
+	gtk_widget_show_all(acc_dialog);
+
+	do {
+		result=gtk_dialog_run(GTK_DIALOG(acc_dialog));
+
+		switch (result) {
+		case GTK_RESPONSE_OK:
+			account_added_successfully = write_account(glade_xml, modest_ui, newaccount);
 			break;
 		default:
 			account_added_successfully = FALSE;
@@ -409,7 +711,7 @@ identity_setup_dialog (ModestUI *modest_ui, GtkListStore *accounts_model, gchar 
 		}
 	} while(result!=GTK_RESPONSE_DELETE_EVENT && result!=GTK_RESPONSE_CANCEL && account_added_successfully!=TRUE);
 
-	gtk_widget_destroy(id_dialog);
+	gtk_widget_destroy(acc_dialog);
 	g_object_unref(glade_xml);
 }
 
@@ -417,13 +719,15 @@ identity_setup_dialog (ModestUI *modest_ui, GtkListStore *accounts_model, gchar 
 static CallbackData *
 setup_callback_data(GtkWidget *id_tree_view,
 		    GtkWidget *acc_tree_view,
-		    ModestUI *modest_ui)
+		    ModestUI *modest_ui,
+		    GladeXML *glade_xml)
 {
 	CallbackData *self;
 	self = g_malloc(sizeof(CallbackData));
 	self->modest_ui=modest_ui;
 	self->id_tree_view=id_tree_view;
 	self->acc_tree_view=acc_tree_view;
+	self->glade_xml=glade_xml;
 	return self;
 }
 
@@ -516,8 +820,6 @@ accounts_and_identities_dialog (gpointer user_data)
 	GtkWidget *main_dialog;
 	GtkWidget *identities_tree_view;
 	GtkWidget *accounts_tree_view;
-	GtkTreeModel *identities_model;
-	GtkTreeModel *accounts_model;
 	ModestUI *modest_ui;
 	ModestUIPrivate *priv;
 	gint retval;
@@ -535,8 +837,6 @@ accounts_and_identities_dialog (gpointer user_data)
 
 	/* Accounts */
 	accounts_tree_view = glade_xml_get_widget(glade_xml, "AccountsTreeview");
-	accounts_model=create_accounts_model(priv->modest_acc_mgr);
-	gtk_tree_view_set_model(GTK_TREE_VIEW(accounts_tree_view), accounts_model);
 	/* Account -> Accountname */
 	renderer = gtk_cell_renderer_text_new ();
 	column = gtk_tree_view_column_new_with_attributes ("Account",
@@ -554,8 +854,6 @@ accounts_and_identities_dialog (gpointer user_data)
 
 	/* Identities */
 	identities_tree_view = glade_xml_get_widget(glade_xml, "IdentitiesTreeview");
-	identities_model=create_identities_model(priv->modest_id_mgr);
-	gtk_tree_view_set_model(GTK_TREE_VIEW(identities_tree_view), identities_model);
 
 	/* Identities -> Identityname */
 	renderer = gtk_cell_renderer_text_new ();
@@ -581,37 +879,89 @@ accounts_and_identities_dialog (gpointer user_data)
 							   NULL);
 	gtk_tree_view_append_column (GTK_TREE_VIEW(identities_tree_view), column);
 
-	cb_data=setup_callback_data(identities_tree_view, accounts_tree_view, modest_ui);
+	cb_data=setup_callback_data(identities_tree_view, accounts_tree_view, modest_ui, glade_xml);
 
+	refresh_accounts(priv->modest_acc_mgr,
+			 glade_xml);
+
+	refresh_identities(priv->modest_id_mgr,
+			   glade_xml);
+
+	/* Identities */
 	abutton=glade_xml_get_widget(glade_xml, "IdentityCreateButton");
 	g_signal_connect(abutton,
 			 "clicked",
-			 G_CALLBACK(create_action),
+			 G_CALLBACK(identity_create_action),
 			 cb_data);
 	abutton=glade_xml_get_widget(glade_xml, "IdentityEditButton");
 	g_signal_connect(abutton,
 			 "clicked",
-			 G_CALLBACK(edit_action),
+			 G_CALLBACK(identity_edit_action),
 			 cb_data);
 	abutton=glade_xml_get_widget(glade_xml, "IdentityDeleteButton");
 	g_signal_connect(abutton,
 			 "clicked",
-			 G_CALLBACK(delete_action),
+			 G_CALLBACK(identity_delete_action),
 			 cb_data);
 
-	/* FIXME: the edit/delete buttons are sensitive by default
-	 * but we have no selection by default.
-	 */
+	/* Accounts */
+	abutton=glade_xml_get_widget(glade_xml, "AccountCreateButton");
+	g_signal_connect(abutton,
+			 "clicked",
+			 G_CALLBACK(account_create_action),
+			 cb_data);
+	abutton=glade_xml_get_widget(glade_xml, "AccountEditButton");
+	g_signal_connect(abutton,
+			 "clicked",
+			 G_CALLBACK(account_edit_action),
+			 cb_data);
+	abutton=glade_xml_get_widget(glade_xml, "AccountDeleteButton");
+	g_signal_connect(abutton,
+			 "clicked",
+			 G_CALLBACK(account_delete_action),
+			 cb_data);
 
-	activate_buttons_on_identity(NULL, glade_xml);
+	g_signal_connect(glade_xml_get_widget(glade_xml, "IdentitiesTreeview"),
+			 "cursor-changed",
+			 G_CALLBACK(activate_buttons_on_identity),
+			 glade_xml);
+
+	g_signal_connect(glade_xml_get_widget(glade_xml, "AccountsTreeview"),
+			 "cursor-changed",
+			 G_CALLBACK(activate_buttons_on_account),
+			 glade_xml);
+
+	g_signal_connect(priv->modest_id_mgr,
+			 "account-change",
+			 G_CALLBACK(refresh_identities_on_change),
+			 glade_xml);
+	g_signal_connect(priv->modest_id_mgr,
+			 "account-add",
+			 G_CALLBACK(refresh_identities_on_add),
+			 glade_xml);
+	g_signal_connect(priv->modest_id_mgr,
+			 "account-remove",
+			 G_CALLBACK(refresh_identities_on_remove),
+			 glade_xml);
+
+	g_signal_connect(priv->modest_acc_mgr,
+			 "account-change",
+			 G_CALLBACK(refresh_accounts_on_change),
+			 glade_xml);
+	g_signal_connect(priv->modest_acc_mgr,
+			 "account-add",
+			 G_CALLBACK(refresh_accounts_on_add),
+			 glade_xml);
+	g_signal_connect(priv->modest_acc_mgr,
+			 "account-remove",
+			 G_CALLBACK(refresh_accounts_on_remove),
+			 glade_xml);
 
 	gtk_widget_show_all(GTK_WIDGET(main_dialog));
 
 	retval=gtk_dialog_run(GTK_DIALOG(main_dialog));
 
 	gtk_widget_destroy(GTK_WIDGET(main_dialog));
-	g_object_unref(accounts_model);
-	g_object_unref(identities_model);
 	free_callback_data(cb_data);
 	g_object_unref(glade_xml);
 }
