@@ -141,6 +141,15 @@ modest_ui_finalize (GObject *obj)
 }
 
 
+static void
+on_accounts_reloaded (ModestTnyAccountStore *account_store, gpointer user_data)
+{
+	ModestUIPrivate *priv = user_data;
+	
+  	
+}
+
+
 GObject*
 modest_ui_new (ModestConf *modest_conf)
 {
@@ -180,6 +189,8 @@ modest_ui_new (ModestConf *modest_conf)
 	g_signal_connect (account_store_iface, "password_requested",
 			  G_CALLBACK(on_password_requested),
 			  NULL);
+	g_signal_connect (account_store_iface, "accounts_reloaded",
+			  G_CALLBACK(on_accounts_reloaded), priv);
 
 	glade_init ();
 	priv->glade_xml = glade_xml_new (MODEST_GLADE, NULL, NULL);

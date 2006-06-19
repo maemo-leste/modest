@@ -39,9 +39,13 @@ enum {
 	LAST_SIGNAL
 };
 
+static const gchar *transport_protocols[] = { "smtp", NULL };
+
 typedef struct _ModestTnyAccountStorePrivate ModestTnyAccountStorePrivate;
 struct _ModestTnyAccountStorePrivate {
 
+	GMutex *store_lock;
+	GMutex *transport_lock;
 	GList *store_accounts;
 	GList *transport_accounts;
 	gchar *cache_dir;
@@ -122,6 +126,8 @@ modest_tny_account_store_init (ModestTnyAccountStore *obj)
 	priv->modest_acc_mgr         = NULL;
 	priv->device                 = NULL;
 
+	priv->store_lock             = NULL;
+	priv->transport_lock         = NULL;
 	priv->store_accounts         = NULL;
 	priv->transport_accounts     = NULL;
 	priv->cache_dir              = NULL;
@@ -147,108 +153,6 @@ free_gobject_list (GList *list)
 	}
 	return NULL;
 }
-
-
-static void 
-manager_new_account (ModestAccountMgr *modest_acc_mgr, gchar *name, gpointer data)
-{
-	g_print ("new account signal %s\n", name);
-}
-
-
-static void 
-manager_remove_account (ModestAccountMgr *modest_acc_mgr,gchar *name, gpointer data)
-{
-	g_print ("remove account signal %s\n", name);
-}
-
-
-static void 
-manager_change_account (ModestAccountMgr *modest_acc_mgr, gchar *accountname, 
-	gchar *key, gchar* value, gpointer data)
-{
-	g_print ("account change signal: account: %s key: %s value: %s\n", accountname, key, value);
-}
-
-
-static void
-modest_tny_account_store_finalize (GObject *obj)
-{
-	ModestTnyAccountStore *self = MODEST_TNY_ACCOUNT_STORE(obj);
-	ModestTnyAccountStorePrivate *priv =
-		MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
-
-	g_signal_handlers_disconnect_by_func (G_OBJECT (priv->modest_acc_mgr), 
-		G_CALLBACK(manager_new_account), NULL);
-	g_signal_handlers_disconnect_by_func (G_OBJECT (priv->modest_acc_mgr), 
-		G_CALLBACK(manager_remove_account), NULL);
-	g_signal_handlers_disconnect_by_func (G_OBJECT (priv->modest_acc_mgr), 
-		G_CALLBACK(manager_change_account), NULL);
-		
-	if (priv->modest_acc_mgr) {
-		g_object_unref (G_OBJECT(priv->modest_acc_mgr));
-		priv->modest_acc_mgr = NULL;
-	}
-
-	if (priv->tny_session_camel) {
-		g_object_unref (G_OBJECT(priv->tny_session_camel));
-		priv->tny_session_camel = NULL;
-	}
-
-	if (priv->device) {
-		g_object_unref (G_OBJECT(priv->device));
-		priv->device = NULL;
-	}
-
-	priv->store_accounts     = free_gobject_list (priv->store_accounts);
-	priv->transport_accounts = free_gobject_list (priv->store_accounts);
-
-	g_free (priv->cache_dir);
-	priv->cache_dir = NULL;
-
-
-}
-
-
-GObject*
-modest_tny_account_store_new (ModestAccountMgr *modest_acc_mgr)
-{
-	GObject *obj;
-	ModestTnyAccountStorePrivate *priv;
-
-	g_return_val_if_fail (modest_acc_mgr, NULL);
-
-	obj  = G_OBJECT(g_object_new(MODEST_TYPE_TNY_ACCOUNT_STORE, NULL));
-
-	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(obj);
-	
-	g_object_ref(G_OBJECT(modest_acc_mgr));
-	priv->modest_acc_mgr = modest_acc_mgr;
-	
-	priv->device = (TnyDeviceIface*)tny_device_new();
-	if (!priv->device) {
-		g_warning ("Cannot create Device instance");
-		g_object_unref (obj);
-		return NULL;
-	}
-	priv->tny_session_camel = tny_session_camel_new
-		(TNY_ACCOUNT_STORE_IFACE(obj));
-	if (!priv->tny_session_camel) {
-		g_warning ("Cannot create TnySessionCamel instance");
-		g_object_unref (obj);
-		return NULL;
-	}
-	
-	g_signal_connect (G_OBJECT (modest_acc_mgr), "account-add", 
-		G_CALLBACK(manager_new_account), NULL);
-	g_signal_connect (G_OBJECT (modest_acc_mgr), "account-remove", 
-		G_CALLBACK(manager_remove_account), NULL);
-	g_signal_connect (G_OBJECT (modest_acc_mgr), "account-change", 
-		G_CALLBACK(manager_change_account), NULL);
-
-	return obj;
-}
-
 
 static gchar*
 get_password (TnyAccountIface *account, const gchar *prompt, gboolean *cancel)
@@ -285,59 +189,6 @@ static void
 forget_password (TnyAccountIface *account)
 {
 	g_warning (__FUNCTION__);
-}
-
-
-
-static gboolean
-add_account  (TnyAccountStoreIface *self, TnyAccountIface *account)
-{
-	TnyAccountIface       *account_iface;
-	ModestTnyAccountStore *account_store;
-	ModestTnyAccountStorePrivate *priv;
-
-	const gchar *account_name;
-	const gchar *hostname, *username, *proto;
-
-	g_return_val_if_fail (self, FALSE);
-	g_return_val_if_fail (account, FALSE);
-
-	account_iface  = TNY_ACCOUNT_IFACE(account);
-	account_store  = MODEST_TNY_ACCOUNT_STORE(self);
-	priv           = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
-
-	account_name   = tny_account_iface_get_id(account_iface);
-	if (!account_name) {
-		g_warning ("failed to retrieve account name");
-		return FALSE;
-	}
-
-	hostname =  tny_account_iface_get_hostname(account_iface);
-	username =  tny_account_iface_get_user(account_iface);
-	proto    =  tny_account_iface_get_proto(account_iface);
-
-	return modest_account_mgr_add_server_account (priv->modest_acc_mgr,
-						      account_name,
-						      hostname, username, NULL,
-						      proto);
-}
-
-
-static void
-modest_tny_account_store_add_store_account  (TnyAccountStoreIface *self,
-					     TnyStoreAccountIface *account)
-{
-	if (!add_account (self, TNY_ACCOUNT_IFACE(account)))
-		g_warning ("failed to add store account");
-}
-
-
-static void
-modest_tny_account_store_add_transport_account  (TnyAccountStoreIface *self,
-						 TnyTransportAccountIface *account)
-{
-	if (!add_account (self, TNY_ACCOUNT_IFACE(account)))
-		g_warning ("failed to add transport account");
 }
 
 
@@ -437,6 +288,264 @@ tny_accounts_from_server_accounts (ModestTnyAccountStore *self, GSList *accounts
 }
 
 
+static void 
+manager_new_account (ModestAccountMgr *modest_acc_mgr, gchar *name, gpointer data)
+{
+	ModestTnyAccountStore *self = data;
+	ModestTnyAccountStorePrivate *priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
+	TnyAccountIface *new_account;
+	gchar *proto;
+	gint i = 0;
+	gboolean is_store = TRUE;
+	
+	g_print ("new account signal %s\n", name);
+	
+	
+	proto = modest_account_mgr_get_server_account_string (priv->modest_acc_mgr, name,
+							    MODEST_ACCOUNT_PROTO, NULL);
+	if (!proto) {
+		g_printerr ("Cannot add account: unknown type.");
+		return;
+	}
+	
+	while (transport_protocols [i])	{
+		if (!strcmp (transport_protocols [i], proto)) {
+			is_store = FALSE;
+			break;
+		}
+		i++;
+	}
+	
+	/* fill account lists */
+	if (!priv->store_accounts)
+		modest_tny_account_store_get_store_accounts (TNY_ACCOUNT_STORE_IFACE(self));
+	if (!priv->transport_accounts)
+		modest_tny_account_store_get_transport_accounts (TNY_ACCOUNT_STORE_IFACE(self));
+
+	
+	if (is_store) {
+			new_account = tny_account_from_key (self, name, is_store);
+			g_mutex_lock (priv->store_lock);
+			priv->store_accounts = g_list_append (priv->store_accounts, new_account);
+			g_mutex_unlock (priv->store_lock);
+	} else {
+			new_account = tny_account_from_key (self, name, is_store);
+			g_mutex_lock (priv->transport_lock);
+			priv->transport_accounts = g_list_append (priv->transport_accounts, new_account);
+			g_mutex_unlock (priv->transport_lock);
+	}
+	g_signal_emit (self, 
+		tny_account_store_iface_signals [TNY_ACCOUNT_STORE_IFACE_ACCOUNT_INSERTED], 0, new_account);
+}
+
+
+static void 
+manager_remove_account (ModestAccountMgr *modest_acc_mgr, gchar *name, gpointer data)
+{
+	g_print ("remove account signal %s\n", name);
+}
+
+
+static void 
+manager_change_account (ModestAccountMgr *modest_acc_mgr, gchar *accountname, 
+	gchar *key, gchar* value, gpointer data)
+{
+	ModestTnyAccountStore *self = data;
+	ModestTnyAccountStorePrivate *priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
+	GList *iter;
+	TnyAccountIface *account = NULL;
+	
+	g_print ("account change signal: account: %s key: %s value: %s\n", accountname, key, value);
+	
+	/* fill account lists */
+	if (!priv->store_accounts)
+		modest_tny_account_store_get_store_accounts (TNY_ACCOUNT_STORE_IFACE(self));
+	if (!priv->transport_accounts)
+		modest_tny_account_store_get_transport_accounts (TNY_ACCOUNT_STORE_IFACE(self));
+	
+	for (iter = priv->store_accounts; iter; iter = iter->next) {
+		TnyAccountIface *acc = iter->data;
+		if (!strcmp (tny_account_iface_get_name (acc), accountname)) {
+			account = acc;
+			break;
+		}
+	}
+	
+	if (!account)
+		for (iter = priv->transport_accounts; iter; iter = iter->next) {
+			TnyAccountIface *acc = iter->data;
+			if (!strcmp (tny_account_iface_get_name (acc), accountname)) {
+				account = acc;
+				break;
+			}
+		}
+	
+	if (!account) {
+		g_printerr ("Couldn't find account - returning without applying changes.");
+		return;
+	}
+	
+	g_mutex_lock (priv->store_lock);
+	g_mutex_lock (priv->transport_lock);
+	
+	if (!strcmp (key, MODEST_ACCOUNT_HOSTNAME))
+		tny_account_iface_set_hostname (account, value);
+	if (!strcmp (key, MODEST_ACCOUNT_USERNAME))
+		tny_account_iface_set_user (account, value);
+		
+	g_mutex_unlock (priv->transport_lock);
+	g_mutex_unlock (priv->store_lock);
+		
+	/* TODO: handle protocol and password changes */
+	
+	g_signal_emit (self,
+		tny_account_store_iface_signals [TNY_ACCOUNT_STORE_IFACE_ACCOUNTS_RELOADED], 0);
+		
+}
+
+
+static void
+modest_tny_account_store_finalize (GObject *obj)
+{
+	ModestTnyAccountStore *self = MODEST_TNY_ACCOUNT_STORE(obj);
+	ModestTnyAccountStorePrivate *priv =
+		MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
+
+	g_signal_handlers_disconnect_by_func (G_OBJECT (priv->modest_acc_mgr), 
+		G_CALLBACK(manager_new_account), NULL);
+	g_signal_handlers_disconnect_by_func (G_OBJECT (priv->modest_acc_mgr), 
+		G_CALLBACK(manager_remove_account), NULL);
+	g_signal_handlers_disconnect_by_func (G_OBJECT (priv->modest_acc_mgr), 
+		G_CALLBACK(manager_change_account), NULL);
+		
+	if (priv->modest_acc_mgr) {
+		g_object_unref (G_OBJECT(priv->modest_acc_mgr));
+		priv->modest_acc_mgr = NULL;
+	}
+
+	if (priv->tny_session_camel) {
+		g_object_unref (G_OBJECT(priv->tny_session_camel));
+		priv->tny_session_camel = NULL;
+	}
+
+	if (priv->device) {
+		g_object_unref (G_OBJECT(priv->device));
+		priv->device = NULL;
+	}
+
+	g_mutex_lock (priv->store_lock);
+	priv->store_accounts     = free_gobject_list (priv->store_accounts);
+	g_mutex_unlock (priv->store_lock);
+	
+	g_mutex_lock (priv->transport_lock);
+	priv->transport_accounts = free_gobject_list (priv->store_accounts);
+	g_mutex_unlock (priv->transport_lock);
+
+
+	g_mutex_free (priv->store_lock);
+	g_mutex_free (priv->transport_lock);
+	
+	g_free (priv->cache_dir);
+	priv->cache_dir = NULL;
+
+}
+
+
+GObject*
+modest_tny_account_store_new (ModestAccountMgr *modest_acc_mgr)
+{
+	GObject *obj;
+	ModestTnyAccountStorePrivate *priv;
+
+	g_return_val_if_fail (modest_acc_mgr, NULL);
+
+	obj  = G_OBJECT(g_object_new(MODEST_TYPE_TNY_ACCOUNT_STORE, NULL));
+
+	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(obj);
+	
+	g_object_ref(G_OBJECT(modest_acc_mgr));
+	priv->modest_acc_mgr = modest_acc_mgr;
+	
+	priv->store_lock = g_mutex_new ();
+	priv->transport_lock = g_mutex_new ();
+	
+	priv->device = (TnyDeviceIface*)tny_device_new();
+	if (!priv->device) {
+		g_warning ("Cannot create Device instance");
+		g_object_unref (obj);
+		return NULL;
+	}
+	priv->tny_session_camel = tny_session_camel_new
+		(TNY_ACCOUNT_STORE_IFACE(obj));
+	if (!priv->tny_session_camel) {
+		g_warning ("Cannot create TnySessionCamel instance");
+		g_object_unref (obj);
+		return NULL;
+	}
+	
+	g_signal_connect (G_OBJECT (modest_acc_mgr), "account-add", 
+		G_CALLBACK(manager_new_account), obj);
+	g_signal_connect (G_OBJECT (modest_acc_mgr), "account-remove", 
+		G_CALLBACK(manager_remove_account), obj);
+	g_signal_connect (G_OBJECT (modest_acc_mgr), "account-change", 
+		G_CALLBACK(manager_change_account), obj);
+
+	return obj;
+}
+
+
+static gboolean
+add_account  (TnyAccountStoreIface *self, TnyAccountIface *account)
+{
+	TnyAccountIface       *account_iface;
+	ModestTnyAccountStore *account_store;
+	ModestTnyAccountStorePrivate *priv;
+
+	const gchar *account_name;
+	const gchar *hostname, *username, *proto;
+
+	g_return_val_if_fail (self, FALSE);
+	g_return_val_if_fail (account, FALSE);
+
+	account_iface  = TNY_ACCOUNT_IFACE(account);
+	account_store  = MODEST_TNY_ACCOUNT_STORE(self);
+	priv           = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
+
+	account_name   = tny_account_iface_get_id(account_iface);
+	if (!account_name) {
+		g_warning ("failed to retrieve account name");
+		return FALSE;
+	}
+
+	hostname =  tny_account_iface_get_hostname(account_iface);
+	username =  tny_account_iface_get_user(account_iface);
+	proto    =  tny_account_iface_get_proto(account_iface);
+
+	return modest_account_mgr_add_server_account (priv->modest_acc_mgr,
+						      account_name,
+						      hostname, username, NULL,
+						      proto);
+}
+
+
+static void
+modest_tny_account_store_add_store_account  (TnyAccountStoreIface *self,
+					     TnyStoreAccountIface *account)
+{
+	if (!add_account (self, TNY_ACCOUNT_IFACE(account)))
+		g_warning ("failed to add store account");
+}
+
+
+static void
+modest_tny_account_store_add_transport_account  (TnyAccountStoreIface *self,
+						 TnyTransportAccountIface *account)
+{
+	if (!add_account (self, TNY_ACCOUNT_IFACE(account)))
+		g_warning ("failed to add transport account");
+}
+
+
 static const GList*
 modest_tny_account_store_get_store_accounts  (TnyAccountStoreIface *iface)
 {
@@ -456,7 +565,9 @@ modest_tny_account_store_get_store_accounts  (TnyAccountStoreIface *iface)
 								 MODEST_PROTO_TYPE_STORE,
 								 NULL, FALSE);
 
+		g_mutex_lock (priv->store_lock);
 		priv->store_accounts = tny_accounts_from_server_accounts (self, accounts, TRUE);
+		g_mutex_unlock (priv->store_lock);
 		g_slist_free (accounts);
 	}	
 
@@ -483,7 +594,9 @@ modest_tny_account_store_get_transport_accounts (TnyAccountStoreIface *iface)
 								 NULL,
 								 MODEST_PROTO_TYPE_TRANSPORT,
 								 NULL, FALSE);
+		g_mutex_lock (priv->transport_lock);
 		priv->transport_accounts = tny_accounts_from_server_accounts (self, accounts, FALSE);
+		g_mutex_unlock (priv->transport_lock);
 		g_slist_free (accounts);
 	}
 

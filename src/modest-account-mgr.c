@@ -88,13 +88,16 @@ modest_account_mgr_check_change (ModestConf *conf, const gchar *key,
 	
 	if ((strlen (key) > strlen (MODEST_SERVER_ACCOUNT_NAMESPACE "/") 
 	     && g_str_has_prefix (key, MODEST_SERVER_ACCOUNT_NAMESPACE))) {
-		gchar *subkey = key + strlen (MODEST_SERVER_ACCOUNT_NAMESPACE "/");
+		gchar *subkey = g_strdup(key + strlen (MODEST_SERVER_ACCOUNT_NAMESPACE "/"));
+		
 		if (! strstr (subkey, "/")) {/* no more '/' means an account was modified */
 			if (new_value)	{
 				 /* covers only one case of two */
+				 /*
 				priv->current_accounts = 
 					g_slist_prepend (priv->current_accounts, g_strdup (subkey));
 				g_signal_emit (amgr, signals[ACCOUNT_ADD_SIGNAL], 0, subkey);
+				*/
 			} else {
 				priv->current_accounts = 
 					delete_account_from_list (priv->current_accounts, subkey);
@@ -109,7 +112,7 @@ modest_account_mgr_check_change (ModestConf *conf, const gchar *key,
 			param++;
 			
 			/* that's the second case for a new account */
-			if (!find_account_in_list (priv->current_accounts, subkey)) {
+			if (!find_account_in_list (priv->current_accounts, subkey) && strstr (param, MODEST_ACCOUNT_PROTO)) {
 				priv->current_accounts = 
 					g_slist_prepend (priv->current_accounts, g_strdup (subkey));
 				g_signal_emit (amgr, signals[ACCOUNT_ADD_SIGNAL], 0, subkey);
@@ -117,9 +120,9 @@ modest_account_mgr_check_change (ModestConf *conf, const gchar *key,
 				
 			g_signal_emit (amgr, signals[ACCOUNT_CHANGE_SIGNAL], 0, subkey, param, new_value);
 		}
-	}	
 		
-	g_message ("value changed: %s %s\n", key, new_value);
+		g_free (subkey);
+	}	
 }
 
 
