@@ -191,8 +191,8 @@ install_test_account (ModestConf *conf)
 		}
 	}
 	if (!modest_identity_mgr_add_identity (id_mgr,
-                                               MODEST_IDENTITY_DEFAULT_IDENTITY,
-                                               "Default User",
+					       MODEST_IDENTITY_DEFAULT_IDENTITY,
+					       "Default User",
 					       "user@localhost",
 					       "", "", FALSE, NULL, FALSE ))
 		g_warning ("failed to add test identity");

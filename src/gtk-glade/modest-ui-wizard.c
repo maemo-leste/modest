@@ -211,15 +211,15 @@ void wizard_account_dialog(ModestUI *modest_ui)
 {
 	GladeXML *glade_xml;
 	GtkWidget *dialog;
-        ModestUIPrivate *priv;
-        GtkWidget *finish_button;
-        GtkWidget *back_button;
-        GtkWidget *next_button;
-        GtkWidget *cancel_button;
+	ModestUIPrivate *priv;
+	GtkWidget *finish_button;
+	GtkWidget *back_button;
+	GtkWidget *next_button;
+	GtkWidget *cancel_button;
 	GtkWidget *notebook;
 	GtkWidget *use_incoming_button;
-        gint cp;
-        gint result;
+	gint cp;
+	gint result;
 	gboolean account_added_successfully=FALSE;
 
 	g_return_if_fail(MODEST_IS_UI(modest_ui));
@@ -227,15 +227,15 @@ void wizard_account_dialog(ModestUI *modest_ui)
 
 	glade_xml = glade_xml_new(MODEST_GLADE, "account_wizard", NULL);
 
-        dialog = glade_xml_get_widget(glade_xml, "account_wizard");
+	dialog = glade_xml_get_widget(glade_xml, "account_wizard");
 
-        gtk_widget_show_all(dialog);
+	gtk_widget_show_all(dialog);
 
-        finish_button=glade_xml_get_widget(glade_xml, "AWFinishButton");
-        back_button=glade_xml_get_widget(glade_xml, "AWBackButton");
-        next_button=glade_xml_get_widget(glade_xml, "AWNextButton");
-        cancel_button=glade_xml_get_widget(glade_xml, "AWCancelButton");
-        notebook=glade_xml_get_widget(glade_xml, "AWNotebook");
+	finish_button=glade_xml_get_widget(glade_xml, "AWFinishButton");
+	back_button=glade_xml_get_widget(glade_xml, "AWBackButton");
+	next_button=glade_xml_get_widget(glade_xml, "AWNextButton");
+	cancel_button=glade_xml_get_widget(glade_xml, "AWCancelButton");
+	notebook=glade_xml_get_widget(glade_xml, "AWNotebook");
 
 	gtk_widget_set_sensitive(finish_button, FALSE);
 
@@ -248,37 +248,37 @@ void wizard_account_dialog(ModestUI *modest_ui)
 	/* First page not used currently. It's reserved for the account preset. */
 	gtk_notebook_set_current_page (GTK_NOTEBOOK(notebook), 1);
 
-        do {
-                cp=gtk_notebook_get_current_page(GTK_NOTEBOOK(notebook));
-                switch (cp) {
-                case 1:
-                        gtk_widget_set_sensitive(back_button, FALSE);
-                        break;
-                case 2:
-                        gtk_widget_set_sensitive(back_button, TRUE);
-                        break;
-                case 3:
-                        gtk_widget_set_sensitive(finish_button, FALSE);
-                        gtk_widget_set_sensitive(next_button, TRUE);
-                        break;
-                case 4:
-                        gtk_widget_set_sensitive(finish_button, TRUE);
-                        gtk_widget_set_sensitive(next_button, FALSE);
-                        break;
-                default:
-                        g_error("I'm on page %d of notebook AWNotebook, which shouldn't have happened. Pulling emergency breaks.", cp);
-                        break;
-                }
+	do {
+		cp=gtk_notebook_get_current_page(GTK_NOTEBOOK(notebook));
+		switch (cp) {
+		case 1:
+			gtk_widget_set_sensitive(back_button, FALSE);
+			break;
+		case 2:
+			gtk_widget_set_sensitive(back_button, TRUE);
+			break;
+		case 3:
+			gtk_widget_set_sensitive(finish_button, FALSE);
+			gtk_widget_set_sensitive(next_button, TRUE);
+			break;
+		case 4:
+			gtk_widget_set_sensitive(finish_button, TRUE);
+			gtk_widget_set_sensitive(next_button, FALSE);
+			break;
+		default:
+			g_error("I'm on page %d of notebook AWNotebook, which shouldn't have happened. Pulling emergency breaks.", cp);
+			break;
+		}
 
-                result=gtk_dialog_run(GTK_DIALOG(dialog));
+		result=gtk_dialog_run(GTK_DIALOG(dialog));
 
-                switch (result) {
-                case 1:
-                        if (advance_sanity_check(glade_xml, cp)==TRUE)
-                                gtk_notebook_next_page(GTK_NOTEBOOK(notebook));
-                        break;
-                case 2:
-                        gtk_notebook_prev_page(GTK_NOTEBOOK(notebook));
+		switch (result) {
+		case 1:
+			if (advance_sanity_check(glade_xml, cp)==TRUE)
+				gtk_notebook_next_page(GTK_NOTEBOOK(notebook));
+			break;
+		case 2:
+			gtk_notebook_prev_page(GTK_NOTEBOOK(notebook));
 			break;
 		case GTK_RESPONSE_ACCEPT:
 			account_added_successfully=wizard_account_add(glade_xml, modest_ui);
