@@ -187,17 +187,17 @@ missing_notification(GtkWindow *parent, gchar *info_message) {
 }
 
 static gboolean
-add_identity(GladeXML *glade_xml, ModestUI *modest_ui, GtkListStore *accounts_model)
-{
-	gchar *reply_to;
+write_identity(GladeXML *glade_xml, ModestUI *modest_ui, GtkListStore *accounts_model, gboolean newidentity) {
+
 	GtkTextBuffer *sigbuff;
-	gchar *signature;
 	GtkTextIter start_iter;
 	GtkTextIter end_iter;
 	GtkTreeIter transport_iter;
 	ModestUIPrivate *priv;
+	const gchar *identity;
+	gchar *reply_to;
+	gchar *signature;
 	gchar *transport;
-	gint retval;
 
 	priv = MODEST_UI_GET_PRIVATE(MODEST_UI(modest_ui));
 
@@ -228,20 +228,67 @@ add_identity(GladeXML *glade_xml, ModestUI *modest_ui, GtkListStore *accounts_mo
 		return FALSE;
 	}
 
-	if (modest_identity_mgr_add_identity (priv->modest_id_mgr,
-					      gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "ISIdentityEntry"))),
-					      gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "ISNameEntry"))),
-					      gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "ISEMailAddress"))),
-					      reply_to,
-					      signature,
-					      gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(glade_xml_get_widget(glade_xml, "ISUseSignatureCheckButton"))),
-					      transport,
-					      FALSE ))
-		retval=TRUE;
-	else
-		retval=FALSE;
+	identity = gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "ISIdentityEntry")));
+
+	if (newidentity) {
+
+		if (modest_identity_mgr_add_identity (priv->modest_id_mgr,
+						      identity,
+						      NULL,
+						      gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "ISEMailAddress"))),
+						      NULL,
+						      NULL,
+						      FALSE,
+						      NULL,
+						      FALSE));
+		else
+			return FALSE;
+	}
+	if (!modest_identity_mgr_set_identity_string(priv->modest_id_mgr,
+						     identity,
+						     MODEST_IDENTITY_REALNAME,
+						     gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "ISNameEntry"))),
+						     NULL))
+		return FALSE;
+	if (!modest_identity_mgr_set_identity_string(priv->modest_id_mgr,
+						     identity,
+						     MODEST_IDENTITY_EMAIL,
+						     gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "ISEMailAddress"))),
+						     NULL))
+		return FALSE;
+	if (!modest_identity_mgr_set_identity_string(priv->modest_id_mgr,
+						     identity,
+						     MODEST_IDENTITY_REPLYTO,
+						     reply_to,
+						     NULL))
+		return FALSE;
+	if (!modest_identity_mgr_set_identity_string(priv->modest_id_mgr,
+						     identity,
+						     MODEST_IDENTITY_REPLYTO,
+						     signature,
+						     NULL))
+		return FALSE;
+	if (!modest_identity_mgr_set_identity_bool(priv->modest_id_mgr,
+						   identity,
+						   MODEST_IDENTITY_USE_SIGNATURE,
+						   gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(glade_xml_get_widget(glade_xml,
+														       "ISUseSignatureCheckButton"))),
+						   NULL))
+		return FALSE;
+	if (!modest_identity_mgr_set_identity_string(priv->modest_id_mgr,
+						     identity,
+						     MODEST_IDENTITY_ID_VIA,
+						     transport,
+						     NULL))
+		return FALSE;
+	if (!modest_identity_mgr_set_identity_bool(priv->modest_id_mgr,
+						   identity,
+						   MODEST_IDENTITY_USE_ID_VIA,
+						   TRUE, /* FIXME: for now */
+						   NULL))
+		return FALSE;
 	g_free(transport);
-	return retval;
+	return TRUE;
 }
 
 static void
@@ -258,6 +305,7 @@ identity_setup_dialog (ModestUI *modest_ui, GtkListStore *accounts_model, gchar 
 	gchar *tmptext;
 	gint account_added_successfully;
 	gint result;
+	gboolean newidentity;
 
 	glade_xml = glade_xml_new(MODEST_GLADE, "IdentitySetupDialog", NULL);
 	id_dialog = glade_xml_get_widget(glade_xml, "IdentitySetupDialog");
@@ -275,7 +323,8 @@ identity_setup_dialog (ModestUI *modest_ui, GtkListStore *accounts_model, gchar 
 			 G_CALLBACK(use_sig_toggled),
 			 glade_xml);
 
-	if (identity!=NULL) {
+	newidentity = identity==NULL;
+	if (!newidentity) {
 		id_mgr = MODEST_UI_GET_PRIVATE(modest_ui)->modest_id_mgr;
 
 		awidget=glade_xml_get_widget(glade_xml, "ISIdentityEntry");
@@ -352,7 +401,7 @@ identity_setup_dialog (ModestUI *modest_ui, GtkListStore *accounts_model, gchar 
 
 		switch (result) {
 		case GTK_RESPONSE_OK:
-			account_added_successfully = add_identity(glade_xml, modest_ui, accounts_model);
+			account_added_successfully = write_identity(glade_xml, modest_ui, accounts_model, newidentity);
 			break;
 		default:
 			account_added_successfully = FALSE;

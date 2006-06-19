@@ -393,8 +393,8 @@ modest_identity_mgr_set_identity_int (ModestIdentityMgr * self,
 
 gboolean
 modest_identity_mgr_set_identity_bool (ModestIdentityMgr * self,
-				     const gchar * name, const gchar * key,
-				     gboolean val, GError ** err)
+				       const gchar * name, const gchar * key,
+				       gboolean val, GError ** err)
 {
 	ModestIdentityMgrPrivate *priv;
 
