@@ -220,7 +220,7 @@ modest_identity_mgr_add_identity (ModestIdentityMgr * self,
 	key = g_strconcat (id_key, "/", MODEST_IDENTITY_USE_ID_VIA, NULL);
 	modest_conf_set_bool (priv->modest_conf, key, use_id_via, NULL);
 	g_free (key);
-	
+
 	g_free (id_key);
 
 	return TRUE;		/* FIXME: better error checking */
@@ -392,7 +392,7 @@ modest_identity_mgr_set_identity_int (ModestIdentityMgr * self,
 
 
 gboolean
-modest_identy_mgr_set_identity_bool (ModestIdentityMgr * self,
+modest_identity_mgr_set_identity_bool (ModestIdentityMgr * self,
 				     const gchar * name, const gchar * key,
 				     gboolean val, GError ** err)
 {
