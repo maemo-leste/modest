@@ -68,23 +68,22 @@ htmltotext (TnyMsgMimePartIface * body)
 gchar *
 modest_tny_msg_actions_quote (const TnyMsgIface * self, const gchar * from,
 			      time_t sent_date, gint limit,
-			      gchar * to_quote)
+			      const gchar * to_quote)
 {
 	gchar *quoted;
 
 	/* 3 cases: */
 
 	/* a) quote text from selection */
-	if (to_quote != NULL) {
+	if (to_quote != NULL) 
 		return modest_text_utils_quote (to_quote, from, sent_date,
 						limit);
-	}
-
+	
 	/* b) try to find a text/plain part in the msg and quote it */
 	quoted = quote_msg (self, from, sent_date, limit, FALSE);
-	if (quoted != NULL)
+	if (quoted)
 		return quoted;
-
+	
 	/* c) if that fails, try text/html */
 	return quote_msg (self, from, sent_date, limit, TRUE);
 }
@@ -92,7 +91,7 @@ modest_tny_msg_actions_quote (const TnyMsgIface * self, const gchar * from,
 
 static gchar *
 quote_msg (const TnyMsgIface * src, const gchar * from, time_t sent_date,
-	   gint limit, gboolean textorhtml)
+	   gint limit, gboolean want_html)
 {
 	TnyStreamIface *stream;
 	TnyMsgMimePartIface *body;
@@ -102,15 +101,13 @@ quote_msg (const TnyMsgIface * src, const gchar * from, time_t sent_date,
 	gchar *quoted;
 
 	/* the cast makes me uneasy... */
-	body = modest_tny_msg_actions_find_body_part((TnyMsgIface *) src,
-												 textorhtml ? "text/html" : "text/plain");
-	
+	body = modest_tny_msg_actions_find_body_part((TnyMsgIface *) src, want_html);
 	if (!body)
 		return NULL;
 
-	if (textorhtml == TRUE) {
+	if (want_html) 
 		buf = htmltotext (body);
-	} else {
+	else {
 		buf = gtk_text_buffer_new (NULL);
 		stream = TNY_STREAM_IFACE (tny_text_buffer_stream_new (buf));
 		tny_stream_iface_reset (stream);
@@ -123,26 +120,37 @@ quote_msg (const TnyMsgIface * src, const gchar * from, time_t sent_date,
 	to_quote = gtk_text_buffer_get_text (buf, &start, &end, FALSE);
 	quoted = modest_text_utils_quote (to_quote, from, sent_date, limit);
 	g_object_unref (buf);
+
 	return quoted;
 }
 
 
 TnyMsgMimePartIface *
-modest_tny_msg_actions_find_body_part (TnyMsgIface *self, const gchar *mime_type)
+modest_tny_msg_actions_find_body_part (TnyMsgIface *self, gboolean want_html)
 {
+	const gchar *mime_type = want_html ? "text/html" : "text/plain";
 	TnyMsgMimePartIface *part = NULL;
 	GList *parts;
-
+	
 	g_return_val_if_fail (self, NULL);
 	g_return_val_if_fail (mime_type, NULL);
 
 	parts  = (GList*) tny_msg_iface_get_parts (self);
 	while (parts && !part) {
+
 		part = TNY_MSG_MIME_PART_IFACE(parts->data);
-		if (!tny_msg_mime_part_iface_content_type_is (part, mime_type))
+
+		if (!tny_msg_mime_part_iface_content_type_is (part, mime_type)
+		    ||tny_msg_mime_part_iface_is_attachment (part))
 			part = NULL;
 		parts = parts->next;
 	}
-	
-	return part;
+
+	/* if were trying to find an HTML part and could find it,
+	 * try to find a text/plain part instead
+	 */
+	if (!part && want_html) 
+		return modest_tny_msg_actions_find_body_part (self, FALSE);
+	else
+		return part;
 }

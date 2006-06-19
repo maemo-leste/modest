@@ -774,25 +774,19 @@ modest_tny_msg_view_set_message (ModestTnyMsgView *self, TnyMsgIface *msg)
 	priv->msg = msg;
 	
 	fill_gtkhtml_with_txt (self, GTK_HTML(priv->gtkhtml), "", msg);
-
 	if (!msg) 
 		return;
 	
-	body = modest_tny_msg_actions_find_body_part (msg, "text/html");
+	body = modest_tny_msg_actions_find_body_part (msg, TRUE);
 	if (body) {
-		set_html_message (self, body, msg);
+		if (tny_msg_mime_part_iface_content_type_is (body, "text/html"))
+			set_html_message (self, body, msg);
+		else
+			set_text_message (self, body, msg);
 		return;
+	} else {
+		/* nothing to show */
 	}
-	
-	body = modest_tny_msg_actions_find_body_part (msg, "text/plain");
-	if (body) {
-		set_text_message (self, body, msg);
-		return;
-	}
-
-	/* hmmmmm */
-	fill_gtkhtml_with_txt (self, GTK_HTML(priv->gtkhtml),
-				_("Unsupported message type"), msg);
 }
 
 void

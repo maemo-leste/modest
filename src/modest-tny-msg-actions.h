@@ -24,20 +24,19 @@
 gchar *modest_tny_msg_actions_quote (const TnyMsgIface * self,
 				     const gchar * from,
 				     time_t sent_date,
-				     gint limit, gchar *to_quote);
+				     gint limit, const gchar *to_quote);
 
 /**
  * modest_tny_msg_actions_find_body_part:
  * @self: a message
- * @mime_type: the mime type to find
+ * @want_html: prefer HTML-part when there are multiple body parts?
  * 
- * search a message for a body part of type @mime_type. @mime_type is a string
- * like "text/plain".
+ * search a message for a body part 
  * 
  * Returns: the TnyMsgMimePartIface for the found part, or NULL if no matching part is found
  */
 					 
 TnyMsgMimePartIface *modest_tny_msg_actions_find_body_part (TnyMsgIface * self,
-							    const gchar * mime_type);
+							    gboolean want_html);
 
 #endif /* __MODEST_TNY_MSG_ACTIONS_H__ */
