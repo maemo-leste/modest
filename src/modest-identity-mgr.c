@@ -325,14 +325,14 @@ modest_identity_mgr_get_identity_bool (ModestIdentityMgr * self,
 	gchar *keyname;
 	gboolean retval;
 
-	g_return_val_if_fail (self, -1);
-	g_return_val_if_fail (name, -1);
-	g_return_val_if_fail (key, -1);
+	g_return_val_if_fail (self, FALSE);
+	g_return_val_if_fail (name, FALSE);
+	g_return_val_if_fail (key, FALSE);
 
 	keyname = get_identity_keyname (name, key);
 
 	priv = MODEST_IDENTITY_MGR_GET_PRIVATE (self);
-	retval = modest_conf_get_int (priv->modest_conf, keyname, err);
+	retval = modest_conf_get_bool (priv->modest_conf, keyname, err);
 	g_free (keyname);
 
 	return retval;
