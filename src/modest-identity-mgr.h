@@ -35,9 +35,9 @@ struct _ModestIdentityMgrClass {
 
 /**
  * modest_ui_get_type:
- * 
+ *
  * get the GType for ModestIdentityMgr
- *  
+ *
  * Returns: the GType
  */
 GType modest_identity_mgr_get_type (void) G_GNUC_CONST;
@@ -45,8 +45,8 @@ GType modest_identity_mgr_get_type (void) G_GNUC_CONST;
 
 /**
  * modest_identity_mgr_new:
- * @modest_conf: a ModestConf instance 
- *  
+ * @modest_conf: a ModestConf instance
+ *
  * Returns: a new ModestIdentityMgr, or NULL in case of error
  */
 GObject * modest_identity_mgr_new (ModestConf * modest_conf);
@@ -56,15 +56,16 @@ GObject * modest_identity_mgr_new (ModestConf * modest_conf);
  * modest_identity_mgr_add_identity:
  * @self: a ModestIdentityMgr instance
  * @name: the name (id) for the identity
+ * @realname: the real name of the user
  * @email: the user's email address which is used when sending email
  * @replyto: the default replyto address
  * @signature: the signature for this identity
  * @use_signature: whether to use this signature instead of the default one
  * @id_via: the transport to send emails for this identity via
  * @use_id_via: whether to use this via instead of the default one
- * 
+ *
  * add a user identity to the configuration
- * 
+ *
  * Returns: TRUE if  succeeded, FALSE otherwise,
  */
 gboolean modest_identity_mgr_add_identity (ModestIdentityMgr * self,
@@ -83,7 +84,7 @@ gboolean modest_identity_mgr_add_identity (ModestIdentityMgr * self,
  * @self: a ModestIdentityMgr instance
  * @name: the name of the identity to remove
  * @err: a GError ptr, or NULL to ignore.
- * 
+ *
  * remove identity from the configuration
  * the identity with @name should exist
  *
@@ -99,7 +100,7 @@ gboolean modest_identity_mgr_remove_identity (ModestIdentityMgr * self,
  * modest_identity_mgr_identity_names:
  * @self: a ModestIdentityMgr instance
  * @err: a GError ptr, or NULL to ignore.
- * 
+ *
  * list all identities
  *
  * Returns: a newly allocated list of identities, or NULL in case of error or
@@ -114,7 +115,7 @@ GSList *modest_identity_mgr_identity_names (ModestIdentityMgr * self,
  * modest_identity_mgr_identity_exists:
  * @self: a ModestIdentityMgr instance
  * @err: a GError ptr, or NULL to ignore.
- * 
+ *
  * check whether identity @name exists
  *
  * Returns: TRUE if the identity exists, FALSE otherwise (or in case of error)
@@ -133,7 +134,7 @@ gboolean modest_identity_mgr_identity_exists (ModestIdentityMgr * self,
  * @name: the name of the identity
  * @key: the key of the value to retrieve
  * @err: a GError ptr, or NULL to ignore.
- * 
+ *
  * get a config string from an identity
  *
  * Returns: a newly allocated string with the value for the key,
@@ -151,7 +152,7 @@ gchar *modest_identity_mgr_get_identity_string (ModestIdentityMgr * self,
  * @name: the name of the identity
  * @key: the key of the value to retrieve
  * @err: a GError ptr, or NULL to ignore.
- * 
+ *
  * get a config int from an identity
  *
  * Returns: an integer with the value for the key, or -1 in case of
@@ -170,7 +171,7 @@ gint modest_identity_mgr_get_identity_int (ModestIdentityMgr * self,
  * @name: the name of the identity
  * @key: the key of the value to retrieve
  * @err: a GError ptr, or NULL to ignore.
- * 
+ *
  * get a config boolean from an identity
  *
  * Returns: an boolean with the value for the key, or FALSE in case of
@@ -190,7 +191,7 @@ gboolean modest_identity_mgr_get_identity_bool (ModestIdentityMgr * self,
  * @key: the key of the value to set
  * @val: the value to set
  * @err: a GError ptr, or NULL to ignore.
- * 
+ *
  * set a config string for an identity
  *
  * Returns: TRUE if setting the value succeeded, or FALSE in case of error.
@@ -211,7 +212,7 @@ gboolean modest_identity_mgr_set_identity_string (ModestIdentityMgr *
  * @key: the key of the value to set
  * @val: the value to set
  * @err: a GError ptr, or NULL to ignore.
- * 
+ *
  * set a config int for an identity
  *
  * Returns: TRUE if setting the value succeeded, or FALSE in case of error.
@@ -230,7 +231,7 @@ gboolean modest_identity_mgr_set_identity_int (ModestIdentityMgr * self,
  * @key: the key of the value to set
  * @val: the value to set
  * @err: a GError ptr, or NULL to ignore.
- * 
+ *
  * set a config bool for an identity
  *
  * Returns: TRUE if setting the value succeeded, or FALSE in case of error.

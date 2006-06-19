@@ -69,7 +69,7 @@ gchar *get_text_from_combobox (GtkWidget *combobox){
 }
 
 
-gboolean advance_sanity_check(GtkWindow *parent, GladeXML *glade_xml, gint cp) {
+gboolean advance_sanity_check(GladeXML *glade_xml, gint cp) {
         gchar *tmptext;
 
 	/* FIXME:
@@ -113,7 +113,7 @@ gboolean advance_sanity_check(GtkWindow *parent, GladeXML *glade_xml, gint cp) {
 			wizard_missing_notification(NULL, "Please specify outgoing server address.");
 			return FALSE;
 		}
-		/* smtp servers may work without a username 
+		/* smtp servers may work without a username
 		if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(glade_xml_get_widget(glade_xml, "AWUseIncomingCheckButton")))==FALSE
 		    && strlen(gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "AWOutUserNameEntry"))))==0) {
 			wizard_missing_notification(NULL, "Please enter user name.");
@@ -195,7 +195,8 @@ gboolean wizard_account_add(GladeXML *glade_xml, ModestUI *modest_ui)
 
 	identity=search_unused_account_or_identity_name(id_mgr, MODEST_IDENTITY_DEFAULT_IDENTITY);
 	if (!modest_identity_mgr_add_identity (id_mgr,
-					       identity,
+                                               identity,
+					       gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "AWRealNameEntry"))),
 					       gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "AWEMailAddressEntry"))),
 					       "", "", FALSE, transport, FALSE ))
 		g_warning ("failed to add default identity");
@@ -273,7 +274,7 @@ void wizard_account_dialog(ModestUI *modest_ui)
 
                 switch (result) {
                 case 1:
-                        if (advance_sanity_check(NULL, glade_xml, cp)==TRUE)
+                        if (advance_sanity_check(glade_xml, cp)==TRUE)
                                 gtk_notebook_next_page(GTK_NOTEBOOK(notebook));
                         break;
                 case 2:
