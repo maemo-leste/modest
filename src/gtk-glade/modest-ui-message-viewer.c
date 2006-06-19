@@ -149,7 +149,7 @@ open_message_viewer_window(ModestUI *modest_ui)
 		return;
 	}
 
-	msg = tny_msg_folder_iface_get_message (TNY_MSG_FOLDER_IFACE(folder), header);
+	msg = (TnyMsgIface *) tny_msg_folder_iface_get_message (TNY_MSG_FOLDER_IFACE(folder), header);
 	if (!msg) {
 		g_warning ("cannot find msg");
 		return;

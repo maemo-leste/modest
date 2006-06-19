@@ -245,6 +245,7 @@ modest_tny_attachment_get_stream (ModestTnyAttachment *self)
 void
 modest_tny_attachment_free_list(GList *list)
 {
+	/* this is pretty generic for a GList of GObjects */
 	GList *pos;
 	
 	for (pos = list; pos; pos = pos->next)
