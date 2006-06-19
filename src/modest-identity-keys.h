@@ -11,6 +11,7 @@
 
 /* user identity keys */
 #define MODEST_IDENTITY_DISPLAY_NAME      "display_name"   /* string */
+#define MODEST_IDENTITY_REALNAME          "realname"       /* string */
 #define MODEST_IDENTITY_EMAIL             "email"          /* string */
 #define MODEST_IDENTITY_EMAIL_ALTERNATIVES "email_alternatives" /* string */
 #define MODEST_IDENTITY_REPLYTO           "replyto"        /* string */

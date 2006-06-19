@@ -155,12 +155,13 @@ null_means_empty (const gchar * str)
 
 gboolean
 modest_identity_mgr_add_identity (ModestIdentityMgr * self,
-				  const gchar * name,
-				  const gchar * email,
-				  const gchar * replyto,
-				  const gchar * signature,
+				  const gchar    * name,
+				  const gchar    * realname,
+				  const gchar    * email,
+				  const gchar    * replyto,
+				  const gchar    * signature,
 				  const gboolean use_signature,
-				  const gchar * id_via,
+				  const gchar    * id_via,
 				  const gboolean use_id_via)
 {
 	ModestIdentityMgrPrivate *priv;
@@ -179,6 +180,12 @@ modest_identity_mgr_add_identity (ModestIdentityMgr * self,
 		//g_free (id_key);
 		//return FALSE;
 	}
+
+	/* realname */
+	key = g_strconcat (id_key, "/", MODEST_IDENTITY_REALNAME, NULL);
+	modest_conf_set_string (priv->modest_conf, key,
+				null_means_empty (realname), NULL);
+	g_free (key);
 
 	/* email */
 	key = g_strconcat (id_key, "/", MODEST_IDENTITY_EMAIL, NULL);
@@ -203,16 +210,17 @@ modest_identity_mgr_add_identity (ModestIdentityMgr * self,
 	modest_conf_set_bool (priv->modest_conf, key, use_signature, NULL);
 	g_free (key);
 
-	/* signature */
+	/* id_via */
 	key = g_strconcat (id_key, "/", MODEST_IDENTITY_ID_VIA, NULL);
 	modest_conf_set_string (priv->modest_conf, key,
 				null_means_empty (id_via), NULL);
 	g_free (key);
 
-	/* use_signature */
+	/* use_id_via */
 	key = g_strconcat (id_key, "/", MODEST_IDENTITY_USE_ID_VIA, NULL);
 	modest_conf_set_bool (priv->modest_conf, key, use_id_via, NULL);
 	g_free (key);
+	
 	g_free (id_key);
 
 	return TRUE;		/* FIXME: better error checking */

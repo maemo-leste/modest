@@ -68,13 +68,14 @@ GObject * modest_identity_mgr_new (ModestConf * modest_conf);
  * Returns: TRUE if  succeeded, FALSE otherwise,
  */
 gboolean modest_identity_mgr_add_identity (ModestIdentityMgr * self,
-										   const gchar * name,
-										   const gchar * email,
-										   const gchar * replyto,
-										   const gchar * signature,
-										   const gboolean use_signature,
-										   const gchar * id_via,
-										   const gboolean use_id_via);
+                                           const gchar * name,
+                                           const gchar * realname,
+                                           const gchar * email,
+                                           const gchar * replyto,
+                                           const gchar * signature,
+                                           const gboolean use_signature,
+                                           const gchar * id_via,
+                                           const gboolean use_id_via);
 
 
 /**
