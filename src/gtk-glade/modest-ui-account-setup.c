@@ -175,6 +175,11 @@ identity_edit_action(GtkWidget *button,
 			   &selected_iter,
 			   IDENTITY_NAME, &identity_name,
 			   -1);
+	/* We use the available tree model from the accounts page to display a selection
+	 * of transports in the identities.
+	 * FIXME: atm all server accounts are displayed and incoming accounts are of no use
+	 * as a transport.
+	 */
 	acc_liststore=GTK_LIST_STORE(gtk_tree_view_get_model (GTK_TREE_VIEW(cb_data->acc_tree_view)));
 
 	identity_setup_dialog (cb_data->modest_ui, acc_liststore, identity_name);
@@ -303,9 +308,19 @@ refresh_accounts_on_add(ModestAccountMgr *modest_acc_mgr,
 static void
 refresh_accounts_on_remove(ModestAccountMgr *modest_acc_mgr,
 			void *nu1,
-			gpointer userdata)
-{
+			gpointer userdata) {
+
+	GladeXML *glade_xml = (GladeXML *) userdata;
+	GtkWidget *button;
+
 	refresh_accounts(modest_acc_mgr, (GladeXML *) userdata);
+	/* Since we loose the selection through the delete operation, we need to
+	 * change the buttons sensitivity .
+	 */
+	button = glade_xml_get_widget(GLADE_XML(glade_xml), "AccountEditButton");
+	gtk_widget_set_sensitive(GTK_WIDGET(button), FALSE);
+	button = glade_xml_get_widget(GLADE_XML(glade_xml), "AccountDeleteButton");
+	gtk_widget_set_sensitive(GTK_WIDGET(button), FALSE);
 }
 
 static void
@@ -329,7 +344,19 @@ static void
 refresh_identities_on_remove(ModestIdentityMgr *modest_id_mgr,
 			     void *nu1,
 			     gpointer userdata) {
-	refresh_identities(modest_id_mgr, (GladeXML *) userdata);
+
+	GladeXML *glade_xml = (GladeXML *) userdata;
+	GtkWidget *button;
+
+	refresh_identities(modest_id_mgr, glade_xml);
+
+	/* Since we loose the selection through the delete operation, we need to
+	 * change the buttons sensitivity .
+	 */
+	button = glade_xml_get_widget(GLADE_XML(glade_xml), "IdentityEditButton");
+	gtk_widget_set_sensitive(GTK_WIDGET(button), FALSE);
+	button = glade_xml_get_widget(GLADE_XML(glade_xml), "IdentityDeleteButton");
+	gtk_widget_set_sensitive(GTK_WIDGET(button), FALSE);
 }
 
 static void
