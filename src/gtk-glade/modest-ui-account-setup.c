@@ -56,7 +56,7 @@ create_accounts_model(ModestAccountMgr *);
 
 static void
 refresh_identities(ModestIdentityMgr *,
-		   gpointer);
+		   GladeXML *);
 
 static void
 refresh_accounts(ModestAccountMgr *, GladeXML *glade_xml);
@@ -322,14 +322,14 @@ static void
 refresh_identities_on_add(ModestIdentityMgr *modest_id_mgr,
 			  void *nu1,
 			  gpointer userdata) {
-	refresh_identities(modest_id_mgr, (GladeXML *)userdata);
+	refresh_identities(modest_id_mgr, (GladeXML *) userdata);
 }
 
 static void
 refresh_identities_on_remove(ModestIdentityMgr *modest_id_mgr,
 			     void *nu1,
 			     gpointer userdata) {
-	refresh_identities(modest_id_mgr, (GladeXML *)userdata);
+	refresh_identities(modest_id_mgr, (GladeXML *) userdata);
 }
 
 static void
@@ -338,7 +338,7 @@ refresh_identities_on_change(ModestIdentityMgr *modest_id_mgr,
 			     void *nu2,
 			     void *nu3,
 			     gpointer userdata) {
-	refresh_identities(modest_id_mgr, (GladeXML *)userdata);
+	refresh_identities(modest_id_mgr, (GladeXML *) userdata);
 }
 
 /* METHODS */
@@ -355,7 +355,6 @@ search_model_column_for_string_advanced(GtkTreeModel *model, GtkTreeIter *iter, 
 				   iter,
 				   ColNum, &tmptext,
 				   -1);
-		g_message("Comparison: '%s' -- '%s' : %d", tmptext, search, strcmp(tmptext, search));
 		if ((mcase && strcasecmp(tmptext, search)==0)
 		    || strcmp(tmptext, search)==0) {
 			g_free(tmptext);
@@ -382,13 +381,14 @@ case_search_model_column_for_string(GtkTreeModel *model, GtkTreeIter *iter, gint
 
 static void
 refresh_identities(ModestIdentityMgr *modest_id_mgr,
-		   gpointer userdata) {
+		   GladeXML *glade_xml) {
 
 	GtkTreeModel *id_liststore;
 	GtkTreeView *id_treeview;
-	GladeXML *glade_xml = (GladeXML *) userdata;
 
+	g_message("Debug before access of Treeview");
 	id_treeview = GTK_TREE_VIEW(glade_xml_get_widget(glade_xml, "IdentitiesTreeview"));
+	g_message("Debug after access of Treeview");
 
 	id_liststore=create_identities_model(modest_id_mgr);
 	gtk_tree_view_set_model(GTK_TREE_VIEW(id_treeview), id_liststore);
@@ -892,6 +892,7 @@ accounts_and_identities_dialog (gpointer user_data)
 	GtkWidget *accounts_tree_view;
 	ModestUI *modest_ui;
 	ModestUIPrivate *priv;
+	gint sig_coll[6];
 	gint retval;
 	GtkCellRenderer *renderer;
 	GtkTreeViewColumn *column;
@@ -995,41 +996,47 @@ accounts_and_identities_dialog (gpointer user_data)
 			 "cursor-changed",
 			 G_CALLBACK(activate_buttons_on_identity),
 			 glade_xml);
-
 	g_signal_connect(glade_xml_get_widget(glade_xml, "AccountsTreeview"),
 			 "cursor-changed",
 			 G_CALLBACK(activate_buttons_on_account),
 			 glade_xml);
 
-	g_signal_connect(priv->modest_id_mgr,
-			 "identity-change",
-			 G_CALLBACK(refresh_identities_on_change),
-			 glade_xml);
-	g_signal_connect(priv->modest_id_mgr,
-			 "identity-add",
-			 G_CALLBACK(refresh_identities_on_add),
-			 glade_xml);
-	g_signal_connect(priv->modest_id_mgr,
-			 "identity-remove",
-			 G_CALLBACK(refresh_identities_on_remove),
-			 glade_xml);
+	sig_coll[0] = g_signal_connect(priv->modest_id_mgr,
+				       "identity-change",
+				       G_CALLBACK(refresh_identities_on_change),
+				       glade_xml);
+	sig_coll[1] = g_signal_connect(priv->modest_id_mgr,
+				       "identity-add",
+				       G_CALLBACK(refresh_identities_on_add),
+				       glade_xml);
+	sig_coll[2] = g_signal_connect(priv->modest_id_mgr,
+				       "identity-remove",
+				       G_CALLBACK(refresh_identities_on_remove),
+				       glade_xml);
 
-	g_signal_connect(priv->modest_acc_mgr,
-			 "account-change",
-			 G_CALLBACK(refresh_accounts_on_change),
-			 glade_xml);
-	g_signal_connect(priv->modest_acc_mgr,
-			 "account-add",
-			 G_CALLBACK(refresh_accounts_on_add),
-			 glade_xml);
-	g_signal_connect(priv->modest_acc_mgr,
-			 "account-remove",
-			 G_CALLBACK(refresh_accounts_on_remove),
-			 glade_xml);
+	sig_coll[3] = g_signal_connect(priv->modest_acc_mgr,
+				       "account-change",
+				       G_CALLBACK(refresh_accounts_on_change),
+				       glade_xml);
+	sig_coll[4] = g_signal_connect(priv->modest_acc_mgr,
+				       "account-add",
+				       G_CALLBACK(refresh_accounts_on_add),
+				       glade_xml);
+	sig_coll[5] = g_signal_connect(priv->modest_acc_mgr,
+				       "account-remove",
+				       G_CALLBACK(refresh_accounts_on_remove),
+				       glade_xml);
 
 	gtk_widget_show_all(GTK_WIDGET(main_dialog));
 
 	retval=gtk_dialog_run(GTK_DIALOG(main_dialog));
+
+	g_signal_handler_disconnect(priv->modest_id_mgr, sig_coll[0]);
+	g_signal_handler_disconnect(priv->modest_id_mgr, sig_coll[1]);
+	g_signal_handler_disconnect(priv->modest_id_mgr, sig_coll[2]);
+	g_signal_handler_disconnect(priv->modest_acc_mgr, sig_coll[3]);
+	g_signal_handler_disconnect(priv->modest_acc_mgr, sig_coll[4]);
+	g_signal_handler_disconnect(priv->modest_acc_mgr, sig_coll[5]);
 
 	gtk_widget_destroy(GTK_WIDGET(main_dialog));
 	free_callback_data(cb_data);
