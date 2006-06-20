@@ -141,6 +141,9 @@ on_accounts_reloaded (ModestTnyAccountStore *account_store, gpointer user_data)
 	ModestUIPrivate *priv = user_data;
 	
 	g_return_if_fail (MODEST_IS_TNY_FOLDER_TREE_VIEW (priv->folder_view));
+	g_return_if_fail (MODEST_IS_TNY_HEADER_TREE_VIEW (priv->header_view));
+	
+	modest_tny_header_tree_view_set_folder (priv->header_view, NULL);
 	
   	modest_tny_folder_tree_view_update_model(priv->folder_view, account_store);
 }

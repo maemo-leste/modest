@@ -527,7 +527,7 @@ static int
 get_prefix_len (const gchar *sub)
 {
 	int i = 0;
-	const static gchar* prefix[] = {"Re:", "RE:", "Fwd:", "FWD:", "FW:", NULL};
+	const static gchar* prefix[] = {"Re:", "RE:", "Fwd:", "FWD:", "FW:", "AW:", NULL};
 
 	if (sub[0] != 'R' && sub[0] != 'F') /* optimization */
 		return 0;
@@ -685,11 +685,9 @@ refresh_folder (TnyMsgFolderIface *folder, gboolean cancelled,
 	else { /* it's a new one or a refresh */
 		GSList *col;
 
-		#warning Looks like a memory leak.		
 		priv->headers = TNY_LIST_IFACE(tny_msg_header_list_model_new ());
 			
-		tny_msg_folder_iface_get_headers (folder, priv->headers,
-						  FALSE);
+		tny_msg_folder_iface_get_headers (folder, priv->headers, FALSE);
 		tny_msg_header_list_model_set_folder (TNY_MSG_HEADER_LIST_MODEL(priv->headers),
 						      folder, TRUE); /* async */
 		
@@ -717,7 +715,6 @@ refresh_folder (TnyMsgFolderIface *folder, gboolean cancelled,
 		gtk_tree_view_set_model (GTK_TREE_VIEW (self), sortable);
 		gtk_tree_view_set_headers_clickable (GTK_TREE_VIEW(self), TRUE);
 		/* no need to unref sortable */
-		
 	} 
 }
 
@@ -768,10 +765,21 @@ gboolean
 modest_tny_header_tree_view_set_folder (ModestTnyHeaderTreeView *self,
 					TnyMsgFolderIface *folder)
 {
+	ModestTnyHeaderTreeViewPrivate *priv;
 	
-	if (!folder)  /* when there is no folder */
+	
+	g_return_val_if_fail (MODEST_IS_TNY_HEADER_TREE_VIEW (self), FALSE);
+
+	priv = MODEST_TNY_HEADER_TREE_VIEW_GET_PRIVATE(self);
+	
+	if (!folder)  {/* when there is no folder */
+		GtkTreeModel *model;
+		model = gtk_tree_view_get_model (GTK_TREE_VIEW(self));
 		gtk_tree_view_set_headers_visible (GTK_TREE_VIEW(self), FALSE);
-	
+		gtk_tree_view_set_model (GTK_TREE_VIEW (self), NULL);
+		if (model)
+			g_object_unref (model);
+	}
 	else { /* it's a new one or a refresh */
 		tny_msg_folder_iface_refresh_async (folder,
 					    refresh_folder,

@@ -397,10 +397,8 @@ manager_change_account (ModestAccountMgr *modest_acc_mgr, gchar *accountname,
 	g_mutex_unlock (priv->store_lock);
 		
 	/* TODO: handle protocol and password changes */
-	
 	g_signal_emit (self,
 		tny_account_store_iface_signals [TNY_ACCOUNT_STORE_IFACE_ACCOUNTS_RELOADED], 0);
-		
 }
 
 
