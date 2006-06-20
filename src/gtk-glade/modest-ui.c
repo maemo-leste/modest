@@ -92,12 +92,6 @@ modest_ui_class_init (ModestUIClass *klass)
 
 	g_type_class_add_private (gobject_class, sizeof(ModestUIPrivate));
 
-	/* signal definitions go here, e.g.: */
-/* 	signals[MY_SIGNAL_1] = */
-/* 		g_signal_new ("my_signal_1",....); */
-/* 	signals[MY_SIGNAL_2] = */
-/* 		g_signal_new ("my_signal_2",....); */
-/* 	etc. */
 }
 
 
@@ -146,7 +140,9 @@ on_accounts_reloaded (ModestTnyAccountStore *account_store, gpointer user_data)
 {
 	ModestUIPrivate *priv = user_data;
 	
-  	
+	g_return_if_fail (MODEST_IS_TNY_FOLDER_TREE_VIEW (priv->folder_view));
+	
+  	modest_tny_folder_tree_view_update_model(priv->folder_view, account_store);
 }
 
 

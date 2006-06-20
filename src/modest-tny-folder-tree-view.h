@@ -33,6 +33,10 @@ struct _ModestTnyFolderTreeViewClass {
 	void (*folder_selected) (ModestTnyFolderTreeView* self,
 				 TnyMsgFolderIface *folder,
 				 gpointer user_data);
+				 
+	gboolean (*update_model) (ModestTnyFolderTreeView *self, 
+	                          TnyAccountStoreIface *iface);
+
 };
 
 
@@ -68,6 +72,19 @@ GtkWidget*   modest_tny_folder_tree_view_new         (TnyAccountStoreIface *ifac
  * Returns: TRUE if the tree view is empty, FALSE otherwise
  */
 gboolean     modest_tny_folder_tree_view_is_empty    (ModestTnyFolderTreeView *self);
+
+
+/**
+ * modest_tny_folder_tree_view_update_model:
+ * @self: a #ModestTnyFolderTreeView instance
+ * @iface: a #TnyAccountStoreIface instance
+ * 
+ * Update the thee model from a given account store.
+ *  
+ * Returns: TRUE on success, FALSE otherwise
+ */
+gboolean     modest_tny_folder_tree_view_update_model(ModestTnyFolderTreeView *self, 
+                                         TnyAccountStoreIface *iface);
 
 
 G_END_DECLS

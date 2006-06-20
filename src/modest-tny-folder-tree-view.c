@@ -80,6 +80,8 @@ modest_tny_folder_tree_view_class_init (ModestTnyFolderTreeViewClass *klass)
 
 	parent_class            = g_type_class_peek_parent (klass);
 	gobject_class->finalize = modest_tny_folder_tree_view_finalize;
+	
+	klass->update_model = modest_tny_folder_tree_view_update_model;
 
 	g_type_class_add_private (gobject_class,
 				  sizeof(ModestTnyFolderTreeViewPrivate));
@@ -362,7 +364,7 @@ update_model_empty (ModestTnyFolderTreeView *self)
 
 
 static gboolean
-update_model (ModestTnyFolderTreeView *self,TnyAccountStoreIface *iface)
+update_model (ModestTnyFolderTreeView *self, TnyAccountStoreIface *iface)
 {
 	const GList *accounts;
 	TnyAccountTreeModel *folder_model;
@@ -451,5 +453,11 @@ selection_changed (GtkTreeSelection *sel, gpointer user_data)
 }
 
 
-
-
+gboolean
+modest_tny_folder_tree_view_update_model(ModestTnyFolderTreeView *self, 
+                                         TnyAccountStoreIface *iface)
+{
+	g_return_val_if_fail (MODEST_IS_TNY_FOLDER_TREE_VIEW (self), FALSE);
+	
+	return update_model (self, iface);
+}
