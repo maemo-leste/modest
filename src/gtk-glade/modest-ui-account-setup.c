@@ -27,20 +27,21 @@ enum {
 enum {
 	ACCOUNT_NAME,
 	ACCOUNT_HOST,
+	ACCOUNT_PROT,
 	ACCOUNT_COLUMNS
 };
 
 typedef struct _CallbackData CallbackData;
 
 struct _CallbackData {
-	GtkWidget       *id_tree_view;
-	GtkWidget       *acc_tree_view;
+	GtkTreeView     *id_tree_view;
+	GtkTreeView     *acc_tree_view;
 	ModestUI        *modest_ui;
 	GladeXML        *glade_xml;
 };
 
 static void
-identity_setup_dialog (ModestUI *, GtkListStore *, gchar *);
+identity_setup_dialog (ModestUI *, GtkTreeModel *, gchar *);
 
 static void
 account_setup_dialog (ModestUI *, gchar *);
@@ -63,6 +64,26 @@ refresh_accounts(ModestAccountMgr *, GladeXML *glade_xml);
 
 /* CALLBACKS */
 
+static gboolean
+filter_transports (GtkTreeModel *model,
+		   GtkTreeIter *iter,
+		   gpointer userdata) {
+
+	gchar *name;
+	gboolean retval;
+
+	gtk_tree_model_get(model,
+			   iter,
+			   ACCOUNT_PROT, &name,
+			   -1);
+
+	retval = strcasecmp(name, "SMTP")==0;
+	g_message("Debug: '%s' -- '%s' : '%d'", name, "SMTP", retval);
+	g_free(name);
+	return retval;
+}
+
+
 static void
 account_edit_action(GtkWidget *button,
 		    gpointer userdata) {
@@ -81,7 +102,7 @@ account_edit_action(GtkWidget *button,
 					&selected_iter);
 	gtk_tree_model_get(GTK_TREE_MODEL(acc_liststore),
 			   &selected_iter,
-			   ACCOUNT_NAME, &account_name,
+			   ACCOUNT_PROT, &account_name,
 			   -1);
 
 	account_setup_dialog (cb_data->modest_ui, account_name);
@@ -159,7 +180,7 @@ identity_edit_action(GtkWidget *button,
 		     gpointer userdata)
 {
 	CallbackData *cb_data;
-	GtkListStore *acc_liststore;
+	GtkTreeModel *acc_liststore;
 	GtkTreeModel *id_liststore;
 	GtkTreeSelection *selection;
 	GtkTreeIter selected_iter;
@@ -177,10 +198,8 @@ identity_edit_action(GtkWidget *button,
 			   -1);
 	/* We use the available tree model from the accounts page to display a selection
 	 * of transports in the identities.
-	 * FIXME: atm all server accounts are displayed and incoming accounts are of no use
-	 * as a transport.
 	 */
-	acc_liststore=GTK_LIST_STORE(gtk_tree_view_get_model (GTK_TREE_VIEW(cb_data->acc_tree_view)));
+	acc_liststore=NULL;
 
 	identity_setup_dialog (cb_data->modest_ui, acc_liststore, identity_name);
 	g_free(identity_name);
@@ -191,13 +210,19 @@ identity_create_action(GtkWidget *button,
 		       gpointer userdata)
 {
 	CallbackData *cb_data;
-	GtkListStore *acc_liststore;
+	GtkTreeModel *acc_liststore;
 
 	cb_data = (CallbackData *) userdata;
 
-	acc_liststore=GTK_LIST_STORE(gtk_tree_view_get_model (GTK_TREE_VIEW(cb_data->acc_tree_view)));
+	acc_liststore = gtk_tree_model_filter_new(gtk_tree_view_get_model(cb_data->acc_tree_view),
+						  NULL);
+	gtk_tree_model_filter_set_visible_func(GTK_TREE_MODEL_FILTER(acc_liststore),
+					       filter_transports,
+					       NULL,
+					       NULL);
 
 	identity_setup_dialog(cb_data->modest_ui, acc_liststore, NULL);
+	g_object_unref(acc_liststore);
 }
 
 static void
@@ -452,7 +477,7 @@ missing_notification(GtkWindow *parent, gchar *info_message) {
 }
 
 static gboolean
-write_identity(GladeXML *glade_xml, ModestUI *modest_ui, GtkListStore *accounts_model, gboolean newidentity) {
+write_identity(GladeXML *glade_xml, ModestUI *modest_ui, GtkTreeModel *accounts_model, gboolean newidentity) {
 
 	GtkTextBuffer *sigbuff;
 	GtkTextIter start_iter;
@@ -604,7 +629,7 @@ write_account(GladeXML *glade_xml, ModestUI *modest_ui, gboolean newaccount) {
 }
 
 static void
-identity_setup_dialog (ModestUI *modest_ui, GtkListStore *accounts_model, gchar *identity)
+identity_setup_dialog (ModestUI *modest_ui, GtkTreeModel *accounts_model, gchar *identity)
 {
 
 	GladeXML *glade_xml;
@@ -814,8 +839,8 @@ account_setup_dialog (ModestUI *modest_ui, gchar *account) {
 
 
 static CallbackData *
-setup_callback_data(GtkWidget *id_tree_view,
-		    GtkWidget *acc_tree_view,
+setup_callback_data(GtkTreeView *id_tree_view,
+		    GtkTreeView *acc_tree_view,
 		    ModestUI *modest_ui,
 		    GladeXML *glade_xml)
 {
@@ -880,28 +905,35 @@ create_accounts_model(ModestAccountMgr *acc_mgr) {
 	GSList *acc_names_list_iter;
 	GtkListStore *acc_list_store;
 	GtkTreeIter acc_list_store_iter;
-	gchar *tmptext;
+	gchar *hostname;
+	gchar *protocol;
 
 	acc_names_list = modest_account_mgr_server_account_names(acc_mgr,
 								 NULL,
 								 MODEST_PROTO_TYPE_ANY,
 								 NULL,
 								 FALSE);
-	acc_list_store = gtk_list_store_new(ACCOUNT_COLUMNS, G_TYPE_STRING, G_TYPE_STRING);
+	acc_list_store = gtk_list_store_new(ACCOUNT_COLUMNS, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
 
 	for (acc_names_list_iter=acc_names_list;
 	     acc_names_list_iter!=NULL;
 	     acc_names_list_iter=g_slist_next(acc_names_list_iter)) {
 		gtk_list_store_append(acc_list_store, &acc_list_store_iter);
-		tmptext=modest_account_mgr_get_server_account_string(acc_mgr,
-								     acc_names_list_iter->data,
-								     MODEST_ACCOUNT_HOSTNAME,
-								     NULL);
+		hostname=modest_account_mgr_get_server_account_string(acc_mgr,
+								      acc_names_list_iter->data,
+								      MODEST_ACCOUNT_HOSTNAME,
+								      NULL);
+		protocol=modest_account_mgr_get_server_account_string(acc_mgr,
+								      acc_names_list_iter->data,
+								      MODEST_ACCOUNT_PROTO,
+								      NULL);
 		gtk_list_store_set(acc_list_store, &acc_list_store_iter,
 				   ACCOUNT_NAME, acc_names_list_iter->data,
-				   ACCOUNT_HOST, tmptext,
+				   ACCOUNT_HOST, hostname,
+				   ACCOUNT_PROT, protocol,
 				   -1);
-		g_free(tmptext);
+		g_free(hostname);
+		g_free(protocol);
 	}
 
 	g_slist_free(acc_names_list);
@@ -915,8 +947,8 @@ accounts_and_identities_dialog (gpointer user_data)
 {
 	GladeXML *glade_xml;
 	GtkWidget *main_dialog;
-	GtkWidget *identities_tree_view;
-	GtkWidget *accounts_tree_view;
+	GtkTreeView *identities_tree_view;
+	GtkTreeView *accounts_tree_view;
 	ModestUI *modest_ui;
 	ModestUIPrivate *priv;
 	gint sig_coll[6];
@@ -934,24 +966,24 @@ accounts_and_identities_dialog (gpointer user_data)
 	main_dialog = glade_xml_get_widget(glade_xml, "IdentitiesAndAccountsDialog");
 
 	/* Accounts */
-	accounts_tree_view = glade_xml_get_widget(glade_xml, "AccountsTreeview");
+	accounts_tree_view = GTK_TREE_VIEW(glade_xml_get_widget(glade_xml, "AccountsTreeview"));
 	/* Account -> Accountname */
 	renderer = gtk_cell_renderer_text_new ();
 	column = gtk_tree_view_column_new_with_attributes ("Account",
 							   renderer,
 							   "text", ACCOUNT_NAME,
 							   NULL);
-	gtk_tree_view_append_column (GTK_TREE_VIEW(accounts_tree_view), column);
+	gtk_tree_view_append_column (accounts_tree_view, column);
 	/* Account -> Hostname */
 	renderer = gtk_cell_renderer_text_new ();
 	column = gtk_tree_view_column_new_with_attributes ("Hostname",
 							   renderer,
 							   "text", ACCOUNT_HOST,
 							   NULL);
-	gtk_tree_view_append_column (GTK_TREE_VIEW(accounts_tree_view), column);
+	gtk_tree_view_append_column (accounts_tree_view, column);
 
 	/* Identities */
-	identities_tree_view = glade_xml_get_widget(glade_xml, "IdentitiesTreeview");
+	identities_tree_view = GTK_TREE_VIEW(glade_xml_get_widget(glade_xml, "IdentitiesTreeview"));
 
 	/* Identities -> Identityname */
 	renderer = gtk_cell_renderer_text_new ();
@@ -959,7 +991,7 @@ accounts_and_identities_dialog (gpointer user_data)
 							   renderer,
 							   "text", IDENTITY_NAME,
 							   NULL);
-	gtk_tree_view_append_column (GTK_TREE_VIEW(identities_tree_view), column);
+	gtk_tree_view_append_column (identities_tree_view, column);
 
 	/* Identities -> E-mail address */
 	renderer = gtk_cell_renderer_text_new ();
@@ -967,7 +999,7 @@ accounts_and_identities_dialog (gpointer user_data)
 							   renderer,
 							   "text", IDENTITY_ADDRESS,
 							   NULL);
-	gtk_tree_view_append_column (GTK_TREE_VIEW(identities_tree_view), column);
+	gtk_tree_view_append_column (identities_tree_view, column);
 
 	/* Identities -> Relay */
 	renderer = gtk_cell_renderer_text_new ();
@@ -975,7 +1007,7 @@ accounts_and_identities_dialog (gpointer user_data)
 							   renderer,
 							   "text", IDENTITY_VIA,
 							   NULL);
-	gtk_tree_view_append_column (GTK_TREE_VIEW(identities_tree_view), column);
+	gtk_tree_view_append_column (identities_tree_view, column);
 
 	cb_data=setup_callback_data(identities_tree_view, accounts_tree_view, modest_ui, glade_xml);
 
@@ -1028,6 +1060,7 @@ accounts_and_identities_dialog (gpointer user_data)
 			 G_CALLBACK(activate_buttons_on_account),
 			 glade_xml);
 
+	/*
 	sig_coll[0] = g_signal_connect(priv->modest_id_mgr,
 				       "identity-change",
 				       G_CALLBACK(refresh_identities_on_change),
@@ -1040,6 +1073,7 @@ accounts_and_identities_dialog (gpointer user_data)
 				       "identity-remove",
 				       G_CALLBACK(refresh_identities_on_remove),
 				       glade_xml);
+	*/
 
 	sig_coll[3] = g_signal_connect(priv->modest_acc_mgr,
 				       "account-change",
@@ -1058,9 +1092,11 @@ accounts_and_identities_dialog (gpointer user_data)
 
 	retval=gtk_dialog_run(GTK_DIALOG(main_dialog));
 
+	/*
 	g_signal_handler_disconnect(priv->modest_id_mgr, sig_coll[0]);
 	g_signal_handler_disconnect(priv->modest_id_mgr, sig_coll[1]);
 	g_signal_handler_disconnect(priv->modest_id_mgr, sig_coll[2]);
+	*/
 	g_signal_handler_disconnect(priv->modest_acc_mgr, sig_coll[3]);
 	g_signal_handler_disconnect(priv->modest_acc_mgr, sig_coll[4]);
 	g_signal_handler_disconnect(priv->modest_acc_mgr, sig_coll[5]);
