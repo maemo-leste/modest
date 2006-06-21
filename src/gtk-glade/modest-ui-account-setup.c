@@ -1064,7 +1064,6 @@ accounts_and_identities_dialog (gpointer user_data)
 			 G_CALLBACK(activate_buttons_on_account),
 			 glade_xml);
 
-	/*
 	sig_coll[0] = g_signal_connect(priv->modest_id_mgr,
 				       "identity-change",
 				       G_CALLBACK(refresh_identities_on_change),
@@ -1077,7 +1076,6 @@ accounts_and_identities_dialog (gpointer user_data)
 				       "identity-remove",
 				       G_CALLBACK(refresh_identities_on_remove),
 				       glade_xml);
-	*/
 
 	sig_coll[3] = g_signal_connect(priv->modest_acc_mgr,
 				       "account-change",
@@ -1096,11 +1094,9 @@ accounts_and_identities_dialog (gpointer user_data)
 
 	retval=gtk_dialog_run(GTK_DIALOG(main_dialog));
 
-	/*
 	g_signal_handler_disconnect(priv->modest_id_mgr, sig_coll[0]);
 	g_signal_handler_disconnect(priv->modest_id_mgr, sig_coll[1]);
 	g_signal_handler_disconnect(priv->modest_id_mgr, sig_coll[2]);
-	*/
 	g_signal_handler_disconnect(priv->modest_acc_mgr, sig_coll[3]);
 	g_signal_handler_disconnect(priv->modest_acc_mgr, sig_coll[4]);
 	g_signal_handler_disconnect(priv->modest_acc_mgr, sig_coll[5]);

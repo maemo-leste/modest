@@ -3,6 +3,7 @@
 /* insert (c)/licensing information) */
 
 #include <string.h>
+#include "modest-marshal.h"
 #include "modest-identity-mgr.h"
 
 /* 'private'/'protected' functions */
@@ -15,14 +16,16 @@ static gchar *get_identity_keyname (const gchar * accname,
 
 /* list my signals */
 enum {
-	/* MY_SIGNAL_1, */
-	/* MY_SIGNAL_2, */
+	IDENTITY_CHANGE_SIGNAL,
+	IDENTITY_REMOVE_SIGNAL,
+	IDENTITY_ADD_SIGNAL,
 	LAST_SIGNAL
 };
 
 typedef struct _ModestIdentityMgrPrivate ModestIdentityMgrPrivate;
 struct _ModestIdentityMgrPrivate {
 	ModestConf *modest_conf;
+	GSList *current_identities;
 };
 
 #define MODEST_IDENTITY_MGR_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -32,7 +35,82 @@ struct _ModestIdentityMgrPrivate {
 static GObjectClass *parent_class = NULL;
 
 /* uncomment the following if you have defined any signals */
-/* static guint signals[LAST_SIGNAL] = {0}; */
+static guint signals[LAST_SIGNAL] = {0};
+
+
+static GSList *
+delete_account_from_list (GSList *list, const gchar *name)
+{
+	GSList *iter, *result;
+
+	iter = list;
+	result = list;
+	while (iter) {
+		if (!strcmp (name, iter->data)) {
+			result = g_slist_delete_link (list, iter);
+			break;
+		}
+
+		iter = g_slist_next (iter);
+	}
+	return result;
+}
+
+static GSList *
+find_account_in_list (GSList *list, const gchar *name)
+{
+	GSList *iter, *result;
+
+	iter = list;
+	result = list;
+	while (iter) {
+		if (!strcmp (name, iter->data)) {
+			return iter;
+			break;
+		}
+
+		iter = g_slist_next (iter);
+	}
+	return NULL;
+}
+
+
+static void
+modest_identity_mgr_check_change (ModestConf *conf,
+				 const gchar *key,
+				 const gchar *new_value,
+				 gpointer userdata)
+{
+	ModestIdentityMgr *id_mgr = userdata;
+	ModestIdentityMgrPrivate *priv = MODEST_IDENTITY_MGR_GET_PRIVATE(id_mgr);
+	gchar *subkey;
+	gchar *param;
+
+	if ((strlen(key) > strlen(MODEST_IDENTITY_NAMESPACE "/")
+	     && g_str_has_prefix(key, MODEST_IDENTITY_NAMESPACE))) {
+		subkey = g_strdup(key + strlen(MODEST_IDENTITY_NAMESPACE "/"));
+		if (! strstr(subkey, "/")) { /* no more '/' means an entry was modified */
+			if (!new_value) {
+				priv->current_identities =
+					delete_account_from_list (priv->current_identities, subkey);
+				g_signal_emit(id_mgr, signals[IDENTITY_REMOVE_SIGNAL], 0, subkey);
+			}
+		}
+		else {
+			param = strstr(subkey, "/");
+			param[0] = 0;
+			param++;
+
+			if (!find_account_in_list(priv->current_identities, subkey)) {
+				priv->current_identities =
+					g_slist_prepend(priv->current_identities, g_strdup(subkey));
+				g_signal_emit(id_mgr, signals[IDENTITY_ADD_SIGNAL], 0, subkey);
+			}
+			g_signal_emit(id_mgr, signals[IDENTITY_CHANGE_SIGNAL], 0, subkey, param, new_value);
+		}
+		g_free(subkey);
+	}
+}
 
 GType
 modest_identity_mgr_get_type (void)
@@ -63,6 +141,7 @@ static void
 modest_identity_mgr_class_init (ModestIdentityMgrClass * klass)
 {
 	GObjectClass *gobject_class;
+	GType paramtypes[3] = {G_TYPE_POINTER, G_TYPE_POINTER, G_TYPE_POINTER};
 
 	gobject_class = (GObjectClass *) klass;
 
@@ -72,12 +151,26 @@ modest_identity_mgr_class_init (ModestIdentityMgrClass * klass)
 	g_type_class_add_private (gobject_class,
 				  sizeof (ModestIdentityMgrPrivate));
 
-/* signal definitions go here, e.g.: */
-/* 	signals[MY_SIGNAL_1] = */
-/* 		g_signal_new ("my_signal_1",....); */
-/* 	signals[MY_SIGNAL_2] = */
-/* 		g_signal_new ("my_signal_2",....); */
-/* 	etc. */
+	/* signal definitions */
+	signals[IDENTITY_ADD_SIGNAL] =
+ 		g_signal_newv ("identity-add",
+	                       G_TYPE_FROM_CLASS (klass), G_SIGNAL_RUN_LAST,
+		               NULL, NULL, NULL,
+		               g_cclosure_marshal_VOID__POINTER,
+		               G_TYPE_NONE, 1, paramtypes);
+
+	signals[IDENTITY_REMOVE_SIGNAL] =
+ 		g_signal_newv ("identity-remove",
+	                       G_TYPE_FROM_CLASS (klass), G_SIGNAL_RUN_LAST,
+		               NULL, NULL, NULL,
+		               g_cclosure_marshal_VOID__POINTER,
+		               G_TYPE_NONE, 1, paramtypes);
+	signals[IDENTITY_CHANGE_SIGNAL] =
+ 		g_signal_newv ("identity-change",
+	                       G_TYPE_FROM_CLASS (klass), G_SIGNAL_RUN_LAST,
+		               NULL, NULL, NULL,
+		               modest_marshal_VOID__POINTER_POINTER_POINTER,
+		               G_TYPE_NONE, 3, paramtypes);
 }
 
 
@@ -116,6 +209,13 @@ modest_identity_mgr_new (ModestConf * conf)
 	 * ModestConf should outlive the ModestIdentityMgr though
 	 */
 	g_object_ref (G_OBJECT (priv->modest_conf = conf));
+
+	priv->current_identities = modest_identity_mgr_identity_names (MODEST_IDENTITY_MGR(obj), NULL);
+
+	g_signal_connect(G_OBJECT(conf),
+			 "key-changed",
+			 G_CALLBACK (modest_identity_mgr_check_change),
+			 obj);
 	return obj;
 }
 
