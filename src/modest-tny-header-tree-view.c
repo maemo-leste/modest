@@ -523,10 +523,10 @@ modest_tny_header_tree_view_get_style (ModestTnyHeaderTreeView *self)
 
 
 /* get the length of any prefix that should be ignored for sorting */
-static int 
+static inline int 
 get_prefix_len (const gchar *sub)
 {
-	int i = 0;
+	gint i = 0;
 	const static gchar* prefix[] = {"Re:", "RE:", "Fwd:", "FWD:", "FW:", "AW:", NULL};
 
 	if (sub[0] != 'R' && sub[0] != 'F') /* optimization */
@@ -545,12 +545,20 @@ get_prefix_len (const gchar *sub)
 }
 
 
-static gint
+static inline gint
 cmp_normalized_subject (const gchar* s1, const gchar *s2)
 {
-	/* FIXME: utf8 */
-	return strcmp (s1 + get_prefix_len(s1),
-		       s2 + get_prefix_len(s2));
+	gint result = 0;
+	register gchar *n1, *n2;
+	
+	n1 = g_utf8_collate_key (s1 + get_prefix_len(s1), -1);
+	n2 = g_utf8_collate_key (s2 + get_prefix_len(s2), -1);
+	
+	result = strcmp (n1, n2);
+	g_free (n1);
+	g_free (n2);
+	
+	return result;
 }
 
 
@@ -705,7 +713,7 @@ refresh_folder (TnyMsgFolderIface *folder, gboolean cancelled,
 		/* install our special sorting functions */
 		col = priv->columns;
 		while (col) {
-			int col_id = GPOINTER_TO_INT (col->data);
+			gint col_id = GPOINTER_TO_INT (col->data);
 			gtk_tree_sortable_set_sort_func (GTK_TREE_SORTABLE(sortable), col_id,
 							 (GtkTreeIterCompareFunc)cmp_rows,
 							 GINT_TO_POINTER(col_id), NULL);
