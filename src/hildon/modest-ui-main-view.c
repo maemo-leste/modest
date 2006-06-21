@@ -7,6 +7,8 @@
 #include <config.h>
 #endif /*HAVE_CONFIG_H*/
 
+#include <hildon-widgets/hildon-app.h>
+
 /* TODO: put in auto* */
 #include <tny-text-buffer-stream.h>
 #include <tny-msg-folder.h>
@@ -232,7 +234,7 @@ modest_ui_show_main_window (ModestUI *modest_ui)
 	g_signal_connect (win, "delete-event", G_CALLBACK(modest_ui_main_view_destroy),
 			  modest_ui);
 	gtk_widget_set_usize (GTK_WIDGET(win), width, height);
-	gtk_window_set_title (GTK_WINDOW(win), PACKAGE_STRING);
+	hildon_app_set_title (HILDON_APP(win), PACKAGE_STRING);
 
 	gtk_widget_show_all (win);
 	return TRUE;
