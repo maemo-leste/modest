@@ -103,6 +103,7 @@ modest_ui_show_main_window (ModestUI *modest_ui)
 	GtkWidget     *open_item;
 	GtkWidget     *view_attachments_item;
 	GtkWidget     *new_account_item;
+	GtkWidget     *main_menu, *menu_item;
 	
 	GtkWidget  *folder_view_holder,
 		*header_view_holder,
@@ -236,7 +237,16 @@ modest_ui_show_main_window (ModestUI *modest_ui)
 	gtk_widget_set_usize (GTK_WIDGET(win), width, height);
 	hildon_app_set_title (HILDON_APP(win), PACKAGE_STRING);
 
+	main_menu = hildon_appview_get_menu(HILDON_APP(win));
+	menu_item = glade_xml_get_widget (priv->glade_xml, "MessageMenuItem");
+	gtk_menu_append(main_menu, menu_item);
+
 	gtk_widget_show_all (win);
+
+	menu_item = glade_xml_get_widget (priv->glade_xml, "menubar1");
+	gtk_widget_hide(menu_item);
+
+
 	return TRUE;
 }
 
