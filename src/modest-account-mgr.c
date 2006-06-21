@@ -90,21 +90,15 @@ modest_account_mgr_check_change (ModestConf *conf, const gchar *key,
 	     && g_str_has_prefix (key, MODEST_SERVER_ACCOUNT_NAMESPACE))) {
 		gchar *subkey = g_strdup(key + strlen (MODEST_SERVER_ACCOUNT_NAMESPACE "/"));
 		
-		if (! strstr (subkey, "/")) {/* no more '/' means an account was modified */
-			if (new_value)	{
-				 /* covers only one case of two */
-				 /*
-				priv->current_accounts = 
-					g_slist_prepend (priv->current_accounts, g_strdup (subkey));
-				g_signal_emit (amgr, signals[ACCOUNT_ADD_SIGNAL], 0, subkey);
-				*/
-			} else {
+		if (! strstr (subkey, "/")) { /* no more '/' means an account was modified */
+			if (!new_value)	{
 				priv->current_accounts = 
 					delete_account_from_list (priv->current_accounts, subkey);
 					
 				g_signal_emit (amgr, signals[ACCOUNT_REMOVE_SIGNAL], 0, subkey);
 			}
-		} else {
+		} 
+		else {
 			gchar *param;
 			
 			param = strstr (subkey, "/");
@@ -122,7 +116,7 @@ modest_account_mgr_check_change (ModestConf *conf, const gchar *key,
 		}
 		
 		g_free (subkey);
-	}	
+	}
 }
 
 
