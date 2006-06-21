@@ -92,7 +92,7 @@ modest_ui_main_view_destroy (GtkWidget *win, GdkEvent *event, gpointer data)
 gboolean
 modest_ui_show_main_window (ModestUI *modest_ui)
 {
-	GtkWidget       *win;
+	GtkWidget       *win, *app_view;
 	gint              height, width;
 	ModestUIPrivate *priv;
 	GtkWidget     *folder_view, *header_view;
@@ -237,9 +237,24 @@ modest_ui_show_main_window (ModestUI *modest_ui)
 	gtk_widget_set_usize (GTK_WIDGET(win), width, height);
 	hildon_app_set_title (HILDON_APP(win), PACKAGE_STRING);
 
-	main_menu = hildon_appview_get_menu(HILDON_APP(win));
+	app_view = glade_xml_get_widget (priv->glade_xml, "appview1");
+	
+	main_menu = hildon_appview_get_menu(HILDON_APPVIEW(app_view));
 	menu_item = glade_xml_get_widget (priv->glade_xml, "MessageMenuItem");
-	gtk_menu_append(main_menu, menu_item);
+	//gtk_menu_append(main_menu, menu_item);
+	gtk_widget_reparent(menu_item, main_menu);
+	menu_item = glade_xml_get_widget (priv->glade_xml, "EditMenuItem");
+	gtk_widget_reparent(menu_item, main_menu);
+	menu_item = glade_xml_get_widget (priv->glade_xml, "FoldersMenuItem");
+	gtk_widget_reparent(menu_item, main_menu);
+	menu_item = glade_xml_get_widget (priv->glade_xml, "ViewMenuItem");
+	gtk_widget_reparent(menu_item, main_menu);
+	menu_item = glade_xml_get_widget (priv->glade_xml, "EMailMenuItem");
+	gtk_widget_reparent(menu_item, main_menu);
+	menu_item = glade_xml_get_widget (priv->glade_xml, "ToolsMenuItem");
+	gtk_widget_reparent(menu_item, main_menu);
+	menu_item = glade_xml_get_widget (priv->glade_xml, "CloseMenuItem");
+	gtk_widget_reparent(menu_item, main_menu);
 
 	gtk_widget_show_all (win);
 
