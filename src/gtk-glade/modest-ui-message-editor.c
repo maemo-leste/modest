@@ -532,7 +532,7 @@ on_send_button_clicked (GtkWidget *widget, ModestEditorWindow *modest_editwin)
 						   body,
 						   attachments);
 
-	modest_tny_attachment_free_list(attachments);
+	modest_editor_window_set_attachments(modest_editwin, NULL); /* This unrefs them, too. */
 	g_free (body);
 	g_object_unref (G_OBJECT(actions));
 

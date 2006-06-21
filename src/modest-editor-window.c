@@ -98,7 +98,7 @@ modest_editor_window_finalize (GObject *obj)
 	if (priv->user_data)
 		g_free(priv->user_data);
 
-	modest_tny_attachment_free_list(priv->attachments);
+	modest_editor_window_set_attachments(MODEST_EDITOR_WINDOW(obj), NULL);
 	g_free(priv->identity);
 	g_free(priv->transport);
 	
