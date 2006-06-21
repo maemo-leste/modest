@@ -51,7 +51,7 @@ delete_account_from_list (GSList *list, const gchar *name)
 			result = g_slist_delete_link (list, iter);
 			break;
 		}
-			
+
 		iter = g_slist_next (iter);
 	}
 	return result;
@@ -69,52 +69,52 @@ find_account_in_list (GSList *list, const gchar *name)
 			return iter;
 			break;
 		}
-			
+
 		iter = g_slist_next (iter);
 	}
 	return NULL;
 }
 
 /* Map configuration changes to account changes.
- * Doing this here makes sure all changes are available and external changes 
+ * Doing this here makes sure all changes are available and external changes
  * are covered as well. */
 
 static void
-modest_account_mgr_check_change (ModestConf *conf, const gchar *key, 
+modest_account_mgr_check_change (ModestConf *conf, const gchar *key,
                                  const gchar *new_value, gpointer user_data)
 {
 	ModestAccountMgr *amgr = user_data;
 	ModestAccountMgrPrivate *priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (amgr);
-	
-	if ((strlen (key) > strlen (MODEST_SERVER_ACCOUNT_NAMESPACE "/") 
+
+	if ((strlen (key) > strlen (MODEST_SERVER_ACCOUNT_NAMESPACE "/")
 	     && g_str_has_prefix (key, MODEST_SERVER_ACCOUNT_NAMESPACE))) {
 		gchar *subkey = g_strdup(key + strlen (MODEST_SERVER_ACCOUNT_NAMESPACE "/"));
-		
+
 		if (! strstr (subkey, "/")) { /* no more '/' means an account was modified */
 			if (!new_value)	{
-				priv->current_accounts = 
+				priv->current_accounts =
 					delete_account_from_list (priv->current_accounts, subkey);
-					
+
 				g_signal_emit (amgr, signals[ACCOUNT_REMOVE_SIGNAL], 0, subkey);
 			}
-		} 
+		}
 		else {
 			gchar *param;
-			
+
 			param = strstr (subkey, "/");
 			param [0] = 0;
 			param++;
-			
+
 			/* that's the second case for a new account */
 			if (!find_account_in_list (priv->current_accounts, subkey) && strstr (param, MODEST_ACCOUNT_PROTO)) {
-				priv->current_accounts = 
+				priv->current_accounts =
 					g_slist_prepend (priv->current_accounts, g_strdup (subkey));
 				g_signal_emit (amgr, signals[ACCOUNT_ADD_SIGNAL], 0, subkey);
 			}
-				
+
 			g_signal_emit (amgr, signals[ACCOUNT_CHANGE_SIGNAL], 0, subkey, param, new_value);
 		}
-		
+
 		g_free (subkey);
 	}
 }
@@ -160,21 +160,21 @@ modest_account_mgr_class_init (ModestAccountMgrClass * klass)
 				  sizeof (ModestAccountMgrPrivate));
 
 	/* signal definitions */
-	signals[ACCOUNT_ADD_SIGNAL] = 
- 		g_signal_newv ("account-add", 
+	signals[ACCOUNT_ADD_SIGNAL] =
+ 		g_signal_newv ("account-add",
 	                       G_TYPE_FROM_CLASS (klass), G_SIGNAL_RUN_LAST,
 		               NULL, NULL, NULL,
 		               g_cclosure_marshal_VOID__POINTER,
 		               G_TYPE_NONE, 1, paramtypes);
-	
-	signals[ACCOUNT_REMOVE_SIGNAL] = 
- 		g_signal_newv ("account-remove", 
+
+	signals[ACCOUNT_REMOVE_SIGNAL] =
+ 		g_signal_newv ("account-remove",
 	                       G_TYPE_FROM_CLASS (klass), G_SIGNAL_RUN_LAST,
 		               NULL, NULL, NULL,
 		               g_cclosure_marshal_VOID__POINTER,
 		               G_TYPE_NONE, 1, paramtypes);
-	signals[ACCOUNT_CHANGE_SIGNAL] = 
- 		g_signal_newv ("account-change", 
+	signals[ACCOUNT_CHANGE_SIGNAL] =
+ 		g_signal_newv ("account-change",
 	                       G_TYPE_FROM_CLASS (klass), G_SIGNAL_RUN_LAST,
 		               NULL, NULL, NULL,
 		               modest_marshal_VOID__POINTER_POINTER_POINTER,
@@ -218,10 +218,10 @@ modest_account_mgr_new (ModestConf * conf)
 	 * ModestConf should outlive the ModestAccountMgr though
 	 */
 	g_object_ref (G_OBJECT (priv->modest_conf = conf));
-	
+
 	priv->current_accounts = modest_account_mgr_account_names (MODEST_ACCOUNT_MGR(obj), NULL);
-	
-	g_signal_connect (G_OBJECT (conf), "key-changed", 
+
+	g_signal_connect (G_OBJECT (conf), "key-changed",
 	                  G_CALLBACK (modest_account_mgr_check_change), obj);
 	return obj;
 }
@@ -488,8 +488,8 @@ modest_account_mgr_account_names (ModestAccountMgr * self, GError ** err)
 
 static gchar *
 get_account_string (ModestAccountMgr * self, const gchar * name,
-		    const gchar * key, gboolean server_account, GError ** err)
-{
+		    const gchar * key, gboolean server_account, GError ** err) {
+
 	ModestAccountMgrPrivate *priv;
 
 	gchar *keyname;
