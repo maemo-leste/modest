@@ -78,7 +78,6 @@ filter_transports (GtkTreeModel *model,
 			   -1);
 
 	retval = strcasecmp(name, "SMTP")==0;
-	g_message("Debug: '%s' -- '%s' : '%d'", name, "SMTP", retval);
 	g_free(name);
 	return retval;
 }
@@ -197,9 +196,15 @@ identity_edit_action(GtkWidget *button,
 			   IDENTITY_NAME, &identity_name,
 			   -1);
 	/* We use the available tree model from the accounts page to display a selection
-	 * of transports in the identities.
+	 * of transports in the identities. Since we only want the transport accounts,
+	 * we derive a gtk_tree_model_filter and apply filter_transports function.
 	 */
-	acc_liststore=NULL;
+	acc_liststore = gtk_tree_model_filter_new(gtk_tree_view_get_model(cb_data->acc_tree_view),
+						  NULL);
+	gtk_tree_model_filter_set_visible_func(GTK_TREE_MODEL_FILTER(acc_liststore),
+					       filter_transports,
+					       NULL,
+					       NULL);
 
 	identity_setup_dialog (cb_data->modest_ui, acc_liststore, identity_name);
 	g_free(identity_name);
@@ -214,6 +219,7 @@ identity_create_action(GtkWidget *button,
 
 	cb_data = (CallbackData *) userdata;
 
+	/* Works as in identity_edit_action. */
 	acc_liststore = gtk_tree_model_filter_new(gtk_tree_view_get_model(cb_data->acc_tree_view),
 						  NULL);
 	gtk_tree_model_filter_set_visible_func(GTK_TREE_MODEL_FILTER(acc_liststore),
@@ -438,9 +444,7 @@ refresh_identities(ModestIdentityMgr *modest_id_mgr,
 	GtkTreeModel *id_liststore;
 	GtkTreeView *id_treeview;
 
-	g_message("Debug before access of Treeview");
 	id_treeview = GTK_TREE_VIEW(glade_xml_get_widget(glade_xml, "IdentitiesTreeview"));
-	g_message("Debug after access of Treeview");
 
 	id_liststore=create_identities_model(modest_id_mgr);
 	gtk_tree_view_set_model(GTK_TREE_VIEW(id_treeview), id_liststore);
@@ -671,7 +675,6 @@ identity_setup_dialog (ModestUI *modest_ui, GtkTreeModel *accounts_model, gchar 
 								      identity,
 								      MODEST_IDENTITY_ID_VIA,
 								      NULL);
-
 		if (search_model_column_for_string(GTK_TREE_MODEL(accounts_model),
 						   &out_iter,
 						   ACCOUNT_NAME,
@@ -785,7 +788,6 @@ account_setup_dialog (ModestUI *modest_ui, gchar *account) {
 								       account,
 								       MODEST_ACCOUNT_PROTO,
 								       NULL);
-		g_message("Proto for account '%s': '%s'", account, tmptext);
 		awidget=glade_xml_get_widget(glade_xml, "ASProtocolComboBox");
 		gtk_widget_set_sensitive(awidget, FALSE);
 		typemodel = gtk_combo_box_get_model(GTK_COMBO_BOX(awidget));
