@@ -1,0 +1,12 @@
+Source: modest
+Section: unknown
+Priority: optional
+Maintainer: unknown <arne@unknown>
+Build-Depends: debhelper (>= 4.0.0)
+Standards-Version: 3.6.0
+
+Package: modest
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, tinymail
+Description: an email client with modest resource-needs
+ TODO: description
