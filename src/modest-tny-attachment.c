@@ -181,24 +181,26 @@ modest_tny_attachment_get_mime_type (ModestTnyAttachment *self)
 }
 
 
-
 void
 modest_tny_attachment_guess_mime_type (ModestTnyAttachment *self)
 {
 	ModestTnyAttachmentPrivate *priv;
-	gchar *suffixes[] = {".jpg", ".gif", ".mp3", NULL};
-	gchar *types[]    = {"image/jpeg", "image/gif", "audio/mpeg", NULL};
+	gchar *suffixes[] = {".jpg", ".gif", ".png", ".mp3", ".ogg", /* default: */ "", NULL};
+	gchar *types[]    = {"image/jpeg", "image/gif", "image/png", "audio/mpeg", "application/ogg", "application/octet-stream", NULL};
+	gchar *low_fn;
 	gint pos;
 	
 	priv = MODEST_TNY_ATTACHMENT_GET_PRIVATE(self);
 	if (!priv->filename)
 		return;
 	
+	low_fn = g_utf8_strdown(priv->filename, -1);
 	for (pos = 0 ; suffixes[pos] ; pos++) {
-		if (g_str_has_suffix(priv->filename, suffixes[pos]))
+		if (g_str_has_suffix(low_fn, suffixes[pos]))
 			break;
 	}
 	
+	g_free(low_fn);
 	g_free(priv->mime_type);
 	if (suffixes[pos])
 		priv->mime_type = g_strdup(types[pos]);
