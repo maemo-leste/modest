@@ -176,8 +176,8 @@ icon_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 	GObject *rendobj;
 	GdkPixbuf *pixbuf;
 	TnyMsgFolderType type;
-	gchar *fname;
-	int unread;
+	gchar *fname = NULL;
+	gint unread;
 	
 	rendobj = G_OBJECT(renderer);
 	gtk_tree_model_get (tree_model, iter,
@@ -188,8 +188,9 @@ icon_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 	
 	if (type == TNY_MSG_FOLDER_TYPE_NORMAL)
 		type = guess_folder_type (fname);
-
-	g_free (fname);
+	
+	if (fname);
+		g_free (fname);
 
 	switch (type) {
         case TNY_MSG_FOLDER_TYPE_INBOX:
