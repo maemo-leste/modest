@@ -7,7 +7,7 @@ AM_INIT_AUTOMAKE(AC_PACKAGE_NAME,AC_PACKAGE_VERSION)
 
 AC_CONFIG_HEADERS([config.h])
 
-if test x$prefix=xNONE; then
+if test x$prefix = xNONE; then
    prefix=/usr/local
 fi
 AC_SUBST(prefix)
