@@ -2,24 +2,14 @@
 <!DOCTYPE glade-interface SYSTEM "http://glade.gnome.org/glade-2.0.dtd">
 
 <glade-interface>
-
-<widget class="GtkWindow" id="main">
-  <property name="title" translatable="yes">Modest</property>
-  <property name="type">GTK_WINDOW_TOPLEVEL</property>
-  <property name="window_position">GTK_WIN_POS_NONE</property>
-  <property name="modal">False</property>
-  <property name="default_width">800</property>
-  <property name="default_height">600</property>
-  <property name="resizable">True</property>
-  <property name="destroy_with_parent">False</property>
-  <property name="icon">qgn_toolb_messagin.png</property>
-  <property name="decorated">True</property>
-  <property name="skip_taskbar_hint">False</property>
-  <property name="skip_pager_hint">False</property>
-  <property name="type_hint">GDK_WINDOW_TYPE_HINT_NORMAL</property>
-  <property name="gravity">GDK_GRAVITY_NORTH_WEST</property>
-  <property name="focus_on_map">True</property>
-  <property name="urgency_hint">False</property>
+<requires lib="libglade-hildon"/>
+<widget class="HildonApp" id="main">
+  <property name="height_request">396</property>
+  <property name="title" context="yes" translatable="yes">Modest 3"</property>
+  <property name="width_request">512</property>
+  <child>
+    <widget class="HildonAppView" id="appview1">
+    <property name="menu_ui"><![CDATA[<popup name="HildonApp"/>]]></property>
 
   <child>
     <widget class="GtkVBox" id="main_top_container">
@@ -224,14 +214,6 @@
 		    </widget>
 		  </child>
 
-		  <child>
-		    <widget class="GtkMenuItem" id="move_to1">
-		      <property name="visible">True</property>
-		      <property name="label" translatable="yes">Move to...</property>
-		      <property name="use_underline">True</property>
-		      <signal name="activate" handler="on_move_to1_activate" last_modification_time="Fri, 28 Apr 2006 12:12:30 GMT"/>
-		    </widget>
-		  </child>
 		</widget>
 	      </child>
 	    </widget>
@@ -652,46 +634,12 @@
 	  </child>
 
 	  <child>
-	    <widget class="GtkToolButton" id="toolb_reply_all">
-	      <property name="visible">True</property>
-	      <property name="tooltip" translatable="yes">Reply all</property>
-	      <property name="label" translatable="yes">Reply all</property>
-	      <property name="use_underline">True</property>
-	      <property name="icon">qgn_toolb_messagin_replytoall.png</property>
-	      <property name="visible_horizontal">True</property>
-	      <property name="visible_vertical">True</property>
-	      <property name="is_important">False</property>
-	    </widget>
-	    <packing>
-	      <property name="expand">False</property>
-	      <property name="homogeneous">True</property>
-	    </packing>
-	  </child>
-
-	  <child>
 	    <widget class="GtkToolButton" id="toolb_forward">
 	      <property name="visible">True</property>
 	      <property name="tooltip" translatable="yes">Forward</property>
 	      <property name="label" translatable="yes">Forward</property>
 	      <property name="use_underline">True</property>
 	      <property name="icon">qgn_toolb_messagin_forward.png</property>
-	      <property name="visible_horizontal">True</property>
-	      <property name="visible_vertical">True</property>
-	      <property name="is_important">False</property>
-	    </widget>
-	    <packing>
-	      <property name="expand">False</property>
-	      <property name="homogeneous">True</property>
-	    </packing>
-	  </child>
-
-	  <child>
-	    <widget class="GtkToolButton" id="toolb_move_to">
-	      <property name="visible">True</property>
-	      <property name="tooltip" translatable="yes">Move message to other location</property>
-	      <property name="label" translatable="yes">Move to...</property>
-	      <property name="use_underline">True</property>
-	      <property name="icon">qgn_toolb_messagin_moveto.png</property>
 	      <property name="visible_horizontal">True</property>
 	      <property name="visible_vertical">True</property>
 	      <property name="is_important">False</property>
@@ -849,6 +797,8 @@
 	</packing>
       </child>
     </widget>
+  </child>
+  </widget>
   </child>
 </widget>
 
@@ -1356,63 +1306,6 @@
 		      <property name="label" translatable="yes">Help</property>
 		      <property name="use_underline">True</property>
 		      <signal name="activate" handler="on_help1_activate" last_modification_time="Fri, 28 Apr 2006 12:23:17 GMT"/>
-		    </widget>
-		  </child>
-		</widget>
-	      </child>
-	    </widget>
-	  </child>
-
-	  <child>
-	    <widget class="GtkMenuItem" id="security1">
-	      <property name="visible">True</property>
-	      <property name="label" translatable="yes">_Security</property>
-	      <property name="use_underline">True</property>
-	      <signal name="activate" handler="on_security1_activate" last_modification_time="Fri, 28 Apr 2006 13:30:35 GMT"/>
-
-	      <child>
-		<widget class="GtkMenu" id="security1_menu">
-
-		  <child>
-		    <widget class="GtkRadioMenuItem" id="none1">
-		      <property name="visible">True</property>
-		      <property name="label" translatable="yes">None</property>
-		      <property name="use_underline">True</property>
-		      <property name="active">True</property>
-		      <signal name="activate" handler="on_none1_activate" last_modification_time="Fri, 28 Apr 2006 13:32:29 GMT"/>
-		    </widget>
-		  </child>
-
-		  <child>
-		    <widget class="GtkRadioMenuItem" id="encrypt1">
-		      <property name="visible">True</property>
-		      <property name="label" translatable="yes">Encrypt</property>
-		      <property name="use_underline">True</property>
-		      <property name="active">False</property>
-		      <property name="group">none1</property>
-		      <signal name="activate" handler="on_encrypt1_activate" last_modification_time="Fri, 28 Apr 2006 13:32:29 GMT"/>
-		    </widget>
-		  </child>
-
-		  <child>
-		    <widget class="GtkRadioMenuItem" id="digitally_sign1">
-		      <property name="visible">True</property>
-		      <property name="label" translatable="yes">Digitally sign</property>
-		      <property name="use_underline">True</property>
-		      <property name="active">False</property>
-		      <property name="group">none1</property>
-		      <signal name="activate" handler="on_digitally_sign1_activate" last_modification_time="Fri, 28 Apr 2006 13:32:29 GMT"/>
-		    </widget>
-		  </child>
-
-		  <child>
-		    <widget class="GtkRadioMenuItem" id="digitally_sign_and_encrypt1">
-		      <property name="visible">True</property>
-		      <property name="label" translatable="yes">Digitally sign and encrypt</property>
-		      <property name="use_underline">True</property>
-		      <property name="active">False</property>
-		      <property name="group">none1</property>
-		      <signal name="activate" handler="on_digitally_sign_and_encrypt1_activate" last_modification_time="Fri, 28 Apr 2006 13:32:29 GMT"/>
 		    </widget>
 		  </child>
 		</widget>
