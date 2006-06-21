@@ -92,12 +92,6 @@ modest_ui_class_init (ModestUIClass *klass)
 
 	g_type_class_add_private (gobject_class, sizeof(ModestUIPrivate));
 
-	/* signal definitions go here, e.g.: */
-/* 	signals[MY_SIGNAL_1] = */
-/* 		g_signal_new ("my_signal_1",....); */
-/* 	signals[MY_SIGNAL_2] = */
-/* 		g_signal_new ("my_signal_2",....); */
-/* 	etc. */
 }
 
 
@@ -141,6 +135,20 @@ modest_ui_finalize (GObject *obj)
 }
 
 
+static void
+on_accounts_reloaded (ModestTnyAccountStore *account_store, gpointer user_data)
+{
+	ModestUIPrivate *priv = user_data;
+
+	g_return_if_fail (MODEST_IS_TNY_FOLDER_TREE_VIEW (priv->folder_view));
+	g_return_if_fail (MODEST_IS_TNY_HEADER_TREE_VIEW (priv->header_view));
+
+	modest_tny_header_tree_view_set_folder (priv->header_view, NULL);
+
+  	modest_tny_folder_tree_view_update_model(priv->folder_view, account_store);
+}
+
+
 GObject*
 modest_ui_new (ModestConf *modest_conf)
 {
@@ -180,6 +188,8 @@ modest_ui_new (ModestConf *modest_conf)
 	g_signal_connect (account_store_iface, "password_requested",
 			  G_CALLBACK(on_password_requested),
 			  NULL);
+	g_signal_connect (account_store_iface, "accounts_reloaded",
+			  G_CALLBACK(on_accounts_reloaded), priv);
 
 	glade_init ();
 	priv->glade_xml = glade_xml_new (MODEST_GLADE, NULL, NULL);
@@ -226,13 +236,13 @@ modest_ui_last_window_closed (GObject *obj, gpointer data)
 
 static void
 on_password_requested (ModestTnyAccountStore *account_store,
-		       const gchar *account_name, gpointer user_data)
-{
+		       const gchar *account_name,
+		       gpointer user_data) {
 
 	GtkWidget *passdialog;
 	GtkWidget *vbox;
 	GtkWidget *infolabel;
-	GtkWidget *passentry;
+        GtkWidget *passentry;
 	gint retval;
 	const gchar *infostring = g_strconcat(_("Please enter the password for "), account_name, ".", NULL);
 
@@ -257,18 +267,18 @@ on_password_requested (ModestTnyAccountStore *account_store,
 	retval = gtk_dialog_run (GTK_DIALOG(passdialog));
 
 	switch (retval) {
-		case GTK_RESPONSE_ACCEPT:
-			modest_account_mgr_set_server_account_string(modest_tny_account_store_get_accout_mgr(account_store),
+	case GTK_RESPONSE_ACCEPT:
+		modest_account_mgr_set_server_account_string(modest_tny_account_store_get_accout_mgr(account_store),
 							     account_name,
 							     "password",
 							     gtk_entry_get_text(GTK_ENTRY(passentry)),
 							     NULL);
-			break;
-		case GTK_RESPONSE_CANCEL:
+		break;
+	case GTK_RESPONSE_CANCEL:
 			/* FIXME:
 			 * What happens, if canceled?"
 			 */
-			break;
+		break;
 	}
 
 	gtk_widget_destroy (passdialog);
