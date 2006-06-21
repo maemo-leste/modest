@@ -591,12 +591,81 @@
 	</packing>
       </child>
 
+
+
+      <child>
+	<widget class="GtkHPaned" id="hpaned1">
+	  <property name="visible">True</property>
+	  <property name="can_focus">True</property>
+	  <property name="position">170</property>
+
+	  <child>
+	    <widget class="GtkScrolledWindow" id="folders">
+	      <property name="visible">True</property>
+	      <property name="can_focus">True</property>
+	      <property name="hscrollbar_policy">GTK_POLICY_AUTOMATIC</property>
+	      <property name="vscrollbar_policy">GTK_POLICY_AUTOMATIC</property>
+	      <property name="shadow_type">GTK_SHADOW_NONE</property>
+	      <property name="window_placement">GTK_CORNER_TOP_LEFT</property>
+
+	      <child>
+		<placeholder/>
+	      </child>
+	    </widget>
+	    <packing>
+	      <property name="shrink">True</property>
+	      <property name="resize">False</property>
+	    </packing>
+	  </child>
+
+	  <child>
+	    <widget class="GtkVPaned" id="mail_paned">
+	      <property name="visible">True</property>
+	      <property name="can_focus">True</property>
+	      <property name="position">150</property>
+
+	      <child>
+		<widget class="GtkScrolledWindow" id="mail_list">
+		  <property name="visible">True</property>
+		  <property name="can_focus">True</property>
+		  <property name="hscrollbar_policy">GTK_POLICY_NEVER</property>
+		  <property name="vscrollbar_policy">GTK_POLICY_AUTOMATIC</property>
+		  <property name="shadow_type">GTK_SHADOW_NONE</property>
+		  <property name="window_placement">GTK_CORNER_TOP_LEFT</property>
+
+		  <child>
+		    <placeholder/>
+		  </child>
+		</widget>
+		<packing>
+		  <property name="shrink">True</property>
+		  <property name="resize">False</property>
+		</packing>
+	      </child>
+
+	      <child>
+		<placeholder/>
+	      </child>
+	    </widget>
+	    <packing>
+	      <property name="shrink">True</property>
+	      <property name="resize">True</property>
+	    </packing>
+	  </child>
+	</widget>
+	<packing>
+	  <property name="padding">0</property>
+	  <property name="expand">True</property>
+	  <property name="fill">True</property>
+	</packing>
+      </child>
+
       <child>
 	<widget class="GtkToolbar" id="toolbar1">
 	  <property name="visible">True</property>
 	  <property name="orientation">GTK_ORIENTATION_HORIZONTAL</property>
-	  <property name="toolbar_style">GTK_TOOLBAR_BOTH</property>
-	  <property name="tooltips">True</property>
+	  <property name="toolbar_style">GTK_TOOLBAR_ICONS</property>
+	  <property name="tooltips">False</property>
 	  <property name="show_arrow">True</property>
 
 	  <child>
@@ -681,84 +750,9 @@
 	    <packing>
 	      <property name="expand">False</property>
 	      <property name="homogeneous">True</property>
-	    </packing>
+	    </packing>		
 	  </child>
-	</widget>
-	<packing>
-	  <property name="padding">0</property>
-	  <property name="expand">False</property>
-	  <property name="fill">False</property>
-	</packing>
-      </child>
-
-      <child>
-	<widget class="GtkHPaned" id="hpaned1">
-	  <property name="visible">True</property>
-	  <property name="can_focus">True</property>
-	  <property name="position">170</property>
-
-	  <child>
-	    <widget class="GtkScrolledWindow" id="folders">
-	      <property name="visible">True</property>
-	      <property name="can_focus">True</property>
-	      <property name="hscrollbar_policy">GTK_POLICY_AUTOMATIC</property>
-	      <property name="vscrollbar_policy">GTK_POLICY_AUTOMATIC</property>
-	      <property name="shadow_type">GTK_SHADOW_NONE</property>
-	      <property name="window_placement">GTK_CORNER_TOP_LEFT</property>
-
-	      <child>
-		<placeholder/>
-	      </child>
-	    </widget>
-	    <packing>
-	      <property name="shrink">True</property>
-	      <property name="resize">False</property>
-	    </packing>
-	  </child>
-
-	  <child>
-	    <widget class="GtkVPaned" id="mail_paned">
-	      <property name="visible">True</property>
-	      <property name="can_focus">True</property>
-	      <property name="position">150</property>
-
-	      <child>
-		<widget class="GtkScrolledWindow" id="mail_list">
-		  <property name="visible">True</property>
-		  <property name="can_focus">True</property>
-		  <property name="hscrollbar_policy">GTK_POLICY_NEVER</property>
-		  <property name="vscrollbar_policy">GTK_POLICY_AUTOMATIC</property>
-		  <property name="shadow_type">GTK_SHADOW_NONE</property>
-		  <property name="window_placement">GTK_CORNER_TOP_LEFT</property>
-
-		  <child>
-		    <placeholder/>
-		  </child>
-		</widget>
-		<packing>
-		  <property name="shrink">True</property>
-		  <property name="resize">False</property>
-		</packing>
-	      </child>
-
-	      <child>
-		<placeholder/>
-	      </child>
-	    </widget>
-	    <packing>
-	      <property name="shrink">True</property>
-	      <property name="resize">True</property>
-	    </packing>
-	  </child>
-	</widget>
-	<packing>
-	  <property name="padding">0</property>
-	  <property name="expand">True</property>
-	  <property name="fill">True</property>
-	</packing>
-      </child>
-
-      <child>
+	<child>
 	<widget class="GtkHBox" id="statusbox">
 	  <property name="homogeneous">True</property>
 	  <property name="spacing">0</property>
@@ -773,7 +767,7 @@
 	    </widget>
 	    <packing>
 	      <property name="padding">0</property>
-	      <property name="expand">False</property>
+	      <property name="expand">True</property>
 	      <property name="fill">True</property>
 	    </packing>
 	  </child>
@@ -785,19 +779,29 @@
 	    </widget>
 	    <packing>
 	      <property name="padding">0</property>
-	      <property name="expand">False</property>
+	      <property name="expand">True</property>
 	      <property name="fill">True</property>
 	    </packing>
 	  </child>
 	</widget>
 	<packing>
 	  <property name="padding">0</property>
-	  <property name="expand">False</property>
-	  <property name="fill">False</property>
+	  <property name="expand">True</property>
+	  <property name="fill">True</property>
 	</packing>
+      </child>
+
+	</widget>
+	<packing>
+	  <property name="padding">0</property>
+	  <property name="expand">False</property>
+	  <property name="fill">True</property>
+	</packing>
+	
       </child>
     </widget>
   </child>
+  
   </widget>
   </child>
 </widget>
@@ -1409,6 +1413,8 @@
 	      <property name="homogeneous">True</property>
 	    </packing>
 	  </child>
+	  
+	  
 	</widget>
 	<packing>
 	  <property name="padding">0</property>
@@ -2048,8 +2054,8 @@
 	<widget class="GtkToolbar" id="toolbar3">
 	  <property name="visible">True</property>
 	  <property name="orientation">GTK_ORIENTATION_HORIZONTAL</property>
-	  <property name="toolbar_style">GTK_TOOLBAR_BOTH</property>
-	  <property name="tooltips">True</property>
+	  <property name="toolbar_style">GTK_TOOLBAR_ICONS</property>
+	  <property name="tooltips">False</property>
 	  <property name="show_arrow">True</property>
 
 	  <child>
@@ -2425,7 +2431,7 @@
 	  </child>
 
 	  <child>
-	    <placeholder/>
+	    <placeholder/>		
 	  </child>
 	</widget>
 	<packing>
@@ -2433,8 +2439,9 @@
 	  <property name="expand">True</property>
 	  <property name="fill">True</property>
 	</packing>
-      </child>
+      </child>	  
     </widget>
+	
   </child>
 </widget>
 
