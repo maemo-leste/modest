@@ -102,7 +102,7 @@ account_edit_action(GtkWidget *button,
 					&selected_iter);
 	gtk_tree_model_get(GTK_TREE_MODEL(acc_liststore),
 			   &selected_iter,
-			   ACCOUNT_PROT, &account_name,
+			   ACCOUNT_NAME, &account_name,
 			   -1);
 
 	account_setup_dialog (cb_data->modest_ui, account_name);
@@ -612,18 +612,19 @@ write_account(GladeXML *glade_xml, ModestUI *modest_ui, gboolean newaccount) {
 							  account,
 							  MODEST_ACCOUNT_HOSTNAME,
 							  gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "ASHostnameEntry"))),
-							  NULL));
+							  NULL))
 		return FALSE;
 	if (!modest_account_mgr_set_server_account_string(priv->modest_acc_mgr,
 							  account,
 							  MODEST_ACCOUNT_USERNAME,
 							  gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "ASUsernameEntry"))),
-							  NULL));
+							  NULL))
+		return FALSE;
 	if (!modest_account_mgr_set_server_account_string(priv->modest_acc_mgr,
 							  account,
-							  MODEST_ACCOUNT_USERNAME,
+							  MODEST_ACCOUNT_PASSWORD,
 							  gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "ASPasswordEntry"))),
-							  NULL));
+							  NULL))
 		return FALSE;
 	return TRUE;
 }
@@ -781,9 +782,10 @@ account_setup_dialog (ModestUI *modest_ui, gchar *account) {
 		gtk_entry_set_text(GTK_ENTRY(awidget), account);
 
 		tmptext = modest_account_mgr_get_server_account_string(acc_mgr,
-								  account,
-								  MODEST_ACCOUNT_PROTO,
-								  NULL);
+								       account,
+								       MODEST_ACCOUNT_PROTO,
+								       NULL);
+		g_message("Proto for account '%s': '%s'", account, tmptext);
 		awidget=glade_xml_get_widget(glade_xml, "ASProtocolComboBox");
 		gtk_widget_set_sensitive(awidget, FALSE);
 		typemodel = gtk_combo_box_get_model(GTK_COMBO_BOX(awidget));
