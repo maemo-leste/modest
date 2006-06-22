@@ -43,7 +43,8 @@ LDADD = \
 	$(MODEST_LIBTINYMAIL_GNOME_DESKTOP_LIBS) \
 	$(MODEST_LIBTINYMAIL_MAEMO_LIBS)
 
-EXTRA_DIST=pixmaps/* glade/* modest.glade modest.gladep
+modestnet_SCRIPTS = modest.sh
+modestnetdir = $(prefix)/bin
 
 gladedir = $(prefix)/share/modest/glade
 glade_DATA = $(GLADE_FILES)
@@ -56,7 +57,9 @@ desktopdir = $(datadir)/applications/hildon
 desktop_in_files = modest.desktop.in
 
 servicedir = $(datadir)/dbus-1/services
-service_in_files = hildon/com.nokia.modest.service.in
+service_in_files = com.nokia.modest.service.in
 
 pixmaps_extradir = $(datadir)/pixmaps
 pixmaps_extra_DATA = modest.png
+
+EXTRA_DIST=pixmaps/* glade/* modest.glade modest.gladep modest.png com.nokia.modest.service.in.in modest.desktop.in
