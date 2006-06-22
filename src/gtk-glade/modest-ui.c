@@ -259,6 +259,7 @@ on_password_requested (ModestTnyAccountStore *account_store,
 
 	infolabel = gtk_label_new(infostring);
 	passentry = gtk_entry_new();
+	gtk_entry_set_visibility(passentry, FALSE);
 
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(passdialog)->vbox), infolabel, FALSE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(passdialog)->vbox), passentry, FALSE, FALSE, 0);
