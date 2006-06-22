@@ -332,6 +332,14 @@ on_new_mail_clicked (GtkWidget *widget, gpointer user_data)
 	new_editor_with_presets(modest_ui, "", "", "", "", "", NULL);
 }
 
+void
+ui_on_mailto_clicked (GtkWidget *widget, const gchar *uri, gpointer user_data)
+{
+	ModestUI *modest_ui = (ModestUI *) user_data;
+	
+	new_editor_with_presets(modest_ui, uri, "", "", "", "", NULL);
+}
+
 
 void
 quoted_send_msg (ModestUI *modest_ui, quoted_send_type qstype)
@@ -532,7 +540,7 @@ on_send_button_clicked (GtkWidget *widget, ModestEditorWindow *modest_editwin)
 						   body,
 						   attachments);
 
-	modest_editor_window_set_attachments(modest_editwin, NULL);
+	modest_editor_window_set_attachments(modest_editwin, NULL); /* This unrefs them, too. */
 	g_free (body);
 	g_object_unref (G_OBJECT(actions));
 

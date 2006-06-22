@@ -31,6 +31,7 @@ struct _ModestTnyMsgView {
 
 struct _ModestTnyMsgViewClass {
 	GtkScrolledWindowClass parent_class;
+	void (*mailto_clicked) (GtkWidget *widget, gpointer user_data);
 };
 
 

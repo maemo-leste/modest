@@ -28,4 +28,5 @@ void quoted_send_msg (ModestUI *modest_ui, quoted_send_type qstype);
  */
 void on_new_mail_clicked (GtkWidget *widget, gpointer user_data);
 
+void ui_on_mailto_clicked (GtkWidget *widget, const gchar * uri, gpointer user_data);
 #endif /* _MODEST_UI_MESSAGE_EDITOR_H */

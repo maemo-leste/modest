@@ -332,6 +332,14 @@ on_new_mail_clicked (GtkWidget *widget, gpointer user_data)
 	new_editor_with_presets(modest_ui, "", "", "", "", "", NULL);
 }
 
+void
+ui_on_mailto_clicked (GtkWidget *widget, const gchar *uri, gpointer user_data)
+{
+	ModestUI *modest_ui = (ModestUI *) user_data;
+	
+	new_editor_with_presets(modest_ui, uri, "", "", "", "", NULL);
+}
+
 
 void
 quoted_send_msg (ModestUI *modest_ui, quoted_send_type qstype)

@@ -33,6 +33,7 @@ static gchar *construct_virtual_filename_from_mime_part(TnyMsgMimePartIface *msg
 
 #define ATTACHMENT_ID_INLINE "attachment-inline"
 #define ATTACHMENT_ID_LINK "attachment-link"
+#define PREFIX_LINK_EMAIL "mailto:"
 
 gint virtual_filename_get_pos(const gchar *filename);
 /*
@@ -63,7 +64,7 @@ struct _UrlMatchPattern {
 
 /* list my signals */
 enum {
-	/* MY_SIGNAL_1, */
+	MAILTO_CLICKED_SIGNAL,
 	/* MY_SIGNAL_2, */
 	LAST_SIGNAL
 };
@@ -81,7 +82,7 @@ struct _ModestTnyMsgViewPrivate {
 static GtkContainerClass *parent_class = NULL;
 
 /* uncomment the following if you have defined any signals */
-/* static guint signals[LAST_SIGNAL] = {0}; */
+static guint signals[LAST_SIGNAL] = {0};
 
 GType
 modest_tny_msg_view_get_type (void)
@@ -116,6 +117,15 @@ modest_tny_msg_view_class_init (ModestTnyMsgViewClass *klass)
 	gobject_class->finalize = modest_tny_msg_view_finalize;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestTnyMsgViewPrivate));
+	
+ 	signals[MAILTO_CLICKED_SIGNAL] =
+ 		g_signal_new ("on_mailto_clicked",
+			      G_TYPE_FROM_CLASS (gobject_class),
+			      G_SIGNAL_RUN_FIRST,
+			      G_STRUCT_OFFSET(ModestTnyMsgViewClass, mailto_clicked),
+			      NULL, NULL,
+			      g_cclosure_marshal_VOID__STRING,
+			      G_TYPE_NONE, 1, G_TYPE_STRING/*, 1, G_TYPE_POINTER*/);
 }
 
 static void
@@ -182,8 +192,20 @@ static gboolean
 on_link_clicked (GtkWidget *widget, const gchar *uri,
 				 ModestTnyMsgView *msg_view)
 {
-	
-	if (g_str_has_prefix(uri, ATTACHMENT_ID_LINK)) {
+	if (g_str_has_prefix(uri, PREFIX_LINK_EMAIL)) {
+		gchar *s, *p;
+		/* skip over "mailto:" */
+		s = g_strdup(uri + strlen(PREFIX_LINK_EMAIL));
+		/* strip ?subject=... and the like */
+		for (p = s; p[0]; p++)
+			if (p[0] == '?') {
+				p[0] = 0;
+				break;
+			}
+		g_signal_emit(msg_view, signals[MAILTO_CLICKED_SIGNAL], 0, s);
+		g_free(s);
+		return TRUE;
+	} else if (g_str_has_prefix(uri, ATTACHMENT_ID_LINK)) {
 		/* save or open attachment */
 		g_message ("link-to-save: %s", uri); /* FIXME */
 		return TRUE;

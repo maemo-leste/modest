@@ -152,6 +152,8 @@ modest_ui_show_main_window (ModestUI *modest_ui)
 		g_warning ("failed to create message view");
 		return FALSE;
 	}
+	g_signal_connect(G_OBJECT(message_view), "on_mailto_clicked",
+                     G_CALLBACK(ui_on_mailto_clicked), modest_ui);
 
 	mail_paned = glade_xml_get_widget (priv->glade_xml, "mail_paned");
 	gtk_paned_add2 (GTK_PANED(mail_paned), message_view);
