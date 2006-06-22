@@ -62,4 +62,8 @@ service_in_files = com.nokia.modest.service.in
 pixmaps_extradir = $(datadir)/pixmaps
 pixmaps_extra_DATA = modest.png
 
+desktop_DATA = $(desktop_in_files:.desktop.in=.desktop)
+service_DATA = $(service_in_files:.service.in=.service)
+@INTLTOOL_DESKTOP_RULE@
+
 EXTRA_DIST=pixmaps/* glade/* modest.glade modest.gladep modest.png com.nokia.modest.service.in.in modest.desktop.in
