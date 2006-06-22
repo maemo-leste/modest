@@ -50,3 +50,13 @@ glade_DATA = $(GLADE_FILES)
 
 pixmapdir = $(prefix)/share/modest/pixmaps
 pixmap_DATA = $(PIXMAP_FILES)
+
+
+desktopdir = $(datadir)/applications/hildon
+desktop_in_files = modest.desktop.in
+
+servicedir = $(datadir)/dbus-1/services
+service_in_files = hildon/com.nokia.modest.service.in
+
+pixmaps_extradir = $(datadir)/pixmaps
+pixmaps_extra_DATA = modest.png

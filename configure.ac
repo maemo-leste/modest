@@ -73,6 +73,8 @@ src/Makefile
 src/gtk/Makefile
 src/gtk-glade/Makefile
 src/hildon/Makefile
+src/hildon/com.nokia.modest.service
+src/hildon/modest.desktop.in
 docs/Makefile
 docs/reference/Makefile
 ])

@@ -1,0 +1,13 @@
+[Desktop Entry]
+Encoding=UTF-8
+_Name=Modest eMail
+_Comment=The modest email application
+Exec=@prefix@/bin/modest
+Terminal=false
+Type=Application
+Icon=modest
+X-Window-Icon=modest
+X-Window-Icon-Dimmed=modest
+X-Osso-Service=modest
+X-HildonDesk-ShowInToolbar=true
+X-Osso-Type=application/x-executable
