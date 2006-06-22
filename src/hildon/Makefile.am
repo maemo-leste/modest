@@ -64,6 +64,13 @@ pixmaps_extra_DATA = modest.png
 
 desktop_DATA = $(desktop_in_files:.desktop.in=.desktop)
 service_DATA = $(service_in_files:.service.in=.service)
-@INTLTOOL_DESKTOP_RULE@
+
+# will be replaced by:
+# @INTLTOOL_DESKTOP_RULE@
+modest.desktop:
+	cp modest.desktop.in modest.desktop
+
+clean-local:
+	rm -f modest.desktop 
 
 EXTRA_DIST=pixmaps/* glade/* modest.glade modest.gladep modest.png com.nokia.modest.service.in.in modest.desktop.in

@@ -1,7 +1,7 @@
 [Desktop Entry]
 Encoding=UTF-8
-_Name=Modest eMail
-_Comment=The modest email application
+Name=Modest eMail
+Comment=The modest email application
 Exec=@prefix@/bin/modest.sh
 Terminal=false
 Type=Application
