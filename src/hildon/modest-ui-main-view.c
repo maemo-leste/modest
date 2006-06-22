@@ -258,8 +258,8 @@ modest_ui_show_main_window (ModestUI *modest_ui)
 	main_toolbar = glade_xml_get_widget (priv->glade_xml, "toolbar1");
 	g_object_ref (main_toolbar);
 	gtk_container_remove (glade_xml_get_widget (priv->glade_xml, 
-	                      "main_top_contianer"), main_toolbar);
-	hildon_window_add_toolbar(win, GTK_TOOLBAR(main_toolbar));
+	                      "main_top_container"), main_toolbar);
+	hildon_appview_set_toolbar (HILDON_APPVIEW(app_view), GTK_TOOLBAR(main_toolbar));
 
 
 	gtk_widget_show_all (win);
