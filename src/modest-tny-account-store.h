@@ -7,6 +7,7 @@
 #include <glib-object.h>
 #include <tny-account-store.h>
 #include <tny-session-camel.h>
+#include <tny-shared.h>
 
 /* other include files */
 
@@ -22,6 +23,7 @@ G_BEGIN_DECLS
 
 typedef struct _ModestTnyAccountStore      ModestTnyAccountStore;
 typedef struct _ModestTnyAccountStoreClass ModestTnyAccountStoreClass;
+typedef TnyGetPassFunc ModestTnyGetPassFunc;
 
 struct _ModestTnyAccountStore {
 	GObject parent;
@@ -74,6 +76,16 @@ ModestAccountMgr *modest_tny_account_store_get_accout_mgr(ModestTnyAccountStore 
  */
 TnySessionCamel* tny_account_store_get_session (TnyAccountStore *self);
 
+/**
+ * tny_account_store_set_get_pass_func:
+ * @self: a TnyAccountStore instance
+ * key: a key
+ * func: a function
+ *
+ * set the password function to function
+ */
+void
+modest_tny_account_store_set_get_pass_func (ModestTnyAccountStore *, ModestTnyGetPassFunc);
 
 G_END_DECLS
 

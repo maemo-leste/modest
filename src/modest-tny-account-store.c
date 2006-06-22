@@ -42,7 +42,7 @@ enum {
 /* Password Status */
 enum {
         PW_NOT_INVALID,
-        PW_INVALID,
+        PW_INVALID
 };
 
 static const gchar *transport_protocols[] = { "smtp", NULL };
@@ -61,6 +61,7 @@ struct _ModestTnyAccountStorePrivate {
 
         ModestAccountMgr *modest_acc_mgr;
         gint pw_invalid;
+        ModestTnyGetPassFunc get_pass_func;
 };
 #define MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                       MODEST_TYPE_TNY_ACCOUNT_STORE, \
@@ -142,6 +143,7 @@ modest_tny_account_store_init (ModestTnyAccountStore *obj)
         priv->tny_session_camel      = NULL;
         /* Meaning: if not indicated otherwise, we have valid password data */
         priv->pw_invalid             = PW_NOT_INVALID;
+        priv->get_pass_func          = NULL;
 }
 
 
@@ -180,7 +182,7 @@ get_password (TnyAccountIface *account,
 	account_store = tny_account_iface_get_account_store(account);
 
 	self = MODEST_TNY_ACCOUNT_STORE (account_store);
-	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
+        priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
 
         if (priv->pw_invalid==PW_NOT_INVALID) {
                 retval = modest_account_mgr_get_server_account_string (priv->modest_acc_mgr,
@@ -188,9 +190,16 @@ get_password (TnyAccountIface *account,
                                                                        MODEST_ACCOUNT_PASSWORD,
                                                                        NULL);
         } else {
-                g_signal_emit(G_OBJECT(self), signals[PASSWORD_REQUESTED_SIGNAL], 0, key);
-                priv->pw_invalid=PW_NOT_INVALID;
-                retval=NULL;
+                retval = priv->get_pass_func(account, prompt, cancel);
+                if (!*cancel)
+                {
+                        priv->pw_invalid=PW_NOT_INVALID;
+                        modest_account_mgr_set_server_account_string(priv->modest_acc_mgr,
+                                                                     key,
+                                                                     MODEST_ACCOUNT_PASSWORD,
+                                                                     retval,
+                                                                     NULL);
+                }
         }
         return retval;
 }
@@ -274,7 +283,7 @@ tny_account_from_key (ModestTnyAccountStore *self, const gchar *key,
 	}
 
 	tny_account_iface_set_pass_func (tny_account, get_password);
-	tny_account_iface_set_forget_pass_func (tny_account, forget_password);
+        tny_account_iface_set_forget_pass_func (tny_account, forget_password);
 
 	return tny_account;
 }
@@ -703,3 +712,12 @@ modest_tny_account_store_iface_init (gpointer g_iface, gpointer iface_data)
 	klass->get_device_func =
 		modest_tny_account_store_get_device;
 }
+
+void
+modest_tny_account_store_set_get_pass_func (ModestTnyAccountStore *self, ModestTnyGetPassFunc func) {
+
+        ModestTnyAccountStorePrivate *priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
+
+        priv->get_pass_func=func;
+}
+

@@ -44,7 +44,7 @@ static void   modest_ui_finalize       (GObject *obj);
 static void   modest_ui_window_destroy    (GtkWidget *win, GdkEvent *event, gpointer data);
 static void   modest_ui_last_window_closed (GObject *obj, gpointer data);
 
-static void   on_password_requested (ModestTnyAccountStore *account_store, const gchar *account_name, gpointer user_data);
+gchar *on_password_requested (TnyAccountIface *, const gchar *, gboolean *);
 
 /* list my signals */
 enum {
@@ -170,7 +170,7 @@ modest_ui_new (ModestConf *modest_conf)
 		g_warning ("could not create ModestAccountMgr instance");
 		g_object_unref (obj);
 		return NULL;
-	}
+        }
 
 	modest_id_mgr = MODEST_IDENTITY_MGR(modest_identity_mgr_new (modest_conf));
 	if (!modest_id_mgr) {
@@ -184,10 +184,11 @@ modest_ui_new (ModestConf *modest_conf)
 	if (!account_store_iface) {
 		g_warning ("could not initialze ModestTnyAccountStore");
 		return NULL;
-	}
-	g_signal_connect (account_store_iface, "password_requested",
-			  G_CALLBACK(on_password_requested),
-			  NULL);
+        }
+
+        modest_tny_account_store_set_get_pass_func(MODEST_TNY_ACCOUNT_STORE(account_store_iface),
+                                                   on_password_requested);
+
 	g_signal_connect (account_store_iface, "accounts_reloaded",
 			  G_CALLBACK(on_accounts_reloaded), priv);
 
@@ -234,17 +235,19 @@ modest_ui_last_window_closed (GObject *obj, gpointer data)
 }
 
 
-static void
-on_password_requested (ModestTnyAccountStore *account_store,
-		       const gchar *account_name,
-		       gpointer user_data) {
+gchar *
+on_password_requested (TnyAccountIface *account,
+		       const gchar *prompt,
+		       gboolean *cancel) {
 
 	GtkWidget *passdialog;
 	GtkWidget *vbox;
+	GtkWidget *infoscroll;
 	GtkWidget *infolabel;
-        GtkWidget *passentry;
-	gint retval;
-	const gchar *infostring = g_strconcat(_("Please enter the password for "), account_name, ".", NULL);
+	GtkWidget *passentry;
+	GtkTextBuffer *infobuffer;
+	gchar *retval;
+	gint result;
 
 	passdialog = gtk_dialog_new_with_buttons(_("Password"),
 						 NULL,
@@ -257,32 +260,38 @@ on_password_requested (ModestTnyAccountStore *account_store,
 
 	vbox = gtk_vbox_new(FALSE, 0);
 
-	infolabel = gtk_label_new(infostring);
+	infobuffer = gtk_text_buffer_new (NULL);
+	gtk_text_buffer_set_text(infobuffer, prompt, -1);
+	infoscroll = gtk_scrolled_window_new(NULL, NULL);
+	infolabel = gtk_text_view_new_with_buffer(infobuffer);
+	gtk_container_add(GTK_CONTAINER(infoscroll), infolabel);
 	passentry = gtk_entry_new();
-	gtk_entry_set_visibility(passentry, FALSE);
+	gtk_entry_set_visibility(GTK_ENTRY(passentry), FALSE);
 
-	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(passdialog)->vbox), infolabel, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(passdialog)->vbox), infoscroll, FALSE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(passdialog)->vbox), passentry, FALSE, FALSE, 0);
 	gtk_widget_show_all(passdialog);
 
-	retval = gtk_dialog_run (GTK_DIALOG(passdialog));
+	result = gtk_dialog_run (GTK_DIALOG(passdialog));
 
-	switch (retval) {
+	switch (result) {
 	case GTK_RESPONSE_ACCEPT:
-		modest_account_mgr_set_server_account_string(modest_tny_account_store_get_accout_mgr(account_store),
-							     account_name,
-							     "password",
-							     gtk_entry_get_text(GTK_ENTRY(passentry)),
-							     NULL);
+		retval = g_strdup(gtk_entry_get_text(GTK_ENTRY(passentry)));
+		*cancel=FALSE;
 		break;
-	case GTK_RESPONSE_CANCEL:
-			/* FIXME:
-			 * What happens, if canceled?"
-			 */
+	default:
+		retval = g_strdup("");;
+		*cancel=TRUE;
 		break;
 	}
 
-	gtk_widget_destroy (passdialog);
+        gtk_widget_hide(passdialog);
+	gtk_widget_destroy(passdialog);
+	while (gtk_events_pending()){
+		gtk_main_iteration();
+	}
+
+	return retval;
 }
 
 
@@ -300,8 +309,6 @@ on_account_selector_selection_changed (GtkWidget *widget, gpointer user_data)
 	} else {
 		account_name="empty";
 	}
-
-	g_message("Value: '%s'\n", account_name);
 
 	free(account_name);
 }
