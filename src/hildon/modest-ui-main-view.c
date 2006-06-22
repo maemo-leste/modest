@@ -103,7 +103,7 @@ modest_ui_show_main_window (ModestUI *modest_ui)
 	GtkWidget     *open_item;
 	GtkWidget     *view_attachments_item;
 	GtkWidget     *new_account_item;
-	GtkWidget     *main_menu, *menu_item;
+	GtkWidget     *main_menu, *menu_item, *main_toolbar;
 	
 	GtkWidget  *folder_view_holder,
 		*header_view_holder,
@@ -241,7 +241,6 @@ modest_ui_show_main_window (ModestUI *modest_ui)
 	
 	main_menu = hildon_appview_get_menu(HILDON_APPVIEW(app_view));
 	menu_item = glade_xml_get_widget (priv->glade_xml, "MessageMenuItem");
-	//gtk_menu_append(main_menu, menu_item);
 	gtk_widget_reparent(menu_item, main_menu);
 	menu_item = glade_xml_get_widget (priv->glade_xml, "EditMenuItem");
 	gtk_widget_reparent(menu_item, main_menu);
@@ -255,6 +254,13 @@ modest_ui_show_main_window (ModestUI *modest_ui)
 	gtk_widget_reparent(menu_item, main_menu);
 	menu_item = glade_xml_get_widget (priv->glade_xml, "CloseMenuItem");
 	gtk_widget_reparent(menu_item, main_menu);
+
+	main_toolbar = glade_xml_get_widget (priv->glade_xml, "toolbar1");
+	g_object_ref (main_toolbar);
+	gtk_container_remove (glade_xml_get_widget (priv->glade_xml, 
+	                      "main_top_contianer"), main_toolbar);
+	hildon_window_add_toolbar(win, GTK_TOOLBAR(main_toolbar));
+
 
 	gtk_widget_show_all (win);
 
