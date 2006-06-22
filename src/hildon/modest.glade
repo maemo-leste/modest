@@ -1359,7 +1359,7 @@
 	<widget class="GtkToolbar" id="toolbar2">
 	  <property name="visible">True</property>
 	  <property name="orientation">GTK_ORIENTATION_HORIZONTAL</property>
-	  <property name="toolbar_style">GTK_TOOLBAR_BOTH</property>
+	  <property name="toolbar_style">GTK_TOOLBAR_ICONS</property>
 	  <property name="tooltips">True</property>
 	  <property name="show_arrow">True</property>
 
