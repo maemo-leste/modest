@@ -327,7 +327,7 @@ new_editor_with_presets (ModestUI *modest_ui, const gchar *to_header,
 void
 on_new_mail_clicked (GtkWidget *widget, gpointer user_data)
 {
-	ModestUI *modest_ui = (ModestUI *) modest_ui;
+	ModestUI *modest_ui = (ModestUI *) user_data;
 
 	new_editor_with_presets(modest_ui, "", "", "", "", "", NULL);
 }
