@@ -107,7 +107,7 @@ msgtype_cell_data (GtkTreeViewColumn *column, GtkCellRenderer *renderer,
 		   GtkTreeModel *tree_model, GtkTreeIter *iter, gpointer user_data)
 {
 	TnyMsgHeaderFlags flags;
-	GdkPixbuf *pixbuf;
+	GdkPixbuf *pixbuf = NULL;
 
 	gtk_tree_model_get (tree_model, iter, TNY_MSG_HEADER_LIST_MODEL_FLAGS_COLUMN,
 			    &flags, -1);
@@ -118,8 +118,8 @@ msgtype_cell_data (GtkTreeViewColumn *column, GtkCellRenderer *renderer,
 		pixbuf = modest_icon_factory_get_icon (MODEST_HEADER_ICON_READ);
 	else
 		pixbuf = modest_icon_factory_get_icon (MODEST_HEADER_ICON_UNREAD);
-	if (pixbuf)
-		g_object_set (G_OBJECT (renderer), "pixbuf", pixbuf, NULL);
+		
+	g_object_set (G_OBJECT (renderer), "pixbuf", pixbuf, NULL);
 }
 
 static void
@@ -132,13 +132,11 @@ attach_cell_data (GtkTreeViewColumn *column, GtkCellRenderer *renderer,
 	gtk_tree_model_get (tree_model, iter, TNY_MSG_HEADER_LIST_MODEL_FLAGS_COLUMN,
 			    &flags, -1);
 
-	if (flags & TNY_MSG_HEADER_FLAG_ATTACHMENTS) {
+	if (flags & TNY_MSG_HEADER_FLAG_ATTACHMENTS)
 		pixbuf = modest_icon_factory_get_icon (MODEST_HEADER_ICON_ATTACH);
-		if (pixbuf)
-			g_object_set (G_OBJECT (renderer), "pixbuf", pixbuf, NULL);
-	}
-}
 
+	g_object_set (G_OBJECT (renderer), "pixbuf", pixbuf, NULL);
+}
 
 
 static void
