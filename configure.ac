@@ -53,6 +53,7 @@ else
       modest_ui="gtk-glade"						
 fi
 
+AM_CONDITIONAL(HILDON, test x$hildon_support = xyes)
 
 dnl now, determine what to build
 AC_MSG_NOTICE([Determining what UI to build])

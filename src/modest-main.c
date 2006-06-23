@@ -12,6 +12,12 @@
 #endif /*HAVE_CONFIG_H*/
 #include <gtk/gtk.h>
 
+#ifdef IS_HILDON /* Hildon includes */
+#include <libosso.h>
+#define APPLICATION_DBUS_SERVICE "modest"
+#endif
+
+
 static void install_basic_conf_settings (ModestConf *conf);
 static void install_test_account        (ModestConf *conf);
 
@@ -50,6 +56,9 @@ main (int argc, char *argv[])
 		{ NULL }
 	};
 
+#ifdef IS_HILDON
+	osso_context_t *osso_context;
+#endif
 
 	g_type_init ();
 
@@ -88,6 +97,15 @@ main (int argc, char *argv[])
 		g_warning ("failed to initialize ui");
 		goto cleanup;
 	}
+	
+#ifdef IS_HILDON
+	/* Initialize maemo application */
+	osso_context = osso_initialize(APPLICATION_DBUS_SERVICE, "0.1", TRUE, NULL);
+
+	/* Check that initialization was ok */
+	if (osso_context == NULL)
+		goto cleanup;
+#endif
 
 	{
 		gboolean ok;

@@ -9,8 +9,12 @@ INCLUDES=\
 	$(MODEST_LIBTINYMAIL_MAEMO_CFLAGS) \
 	-I$(MODEST_UI_DIR) -Wall\
 	-DPREFIX=\"@prefix@\" \
-	-Wall
+	-Wall 
 
+if HILDON
+INCLUDES += -DIS_HILDON
+endif
+		
 BUILT_SOURCES = modest-marshal.c modest-marshal.h
 
 modest-marshal.c: marshall.list
