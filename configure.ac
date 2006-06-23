@@ -38,7 +38,7 @@ if test "x$hildon_support" = "xyes"; then
 
       AC_SUBST(MODEST_UI_DIR,"hildon-libs")
       AC_DEFINE([MODEST_ENABLE_HILDON_UI],1,[Enable Hildon UI])
-      PKG_CHECK_MODULES(MODEST_LIBTINYMAIL_MAEMO,libtinymail-maemo-1.0 hildon-libs hildon-lgpl)
+      PKG_CHECK_MODULES(MODEST_LIBTINYMAIL_MAEMO,libtinymail-maemo-1.0 hildon-libs hildon-lgpl libosso)
       AC_SUBST(MODEST_LIBTINYMAIL_MAEMO_CFLAGS)
       AC_SUBST(MODEST_LIBTINYMAIL_MAEMO_LIBS) 
       modest_ui="hildon"
