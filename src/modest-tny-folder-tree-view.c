@@ -104,7 +104,7 @@ text_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 {
 	GObject *rendobj;
 	gchar *fname;
-	guint unread;
+	gint unread;
 	TnyMsgFolderType type;
 	
 	gtk_tree_model_get (tree_model, iter,
