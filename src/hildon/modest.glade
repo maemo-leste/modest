@@ -8,8 +8,7 @@
   <property name="title" context="yes" translatable="yes">Modest 3"</property>
   <property name="width_request">512</property>
   <child>
-    <widget class="HildonAppView" id="appview1">
-    <property name="menu_ui"><![CDATA[<popup name="HildonApp"/>]]></property>
+    <widget class="HildonWindow" id="appview1">
 
   <child>
     <widget class="GtkVBox" id="main_top_container">
@@ -775,7 +774,7 @@
 	  <child>
 	    <widget class="GtkStatusbar" id="statusbar">
 	      <property name="visible">True</property>
-	      <property name="has_resize_grip">True</property>
+	      <property name="has_resize_grip">False</property>
 	    </widget>
 	    <packing>
 	      <property name="padding">0</property>
@@ -806,23 +805,8 @@
   </child>
 </widget>
 
-<widget class="GtkWindow" id="new_mail">
-  <property name="title" translatable="yes">Modest - New message</property>
-  <property name="type">GTK_WINDOW_TOPLEVEL</property>
-  <property name="window_position">GTK_WIN_POS_NONE</property>
-  <property name="modal">False</property>
-  <property name="default_width">800</property>
-  <property name="default_height">600</property>
-  <property name="resizable">True</property>
-  <property name="destroy_with_parent">False</property>
-  <property name="icon">qgn_toolb_messagin.png</property>
-  <property name="decorated">True</property>
-  <property name="skip_taskbar_hint">False</property>
-  <property name="skip_pager_hint">False</property>
-  <property name="type_hint">GDK_WINDOW_TYPE_HINT_NORMAL</property>
-  <property name="gravity">GDK_GRAVITY_NORTH_WEST</property>
-  <property name="focus_on_map">True</property>
-  <property name="urgency_hint">False</property>
+<widget class="HildonWindow" id="new_mail">
+  <property name="title">Untitled</property>
 
   <child>
     <widget class="GtkVBox" id="new_mail_top_container">
@@ -832,7 +816,7 @@
 
       <child>
 	<widget class="GtkMenuBar" id="menubar2">
-	  <property name="visible">True</property>
+	  <property name="visible">False</property>
 
 	  <child>
 	    <widget class="GtkMenuItem" id="menuitem5">
@@ -1356,74 +1340,6 @@
       </child>
 
       <child>
-	<widget class="GtkToolbar" id="toolbar2">
-	  <property name="visible">True</property>
-	  <property name="orientation">GTK_ORIENTATION_HORIZONTAL</property>
-	  <property name="toolbar_style">GTK_TOOLBAR_ICONS</property>
-	  <property name="tooltips">True</property>
-	  <property name="show_arrow">True</property>
-
-	  <child>
-	    <widget class="GtkToolButton" id="toolb_send">
-	      <property name="visible">True</property>
-	      <property name="tooltip" translatable="yes">Send message</property>
-	      <property name="label" translatable="yes">Send</property>
-	      <property name="use_underline">True</property>
-	      <property name="icon">qgn_toolb_messagin_send.png</property>
-	      <property name="visible_horizontal">True</property>
-	      <property name="visible_vertical">True</property>
-	      <property name="is_important">False</property>
-	    </widget>
-	    <packing>
-	      <property name="expand">False</property>
-	      <property name="homogeneous">True</property>
-	    </packing>
-	  </child>
-
-	  <child>
-	    <widget class="GtkToolButton" id="toolb_attach">
-	      <property name="visible">True</property>
-	      <property name="tooltip" translatable="yes">Add attachment</property>
-	      <property name="label" translatable="yes">Attach</property>
-	      <property name="use_underline">True</property>
-	      <property name="icon">qgn_list_gene_attacpap.png</property>
-	      <property name="visible_horizontal">True</property>
-	      <property name="visible_vertical">True</property>
-	      <property name="is_important">False</property>
-	    </widget>
-	    <packing>
-	      <property name="expand">False</property>
-	      <property name="homogeneous">True</property>
-	    </packing>
-	  </child>
-
-	  <child>
-	    <widget class="GtkToolButton" id="toolb_recipients">
-	      <property name="visible">True</property>
-	      <property name="tooltip" translatable="yes">Add reipients</property>
-	      <property name="label" translatable="yes">Recipients</property>
-	      <property name="use_underline">True</property>
-	      <property name="icon">qgn_list_gene_contacts.png</property>
-	      <property name="visible_horizontal">True</property>
-	      <property name="visible_vertical">True</property>
-	      <property name="is_important">False</property>
-	    </widget>
-	    <packing>
-	      <property name="expand">False</property>
-	      <property name="homogeneous">True</property>
-	    </packing>
-	  </child>
-	  
-	  
-	</widget>
-	<packing>
-	  <property name="padding">0</property>
-	  <property name="expand">False</property>
-	  <property name="fill">False</property>
-	</packing>
-      </child>
-
-      <child>
 	<widget class="GtkVPaned" id="vpaned2">
 	  <property name="visible">True</property>
 	  <property name="can_focus">True</property>
@@ -1584,8 +1500,76 @@
 	  <property name="fill">True</property>
 	</packing>
       </child>
+      <child>
+	<widget class="GtkToolbar" id="toolbar2">
+	  <property name="visible">True</property>
+	  <property name="orientation">GTK_ORIENTATION_HORIZONTAL</property>
+	  <property name="toolbar_style">GTK_TOOLBAR_ICONS</property>
+	  <property name="tooltips">True</property>
+	  <property name="show_arrow">True</property>
+
+	  <child>
+	    <widget class="GtkToolButton" id="toolb_send">
+	      <property name="visible">True</property>
+	      <property name="tooltip" translatable="yes">Send message</property>
+	      <property name="label" translatable="yes">Send</property>
+	      <property name="use_underline">True</property>
+	      <property name="icon">qgn_toolb_messagin_send.png</property>
+	      <property name="visible_horizontal">True</property>
+	      <property name="visible_vertical">True</property>
+	      <property name="is_important">False</property>
+	    </widget>
+	    <packing>
+	      <property name="expand">False</property>
+	      <property name="homogeneous">True</property>
+	    </packing>
+	  </child>
+
+	  <child>
+	    <widget class="GtkToolButton" id="toolb_attach">
+	      <property name="visible">True</property>
+	      <property name="tooltip" translatable="yes">Add attachment</property>
+	      <property name="label" translatable="yes">Attach</property>
+	      <property name="use_underline">True</property>
+	      <property name="icon">qgn_list_gene_attacpap.png</property>
+	      <property name="visible_horizontal">True</property>
+	      <property name="visible_vertical">True</property>
+	      <property name="is_important">False</property>
+	    </widget>
+	    <packing>
+	      <property name="expand">False</property>
+	      <property name="homogeneous">True</property>
+	    </packing>
+	  </child>
+
+	  <child>
+	    <widget class="GtkToolButton" id="toolb_recipients">
+	      <property name="visible">True</property>
+	      <property name="tooltip" translatable="yes">Add reipients</property>
+	      <property name="label" translatable="yes">Recipients</property>
+	      <property name="use_underline">True</property>
+	      <property name="icon">qgn_list_gene_contacts.png</property>
+	      <property name="visible_horizontal">True</property>
+	      <property name="visible_vertical">True</property>
+	      <property name="is_important">False</property>
+	    </widget>
+	    <packing>
+	      <property name="expand">False</property>
+	      <property name="homogeneous">True</property>
+	    </packing>
+	  </child>
+	  
+	  
+	</widget>
+	<packing>
+	  <property name="padding">0</property>
+	  <property name="expand">False</property>
+	  <property name="fill">False</property>
+	</packing>
+      </child>
+	  
     </widget>
-  </child>
+  </child>  
 </widget>
 
 <widget class="GtkWindow" id="viewer">

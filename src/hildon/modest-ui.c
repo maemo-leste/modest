@@ -109,6 +109,7 @@ modest_ui_init (ModestUI *obj)
 	priv->header_view       = NULL;
 	priv->message_view      = NULL;
 	priv->current_folder    = NULL;
+	priv->program           = NULL;
 }
 
 
@@ -315,5 +316,3 @@ on_account_selector_selection_changed (GtkWidget *widget, gpointer user_data)
 
 	free(account_name);
 }
-
-

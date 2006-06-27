@@ -24,7 +24,8 @@ typedef struct _ModestEditorWindow      ModestEditorWindow;
 typedef struct _ModestEditorWindowClass ModestEditorWindowClass;
 
 struct _ModestEditorWindow {
-	 GtkWindow parent;
+	 GObject parent;
+	 GtkWindow *window;
 	/* insert public members, if any */
 };
 
@@ -47,7 +48,7 @@ GType        modest_editor_window_get_type    (void) G_GNUC_CONST;
  *
  * Returns: a GtkWindow* to show and populate
  */
-GtkWidget *modest_editor_window_new         (ModestUI *ui);
+GObject *modest_editor_window_new         (ModestUI *ui);
 
 /**
  * modest_editor_window_get_data:

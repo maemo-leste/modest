@@ -19,6 +19,7 @@ enum {
 
 typedef struct _ModestEditorWindowPrivate ModestEditorWindowPrivate;
 struct _ModestEditorWindowPrivate {
+	GtkWidget *window;
 	gpointer user_data;
 	gboolean modified;
 	GList *attachments;
@@ -29,7 +30,7 @@ struct _ModestEditorWindowPrivate {
                                                   MODEST_TYPE_EDITOR_WINDOW, \
                                                   ModestEditorWindowPrivate))
 /* globals */
-static GtkWindowClass *parent_class = NULL;
+static GObjectClass *parent_class = NULL;
 
 /* uncomment the following if you have defined any signals */
 /* static guint signals[LAST_SIGNAL] = {0}; */
@@ -50,7 +51,7 @@ modest_editor_window_get_type (void)
 			1,		/* n_preallocs */
 			(GInstanceInitFunc) modest_editor_window_init,
 		};
-		my_type = g_type_register_static (GTK_TYPE_WINDOW,
+		my_type = g_type_register_static (G_TYPE_OBJECT,
 		                                  "ModestEditorWindow",
 		                                  &my_info, 0);
 	}
@@ -68,12 +69,6 @@ modest_editor_window_class_init (ModestEditorWindowClass *klass)
 
 	g_type_class_add_private (gobject_class, sizeof(ModestEditorWindowPrivate));
 
-	/* signal definitions go here, e.g.: */
-/* 	signals[MY_SIGNAL_1] = */
-/* 		g_signal_new ("my_signal_1",....); */
-/* 	signals[MY_SIGNAL_2] = */
-/* 		g_signal_new ("my_signal_2",....); */
-/* 	etc. */
 }
 
 static void
@@ -86,6 +81,7 @@ modest_editor_window_init (ModestEditorWindow *obj)
 	priv->attachments = NULL;
 	priv->identity = NULL;
 	priv->transport = NULL;
+	obj->window = NULL;
 }
 
 static void
@@ -101,16 +97,18 @@ modest_editor_window_finalize (GObject *obj)
 	modest_editor_window_set_attachments(MODEST_EDITOR_WINDOW(obj), NULL);
 	g_free(priv->identity);
 	g_free(priv->transport);
+	g_object_unref (MODEST_EDITOR_WINDOW(obj)->window);
+	MODEST_EDITOR_WINDOW(obj)->window = NULL;
 	
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
-GtkWidget*
+GObject*
 modest_editor_window_new (ModestUI *ui)
 {
 	GObject *self;
 	ModestEditorWindowPrivate *priv;
-	GtkWidget *w;
+	GObject *edit_win;
 	gpointer data;
 
 	self = G_OBJECT(g_object_new(MODEST_TYPE_EDITOR_WINDOW, NULL));
@@ -119,18 +117,17 @@ modest_editor_window_new (ModestUI *ui)
 	/* for now create a local test-window */
 
 	data = NULL;
-	w = GTK_WIDGET(modest_ui_new_editor_window(ui, &data));
-	// g_message("new data = %p", data);
-	if (!w)
+	edit_win = modest_ui_new_editor_window(ui, &data);
+	
+	if (!edit_win)
 		return NULL;
 	if (!data)
 		g_message("editor window user data is emtpy");
 
-	gtk_container_add(GTK_CONTAINER(self), w);
+	MODEST_EDITOR_WINDOW(self)->window = edit_win;
 	priv->user_data = data;
-	// g_message("new priv->data = %p", priv->user_data);
 	
-	return GTK_WIDGET(self);
+	return self;
 }
 
 /*
@@ -334,4 +331,4 @@ modest_editor_window_get_transport(ModestEditorWindow *edit_win)
 	priv = MODEST_EDITOR_WINDOW_GET_PRIVATE(edit_win);
 
 	return priv->transport;
-}	
+}

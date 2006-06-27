@@ -7,7 +7,8 @@
 #include <config.h>
 #endif /*HAVE_CONFIG_H*/
 
-#include <hildon-widgets/hildon-app.h>
+#include <hildon-widgets/hildon-window.h>
+#include <hildon-widgets/hildon-program.h>
 
 /* TODO: put in auto* */
 #include <tny-text-buffer-stream.h>
@@ -92,23 +93,24 @@ modest_ui_main_view_destroy (GtkWidget *win, GdkEvent *event, gpointer data)
 gboolean
 modest_ui_show_main_window (ModestUI *modest_ui)
 {
-	GtkWidget       *win, *app_view;
-	gint              height, width;
+	GtkWidget       *win;
+	gint            height, width;
 	ModestUIPrivate *priv;
-	GtkWidget     *folder_view, *header_view;
-	GtkWidget     *message_view;
-	GtkWidget     *account_settings_item;
-	GtkWidget     *forward_attached_menu_item;
-	GtkWidget     *delete_item;
-	GtkWidget     *open_item;
-	GtkWidget     *view_attachments_item;
-	GtkWidget     *new_account_item;
-	GtkWidget     *main_menu, *menu_item, *main_toolbar;
+	GtkWidget       *folder_view, *header_view;
+	GtkWidget       *message_view;
+	GtkWidget       *account_settings_item;
+	GtkWidget       *forward_attached_menu_item;
+	GtkWidget       *delete_item;
+	GtkWidget       *open_item;
+	GtkWidget       *view_attachments_item;
+	GtkWidget       *new_account_item;
+	GtkWidget       *main_menu, *menu_item, *main_toolbar;
 	
 	GtkWidget  *folder_view_holder,
 		*header_view_holder,
 		*mail_paned;
 	gboolean show_attachments_inline;
+	HildonProgram *program;
 
 	priv = MODEST_UI_GET_PRIVATE(modest_ui);
 	
@@ -117,7 +119,11 @@ modest_ui_show_main_window (ModestUI *modest_ui)
 	width  = modest_conf_get_int (priv->modest_conf,
 				      MODEST_CONF_MAIN_WINDOW_WIDTH,NULL);
 
-	win = glade_xml_get_widget (priv->glade_xml, "main");
+	program = HILDON_PROGRAM (hildon_program_get_instance ());
+	priv->program = program;
+	g_set_application_name (_("Modest"));
+	
+	win = glade_xml_get_widget (priv->glade_xml, "appview1");
 	if (!win) {
 		g_warning ("could not create main window");
 		return FALSE;
@@ -236,12 +242,10 @@ modest_ui_show_main_window (ModestUI *modest_ui)
 			  modest_ui);
 	g_signal_connect (win, "delete-event", G_CALLBACK(modest_ui_main_view_destroy),
 			  modest_ui);
-	gtk_widget_set_usize (GTK_WIDGET(win), width, height);
-	hildon_app_set_title (HILDON_APP(win), PACKAGE_STRING);
-
-	app_view = glade_xml_get_widget (priv->glade_xml, "appview1");
 	
-	main_menu = hildon_appview_get_menu(HILDON_APPVIEW(app_view));
+	gtk_window_set_title (GTK_WINDOW(win), _("Main"));
+
+	main_menu = gtk_menu_new ();
 	menu_item = glade_xml_get_widget (priv->glade_xml, "MessageMenuItem");
 	gtk_widget_reparent(menu_item, main_menu);
 	menu_item = glade_xml_get_widget (priv->glade_xml, "EditMenuItem");
@@ -257,18 +261,20 @@ modest_ui_show_main_window (ModestUI *modest_ui)
 	menu_item = glade_xml_get_widget (priv->glade_xml, "CloseMenuItem");
 	gtk_widget_reparent(menu_item, main_menu);
 
+	hildon_window_set_menu (win, main_menu);
+
 	main_toolbar = glade_xml_get_widget (priv->glade_xml, "toolbar1");
 	g_object_ref (main_toolbar);
 	gtk_container_remove (glade_xml_get_widget (priv->glade_xml, 
 	                      "main_top_container"), main_toolbar);
-	hildon_appview_set_toolbar (HILDON_APPVIEW(app_view), GTK_TOOLBAR(main_toolbar));
-
+	hildon_window_add_toolbar (HILDON_WINDOW(win), GTK_TOOLBAR(main_toolbar));
 
 	gtk_widget_show_all (win);
-
+	
 	menu_item = glade_xml_get_widget (priv->glade_xml, "menubar1");
 	gtk_widget_hide(menu_item);
-
+	
+	hildon_program_add_window (program, win);
 
 	return TRUE;
 }
@@ -631,5 +637,4 @@ on_headers_status_update (GtkWidget *header_view, const gchar *msg, gint status_
 		gtk_widget_hide   (status_box);
 		gtk_statusbar_pop (status_bar, status_id);
 	}
-}		
-
+}

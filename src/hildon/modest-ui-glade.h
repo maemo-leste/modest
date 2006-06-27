@@ -4,6 +4,8 @@
 #ifndef __MODEST_UI_GLADE_H__
 #define __MODEST_UI_GLADE_H__
 
+#include <hildon-widgets/hildon-program.h>
+
 #include "../modest-ui.h"
 #include "../modest-account-mgr.h"
 #include "../modest-identity-mgr.h"
@@ -30,6 +32,7 @@ struct _ModestUIPrivate {
 	GladeXML             *glade_xml;
 
 	TnyMsgFolderIface    *current_folder;
+	HildonProgram        *program;
 };
 
 #define MODEST_UI_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
