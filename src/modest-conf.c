@@ -28,6 +28,7 @@
  */
 
 #include <gconf/gconf-client.h>
+#include <string.h>
 #include "modest-conf.h"
 #include "modest-marshal.h"
 
@@ -318,6 +319,22 @@ modest_conf_key_exists (ModestConf* self, const gchar* key, GError **err)
 }
 
 
+gchar*
+modest_conf_key_escape (ModestConf *self, const gchar* key)
+{
+	g_return_val_if_fail (key, NULL);
+
+	return gconf_escape_key (key, strlen(key));
+}
+
+
+gchar*
+modest_conf_key_unescape (ModestConf *self, const gchar* key)
+{
+	g_return_val_if_fail (key, NULL);
+
+	return gconf_unescape_key (key, strlen(key));
+}
 
 
 

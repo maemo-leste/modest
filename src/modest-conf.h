@@ -216,6 +216,31 @@ gboolean   modest_conf_remove_key    (ModestConf* self, const gchar* key, GError
 gboolean   modest_conf_key_exists   (ModestConf* self, const gchar* key, GError **err);
 
 
+/**
+ * modest_conf_key_escape:
+ * @self: a ModestConf instance. Not used, but for consistency with other ModestConf funcs
+ * @str: a string to escape
+ *
+ * returns an escaped version of @str, ie. something suitable as a key
+ * 
+ * Returns: a newly allocated string with the escaped version
+ */
+gchar* modest_conf_key_escape (ModestConf *self, const gchar* str);
+
+
+/**
+ * modest_conf_key_escape:
+ * @self: a ModestConf instance. Not used, but for consistency with other ModestConf funcs
+ * @str: a string to escape
+ *
+ * returns an unescaped version of @str
+ * 
+ * Returns: a newly allocated string with the unescaped version
+ */
+gchar* modest_conf_key_unescape (ModestConf *self, const gchar* str);
+
+
+
 G_END_DECLS
 
 #endif /* __MODEST_CONF_H__ */
