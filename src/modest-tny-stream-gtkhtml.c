@@ -164,7 +164,7 @@ gtkhtml_write (TnyStreamIface *self, const char *buffer, size_t n)
 		return 0;
 	}
 
-	if (n == 0)
+	if (n == 0 || !buffer)
 		return 0;
 		
 	gtk_html_stream_write (priv->stream, buffer, n);
