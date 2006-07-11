@@ -27,7 +27,6 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 #include <gtk/gtk.h>
 #include <glade/glade.h>
 #include <glib/gi18n.h>
@@ -40,6 +39,8 @@
 /* TODO: put in auto* */
 #include <tny-text-buffer-stream.h>
 #include <tny-msg-folder.h>
+#include <tny-list.h>
+
 
 #include "../modest-ui.h"
 #include "../modest-window-mgr.h"
@@ -300,7 +301,7 @@ new_editor_with_presets (ModestUI *modest_ui, const gchar *to_header,
 
 	g_return_if_fail (modest_ui);
 
-	edit_win = modest_editor_window_new(modest_ui);
+	edit_win = GTK_WIDGET(modest_editor_window_new(modest_ui));
 	windata = (EditWinData *)modest_editor_window_get_data(MODEST_EDITOR_WINDOW(edit_win));
 	g_return_if_fail(windata);
 
@@ -514,14 +515,14 @@ on_send_button_clicked (GtkWidget *widget, ModestEditorWindow *modest_editwin)
 	gchar *body;
 	GtkTextIter start, end;
 	GtkTextBuffer *buf;
-	TnyAccountStoreIface *account_store;
-	const GList *transport_accounts;
 	TnyTransportAccountIface *transport_account;
 	ModestIdentityMgr *id_mgr;
 	EditWinData *win_data;
 	GList * attachments;
 
-
+	TnyListIface *transport_accounts;
+	TnyIteratorIface *iter;
+	
 	win_data = modest_editor_window_get_data(modest_editwin);
 	modest_ui = win_data->modest_ui;
 
@@ -532,15 +533,6 @@ on_send_button_clicked (GtkWidget *widget, ModestEditorWindow *modest_editwin)
 
 	priv = MODEST_UI_GET_PRIVATE(modest_ui);
 
-	account_store = priv->account_store;
-	transport_accounts =
-		tny_account_store_iface_get_transport_accounts (account_store);
-	if (!transport_accounts) {
-		g_message ("cannot send message: no transport account defined");
-		return;
-	} else /* take the first one! */
-		transport_account =
-			TNY_TRANSPORT_ACCOUNT_IFACE(transport_accounts->data);
 
 	to_entry      = glade_xml_get_widget (win_data->glade_xml, "to_entry");
 	subject_entry = glade_xml_get_widget (win_data->glade_xml, "subject_entry");
@@ -563,13 +555,31 @@ on_send_button_clicked (GtkWidget *widget, ModestEditorWindow *modest_editwin)
 	
 	g_message("sending \"%s\" %s ==> %s", subject, email_from, to);
 
+	transport_accounts = TNY_LIST_IFACE(tny_list_new ());
+	tny_account_store_iface_get_accounts (priv->account_store,
+					      transport_accounts,
+					      TNY_ACCOUNT_STORE_IFACE_TRANSPORT_ACCOUNTS);
+	
+	iter = tny_list_iface_create_iterator (transport_accounts);
+		
+	if (!transport_accounts || !tny_iterator_iface_has_first(iter)) {
+		g_printerr ("modest: cannot send message: no transport account defined");
+		return;
+	} else { /* take the first one! */
+		tny_iterator_iface_first (iter);
+		transport_account = 
+			TNY_TRANSPORT_ACCOUNT_IFACE(tny_iterator_iface_current(iter));
+	}
+	
 	modest_tny_transport_actions_send_message (actions,
 						   transport_account,
 						   email_from,
 						   to, "", "", subject,
 						   body,
 						   attachments);
-
+	g_object_unref (G_OBJECT(iter));
+	g_object_unref (G_OBJECT(transport_accounts));
+	
 	modest_editor_window_set_attachments(modest_editwin, NULL); /* This unrefs them, too. */
 	g_free (body);
 	g_object_unref (G_OBJECT(actions));

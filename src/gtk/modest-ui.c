@@ -27,9 +27,6 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
-/* modest-ui.c */
-
 #include <gtk/gtk.h>
 #include <glade/glade.h>
 #include <glib/gi18n.h>
@@ -171,9 +168,11 @@ on_accounts_reloaded (ModestTnyAccountStore *account_store, gpointer user_data)
 	g_return_if_fail (MODEST_IS_TNY_FOLDER_TREE_VIEW (priv->folder_view));
 	g_return_if_fail (MODEST_IS_TNY_HEADER_TREE_VIEW (priv->header_view));
 
-	modest_tny_header_tree_view_set_folder (priv->header_view, NULL);
+	modest_tny_header_tree_view_set_folder (MODEST_TNY_HEADER_TREE_VIEW(priv->header_view),
+						NULL);
 
-  	modest_tny_folder_tree_view_update_model(priv->folder_view, account_store);
+  	modest_tny_folder_tree_view_update_model(MODEST_TNY_FOLDER_TREE_VIEW(priv->folder_view),
+						 TNY_ACCOUNT_STORE_IFACE(account_store));
 }
 
 
@@ -185,7 +184,7 @@ modest_ui_new (ModestConf *modest_conf)
 	ModestAccountMgr *modest_acc_mgr;
 	ModestIdentityMgr *modest_id_mgr;
 	TnyAccountStoreIface *account_store_iface;
-	GSList *account_names_list;
+	GSList *account_names_list, *cursor;
 	GSList *identities_list;
 
 	g_return_val_if_fail (modest_conf, NULL);
@@ -243,12 +242,26 @@ modest_ui_new (ModestConf *modest_conf)
 			  G_CALLBACK(modest_ui_last_window_closed),
 			  NULL);
 
-	account_names_list = modest_account_mgr_server_account_names(modest_acc_mgr,
-					NULL, MODEST_PROTO_TYPE_ANY, NULL, FALSE);
+	account_names_list = modest_account_mgr_search_server_accounts(modest_acc_mgr,
+								       
+								       NULL, MODEST_PROTO_TYPE_ANY, NULL, FALSE);
 	identities_list = modest_identity_mgr_identity_names(modest_id_mgr, NULL);
 	if (!(account_names_list != NULL || identities_list != NULL))
 		wizard_account_dialog(MODEST_UI(obj));
+
+	cursor = account_names_list;
+	while (cursor) {
+		g_free (cursor->data);
+		cursor = cursor->next;
+	}
 	g_slist_free(account_names_list);
+	
+
+	cursor = identities_list;
+	while (cursor) {
+		g_free (cursor->data);
+		cursor = cursor->next;
+	}
 	g_slist_free(identities_list);
 
 	return obj;

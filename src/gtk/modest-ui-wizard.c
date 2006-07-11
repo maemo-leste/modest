@@ -162,7 +162,7 @@ gchar *search_unused_account_or_identity_name(gpointer mgr, gchar *draft) {
 	tmpaccount_name=g_string_new("");
 	g_string_printf(tmpaccount_name, "%s", draft);
 	if(MODEST_IS_ACCOUNT_MGR(mgr)) {
-		for(counter=0; modest_account_mgr_server_account_exists(mgr, tmpaccount_name->str, NULL); counter++)
+		for(counter=0; modest_account_mgr_account_exists(mgr, tmpaccount_name->str, TRUE, NULL); counter++)
 			g_string_printf(tmpaccount_name, "%s%d", draft, counter);
 	}
 	else
