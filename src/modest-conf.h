@@ -47,6 +47,11 @@ typedef struct _ModestConf        ModestConf;
 typedef struct _ModestConfClass   ModestConfClass;
 typedef enum   _ModestConfEvent   ModestConfEvent;
 
+enum _ModestConfEvent {
+	MODEST_CONF_EVENT_KEY_CHANGED,
+	MODEST_CONF_EVENT_KEY_UNSET
+};
+
 struct _ModestConf {
 	 GObject parent;
 };
@@ -54,11 +59,6 @@ struct _ModestConf {
 struct _ModestConfClass {
 	GObjectClass parent_class;	
 	void (* key_changed) (ModestConf* self, const gchar *key, ModestConfEvent event);
-};
-
-enum _ModestConfEvent {
-	MODEST_CONF_EVENT_KEY_CHANGED,
-	MODEST_CONF_EVENT_KEY_UNSET
 };
 
 /**
