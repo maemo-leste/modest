@@ -27,9 +27,6 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
-/* modest-ui.h */
-
 #ifndef __MODEST_UI_H__
 #define __MODEST_UI_H__
 
