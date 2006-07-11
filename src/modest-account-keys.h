@@ -50,6 +50,7 @@
 #define MODEST_ACCOUNT_HOSTNAME          "hostname"          /* string */
 #define MODEST_ACCOUNT_USERNAME          "username"          /* string */
 #define MODEST_ACCOUNT_PROTO             "proto"             /* string */
+#define MODEST_ACCOUNT_ENABLED		 "enabled"	     /* boolean */
 
 #define MODEST_ACCOUNT_LEAVE_ON_SERVER   "leave_on_server"   /* boolean */
 #define MODEST_ACCOUNT_PREFERRED_CNX     "preferred_cnx"     /* string */
