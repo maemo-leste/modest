@@ -185,14 +185,14 @@ modest_ui_show_main_window (ModestUI *modest_ui)
 	                                     MODEST_CONF_MSG_VIEW_SHOW_ATTACHMENTS_INLINE,
 	                                     NULL);
 
-	message_view  = GTK_WIDGET(modest_tny_msg_view_new (NULL, show_attachments_inline));
+	message_view  = GTK_WIDGET(modest_tny_msg_view_new (NULL));
 	priv->message_view = message_view;
 	if (!message_view) {
 		g_warning ("failed to create message view");
 		return FALSE;
 	}
-	g_signal_connect(G_OBJECT(message_view), "on_mailto_clicked",
-                     G_CALLBACK(ui_on_mailto_clicked), modest_ui);
+	//g_signal_connect(G_OBJECT(message_view), "on_mailto_clicked",
+        //             G_CALLBACK(ui_on_mailto_clicked), modest_ui);
 	
 	mail_paned = glade_xml_get_widget (priv->glade_xml, "mail_paned");
 	gtk_paned_add2 (GTK_PANED(mail_paned), message_view);
@@ -291,12 +291,12 @@ modest_ui_show_main_window (ModestUI *modest_ui)
 	menu_item = glade_xml_get_widget (priv->glade_xml, "CloseMenuItem");
 	gtk_widget_reparent(menu_item, main_menu);
 
-	hildon_window_set_menu (win, main_menu);
+	hildon_window_set_menu (HILDON_WINDOW(win), GTK_MENU(main_menu));
 
 	main_toolbar = glade_xml_get_widget (priv->glade_xml, "toolbar1");
 	g_object_ref (main_toolbar);
-	gtk_container_remove (glade_xml_get_widget (priv->glade_xml, 
-	                      "main_top_container"), main_toolbar);
+	gtk_container_remove (GTK_CONTAINER(glade_xml_get_widget (priv->glade_xml, 
+								  "main_top_container")), main_toolbar);
 	hildon_window_add_toolbar (HILDON_WINDOW(win), GTK_TOOLBAR(main_toolbar));
 
 	gtk_widget_show_all (win);
@@ -304,7 +304,8 @@ modest_ui_show_main_window (ModestUI *modest_ui)
 	menu_item = glade_xml_get_widget (priv->glade_xml, "menubar1");
 	gtk_widget_hide(menu_item);
 	
-	hildon_program_add_window (program, win);
+	hildon_program_add_window (HILDON_PROGRAM(program),
+				   HILDON_WINDOW(win));
 
 	return TRUE;
 }
@@ -535,8 +536,6 @@ on_view_attachments_toggled(GtkWidget *widget, gpointer user_data)
 	                     MODEST_CONF_MSG_VIEW_SHOW_ATTACHMENTS_INLINE,
 	                     view_attachments_inline,
 	                     NULL);
-
-	modest_tny_msg_view_set_show_attachments_inline_flag(msg_view, view_attachments_inline);
 }
 
 
@@ -601,20 +600,23 @@ on_sendreceive_button_clicked (GtkWidget *widget, gpointer user_data)
 	ModestUI *modest_ui = (ModestUI *)user_data;
 	ModestUIPrivate *priv;
 	TnyAccountStoreIface *account_store;
-	const GList *store_accounts;
-	const GList *iter;
+	TnyListIface *store_accounts = NULL;
+	TnyIteratorIface *iter;
 
 	g_return_if_fail (modest_ui);
 	priv = MODEST_UI_GET_PRIVATE(modest_ui);
-
+	
 	account_store = priv->account_store;
-	store_accounts =
-		tny_account_store_iface_get_store_accounts (account_store);
-		
-	for (iter = store_accounts; iter; iter = iter->next) {
-		modest_tny_store_actions_update_folders (TNY_STORE_ACCOUNT_IFACE (iter->data));
+	tny_account_store_iface_get_accounts (account_store, store_accounts,
+					      TNY_ACCOUNT_STORE_IFACE_STORE_ACCOUNTS);
+	iter = tny_list_iface_create_iterator (store_accounts);
 
+	while (!tny_iterator_iface_is_done(iter)) {
+		modest_tny_store_actions_update_folders
+			(TNY_STORE_ACCOUNT_IFACE (tny_iterator_iface_current(iter)));
+		tny_iterator_iface_next (iter);
 	}
+	g_object_unref (iter);
 	
 	if (priv->header_view && priv->current_folder) {
 			

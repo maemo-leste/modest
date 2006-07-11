@@ -117,7 +117,7 @@ close_edit_window (GtkWidget *win, GdkEvent *event, gpointer data)
 	if (modest_editor_window_get_modified(edit_win)) {
 		if (close_edit_confirm_dialog(edit_win)) {
 			gtk_widget_hide (GTK_WIDGET(edit_win->window));
-			modest_window_mgr_unregister(priv->modest_window_mgr, HILDON_WINDOW (edit_win->window));
+			modest_window_mgr_unregister(priv->modest_window_mgr, G_OBJECT(edit_win->window));
 			hildon_program_remove_window (priv->program, HILDON_WINDOW (edit_win->window));
 			g_object_unref(edit_win);
 			g_message("closing window");
@@ -126,7 +126,7 @@ close_edit_window (GtkWidget *win, GdkEvent *event, gpointer data)
 		}
 	} else {
 		gtk_widget_hide (GTK_WIDGET(edit_win->window));
-		modest_window_mgr_unregister(priv->modest_window_mgr, HILDON_WINDOW (edit_win->window));
+		modest_window_mgr_unregister(priv->modest_window_mgr, G_OBJECT (edit_win->window));
 		hildon_program_remove_window (priv->program, HILDON_WINDOW (edit_win->window));
 		g_object_unref(edit_win);
 		g_message("closing window");
@@ -547,7 +547,8 @@ on_send_button_clicked (GtkWidget *widget, ModestEditorWindow *modest_editwin)
 	GtkTextIter start, end;
 	GtkTextBuffer *buf;
 	TnyAccountStoreIface *account_store;
-	const GList *transport_accounts;
+	TnyListIface *transport_accounts;
+	TnyIteratorIface *iter;
 	TnyTransportAccountIface *transport_account;
 	ModestIdentityMgr *id_mgr;
 	EditWinData *win_data;
@@ -565,15 +566,23 @@ on_send_button_clicked (GtkWidget *widget, ModestEditorWindow *modest_editwin)
 	priv = MODEST_UI_GET_PRIVATE(modest_ui);
 
 	account_store = priv->account_store;
-	transport_accounts =
-		tny_account_store_iface_get_transport_accounts (account_store);
-	if (!transport_accounts) {
+
+	transport_accounts = tny_list_new ();
+	tny_account_store_iface_get_accounts (priv->account_store,
+					      transport_accounts,
+					      TNY_ACCOUNT_STORE_IFACE_TRANSPORT_ACCOUNTS);	
+	tny_list_iface_create_iterator (transport_accounts);
+
+	iter = tny_list_iface_create_iterator(transport_accounts);
+	if (!tny_iterator_iface_first(iter))   {
 		g_message ("cannot send message: no transport account defined");
 		return;
 	} else /* take the first one! */
 		transport_account =
-			TNY_TRANSPORT_ACCOUNT_IFACE(transport_accounts->data);
-
+			TNY_TRANSPORT_ACCOUNT_IFACE(tny_iterator_iface_current(iter));
+	g_object_unref (iter);
+	g_object_unref (transport_accounts);
+	
 	to_entry      = glade_xml_get_widget (win_data->glade_xml, "to_entry");
 	subject_entry = glade_xml_get_widget (win_data->glade_xml, "subject_entry");
 	body_view     = glade_xml_get_widget (win_data->glade_xml, "body_view");

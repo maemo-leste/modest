@@ -27,9 +27,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
-/* modest-ui-wizard.c */
-
+#include <strings.h>
 #include <gtk/gtk.h>
 #include <glade/glade.h>
 #include <glib/gi18n.h>
@@ -189,11 +187,10 @@ account_delete_action(GtkWidget *button,
 	gtk_widget_show_all(confirmation_dialog);
 
 	result=gtk_dialog_run(GTK_DIALOG(confirmation_dialog));
-	if (result==GTK_RESPONSE_OK)
-	{
-		modest_account_mgr_remove_server_account(priv->modest_acc_mgr,
-							 account_name,
-							 NULL);
+	if (result==GTK_RESPONSE_OK) {
+		modest_account_mgr_remove_account(priv->modest_acc_mgr,
+						  account_name, TRUE,
+						  NULL);
 	}
 
 	gtk_widget_destroy(confirmation_dialog);
@@ -640,24 +637,31 @@ write_account(GladeXML *glade_xml, ModestUI *modest_ui, gboolean newaccount) {
 		g_free(protocol);
 		return retval;
 	}
-	if (!modest_account_mgr_set_server_account_string(priv->modest_acc_mgr,
-							  account,
-							  MODEST_ACCOUNT_HOSTNAME,
-							  gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "ASHostnameEntry"))),
-							  NULL))
+	if (!modest_account_mgr_set_string(priv->modest_acc_mgr,
+					   account,
+					   MODEST_ACCOUNT_HOSTNAME,
+					   gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "ASHostnameEntry"))),
+					   TRUE,
+					   NULL))
+		
 		return FALSE;
-	if (!modest_account_mgr_set_server_account_string(priv->modest_acc_mgr,
-							  account,
-							  MODEST_ACCOUNT_USERNAME,
-							  gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "ASUsernameEntry"))),
-							  NULL))
+
+	if (!modest_account_mgr_set_string(priv->modest_acc_mgr,
+					   account,
+					   MODEST_ACCOUNT_USERNAME,
+					   gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "ASUsernameEntry"))),
+					   TRUE,
+					   NULL))
 		return FALSE;
-	if (!modest_account_mgr_set_server_account_string(priv->modest_acc_mgr,
-							  account,
-							  MODEST_ACCOUNT_PASSWORD,
-							  gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "ASPasswordEntry"))),
-							  NULL))
+	
+	if (!modest_account_mgr_set_string(priv->modest_acc_mgr,
+					   account,
+					   MODEST_ACCOUNT_PASSWORD,
+					   gtk_entry_get_text(GTK_ENTRY(glade_xml_get_widget(glade_xml, "ASPasswordEntry"))),
+					   TRUE,
+					   NULL))
 		return FALSE;
+	
 	return TRUE;
 }
 
@@ -708,7 +712,7 @@ identity_setup_dialog (ModestUI *modest_ui, GtkTreeModel *accounts_model, gchar 
 						   ACCOUNT_NAME,
 						   outacc_name))
 			gtk_combo_box_set_active_iter(GTK_COMBO_BOX(outgoing_server), &out_iter);
-
+		
 		awidget=glade_xml_get_widget(glade_xml, "ISIdentityEntry");
 		gtk_widget_set_sensitive(awidget, FALSE);
 		gtk_entry_set_text(GTK_ENTRY(awidget), identity);
@@ -812,10 +816,10 @@ account_setup_dialog (ModestUI *modest_ui, gchar *account) {
 		gtk_widget_set_sensitive(awidget, FALSE);
 		gtk_entry_set_text(GTK_ENTRY(awidget), account);
 
-		tmptext = modest_account_mgr_get_server_account_string(acc_mgr,
-								       account,
-								       MODEST_ACCOUNT_PROTO,
-								       NULL);
+		tmptext = modest_account_mgr_get_string(acc_mgr,
+							account,
+							MODEST_ACCOUNT_PROTO,
+							TRUE, NULL);
 		awidget=glade_xml_get_widget(glade_xml, "ASProtocolComboBox");
 		gtk_widget_set_sensitive(awidget, FALSE);
 		typemodel = gtk_combo_box_get_model(GTK_COMBO_BOX(awidget));
@@ -824,26 +828,26 @@ account_setup_dialog (ModestUI *modest_ui, gchar *account) {
 
 		g_free(tmptext);
 
-		tmptext = modest_account_mgr_get_server_account_string(acc_mgr,
-								account,
-								MODEST_ACCOUNT_HOSTNAME,
-								NULL);
+		tmptext = modest_account_mgr_get_string(acc_mgr,
+							account,
+							MODEST_ACCOUNT_HOSTNAME,
+							TRUE, NULL);
 		awidget=glade_xml_get_widget(glade_xml, "ASHostnameEntry");
 		gtk_entry_set_text(GTK_ENTRY(awidget), tmptext);
 		g_free(tmptext);
 
-		tmptext = modest_account_mgr_get_server_account_string(acc_mgr,
-								account,
-								MODEST_ACCOUNT_USERNAME,
-								NULL);
+		tmptext = modest_account_mgr_get_string(acc_mgr,
+							account,
+							MODEST_ACCOUNT_USERNAME,
+							TRUE, NULL);
 		awidget=glade_xml_get_widget(glade_xml, "ASUsernameEntry");
 		gtk_entry_set_text(GTK_ENTRY(awidget), tmptext);
 		g_free(tmptext);
 
-		tmptext = modest_account_mgr_get_server_account_string(acc_mgr,
-								account,
-								MODEST_ACCOUNT_PASSWORD,
-								NULL);
+		tmptext = modest_account_mgr_get_string(acc_mgr,
+							account,
+							MODEST_ACCOUNT_PASSWORD,
+							TRUE, NULL);
 		awidget=glade_xml_get_widget(glade_xml, "ASPasswordEntry");
 		gtk_entry_set_text(GTK_ENTRY(awidget), tmptext);
 		g_free(tmptext);
@@ -940,25 +944,27 @@ create_accounts_model(ModestAccountMgr *acc_mgr) {
 	gchar *hostname;
 	gchar *protocol;
 
-	acc_names_list = modest_account_mgr_server_account_names(acc_mgr,
-								 NULL,
-								 MODEST_PROTO_TYPE_ANY,
-								 NULL,
-								 FALSE);
+	acc_names_list = modest_account_mgr_search_server_accounts (acc_mgr,
+								    NULL,
+								    MODEST_PROTO_TYPE_ANY,
+								    NULL,
+								    FALSE);
 	acc_list_store = gtk_list_store_new(ACCOUNT_COLUMNS, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
 
 	for (acc_names_list_iter=acc_names_list;
 	     acc_names_list_iter!=NULL;
 	     acc_names_list_iter=g_slist_next(acc_names_list_iter)) {
 		gtk_list_store_append(acc_list_store, &acc_list_store_iter);
-		hostname=modest_account_mgr_get_server_account_string(acc_mgr,
-								      acc_names_list_iter->data,
-								      MODEST_ACCOUNT_HOSTNAME,
-								      NULL);
-		protocol=modest_account_mgr_get_server_account_string(acc_mgr,
-								      acc_names_list_iter->data,
-								      MODEST_ACCOUNT_PROTO,
-								      NULL);
+		hostname=modest_account_mgr_get_string(acc_mgr,
+						       acc_names_list_iter->data,
+						       MODEST_ACCOUNT_HOSTNAME,
+						       TRUE,
+						       NULL);
+		protocol=modest_account_mgr_get_string(acc_mgr,
+						       acc_names_list_iter->data,
+						       MODEST_ACCOUNT_PROTO,
+						       TRUE,
+						       NULL);
 		gtk_list_store_set(acc_list_store, &acc_list_store_iter,
 				   ACCOUNT_NAME, acc_names_list_iter->data,
 				   ACCOUNT_HOST, hostname,
