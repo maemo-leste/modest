@@ -1,25 +1,20 @@
 #
 # Makefile.am
-# Time-stamp: <2006-06-02 16:29:55 (djcb)>
-SUBDIRS=$(MODEST_UI_DIR)
+# Time-stamp: <2006-07-05 13:04:47 (djcb)>
+SUBDIRS=$(MODEST_BACKEND_DIR)
+DIST_SUBDIRS = gtk hildon
 
 INCLUDES=\
 	$(MODEST_GSTUFF_CFLAGS)\
 	$(MODEST_LIBTINYMAIL_GNOME_DESKTOP_CFLAGS) \
 	$(MODEST_LIBTINYMAIL_MAEMO_CFLAGS) \
-	-I$(MODEST_UI_DIR) -Wall\
-	-DPREFIX=\"@prefix@\" \
-	-Wall 
+	-I$(MODEST_BACKEND_DIR) -DPREFIX=\"@prefix@\" 
 
-if HILDON
-INCLUDES += -DIS_HILDON
-endif
-		
 BUILT_SOURCES = modest-marshal.c modest-marshal.h
 
 modest-marshal.c: marshall.list
 	glib-genmarshal --body --prefix=modest_marshal < marshall.list > modest-marshal.c
-	
+
 modest-marshal.h: marshall.list
 	glib-genmarshal --header --prefix=modest_marshal < marshall.list > modest-marshal.h
 
@@ -31,7 +26,7 @@ modest_SOURCES=\
 	modest-main.c\
 	modest-conf-keys.h\
 	modest-conf.h \
-	modest-conf-gconf.c\
+	modest-conf.c\
 	modest-identity-keys.h\
 	modest-identity-mgr.h\
 	modest-identity-mgr.c\
@@ -77,4 +72,4 @@ modest_LDADD = \
 	$(MODEST_GSTUFF_LIBS) \
 	$(MODEST_LIBTINYMAIL_GNOME_DESKTOP_LIBS) \
 	$(MODEST_LIBTINYMAIL_MAEMO_LIBS) \
-	$(MODEST_UI_DIR)/libmodest-ui.la 
+	$(MODEST_BACKEND_DIR)/libmodest-ui.la 

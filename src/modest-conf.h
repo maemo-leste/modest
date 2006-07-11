@@ -27,9 +27,6 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
-/* modest-conf.h */
-
 #ifndef __MODEST_CONF_H__
 #define __MODEST_CONF_H__
 
@@ -46,19 +43,23 @@ G_BEGIN_DECLS
 #define MODEST_IS_CONF_CLASS(klass)  (G_TYPE_CHECK_CLASS_TYPE((klass),MODEST_TYPE_CONF))
 #define MODEST_CONF_GET_CLASS(obj)   (G_TYPE_INSTANCE_GET_CLASS((obj),MODEST_TYPE_CONF,ModestConfClass))
 
-typedef struct _ModestConf      ModestConf;
-typedef struct _ModestConfClass ModestConfClass;
+typedef struct _ModestConf        ModestConf;
+typedef struct _ModestConfClass   ModestConfClass;
+typedef enum   _ModestConfEvent   ModestConfEvent;
 
 struct _ModestConf {
 	 GObject parent;
 };
 
 struct _ModestConfClass {
-	GObjectClass parent_class;
-	
-	void (* key_changed) (ModestConf* self, const gchar *key, const gchar *new_value);
+	GObjectClass parent_class;	
+	void (* key_changed) (ModestConf* self, const gchar *key, ModestConfEvent event);
 };
 
+enum _ModestConfEvent {
+	MODEST_CONF_EVENT_KEY_CHANGED,
+	MODEST_CONF_EVENT_KEY_UNSET
+};
 
 /**
  * modest_conf_get_type:
