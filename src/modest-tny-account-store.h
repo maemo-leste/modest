@@ -64,6 +64,9 @@ struct _ModestTnyAccountStoreClass {
 	void (*password_requested) (ModestTnyAccountStore *self,
 				    const gchar *account_name,
 				    gpointer user_data);
+	void (*update_accounts)    (ModestTnyAccountStore *self,
+				    const gchar *account_name,
+				    gpointer user_data);
 };
 
 /* member functions */
@@ -85,25 +88,7 @@ GType        modest_tny_account_store_get_type    (void) G_GNUC_CONST;
  */
 GObject*    modest_tny_account_store_new         (ModestAccountMgr *modest_acc_mgr);
 
-/**
- * modest_tny_account_store_get_account_mgr:
- * @self: a TnyAccountStore instance
- *
- * retrieve the account manager associated with this account store.
- *
- * Returns: the account manager for @self.
- */
-ModestAccountMgr *modest_tny_account_store_get_accout_mgr(ModestTnyAccountStore *self);
 
-/**
- * tny_account_store_get_session:
- * @self: a TnyAccountStore instance
- *
- * retrieve current tinymail camel session
- *
- * Returns: current tinymail camel session
- */
-TnySessionCamel* tny_account_store_get_session (TnyAccountStore *self);
 
 /**
  * tny_account_store_set_get_pass_func:
@@ -115,6 +100,19 @@ TnySessionCamel* tny_account_store_get_session (TnyAccountStore *self);
  */
 void
 modest_tny_account_store_set_get_pass_func (ModestTnyAccountStore *, ModestTnyGetPassFunc);
+
+
+/**
+ * tny_account_store_get_session
+ * @self: a TnyAccountStore instance
+ * 
+ * get the tny-camel-session for this account store. Note that this function
+ * does NOT have the modest_ prefix, as tinymail requires the symbol to be like this...
+ *
+ * Returns: a tny-camel-session
+ */
+TnySessionCamel*    tny_account_store_get_session    (TnyAccountStore *self);
+
 
 G_END_DECLS
 
