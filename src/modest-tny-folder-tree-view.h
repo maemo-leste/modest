@@ -27,9 +27,6 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
-/* modest-tny-folder-tree-view.h */
-
 #ifndef __MODEST_TNY_FOLDER_TREE_VIEW_H__
 #define __MODEST_TNY_FOLDER_TREE_VIEW_H__
 
@@ -113,7 +110,7 @@ gboolean     modest_tny_folder_tree_view_is_empty    (ModestTnyFolderTreeView *s
  * Returns: TRUE on success, FALSE otherwise
  */
 gboolean     modest_tny_folder_tree_view_update_model(ModestTnyFolderTreeView *self, 
-                                         TnyAccountStoreIface *iface);
+						      TnyAccountStoreIface *iface);
 
 
 G_END_DECLS
