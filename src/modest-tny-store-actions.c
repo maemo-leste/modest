@@ -27,9 +27,6 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
-/* modest-tny-store-actions.c */
-
 #include <tny-msg.h>
 #include <tny-msg-iface.h>			
 #include <tny-msg-header.h>
