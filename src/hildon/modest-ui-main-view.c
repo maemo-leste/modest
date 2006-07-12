@@ -33,6 +33,8 @@
 #include <glib/gi18n.h>
 #include <string.h>
 
+#include <tny-list.h>
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif /*HAVE_CONFIG_H*/
@@ -434,7 +436,7 @@ on_message_clicked (ModestTnyFolderTreeView *folder_tree,
 	msg_view = MODEST_TNY_MSG_VIEW (priv->message_view);
 
 	modest_tny_msg_view_set_message (msg_view, message);
-	
+
 	button = glade_xml_get_widget (priv->glade_xml, "toolb_reply");
 	if (button) {
 		gtk_widget_set_sensitive(button, TRUE);
@@ -459,9 +461,7 @@ modest_main_window_header_tree (TnyMsgFolderIface *folder)
 	ModestTnyHeaderTreeViewColumn cols[] = {
 		MODEST_TNY_HEADER_TREE_VIEW_COLUMN_MSGTYPE,
 		MODEST_TNY_HEADER_TREE_VIEW_COLUMN_ATTACH,
-		MODEST_TNY_HEADER_TREE_VIEW_COLUMN_FROM,
-		MODEST_TNY_HEADER_TREE_VIEW_COLUMN_SUBJECT,
-		MODEST_TNY_HEADER_TREE_VIEW_COLUMN_RECEIVED_DATE
+		MODEST_TNY_HEADER_TREE_VIEW_COLUMN_COMPACT_HEADER
 	};
 
 	for (i = 0 ; i != sizeof(cols) / sizeof(ModestTnyHeaderTreeViewColumn); ++i)
@@ -607,6 +607,8 @@ on_sendreceive_button_clicked (GtkWidget *widget, gpointer user_data)
 	priv = MODEST_UI_GET_PRIVATE(modest_ui);
 	
 	account_store = priv->account_store;
+	store_accounts = TNY_LIST_IFACE(tny_list_new());
+
 	tny_account_store_iface_get_accounts (account_store, store_accounts,
 					      TNY_ACCOUNT_STORE_IFACE_STORE_ACCOUNTS);
 	iter = tny_list_iface_create_iterator (store_accounts);
@@ -617,7 +619,8 @@ on_sendreceive_button_clicked (GtkWidget *widget, gpointer user_data)
 		tny_iterator_iface_next (iter);
 	}
 	g_object_unref (iter);
-	
+	g_object_unref (store_accounts);
+
 	if (priv->header_view && priv->current_folder) {
 			
 		modest_tny_header_tree_view_set_folder (MODEST_TNY_HEADER_TREE_VIEW(priv->header_view),
