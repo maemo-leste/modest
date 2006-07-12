@@ -27,9 +27,6 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
-/* modest-editor-window.c */
-
 #include "modest-ui.h"
 #include "modest-editor-window.h"
 
@@ -220,10 +217,10 @@ gboolean modest_editor_window_set_to_header(ModestEditorWindow *edit_win, const 
 gboolean modest_editor_window_set_cc_header(ModestEditorWindow *edit_win, const gchar *cc)
 {
 	ModestEditorWindowPrivate *priv;
-
 	
 	if (!edit_win)
 		return FALSE;
+
 	priv = MODEST_EDITOR_WINDOW_GET_PRIVATE(edit_win);
 
 	return modest_ui_editor_window_set_cc_header(cc, priv->user_data);
@@ -232,7 +229,6 @@ gboolean modest_editor_window_set_cc_header(ModestEditorWindow *edit_win, const 
 gboolean modest_editor_window_set_bcc_header(ModestEditorWindow *edit_win, const gchar *bcc)
 {
 	ModestEditorWindowPrivate *priv;
-
 	
 	if (!edit_win)
 		return FALSE;
@@ -244,7 +240,6 @@ gboolean modest_editor_window_set_bcc_header(ModestEditorWindow *edit_win, const
 gboolean modest_editor_window_set_subject_header(ModestEditorWindow *edit_win, const gchar *subject)
 {
 	ModestEditorWindowPrivate *priv;
-
 	
 	if (!edit_win)
 		return FALSE;
@@ -257,7 +252,6 @@ gboolean modest_editor_window_set_body(ModestEditorWindow *edit_win, const gchar
 {
 	ModestEditorWindowPrivate *priv;
 
-	
 	if (!edit_win)
 		return FALSE;
 	priv = MODEST_EDITOR_WINDOW_GET_PRIVATE(edit_win);
@@ -266,7 +260,8 @@ gboolean modest_editor_window_set_body(ModestEditorWindow *edit_win, const gchar
 }
 
 
-gboolean modest_editor_window_attach_file(ModestEditorWindow *edit_win, ModestTnyAttachment *attachment)
+gboolean modest_editor_window_attach_file(ModestEditorWindow *edit_win,
+					  ModestTnyAttachment *attachment)
 {
 	ModestEditorWindowPrivate *priv;
 
@@ -274,9 +269,8 @@ gboolean modest_editor_window_attach_file(ModestEditorWindow *edit_win, ModestTn
 		return FALSE;
 	priv = MODEST_EDITOR_WINDOW_GET_PRIVATE(edit_win);
 	
-	priv->attachments = g_list_append(
-							priv->attachments, 
-							attachment);
+	priv->attachments = g_list_append(priv->attachments, 
+					  attachment);
 	
 	return modest_ui_editor_window_update_attachments(priv->user_data);
 }
@@ -294,6 +288,7 @@ GList * modest_editor_window_set_attachments(ModestEditorWindow *edit_win, const
 	priv->attachments = g_list_copy((GList *)attachments);
 	for (pos = priv->attachments ; pos ; pos = pos->next )
 		g_object_ref(pos->data);
+
 	return priv->attachments;
 }
 

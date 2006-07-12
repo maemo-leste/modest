@@ -27,9 +27,6 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
-/* modest-editor-window.h */
-
 #ifndef __MODEST_EDITOR_WINDOW_H__
 #define __MODEST_EDITOR_WINDOW_H__
 
@@ -210,6 +207,8 @@ const gchar * modest_editor_window_get_identity(ModestEditorWindow *edit_win);
 
 void modest_editor_window_set_transport(ModestEditorWindow *edit_win, const gchar *transport);
 const gchar * modest_editor_window_get_transport(ModestEditorWindow *edit_win);
+
+
 G_END_DECLS
 
 #endif /* __MODEST_EDITOR_WINDOW_H__ */
