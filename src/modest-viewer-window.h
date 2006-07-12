@@ -27,9 +27,6 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
-/* modest-viewer-window.h */
-
 #ifndef __MODEST_VIEWER_WINDOW_H__
 #define __MODEST_VIEWER_WINDOW_H__
 

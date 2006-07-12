@@ -28,8 +28,6 @@
  */
 
 
-/* modest-viewer-window.c */
-
 #include "modest-ui.h"
 #include "modest-tny-msg-view.h"
 #include "modest-viewer-window.h"
@@ -136,7 +134,7 @@ modest_viewer_window_new (ModestUI *ui, TnyMsgIface *msg)
 	self = G_OBJECT(g_object_new(MODEST_TYPE_VIEWER_WINDOW, NULL));
 	priv = MODEST_VIEWER_WINDOW_GET_PRIVATE(self);
 
-	msg_view = modest_tny_msg_view_new(msg, FALSE);
+	msg_view = modest_tny_msg_view_new(msg);
 
 	data = NULL;
 	w = GTK_WIDGET(modest_ui_new_viewer_window(ui, msg_view, msg, &data));
@@ -157,27 +155,26 @@ modest_viewer_window_new (ModestUI *ui, TnyMsgIface *msg)
  * return user defined data from a ModestViewerWindow instance
  * like e.g. a refernce to a GladeXML*
  */
-gpointer modest_viewer_window_get_data(ModestViewerWindow *viewer_win)
+gpointer
+modest_viewer_window_get_data(ModestViewerWindow *viewer_win)
 {
 	ModestViewerWindowPrivate *priv;
 
-	if (!viewer_win) {
-		return NULL;
-	}
+	g_return_val_if_fail (viewer_win, NULL);
+
 	priv = MODEST_VIEWER_WINDOW_GET_PRIVATE(viewer_win);
 
 	return priv->user_data;
 }
 
 
-ModestTnyMsgView
-*modest_viewer_window_get_tiny_msg_view(ModestViewerWindow *viewer_win)
+ModestTnyMsgView*
+modest_viewer_window_get_tiny_msg_view(ModestViewerWindow *viewer_win)
 {
 	ModestViewerWindowPrivate *priv;
 
-	if (!viewer_win) {
-		return NULL;
-	}
+	g_return_val_if_fail (viewer_win, NULL);
+
 	priv = MODEST_VIEWER_WINDOW_GET_PRIVATE(viewer_win);
 
 	return priv->msg_view;
