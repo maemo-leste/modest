@@ -60,7 +60,9 @@ struct _ModestTnyMsgView {
 
 struct _ModestTnyMsgViewClass {
 	GtkScrolledWindowClass parent_class;
-	void (*mailto_clicked) (GtkWidget *widget, gpointer user_data);
+
+	void (*link_clicked)       (GtkWidget *widget, const gchar* link, gpointer user_data);
+	void (*attachment_clicked) (GtkWidget *widget, int index, gpointer user_data);
 };
 
 
@@ -84,7 +86,7 @@ GType        modest_tny_msg_view_get_type    (void) G_GNUC_CONST;
  *  
  * Returns: a new ModestTnyMsgView widget, or NULL if there's an error
  */
-GtkWidget*   modest_tny_msg_view_new          (TnyMsgIface *tny_msg, gboolean show_attachments_inline);
+GtkWidget*   modest_tny_msg_view_new          (const TnyMsgIface *tny_msg);
 
 
 /**
@@ -96,16 +98,7 @@ GtkWidget*   modest_tny_msg_view_new          (TnyMsgIface *tny_msg, gboolean sh
  * then a blank page will be displayed
  *  */
 void         modest_tny_msg_view_set_message  (ModestTnyMsgView *self,
-						TnyMsgIface *tny_msg);
-
-/**
- * modest_tny_msg_view_redraw
- * @self: a ModestTnyMsgView instance
- *
- * re-display the current e-mail message.
- */
-void         modest_tny_msg_view_redraw  (ModestTnyMsgView *self);
-
+						const TnyMsgIface *tny_msg);
 
 /**
  * modest_tny_msg_view_get_selected_text:
@@ -116,10 +109,6 @@ void         modest_tny_msg_view_redraw  (ModestTnyMsgView *self);
  * Returns: a newly allocated string of the user's selection or NULL if nothing is selected
  */
 gchar *      modest_tny_msg_view_get_selected_text (ModestTnyMsgView *self);
-
-gboolean modest_tny_msg_view_get_show_attachments_inline_flag (ModestTnyMsgView *self);
-
-gboolean modest_tny_msg_view_set_show_attachments_inline_flag (ModestTnyMsgView *self, gboolean flag);
 
 G_END_DECLS
 

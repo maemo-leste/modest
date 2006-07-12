@@ -27,13 +27,6 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
-/* modest-tny-msg-view.c */
-
-#include "modest-tny-msg-view.h"
-#include "modest-tny-stream-gtkhtml.h"
-#include "modest-tny-msg-actions.h"
-
 #include <tny-text-buffer-stream.h>
 #include <string.h>
 #include <regex.h>
@@ -41,6 +34,12 @@
 #include <glib/gi18n.h>
 #include <gtkhtml/gtkhtml.h>
 #include <gtkhtml/gtkhtml-stream.h>
+#include <tny-list-iface.h>
+
+#include "modest-tny-msg-view.h"
+#include "modest-tny-stream-gtkhtml.h"
+#include "modest-tny-msg-actions.h"
+
 
 /* 'private'/'protected' functions */
 static void     modest_tny_msg_view_class_init   (ModestTnyMsgViewClass *klass);
@@ -49,21 +48,12 @@ static void     modest_tny_msg_view_finalize     (GObject *obj);
 
 
 static GSList*  get_url_matches (GString *txt);
-static gboolean fill_gtkhtml_with_txt (ModestTnyMsgView *self, GtkHTML* gtkhtml, const gchar* txt, TnyMsgIface *msg);
-
 static gboolean on_link_clicked (GtkWidget *widget, const gchar *uri,
 				 ModestTnyMsgView *msg_view);
 static gboolean on_url_requested (GtkWidget *widget, const gchar *uri,
 				  GtkHTMLStream *stream,
 				  ModestTnyMsgView *msg_view);
-static gchar *construct_virtual_filename(const gchar *filename, const gint position, const gchar *id, const gboolean active);
-static gchar *construct_virtual_filename_from_mime_part(TnyMsgMimePartIface *msg, const gint position);
 
-#define ATTACHMENT_ID_INLINE "attachment-inline"
-#define ATTACHMENT_ID_LINK "attachment-link"
-#define PREFIX_LINK_EMAIL "mailto:"
-
-gint virtual_filename_get_pos(const gchar *filename);
 /*
  * we need these regexps to find URLs in plain text e-mails
  */
@@ -74,7 +64,10 @@ struct _UrlMatchPattern {
 	gchar   *prefix;
 	
 };
-#define MAIL_VIEWER_URL_MATCH_PATTERNS  {\
+
+#define ATT_PREFIX "att:"
+
+#define MAIL_VIEWER_URL_MATCH_PATTERNS  {				\
 	{ "(file|http|ftp|https)://[-A-Za-z0-9_$.+!*(),;:@%&=?/~#]+[-A-Za-z0-9_$%&=?/~#]",\
 	  NULL, NULL },\
 	{ "www\\.[-a-z0-9.]+[-a-z0-9](:[0-9]*)?(/[-A-Za-z0-9_$.+!*(),;:@%&=?/~#]*[^]}\\),?!;:\"]?)?",\
@@ -92,16 +85,15 @@ struct _UrlMatchPattern {
 
 /* list my signals */
 enum {
-	MAILTO_CLICKED_SIGNAL,
-	/* MY_SIGNAL_2, */
+	LINK_CLICKED_SIGNAL,
+	ATTACHMENT_CLICKED_SIGNAL,
 	LAST_SIGNAL
 };
 
 typedef struct _ModestTnyMsgViewPrivate ModestTnyMsgViewPrivate;
 struct _ModestTnyMsgViewPrivate {
 	GtkWidget *gtkhtml;
-	TnyMsgIface *msg;
-	gboolean show_attachments_inline;
+	const TnyMsgIface *msg;
 };
 #define MODEST_TNY_MSG_VIEW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                  MODEST_TYPE_TNY_MSG_VIEW, \
@@ -145,15 +137,26 @@ modest_tny_msg_view_class_init (ModestTnyMsgViewClass *klass)
 	gobject_class->finalize = modest_tny_msg_view_finalize;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestTnyMsgViewPrivate));
-	
- 	signals[MAILTO_CLICKED_SIGNAL] =
- 		g_signal_new ("on_mailto_clicked",
+
+		
+ 	signals[LINK_CLICKED_SIGNAL] =
+ 		g_signal_new ("link_clicked",
 			      G_TYPE_FROM_CLASS (gobject_class),
 			      G_SIGNAL_RUN_FIRST,
-			      G_STRUCT_OFFSET(ModestTnyMsgViewClass, mailto_clicked),
+			      G_STRUCT_OFFSET(ModestTnyMsgViewClass, link_clicked),
 			      NULL, NULL,
 			      g_cclosure_marshal_VOID__STRING,
-			      G_TYPE_NONE, 1, G_TYPE_STRING/*, 1, G_TYPE_POINTER*/);
+			      G_TYPE_NONE, 1, G_TYPE_STRING);
+	
+	signals[ATTACHMENT_CLICKED_SIGNAL] =
+ 		g_signal_new ("attachment_clicked",
+			      G_TYPE_FROM_CLASS (gobject_class),
+			      G_SIGNAL_RUN_FIRST,
+			      G_STRUCT_OFFSET(ModestTnyMsgViewClass, attachment_clicked),
+			      NULL, NULL,
+			      g_cclosure_marshal_VOID__POINTER,
+			      G_TYPE_NONE, 1, G_TYPE_INT);
+	
 }
 
 static void
@@ -163,12 +166,9 @@ modest_tny_msg_view_init (ModestTnyMsgView *obj)
 	
 	priv = MODEST_TNY_MSG_VIEW_GET_PRIVATE(obj);
 
-	priv->msg = NULL;
+	priv->msg                     = NULL;
+	priv->gtkhtml                 = gtk_html_new();
 	
-	priv->gtkhtml = gtk_html_new();
-	
-	priv->show_attachments_inline = FALSE;
-
 	gtk_html_set_editable        (GTK_HTML(priv->gtkhtml), FALSE);
 	gtk_html_allow_selection     (GTK_HTML(priv->gtkhtml), TRUE);
 	gtk_html_set_caret_mode      (GTK_HTML(priv->gtkhtml), FALSE);
@@ -190,7 +190,7 @@ modest_tny_msg_view_finalize (GObject *obj)
 }
 
 GtkWidget*
-modest_tny_msg_view_new (TnyMsgIface *msg, const gboolean show_attachments_inline)
+modest_tny_msg_view_new (const TnyMsgIface *msg)
 {
 	GObject *obj;
 	ModestTnyMsgView* self;
@@ -210,93 +210,67 @@ modest_tny_msg_view_new (TnyMsgIface *msg, const gboolean show_attachments_inlin
 	if (msg)
 		modest_tny_msg_view_set_message (self, msg);
 	
-	modest_tny_msg_view_set_show_attachments_inline_flag(self, show_attachments_inline);
-
 	return GTK_WIDGET(self);
 }
 
 
 static gboolean
-on_link_clicked (GtkWidget *widget, const gchar *uri,
-				 ModestTnyMsgView *msg_view)
+on_link_clicked (GtkWidget *widget, const gchar *uri, ModestTnyMsgView *msg_view)
 {
-	if (g_str_has_prefix(uri, PREFIX_LINK_EMAIL)) {
-		gchar *s, *p;
-		/* skip over "mailto:" */
-		s = g_strdup(uri + strlen(PREFIX_LINK_EMAIL));
-		/* strip ?subject=... and the like */
-		for (p = s; p[0]; p++)
-			if (p[0] == '?') {
-				p[0] = 0;
-				break;
-			}
-		g_signal_emit(msg_view, signals[MAILTO_CLICKED_SIGNAL], 0, s);
-		g_free(s);
-		return TRUE;
-	} else if (g_str_has_prefix(uri, ATTACHMENT_ID_LINK)) {
-		/* save or open attachment */
-		g_message ("link-to-save: %s", uri); /* FIXME */
-		return TRUE;
-	}
-	g_message ("link clicked: %s", uri); /* FIXME */
-	return FALSE;
+
+	int index;
+
+	g_return_val_if_fail (msg_view, FALSE);
 	
+	/* is it an attachment? */
+	if (g_str_has_prefix(uri, ATT_PREFIX)) {
+
+		index = atoi (uri + strlen(ATT_PREFIX));
+		
+		if (index == 0) {
+			/* index is 1-based, so 0 indicates an error */
+			g_printerr ("modest: invalid attachment id: %s\n", uri);
+			return FALSE;
+		}
+
+		g_signal_emit (G_OBJECT(msg_view), signals[ATTACHMENT_CLICKED_SIGNAL],
+			       0, index);
+		return FALSE;
+	}
+
+	g_signal_emit (G_OBJECT(msg_view), signals[LINK_CLICKED_SIGNAL], 0, uri);
+
+	return FALSE;
 }
 
 
 static TnyMsgMimePartIface *
-find_cid_image (TnyMsgIface *msg, const gchar *cid)
+find_cid_image (const TnyMsgIface *msg, const gchar *cid)
 {
 	TnyMsgMimePartIface *part = NULL;
-	GList *parts;
-
+	const TnyListIface *parts;
+	TnyIteratorIface *iter;
+	
 	g_return_val_if_fail (msg, NULL);
 	g_return_val_if_fail (cid, NULL);
 	
-	parts  = (GList*) tny_msg_iface_get_parts (msg);
-	while (parts && !part) {
+	parts  = tny_msg_iface_get_parts ((TnyMsgIface*)msg); // FIXME: tinymail
+	iter   = tny_list_iface_create_iterator ((TnyListIface*)parts);
+	
+	while (!tny_iterator_iface_is_done(iter)) {
 		const gchar *part_cid;
-		part = TNY_MSG_MIME_PART_IFACE(parts->data);
+		part = TNY_MSG_MIME_PART_IFACE(tny_iterator_iface_current(iter));
 		part_cid = tny_msg_mime_part_iface_get_content_id (part);
-		printf("CMP:%s:%s\n", cid, part_cid);
+
 		if (part_cid && strcmp (cid, part_cid) == 0)
-			return part; /* we found it! */
-		
+			break;
+
 		part = NULL;
-		parts = parts->next;
+		tny_iterator_iface_next (iter);
 	}
-	
+
+	g_object_unref (G_OBJECT(iter));	
 	return part;
-}
-
-
-static TnyMsgMimePartIface *
-find_attachment_by_filename (TnyMsgIface *msg, const gchar *fn)
-{
-	TnyMsgMimePartIface *part = NULL;
-	GList *parts;
-	gchar *dummy;
-	gint pos;
-
-	g_return_val_if_fail (msg, NULL);
-	g_return_val_if_fail (fn, NULL);
-	
-	parts  = (GList*) tny_msg_iface_get_parts (msg);
-	pos = virtual_filename_get_pos(fn);
-	
-	if ((pos < 0) || (pos >= g_list_length(parts)))
-		return NULL;
-	
-	part = g_list_nth_data(parts, pos);
-	
-	dummy = construct_virtual_filename_from_mime_part(part, pos);
-	if (strcmp(dummy, fn) == 0) {
-		g_free(dummy);
-		return part;
-	} else {
-		g_free(dummy);
-		return NULL;
-	}
 }
 
 
@@ -305,41 +279,25 @@ on_url_requested (GtkWidget *widget, const gchar *uri,
 		  GtkHTMLStream *stream,
 		  ModestTnyMsgView *msg_view)
 {
-	
 	ModestTnyMsgViewPrivate *priv;
 	priv = MODEST_TNY_MSG_VIEW_GET_PRIVATE (msg_view);
-
-	g_message ("url requested: %s", uri);
-	
-	if (!modest_tny_msg_view_get_show_attachments_inline_flag(msg_view))
-		return TRUE; /* debatable */
 	
 	if (g_str_has_prefix (uri, "cid:")) {
 		/* +4 ==> skip "cid:" */
-		
-		TnyMsgMimePartIface *part = find_cid_image (priv->msg, uri + 4);
+		const TnyMsgMimePartIface *part = find_cid_image (priv->msg, uri + 4);
 		if (!part) {
-			g_message ("%s not found", uri + 4);
+			g_printerr ("modest: '%s' not found\n", uri + 4);
 			gtk_html_stream_close (stream, GTK_HTML_STREAM_ERROR);
 		} else {
 			TnyStreamIface *tny_stream =
 				TNY_STREAM_IFACE(modest_tny_stream_gtkhtml_new(stream));
-			tny_msg_mime_part_iface_decode_to_stream (part,tny_stream);
-			gtk_html_stream_close (stream, GTK_HTML_STREAM_OK);
-		}
-	} else if (g_str_has_prefix (uri, ATTACHMENT_ID_INLINE)) {
-		TnyMsgMimePartIface *part;
-		part = find_attachment_by_filename (priv->msg, uri);
-		if (!part) {
-			g_message ("%s not found", uri);
-			gtk_html_stream_close (stream, GTK_HTML_STREAM_ERROR);
-		} else {
-			TnyStreamIface *tny_stream =
-				TNY_STREAM_IFACE(modest_tny_stream_gtkhtml_new(stream));
-			tny_msg_mime_part_iface_decode_to_stream (part,tny_stream);
+			// FIXME: tinymail
+			tny_msg_mime_part_iface_decode_to_stream ((TnyMsgMimePartIface*)part,
+								  tny_stream);
 			gtk_html_stream_close (stream, GTK_HTML_STREAM_OK);
 		}
 	}
+
 	return TRUE;
 }
 
@@ -351,181 +309,59 @@ typedef struct  {
 } url_match_t;
 
 
-static gchar *
-secure_filename(const gchar *fn)
-{
-	gchar *tmp, *p;
-	GString *s;
-	
-	s = g_string_new("");
-#if 1 || DEBUG
-	tmp = g_strdup(fn);
-	for (p = tmp; p[0] ; p++ ) {
-		p[0] &= 0x5f; /* 01011111 */
-		p[0] |= 0x40; /* 01000000 */
-	}
-	g_string_printf(s, "0x%x:%s", g_str_hash(fn), tmp);
-	g_free(tmp);
-	return g_string_free(s, FALSE);
-#else
-	g_string_printf(s, "0x%x", g_str_hash(fn));
-	return g_string_free(s, FALSE);
-#endif
-}
-	
-	
-static gchar *
-construct_virtual_filename(const gchar *filename,
-                           const gint position,
-                           const gchar *id,
-                           const gboolean active)
-{
-	GString *s;
-	gchar *fn;
-	
-	if (position < 0)
-		return g_strdup("AttachmentInvalid");
 
-	s = g_string_new("");
-	if (active)
-		g_string_append(s, ATTACHMENT_ID_INLINE);
-	else
-		g_string_append(s, ATTACHMENT_ID_LINK);
-	g_string_append_printf(s, ":%d:", position);
-	if (id)
-		g_string_append(s, id);
-	g_string_append_c(s, ':');
-	
-	fn = secure_filename(filename);
-	if (fn)
-		g_string_append(s, fn);
-	g_free(fn);
-	g_string_append_c(s, ':');
-	return g_string_free(s, FALSE);
-}
-
-
-static gchar *
-construct_virtual_filename_from_mime_part(TnyMsgMimePartIface *msg, const gint position)
-{
-	const gchar *id, *filename;
-	const gboolean active = TRUE;
-	
-	filename = tny_msg_mime_part_iface_get_filename(
-									TNY_MSG_MIME_PART_IFACE(msg));
-	if (!filename)
-		filename = "[unknown]";
-	id = tny_msg_mime_part_iface_get_content_id(
-									TNY_MSG_MIME_PART_IFACE(msg));
-	
-	return construct_virtual_filename(filename, position, id, active);
-}
-
-const gchar *
-get_next_token(const gchar *s, gint *len)
-{
-	gchar *i1, *i2;
-	i1 = (char *) s;
-	i2 = (char *) s;
-	
-	while (i2[0]) {
-		if (i2[0] == ':')
-			break;
-		i2++;
-	}
-	if (!i2[0])
-		return NULL;
-	*len = i2 - i1;
-	return ++i2;
-}
-
-/* maybe I should use libregexp */
-gint
-virtual_filename_get_pos(const gchar *filename)
-{
-	const gchar *i1, *i2;
-	gint len, pos;
-	GString *dummy;
-	
-	/* check prefix */
-	if ((!g_str_has_prefix(filename, ATTACHMENT_ID_INLINE ":")) &&
-	    (!g_str_has_prefix(filename, ATTACHMENT_ID_LINK ":")))
-		return -1;
-
-	i2 = filename;
-	i2 = get_next_token(i2, &len);
-	i1 = i2;
-		
-	/* get position */
-	i2 = get_next_token(i2, &len);
-	if (i2 == NULL)
-		return -1;
-	dummy = g_string_new_len(i1, len);
-	pos = atoi(dummy->str);
-	g_string_free(dummy, FALSE);
-	return pos;
-}	
-
-
-static gchar *
-attachments_as_html(ModestTnyMsgView *self, TnyMsgIface *msg)
+/* render the attachments as hyperlinks in html */
+static gchar*
+attachments_as_html (ModestTnyMsgView *self, const TnyMsgIface *msg)
 {
 	ModestTnyMsgViewPrivate *priv;
-	gboolean attachments_found = FALSE;
 	GString *appendix;
-	const GList *attachment_list, *attachment;
-	const gchar *content_type, *filename, *id;
-	gchar *virtual_filename;
+	const TnyListIface *parts;
+	TnyIteratorIface *iter;
+	gchar *html;
+	int index = 0;
 	
 	if (!msg)
-		return g_malloc0(1);
-	
-	priv = MODEST_TNY_MSG_VIEW_GET_PRIVATE (self);
-	
-	appendix = g_string_new("");
-	g_string_printf(appendix, "<HTML><BODY>\n<hr><h5>%s:</h5>\n", _("Attachments"));
-	
-	attachment_list = tny_msg_iface_get_parts(msg);
-	attachment = attachment_list;
-	while (attachment) {
-		filename = "";
-		content_type = tny_msg_mime_part_iface_get_content_type(
-										TNY_MSG_MIME_PART_IFACE(attachment->data));
-		if (!content_type)
-			continue;
+		return NULL;
 
-		if ((strcmp("image/jpeg", content_type) == 0) ||
-			(strcmp("image/gif",  content_type) == 0)) {
-			filename = tny_msg_mime_part_iface_get_filename(
-			        TNY_MSG_MIME_PART_IFACE(attachment->data));
+	priv  = MODEST_TNY_MSG_VIEW_GET_PRIVATE (self);
+	parts = tny_msg_iface_get_parts ((TnyMsgIface*)msg);
+	// FIXME: tinymail
+	iter  = tny_list_iface_create_iterator ((TnyListIface*)parts);
+
+	appendix= g_string_new ("");
+	
+	while (!tny_iterator_iface_is_done(iter)) {
+		TnyMsgMimePartIface *part;
+
+		++index; /* attachment numbers are 1-based */
+		
+		part = TNY_MSG_MIME_PART_IFACE(tny_iterator_iface_current (iter));
+
+		if (tny_msg_mime_part_iface_is_attachment (part)) {
+
+			const gchar *filename = tny_msg_mime_part_iface_get_filename(part);
 			if (!filename)
-				filename = "[unknown]";
-			else
-				attachments_found = TRUE;
-			id = tny_msg_mime_part_iface_get_content_id(
-										TNY_MSG_MIME_PART_IFACE(attachment->data));
-			if (modest_tny_msg_view_get_show_attachments_inline_flag(self)) {
-				virtual_filename = construct_virtual_filename(filename,
-				        g_list_position((GList *)attachment_list, (GList *) attachment),
-				        id, TRUE);
-				g_string_append_printf(appendix, "<IMG src=\"%s\">\n<BR>", virtual_filename);
-				g_free(virtual_filename);
-			}
-			virtual_filename = construct_virtual_filename(filename,
-				        g_list_position((GList *)attachment_list, (GList *) attachment),
-				        id, FALSE);
-			g_string_append_printf(appendix,
-			        "<A href=\"%s\">%s</A>: %s<BR>\n",
-			        virtual_filename, filename, content_type);
-			g_free(virtual_filename);
+				filename = _("attachment");
+
+			g_string_append_printf (appendix, "<a href=\"%s%d\">%s</a> \n",
+						ATT_PREFIX, index, filename);			 
 		}
-		attachment = attachment->next;
+		tny_iterator_iface_next (iter);
 	}
-	g_string_append(appendix, "</BODY></HTML>");
-	if (!attachments_found)
-		g_string_assign(appendix, "");
-	return g_string_free(appendix, FALSE);
+	g_object_unref (G_OBJECT(iter));
+	
+	if (appendix->len == 0) 
+		return g_string_free (appendix, TRUE);
+
+	html = g_strdup_printf ("<strong>%s:</strong> %s\n<hr>",
+				_("Attachments"), appendix->str);			 
+	g_string_free (appendix, TRUE);
+	
+	return html;
 }
+
+
 
 static void
 hyperlinkify_plain_text (GString *txt)
@@ -701,30 +537,11 @@ get_url_matches (GString *txt)
 	return match_list;	
 }
 
-static gboolean
-fill_gtkhtml_with_txt (ModestTnyMsgView *self, GtkHTML* gtkhtml, const gchar* txt, TnyMsgIface *msg)
-{
-	GString *html;
-	gchar *html_attachments;
-	
-	g_return_val_if_fail (gtkhtml, FALSE);
-	g_return_val_if_fail (txt, FALSE);
-
-	html = g_string_new(convert_to_html (txt));
-	html_attachments = attachments_as_html(self, msg);
-	g_string_append(html, html_attachments);
-
-	gtk_html_load_from_string (gtkhtml, html->str, html->len);
-	g_string_free (html, TRUE);
-	g_free(html_attachments);
-
-	return TRUE;
-}
-
 
 
 static gboolean
-set_html_message (ModestTnyMsgView *self, TnyMsgMimePartIface *tny_body, TnyMsgIface *msg)
+set_html_message (ModestTnyMsgView *self, const TnyMsgMimePartIface *tny_body,
+		  const TnyMsgIface *msg)
 {
 	gchar *html_attachments;
 	TnyStreamIface *gtkhtml_stream;	
@@ -740,13 +557,20 @@ set_html_message (ModestTnyMsgView *self, TnyMsgMimePartIface *tny_body, TnyMsgI
 				 (gtk_html_begin(GTK_HTML(priv->gtkhtml))));
 	
 	tny_stream_iface_reset (gtkhtml_stream);
-	tny_msg_mime_part_iface_decode_to_stream (tny_body, gtkhtml_stream);
+	
 	html_attachments = attachments_as_html(self, msg);
-	tny_stream_iface_write (gtkhtml_stream, html_attachments, strlen(html_attachments));
-	tny_stream_iface_reset (gtkhtml_stream);
+	if (html_attachments) {
+		tny_stream_iface_write (gtkhtml_stream, html_attachments,
+					strlen(html_attachments));
+		tny_stream_iface_reset (gtkhtml_stream);
+		g_free (html_attachments);
+	}
+
+	// FIXME: tinymail
+	tny_msg_mime_part_iface_decode_to_stream ((TnyMsgMimePartIface*)tny_body,
+						  gtkhtml_stream);
 
 	g_object_unref (G_OBJECT(gtkhtml_stream));
-	g_free (html_attachments);
 	
 	return TRUE;
 }
@@ -755,12 +579,13 @@ set_html_message (ModestTnyMsgView *self, TnyMsgMimePartIface *tny_body, TnyMsgI
 /* this is a hack --> we use the tny_text_buffer_stream to
  * get the message text, then write to gtkhtml 'by hand' */
 static gboolean
-set_text_message (ModestTnyMsgView *self, TnyMsgMimePartIface *tny_body, TnyMsgIface *msg)
+set_text_message (ModestTnyMsgView *self, const TnyMsgMimePartIface *tny_body,
+		  const TnyMsgIface *msg)
 {
 	GtkTextBuffer *buf;
 	GtkTextIter begin, end;
-	TnyStreamIface* txt_stream;
-	gchar *txt;
+	TnyStreamIface* txt_stream, *gtkhtml_stream;
+	gchar *txt, *html_attachments;
 	ModestTnyMsgViewPrivate *priv;
 		
 	g_return_val_if_fail (self, FALSE);
@@ -772,18 +597,38 @@ set_text_message (ModestTnyMsgView *self, TnyMsgMimePartIface *tny_body, TnyMsgI
 	txt_stream     = TNY_STREAM_IFACE(tny_text_buffer_stream_new (buf));
 		
 	tny_stream_iface_reset (txt_stream);
-	tny_msg_mime_part_iface_decode_to_stream (tny_body, txt_stream);
+	
+	gtkhtml_stream =
+		TNY_STREAM_IFACE(modest_tny_stream_gtkhtml_new
+				 (gtk_html_begin(GTK_HTML(priv->gtkhtml))));
+
+	html_attachments = attachments_as_html(self, msg);
+	if (html_attachments) {
+		tny_stream_iface_write (gtkhtml_stream, html_attachments,
+					strlen(html_attachments));
+		tny_stream_iface_reset (gtkhtml_stream);
+		g_free (html_attachments);
+	}
+
+	// FIXME: tinymail
+	tny_msg_mime_part_iface_decode_to_stream ((TnyMsgMimePartIface*)tny_body,
+						  txt_stream);
 	tny_stream_iface_reset (txt_stream);		
 	
 	gtk_text_buffer_get_bounds (buf, &begin, &end);
 	txt = gtk_text_buffer_get_text (buf, &begin, &end, FALSE);
+	if (txt) {
+		gchar *html = convert_to_html (txt);
+		tny_stream_iface_write (gtkhtml_stream, html, strlen(html));
+		tny_stream_iface_reset (gtkhtml_stream);
+		g_free (txt);
+		g_free (html);
+	}
 	
-	fill_gtkhtml_with_txt (self, GTK_HTML(priv->gtkhtml), txt, msg);
-
+	g_object_unref (G_OBJECT(gtkhtml_stream));
 	g_object_unref (G_OBJECT(txt_stream));
 	g_object_unref (G_OBJECT(buf));
 
-	g_free (txt);
 	return TRUE;
 }
 
@@ -811,8 +656,9 @@ modest_tny_msg_view_get_selected_text (ModestTnyMsgView *self)
 	return gtk_clipboard_wait_for_text(clip);
 }
 
+
 void
-modest_tny_msg_view_set_message (ModestTnyMsgView *self, TnyMsgIface *msg)
+modest_tny_msg_view_set_message (ModestTnyMsgView *self, const TnyMsgIface *msg)
 {
 	TnyMsgMimePartIface *body;
 	ModestTnyMsgViewPrivate *priv;
@@ -823,10 +669,6 @@ modest_tny_msg_view_set_message (ModestTnyMsgView *self, TnyMsgIface *msg)
 
 	priv->msg = msg;
 	
-	fill_gtkhtml_with_txt (self, GTK_HTML(priv->gtkhtml), "", msg);
-	if (!msg) 
-		return;
-	
 	body = modest_tny_msg_actions_find_body_part (msg, TRUE);
 	if (body) {
 		if (tny_msg_mime_part_iface_content_type_is (body, "text/html"))
@@ -836,40 +678,5 @@ modest_tny_msg_view_set_message (ModestTnyMsgView *self, TnyMsgIface *msg)
 		return;
 	} else {
 		/* nothing to show */
-	}
-}
-
-void
-modest_tny_msg_view_redraw (ModestTnyMsgView *self)
-{
-	ModestTnyMsgViewPrivate *priv;
-
-	g_return_if_fail (self);
-	priv = MODEST_TNY_MSG_VIEW_GET_PRIVATE(self);
-	modest_tny_msg_view_set_message(self, priv->msg);
-}
-
-gboolean
-modest_tny_msg_view_get_show_attachments_inline_flag (ModestTnyMsgView *self)
-{
-	ModestTnyMsgViewPrivate *priv;
-
-	g_return_val_if_fail (self, FALSE);
-	priv = MODEST_TNY_MSG_VIEW_GET_PRIVATE(self);
-	return priv->show_attachments_inline;
-}
-
-gboolean
-modest_tny_msg_view_set_show_attachments_inline_flag (ModestTnyMsgView *self, gboolean flag)
-{
-	ModestTnyMsgViewPrivate *priv;
-	gboolean oldflag;
-
-	g_return_val_if_fail (self, FALSE);
-	priv = MODEST_TNY_MSG_VIEW_GET_PRIVATE(self);
-	oldflag = priv->show_attachments_inline;
-	priv->show_attachments_inline = flag;
-	if (priv->show_attachments_inline != oldflag)
-		modest_tny_msg_view_redraw(self);
-	return priv->show_attachments_inline;
+	} 
 }
