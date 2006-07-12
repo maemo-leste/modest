@@ -27,9 +27,6 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
-/* modest-tny-header-tree-view.h */
-
 #ifndef __MODEST_TNY_HEADER_TREE_VIEW_H__
 #define __MODEST_TNY_HEADER_TREE_VIEW_H__
 
@@ -183,9 +180,6 @@ gboolean   modest_tny_header_tree_view_set_style (ModestTnyHeaderTreeView *self,
 ModestTnyHeaderTreeViewStyle   modest_tny_header_tree_view_get_style (ModestTnyHeaderTreeView *self);
 
 G_END_DECLS
-
-
-
 
 
 #endif /* __MODEST_TNY_HEADER_TREE_VIEW_H__ */
