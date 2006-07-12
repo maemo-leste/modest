@@ -12,11 +12,11 @@ INCLUDES=\
 
 BUILT_SOURCES = modest-marshal.c modest-marshal.h
 
-modest-marshal.c: marshall.list
-	glib-genmarshal --body --prefix=modest_marshal < marshall.list > modest-marshal.c
+modest-marshal.c: modest-marshal.list
+	glib-genmarshal --body --prefix=modest_marshal < modest-marshal.list > modest-marshal.c
 
-modest-marshal.h: marshall.list
-	glib-genmarshal --header --prefix=modest_marshal < marshall.list > modest-marshal.h
+modest-marshal.h: modest-marshal.list
+	glib-genmarshal --header --prefix=modest_marshal < modest-marshal.list > modest-marshal.h
 
 
 bin_PROGRAMS=\
