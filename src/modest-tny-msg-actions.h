@@ -27,9 +27,6 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
-/* modest-tny-msg-actions.h */
-
 #ifndef __MODEST_TNY_MSG_ACTIONS_H__
 #define __MODEST_TNY_MSG_ACTIONS_H__
 
@@ -49,23 +46,37 @@
  * 
  * Returns: a newly allocated string containing the quoted message
  */
-
 gchar *modest_tny_msg_actions_quote (const TnyMsgIface * self,
 				     const gchar * from,
 				     time_t sent_date,
-				     gint limit, const gchar *to_quote);
+				     gint limit,
+				     const gchar *to_quote);
 
 /**
  * modest_tny_msg_actions_find_body_part:
  * @self: a message
  * @want_html: prefer HTML-part when there are multiple body parts?
  * 
- * search a message for a body part 
+ * search a message for the body part. if @want_html is true, try HTML mail
+ * first.
+ * 
+ * Returns: the TnyMsgMimePartIface for the found part, or NULL if no matching part is found
+ */	 
+TnyMsgMimePartIface *modest_tny_msg_actions_find_body_part (const TnyMsgIface * self,
+							    gboolean want_html);
+
+
+/**
+ * modest_tny_msg_actions_get_nth_part:
+ * @self: a message
+ * @index: number (1-based) of the part to retrieve
+ * 
+ * search for the nth (mime) part in the message
  * 
  * Returns: the TnyMsgMimePartIface for the found part, or NULL if no matching part is found
  */
-					 
-TnyMsgMimePartIface *modest_tny_msg_actions_find_body_part (TnyMsgIface * self,
-							    gboolean want_html);
+TnyMsgMimePartIface * modest_tny_msg_actions_find_nth_part (const TnyMsgIface *msg,
+							   gint index);
+
 
 #endif /* __MODEST_TNY_MSG_ACTIONS_H__ */
