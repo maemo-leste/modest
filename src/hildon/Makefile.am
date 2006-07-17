@@ -73,4 +73,4 @@ modest.desktop:
 clean-local:
 	rm -f modest.desktop 
 
-EXTRA_DIST=pixmaps/* glade/* modest.glade modest.gladep modest.png com.nokia.modest.service.in.in modest.desktop.in
+EXTRA_DIST=pixmaps/* glade/* modest.glade modest.png com.nokia.modest.service.in modest.desktop.in
