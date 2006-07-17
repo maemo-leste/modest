@@ -77,7 +77,7 @@ GType        modest_ui_get_type        (void) G_GNUC_CONST;
  *  
  * Returns: a new ModestUI, or NULL in case of error
  */
-GObject*     modest_ui_new             (ModestConf *modest_conf);
+ModestUI*     modest_ui_new             (ModestConf *modest_conf);
 
 
 /**
@@ -121,8 +121,13 @@ gboolean modest_ui_editor_window_set_subject_header(const gchar *subject, gpoint
 gboolean modest_ui_editor_window_set_body(const gchar *body, gpointer window_data);
 gboolean modest_ui_editor_window_update_attachments(gpointer window_data);
 
-GtkContainer *modest_ui_new_viewer_window (ModestUI *modest_ui, GtkWidget *msg_view, TnyMsgIface *msg, gpointer *user_data);
+GtkContainer *modest_ui_new_viewer_window (ModestUI *modest_ui, GtkWidget *msg_view,
+					   TnyMsgIface *msg, gpointer *user_data);
+
+/*
+ * the new API below
+ */
+GtkWidget *modest_ui_main_window (ModestUI *modest_ui);
 
 G_END_DECLS
-
 #endif /* __MODEST_UI_H__ */

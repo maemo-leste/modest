@@ -176,7 +176,7 @@ on_accounts_reloaded (ModestTnyAccountStore *account_store, gpointer user_data)
 }
 
 
-GObject*
+ModestUI*
 modest_ui_new (ModestConf *modest_conf)
 {
 	GObject *obj;
@@ -264,7 +264,7 @@ modest_ui_new (ModestConf *modest_conf)
 	}
 	g_slist_free(identities_list);
 
-	return obj;
+	return MODEST_UI(obj);
 }
 
 
