@@ -138,10 +138,11 @@ modest_tny_transport_actions_finalize (GObject *obj)
 /* 	free/unref instance resources here */
 }
 
-GObject*
+ModestTnyTransportActions *
 modest_tny_transport_actions_new (void)
 {
-	return G_OBJECT(g_object_new(MODEST_TYPE_TNY_TRANSPORT_ACTIONS, NULL));
+	return MODEST_TNY_TRANSPORT_ACTIONS(g_object_new(MODEST_TYPE_TNY_TRANSPORT_ACTIONS,
+							 NULL));
 }
 
 static gboolean

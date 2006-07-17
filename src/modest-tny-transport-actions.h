@@ -66,7 +66,8 @@ GType        modest_tny_transport_actions_get_type    (void) G_GNUC_CONST;
 /* typical parameter-less _new function */
 /* if this is a kind of GtkWidget, it should probably return at GtkWidget*, */
 /*    otherwise probably a GObject*. */
-GObject*    modest_tny_transport_actions_new         (void);
+
+ModestTnyTransportActions* modest_tny_transport_actions_new         (void);
 
 
 /**
