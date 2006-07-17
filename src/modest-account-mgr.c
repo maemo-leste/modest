@@ -220,7 +220,8 @@ modest_account_mgr_finalize (GObject * obj)
 	priv->modest_conf = NULL;
 }
 
-GObject *
+
+ModestAccountMgr *
 modest_account_mgr_new (ModestConf * conf)
 {
 	GObject *obj;
@@ -236,7 +237,8 @@ modest_account_mgr_new (ModestConf * conf)
 	g_signal_connect (G_OBJECT (conf), "key_changed",
 	                  G_CALLBACK (on_key_change),
 			  obj);
-	return obj;
+	
+	return MODEST_ACCOUNT_MGR (obj);
 }
 
 

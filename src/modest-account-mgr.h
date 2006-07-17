@@ -79,7 +79,7 @@ GType           modest_account_mgr_get_type       (void) G_GNUC_CONST;
  *  
  * Returns: a new ModestAccountMgr, or NULL in case of error
  */
-GObject*        modest_account_mgr_new            (ModestConf *modest_conf);
+ModestAccountMgr*        modest_account_mgr_new            (ModestConf *modest_conf);
 
 
 

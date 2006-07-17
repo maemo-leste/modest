@@ -79,7 +79,7 @@ GType        modest_conf_get_type    (void) G_GNUC_CONST;
  * Returns: a new ModestConf instance, or NULL in case
  * of any error
  */
-GObject*     modest_conf_new         (void);
+ModestConf*     modest_conf_new         (void);
 
 
 /**

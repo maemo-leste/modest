@@ -152,7 +152,7 @@ modest_conf_finalize (GObject *obj)
 	}	
 }
 
-GObject*
+ModestConf*
 modest_conf_new (void)
 {
 	ModestConf *conf = MODEST_CONF(g_object_new(MODEST_TYPE_CONF, NULL));
@@ -168,7 +168,7 @@ modest_conf_new (void)
 		return NULL;
 	}
 	
-	return G_OBJECT(conf);
+	return conf;
 }
 
 
