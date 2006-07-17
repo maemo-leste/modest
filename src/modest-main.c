@@ -32,11 +32,15 @@
 #include <glib/gi18n.h>
 #include <gtk/gtk.h>
 
+#include <tny-account-store-iface.h>
+#include <tny-list-iface.h>
+
 #include "modest-conf.h"
 #include "modest-account-mgr.h"
-#include "modest-identity-mgr.h"
 #include "modest-ui.h"
 #include "modest-icon-factory.h"
+#include "modest-tny-transport-actions.h"
+#include "modest-tny-account-store.h"
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -53,12 +57,15 @@
 #define MODEST_ERR_UI      3
 #define MODEST_ERR_HILDON  4
 #define MODEST_ERR_RUN     5
-
+#define MODEST_ERR_SEND    6
 
 static gboolean hildon_init (); /* NOP if HILDON is not defined */
 
 static int start_ui (ModestConf *conf, const gchar* mailto, const gchar *cc,
 		     const gchar *bcc, const gchar* subject, const gchar *body);
+
+static int send_mail (ModestConf *conf, const gchar* mailto, const gchar *cc, const gchar *bcc,
+		      const gchar* subject, const gchar *body);
 
 int
 main (int argc, char *argv[])
@@ -70,25 +77,23 @@ main (int argc, char *argv[])
 	GError *err = NULL;
 	int retval  = MODEST_ERR_NONE;
 		
-	static gboolean update, debug, batch;
+	static gboolean debug=FALSE, batch=FALSE;
 	static gchar    *mailto, *subject, *bcc, *cc, *body;
 
 	static GOptionEntry options[] = {
 		{ "debug",  'd', 0, G_OPTION_ARG_NONE, &debug,
 		  "Run in debug mode" },
-		{ "update", 'u', 0, G_OPTION_ARG_NONE, &update,
-		  "Send/receive active accounts"},
 		{ "mailto", 'm', 0, G_OPTION_ARG_STRING, &mailto,
-		  "Start writing a new email to <addresses>"},
+		  "New email to <addresses> (comma-separated)"},
 		{ "subject", 's', 0, G_OPTION_ARG_STRING, &subject,
 		  "Subject for a new mail"},
 		{ "body", 'b', 0, G_OPTION_ARG_STRING, &body,
 		  "Body for a new email"},
 		{ "cc",  'c', 0, G_OPTION_ARG_STRING, &cc,
 		  "Cc: addresses for a new mail (comma-separated)"},
-		{ "bcc", 'd', 0, G_OPTION_ARG_STRING, &bcc,
+		{ "bcc", 'x', 0, G_OPTION_ARG_STRING, &bcc,
 		  "Bcc: addresses for a new mail (comma-separated)"},
-		{ "batch", 'b', 0, G_OPTION_ARG_NONE, &batch,
+		{ "batch", 'y', 0, G_OPTION_ARG_NONE, &batch,
 		  "Run in batch mode (don't show UI)"},
 		{ NULL }
 	};
@@ -106,28 +111,38 @@ main (int argc, char *argv[])
 		goto cleanup;
 	}
 	g_option_context_free (context);
-
+	
 	modest_conf = MODEST_CONF(modest_conf_new());
 	if (!modest_conf) {
 		g_printerr ("modest: failed to initialize config system, exiting\n");
 		retval = MODEST_ERR_CONF;
 		goto cleanup;
 	}
-	
-	gtk_init (&argc, &argv);
-	retval = start_ui (modest_conf, mailto, cc, bcc, subject, body);
 
+	if (debug)
+		g_log_set_always_fatal (G_LOG_LEVEL_WARNING);
+	
+	if (!batch) {
+		gtk_init (&argc, &argv);
+		retval = start_ui (modest_conf, mailto, cc, bcc, subject, body);
+	} else 
+		retval = send_mail (modest_conf, mailto, cc, bcc, subject, body);
+		
+	
 cleanup:
-	g_object_unref (modest_conf);
+	if (modest_conf)
+		g_object_unref (G_OBJECT(modest_conf));
 	
 	return retval;
 }
 
 
-int
+static int
 start_ui (ModestConf *conf, const gchar* mailto, const gchar *cc, const gchar *bcc,
 	  const gchar* subject, const gchar *body)
 {
+
+	GtkWidget *win;
 	ModestUI *modest_ui;
 	gint ok, retval = 0;
 
@@ -156,14 +171,12 @@ start_ui (ModestConf *conf, const gchar* mailto, const gchar *cc, const gchar *b
 /* 		 				body,    /\* body *\/ */
 /* 						NULL);   /\* attachments *\/ */
 	} else
-		ok = modest_ui_show_main_window (modest_ui);
-	
-	if (!ok) {
-		g_printerr ("modest: showing window failed");
-		retval = MODEST_ERR_RUN;
-		goto cleanup;
-	}	
-	
+#ifndef OLD_UI_STUFF
+	win = modest_ui_main_window (modest_ui);
+	gtk_widget_show (win);
+#else
+	modest_ui_show_main_window (modest_ui);
+#endif
 	gtk_main();
 	
 cleanup:
@@ -182,13 +195,74 @@ hildon_init ()
 
 	osso_context_t *osso_context =
 		osso_initialize(PACKAGE, PACKAGE_VERSION,
-				TRUE, NULL);
-	
+				TRUE, NULL);	
 	if (!osso_context) {
-		g_printerr ("modest: failed to aquire osso context, exiting");
+		g_printerr ("modest: failed to aquire osso context, exiting\n");
+
 		return FALSE;
+		
 	}
 #endif /* MODEST_ENABLE_HILDON */
 
 	return TRUE;
 }
+
+
+
+static int
+send_mail (ModestConf *conf, const gchar* mailto, const gchar *cc, const gchar *bcc,
+	   const gchar* subject, const gchar *body)
+{
+	ModestAccountMgr *acc_mgr = NULL;
+	ModestTnyTransportActions *transport = NULL;
+	ModestTnyAccountStore *acc_store = NULL;
+
+	TnyListIface *accounts = NULL;
+	TnyIteratorIface *iter = NULL;
+
+	TnyTransportAccountIface *account = NULL;
+	
+	int retval;
+	int i = 0;
+	
+	acc_mgr   = modest_account_mgr_new (conf);
+	acc_store = modest_tny_account_store_new (acc_mgr);	
+	transport = modest_tny_transport_actions_new ();
+
+	accounts = TNY_LIST_IFACE(tny_list_new ());
+	tny_account_store_iface_get_accounts (TNY_ACCOUNT_STORE_IFACE(acc_store), accounts,
+					      TNY_ACCOUNT_STORE_IFACE_TRANSPORT_ACCOUNTS);
+
+	iter = tny_list_iface_create_iterator(accounts);
+	tny_iterator_iface_first (iter);
+	if (tny_iterator_iface_is_done (iter)) {
+		g_printerr("modest: no transport accounts defined");
+		retval = MODEST_ERR_SEND;
+		goto cleanup;
+	}
+
+	account = TNY_TRANSPORT_ACCOUNT_IFACE (tny_iterator_iface_current(iter));
+
+	if (!modest_tny_transport_actions_send_message (transport, account,
+							"<>", mailto, cc, bcc, subject, body,
+							NULL)) {
+		retval = MODEST_ERR_SEND;
+		goto cleanup;
+	} else
+		retval = MODEST_ERR_NONE; /* hurray! */
+							 
+cleanup:
+	if (iter)
+		g_object_unref (G_OBJECT(iter));
+	if (accounts)
+		g_object_unref (G_OBJECT(accounts));
+	if (transport)
+		g_object_unref (G_OBJECT(transport));
+	if (acc_store)
+		g_object_unref (G_OBJECT(acc_store));
+	if (acc_mgr)
+		g_object_unref (G_OBJECT(acc_mgr));
+	
+	return retval;
+}
+
