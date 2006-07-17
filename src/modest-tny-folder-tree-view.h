@@ -84,8 +84,7 @@ GType        modest_tny_folder_tree_view_get_type    (void) G_GNUC_CONST;
  *  
  * Returns: a new GtkWidget (a GtkTreeView-subclass)
  */
-
-GtkWidget*   modest_tny_folder_tree_view_new         (TnyAccountStoreIface *iface);
+GtkWidget* modest_tny_folder_tree_view_new         (TnyAccountStoreIface *iface);
 
 
 /**

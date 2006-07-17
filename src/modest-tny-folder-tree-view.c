@@ -62,9 +62,12 @@ enum {
 
 typedef struct _ModestTnyFolderTreeViewPrivate ModestTnyFolderTreeViewPrivate;
 struct _ModestTnyFolderTreeViewPrivate {
+
 	TnyAccountStoreIface *tny_account_store;
 	TnyMsgFolderIface *cur_folder;
 	gboolean view_is_empty;
+
+	GMutex *lock;
 };
 #define MODEST_TNY_FOLDER_TREE_VIEW_GET_PRIVATE(o)			\
 	(G_TYPE_INSTANCE_GET_PRIVATE((o),				\
@@ -283,6 +286,8 @@ modest_tny_folder_tree_view_init (ModestTnyFolderTreeView *obj)
 	priv->tny_account_store = NULL;
 	priv->cur_folder = NULL;
 
+	priv->lock = g_mutex_new ();
+	
 	column = gtk_tree_view_column_new ();
 	gtk_tree_view_column_set_title (column,
 					_("All Mail Folders"));
@@ -325,6 +330,12 @@ modest_tny_folder_tree_view_finalize (GObject *obj)
 		priv->tny_account_store = NULL;
 	}
 
+
+	if (priv->lock) {
+		g_mutex_free (priv->lock);
+		priv->lock = NULL;
+	}
+	
 	(*parent_class->finalize)(obj);
 }
 
@@ -383,7 +394,7 @@ modest_tny_folder_tree_view_new (TnyAccountStoreIface *account_store)
 	g_signal_connect (sel, "changed",
 			  G_CALLBACK(selection_changed), self);
 		
-	return GTK_WIDGET(self);
+	return self;
 }
 
 
@@ -467,9 +478,6 @@ selection_changed (GtkTreeSelection *sel, gpointer user_data)
 	
 	/* folder was _un_selected if true */
 	if (!gtk_tree_selection_get_selected (sel, &model, &iter)) {
-		
-		if (priv->cur_folder) 
-			tny_msg_folder_iface_expunge (priv->cur_folder);
 		priv->cur_folder = NULL;
 		return; 
 	}
