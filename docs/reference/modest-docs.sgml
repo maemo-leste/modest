@@ -2,13 +2,18 @@
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" 
                "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
 <book id="index" xmlns:xi="http://www.w3.org/2003/XInclude">
+
+  <copyright>
+  <year>2006</year>
+  <holder>Nokia Corporation</holder>
+  </copyright>
+
   <bookinfo>
-    <title>modest reference manual</title>
+    <title>modest technical documentation</title>
   </bookinfo>
 
   <preface>
     <title>Introduction</title>
-
     <para><application>modest</application> is a mail user agent
       (<abbrev>MUA</abbrev>) targetting small devices, in particular Nokia's
       <productname>Nokia 770 Internet Tablet</productname>. This document
@@ -106,7 +111,7 @@
 	the <classname>ModestConf</classname>-class. It is declared
 	in <filename> modest-conf.h</filename>, and
 	the <systemitem>GConf</systemitem>-based implementation in 
-	<filename>modest-conf-gconf.c</filename>. As said, there could be
+	<filename>modest-conf.c</filename>. As said, there could be
 	different implementations --
 	nothing <systemitem>GConf</systemitem>-specific is visible in the
 	<classname>ModestConf</classname>-<abbrev>API</abbrev>.
@@ -119,7 +124,7 @@
 	Account Management is the part of <application>modest</application>
 	that deals with the setting related to sending and receiving of
 	e-mail. We will follow the libcamel-convention of using the
-	term <emphasis> store</emphasis> for an e-mail storage/retrieval
+	term <emphasis>store</emphasis> for an e-mail storage/retrieval
 	server, and a <emphasis>transport</emphasis> for a server that
 	transports mail to its destination.
       </para>
@@ -202,9 +207,9 @@
 	  </itemizedlist>
 	</para>
 	
-	<para>In the <filename>modest-proto.[ch]</filename> there are
-	  various functions to check whether something is a valid protocol, and whether
-	  it is a transport of a store.
+	<para>In <filename>modest-proto.[ch]</filename> there are various
+	  functions to check whether something is a valid protocol, and
+	  whether it is a transport of a store.
 	</para>
 	
 	<para>Note that server accounts and accounts are relatively independent. While
@@ -220,27 +225,55 @@
       </sect1>
     </chapter>
 
-    <chapter>
-      <title>Finding the right transport</title>
+    <sec1>
+      <title>Account Management and Tinymail</title>
       <para>
-	One of the interesting topics in designing a mobile e-mail client is
-	to deal with transports (in
-	particular, <acronym>SMTP</acronym>). The reason for that is that
-	the majority of <acronym>SMTP</acronym>-servers only allow e-mail
-	from the same network. That means that for example <systemitem>
-	smtp.some-isp.com</systemitem> will only accept mail from
-	(<command>MAIL FROM:</command>) <systemitem>
-	  user@some-isp.com</systemitem>, and refuse mail
-	from <systemitem>user@some-other-isp.com</systemitem>, unless the
-	recipient (<command>RCPT TO:</command>) is on the same network.
+	Tinymail needs the information about all configured accounts - and the
+	mechanism that it uses for that
+	is <interface>TnyAccountStoreIface</interface>. We don't want to use
+	the tinymail-provided <classname>TnyAccountStore</classname>, but
+	provide our own implementation
+	instead: <classname>ModestTnyAccountStore</classname>. This class
+	implements the <interface>TnyAccountStoreIface</interface>-interace in
+	terms of the aforementioned <classname>ModestAccountMgr</classname>.
       </para>
-    </chapter>
+      
+      <para>
+	One unexpected function
+	that  <classname>ModestTnyAccountStore</classname> needs to implement
+	is <symbol>tny account_store get_session</symbol> (to get the
+	Camel-session). This function must be provided as a public function,
+	with that exact name.
+      </para>
+    </sec1>
+  </chapter>
+  
+  
+  
+
+  <chapter>
+    <title>Finding the right transport</title>
+    <para>
+      One of the interesting topics in designing a mobile e-mail client is
+      to deal with transports (in
+      particular, <acronym>SMTP</acronym>). The reason for that is that
+      the majority of <acronym>SMTP</acronym>-servers only allow e-mail
+      from the same network. That means that for example <systemitem>
+	smtp.some-isp.com</systemitem> will only accept mail from
+      (<command>MAIL FROM:</command>) <systemitem>
+	user@some-isp.com</systemitem>, and refuse mail
+      from <systemitem>user@some-other-isp.com</systemitem>, unless the
+      recipient (<command>RCPT TO:</command>) is on the same network.
+    </para>
+  </chapter>
   </part>
   
+
+
   <chapter>
     <title>Coding guidelines</title>
     <para>
-      When hacking on \modest, please honour these time-tested coding guidelines.
+      When hacking on modest, please honour these time-tested coding guidelines.
       First, please follow the <emphasis>Linux CodingStyle guidelines</emphasis>
       (<filename>/usr/src/linux/Documentation/CodingStyle</filename>).
     </para>
@@ -257,21 +290,38 @@
       (setq indent-tabs-mode t)
       (setq c-basic-offset 8)
       </programlisting>
-    </para>
-    
-    <para>
+      
       Or the equivalent in your favourite editor.
     </para>
     
     <para>
-      Lines should not exceed 100 characters.
+      Lines must not exceed 100 characters.
+    </para>
+
+    <para>
+      Functions should do one thing, and do it well. In general, functions
+      should not be much longer than 20-30 lines (except for, say, handling
+      many different cases in a 'switch'-statement). Files should not get to
+      big either; if there's more than, say, 800 lines, it probably shows the
+      codes needs to be refactored a bit.
     </para>
       
+    <para>
+      Code should compile cleanly
+      with <command>gcc</command>'s <symbol>-Wall</symbol> compile option. Of
+      course this might not always be possible due to problems in dependent
+      libraries and/or compiler version. Therefore, do not
+      include <symbol>-Werror</symbol> in the standard compile options.
+    </para>
+
     <para>Global functions (the ones in <filename>.h</filename>-files) should
       be commented using
       <systemitem>gtk-doc</systemitem>.
     </para>
     
+    
+    
+
     <para>
 	Furthermore, please follow 'conventional wisdom' for programming with 
 	GLib/GTK+/GObject. Some things to remember:
