@@ -84,10 +84,9 @@ GType        modest_tny_account_store_get_type    (void) G_GNUC_CONST;
  *
  * creates new (tinymail) account store for account manager modest_acc_mgr
  *
- * Returns: GObject of newly created account store
+ * Returns: newly created account store or NULL in case of error
  */
-GObject*    modest_tny_account_store_new         (ModestAccountMgr *modest_acc_mgr);
-
+ModestTnyAccountStore*    modest_tny_account_store_new         (ModestAccountMgr *modest_acc_mgr);
 
 
 /**

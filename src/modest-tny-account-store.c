@@ -70,8 +70,6 @@ enum {
         PW_INVALID
 };
 
-static const gchar *transport_protocols[] = { "smtp", NULL };
-
 typedef struct _ModestTnyAccountStorePrivate ModestTnyAccountStorePrivate;
 struct _ModestTnyAccountStorePrivate {
 
@@ -353,7 +351,7 @@ modest_tny_account_store_finalize (GObject *obj)
 }
 
 
-GObject*
+ModestTnyAccountStore*
 modest_tny_account_store_new (ModestAccountMgr *modest_acc_mgr) {
 
 	GObject *obj;
@@ -390,7 +388,7 @@ modest_tny_account_store_new (ModestAccountMgr *modest_acc_mgr) {
 		return NULL;
 	}
 
-	return obj;
+	return MODEST_TNY_ACCOUNT_STORE(obj);
 }
 
 
