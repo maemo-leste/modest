@@ -1,14 +1,20 @@
 #
 # Makefile.am
-# Time-stamp: <2006-07-05 13:04:47 (djcb)>
-SUBDIRS=$(MODEST_BACKEND_DIR)
-DIST_SUBDIRS = gtk hildon
+# Time-stamp: <2006-07-17 13:55:31 (djcb)>
+SUBDIRS=$(MODEST_PLATFORM_DIR)
+DIST_SUBDIRS = gtk gtk2 hildon
 
 INCLUDES=\
 	$(MODEST_GSTUFF_CFLAGS)\
 	$(MODEST_LIBTINYMAIL_GNOME_DESKTOP_CFLAGS) \
 	$(MODEST_LIBTINYMAIL_MAEMO_CFLAGS) \
-	-I$(MODEST_BACKEND_DIR) -DPREFIX=\"@prefix@\" 
+	-I$(MODEST_PLATFORM_DIR) \
+	-DPREFIX=\"@prefix@\" 
+
+if OLD_UI_STUFF
+INCLUDES +=\
+	-DOLD_UI_STUFF
+endif
 
 BUILT_SOURCES = modest-marshal.c modest-marshal.h
 
@@ -27,9 +33,8 @@ modest_SOURCES=\
 	modest-conf-keys.h\
 	modest-conf.h \
 	modest-conf.c\
-	modest-identity-keys.h\
-	modest-identity-mgr.h\
-	modest-identity-mgr.c\
+	modest-widget-factory.h\
+	modest-widget-factory.c\
 	modest-account-keys.h\
 	modest-account-mgr.h\
 	modest-account-mgr.c\
@@ -39,8 +44,6 @@ modest_SOURCES=\
 	modest-icon-factory.h\
 	modest-tny-account-store.h\
 	modest-tny-account-store.c\
-	modest-tny-attachment.h\
-	modest-tny-attachment.c\
 	modest-tny-folder-tree-view.h\
 	modest-tny-folder-tree-view.c\
 	modest-tny-header-tree-view.h\
@@ -58,18 +61,29 @@ modest_SOURCES=\
 	modest-tny-stream-gtkhtml.c\
 	modest-tny-transport-actions.c\
 	modest-tny-transport-actions.h\
+	modest-tny-attachment.h\
+	modest-tny-attachment.c\
 	modest-tny-store-actions.c\
 	modest-tny-store-actions.h\
+	modest-ui.h \
+	modest-marshal.c \
+	modest-marshal.h 
+
+if OLD_UI_STUFF
+modest_SOURCES += \
+	modest-identity-keys.h\
+	modest-identity-mgr.h\
+	modest-identity-mgr.c\
 	modest-editor-window.c\
 	modest-editor-window.h\
 	modest-viewer-window.c\
-	modest-viewer-window.h\
-	modest-ui.h \
-	modest-marshal.c \
-	modest-marshal.h
+	modest-viewer-window.h
+endif
 
 modest_LDADD = \
 	$(MODEST_GSTUFF_LIBS) \
 	$(MODEST_LIBTINYMAIL_GNOME_DESKTOP_LIBS) \
 	$(MODEST_LIBTINYMAIL_MAEMO_LIBS) \
-	$(MODEST_BACKEND_DIR)/libmodest-ui.la 
+	$(MODEST_PLATFORM_DIR)/libmodest-ui.la 
+
+EXTRA_DIST=modest-marshal.list
