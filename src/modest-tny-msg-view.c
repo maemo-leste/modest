@@ -632,6 +632,21 @@ set_text_message (ModestTnyMsgView *self, const TnyMsgMimePartIface *tny_body,
 	return TRUE;
 }
 
+
+static gboolean
+set_empty_message (ModestTnyMsgView *self)
+{
+	ModestTnyMsgViewPrivate *priv;
+	
+	g_return_val_if_fail (self, FALSE);
+	priv           = MODEST_TNY_MSG_VIEW_GET_PRIVATE(self);
+
+	gtk_html_load_from_string (priv->gtkhtml, "", 1);
+	
+	return TRUE;
+}
+
+
 gchar *
 modest_tny_msg_view_get_selected_text (ModestTnyMsgView *self)
 {
@@ -669,6 +684,11 @@ modest_tny_msg_view_set_message (ModestTnyMsgView *self, const TnyMsgIface *msg)
 
 	priv->msg = msg;
 	
+	if (!msg) {
+		set_empty_message (self);
+		return;
+	}
+		
 	body = modest_tny_msg_actions_find_body_part (msg, TRUE);
 	if (body) {
 		if (tny_msg_mime_part_iface_content_type_is (body, "text/html"))
@@ -676,7 +696,6 @@ modest_tny_msg_view_set_message (ModestTnyMsgView *self, const TnyMsgIface *msg)
 		else
 			set_text_message (self, body, msg);
 		return;
-	} else {
-		/* nothing to show */
-	} 
+	} else 
+		set_empty_message (self);
 }
