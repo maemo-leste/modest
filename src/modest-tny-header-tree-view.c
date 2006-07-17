@@ -39,7 +39,6 @@
 #include <modest-icon-names.h>
 #include "modest-icon-factory.h"
 
-/* 'private'/'protected' functions */
 static void modest_tny_header_tree_view_class_init  (ModestTnyHeaderTreeViewClass *klass);
 static void modest_tny_header_tree_view_init        (ModestTnyHeaderTreeView *obj);
 static void modest_tny_header_tree_view_finalize    (GObject *obj);
@@ -62,6 +61,8 @@ struct _ModestTnyHeaderTreeViewPrivate {
 
 	gint              status_id;
 	GSList            *columns;
+
+	GMutex		  *lock;
 	
 	ModestTnyHeaderTreeViewStyle style;
 };
@@ -186,12 +187,36 @@ header_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 
 
 
+/* try to make a shorter display address; changes it arg in-place */
+static gchar*
+display_address (gchar *address)
+{
+	gchar *cursor;
+
+	if (!address)
+		return;
+	
+	/* simplistic --> remove <email@address> from display name */
+	cursor = g_strstr_len (address, strlen(address), "<");
+	if (cursor) 
+		cursor[0]='\0';
+
+	/* simplistic --> remove (bla bla) from display name */
+	cursor = g_strstr_len (address, strlen(address), "(");
+	if (cursor) 
+		cursor[0]='\0';
+
+	return address;
+}
+
+
+
 static void
 sender_receiver_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 			    GtkTreeModel *tree_model,  GtkTreeIter *iter,  gboolean is_sender)
 {
 	TnyMsgHeaderFlags flags;
-	gchar *addr1, *addr2;
+	gchar *address;
 	gint sender_receiver_col;
 
 	if (is_sender)
@@ -200,22 +225,17 @@ sender_receiver_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *rendere
 		sender_receiver_col = TNY_MSG_HEADER_LIST_MODEL_TO_COLUMN;
 		
 	gtk_tree_model_get (tree_model, iter,
-			    sender_receiver_col,  &addr1,
+			    sender_receiver_col,  &address,
 			    TNY_MSG_HEADER_LIST_MODEL_FLAGS_COLUMN, &flags,
 			    -1);
-	
-	/* simplistic --> remove <email@address> from display */
-	addr2 = g_strstr_len (addr1, strlen(addr1), "<");
-	if (addr2) 
-		addr2[0]='\0';
 
 	g_object_set (G_OBJECT(renderer),
-		      "text", addr1,
+		      "text",    display_address (address),
 		      "weight", (flags & TNY_MSG_HEADER_FLAG_SEEN) ? 400 : 800,
 		      "style",  (flags & TNY_MSG_HEADER_FLAG_DELETED) ? PANGO_STYLE_ITALIC : PANGO_STYLE_NORMAL,
 		      NULL);
 
-	g_free (addr1);	
+	g_free (address);	
 }
 
 
@@ -254,7 +274,6 @@ compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer
 	GObject *rendobj;
 	TnyMsgHeaderFlags flags;
 	gchar *from, *subject;
-	gchar *address;
 	gchar *header;
 	time_t date;
 		
@@ -265,14 +284,12 @@ compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer
 			    TNY_MSG_HEADER_LIST_MODEL_DATE_RECEIVED_TIME_T_COLUMN, &date,   
 			    -1);
 	rendobj = G_OBJECT(renderer);		
-	
-	/* simplistic --> remove <email@address> from display */
-	address = g_strstr_len (from, strlen(from), "<");
-	if (address)
-		address[0]='\0'; /* set a new endpoint */
-	
-	header = g_strdup_printf ("%s %s\n%s", from,
-				  display_date(date), subject);
+
+	header = g_strdup_printf ("%s %s\n%s",
+				  display_address (from),
+				  display_date(date),
+				  subject);
+
 	g_object_set (G_OBJECT(renderer),
 		      "text",  header,
 		      "weight", (flags & TNY_MSG_HEADER_FLAG_SEEN) ? 400: 800,
@@ -432,6 +449,7 @@ modest_tny_header_tree_view_init (ModestTnyHeaderTreeView *obj)
 	priv = MODEST_TNY_HEADER_TREE_VIEW_GET_PRIVATE(obj); 
 
 	priv->status_id = 0;
+	priv->lock = g_mutex_new ();
 }
 
 static void
@@ -445,9 +463,16 @@ modest_tny_header_tree_view_finalize (GObject *obj)
 
 	if (priv->headers)	
 		g_object_unref (G_OBJECT(priv->headers));
+
 	
+	if (priv->lock) {
+		g_mutex_free (priv->lock);
+		priv->lock = NULL;
+	}
+
 	priv->headers = NULL;
 	priv->tny_msg_folder    = NULL;
+
 }
 
 GtkWidget*
@@ -700,7 +725,7 @@ cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 
 static void
 refresh_folder (TnyMsgFolderIface *folder, gboolean cancelled,
-				       gpointer user_data)
+		gpointer user_data)
 {
 	GtkTreeModel *oldsortable, *sortable;
 	ModestTnyHeaderTreeView *self =
@@ -721,7 +746,7 @@ refresh_folder (TnyMsgFolderIface *folder, gboolean cancelled,
 		GSList *col;
 
 		priv->headers = TNY_LIST_IFACE(tny_msg_header_list_model_new ());
-			
+ 		
 		tny_msg_folder_iface_get_headers (folder, priv->headers, FALSE);
 		tny_msg_header_list_model_set_folder (TNY_MSG_HEADER_LIST_MODEL(priv->headers),
 						      folder, TRUE); /* async */
@@ -750,7 +775,8 @@ refresh_folder (TnyMsgFolderIface *folder, gboolean cancelled,
 		gtk_tree_view_set_model (GTK_TREE_VIEW (self), sortable);
 		gtk_tree_view_set_headers_clickable (GTK_TREE_VIEW(self), TRUE);
 		/* no need to unref sortable */
-	} 
+	}
+
 }
 
 
@@ -801,12 +827,13 @@ modest_tny_header_tree_view_set_folder (ModestTnyHeaderTreeView *self,
 					TnyMsgFolderIface *folder)
 {
 	ModestTnyHeaderTreeViewPrivate *priv;
-	
-	
+		
 	g_return_val_if_fail (MODEST_IS_TNY_HEADER_TREE_VIEW (self), FALSE);
 
 	priv = MODEST_TNY_HEADER_TREE_VIEW_GET_PRIVATE(self);
-	
+
+	g_mutex_lock (priv->lock);
+
 	if (!folder)  {/* when there is no folder */
 		GtkTreeModel *model;
 		model = gtk_tree_view_get_model (GTK_TREE_VIEW(self));
@@ -821,6 +848,13 @@ modest_tny_header_tree_view_set_folder (ModestTnyHeaderTreeView *self,
 						    refresh_folder_status_update,
 						    self);
 	}
+
+	/* no message selected */
+	g_signal_emit (G_OBJECT(self), signals[MESSAGE_SELECTED_SIGNAL], 0,
+		       NULL);
+
+	g_mutex_unlock (priv->lock);
+
 	return TRUE;
 }
 
@@ -829,18 +863,23 @@ modest_tny_header_tree_view_set_folder (ModestTnyHeaderTreeView *self,
 static void
 selection_changed (GtkTreeSelection *sel, gpointer user_data)
 {
-	GtkTreeModel            *model;
-	TnyMsgHeaderIface       *header;
-	GtkTreeIter             iter;
-	ModestTnyHeaderTreeView *tree_view;
-
+	GtkTreeModel                   *model;
+	TnyMsgHeaderIface              *header;
+	GtkTreeIter                    iter;
+	ModestTnyHeaderTreeView        *self;
+	ModestTnyHeaderTreeViewPrivate *priv;
+	
 	g_return_if_fail (sel);
 	g_return_if_fail (user_data);
 	
+	self = MODEST_TNY_HEADER_TREE_VIEW (user_data);
+	priv = MODEST_TNY_HEADER_TREE_VIEW_GET_PRIVATE(self);	
+
+		
 	if (!gtk_tree_selection_get_selected (sel, &model, &iter))
 		return; /* msg was _un_selected */
-	
-	tree_view = MODEST_TNY_HEADER_TREE_VIEW (user_data);
+
+	//g_mutex_lock (priv->lock);
 	
 	gtk_tree_model_get (model, &iter,
 			    TNY_MSG_HEADER_LIST_MODEL_INSTANCE_COLUMN,
@@ -852,24 +891,27 @@ selection_changed (GtkTreeSelection *sel, gpointer user_data)
 		
 		folder = tny_msg_header_iface_get_folder (TNY_MSG_HEADER_IFACE(header));
 		if (!folder)
-			g_message ("cannot find folder");
+			g_printerr ("modest: cannot find folder\n");
 		else {
 			msg = tny_msg_folder_iface_get_message (TNY_MSG_FOLDER_IFACE(folder),
 								header);
 			if (!msg) {
-				g_message ("cannot find msg");
+				g_printerr ("modest: cannot find msg\n");
  				gtk_tree_store_remove (GTK_TREE_STORE(model), 
  						       &iter); 
 			}
 		}
 					
-		g_signal_emit (G_OBJECT(tree_view), signals[MESSAGE_SELECTED_SIGNAL], 0,
+		g_signal_emit (G_OBJECT(self), signals[MESSAGE_SELECTED_SIGNAL], 0,
 			       msg);
 
 		/* mark message as seen; _set_flags crashes, bug in tinymail? */
 		//flags = tny_msg_header_iface_get_flags (TNY_MSG_HEADER_IFACE(header));
 		//tny_msg_header_iface_set_flags (header, TNY_MSG_HEADER_FLAG_SEEN);
 	}
+
+	// g_mutex_unlock (priv->lock);
+	
 }
 
 static void
