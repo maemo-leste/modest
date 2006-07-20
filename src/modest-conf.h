@@ -108,7 +108,7 @@ gchar*       modest_conf_get_string  (ModestConf* self, const gchar* key, GError
  * (of course, -1 can also be returned in non-error cases).
  * @err gives details in case of error
  */
-int          modest_conf_get_int     (ModestConf* self, const gchar* key, GError **err);
+gint         modest_conf_get_int     (ModestConf* self, const gchar* key, GError **err);
 
 
 /** 
@@ -119,11 +119,44 @@ int          modest_conf_get_int     (ModestConf* self, const gchar* key, GError
  * 
  * get a boolean value from the configuration system
  *  
- * Returns: a boolean value with the value for the key, or -1 in case of error
- * (of course, -1 can also be returned in non-error cases).
+ * Returns: a boolean value with the value for the key, or FALSE in case of error
+ * (of course, FALSE can also be returned in non-error cases).
  * @err gives details in case of error
  */
 gboolean     modest_conf_get_bool    (ModestConf* self, const gchar* key, GError **err);
+
+
+
+/**
+ * modest_conf_get_string_or_default:
+ * @self: a ModestConf instance
+ * @key: the key of the value to retrieve
+ * @err: a GError ptr, or NULL to ignore.
+ * 
+ * get a string from the configuration system; if the value is not set,
+ * or some error occurs, return @defaultval (copied)
+ *
+ * Returns: a newly allocated string with the value for the key,
+ * or the @defaultval in case of any error
+ */
+gchar*       modest_conf_get_string_or_default  (ModestConf* self, const gchar* key,
+						 const gchar *defaultval);
+
+
+/**
+ * modest_conf_get_int_or_default:
+ * @self: a ModestConf instance
+ * @key: the key of the value to retrieve
+ * @err: a GError ptr, or NULL to ignore.
+ * 
+ * get an integer from the configuration system; if the value is not set,
+ * or some error occurs, return @defaultval.
+ * 
+ * Returns: an integer with the value for the key, or the @defaultval in case
+ * of any error
+ */
+gint          modest_conf_get_int_or_default     (ModestConf* self, const gchar* key,
+						  int defaultval);
 
 
 /**

@@ -155,13 +155,16 @@ modest_conf_finalize (GObject *obj)
 ModestConf*
 modest_conf_new (void)
 {
-	ModestConf *conf = MODEST_CONF(g_object_new(MODEST_TYPE_CONF, NULL));
+	ModestConf *conf;
+	ModestConfPrivate *priv;
+	
+	conf = MODEST_CONF(g_object_new(MODEST_TYPE_CONF, NULL));
 	if (!conf) {
 		g_printerr ("modest: failed to init ModestConf (GConf)\n");
 		return NULL;
 	}
 
-	ModestConfPrivate *priv = MODEST_CONF_GET_PRIVATE(conf);
+	priv = MODEST_CONF_GET_PRIVATE(conf);
 	if (!priv->gconf_client) {
 		g_printerr ("modest: failed to init gconf\n");
 		g_object_unref (conf);
@@ -211,6 +214,59 @@ modest_conf_get_bool (ModestConf* self, const gchar* key, GError **err)
 	
 	return gconf_client_get_bool (priv->gconf_client, key, err);
 }
+
+
+
+gchar*
+modest_conf_get_string_or_default (ModestConf* self, const gchar* key,
+				   const gchar *defaultval)
+{
+	ModestConfPrivate *priv;
+	GConfValue *val;
+	const gchar *str;
+
+	g_return_val_if_fail (self, g_strdup(defaultval));
+	g_return_val_if_fail (key,  g_strdup(defaultval));
+
+	priv = MODEST_CONF_GET_PRIVATE(self);
+	val = gconf_client_get (priv->gconf_client, key, NULL);
+
+	if (!val)
+		str = defaultval;
+	else {
+		str = gconf_value_get_string (val);
+		gconf_value_free (val);
+	}
+	
+	return g_strdup (str);
+}
+
+
+gint
+modest_conf_get_int_or_default (ModestConf* self, const gchar* key,
+				gint defaultval)
+{
+	ModestConfPrivate *priv;
+	GConfValue *val;
+	gint retval;
+	
+	g_return_val_if_fail (self, defaultval);
+	g_return_val_if_fail (key,  defaultval);
+
+	priv = MODEST_CONF_GET_PRIVATE(self);
+	val = gconf_client_get (priv->gconf_client, key, NULL);
+
+	if (!val)
+		retval = defaultval;
+	else {
+		retval = gconf_value_get_int (val);
+		gconf_value_free (val);
+	}	
+
+	return retval;
+}
+
+
 
 
 gboolean
