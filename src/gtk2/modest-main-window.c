@@ -1,9 +1,35 @@
-/* modest-main-window.c */
-
-/* insert (c)/licensing information) */
+/* Copyright (c) 2006, Nokia Corporation
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ * * Redistributions of source code must retain the above copyright
+ *   notice, this list of conditions and the following disclaimer.
+ * * Redistributions in binary form must reproduce the above copyright
+ *   notice, this list of conditions and the following disclaimer in the
+ *   documentation and/or other materials provided with the distribution.
+ * * Neither the name of the Nokia Corporation nor the names of its
+ *   contributors may be used to endorse or promote products derived from
+ *   this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+ * IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+ * PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+ * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 #include "modest-main-window.h"
-/* include other impl specific header files */
+#include "modest-account-view-window.h"
+#include "modest-msg-window.h"
 
 /* 'private'/'protected' functions */
 static void modest_main_window_class_init    (ModestMainWindowClass *klass);
@@ -27,6 +53,7 @@ struct _ModestMainWindowPrivate {
 	GtkWidget *msg_paned;
 
 	ModestWidgetFactory *widget_factory;
+	ModestConf *conf;
 	
 	ModestTnyHeaderTreeView *header_view;
 	ModestTnyFolderTreeView *folder_view;
@@ -106,66 +133,101 @@ modest_main_window_finalize (GObject *obj)
 		g_object_unref (G_OBJECT(priv->widget_factory));
 		priv->widget_factory = NULL;
 	}
-		
+
+	if (priv->conf) {
+		g_object_unref (G_OBJECT(priv->conf));
+		priv->conf = NULL;
+	}		
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
-/* Obligatory basic callback */
-static void print_hello( GtkWidget *w,
-                         gpointer   data )
+
+static void
+on_menu_about (GtkWidget *widget, gpointer data)
 {
-	g_message ("Hello, World!\n");
+	GtkWidget *about;
+
+	about = gtk_about_dialog_new ();
+	gtk_about_dialog_set_name (GTK_ABOUT_DIALOG(about), PACKAGE_NAME);
+	gtk_about_dialog_set_version (GTK_ABOUT_DIALOG(about),PACKAGE_VERSION);
+	gtk_about_dialog_set_copyright (
+		GTK_ABOUT_DIALOG(about),
+		_("Copyright (c) 2006, Nokia Corporation\n"
+		  "All rights reserved."));
+	gtk_about_dialog_set_comments (	GTK_ABOUT_DIALOG(about),
+		_("a modest e-mail client"));
+	gtk_dialog_run (GTK_DIALOG (about));
+	gtk_widget_destroy(about);
 }
 
-/* For the check button */
-static void print_toggle( gpointer   callback_data,
-                          guint      callback_action,
-                          GtkWidget *menu_item )
+
+static void
+on_menu_accounts (ModestMainWindow *self, guint action, GtkWidget *widget)
 {
-   g_message ("Check button state - %d\n",
-              GTK_CHECK_MENU_ITEM (menu_item)->active);
+	GtkWidget *account_win;
+	ModestMainWindowPrivate *priv;
+	ModestAccountMgr *account_mgr;
+
+	g_return_if_fail (widget);
+	g_return_if_fail (self);
+	
+	priv        = MODEST_MAIN_WINDOW_GET_PRIVATE(self);	
+	account_win = modest_account_view_window_new (priv->conf,
+						      priv->widget_factory);
+	gtk_widget_show (account_win);
 }
 
-/* For the radio buttons */
-static void print_selected( gpointer   callback_data,
-                            guint      callback_action,
-                            GtkWidget *menu_item )
+
+static void
+on_menu_new_message (ModestMainWindow *self, guint action, GtkWidget *widget)
 {
-   if(GTK_CHECK_MENU_ITEM(menu_item)->active)
-     g_message ("Radio button %d selected\n", callback_action);
+	GtkWidget *msg_win;
+
+	msg_win = modest_msg_window_new (MODEST_MSG_WINDOW_TYPE_NEW,
+					 NULL);
+
+	gtk_widget_show (msg_win);
 }
+
+
 
 /* Our menu, an array of GtkItemFactoryEntry structures that defines each menu item */
 static GtkItemFactoryEntry menu_items[] = {
-	{ "/_File",         NULL,         NULL,           0, "<Branch>" },
-	{ "/File/_New",     "<control>N", print_hello,    0, "<StockItem>", GTK_STOCK_NEW },
-	{ "/File/_Open",    "<control>O", print_hello,    0, "<StockItem>", GTK_STOCK_OPEN },
-	{ "/File/_Save",    "<control>S", print_hello,    0, "<StockItem>", GTK_STOCK_SAVE },
-	{ "/File/Save _As", NULL,         NULL,           0, "<Item>" },
-	{ "/File/sep1",     NULL,         NULL,           0, "<Separator>" },
-	{ "/File/_Quit",    "<CTRL>Q", gtk_main_quit, 0, "<StockItem>", GTK_STOCK_QUIT },
-	{ "/_Edit",         NULL,         NULL,           0, "<Branch>" },
-	{ "/Edit/_Undo",    "<control>Z", print_hello,    0, "<StockItem>", GTK_STOCK_UNDO },
-	{ "/Edit/_Redo",    "<shift><control>Z", print_hello,    0, "<StockItem>", GTK_STOCK_REDO },
-	{ "/File/sep1",     NULL,         NULL,           0, "<Separator>" },
+	{ "/_File",		NULL,			NULL,           0, "<Branch>" },
+	{ "/File/_New",		"<control>N",		NULL,		0, "<StockItem>", GTK_STOCK_NEW },
+	{ "/File/_Open",	"<control>O",		NULL,		0, "<StockItem>", GTK_STOCK_OPEN },
+	{ "/File/_Save",	"<control>S",		NULL,		0, "<StockItem>", GTK_STOCK_SAVE },
+	{ "/File/Save _As",	NULL,			NULL,           0, "<Item>" },
+	{ "/File/sep1",		NULL,			NULL,           0, "<Separator>" },
+	{ "/File/_Quit",	"<CTRL>Q",		gtk_main_quit,  0, "<StockItem>", GTK_STOCK_QUIT },
+
+	{ "/_Edit",		NULL,			NULL,           0, "<Branch>" },
+	{ "/Edit/_Undo",	"<CTRL>Z",		NULL,		0, "<StockItem>", GTK_STOCK_UNDO },
+	{ "/Edit/_Redo",	"<shift><CTRL>Z",	NULL,		0, "<StockItem>", GTK_STOCK_REDO },
+	{ "/File/sep1",		NULL,			NULL,           0, "<Separator>" },
+	{ "/Edit/Cut",		"<control>X",		NULL,		0, "<StockItem>", GTK_STOCK_CUT  },
+	{ "/Edit/Copy",		"<CTRL>C",		NULL,           0, "<StockItem>", GTK_STOCK_COPY },
+	{ "/Edit/Paste",	NULL,			NULL,           0, "<StockItem>", GTK_STOCK_PASTE},
+	{ "/Edit/sep1",		NULL,			NULL,           0, "<Separator>" },
+	{ "/Edit/Delete",	"<CTRL>Q",		NULL,           0, "<Item>" },
+	{ "/Edit/Select all",	"<CTRL>A",		NULL,           0, "<Item>" },
+	{ "/Edit/Deelect all",  "<Shift><CTRL>A",	NULL,           0, "<Item>" },
+
+	{ "/_Actions",                NULL,		NULL,		0, "<Branch>" },
+	{ "/Actions/_New Message",    NULL,		on_menu_new_message,		0, "<Item>" },
+	{ "/Actions/_Reply",    NULL,			NULL,		0, "<Item>" },
+	{ "/Actions/_Forward",  NULL,			NULL,		0, "<Item>" },
+	{ "/Actions/_Bounce",   NULL,			NULL,		0, "<Item>" },	
 	
-	{ "/Edit/Cut",    "<control>S", print_hello,    0, "<StockItem>", GTK_STOCK_SAVE },
-	{ "/Edit/Copy",    NULL,         NULL,           0, "<Item>" },
-	{ "/Edit/Paste",     NULL,         NULL,           0, "<Separator>" },
-	{ "/Edit/Delete",    "<CTRL>Q", gtk_main_quit, 0, "<StockItem>", GTK_STOCK_QUIT },
-	{ "/Edit/Select all",    "<CTRL>A", gtk_main_quit, 0, "<StockItem>", GTK_STOCK_QUIT },
-	{ "/Edit/Deelect all",    "<Shift><CTRL>A", gtk_main_quit, 0, "<StockItem>", GTK_STOCK_QUIT },
-	
-	{ "/_Options",      NULL,         NULL,           0, "<Branch>" },
-	{ "/Options/tear",  NULL,         NULL,           0, "<Tearoff>" },
-	{ "/Options/Check", NULL,         print_toggle,   1, "<CheckItem>" },
-	{ "/Options/sep",   NULL,         NULL,           0, "<Separator>" },
-	{ "/Options/Rad1",  NULL,         print_selected, 1, "<RadioItem>" },
-	{ "/Options/Rad2",  NULL,         print_selected, 2, "/Options/Rad1" },
-	{ "/Options/Rad3",  NULL,         print_selected, 3, "/Options/Rad1" },
-	{ "/_Help",         NULL,         NULL,           0, "<LastBranch>" },
-	{ "/_Help/About",   NULL,         NULL,           0, "<Item>" },
+	{ "/_Options",		 NULL,			NULL,		0, "<Branch>" },
+	{ "/Options/_Accounts",  NULL,			on_menu_accounts,0, "<Item>" },
+	{ "/Options/_Contacts",  NULL,			NULL,		0, "<Item>" },
+
+
+	{ "/_Help",         NULL,                       NULL,           0, "<Branch>" },
+	{ "/_Help/About",   NULL,                       on_menu_about,  0, "<StockItem>", GTK_STOCK_ABOUT},
 };
+
 static gint nmenu_items = sizeof (menu_items) / sizeof (menu_items[0]);
 
 
@@ -185,7 +247,7 @@ menubar_new (ModestMainWindow *self)
 	/* This function generates the menu items. Pass the item factory,
 	   the number of items in the array, the array itself, and any
 	   callback data for the the menu items. */
-	gtk_item_factory_create_items (item_factory, nmenu_items, menu_items, NULL);
+	gtk_item_factory_create_items (item_factory, nmenu_items, menu_items, self);
 	
 	///* Attach the new accelerator group to the window. */
 	gtk_window_add_accel_group (GTK_WINDOW (self), accel_group);
@@ -225,9 +287,100 @@ header_view_new (ModestMainWindow *self)
 }
 
 
+static void
+set_sizes (ModestMainWindow *self)
+{
+	ModestMainWindowPrivate *priv;
+
+	int win_x,win_y;
+	int fol_x,fol_pos;
+	int msg_x,msg_pos;
+	
+	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
+
+	/* size of the whole window */
+	win_x = modest_conf_get_int_or_default (priv->conf,
+						      MODEST_MAIN_WINDOW_WIDTH,
+						      MODEST_MAIN_WINDOW_WIDTH_DEFAULT);
+	win_y = modest_conf_get_int_or_default (priv->conf,
+						      MODEST_MAIN_WINDOW_HEIGHT,
+						      MODEST_MAIN_WINDOW_HEIGHT_DEFAULT);
+	gtk_window_set_default_size (GTK_WINDOW(self), win_x, win_y);
+	
+	/* size of the folder pane */
+	fol_x = modest_conf_get_int_or_default (priv->conf,
+						      MODEST_FOLDER_PANED_WIDTH,
+						      MODEST_FOLDER_PANED_WIDTH_DEFAULT);
+	fol_pos = modest_conf_get_int_or_default (priv->conf,
+							MODEST_FOLDER_PANED_DIVIDER_POS,
+							MODEST_FOLDER_PANED_DIVIDER_POS_DEFAULT);
+	if (1 > fol_x || fol_x > win_x || 1 > fol_pos || fol_pos > win_y) {
+		g_printerr ("modest: folder paned <x,pos> out of range: <%d,%d>\n",
+			    fol_x, fol_pos);
+	} else {
+		/* slightly off... */
+		gtk_widget_set_size_request (priv->folder_paned, fol_x, win_y);
+		gtk_paned_set_position (GTK_PANED(priv->folder_paned),
+					fol_pos);
+	}
+	
+	/* size of the folder pane */
+	msg_x = modest_conf_get_int_or_default (priv->conf,
+						      MODEST_MSG_PANED_WIDTH,
+						      MODEST_MSG_PANED_WIDTH_DEFAULT);
+	msg_pos = modest_conf_get_int_or_default (priv->conf,
+							MODEST_MSG_PANED_DIVIDER_POS,
+							MODEST_MSG_PANED_DIVIDER_POS_DEFAULT);
+	if (1 > msg_x || msg_x > win_x || 1 > msg_pos || msg_pos > win_y) {
+		g_printerr ("modest: msg paned <x,pos> out of range: <%d,%d>\n",
+			    msg_x, msg_pos);
+	} else {
+		/* slightly off... */
+		gtk_widget_set_size_request (priv->msg_paned,
+					     fol_x, win_y);
+		gtk_paned_set_position (GTK_PANED(priv->msg_paned),
+					msg_pos);
+	}
+}
+
+
+
+static void
+save_sizes (ModestMainWindow *self, ModestConf *conf)
+{
+	ModestMainWindowPrivate *priv;
+
+	int x,y;
+	
+	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
+
+
+}
+
+
+
+static GtkWidget*
+wrapped_in_scrolled_window (GtkWidget *widget, gboolean needs_viewport)
+{
+	GtkWidget *win;
+
+	win = gtk_scrolled_window_new (NULL, NULL);
+	gtk_scrolled_window_set_policy
+		(GTK_SCROLLED_WINDOW (win),GTK_POLICY_NEVER,
+		 GTK_POLICY_AUTOMATIC);
+	
+	if (needs_viewport)
+		gtk_scrolled_window_add_with_viewport
+			(GTK_SCROLLED_WINDOW(win), widget);
+	else
+		gtk_container_add (GTK_CONTAINER(win),
+				   widget);
+
+	return win;
+}
 
 GtkWidget*
-modest_main_window_new (ModestWidgetFactory *factory)
+modest_main_window_new (ModestWidgetFactory *factory, ModestConf *conf)
 {
 	GObject *obj;
 	ModestMainWindowPrivate *priv;
@@ -238,6 +391,7 @@ modest_main_window_new (ModestWidgetFactory *factory)
 	GtkWidget *header_win, *folder_win; 
 	
 	g_return_val_if_fail (factory, NULL);
+	g_return_val_if_fail (conf, NULL);
 
 	obj  = g_object_new(MODEST_TYPE_MAIN_WINDOW, NULL);
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(obj);
@@ -245,15 +399,18 @@ modest_main_window_new (ModestWidgetFactory *factory)
 	g_object_ref (factory);
 	priv->widget_factory = factory;
 
+	g_object_ref (conf);
+	priv->conf = conf;
+
 	/* widgets from factory */
 	priv->folder_view = modest_widget_factory_get_folder_tree_widget (factory);
 	priv->header_view = header_view_new (MODEST_MAIN_WINDOW(obj));
 	priv->msg_preview = modest_widget_factory_get_msg_preview_widget (factory);
-	folder_win = gtk_scrolled_window_new (NULL,NULL);
-	gtk_container_add (GTK_CONTAINER(folder_win), GTK_WIDGET(priv->folder_view));
-	header_win = gtk_scrolled_window_new (NULL,NULL);
-	gtk_container_add (GTK_CONTAINER(header_win), GTK_WIDGET(priv->header_view));
-			   
+
+	folder_win = wrapped_in_scrolled_window (GTK_WIDGET(priv->folder_view),
+						 FALSE);
+	header_win = wrapped_in_scrolled_window (GTK_WIDGET(priv->header_view),
+						 FALSE);			   
 	/* tool/menubar */
 	priv->menubar = menubar_new (MODEST_MAIN_WINDOW(obj));
 	priv->toolbar = gtk_toolbar_new ();
@@ -264,7 +421,8 @@ modest_main_window_new (ModestWidgetFactory *factory)
 	main_paned = gtk_hpaned_new ();
 	gtk_paned_add1 (GTK_PANED(main_paned), priv->folder_paned);
 	gtk_paned_add2 (GTK_PANED(main_paned), priv->msg_paned);
-	gtk_paned_add1 (GTK_PANED(priv->folder_paned), gtk_label_new ("Favourites"));
+	gtk_paned_add1 (GTK_PANED(priv->folder_paned),
+			gtk_label_new (_("Favorites")));
 	gtk_paned_add2 (GTK_PANED(priv->folder_paned), folder_win);
 	gtk_paned_add1 (GTK_PANED(priv->msg_paned), header_win);
 	gtk_paned_add2 (GTK_PANED(priv->msg_paned), GTK_WIDGET(priv->msg_preview));
@@ -275,9 +433,8 @@ modest_main_window_new (ModestWidgetFactory *factory)
 	priv->status_bar   = gtk_statusbar_new ();
 	priv->progress_bar = gtk_progress_bar_new ();
 	status_hbox = gtk_hbox_new (TRUE, 5);
-	gtk_box_pack_start (GTK_BOX(status_hbox), priv->status_bar, FALSE, TRUE, 5);
 	gtk_box_pack_start (GTK_BOX(status_hbox), priv->progress_bar, FALSE, TRUE, 5);
-
+	gtk_box_pack_start (GTK_BOX(status_hbox), priv->status_bar, FALSE, TRUE, 5);
 	
 	/* putting it all together... */
 	main_vbox = gtk_vbox_new (FALSE, 2);
@@ -289,8 +446,8 @@ modest_main_window_new (ModestWidgetFactory *factory)
 	gtk_container_add (GTK_CONTAINER(obj), main_vbox);
 	gtk_widget_show_all (main_vbox);
 	
-	gtk_window_set_title (GTK_WINDOW(obj), "modest");
-	gtk_window_set_default_size (GTK_WINDOW(obj), 800, 600);
-	
+	gtk_window_set_title (GTK_WINDOW(obj), "Modest");
+
+	set_sizes (MODEST_MAIN_WINDOW(obj));	
 	return GTK_WIDGET(obj);
 }

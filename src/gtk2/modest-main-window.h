@@ -5,7 +5,12 @@
 #define __MODEST_MAIN_WINDOW_H__
 
 #include <gtk/gtkwindow.h>
-#include "../modest-widget-factory.h"
+#include <glib/gi18n.h>
+#include <modest-widget-factory.h>
+
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif /*HAVE_CONFIG_H*/
 
 G_BEGIN_DECLS
 
@@ -36,7 +41,7 @@ GType        modest_main_window_get_type    (void) G_GNUC_CONST;
 
 /* typical parameter-less _new function */
 /* if this is a kind of GtkWidget, it should probably return at GtkWidget* */
-GtkWidget*   modest_main_window_new         (ModestWidgetFactory *factory);
+GtkWidget*   modest_main_window_new         (ModestWidgetFactory *factory, ModestConf *conf);
 
 G_END_DECLS
 

@@ -181,7 +181,8 @@ modest_ui_new (ModestConf *modest_conf)
 		return NULL;
         }
 
-	priv->widget_factory = modest_widget_factory_new (priv->account_store, TRUE);
+	priv->widget_factory = modest_widget_factory_new (
+		priv->conf, priv->account_store, priv->account_mgr, TRUE);
 	if (!priv->account_store) {
 		g_printerr ("modest: could not initialize widget factory\n");
 		return NULL;
@@ -200,7 +201,7 @@ modest_ui_main_window (ModestUI *modest_ui)
 	g_return_val_if_fail (modest_ui, NULL);
 	priv = MODEST_UI_GET_PRIVATE(modest_ui);
 
-	win = modest_main_window_new (priv->widget_factory);
+	win = modest_main_window_new (priv->widget_factory, priv->conf);
 	if (!win)
 		g_printerr ("modest: could not create main window\n");
 

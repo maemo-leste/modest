@@ -1,6 +1,6 @@
 #
 # Makefile.am
-# Time-stamp: <2006-07-14 12:43:36 (djcb)>
+# Time-stamp: <2006-07-20 15:52:05 (djcb)>
 #
 #
 # use Automake 'trick' ==> convenience static libraries, which
@@ -9,6 +9,7 @@
 INCLUDES=\
 	$(MODEST_GSTUFF_CFLAGS) \
 	$(MODEST_LIBTINYMAIL_GNOME_DESKTOP_CFLAGS) \
+	-I ${top_srcdir}/src
 	-DPREFIX=\"@prefix@\" \
 	-Wall
 
@@ -18,11 +19,17 @@ noinst_LTLIBRARIES=\
 PIXMAP_FILES=\
 	pixmaps/*.png
 
-libmodest_ui_la_SOURCES=\
-	modest-ui.c\
-	modest-icon-names.h\
-	modest-main-window.h\
-	modest-main-window.c
+libmodest_ui_la_SOURCES=              \
+	modest-ui.c                   \
+	modest-icon-names.h           \
+	modest-main-window.h          \
+	modest-main-window.c          \
+	modest-account-view-window.c  \
+	modest-account-view-window.h  \
+	modest-account-wizard.c       \
+	modest-account-wizard.h       \
+	modest-msg-window.c           \
+	modest-msg-window.h
 
 LDADD = \
 	$(MODEST_GSTUFF_LIBS) \
