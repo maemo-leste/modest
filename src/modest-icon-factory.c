@@ -53,8 +53,8 @@ void
 modest_icon_factory_init   (void)
 {
 	if (icon_hash) {
-		g_warning ("modest_icon_factory_init "
-			   "should be called only once");
+		g_printerr ("modest: modest_icon_factory_init " 
+			    "should be called only once\n");
 		return;
 	}
 
@@ -69,9 +69,9 @@ void
 modest_icon_factory_uninit (void)
 {
 	if (!icon_hash) {
-		g_warning ("modest_icon_factory_uninit "
+		g_printerr ("modest: modest_icon_factory_uninit "
 			   "must only be called with initialized "
-			   "ModestIconFactories");
+			   "ModestIconFactories\n");
 		return;
 	}
 
@@ -89,7 +89,7 @@ modest_icon_factory_get_icon (const gchar *name)
 	gpointer orig_key;
 	
 	if (!icon_hash) {
-		g_warning ("ModestIconFactory must be initialized first");
+		g_printerr ("modest: ModestIconFactory must be initialized first\n");
 		return NULL;
 	}
 
@@ -100,7 +100,7 @@ modest_icon_factory_get_icon (const gchar *name)
 					   (gpointer*)&pixbuf)) {
 		pixbuf = gdk_pixbuf_new_from_file (name, &err);
 		if (!pixbuf) {
-			g_warning (err->message);
+			g_printerr ("modest: error in icon factory: %s\n", err->message);
 			g_error_free (err);
 		}
 		/* if we cannot find it, we still insert, so we get the error
