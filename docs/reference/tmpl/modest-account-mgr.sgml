@@ -55,6 +55,7 @@ abstraction of the configuration backend used to store the account data.
 
 @self: 
 @name: 
+@server_account: 
 @err: 
 @Returns: 
 
@@ -73,17 +74,6 @@ abstraction of the configuration backend used to store the account data.
 @Returns: 
 
 
-<!-- ##### FUNCTION modest_account_mgr_remove_server_account ##### -->
-<para>
-
-</para>
-
-@self: 
-@name: 
-@err: 
-@Returns: 
-
-
 <!-- ##### FUNCTION modest_account_mgr_account_names ##### -->
 <para>
 
@@ -94,19 +84,6 @@ abstraction of the configuration backend used to store the account data.
 @Returns: 
 
 
-<!-- ##### FUNCTION modest_account_mgr_server_account_names ##### -->
-<para>
-
-</para>
-
-@self: 
-@account_name: 
-@type: 
-@proto: 
-@only_enabled: 
-@Returns: 
-
-
 <!-- ##### FUNCTION modest_account_mgr_account_exists ##### -->
 <para>
 
@@ -114,166 +91,8 @@ abstraction of the configuration backend used to store the account data.
 
 @self: 
 @name: 
+@server_account: 
 @err: 
 @Returns: 
 
 
-<!-- ##### FUNCTION modest_account_mgr_server_account_exists ##### -->
-<para>
-
-</para>
-
-@self: 
-@name: 
-@err: 
-@Returns: 
-
-
-<!-- ##### FUNCTION modest_account_mgr_get_account_string ##### -->
-<para>
-
-</para>
-
-@self: 
-@name: 
-@key: 
-@err: 
-@Returns: 
-
-
-<!-- ##### FUNCTION modest_account_mgr_get_server_account_string ##### -->
-<para>
-
-</para>
-
-@self: 
-@name: 
-@key: 
-@err: 
-@Returns: 
-
-
-<!-- ##### FUNCTION modest_account_mgr_get_account_int ##### -->
-<para>
-
-</para>
-
-@self: 
-@name: 
-@key: 
-@err: 
-@Returns: 
-
-
-<!-- ##### FUNCTION modest_account_mgr_get_server_account_int ##### -->
-<para>
-
-</para>
-
-@self: 
-@name: 
-@key: 
-@err: 
-@Returns: 
-
-
-<!-- ##### FUNCTION modest_account_mgr_get_account_bool ##### -->
-<para>
-
-</para>
-
-@self: 
-@name: 
-@key: 
-@err: 
-@Returns: 
-
-
-<!-- ##### FUNCTION modest_account_mgr_get_server_account_bool ##### -->
-<para>
-
-</para>
-
-@self: 
-@name: 
-@key: 
-@err: 
-@Returns: 
-
-
-<!-- ##### FUNCTION modest_account_mgr_set_account_string ##### -->
-<para>
-
-</para>
-
-@self: 
-@name: 
-@key: 
-@val: 
-@err: 
-@Returns: 
-
-
-<!-- ##### FUNCTION modest_account_mgr_set_server_account_string ##### -->
-<para>
-
-</para>
-
-@self: 
-@name: 
-@key: 
-@val: 
-@err: 
-@Returns: 
-
-
-<!-- ##### FUNCTION modest_account_mgr_set_account_int ##### -->
-<para>
-
-</para>
-
-@self: 
-@name: 
-@key: 
-@val: 
-@err: 
-@Returns: 
-
-
-<!-- ##### FUNCTION modest_account_mgr_set_server_account_int ##### -->
-<para>
-
-</para>
-
-@self: 
-@name: 
-@key: 
-@val: 
-@err: 
-@Returns: 
-
-
-<!-- ##### FUNCTION modest_account_mgr_set_account_bool ##### -->
-<para>
-
-</para>
-
-@self: 
-@name: 
-@key: 
-@val: 
-@err: 
-@Returns: 
-
-
-<!-- ##### FUNCTION modest_account_mgr_set_server_account_bool ##### -->
-<para>
-
-</para>
-
-@self: 
-@name: 
-@key: 
-@val: 
-@err: 
-@Returns:

@@ -1,15 +1,13 @@
 <?xml version="1.0"?>
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" 
-               "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+          "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
 <book id="index" xmlns:xi="http://www.w3.org/2003/XInclude">
-
-  <copyright>
-  <year>2006</year>
-  <holder>Nokia Corporation</holder>
-  </copyright>
-
   <bookinfo>
     <title>modest technical documentation</title>
+    <copyright>
+      <year>2006</year>
+      <holder>Nokia Corporation</holder>
+    </copyright>
   </bookinfo>
 
   <preface>
@@ -42,21 +40,21 @@
     </para>
     
     <para>To summarize the goals for <application>modest</application>:
-    <itemizedlist>
-      <listitem>target devices with limited amounts of memory ('limited' in 2006
-	terms means less than 64Mb, and of which only part can be used for
-	e-mail);</listitem>
-      <listitem>target Linux/Unix-like environments with GLib/GTK+-based
-      support;</listitem>
-      <listitem>support multiple user-interface (UIs) with as much code
-	sharing as possible between the different UIs.</listitem>
+      <itemizedlist>
+	<listitem>target devices with limited amounts of memory ('limited' in 2006
+	  terms means less than 64Mb, and of which only part can be used for
+	  e-mail);</listitem>
+	<listitem>target Linux/Unix-like environments with GLib/GTK+-based
+	  support;</listitem>
+	<listitem>support multiple user-interface (UIs) with as much code
+	  sharing as possible between the different UIs.</listitem>
     </itemizedlist></para>
     
     <para>Like <application>tinymail</application>
-    and <application>libcamel</application>, <application>modest</application>
-    is programmed in C, using the <package>GObject</package>-system for
-    object-oriented (OO) features. For now, it specifically targets \gtk based
-    UIs (and derivatives like 'Hildon').</para>
+      and <application>libcamel</application>, <application>modest</application>
+      is programmed in C, using the <package>GObject</package>-system for
+      object-oriented (OO) features. For now, it specifically targets \gtk based
+      UIs (and derivatives like 'Hildon').</para>
 
   </preface>
 
@@ -73,14 +71,14 @@
 	For <application>modest</application>, the following:
 	<itemizedlist>
 	  <listitem><application>modest</application> is a e-mail program
-	  using the <package>tinymail</package> and <package>camel</package>
-	  libraries;</listitem>
+	    using the <package>tinymail</package> and <package>camel</package>
+	    libraries;</listitem>
 	  <listitem><application>modest</application> targets gtk and
 	    gconf-based user-interfaces, including the Hildon
 	    environment;</listitem>
 	  <listitem><application>modest</application> main use-case is in
 	    small, mobile device such as the <productname>Nokia 770 Internet
-	    Tablet</productname>;</listitem>
+	      Tablet</productname>;</listitem>
 	  <listitem>However, effort is made also to
 	    make <application>modest</application> usable as a general-purpose
 	    e-mail client on normal desktop computer.</listitem>
@@ -88,14 +86,15 @@
       </para>
     </partintro>
   </part>
-      
+  
   <part>
     <title>Design</title>
     <partintro>
       <para>In this part, we'll discuss the design of various parts of
 	<application>modest</application>. We'll not go into the details of
-	various APIs in this chapter.  Please consul the documentation generated
-	from the source code (<systemitem>gtk-doc</systemitem>) for that.</para>
+	various APIs in this chapter.  Please consult the documentation generated
+	from the source code (<systemitem>gtk-doc</systemitem>) for that.
+      </para>
     </partintro>
     
     <chapter>
@@ -145,9 +144,9 @@
 	  <listitem>An <emphasis>account</emphasis> is a named entity
 	    consisting of a <emphasis>store</emphasis> and
 	    a <emphasis>transport</emphasis>. Note: For our mobile use-cases,
-	      the <emphasis>transport</emphasis> cannot be a static entity, but
-	      may depend on the network connection. That is however not part of
-	      Account Management, so not discussed here</listitem>
+	    the <emphasis>transport</emphasis> cannot be a static entity, but
+	    may depend on the network connection. That is however not part of
+	    Account Management, so not discussed here</listitem>
 	  <listitem>A <emphasis>server account</emphasis> is account
 	    describing the connection with a specific server. Server accounts
 	    come in two type:
@@ -161,7 +160,7 @@
 	  </listitem>
 	</itemizedlist>
       </sect1>
-	      
+      
       <sect1>
 	<title>Code</title>
 	<para>The functions to deal with account and server accounts are
@@ -223,53 +222,47 @@
 	  over all smtp-servers and find the right one.
 	</para>
       </sect1>
-    </chapter>
-
-    <sec1>
-      <title>Account Management and Tinymail</title>
-      <para>
-	Tinymail needs the information about all configured accounts - and the
-	mechanism that it uses for that
-	is <interface>TnyAccountStoreIface</interface>. We don't want to use
-	the tinymail-provided <classname>TnyAccountStore</classname>, but
-	provide our own implementation
-	instead: <classname>ModestTnyAccountStore</classname>. This class
-	implements the <interface>TnyAccountStoreIface</interface>-interace in
-	terms of the aforementioned <classname>ModestAccountMgr</classname>.
-      </para>
       
+      <sect1>
+	<title>Account Management and Tinymail</title>
+	<para>
+	  Tinymail needs the information about all configured accounts - and the
+	  mechanism that it uses for that
+	  is <interface>TnyAccountStoreIface</interface>. We don't want to use
+	  the tinymail-provided <classname>TnyAccountStore</classname>, but
+	  provide our own implementation
+	  instead: <classname>ModestTnyAccountStore</classname>. This class
+	  implements the <interface>TnyAccountStoreIface</interface>-interace in
+	  terms of the aforementioned <classname>ModestAccountMgr</classname>.
+	</para>
+	
+	<para>
+	  One unexpected function
+	  that  <classname>ModestTnyAccountStore</classname> needs to implement
+	  is <symbol>tny account_store get_session</symbol> (to get the
+	  Camel-session). This function must be provided as a public function,
+	  with that exact name.
+	</para>
+      </sect1>
+    </chapter>
+    
+    <chapter>
+      <title>Finding the right transport</title>
       <para>
-	One unexpected function
-	that  <classname>ModestTnyAccountStore</classname> needs to implement
-	is <symbol>tny account_store get_session</symbol> (to get the
-	Camel-session). This function must be provided as a public function,
-	with that exact name.
+	One of the interesting topics in designing a mobile e-mail client is
+	to deal with transports (in
+	particular, <acronym>SMTP</acronym>). The reason for that is that
+	the majority of <acronym>SMTP</acronym>-servers only allow e-mail
+	from the same network. That means that for example <systemitem>
+	  smtp.some-isp.com</systemitem> will only accept mail from
+	(<command>MAIL FROM:</command>) <systemitem>
+	  user@some-isp.com</systemitem>, and refuse mail
+	from <systemitem>user@some-other-isp.com</systemitem>, unless the
+	recipient (<command>RCPT TO:</command>) is on the same network.
       </para>
-    </sec1>
-  </chapter>
-  
-  
-  
-
-  <chapter>
-    <title>Finding the right transport</title>
-    <para>
-      One of the interesting topics in designing a mobile e-mail client is
-      to deal with transports (in
-      particular, <acronym>SMTP</acronym>). The reason for that is that
-      the majority of <acronym>SMTP</acronym>-servers only allow e-mail
-      from the same network. That means that for example <systemitem>
-	smtp.some-isp.com</systemitem> will only accept mail from
-      (<command>MAIL FROM:</command>) <systemitem>
-	user@some-isp.com</systemitem>, and refuse mail
-      from <systemitem>user@some-other-isp.com</systemitem>, unless the
-      recipient (<command>RCPT TO:</command>) is on the same network.
-    </para>
-  </chapter>
+    </chapter>
   </part>
   
-
-
   <chapter>
     <title>Coding guidelines</title>
     <para>
@@ -281,14 +274,14 @@
     <para>
       Here are only some additional notes.
     </para>
-
+    
     <para>
       Your editor may help you with this, for example for <application>emacs</application>:
       <programlisting>
-      (c-set-style "K&amp;R")
-      (setq tab-width 8)
-      (setq indent-tabs-mode t)
-      (setq c-basic-offset 8)
+	(c-set-style "K&amp;R")
+	(setq tab-width 8)
+	(setq indent-tabs-mode t)
+	(setq c-basic-offset 8)
       </programlisting>
       
       Or the equivalent in your favourite editor.
@@ -297,15 +290,15 @@
     <para>
       Lines must not exceed 100 characters.
     </para>
-
+    
     <para>
       Functions should do one thing, and do it well. In general, functions
       should not be much longer than 20-30 lines (except for, say, handling
       many different cases in a 'switch'-statement). Files should not get to
-      big either; if there's more than, say, 800 lines, it probably shows the
-      codes needs to be refactored a bit.
+      big either; if there are more than, say, 800 lines, it's a sign that
+      some refactoring should take place.
     </para>
-      
+    
     <para>
       Code should compile cleanly
       with <command>gcc</command>'s <symbol>-Wall</symbol> compile option. Of
@@ -313,35 +306,35 @@
       libraries and/or compiler version. Therefore, do not
       include <symbol>-Werror</symbol> in the standard compile options.
     </para>
-
-    <para>Global functions (the ones in <filename>.h</filename>-files) should
-      be commented using
-      <systemitem>gtk-doc</systemitem>.
+    
+    <para>Global functions (the ones in <filename>.h</filename>-files) must
+      be commented using <systemitem>gtk-doc</systemitem>. This way, we
+      generate nice documentation. After installing
+      (under <filename>/usr/local</filename>), we can browse the results
+      with <application>DevHelp</application>. Just
+      add <systemitem>/usr/local/share/gtk-doc/html</systemitem> to the
+      <systemitem>DEVHELP_SEARCH_PATH</systemitem>-environment variable.  
     </para>
-    
-    
-    
-
     <para>
-	Furthermore, please follow 'conventional wisdom' for programming with 
-	GLib/GTK+/GObject. Some things to remember:
-	<itemizedlist>
-	  <listitem> <function>g_new</function>, <function>g_malloc</function> and
-	    friends <emphasis>never</emphasis> return <function>NULL</function>. They terminate
-	    the application if it happens (normally).  No need to check
-	    for <function>NULL</function> returns;</listitem>
-	  <listitem> <function>g_return_if_fail</function> and friends may be
-	    'turned off', ie. they are to be used for error checking,
-	    but <emphasis>not</emphasis> for your programming logic
-	  </listitem>
-	</itemizedlist>
+      Furthermore, please follow 'conventional wisdom' for programming with 
+      GLib/GTK+/GObject. Some things to remember:
+      <itemizedlist>
+	<listitem> <function>g_new</function>, <function>g_malloc</function> and
+	  friends <emphasis>never</emphasis> return <function>NULL</function>. They terminate
+	  the application if it happens (normally).  No need to check
+	  for <function>NULL</function> returns;</listitem>
+	<listitem> <function>g_return_if_fail</function> and friends may be
+	  'turned off', ie. they are to be used for error checking,
+	  but <emphasis>not</emphasis> for your programming logic
+	</listitem>
+      </itemizedlist>
     </para>
   </chapter>
   
   <chapter>
     <title>Object Index</title>
   </chapter>
-	
+  
   <chapter>
     <title>API Reference</title>
     <xi:include href="xml/modest-ui.xml"/>

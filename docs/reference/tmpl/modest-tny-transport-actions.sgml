@@ -45,6 +45,7 @@ ModestTnyTransportActions
 @bcc: 
 @subject: 
 @body: 
+@attachments_list: 
 @Returns: 
 
 

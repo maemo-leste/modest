@@ -1,0 +1,264 @@
+<!-- ##### MACRO MODEST_CONF_EDIT_WINDOW_HEIGHT ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### MACRO MODEST_CONF_EDIT_WINDOW_HEIGHT_DEFAULT ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### MACRO MODEST_CONF_EDIT_WINDOW_WIDTH ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### MACRO MODEST_CONF_EDIT_WINDOW_WIDTH_DEFAULT ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### MACRO MODEST_CONF_EXT_EDITOR ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### MACRO MODEST_CONF_MAIN_WINDOW_HEIGHT ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### MACRO MODEST_CONF_MAIN_WINDOW_HEIGHT_DEFAULT ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### MACRO MODEST_CONF_MAIN_WINDOW_WIDTH ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### MACRO MODEST_CONF_MAIN_WINDOW_WIDTH_DEFAULT ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### MACRO MODEST_CONF_USE_EXT_EDITOR ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### STRUCT ModestEditWindow ##### -->
+<para>
+
+</para>
+
+@parent: 
+
+<!-- ##### FUNCTION modest_account_mgr_get_account_bool ##### -->
+<para>
+
+</para>
+
+@self: 
+@name: 
+@key: 
+@err: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_account_mgr_get_account_int ##### -->
+<para>
+
+</para>
+
+@self: 
+@name: 
+@key: 
+@err: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_account_mgr_get_account_string ##### -->
+<para>
+
+</para>
+
+@self: 
+@name: 
+@key: 
+@err: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_account_mgr_get_server_account_bool ##### -->
+<para>
+
+</para>
+
+@self: 
+@name: 
+@key: 
+@err: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_account_mgr_get_server_account_int ##### -->
+<para>
+
+</para>
+
+@self: 
+@name: 
+@key: 
+@err: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_account_mgr_get_server_account_string ##### -->
+<para>
+
+</para>
+
+@self: 
+@name: 
+@key: 
+@err: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_account_mgr_remove_server_account ##### -->
+<para>
+
+</para>
+
+@self: 
+@name: 
+@err: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_account_mgr_server_account_exists ##### -->
+<para>
+
+</para>
+
+@self: 
+@name: 
+@err: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_account_mgr_server_account_names ##### -->
+<para>
+
+</para>
+
+@self: 
+@account_name: 
+@type: 
+@proto: 
+@only_enabled: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_account_mgr_set_account_bool ##### -->
+<para>
+
+</para>
+
+@self: 
+@name: 
+@key: 
+@val: 
+@err: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_account_mgr_set_account_int ##### -->
+<para>
+
+</para>
+
+@self: 
+@name: 
+@key: 
+@val: 
+@err: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_account_mgr_set_account_string ##### -->
+<para>
+
+</para>
+
+@self: 
+@name: 
+@key: 
+@val: 
+@err: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_account_mgr_set_server_account_bool ##### -->
+<para>
+
+</para>
+
+@self: 
+@name: 
+@key: 
+@val: 
+@err: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_account_mgr_set_server_account_int ##### -->
+<para>
+
+</para>
+
+@self: 
+@name: 
+@key: 
+@val: 
+@err: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_account_mgr_set_server_account_string ##### -->
+<para>
+
+</para>
+
+@self: 
+@name: 
+@key: 
+@val: 
+@err: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_edit_window_new ##### -->
+<para>
+
+</para>
+
+@to: 
+@cc: 
+@bcc: 
+@subject: 
+@body: 
+@attachments: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_ui_show_edit_window ##### -->
+<para>
+
+</para>
+
+@ui: 
+@to: 
+@cc: 
+@bcc: 
+@subject: 
+@body: 
+@att: 
+@Returns: 
+

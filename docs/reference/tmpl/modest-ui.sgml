@@ -2,7 +2,7 @@
 ModestUI
 
 <!-- ##### SECTION Short_Description ##### -->
-
+Abstraction for Modest user interfaces (GTK, Hildon, ...)
 
 <!-- ##### SECTION Long_Description ##### -->
 <para>
@@ -39,21 +39,6 @@ ModestUI
 </para>
 
 @ui: 
-@Returns: 
-
-
-<!-- ##### FUNCTION modest_ui_show_edit_window ##### -->
-<para>
-
-</para>
-
-@ui: 
-@to: 
-@cc: 
-@bcc: 
-@subject: 
-@body: 
-@att: 
 @Returns: 
 
 
