@@ -31,11 +31,13 @@
 #define __MODEST_WIDGET_FACTORY_H__
 
 #include <glib-object.h>
-#include "../modest-account-mgr.h"
-#include "../modest-tny-account-store.h"
-#include "../modest-tny-header-tree-view.h"
-#include "../modest-tny-folder-tree-view.h"
-#include "../modest-tny-msg-view.h"
+#include "modest-account-mgr.h"
+#include "modest-tny-account-store.h"
+#include "modest-tny-header-tree-view.h"
+#include "modest-tny-folder-tree-view.h"
+#include "modest-tny-msg-view.h"
+#include "modest-account-view.h"
+
 
 G_BEGIN_DECLS
 
@@ -73,6 +75,8 @@ GType        modest_widget_factory_get_type    (void) G_GNUC_CONST;
 
 /**
  * modest_widget_factory_new
+ * @conf: a modest conf instance
+ * @acc_store: a modest account store instance
  * @acc_mgr: a modest account mgr instance
  * @autoconnect: should we autoconnect the widgets (ie. depedent widgets are update
  * automagically)
@@ -81,9 +85,10 @@ GType        modest_widget_factory_get_type    (void) G_GNUC_CONST;
  *
  * Returns: a new ModestWidgetFactory, or NULL in case of error
  */
-ModestWidgetFactory*                  modest_widget_factory_new   (ModestTnyAccountStore *acc_store,
-								   gboolean autoconnect);
-
+ModestWidgetFactory*      modest_widget_factory_new   (ModestConf *conf,
+						       ModestTnyAccountStore *acc_store,
+						       ModestAccountMgr *account_mgr,
+						       gboolean auto_connect);
 /**
  * modest_widget_factory_get_folder_tree_widget
  * @self: a ModestWidgetFactory instance
@@ -124,6 +129,24 @@ ModestTnyHeaderTreeView*    modest_widget_factory_get_header_tree_widget (Modest
  * Returns: a header tree view, or NULL in case of error
  */
 ModestTnyMsgView*           modest_widget_factory_get_msg_preview_widget (ModestWidgetFactory *self);
+
+
+
+/**
+ * modest_widget_factory_get_account_view_widget
+ * @self: a ModestWidgetFactory instance
+ * 
+ * return an account view widget (ie. the widget that shows a list of accounts)
+ *
+ * This factory will always return the
+ * same widget, and takes care of its lifetime - users should *not* destroy it.
+ *
+ * Returns: the account view, or NULL in case of error
+ */
+ModestAccountView*    modest_widget_factory_get_account_view_widget (ModestWidgetFactory *self);
+
+
+
 
 
 G_END_DECLS

@@ -35,7 +35,6 @@ static void modest_widget_factory_class_init    (ModestWidgetFactoryClass *klass
 static void modest_widget_factory_init          (ModestWidgetFactory *obj);
 static void modest_widget_factory_finalize      (GObject *obj);
 
-static void connect_widgets (ModestWidgetFactory *self);
 static void on_folder_clicked (ModestTnyFolderTreeView *folder_view, TnyMsgFolderIface *folder,
 			       ModestWidgetFactory *self);
 static void on_message_selected (ModestTnyFolderTreeView *folder_view, TnyMsgIface *msg,
@@ -50,11 +49,17 @@ enum {
 
 typedef struct _ModestWidgetFactoryPrivate ModestWidgetFactoryPrivate;
 struct _ModestWidgetFactoryPrivate {
-
+	
+	ModestTnyAccountStore *account_store;
+	ModestAccountMgr      *account_mgr;
+	ModestConf            *conf;
+	
 	ModestTnyHeaderTreeView *header_view;
 	ModestTnyFolderTreeView *folder_view;
 	ModestTnyMsgView        *msg_preview;
-	
+	ModestAccountView       *account_view;
+
+	gboolean		auto_connect;
 };
 #define MODEST_WIDGET_FACTORY_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                    MODEST_TYPE_WIDGET_FACTORY, \
@@ -110,55 +115,63 @@ modest_widget_factory_class_init (ModestWidgetFactoryClass *klass)
 static void
 modest_widget_factory_init (ModestWidgetFactory *obj)
 {
+	ModestWidgetFactoryPrivate *priv;
+	priv = MODEST_WIDGET_FACTORY_GET_PRIVATE(obj);
 
+	priv->conf          = NULL;
+	priv->account_mgr   = NULL;
+	priv->account_store = NULL;
 }
 
 static void
 modest_widget_factory_finalize (GObject *obj)
 {
+	ModestWidgetFactoryPrivate *priv;
+	priv = MODEST_WIDGET_FACTORY_GET_PRIVATE(obj);
 
+	if (priv->account_mgr) {
+		g_object_unref (G_OBJECT(priv->account_mgr));
+		priv->account_mgr = NULL;
+	}
+
+	if (priv->conf) {
+		g_object_unref (G_OBJECT(priv->conf));
+		priv->conf = NULL;
+	}
+
+	if (priv->account_store) {
+		g_object_unref (G_OBJECT(priv->account_store));
+		priv->account_store = NULL;
+	}
 }
 
 ModestWidgetFactory*
-modest_widget_factory_new (ModestTnyAccountStore *account_store, gboolean autoconnect)
+modest_widget_factory_new (ModestConf *conf,
+			   ModestTnyAccountStore *account_store,
+			   ModestAccountMgr *account_mgr,
+			   gboolean auto_connect)
 {
 	GObject *obj;
 	ModestWidgetFactoryPrivate *priv;
 
 	g_return_val_if_fail (account_store, NULL);
-
+	g_return_val_if_fail (account_mgr, NULL);
+	g_return_val_if_fail (conf, NULL);
+	
 	obj  = g_object_new(MODEST_TYPE_WIDGET_FACTORY, NULL);	
 	priv = MODEST_WIDGET_FACTORY_GET_PRIVATE(obj);
 
-	priv->folder_view =
-		MODEST_TNY_FOLDER_TREE_VIEW(modest_tny_folder_tree_view_new
-					    (TNY_ACCOUNT_STORE_IFACE(account_store)));
-	if (!priv->folder_view) {
-		g_printerr ("modest: cannot instantiate folder view\n");
-		g_object_unref (obj);
-		return NULL;
-	}
+	priv->auto_connect = auto_connect;
+
+	g_object_ref (G_OBJECT(conf));
+	priv->conf = conf;
 	
-	priv->header_view =
-		MODEST_TNY_HEADER_TREE_VIEW(modest_tny_header_tree_view_new
-					    (NULL, NULL, MODEST_TNY_HEADER_TREE_VIEW_STYLE_NORMAL));
-	if (!priv->header_view) {
-		g_printerr ("modest: cannot instantiate header view\n");
-		g_object_unref (obj);
-		return NULL;
-	}
+	g_object_ref (G_OBJECT(account_mgr));
+	priv->account_mgr = account_mgr;
 
-	priv->msg_preview =
-		MODEST_TNY_MSG_VIEW(modest_tny_msg_view_new (NULL));
-	if (!priv->msg_preview) {
-		g_printerr ("modest: cannot instantiate msg preview\n");
-		g_object_unref (obj);
-		return NULL;
-	}
-
-	if (autoconnect)
-		connect_widgets (MODEST_WIDGET_FACTORY(obj));
-
+	g_object_ref (G_OBJECT(account_store));
+	priv->account_store = account_store;
+	
 	return MODEST_WIDGET_FACTORY(obj);
 }
 
@@ -168,53 +181,72 @@ modest_widget_factory_new (ModestTnyAccountStore *account_store, gboolean autoco
 ModestTnyFolderTreeView*
 modest_widget_factory_get_folder_tree_widget (ModestWidgetFactory *self)
 {
+	ModestWidgetFactoryPrivate *priv;
+	
 	g_return_val_if_fail (self, NULL);
 
-	return MODEST_WIDGET_FACTORY_GET_PRIVATE(self)->folder_view;
+	priv = MODEST_WIDGET_FACTORY_GET_PRIVATE(self);
+
+	if (!priv->folder_view) {
+		priv->folder_view =
+			MODEST_TNY_FOLDER_TREE_VIEW(modest_tny_folder_tree_view_new
+						    (TNY_ACCOUNT_STORE_IFACE(priv->account_store)));
+		if (priv->folder_view && priv->auto_connect)
+			g_signal_connect (G_OBJECT(priv->folder_view), "folder_selected",
+					  G_CALLBACK(on_folder_clicked), self);
+	}
+		
+	if (!priv->folder_view)
+		g_printerr ("modest: cannot instantiate folder view\n");
 	
+	return priv->folder_view;
 }
 
 
 ModestTnyHeaderTreeView*
 modest_widget_factory_get_header_tree_widget (ModestWidgetFactory *self)
 {
-	g_return_val_if_fail (self, NULL);
+	ModestWidgetFactoryPrivate *priv;
 	
-	return MODEST_WIDGET_FACTORY_GET_PRIVATE(self)->header_view;
+	g_return_val_if_fail (self, NULL);
+
+	priv = MODEST_WIDGET_FACTORY_GET_PRIVATE(self);
+
+	if (!priv->header_view) {
+		priv->header_view =
+			MODEST_TNY_HEADER_TREE_VIEW(modest_tny_header_tree_view_new
+						    (NULL, NULL,
+						     MODEST_TNY_HEADER_TREE_VIEW_STYLE_NORMAL));
+		if (priv->header_view && priv->auto_connect)
+			g_signal_connect (G_OBJECT(priv->header_view), "message_selected",
+					  G_CALLBACK(on_message_selected), self);
+	}
+	
+	if (!priv->header_view)
+		g_printerr ("modest: cannot instantiate header view\n");
+	
+	return priv->header_view;
 }
 
 
 ModestTnyMsgView*
 modest_widget_factory_get_msg_preview_widget (ModestWidgetFactory *self)
 {
-	g_return_val_if_fail (self, NULL);
-
-	return MODEST_WIDGET_FACTORY_GET_PRIVATE(self)->msg_preview;
-}
-
-
-
-static void
-connect_widgets (ModestWidgetFactory *self)
-{
 	ModestWidgetFactoryPrivate *priv;
-
-	g_return_if_fail (self);
+	
+	g_return_val_if_fail (self, NULL);
 
 	priv = MODEST_WIDGET_FACTORY_GET_PRIVATE(self);
 
-	/* folder view signals */
-	g_signal_connect (G_OBJECT(priv->folder_view), "folder_selected",
- 			  G_CALLBACK(on_folder_clicked), self);
-	/* header view signals */
-	g_signal_connect (G_OBJECT(priv->header_view), "message_selected",
-			  G_CALLBACK(on_message_selected), self);
-//	g_signal_connect (G_OBJECT(priv->header_view), "row-activated",
-//			  G_CALLBACK(on_header_activated), self);
-//	g_signal_connect (G_OBJECT(header_view), "status_update",
-//			  G_CALLBACK(on_headers_status_update), self);
+	if (!priv->msg_preview)
+		priv->msg_preview =
+			MODEST_TNY_MSG_VIEW(modest_tny_msg_view_new (NULL));
+	
+	if (!priv->msg_preview)
+		g_printerr ("modest: cannot instantiate header view\n");
+	
+	return priv->msg_preview;
 }
-
 
 
 static void
@@ -238,3 +270,22 @@ on_message_selected (ModestTnyFolderTreeView *folder_view, TnyMsgIface *msg,
 	modest_tny_msg_view_set_message (priv->msg_preview, msg);
 }
 
+
+ModestAccountView*
+modest_widget_factory_get_account_view_widget (ModestWidgetFactory *self)
+{
+	ModestWidgetFactoryPrivate *priv;
+	
+	g_return_val_if_fail (self, NULL);
+
+	priv = MODEST_WIDGET_FACTORY_GET_PRIVATE(self);
+
+	if (!priv->account_view)
+		priv->account_view =
+			MODEST_ACCOUNT_VIEW(modest_account_view_new (priv->account_mgr));
+
+	if (!priv->account_view)
+		g_printerr ("modest: cannot create account view widget\n");
+	
+	return priv->account_view;	
+}
