@@ -129,8 +129,8 @@ on_key_change (ModestConf *conf, const gchar *key, ModestConfEvent event, gpoint
 	}
 
 	/* is this account enabled? */
-	enabled = modest_account_mgr_account_is_enabled (self, account,
-							 is_server_account);
+	enabled = modest_account_mgr_account_get_enabled (self, account,
+							  is_server_account);
 
 	/* account was changed.
 	 * and always notify when enabled/disabled changes
@@ -216,8 +216,11 @@ modest_account_mgr_finalize (GObject * obj)
 {
 	ModestAccountMgrPrivate *priv =
 		MODEST_ACCOUNT_MGR_GET_PRIVATE (obj);
-	
-	priv->modest_conf = NULL;
+
+	if (priv->modest_conf) {
+		g_object_unref (G_OBJECT(priv->modest_conf));
+		priv->modest_conf = NULL;
+	}
 }
 
 
@@ -232,7 +235,8 @@ modest_account_mgr_new (ModestConf * conf)
 	obj = G_OBJECT (g_object_new (MODEST_TYPE_ACCOUNT_MGR, NULL));
 	priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (obj);
 
-	priv->modest_conf      = conf;
+	g_object_ref (G_OBJECT(conf));
+	priv->modest_conf = conf;
 
 	g_signal_connect (G_OBJECT (conf), "key_changed",
 	                  G_CALLBACK (on_key_change),
@@ -249,30 +253,19 @@ null_means_empty (const gchar * str)
 }
 
 
-
 gboolean
-modest_account_mgr_disable_account (ModestAccountMgr *self, const gchar* name,
-				    gboolean is_server_account)
+modest_account_mgr_account_set_enabled (ModestAccountMgr *self, const gchar* name,
+					gboolean is_server_account, gboolean enabled)
 {
 	return modest_account_mgr_set_bool (self, name,
-					    MODEST_ACCOUNT_ENABLED, FALSE,
+					    MODEST_ACCOUNT_ENABLED, enabled,
 					    is_server_account, NULL);
 }
 
 
 gboolean
-modest_account_mgr_enable_account (ModestAccountMgr *self, const gchar* name,
-				   gboolean is_server_account)
-{
-	return modest_account_mgr_set_bool (self, name,
-					    MODEST_ACCOUNT_ENABLED, TRUE,
-					    is_server_account, NULL);
-}
-
-
-gboolean
-modest_account_mgr_account_is_enabled (ModestAccountMgr *self, const gchar* name,
-				       gboolean is_server_account)
+modest_account_mgr_account_get_enabled (ModestAccountMgr *self, const gchar* name,
+					gboolean is_server_account)
 {
 	return modest_account_mgr_get_bool (self, name,
 					    MODEST_ACCOUNT_ENABLED, is_server_account,
@@ -336,7 +329,7 @@ modest_account_mgr_add_account (ModestAccountMgr *self,
 		}
 	}
 
-	modest_account_mgr_enable_account (self, name, FALSE);
+	modest_account_mgr_account_set_enabled (self, name, FALSE, TRUE);
 	
 	return TRUE;
 }
@@ -389,7 +382,7 @@ modest_account_mgr_add_server_account (ModestAccountMgr * self,
 	g_free (key);
 
 	/* enable it */
-	modest_account_mgr_enable_account (self, name, TRUE);
+	modest_account_mgr_account_set_enabled (self, name, TRUE, TRUE);
 	
 	return TRUE;
 }
@@ -484,7 +477,7 @@ modest_account_mgr_search_server_accounts (ModestAccountMgr * self,
 		
 		account = account_from_key ((gchar*)cursor->data, NULL, NULL);
 		
-		enabled   = modest_account_mgr_account_is_enabled (self, account, TRUE);
+		enabled   = modest_account_mgr_account_get_enabled (self, account, TRUE);
 		acc_proto = modest_account_mgr_get_string (self, account, MODEST_ACCOUNT_PROTO,
 							   TRUE, NULL);
 		if ((!acc_proto) ||	                           /* proto not defined? */

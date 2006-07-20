@@ -193,39 +193,22 @@ gboolean	modest_account_mgr_account_exists	  (ModestAccountMgr *self,
 
 
 /**
- * modest_account_mgr_enable_account:
+ * modest_account_mgr_account_set_enabled
  * @self: a ModestAccountMgr instance
- * @name: the account name to disable
+ * @name: the account name 
  * @server_account: if TRUE, this is a server account
+ * @enabled: if TRUE, the account will be enabled, if FALSE, it will be disabled
  * 
- * enable an account that has been disabled with 'modest_account_mgr_disable_account'
+ * enable/disabled an account
  *
  * Returns: TRUE if it worked, FALSE otherwise
  */
-gboolean modest_account_mgr_enable_account (ModestAccountMgr *self, const gchar* name,
-					    gboolean is_server_account);
-
-
-
-/**
- * modest_account_mgr_disable_account:
- * @self: a ModestAccountMgr instance
- * @name: the account name to disable
- * @server_account: if TRUE, this is a server account
- * 
- * disable an account. this will also stop change notification until
- * modest_account_mgr_enable_account is called. However, in case of removal, the
- * appropriate signal will still be emitted.
- *
- * Returns: TRUE if it worked, FALSE otherwise
- */
-gboolean modest_account_mgr_disable_account (ModestAccountMgr *self, const gchar* name,
-					     gboolean is_server_account);
-
+gboolean modest_account_mgr_set_account_enabled (ModestAccountMgr *self, const gchar* name,
+						 gboolean is_server_account, gboolean enabled);
 
 
 /**
- * modest_account_mgr_account_is_enabled:
+ * modest_account_mgr_account_get_enabled:
  * @self: a ModestAccountMgr instance
  * @name: the account name to check
  * @server_account: if TRUE, this is a server account
@@ -234,10 +217,8 @@ gboolean modest_account_mgr_disable_account (ModestAccountMgr *self, const gchar
  *
  * Returns: TRUE if it is enabled, FALSE otherwise
  */
-gboolean modest_account_mgr_account_is_enabled (ModestAccountMgr *self, const gchar* name,
-						gboolean is_server_account);
-
-
+gboolean modest_account_mgr_account_get_enabled (ModestAccountMgr *self, const gchar* name,
+						 gboolean is_server_account);
 
 
 /**
