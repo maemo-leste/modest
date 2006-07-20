@@ -335,8 +335,8 @@ modest_tny_folder_tree_view_finalize (GObject *obj)
 		g_mutex_free (priv->lock);
 		priv->lock = NULL;
 	}
-	
-	(*parent_class->finalize)(obj);
+
+	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
 
