@@ -1,5 +1,5 @@
 dnl configure.ac for modest 
-dnl Time-stamp: <2006-07-17 13:28:07 (djcb)>
+dnl Time-stamp: <2006-07-20 17:01:42 (djcb)>
 dnl written by Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>
 
 AC_INIT([modest],[0.0.1],[http://maemo.org])
@@ -30,6 +30,8 @@ AC_SUBST(MODEST_GSTUFF_LIBS)
 
 dnl now, determine what to build
 AC_MSG_NOTICE([Determining what platform to build])
+PKG_CHECK_MODULES(MODEST_LIBTINYMAIL_MAEMO,libosso,[with_platform=hildon])
+
 AC_ARG_WITH(platform,
 [--with-platform=gtk		platform to build for [gtk]],
 [case "${with_platform}" in
@@ -69,4 +71,6 @@ echo
 echo "modest configure results"
 echo "-----------------------------------"
 echo "Platform       : $with_platform"
+echo ""
+echo "NOTE: you should do a 'make clean' after changing platform (--with-platform=)"
 echo ""
