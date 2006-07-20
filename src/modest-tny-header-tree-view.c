@@ -43,8 +43,8 @@ static void modest_tny_header_tree_view_class_init  (ModestTnyHeaderTreeViewClas
 static void modest_tny_header_tree_view_init        (ModestTnyHeaderTreeView *obj);
 static void modest_tny_header_tree_view_finalize    (GObject *obj);
 
-static void selection_changed (GtkTreeSelection *sel, gpointer user_data);
-static void column_clicked (GtkTreeViewColumn *treeviewcolumn, gpointer user_data);
+static void     on_selection_changed (GtkTreeSelection *sel, gpointer user_data);
+static void     on_column_clicked (GtkTreeViewColumn *treeviewcolumn, gpointer user_data);
 static gboolean refresh_folder_finish_status_update (gpointer user_data);
 
 enum {
@@ -230,9 +230,12 @@ sender_receiver_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *rendere
 			    -1);
 
 	g_object_set (G_OBJECT(renderer),
-		      "text",    display_address (address),
-		      "weight", (flags & TNY_MSG_HEADER_FLAG_SEEN) ? 400 : 800,
-		      "style",  (flags & TNY_MSG_HEADER_FLAG_DELETED) ? PANGO_STYLE_ITALIC : PANGO_STYLE_NORMAL,
+		      "text",
+		      display_address (address),
+		      "weight",
+		      (flags & TNY_MSG_HEADER_FLAG_SEEN) ? 400 : 800,
+		      "style",
+		      (flags & TNY_MSG_HEADER_FLAG_DELETED)?PANGO_STYLE_ITALIC:PANGO_STYLE_NORMAL,
 		      NULL);
 
 	g_free (address);	
@@ -473,6 +476,7 @@ modest_tny_header_tree_view_finalize (GObject *obj)
 	priv->headers = NULL;
 	priv->tny_msg_folder    = NULL;
 
+	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
 GtkWidget*
@@ -505,7 +509,7 @@ modest_tny_header_tree_view_new (TnyMsgFolderIface *folder,
 
 	sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(self));
 	g_signal_connect (sel, "changed",
-			  G_CALLBACK(selection_changed), self);
+			  G_CALLBACK(on_selection_changed), self);
 	
 	return GTK_WIDGET(self);
 }
@@ -631,16 +635,20 @@ cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 		/* first one, we decide based on the time */
 	case MODEST_TNY_HEADER_TREE_VIEW_COLUMN_COMPACT_HEADER:
 	case MODEST_TNY_HEADER_TREE_VIEW_COLUMN_RECEIVED_DATE:
-		gtk_tree_model_get (tree_model, iter1, TNY_MSG_HEADER_LIST_MODEL_DATE_RECEIVED_TIME_T_COLUMN,
+		gtk_tree_model_get (tree_model, iter1,
+				    TNY_MSG_HEADER_LIST_MODEL_DATE_RECEIVED_TIME_T_COLUMN,
 				    &t1,-1);
-		gtk_tree_model_get (tree_model, iter2, TNY_MSG_HEADER_LIST_MODEL_DATE_RECEIVED_TIME_T_COLUMN,
+		gtk_tree_model_get (tree_model, iter2,
+				    TNY_MSG_HEADER_LIST_MODEL_DATE_RECEIVED_TIME_T_COLUMN,
 				    &t2,-1);
 		return t1 - t2;
 		
 	case MODEST_TNY_HEADER_TREE_VIEW_COLUMN_SENT_DATE:
-		gtk_tree_model_get (tree_model, iter1, TNY_MSG_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN,
+		gtk_tree_model_get (tree_model, iter1,
+				    TNY_MSG_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN,
 				    &t1,-1);
-		gtk_tree_model_get (tree_model, iter2, TNY_MSG_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN,
+		gtk_tree_model_get (tree_model, iter2,
+				    TNY_MSG_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN,
 				    &t2,-1);
 		return t1 - t2;
 
@@ -704,7 +712,8 @@ cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 		gtk_tree_model_get (tree_model, iter2, TNY_MSG_HEADER_LIST_MODEL_FLAGS_COLUMN, &val2,
 				    TNY_MSG_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN, &t2, -1);
 		
-		cmp = (val1 & TNY_MSG_HEADER_FLAG_ATTACHMENTS) - (val2 & TNY_MSG_HEADER_FLAG_ATTACHMENTS);
+		cmp = (val1 & TNY_MSG_HEADER_FLAG_ATTACHMENTS) -
+			(val2 & TNY_MSG_HEADER_FLAG_ATTACHMENTS);
 
 		return cmp ? cmp : t1 - t2;
 		
@@ -861,7 +870,7 @@ modest_tny_header_tree_view_set_folder (ModestTnyHeaderTreeView *self,
 
 
 static void
-selection_changed (GtkTreeSelection *sel, gpointer user_data)
+on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 {
 	GtkTreeModel                   *model;
 	TnyMsgHeaderIface              *header;
@@ -915,7 +924,7 @@ selection_changed (GtkTreeSelection *sel, gpointer user_data)
 }
 
 static void
-column_clicked (GtkTreeViewColumn *col, gpointer user_data)
+on_column_clicked (GtkTreeViewColumn *col, gpointer user_data)
 {
 	GtkTreeView *treeview;
 	gint id;
