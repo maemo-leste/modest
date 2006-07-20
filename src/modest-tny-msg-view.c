@@ -186,8 +186,9 @@ modest_tny_msg_view_init (ModestTnyMsgView *obj)
 static void
 modest_tny_msg_view_finalize (GObject *obj)
 {	
-	/* TODO! */
+	G_OBJECT_CLASS(parent_class)->finalize (obj);		
 }
+
 
 GtkWidget*
 modest_tny_msg_view_new (const TnyMsgIface *msg)
