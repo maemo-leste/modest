@@ -1,6 +1,6 @@
 #
 # Makefile.am
-# Time-stamp: <2006-07-17 13:55:31 (djcb)>
+# Time-stamp: <2006-07-19 18:21:49 (djcb)>
 SUBDIRS=$(MODEST_PLATFORM_DIR)
 DIST_SUBDIRS = gtk gtk2 hildon
 
@@ -38,6 +38,8 @@ modest_SOURCES=\
 	modest-account-keys.h\
 	modest-account-mgr.h\
 	modest-account-mgr.c\
+	modest-account-view.h\
+	modest-account-view.c\
 	modest-window-mgr.h\
 	modest-window-mgr.c\
 	modest-icon-factory.c\
