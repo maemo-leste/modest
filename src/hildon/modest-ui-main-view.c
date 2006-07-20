@@ -147,9 +147,9 @@ modest_ui_show_main_window (ModestUI *modest_ui)
 	priv = MODEST_UI_GET_PRIVATE(modest_ui);
 	
 	height = modest_conf_get_int (priv->modest_conf,
-				      MODEST_CONF_MAIN_WINDOW_HEIGHT,NULL);
+				      MODEST_MAIN_WINDOW_HEIGHT,NULL);
 	width  = modest_conf_get_int (priv->modest_conf,
-				      MODEST_CONF_MAIN_WINDOW_WIDTH,NULL);
+				      MODEST_MAIN_WINDOW_WIDTH,NULL);
 
 	program = HILDON_PROGRAM (hildon_program_get_instance ());
 	priv->program = program;
@@ -183,10 +183,8 @@ modest_ui_show_main_window (ModestUI *modest_ui)
 	g_signal_connect (G_OBJECT(folder_view), "folder_selected",
  			  G_CALLBACK(on_folder_clicked), modest_ui);
 
-	show_attachments_inline = modest_conf_get_bool(priv->modest_conf,
-	                                     MODEST_CONF_MSG_VIEW_SHOW_ATTACHMENTS_INLINE,
-	                                     NULL);
-
+	show_attachments_inline = FALSE;
+	
 	message_view  = GTK_WIDGET(modest_tny_msg_view_new (NULL));
 	priv->message_view = message_view;
 	if (!message_view) {
@@ -257,11 +255,6 @@ modest_ui_show_main_window (ModestUI *modest_ui)
 	}
 	g_signal_connect (forward_attached_menu_item, "activate", G_CALLBACK(on_forward_attached_activated),
 			  modest_ui);
-
-	gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(view_attachments_item),
-					modest_conf_get_bool(priv->modest_conf,
-					MODEST_CONF_MSG_VIEW_SHOW_ATTACHMENTS_INLINE,
-					NULL));
 
 	g_signal_connect (view_attachments_item, "toggled",
 				G_CALLBACK(on_view_attachments_toggled), modest_ui);
@@ -531,11 +524,6 @@ on_view_attachments_toggled(GtkWidget *widget, gpointer user_data)
 
 	view_attachments_inline = gtk_check_menu_item_get_active(
 	                                GTK_CHECK_MENU_ITEM(view_attachments_item));
-
-	modest_conf_set_bool(priv->modest_conf,
-	                     MODEST_CONF_MSG_VIEW_SHOW_ATTACHMENTS_INLINE,
-	                     view_attachments_inline,
-	                     NULL);
 }
 
 

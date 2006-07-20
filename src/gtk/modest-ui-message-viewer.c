@@ -145,8 +145,8 @@ open_message_viewer_window(ModestUI *modest_ui)
 
 	priv = MODEST_UI_GET_PRIVATE(modest_ui);
 	/* FIXME: maybe use seperate viewer defaults? */
-	height = modest_conf_get_int (priv->modest_conf, MODEST_CONF_EDIT_WINDOW_HEIGHT, NULL);
-	width  = modest_conf_get_int (priv->modest_conf, MODEST_CONF_EDIT_WINDOW_WIDTH, NULL);
+	height = modest_conf_get_int (priv->modest_conf, MODEST_EDIT_WINDOW_HEIGHT, NULL);
+	width  = modest_conf_get_int (priv->modest_conf, MODEST_EDIT_WINDOW_WIDTH, NULL);
 
 	paned = glade_xml_get_widget (priv->glade_xml,"mail_paned");
 	g_return_if_fail (paned);

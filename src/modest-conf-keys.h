@@ -34,24 +34,49 @@
 /* configuration key definitions for modest */
 #define MODEST_CONF_NAMESPACE		"/apps/modest"
 
-#define MODEST_CONF_USE_EXT_EDITOR	  MODEST_CONF_NAMESPACE "/use_ext_editor"	  /* boolean */
-#define MODEST_CONF_EXT_EDITOR	          MODEST_CONF_NAMESPACE "/ext_editor"	  /* string */
 
-#define MODEST_CONF_MAIN_WINDOW_HEIGHT	  MODEST_CONF_NAMESPACE "/main_window_height"    /* int */
-#define MODEST_CONF_MAIN_WINDOW_HEIGHT_DEFAULT 480                                       /* int */
+/*
+ * the main window
+ */
+#define MODEST_MAIN_WINDOW_HEIGHT	                 MODEST_CONF_NAMESPACE "/main_window_height"     /* int */
+#define MODEST_MAIN_WINDOW_HEIGHT_DEFAULT                480                                             /* int */
 
-#define MODEST_CONF_MAIN_WINDOW_WIDTH	  MODEST_CONF_NAMESPACE "/main_window_width"     /* int */
-#define MODEST_CONF_MAIN_WINDOW_WIDTH_DEFAULT  800
+#define MODEST_MAIN_WINDOW_WIDTH	                 MODEST_CONF_NAMESPACE "/main_window_width"      /* int */
+#define MODEST_MAIN_WINDOW_WIDTH_DEFAULT                 800
 
-#define MODEST_CONF_EDIT_WINDOW_HEIGHT	  MODEST_CONF_NAMESPACE "/edit_window_height"    /* int */
-#define MODEST_CONF_EDIT_WINDOW_HEIGHT_DEFAULT 480                                       /* int */
 
-#define MODEST_CONF_EDIT_WINDOW_WIDTH	  MODEST_CONF_NAMESPACE "/edit_window_width"     /* int */
-#define MODEST_CONF_EDIT_WINDOW_WIDTH_DEFAULT  800
+/* the folders / favorites (on the left) */
+#define MODEST_FOLDER_PANED_WIDTH			 MODEST_CONF_NAMESPACE "/folder_paned_width"
+#define MODEST_FOLDER_PANED_WIDTH_DEFAULT		 150
+/* percentage the of the height of the favorites folders */
+#define MODEST_FOLDER_PANED_DIVIDER_POS			 MODEST_CONF_NAMESPACE "/folder_paned_divider_pos"
+#define MODEST_FOLDER_PANED_DIVIDER_POS_DEFAULT	         20
 
-#define MODEST_CONF_MSG_VIEW_NAMESPACE    MODEST_CONF_NAMESPACE "/view"
+/* the messages / headers (on the right) */
+#define MODEST_MSG_PANED_WIDTH			         MODEST_CONF_NAMESPACE "/msg_paned_width"
+#define MODEST_MSG_PANED_WIDTH_DEFAULT			 600
 
-#define MODEST_CONF_MSG_VIEW_SHOW_ATTACHMENTS_INLINE MODEST_CONF_MSG_VIEW_NAMESPACE "/show_attachments_inline" /* boolean */
+/* percentage the of the height of the headers */
+#define MODEST_MSG_PANED_DIVIDER_POS                     MODEST_CONF_NAMESPACE "/msg_paned_divider_pos"
+#define MODEST_MSG_PANED_DIVIDER_POS_DEFAULT		 40
+
+
+/*
+ * the account view window
+ */
+#define MODEST_ACCOUNT_VIEW_WINDOW_HEIGHT_DEFAULT	 500
+#define MODEST_ACCOUNT_VIEW_WINDOW_WIDTH_DEFAULT	 300
+
+
+#define MODEST_EDIT_WINDOW_HEIGHT	  MODEST_CONF_NAMESPACE "/edit_window_height"    /* int */
+#define MODEST_EDIT_WINDOW_HEIGHT_DEFAULT 480                                             /* int */
+
+#define MODEST_EDIT_WINDOW_WIDTH	  MODEST_CONF_NAMESPACE "/edit_window_width"     /* int */
+#define MODEST_EDIT_WINDOW_WIDTH_DEFAULT  800
+
+#define MODEST_MSG_VIEW_NAMESPACE    MODEST_NAMESPACE "/view"
+
+#define MODEST_MSG_VIEW_SHOW_ATTACHMENTS_INLINE MODEST_MSG_VIEW_NAMESPACE "/show_attachments_inline" /* boolean */
 
 
 #endif /*__MODEST_CONF_KEYS_H__*/

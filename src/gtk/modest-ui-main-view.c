@@ -136,9 +136,9 @@ modest_ui_show_main_window (ModestUI *modest_ui)
 	priv = MODEST_UI_GET_PRIVATE(modest_ui);
 	
 	height = modest_conf_get_int (priv->modest_conf,
-				      MODEST_CONF_MAIN_WINDOW_HEIGHT,NULL);
+				      MODEST_MAIN_WINDOW_HEIGHT,NULL);
 	width  = modest_conf_get_int (priv->modest_conf,
-				      MODEST_CONF_MAIN_WINDOW_WIDTH,NULL);
+				      MODEST_MAIN_WINDOW_WIDTH,NULL);
 
 	win = glade_xml_get_widget (priv->glade_xml, "main");
 	if (!win) {

@@ -328,9 +328,9 @@ new_editor_with_presets (ModestUI *modest_ui, const gchar *to_header,
 
 	priv = MODEST_UI_GET_PRIVATE(modest_ui);
 	height = modest_conf_get_int (priv->modest_conf,
-					  MODEST_CONF_EDIT_WINDOW_HEIGHT, NULL);
+					  MODEST_EDIT_WINDOW_HEIGHT, NULL);
 	width  = modest_conf_get_int (priv->modest_conf,
-					  MODEST_CONF_EDIT_WINDOW_WIDTH, NULL);
+					  MODEST_EDIT_WINDOW_WIDTH, NULL);
 
 	// g_message("new editor win@%dx%d", width, height);
 
