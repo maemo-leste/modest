@@ -286,7 +286,7 @@ init_view (ModestAccountView *self)
 
 
 
-GtkWidget*
+ModestAccountView*
 modest_account_view_new (ModestAccountMgr *account_mgr)
 {
 	GObject *obj;
@@ -302,6 +302,6 @@ modest_account_view_new (ModestAccountMgr *account_mgr)
 
 	init_view (MODEST_ACCOUNT_VIEW (obj));
 	
-	return GTK_WIDGET(obj);
+	return MODEST_ACCOUNT_VIEW(obj);
 }
 

@@ -61,9 +61,7 @@ struct _ModestAccountViewClass {
 /* member functions */
 GType        modest_account_view_get_type    (void) G_GNUC_CONST;
 
-
-
-GtkWidget*   modest_account_view_new         (ModestAccountMgr *account_mgr);
+ModestAccountView*   modest_account_view_new         (ModestAccountMgr *account_mgr);
 
 G_END_DECLS
 
