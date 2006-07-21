@@ -44,7 +44,6 @@ enum {
 
 typedef struct _ModestEditorWindowPrivate ModestEditorWindowPrivate;
 struct _ModestEditorWindowPrivate {
-	GtkWidget *window;
 	gpointer user_data;
 	gboolean modified;
 	GList *attachments;
@@ -142,14 +141,14 @@ modest_editor_window_new (ModestUI *ui)
 	/* for now create a local test-window */
 
 	data = NULL;
-	edit_win = modest_ui_new_editor_window(ui, &data);
+	edit_win = G_OBJECT(modest_ui_new_editor_window(ui, &data));
 	
 	if (!edit_win)
 		return NULL;
 	if (!data)
 		g_message("editor window user data is emtpy");
 
-	MODEST_EDITOR_WINDOW(self)->window = edit_win;
+	MODEST_EDITOR_WINDOW(self)->window = GTK_WINDOW(edit_win);
 	priv->user_data = data;
 	
 	return self;

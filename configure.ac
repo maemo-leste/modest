@@ -1,5 +1,5 @@
 dnl configure.ac for modest 
-dnl Time-stamp: <2006-07-20 17:01:42 (djcb)>
+dnl Time-stamp: <2006-07-21 09:30:11 (djcb)>
 dnl written by Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>
 
 AC_INIT([modest],[0.0.1],[http://maemo.org])
@@ -63,6 +63,7 @@ src/gtk2/Makefile
 src/hildon/Makefile
 src/hildon/com.nokia.modest.service
 src/hildon/modest.desktop.in
+src/widgets/Makefile
 docs/Makefile
 docs/reference/Makefile
 ])

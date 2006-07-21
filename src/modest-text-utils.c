@@ -198,6 +198,17 @@ get_breakpoint (const gchar * s, const gint indent, const gint limit)
 }
 
 
+
+/* just to prevent warnings:
+ * warning: `%x' yields only last 2 digits of year in some locales
+ */
+static size_t
+my_strftime(char *s, size_t max, const char  *fmt,  const
+	    struct tm *tm) {
+	return strftime(s, max, fmt, tm);
+}
+
+
 gchar *
 modest_text_utils_quote (const gchar * to_quote, const gchar * from,
 			 const time_t sent_date, const int limit)
@@ -209,7 +220,7 @@ modest_text_utils_quote (const gchar * to_quote, const gchar * from,
 	gsize len;
 
 	/* format sent_date */
-	strftime (sent_str, 100, "%c", localtime (&sent_date));
+	my_strftime (sent_str, 100, "%c", localtime (&sent_date));
 	q = g_string_new ("");
 	g_string_printf (q, "On %s, %s wrote:\n", sent_str, from);
 

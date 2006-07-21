@@ -56,7 +56,6 @@ static void    modest_tny_account_store_add_transport_account   (TnyAccountStore
 								 TnyTransportAccountIface *account);
 static void    modest_tny_account_store_get_accounts            (TnyAccountStoreIface *iface, TnyListIface *list,
 								 TnyGetAccountsRequestType type);
-
 /* list my signals */
 enum {
 	PASSWORD_REQUESTED_SIGNAL,
@@ -334,8 +333,10 @@ modest_tny_account_store_finalize (GObject *obj)
 		priv->modest_acc_mgr = NULL;
 	}
 
+	
 	if (priv->tny_session_camel) {
-		g_object_unref (G_OBJECT(priv->tny_session_camel));
+// FIXME: how to kill a camel
+		//g_object_unref (G_OBJECT(priv->tny_session_camel));
 		priv->tny_session_camel = NULL;
 	}
 
@@ -344,7 +345,8 @@ modest_tny_account_store_finalize (GObject *obj)
 		priv->device = NULL;
 	}
 
-	g_mutex_free (priv->store_lock);
+	if (priv->store_lock)
+		g_mutex_free (priv->store_lock);
 
 	g_free (priv->cache_dir);
 	priv->cache_dir = NULL;
@@ -525,6 +527,14 @@ modest_tny_account_store_get_device (TnyAccountStoreIface *self)
 }
 
 
+static gboolean
+modest_tny_account_store_alert (TnyAccountStoreIface *self, TnyAlertType type,
+				const gchar *prompt)
+{
+	return TRUE; /* FIXME: implement this */
+}
+
+
 static void
 modest_tny_account_store_iface_init (gpointer g_iface, gpointer iface_data)
 {
@@ -538,10 +548,14 @@ modest_tny_account_store_iface_init (gpointer g_iface, gpointer iface_data)
 		modest_tny_account_store_get_accounts;
 	klass->add_transport_account_func  =
 		modest_tny_account_store_add_transport_account;
+	klass->add_store_account_func =
+		modest_tny_account_store_add_store_account;
 	klass->get_cache_dir_func =
 		modest_tny_account_store_get_cache_dir;
 	klass->get_device_func =
 		modest_tny_account_store_get_device;
+	klass->alert_func =
+		modest_tny_account_store_alert;
 }
 
 void

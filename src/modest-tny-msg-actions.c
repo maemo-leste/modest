@@ -85,8 +85,6 @@ modest_tny_msg_actions_quote (const TnyMsgIface * self, const gchar * from,
 			      time_t sent_date, gint limit,
 			      const gchar * to_quote)
 {
-	gchar *quoted;
-
 	/* 2 cases: */
 
 	/* a) quote text from selection */

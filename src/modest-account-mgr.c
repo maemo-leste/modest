@@ -172,8 +172,6 @@ static void
 modest_account_mgr_class_init (ModestAccountMgrClass * klass)
 {
 	GObjectClass *gobject_class;
-	GType paramtypes[3] = {G_TYPE_POINTER, G_TYPE_POINTER, G_TYPE_POINTER};
-
 	gobject_class = (GObjectClass *) klass;
 
 	parent_class = g_type_class_peek_parent (klass);

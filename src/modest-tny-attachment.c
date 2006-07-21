@@ -330,12 +330,16 @@ modest_tny_attachment_new_from_message(const TnyMsgIface *msg)
 GList *
 modest_tny_attachment_new_list_from_msg(const TnyMsgIface *msg, gboolean with_body)
 {
-	GList *list = NULL;
+	// FIXME: does not work anymore. needs the new TnyList stuff...
+	return NULL;
+#if 0	
+
+	TnyList *att_list
 	const GList *attachments = NULL;
 	TnyMsgMimePartIface *part;
 	ModestTnyAttachment *att;
 	
-#if 0	
+
 	if (with_body) {
 		/* TODO: make plain over html configurable */
 		part = modest_tny_msg_actions_find_body_part ((TnyMsgIface *)msg, "text/plain");
@@ -348,7 +352,7 @@ modest_tny_attachment_new_list_from_msg(const TnyMsgIface *msg, gboolean with_bo
 			list = g_list_append(list, att);
 		}
 	}
-#endif
+
 	if (with_body) {
 		list = g_list_append(list, modest_tny_attachment_new_from_message(msg));
 	} else {
@@ -363,4 +367,6 @@ modest_tny_attachment_new_list_from_msg(const TnyMsgIface *msg, gboolean with_bo
 		attachments = attachments->next;
 	}
 	return list;
+
+#endif
 }

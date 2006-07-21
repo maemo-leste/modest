@@ -53,9 +53,9 @@
 #include "../modest-identity-mgr.h"
 
 #include "../modest-tny-account-store.h"
-#include "../modest-tny-folder-tree-view.h"
-#include "../modest-tny-header-tree-view.h"
-#include "../modest-tny-msg-view.h"
+#include "../widgets/modest-folder-view.h"
+#include "../widgets/modest-header-view.h"
+#include "../widgets/modest-msg-view.h"
 #include "../modest-tny-transport-actions.h"
 #include "../modest-tny-store-actions.h"
 
@@ -78,11 +78,11 @@ static GtkWidget* modest_main_window_folder_tree (ModestAccountMgr *modest_acc_m
 
 static GtkWidget* modest_main_window_header_tree (TnyMsgFolderIface *folder);
 
-static void on_folder_clicked (ModestTnyFolderTreeView *folder_tree,
+static void on_folder_clicked (ModestFolderView *folder_tree,
 			       TnyMsgFolderIface *folder,
 			       gpointer data);
 
-static void on_message_clicked (ModestTnyFolderTreeView *folder_tree,
+static void on_message_clicked (ModestFolderView *folder_tree,
 				TnyMsgIface *message,
 				gpointer data);
 
@@ -100,7 +100,6 @@ static void on_forward_attached_activated (GtkWidget *widget, gpointer user_data
 
 static void on_headers_status_update (GtkWidget *header_view, const gchar *msg, gint status,
 			  gpointer user_data);
-static void on_status_cleanup (gpointer user_data);
 
 static void register_toolbar_callbacks (ModestUI *modest_ui);
 
@@ -185,7 +184,7 @@ modest_ui_show_main_window (ModestUI *modest_ui)
 
 	show_attachments_inline = FALSE;
 	
-	message_view  = GTK_WIDGET(modest_tny_msg_view_new (NULL));
+	message_view  = GTK_WIDGET(modest_msg_view_new (NULL));
 	priv->message_view = message_view;
 	if (!message_view) {
 		g_warning ("failed to create message view");
@@ -366,14 +365,14 @@ register_toolbar_callbacks (ModestUI *modest_ui)
 
 
 static void
-on_folder_clicked (ModestTnyFolderTreeView *folder_tree,
+on_folder_clicked (ModestFolderView *folder_tree,
 		   TnyMsgFolderIface *folder,
 		   gpointer data)
 {
 	GtkWidget *win;
 	GtkWidget *button;
-	ModestTnyHeaderTreeView *tree_view;
-	ModestTnyMsgView *msg_view;
+	ModestHeaderView *tree_view;
+	ModestMsgView *msg_view;
 	ModestUIPrivate *priv;
 	GtkWidget *scrollview;
 
@@ -383,13 +382,13 @@ on_folder_clicked (ModestTnyFolderTreeView *folder_tree,
 	priv = MODEST_UI_GET_PRIVATE(data);
 	scrollview = glade_xml_get_widget (priv->glade_xml,"mail_list");
 
-	tree_view = MODEST_TNY_HEADER_TREE_VIEW (priv->header_view);
+	tree_view = MODEST_HEADER_VIEW (priv->header_view);
 
 	win = glade_xml_get_widget (priv->glade_xml, "main");
 	gtk_window_set_title (GTK_WINDOW(win),
 			      tny_msg_folder_iface_get_name(folder));
 
-	modest_tny_header_tree_view_set_folder (tree_view, folder);
+	modest_header_view_set_folder (tree_view, folder);
 	priv->current_folder = folder;
 
 	button = glade_xml_get_widget (priv->glade_xml, "toolb_reply");
@@ -407,28 +406,28 @@ on_folder_clicked (ModestTnyFolderTreeView *folder_tree,
 		gtk_widget_set_sensitive(button, FALSE);
 	}
 
-	msg_view = MODEST_TNY_MSG_VIEW (priv->message_view);
+	msg_view = MODEST_MSG_VIEW (priv->message_view);
 	g_return_if_fail (msg_view);
 
-	modest_tny_msg_view_set_message  (msg_view, NULL);
+	modest_msg_view_set_message  (msg_view, NULL);
 }
 
 
 static void
-on_message_clicked (ModestTnyFolderTreeView *folder_tree,
+on_message_clicked (ModestFolderView *folder_tree,
 				TnyMsgIface *message,
 				gpointer data)
 {
 	GtkWidget *button;
-	ModestTnyMsgView *msg_view;
+	ModestMsgView *msg_view;
 	ModestUIPrivate *priv;
 
 	g_return_if_fail (data);
 
 	priv = MODEST_UI_GET_PRIVATE (data);
-	msg_view = MODEST_TNY_MSG_VIEW (priv->message_view);
+	msg_view = MODEST_MSG_VIEW (priv->message_view);
 
-	modest_tny_msg_view_set_message (msg_view, message);
+	modest_msg_view_set_message (msg_view, message);
 
 	button = glade_xml_get_widget (priv->glade_xml, "toolb_reply");
 	if (button) {
@@ -451,17 +450,17 @@ modest_main_window_header_tree (TnyMsgFolderIface *folder)
 	int i;
 	GSList *columns = NULL;
 	GtkWidget *header_tree;
-	ModestTnyHeaderTreeViewColumn cols[] = {
-		MODEST_TNY_HEADER_TREE_VIEW_COLUMN_MSGTYPE,
-		MODEST_TNY_HEADER_TREE_VIEW_COLUMN_ATTACH,
-		MODEST_TNY_HEADER_TREE_VIEW_COLUMN_COMPACT_HEADER
+	ModestHeaderViewColumn cols[] = {
+		MODEST_HEADER_VIEW_COLUMN_MSGTYPE,
+		MODEST_HEADER_VIEW_COLUMN_ATTACH,
+		MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER
 	};
 
-	for (i = 0 ; i != sizeof(cols) / sizeof(ModestTnyHeaderTreeViewColumn); ++i)
+	for (i = 0 ; i != sizeof(cols) / sizeof(ModestHeaderViewColumn); ++i)
 		columns = g_slist_append (columns, GINT_TO_POINTER(cols[i]));
 
-	header_tree = GTK_WIDGET(modest_tny_header_tree_view_new(folder, columns,
-								 MODEST_TNY_HEADER_TREE_VIEW_STYLE_NORMAL));
+	header_tree = GTK_WIDGET(modest_header_view_new(folder, columns,
+								 MODEST_HEADER_VIEW_STYLE_NORMAL));
 	g_slist_free (columns);
 
 	if (!header_tree) {
@@ -479,7 +478,7 @@ modest_main_window_folder_tree (ModestAccountMgr *modest_acc_mgr,
 {
 	GtkWidget *folder_tree;
 
-	folder_tree = GTK_WIDGET (modest_tny_folder_tree_view_new (account_store));
+	folder_tree = GTK_WIDGET (modest_folder_view_new (account_store));
 	if (!folder_tree) {
 		g_warning ("could not create folder list");
 		return NULL;
@@ -512,7 +511,7 @@ on_view_attachments_toggled(GtkWidget *widget, gpointer user_data)
 {
 	ModestUI *modest_ui = (ModestUI *)user_data;
 	GtkWidget *view_attachments_item;
-	ModestTnyMsgView *msg_view;
+	ModestMsgView *msg_view;
 	ModestUIPrivate *priv;
 	gboolean view_attachments_inline;
 
@@ -520,7 +519,7 @@ on_view_attachments_toggled(GtkWidget *widget, gpointer user_data)
 	view_attachments_item = glade_xml_get_widget (priv->glade_xml, "menu_view_attachments");
 	g_return_if_fail(view_attachments_item);
 
-	msg_view = MODEST_TNY_MSG_VIEW(priv->message_view);
+	msg_view = MODEST_MSG_VIEW(priv->message_view);
 
 	view_attachments_inline = gtk_check_menu_item_get_active(
 	                                GTK_CHECK_MENU_ITEM(view_attachments_item));
@@ -536,18 +535,18 @@ on_delete_clicked (GtkWidget *widget, gpointer user_data)
 	GtkTreeIter iter;
 	GtkTreeModel *mymodel;
 
-	ModestTnyHeaderTreeView *header_view;
-	ModestTnyMsgView *msg_view;
+	ModestHeaderView *header_view;
+	ModestMsgView *msg_view;
 	ModestUIPrivate *priv;
 
 	g_return_if_fail (modest_ui);
 
 	priv = MODEST_UI_GET_PRIVATE(modest_ui);
 
-	msg_view = MODEST_TNY_MSG_VIEW(priv->message_view);
+	msg_view = MODEST_MSG_VIEW(priv->message_view);
 	g_return_if_fail (msg_view);
 
-	header_view = MODEST_TNY_HEADER_TREE_VIEW(priv->header_view);
+	header_view = MODEST_HEADER_VIEW(priv->header_view);
 	g_return_if_fail (header_view);
 
 	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW(header_view));
@@ -611,7 +610,7 @@ on_sendreceive_button_clicked (GtkWidget *widget, gpointer user_data)
 
 	if (priv->header_view && priv->current_folder) {
 			
-		modest_tny_header_tree_view_set_folder (MODEST_TNY_HEADER_TREE_VIEW(priv->header_view),
+		modest_header_view_set_folder (MODEST_HEADER_VIEW(priv->header_view),
 							priv->current_folder);
 		gtk_widget_queue_draw (priv->header_view);
 	}

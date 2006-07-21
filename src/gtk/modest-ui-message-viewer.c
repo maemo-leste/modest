@@ -48,9 +48,9 @@
 #include "../modest-identity-mgr.h"
 
 #include "../modest-tny-account-store.h"
-#include "../modest-tny-folder-tree-view.h"
-#include "../modest-tny-header-tree-view.h"
-#include "../modest-tny-msg-view.h"
+#include "../widgets/modest-folder-view.h"
+#include "../widgets/modest-header-view.h"
+#include "../widgets/modest-msg-view.h"
 #include "../modest-tny-transport-actions.h"
 #include "../modest-tny-store-actions.h"
 
@@ -134,7 +134,7 @@ open_message_viewer_window(ModestUI *modest_ui)
 	GtkTreeModel *model;
 	GtkTreeIter iter;
 	GtkScrolledWindow *scroll;
-	ModestTnyHeaderTreeView *header_view;
+	ModestHeaderView *header_view;
 	TnyMsgHeaderIface *header;
 	const TnyMsgFolderIface *folder;
 	TnyMsgIface *msg;
@@ -154,7 +154,7 @@ open_message_viewer_window(ModestUI *modest_ui)
 	scroll = GTK_SCROLLED_WINDOW(gtk_paned_get_child1 (GTK_PANED(paned)));
         g_return_if_fail (scroll);
 
-	header_view = MODEST_TNY_HEADER_TREE_VIEW(gtk_bin_get_child (GTK_BIN(scroll)));
+	header_view = MODEST_HEADER_VIEW(gtk_bin_get_child (GTK_BIN(scroll)));
 	g_return_if_fail (header_view);
 
 	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW(header_view));

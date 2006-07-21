@@ -31,6 +31,7 @@
 #include <glib.h>
 #include <glib/gi18n.h>
 #include <gtk/gtk.h>
+#include <tny-list.h>
 
 #include <tny-account-store-iface.h>
 #include <tny-list-iface.h>
@@ -42,9 +43,6 @@
 #include "modest-tny-transport-actions.h"
 #include "modest-tny-account-store.h"
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif /*HAVE_CONFIG_H*/
 
 #ifdef MODEST_ENABLE_HILDON /* Hildon includes */
 #include <libosso.h>
@@ -72,7 +70,6 @@ main (int argc, char *argv[])
 {
 	GOptionContext   *context        = NULL;
 	ModestConf       *modest_conf    = NULL;
-	ModestUI         *modest_ui      = NULL;
 
 	GError *err = NULL;
 	int retval  = MODEST_ERR_NONE;
@@ -142,9 +139,8 @@ start_ui (ModestConf *conf, const gchar* mailto, const gchar *cc, const gchar *b
 	  const gchar* subject, const gchar *body)
 {
 
-	GtkWidget *win;
 	ModestUI *modest_ui;
-	gint ok, retval = 0;
+	gint retval = 0;
 
 	modest_ui = MODEST_UI(modest_ui_new (conf));
 	if (!modest_ui) {
@@ -219,11 +215,8 @@ send_mail (ModestConf *conf, const gchar* mailto, const gchar *cc, const gchar *
 
 	TnyListIface *accounts = NULL;
 	TnyIteratorIface *iter = NULL;
-
-	TnyTransportAccountIface *account = NULL;
-	
+	TnyTransportAccountIface *account = NULL;	
 	int retval;
-	int i = 0;
 	
 	acc_mgr   = modest_account_mgr_new (conf);
 	acc_store = modest_tny_account_store_new (acc_mgr);	

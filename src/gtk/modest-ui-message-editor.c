@@ -49,9 +49,9 @@
 #include "../modest-identity-mgr.h"
 
 #include "../modest-tny-account-store.h"
-#include "../modest-tny-folder-tree-view.h"
-#include "../modest-tny-header-tree-view.h"
-#include "../modest-tny-msg-view.h"
+#include "../widgets/modest-folder-view.h"
+#include "../widgets/modest-header-view.h"
+#include "../widgets/modest-msg-view.h"
 #include "../modest-tny-transport-actions.h"
 #include "../modest-tny-store-actions.h"
 
@@ -381,8 +381,8 @@ quoted_send_msg (ModestUI *modest_ui, quoted_send_type qstype)
 
 	TnyMsgHeaderIface *header;
 
-	ModestTnyHeaderTreeView *header_view;
-	ModestTnyMsgView *msg_view;
+	ModestHeaderView *header_view;
+	ModestMsgView *msg_view;
 	ModestUIPrivate *priv;
 
 	const TnyMsgIface *msg;
@@ -399,10 +399,10 @@ quoted_send_msg (ModestUI *modest_ui, quoted_send_type qstype)
 
 	priv = MODEST_UI_GET_PRIVATE(modest_ui);
 
-	msg_view = MODEST_TNY_MSG_VIEW(priv->message_view);
+	msg_view = MODEST_MSG_VIEW(priv->message_view);
 	g_return_if_fail (msg_view);
 
-	header_view = MODEST_TNY_HEADER_TREE_VIEW(priv->header_view);
+	header_view = MODEST_HEADER_VIEW(priv->header_view);
 	g_return_if_fail (header_view);
 
 	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW(header_view));
@@ -440,23 +440,26 @@ quoted_send_msg (ModestUI *modest_ui, quoted_send_type qstype)
 	from = tny_msg_header_iface_get_from(header);
 	sent_date = tny_msg_header_iface_get_date_sent(header);
 
-	unquoted = modest_tny_msg_view_get_selected_text(msg_view);
+	unquoted = modest_msg_view_get_selected_text(msg_view);
 	quoted = modest_tny_msg_actions_quote(msg, from, sent_date, line_limit, unquoted);
 
 	switch (qstype) {
 		case QUOTED_SEND_REPLY:
 			g_string_prepend(re_sub, _("Re: "));
-			new_editor_with_presets(modest_ui, from, /* cc */ "", /* bcc */ "", re_sub->str, quoted, attachments);
+			new_editor_with_presets(modest_ui, from, /* cc */ "", /* bcc */ "",
+						re_sub->str, quoted, attachments);
 			break;
 		case QUOTED_SEND_FORWARD:
 			attachments = modest_tny_attachment_new_list_from_msg(msg, FALSE);
 			g_string_prepend(re_sub, _("Fwd: "));
-			new_editor_with_presets(modest_ui, /* from */ "", /* cc */ "", /* bcc */ "", re_sub->str, quoted, attachments);
+			new_editor_with_presets(modest_ui, /* from */ "", /* cc */ "",
+						/* bcc */ "", re_sub->str, quoted, attachments);
 			break;
 		case QUOTED_SEND_FORWARD_ATTACHED:
 			attachments = modest_tny_attachment_new_list_from_msg(msg, TRUE);
 			g_string_prepend(re_sub, _("Fwd: "));
-			new_editor_with_presets(modest_ui, /* from */ "", /* cc */ "", /* bcc */ "", re_sub->str, "", attachments);
+			new_editor_with_presets(modest_ui, /* from */ "", /* cc */ "",
+						/* bcc */ "", re_sub->str, "", attachments);
 			break;
 		default:
 			break;

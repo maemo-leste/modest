@@ -50,11 +50,13 @@ void
 modest_tny_store_actions_update_folders (TnyStoreAccountIface *storage_account)
 {
 
+// FIXME TODO: This results in failure on folder change.	
+	/*
 	const TnyListIface* folders;
 	TnyIteratorIface* ifolders;
 	const TnyMsgFolderIface *cur_folder;
-#warning TODO: This results in failure on folder change.
-/*	folders = tny_store_account_iface_get_folders (storage_account, 
+
+	folders = tny_store_account_iface_get_folders (storage_account, 
 						       TNY_STORE_ACCOUNT_FOLDER_TYPE_SUBSCRIBED);
 	
 	ifolders = tny_list_iface_create_iterator (folders);

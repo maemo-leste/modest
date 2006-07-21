@@ -33,7 +33,7 @@
 #include <glib-object.h>
 #include <gtk/gtkcontainer.h>
 #include "modest-conf.h"
-#include "modest-tny-msg-view.h"
+#include "widgets/modest-msg-view.h"
 
 G_BEGIN_DECLS
 

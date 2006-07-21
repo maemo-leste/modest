@@ -8,7 +8,7 @@ SUBDIRS=\
 	docs
 
 EXTRA_DIST=\
-	autogen.sh
+	autogen.sh TODO COPYING
 
 CFLAGS=\
 	-Wall

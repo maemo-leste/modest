@@ -32,8 +32,7 @@
 
 #include <gtk/gtk.h>
 #include <glib/gi18n.h>
-
-#include "modest-account-mgr.h"
+#include <modest-account-mgr.h>
 
 G_BEGIN_DECLS
 

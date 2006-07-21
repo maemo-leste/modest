@@ -1,6 +1,6 @@
 #
 # Makefile.am
-# Time-stamp: <2006-07-19 18:21:49 (djcb)>
+# Time-stamp: <2006-07-21 09:29:41 (djcb)>
 SUBDIRS=$(MODEST_PLATFORM_DIR)
 DIST_SUBDIRS = gtk gtk2 hildon
 
@@ -38,20 +38,12 @@ modest_SOURCES=\
 	modest-account-keys.h\
 	modest-account-mgr.h\
 	modest-account-mgr.c\
-	modest-account-view.h\
-	modest-account-view.c\
 	modest-window-mgr.h\
 	modest-window-mgr.c\
 	modest-icon-factory.c\
 	modest-icon-factory.h\
 	modest-tny-account-store.h\
 	modest-tny-account-store.c\
-	modest-tny-folder-tree-view.h\
-	modest-tny-folder-tree-view.c\
-	modest-tny-header-tree-view.h\
-	modest-tny-header-tree-view.c\
-	modest-tny-msg-view.h\
-	modest-tny-msg-view.c\
 	modest-tny-msg-actions.h\
 	modest-tny-msg-actions.c\
 	modest-proto.h\
@@ -86,6 +78,8 @@ modest_LDADD = \
 	$(MODEST_GSTUFF_LIBS) \
 	$(MODEST_LIBTINYMAIL_GNOME_DESKTOP_LIBS) \
 	$(MODEST_LIBTINYMAIL_MAEMO_LIBS) \
-	$(MODEST_PLATFORM_DIR)/libmodest-ui.la 
+	$(MODEST_PLATFORM_DIR)/libmodest-ui.la \
+	widgets/libmodest-widgets.la
+		
 
 EXTRA_DIST=modest-marshal.list

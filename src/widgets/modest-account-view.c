@@ -31,9 +31,9 @@
 /* include other impl specific header files */
 
 /* 'private'/'protected' functions */
-static void                     modest_account_view_class_init    (ModestAccountViewClass *klass);
-static void                     modest_account_view_init          (ModestAccountView *obj);
-static void                     modest_account_view_finalize      (GObject *obj);
+static void modest_account_view_class_init    (ModestAccountViewClass *klass);
+static void modest_account_view_init          (ModestAccountView *obj);
+static void modest_account_view_finalize      (GObject *obj);
 
 
 enum _AccountViewColumns {
@@ -137,8 +137,7 @@ update_account_view (ModestAccountMgr *account_mgr, ModestAccountView *view)
 {
 	GSList *account_names, *cursor;
 	GtkListStore *model;
-	GtkTreeIter iter;
-	
+		
 	model = GTK_LIST_STORE(gtk_tree_view_get_model (GTK_TREE_VIEW(view)));	
 	gtk_list_store_clear (model);
 
@@ -146,7 +145,8 @@ update_account_view (ModestAccountMgr *account_mgr, ModestAccountView *view)
 		modest_account_mgr_account_names (account_mgr, NULL);
 	
 	while (cursor) {
-		gchar    *proto, *store, *account_name;
+		gchar    *proto = NULL;
+		gchar    *store, *account_name;
 		gboolean enabled;
 
 		account_name = (gchar*)cursor->data;
@@ -235,20 +235,14 @@ on_account_enable_toggled (GtkCellRendererToggle *cell_renderer, gchar *path,
 }
 
 
-
-
-
-
-static
+static void
 init_view (ModestAccountView *self)
 {
 	ModestAccountViewPrivate *priv;
 	GtkTreeSelection *sel;
-	GtkWidget *account_view;
 	GtkCellRenderer *renderer;
 	GtkListStore *model;
-	GtkTreeIter iter;
-
+	
 	priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE(self);
 		
 	model = gtk_list_store_new (3,

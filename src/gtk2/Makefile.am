@@ -9,7 +9,7 @@
 INCLUDES=\
 	$(MODEST_GSTUFF_CFLAGS) \
 	$(MODEST_LIBTINYMAIL_GNOME_DESKTOP_CFLAGS) \
-	-I ${top_srcdir}/src
+	-I ${top_srcdir}/src  \
 	-DPREFIX=\"@prefix@\" \
 	-Wall
 

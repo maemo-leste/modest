@@ -180,7 +180,7 @@ button_box_new (ModestAccountViewWindow *self)
 {
 
 	GtkWidget *button_box;
-	GtkWidget *add_button, *remove_button, *edit_button, *close_button;
+	GtkWidget *add_button, *remove_button, *edit_button;
 	ModestAccountViewWindowPrivate *priv;
 	
 	priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE(self);
@@ -232,7 +232,7 @@ window_vbox_new (ModestAccountViewWindow *self)
 	main_vbox     = gtk_vbox_new (FALSE, 6);
 	main_hbox     = gtk_hbox_new (FALSE, 6);
 	
-	account_view = modest_widget_factory_get_account_view_widget (priv->widget_factory);
+	account_view = modest_widget_factory_get_account_view (priv->widget_factory);
 
 	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW(account_view));
 	g_signal_connect (G_OBJECT(sel), "changed",  G_CALLBACK(on_selection_changed),

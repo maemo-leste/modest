@@ -39,17 +39,17 @@
 /* TODO: put in auto* */
 #include <tny-text-buffer-stream.h>
 #include <tny-msg-folder.h>
+#include <tny-account-store-iface.h>
 
 #include "../modest-ui.h"
 #include "../modest-window-mgr.h"
 #include "../modest-account-mgr.h"
-#include "../modest-account-mgr.h"
 #include "../modest-identity-mgr.h"
 
 #include "../modest-tny-account-store.h"
-#include "../modest-tny-folder-tree-view.h"
-#include "../modest-tny-header-tree-view.h"
-#include "../modest-tny-msg-view.h"
+#include "../widgets/modest-folder-view.h"
+#include "../widgets/modest-header-view.h"
+#include "../widgets/modest-msg-view.h"
 #include "../modest-tny-transport-actions.h"
 #include "../modest-tny-store-actions.h"
 
@@ -166,14 +166,14 @@ on_accounts_reloaded (ModestTnyAccountStore *account_store, gpointer user_data)
 {
 	ModestUIPrivate *priv = user_data;
 
-	g_return_if_fail (MODEST_IS_TNY_FOLDER_TREE_VIEW (priv->folder_view));
-	g_return_if_fail (MODEST_IS_TNY_HEADER_TREE_VIEW (priv->header_view));
-
-	modest_tny_header_tree_view_set_folder (MODEST_TNY_HEADER_TREE_VIEW(priv->header_view),
+	g_return_if_fail (MODEST_IS_FOLDER_VIEW (priv->folder_view));
+	g_return_if_fail (MODEST_IS_HEADER_VIEW (priv->header_view));
+	
+	modest_header_view_set_folder (MODEST_HEADER_VIEW(priv->header_view),
 						NULL);
 
-  	modest_tny_folder_tree_view_update_model(MODEST_TNY_FOLDER_TREE_VIEW(priv->folder_view),
-						 TNY_ACCOUNT_STORE(account_store));
+  	modest_folder_view_update_model(MODEST_FOLDER_VIEW(priv->folder_view),
+					TNY_ACCOUNT_STORE_IFACE(account_store));
 }
 
 

@@ -74,7 +74,7 @@ gpointer modest_viewer_window_get_data(ModestViewerWindow *viewer_win);
  *
  * Returns: the ModestTnyMsgView widget from the viewer instance
  */
-ModestTnyMsgView *modest_viewer_window_get_tiny_msg_view(ModestViewerWindow *viewer_win);
+ModestMsgView *modest_viewer_window_get_tiny_msg_view(ModestViewerWindow *viewer_win);
 
 
 G_END_DECLS

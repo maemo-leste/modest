@@ -33,11 +33,11 @@
 #include <glib-object.h>
 #include "modest-account-mgr.h"
 #include "modest-tny-account-store.h"
-#include "modest-tny-header-tree-view.h"
-#include "modest-tny-folder-tree-view.h"
-#include "modest-tny-msg-view.h"
-#include "modest-account-view.h"
 
+#include "widgets/modest-header-view.h"
+#include "widgets/modest-folder-view.h"
+#include "widgets/modest-msg-view.h"
+#include "widgets/modest-account-view.h"
 
 G_BEGIN_DECLS
 
@@ -90,7 +90,7 @@ ModestWidgetFactory*      modest_widget_factory_new   (ModestConf *conf,
 						       ModestAccountMgr *account_mgr,
 						       gboolean auto_connect);
 /**
- * modest_widget_factory_get_folder_tree_widget
+ * modest_widget_factory_get_folder_view
  * @self: a ModestWidgetFactory instance
  * 
  * return the folder tree widget (ie. the widget with the list of folders);
@@ -100,11 +100,11 @@ ModestWidgetFactory*      modest_widget_factory_new   (ModestConf *conf,
  *
  * Returns: a folder tree view, or NULL in case of error
  */
-ModestTnyFolderTreeView*    modest_widget_factory_get_folder_tree_widget (ModestWidgetFactory *self);
+ModestFolderView*    modest_widget_factory_get_folder_view (ModestWidgetFactory *self);
 
 
 /**
- * modest_widget_factory_get_header_tree_widget
+ * modest_widget_factory_get_header_view
  * @self: a ModestWidgetFactory instance
  * 
  * return the header tree widget (ie. the widget with the list of headers);
@@ -114,11 +114,11 @@ ModestTnyFolderTreeView*    modest_widget_factory_get_folder_tree_widget (Modest
  *
  * Returns: a header tree view, or NULL in case of error
  */
-ModestTnyHeaderTreeView*    modest_widget_factory_get_header_tree_widget (ModestWidgetFactory *self);
+ModestHeaderView*    modest_widget_factory_get_header_view (ModestWidgetFactory *self);
 
 
 /**
- * modest_widget_factory_get_header_tree_widget
+ * modest_widget_factory_get_msg_preview
  * @self: a ModestWidgetFactory instance
  * 
  * return the message preview widget (ie. the widget with shows the currently selected message);
@@ -128,12 +128,11 @@ ModestTnyHeaderTreeView*    modest_widget_factory_get_header_tree_widget (Modest
  *
  * Returns: a header tree view, or NULL in case of error
  */
-ModestTnyMsgView*           modest_widget_factory_get_msg_preview_widget (ModestWidgetFactory *self);
-
+ModestMsgView*           modest_widget_factory_get_msg_preview (ModestWidgetFactory *self);
 
 
 /**
- * modest_widget_factory_get_account_view_widget
+ * modest_widget_factory_get_account_view
  * @self: a ModestWidgetFactory instance
  * 
  * return an account view widget (ie. the widget that shows a list of accounts)
@@ -143,10 +142,7 @@ ModestTnyMsgView*           modest_widget_factory_get_msg_preview_widget (Modest
  *
  * Returns: the account view, or NULL in case of error
  */
-ModestAccountView*    modest_widget_factory_get_account_view_widget (ModestWidgetFactory *self);
-
-
-
+ModestAccountView*    modest_widget_factory_get_account_view (ModestWidgetFactory *self);
 
 
 G_END_DECLS

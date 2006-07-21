@@ -30,35 +30,33 @@
 
 /* modest-tny-msg-view.h */
 
-#ifndef __MODEST_TNY_MSG_VIEW_H__
-#define __MODEST_TNY_MSG_VIEW_H__
-
+#ifndef __MODEST_MSG_VIEW_H__
+#define __MODEST_MSG_VIEW_H__
 
 #include <gtk/gtk.h>
 #include <tny-stream-iface.h>
 #include <tny-msg-iface.h>
 #include <tny-msg-mime-part-iface.h>
-
-#include "modest-conf.h"
+#include <modest-conf.h>
 
 G_BEGIN_DECLS
 
 /* convenience macros */
-#define MODEST_TYPE_TNY_MSG_VIEW             (modest_tny_msg_view_get_type())
-#define MODEST_TNY_MSG_VIEW(obj)             (G_TYPE_CHECK_INSTANCE_CAST((obj),MODEST_TYPE_TNY_MSG_VIEW,ModestTnyMsgView))
-#define MODEST_TNY_MSG_VIEW_CLASS(klass)     (G_TYPE_CHECK_CLASS_CAST((klass),MODEST_TYPE_TNY_MSG_VIEW,ModestTnyMsgViewClass))
-#define MODEST_IS_TNY_MSG_VIEW(obj)          (G_TYPE_CHECK_INSTANCE_TYPE((obj),MODEST_TYPE_TNY_MSG_VIEW))
-#define MODEST_IS_TNY_MSG_VIEW_CLASS(klass)  (G_TYPE_CHECK_CLASS_TYPE((klass),MODEST_TYPE_TNY_MSG_VIEW))
-#define MODEST_TNY_MSG_VIEW_GET_CLASS(obj)   (G_TYPE_INSTANCE_GET_CLASS((obj),MODEST_TYPE_TNY_MSG_VIEW,ModestTnyMsgViewClass))
+#define MODEST_TYPE_MSG_VIEW             (modest_msg_view_get_type())
+#define MODEST_MSG_VIEW(obj)             (G_TYPE_CHECK_INSTANCE_CAST((obj),MODEST_TYPE_MSG_VIEW,ModestMsgView))
+#define MODEST_MSG_VIEW_CLASS(klass)     (G_TYPE_CHECK_CLASS_CAST((klass),MODEST_TYPE_MSG_VIEW,ModestMsgViewClass))
+#define MODEST_IS_MSG_VIEW(obj)          (G_TYPE_CHECK_INSTANCE_TYPE((obj),MODEST_TYPE_MSG_VIEW))
+#define MODEST_IS_MSG_VIEW_CLASS(klass)  (G_TYPE_CHECK_CLASS_TYPE((klass),MODEST_TYPE_MSG_VIEW))
+#define MODEST_MSG_VIEW_GET_CLASS(obj)   (G_TYPE_INSTANCE_GET_CLASS((obj),MODEST_TYPE_MSG_VIEW,ModestMsgViewClass))
 
-typedef struct _ModestTnyMsgView      ModestTnyMsgView;
-typedef struct _ModestTnyMsgViewClass ModestTnyMsgViewClass;
+typedef struct _ModestMsgView      ModestMsgView;
+typedef struct _ModestMsgViewClass ModestMsgViewClass;
 
-struct _ModestTnyMsgView {
+struct _ModestMsgView {
 	GtkScrolledWindow parent;
 };
 
-struct _ModestTnyMsgViewClass {
+struct _ModestMsgViewClass {
 	GtkScrolledWindowClass parent_class;
 
 	void (*link_clicked)       (GtkWidget *widget, const gchar* link, gpointer user_data);
@@ -67,49 +65,49 @@ struct _ModestTnyMsgViewClass {
 
 
 /**
- * modest_tny_msg_view_get_type
+ * modest_msg_view_get_type
  *
  * get the GType for the this class
  *
  * Returns: the GType for this class
  */
-GType        modest_tny_msg_view_get_type    (void) G_GNUC_CONST;
+GType        modest_msg_view_get_type    (void) G_GNUC_CONST;
 
 
 /**
- * modest_tny_msg_view_new 
+ * modest_msg_view_new 
  * @tny_msg: a TnyMsgIface instance, or NULL
  *
- * create a new ModestTnyMsgView widget (a GtkScrolledWindow subclass),
+ * create a new ModestMsgView widget (a GtkScrolledWindow subclass),
  * and display the @tny_msg e-mail message in it. If @tny_msg is NULL,
  * then a blank page will be displayed
  *  
- * Returns: a new ModestTnyMsgView widget, or NULL if there's an error
+ * Returns: a new ModestMsgView widget, or NULL if there's an error
  */
-GtkWidget*   modest_tny_msg_view_new          (const TnyMsgIface *tny_msg);
+GtkWidget*   modest_msg_view_new          (const TnyMsgIface *tny_msg);
 
 
 /**
- * modest_tny_msg_view_set_message
- * @self: a ModestTnyMsgView instance
+ * modest_msg_view_set_message
+ * @self: a ModestMsgView instance
  * @tny_msg: a TnyMsgIface instance, or NULL
  *
  * display the @tny_msg e-mail message. If @tny_msg is NULL,
  * then a blank page will be displayed
  *  */
-void         modest_tny_msg_view_set_message  (ModestTnyMsgView *self,
+void         modest_msg_view_set_message  (ModestMsgView *self,
 						const TnyMsgIface *tny_msg);
 
 /**
- * modest_tny_msg_view_get_selected_text:
- * @self: a ModestTnyMsgView instance
+ * modest_msg_view_get_selected_text:
+ * @self: a ModestMsgView instance
  * 
  * get the user selected part of the message
  * 
  * Returns: a newly allocated string of the user's selection or NULL if nothing is selected
  */
-gchar *      modest_tny_msg_view_get_selected_text (ModestTnyMsgView *self);
+gchar *      modest_msg_view_get_selected_text (ModestMsgView *self);
 
 G_END_DECLS
 
-#endif /* __MODEST_TNY_MSG_VIEW_H__ */
+#endif /* __MODEST_MSG_VIEW_H__ */

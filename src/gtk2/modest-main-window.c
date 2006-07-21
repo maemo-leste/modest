@@ -55,9 +55,9 @@ struct _ModestMainWindowPrivate {
 	ModestWidgetFactory *widget_factory;
 	ModestConf *conf;
 	
-	ModestTnyHeaderTreeView *header_view;
-	ModestTnyFolderTreeView *folder_view;
-	ModestTnyMsgView        *msg_preview;
+	ModestHeaderView *header_view;
+	ModestFolderView *folder_view;
+	ModestMsgView    *msg_preview;
 };
 
 
@@ -166,7 +166,6 @@ on_menu_accounts (ModestMainWindow *self, guint action, GtkWidget *widget)
 {
 	GtkWidget *account_win;
 	ModestMainWindowPrivate *priv;
-	ModestAccountMgr *account_mgr;
 
 	g_return_if_fail (widget);
 	g_return_if_fail (self);
@@ -259,28 +258,28 @@ menubar_new (ModestMainWindow *self)
 
 
 
-static ModestTnyHeaderTreeView*
+static ModestHeaderView*
 header_view_new (ModestMainWindow *self)
 {
 	int i;
 	GSList *columns = NULL;
-	ModestTnyHeaderTreeView *header_view;
+	ModestHeaderView *header_view;
 	ModestMainWindowPrivate *priv;
-	ModestTnyHeaderTreeViewColumn cols[] = {
-		MODEST_TNY_HEADER_TREE_VIEW_COLUMN_MSGTYPE,
-		MODEST_TNY_HEADER_TREE_VIEW_COLUMN_ATTACH,
-		MODEST_TNY_HEADER_TREE_VIEW_COLUMN_FROM,
-		MODEST_TNY_HEADER_TREE_VIEW_COLUMN_SUBJECT,
-		MODEST_TNY_HEADER_TREE_VIEW_COLUMN_RECEIVED_DATE
+	ModestHeaderViewColumn cols[] = {
+		MODEST_HEADER_VIEW_COLUMN_MSGTYPE,
+		MODEST_HEADER_VIEW_COLUMN_ATTACH,
+		MODEST_HEADER_VIEW_COLUMN_FROM,
+		MODEST_HEADER_VIEW_COLUMN_SUBJECT,
+		MODEST_HEADER_VIEW_COLUMN_RECEIVED_DATE
 	};
 
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
 	
-	for (i = 0 ; i != sizeof(cols) / sizeof(ModestTnyHeaderTreeViewColumn); ++i)
+	for (i = 0 ; i != sizeof(cols) / sizeof(ModestHeaderViewColumn); ++i)
 		columns = g_slist_append (columns, GINT_TO_POINTER(cols[i]));
 
-	header_view = modest_widget_factory_get_header_tree_widget (priv->widget_factory);
-	modest_tny_header_tree_view_set_columns (header_view, columns);
+	header_view = modest_widget_factory_get_header_view (priv->widget_factory);
+	modest_header_view_set_columns (header_view, columns);
 	g_slist_free (columns);
 
 	return header_view;
@@ -345,20 +344,6 @@ set_sizes (ModestMainWindow *self)
 
 
 
-static void
-save_sizes (ModestMainWindow *self, ModestConf *conf)
-{
-	ModestMainWindowPrivate *priv;
-
-	int x,y;
-	
-	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
-
-
-}
-
-
-
 static GtkWidget*
 wrapped_in_scrolled_window (GtkWidget *widget, gboolean needs_viewport)
 {
@@ -403,9 +388,9 @@ modest_main_window_new (ModestWidgetFactory *factory, ModestConf *conf)
 	priv->conf = conf;
 
 	/* widgets from factory */
-	priv->folder_view = modest_widget_factory_get_folder_tree_widget (factory);
+	priv->folder_view = modest_widget_factory_get_folder_view (factory);
 	priv->header_view = header_view_new (MODEST_MAIN_WINDOW(obj));
-	priv->msg_preview = modest_widget_factory_get_msg_preview_widget (factory);
+	priv->msg_preview = modest_widget_factory_get_msg_preview (factory);
 
 	folder_win = wrapped_in_scrolled_window (GTK_WIDGET(priv->folder_view),
 						 FALSE);

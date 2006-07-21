@@ -27,7 +27,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modest-tny-msg-view.h>
+#include <widgets/modest-msg-view.h>
 #include "modest-msg-window.h"
 
 /* 'private'/'protected' functions */
@@ -131,7 +131,7 @@ modest_msg_window_init (ModestMsgWindow *obj)
 	gtk_table_attach_defaults (GTK_TABLE(header_table), bcc_field,     1,2,2,3);
 	gtk_table_attach_defaults (GTK_TABLE(header_table), subject_field, 1,2,3,4);
 
-	msg_field = modest_tny_msg_view_new (NULL);
+	msg_field = modest_msg_view_new (NULL);
 	
 	main_vbox = gtk_vbox_new  (FALSE, 6);
 

@@ -29,7 +29,7 @@
 
 
 #include "modest-ui.h"
-#include "modest-tny-msg-view.h"
+#include "widgets/modest-msg-view.h"
 #include "modest-viewer-window.h"
 
 
@@ -45,8 +45,8 @@ enum {
 
 typedef struct _ModestViewerWindowPrivate ModestViewerWindowPrivate;
 struct _ModestViewerWindowPrivate {
-	ModestTnyMsgView *msg_view;
-	gpointer user_data;
+	ModestMsgView *msg_view;
+	gpointer      user_data;
 };
 #define MODEST_VIEWER_WINDOW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                   MODEST_TYPE_VIEWER_WINDOW, \
@@ -134,7 +134,7 @@ modest_viewer_window_new (ModestUI *ui, TnyMsgIface *msg)
 	self = G_OBJECT(g_object_new(MODEST_TYPE_VIEWER_WINDOW, NULL));
 	priv = MODEST_VIEWER_WINDOW_GET_PRIVATE(self);
 
-	msg_view = modest_tny_msg_view_new(msg);
+	msg_view = modest_msg_view_new(msg);
 
 	data = NULL;
 	w = GTK_WIDGET(modest_ui_new_viewer_window(ui, msg_view, msg, &data));
@@ -145,7 +145,7 @@ modest_viewer_window_new (ModestUI *ui, TnyMsgIface *msg)
 
 	gtk_container_add(GTK_CONTAINER(self), w);
 	priv->user_data = data;
-	priv->msg_view = MODEST_TNY_MSG_VIEW(msg_view);
+	priv->msg_view = MODEST_MSG_VIEW(msg_view);
 
 	return GTK_WIDGET(self);
 }
@@ -168,13 +168,13 @@ modest_viewer_window_get_data(ModestViewerWindow *viewer_win)
 }
 
 
-ModestTnyMsgView*
+ModestMsgView*
 modest_viewer_window_get_tiny_msg_view(ModestViewerWindow *viewer_win)
 {
 	ModestViewerWindowPrivate *priv;
 
 	g_return_val_if_fail (viewer_win, NULL);
-
+	
 	priv = MODEST_VIEWER_WINDOW_GET_PRIVATE(viewer_win);
 
 	return priv->msg_view;

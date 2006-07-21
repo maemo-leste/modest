@@ -48,9 +48,9 @@
 #include "../modest-identity-mgr.h"
 
 #include "../modest-tny-account-store.h"
-#include "../modest-tny-folder-tree-view.h"
-#include "../modest-tny-header-tree-view.h"
-#include "../modest-tny-msg-view.h"
+#include "../widgets/modest-folder-view.h"
+#include "../widgets/modest-header-view.h"
+#include "../widgets/modest-msg-view.h"
 #include "../modest-tny-transport-actions.h"
 #include "../modest-tny-store-actions.h"
 
@@ -121,6 +121,15 @@ close_viewer_window(GtkWidget *win, GdkEvent *event, gpointer data)
 	gtk_widget_destroy(GTK_WIDGET(viewer_win));
 }
 
+/* just to prevent warnings:
+ * warning: `%x' yields only last 2 digits of year in some locales
+ */
+static size_t
+my_strftime(char *s, size_t max, const char  *fmt,  const
+	    struct tm *tm) {
+	return strftime(s, max, fmt, tm);
+}
+
 
 static void
 open_message_viewer_window(ModestUI *modest_ui)
@@ -134,7 +143,7 @@ open_message_viewer_window(ModestUI *modest_ui)
 	GtkTreeModel *model;
 	GtkTreeIter iter;
 	GtkScrolledWindow *scroll;
-	ModestTnyHeaderTreeView *header_view;
+	ModestHeaderView *header_view;
 	TnyMsgHeaderIface *header;
 	const TnyMsgFolderIface *folder;
 	TnyMsgIface *msg;
@@ -154,7 +163,7 @@ open_message_viewer_window(ModestUI *modest_ui)
 	scroll = GTK_SCROLLED_WINDOW(gtk_paned_get_child1 (GTK_PANED(paned)));
         g_return_if_fail (scroll);
 
-	header_view = MODEST_TNY_HEADER_TREE_VIEW(gtk_bin_get_child (GTK_BIN(scroll)));
+	header_view = MODEST_HEADER_VIEW(gtk_bin_get_child (GTK_BIN(scroll)));
 	g_return_if_fail (header_view);
 
 	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW(header_view));
@@ -193,8 +202,8 @@ open_message_viewer_window(ModestUI *modest_ui)
 	from = tny_msg_header_iface_get_from(header);
 	to = tny_msg_header_iface_get_to(header);
 	sent_date = tny_msg_header_iface_get_date_sent(header);
-	strftime (date_str, 100, "%c", localtime (&sent_date));
-
+	my_strftime (date_str, 100, "%c", localtime (&sent_date));
+	
 	w = glade_xml_get_widget (windata->glade_xml, "from");
 	gtk_label_set_text(GTK_LABEL(w), from);
 	w = glade_xml_get_widget (windata->glade_xml, "to");

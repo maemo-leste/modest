@@ -203,7 +203,7 @@ gboolean	modest_account_mgr_account_exists	  (ModestAccountMgr *self,
  *
  * Returns: TRUE if it worked, FALSE otherwise
  */
-gboolean modest_account_mgr_set_account_enabled (ModestAccountMgr *self, const gchar* name,
+gboolean modest_account_mgr_account_set_enabled (ModestAccountMgr *self, const gchar* name,
 						 gboolean is_server_account, gboolean enabled);
 
 

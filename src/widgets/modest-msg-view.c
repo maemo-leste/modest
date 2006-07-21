@@ -31,28 +31,29 @@
 #include <string.h>
 #include <regex.h>
 #include <ctype.h>
+#include <stdlib.h>
 #include <glib/gi18n.h>
 #include <gtkhtml/gtkhtml.h>
 #include <gtkhtml/gtkhtml-stream.h>
 #include <tny-list-iface.h>
 
-#include "modest-tny-msg-view.h"
+#include <modest-tny-msg-actions.h>
+#include "modest-msg-view.h"
 #include "modest-tny-stream-gtkhtml.h"
-#include "modest-tny-msg-actions.h"
 
 
 /* 'private'/'protected' functions */
-static void     modest_tny_msg_view_class_init   (ModestTnyMsgViewClass *klass);
-static void     modest_tny_msg_view_init         (ModestTnyMsgView *obj);
-static void     modest_tny_msg_view_finalize     (GObject *obj);
+static void     modest_msg_view_class_init   (ModestMsgViewClass *klass);
+static void     modest_msg_view_init         (ModestMsgView *obj);
+static void     modest_msg_view_finalize     (GObject *obj);
 
 
 static GSList*  get_url_matches (GString *txt);
 static gboolean on_link_clicked (GtkWidget *widget, const gchar *uri,
-				 ModestTnyMsgView *msg_view);
+				 ModestMsgView *msg_view);
 static gboolean on_url_requested (GtkWidget *widget, const gchar *uri,
 				  GtkHTMLStream *stream,
-				  ModestTnyMsgView *msg_view);
+				  ModestMsgView *msg_view);
 
 /*
  * we need these regexps to find URLs in plain text e-mails
@@ -90,14 +91,14 @@ enum {
 	LAST_SIGNAL
 };
 
-typedef struct _ModestTnyMsgViewPrivate ModestTnyMsgViewPrivate;
-struct _ModestTnyMsgViewPrivate {
+typedef struct _ModestMsgViewPrivate ModestMsgViewPrivate;
+struct _ModestMsgViewPrivate {
 	GtkWidget *gtkhtml;
 	const TnyMsgIface *msg;
 };
-#define MODEST_TNY_MSG_VIEW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
-                                                 MODEST_TYPE_TNY_MSG_VIEW, \
-                                                 ModestTnyMsgViewPrivate))
+#define MODEST_MSG_VIEW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
+                                                 MODEST_TYPE_MSG_VIEW, \
+                                                 ModestMsgViewPrivate))
 /* globals */
 static GtkContainerClass *parent_class = NULL;
 
@@ -105,45 +106,45 @@ static GtkContainerClass *parent_class = NULL;
 static guint signals[LAST_SIGNAL] = {0};
 
 GType
-modest_tny_msg_view_get_type (void)
+modest_msg_view_get_type (void)
 {
 	static GType my_type = 0;
 	if (!my_type) {
 		static const GTypeInfo my_info = {
-			sizeof(ModestTnyMsgViewClass),
+			sizeof(ModestMsgViewClass),
 			NULL,		/* base init */
 			NULL,		/* base finalize */
-			(GClassInitFunc) modest_tny_msg_view_class_init,
+			(GClassInitFunc) modest_msg_view_class_init,
 			NULL,		/* class finalize */
 			NULL,		/* class data */
-			sizeof(ModestTnyMsgView),
+			sizeof(ModestMsgView),
 			1,		/* n_preallocs */
-			(GInstanceInitFunc) modest_tny_msg_view_init,
+			(GInstanceInitFunc) modest_msg_view_init,
 		};
 		my_type = g_type_register_static (GTK_TYPE_SCROLLED_WINDOW,
-		                                  "ModestTnyMsgView",
+		                                  "ModestMsgView",
 		                                  &my_info, 0);
 	}
 	return my_type;
 }
 
 static void
-modest_tny_msg_view_class_init (ModestTnyMsgViewClass *klass)
+modest_msg_view_class_init (ModestMsgViewClass *klass)
 {
 	GObjectClass *gobject_class;
 	gobject_class = (GObjectClass*) klass;
 
 	parent_class            = g_type_class_peek_parent (klass);
-	gobject_class->finalize = modest_tny_msg_view_finalize;
+	gobject_class->finalize = modest_msg_view_finalize;
 
-	g_type_class_add_private (gobject_class, sizeof(ModestTnyMsgViewPrivate));
+	g_type_class_add_private (gobject_class, sizeof(ModestMsgViewPrivate));
 
 		
  	signals[LINK_CLICKED_SIGNAL] =
  		g_signal_new ("link_clicked",
 			      G_TYPE_FROM_CLASS (gobject_class),
 			      G_SIGNAL_RUN_FIRST,
-			      G_STRUCT_OFFSET(ModestTnyMsgViewClass, link_clicked),
+			      G_STRUCT_OFFSET(ModestMsgViewClass, link_clicked),
 			      NULL, NULL,
 			      g_cclosure_marshal_VOID__STRING,
 			      G_TYPE_NONE, 1, G_TYPE_STRING);
@@ -152,7 +153,7 @@ modest_tny_msg_view_class_init (ModestTnyMsgViewClass *klass)
  		g_signal_new ("attachment_clicked",
 			      G_TYPE_FROM_CLASS (gobject_class),
 			      G_SIGNAL_RUN_FIRST,
-			      G_STRUCT_OFFSET(ModestTnyMsgViewClass, attachment_clicked),
+			      G_STRUCT_OFFSET(ModestMsgViewClass, attachment_clicked),
 			      NULL, NULL,
 			      g_cclosure_marshal_VOID__POINTER,
 			      G_TYPE_NONE, 1, G_TYPE_INT);
@@ -160,11 +161,11 @@ modest_tny_msg_view_class_init (ModestTnyMsgViewClass *klass)
 }
 
 static void
-modest_tny_msg_view_init (ModestTnyMsgView *obj)
+modest_msg_view_init (ModestMsgView *obj)
 {
- 	ModestTnyMsgViewPrivate *priv;
+ 	ModestMsgViewPrivate *priv;
 	
-	priv = MODEST_TNY_MSG_VIEW_GET_PRIVATE(obj);
+	priv = MODEST_MSG_VIEW_GET_PRIVATE(obj);
 
 	priv->msg                     = NULL;
 	priv->gtkhtml                 = gtk_html_new();
@@ -184,22 +185,22 @@ modest_tny_msg_view_init (ModestTnyMsgView *obj)
 	
 
 static void
-modest_tny_msg_view_finalize (GObject *obj)
+modest_msg_view_finalize (GObject *obj)
 {	
 	G_OBJECT_CLASS(parent_class)->finalize (obj);		
 }
 
 
 GtkWidget*
-modest_tny_msg_view_new (const TnyMsgIface *msg)
+modest_msg_view_new (const TnyMsgIface *msg)
 {
 	GObject *obj;
-	ModestTnyMsgView* self;
-	ModestTnyMsgViewPrivate *priv;
+	ModestMsgView* self;
+	ModestMsgViewPrivate *priv;
 	
-	obj  = G_OBJECT(g_object_new(MODEST_TYPE_TNY_MSG_VIEW, NULL));
-	self = MODEST_TNY_MSG_VIEW(obj);
-	priv = MODEST_TNY_MSG_VIEW_GET_PRIVATE (self);
+	obj  = G_OBJECT(g_object_new(MODEST_TYPE_MSG_VIEW, NULL));
+	self = MODEST_MSG_VIEW(obj);
+	priv = MODEST_MSG_VIEW_GET_PRIVATE (self);
 
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(self),
 				       GTK_POLICY_AUTOMATIC,
@@ -209,14 +210,14 @@ modest_tny_msg_view_new (const TnyMsgIface *msg)
 		gtk_container_add (GTK_CONTAINER(obj), priv->gtkhtml);
 	
 	if (msg)
-		modest_tny_msg_view_set_message (self, msg);
+		modest_msg_view_set_message (self, msg);
 	
 	return GTK_WIDGET(self);
 }
 
 
 static gboolean
-on_link_clicked (GtkWidget *widget, const gchar *uri, ModestTnyMsgView *msg_view)
+on_link_clicked (GtkWidget *widget, const gchar *uri, ModestMsgView *msg_view)
 {
 
 	int index;
@@ -278,10 +279,10 @@ find_cid_image (const TnyMsgIface *msg, const gchar *cid)
 static gboolean
 on_url_requested (GtkWidget *widget, const gchar *uri,
 		  GtkHTMLStream *stream,
-		  ModestTnyMsgView *msg_view)
+		  ModestMsgView *msg_view)
 {
-	ModestTnyMsgViewPrivate *priv;
-	priv = MODEST_TNY_MSG_VIEW_GET_PRIVATE (msg_view);
+	ModestMsgViewPrivate *priv;
+	priv = MODEST_MSG_VIEW_GET_PRIVATE (msg_view);
 	
 	if (g_str_has_prefix (uri, "cid:")) {
 		/* +4 ==> skip "cid:" */
@@ -313,9 +314,9 @@ typedef struct  {
 
 /* render the attachments as hyperlinks in html */
 static gchar*
-attachments_as_html (ModestTnyMsgView *self, const TnyMsgIface *msg)
+attachments_as_html (ModestMsgView *self, const TnyMsgIface *msg)
 {
-	ModestTnyMsgViewPrivate *priv;
+	ModestMsgViewPrivate *priv;
 	GString *appendix;
 	const TnyListIface *parts;
 	TnyIteratorIface *iter;
@@ -325,7 +326,7 @@ attachments_as_html (ModestTnyMsgView *self, const TnyMsgIface *msg)
 	if (!msg)
 		return NULL;
 
-	priv  = MODEST_TNY_MSG_VIEW_GET_PRIVATE (self);
+	priv  = MODEST_MSG_VIEW_GET_PRIVATE (self);
 	parts = tny_msg_iface_get_parts ((TnyMsgIface*)msg);
 	// FIXME: tinymail
 	iter  = tny_list_iface_create_iterator ((TnyListIface*)parts);
@@ -541,17 +542,17 @@ get_url_matches (GString *txt)
 
 
 static gboolean
-set_html_message (ModestTnyMsgView *self, const TnyMsgMimePartIface *tny_body,
+set_html_message (ModestMsgView *self, const TnyMsgMimePartIface *tny_body,
 		  const TnyMsgIface *msg)
 {
 	gchar *html_attachments;
 	TnyStreamIface *gtkhtml_stream;	
-	ModestTnyMsgViewPrivate *priv;
+	ModestMsgViewPrivate *priv;
 	
 	g_return_val_if_fail (self, FALSE);
 	g_return_val_if_fail (tny_body, FALSE);
 	
-	priv = MODEST_TNY_MSG_VIEW_GET_PRIVATE(self);
+	priv = MODEST_MSG_VIEW_GET_PRIVATE(self);
 
 	gtkhtml_stream =
 		TNY_STREAM_IFACE(modest_tny_stream_gtkhtml_new
@@ -580,19 +581,19 @@ set_html_message (ModestTnyMsgView *self, const TnyMsgMimePartIface *tny_body,
 /* this is a hack --> we use the tny_text_buffer_stream to
  * get the message text, then write to gtkhtml 'by hand' */
 static gboolean
-set_text_message (ModestTnyMsgView *self, const TnyMsgMimePartIface *tny_body,
+set_text_message (ModestMsgView *self, const TnyMsgMimePartIface *tny_body,
 		  const TnyMsgIface *msg)
 {
 	GtkTextBuffer *buf;
 	GtkTextIter begin, end;
 	TnyStreamIface* txt_stream, *gtkhtml_stream;
 	gchar *txt, *html_attachments;
-	ModestTnyMsgViewPrivate *priv;
+	ModestMsgViewPrivate *priv;
 		
 	g_return_val_if_fail (self, FALSE);
 	g_return_val_if_fail (tny_body, FALSE);
 
-	priv           = MODEST_TNY_MSG_VIEW_GET_PRIVATE(self);
+	priv           = MODEST_MSG_VIEW_GET_PRIVATE(self);
 	
 	buf            = gtk_text_buffer_new (NULL);
 	txt_stream     = TNY_STREAM_IFACE(tny_text_buffer_stream_new (buf));
@@ -635,30 +636,31 @@ set_text_message (ModestTnyMsgView *self, const TnyMsgMimePartIface *tny_body,
 
 
 static gboolean
-set_empty_message (ModestTnyMsgView *self)
+set_empty_message (ModestMsgView *self)
 {
-	ModestTnyMsgViewPrivate *priv;
+	ModestMsgViewPrivate *priv;
 	
 	g_return_val_if_fail (self, FALSE);
-	priv           = MODEST_TNY_MSG_VIEW_GET_PRIVATE(self);
+	priv           = MODEST_MSG_VIEW_GET_PRIVATE(self);
 
-	gtk_html_load_from_string (priv->gtkhtml, "", 1);
+	gtk_html_load_from_string (GTK_HTML(priv->gtkhtml),
+				   "", 1);
 	
 	return TRUE;
 }
 
 
 gchar *
-modest_tny_msg_view_get_selected_text (ModestTnyMsgView *self)
+modest_msg_view_get_selected_text (ModestMsgView *self)
 {
-	ModestTnyMsgViewPrivate *priv;
+	ModestMsgViewPrivate *priv;
 	gchar *sel;
 	GtkWidget *html;
 	int len;
 	GtkClipboard *clip;
 
 	g_return_val_if_fail (self, NULL);
-	priv = MODEST_TNY_MSG_VIEW_GET_PRIVATE(self);
+	priv = MODEST_MSG_VIEW_GET_PRIVATE(self);
 	html = priv->gtkhtml;
 	
 	/* I'm sure there is a better way to check for selected text */
@@ -674,14 +676,14 @@ modest_tny_msg_view_get_selected_text (ModestTnyMsgView *self)
 
 
 void
-modest_tny_msg_view_set_message (ModestTnyMsgView *self, const TnyMsgIface *msg)
+modest_msg_view_set_message (ModestMsgView *self, const TnyMsgIface *msg)
 {
 	TnyMsgMimePartIface *body;
-	ModestTnyMsgViewPrivate *priv;
+	ModestMsgViewPrivate *priv;
 
 	g_return_if_fail (self);
 	
-	priv = MODEST_TNY_MSG_VIEW_GET_PRIVATE(self);
+	priv = MODEST_MSG_VIEW_GET_PRIVATE(self);
 
 	priv->msg = msg;
 	
