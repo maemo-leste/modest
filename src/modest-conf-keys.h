@@ -45,12 +45,19 @@
 #define MODEST_MAIN_WINDOW_WIDTH_DEFAULT                 800
 
 
+
+/*
+ * the next 5 parameters determine the window size
+ */
+#define MODEST_MAIN_PANED_HEIGHT			MODEST_CONF_NAMESPACE "/main_paned_height"
+#define MODEST_MAIN_PANED_HEIGHT_DEFAULT		600
+
 /* the folders / favorites (on the left) */
 #define MODEST_FOLDER_PANED_WIDTH			 MODEST_CONF_NAMESPACE "/folder_paned_width"
 #define MODEST_FOLDER_PANED_WIDTH_DEFAULT		 150
 /* percentage the of the height of the favorites folders */
 #define MODEST_FOLDER_PANED_DIVIDER_POS			 MODEST_CONF_NAMESPACE "/folder_paned_divider_pos"
-#define MODEST_FOLDER_PANED_DIVIDER_POS_DEFAULT	         20
+#define MODEST_FOLDER_PANED_DIVIDER_POS_DEFAULT	         100
 
 /* the messages / headers (on the right) */
 #define MODEST_MSG_PANED_WIDTH			         MODEST_CONF_NAMESPACE "/msg_paned_width"
@@ -59,6 +66,10 @@
 /* percentage the of the height of the headers */
 #define MODEST_MSG_PANED_DIVIDER_POS                     MODEST_CONF_NAMESPACE "/msg_paned_divider_pos"
 #define MODEST_MSG_PANED_DIVIDER_POS_DEFAULT		 40
+
+
+
+
 
 
 /*

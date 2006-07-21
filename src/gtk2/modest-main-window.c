@@ -36,6 +36,9 @@ static void modest_main_window_class_init    (ModestMainWindowClass *klass);
 static void modest_main_window_init          (ModestMainWindow *obj);
 static void modest_main_window_finalize      (GObject *obj);
 
+static void restore_sizes (ModestMainWindow *self);
+static void save_sizes (ModestMainWindow *self);
+
 /* list my signals */
 enum {
 	/* MY_SIGNAL_1, */
@@ -47,11 +50,11 @@ typedef struct _ModestMainWindowPrivate ModestMainWindowPrivate;
 struct _ModestMainWindowPrivate {
 	GtkWidget *toolbar;
 	GtkWidget *menubar;
-	GtkWidget *progress_bar;
-	GtkWidget *status_bar;
+
 	GtkWidget *folder_paned;
 	GtkWidget *msg_paned;
-
+	GtkWidget *main_paned;
+	
 	ModestWidgetFactory *widget_factory;
 	ModestConf *conf;
 	
@@ -188,6 +191,13 @@ on_menu_new_message (ModestMainWindow *self, guint action, GtkWidget *widget)
 	gtk_widget_show (msg_win);
 }
 
+static void
+on_menu_quit (ModestMainWindow *self, guint action, GtkWidget *widget)
+{
+	save_sizes (self);
+	gtk_main_quit ();
+}
+
 
 
 /* Our menu, an array of GtkItemFactoryEntry structures that defines each menu item */
@@ -198,7 +208,7 @@ static GtkItemFactoryEntry menu_items[] = {
 	{ "/File/_Save",	"<control>S",		NULL,		0, "<StockItem>", GTK_STOCK_SAVE },
 	{ "/File/Save _As",	NULL,			NULL,           0, "<Item>" },
 	{ "/File/sep1",		NULL,			NULL,           0, "<Separator>" },
-	{ "/File/_Quit",	"<CTRL>Q",		gtk_main_quit,  0, "<StockItem>", GTK_STOCK_QUIT },
+	{ "/File/_Quit",	"<CTRL>Q",		on_menu_quit,  0, "<StockItem>", GTK_STOCK_QUIT },
 
 	{ "/_Edit",		NULL,			NULL,           0, "<Branch>" },
 	{ "/Edit/_Undo",	"<CTRL>Z",		NULL,		0, "<StockItem>", GTK_STOCK_UNDO },
@@ -287,61 +297,68 @@ header_view_new (ModestMainWindow *self)
 
 
 static void
-set_sizes (ModestMainWindow *self)
+restore_sizes (ModestMainWindow *self)
 {
 	ModestMainWindowPrivate *priv;
 
-	int win_x,win_y;
 	int fol_x,fol_pos;
 	int msg_x,msg_pos;
+	int main_y;
 	
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
 
-	/* size of the whole window */
-	win_x = modest_conf_get_int_or_default (priv->conf,
-						      MODEST_MAIN_WINDOW_WIDTH,
-						      MODEST_MAIN_WINDOW_WIDTH_DEFAULT);
-	win_y = modest_conf_get_int_or_default (priv->conf,
-						      MODEST_MAIN_WINDOW_HEIGHT,
-						      MODEST_MAIN_WINDOW_HEIGHT_DEFAULT);
-	gtk_window_set_default_size (GTK_WINDOW(self), win_x, win_y);
-	
+	/* heigth of the main paned */
+	main_y =  modest_conf_get_int_or_default (priv->conf,
+						  MODEST_MAIN_PANED_HEIGHT,
+						  MODEST_MAIN_PANED_HEIGHT_DEFAULT);
 	/* size of the folder pane */
 	fol_x = modest_conf_get_int_or_default (priv->conf,
-						      MODEST_FOLDER_PANED_WIDTH,
-						      MODEST_FOLDER_PANED_WIDTH_DEFAULT);
+						MODEST_FOLDER_PANED_WIDTH,
+						MODEST_FOLDER_PANED_WIDTH_DEFAULT);
 	fol_pos = modest_conf_get_int_or_default (priv->conf,
-							MODEST_FOLDER_PANED_DIVIDER_POS,
-							MODEST_FOLDER_PANED_DIVIDER_POS_DEFAULT);
-	if (1 > fol_x || fol_x > win_x || 1 > fol_pos || fol_pos > win_y) {
-		g_printerr ("modest: folder paned <x,pos> out of range: <%d,%d>\n",
-			    fol_x, fol_pos);
-	} else {
-		/* slightly off... */
-		gtk_widget_set_size_request (priv->folder_paned, fol_x, win_y);
-		gtk_paned_set_position (GTK_PANED(priv->folder_paned),
-					fol_pos);
-	}
+						  MODEST_FOLDER_PANED_DIVIDER_POS,
+						  MODEST_FOLDER_PANED_DIVIDER_POS_DEFAULT);
+	gtk_paned_set_position (GTK_PANED(priv->folder_paned), fol_pos);
 	
-	/* size of the folder pane */
+	/* size of the msg pane */
 	msg_x = modest_conf_get_int_or_default (priv->conf,
-						      MODEST_MSG_PANED_WIDTH,
-						      MODEST_MSG_PANED_WIDTH_DEFAULT);
+						MODEST_MSG_PANED_WIDTH,
+						MODEST_MSG_PANED_WIDTH_DEFAULT);
 	msg_pos = modest_conf_get_int_or_default (priv->conf,
-							MODEST_MSG_PANED_DIVIDER_POS,
-							MODEST_MSG_PANED_DIVIDER_POS_DEFAULT);
-	if (1 > msg_x || msg_x > win_x || 1 > msg_pos || msg_pos > win_y) {
-		g_printerr ("modest: msg paned <x,pos> out of range: <%d,%d>\n",
-			    msg_x, msg_pos);
-	} else {
-		/* slightly off... */
-		gtk_widget_set_size_request (priv->msg_paned,
-					     fol_x, win_y);
-		gtk_paned_set_position (GTK_PANED(priv->msg_paned),
-					msg_pos);
-	}
+						  MODEST_MSG_PANED_DIVIDER_POS,
+						  MODEST_MSG_PANED_DIVIDER_POS_DEFAULT);
+	gtk_paned_set_position (GTK_PANED(priv->msg_paned), msg_pos);
+
+	g_message ("(%d, %d, %d %d, %d)", main_y, fol_x, fol_pos,  msg_x, msg_pos);
+	
+	//gtk_widget_set_size_request (GTK_WIDGET(self), fol_x + msg_x, main_y+50);
+	gtk_widget_set_size_request (priv->main_paned, fol_x + msg_x, main_y);
+	gtk_paned_set_position      (GTK_PANED(priv->main_paned), fol_x);
 }
 
+
+static void
+save_sizes (ModestMainWindow *self)
+{
+	ModestMainWindowPrivate *priv;
+	int fol_pos, msg_pos;
+	int height, width;
+	
+	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
+	
+	height = GTK_WIDGET(priv->main_paned)->allocation.height;
+	modest_conf_set_int (priv->conf, MODEST_MAIN_PANED_HEIGHT, height, NULL);
+
+	width = GTK_WIDGET(priv->folder_paned)->allocation.width;
+	fol_pos = gtk_paned_get_position (GTK_PANED(priv->folder_paned));
+	modest_conf_set_int (priv->conf, MODEST_FOLDER_PANED_WIDTH, width, NULL);
+	modest_conf_set_int (priv->conf, MODEST_FOLDER_PANED_DIVIDER_POS, fol_pos, NULL);
+	
+	width = GTK_WIDGET(priv->msg_paned)->allocation.width;
+	msg_pos = gtk_paned_get_position (GTK_PANED(priv->msg_paned));
+	modest_conf_set_int (priv->conf, MODEST_MSG_PANED_WIDTH, width, NULL);
+	modest_conf_set_int (priv->conf, MODEST_MSG_PANED_DIVIDER_POS, msg_pos, NULL);
+}
 
 
 static GtkWidget*
@@ -371,7 +388,6 @@ modest_main_window_new (ModestWidgetFactory *factory, ModestConf *conf)
 	ModestMainWindowPrivate *priv;
 	
 	GtkWidget *main_vbox;
-	GtkWidget *main_paned;
 	GtkWidget *status_hbox;
 	GtkWidget *header_win, *folder_win; 
 	
@@ -403,9 +419,9 @@ modest_main_window_new (ModestWidgetFactory *factory, ModestConf *conf)
 	/* paned */
 	priv->folder_paned = gtk_vpaned_new ();
 	priv->msg_paned = gtk_vpaned_new ();
-	main_paned = gtk_hpaned_new ();
-	gtk_paned_add1 (GTK_PANED(main_paned), priv->folder_paned);
-	gtk_paned_add2 (GTK_PANED(main_paned), priv->msg_paned);
+	priv->main_paned = gtk_hpaned_new ();
+	gtk_paned_add1 (GTK_PANED(priv->main_paned), priv->folder_paned);
+	gtk_paned_add2 (GTK_PANED(priv->main_paned), priv->msg_paned);
 	gtk_paned_add1 (GTK_PANED(priv->folder_paned),
 			gtk_label_new (_("Favorites")));
 	gtk_paned_add2 (GTK_PANED(priv->folder_paned), folder_win);
@@ -415,17 +431,19 @@ modest_main_window_new (ModestWidgetFactory *factory, ModestConf *conf)
 	gtk_widget_show (GTK_WIDGET(priv->header_view));
 		
 	/* status bar / progress */
-	priv->status_bar   = gtk_statusbar_new ();
-	priv->progress_bar = gtk_progress_bar_new ();
 	status_hbox = gtk_hbox_new (TRUE, 5);
-	gtk_box_pack_start (GTK_BOX(status_hbox), priv->progress_bar, FALSE, TRUE, 5);
-	gtk_box_pack_start (GTK_BOX(status_hbox), priv->status_bar, FALSE, TRUE, 5);
+	gtk_box_pack_start (GTK_BOX(status_hbox),
+			    modest_widget_factory_get_status_bar(factory),
+			    FALSE, TRUE, 5);
+	gtk_box_pack_start (GTK_BOX(status_hbox),
+			    modest_widget_factory_get_progress_bar(factory),
+			    FALSE, TRUE, 5);
 	
 	/* putting it all together... */
 	main_vbox = gtk_vbox_new (FALSE, 2);
 	gtk_box_pack_start (GTK_BOX(main_vbox), priv->menubar, FALSE, FALSE, 2);
 	gtk_box_pack_start (GTK_BOX(main_vbox), priv->toolbar, FALSE, TRUE, 5);
-	gtk_box_pack_start (GTK_BOX(main_vbox), main_paned, TRUE, TRUE, 2);
+	gtk_box_pack_start (GTK_BOX(main_vbox), priv->main_paned, TRUE, TRUE, 2);
 	gtk_box_pack_start (GTK_BOX(main_vbox), status_hbox, FALSE, FALSE, 5);
 	
 	gtk_container_add (GTK_CONTAINER(obj), main_vbox);
@@ -433,6 +451,7 @@ modest_main_window_new (ModestWidgetFactory *factory, ModestConf *conf)
 	
 	gtk_window_set_title (GTK_WINDOW(obj), "Modest");
 
-	set_sizes (MODEST_MAIN_WINDOW(obj));	
+	restore_sizes (MODEST_MAIN_WINDOW(obj));	
+	
 	return GTK_WIDGET(obj);
 }
