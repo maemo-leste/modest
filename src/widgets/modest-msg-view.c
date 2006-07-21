@@ -54,6 +54,8 @@ static gboolean on_link_clicked (GtkWidget *widget, const gchar *uri,
 static gboolean on_url_requested (GtkWidget *widget, const gchar *uri,
 				  GtkHTMLStream *stream,
 				  ModestMsgView *msg_view);
+static gboolean on_link_hover (GtkWidget *widget, const gchar *uri,
+			       ModestMsgView *msg_view);
 
 /*
  * we need these regexps to find URLs in plain text e-mails
@@ -69,7 +71,7 @@ struct _UrlMatchPattern {
 #define ATT_PREFIX "att:"
 
 #define MAIL_VIEWER_URL_MATCH_PATTERNS  {				\
-	{ "(file|http|ftp|https)://[-A-Za-z0-9_$.+!*(),;:@%&=?/~#]+[-A-Za-z0-9_$%&=?/~#]",\
+	{ "(file|rtsp|http|ftp|https)://[-A-Za-z0-9_$.+!*(),;:@%&=?/~#]+[-A-Za-z0-9_$%&=?/~#]",\
 	  NULL, NULL },\
 	{ "www\\.[-a-z0-9.]+[-a-z0-9](:[0-9]*)?(/[-A-Za-z0-9_$.+!*(),;:@%&=?/~#]*[^]}\\),?!;:\"]?)?",\
 	  NULL, "http://" },\
@@ -87,6 +89,7 @@ struct _UrlMatchPattern {
 /* list my signals */
 enum {
 	LINK_CLICKED_SIGNAL,
+	LINK_HOVER_SIGNAL,
 	ATTACHMENT_CLICKED_SIGNAL,
 	LAST_SIGNAL
 };
@@ -158,6 +161,14 @@ modest_msg_view_class_init (ModestMsgViewClass *klass)
 			      g_cclosure_marshal_VOID__POINTER,
 			      G_TYPE_NONE, 1, G_TYPE_INT);
 	
+	signals[LINK_HOVER_SIGNAL] =
+		g_signal_new ("link_hover",
+			      G_TYPE_FROM_CLASS (gobject_class),
+			      G_SIGNAL_RUN_FIRST,
+			      G_STRUCT_OFFSET(ModestMsgViewClass, link_hover),
+			      NULL, NULL,
+			      g_cclosure_marshal_VOID__STRING,
+			      G_TYPE_NONE, 1, G_TYPE_STRING);
 }
 
 static void
@@ -181,6 +192,9 @@ modest_msg_view_init (ModestMsgView *obj)
 	
 	g_signal_connect (G_OBJECT(priv->gtkhtml), "url_requested",
 			  G_CALLBACK(on_url_requested), obj);
+
+	g_signal_connect (G_OBJECT(priv->gtkhtml), "on_url",
+			  G_CALLBACK(on_link_hover), obj);
 }
 	
 
@@ -219,7 +233,6 @@ modest_msg_view_new (const TnyMsgIface *msg)
 static gboolean
 on_link_clicked (GtkWidget *widget, const gchar *uri, ModestMsgView *msg_view)
 {
-
 	int index;
 
 	g_return_val_if_fail (msg_view, FALSE);
@@ -240,10 +253,26 @@ on_link_clicked (GtkWidget *widget, const gchar *uri, ModestMsgView *msg_view)
 		return FALSE;
 	}
 
-	g_signal_emit (G_OBJECT(msg_view), signals[LINK_CLICKED_SIGNAL], 0, uri);
+	g_signal_emit (G_OBJECT(msg_view), signals[LINK_CLICKED_SIGNAL],
+		       0, uri);
 
 	return FALSE;
 }
+
+
+
+static gboolean
+on_link_hover (GtkWidget *widget, const gchar *uri, ModestMsgView *msg_view)
+{
+	if (uri && g_str_has_prefix (uri, ATT_PREFIX))
+		return FALSE;
+
+	g_signal_emit (G_OBJECT(msg_view), signals[LINK_HOVER_SIGNAL],
+		       0, uri);
+
+	return FALSE;
+}
+
 
 
 static TnyMsgMimePartIface *

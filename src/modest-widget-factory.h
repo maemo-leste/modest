@@ -145,6 +145,43 @@ ModestMsgView*           modest_widget_factory_get_msg_preview (ModestWidgetFact
 ModestAccountView*    modest_widget_factory_get_account_view (ModestWidgetFactory *self);
 
 
+/**
+ * modest_widget_factory_get_progress_bar
+ * @self: a ModestWidgetFactory instance
+ * 
+ * return an progress bar widget 
+ * if the widget factory was created with 'auto_connect', then this progress bar
+ * will automatically update for changes in the other widgets
+ * NOTE the naming inconsistency: GtkProgressBar vs GtkStatusbar 
+ * 
+ * This factory will always return the
+ * same widget, and takes care of its lifetime - users should *not* destroy it.
+ *
+ * Returns: the progress bar widget
+ */
+GtkWidget*       modest_widget_factory_get_progress_bar (ModestWidgetFactory *self);
+
+
+
+/**
+ * modest_widget_factory_get_status_bar
+ * @self: a ModestWidgetFactory instance
+ * 
+ * return an status bar widget 
+ * if the widget factory was created with 'auto_connect', then this status bar
+ * will automatically update for changes in the other widgets
+ * NOTE the naming inconsistency: GtkProgressBar vs GtkStatusbar 
+ * 
+ * This factory will always return the
+ * same widget, and takes care of its lifetime - users should *not* destroy it.
+ *
+ * Returns: the status bar widget
+ */
+GtkWidget*     modest_widget_factory_get_status_bar (ModestWidgetFactory *self);
+
+
+
+
 G_END_DECLS
 
 #endif /* __MODEST_WIDGET_FACTORY_H__ */

@@ -59,8 +59,12 @@ struct _ModestMsgView {
 struct _ModestMsgViewClass {
 	GtkScrolledWindowClass parent_class;
 
-	void (*link_clicked)       (GtkWidget *widget, const gchar* link, gpointer user_data);
-	void (*attachment_clicked) (GtkWidget *widget, int index, gpointer user_data);
+	void (*link_hover)         (ModestMsgView *msgview, const gchar* link,
+				    gpointer user_data);
+	void (*link_clicked)       (ModestMsgView *msgview, const gchar* link,
+				    gpointer user_data);
+	void (*attachment_clicked) (ModestMsgView *msgview, int index,
+				    gpointer user_data);
 };
 
 
