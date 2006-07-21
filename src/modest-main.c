@@ -142,6 +142,10 @@ start_ui (ModestConf *conf, const gchar* mailto, const gchar *cc, const gchar *b
 	ModestUI *modest_ui;
 	gint retval = 0;
 
+	#ifndef OLD_UI_STUFF
+	GtkWidget *win;
+	#endif
+	
 	modest_ui = MODEST_UI(modest_ui_new (conf));
 	if (!modest_ui) {
 		g_printerr ("modest: failed to initialize ui, exiting\n");
