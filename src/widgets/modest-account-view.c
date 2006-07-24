@@ -291,12 +291,12 @@ modest_account_view_new (ModestAccountMgr *account_mgr)
 {
 	GObject *obj;
 	ModestAccountViewPrivate *priv;
-
+	
 	g_return_val_if_fail (account_mgr, NULL);
 	
 	obj  = g_object_new(MODEST_TYPE_ACCOUNT_VIEW, NULL);
 	priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE(obj);
-
+	
 	g_object_ref (G_OBJECT(account_mgr));
 	priv->account_mgr = account_mgr;
 
