@@ -1,7 +1,7 @@
 #
 # Makefile.am
-# Time-stamp: <2006-07-21 09:29:41 (djcb)>
-SUBDIRS=$(MODEST_PLATFORM_DIR)
+# Time-stamp: <2006-07-24 11:11:09 (djcb)>
+SUBDIRS=$(MODEST_PLATFORM_DIR) widgets
 DIST_SUBDIRS = widgets gtk gtk2 hildon
 
 INCLUDES=\
@@ -35,6 +35,8 @@ modest_SOURCES=\
 	modest-conf.c\
 	modest-widget-factory.h\
 	modest-widget-factory.c\
+	modest-widget-memory.h\
+	modest-widget-memory.c\
 	modest-account-keys.h\
 	modest-account-mgr.h\
 	modest-account-mgr.c\
