@@ -31,26 +31,34 @@
 #include <string.h>
 #include "modest-proto.h"
 
+static const gchar* transport_protos[] = {
+	MODEST_PROTO_SENDMAIL,
+	MODEST_PROTO_SMTP,
+	NULL
+};
+
+static const gchar* store_protos[] = {
+	MODEST_PROTO_NONE,
+	MODEST_PROTO_POP,
+	MODEST_PROTO_IMAP,
+	MODEST_PROTO_MAILDIR,
+	MODEST_PROTO_MBOX,
+	NULL
+};
 
 gboolean
-modest_proto_is_valid (const gchar *proto)
+modest_proto_is_valid (const gchar *proto, gboolean store_proto)
 {
 	int i;
-	static const gchar* protos[] = {
-		MODEST_PROTO_SENDMAIL,
-		MODEST_PROTO_SMTP,
-		MODEST_PROTO_POP,
-		MODEST_PROTO_IMAP,
-		NULL
-	};
 	
-	if (!proto)
-		return FALSE;
+	g_return_val_if_fail (proto, FALSE);
 
-	for (i = 0; protos[i]; ++i) {
+	const gchar** protos = (const gchar**)
+		store_proto ? store_protos : transport_protos;
+	
+	for (i = 0; protos[i]; ++i)
 		if (strcmp(protos[i], proto) == 0)
 			return TRUE;
-	}
 	
 	return FALSE;
 }
@@ -59,14 +67,28 @@ modest_proto_is_valid (const gchar *proto)
 ModestProtoType
 modest_proto_type (const gchar *proto)
 {
-	if (!modest_proto_is_valid(proto)) {
-		g_warning ("invalid protocol %s", proto);
-		return -1;
-	}
-	
-	/* trick */
+	g_return_val_if_fail (proto, -1);
+	g_return_val_if_fail (modest_proto_is_valid (proto, TRUE) ||
+			      modest_proto_is_valid (proto, FALSE),
+			      -1);
+	/* trick */	
 	if (proto[0] == 's')
 		return MODEST_PROTO_TYPE_TRANSPORT;
 	else
 		return MODEST_PROTO_TYPE_STORE;
+}
+
+
+
+const gchar**
+modest_proto_store_protos (void)
+{
+	return (const gchar **) store_protos;
+}
+
+
+const gchar**
+modest_proto_transport_protos (void)
+{
+	return (const gchar**) transport_protos;
 }

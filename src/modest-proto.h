@@ -35,10 +35,15 @@
 
 #include <glib.h>
 
+
 #define MODEST_PROTO_SENDMAIL "sendmail"
 #define MODEST_PROTO_SMTP     "smtp"
+
+#define MODEST_PROTO_NONE     "none"
 #define MODEST_PROTO_POP      "pop"
 #define MODEST_PROTO_IMAP     "imap"
+#define MODEST_PROTO_MAILDIR  "maildir"
+#define MODEST_PROTO_MBOX     "mbox"
 
 enum {
 	MODEST_PROTO_TYPE_ANY       = 0,	
@@ -50,12 +55,13 @@ typedef gint ModestProtoType;
 /**
  * modest_proto_is_valid:
  * @proto: a string describing the protocol
- *
- * checks if proto is a valid protocol
+ * @store_proto: is this a store proto?
+ * 
+ * checks if proto is a valid protocol of the given type
  *
  * Returns: TRUE if proto is valid, FALSE otherwise
  */
-gboolean         modest_proto_is_valid     (const gchar *proto);
+gboolean         modest_proto_is_valid     (const gchar *proto, gboolean store_proto);
 
 /**
  * modest_proto_type:
@@ -66,6 +72,27 @@ gboolean         modest_proto_is_valid     (const gchar *proto);
  * Returns: a valid ModestProtoType corresponding to proto
  */
 ModestProtoType  modest_proto_type         (const gchar *proto);
+
+/**
+ * modest_store_protos:
+ *
+ * return a list of all available store protos
+ *
+ * Returns: a newly allocated, NULL-terminated list of of store protocols
+ */
+const gchar**     modest_proto_store_protos       (void);
+
+
+/**
+ * modest_transport_protos:
+ *
+ * return a list of all available store protos
+ *
+ * Returns: a newly allocated, NULL-terminated list of of store protocols
+ */
+const gchar**     modest_proto_transport_protos   (void);
+
+
 
 #endif /*__MODEST_SERVER_PROTO_H__*/
                             
