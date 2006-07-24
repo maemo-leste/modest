@@ -34,6 +34,15 @@
 /* configuration key definitions for modest */
 #define MODEST_CONF_NAMESPACE		"/apps/modest"
 
+/* place for widget settings */
+#define MODEST_CONF_WIDGET_NAMESPACE     MODEST_CONF_NAMESPACE "/widgets"
+
+
+
+/*
+ * the widget settings below are obsolete
+ */
+
 
 /*
  * the main window
