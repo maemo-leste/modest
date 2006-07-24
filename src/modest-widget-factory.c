@@ -259,7 +259,7 @@ modest_widget_factory_new (ModestConf *conf,
 	
 	g_object_ref (G_OBJECT(account_mgr));
 	priv->account_mgr = account_mgr;
-
+	
 	g_object_ref (G_OBJECT(account_store));
 	priv->account_store = account_store;
 
@@ -305,7 +305,8 @@ modest_widget_factory_get_account_view (ModestWidgetFactory *self)
 	ModestWidgetFactoryPrivate *priv;
 	
 	g_return_val_if_fail (self, NULL);
-
+	priv =  MODEST_WIDGET_FACTORY_GET_PRIVATE(self);
+	
 	return modest_account_view_new (priv->account_mgr);
 }
 
@@ -325,6 +326,31 @@ modest_widget_factory_get_status_bar (ModestWidgetFactory *self)
 	g_return_val_if_fail (self, NULL);
 	return MODEST_WIDGET_FACTORY_GET_PRIVATE(self)->status_bar;
 }
+
+
+GtkWidget*
+modest_widget_factory_get_store_combo (ModestWidgetFactory *self)
+{
+	GtkWidget *combo;
+	GtkListStore *store;
+	GtkTreeIter iter;
+	const gchar **protos, **cursor; 
+
+	g_return_val_if_fail (self, NULL);
+
+	combo = gtk_combo_box_new_text ();		
+	cursor = protos = modest_proto_store_protos ();
+	while (cursor && *cursor) {
+		gtk_combo_box_append_text (GTK_COMBO_BOX(combo),
+					   (const gchar*)*cursor);
+		++cursor;
+	}
+
+	gtk_combo_box_set_active (GTK_COMBO(combo), 0);
+	
+	return combo;
+}
+
 
 
 static void

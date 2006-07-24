@@ -182,6 +182,21 @@ GtkWidget*     modest_widget_factory_get_status_bar (ModestWidgetFactory *self);
 
 
 
+/**
+ * modest_widget_factory_get_store
+ * @self: a ModestWidgetFactory instance
+ * 
+ * return a combobox with all the store protocols
+ *  
+ * Returns: the combo box
+ */
+GtkWidget*     modest_widget_factory_get_store_combo (ModestWidgetFactory *self);
+
+
+
+
+
+
 G_END_DECLS
 
 #endif /* __MODEST_WIDGET_FACTORY_H__ */
