@@ -27,6 +27,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <modest-widget-memory.h>
+
 #include "modest-main-window.h"
 #include "modest-account-view-window.h"
 #include "modest-msg-window.h"
@@ -176,6 +178,10 @@ on_menu_accounts (ModestMainWindow *self, guint action, GtkWidget *widget)
 	priv        = MODEST_MAIN_WINDOW_GET_PRIVATE(self);	
 	account_win = modest_account_view_window_new (priv->conf,
 						      priv->widget_factory);
+
+	gtk_window_set_transient_for (GTK_WINDOW(account_win),
+				      GTK_WINDOW(self));
+				      
 	gtk_widget_show (account_win);
 }
 
@@ -300,40 +306,18 @@ static void
 restore_sizes (ModestMainWindow *self)
 {
 	ModestMainWindowPrivate *priv;
-
-	int fol_x,fol_pos;
-	int msg_x,msg_pos;
-	int main_y;
 	
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
-
-	/* heigth of the main paned */
-	main_y =  modest_conf_get_int_or_default (priv->conf,
-						  MODEST_MAIN_PANED_HEIGHT,
-						  MODEST_MAIN_PANED_HEIGHT_DEFAULT);
-	/* size of the folder pane */
-	fol_x = modest_conf_get_int_or_default (priv->conf,
-						MODEST_FOLDER_PANED_WIDTH,
-						MODEST_FOLDER_PANED_WIDTH_DEFAULT);
-	fol_pos = modest_conf_get_int_or_default (priv->conf,
-						  MODEST_FOLDER_PANED_DIVIDER_POS,
-						  MODEST_FOLDER_PANED_DIVIDER_POS_DEFAULT);
-	gtk_paned_set_position (GTK_PANED(priv->folder_paned), fol_pos);
 	
-	/* size of the msg pane */
-	msg_x = modest_conf_get_int_or_default (priv->conf,
-						MODEST_MSG_PANED_WIDTH,
-						MODEST_MSG_PANED_WIDTH_DEFAULT);
-	msg_pos = modest_conf_get_int_or_default (priv->conf,
-						  MODEST_MSG_PANED_DIVIDER_POS,
-						  MODEST_MSG_PANED_DIVIDER_POS_DEFAULT);
-	gtk_paned_set_position (GTK_PANED(priv->msg_paned), msg_pos);
+	modest_widget_memory_restore_settings (priv->conf,GTK_WIDGET(self),
+					       "modest-main-window");
+	modest_widget_memory_restore_settings (priv->conf, GTK_WIDGET(priv->folder_paned),
+					       "modest-folder-paned");
+	modest_widget_memory_restore_settings (priv->conf, GTK_WIDGET(priv->msg_paned),
+					       "modest-msg-paned");
+	modest_widget_memory_restore_settings (priv->conf, GTK_WIDGET(priv->main_paned),
+					       "modest-main-paned");
 
-	g_message ("(%d, %d, %d %d, %d)", main_y, fol_x, fol_pos,  msg_x, msg_pos);
-	
-	//gtk_widget_set_size_request (GTK_WIDGET(self), fol_x + msg_x, main_y+50);
-	gtk_widget_set_size_request (priv->main_paned, fol_x + msg_x, main_y);
-	gtk_paned_set_position      (GTK_PANED(priv->main_paned), fol_x);
 }
 
 
@@ -341,23 +325,20 @@ static void
 save_sizes (ModestMainWindow *self)
 {
 	ModestMainWindowPrivate *priv;
-	int fol_pos, msg_pos;
-	int height, width;
 	
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
 	
-	height = GTK_WIDGET(priv->main_paned)->allocation.height;
-	modest_conf_set_int (priv->conf, MODEST_MAIN_PANED_HEIGHT, height, NULL);
+	modest_widget_memory_save_settings (priv->conf,GTK_WIDGET(self),
+					    "modest-main-window");
+	modest_widget_memory_save_settings (priv->conf, GTK_WIDGET(priv->folder_paned),
+					    "modest-folder-paned");
+	modest_widget_memory_save_settings (priv->conf, GTK_WIDGET(priv->msg_paned),
+					    "modest-msg-paned");
+	modest_widget_memory_save_settings (priv->conf, GTK_WIDGET(priv->main_paned),
+					    "modest-main-paned");
 
-	width = GTK_WIDGET(priv->folder_paned)->allocation.width;
-	fol_pos = gtk_paned_get_position (GTK_PANED(priv->folder_paned));
-	modest_conf_set_int (priv->conf, MODEST_FOLDER_PANED_WIDTH, width, NULL);
-	modest_conf_set_int (priv->conf, MODEST_FOLDER_PANED_DIVIDER_POS, fol_pos, NULL);
 	
-	width = GTK_WIDGET(priv->msg_paned)->allocation.width;
-	msg_pos = gtk_paned_get_position (GTK_PANED(priv->msg_paned));
-	modest_conf_set_int (priv->conf, MODEST_MSG_PANED_WIDTH, width, NULL);
-	modest_conf_set_int (priv->conf, MODEST_MSG_PANED_DIVIDER_POS, msg_pos, NULL);
+
 }
 
 
