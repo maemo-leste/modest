@@ -28,7 +28,7 @@
  */
 
 #include "modest-account-view-window.h"
-#include "modest-account-wizard.h"
+#include "modest-account-assistant.h"
 
 /* 'private'/'protected' functions */
 static void                            modest_account_view_window_class_init   (ModestAccountViewWindowClass *klass);
@@ -103,7 +103,12 @@ modest_account_view_window_class_init (ModestAccountViewWindowClass *klass)
 static void
 modest_account_view_window_init (ModestAccountViewWindow *obj)
 {
+	ModestAccountViewWindowPrivate *priv;
+		
+	priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE(obj);
 
+	priv->conf = NULL;
+	priv->widget_factory = NULL;
 }
 
 static void
@@ -122,6 +127,8 @@ modest_account_view_window_finalize (GObject *obj)
 		g_object_unref (G_OBJECT(priv->widget_factory));
 		priv->widget_factory = NULL;
 	}
+
+	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
 
@@ -159,11 +166,16 @@ on_edit_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 static void
 on_add_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 {
-	GtkWidget *wizard;
+	GtkWidget *assistant;
+	ModestAccountViewWindowPrivate *priv;
 	
-	wizard = modest_account_wizard_new ();
-	
-	gtk_widget_show (GTK_WIDGET(wizard));
+	priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE(self);
+
+	assistant = modest_account_assistant_new (priv->widget_factory);
+	gtk_window_set_transient_for (GTK_WINDOW(assistant),
+				      GTK_WINDOW(self));
+
+	gtk_widget_show (GTK_WIDGET(assistant));
 }
 
 
@@ -233,6 +245,7 @@ window_vbox_new (ModestAccountViewWindow *self)
 	main_hbox     = gtk_hbox_new (FALSE, 6);
 	
 	account_view = modest_widget_factory_get_account_view (priv->widget_factory);
+	gtk_widget_set_size_request (GTK_WIDGET(account_view), 300, 400);
 
 	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW(account_view));
 	g_signal_connect (G_OBJECT(sel), "changed",  G_CALLBACK(on_selection_changed),
@@ -279,18 +292,13 @@ modest_account_view_window_new (ModestConf *conf, ModestWidgetFactory *factory)
 	g_object_ref (G_OBJECT(factory));
 	priv->widget_factory = factory;
 
-	gtk_window_set_resizable (GTK_WINDOW(obj), TRUE);
-	gtk_window_set_default_size (GTK_WINDOW(obj),
-				     MODEST_ACCOUNT_VIEW_WINDOW_WIDTH_DEFAULT,
-				     MODEST_ACCOUNT_VIEW_WINDOW_HEIGHT_DEFAULT);
 	gtk_window_set_resizable (GTK_WINDOW(obj), FALSE);
 
 	gtk_window_set_title (GTK_WINDOW(obj), _("Accounts"));
 	gtk_window_set_type_hint (GTK_WINDOW(obj), GDK_WINDOW_TYPE_HINT_DIALOG);
 	
 	gtk_window_set_modal (GTK_WINDOW(obj), TRUE);
-	
-	
+		
 	gtk_container_add (GTK_CONTAINER(obj),
 			   window_vbox_new (MODEST_ACCOUNT_VIEW_WINDOW(obj)));
 		
