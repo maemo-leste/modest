@@ -26,8 +26,8 @@ libmodest_ui_la_SOURCES=              \
 	modest-main-window.c          \
 	modest-account-view-window.c  \
 	modest-account-view-window.h  \
-	modest-account-wizard.c       \
-	modest-account-wizard.h       \
+	modest-account-assistant.c    \
+	modest-account-assistant.h    \
 	modest-msg-window.c           \
 	modest-msg-window.h
 
