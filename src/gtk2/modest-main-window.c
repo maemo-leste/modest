@@ -31,7 +31,7 @@
 
 #include "modest-main-window.h"
 #include "modest-account-view-window.h"
-#include "modest-msg-window.h"
+#include "modest-edit-msg-window.h"
 
 /* 'private'/'protected' functions */
 static void modest_main_window_class_init    (ModestMainWindowClass *klass);
@@ -50,6 +50,7 @@ enum {
 
 typedef struct _ModestMainWindowPrivate ModestMainWindowPrivate;
 struct _ModestMainWindowPrivate {
+
 	GtkWidget *toolbar;
 	GtkWidget *menubar;
 
@@ -130,15 +131,12 @@ modest_main_window_init (ModestMainWindow *obj)
 static void
 modest_main_window_finalize (GObject *obj)
 {
-	ModestMainWindowPrivate *priv;
-	
+	ModestMainWindowPrivate *priv;	
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(obj);
-
 	if (priv->widget_factory) {
 		g_object_unref (G_OBJECT(priv->widget_factory));
 		priv->widget_factory = NULL;
 	}
-
 	if (priv->conf) {
 		g_object_unref (G_OBJECT(priv->conf));
 		priv->conf = NULL;
@@ -190,17 +188,20 @@ static void
 on_menu_new_message (ModestMainWindow *self, guint action, GtkWidget *widget)
 {
 	GtkWidget *msg_win;
+	ModestMainWindowPrivate *priv;
 
-	msg_win = modest_msg_window_new (MODEST_MSG_WINDOW_TYPE_NEW,
-					 NULL);
 
+	priv  = MODEST_MAIN_WINDOW_GET_PRIVATE(self);	
+
+	msg_win = modest_edit_msg_window_new (priv->conf,
+					      MODEST_EDIT_TYPE_NEW,
+					      NULL);
 	gtk_widget_show (msg_win);
 }
 
 static void
 on_menu_quit (ModestMainWindow *self, guint action, GtkWidget *widget)
 {
-	save_sizes (self);
 	gtk_main_quit ();
 }
 
@@ -362,6 +363,16 @@ wrapped_in_scrolled_window (GtkWidget *widget, gboolean needs_viewport)
 	return win;
 }
 
+
+static gboolean
+on_delete_event (GtkWidget *widget, GdkEvent  *event, ModestMainWindow *self)
+{
+	save_sizes (self);
+}
+
+
+
+
 GtkWidget*
 modest_main_window_new (ModestWidgetFactory *factory, ModestConf *conf)
 {
@@ -431,6 +442,9 @@ modest_main_window_new (ModestWidgetFactory *factory, ModestConf *conf)
 	gtk_widget_show_all (main_vbox);
 	
 	gtk_window_set_title (GTK_WINDOW(obj), "Modest");
+
+	g_signal_connect (G_OBJECT(obj), "delete-event",
+			  G_CALLBACK(on_delete_event), obj);
 
 	restore_sizes (MODEST_MAIN_WINDOW(obj));	
 	

@@ -39,8 +39,7 @@ struct _ModestMainWindowClass {
 /* member functions */
 GType        modest_main_window_get_type    (void) G_GNUC_CONST;
 
-/* typical parameter-less _new function */
-/* if this is a kind of GtkWidget, it should probably return at GtkWidget* */
+
 GtkWidget*   modest_main_window_new         (ModestWidgetFactory *factory, ModestConf *conf);
 
 G_END_DECLS

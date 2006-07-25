@@ -197,7 +197,6 @@ add_identity_page (ModestAccountAssistant *self)
 					 page, FALSE);
 }	
 
-
 /*
 
 static void
@@ -231,7 +230,6 @@ mbox_maildir_configuration (ModestAccountAssistant *self)
 }
 
 */
-
 
 static void
 add_receiving_page (ModestAccountAssistant *self)
