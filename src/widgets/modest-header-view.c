@@ -455,8 +455,6 @@ init_columns (ModestHeaderView *obj)
 
 
 
-
-
 static void
 modest_header_view_init (ModestHeaderView *obj)
 {
@@ -522,6 +520,7 @@ modest_header_view_new (TnyMsgFolderIface *folder,
 	sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(self));
 	g_signal_connect (sel, "changed",
 			  G_CALLBACK(on_selection_changed), self);
+
 	
 	return GTK_WIDGET(self);
 }

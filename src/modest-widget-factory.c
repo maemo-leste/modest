@@ -129,13 +129,6 @@ modest_widget_factory_class_init (ModestWidgetFactoryClass *klass)
 	gobject_class->finalize = modest_widget_factory_finalize;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestWidgetFactoryPrivate));
-
-	/* signal definitions go here, e.g.: */
-/* 	signals[MY_SIGNAL_1] = */
-/* 		g_signal_new ("my_signal_1",....); */
-/* 	signals[MY_SIGNAL_2] = */
-/* 		g_signal_new ("my_signal_2",....); */
-/* 	etc. */
 }
 
 static void
@@ -345,8 +338,7 @@ modest_widget_factory_get_store_combo (ModestWidgetFactory *self)
 					   (const gchar*)*cursor);
 		++cursor;
 	}
-
-	gtk_combo_box_set_active (GTK_COMBO(combo), 0);
+	gtk_combo_box_set_active (GTK_COMBO_BOX(combo), 0);
 	
 	return combo;
 }
