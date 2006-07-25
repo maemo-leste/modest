@@ -27,13 +27,14 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "modest-edit-msg-window.h"
 #include <widgets/modest-msg-view.h>
-#include "modest-msg-window.h"
+#include <modest-widget-memory.h>
 
 /* 'private'/'protected' functions */
-static void                   modest_msg_window_class_init    (ModestMsgWindowClass *klass);
-static void                   modest_msg_window_init          (ModestMsgWindow *obj);
-static void                   modest_msg_window_finalize      (GObject *obj);
+static void                        modest_edit_msg_window_class_init   (ModestEditMsgWindowClass *klass);
+static void                        modest_edit_msg_window_init         (ModestEditMsgWindow *obj);
+static void                        modest_edit_msg_window_finalize     (GObject *obj);
 
 /* list my signals */
 enum {
@@ -42,14 +43,18 @@ enum {
 	LAST_SIGNAL
 };
 
-typedef struct _ModestMsgWindowPrivate ModestMsgWindowPrivate;
-struct _ModestMsgWindowPrivate {
-	/* my private members go here, eg. */
-	/* gboolean frobnicate_mode; */
+typedef struct _ModestEditMsgWindowPrivate ModestEditMsgWindowPrivate;
+struct _ModestEditMsgWindowPrivate {
+
+	ModestConf *conf;
+	
+	GtkWidget  *msg_body;
+	GtkWidget  *to_field, *cc_field, *bcc_field,
+		   *subject_field;
 };
-#define MODEST_MSG_WINDOW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
-                                               MODEST_TYPE_MSG_WINDOW, \
-                                               ModestMsgWindowPrivate))
+#define MODEST_EDIT_MSG_WINDOW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
+                                                    MODEST_TYPE_EDIT_MSG_WINDOW, \
+                                                    ModestEditMsgWindowPrivate))
 /* globals */
 static GtkWindowClass *parent_class = NULL;
 
@@ -57,38 +62,38 @@ static GtkWindowClass *parent_class = NULL;
 /* static guint signals[LAST_SIGNAL] = {0}; */
 
 GType
-modest_msg_window_get_type (void)
+modest_edit_msg_window_get_type (void)
 {
 	static GType my_type = 0;
 	if (!my_type) {
 		static const GTypeInfo my_info = {
-			sizeof(ModestMsgWindowClass),
+			sizeof(ModestEditMsgWindowClass),
 			NULL,		/* base init */
 			NULL,		/* base finalize */
-			(GClassInitFunc) modest_msg_window_class_init,
+			(GClassInitFunc) modest_edit_msg_window_class_init,
 			NULL,		/* class finalize */
 			NULL,		/* class data */
-			sizeof(ModestMsgWindow),
+			sizeof(ModestEditMsgWindow),
 			1,		/* n_preallocs */
-			(GInstanceInitFunc) modest_msg_window_init,
+			(GInstanceInitFunc) modest_edit_msg_window_init,
 		};
 		my_type = g_type_register_static (GTK_TYPE_WINDOW,
-		                                  "ModestMsgWindow",
+		                                  "ModestEditMsgWindow",
 		                                  &my_info, 0);
 	}
 	return my_type;
 }
 
 static void
-modest_msg_window_class_init (ModestMsgWindowClass *klass)
+modest_edit_msg_window_class_init (ModestEditMsgWindowClass *klass)
 {
 	GObjectClass *gobject_class;
 	gobject_class = (GObjectClass*) klass;
 
 	parent_class            = g_type_class_peek_parent (klass);
-	gobject_class->finalize = modest_msg_window_finalize;
+	gobject_class->finalize = modest_edit_msg_window_finalize;
 
-	g_type_class_add_private (gobject_class, sizeof(ModestMsgWindowPrivate));
+	g_type_class_add_private (gobject_class, sizeof(ModestEditMsgWindowPrivate));
 
 	/* signal definitions go here, e.g.: */
 /* 	signals[MY_SIGNAL_1] = */
@@ -99,65 +104,82 @@ modest_msg_window_class_init (ModestMsgWindowClass *klass)
 }
 
 static void
-modest_msg_window_init (ModestMsgWindow *obj)
+modest_edit_msg_window_init (ModestEditMsgWindow *obj)
 {
-	GtkWidget *to_button, *cc_button, *bcc_button, *subject_label;
-	GtkWidget *to_field, *cc_field, *bcc_field, *subject_field;
+	GtkWidget *to_button, *cc_button, *bcc_button, *subject_label; 
 	GtkWidget *header_table;
 	GtkWidget *main_vbox;
-	GtkWidget *msg_field;
 	
-	ModestMsgWindowPrivate *priv;
-	priv = MODEST_MSG_WINDOW_GET_PRIVATE(obj);
+	ModestEditMsgWindowPrivate *priv;
+	priv = MODEST_EDIT_MSG_WINDOW_GET_PRIVATE(obj);
 
 	to_button     = gtk_button_new_with_label (_("To..."));
 	cc_button     = gtk_button_new_with_label (_("Cc..."));
 	bcc_button    = gtk_button_new_with_label (_("Bcc..."));
 	subject_label = gtk_label_new (_("Subject:"));
 	
-	to_field      = gtk_entry_new ();
-	cc_field      = gtk_entry_new ();
-	bcc_field     = gtk_entry_new ();
-	subject_field = gtk_entry_new ();
+	priv->to_field      = gtk_entry_new_with_max_length (40);
+	priv->cc_field      = gtk_entry_new_with_max_length (40);
+	priv->bcc_field     = gtk_entry_new_with_max_length (40);
+	priv->subject_field = gtk_entry_new_with_max_length (40);
 
 	header_table = gtk_table_new (4,2, FALSE);
 	gtk_table_attach_defaults (GTK_TABLE(header_table), to_button,     0,1,0,1);
 	gtk_table_attach_defaults (GTK_TABLE(header_table), cc_button,     0,1,1,2);
 	gtk_table_attach_defaults (GTK_TABLE(header_table), bcc_button,    0,1,2,3);
 	gtk_table_attach_defaults (GTK_TABLE(header_table), subject_label, 0,1,3,4);
+ 
+	gtk_table_attach_defaults (GTK_TABLE(header_table), priv->to_field,     1,2,0,1);
+	gtk_table_attach_defaults (GTK_TABLE(header_table), priv->cc_field,     1,2,1,2);
+	gtk_table_attach_defaults (GTK_TABLE(header_table), priv->bcc_field,    1,2,2,3);
+	gtk_table_attach_defaults (GTK_TABLE(header_table), priv->subject_field,1,2,3,4);
 
-	gtk_table_attach_defaults (GTK_TABLE(header_table), to_field,      1,2,0,1);
-	gtk_table_attach_defaults (GTK_TABLE(header_table), cc_field,      1,2,1,2);
-	gtk_table_attach_defaults (GTK_TABLE(header_table), bcc_field,     1,2,2,3);
-	gtk_table_attach_defaults (GTK_TABLE(header_table), subject_field, 1,2,3,4);
-
-	msg_field = modest_msg_view_new (NULL);
+	priv->msg_body = gtk_text_view_new ();
 	
 	main_vbox = gtk_vbox_new  (FALSE, 6);
 
-	gtk_box_pack_start (GTK_BOX(main_vbox), header_table, FALSE, FALSE, 6);
-	gtk_box_pack_start (GTK_BOX(main_vbox), msg_field,    TRUE, TRUE, 6);
+	gtk_box_pack_start (GTK_BOX(main_vbox), header_table, TRUE, TRUE, 6);
+	gtk_box_pack_start (GTK_BOX(main_vbox), priv->msg_body, TRUE, TRUE, 6);
 
 	gtk_widget_show_all (GTK_WIDGET(main_vbox));
-	
 	gtk_container_add (GTK_CONTAINER(obj), main_vbox);
 }
 
 static void
-modest_msg_window_finalize (GObject *obj)
+modest_edit_msg_window_finalize (GObject *obj)
 {
-/* 	free/unref instance resources here */
+	ModestEditMsgWindowPrivate *priv;
+
+	priv = MODEST_EDIT_MSG_WINDOW_GET_PRIVATE(obj);
+
+	g_object_unref (G_OBJECT(priv->conf));
+	priv->conf = NULL;
+
+	G_OBJECT_CLASS(parent_class)->finalize (obj);
+
 }
+
 
 GtkWidget*
-modest_msg_window_new  (ModestMsgWindowType type, TnyMsgIface *msg)
+modest_edit_msg_window_new (ModestConf *conf, ModestEditType type,
+			    TnyMsgIface *msg)
 {
 	GObject *obj;
-	
-	g_return_val_if_fail ((type >= 1 && type <= MODEST_MSG_WINDOW_TYPE_NUM), NULL);
-	
-	obj = g_object_new(MODEST_TYPE_MSG_WINDOW, NULL);
+	ModestEditMsgWindowPrivate *priv;
 
+	g_return_val_if_fail (conf, NULL);
+	g_return_val_if_fail (type >= 0 && type < MODEST_EDIT_TYPE_NUM, NULL);
+	g_return_val_if_fail (!(type==MODEST_EDIT_TYPE_NEW && msg), NULL); 
+	g_return_val_if_fail (!(type!=MODEST_EDIT_TYPE_NEW && !msg), NULL); 
+	
+	
+	obj = g_object_new(MODEST_TYPE_EDIT_MSG_WINDOW, NULL);
+	priv = MODEST_EDIT_MSG_WINDOW_GET_PRIVATE(obj);
+
+	g_object_ref (G_OBJECT(conf));
+	priv->conf = conf;
+	
+	modest_widget_memory_restore_settings (priv->conf, GTK_WIDGET(priv->msg_body),
+					       "modest-edit-msg-body");
 	return GTK_WIDGET (obj);
 }
-

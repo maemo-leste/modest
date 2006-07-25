@@ -27,57 +27,58 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __MODEST_MSG_WINDOW_H__
-#define __MODEST_MSG_WINDOW_H__
+#ifndef __MODEST_EDIT_MSG_WINDOW_H__
+#define __MODEST_EDIT_MSG_WINDOW_H__
 
 #include <gtk/gtk.h>
-#include <glib/gi18n.h>
 #include <tny-msg-iface.h>
+#include <modest-conf.h>
+#include <glib/gi18n.h>
+
 
 G_BEGIN_DECLS
 
 /* convenience macros */
-#define MODEST_TYPE_MSG_WINDOW             (modest_msg_window_get_type())
-#define MODEST_MSG_WINDOW(obj)             (G_TYPE_CHECK_INSTANCE_CAST((obj),MODEST_TYPE_MSG_WINDOW,ModestMsgWindow))
-#define MODEST_MSG_WINDOW_CLASS(klass)     (G_TYPE_CHECK_CLASS_CAST((klass),MODEST_TYPE_MSG_WINDOW,GtkWindow))
-#define MODEST_IS_MSG_WINDOW(obj)          (G_TYPE_CHECK_INSTANCE_TYPE((obj),MODEST_TYPE_MSG_WINDOW))
-#define MODEST_IS_MSG_WINDOW_CLASS(klass)  (G_TYPE_CHECK_CLASS_TYPE((klass),MODEST_TYPE_MSG_WINDOW))
-#define MODEST_MSG_WINDOW_GET_CLASS(obj)   (G_TYPE_INSTANCE_GET_CLASS((obj),MODEST_TYPE_MSG_WINDOW,ModestMsgWindowClass))
+#define MODEST_TYPE_EDIT_MSG_WINDOW             (modest_edit_msg_window_get_type())
+#define MODEST_EDIT_MSG_WINDOW(obj)             (G_TYPE_CHECK_INSTANCE_CAST((obj),MODEST_TYPE_EDIT_MSG_WINDOW,ModestEditMsgWindow))
+#define MODEST_EDIT_MSG_WINDOW_CLASS(klass)     (G_TYPE_CHECK_CLASS_CAST((klass),MODEST_TYPE_EDIT_MSG_WINDOW,GtkWindow))
+#define MODEST_IS_EDIT_MSG_WINDOW(obj)          (G_TYPE_CHECK_INSTANCE_TYPE((obj),MODEST_TYPE_EDIT_MSG_WINDOW))
+#define MODEST_IS_EDIT_MSG_WINDOW_CLASS(klass)  (G_TYPE_CHECK_CLASS_TYPE((klass),MODEST_TYPE_EDIT_MSG_WINDOW))
+#define MODEST_EDIT_MSG_WINDOW_GET_CLASS(obj)   (G_TYPE_INSTANCE_GET_CLASS((obj),MODEST_TYPE_EDIT_MSG_WINDOW,ModestEditMsgWindowClass))
 
-typedef struct _ModestMsgWindow      ModestMsgWindow;
-typedef struct _ModestMsgWindowClass ModestMsgWindowClass;
+typedef struct _ModestEditMsgWindow      ModestEditMsgWindow;
+typedef struct _ModestEditMsgWindowClass ModestEditMsgWindowClass;
 
-struct _ModestMsgWindow {
+struct _ModestEditMsgWindow {
 	 GtkWindow parent;
 	/* insert public members, if any */
 };
 
-struct _ModestMsgWindowClass {
+struct _ModestEditMsgWindowClass {
 	GtkWindowClass parent_class;
 	/* insert signal callback declarations, eg. */
-	/* void (* my_event) (ModestMsgWindow* obj); */
+	/* void (* my_event) (ModestEditMsgWindow* obj); */
 };
 
 
-enum _ModestMsgWindowType {
-	MODEST_MSG_WINDOW_TYPE_VIEW,
-	MODEST_MSG_WINDOW_TYPE_NEW,
-	MODEST_MSG_WINDOW_TYPE_REPLY,
-	MODEST_MSG_WINDOW_TYPE_FORWARD,
-
-	MODEST_MSG_WINDOW_TYPE_NUM
+enum _ModestEditType {
+	MODEST_EDIT_TYPE_NEW,
+	MODEST_EDIT_TYPE_REPLY,
+	MODEST_EDIT_TYPE_FORWARD,
+	MODEST_EDIT_TYPE_VIEW,
+	
+	MODEST_EDIT_TYPE_NUM
 };
-
-typedef enum _ModestMsgWindowType ModestMsgWindowType;
+typedef enum _ModestEditType ModestEditType;
 
 
 /* member functions */
-GType        modest_msg_window_get_type    (void) G_GNUC_CONST;
+GType        modest_edit_msg_window_get_type    (void) G_GNUC_CONST;
 
-GtkWidget*   modest_msg_window_new         (ModestMsgWindowType type,
-					    TnyMsgIface *msg);
-
+GtkWidget*   modest_edit_msg_window_new         (ModestConf *conf,
+						 ModestEditType type,
+						 TnyMsgIface *msg);
 G_END_DECLS
 
-#endif /* __MODEST_MSG_WINDOW_H__ */
+#endif /* __MODEST_EDIT_MSG_WINDOW_H__ */
 
