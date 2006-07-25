@@ -65,6 +65,27 @@
 
 @parent: 
 
+<!-- ##### STRUCT ModestTnyFolderTreeView ##### -->
+<para>
+
+</para>
+
+@parent: 
+
+<!-- ##### STRUCT ModestTnyHeaderTreeView ##### -->
+<para>
+
+</para>
+
+@parent: 
+
+<!-- ##### STRUCT ModestTnyMsgView ##### -->
+<para>
+
+</para>
+
+@parent: 
+
 <!-- ##### FUNCTION modest_account_mgr_get_account_bool ##### -->
 <para>
 
@@ -247,6 +268,57 @@
 @body: 
 @attachments: 
 @Returns: 
+
+<!-- ##### FUNCTION modest_tny_folder_tree_view_is_empty ##### -->
+<para>
+
+</para>
+
+@self: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_tny_folder_tree_view_new ##### -->
+<para>
+
+</para>
+
+@iface: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_tny_header_tree_view_new ##### -->
+<para>
+
+</para>
+
+@folder: 
+@columns: 
+@style: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_tny_header_tree_view_set_folder ##### -->
+<para>
+
+</para>
+
+@self: 
+@folder: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_tny_msg_view_new ##### -->
+<para>
+
+</para>
+
+@tny_msg: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_tny_msg_view_set_message ##### -->
+<para>
+
+</para>
+
+@self: 
+@tny_msg: 
 
 <!-- ##### FUNCTION modest_ui_show_edit_window ##### -->
 <para>

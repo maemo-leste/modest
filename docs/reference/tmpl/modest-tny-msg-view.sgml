@@ -17,28 +17,3 @@ ModestTnyMsgView
 <!-- ##### SECTION Stability_Level ##### -->
 
 
-<!-- ##### STRUCT ModestTnyMsgView ##### -->
-<para>
-
-</para>
-
-@parent: 
-
-<!-- ##### FUNCTION modest_tny_msg_view_new ##### -->
-<para>
-
-</para>
-
-@tny_msg: 
-@Returns: 
-
-
-<!-- ##### FUNCTION modest_tny_msg_view_set_message ##### -->
-<para>
-
-</para>
-
-@self: 
-@tny_msg: 
-
-

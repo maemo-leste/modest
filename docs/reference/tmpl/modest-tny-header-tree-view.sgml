@@ -17,31 +17,3 @@ ModestTnyHeaderTreeView
 <!-- ##### SECTION Stability_Level ##### -->
 
 
-<!-- ##### STRUCT ModestTnyHeaderTreeView ##### -->
-<para>
-
-</para>
-
-@parent: 
-
-<!-- ##### FUNCTION modest_tny_header_tree_view_new ##### -->
-<para>
-
-</para>
-
-@folder: 
-@columns: 
-@style: 
-@Returns: 
-
-
-<!-- ##### FUNCTION modest_tny_header_tree_view_set_folder ##### -->
-<para>
-
-</para>
-
-@self: 
-@folder: 
-@Returns: 
-
-
