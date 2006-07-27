@@ -119,6 +119,9 @@ main (int argc, char *argv[])
 	if (debug)
 		g_log_set_always_fatal (G_LOG_LEVEL_WARNING);
 	
+	if (!getenv("DISPLAY"))
+		batch = TRUE; 
+	
 	if (!batch) {
 		gtk_init (&argc, &argv);
 		retval = start_ui (modest_conf, mailto, cc, bcc, subject, body);
@@ -233,7 +236,7 @@ send_mail (ModestConf *conf, const gchar* mailto, const gchar *cc, const gchar *
 	iter = tny_list_iface_create_iterator(accounts);
 	tny_iterator_iface_first (iter);
 	if (tny_iterator_iface_is_done (iter)) {
-		g_printerr("modest: no transport accounts defined");
+		g_printerr("modest: no transport accounts defined\n");
 		retval = MODEST_ERR_SEND;
 		goto cleanup;
 	}
