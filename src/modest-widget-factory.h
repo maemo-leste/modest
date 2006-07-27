@@ -63,6 +63,16 @@ struct _ModestWidgetFactoryClass {
 	/* void (* my_event) (ModestWidgetFactory* obj); */
 };
 
+
+enum _ModestComboBoxType {
+	MODEST_COMBO_BOX_TYPE_STORE_PROTOS,
+	MODEST_COMBO_BOX_TYPE_TRANSPORT_PROTOS,
+	MODEST_COMBO_BOX_TYPE_SECURITY_PROTOS,
+	MODEST_COMBO_BOX_TYPE_AUTH_PROTOS,
+};
+typedef enum _ModestComboBoxType ModestComboBoxType;
+
+
 /**
  * modest_widget_factory_get_type
  *
@@ -78,8 +88,6 @@ GType        modest_widget_factory_get_type    (void) G_GNUC_CONST;
  * @conf: a modest conf instance
  * @acc_store: a modest account store instance
  * @acc_mgr: a modest account mgr instance
- * @autoconnect: should we autoconnect the widgets (ie. depedent widgets are update
- * automagically)
  *
  * instantiates a ModestWidgetFactory
  *
@@ -87,8 +95,7 @@ GType        modest_widget_factory_get_type    (void) G_GNUC_CONST;
  */
 ModestWidgetFactory*      modest_widget_factory_new   (ModestConf *conf,
 						       ModestTnyAccountStore *acc_store,
-						       ModestAccountMgr *account_mgr,
-						       gboolean auto_connect);
+						       ModestAccountMgr *account_mgr);
 /**
  * modest_widget_factory_get_folder_view
  * @self: a ModestWidgetFactory instance
@@ -179,19 +186,30 @@ GtkWidget*       modest_widget_factory_get_progress_bar (ModestWidgetFactory *se
  */
 GtkWidget*     modest_widget_factory_get_status_bar (ModestWidgetFactory *self);
 
-
-
-
 /**
  * modest_widget_factory_get_store
  * @self: a ModestWidgetFactory instance
+ * @type: the type of items we want a combo box for
  * 
- * return a combobox with all the store protocols
+ * return a combobox with with the given items
  *  
  * Returns: the combo box
  */
-GtkWidget*     modest_widget_factory_get_store_combo (ModestWidgetFactory *self);
+GtkWidget*     modest_widget_factory_get_combo_box (ModestWidgetFactory *self,
+						    ModestComboBoxType type);
 
+
+/**
+ * modest_widget_factory_get_online_combo
+ * @self: a ModestWidgetFactory instance
+ * 
+ * return a toggle which with one can see whether online/offline mode is active.
+ * In case of auto-connect, this will automatically be sync'd with the
+ * account_store / device
+ *  
+ * Returns: the combo box
+ */
+GtkWidget*  modest_widget_factory_get_online_toggle (ModestWidgetFactory *self);
 
 
 
