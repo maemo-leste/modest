@@ -182,7 +182,7 @@ modest_ui_new (ModestConf *modest_conf)
         }
 
 	priv->widget_factory = modest_widget_factory_new (
-		priv->conf, priv->account_store, priv->account_mgr, TRUE);
+		priv->conf, priv->account_store, priv->account_mgr);
 	if (!priv->account_store) {
 		g_printerr ("modest: could not initialize widget factory\n");
 		return NULL;

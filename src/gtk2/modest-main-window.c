@@ -28,7 +28,6 @@
  */
 
 #include <modest-widget-memory.h>
-
 #include "modest-main-window.h"
 #include "modest-account-view-window.h"
 #include "modest-edit-msg-window.h"
@@ -368,6 +367,7 @@ static gboolean
 on_delete_event (GtkWidget *widget, GdkEvent  *event, ModestMainWindow *self)
 {
 	save_sizes (self);
+	return TRUE;
 }
 
 
@@ -414,8 +414,8 @@ modest_main_window_new (ModestWidgetFactory *factory, ModestConf *conf)
 	priv->main_paned = gtk_hpaned_new ();
 	gtk_paned_add1 (GTK_PANED(priv->main_paned), priv->folder_paned);
 	gtk_paned_add2 (GTK_PANED(priv->main_paned), priv->msg_paned);
-	gtk_paned_add1 (GTK_PANED(priv->folder_paned),
-			gtk_label_new (_("Favorites")));
+//	gtk_paned_add1 (GTK_PANED(priv->folder_paned),
+//			gtk_label_new (_("Favorites")));
 	gtk_paned_add2 (GTK_PANED(priv->folder_paned), folder_win);
 	gtk_paned_add1 (GTK_PANED(priv->msg_paned), header_win);
 	gtk_paned_add2 (GTK_PANED(priv->msg_paned), GTK_WIDGET(priv->msg_preview));
@@ -423,30 +423,31 @@ modest_main_window_new (ModestWidgetFactory *factory, ModestConf *conf)
 	gtk_widget_show (GTK_WIDGET(priv->header_view));
 		
 	/* status bar / progress */
-	status_hbox = gtk_hbox_new (TRUE, 5);
+	status_hbox = gtk_hbox_new (TRUE, 6);
 	gtk_box_pack_start (GTK_BOX(status_hbox),
 			    modest_widget_factory_get_status_bar(factory),
-			    FALSE, TRUE, 5);
+			    TRUE, TRUE, 6);
 	gtk_box_pack_start (GTK_BOX(status_hbox),
 			    modest_widget_factory_get_progress_bar(factory),
-			    FALSE, TRUE, 5);
-	
+			    TRUE, FALSE, 6);
+	gtk_box_pack_end (GTK_BOX(status_hbox),
+			  modest_widget_factory_get_online_toggle(factory),
+			  FALSE, FALSE, 6);
+
 	/* putting it all together... */
-	main_vbox = gtk_vbox_new (FALSE, 2);
-	gtk_box_pack_start (GTK_BOX(main_vbox), priv->menubar, FALSE, FALSE, 2);
-	gtk_box_pack_start (GTK_BOX(main_vbox), priv->toolbar, FALSE, TRUE, 5);
-	gtk_box_pack_start (GTK_BOX(main_vbox), priv->main_paned, TRUE, TRUE, 2);
-	gtk_box_pack_start (GTK_BOX(main_vbox), status_hbox, FALSE, FALSE, 5);
+	main_vbox = gtk_vbox_new (FALSE, 6);
+	gtk_box_pack_start (GTK_BOX(main_vbox), priv->menubar, FALSE, FALSE, 6);
+	gtk_box_pack_start (GTK_BOX(main_vbox), priv->toolbar, FALSE, FALSE, 6);
+	gtk_box_pack_start (GTK_BOX(main_vbox), priv->main_paned, TRUE, TRUE, 6);
+	gtk_box_pack_start (GTK_BOX(main_vbox), status_hbox, FALSE, FALSE, 6);
 	
 	gtk_container_add (GTK_CONTAINER(obj), main_vbox);
-	gtk_widget_show_all (main_vbox);
-	
-	gtk_window_set_title (GTK_WINDOW(obj), "Modest");
+	restore_sizes (MODEST_MAIN_WINDOW(obj));	
 
+	gtk_widget_show_all (main_vbox);
 	g_signal_connect (G_OBJECT(obj), "delete-event",
 			  G_CALLBACK(on_delete_event), obj);
 
-	restore_sizes (MODEST_MAIN_WINDOW(obj));	
 	
 	return GTK_WIDGET(obj);
 }
