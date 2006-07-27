@@ -326,7 +326,8 @@ get_new_column (const gchar *name, GtkCellRenderer *renderer,
 
 	column =  gtk_tree_view_column_new_with_attributes(name, renderer, NULL);
 	gtk_tree_view_column_set_resizable (column, resizable);
-
+	gtk_tree_view_column_set_sizing (column, GTK_TREE_VIEW_COLUMN_FIXED);
+	
 	if (show_as_text) 
 		gtk_tree_view_column_add_attribute (column, renderer, "text",
 						    sort_col_id);
@@ -521,7 +522,6 @@ modest_header_view_new (TnyMsgFolderIface *folder,
 	g_signal_connect (sel, "changed",
 			  G_CALLBACK(on_selection_changed), self);
 
-	
 	return GTK_WIDGET(self);
 }
 

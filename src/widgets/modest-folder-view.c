@@ -354,11 +354,11 @@ modest_folder_view_new (TnyAccountStoreIface *account_store)
 	GObject *self;
 	ModestFolderViewPrivate *priv;
 	GtkTreeSelection *sel;
-
+	
+	g_return_val_if_fail (account_store, NULL);
+	
 	self = G_OBJECT(g_object_new(MODEST_TYPE_FOLDER_VIEW, NULL));
 	priv = MODEST_FOLDER_VIEW_GET_PRIVATE(self);
-
-	g_return_val_if_fail (account_store, NULL);
 	
 	if (!update_model (MODEST_FOLDER_VIEW(self), account_store))
 		g_printerr ("modest: failed to update model");
