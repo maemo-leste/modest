@@ -45,6 +45,16 @@
 #define MODEST_PROTO_MAILDIR  "maildir"
 #define MODEST_PROTO_MBOX     "mbox"
 
+
+#define MODEST_SECURITY_PROTO_NONE "none"
+#define MODEST_SECURITY_PROTO_SSL  "ssl"
+#define MODEST_SECURITY_PROTO_TLS  "tls"
+
+
+#define MODEST_AUTH_PROTO_PASSWORD "password"
+
+
+
 enum {
 	MODEST_PROTO_TYPE_ANY       = 0,	
 	MODEST_PROTO_TYPE_TRANSPORT = 1,
@@ -74,7 +84,7 @@ gboolean         modest_proto_is_valid     (const gchar *proto, gboolean store_p
 ModestProtoType  modest_proto_type         (const gchar *proto);
 
 /**
- * modest_store_protos:
+ * modest_proto_store_protos:
  *
  * return a list of all available store protos
  *
@@ -84,13 +94,34 @@ const gchar**     modest_proto_store_protos       (void);
 
 
 /**
- * modest_transport_protos:
+ * modest_proto_transport_protos:
  *
  * return a list of all available store protos
  *
  * Returns: a newly allocated, NULL-terminated list of of store protocols
  */
 const gchar**     modest_proto_transport_protos   (void);
+
+
+/**
+ * modest_proto_security_protos:
+ *
+ * return a list of all available security (connection) protocols
+ *
+ * Returns: a newly allocated, NULL-terminated list of of store protocols
+ */
+const gchar**     modest_proto_security_protos   (void);
+
+
+/**
+ * modest_proto_auth_protos:
+ *
+ * return a list of all available authentication protocols
+ *
+ * Returns: a newly allocated, NULL-terminated list of of store protocols
+ */
+const gchar**     modest_proto_auth_protos   (void);
+
 
 
 

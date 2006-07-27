@@ -46,6 +46,20 @@ static const gchar* store_protos[] = {
 	NULL
 };
 
+
+static const gchar* security_protos[] = {
+	MODEST_SECURITY_PROTO_NONE,
+	MODEST_SECURITY_PROTO_SSL,
+	MODEST_SECURITY_PROTO_TLS,
+	NULL
+};
+
+static const gchar* auth_protos[] = {
+	MODEST_AUTH_PROTO_PASSWORD,
+	NULL
+};
+
+
 gboolean
 modest_proto_is_valid (const gchar *proto, gboolean store_proto)
 {
@@ -92,3 +106,16 @@ modest_proto_transport_protos (void)
 {
 	return (const gchar**) transport_protos;
 }
+
+const gchar**
+modest_proto_security_protos (void)
+{
+	return (const gchar**) security_protos;
+}
+
+const gchar**
+modest_proto_auth_protos (void)
+{
+	return (const gchar**) auth_protos;
+}
+
