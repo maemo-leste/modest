@@ -44,8 +44,6 @@ static void modest_header_view_init        (ModestHeaderView *obj);
 static void modest_header_view_finalize    (GObject *obj);
 
 static void     on_selection_changed (GtkTreeSelection *sel, gpointer user_data);
-//static void     on_column_clicked (GtkTreeViewColumn *treeviewcolumn, gpointer user_data);
-static gboolean refresh_folder_finish_status_update (gpointer user_data);
 
 enum {
 	MESSAGE_SELECTED_SIGNAL,
@@ -53,18 +51,18 @@ enum {
 	LAST_SIGNAL
 };
 
+
 typedef struct _ModestHeaderViewPrivate ModestHeaderViewPrivate;
 struct _ModestHeaderViewPrivate {
 
 	TnyMsgFolderIface *tny_msg_folder;
 	TnyListIface      *headers;
-
-	gint              status_id;
 	GSList            *columns;
-
 	GMutex		  *lock;
-	
 	ModestHeaderViewStyle style;
+
+	gulong            sig1;
+
 };
 #define MODEST_HEADER_VIEW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
 						MODEST_TYPE_HEADER_VIEW, \
@@ -208,7 +206,7 @@ display_address (gchar *address)
 	
 	/* FIXME */
 	if (!g_utf8_validate (address, -1, NULL)) 
-		g_warning ("not valid: '%s'", address);
+		g_printerr ("modest: invalid: '%s'", address);
 
 	return address;
 }
@@ -308,7 +306,7 @@ compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer
 				  display_address (from),
 				  display_date(date),
 				  subject);
-
+	
 	g_object_set (G_OBJECT(renderer),
 		      "text",  header,
 		      "weight", (flags & TNY_MSG_HEADER_FLAG_SEEN) ? 400: 800,
@@ -344,9 +342,6 @@ get_new_column (const gchar *name, GtkCellRenderer *renderer,
 	if (cell_data_func)
 		gtk_tree_view_column_set_cell_data_func(column, renderer, cell_data_func,
 							user_data, NULL);
-
-/*  	g_signal_connect (G_OBJECT (column), "clicked", */
-/* 			  G_CALLBACK (column_clicked), obj);  */
 
 	return column;
 }
@@ -457,6 +452,11 @@ init_columns (ModestHeaderView *obj)
 		default:
 			g_assert_not_reached ();
 		}
+
+		gtk_tree_view_column_set_visible (column, TRUE);
+		gtk_tree_view_column_set_min_width (column, 36);
+		gtk_tree_view_column_set_resizable (column, TRUE);
+		
 		gtk_tree_view_append_column (GTK_TREE_VIEW(obj), column);		
 	}	
 }
@@ -469,7 +469,6 @@ modest_header_view_init (ModestHeaderView *obj)
 	ModestHeaderViewPrivate *priv;
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(obj); 
 
-	priv->status_id = 0;
 	priv->lock = g_mutex_new ();
 }
 
@@ -478,6 +477,7 @@ modest_header_view_finalize (GObject *obj)
 {
 	ModestHeaderView        *self;
 	ModestHeaderViewPrivate *priv;
+	GtkTreeSelection        *sel;
 	
 	self = MODEST_HEADER_VIEW(obj);
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
@@ -485,7 +485,9 @@ modest_header_view_finalize (GObject *obj)
 	if (priv->headers)	
 		g_object_unref (G_OBJECT(priv->headers));
 
-	
+	sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(self));
+	g_signal_handler_disconnect (G_OBJECT(sel), priv->sig1);
+
 	if (priv->lock) {
 		g_mutex_free (priv->lock);
 		priv->lock = NULL;
@@ -493,7 +495,7 @@ modest_header_view_finalize (GObject *obj)
 
 	priv->headers = NULL;
 	priv->tny_msg_folder    = NULL;
-
+	
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
@@ -505,9 +507,11 @@ modest_header_view_new (TnyMsgFolderIface *folder,
 	GObject *obj;
 	GtkTreeSelection *sel;
 	ModestHeaderView *self;
+	ModestHeaderViewPrivate *priv;
 	
 	obj  = G_OBJECT(g_object_new(MODEST_TYPE_HEADER_VIEW, NULL));
 	self = MODEST_HEADER_VIEW(obj);
+	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
 	
 	if (!modest_header_view_set_folder (self, NULL)) {
 		g_warning ("could not set the folder");
@@ -528,8 +532,8 @@ modest_header_view_new (TnyMsgFolderIface *folder,
 
 	sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(self));
 	
-	g_signal_connect (sel, "changed",
-			  G_CALLBACK(on_selection_changed), self);
+	priv->sig1 = g_signal_connect (sel, "changed",
+				       G_CALLBACK(on_selection_changed), self);
 	
 
 	return GTK_WIDGET(self);
@@ -554,8 +558,6 @@ modest_header_view_set_columns (ModestHeaderView *self, GSList *columns)
 			g_printerr ("modest: invalid column %d in column list\n", col);
 		else
 			priv->columns = g_slist_append (priv->columns, cursor->data);
-
-		g_warning ("col: %d", col);
 	}
 
 	init_columns (self); /* redraw them */
@@ -756,21 +758,19 @@ cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 
 
 static void
-refresh_folder (TnyMsgFolderIface *folder, gboolean cancelled,
-		gpointer user_data)
+on_refresh_folder (TnyMsgFolderIface *folder, gboolean cancelled, gpointer user_data)
 {
 	GtkTreeModel *oldsortable, *sortable;
-	ModestHeaderView *self =
-		MODEST_HEADER_VIEW(user_data);
+	ModestHeaderView *self;
 	ModestHeaderViewPrivate *priv;
 
-	g_return_if_fail (self);
-	
 	if (cancelled)
 		return;
-	
+
+	self = MODEST_HEADER_VIEW(user_data);
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
 
+	
 	g_mutex_lock (priv->lock);
 
 	if (!folder)  /* when there is no folder */
@@ -805,67 +805,39 @@ refresh_folder (TnyMsgFolderIface *folder, gboolean cancelled,
 							 GINT_TO_POINTER(col_id), NULL);
 			col = col->next;
 		}
-		
+
 		gtk_tree_view_set_model (GTK_TREE_VIEW (self), sortable);
 		gtk_tree_view_set_headers_clickable (GTK_TREE_VIEW(self), TRUE);
+		gtk_tree_view_set_headers_visible (GTK_TREE_VIEW(self), TRUE);
 		/* no need to unref sortable */
 	}
-	
 	g_mutex_unlock (priv->lock);
 }
 
 
 static void
-refresh_folder_status_update (TnyMsgFolderIface *folder, const gchar *msg,
-			      gint status_id, gpointer user_data)
+on_refresh_folder_status_update (TnyMsgFolderIface *folder, const gchar *msg,
+				 gint status_id,  gpointer user_data)
 {
 	ModestHeaderView *self;
 	ModestHeaderViewPrivate *priv;
-	
-	self = MODEST_HEADER_VIEW (user_data);
+
+	self = MODEST_HEADER_VIEW(user_data);
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
 
-	g_signal_emit (G_OBJECT(self),
-			       signals[STATUS_UPDATE_SIGNAL], 0,
-			       msg, status_id);
-	if (msg) 
-		g_timeout_add  (750,
-				(GSourceFunc)refresh_folder_finish_status_update,
-				self);
-	
-	priv->status_id = status_id;
+	g_signal_emit (G_OBJECT(self), signals[STATUS_UPDATE_SIGNAL],
+		       0, msg, status_id);
 }
 
-
-static gboolean
-refresh_folder_finish_status_update (gpointer user_data)
-{
-	ModestHeaderView *self;
-	ModestHeaderViewPrivate *priv;
-	
-	self = MODEST_HEADER_VIEW (user_data);
-	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
-
-	if (priv->status_id == 0)
-		return FALSE;
-	
-	refresh_folder_status_update (NULL, NULL, priv->status_id,
-				      user_data);
-	priv->status_id = 0;
-
-	return FALSE;	
-}
 
 
 gboolean
 modest_header_view_set_folder (ModestHeaderView *self,
-					TnyMsgFolderIface *folder)
+			       TnyMsgFolderIface *folder)
 {
-	ModestHeaderViewPrivate *priv;		
-	g_return_val_if_fail (MODEST_IS_HEADER_VIEW (self), FALSE);
-
+	ModestHeaderViewPrivate *priv;
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
-
+	
 	g_mutex_lock (priv->lock);
 
 	if (!folder)  {/* when there is no folder */
@@ -877,8 +849,8 @@ modest_header_view_set_folder (ModestHeaderView *self,
 			g_object_unref (model);
 	} else { /* it's a new one or a refresh */
 		tny_msg_folder_iface_refresh_async (folder,
-						    refresh_folder,
-						    refresh_folder_status_update,
+						    on_refresh_folder,
+						    on_refresh_folder_status_update,
 						    self);
 	}
 
@@ -941,16 +913,3 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 		//tny_msg_header_iface_set_flags (header, TNY_MSG_HEADER_FLAG_SEEN);
 	}	
 }
-
-
-/* static void */
-/* on_column_clicked (GtkTreeViewColumn *col, gpointer user_data) */
-/* { */
-/* 	GtkTreeView *treeview; */
-/* 	gint id; */
-
-/* 	treeview = GTK_TREE_VIEW (user_data); */
-/* 	id = gtk_tree_view_column_get_sort_column_id (col); */
-	
-/* 	gtk_tree_view_set_search_column (treeview, id); */
-/* } */
