@@ -29,14 +29,11 @@
 
 #include "modest-widget-memory.h"
 
-
 #define PARAM_X           "x"
 #define PARAM_Y           "y"
 #define PARAM_HEIGHT      "height"
 #define PARAM_WIDTH       "width"
-
 #define PARAM_POS         "pos"
-
 
 static gchar*
 get_keyname (ModestConf *conf, const gchar *name, const gchar *param)
@@ -52,12 +49,55 @@ get_keyname (ModestConf *conf, const gchar *name, const gchar *param)
 }
 
 
+
+static gboolean
+save_settings_widget (ModestConf *conf, GtkWidget *widget, const gchar *name)
+{
+	gchar *key;
+
+	key = get_keyname (conf, name, PARAM_HEIGHT);
+	modest_conf_set_int (conf, key, GTK_WIDGET(widget)->allocation.height, NULL);
+	g_free (key);
+	
+	key = get_keyname (conf, name, PARAM_WIDTH);
+	modest_conf_set_int (conf, key, GTK_WIDGET(widget)->allocation.width, NULL);
+	g_free (key);
+
+	return TRUE;
+}
+
+
+static gboolean
+restore_settings_widget (ModestConf *conf, GtkWidget *widget, const gchar *name)
+{
+	GtkRequisition req;
+	gchar *key;
+
+	key = get_keyname (conf, name, PARAM_HEIGHT);
+	
+	if (modest_conf_key_exists (conf, key, NULL))
+		req.height = modest_conf_get_int (conf, key, NULL);
+
+	g_free (key);
+	
+	key = get_keyname (conf, name, PARAM_WIDTH);
+	if (modest_conf_key_exists (conf, key, NULL))
+		req.width = modest_conf_get_int (conf, key, NULL);
+	g_free (key);
+
+	if (req.height && req.width) 
+		gtk_widget_size_request (widget, &req);
+
+	return TRUE;
+
+}
+
+
+
 static gboolean
 save_settings_window (ModestConf *conf, GtkWindow *win, const gchar *name)
 {
 	gchar *key;
-
-	int x,y;
 	int height, width;
 	
 	gtk_window_get_size (win, &width, &height);
@@ -143,13 +183,16 @@ modest_widget_memory_save_settings (ModestConf *conf, GtkWidget *widget,
 	g_return_val_if_fail (name, FALSE);
 
 	if (GTK_IS_WINDOW(widget))
-		save_settings_window (conf, (GtkWindow*)widget, name);
-	if (GTK_IS_PANED(widget))
-		save_settings_paned (conf, (GtkPaned*)widget, name);
-	
+		return save_settings_window (conf, (GtkWindow*)widget, name);
+	else if (GTK_IS_PANED(widget))
+		return save_settings_paned (conf, (GtkPaned*)widget, name);
+	else if (GTK_IS_WIDGET(widget))
+		return save_settings_widget (conf, widget, name);
 
-	
+	return TRUE;
 }
+
+
 
 gboolean
 modest_widget_memory_restore_settings (ModestConf *conf, GtkWidget *widget,
@@ -160,9 +203,11 @@ modest_widget_memory_restore_settings (ModestConf *conf, GtkWidget *widget,
 	g_return_val_if_fail (name, FALSE);
 	
 	if (GTK_IS_WINDOW(widget))
-		restore_settings_window (conf, (GtkWindow*)widget, name);
-	if (GTK_IS_PANED(widget))
-		restore_settings_paned (conf, (GtkPaned*)widget, name);
+		return restore_settings_window (conf, (GtkWindow*)widget, name);
+	else if (GTK_IS_PANED(widget))
+		return restore_settings_paned (conf, (GtkPaned*)widget, name);
+	else if (GTK_IS_WIDGET(widget))
+		return restore_settings_widget (conf, widget, name);
 	
 	return TRUE;
 }
