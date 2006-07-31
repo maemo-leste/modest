@@ -61,9 +61,9 @@ struct _ModestTnyAccountStore {
 struct _ModestTnyAccountStoreClass {
 	GObjectClass parent_class;
 
-	void (*password_requested) (ModestTnyAccountStore *self,
-				    const gchar *account_name,
-				    gpointer user_data);
+	gchar* (*password_requested) (ModestTnyAccountStore *self,
+				      const gchar *account_name,
+				      gpointer user_data);
 	void (*update_accounts)    (ModestTnyAccountStore *self,
 				    const gchar *account_name,
 				    gpointer user_data);
@@ -74,9 +74,9 @@ struct _ModestTnyAccountStoreClass {
 /**
  * modest_tny_account_store_get_type:
  *
- * Returns: GType of account store
+ * Returns: GType of the account store
  */
-GType        modest_tny_account_store_get_type    (void) G_GNUC_CONST;
+GType  modest_tny_account_store_get_type   (void) G_GNUC_CONST;
 
 /**
  * modest_tny_account_store_new:
@@ -86,19 +86,7 @@ GType        modest_tny_account_store_get_type    (void) G_GNUC_CONST;
  *
  * Returns: newly created account store or NULL in case of error
  */
-ModestTnyAccountStore*    modest_tny_account_store_new         (ModestAccountMgr *modest_acc_mgr);
-
-
-/**
- * tny_account_store_set_get_pass_func:
- * @self: a TnyAccountStore instance
- * key: a key
- * func: a function
- *
- * set the password function to function
- */
-void
-modest_tny_account_store_set_get_pass_func (ModestTnyAccountStore *, ModestTnyGetPassFunc);
+ModestTnyAccountStore*    modest_tny_account_store_new (ModestAccountMgr *modest_acc_mgr);
 
 
 /**
