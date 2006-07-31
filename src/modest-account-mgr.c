@@ -120,6 +120,10 @@ on_key_change (ModestConf *conf, const gchar *key, ModestConfEvent event, gpoint
 	
 	account = account_from_key (key, &is_account_key, &is_server_account);
 
+	/* if this is not an account-related key change, ignore */
+	if (!account)
+		return;
+
 	/* account was removed -- emit this, even if the account was disabled */
 	if (is_account_key && event == MODEST_CONF_EVENT_KEY_UNSET) {
 		g_signal_emit (G_OBJECT(self), signals[ACCOUNT_REMOVED_SIGNAL], 0,
