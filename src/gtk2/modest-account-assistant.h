@@ -33,6 +33,7 @@
 #include <gtk/gtk.h>
 #include <glib/gi18n.h>
 #include <modest-widget-factory.h>
+#include <modest-account-mgr.h>
 
 G_BEGIN_DECLS
 
@@ -61,7 +62,8 @@ struct _ModestAccountAssistantClass {
 /* member functions */
 GType        modest_account_assistant_get_type    (void) G_GNUC_CONST;
 
-GtkWidget*    modest_account_assistant_new        (ModestWidgetFactory *factory);
+GtkWidget*    modest_account_assistant_new        (ModestAccountMgr* account_mgr,
+						   ModestWidgetFactory *factory);
 
 
 G_END_DECLS

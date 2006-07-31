@@ -59,6 +59,7 @@ struct _ModestMainWindowPrivate {
 	
 	ModestWidgetFactory *widget_factory;
 	ModestConf *conf;
+	ModestAccountMgr *account_mgr;
 	
 	ModestHeaderView *header_view;
 	ModestFolderView *folder_view;
@@ -90,6 +91,7 @@ modest_main_window_get_type (void)
 			sizeof(ModestMainWindow),
 			1,		/* n_preallocs */
 			(GInstanceInitFunc) modest_main_window_init,
+			NULL
 		};
 		my_type = g_type_register_static (GTK_TYPE_WINDOW,
 		                                  "ModestMainWindow",
@@ -125,6 +127,8 @@ modest_main_window_init (ModestMainWindow *obj)
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(obj);
 
 	priv->widget_factory = NULL;
+	priv->conf           = NULL;
+	priv->account_mgr    = NULL;
 }
 
 static void
@@ -136,10 +140,16 @@ modest_main_window_finalize (GObject *obj)
 		g_object_unref (G_OBJECT(priv->widget_factory));
 		priv->widget_factory = NULL;
 	}
-	if (priv->conf) {
+ 	if (priv->conf) {
 		g_object_unref (G_OBJECT(priv->conf));
 		priv->conf = NULL;
 	}		
+
+	if (priv->account_mgr) {
+		g_object_unref (G_OBJECT(priv->account_mgr));
+		priv->account_mgr = NULL;
+	}		
+
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
@@ -148,7 +158,10 @@ static void
 on_menu_about (GtkWidget *widget, gpointer data)
 {
 	GtkWidget *about;
-
+	const gchar *authors[] = {
+		"Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>",
+		NULL
+	};	
 	about = gtk_about_dialog_new ();
 	gtk_about_dialog_set_name (GTK_ABOUT_DIALOG(about), PACKAGE_NAME);
 	gtk_about_dialog_set_version (GTK_ABOUT_DIALOG(about),PACKAGE_VERSION);
@@ -157,7 +170,13 @@ on_menu_about (GtkWidget *widget, gpointer data)
 		_("Copyright (c) 2006, Nokia Corporation\n"
 		  "All rights reserved."));
 	gtk_about_dialog_set_comments (	GTK_ABOUT_DIALOG(about),
-		_("a modest e-mail client"));
+		_("a modest e-mail client\n\n"
+		  "design and implementation: Dirk-Jan C. Binnema\n"
+		  "contributions from the fine people at KernelConcepts\n\n"
+		  "uses the tinymail email framework written by Philip van Hoof"));
+	gtk_about_dialog_set_authors (GTK_ABOUT_DIALOG(about), authors);
+	gtk_about_dialog_set_website (GTK_ABOUT_DIALOG(about), "http://modest.garage.maemo.org");
+
 	gtk_dialog_run (GTK_DIALOG (about));
 	gtk_widget_destroy(about);
 }
@@ -173,7 +192,7 @@ on_menu_accounts (ModestMainWindow *self, guint action, GtkWidget *widget)
 	g_return_if_fail (self);
 	
 	priv        = MODEST_MAIN_WINDOW_GET_PRIVATE(self);	
-	account_win = modest_account_view_window_new (priv->conf,
+	account_win = modest_account_view_window_new (priv->account_mgr,
 						      priv->widget_factory);
 
 	gtk_window_set_transient_for (GTK_WINDOW(account_win),
@@ -188,7 +207,6 @@ on_menu_new_message (ModestMainWindow *self, guint action, GtkWidget *widget)
 {
 	GtkWidget *msg_win;
 	ModestMainWindowPrivate *priv;
-
 
 	priv  = MODEST_MAIN_WINDOW_GET_PRIVATE(self);	
 
@@ -284,9 +302,7 @@ header_view_new (ModestMainWindow *self)
 	ModestHeaderViewColumn cols[] = {
 		MODEST_HEADER_VIEW_COLUMN_MSGTYPE,
 		MODEST_HEADER_VIEW_COLUMN_ATTACH,
-		MODEST_HEADER_VIEW_COLUMN_FROM,
-		MODEST_HEADER_VIEW_COLUMN_SUBJECT,
-		MODEST_HEADER_VIEW_COLUMN_RECEIVED_DATE
+		MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER
 	};
 
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
@@ -367,6 +383,8 @@ static gboolean
 on_delete_event (GtkWidget *widget, GdkEvent  *event, ModestMainWindow *self)
 {
 	save_sizes (self);
+	gtk_widget_destroy (GTK_WIDGET(self));
+
 	return TRUE;
 }
 
@@ -374,7 +392,8 @@ on_delete_event (GtkWidget *widget, GdkEvent  *event, ModestMainWindow *self)
 
 
 GtkWidget*
-modest_main_window_new (ModestWidgetFactory *factory, ModestConf *conf)
+modest_main_window_new (ModestConf *conf, ModestAccountMgr *account_mgr,
+			ModestWidgetFactory *factory)
 {
 	GObject *obj;
 	ModestMainWindowPrivate *priv;
@@ -394,6 +413,10 @@ modest_main_window_new (ModestWidgetFactory *factory, ModestConf *conf)
 
 	g_object_ref (conf);
 	priv->conf = conf;
+	
+	g_object_ref (account_mgr);
+	priv->account_mgr = account_mgr;
+
 
 	/* widgets from factory */
 	priv->folder_view = modest_widget_factory_get_folder_view (factory);
@@ -421,33 +444,37 @@ modest_main_window_new (ModestWidgetFactory *factory, ModestConf *conf)
 	gtk_paned_add2 (GTK_PANED(priv->msg_paned), GTK_WIDGET(priv->msg_preview));
 
 	gtk_widget_show (GTK_WIDGET(priv->header_view));
-		
+	gtk_tree_view_columns_autosize (GTK_TREE_VIEW(priv->header_view));
+
+	
 	/* status bar / progress */
-	status_hbox = gtk_hbox_new (TRUE, 6);
+	status_hbox = gtk_hbox_new (FALSE, 0);
 	gtk_box_pack_start (GTK_BOX(status_hbox),
 			    modest_widget_factory_get_status_bar(factory),
-			    TRUE, TRUE, 6);
+			    TRUE, TRUE, 0);
 	gtk_box_pack_start (GTK_BOX(status_hbox),
 			    modest_widget_factory_get_progress_bar(factory),
-			    TRUE, FALSE, 6);
-	gtk_box_pack_end (GTK_BOX(status_hbox),
+			    FALSE, FALSE, 0);
+	gtk_box_pack_start (GTK_BOX(status_hbox),
 			  modest_widget_factory_get_online_toggle(factory),
-			  FALSE, FALSE, 6);
+			  FALSE, FALSE, 0);
 
 	/* putting it all together... */
 	main_vbox = gtk_vbox_new (FALSE, 6);
-	gtk_box_pack_start (GTK_BOX(main_vbox), priv->menubar, FALSE, FALSE, 6);
-	gtk_box_pack_start (GTK_BOX(main_vbox), priv->toolbar, FALSE, FALSE, 6);
-	gtk_box_pack_start (GTK_BOX(main_vbox), priv->main_paned, TRUE, TRUE, 6);
-	gtk_box_pack_start (GTK_BOX(main_vbox), status_hbox, FALSE, FALSE, 6);
+	gtk_box_pack_start (GTK_BOX(main_vbox), priv->menubar, FALSE, FALSE, 0);
+	gtk_box_pack_start (GTK_BOX(main_vbox), priv->toolbar, FALSE, FALSE, 0);
+	gtk_box_pack_start (GTK_BOX(main_vbox), priv->main_paned, TRUE, TRUE,0);
+	gtk_box_pack_start (GTK_BOX(main_vbox), status_hbox, FALSE, FALSE, 0);
 	
 	gtk_container_add (GTK_CONTAINER(obj), main_vbox);
 	restore_sizes (MODEST_MAIN_WINDOW(obj));	
 
+	gtk_window_set_title (GTK_WINDOW(obj), "Modest");
+
 	gtk_widget_show_all (main_vbox);
+	
 	g_signal_connect (G_OBJECT(obj), "delete-event",
 			  G_CALLBACK(on_delete_event), obj);
-
 	
 	return GTK_WIDGET(obj);
 }

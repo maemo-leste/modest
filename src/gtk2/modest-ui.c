@@ -89,6 +89,7 @@ modest_ui_get_type (void)
 			sizeof(ModestUI),
 			1,		/* n_preallocs */
 			(GInstanceInitFunc) modest_ui_init,
+			NULL
 		};
 		my_type = g_type_register_static (G_TYPE_OBJECT,
 		                                  "ModestUI",
@@ -201,9 +202,12 @@ modest_ui_main_window (ModestUI *modest_ui)
 	g_return_val_if_fail (modest_ui, NULL);
 	priv = MODEST_UI_GET_PRIVATE(modest_ui);
 
-	win = modest_main_window_new (priv->widget_factory, priv->conf);
+	win = modest_main_window_new (priv->conf, priv->account_mgr,
+				      priv->widget_factory);
 	if (!win)
 		g_printerr ("modest: could not create main window\n");
 
 	return win;
 }
+
+

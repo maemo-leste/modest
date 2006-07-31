@@ -32,9 +32,9 @@
 #include <modest-widget-memory.h>
 
 /* 'private'/'protected' functions */
-static void                        modest_edit_msg_window_class_init   (ModestEditMsgWindowClass *klass);
-static void                        modest_edit_msg_window_init         (ModestEditMsgWindow *obj);
-static void                        modest_edit_msg_window_finalize     (GObject *obj);
+static void  modest_edit_msg_window_class_init   (ModestEditMsgWindowClass *klass);
+static void  modest_edit_msg_window_init         (ModestEditMsgWindow *obj);
+static void  modest_edit_msg_window_finalize     (GObject *obj);
 
 /* list my signals */
 enum {
@@ -124,10 +124,14 @@ modest_edit_msg_window_init (ModestEditMsgWindow *obj)
 	priv->subject_field = gtk_entry_new_with_max_length (40);
 
 	header_table = gtk_table_new (4,2, FALSE);
-	gtk_table_attach_defaults (GTK_TABLE(header_table), to_button,     0,1,0,1);
-	gtk_table_attach_defaults (GTK_TABLE(header_table), cc_button,     0,1,1,2);
-	gtk_table_attach_defaults (GTK_TABLE(header_table), bcc_button,    0,1,2,3);
-	gtk_table_attach_defaults (GTK_TABLE(header_table), subject_label, 0,1,3,4);
+	gtk_table_attach (GTK_TABLE(header_table), to_button,     0,1,0,1,
+			  GTK_SHRINK, 0, 0, 0);
+	gtk_table_attach (GTK_TABLE(header_table), cc_button,     0,1,1,2,
+			  GTK_SHRINK, 0, 0, 0);
+	gtk_table_attach (GTK_TABLE(header_table), bcc_button,    0,1,2,3,
+			  GTK_SHRINK, 0, 0, 0);
+	gtk_table_attach (GTK_TABLE(header_table), subject_label, 0,1,3,4,
+			  GTK_SHRINK, 0, 0, 0);
  
 	gtk_table_attach_defaults (GTK_TABLE(header_table), priv->to_field,     1,2,0,1);
 	gtk_table_attach_defaults (GTK_TABLE(header_table), priv->cc_field,     1,2,1,2);
@@ -138,7 +142,7 @@ modest_edit_msg_window_init (ModestEditMsgWindow *obj)
 	
 	main_vbox = gtk_vbox_new  (FALSE, 6);
 
-	gtk_box_pack_start (GTK_BOX(main_vbox), header_table, TRUE, TRUE, 6);
+	gtk_box_pack_start (GTK_BOX(main_vbox), header_table, FALSE, FALSE, 6);
 	gtk_box_pack_start (GTK_BOX(main_vbox), priv->msg_body, TRUE, TRUE, 6);
 
 	gtk_widget_show_all (GTK_WIDGET(main_vbox));
@@ -158,6 +162,21 @@ modest_edit_msg_window_finalize (GObject *obj)
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 
 }
+
+static gboolean
+on_delete_event (GtkWidget *widget, GdkEvent *event, ModestEditMsgWindow *self)
+{
+	ModestEditMsgWindowPrivate *priv;
+	priv = MODEST_EDIT_MSG_WINDOW_GET_PRIVATE(self);
+
+	modest_widget_memory_save_settings (priv->conf,
+					    GTK_WIDGET(priv->msg_body),
+					    "modest-edit-msg-body");
+	gtk_widget_destroy (GTK_WIDGET(self));
+	return TRUE;
+}
+
+
 
 
 GtkWidget*
@@ -181,5 +200,9 @@ modest_edit_msg_window_new (ModestConf *conf, ModestEditType type,
 	
 	modest_widget_memory_restore_settings (priv->conf, GTK_WIDGET(priv->msg_body),
 					       "modest-edit-msg-body");
+
+	g_signal_connect (G_OBJECT(obj), "delete-event",
+			  G_CALLBACK(on_delete_event), obj);
+	
 	return GTK_WIDGET (obj);
 }

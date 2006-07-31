@@ -45,7 +45,7 @@ enum {
 
 typedef struct _ModestAccountViewWindowPrivate ModestAccountViewWindowPrivate;
 struct _ModestAccountViewWindowPrivate {
-	ModestConf          *conf;
+	ModestAccountMgr    *account_mgr;
 	ModestWidgetFactory *widget_factory;
 	GtkWidget           *edit_button, *remove_button;
 };
@@ -107,7 +107,7 @@ modest_account_view_window_init (ModestAccountViewWindow *obj)
 		
 	priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE(obj);
 
-	priv->conf = NULL;
+	priv->account_mgr    = NULL;
 	priv->widget_factory = NULL;
 }
 
@@ -118,9 +118,9 @@ modest_account_view_window_finalize (GObject *obj)
 		
 	priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE(obj);
 
-	if (priv->conf) {
-		g_object_unref (G_OBJECT(priv->conf));
-		priv->conf = NULL;
+	if (priv->account_mgr) {
+		g_object_unref (G_OBJECT(priv->account_mgr));
+		priv->account_mgr = NULL;
 	}
 	
 	if (priv->widget_factory) {
@@ -171,7 +171,8 @@ on_add_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 	
 	priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE(self);
 
-	assistant = modest_account_assistant_new (priv->widget_factory);
+	assistant = modest_account_assistant_new (priv->account_mgr,
+						  priv->widget_factory);
 	gtk_window_set_transient_for (GTK_WINDOW(assistant),
 				      GTK_WINDOW(self));
 
@@ -220,7 +221,7 @@ button_box_new (ModestAccountViewWindow *self)
 	gtk_widget_set_sensitive (edit_button, FALSE);
 	gtk_widget_set_sensitive (remove_button, FALSE);	
 
-	/* remember these, so we can deactivate them when nothing i
+	/* remember these, so we can deactivate them when nothing is
 	 * selected */
 	priv->remove_button = remove_button;
 	priv->edit_button   = edit_button;
@@ -275,19 +276,19 @@ window_vbox_new (ModestAccountViewWindow *self)
 
 
 GtkWidget*
-modest_account_view_window_new (ModestConf *conf, ModestWidgetFactory *factory)
+modest_account_view_window_new (ModestAccountMgr *account_mgr, ModestWidgetFactory *factory)
 {
 	GObject *obj;
 	ModestAccountViewWindowPrivate *priv;
 
-	g_return_val_if_fail (conf, NULL);
+	g_return_val_if_fail (account_mgr, NULL);
 	g_return_val_if_fail (factory, NULL);
 	
 	obj  = g_object_new(MODEST_TYPE_ACCOUNT_VIEW_WINDOW, NULL);
 	priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE(obj);
 
-	g_object_ref (G_OBJECT(conf));
-	priv->conf = conf;
+	g_object_ref (G_OBJECT(account_mgr));
+	priv->account_mgr = account_mgr;
 	
 	g_object_ref (G_OBJECT(factory));
 	priv->widget_factory = factory;

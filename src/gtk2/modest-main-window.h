@@ -7,6 +7,8 @@
 #include <gtk/gtkwindow.h>
 #include <glib/gi18n.h>
 #include <modest-widget-factory.h>
+#include <modest-conf.h>
+#include <modest-account-mgr.h>
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -40,7 +42,8 @@ struct _ModestMainWindowClass {
 GType        modest_main_window_get_type    (void) G_GNUC_CONST;
 
 
-GtkWidget*   modest_main_window_new         (ModestWidgetFactory *factory, ModestConf *conf);
+GtkWidget*   modest_main_window_new         (ModestConf *conf, ModestAccountMgr *account_mgr,
+					     ModestWidgetFactory *factory);
 
 G_END_DECLS
 
