@@ -171,8 +171,7 @@ GSList*	        modest_account_mgr_account_names    (ModestAccountMgr *self, GEr
 GSList*  modest_account_mgr_search_server_accounts  (ModestAccountMgr *self,
 						     const gchar*    account_name,
 						     ModestProtoType type,
-						     const gchar*    proto,
-						     gboolean only_enabled);
+						     const gchar*    proto);
 
 /**
  * modest_account_mgr_account_exists:
@@ -196,7 +195,6 @@ gboolean	modest_account_mgr_account_exists	  (ModestAccountMgr *self,
  * modest_account_mgr_account_set_enabled
  * @self: a ModestAccountMgr instance
  * @name: the account name 
- * @server_account: if TRUE, this is a server account
  * @enabled: if TRUE, the account will be enabled, if FALSE, it will be disabled
  * 
  * enable/disabled an account
@@ -204,21 +202,19 @@ gboolean	modest_account_mgr_account_exists	  (ModestAccountMgr *self,
  * Returns: TRUE if it worked, FALSE otherwise
  */
 gboolean modest_account_mgr_account_set_enabled (ModestAccountMgr *self, const gchar* name,
-						 gboolean is_server_account, gboolean enabled);
+						 gboolean enabled);
 
 
 /**
  * modest_account_mgr_account_get_enabled:
  * @self: a ModestAccountMgr instance
  * @name: the account name to check
- * @server_account: if TRUE, this is a server account
  *
  * check whether a certain account is enabled
  *
  * Returns: TRUE if it is enabled, FALSE otherwise
  */
-gboolean modest_account_mgr_account_get_enabled (ModestAccountMgr *self, const gchar* name,
-						 gboolean is_server_account);
+gboolean modest_account_mgr_account_get_enabled (ModestAccountMgr *self, const gchar* name);
 
 
 /**

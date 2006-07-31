@@ -133,8 +133,10 @@ on_key_change (ModestConf *conf, const gchar *key, ModestConfEvent event, gpoint
 	}
 
 	/* is this account enabled? */
-	enabled = modest_account_mgr_account_get_enabled (self, account,
-							  is_server_account);
+	if (is_server_account)
+		enabled = TRUE;
+	else 
+		enabled = modest_account_mgr_account_get_enabled (self, account);
 
 	/* account was changed.
 	 * and always notify when enabled/disabled changes
@@ -257,20 +259,19 @@ null_means_empty (const gchar * str)
 
 gboolean
 modest_account_mgr_account_set_enabled (ModestAccountMgr *self, const gchar* name,
-					gboolean is_server_account, gboolean enabled)
+					gboolean enabled)
 {
 	return modest_account_mgr_set_bool (self, name,
 					    MODEST_ACCOUNT_ENABLED, enabled,
-					    is_server_account, NULL);
+					    FALSE, NULL);
 }
 
 
 gboolean
-modest_account_mgr_account_get_enabled (ModestAccountMgr *self, const gchar* name,
-					gboolean is_server_account)
+modest_account_mgr_account_get_enabled (ModestAccountMgr *self, const gchar* name)
 {
 	return modest_account_mgr_get_bool (self, name,
-					    MODEST_ACCOUNT_ENABLED, is_server_account,
+					    MODEST_ACCOUNT_ENABLED, FALSE,
 					    NULL);
 }
 
@@ -331,7 +332,7 @@ modest_account_mgr_add_account (ModestAccountMgr *self,
 		}
 	}
 
-	modest_account_mgr_account_set_enabled (self, name, FALSE, TRUE);
+	modest_account_mgr_account_set_enabled (self, name, TRUE);
 	
 	return TRUE;
 }
@@ -382,9 +383,6 @@ modest_account_mgr_add_server_account (ModestAccountMgr * self,
 	key = get_account_keyname (name, MODEST_ACCOUNT_PROTO, TRUE);
 	modest_conf_set_string (priv->modest_conf, key,	null_means_empty (proto), NULL);
 	g_free (key);
-
-	/* enable it */
-	modest_account_mgr_account_set_enabled (self, name, TRUE, TRUE);
 	
 	return TRUE;
 }
@@ -443,8 +441,7 @@ GSList *
 modest_account_mgr_search_server_accounts (ModestAccountMgr * self,
 					   const gchar * account_name,
 					   ModestProtoType type,
-					   const gchar *proto,
-					   gboolean only_enabled)
+					   const gchar *proto)
 {
 	GSList *accounts;
 	GSList *cursor;
@@ -475,18 +472,14 @@ modest_account_mgr_search_server_accounts (ModestAccountMgr * self,
 	while (cursor) {
 		gchar *account;
 		gchar *acc_proto;
-		gboolean enabled;
 		
 		account = account_from_key ((gchar*)cursor->data, NULL, NULL);
-		
-		enabled   = modest_account_mgr_account_get_enabled (self, account, TRUE);
 		acc_proto = modest_account_mgr_get_string (self, account, MODEST_ACCOUNT_PROTO,
 							   TRUE, NULL);
 		if ((!acc_proto) ||	                           /* proto not defined? */
 		    (type != MODEST_PROTO_TYPE_ANY &&	           /* proto type ...     */
 		     modest_proto_type (acc_proto) != type) ||	   /* ... matches?       */
-		    (proto && strcmp (proto, acc_proto) != 0) ||   /* proto matches?     */
-		    (!enabled && only_enabled)) {                  /* account enabled?   */
+		    (proto && strcmp (proto, acc_proto) != 0)) {  /* proto matches?     */
 			/* match! remove from the list */
 			GSList *nxt = cursor->next;
 			accounts = g_slist_delete_link (accounts, cursor);
@@ -510,13 +503,13 @@ modest_account_mgr_account_names (ModestAccountMgr * self, GError ** err)
 	ModestAccountMgrPrivate *priv;
 	const size_t prefix_len = strlen (MODEST_ACCOUNT_NAMESPACE "/");
 
-
 	g_return_val_if_fail (self, NULL);
 
 	priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
 
 	accounts = modest_conf_list_subkeys (priv->modest_conf,
                                              MODEST_ACCOUNT_NAMESPACE, err);
+	
 	return strip_prefix_from_elements (accounts, prefix_len);
 }
 
