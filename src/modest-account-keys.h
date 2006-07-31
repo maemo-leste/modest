@@ -44,6 +44,9 @@
 #define MODEST_ACCOUNT_DISPLAY_NAME      "display_name"      /* string */
 #define MODEST_ACCOUNT_STORE_ACCOUNT     "store_account"     /* string */
 #define MODEST_ACCOUNT_TRANSPORT_ACCOUNT "transport_account" /* string */
+#define MODEST_ACCOUNT_FULLNAME		 "fullname"
+#define MODEST_ACCOUNT_EMAIL             "email"
+
 
 /* server account keys */
 #define MODEST_ACCOUNT_PASSWORD          "password"          /* string */
