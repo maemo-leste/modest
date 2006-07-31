@@ -363,9 +363,7 @@ gboolean
 modest_conf_key_exists (ModestConf* self, const gchar* key, GError **err)
 {
 	ModestConfPrivate *priv;
-	gboolean dir_exists;
 	GConfValue *val;
-	const gchar *str;
 
 	g_return_val_if_fail (self,FALSE);
 	g_return_val_if_fail (key, FALSE);
@@ -375,7 +373,7 @@ modest_conf_key_exists (ModestConf* self, const gchar* key, GError **err)
 	/* the fast way... */
 	if (gconf_client_dir_exists (priv->gconf_client,key,err))
 		return TRUE;
-
+	
 	val = gconf_client_get (priv->gconf_client, key, NULL);
 	if (!val)
 		return FALSE;
