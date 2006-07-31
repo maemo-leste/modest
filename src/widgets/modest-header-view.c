@@ -205,6 +205,10 @@ display_address (gchar *address)
 	cursor = g_strstr_len (address, strlen(address), "(");
 	if (cursor) 
 		cursor[0]='\0';
+	
+	/* FIXME */
+	if (!g_utf8_validate (address, -1, NULL)) 
+		g_warning ("not valid: '%s'", address);
 
 	return address;
 }
@@ -228,7 +232,7 @@ sender_receiver_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *rendere
 			    sender_receiver_col,  &address,
 			    TNY_MSG_HEADER_LIST_MODEL_FLAGS_COLUMN, &flags,
 			    -1);
-
+	
 	g_object_set (G_OBJECT(renderer),
 		      "text",
 		      display_address (address),
@@ -449,6 +453,9 @@ init_columns (ModestHeaderView *obj)
 						 TRUE, (GtkTreeCellDataFunc)header_cell_data,
 						 NULL);
 			break;
+
+		default:
+			g_assert_not_reached ();
 		}
 		gtk_tree_view_append_column (GTK_TREE_VIEW(obj), column);		
 	}	
@@ -492,8 +499,8 @@ modest_header_view_finalize (GObject *obj)
 
 GtkWidget*
 modest_header_view_new (TnyMsgFolderIface *folder,
-				 GSList *columns,
-				 ModestHeaderViewStyle style)
+			GSList *columns,
+			ModestHeaderViewStyle style)
 {
 	GObject *obj;
 	GtkTreeSelection *sel;
@@ -514,13 +521,16 @@ modest_header_view_new (TnyMsgFolderIface *folder,
 	/* all cols */
 	gtk_tree_view_set_headers_visible   (GTK_TREE_VIEW(obj), TRUE);
 	gtk_tree_view_set_headers_clickable (GTK_TREE_VIEW(obj), TRUE);
+	gtk_tree_view_columns_autosize (GTK_TREE_VIEW(obj));
 	
 	gtk_tree_view_set_rules_hint (GTK_TREE_VIEW(obj),
 				      TRUE); /* alternating row colors */
 
 	sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(self));
+	
 	g_signal_connect (sel, "changed",
 			  G_CALLBACK(on_selection_changed), self);
+	
 
 	return GTK_WIDGET(self);
 }
@@ -541,9 +551,11 @@ modest_header_view_set_columns (ModestHeaderView *self, GSList *columns)
 		ModestHeaderViewColumn col = 
 			(ModestHeaderViewColumn) GPOINTER_TO_INT(cursor->data);
 		if (0 > col || col >= MODEST_HEADER_VIEW_COLUMN_NUM)
-			g_warning ("invalid column in column list");
+			g_printerr ("modest: invalid column %d in column list\n", col);
 		else
 			priv->columns = g_slist_append (priv->columns, cursor->data);
+
+		g_warning ("col: %d", col);
 	}
 
 	init_columns (self); /* redraw them */
@@ -759,6 +771,8 @@ refresh_folder (TnyMsgFolderIface *folder, gboolean cancelled,
 	
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
 
+	g_mutex_lock (priv->lock);
+
 	if (!folder)  /* when there is no folder */
 		gtk_tree_view_set_headers_visible (GTK_TREE_VIEW(self), FALSE);
 	
@@ -796,7 +810,8 @@ refresh_folder (TnyMsgFolderIface *folder, gboolean cancelled,
 		gtk_tree_view_set_headers_clickable (GTK_TREE_VIEW(self), TRUE);
 		/* no need to unref sortable */
 	}
-
+	
+	g_mutex_unlock (priv->lock);
 }
 
 
@@ -846,8 +861,7 @@ gboolean
 modest_header_view_set_folder (ModestHeaderView *self,
 					TnyMsgFolderIface *folder)
 {
-	ModestHeaderViewPrivate *priv;
-		
+	ModestHeaderViewPrivate *priv;		
 	g_return_val_if_fail (MODEST_IS_HEADER_VIEW (self), FALSE);
 
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
@@ -861,10 +875,9 @@ modest_header_view_set_folder (ModestHeaderView *self,
 		gtk_tree_view_set_model (GTK_TREE_VIEW (self), NULL);
 		if (model)
 			g_object_unref (model);
-	}
-	else { /* it's a new one or a refresh */
+	} else { /* it's a new one or a refresh */
 		tny_msg_folder_iface_refresh_async (folder,
-					    refresh_folder,
+						    refresh_folder,
 						    refresh_folder_status_update,
 						    self);
 	}
@@ -898,8 +911,6 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 		
 	if (!gtk_tree_selection_get_selected (sel, &model, &iter))
 		return; /* msg was _un_selected */
-
-	//g_mutex_lock (priv->lock);
 	
 	gtk_tree_model_get (model, &iter,
 			    TNY_MSG_HEADER_LIST_MODEL_INSTANCE_COLUMN,
@@ -928,10 +939,7 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 		/* mark message as seen; _set_flags crashes, bug in tinymail? */
 		//flags = tny_msg_header_iface_get_flags (TNY_MSG_HEADER_IFACE(header));
 		//tny_msg_header_iface_set_flags (header, TNY_MSG_HEADER_FLAG_SEEN);
-	}
-
-	// g_mutex_unlock (priv->lock);
-	
+	}	
 }
 
 

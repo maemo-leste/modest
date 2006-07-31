@@ -71,7 +71,7 @@ struct _ModestHeaderViewClass {
 };
 
 
-enum {
+enum _ModestHeaderViewColumn {
 	MODEST_HEADER_VIEW_COLUMN_FROM,
 	MODEST_HEADER_VIEW_COLUMN_TO,
 	MODEST_HEADER_VIEW_COLUMN_SUBJECT,
@@ -83,16 +83,16 @@ enum {
 
 	MODEST_HEADER_VIEW_COLUMN_NUM
 };
-typedef guint ModestHeaderViewColumn;
+typedef enum _ModestHeaderViewColumn ModestHeaderViewColumn;
 
-enum {
+
+enum _ModestHeaderViewStyle {
 	MODEST_HEADER_VIEW_STYLE_NORMAL,
 	MODEST_HEADER_VIEW_STYLE_COMPACT,
 	
 	MODEST_HEADER_VIEW_STYLE_NUM
 };
-typedef guint ModestHeaderViewStyle;
-
+typedef enum _ModestHeaderViewStyle ModestHeaderViewStyle;
 
 
 /**
