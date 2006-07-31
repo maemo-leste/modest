@@ -64,16 +64,6 @@ enum {
 	LAST_SIGNAL
 };
 
-
-enum _StatusID {
-	STATUS_ID_HEADER,
-	STATUS_ID_FOLDER,
-	STATUS_ID_MESSAGE,
-
-	STATUS_ID_NUM
-};
-typedef enum _StatusID StatusID;
-
 typedef struct _ModestWidgetFactoryPrivate ModestWidgetFactoryPrivate;
 struct _ModestWidgetFactoryPrivate {
 	
@@ -89,8 +79,6 @@ struct _ModestWidgetFactoryPrivate {
 	GtkWidget             *status_bar;
 
 	GtkWidget	      *online_toggle;
-	StatusID              status_bar_ctx[STATUS_ID_NUM];
-	
 };
 #define MODEST_WIDGET_FACTORY_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                    MODEST_TYPE_WIDGET_FACTORY, \
@@ -152,16 +140,6 @@ modest_widget_factory_init (ModestWidgetFactory *obj)
 	priv->status_bar   = gtk_statusbar_new ();
 	gtk_statusbar_set_has_resize_grip (GTK_STATUSBAR(priv->status_bar),
 					   FALSE);
-	
-	priv->status_bar_ctx[STATUS_ID_HEADER] =
-		gtk_statusbar_get_context_id (GTK_STATUSBAR(priv->status_bar),
-					      "header");
-	priv->status_bar_ctx[STATUS_ID_MESSAGE] =
-		gtk_statusbar_get_context_id (GTK_STATUSBAR(priv->status_bar),
-					      "message");	
-	priv->status_bar_ctx[STATUS_ID_FOLDER] =
-		gtk_statusbar_get_context_id (GTK_STATUSBAR(priv->status_bar),
-					      "folder");
 }
 
 static void
@@ -234,8 +212,7 @@ init_widgets (ModestWidgetFactory *self)
 
 	/* folder view */
 	if (!(priv->folder_view =
-	      MODEST_FOLDER_VIEW(modest_folder_view_new
-				 (TNY_ACCOUNT_STORE_IFACE(priv->account_store))))) {
+	      MODEST_FOLDER_VIEW(modest_folder_view_new (priv->account_store)))) {
 		g_printerr ("modest: cannot instantiate folder view\n");
 		return FALSE;
 	}
@@ -358,8 +335,6 @@ GtkWidget*
 modest_widget_factory_get_combo_box (ModestWidgetFactory *self, ModestComboBoxType type)
 {
 	GtkWidget *combo_box;
-	GtkListStore *model;
-	GtkTreeIter iter;
 	const gchar **protos, **cursor; 
 
 	g_return_val_if_fail (self, NULL);
@@ -426,26 +401,62 @@ on_message_selected (ModestHeaderView *folder_view, TnyMsgIface *msg,
 }
 
 
+/*
+ * below some stuff to clearup statusbar messages after 1,5 seconds....
+ */
+typedef struct {
+	GtkWidget *status_bar;
+	GtkWidget *progress_bar;
+	guint     msg_id;
+} StatusRemoveData;
+
+
+static gboolean
+on_statusbar_remove_msg (StatusRemoveData *data)
+{
+	gtk_statusbar_remove (GTK_STATUSBAR(data->status_bar), 0, data->msg_id);
+	g_free (data);
+
+	gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR(data->progress_bar), 1.0);
+	
+	return FALSE;
+}
+
+
+static void
+statusbar_push (ModestWidgetFactory *self, guint context_id, const gchar *msg)
+{
+	guint id;
+	StatusRemoveData *data;
+	ModestWidgetFactoryPrivate *priv;
+	
+	priv = MODEST_WIDGET_FACTORY_GET_PRIVATE(self);
+	
+	if (!msg)
+		return;
+	
+	id = gtk_statusbar_push (GTK_STATUSBAR(priv->status_bar), 0, msg);
+
+	data = g_new (StatusRemoveData, 1);
+	data->status_bar   = priv->status_bar;
+	data->progress_bar = priv->progress_bar;
+	data->msg_id     = id;
+
+	g_timeout_add (1500, (GSourceFunc)on_statusbar_remove_msg, data);
+}
+/****************************************************************************/
+
+
 static void
 on_header_status_update (ModestHeaderView *header_view, const gchar *msg,
 			 gint status_id, ModestWidgetFactory *self)
 {
 	ModestWidgetFactoryPrivate *priv;
-	priv = MODEST_WIDGET_FACTORY_GET_PRIVATE(self);
 	
-	if (msg && status_id) {
-		gchar *msg = g_strdup_printf ("%s", msg);
-		gtk_progress_bar_pulse (GTK_PROGRESS_BAR(priv->progress_bar));
-		gtk_statusbar_push (GTK_STATUSBAR(priv->status_bar),
-				       priv->status_bar_ctx[STATUS_ID_HEADER],
-				       msg);
-		g_free (msg);
-	} else {
-		gtk_statusbar_pop (GTK_STATUSBAR(priv->status_bar),
-				   priv->status_bar_ctx[STATUS_ID_HEADER]);
-		gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR(priv->progress_bar),
-					       1.0);
-	}
+	priv = MODEST_WIDGET_FACTORY_GET_PRIVATE(self);
+			
+	gtk_progress_bar_pulse (GTK_PROGRESS_BAR(priv->progress_bar));
+	statusbar_push (self, 0, msg);
 }
 
 
@@ -455,14 +466,8 @@ on_msg_link_hover (ModestMsgView *msgview, const gchar* link,
 {
 	ModestWidgetFactoryPrivate *priv;
 	priv = MODEST_WIDGET_FACTORY_GET_PRIVATE(self);
-
-	if (link)
-		gtk_statusbar_push (GTK_STATUSBAR(priv->status_bar),
-				    priv->status_bar_ctx[STATUS_ID_MESSAGE],
-				    link);
-	else
-		gtk_statusbar_pop (GTK_STATUSBAR(priv->status_bar),
-				   priv->status_bar_ctx[STATUS_ID_MESSAGE]);
+	
+	statusbar_push (self, 0, link);
 
 }	
 
@@ -471,29 +476,21 @@ static void
 on_msg_link_clicked  (ModestMsgView *msgview, const gchar* link,
 		      ModestWidgetFactory *self)
 {
-	ModestWidgetFactoryPrivate *priv;
-	priv = MODEST_WIDGET_FACTORY_GET_PRIVATE(self);
-
-	if (link) {
-		gchar *msg = g_strdup_printf (_("Opening %s..."), link);
-		gtk_statusbar_push (GTK_STATUSBAR(priv->status_bar),
-				    priv->status_bar_ctx[STATUS_ID_MESSAGE],
-				    msg);
-		g_free (msg);
-	}	
+	gchar *msg;
+	msg = g_strdup_printf (_("Opening %s..."), link);
+	statusbar_push (self, 0, msg);
+	g_free (msg);
 }
 
 static void
 on_msg_attachment_clicked  (ModestMsgView *msgview, int index,
 			    ModestWidgetFactory *self)
 {
-	ModestWidgetFactoryPrivate *priv;
-	priv = MODEST_WIDGET_FACTORY_GET_PRIVATE(self);
+	gchar *msg;
 	
-	gchar *msg = g_strdup_printf (_("Opening attachment %d..."), index);
-	gtk_statusbar_push (GTK_STATUSBAR(priv->status_bar),
-			    priv->status_bar_ctx[STATUS_ID_MESSAGE],
-			    msg);
+	msg = g_strdup_printf (_("Opening attachment %d..."), index);
+	statusbar_push (self, 0, msg);
+	
 	g_free (msg);
 }
 
@@ -502,15 +499,15 @@ static void
 on_connection_changed (TnyDeviceIface *device, gboolean online,
 		       ModestWidgetFactory *self)
 {
-	gint item;
 	ModestWidgetFactoryPrivate *priv;
-
 	priv = MODEST_WIDGET_FACTORY_GET_PRIVATE(self);
 
 	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(priv->online_toggle),
 				      online);
 	gtk_button_set_label (GTK_BUTTON(priv->online_toggle),
 			      online ? _("Online") : _("Offline"));
+
+	statusbar_push (self, 0, online ? _("Modest went online") : _("Modest went offline"));
 }
 
 
