@@ -55,6 +55,8 @@ enum {
 typedef struct _ModestAccountViewPrivate ModestAccountViewPrivate;
 struct _ModestAccountViewPrivate {
 	ModestAccountMgr *account_mgr;
+	gulong sig1, sig2;
+	
 };
 #define MODEST_ACCOUNT_VIEW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                  MODEST_TYPE_ACCOUNT_VIEW, \
@@ -123,11 +125,18 @@ modest_account_view_finalize (GObject *obj)
 	ModestAccountViewPrivate *priv;
 
 	priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE(obj);
-	
+
+	g_signal_handler_disconnect (G_OBJECT(priv->account_mgr),
+				     priv->sig1);
+	g_signal_handler_disconnect (G_OBJECT(priv->account_mgr),
+				     priv->sig2);
+
 	if (priv->account_mgr) {
 		g_object_unref (G_OBJECT(priv->account_mgr));
 		priv->account_mgr = NULL; 
 	}
+	
+	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
 
@@ -143,7 +152,7 @@ update_account_view (ModestAccountMgr *account_mgr, ModestAccountView *view)
 
 	cursor = account_names =
 		modest_account_mgr_account_names (account_mgr, NULL);
-	
+
 	while (cursor) {
 		gchar    *proto = NULL;
 		gchar    *store, *account_name;
@@ -156,6 +165,7 @@ update_account_view (ModestAccountMgr *account_mgr, ModestAccountView *view)
 							      MODEST_ACCOUNT_STORE_ACCOUNT,
 							      FALSE, NULL);
 		if (store) {
+
 			proto = modest_account_mgr_get_string (account_mgr,
 							       store,
 							       MODEST_ACCOUNT_PROTO,
@@ -163,9 +173,7 @@ update_account_view (ModestAccountMgr *account_mgr, ModestAccountView *view)
 			g_free(store);
 		}
 		
-		enabled = modest_account_mgr_account_get_enabled (account_mgr,
-								  account_name,
-								  FALSE);
+		enabled = modest_account_mgr_account_get_enabled (account_mgr, account_name);
 		gtk_list_store_insert_with_values (
 			model, NULL, 0,
 			ENABLED_COLUMN, enabled,
@@ -186,10 +194,7 @@ static void
 on_account_changed (ModestAccountMgr *account_mgr,
 		    const gchar* account, const gchar* key,
 		    gboolean server_account, ModestAccountView *self)
-{
-	ModestAccountViewPrivate *priv;
-	priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE(self);
-	
+{	
 	update_account_view (account_mgr, self);
 }
 
@@ -197,9 +202,9 @@ on_account_changed (ModestAccountMgr *account_mgr,
 static void
 on_account_removed (ModestAccountMgr *account_mgr,
 		    const gchar* account, gboolean server_account,
-		    gpointer user_data)
+		    ModestAccountView *self)
 {
-	on_account_changed (account_mgr, account, NULL, server_account, user_data);
+	on_account_changed (account_mgr, account, NULL, server_account, self);
 }
 
 
@@ -223,14 +228,12 @@ on_account_enable_toggled (GtkCellRendererToggle *cell_renderer, gchar *path,
 		return;
 	}
 	
-	gtk_tree_model_get (model, &iter,
-			    ENABLED_COLUMN, &enabled,
+	gtk_tree_model_get (model, &iter, ENABLED_COLUMN, &enabled,
 			    NAME_COLUMN, &account_name,
 			    -1);
 	
 	/* toggle enabled / disabled */
-	modest_account_mgr_account_set_enabled (priv->account_mgr, account_name,
-						FALSE, !enabled);
+	modest_account_mgr_account_set_enabled (priv->account_mgr, account_name, !enabled);
 	g_free (account_name);
 }
 
@@ -276,12 +279,12 @@ init_view (ModestAccountView *self)
 
 	sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(self));
 	
-	g_signal_connect (G_OBJECT(priv->account_mgr),
-			  "account_removed",
-			  G_CALLBACK(on_account_removed), self);
-	g_signal_connect (G_OBJECT(priv->account_mgr),
-			  "account_changed",
-			  G_CALLBACK(on_account_changed), self);
+	priv->sig1 = g_signal_connect (G_OBJECT(priv->account_mgr),
+				       "account_removed",
+				       G_CALLBACK(on_account_removed), self);
+	priv->sig2 = g_signal_connect (G_OBJECT(priv->account_mgr),
+				       "account_changed",
+				       G_CALLBACK(on_account_changed), self);
 }
 
 
@@ -301,6 +304,7 @@ modest_account_view_new (ModestAccountMgr *account_mgr)
 	priv->account_mgr = account_mgr;
 
 	init_view (MODEST_ACCOUNT_VIEW (obj));
+	update_account_view (account_mgr, MODEST_ACCOUNT_VIEW(obj));
 	
 	return MODEST_ACCOUNT_VIEW(obj);
 }
