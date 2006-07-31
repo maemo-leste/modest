@@ -37,6 +37,7 @@
 #include <tny-account-store.h>
 #include <tny-session-camel.h>
 #include <tny-shared.h>
+#include <modest-account-mgr.h>
 
 /* other include files */
 
@@ -64,9 +65,9 @@ struct _ModestTnyAccountStoreClass {
 	gchar* (*password_requested) (ModestTnyAccountStore *self,
 				      const gchar *account_name,
 				      gpointer user_data);
-	void (*update_accounts)    (ModestTnyAccountStore *self,
-				    const gchar *account_name,
-				    gpointer user_data);
+	void (*account_update)    (ModestTnyAccountStore *self,
+				   const gchar *account_name,
+				   gpointer user_data);
 };
 
 /* member functions */
@@ -86,7 +87,7 @@ GType  modest_tny_account_store_get_type   (void) G_GNUC_CONST;
  *
  * Returns: newly created account store or NULL in case of error
  */
-ModestTnyAccountStore*    modest_tny_account_store_new (ModestAccountMgr *modest_acc_mgr);
+ModestTnyAccountStore*    modest_tny_account_store_new (ModestAccountMgr *account_mgr);
 
 
 /**

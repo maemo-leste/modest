@@ -59,7 +59,7 @@ static void    modest_tny_account_store_get_accounts            (TnyAccountStore
 /* list my signals */
 enum {
 	PASSWORD_REQUESTED_SIGNAL,
-	UPDATE_ACCOUNTS_SIGNAL,
+	ACCOUNT_UPDATE_SIGNAL,
 	LAST_SIGNAL
 };
 
@@ -143,11 +143,11 @@ modest_tny_account_store_class_init (ModestTnyAccountStoreClass *klass)
 			      g_cclosure_marshal_VOID__STRING,
 			      G_TYPE_NONE, 1, G_TYPE_STRING);
 
-	signals[UPDATE_ACCOUNTS_SIGNAL] =
- 		g_signal_new ("update_accounts",
+	signals[ACCOUNT_UPDATE_SIGNAL] =
+ 		g_signal_new ("account_update",
 			      G_TYPE_FROM_CLASS (gobject_class),
 			      G_SIGNAL_RUN_FIRST,
-			      G_STRUCT_OFFSET(ModestTnyAccountStoreClass, update_accounts),
+			      G_STRUCT_OFFSET(ModestTnyAccountStoreClass, account_update),
 			      NULL, NULL,
 			      g_cclosure_marshal_VOID__STRING,
 			      G_TYPE_NONE, 1, G_TYPE_STRING);
@@ -177,7 +177,7 @@ on_account_removed (ModestAccountMgr *acc_mgr, const gchar *account, gboolean se
 {
 	ModestTnyAccountStore *self = MODEST_TNY_ACCOUNT_STORE(user_data);
 
-	g_signal_emit (G_OBJECT(self), signals[UPDATE_ACCOUNTS_SIGNAL], 0,
+	g_signal_emit (G_OBJECT(self), signals[ACCOUNT_UPDATE_SIGNAL], 0,
 		       account);
 	
 }
@@ -189,7 +189,7 @@ on_account_changed (ModestAccountMgr *acc_mgr, const gchar *account, gboolean se
 {
 	ModestTnyAccountStore *self = MODEST_TNY_ACCOUNT_STORE(user_data);
 	
-	g_signal_emit (G_OBJECT(self), signals[UPDATE_ACCOUNTS_SIGNAL], 0,
+	g_signal_emit (G_OBJECT(self), signals[ACCOUNT_UPDATE_SIGNAL], 0,
 		       account);
 }
 
@@ -518,6 +518,12 @@ modest_tny_account_store_get_accounts  (TnyAccountStoreIface *iface,
 		TnyAccountIface *account_iface;
 
 		account_name =  (gchar*)cursor->data;
+
+ 		if (!modest_account_mgr_account_get_enabled (priv->account_mgr, account_name)) { 
+ 			g_free (account_name); 
+ 			cursor = cursor->next;
+			continue;
+ 		} 
 		
 		if (modest_type == MODEST_PROTO_TYPE_TRANSPORT || MODEST_PROTO_TYPE_ANY) {
 			server_account = get_server_account_for_account (self, account_name,
