@@ -36,7 +36,8 @@
 #include <tny-msg-folder-iface.h>
 #include <tny-summary-window-iface.h>
 #include <modest-icon-names.h>
-#include "modest-icon-factory.h"
+#include <modest-icon-factory.h>
+#include <modest-tny-account-store.h>
 
 #include "modest-folder-view.h"
 
@@ -46,10 +47,12 @@ static void modest_folder_view_class_init  (ModestFolderViewClass *klass);
 static void modest_folder_view_init        (ModestFolderView *obj);
 static void modest_folder_view_finalize    (GObject *obj);
 
-static gboolean update_model (ModestFolderView *self,TnyAccountStoreIface *iface);
+static gboolean update_model (ModestFolderView *self,
+			      ModestTnyAccountStore *account_store);
 static gboolean update_model_empty (ModestFolderView *self);
-
-static void selection_changed (GtkTreeSelection *sel, gpointer data);
+static void on_selection_changed (GtkTreeSelection *sel, gpointer data);
+static gboolean modest_folder_view_update_model (ModestFolderView *self,
+						 TnyAccountStoreIface *account_store);
 
 enum {
 	FOLDER_SELECTED_SIGNAL,
@@ -59,11 +62,12 @@ enum {
 typedef struct _ModestFolderViewPrivate ModestFolderViewPrivate;
 struct _ModestFolderViewPrivate {
 
-	TnyAccountStoreIface *tny_account_store;
-	TnyMsgFolderIface *cur_folder;
-	gboolean view_is_empty;
+	TnyAccountStoreIface *account_store;
+	TnyMsgFolderIface    *cur_folder;
+	gboolean             view_is_empty;
 
-	GMutex *lock;
+	gulong               sig1, sig2;
+	GMutex               *lock;
 };
 #define MODEST_FOLDER_VIEW_GET_PRIVATE(o)			        \
 	(G_TYPE_INSTANCE_GET_PRIVATE((o),				\
@@ -279,7 +283,7 @@ modest_folder_view_init (ModestFolderView *obj)
 	priv =	MODEST_FOLDER_VIEW_GET_PRIVATE(obj);
 	
 	priv->view_is_empty     = TRUE;
-	priv->tny_account_store = NULL;
+	priv->account_store = NULL;
 	priv->cur_folder = NULL;
 
 	priv->lock = g_mutex_new ();
@@ -317,28 +321,34 @@ static void
 modest_folder_view_finalize (GObject *obj)
 {
 	ModestFolderViewPrivate *priv;
-
+	GtkTreeSelection    *sel;
+	
 	g_return_if_fail (obj);
 	
 	priv =	MODEST_FOLDER_VIEW_GET_PRIVATE(obj);
-	if (priv->tny_account_store) {
-		g_object_unref (G_OBJECT(priv->tny_account_store));
-		priv->tny_account_store = NULL;
+	if (priv->account_store) {
+		g_signal_handler_disconnect (G_OBJECT(priv->account_store),
+					     priv->sig1);
+		g_object_unref (G_OBJECT(priv->account_store));
+		priv->account_store = NULL;
 	}
-
 
 	if (priv->lock) {
 		g_mutex_free (priv->lock);
 		priv->lock = NULL;
 	}
 
+	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW(obj));
+	if (sel)
+		g_signal_handler_disconnect (G_OBJECT(sel), priv->sig2);
+	
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
 
 static void
-on_accounts_update (TnyAccountStoreIface *account_store, const gchar *account,
-		    gpointer user_data)
+on_account_update (TnyAccountStoreIface *account_store, const gchar *account,
+		   gpointer user_data)
 {
 	update_model_empty (MODEST_FOLDER_VIEW(user_data));
 	
@@ -349,7 +359,7 @@ on_accounts_update (TnyAccountStoreIface *account_store, const gchar *account,
 
 
 GtkWidget*
-modest_folder_view_new (TnyAccountStoreIface *account_store)
+modest_folder_view_new (ModestTnyAccountStore *account_store)
 {
 	GObject *self;
 	ModestFolderViewPrivate *priv;
@@ -360,16 +370,16 @@ modest_folder_view_new (TnyAccountStoreIface *account_store)
 	self = G_OBJECT(g_object_new(MODEST_TYPE_FOLDER_VIEW, NULL));
 	priv = MODEST_FOLDER_VIEW_GET_PRIVATE(self);
 	
-	if (!update_model (MODEST_FOLDER_VIEW(self), account_store))
+	if (!update_model (MODEST_FOLDER_VIEW(self), TNY_ACCOUNT_STORE_IFACE(account_store)))
 		g_printerr ("modest: failed to update model");
-
-	g_signal_connect (G_OBJECT(account_store), "update_accounts",
-			  G_CALLBACK (on_accounts_update), self);
+	
+	priv->sig1 = g_signal_connect (G_OBJECT(account_store), "account_update",
+				       G_CALLBACK (on_account_update), self);	
 	
 	sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(self));
-	g_signal_connect (sel, "changed",
-			  G_CALLBACK(selection_changed), self);
-		
+	priv->sig2 = g_signal_connect (sel, "changed",
+				       G_CALLBACK(on_selection_changed), self);
+				     	
 	return GTK_WIDGET(self);
 }
 
@@ -397,13 +407,16 @@ update_model_empty (ModestFolderView *self)
 
 	priv = MODEST_FOLDER_VIEW_GET_PRIVATE(self);
 	priv->view_is_empty = TRUE;
+
+	g_signal_emit (G_OBJECT(self), signals[FOLDER_SELECTED_SIGNAL], 0,
+		       NULL);
 	
 	return TRUE;
 }
 
 
 static gboolean
-update_model (ModestFolderView *self, TnyAccountStoreIface *account_store)
+update_model (ModestFolderView *self, ModestTnyAccountStore *account_store)
 {
 	ModestFolderViewPrivate *priv;
 	TnyListIface     *account_list;
@@ -419,7 +432,8 @@ update_model (ModestFolderView *self, TnyAccountStoreIface *account_store)
 	update_model_empty (self); /* cleanup */
 	priv->view_is_empty = TRUE;
 	
-	tny_account_store_iface_get_accounts (account_store, account_list,
+	tny_account_store_iface_get_accounts (TNY_ACCOUNT_STORE_IFACE(account_store),
+					      account_list,
 					      TNY_ACCOUNT_STORE_IFACE_STORE_ACCOUNTS);
 	if (!account_list) /* no store accounts found */ 
 		return TRUE;
@@ -434,8 +448,8 @@ update_model (ModestFolderView *self, TnyAccountStoreIface *account_store)
 } 
 
 
-void
-selection_changed (GtkTreeSelection *sel, gpointer user_data)
+static void
+on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 {
 	GtkTreeModel            *model;
 	TnyMsgFolderIface       *folder = NULL;
@@ -475,11 +489,16 @@ selection_changed (GtkTreeSelection *sel, gpointer user_data)
 }
 
 
-gboolean
-modest_folder_view_update_model(ModestFolderView *self, 
-				TnyAccountStoreIface *iface)
+static gboolean
+modest_folder_view_update_model (ModestFolderView *self, TnyAccountStoreIface *account_store)
 {
-	g_return_val_if_fail (MODEST_IS_FOLDER_VIEW (self), FALSE);
+	gboolean retval;
 	
-	return update_model (self, iface);
+	g_return_val_if_fail (MODEST_IS_FOLDER_VIEW (self), FALSE);
+	retval = update_model (self, MODEST_TNY_ACCOUNT_STORE(account_store)); /* ugly */
+
+	g_signal_emit (G_OBJECT(self), signals[FOLDER_SELECTED_SIGNAL],
+		       0, NULL);
+
+	return retval;
 }

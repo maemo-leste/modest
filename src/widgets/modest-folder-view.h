@@ -78,13 +78,13 @@ GType        modest_folder_view_get_type    (void) G_GNUC_CONST;
 
 /**
  * modest_folder_view_new:
- * @iface: a TnyAccountStoreIface object
+ * @iface: a ModestTnyAccountStore instance
  * 
  * create a new ModestFolderView instance, based on an account store
  *  
  * Returns: a new GtkWidget (a GtkTreeView-subclass)
  */
-GtkWidget* modest_folder_view_new         (TnyAccountStoreIface *iface);
+GtkWidget* modest_folder_view_new         (ModestTnyAccountStore *account_store);
 
 
 /**
@@ -97,19 +97,6 @@ GtkWidget* modest_folder_view_new         (TnyAccountStoreIface *iface);
  * Returns: TRUE if the tree view is empty, FALSE otherwise
  */
 gboolean     modest_folder_view_is_empty    (ModestFolderView *self);
-
-
-/**
- * modest_folder_view_update_model:
- * @self: a #ModestFolderView instance
- * @iface: a #TnyAccountStoreIface instance
- * 
- * Update the thee model from a given account store.
- *  
- * Returns: TRUE on success, FALSE otherwise
- */
-gboolean     modest_folder_view_update_model(ModestFolderView *self, 
-					     TnyAccountStoreIface *iface);
 
 
 G_END_DECLS
