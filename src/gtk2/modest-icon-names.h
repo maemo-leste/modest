@@ -42,6 +42,8 @@
 
 /* icons */
 
+#define MODEST_APP_ICON				PIXMAP_PREFIX "internet-mail.svg"
+
 #define MODEST_HEADER_ICON_READ			PIXMAP_PREFIX "qgn_list_messagin_mail.png"
 #define MODEST_HEADER_ICON_UNREAD		PIXMAP_PREFIX "qgn_list_messagin_mail_unread.png"
 #define MODEST_HEADER_ICON_DELETED		PIXMAP_PREFIX "qgn_list_messagin_mail_deleted.png"

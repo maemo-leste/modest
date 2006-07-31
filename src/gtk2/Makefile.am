@@ -17,7 +17,8 @@ noinst_LTLIBRARIES=\
 	libmodest-ui.la
 
 PIXMAP_FILES=\
-	pixmaps/*.png
+	pixmaps/*.png \
+	pixmaps/*.svg
 
 libmodest_ui_la_SOURCES=              \
 	modest-ui.c                   \

@@ -28,9 +28,13 @@
  */
 
 #include <modest-widget-memory.h>
+#include <modest-icon-factory.h>
+
 #include "modest-main-window.h"
 #include "modest-account-view-window.h"
 #include "modest-edit-msg-window.h"
+#include "modest-icon-names.h"
+
 
 /* 'private'/'protected' functions */
 static void modest_main_window_class_init    (ModestMainWindowClass *klass);
@@ -470,7 +474,9 @@ modest_main_window_new (ModestConf *conf, ModestAccountMgr *account_mgr,
 	restore_sizes (MODEST_MAIN_WINDOW(obj));	
 
 	gtk_window_set_title (GTK_WINDOW(obj), "Modest");
-
+	gtk_window_set_icon  (GTK_WINDOW(obj),
+			      modest_icon_factory_get_icon (MODEST_APP_ICON));
+	
 	gtk_widget_show_all (main_vbox);
 	
 	g_signal_connect (G_OBJECT(obj), "delete-event",
