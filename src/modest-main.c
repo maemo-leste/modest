@@ -115,9 +115,6 @@ main (int argc, char *argv[])
 		retval = MODEST_ERR_CONF;
 		goto cleanup;
 	}
-
-	if (debug)
-		g_log_set_always_fatal (G_LOG_LEVEL_WARNING);
 	
 	if (!getenv("DISPLAY"))
 		batch = TRUE; 
