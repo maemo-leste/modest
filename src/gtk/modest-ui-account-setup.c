@@ -950,8 +950,7 @@ create_accounts_model(ModestAccountMgr *acc_mgr) {
 	acc_names_list = modest_account_mgr_search_server_accounts (acc_mgr,
 								    NULL,
 								    MODEST_PROTO_TYPE_ANY,
-								    NULL,
-								    FALSE);
+								    NULL);
 	acc_list_store = gtk_list_store_new(ACCOUNT_COLUMNS, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
 
 	for (acc_names_list_iter=acc_names_list;

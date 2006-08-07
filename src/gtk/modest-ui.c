@@ -169,8 +169,8 @@ on_accounts_reloaded (ModestTnyAccountStore *account_store, gpointer user_data)
 	modest_header_view_set_folder (MODEST_HEADER_VIEW(priv->header_view),
 						NULL);
 
-  	modest_folder_view_update_model(MODEST_FOLDER_VIEW(priv->folder_view),
-					TNY_ACCOUNT_STORE_IFACE(account_store));
+	//	modest_folder_view_update_model(MODEST_FOLDER_VIEW(priv->folder_view),
+	//			TNY_ACCOUNT_STORE_IFACE(account_store));
 }
 
 
@@ -211,8 +211,8 @@ modest_ui_new (ModestConf *modest_conf)
 		return NULL;
         }
 
-        modest_tny_account_store_set_get_pass_func(MODEST_TNY_ACCOUNT_STORE(account_store_iface),
-                                                   on_password_requested);
+        //modest_tny_account_store_set_get_pass_func(MODEST_TNY_ACCOUNT_STORE(account_store_iface),
+        //                                           on_password_requested);
 
 	g_signal_connect (account_store_iface, "accounts_reloaded",
 			  G_CALLBACK(on_accounts_reloaded), priv);
@@ -241,8 +241,8 @@ modest_ui_new (ModestConf *modest_conf)
 			  NULL);
 
 	account_names_list = modest_account_mgr_search_server_accounts(modest_acc_mgr,
-								       
-								       NULL, MODEST_PROTO_TYPE_ANY, NULL, FALSE);
+								       NULL, MODEST_PROTO_TYPE_ANY,
+								       NULL);
 	identities_list = modest_identity_mgr_identity_names(modest_id_mgr, NULL);
 	if (!(account_names_list != NULL || identities_list != NULL))
 		wizard_account_dialog(MODEST_UI(obj));
