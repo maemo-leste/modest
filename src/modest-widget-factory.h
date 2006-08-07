@@ -31,13 +31,15 @@
 #define __MODEST_WIDGET_FACTORY_H__
 
 #include <glib-object.h>
-#include "modest-account-mgr.h"
-#include "modest-tny-account-store.h"
+#include <glib/gi18n.h>
+#include <modest-account-mgr.h>
+#include <modest-tny-account-store.h>
 
-#include "widgets/modest-header-view.h"
-#include "widgets/modest-folder-view.h"
-#include "widgets/modest-msg-view.h"
-#include "widgets/modest-account-view.h"
+#include <widgets/modest-header-view.h>
+#include <widgets/modest-folder-view.h>
+#include <widgets/modest-msg-view.h>
+#include <widgets/modest-account-view.h>
+#include <widgets/modest-toolbar.h>
 
 G_BEGIN_DECLS
 
@@ -213,6 +215,44 @@ GtkWidget*  modest_widget_factory_get_online_toggle (ModestWidgetFactory *self);
 
 
 
+
+/**
+ * modest_widget_factory_get_folder_info_label
+ * @self: a ModestWidgetFactory instance
+ * 
+ * return a label with the number of items, unread items in the current folder
+ *  
+ * Returns: the label
+ */
+GtkWidget* modest_widget_factory_get_folder_info_label (ModestWidgetFactory *self);
+
+
+/**
+ * modest_widget_factory_get_main_toolbar
+ * @self: a ModestWidgetFactory instance
+ * @items: a list of ModestToolbarButtons (button_ids)
+ *
+ * returns the main toolbar widget; their enabled/disabled state synchronized with
+ * the other widgets. Note that after the first calling, this function will
+ * always return the same toolbar, regardless of the items
+ *  
+ * Returns: the toolbar
+ */
+ModestToolbar *modest_widget_factory_get_main_toolbar (ModestWidgetFactory *self, 
+						       GSList *items);
+
+/**
+ * modest_widget_factory_get_edit_toolbar
+ * @self: a ModestWidgetFactory instance
+ * @items: a list of ModestToolbarButtons (button_ids)
+ *
+ * returns the toolbar widget for edit windows; the enabled/disabled
+ * state synchronized with the other widgets.
+ *  
+ * Returns: the toolbar
+ */
+ModestToolbar *modest_widget_factory_get_edit_toolbar (ModestWidgetFactory *self, 
+						       GSList *items);
 
 
 G_END_DECLS
