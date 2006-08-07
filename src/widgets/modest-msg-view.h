@@ -36,7 +36,7 @@
 #include <gtk/gtk.h>
 #include <tny-stream-iface.h>
 #include <tny-msg-iface.h>
-#include <tny-msg-mime-part-iface.h>
+#include <tny-mime-part-iface.h>
 #include <modest-conf.h>
 
 G_BEGIN_DECLS
@@ -88,7 +88,7 @@ GType        modest_msg_view_get_type    (void) G_GNUC_CONST;
  *  
  * Returns: a new ModestMsgView widget, or NULL if there's an error
  */
-GtkWidget*   modest_msg_view_new          (const TnyMsgIface *tny_msg);
+GtkWidget*   modest_msg_view_new          (TnyMsgIface *tny_msg);
 
 
 /**
@@ -99,8 +99,7 @@ GtkWidget*   modest_msg_view_new          (const TnyMsgIface *tny_msg);
  * display the @tny_msg e-mail message. If @tny_msg is NULL,
  * then a blank page will be displayed
  *  */
-void         modest_msg_view_set_message  (ModestMsgView *self,
-						const TnyMsgIface *tny_msg);
+void         modest_msg_view_set_message  (ModestMsgView *self, TnyMsgIface *tny_msg);
 
 /**
  * modest_msg_view_get_selected_text:

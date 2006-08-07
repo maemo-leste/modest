@@ -33,8 +33,7 @@
 #include <tny-account-tree-model.h>
 #include <tny-account-store-iface.h>
 #include <tny-account-iface.h>
-#include <tny-msg-folder-iface.h>
-#include <tny-summary-window-iface.h>
+#include <tny-folder-iface.h>
 #include <modest-icon-names.h>
 #include <modest-icon-factory.h>
 #include <modest-tny-account-store.h>
@@ -63,7 +62,7 @@ typedef struct _ModestFolderViewPrivate ModestFolderViewPrivate;
 struct _ModestFolderViewPrivate {
 
 	TnyAccountStoreIface *account_store;
-	TnyMsgFolderIface    *cur_folder;
+	TnyFolderIface       *cur_folder;
 	gboolean             view_is_empty;
 
 	gulong               sig1, sig2;
@@ -93,6 +92,7 @@ modest_folder_view_get_type (void)
 			sizeof(ModestFolderView),
 			1,		/* n_preallocs */
 			(GInstanceInitFunc) modest_folder_view_init,
+			NULL
 		};
 				
 		my_type = g_type_register_static (GTK_TYPE_TREE_VIEW,
@@ -131,12 +131,12 @@ modest_folder_view_class_init (ModestFolderViewClass *klass)
 
 static void
 text_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
-		   GtkTreeModel *tree_model,  GtkTreeIter *iter,  gpointer data)
+		 GtkTreeModel *tree_model,  GtkTreeIter *iter,  gpointer data)
 {
 	GObject *rendobj;
 	gchar *fname;
 	gint unread;
-	TnyMsgFolderType type;
+	TnyFolderType type;
 	
 	gtk_tree_model_get (tree_model, iter,
 			    TNY_ACCOUNT_TREE_MODEL_NAME_COLUMN, &fname,
@@ -157,52 +157,52 @@ text_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 /* FIXME: move these to TnyMail */
 enum {
 
-	TNY_MSG_FOLDER_TYPE_NOTES = TNY_MSG_FOLDER_TYPE_SENT + 1, /* urgh */
-	TNY_MSG_FOLDER_TYPE_DRAFTS,
-	TNY_MSG_FOLDER_TYPE_CONTACTS,
-	TNY_MSG_FOLDER_TYPE_CALENDAR
+	TNY_FOLDER_TYPE_NOTES = TNY_FOLDER_TYPE_SENT + 1, /* urgh */
+	TNY_FOLDER_TYPE_DRAFTS,
+	TNY_FOLDER_TYPE_CONTACTS,
+	TNY_FOLDER_TYPE_CALENDAR
 };
 	
-static TnyMsgFolderType
+static TnyFolderType
 guess_folder_type (const gchar* name)
 {
-	TnyMsgFolderType type;
+	TnyFolderType type;
 	gchar *folder;
 
-	g_return_val_if_fail (name, TNY_MSG_FOLDER_TYPE_NORMAL);
+	g_return_val_if_fail (name, TNY_FOLDER_TYPE_NORMAL);
 	
-	type = TNY_MSG_FOLDER_TYPE_NORMAL;
+	type = TNY_FOLDER_TYPE_NORMAL;
 	folder = g_utf8_strdown (name, strlen(name));
 
 	if (strcmp (folder, "inbox") == 0 ||
 	    strcmp (folder, _("inbox")) == 0)
-		type = TNY_MSG_FOLDER_TYPE_INBOX;
+		type = TNY_FOLDER_TYPE_INBOX;
 	else if (strcmp (folder, "outbox") == 0 ||
 		 strcmp (folder, _("outbox")) == 0)
-		type = TNY_MSG_FOLDER_TYPE_OUTBOX;
+		type = TNY_FOLDER_TYPE_OUTBOX;
 	else if (g_str_has_prefix(folder, "junk") ||
 		 g_str_has_prefix(folder, _("junk")))
-		type = TNY_MSG_FOLDER_TYPE_JUNK;
+		type = TNY_FOLDER_TYPE_JUNK;
 	else if (g_str_has_prefix(folder, "trash") ||
 		 g_str_has_prefix(folder, _("trash")))
-		type = TNY_MSG_FOLDER_TYPE_JUNK;
+		type = TNY_FOLDER_TYPE_JUNK;
 	else if (g_str_has_prefix(folder, "sent") ||
 		 g_str_has_prefix(folder, _("sent")))
-		type = TNY_MSG_FOLDER_TYPE_SENT;
+		type = TNY_FOLDER_TYPE_SENT;
 
 	/* these are not *really* TNY_ types */
 	else if (g_str_has_prefix(folder, "draft") ||
 		 g_str_has_prefix(folder, _("draft")))
-		type = TNY_MSG_FOLDER_TYPE_DRAFTS;
+		type = TNY_FOLDER_TYPE_DRAFTS;
 	else if (g_str_has_prefix(folder, "notes") ||
 		 g_str_has_prefix(folder, _("notes")))
-		type = TNY_MSG_FOLDER_TYPE_NOTES;
+		type = TNY_FOLDER_TYPE_NOTES;
 	else if (g_str_has_prefix(folder, "contacts") ||
 		 g_str_has_prefix(folder, _("contacts")))
-		type = TNY_MSG_FOLDER_TYPE_CONTACTS;
+		type = TNY_FOLDER_TYPE_CONTACTS;
 	else if (g_str_has_prefix(folder, "calendar") ||
 		 g_str_has_prefix(folder, _("calendar")))
-		type = TNY_MSG_FOLDER_TYPE_CALENDAR;
+		type = TNY_FOLDER_TYPE_CALENDAR;
 	
 	g_free (folder);
 	return type;
@@ -215,7 +215,7 @@ icon_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 {
 	GObject *rendobj;
 	GdkPixbuf *pixbuf;
-	TnyMsgFolderType type;
+	TnyFolderType type;
 	gchar *fname = NULL;
 	gint unread;
 	
@@ -226,40 +226,40 @@ icon_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 			    TNY_ACCOUNT_TREE_MODEL_UNREAD_COLUMN, &unread, -1);
 	rendobj = G_OBJECT(renderer);
 	
-	if (type == TNY_MSG_FOLDER_TYPE_NORMAL)
+	if (type == TNY_FOLDER_TYPE_NORMAL)
 		type = guess_folder_type (fname);
 	
-	if (fname);
+	if (fname)
 		g_free (fname);
 
 	switch (type) {
-        case TNY_MSG_FOLDER_TYPE_INBOX:
-                pixbuf = modest_icon_factory_get_icon (MODEST_FOLDER_ICON_INBOX);
+        case TNY_FOLDER_TYPE_INBOX:
+                pixbuf = modest_icon_factory_get_small_icon (MODEST_FOLDER_ICON_INBOX);
                 break;
-        case TNY_MSG_FOLDER_TYPE_OUTBOX:
-                pixbuf = modest_icon_factory_get_icon (MODEST_FOLDER_ICON_OUTBOX);
+        case TNY_FOLDER_TYPE_OUTBOX:
+                pixbuf = modest_icon_factory_get_small_icon (MODEST_FOLDER_ICON_OUTBOX);
                 break;
-        case TNY_MSG_FOLDER_TYPE_JUNK:
-                pixbuf = modest_icon_factory_get_icon (MODEST_FOLDER_ICON_JUNK);
+        case TNY_FOLDER_TYPE_JUNK:
+                pixbuf = modest_icon_factory_get_small_icon (MODEST_FOLDER_ICON_JUNK);
                 break;
-        case TNY_MSG_FOLDER_TYPE_SENT:
-                pixbuf = modest_icon_factory_get_icon (MODEST_FOLDER_ICON_SENT);
+        case TNY_FOLDER_TYPE_SENT:
+                pixbuf = modest_icon_factory_get_small_icon (MODEST_FOLDER_ICON_SENT);
                 break;
-	case TNY_MSG_FOLDER_TYPE_DRAFTS:
-		pixbuf = modest_icon_factory_get_icon (MODEST_FOLDER_ICON_DRAFTS);
+	case TNY_FOLDER_TYPE_DRAFTS:
+		pixbuf = modest_icon_factory_get_small_icon (MODEST_FOLDER_ICON_DRAFTS);
                 break;
-	case TNY_MSG_FOLDER_TYPE_NOTES:
-		pixbuf = modest_icon_factory_get_icon (MODEST_FOLDER_ICON_NOTES);
+	case TNY_FOLDER_TYPE_NOTES:
+		pixbuf = modest_icon_factory_get_small_icon (MODEST_FOLDER_ICON_NOTES);
                 break;
-	case TNY_MSG_FOLDER_TYPE_CALENDAR:
-		pixbuf = modest_icon_factory_get_icon (MODEST_FOLDER_ICON_CALENDAR);
+	case TNY_FOLDER_TYPE_CALENDAR:
+		pixbuf = modest_icon_factory_get_small_icon (MODEST_FOLDER_ICON_CALENDAR);
                 break;
-	case TNY_MSG_FOLDER_TYPE_CONTACTS:
-                pixbuf = modest_icon_factory_get_icon (MODEST_FOLDER_ICON_CONTACTS);
+	case TNY_FOLDER_TYPE_CONTACTS:
+                pixbuf = modest_icon_factory_get_small_icon (MODEST_FOLDER_ICON_CONTACTS);
                 break;
-	case TNY_MSG_FOLDER_TYPE_NORMAL:
+	case TNY_FOLDER_TYPE_NORMAL:
         default:
-                pixbuf = modest_icon_factory_get_icon (MODEST_FOLDER_ICON_NORMAL);
+                pixbuf = modest_icon_factory_get_small_icon (MODEST_FOLDER_ICON_NORMAL);
                 break;
         }
 
@@ -352,7 +352,8 @@ on_account_update (TnyAccountStoreIface *account_store, const gchar *account,
 {
 	update_model_empty (MODEST_FOLDER_VIEW(user_data));
 	
-	if (!update_model (MODEST_FOLDER_VIEW(user_data), account_store))
+	if (!update_model (MODEST_FOLDER_VIEW(user_data), 
+			   MODEST_TNY_ACCOUNT_STORE(account_store)))
 		g_printerr ("modest: failed to update model for changes in '%s'",
 			    account);
 }
@@ -370,7 +371,8 @@ modest_folder_view_new (ModestTnyAccountStore *account_store)
 	self = G_OBJECT(g_object_new(MODEST_TYPE_FOLDER_VIEW, NULL));
 	priv = MODEST_FOLDER_VIEW_GET_PRIVATE(self);
 	
-	if (!update_model (MODEST_FOLDER_VIEW(self), TNY_ACCOUNT_STORE_IFACE(account_store)))
+	if (!update_model (MODEST_FOLDER_VIEW(self), 
+			   MODEST_TNY_ACCOUNT_STORE(account_store)))
 		g_printerr ("modest: failed to update model");
 	
 	priv->sig1 = g_signal_connect (G_OBJECT(account_store), "account_update",
@@ -452,7 +454,7 @@ static void
 on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 {
 	GtkTreeModel            *model;
-	TnyMsgFolderIface       *folder = NULL;
+	TnyFolderIface       *folder = NULL;
 	GtkTreeIter             iter;
 	ModestFolderView *tree_view;
 	ModestFolderViewPrivate *priv;
@@ -468,7 +470,7 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 	
 	/* folder was _un_selected if true */
 	if (!gtk_tree_selection_get_selected (sel, &model, &iter)) {
-		priv->cur_folder = NULL;
+		priv->cur_folder = NULL; /* FIXME: need this? */
 		return; 
 	}
 
@@ -479,7 +481,7 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 			    &folder, -1);
 
 	if (priv->cur_folder) 
-		tny_msg_folder_iface_expunge (priv->cur_folder);
+		tny_folder_iface_expunge (priv->cur_folder);
 	priv->cur_folder = folder;
 
 	/* folder will not be defined if you click eg. on the root node */

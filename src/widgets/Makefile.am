@@ -21,12 +21,9 @@ libmodest_widgets_la_SOURCES=    \
 	modest-header-view.c     \
 	modest-header-view.h     \
 	modest-msg-view.c        \
-	modest-msg-view.h        
-
-
-
-#	modest-toolbar.h	 
-#	modest-toolbar.c	
+	modest-msg-view.h	 \ 
+	modest-toolbar.h	 \
+	modest-toolbar.c	
  
 LDADD = \
 	$(MODEST_GSTUFF_LIBS) \

@@ -36,6 +36,7 @@
 #include <gtkhtml/gtkhtml.h>
 #include <gtkhtml/gtkhtml-stream.h>
 #include <tny-list-iface.h>
+#include <tny-list.h>
 
 #include <modest-tny-msg-actions.h>
 #include "modest-msg-view.h"
@@ -49,13 +50,10 @@ static void     modest_msg_view_finalize     (GObject *obj);
 
 
 static GSList*  get_url_matches (GString *txt);
-static gboolean on_link_clicked (GtkWidget *widget, const gchar *uri,
-				 ModestMsgView *msg_view);
-static gboolean on_url_requested (GtkWidget *widget, const gchar *uri,
-				  GtkHTMLStream *stream,
+static gboolean on_link_clicked (GtkWidget *widget, const gchar *uri, ModestMsgView *msg_view);
+static gboolean on_url_requested (GtkWidget *widget, const gchar *uri, GtkHTMLStream *stream,
 				  ModestMsgView *msg_view);
-static gboolean on_link_hover (GtkWidget *widget, const gchar *uri,
-			       ModestMsgView *msg_view);
+static gboolean on_link_hover (GtkWidget *widget, const gchar *uri, ModestMsgView *msg_view);
 
 /*
  * we need these regexps to find URLs in plain text e-mails
@@ -65,7 +63,6 @@ struct _UrlMatchPattern {
 	gchar   *regex;
 	regex_t *preg;
 	gchar   *prefix;
-	
 };
 
 #define ATT_PREFIX "att:"
@@ -96,8 +93,11 @@ enum {
 
 typedef struct _ModestMsgViewPrivate ModestMsgViewPrivate;
 struct _ModestMsgViewPrivate {
-	GtkWidget *gtkhtml;
-	const TnyMsgIface *msg;
+
+	GtkWidget   *gtkhtml;
+	TnyMsgIface *msg;
+
+	gulong  sig1, sig2, sig3;
 };
 #define MODEST_MSG_VIEW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                  MODEST_TYPE_MSG_VIEW, \
@@ -123,6 +123,7 @@ modest_msg_view_get_type (void)
 			sizeof(ModestMsgView),
 			1,		/* n_preallocs */
 			(GInstanceInitFunc) modest_msg_view_init,
+			NULL
 		};
 		my_type = g_type_register_static (GTK_TYPE_SCROLLED_WINDOW,
 		                                  "ModestMsgView",
@@ -187,26 +188,37 @@ modest_msg_view_init (ModestMsgView *obj)
 	gtk_html_set_blocking        (GTK_HTML(priv->gtkhtml), FALSE);
 	gtk_html_set_images_blocking (GTK_HTML(priv->gtkhtml), FALSE);
 
-	g_signal_connect (G_OBJECT(priv->gtkhtml), "link_clicked",
-			  G_CALLBACK(on_link_clicked), obj);
-	
-	g_signal_connect (G_OBJECT(priv->gtkhtml), "url_requested",
-			  G_CALLBACK(on_url_requested), obj);
-
-	g_signal_connect (G_OBJECT(priv->gtkhtml), "on_url",
-			  G_CALLBACK(on_link_hover), obj);
+	priv->sig1 = g_signal_connect (G_OBJECT(priv->gtkhtml), "link_clicked",
+				       G_CALLBACK(on_link_clicked), obj);
+	priv->sig2 = g_signal_connect (G_OBJECT(priv->gtkhtml), "url_requested",
+				       G_CALLBACK(on_url_requested), obj);
+	priv->sig3 = g_signal_connect (G_OBJECT(priv->gtkhtml), "on_url",
+				       G_CALLBACK(on_link_hover), obj);
 }
 	
 
 static void
 modest_msg_view_finalize (GObject *obj)
 {	
+	ModestMsgViewPrivate *priv;
+	priv = MODEST_MSG_VIEW_GET_PRIVATE (obj);
+
+	if (priv->msg) {
+		g_object_unref (G_OBJECT(priv->msg));
+		priv->msg = NULL;
+	}
+	
+	/* we cannot disconnect sigs, because priv->gtkhtml is
+	 * already dead */
+	
+	priv->gtkhtml = NULL;
+	
 	G_OBJECT_CLASS(parent_class)->finalize (obj);		
 }
 
 
 GtkWidget*
-modest_msg_view_new (const TnyMsgIface *msg)
+modest_msg_view_new (TnyMsgIface *msg)
 {
 	GObject *obj;
 	ModestMsgView* self;
@@ -275,23 +287,25 @@ on_link_hover (GtkWidget *widget, const gchar *uri, ModestMsgView *msg_view)
 
 
 
-static TnyMsgMimePartIface *
-find_cid_image (const TnyMsgIface *msg, const gchar *cid)
+static TnyMimePartIface *
+find_cid_image (TnyMsgIface *msg, const gchar *cid)
 {
-	TnyMsgMimePartIface *part = NULL;
-	const TnyListIface *parts;
+	TnyMimePartIface *part = NULL;
+	TnyListIface *parts;
 	TnyIteratorIface *iter;
 	
 	g_return_val_if_fail (msg, NULL);
 	g_return_val_if_fail (cid, NULL);
 	
-	parts  = tny_msg_iface_get_parts ((TnyMsgIface*)msg); // FIXME: tinymail
-	iter   = tny_list_iface_create_iterator ((TnyListIface*)parts);
+	parts  = TNY_LIST_IFACE (tny_list_new());
+
+	tny_msg_iface_get_parts (msg, parts); 
+	iter   = tny_list_iface_create_iterator (parts);
 	
 	while (!tny_iterator_iface_is_done(iter)) {
 		const gchar *part_cid;
-		part = TNY_MSG_MIME_PART_IFACE(tny_iterator_iface_current(iter));
-		part_cid = tny_msg_mime_part_iface_get_content_id (part);
+		part = TNY_MIME_PART_IFACE(tny_iterator_iface_current(iter));
+		part_cid = tny_mime_part_iface_get_content_id (part);
 
 		if (part_cid && strcmp (cid, part_cid) == 0)
 			break;
@@ -299,8 +313,13 @@ find_cid_image (const TnyMsgIface *msg, const gchar *cid)
 		part = NULL;
 		tny_iterator_iface_next (iter);
 	}
+	
+	if (part)
+		g_object_ref (G_OBJECT(part));
 
 	g_object_unref (G_OBJECT(iter));	
+	g_object_unref (G_OBJECT(parts));
+	
 	return part;
 }
 
@@ -315,17 +334,19 @@ on_url_requested (GtkWidget *widget, const gchar *uri,
 	
 	if (g_str_has_prefix (uri, "cid:")) {
 		/* +4 ==> skip "cid:" */
-		const TnyMsgMimePartIface *part = find_cid_image (priv->msg, uri + 4);
+		TnyMimePartIface *part = find_cid_image (priv->msg, uri + 4);
 		if (!part) {
 			g_printerr ("modest: '%s' not found\n", uri + 4);
 			gtk_html_stream_close (stream, GTK_HTML_STREAM_ERROR);
 		} else {
 			TnyStreamIface *tny_stream =
 				TNY_STREAM_IFACE(modest_tny_stream_gtkhtml_new(stream));
-			// FIXME: tinymail
-			tny_msg_mime_part_iface_decode_to_stream ((TnyMsgMimePartIface*)part,
+			tny_mime_part_iface_decode_to_stream ((TnyMimePartIface*)part,
 								  tny_stream);
 			gtk_html_stream_close (stream, GTK_HTML_STREAM_OK);
+	
+			g_object_unref (G_OBJECT(tny_stream));
+			g_object_unref (G_OBJECT(part));
 		}
 	}
 
@@ -343,11 +364,11 @@ typedef struct  {
 
 /* render the attachments as hyperlinks in html */
 static gchar*
-attachments_as_html (ModestMsgView *self, const TnyMsgIface *msg)
+attachments_as_html (ModestMsgView *self, TnyMsgIface *msg)
 {
 	ModestMsgViewPrivate *priv;
 	GString *appendix;
-	const TnyListIface *parts;
+	TnyListIface *parts;
 	TnyIteratorIface *iter;
 	gchar *html;
 	int index = 0;
@@ -356,22 +377,23 @@ attachments_as_html (ModestMsgView *self, const TnyMsgIface *msg)
 		return NULL;
 
 	priv  = MODEST_MSG_VIEW_GET_PRIVATE (self);
-	parts = tny_msg_iface_get_parts ((TnyMsgIface*)msg);
-	// FIXME: tinymail
-	iter  = tny_list_iface_create_iterator ((TnyListIface*)parts);
 
+	parts = TNY_LIST_IFACE(tny_list_new());
+	tny_msg_iface_get_parts (msg, parts);
+	iter  = tny_list_iface_create_iterator (parts);
+	
 	appendix= g_string_new ("");
 	
 	while (!tny_iterator_iface_is_done(iter)) {
-		TnyMsgMimePartIface *part;
+		TnyMimePartIface *part;
 
 		++index; /* attachment numbers are 1-based */
 		
-		part = TNY_MSG_MIME_PART_IFACE(tny_iterator_iface_current (iter));
+		part = TNY_MIME_PART_IFACE(tny_iterator_iface_current (iter));
 
-		if (tny_msg_mime_part_iface_is_attachment (part)) {
+		if (tny_mime_part_iface_is_attachment (part)) {
 
-			const gchar *filename = tny_msg_mime_part_iface_get_filename(part);
+			const gchar *filename = tny_mime_part_iface_get_filename(part);
 			if (!filename)
 				filename = _("attachment");
 
@@ -430,7 +452,7 @@ hyperlinkify_plain_text (GString *txt)
 static gchar *
 convert_to_html (const gchar *data)
 {
-	int		 i;
+	guint		 i;
 	gboolean	 first_space = TRUE;
 	GString		*html;	    
 	gsize           len;
@@ -502,7 +524,7 @@ cmp_offsets_reverse (const url_match_t *match1, const url_match_t *match2)
 /*
  * check if the match is inside an existing match... */
 static void
-chk_partial_match (const url_match_t *match, int* offset)
+chk_partial_match (const url_match_t *match, guint* offset)
 {
 	if (*offset >= match->offset && *offset < match->offset + match->len)
 		*offset = -1;
@@ -512,7 +534,7 @@ static GSList*
 get_url_matches (GString *txt)
 {
 	regmatch_t rm;
-        int rv, i, offset = 0;
+        guint rv, i, offset = 0;
         GSList *match_list = NULL;
 
 	static UrlMatchPattern patterns[] = MAIL_VIEWER_URL_MATCH_PATTERNS;
@@ -571,8 +593,7 @@ get_url_matches (GString *txt)
 
 
 static gboolean
-set_html_message (ModestMsgView *self, const TnyMsgMimePartIface *tny_body,
-		  const TnyMsgIface *msg)
+set_html_message (ModestMsgView *self, TnyMimePartIface *tny_body, TnyMsgIface *msg)
 {
 	gchar *html_attachments;
 	TnyStreamIface *gtkhtml_stream;	
@@ -598,7 +619,7 @@ set_html_message (ModestMsgView *self, const TnyMsgMimePartIface *tny_body,
 	}
 
 	// FIXME: tinymail
-	tny_msg_mime_part_iface_decode_to_stream ((TnyMsgMimePartIface*)tny_body,
+	tny_mime_part_iface_decode_to_stream ((TnyMimePartIface*)tny_body,
 						  gtkhtml_stream);
 
 	g_object_unref (G_OBJECT(gtkhtml_stream));
@@ -610,8 +631,7 @@ set_html_message (ModestMsgView *self, const TnyMsgMimePartIface *tny_body,
 /* this is a hack --> we use the tny_text_buffer_stream to
  * get the message text, then write to gtkhtml 'by hand' */
 static gboolean
-set_text_message (ModestMsgView *self, const TnyMsgMimePartIface *tny_body,
-		  const TnyMsgIface *msg)
+set_text_message (ModestMsgView *self, TnyMimePartIface *tny_body, TnyMsgIface *msg)
 {
 	GtkTextBuffer *buf;
 	GtkTextIter begin, end;
@@ -642,7 +662,7 @@ set_text_message (ModestMsgView *self, const TnyMsgMimePartIface *tny_body,
 	}
 
 	// FIXME: tinymail
-	tny_msg_mime_part_iface_decode_to_stream ((TnyMsgMimePartIface*)tny_body,
+	tny_mime_part_iface_decode_to_stream ((TnyMimePartIface*)tny_body,
 						  txt_stream);
 	tny_stream_iface_reset (txt_stream);		
 	
@@ -705,16 +725,23 @@ modest_msg_view_get_selected_text (ModestMsgView *self)
 
 
 void
-modest_msg_view_set_message (ModestMsgView *self, const TnyMsgIface *msg)
+modest_msg_view_set_message (ModestMsgView *self, TnyMsgIface *msg)
 {
-	TnyMsgMimePartIface *body;
+	TnyMimePartIface *body;
 	ModestMsgViewPrivate *priv;
 
 	g_return_if_fail (self);
 	
 	priv = MODEST_MSG_VIEW_GET_PRIVATE(self);
 
-	priv->msg = msg;
+
+	if (msg != priv->msg) {
+		if (priv->msg)
+			g_object_unref (G_OBJECT(priv->msg));
+		if (msg)
+			g_object_ref   (G_OBJECT(msg));
+		priv->msg = msg;
+	}
 	
 	if (!msg) {
 		set_empty_message (self);
@@ -723,7 +750,7 @@ modest_msg_view_set_message (ModestMsgView *self, const TnyMsgIface *msg)
 		
 	body = modest_tny_msg_actions_find_body_part (msg, TRUE);
 	if (body) {
-		if (tny_msg_mime_part_iface_content_type_is (body, "text/html"))
+		if (tny_mime_part_iface_content_type_is (body, "text/html"))
 			set_html_message (self, body, msg);
 		else
 			set_text_message (self, body, msg);

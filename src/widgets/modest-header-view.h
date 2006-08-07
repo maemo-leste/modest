@@ -31,11 +31,11 @@
 #define __MODEST_HEADER_VIEW_H__
 
 #include <gtk/gtk.h>
-#include <tny-msg-folder-iface.h>
+#include <tny-folder-iface.h>
 #include <tny-account-tree-model.h>
 #include <tny-msg-iface.h>
-#include <tny-msg-header-iface.h>
-#include <tny-msg-header-list-model.h>
+#include <tny-header-iface.h>
+#include <tny-header-list-model.h>
 
 G_BEGIN_DECLS
 
@@ -55,6 +55,8 @@ struct _ModestHeaderView {
 	/* insert public members, if any */
 };
 
+typedef enum _ModestItemType ModestItemType;
+
 struct _ModestHeaderViewClass {
 	GtkTreeViewClass parent_class;
 
@@ -62,6 +64,10 @@ struct _ModestHeaderViewClass {
 				  TnyMsgIface *msg,
 				  gpointer user_data);
 
+	void (*message_not_found) (ModestHeaderView* self,
+				   ModestItemType type,
+				   gpointer user_data);
+	
 	/* msg == NULL implies that the operation is finished, ie.
 	 * the progress indictation can be hidden */
 	void (*status_update) (ModestHeaderView* self,
@@ -85,14 +91,18 @@ enum _ModestHeaderViewColumn {
 };
 typedef enum _ModestHeaderViewColumn ModestHeaderViewColumn;
 
-
 enum _ModestHeaderViewStyle {
 	MODEST_HEADER_VIEW_STYLE_NORMAL,
 	MODEST_HEADER_VIEW_STYLE_COMPACT,
-	
 	MODEST_HEADER_VIEW_STYLE_NUM
 };
 typedef enum _ModestHeaderViewStyle ModestHeaderViewStyle;
+
+enum _ModestItemType {
+	MODEST_ITEM_TYPE_MESSAGE,
+	MODEST_ITEM_TYPE_FOLDER,
+	MODEST_ITEM_TYPE_NUM
+};
 
 
 /**
@@ -116,21 +126,21 @@ GType        modest_header_view_get_type    (void) G_GNUC_CONST;
  *   
  * Returns: a new GtkWidget (a GtkTreeView-subclass)
  */
-GtkWidget*   modest_header_view_new        (TnyMsgFolderIface *folder,
-						     GSList *columns,
-						     ModestHeaderViewStyle style);
+GtkWidget*   modest_header_view_new        (TnyFolderIface *folder,
+					    GSList *columns,
+					    ModestHeaderViewStyle style);
 
 /**
  * modest_header_view_set_folder:
  * @self: a ModestHeaderView instance
- * @folder: a TnyMsgFolderIface object
+ * @folder: a TnyFolderIface object
  * 
  * set the folder for this ModestHeaderView
  *  
  * Returns: TRUE if it succeeded, FALSE otherwise
  */
 gboolean     modest_header_view_set_folder (ModestHeaderView *self,
-						      TnyMsgFolderIface *folder);
+					    TnyFolderIface *folder);
 
 
 /**
@@ -143,11 +153,11 @@ gboolean     modest_header_view_set_folder (ModestHeaderView *self,
  * Returns: TRUE if it succeeded, FALSE otherwise
  */
 gboolean     modest_header_view_set_columns (ModestHeaderView *self,
-						      GSList *columns);
+					     GSList *columns);
 /**
  * modest_header_view_get_columns:
  * @self: a ModestHeaderView instance
- * @folder: a TnyMsgFolderIface object
+ * @folder: a TnyFolderIface object
  * 
  * get the columns for this ModestHeaderView
  *  
@@ -161,21 +171,20 @@ const GSList*   modest_header_view_get_columns (ModestHeaderView *self);
  * @self: a ModestHeaderView instance
  * @style: the style for this tree view
  * 
- * set the folder for this ModestHeaderView
+ * set the style this ModestHeaderView
  *  
  * Returns: TRUE if it succeeded, FALSE otherwise
  */
 gboolean   modest_header_view_set_style (ModestHeaderView *self,
-						  ModestHeaderViewStyle style);
+					 ModestHeaderViewStyle style);
 
 /**
  * modest_header_view_set_folder:
  * @self: a ModestHeaderView instance
- * @folder: a TnyMsgFolderIface object
  * 
- * set the folder for this ModestHeaderView
+ * get the style for this ModestHeaderView
  *  
- * Returns: TRUE if it succeeded, FALSE otherwise
+ * Returns: the current style
  */
 ModestHeaderViewStyle   modest_header_view_get_style (ModestHeaderView *self);
 

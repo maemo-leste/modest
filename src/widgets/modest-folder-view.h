@@ -57,7 +57,7 @@ struct _ModestFolderViewClass {
 
 	/* emitted when a folder is clicked */
 	void (*folder_selected) (ModestFolderView* self,
-				 TnyMsgFolderIface *folder,
+				 TnyFolderIface *folder,
 				 gpointer user_data);
 				 
 	gboolean (*update_model) (ModestFolderView *self, 
