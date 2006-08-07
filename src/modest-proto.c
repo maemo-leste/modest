@@ -68,7 +68,7 @@ modest_proto_is_valid (const gchar *proto, gboolean store_proto)
 	g_return_val_if_fail (proto, FALSE);
 
 	const gchar** protos = (const gchar**)
-		store_proto ? store_protos : transport_protos;
+		(store_proto ? store_protos : transport_protos);
 	
 	for (i = 0; protos[i]; ++i)
 		if (strcmp(protos[i], proto) == 0)
