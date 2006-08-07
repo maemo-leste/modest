@@ -30,12 +30,11 @@
 
 #include <gtk/gtk.h>
 #include <gtkhtml/gtkhtml.h>
-
-/* TODO: put in auto* */
 #include <tny-text-buffer-stream.h>
-#include <tny-msg-mime-part-iface.h>
+#include <tny-mime-part-iface.h>
 #include <tny-msg-iface.h>
 #include <tny-list-iface.h>
+#include <tny-list.h>
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -44,22 +43,16 @@
 #include "modest-tny-msg-actions.h"
 #include "modest-text-utils.h"
 
-
-/* private */
-static gchar *quote_msg (const TnyMsgIface * src, const gchar * from,
-			 time_t sent_date, gint limit);
-
 static gchar *
-quote_msg (const TnyMsgIface * src, const gchar * from, time_t sent_date, gint limit)
+quote_msg (TnyMsgIface* src, const gchar * from, time_t sent_date, gint limit)
 {
 	TnyStreamIface *stream;
-	TnyMsgMimePartIface *body;
+	TnyMimePartIface *body;
 	GtkTextBuffer *buf;
 	GtkTextIter start, end;
 	const gchar *to_quote;
 	gchar *quoted;
 
-	/* the cast makes me uneasy... */
 	body = modest_tny_msg_actions_find_body_part(src, FALSE);
 	if (!body)
 		return NULL;
@@ -67,9 +60,11 @@ quote_msg (const TnyMsgIface * src, const gchar * from, time_t sent_date, gint l
 	buf = gtk_text_buffer_new (NULL);
 	stream = TNY_STREAM_IFACE (tny_text_buffer_stream_new (buf));
 	tny_stream_iface_reset (stream);
-	tny_msg_mime_part_iface_decode_to_stream (body, stream);
+	tny_mime_part_iface_decode_to_stream (body, stream);
 	tny_stream_iface_reset (stream);
-	g_object_unref (stream);
+
+	g_object_unref (G_OBJECT(stream));
+	g_object_unref (G_OBJECT(body));
 	
 	gtk_text_buffer_get_bounds (buf, &start, &end);
 	to_quote = gtk_text_buffer_get_text (buf, &start, &end, FALSE);
@@ -81,7 +76,7 @@ quote_msg (const TnyMsgIface * src, const gchar * from, time_t sent_date, gint l
 
 
 gchar*
-modest_tny_msg_actions_quote (const TnyMsgIface * self, const gchar * from,
+modest_tny_msg_actions_quote (TnyMsgIface * self, const gchar * from,
 			      time_t sent_date, gint limit,
 			      const gchar * to_quote)
 {
@@ -98,66 +93,72 @@ modest_tny_msg_actions_quote (const TnyMsgIface * self, const gchar * from,
 
 
 
-TnyMsgMimePartIface *
-modest_tny_msg_actions_find_body_part (const TnyMsgIface *msg, gboolean want_html)
+TnyMimePartIface *
+modest_tny_msg_actions_find_body_part (TnyMsgIface *msg, gboolean want_html)
 {
 	const gchar *mime_type = want_html ? "text/html" : "text/plain";
-	TnyMsgMimePartIface *part;
-	const TnyListIface *parts;
+	TnyMimePartIface *part;
+	TnyListIface *parts;
 	TnyIteratorIface *iter;
-	gboolean found;
 
 	if (!msg)
 		return NULL;
 
-	found = FALSE;
-	parts =  tny_msg_iface_get_parts ((TnyMsgIface *)msg);
-	iter  = tny_list_iface_create_iterator ((TnyListIface*)parts);
+	parts = TNY_LIST_IFACE(tny_list_new());
+	tny_msg_iface_get_parts ((TnyMsgIface*)msg, parts);
+
+	iter  = tny_list_iface_create_iterator(parts);
 
 	while (!tny_iterator_iface_is_done(iter)) {
-		part = TNY_MSG_MIME_PART_IFACE(tny_iterator_iface_current (iter));
+
+		part = TNY_MIME_PART_IFACE(tny_iterator_iface_current (iter));
 		
-		if (tny_msg_mime_part_iface_content_type_is (part, mime_type) &&
-		    !tny_msg_mime_part_iface_is_attachment (part)) {
-			found = TRUE;
+		if (tny_mime_part_iface_content_type_is (part, mime_type) &&
+		    !tny_mime_part_iface_is_attachment (part)) {
 			break;
-		}	
+		}
+		part = NULL;
 		tny_iterator_iface_next (iter);
 	}
 
-	g_object_unref (G_OBJECT(iter));
+	/* did we find a matching part? */
+	if (part)
+		g_object_ref (G_OBJECT(part));
 
-	/* if were trying to find an HTML part and could find it,
+	g_object_unref (G_OBJECT(iter));
+	g_object_unref (G_OBJECT(parts));
+
+	/* if were trying to find an HTML part and couldn't find it,
 	 * try to find a text/plain part instead
 	 */
-	if (!found && want_html) 
+	if (!part && want_html) 
 		return modest_tny_msg_actions_find_body_part (msg, FALSE);
 
-	return found ? part : NULL;
+	return part ? part : NULL;
 }
 
 
 
-
-TnyMsgMimePartIface *
-modest_tny_msg_actions_find_nth_part (const TnyMsgIface *msg, gint index)
+TnyMimePartIface *
+modest_tny_msg_actions_find_nth_part (TnyMsgIface *msg, gint index)
 {
-	TnyMsgMimePartIface *part;
-	const TnyListIface *parts;
+	TnyMimePartIface *part;
+	TnyListIface *parts;
 	TnyIteratorIface *iter;
 
 	g_return_val_if_fail (msg, NULL);
 	g_return_val_if_fail (index > 0, NULL);
 		
-	parts =  tny_msg_iface_get_parts ((TnyMsgIface *)msg);
+	parts = TNY_LIST_IFACE(tny_list_new());
+	tny_msg_iface_get_parts ((TnyMsgIface*)msg, parts);
 	iter  = tny_list_iface_create_iterator ((TnyListIface*)parts);
-
 	if (!tny_iterator_iface_has_first(iter))
 		return NULL;
 
-	part = tny_iterator_iface_nth (iter, index);
+	part = TNY_MIME_PART_IFACE(tny_iterator_iface_nth (iter, index));
 
 	g_object_unref (G_OBJECT(iter));
+	g_object_unref (G_OBJECT(parts));
 
 	return part;
 }

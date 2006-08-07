@@ -32,11 +32,11 @@
 
 #include <tny-msg.h>
 #include <tny-msg-iface.h>			
-#include <tny-msg-mime-part.h>
-#include <tny-msg-mime-part-iface.h>		
+#include <tny-mime-part.h>
+#include <tny-mime-part-iface.h>		
 #include <tny-stream-iface.h>
-#include <tny-msg-header.h>
-#include <tny-msg-header-iface.h>
+#include <tny-header.h>
+#include <tny-header-iface.h>
 #include <tny-account-iface.h>	
 #include <tny-account-store-iface.h>
 #include <tny-transport-account-iface.h>	
@@ -186,8 +186,8 @@ modest_tny_transport_actions_send_message (ModestTnyTransportActions *self,
 					   const GList *attachments_list)
 {
 	TnyMsgIface *new_msg;
-	TnyMsgMimePartIface *attachment_part, *text_body_part;
-	TnyMsgHeaderIface *headers;
+	TnyMimePartIface *attachment_part, *text_body_part;
+	TnyHeaderIface *headers;
 	TnyStreamIface *text_body_stream, *attachment_stream;
 	ModestTnyAttachment *attachment;
 	GList *pos;
@@ -196,33 +196,32 @@ modest_tny_transport_actions_send_message (ModestTnyTransportActions *self,
 	const gchar *attachment_filename;
 	
 	new_msg          = TNY_MSG_IFACE(tny_msg_new ());
-	headers          = TNY_MSG_HEADER_IFACE(tny_msg_header_new ());
+	headers          = TNY_HEADER_IFACE(tny_header_new ());
 	text_body_stream = TNY_STREAM_IFACE (tny_stream_camel_new
 	                                     (camel_stream_mem_new_with_buffer
 	                                      (body, strlen(body))));
 	
-	tny_msg_header_iface_set_from (TNY_MSG_HEADER_IFACE (headers), from);
-	tny_msg_header_iface_set_to (TNY_MSG_HEADER_IFACE (headers), to);
-	tny_msg_header_iface_set_cc (TNY_MSG_HEADER_IFACE (headers), cc);
-	tny_msg_header_iface_set_bcc (TNY_MSG_HEADER_IFACE (headers), bcc);
-	tny_msg_header_iface_set_subject (TNY_MSG_HEADER_IFACE (headers), subject);
+	tny_header_iface_set_from (TNY_HEADER_IFACE (headers), from);
+	tny_header_iface_set_to (TNY_HEADER_IFACE (headers), to);
+	tny_header_iface_set_cc (TNY_HEADER_IFACE (headers), cc);
+	tny_header_iface_set_bcc (TNY_HEADER_IFACE (headers), bcc);
+	tny_header_iface_set_subject (TNY_HEADER_IFACE (headers), subject);
 	tny_msg_iface_set_header (new_msg, headers);
 
-	
 	content_type = get_content_type(body);
 	
 	if (attachments_list == NULL) {
 		tny_stream_iface_reset (text_body_stream);
-		tny_msg_mime_part_iface_construct_from_stream (TNY_MSG_MIME_PART_IFACE(new_msg),
-		                                               text_body_stream, content_type);
+		tny_mime_part_iface_construct_from_stream (TNY_MIME_PART_IFACE(new_msg),
+							   text_body_stream, content_type);
 		tny_stream_iface_reset (text_body_stream);
 	} else {
-		text_body_part = TNY_MSG_MIME_PART_IFACE (tny_msg_mime_part_new(
-		                                          camel_mime_part_new()));
+		text_body_part = 
+			TNY_MIME_PART_IFACE (tny_mime_part_new(camel_mime_part_new()));
 		tny_stream_iface_reset (text_body_stream);
-		tny_msg_mime_part_iface_construct_from_stream (text_body_part,
-		                                               text_body_stream,
-		                                               content_type);
+		tny_mime_part_iface_construct_from_stream (text_body_part,
+							   text_body_stream,
+							   content_type);
 		tny_stream_iface_reset (text_body_stream);
 		tny_msg_iface_add_part(new_msg, text_body_part);
 		//g_object_unref (G_OBJECT(text_body_part));
@@ -234,17 +233,17 @@ modest_tny_transport_actions_send_message (ModestTnyTransportActions *self,
 		attachment = pos->data;
 		attachment_filename = modest_tny_attachment_get_name(attachment);
 		attachment_stream = modest_tny_attachment_get_stream(attachment);
-		attachment_part = TNY_MSG_MIME_PART_IFACE (tny_msg_mime_part_new (
-		                                                camel_mime_part_new()));
+		attachment_part = TNY_MIME_PART_IFACE (tny_mime_part_new (
+							       camel_mime_part_new()));
 		
 		attachment_content_type = modest_tny_attachment_get_mime_type(attachment);
 				 
-		tny_msg_mime_part_iface_construct_from_stream (attachment_part,
+		tny_mime_part_iface_construct_from_stream (attachment_part,
 		                                               attachment_stream,
 		                                               attachment_content_type);
 		tny_stream_iface_reset (attachment_stream);
 		
-		tny_msg_mime_part_iface_set_filename(attachment_part, attachment_filename);
+		tny_mime_part_iface_set_filename(attachment_part, attachment_filename);
 		
 		tny_msg_iface_add_part (new_msg, attachment_part);
 		//g_object_unref(G_OBJECT(attachment_part));

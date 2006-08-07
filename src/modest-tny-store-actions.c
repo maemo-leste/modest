@@ -29,8 +29,8 @@
 
 #include <tny-msg.h>
 #include <tny-msg-iface.h>			
-#include <tny-msg-header.h>
-#include <tny-msg-header-iface.h>
+#include <tny-header.h>
+#include <tny-header-iface.h>
 #include <tny-account-iface.h>	
 #include <tny-account-store-iface.h>
 #include <tny-store-account-iface.h>	

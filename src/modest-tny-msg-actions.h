@@ -30,8 +30,6 @@
 #ifndef __MODEST_TNY_MSG_ACTIONS_H__
 #define __MODEST_TNY_MSG_ACTIONS_H__
 
-/* public */
-
 /**
  * modest_tny_msg_actions_quote:
  * @self: the message to quote
@@ -46,10 +44,8 @@
  * 
  * Returns: a newly allocated string containing the quoted message
  */
-gchar *modest_tny_msg_actions_quote (const TnyMsgIface * self,
-				     const gchar * from,
-				     time_t sent_date,
-				     gint limit,
+gchar *modest_tny_msg_actions_quote (TnyMsgIface * self, const gchar * from,
+				     time_t sent_date, gint limit,
 				     const gchar *to_quote);
 
 /**
@@ -62,8 +58,7 @@ gchar *modest_tny_msg_actions_quote (const TnyMsgIface * self,
  * 
  * Returns: the TnyMsgMimePartIface for the found part, or NULL if no matching part is found
  */	 
-TnyMsgMimePartIface *modest_tny_msg_actions_find_body_part (const TnyMsgIface * self,
-							    gboolean want_html);
+TnyMimePartIface *modest_tny_msg_actions_find_body_part (TnyMsgIface * self, gboolean want_html);
 
 
 /**
@@ -75,8 +70,7 @@ TnyMsgMimePartIface *modest_tny_msg_actions_find_body_part (const TnyMsgIface * 
  * 
  * Returns: the TnyMsgMimePartIface for the found part, or NULL if no matching part is found
  */
-TnyMsgMimePartIface * modest_tny_msg_actions_find_nth_part (const TnyMsgIface *msg,
-							   gint index);
+TnyMimePartIface * modest_tny_msg_actions_find_nth_part (TnyMsgIface *msg, gint index);
 
 
 #endif /* __MODEST_TNY_MSG_ACTIONS_H__ */
