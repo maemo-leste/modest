@@ -33,6 +33,7 @@
 #include <gtk/gtk.h>
 #include <tny-msg-iface.h>
 #include <modest-conf.h>
+#include <modest-widget-factory.h>
 #include <glib/gi18n.h>
 
 
@@ -76,6 +77,7 @@ typedef enum _ModestEditType ModestEditType;
 GType        modest_edit_msg_window_get_type    (void) G_GNUC_CONST;
 
 GtkWidget*   modest_edit_msg_window_new         (ModestConf *conf,
+						 ModestWidgetFactory *factory,
 						 ModestEditType type,
 						 TnyMsgIface *msg);
 G_END_DECLS

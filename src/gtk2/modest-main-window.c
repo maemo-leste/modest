@@ -30,6 +30,8 @@
 #include <modest-widget-memory.h>
 #include <modest-icon-factory.h>
 
+#include <widgets/modest-toolbar.h>
+
 #include "modest-main-window.h"
 #include "modest-account-view-window.h"
 #include "modest-edit-msg-window.h"
@@ -61,7 +63,7 @@ struct _ModestMainWindowPrivate {
 	GtkWidget *msg_paned;
 	GtkWidget *main_paned;
 	
-	ModestWidgetFactory *widget_factory;
+	ModestWidgetFactory *factory;
 	ModestConf *conf;
 	ModestAccountMgr *account_mgr;
 	
@@ -130,7 +132,7 @@ modest_main_window_init (ModestMainWindow *obj)
 
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(obj);
 
-	priv->widget_factory = NULL;
+	priv->factory = NULL;
 	priv->conf           = NULL;
 	priv->account_mgr    = NULL;
 }
@@ -140,9 +142,9 @@ modest_main_window_finalize (GObject *obj)
 {
 	ModestMainWindowPrivate *priv;	
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(obj);
-	if (priv->widget_factory) {
-		g_object_unref (G_OBJECT(priv->widget_factory));
-		priv->widget_factory = NULL;
+	if (priv->factory) {
+		g_object_unref (G_OBJECT(priv->factory));
+		priv->factory = NULL;
 	}
  	if (priv->conf) {
 		g_object_unref (G_OBJECT(priv->conf));
@@ -197,7 +199,7 @@ on_menu_accounts (ModestMainWindow *self, guint action, GtkWidget *widget)
 	
 	priv        = MODEST_MAIN_WINDOW_GET_PRIVATE(self);	
 	account_win = modest_account_view_window_new (priv->account_mgr,
-						      priv->widget_factory);
+						      priv->factory);
 
 	gtk_window_set_transient_for (GTK_WINDOW(account_win),
 				      GTK_WINDOW(self));
@@ -215,6 +217,7 @@ on_menu_new_message (ModestMainWindow *self, guint action, GtkWidget *widget)
 	priv  = MODEST_MAIN_WINDOW_GET_PRIVATE(self);	
 
 	msg_win = modest_edit_msg_window_new (priv->conf,
+					      priv->factory,
 					      MODEST_EDIT_TYPE_NEW,
 					      NULL);
 	gtk_widget_show (msg_win);
@@ -223,9 +226,9 @@ on_menu_new_message (ModestMainWindow *self, guint action, GtkWidget *widget)
 static void
 on_menu_quit (ModestMainWindow *self, guint action, GtkWidget *widget)
 {
-	gtk_main_quit ();
+	save_sizes (self);
+	gtk_widget_destroy (GTK_WIDGET(self));
 }
-
 
 
 /* Our menu, an array of GtkItemFactoryEntry structures that defines each menu item */
@@ -307,26 +310,61 @@ header_view_new (ModestMainWindow *self)
 		MODEST_HEADER_VIEW_COLUMN_MSGTYPE,
 		MODEST_HEADER_VIEW_COLUMN_ATTACH,
 		MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER
+/* 		MODEST_HEADER_VIEW_COLUMN_FROM, */
+/* 		MODEST_HEADER_VIEW_COLUMN_SUBJECT, */
+/* 		MODEST_HEADER_VIEW_COLUMN_RECEIVED_DATE */
 	};
-
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
 	
 	for (i = 0 ; i != sizeof(cols) / sizeof(ModestHeaderViewColumn); ++i)
 		columns = g_slist_append (columns, GINT_TO_POINTER(cols[i]));
 
-	header_view = modest_widget_factory_get_header_view (priv->widget_factory);
+	header_view = modest_widget_factory_get_header_view (priv->factory);
 	modest_header_view_set_columns (header_view, columns);
 	g_slist_free (columns);
 
 	return header_view;
 }
 
+static ModestToolbar*
+toolbar_new (ModestMainWindow *self)
+{
+	int i;
+	ModestToolbar *toolbar;
+	GSList *buttons = NULL;
+	ModestMainWindowPrivate *priv;
+
+	ModestToolbarButton button_ids[] = {
+		MODEST_TOOLBAR_BUTTON_NEW_MAIL,
+		MODEST_TOOLBAR_BUTTON_REPLY,
+		MODEST_TOOLBAR_BUTTON_REPLY_ALL,
+		MODEST_TOOLBAR_BUTTON_FORWARD,
+		MODEST_TOOLBAR_SEPARATOR,
+		MODEST_TOOLBAR_BUTTON_SEND_RECEIVE,
+		MODEST_TOOLBAR_SEPARATOR,
+		MODEST_TOOLBAR_BUTTON_NEXT,
+		MODEST_TOOLBAR_BUTTON_PREV,
+		MODEST_TOOLBAR_SEPARATOR,		
+		MODEST_TOOLBAR_BUTTON_DELETE
+	};		
+	
+	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
+
+	for (i = 0 ; i != sizeof(button_ids) / sizeof(ModestToolbarButton); ++i)
+		buttons = g_slist_append (buttons, GINT_TO_POINTER(button_ids[i]));
+	
+	toolbar = modest_widget_factory_get_main_toolbar (priv->factory, buttons);
+	g_slist_free (buttons);
+	
+	return toolbar;
+}
+
+
 
 static void
 restore_sizes (ModestMainWindow *self)
 {
-	ModestMainWindowPrivate *priv;
-	
+	ModestMainWindowPrivate *priv;	
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
 	
 	modest_widget_memory_restore_settings (priv->conf,GTK_WIDGET(self),
@@ -337,7 +375,6 @@ restore_sizes (ModestMainWindow *self)
 					       "modest-msg-paned");
 	modest_widget_memory_restore_settings (priv->conf, GTK_WIDGET(priv->main_paned),
 					       "modest-main-paned");
-
 }
 
 
@@ -356,11 +393,7 @@ save_sizes (ModestMainWindow *self)
 					    "modest-msg-paned");
 	modest_widget_memory_save_settings (priv->conf, GTK_WIDGET(priv->main_paned),
 					    "modest-main-paned");
-
-	
-
 }
-
 
 static GtkWidget*
 wrapped_in_scrolled_window (GtkWidget *widget, gboolean needs_viewport)
@@ -387,11 +420,29 @@ static gboolean
 on_delete_event (GtkWidget *widget, GdkEvent  *event, ModestMainWindow *self)
 {
 	save_sizes (self);
-	gtk_widget_destroy (GTK_WIDGET(self));
-
-	return TRUE;
+	return FALSE;
 }
 
+static GtkWidget*
+favorites_view ()
+{
+	GtkWidget *favorites;
+	GtkTreeStore *store;
+	GtkTreeViewColumn *col;
+
+	store = gtk_tree_store_new (1, G_TYPE_STRING);
+	favorites = gtk_tree_view_new_with_model (GTK_TREE_MODEL(store));
+	col = gtk_tree_view_column_new_with_attributes (_("Favorites"),
+							gtk_cell_renderer_text_new(),
+							"text", 0, NULL);
+	
+	gtk_tree_view_append_column (GTK_TREE_VIEW(favorites), col);
+	gtk_widget_show_all (favorites);
+
+	g_object_unref (G_OBJECT(store));
+
+	return favorites;
+}
 
 
 
@@ -404,7 +455,7 @@ modest_main_window_new (ModestConf *conf, ModestAccountMgr *account_mgr,
 	
 	GtkWidget *main_vbox;
 	GtkWidget *status_hbox;
-	GtkWidget *header_win, *folder_win; 
+	GtkWidget *header_win, *folder_win, *favorites_win;
 	
 	g_return_val_if_fail (factory, NULL);
 	g_return_val_if_fail (conf, NULL);
@@ -413,7 +464,7 @@ modest_main_window_new (ModestConf *conf, ModestAccountMgr *account_mgr,
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(obj);
 
 	g_object_ref (factory);
-	priv->widget_factory = factory;
+	priv->factory = factory;
 
 	g_object_ref (conf);
 	priv->conf = conf;
@@ -421,19 +472,20 @@ modest_main_window_new (ModestConf *conf, ModestAccountMgr *account_mgr,
 	g_object_ref (account_mgr);
 	priv->account_mgr = account_mgr;
 
-
 	/* widgets from factory */
 	priv->folder_view = modest_widget_factory_get_folder_view (factory);
 	priv->header_view = header_view_new (MODEST_MAIN_WINDOW(obj));
 	priv->msg_preview = modest_widget_factory_get_msg_preview (factory);
-
+	
 	folder_win = wrapped_in_scrolled_window (GTK_WIDGET(priv->folder_view),
 						 FALSE);
 	header_win = wrapped_in_scrolled_window (GTK_WIDGET(priv->header_view),
 						 FALSE);			   
+	favorites_win = wrapped_in_scrolled_window (favorites_view(),FALSE);			   
+	
 	/* tool/menubar */
 	priv->menubar = menubar_new (MODEST_MAIN_WINDOW(obj));
-	priv->toolbar = gtk_toolbar_new ();
+	priv->toolbar = GTK_WIDGET(toolbar_new (MODEST_MAIN_WINDOW(obj)));
 
 	/* paned */
 	priv->folder_paned = gtk_vpaned_new ();
@@ -441,8 +493,7 @@ modest_main_window_new (ModestConf *conf, ModestAccountMgr *account_mgr,
 	priv->main_paned = gtk_hpaned_new ();
 	gtk_paned_add1 (GTK_PANED(priv->main_paned), priv->folder_paned);
 	gtk_paned_add2 (GTK_PANED(priv->main_paned), priv->msg_paned);
-//	gtk_paned_add1 (GTK_PANED(priv->folder_paned),
-//			gtk_label_new (_("Favorites")));
+	gtk_paned_add1 (GTK_PANED(priv->folder_paned), favorites_win);
 	gtk_paned_add2 (GTK_PANED(priv->folder_paned), folder_win);
 	gtk_paned_add1 (GTK_PANED(priv->msg_paned), header_win);
 	gtk_paned_add2 (GTK_PANED(priv->msg_paned), GTK_WIDGET(priv->msg_preview));
@@ -453,6 +504,9 @@ modest_main_window_new (ModestConf *conf, ModestAccountMgr *account_mgr,
 	
 	/* status bar / progress */
 	status_hbox = gtk_hbox_new (FALSE, 0);
+	gtk_box_pack_start (GTK_BOX(status_hbox),
+			    modest_widget_factory_get_folder_info_label (factory),
+			    FALSE,FALSE, 6);
 	gtk_box_pack_start (GTK_BOX(status_hbox),
 			    modest_widget_factory_get_status_bar(factory),
 			    TRUE, TRUE, 0);
@@ -478,7 +532,7 @@ modest_main_window_new (ModestConf *conf, ModestAccountMgr *account_mgr,
 			      modest_icon_factory_get_icon (MODEST_APP_ICON));
 	
 	gtk_widget_show_all (main_vbox);
-	
+
 	g_signal_connect (G_OBJECT(obj), "delete-event",
 			  G_CALLBACK(on_delete_event), obj);
 	

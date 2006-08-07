@@ -56,6 +56,8 @@ struct _ModestUIPrivate {
         ModestAccountMgr      *account_mgr;
 	ModestWidgetFactory   *widget_factory;	
         ModestTnyAccountStore *account_store;
+
+	GtkWidget              *main_window;
 };
 
 #define MODEST_UI_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -124,6 +126,8 @@ modest_ui_init (ModestUI *obj)
 	priv->account_mgr    = NULL;
 	priv->conf           = NULL;
 	priv->widget_factory = NULL;
+
+	priv->main_window    = NULL;
 }
 
 
@@ -192,6 +196,13 @@ modest_ui_new (ModestConf *modest_conf)
 	return MODEST_UI(obj);
 }
 
+static gboolean
+on_main_window_delete_event (GtkWidget *widget, GdkEvent *event, ModestUI *self)
+{
+	gtk_main_quit ();
+	return FALSE;
+}
+
 
 GtkWidget*
 modest_ui_main_window (ModestUI *modest_ui)
@@ -202,12 +213,16 @@ modest_ui_main_window (ModestUI *modest_ui)
 	g_return_val_if_fail (modest_ui, NULL);
 	priv = MODEST_UI_GET_PRIVATE(modest_ui);
 
-	win = modest_main_window_new (priv->conf, priv->account_mgr,
-				      priv->widget_factory);
-	if (!win)
+	if (!priv->main_window) {
+		priv->main_window =
+			modest_main_window_new (priv->conf, priv->account_mgr,
+						priv->widget_factory);
+		g_signal_connect (G_OBJECT(priv->main_window), "delete-event",
+				  G_CALLBACK(on_main_window_delete_event), modest_ui);
+	}
+		
+	if (!priv->main_window)
 		g_printerr ("modest: could not create main window\n");
-
-	return win;
+	
+	return priv->main_window;
 }
-
-

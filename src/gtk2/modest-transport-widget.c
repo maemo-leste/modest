@@ -52,6 +52,7 @@ modest_transport_widget_get_type (void)
 			sizeof(ModestTransportWidget),
 			1,		/* n_preallocs */
 			(GInstanceInitFunc) modest_transport_widget_init,
+			NULL
 		};
 		my_type = g_type_register_static (GTK_TYPE_VBOX,
 		                                  "ModestTransportWidget",

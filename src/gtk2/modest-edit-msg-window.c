@@ -30,8 +30,9 @@
 #include "modest-edit-msg-window.h"
 #include <widgets/modest-msg-view.h>
 #include <modest-widget-memory.h>
+#include <modest-widget-factory.h>
+#include "modest-icon-names.h"
 
-/* 'private'/'protected' functions */
 static void  modest_edit_msg_window_class_init   (ModestEditMsgWindowClass *klass);
 static void  modest_edit_msg_window_init         (ModestEditMsgWindow *obj);
 static void  modest_edit_msg_window_finalize     (GObject *obj);
@@ -47,10 +48,12 @@ typedef struct _ModestEditMsgWindowPrivate ModestEditMsgWindowPrivate;
 struct _ModestEditMsgWindowPrivate {
 
 	ModestConf *conf;
+	ModestWidgetFactory *factory;
 	
-	GtkWidget  *msg_body;
-	GtkWidget  *to_field, *cc_field, *bcc_field,
-		   *subject_field;
+	GtkWidget      *toolbar, *menubar;
+	GtkWidget      *msg_body;
+	GtkWidget      *to_field, *cc_field, *bcc_field,
+		       *subject_field;
 };
 #define MODEST_EDIT_MSG_WINDOW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                     MODEST_TYPE_EDIT_MSG_WINDOW, \
@@ -76,6 +79,7 @@ modest_edit_msg_window_get_type (void)
 			sizeof(ModestEditMsgWindow),
 			1,		/* n_preallocs */
 			(GInstanceInitFunc) modest_edit_msg_window_init,
+			NULL
 		};
 		my_type = g_type_register_static (GTK_TYPE_WINDOW,
 		                                  "ModestEditMsgWindow",
@@ -105,6 +109,122 @@ modest_edit_msg_window_class_init (ModestEditMsgWindowClass *klass)
 
 static void
 modest_edit_msg_window_init (ModestEditMsgWindow *obj)
+{
+	ModestEditMsgWindowPrivate *priv;
+	priv = MODEST_EDIT_MSG_WINDOW_GET_PRIVATE(obj);
+
+	priv->factory = NULL;
+	priv->toolbar = NULL;
+	priv->menubar = NULL;
+		
+}
+
+
+
+
+/* Our menu, an array of GtkItemFactoryEntry structures that defines each menu item */
+static GtkItemFactoryEntry menu_items[] = {
+	{ "/_File",		NULL,			NULL,           0, "<Branch>" },
+	{ "/File/_New",		"<control>N",		NULL,		0, "<StockItem>", GTK_STOCK_NEW },
+	{ "/File/_Open",	"<control>O",		NULL,		0, "<StockItem>", GTK_STOCK_OPEN },
+	{ "/File/_Save",	"<control>S",		NULL,		0, "<StockItem>", GTK_STOCK_SAVE },
+	{ "/File/Save _As",	NULL,			NULL,           0, "<Item>" },
+	{ "/File/Save Draft",	"<control><shift>S",	NULL,           0, "<Item>" },
+
+
+	{ "/File/sep1",		NULL,			NULL,           0, "<Separator>" },
+	{ "/File/_Quit",	"<CTRL>Q",		NULL,           0, "<StockItem>", GTK_STOCK_QUIT },
+
+	{ "/_Edit",		NULL,			NULL,           0, "<Branch>" },
+	{ "/Edit/_Undo",	"<CTRL>Z",		NULL,		0, "<StockItem>", GTK_STOCK_UNDO },
+	{ "/Edit/_Redo",	"<shift><CTRL>Z",	NULL,		0, "<StockItem>", GTK_STOCK_REDO },
+	{ "/File/sep1",		NULL,			NULL,           0, "<Separator>" },
+	{ "/Edit/Cut",		"<control>X",		NULL,		0, "<StockItem>", GTK_STOCK_CUT  },
+	{ "/Edit/Copy",		"<CTRL>C",		NULL,           0, "<StockItem>", GTK_STOCK_COPY },
+	{ "/Edit/Paste",	NULL,			NULL,           0, "<StockItem>", GTK_STOCK_PASTE},
+	{ "/Edit/sep1",		NULL,			NULL,           0, "<Separator>" },
+	{ "/Edit/Delete",	"<CTRL>Q",		NULL,           0, "<Item>" },
+	{ "/Edit/Select all",	"<CTRL>A",		NULL,           0, "<Item>" },
+	{ "/Edit/Deselect all",  "<Shift><CTRL>A",	NULL,           0, "<Item>" },
+
+	{ "/_View",             NULL,		NULL,		0, "<Branch>" },
+	{ "/View/To-field",          NULL,		NULL,		0, "<Item>" },
+	
+	{ "/View/Cc-field:",          NULL,		NULL,		0, "<Item>" },
+	{ "/View/Bcc-field:",          NULL,		NULL,		0, "<Item>" },
+	
+	
+	{ "/_Insert",             NULL,		NULL,		0, "<Branch>" },
+/* 	{ "/Actions/_Reply",    NULL,			NULL,		0, "<Item>" }, */
+/* 	{ "/Actions/_Forward",  NULL,			NULL,		0, "<Item>" }, */
+/* 	{ "/Actions/_Bounce",   NULL,			NULL,		0, "<Item>" },	 */
+	
+	{ "/_Format",		 NULL,			NULL,		0, "<Branch>" }
+/* 	{ "/Options/_Accounts",  NULL,			on_menu_accounts,0, "<Item>" }, */
+/* 	{ "/Options/_Contacts",  NULL,			NULL,		0, "<Item>" }, */
+
+
+/* 	{ "/_Help",         NULL,                       NULL,           0, "<Branch>" }, */
+/* 	{ "/_Help/About",   NULL,                       on_menu_about,  0, "<StockItem>", GTK_STOCK_ABOUT}, */
+};
+
+static gint nmenu_items = sizeof (menu_items) / sizeof (menu_items[0]);
+
+
+static GtkWidget *
+menubar_new (ModestEditMsgWindow *self)
+{
+	GtkItemFactory *item_factory;
+	GtkAccelGroup *accel_group;
+	
+	/* Make an accelerator group (shortcut keys) */
+	accel_group = gtk_accel_group_new ();
+	
+	/* Make an ItemFactory (that makes a menubar) */
+	item_factory = gtk_item_factory_new (GTK_TYPE_MENU_BAR, "<main>",
+					     accel_group);
+	
+	/* This function generates the menu items. Pass the item factory,
+	   the number of items in the array, the array itself, and any
+	   callback data for the the menu items. */
+	gtk_item_factory_create_items (item_factory, nmenu_items, menu_items, self);
+	
+	///* Attach the new accelerator group to the window. */
+	gtk_window_add_accel_group (GTK_WINDOW (self), accel_group);
+	
+	/* Finally, return the actual menu bar created by the item factory. */
+	return gtk_item_factory_get_widget (item_factory, "<main>");
+}
+
+
+
+
+static ModestToolbar*
+toolbar_new (ModestEditMsgWindow *self)
+{
+	int i;
+	ModestToolbar *toolbar;
+	GSList *buttons = NULL;
+	ModestEditMsgWindowPrivate *priv;
+
+	ModestToolbarButton button_ids[] = {
+		MODEST_TOOLBAR_BUTTON_MAIL_SEND
+	};		
+	
+	priv = MODEST_EDIT_MSG_WINDOW_GET_PRIVATE(self);
+
+	for (i = 0 ; i != sizeof(button_ids) / sizeof(ModestToolbarButton); ++i)
+		buttons = g_slist_append (buttons, GINT_TO_POINTER(button_ids[i]));
+	
+	toolbar = modest_widget_factory_get_edit_toolbar (priv->factory, buttons);
+	g_slist_free (buttons);
+	
+	return toolbar;
+}
+
+
+static void
+init_window (ModestEditMsgWindow *obj)
 {
 	GtkWidget *to_button, *cc_button, *bcc_button, *subject_label; 
 	GtkWidget *header_table;
@@ -142,12 +262,19 @@ modest_edit_msg_window_init (ModestEditMsgWindow *obj)
 	
 	main_vbox = gtk_vbox_new  (FALSE, 6);
 
-	gtk_box_pack_start (GTK_BOX(main_vbox), header_table, FALSE, FALSE, 6);
+	priv->menubar = menubar_new (obj);
+	priv->toolbar = GTK_WIDGET(toolbar_new (obj));
+
+	gtk_box_pack_start (GTK_BOX(main_vbox), priv->menubar, FALSE, FALSE, 0);
+	gtk_box_pack_start (GTK_BOX(main_vbox), priv->toolbar, FALSE, FALSE, 0);
+	gtk_box_pack_start (GTK_BOX(main_vbox), header_table, FALSE, FALSE, 0);
 	gtk_box_pack_start (GTK_BOX(main_vbox), priv->msg_body, TRUE, TRUE, 6);
 
 	gtk_widget_show_all (GTK_WIDGET(main_vbox));
 	gtk_container_add (GTK_CONTAINER(obj), main_vbox);
 }
+	
+
 
 static void
 modest_edit_msg_window_finalize (GObject *obj)
@@ -159,47 +286,58 @@ modest_edit_msg_window_finalize (GObject *obj)
 	g_object_unref (G_OBJECT(priv->conf));
 	priv->conf = NULL;
 
+	g_object_unref (G_OBJECT(priv->factory));
+	priv->factory = NULL;
+	
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 
 }
+
+
 
 static gboolean
 on_delete_event (GtkWidget *widget, GdkEvent *event, ModestEditMsgWindow *self)
 {
 	ModestEditMsgWindowPrivate *priv;
 	priv = MODEST_EDIT_MSG_WINDOW_GET_PRIVATE(self);
-
+	
 	modest_widget_memory_save_settings (priv->conf,
 					    GTK_WIDGET(priv->msg_body),
 					    "modest-edit-msg-body");
-	gtk_widget_destroy (GTK_WIDGET(self));
-	return TRUE;
+	return FALSE;
 }
 
 
-
-
 GtkWidget*
-modest_edit_msg_window_new (ModestConf *conf, ModestEditType type,
-			    TnyMsgIface *msg)
+modest_edit_msg_window_new (ModestConf *conf, ModestWidgetFactory *factory,
+			    ModestEditType type, TnyMsgIface *msg)
 {
 	GObject *obj;
 	ModestEditMsgWindowPrivate *priv;
 
 	g_return_val_if_fail (conf, NULL);
+	g_return_val_if_fail (factory, NULL);
 	g_return_val_if_fail (type >= 0 && type < MODEST_EDIT_TYPE_NUM, NULL);
 	g_return_val_if_fail (!(type==MODEST_EDIT_TYPE_NEW && msg), NULL); 
-	g_return_val_if_fail (!(type!=MODEST_EDIT_TYPE_NEW && !msg), NULL); 
-	
+	g_return_val_if_fail (!(type!=MODEST_EDIT_TYPE_NEW && !msg), NULL); 	
 	
 	obj = g_object_new(MODEST_TYPE_EDIT_MSG_WINDOW, NULL);
 	priv = MODEST_EDIT_MSG_WINDOW_GET_PRIVATE(obj);
 
 	g_object_ref (G_OBJECT(conf));
 	priv->conf = conf;
+
+	g_object_ref (factory);
+	priv->factory = factory;
+
+	init_window (obj);
 	
-	modest_widget_memory_restore_settings (priv->conf, GTK_WIDGET(priv->msg_body),
+	modest_widget_memory_restore_settings (priv->conf, GTK_WIDGET(obj),
 					       "modest-edit-msg-body");
+	
+	gtk_window_set_title (GTK_WINDOW(obj), "Modest");
+	gtk_window_set_icon  (GTK_WINDOW(obj),
+			      modest_icon_factory_get_icon (MODEST_APP_ICON));
 
 	g_signal_connect (G_OBJECT(obj), "delete-event",
 			  G_CALLBACK(on_delete_event), obj);
