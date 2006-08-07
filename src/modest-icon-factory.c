@@ -110,3 +110,30 @@ modest_icon_factory_get_icon (const gchar *name)
 	}
 	return pixbuf;
 }
+
+
+GdkPixbuf*
+modest_icon_factory_get_icon_at_size (const gchar *name, int width, int height)
+{
+	/* FIXME, somehow, cache scaled icons as well... */
+	GError *err = NULL;
+	GdkPixbuf *pixbuf = NULL;
+	
+	if (!icon_hash) {
+		g_printerr ("modest: ModestIconFactory must be initialized first\n");
+		return NULL;
+	}
+
+	pixbuf = gdk_pixbuf_new_from_file_at_size (name, width, height, &err);
+	if (!pixbuf) {
+		g_printerr ("modest: error in icon factory: %s\n", err->message);
+		g_error_free (err);
+	}
+	
+	/* we insert it, so it will be freed... FIXME... */
+	if (pixbuf)
+		g_hash_table_insert (icon_hash, g_strdup_printf ("%s-%d-%d",name,width,height),
+				     (gpointer)pixbuf);
+	
+	return pixbuf;
+}
