@@ -39,6 +39,7 @@
 
 #include <tny-store-account.h>
 #include <tny-transport-account.h>
+#include <modest-marshal.h>
 
 #include "modest-account-mgr.h"
 #include "modest-tny-account-store.h"
@@ -63,25 +64,19 @@ enum {
 	LAST_SIGNAL
 };
 
-/* Password Status */
-enum {
-        PW_NOT_INVALID,
-        PW_INVALID
-};
-
 typedef struct _ModestTnyAccountStorePrivate ModestTnyAccountStorePrivate;
 struct _ModestTnyAccountStorePrivate {
 
 	GMutex *store_lock;	
 	gchar *cache_dir;
-
+	gulong sig1, sig2;
+	
 	TnySessionCamel *tny_session_camel;
 	TnyDeviceIface  *device;
-
+	
         ModestAccountMgr *account_mgr;
-        gint pw_invalid;
-        ModestTnyGetPassFunc get_pass_func;
 };
+
 #define MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                       MODEST_TYPE_TNY_ACCOUNT_STORE, \
                                                       ModestTnyAccountStorePrivate))
@@ -105,6 +100,7 @@ modest_tny_account_store_get_type (void)
 			sizeof(ModestTnyAccountStore),
 			1,		/* n_preallocs */
 			(GInstanceInitFunc) modest_tny_account_store_init,
+			NULL
 		};
 
 		static const GInterfaceInfo iface_info = {
@@ -140,9 +136,9 @@ modest_tny_account_store_class_init (ModestTnyAccountStoreClass *klass)
 			      G_SIGNAL_RUN_FIRST,
 			      G_STRUCT_OFFSET(ModestTnyAccountStoreClass, password_requested),
 			      NULL, NULL,
-			      g_cclosure_marshal_VOID__STRING,
-			      G_TYPE_NONE, 1, G_TYPE_STRING);
-
+			      modest_marshal_VOID__STRING_POINTER_POINTER,
+			      G_TYPE_NONE, 3, G_TYPE_STRING, G_TYPE_POINTER, G_TYPE_POINTER);
+	
 	signals[ACCOUNT_UPDATE_SIGNAL] =
  		g_signal_new ("account_update",
 			      G_TYPE_FROM_CLASS (gobject_class),
@@ -160,14 +156,10 @@ modest_tny_account_store_init (ModestTnyAccountStore *obj)
 	ModestTnyAccountStorePrivate *priv =
 		MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(obj);
 
-	priv->account_mgr         = NULL;
+	priv->account_mgr            = NULL;
 	priv->device                 = NULL;
 	priv->cache_dir              = NULL;
-
         priv->tny_session_camel      = NULL;
-        /* Meaning: if not indicated otherwise, we have valid password data */
-        priv->pw_invalid             = PW_NOT_INVALID;
-        priv->get_pass_func          = NULL;
 }
 
 
@@ -198,39 +190,40 @@ on_account_changed (ModestAccountMgr *acc_mgr, const gchar *account, gboolean se
 static gchar*
 get_password (TnyAccountIface *account, const gchar *prompt, gboolean *cancel)
 {
-	
-	const gchar *key;
+	gchar *key;
 	const TnyAccountStoreIface *account_store;
 	ModestTnyAccountStore *self;
 	ModestTnyAccountStorePrivate *priv;
-	gchar *retval;
-
+	gchar *pwd = NULL;
+	gboolean remember_pwd;
+	
 	g_return_val_if_fail (account, NULL);
 	
-	key = tny_account_iface_get_id (account);
+	key           = tny_account_iface_get_id (account);
 	account_store = tny_account_iface_get_account_store(account);
 
 	self = MODEST_TNY_ACCOUNT_STORE (account_store);
         priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
 
-        if (priv->pw_invalid==PW_NOT_INVALID) {
-                retval = modest_account_mgr_get_string (priv->account_mgr,
-							key,
-							MODEST_ACCOUNT_PASSWORD,
-							TRUE,
-							NULL);
-        } else {
-                retval = priv->get_pass_func(account, prompt, cancel);
-                if (!*cancel) {
-                        priv->pw_invalid=PW_NOT_INVALID;
-                        modest_account_mgr_set_string(priv->account_mgr,
-						      key,
-						      MODEST_ACCOUNT_PASSWORD,
-						      retval, TRUE, 
-						      NULL);
-                }
-        }
-        return retval;
+	/* is it in the conf? */
+	pwd  = modest_account_mgr_get_string (priv->account_mgr,
+					      key, MODEST_ACCOUNT_PASSWORD,
+					      TRUE, NULL);
+	if (!pwd || strlen(pwd) == 0) {
+		/* we don't have it yet. we emit a signal to get the password somewhere */
+		const gchar* name = tny_account_iface_get_name (account);
+		*cancel = TRUE;
+		pwd     = NULL;
+		g_signal_emit (G_OBJECT(self), signals[PASSWORD_REQUESTED_SIGNAL], 0,
+			       name, &pwd, cancel);
+		if (!*cancel) /* remember the password */
+			modest_account_mgr_set_string (priv->account_mgr,
+						       key, MODEST_ACCOUNT_PASSWORD,
+						       pwd, TRUE, NULL);
+	} else
+		*cancel = FALSE;
+
+	return pwd; 
 }
 
 
@@ -244,8 +237,6 @@ forget_password (TnyAccountIface *account) {
         account_store = tny_account_iface_get_account_store(account);
 	self = MODEST_TNY_ACCOUNT_STORE (account_store);
         priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
-
-        priv->pw_invalid=PW_INVALID;
 }
 
 
@@ -331,15 +322,19 @@ modest_tny_account_store_finalize (GObject *obj)
 	ModestTnyAccountStorePrivate *priv =
 		MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
 
+	
+	
 	if (priv->account_mgr) {
+		g_signal_handler_disconnect (G_OBJECT(priv->account_mgr),
+					     priv->sig1);
+		g_signal_handler_disconnect (G_OBJECT(priv->account_mgr),
+					     priv->sig2);
 		g_object_unref (G_OBJECT(priv->account_mgr));
 		priv->account_mgr = NULL;
 	}
 
-	
 	if (priv->tny_session_camel) {
-// FIXME: how to kill a camel
-		//g_object_unref (G_OBJECT(priv->tny_session_camel));
+		// FIXME: how to kill a camel
 		priv->tny_session_camel = NULL;
 	}
 
@@ -353,6 +348,8 @@ modest_tny_account_store_finalize (GObject *obj)
 
 	g_free (priv->cache_dir);
 	priv->cache_dir = NULL;
+
+	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
 
@@ -371,11 +368,11 @@ modest_tny_account_store_new (ModestAccountMgr *account_mgr) {
 	g_object_ref(G_OBJECT(account_mgr));
 	priv->account_mgr = account_mgr;
 
-	g_signal_connect (G_OBJECT(account_mgr), "account_changed",
-			  G_CALLBACK (on_account_changed), obj);
-	g_signal_connect (G_OBJECT(account_mgr), "account_removed",
-			  G_CALLBACK (on_account_removed), obj);
-
+	priv->sig1 = g_signal_connect (G_OBJECT(account_mgr), "account_changed",
+				       G_CALLBACK (on_account_changed), obj);
+	priv->sig2 = g_signal_connect (G_OBJECT(account_mgr), "account_removed",
+				       G_CALLBACK (on_account_removed), obj);
+	
 	priv->store_lock = g_mutex_new ();
 
 	priv->device = (TnyDeviceIface*)tny_device_new();
@@ -536,7 +533,7 @@ modest_tny_account_store_get_accounts  (TnyAccountStoreIface *iface,
 				g_printerr ("modest: failed to create account iface for '%s:%s'\n",
 					    account_name, server_account);
 			else
-				tny_list_iface_prepend (list, account_iface);
+				tny_list_iface_prepend (list, G_OBJECT(account_iface));
 			g_free (server_account);
 		}
 		
@@ -551,7 +548,7 @@ modest_tny_account_store_get_accounts  (TnyAccountStoreIface *iface,
 				g_printerr ("modest: failed to create account iface for '%s:%s'\n",
 					    account_name, server_account);
 			else
-				tny_list_iface_prepend (list, account_iface);
+				tny_list_iface_prepend (list, G_OBJECT(account_iface));
 			g_free (server_account);
 		}
 
@@ -579,7 +576,7 @@ modest_tny_account_store_get_cache_dir (TnyAccountStoreIface *self)
 }
 
 
-static const TnyDeviceIface*
+static TnyDeviceIface*
 modest_tny_account_store_get_device (TnyAccountStoreIface *self)
 {
 	ModestTnyAccountStorePrivate *priv;
@@ -594,6 +591,7 @@ static gboolean
 modest_tny_account_store_alert (TnyAccountStoreIface *self, TnyAlertType type,
 				const gchar *prompt)
 {
+	g_printerr ("modest: alert [%d]: %s", type, prompt);
 	return TRUE; /* FIXME: implement this */
 }
 
@@ -625,6 +623,7 @@ void
 modest_tny_account_store_set_get_pass_func (ModestTnyAccountStore *self,
 					    ModestTnyGetPassFunc func)
 {
+	g_warning (__FUNCTION__);
 	return; /* not implemented, we use signals */
 }
 
@@ -632,9 +631,7 @@ modest_tny_account_store_set_get_pass_func (ModestTnyAccountStore *self,
 TnySessionCamel*
 tny_account_store_get_session    (TnyAccountStore *self)
 {
-	ModestTnyAccountStorePrivate *priv;
-
-	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
-
-	return priv->tny_session_camel;
+	g_return_val_if_fail (self, NULL);
+	
+	return MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self)->tny_session_camel;
 }
