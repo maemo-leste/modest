@@ -85,6 +85,7 @@ modest_tny_attachment_get_type (void)
 			sizeof(ModestTnyAttachment),
 			1,		/* n_preallocs */
 			(GInstanceInitFunc) modest_tny_attachment_init,
+			NULL
 		};
 		my_type = g_type_register_static (G_TYPE_OBJECT,
 		                                  "ModestTnyAttachment",
@@ -287,20 +288,20 @@ modest_tny_attachment_free_list(GList *list)
 
 
 ModestTnyAttachment *
-modest_tny_attachment_new_from_mime_part(TnyMsgMimePartIface *part)
+modest_tny_attachment_new_from_mime_part(TnyMimePartIface *part)
 {
 	TnyStreamIface *mem_stream;
 	ModestTnyAttachment *self;
 	
 	mem_stream = TNY_STREAM_IFACE(tny_stream_camel_new(camel_stream_mem_new()));
 	self = modest_tny_attachment_new();
-	tny_msg_mime_part_iface_decode_to_stream(part, mem_stream);
+	tny_mime_part_iface_decode_to_stream(part, mem_stream);
 	tny_stream_iface_reset(mem_stream);
 	modest_tny_attachment_set_stream(self, mem_stream);
 	modest_tny_attachment_set_mime_type(self,
-	                                    tny_msg_mime_part_iface_get_content_type(part));
+	                                    tny_mime_part_iface_get_content_type(part));
 	modest_tny_attachment_set_name(self,
-	                                    tny_msg_mime_part_iface_get_filename(part));
+	                                    tny_mime_part_iface_get_filename(part));
 	return self;
 }
 
@@ -312,7 +313,7 @@ modest_tny_attachment_new_from_message(const TnyMsgIface *msg)
 	gint res;
 	
 	mem_stream = TNY_STREAM_IFACE(tny_stream_camel_new(camel_stream_mem_new()));
-	msg_stream = tny_msg_mime_part_iface_get_stream(TNY_MSG_MIME_PART_IFACE(msg));
+	msg_stream = tny_mime_part_iface_get_stream(TNY_MIME_PART_IFACE(msg));
 	printf("ping\n");
 	tny_stream_iface_reset(msg_stream);
 	res = tny_stream_iface_write_to_stream(msg_stream, mem_stream);
@@ -325,48 +326,4 @@ modest_tny_attachment_new_from_message(const TnyMsgIface *msg)
 	modest_tny_attachment_set_mime_type(self, "message/rfc822");
 	modest_tny_attachment_set_name(self, "original message");
 	return self;
-}
-
-GList *
-modest_tny_attachment_new_list_from_msg(const TnyMsgIface *msg, gboolean with_body)
-{
-	// FIXME: does not work anymore. needs the new TnyList stuff...
-	return NULL;
-#if 0	
-
-	TnyList *att_list
-	const GList *attachments = NULL;
-	TnyMsgMimePartIface *part;
-	ModestTnyAttachment *att;
-	
-
-	if (with_body) {
-		/* TODO: make plain over html configurable */
-		part = modest_tny_msg_actions_find_body_part ((TnyMsgIface *)msg, "text/plain");
-		if (!part) 
-			part = modest_tny_msg_actions_find_body_part ((TnyMsgIface *)msg, "text/html");
-		if (part) {
-			att = modest_tny_attachment_new_from_mime_part(part);
-			/* TODO: i18n */
-			modest_tny_attachment_set_name(att, "original message");
-			list = g_list_append(list, att);
-		}
-	}
-
-	if (with_body) {
-		list = g_list_append(list, modest_tny_attachment_new_from_message(msg));
-	} else {
-		attachments = tny_msg_iface_get_parts((TnyMsgIface *)msg);
-	}
-	while (attachments) {
-		part = attachments->data;
-		if (tny_msg_mime_part_iface_is_attachment(part)) {
-			att = modest_tny_attachment_new_from_mime_part(part);
-			list = g_list_append(list, att);
-		}
-		attachments = attachments->next;
-	}
-	return list;
-
-#endif
 }
