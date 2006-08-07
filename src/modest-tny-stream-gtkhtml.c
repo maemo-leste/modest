@@ -76,6 +76,7 @@ modest_tny_stream_gtkhtml_get_type (void)
 			sizeof(ModestTnyStreamGtkhtml),
 			1,		/* n_preallocs */
 			(GInstanceInitFunc) modest_tny_stream_gtkhtml_init,
+			NULL
 		};
 
 		static const GInterfaceInfo iface_info = {
@@ -160,7 +161,7 @@ gtkhtml_write (TnyStreamIface *self, const char *buffer, size_t n)
 	priv = MODEST_TNY_STREAM_GTKHTML_GET_PRIVATE(self);
 
 	if (!priv->stream) {
-		g_warning ("cannot write to closed stream");
+		g_print ("modest: cannot write to closed stream\n");
 		return 0;
 	}
 
@@ -224,11 +225,11 @@ modest_tny_stream_gtkhml_iface_init (gpointer g_iface, gpointer iface_data)
 
 	klass = (TnyStreamIfaceClass *)g_iface;
 	
-        klass->read_func  = gtkhtml_read;
-        klass->write_func = gtkhtml_write;
-        klass->flush_func = gtkhtml_flush;
-        klass->close_func = gtkhtml_close;
-	klass->eos_func   = gtkhtml_eos;
-	klass->reset_func = gtkhtml_reset;
+        klass->read_func            = gtkhtml_read;
+        klass->write_func           = gtkhtml_write;
+        klass->flush_func           = gtkhtml_flush;
+        klass->close_func           = gtkhtml_close;
+	klass->eos_func             = gtkhtml_eos;
+	klass->reset_func           = gtkhtml_reset;
 	klass->write_to_stream_func = gtkhtml_write_to_stream;
 }

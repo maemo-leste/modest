@@ -117,7 +117,7 @@ main (int argc, char *argv[])
 	}
 
 	if (debug)
-		g_log_set_always_fatal (G_LOG_LEVEL_CRITICAL);
+		g_log_set_always_fatal (G_LOG_LEVEL_CRITICAL|G_LOG_LEVEL_WARNING);
 	
 	if (!getenv("DISPLAY"))
 		batch = TRUE; 
