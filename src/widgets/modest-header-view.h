@@ -64,9 +64,9 @@ struct _ModestHeaderViewClass {
 				  TnyMsgIface *msg,
 				  gpointer user_data);
 
-	void (*message_not_found) (ModestHeaderView* self,
-				   ModestItemType type,
-				   gpointer user_data);
+	void (*item_not_found) (ModestHeaderView* self,
+				ModestItemType type,
+				gpointer user_data);
 	
 	/* msg == NULL implies that the operation is finished, ie.
 	 * the progress indictation can be hidden */

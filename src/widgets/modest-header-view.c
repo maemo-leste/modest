@@ -119,7 +119,7 @@ modest_header_view_class_init (ModestHeaderViewClass *klass)
 		g_signal_new ("item_not_found",
 			      G_TYPE_FROM_CLASS (gobject_class),
 			      G_SIGNAL_RUN_FIRST,
-			      G_STRUCT_OFFSET (ModestHeaderViewClass,message_not_found),
+			      G_STRUCT_OFFSET (ModestHeaderViewClass,item_not_found),
 			      NULL, NULL,
 			      g_cclosure_marshal_VOID__INT,
 			      G_TYPE_NONE, 1, G_TYPE_INT);
