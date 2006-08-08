@@ -50,7 +50,7 @@
 
 /* server account keys */
 #define MODEST_ACCOUNT_PASSWORD          "password"          /* string */
-#define MODEST_ACCOUNT_REMEMBER_PWD	 "remember_pwd"      /* boolean */
+#define MDOEST_ACCOUNT_REMEMBER_PWD	 "remember_pwd"      /* boolean */
 #define MODEST_ACCOUNT_HOSTNAME          "hostname"          /* string */
 #define MODEST_ACCOUNT_USERNAME          "username"          /* string */
 #define MODEST_ACCOUNT_PROTO             "proto"             /* string */

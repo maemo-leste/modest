@@ -56,8 +56,6 @@ static void on_connection_changed (TnyDeviceIface *device, gboolean online,
 				   ModestWidgetFactory *self);
 static void on_online_toggle_toggled (GtkToggleButton *toggle, ModestWidgetFactory *factory);
 
-static void on_main_toolbar_button_clicked (ModestToolbar *toolbar, ModestToolbarButton button_id, 
-					    ModestWidgetFactory *self);
 static void on_password_requested (ModestTnyAccountStore *account_store, const gchar* account_name,
 				   gchar **password, gboolean *cancel, ModestWidgetFactory *self);
 
@@ -414,9 +412,6 @@ modest_widget_factory_get_folder_info_label (ModestWidgetFactory *self)
 	return MODEST_WIDGET_FACTORY_GET_PRIVATE(self)->folder_info_label;
 }
 
-
-
-
 ModestToolbar*
 modest_widget_factory_get_main_toolbar (ModestWidgetFactory *self, 
 					GSList *items)
@@ -432,9 +427,6 @@ modest_widget_factory_get_main_toolbar (ModestWidgetFactory *self,
 		g_printerr ("modest: failed to create main toolbar\n");
 		return NULL;
 	}
-	
-	g_signal_connect (G_OBJECT(priv->main_toolbar), "button_clicked",
-			  G_CALLBACK(on_main_toolbar_button_clicked), self);
 	
 	return priv->main_toolbar;
 }
@@ -673,13 +665,6 @@ static void on_item_not_found     (ModestHeaderView* header_view, ModestItemType
 	gtk_widget_destroy (dialog);
 }
 
-
-static void
-on_main_toolbar_button_clicked (ModestToolbar *toolbar, ModestToolbarButton button_id, 
-				ModestWidgetFactory *self)
-{
-	g_printerr ("modest: button %d clicked\n", button_id);
-}
 
 
 static void
