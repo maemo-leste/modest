@@ -11,11 +11,6 @@ INCLUDES=\
 	-I$(MODEST_PLATFORM_DIR) \
 	-DPREFIX=\"@prefix@\" 
 
-if OLD_UI_STUFF
-INCLUDES +=\
-	-DOLD_UI_STUFF
-endif
-
 BUILT_SOURCES = modest-marshal.c modest-marshal.h
 
 modest-marshal.c: modest-marshal.list
@@ -40,8 +35,6 @@ modest_SOURCES=\
 	modest-account-keys.h\
 	modest-account-mgr.h\
 	modest-account-mgr.c\
-	modest-window-mgr.h\
-	modest-window-mgr.c\
 	modest-icon-factory.c\
 	modest-icon-factory.h\
 	modest-tny-account-store.h\
@@ -65,16 +58,6 @@ modest_SOURCES=\
 	modest-marshal.c \
 	modest-marshal.h 
 
-if OLD_UI_STUFF
-modest_SOURCES += \
-	modest-identity-keys.h\
-	modest-identity-mgr.h\
-	modest-identity-mgr.c\
-	modest-editor-window.c\
-	modest-editor-window.h\
-	modest-viewer-window.c\
-	modest-viewer-window.h
-endif
 
 modest_LDADD = \
 	$(MODEST_GSTUFF_LIBS) \

@@ -27,9 +27,6 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
-/* modest-tny-msg-view.h */
-
 #ifndef __MODEST_MSG_VIEW_H__
 #define __MODEST_MSG_VIEW_H__
 

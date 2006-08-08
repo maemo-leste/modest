@@ -29,8 +29,9 @@ ModestMainWindow
 
 </para>
 
-@factory: 
 @conf: 
+@account_mgr: 
+@factory: 
 @Returns: 
 
 

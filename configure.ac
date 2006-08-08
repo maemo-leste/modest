@@ -1,5 +1,5 @@
 dnl configure.ac for modest 
-dnl Time-stamp: <2006-07-21 09:30:11 (djcb)>
+dnl Time-stamp: <2006-08-08 12:21:25 (djcb)>
 dnl written by Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>
 
 AC_INIT([modest],[0.0.1],[http://maemo.org])
@@ -28,21 +28,26 @@ PKG_CHECK_MODULES(MODEST_GSTUFF,glib-2.0 >= 2.6 gobject-2.0 gtk+-2.0 >= 2.6 gcon
 AC_SUBST(MODEST_GSTUFF_CFLAGS)
 AC_SUBST(MODEST_GSTUFF_LIBS)
 
-dnl now, determine what to build
+dnl dnl now, determine what to build
 AC_MSG_NOTICE([Determining what platform to build])
-PKG_CHECK_MODULES(MODEST_LIBTINYMAIL_MAEMO,libosso,[with_platform=hildon],true)
+dnl PKG_CHECK_MODULES(MODEST_LIBTINYMAIL_MAEMO,libosso,[with_platform=hildon],true)
 
 AC_ARG_WITH(platform,
 [--with-platform=gtk		platform to build for [gtk]],
 [case "${with_platform}" in
-      gtk)    MODEST_PLATFORM_DIR=gtk;;
-      gtk2)   MODEST_PLATFORM_DIR=gtk2;;
-      hildon) MODEST_PLATFORM_DIR=hildon;;
-      *)      MODEST_PLATFORM_DIR=${with_platform}
+       gtk)    MODEST_PLATFORM_DIR=gtk;;
+       hildon) MODEST_PLATFORM_DIR=hildon;;
+       *)      MODEST_PLATFORM_DIR=${with_platform}
 esac], [MODEST_PLATFORM_DIR=gtk
-       with_platform=gtk])
+               with_platform=gtk])
 AC_SUBST(MODEST_PLATFORM_DIR)
 	
+dnl tempororily change hildon into gtk...
+if test "x$with_platform" = "xhildon"; then
+   AC_MSG_WARN([Hildon frontend is currently disabled])
+   with_platform="gtk"
+fi
+
 if test "x$with_platform" = "xhildon"; then
    PKG_CHECK_MODULES(MODEST_LIBTINYMAIL_MAEMO,libtinymail-maemo-1.0 hildon-libs hildon-lgpl libosso)
    AC_SUBST(MODEST_LIBTINYMAIL_MAEMO_CFLAGS)
@@ -53,16 +58,10 @@ else
    AC_SUBST(MODEST_LIBTINYMAIL_GNOME_DESKTOP_LIBS)
 fi
 
-AM_CONDITIONAL(OLD_UI_STUFF, test x$with_platform != xgtk2)
-
 AC_OUTPUT([
 Makefile
 src/Makefile
 src/gtk/Makefile
-src/gtk2/Makefile
-src/hildon/Makefile
-src/hildon/com.nokia.modest.service
-src/hildon/modest.desktop.in
 src/widgets/Makefile
 docs/Makefile
 docs/reference/Makefile

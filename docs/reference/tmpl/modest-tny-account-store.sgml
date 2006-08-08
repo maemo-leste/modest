@@ -29,7 +29,7 @@ ModestTnyAccountStore
 
 </para>
 
-@modest_acc_mgr: 
+@account_mgr: 
 @Returns: 
 
 
