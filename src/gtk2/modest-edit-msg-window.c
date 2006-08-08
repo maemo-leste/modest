@@ -122,6 +122,8 @@ modest_edit_msg_window_init (ModestEditMsgWindow *obj)
 
 
 
+
+
 /* Our menu, an array of GtkItemFactoryEntry structures that defines each menu item */
 static GtkItemFactoryEntry menu_items[] = {
 	{ "/_File",		NULL,			NULL,           0, "<Branch>" },
@@ -198,6 +200,31 @@ menubar_new (ModestEditMsgWindow *self)
 
 
 
+static void
+on_toolbar_button_clicked (ModestToolbar *toolbar, ModestToolbarButton button_id,
+			   ModestEditMsgWindow *self)
+{
+	switch (button_id) {
+	case MODEST_TOOLBAR_BUTTON_MAIL_SEND:
+		g_warning ("send the mail!");
+		gtk_widget_destroy (GTK_WIDGET(self));
+		break;
+		
+	case MODEST_TOOLBAR_BUTTON_REPLY:
+	case MODEST_TOOLBAR_BUTTON_REPLY_ALL:
+	case MODEST_TOOLBAR_BUTTON_FORWARD:
+	case MODEST_TOOLBAR_BUTTON_SEND_RECEIVE:
+	case MODEST_TOOLBAR_BUTTON_NEXT:
+	case MODEST_TOOLBAR_BUTTON_PREV:
+	case MODEST_TOOLBAR_BUTTON_DELETE:
+
+	default:
+		g_printerr ("modest: key %d pressed\n", button_id);
+	}
+}
+
+
+
 
 static ModestToolbar*
 toolbar_new (ModestEditMsgWindow *self)
@@ -218,6 +245,9 @@ toolbar_new (ModestEditMsgWindow *self)
 	
 	toolbar = modest_widget_factory_get_edit_toolbar (priv->factory, buttons);
 	g_slist_free (buttons);
+
+	g_signal_connect (G_OBJECT(toolbar), "button_clicked",
+			  G_CALLBACK(on_toolbar_button_clicked), self);
 	
 	return toolbar;
 }
@@ -330,7 +360,7 @@ modest_edit_msg_window_new (ModestConf *conf, ModestWidgetFactory *factory,
 	g_object_ref (factory);
 	priv->factory = factory;
 
-	init_window (obj);
+	init_window (MODEST_EDIT_MSG_WINDOW(obj));
 	
 	modest_widget_memory_restore_settings (priv->conf, GTK_WIDGET(obj),
 					       "modest-edit-msg-body");

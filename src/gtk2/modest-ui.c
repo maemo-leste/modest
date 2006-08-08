@@ -199,6 +199,7 @@ modest_ui_new (ModestConf *modest_conf)
 static gboolean
 on_main_window_delete_event (GtkWidget *widget, GdkEvent *event, ModestUI *self)
 {
+	g_warning (__FUNCTION__);
 	gtk_main_quit ();
 	return FALSE;
 }
@@ -207,7 +208,6 @@ on_main_window_delete_event (GtkWidget *widget, GdkEvent *event, ModestUI *self)
 GtkWidget*
 modest_ui_main_window (ModestUI *modest_ui)
 {
-	GtkWidget* win;
 	ModestUIPrivate *priv;
 
 	g_return_val_if_fail (modest_ui, NULL);

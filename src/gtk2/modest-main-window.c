@@ -326,6 +326,28 @@ header_view_new (ModestMainWindow *self)
 	return header_view;
 }
 
+static void
+on_toolbar_button_clicked (ModestToolbar *toolbar, ModestToolbarButton button_id,
+			   ModestMainWindow *self)
+{
+	switch (button_id) {
+	case MODEST_TOOLBAR_BUTTON_NEW_MAIL:
+		on_menu_new_message (self, 0, NULL);
+		break;
+		
+	case MODEST_TOOLBAR_BUTTON_REPLY:
+	case MODEST_TOOLBAR_BUTTON_REPLY_ALL:
+	case MODEST_TOOLBAR_BUTTON_FORWARD:
+	case MODEST_TOOLBAR_BUTTON_SEND_RECEIVE:
+	case MODEST_TOOLBAR_BUTTON_NEXT:
+	case MODEST_TOOLBAR_BUTTON_PREV:
+	case MODEST_TOOLBAR_BUTTON_DELETE:
+
+	default:
+		g_printerr ("modest: key %d pressed\n", button_id);
+	}
+}
+
 static ModestToolbar*
 toolbar_new (ModestMainWindow *self)
 {
@@ -355,6 +377,9 @@ toolbar_new (ModestMainWindow *self)
 	
 	toolbar = modest_widget_factory_get_main_toolbar (priv->factory, buttons);
 	g_slist_free (buttons);
+	
+	g_signal_connect (G_OBJECT(toolbar), "button_clicked",
+			  G_CALLBACK(on_toolbar_button_clicked), self);
 	
 	return toolbar;
 }
