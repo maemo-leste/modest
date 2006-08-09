@@ -2,7 +2,7 @@
 # Makefile.am
 # Time-stamp: <2006-07-24 11:11:09 (djcb)>
 SUBDIRS=$(MODEST_PLATFORM_DIR) widgets
-DIST_SUBDIRS = widgets gtk gtk2 hildon
+DIST_SUBDIRS = widgets gtk
 
 INCLUDES=\
 	$(MODEST_GSTUFF_CFLAGS)\

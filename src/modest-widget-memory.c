@@ -109,7 +109,7 @@ save_settings_window (ModestConf *conf, GtkWindow *win, const gchar *name)
 	key = get_keyname (conf, name, PARAM_WIDTH);
 	modest_conf_set_int (conf, key, width, NULL);
 	g_free (key);
-
+	
 	return TRUE;
 }
 
