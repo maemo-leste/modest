@@ -116,9 +116,40 @@ modest_edit_msg_window_init (ModestEditMsgWindow *obj)
 	priv->factory = NULL;
 	priv->toolbar = NULL;
 	priv->menubar = NULL;
-		
 }
 
+
+
+static void
+save_settings (ModestEditMsgWindow *self)
+{
+	ModestEditMsgWindowPrivate *priv;
+	priv = MODEST_EDIT_MSG_WINDOW_GET_PRIVATE(self);
+	modest_widget_memory_save_settings (priv->conf,
+					    GTK_WIDGET(self),
+					    "modest-edit-msg-window");
+}
+
+
+static void
+restore_settings (ModestEditMsgWindow *self)
+{
+	ModestEditMsgWindowPrivate *priv;
+	priv = MODEST_EDIT_MSG_WINDOW_GET_PRIVATE(self);
+	modest_widget_memory_restore_settings (priv->conf, GTK_WIDGET(self),
+					       "modest-edit-msg-window");
+}
+
+
+
+	
+
+static void
+on_menu_quit (ModestEditMsgWindow *self, guint action, GtkWidget *widget)
+{
+	save_settings (self);
+	gtk_widget_destroy (GTK_WIDGET(self));
+}
 
 
 
@@ -135,7 +166,7 @@ static GtkItemFactoryEntry menu_items[] = {
 
 
 	{ "/File/sep1",		NULL,			NULL,           0, "<Separator>" },
-	{ "/File/_Quit",	"<CTRL>Q",		NULL,           0, "<StockItem>", GTK_STOCK_QUIT },
+	{ "/File/_Quit",	"<CTRL>Q",		on_menu_quit,   0, "<StockItem>", GTK_STOCK_QUIT },
 
 	{ "/_Edit",		NULL,			NULL,           0, "<Branch>" },
 	{ "/Edit/_Undo",	"<CTRL>Z",		NULL,		0, "<StockItem>", GTK_STOCK_UNDO },
@@ -206,7 +237,7 @@ on_toolbar_button_clicked (ModestToolbar *toolbar, ModestToolbarButton button_id
 {
 	switch (button_id) {
 	case MODEST_TOOLBAR_BUTTON_MAIL_SEND:
-		g_warning ("send the mail!");
+		save_settings (self);
 		gtk_widget_destroy (GTK_WIDGET(self));
 		break;
 		
@@ -328,12 +359,7 @@ modest_edit_msg_window_finalize (GObject *obj)
 static gboolean
 on_delete_event (GtkWidget *widget, GdkEvent *event, ModestEditMsgWindow *self)
 {
-	ModestEditMsgWindowPrivate *priv;
-	priv = MODEST_EDIT_MSG_WINDOW_GET_PRIVATE(self);
-	
-	modest_widget_memory_save_settings (priv->conf,
-					    GTK_WIDGET(priv->msg_body),
-					    "modest-edit-msg-body");
+	save_settings (self);
 	return FALSE;
 }
 
@@ -361,9 +387,8 @@ modest_edit_msg_window_new (ModestConf *conf, ModestWidgetFactory *factory,
 	priv->factory = factory;
 
 	init_window (MODEST_EDIT_MSG_WINDOW(obj));
-	
-	modest_widget_memory_restore_settings (priv->conf, GTK_WIDGET(obj),
-					       "modest-edit-msg-body");
+
+	restore_settings (MODEST_EDIT_MSG_WINDOW(obj));
 	
 	gtk_window_set_title (GTK_WINDOW(obj), "Modest");
 	gtk_window_set_icon  (GTK_WINDOW(obj),

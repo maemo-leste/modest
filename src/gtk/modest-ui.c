@@ -197,9 +197,9 @@ modest_ui_new (ModestConf *modest_conf)
 }
 
 static gboolean
-on_main_window_delete_event (GtkWidget *widget, GdkEvent *event, ModestUI *self)
+on_main_window_destroy (GtkObject *widget, ModestUI *self)
 {
-	g_warning (__FUNCTION__);
+	/* FIXME: check if there any viewer/editing windows opened */
 	gtk_main_quit ();
 	return FALSE;
 }
@@ -217,8 +217,9 @@ modest_ui_main_window (ModestUI *modest_ui)
 		priv->main_window =
 			modest_main_window_new (priv->conf, priv->account_mgr,
 						priv->widget_factory);
-		g_signal_connect (G_OBJECT(priv->main_window), "delete-event",
-				  G_CALLBACK(on_main_window_delete_event), modest_ui);
+		g_signal_connect (G_OBJECT(priv->main_window), "destroy",
+				  G_CALLBACK(on_main_window_destroy), modest_ui);
+
 	}
 		
 	if (!priv->main_window)
