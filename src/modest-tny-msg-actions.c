@@ -154,8 +154,9 @@ modest_tny_msg_actions_find_nth_part (TnyMsgIface *msg, gint index)
 	iter  = tny_list_iface_create_iterator ((TnyListIface*)parts);
 	if (!tny_iterator_iface_has_first(iter))
 		return NULL;
-
-	part = TNY_MIME_PART_IFACE(tny_iterator_iface_nth (iter, index));
+	
+	tny_iterator_iface_nth (iter, index);
+	part = TNY_MIME_PART_IFACE(tny_iterator_iface_current (iter));
 
 	g_object_unref (G_OBJECT(iter));
 	g_object_unref (G_OBJECT(parts));

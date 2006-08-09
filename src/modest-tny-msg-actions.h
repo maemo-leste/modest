@@ -68,7 +68,7 @@ TnyMimePartIface *modest_tny_msg_actions_find_body_part (TnyMsgIface * self, gbo
  * 
  * search for the nth (mime) part in the message
  * 
- * Returns: the TnyMsgMimePartIface for the found part, or NULL if no matching part is found
+ * Returns: the TnyMsgMimePartIface for the found part, or NULL if no matching part is foundi; must be unref'd
  */
 TnyMimePartIface * modest_tny_msg_actions_find_nth_part (TnyMsgIface *msg, gint index);
 
