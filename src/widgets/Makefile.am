@@ -1,6 +1,6 @@
 #
 # Makefile.am
-# Time-stamp: <2006-08-08 12:22:31 (djcb)>
+# Time-stamp: <2006-08-11 00:24:01 (djcb)>
 
 INCLUDES=\
 	$(MODEST_GSTUFF_CFLAGS) \
@@ -23,7 +23,9 @@ libmodest_widgets_la_SOURCES=    \
 	modest-msg-view.c        \
 	modest-msg-view.h	 \
 	modest-toolbar.h	 \
-	modest-toolbar.c	
+	modest-toolbar.c	 \
+	modest-combo-box.c	 \
+	modest-combo-box.h
  
 LDADD = \
 	$(MODEST_GSTUFF_LIBS) \
