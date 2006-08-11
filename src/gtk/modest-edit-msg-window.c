@@ -32,6 +32,7 @@
 #include <modest-widget-memory.h>
 #include <modest-widget-factory.h>
 #include "modest-icon-names.h"
+#include <modest-tny-transport-actions.h>
 
 static void  modest_edit_msg_window_class_init   (ModestEditMsgWindowClass *klass);
 static void  modest_edit_msg_window_init         (ModestEditMsgWindow *obj);
@@ -140,8 +141,6 @@ restore_settings (ModestEditMsgWindow *self)
 					       "modest-edit-msg-window");
 }
 
-
-
 	
 
 static void
@@ -181,10 +180,10 @@ static GtkItemFactoryEntry menu_items[] = {
 	{ "/Edit/Deselect all",  "<Shift><CTRL>A",	NULL,           0, "<Item>" },
 
 	{ "/_View",             NULL,		NULL,		0, "<Branch>" },
-	{ "/View/To-field",          NULL,		NULL,		0, "<Item>" },
+	{ "/View/To-field",          NULL,		NULL,		0, "<CheckItem>" },
 	
-	{ "/View/Cc-field:",          NULL,		NULL,		0, "<Item>" },
-	{ "/View/Bcc-field:",          NULL,		NULL,		0, "<Item>" },
+	{ "/View/Cc-field:",          NULL,		NULL,		0, "<CheckItem>" },
+	{ "/View/Bcc-field:",          NULL,		NULL,		0, "<CheckItem>" },
 	
 	
 	{ "/_Insert",             NULL,		NULL,		0, "<Branch>" },
@@ -230,6 +229,38 @@ menubar_new (ModestEditMsgWindow *self)
 }
 
 
+static void
+send_mail (ModestEditMsgWindow *self)
+{
+	const gchar *from, *to, *cc, *bcc, *subject;
+	gchar *body;
+	ModestEditMsgWindowPrivate *priv;
+
+	GtkTextBuffer *buf;
+	GtkTextIter b, e;
+	
+	priv = MODEST_EDIT_MSG_WINDOW_GET_PRIVATE(self);
+
+	/* don't free these */
+	from = "djcb@djcbsoftware.nl";
+	to   =  gtk_entry_get_text (GTK_ENTRY(priv->to_field));
+	cc   =  gtk_entry_get_text (GTK_ENTRY(priv->cc_field));
+	bcc  =  gtk_entry_get_text (GTK_ENTRY(priv->bcc_field));
+	to   =  gtk_entry_get_text (GTK_ENTRY(priv->subject_field));
+
+	/* don't unref */
+	buf   =  gtk_text_view_get_buffer (GTK_TEXT_VIEW(priv->msg_body));
+	
+	gtk_text_buffer_get_bounds (buf, &b, &e);
+	body  = gtk_text_buffer_get_text (buf, &b, &e,
+					  FALSE); /* free this one */
+
+//	modest_tny_transport_actions_send_message (transport_account,
+//						   from, to, cc, bcc,
+//						   subject, *body, NULL);
+	g_free (body);
+}
+
 
 static void
 on_toolbar_button_clicked (ModestToolbar *toolbar, ModestToolbarButton button_id,
@@ -237,6 +268,7 @@ on_toolbar_button_clicked (ModestToolbar *toolbar, ModestToolbarButton button_id
 {
 	switch (button_id) {
 	case MODEST_TOOLBAR_BUTTON_MAIL_SEND:
+		send_mail (self);
 		save_settings (self);
 		gtk_widget_destroy (GTK_WIDGET(self));
 		break;
@@ -328,7 +360,7 @@ init_window (ModestEditMsgWindow *obj)
 
 	gtk_box_pack_start (GTK_BOX(main_vbox), priv->menubar, FALSE, FALSE, 0);
 	gtk_box_pack_start (GTK_BOX(main_vbox), priv->toolbar, FALSE, FALSE, 0);
-	gtk_box_pack_start (GTK_BOX(main_vbox), header_table, FALSE, FALSE, 0);
+	gtk_box_pack_start (GTK_BOX(main_vbox), header_table, FALSE, FALSE, 6);
 	gtk_box_pack_start (GTK_BOX(main_vbox), priv->msg_body, TRUE, TRUE, 6);
 
 	gtk_widget_show_all (GTK_WIDGET(main_vbox));
