@@ -28,15 +28,10 @@
  */
 
 
-/* modest-tny-transport-actions.c */
-
 #include <tny-msg.h>
-#include <tny-msg-iface.h>			
 #include <tny-mime-part.h>
-#include <tny-mime-part-iface.h>		
 #include <tny-stream-iface.h>
 #include <tny-header.h>
-#include <tny-header-iface.h>
 #include <tny-account-iface.h>	
 #include <tny-account-store-iface.h>
 #include <tny-transport-account-iface.h>	
@@ -44,106 +39,9 @@
 #include <tny-stream-camel.h>
 #include <tny-fs-stream.h>
 #include <string.h>
-#include <camel/camel-folder.h>
-#include <camel/camel.h>
-#include <camel/camel-folder-summary.h>
 
 #include "modest-tny-transport-actions.h"
 #include "modest-tny-attachment.h"
-/* include other impl specific header files */
-
-/* 'private'/'protected' functions */
-static void                              modest_tny_transport_actions_class_init   (ModestTnyTransportActionsClass *klass);
-static void                              modest_tny_transport_actions_init         (ModestTnyTransportActions *obj);
-static void                              modest_tny_transport_actions_finalize     (GObject *obj);
-static gboolean                          is_ascii                                  (const gchar *s);
-static char *                            get_content_type                          (const gchar *s);
-
-/* list my signals */
-enum {
-	/* MY_SIGNAL_1, */
-	/* MY_SIGNAL_2, */
-	LAST_SIGNAL
-};
-
-typedef struct _ModestTnyTransportActionsPrivate ModestTnyTransportActionsPrivate;
-struct _ModestTnyTransportActionsPrivate {
-	/* my private members go here, eg. */
-	/* gboolean frobnicate_mode; */
-};
-#define MODEST_TNY_TRANSPORT_ACTIONS_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
-                                                          MODEST_TYPE_TNY_TRANSPORT_ACTIONS, \
-                                                          ModestTnyTransportActionsPrivate))
-/* globals */
-static GObjectClass *parent_class = NULL;
-
-/* uncomment the following if you have defined any signals */
-/* static guint signals[LAST_SIGNAL] = {0}; */
-
-GType
-modest_tny_transport_actions_get_type (void)
-{
-	static GType my_type = 0;
-	if (!my_type) {
-		static const GTypeInfo my_info = {
-			sizeof(ModestTnyTransportActionsClass),
-			NULL,		/* base init */
-			NULL,		/* base finalize */
-			(GClassInitFunc) modest_tny_transport_actions_class_init,
-			NULL,		/* class finalize */
-			NULL,		/* class data */
-			sizeof(ModestTnyTransportActions),
-			1,		/* n_preallocs */
-			(GInstanceInitFunc) modest_tny_transport_actions_init,
-		};
-		my_type = g_type_register_static (G_TYPE_OBJECT,
-		                                  "ModestTnyTransportActions",
-		                                  &my_info, 0);
-	}
-	return my_type;
-}
-
-static void
-modest_tny_transport_actions_class_init (ModestTnyTransportActionsClass *klass)
-{
-	GObjectClass *gobject_class;
-	gobject_class = (GObjectClass*) klass;
-
-	parent_class            = g_type_class_peek_parent (klass);
-	gobject_class->finalize = modest_tny_transport_actions_finalize;
-
-	g_type_class_add_private (gobject_class, sizeof(ModestTnyTransportActionsPrivate));
-
-	/* signal definitions go here, e.g.: */
-/* 	signals[MY_SIGNAL_1] = */
-/* 		g_signal_new ("my_signal_1",....); */
-/* 	signals[MY_SIGNAL_2] = */
-/* 		g_signal_new ("my_signal_2",....); */
-/* 	etc. */
-}
-
-static void
-modest_tny_transport_actions_init (ModestTnyTransportActions *obj)
-{
-/* uncomment the following if you init any of the private data */
-/* 	ModestTnyTransportActionsPrivate *priv = MODEST_TNY_TRANSPORT_ACTIONS_GET_PRIVATE(obj); */
-
-/* 	initialize this object, eg.: */
-/* 	priv->frobnicate_mode = FALSE; */
-}
-
-static void
-modest_tny_transport_actions_finalize (GObject *obj)
-{
-/* 	free/unref instance resources here */
-}
-
-ModestTnyTransportActions *
-modest_tny_transport_actions_new (void)
-{
-	return MODEST_TNY_TRANSPORT_ACTIONS(g_object_new(MODEST_TYPE_TNY_TRANSPORT_ACTIONS,
-							 NULL));
-}
 
 static gboolean
 is_ascii(const gchar *s)
@@ -175,8 +73,7 @@ get_content_type(const gchar *s)
 }
 
 gboolean
-modest_tny_transport_actions_send_message (ModestTnyTransportActions *self,
-					   TnyTransportAccountIface *transport_account,
+modest_tny_transport_actions_send_message (TnyTransportAccountIface *transport_account,
 					   const gchar *from,
 					   const gchar *to,
 					   const gchar *cc,

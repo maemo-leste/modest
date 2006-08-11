@@ -395,7 +395,6 @@ modest_widget_factory_get_combo_box (ModestWidgetFactory *self, ModestComboBoxTy
 
 
 
-
 GtkWidget*
 modest_widget_factory_get_online_toggle (ModestWidgetFactory *self)
 {

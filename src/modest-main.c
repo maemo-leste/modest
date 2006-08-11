@@ -217,7 +217,6 @@ send_mail (ModestConf *conf, const gchar* mailto, const gchar *cc, const gchar *
 	   const gchar* subject, const gchar *body)
 {
 	ModestAccountMgr *acc_mgr = NULL;
-	ModestTnyTransportActions *transport = NULL;
 	ModestTnyAccountStore *acc_store = NULL;
 
 	TnyListIface *accounts = NULL;
@@ -227,7 +226,6 @@ send_mail (ModestConf *conf, const gchar* mailto, const gchar *cc, const gchar *
 	
 	acc_mgr   = modest_account_mgr_new (conf);
 	acc_store = modest_tny_account_store_new (acc_mgr);	
-	transport = modest_tny_transport_actions_new ();
 
 	accounts = TNY_LIST_IFACE(tny_list_new ());
 	tny_account_store_iface_get_accounts (TNY_ACCOUNT_STORE_IFACE(acc_store), accounts,
@@ -243,9 +241,9 @@ send_mail (ModestConf *conf, const gchar* mailto, const gchar *cc, const gchar *
 
 	account = TNY_TRANSPORT_ACCOUNT_IFACE (tny_iterator_iface_current(iter));
 
-	if (!modest_tny_transport_actions_send_message (transport, account,
-							"<>", mailto, cc, bcc, subject, body,
-							NULL)) {
+	if (!modest_tny_transport_actions_send_message ( account,
+							 "<>", mailto, cc, bcc, subject, body,
+							 NULL)) {
 		retval = MODEST_ERR_SEND;
 		goto cleanup;
 	} else
@@ -256,8 +254,6 @@ cleanup:
 		g_object_unref (G_OBJECT(iter));
 	if (accounts)
 		g_object_unref (G_OBJECT(accounts));
-	if (transport)
-		g_object_unref (G_OBJECT(transport));
 	if (acc_store)
 		g_object_unref (G_OBJECT(acc_store));
 	if (acc_mgr)
