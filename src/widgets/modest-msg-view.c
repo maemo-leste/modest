@@ -27,7 +27,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <tny-text-buffer-stream.h>
+#include <tny-gtk-text-buffer-stream.h>
 #include <string.h>
 #include <regex.h>
 #include <ctype.h>
@@ -35,8 +35,8 @@
 #include <glib/gi18n.h>
 #include <gtkhtml/gtkhtml.h>
 #include <gtkhtml/gtkhtml-stream.h>
-#include <tny-list-iface.h>
 #include <tny-list.h>
+#include <tny-simple-list.h>
 
 #include <modest-tny-msg-actions.h>
 #include "modest-msg-view.h"
@@ -95,7 +95,7 @@ typedef struct _ModestMsgViewPrivate ModestMsgViewPrivate;
 struct _ModestMsgViewPrivate {
 
 	GtkWidget   *gtkhtml;
-	TnyMsgIface *msg;
+	TnyMsg      *msg;
 
 	gulong  sig1, sig2, sig3;
 };
@@ -218,7 +218,7 @@ modest_msg_view_finalize (GObject *obj)
 
 
 GtkWidget*
-modest_msg_view_new (TnyMsgIface *msg)
+modest_msg_view_new (TnyMsg *msg)
 {
 	GObject *obj;
 	ModestMsgView* self;
@@ -287,31 +287,31 @@ on_link_hover (GtkWidget *widget, const gchar *uri, ModestMsgView *msg_view)
 
 
 
-static TnyMimePartIface *
-find_cid_image (TnyMsgIface *msg, const gchar *cid)
+static TnyMimePart *
+find_cid_image (TnyMsg *msg, const gchar *cid)
 {
-	TnyMimePartIface *part = NULL;
-	TnyListIface *parts;
-	TnyIteratorIface *iter;
+	TnyMimePart *part = NULL;
+	TnyList *parts;
+	TnyIterator *iter;
 	
 	g_return_val_if_fail (msg, NULL);
 	g_return_val_if_fail (cid, NULL);
 	
-	parts  = TNY_LIST_IFACE (tny_list_new());
+	parts  = TNY_LIST (tny_simple_list_new());
 
-	tny_msg_iface_get_parts (msg, parts); 
-	iter   = tny_list_iface_create_iterator (parts);
+	tny_msg_get_parts (msg, parts); 
+	iter   = tny_list_create_iterator (parts);
 	
-	while (!tny_iterator_iface_is_done(iter)) {
+	while (!tny_iterator_is_done(iter)) {
 		const gchar *part_cid;
-		part = TNY_MIME_PART_IFACE(tny_iterator_iface_current(iter));
-		part_cid = tny_mime_part_iface_get_content_id (part);
+		part = TNY_MIME_PART(tny_iterator_get_current(iter));
+		part_cid = tny_mime_part_get_content_id (part);
 
 		if (part_cid && strcmp (cid, part_cid) == 0)
 			break;
 
 		part = NULL;
-		tny_iterator_iface_next (iter);
+		tny_iterator_next (iter);
 	}
 	
 	if (part)
@@ -334,14 +334,14 @@ on_url_requested (GtkWidget *widget, const gchar *uri,
 	
 	if (g_str_has_prefix (uri, "cid:")) {
 		/* +4 ==> skip "cid:" */
-		TnyMimePartIface *part = find_cid_image (priv->msg, uri + 4);
+		TnyMimePart *part = find_cid_image (priv->msg, uri + 4);
 		if (!part) {
 			g_printerr ("modest: '%s' not found\n", uri + 4);
 			gtk_html_stream_close (stream, GTK_HTML_STREAM_ERROR);
 		} else {
-			TnyStreamIface *tny_stream =
-				TNY_STREAM_IFACE(modest_tny_stream_gtkhtml_new(stream));
-			tny_mime_part_iface_decode_to_stream ((TnyMimePartIface*)part,
+			TnyStream *tny_stream =
+				TNY_STREAM(modest_tny_stream_gtkhtml_new(stream));
+			tny_mime_part_decode_to_stream ((TnyMimePart*)part,
 								  tny_stream);
 			gtk_html_stream_close (stream, GTK_HTML_STREAM_OK);
 	
@@ -364,12 +364,12 @@ typedef struct  {
 
 /* render the attachments as hyperlinks in html */
 static gchar*
-attachments_as_html (ModestMsgView *self, TnyMsgIface *msg)
+attachments_as_html (ModestMsgView *self, TnyMsg *msg)
 {
 	ModestMsgViewPrivate *priv;
 	GString *appendix;
-	TnyListIface *parts;
-	TnyIteratorIface *iter;
+	TnyList *parts;
+	TnyIterator *iter;
 	gchar *html;
 	int index = 0;
 	
@@ -378,29 +378,29 @@ attachments_as_html (ModestMsgView *self, TnyMsgIface *msg)
 
 	priv  = MODEST_MSG_VIEW_GET_PRIVATE (self);
 
-	parts = TNY_LIST_IFACE(tny_list_new());
-	tny_msg_iface_get_parts (msg, parts);
-	iter  = tny_list_iface_create_iterator (parts);
+	parts = TNY_LIST(tny_simple_list_new());
+	tny_msg_get_parts (msg, parts);
+	iter  = tny_list_create_iterator (parts);
 	
 	appendix= g_string_new ("");
 	
-	while (!tny_iterator_iface_is_done(iter)) {
-		TnyMimePartIface *part;
+	while (!tny_iterator_is_done(iter)) {
+		TnyMimePart *part;
 
 		++index; /* attachment numbers are 1-based */
 		
-		part = TNY_MIME_PART_IFACE(tny_iterator_iface_current (iter));
+		part = TNY_MIME_PART(tny_iterator_get_current (iter));
 
-		if (tny_mime_part_iface_is_attachment (part)) {
+		if (tny_mime_part_is_attachment (part)) {
 
-			const gchar *filename = tny_mime_part_iface_get_filename(part);
+			const gchar *filename = tny_mime_part_get_filename(part);
 			if (!filename)
 				filename = _("attachment");
 
 			g_string_append_printf (appendix, "<a href=\"%s%d\">%s</a> \n",
 						ATT_PREFIX, index, filename);			 
 		}
-		tny_iterator_iface_next (iter);
+		tny_iterator_next (iter);
 	}
 	g_object_unref (G_OBJECT(iter));
 	
@@ -593,10 +593,10 @@ get_url_matches (GString *txt)
 
 
 static gboolean
-set_html_message (ModestMsgView *self, TnyMimePartIface *tny_body, TnyMsgIface *msg)
+set_html_message (ModestMsgView *self, TnyMimePart *tny_body, TnyMsg *msg)
 {
 	gchar *html_attachments;
-	TnyStreamIface *gtkhtml_stream;	
+	TnyStream *gtkhtml_stream;	
 	ModestMsgViewPrivate *priv;
 	
 	g_return_val_if_fail (self, FALSE);
@@ -605,21 +605,21 @@ set_html_message (ModestMsgView *self, TnyMimePartIface *tny_body, TnyMsgIface *
 	priv = MODEST_MSG_VIEW_GET_PRIVATE(self);
 
 	gtkhtml_stream =
-		TNY_STREAM_IFACE(modest_tny_stream_gtkhtml_new
+		TNY_STREAM(modest_tny_stream_gtkhtml_new
 				 (gtk_html_begin(GTK_HTML(priv->gtkhtml))));
 	
-	tny_stream_iface_reset (gtkhtml_stream);
+	tny_stream_reset (gtkhtml_stream);
 	
 	html_attachments = attachments_as_html(self, msg);
 	if (html_attachments) {
-		tny_stream_iface_write (gtkhtml_stream, html_attachments,
+		tny_stream_write (gtkhtml_stream, html_attachments,
 					strlen(html_attachments));
-		tny_stream_iface_reset (gtkhtml_stream);
+		tny_stream_reset (gtkhtml_stream);
 		g_free (html_attachments);
 	}
 
 	// FIXME: tinymail
-	tny_mime_part_iface_decode_to_stream ((TnyMimePartIface*)tny_body,
+	tny_mime_part_decode_to_stream ((TnyMimePart*)tny_body,
 						  gtkhtml_stream);
 
 	g_object_unref (G_OBJECT(gtkhtml_stream));
@@ -631,11 +631,11 @@ set_html_message (ModestMsgView *self, TnyMimePartIface *tny_body, TnyMsgIface *
 /* this is a hack --> we use the tny_text_buffer_stream to
  * get the message text, then write to gtkhtml 'by hand' */
 static gboolean
-set_text_message (ModestMsgView *self, TnyMimePartIface *tny_body, TnyMsgIface *msg)
+set_text_message (ModestMsgView *self, TnyMimePart *tny_body, TnyMsg *msg)
 {
 	GtkTextBuffer *buf;
 	GtkTextIter begin, end;
-	TnyStreamIface* txt_stream, *gtkhtml_stream;
+	TnyStream* txt_stream, *gtkhtml_stream;
 	gchar *txt, *html_attachments;
 	ModestMsgViewPrivate *priv;
 		
@@ -645,33 +645,33 @@ set_text_message (ModestMsgView *self, TnyMimePartIface *tny_body, TnyMsgIface *
 	priv           = MODEST_MSG_VIEW_GET_PRIVATE(self);
 	
 	buf            = gtk_text_buffer_new (NULL);
-	txt_stream     = TNY_STREAM_IFACE(tny_text_buffer_stream_new (buf));
+	txt_stream     = TNY_STREAM(tny_gtk_text_buffer_stream_new (buf));
 		
-	tny_stream_iface_reset (txt_stream);
+	tny_stream_reset (txt_stream);
 	
 	gtkhtml_stream =
-		TNY_STREAM_IFACE(modest_tny_stream_gtkhtml_new
+		TNY_STREAM(modest_tny_stream_gtkhtml_new
 				 (gtk_html_begin(GTK_HTML(priv->gtkhtml))));
 
 	html_attachments = attachments_as_html(self, msg);
 	if (html_attachments) {
-		tny_stream_iface_write (gtkhtml_stream, html_attachments,
+		tny_stream_write (gtkhtml_stream, html_attachments,
 					strlen(html_attachments));
-		tny_stream_iface_reset (gtkhtml_stream);
+		tny_stream_reset (gtkhtml_stream);
 		g_free (html_attachments);
 	}
 
 	// FIXME: tinymail
-	tny_mime_part_iface_decode_to_stream ((TnyMimePartIface*)tny_body,
+	tny_mime_part_decode_to_stream ((TnyMimePart*)tny_body,
 						  txt_stream);
-	tny_stream_iface_reset (txt_stream);		
+	tny_stream_reset (txt_stream);		
 	
 	gtk_text_buffer_get_bounds (buf, &begin, &end);
 	txt = gtk_text_buffer_get_text (buf, &begin, &end, FALSE);
 	if (txt) {
 		gchar *html = convert_to_html (txt);
-		tny_stream_iface_write (gtkhtml_stream, html, strlen(html));
-		tny_stream_iface_reset (gtkhtml_stream);
+		tny_stream_write (gtkhtml_stream, html, strlen(html));
+		tny_stream_reset (gtkhtml_stream);
 		g_free (txt);
 		g_free (html);
 	}
@@ -725,9 +725,9 @@ modest_msg_view_get_selected_text (ModestMsgView *self)
 
 
 void
-modest_msg_view_set_message (ModestMsgView *self, TnyMsgIface *msg)
+modest_msg_view_set_message (ModestMsgView *self, TnyMsg *msg)
 {
-	TnyMimePartIface *body;
+	TnyMimePart *body;
 	ModestMsgViewPrivate *priv;
 
 	g_return_if_fail (self);
@@ -750,7 +750,7 @@ modest_msg_view_set_message (ModestMsgView *self, TnyMsgIface *msg)
 		
 	body = modest_tny_msg_actions_find_body_part (msg, TRUE);
 	if (body) {
-		if (tny_mime_part_iface_content_type_is (body, "text/html"))
+		if (tny_mime_part_content_type_is (body, "text/html"))
 			set_html_message (self, body, msg);
 		else
 			set_text_message (self, body, msg);

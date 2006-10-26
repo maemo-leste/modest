@@ -73,6 +73,7 @@ modest_account_view_window_get_type (void)
 			sizeof(ModestAccountViewWindow),
 			1,		/* n_preallocs */
 			(GInstanceInitFunc) modest_account_view_window_init,
+			NULL
 		};
 		my_type = g_type_register_static (GTK_TYPE_WINDOW,
 		                                  "ModestAccountViewWindow",

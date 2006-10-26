@@ -289,12 +289,12 @@ modest_store_widget_new (ModestWidgetFactory *factory, const gchar *proto)
 
 	priv->proto = g_strdup (proto);
 	
-	if (strcmp (proto, MODEST_PROTO_POP) == 0 ||
-	    strcmp (proto, MODEST_PROTO_IMAP) == 0) {
+	if (strcmp (proto, MODEST_PROTOCOL_STORE_POP) == 0 ||
+	    strcmp (proto, MODEST_PROTOCOL_STORE_IMAP) == 0) {
 		w = imap_pop_configuration (self);
-	} else if (strcmp (proto, MODEST_PROTO_MAILDIR) == 0) {
+	} else if (strcmp (proto, MODEST_PROTOCOL_STORE_MAILDIR) == 0) {
 		w = maildir_configuration (self);
-	}  else if (strcmp (proto, MODEST_PROTO_MBOX) == 0) {
+	}  else if (strcmp (proto, MODEST_PROTOCOL_STORE_MBOX) == 0) {
 		w = mbox_configuration (self);
 	} else
 		w = gtk_label_new ("");

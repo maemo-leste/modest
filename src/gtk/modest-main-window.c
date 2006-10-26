@@ -233,38 +233,38 @@ on_menu_quit (ModestMainWindow *self, guint action, GtkWidget *widget)
 
 /* Our menu, an array of GtkItemFactoryEntry structures that defines each menu item */
 static GtkItemFactoryEntry menu_items[] = {
-	{ "/_File",		NULL,			NULL,           0, "<Branch>" },
+	{ "/_File",		NULL,			NULL,           0, "<Branch>", NULL },
 	{ "/File/_New",		"<control>N",		NULL,		0, "<StockItem>", GTK_STOCK_NEW },
 	{ "/File/_Open",	"<control>O",		NULL,		0, "<StockItem>", GTK_STOCK_OPEN },
 	{ "/File/_Save",	"<control>S",		NULL,		0, "<StockItem>", GTK_STOCK_SAVE },
-	{ "/File/Save _As",	NULL,			NULL,           0, "<Item>" },
-	{ "/File/sep1",		NULL,			NULL,           0, "<Separator>" },
+	{ "/File/Save _As",	NULL,			NULL,           0, "<Item>", NULL },
+	{ "/File/sep1",		NULL,			NULL,           0, "<Separator>", NULL },
 	{ "/File/_Quit",	"<CTRL>Q",		on_menu_quit,  0, "<StockItem>", GTK_STOCK_QUIT },
 
-	{ "/_Edit",		NULL,			NULL,           0, "<Branch>" },
+	{ "/_Edit",		NULL,			NULL,           0, "<Branch>", NULL },
 	{ "/Edit/_Undo",	"<CTRL>Z",		NULL,		0, "<StockItem>", GTK_STOCK_UNDO },
 	{ "/Edit/_Redo",	"<shift><CTRL>Z",	NULL,		0, "<StockItem>", GTK_STOCK_REDO },
-	{ "/File/sep1",		NULL,			NULL,           0, "<Separator>" },
+	{ "/File/sep1",		NULL,			NULL,           0, "<Separator>", NULL },
 	{ "/Edit/Cut",		"<control>X",		NULL,		0, "<StockItem>", GTK_STOCK_CUT  },
 	{ "/Edit/Copy",		"<CTRL>C",		NULL,           0, "<StockItem>", GTK_STOCK_COPY },
 	{ "/Edit/Paste",	NULL,			NULL,           0, "<StockItem>", GTK_STOCK_PASTE},
-	{ "/Edit/sep1",		NULL,			NULL,           0, "<Separator>" },
-	{ "/Edit/Delete",	"<CTRL>Q",		NULL,           0, "<Item>" },
-	{ "/Edit/Select all",	"<CTRL>A",		NULL,           0, "<Item>" },
-	{ "/Edit/Deelect all",  "<Shift><CTRL>A",	NULL,           0, "<Item>" },
+	{ "/Edit/sep1",		NULL,			NULL,           0, "<Separator>", NULL },
+	{ "/Edit/Delete",	"<CTRL>Q",		NULL,           0, "<Item>" ,NULL},
+	{ "/Edit/Select all",	"<CTRL>A",		NULL,           0, "<Item>" ,NULL},
+	{ "/Edit/Deelect all",  "<Shift><CTRL>A",	NULL,           0, "<Item>" ,NULL},
 
-	{ "/_Actions",                NULL,		NULL,		0, "<Branch>" },
-	{ "/Actions/_New Message",    NULL,		on_menu_new_message,		0, "<Item>" },
-	{ "/Actions/_Reply",    NULL,			NULL,		0, "<Item>" },
-	{ "/Actions/_Forward",  NULL,			NULL,		0, "<Item>" },
-	{ "/Actions/_Bounce",   NULL,			NULL,		0, "<Item>" },	
+	{ "/_Actions",                NULL,		NULL,		0, "<Branch>" ,NULL},
+	{ "/Actions/_New Message",    NULL,		on_menu_new_message,		0, "<Item>",NULL },
+	{ "/Actions/_Reply",    NULL,			NULL,		0, "<Item>" ,NULL},
+	{ "/Actions/_Forward",  NULL,			NULL,		0, "<Item>" ,NULL},
+	{ "/Actions/_Bounce",   NULL,			NULL,		0, "<Item>",NULL },	
 	
-	{ "/_Options",		 NULL,			NULL,		0, "<Branch>" },
-	{ "/Options/_Accounts",  NULL,			on_menu_accounts,0, "<Item>" },
-	{ "/Options/_Contacts",  NULL,			NULL,		0, "<Item>" },
+	{ "/_Options",		 NULL,			NULL,		0, "<Branch>" ,NULL},
+	{ "/Options/_Accounts",  NULL,			on_menu_accounts,0, "<Item>" ,NULL},
+	{ "/Options/_Contacts",  NULL,			NULL,		0, "<Item>" ,NULL },
 
 
-	{ "/_Help",         NULL,                       NULL,           0, "<Branch>" },
+	{ "/_Help",         NULL,                       NULL,           0, "<Branch>" ,NULL},
 	{ "/_Help/About",   NULL,                       on_menu_about,  0, "<StockItem>", GTK_STOCK_ABOUT},
 };
 
@@ -330,17 +330,42 @@ static void
 on_toolbar_button_clicked (ModestToolbar *toolbar, ModestToolbarButton button_id,
 			   ModestMainWindow *self)
 {
+	GtkTreeSelection *sel;
+	GtkTreeIter iter;
+	GtkTreeModel *model;
+	ModestMainWindowPrivate *priv;
+
+	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
+	
 	switch (button_id) {
 	case MODEST_TOOLBAR_BUTTON_NEW_MAIL:
 		on_menu_new_message (self, 0, NULL);
 		break;
-		
 	case MODEST_TOOLBAR_BUTTON_REPLY:
+		break;
 	case MODEST_TOOLBAR_BUTTON_REPLY_ALL:
+		break;
 	case MODEST_TOOLBAR_BUTTON_FORWARD:
+		break;
 	case MODEST_TOOLBAR_BUTTON_SEND_RECEIVE:
+		
+
 	case MODEST_TOOLBAR_BUTTON_NEXT:
+		sel = gtk_tree_view_get_selection (GTK_TREE_VIEW(priv->header_view));
+		if (sel) {
+			gtk_tree_selection_get_selected (sel, &model, &iter);
+			gtk_tree_model_iter_next (model, &iter);
+			gtk_tree_selection_select_iter (sel, &iter);
+		}
+		
 	case MODEST_TOOLBAR_BUTTON_PREV:
+	/* 	if (sel) { */
+/* 			gtk_tree_selection_get_selected (sel, &model, &iter); */
+/* 			gtk_tree_model_iter_prev (model, &iter); */
+/* 			gtk_tree_selection_select_iter (sel, &iter); */
+/* 		} */
+
+		break;
 	case MODEST_TOOLBAR_BUTTON_DELETE:
 
 	default:
@@ -364,8 +389,8 @@ toolbar_new (ModestMainWindow *self)
 		MODEST_TOOLBAR_SEPARATOR,
 		MODEST_TOOLBAR_BUTTON_SEND_RECEIVE,
 		MODEST_TOOLBAR_SEPARATOR,
-		MODEST_TOOLBAR_BUTTON_NEXT,
 		MODEST_TOOLBAR_BUTTON_PREV,
+		MODEST_TOOLBAR_BUTTON_NEXT,
 		MODEST_TOOLBAR_SEPARATOR,		
 		MODEST_TOOLBAR_BUTTON_DELETE
 	};		

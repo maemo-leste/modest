@@ -32,9 +32,9 @@
 #define __MODEST_ACCOUNT_MGR_H__
 
 #include <glib-object.h>
-#include "modest-conf.h"
-#include "modest-account-keys.h"
-#include "modest-proto.h"
+#include <modest-conf.h>
+#include <modest-account-keys.h>
+#include <modest-protocol-mgr.h>
 
 G_BEGIN_DECLS
 
@@ -57,10 +57,36 @@ struct _ModestAccountMgr {
 struct _ModestAccountMgrClass {
 	GObjectClass parent_class;
 
-	void (* account_removed)   (ModestAccountMgr *obj, const gchar* account, gboolean server_account, gpointer user_data);
-	void (* account_changed)   (ModestAccountMgr *obj, const gchar* account, const gchar* key, gboolean server_account,
+	void (* account_removed)   (ModestAccountMgr *obj, const gchar* account,
+				    gboolean server_account, gpointer user_data);
+	void (* account_changed)   (ModestAccountMgr *obj, const gchar* account,
+				    const gchar* key, gboolean server_account,
 				    gpointer user_data);
 };
+
+/*
+ * some convenience structs to get bulk data about an account 
+ */
+struct _ModestServerAccountData {
+	gchar *account_name;
+	gchar *hostname;
+	gchar *username;
+	gchar *proto;
+	gchar *password;
+};
+typedef struct _ModestServerAccountData ModestServerAccountData;
+
+struct _ModestAccountData {
+	gchar *account_name;
+	gchar *full_name;
+	gchar *email;
+	gboolean enabled;
+	
+	ModestServerAccountData *transport_account;
+	ModestServerAccountData *store_account;
+};
+typedef struct _ModestAccountData ModestAccountData;
+
 
 
 /**
@@ -169,9 +195,9 @@ GSList*	        modest_account_mgr_account_names    (ModestAccountMgr *self, GEr
  * error or if there are no server accounts. The caller must free the returned GSList
  */
 GSList*  modest_account_mgr_search_server_accounts  (ModestAccountMgr *self,
-						     const gchar*    account_name,
-						     ModestProtoType type,
-						     const gchar*    proto);
+						     const gchar*       account_name,
+						     ModestProtocolType type,
+						     const gchar*       proto);
 
 /**
  * modest_account_mgr_account_exists:
@@ -190,6 +216,29 @@ gboolean	modest_account_mgr_account_exists	  (ModestAccountMgr *self,
 							   gboolean server_account,
 							   GError **err);
 
+/**
+ * modest_account_mgr_get_account_data:
+ * @self: a ModestAccountMgr instance
+ * @name: the name of the account
+ * 
+ * get information about an account
+ *
+ * Returns: a ModestAccountData structure with information about the account.
+ * the data should not be changed, and be freed with modest_account_mgr_free_account_data
+ */
+ModestAccountData *modest_account_mgr_get_account_data     (ModestAccountMgr *self,
+							    const gchar* name);
+
+
+/**
+ * modest_account_mgr_free_account_data:
+ * @self: a ModestAccountMgr instance
+ * @data: a ModestAccountData instance
+ * 
+ * free the account data structure
+ */
+void       modest_account_mgr_free_account_data     (ModestAccountMgr *self,
+						     ModestAccountData *data);
 
 /**
  * modest_account_mgr_account_set_enabled
@@ -337,6 +386,8 @@ gboolean	modest_account_mgr_set_bool       (ModestAccountMgr *self,
 						   const gchar *key, gboolean val,
 						   gboolean server_account,
 						   GError **err);
+
+
 
 G_END_DECLS
 

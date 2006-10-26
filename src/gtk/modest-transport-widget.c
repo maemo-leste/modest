@@ -185,7 +185,7 @@ modest_transport_widget_new (ModestWidgetFactory *factory, const gchar* proto)
 
 	priv->proto = g_strdup (proto);
 	
-	if (strcmp (proto, MODEST_PROTO_SMTP) == 0) {
+	if (strcmp (proto, MODEST_PROTOCOL_TRANSPORT_SMTP) == 0) {
 		w = smtp_configuration (self);
 	} else
 		w = gtk_label_new ("");

@@ -304,7 +304,16 @@
       with <command>gcc</command>'s <symbol>-Wall</symbol> compile option. Of
       course this might not always be possible due to problems in dependent
       libraries and/or compiler version. Therefore, do not
-      include <symbol>-Werror</symbol> in the standard compile options.
+      include <symbol>-Werror</symbol> in the standard compile options; but
+      do use it when building / testing things yourself.
+    </para>
+
+    <para>
+      Code should also run cleanly. GTK+/GLib warnings and errors must be
+      taken very seriously. If you run <application>modest</application> with
+      the <symbol>-d</symbol>-flag, it will <symbol>abort</symbol> whenever
+      there is such a warning. This can be useful when running inside the
+      debugger. 
     </para>
     
     <para>Global functions (the ones in <filename>.h</filename>-files) must

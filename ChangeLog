@@ -1,8 +1,0 @@
-2006-05-11  Florian Boor <fb@kernelconcepts.de>
-
-	* Add module list.
-
-2006-05-10  Florian Boor <fb@kernelconcepts.de>
-
-	* Install glade file.
-	* Use installed glade file.

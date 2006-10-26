@@ -31,11 +31,11 @@
 #define __MODEST_HEADER_VIEW_H__
 
 #include <gtk/gtk.h>
-#include <tny-folder-iface.h>
-#include <tny-account-tree-model.h>
-#include <tny-msg-iface.h>
-#include <tny-header-iface.h>
-#include <tny-header-list-model.h>
+#include <tny-folder.h>
+#include <tny-gtk-account-tree-model.h>
+#include <tny-msg.h>
+#include <tny-header.h>
+#include <tny-gtk-header-list-model.h>
 
 G_BEGIN_DECLS
 
@@ -61,7 +61,7 @@ struct _ModestHeaderViewClass {
 	GtkTreeViewClass parent_class;
 
 	void (*message_selected) (ModestHeaderView* self,
-				  TnyMsgIface *msg,
+				  TnyMsg *msg,
 				  gpointer user_data);
 
 	void (*item_not_found) (ModestHeaderView* self,
@@ -117,7 +117,7 @@ GType        modest_header_view_get_type    (void) G_GNUC_CONST;
 
 /**
  * modest_header_view_new:
- * @folder: a TnyMsgFolderIface object
+ * @folder: a TnyMsgFolder object
  * @columns: a list of ModestHeaderViewColumn
  * @style: a ModestHeaderViewColumn with the style of this listview
  *  (	MODEST_HEADER_VIEW_STYLE_NORMAL or MODEST_HEADER_VIEW_STYLE_COMPACT)
@@ -126,21 +126,21 @@ GType        modest_header_view_get_type    (void) G_GNUC_CONST;
  *   
  * Returns: a new GtkWidget (a GtkTreeView-subclass)
  */
-GtkWidget*   modest_header_view_new        (TnyFolderIface *folder,
+GtkWidget*   modest_header_view_new        (TnyFolder *folder,
 					    GSList *columns,
 					    ModestHeaderViewStyle style);
 
 /**
  * modest_header_view_set_folder:
  * @self: a ModestHeaderView instance
- * @folder: a TnyFolderIface object
+ * @folder: a TnyFolder object
  * 
  * set the folder for this ModestHeaderView
  *  
  * Returns: TRUE if it succeeded, FALSE otherwise
  */
 gboolean     modest_header_view_set_folder (ModestHeaderView *self,
-					    TnyFolderIface *folder);
+					    TnyFolder *folder);
 
 
 /**
@@ -157,7 +157,7 @@ gboolean     modest_header_view_set_columns (ModestHeaderView *self,
 /**
  * modest_header_view_get_columns:
  * @self: a ModestHeaderView instance
- * @folder: a TnyFolderIface object
+ * @folder: a TnyFolder object
  * 
  * get the columns for this ModestHeaderView
  *  

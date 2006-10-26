@@ -30,10 +30,10 @@
 #include <glib/gi18n.h>
 #include <string.h>
 
-#include <tny-account-tree-model.h>
-#include <tny-account-store-iface.h>
-#include <tny-account-iface.h>
-#include <tny-folder-iface.h>
+#include <tny-gtk-account-tree-model.h>
+#include <tny-account-store.h>
+#include <tny-account.h>
+#include <tny-folder.h>
 #include <modest-icon-names.h>
 #include <modest-icon-factory.h>
 #include <modest-tny-account-store.h>
@@ -62,7 +62,7 @@ typedef struct _ModestFolderViewPrivate ModestFolderViewPrivate;
 struct _ModestFolderViewPrivate {
 
 	TnyAccountStoreIface *account_store;
-	TnyFolderIface       *cur_folder;
+	TnyFolder            *cur_folder;
 	gboolean             view_is_empty;
 
 	gulong               sig1, sig2;
@@ -139,9 +139,9 @@ text_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 	TnyFolderType type;
 	
 	gtk_tree_model_get (tree_model, iter,
-			    TNY_ACCOUNT_TREE_MODEL_NAME_COLUMN, &fname,
-			    TNY_ACCOUNT_TREE_MODEL_TYPE_COLUMN, &type,
-			    TNY_ACCOUNT_TREE_MODEL_UNREAD_COLUMN, &unread, -1);
+			    TNY_GTK_ACCOUNT_TREE_MODEL_NAME_COLUMN, &fname,
+			    TNY_GTK_ACCOUNT_TREE_MODEL_TYPE_COLUMN, &type,
+			    TNY_GTK_ACCOUNT_TREE_MODEL_UNREAD_COLUMN, &unread, -1);
 	rendobj = G_OBJECT(renderer);
 
 	if (unread > 0) {
@@ -221,9 +221,9 @@ icon_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 	
 	rendobj = G_OBJECT(renderer);
 	gtk_tree_model_get (tree_model, iter,
-			    TNY_ACCOUNT_TREE_MODEL_TYPE_COLUMN, &type,
-			    TNY_ACCOUNT_TREE_MODEL_NAME_COLUMN, &fname,
-			    TNY_ACCOUNT_TREE_MODEL_UNREAD_COLUMN, &unread, -1);
+			    TNY_GTK_ACCOUNT_TREE_MODEL_TYPE_COLUMN, &type,
+			    TNY_GTK_ACCOUNT_TREE_MODEL_NAME_COLUMN, &fname,
+			    TNY_GTK_ACCOUNT_TREE_MODEL_UNREAD_COLUMN, &unread, -1);
 	rendobj = G_OBJECT(renderer);
 	
 	if (type == TNY_FOLDER_TYPE_NORMAL)
@@ -396,7 +396,8 @@ update_model_empty (ModestFolderView *self)
 	ModestFolderViewPrivate *priv;
 	
 	g_return_val_if_fail (self, FALSE);
-	
+	priv = MODEST_FOLDER_VIEW_GET_PRIVATE(self);
+
 	store = gtk_tree_store_new (1, G_TYPE_STRING);
 	gtk_tree_store_append (store, &iter, NULL);
 
@@ -407,12 +408,11 @@ update_model_empty (ModestFolderView *self)
 				 GTK_TREE_MODEL(store));
 	g_object_unref (store);
 
-	priv = MODEST_FOLDER_VIEW_GET_PRIVATE(self);
 	priv->view_is_empty = TRUE;
 
 	g_signal_emit (G_OBJECT(self), signals[FOLDER_SELECTED_SIGNAL], 0,
 		       NULL);
-	
+
 	return TRUE;
 }
 
@@ -421,30 +421,30 @@ static gboolean
 update_model (ModestFolderView *self, ModestTnyAccountStore *account_store)
 {
 	ModestFolderViewPrivate *priv;
-	TnyListIface     *account_list;
+
+	TnyList          *account_list;
 	GtkTreeModel     *model, *sortable;
 	
 	g_return_val_if_fail (account_store, FALSE);
-	
 	priv =	MODEST_FOLDER_VIEW_GET_PRIVATE(self);
-
-	model        = GTK_TREE_MODEL(tny_account_tree_model_new ());
-	account_list = TNY_LIST_IFACE(model);
+	
+	model        = GTK_TREE_MODEL(tny_gtk_account_tree_model_new (TRUE)); /* async */
+	account_list = TNY_LIST(model);
 
 	update_model_empty (self); /* cleanup */
 	priv->view_is_empty = TRUE;
-	
-	tny_account_store_iface_get_accounts (TNY_ACCOUNT_STORE_IFACE(account_store),
-					      account_list,
-					      TNY_ACCOUNT_STORE_IFACE_STORE_ACCOUNTS);
-	if (!account_list) /* no store accounts found */ 
-		return TRUE;
-	
-	sortable = gtk_tree_model_sort_new_with_model (model);
-	gtk_tree_view_set_model (GTK_TREE_VIEW(self), sortable);
 
-	priv->view_is_empty = FALSE;	
-	g_object_unref (model);
+	tny_account_store_get_accounts (TNY_ACCOUNT_STORE(account_store),
+					      account_list,
+					      TNY_ACCOUNT_STORE_STORE_ACCOUNTS);
+	if (account_list) { /* no store accounts found */ 
+	
+		sortable = gtk_tree_model_sort_new_with_model (model);
+		gtk_tree_view_set_model (GTK_TREE_VIEW(self), sortable);
+		
+		priv->view_is_empty = FALSE;	
+		g_object_unref (model);
+	}
 
 	return TRUE;
 } 
@@ -454,9 +454,9 @@ static void
 on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 {
 	GtkTreeModel            *model;
-	TnyFolderIface       *folder = NULL;
+	TnyFolder               *folder = NULL;
 	GtkTreeIter             iter;
-	ModestFolderView *tree_view;
+	ModestFolderView        *tree_view;
 	ModestFolderViewPrivate *priv;
 
 	g_return_if_fail (sel);
@@ -477,11 +477,11 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 	tree_view = MODEST_FOLDER_VIEW (user_data);
 
 	gtk_tree_model_get (model, &iter,
-			    TNY_ACCOUNT_TREE_MODEL_INSTANCE_COLUMN,
+			    TNY_GTK_ACCOUNT_TREE_MODEL_INSTANCE_COLUMN,
 			    &folder, -1);
 
 	if (priv->cur_folder) 
-		tny_folder_iface_expunge (priv->cur_folder);
+		tny_folder_expunge (priv->cur_folder);
 	priv->cur_folder = folder;
 
 	/* folder will not be defined if you click eg. on the root node */

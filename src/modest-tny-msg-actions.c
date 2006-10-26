@@ -30,11 +30,11 @@
 
 #include <gtk/gtk.h>
 #include <gtkhtml/gtkhtml.h>
-#include <tny-text-buffer-stream.h>
-#include <tny-mime-part-iface.h>
-#include <tny-msg-iface.h>
-#include <tny-list-iface.h>
+#include <tny-gtk-text-buffer-stream.h>
+#include <tny-camel-mime-part.h>
+#include <tny-camel-msg.h>
 #include <tny-list.h>
+#include <tny-simple-list.h>
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -44,10 +44,10 @@
 #include "modest-text-utils.h"
 
 static gchar *
-quote_msg (TnyMsgIface* src, const gchar * from, time_t sent_date, gint limit)
+quote_msg (TnyMsg* src, const gchar * from, time_t sent_date, gint limit)
 {
-	TnyStreamIface *stream;
-	TnyMimePartIface *body;
+	TnyStream *stream;
+	TnyMimePart *body;
 	GtkTextBuffer *buf;
 	GtkTextIter start, end;
 	const gchar *to_quote;
@@ -58,10 +58,10 @@ quote_msg (TnyMsgIface* src, const gchar * from, time_t sent_date, gint limit)
 		return NULL;
 
 	buf = gtk_text_buffer_new (NULL);
-	stream = TNY_STREAM_IFACE (tny_text_buffer_stream_new (buf));
-	tny_stream_iface_reset (stream);
-	tny_mime_part_iface_decode_to_stream (body, stream);
-	tny_stream_iface_reset (stream);
+	stream = TNY_STREAM (tny_gtk_text_buffer_stream_new (buf));
+	tny_stream_reset (stream);
+	tny_mime_part_decode_to_stream (body, stream);
+	tny_stream_reset (stream);
 
 	g_object_unref (G_OBJECT(stream));
 	g_object_unref (G_OBJECT(body));
@@ -76,7 +76,7 @@ quote_msg (TnyMsgIface* src, const gchar * from, time_t sent_date, gint limit)
 
 
 gchar*
-modest_tny_msg_actions_quote (TnyMsgIface * self, const gchar * from,
+modest_tny_msg_actions_quote (TnyMsg * self, const gchar * from,
 			      time_t sent_date, gint limit,
 			      const gchar * to_quote)
 {
@@ -93,32 +93,32 @@ modest_tny_msg_actions_quote (TnyMsgIface * self, const gchar * from,
 
 
 
-TnyMimePartIface *
-modest_tny_msg_actions_find_body_part (TnyMsgIface *msg, gboolean want_html)
+TnyMimePart *
+modest_tny_msg_actions_find_body_part (TnyMsg *msg, gboolean want_html)
 {
 	const gchar *mime_type = want_html ? "text/html" : "text/plain";
-	TnyMimePartIface *part;
-	TnyListIface *parts;
-	TnyIteratorIface *iter;
+	TnyMimePart *part;
+	TnyList *parts;
+	TnyIterator *iter;
 
 	if (!msg)
 		return NULL;
 
-	parts = TNY_LIST_IFACE(tny_list_new());
-	tny_msg_iface_get_parts ((TnyMsgIface*)msg, parts);
+	parts = TNY_LIST (tny_simple_list_new());
+	tny_msg_get_parts ((TnyMsg*)msg, parts);
 
-	iter  = tny_list_iface_create_iterator(parts);
+	iter  = tny_list_create_iterator(parts);
 
-	while (!tny_iterator_iface_is_done(iter)) {
+	while (!tny_iterator_is_done(iter)) {
 
-		part = TNY_MIME_PART_IFACE(tny_iterator_iface_current (iter));
+		part = TNY_MIME_PART(tny_iterator_get_current (iter));
 		
-		if (tny_mime_part_iface_content_type_is (part, mime_type) &&
-		    !tny_mime_part_iface_is_attachment (part)) {
+		if (tny_mime_part_content_type_is (part, mime_type) &&
+		    !tny_mime_part_is_attachment (part)) {
 			break;
 		}
 		part = NULL;
-		tny_iterator_iface_next (iter);
+		tny_iterator_next (iter);
 	}
 
 	/* did we find a matching part? */
@@ -139,24 +139,26 @@ modest_tny_msg_actions_find_body_part (TnyMsgIface *msg, gboolean want_html)
 
 
 
-TnyMimePartIface *
-modest_tny_msg_actions_find_nth_part (TnyMsgIface *msg, gint index)
+TnyMimePart *
+modest_tny_msg_actions_find_nth_part (TnyMsg *msg, gint index)
 {
-	TnyMimePartIface *part;
-	TnyListIface *parts;
-	TnyIteratorIface *iter;
+	TnyMimePart *part;
+	TnyList *parts;
+	TnyIterator *iter;
 
 	g_return_val_if_fail (msg, NULL);
 	g_return_val_if_fail (index > 0, NULL);
 		
-	parts = TNY_LIST_IFACE(tny_list_new());
-	tny_msg_iface_get_parts ((TnyMsgIface*)msg, parts);
-	iter  = tny_list_iface_create_iterator ((TnyListIface*)parts);
-	if (!tny_iterator_iface_has_first(iter))
-		return NULL;
+	parts = TNY_LIST(tny_simple_list_new());
+	tny_msg_get_parts ((TnyMsg*)msg, parts);
+	iter  = tny_list_create_iterator (parts);
+
+	part = NULL;
 	
-	tny_iterator_iface_nth (iter, index);
-	part = TNY_MIME_PART_IFACE(tny_iterator_iface_current (iter));
+	if (!tny_iterator_is_done(iter)) {
+		tny_iterator_nth (iter, index);
+		part = TNY_MIME_PART(tny_iterator_get_current (iter));
+	}
 
 	g_object_unref (G_OBJECT(iter));
 	g_object_unref (G_OBJECT(parts));

@@ -70,6 +70,7 @@ modest_conf_get_type (void)
 			sizeof(ModestConf),
 			1,		/* n_preallocs */
 			(GInstanceInitFunc) modest_conf_init,
+			NULL
 		};
 		my_type = g_type_register_static (G_TYPE_OBJECT,
 		                                  "ModestConf",

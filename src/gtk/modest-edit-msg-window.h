@@ -31,7 +31,7 @@
 #define __MODEST_EDIT_MSG_WINDOW_H__
 
 #include <gtk/gtk.h>
-#include <tny-msg-iface.h>
+#include <tny-msg.h>
 #include <modest-conf.h>
 #include <modest-widget-factory.h>
 #include <glib/gi18n.h>

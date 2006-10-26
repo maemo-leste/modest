@@ -35,7 +35,7 @@
 
 #include <glib-object.h>
 #include <gtkhtml/gtkhtml.h>
-#include <tny-stream-iface.h>
+#include <tny-stream.h>
 
 G_BEGIN_DECLS
 

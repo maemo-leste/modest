@@ -1,6 +1,6 @@
 #
 # Makefile.am
-# Time-stamp: <2006-07-24 11:11:09 (djcb)>
+# Time-stamp: <2006-08-17 14:29:08 (djcb)>
 SUBDIRS=$(MODEST_PLATFORM_DIR) widgets
 DIST_SUBDIRS = widgets gtk
 
@@ -28,6 +28,8 @@ modest_SOURCES=\
 	modest-conf-keys.h\
 	modest-conf.h \
 	modest-conf.c\
+	modest-pair.h\
+	modest-pair.c\
 	modest-widget-factory.h\
 	modest-widget-factory.c\
 	modest-widget-memory.h\
@@ -41,8 +43,8 @@ modest_SOURCES=\
 	modest-tny-account-store.c\
 	modest-tny-msg-actions.h\
 	modest-tny-msg-actions.c\
-	modest-proto.h\
-	modest-proto.c\
+	modest-protocol-mgr.h\
+	modest-protocol-mgr.c\
 	modest-ui.h\
 	modest-text-utils.h\
 	modest-text-utils.c\

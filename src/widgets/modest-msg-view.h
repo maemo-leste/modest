@@ -31,9 +31,9 @@
 #define __MODEST_MSG_VIEW_H__
 
 #include <gtk/gtk.h>
-#include <tny-stream-iface.h>
-#include <tny-msg-iface.h>
-#include <tny-mime-part-iface.h>
+#include <tny-stream.h>
+#include <tny-msg.h>
+#include <tny-mime-part.h>
 #include <modest-conf.h>
 
 G_BEGIN_DECLS
@@ -77,7 +77,7 @@ GType        modest_msg_view_get_type    (void) G_GNUC_CONST;
 
 /**
  * modest_msg_view_new 
- * @tny_msg: a TnyMsgIface instance, or NULL
+ * @tny_msg: a TnyMsg instance, or NULL
  *
  * create a new ModestMsgView widget (a GtkScrolledWindow subclass),
  * and display the @tny_msg e-mail message in it. If @tny_msg is NULL,
@@ -85,18 +85,18 @@ GType        modest_msg_view_get_type    (void) G_GNUC_CONST;
  *  
  * Returns: a new ModestMsgView widget, or NULL if there's an error
  */
-GtkWidget*   modest_msg_view_new          (TnyMsgIface *tny_msg);
+GtkWidget*   modest_msg_view_new          (TnyMsg *tny_msg);
 
 
 /**
  * modest_msg_view_set_message
  * @self: a ModestMsgView instance
- * @tny_msg: a TnyMsgIface instance, or NULL
+ * @tny_msg: a TnyMsg instance, or NULL
  *
  * display the @tny_msg e-mail message. If @tny_msg is NULL,
  * then a blank page will be displayed
  *  */
-void         modest_msg_view_set_message  (ModestMsgView *self, TnyMsgIface *tny_msg);
+void         modest_msg_view_set_message  (ModestMsgView *self, TnyMsg *tny_msg);
 
 /**
  * modest_msg_view_get_selected_text:

@@ -44,7 +44,7 @@
  * 
  * Returns: a newly allocated string containing the quoted message
  */
-gchar *modest_tny_msg_actions_quote (TnyMsgIface * self, const gchar * from,
+gchar *modest_tny_msg_actions_quote (TnyMsg * self, const gchar * from,
 				     time_t sent_date, gint limit,
 				     const gchar *to_quote);
 
@@ -56,9 +56,9 @@ gchar *modest_tny_msg_actions_quote (TnyMsgIface * self, const gchar * from,
  * search a message for the body part. if @want_html is true, try HTML mail
  * first.
  * 
- * Returns: the TnyMsgMimePartIface for the found part, or NULL if no matching part is found
+ * Returns: the TnyMsgMimePart for the found part, or NULL if no matching part is found
  */	 
-TnyMimePartIface *modest_tny_msg_actions_find_body_part (TnyMsgIface * self, gboolean want_html);
+TnyMimePart *modest_tny_msg_actions_find_body_part (TnyMsg * self, gboolean want_html);
 
 
 /**
@@ -68,9 +68,9 @@ TnyMimePartIface *modest_tny_msg_actions_find_body_part (TnyMsgIface * self, gbo
  * 
  * search for the nth (mime) part in the message
  * 
- * Returns: the TnyMsgMimePartIface for the found part, or NULL if no matching part is foundi; must be unref'd
+ * Returns: the TnyMsgMimePart for the found part, or NULL if no matching part is foundi; must be unref'd
  */
-TnyMimePartIface * modest_tny_msg_actions_find_nth_part (TnyMsgIface *msg, gint index);
+TnyMimePart * modest_tny_msg_actions_find_nth_part (TnyMsg *msg, gint index);
 
 
 #endif /* __MODEST_TNY_MSG_ACTIONS_H__ */

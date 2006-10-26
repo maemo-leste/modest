@@ -82,6 +82,7 @@ modest_account_view_get_type (void)
 			sizeof(ModestAccountView),
 			1,		/* n_preallocs */
 			(GInstanceInitFunc) modest_account_view_init,
+			NULL
 		};
 		my_type = g_type_register_static (GTK_TYPE_TREE_VIEW,
 		                                  "ModestAccountView",

@@ -58,12 +58,51 @@
 </para>
 
 
+<!-- ##### MACRO MODEST_PROTO_IMAP ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### MACRO MODEST_PROTO_POP ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### MACRO MODEST_PROTO_SENDMAIL ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### MACRO MODEST_PROTO_SMTP ##### -->
+<para>
+
+</para>
+
+
 <!-- ##### STRUCT ModestEditWindow ##### -->
 <para>
 
 </para>
 
 @parent: 
+
+<!-- ##### STRUCT ModestOpenWindow ##### -->
+<para>
+
+</para>
+
+@win: 
+@type: 
+@id: 
+
+<!-- ##### TYPEDEF ModestProtoType ##### -->
+<para>
+
+</para>
+
 
 <!-- ##### STRUCT ModestTnyFolderTreeView ##### -->
 <para>
@@ -85,6 +124,26 @@
 </para>
 
 @parent: 
+
+<!-- ##### STRUCT ModestTnyTransportActions ##### -->
+<para>
+
+</para>
+
+@parent: 
+
+<!-- ##### STRUCT ModestWindowMgr ##### -->
+<para>
+
+</para>
+
+@parent: 
+
+<!-- ##### TYPEDEF ModestWindowType ##### -->
+<para>
+
+</para>
+
 
 <!-- ##### FUNCTION modest_account_mgr_get_account_bool ##### -->
 <para>
@@ -269,6 +328,23 @@
 @attachments: 
 @Returns: 
 
+<!-- ##### FUNCTION modest_proto_is_valid ##### -->
+<para>
+
+</para>
+
+@proto: 
+@store_proto: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_proto_type ##### -->
+<para>
+
+</para>
+
+@proto: 
+@Returns: 
+
 <!-- ##### FUNCTION modest_tny_folder_tree_view_is_empty ##### -->
 <para>
 
@@ -320,6 +396,13 @@
 @self: 
 @tny_msg: 
 
+<!-- ##### FUNCTION modest_tny_transport_actions_new ##### -->
+<para>
+
+</para>
+
+@Returns: 
+
 <!-- ##### FUNCTION modest_ui_show_edit_window ##### -->
 <para>
 
@@ -332,5 +415,50 @@
 @subject: 
 @body: 
 @att: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_window_mgr_find_by_id ##### -->
+<para>
+
+</para>
+
+@self: 
+@window_id: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_window_mgr_find_by_type ##### -->
+<para>
+
+</para>
+
+@self: 
+@type: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_window_mgr_new ##### -->
+<para>
+
+</para>
+
+@Returns: 
+
+<!-- ##### FUNCTION modest_window_mgr_register ##### -->
+<para>
+
+</para>
+
+@self: 
+@win: 
+@type: 
+@window_id: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_window_mgr_unregister ##### -->
+<para>
+
+</para>
+
+@self: 
+@win: 
 @Returns: 
 

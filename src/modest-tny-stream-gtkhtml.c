@@ -31,6 +31,7 @@
 /* modest-tny-stream-gtkhtml.c */
 
 #include "modest-tny-stream-gtkhtml.h"
+#include <tny-stream.h>
 #include <gtkhtml/gtkhtml-stream.h>
 #include <gtkhtml/gtkhtml-search.h>
 
@@ -89,7 +90,7 @@ modest_tny_stream_gtkhtml_get_type (void)
 		                                  "ModestTnyStreamGtkhtml",
 		                                  &my_info, 0);
 
-		g_type_add_interface_static (my_type, TNY_TYPE_STREAM_IFACE,
+		g_type_add_interface_static (my_type, TNY_TYPE_STREAM,
 					     &iface_info);
 
 	}
@@ -147,14 +148,14 @@ modest_tny_stream_gtkhtml_new (GtkHTMLStream *stream)
 
 
 static ssize_t
-gtkhtml_read (TnyStreamIface *self, char *buffer, size_t n)
+gtkhtml_read (TnyStream *self, char *buffer, size_t n)
 {
 	return -1; /* we cannot read */
 }
 
 
 static ssize_t
-gtkhtml_write (TnyStreamIface *self, const char *buffer, size_t n)
+gtkhtml_write (TnyStream *self, const char *buffer, size_t n)
 {
 	ModestTnyStreamGtkhtmlPrivate *priv;
 	
@@ -174,14 +175,14 @@ gtkhtml_write (TnyStreamIface *self, const char *buffer, size_t n)
 
 	
 static gint
-gtkhtml_flush (TnyStreamIface *self)
+gtkhtml_flush (TnyStream *self)
 {
 	return 0;
 }
 	
 
 static gint
-gtkhtml_close (TnyStreamIface *self)
+gtkhtml_close (TnyStream *self)
 {
 	ModestTnyStreamGtkhtmlPrivate *priv;
 	g_return_val_if_fail (self, 0);
@@ -195,7 +196,7 @@ gtkhtml_close (TnyStreamIface *self)
 
 
 static gboolean
-gtkhtml_eos (TnyStreamIface *self)
+gtkhtml_is_eos (TnyStream *self)
 {
 	return TRUE;
 }
@@ -203,14 +204,14 @@ gtkhtml_eos (TnyStreamIface *self)
 
 	
 static gint
-gtkhtml_reset (TnyStreamIface *self)
+gtkhtml_reset (TnyStream *self)
 {
 	return 0;
 }
 
 	
 static ssize_t
-gtkhtml_write_to_stream (TnyStreamIface *self, TnyStreamIface *output)
+gtkhtml_write_to_stream (TnyStream *self, TnyStream *output)
 {
 	return 0;
 }
@@ -219,17 +220,17 @@ gtkhtml_write_to_stream (TnyStreamIface *self, TnyStreamIface *output)
 static void
 modest_tny_stream_gtkhml_iface_init (gpointer g_iface, gpointer iface_data)
 {
-        TnyStreamIfaceClass *klass;
+        TnyStreamIface *klass;
 	
 	g_return_if_fail (g_iface);
 
-	klass = (TnyStreamIfaceClass *)g_iface;
+	klass = (TnyStreamIface*) g_iface;
 	
         klass->read_func            = gtkhtml_read;
         klass->write_func           = gtkhtml_write;
         klass->flush_func           = gtkhtml_flush;
         klass->close_func           = gtkhtml_close;
-	klass->eos_func             = gtkhtml_eos;
+	klass->is_eos_func          = gtkhtml_is_eos;
 	klass->reset_func           = gtkhtml_reset;
 	klass->write_to_stream_func = gtkhtml_write_to_stream;
 }

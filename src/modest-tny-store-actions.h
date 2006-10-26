@@ -34,7 +34,7 @@
 #define __MODEST_TNY_STORE_ACTIONS_H__
 
 #include <glib-object.h>
-#include <tny-store-account-iface.h>
+#include <tny-store-account.h>
 
 G_BEGIN_DECLS
 

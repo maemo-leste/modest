@@ -86,6 +86,7 @@ modest_account_assistant_get_type (void)
 			sizeof(ModestAccountAssistant),
 			1,		/* n_preallocs */
 			(GInstanceInitFunc) modest_account_assistant_init,
+			NULL
 		};
 		my_type = g_type_register_static (GTK_TYPE_ASSISTANT,
 		                                  "ModestAccountAssistant",

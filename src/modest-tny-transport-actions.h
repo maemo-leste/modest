@@ -33,14 +33,14 @@
 #ifndef __MODEST_TNY_TRANSPORT_ACTIONS_H__
 #define __MODEST_TNY_TRANSPORT_ACTIONS_H__
 
-#include <tny-transport-account-iface.h>
+#include <tny-transport-account.h>
 
 G_BEGIN_DECLS
 
 /**
  * modest_tny_transport_actions_send_message:
  * @self: a ModestTnyTransportActions object
- * @transport_account: the TnyTransportAccountIface to use for sending this message
+ * @transport_account: the TnyTransportAccount to use for sending this message
  * @from: the email address of the sender
  * @to: the email address of the receiver
  * @cc: the receivers of a copy of the message (comma-seperated)
@@ -52,7 +52,7 @@ G_BEGIN_DECLS
  *
  * Returns: TRUE but this will change to whether sending was successful
  */
-gboolean modest_tny_transport_actions_send_message (TnyTransportAccountIface *transport_account,
+gboolean modest_tny_transport_actions_send_message (TnyTransportAccount *transport_account,
 						    const gchar *from,
 						    const gchar *to,
 						    const gchar *cc,

@@ -40,6 +40,7 @@
 #include <widgets/modest-msg-view.h>
 #include <widgets/modest-account-view.h>
 #include <widgets/modest-toolbar.h>
+#include <widgets/modest-combo-box.h>
 
 G_BEGIN_DECLS
 
@@ -71,6 +72,7 @@ enum _ModestComboBoxType {
 	MODEST_COMBO_BOX_TYPE_TRANSPORT_PROTOS,
 	MODEST_COMBO_BOX_TYPE_SECURITY_PROTOS,
 	MODEST_COMBO_BOX_TYPE_AUTH_PROTOS,
+	MODEST_COMBO_BOX_TYPE_TRANSPORTS
 };
 typedef enum _ModestComboBoxType ModestComboBoxType;
 

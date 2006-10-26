@@ -240,13 +240,7 @@ modest_tny_attachment_guess_mime_type (ModestTnyAttachment *self)
 static TnyStreamIface *
 make_stream_from_file(const gchar * filename)
 {
-	gint file;
-	
-	file = open(filename, O_RDONLY);
-	if (file < 0)
-		return NULL;
-
-	return TNY_STREAM_IFACE(tny_stream_camel_new(camel_stream_fs_new_with_fd(file)));
+	return NULL;
 }
 
 void
@@ -290,40 +284,11 @@ modest_tny_attachment_free_list(GList *list)
 ModestTnyAttachment *
 modest_tny_attachment_new_from_mime_part(TnyMimePartIface *part)
 {
-	TnyStreamIface *mem_stream;
-	ModestTnyAttachment *self;
-	
-	mem_stream = TNY_STREAM_IFACE(tny_stream_camel_new(camel_stream_mem_new()));
-	self = modest_tny_attachment_new();
-	tny_mime_part_iface_decode_to_stream(part, mem_stream);
-	tny_stream_iface_reset(mem_stream);
-	modest_tny_attachment_set_stream(self, mem_stream);
-	modest_tny_attachment_set_mime_type(self,
-	                                    tny_mime_part_iface_get_content_type(part));
-	modest_tny_attachment_set_name(self,
-	                                    tny_mime_part_iface_get_filename(part));
-	return self;
+	return NULL;
 }
 
 ModestTnyAttachment *
 modest_tny_attachment_new_from_message(const TnyMsgIface *msg)
 {
-	TnyStreamIface *mem_stream, *msg_stream;
-	ModestTnyAttachment *self;
-	gint res;
-	
-	mem_stream = TNY_STREAM_IFACE(tny_stream_camel_new(camel_stream_mem_new()));
-	msg_stream = tny_mime_part_iface_get_stream(TNY_MIME_PART_IFACE(msg));
-	printf("ping\n");
-	tny_stream_iface_reset(msg_stream);
-	res = tny_stream_iface_write_to_stream(msg_stream, mem_stream);
-	//tny_msg_mime_part_iface_write_to_stream(TNY_MSG_MIME_PART_IFACE(msg), mem_stream);
-	printf("pong, %d\n", res);
-	tny_stream_iface_reset(msg_stream);
-	tny_stream_iface_reset(mem_stream);
-	self = modest_tny_attachment_new();
-	modest_tny_attachment_set_stream(self, mem_stream);
-	modest_tny_attachment_set_mime_type(self, "message/rfc822");
-	modest_tny_attachment_set_name(self, "original message");
-	return self;
+	return NULL;
 }

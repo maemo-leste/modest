@@ -28,8 +28,9 @@
  */
 
 #include "modest-widget-factory.h"
-#include <tny-account-store-iface.h>
-#include <tny-device-iface.h>
+#include <modest-protocol-mgr.h>
+#include <tny-account-store.h>
+#include <tny-device.h>
 
 /* 'private'/'protected' functions */
 static void modest_widget_factory_class_init    (ModestWidgetFactoryClass *klass);
@@ -39,9 +40,9 @@ static void modest_widget_factory_finalize      (GObject *obj);
 
 /* callbacks */
 static void on_folder_selected         (ModestFolderView *folder_view,
-					TnyFolderIface *folder,
+					TnyFolder *folder,
 					ModestWidgetFactory *self);
-static void on_message_selected        (ModestHeaderView *header_view, TnyMsgIface *msg,
+static void on_message_selected        (ModestHeaderView *header_view, TnyMsg *msg,
 					ModestWidgetFactory *self);
 static void on_header_status_update    (ModestHeaderView *header_view, const gchar *msg,
 					gint status_id, ModestWidgetFactory *self);
@@ -52,7 +53,7 @@ static void on_msg_link_clicked        (ModestMsgView *msgview, const gchar* lin
 static void on_msg_attachment_clicked  (ModestMsgView *msgview, int index,
 					ModestWidgetFactory *self);
 
-static void on_connection_changed (TnyDeviceIface *device, gboolean online,
+static void on_connection_changed (TnyDevice *device, gboolean online,
 				   ModestWidgetFactory *self);
 static void on_online_toggle_toggled (GtkToggleButton *toggle, ModestWidgetFactory *factory);
 
@@ -76,6 +77,7 @@ struct _ModestWidgetFactoryPrivate {
 	ModestTnyAccountStore *account_store;
 	ModestAccountMgr      *account_mgr;
 	ModestConf            *conf;
+	ModestProtocolMgr     *proto_mgr;
 	
 	ModestHeaderView      *header_view;
 	ModestFolderView      *folder_view;
@@ -142,6 +144,7 @@ modest_widget_factory_init (ModestWidgetFactory *obj)
 	priv->conf          = NULL;
 	priv->account_mgr   = NULL;
 	priv->account_store = NULL;
+	priv->proto_mgr     = modest_protocol_mgr_new ();
 	
 	priv->progress_bar = gtk_progress_bar_new ();
 	gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR(priv->progress_bar),
@@ -166,7 +169,12 @@ modest_widget_factory_finalize (GObject *obj)
 		g_object_unref (G_OBJECT(priv->conf));
 		priv->conf = NULL;
 	}
-
+	
+	if (priv->proto_mgr) {
+		g_object_unref (G_OBJECT(priv->proto_mgr));
+		priv->proto_mgr = NULL;
+	}
+	
 	if (priv->account_store) {
 		g_object_unref (G_OBJECT(priv->account_store));
 		priv->account_store = NULL;
@@ -179,7 +187,7 @@ static void
 init_signals (ModestWidgetFactory *self)
 {
 	
-	TnyDeviceIface *device;
+	TnyDevice *device;
 	ModestWidgetFactoryPrivate *priv;
 	
 	priv = MODEST_WIDGET_FACTORY_GET_PRIVATE(self);
@@ -210,8 +218,8 @@ init_signals (ModestWidgetFactory *self)
 			  G_CALLBACK(on_password_requested), self);	
 
 	/* FIXME: const casting is evil ==> tinymail */
-	device = (TnyDeviceIface*)tny_account_store_iface_get_device
-		(TNY_ACCOUNT_STORE_IFACE(priv->account_store));
+	device = (TnyDevice*)tny_account_store_get_device
+		(TNY_ACCOUNT_STORE(priv->account_store));
 	if (device) {
 		g_signal_connect (G_OBJECT(device), "connection_changed",
 				  G_CALLBACK(on_connection_changed), self);
@@ -220,7 +228,7 @@ init_signals (ModestWidgetFactory *self)
 		
 		/* init toggle in correct state */
 		on_connection_changed (device,
-				       tny_device_iface_is_online (device),
+				       tny_device_is_online (device),
 				       self);
 	}
 }
@@ -357,37 +365,70 @@ modest_widget_factory_get_status_bar (ModestWidgetFactory *self)
 }
 
 
+
+static const GSList*
+get_transports (ModestWidgetFactory *self)
+{
+	ModestWidgetFactoryPrivate *priv;
+	GSList *transports = NULL;
+	GSList *cursor, *accounts;
+	
+	priv = MODEST_WIDGET_FACTORY_GET_PRIVATE(self);
+
+	cursor = accounts = modest_account_mgr_account_names (priv->account_mgr, NULL);
+	while (cursor) {
+		ModestAccountData *data;
+		gchar *account_name = (gchar*)cursor->data;
+
+		data = modest_account_mgr_get_account_data (priv->account_mgr, account_name);
+		if (data && data->transport_account) {
+			gchar *display_name = g_strdup_printf ("%s (%s)", data->email, account_name);
+			ModestPair *pair = modest_pair_new ((gpointer)account_name,
+							    (gpointer)display_name , TRUE);
+			transports = g_slist_append (transports, pair);
+		}
+		/* don't free account name; it's freed when the transports list is freed */
+		cursor = cursor->next;
+	}
+	g_slist_free (accounts);
+	
+	return transports;
+}
+
+
 GtkWidget*
 modest_widget_factory_get_combo_box (ModestWidgetFactory *self, ModestComboBoxType type)
 {
-	GtkWidget *combo_box;
-	const gchar **protos, **cursor; 
-
+	ModestWidgetFactoryPrivate *priv;
+	const GSList *list = NULL;
+	GtkWidget* combo_box;
+	
 	g_return_val_if_fail (self, NULL);
 
-	combo_box = gtk_combo_box_new_text ();
+	priv = MODEST_WIDGET_FACTORY_GET_PRIVATE(self);
 	
 	switch (type) {
 	case MODEST_COMBO_BOX_TYPE_STORE_PROTOS:
-		cursor = protos = modest_proto_store_protos ();
+		list = modest_protocol_mgr_get_store_protocols (priv->proto_mgr);
 		break;
 	case MODEST_COMBO_BOX_TYPE_TRANSPORT_PROTOS:
-		cursor = protos = modest_proto_transport_protos ();
+		list = modest_protocol_mgr_get_transport_protocols (priv->proto_mgr);
 		break;
 	case MODEST_COMBO_BOX_TYPE_SECURITY_PROTOS:
-		cursor = protos = modest_proto_security_protos ();
+		list = modest_protocol_mgr_get_security_protocols (priv->proto_mgr);
 		break;
 	case MODEST_COMBO_BOX_TYPE_AUTH_PROTOS:
-		cursor = protos = modest_proto_auth_protos ();
+		list = modest_protocol_mgr_get_auth_protocols (priv->proto_mgr);
+		break;
+	case MODEST_COMBO_BOX_TYPE_TRANSPORTS:
+		list = get_transports (self);
 		break;
 	default:
-		g_assert_not_reached ();
+		g_warning ("invalid combo box type: %d", type);
+		return NULL;
 	}
-	while (cursor && *cursor) {
-		gtk_combo_box_append_text (GTK_COMBO_BOX(combo_box),
-					   (const gchar*)*cursor);
-		++cursor;
-	}
+
+	combo_box = modest_combo_box_new (list);
 	gtk_combo_box_set_active (GTK_COMBO_BOX(combo_box), 0);
 	
 	return combo_box;
@@ -441,7 +482,7 @@ modest_widget_factory_get_edit_toolbar (ModestWidgetFactory *self,
 
 
 static void
-on_folder_selected (ModestFolderView *folder_view, TnyFolderIface *folder,
+on_folder_selected (ModestFolderView *folder_view, TnyFolder *folder,
 		    ModestWidgetFactory *self)
 {
 	ModestWidgetFactoryPrivate *priv;
@@ -454,8 +495,8 @@ on_folder_selected (ModestFolderView *folder_view, TnyFolderIface *folder,
 	if (folder) {
 		guint num, unread;
 		
-		num    = tny_folder_iface_get_all_count    (folder);
-		unread = tny_folder_iface_get_unread_count (folder); 
+		num    = tny_folder_get_all_count    (folder);
+		unread = tny_folder_get_unread_count (folder); 
 
 		txt = g_strdup_printf (_("%d %s, %d unread"),
 				       num, num==1 ? _("item") : _("items"), unread);
@@ -468,7 +509,7 @@ on_folder_selected (ModestFolderView *folder_view, TnyFolderIface *folder,
 
 
 static void
-on_message_selected (ModestHeaderView *folder_view, TnyMsgIface *msg,
+on_message_selected (ModestHeaderView *folder_view, TnyMsg *msg,
 		     ModestWidgetFactory *self)
 {	
 	ModestWidgetFactoryPrivate *priv;
@@ -578,7 +619,7 @@ on_msg_attachment_clicked  (ModestMsgView *msgview, int index,
 
 
 static void
-on_connection_changed (TnyDeviceIface *device, gboolean online,
+on_connection_changed (TnyDevice *device, gboolean online,
 		       ModestWidgetFactory *self)
 {
 	ModestWidgetFactoryPrivate *priv;
@@ -597,19 +638,19 @@ static void
 on_online_toggle_toggled (GtkToggleButton *toggle, ModestWidgetFactory *self)
 {
 	gboolean online;
-	const TnyDeviceIface *device;
+	const TnyDevice *device;
 	ModestWidgetFactoryPrivate *priv;
 	
 	priv    = MODEST_WIDGET_FACTORY_GET_PRIVATE(self);
 	online  = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON(priv->online_toggle));
-	device  = tny_account_store_iface_get_device
-		(TNY_ACCOUNT_STORE_IFACE(priv->account_store)); 
+	device  = tny_account_store_get_device
+		(TNY_ACCOUNT_STORE(priv->account_store)); 
 
 	/* FIXME: const casting should not be necessary ==> tinymail */
 	if (online)  /* we're moving to online state */
-		tny_device_iface_force_online ((TnyDeviceIface*)device);
+		tny_device_force_online ((TnyDevice*)device);
 	else  /* we're moving to offline state */
-		tny_device_iface_force_offline ((TnyDeviceIface*)device);
+		tny_device_force_offline ((TnyDevice*)device);
 }
 
 
@@ -622,14 +663,14 @@ static void on_item_not_found     (ModestHeaderView* header_view, ModestItemType
 	gboolean online;
 	gchar *item = type == MODEST_ITEM_TYPE_FOLDER ? "folder" : "message";
 	
-	TnyDeviceIface *device;
+	TnyDevice *device;
 	ModestWidgetFactoryPrivate *priv;
 	
 	priv    = MODEST_WIDGET_FACTORY_GET_PRIVATE(self);
-	device  = tny_account_store_iface_get_device
-		(TNY_ACCOUNT_STORE_IFACE(priv->account_store));
+	device  = tny_account_store_get_device
+		(TNY_ACCOUNT_STORE(priv->account_store));
 	
-	online = tny_device_iface_is_online (device);
+	online = tny_device_is_online (device);
 	if (online) {
 		/* already online -- the item is simply not there... */
 		dialog = gtk_message_dialog_new (NULL,
@@ -659,7 +700,7 @@ static void on_item_not_found     (ModestHeaderView* header_view, ModestItemType
 
 		gtk_window_set_default_size (GTK_WINDOW(dialog), 300, 300);
 		if (gtk_dialog_run (GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
-			tny_device_iface_force_online (device);
+			tny_device_force_online (device);
 	}
 	gtk_widget_destroy (dialog);
 }

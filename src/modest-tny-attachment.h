@@ -34,9 +34,9 @@
 #define __MODEST_TNY_ATTACHMENT_H__
 
 #include <glib-object.h>
-#include <tny-stream-iface.h>
-#include <tny-msg-iface.h>
-#include <tny-mime-part-iface.h>
+#include <tny-stream.h>
+#include <tny-msg.h>
+#include <tny-mime-part.h>
 /* other include files */
 
 G_BEGIN_DECLS

@@ -28,12 +28,12 @@
  */
 
 #include <tny-msg.h>
-#include <tny-msg-iface.h>			
+#include <tny-msg.h>			
 #include <tny-header.h>
-#include <tny-header-iface.h>
-#include <tny-account-iface.h>	
-#include <tny-account-store-iface.h>
-#include <tny-store-account-iface.h>	
+#include <tny-header.h>
+#include <tny-account.h>	
+#include <tny-account-store.h>
+#include <tny-store-account.h>	
 #include <tny-store-account.h>
 #include <tny-stream-camel.h>
 #include <string.h>
