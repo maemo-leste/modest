@@ -38,7 +38,7 @@
 
 G_BEGIN_DECLS
 
-void    modest_tny_store_actions_update_folders (TnyStoreAccountIface *storage_account);
+void    modest_tny_store_actions_update_folders (TnyStoreAccount *storage_account);
 
 G_END_DECLS
 

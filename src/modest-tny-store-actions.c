@@ -28,8 +28,9 @@
  */
 
 #include <tny-msg.h>
-#include <tny-msg.h>			
-#include <tny-header.h>
+#include <tny-folder.h>			
+#include <tny-folder-store.h>
+#include <tny-folder-store-query.h>
 #include <tny-header.h>
 #include <tny-account.h>	
 #include <tny-account-store.h>
@@ -47,28 +48,34 @@
 
 
 void
-modest_tny_store_actions_update_folders (TnyStoreAccountIface *storage_account)
+modest_tny_store_actions_update_folders (TnyStoreAccount *storage_account)
 {
 
 // FIXME TODO: This results in failure on folder change.	
-	/*
-	const TnyListIface* folders;
-	TnyIteratorIface* ifolders;
-	const TnyMsgFolderIface *cur_folder;
 
-	folders = tny_store_account_iface_get_folders (storage_account, 
-						       TNY_STORE_ACCOUNT_FOLDER_TYPE_SUBSCRIBED);
+	TnyList *folders;
+	TnyIterator *ifolders;
+	const TnyFolder *cur_folder;
+	TnyFolderStoreQuery *query;
+
+/* 	folders = tny_store_account_get_folders (storage_account,  */
+/* 						       TNY_STORE_ACCOUNT_FOLDER_TYPE_SUBSCRIBED); */
+	query = tny_folder_store_query_new ();
+	tny_folder_store_query_add_item (query, NULL, TNY_FOLDER_STORE_QUERY_OPTION_SUBSCRIBED);
+	tny_folder_store_get_folders (TNY_FOLDER_STORE (storage_account),
+				      folders, NULL);
+	g_object_unref (query);
 	
-	ifolders = tny_list_iface_create_iterator (folders);
+	ifolders = tny_list_create_iterator (folders);
 	
-	for (cur_folder = TNY_MSG_FOLDER_IFACE(tny_iterator_iface_first (ifolders)); 
-	     tny_iterator_iface_has_next (ifolders); 
-	     tny_iterator_iface_next (ifolders)) {
+	for (tny_iterator_first (ifolders); 
+	     !tny_iterator_is_done (ifolders); 
+	     tny_iterator_next (ifolders)) {
 		
-		cur_folder = TNY_MSG_FOLDER_IFACE(tny_iterator_iface_current (ifolders));
-		tny_msg_folder_iface_refresh (cur_folder);
+		cur_folder = TNY_FOLDER(tny_iterator_get_current (ifolders));
+		tny_folder_refresh (cur_folder);
 	}
 	
 	g_object_unref (ifolders);
-*/}
+}
 
