@@ -43,17 +43,38 @@ typedef struct _ModestPair ModestPair;
 
 
 /**
- * modest_pait_new
+ * modest_pair_new:
+ * @first: the first element of the pair
+ * @second: the second element of the pair
+ * @own: does the pair own the item (ie. should the items be freed when the pair is destroyed)
  *
  * create a new ModestPair instance
  *
  * Returns: a newly allocated ModestPair instance
  */
 ModestPair* modest_pair_new           (gpointer first, gpointer second, gboolean own);
+
+
+
+/**
+ * modest_pair_destroy:
+ * @self: a valid ModestPair instance or NULL
+ *
+ * destroy a ModestPair instance. If it was created with own==TRUE, the elements
+ * will be g_free'd as well. If pair==NULL, nothing will be done.
+ */
 void        modest_pair_destroy       (ModestPair *pair);
 
 
-GSList    *modest_pair_gslist_destroy (GSList *pairs);
+/**
+ * modest_pair_gslist_destroy:
+ * @pairs: a list of ModestPair instances
+ *
+ * convenience function to destroy all pairs in a list 
+ *
+ * Returns: NULL
+ */
+GSList      *modest_pair_gslist_destroy (GSList *pairs);
 
 
 G_END_DECLS
