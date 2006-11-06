@@ -50,8 +50,6 @@ modest_SOURCES=\
 	modest-text-utils.c\
 	modest-tny-stream-gtkhtml.h\
 	modest-tny-stream-gtkhtml.c\
-	modest-tny-transport-actions.c\
-	modest-tny-transport-actions.h\
 	modest-tny-attachment.h\
 	modest-tny-attachment.c\
 	modest-tny-store-actions.c\

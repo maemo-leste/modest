@@ -32,7 +32,7 @@
 #include <glib/gi18n.h>
 #include <gtk/gtk.h>
 #include <tny-list.h>
-
+#include <tny-transport-account.h>
 #include <tny-account-store.h>
 #include <tny-list.h>
 #include <tny-simple-list.h>
@@ -41,7 +41,6 @@
 #include "modest-account-mgr.h"
 #include "modest-ui.h"
 #include "modest-icon-factory.h"
-#include "modest-tny-transport-actions.h"
 #include "modest-tny-account-store.h"
 #include "modest-tny-platform-factory.h"
 
