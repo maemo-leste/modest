@@ -29,6 +29,7 @@
 
 #include "modest-account-view-window.h"
 #include "modest-account-assistant.h"
+#include "modest-tny-platform-factory.h"
 
 /* 'private'/'protected' functions */
 static void                            modest_account_view_window_class_init   (ModestAccountViewWindowClass *klass);
@@ -45,7 +46,6 @@ enum {
 
 typedef struct _ModestAccountViewWindowPrivate ModestAccountViewWindowPrivate;
 struct _ModestAccountViewWindowPrivate {
-	ModestAccountMgr    *account_mgr;
 	ModestWidgetFactory *widget_factory;
 	GtkWidget           *edit_button, *remove_button;
 };
@@ -108,7 +108,6 @@ modest_account_view_window_init (ModestAccountViewWindow *obj)
 		
 	priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE(obj);
 
-	priv->account_mgr    = NULL;
 	priv->widget_factory = NULL;
 }
 
@@ -119,11 +118,6 @@ modest_account_view_window_finalize (GObject *obj)
 		
 	priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE(obj);
 
-	if (priv->account_mgr) {
-		g_object_unref (G_OBJECT(priv->account_mgr));
-		priv->account_mgr = NULL;
-	}
-	
 	if (priv->widget_factory) {
 		g_object_unref (G_OBJECT(priv->widget_factory));
 		priv->widget_factory = NULL;
@@ -169,10 +163,14 @@ on_add_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 {
 	GtkWidget *assistant;
 	ModestAccountViewWindowPrivate *priv;
+	TnyPlatformFactory *fact;
+	ModestAccountMgr *account_mgr;
 	
 	priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE(self);
+	fact = modest_tny_platform_factory_get_instance ();
+	account_mgr = modest_tny_platform_factory_get_modest_account_mgr_instance (fact);
 
-	assistant = modest_account_assistant_new (priv->account_mgr,
+	assistant = modest_account_assistant_new (account_mgr,
 						  priv->widget_factory);
 	gtk_window_set_transient_for (GTK_WINDOW(assistant),
 				      GTK_WINDOW(self));
@@ -277,20 +275,16 @@ window_vbox_new (ModestAccountViewWindow *self)
 
 
 GtkWidget*
-modest_account_view_window_new (ModestAccountMgr *account_mgr, ModestWidgetFactory *factory)
+modest_account_view_window_new (ModestWidgetFactory *factory)
 {
 	GObject *obj;
 	ModestAccountViewWindowPrivate *priv;
 
-	g_return_val_if_fail (account_mgr, NULL);
 	g_return_val_if_fail (factory, NULL);
 	
 	obj  = g_object_new(MODEST_TYPE_ACCOUNT_VIEW_WINDOW, NULL);
 	priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE(obj);
 
-	g_object_ref (G_OBJECT(account_mgr));
-	priv->account_mgr = account_mgr;
-	
 	g_object_ref (G_OBJECT(factory));
 	priv->widget_factory = factory;
 

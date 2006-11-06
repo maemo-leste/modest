@@ -43,6 +43,7 @@
 #include "modest-icon-factory.h"
 #include "modest-tny-transport-actions.h"
 #include "modest-tny-account-store.h"
+#include "modest-tny-platform-factory.h"
 
 
 #ifdef MODEST_ENABLE_HILDON /* Hildon includes */
@@ -60,16 +61,17 @@
 
 static gboolean hildon_init (); /* NOP if HILDON is not defined */
 
-static int start_ui (ModestConf *conf, const gchar* mailto, const gchar *cc,
+static int start_ui (const gchar* mailto, const gchar *cc,
 		     const gchar *bcc, const gchar* subject, const gchar *body);
 
-static int send_mail (ModestConf *conf, const gchar* mailto, const gchar *cc, const gchar *bcc,
+static int send_mail (const gchar* mailto, const gchar *cc, const gchar *bcc,
 		      const gchar* subject, const gchar *body);
 
 int
 main (int argc, char *argv[])
 {
 	GOptionContext   *context        = NULL;
+	TnyPlatformFactory *fact         = NULL;
 	ModestConf       *modest_conf    = NULL;
 
 	GError *err = NULL;
@@ -110,7 +112,8 @@ main (int argc, char *argv[])
 	}
 	g_option_context_free (context);
 	
-	modest_conf = MODEST_CONF(modest_conf_new());
+	fact = modest_tny_platform_factory_get_instance ();
+	modest_conf = modest_tny_platform_factory_get_modest_conf_instance (fact);
 	if (!modest_conf) {
 		g_printerr ("modest: failed to initialize config system, exiting\n");
 		retval = MODEST_ERR_CONF;
@@ -125,21 +128,19 @@ main (int argc, char *argv[])
 	
 	if (!batch) {
 		gtk_init (&argc, &argv);
-		retval = start_ui (modest_conf, mailto, cc, bcc, subject, body);
+		retval = start_ui (mailto, cc, bcc, subject, body);
 	} else 
-		retval = send_mail (modest_conf, mailto, cc, bcc, subject, body);
+		retval = send_mail (mailto, cc, bcc, subject, body);
 		
 	
 cleanup:
-	if (modest_conf)
-		g_object_unref (G_OBJECT(modest_conf));
 	
 	return retval;
 }
 
 
 static int
-start_ui (ModestConf *conf, const gchar* mailto, const gchar *cc, const gchar *bcc,
+start_ui (const gchar* mailto, const gchar *cc, const gchar *bcc,
 	  const gchar* subject, const gchar *body)
 {
 
@@ -150,7 +151,7 @@ start_ui (ModestConf *conf, const gchar* mailto, const gchar *cc, const gchar *b
 	GtkWidget *win;
 	#endif
 	
-	modest_ui = MODEST_UI(modest_ui_new (conf));
+	modest_ui = MODEST_UI(modest_ui_new ());
 	if (!modest_ui) {
 		g_printerr ("modest: failed to initialize ui, exiting\n");
 		retval = MODEST_ERR_UI;
@@ -214,19 +215,21 @@ hildon_init ()
 
 
 static int
-send_mail (ModestConf *conf, const gchar* mailto, const gchar *cc, const gchar *bcc,
+send_mail (const gchar* mailto, const gchar *cc, const gchar *bcc,
 	   const gchar* subject, const gchar *body)
 {
 	ModestAccountMgr *acc_mgr = NULL;
-	ModestTnyAccountStore *acc_store = NULL;
+	TnyPlatformFactory *fact = NULL;
+	TnyAccountStore *acc_store = NULL;
 
 	TnyList *accounts = NULL;
 	TnyIterator *iter = NULL;
 	TnyTransportAccount *account = NULL;	
 	int retval;
-	
-	acc_mgr   = modest_account_mgr_new (conf);
-	acc_store = modest_tny_account_store_new (acc_mgr);	
+
+	fact = modest_tny_platform_factory_get_instance ();
+	acc_mgr = modest_tny_platform_factory_get_modest_account_mgr_instance (fact);
+	acc_store = tny_platform_factory_new_account_store (fact);	
 
 	accounts = TNY_LIST(tny_simple_list_new ());
 	tny_account_store_get_accounts (TNY_ACCOUNT_STORE(acc_store), accounts,
@@ -242,23 +245,19 @@ send_mail (ModestConf *conf, const gchar* mailto, const gchar *cc, const gchar *
 
 	account = TNY_TRANSPORT_ACCOUNT (tny_iterator_get_current(iter));
 
-	if (!modest_tny_transport_actions_send_message (account,
-							 "<>", mailto, cc, bcc, subject, body,
-							 NULL)) {
+	if (!modest_mail_operation_send_mail (account,
+					      "djcb@djcbsoftware.nl", mailto, cc, bcc, subject, body,
+					      NULL)) {
 		retval = MODEST_ERR_SEND;
 		goto cleanup;
 	} else
 		retval = MODEST_ERR_NONE; /* hurray! */
-							 
+
 cleanup:
 	if (iter)
 		g_object_unref (G_OBJECT(iter));
 	if (accounts)
 		g_object_unref (G_OBJECT(accounts));
-	if (acc_store)
-		g_object_unref (G_OBJECT(acc_store));
-	if (acc_mgr)
-		g_object_unref (G_OBJECT(acc_mgr));
 	
 	return retval;
 }

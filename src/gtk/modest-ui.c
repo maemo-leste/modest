@@ -40,6 +40,7 @@
 #include "../modest-account-mgr.h"
 #include "../modest-widget-factory.h"
 #include "modest-main-window.h"
+#include "modest-tny-platform-factory.h"
 
 
 /* 'private'/'protected' functions */
@@ -52,10 +53,7 @@ gchar *on_password_requested (TnyAccountIface *, const gchar *, gboolean *);
 
 typedef struct _ModestUIPrivate ModestUIPrivate;
 struct _ModestUIPrivate {
-	ModestConf            *conf;
-        ModestAccountMgr      *account_mgr;
 	ModestWidgetFactory   *widget_factory;	
-        ModestTnyAccountStore *account_store;
 
 	GtkWidget              *main_window;
 };
@@ -122,9 +120,6 @@ modest_ui_init (ModestUI *obj)
 
 	priv = MODEST_UI_GET_PRIVATE(obj);
 
-	priv->account_store  = NULL;
-	priv->account_mgr    = NULL;
-	priv->conf           = NULL;
 	priv->widget_factory = NULL;
 
 	priv->main_window    = NULL;
@@ -137,58 +132,43 @@ modest_ui_finalize (GObject *obj)
 	
 	ModestUIPrivate *priv = MODEST_UI_GET_PRIVATE(obj);
 
-	if (priv->account_store) {
-		g_object_unref (G_OBJECT(priv->account_store));
-		priv->account_store = NULL;
-	}
-		
-	if (priv->account_mgr) {
-		g_object_unref (G_OBJECT(priv->account_mgr));
-		priv->account_mgr = NULL;
-	}
-
 	if (priv->widget_factory) {
 		g_object_unref (G_OBJECT(priv->widget_factory));
 		priv->widget_factory = NULL;
 	}
-
-	if (priv->conf) {
-		g_object_unref (G_OBJECT(priv->conf));
-		priv->conf = NULL;
-	}	
 }
 
 
 ModestUI*
-modest_ui_new (ModestConf *modest_conf)
+modest_ui_new (void)
 {
 	GObject *obj;
 	ModestUIPrivate *priv;
-
-	g_return_val_if_fail (modest_conf, NULL);
+	TnyPlatformFactory *fact;
+	ModestAccountMgr *account_mgr;
+	TnyAccountStore *account_store;
 
 	obj  = g_object_new(MODEST_TYPE_UI, NULL);
 	priv = MODEST_UI_GET_PRIVATE(obj);
 
-	g_object_ref (G_OBJECT(modest_conf));
-	priv->conf = modest_conf;
+	/* Get the platform-dependent instances */
+	fact = modest_tny_platform_factory_get_instance ();
 	
-	priv->account_mgr = MODEST_ACCOUNT_MGR(modest_account_mgr_new (priv->conf));
-	if (!priv->account_mgr) {
+	account_mgr = modest_tny_platform_factory_get_modest_account_mgr_instance (fact);
+	if (!account_mgr) {
 		g_printerr ("modest: could not create ModestAccountMgr instance\n");
 		g_object_unref (obj);
 		return NULL;
         }
 
-	priv->account_store = modest_tny_account_store_new (priv->account_mgr);
-	if (!priv->account_store) {
+	account_store = tny_platform_factory_new_account_store (fact);
+	if (!account_store) {
 		g_printerr ("modest: could not initialze ModestTnyAccountStore instance\n");
 		return NULL;
         }
 
-	priv->widget_factory = modest_widget_factory_new (
-		priv->conf, priv->account_store, priv->account_mgr);
-	if (!priv->account_store) {
+	priv->widget_factory = modest_widget_factory_new ();
+	if (!priv->widget_factory) {
 		g_printerr ("modest: could not initialize widget factory\n");
 		return NULL;
 	}
@@ -215,8 +195,7 @@ modest_ui_main_window (ModestUI *modest_ui)
 
 	if (!priv->main_window) {
 		priv->main_window =
-			modest_main_window_new (priv->conf, priv->account_mgr,
-						priv->widget_factory);
+			modest_main_window_new (priv->widget_factory);
 		g_signal_connect (G_OBJECT(priv->main_window), "destroy",
 				  G_CALLBACK(on_main_window_destroy), modest_ui);
 

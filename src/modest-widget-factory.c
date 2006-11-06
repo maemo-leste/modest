@@ -31,6 +31,8 @@
 #include <modest-protocol-mgr.h>
 #include <tny-account-store.h>
 #include <tny-device.h>
+#include "modest-tny-platform-factory.h"
+#include "modest-account-mgr.h"
 
 /* 'private'/'protected' functions */
 static void modest_widget_factory_class_init    (ModestWidgetFactoryClass *klass);
@@ -74,9 +76,8 @@ enum {
 typedef struct _ModestWidgetFactoryPrivate ModestWidgetFactoryPrivate;
 struct _ModestWidgetFactoryPrivate {
 	
-	ModestTnyAccountStore *account_store;
-	ModestAccountMgr      *account_mgr;
-	ModestConf            *conf;
+	TnyPlatformFactory    *fact;
+	TnyAccountStore       *account_store;
 	ModestProtocolMgr     *proto_mgr;
 	
 	ModestHeaderView      *header_view;
@@ -141,9 +142,8 @@ modest_widget_factory_init (ModestWidgetFactory *obj)
 	ModestWidgetFactoryPrivate *priv;
 	priv = MODEST_WIDGET_FACTORY_GET_PRIVATE(obj);
 
-	priv->conf          = NULL;
-	priv->account_mgr   = NULL;
-	priv->account_store = NULL;
+	priv->fact = modest_tny_platform_factory_get_instance ();
+	priv->account_store = tny_platform_factory_new_account_store (priv->fact);
 	priv->proto_mgr     = modest_protocol_mgr_new ();
 	
 	priv->progress_bar = gtk_progress_bar_new ();
@@ -160,24 +160,9 @@ modest_widget_factory_finalize (GObject *obj)
 	ModestWidgetFactoryPrivate *priv;
 	priv = MODEST_WIDGET_FACTORY_GET_PRIVATE(obj);
 
-	if (priv->account_mgr) {
-		g_object_unref (G_OBJECT(priv->account_mgr));
-		priv->account_mgr = NULL;
-	}
-
-	if (priv->conf) {
-		g_object_unref (G_OBJECT(priv->conf));
-		priv->conf = NULL;
-	}
-	
 	if (priv->proto_mgr) {
 		g_object_unref (G_OBJECT(priv->proto_mgr));
 		priv->proto_mgr = NULL;
-	}
-	
-	if (priv->account_store) {
-		g_object_unref (G_OBJECT(priv->account_store));
-		priv->account_store = NULL;
 	}
 }
 
@@ -214,12 +199,11 @@ init_signals (ModestWidgetFactory *self)
 			  G_CALLBACK(on_msg_attachment_clicked), self);
 
 	/* account store */	
-	g_signal_connect (G_OBJECT(priv->account_store), "password_requested",
+	g_signal_connect (G_OBJECT (priv->account_store), "password_requested",
 			  G_CALLBACK(on_password_requested), self);	
 
 	/* FIXME: const casting is evil ==> tinymail */
-	device = (TnyDevice*)tny_account_store_get_device
-		(TNY_ACCOUNT_STORE(priv->account_store));
+	device = (TnyDevice*) tny_account_store_get_device (priv->account_store);
 	if (device) {
 		g_signal_connect (G_OBJECT(device), "connection_changed",
 				  G_CALLBACK(on_connection_changed), self);
@@ -237,6 +221,7 @@ static gboolean
 init_widgets (ModestWidgetFactory *self)
 {
 	ModestWidgetFactoryPrivate *priv;
+
 	priv = MODEST_WIDGET_FACTORY_GET_PRIVATE(self);
 
 	/* folder view */
@@ -277,28 +262,14 @@ init_widgets (ModestWidgetFactory *self)
 
 
 ModestWidgetFactory*
-modest_widget_factory_new (ModestConf *conf,
-			   ModestTnyAccountStore *account_store,
-			   ModestAccountMgr *account_mgr)
+modest_widget_factory_new (void)
 {
 	GObject *obj;
 	ModestWidgetFactoryPrivate *priv;
+	ModestAccountMgr *account_mgr;
 
-	g_return_val_if_fail (account_store, NULL);
-	g_return_val_if_fail (account_mgr, NULL);
-	g_return_val_if_fail (conf, NULL);
-	
-	obj  = g_object_new(MODEST_TYPE_WIDGET_FACTORY, NULL);	
+	obj  = g_object_new (MODEST_TYPE_WIDGET_FACTORY, NULL);	
 	priv = MODEST_WIDGET_FACTORY_GET_PRIVATE(obj);
-
-	g_object_ref (G_OBJECT(conf));
-	priv->conf = conf;
-	
-	g_object_ref (G_OBJECT(account_mgr));
-	priv->account_mgr = account_mgr;
-	
-	g_object_ref (G_OBJECT(account_store));
-	priv->account_store = account_store;
 
 	if (!init_widgets (MODEST_WIDGET_FACTORY(obj))) {
 		g_printerr ("modest: widget factory failed to init widgets\n");
@@ -340,11 +311,15 @@ ModestAccountView*
 modest_widget_factory_get_account_view (ModestWidgetFactory *self)
 {
 	ModestWidgetFactoryPrivate *priv;
+	ModestAccountMgr *account_mgr;
 	
 	g_return_val_if_fail (self, NULL);
 	priv =  MODEST_WIDGET_FACTORY_GET_PRIVATE(self);
+
+	account_mgr = 
+		modest_tny_platform_factory_get_modest_account_mgr_instance (priv->fact);
 	
-	return modest_account_view_new (priv->account_mgr);
+	return modest_account_view_new (account_mgr);
 }
 
 
@@ -370,17 +345,20 @@ static const GSList*
 get_transports (ModestWidgetFactory *self)
 {
 	ModestWidgetFactoryPrivate *priv;
+	ModestAccountMgr *account_mgr;
 	GSList *transports = NULL;
 	GSList *cursor, *accounts;
 	
 	priv = MODEST_WIDGET_FACTORY_GET_PRIVATE(self);
 
-	cursor = accounts = modest_account_mgr_account_names (priv->account_mgr, NULL);
+	account_mgr = 
+		modest_tny_platform_factory_get_modest_account_mgr_instance (priv->fact);
+	cursor = accounts = modest_account_mgr_account_names (account_mgr, NULL);
 	while (cursor) {
 		ModestAccountData *data;
 		gchar *account_name = (gchar*)cursor->data;
 
-		data = modest_account_mgr_get_account_data (priv->account_mgr, account_name);
+		data = modest_account_mgr_get_account_data (account_mgr, account_name);
 		if (data && data->transport_account) {
 			gchar *display_name = g_strdup_printf ("%s (%s)", data->email, account_name);
 			ModestPair *pair = modest_pair_new ((gpointer)account_name,
@@ -643,8 +621,7 @@ on_online_toggle_toggled (GtkToggleButton *toggle, ModestWidgetFactory *self)
 	
 	priv    = MODEST_WIDGET_FACTORY_GET_PRIVATE(self);
 	online  = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON(priv->online_toggle));
-	device  = tny_account_store_get_device
-		(TNY_ACCOUNT_STORE(priv->account_store)); 
+	device  = tny_account_store_get_device (priv->account_store); 
 
 	/* FIXME: const casting should not be necessary ==> tinymail */
 	if (online)  /* we're moving to online state */
@@ -667,8 +644,7 @@ static void on_item_not_found     (ModestHeaderView* header_view, ModestItemType
 	ModestWidgetFactoryPrivate *priv;
 	
 	priv    = MODEST_WIDGET_FACTORY_GET_PRIVATE(self);
-	device  = tny_account_store_get_device
-		(TNY_ACCOUNT_STORE(priv->account_store));
+	device  = tny_account_store_get_device (priv->account_store);
 	
 	online = tny_device_is_online (device);
 	if (online) {

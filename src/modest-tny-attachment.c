@@ -254,7 +254,7 @@ modest_tny_attachment_set_stream(ModestTnyAttachment *self, TnyStreamIface *thin
 	priv->stream = thing;
 }
 
-TnyStreamIface *
+TnyStream *
 modest_tny_attachment_get_stream (ModestTnyAttachment *self)
 {
 	ModestTnyAttachmentPrivate *priv;

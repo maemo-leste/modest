@@ -34,9 +34,11 @@
 
 #include "modest-main-window.h"
 #include "modest-account-view-window.h"
+#include "modest-account-mgr.h"
+#include "modest-conf.h"
 #include "modest-edit-msg-window.h"
 #include "modest-icon-names.h"
-
+#include "modest-tny-platform-factory.h"
 
 /* 'private'/'protected' functions */
 static void modest_main_window_class_init    (ModestMainWindowClass *klass);
@@ -63,10 +65,9 @@ struct _ModestMainWindowPrivate {
 	GtkWidget *msg_paned;
 	GtkWidget *main_paned;
 	
-	ModestWidgetFactory *factory;
-	ModestConf *conf;
-	ModestAccountMgr *account_mgr;
-	
+	ModestWidgetFactory *widget_factory;
+	TnyPlatformFactory *factory;
+  
 	ModestHeaderView *header_view;
 	ModestFolderView *folder_view;
 	ModestMsgView    *msg_preview;
@@ -131,10 +132,8 @@ modest_main_window_init (ModestMainWindow *obj)
 	ModestMainWindowPrivate *priv;
 
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(obj);
-
-	priv->factory = NULL;
-	priv->conf           = NULL;
-	priv->account_mgr    = NULL;
+	
+	priv->factory = modest_tny_platform_factory_get_instance ();
 }
 
 static void
@@ -142,19 +141,10 @@ modest_main_window_finalize (GObject *obj)
 {
 	ModestMainWindowPrivate *priv;	
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(obj);
-	if (priv->factory) {
-		g_object_unref (G_OBJECT(priv->factory));
-		priv->factory = NULL;
+	if (priv->widget_factory) {
+		g_object_unref (G_OBJECT(priv->widget_factory));
+		priv->widget_factory = NULL;
 	}
- 	if (priv->conf) {
-		g_object_unref (G_OBJECT(priv->conf));
-		priv->conf = NULL;
-	}		
-
-	if (priv->account_mgr) {
-		g_object_unref (G_OBJECT(priv->account_mgr));
-		priv->account_mgr = NULL;
-	}		
 
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
@@ -198,8 +188,7 @@ on_menu_accounts (ModestMainWindow *self, guint action, GtkWidget *widget)
 	g_return_if_fail (self);
 	
 	priv        = MODEST_MAIN_WINDOW_GET_PRIVATE(self);	
-	account_win = modest_account_view_window_new (priv->account_mgr,
-						      priv->factory);
+	account_win = modest_account_view_window_new (priv->widget_factory);
 
 	gtk_window_set_transient_for (GTK_WINDOW(account_win),
 				      GTK_WINDOW(self));
@@ -213,11 +202,14 @@ on_menu_new_message (ModestMainWindow *self, guint action, GtkWidget *widget)
 {
 	GtkWidget *msg_win;
 	ModestMainWindowPrivate *priv;
+	ModestConf *conf;
+	TnyAccountStore *account_store;
 
-	priv  = MODEST_MAIN_WINDOW_GET_PRIVATE(self);	
+	priv  = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
+	conf = modest_tny_platform_factory_get_modest_conf_instance (priv->factory);
+	account_store = tny_platform_factory_new_account_store (priv->factory);
 
-	msg_win = modest_edit_msg_window_new (priv->conf,
-					      priv->factory,
+	msg_win = modest_edit_msg_window_new (priv->widget_factory,
 					      MODEST_EDIT_TYPE_NEW,
 					      NULL);
 	gtk_widget_show (msg_win);
@@ -319,7 +311,7 @@ header_view_new (ModestMainWindow *self)
 	for (i = 0 ; i != sizeof(cols) / sizeof(ModestHeaderViewColumn); ++i)
 		columns = g_slist_append (columns, GINT_TO_POINTER(cols[i]));
 
-	header_view = modest_widget_factory_get_header_view (priv->factory);
+	header_view = modest_widget_factory_get_header_view (priv->widget_factory);
 	modest_header_view_set_columns (header_view, columns);
 	g_slist_free (columns);
 
@@ -400,7 +392,7 @@ toolbar_new (ModestMainWindow *self)
 	for (i = 0 ; i != sizeof(button_ids) / sizeof(ModestToolbarButton); ++i)
 		buttons = g_slist_append (buttons, GINT_TO_POINTER(button_ids[i]));
 	
-	toolbar = modest_widget_factory_get_main_toolbar (priv->factory, buttons);
+	toolbar = modest_widget_factory_get_main_toolbar (priv->widget_factory, buttons);
 	g_slist_free (buttons);
 	
 	g_signal_connect (G_OBJECT(toolbar), "button_clicked",
@@ -414,16 +406,19 @@ toolbar_new (ModestMainWindow *self)
 static void
 restore_sizes (ModestMainWindow *self)
 {
-	ModestMainWindowPrivate *priv;	
-	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
+	ModestConf *conf;
+	ModestMainWindowPrivate *priv;
 	
-	modest_widget_memory_restore_settings (priv->conf,GTK_WIDGET(self),
+	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
+	conf = modest_tny_platform_factory_get_modest_conf_instance (priv->factory);
+
+	modest_widget_memory_restore_settings (conf,GTK_WIDGET(self),
 					       "modest-main-window");
-	modest_widget_memory_restore_settings (priv->conf, GTK_WIDGET(priv->folder_paned),
+	modest_widget_memory_restore_settings (conf, GTK_WIDGET(priv->folder_paned),
 					       "modest-folder-paned");
-	modest_widget_memory_restore_settings (priv->conf, GTK_WIDGET(priv->msg_paned),
+	modest_widget_memory_restore_settings (conf, GTK_WIDGET(priv->msg_paned),
 					       "modest-msg-paned");
-	modest_widget_memory_restore_settings (priv->conf, GTK_WIDGET(priv->main_paned),
+	modest_widget_memory_restore_settings (conf, GTK_WIDGET(priv->main_paned),
 					       "modest-main-paned");
 }
 
@@ -432,16 +427,18 @@ static void
 save_sizes (ModestMainWindow *self)
 {
 	ModestMainWindowPrivate *priv;
+	ModestConf *conf;
 	
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
+	conf = modest_tny_platform_factory_get_modest_conf_instance (priv->factory);
 	
-	modest_widget_memory_save_settings (priv->conf,GTK_WIDGET(self),
+	modest_widget_memory_save_settings (conf,GTK_WIDGET(self),
 					    "modest-main-window");
-	modest_widget_memory_save_settings (priv->conf, GTK_WIDGET(priv->folder_paned),
+	modest_widget_memory_save_settings (conf, GTK_WIDGET(priv->folder_paned),
 					    "modest-folder-paned");
-	modest_widget_memory_save_settings (priv->conf, GTK_WIDGET(priv->msg_paned),
+	modest_widget_memory_save_settings (conf, GTK_WIDGET(priv->msg_paned),
 					    "modest-msg-paned");
-	modest_widget_memory_save_settings (priv->conf, GTK_WIDGET(priv->main_paned),
+	modest_widget_memory_save_settings (conf, GTK_WIDGET(priv->main_paned),
 					    "modest-main-paned");
 }
 
@@ -497,8 +494,7 @@ favorites_view ()
 
 
 GtkWidget*
-modest_main_window_new (ModestConf *conf, ModestAccountMgr *account_mgr,
-			ModestWidgetFactory *factory)
+modest_main_window_new (ModestWidgetFactory *widget_factory)
 {
 	GObject *obj;
 	ModestMainWindowPrivate *priv;
@@ -507,25 +503,18 @@ modest_main_window_new (ModestConf *conf, ModestAccountMgr *account_mgr,
 	GtkWidget *status_hbox;
 	GtkWidget *header_win, *folder_win, *favorites_win;
 	
-	g_return_val_if_fail (factory, NULL);
-	g_return_val_if_fail (conf, NULL);
+	g_return_val_if_fail (widget_factory, NULL);
 
 	obj  = g_object_new(MODEST_TYPE_MAIN_WINDOW, NULL);
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(obj);
 
-	g_object_ref (factory);
-	priv->factory = factory;
-
-	g_object_ref (conf);
-	priv->conf = conf;
-	
-	g_object_ref (account_mgr);
-	priv->account_mgr = account_mgr;
+	g_object_ref (widget_factory);
+	priv->widget_factory = widget_factory;
 
 	/* widgets from factory */
-	priv->folder_view = modest_widget_factory_get_folder_view (factory);
+	priv->folder_view = modest_widget_factory_get_folder_view (widget_factory);
 	priv->header_view = header_view_new (MODEST_MAIN_WINDOW(obj));
-	priv->msg_preview = modest_widget_factory_get_msg_preview (factory);
+	priv->msg_preview = modest_widget_factory_get_msg_preview (widget_factory);
 	
 	folder_win = wrapped_in_scrolled_window (GTK_WIDGET(priv->folder_view),
 						 FALSE);
@@ -555,16 +544,16 @@ modest_main_window_new (ModestConf *conf, ModestAccountMgr *account_mgr,
 	/* status bar / progress */
 	status_hbox = gtk_hbox_new (FALSE, 0);
 	gtk_box_pack_start (GTK_BOX(status_hbox),
-			    modest_widget_factory_get_folder_info_label (factory),
+			    modest_widget_factory_get_folder_info_label (widget_factory),
 			    FALSE,FALSE, 6);
 	gtk_box_pack_start (GTK_BOX(status_hbox),
-			    modest_widget_factory_get_status_bar(factory),
+			    modest_widget_factory_get_status_bar(widget_factory),
 			    TRUE, TRUE, 0);
 	gtk_box_pack_start (GTK_BOX(status_hbox),
-			    modest_widget_factory_get_progress_bar(factory),
+			    modest_widget_factory_get_progress_bar(widget_factory),
 			    FALSE, FALSE, 0);
 	gtk_box_pack_start (GTK_BOX(status_hbox),
-			  modest_widget_factory_get_online_toggle(factory),
+			  modest_widget_factory_get_online_toggle(widget_factory),
 			  FALSE, FALSE, 0);
 
 	/* putting it all together... */

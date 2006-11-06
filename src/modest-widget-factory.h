@@ -97,9 +97,7 @@ GType        modest_widget_factory_get_type    (void) G_GNUC_CONST;
  *
  * Returns: a new ModestWidgetFactory, or NULL in case of error
  */
-ModestWidgetFactory*      modest_widget_factory_new   (ModestConf *conf,
-						       ModestTnyAccountStore *acc_store,
-						       ModestAccountMgr *account_mgr);
+ModestWidgetFactory*      modest_widget_factory_new   (void);
 /**
  * modest_widget_factory_get_folder_view
  * @self: a ModestWidgetFactory instance

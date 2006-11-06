@@ -32,7 +32,9 @@
 #include <modest-widget-memory.h>
 #include <modest-widget-factory.h>
 #include "modest-icon-names.h"
-#include <modest-tny-transport-actions.h>
+#include "modest-mail-operation.h"
+#include "modest-tny-platform-factory.h"
+#include <tny-simple-list.h>
 
 static void  modest_edit_msg_window_class_init   (ModestEditMsgWindowClass *klass);
 static void  modest_edit_msg_window_init         (ModestEditMsgWindow *obj);
@@ -48,8 +50,8 @@ enum {
 typedef struct _ModestEditMsgWindowPrivate ModestEditMsgWindowPrivate;
 struct _ModestEditMsgWindowPrivate {
 
-	ModestConf *conf;
 	ModestWidgetFactory *factory;
+	TnyPlatformFactory *fact;
 	
 	GtkWidget      *toolbar, *menubar;
 	GtkWidget      *msg_body;
@@ -114,6 +116,7 @@ modest_edit_msg_window_init (ModestEditMsgWindow *obj)
 	ModestEditMsgWindowPrivate *priv;
 	priv = MODEST_EDIT_MSG_WINDOW_GET_PRIVATE(obj);
 
+	priv->fact = modest_tny_platform_factory_get_instance ();
 	priv->factory = NULL;
 	priv->toolbar = NULL;
 	priv->menubar = NULL;
@@ -125,9 +128,12 @@ static void
 save_settings (ModestEditMsgWindow *self)
 {
 	ModestEditMsgWindowPrivate *priv;
+	ModestConf *conf;
+
 	priv = MODEST_EDIT_MSG_WINDOW_GET_PRIVATE(self);
-	modest_widget_memory_save_settings (priv->conf,
-					    GTK_WIDGET(self),
+	conf = modest_tny_platform_factory_get_modest_conf_instance (priv->fact);
+
+	modest_widget_memory_save_settings (conf, GTK_WIDGET(self),
 					    "modest-edit-msg-window");
 }
 
@@ -136,8 +142,12 @@ static void
 restore_settings (ModestEditMsgWindow *self)
 {
 	ModestEditMsgWindowPrivate *priv;
+	ModestConf *conf;
+
 	priv = MODEST_EDIT_MSG_WINDOW_GET_PRIVATE(self);
-	modest_widget_memory_restore_settings (priv->conf, GTK_WIDGET(self),
+	conf = modest_tny_platform_factory_get_modest_conf_instance (priv->fact);
+
+	modest_widget_memory_restore_settings (conf, GTK_WIDGET(self),
 					       "modest-edit-msg-window");
 }
 
@@ -235,6 +245,7 @@ send_mail (ModestEditMsgWindow *self)
 	const gchar *from, *to, *cc, *bcc, *subject;
 	gchar *body;
 	ModestEditMsgWindowPrivate *priv;
+	TnyTransportAccount *transport_account;
 	
 	GtkTextBuffer *buf;
 	GtkTextIter b, e;
@@ -255,9 +266,37 @@ send_mail (ModestEditMsgWindow *self)
 	body  = gtk_text_buffer_get_text (buf, &b, &e,
 					  FALSE); /* free this one */
 
-//	modest_tny_transport_actions_send_message (transport_account,
-//						   from, to, cc, bcc,
-//						   subject, *body, NULL);
+	/* FIXME: Code added just for testing. The transport_account
+	   should be provided by the account manager, maybe using
+	   _get_current_account () or _get_default_account
+	   (TRANSPORT_ACCOUNT). These methods do not exist currently. */
+	{
+		TnyList *accounts;
+		TnyIterator *iter;
+		TnyAccountStore *account_store;
+
+		accounts = TNY_LIST(tny_simple_list_new ());
+		account_store = tny_platform_factory_new_account_store (priv->fact);
+		tny_account_store_get_accounts (account_store, accounts,
+						TNY_ACCOUNT_STORE_TRANSPORT_ACCOUNTS);
+
+		iter = tny_list_create_iterator(accounts);
+		tny_iterator_first (iter);
+		if (tny_iterator_is_done (iter)) {
+			g_printerr("modest: no transport accounts defined\n");
+			goto cleanup;
+		}
+
+		transport_account = TNY_TRANSPORT_ACCOUNT (tny_iterator_get_current(iter));
+
+	}
+	/*****/
+	modest_mail_operation_send_mail (transport_account,
+					 from, to, cc, bcc,
+					 subject, body, NULL);
+	
+ cleanup:
+
 	g_free (body);
 }
 
@@ -378,9 +417,6 @@ modest_edit_msg_window_finalize (GObject *obj)
 
 	priv = MODEST_EDIT_MSG_WINDOW_GET_PRIVATE(obj);
 
-	g_object_unref (G_OBJECT(priv->conf));
-	priv->conf = NULL;
-
 	g_object_unref (G_OBJECT(priv->factory));
 	priv->factory = NULL;
 	
@@ -399,13 +435,12 @@ on_delete_event (GtkWidget *widget, GdkEvent *event, ModestEditMsgWindow *self)
 
 
 GtkWidget*
-modest_edit_msg_window_new (ModestConf *conf, ModestWidgetFactory *factory,
+modest_edit_msg_window_new (ModestWidgetFactory *factory,
 			    ModestEditType type, TnyMsgIface *msg)
 {
 	GObject *obj;
 	ModestEditMsgWindowPrivate *priv;
 
-	g_return_val_if_fail (conf, NULL);
 	g_return_val_if_fail (factory, NULL);
 	g_return_val_if_fail (type < MODEST_EDIT_TYPE_NUM, NULL);
 	g_return_val_if_fail (!(type==MODEST_EDIT_TYPE_NEW && msg), NULL); 
@@ -413,9 +448,6 @@ modest_edit_msg_window_new (ModestConf *conf, ModestWidgetFactory *factory,
 	
 	obj = g_object_new(MODEST_TYPE_EDIT_MSG_WINDOW, NULL);
 	priv = MODEST_EDIT_MSG_WINDOW_GET_PRIVATE(obj);
-
-	g_object_ref (G_OBJECT(conf));
-	priv->conf = conf;
 
 	g_object_ref (factory);
 	priv->factory = factory;

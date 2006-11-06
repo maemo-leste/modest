@@ -82,7 +82,7 @@ const gchar *modest_tny_attachment_get_mime_type (ModestTnyAttachment *self);
 
 void modest_tny_attachment_guess_mime_type (ModestTnyAttachment *self);
 
-TnyStreamIface * modest_tny_attachment_get_stream (ModestTnyAttachment *self);
+TnyStream * modest_tny_attachment_get_stream (ModestTnyAttachment *self);
 
 void modest_tny_attachment_free_list(GList *list);
 

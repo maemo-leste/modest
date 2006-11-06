@@ -58,7 +58,11 @@ modest_SOURCES=\
 	modest-tny-store-actions.h\
 	modest-ui.h \
 	modest-marshal.c \
-	modest-marshal.h 
+	modest-marshal.h \
+	modest-mail-operation.c \
+	modest-mail-operation.h \
+	modest-tny-platform-factory.c \
+	modest-tny-platform-factory.h
 
 
 modest_LDADD = \
@@ -67,6 +71,6 @@ modest_LDADD = \
 	$(MODEST_LIBTINYMAIL_MAEMO_LIBS) \
 	$(MODEST_PLATFORM_DIR)/libmodest-ui.la \
 	widgets/libmodest-widgets.la
-		
+
 
 EXTRA_DIST=modest-marshal.list

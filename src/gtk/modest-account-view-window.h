@@ -35,8 +35,7 @@ struct _ModestAccountViewWindowClass {
 /* member functions */
 GType        modest_account_view_window_get_type    (void) G_GNUC_CONST;
 
-GtkWidget*   modest_account_view_window_new         (ModestAccountMgr *account_mgr,
-						     ModestWidgetFactory *factory);
+GtkWidget*   modest_account_view_window_new         (ModestWidgetFactory *factory);
 
 G_END_DECLS
 

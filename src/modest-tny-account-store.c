@@ -36,12 +36,12 @@
 #include <tny-device.h>
 #include <tny-gnome-device.h>
 #include <tny-account-store.h>
-#include <tny-gnome-platform-factory.h>	
 #include <tny-camel-transport-account.h>
 #include <tny-camel-store-account.h>
 #include <modest-marshal.h>
 #include "modest-account-mgr.h"
 #include "modest-tny-account-store.h"
+#include "modest-tny-platform-factory.h"
 
 /* 'private'/'protected' functions */
 static void modest_tny_account_store_class_init   (ModestTnyAccountStoreClass *klass);
@@ -422,7 +422,7 @@ modest_tny_account_store_new (ModestAccountMgr *account_mgr) {
 	priv->store_lock = g_mutex_new ();
 
 	/* FIXME: don't use GNOME */
-	pfact = TNY_PLATFORM_FACTORY (tny_gnome_platform_factory_get_instance());
+	pfact = TNY_PLATFORM_FACTORY (modest_tny_platform_factory_get_instance());
 	if (!pfact) {
 		g_printerr ("modest: cannot create platform factory\n");
 		g_object_unref (obj);
