@@ -424,7 +424,7 @@ update_model (ModestFolderView *self, ModestTnyAccountStore *account_store)
 
 	TnyList          *account_list;
 	GtkTreeModel     *model, *sortable;
-	
+
 	g_return_val_if_fail (account_store, FALSE);
 	priv =	MODEST_FOLDER_VIEW_GET_PRIVATE(self);
 	
@@ -435,19 +435,24 @@ update_model (ModestFolderView *self, ModestTnyAccountStore *account_store)
 	priv->view_is_empty = TRUE;
 
 	tny_account_store_get_accounts (TNY_ACCOUNT_STORE(account_store),
-					      account_list,
-					      TNY_ACCOUNT_STORE_STORE_ACCOUNTS);
-	if (account_list) { /* no store accounts found */ 
+					account_list,
+					TNY_ACCOUNT_STORE_STORE_ACCOUNTS);
+
+	if (account_list) {
 	
 		sortable = gtk_tree_model_sort_new_with_model (model);
+		gtk_tree_sortable_set_sort_column_id (GTK_TREE_SORTABLE (sortable),
+						      TNY_GTK_ACCOUNT_TREE_MODEL_NAME_COLUMN, 
+						      GTK_SORT_ASCENDING);
+
 		gtk_tree_view_set_model (GTK_TREE_VIEW(self), sortable);
 		
-		priv->view_is_empty = FALSE;	
+		priv->view_is_empty = FALSE;
 		g_object_unref (model);
 	}
 
 	return TRUE;
-} 
+}
 
 
 static void
@@ -458,6 +463,7 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 	GtkTreeIter             iter;
 	ModestFolderView        *tree_view;
 	ModestFolderViewPrivate *priv;
+	gint type;
 
 	g_return_if_fail (sel);
 	g_return_if_fail (user_data);
@@ -476,18 +482,28 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 
 	tree_view = MODEST_FOLDER_VIEW (user_data);
 
-	gtk_tree_model_get (model, &iter,
-			    TNY_GTK_ACCOUNT_TREE_MODEL_INSTANCE_COLUMN,
-			    &folder, -1);
+	gtk_tree_model_get (model, &iter, 
+			    TNY_GTK_ACCOUNT_TREE_MODEL_TYPE_COLUMN, 
+			    &type, -1);
 
-	if (priv->cur_folder) 
-		tny_folder_expunge (priv->cur_folder);
-	priv->cur_folder = folder;
+	if (type == TNY_FOLDER_TYPE_ROOT) {
+		g_message ("FOLDER ROOT");
+	} else {
+		gtk_tree_model_get (model, &iter,
+				    TNY_GTK_ACCOUNT_TREE_MODEL_INSTANCE_COLUMN,
+				    &folder, -1);
 
-	/* folder will not be defined if you click eg. on the root node */
-	if (folder)
-		g_signal_emit (G_OBJECT(tree_view), signals[FOLDER_SELECTED_SIGNAL], 0,
-			       folder);
+		if (TNY_IS_FOLDER (folder)) {
+			
+			if (priv->cur_folder) 
+				tny_folder_expunge (priv->cur_folder);
+			priv->cur_folder = folder;
+			
+			
+			g_signal_emit (G_OBJECT(tree_view), signals[FOLDER_SELECTED_SIGNAL], 0,
+				       folder);
+		}
+	}
 }
 
 

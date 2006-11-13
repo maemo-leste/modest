@@ -27,6 +27,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <glib/gi18n.h>
 #include "modest-toolbar.h"
 
 /* 'private'/'protected' functions */
@@ -204,12 +205,13 @@ modest_toolbar_set_buttons (ModestToolbar *self, const GSList *buttons)
 				g_printerr ("modest: error getting data for toolbar button %d\n",
 					    button_id);
 			else {
-				GtkWidget *icon;
-				GtkToolItem *button;
-				GdkPixbuf *pixbuf;
+				GtkWidget *icon = NULL;
+				GtkToolItem *button = NULL;
+				GdkPixbuf *pixbuf = NULL;
 				
 				pixbuf = modest_icon_factory_get_icon_at_size (icon_name, 24, 24);
-				icon   = gtk_image_new_from_pixbuf ((GdkPixbuf*)pixbuf);
+				if (pixbuf)
+					icon   = gtk_image_new_from_pixbuf ((GdkPixbuf*)pixbuf);
 				button = gtk_tool_button_new (icon, label);
 				g_object_set_data (G_OBJECT(button), "button_id",
 						   GINT_TO_POINTER(button_id));

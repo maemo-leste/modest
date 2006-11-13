@@ -31,7 +31,6 @@
 #define __MODEST_PROTOCOL_MGR_H__
 
 #include <glib-object.h>
-#include <glib/gi18n.h>
 #include <modest-pair.h>
 
 G_BEGIN_DECLS

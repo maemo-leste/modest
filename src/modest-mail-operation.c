@@ -30,12 +30,36 @@
 #include "modest-mail-operation.h"
 /* include other impl specific header files */
 #include <string.h>
+#include <stdarg.h>
 #include <tny-mime-part.h>
+#include <tny-store-account.h>
+#include <tny-folder-store.h>
+#include <tny-folder-store-query.h>
+#include <glib/gi18n.h>
 
 /* 'private'/'protected' functions */
 static void modest_mail_operation_class_init (ModestMailOperationClass *klass);
 static void modest_mail_operation_init       (ModestMailOperation *obj);
 static void modest_mail_operation_finalize   (GObject *obj);
+
+#define MODEST_ERROR modest_error_quark ()
+
+typedef enum _ModestMailOperationErrorCode ModestMailOperationErrorCode;
+enum _ModestMailOperationErrorCode {
+        MODEST_MAIL_OPERATION_ERROR_BAD_ACCOUNT,
+        MODEST_MAIL_OPERATION_ERROR_MISSING_PARAMETER,
+
+	MODEST_MAIL_OPERATION_NUM_ERROR_CODES
+};
+
+static void set_error (ModestMailOperation *mail_operation, 
+		       ModestMailOperationErrorCode error_code,
+		       const gchar *fmt, ...);
+static void status_update_cb (TnyFolder *folder, const gchar *what, 
+			      gint status, gpointer user_data);
+static void folder_refresh_cb (TnyFolder *folder, gboolean cancelled, 
+			       gpointer user_data);
+
 /* list my signals  */
 enum {
 	/* MY_SIGNAL_1, */
@@ -45,10 +69,18 @@ enum {
 
 typedef struct _ModestMailOperationPrivate ModestMailOperationPrivate;
 struct _ModestMailOperationPrivate {
+	TnyAccount                *account;
+	ModestMailOperationStatus  status;
+	GError                    *error;
 };
 #define MODEST_MAIL_OPERATION_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                    MODEST_TYPE_MAIL_OPERATION, \
                                                    ModestMailOperationPrivate))
+
+/* some utility functions */
+static char * get_content_type(const gchar *s);
+static gboolean is_ascii(const gchar *s);
+
 /* globals */
 static GObjectClass *parent_class = NULL;
 
@@ -101,81 +133,112 @@ modest_mail_operation_class_init (ModestMailOperationClass *klass)
 static void
 modest_mail_operation_init (ModestMailOperation *obj)
 {
-/* 	initialize this object, eg.: */
-/* 	priv->frobnicate_mode = FALSE; */
+	ModestMailOperationPrivate *priv;
+
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(obj);
+
+	priv->account = NULL;
+	priv->status = MODEST_MAIL_OPERATION_STATUS_INVALID;
+	priv->error = NULL;
 }
 
 static void
 modest_mail_operation_finalize (GObject *obj)
 {
-/* 	free/unref instance resources here */
+	ModestMailOperationPrivate *priv;
+
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(obj);
+
+	if (priv->account) {
+		g_object_unref (priv->account);
+		priv->account = NULL;
+	}
+	if (priv->error) {
+		g_object_unref (priv->error);
+		priv->error = NULL;
+	}
+
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
 ModestMailOperation*
-modest_mail_operation_new (void)
-{
-	return MODEST_MAIL_OPERATION(g_object_new(MODEST_TYPE_MAIL_OPERATION, NULL));
-}
-
-
-static gboolean
-is_ascii(const gchar *s)
-{
-	while (s[0]) {
-		if (s[0] & 128 || s[0] < 32)
-			return FALSE;
-		s++;
-	}
-	return TRUE;
-}
-
-static char *
-get_content_type(const gchar *s)
-{
-	GString *type;
-	
-	type = g_string_new("text/plain");
-	if (!is_ascii(s)) {
-		if (g_utf8_validate(s, -1, NULL)) {
-			g_string_append(type, "; charset=\"utf-8\"");
-		} else {
-			/* it should be impossible to reach this, but better safe than sorry */
-			g_warning("invalid utf8 in message");
-			g_string_append(type, "; charset=\"latin1\"");
-		}
-	}
-	return g_string_free(type, FALSE);
-}
-
-ModestMailOperation*
-modest_mail_operation_send_mail (TnyTransportAccount *transport_account,
-				 const gchar *from,
-				 const gchar *to,
-				 const gchar *cc,
-				 const gchar *bcc,
-				 const gchar *subject,
-				 const gchar *body,
-				 const GList *attachments_list)
+modest_mail_operation_new (TnyAccount *account)
 {
 	ModestMailOperation *mail_operation;
+	ModestMailOperationPrivate *priv;
+
+	mail_operation = 
+		MODEST_MAIL_OPERATION(g_object_new(MODEST_TYPE_MAIL_OPERATION, NULL));
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(mail_operation);
+
+	priv->account = g_object_ref (account);
+
+	return mail_operation;
+}
+
+
+void
+modest_mail_operation_send_mail (ModestMailOperation *mail_operation,
+				 TnyMsg* msg)
+{
+	ModestMailOperationPrivate *priv;
+	TnyTransportAccount *transport_account;
+
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(mail_operation);
+
+	if (!TNY_IS_TRANSPORT_ACCOUNT (priv->account)) {
+		set_error (mail_operation,
+			   MODEST_MAIL_OPERATION_ERROR_BAD_ACCOUNT,
+			   _("Error trying to send a mail. Use a transport account"));
+	}
+
+	transport_account = TNY_TRANSPORT_ACCOUNT (priv->account);
+
+	mail_operation = modest_mail_operation_new (NULL);
+	tny_transport_account_send (transport_account, msg);
+}
+
+void
+modest_mail_operation_send_new_mail (ModestMailOperation *mail_operation,
+				     const gchar *from,
+				     const gchar *to,
+				     const gchar *cc,
+				     const gchar *bcc,
+				     const gchar *subject,
+				     const gchar *body,
+				     const GList *attachments_list)
+{
 	TnyMsg *new_msg;
 	TnyHeader *headers;
 	TnyStream *text_body_stream, *attachment_stream;
+	TnyTransportAccount *transport_account;
+	ModestMailOperationPrivate *priv;
 	ModestTnyAttachment *attachment;
 	GList *pos;
 	gchar *content_type;
 	const gchar *attachment_content_type;
 	const gchar *attachment_filename;
 
-	/* TODO: better error handling management. Do it inside the
-	   ModestMailOperation, for example set operation state to
-	   failed or something like this and fill a GError with a
-	   short description */
-	if (to == NULL || body == NULL)
-		return NULL;
+	g_return_if_fail (mail_operation);
 
-	mail_operation   = modest_mail_operation_new ();
+	if (to == NULL) {
+		set_error (mail_operation,
+			   MODEST_MAIL_OPERATION_ERROR_MISSING_PARAMETER,
+			   _("Error trying to send a mail. You need to set almost one a recipient"));
+		return;
+	}
+
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(mail_operation);
+
+	if (!TNY_IS_TRANSPORT_ACCOUNT (priv->account)) {
+		set_error (mail_operation,
+			   MODEST_MAIL_OPERATION_ERROR_BAD_ACCOUNT,
+			   _("Error trying to send a mail. Use a transport account"));
+		return;
+	}
+
+	transport_account = TNY_TRANSPORT_ACCOUNT (priv->account);
+
 	new_msg          = TNY_MSG (tny_camel_msg_new ());
 	headers          = TNY_HEADER (tny_camel_header_new ());
 	text_body_stream = TNY_STREAM (tny_camel_stream_new
@@ -236,10 +299,416 @@ modest_mail_operation_send_mail (TnyTransportAccount *transport_account,
 	
 	tny_transport_account_send (transport_account, new_msg);
 
+	/* Clean */
 	g_object_unref (G_OBJECT(text_body_stream));
 	g_object_unref (G_OBJECT(headers));
 	g_object_unref (G_OBJECT(new_msg));
 	g_free(content_type);
+}
 
-	return mail_operation;
+/**
+ * modest_mail_operation_create_forward_mail:
+ * @msg: a valid #TnyMsg instance
+ * @forward_type: the type of forwarded message
+ * 
+ * creates a forwarded message from an existing one
+ * 
+ * Returns: a new #TnyMsg, or NULL in case of error
+ **/
+TnyMsg* 
+modest_mail_operation_create_forward_mail (TnyMsg *msg, 
+					   ModestMailOperationForwardType forward_type)
+{
+	TnyMsg *new_msg;
+	TnyHeader *new_header, *header;
+	TnyStream *attachment_stream;
+	gchar *new_subject, *new_body, *content_type, *quoted;
+	TnyList *parts;
+	TnyMimePart *text_body_part = NULL;
+	TnyStream *text_body_stream = NULL;
+
+	/* Create new objects */
+	new_msg          = TNY_MSG (tny_camel_msg_new ());
+	new_header       = TNY_HEADER (tny_camel_header_new ());
+
+	header = tny_msg_get_header (msg);
+
+	/* Fill the header */
+	tny_msg_set_header (new_msg, new_header);
+	/* FIXME: set it from default account, current account ... */
+	tny_header_set_from (new_header, "<me@home.org>");
+
+	/* Change the subject */
+	new_subject = (gchar *) modest_text_utils_create_forward_subject (tny_header_get_subject(header));
+	tny_header_set_subject (new_header, (const gchar *) new_subject);
+	g_free (new_subject);
+
+	/* Get body from original msg */
+	new_body = (gchar *) modest_tny_msg_actions_find_body (msg, FALSE);
+	if (!new_body) {
+		g_object_unref (new_msg);
+		return NULL;
+	}
+	content_type = get_content_type(new_body);
+
+	switch (forward_type) {
+		TnyMimePart *attachment_part;
+		gchar *inlined_text;
+
+	case MODEST_MAIL_OPERATION_FORWARD_TYPE_INLINE:
+		/* Prepend "Original message" text */
+		inlined_text = (gchar *) 
+			modest_text_utils_create_inlined_text (tny_header_get_from (header),
+							       tny_header_get_date_sent (header),
+							       tny_header_get_to (header),
+							       tny_header_get_subject (header),
+							       (const gchar*) new_body);
+		g_free (new_body);
+		new_body = inlined_text;
+
+		/* Create the body */
+		text_body_stream = TNY_STREAM (tny_camel_stream_new
+					       (camel_stream_mem_new_with_buffer
+						(new_body, strlen(new_body))));
+
+		text_body_part = 
+			TNY_MIME_PART (tny_camel_mime_part_new (camel_mime_part_new()));
+		tny_stream_reset (text_body_stream);
+		tny_mime_part_construct_from_stream (text_body_part,
+						     text_body_stream,
+						     content_type);
+		tny_stream_reset (text_body_stream);
+		
+		/* Add body part to msg */
+		tny_msg_add_part (new_msg, text_body_part);
+		break;
+	case MODEST_MAIL_OPERATION_FORWARD_TYPE_ATTACHMENT:
+		attachment_part = TNY_MIME_PART (tny_camel_mime_part_new (camel_mime_part_new()));
+
+		text_body_stream = TNY_STREAM (tny_camel_stream_new
+					       (camel_stream_mem_new_with_buffer
+						(new_body, strlen(new_body))));
+
+		tny_mime_part_construct_from_stream (attachment_part,
+						     text_body_stream,
+						     content_type);
+		tny_stream_reset (attachment_stream);
+		
+		/* Set the subject as the name of the attachment */
+		tny_mime_part_set_filename (attachment_part, tny_header_get_subject (header));
+		
+		tny_msg_add_part (new_msg, attachment_part);
+		g_object_unref (G_OBJECT (attachment_part));
+		break;
+	}
+	/* TODO: attachments? */
+
+	/* Clean */
+	if (text_body_part) g_object_unref (G_OBJECT(text_body_part));
+	if (text_body_stream) g_object_unref (G_OBJECT(text_body_stream));
+	g_free (content_type);
+	g_free (new_body);
+
+	return new_msg;
+}
+
+/**
+ * modest_mail_operation_create_reply_mail:
+ * @msg: a valid #TnyMsg instance
+ * @reply_type: the format of the new message
+ * @reply_mode: the mode of reply, to the sender only, to a mail list or to all
+ * 
+ * creates a new message to reply to an existing one
+ * 
+ * Returns: Returns: a new #TnyMsg, or NULL in case of error
+ **/
+TnyMsg* 
+modest_mail_operation_create_reply_mail (TnyMsg *msg, 
+					 ModestMailOperationReplyType reply_type,
+					 ModestMailOperationReplyMode reply_mode)
+{
+	TnyMsg *new_msg;
+	TnyHeader *new_header, *header;
+	TnyStream *attachment_stream;
+	gchar *new_subject, *new_body, *content_type, *quoted;
+	TnyList *parts;
+	TnyMimePart *text_body_part;
+	TnyStream *text_body_stream;
+	gchar *my_email = NULL;
+
+	/* Create new objects */
+	new_msg          = TNY_MSG (tny_camel_msg_new ());
+	new_header       = TNY_HEADER (tny_camel_header_new ());
+
+	header = tny_msg_get_header (msg);
+
+	/* Fill the header */
+	tny_msg_set_header (new_msg, new_header);
+	tny_header_set_to (new_header, tny_header_get_from (header));
+	/* TODO: set "From:" from my current account */
+/* 	current_account = modest_account_mgr_get_current_account (account_mgr); */
+/* 		my_email = modest_account_mgr_get_string (account_mgr, */
+/* 						       current_account, */
+/* 						       MODEST_ACCOUNT_EMAIL, */
+/* 						       FALSE, */
+/* 						       NULL); */
+/* 	tny_header_set_from (new_header, email); */
+	my_email = g_strdup ("svillarsenin@terra.es");
+
+	switch (reply_mode) {
+		gchar *new_cc = NULL;
+		const gchar *cc = NULL, *bcc = NULL;
+		GString *tmp = NULL;
+
+	case MODEST_MAIL_OPERATION_REPLY_MODE_SENDER:
+		/* Do not fill neither cc nor bcc */
+		break;
+	case MODEST_MAIL_OPERATION_REPLY_MODE_LIST:
+		/* TODO */
+		break;
+	case MODEST_MAIL_OPERATION_REPLY_MODE_ALL:
+		/* Concatenate to, cc and bcc */
+		cc = tny_header_get_cc (header);
+		bcc = tny_header_get_bcc (header);
+
+		tmp = g_string_new (tny_header_get_to (header));
+		if (cc)  g_string_append_printf (tmp, ",%s",cc);
+		if (bcc) g_string_append_printf (tmp, ",%s",bcc);
+
+		/* Remove my own address from the cc list */
+		new_cc = modest_text_utils_remove_mail_from_mail_list ((const gchar *) tmp->str, 
+								       (const gchar *) my_email);
+		/* FIXME: remove also the mails from the new To: */
+		tny_header_set_cc (new_header, new_cc);
+
+		/* Clean */
+		g_string_free (tmp, TRUE);
+		g_free (new_cc);
+		break;
+	}
+	g_free (my_email);
+
+	/* Change the subject */
+	new_subject = (gchar*) modest_text_utils_create_reply_subject (tny_header_get_subject(header));
+	tny_header_set_subject (new_header, (const gchar *) new_subject);
+	g_free (new_subject);
+
+	/* Get body from original msg */
+	new_body = (gchar*) modest_tny_msg_actions_find_body (msg, FALSE);
+	if (!new_body) {
+		g_object_unref (new_msg);
+		return NULL;
+	}
+	content_type = get_content_type(new_body);
+
+	switch (reply_type) {
+		gchar *cited_text;
+
+	case MODEST_MAIL_OPERATION_REPLY_TYPE_CITE:
+		/* Prepend "Original message" text */
+		cited_text = (gchar *) modest_text_utils_create_cited_text (tny_header_get_from (header),
+									    tny_header_get_date_sent (header),
+									    (const gchar*) new_body);
+		g_free (new_body);
+		new_body = cited_text;
+		break;
+	case MODEST_MAIL_OPERATION_REPLY_TYPE_QUOTE:
+		/* FIXME: replace 80 with a value from ModestConf */
+		quoted = (gchar*) modest_text_utils_quote (new_body, 
+							   tny_header_get_from (header),
+							   tny_header_get_date_sent (header),
+							   80);
+		g_free (new_body);
+		new_body = quoted;
+		break;
+	}
+	/* Create the MIME part for the body */
+	text_body_stream = TNY_STREAM (tny_camel_stream_new
+				       (camel_stream_mem_new_with_buffer
+					(new_body, strlen(new_body))));
+
+	text_body_part = 
+		TNY_MIME_PART (tny_camel_mime_part_new (camel_mime_part_new()));
+	tny_stream_reset (text_body_stream);
+	tny_mime_part_construct_from_stream (text_body_part,
+					     text_body_stream,
+					     content_type);
+	tny_stream_reset (text_body_stream);
+
+	/* Add body part to msg */
+	tny_msg_add_part (new_msg, text_body_part);
+
+	/* TODO: attachments? */
+
+	/* Clean */
+	g_object_unref (G_OBJECT(text_body_part));
+	g_object_unref (G_OBJECT(text_body_stream));
+	g_free (content_type);
+	g_free (new_body);
+
+	return new_msg;
+}
+
+void
+modest_mail_operation_update_account (ModestMailOperation *mail_operation)
+{
+	TnyStoreAccount *storage_account;
+	ModestMailOperationPrivate *priv;
+	TnyList *folders;
+	TnyIterator *ifolders;
+	TnyFolder *cur_folder;
+	TnyFolderStoreQuery *query;
+
+	g_return_if_fail (mail_operation);
+	g_return_if_fail (MODEST_IS_MAIL_OPERATION (mail_operation));
+
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(mail_operation);
+
+	/* Check that it is a store account */
+	if (!TNY_IS_STORE_ACCOUNT (priv->account)) {
+		set_error (mail_operation,
+			   MODEST_MAIL_OPERATION_ERROR_BAD_ACCOUNT,
+			   _("Error trying to update an account. Use a store account"));
+		return;
+	}
+	storage_account = TNY_STORE_ACCOUNT (priv->account);
+
+	/* Get subscribed folders */
+    	folders = TNY_LIST (tny_simple_list_new ());
+	query = tny_folder_store_query_new ();
+	tny_folder_store_query_add_item (query, NULL, TNY_FOLDER_STORE_QUERY_OPTION_SUBSCRIBED);
+	tny_folder_store_get_folders (TNY_FOLDER_STORE (storage_account),
+				      folders, NULL);
+	g_object_unref (query);
+	
+	ifolders = tny_list_create_iterator (folders);
+	
+	for (tny_iterator_first (ifolders); 
+	     !tny_iterator_is_done (ifolders); 
+	     tny_iterator_next (ifolders)) {
+		
+		cur_folder = TNY_FOLDER (tny_iterator_get_current (ifolders));
+		tny_folder_refresh_async (cur_folder, folder_refresh_cb,
+					  status_update_cb, mail_operation);
+	}
+	
+	g_object_unref (ifolders);
+}
+
+ModestMailOperationStatus
+modest_mail_operation_get_status (ModestMailOperation *mail_operation)
+{
+	ModestMailOperationPrivate *priv;
+
+/* 	g_return_val_if_fail (mail_operation, MODEST_MAIL_OPERATION_STATUS_INVALID); */
+/* 	g_return_val_if_fail (MODEST_IS_MAIL_OPERATION (mail_operation),  */
+/* 			      MODEST_MAIL_OPERATION_STATUS_INVALID); */
+
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (mail_operation);
+	return priv->status;
+}
+
+const GError *
+modest_mail_operation_get_error (ModestMailOperation *mail_operation)
+{
+	ModestMailOperationPrivate *priv;
+
+/* 	g_return_val_if_fail (mail_operation, NULL); */
+/* 	g_return_val_if_fail (MODEST_IS_MAIL_OPERATION (mail_operation), NULL); */
+
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (mail_operation);
+	return priv->error;
+}
+
+void 
+modest_mail_operation_cancel (ModestMailOperation *mail_operation)
+{
+	/* TODO */
+}
+
+static gboolean
+is_ascii(const gchar *s)
+{
+	while (s[0]) {
+		if (s[0] & 128 || s[0] < 32)
+			return FALSE;
+		s++;
+	}
+	return TRUE;
+}
+
+static char *
+get_content_type(const gchar *s)
+{
+	GString *type;
+	
+	type = g_string_new("text/plain");
+	if (!is_ascii(s)) {
+		if (g_utf8_validate(s, -1, NULL)) {
+			g_string_append(type, "; charset=\"utf-8\"");
+		} else {
+			/* it should be impossible to reach this, but better safe than sorry */
+			g_warning("invalid utf8 in message");
+			g_string_append(type, "; charset=\"latin1\"");
+		}
+	}
+	return g_string_free(type, FALSE);
+}
+
+static GQuark 
+modest_error_quark (void)
+{
+  static GQuark err_q = 0;
+
+  if (err_q == 0)
+    err_q = g_quark_from_static_string ("modest-error-quark");
+
+  return err_q;
+}
+
+
+static void 
+set_error (ModestMailOperation *mail_operation, 
+	   ModestMailOperationErrorCode error_code,
+	   const gchar *fmt, ...)
+{
+	ModestMailOperationPrivate *priv;
+	GError* error;
+	va_list args;
+	gchar* orig;
+
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(mail_operation);
+
+	va_start (args, fmt);
+
+	orig = g_strdup_vprintf(fmt, args);
+	error = g_error_new (MODEST_ERROR, error_code, orig);
+
+	va_end (args);
+
+	if (priv->error)
+		g_object_unref (priv->error);
+
+	priv->error = error;
+	priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
+}
+
+static void
+status_update_cb (TnyFolder *folder, const gchar *what, gint status, gpointer user_data) 
+{
+	/* TODO: update main window progress bar */
+}
+
+static void
+folder_refresh_cb (TnyFolder *folder, gboolean cancelled, gpointer user_data) 
+{
+	if (cancelled) {
+		ModestMailOperation *mail_operation;
+		ModestMailOperationPrivate *priv;
+
+		mail_operation = MODEST_MAIL_OPERATION (user_data);
+		priv = MODEST_MAIL_OPERATION_GET_PRIVATE(mail_operation);
+
+		priv->status = 	MODEST_MAIL_OPERATION_STATUS_CANCELLED;
+	}
 }

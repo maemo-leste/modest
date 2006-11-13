@@ -5,7 +5,6 @@
 #define __MODEST_STORE_WIDGET_H__
 
 #include <gtk/gtk.h>
-#include <glib/gi18n.h>
 #include <modest-widget-factory.h>
 
 G_BEGIN_DECLS

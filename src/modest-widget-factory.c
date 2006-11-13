@@ -27,6 +27,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <glib/gi18n.h>
 #include "modest-widget-factory.h"
 #include <modest-protocol-mgr.h>
 #include <tny-account-store.h>
@@ -226,7 +227,7 @@ init_widgets (ModestWidgetFactory *self)
 
 	/* folder view */
 	if (!(priv->folder_view =
-	      MODEST_FOLDER_VIEW(modest_folder_view_new (priv->account_store)))) {
+	      MODEST_FOLDER_VIEW(modest_folder_view_new (MODEST_TNY_ACCOUNT_STORE (priv->account_store))))) {
 		g_printerr ("modest: cannot instantiate folder view\n");
 		return FALSE;
 	}

@@ -2,8 +2,9 @@
 
 /* insert (c)/licensing information) */
 
-#include "modest-protocol-mgr.h"
+#include <glib/gi18n.h>
 #include <string.h> /* strcmp */
+#include "modest-protocol-mgr.h"
 #include <modest-pair.h>
 
 /* include other impl specific header files */

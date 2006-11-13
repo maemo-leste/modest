@@ -9,7 +9,8 @@ INCLUDES=\
 	$(MODEST_LIBTINYMAIL_GNOME_DESKTOP_CFLAGS) \
 	$(MODEST_LIBTINYMAIL_MAEMO_CFLAGS) \
 	-I$(MODEST_PLATFORM_DIR) \
-	-DPREFIX=\"@prefix@\" 
+	-DPREFIX=\"@prefix@\" \
+	-DMODESTLOCALEDIR=\""$(modestlocaledir)"\"
 
 BUILT_SOURCES = modest-marshal.c modest-marshal.h
 
@@ -52,8 +53,6 @@ modest_SOURCES=\
 	modest-tny-stream-gtkhtml.c\
 	modest-tny-attachment.h\
 	modest-tny-attachment.c\
-	modest-tny-store-actions.c\
-	modest-tny-store-actions.h\
 	modest-ui.h \
 	modest-marshal.c \
 	modest-marshal.h \

@@ -43,8 +43,8 @@
 #include "modest-tny-msg-actions.h"
 #include "modest-text-utils.h"
 
-static gchar *
-quote_msg (TnyMsg* src, const gchar * from, time_t sent_date, gint limit)
+static const gchar *
+get_body_text (TnyMsg *msg, gboolean want_html)
 {
 	TnyStream *stream;
 	TnyMimePart *body;
@@ -53,7 +53,7 @@ quote_msg (TnyMsg* src, const gchar * from, time_t sent_date, gint limit)
 	const gchar *to_quote;
 	gchar *quoted;
 
-	body = modest_tny_msg_actions_find_body_part(src, FALSE);
+	body = modest_tny_msg_actions_find_body_part(msg, want_html);
 	if (!body)
 		return NULL;
 
@@ -68,18 +68,19 @@ quote_msg (TnyMsg* src, const gchar * from, time_t sent_date, gint limit)
 	
 	gtk_text_buffer_get_bounds (buf, &start, &end);
 	to_quote = gtk_text_buffer_get_text (buf, &start, &end, FALSE);
-	quoted = modest_text_utils_quote (to_quote, from, sent_date, limit);
 	g_object_unref (buf);
 
-	return quoted;
+	return to_quote;
 }
-
 
 gchar*
 modest_tny_msg_actions_quote (TnyMsg * self, const gchar * from,
 			      time_t sent_date, gint limit,
 			      const gchar * to_quote)
 {
+	gchar *quoted_msg = NULL;
+	const gchar *body;
+
 	/* 2 cases: */
 
 	/* a) quote text from selection */
@@ -88,7 +89,11 @@ modest_tny_msg_actions_quote (TnyMsg * self, const gchar * from,
 						limit);
 	
 	/* b) try to find a text/plain part in the msg and quote it */
-	return quote_msg (self, from, sent_date, limit);
+	body = get_body_text (self, FALSE);
+	if (body)
+		quoted_msg = modest_text_utils_quote (body, from, sent_date, limit);
+	
+	return quoted_msg;
 }
 
 
@@ -164,4 +169,17 @@ modest_tny_msg_actions_find_nth_part (TnyMsg *msg, gint index)
 	g_object_unref (G_OBJECT(parts));
 
 	return part;
+}
+
+gchar * 
+modest_tny_msg_actions_find_body (TnyMsg *msg, gboolean want_html)
+{
+	const gchar *body;
+
+	body = get_body_text (msg, want_html);
+
+	if (body)
+		return g_strdup (body);
+	else 
+		return NULL;
 }

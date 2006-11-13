@@ -27,6 +27,10 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <glib/gi18n.h>
+#include <gtk/gtkaboutdialog.h>
+#include <gtk/gtktreeviewcolumn.h>
+
 #include <modest-widget-memory.h>
 #include <modest-icon-factory.h>
 
@@ -39,6 +43,7 @@
 #include "modest-edit-msg-window.h"
 #include "modest-icon-names.h"
 #include "modest-tny-platform-factory.h"
+#include "modest-mail-operation.h"
 
 /* 'private'/'protected' functions */
 static void modest_main_window_class_init    (ModestMainWindowClass *klass);
@@ -202,17 +207,80 @@ on_menu_new_message (ModestMainWindow *self, guint action, GtkWidget *widget)
 {
 	GtkWidget *msg_win;
 	ModestMainWindowPrivate *priv;
-	ModestConf *conf;
-	TnyAccountStore *account_store;
 
 	priv  = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
-	conf = modest_tny_platform_factory_get_modest_conf_instance (priv->factory);
-	account_store = tny_platform_factory_new_account_store (priv->factory);
 
 	msg_win = modest_edit_msg_window_new (priv->widget_factory,
 					      MODEST_EDIT_TYPE_NEW,
 					      NULL);
 	gtk_widget_show (msg_win);
+}
+
+static void
+on_menu_reply_forward (ModestMainWindow *self, guint action, GtkWidget *widget)
+{
+	GtkWidget *msg_win;
+	ModestMainWindowPrivate *priv;
+	ModestHeaderView *header_view;
+	TnyList *header_list;
+	TnyIterator *iter;
+
+	priv  = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
+
+	header_view = modest_widget_factory_get_header_view (priv->widget_factory);
+	header_list = modest_header_view_get_selected_headers (header_view);
+
+	if (header_list) {
+		iter = tny_list_create_iterator (header_list);
+		do {
+			TnyHeader *header;
+			TnyFolder *folder;
+			TnyMsg    *msg, *new_msg;
+			ModestEditType edit_type;
+
+			/* Get msg from header */
+			header = TNY_HEADER (tny_iterator_get_current (iter));
+			folder = tny_header_get_folder (header);
+			msg = tny_folder_get_msg (folder, header);
+
+			/* FIXME: select proper action */
+			switch (action) {
+			case 1:
+				/* TODO: get reply type from config */
+				new_msg = 
+					modest_mail_operation_create_reply_mail (msg,
+										 MODEST_MAIL_OPERATION_REPLY_TYPE_CITE,
+										 MODEST_MAIL_OPERATION_REPLY_MODE_SENDER);
+				edit_type = MODEST_EDIT_TYPE_REPLY;
+				break;
+			case 2:
+				/* TODO: get reply type from config */
+				new_msg = 
+					modest_mail_operation_create_reply_mail (msg,
+										 MODEST_MAIL_OPERATION_REPLY_TYPE_QUOTE,
+										 MODEST_MAIL_OPERATION_REPLY_MODE_ALL);
+				edit_type = MODEST_EDIT_TYPE_REPLY;
+				break;
+			case 3:
+				/* TODO: get forward type from config */
+				new_msg = 
+					modest_mail_operation_create_forward_mail (msg,
+										   MODEST_MAIL_OPERATION_FORWARD_TYPE_INLINE);
+				edit_type = MODEST_EDIT_TYPE_FORWARD;
+				break;
+			}
+			/* Show edit window */
+			msg_win = modest_edit_msg_window_new (priv->widget_factory,
+							      edit_type,
+							      new_msg);
+			gtk_widget_show (msg_win);
+
+			/* Clean and go on */
+			g_object_unref (new_msg);
+			tny_iterator_next (iter);
+
+		} while (!tny_iterator_is_done (iter));
+	}
 }
 
 static void
@@ -301,10 +369,10 @@ header_view_new (ModestMainWindow *self)
 	ModestHeaderViewColumn cols[] = {
 		MODEST_HEADER_VIEW_COLUMN_MSGTYPE,
 		MODEST_HEADER_VIEW_COLUMN_ATTACH,
-		MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER
-/* 		MODEST_HEADER_VIEW_COLUMN_FROM, */
-/* 		MODEST_HEADER_VIEW_COLUMN_SUBJECT, */
-/* 		MODEST_HEADER_VIEW_COLUMN_RECEIVED_DATE */
+/* 		MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER, */
+		MODEST_HEADER_VIEW_COLUMN_FROM,
+ 		MODEST_HEADER_VIEW_COLUMN_SUBJECT,
+		MODEST_HEADER_VIEW_COLUMN_RECEIVED_DATE
 	};
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
 	
@@ -334,10 +402,13 @@ on_toolbar_button_clicked (ModestToolbar *toolbar, ModestToolbarButton button_id
 		on_menu_new_message (self, 0, NULL);
 		break;
 	case MODEST_TOOLBAR_BUTTON_REPLY:
+		on_menu_reply_forward (self, 1, NULL);
 		break;
 	case MODEST_TOOLBAR_BUTTON_REPLY_ALL:
+		on_menu_reply_forward (self, 2, NULL);
 		break;
 	case MODEST_TOOLBAR_BUTTON_FORWARD:
+		on_menu_reply_forward (self, 3, NULL);
 		break;
 	case MODEST_TOOLBAR_BUTTON_SEND_RECEIVE:
 		

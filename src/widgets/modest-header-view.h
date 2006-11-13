@@ -188,6 +188,8 @@ gboolean   modest_header_view_set_style (ModestHeaderView *self,
  */
 ModestHeaderViewStyle   modest_header_view_get_style (ModestHeaderView *self);
 
+TnyList* modest_header_view_get_selected_headers (ModestHeaderView *self);
+
 G_END_DECLS
 
 

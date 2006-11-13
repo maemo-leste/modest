@@ -31,7 +31,6 @@
 #define __MODEST_TOOLBAR_H__
 
 #include <gtk/gtk.h>
-#include <glib/gi18n.h>
 #include <modest-icon-factory.h>
 #include <modest-icon-names.h>
 

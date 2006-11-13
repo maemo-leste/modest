@@ -46,10 +46,25 @@
  * 
  * Returns: a string containing the quoted message
  */
-gchar *
-modest_text_utils_quote(const gchar *buf,
+gchar* modest_text_utils_quote(const gchar *buf,
                         const gchar *from,
                         const time_t sent_date,
                         const int limit);
 
+gchar* modest_text_utils_create_reply_subject (const gchar *subject);
+
+gchar* modest_text_utils_create_forward_subject (const gchar *subject);
+
+gchar* modest_text_utils_create_cited_text (const gchar *from,
+					    time_t sent_date,
+					    const gchar *text);
+
+gchar* modest_text_utils_create_inlined_text (const gchar *from,
+					      time_t sent_date,
+					      const gchar *to,
+					      const gchar *subject,
+					      const gchar *text);
+
+gchar* modest_text_utils_remove_mail_from_mail_list (const gchar *emails, 
+						     const gchar *email);
 #endif /* __MODEST_TEXT_UTILS_H__ */

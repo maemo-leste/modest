@@ -1,0 +1,518 @@
+# English translations for modest package.
+# Copyright (C) 2006 THE modest'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the modest package.
+#  <svillar@igalia.com>, 2006.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: modest 0.0.1\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2006-11-10 11:37+0100\n"
+"PO-Revision-Date: 2006-11-09 20:16+0100\n"
+"Last-Translator:  <svillar@igalia.com>\n"
+"Language-Team: English <en_gb@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=ASCII\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: ../src/modest-mail-operation.c:188 ../src/modest-mail-operation.c:232
+msgid "Error trying to send a mail. Use a transport account"
+msgstr "Error trying to send a mail. Use a transport account"
+
+#: ../src/modest-mail-operation.c:223
+msgid "Error trying to send a mail. You need to set almost one a recipient"
+msgstr "Error trying to send a mail. You need to set almost one a recipient"
+
+#: ../src/modest-mail-operation.c:523
+#, fuzzy
+msgid "Error trying to update an account. Use a store account"
+msgstr "Error trying to send a mail. Use a transport account"
+
+#: ../src/modest-protocol-mgr.c:137
+msgid "Sendmail"
+msgstr "Sendmail"
+
+#: ../src/modest-protocol-mgr.c:142
+msgid "SMTP-server"
+msgstr "SMTP-server"
+
+#: ../src/modest-protocol-mgr.c:162
+msgid "POP3"
+msgstr "POP3"
+
+#: ../src/modest-protocol-mgr.c:167
+msgid "IMAP v4"
+msgstr "IMAP v4"
+
+#: ../src/modest-protocol-mgr.c:172
+msgid "Mbox"
+msgstr "Mbox"
+
+#: ../src/modest-protocol-mgr.c:177
+msgid "Maildir"
+msgstr "Maildir"
+
+#: ../src/modest-protocol-mgr.c:196 ../src/modest-protocol-mgr.c:227
+msgid "None"
+msgstr "None"
+
+#: ../src/modest-protocol-mgr.c:201
+msgid "TLS"
+msgstr "TLS"
+
+#: ../src/modest-protocol-mgr.c:206
+msgid "SSL"
+msgstr "SSL"
+
+#: ../src/modest-protocol-mgr.c:232
+msgid "Password"
+msgstr "Password"
+
+#: ../src/modest-text-utils.c:225
+#, c-format
+msgid "On %s, %s wrote:\n"
+msgstr "On %s, %s wrote:\n"
+
+#: ../src/modest-text-utils.c:302
+msgid "Re:"
+msgstr "Re:"
+
+#: ../src/modest-text-utils.c:316
+msgid "Fw:"
+msgstr "Fw:"
+
+#: ../src/modest-text-utils.c:340
+msgid "-----Original message-----"
+msgstr "-----Original message-----"
+
+#: ../src/modest-text-utils.c:341 ../src/gtk/modest-edit-msg-window.c:384
+msgid "From:"
+msgstr "From:"
+
+#: ../src/modest-text-utils.c:342
+msgid "Sent:"
+msgstr "Sent:"
+
+#: ../src/modest-text-utils.c:343
+msgid "To:"
+msgstr "To:"
+
+#: ../src/modest-text-utils.c:344 ../src/gtk/modest-edit-msg-window.c:389
+msgid "Subject:"
+msgstr "Subject:"
+
+#: ../src/modest-widget-factory.c:480
+#, c-format
+msgid "%d %s, %d unread"
+msgstr "%d %s, %d unread"
+
+#: ../src/modest-widget-factory.c:481
+msgid "item"
+msgstr "item"
+
+#: ../src/modest-widget-factory.c:481
+msgid "items"
+msgstr "items"
+
+#: ../src/modest-widget-factory.c:582
+#, c-format
+msgid "Opening %s..."
+msgstr "Opening %s..."
+
+#: ../src/modest-widget-factory.c:593
+#, c-format
+msgid "Opening attachment %d..."
+msgstr "Opening attachment %d..."
+
+#: ../src/modest-widget-factory.c:610
+msgid "Online"
+msgstr "Online"
+
+#: ../src/modest-widget-factory.c:610
+msgid "Offline"
+msgstr "Offline"
+
+#: ../src/modest-widget-factory.c:612
+msgid "Modest went online"
+msgstr "Modest went online"
+
+#: ../src/modest-widget-factory.c:612
+msgid "Modest went offline"
+msgstr "Modest went offline"
+
+#: ../src/modest-widget-factory.c:657
+#, c-format
+msgid "The %s you selected cannot be found"
+msgstr "The %s you selected cannot be found"
+
+#: ../src/modest-widget-factory.c:662
+msgid "Connection requested"
+msgstr "Connection requested"
+
+#: ../src/modest-widget-factory.c:671
+#, c-format
+msgid ""
+"This %s is not available in offline mode.\n"
+"Do you want to get online?"
+msgstr ""
+"This %s is not available in offline mode.\n"
+"Do you want to get online?"
+
+#: ../src/modest-widget-factory.c:694
+msgid "Password requested"
+msgstr "Password requested"
+
+#: ../src/modest-widget-factory.c:703
+#, c-format
+msgid "Please enter your password for %s"
+msgstr "Please enter your password for %s"
+
+#: ../src/gtk/modest-account-view-window.c:294
+msgid "Accounts"
+msgstr "Accounts"
+
+#: ../src/gtk/modest-account-assistant.c:128
+msgid ""
+"Welcome to the account assistant\n"
+"\n"
+"It will help to set up a new e-mail account\n"
+msgstr ""
+"Welcome to the account assistant\n"
+"\n"
+"It will help to set up a new e-mail account\n"
+
+#: ../src/gtk/modest-account-assistant.c:136
+msgid "Modest Account Assistant"
+msgstr "Modest Account Assistant"
+
+#: ../src/gtk/modest-account-assistant.c:196
+msgid ""
+"Please enter your name and your e-mail address below.\n"
+"\n"
+msgstr ""
+"Please enter your name and your e-mail address below.\n"
+"\n"
+
+#: ../src/gtk/modest-account-assistant.c:200
+msgid "Full name"
+msgstr "Full name"
+
+#: ../src/gtk/modest-account-assistant.c:202
+msgid "E-mail address"
+msgstr "E-mail address"
+
+#: ../src/gtk/modest-account-assistant.c:222
+msgid "Identity"
+msgstr "Identity"
+
+#: ../src/gtk/modest-account-assistant.c:264
+#: ../src/gtk/modest-account-assistant.c:336
+msgid "Please select among the following options"
+msgstr "Please select among the following options"
+
+#: ../src/gtk/modest-account-assistant.c:268
+#: ../src/gtk/modest-account-assistant.c:340
+msgid "Server type"
+msgstr "Server type"
+
+#: ../src/gtk/modest-account-assistant.c:288
+msgid "Receiving mail"
+msgstr "Receiving mail"
+
+#: ../src/gtk/modest-account-assistant.c:360
+msgid "Sending mail"
+msgstr "Sending mail"
+
+#: ../src/gtk/modest-account-assistant.c:381
+msgid "We're almost done. Press 'Apply' to store this new account"
+msgstr "We're almost done. Press 'Apply' to store this new account"
+
+#: ../src/gtk/modest-account-assistant.c:388
+msgid "Account name:"
+msgstr "Account name:"
+
+#: ../src/gtk/modest-account-assistant.c:397
+msgid "Account Management"
+msgstr "Account Management"
+
+#: ../src/gtk/modest-account-assistant.c:451
+msgid ""
+"Are you sure you want to cancel\n"
+"setting up a new account?"
+msgstr ""
+"Are you sure you want to cancel\n"
+"setting up a new account?"
+
+#: ../src/gtk/modest-account-assistant.c:454
+msgid "Cancel"
+msgstr "Cancel"
+
+#: ../src/gtk/modest-account-assistant.c:590
+msgid "Modest Account Wizard"
+msgstr "Modest Account Wizard"
+
+#: ../src/gtk/modest-edit-msg-window.c:371
+msgid "To..."
+msgstr "To..."
+
+#: ../src/gtk/modest-edit-msg-window.c:372
+msgid "Cc..."
+msgstr "Cc..."
+
+#: ../src/gtk/modest-edit-msg-window.c:373
+msgid "Bcc..."
+msgstr "Bcc..."
+
+#: ../src/gtk/modest-transport-widget.c:124
+msgid "<b>SMTP configuration</b>"
+msgstr "<b>SMTP configuration</b>"
+
+#: ../src/gtk/modest-transport-widget.c:130
+msgid "Servername: "
+msgstr "Servername: "
+
+#: ../src/gtk/modest-transport-widget.c:136
+msgid "Requires authentication"
+msgstr "Requires authentication"
+
+#: ../src/gtk/modest-transport-widget.c:140
+#: ../src/gtk/modest-store-widget.c:220
+msgid "<b>Security</b>"
+msgstr "<b>Security</b>"
+
+#: ../src/gtk/modest-transport-widget.c:145
+#: ../src/gtk/modest-store-widget.c:225
+msgid "Connection type:"
+msgstr "Connection type:"
+
+#: ../src/gtk/modest-transport-widget.c:155
+#: ../src/gtk/modest-store-widget.c:235
+msgid "Authentication:"
+msgstr "Authentication:"
+
+#: ../src/gtk/modest-transport-widget.c:161
+#: ../src/gtk/modest-store-widget.c:242
+msgid "Remember password"
+msgstr "Remember password"
+
+#: ../src/gtk/modest-store-widget.c:134
+msgid "<b>Maildir configuration</b>"
+msgstr "<b>Maildir configuration</b>"
+
+#: ../src/gtk/modest-store-widget.c:138
+msgid "Please select the path to your Maildir below"
+msgstr "Please select the path to your Maildir below"
+
+#: ../src/gtk/modest-store-widget.c:141
+msgid "Path:"
+msgstr "Path:"
+
+#: ../src/gtk/modest-store-widget.c:144 ../src/gtk/modest-store-widget.c:178
+msgid "(none)"
+msgstr "(none)"
+
+#: ../src/gtk/modest-store-widget.c:168
+msgid "<b>Mbox configuration</b>"
+msgstr "<b>Mbox configuration</b>"
+
+#: ../src/gtk/modest-store-widget.c:172
+msgid "Please select your mbox file below"
+msgstr "Please select your mbox file below"
+
+#: ../src/gtk/modest-store-widget.c:175
+msgid "mbox:"
+msgstr "mbox:"
+
+#: ../src/gtk/modest-store-widget.c:200
+msgid "<b>Server configuration</b>"
+msgstr "<b>Server configuration</b>"
+
+#: ../src/gtk/modest-store-widget.c:204
+msgid "Username:"
+msgstr "Username:"
+
+#: ../src/gtk/modest-store-widget.c:212
+msgid "Server:"
+msgstr "Server:"
+
+#: ../src/widgets/modest-account-view.c:269
+msgid "Enabled"
+msgstr "Enabled"
+
+#: ../src/widgets/modest-account-view.c:273
+msgid "Account"
+msgstr "Account"
+
+#: ../src/widgets/modest-account-view.c:278
+msgid "Type"
+msgstr "Type"
+
+#: ../src/widgets/modest-folder-view.c:178
+msgid "inbox"
+msgstr "inbox"
+
+#: ../src/widgets/modest-folder-view.c:181
+msgid "outbox"
+msgstr "outbox"
+
+#: ../src/widgets/modest-folder-view.c:184
+msgid "junk"
+msgstr "junk"
+
+#: ../src/widgets/modest-folder-view.c:187
+msgid "trash"
+msgstr "trash"
+
+#: ../src/widgets/modest-folder-view.c:190
+msgid "sent"
+msgstr "sent"
+
+#: ../src/widgets/modest-folder-view.c:195
+msgid "draft"
+msgstr "draft"
+
+#: ../src/widgets/modest-folder-view.c:198
+msgid "notes"
+msgstr "notes"
+
+#: ../src/widgets/modest-folder-view.c:201
+msgid "contacts"
+msgstr "contacts"
+
+#: ../src/widgets/modest-folder-view.c:204
+msgid "calendar"
+msgstr "calendar"
+
+#: ../src/widgets/modest-folder-view.c:293
+msgid "All Mail Folders"
+msgstr "All Mail Folders"
+
+#: ../src/widgets/modest-folder-view.c:405
+msgid "(empty)"
+msgstr "(empty)"
+
+#: ../src/widgets/modest-header-view.c:286
+#, c-format
+msgid "%X"
+msgstr "%X"
+
+#: ../src/widgets/modest-header-view.c:400
+msgid "M"
+msgstr "M"
+
+#: ../src/widgets/modest-header-view.c:408
+msgid "A"
+msgstr "A"
+
+#: ../src/widgets/modest-header-view.c:415
+msgid "Received"
+msgstr "Received"
+
+#: ../src/widgets/modest-header-view.c:422
+msgid "From"
+msgstr "From"
+
+#: ../src/widgets/modest-header-view.c:429
+msgid "To"
+msgstr "To"
+
+#: ../src/widgets/modest-header-view.c:436
+msgid "Header"
+msgstr "Header"
+
+#: ../src/widgets/modest-header-view.c:443
+msgid "Subject"
+msgstr "Subject"
+
+#: ../src/widgets/modest-header-view.c:451
+msgid "Sent"
+msgstr "Sent"
+
+#: ../src/widgets/modest-msg-view.c:398
+msgid "attachment"
+msgstr "attachment"
+
+#: ../src/widgets/modest-msg-view.c:411
+msgid "Attachments"
+msgstr "Attachments"
+
+#: ../src/widgets/modest-toolbar.c:124
+msgid "Send"
+msgstr "Send"
+
+#: ../src/widgets/modest-toolbar.c:125
+msgid "Send the current email message"
+msgstr "Send the current email message"
+
+#: ../src/widgets/modest-toolbar.c:129
+msgid "New mail"
+msgstr "New mail"
+
+#: ../src/widgets/modest-toolbar.c:130
+msgid "Compose a new email message"
+msgstr "Compose a new email message"
+
+#: ../src/widgets/modest-toolbar.c:134
+msgid "Send/Receive"
+msgstr "Send/Receive"
+
+#: ../src/widgets/modest-toolbar.c:135
+msgid "Send and receive messages"
+msgstr "Send and receive messages"
+
+#: ../src/widgets/modest-toolbar.c:139
+msgid "Reply"
+msgstr "Reply"
+
+#: ../src/widgets/modest-toolbar.c:140
+msgid "Reply to the selected email message"
+msgstr "Reply to the selected email message"
+
+#: ../src/widgets/modest-toolbar.c:144
+msgid "Reply all"
+msgstr "Reply all"
+
+#: ../src/widgets/modest-toolbar.c:145
+msgid "Reply to all people the selected email was sent to"
+msgstr "Reply to all people the selected email was sent to"
+
+#: ../src/widgets/modest-toolbar.c:149
+msgid "Forward"
+msgstr "Forward"
+
+#: ../src/widgets/modest-toolbar.c:150
+msgid "Forward the selected email"
+msgstr "Forward the selected email"
+
+#: ../src/widgets/modest-toolbar.c:154
+msgid "Delete"
+msgstr "Delete"
+
+#: ../src/widgets/modest-toolbar.c:155
+msgid "Delete the selected email message(s)"
+msgstr "Delete the selected email message(s)"
+
+#: ../src/widgets/modest-toolbar.c:159
+msgid "Next"
+msgstr "Next"
+
+#: ../src/widgets/modest-toolbar.c:160
+msgid "Move to the next message"
+msgstr "Move to the next message"
+
+#: ../src/widgets/modest-toolbar.c:164
+msgid "Previous"
+msgstr "Previous"
+
+#: ../src/widgets/modest-toolbar.c:165
+msgid "Move to the previous message"
+msgstr "Move to the previous message"
+
+#: ../src/widgets/modest-toolbar.c:169
+msgid "Stop"
+msgstr "Stop"
+
+#: ../src/widgets/modest-toolbar.c:170
+msgid "Stop whatever"
+msgstr "Stop whatever"

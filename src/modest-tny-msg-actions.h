@@ -70,7 +70,9 @@ TnyMimePart *modest_tny_msg_actions_find_body_part (TnyMsg * self, gboolean want
  * 
  * Returns: the TnyMsgMimePart for the found part, or NULL if no matching part is foundi; must be unref'd
  */
-TnyMimePart * modest_tny_msg_actions_find_nth_part (TnyMsg *msg, gint index);
+TnyMimePart* modest_tny_msg_actions_find_nth_part (TnyMsg *msg, gint index);
 
+
+gchar* modest_tny_msg_actions_find_body (TnyMsg *self, gboolean want_html);
 
 #endif /* __MODEST_TNY_MSG_ACTIONS_H__ */

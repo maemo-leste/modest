@@ -28,12 +28,13 @@
  */
 
 #include <glib/gi18n.h>
-#include "modest-header-view.h"
 #include <tny-list.h>
+#include <tny-simple-list.h>
 #include <string.h>
-#include <modest-marshal.h>
 
-#include <modest-icon-names.h>
+#include "modest-header-view.h"
+#include "modest-marshal.h"
+#include "modest-icon-names.h"
 #include "modest-icon-factory.h"
 
 static void modest_header_view_class_init  (ModestHeaderViewClass *klass);
@@ -574,6 +575,48 @@ modest_header_view_set_columns (ModestHeaderView *self, GSList *columns)
 }
 
 
+TnyList * 
+modest_header_view_get_selected_headers (ModestHeaderView *self)
+{
+	GtkTreeSelection *sel;
+	ModestHeaderViewPrivate *priv;
+	TnyList *header_list = NULL;
+	TnyHeader *header;
+	GList *list, *tmp = NULL;
+	GtkTreeModel *tree_model = NULL;
+	GtkTreeIter iter;
+	
+	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
+
+	/* Get selected rows */
+	sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(self));
+	list = gtk_tree_selection_get_selected_rows (sel, &tree_model);
+
+	if (list) {
+		header_list = tny_simple_list_new();
+
+		list = g_list_reverse (list);
+		tmp = list;
+		while (tmp) {			
+			/* Get Header from selection */
+			gtk_tree_model_get_iter (tree_model,
+						 &iter,
+						 (GtkTreePath *) (tmp->data));
+									  
+			gtk_tree_model_get (tree_model, &iter,
+					    TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN,
+					    &header, -1);
+
+			/* Prepend to list */
+			tny_list_prepend (header_list, G_OBJECT (header));
+			tmp = g_list_next (tmp);
+		}
+		/* Clean up*/
+		g_list_foreach (list, (GFunc) gtk_tree_path_free, NULL);
+		g_list_free (list);
+	}
+	return header_list;
+}
 
 const GSList*
 modest_header_view_get_columns (ModestHeaderView *self)
@@ -860,6 +903,7 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 {
 	GtkTreeModel            *model;
 	TnyHeader       *header;
+	TnyHeaderFlags header_flags;
 	GtkTreeIter             iter;
 	ModestHeaderView        *self;
 	ModestHeaderViewPrivate *priv;
@@ -891,8 +935,8 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 		return;
 	}
 	
-	msg = tny_folder_get_message (TNY_FOLDER(folder),
-						header);
+	msg = tny_folder_get_msg (TNY_FOLDER(folder),
+				  header);
 	if (!msg) {
 		g_signal_emit (G_OBJECT(self), signals[ITEM_NOT_FOUND_SIGNAL], 0,
 			       MODEST_ITEM_TYPE_MESSAGE);
@@ -903,7 +947,7 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 		       msg);
 	
 	/* mark message as seen; _set_flags crashes, bug in tinymail? */
-	//flags = tny_header_get_flags (TNY_HEADER(header));
-	//tny_header_set_flags (header, TNY_HEADER_FLAG_SEEN);
+	header_flags = tny_header_get_flags (TNY_HEADER(header));
+	tny_header_set_flags (header, header_flags | TNY_HEADER_FLAG_SEEN);
 }	
 

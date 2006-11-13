@@ -8,6 +8,18 @@ AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_SRCDIR(src/modest-main.c)
 AM_INIT_AUTOMAKE(AC_PACKAGE_NAME,AC_PACKAGE_VERSION)
 
+# Check for gettext support
+GETTEXT_PACKAGE=modest
+AC_SUBST(GETTEXT_PACKAGE)
+AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE, "$GETTEXT_PACKAGE", ["Description"])
+
+ALL_LINGUAS="en_GB gl"
+#AM_GLIB_DEFINE_LOCALEDIR([MODEST_LOCALE_DIR])
+AM_GLIB_GNU_GETTEXT
+
+modestlocaledir='$prefix/${DATADIRNAME}/locale'
+AC_SUBST(modestlocaledir)
+
 if test x$prefix = xNONE; then
    prefix=/usr/local
 fi
@@ -59,6 +71,7 @@ else
 fi
 
 AC_OUTPUT([
+po/Makefile.in
 Makefile
 src/Makefile
 src/gtk/Makefile

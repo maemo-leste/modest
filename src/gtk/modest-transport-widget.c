@@ -2,6 +2,7 @@
 
 /* insert (c)/licensing information) */
 
+#include <glib/gi18n.h>
 #include "modest-transport-widget.h"
 #include <string.h>
 

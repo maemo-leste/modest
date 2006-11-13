@@ -34,7 +34,6 @@
 #include <tny-store-account.h>
 #include <tny-transport-account.h>
 #include <tny-device.h>
-#include <tny-gnome-device.h>
 #include <tny-account-store.h>
 #include <tny-camel-transport-account.h>
 #include <tny-camel-store-account.h>
@@ -421,7 +420,6 @@ modest_tny_account_store_new (ModestAccountMgr *account_mgr) {
 	
 	priv->store_lock = g_mutex_new ();
 
-	/* FIXME: don't use GNOME */
 	pfact = TNY_PLATFORM_FACTORY (modest_tny_platform_factory_get_instance());
 	if (!pfact) {
 		g_printerr ("modest: cannot create platform factory\n");

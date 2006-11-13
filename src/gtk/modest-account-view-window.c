@@ -27,6 +27,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <glib/gi18n.h>
 #include "modest-account-view-window.h"
 #include "modest-account-assistant.h"
 #include "modest-tny-platform-factory.h"

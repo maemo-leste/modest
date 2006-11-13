@@ -37,12 +37,14 @@
 #include <tny-list.h>
 #include <tny-simple-list.h>
 
+#include "config.h"
 #include "modest-conf.h"
 #include "modest-account-mgr.h"
 #include "modest-ui.h"
 #include "modest-icon-factory.h"
 #include "modest-tny-account-store.h"
 #include "modest-tny-platform-factory.h"
+#include "modest-mail-operation.h"
 
 
 #ifdef MODEST_ENABLE_HILDON /* Hildon includes */
@@ -96,6 +98,10 @@ main (int argc, char *argv[])
 		  "Run in batch mode (don't show UI)", NULL},
 		{ NULL, 0, 0, 0, NULL, NULL, NULL }
 	};
+
+	bindtextdomain (GETTEXT_PACKAGE, MODESTLOCALEDIR);
+	bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
+	textdomain (GETTEXT_PACKAGE);
 
 	g_type_init ();
 
@@ -220,6 +226,7 @@ send_mail (const gchar* mailto, const gchar *cc, const gchar *bcc,
 	ModestAccountMgr *acc_mgr = NULL;
 	TnyPlatformFactory *fact = NULL;
 	TnyAccountStore *acc_store = NULL;
+	ModestMailOperation *mail_operation;
 
 	TnyList *accounts = NULL;
 	TnyIterator *iter = NULL;
@@ -244,20 +251,25 @@ send_mail (const gchar* mailto, const gchar *cc, const gchar *bcc,
 
 	account = TNY_TRANSPORT_ACCOUNT (tny_iterator_get_current(iter));
 
-	if (!modest_mail_operation_send_mail (account,
-					      "djcb@djcbsoftware.nl", mailto, cc, bcc, subject, body,
-					      NULL)) {
+	mail_operation = modest_mail_operation_new (TNY_ACCOUNT (account));
+
+	modest_mail_operation_send_new_mail (mail_operation,
+					     "djcb@djcbsoftware.nl", mailto, cc, bcc, 
+					     subject, body, NULL);
+
+
+	if (modest_mail_operation_get_status (mail_operation) == 
+	    MODEST_MAIL_OPERATION_STATUS_FAILED) {
 		retval = MODEST_ERR_SEND;
 		goto cleanup;
 	} else
 		retval = MODEST_ERR_NONE; /* hurray! */
 
 cleanup:
-	if (iter)
-		g_object_unref (G_OBJECT(iter));
-	if (accounts)
-		g_object_unref (G_OBJECT(accounts));
-	
+	if (iter) g_object_unref (G_OBJECT (iter));
+	if (accounts) g_object_unref (G_OBJECT (accounts));
+	if (mail_operation) g_object_unref (G_OBJECT (mail_operation));
+
 	return retval;
 }
 

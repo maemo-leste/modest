@@ -33,7 +33,7 @@
 #include <gtk/gtk.h>
 #include <string.h>
 #include <stdlib.h>
-
+#include <glib/gi18n.h>
 #include "modest-text-utils.h"
 
 
@@ -208,6 +208,16 @@ my_strftime(char *s, size_t max, const char  *fmt,  const
 	return strftime(s, max, fmt, tm);
 }
 
+static gchar *
+cite (const time_t sent_date, const gchar *from) {
+	gchar *str;
+	gchar sent_str[101];
+
+	/* format sent_date */
+	my_strftime (sent_str, 100, "%c", localtime (&sent_date));
+	return g_strdup_printf (N_("On %s, %s wrote:\n"), sent_str, from);
+}
+
 
 gchar *
 modest_text_utils_quote (const gchar * to_quote, const gchar * from,
@@ -215,14 +225,14 @@ modest_text_utils_quote (const gchar * to_quote, const gchar * from,
 {
 	const gchar *iter;
 	gint indent, breakpoint, rem_indent = 0;
-	gchar sent_str[101];
 	GString *q, *l, *remaining;
 	gsize len;
+	gchar *tmp;
 
 	/* format sent_date */
-	my_strftime (sent_str, 100, "%c", localtime (&sent_date));
-	q = g_string_new ("");
-	g_string_printf (q, "On %s, %s wrote:\n", sent_str, from);
+	tmp = cite (sent_date, from);
+	q = g_string_new (tmp);
+	g_free (tmp);
 
 	/* remaining will store the rest of the line if we have to break it */
 	remaining = g_string_new ("");
@@ -268,4 +278,131 @@ modest_text_utils_quote (const gchar * to_quote, const gchar * from,
 	} while ((iter < to_quote + len) || (remaining->str[0]));
 
 	return g_string_free (q, FALSE);
+}
+
+static gchar *
+create_derivated_subject (const gchar *subject, const gchar *prefix)
+{
+	gchar *tmp, *buffer;
+
+	if (!subject)
+		return g_strdup_printf ("%s ", prefix);
+
+	tmp = g_strchug (g_strdup (subject));
+
+	if (!strncmp (tmp, prefix, strlen (prefix))) {
+		return tmp;
+	} else {
+		g_free (tmp);
+		return g_strdup_printf ("%s %s", prefix, subject);
+	}
+}
+
+/**
+ * modest_text_utils_create_reply_subject:
+ * @subject: 
+ * 
+ * creates a new subject with a reply prefix if not present before
+ * 
+ * Returns: a new subject with the reply prefix
+ **/
+gchar * 
+modest_text_utils_create_reply_subject (const gchar *subject)
+{
+	return create_derivated_subject (subject, _("Re:"));
+}
+
+/**
+ * modest_text_utils_create_forward_subject:
+ * @subject: 
+ * 
+ * creates a new subject with a forward prefix if not present before
+ * 
+ * Returns:  a new subject with the forward prefix
+ **/
+gchar * 
+modest_text_utils_create_forward_subject (const gchar *subject)
+{
+	return create_derivated_subject (subject, _("Fw:"));
+}
+
+gchar *
+modest_text_utils_create_cited_text (const gchar *from, 
+				     time_t sent_date, 
+				     const gchar *text)
+{
+	gchar *tmp, *retval;
+
+	tmp = cite (sent_date, from);
+	retval = g_strdup_printf ("%s%s\n", tmp, text);
+	g_free (tmp);
+
+	return retval;
+}
+
+/**
+ * modest_text_utils_create_inlined_text:
+ * @text: the original text
+ * 
+ * creates a new string with the "Original message" text prepended to
+ * the text passed as argument and some data of the header
+ * 
+ * Returns:  a newly allocated text
+ **/
+gchar * 
+modest_text_utils_create_inlined_text (const gchar *from,
+				       time_t sent_date,
+				       const gchar *to,
+				      const gchar *subject,
+				      const gchar *text)
+{
+	gchar sent_str[101];
+
+	my_strftime (sent_str, 100, "%c", localtime (&sent_date));
+
+	return g_strdup_printf ("%s\n%s %s\n%s %s\n%s %s\n%s %s\n\n%s", 
+				_("-----Forwarded Message-----"),
+				_("From:"), from,
+				_("Sent:"), sent_str,
+				_("To:"), to,
+				_("Subject:"), subject,
+				text);
+}
+
+gchar *
+modest_text_utils_remove_mail_from_mail_list (const gchar *emails,
+					      const gchar *email)
+{
+	char *dup, *token, *ptr, *result;
+	GString *filtered_emails;
+
+	if (!emails)
+		return NULL;
+
+	/* Search for substring */
+	if (!strstr ((const char *) emails, (const char *) email))
+		return g_strdup (emails);
+
+	dup = g_strdup (emails);
+	filtered_emails = g_string_new (NULL);
+
+	token = strtok_r (dup, ",", &ptr);
+
+	while (token != NULL) {
+		/* Add to list if not found */
+		if (!strstr ((const char *) token, (const char *) email)) {
+			if (G_UNLIKELY (filtered_emails->len) == 0)
+				g_string_append_printf (filtered_emails, "%s", token);
+			else
+				g_string_append_printf (filtered_emails, ",%s", token);
+		}
+		token = strtok_r (NULL, ",", &ptr);
+	}
+	result = filtered_emails->str;
+
+	/* Clean */
+	g_free (dup);
+	g_string_free (filtered_emails, FALSE);
+
+	return result;
 }

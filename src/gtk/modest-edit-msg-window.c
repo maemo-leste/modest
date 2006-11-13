@@ -26,14 +26,13 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
+#include <glib/gi18n.h>
+#include <tny-account-store.h>
 #include "modest-edit-msg-window.h"
-#include <widgets/modest-msg-view.h>
-#include <modest-widget-memory.h>
-#include <modest-widget-factory.h>
-#include "modest-icon-names.h"
+#include "modest-widget-memory.h"
 #include "modest-mail-operation.h"
 #include "modest-tny-platform-factory.h"
+#include "modest-tny-msg-actions.h"
 #include <tny-simple-list.h>
 
 static void  modest_edit_msg_window_class_init   (ModestEditMsgWindowClass *klass);
@@ -246,6 +245,7 @@ send_mail (ModestEditMsgWindow *self)
 	gchar *body;
 	ModestEditMsgWindowPrivate *priv;
 	TnyTransportAccount *transport_account;
+	ModestMailOperation *mail_operation;
 	
 	GtkTextBuffer *buf;
 	GtkTextIter b, e;
@@ -283,20 +283,21 @@ send_mail (ModestEditMsgWindow *self)
 		iter = tny_list_create_iterator(accounts);
 		tny_iterator_first (iter);
 		if (tny_iterator_is_done (iter)) {
+			/* FIXME: Add error handling through mail operation */
 			g_printerr("modest: no transport accounts defined\n");
-			goto cleanup;
+			g_free (body);
+			return;
 		}
-
 		transport_account = TNY_TRANSPORT_ACCOUNT (tny_iterator_get_current(iter));
-
 	}
-	/*****/
-	modest_mail_operation_send_mail (transport_account,
-					 from, to, cc, bcc,
-					 subject, body, NULL);
-	
- cleanup:
 
+	mail_operation = modest_mail_operation_new (TNY_ACCOUNT (transport_account));
+
+	modest_mail_operation_send_new_mail (mail_operation,
+					     from, to, cc, bcc,
+					     subject, body, NULL);
+	/* Clean up */
+	g_object_unref (mail_operation);
 	g_free (body);
 }
 
@@ -436,7 +437,7 @@ on_delete_event (GtkWidget *widget, GdkEvent *event, ModestEditMsgWindow *self)
 
 GtkWidget*
 modest_edit_msg_window_new (ModestWidgetFactory *factory,
-			    ModestEditType type, TnyMsgIface *msg)
+			    ModestEditType type, TnyMsg *msg)
 {
 	GObject *obj;
 	ModestEditMsgWindowPrivate *priv;
@@ -463,5 +464,26 @@ modest_edit_msg_window_new (ModestWidgetFactory *factory,
 	g_signal_connect (G_OBJECT(obj), "delete-event",
 			  G_CALLBACK(on_delete_event), obj);
 	
+	if (msg) {
+		/* Testing code. Should be into a set_msg method */
+		TnyHeader *header;
+		GtkTextBuffer *buf;
+
+		header = tny_msg_get_header (msg);
+		gtk_entry_set_text (GTK_ENTRY(priv->to_field),
+				    tny_header_get_to (header));
+		gtk_entry_set_text (GTK_ENTRY(priv->cc_field),
+				    tny_header_get_cc (header));
+		gtk_entry_set_text (GTK_ENTRY(priv->bcc_field),
+				    tny_header_get_bcc (header));
+		gtk_entry_set_text (GTK_ENTRY(priv->subject_field),
+				    tny_header_get_subject (header));	
+
+		buf = gtk_text_view_get_buffer (GTK_TEXT_VIEW(priv->msg_body));
+		gtk_text_buffer_set_text (buf,
+					  (const gchar *) modest_tny_msg_actions_find_body (msg, FALSE),
+					  -1);
+	}
+
 	return GTK_WIDGET (obj);
 }

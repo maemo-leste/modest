@@ -32,10 +32,8 @@
 
 #include <gtk/gtk.h>
 #include <tny-msg.h>
-#include <modest-conf.h>
-#include <modest-widget-factory.h>
-#include <glib/gi18n.h>
-
+#include "modest-conf.h"
+#include "modest-widget-factory.h"
 
 G_BEGIN_DECLS
 
@@ -78,7 +76,7 @@ GType        modest_edit_msg_window_get_type    (void) G_GNUC_CONST;
 
 GtkWidget*   modest_edit_msg_window_new         (ModestWidgetFactory *factory,
 						 ModestEditType type,
-						 TnyMsgIface *msg);
+						 TnyMsg *msg);
 G_END_DECLS
 
 #endif /* __MODEST_EDIT_MSG_WINDOW_H__ */

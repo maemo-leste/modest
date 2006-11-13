@@ -5,7 +5,6 @@
 #define __MODEST_MAIN_WINDOW_H__
 
 #include <gtk/gtkwindow.h>
-#include <glib/gi18n.h>
 #include <modest-widget-factory.h>
 
 #ifdef HAVE_CONFIG_H

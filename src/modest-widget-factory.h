@@ -30,17 +30,14 @@
 #ifndef __MODEST_WIDGET_FACTORY_H__
 #define __MODEST_WIDGET_FACTORY_H__
 
-#include <glib-object.h>
-#include <glib/gi18n.h>
-#include <modest-account-mgr.h>
-#include <modest-tny-account-store.h>
-
-#include <widgets/modest-header-view.h>
-#include <widgets/modest-folder-view.h>
-#include <widgets/modest-msg-view.h>
-#include <widgets/modest-account-view.h>
-#include <widgets/modest-toolbar.h>
-#include <widgets/modest-combo-box.h>
+#include "modest-account-mgr.h"
+#include "modest-tny-account-store.h"
+#include "widgets/modest-header-view.h"
+#include "widgets/modest-folder-view.h"
+#include "widgets/modest-msg-view.h"
+#include "widgets/modest-account-view.h"
+#include "widgets/modest-toolbar.h"
+#include "widgets/modest-combo-box.h"
 
 G_BEGIN_DECLS
 

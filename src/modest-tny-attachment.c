@@ -59,7 +59,7 @@ struct _ModestTnyAttachmentPrivate {
 	gchar *mime_type;
 	gchar *disposition;
 	gchar *content_id;
-	TnyStreamIface *stream;
+	TnyStream *stream;
 };
 #define MODEST_TNY_ATTACHMENT_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                    MODEST_TYPE_TNY_ATTACHMENT, \
@@ -237,14 +237,14 @@ modest_tny_attachment_guess_mime_type (ModestTnyAttachment *self)
 		priv->mime_type = NULL;
 }
 
-static TnyStreamIface *
+static TnyStream *
 make_stream_from_file(const gchar * filename)
 {
 	return NULL;
 }
 
 void
-modest_tny_attachment_set_stream(ModestTnyAttachment *self, TnyStreamIface *thing)
+modest_tny_attachment_set_stream(ModestTnyAttachment *self, TnyStream *thing)
 {
 	ModestTnyAttachmentPrivate *priv;
 	
@@ -282,13 +282,13 @@ modest_tny_attachment_free_list(GList *list)
 
 
 ModestTnyAttachment *
-modest_tny_attachment_new_from_mime_part(TnyMimePartIface *part)
+modest_tny_attachment_new_from_mime_part(TnyMimePart *part)
 {
 	return NULL;
 }
 
 ModestTnyAttachment *
-modest_tny_attachment_new_from_message(const TnyMsgIface *msg)
+modest_tny_attachment_new_from_message(const TnyMsg *msg)
 {
 	return NULL;
 }
