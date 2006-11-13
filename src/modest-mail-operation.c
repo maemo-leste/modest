@@ -59,6 +59,9 @@ static void status_update_cb (TnyFolder *folder, const gchar *what,
 			      gint status, gpointer user_data);
 static void folder_refresh_cb (TnyFolder *folder, gboolean cancelled, 
 			       gpointer user_data);
+static void add_attachments (TnyMsg *msg, const GList *attachments_list);
+static TnyMimePart * add_body_part (TnyMsg *msg, const gchar *body,
+				    const gchar *content_type, gboolean has_attachments);
 
 /* list my signals  */
 enum {
@@ -209,18 +212,14 @@ modest_mail_operation_send_new_mail (ModestMailOperation *mail_operation,
 				     const GList *attachments_list)
 {
 	TnyMsg *new_msg;
-	TnyHeader *headers;
-	TnyStream *text_body_stream, *attachment_stream;
+	TnyHeader *header;
 	TnyTransportAccount *transport_account;
 	ModestMailOperationPrivate *priv;
-	ModestTnyAttachment *attachment;
-	GList *pos;
 	gchar *content_type;
-	const gchar *attachment_content_type;
-	const gchar *attachment_filename;
 
 	g_return_if_fail (mail_operation);
 
+	/* Check parametters */
 	if (to == NULL) {
 		set_error (mail_operation,
 			   MODEST_MAIL_OPERATION_ERROR_MISSING_PARAMETER,
@@ -237,72 +236,35 @@ modest_mail_operation_send_new_mail (ModestMailOperation *mail_operation,
 		return;
 	}
 
+	/* Create new msg */
 	transport_account = TNY_TRANSPORT_ACCOUNT (priv->account);
 
 	new_msg          = TNY_MSG (tny_camel_msg_new ());
-	headers          = TNY_HEADER (tny_camel_header_new ());
-	text_body_stream = TNY_STREAM (tny_camel_stream_new
-				       (camel_stream_mem_new_with_buffer
-					(body, strlen(body))));
+	header           = TNY_HEADER (tny_camel_header_new ());
 
 	/* IMPORTANT: set the header before assign values to it */
-	tny_msg_set_header (new_msg, headers);
-	tny_header_set_from (TNY_HEADER (headers), from);
-	tny_header_set_to (TNY_HEADER (headers), to);
-	tny_header_set_cc (TNY_HEADER (headers), cc);
-	tny_header_set_bcc (TNY_HEADER (headers), bcc);
-	tny_header_set_subject (TNY_HEADER (headers), subject);
+	tny_msg_set_header (new_msg, header);
+	tny_header_set_from (TNY_HEADER (header), from);
+	tny_header_set_to (TNY_HEADER (header), to);
+	tny_header_set_cc (TNY_HEADER (header), cc);
+	tny_header_set_bcc (TNY_HEADER (header), bcc);
+	tny_header_set_subject (TNY_HEADER (header), subject);
 
 	content_type = get_content_type(body);
-	
-	if (attachments_list == NULL) {
-		tny_stream_reset (text_body_stream);
-		tny_mime_part_construct_from_stream (TNY_MIME_PART(new_msg),
-						     text_body_stream, content_type);
-		tny_stream_reset (text_body_stream);
-	} else {
-		TnyMimePart *text_body_part;
 
-		text_body_part = 
-			TNY_MIME_PART (tny_camel_mime_part_new (camel_mime_part_new()));
-		tny_stream_reset (text_body_stream);
-		tny_mime_part_construct_from_stream (text_body_part,
-						     text_body_stream,
-						     content_type);
-		tny_stream_reset (text_body_stream);
-		tny_msg_add_part (new_msg, text_body_part);
-		g_object_unref (G_OBJECT(text_body_part));
-	}
+	/* Add the body of the new mail */	
+	add_body_part (new_msg, body, (const gchar *) content_type,
+		       (attachments_list == NULL) ? FALSE : TRUE);
 
-	for (pos = (GList *)attachments_list;
-	     pos;
-	     pos = pos->next) {
-		TnyMimePart *attachment_part;
+	/* Add attachments */
+	add_attachments (new_msg, attachments_list);
 
-		attachment = pos->data;
-		attachment_filename = modest_tny_attachment_get_name (attachment);
-		attachment_stream = modest_tny_attachment_get_stream (attachment);
-		attachment_part = TNY_MIME_PART (tny_camel_mime_part_new (camel_mime_part_new()));
-		
-		attachment_content_type = modest_tny_attachment_get_mime_type (attachment);
-				 
-		tny_mime_part_construct_from_stream (attachment_part,
-						     attachment_stream,
-						     attachment_content_type);
-		tny_stream_reset (attachment_stream);
-		
-		tny_mime_part_set_filename (attachment_part, attachment_filename);
-		
-		tny_msg_add_part (new_msg, attachment_part);
-		g_object_unref(G_OBJECT(attachment_part));
-	}
-	
+	/* Send mail */	
 	tny_transport_account_send (transport_account, new_msg);
 
 	/* Clean */
-	g_object_unref (G_OBJECT(text_body_stream));
-	g_object_unref (G_OBJECT(headers));
-	g_object_unref (G_OBJECT(new_msg));
+	g_object_unref (header);
+	g_object_unref (new_msg);
 	g_free(content_type);
 }
 
@@ -323,9 +285,11 @@ modest_mail_operation_create_forward_mail (TnyMsg *msg,
 	TnyHeader *new_header, *header;
 	TnyStream *attachment_stream;
 	gchar *new_subject, *new_body, *content_type, *quoted;
-	TnyList *parts;
 	TnyMimePart *text_body_part = NULL;
-	TnyStream *text_body_stream = NULL;
+	GList *attachments_list;
+	TnyList *parts;
+	TnyIterator *iter;
+
 
 	/* Create new objects */
 	new_msg          = TNY_MSG (tny_camel_msg_new ());
@@ -336,7 +300,7 @@ modest_mail_operation_create_forward_mail (TnyMsg *msg,
 	/* Fill the header */
 	tny_msg_set_header (new_msg, new_header);
 	/* FIXME: set it from default account, current account ... */
-	tny_header_set_from (new_header, "<me@home.org>");
+	tny_header_set_from (new_header, "<svsdrozo@terra.es>");
 
 	/* Change the subject */
 	new_subject = (gchar *) modest_text_utils_create_forward_subject (tny_header_get_subject(header));
@@ -350,6 +314,25 @@ modest_mail_operation_create_forward_mail (TnyMsg *msg,
 		return NULL;
 	}
 	content_type = get_content_type(new_body);
+
+	/* Create the list of attachments */
+	parts = TNY_LIST (tny_simple_list_new());
+	tny_msg_get_parts (msg, parts);
+	iter = tny_list_create_iterator (parts);
+	attachments_list = NULL;
+
+	while (!tny_iterator_is_done(iter)) {
+		TnyMimePart *part;
+
+		part = TNY_MIME_PART (tny_iterator_get_current (iter));
+		if (tny_mime_part_is_attachment (part))
+			attachments_list = g_list_prepend (attachments_list, part);
+
+		tny_iterator_next (iter);
+	}
+
+	/* Add attachments */
+	add_attachments (new_msg, attachments_list);
 
 	switch (forward_type) {
 		TnyMimePart *attachment_part;
@@ -366,46 +349,26 @@ modest_mail_operation_create_forward_mail (TnyMsg *msg,
 		g_free (new_body);
 		new_body = inlined_text;
 
-		/* Create the body */
-		text_body_stream = TNY_STREAM (tny_camel_stream_new
-					       (camel_stream_mem_new_with_buffer
-						(new_body, strlen(new_body))));
+		/* Add body part */
+		add_body_part (new_msg, new_body, 
+			       (const gchar *) content_type, 
+			       (tny_list_get_length (parts) > 0) ? TRUE : FALSE);
 
-		text_body_part = 
-			TNY_MIME_PART (tny_camel_mime_part_new (camel_mime_part_new()));
-		tny_stream_reset (text_body_stream);
-		tny_mime_part_construct_from_stream (text_body_part,
-						     text_body_stream,
-						     content_type);
-		tny_stream_reset (text_body_stream);
-		
-		/* Add body part to msg */
-		tny_msg_add_part (new_msg, text_body_part);
 		break;
 	case MODEST_MAIL_OPERATION_FORWARD_TYPE_ATTACHMENT:
-		attachment_part = TNY_MIME_PART (tny_camel_mime_part_new (camel_mime_part_new()));
+		attachment_part = add_body_part (new_msg, new_body, 
+						 (const gchar *) content_type, TRUE);
 
-		text_body_stream = TNY_STREAM (tny_camel_stream_new
-					       (camel_stream_mem_new_with_buffer
-						(new_body, strlen(new_body))));
-
-		tny_mime_part_construct_from_stream (attachment_part,
-						     text_body_stream,
-						     content_type);
-		tny_stream_reset (attachment_stream);
-		
 		/* Set the subject as the name of the attachment */
 		tny_mime_part_set_filename (attachment_part, tny_header_get_subject (header));
 		
-		tny_msg_add_part (new_msg, attachment_part);
-		g_object_unref (G_OBJECT (attachment_part));
 		break;
 	}
-	/* TODO: attachments? */
 
 	/* Clean */
-	if (text_body_part) g_object_unref (G_OBJECT(text_body_part));
-	if (text_body_stream) g_object_unref (G_OBJECT(text_body_stream));
+	g_object_unref (parts);
+	if (attachments_list) g_list_free (attachments_list);
+	if (text_body_part) g_object_unref (text_body_part);
 	g_free (content_type);
 	g_free (new_body);
 
@@ -433,7 +396,6 @@ modest_mail_operation_create_reply_mail (TnyMsg *msg,
 	gchar *new_subject, *new_body, *content_type, *quoted;
 	TnyList *parts;
 	TnyMimePart *text_body_part;
-	TnyStream *text_body_stream;
 	gchar *my_email = NULL;
 
 	/* Create new objects */
@@ -453,7 +415,7 @@ modest_mail_operation_create_reply_mail (TnyMsg *msg,
 /* 						       FALSE, */
 /* 						       NULL); */
 /* 	tny_header_set_from (new_header, email); */
-	my_email = g_strdup ("svillarsenin@terra.es");
+	my_email = g_strdup ("svsdrozo@terra.es");
 
 	switch (reply_mode) {
 		gchar *new_cc = NULL;
@@ -476,8 +438,9 @@ modest_mail_operation_create_reply_mail (TnyMsg *msg,
 		if (bcc) g_string_append_printf (tmp, ",%s",bcc);
 
 		/* Remove my own address from the cc list */
-		new_cc = modest_text_utils_remove_mail_from_mail_list ((const gchar *) tmp->str, 
-								       (const gchar *) my_email);
+		new_cc = (gchar *) 
+			modest_text_utils_remove_mail_from_mail_list ((const gchar *) tmp->str, 
+								      (const gchar *) my_email);
 		/* FIXME: remove also the mails from the new To: */
 		tny_header_set_cc (new_header, new_cc);
 
@@ -522,27 +485,12 @@ modest_mail_operation_create_reply_mail (TnyMsg *msg,
 		new_body = quoted;
 		break;
 	}
-	/* Create the MIME part for the body */
-	text_body_stream = TNY_STREAM (tny_camel_stream_new
-				       (camel_stream_mem_new_with_buffer
-					(new_body, strlen(new_body))));
-
-	text_body_part = 
-		TNY_MIME_PART (tny_camel_mime_part_new (camel_mime_part_new()));
-	tny_stream_reset (text_body_stream);
-	tny_mime_part_construct_from_stream (text_body_part,
-					     text_body_stream,
-					     content_type);
-	tny_stream_reset (text_body_stream);
-
-	/* Add body part to msg */
-	tny_msg_add_part (new_msg, text_body_part);
-
-	/* TODO: attachments? */
+	/* Add body part */
+	text_body_part = add_body_part (new_msg, new_body, 
+					(const gchar *) content_type, TRUE);
 
 	/* Clean */
 	g_object_unref (G_OBJECT(text_body_part));
-	g_object_unref (G_OBJECT(text_body_stream));
 	g_free (content_type);
 	g_free (new_body);
 
@@ -582,7 +530,8 @@ modest_mail_operation_update_account (ModestMailOperation *mail_operation)
 	g_object_unref (query);
 	
 	ifolders = tny_list_create_iterator (folders);
-	
+
+	/* Async refresh folders */	
 	for (tny_iterator_first (ifolders); 
 	     !tny_iterator_is_done (ifolders); 
 	     tny_iterator_next (ifolders)) {
@@ -711,4 +660,74 @@ folder_refresh_cb (TnyFolder *folder, gboolean cancelled, gpointer user_data)
 
 		priv->status = 	MODEST_MAIL_OPERATION_STATUS_CANCELLED;
 	}
+}
+
+static void
+add_attachments (TnyMsg *msg, const GList *attachments_list)
+{
+	GList *pos;
+	TnyMimePart *attachment_part, *old_attachment;
+	const gchar *attachment_content_type;
+	const gchar *attachment_filename;
+	TnyStream *attachment_stream;
+
+	for (pos = (GList *)attachments_list; pos; pos = pos->next) {
+
+		old_attachment = pos->data;
+		attachment_filename = tny_mime_part_get_filename (old_attachment);
+		attachment_stream = tny_mime_part_get_stream (old_attachment);
+		attachment_part = TNY_MIME_PART (tny_camel_mime_part_new (camel_mime_part_new()));
+		
+		attachment_content_type = tny_mime_part_get_content_type (old_attachment);
+				 
+		tny_mime_part_construct_from_stream (attachment_part,
+						     attachment_stream,
+						     attachment_content_type);
+		tny_stream_reset (attachment_stream);
+		
+		tny_mime_part_set_filename (attachment_part, attachment_filename);
+		
+		tny_msg_add_part (msg, attachment_part);
+		g_object_unref(G_OBJECT(attachment_part));
+	}
+}
+
+static TnyMimePart *
+add_body_part (TnyMsg *msg, 
+	       const gchar *body,
+	       const gchar *content_type,
+	       gboolean has_attachments)
+{
+	TnyMimePart *text_body_part = NULL;
+	TnyStream *text_body_stream;
+
+	/* Create the stream */
+	text_body_stream = TNY_STREAM (tny_camel_stream_new
+				       (camel_stream_mem_new_with_buffer
+					(body, strlen(body))));
+
+	/* Create body part if needed */
+	if (has_attachments)
+		text_body_part = 
+			TNY_MIME_PART (tny_camel_mime_part_new (camel_mime_part_new()));
+	else
+		text_body_part = TNY_MIME_PART(msg);
+
+	/* Construct MIME part */
+	tny_stream_reset (text_body_stream);
+	tny_mime_part_construct_from_stream (text_body_part,
+					     text_body_stream,
+					     content_type);
+	tny_stream_reset (text_body_stream);
+
+	/* Add part if needed */
+	if (has_attachments) {
+		tny_msg_add_part (msg, text_body_part);
+		g_object_unref (G_OBJECT(text_body_part));
+	}
+
+	/* Clean */
+	g_object_unref (text_body_stream);
+
+	return text_body_part;
 }
