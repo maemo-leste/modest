@@ -803,7 +803,6 @@ modest_account_mgr_account_exists (ModestAccountMgr * self, const gchar * name,
 	return retval;
 }
 
-
 /* must be freed by caller */
 static gchar *
 get_account_keyname (const gchar * accname, const gchar * name, gboolean server_account)

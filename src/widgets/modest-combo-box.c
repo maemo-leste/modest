@@ -27,7 +27,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
+#include <gtk/gtkcelllayout.h>
+#include <gtk/gtkcellrenderertext.h>
 #include "modest-combo-box.h"
 
 /* 'private'/'protected' functions */
@@ -79,7 +80,7 @@ modest_combo_box_get_type (void)
 			(GInstanceInitFunc) modest_combo_box_init,
 			NULL
 		};
-		my_type = g_type_register_static (G_TYPE_OBJECT,
+		my_type = g_type_register_static (GTK_TYPE_COMBO_BOX,
 		                                  "ModestComboBox",
 		                                  &my_info, 0);
 	}
@@ -175,27 +176,45 @@ modest_combo_box_new (const GSList *pairs)
 
 
 
+static void
+get_active (ModestComboBox *self, GValue *val, gint column)
+{
+	GtkTreeIter iter;
+	
+	g_return_if_fail (self);
+
+	if (gtk_combo_box_get_active_iter (GTK_COMBO_BOX(self), &iter)) {
+		GtkTreeModel *model;
+		
+		model = gtk_combo_box_get_model (GTK_COMBO_BOX(self));
+		gtk_tree_model_get_value (model, &iter, column, val);
+	}
+}
+
 gpointer
 modest_combo_box_get_active_id (ModestComboBox *self)
 {
-	GtkTreeIter iter;
-	gpointer retval;
-	
 	g_return_val_if_fail (self, NULL);
+	GValue val = {0,};
+	gpointer retval;
 
-	if (!gtk_combo_box_get_active_iter (GTK_COMBO_BOX(self), &iter))
-		retval = NULL; /* nothing found */
-	else {
-		GtkTreeModel *model;
-		GValue val;
-		
-		model = gtk_combo_box_get_model (GTK_COMBO_BOX(self));
+	/* Do not unset the GValue */
+	get_active (self, &val, COLUMN_ID);
+	retval = g_value_peek_pointer (&val);
 
-		g_value_init (&val, G_TYPE_POINTER);
-		gtk_tree_model_get_value (model, &iter, COLUMN_ID, &val);
+	return retval;
+}
 
-		retval = g_value_get_pointer (&val);
-		g_value_unset (&val);
-	}
+gpointer
+modest_combo_box_get_active_display_name (ModestComboBox *self)
+{
+	g_return_val_if_fail (self, NULL);
+	GValue val = {0,};
+	gpointer retval;
+
+	/* Do not unset the GValue */
+	get_active (self, &val, COLUMN_DISPLAY_NAME);
+	retval = g_value_peek_pointer (&val);
+
 	return retval;
 }

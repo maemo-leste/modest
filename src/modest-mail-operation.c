@@ -36,6 +36,7 @@
 #include <tny-folder-store.h>
 #include <tny-folder-store-query.h>
 #include <glib/gi18n.h>
+#include "modest-tny-platform-factory.h"
 
 /* 'private'/'protected' functions */
 static void modest_mail_operation_class_init (ModestMailOperationClass *klass);
@@ -52,16 +53,25 @@ enum _ModestMailOperationErrorCode {
 	MODEST_MAIL_OPERATION_NUM_ERROR_CODES
 };
 
-static void set_error (ModestMailOperation *mail_operation, 
-		       ModestMailOperationErrorCode error_code,
-		       const gchar *fmt, ...);
-static void status_update_cb (TnyFolder *folder, const gchar *what, 
-			      gint status, gpointer user_data);
-static void folder_refresh_cb (TnyFolder *folder, gboolean cancelled, 
-			       gpointer user_data);
-static void add_attachments (TnyMsg *msg, const GList *attachments_list);
-static TnyMimePart * add_body_part (TnyMsg *msg, const gchar *body,
-				    const gchar *content_type, gboolean has_attachments);
+static void       set_error          (ModestMailOperation *mail_operation, 
+				      ModestMailOperationErrorCode error_code,
+				      const gchar *fmt, ...);
+static void       status_update_cb   (TnyFolder *folder, 
+				      const gchar *what, 
+				      gint status, 
+				      gpointer user_data);
+static void       folder_refresh_cb  (TnyFolder *folder, 
+				      gboolean cancelled, 
+				      gpointer user_data);
+static void       add_attachments    (TnyMsg *msg, 
+				      const GList *attachments_list);
+
+
+static TnyMimePart *         add_body_part    (TnyMsg *msg, 
+					       const gchar *body,
+					       const gchar *content_type, 
+					       gboolean has_attachments);
+
 
 /* list my signals  */
 enum {
@@ -157,7 +167,7 @@ modest_mail_operation_finalize (GObject *obj)
 		priv->account = NULL;
 	}
 	if (priv->error) {
-		g_object_unref (priv->error);
+		g_error_free (priv->error);
 		priv->error = NULL;
 	}
 
@@ -242,7 +252,7 @@ modest_mail_operation_send_new_mail (ModestMailOperation *mail_operation,
 	new_msg          = TNY_MSG (tny_camel_msg_new ());
 	header           = TNY_HEADER (tny_camel_header_new ());
 
-	/* IMPORTANT: set the header before assign values to it */
+	/* WARNING: set the header before assign values to it */
 	tny_msg_set_header (new_msg, header);
 	tny_header_set_from (TNY_HEADER (header), from);
 	tny_header_set_to (TNY_HEADER (header), to);
@@ -279,6 +289,7 @@ modest_mail_operation_send_new_mail (ModestMailOperation *mail_operation,
  **/
 TnyMsg* 
 modest_mail_operation_create_forward_mail (TnyMsg *msg, 
+					   const gchar *from,
 					   ModestMailOperationForwardType forward_type)
 {
 	TnyMsg *new_msg;
@@ -290,7 +301,6 @@ modest_mail_operation_create_forward_mail (TnyMsg *msg,
 	TnyList *parts;
 	TnyIterator *iter;
 
-
 	/* Create new objects */
 	new_msg          = TNY_MSG (tny_camel_msg_new ());
 	new_header       = TNY_HEADER (tny_camel_header_new ());
@@ -299,8 +309,7 @@ modest_mail_operation_create_forward_mail (TnyMsg *msg,
 
 	/* Fill the header */
 	tny_msg_set_header (new_msg, new_header);
-	/* FIXME: set it from default account, current account ... */
-	tny_header_set_from (new_header, "<svsdrozo@terra.es>");
+	tny_header_set_from (new_header, from);
 
 	/* Change the subject */
 	new_subject = (gchar *) modest_text_utils_create_forward_subject (tny_header_get_subject(header));
@@ -317,7 +326,7 @@ modest_mail_operation_create_forward_mail (TnyMsg *msg,
 
 	/* Create the list of attachments */
 	parts = TNY_LIST (tny_simple_list_new());
-	tny_msg_get_parts (msg, parts);
+	tny_mime_part_get_parts (TNY_MIME_PART (msg), parts);
 	iter = tny_list_create_iterator (parts);
 	attachments_list = NULL;
 
@@ -366,9 +375,9 @@ modest_mail_operation_create_forward_mail (TnyMsg *msg,
 	}
 
 	/* Clean */
-	g_object_unref (parts);
 	if (attachments_list) g_list_free (attachments_list);
-	if (text_body_part) g_object_unref (text_body_part);
+	g_object_unref (parts);
+	if (text_body_part) g_free (text_body_part);
 	g_free (content_type);
 	g_free (new_body);
 
@@ -387,6 +396,7 @@ modest_mail_operation_create_forward_mail (TnyMsg *msg,
  **/
 TnyMsg* 
 modest_mail_operation_create_reply_mail (TnyMsg *msg, 
+					 const gchar *from,
 					 ModestMailOperationReplyType reply_type,
 					 ModestMailOperationReplyMode reply_mode)
 {
@@ -396,26 +406,16 @@ modest_mail_operation_create_reply_mail (TnyMsg *msg,
 	gchar *new_subject, *new_body, *content_type, *quoted;
 	TnyList *parts;
 	TnyMimePart *text_body_part;
-	gchar *my_email = NULL;
 
 	/* Create new objects */
 	new_msg          = TNY_MSG (tny_camel_msg_new ());
 	new_header       = TNY_HEADER (tny_camel_header_new ());
-
-	header = tny_msg_get_header (msg);
+	header           = tny_msg_get_header (msg);
 
 	/* Fill the header */
 	tny_msg_set_header (new_msg, new_header);
 	tny_header_set_to (new_header, tny_header_get_from (header));
-	/* TODO: set "From:" from my current account */
-/* 	current_account = modest_account_mgr_get_current_account (account_mgr); */
-/* 		my_email = modest_account_mgr_get_string (account_mgr, */
-/* 						       current_account, */
-/* 						       MODEST_ACCOUNT_EMAIL, */
-/* 						       FALSE, */
-/* 						       NULL); */
-/* 	tny_header_set_from (new_header, email); */
-	my_email = g_strdup ("svsdrozo@terra.es");
+	tny_header_set_from (new_header, from);
 
 	switch (reply_mode) {
 		gchar *new_cc = NULL;
@@ -440,7 +440,7 @@ modest_mail_operation_create_reply_mail (TnyMsg *msg,
 		/* Remove my own address from the cc list */
 		new_cc = (gchar *) 
 			modest_text_utils_remove_mail_from_mail_list ((const gchar *) tmp->str, 
-								      (const gchar *) my_email);
+								      (const gchar *) from);
 		/* FIXME: remove also the mails from the new To: */
 		tny_header_set_cc (new_header, new_cc);
 
@@ -449,7 +449,6 @@ modest_mail_operation_create_reply_mail (TnyMsg *msg,
 		g_free (new_cc);
 		break;
 	}
-	g_free (my_email);
 
 	/* Change the subject */
 	new_subject = (gchar*) modest_text_utils_create_reply_subject (tny_header_get_subject(header));
@@ -490,7 +489,7 @@ modest_mail_operation_create_reply_mail (TnyMsg *msg,
 					(const gchar *) content_type, TRUE);
 
 	/* Clean */
-	g_object_unref (G_OBJECT(text_body_part));
+/* 	g_free (text_body_part); */
 	g_free (content_type);
 	g_free (new_body);
 
@@ -526,7 +525,7 @@ modest_mail_operation_update_account (ModestMailOperation *mail_operation)
 	query = tny_folder_store_query_new ();
 	tny_folder_store_query_add_item (query, NULL, TNY_FOLDER_STORE_QUERY_OPTION_SUBSCRIBED);
 	tny_folder_store_get_folders (TNY_FOLDER_STORE (storage_account),
-				      folders, NULL);
+				      folders, query);
 	g_object_unref (query);
 	
 	ifolders = tny_list_create_iterator (folders);
@@ -687,8 +686,8 @@ add_attachments (TnyMsg *msg, const GList *attachments_list)
 		
 		tny_mime_part_set_filename (attachment_part, attachment_filename);
 		
-		tny_msg_add_part (msg, attachment_part);
-		g_object_unref(G_OBJECT(attachment_part));
+		tny_mime_part_add_part (TNY_MIME_PART (msg), attachment_part);
+/* 		g_object_unref (attachment_part); */
 	}
 }
 
@@ -722,7 +721,7 @@ add_body_part (TnyMsg *msg,
 
 	/* Add part if needed */
 	if (has_attachments) {
-		tny_msg_add_part (msg, text_body_part);
+		tny_mime_part_add_part (TNY_MIME_PART (msg), text_body_part);
 		g_object_unref (G_OBJECT(text_body_part));
 	}
 

@@ -38,6 +38,7 @@
 #include <tny-camel-transport-account.h>
 #include <tny-camel-store-account.h>
 #include <modest-marshal.h>
+#include <glib/gi18n.h>
 #include "modest-account-mgr.h"
 #include "modest-tny-account-store.h"
 #include "modest-tny-platform-factory.h"
@@ -226,24 +227,17 @@ get_password (TnyAccount *account, const gchar *prompt, gboolean *cancel)
         priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
 
 	/* is it in the hash? if it's already there, it must be wrong... */
-//	already_asked = g_hash_table_lookup (priv->password_hash, key) != NULL;
-/* 	if (already_asked) */
-/* 		g_warning ("password already asked for or in config (%s)", */
-/* 			   key); */
-/* 	else */
-/* 		g_warning ("password not yet asked for or in config (%s)", */
-/* 			   key); */
+	already_asked = g_hash_table_lookup (priv->password_hash, key) != NULL;
 
 	/* if the password is not already there, try ModestConf */
-//	if (!already_asked) 
+/* 	if (!already_asked)  */
 		pwd  = modest_account_mgr_get_string (priv->account_mgr,
 						      key, MODEST_ACCOUNT_PASSWORD,
 						      TRUE, NULL);
 
-	/* if it was already asked, it must have been wrong, so ask again */
-/* 	if (!already_asked ||  !pwd || strlen(pwd) == 0) { */
-/* 		g_warning ("emit signal to get pass for %s", key); */
-		
+/* 	/\* if it was already asked, it must have been wrong, so ask again *\/ */
+/* 	if (!already_asked || !pwd || strlen(pwd) == 0) { */
+
 /* 		/\* we don't have it yet. we emit a signal to get the password somewhere *\/ */
 /* 		const gchar* name = tny_account_get_name (account); */
 /* 		*cancel = TRUE; */
@@ -257,7 +251,7 @@ get_password (TnyAccount *account, const gchar *prompt, gboolean *cancel)
 /* 	} else */
 /* 		*cancel = FALSE; */
 
-//	g_hash_table_insert (priv->password_hash, (gpointer)key, (gpointer)pwd);
+/* 	g_hash_table_insert (priv->password_hash, key, pwd); */
 	
 	return pwd; 
 }

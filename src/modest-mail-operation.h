@@ -53,12 +53,12 @@ typedef enum _ModestMailOperationReplyMode   ModestMailOperationReplyMode;
 typedef enum _ModestMailOperationStatus      ModestMailOperationStatus;
 
 enum _ModestMailOperationForwardType {
-	MODEST_MAIL_OPERATION_FORWARD_TYPE_INLINE,
+	MODEST_MAIL_OPERATION_FORWARD_TYPE_INLINE = 1,
 	MODEST_MAIL_OPERATION_FORWARD_TYPE_ATTACHMENT
 };
 
 enum _ModestMailOperationReplyType {
-	MODEST_MAIL_OPERATION_REPLY_TYPE_CITE,
+	MODEST_MAIL_OPERATION_REPLY_TYPE_CITE = 1,
 	MODEST_MAIL_OPERATION_REPLY_TYPE_QUOTE
 };
 
@@ -107,9 +107,11 @@ void                    modest_mail_operation_send_new_mail (ModestMailOperation
 							     const GList *attachments_list);
 
 TnyMsg* modest_mail_operation_create_forward_mail (TnyMsg *msg, 
+						   const gchar *from,
 						   ModestMailOperationForwardType forward_type);
 
 TnyMsg* modest_mail_operation_create_reply_mail (TnyMsg *msg, 
+						 const gchar *from,
 						 ModestMailOperationReplyType reply_type,
 						 ModestMailOperationReplyMode reply_mode);
 

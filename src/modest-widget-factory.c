@@ -28,13 +28,15 @@
  */
 
 #include <glib/gi18n.h>
+#include <gdk/gdkkeysyms.h>
 #include "modest-widget-factory.h"
 #include <modest-protocol-mgr.h>
 #include <tny-account-store.h>
 #include <tny-device.h>
 #include "modest-tny-platform-factory.h"
 #include "modest-account-mgr.h"
-
+/* Test: REMOVE */
+#include <tny-folder-store.h>
 /* 'private'/'protected' functions */
 static void modest_widget_factory_class_init    (ModestWidgetFactoryClass *klass);
 static void modest_widget_factory_init          (ModestWidgetFactory *obj);
@@ -45,6 +47,9 @@ static void modest_widget_factory_finalize      (GObject *obj);
 static void on_folder_selected         (ModestFolderView *folder_view,
 					TnyFolder *folder,
 					ModestWidgetFactory *self);
+static void on_folder_key_press_event  (ModestFolderView *header_view, 
+				        GdkEventKey *event, 
+				        gpointer user_data);
 static void on_message_selected        (ModestHeaderView *header_view, TnyMsg *msg,
 					ModestWidgetFactory *self);
 static void on_header_status_update    (ModestHeaderView *header_view, const gchar *msg,
@@ -181,6 +186,8 @@ init_signals (ModestWidgetFactory *self)
 	/* folder view */
 	g_signal_connect (G_OBJECT(priv->folder_view), "folder_selected",
 			  G_CALLBACK(on_folder_selected), self);
+	g_signal_connect (G_OBJECT(priv->folder_view), "key-press-event",
+			  G_CALLBACK(on_folder_key_press_event), self);
 
 	/* header view */
 	g_signal_connect (G_OBJECT(priv->header_view), "status_update",
@@ -222,15 +229,20 @@ static gboolean
 init_widgets (ModestWidgetFactory *self)
 {
 	ModestWidgetFactoryPrivate *priv;
+	TnyFolderStoreQuery *query;
 
 	priv = MODEST_WIDGET_FACTORY_GET_PRIVATE(self);
 
 	/* folder view */
+	query = tny_folder_store_query_new ();
+	tny_folder_store_query_add_item (query, NULL, TNY_FOLDER_STORE_QUERY_OPTION_SUBSCRIBED);
 	if (!(priv->folder_view =
-	      MODEST_FOLDER_VIEW(modest_folder_view_new (MODEST_TNY_ACCOUNT_STORE (priv->account_store))))) {
+	      MODEST_FOLDER_VIEW(modest_folder_view_new (MODEST_TNY_ACCOUNT_STORE (priv->account_store),
+							 query)))) {
 		g_printerr ("modest: cannot instantiate folder view\n");
 		return FALSE;
 	}
+	g_object_unref (G_OBJECT (query));
 
 	/* header view */
 	if (!(priv->header_view =
@@ -267,7 +279,6 @@ modest_widget_factory_new (void)
 {
 	GObject *obj;
 	ModestWidgetFactoryPrivate *priv;
-	ModestAccountMgr *account_mgr;
 
 	obj  = g_object_new (MODEST_TYPE_WIDGET_FACTORY, NULL);	
 	priv = MODEST_WIDGET_FACTORY_GET_PRIVATE(obj);
@@ -362,8 +373,8 @@ get_transports (ModestWidgetFactory *self)
 		data = modest_account_mgr_get_account_data (account_mgr, account_name);
 		if (data && data->transport_account) {
 			gchar *display_name = g_strdup_printf ("%s (%s)", data->email, account_name);
-			ModestPair *pair = modest_pair_new ((gpointer)account_name,
-							    (gpointer)display_name , TRUE);
+			ModestPair *pair = modest_pair_new ((gpointer) data,
+							    (gpointer) display_name , TRUE);
 			transports = g_slist_append (transports, pair);
 		}
 		/* don't free account name; it's freed when the transports list is freed */
@@ -475,7 +486,7 @@ on_folder_selected (ModestFolderView *folder_view, TnyFolder *folder,
 		guint num, unread;
 		
 		num    = tny_folder_get_all_count    (folder);
-		unread = tny_folder_get_unread_count (folder); 
+		unread = tny_folder_get_unread_count (folder);
 
 		txt = g_strdup_printf (_("%d %s, %d unread"),
 				       num, num==1 ? _("item") : _("items"), unread);
@@ -483,9 +494,39 @@ on_folder_selected (ModestFolderView *folder_view, TnyFolder *folder,
 		gtk_label_set_label (GTK_LABEL(priv->folder_info_label), txt);
 		g_free (txt);
 	} else
-		gtk_label_set_label (GTK_LABEL(priv->folder_info_label), "");	
+		gtk_label_set_label (GTK_LABEL(priv->folder_info_label), "");
 }
 
+/*********************** Test code ********************/
+static void
+on_folder_key_press_event (ModestFolderView *folder_view, GdkEventKey *event, gpointer user_data)
+{
+	if (event->keyval == GDK_C || event->keyval == GDK_c) {
+		GtkTreeSelection *selection;
+		GtkTreeModel *model;
+		GtkTreeIter iter;
+		const gchar *name;
+		TnyFolderStore *folder;
+		gint type;
+
+		selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (folder_view));
+		gtk_tree_selection_get_selected (selection, &model, &iter);
+
+		gtk_tree_model_get (model, &iter, 
+				    TNY_GTK_ACCOUNT_TREE_MODEL_TYPE_COLUMN, &type, 
+				    TNY_GTK_ACCOUNT_TREE_MODEL_INSTANCE_COLUMN, &folder, 
+				    -1);
+
+		if (type == TNY_FOLDER_TYPE_ROOT) {
+			name = tny_account_get_name (TNY_ACCOUNT (folder));
+		} else {
+			name = tny_folder_get_name (TNY_FOLDER (folder));
+			modest_tny_store_actions_create_folder (TNY_FOLDER_STORE (folder),
+								"New");
+		}
+	}
+}
+/****************************************************/
 
 static void
 on_message_selected (ModestHeaderView *folder_view, TnyMsg *msg,
@@ -689,7 +730,7 @@ on_password_requested (ModestTnyAccountStore *account_store, const gchar* accoun
 		       gchar **password, gboolean *cancel, ModestWidgetFactory *self)
 {
 	gchar *txt;
-	GtkWidget *dialog, *entry;
+	GtkWidget *dialog, *entry, *remember_pass_check;
 	
 	dialog = gtk_dialog_new_with_buttons (_("Password requested"),
 					      NULL,
@@ -703,7 +744,7 @@ on_password_requested (ModestTnyAccountStore *account_store, const gchar* accoun
 	txt = g_strdup_printf (_("Please enter your password for %s"), account_name);
 	gtk_box_pack_start (GTK_BOX(GTK_DIALOG(dialog)->vbox), gtk_label_new(txt),
 			    FALSE, FALSE, 0);
-	g_free (txt);	
+	g_free (txt);
 
 	entry = gtk_entry_new_with_max_length (40);
 	gtk_entry_set_visibility (GTK_ENTRY(entry), FALSE);
@@ -711,7 +752,11 @@ on_password_requested (ModestTnyAccountStore *account_store, const gchar* accoun
 	
 	gtk_box_pack_start (GTK_BOX(GTK_DIALOG(dialog)->vbox), entry,
 			    TRUE, FALSE, 0);	
-	
+
+	remember_pass_check = gtk_check_button_new_with_label (_("Remember password"));
+	gtk_box_pack_start (GTK_BOX(GTK_DIALOG(dialog)->vbox), remember_pass_check,
+			    TRUE, FALSE, 0);
+
 	gtk_widget_show_all (GTK_WIDGET(GTK_DIALOG(dialog)->vbox));
 	
 	if (gtk_dialog_run (GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
@@ -720,7 +765,7 @@ on_password_requested (ModestTnyAccountStore *account_store, const gchar* accoun
 	} else {
 		*password = NULL;
 		*cancel   = TRUE;
-	}	
+	}
 	gtk_widget_destroy (dialog);
 }
 

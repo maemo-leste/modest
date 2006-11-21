@@ -57,12 +57,11 @@ struct _ModestFolderViewClass {
 
 	/* emitted when a folder is clicked */
 	void (*folder_selected) (ModestFolderView* self,
-				 TnyFolderIface *folder,
+				 TnyFolder *folder,
 				 gpointer user_data);
 				 
 	gboolean (*update_model) (ModestFolderView *self, 
-	                          TnyAccountStoreIface *iface);
-
+	                          TnyAccountStore *account_store);
 };
 
 
@@ -84,7 +83,8 @@ GType        modest_folder_view_get_type    (void) G_GNUC_CONST;
  *  
  * Returns: a new GtkWidget (a GtkTreeView-subclass)
  */
-GtkWidget* modest_folder_view_new         (ModestTnyAccountStore *account_store);
+GtkWidget* modest_folder_view_new         (ModestTnyAccountStore *account_store,
+					   TnyFolderStoreQuery *query);
 
 
 /**
@@ -99,7 +99,8 @@ GtkWidget* modest_folder_view_new         (ModestTnyAccountStore *account_store)
 gboolean     modest_folder_view_is_empty    (ModestFolderView *self);
 
 
+const gchar* modest_folder_view_get_selected_account (ModestFolderView *self);
+
 G_END_DECLS
 
 #endif /* __MODEST_FOLDER_VIEW_H__ */
-

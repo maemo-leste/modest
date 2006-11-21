@@ -46,12 +46,19 @@ static void modest_folder_view_class_init  (ModestFolderViewClass *klass);
 static void modest_folder_view_init        (ModestFolderView *obj);
 static void modest_folder_view_finalize    (GObject *obj);
 
-static gboolean update_model (ModestFolderView *self,
-			      ModestTnyAccountStore *account_store);
-static gboolean update_model_empty (ModestFolderView *self);
-static void on_selection_changed (GtkTreeSelection *sel, gpointer data);
-static gboolean modest_folder_view_update_model (ModestFolderView *self,
-						 TnyAccountStoreIface *account_store);
+static gboolean     update_model             (ModestFolderView *self,
+					      ModestTnyAccountStore *account_store);
+static gboolean     update_model_empty       (ModestFolderView *self);
+
+static void         on_selection_changed     (GtkTreeSelection *sel, gpointer data);
+static void         on_subscription_changed  (TnyStoreAccount *store_account, TnyFolder *folder,
+					      ModestFolderView *self);
+
+static gboolean     modest_folder_view_update_model     (ModestFolderView *self,
+							 TnyAccountStore *account_store);
+static const gchar *get_account_name_from_folder        (GtkTreeModel *model, GtkTreeIter iter);
+
+static void         modest_folder_view_disconnect_store_account_handlers (GtkTreeView *self);
 
 enum {
 	FOLDER_SELECTED_SIGNAL,
@@ -61,12 +68,16 @@ enum {
 typedef struct _ModestFolderViewPrivate ModestFolderViewPrivate;
 struct _ModestFolderViewPrivate {
 
-	TnyAccountStoreIface *account_store;
-	TnyFolder            *cur_folder;
+	TnyAccountStore     *account_store;
+	TnyFolder           *cur_folder;
 	gboolean             view_is_empty;
 
 	gulong               sig1, sig2;
-	GMutex               *lock;
+	gulong              *store_accounts_handlers;
+	GMutex              *lock;
+	GtkTreeSelection    *cur_selection;
+	TnyFolderStoreQuery *query;
+
 };
 #define MODEST_FOLDER_VIEW_GET_PRIVATE(o)			        \
 	(G_TYPE_INSTANCE_GET_PRIVATE((o),				\
@@ -282,11 +293,11 @@ modest_folder_view_init (ModestFolderView *obj)
 	
 	priv =	MODEST_FOLDER_VIEW_GET_PRIVATE(obj);
 	
-	priv->view_is_empty     = TRUE;
-	priv->account_store = NULL;
-	priv->cur_folder = NULL;
-
-	priv->lock = g_mutex_new ();
+	priv->view_is_empty  = TRUE;
+	priv->account_store  = NULL;
+	priv->cur_folder     = NULL;
+	priv->query          = NULL;
+	priv->lock           = g_mutex_new ();
 	
 	column = gtk_tree_view_column_new ();
 	gtk_tree_view_column_set_title (column,
@@ -313,7 +324,31 @@ modest_folder_view_init (ModestFolderView *obj)
 	gtk_tree_view_column_set_fixed_width (column, TRUE);		
 	gtk_tree_view_set_headers_visible   (GTK_TREE_VIEW(obj), TRUE);
 	gtk_tree_view_set_headers_clickable (GTK_TREE_VIEW(obj), FALSE);
+	gtk_tree_view_set_enable_search     (GTK_TREE_VIEW(obj), FALSE);
 
+}
+
+static void
+modest_folder_view_disconnect_store_account_handlers (GtkTreeView *self)
+{
+	TnyIterator *iter;
+	ModestFolderViewPrivate *priv;
+	GtkTreeModel *model;
+	GtkTreeModelSort *sortable;
+	gint i = 0;
+
+	sortable = GTK_TREE_MODEL_SORT (gtk_tree_view_get_model (self));
+	if (!sortable) return; 
+	model = gtk_tree_model_sort_get_model (sortable);
+	if (!model) return; 
+
+	priv =	MODEST_FOLDER_VIEW_GET_PRIVATE (self);	
+	iter = tny_list_create_iterator (TNY_LIST (model));
+	do {
+		g_signal_handler_disconnect (G_OBJECT (tny_iterator_get_current (iter)),
+					     priv->store_accounts_handlers [i++]);
+		tny_iterator_next (iter);
+	} while (!tny_iterator_is_done (iter));
 }
 
 
@@ -338,6 +373,17 @@ modest_folder_view_finalize (GObject *obj)
 		priv->lock = NULL;
 	}
 
+	if (priv->store_accounts_handlers) {
+		modest_folder_view_disconnect_store_account_handlers (GTK_TREE_VIEW (obj));
+		g_free (priv->store_accounts_handlers);
+		priv->store_accounts_handlers = NULL;
+	}
+
+	if (priv->query) {
+		g_object_unref (G_OBJECT (priv->query));
+		priv->query = NULL;
+	}
+
 	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW(obj));
 	if (sel)
 		g_signal_handler_disconnect (G_OBJECT(sel), priv->sig2);
@@ -347,7 +393,7 @@ modest_folder_view_finalize (GObject *obj)
 
 
 static void
-on_account_update (TnyAccountStoreIface *account_store, const gchar *account,
+on_account_update (TnyAccountStore *account_store, const gchar *account,
 		   gpointer user_data)
 {
 	update_model_empty (MODEST_FOLDER_VIEW(user_data));
@@ -360,7 +406,8 @@ on_account_update (TnyAccountStoreIface *account_store, const gchar *account,
 
 
 GtkWidget*
-modest_folder_view_new (ModestTnyAccountStore *account_store)
+modest_folder_view_new (ModestTnyAccountStore *account_store, 
+			TnyFolderStoreQuery *query)
 {
 	GObject *self;
 	ModestFolderViewPrivate *priv;
@@ -371,7 +418,10 @@ modest_folder_view_new (ModestTnyAccountStore *account_store)
 	self = G_OBJECT(g_object_new(MODEST_TYPE_FOLDER_VIEW, NULL));
 	priv = MODEST_FOLDER_VIEW_GET_PRIVATE(self);
 	
-	if (!update_model (MODEST_FOLDER_VIEW(self), 
+	priv->account_store = g_object_ref (G_OBJECT (account_store));
+	if (query) priv->query = g_object_ref (G_OBJECT (query));
+
+	if (!update_model (MODEST_FOLDER_VIEW(self),
 			   MODEST_TNY_ACCOUNT_STORE(account_store)))
 		g_printerr ("modest: failed to update model");
 	
@@ -386,7 +436,20 @@ modest_folder_view_new (ModestTnyAccountStore *account_store)
 }
 
 
+const gchar *
+modest_folder_view_get_selected_account (ModestFolderView *self)
+{
+	GtkTreeModel *model;
+	GtkTreeIter iter;
+	ModestFolderViewPrivate *priv;
+	
+	g_return_val_if_fail (self, NULL);
+	priv = MODEST_FOLDER_VIEW_GET_PRIVATE(self);
 
+	gtk_tree_selection_get_selected (priv->cur_selection, &model, &iter);
+
+	return get_account_name_from_folder (model, iter);
+}
 
 static gboolean
 update_model_empty (ModestFolderView *self)
@@ -398,6 +461,14 @@ update_model_empty (ModestFolderView *self)
 	g_return_val_if_fail (self, FALSE);
 	priv = MODEST_FOLDER_VIEW_GET_PRIVATE(self);
 
+	/* Disconnect old handlers */
+	if (priv->store_accounts_handlers) {
+		modest_folder_view_disconnect_store_account_handlers (GTK_TREE_VIEW (self));
+		g_free (priv->store_accounts_handlers);
+		priv->store_accounts_handlers = NULL;
+	}
+
+	/* Create the new model */
 	store = gtk_tree_store_new (1, G_TYPE_STRING);
 	gtk_tree_store_append (store, &iter, NULL);
 
@@ -412,10 +483,8 @@ update_model_empty (ModestFolderView *self)
 
 	g_signal_emit (G_OBJECT(self), signals[FOLDER_SELECTED_SIGNAL], 0,
 		       NULL);
-
 	return TRUE;
 }
-
 
 static gboolean
 update_model (ModestFolderView *self, ModestTnyAccountStore *account_store)
@@ -428,7 +497,7 @@ update_model (ModestFolderView *self, ModestTnyAccountStore *account_store)
 	g_return_val_if_fail (account_store, FALSE);
 	priv =	MODEST_FOLDER_VIEW_GET_PRIVATE(self);
 	
-	model        = GTK_TREE_MODEL(tny_gtk_account_tree_model_new (TRUE)); /* async */
+	model        = GTK_TREE_MODEL(tny_gtk_account_tree_model_new (TRUE, priv->query)); /* async */
 	account_list = TNY_LIST(model);
 
 	update_model_empty (self); /* cleanup */
@@ -439,6 +508,8 @@ update_model (ModestFolderView *self, ModestTnyAccountStore *account_store)
 					TNY_ACCOUNT_STORE_STORE_ACCOUNTS);
 
 	if (account_list) {
+		TnyIterator *iter;
+		gint i = 0, size;
 	
 		sortable = gtk_tree_model_sort_new_with_model (model);
 		gtk_tree_sortable_set_sort_column_id (GTK_TREE_SORTABLE (sortable),
@@ -446,8 +517,23 @@ update_model (ModestFolderView *self, ModestTnyAccountStore *account_store)
 						      GTK_SORT_ASCENDING);
 
 		gtk_tree_view_set_model (GTK_TREE_VIEW(self), sortable);
+
+		/* Listen to subscription changes */
+		size = tny_list_get_length (TNY_LIST (account_list)) * sizeof (gulong);
+		priv->store_accounts_handlers = g_malloc0 (size);
+		iter = tny_list_create_iterator (account_list);
 		
+		do {
+			priv->store_accounts_handlers [i++] =
+				g_signal_connect (G_OBJECT (tny_iterator_get_current (iter)),
+						  "subscription_changed",
+						  G_CALLBACK (on_subscription_changed),
+						  self);
+			tny_iterator_next (iter);
+		} while (!tny_iterator_is_done (iter));
+
 		priv->view_is_empty = FALSE;
+		g_object_unref (iter);
 		g_object_unref (model);
 	}
 
@@ -464,11 +550,13 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 	ModestFolderView        *tree_view;
 	ModestFolderViewPrivate *priv;
 	gint type;
+	const gchar *account_name;
 
 	g_return_if_fail (sel);
 	g_return_if_fail (user_data);
 
 	priv = MODEST_FOLDER_VIEW_GET_PRIVATE(user_data);
+	priv->cur_selection = sel;
 
 	/* is_empty means that there is only the 'empty' item */
 	if (priv->view_is_empty)
@@ -483,32 +571,41 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 	tree_view = MODEST_FOLDER_VIEW (user_data);
 
 	gtk_tree_model_get (model, &iter, 
-			    TNY_GTK_ACCOUNT_TREE_MODEL_TYPE_COLUMN, 
-			    &type, -1);
+			    TNY_GTK_ACCOUNT_TREE_MODEL_TYPE_COLUMN, &type, 
+			    TNY_GTK_ACCOUNT_TREE_MODEL_INSTANCE_COLUMN, &folder, 
+			    -1);
 
 	if (type == TNY_FOLDER_TYPE_ROOT) {
-		g_message ("FOLDER ROOT");
+		account_name = tny_account_get_name (TNY_ACCOUNT (folder));
 	} else {
-		gtk_tree_model_get (model, &iter,
-				    TNY_GTK_ACCOUNT_TREE_MODEL_INSTANCE_COLUMN,
-				    &folder, -1);
+		if (priv->cur_folder) 
+			tny_folder_expunge (priv->cur_folder);
+		priv->cur_folder = folder;
 
-		if (TNY_IS_FOLDER (folder)) {
+		account_name = get_account_name_from_folder (model, iter);
 			
-			if (priv->cur_folder) 
-				tny_folder_expunge (priv->cur_folder);
-			priv->cur_folder = folder;
-			
-			
-			g_signal_emit (G_OBJECT(tree_view), signals[FOLDER_SELECTED_SIGNAL], 0,
-				       folder);
-		}
+		g_signal_emit (G_OBJECT(tree_view), signals[FOLDER_SELECTED_SIGNAL], 0,
+			       folder);
 	}
+}
+
+static void 
+on_subscription_changed  (TnyStoreAccount *store_account, 
+			  TnyFolder *folder,
+			  ModestFolderView *self)
+{
+	/* TODO: probably we won't need a full reload, just the store
+	   account or even the parent of the folder */
+
+	ModestFolderViewPrivate *priv;
+
+	priv =	MODEST_FOLDER_VIEW_GET_PRIVATE(self);
+	update_model (self, MODEST_TNY_ACCOUNT_STORE (priv->account_store));
 }
 
 
 static gboolean
-modest_folder_view_update_model (ModestFolderView *self, TnyAccountStoreIface *account_store)
+modest_folder_view_update_model (ModestFolderView *self, TnyAccountStore *account_store)
 {
 	gboolean retval;
 	
@@ -519,4 +616,24 @@ modest_folder_view_update_model (ModestFolderView *self, TnyAccountStoreIface *a
 		       0, NULL);
 
 	return retval;
+}
+
+static const gchar *
+get_account_name_from_folder (GtkTreeModel *model, GtkTreeIter iter) {
+	GtkTreePath *path;
+	GtkTreeIter new_iter;
+	TnyFolder *account_folder;
+	gint depth, i;
+
+	path = gtk_tree_model_get_path (model, &iter);
+	depth = gtk_tree_path_get_depth (path);
+
+	for (i=1; i<= depth - 1; i++)
+		gtk_tree_path_up (path);
+
+	gtk_tree_model_get_iter (model, &new_iter, path);
+	gtk_tree_model_get (model, &new_iter, 
+			    TNY_GTK_ACCOUNT_TREE_MODEL_INSTANCE_COLUMN, &account_folder, 
+			    -1);
+	return tny_account_get_name (TNY_ACCOUNT (account_folder));
 }

@@ -241,19 +241,21 @@ menubar_new (ModestEditMsgWindow *self)
 static void
 send_mail (ModestEditMsgWindow *self)
 {
-	const gchar *from, *to, *cc, *bcc, *subject;
-	gchar *body;
+	const gchar *to, *cc, *bcc, *subject;
+	gchar *body, *from;
 	ModestEditMsgWindowPrivate *priv;
 	TnyTransportAccount *transport_account;
 	ModestMailOperation *mail_operation;
+	ModestAccountData *data;
 	
 	GtkTextBuffer *buf;
 	GtkTextIter b, e;
 	
 	priv = MODEST_EDIT_MSG_WINDOW_GET_PRIVATE(self);
+	data = modest_combo_box_get_active_id (MODEST_COMBO_BOX (priv->from_field));
 
-	/* don't free these */
-	from    = "djcb@djcbsoftware.nl";
+	/* don't free these (except from) */
+	from    =  g_strdup_printf ("%s <%s>", data->full_name, data->email) ;
 	to      =  gtk_entry_get_text (GTK_ENTRY(priv->to_field));
 	cc      =  gtk_entry_get_text (GTK_ENTRY(priv->cc_field));
 	bcc     =  gtk_entry_get_text (GTK_ENTRY(priv->bcc_field));
@@ -298,6 +300,7 @@ send_mail (ModestEditMsgWindow *self)
 					     subject, body, NULL);
 	/* Clean up */
 	g_object_unref (mail_operation);
+	g_free (from);
 	g_free (body);
 }
 
@@ -483,6 +486,11 @@ modest_edit_msg_window_new (ModestWidgetFactory *factory,
 		gtk_text_buffer_set_text (buf,
 					  (const gchar *) modest_tny_msg_actions_find_body (msg, FALSE),
 					  -1);
+
+		/* TODO: lower priority, select in the From: combo to
+		   the value that comes from msg */
+
+		/* TODO: set attachments */
 	}
 
 	return GTK_WIDGET (obj);

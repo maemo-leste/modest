@@ -31,10 +31,8 @@
 #include <gtk/gtk.h>
 #include <gtkhtml/gtkhtml.h>
 #include <tny-gtk-text-buffer-stream.h>
-#include <tny-camel-mime-part.h>
-#include <tny-camel-msg.h>
-#include <tny-list.h>
 #include <tny-simple-list.h>
+#include <tny-folder.h>
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -42,6 +40,10 @@
 
 #include "modest-tny-msg-actions.h"
 #include "modest-text-utils.h"
+
+static void modest_tny_msg_actions_xfer (TnyHeader *header, TnyFolder *folder, 
+					 gboolean delete_original);
+
 
 static const gchar *
 get_body_text (TnyMsg *msg, gboolean want_html)
@@ -110,7 +112,7 @@ modest_tny_msg_actions_find_body_part (TnyMsg *msg, gboolean want_html)
 		return NULL;
 
 	parts = TNY_LIST (tny_simple_list_new());
-	tny_msg_get_parts ((TnyMsg*)msg, parts);
+	tny_mime_part_get_parts (TNY_MIME_PART (msg), parts);
 
 	iter  = tny_list_create_iterator(parts);
 
@@ -155,7 +157,7 @@ modest_tny_msg_actions_find_nth_part (TnyMsg *msg, gint index)
 	g_return_val_if_fail (index > 0, NULL);
 		
 	parts = TNY_LIST(tny_simple_list_new());
-	tny_msg_get_parts ((TnyMsg*)msg, parts);
+	tny_mime_part_get_parts (TNY_MIME_PART(msg), parts);
 	iter  = tny_list_create_iterator (parts);
 
 	part = NULL;
@@ -182,4 +184,59 @@ modest_tny_msg_actions_find_body (TnyMsg *msg, gboolean want_html)
 		return g_strdup (body);
 	else 
 		return NULL;
+}
+
+
+static void
+modest_tny_msg_actions_xfer (TnyHeader *header, TnyFolder *folder, 
+			     gboolean delete_original)
+{
+	TnyFolder *src_folder;
+	TnyList *headers;
+
+	src_folder = tny_header_get_folder (header);
+	headers = tny_simple_list_new ();
+
+	/* Move */
+	tny_list_prepend (headers, G_OBJECT (header));
+	tny_folder_transfer_msgs (src_folder, headers, folder, delete_original);
+
+	/* Free */
+	g_object_unref (headers);
+	g_object_unref (folder);
+}
+
+void
+modest_tny_msg_actions_copy (TnyHeader *header, TnyFolder *folder)
+{
+	g_return_if_fail (TNY_IS_HEADER (header));
+	g_return_if_fail (TNY_IS_FOLDER (folder));
+
+	modest_tny_msg_actions_xfer (header, folder, FALSE);
+}
+
+void
+modest_tny_msg_actions_move (TnyHeader *header, TnyFolder *folder)
+{
+	g_return_if_fail (TNY_IS_HEADER (header));
+	g_return_if_fail (TNY_IS_FOLDER (folder));
+
+	modest_tny_msg_actions_xfer (header, folder, TRUE);
+}
+
+void
+modest_tny_msg_actions_remove (TnyHeader *header)
+{
+	TnyFolder *folder;
+
+	g_return_if_fail (TNY_IS_HEADER (header));
+
+	folder = tny_header_get_folder (header);
+
+	/* Remove */
+	tny_folder_remove_msg (folder, header);
+	tny_folder_expunge (folder);
+
+	/* Free */
+	g_object_unref (folder);
 }

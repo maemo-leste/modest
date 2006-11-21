@@ -30,7 +30,7 @@
 #ifndef __MODEST_COMBO_BOX_H__
 #define __MODEST_COMBO_BOX_H__
 
-#include <gtk/gtk.h>
+#include <gtk/gtkcombobox.h>
 #include <modest-pair.h>
 
 G_BEGIN_DECLS
@@ -47,12 +47,12 @@ typedef struct _ModestComboBox      ModestComboBox;
 typedef struct _ModestComboBoxClass ModestComboBoxClass;
 
 struct _ModestComboBox {
-	 GObject parent;
+	 GtkComboBox parent;
 	/* insert public members, if any */
 };
 
 struct _ModestComboBoxClass {
-	GObjectClass parent_class;
+	GtkComboBoxClass parent_class;
 	/* insert signal callback declarations, eg. */
 	/* void (* my_event) (ModestComboBox* obj); */
 };
@@ -81,6 +81,17 @@ GtkWidget*   modest_combo_box_new         (const GSList *hash);
  * Returns: the id or NULL if there's nothing chosen.
  */
 gpointer   modest_combo_box_get_active_id  (ModestComboBox *self);
+
+/**
+ * modest_combo_box_get_active_display_name
+ * @self: a valid ModestComboBox instance 
+ * 
+ * get the display name for the currently active lemma, or NULL if
+ * there's nothing chosen
+ * 
+ * Returns: the display name or NULL if there's nothing chosen.
+ */
+gpointer   modest_combo_box_get_active_display_name  (ModestComboBox *self);
 
 G_END_DECLS
 

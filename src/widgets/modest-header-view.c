@@ -826,6 +826,9 @@ on_refresh_folder (TnyFolder *folder, gboolean cancelled, gpointer user_data)
 	else { /* it's a new one or a refresh */
 		GSList *col;
 
+		if (priv->headers)
+			g_object_unref (priv->headers);
+
 		priv->headers = TNY_LIST(tny_gtk_header_list_model_new ());
 		tny_folder_get_headers (folder, priv->headers, FALSE);
 		
@@ -949,5 +952,8 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 	/* mark message as seen; _set_flags crashes, bug in tinymail? */
 	header_flags = tny_header_get_flags (TNY_HEADER(header));
 	tny_header_set_flags (header, header_flags | TNY_HEADER_FLAG_SEEN);
+
+	/* Free */
+/* 	g_free (folder); */
 }	
 

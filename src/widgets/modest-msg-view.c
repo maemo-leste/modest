@@ -299,7 +299,7 @@ find_cid_image (TnyMsg *msg, const gchar *cid)
 	
 	parts  = TNY_LIST (tny_simple_list_new());
 
-	tny_msg_get_parts (msg, parts); 
+	tny_mime_part_get_parts (TNY_MIME_PART (msg), parts); 
 	iter   = tny_list_create_iterator (parts);
 	
 	while (!tny_iterator_is_done(iter)) {
@@ -379,7 +379,7 @@ attachments_as_html (ModestMsgView *self, TnyMsg *msg)
 	priv  = MODEST_MSG_VIEW_GET_PRIVATE (self);
 
 	parts = TNY_LIST(tny_simple_list_new());
-	tny_msg_get_parts (msg, parts);
+	tny_mime_part_get_parts (TNY_MIME_PART (msg), parts);
 	iter  = tny_list_create_iterator (parts);
 	
 	appendix= g_string_new ("");

@@ -34,11 +34,20 @@
 #define __MODEST_TNY_STORE_ACTIONS_H__
 
 #include <glib-object.h>
-#include <tny-store-account.h>
+#include <tny-folder.h>
 
 G_BEGIN_DECLS
 
-void    modest_tny_store_actions_update_folders (TnyStoreAccount *storage_account);
+TnyFolder*    modest_tny_store_actions_create_folder  (TnyFolderStore *parent,
+						       const gchar *name);
+
+void          modest_tny_store_actions_remove_folder  (TnyFolder *folder);
+
+void          modest_tny_store_actions_rename_folder  (TnyFolder *folder, 
+						       const gchar *name);
+
+void          modest_tny_store_actions_move_folder    (TnyFolder *folder, 
+						       TnyFolderStore *parent);
 
 G_END_DECLS
 

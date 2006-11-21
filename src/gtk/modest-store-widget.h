@@ -42,10 +42,6 @@ const gchar*   modest_store_widget_get_username          (ModestStoreWidget *sel
 const gchar*   modest_store_widget_get_servername        (ModestStoreWidget *self);
 const gchar*   modest_store_widget_get_proto             (ModestStoreWidget *self);
 
-
-
-
-
 G_END_DECLS
 
 #endif /* __MODEST_STORE_WIDGET_H__ */

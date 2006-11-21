@@ -75,4 +75,10 @@ TnyMimePart* modest_tny_msg_actions_find_nth_part (TnyMsg *msg, gint index);
 
 gchar* modest_tny_msg_actions_find_body (TnyMsg *self, gboolean want_html);
 
+void   modest_tny_msg_actions_copy      (TnyHeader *header, TnyFolder *folder);
+
+void   modest_tny_msg_actions_move      (TnyHeader *header, TnyFolder *folder);
+
+void   modest_tny_msg_actions_remove    (TnyHeader *header);
+
 #endif /* __MODEST_TNY_MSG_ACTIONS_H__ */

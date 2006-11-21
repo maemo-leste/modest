@@ -27,6 +27,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <string.h>
+#include <glib.h>
 #include <tny-msg.h>
 #include <tny-folder.h>			
 #include <tny-folder-store.h>
@@ -37,45 +39,60 @@
 #include <tny-store-account.h>	
 #include <tny-store-account.h>
 #include <tny-stream-camel.h>
-#include <string.h>
-#include <camel/camel-folder.h>
-#include <camel/camel.h>
-#include <camel/camel-folder-summary.h>
-
-
-#include <glib.h>
 #include "modest-tny-store-actions.h"
 
-
-void
-modest_tny_store_actions_update_folders (TnyStoreAccount *storage_account)
+TnyFolder *
+modest_tny_store_actions_create_folder (TnyFolderStore *parent,
+					const gchar *name)
 {
+	g_return_val_if_fail (TNY_IS_FOLDER_STORE (parent), NULL);
+	g_return_val_if_fail (name, NULL);
 
-// FIXME TODO: This results in failure on folder change.	
+	TnyFolder *new_folder = NULL;
+	TnyStoreAccount *store_account;
 
-	TnyList *folders;
-	TnyIterator *ifolders;
-	const TnyFolder *cur_folder;
-	TnyFolderStoreQuery *query;
+	/* Create the folder */
+	new_folder = tny_folder_store_create_folder (parent, name);
+	if (!new_folder) 
+		return NULL;
 
-/* 	folders = tny_store_account_get_folders (storage_account,  */
-/* 						       TNY_STORE_ACCOUNT_FOLDER_TYPE_SUBSCRIBED); */
-	query = tny_folder_store_query_new ();
-	tny_folder_store_query_add_item (query, NULL, TNY_FOLDER_STORE_QUERY_OPTION_SUBSCRIBED);
-	tny_folder_store_get_folders (TNY_FOLDER_STORE (storage_account),
-				      folders, NULL);
-	g_object_unref (query);
-	
-	ifolders = tny_list_create_iterator (folders);
-	
-	for (tny_iterator_first (ifolders); 
-	     !tny_iterator_is_done (ifolders); 
-	     tny_iterator_next (ifolders)) {
-		
-		cur_folder = TNY_FOLDER(tny_iterator_get_current (ifolders));
-		tny_folder_refresh (cur_folder);
+	/* Subscribe to folder */
+	if (!tny_folder_is_subscribed (new_folder)) {
+		store_account = tny_folder_get_account (TNY_FOLDER (parent));
+		tny_store_account_subscribe (store_account, new_folder);
 	}
-	
-	g_object_unref (ifolders);
+
+	return new_folder;
 }
 
+void
+modest_tny_store_actions_remove_folder (TnyFolder *folder)
+{
+	TnyFolderStore *folder_store;
+
+	g_return_if_fail (TNY_IS_FOLDER (folder));
+
+	/* Get folder store */
+	folder_store = TNY_FOLDER_STORE (tny_folder_get_account (folder));
+
+	/* Remove folder */
+	tny_folder_store_remove_folder (folder_store, folder);
+
+	/* Free instance */
+	g_object_unref (G_OBJECT (folder));
+}
+
+void modest_tny_store_actions_rename_folder (TnyFolder *folder, 
+					     const gchar *name)
+{
+	g_return_if_fail (TNY_IS_FOLDER (folder));
+	g_return_if_fail (name);
+
+	tny_folder_set_name (folder, name);
+}
+
+void modest_tny_store_actions_move_folder (TnyFolder *folder, 
+					   TnyFolderStore *parent)
+{
+	/* TODO: set parent as parent */
+}

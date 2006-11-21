@@ -44,6 +44,8 @@ modest_SOURCES=\
 	modest-tny-account-store.c\
 	modest-tny-msg-actions.h\
 	modest-tny-msg-actions.c\
+	modest-tny-store-actions.c\
+	modest-tny-store-actions.h\
 	modest-protocol-mgr.h\
 	modest-protocol-mgr.c\
 	modest-ui.h\
@@ -60,7 +62,6 @@ modest_SOURCES=\
 	modest-mail-operation.h \
 	modest-tny-platform-factory.c \
 	modest-tny-platform-factory.h
-
 
 modest_LDADD = \
 	$(MODEST_GSTUFF_LIBS) \

@@ -39,6 +39,8 @@
 /* configuration key definitions for modest */
 #define MODEST_ACCOUNT_NAMESPACE         MODEST_CONF_NAMESPACE "/" "accounts"
 #define MODEST_SERVER_ACCOUNT_NAMESPACE  MODEST_CONF_NAMESPACE "/" "server_accounts"
+#define MODEST_CONF_REPLY_TYPE           "reply_type"        /*  int  */
+#define MODEST_CONF_FORWARD_TYPE         "forward_type"      /*  int  */
 
 /* per-account data */
 #define MODEST_ACCOUNT_DISPLAY_NAME      "display_name"      /* string */
@@ -46,7 +48,6 @@
 #define MODEST_ACCOUNT_TRANSPORT_ACCOUNT "transport_account" /* string */
 #define MODEST_ACCOUNT_FULLNAME		 "fullname"
 #define MODEST_ACCOUNT_EMAIL             "email"
-
 
 /* server account keys */
 #define MODEST_ACCOUNT_PASSWORD          "password"          /* string */
