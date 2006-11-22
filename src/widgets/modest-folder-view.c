@@ -506,8 +506,8 @@ update_model (ModestFolderView *self, ModestTnyAccountStore *account_store)
 	tny_account_store_get_accounts (TNY_ACCOUNT_STORE(account_store),
 					account_list,
 					TNY_ACCOUNT_STORE_STORE_ACCOUNTS);
-
 	if (account_list) {
+		
 		TnyIterator *iter;
 		gint i = 0, size;
 	
@@ -522,21 +522,23 @@ update_model (ModestFolderView *self, ModestTnyAccountStore *account_store)
 		size = tny_list_get_length (TNY_LIST (account_list)) * sizeof (gulong);
 		priv->store_accounts_handlers = g_malloc0 (size);
 		iter = tny_list_create_iterator (account_list);
-		
-		do {
-			priv->store_accounts_handlers [i++] =
-				g_signal_connect (G_OBJECT (tny_iterator_get_current (iter)),
-						  "subscription_changed",
-						  G_CALLBACK (on_subscription_changed),
-						  self);
-			tny_iterator_next (iter);
-		} while (!tny_iterator_is_done (iter));
 
-		priv->view_is_empty = FALSE;
+	 	if (!tny_iterator_is_done (iter)) 	
+			priv->view_is_empty = FALSE; 
+		else {
+			while (!tny_iterator_is_done (iter)) {
+				
+				priv->store_accounts_handlers [i++] =
+					g_signal_connect (G_OBJECT (tny_iterator_get_current (iter)),
+							  "subscription_changed",
+							  G_CALLBACK (on_subscription_changed),
+						  	self);
+				tny_iterator_next (iter);
+			}
+		}	
 		g_object_unref (iter);
 		g_object_unref (model);
 	}
-
 	return TRUE;
 }
 
@@ -582,6 +584,7 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 			tny_folder_expunge (priv->cur_folder);
 		priv->cur_folder = folder;
 
+		/* FIXME: this is ugly */
 		account_name = get_account_name_from_folder (model, iter);
 			
 		g_signal_emit (G_OBJECT(tree_view), signals[FOLDER_SELECTED_SIGNAL], 0,
@@ -619,7 +622,8 @@ modest_folder_view_update_model (ModestFolderView *self, TnyAccountStore *accoun
 }
 
 static const gchar *
-get_account_name_from_folder (GtkTreeModel *model, GtkTreeIter iter) {
+get_account_name_from_folder (GtkTreeModel *model, GtkTreeIter iter)
+{
 	GtkTreePath *path;
 	GtkTreeIter new_iter;
 	TnyFolder *account_folder;
@@ -628,7 +632,7 @@ get_account_name_from_folder (GtkTreeModel *model, GtkTreeIter iter) {
 	path = gtk_tree_model_get_path (model, &iter);
 	depth = gtk_tree_path_get_depth (path);
 
-	for (i=1; i<= depth - 1; i++)
+	for (i = 1; i < depth; ++i)
 		gtk_tree_path_up (path);
 
 	gtk_tree_model_get_iter (model, &new_iter, path);
