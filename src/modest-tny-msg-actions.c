@@ -104,7 +104,7 @@ TnyMimePart *
 modest_tny_msg_actions_find_body_part (TnyMsg *msg, gboolean want_html)
 {
 	const gchar *mime_type = want_html ? "text/html" : "text/plain";
-	TnyMimePart *part;
+	TnyMimePart *part = NULL;
 	TnyList *parts;
 	TnyIterator *iter;
 
