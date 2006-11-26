@@ -338,9 +338,12 @@ modest_folder_view_disconnect_store_account_handlers (GtkTreeView *self)
 	gint i = 0;
 
 	sortable = GTK_TREE_MODEL_SORT (gtk_tree_view_get_model (self));
-	if (!sortable) return; 
+	if (!sortable)
+		return; 
+
 	model = gtk_tree_model_sort_get_model (sortable);
-	if (!model) return; 
+	if (!model)
+		return; 
 
 	priv =	MODEST_FOLDER_VIEW_GET_PRIVATE (self);	
 	iter = tny_list_create_iterator (TNY_LIST (model));
@@ -419,7 +422,8 @@ modest_folder_view_new (ModestTnyAccountStore *account_store,
 	priv = MODEST_FOLDER_VIEW_GET_PRIVATE(self);
 	
 	priv->account_store = g_object_ref (G_OBJECT (account_store));
-	if (query) priv->query = g_object_ref (G_OBJECT (query));
+	if (query)
+		priv->query = g_object_ref (G_OBJECT (query));
 
 	if (!update_model (MODEST_FOLDER_VIEW(self),
 			   MODEST_TNY_ACCOUNT_STORE(account_store)))
@@ -486,6 +490,40 @@ update_model_empty (ModestFolderView *self)
 	return TRUE;
 }
 
+
+static void
+update_store_account_handlers (ModestFolderView *self, TnyList *account_list)
+{
+	gint size;
+	ModestFolderViewPrivate *priv;
+	TnyIterator *iter;
+	
+	priv =	MODEST_FOLDER_VIEW_GET_PRIVATE(self);
+
+	/* Listen to subscription changes */
+	size = tny_list_get_length (TNY_LIST (account_list)) * sizeof (gulong);
+
+	g_assert (priv->store_accounts_handlers == NULL); /* don't leak */
+	priv->store_accounts_handlers = g_malloc0 (size);
+	iter = tny_list_create_iterator (account_list);
+	
+	if (!tny_iterator_is_done (iter)) 	
+		priv->view_is_empty = FALSE; 
+	else {
+		gint i = 0;
+		while (!tny_iterator_is_done (iter)) {
+			
+			priv->store_accounts_handlers [i++] =
+				g_signal_connect (G_OBJECT (tny_iterator_get_current (iter)),
+						  "subscription_changed",
+						  G_CALLBACK (on_subscription_changed),
+						  self);
+			tny_iterator_next (iter);
+			}
+	}	
+	g_object_unref (iter);			       
+}
+
 static gboolean
 update_model (ModestFolderView *self, ModestTnyAccountStore *account_store)
 {
@@ -496,49 +534,29 @@ update_model (ModestFolderView *self, ModestTnyAccountStore *account_store)
 
 	g_return_val_if_fail (account_store, FALSE);
 	priv =	MODEST_FOLDER_VIEW_GET_PRIVATE(self);
-	
-	model        = GTK_TREE_MODEL(tny_gtk_account_tree_model_new (TRUE, priv->query)); /* async */
-	account_list = TNY_LIST(model);
 
 	update_model_empty (self); /* cleanup */
-	priv->view_is_empty = TRUE;
+	
+	//model        = GTK_TREE_MODEL(tny_gtk_account_tree_model_new (TRUE, priv->query)); /* async */
+	model        = GTK_TREE_MODEL(tny_gtk_account_tree_model_new (TRUE, NULL)); /* async */
+
+	account_list = TNY_LIST(model);
 
 	tny_account_store_get_accounts (TNY_ACCOUNT_STORE(account_store),
 					account_list,
 					TNY_ACCOUNT_STORE_STORE_ACCOUNTS);
+
 	if (account_list) {
-		
-		TnyIterator *iter;
-		gint i = 0, size;
-	
 		sortable = gtk_tree_model_sort_new_with_model (model);
 		gtk_tree_sortable_set_sort_column_id (GTK_TREE_SORTABLE (sortable),
 						      TNY_GTK_ACCOUNT_TREE_MODEL_NAME_COLUMN, 
 						      GTK_SORT_ASCENDING);
-
 		gtk_tree_view_set_model (GTK_TREE_VIEW(self), sortable);
 
-		/* Listen to subscription changes */
-		size = tny_list_get_length (TNY_LIST (account_list)) * sizeof (gulong);
-		priv->store_accounts_handlers = g_malloc0 (size);
-		iter = tny_list_create_iterator (account_list);
-
-	 	if (!tny_iterator_is_done (iter)) 	
-			priv->view_is_empty = FALSE; 
-		else {
-			while (!tny_iterator_is_done (iter)) {
-				
-				priv->store_accounts_handlers [i++] =
-					g_signal_connect (G_OBJECT (tny_iterator_get_current (iter)),
-							  "subscription_changed",
-							  G_CALLBACK (on_subscription_changed),
-						  	self);
-				tny_iterator_next (iter);
-			}
-		}	
-		g_object_unref (iter);
-		g_object_unref (model);
+		update_store_account_handlers (self, account_list);
 	}
+
+	g_object_unref (model);
 	return TRUE;
 }
 
