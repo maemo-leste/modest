@@ -35,7 +35,16 @@
 #include <tny-store-account.h>
 #include <tny-folder-store.h>
 #include <tny-folder-store-query.h>
+#include <tny-camel-msg.h>
+#include <tny-camel-header.h>
+#include <tny-camel-stream.h>
+#include <tny-camel-mime-part.h>
+#include <tny-simple-list.h>
+
 #include <glib/gi18n.h>
+
+#include <modest-text-utils.h>
+#include <modest-tny-msg-actions.h>
 #include "modest-tny-platform-factory.h"
 
 /* 'private'/'protected' functions */
@@ -294,8 +303,7 @@ modest_mail_operation_create_forward_mail (TnyMsg *msg,
 {
 	TnyMsg *new_msg;
 	TnyHeader *new_header, *header;
-	TnyStream *attachment_stream;
-	gchar *new_subject, *new_body, *content_type, *quoted;
+	gchar *new_subject, *new_body, *content_type;
 	TnyMimePart *text_body_part = NULL;
 	GList *attachments_list;
 	TnyList *parts;
@@ -312,7 +320,8 @@ modest_mail_operation_create_forward_mail (TnyMsg *msg,
 	tny_header_set_from (new_header, from);
 
 	/* Change the subject */
-	new_subject = (gchar *) modest_text_utils_create_forward_subject (tny_header_get_subject(header));
+	new_subject = (gchar *) modest_text_utils_derived_subject (tny_header_get_subject(header),
+								   _("Fwd:"));
 	tny_header_set_subject (new_header, (const gchar *) new_subject);
 	g_free (new_subject);
 
@@ -350,11 +359,11 @@ modest_mail_operation_create_forward_mail (TnyMsg *msg,
 	case MODEST_MAIL_OPERATION_FORWARD_TYPE_INLINE:
 		/* Prepend "Original message" text */
 		inlined_text = (gchar *) 
-			modest_text_utils_create_inlined_text (tny_header_get_from (header),
-							       tny_header_get_date_sent (header),
-							       tny_header_get_to (header),
-							       tny_header_get_subject (header),
-							       (const gchar*) new_body);
+			modest_text_utils_inlined_text (tny_header_get_from (header),
+							tny_header_get_date_sent (header),
+							tny_header_get_to (header),
+							tny_header_get_subject (header),
+							(const gchar*) new_body);
 		g_free (new_body);
 		new_body = inlined_text;
 
@@ -402,9 +411,7 @@ modest_mail_operation_create_reply_mail (TnyMsg *msg,
 {
 	TnyMsg *new_msg;
 	TnyHeader *new_header, *header;
-	TnyStream *attachment_stream;
 	gchar *new_subject, *new_body, *content_type, *quoted;
-	TnyList *parts;
 	TnyMimePart *text_body_part;
 
 	/* Create new objects */
@@ -439,8 +446,8 @@ modest_mail_operation_create_reply_mail (TnyMsg *msg,
 
 		/* Remove my own address from the cc list */
 		new_cc = (gchar *) 
-			modest_text_utils_remove_mail_from_mail_list ((const gchar *) tmp->str, 
-								      (const gchar *) from);
+			modest_text_utils_remove_address ((const gchar *) tmp->str, 
+							  (const gchar *) from);
 		/* FIXME: remove also the mails from the new To: */
 		tny_header_set_cc (new_header, new_cc);
 
@@ -451,7 +458,8 @@ modest_mail_operation_create_reply_mail (TnyMsg *msg,
 	}
 
 	/* Change the subject */
-	new_subject = (gchar*) modest_text_utils_create_reply_subject (tny_header_get_subject(header));
+	new_subject = (gchar*) modest_text_utils_derived_subject (tny_header_get_subject(header),
+								  _("Re:"));
 	tny_header_set_subject (new_header, (const gchar *) new_subject);
 	g_free (new_subject);
 
@@ -468,9 +476,9 @@ modest_mail_operation_create_reply_mail (TnyMsg *msg,
 
 	case MODEST_MAIL_OPERATION_REPLY_TYPE_CITE:
 		/* Prepend "Original message" text */
-		cited_text = (gchar *) modest_text_utils_create_cited_text (tny_header_get_from (header),
-									    tny_header_get_date_sent (header),
-									    (const gchar*) new_body);
+		cited_text = (gchar *) modest_text_utils_cited_text (tny_header_get_from (header),
+								     tny_header_get_date_sent (header),
+								     (const gchar*) new_body);
 		g_free (new_body);
 		new_body = cited_text;
 		break;
@@ -606,12 +614,12 @@ get_content_type(const gchar *s)
 static GQuark 
 modest_error_quark (void)
 {
-  static GQuark err_q = 0;
-
-  if (err_q == 0)
-    err_q = g_quark_from_static_string ("modest-error-quark");
-
-  return err_q;
+	static GQuark err_q = 0;
+	
+	if (err_q == 0)
+		err_q = g_quark_from_static_string ("modest-error-quark");
+	
+	return err_q;
 }
 
 
@@ -690,6 +698,7 @@ add_attachments (TnyMsg *msg, const GList *attachments_list)
 /* 		g_object_unref (attachment_part); */
 	}
 }
+
 
 static TnyMimePart *
 add_body_part (TnyMsg *msg, 

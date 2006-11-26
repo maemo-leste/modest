@@ -53,7 +53,6 @@ get_body_text (TnyMsg *msg, gboolean want_html)
 	GtkTextBuffer *buf;
 	GtkTextIter start, end;
 	const gchar *to_quote;
-	gchar *quoted;
 
 	body = modest_tny_msg_actions_find_body_part(msg, want_html);
 	if (!body)

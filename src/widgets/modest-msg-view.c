@@ -39,6 +39,7 @@
 #include <tny-simple-list.h>
 
 #include <modest-tny-msg-actions.h>
+#include <modest-text-utils.h>
 #include "modest-msg-view.h"
 #include "modest-tny-stream-gtkhtml.h"
 
@@ -48,40 +49,12 @@ static void     modest_msg_view_class_init   (ModestMsgViewClass *klass);
 static void     modest_msg_view_init         (ModestMsgView *obj);
 static void     modest_msg_view_finalize     (GObject *obj);
 
-
-static GSList*  get_url_matches (GString *txt);
 static gboolean on_link_clicked (GtkWidget *widget, const gchar *uri, ModestMsgView *msg_view);
 static gboolean on_url_requested (GtkWidget *widget, const gchar *uri, GtkHTMLStream *stream,
 				  ModestMsgView *msg_view);
 static gboolean on_link_hover (GtkWidget *widget, const gchar *uri, ModestMsgView *msg_view);
 
-/*
- * we need these regexps to find URLs in plain text e-mails
- */
-typedef struct _UrlMatchPattern UrlMatchPattern;
-struct _UrlMatchPattern {
-	gchar   *regex;
-	regex_t *preg;
-	gchar   *prefix;
-};
-
 #define ATT_PREFIX "att:"
-
-#define MAIL_VIEWER_URL_MATCH_PATTERNS  {				\
-	{ "(file|rtsp|http|ftp|https)://[-A-Za-z0-9_$.+!*(),;:@%&=?/~#]+[-A-Za-z0-9_$%&=?/~#]",\
-	  NULL, NULL },\
-	{ "www\\.[-a-z0-9.]+[-a-z0-9](:[0-9]*)?(/[-A-Za-z0-9_$.+!*(),;:@%&=?/~#]*[^]}\\),?!;:\"]?)?",\
-	  NULL, "http://" },\
-	{ "ftp\\.[-a-z0-9.]+[-a-z0-9](:[0-9]*)?(/[-A-Za-z0-9_$.+!*(),;:@%&=?/~#]*[^]}\\),?!;:\"]?)?",\
-	  NULL, "ftp://" },\
-	{ "(voipto|callto|chatto|jabberto|xmpp):[-_a-z@0-9.\\+]+", \
-	   NULL, NULL},						    \
-	{ "mailto:[-_a-z0-9.\\+]+@[-_a-z0-9.]+",		    \
-	  NULL, NULL},\
-	{ "[-_a-z0-9.\\+]+@[-_a-z0-9.]+",\
-	  NULL, "mailto:"}\
-	}
-
 
 /* list my signals */
 enum {
@@ -354,14 +327,6 @@ on_url_requested (GtkWidget *widget, const gchar *uri,
 }
 
 
-typedef struct  {
-	guint offset;
-	guint len;
-	const gchar* prefix;
-} url_match_t;
-
-
-
 /* render the attachments as hyperlinks in html */
 static gchar*
 attachments_as_html (ModestMsgView *self, TnyMsg *msg)
@@ -414,181 +379,6 @@ attachments_as_html (ModestMsgView *self, TnyMsg *msg)
 	return html;
 }
 
-
-
-static void
-hyperlinkify_plain_text (GString *txt)
-{
-	GSList *cursor;
-	GSList *match_list = get_url_matches (txt);
-
-	/* we will work backwards, so the offsets stay valid */
-	for (cursor = match_list; cursor; cursor = cursor->next) {
-
-		url_match_t *match = (url_match_t*) cursor->data;
-		gchar *url  = g_strndup (txt->str + match->offset, match->len);
-		gchar *repl = NULL; /* replacement  */
-
-		/* the prefix is NULL: use the one that is already there */
-		repl = g_strdup_printf ("<a href=\"%s%s\">%s</a>",
-					match->prefix ? match->prefix : "", url, url);
-
-		/* replace the old thing with our hyperlink
-		 * replacement thing */
-		g_string_erase  (txt, match->offset, match->len);
-		g_string_insert (txt, match->offset, repl);
-		
-		g_free (url);
-		g_free (repl);
-
-		g_free (cursor->data);	
-	}
-	
-	g_slist_free (match_list);
-}
-
-
-
-static gchar *
-convert_to_html (const gchar *data)
-{
-	guint		 i;
-	gboolean	 first_space = TRUE;
-	GString		*html;	    
-	gsize           len;
-
-	if (!data)
-		return NULL;
-
-	len = strlen (data);
-	html = g_string_sized_new (len + 100);	/* just a  guess... */
-	
-	g_string_append_printf (html,
-				"<html>"
-				"<head>"
-				"<meta http-equiv=\"content-type\""
-				" content=\"text/html; charset=utf8\">"
-				"</head>"
-				"<body><tt>");
-	
-	/* replace with special html chars where needed*/
-	for (i = 0; i != len; ++i)  {
-		char	kar = data[i]; 
-		switch (kar) {
-			
-		case 0:  break; /* ignore embedded \0s */	
-		case '<' : g_string_append   (html, "&lt;"); break;
-		case '>' : g_string_append   (html, "&gt;"); break;
-		case '&' : g_string_append   (html, "&quot;"); break;
-		case '\n': g_string_append   (html, "<br>\n"); break;
-		default:
-			if (kar == ' ') {
-				g_string_append (html, first_space ? " " : "&nbsp;");
-				first_space = FALSE;
-			} else	if (kar == '\t')
-				g_string_append (html, "&nbsp; &nbsp;&nbsp;");
-			else {
-				int charnum = 0;
-				first_space = TRUE;
-				/* optimization trick: accumulate 'normal' chars, then copy */
-				do {
-					kar = data [++charnum + i];
-					
-				} while ((i + charnum < len) &&
-					 (kar > '>' || (kar != '<' && kar != '>'
-							&& kar != '&' && kar !=  ' '
-							&& kar != '\n' && kar != '\t')));
-				g_string_append_len (html, &data[i], charnum);
-				i += (charnum  - 1);
-			}
-		}
-	}
-	
-	g_string_append (html, "</tt></body></html>");
-	hyperlinkify_plain_text (html);
-
-	return g_string_free (html, FALSE);
-}
-
-
-
-
-static gint 
-cmp_offsets_reverse (const url_match_t *match1, const url_match_t *match2)
-{
-	return match2->offset - match1->offset;
-}
-
-
-
-/*
- * check if the match is inside an existing match... */
-static void
-chk_partial_match (const url_match_t *match, guint* offset)
-{
-	if (*offset >= match->offset && *offset < match->offset + match->len)
-		*offset = -1;
-}
-
-static GSList*
-get_url_matches (GString *txt)
-{
-	regmatch_t rm;
-        guint rv, i, offset = 0;
-        GSList *match_list = NULL;
-
-	static UrlMatchPattern patterns[] = MAIL_VIEWER_URL_MATCH_PATTERNS;
-	const size_t pattern_num = sizeof(patterns)/sizeof(UrlMatchPattern);
-
-	/* initalize the regexps */
-	for (i = 0; i != pattern_num; ++i) {
-		patterns[i].preg = g_new0 (regex_t,1);
-		g_assert(regcomp (patterns[i].preg, patterns[i].regex,
-				  REG_ICASE|REG_EXTENDED|REG_NEWLINE) == 0);
-	}
-        /* find all the matches */
-	for (i = 0; i != pattern_num; ++i) {
-		offset     = 0;	
-		while (1) {
-			int test_offset;
-			if ((rv = regexec (patterns[i].preg, txt->str + offset, 1, &rm, 0)) != 0) {
-				g_assert (rv == REG_NOMATCH); /* this should not happen */
-				break; /* try next regexp */ 
-			}
-			if (rm.rm_so == -1)
-				break;
-
-			/* FIXME: optimize this */
-			/* to avoid partial matches on something that was already found... */
-			/* check_partial_match will put -1 in the data ptr if that is the case */
-			test_offset = offset + rm.rm_so;
-			g_slist_foreach (match_list, (GFunc)chk_partial_match, &test_offset);
-			
-			/* make a list of our matches (<offset, len, prefix> tupels)*/
-			if (test_offset != -1) {
-				url_match_t *match = g_new (url_match_t,1);
-				match->offset = offset + rm.rm_so;
-				match->len    = rm.rm_eo - rm.rm_so;
-				match->prefix = patterns[i].prefix;
-				match_list = g_slist_prepend (match_list, match);
-			}
-			offset += rm.rm_eo;
-		}
-	}
-
-	for (i = 0; i != pattern_num; ++i) {
-		regfree (patterns[i].preg);
-		g_free  (patterns[i].preg);
-	} /* don't free patterns itself -- it's static */
-	
-	/* now sort the list, so the matches are in reverse order of occurence.
-	 * that way, we can do the replacements starting from the end, so we don't need
-	 * to recalculate the offsets
-	 */
-	match_list = g_slist_sort (match_list,
-				   (GCompareFunc)cmp_offsets_reverse); 
-	return match_list;	
-}
 
 
 
@@ -669,7 +459,7 @@ set_text_message (ModestMsgView *self, TnyMimePart *tny_body, TnyMsg *msg)
 	gtk_text_buffer_get_bounds (buf, &begin, &end);
 	txt = gtk_text_buffer_get_text (buf, &begin, &end, FALSE);
 	if (txt) {
-		gchar *html = convert_to_html (txt);
+		gchar *html = modest_text_utils_convert_to_html (txt);
 		tny_stream_write (gtkhtml_stream, html, strlen(html));
 		tny_stream_reset (gtkhtml_stream);
 		g_free (txt);

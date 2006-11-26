@@ -35,8 +35,6 @@
 
 #include <time.h>
 
-/* public */
-
 /**
  * modest_text_utils_quote:
  * @buf: a string which contains the message to quote
@@ -44,27 +42,95 @@
  * @sent_date: sent date/time of the original message
  * @limit: specifies the maximum characters per line in the quoted text
  * 
- * Returns: a string containing the quoted message
+ * quote an existing message
+ * 
+ * Returns: a newly allocated string containing the quoted message
  */
-gchar* modest_text_utils_quote(const gchar *buf,
-                        const gchar *from,
-                        const time_t sent_date,
-                        const int limit);
+gchar* modest_text_utils_quote(const gchar *buf, const gchar *from,
+			       const time_t sent_date, const int limit);
 
-gchar* modest_text_utils_create_reply_subject (const gchar *subject);
 
-gchar* modest_text_utils_create_forward_subject (const gchar *subject);
+/**
+ * modest_text_utils_derived_subject:
+ * @subject: a string which contains the original subject
+ * @prefix: the prefix for the new subject (such as 'Re:' or 'Fwd:')
+ *
+ * create a 'derived' subject line for eg. replies and forwards 
+ * 
+ * Returns: a newly allocated string containing the resulting subject
+ */
+gchar* modest_text_utils_derived_subject (const gchar *subject, const gchar* prefix);
 
-gchar* modest_text_utils_create_cited_text (const gchar *from,
-					    time_t sent_date,
-					    const gchar *text);
 
-gchar* modest_text_utils_create_inlined_text (const gchar *from,
-					      time_t sent_date,
-					      const gchar *to,
-					      const gchar *subject,
-					      const gchar *text);
+/**
+ * modest_text_utils_cited_text:
+ * @from: sender of the message
+ * @sent_date: the sent date of the original message
+ * @text: the text of the original message
+ *
+ * cite the text in a message
+ * 
+ * Returns: a newly allocated string containing the cited text
+ */
+gchar* modest_text_utils_cited_text (const gchar *from,
+				     time_t sent_date,
+				     const gchar *text);
 
-gchar* modest_text_utils_remove_mail_from_mail_list (const gchar *emails, 
-						     const gchar *email);
+/**
+ * modest_text_utils_inlined_text
+ * @from: the sender of the original message
+ * @sent_date: sent date/time of the original message
+ * @to: sent date/time of the original message
+ * @subject: sent date/time of the original message
+ * @text: sent date/time of the original message
+ *
+ * creates a new string with the "Original message" text prepended to
+ * the text passed as argument and some data of the header
+ * 
+ * Returns: a newly allocated string containing the quoted message
+ */
+gchar*   modest_text_utils_inlined_text (const gchar *from,
+					 time_t sent_date,
+					 const gchar *to,
+					 const gchar *subject,
+					 const gchar *text);
+
+/**
+ * modest_text_utils_remove_address
+ * @address_list: string with a comma-separated list of email addresses
+ * @address: an specific e-mail address
+ *
+ * remove a specific address from a list of email addresses
+ * 
+ * Returns: a newly allocated string containing the new list
+ */
+gchar*   modest_text_utils_remove_address (const gchar *address_list, 
+					   const gchar *address);
+
+/**
+ * modest_text_utils_convert_to_html:
+ * @txt: a string which contains the message to quote
+ *
+ * convert plain text (utf8) into html
+ * 
+ * Returns: a newly allocated string containing the html
+ */
+gchar*  modest_text_utils_convert_to_html (const gchar *data);
+
+
+/**
+ * modest_text_utils_strftime:
+ * @s:
+ * @max:
+ * @fmt:
+ * @tm
+ *
+ * this is just an alias for strftime(3), so we can use that without
+ * getting warning from gcc
+ * 
+ * Returns: a formatted string of max length @max in @s
+ */
+size_t modest_text_utils_strftime(char *s, size_t max, const char  *fmt, const  struct tm *tm);
+
+
 #endif /* __MODEST_TEXT_UTILS_H__ */

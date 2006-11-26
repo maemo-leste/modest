@@ -243,7 +243,7 @@ on_menu_reply_forward (ModestMainWindow *self, guint action, GtkWidget *widget)
 	reply_key = g_strdup_printf ("%s/%s", MODEST_CONF_NAMESPACE, MODEST_CONF_REPLY_TYPE);
 	reply_type = modest_conf_get_int (conf, reply_key, &error);
 	if (error) {
-		g_warning (N_("Key %s not defined"), reply_key);
+		g_warning ("key %s not defined", reply_key);
 		reply_type = MODEST_MAIL_OPERATION_REPLY_TYPE_CITE;
 		g_error_free (error);
 		error = NULL;
@@ -253,7 +253,7 @@ on_menu_reply_forward (ModestMainWindow *self, guint action, GtkWidget *widget)
 	forward_key = g_strdup_printf ("%s/%s", MODEST_CONF_NAMESPACE, MODEST_CONF_FORWARD_TYPE);
 	forward_type = modest_conf_get_int (conf, forward_key, NULL);
 	if (error) {
-		g_warning (N_("Key %s not defined"), forward_key);
+		g_warning ("key %s not defined", forward_key);
 		reply_type = MODEST_MAIL_OPERATION_FORWARD_TYPE_INLINE;
 		g_error_free (error);
 	}
@@ -293,6 +293,8 @@ on_menu_reply_forward (ModestMainWindow *self, guint action, GtkWidget *widget)
 					modest_mail_operation_create_forward_mail (msg, from, forward_type);
 				edit_type = MODEST_EDIT_TYPE_FORWARD;
 				break;
+			default:
+				g_warning ("unexpected action type: %d", action);
 			}
 
 			/* Set from */

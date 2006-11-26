@@ -1,6 +1,6 @@
 #
 # Makefile.am
-# Time-stamp: <2006-08-17 14:29:08 (djcb)>
+# Time-stamp: <2006-11-26 19:23:53 (djcb)>
 SUBDIRS=$(MODEST_PLATFORM_DIR) widgets
 DIST_SUBDIRS = widgets gtk
 
@@ -55,7 +55,6 @@ modest_SOURCES=\
 	modest-tny-stream-gtkhtml.c\
 	modest-tny-attachment.h\
 	modest-tny-attachment.c\
-	modest-ui.h \
 	modest-marshal.c \
 	modest-marshal.h \
 	modest-mail-operation.c \

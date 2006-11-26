@@ -28,12 +28,11 @@
  */
 
 
-/* modest-ui.c */
-
-#include <gtk/gtk.h>
+#include <glib.h>
 #include <string.h>
 #include <stdlib.h>
 #include <glib/gi18n.h>
+#include <regex.h>
 #include "modest-text-utils.h"
 
 
@@ -202,19 +201,19 @@ get_breakpoint (const gchar * s, const gint indent, const gint limit)
 /* just to prevent warnings:
  * warning: `%x' yields only last 2 digits of year in some locales
  */
-static size_t
-my_strftime(char *s, size_t max, const char  *fmt,  const
-	    struct tm *tm) {
+size_t
+modest_text_utils_strftime(char *s, size_t max, const char  *fmt, const  struct tm *tm)
+{
 	return strftime(s, max, fmt, tm);
 }
 
 static gchar *
-cite (const time_t sent_date, const gchar *from) {
-	gchar *str;
+cite (const time_t sent_date, const gchar *from)
+{
 	gchar sent_str[101];
 
 	/* format sent_date */
-	my_strftime (sent_str, 100, "%c", localtime (&sent_date));
+	modest_text_utils_strftime (sent_str, 100, "%c", localtime (&sent_date));
 	return g_strdup_printf (N_("On %s, %s wrote:\n"), sent_str, from);
 }
 
@@ -280,10 +279,11 @@ modest_text_utils_quote (const gchar * to_quote, const gchar * from,
 	return g_string_free (q, FALSE);
 }
 
-static gchar *
-create_derivated_subject (const gchar *subject, const gchar *prefix)
+
+gchar *
+modest_text_utils_derived_subject (const gchar *subject, const gchar *prefix)
 {
-	gchar *tmp, *buffer;
+	gchar *tmp;
 
 	if (!subject)
 		return g_strdup_printf ("%s ", prefix);
@@ -298,36 +298,9 @@ create_derivated_subject (const gchar *subject, const gchar *prefix)
 	}
 }
 
-/**
- * modest_text_utils_create_reply_subject:
- * @subject: 
- * 
- * creates a new subject with a reply prefix if not present before
- * 
- * Returns: a new subject with the reply prefix
- **/
-gchar * 
-modest_text_utils_create_reply_subject (const gchar *subject)
-{
-	return create_derivated_subject (subject, _("Re:"));
-}
-
-/**
- * modest_text_utils_create_forward_subject:
- * @subject: 
- * 
- * creates a new subject with a forward prefix if not present before
- * 
- * Returns:  a new subject with the forward prefix
- **/
-gchar * 
-modest_text_utils_create_forward_subject (const gchar *subject)
-{
-	return create_derivated_subject (subject, _("Fw:"));
-}
 
 gchar *
-modest_text_utils_create_cited_text (const gchar *from, 
+modest_text_utils_cited_text (const gchar *from, 
 				     time_t sent_date, 
 				     const gchar *text)
 {
@@ -340,25 +313,15 @@ modest_text_utils_create_cited_text (const gchar *from,
 	return retval;
 }
 
-/**
- * modest_text_utils_create_inlined_text:
- * @text: the original text
- * 
- * creates a new string with the "Original message" text prepended to
- * the text passed as argument and some data of the header
- * 
- * Returns:  a newly allocated text
- **/
+
 gchar * 
-modest_text_utils_create_inlined_text (const gchar *from,
-				       time_t sent_date,
-				       const gchar *to,
-				      const gchar *subject,
-				      const gchar *text)
+modest_text_utils_inlined_text (const gchar *from, time_t sent_date,
+				const gchar *to, const gchar *subject,
+				const gchar *text)
 {
 	gchar sent_str[101];
 
-	my_strftime (sent_str, 100, "%c", localtime (&sent_date));
+	modest_text_utils_strftime (sent_str, 100, "%c", localtime (&sent_date));
 
 	return g_strdup_printf ("%s\n%s %s\n%s %s\n%s %s\n%s %s\n\n%s", 
 				_("-----Forwarded Message-----"),
@@ -370,28 +333,27 @@ modest_text_utils_create_inlined_text (const gchar *from,
 }
 
 gchar *
-modest_text_utils_remove_mail_from_mail_list (const gchar *emails,
-					      const gchar *email)
+modest_text_utils_remove_address (const gchar *address, const gchar *address_list)
 {
 	char *dup, *token, *ptr, *result;
 	GString *filtered_emails;
 
-	if (!emails)
+	if (!address_list)
 		return NULL;
 
 	/* Search for substring */
-	if (!strstr ((const char *) emails, (const char *) email))
-		return g_strdup (emails);
+	if (!strstr ((const char *) address_list, (const char *) address))
+		return g_strdup (address_list);
 
-	dup = g_strdup (emails);
+	dup = g_strdup (address_list);
 	filtered_emails = g_string_new (NULL);
-
+	
 	token = strtok_r (dup, ",", &ptr);
 
 	while (token != NULL) {
 		/* Add to list if not found */
-		if (!strstr ((const char *) token, (const char *) email)) {
-			if (G_UNLIKELY (filtered_emails->len) == 0)
+		if (!strstr ((const char *) token, (const char *) address)) {
+			if (filtered_emails->len == 0)
 				g_string_append_printf (filtered_emails, "%s", token);
 			else
 				g_string_append_printf (filtered_emails, ",%s", token);
@@ -406,3 +368,216 @@ modest_text_utils_remove_mail_from_mail_list (const gchar *emails,
 
 	return result;
 }
+
+
+
+
+/*
+ * we need these regexps to find URLs in plain text e-mails
+ */
+typedef struct _url_match_pattern_t url_match_pattern_t;
+struct _url_match_pattern_t {
+	gchar   *regex;
+	regex_t *preg;
+	gchar   *prefix;
+};
+
+typedef struct _url_match_t url_match_t;
+struct _url_match_t {
+	guint offset;
+	guint len;
+	const gchar* prefix;
+};
+
+
+#define MAIL_VIEWER_URL_MATCH_PATTERNS  {				\
+	{ "(file|rtsp|http|ftp|https)://[-A-Za-z0-9_$.+!*(),;:@%&=?/~#]+[-A-Za-z0-9_$%&=?/~#]",\
+	  NULL, NULL },\
+	{ "www\\.[-a-z0-9.]+[-a-z0-9](:[0-9]*)?(/[-A-Za-z0-9_$.+!*(),;:@%&=?/~#]*[^]}\\),?!;:\"]?)?",\
+	  NULL, "http://" },\
+	{ "ftp\\.[-a-z0-9.]+[-a-z0-9](:[0-9]*)?(/[-A-Za-z0-9_$.+!*(),;:@%&=?/~#]*[^]}\\),?!;:\"]?)?",\
+	  NULL, "ftp://" },\
+	{ "(voipto|callto|chatto|jabberto|xmpp):[-_a-z@0-9.\\+]+", \
+	   NULL, NULL},						    \
+	{ "mailto:[-_a-z0-9.\\+]+@[-_a-z0-9.]+",		    \
+	  NULL, NULL},\
+	{ "[-_a-z0-9.\\+]+@[-_a-z0-9.]+",\
+	  NULL, "mailto:"}\
+	}
+
+
+static gint 
+cmp_offsets_reverse (const url_match_t *match1, const url_match_t *match2)
+{
+	return match2->offset - match1->offset;
+}
+
+
+
+/*
+ * check if the match is inside an existing match... */
+static void
+chk_partial_match (const url_match_t *match, guint* offset)
+{
+	if (*offset >= match->offset && *offset < match->offset + match->len)
+		*offset = -1;
+}
+
+static GSList*
+get_url_matches (GString *txt)
+{
+	regmatch_t rm;
+        guint rv, i, offset = 0;
+        GSList *match_list = NULL;
+
+	static url_match_pattern_t patterns[] = MAIL_VIEWER_URL_MATCH_PATTERNS;
+	const size_t pattern_num = sizeof(patterns)/sizeof(url_match_pattern_t);
+
+	/* initalize the regexps */
+	for (i = 0; i != pattern_num; ++i) {
+		patterns[i].preg = g_new0 (regex_t,1);
+		g_assert(regcomp (patterns[i].preg, patterns[i].regex,
+				  REG_ICASE|REG_EXTENDED|REG_NEWLINE) == 0);
+	}
+        /* find all the matches */
+	for (i = 0; i != pattern_num; ++i) {
+		offset     = 0;	
+		while (1) {
+			int test_offset;
+			if ((rv = regexec (patterns[i].preg, txt->str + offset, 1, &rm, 0)) != 0) {
+				g_assert (rv == REG_NOMATCH); /* this should not happen */
+				break; /* try next regexp */ 
+			}
+			if (rm.rm_so == -1)
+				break;
+
+			/* FIXME: optimize this */
+			/* to avoid partial matches on something that was already found... */
+			/* check_partial_match will put -1 in the data ptr if that is the case */
+			test_offset = offset + rm.rm_so;
+			g_slist_foreach (match_list, (GFunc)chk_partial_match, &test_offset);
+			
+			/* make a list of our matches (<offset, len, prefix> tupels)*/
+			if (test_offset != -1) {
+				url_match_t *match = g_new (url_match_t,1);
+				match->offset = offset + rm.rm_so;
+				match->len    = rm.rm_eo - rm.rm_so;
+				match->prefix = patterns[i].prefix;
+				match_list = g_slist_prepend (match_list, match);
+			}
+			offset += rm.rm_eo;
+		}
+	}
+
+	for (i = 0; i != pattern_num; ++i) {
+		regfree (patterns[i].preg);
+		g_free  (patterns[i].preg);
+	} /* don't free patterns itself -- it's static */
+	
+	/* now sort the list, so the matches are in reverse order of occurence.
+	 * that way, we can do the replacements starting from the end, so we don't need
+	 * to recalculate the offsets
+	 */
+	match_list = g_slist_sort (match_list,
+				   (GCompareFunc)cmp_offsets_reverse); 
+	return match_list;	
+}
+
+
+
+static void
+hyperlinkify_plain_text (GString *txt)
+{
+	GSList *cursor;
+	GSList *match_list = get_url_matches (txt);
+
+	/* we will work backwards, so the offsets stay valid */
+	for (cursor = match_list; cursor; cursor = cursor->next) {
+
+		url_match_t *match = (url_match_t*) cursor->data;
+		gchar *url  = g_strndup (txt->str + match->offset, match->len);
+		gchar *repl = NULL; /* replacement  */
+
+		/* the prefix is NULL: use the one that is already there */
+		repl = g_strdup_printf ("<a href=\"%s%s\">%s</a>",
+					match->prefix ? match->prefix : "", url, url);
+
+		/* replace the old thing with our hyperlink
+		 * replacement thing */
+		g_string_erase  (txt, match->offset, match->len);
+		g_string_insert (txt, match->offset, repl);
+		
+		g_free (url);
+		g_free (repl);
+
+		g_free (cursor->data);	
+	}
+	
+	g_slist_free (match_list);
+}
+
+
+
+gchar*
+modest_text_utils_convert_to_html (const gchar *data)
+{
+	guint		 i;
+	gboolean	 first_space = TRUE;
+	GString		*html;	    
+	gsize           len;
+
+	if (!data)
+		return NULL;
+
+	len = strlen (data);
+	html = g_string_sized_new (len + 100);	/* just a  guess... */
+	
+	g_string_append_printf (html,
+				"<html>"
+				"<head>"
+				"<meta http-equiv=\"content-type\""
+				" content=\"text/html; charset=utf8\">"
+				"</head>"
+				"<body><tt>");
+	
+	/* replace with special html chars where needed*/
+	for (i = 0; i != len; ++i)  {
+		char	kar = data[i]; 
+		switch (kar) {
+			
+		case 0:  break; /* ignore embedded \0s */	
+		case '<' : g_string_append   (html, "&lt;"); break;
+		case '>' : g_string_append   (html, "&gt;"); break;
+		case '&' : g_string_append   (html, "&quot;"); break;
+		case '\n': g_string_append   (html, "<br>\n"); break;
+		default:
+			if (kar == ' ') {
+				g_string_append (html, first_space ? " " : "&nbsp;");
+				first_space = FALSE;
+			} else	if (kar == '\t')
+				g_string_append (html, "&nbsp; &nbsp;&nbsp;");
+			else {
+				int charnum = 0;
+				first_space = TRUE;
+				/* optimization trick: accumulate 'normal' chars, then copy */
+				do {
+					kar = data [++charnum + i];
+					
+				} while ((i + charnum < len) &&
+					 (kar > '>' || (kar != '<' && kar != '>'
+							&& kar != '&' && kar !=  ' '
+							&& kar != '\n' && kar != '\t')));
+				g_string_append_len (html, &data[i], charnum);
+				i += (charnum  - 1);
+			}
+		}
+	}
+	
+	g_string_append (html, "</tt></body></html>");
+	hyperlinkify_plain_text (html);
+
+	return g_string_free (html, FALSE);
+}
+
+
+
