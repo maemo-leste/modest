@@ -60,15 +60,15 @@ struct _ModestEditMsgWindowClass {
 };
 
 
-enum _ModestEditType {
+typedef enum _ModestEditType {
 	MODEST_EDIT_TYPE_NEW,
 	MODEST_EDIT_TYPE_REPLY,
 	MODEST_EDIT_TYPE_FORWARD,
 	MODEST_EDIT_TYPE_VIEW,
 	
 	MODEST_EDIT_TYPE_NUM
-};
-typedef enum _ModestEditType ModestEditType;
+} ModestEditType;
+/* typedef enum _ModestEditType ModestEditType; */
 
 
 /* member functions */

@@ -418,3 +418,34 @@ modest_conf_on_change (GConfClient *client, guint conn_id, GConfEntry *entry,
 		       signals[KEY_CHANGED_SIGNAL], 0,
 		       key, event);
 }
+
+GSList * 
+modest_conf_get_list (ModestConf* self, const gchar* key, ModestConfValueType list_type, GError **err)
+{
+	ModestConfPrivate *priv;
+	GConfValueType gconf_type;
+	
+	g_return_val_if_fail (self, NULL);
+	g_return_val_if_fail (key,  NULL);
+
+	priv = MODEST_CONF_GET_PRIVATE(self);
+
+	switch (list_type) {
+	case MODEST_CONF_VALUE_INT:
+		gconf_type = GCONF_VALUE_INT;
+		break;
+	case MODEST_CONF_VALUE_BOOL:
+		gconf_type = GCONF_VALUE_BOOL;
+		break;
+	case MODEST_CONF_VALUE_FLOAT:
+		gconf_type = GCONF_VALUE_FLOAT;
+		break;
+	case MODEST_CONF_VALUE_STRING:
+		gconf_type = GCONF_VALUE_STRING;
+		break;
+	default:
+		return NULL;
+	}
+
+	return gconf_client_get_list (priv->gconf_client, key, gconf_type, err);
+}

@@ -47,34 +47,34 @@ G_BEGIN_DECLS
 typedef struct _ModestMailOperation      ModestMailOperation;
 typedef struct _ModestMailOperationClass ModestMailOperationClass;
 
-typedef enum _ModestMailOperationForwardType ModestMailOperationForwardType;
-typedef enum _ModestMailOperationReplyType   ModestMailOperationReplyType;
-typedef enum _ModestMailOperationReplyMode   ModestMailOperationReplyMode;
-typedef enum _ModestMailOperationStatus      ModestMailOperationStatus;
+/* typedef enum _ModestMailOperationForwardType ModestMailOperationForwardType; */
+/* typedef enum _ModestMailOperationReplyType   ModestMailOperationReplyType; */
+/* typedef enum _ModestMailOperationReplyMode   ModestMailOperationReplyMode; */
+/* typedef enum _ModestMailOperationStatus      ModestMailOperationStatus; */
 
-enum _ModestMailOperationForwardType {
+typedef enum _ModestMailOperationForwardType {
 	MODEST_MAIL_OPERATION_FORWARD_TYPE_INLINE = 1,
 	MODEST_MAIL_OPERATION_FORWARD_TYPE_ATTACHMENT
-};
+} ModestMailOperationForwardType;
 
-enum _ModestMailOperationReplyType {
+typedef enum _ModestMailOperationReplyType {
 	MODEST_MAIL_OPERATION_REPLY_TYPE_CITE = 1,
 	MODEST_MAIL_OPERATION_REPLY_TYPE_QUOTE
-};
+} ModestMailOperationReplyType;
 
-enum _ModestMailOperationReplyMode {
+typedef enum _ModestMailOperationReplyMode {
 	MODEST_MAIL_OPERATION_REPLY_MODE_SENDER,
 	MODEST_MAIL_OPERATION_REPLY_MODE_LIST,
 	MODEST_MAIL_OPERATION_REPLY_MODE_ALL
-};
+} ModestMailOperationReplyMode;
 
-enum _ModestMailOperationStatus {
+typedef enum _ModestMailOperationStatus {
 	MODEST_MAIL_OPERATION_STATUS_INVALID,
 	MODEST_MAIL_OPERATION_STATUS_SUCCESS,
 	MODEST_MAIL_OPERATION_STATUS_FAILED,
 	MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS,
 	MODEST_MAIL_OPERATION_STATUS_CANCELLED
-};
+} ModestMailOperationStatus;
 
 struct _ModestMailOperation {
 	 GObject parent;
@@ -91,38 +91,76 @@ struct _ModestMailOperationClass {
 GType        modest_mail_operation_get_type    (void) G_GNUC_CONST;
 
 /* typical parameter-less _new function */
-ModestMailOperation*    modest_mail_operation_new         (TnyAccount *account);
+ModestMailOperation*    modest_mail_operation_new         (void);
 
 /* fill in other public functions, eg.: */
-void                    modest_mail_operation_send_mail (ModestMailOperation *mail_operation,
-							 TnyMsg* msg);
+void    modest_mail_operation_send_mail       (ModestMailOperation *mail_op,
+					       TnyTransportAccount *transport_account,
+					       TnyMsg* msg);
 
-void                    modest_mail_operation_send_new_mail (ModestMailOperation *mail_operation,
-							     const gchar *from,
-							     const gchar *to,
-							     const gchar *cc,
-							     const gchar *bcc,
-							     const gchar *subject,
-							     const gchar *body,
-							     const GList *attachments_list);
+void    modest_mail_operation_send_new_mail   (ModestMailOperation *mail_op,
+					       TnyTransportAccount *transport_account,
+					       const gchar *from,
+					       const gchar *to,
+					       const gchar *cc,
+					       const gchar *bcc,
+					       const gchar *subject,
+					       const gchar *body,
+					       const GList *attachments_list);
 
 TnyMsg* modest_mail_operation_create_forward_mail (TnyMsg *msg, 
 						   const gchar *from,
 						   ModestMailOperationForwardType forward_type);
 
-TnyMsg* modest_mail_operation_create_reply_mail (TnyMsg *msg, 
-						 const gchar *from,
-						 ModestMailOperationReplyType reply_type,
-						 ModestMailOperationReplyMode reply_mode);
+TnyMsg* modest_mail_operation_create_reply_mail    (TnyMsg *msg, 
+						    const gchar *from,
+						    ModestMailOperationReplyType reply_type,
+						    ModestMailOperationReplyMode reply_mode);
 
-void    modest_mail_operation_update_account (ModestMailOperation *mail_operation);
+void    modest_mail_operation_update_account       (ModestMailOperation *mail_op,
+						    TnyStoreAccount *store_account);
+
+/* Functions that perform store operations */
+TnyFolder*    modest_mail_operation_create_folder  (ModestMailOperation *mail_op,
+						    TnyFolderStore *parent,
+						    const gchar *name);
+
+void          modest_mail_operation_remove_folder  (ModestMailOperation *mail_op,
+						    TnyFolder *folder,
+						    gboolean remove_to_trash);
+
+void          modest_mail_operation_rename_folder  (ModestMailOperation *mail_op,
+						    TnyFolder *folder, 
+						    const gchar *name);
+
+void          modest_mail_operation_move_folder    (ModestMailOperation *mail_op,
+						    TnyFolder *folder, 
+						    TnyFolderStore *parent);
+
+void          modest_mail_operation_copy_folder    (ModestMailOperation *mail_op,
+						    TnyFolder *folder, 
+						    TnyFolderStore *parent);
+
+/* Functions that performs msg operations */
+
+void          modest_mail_operation_copy_msg       (ModestMailOperation *mail_op,
+						    TnyHeader *header, 
+						    TnyFolder *folder);
+
+void          modest_mail_operation_move_msg       (ModestMailOperation *mail_op,
+						    TnyHeader *header, 
+						    TnyFolder *folder);
+
+void          modest_mail_operation_remove_msg     (ModestMailOperation *mail_op,
+						    TnyHeader *header,
+						    gboolean remove_to_trash);
 
 /* Functions to control mail operations */
-ModestMailOperationStatus modest_mail_operation_get_status (ModestMailOperation *mail_operation);
+ModestMailOperationStatus modest_mail_operation_get_status (ModestMailOperation *mail_op);
 
-const GError*             modest_mail_operation_get_error  (ModestMailOperation *mail_operation);
+const GError*             modest_mail_operation_get_error  (ModestMailOperation *mail_op);
 
-void                      modest_mail_operation_cancel     (ModestMailOperation *mail_operation);
+void                      modest_mail_operation_cancel     (ModestMailOperation *mail_op);
 
 G_END_DECLS
 

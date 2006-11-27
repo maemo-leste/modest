@@ -78,6 +78,7 @@ src/gtk/Makefile
 src/widgets/Makefile
 docs/Makefile
 docs/reference/Makefile
+tests/Makefile
 ])
 
 echo

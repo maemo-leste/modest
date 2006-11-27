@@ -31,8 +31,8 @@ modest_SOURCES=\
 	modest-conf.c\
 	modest-pair.h\
 	modest-pair.c\
-	modest-widget-factory.h\
-	modest-widget-factory.c\
+	modest-widget-factory.h	\
+	modest-widget-factory.c	\
 	modest-widget-memory.h\
 	modest-widget-memory.c\
 	modest-account-keys.h\
@@ -44,8 +44,6 @@ modest_SOURCES=\
 	modest-tny-account-store.c\
 	modest-tny-msg-actions.h\
 	modest-tny-msg-actions.c\
-	modest-tny-store-actions.c\
-	modest-tny-store-actions.h\
 	modest-protocol-mgr.h\
 	modest-protocol-mgr.c\
 	modest-ui.h\
@@ -62,12 +60,11 @@ modest_SOURCES=\
 	modest-tny-platform-factory.c \
 	modest-tny-platform-factory.h
 
-modest_LDADD = \
-	$(MODEST_GSTUFF_LIBS) \
-	$(MODEST_LIBTINYMAIL_GNOME_DESKTOP_LIBS) \
-	$(MODEST_LIBTINYMAIL_MAEMO_LIBS) \
-	$(MODEST_PLATFORM_DIR)/libmodest-ui.la \
-	widgets/libmodest-widgets.la
-
+modest_LDADD = 						\
+	$(MODEST_GSTUFF_LIBS) 				\
+	$(MODEST_LIBTINYMAIL_GNOME_DESKTOP_LIBS)	\
+	$(MODEST_LIBTINYMAIL_MAEMO_LIBS) 		\
+	$(MODEST_PLATFORM_DIR)/libmodest-ui.la		\
+	widgets/libmodest-widgets.la			
 
 EXTRA_DIST=modest-marshal.list

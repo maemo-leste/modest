@@ -9,12 +9,20 @@ ModestTnyAccountStore
 
 </para>
 
+
 <!-- ##### SECTION See_Also ##### -->
 <para>
 
 </para>
 
+
 <!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### TYPEDEF ModestTnyGetPassFunc ##### -->
+<para>
+
+</para>
 
 
 <!-- ##### STRUCT ModestTnyAccountStore ##### -->
@@ -22,7 +30,42 @@ ModestTnyAccountStore
 
 </para>
 
-@parent: 
+
+<!-- ##### SIGNAL ModestTnyAccountStore::account-update ##### -->
+<para>
+
+</para>
+
+@modesttnyaccountstore: the object which received the signal.
+@arg1: 
+
+<!-- ##### SIGNAL ModestTnyAccountStore::password-requested ##### -->
+<para>
+
+</para>
+
+@modesttnyaccountstore: the object which received the signal.
+@arg1: 
+@arg2: 
+@arg3: 
+
+<!-- ##### SIGNAL ModestTnyAccountStore::account-update ##### -->
+<para>
+
+</para>
+
+@modesttnyaccountstore: the object which received the signal.
+@arg1: 
+
+<!-- ##### SIGNAL ModestTnyAccountStore::password-requested ##### -->
+<para>
+
+</para>
+
+@modesttnyaccountstore: the object which received the signal.
+@arg1: 
+@arg2: 
+@arg3: 
 
 <!-- ##### FUNCTION modest_tny_account_store_new ##### -->
 <para>

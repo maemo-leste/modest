@@ -64,14 +64,14 @@ struct _ModestWidgetFactoryClass {
 };
 
 
-enum _ModestComboBoxType {
+typedef enum _ModestComboBoxType {
 	MODEST_COMBO_BOX_TYPE_STORE_PROTOS,
 	MODEST_COMBO_BOX_TYPE_TRANSPORT_PROTOS,
 	MODEST_COMBO_BOX_TYPE_SECURITY_PROTOS,
 	MODEST_COMBO_BOX_TYPE_AUTH_PROTOS,
 	MODEST_COMBO_BOX_TYPE_TRANSPORTS
-};
-typedef enum _ModestComboBoxType ModestComboBoxType;
+} ModestComboBoxType;
+/* typedef enum _ModestComboBoxType ModestComboBoxType; */
 
 
 /**

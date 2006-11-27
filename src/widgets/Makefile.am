@@ -13,20 +13,20 @@ INCLUDES=\
 noinst_LTLIBRARIES=\
 	libmodest-widgets.la
 
-libmodest_widgets_la_SOURCES=    \
-	modest-account-view.c    \
-	modest-account-view.h    \
-	modest-folder-view.c     \
-	modest-folder-view.h     \
-	modest-header-view.c     \
-	modest-header-view.h     \
-	modest-msg-view.c        \
-	modest-msg-view.h	 \
-	modest-toolbar.h	 \
-	modest-toolbar.c	 \
-	modest-combo-box.c	 \
+libmodest_widgets_la_SOURCES=   \
+	modest-account-view.c   \
+	modest-account-view.h   \
+	modest-folder-view.c    \
+	modest-folder-view.h    \
+	modest-header-view.c    \
+	modest-header-view.h    \
+	modest-msg-view.c       \
+	modest-msg-view.h	\
+	modest-toolbar.h	\
+	modest-toolbar.c	\
+	modest-combo-box.c	\
 	modest-combo-box.h
  
 LDADD = \
-	$(MODEST_GSTUFF_LIBS) \
+	$(MODEST_GSTUFF_LIBS) 				\
 	$(MODEST_LIBTINYMAIL_GNOME_DESKTOP_LIBS)

@@ -1,3 +1,171 @@
+<!-- ##### SECTION ./tmpl/modest-edit-window.sgml:Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION ./tmpl/modest-edit-window.sgml:See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION ./tmpl/modest-edit-window.sgml:Short_Description ##### -->
+
+
+
+<!-- ##### SECTION ./tmpl/modest-edit-window.sgml:Stability_Level ##### -->
+
+
+
+<!-- ##### SECTION ./tmpl/modest-edit-window.sgml:Title ##### -->
+ModestEditWindow
+
+
+<!-- ##### SECTION ./tmpl/modest-tny-folder-tree-view.sgml:Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION ./tmpl/modest-tny-folder-tree-view.sgml:See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION ./tmpl/modest-tny-folder-tree-view.sgml:Short_Description ##### -->
+
+
+
+<!-- ##### SECTION ./tmpl/modest-tny-folder-tree-view.sgml:Stability_Level ##### -->
+
+
+
+<!-- ##### SECTION ./tmpl/modest-tny-folder-tree-view.sgml:Title ##### -->
+ModestTnyFolderTreeView
+
+
+<!-- ##### SECTION ./tmpl/modest-tny-header-tree-view.sgml:Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION ./tmpl/modest-tny-header-tree-view.sgml:See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION ./tmpl/modest-tny-header-tree-view.sgml:Short_Description ##### -->
+
+
+
+<!-- ##### SECTION ./tmpl/modest-tny-header-tree-view.sgml:Stability_Level ##### -->
+
+
+
+<!-- ##### SECTION ./tmpl/modest-tny-header-tree-view.sgml:Title ##### -->
+ModestTnyHeaderTreeView
+
+
+<!-- ##### SECTION ./tmpl/modest-tny-msg-view.sgml:Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION ./tmpl/modest-tny-msg-view.sgml:See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION ./tmpl/modest-tny-msg-view.sgml:Short_Description ##### -->
+
+
+
+<!-- ##### SECTION ./tmpl/modest-tny-msg-view.sgml:Stability_Level ##### -->
+
+
+
+<!-- ##### SECTION ./tmpl/modest-tny-msg-view.sgml:Title ##### -->
+ModestTnyMsgView
+
+
+<!-- ##### SECTION ./tmpl/modest-tny-transport-actions.sgml:Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION ./tmpl/modest-tny-transport-actions.sgml:See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION ./tmpl/modest-tny-transport-actions.sgml:Short_Description ##### -->
+
+
+
+<!-- ##### SECTION ./tmpl/modest-tny-transport-actions.sgml:Stability_Level ##### -->
+
+
+
+<!-- ##### SECTION ./tmpl/modest-tny-transport-actions.sgml:Title ##### -->
+ModestTnyTransportActions
+
+
+<!-- ##### SECTION ./tmpl/modest-window-mgr.sgml:Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION ./tmpl/modest-window-mgr.sgml:See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION ./tmpl/modest-window-mgr.sgml:Short_Description ##### -->
+
+
+
+<!-- ##### SECTION ./tmpl/modest-window-mgr.sgml:Stability_Level ##### -->
+
+
+
+<!-- ##### SECTION ./tmpl/modest-window-mgr.sgml:Title ##### -->
+ModestWindowMgr
+
+
+<!-- ##### SECTION ./tmpl/modest.glade.sgml:Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION ./tmpl/modest.glade.sgml:See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION ./tmpl/modest.glade.sgml:Short_Description ##### -->
+
+
+
+<!-- ##### SECTION ./tmpl/modest.glade.sgml:Stability_Level ##### -->
+
+
+
+<!-- ##### SECTION ./tmpl/modest.glade.sgml:Title ##### -->
+modest.glade
+
+
 <!-- ##### MACRO MODEST_CONF_EDIT_WINDOW_HEIGHT ##### -->
 <para>
 
@@ -58,30 +226,6 @@
 </para>
 
 
-<!-- ##### MACRO MODEST_PROTO_IMAP ##### -->
-<para>
-
-</para>
-
-
-<!-- ##### MACRO MODEST_PROTO_POP ##### -->
-<para>
-
-</para>
-
-
-<!-- ##### MACRO MODEST_PROTO_SENDMAIL ##### -->
-<para>
-
-</para>
-
-
-<!-- ##### MACRO MODEST_PROTO_SMTP ##### -->
-<para>
-
-</para>
-
-
 <!-- ##### STRUCT ModestEditWindow ##### -->
 <para>
 
@@ -97,12 +241,6 @@
 @win: 
 @type: 
 @id: 
-
-<!-- ##### TYPEDEF ModestProtoType ##### -->
-<para>
-
-</para>
-
 
 <!-- ##### STRUCT ModestTnyFolderTreeView ##### -->
 <para>
@@ -328,21 +466,59 @@
 @attachments: 
 @Returns: 
 
-<!-- ##### FUNCTION modest_proto_is_valid ##### -->
+<!-- ##### FUNCTION modest_mail_operation_move_folder_to_trash ##### -->
 <para>
 
 </para>
 
-@proto: 
-@store_proto: 
+@mail_operation: 
+@folder: 
+
+<!-- ##### FUNCTION modest_text_utils_create_cited_text ##### -->
+<para>
+
+</para>
+
+@from: 
+@sent_date: 
+@text: 
 @Returns: 
 
-<!-- ##### FUNCTION modest_proto_type ##### -->
+<!-- ##### FUNCTION modest_text_utils_create_forward_subject ##### -->
 <para>
 
 </para>
 
-@proto: 
+@subject: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_text_utils_create_inlined_text ##### -->
+<para>
+
+</para>
+
+@from: 
+@sent_date: 
+@to: 
+@subject: 
+@text: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_text_utils_create_reply_subject ##### -->
+<para>
+
+</para>
+
+@subject: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_text_utils_remove_mail_from_mail_list ##### -->
+<para>
+
+</para>
+
+@emails: 
+@email: 
 @Returns: 
 
 <!-- ##### FUNCTION modest_tny_folder_tree_view_is_empty ##### -->
@@ -380,6 +556,29 @@
 @folder: 
 @Returns: 
 
+<!-- ##### FUNCTION modest_tny_msg_actions_copy ##### -->
+<para>
+
+</para>
+
+@header: 
+@folder: 
+
+<!-- ##### FUNCTION modest_tny_msg_actions_move ##### -->
+<para>
+
+</para>
+
+@header: 
+@folder: 
+
+<!-- ##### FUNCTION modest_tny_msg_actions_remove ##### -->
+<para>
+
+</para>
+
+@header: 
+
 <!-- ##### FUNCTION modest_tny_msg_view_new ##### -->
 <para>
 
@@ -401,6 +600,21 @@
 
 </para>
 
+@Returns: 
+
+<!-- ##### FUNCTION modest_tny_transport_actions_send_message ##### -->
+<para>
+
+</para>
+
+@transport_account: 
+@from: 
+@to: 
+@cc: 
+@bcc: 
+@subject: 
+@body: 
+@attachments_list: 
 @Returns: 
 
 <!-- ##### FUNCTION modest_ui_show_edit_window ##### -->

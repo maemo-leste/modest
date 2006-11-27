@@ -9,10 +9,12 @@ ModestMainWindow
 
 </para>
 
+
 <!-- ##### SECTION See_Also ##### -->
 <para>
 
 </para>
+
 
 <!-- ##### SECTION Stability_Level ##### -->
 
@@ -22,15 +24,12 @@ ModestMainWindow
 
 </para>
 
-@parent: 
 
 <!-- ##### FUNCTION modest_main_window_new ##### -->
 <para>
 
 </para>
 
-@conf: 
-@account_mgr: 
 @factory: 
 @Returns: 
 

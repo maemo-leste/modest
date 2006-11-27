@@ -22,7 +22,10 @@ SCANGOBJ_OPTIONS=
 
 # Extra options to supply to gtkdoc-scan.
 # e.g. SCAN_OPTIONS=--deprecated-guards="GTK_DISABLE_DEPRECATED" 
-SCAN_OPTIONS=
+SCAN_OPTIONS=\
+	--source-dir=$(top_srcdir)/src \
+	--source-dir=$(top_srcdir)/src/gtk \
+	--source-dir=$(top_srcdir)/src/widgets
 
 # Extra options to supply to gtkdoc-mkdb.
 # e.g. MKDB_OPTIONS=--sgml-mode --output-format=xml
@@ -64,8 +67,34 @@ expand_content_files=
 # signals and properties.
 # e.g. INCLUDES=-I$(top_srcdir) -I$(top_builddir) $(GTK_DEBUG_FLAGS)
 # e.g. GTKDOC_LIBS=$(top_builddir)/gtk/$(gtktargetlib)
-INCLUDES=-I$(top_srcdir)/src $(MODEST_GSTUFF_CFLAGS)
-GTKDOC_LIBS=$(MODEST_GSTUFF_LIBS)
+INCLUDES=						\
+	-I$(top_srcdir)/src $(MODEST_GSTUFF_CFLAGS)	\
+	-I$(top_srcdir)/src				\
+	-I$(top_srcdir)/src/gtk				\
+	-I$(top_srcdir)/src/widgets
+
+
+GTKDOC_LIBS=\
+	$(MODEST_LIBTINYMAIL_GNOME_DESKTOP_LIBS)	\
+	$(MODEST_LIBTINYMAIL_MAEMO_LIBS) 		\
+	$(MODEST_GSTUFF_LIBS)			\
+	$(top_builddir)/src/gtk/libmodest-ui.la		\
+	$(top_builddir)/src/widgets/libmodest-widgets.la\
+	${top_builddir}/src/modest-conf.o \
+	${top_builddir}/src/modest-account-mgr.o \
+	${top_builddir}/src/modest-tny-platform-factory.o \
+	${top_builddir}/src/modest-protocol-mgr.o \
+	${top_builddir}/src/modest-pair.o \
+	${top_builddir}/src/modest-marshal.o \
+	${top_builddir}/src/modest-tny-account-store.o \
+	${top_builddir}/src/modest-mail-operation.o \
+	${top_builddir}/src/modest-tny-msg-actions.o \
+	${top_builddir}/src/modest-tny-attachment.o \
+	${top_builddir}/src/modest-tny-stream-gtkhtml.o \
+	${top_builddir}/src/modest-widget-factory.o \
+	${top_builddir}/src/modest-widget-memory.o \
+	${top_builddir}/src/modest-icon-factory.o \
+	${top_builddir}/src/modest-text-utils.o
 
 # This includes the standard gtk-doc make rules, copied by gtkdocize.
 include $(top_srcdir)/gtk-doc.make

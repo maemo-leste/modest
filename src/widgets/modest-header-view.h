@@ -55,7 +55,35 @@ struct _ModestHeaderView {
 	/* insert public members, if any */
 };
 
-typedef enum _ModestItemType ModestItemType;
+/* typedef enum _ModestItemType ModestItemType; */
+
+
+typedef enum _ModestHeaderViewColumn {
+	MODEST_HEADER_VIEW_COLUMN_FROM,
+	MODEST_HEADER_VIEW_COLUMN_TO,
+	MODEST_HEADER_VIEW_COLUMN_SUBJECT,
+	MODEST_HEADER_VIEW_COLUMN_SENT_DATE,
+	MODEST_HEADER_VIEW_COLUMN_RECEIVED_DATE,
+	MODEST_HEADER_VIEW_COLUMN_MSGTYPE,
+	MODEST_HEADER_VIEW_COLUMN_ATTACH,
+	MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER,
+
+	MODEST_HEADER_VIEW_COLUMN_NUM
+} ModestHeaderViewColumn;
+/* typedef enum _ModestHeaderViewColumn ModestHeaderViewColumn; */
+
+typedef enum _ModestHeaderViewStyle {
+	MODEST_HEADER_VIEW_STYLE_NORMAL,
+	MODEST_HEADER_VIEW_STYLE_COMPACT,
+	MODEST_HEADER_VIEW_STYLE_NUM
+} ModestHeaderViewStyle;
+/* typedef enum _ModestHeaderViewStyle ModestHeaderViewStyle; */
+
+typedef enum _ModestItemType {
+	MODEST_ITEM_TYPE_MESSAGE,
+	MODEST_ITEM_TYPE_FOLDER,
+	MODEST_ITEM_TYPE_NUM
+} ModestItemType;
 
 struct _ModestHeaderViewClass {
 	GtkTreeViewClass parent_class;
@@ -75,35 +103,6 @@ struct _ModestHeaderViewClass {
 			       gint status,
 			       gpointer user_data);
 };
-
-
-enum _ModestHeaderViewColumn {
-	MODEST_HEADER_VIEW_COLUMN_FROM,
-	MODEST_HEADER_VIEW_COLUMN_TO,
-	MODEST_HEADER_VIEW_COLUMN_SUBJECT,
-	MODEST_HEADER_VIEW_COLUMN_SENT_DATE,
-	MODEST_HEADER_VIEW_COLUMN_RECEIVED_DATE,
-	MODEST_HEADER_VIEW_COLUMN_MSGTYPE,
-	MODEST_HEADER_VIEW_COLUMN_ATTACH,
-	MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER,
-
-	MODEST_HEADER_VIEW_COLUMN_NUM
-};
-typedef enum _ModestHeaderViewColumn ModestHeaderViewColumn;
-
-enum _ModestHeaderViewStyle {
-	MODEST_HEADER_VIEW_STYLE_NORMAL,
-	MODEST_HEADER_VIEW_STYLE_COMPACT,
-	MODEST_HEADER_VIEW_STYLE_NUM
-};
-typedef enum _ModestHeaderViewStyle ModestHeaderViewStyle;
-
-enum _ModestItemType {
-	MODEST_ITEM_TYPE_MESSAGE,
-	MODEST_ITEM_TYPE_FOLDER,
-	MODEST_ITEM_TYPE_NUM
-};
-
 
 /**
  * modest_header_view_get_type:

@@ -82,6 +82,20 @@ static TnyMimePart *         add_body_part    (TnyMsg *msg,
 					       gboolean has_attachments);
 
 
+static void modest_mail_operation_xfer_folder (ModestMailOperation *mail_op,
+					       TnyFolder *folder,
+					       TnyFolderStore *parent,
+					       gboolean delete_original);
+
+static void modest_mail_operation_xfer_msg    (ModestMailOperation *mail_op,
+					       TnyHeader *header, 
+					       TnyFolder *folder, 
+					       gboolean delete_original);
+
+static TnyFolder * modest_mail_operation_find_trash_folder (ModestMailOperation *mail_op,
+							    TnyStoreAccount *store_account);
+
+
 /* list my signals  */
 enum {
 	/* MY_SIGNAL_1, */
@@ -91,7 +105,6 @@ enum {
 
 typedef struct _ModestMailOperationPrivate ModestMailOperationPrivate;
 struct _ModestMailOperationPrivate {
-	TnyAccount                *account;
 	ModestMailOperationStatus  status;
 	GError                    *error;
 };
@@ -159,7 +172,6 @@ modest_mail_operation_init (ModestMailOperation *obj)
 
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(obj);
 
-	priv->account = NULL;
 	priv->status = MODEST_MAIL_OPERATION_STATUS_INVALID;
 	priv->error = NULL;
 }
@@ -171,10 +183,6 @@ modest_mail_operation_finalize (GObject *obj)
 
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(obj);
 
-	if (priv->account) {
-		g_object_unref (priv->account);
-		priv->account = NULL;
-	}
 	if (priv->error) {
 		g_error_free (priv->error);
 		priv->error = NULL;
@@ -184,44 +192,26 @@ modest_mail_operation_finalize (GObject *obj)
 }
 
 ModestMailOperation*
-modest_mail_operation_new (TnyAccount *account)
+modest_mail_operation_new (void)
 {
-	ModestMailOperation *mail_operation;
-	ModestMailOperationPrivate *priv;
-
-	mail_operation = 
-		MODEST_MAIL_OPERATION(g_object_new(MODEST_TYPE_MAIL_OPERATION, NULL));
-	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(mail_operation);
-
-	priv->account = g_object_ref (account);
-
-	return mail_operation;
+	return MODEST_MAIL_OPERATION(g_object_new(MODEST_TYPE_MAIL_OPERATION, NULL));
 }
 
 
 void
-modest_mail_operation_send_mail (ModestMailOperation *mail_operation,
+modest_mail_operation_send_mail (ModestMailOperation *mail_op,
+				 TnyTransportAccount *transport_account,
 				 TnyMsg* msg)
 {
-	ModestMailOperationPrivate *priv;
-	TnyTransportAccount *transport_account;
+	g_return_if_fail (MODEST_IS_MAIL_OPERATION (mail_op));
+	g_return_if_fail (TNY_IS_TRANSPORT_ACCOUNT (transport_account));
 
-	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(mail_operation);
-
-	if (!TNY_IS_TRANSPORT_ACCOUNT (priv->account)) {
-		set_error (mail_operation,
-			   MODEST_MAIL_OPERATION_ERROR_BAD_ACCOUNT,
-			   _("Error trying to send a mail. Use a transport account"));
-	}
-
-	transport_account = TNY_TRANSPORT_ACCOUNT (priv->account);
-
-	mail_operation = modest_mail_operation_new (NULL);
 	tny_transport_account_send (transport_account, msg);
 }
 
 void
-modest_mail_operation_send_new_mail (ModestMailOperation *mail_operation,
+modest_mail_operation_send_new_mail (ModestMailOperation *mail_op,
+				     TnyTransportAccount *transport_account,
 				     const gchar *from,
 				     const gchar *to,
 				     const gchar *cc,
@@ -232,32 +222,20 @@ modest_mail_operation_send_new_mail (ModestMailOperation *mail_operation,
 {
 	TnyMsg *new_msg;
 	TnyHeader *header;
-	TnyTransportAccount *transport_account;
-	ModestMailOperationPrivate *priv;
 	gchar *content_type;
 
-	g_return_if_fail (mail_operation);
+	g_return_if_fail (MODEST_IS_MAIL_OPERATION (mail_op));
+	g_return_if_fail (TNY_IS_TRANSPORT_ACCOUNT (transport_account));
 
 	/* Check parametters */
 	if (to == NULL) {
-		set_error (mail_operation,
+		set_error (mail_op,
 			   MODEST_MAIL_OPERATION_ERROR_MISSING_PARAMETER,
 			   _("Error trying to send a mail. You need to set almost one a recipient"));
 		return;
 	}
 
-	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(mail_operation);
-
-	if (!TNY_IS_TRANSPORT_ACCOUNT (priv->account)) {
-		set_error (mail_operation,
-			   MODEST_MAIL_OPERATION_ERROR_BAD_ACCOUNT,
-			   _("Error trying to send a mail. Use a transport account"));
-		return;
-	}
-
 	/* Create new msg */
-	transport_account = TNY_TRANSPORT_ACCOUNT (priv->account);
-
 	new_msg          = TNY_MSG (tny_camel_msg_new ());
 	header           = TNY_HEADER (tny_camel_header_new ());
 
@@ -505,7 +483,8 @@ modest_mail_operation_create_reply_mail (TnyMsg *msg,
 }
 
 void
-modest_mail_operation_update_account (ModestMailOperation *mail_operation)
+modest_mail_operation_update_account (ModestMailOperation *mail_op,
+				      TnyStoreAccount *store_account)
 {
 	TnyStoreAccount *storage_account;
 	ModestMailOperationPrivate *priv;
@@ -514,19 +493,10 @@ modest_mail_operation_update_account (ModestMailOperation *mail_operation)
 	TnyFolder *cur_folder;
 	TnyFolderStoreQuery *query;
 
-	g_return_if_fail (mail_operation);
-	g_return_if_fail (MODEST_IS_MAIL_OPERATION (mail_operation));
+	g_return_if_fail (MODEST_IS_MAIL_OPERATION (mail_op));
+	g_return_if_fail (TNY_IS_STORE_ACCOUNT(store_account));
 
-	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(mail_operation);
-
-	/* Check that it is a store account */
-	if (!TNY_IS_STORE_ACCOUNT (priv->account)) {
-		set_error (mail_operation,
-			   MODEST_MAIL_OPERATION_ERROR_BAD_ACCOUNT,
-			   _("Error trying to update an account. Use a store account"));
-		return;
-	}
-	storage_account = TNY_STORE_ACCOUNT (priv->account);
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(mail_op);
 
 	/* Get subscribed folders */
     	folders = TNY_LIST (tny_simple_list_new ());
@@ -545,43 +515,313 @@ modest_mail_operation_update_account (ModestMailOperation *mail_operation)
 		
 		cur_folder = TNY_FOLDER (tny_iterator_get_current (ifolders));
 		tny_folder_refresh_async (cur_folder, folder_refresh_cb,
-					  status_update_cb, mail_operation);
+					  status_update_cb, mail_op);
 	}
 	
 	g_object_unref (ifolders);
 }
 
 ModestMailOperationStatus
-modest_mail_operation_get_status (ModestMailOperation *mail_operation)
+modest_mail_operation_get_status (ModestMailOperation *mail_op)
 {
 	ModestMailOperationPrivate *priv;
 
-/* 	g_return_val_if_fail (mail_operation, MODEST_MAIL_OPERATION_STATUS_INVALID); */
-/* 	g_return_val_if_fail (MODEST_IS_MAIL_OPERATION (mail_operation),  */
+/* 	g_return_val_if_fail (mail_op, MODEST_MAIL_OPERATION_STATUS_INVALID); */
+/* 	g_return_val_if_fail (MODEST_IS_MAIL_OPERATION (mail_op),  */
 /* 			      MODEST_MAIL_OPERATION_STATUS_INVALID); */
 
-	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (mail_operation);
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (mail_op);
 	return priv->status;
 }
 
 const GError *
-modest_mail_operation_get_error (ModestMailOperation *mail_operation)
+modest_mail_operation_get_error (ModestMailOperation *mail_op)
 {
 	ModestMailOperationPrivate *priv;
 
-/* 	g_return_val_if_fail (mail_operation, NULL); */
-/* 	g_return_val_if_fail (MODEST_IS_MAIL_OPERATION (mail_operation), NULL); */
+/* 	g_return_val_if_fail (mail_op, NULL); */
+/* 	g_return_val_if_fail (MODEST_IS_MAIL_OPERATION (mail_op), NULL); */
 
-	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (mail_operation);
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (mail_op);
 	return priv->error;
 }
 
 void 
-modest_mail_operation_cancel (ModestMailOperation *mail_operation)
+modest_mail_operation_cancel (ModestMailOperation *mail_op)
 {
 	/* TODO */
 }
 
+/* ******************************************************************* */
+/* ************************** STORE  ACTIONS ************************* */
+/* ******************************************************************* */
+
+
+TnyFolder *
+modest_mail_operation_create_folder (ModestMailOperation *mail_op,
+				     TnyFolderStore *parent,
+				     const gchar *name)
+{
+	g_return_val_if_fail (TNY_IS_FOLDER_STORE (parent), NULL);
+	g_return_val_if_fail (name, NULL);
+
+	TnyFolder *new_folder = NULL;
+	TnyStoreAccount *store_account;
+
+	/* Create the folder */
+	new_folder = tny_folder_store_create_folder (parent, name);
+	if (!new_folder) 
+		return NULL;
+
+	/* Subscribe to folder */
+	if (!tny_folder_is_subscribed (new_folder)) {
+		store_account = tny_folder_get_account (TNY_FOLDER (parent));
+		tny_store_account_subscribe (store_account, new_folder);
+		g_object_unref (G_OBJECT (store_account));
+	}
+
+	return new_folder;
+}
+
+void
+modest_mail_operation_remove_folder (ModestMailOperation *mail_op,
+				     TnyFolder *folder,
+				     gboolean remove_to_trash)
+{
+	TnyFolderStore *folder_store;
+
+	g_return_if_fail (TNY_IS_FOLDER (folder));
+
+	/* Get folder store */
+	folder_store = TNY_FOLDER_STORE (tny_folder_get_account (folder));
+
+	/* Delete folder or move to trash */
+	if (remove_to_trash) {
+		TnyFolder *trash_folder;
+
+		trash_folder = modest_mail_operation_find_trash_folder (mail_op,
+									TNY_STORE_ACCOUNT (folder_store));
+
+		/* TODO: error_handling */
+		modest_mail_operation_move_folder (mail_op, 
+						   folder, 
+						   TNY_FOLDER_STORE (trash_folder));
+	} else {
+		tny_folder_store_remove_folder (folder_store, folder);
+		g_object_unref (G_OBJECT (folder));
+	}
+
+	/* Free instances */
+	g_object_unref (G_OBJECT (folder_store));
+}
+
+void
+modest_mail_operation_rename_folder (ModestMailOperation *mail_op,
+				     TnyFolder *folder,
+				     const gchar *name)
+{
+	g_return_if_fail (MODEST_IS_MAIL_OPERATION (mail_op));
+	g_return_if_fail (TNY_IS_FOLDER_STORE (folder));
+
+	/* FIXME: better error handling */
+	if (strrchr (name, '/') != NULL)
+		return;
+
+	/* Rename. Camel handles folder subscription/unsubscription */
+	tny_folder_set_name (folder, name);
+}
+
+void
+modest_mail_operation_move_folder (ModestMailOperation *mail_op,
+				   TnyFolder *folder,
+				   TnyFolderStore *parent)
+{
+	g_return_if_fail (MODEST_IS_MAIL_OPERATION (mail_op));
+	g_return_if_fail (TNY_IS_FOLDER_STORE (parent));
+	g_return_if_fail (TNY_IS_FOLDER (folder));
+	
+	modest_mail_operation_xfer_folder (mail_op, folder, parent, TRUE);
+}
+
+void
+modest_mail_operation_copy_folder (ModestMailOperation *mail_op,
+				   TnyFolder *folder,
+				   TnyFolderStore *parent)
+{
+	g_return_if_fail (MODEST_IS_MAIL_OPERATION (mail_op));
+	g_return_if_fail (TNY_IS_FOLDER_STORE (parent));
+	g_return_if_fail (TNY_IS_FOLDER (folder));
+
+	modest_mail_operation_xfer_folder (mail_op, folder, parent, FALSE);
+}
+
+static void
+modest_mail_operation_xfer_folder (ModestMailOperation *mail_op,
+				   TnyFolder *folder,
+				   TnyFolderStore *parent,
+				   gboolean delete_original)
+{
+	const gchar *folder_name;
+	TnyFolder *dest_folder, *child;
+	TnyIterator *iter;
+	TnyList *folders, *headers;
+
+	g_return_if_fail (TNY_IS_FOLDER (folder));
+	g_return_if_fail (TNY_IS_FOLDER_STORE (parent));
+
+	/* Create the destination folder */
+	folder_name = tny_folder_get_name (folder);
+	dest_folder = modest_mail_operation_create_folder (mail_op, 
+							   parent, folder_name);
+
+	/* Transfer messages */
+	headers = TNY_LIST (tny_simple_list_new ());
+	tny_folder_get_headers (folder, headers, FALSE);
+	tny_folder_transfer_msgs (folder, headers, dest_folder, delete_original);
+
+	/* Recurse children */
+	folders = TNY_LIST (tny_simple_list_new ());
+	tny_folder_store_get_folders (TNY_FOLDER_STORE (folder), folders, NULL);
+	iter = tny_list_create_iterator (folders);
+
+	while (!tny_iterator_is_done (iter)) {
+
+		child = TNY_FOLDER (tny_iterator_get_current (iter));
+		modest_mail_operation_xfer_folder (mail_op, child,
+						   TNY_FOLDER_STORE (dest_folder),
+						   delete_original);
+		tny_iterator_next (iter);
+	}
+
+	/* Delete source folder (if needed) */
+	if (delete_original)
+		modest_mail_operation_remove_folder (mail_op, folder, FALSE);
+
+	/* Clean up */
+	g_object_unref (G_OBJECT (dest_folder));
+	g_object_unref (G_OBJECT (headers));
+	g_object_unref (G_OBJECT (folders));
+	g_object_unref (G_OBJECT (iter));
+}
+
+static TnyFolder *
+modest_mail_operation_find_trash_folder (ModestMailOperation *mail_op,
+					 TnyStoreAccount *store_account)
+{
+	TnyList *folders;
+	TnyIterator *iter;
+	gboolean found;
+	TnyFolderStoreQuery *query;
+	TnyFolder *trash_folder;
+
+	/* Look for Trash folder */
+	folders = TNY_LIST (tny_simple_list_new ());
+	tny_folder_store_get_folders (TNY_FOLDER_STORE (store_account), folders, NULL);
+	iter = tny_list_create_iterator (folders);
+
+	found = FALSE;
+	while (!tny_iterator_is_done (iter) && !found) {
+
+		trash_folder = TNY_FOLDER (tny_iterator_get_current (iter));
+		if (tny_folder_get_folder_type (trash_folder) == TNY_FOLDER_TYPE_TRASH)
+			found = TRUE;
+		else
+			tny_iterator_next (iter);
+	}
+
+	/* Clean up */
+	g_object_unref (G_OBJECT (folders));
+	g_object_unref (G_OBJECT (iter));
+
+	/* TODO: better error handling management */
+	if (!found) 
+		return NULL;
+	else
+		return trash_folder;
+}
+
+/* ******************************************************************* */
+/* **************************  MSG  ACTIONS  ************************* */
+/* ******************************************************************* */
+
+void 
+modest_mail_operation_copy_msg (ModestMailOperation *mail_op,
+				TnyHeader *header, 
+				TnyFolder *folder)
+{
+	g_return_if_fail (TNY_IS_HEADER (header));
+	g_return_if_fail (TNY_IS_FOLDER (folder));
+
+	modest_mail_operation_xfer_msg (mail_op, header, folder, FALSE);
+}
+
+void 
+modest_mail_operation_move_msg (ModestMailOperation *mail_op,
+				TnyHeader *header, 
+				TnyFolder *folder)
+{
+	g_return_if_fail (TNY_IS_HEADER (header));
+	g_return_if_fail (TNY_IS_FOLDER (folder));
+
+	modest_mail_operation_xfer_msg (mail_op, header, folder, TRUE);
+}
+
+void 
+modest_mail_operation_remove_msg (ModestMailOperation *mail_op,
+				  TnyHeader *header,
+				  gboolean remove_to_trash)
+{
+	TnyFolder *folder;
+
+	g_return_if_fail (TNY_IS_HEADER (header));
+
+	folder = tny_header_get_folder (header);
+
+	/* Delete or move to trash */
+	if (remove_to_trash) {
+		TnyFolder *trash_folder;
+		TnyStoreAccount *store_account;
+
+		store_account = TNY_STORE_ACCOUNT (tny_folder_get_account (folder));
+		trash_folder = modest_mail_operation_find_trash_folder (mail_op, store_account);
+
+		modest_mail_operation_move_msg (mail_op, header, trash_folder);
+
+		g_object_unref (G_OBJECT (store_account));
+	} else {
+		tny_folder_remove_msg (folder, header);
+		tny_folder_expunge (folder);
+	}
+
+	/* Free */
+	g_object_unref (folder);
+}
+
+static void
+modest_mail_operation_xfer_msg (ModestMailOperation *mail_op,
+				TnyHeader *header, 
+				TnyFolder *folder, 
+				gboolean delete_original)
+{
+	TnyFolder *src_folder;
+	TnyList *headers;
+
+	src_folder = tny_header_get_folder (header);
+	headers = tny_simple_list_new ();
+
+	/* Move */
+	tny_list_prepend (headers, G_OBJECT (header));
+	tny_folder_transfer_msgs (src_folder, headers, folder, delete_original);
+
+	/* Free */
+	g_object_unref (headers);
+	g_object_unref (folder);
+}
+
+
+/* ******************************************************************* */
+/* ************************* UTILIY FUNCTIONS ************************ */
+/* ******************************************************************* */
 static gboolean
 is_ascii(const gchar *s)
 {
@@ -624,7 +864,7 @@ modest_error_quark (void)
 
 
 static void 
-set_error (ModestMailOperation *mail_operation, 
+set_error (ModestMailOperation *mail_op, 
 	   ModestMailOperationErrorCode error_code,
 	   const gchar *fmt, ...)
 {
@@ -633,7 +873,7 @@ set_error (ModestMailOperation *mail_operation,
 	va_list args;
 	gchar* orig;
 
-	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(mail_operation);
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(mail_op);
 
 	va_start (args, fmt);
 
@@ -659,11 +899,11 @@ static void
 folder_refresh_cb (TnyFolder *folder, gboolean cancelled, gpointer user_data) 
 {
 	if (cancelled) {
-		ModestMailOperation *mail_operation;
+		ModestMailOperation *mail_op;
 		ModestMailOperationPrivate *priv;
 
-		mail_operation = MODEST_MAIL_OPERATION (user_data);
-		priv = MODEST_MAIL_OPERATION_GET_PRIVATE(mail_operation);
+		mail_op = MODEST_MAIL_OPERATION (user_data);
+		priv = MODEST_MAIL_OPERATION_GET_PRIVATE(mail_op);
 
 		priv->status = 	MODEST_MAIL_OPERATION_STATUS_CANCELLED;
 	}

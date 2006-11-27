@@ -3,13 +3,11 @@
 # Time-stamp: <2006-04-22 16:29:00 (djcb)>
 #
 
-SUBDIRS= docs src po
+SUBDIRS= src tests po docs
 
-EXTRA_DIST= config.rpath  config.rpath mkinstalldirs m4/ChangeLog \
+EXTRA_DIST= config.rpath  config.rpath mkinstalldirs \
 	autogen.sh TODO COPYING intltool-extract.in intltool-merge.in \
 	intltool-update.in
 
 CFLAGS=\
 	-Wall
-
-ACLOCAL_AMFLAGS = -I m4

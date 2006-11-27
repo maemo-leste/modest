@@ -803,6 +803,33 @@ modest_account_mgr_account_exists (ModestAccountMgr * self, const gchar * name,
 	return retval;
 }
 
+
+GSList * 
+modest_account_mgr_get_list (ModestAccountMgr *self,
+			     const gchar *name,
+			     const gchar *key,
+			     ModestConfValueType list_type,
+			     gboolean server_account,
+			     GError **err)
+{
+	ModestAccountMgrPrivate *priv;
+
+	gchar *keyname;
+	GSList *retval;
+	
+	g_return_val_if_fail (self, NULL);
+	g_return_val_if_fail (name, NULL);
+	g_return_val_if_fail (key, NULL);
+
+	keyname = get_account_keyname (name, key, server_account);
+	
+	priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
+	retval = modest_conf_get_list (priv->modest_conf, keyname, list_type, err);
+	g_free (keyname);
+
+	return retval;
+}
+
 /* must be freed by caller */
 static gchar *
 get_account_keyname (const gchar * accname, const gchar * name, gboolean server_account)

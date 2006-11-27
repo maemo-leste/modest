@@ -38,7 +38,7 @@ struct _ModestPresets {
 };
 typedef struct _ModestPresets ModestPresets;
 
-enum _ModestPresetsInfo {
+typedef enum _ModestPresetsInfo {
 	/* two bits for the server type */
 	MODEST_PRESETS_INFO_NONE             = 0x0000,
 	MODEST_PRESETS_INFO_IMAP             = 0x0001,
@@ -49,9 +49,9 @@ enum _ModestPresetsInfo {
 	MODEST_PRESETS_INFO_APOP             = 0x0004,
 	MODEST_PRESETS_INFO_SECURE_SMTP      = 0x0008,
 	MODEST_PRESETS_INFO_SECURE_INCOMING  = 0x000f	
-};
+} ModestPresetsInfo;
 
-typedef enum _ModestPresetsInfo ModestPresetsInfo;
+/* typedef enum _ModestPresetsInfo ModestPresetsInfo; */
 
 
 /**

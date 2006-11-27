@@ -293,9 +293,10 @@ send_mail (ModestEditMsgWindow *self)
 		transport_account = TNY_TRANSPORT_ACCOUNT (tny_iterator_get_current(iter));
 	}
 
-	mail_operation = modest_mail_operation_new (TNY_ACCOUNT (transport_account));
+	mail_operation = modest_mail_operation_new ();
 
 	modest_mail_operation_send_new_mail (mail_operation,
+					     transport_account,
 					     from, to, cc, bcc,
 					     subject, body, NULL);
 	/* Clean up */

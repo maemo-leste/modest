@@ -251,9 +251,10 @@ send_mail (const gchar* mailto, const gchar *cc, const gchar *bcc,
 
 	account = TNY_TRANSPORT_ACCOUNT (tny_iterator_get_current(iter));
 
-	mail_operation = modest_mail_operation_new (TNY_ACCOUNT (account));
+	mail_operation = modest_mail_operation_new ();
 
 	modest_mail_operation_send_new_mail (mail_operation,
+					     account,
 					     "djcb@djcbsoftware.nl", mailto, cc, bcc, 
 					     subject, body, NULL);
 

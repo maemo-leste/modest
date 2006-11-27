@@ -386,6 +386,14 @@ gboolean	modest_account_mgr_set_bool       (ModestAccountMgr *self,
 						   const gchar *key, gboolean val,
 						   gboolean server_account,
 						   GError **err);
+
+
+GSList*	        modest_account_mgr_get_list       (ModestAccountMgr *self,
+						   const gchar *name,
+						   const gchar *key,
+						   ModestConfValueType list_type,
+						   gboolean server_account,
+						   GError **err);
 G_END_DECLS
 
 #endif /* __MODEST_ACCOUNT_MGR_H__ */

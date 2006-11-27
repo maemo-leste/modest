@@ -77,17 +77,15 @@ struct _ModestProtocolMgrClass {
 #define MODEST_PROTOCOL_AUTH_NONE      "none"
 #define MODEST_PROTOCOL_AUTH_PASSWORD  "password"
 
-
-enum _ModestProtocolType {
+typedef enum _ModestProtocolType {
 	MODEST_PROTOCOL_TYPE_TRANSPORT,
 	MODEST_PROTOCOL_TYPE_STORE,
 	MODEST_PROTOCOL_TYPE_SECURITY,
 	MODEST_PROTOCOL_TYPE_AUTH,
-	MODEST_PROTOCOL_TYPE_ANY,
-	
+	MODEST_PROTOCOL_TYPE_ANY,	
 	MODEST_PROTOCOL_TYPE_NUM
-};
-typedef enum _ModestProtocolType ModestProtocolType;
+} ModestProtocolType;
+/* typedef enum _ModestProtocolType ModestProtocolType; */
 
 /* member functions */
 GType        modest_protocol_mgr_get_type    (void) G_GNUC_CONST;

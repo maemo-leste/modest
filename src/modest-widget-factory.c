@@ -35,8 +35,7 @@
 #include <tny-device.h>
 #include "modest-tny-platform-factory.h"
 #include "modest-account-mgr.h"
-/* Test: REMOVE */
-#include <tny-folder-store.h>
+#include "modest-mail-operation.h"
 /* 'private'/'protected' functions */
 static void modest_widget_factory_class_init    (ModestWidgetFactoryClass *klass);
 static void modest_widget_factory_init          (ModestWidgetFactory *obj);
@@ -501,30 +500,38 @@ on_folder_selected (ModestFolderView *folder_view, TnyFolder *folder,
 static void
 on_folder_key_press_event (ModestFolderView *folder_view, GdkEventKey *event, gpointer user_data)
 {
+	GtkTreeSelection *selection;
+	GtkTreeModel *model;
+	GtkTreeIter iter;
+	TnyFolderStore *folder;
+	gint type;
+	ModestMailOperation *mail_op;
+
+	selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (folder_view));
+	gtk_tree_selection_get_selected (selection, &model, &iter);
+	
+	gtk_tree_model_get (model, &iter, 
+			    TNY_GTK_ACCOUNT_TREE_MODEL_TYPE_COLUMN, &type, 
+			    TNY_GTK_ACCOUNT_TREE_MODEL_INSTANCE_COLUMN, &folder, 
+			    -1);
+
+	mail_op = modest_mail_operation_new ();
+
 	if (event->keyval == GDK_C || event->keyval == GDK_c) {
-		GtkTreeSelection *selection;
-		GtkTreeModel *model;
-		GtkTreeIter iter;
-		const gchar *name;
-		TnyFolderStore *folder;
-		gint type;
-
-		selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (folder_view));
-		gtk_tree_selection_get_selected (selection, &model, &iter);
-
-		gtk_tree_model_get (model, &iter, 
-				    TNY_GTK_ACCOUNT_TREE_MODEL_TYPE_COLUMN, &type, 
-				    TNY_GTK_ACCOUNT_TREE_MODEL_INSTANCE_COLUMN, &folder, 
-				    -1);
-
-		if (type == TNY_FOLDER_TYPE_ROOT) {
-			name = tny_account_get_name (TNY_ACCOUNT (folder));
-		} else {
-			name = tny_folder_get_name (TNY_FOLDER (folder));
-			modest_tny_store_actions_create_folder (TNY_FOLDER_STORE (folder),
-								"New");
-		}
+		if (type != TNY_FOLDER_TYPE_ROOT)
+			modest_mail_operation_create_folder (mail_op, folder, "New");
+	} else if (event->keyval == GDK_D || event->keyval == GDK_d) {
+		if (type != TNY_FOLDER_TYPE_ROOT)
+			modest_mail_operation_remove_folder (mail_op, TNY_FOLDER (folder), FALSE);
+	} else if (event->keyval == GDK_N || event->keyval == GDK_n) {
+		if (type != TNY_FOLDER_TYPE_ROOT)
+			modest_mail_operation_rename_folder (mail_op, TNY_FOLDER (folder), "New Name");
+	} else if (event->keyval == GDK_T || event->keyval == GDK_t) {
+		if (type != TNY_FOLDER_TYPE_ROOT)
+			modest_mail_operation_remove_folder (mail_op, TNY_FOLDER (folder), TRUE);
 	}
+
+	g_object_unref (G_OBJECT (mail_op));
 }
 /****************************************************/
 

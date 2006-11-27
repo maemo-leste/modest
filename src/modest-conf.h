@@ -45,12 +45,20 @@ G_BEGIN_DECLS
 
 typedef struct _ModestConf        ModestConf;
 typedef struct _ModestConfClass   ModestConfClass;
-typedef enum   _ModestConfEvent   ModestConfEvent;
+/* typedef enum   _ModestConfEvent   ModestConfEvent; */
+/* typedef enum   _ModestConfValueType   ModestConfValueType; */
 
-enum _ModestConfEvent {
+typedef enum _ModestConfValueType {
+	MODEST_CONF_VALUE_INT,
+	MODEST_CONF_VALUE_BOOL,
+	MODEST_CONF_VALUE_FLOAT,
+	MODEST_CONF_VALUE_STRING
+} ModestConfValueType;
+
+typedef enum _ModestConfEvent {
 	MODEST_CONF_EVENT_KEY_CHANGED,
 	MODEST_CONF_EVENT_KEY_UNSET
-};
+} ModestConfEvent;
 
 struct _ModestConf {
 	 GObject parent;
@@ -273,6 +281,7 @@ gchar* modest_conf_key_escape (ModestConf *self, const gchar* str);
 gchar* modest_conf_key_unescape (ModestConf *self, const gchar* str);
 
 
+GSList* modest_conf_get_list (ModestConf* self, const gchar* key, ModestConfValueType list_type, GError **err);
 
 G_END_DECLS
 

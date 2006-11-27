@@ -344,15 +344,20 @@ on_menu_delete (ModestMainWindow *self, guint action, GtkWidget *widget)
 			model = gtk_tree_model_sort_get_model (GTK_TREE_MODEL_SORT (model));
 		do {
 			TnyHeader *header;
+			ModestMailOperation *mail_op;
 
 			header = TNY_HEADER (tny_iterator_get_current (iter));
+			/* TODO: thick grain mail operation involving
+			   a list of objects. Composite pattern ??? */
+			mail_op = modest_mail_operation_new ();
+
+			/* Move to trash */
+			modest_mail_operation_remove_msg (mail_op, header, TRUE);
 
 			/* Remove from tree model */
 			tny_list_remove (TNY_LIST (model), G_OBJECT (header));
 
-			/* Remove from server */
-			modest_tny_msg_actions_remove (header);
-
+			g_object_unref (G_OBJECT (mail_op));
 			g_object_unref (header);
 			tny_iterator_next (iter);
 

@@ -280,7 +280,9 @@ tny_account_from_name (ModestTnyAccountStore *self, const gchar *account,
 	TnyAccount *tny_account;
 	ModestTnyAccountStorePrivate *priv;
 	gchar *val;
-
+	GSList *options = NULL;
+	GError *error = NULL;
+	
 	g_return_val_if_fail (self, NULL);
 	g_return_val_if_fail (account, NULL);
 	g_return_val_if_fail (server_account, NULL);
@@ -322,6 +324,28 @@ tny_account_from_name (ModestTnyAccountStore *self, const gchar *account,
 			    account, server_account);
 		g_object_unref (G_OBJECT(tny_account));
 		return NULL;
+	}
+
+	/* Options */
+	options = modest_account_mgr_get_list (priv->account_mgr,
+					       tny_account_get_id (tny_account),
+					       MODEST_ACCOUNT_OPTIONS,
+					       MODEST_CONF_VALUE_STRING,
+					       TRUE,
+					       &error);
+	
+	if (error) {
+		g_warning ("Error retrieving account %s options: %s",
+			   tny_account_get_id (tny_account), error->message);
+		g_error_free (error);
+	} else {
+		GSList *tmp = options;
+		while (options) {
+			tny_camel_account_add_option (TNY_CAMEL_ACCOUNT (tny_account), options->data);
+			g_free (options->data);
+			options = g_slist_next (options);
+		}
+		g_slist_free (tmp);
 	}
 
 	/* hostname */
@@ -566,12 +590,14 @@ modest_tny_account_store_get_accounts  (TnyAccountStore *iface,
 	cursor = accounts = modest_account_mgr_account_names (priv->account_mgr, NULL); 
 
 	while (cursor) {
-		gchar           *account_name;
-		gchar           *server_account;
-		TnyAccount *account;
+		gchar       *account_name;
+		gchar       *server_account;
+		TnyAccount  *account;
+		gboolean     is_server_account;
 
-		account_name  =  (gchar*)cursor->data;
-		account =  NULL;
+		account_name      = (gchar*)cursor->data;
+		account           = NULL;
+		is_server_account = FALSE;
 		
  		if (!modest_account_mgr_account_get_enabled (priv->account_mgr, account_name)) { 
  			g_free (account_name); 
@@ -582,10 +608,13 @@ modest_tny_account_store_get_accounts  (TnyAccountStore *iface,
 		if (modest_type == MODEST_PROTOCOL_TYPE_TRANSPORT || modest_type == MODEST_PROTOCOL_TYPE_ANY) {
 			server_account = get_server_account_for_account (self, account_name,
 									 MODEST_PROTOCOL_TYPE_TRANSPORT);
-			if (server_account)
+			if (server_account) {
 				account = tny_account_from_name (self, account_name, 
 								       server_account,
 								       MODEST_PROTOCOL_TYPE_TRANSPORT);
+				is_server_account = TRUE;
+			}
+
 			if (!account)
 				g_printerr ("modest: no transport account for '%s'\n",
 					    account_name);
@@ -598,10 +627,13 @@ modest_tny_account_store_get_accounts  (TnyAccountStore *iface,
 		if (modest_type == MODEST_PROTOCOL_TYPE_STORE || modest_type == MODEST_PROTOCOL_TYPE_ANY) {
 			server_account = get_server_account_for_account (self, account_name,
 									 MODEST_PROTOCOL_TYPE_STORE);
-			if (server_account)
+			if (server_account) {
 				account = tny_account_from_name (self, account_name, 
 								       server_account,
 								       MODEST_PROTOCOL_TYPE_STORE);
+				is_server_account = TRUE;
+			}
+
 			if (!account)
 				g_printerr ("modest: no store account for '%s'\n",
 					    account_name);
@@ -617,8 +649,6 @@ modest_tny_account_store_get_accounts  (TnyAccountStore *iface,
 	g_slist_free (accounts);
 
 	tny_session_camel_set_account_store (priv->tny_session_camel, iface);
-/* 	tny_session_camel_set_current_accounts (priv->tny_session_camel, */
-/* 						list); */
 }
 
 

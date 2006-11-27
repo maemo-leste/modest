@@ -2,22 +2,31 @@
 modest-account-keys
 
 <!-- ##### SECTION Short_Description ##### -->
-Configuration key definitions
+
 
 <!-- ##### SECTION Long_Description ##### -->
 <para>
-Definition of keys used to access account properties from the account store.
+
 </para>
+
 
 <!-- ##### SECTION See_Also ##### -->
 <para>
 
 </para>
 
+
 <!-- ##### SECTION Stability_Level ##### -->
 
 
 <!-- ##### MACRO MODEST_CONF_DEFAULT_ACCOUNT ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO MODEST_ACCOUNT_NAMESPACE ##### -->
 <para>
 
 </para>
@@ -31,7 +40,14 @@ Definition of keys used to access account properties from the account store.
 
 
 
-<!-- ##### MACRO MODEST_ACCOUNT_NAMESPACE ##### -->
+<!-- ##### MACRO MODEST_CONF_REPLY_TYPE ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO MODEST_CONF_FORWARD_TYPE ##### -->
 <para>
 
 </para>
@@ -59,7 +75,28 @@ Definition of keys used to access account properties from the account store.
 
 
 
+<!-- ##### MACRO MODEST_ACCOUNT_FULLNAME ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO MODEST_ACCOUNT_EMAIL ##### -->
+<para>
+
+</para>
+
+
+
 <!-- ##### MACRO MODEST_ACCOUNT_PASSWORD ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO MDOEST_ACCOUNT_REMEMBER_PWD ##### -->
 <para>
 
 </para>
@@ -87,7 +124,28 @@ Definition of keys used to access account properties from the account store.
 
 
 
+<!-- ##### MACRO MODEST_ACCOUNT_ENABLED ##### -->
+<para>
+
+</para>
+
+
+
 <!-- ##### MACRO MODEST_ACCOUNT_LEAVE_ON_SERVER ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO MODEST_ACCOUNT_PREFERRED_CNX ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO MODEST_ACCOUNT_OPTIONS ##### -->
 <para>
 
 </para>

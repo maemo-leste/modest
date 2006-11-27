@@ -47,21 +47,8 @@ G_BEGIN_DECLS
 typedef struct _ModestToolbar      ModestToolbar;
 typedef struct _ModestToolbarClass ModestToolbarClass;
 
-typedef enum _ModestToolbarButton ModestToolbarButton;
-
-
-struct _ModestToolbar {
-	 GtkToolbar parent;
-	/* insert public members, if any */
-};
-
-struct _ModestToolbarClass {
-	GtkToolbarClass parent_class;
-	
-	void (* button_clicked) (ModestToolbar* obj, ModestToolbarButton button_id);
-};
-
-enum _ModestToolbarButton {
+/* typedef enum _ModestToolbarButton ModestToolbarButton; */
+typedef enum _ModestToolbarButton {
 	MODEST_TOOLBAR_BUTTON_MAIL_SEND,
 	MODEST_TOOLBAR_BUTTON_NEW_MAIL,
 	MODEST_TOOLBAR_BUTTON_REPLY,
@@ -76,8 +63,18 @@ enum _ModestToolbarButton {
 
 	MODEST_TOOLBAR_SEPARATOR,
 	MODEST_TOOLBAR_BUTTON_NUM
+} ModestToolbarButton;
+
+struct _ModestToolbar {
+	 GtkToolbar parent;
+	/* insert public members, if any */
 };
 
+struct _ModestToolbarClass {
+	GtkToolbarClass parent_class;
+	
+	void (* button_clicked) (ModestToolbar* obj, ModestToolbarButton button_id);
+};
 
 /* member functions */
 GType        modest_toolbar_get_type    (void) G_GNUC_CONST;
