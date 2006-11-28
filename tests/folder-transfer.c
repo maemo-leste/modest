@@ -28,6 +28,7 @@
  */
 
 #include <glib.h>
+#include <string.h>
 
 #include <tny-list.h>
 #include <tny-iterator.h>
@@ -36,9 +37,11 @@
 #include <tny-store-account.h>
 #include <tny-folder.h>
 #include <tny-folder-store.h>
-#include <tny-platform-factory.h>
-#include "modest-account-mgr.h"
-#include "modest-mail-operation.h"
+#include <modest-tny-platform-factory.h>
+
+
+#include <modest-account-mgr.h>
+#include <modest-mail-operation.h>
 
 static gchar *cachedir=NULL;
 static gboolean move=FALSE;
@@ -56,20 +59,19 @@ find_folders (TnyFolderStore *store, TnyFolderStoreQuery *query,
 		return;
 
 	folders = tny_simple_list_new ();
-	tny_folder_store_get_folders (store, folders, query);
+	tny_folder_store_get_folders (store, folders, query, NULL);
 	iter = tny_list_create_iterator (folders);
 
 	while (!tny_iterator_is_done (iter) && (!*folder_src || !*folder_dst))
 	{
 		TnyFolderStore *folder = (TnyFolderStore*) tny_iterator_get_current (iter);
-		gint i=0;
 		const gchar *folder_name = NULL;
 
 		folder_name = tny_folder_get_name (TNY_FOLDER (folder));
 
-		if (!strcmp (folder_name, src_name))
+		if (strcmp (folder_name, src_name) == 0)
 		    *folder_src = g_object_ref (folder);
-
+		
 		if (!strcmp (folder_name, dst_name))
 		    *folder_dst = g_object_ref (folder);
 
@@ -100,7 +102,7 @@ int
 main (int argc, char **argv)
 {
 	GOptionContext *context;
-	TnyList *accounts, *src_headers, *dst_headers;
+	TnyList *accounts, *src_headers;
 	TnyStoreAccount *account;
 	TnyIterator *iter;
 	TnyFolder *folder_src = NULL, *folder_dst = NULL;
@@ -154,15 +156,15 @@ main (int argc, char **argv)
 		goto cleanup;
 
 	/* Refresh folders */
-	tny_folder_refresh (folder_src);
+	tny_folder_refresh (folder_src, NULL);
 	src_num_headers = tny_folder_get_all_count (folder_src);
 
-	tny_folder_refresh (folder_dst);
+	tny_folder_refresh (folder_dst, NULL);
 	dst_num_headers = tny_folder_get_all_count (folder_dst);
 
 	/* Get all the headers of the source & target folder */
 	src_headers = tny_simple_list_new ();
-	tny_folder_get_headers (folder_src, src_headers, TRUE);
+	tny_folder_get_headers (folder_src, src_headers, TRUE, NULL);
 
 	mail_op = modest_mail_operation_new ();
 		
