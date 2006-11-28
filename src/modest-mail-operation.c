@@ -40,7 +40,7 @@
 #include <tny-camel-stream.h>
 #include <tny-camel-mime-part.h>
 #include <tny-simple-list.h>
-
+#include <camel/camel-stream-mem.h>
 #include <glib/gi18n.h>
 
 #include <modest-text-utils.h>
@@ -70,7 +70,8 @@ static void       status_update_cb   (TnyFolder *folder,
 				      gint status, 
 				      gpointer user_data);
 static void       folder_refresh_cb  (TnyFolder *folder, 
-				      gboolean cancelled, 
+				      gboolean cancelled,
+				      GError **err,
 				      gpointer user_data);
 static void       add_attachments    (TnyMsg *msg, 
 				      const GList *attachments_list);
@@ -206,7 +207,7 @@ modest_mail_operation_send_mail (ModestMailOperation *mail_op,
 	g_return_if_fail (MODEST_IS_MAIL_OPERATION (mail_op));
 	g_return_if_fail (TNY_IS_TRANSPORT_ACCOUNT (transport_account));
 
-	tny_transport_account_send (transport_account, msg);
+	tny_transport_account_send (transport_account, msg, NULL); /* FIXME */
 }
 
 void
@@ -257,7 +258,7 @@ modest_mail_operation_send_new_mail (ModestMailOperation *mail_op,
 	add_attachments (new_msg, attachments_list);
 
 	/* Send mail */	
-	tny_transport_account_send (transport_account, new_msg);
+	tny_transport_account_send (transport_account, new_msg, NULL); /* FIXME */
 
 	/* Clean */
 	g_object_unref (header);
@@ -503,7 +504,7 @@ modest_mail_operation_update_account (ModestMailOperation *mail_op,
 	query = tny_folder_store_query_new ();
 	tny_folder_store_query_add_item (query, NULL, TNY_FOLDER_STORE_QUERY_OPTION_SUBSCRIBED);
 	tny_folder_store_get_folders (TNY_FOLDER_STORE (storage_account),
-				      folders, query);
+				      folders, query, NULL); /* FIXME */
 	g_object_unref (query);
 	
 	ifolders = tny_list_create_iterator (folders);
@@ -569,7 +570,7 @@ modest_mail_operation_create_folder (ModestMailOperation *mail_op,
 	TnyStoreAccount *store_account;
 
 	/* Create the folder */
-	new_folder = tny_folder_store_create_folder (parent, name);
+	new_folder = tny_folder_store_create_folder (parent, name, NULL); /* FIXME */
 	if (!new_folder) 
 		return NULL;
 
@@ -607,7 +608,7 @@ modest_mail_operation_remove_folder (ModestMailOperation *mail_op,
 						   folder, 
 						   TNY_FOLDER_STORE (trash_folder));
 	} else {
-		tny_folder_store_remove_folder (folder_store, folder);
+		tny_folder_store_remove_folder (folder_store, folder, NULL); /* FIXME */
 		g_object_unref (G_OBJECT (folder));
 	}
 
@@ -628,8 +629,8 @@ modest_mail_operation_rename_folder (ModestMailOperation *mail_op,
 		return;
 
 	/* Rename. Camel handles folder subscription/unsubscription */
-	tny_folder_set_name (folder, name);
-}
+	tny_folder_set_name (folder, name, NULL); /* FIXME */
+ }
 
 void
 modest_mail_operation_move_folder (ModestMailOperation *mail_op,
@@ -676,12 +677,12 @@ modest_mail_operation_xfer_folder (ModestMailOperation *mail_op,
 
 	/* Transfer messages */
 	headers = TNY_LIST (tny_simple_list_new ());
-	tny_folder_get_headers (folder, headers, FALSE);
-	tny_folder_transfer_msgs (folder, headers, dest_folder, delete_original);
+ 	tny_folder_get_headers (folder, headers, FALSE, NULL); /* FIXME */
+	tny_folder_transfer_msgs (folder, headers, dest_folder, delete_original, NULL); /* FIXME */
 
 	/* Recurse children */
 	folders = TNY_LIST (tny_simple_list_new ());
-	tny_folder_store_get_folders (TNY_FOLDER_STORE (folder), folders, NULL);
+	tny_folder_store_get_folders (TNY_FOLDER_STORE (folder), folders, NULL, NULL ); /* FIXME */
 	iter = tny_list_create_iterator (folders);
 
 	while (!tny_iterator_is_done (iter)) {
@@ -711,12 +712,13 @@ modest_mail_operation_find_trash_folder (ModestMailOperation *mail_op,
 	TnyList *folders;
 	TnyIterator *iter;
 	gboolean found;
-	TnyFolderStoreQuery *query;
+	/*TnyFolderStoreQuery *query;*/
 	TnyFolder *trash_folder;
 
 	/* Look for Trash folder */
 	folders = TNY_LIST (tny_simple_list_new ());
-	tny_folder_store_get_folders (TNY_FOLDER_STORE (store_account), folders, NULL);
+	tny_folder_store_get_folders (TNY_FOLDER_STORE (store_account),
+				      folders, NULL, NULL); /* FIXME */
 	iter = tny_list_create_iterator (folders);
 
 	found = FALSE;
@@ -789,8 +791,8 @@ modest_mail_operation_remove_msg (ModestMailOperation *mail_op,
 
 		g_object_unref (G_OBJECT (store_account));
 	} else {
-		tny_folder_remove_msg (folder, header);
-		tny_folder_expunge (folder);
+		tny_folder_remove_msg (folder, header, NULL); /* FIXME */
+		tny_folder_expunge (folder, NULL); /* FIXME */
 	}
 
 	/* Free */
@@ -811,7 +813,7 @@ modest_mail_operation_xfer_msg (ModestMailOperation *mail_op,
 
 	/* Move */
 	tny_list_prepend (headers, G_OBJECT (header));
-	tny_folder_transfer_msgs (src_folder, headers, folder, delete_original);
+	tny_folder_transfer_msgs (src_folder, headers, folder, delete_original, NULL); /* FIXME */
 
 	/* Free */
 	g_object_unref (headers);
@@ -896,7 +898,7 @@ status_update_cb (TnyFolder *folder, const gchar *what, gint status, gpointer us
 }
 
 static void
-folder_refresh_cb (TnyFolder *folder, gboolean cancelled, gpointer user_data) 
+folder_refresh_cb (TnyFolder *folder, gboolean cancelled, GError **err, gpointer user_data) 
 {
 	if (cancelled) {
 		ModestMailOperation *mail_op;

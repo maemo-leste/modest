@@ -270,7 +270,7 @@ on_menu_reply_forward (ModestMainWindow *self, guint action, GtkWidget *widget)
 			/* Get msg from header */
 			header = TNY_HEADER (tny_iterator_get_current (iter));
 			folder = tny_header_get_folder (header);
-			msg = tny_folder_get_msg (folder, header);
+			msg = tny_folder_get_msg (folder, header, NULL); /* FIXME */
 
 			from = modest_folder_view_get_selected_account (priv->folder_view);
 

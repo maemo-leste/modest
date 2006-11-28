@@ -809,7 +809,8 @@ cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 
 
 static void
-on_refresh_folder (TnyFolder *folder, gboolean cancelled, gpointer user_data)
+on_refresh_folder (TnyFolder *folder, gboolean cancelled, GError **err,
+		   gpointer user_data)
 {
 	GtkTreeModel *sortable; 
 	ModestHeaderView *self;
@@ -830,7 +831,7 @@ on_refresh_folder (TnyFolder *folder, gboolean cancelled, gpointer user_data)
 			g_object_unref (priv->headers);
 
 		priv->headers = TNY_LIST(tny_gtk_header_list_model_new ());
-		tny_folder_get_headers (folder, priv->headers, FALSE);
+		tny_folder_get_headers (folder, priv->headers, FALSE, NULL); /* FIXME */
 		
 		tny_gtk_header_list_model_set_folder
 			(TNY_GTK_HEADER_LIST_MODEL(priv->headers),folder, TRUE); /*async*/
@@ -939,7 +940,7 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 	}
 	
 	msg = tny_folder_get_msg (TNY_FOLDER(folder),
-				  header);
+				  header, NULL); /* FIXME */
 	if (!msg) {
 		g_signal_emit (G_OBJECT(self), signals[ITEM_NOT_FOUND_SIGNAL], 0,
 			       MODEST_ITEM_TYPE_MESSAGE);

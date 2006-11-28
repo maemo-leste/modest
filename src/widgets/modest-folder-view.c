@@ -599,7 +599,7 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 		account_name = tny_account_get_name (TNY_ACCOUNT (folder));
 	} else {
 		if (priv->cur_folder) 
-			tny_folder_expunge (priv->cur_folder);
+			tny_folder_expunge (priv->cur_folder, NULL); /* FIXME */
 		priv->cur_folder = folder;
 
 		/* FIXME: this is ugly */
