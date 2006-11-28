@@ -1,13 +1,14 @@
 #
 # Makefile.am
-# Time-stamp: <2006-08-11 00:24:01 (djcb)>
+# Time-stamp: <2006-11-28 17:32:52 (djcb)>
 
 INCLUDES=\
 	$(MODEST_GSTUFF_CFLAGS) \
 	$(MODEST_LIBTINYMAIL_GNOME_DESKTOP_CFLAGS) \
-	-I${top_srcdir}/src/$(MODEST_PLATFORM_DIR) \
+	$(MODEST_LIBTINYMAIL_MAEMO_CFLAGS) \
+	-I${top_srcdir}/src/$(MODEST_PLATFORM) \
 	-DPREFIX=\"@prefix@\" \
-	 -I ${top_srcdir}/src \
+	-I ${top_srcdir}/src \
 	-Wall
 
 noinst_LTLIBRARIES=\
@@ -29,4 +30,5 @@ libmodest_widgets_la_SOURCES=   \
  
 LDADD = \
 	$(MODEST_GSTUFF_LIBS) 				\
-	$(MODEST_LIBTINYMAIL_GNOME_DESKTOP_LIBS)
+	$(MODEST_LIBTINYMAIL_GNOME_DESKTOP_LIBS)        \
+	$(MODEST_LIBTINYMAIL_MAEMO_LIBS) 		

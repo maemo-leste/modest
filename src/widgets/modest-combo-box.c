@@ -29,6 +29,7 @@
 
 #include <gtk/gtkcelllayout.h>
 #include <gtk/gtkcellrenderertext.h>
+#include <gtk/gtkliststore.h>
 #include "modest-combo-box.h"
 
 /* 'private'/'protected' functions */

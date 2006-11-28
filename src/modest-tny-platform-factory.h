@@ -33,7 +33,7 @@
 #define __MODEST_TNY_PLATFORM_FACTORY_H__
 
 #include <glib-object.h>
-/* other include files */
+
 #include <tny-platform-factory.h>
 #include "modest-account-mgr.h"
 #include "modest-conf.h"

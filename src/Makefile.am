@@ -1,16 +1,18 @@
 #
 # Makefile.am
-# Time-stamp: <2006-11-26 19:23:53 (djcb)>
-SUBDIRS=$(MODEST_PLATFORM_DIR) widgets
+# Time-stamp: <2006-11-28 17:42:40 (djcb)>
+SUBDIRS=$(MODEST_PLATFORM) widgets
 DIST_SUBDIRS = widgets gtk
 
 INCLUDES=\
 	$(MODEST_GSTUFF_CFLAGS)\
 	$(MODEST_LIBTINYMAIL_GNOME_DESKTOP_CFLAGS) \
 	$(MODEST_LIBTINYMAIL_MAEMO_CFLAGS) \
-	-I$(MODEST_PLATFORM_DIR) \
+	-I$(MODEST_PLATFORM) \
 	-DPREFIX=\"@prefix@\" \
-	-DMODESTLOCALEDIR=\""$(modestlocaledir)"\"
+	-DMODESTLOCALEDIR=\""$(modestlocaledir)"\" \
+	-DMODEST_PLATFORM=\"$(MODEST_PLATFORM)\" \
+	-DMODEST_PLATFORM_ID=$(MODEST_PLATFORM_ID)
 
 BUILT_SOURCES = modest-marshal.c modest-marshal.h
 
@@ -64,7 +66,7 @@ modest_LDADD = 						\
 	$(MODEST_GSTUFF_LIBS) 				\
 	$(MODEST_LIBTINYMAIL_GNOME_DESKTOP_LIBS)	\
 	$(MODEST_LIBTINYMAIL_MAEMO_LIBS) 		\
-	$(MODEST_PLATFORM_DIR)/libmodest-ui.la		\
+	$(MODEST_PLATFORM)/libmodest-ui.la		\
 	widgets/libmodest-widgets.la			
 
 EXTRA_DIST=modest-marshal.list

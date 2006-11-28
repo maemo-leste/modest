@@ -1,5 +1,5 @@
 dnl configure.ac for modest 
-dnl Time-stamp: <2006-08-08 12:21:25 (djcb)>
+dnl Time-stamp: <2006-11-28 17:26:13 (djcb)>
 dnl written by Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>
 
 AC_INIT([modest],[0.0.1],[http://maemo.org])
@@ -42,39 +42,41 @@ AC_SUBST(MODEST_GSTUFF_LIBS)
 
 dnl dnl now, determine what to build
 AC_MSG_NOTICE([Determining what platform to build])
-dnl PKG_CHECK_MODULES(MODEST_LIBTINYMAIL_MAEMO,libosso,[with_platform=hildon],true)
+PKG_CHECK_MODULES(MODEST_LIBTINYMAIL_MAEMO,libosso,[with_platform=maemo],true)
+
 
 AC_ARG_WITH(platform,
 [--with-platform=gtk		platform to build for [gtk]],
 [case "${with_platform}" in
-       gtk)    MODEST_PLATFORM_DIR=gtk;;
-       hildon) MODEST_PLATFORM_DIR=hildon;;
-       *)      MODEST_PLATFORM_DIR=${with_platform}
-esac], [MODEST_PLATFORM_DIR=gtk
+       gtk)    MODEST_PLATFORM=gtk;;
+       maemo) MODEST_PLATFORM=maemo;;
+       *)      MODEST_PLATFORM=${with_platform}
+esac], [MODEST_PLATFORM=gtk
                with_platform=gtk])
-AC_SUBST(MODEST_PLATFORM_DIR)
-	
-dnl tempororily change hildon into gtk...
-if test "x$with_platform" = "xhildon"; then
-   AC_MSG_WARN([Hildon frontend is currently disabled])
-   with_platform="gtk"
-fi
+AC_SUBST(MODEST_PLATFORM)
 
-if test "x$with_platform" = "xhildon"; then
-   PKG_CHECK_MODULES(MODEST_LIBTINYMAIL_MAEMO,libtinymail-maemo-1.0 hildon-libs hildon-lgpl libosso)
+
+if test "x$with_platform" = "xmaemo"; then
+   PKG_CHECK_MODULES(MODEST_LIBTINYMAIL_MAEMO,libtinymail-maemo-1.0 hildon-libs libosso)
    AC_SUBST(MODEST_LIBTINYMAIL_MAEMO_CFLAGS)
    AC_SUBST(MODEST_LIBTINYMAIL_MAEMO_LIBS) 
+   MODEST_PLATFORM_ID=2
 else
    PKG_CHECK_MODULES(MODEST_LIBTINYMAIL_GNOME_DESKTOP,libtinymail-gnome-desktop-1.0 libnm_glib glib-2.0 >= 2.8)
    AC_SUBST(MODEST_LIBTINYMAIL_GNOME_DESKTOP_CFLAGS)
    AC_SUBST(MODEST_LIBTINYMAIL_GNOME_DESKTOP_LIBS)
+   MODEST_PLATFORM_ID=1
 fi
+
+dnl 1==>gtk, 2==>maemo
+AC_SUBST(MODEST_PLATFORM_ID)
 
 AC_OUTPUT([
 po/Makefile.in
 Makefile
 src/Makefile
 src/gtk/Makefile
+src/maemo/Makefile
 src/widgets/Makefile
 docs/Makefile
 docs/reference/Makefile

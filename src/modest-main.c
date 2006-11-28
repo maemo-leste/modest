@@ -47,9 +47,9 @@
 #include "modest-mail-operation.h"
 
 
-#ifdef MODEST_ENABLE_HILDON /* Hildon includes */
+#if MODEST_PLATFORM_ID==2 
 #include <libosso.h>
-#endif /* MODEST_ENABLE_HILDON */
+#endif /* MODEST_PLATFORM==2 */
 
 /* return values */
 #define MODEST_ERR_NONE    0
@@ -103,7 +103,8 @@ main (int argc, char *argv[])
 	bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
 	textdomain (GETTEXT_PACKAGE);
 
-	g_type_init ();
+	g_type_init ();		
+	g_thread_init (NULL);
 
 	context = g_option_context_new (NULL);
 	g_option_context_add_main_entries (context, options, NULL);
@@ -201,8 +202,8 @@ cleanup:
 static gboolean
 hildon_init ()
 {
-#ifdef MODEST_ENABLE_HILDON
-
+#if MODEST_PLATFORM_ID==2 
+	
 	osso_context_t *osso_context =
 		osso_initialize(PACKAGE, PACKAGE_VERSION,
 				TRUE, NULL);	
@@ -212,7 +213,8 @@ hildon_init ()
 		return FALSE;
 		
 	}
-#endif /* MODEST_ENABLE_HILDON */
+	
+#endif /* MODEST_PLATFORM_ID==2 */
 
 	return TRUE;
 }
