@@ -69,11 +69,8 @@ struct _ModestUIClass {
  */
 GType        modest_ui_get_type        (void) G_GNUC_CONST;
 
-
-
 /**
  * modest_ui_new:
- * @modest_conf: a ModestConf instance 
  *  
  * Returns: a new ModestUI, or NULL in case of error
  */
@@ -81,51 +78,10 @@ ModestUI*     modest_ui_new             (void);
 
 
 /**
- * modest_ui_show_main_window:
- * @ui: a ModestUI instance 
- * 
- * show the application's main window
- * 
- * Returns: TRUE if succeeded, FALSE otherwise
- */
-gboolean     modest_ui_show_main_window (ModestUI *ui);
-
-
-/**
- * modest_ui_new_edit_window:
- * @ui: a ModestUI instance 
- * @to: people to send this to, ';' separated
- * @cc: people to send carbon-copies (cc), ';' separated
- * @bcc people to send blind-carbon-copies (bcc),';' separated
- * @subject: the subject of the message
- * @body: the body text of the message
- * @att: a list with the filepaths for attachments
+ * modest_ui_main_window:
+ * @modest_ui: a ModestUI instance 
  *  
- * Returns: TRUE if succeeded, FALSE otherwise
- */
-gboolean     modest_ui_new_edit_window (ModestUI *ui,
-					 const gchar* to,
-					 const gchar* cc,
-					 const gchar* bcc,
-					 const gchar* subject,
-					 const gchar* body,
-					 const GSList* att);
-
-
-GtkContainer *modest_ui_new_editor_window (ModestUI *modest_ui, gpointer *user_data);
-
-gboolean modest_ui_editor_window_set_to_header(const gchar *to, gpointer window_data);
-gboolean modest_ui_editor_window_set_cc_header(const gchar *cc, gpointer window_data);
-gboolean modest_ui_editor_window_set_bcc_header(const gchar *bcc, gpointer window_data);
-gboolean modest_ui_editor_window_set_subject_header(const gchar *subject, gpointer window_data);
-gboolean modest_ui_editor_window_set_body(const gchar *body, gpointer window_data);
-gboolean modest_ui_editor_window_update_attachments(gpointer window_data);
-
-GtkContainer *modest_ui_new_viewer_window (ModestUI *modest_ui, GtkWidget *msg_view,
-					   TnyMsgIface *msg, gpointer *user_data);
-
-/*
- * the new API below
+ * Returns: a new main window, or NULL in case of error
  */
 GtkWidget *modest_ui_main_window (ModestUI *modest_ui);
 
