@@ -72,7 +72,7 @@ GdkPixbuf* modest_icon_factory_get_icon (const gchar *name);
  * Returns: a GdkPixBuf for this icon, or NULL in case of error
  * You should NOT unref or modify the pixbuf in any way
  */
-GdkPixbuf* modest_icon_factory_get_icon_at_size (const gchar *name, int width, int height);
+GdkPixbuf* modest_icon_factory_get_icon_at_size (const gchar *name, guint width, guint height);
 
 /* FIXME */
 #define modest_icon_factory_get_small_icon(n) modest_icon_factory_get_icon_at_size(n,16,16)

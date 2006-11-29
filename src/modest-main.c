@@ -208,10 +208,8 @@ hildon_init ()
 		osso_initialize(PACKAGE, PACKAGE_VERSION,
 				TRUE, NULL);	
 	if (!osso_context) {
-		g_printerr ("modest: failed to aquire osso context, exiting\n");
-
+		g_printerr ("modest: failed to acquire osso context\n");
 		return FALSE;
-		
 	}
 	
 #endif /* MODEST_PLATFORM_ID==2 */

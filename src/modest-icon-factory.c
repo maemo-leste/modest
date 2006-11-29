@@ -57,7 +57,7 @@ modest_icon_factory_init   (void)
 			    "should be called only once\n");
 		return;
 	}
-
+	
 	icon_hash = g_hash_table_new_full (g_str_hash,
 					   (GEqualFunc)equal_func,
 					   (GDestroyNotify)g_free,
@@ -87,6 +87,8 @@ modest_icon_factory_get_icon (const gchar *name)
 	GError *err = NULL;
 	GdkPixbuf *pixbuf;
 	gpointer orig_key;
+
+	g_return_val_if_fail (name, NULL);
 	
 	if (!icon_hash) {
 		g_printerr ("modest: ModestIconFactory must be initialized first\n");
@@ -100,7 +102,8 @@ modest_icon_factory_get_icon (const gchar *name)
 					   (gpointer*)&pixbuf)) {
 		pixbuf = gdk_pixbuf_new_from_file (name, &err);
 		if (!pixbuf) {
-			g_printerr ("modest: error in icon factory: %s\n", err->message);
+			g_printerr ("modest: error in icon factory while loading '%s': %s\n",
+				    name, err->message);
 			g_error_free (err);
 		}
 		/* if we cannot find it, we still insert, so we get the error
@@ -112,12 +115,15 @@ modest_icon_factory_get_icon (const gchar *name)
 }
 
 
+
 GdkPixbuf*
-modest_icon_factory_get_icon_at_size (const gchar *name, int width, int height)
+modest_icon_factory_get_icon_at_size (const gchar *name, guint width, guint height)
 {
 	/* FIXME, somehow, cache scaled icons as well... */
 	GError *err = NULL;
 	GdkPixbuf *pixbuf = NULL;
+
+	g_return_val_if_fail (name, NULL);
 	
 	if (!icon_hash) {
 		g_printerr ("modest: ModestIconFactory must be initialized first\n");
@@ -126,7 +132,8 @@ modest_icon_factory_get_icon_at_size (const gchar *name, int width, int height)
 
 	pixbuf = gdk_pixbuf_new_from_file_at_size (name, width, height, &err);
 	if (!pixbuf) {
-		g_printerr ("modest: error in icon factory: %s\n", err->message);
+		g_printerr ("modest: error in icon factory while loading '%s'@(%dx%d): %s\n",
+			    name, width, height, err->message);
 		g_error_free (err);
 	}
 	
