@@ -36,11 +36,13 @@
 #include <config.h>
 #endif /*HAVE_CONFIG_H*/
 
-#include "../modest-ui.h"
-#include "../modest-account-mgr.h"
-#include "../modest-widget-factory.h"
-#include "modest-main-window.h"
-#include "modest-tny-platform-factory.h"
+#include <hildon-widgets/hildon-program.h>
+
+#include <modest-ui.h>
+#include <modest-account-mgr.h>
+#include <modest-widget-factory.h>
+#include <modest-main-window.h>
+#include <modest-tny-platform-factory.h>
 
 
 /* 'private'/'protected' functions */
@@ -53,9 +55,9 @@ gchar *on_password_requested (TnyAccountIface *, const gchar *, gboolean *);
 
 typedef struct _ModestUIPrivate ModestUIPrivate;
 struct _ModestUIPrivate {
-	ModestWidgetFactory   *widget_factory;	
-
+	ModestWidgetFactory    *widget_factory;	
 	GtkWidget              *main_window;
+	HildonProgram          *hildon_program;
 };
 
 #define MODEST_UI_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -172,7 +174,15 @@ modest_ui_new (void)
 		g_printerr ("modest: could not initialize widget factory\n");
 		return NULL;
 	}
-		
+
+	g_set_application_name ("Modest");
+	
+	priv->hildon_program = HILDON_PROGRAM (hildon_program_get_instance());
+	if (!priv->hildon_program) {
+		g_printerr ("modest: could not initialize HildonProgram instance\n");
+		return NULL;
+	}
+
 	return MODEST_UI(obj);
 }
 
@@ -203,6 +213,8 @@ modest_ui_main_window (ModestUI *modest_ui)
 		
 	if (!priv->main_window)
 		g_printerr ("modest: could not create main window\n");
+
+	hildon_program_add_window (priv->hildon_program, priv->main_window);
 	
 	return priv->main_window;
 }

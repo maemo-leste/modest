@@ -83,7 +83,7 @@ modest_edit_msg_window_get_type (void)
 			(GInstanceInitFunc) modest_edit_msg_window_init,
 			NULL
 		};
-		my_type = g_type_register_static (GTK_TYPE_WINDOW,
+		my_type = g_type_register_static (HILDON_TYPE_WINDOW,
 		                                  "ModestEditMsgWindow",
 		                                  &my_info, 0);
 	}

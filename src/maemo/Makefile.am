@@ -1,6 +1,6 @@
 #
 # Makefile.am
-# Time-stamp: <2006-07-29 20:47:31 (djcb)>
+# Time-stamp: <2006-11-29 17:51:15 (djcb)>
 #
 #
 # use Automake 'trick' ==> convenience static libraries, which
@@ -17,8 +17,7 @@ noinst_LTLIBRARIES=\
 	libmodest-ui.la
 
 PIXMAP_FILES=\
-	pixmaps/*.png \
-	pixmaps/*.svg
+	pixmaps/*.png 
 
 libmodest_ui_la_SOURCES=              \
 	modest-ui.c                   \

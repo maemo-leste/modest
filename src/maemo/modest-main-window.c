@@ -28,6 +28,7 @@
  */
 
 #include <glib/gi18n.h>
+#include <string.h>
 #include <gtk/gtkaboutdialog.h>
 #include <gtk/gtktreeviewcolumn.h>
 
@@ -64,8 +65,10 @@ enum {
 typedef struct _ModestMainWindowPrivate ModestMainWindowPrivate;
 struct _ModestMainWindowPrivate {
 
+	GtkUIManager *ui_manager;
+
 	GtkWidget *toolbar;
-	GtkWidget *menubar;
+	GtkWidget *menu;
 
 	GtkWidget *folder_paned;
 	GtkWidget *msg_paned;
@@ -106,7 +109,7 @@ modest_main_window_get_type (void)
 			(GInstanceInitFunc) modest_main_window_init,
 			NULL
 		};
-		my_type = g_type_register_static (GTK_TYPE_WINDOW,
+		my_type = g_type_register_static (HILDON_TYPE_WINDOW,
 		                                  "ModestMainWindow",
 		                                  &my_info, 0);
 	}
@@ -367,70 +370,42 @@ on_menu_delete (ModestMainWindow *self, guint action, GtkWidget *widget)
 
 
 /* Our menu, an array of GtkItemFactoryEntry structures that defines each menu item */
-static GtkItemFactoryEntry menu_items[] = {
-	{ "/_File",		NULL,			NULL,           0, "<Branch>", NULL },
-	{ "/File/_New",		"<control>N",		NULL,		0, "<StockItem>", GTK_STOCK_NEW },
-	{ "/File/_Open",	"<control>O",		NULL,		0, "<StockItem>", GTK_STOCK_OPEN },
-	{ "/File/_Save",	"<control>S",		NULL,		0, "<StockItem>", GTK_STOCK_SAVE },
-	{ "/File/Save _As",	NULL,			NULL,           0, "<Item>", NULL },
-	{ "/File/sep1",		NULL,			NULL,           0, "<Separator>", NULL },
-	{ "/File/_Quit",	"<CTRL>Q",		on_menu_quit,  0, "<StockItem>", GTK_STOCK_QUIT },
+static const gchar* UI_DEF=
+	"<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+	"<ui>"
+	"  <popup>"
+	"    <menu name=\"Message\" \"MenuMessage\">"
+	"      <menuitem name=\"New\" action=\"on_menu_new_message\" />"
+	"    </menu>"
+//	"    <menu name=\"JustifyMenu\" action=\"JustifyMenuAction\">"
+//	"      <menuitem name=\"Left\" action=\"justify-left\"/>"
+//	"      <menuitem name=\"Centre\" action=\"justify-center\"/>"
+//	"      <menuitem name=\"Right\" action=\"justify-right\"/>"
+//	"      <menuitem name=\"Fill\" action=\"justify-fill\"/>"
+//	"    </menu>"
+	"  </popup>"
+	"</ui>";
 
-	{ "/_Edit",		NULL,			NULL,           0, "<Branch>", NULL },
-	{ "/Edit/_Undo",	"<CTRL>Z",		NULL,		0, "<StockItem>", GTK_STOCK_UNDO },
-	{ "/Edit/_Redo",	"<shift><CTRL>Z",	NULL,		0, "<StockItem>", GTK_STOCK_REDO },
-	{ "/File/sep1",		NULL,			NULL,           0, "<Separator>", NULL },
-	{ "/Edit/Cut",		"<control>X",		NULL,		0, "<StockItem>", GTK_STOCK_CUT  },
-	{ "/Edit/Copy",		"<CTRL>C",		NULL,           0, "<StockItem>", GTK_STOCK_COPY },
-	{ "/Edit/Paste",	NULL,			NULL,           0, "<StockItem>", GTK_STOCK_PASTE},
-	{ "/Edit/sep1",		NULL,			NULL,           0, "<Separator>", NULL },
-	{ "/Edit/Delete",	"<CTRL>Q",		NULL,           0, "<Item>" ,NULL},
-	{ "/Edit/Select all",	"<CTRL>A",		NULL,           0, "<Item>" ,NULL},
-	{ "/Edit/Deelect all",  "<Shift><CTRL>A",	NULL,           0, "<Item>" ,NULL},
-
-	{ "/_Actions",                NULL,		NULL,		0, "<Branch>" ,NULL},
-	{ "/Actions/_New Message",    NULL,		on_menu_new_message,		0, "<Item>",NULL },
-	{ "/Actions/_Reply",    NULL,			on_menu_reply_forward,		1, "<Item>" ,NULL},
-	{ "/Actions/_Forward",  NULL,			on_menu_reply_forward,		3, "<Item>" ,NULL},
-	{ "/Actions/_Bounce",   NULL,			NULL,		0, "<Item>",NULL },	
-	
-	{ "/_Options",		 NULL,			NULL,		0, "<Branch>" ,NULL},
-	{ "/Options/_Accounts",  NULL,			on_menu_accounts,0, "<Item>" ,NULL},
-	{ "/Options/_Contacts",  NULL,			NULL,		0, "<Item>" ,NULL },
-
-
-	{ "/_Help",         NULL,                       NULL,           0, "<Branch>" ,NULL},
-	{ "/_Help/About",   NULL,                       on_menu_about,  0, "<StockItem>", GTK_STOCK_ABOUT},
-};
-
-static gint nmenu_items = sizeof (menu_items) / sizeof (menu_items[0]);
-
-
-static GtkWidget *
-menubar_new (ModestMainWindow *self)
+static GtkMenu *
+get_menu (ModestMainWindow *self)
 {
-	GtkItemFactory *item_factory;
-	GtkAccelGroup *accel_group;
+	GtkWidget *w;
+	int i = 0;
 	
-	/* Make an accelerator group (shortcut keys) */
-	accel_group = gtk_accel_group_new ();
-	
-	/* Make an ItemFactory (that makes a menubar) */
-	item_factory = gtk_item_factory_new (GTK_TYPE_MENU_BAR, "<main>",
-					     accel_group);
-	
-	/* This function generates the menu items. Pass the item factory,
-	   the number of items in the array, the array itself, and any
-	   callback data for the the menu items. */
-	gtk_item_factory_create_items (item_factory, nmenu_items, menu_items, self);
-	
-	///* Attach the new accelerator group to the window. */
-	gtk_window_add_accel_group (GTK_WINDOW (self), accel_group);
-	
-	/* Finally, return the actual menu bar created by the item factory. */
-	return gtk_item_factory_get_widget (item_factory, "<main>");
-}
+	ModestMainWindowPrivate *priv;
+	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
 
+	priv->ui_manager = gtk_ui_manager_new ();
+
+	gtk_ui_manager_add_ui_from_string (priv->ui_manager,
+					   UI_DEF, strlen(UI_DEF),
+					   NULL);
+
+	w = gtk_ui_manager_get_widget (priv->ui_manager, "/popup");
+	g_warning ("==> GtkMenu? ==> %s", GTK_IS_MENU(w) ? "yes" : "no"); 
+
+	return GTK_MENU(w);
+}
 
 
 
@@ -667,28 +642,26 @@ modest_main_window_new (ModestWidgetFactory *widget_factory)
 	folder_win = wrapped_in_scrolled_window (GTK_WIDGET(priv->folder_view),
 						 FALSE);
 	header_win = wrapped_in_scrolled_window (GTK_WIDGET(priv->header_view),
-						 FALSE);			   
-	favorites_win = wrapped_in_scrolled_window (favorites_view(),FALSE);			   
+						 FALSE);			   	
+	/*menu */
+	priv->menu = get_menu (MODEST_MAIN_WINDOW(obj));
+	hildon_window_set_menu (HILDON_WINDOW(obj), GTK_MENU(priv->menu));
 	
-	/* tool/menubar */
-	priv->menubar = menubar_new (MODEST_MAIN_WINDOW(obj));
 	priv->toolbar = GTK_WIDGET(toolbar_new (MODEST_MAIN_WINDOW(obj)));
-
+	
 	/* paned */
-	priv->folder_paned = gtk_vpaned_new ();
 	priv->msg_paned = gtk_vpaned_new ();
 	priv->main_paned = gtk_hpaned_new ();
-	gtk_paned_add1 (GTK_PANED(priv->main_paned), priv->folder_paned);
+
+	gtk_paned_add1 (GTK_PANED(priv->main_paned), folder_win);
 	gtk_paned_add2 (GTK_PANED(priv->main_paned), priv->msg_paned);
-	gtk_paned_add1 (GTK_PANED(priv->folder_paned), favorites_win);
-	gtk_paned_add2 (GTK_PANED(priv->folder_paned), folder_win);
+
 	gtk_paned_add1 (GTK_PANED(priv->msg_paned), header_win);
 	gtk_paned_add2 (GTK_PANED(priv->msg_paned), GTK_WIDGET(priv->msg_preview));
 
 	gtk_widget_show (GTK_WIDGET(priv->header_view));
 	gtk_tree_view_columns_autosize (GTK_TREE_VIEW(priv->header_view));
 
-	
 	/* status bar / progress */
 	status_hbox = gtk_hbox_new (FALSE, 0);
 	gtk_box_pack_start (GTK_BOX(status_hbox),
@@ -706,9 +679,8 @@ modest_main_window_new (ModestWidgetFactory *widget_factory)
 
 	/* putting it all together... */
 	main_vbox = gtk_vbox_new (FALSE, 6);
-	gtk_box_pack_start (GTK_BOX(main_vbox), priv->menubar, FALSE, FALSE, 0);
-	gtk_box_pack_start (GTK_BOX(main_vbox), priv->toolbar, FALSE, FALSE, 0);
 	gtk_box_pack_start (GTK_BOX(main_vbox), priv->main_paned, TRUE, TRUE,0);
+	gtk_box_pack_start (GTK_BOX(main_vbox), priv->toolbar, FALSE, FALSE, 0);	
 	gtk_box_pack_start (GTK_BOX(main_vbox), status_hbox, FALSE, FALSE, 0);
 	
 	gtk_container_add (GTK_CONTAINER(obj), main_vbox);

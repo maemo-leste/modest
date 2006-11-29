@@ -32,6 +32,8 @@
 
 #include <gtk/gtk.h>
 #include <tny-msg.h>
+#include <hildon-widgets/hildon-window.h>
+
 #include "modest-conf.h"
 #include "modest-widget-factory.h"
 
@@ -49,12 +51,12 @@ typedef struct _ModestEditMsgWindow      ModestEditMsgWindow;
 typedef struct _ModestEditMsgWindowClass ModestEditMsgWindowClass;
 
 struct _ModestEditMsgWindow {
-	 GtkWindow parent;
+	HildonWindow parent;
 	/* insert public members, if any */
 };
 
 struct _ModestEditMsgWindowClass {
-	GtkWindowClass parent_class;
+	HildonWindowClass parent_class;
 	/* insert signal callback declarations, eg. */
 	/* void (* my_event) (ModestEditMsgWindow* obj); */
 };
