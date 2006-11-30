@@ -32,7 +32,7 @@
 
 #include <gtk/gtk.h>
 #include <tny-folder.h>
-#include <tny-gtk-account-tree-model.h>
+#include <tny-gtk-account-list-model.h>
 #include <tny-msg.h>
 #include <tny-header.h>
 #include <tny-gtk-header-list-model.h>

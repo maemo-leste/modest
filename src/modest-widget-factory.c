@@ -31,11 +31,17 @@
 #include <gdk/gdkkeysyms.h>
 #include "modest-widget-factory.h"
 #include <modest-protocol-mgr.h>
+#include <tny-gtk-account-list-model.h>
+#include <tny-gtk-folder-store-tree-model.h>
 #include <tny-account-store.h>
 #include <tny-device.h>
+#include <tny-folder-store-query.h>
+
 #include "modest-tny-platform-factory.h"
 #include "modest-account-mgr.h"
 #include "modest-mail-operation.h"
+
+
 /* 'private'/'protected' functions */
 static void modest_widget_factory_class_init    (ModestWidgetFactoryClass *klass);
 static void modest_widget_factory_init          (ModestWidgetFactory *obj);
@@ -511,8 +517,8 @@ on_folder_key_press_event (ModestFolderView *folder_view, GdkEventKey *event, gp
 	gtk_tree_selection_get_selected (selection, &model, &iter);
 	
 	gtk_tree_model_get (model, &iter, 
-			    TNY_GTK_ACCOUNT_TREE_MODEL_TYPE_COLUMN, &type, 
-			    TNY_GTK_ACCOUNT_TREE_MODEL_INSTANCE_COLUMN, &folder, 
+			    TNY_GTK_FOLDER_STORE_TREE_MODEL_TYPE_COLUMN, &type, 
+			    TNY_GTK_FOLDER_STORE_TREE_MODEL_INSTANCE_COLUMN, &folder, 
 			    -1);
 
 	mail_op = modest_mail_operation_new ();

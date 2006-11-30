@@ -30,7 +30,7 @@
 #ifndef __MODEST_FOLDER_VIEW_H__
 #define __MODEST_FOLDER_VIEW_H__
 
-#include <tny-gtk-account-tree-model.h>
+#include <tny-gtk-account-list-model.h>
 #include <tny-account-store.h>
 #include <glib-object.h>
 

@@ -30,7 +30,9 @@
 #include <glib/gi18n.h>
 #include <string.h>
 
-#include <tny-gtk-account-tree-model.h>
+#include <tny-gtk-account-list-model.h>
+#include <tny-gtk-folder-store-tree-model.h>
+#include <tny-gtk-header-list-model.h>
 #include <tny-account-store.h>
 #include <tny-account.h>
 #include <tny-folder.h>
@@ -39,7 +41,6 @@
 #include <modest-tny-account-store.h>
 
 #include "modest-folder-view.h"
-
 
 /* 'private'/'protected' functions */
 static void modest_folder_view_class_init  (ModestFolderViewClass *klass);
@@ -150,9 +151,9 @@ text_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 	TnyFolderType type;
 	
 	gtk_tree_model_get (tree_model, iter,
-			    TNY_GTK_ACCOUNT_TREE_MODEL_NAME_COLUMN, &fname,
-			    TNY_GTK_ACCOUNT_TREE_MODEL_TYPE_COLUMN, &type,
-			    TNY_GTK_ACCOUNT_TREE_MODEL_UNREAD_COLUMN, &unread, -1);
+			    TNY_GTK_FOLDER_STORE_TREE_MODEL_NAME_COLUMN, &fname,
+			    TNY_GTK_FOLDER_STORE_TREE_MODEL_TYPE_COLUMN, &type,
+			    TNY_GTK_FOLDER_STORE_TREE_MODEL_UNREAD_COLUMN, &unread, -1);
 	rendobj = G_OBJECT(renderer);
 
 	if (unread > 0) {
@@ -232,9 +233,9 @@ icon_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 	
 	rendobj = G_OBJECT(renderer);
 	gtk_tree_model_get (tree_model, iter,
-			    TNY_GTK_ACCOUNT_TREE_MODEL_TYPE_COLUMN, &type,
-			    TNY_GTK_ACCOUNT_TREE_MODEL_NAME_COLUMN, &fname,
-			    TNY_GTK_ACCOUNT_TREE_MODEL_UNREAD_COLUMN, &unread, -1);
+			    TNY_GTK_FOLDER_STORE_TREE_MODEL_TYPE_COLUMN, &type,
+			    TNY_GTK_FOLDER_STORE_TREE_MODEL_NAME_COLUMN, &fname,
+			    TNY_GTK_FOLDER_STORE_TREE_MODEL_UNREAD_COLUMN, &unread, -1);
 	rendobj = G_OBJECT(renderer);
 	
 	if (type == TNY_FOLDER_TYPE_NORMAL)
@@ -303,8 +304,7 @@ modest_folder_view_init (ModestFolderView *obj)
 	priv->lock           = g_mutex_new ();
 	
 	column = gtk_tree_view_column_new ();	
-	gtk_tree_view_append_column (GTK_TREE_VIEW(obj),
-				     column);
+	gtk_tree_view_append_column (GTK_TREE_VIEW(obj),column);
 	
 	renderer = gtk_cell_renderer_pixbuf_new();
 	gtk_tree_view_column_pack_start (column, renderer, FALSE);
@@ -492,8 +492,7 @@ update_model_empty (ModestFolderView *self)
 	store = gtk_tree_store_new (1, G_TYPE_STRING);
 	gtk_tree_store_append (store, &iter, NULL);
 
-	gtk_tree_store_set (store, &iter, 0,
-			    _("(empty)"), -1);
+	gtk_tree_store_set (store, &iter, 0, _("(empty)"), -1);
 
 	gtk_tree_view_set_model (GTK_TREE_VIEW(self),
 				 GTK_TREE_MODEL(store));
@@ -552,10 +551,8 @@ update_model (ModestFolderView *self, ModestTnyAccountStore *account_store)
 	priv =	MODEST_FOLDER_VIEW_GET_PRIVATE(self);
 
 	update_model_empty (self); /* cleanup */
-	
-	//model        = GTK_TREE_MODEL(tny_gtk_account_tree_model_new (TRUE, priv->query)); /* async */
-	model        = GTK_TREE_MODEL(tny_gtk_account_list_model_new (TRUE, NULL)); /* async */
 
+	model        = tny_gtk_folder_store_tree_model_new (TRUE,NULL);
 	account_list = TNY_LIST(model);
 
 	tny_account_store_get_accounts (TNY_ACCOUNT_STORE(account_store),
@@ -565,7 +562,7 @@ update_model (ModestFolderView *self, ModestTnyAccountStore *account_store)
 	if (account_list) {
 		sortable = gtk_tree_model_sort_new_with_model (model);
 		gtk_tree_sortable_set_sort_column_id (GTK_TREE_SORTABLE (sortable),
-						      TNY_GTK_ACCOUNT_TREE_MODEL_NAME_COLUMN, 
+						      TNY_GTK_FOLDER_STORE_TREE_MODEL_NAME_COLUMN, 
 						      GTK_SORT_ASCENDING);
 		gtk_tree_view_set_model (GTK_TREE_VIEW(self), sortable);
 
@@ -608,8 +605,8 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 	tree_view = MODEST_FOLDER_VIEW (user_data);
 
 	gtk_tree_model_get (model, &iter, 
-			    TNY_GTK_ACCOUNT_TREE_MODEL_TYPE_COLUMN, &type, 
-			    TNY_GTK_ACCOUNT_TREE_MODEL_INSTANCE_COLUMN, &folder, 
+			    TNY_GTK_FOLDER_STORE_TREE_MODEL_TYPE_COLUMN, &type, 
+			    TNY_GTK_FOLDER_STORE_TREE_MODEL_INSTANCE_COLUMN, &folder, 
 			    -1);
 
 	if (type == TNY_FOLDER_TYPE_ROOT) {
@@ -673,7 +670,7 @@ get_account_name_from_folder (GtkTreeModel *model, GtkTreeIter iter)
 
 	gtk_tree_model_get_iter (model, &new_iter, path);
 	gtk_tree_model_get (model, &new_iter, 
-			    TNY_GTK_ACCOUNT_TREE_MODEL_INSTANCE_COLUMN, &account_folder, 
+			    TNY_GTK_FOLDER_STORE_TREE_MODEL_INSTANCE_COLUMN, &account_folder, 
 			    -1);
 	return tny_account_get_name (TNY_ACCOUNT (account_folder));
 }
