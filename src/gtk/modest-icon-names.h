@@ -42,7 +42,7 @@
 
 /* icons */
 
-#define MODEST_APP_ICON				PIXMAP_PREFIX "internet-mail.svg"
+#define MODEST_APP_ICON				PIXMAP_PREFIX "modest.png"
 
 #define MODEST_HEADER_ICON_READ			PIXMAP_PREFIX "qgn_list_messagin_mail.png"
 #define MODEST_HEADER_ICON_UNREAD		PIXMAP_PREFIX "qgn_list_messagin_mail_unread.png"
@@ -66,15 +66,15 @@
 #define MODEST_FOLDER_ICON_CALENDAR     	PIXMAP_PREFIX "qgn_widg_datedit.png"
 
 /* toolbar */
-#define  MODEST_TOOLBAR_ICON_MAIL_SEND		PIXMAP_PREFIX "gnome-stock-mail-new.svg"
-#define  MODEST_TOOLBAR_ICON_NEW_MAIL		PIXMAP_PREFIX "gnome-stock-mail-new.svg"
-#define  MODEST_TOOLBAR_ICON_SEND_RECEIVE	PIXMAP_PREFIX "gtk-refresh.svg"
-#define  MODEST_TOOLBAR_ICON_REPLY		PIXMAP_PREFIX "gnome-stock-mail-rpl.svg"
-#define  MODEST_TOOLBAR_ICON_REPLY_ALL		PIXMAP_PREFIX "mail-reply-all.svg"
-#define  MODEST_TOOLBAR_ICON_FORWARD		PIXMAP_PREFIX "mail-forward.svg"
-#define  MODEST_TOOLBAR_ICON_DELETE		PIXMAP_PREFIX "edit-delete.svg"
-#define  MODEST_TOOLBAR_ICON_NEXT		PIXMAP_PREFIX "forward.svg"
-#define  MODEST_TOOLBAR_ICON_PREV		PIXMAP_PREFIX "back.svg"
+#define  MODEST_TOOLBAR_ICON_MAIL_SEND		PIXMAP_PREFIX "qgn_list_messagin_sent.png"
+#define  MODEST_TOOLBAR_ICON_NEW_MAIL		PIXMAP_PREFIX "qgn_list_messagin_editor.png"
+#define  MODEST_TOOLBAR_ICON_SEND_RECEIVE	PIXMAP_PREFIX "gtk-refresh.png"
+#define  MODEST_TOOLBAR_ICON_REPLY		PIXMAP_PREFIX "mail-reply-sender.png"
+#define  MODEST_TOOLBAR_ICON_REPLY_ALL		PIXMAP_PREFIX "mail-reply-all.png"
+#define  MODEST_TOOLBAR_ICON_FORWARD		PIXMAP_PREFIX "mail-forward.png"
+#define  MODEST_TOOLBAR_ICON_DELETE		PIXMAP_PREFIX "mail-mark-junk.png"
+#define  MODEST_TOOLBAR_ICON_NEXT		PIXMAP_PREFIX "forward.png"
+#define  MODEST_TOOLBAR_ICON_PREV		PIXMAP_PREFIX "back.png"
 #define  MODEST_TOOLBAR_ICON_STOP		PIXMAP_PREFIX "stock-stop.svg"
 
 #endif  /*__MODEST_TNY_ICON_NAMES_H__*/
