@@ -52,6 +52,7 @@
 #define MODEST_FOLDER_ICON_OPEN			PIXMAP_PREFIX "qgn_list_gene_fldr_opn.png"
 #define MODEST_FOLDER_ICON_CLOSED		PIXMAP_PREFIX "qgn_list_gene_fldr_cls.png"
 
+#define MODEST_FOLDER_ICON_ACCOUNT		PIXMAP_PREFIX "qgn_addr_icon_user_group.png"
 #define MODEST_FOLDER_ICON_INBOX		PIXMAP_PREFIX "qgn_list_messagin_inbox.png"
 #define MODEST_FOLDER_ICON_OUTBOX		PIXMAP_PREFIX "qgn_list_messagin_outbox.png"
 #define MODEST_FOLDER_ICON_SENT			PIXMAP_PREFIX "qgn_list_messagin_sent.png"
