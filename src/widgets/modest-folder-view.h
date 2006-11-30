@@ -75,9 +75,11 @@ struct _ModestFolderViewClass {
 GType        modest_folder_view_get_type    (void) G_GNUC_CONST;
 
 
+
 /**
  * modest_folder_view_new:
- * @iface: a ModestTnyAccountStore instance
+ * @account_store: a ModestTnyAccountStore instance
+ * @query: a folder store query for the folders to watch
  * 
  * create a new ModestFolderView instance, based on an account store
  *  
@@ -85,6 +87,18 @@ GType        modest_folder_view_get_type    (void) G_GNUC_CONST;
  */
 GtkWidget* modest_folder_view_new         (ModestTnyAccountStore *account_store,
 					   TnyFolderStoreQuery *query);
+
+
+/**
+ * modest_folder_view_set_title:
+ * @self: a ModestFolderView instance
+ * @title: the new title
+ * 
+ * set the title for the folder view; if title is NULL, the title column
+ * header will be hidden
+ */
+void  modest_folder_view_set_title (ModestFolderView *self, const gchar *title);
+
 
 
 /**

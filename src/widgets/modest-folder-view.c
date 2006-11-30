@@ -168,7 +168,7 @@ text_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 /* FIXME: move these to TnyMail */
 enum {
 
-	TNY_FOLDER_TYPE_NOTES = TNY_FOLDER_TYPE_SENT + 1, /* urgh */
+	TNY_FOLDER_TYPE_NOTES = TNY_FOLDER_TYPE_ROOT + 1, /* urgh */
 	TNY_FOLDER_TYPE_DRAFTS,
 	TNY_FOLDER_TYPE_CONTACTS,
 	TNY_FOLDER_TYPE_CALENDAR
@@ -244,7 +244,10 @@ icon_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 		g_free (fname);
 
 	switch (type) {
-        case TNY_FOLDER_TYPE_INBOX:
+	case TNY_FOLDER_TYPE_ROOT:
+		pixbuf = modest_icon_factory_get_icon (MODEST_FOLDER_ICON_ACCOUNT);
+                break;
+	case TNY_FOLDER_TYPE_INBOX:
                 pixbuf = modest_icon_factory_get_small_icon (MODEST_FOLDER_ICON_INBOX);
                 break;
         case TNY_FOLDER_TYPE_OUTBOX:
@@ -299,10 +302,7 @@ modest_folder_view_init (ModestFolderView *obj)
 	priv->query          = NULL;
 	priv->lock           = g_mutex_new ();
 	
-	column = gtk_tree_view_column_new ();
-	gtk_tree_view_column_set_title (column,
-					_("All Mail Folders"));
-	
+	column = gtk_tree_view_column_new ();	
 	gtk_tree_view_append_column (GTK_TREE_VIEW(obj),
 				     column);
 	
@@ -322,7 +322,6 @@ modest_folder_view_init (ModestFolderView *obj)
 	gtk_tree_view_column_set_spacing (column, 2);
 	gtk_tree_view_column_set_resizable (column, TRUE);
 	gtk_tree_view_column_set_fixed_width (column, TRUE);		
-	gtk_tree_view_set_headers_visible   (GTK_TREE_VIEW(obj), TRUE);
 	gtk_tree_view_set_headers_clickable (GTK_TREE_VIEW(obj), FALSE);
 	gtk_tree_view_set_enable_search     (GTK_TREE_VIEW(obj), FALSE);
 
@@ -407,6 +406,23 @@ on_account_update (TnyAccountStore *account_store, const gchar *account,
 			    account);
 }
 
+void
+modest_folder_view_set_title (ModestFolderView *self, const gchar *title)
+{
+	GtkTreeViewColumn *col;
+	
+	g_return_if_fail (self);
+
+	col = gtk_tree_view_get_column (GTK_TREE_VIEW(self), 0);
+	if (!col) {
+		g_printerr ("modest: failed get column for title\n");
+		return;
+	}
+
+	gtk_tree_view_column_set_title (col, title);
+	gtk_tree_view_set_headers_visible (GTK_TREE_VIEW(self),
+					   title != NULL);
+}
 
 GtkWidget*
 modest_folder_view_new (ModestTnyAccountStore *account_store, 
@@ -424,10 +440,10 @@ modest_folder_view_new (ModestTnyAccountStore *account_store,
 	priv->account_store = g_object_ref (G_OBJECT (account_store));
 	if (query)
 		priv->query = g_object_ref (G_OBJECT (query));
-
+	
 	if (!update_model (MODEST_FOLDER_VIEW(self),
 			   MODEST_TNY_ACCOUNT_STORE(account_store)))
-		g_printerr ("modest: failed to update model");
+		g_printerr ("modest: failed to update model\n");
 	
 	priv->sig1 = g_signal_connect (G_OBJECT(account_store), "account_update",
 				       G_CALLBACK (on_account_update), self);	
@@ -574,10 +590,11 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 
 	g_return_if_fail (sel);
 	g_return_if_fail (user_data);
-
+	
 	priv = MODEST_FOLDER_VIEW_GET_PRIVATE(user_data);
 	priv->cur_selection = sel;
 
+	
 	/* is_empty means that there is only the 'empty' item */
 	if (priv->view_is_empty)
 		return;
@@ -608,6 +625,7 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 		g_signal_emit (G_OBJECT(tree_view), signals[FOLDER_SELECTED_SIGNAL], 0,
 			       folder);
 	}
+
 }
 
 static void 
