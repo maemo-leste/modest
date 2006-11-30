@@ -554,7 +554,7 @@ update_model (ModestFolderView *self, ModestTnyAccountStore *account_store)
 	update_model_empty (self); /* cleanup */
 	
 	//model        = GTK_TREE_MODEL(tny_gtk_account_tree_model_new (TRUE, priv->query)); /* async */
-	model        = GTK_TREE_MODEL(tny_gtk_account_tree_model_new (TRUE, NULL)); /* async */
+	model        = GTK_TREE_MODEL(tny_gtk_account_list_model_new (TRUE, NULL)); /* async */
 
 	account_list = TNY_LIST(model);
 
