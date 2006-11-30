@@ -70,7 +70,7 @@ struct _ModestMainWindowPrivate {
 	GtkWidget *toolbar;
 	GtkWidget *menu;
 
-	GtkWidget *folder_paned;
+	//GtkWidget *folder_paned;
 	GtkWidget *msg_paned;
 	GtkWidget *main_paned;
 	
@@ -537,8 +537,6 @@ restore_sizes (ModestMainWindow *self)
 
 	modest_widget_memory_restore_settings (conf,GTK_WIDGET(self),
 					       "modest-main-window");
-	modest_widget_memory_restore_settings (conf, GTK_WIDGET(priv->folder_paned),
-					       "modest-folder-paned");
 	modest_widget_memory_restore_settings (conf, GTK_WIDGET(priv->msg_paned),
 					       "modest-msg-paned");
 	modest_widget_memory_restore_settings (conf, GTK_WIDGET(priv->main_paned),
@@ -557,8 +555,6 @@ save_sizes (ModestMainWindow *self)
 	
 	modest_widget_memory_save_settings (conf,GTK_WIDGET(self),
 					    "modest-main-window");
-	modest_widget_memory_save_settings (conf, GTK_WIDGET(priv->folder_paned),
-					    "modest-folder-paned");
 	modest_widget_memory_save_settings (conf, GTK_WIDGET(priv->msg_paned),
 					    "modest-msg-paned");
 	modest_widget_memory_save_settings (conf, GTK_WIDGET(priv->main_paned),
@@ -592,28 +588,6 @@ on_delete_event (GtkWidget *widget, GdkEvent  *event, ModestMainWindow *self)
 	save_sizes (self);
 	return FALSE;
 }
-
-static GtkWidget*
-favorites_view ()
-{
-	GtkWidget *favorites;
-	GtkTreeStore *store;
-	GtkTreeViewColumn *col;
-
-	store = gtk_tree_store_new (1, G_TYPE_STRING);
-	favorites = gtk_tree_view_new_with_model (GTK_TREE_MODEL(store));
-	col = gtk_tree_view_column_new_with_attributes (_("Favorites"),
-							gtk_cell_renderer_text_new(),
-							"text", 0, NULL);
-	
-	gtk_tree_view_append_column (GTK_TREE_VIEW(favorites), col);
-	gtk_widget_show_all (favorites);
-
-	g_object_unref (G_OBJECT(store));
-
-	return favorites;
-}
-
 
 
 GtkWidget*

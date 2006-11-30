@@ -56,6 +56,7 @@ struct _ModestEditMsgWindowPrivate {
 	GtkWidget      *msg_body;
 	GtkWidget      *from_field, *to_field, *cc_field, *bcc_field,
 		       *subject_field;
+	GtkUIManager   *ui_manager;
 };
 #define MODEST_EDIT_MSG_WINDOW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                     MODEST_TYPE_EDIT_MSG_WINDOW, \
@@ -118,7 +119,7 @@ modest_edit_msg_window_init (ModestEditMsgWindow *obj)
 	priv->fact = modest_tny_platform_factory_get_instance ();
 	priv->factory = NULL;
 	priv->toolbar = NULL;
-	priv->menubar = NULL;
+	//priv->menubar = NULL;
 }
 
 
@@ -160,82 +161,47 @@ on_menu_quit (ModestEditMsgWindow *self, guint action, GtkWidget *widget)
 }
 
 
-
-
-
 /* Our menu, an array of GtkItemFactoryEntry structures that defines each menu item */
-static GtkItemFactoryEntry menu_items[] = {
-	{ "/_File",		NULL,			NULL,           0, "<Branch>" ,NULL},
-	{ "/File/_New",		"<control>N",		NULL,		0, "<StockItem>", GTK_STOCK_NEW },
-	{ "/File/_Open",	"<control>O",		NULL,		0, "<StockItem>", GTK_STOCK_OPEN },
-	{ "/File/_Save",	"<control>S",		NULL,		0, "<StockItem>", GTK_STOCK_SAVE },
-	{ "/File/Save _As",	NULL,			NULL,           0, "<Item>", NULL} ,
-	{ "/File/Save Draft",	"<control><shift>S",	NULL,           0, "<Item>",NULL },
+static const gchar* UI_DEF=
+	"<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+	"<ui>"
+	"  <popup>"
+	"    <menu name=\"Message\" \"MenuMessage\">"
+	"      <menuitem name=\"New\" action=\"on_menu_quit\" />"
+	"    </menu>"
+//	"    <menu name=\"JustifyMenu\" action=\"JustifyMenuAction\">"
+//	"      <menuitem name=\"Left\" action=\"justify-left\"/>"
+//	"      <menuitem name=\"Centre\" action=\"justify-center\"/>"
+//	"      <menuitem name=\"Right\" action=\"justify-right\"/>"
+//	"      <menuitem name=\"Fill\" action=\"justify-fill\"/>"
+//	"    </menu>"
+	"  </popup>"
+	"</ui>";
 
 
-	{ "/File/sep1",		NULL,			NULL,           0, "<Separator>" ,NULL },
-	{ "/File/_Quit",	"<CTRL>Q",		on_menu_quit,   0, "<StockItem>", GTK_STOCK_QUIT },
-
-	{ "/_Edit",		NULL,			NULL,           0, "<Branch>" ,NULL },
-	{ "/Edit/_Undo",	"<CTRL>Z",		NULL,		0, "<StockItem>", GTK_STOCK_UNDO },
-	{ "/Edit/_Redo",	"<shift><CTRL>Z",	NULL,		0, "<StockItem>", GTK_STOCK_REDO },
-	{ "/File/sep1",		NULL,			NULL,           0, "<Separator>",NULL },
-	{ "/Edit/Cut",		"<control>X",		NULL,		0, "<StockItem>", GTK_STOCK_CUT  },
-	{ "/Edit/Copy",		"<CTRL>C",		NULL,           0, "<StockItem>", GTK_STOCK_COPY },
-	{ "/Edit/Paste",	NULL,			NULL,           0, "<StockItem>", GTK_STOCK_PASTE},
-	{ "/Edit/sep1",		NULL,			NULL,           0, "<Separator>",NULL },
-	{ "/Edit/Delete",	"<CTRL>Q",		NULL,           0, "<Item>" ,NULL },
-	{ "/Edit/Select all",	"<CTRL>A",		NULL,           0, "<Item>" ,NULL },
-	{ "/Edit/Deselect all",  "<Shift><CTRL>A",	NULL,           0, "<Item>",NULL },
-
-	{ "/_View",             NULL,		NULL,		        0, "<Branch>",NULL },
-	{ "/View/To-field",          NULL,		NULL,		0, "<CheckItem>",NULL },
-	
-	{ "/View/Cc-field:",          NULL,		NULL,		0, "<CheckItem>",NULL },
-	{ "/View/Bcc-field:",          NULL,		NULL,		0, "<CheckItem>",NULL },
-	
-	
-	{ "/_Insert",             NULL,		NULL,		0, "<Branch>",NULL },
-/* 	{ "/Actions/_Reply",    NULL,			NULL,		0, "<Item>" }, */
-/* 	{ "/Actions/_Forward",  NULL,			NULL,		0, "<Item>" }, */
-/* 	{ "/Actions/_Bounce",   NULL,			NULL,		0, "<Item>" },	 */
-	
-	{ "/_Format",		 NULL,			NULL,		0, "<Branch>",NULL }
-/* 	{ "/Options/_Accounts",  NULL,			on_menu_accounts,0, "<Item>" }, */
-/* 	{ "/Options/_Contacts",  NULL,			NULL,		0, "<Item>" }, */
-
-
-/* 	{ "/_Help",         NULL,                       NULL,           0, "<Branch>" }, */
-/* 	{ "/_Help/About",   NULL,                       on_menu_about,  0, "<StockItem>", GTK_STOCK_ABOUT}, */
-};
-
-static gint nmenu_items = sizeof (menu_items) / sizeof (menu_items[0]);
-
-
-static GtkWidget *
-menubar_new (ModestEditMsgWindow *self)
+static GtkMenu *
+get_menu (ModestEditMsgWindow *self)
 {
-	GtkItemFactory *item_factory;
-	GtkAccelGroup *accel_group;
+	GtkWidget *w;
+	int i = 0;
 	
-	/* Make an accelerator group (shortcut keys) */
-	accel_group = gtk_accel_group_new ();
-	
-	/* Make an ItemFactory (that makes a menubar) */
-	item_factory = gtk_item_factory_new (GTK_TYPE_MENU_BAR, "<main>",
-					     accel_group);
-	
-	/* This function generates the menu items. Pass the item factory,
-	   the number of items in the array, the array itself, and any
-	   callback data for the the menu items. */
-	gtk_item_factory_create_items (item_factory, nmenu_items, menu_items, self);
-	
-	///* Attach the new accelerator group to the window. */
-	gtk_window_add_accel_group (GTK_WINDOW (self), accel_group);
-	
-	/* Finally, return the actual menu bar created by the item factory. */
-	return gtk_item_factory_get_widget (item_factory, "<main>");
+	ModestEditMsgWindowPrivate *priv;
+	priv = MODEST_EDIT_MSG_WINDOW_GET_PRIVATE(self);
+
+	priv->ui_manager = gtk_ui_manager_new ();
+
+	gtk_ui_manager_add_ui_from_string (priv->ui_manager,
+					   UI_DEF, strlen(UI_DEF),
+					   NULL);
+
+	w = gtk_ui_manager_get_widget (priv->ui_manager, "/popup");
+	g_warning ("==> GtkMenu? ==> %s", GTK_IS_MENU(w) ? "yes" : "no"); 
+
+	return GTK_MENU(w);
 }
+
+
+
 
 
 static void
@@ -401,14 +367,14 @@ init_window (ModestEditMsgWindow *obj)
 	
 	main_vbox = gtk_vbox_new  (FALSE, 6);
 
-	priv->menubar = menubar_new (obj);
+	//priv->menubar = menubar_new (obj);
 	priv->toolbar = GTK_WIDGET(toolbar_new (obj));
 
-	gtk_box_pack_start (GTK_BOX(main_vbox), priv->menubar, FALSE, FALSE, 0);
-	gtk_box_pack_start (GTK_BOX(main_vbox), priv->toolbar, FALSE, FALSE, 0);
+	//gtk_box_pack_start (GTK_BOX(main_vbox), priv->menubar, FALSE, FALSE, 0);
 	gtk_box_pack_start (GTK_BOX(main_vbox), header_table, FALSE, FALSE, 6);
 	gtk_box_pack_start (GTK_BOX(main_vbox), priv->msg_body, TRUE, TRUE, 6);
-
+	gtk_box_pack_start (GTK_BOX(main_vbox), priv->toolbar, FALSE, FALSE, 0);
+	
 	gtk_widget_show_all (GTK_WIDGET(main_vbox));
 	gtk_container_add (GTK_CONTAINER(obj), main_vbox);
 }
