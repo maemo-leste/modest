@@ -174,6 +174,36 @@ restore_settings_paned (ModestConf *conf, GtkPaned *paned, const gchar *name)
 }
 
 
+static gboolean
+modest_widget_memory_save_settings_treeview (ModestConf *conf, GtkTreeView *treeview,
+					     const gchar *name)
+{
+	GList *cols;
+
+	cols = gtk_tree_view_get_columns (treeview);
+	/* FIXME: implement this */
+	while (cols) {
+		gint size = gtk_tree_view_column_get_width (GTK_TREE_VIEW_COLUMN(cols->data));
+		cols = g_list_next (cols);
+	}
+	
+	
+	g_list_free (cols);
+	
+	return TRUE;
+}
+
+
+
+static gboolean
+modest_widget_memory_restore_settings_treeview (ModestConf *conf, GtkTreeView *treeview,
+						const gchar *name)
+{
+	/* FIXME */
+	return TRUE;
+}
+
+
 gboolean
 modest_widget_memory_save_settings (ModestConf *conf, GtkWidget *widget,
 				    const gchar *name)
