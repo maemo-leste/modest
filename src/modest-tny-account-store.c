@@ -310,8 +310,20 @@ tny_account_from_name (ModestTnyAccountStore *self, const gchar *account,
 				       priv->tny_session_camel);
 	
 	/* id */
-	tny_account_set_id (tny_account, server_account);
-	tny_account_set_name (tny_account, account);
+	tny_account_set_id   (tny_account, server_account);
+
+	/* name */
+	val = modest_account_mgr_get_string (priv->account_mgr, account,
+					     MODEST_ACCOUNT_DISPLAY_NAME, FALSE, NULL);
+	if (val) {
+		tny_account_set_name (tny_account, val);
+		g_free (val);
+	} else {
+		g_printerr ("modest: display name not defined for '%s:%s'\n", 
+			    account, server_account);
+		g_object_unref (G_OBJECT(tny_account));
+		return NULL;
+	}
 
 	/* proto */
 	val = modest_account_mgr_get_string (priv->account_mgr, server_account,
