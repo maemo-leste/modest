@@ -43,8 +43,8 @@
 #include <camel/camel-stream-mem.h>
 #include <glib/gi18n.h>
 
-#include <modest-text-utils.h>
-#include <modest-tny-msg-actions.h>
+#include "modest-text-utils.h"
+#include "modest-tny-msg-actions.h"
 #include "modest-tny-platform-factory.h"
 
 /* 'private'/'protected' functions */
@@ -61,6 +61,13 @@ enum _ModestMailOperationErrorCode {
 
 	MODEST_MAIL_OPERATION_NUM_ERROR_CODES
 };
+
+typedef struct
+{
+	ModestMailOperation *mail_op;
+	GCallback            cb;
+	gpointer             user_data;
+} AsyncHelper;
 
 static void       set_error          (ModestMailOperation *mail_operation, 
 				      ModestMailOperationErrorCode error_code,
@@ -97,15 +104,18 @@ static TnyFolder * modest_mail_operation_find_trash_folder (ModestMailOperation 
 							    TnyStoreAccount *store_account);
 
 
-/* list my signals  */
-enum {
-	/* MY_SIGNAL_1, */
-	/* MY_SIGNAL_2, */
-	LAST_SIGNAL
+enum _ModestMailOperationSignals 
+{
+	PROGRESS_CHANGED_SIGNAL,
+
+	NUM_SIGNALS
 };
 
 typedef struct _ModestMailOperationPrivate ModestMailOperationPrivate;
 struct _ModestMailOperationPrivate {
+	guint                      done;
+	guint                      total;
+	GMutex                    *cb_lock;
 	ModestMailOperationStatus  status;
 	GError                    *error;
 };
@@ -120,8 +130,7 @@ static gboolean is_ascii(const gchar *s);
 /* globals */
 static GObjectClass *parent_class = NULL;
 
-/* uncomment the following if you have defined any signals */
-/* static guint signals[LAST_SIGNAL] = {0}; */
+static guint signals[NUM_SIGNALS] = {0};
 
 GType
 modest_mail_operation_get_type (void)
@@ -159,11 +168,14 @@ modest_mail_operation_class_init (ModestMailOperationClass *klass)
 	g_type_class_add_private (gobject_class, sizeof(ModestMailOperationPrivate));
 
 	/* signal definitions go here, e.g.: */
-/* 	signals[MY_SIGNAL_1] = */
-/* 		g_signal_new ("my_signal_1",....); */
-/* 	signals[MY_SIGNAL_2] = */
-/* 		g_signal_new ("my_signal_2",....); */
-/* 	etc. */
+ 	signals[PROGRESS_CHANGED_SIGNAL] = 
+		g_signal_new ("progress_changed",
+			      G_TYPE_FROM_CLASS (gobject_class),
+			      G_SIGNAL_RUN_FIRST,
+			      G_STRUCT_OFFSET (ModestMailOperationClass, progress_changed),
+			      NULL, NULL,
+			      g_cclosure_marshal_VOID__VOID,
+			      G_TYPE_NONE, 0);
 }
 
 static void
@@ -173,8 +185,11 @@ modest_mail_operation_init (ModestMailOperation *obj)
 
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(obj);
 
-	priv->status = MODEST_MAIL_OPERATION_STATUS_INVALID;
-	priv->error = NULL;
+	priv->status  = MODEST_MAIL_OPERATION_STATUS_INVALID;
+	priv->error   = NULL;
+	priv->done    = 0;
+	priv->total   = 0;
+	priv->cb_lock = g_mutex_new ();
 }
 
 static void
@@ -188,6 +203,8 @@ modest_mail_operation_finalize (GObject *obj)
 		g_error_free (priv->error);
 		priv->error = NULL;
 	}
+
+	g_mutex_free (priv->cb_lock);
 
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
@@ -483,16 +500,52 @@ modest_mail_operation_create_reply_mail (TnyMsg *msg,
 	return new_msg;
 }
 
+static void
+status_update_cb (TnyFolder *folder, const gchar *what, gint status, gpointer user_data) 
+{
+	g_print ("%s status: %d\n", what, status);
+}
+
+static void
+folder_refresh_cb (TnyFolder *folder, gboolean cancelled, GError **err, gpointer user_data)
+{
+	AsyncHelper *helper = NULL;
+	ModestMailOperation *mail_op = NULL;
+	ModestMailOperationPrivate *priv = NULL;
+
+	helper = (AsyncHelper *) user_data;
+	mail_op = MODEST_MAIL_OPERATION (helper->mail_op);
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(mail_op);
+
+	g_mutex_lock (priv->cb_lock);
+
+	priv->done++;
+
+	if (cancelled)
+		priv->status = MODEST_MAIL_OPERATION_STATUS_CANCELLED;
+	else
+		g_signal_emit (G_OBJECT (mail_op), signals[PROGRESS_CHANGED_SIGNAL], 0, NULL);
+
+	g_mutex_unlock (priv->cb_lock);
+
+	if (priv->done == priv->total) {
+		((ModestUpdateAccountCallback) (helper->cb)) (mail_op, helper->user_data);
+		g_slice_free (AsyncHelper, helper);
+	}
+}
+
 void
 modest_mail_operation_update_account (ModestMailOperation *mail_op,
-				      TnyStoreAccount *store_account)
+				      TnyStoreAccount *store_account,
+				      ModestUpdateAccountCallback callback,
+				      gpointer user_data)
 {
-	TnyStoreAccount *storage_account;
 	ModestMailOperationPrivate *priv;
 	TnyList *folders;
 	TnyIterator *ifolders;
 	TnyFolder *cur_folder;
 	TnyFolderStoreQuery *query;
+	AsyncHelper *helper;
 
 	g_return_if_fail (MODEST_IS_MAIL_OPERATION (mail_op));
 	g_return_if_fail (TNY_IS_STORE_ACCOUNT(store_account));
@@ -503,20 +556,27 @@ modest_mail_operation_update_account (ModestMailOperation *mail_op,
     	folders = TNY_LIST (tny_simple_list_new ());
 	query = tny_folder_store_query_new ();
 	tny_folder_store_query_add_item (query, NULL, TNY_FOLDER_STORE_QUERY_OPTION_SUBSCRIBED);
-	tny_folder_store_get_folders (TNY_FOLDER_STORE (storage_account),
+	tny_folder_store_get_folders (TNY_FOLDER_STORE (store_account),
 				      folders, query, NULL); /* FIXME */
 	g_object_unref (query);
 	
 	ifolders = tny_list_create_iterator (folders);
+	priv->total = tny_list_get_length (folders);
+	priv->done = 0;
 
+	gint i =0;
 	/* Async refresh folders */	
 	for (tny_iterator_first (ifolders); 
 	     !tny_iterator_is_done (ifolders); 
 	     tny_iterator_next (ifolders)) {
 		
 		cur_folder = TNY_FOLDER (tny_iterator_get_current (ifolders));
+		helper = g_slice_new0 (AsyncHelper);
+		helper->mail_op = mail_op;
+		helper->user_data = user_data;
+		helper->cb = callback;
 		tny_folder_refresh_async (cur_folder, folder_refresh_cb,
-					  status_update_cb, mail_op);
+					  status_update_cb, helper);
 	}
 	
 	g_object_unref (ifolders);
@@ -551,6 +611,28 @@ void
 modest_mail_operation_cancel (ModestMailOperation *mail_op)
 {
 	/* TODO */
+}
+
+guint 
+modest_mail_operation_get_task_done (ModestMailOperation *mail_op)
+{
+	ModestMailOperationPrivate *priv;
+
+	g_return_val_if_fail (MODEST_IS_MAIL_OPERATION (mail_op), 0);
+
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (mail_op);
+	return priv->done;
+}
+
+guint 
+modest_mail_operation_get_task_total (ModestMailOperation *mail_op)
+{
+	ModestMailOperationPrivate *priv;
+
+	g_return_val_if_fail (MODEST_IS_MAIL_OPERATION (mail_op), 0);
+
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (mail_op);
+	return priv->total;
 }
 
 /* ******************************************************************* */
@@ -889,26 +971,6 @@ set_error (ModestMailOperation *mail_op,
 
 	priv->error = error;
 	priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
-}
-
-static void
-status_update_cb (TnyFolder *folder, const gchar *what, gint status, gpointer user_data) 
-{
-	/* TODO: update main window progress bar */
-}
-
-static void
-folder_refresh_cb (TnyFolder *folder, gboolean cancelled, GError **err, gpointer user_data) 
-{
-	if (cancelled) {
-		ModestMailOperation *mail_op;
-		ModestMailOperationPrivate *priv;
-
-		mail_op = MODEST_MAIL_OPERATION (user_data);
-		priv = MODEST_MAIL_OPERATION_GET_PRIVATE(mail_op);
-
-		priv->status = 	MODEST_MAIL_OPERATION_STATUS_CANCELLED;
-	}
 }
 
 static void

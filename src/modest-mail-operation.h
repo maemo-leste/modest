@@ -76,6 +76,8 @@ typedef enum _ModestMailOperationStatus {
 	MODEST_MAIL_OPERATION_STATUS_CANCELLED
 } ModestMailOperationStatus;
 
+typedef void (*ModestUpdateAccountCallback) (ModestMailOperation *mail_op, gpointer user_data);
+
 struct _ModestMailOperation {
 	 GObject parent;
 	/* insert public members, if any */
@@ -83,8 +85,9 @@ struct _ModestMailOperation {
 
 struct _ModestMailOperationClass {
 	GObjectClass parent_class;
-	/* insert signal callback declarations, eg. */
-	/* void (* my_event) (ModestMailOperation* obj); */
+
+	/* Signals */
+	void (*progress_changed) (ModestMailOperation *mail_op, gpointer user_data);
 };
 
 /* member functions */
@@ -118,7 +121,9 @@ TnyMsg* modest_mail_operation_create_reply_mail    (TnyMsg *msg,
 						    ModestMailOperationReplyMode reply_mode);
 
 void    modest_mail_operation_update_account       (ModestMailOperation *mail_op,
-						    TnyStoreAccount *store_account);
+						    TnyStoreAccount *store_account,
+						    ModestUpdateAccountCallback callback,
+						    gpointer user_data);
 
 /* Functions that perform store operations */
 TnyFolder*    modest_mail_operation_create_folder  (ModestMailOperation *mail_op,
@@ -156,6 +161,11 @@ void          modest_mail_operation_remove_msg     (ModestMailOperation *mail_op
 						    gboolean remove_to_trash);
 
 /* Functions to control mail operations */
+guint     modest_mail_operation_get_task_done      (ModestMailOperation *mail_op);
+
+guint     modest_mail_operation_get_task_total     (ModestMailOperation *mail_op);
+
+
 ModestMailOperationStatus modest_mail_operation_get_status (ModestMailOperation *mail_op);
 
 const GError*             modest_mail_operation_get_error  (ModestMailOperation *mail_op);
