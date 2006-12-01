@@ -46,6 +46,7 @@
 #include "modest-text-utils.h"
 #include "modest-tny-msg-actions.h"
 #include "modest-tny-platform-factory.h"
+#include "modest-marshal.h"
 
 /* 'private'/'protected' functions */
 static void modest_mail_operation_class_init (ModestMailOperationClass *klass);
@@ -305,6 +306,10 @@ modest_mail_operation_create_forward_mail (TnyMsg *msg,
 	TnyList *parts;
 	TnyIterator *iter;
 
+	g_return_val_if_fail (TNY_IS_MSG (msg), NULL);
+	g_return_val_if_fail (from != NULL    , NULL);
+	g_return_val_if_fail (forward_type > 0, NULL);
+
 	/* Create new objects */
 	new_msg          = TNY_MSG (tny_camel_msg_new ());
 	new_header       = TNY_HEADER (tny_camel_header_new ());
@@ -322,7 +327,7 @@ modest_mail_operation_create_forward_mail (TnyMsg *msg,
 	g_free (new_subject);
 
 	/* Get body from original msg */
-	new_body = (gchar *) modest_tny_msg_actions_find_body (msg, FALSE);
+	new_body = (gchar *) modest_tny_msg_actions_find_body (msg, TRUE);
 	if (!new_body) {
 		g_object_unref (new_msg);
 		return NULL;
@@ -377,6 +382,9 @@ modest_mail_operation_create_forward_mail (TnyMsg *msg,
 		tny_mime_part_set_filename (attachment_part, tny_header_get_subject (header));
 		
 		break;
+	default:
+		g_warning (_("Invalid forward type"));
+		g_free (new_msg);
 	}
 
 	/* Clean */
@@ -460,7 +468,7 @@ modest_mail_operation_create_reply_mail (TnyMsg *msg,
 	g_free (new_subject);
 
 	/* Get body from original msg */
-	new_body = (gchar*) modest_tny_msg_actions_find_body (msg, FALSE);
+	new_body = (gchar*) modest_tny_msg_actions_find_body (msg, TRUE);
 	if (!new_body) {
 		g_object_unref (new_msg);
 		return NULL;
@@ -572,9 +580,10 @@ modest_mail_operation_update_account (ModestMailOperation *mail_op,
 		
 		cur_folder = TNY_FOLDER (tny_iterator_get_current (ifolders));
 		helper = g_slice_new0 (AsyncHelper);
-		helper->mail_op = mail_op;
+		helper->mail_op   = mail_op;
 		helper->user_data = user_data;
-		helper->cb = callback;
+		helper->cb        = G_CALLBACK (callback);
+
 		tny_folder_refresh_async (cur_folder, folder_refresh_cb,
 					  status_update_cb, helper);
 	}
@@ -658,7 +667,7 @@ modest_mail_operation_create_folder (ModestMailOperation *mail_op,
 
 	/* Subscribe to folder */
 	if (!tny_folder_is_subscribed (new_folder)) {
-		store_account = tny_folder_get_account (TNY_FOLDER (parent));
+		store_account = TNY_STORE_ACCOUNT (tny_folder_get_account (TNY_FOLDER (parent)));
 		tny_store_account_subscribe (store_account, new_folder);
 		g_object_unref (G_OBJECT (store_account));
 	}

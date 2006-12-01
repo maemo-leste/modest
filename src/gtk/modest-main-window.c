@@ -242,20 +242,25 @@ on_menu_reply_forward (ModestMainWindow *self, guint action, GtkWidget *widget)
 	error = NULL;
 	reply_key = g_strdup_printf ("%s/%s", MODEST_CONF_NAMESPACE, MODEST_CONF_REPLY_TYPE);
 	reply_type = modest_conf_get_int (conf, reply_key, &error);
-	if (error) {
+	if (error || reply_type == 0) {
 		g_warning ("key %s not defined", reply_key);
 		reply_type = MODEST_MAIL_OPERATION_REPLY_TYPE_CITE;
-		g_error_free (error);
-		error = NULL;
+		if (error) {
+			g_error_free (error);
+			error = NULL;
+		}
 	}
 	g_free (reply_key);
 	
 	forward_key = g_strdup_printf ("%s/%s", MODEST_CONF_NAMESPACE, MODEST_CONF_FORWARD_TYPE);
 	forward_type = modest_conf_get_int (conf, forward_key, NULL);
-	if (error) {
+	if (error || forward_type == 0) {
 		g_warning ("key %s not defined", forward_key);
-		reply_type = MODEST_MAIL_OPERATION_FORWARD_TYPE_INLINE;
-		g_error_free (error);
+		forward_type = MODEST_MAIL_OPERATION_FORWARD_TYPE_INLINE;
+		if (error) {
+			g_error_free (error);
+			error = NULL;
+		}
 	}
 	g_free (forward_key);
 	
@@ -297,19 +302,22 @@ on_menu_reply_forward (ModestMainWindow *self, guint action, GtkWidget *widget)
 				g_warning ("unexpected action type: %d", action);
 			}
 
-			/* Set from */
-			new_header = tny_msg_get_header (new_msg);
-			tny_header_set_from (new_header, 
-					     modest_folder_view_get_selected_account (priv->folder_view));
+			if (new_msg) {
+				/* Set from */
+				new_header = tny_msg_get_header (new_msg);
+				tny_header_set_from (new_header, 
+						     modest_folder_view_get_selected_account (priv->folder_view));
+				
+				/* Show edit window */
+				msg_win = modest_edit_msg_window_new (priv->widget_factory,
+								      edit_type,
+								      new_msg);
+				gtk_widget_show (msg_win);
+				
+				/* Clean and go on */
+				g_object_unref (new_msg);
+			}
 
-			/* Show edit window */
-			msg_win = modest_edit_msg_window_new (priv->widget_factory,
-							      edit_type,
-							      new_msg);
-			gtk_widget_show (msg_win);
-
-			/* Clean and go on */
-			g_object_unref (new_msg);
 			tny_iterator_next (iter);
 
 		} while (!tny_iterator_is_done (iter));
