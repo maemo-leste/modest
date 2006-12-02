@@ -32,10 +32,11 @@
 #include <tny-simple-list.h>
 #include <string.h>
 
-#include "modest-header-view.h"
-#include "modest-marshal.h"
-#include "modest-icon-names.h"
-#include "modest-icon-factory.h"
+#include <modest-header-view.h>
+#include <modest-marshal.h>
+#include <modest-text-utils.h>
+#include <modest-icon-names.h>
+#include <modest-icon-factory.h>
 
 static void modest_header_view_class_init  (ModestHeaderViewClass *klass);
 static void modest_header_view_init        (ModestHeaderView *obj);
@@ -190,7 +191,7 @@ header_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 
 
 
-/* try to make a shorter display address; changes it arg in-place */
+/* try to make a shorter display address; changes its argument in-place */
 static gchar*
 display_address (gchar *address)
 {
@@ -250,16 +251,6 @@ sender_receiver_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *rendere
 
 
 
-/* just to prevent warnings:
- * warning: `%x' yields only last 2 digits of year in some locales
- */
-static size_t
-my_strftime(char *s, size_t max, const char  *fmt,  const
-	    struct tm *tm) {
-	return strftime(s, max, fmt, tm);
-}
-
-
 
 /* not reentrant/thread-safe */
 const gchar*
@@ -278,8 +269,9 @@ display_date (time_t date)
 	localtime_r(&date, &date_tm);
 
 	/* get today's date */
-	my_strftime (date_buf, buf_size, "%x", &date_tm);
-	my_strftime (now_buf,  buf_size, "%x",  &now_tm);  /* today */
+	modest_text_utils_strftime (date_buf, buf_size, "%x", &date_tm);
+	modest_text_utils_strftime (now_buf,  buf_size, "%x",  &now_tm);
+	/* today */
 
 	/* if this is today, get the time instead of the date */
 	if (strcmp (date_buf, now_buf) == 0)
@@ -658,11 +650,15 @@ modest_header_view_get_style (ModestHeaderView *self)
 static inline int 
 get_prefix_len (const gchar *sub)
 {
-	gint i = 0;
-	static const gchar* prefix[] = {"Re:", "RE:", "Fwd:", "FWD:", "FW:", "AW:", NULL};
-
-	if (sub[0] != 'R' && sub[0] != 'F') /* optimization */
+	gint i;
+	static const gchar* prefix[] = {
+		"Re:", "RE:", "Fwd:", "FWD:", "FW:", NULL
+	};
+		
+	if (!sub || (sub[0] != 'R' && sub[0] != 'F')) /* optimization */
 		return 0;
+
+	i = 0;
 	
 	while (prefix[i]) {
 		if (g_str_has_prefix(sub, prefix[i])) {
@@ -677,16 +673,27 @@ get_prefix_len (const gchar *sub)
 }
 
 
-static inline gint
-cmp_normalized_subject (const gchar* s1, const gchar *s2)
+
+/* a strcmp that is case insensitive and NULL-safe */
+static gint
+cmp_insensitive_str (const gchar* s1, const gchar *s2)
 {
 	gint result = 0;
-	register gchar *n1, *n2;
-	
-	n1 = g_utf8_collate_key (s1 + get_prefix_len(s1), -1);
-	n2 = g_utf8_collate_key (s2 + get_prefix_len(s2), -1);
+	gchar *n1, *n2;
+
+	/* work even when s1 and/or s2 == NULL */
+	if (s1 == s2)
+		return 0;
+	if (!s1)
+		return -1;
+	if (!s2)
+		return 1;
+
+	n1 = g_utf8_collate_key (s1, -1);
+	n2 = g_utf8_collate_key (s2, -1);
 	
 	result = strcmp (n1, n2);
+
 	g_free (n1);
 	g_free (n2);
 	
@@ -740,8 +747,9 @@ cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 				    TNY_GTK_HEADER_LIST_MODEL_SUBJECT_COLUMN, &s2,
 				    TNY_GTK_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN, &t2,
 				    -1);
-		
-		cmp = cmp_normalized_subject(s1, s2);
+
+		/* the prefix ('Re:', 'Fwd:' etc.) we ignore */ 
+		cmp = cmp_insensitive_str (s1 + get_prefix_len(s1), s2 + get_prefix_len(s2));
 
 		g_free (s1);
 		g_free (s2);
@@ -759,7 +767,7 @@ cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 				    TNY_GTK_HEADER_LIST_MODEL_FROM_COLUMN, &s2,
 				    TNY_GTK_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN, &t2,
 				    -1);
-		cmp = strcmp (s1, s2);
+		cmp = cmp_insensitive_str (s1, s2);
 		g_free (s1);
 		g_free (s2);
 		
@@ -775,7 +783,7 @@ cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 				    TNY_GTK_HEADER_LIST_MODEL_TO_COLUMN, &s2,
 				    TNY_GTK_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN, &t2,
 				    -1);
-		cmp = strcmp (s1, s2);
+		cmp = cmp_insensitive_str (s1, s2);
 		g_free (s1);
 		g_free (s2);
 		
