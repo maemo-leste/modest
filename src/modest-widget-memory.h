@@ -31,8 +31,8 @@
 #define __MODEST_WIDGET_MEMORY_H__
 
 #include <gtk/gtk.h>
-#include "modest-conf.h"
-#include "modest-conf-keys.h"
+#include <modest-conf.h>
+#include <modest-conf-keys.h>
 
 G_BEGIN_DECLS
 

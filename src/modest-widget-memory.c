@@ -28,12 +28,15 @@
  */
 
 #include "modest-widget-memory.h"
+#include <widgets/modest-header-view.h>
+#include <string.h>
 
-#define PARAM_X           "x"
-#define PARAM_Y           "y"
-#define PARAM_HEIGHT      "height"
-#define PARAM_WIDTH       "width"
-#define PARAM_POS         "pos"
+#define PARAM_X             "x"
+#define PARAM_Y             "y"
+#define PARAM_HEIGHT        "height"
+#define PARAM_WIDTH         "width"
+#define PARAM_POS           "pos"
+#define PARAM_COLUMN_WIDTH  "column-width"
 
 static gchar*
 get_keyname (ModestConf *conf, const gchar *name, const gchar *param)
@@ -159,7 +162,7 @@ save_settings_paned (ModestConf *conf, GtkPaned *paned, const gchar *name)
 static gboolean
 restore_settings_paned (ModestConf *conf, GtkPaned *paned, const gchar *name)
 {
-	gchar *key;
+ 	gchar *key;
 	int pos;
 	
 	key = get_keyname (conf, name, PARAM_POS);
@@ -175,19 +178,35 @@ restore_settings_paned (ModestConf *conf, GtkPaned *paned, const gchar *name)
 
 
 static gboolean
-modest_widget_memory_save_settings_treeview (ModestConf *conf, GtkTreeView *treeview,
-					     const gchar *name)
+save_settings_header_view (ModestConf *conf, ModestHeaderView *header_view,
+			   const gchar *name)
 {
-	GList *cols;
+	gchar *key;
+	GString *str;
+	GList *cols, *cursor;
 
-	cols = gtk_tree_view_get_columns (treeview);
-	/* FIXME: implement this */
-	while (cols) {
-		gint size = gtk_tree_view_column_get_width (GTK_TREE_VIEW_COLUMN(cols->data));
-		cols = g_list_next (cols);
+	cursor = cols = modest_header_view_get_columns (header_view);
+	str = g_string_new (NULL);
+	
+	while (cursor) {
+
+		int col_id, width;
+		GtkTreeViewColumn *col;
+		
+		col    = GTK_TREE_VIEW_COLUMN (cursor->data);
+		col_id = GPOINTER_TO_INT(g_object_get_data (G_OBJECT(col),
+							    MODEST_HEADER_VIEW_COLUMN));
+		width = gtk_tree_view_column_get_width (col);
+		
+		g_string_append_printf (str, "%d:%d ", col_id, width);  
+		
+		cursor = g_list_next (cursor);
 	}
+
+	key = get_keyname (conf, name, PARAM_COLUMN_WIDTH);
+	modest_conf_set_string (conf, key, str->str, NULL);
 	
-	
+	g_string_free (str, TRUE);
 	g_list_free (cols);
 	
 	return TRUE;
@@ -196,10 +215,46 @@ modest_widget_memory_save_settings_treeview (ModestConf *conf, GtkTreeView *tree
 
 
 static gboolean
-modest_widget_memory_restore_settings_treeview (ModestConf *conf, GtkTreeView *treeview,
-						const gchar *name)
+restore_settings_header_view (ModestConf *conf, ModestHeaderView *header_view,
+			      const gchar *name)
 {
-	/* FIXME */
+	gchar *key;	
+	key = get_keyname (conf, name, PARAM_COLUMN_WIDTH);
+	
+	if (modest_conf_key_exists (conf, key, NULL)) {
+
+		gchar *data, *cursor;
+		guint col, width;
+		GList *cols = NULL;
+		GList *colwidths = NULL;
+		
+		cursor = data = modest_conf_get_string (conf, key, NULL);
+		while (cursor && sscanf (cursor, "%u:%u ", &col, &width) == 2) {
+			cols      = g_list_append (cols, GINT_TO_POINTER(col));
+			colwidths = g_list_append (colwidths, GINT_TO_POINTER(width));
+			cursor = strchr (cursor + 1, ' ');
+		}
+		g_free (data);	
+		
+		if (cols) {
+			GList *viewcolumns, *colcursor, *widthcursor;
+			modest_header_view_set_columns (header_view, cols);
+
+			widthcursor = colwidths;
+			colcursor = viewcolumns = gtk_tree_view_get_columns (GTK_TREE_VIEW(header_view));
+			while (colcursor && widthcursor) {
+				gtk_tree_view_column_set_fixed_width(GTK_TREE_VIEW_COLUMN(colcursor->data),
+								     GPOINTER_TO_INT(widthcursor->data));
+				colcursor = g_list_next (colcursor);
+				widthcursor = g_list_next (widthcursor);
+			}
+			g_list_free (cols);
+			g_list_free (colwidths);
+			g_list_free (viewcolumns);
+		}
+	}
+
+	g_free (key);
 	return TRUE;
 }
 
@@ -211,15 +266,18 @@ modest_widget_memory_save_settings (ModestConf *conf, GtkWidget *widget,
 	g_return_val_if_fail (conf, FALSE);
 	g_return_val_if_fail (widget, FALSE);
 	g_return_val_if_fail (name, FALSE);
-
+	
 	if (GTK_IS_WINDOW(widget))
-		return save_settings_window (conf, (GtkWindow*)widget, name);
+		return save_settings_window (conf, GTK_WINDOW(widget), name);
 	else if (GTK_IS_PANED(widget))
-		return save_settings_paned (conf, (GtkPaned*)widget, name);
+		return save_settings_paned (conf, GTK_PANED(widget), name);
+	else if (MODEST_IS_HEADER_VIEW(widget))
+		return save_settings_header_view (conf, MODEST_HEADER_VIEW(widget), name);
 	else if (GTK_IS_WIDGET(widget))
 		return save_settings_widget (conf, widget, name);
-
-	return TRUE;
+	
+	g_printerr ("modest: %p is not a known widget\n", widget);
+	return FALSE;
 }
 
 
@@ -233,11 +291,14 @@ modest_widget_memory_restore_settings (ModestConf *conf, GtkWidget *widget,
 	g_return_val_if_fail (name, FALSE);
 	
 	if (GTK_IS_WINDOW(widget))
-		return restore_settings_window (conf, (GtkWindow*)widget, name);
+		return restore_settings_window (conf, GTK_WINDOW(widget), name);
 	else if (GTK_IS_PANED(widget))
-		return restore_settings_paned (conf, (GtkPaned*)widget, name);
+		return restore_settings_paned (conf, GTK_PANED(widget), name);
+	else if (MODEST_IS_HEADER_VIEW(widget))
+		return restore_settings_header_view (conf, MODEST_HEADER_VIEW(widget), name);
 	else if (GTK_IS_WIDGET(widget))
 		return restore_settings_widget (conf, widget, name);
 	
-	return TRUE;
+	g_printerr ("modest: %p is not a known widget\n", widget);
+	return FALSE;
 }
