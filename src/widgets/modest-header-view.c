@@ -44,6 +44,8 @@ static void modest_header_view_finalize    (GObject *obj);
 
 static void on_selection_changed (GtkTreeSelection *sel, gpointer user_data);
 
+#define MODEST_HEADER_VIEW_PTR "modest-header-view"
+
 enum {
 	MESSAGE_SELECTED_SIGNAL,
 	ITEM_NOT_FOUND_SIGNAL,
@@ -362,7 +364,7 @@ remove_all_columns (ModestHeaderView *obj)
 
 
 gboolean
-modest_header_view_set_columns (ModestHeaderView *obj, const GList *columns)
+modest_header_view_set_columns (ModestHeaderView *self, const GList *columns)
 {
 	GtkTreeViewColumn *column=NULL;
 	GtkCellRenderer *renderer_msgtype,
@@ -372,13 +374,13 @@ modest_header_view_set_columns (ModestHeaderView *obj, const GList *columns)
 	ModestHeaderViewPrivate *priv;
 	const GList *cursor;
 	
-	priv = MODEST_HEADER_VIEW_GET_PRIVATE(obj); 
+	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self); 
 	
 	renderer_msgtype = gtk_cell_renderer_pixbuf_new ();
 	renderer_attach  = gtk_cell_renderer_pixbuf_new ();
 	renderer_header = gtk_cell_renderer_text_new (); 
 	
-	remove_all_columns (obj);
+	remove_all_columns (self);
 	
 	for (cursor = columns; cursor; cursor = g_list_next(cursor)) {
 		ModestHeaderViewColumn col =
@@ -454,11 +456,16 @@ modest_header_view_set_columns (ModestHeaderView *obj, const GList *columns)
 			g_assert_not_reached ();
 		}
 
+		/* we keep the column id around */
 		g_object_set_data (G_OBJECT(column), MODEST_HEADER_VIEW_COLUMN,
 				   GINT_TO_POINTER(col));
-				   
+		
+		/* we need this ptr when sorting the rows */
+		g_object_set_data (G_OBJECT(column), MODEST_HEADER_VIEW_PTR,
+				   self);
+		
 		gtk_tree_view_column_set_visible   (column, TRUE);
-		gtk_tree_view_append_column (GTK_TREE_VIEW(obj), column);		
+		gtk_tree_view_append_column (GTK_TREE_VIEW(self), column);		
 	}	
 	return TRUE;
 }
@@ -540,7 +547,6 @@ modest_header_view_new (TnyFolder *folder, const GList *columns,
 	
 	priv->sig1 = g_signal_connect (sel, "changed",
 				       G_CALLBACK(on_selection_changed), self);
-	
 	return GTK_WIDGET(self);
 }
 
@@ -680,20 +686,23 @@ static gint
 cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 	  gpointer user_data)
 {
-	gint col_id = GPOINTER_TO_INT (user_data);
+	gint col_id;
 	gint t1, t2;
 	gint val1, val2;
 	gchar *s1, *s2;
 	gint cmp;
-
-	static int counter = 0;
 	
-	g_return_val_if_fail (GTK_IS_TREE_MODEL(tree_model), -1);
-
-	if (!(++counter % 100))
-		g_print ("==> %d\n", counter);
-		
-		
+	static int counter = 0;
+	col_id = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(user_data), MODEST_HEADER_VIEW_COLUMN));
+	
+	if (!(++counter % 100)) {
+		GObject *header_view = g_object_get_data(G_OBJECT(user_data),
+							 MODEST_HEADER_VIEW_PTR);
+		g_signal_emit (header_view,
+			       signals[STATUS_UPDATE_SIGNAL],
+			       0, _("Sorting..."), 0);
+	}
+	
 	switch (col_id) {
 
 		/* first one, we decide based on the time */
@@ -831,13 +840,12 @@ on_refresh_folder (TnyFolder *folder, gboolean cancelled, GError **err,
 		/* install our special sorting functions */
 		cursor = cols = gtk_tree_view_get_columns (GTK_TREE_VIEW(self));
 		while (cursor) {
-			gint col_id =
-				GPOINTER_TO_INT (g_object_get_data(G_OBJECT(cursor->data),
-								   MODEST_HEADER_VIEW_COLUMN));
+			gint col_id = GPOINTER_TO_INT (g_object_get_data(G_OBJECT(cursor->data),
+									 MODEST_HEADER_VIEW_COLUMN));
 			gtk_tree_sortable_set_sort_func (GTK_TREE_SORTABLE(sortable),
 							 col_id,
 							 (GtkTreeIterCompareFunc)cmp_rows,
-							 GINT_TO_POINTER(col_id), NULL);
+							 cursor->data, NULL);
 			cursor = g_list_next(cursor);
 		}
 		g_list_free (cols);

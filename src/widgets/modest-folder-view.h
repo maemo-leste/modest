@@ -88,7 +88,6 @@ GType        modest_folder_view_get_type    (void) G_GNUC_CONST;
 GtkWidget* modest_folder_view_new         (ModestTnyAccountStore *account_store,
 					   TnyFolderStoreQuery *query);
 
-
 /**
  * modest_folder_view_set_title:
  * @self: a ModestFolderView instance
@@ -111,6 +110,7 @@ void  modest_folder_view_set_title (ModestFolderView *self, const gchar *title);
  * Returns: TRUE if the tree view is empty, FALSE otherwise
  */
 gboolean     modest_folder_view_is_empty    (ModestFolderView *self);
+
 
 
 const gchar* modest_folder_view_get_selected_account (ModestFolderView *self);
