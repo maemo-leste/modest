@@ -42,7 +42,7 @@ static void modest_header_view_class_init  (ModestHeaderViewClass *klass);
 static void modest_header_view_init        (ModestHeaderView *obj);
 static void modest_header_view_finalize    (GObject *obj);
 
-static void     on_selection_changed (GtkTreeSelection *sel, gpointer user_data);
+static void on_selection_changed (GtkTreeSelection *sel, gpointer user_data);
 
 enum {
 	MESSAGE_SELECTED_SIGNAL,
@@ -54,11 +54,9 @@ enum {
 
 typedef struct _ModestHeaderViewPrivate ModestHeaderViewPrivate;
 struct _ModestHeaderViewPrivate {
-
-	TnyFolder *tny_folder;
-	TnyList      *headers;
-	GSList            *columns;
-	GMutex		  *lock;
+	TnyFolder            *tny_folder;
+	TnyList              *headers;
+	GMutex		     *lock;
 	ModestHeaderViewStyle style;
 
 	gulong            sig1;
@@ -324,8 +322,11 @@ get_new_column (const gchar *name, GtkCellRenderer *renderer,
 	GtkTreeViewColumn *column;
 
 	column =  gtk_tree_view_column_new_with_attributes(name, renderer, NULL);
-	gtk_tree_view_column_set_resizable (column, resizable);
 	gtk_tree_view_column_set_sizing (column, GTK_TREE_VIEW_COLUMN_FIXED);
+
+	gtk_tree_view_column_set_resizable (column, resizable);
+	if (resizable)
+		gtk_tree_view_column_set_min_width (column, 100);
 	
 	if (show_as_text) 
 		gtk_tree_view_column_add_attribute (column, renderer, "text",
@@ -339,7 +340,6 @@ get_new_column (const gchar *name, GtkCellRenderer *renderer,
 	if (cell_data_func)
 		gtk_tree_view_column_set_cell_data_func(column, renderer, cell_data_func,
 							user_data, NULL);
-
 	return column;
 }
 
@@ -361,9 +361,8 @@ remove_all_columns (ModestHeaderView *obj)
 
 
 
-
-static void
-init_columns (ModestHeaderView *obj)
+gboolean
+modest_header_view_set_columns (ModestHeaderView *obj, const GList *columns)
 {
 	GtkTreeViewColumn *column=NULL;
 	GtkCellRenderer *renderer_msgtype,
@@ -371,38 +370,43 @@ init_columns (ModestHeaderView *obj)
 		*renderer_attach;
 
 	ModestHeaderViewPrivate *priv;
-	GSList *cursor;
+	const GList *cursor;
 	
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(obj); 
-			
+	
 	renderer_msgtype = gtk_cell_renderer_pixbuf_new ();
 	renderer_attach  = gtk_cell_renderer_pixbuf_new ();
 	renderer_header = gtk_cell_renderer_text_new (); 
 	
 	remove_all_columns (obj);
 	
-	for (cursor = priv->columns; cursor; cursor = cursor->next) {
+	for (cursor = columns; cursor; cursor = g_list_next(cursor)) {
 		ModestHeaderViewColumn col =
 			(ModestHeaderViewColumn) GPOINTER_TO_INT(cursor->data);
+		
+		if (0> col || col >= MODEST_HEADER_VIEW_COLUMN_NUM) {
+			g_printerr ("modest: invalid column %d in column list\n", col);
+			continue;
+		}
 		
 		switch (col) {
 			
 		case MODEST_HEADER_VIEW_COLUMN_MSGTYPE:
-
 			column = get_new_column (_("M"), renderer_msgtype, FALSE,
 						 TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN,
 						 FALSE, (GtkTreeCellDataFunc)msgtype_cell_data,
 						 NULL);
+			gtk_tree_view_column_set_fixed_width (column, 32);
 			break;
 
 		case MODEST_HEADER_VIEW_COLUMN_ATTACH:
-
 			column = get_new_column (_("A"), renderer_attach, FALSE,
 						 TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN,
 						 FALSE, (GtkTreeCellDataFunc)attach_cell_data,
 						 NULL);
+			gtk_tree_view_column_set_fixed_width (column, 32);
 			break;
-			
+		
 		case MODEST_HEADER_VIEW_COLUMN_RECEIVED_DATE:
 			column = get_new_column (_("Received"), renderer_header, TRUE,
 						 TNY_GTK_HEADER_LIST_MODEL_DATE_RECEIVED_COLUMN,
@@ -450,12 +454,13 @@ init_columns (ModestHeaderView *obj)
 			g_assert_not_reached ();
 		}
 
-		gtk_tree_view_column_set_visible (column, TRUE);
-		gtk_tree_view_column_set_min_width (column, 36);
-		gtk_tree_view_column_set_resizable (column, TRUE);
-		
+		g_object_set_data (G_OBJECT(column), MODEST_HEADER_VIEW_COLUMN,
+				   GINT_TO_POINTER(col));
+				   
+		gtk_tree_view_column_set_visible   (column, TRUE);
 		gtk_tree_view_append_column (GTK_TREE_VIEW(obj), column);		
 	}	
+	return TRUE;
 }
 
 
@@ -500,10 +505,9 @@ modest_header_view_finalize (GObject *obj)
 	
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
-
+	
 GtkWidget*
-modest_header_view_new (TnyFolder *folder,
-			GSList *columns,
+modest_header_view_new (TnyFolder *folder, const GList *columns,
 			ModestHeaderViewStyle style)
 {
 	GObject *obj;
@@ -537,33 +541,7 @@ modest_header_view_new (TnyFolder *folder,
 	priv->sig1 = g_signal_connect (sel, "changed",
 				       G_CALLBACK(on_selection_changed), self);
 	
-
 	return GTK_WIDGET(self);
-}
-
-gboolean
-modest_header_view_set_columns (ModestHeaderView *self, GSList *columns)
-{
-	ModestHeaderViewPrivate *priv;
-	GSList *cursor;
-
-	g_return_val_if_fail (self, FALSE);
-	
-	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
-
-	g_slist_free (priv->columns);
-	
-	for (cursor = columns; cursor; cursor = cursor->next) {
-		ModestHeaderViewColumn col = 
-			(ModestHeaderViewColumn) GPOINTER_TO_INT(cursor->data);
-		if (col >= MODEST_HEADER_VIEW_COLUMN_NUM)
-			g_printerr ("modest: invalid column %d in column list\n", col);
-		else
-			priv->columns = g_slist_append (priv->columns, cursor->data);
-	}
-
-	init_columns (self); /* redraw them */
-	return TRUE;
 }
 
 
@@ -590,7 +568,7 @@ modest_header_view_get_selected_headers (ModestHeaderView *self)
 		list = g_list_reverse (list);
 		tmp = list;
 		while (tmp) {			
-			/* Get Header from selection */
+			/* get header from selection */
 			gtk_tree_model_get_iter (tree_model,
 						 &iter,
 						 (GtkTreePath *) (tmp->data));
@@ -610,15 +588,12 @@ modest_header_view_get_selected_headers (ModestHeaderView *self)
 	return header_list;
 }
 
-const GSList*
+
+GList*
 modest_header_view_get_columns (ModestHeaderView *self)
 {
-	ModestHeaderViewPrivate *priv;
-
-	g_return_val_if_fail (self, FALSE);
-	
-	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
-	return priv->columns;
+ 	g_return_val_if_fail (self, FALSE);
+	return gtk_tree_view_get_columns (GTK_TREE_VIEW(self)); 
 }
 
 
@@ -626,7 +601,7 @@ modest_header_view_get_columns (ModestHeaderView *self)
 
 gboolean
 modest_header_view_set_style (ModestHeaderView *self,
-				       ModestHeaderViewStyle style)
+			      ModestHeaderViewStyle style)
 {
 	g_return_val_if_fail (self, FALSE);
 	g_return_val_if_fail (style < MODEST_HEADER_VIEW_STYLE_NUM, FALSE);
@@ -710,9 +685,15 @@ cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 	gint val1, val2;
 	gchar *s1, *s2;
 	gint cmp;
+
+	static int counter = 0;
 	
 	g_return_val_if_fail (GTK_IS_TREE_MODEL(tree_model), -1);
-	
+
+	if (!(++counter % 100))
+		g_print ("==> %d\n", counter);
+		
+		
 	switch (col_id) {
 
 		/* first one, we decide based on the time */
@@ -826,14 +807,14 @@ on_refresh_folder (TnyFolder *folder, gboolean cancelled, GError **err,
 
 	if (cancelled)
 		return;
-
+	
 	self = MODEST_HEADER_VIEW(user_data);
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
 
 	if (!folder)  /* when there is no folder */
 		gtk_tree_view_set_headers_visible (GTK_TREE_VIEW(self), FALSE);
 	else { /* it's a new one or a refresh */
-		GSList *col;
+		GList *cols, *cursor;
 
 		if (priv->headers)
 			g_object_unref (priv->headers);
@@ -848,20 +829,23 @@ on_refresh_folder (TnyFolder *folder, gboolean cancelled, GError **err,
 			(GTK_TREE_MODEL(priv->headers));
 
 		/* install our special sorting functions */
-		col = priv->columns;
-		while (col) {
-			gint col_id = GPOINTER_TO_INT (col->data);
+		cursor = cols = gtk_tree_view_get_columns (GTK_TREE_VIEW(self));
+		while (cursor) {
+			gint col_id =
+				GPOINTER_TO_INT (g_object_get_data(G_OBJECT(cursor->data),
+								   MODEST_HEADER_VIEW_COLUMN));
 			gtk_tree_sortable_set_sort_func (GTK_TREE_SORTABLE(sortable),
 							 col_id,
 							 (GtkTreeIterCompareFunc)cmp_rows,
 							 GINT_TO_POINTER(col_id), NULL);
-			col = col->next;
+			cursor = g_list_next(cursor);
 		}
-
+		g_list_free (cols);
+		
 		gtk_tree_view_set_model (GTK_TREE_VIEW (self), sortable);
 		gtk_tree_view_set_headers_clickable (GTK_TREE_VIEW(self),TRUE);
 		gtk_tree_view_set_headers_visible (GTK_TREE_VIEW(self), TRUE);
-		/* no need to unref sortable */
+		/* no need to unref sortable */	
 	}
 }
 
@@ -883,8 +867,7 @@ on_refresh_folder_status_update (TnyFolder *folder, const gchar *msg,
 
 
 gboolean
-modest_header_view_set_folder (ModestHeaderView *self,
-			       TnyFolder *folder)
+modest_header_view_set_folder (ModestHeaderView *self, TnyFolder *folder)
 {
 	ModestHeaderViewPrivate *priv;
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);

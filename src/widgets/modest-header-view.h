@@ -55,11 +55,10 @@ struct _ModestHeaderView {
 	/* insert public members, if any */
 };
 
-/* typedef enum _ModestItemType ModestItemType; */
-
+#define MODEST_HEADER_VIEW_COLUMN    "header-view-column"
 
 typedef enum _ModestHeaderViewColumn {
-	MODEST_HEADER_VIEW_COLUMN_FROM,
+	MODEST_HEADER_VIEW_COLUMN_FROM            = 0,
 	MODEST_HEADER_VIEW_COLUMN_TO,
 	MODEST_HEADER_VIEW_COLUMN_SUBJECT,
 	MODEST_HEADER_VIEW_COLUMN_SENT_DATE,
@@ -126,7 +125,7 @@ GType        modest_header_view_get_type    (void) G_GNUC_CONST;
  * Returns: a new GtkWidget (a GtkTreeView-subclass)
  */
 GtkWidget*   modest_header_view_new        (TnyFolder *folder,
-					    GSList *columns,
+					    const GList *columns,
 					    ModestHeaderViewStyle style);
 
 /**
@@ -147,22 +146,26 @@ gboolean     modest_header_view_set_folder (ModestHeaderView *self,
  * @self: a ModestHeaderView instance
  * @columns: a list of ModestHeaderViewColumn
  * 
- * set the columns for this ModestHeaderView
+ * set the columns for this ModestHeaderView.
  *  
  * Returns: TRUE if it succeeded, FALSE otherwise
  */
-gboolean     modest_header_view_set_columns (ModestHeaderView *self,
-					     GSList *columns);
+gboolean modest_header_view_set_columns (ModestHeaderView *self,
+					 const GList *columns);
 /**
  * modest_header_view_get_columns:
  * @self: a ModestHeaderView instance
  * @folder: a TnyFolder object
  * 
- * get the columns for this ModestHeaderView
+ * get the GtkTreeColumns for this ModestHeaderView. Each one of the
+ * tree columns will have property  than can be retrieved
+ * with g_object_get_data MODEST_HEADER_VIEW_COLUMN (#define),
+ * and which contains the corresponding ModestHeaderViewColumn
  *  
- * Returns: list of columms, or NULL in case of no columns or error
+ * Returns: newly allocated list of column ids, or NULL in case of no columns or error
+ * You must free the list with g_list_free
  */
-const GSList*   modest_header_view_get_columns (ModestHeaderView *self);
+GList*  modest_header_view_get_columns (ModestHeaderView *self);
 	
 
 /**
