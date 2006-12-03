@@ -686,8 +686,9 @@ on_online_toggle_toggled (GtkToggleButton *toggle, ModestWidgetFactory *self)
 }
 
 
-static void on_item_not_found     (ModestHeaderView* header_view, ModestItemType type,
-				   ModestWidgetFactory *self)
+static void
+on_item_not_found (ModestHeaderView* header_view, ModestItemType type,
+		   ModestWidgetFactory *self)
 {
 	/* FIXME ==> ask from UI... */
 	GtkWidget *dialog;
