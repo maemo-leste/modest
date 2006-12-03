@@ -413,28 +413,29 @@ static ModestHeaderView*
 header_view_new (ModestMainWindow *self)
 {
 	int i;
-	GSList *columns = NULL;
+	GList *columns = NULL;
 	ModestHeaderView *header_view;
 	ModestMainWindowPrivate *priv;
 	ModestHeaderViewColumn cols[] = {
 		MODEST_HEADER_VIEW_COLUMN_MSGTYPE,
 		MODEST_HEADER_VIEW_COLUMN_ATTACH,
-/* 		MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER, */
-		MODEST_HEADER_VIEW_COLUMN_FROM,
- 		MODEST_HEADER_VIEW_COLUMN_SUBJECT,
-		MODEST_HEADER_VIEW_COLUMN_RECEIVED_DATE
+ 		MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER
+//		MODEST_HEADER_VIEW_COLUMN_FROM,
+//		MODEST_HEADER_VIEW_COLUMN_SUBJECT,
+//		MODEST_HEADER_VIEW_COLUMN_RECEIVED_DATE
 	};
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
 	
 	for (i = 0 ; i != sizeof(cols) / sizeof(ModestHeaderViewColumn); ++i)
-		columns = g_slist_append (columns, GINT_TO_POINTER(cols[i]));
+		columns = g_list_append (columns, GINT_TO_POINTER(cols[i]));
 
 	header_view = modest_widget_factory_get_header_view (priv->widget_factory);
 	modest_header_view_set_columns (header_view, columns);
-	g_slist_free (columns);
+	g_list_free (columns);
 
 	return header_view;
 }
+
 
 static void
 on_toolbar_button_clicked (ModestToolbar *toolbar, ModestToolbarButton button_id,
