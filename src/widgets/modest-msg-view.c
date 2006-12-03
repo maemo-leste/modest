@@ -418,7 +418,7 @@ set_html_message (ModestMsgView *self, TnyMimePart *tny_body, TnyMsg *msg)
 }
 
 
-/* this is a hack --> we use the tny_text_buffer_stream to
+/* FIXME: this is a hack --> we use the tny_text_buffer_stream to
  * get the message text, then write to gtkhtml 'by hand' */
 static gboolean
 set_text_message (ModestMsgView *self, TnyMimePart *tny_body, TnyMsg *msg)
@@ -486,31 +486,6 @@ set_empty_message (ModestMsgView *self)
 				   "", 1);
 	
 	return TRUE;
-}
-
-
-gchar *
-modest_msg_view_get_selected_text (ModestMsgView *self)
-{
-	ModestMsgViewPrivate *priv;
-	gchar *sel;
-	GtkWidget *html;
-	int len;
-	GtkClipboard *clip;
-
-	g_return_val_if_fail (self, NULL);
-	priv = MODEST_MSG_VIEW_GET_PRIVATE(self);
-	html = priv->gtkhtml;
-	
-	/* I'm sure there is a better way to check for selected text */
-	sel = gtk_html_get_selection_html(GTK_HTML(html), &len);
-	if (!sel)
-		return NULL;
-	
-	g_free(sel);
-	
-	clip = gtk_widget_get_clipboard(html, GDK_SELECTION_PRIMARY);
-	return gtk_clipboard_wait_for_text(clip);
 }
 
 

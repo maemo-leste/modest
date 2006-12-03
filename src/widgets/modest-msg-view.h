@@ -34,7 +34,7 @@
 #include <tny-stream.h>
 #include <tny-msg.h>
 #include <tny-mime-part.h>
-#include <modest-conf.h>
+#include <tny-msg-view.h>
 
 G_BEGIN_DECLS
 
@@ -97,16 +97,6 @@ GtkWidget*   modest_msg_view_new          (TnyMsg *tny_msg);
  * then a blank page will be displayed
  *  */
 void         modest_msg_view_set_message  (ModestMsgView *self, TnyMsg *tny_msg);
-
-/**
- * modest_msg_view_get_selected_text:
- * @self: a ModestMsgView instance
- * 
- * get the user selected part of the message
- * 
- * Returns: a newly allocated string of the user's selection or NULL if nothing is selected
- */
-gchar *      modest_msg_view_get_selected_text (ModestMsgView *self);
 
 G_END_DECLS
 
