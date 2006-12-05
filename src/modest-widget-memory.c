@@ -205,7 +205,8 @@ save_settings_header_view (ModestConf *conf, ModestHeaderView *header_view,
 
 	key = get_keyname (conf, name, PARAM_COLUMN_WIDTH);
 	modest_conf_set_string (conf, key, str->str, NULL);
-	
+
+	g_free (key);	
 	g_string_free (str, TRUE);
 	g_list_free (cols);
 	
