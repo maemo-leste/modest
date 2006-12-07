@@ -71,12 +71,11 @@ typedef enum _ModestMailOperationReplyMode {
 typedef enum _ModestMailOperationStatus {
 	MODEST_MAIL_OPERATION_STATUS_INVALID,
 	MODEST_MAIL_OPERATION_STATUS_SUCCESS,
+	MODEST_MAIL_OPERATION_STATUS_FINISHED_WITH_ERRORS,
 	MODEST_MAIL_OPERATION_STATUS_FAILED,
 	MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS,
-	MODEST_MAIL_OPERATION_STATUS_CANCELLED
+	MODEST_MAIL_OPERATION_STATUS_CANCELED
 } ModestMailOperationStatus;
-
-typedef void (*ModestUpdateAccountCallback) (ModestMailOperation *mail_op, gpointer user_data);
 
 struct _ModestMailOperation {
 	 GObject parent;
@@ -120,10 +119,8 @@ TnyMsg* modest_mail_operation_create_reply_mail    (TnyMsg *msg,
 						    ModestMailOperationReplyType reply_type,
 						    ModestMailOperationReplyMode reply_mode);
 
-void    modest_mail_operation_update_account       (ModestMailOperation *mail_op,
-						    TnyStoreAccount *store_account,
-						    ModestUpdateAccountCallback callback,
-						    gpointer user_data);
+gboolean      modest_mail_operation_update_account (ModestMailOperation *mail_op,
+						    TnyStoreAccount *store_account);
 
 /* Functions that perform store operations */
 TnyFolder*    modest_mail_operation_create_folder  (ModestMailOperation *mail_op,
@@ -166,11 +163,13 @@ guint     modest_mail_operation_get_task_done      (ModestMailOperation *mail_op
 guint     modest_mail_operation_get_task_total     (ModestMailOperation *mail_op);
 
 
-ModestMailOperationStatus modest_mail_operation_get_status (ModestMailOperation *mail_op);
+gboolean                  modest_mail_operation_is_finished (ModestMailOperation *mail_op);
 
-const GError*             modest_mail_operation_get_error  (ModestMailOperation *mail_op);
+ModestMailOperationStatus modest_mail_operation_get_status  (ModestMailOperation *mail_op);
 
-void                      modest_mail_operation_cancel     (ModestMailOperation *mail_op);
+const GError*             modest_mail_operation_get_error   (ModestMailOperation *mail_op);
+
+void                      modest_mail_operation_cancel      (ModestMailOperation *mail_op);
 
 G_END_DECLS
 

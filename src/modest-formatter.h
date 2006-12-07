@@ -27,34 +27,45 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __MODEST_TNY_MSG_ACTIONS_H__
-#define __MODEST_TNY_MSG_ACTIONS_H__
+#ifndef __MODEST_FORMATTER_H__
+#define __MODEST_FORMATTER_H__
 
-/**
- * modest_tny_msg_actions_find_body_part:
- * @self: a message
- * @want_html: prefer HTML-part when there are multiple body parts?
- * 
- * search a message for the body part. if @want_html is true, try HTML mail
- * first.
- * 
- * Returns: the TnyMsgMimePart for the found part, or NULL if no matching part is found
- */	 
-TnyMimePart *modest_tny_msg_actions_find_body_part (TnyMsg * self, gboolean want_html);
+#include <tny-msg.h>
+#include <tny-header.h>
+#include <tny-mime-part.h>
+
+G_BEGIN_DECLS
+
+#define MODEST_TYPE_FORMATTER             (modest_formatter_get_type ())
+#define MODEST_FORMATTER(obj)             (G_TYPE_CHECK_INSTANCE_CAST ((obj), MODEST_TYPE_FORMATTER, ModestFormatter))
+#define MODEST_FORMATTER_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), MODEST_TYPE_FORMATTER, ModestFormatterClass))
+#define MODEST_IS_FORMATTER(obj)          (G_TYPE_CHECK_INSTANCE_TYPE ((obj), MODEST_TYPE_FORMATTER))
+#define MODEST_IS_FORMATTER_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), MODEST_TYPE_FORMATTER))
+#define MODEST_FORMATTER_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), MODEST_TYPE_FORMATTER, ModestFormatterClass))
+
+typedef struct _ModestFormatter ModestFormatter;
+typedef struct _ModestFormatterClass ModestFormatterClass;
+
+struct _ModestFormatter
+{
+	GObject parent;
+};
+
+struct _ModestFormatterClass 
+{
+	GObjectClass parent;
+};
+
+GType modest_formatter_get_type (void);
+
+ModestFormatter* modest_formatter_new (const gchar *content_type);
+
+TnyMsg * modest_formatter_cite   (ModestFormatter *self, TnyMimePart *part, TnyHeader *header);
+TnyMsg * modest_formatter_quote  (ModestFormatter *self, TnyMimePart *part, TnyHeader *header);
+TnyMsg * modest_formatter_inline (ModestFormatter *self, TnyMimePart *part, TnyHeader *header);
+TnyMsg * modest_formatter_attach (ModestFormatter *self, TnyMimePart *part, TnyHeader *header);
 
 
-/**
- * modest_tny_msg_actions_get_nth_part:
- * @self: a message
- * @index: number (1-based) of the part to retrieve
- * 
- * search for the nth (mime) part in the message
- * 
- * Returns: the TnyMsgMimePart for the found part, or NULL if no matching part is foundi; must be unref'd
- */
-TnyMimePart* modest_tny_msg_actions_find_nth_part (TnyMsg *msg, gint index);
+G_END_DECLS
 
-
-gchar* modest_tny_msg_actions_find_body (TnyMsg *self, gboolean want_html);
-
-#endif /* __MODEST_TNY_MSG_ACTIONS_H__ */
+#endif

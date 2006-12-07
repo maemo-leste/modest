@@ -24,9 +24,11 @@ folder_xfer_LDADD = \
 	${top_srcdir}/src/modest-tny-platform-factory.o \
 	${top_srcdir}/src/modest-conf.o \
 	${top_srcdir}/src/modest-protocol-mgr.o \
+	${top_srcdir}/src/modest-formatter.o \
 	${top_srcdir}/src/modest-pair.o \
 	${top_srcdir}/src/modest-marshal.o \
 	${top_srcdir}/src/modest-tny-account-store.o \
+	${top_srcdir}/src/modest-mail-operation-queue.o \
 	${top_srcdir}/src/modest-mail-operation.o \
 	${top_srcdir}/src/modest-tny-msg-actions.o \
 	${top_srcdir}/src/modest-text-utils.o
@@ -44,9 +46,11 @@ update_account_LDADD = \
 	${top_srcdir}/src/modest-tny-platform-factory.o \
 	${top_srcdir}/src/modest-conf.o \
 	${top_srcdir}/src/modest-protocol-mgr.o \
+	${top_srcdir}/src/modest-formatter.o \
 	${top_srcdir}/src/modest-pair.o \
 	${top_srcdir}/src/modest-marshal.o \
 	${top_srcdir}/src/modest-tny-account-store.o \
+	${top_srcdir}/src/modest-mail-operation-queue.o \
 	${top_srcdir}/src/modest-mail-operation.o \
 	${top_srcdir}/src/modest-tny-msg-actions.o \
 	${top_srcdir}/src/modest-text-utils.o

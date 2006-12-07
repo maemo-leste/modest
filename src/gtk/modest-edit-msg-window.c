@@ -485,7 +485,7 @@ modest_edit_msg_window_new (ModestWidgetFactory *factory,
 
 		buf = gtk_text_view_get_buffer (GTK_TEXT_VIEW(priv->msg_body));
 		gtk_text_buffer_set_text (buf,
-					  (const gchar *) modest_tny_msg_actions_find_body (msg, FALSE),
+					  (const gchar *) modest_tny_msg_actions_find_body (msg, TRUE),
 					  -1);
 
 		/* TODO: lower priority, select in the From: combo to

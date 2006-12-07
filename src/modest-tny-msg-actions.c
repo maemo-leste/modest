@@ -70,31 +70,6 @@ get_body_text (TnyMsg *msg, gboolean want_html)
 	return to_quote;
 }
 
-gchar*
-modest_tny_msg_actions_quote (TnyMsg * self, const gchar * from,
-			      time_t sent_date, gint limit,
-			      const gchar * to_quote)
-{
-	gchar *quoted_msg = NULL;
-	const gchar *body;
-
-	/* 2 cases: */
-
-	/* a) quote text from selection */
-	if (to_quote != NULL) 
-		return modest_text_utils_quote (to_quote, from, sent_date,
-						limit);
-	
-	/* b) try to find a text/plain part in the msg and quote it */
-	body = get_body_text (self, FALSE);
-	if (body)
-		quoted_msg = modest_text_utils_quote (body, from, sent_date, limit);
-	
-	return quoted_msg;
-}
-
-
-
 static TnyMimePart*
 modest_tny_msg_actions_find_body_part_from_mime_part (TnyMimePart *msg, gboolean want_html)
 {

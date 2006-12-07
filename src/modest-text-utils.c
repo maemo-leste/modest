@@ -40,18 +40,278 @@
 #include <config.h>
 #endif /*HAVE_CONFIG_H */
 
+/* defines */
+#define FORWARD_STRING _("-----Forwarded Message-----")
+#define FROM_STRING _("From:")
+#define SENT_STRING _("Sent:")
+#define TO_STRING _("To:")
+#define	SUBJECT_STRING _("Subject:")
+
+/*
+ * we need these regexps to find URLs in plain text e-mails
+ */
+typedef struct _url_match_pattern_t url_match_pattern_t;
+struct _url_match_pattern_t {
+	gchar   *regex;
+	regex_t *preg;
+	gchar   *prefix;
+};
+
+typedef struct _url_match_t url_match_t;
+struct _url_match_t {
+	guint offset;
+	guint len;
+	const gchar* prefix;
+};
+
+#define MAIL_VIEWER_URL_MATCH_PATTERNS  {				\
+	{ "(file|rtsp|http|ftp|https)://[-A-Za-z0-9_$.+!*(),;:@%&=?/~#]+[-A-Za-z0-9_$%&=?/~#]",\
+	  NULL, NULL },\
+	{ "www\\.[-a-z0-9.]+[-a-z0-9](:[0-9]*)?(/[-A-Za-z0-9_$.+!*(),;:@%&=?/~#]*[^]}\\),?!;:\"]?)?",\
+	  NULL, "http://" },\
+	{ "ftp\\.[-a-z0-9.]+[-a-z0-9](:[0-9]*)?(/[-A-Za-z0-9_$.+!*(),;:@%&=?/~#]*[^]}\\),?!;:\"]?)?",\
+	  NULL, "ftp://" },\
+	{ "(voipto|callto|chatto|jabberto|xmpp):[-_a-z@0-9.\\+]+", \
+	   NULL, NULL},						    \
+	{ "mailto:[-_a-z0-9.\\+]+@[-_a-z0-9.]+",		    \
+	  NULL, NULL},\
+	{ "[-_a-z0-9.\\+]+@[-_a-z0-9.]+",\
+	  NULL, "mailto:"}\
+	}
+
 /* private */
-static GString *get_next_line (const char *b, const gsize blen, const gchar * iter);
-static int get_indent_level (const char *l);
-static void unquote_line (GString * l);
-static void append_quoted (GString * buf, const int indent,
-			   const GString * str, const int cutpoint);
-static int get_breakpoint_utf8 (const gchar * s, const gint indent,
-				const gint limit);
-static int get_breakpoint_ascii (const gchar * s, const gint indent,
-				 const gint limit);
-static int get_breakpoint (const gchar * s, const gint indent,
-			   const gint limit);
+static gchar*   cite                    (const time_t sent_date, const gchar *from);
+static void     hyperlinkify_plain_text (GString *txt);
+static gint     cmp_offsets_reverse     (const url_match_t *match1, const url_match_t *match2);
+static void     chk_partial_match       (const url_match_t *match, guint* offset);
+static GSList*  get_url_matches         (GString *txt);
+
+static GString* get_next_line           (const char *b, const gsize blen, const gchar * iter);
+static int      get_indent_level        (const char *l);
+static void     unquote_line            (GString * l);
+static void     append_quoted           (GString * buf, const int indent, const GString * str, 
+					 const int cutpoint);
+static int      get_breakpoint_utf8     (const gchar * s, const gint indent, const gint limit);
+static int      get_breakpoint_ascii    (const gchar * s, const gint indent, const gint limit);
+static int      get_breakpoint          (const gchar * s, const gint indent, const gint limit);
+
+static gchar*   modest_text_utils_quote_plain_text (const gchar *text, 
+						    const gchar *cite, 
+						    int limit);
+
+static gchar*   modest_text_utils_quote_html       (const gchar *text, 
+						    const gchar *cite, 
+						    int limit);
+
+
+/* ******************************************************************* */
+/* ************************* PUBLIC FUNCTIONS ************************ */
+/* ******************************************************************* */
+
+gchar *
+modest_text_utils_quote (const gchar *text, 
+			 const gchar *content_type,
+			 const gchar *from,
+			 const time_t sent_date, 
+			 int limit)
+{
+	gchar *retval, *cited;
+
+	cited = cite (sent_date, from);
+
+	if (!strcmp (content_type, "text/html"))
+		/* TODO: extract the <body> of the HTML and pass it to
+		   the function */
+		retval = modest_text_utils_quote_html (text, cited, limit);
+	else
+		retval = modest_text_utils_quote_plain_text (text, cited, limit);
+		
+	g_free (cited);
+
+	return retval;
+}
+
+
+gchar *
+modest_text_utils_cite (const gchar *text,
+			const gchar *content_type,
+			const gchar *from,
+			time_t sent_date)
+{
+	gchar *tmp, *retval;
+
+	tmp = cite (sent_date, from);
+	retval = g_strdup_printf ("%s%s\n", tmp, text);
+	g_free (tmp);
+
+	return retval;
+}
+
+gchar * 
+modest_text_utils_inline (const gchar *text,
+			  const gchar *content_type,
+			  const gchar *from,
+			  time_t sent_date,
+			  const gchar *to,
+			  const gchar *subject)
+{
+	gchar sent_str[101];
+	const gchar *plain_format = "%s\n%s %s\n%s %s\n%s %s\n%s %s\n\n%s";
+	const gchar *html_format = \
+		"%s<br>\n<table width=\"100%\" border=\"0\" cellspacing=\"2\" cellpadding=\"2\">\n" \
+		"<tr><td>%s</td><td>%s</td></tr>\n" \
+		"<tr><td>%s</td><td>%s</td></tr>\n" \
+		"<tr><td>%s</td><td>%s</td></tr>\n" \
+		"<tr><td>%s</td><td>%s</td></tr>\n" \
+		"<br><br>%s";
+	const gchar *format;
+
+	modest_text_utils_strftime (sent_str, 100, "%c", localtime (&sent_date));
+
+	if (!strcmp (content_type, "text/html"))
+		/* TODO: extract the <body> of the HTML and pass it to
+		   the function */
+		format = html_format;
+	else
+		format = plain_format;
+
+	return g_strdup_printf (format, 
+				FORWARD_STRING,
+				FROM_STRING, from,
+				SENT_STRING, sent_str,
+				TO_STRING, to,
+				SUBJECT_STRING, subject,
+				text);
+}
+
+/* just to prevent warnings:
+ * warning: `%x' yields only last 2 digits of year in some locales
+ */
+size_t
+modest_text_utils_strftime(char *s, size_t max, const char  *fmt, const  struct tm *tm)
+{
+	return strftime(s, max, fmt, tm);
+}
+
+gchar *
+modest_text_utils_derived_subject (const gchar *subject, const gchar *prefix)
+{
+	gchar *tmp;
+
+	if (!subject)
+		return g_strdup_printf ("%s ", prefix);
+
+	tmp = g_strchug (g_strdup (subject));
+
+	if (!strncmp (tmp, prefix, strlen (prefix))) {
+		return tmp;
+	} else {
+		g_free (tmp);
+		return g_strdup_printf ("%s %s", prefix, subject);
+	}
+}
+
+gchar *
+modest_text_utils_remove_address (const gchar *address, const gchar *address_list)
+{
+	char *dup, *token, *ptr, *result;
+	GString *filtered_emails;
+
+	if (!address_list)
+		return NULL;
+
+	/* Search for substring */
+	if (!strstr ((const char *) address_list, (const char *) address))
+		return g_strdup (address_list);
+
+	dup = g_strdup (address_list);
+	filtered_emails = g_string_new (NULL);
+	
+	token = strtok_r (dup, ",", &ptr);
+
+	while (token != NULL) {
+		/* Add to list if not found */
+		if (!strstr ((const char *) token, (const char *) address)) {
+			if (filtered_emails->len == 0)
+				g_string_append_printf (filtered_emails, "%s", token);
+			else
+				g_string_append_printf (filtered_emails, ",%s", token);
+		}
+		token = strtok_r (NULL, ",", &ptr);
+	}
+	result = filtered_emails->str;
+
+	/* Clean */
+	g_free (dup);
+	g_string_free (filtered_emails, FALSE);
+
+	return result;
+}
+
+gchar*
+modest_text_utils_convert_to_html (const gchar *data)
+{
+	guint		 i;
+	gboolean	 first_space = TRUE;
+	GString		*html;	    
+	gsize           len;
+
+	if (!data)
+		return NULL;
+
+	len = strlen (data);
+	html = g_string_sized_new (len + 100);	/* just a  guess... */
+	
+	g_string_append_printf (html,
+				"<html>"
+				"<head>"
+				"<meta http-equiv=\"content-type\""
+				" content=\"text/html; charset=utf8\">"
+				"</head>"
+				"<body><tt>");
+	
+	/* replace with special html chars where needed*/
+	for (i = 0; i != len; ++i)  {
+		char	kar = data[i]; 
+		switch (kar) {
+			
+		case 0:  break; /* ignore embedded \0s */	
+		case '<' : g_string_append   (html, "&lt;"); break;
+		case '>' : g_string_append   (html, "&gt;"); break;
+		case '&' : g_string_append   (html, "&quot;"); break;
+		case '\n': g_string_append   (html, "<br>\n"); break;
+		default:
+			if (kar == ' ') {
+				g_string_append (html, first_space ? " " : "&nbsp;");
+				first_space = FALSE;
+			} else	if (kar == '\t')
+				g_string_append (html, "&nbsp; &nbsp;&nbsp;");
+			else {
+				int charnum = 0;
+				first_space = TRUE;
+				/* optimization trick: accumulate 'normal' chars, then copy */
+				do {
+					kar = data [++charnum + i];
+					
+				} while ((i + charnum < len) &&
+					 (kar > '>' || (kar != '<' && kar != '>'
+							&& kar != '&' && kar !=  ' '
+							&& kar != '\n' && kar != '\t')));
+				g_string_append_len (html, &data[i], charnum);
+				i += (charnum  - 1);
+			}
+		}
+	}
+	
+	g_string_append (html, "</tt></body></html>");
+	hyperlinkify_plain_text (html);
+
+	return g_string_free (html, FALSE);
+}
+
+/* ******************************************************************* */
+/* ************************* UTILIY FUNCTIONS ************************ */
+/* ******************************************************************* */
 
 static GString *
 get_next_line (const gchar * b, const gsize blen, const gchar * iter)
@@ -196,17 +456,6 @@ get_breakpoint (const gchar * s, const gint indent, const gint limit)
 	}
 }
 
-
-
-/* just to prevent warnings:
- * warning: `%x' yields only last 2 digits of year in some locales
- */
-size_t
-modest_text_utils_strftime(char *s, size_t max, const char  *fmt, const  struct tm *tm)
-{
-	return strftime(s, max, fmt, tm);
-}
-
 static gchar *
 cite (const time_t sent_date, const gchar *from)
 {
@@ -218,9 +467,10 @@ cite (const time_t sent_date, const gchar *from)
 }
 
 
-gchar *
-modest_text_utils_quote (const gchar * to_quote, const gchar * from,
-			 const time_t sent_date, const int limit)
+static gchar *
+modest_text_utils_quote_plain_text (const gchar *text, 
+				    const gchar *cite, 
+				    int limit)
 {
 	const gchar *iter;
 	gint indent, breakpoint, rem_indent = 0;
@@ -228,18 +478,14 @@ modest_text_utils_quote (const gchar * to_quote, const gchar * from,
 	gsize len;
 	gchar *tmp;
 
-	/* format sent_date */
-	tmp = cite (sent_date, from);
-	q = g_string_new (tmp);
-	g_free (tmp);
-
 	/* remaining will store the rest of the line if we have to break it */
+	q = g_string_new (cite);
 	remaining = g_string_new ("");
 
-	iter = to_quote;
-	len = strlen(to_quote);
+	iter = text;
+	len = strlen(text);
 	do {
-		l = get_next_line (to_quote, len, iter);
+		l = get_next_line (text, len, iter);
 		iter = iter + l->len + 1;
 		indent = get_indent_level (l->str);
 		unquote_line (l);
@@ -274,137 +520,27 @@ modest_text_utils_quote (const gchar * to_quote, const gchar * from,
 		rem_indent = indent;
 		append_quoted (q, indent, l, breakpoint);
 		g_string_free (l, TRUE);
-	} while ((iter < to_quote + len) || (remaining->str[0]));
+	} while ((iter < text + len) || (remaining->str[0]));
 
 	return g_string_free (q, FALSE);
 }
 
-
-gchar *
-modest_text_utils_derived_subject (const gchar *subject, const gchar *prefix)
+static gchar*
+modest_text_utils_quote_html (const gchar *text, 
+			      const gchar *cite, 
+			      int limit)
 {
-	gchar *tmp;
+	const gchar *format = \
+		"<!DOCTYPE html PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n" \
+		"<html>\n" \
+		"<body>\n" \
+		"%s" \
+		"<blockquote type=\"cite\">\n%s\n</blockquote>\n" \
+		"</body>\n" \
+		"</html>\n";
 
-	if (!subject)
-		return g_strdup_printf ("%s ", prefix);
-
-	tmp = g_strchug (g_strdup (subject));
-
-	if (!strncmp (tmp, prefix, strlen (prefix))) {
-		return tmp;
-	} else {
-		g_free (tmp);
-		return g_strdup_printf ("%s %s", prefix, subject);
-	}
+	return g_strdup_printf (format, cite, text);
 }
-
-
-gchar *
-modest_text_utils_cited_text (const gchar *from, 
-				     time_t sent_date, 
-				     const gchar *text)
-{
-	gchar *tmp, *retval;
-
-	tmp = cite (sent_date, from);
-	retval = g_strdup_printf ("%s%s\n", tmp, text);
-	g_free (tmp);
-
-	return retval;
-}
-
-
-gchar * 
-modest_text_utils_inlined_text (const gchar *from, time_t sent_date,
-				const gchar *to, const gchar *subject,
-				const gchar *text)
-{
-	gchar sent_str[101];
-
-	modest_text_utils_strftime (sent_str, 100, "%c", localtime (&sent_date));
-
-	return g_strdup_printf ("%s\n%s %s\n%s %s\n%s %s\n%s %s\n\n%s", 
-				_("-----Forwarded Message-----"),
-				_("From:"), from,
-				_("Sent:"), sent_str,
-				_("To:"), to,
-				_("Subject:"), subject,
-				text);
-}
-
-gchar *
-modest_text_utils_remove_address (const gchar *address, const gchar *address_list)
-{
-	char *dup, *token, *ptr, *result;
-	GString *filtered_emails;
-
-	if (!address_list)
-		return NULL;
-
-	/* Search for substring */
-	if (!strstr ((const char *) address_list, (const char *) address))
-		return g_strdup (address_list);
-
-	dup = g_strdup (address_list);
-	filtered_emails = g_string_new (NULL);
-	
-	token = strtok_r (dup, ",", &ptr);
-
-	while (token != NULL) {
-		/* Add to list if not found */
-		if (!strstr ((const char *) token, (const char *) address)) {
-			if (filtered_emails->len == 0)
-				g_string_append_printf (filtered_emails, "%s", token);
-			else
-				g_string_append_printf (filtered_emails, ",%s", token);
-		}
-		token = strtok_r (NULL, ",", &ptr);
-	}
-	result = filtered_emails->str;
-
-	/* Clean */
-	g_free (dup);
-	g_string_free (filtered_emails, FALSE);
-
-	return result;
-}
-
-
-
-
-/*
- * we need these regexps to find URLs in plain text e-mails
- */
-typedef struct _url_match_pattern_t url_match_pattern_t;
-struct _url_match_pattern_t {
-	gchar   *regex;
-	regex_t *preg;
-	gchar   *prefix;
-};
-
-typedef struct _url_match_t url_match_t;
-struct _url_match_t {
-	guint offset;
-	guint len;
-	const gchar* prefix;
-};
-
-
-#define MAIL_VIEWER_URL_MATCH_PATTERNS  {				\
-	{ "(file|rtsp|http|ftp|https)://[-A-Za-z0-9_$.+!*(),;:@%&=?/~#]+[-A-Za-z0-9_$%&=?/~#]",\
-	  NULL, NULL },\
-	{ "www\\.[-a-z0-9.]+[-a-z0-9](:[0-9]*)?(/[-A-Za-z0-9_$.+!*(),;:@%&=?/~#]*[^]}\\),?!;:\"]?)?",\
-	  NULL, "http://" },\
-	{ "ftp\\.[-a-z0-9.]+[-a-z0-9](:[0-9]*)?(/[-A-Za-z0-9_$.+!*(),;:@%&=?/~#]*[^]}\\),?!;:\"]?)?",\
-	  NULL, "ftp://" },\
-	{ "(voipto|callto|chatto|jabberto|xmpp):[-_a-z@0-9.\\+]+", \
-	   NULL, NULL},						    \
-	{ "mailto:[-_a-z0-9.\\+]+@[-_a-z0-9.]+",		    \
-	  NULL, NULL},\
-	{ "[-_a-z0-9.\\+]+@[-_a-z0-9.]+",\
-	  NULL, "mailto:"}\
-	}
-
 
 static gint 
 cmp_offsets_reverse (const url_match_t *match1, const url_match_t *match2)
@@ -515,69 +651,3 @@ hyperlinkify_plain_text (GString *txt)
 	
 	g_slist_free (match_list);
 }
-
-
-
-gchar*
-modest_text_utils_convert_to_html (const gchar *data)
-{
-	guint		 i;
-	gboolean	 first_space = TRUE;
-	GString		*html;	    
-	gsize           len;
-
-	if (!data)
-		return NULL;
-
-	len = strlen (data);
-	html = g_string_sized_new (len + 100);	/* just a  guess... */
-	
-	g_string_append_printf (html,
-				"<html>"
-				"<head>"
-				"<meta http-equiv=\"content-type\""
-				" content=\"text/html; charset=utf8\">"
-				"</head>"
-				"<body><tt>");
-	
-	/* replace with special html chars where needed*/
-	for (i = 0; i != len; ++i)  {
-		char	kar = data[i]; 
-		switch (kar) {
-			
-		case 0:  break; /* ignore embedded \0s */	
-		case '<' : g_string_append   (html, "&lt;"); break;
-		case '>' : g_string_append   (html, "&gt;"); break;
-		case '&' : g_string_append   (html, "&quot;"); break;
-		case '\n': g_string_append   (html, "<br>\n"); break;
-		default:
-			if (kar == ' ') {
-				g_string_append (html, first_space ? " " : "&nbsp;");
-				first_space = FALSE;
-			} else	if (kar == '\t')
-				g_string_append (html, "&nbsp; &nbsp;&nbsp;");
-			else {
-				int charnum = 0;
-				first_space = TRUE;
-				/* optimization trick: accumulate 'normal' chars, then copy */
-				do {
-					kar = data [++charnum + i];
-					
-				} while ((i + charnum < len) &&
-					 (kar > '>' || (kar != '<' && kar != '>'
-							&& kar != '&' && kar !=  ' '
-							&& kar != '\n' && kar != '\t')));
-				g_string_append_len (html, &data[i], charnum);
-				i += (charnum  - 1);
-			}
-		}
-	}
-	
-	g_string_append (html, "</tt></body></html>");
-	hyperlinkify_plain_text (html);
-
-	return g_string_free (html, FALSE);
-}
-
-
-

@@ -36,6 +36,19 @@
 #include <time.h>
 
 /**
+ * modest_text_utils_derived_subject:
+ * @subject: a string which contains the original subject
+ * @prefix: the prefix for the new subject (such as 'Re:' or 'Fwd:')
+ *
+ * create a 'derived' subject line for eg. replies and forwards 
+ * 
+ * Returns: a newly allocated string containing the resulting subject
+ */
+gchar* modest_text_utils_derived_subject (const gchar *subject, 
+					  const gchar* prefix);
+
+
+/**
  * modest_text_utils_quote:
  * @buf: a string which contains the message to quote
  * @from: the sender of the original message
@@ -46,20 +59,11 @@
  * 
  * Returns: a newly allocated string containing the quoted message
  */
-gchar* modest_text_utils_quote(const gchar *buf, const gchar *from,
-			       const time_t sent_date, const int limit);
-
-
-/**
- * modest_text_utils_derived_subject:
- * @subject: a string which contains the original subject
- * @prefix: the prefix for the new subject (such as 'Re:' or 'Fwd:')
- *
- * create a 'derived' subject line for eg. replies and forwards 
- * 
- * Returns: a newly allocated string containing the resulting subject
- */
-gchar* modest_text_utils_derived_subject (const gchar *subject, const gchar* prefix);
+gchar* modest_text_utils_quote (const gchar *text, 
+				const gchar *content_type,
+			        const gchar *from,
+			        const time_t sent_date, 
+				int limit);
 
 
 /**
@@ -72,9 +76,10 @@ gchar* modest_text_utils_derived_subject (const gchar *subject, const gchar* pre
  * 
  * Returns: a newly allocated string containing the cited text
  */
-gchar* modest_text_utils_cited_text (const gchar *from,
-				     time_t sent_date,
-				     const gchar *text);
+gchar* modest_text_utils_cite (const gchar *text,
+			       const gchar *content_type,
+			       const gchar *from,
+			       time_t sent_date);
 
 /**
  * modest_text_utils_inlined_text
@@ -89,11 +94,12 @@ gchar* modest_text_utils_cited_text (const gchar *from,
  * 
  * Returns: a newly allocated string containing the quoted message
  */
-gchar*   modest_text_utils_inlined_text (const gchar *from,
-					 time_t sent_date,
-					 const gchar *to,
-					 const gchar *subject,
-					 const gchar *text);
+gchar*   modest_text_utils_inline (const gchar *text,
+				   const gchar *content_type,
+				   const gchar *from,
+				   time_t sent_date,
+				   const gchar *to,
+				   const gchar *subject);
 
 /**
  * modest_text_utils_remove_address

@@ -37,27 +37,29 @@
 #include <tny-store-account.h>
 #include <tny-folder.h>
 #include <tny-folder-store.h>
-#include <modest-tny-platform-factory.h>
 
-
-#include <modest-account-mgr.h>
-#include <modest-mail-operation.h>
+#include "modest-tny-platform-factory.h"
+#include "modest-account-mgr.h"
+#include "modest-mail-operation.h"
+#include "modest-mail-operation-queue.h"
 
 GMainLoop *main_loop;
 
 static void
-update_cb (ModestMailOperation *mail_op, gpointer user_data)
+on_progress_changed (ModestMailOperation *mail_op, gpointer user_data)
 {
-	g_object_unref (G_OBJECT (mail_op));
-	g_main_loop_quit (main_loop);
-}
+	ModestMailOperationStatus status;
+	ModestMailOperationQueue *queue = NULL;
 
-static void
-progress_cb (ModestMailOperation *mail_op, gpointer user_data)
-{
 	g_print ("Refreshed %d of %d\n", 
 		 modest_mail_operation_get_task_done  (mail_op), 
 		 modest_mail_operation_get_task_total (mail_op));
+
+	if (modest_mail_operation_is_finished (mail_op)) {
+		queue = MODEST_MAIL_OPERATION_QUEUE (user_data);
+		modest_mail_operation_queue_remove (queue, mail_op);
+		g_main_loop_quit (main_loop);
+	}
 }
 
 static gboolean
@@ -68,6 +70,7 @@ func (gpointer_data)
 	TnyPlatformFactory *fact = NULL;
 	ModestAccountMgr *acc_mgr = NULL;
 	ModestMailOperation *mail_op = NULL;
+	ModestMailOperationQueue *queue = NULL;
 	TnyAccountStore *account_store = NULL;
 	TnyList *accounts;
 
@@ -87,11 +90,16 @@ func (gpointer_data)
 	g_object_unref (G_OBJECT (iter));
 	g_object_unref (G_OBJECT (accounts));
 
+	queue = modest_mail_operation_queue_get_instance ();
 	mail_op = modest_mail_operation_new ();
 	
 	g_signal_connect (G_OBJECT (mail_op), "progress_changed", 
-			  G_CALLBACK (progress_cb), NULL);
-	modest_mail_operation_update_account (mail_op, account, update_cb, NULL);
+			  G_CALLBACK (on_progress_changed), queue);
+
+	if (modest_mail_operation_update_account (mail_op, account))
+		modest_mail_operation_queue_add (queue, mail_op);
+
+	g_object_unref (G_OBJECT (mail_op));
 
 	return FALSE;
 }

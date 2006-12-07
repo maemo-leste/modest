@@ -59,8 +59,12 @@ modest_SOURCES=\
 	modest-marshal.h \
 	modest-mail-operation.c \
 	modest-mail-operation.h \
+	modest-mail-operation-queue.c \
+	modest-mail-operation-queue.h \
 	modest-tny-platform-factory.c \
-	modest-tny-platform-factory.h
+	modest-tny-platform-factory.h \
+	modest-formatter.c \
+	modest-formatter.h
 
 modest_LDADD = 						\
 	$(MODEST_GSTUFF_LIBS) 				\
