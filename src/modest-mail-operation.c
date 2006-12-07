@@ -260,6 +260,7 @@ modest_mail_operation_send_new_mail (ModestMailOperation *mail_op,
 	/* WARNING: set the header before assign values to it */
 	tny_msg_set_header (new_msg, header);
 	tny_header_set_from (TNY_HEADER (header), from);
+	tny_header_set_replyto (TNY_HEADER (header), from);
 	tny_header_set_to (TNY_HEADER (header), to);
 	tny_header_set_cc (TNY_HEADER (header), cc);
 	tny_header_set_bcc (TNY_HEADER (header), bcc);
@@ -341,6 +342,7 @@ create_reply_forward_mail (TnyMsg *msg, const gchar *from, gboolean is_reply, gu
 	new_header = TNY_HEADER (tny_camel_header_new ());
 	tny_msg_set_header  (new_msg, new_header);
 	tny_header_set_from (new_header, from);
+	tny_header_set_replyto (new_header, from);
 
 	/* Change the subject */
 	new_subject = (gchar *) modest_text_utils_derived_subject (tny_header_get_subject(header), 
@@ -406,13 +408,18 @@ modest_mail_operation_create_reply_mail (TnyMsg *msg,
 {
 	TnyMsg *new_msg;
 	TnyHeader *new_header, *header;
+	const gchar* reply_to;
 
 	new_msg = create_reply_forward_mail (msg, from, TRUE, reply_type);
 
 	/* Fill the header */
 	header = tny_msg_get_header (msg);
 	new_header = tny_msg_get_header (new_msg);
-	tny_header_set_to   (new_header, tny_header_get_from (header));
+	reply_to = tny_header_get_replyto (header);
+	if (reply_to)
+		tny_header_set_to (new_header, reply_to);
+	else
+		tny_header_set_to (new_header, tny_header_get_from (header));
 
 	switch (reply_mode) {
 		gchar *new_cc = NULL;

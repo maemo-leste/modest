@@ -225,7 +225,6 @@ on_menu_reply_forward (ModestMainWindow *self, guint action, GtkWidget *widget)
 	ModestHeaderView *header_view;
 	TnyList *header_list;
 	TnyIterator *iter;
-	const gchar *from;
 	gchar *reply_key, *forward_key;
 	ModestMailOperationReplyType reply_type;
 	ModestMailOperationForwardType forward_type;
@@ -253,7 +252,7 @@ on_menu_reply_forward (ModestMainWindow *self, guint action, GtkWidget *widget)
 	g_free (reply_key);
 	
 	forward_key = g_strdup_printf ("%s/%s", MODEST_CONF_NAMESPACE, MODEST_CONF_FORWARD_TYPE);
-	forward_type = modest_conf_get_int (conf, forward_key, NULL);
+	forward_type = modest_conf_get_int (conf, forward_key, &error);
 	if (error || forward_type == 0) {
 		g_warning ("key %s not defined", forward_key);
 		forward_type = MODEST_MAIL_OPERATION_FORWARD_TYPE_INLINE;
@@ -265,19 +264,31 @@ on_menu_reply_forward (ModestMainWindow *self, guint action, GtkWidget *widget)
 	g_free (forward_key);
 	
 	if (header_list) {
-		iter = tny_list_create_iterator (header_list);
-		do {
-			TnyHeader *header, *new_header;
-			TnyFolder *folder;
-			TnyMsg    *msg, *new_msg;
-			ModestEditType edit_type;
+		TnyHeader *header, *new_header;
+		TnyFolder *folder;
+		TnyMsg    *msg, *new_msg;
+		ModestEditType edit_type;
+		gchar *from, *email_key;
+		const gchar *account_name;
 
+		/* We assume that we can only select messages of the
+		   same folder and that we reply all of them from the
+		   same account. In fact the interface currently only
+		   allows single selection */
+		account_name = modest_folder_view_get_selected_account (priv->folder_view);
+		email_key = g_strdup_printf ("%s/%s/%s", MODEST_ACCOUNT_NAMESPACE, 
+					     account_name, MODEST_ACCOUNT_EMAIL);
+		from = modest_conf_get_string (conf, email_key, NULL);
+		g_free (email_key);
+
+		iter = tny_list_create_iterator (header_list);
+		header = TNY_HEADER (tny_iterator_get_current (iter));
+		folder = tny_header_get_folder (header);
+
+		do {
 			/* Get msg from header */
 			header = TNY_HEADER (tny_iterator_get_current (iter));
-			folder = tny_header_get_folder (header);
 			msg = tny_folder_get_msg (folder, header, NULL); /* FIXME */
-
-			from = modest_folder_view_get_selected_account (priv->folder_view);
 
 			/* FIXME: select proper action */
 			switch (action) {
@@ -305,8 +316,7 @@ on_menu_reply_forward (ModestMainWindow *self, guint action, GtkWidget *widget)
 			if (new_msg) {
 				/* Set from */
 				new_header = tny_msg_get_header (new_msg);
-				tny_header_set_from (new_header, 
-						     modest_folder_view_get_selected_account (priv->folder_view));
+				tny_header_set_from (new_header, from);
 				
 				/* Show edit window */
 				msg_win = modest_edit_msg_window_new (priv->widget_factory,
@@ -317,10 +327,14 @@ on_menu_reply_forward (ModestMainWindow *self, guint action, GtkWidget *widget)
 				/* Clean and go on */
 				g_object_unref (new_msg);
 			}
-
 			tny_iterator_next (iter);
 
 		} while (!tny_iterator_is_done (iter));
+
+		/* Clean */
+		g_free (from);
+		g_object_unref (G_OBJECT (iter));
+		g_object_unref (G_OBJECT (folder));
 	}
 }
 

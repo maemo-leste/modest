@@ -376,10 +376,10 @@ init_window (ModestEditMsgWindow *obj)
 
 	priv->from_field    = modest_widget_factory_get_combo_box (priv->factory,
 								   MODEST_COMBO_BOX_TYPE_TRANSPORTS);
-	priv->to_field      = gtk_entry_new_with_max_length (40);
-	priv->cc_field      = gtk_entry_new_with_max_length (40);
-	priv->bcc_field     = gtk_entry_new_with_max_length (40);
-	priv->subject_field = gtk_entry_new_with_max_length (40);
+	priv->to_field      = gtk_entry_new_with_max_length (80);
+	priv->cc_field      = gtk_entry_new_with_max_length (80);
+	priv->bcc_field     = gtk_entry_new_with_max_length (80);
+	priv->subject_field = gtk_entry_new_with_max_length (80);
 	
 	header_table = gtk_table_new (5,2, FALSE);
 	
