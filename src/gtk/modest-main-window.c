@@ -174,7 +174,7 @@ on_menu_about (GtkWidget *widget, gpointer data)
 	gtk_about_dialog_set_comments (	GTK_ABOUT_DIALOG(about),
 		_("a modest e-mail client\n\n"
 		  "design and implementation: Dirk-Jan C. Binnema\n"
-		  "contributions from the fine people at KernelConcepts\n\n"
+		  "contributions from the fine people at KernelConcepts and Igalia\n"
 		  "uses the tinymail email framework written by Philip van Hoof"));
 	gtk_about_dialog_set_authors (GTK_ABOUT_DIALOG(about), authors);
 	gtk_about_dialog_set_website (GTK_ABOUT_DIALOG(about), "http://modest.garage.maemo.org");
@@ -645,28 +645,6 @@ on_delete_event (GtkWidget *widget, GdkEvent  *event, ModestMainWindow *self)
 	return FALSE;
 }
 
-static GtkWidget*
-favorites_view ()
-{
-	GtkWidget *favorites;
-	GtkTreeStore *store;
-	GtkTreeViewColumn *col;
-
-	store = gtk_tree_store_new (1, G_TYPE_STRING);
-	favorites = gtk_tree_view_new_with_model (GTK_TREE_MODEL(store));
-	col = gtk_tree_view_column_new_with_attributes (_("Favorites"),
-							gtk_cell_renderer_text_new(),
-							"text", 0, NULL);
-	
-	gtk_tree_view_append_column (GTK_TREE_VIEW(favorites), col);
-	gtk_widget_show_all (favorites);
-
-	g_object_unref (G_OBJECT(store));
-
-	return favorites;
-}
-
-
 
 GtkWidget*
 modest_main_window_new (ModestWidgetFactory *widget_factory)
@@ -676,7 +654,7 @@ modest_main_window_new (ModestWidgetFactory *widget_factory)
 	
 	GtkWidget *main_vbox;
 	GtkWidget *status_hbox;
-	GtkWidget *header_win, *folder_win, *favorites_win;
+	GtkWidget *header_win, *folder_win;
 	
 	g_return_val_if_fail (widget_factory, NULL);
 
@@ -695,7 +673,6 @@ modest_main_window_new (ModestWidgetFactory *widget_factory)
 						 FALSE);
 	header_win = wrapped_in_scrolled_window (GTK_WIDGET(priv->header_view),
 						 FALSE);			   
-	favorites_win = wrapped_in_scrolled_window (favorites_view(),FALSE);			   
 	
 	/* tool/menubar */
 	priv->menubar = menubar_new (MODEST_MAIN_WINDOW(obj));
@@ -705,10 +682,8 @@ modest_main_window_new (ModestWidgetFactory *widget_factory)
 	priv->folder_paned = gtk_vpaned_new ();
 	priv->msg_paned = gtk_vpaned_new ();
 	priv->main_paned = gtk_hpaned_new ();
-	gtk_paned_add1 (GTK_PANED(priv->main_paned), priv->folder_paned);
+	gtk_paned_add1 (GTK_PANED(priv->main_paned), folder_win);
 	gtk_paned_add2 (GTK_PANED(priv->main_paned), priv->msg_paned);
-	gtk_paned_add1 (GTK_PANED(priv->folder_paned), favorites_win);
-	gtk_paned_add2 (GTK_PANED(priv->folder_paned), folder_win);
 	gtk_paned_add1 (GTK_PANED(priv->msg_paned), header_win);
 	gtk_paned_add2 (GTK_PANED(priv->msg_paned), GTK_WIDGET(priv->msg_preview));
 
