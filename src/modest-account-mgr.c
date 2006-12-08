@@ -233,6 +233,8 @@ modest_account_mgr_finalize (GObject * obj)
 		g_object_unref (G_OBJECT(priv->proto_mgr));
 		priv->proto_mgr = NULL;
 	}
+
+	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
 ModestAccountMgr *
