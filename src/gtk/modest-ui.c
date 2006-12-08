@@ -121,7 +121,6 @@ modest_ui_init (ModestUI *obj)
 	priv = MODEST_UI_GET_PRIVATE(obj);
 
 	priv->widget_factory = NULL;
-
 	priv->main_window    = NULL;
 }
 
@@ -131,11 +130,13 @@ modest_ui_finalize (GObject *obj)
 {
 	
 	ModestUIPrivate *priv = MODEST_UI_GET_PRIVATE(obj);
-
+	
 	if (priv->widget_factory) {
 		g_object_unref (G_OBJECT(priv->widget_factory));
 		priv->widget_factory = NULL;
 	}
+	
+	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
 

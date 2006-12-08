@@ -151,6 +151,8 @@ modest_conf_finalize (GObject *obj)
 		g_object_unref (priv->gconf_client);
 		priv->gconf_client = NULL;
 	}	
+
+	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
 ModestConf*
