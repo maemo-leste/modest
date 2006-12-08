@@ -99,7 +99,7 @@ struct _ModestHeaderViewClass {
 	 * the progress indictation can be hidden */
 	void (*status_update) (ModestHeaderView* self,
 			       const gchar* msg,
-			       gint status,
+			       gint num, gint total,
 			       gpointer user_data);
 };
 

@@ -58,7 +58,7 @@ static void on_folder_key_press_event  (ModestFolderView *header_view,
 static void on_message_selected        (ModestHeaderView *header_view, TnyMsg *msg,
 					ModestWidgetFactory *self);
 static void on_header_status_update    (ModestHeaderView *header_view, const gchar *msg,
-					gint status_id, ModestWidgetFactory *self);
+					gint num, gint total, ModestWidgetFactory *self);
 static void on_msg_link_hover          (ModestMsgView *msgview, const gchar* link,
 					ModestWidgetFactory *self);
 static void on_msg_link_clicked        (ModestMsgView *msgview, const gchar* link,
@@ -605,13 +605,18 @@ statusbar_push (ModestWidgetFactory *self, guint context_id, const gchar *msg)
 
 static void
 on_header_status_update (ModestHeaderView *header_view, const gchar *msg,
-			 gint status_id, ModestWidgetFactory *self)
+			 gint num, gint total, ModestWidgetFactory *self)
 {
 	ModestWidgetFactoryPrivate *priv;
 	
 	priv = MODEST_WIDGET_FACTORY_GET_PRIVATE(self);
-			
-	gtk_progress_bar_pulse (GTK_PROGRESS_BAR(priv->progress_bar));
+
+	if (total != 0)
+		gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR(priv->progress_bar),
+					       (gdouble)num/(gdouble)total);
+	else
+		gtk_progress_bar_pulse (GTK_PROGRESS_BAR(priv->progress_bar));
+
 	statusbar_push (self, 0, msg);
 }
 

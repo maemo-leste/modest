@@ -132,8 +132,8 @@ modest_header_view_class_init (ModestHeaderViewClass *klass)
 			      G_SIGNAL_RUN_FIRST,
 			      G_STRUCT_OFFSET (ModestHeaderViewClass,message_selected),
 			      NULL, NULL,
-			      modest_marshal_VOID__STRING_INT,
-			      G_TYPE_NONE, 2, G_TYPE_STRING, G_TYPE_INT); 	
+			      modest_marshal_VOID__STRING_INT_INT,
+			      G_TYPE_NONE, 3, G_TYPE_STRING, G_TYPE_INT, G_TYPE_INT); 	
 }
 
 static void
@@ -375,10 +375,11 @@ modest_header_view_set_columns (ModestHeaderView *self, const GList *columns)
 	const GList *cursor;
 	
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self); 
-	
+
+	/* FIXME: check whether these renderers need to be freed */
 	renderer_msgtype = gtk_cell_renderer_pixbuf_new ();
 	renderer_attach  = gtk_cell_renderer_pixbuf_new ();
-	renderer_header = gtk_cell_renderer_text_new (); 
+	renderer_header  = gtk_cell_renderer_text_new (); 
 	
 	remove_all_columns (self);
 	
@@ -510,7 +511,7 @@ modest_header_view_finalize (GObject *obj)
 	priv->headers       = NULL;
 	priv->tny_folder    = NULL;
 	
-	G_OBJECT_CLASS(parent_class)->finalize (obj);
+	//G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 	
 GtkWidget*
@@ -700,7 +701,7 @@ cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 							 MODEST_HEADER_VIEW_PTR);
 		g_signal_emit (header_view,
 			       signals[STATUS_UPDATE_SIGNAL],
-			       0, _("Sorting..."), 0);
+			       0, _("Sorting..."), 0, 0);
 	}
 	
 	switch (col_id) {
@@ -860,7 +861,7 @@ on_refresh_folder (TnyFolder *folder, gboolean cancelled, GError **err,
 
 static void
 on_refresh_folder_status_update (TnyFolder *folder, const gchar *msg,
-				 gint status_id,  gpointer user_data)
+				 gint num, gint total,  gpointer user_data)
 {
 	ModestHeaderView *self;
 	ModestHeaderViewPrivate *priv;
@@ -869,7 +870,7 @@ on_refresh_folder_status_update (TnyFolder *folder, const gchar *msg,
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
 
 	g_signal_emit (G_OBJECT(self), signals[STATUS_UPDATE_SIGNAL],
-		       0, msg, status_id);
+		       0, msg, num, total);
 }
 
 
