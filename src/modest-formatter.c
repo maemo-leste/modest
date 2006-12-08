@@ -31,6 +31,10 @@
 #include <glib/gi18n.h>
 #include <string.h>
 #include <tny-header.h>
+#include <tny-gtk-text-buffer-stream.h>
+#include <tny-camel-stream.h>
+#include <tny-camel-msg.h>
+#include <camel/camel-stream-mem.h>
 #include "modest-formatter.h"
 #include "modest-text-utils.h"
 
@@ -141,19 +145,19 @@ modest_formatter_do (ModestFormatter *self,
 TnyMsg *
 modest_formatter_cite (ModestFormatter *self, TnyMimePart *body, TnyHeader *header)
 {
-	modest_formatter_do (self, body, header, modest_formatter_wrapper_cite);
+	return modest_formatter_do (self, body, header, modest_formatter_wrapper_cite);
 }
 
 TnyMsg *
 modest_formatter_quote (ModestFormatter *self, TnyMimePart *body, TnyHeader *header)
 {
-	modest_formatter_do (self, body, header, modest_formatter_wrapper_quote);
+	return modest_formatter_do (self, body, header, modest_formatter_wrapper_quote);
 }
 
 TnyMsg *
 modest_formatter_inline (ModestFormatter *self, TnyMimePart *body, TnyHeader *header)
 {
-	modest_formatter_do (self, body, header, modest_formatter_wrapper_inline);
+	return modest_formatter_do (self, body, header, modest_formatter_wrapper_inline);
 }
 
 TnyMsg *
@@ -227,7 +231,8 @@ modest_formatter_class_init (ModestFormatterClass *class)
 
 	parent_class = g_type_class_peek_parent (class);
 	object_class = (GObjectClass*) class;
-   
+	object_class->finalize = modest_formatter_finalize;
+
 	g_type_class_add_private (object_class, sizeof (ModestFormatterPrivate));
 }
 
