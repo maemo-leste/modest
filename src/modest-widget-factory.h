@@ -71,7 +71,6 @@ typedef enum _ModestComboBoxType {
 	MODEST_COMBO_BOX_TYPE_AUTH_PROTOS,
 	MODEST_COMBO_BOX_TYPE_TRANSPORTS
 } ModestComboBoxType;
-/* typedef enum _ModestComboBoxType ModestComboBoxType; */
 
 
 /**

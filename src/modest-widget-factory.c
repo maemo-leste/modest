@@ -30,6 +30,7 @@
 #include <glib/gi18n.h>
 #include <gdk/gdkkeysyms.h>
 #include "modest-widget-factory.h"
+#include <modest-widget-memory.h>
 #include <modest-protocol-mgr.h>
 #include <tny-gtk-account-list-model.h>
 #include <tny-gtk-folder-store-tree-model.h>
@@ -49,9 +50,9 @@ static void modest_widget_factory_finalize      (GObject *obj);
 
 
 /* callbacks */
-static void on_folder_selected         (ModestFolderView *folder_view,
-					TnyFolder *folder,
-					ModestWidgetFactory *self);
+static void on_folder_selection_changed         (ModestFolderView *folder_view,
+						 TnyFolder *folder, gboolean selected,
+						 ModestWidgetFactory *self);
 static void on_folder_key_press_event  (ModestFolderView *header_view, 
 				        GdkEventKey *event, 
 				        gpointer user_data);
@@ -87,20 +88,20 @@ enum {
 typedef struct _ModestWidgetFactoryPrivate ModestWidgetFactoryPrivate;
 struct _ModestWidgetFactoryPrivate {
 	
-	TnyPlatformFactory    *fact;
-	TnyAccountStore       *account_store;
-	ModestProtocolMgr     *proto_mgr;
+	TnyPlatformFactory          *fact;
+	ModestProtocolMgr           *proto_mgr;
+	TnyAccountStore             *account_store;
 	
-	ModestHeaderView      *header_view;
-	ModestFolderView      *folder_view;
-	ModestMsgView         *msg_preview;
-	ModestToolbar         *main_toolbar, *edit_toolbar;
+	ModestHeaderView            *header_view;
+	ModestFolderView            *folder_view;
+	ModestMsgView               *msg_preview;
+	ModestToolbar               *main_toolbar, *edit_toolbar;
 
-	GtkWidget             *progress_bar;
-	GtkWidget             *status_bar;
-	GtkWidget	      *folder_info_label;
+	GtkWidget                   *progress_bar;
+	GtkWidget                   *status_bar;
+	GtkWidget	            *folder_info_label;
 
-	GtkWidget	      *online_toggle;
+	GtkWidget	            *online_toggle;
 };
 #define MODEST_WIDGET_FACTORY_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                    MODEST_TYPE_WIDGET_FACTORY, \
@@ -153,7 +154,7 @@ modest_widget_factory_init (ModestWidgetFactory *obj)
 	ModestWidgetFactoryPrivate *priv;
 	priv = MODEST_WIDGET_FACTORY_GET_PRIVATE(obj);
 
-	priv->fact = modest_tny_platform_factory_get_instance ();
+	priv->fact          = modest_tny_platform_factory_get_instance ();
 	priv->account_store = tny_platform_factory_new_account_store (priv->fact);
 	priv->proto_mgr     = modest_protocol_mgr_new ();
 	
@@ -165,6 +166,7 @@ modest_widget_factory_init (ModestWidgetFactory *obj)
 					   FALSE);
 }
 
+
 static void
 modest_widget_factory_finalize (GObject *obj)
 {
@@ -175,22 +177,24 @@ modest_widget_factory_finalize (GObject *obj)
 		g_object_unref (G_OBJECT(priv->proto_mgr));
 		priv->proto_mgr = NULL;
 	}
+
+	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
 
 
+/* FIXME: uninit these as well */
 static void
 init_signals (ModestWidgetFactory *self)
 {
-	
 	TnyDevice *device;
 	ModestWidgetFactoryPrivate *priv;
 	
 	priv = MODEST_WIDGET_FACTORY_GET_PRIVATE(self);
 
 	/* folder view */
-	g_signal_connect (G_OBJECT(priv->folder_view), "folder_selected",
-			  G_CALLBACK(on_folder_selected), self);
+	g_signal_connect (G_OBJECT(priv->folder_view), "folder_selection_changed",
+			  G_CALLBACK(on_folder_selection_changed), self);
 	g_signal_connect (G_OBJECT(priv->folder_view), "key-press-event",
 			  G_CALLBACK(on_folder_key_press_event), self);
 
@@ -477,27 +481,37 @@ modest_widget_factory_get_edit_toolbar (ModestWidgetFactory *self,
 
 
 static void
-on_folder_selected (ModestFolderView *folder_view, TnyFolder *folder,
-		    ModestWidgetFactory *self)
+on_folder_selection_changed (ModestFolderView *folder_view, TnyFolder *folder,
+			     gboolean selected,
+			     ModestWidgetFactory *self)
 {
 	ModestWidgetFactoryPrivate *priv;
-	gchar *txt;
+	gchar *txt;	
 
 	priv = MODEST_WIDGET_FACTORY_GET_PRIVATE(self);
-	
-	modest_header_view_set_folder (priv->header_view, folder);
-	
-	if (folder) {
-		guint num, unread;
-		
-		num    = tny_folder_get_all_count    (folder);
-		unread = tny_folder_get_unread_count (folder);
 
-		txt = g_strdup_printf (_("%d %s, %d unread"),
-				       num, num==1 ? _("item") : _("items"), unread);
+	if (folder) {
+		ModestConf *conf;
 		
-		gtk_label_set_label (GTK_LABEL(priv->folder_info_label), txt);
-		g_free (txt);
+		conf = modest_tny_platform_factory_get_modest_conf_instance (priv->fact);
+
+		if (!selected) { /* the folder was unselected; save it's settings  */
+			modest_widget_memory_save (conf, G_OBJECT (priv->header_view),
+						   "header-view");
+		} else {  /* the folder was selected */
+			guint num, unread;
+			num    = tny_folder_get_all_count    (folder);
+			unread = tny_folder_get_unread_count (folder);
+			
+			txt = g_strdup_printf (_("%d %s, %d unread"),
+					       num, num==1 ? _("item") : _("items"), unread);		
+			gtk_label_set_label (GTK_LABEL(priv->folder_info_label), txt);
+			g_free (txt);
+			
+			modest_header_view_set_folder (priv->header_view, folder);
+			modest_widget_memory_restore (conf, G_OBJECT(priv->header_view),
+							      "header-view");
+		}
 	} else
 		gtk_label_set_label (GTK_LABEL(priv->folder_info_label), "");
 }
