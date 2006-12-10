@@ -139,4 +139,19 @@ gchar*  modest_text_utils_convert_to_html (const gchar *data);
 size_t modest_text_utils_strftime(char *s, size_t max, const char  *fmt, const  struct tm *tm);
 
 
+
+/**
+ * modest_text_utils_display_addres:
+ * @address: original address (UTF8 string)
+ *
+ * make a 'display address' from an address:
+ * "Foo Bar <foo@bar.cx> (Bla)" --> "Foo Bar" 
+ * the change is in-place
+ * 
+ * Returns: the new address. The string is *not* newly allocated.
+ * NULL in case of error
+ */
+gchar* modest_text_utils_display_address (gchar *address);
+
+
 #endif /* __MODEST_TEXT_UTILS_H__ */

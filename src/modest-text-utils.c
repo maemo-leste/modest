@@ -651,3 +651,29 @@ hyperlinkify_plain_text (GString *txt)
 	
 	g_slist_free (match_list);
 }
+
+
+
+gchar*
+modest_text_utils_display_address (gchar *address)
+{
+	gchar *cursor;
+	
+	if (!address)
+		return NULL;
+
+	g_return_val_if_fail (g_utf8_validate (address, -1, NULL), NULL);
+
+	/* simplistic --> remove <email@address> from display name */
+	cursor = g_strstr_len (address, strlen(address), "<");
+	if (cursor) 
+		cursor[0]='\0';
+
+	/* simplistic --> remove (bla bla) from display name */
+	cursor = g_strstr_len (address, strlen(address), "(");
+	if (cursor) 
+		cursor[0]='\0';
+	
+	return address;
+}
+
