@@ -120,7 +120,7 @@ main (int argc, char **argv)
 	if (!g_option_context_parse (context, &argc, &argv, &err)) {
 		g_printerr ("Error in command line parameter(s): '%s', exiting\n",
 			    err ? err->message : "");
-		return 1;
+		return 0;
 	}
 	g_option_context_free (context);
 
@@ -133,7 +133,7 @@ main (int argc, char **argv)
 
 	if (!src_name || !dst_name) {
 		g_printerr ("Error in command line parameter(s), specify source and target folders\n");	
-		return 1;
+		return 0;
 	}
 
 	/* Get accounts */

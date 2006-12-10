@@ -1,13 +1,18 @@
 #
 # Makefile.am for modest
-# Time-stamp: <2006-04-22 16:29:00 (djcb)>
+# Time-stamp: <2006-12-10 12:55:27 (djcb)>
 #
 
-SUBDIRS= src tests po docs
+SUBDIRS= src po
+
+if BUILD_TESTS
+SUBDIRS += tests
+endif
+
+if BUILD_DOCS
+SUBDIRS += docs
+endif
 
 EXTRA_DIST= config.rpath  config.rpath mkinstalldirs \
 	autogen.sh TODO COPYING intltool-extract.in intltool-merge.in \
 	intltool-update.in
-
-CFLAGS=\
-	-Wall
