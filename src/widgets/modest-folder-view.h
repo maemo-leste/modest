@@ -30,9 +30,10 @@
 #ifndef __MODEST_FOLDER_VIEW_H__
 #define __MODEST_FOLDER_VIEW_H__
 
+#include <glib-object.h>
 #include <tny-gtk-account-list-model.h>
 #include <tny-account-store.h>
-#include <glib-object.h>
+#include <modest-tny-account-store.h>
 
 G_BEGIN_DECLS
 
@@ -55,13 +56,25 @@ struct _ModestFolderView {
 struct _ModestFolderViewClass {
 	GtkTreeViewClass parent_class;
 
-	/* emitted when a folder is clicked */
-	void (*folder_selected) (ModestFolderView* self,
-				 TnyFolder *folder,
-				 gpointer user_data);
-				 
+	/* emitted when a folder is selected or unselected */
+	void (*folder_selection_changed) (ModestFolderView* self,
+					  TnyFolder *folder,
+					  gboolean selected,
+					  gpointer user_data);
+	
 	gboolean (*update_model) (ModestFolderView *self, 
 	                          TnyAccountStore *account_store);
+};
+
+
+
+/* FIXME: move these to TnyMail */
+enum {
+
+	TNY_FOLDER_TYPE_NOTES = TNY_FOLDER_TYPE_ROOT + 1, /* urgh */
+	TNY_FOLDER_TYPE_DRAFTS,
+	TNY_FOLDER_TYPE_CONTACTS,
+	TNY_FOLDER_TYPE_CALENDAR
 };
 
 
@@ -112,7 +125,20 @@ void  modest_folder_view_set_title (ModestFolderView *self, const gchar *title);
 gboolean     modest_folder_view_is_empty    (ModestFolderView *self);
 
 
+/**
+ * modest_folder_view_guess_folder_type:
+ * @folder: a tnymail folder
+ * 
+ * guess the type of the folder, this is a class method so it does not need
+ * an ModestFolderView instance
+ *  
+ * Returns: the folder type, or -1 in case of error
+ */
+TnyFolderType  modest_folder_view_guess_folder_type    (TnyFolder *folder);
 
+
+
+/* FIXME: this is ugly */
 const gchar* modest_folder_view_get_selected_account (ModestFolderView *self);
 
 G_END_DECLS

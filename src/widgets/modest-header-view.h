@@ -66,17 +66,14 @@ typedef enum _ModestHeaderViewColumn {
 	MODEST_HEADER_VIEW_COLUMN_MSGTYPE,
 	MODEST_HEADER_VIEW_COLUMN_ATTACH,
 	MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER,
-
 	MODEST_HEADER_VIEW_COLUMN_NUM
 } ModestHeaderViewColumn;
-/* typedef enum _ModestHeaderViewColumn ModestHeaderViewColumn; */
 
 typedef enum _ModestHeaderViewStyle {
 	MODEST_HEADER_VIEW_STYLE_NORMAL,
 	MODEST_HEADER_VIEW_STYLE_COMPACT,
 	MODEST_HEADER_VIEW_STYLE_NUM
 } ModestHeaderViewStyle;
-/* typedef enum _ModestHeaderViewStyle ModestHeaderViewStyle; */
 
 typedef enum _ModestItemType {
 	MODEST_ITEM_TYPE_MESSAGE,
@@ -139,6 +136,19 @@ GtkWidget*   modest_header_view_new        (TnyFolder *folder,
  */
 gboolean     modest_header_view_set_folder (ModestHeaderView *self,
 					    TnyFolder *folder);
+
+
+
+
+/**
+ * modest_header_view_get_folder:
+ * @self: a ModestHeaderView instance
+ * 
+ * get the folder in this ModestHeaderView
+ *  
+ * Returns: the tny folder instance or NULL if there is none
+ */
+TnyFolder *modest_header_view_get_folder (ModestHeaderView *self);
 
 
 /**

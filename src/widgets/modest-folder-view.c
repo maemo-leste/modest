@@ -36,6 +36,7 @@
 #include <tny-account-store.h>
 #include <tny-account.h>
 #include <tny-folder.h>
+#include <modest-marshal.h>
 #include <modest-icon-names.h>
 #include <modest-icon-factory.h>
 #include <modest-tny-account-store.h>
@@ -62,7 +63,7 @@ static const gchar *get_account_name_from_folder        (GtkTreeModel *model, Gt
 static void         modest_folder_view_disconnect_store_account_handlers (GtkTreeView *self);
 
 enum {
-	FOLDER_SELECTED_SIGNAL,
+	FOLDER_SELECTION_CHANGED_SIGNAL,
 	LAST_SIGNAL
 };
 
@@ -128,15 +129,15 @@ modest_folder_view_class_init (ModestFolderViewClass *klass)
 	g_type_class_add_private (gobject_class,
 				  sizeof(ModestFolderViewPrivate));
 	
- 	signals[FOLDER_SELECTED_SIGNAL] = 
-		g_signal_new ("folder_selected",
+ 	signals[FOLDER_SELECTION_CHANGED_SIGNAL] = 
+		g_signal_new ("folder_selection_changed",
 			      G_TYPE_FROM_CLASS (gobject_class),
 			      G_SIGNAL_RUN_FIRST,
 			      G_STRUCT_OFFSET (ModestFolderViewClass,
-					       folder_selected),
+					       folder_selection_changed),
 			      NULL, NULL,
-			      g_cclosure_marshal_VOID__POINTER,
-			      G_TYPE_NONE, 1, G_TYPE_POINTER); 
+			      modest_marshal_VOID__POINTER_BOOLEAN,
+			      G_TYPE_NONE, 2, G_TYPE_POINTER, G_TYPE_BOOLEAN);
 }
 
 
@@ -166,22 +167,16 @@ text_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 	g_free (fname);
 }
 
-/* FIXME: move these to TnyMail */
-enum {
 
-	TNY_FOLDER_TYPE_NOTES = TNY_FOLDER_TYPE_ROOT + 1, /* urgh */
-	TNY_FOLDER_TYPE_DRAFTS,
-	TNY_FOLDER_TYPE_CONTACTS,
-	TNY_FOLDER_TYPE_CALENDAR
-};
-	
+/* guess the folder type based on the name, or -1 in case of error */
 static TnyFolderType
-guess_folder_type (const gchar* name)
+guess_type_from_name (const gchar* name)
 {
-	TnyFolderType type;
+	gint  type;
 	gchar *folder;
-
-	g_return_val_if_fail (name, TNY_FOLDER_TYPE_NORMAL);
+	
+	if (!name)
+		return -1;
 	
 	type = TNY_FOLDER_TYPE_NORMAL;
 	folder = g_utf8_strdown (name, strlen(name));
@@ -221,6 +216,22 @@ guess_folder_type (const gchar* name)
 }
 
 
+
+TnyFolderType
+modest_folder_view_guess_folder_type (TnyFolder *folder)
+{
+	TnyFolderType type;
+
+	g_return_val_if_fail (folder, -1);
+
+	type = tny_folder_get_folder_type (folder);
+	if (type == TNY_FOLDER_TYPE_NORMAL)
+		type = guess_type_from_name (tny_folder_get_name (folder));
+
+	return type;
+}
+
+
 static void
 icon_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 		 GtkTreeModel *tree_model,  GtkTreeIter *iter, gpointer data)
@@ -239,7 +250,7 @@ icon_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 	rendobj = G_OBJECT(renderer);
 	
 	if (type == TNY_FOLDER_TYPE_NORMAL)
-		type = guess_folder_type (fname);
+		type = guess_type_from_name (fname);
 	
 	if (fname)
 		g_free (fname);
@@ -500,8 +511,8 @@ update_model_empty (ModestFolderView *self)
 
 	priv->view_is_empty = TRUE;
 
-	g_signal_emit (G_OBJECT(self), signals[FOLDER_SELECTED_SIGNAL], 0,
-		       NULL);
+	g_signal_emit (G_OBJECT(self), signals[FOLDER_SELECTION_CHANGED_SIGNAL], 0,
+		       NULL, TRUE);
 	return TRUE;
 }
 
@@ -582,8 +593,7 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 	GtkTreeIter             iter;
 	ModestFolderView        *tree_view;
 	ModestFolderViewPrivate *priv;
-	gint type;
-	const gchar *account_name;
+	gint                    type;
 
 	g_return_if_fail (sel);
 	g_return_if_fail (user_data);
@@ -591,38 +601,35 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 	priv = MODEST_FOLDER_VIEW_GET_PRIVATE(user_data);
 	priv->cur_selection = sel;
 
-	
 	/* is_empty means that there is only the 'empty' item */
 	if (priv->view_is_empty)
 		return;
-	
+
 	/* folder was _un_selected if true */
 	if (!gtk_tree_selection_get_selected (sel, &model, &iter)) {
-		priv->cur_folder = NULL; /* FIXME: need this? */
-		return; 
-	}
-
+               priv->cur_folder = NULL; /* FIXME: need this? */
+               return; 
+       }
+	
 	tree_view = MODEST_FOLDER_VIEW (user_data);
-
 	gtk_tree_model_get (model, &iter, 
 			    TNY_GTK_FOLDER_STORE_TREE_MODEL_TYPE_COLUMN, &type, 
 			    TNY_GTK_FOLDER_STORE_TREE_MODEL_INSTANCE_COLUMN, &folder, 
 			    -1);
-
-	if (type == TNY_FOLDER_TYPE_ROOT) {
-		account_name = tny_account_get_name (TNY_ACCOUNT (folder));
-	} else {
-		if (priv->cur_folder) 
-			tny_folder_expunge (priv->cur_folder, NULL); /* FIXME */
-		priv->cur_folder = folder;
-
-		/* FIXME: this is ugly */
-		account_name = get_account_name_from_folder (model, iter);
-			
-		g_signal_emit (G_OBJECT(tree_view), signals[FOLDER_SELECTED_SIGNAL], 0,
-			       folder);
-	}
-
+	
+	if (type == TNY_FOLDER_TYPE_ROOT)
+		return; 
+	
+	/* emit 2 signals: one for the unselection of the old one,
+	 * and one for the selection of the new on */
+	g_signal_emit (G_OBJECT(tree_view), signals[FOLDER_SELECTION_CHANGED_SIGNAL], 0,
+		       priv->cur_folder, FALSE);
+	g_signal_emit (G_OBJECT(tree_view), signals[FOLDER_SELECTION_CHANGED_SIGNAL], 0,
+		       folder, TRUE);
+	
+	if (priv->cur_folder)
+		tny_folder_expunge (priv->cur_folder, NULL); /* FIXME */
+	priv->cur_folder = folder;
 }
 
 static void 
@@ -648,12 +655,14 @@ modest_folder_view_update_model (ModestFolderView *self, TnyAccountStore *accoun
 	g_return_val_if_fail (MODEST_IS_FOLDER_VIEW (self), FALSE);
 	retval = update_model (self, MODEST_TNY_ACCOUNT_STORE(account_store)); /* ugly */
 
-	g_signal_emit (G_OBJECT(self), signals[FOLDER_SELECTED_SIGNAL],
-		       0, NULL);
+	g_signal_emit (G_OBJECT(self), signals[FOLDER_SELECTION_CHANGED_SIGNAL],
+		       0, NULL, TRUE);
 
 	return retval;
 }
 
+
+/* ugly */
 static const gchar *
 get_account_name_from_folder (GtkTreeModel *model, GtkTreeIter iter)
 {

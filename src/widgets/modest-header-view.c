@@ -56,12 +56,11 @@ enum {
 
 typedef struct _ModestHeaderViewPrivate ModestHeaderViewPrivate;
 struct _ModestHeaderViewPrivate {
-	TnyFolder            *tny_folder;
+	TnyFolder            *folder;
 	TnyList              *headers;
 	GMutex		     *lock;
 	ModestHeaderViewStyle style;
-
-	gulong            sig1;
+	gulong               sig1;
 
 };
 #define MODEST_HEADER_VIEW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -190,35 +189,6 @@ header_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 }
 
 
-
-/* try to make a shorter display address; changes its argument in-place */
-static gchar*
-display_address (gchar *address)
-{
-	gchar *cursor;
-
-	if (!address)
-		return NULL;
-	
-	/* simplistic --> remove <email@address> from display name */
-	cursor = g_strstr_len (address, strlen(address), "<");
-	if (cursor) 
-		cursor[0]='\0';
-
-	/* simplistic --> remove (bla bla) from display name */
-	cursor = g_strstr_len (address, strlen(address), "(");
-	if (cursor) 
-		cursor[0]='\0';
-	
-	/* FIXME */
-	if (!g_utf8_validate (address, -1, NULL)) 
-		g_printerr ("modest: invalid: '%s'", address);
-
-	return address;
-}
-
-
-
 static void
 sender_receiver_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 			    GtkTreeModel *tree_model,  GtkTreeIter *iter,  gboolean is_sender)
@@ -239,7 +209,7 @@ sender_receiver_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *rendere
 	
 	g_object_set (G_OBJECT(renderer),
 		      "text",
-		      display_address (address),
+		      modest_text_utils_display_address (address),
 		      "weight",
 		      (flags & TNY_HEADER_FLAG_SEEN) ? 400 : 800,
 		      "style",
@@ -300,7 +270,7 @@ compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer
 	rendobj = G_OBJECT(renderer);		
 
 	header = g_strdup_printf ("%s %s\n%s",
-				  display_address (from),
+				  modest_text_utils_display_address (from),
 				  display_date(date),
 				  subject);
 	
@@ -508,10 +478,10 @@ modest_header_view_finalize (GObject *obj)
 		priv->lock = NULL;
 	}
 
-	priv->headers       = NULL;
-	priv->tny_folder    = NULL;
+	priv->headers  = NULL;
+	priv->folder   = NULL;
 	
-	//G_OBJECT_CLASS(parent_class)->finalize (obj);
+	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 	
 GtkWidget*
@@ -821,6 +791,9 @@ on_refresh_folder (TnyFolder *folder, gboolean cancelled, GError **err,
 	self = MODEST_HEADER_VIEW(user_data);
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
 
+
+	g_assert (folder == priv->folder);
+	
 	if (!folder)  /* when there is no folder */
 		gtk_tree_view_set_headers_visible (GTK_TREE_VIEW(self), FALSE);
 	else { /* it's a new one or a refresh */
@@ -874,6 +847,15 @@ on_refresh_folder_status_update (TnyFolder *folder, const gchar *msg,
 }
 
 
+TnyFolder*
+modest_header_view_get_folder (ModestHeaderView *self)
+{
+	ModestHeaderViewPrivate *priv;
+	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
+
+	return priv->folder;
+}
+
 
 gboolean
 modest_header_view_set_folder (ModestHeaderView *self, TnyFolder *folder)
@@ -881,6 +863,8 @@ modest_header_view_set_folder (ModestHeaderView *self, TnyFolder *folder)
 	ModestHeaderViewPrivate *priv;
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
 
+	priv->folder = folder;
+	
 	if (!folder)  {/* when there is no folder */
 		gtk_tree_view_set_headers_visible (GTK_TREE_VIEW(self), FALSE);
 		gtk_tree_view_set_model (GTK_TREE_VIEW (self), NULL);
@@ -890,15 +874,13 @@ modest_header_view_set_folder (ModestHeaderView *self, TnyFolder *folder)
 					  on_refresh_folder_status_update,
 					  self);
 	}
-
+	
 	/* no message selected */
 	g_signal_emit (G_OBJECT(self), signals[MESSAGE_SELECTED_SIGNAL], 0,
 		       NULL);
-
-	//g_mutex_unlock (priv->lock);
-
 	return TRUE;
 }
+
 
 
 
@@ -957,4 +939,3 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 	/* Free */
 /* 	g_free (folder); */
 }	
-

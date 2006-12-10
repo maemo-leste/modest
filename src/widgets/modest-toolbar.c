@@ -104,12 +104,24 @@ modest_toolbar_class_init (ModestToolbarClass *klass)
 static void
 modest_toolbar_init (ModestToolbar *obj)
 {
+	ModestToolbarPrivate *priv;
+	priv = MODEST_TOOLBAR_GET_PRIVATE(obj);
+
+	priv->tooltips = NULL;
 	
 }
 
 static void
 modest_toolbar_finalize (GObject *obj)
 {
+	ModestToolbarPrivate *priv;
+	priv = MODEST_TOOLBAR_GET_PRIVATE(obj);
+
+	if (priv->tooltips) {
+		g_object_ref_sink (G_OBJECT(priv->tooltips));
+		priv->tooltips = NULL;
+	}
+
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
@@ -183,12 +195,12 @@ static gboolean
 modest_toolbar_set_buttons (ModestToolbar *self, const GSList *buttons)
 {
 	const GSList *cursor;
-	GtkTooltips *tooltips;
+	ModestToolbarPrivate *priv;
+
+	priv = MODEST_TOOLBAR_GET_PRIVATE(self);
 	
-	g_return_val_if_fail (self, FALSE);
-	
-	tooltips = gtk_tooltips_new ();
-	gtk_tooltips_enable (tooltips);
+	priv->tooltips = gtk_tooltips_new ();
+	gtk_tooltips_enable (priv->tooltips);
 	gtk_toolbar_set_tooltips (GTK_TOOLBAR(self), TRUE);
 
 	cursor = buttons;
@@ -218,7 +230,8 @@ modest_toolbar_set_buttons (ModestToolbar *self, const GSList *buttons)
 				g_signal_connect (G_OBJECT(button), "clicked", 
 						  G_CALLBACK(on_toolbutton_clicked), self);
 
-				gtk_tooltips_set_tip (tooltips, GTK_WIDGET(button),tooltip, NULL);
+				gtk_tooltips_set_tip (priv->tooltips, GTK_WIDGET(button),
+						      tooltip, NULL);
 				gtk_widget_show_all (GTK_WIDGET(button));
 				gtk_toolbar_insert (GTK_TOOLBAR(self), button, -1);
 			}
