@@ -252,7 +252,8 @@ get_password (TnyAccount *account, const gchar *prompt, gboolean *cancel)
 /* 		*cancel = FALSE; */
 
 /* 	g_hash_table_insert (priv->password_hash, key, pwd); */
-	
+
+		/* FIXME: pwd needs to be freed somehow */
 	return pwd; 
 }
 
