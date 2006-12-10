@@ -32,12 +32,11 @@
 
 #include <gtk/gtk.h>
 #include <modest-conf.h>
-#include <modest-conf-keys.h>
 
 G_BEGIN_DECLS
 
 /**
- * modest_widget_memory_save_settings:
+ * modest_widget_memory_save:
  * @self: a ModestConf instance
  * @widget: the widget to save the settings for
  * @name: the unique name for this widget
@@ -46,21 +45,21 @@ G_BEGIN_DECLS
  * 
  * Returns: TRUE if succeeded or FALSE in case of error.
  */
-gboolean modest_widget_memory_save_settings (ModestConf *conf, GtkWidget *widget,
-					     const gchar *name);
+gboolean modest_widget_memory_save (ModestConf *conf, GObject *widget, const gchar *name);
 
 /**
- * modest_widget_memory_restore_settings:
+ * modest_widget_memory_restore:
  * @self: a ModestConf instance
  * @widget: the widget to save the settings for
  * @name: the unique name for this widget
- *
+ * 
  * restore the settings for a widget configuration system
  * 
  * Returns: TRUE if succeeded or FALSE in case of error.
  */
-gboolean modest_widget_memory_restore_settings (ModestConf *conf, GtkWidget *widget,
-						const gchar *name);
+gboolean modest_widget_memory_restore (ModestConf *conf, GObject *widget, const gchar *name);
+
+
 G_END_DECLS
 
 #endif /*__MODEST_WIDGET_MEMORY_H__*/

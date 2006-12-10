@@ -28,7 +28,12 @@
  */
 
 #include "modest-widget-memory.h"
+
+#include <modest-tny-platform-factory.h>
 #include <widgets/modest-header-view.h>
+#include <widgets/modest-msg-view.h>
+#include <widgets/modest-folder-view.h>
+
 #include <string.h>
 
 #define PARAM_X             "x"
@@ -51,6 +56,19 @@ get_keyname (ModestConf *conf, const gchar *name, const gchar *param)
 	return keyname;
 }
 
+
+static gchar*
+get_keyname_with_type (ModestConf *conf, const gchar *name, guint type, const gchar *param)
+{
+	gchar *esc_name, *keyname;
+	esc_name = modest_conf_key_escape (conf, name);
+
+	keyname = g_strdup_printf ("%s/%s/%s_%d",
+				   MODEST_CONF_WIDGET_NAMESPACE, 
+				   esc_name, param, type);
+	g_free (esc_name);
+	return keyname;
+}
 
 
 static gboolean
@@ -184,6 +202,15 @@ save_settings_header_view (ModestConf *conf, ModestHeaderView *header_view,
 	gchar *key;
 	GString *str;
 	GList *cols, *cursor;
+	TnyFolder *folder;
+	TnyFolderType type;
+
+	folder = modest_header_view_get_folder (header_view);
+	if (!folder) 
+		return TRUE; /* no folder: no settings */ 
+	
+	type = modest_folder_view_guess_folder_type (folder);
+	key = get_keyname_with_type (conf, name, type, PARAM_COLUMN_WIDTH);
 
 	cursor = cols = modest_header_view_get_columns (header_view);
 	str = g_string_new (NULL);
@@ -203,9 +230,10 @@ save_settings_header_view (ModestConf *conf, ModestHeaderView *header_view,
 		cursor = g_list_next (cursor);
 	}
 
-	key = get_keyname (conf, name, PARAM_COLUMN_WIDTH);
 	modest_conf_set_string (conf, key, str->str, NULL);
 
+	g_warning ("save %s", key);
+	
 	g_free (key);	
 	g_string_free (str, TRUE);
 	g_list_free (cols);
@@ -214,21 +242,28 @@ save_settings_header_view (ModestConf *conf, ModestHeaderView *header_view,
 }
 
 
-
 static gboolean
 restore_settings_header_view (ModestConf *conf, ModestHeaderView *header_view,
 			      const gchar *name)
 {
-	gchar *key;	
-	key = get_keyname (conf, name, PARAM_COLUMN_WIDTH);
-	
-	if (modest_conf_key_exists (conf, key, NULL)) {
+	gchar *key;
+	TnyFolder *folder;
+	TnyFolderType type;
 
+	folder = modest_header_view_get_folder (header_view);
+	if (!folder) 
+		return TRUE; /* no folder: no settings */ 
+	
+	type = modest_folder_view_guess_folder_type (folder);
+	
+	key = get_keyname_with_type (conf, name, type, PARAM_COLUMN_WIDTH);
+	if (modest_conf_key_exists (conf, key, NULL)) {
+		
 		gchar *data, *cursor;
 		guint col, width;
 		GList *cols = NULL;
 		GList *colwidths = NULL;
-		
+	
 		cursor = data = modest_conf_get_string (conf, key, NULL);
 		while (cursor && sscanf (cursor, "%u:%u ", &col, &width) == 2) {
 			cols      = g_list_append (cols, GINT_TO_POINTER(col));
@@ -255,14 +290,47 @@ restore_settings_header_view (ModestConf *conf, ModestHeaderView *header_view,
 		}
 	}
 
+	g_warning ("restore %s", key);
+
 	g_free (key);
 	return TRUE;
 }
 
 
+
+static gboolean
+save_settings_folder_view (ModestConf *conf, ModestFolderView *folder_view,
+			   const gchar *name)
+{
+	return TRUE; /* FIXME: implement this */
+}
+
+static gboolean
+restore_settings_folder_view (ModestConf *conf, ModestFolderView *folder_view,
+			      const gchar *name)
+{
+	return TRUE; /* FIXME: implement this */
+}
+
+
+static gboolean
+save_settings_msg_view (ModestConf *conf, ModestMsgView *msg_view,
+			   const gchar *name)
+{
+	return TRUE; /* FIXME: implement this */
+}
+
+static gboolean
+restore_settings_msg_view (ModestConf *conf, ModestMsgView *msg_view,
+			      const gchar *name)
+{
+	return TRUE; /* FIXME: implement this */
+}
+
+
+
 gboolean
-modest_widget_memory_save_settings (ModestConf *conf, GtkWidget *widget,
-				    const gchar *name)
+modest_widget_memory_save (ModestConf *conf, GObject *widget, const gchar *name)
 {
 	g_return_val_if_fail (conf, FALSE);
 	g_return_val_if_fail (widget, FALSE);
@@ -274,18 +342,21 @@ modest_widget_memory_save_settings (ModestConf *conf, GtkWidget *widget,
 		return save_settings_paned (conf, GTK_PANED(widget), name);
 	else if (MODEST_IS_HEADER_VIEW(widget))
 		return save_settings_header_view (conf, MODEST_HEADER_VIEW(widget), name);
+	else if (MODEST_IS_FOLDER_VIEW(widget))
+		return save_settings_folder_view (conf, MODEST_FOLDER_VIEW(widget), name);
+	else if (MODEST_IS_MSG_VIEW(widget))
+		return save_settings_msg_view (conf, MODEST_MSG_VIEW(widget), name);
 	else if (GTK_IS_WIDGET(widget))
 		return save_settings_widget (conf, widget, name);
 	
-	g_printerr ("modest: %p is not a known widget\n", widget);
+	g_printerr ("modest: %p (%s) is not a known widget\n", widget, name);	
 	return FALSE;
 }
 
 
 
 gboolean
-modest_widget_memory_restore_settings (ModestConf *conf, GtkWidget *widget,
-				       const gchar *name)
+modest_widget_memory_restore (ModestConf *conf, GObject *widget, const gchar *name)
 {
 	g_return_val_if_fail (conf, FALSE);
 	g_return_val_if_fail (widget, FALSE);
@@ -297,9 +368,13 @@ modest_widget_memory_restore_settings (ModestConf *conf, GtkWidget *widget,
 		return restore_settings_paned (conf, GTK_PANED(widget), name);
 	else if (MODEST_IS_HEADER_VIEW(widget))
 		return restore_settings_header_view (conf, MODEST_HEADER_VIEW(widget), name);
+ 	else if (MODEST_IS_FOLDER_VIEW(widget))
+		return restore_settings_folder_view (conf, MODEST_FOLDER_VIEW(widget), name);
+	else if (MODEST_IS_MSG_VIEW(widget))
+		return restore_settings_msg_view (conf, MODEST_MSG_VIEW(widget), name);
 	else if (GTK_IS_WIDGET(widget))
 		return restore_settings_widget (conf, widget, name);
 	
-	g_printerr ("modest: %p is not a known widget\n", widget);
+	g_printerr ("modest: %p (%s) is not a known widget\n", widget, name);
 	return FALSE;
 }
