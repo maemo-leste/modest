@@ -73,7 +73,7 @@ struct _ModestMainWindowPrivate {
 	
 	ModestWidgetFactory *widget_factory;
 	TnyPlatformFactory *factory;
-  
+	
 	ModestHeaderView *header_view;
 	ModestFolderView *folder_view;
 	ModestMsgView    *msg_preview;
@@ -266,8 +266,8 @@ on_menu_reply_forward (ModestMainWindow *self, guint action, GtkWidget *widget)
 	if (header_list) {
 		TnyHeader *header, *new_header;
 		TnyFolder *folder;
-		TnyMsg    *msg, *new_msg;
-		ModestEditType edit_type;
+		TnyMsg    *msg, *new_msg = NULL;
+		ModestEditType edit_type = -2;
 		gchar *from, *email_key;
 		const gchar *account_name;
 
@@ -582,17 +582,16 @@ restore_sizes (ModestMainWindow *self)
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
 	conf = modest_tny_platform_factory_get_modest_conf_instance (priv->factory);
 
-	modest_widget_memory_restore_settings (conf,GTK_WIDGET(self),
-					       "modest-main-window");
-	modest_widget_memory_restore_settings (conf, GTK_WIDGET(priv->folder_paned),
-					       "modest-folder-paned");
-	modest_widget_memory_restore_settings (conf, GTK_WIDGET(priv->msg_paned),
-					       "modest-msg-paned");
-	modest_widget_memory_restore_settings (conf, GTK_WIDGET(priv->main_paned),
-					       "modest-main-paned");
-	modest_widget_memory_restore_settings (conf, GTK_WIDGET(priv->header_view),
-					       "modest-header-view");
-
+	modest_widget_memory_restore (conf,G_OBJECT(self),
+				      "modest-main-window");
+	modest_widget_memory_restore (conf, G_OBJECT(priv->folder_paned),
+				      "modest-folder-paned");
+	modest_widget_memory_restore (conf, G_OBJECT(priv->msg_paned),
+				      "modest-msg-paned");
+	modest_widget_memory_restore (conf, G_OBJECT(priv->main_paned),
+				      "modest-main-paned");
+	modest_widget_memory_restore (conf, G_OBJECT(priv->header_view),
+				      "header-view");
 }
 
 
@@ -605,16 +604,14 @@ save_sizes (ModestMainWindow *self)
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
 	conf = modest_tny_platform_factory_get_modest_conf_instance (priv->factory);
 	
-	modest_widget_memory_save_settings (conf,GTK_WIDGET(self),
-					    "modest-main-window");
-	modest_widget_memory_save_settings (conf, GTK_WIDGET(priv->folder_paned),
-					    "modest-folder-paned");
-	modest_widget_memory_save_settings (conf, GTK_WIDGET(priv->msg_paned),
-					    "modest-msg-paned");
-	modest_widget_memory_save_settings (conf, GTK_WIDGET(priv->main_paned),
-					    "modest-main-paned");
-	modest_widget_memory_save_settings (conf, GTK_WIDGET(priv->header_view),
-					    "modest-header-view");
+	modest_widget_memory_save (conf,G_OBJECT(self), "modest-main-window");
+	modest_widget_memory_save (conf, G_OBJECT(priv->folder_paned),
+				   "modest-folder-paned");
+	modest_widget_memory_save (conf, G_OBJECT(priv->msg_paned),
+				   "modest-msg-paned");
+	modest_widget_memory_save (conf, G_OBJECT(priv->main_paned),
+				   "modest-main-paned");
+	modest_widget_memory_save (conf, G_OBJECT(priv->header_view), "header-view");
 }
 
 static GtkWidget*
