@@ -65,7 +65,7 @@ GType        modest_tny_platform_factory_get_type    (void) G_GNUC_CONST;
 TnyPlatformFactory*    modest_tny_platform_factory_get_instance         (void);
 
 ModestAccountMgr*    modest_tny_platform_factory_get_modest_account_mgr_instance (TnyPlatformFactory *fact);
-ModestConf*    modest_tny_platform_factory_get_modest_conf_instance (TnyPlatformFactory *fact);
+ModestConf*          modest_tny_platform_factory_get_modest_conf_instance (TnyPlatformFactory *fact);
 
 
 G_END_DECLS

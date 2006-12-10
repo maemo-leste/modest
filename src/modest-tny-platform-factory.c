@@ -124,7 +124,12 @@ modest_tny_platform_factory_class_init (ModestTnyPlatformFactoryClass *klass)
 static void
 modest_tny_platform_factory_init (ModestTnyPlatformFactory *obj)
 {
-	/* Empty implementation */
+	ModestTnyPlatformFactoryPrivate *priv;
+	priv = MODEST_TNY_PLATFORM_FACTORY_GET_PRIVATE(obj);
+
+	priv->account_mgr   = NULL;
+	priv->conf          = NULL;
+	priv->account_store = NULL;
 }
 
 static GObject*
