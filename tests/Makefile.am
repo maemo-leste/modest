@@ -9,13 +9,14 @@ TESTS_ENVIRONMENT       = top_builddir=$(top_builddir)
 TESTS                   =                           \
                         check_folder-xfer           \
                         check_update-account        \
-			check_modest-conf           
+			check_modest-conf           \
+			check_text-utils
 
 noinst_PROGRAMS=				    \
 			check_folder-xfer           \
 			check_update-account        \
-			check_modest-conf
-
+			check_modest-conf	    \
+			check_text-utils
 
 INCLUDES=\
 	@CHECK_CFLAGS@ \
@@ -58,3 +59,7 @@ check_update_account_LDADD = $(objects)
 check_modest_conf_SOURCES=\
 	check_modest-conf.c
 check_modest_conf_LDADD = $(objects)
+
+check_text_utils_SOURCES=\
+	check_text-utils.c
+check_text_utils_LDADD = $(objects)
