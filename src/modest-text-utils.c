@@ -664,16 +664,24 @@ modest_text_utils_display_address (gchar *address)
 
 	g_return_val_if_fail (g_utf8_validate (address, -1, NULL), NULL);
 
-	/* simplistic --> remove <email@address> from display name */
+	g_strchug (address); /* remove leading whitespace */
+
+	/*  <email@address> from display name */
 	cursor = g_strstr_len (address, strlen(address), "<");
+	if (cursor == address) /* there's nothing else? leave it */
+		return address;
 	if (cursor) 
 		cursor[0]='\0';
 
-	/* simplistic --> remove (bla bla) from display name */
+	/* remove (bla bla) from display name */
 	cursor = g_strstr_len (address, strlen(address), "(");
+	if (cursor == address) /* there's nothing else? leave it */
+		return address;
 	if (cursor) 
 		cursor[0]='\0';
-	
+
+	g_strchomp (address); /* remove trailing whitespace */
+
 	return address;
 }
 

@@ -34,6 +34,7 @@
 #define __MODEST_TEXT_UTILS_H__
 
 #include <time.h>
+#include <glib.h>
 
 /**
  * modest_text_utils_derived_subject:
@@ -145,8 +146,9 @@ size_t modest_text_utils_strftime(char *s, size_t max, const char  *fmt, const  
  * @address: original address (UTF8 string)
  *
  * make a 'display address' from an address:
- * "Foo Bar <foo@bar.cx> (Bla)" --> "Foo Bar" 
- * the change is in-place
+ * "Foo Bar <foo@bar.cx> (Bla)" --> "Foo Bar"
+ * ie. removes "<...>" and "(...)" parts
+ * the change is in-place; removes leading/trailing whitespace
  * 
  * Returns: the new address. The string is *not* newly allocated.
  * NULL in case of error
