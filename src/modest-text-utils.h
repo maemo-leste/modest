@@ -39,11 +39,13 @@
 /**
  * modest_text_utils_derived_subject:
  * @subject: a string which contains the original subject
- * @prefix: the prefix for the new subject (such as 'Re:' or 'Fwd:')
+ * @prefix: the prefix for the new subject (such as 'Re:' or 'Fwd:'),
+ *           must not be NULL
  *
  * create a 'derived' subject line for eg. replies and forwards 
  * 
  * Returns: a newly allocated string containing the resulting subject
+ * subject == NULL, then @prefix " " will be returned
  */
 gchar* modest_text_utils_derived_subject (const gchar *subject, 
 					  const gchar* prefix);

@@ -198,8 +198,10 @@ modest_text_utils_derived_subject (const gchar *subject, const gchar *prefix)
 {
 	gchar *tmp;
 
+	g_return_val_if_fail (prefix, NULL);
+	
 	if (!subject)
-		return g_strdup_printf ("%s ", prefix);
+		return g_strdup (prefix);
 
 	tmp = g_strchug (g_strdup (subject));
 

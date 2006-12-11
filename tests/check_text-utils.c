@@ -43,6 +43,9 @@ START_TEST (test_display_address)
 		{ "Rupert Griffin (test)", "Rupert Griffin"},
 		{ "Hyvää päivää    ", "Hyvää päivää"},
 	};
+
+	fail_unless (modest_text_utils_display_address (NULL) == NULL,
+		     "modest_text_utils_display_address(NULL) should be NULL");
 	
 	for (i = 0; i !=  sizeof(tests)/sizeof(StringPair); ++i) {
 		gchar *str = g_strdup (tests[i].original);
@@ -56,6 +59,35 @@ START_TEST (test_display_address)
 }
 END_TEST
 
+START_TEST (test_derived_address)
+{
+	int i;
+	const gchar *prefix="Re:";
+	
+	const StringPair  tests[] = {
+		{ "subject", "Re: subject" },
+		{ NULL,      "Re:"},
+		{ "Hyvää päivää", "Re: Hyvää päivää"},
+	};
+
+	fail_unless (modest_text_utils_derived_subject (NULL, NULL) == NULL,
+		     "modest_text_utils_derived_subject (NULL,NULL) should be NULL");
+	
+	for (i = 0; i !=  sizeof(tests)/sizeof(StringPair); ++i) {
+		gchar *str = g_strdup (tests[i].original);
+		str = modest_text_utils_derived_subject (str, prefix);
+		fail_unless (str && strcmp(str, tests[i].expected) == 0,
+			"modest_text_utils_derived_subject failed for '%s': "
+			     "expected '%s' but got '%s'",
+			     tests[i].original, tests[i].expected, str);
+		g_free (str);
+	}
+}
+END_TEST
+
+
+
+
 
 
 static Suite*
@@ -63,9 +95,10 @@ text_utils_suite (void)
 {
 	Suite *suite = suite_create ("ModestTextUtils");
 
-	TCase *tc_core = tcase_create ("core");
+	TCase *tc_core = tcase_create ("modest");
 	tcase_add_test (tc_core, test_display_address);
-
+	tcase_add_test (tc_core, test_derived_address);
+	
 	suite_add_tcase (suite, tc_core);
 
 	return suite;
