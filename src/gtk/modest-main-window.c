@@ -53,6 +53,7 @@ static void modest_main_window_finalize      (GObject *obj);
 
 static void restore_sizes (ModestMainWindow *self);
 static void save_sizes (ModestMainWindow *self);
+static void get_msg_cb (TnyFolder *folder, TnyMsg *msg, GError **err, gpointer user_data);
 
 /* list my signals */
 enum {
@@ -83,6 +84,15 @@ struct _ModestMainWindowPrivate {
 #define MODEST_MAIN_WINDOW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                 MODEST_TYPE_MAIN_WINDOW, \
                                                 ModestMainWindowPrivate))
+
+typedef struct _GetMsgAsyncHelper {
+	ModestMainWindowPrivate *main_window_private;
+	guint action;
+	ModestMailOperationReplyType reply_type;
+	ModestMailOperationForwardType forward_type;
+	gchar *from;
+} GetMsgAsyncHelper;
+
 /* globals */
 static GtkWindowClass *parent_class = NULL;
 
@@ -218,9 +228,61 @@ on_menu_new_message (ModestMainWindow *self, guint action, GtkWidget *widget)
 }
 
 static void
-on_menu_reply_forward (ModestMainWindow *self, guint action, GtkWidget *widget)
+get_msg_cb (TnyFolder *folder, TnyMsg *msg, GError **err, gpointer user_data)
 {
 	GtkWidget *msg_win;
+	TnyHeader *new_header;
+	TnyMsg *new_msg;
+	ModestMainWindowPrivate *priv;
+	ModestEditType edit_type = -2;
+	GetMsgAsyncHelper *helper;
+
+	helper = (GetMsgAsyncHelper *) (user_data);
+	priv  = helper->main_window_private;
+
+	/* FIXME: select proper action */
+	new_msg = NULL;
+	switch (helper->action) {
+	case 1:
+		new_msg = 
+			modest_mail_operation_create_reply_mail (msg, helper->from, helper->reply_type,
+								 MODEST_MAIL_OPERATION_REPLY_MODE_SENDER);
+		edit_type = MODEST_EDIT_TYPE_REPLY;
+		break;
+	case 2:
+		new_msg = 
+			modest_mail_operation_create_reply_mail (msg, helper->from, helper->reply_type,
+								 MODEST_MAIL_OPERATION_REPLY_MODE_ALL);
+		edit_type = MODEST_EDIT_TYPE_REPLY;
+		break;
+	case 3:
+		new_msg = 
+			modest_mail_operation_create_forward_mail (msg, helper->from, helper->forward_type);
+		edit_type = MODEST_EDIT_TYPE_FORWARD;
+		break;
+	default:
+		g_warning ("unexpected action type: %d", helper->action);
+	}
+	
+	if (new_msg) {
+		/* Set from */
+		new_header = tny_msg_get_header (new_msg);
+		tny_header_set_from (new_header, helper->from);
+		
+		/* Show edit window */
+		msg_win = modest_edit_msg_window_new (priv->widget_factory,
+						      edit_type,
+						      new_msg);
+		gtk_widget_show (msg_win);
+		
+		/* Clean and go on */
+		g_object_unref (new_msg);
+	}
+}
+
+static void
+on_menu_reply_forward (ModestMainWindow *self, guint action, GtkWidget *widget)
+{
 	ModestMainWindowPrivate *priv;
 	ModestHeaderView *header_view;
 	TnyList *header_list;
@@ -230,6 +292,7 @@ on_menu_reply_forward (ModestMainWindow *self, guint action, GtkWidget *widget)
 	ModestMailOperationForwardType forward_type;
 	ModestConf *conf;
 	GError *error;
+	GetMsgAsyncHelper *helper;
 
 	priv  = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
 	conf = modest_tny_platform_factory_get_modest_conf_instance (priv->factory);
@@ -264,10 +327,8 @@ on_menu_reply_forward (ModestMainWindow *self, guint action, GtkWidget *widget)
 	g_free (forward_key);
 	
 	if (header_list) {
-		TnyHeader *header, *new_header;
+		TnyHeader *header;
 		TnyFolder *folder;
-		TnyMsg    *msg, *new_msg = NULL;
-		ModestEditType edit_type = -2;
 		gchar *from, *email_key;
 		const gchar *account_name;
 
@@ -286,47 +347,20 @@ on_menu_reply_forward (ModestMainWindow *self, guint action, GtkWidget *widget)
 		folder = tny_header_get_folder (header);
 
 		do {
+			/* Since it's not an object, we need to create
+			   it each time due to it's not a GObject and
+			   we can not do a g_object_ref. No need to
+			   free it, tinymail will do it for us. */
+			helper = g_slice_new0 (GetMsgAsyncHelper);
+			helper->main_window_private = priv;
+			helper->reply_type = reply_type;
+			helper->forward_type = forward_type;
+			helper->action = action;
+			helper->from = from;
+
 			/* Get msg from header */
 			header = TNY_HEADER (tny_iterator_get_current (iter));
-			msg = tny_folder_get_msg (folder, header, NULL); /* FIXME */
-
-			/* FIXME: select proper action */
-			switch (action) {
-			case 1:
-				new_msg = 
-					modest_mail_operation_create_reply_mail (msg, from, reply_type,
-										 MODEST_MAIL_OPERATION_REPLY_MODE_SENDER);
-				edit_type = MODEST_EDIT_TYPE_REPLY;
-				break;
-			case 2:
-				new_msg = 
-					modest_mail_operation_create_reply_mail (msg, from, reply_type,
-										 MODEST_MAIL_OPERATION_REPLY_MODE_ALL);
-				edit_type = MODEST_EDIT_TYPE_REPLY;
-				break;
-			case 3:
-				new_msg = 
-					modest_mail_operation_create_forward_mail (msg, from, forward_type);
-				edit_type = MODEST_EDIT_TYPE_FORWARD;
-				break;
-			default:
-				g_warning ("unexpected action type: %d", action);
-			}
-
-			if (new_msg) {
-				/* Set from */
-				new_header = tny_msg_get_header (new_msg);
-				tny_header_set_from (new_header, from);
-				
-				/* Show edit window */
-				msg_win = modest_edit_msg_window_new (priv->widget_factory,
-								      edit_type,
-								      new_msg);
-				gtk_widget_show (msg_win);
-				
-				/* Clean and go on */
-				g_object_unref (new_msg);
-			}
+			tny_folder_get_msg_async (folder, header, get_msg_cb, helper);
 			tny_iterator_next (iter);
 
 		} while (!tny_iterator_is_done (iter));

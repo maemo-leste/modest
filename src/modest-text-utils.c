@@ -235,9 +235,9 @@ modest_text_utils_remove_address (const gchar *address_list, const gchar *addres
 		/* Add to list if not found */
 		if (!strstr ((const char *) token, (const char *) address)) {
 			if (filtered_emails->len == 0)
-				g_string_append_printf (filtered_emails, "%s", token);
+				g_string_append_printf (filtered_emails, "%s", g_strstrip (token));
 			else
-				g_string_append_printf (filtered_emails, ",%s", token);
+				g_string_append_printf (filtered_emails, ",%s", g_strstrip (token));
 		}
 		token = strtok_r (NULL, ",", &ptr);
 	}

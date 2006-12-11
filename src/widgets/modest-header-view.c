@@ -66,6 +66,12 @@ struct _ModestHeaderViewPrivate {
 #define MODEST_HEADER_VIEW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
 						MODEST_TYPE_HEADER_VIEW, \
                                                 ModestHeaderViewPrivate))
+
+typedef struct _GetMsgAsyncHelper {
+	ModestHeaderView *view;
+	TnyHeader *header;
+} GetMsgAsyncHelper;
+
 /* globals */
 static GObjectClass *parent_class = NULL;
 
@@ -881,20 +887,38 @@ modest_header_view_set_folder (ModestHeaderView *self, TnyFolder *folder)
 	return TRUE;
 }
 
+static void
+get_msg_cb (TnyFolder *folder, TnyMsg *msg, GError **err, gpointer user_data)
+{
+	GetMsgAsyncHelper *helper;
+	TnyHeaderFlags header_flags;
 
+	helper = (GetMsgAsyncHelper *) user_data;
 
+	if (!msg) {
+		g_signal_emit (G_OBJECT(helper->view), signals[ITEM_NOT_FOUND_SIGNAL], 0,
+			       MODEST_ITEM_TYPE_MESSAGE);
+		return;
+	}
+					
+	g_signal_emit (G_OBJECT(helper->view), signals[MESSAGE_SELECTED_SIGNAL], 0,
+		       msg);
+	
+	/* mark message as seen; _set_flags crashes, bug in tinymail? */
+	header_flags = tny_header_get_flags (helper->header);
+	tny_header_set_flags (helper->header, header_flags | TNY_HEADER_FLAG_SEEN);
+}
 
 static void
 on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 {
-	GtkTreeModel            *model;
-	TnyHeader       *header;
-	TnyHeaderFlags header_flags;
-	GtkTreeIter             iter;
-	ModestHeaderView        *self;
+	GtkTreeModel *model;
+	TnyHeader *header;
+	GtkTreeIter iter;
+	ModestHeaderView *self;
 	ModestHeaderViewPrivate *priv;
-	const TnyMsg *msg = NULL;
-	const TnyFolder *folder;
+	TnyFolder *folder;
+	GetMsgAsyncHelper *helper;
 	
 	g_return_if_fail (sel);
 	g_return_if_fail (user_data);
@@ -920,22 +944,16 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 			       MODEST_ITEM_TYPE_FOLDER);
 		return;
 	}
-	
-	msg = tny_folder_get_msg (TNY_FOLDER(folder),
-				  header, NULL); /* FIXME */
-	if (!msg) {
-		g_signal_emit (G_OBJECT(self), signals[ITEM_NOT_FOUND_SIGNAL], 0,
-			       MODEST_ITEM_TYPE_MESSAGE);
-		return;
-	}
-					
-	g_signal_emit (G_OBJECT(self), signals[MESSAGE_SELECTED_SIGNAL], 0,
-		       msg);
-	
-	/* mark message as seen; _set_flags crashes, bug in tinymail? */
-	header_flags = tny_header_get_flags (TNY_HEADER(header));
-	tny_header_set_flags (header, header_flags | TNY_HEADER_FLAG_SEEN);
+
+	helper = g_slice_new0 (GetMsgAsyncHelper);
+	helper->view = self;
+	helper->header = header;
+
+	/* Get message asynchronously. The callback will issue a
+	   signal if the message was retrieved correctly and then will
+	   set the header flags as read. Tinymail will free the helper */	
+	tny_folder_get_msg_async (TNY_FOLDER(folder), header, get_msg_cb, helper);
 
 	/* Free */
-/* 	g_free (folder); */
-}	
+	g_object_unref (G_OBJECT (folder));
+}

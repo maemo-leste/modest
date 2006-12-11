@@ -221,19 +221,71 @@ on_menu_new_message (ModestMainWindow *self, guint action, GtkWidget *widget)
 }
 
 static void
-on_menu_reply_forward (ModestMainWindow *self, guint action, GtkWidget *widget)
+get_msg_cb (TnyFolder *folder, TnyMsg *msg, GError **err, gpointer user_data)
 {
 	GtkWidget *msg_win;
+	TnyHeader *new_header;
+	TnyMsg *new_msg;
+	ModestMainWindowPrivate *priv;
+	ModestEditType edit_type = -2;
+	GetMsgAsyncHelper *helper;
+
+	helper = (GetMsgAsyncHelper *) (user_data);
+	priv  = helper->main_window_private;
+
+	/* FIXME: select proper action */
+	new_msg = NULL;
+	switch (helper->action) {
+	case 1:
+		new_msg = 
+			modest_mail_operation_create_reply_mail (msg, helper->from, helper->reply_type,
+								 MODEST_MAIL_OPERATION_REPLY_MODE_SENDER);
+		edit_type = MODEST_EDIT_TYPE_REPLY;
+		break;
+	case 2:
+		new_msg = 
+			modest_mail_operation_create_reply_mail (msg, helper->from, helper->reply_type,
+								 MODEST_MAIL_OPERATION_REPLY_MODE_ALL);
+		edit_type = MODEST_EDIT_TYPE_REPLY;
+		break;
+	case 3:
+		new_msg = 
+			modest_mail_operation_create_forward_mail (msg, helper->from, helper->forward_type);
+		edit_type = MODEST_EDIT_TYPE_FORWARD;
+		break;
+	default:
+		g_warning ("unexpected action type: %d", helper->action);
+	}
+	
+	if (new_msg) {
+		/* Set from */
+		new_header = tny_msg_get_header (new_msg);
+		tny_header_set_from (new_header, helper->from);
+		
+		/* Show edit window */
+		msg_win = modest_edit_msg_window_new (priv->widget_factory,
+						      edit_type,
+						      new_msg);
+		gtk_widget_show (msg_win);
+		
+		/* Clean and go on */
+		g_object_unref (new_msg);
+	}
+}
+
+static void
+on_menu_reply_forward (ModestMainWindow *self, guint action, GtkWidget *widget)
+{
 	ModestMainWindowPrivate *priv;
 	ModestHeaderView *header_view;
 	TnyList *header_list;
 	TnyIterator *iter;
-	const gchar *from;
 	gchar *reply_key, *forward_key;
 	ModestMailOperationReplyType reply_type;
 	ModestMailOperationForwardType forward_type;
 	ModestConf *conf;
 	GError *error;
+	GetMsgAsyncHelper *helper;
 
 	priv  = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
 	conf = modest_tny_platform_factory_get_modest_conf_instance (priv->factory);
@@ -245,77 +297,71 @@ on_menu_reply_forward (ModestMainWindow *self, guint action, GtkWidget *widget)
 	error = NULL;
 	reply_key = g_strdup_printf ("%s/%s", MODEST_CONF_NAMESPACE, MODEST_CONF_REPLY_TYPE);
 	reply_type = modest_conf_get_int (conf, reply_key, &error);
-	if (error) {
+	if (error || reply_type == 0) {
 		g_warning ("key %s not defined", reply_key);
 		reply_type = MODEST_MAIL_OPERATION_REPLY_TYPE_CITE;
-		g_error_free (error);
-		error = NULL;
+		if (error) {
+			g_error_free (error);
+			error = NULL;
+		}
 	}
 	g_free (reply_key);
 	
 	forward_key = g_strdup_printf ("%s/%s", MODEST_CONF_NAMESPACE, MODEST_CONF_FORWARD_TYPE);
-	forward_type = modest_conf_get_int (conf, forward_key, NULL);
-	if (error) {
+	forward_type = modest_conf_get_int (conf, forward_key, &error);
+	if (error || forward_type == 0) {
 		g_warning ("key %s not defined", forward_key);
-		reply_type = MODEST_MAIL_OPERATION_FORWARD_TYPE_INLINE;
-		g_error_free (error);
+		forward_type = MODEST_MAIL_OPERATION_FORWARD_TYPE_INLINE;
+		if (error) {
+			g_error_free (error);
+			error = NULL;
+		}
 	}
 	g_free (forward_key);
 	
 	if (header_list) {
+		TnyHeader *header;
+		TnyFolder *folder;
+		gchar *from, *email_key;
+		const gchar *account_name;
+
+		/* We assume that we can only select messages of the
+		   same folder and that we reply all of them from the
+		   same account. In fact the interface currently only
+		   allows single selection */
+		account_name = modest_folder_view_get_selected_account (priv->folder_view);
+		email_key = g_strdup_printf ("%s/%s/%s", MODEST_ACCOUNT_NAMESPACE, 
+					     account_name, MODEST_ACCOUNT_EMAIL);
+		from = modest_conf_get_string (conf, email_key, NULL);
+		g_free (email_key);
+
 		iter = tny_list_create_iterator (header_list);
+		header = TNY_HEADER (tny_iterator_get_current (iter));
+		folder = tny_header_get_folder (header);
+
 		do {
-			TnyHeader *header, *new_header;
-			TnyFolder *folder;
-			TnyMsg    *msg, *new_msg;
-			ModestEditType edit_type;
+			/* Since it's not an object, we need to create
+			   it each time due to it's not a GObject and
+			   we can not do a g_object_ref. No need to
+			   free it, tinymail will do it for us. */
+			helper = g_slice_new0 (GetMsgAsyncHelper);
+			helper->main_window_private = priv;
+			helper->reply_type = reply_type;
+			helper->forward_type = forward_type;
+			helper->action = action;
+			helper->from = from;
 
 			/* Get msg from header */
 			header = TNY_HEADER (tny_iterator_get_current (iter));
-			folder = tny_header_get_folder (header);
-			msg = tny_folder_get_msg (folder, header, NULL); /* FIXME */
-
-			from = modest_folder_view_get_selected_account (priv->folder_view);
-
-			/* FIXME: select proper action */
-			switch (action) {
-			case 1:
-				new_msg = 
-					modest_mail_operation_create_reply_mail (msg, from, reply_type,
-										 MODEST_MAIL_OPERATION_REPLY_MODE_SENDER);
-				edit_type = MODEST_EDIT_TYPE_REPLY;
-				break;
-			case 2:
-				new_msg = 
-					modest_mail_operation_create_reply_mail (msg, from, reply_type,
-										 MODEST_MAIL_OPERATION_REPLY_MODE_ALL);
-				edit_type = MODEST_EDIT_TYPE_REPLY;
-				break;
-			case 3:
-				new_msg = 
-					modest_mail_operation_create_forward_mail (msg, from, forward_type);
-				edit_type = MODEST_EDIT_TYPE_FORWARD;
-				break;
-			default:
-				g_warning ("unexpected action type: %d", action);
-			}
-
-			/* Set from */
-			new_header = tny_msg_get_header (new_msg);
-			tny_header_set_from (new_header, 
-					     modest_folder_view_get_selected_account (priv->folder_view));
-
-			/* Show edit window */
-			msg_win = modest_edit_msg_window_new (priv->widget_factory,
-							      edit_type,
-							      new_msg);
-			gtk_widget_show (msg_win);
-
-			/* Clean and go on */
-			g_object_unref (new_msg);
+			tny_folder_get_msg_async (folder, header, get_msg_cb, helper);
 			tny_iterator_next (iter);
 
 		} while (!tny_iterator_is_done (iter));
+
+		/* Clean */
+		g_free (from);
+		g_object_unref (G_OBJECT (iter));
+		g_object_unref (G_OBJECT (folder));
 	}
 }
 

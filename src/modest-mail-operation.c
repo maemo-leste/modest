@@ -65,18 +65,23 @@ enum _ModestMailOperationErrorCode {
 	MODEST_MAIL_OPERATION_NUM_ERROR_CODES
 };
 
-static void       set_error          (ModestMailOperation *mail_operation, 
+static void     set_error            (ModestMailOperation *mail_operation, 
 				      ModestMailOperationErrorCode error_code,
 				      const gchar *fmt, ...);
-static void       status_update_cb   (TnyFolder *folder, 
+static void     status_update_cb     (TnyFolder *folder, 
 				      const gchar *what, 
 				      gint status, 
+				      gint oftotal,
 				      gpointer user_data);
-static void       folder_refresh_cb  (TnyFolder *folder, 
+static void     folder_refresh_cb    (TnyFolder *folder, 
 				      gboolean canceled,
 				      GError **err,
 				      gpointer user_data);
-static void       add_attachments    (TnyMsg *msg, 
+static void     update_folders_cb    (TnyFolderStore *self, 
+				      TnyList *list, 
+				      GError **err, 
+				      gpointer user_data);
+static void     add_attachments      (TnyMsg *msg, 
 				      GList *attachments_list);
 
 
@@ -441,10 +446,13 @@ modest_mail_operation_create_reply_mail (TnyMsg *msg,
 		if (cc)  g_string_append_printf (tmp, ",%s",cc);
 		if (bcc) g_string_append_printf (tmp, ",%s",bcc);
 
-		/* Remove my own address from the cc list */
+
+               /* Remove my own address from the cc list. TODO:
+                  remove also the To: of the new message, needed due
+                  to the new reply_to feature */
 		new_cc = (gchar *) 
 			modest_text_utils_remove_address ((const gchar *) tmp->str, 
-							  (const gchar *) from);
+							  from);
 		/* FIXME: remove also the mails from the new To: */
 		tny_header_set_cc (new_header, new_cc);
 
@@ -462,9 +470,9 @@ modest_mail_operation_create_reply_mail (TnyMsg *msg,
 }
 
 static void
-status_update_cb (TnyFolder *folder, const gchar *what, gint status, gpointer user_data) 
+status_update_cb (TnyFolder *folder, const gchar *what, gint status, gint oftotal, gpointer user_data) 
 {
-	g_print ("%s status: %d\n", what, status);
+	g_print ("%s status: %d, of total %d\n", what, status, oftotal);
 }
 
 static void
@@ -506,35 +514,24 @@ folder_refresh_cb (TnyFolder *folder, gboolean canceled, GError **err, gpointer 
 	g_signal_emit (G_OBJECT (mail_op), signals[PROGRESS_CHANGED_SIGNAL], 0, NULL);
 }
 
-gboolean
-modest_mail_operation_update_account (ModestMailOperation *mail_op,
-				      TnyStoreAccount *store_account)
+
+static void
+update_folders_cb (TnyFolderStore *self, TnyList *list, GError **err, gpointer user_data)
 {
+	ModestMailOperation *mail_op;
 	ModestMailOperationPrivate *priv;
 	TnyList *folders;
 	TnyIterator *ifolders;
 	TnyFolder *cur_folder;
-	TnyFolderStoreQuery *query;
 
-	g_return_if_fail (MODEST_IS_MAIL_OPERATION (mail_op));
-	g_return_if_fail (TNY_IS_STORE_ACCOUNT(store_account));
+	mail_op = MODEST_MAIL_OPERATION (user_data);
+	priv    = MODEST_MAIL_OPERATION_GET_PRIVATE (mail_op);
 
-	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(mail_op);
-
-	/* Get subscribed folders */
-    	folders = TNY_LIST (tny_simple_list_new ());
-	query = tny_folder_store_query_new ();
-	tny_folder_store_query_add_item (query, NULL, TNY_FOLDER_STORE_QUERY_OPTION_SUBSCRIBED);
-	tny_folder_store_get_folders (TNY_FOLDER_STORE (store_account),
-				      folders, query, NULL); /* FIXME */
-	g_object_unref (query);
-	
-	ifolders = tny_list_create_iterator (folders);
-	priv->total = tny_list_get_length (folders);
+	ifolders = tny_list_create_iterator (list);
+	priv->total = tny_list_get_length (list);
 	priv->done = 0;
 	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
 
-	gint i =0;
 	/* Async refresh folders. Reference the mail_op because
 	   tinymail destroys the user_data */	
 	for (tny_iterator_first (ifolders); 
@@ -542,11 +539,35 @@ modest_mail_operation_update_account (ModestMailOperation *mail_op,
 	     tny_iterator_next (ifolders)) {
 		
 		cur_folder = TNY_FOLDER (tny_iterator_get_current (ifolders));
-		tny_folder_refresh_async (cur_folder, folder_refresh_cb,
+		tny_folder_refresh_async (cur_folder, 
+					  folder_refresh_cb,
 					  status_update_cb, g_object_ref (mail_op));
 	}
 	
-	g_object_unref (ifolders);
+	g_object_unref (G_OBJECT (ifolders));
+	g_object_unref (G_OBJECT (list));
+}
+
+gboolean
+modest_mail_operation_update_account (ModestMailOperation *mail_op,
+				      TnyStoreAccount *store_account)
+{
+	ModestMailOperationPrivate *priv;
+	TnyList *folders;
+	TnyFolderStoreQuery *query;
+
+	g_return_if_fail (MODEST_IS_MAIL_OPERATION (mail_op));
+	g_return_if_fail (TNY_IS_STORE_ACCOUNT(store_account));
+
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(mail_op);
+
+	/* Get subscribed folders & refresh them */
+    	folders = TNY_LIST (tny_simple_list_new ());
+	query = tny_folder_store_query_new ();
+	tny_folder_store_query_add_item (query, NULL, TNY_FOLDER_STORE_QUERY_OPTION_SUBSCRIBED);
+	tny_folder_store_get_folders_async (TNY_FOLDER_STORE (store_account),
+					    folders, update_folders_cb, query, mail_op);
+	g_object_unref (query);
 
 	return TRUE;
 }

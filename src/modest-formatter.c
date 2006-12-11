@@ -87,7 +87,8 @@ extract_text (ModestFormatter *self, TnyMimePart *body)
 	if (strcmp (tny_mime_part_get_content_type (body), priv->content_type)) {
 		if (!strcmp (priv->content_type, "text/html"))
 			converted_text = modest_text_utils_convert_to_html  (text);
-/* 		else */
+		else
+			converted_text = g_strdup (text);
 /* 			converted_text = modest_text_utils_convert_to_plain (text); */
 
 		g_free (text);
