@@ -105,14 +105,6 @@ func (gpointer_data)
 	return FALSE;
 }
 
-static void
-quit (gpointer data) 
-{
-	_exit (0);
-}
-
-
-
 int
 main (int argc, char **argv)
 {   
@@ -123,8 +115,6 @@ main (int argc, char **argv)
 
 	main_loop = g_main_loop_new (NULL, FALSE);
         id = g_timeout_add(1000, func, main_loop);
-
-	g_timeout_add (5000, quit, main_loop); /* quit after 5 seconds */
 
 	g_main_loop_run(main_loop);
 

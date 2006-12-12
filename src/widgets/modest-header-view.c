@@ -68,7 +68,7 @@ struct _ModestHeaderViewPrivate {
                                                 ModestHeaderViewPrivate))
 
 typedef struct _GetMsgAsyncHelper {
-	ModestHeaderView *view;
+	ModestHeaderView *self;
 	TnyHeader *header;
 } GetMsgAsyncHelper;
 
@@ -894,18 +894,19 @@ get_msg_cb (TnyFolder *folder, TnyMsg *msg, GError **err, gpointer user_data)
 
 	helper = (GetMsgAsyncHelper *) user_data;
 
-	if (!msg) {
-		g_signal_emit (G_OBJECT(helper->view), signals[ITEM_NOT_FOUND_SIGNAL], 0,
-			       MODEST_ITEM_TYPE_MESSAGE);
-		return;
-	}
-					
-	g_signal_emit (G_OBJECT(helper->view), signals[MESSAGE_SELECTED_SIGNAL], 0,
-		       msg);
+	if (msg) {
+		g_signal_emit (G_OBJECT(helper->self), signals[MESSAGE_SELECTED_SIGNAL], 0,
+			       msg);
 	
-	/* mark message as seen; _set_flags crashes, bug in tinymail? */
-	header_flags = tny_header_get_flags (helper->header);
-	tny_header_set_flags (helper->header, header_flags | TNY_HEADER_FLAG_SEEN);
+		/* mark message as seen; _set_flags crashes, bug in tinymail? */
+		header_flags = tny_header_get_flags (helper->header);
+		tny_header_set_flags (helper->header, header_flags | TNY_HEADER_FLAG_SEEN);
+	} else
+		g_signal_emit (G_OBJECT(helper->self), signals[ITEM_NOT_FOUND_SIGNAL], 0,
+			       MODEST_ITEM_TYPE_MESSAGE);
+
+	/* Frees */					
+	g_slice_free (GetMsgAsyncHelper, helper);
 }
 
 static void
@@ -945,14 +946,15 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 	}
 
 	helper = g_slice_new0 (GetMsgAsyncHelper);
-	helper->view = self;
+	helper->self = self;
 	helper->header = header;
 
 	/* Get message asynchronously. The callback will issue a
 	   signal if the message was retrieved correctly and then will
-	   set the header flags as read. Tinymail will free the helper */	
-	tny_folder_get_msg_async (TNY_FOLDER(folder), header, get_msg_cb, helper);
+	   set the header flags as read. */
+	tny_folder_get_msg_async (TNY_FOLDER(folder), 
+				  header, get_msg_cb, helper);
 
-	/* Free */
+	/* Frees */
 	g_object_unref (G_OBJECT (folder));
 }

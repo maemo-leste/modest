@@ -114,17 +114,23 @@ enum _ModestMailOperationSignals
 
 typedef struct _ModestMailOperationPrivate ModestMailOperationPrivate;
 struct _ModestMailOperationPrivate {
-	guint                      failed;
-	guint                      canceled;
 	guint                      done;
 	guint                      total;
-	GMutex                    *cb_lock;
 	ModestMailOperationStatus  status;
 	GError                    *error;
 };
 #define MODEST_MAIL_OPERATION_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                    MODEST_TYPE_MAIL_OPERATION, \
                                                    ModestMailOperationPrivate))
+
+typedef struct _RefreshFolderAsyncHelper
+{
+	ModestMailOperation *mail_op;
+	TnyIterator *iter;
+	guint failed;
+	guint canceled;
+
+} RefreshFolderAsyncHelper;
 
 /* some utility functions */
 static char * get_content_type(const gchar *s);
@@ -191,10 +197,7 @@ modest_mail_operation_init (ModestMailOperation *obj)
 	priv->status   = MODEST_MAIL_OPERATION_STATUS_INVALID;
 	priv->error    = NULL;
 	priv->done     = 0;
-	priv->failed   = 0;
-	priv->canceled = 0;
 	priv->total    = 0;
-	priv->cb_lock  = g_mutex_new ();
 }
 
 static void
@@ -208,8 +211,6 @@ modest_mail_operation_finalize (GObject *obj)
 		g_error_free (priv->error);
 		priv->error = NULL;
 	}
-
-	g_mutex_free (priv->cb_lock);
 
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
@@ -446,7 +447,6 @@ modest_mail_operation_create_reply_mail (TnyMsg *msg,
 		if (cc)  g_string_append_printf (tmp, ",%s",cc);
 		if (bcc) g_string_append_printf (tmp, ",%s",bcc);
 
-
                /* Remove my own address from the cc list. TODO:
                   remove also the To: of the new message, needed due
                   to the new reply_to feature */
@@ -480,17 +480,17 @@ folder_refresh_cb (TnyFolder *folder, gboolean canceled, GError **err, gpointer 
 {
 	ModestMailOperation *mail_op = NULL;
 	ModestMailOperationPrivate *priv = NULL;
+	RefreshFolderAsyncHelper *helper;
 
-	mail_op = MODEST_MAIL_OPERATION (user_data);
+	helper = (RefreshFolderAsyncHelper *) user_data;
+	mail_op = MODEST_MAIL_OPERATION (helper->mail_op);
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(mail_op);
-
-	g_mutex_lock (priv->cb_lock);
 
 	if ((canceled && *err) || *err) {
 		priv->error = g_error_copy (*err);
-		priv->failed++;
+		helper->failed++;
 	} else if (canceled) {
-		priv->canceled++;
+		helper->canceled++;
 		set_error (mail_op,
 			   MODEST_MAIL_OPERATION_ERROR_OPERATION_CANCELED,
 			   _("Error trying to refresh folder %s. Operation canceled"),
@@ -501,16 +501,27 @@ folder_refresh_cb (TnyFolder *folder, gboolean canceled, GError **err, gpointer 
 
 	if (priv->done == priv->total)
 		priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
-	else if ((priv->done + priv->canceled + priv->failed) == priv->total)
-		if (priv->failed == priv->total)
+	else if ((priv->done + helper->canceled + helper->failed) == priv->total)
+		if (helper->failed == priv->total)
 			priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
-		else if (priv->failed == priv->total)
+		else if (helper->failed == priv->total)
 			priv->status = MODEST_MAIL_OPERATION_STATUS_CANCELED;
 		else
 			priv->status = MODEST_MAIL_OPERATION_STATUS_FINISHED_WITH_ERRORS;
 
-	g_mutex_unlock (priv->cb_lock);
-
+	tny_iterator_next (helper->iter);
+	if (tny_iterator_is_done (helper->iter)) {
+		TnyList *list;
+		list = tny_iterator_get_list (helper->iter);
+		g_object_unref (G_OBJECT (helper->iter));
+		g_object_unref (G_OBJECT (list));
+		g_slice_free (RefreshFolderAsyncHelper, helper);
+	} else {
+		tny_folder_refresh_async (TNY_FOLDER (tny_iterator_get_current (helper->iter)),
+					  folder_refresh_cb,
+					  status_update_cb, 
+					  helper);
+	}
 	g_signal_emit (G_OBJECT (mail_op), signals[PROGRESS_CHANGED_SIGNAL], 0, NULL);
 }
 
@@ -521,31 +532,26 @@ update_folders_cb (TnyFolderStore *self, TnyList *list, GError **err, gpointer u
 	ModestMailOperation *mail_op;
 	ModestMailOperationPrivate *priv;
 	TnyList *folders;
-	TnyIterator *ifolders;
-	TnyFolder *cur_folder;
+	RefreshFolderAsyncHelper *helper;
 
 	mail_op = MODEST_MAIL_OPERATION (user_data);
 	priv    = MODEST_MAIL_OPERATION_GET_PRIVATE (mail_op);
 
-	ifolders = tny_list_create_iterator (list);
 	priv->total = tny_list_get_length (list);
 	priv->done = 0;
 	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
 
-	/* Async refresh folders. Reference the mail_op because
-	   tinymail destroys the user_data */	
-	for (tny_iterator_first (ifolders); 
-	     !tny_iterator_is_done (ifolders); 
-	     tny_iterator_next (ifolders)) {
-		
-		cur_folder = TNY_FOLDER (tny_iterator_get_current (ifolders));
-		tny_folder_refresh_async (cur_folder, 
-					  folder_refresh_cb,
-					  status_update_cb, g_object_ref (mail_op));
-	}
-	
-	g_object_unref (G_OBJECT (ifolders));
-	g_object_unref (G_OBJECT (list));
+	helper = g_slice_new0 (RefreshFolderAsyncHelper);
+	helper->mail_op = mail_op;
+	helper->iter = tny_list_create_iterator (list);
+	helper->failed = 0;
+	helper->canceled = 0;
+
+	/* Async refresh folders */
+	tny_folder_refresh_async (TNY_FOLDER (tny_iterator_get_current (helper->iter)),
+				  folder_refresh_cb,
+				  status_update_cb, 
+				  helper);
 }
 
 gboolean
@@ -638,8 +644,6 @@ modest_mail_operation_is_finished (ModestMailOperation *mail_op)
 
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (mail_op);
 
-	g_mutex_lock (priv->cb_lock);
-
 	if (priv->status == MODEST_MAIL_OPERATION_STATUS_SUCCESS   ||
 	    priv->status == MODEST_MAIL_OPERATION_STATUS_FAILED    ||
 	    priv->status == MODEST_MAIL_OPERATION_STATUS_CANCELED  ||
@@ -648,7 +652,6 @@ modest_mail_operation_is_finished (ModestMailOperation *mail_op)
 	} else {
 		retval = FALSE;
 	}
-	g_mutex_unlock (priv->cb_lock);
 
 	return retval;
 }

@@ -91,6 +91,7 @@ typedef struct _GetMsgAsyncHelper {
 	ModestMailOperationReplyType reply_type;
 	ModestMailOperationForwardType forward_type;
 	gchar *from;
+	TnyIterator *iter;
 } GetMsgAsyncHelper;
 
 /* globals */
@@ -238,9 +239,9 @@ get_msg_cb (TnyFolder *folder, TnyMsg *msg, GError **err, gpointer user_data)
 	GetMsgAsyncHelper *helper;
 
 	helper = (GetMsgAsyncHelper *) (user_data);
-	priv  = helper->main_window_private;
 
 	/* FIXME: select proper action */
+	priv  = helper->main_window_private;
 	new_msg = NULL;
 	switch (helper->action) {
 	case 1:
@@ -268,6 +269,7 @@ get_msg_cb (TnyFolder *folder, TnyMsg *msg, GError **err, gpointer user_data)
 		/* Set from */
 		new_header = tny_msg_get_header (new_msg);
 		tny_header_set_from (new_header, helper->from);
+		g_object_unref (G_OBJECT (new_header));
 		
 		/* Show edit window */
 		msg_win = modest_edit_msg_window_new (priv->widget_factory,
@@ -278,6 +280,17 @@ get_msg_cb (TnyFolder *folder, TnyMsg *msg, GError **err, gpointer user_data)
 		/* Clean and go on */
 		g_object_unref (new_msg);
 	}
+
+	tny_iterator_next (helper->iter);
+	if (tny_iterator_is_done (helper->iter)) {
+		TnyList *headers;
+		headers = tny_iterator_get_list (helper->iter);
+		g_object_unref (G_OBJECT (headers));
+		g_object_unref (G_OBJECT (helper->iter));
+		g_slice_free (GetMsgAsyncHelper, helper);
+	} else
+		tny_folder_get_msg_async (folder, TNY_HEADER (tny_iterator_get_current (helper->iter)), 
+					  get_msg_cb, helper);
 }
 
 static void
@@ -286,13 +299,11 @@ on_menu_reply_forward (ModestMainWindow *self, guint action, GtkWidget *widget)
 	ModestMainWindowPrivate *priv;
 	ModestHeaderView *header_view;
 	TnyList *header_list;
-	TnyIterator *iter;
 	gchar *reply_key, *forward_key;
 	ModestMailOperationReplyType reply_type;
 	ModestMailOperationForwardType forward_type;
 	ModestConf *conf;
 	GError *error;
-	GetMsgAsyncHelper *helper;
 
 	priv  = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
 	conf = modest_tny_platform_factory_get_modest_conf_instance (priv->factory);
@@ -331,6 +342,7 @@ on_menu_reply_forward (ModestMainWindow *self, guint action, GtkWidget *widget)
 		TnyFolder *folder;
 		gchar *from, *email_key;
 		const gchar *account_name;
+		GetMsgAsyncHelper *helper;
 
 		/* We assume that we can only select messages of the
 		   same folder and that we reply all of them from the
@@ -340,34 +352,25 @@ on_menu_reply_forward (ModestMainWindow *self, guint action, GtkWidget *widget)
 		email_key = g_strdup_printf ("%s/%s/%s", MODEST_ACCOUNT_NAMESPACE, 
 					     account_name, MODEST_ACCOUNT_EMAIL);
 		from = modest_conf_get_string (conf, email_key, NULL);
+		if (!from)
+			from = g_strdup ("Invalid");
 		g_free (email_key);
 
-		iter = tny_list_create_iterator (header_list);
-		header = TNY_HEADER (tny_iterator_get_current (iter));
+		helper = g_slice_new0 (GetMsgAsyncHelper);
+		helper->main_window_private = priv;
+		helper->reply_type = reply_type;
+		helper->forward_type = forward_type;
+		helper->action = action;
+		helper->from = from;
+		helper->iter = tny_list_create_iterator (header_list);
+
+		header = TNY_HEADER (tny_iterator_get_current (helper->iter));
 		folder = tny_header_get_folder (header);
 
-		do {
-			/* Since it's not an object, we need to create
-			   it each time due to it's not a GObject and
-			   we can not do a g_object_ref. No need to
-			   free it, tinymail will do it for us. */
-			helper = g_slice_new0 (GetMsgAsyncHelper);
-			helper->main_window_private = priv;
-			helper->reply_type = reply_type;
-			helper->forward_type = forward_type;
-			helper->action = action;
-			helper->from = from;
-
-			/* Get msg from header */
-			header = TNY_HEADER (tny_iterator_get_current (iter));
-			tny_folder_get_msg_async (folder, header, get_msg_cb, helper);
-			tny_iterator_next (iter);
-
-		} while (!tny_iterator_is_done (iter));
+		/* The callback will call it per each header */
+		tny_folder_get_msg_async (folder, header, get_msg_cb, helper);
 
 		/* Clean */
-		g_free (from);
-		g_object_unref (G_OBJECT (iter));
 		g_object_unref (G_OBJECT (folder));
 	}
 }
