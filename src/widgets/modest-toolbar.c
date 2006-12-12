@@ -114,14 +114,6 @@ modest_toolbar_init (ModestToolbar *obj)
 static void
 modest_toolbar_finalize (GObject *obj)
 {
-	ModestToolbarPrivate *priv;
-	priv = MODEST_TOOLBAR_GET_PRIVATE(obj);
-
-	if (priv->tooltips) {
-		g_object_ref_sink (G_OBJECT(priv->tooltips));
-		priv->tooltips = NULL;
-	}
-
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 

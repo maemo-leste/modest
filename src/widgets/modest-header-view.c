@@ -797,8 +797,7 @@ on_refresh_folder (TnyFolder *folder, gboolean cancelled, GError **err,
 	self = MODEST_HEADER_VIEW(user_data);
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
 
-
-	g_assert (folder == priv->folder);
+	priv->folder = folder;
 	
 	if (!folder)  /* when there is no folder */
 		gtk_tree_view_set_headers_visible (GTK_TREE_VIEW(self), FALSE);

@@ -550,6 +550,8 @@ update_store_account_handlers (ModestFolderView *self, TnyList *account_list)
 	g_object_unref (iter);			       
 }
 
+
+
 static gboolean
 update_model (ModestFolderView *self, ModestTnyAccountStore *account_store)
 {
@@ -560,10 +562,8 @@ update_model (ModestFolderView *self, ModestTnyAccountStore *account_store)
 
 	g_return_val_if_fail (account_store, FALSE);
 	priv =	MODEST_FOLDER_VIEW_GET_PRIVATE(self);
-
-	update_model_empty (self); /* cleanup */
-
-	model        = tny_gtk_folder_store_tree_model_new (TRUE,NULL);
+	
+	model        = tny_gtk_folder_store_tree_model_new (TRUE, NULL);
 	account_list = TNY_LIST(model);
 
 	tny_account_store_get_accounts (TNY_ACCOUNT_STORE(account_store),
@@ -600,14 +600,14 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 	
 	priv = MODEST_FOLDER_VIEW_GET_PRIVATE(user_data);
 	priv->cur_selection = sel;
-
+	
 	/* is_empty means that there is only the 'empty' item */
 	if (priv->view_is_empty)
 		return;
 
 	/* folder was _un_selected if true */
 	if (!gtk_tree_selection_get_selected (sel, &model, &iter)) {
-               priv->cur_folder = NULL; /* FIXME: need this? */
+		priv->cur_folder = NULL; /* FIXME: need this? */
                return; 
        }
 	
@@ -616,7 +616,7 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 			    TNY_GTK_FOLDER_STORE_TREE_MODEL_TYPE_COLUMN, &type, 
 			    TNY_GTK_FOLDER_STORE_TREE_MODEL_INSTANCE_COLUMN, &folder, 
 			    -1);
-	
+
 	if (type == TNY_FOLDER_TYPE_ROOT)
 		return; 
 	
@@ -630,6 +630,7 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 	if (priv->cur_folder)
 		tny_folder_expunge (priv->cur_folder, NULL); /* FIXME */
 	priv->cur_folder = folder;
+
 }
 
 static void 
@@ -651,7 +652,7 @@ static gboolean
 modest_folder_view_update_model (ModestFolderView *self, TnyAccountStore *account_store)
 {
 	gboolean retval;
-	
+
 	g_return_val_if_fail (MODEST_IS_FOLDER_VIEW (self), FALSE);
 	retval = update_model (self, MODEST_TNY_ACCOUNT_STORE(account_store)); /* ugly */
 
