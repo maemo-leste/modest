@@ -277,8 +277,10 @@ restore_settings_header_view (ModestConf *conf, ModestHeaderView *header_view,
 			widthcursor = colwidths;
 			colcursor = viewcolumns = gtk_tree_view_get_columns (GTK_TREE_VIEW(header_view));
 			while (colcursor && widthcursor) {
-				gtk_tree_view_column_set_fixed_width(GTK_TREE_VIEW_COLUMN(colcursor->data),
-								     GPOINTER_TO_INT(widthcursor->data));
+				int width = GPOINTER_TO_INT(widthcursor->data);
+				if (width > 0)
+					gtk_tree_view_column_set_fixed_width(GTK_TREE_VIEW_COLUMN(colcursor->data),
+									     width);
 				colcursor = g_list_next (colcursor);
 				widthcursor = g_list_next (widthcursor);
 			}
