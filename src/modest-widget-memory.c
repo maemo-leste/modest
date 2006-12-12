@@ -232,8 +232,6 @@ save_settings_header_view (ModestConf *conf, ModestHeaderView *header_view,
 
 	modest_conf_set_string (conf, key, str->str, NULL);
 
-	g_warning ("save %s", key);
-	
 	g_free (key);	
 	g_string_free (str, TRUE);
 	g_list_free (cols);
@@ -290,8 +288,6 @@ restore_settings_header_view (ModestConf *conf, ModestHeaderView *header_view,
 		}
 	}
 
-	g_warning ("restore %s", key);
-
 	g_free (key);
 	return TRUE;
 }
@@ -347,7 +343,7 @@ modest_widget_memory_save (ModestConf *conf, GObject *widget, const gchar *name)
 	else if (MODEST_IS_MSG_VIEW(widget))
 		return save_settings_msg_view (conf, MODEST_MSG_VIEW(widget), name);
 	else if (GTK_IS_WIDGET(widget))
-		return save_settings_widget (conf, widget, name);
+		return save_settings_widget (conf, GTK_WIDGET(widget), name);
 	
 	g_printerr ("modest: %p (%s) is not a known widget\n", widget, name);	
 	return FALSE;
@@ -373,7 +369,7 @@ modest_widget_memory_restore (ModestConf *conf, GObject *widget, const gchar *na
 	else if (MODEST_IS_MSG_VIEW(widget))
 		return restore_settings_msg_view (conf, MODEST_MSG_VIEW(widget), name);
 	else if (GTK_IS_WIDGET(widget))
-		return restore_settings_widget (conf, widget, name);
+		return restore_settings_widget (conf, GTK_WIDGET(widget), name);
 	
 	g_printerr ("modest: %p (%s) is not a known widget\n", widget, name);
 	return FALSE;
