@@ -181,15 +181,13 @@ start_ui (const gchar* mailto, const gchar *cc, const gchar *bcc,
 /* 						subject,    /\* subject *\/ */
 /* 		 				body,    /\* body *\/ */
 /* 						NULL);   /\* attachments *\/ */
-	} else
-#ifndef OLD_UI_STUFF
-	win = modest_ui_main_window (modest_ui);
-	gtk_widget_show (win);
-#else
-	modest_ui_show_main_window (modest_ui);
-#endif
-	gtk_main();
+	} else 
+		win = modest_ui_main_window (modest_ui);
 	
+	if (win) {
+		gtk_widget_show (win);
+		gtk_main();
+	}	
 cleanup:
 	if (modest_ui)
 		g_object_unref (modest_ui);
