@@ -114,7 +114,8 @@ main (int argc, char **argv)
 	GError *err;
     
 	g_type_init ();
-
+	g_thread_init (NULL);
+	
     	context = g_option_context_new ("Test");
 	g_option_context_add_main_entries (context, options, "Modest");
 	if (!g_option_context_parse (context, &argc, &argv, &err)) {
