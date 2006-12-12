@@ -352,7 +352,7 @@ gboolean
 modest_conf_remove_key (ModestConf* self, const gchar* key, GError **err)
 {
 	ModestConfPrivate *priv;
-		
+	
 	g_return_val_if_fail (self,FALSE);
 	g_return_val_if_fail (key, FALSE);
 	

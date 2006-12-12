@@ -136,38 +136,6 @@ gboolean     modest_conf_get_bool    (ModestConf* self, const gchar* key, GError
 
 
 /**
- * modest_conf_get_string_or_default:
- * @self: a ModestConf instance
- * @key: the key of the value to retrieve
- * @err: a GError ptr, or NULL to ignore.
- * 
- * get a string from the configuration system; if the value is not set,
- * or some error occurs, return @defaultval (copied)
- *
- * Returns: a newly allocated string with the value for the key,
- * or the @defaultval in case of any error
- */
-gchar*       modest_conf_get_string_or_default  (ModestConf* self, const gchar* key,
-						 const gchar *defaultval);
-
-
-/**
- * modest_conf_get_int_or_default:
- * @self: a ModestConf instance
- * @key: the key of the value to retrieve
- * @err: a GError ptr, or NULL to ignore.
- * 
- * get an integer from the configuration system; if the value is not set,
- * or some error occurs, return @defaultval.
- * 
- * Returns: an integer with the value for the key, or the @defaultval in case
- * of any error
- */
-gint          modest_conf_get_int_or_default     (ModestConf* self, const gchar* key,
-						  int defaultval);
-
-
-/**
  * modest_conf_set_string:
  * @self: a ModestConf instance
  * @key: the key of the value to set
@@ -280,8 +248,6 @@ gchar* modest_conf_key_escape (ModestConf *self, const gchar* str);
  */
 gchar* modest_conf_key_unescape (ModestConf *self, const gchar* str);
 
-
-GSList* modest_conf_get_list (ModestConf* self, const gchar* key, ModestConfValueType list_type, GError **err);
 
 G_END_DECLS
 
