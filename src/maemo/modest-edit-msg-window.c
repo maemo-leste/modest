@@ -133,7 +133,7 @@ save_settings (ModestEditMsgWindow *self)
 	priv = MODEST_EDIT_MSG_WINDOW_GET_PRIVATE(self);
 	conf = modest_tny_platform_factory_get_modest_conf_instance (priv->fact);
 
-	modest_widget_memory_save_settings (conf, GTK_WIDGET(self),
+	modest_widget_memory_save (conf, G_OBJECT(self),
 					    "modest-edit-msg-window");
 }
 
@@ -147,7 +147,7 @@ restore_settings (ModestEditMsgWindow *self)
 	priv = MODEST_EDIT_MSG_WINDOW_GET_PRIVATE(self);
 	conf = modest_tny_platform_factory_get_modest_conf_instance (priv->fact);
 
-	modest_widget_memory_restore_settings (conf, GTK_WIDGET(self),
+	modest_widget_memory_restore (conf, G_OBJECT(self),
 					       "modest-edit-msg-window");
 }
 

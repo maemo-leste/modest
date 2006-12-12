@@ -86,6 +86,17 @@ struct _ModestMainWindowPrivate {
 #define MODEST_MAIN_WINDOW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                 MODEST_TYPE_MAIN_WINDOW, \
                                                 ModestMainWindowPrivate))
+
+
+typedef struct _GetMsgAsyncHelper {
+        ModestMainWindowPrivate *main_window_private;
+        guint action;
+        ModestMailOperationReplyType reply_type;
+        ModestMailOperationForwardType forward_type;
+        gchar *from;
+} GetMsgAsyncHelper;
+
+
 /* globals */
 static GtkWindowClass *parent_class = NULL;
 
@@ -177,7 +188,7 @@ on_menu_about (GtkWidget *widget, gpointer data)
 	gtk_about_dialog_set_comments (	GTK_ABOUT_DIALOG(about),
 		_("a modest e-mail client\n\n"
 		  "design and implementation: Dirk-Jan C. Binnema\n"
-		  "contributions from the fine people at KernelConcepts\n\n"
+		  "contributions from the fine people at KernelConcepts and Igalia\n\n"
 		  "uses the tinymail email framework written by Philip van Hoof"));
 	gtk_about_dialog_set_authors (GTK_ABOUT_DIALOG(about), authors);
 	gtk_about_dialog_set_website (GTK_ABOUT_DIALOG(about), "http://modest.garage.maemo.org");
@@ -417,18 +428,18 @@ on_menu_delete (ModestMainWindow *self, guint action, GtkWidget *widget)
 
 /* Our menu, an array of GtkItemFactoryEntry structures that defines each menu item */
 static const gchar* UI_DEF=
-	"<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+//	"<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
 	"<ui>"
 	"  <popup>"
-	"    <menu name=\"Message\" \"MenuMessage\">"
+	"    <menu name=\"Message\" action=\"MenuMessage\">"
 	"      <menuitem name=\"New\" action=\"on_menu_new_message\" />"
 	"    </menu>"
-//	"    <menu name=\"JustifyMenu\" action=\"JustifyMenuAction\">"
-//	"      <menuitem name=\"Left\" action=\"justify-left\"/>"
-//	"      <menuitem name=\"Centre\" action=\"justify-center\"/>"
-//	"      <menuitem name=\"Right\" action=\"justify-right\"/>"
-//	"      <menuitem name=\"Fill\" action=\"justify-fill\"/>"
-//	"    </menu>"
+	"    <menu name=\"JustifyMenu\" action=\"JustifyMenuAction\">"
+	"      <menuitem name=\"Left\" action=\"justify-left\"/>"
+	"      <menuitem name=\"Centre\" action=\"justify-center\"/>"
+	"      <menuitem name=\"Right\" action=\"justify-right\"/>"
+	"      <menuitem name=\"Fill\" action=\"justify-fill\"/>"
+	"    </menu>"
 	"  </popup>"
 	"</ui>";
 
@@ -436,6 +447,7 @@ static GtkMenu *
 get_menu (ModestMainWindow *self)
 {
 	GtkWidget *w;
+	GError *err = NULL;
 	int i = 0;
 	
 	ModestMainWindowPrivate *priv;
@@ -443,13 +455,14 @@ get_menu (ModestMainWindow *self)
 
 	priv->ui_manager = gtk_ui_manager_new ();
 
-	gtk_ui_manager_add_ui_from_string (priv->ui_manager,
-					   UI_DEF, strlen(UI_DEF),
-					   NULL);
-
-	w = gtk_ui_manager_get_widget (priv->ui_manager, "/popup");
-	g_warning ("==> GtkMenu? ==> %s", GTK_IS_MENU(w) ? "yes" : "no"); 
-
+	if (!gtk_ui_manager_add_ui_from_string (priv->ui_manager,
+						UI_DEF, strlen(UI_DEF),
+						&err)) {
+		g_warning (err->message);
+		g_error_free (err);
+	}
+	
+	w = gtk_ui_manager_get_widget (priv->ui_manager, "/ui/popup");
 	return GTK_MENU(w);
 }
 
@@ -582,11 +595,11 @@ restore_sizes (ModestMainWindow *self)
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
 	conf = modest_tny_platform_factory_get_modest_conf_instance (priv->factory);
 
-	modest_widget_memory_restore_settings (conf,GTK_WIDGET(self),
+	modest_widget_memory_restore (conf,G_OBJECT(self),
 					       "modest-main-window");
-	modest_widget_memory_restore_settings (conf, GTK_WIDGET(priv->msg_paned),
+	modest_widget_memory_restore (conf, G_OBJECT(priv->msg_paned),
 					       "modest-msg-paned");
-	modest_widget_memory_restore_settings (conf, GTK_WIDGET(priv->main_paned),
+	modest_widget_memory_restore (conf, G_OBJECT(priv->main_paned),
 					       "modest-main-paned");
 }
 
@@ -600,11 +613,11 @@ save_sizes (ModestMainWindow *self)
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
 	conf = modest_tny_platform_factory_get_modest_conf_instance (priv->factory);
 	
-	modest_widget_memory_save_settings (conf,GTK_WIDGET(self),
+	modest_widget_memory_save (conf,G_OBJECT(self),
 					    "modest-main-window");
-	modest_widget_memory_save_settings (conf, GTK_WIDGET(priv->msg_paned),
+	modest_widget_memory_save (conf, G_OBJECT(priv->msg_paned),
 					    "modest-msg-paned");
-	modest_widget_memory_save_settings (conf, GTK_WIDGET(priv->main_paned),
+	modest_widget_memory_save (conf, G_OBJECT(priv->main_paned),
 					    "modest-main-paned");
 }
 
