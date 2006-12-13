@@ -91,21 +91,31 @@ modest_tny_msg_actions_find_body_part_from_mime_part (TnyMimePart *msg, gboolean
 		return TNY_MIME_PART (g_object_ref(G_OBJECT(msg)));
 	else {
 		do {
-			const gchar* content_type;
+			const gchar *ct;
+			gchar *content_type;
 			part = TNY_MIME_PART(tny_iterator_get_current (iter));
-			
-			if (tny_mime_part_content_type_is (part, mime_type) &&
-			    !tny_mime_part_is_attachment (part)) 
+
+			/* we need to strdown the content type, because
+			 * tny_mime_part_has_content_type does not do it...
+			 */
+			ct = tny_mime_part_get_content_type (part);
+			content_type = g_ascii_strdown (ct, strlen(ct));
+						
+			if (g_str_has_prefix (content_type, mime_type) &&
+			    !tny_mime_part_is_attachment (part)) {
+				g_free (content_type);
 				break;
+			}
 			
-			content_type = tny_mime_part_get_content_type (part);
 			if (g_str_has_prefix(content_type, "multipart")) {
 				part = modest_tny_msg_actions_find_body_part_from_mime_part (part,
 											     want_html);
+				g_free (content_type);
 				if (part)
 					break;
 			}
 
+			g_free (content_type);
 			part = NULL;
 			tny_iterator_next (iter);
 
@@ -126,7 +136,7 @@ modest_tny_msg_actions_find_body_part_from_mime_part (TnyMimePart *msg, gboolean
 		return modest_tny_msg_actions_find_body_part_from_mime_part (msg, FALSE);
 
 	if (!part)
-		g_warning ("cannot find body part");
+		g_printerr ("modest: cannot find body part\n");
 	
 	return part ? part : NULL;
 }
