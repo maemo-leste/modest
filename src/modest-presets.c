@@ -170,7 +170,8 @@ modest_presets_get_info (ModestPresets *self, const gchar *provider, gboolean in
 void
 modest_presets_destroy (ModestPresets *self)
 {
-	g_return_if_fail (self);
+	if (!self)
+		return;
 
 	g_key_file_free (self->keyfile);
 	self->keyfile = NULL;

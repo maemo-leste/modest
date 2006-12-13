@@ -46,6 +46,8 @@ modest_SOURCES=\
 	modest-tny-account-store.c\
 	modest-tny-msg-actions.h\
 	modest-tny-msg-actions.c\
+	modest-presets.c\
+	modest-presets.h\
 	modest-protocol-mgr.h\
 	modest-protocol-mgr.c\
 	modest-ui.h\

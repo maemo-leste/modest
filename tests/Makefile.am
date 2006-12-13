@@ -10,13 +10,15 @@ TESTS                   =                           \
                         check_folder-xfer           \
                         check_update-account        \
 			check_modest-conf           \
-			check_text-utils
+			check_text-utils	    \
+			check_modest-presets	 
 
 noinst_PROGRAMS=				    \
 			check_folder-xfer           \
 			check_update-account        \
 			check_modest-conf	    \
-			check_text-utils
+			check_text-utils            \
+			check_modest-presets	 
 
 INCLUDES=\
 	@CHECK_CFLAGS@ \
@@ -39,6 +41,7 @@ objects=\
         ${top_srcdir}/src/modest-conf.o \
         ${top_srcdir}/src/modest-protocol-mgr.o \
         ${top_srcdir}/src/modest-formatter.o \
+        ${top_srcdir}/src/modest-presets.o \
         ${top_srcdir}/src/modest-pair.o \
         ${top_srcdir}/src/modest-marshal.o \
         ${top_srcdir}/src/modest-tny-account-store.o \
@@ -63,3 +66,7 @@ check_modest_conf_LDADD = $(objects)
 check_text_utils_SOURCES=\
 	check_text-utils.c
 check_text_utils_LDADD = $(objects)
+
+check_modest_presets_SOURCES=\
+	check_modest-presets.c
+check_modest_presets_LDADD = $(objects)

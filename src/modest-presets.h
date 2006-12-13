@@ -112,10 +112,9 @@ ModestPresetsInfo          modest_presets_get_info (ModestPresets *self,
 
 /**
  * modest_presets_destroy:
- * @self: a valid ModestPresets instance
+ * @self: a valid ModestPresets instance (ie. must not be NULL)
  *
  * destroy ModestPresets instance; this is required after you're done with it.
- *
  */
 void                      modest_presets_destroy         (ModestPresets *self);
 
