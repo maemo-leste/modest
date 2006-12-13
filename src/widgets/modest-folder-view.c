@@ -357,11 +357,12 @@ modest_folder_view_disconnect_store_account_handlers (GtkTreeView *self)
 
 	priv =	MODEST_FOLDER_VIEW_GET_PRIVATE (self);	
 	iter = tny_list_create_iterator (TNY_LIST (model));
-	do {
+	while (!tny_iterator_is_done (iter)) {
 		g_signal_handler_disconnect (G_OBJECT (tny_iterator_get_current (iter)),
 					     priv->store_accounts_handlers [i++]);
 		tny_iterator_next (iter);
-	} while (!tny_iterator_is_done (iter));
+	}
+	g_object_unref (G_OBJECT (iter));
 }
 
 
@@ -520,24 +521,24 @@ update_model_empty (ModestFolderView *self)
 static void
 update_store_account_handlers (ModestFolderView *self, TnyList *account_list)
 {
-	gint size;
 	ModestFolderViewPrivate *priv;
 	TnyIterator *iter;
+	guint len;
 	
 	priv =	MODEST_FOLDER_VIEW_GET_PRIVATE(self);
 
 	/* Listen to subscription changes */
-	size = tny_list_get_length (TNY_LIST (account_list)) * sizeof (gulong);
+	len = tny_list_get_length (TNY_LIST (account_list));
 
 	g_assert (priv->store_accounts_handlers == NULL); /* don't leak */
-	priv->store_accounts_handlers = g_malloc0 (size);
+	priv->store_accounts_handlers = g_malloc0 (sizeof (guint) * len);
 	iter = tny_list_create_iterator (account_list);
 	
-	if (!tny_iterator_is_done (iter)) 	
-		priv->view_is_empty = FALSE; 
-	else {
+	if (!tny_iterator_is_done (iter)) {
 		gint i = 0;
-		while (!tny_iterator_is_done (iter)) {
+
+		priv->view_is_empty = FALSE;
+		do  {
 			
 			priv->store_accounts_handlers [i++] =
 				g_signal_connect (G_OBJECT (tny_iterator_get_current (iter)),
@@ -545,9 +546,9 @@ update_store_account_handlers (ModestFolderView *self, TnyList *account_list)
 						  G_CALLBACK (on_subscription_changed),
 						  self);
 			tny_iterator_next (iter);
-			}
-	}	
-	g_object_unref (iter);			       
+		} while (!tny_iterator_is_done (iter));
+	}
+	g_object_unref (G_OBJECT (iter));       
 }
 
 
@@ -612,14 +613,14 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
        }
 	
 	tree_view = MODEST_FOLDER_VIEW (user_data);
-	gtk_tree_model_get (model, &iter, 
-			    TNY_GTK_FOLDER_STORE_TREE_MODEL_TYPE_COLUMN, &type, 
-			    TNY_GTK_FOLDER_STORE_TREE_MODEL_INSTANCE_COLUMN, &folder, 
+	gtk_tree_model_get (model, &iter,
+			    TNY_GTK_FOLDER_STORE_TREE_MODEL_TYPE_COLUMN, &type,
+			    TNY_GTK_FOLDER_STORE_TREE_MODEL_INSTANCE_COLUMN, &folder,
 			    -1);
 
 	if (type == TNY_FOLDER_TYPE_ROOT)
-		return; 
-	
+		return;
+
 	/* emit 2 signals: one for the unselection of the old one,
 	 * and one for the selection of the new on */
 	g_signal_emit (G_OBJECT(tree_view), signals[FOLDER_SELECTION_CHANGED_SIGNAL], 0,

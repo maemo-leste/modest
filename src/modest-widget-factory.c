@@ -793,7 +793,7 @@ on_password_requested (ModestTnyAccountStore *account_store, const gchar* accoun
 	gtk_widget_show_all (GTK_WIDGET(GTK_DIALOG(dialog)->vbox));
 	
 	if (gtk_dialog_run (GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
-		*password = g_strdup(gtk_entry_get_text (GTK_ENTRY(entry)));
+		*password = g_strdup (gtk_entry_get_text (GTK_ENTRY(entry)));
 		*cancel   = FALSE;
 	} else {
 		*password = NULL;

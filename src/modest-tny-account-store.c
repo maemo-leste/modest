@@ -207,7 +207,6 @@ set_account_store_for_account (TnyAccount *account, ModestTnyAccountStore *store
 	g_object_set_data (G_OBJECT(account), "account_store", (gpointer)store);
 }
 
-
 static gchar*
 get_password (TnyAccount *account, const gchar *prompt, gboolean *cancel)
 {
@@ -219,7 +218,7 @@ get_password (TnyAccount *account, const gchar *prompt, gboolean *cancel)
 	gboolean already_asked;
 	
 	g_return_val_if_fail (account, NULL);
-	
+
 	key           = tny_account_get_id (account);
 	account_store = TNY_ACCOUNT_STORE(get_account_store_for_account (account));
 
@@ -227,34 +226,48 @@ get_password (TnyAccount *account, const gchar *prompt, gboolean *cancel)
         priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
 
 	/* is it in the hash? if it's already there, it must be wrong... */
-	already_asked = g_hash_table_lookup (priv->password_hash, key) != NULL;
+	pwd = g_hash_table_lookup (priv->password_hash, key);
+	already_asked = (pwd != NULL);
 
 	/* if the password is not already there, try ModestConf */
-/* 	if (!already_asked)  */
+	if (!already_asked) {
 		pwd  = modest_account_mgr_get_string (priv->account_mgr,
 						      key, MODEST_ACCOUNT_PASSWORD,
 						      TRUE, NULL);
+		g_hash_table_insert (priv->password_hash, g_strdup (key), g_strdup (pwd));
+	}
 
-/* 	/\* if it was already asked, it must have been wrong, so ask again *\/ */
-/* 	if (!already_asked || !pwd || strlen(pwd) == 0) { */
+	/* if it was already asked, it must have been wrong, so ask again */
+	if (already_asked || !pwd || strlen(pwd) == 0) {
 
-/* 		/\* we don't have it yet. we emit a signal to get the password somewhere *\/ */
-/* 		const gchar* name = tny_account_get_name (account); */
-/* 		*cancel = TRUE; */
-/* 		pwd     = NULL; */
-/* 		g_signal_emit (G_OBJECT(self), signals[PASSWORD_REQUESTED_SIGNAL], 0, */
-/* 			       name, &pwd, cancel); */
-/* 		if (!*cancel) /\* remember the password *\/ */
-/* 			modest_account_mgr_set_string (priv->account_mgr, */
-/* 						       key, MODEST_ACCOUNT_PASSWORD, */
-/* 						       pwd, TRUE, NULL); */
-/* 	} else */
-/* 		*cancel = FALSE; */
+		/* we don't have it yet. we emit a signal to get the password somewhere */
+		const gchar* name = tny_account_get_name (account);
+		pwd = NULL;
 
-/* 	g_hash_table_insert (priv->password_hash, key, pwd); */
+		gdk_threads_enter ();
+	
+		g_signal_emit (G_OBJECT(self), signals[PASSWORD_REQUESTED_SIGNAL], 0,
+			       name, &pwd, cancel);
 
-		/* FIXME: pwd needs to be freed somehow */
-	return pwd; 
+		if (!*cancel) {/* TODO: if remember the password */
+			modest_account_mgr_set_string (priv->account_mgr,
+						       key, MODEST_ACCOUNT_PASSWORD,
+						       pwd, TRUE, NULL);
+			/* We need to dup the string even knowing that
+			   it's already a dup of the contents of an
+			   entry, because it if it's wrong then camel
+			   will free it */
+			g_hash_table_insert (priv->password_hash, g_strdup (key), g_strdup(pwd));
+		} else {
+			g_hash_table_remove (priv->password_hash, key);
+			g_free (pwd);
+			pwd = NULL;
+		}
+		gdk_threads_leave ();
+	} else
+		*cancel = FALSE;
+
+	return pwd;
 }
 
 
