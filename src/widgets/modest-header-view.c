@@ -128,8 +128,8 @@ modest_header_view_class_init (ModestHeaderViewClass *klass)
 			      G_SIGNAL_RUN_FIRST,
 			      G_STRUCT_OFFSET (ModestHeaderViewClass,item_not_found),
 			      NULL, NULL,
-			      modest_marshal_VOID__INT_POINTER,
-			      G_TYPE_NONE, 2, G_TYPE_INT, G_TYPE_POINTER);
+			      g_cclosure_marshal_VOID__INT,
+			      G_TYPE_NONE, 1, G_TYPE_INT);
 
 	signals[STATUS_UPDATE_SIGNAL] = 
 		g_signal_new ("status_update",
@@ -891,7 +891,6 @@ get_msg_cb (TnyFolder *folder, TnyMsg *msg, GError **err, gpointer user_data)
 {
 	GetMsgAsyncHelper *helper;
 	TnyHeaderFlags header_flags;
-	gboolean retry;
 
 	helper = (GetMsgAsyncHelper *) user_data;
 
@@ -903,17 +902,12 @@ get_msg_cb (TnyFolder *folder, TnyMsg *msg, GError **err, gpointer user_data)
 		header_flags = tny_header_get_flags (helper->header);
 		tny_header_set_flags (helper->header, header_flags | TNY_HEADER_FLAG_SEEN);
 	} else {
-		g_signal_emit (G_OBJECT(helper->self), 
-			       signals[ITEM_NOT_FOUND_SIGNAL], 0,
-			       MODEST_ITEM_TYPE_MESSAGE, &retry);
-		if (retry)
-			tny_folder_get_msg_async (TNY_FOLDER(folder), helper->header, 
-						  get_msg_cb, helper);
+		g_signal_emit (G_OBJECT(helper->self), signals[ITEM_NOT_FOUND_SIGNAL], 
+			       0, MODEST_ITEM_TYPE_MESSAGE);
 	}
 
 	/* Frees */
-	if (!retry)
-		g_slice_free (GetMsgAsyncHelper, helper);
+	g_slice_free (GetMsgAsyncHelper, helper);
 }
 
 static void
