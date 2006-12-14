@@ -140,8 +140,8 @@ modest_tny_account_store_class_init (ModestTnyAccountStoreClass *klass)
 			      G_SIGNAL_RUN_FIRST,
 			      G_STRUCT_OFFSET(ModestTnyAccountStoreClass, password_requested),
 			      NULL, NULL,
-			      modest_marshal_VOID__STRING_POINTER_POINTER,
-			      G_TYPE_NONE, 3, G_TYPE_STRING, G_TYPE_POINTER, G_TYPE_POINTER);
+			      modest_marshal_VOID__STRING_POINTER_POINTER_POINTER,
+			      G_TYPE_NONE, 4, G_TYPE_STRING, G_TYPE_POINTER, G_TYPE_POINTER, G_TYPE_POINTER);
 	
 	signals[ACCOUNT_UPDATE_SIGNAL] =
  		g_signal_new ("account_update",
@@ -226,8 +226,8 @@ get_password (TnyAccount *account, const gchar *prompt, gboolean *cancel)
         priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
 
 	/* is it in the hash? if it's already there, it must be wrong... */
-	pwd = g_hash_table_lookup (priv->password_hash, key);
-	already_asked = (pwd != NULL);
+	already_asked = g_hash_table_lookup_extended (priv->password_hash, 
+						      key, NULL, (gpointer *) &pwd);
 
 	/* if the password is not already there, try ModestConf */
 	if (!already_asked) {
@@ -242,20 +242,23 @@ get_password (TnyAccount *account, const gchar *prompt, gboolean *cancel)
 
 		/* we don't have it yet. we emit a signal to get the password somewhere */
 		const gchar* name = tny_account_get_name (account);
+		gboolean remember;
 		pwd = NULL;
 
 		gdk_threads_enter ();
 	
 		g_signal_emit (G_OBJECT(self), signals[PASSWORD_REQUESTED_SIGNAL], 0,
-			       name, &pwd, cancel);
+			       name, &pwd, cancel, &remember);
 
-		if (!*cancel) {/* TODO: if remember the password */
-			modest_account_mgr_set_string (priv->account_mgr,
-						       key, MODEST_ACCOUNT_PASSWORD,
-						       pwd, TRUE, NULL);
+		if (!*cancel) {
+			if (remember)
+				modest_account_mgr_set_string (priv->account_mgr,
+							       key, MODEST_ACCOUNT_PASSWORD,
+							       pwd, 
+							       TRUE, NULL);
 			/* We need to dup the string even knowing that
 			   it's already a dup of the contents of an
-			   entry, because it if it's wrong then camel
+			   entry, because it if it's wrong, then camel
 			   will free it */
 			g_hash_table_insert (priv->password_hash, g_strdup (key), g_strdup(pwd));
 		} else {
@@ -277,10 +280,26 @@ forget_password (TnyAccount *account) {
 	ModestTnyAccountStore *self;
 	ModestTnyAccountStorePrivate *priv;
 	const TnyAccountStore *account_store;
+	gchar *pwd;
+	const gchar *key;
 
         account_store = TNY_ACCOUNT_STORE(get_account_store_for_account (account));
 	self = MODEST_TNY_ACCOUNT_STORE (account_store);
         priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
+	key  = tny_account_get_id (account);
+
+	/* Do not remove the key, this will allow us to detect that we
+	   have already asked for it at least once */
+	pwd = g_hash_table_lookup (priv->password_hash, key);
+	if (pwd) {
+		memset (pwd, 0, strlen (pwd));
+		g_hash_table_insert (priv->password_hash, g_strdup (key), NULL);
+	}
+
+	/* Remove from configuration system */
+	modest_account_mgr_unset (priv->account_mgr,
+				  key, MODEST_ACCOUNT_PASSWORD,
+				  TRUE, NULL);
 }
 
 

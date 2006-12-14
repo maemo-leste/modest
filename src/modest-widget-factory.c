@@ -72,7 +72,7 @@ static void on_connection_changed (TnyDevice *device, gboolean online,
 static void on_online_toggle_toggled (GtkToggleButton *toggle, ModestWidgetFactory *factory);
 
 static void on_password_requested (ModestTnyAccountStore *account_store, const gchar* account_name,
-				   gchar **password, gboolean *cancel, ModestWidgetFactory *self);
+				   gchar **password, gboolean *cancel, gboolean *remember, ModestWidgetFactory *self);
 
 static void on_item_not_found     (ModestHeaderView* header_view, ModestItemType type,
 				   ModestWidgetFactory *self);
@@ -730,7 +730,9 @@ on_item_not_found (ModestHeaderView* header_view, ModestItemType type,
 						 GTK_BUTTONS_OK,
 						 _("The %s you selected cannot be found"),
 						 item);
+		gdk_threads_enter ();
 		gtk_dialog_run (GTK_DIALOG(dialog));
+		gdk_threads_leave ();
 	} else {
 
 		dialog = gtk_dialog_new_with_buttons (_("Connection requested"),
@@ -750,8 +752,10 @@ on_item_not_found (ModestHeaderView* header_view, ModestItemType type,
 		g_free (txt);
 
 		gtk_window_set_default_size (GTK_WINDOW(dialog), 300, 300);
+		gdk_threads_enter ();
 		if (gtk_dialog_run (GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
 			tny_device_force_online (device);
+		gdk_threads_leave ();
 	}
 	gtk_widget_destroy (dialog);
 }
@@ -760,7 +764,7 @@ on_item_not_found (ModestHeaderView* header_view, ModestItemType type,
 
 static void
 on_password_requested (ModestTnyAccountStore *account_store, const gchar* account_name,
-		       gchar **password, gboolean *cancel, ModestWidgetFactory *self)
+		       gchar **password, gboolean *cancel, gboolean *remember, ModestWidgetFactory *self)
 {
 	gchar *txt;
 	GtkWidget *dialog, *entry, *remember_pass_check;
@@ -799,6 +803,11 @@ on_password_requested (ModestTnyAccountStore *account_store, const gchar* accoun
 		*password = NULL;
 		*cancel   = TRUE;
 	}
+	if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (remember_pass_check)))
+		*remember = TRUE;
+	else
+		*remember = FALSE;
+
 	gtk_widget_destroy (dialog);
 }
 

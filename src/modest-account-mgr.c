@@ -832,6 +832,32 @@ modest_account_mgr_get_list (ModestAccountMgr *self,
 	return retval;
 }
 
+
+gboolean 
+modest_account_mgr_unset (ModestAccountMgr *self,
+			  const gchar *name,
+			  const gchar *key,
+			  gboolean server_account,
+			  GError **err)
+{
+	ModestAccountMgrPrivate *priv;
+
+	gchar *keyname;
+	gboolean retval;
+
+	g_return_val_if_fail (self, FALSE);
+        g_return_val_if_fail (name, FALSE);
+        g_return_val_if_fail (key, FALSE);
+
+	keyname = get_account_keyname (name, key, server_account);
+
+	priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
+	retval = modest_conf_remove_key (priv->modest_conf, keyname, err);
+
+	g_free (keyname);
+	return retval;
+}
+
 /* must be freed by caller */
 static gchar *
 get_account_keyname (const gchar * accname, const gchar * name, gboolean server_account)

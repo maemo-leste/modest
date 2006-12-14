@@ -134,6 +134,20 @@ gint         modest_conf_get_int     (ModestConf* self, const gchar* key, GError
 gboolean     modest_conf_get_bool    (ModestConf* self, const gchar* key, GError **err);
 
 
+/** 
+ * modest_conf_get_list:
+ * @self: a ModestConf instance
+ * @key: the key of the value to retrieve
+ * @list_type: the type of the elements of the list
+ * @err: a GError ptr, or NULL to ignore.
+ * 
+ * get a list of values from the configuration system
+ *  
+ * Returns: a list with the values for the key, or NULL in case of error
+ * @err gives details in case of error
+ */
+GSList *     modest_conf_get_list    (ModestConf* self, const gchar* key, 
+				      ModestConfValueType list_type, GError **err);
 
 /**
  * modest_conf_set_string:

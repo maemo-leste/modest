@@ -335,7 +335,7 @@ gboolean	modest_account_mgr_get_bool       (ModestAccountMgr *self,
  * @server_account: if TRUE, this is a server account
  * @err: a GError ptr, or NULL to ignore.
  * 
- * set a config string for an account
+ * set a config string for an account.
  *
  * Returns: TRUE if setting the value succeeded, or FALSE in case of error.
  * @err gives details in case of error
@@ -388,12 +388,46 @@ gboolean	modest_account_mgr_set_bool       (ModestAccountMgr *self,
 						   GError **err);
 
 
+/**
+ * modest_account_mgr_get_list:
+ * @self: a ModestAccountMgr instance
+ * @name: the name of the account
+ * @key: the key of the value to get
+ * @list_type: the type of the members of the list
+ * @server_account: if TRUE, this is a server account
+ * @err: a GError ptr, or NULL to ignore.
+ * 
+ * get a config list of values of type @list_type of an account
+ *
+ * Returns: a newly allocated list of elements
+ * @err gives details in case of error
+ */
 GSList*	        modest_account_mgr_get_list       (ModestAccountMgr *self,
 						   const gchar *name,
 						   const gchar *key,
 						   ModestConfValueType list_type,
 						   gboolean server_account,
 						   GError **err);
+
+/**
+ * modest_account_mgr_unset:
+ * @self: a ModestAccountMgr instance
+ * @name: the name of the account
+ * @key: the key of the value to unset
+ * @server_account: if TRUE, this is a server account
+ * @err: a GError ptr, or NULL to ignore.
+ * 
+ * unsets the config value of an account and all their children keys
+ *
+ * Returns: TRUE if unsetting the value succeeded, or FALSE in case of error.
+ * @err gives details in case of error
+ */
+gboolean        modest_account_mgr_unset           (ModestAccountMgr *self,
+						   const gchar *name,
+						   const gchar *key,
+						   gboolean server_account,
+						   GError **err);
+
 G_END_DECLS
 
 #endif /* __MODEST_ACCOUNT_MGR_H__ */
