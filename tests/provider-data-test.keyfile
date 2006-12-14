@@ -15,10 +15,16 @@ OutgoingMailServer=smtp.xxx.fi
 IncomingMailServer=mail.xxx.fi
 IncomingSecurity=0
 MailboxType=imap
-[YYY]
+[ZZZ]
 MCC=244
-OutgoingMailServer=smtp.kolumbus.fi
-IncomingMailServer=mail.kolumbus.fi
+OutgoingMailServer=smtp.zzz.fi
+IncomingMailServer=mail.zzz.fi
 IncomingSecurity=0
 MailboxType=pop
+[RRR]
+MCC=412
+OutgoingMailServer=smtp.rrr.af
+IncomingMailServer=mail.rrr.af
+IncomingSecurity=0
+MailboxType=imap
 
