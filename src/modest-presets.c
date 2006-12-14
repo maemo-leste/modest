@@ -80,7 +80,7 @@ modest_presets_get_providers  (ModestPresets *self, gint mcc, gboolean include_g
 	providers = g_key_file_get_groups (self->keyfile, NULL);
 
 	/* return *all* providers? */
-	if (mcc < 0)
+	if (mcc < 0 && include_globals)
 		return providers;
 
 	/* nope: filter them instead */
