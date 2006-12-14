@@ -75,7 +75,7 @@ static void on_password_requested (ModestTnyAccountStore *account_store, const g
 				   gchar **password, gboolean *cancel, gboolean *remember, ModestWidgetFactory *self);
 
 static void on_item_not_found     (ModestHeaderView* header_view, ModestItemType type,
-				   ModestWidgetFactory *self);
+				   gboolean *retry, ModestWidgetFactory *self);
 
 
 /* list my signals */
@@ -707,7 +707,7 @@ on_online_toggle_toggled (GtkToggleButton *toggle, ModestWidgetFactory *self)
 
 static void
 on_item_not_found (ModestHeaderView* header_view, ModestItemType type,
-		   ModestWidgetFactory *self)
+		   gboolean *retry, ModestWidgetFactory *self)
 {
 	/* FIXME ==> ask from UI... */
 	GtkWidget *dialog;
@@ -720,6 +720,7 @@ on_item_not_found (ModestHeaderView* header_view, ModestItemType type,
 	
 	priv    = MODEST_WIDGET_FACTORY_GET_PRIVATE(self);
 	device  = tny_account_store_get_device (priv->account_store);
+	*retry = FALSE;
 	
 	online = tny_device_is_online (device);
 	if (online) {
@@ -753,8 +754,10 @@ on_item_not_found (ModestHeaderView* header_view, ModestItemType type,
 
 		gtk_window_set_default_size (GTK_WINDOW(dialog), 300, 300);
 		gdk_threads_enter ();
-		if (gtk_dialog_run (GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
+		if (gtk_dialog_run (GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
 			tny_device_force_online (device);
+			*retry = TRUE;
+		}
 		gdk_threads_leave ();
 	}
 	gtk_widget_destroy (dialog);

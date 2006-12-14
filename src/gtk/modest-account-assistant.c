@@ -554,6 +554,9 @@ on_apply (ModestAccountAssistant *self, gpointer user_data)
 				       get_email(self), FALSE, NULL);
 	
 	g_free (store_name);
+
+	/* Close the assistant */
+	gtk_widget_destroy (GTK_WIDGET(self));
 }
 
 
