@@ -200,6 +200,14 @@ gboolean   modest_header_view_set_style (ModestHeaderView *self,
  */
 ModestHeaderViewStyle   modest_header_view_get_style (ModestHeaderView *self);
 
+/**
+ * modest_header_view_get_selected_headers:
+ * @self: a ModestHeaderView instance
+ * 
+ * get the list of the currently selected TnyHeader's
+ *  
+ * Returns: the list with the currently selected headers
+ */
 TnyList* modest_header_view_get_selected_headers (ModestHeaderView *self);
 
 G_END_DECLS

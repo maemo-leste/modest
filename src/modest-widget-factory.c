@@ -29,19 +29,18 @@
 
 #include <glib/gi18n.h>
 #include <gdk/gdkkeysyms.h>
-#include "modest-widget-factory.h"
-#include <modest-widget-memory.h>
-#include <modest-protocol-mgr.h>
 #include <tny-gtk-account-list-model.h>
 #include <tny-gtk-folder-store-tree-model.h>
 #include <tny-account-store.h>
 #include <tny-device.h>
 #include <tny-folder-store-query.h>
-
+#include "modest-widget-factory.h"
+#include "modest-widget-memory.h"
+#include "modest-protocol-mgr.h"
 #include "modest-tny-platform-factory.h"
 #include "modest-account-mgr.h"
 #include "modest-mail-operation.h"
-
+#include "widgets/modest-header-view-priv.h"
 
 /* 'private'/'protected' functions */
 static void modest_widget_factory_class_init    (ModestWidgetFactoryClass *klass);
@@ -675,6 +674,7 @@ on_connection_changed (TnyDevice *device, gboolean online,
 		       ModestWidgetFactory *self)
 {
 	ModestWidgetFactoryPrivate *priv;
+
 	priv = MODEST_WIDGET_FACTORY_GET_PRIVATE(self);
 
 	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(priv->online_toggle),
@@ -683,6 +683,15 @@ on_connection_changed (TnyDevice *device, gboolean online,
 			      online ? _("Online") : _("Offline"));
 
 	statusbar_push (self, 0, online ? _("Modest went online") : _("Modest went offline"));
+
+	/* If Modest has became online and the header view has a
+	   header selected then show it */
+	if (online) {
+		GtkTreeSelection *selected;
+
+		selected = gtk_tree_view_get_selection (GTK_TREE_VIEW (priv->header_view));
+		_modest_header_view_change_selection (selected, priv->header_view);
+	}
 }
 
 

@@ -21,6 +21,7 @@ libmodest_widgets_la_SOURCES=   \
 	modest-folder-view.h    \
 	modest-header-view.c    \
 	modest-header-view.h    \
+	modest-header-view-priv.h \
 	modest-msg-view.c       \
 	modest-msg-view.h	\
 	modest-toolbar.h	\
