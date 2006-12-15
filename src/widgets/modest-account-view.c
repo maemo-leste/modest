@@ -239,12 +239,10 @@ on_account_enable_toggled (GtkCellRendererToggle *cell_renderer, gchar *path,
 	g_free (account_name);
 }
 
-
 static void
 init_view (ModestAccountView *self)
 {
 	ModestAccountViewPrivate *priv;
-	GtkTreeSelection *sel;
 	GtkCellRenderer *renderer;
 	GtkListStore *model;
 	
@@ -279,8 +277,6 @@ init_view (ModestAccountView *self)
 					     gtk_cell_renderer_text_new (),
 					     "text", PROTO_COLUMN, NULL));
 
-	sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(self));
-	
 	priv->sig1 = g_signal_connect (G_OBJECT(priv->account_mgr),
 				       "account_removed",
 				       G_CALLBACK(on_account_removed), self);

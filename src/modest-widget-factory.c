@@ -719,7 +719,7 @@ on_item_not_found (ModestHeaderView* header_view, ModestItemType type,
 		   ModestWidgetFactory *self)
 {
 	/* FIXME ==> ask from UI... */
-	GtkWidget *dialog;
+	GtkWidget *dialog, *window;
 	gchar *txt;
 	gboolean online;
 	gchar *item = type == MODEST_ITEM_TYPE_FOLDER ? "folder" : "message";
@@ -732,9 +732,11 @@ on_item_not_found (ModestHeaderView* header_view, ModestItemType type,
 	
 	gdk_threads_enter ();
 	online = tny_device_is_online (device);
+	/* FIXME: get main window */
+	window = NULL;
 	if (online) {
 		/* already online -- the item is simply not there... */
-		dialog = gtk_message_dialog_new (NULL,
+		dialog = gtk_message_dialog_new (window,
 						 GTK_DIALOG_MODAL,
 						 GTK_MESSAGE_WARNING,
 						 GTK_BUTTONS_OK,
@@ -744,7 +746,7 @@ on_item_not_found (ModestHeaderView* header_view, ModestItemType type,
 	} else {
 
 		dialog = gtk_dialog_new_with_buttons (_("Connection requested"),
-						      NULL,
+						      window,
 						      GTK_DIALOG_MODAL,
 						      GTK_STOCK_CANCEL,
 						      GTK_RESPONSE_REJECT,
@@ -775,10 +777,12 @@ on_password_requested (ModestTnyAccountStore *account_store, const gchar* accoun
 		       gchar **password, gboolean *cancel, gboolean *remember, ModestWidgetFactory *self)
 {
 	gchar *txt;
-	GtkWidget *dialog, *entry, *remember_pass_check;
+	GtkWidget *dialog, *entry, *remember_pass_check, *window;
 	
+	/* FIXME: get main window */
+	window = NULL;
 	dialog = gtk_dialog_new_with_buttons (_("Password requested"),
-					      NULL,
+					      window,
 					      GTK_DIALOG_MODAL,
 					      GTK_STOCK_CANCEL,
 					      GTK_RESPONSE_REJECT,

@@ -352,13 +352,17 @@ gboolean
 modest_conf_remove_key (ModestConf* self, const gchar* key, GError **err)
 {
 	ModestConfPrivate *priv;
+	gboolean retval;
 	
 	g_return_val_if_fail (self,FALSE);
 	g_return_val_if_fail (key, FALSE);
 	
 	priv = MODEST_CONF_GET_PRIVATE(self);
 			
-	return gconf_client_recursive_unset (priv->gconf_client,key,0,err);
+	retval = gconf_client_recursive_unset (priv->gconf_client,key,0,err);
+	gconf_client_suggest_sync (priv->gconf_client, NULL);
+
+	return retval;
 }
 
 

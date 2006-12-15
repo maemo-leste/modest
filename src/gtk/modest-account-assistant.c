@@ -402,8 +402,6 @@ add_final_page (ModestAccountAssistant *self)
 					 page, TRUE);
 	gtk_widget_show_all (page);
 }
-	
-
 
 
 static void
@@ -471,7 +469,7 @@ on_cancel (ModestAccountAssistant *self, gpointer user_data)
 	switch (response) {
 	case GTK_RESPONSE_ACCEPT:
 		/* close the assistant */
-		gtk_widget_destroy (GTK_WIDGET(self));
+		gtk_widget_hide (GTK_WIDGET(self));
 		break;
 	case GTK_RESPONSE_CANCEL:
 		/* don't do anything */
@@ -511,6 +509,11 @@ get_email (ModestAccountAssistant *self)
 }
 
 
+static void
+on_close (ModestAccountAssistant *self, gpointer user_data)
+{
+	gtk_widget_hide (GTK_WIDGET (self));
+}
 
 static void
 on_apply (ModestAccountAssistant *self, gpointer user_data)
@@ -554,9 +557,6 @@ on_apply (ModestAccountAssistant *self, gpointer user_data)
 				       get_email(self), FALSE, NULL);
 	
 	g_free (store_name);
-
-	/* Close the assistant */
-	gtk_widget_destroy (GTK_WIDGET(self));
 }
 
 
@@ -600,6 +600,8 @@ modest_account_assistant_new (ModestAccountMgr *account_mgr, ModestWidgetFactory
 			  G_CALLBACK(on_apply), NULL);
 	g_signal_connect (G_OBJECT(self), "cancel",
 			  G_CALLBACK(on_cancel), NULL);
+	g_signal_connect (G_OBJECT(self), "close",
+			  G_CALLBACK(on_close), NULL);
 
 	return GTK_WIDGET(self);
 }

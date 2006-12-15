@@ -48,7 +48,9 @@ enum {
 typedef struct _ModestAccountViewWindowPrivate ModestAccountViewWindowPrivate;
 struct _ModestAccountViewWindowPrivate {
 	ModestWidgetFactory *widget_factory;
-	GtkWidget           *edit_button, *remove_button;
+	GtkWidget           *edit_button;
+	GtkWidget           *remove_button;
+	ModestAccountView   *account_view;
 };
 #define MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                         MODEST_TYPE_ACCOUNT_VIEW_WINDOW, \
@@ -145,39 +147,56 @@ on_selection_changed (GtkTreeSelection *sel, ModestAccountViewWindow *self)
 	gtk_widget_set_sensitive (priv->remove_button, has_selection);	
 }
 
-
-
 static void
 on_remove_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 {
 	TnyPlatformFactory *fact;
 	ModestAccountViewWindowPrivate *priv;
 	ModestAccountMgr *account_mgr;
-	ModestAccountView *account_view;
-	gchar *account_name;
+	const gchar *account_name;
 	
 	priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE(self);
 	fact = modest_tny_platform_factory_get_instance ();
 	account_mgr = modest_tny_platform_factory_get_modest_account_mgr_instance (fact);
 
-	account_view = modest_widget_factory_get_account_view (priv->widget_factory);
-	account_name = modest_account_view_get_selected_account (account_view);
+	account_name = modest_account_view_get_selected_account (priv->account_view);
 
 	if (account_name) {
 		gboolean removed;
 		GError *err = NULL;
+		GtkWidget *dialog;
+		gchar *txt;
 
-		removed = modest_account_mgr_remove_account (account_mgr,
-							     account_name,
-							     FALSE,
-							     &err);
-		if (removed) {
-			/* Show confirmation dialog */
-			/* Remove from model & reload it */
-		} else {
-			if (err)
-				g_error_free (err);
+		dialog = gtk_dialog_new_with_buttons (_("Confirmation dialog"),
+						      GTK_WINDOW (self),
+						      GTK_DIALOG_MODAL,
+						      GTK_STOCK_CANCEL,
+						      GTK_RESPONSE_REJECT,
+						      GTK_STOCK_OK,
+						      GTK_RESPONSE_ACCEPT,
+						      NULL);
+		txt = g_strdup_printf (_("Do you really want to delete the account %s?"), account_name);
+		gtk_box_pack_start (GTK_BOX(GTK_DIALOG(dialog)->vbox), 
+				    gtk_label_new (txt), FALSE, FALSE, 0);
+		gtk_widget_show_all (GTK_WIDGET(GTK_DIALOG(dialog)->vbox));
+		g_free (txt);
+
+		if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT) {
+			/* Remove account. If succeeded it removes also 
+			   the account from the ModestAccountView */
+			removed = modest_account_mgr_remove_account (account_mgr,
+								     account_name,
+								     FALSE,
+								     &err);
+			if (removed) {
+				/* Show confirmation dialog ??? */
+			} else {
+				/* Show error dialog ??? */
+				if (err)
+					g_error_free (err);
+			}
 		}
+		gtk_widget_destroy (dialog);
 	}
 }
 
@@ -274,6 +293,7 @@ window_vbox_new (ModestAccountViewWindow *self)
 	main_hbox     = gtk_hbox_new (FALSE, 6);
 	
 	account_view = modest_widget_factory_get_account_view (priv->widget_factory);
+	priv->account_view = account_view;
 	gtk_widget_set_size_request (GTK_WIDGET(account_view), 300, 400);
 
 	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW(account_view));
