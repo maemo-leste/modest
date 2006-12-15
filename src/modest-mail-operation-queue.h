@@ -59,17 +59,45 @@ struct _ModestMailOperationQueueClass {
 /* member functions */
 GType                   modest_mail_operation_queue_get_type      (void) G_GNUC_CONST;
 
-ModestMailOperationQueue *    modest_mail_operation_queue_get_instance  (void);
+ModestMailOperationQueue *    modest_mail_operation_queue_new  (void);
 
+/**
+ * modest_mail_operation_queue_add:
+ * @op_queue: a #ModestMailOperationQueue
+ * @mail_op: the #ModestMailOperation that will be added to the queue
+ * 
+ * Adds a mail operation at the end of the queue. It also adds a
+ * reference to the mail operation so the caller could free it
+ **/
 void    modest_mail_operation_queue_add        (ModestMailOperationQueue *op_queue, 
 						ModestMailOperation *mail_op);
 
+/**
+ * modest_mail_operation_queue_remove:
+ * @op_queue: a #ModestMailOperationQueue
+ * @mail_op: the #ModestMailOperation that will be removed from the queue
+ * 
+ * Removes a mail operation from the queue. This method does not free
+ * the mail operation
+ **/
 void    modest_mail_operation_queue_remove     (ModestMailOperationQueue *op_queue, 
 						ModestMailOperation *mail_op);
-
+/**
+ * modest_mail_operation_queue_cancel:
+ * @op_queue:  a #ModestMailOperationQueue
+ * @mail_op:  the #ModestMailOperation that will be canceled
+ * 
+ * Cancels a #ModestMailOperation if it's not finished and removes it
+ * from the queue
+ **/
 void    modest_mail_operation_queue_cancel     (ModestMailOperationQueue *op_queue, 
 						ModestMailOperation *mail_op);
-
+/**
+ * modest_mail_operation_queue_cancel_all:
+ * @op_queue:  a #ModestMailOperationQueue
+ * 
+ * Cancels all the unfinished #ModestMailOperation of the queue
+ **/
 void    modest_mail_operation_queue_cancel_all (ModestMailOperationQueue *op_queue);
 
 G_END_DECLS

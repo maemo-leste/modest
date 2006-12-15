@@ -35,9 +35,6 @@ static void modest_mail_operation_queue_class_init (ModestMailOperationQueueClas
 static void modest_mail_operation_queue_init       (ModestMailOperationQueue *obj);
 static void modest_mail_operation_queue_finalize   (GObject *obj);
 
-static GObject *modest_mail_operation_queue_constructor (GType type, guint n_construct_params,
-							 GObjectConstructParam *construct_params);
-
 static void modest_mail_operation_queue_cancel_no_block_wrapper (ModestMailOperation *mail_op,
 								 ModestMailOperationQueue *op_queue);
 
@@ -61,7 +58,6 @@ struct _ModestMailOperationQueuePrivate {
                                                          ModestMailOperationQueuePrivate))
 /* globals */
 static GObjectClass *parent_class = NULL;
-static ModestMailOperationQueue *singleton = NULL;
 
 /* uncomment the following if you have defined any signals */
 /* static guint signals[LAST_SIGNAL] = {0}; */
@@ -100,7 +96,6 @@ modest_mail_operation_queue_class_init (ModestMailOperationQueueClass *klass)
 	parent_class  = g_type_class_peek_parent (klass);
 
 	gobject_class->finalize    = modest_mail_operation_queue_finalize;
-	gobject_class->constructor = modest_mail_operation_queue_constructor;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestMailOperationQueuePrivate));
 }
@@ -114,25 +109,6 @@ modest_mail_operation_queue_init (ModestMailOperationQueue *obj)
 
 	priv->op_queue   = g_queue_new ();
 	priv->queue_lock = g_mutex_new ();
-}
-
-static GObject*
-modest_mail_operation_queue_constructor (GType type, guint n_construct_params,
-					 GObjectConstructParam *construct_params)
-{
-	GObject *object;
-
-	if (!singleton)	{
-		object = G_OBJECT_CLASS (parent_class)->constructor (type,
-				n_construct_params, construct_params);
-
-		singleton = MODEST_MAIL_OPERATION_QUEUE (object);
-	} else {
-		object = G_OBJECT (singleton);
-		g_object_freeze_notify (G_OBJECT (singleton));
-	}
-
-	return object;
 }
 
 static void
@@ -157,7 +133,7 @@ modest_mail_operation_queue_finalize (GObject *obj)
 }
 
 ModestMailOperationQueue *
-modest_mail_operation_queue_get_instance (void)
+modest_mail_operation_queue_new (void)
 {
 	ModestMailOperationQueue *self = g_object_new (MODEST_TYPE_MAIL_OPERATION_QUEUE, NULL);
 
@@ -200,8 +176,6 @@ modest_mail_operation_queue_remove (ModestMailOperationQueue *op_queue,
 	g_mutex_lock (priv->queue_lock);
 	g_queue_remove (priv->op_queue, mail_op);
 	g_mutex_unlock (priv->queue_lock);
-
-	g_object_unref (G_OBJECT (mail_op));
 }
 
 
@@ -217,7 +191,14 @@ static void
 modest_mail_operation_queue_cancel_no_block (ModestMailOperationQueue *op_queue,
 					     ModestMailOperation *mail_op)
 {
-	/* TODO: place here the cancel code */
+	if (modest_mail_operation_is_finished (mail_op))
+		return;
+
+	/* TODO: the implementation is still empty */
+	modest_mail_operation_cancel (mail_op);
+
+	/* Remove from the queue */
+	modest_mail_operation_queue_remove (op_queue, mail_op);
 }
 
 void 

@@ -62,6 +62,17 @@ GType        modest_account_view_get_type    (void) G_GNUC_CONST;
 
 ModestAccountView*   modest_account_view_new         (ModestAccountMgr *account_mgr);
 
+/**
+ * modest_account_view_get_selected_account:
+ * @account_view: a #ModestAccountView
+ * 
+ * Gets the name of the account currently selected
+ * 
+ * Returns: the name of the selected account or NULL if none is
+ * selected
+ **/
+const gchar*   modest_account_view_get_selected_account    (ModestAccountView *account_view);
+
 G_END_DECLS
 
 #endif /* __MODEST_ACCOUNT_VIEW_H__ */

@@ -808,6 +808,9 @@ modest_mail_operation_xfer_folder (ModestMailOperation *mail_op,
 	g_object_unref (G_OBJECT (iter));
 }
 
+
+/* FIXME: this method should be rewritten when the policy for the
+   Trash folder becomes clearer */
 static TnyFolder *
 modest_mail_operation_find_trash_folder (ModestMailOperation *mail_op,
 					 TnyStoreAccount *store_account)

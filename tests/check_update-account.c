@@ -91,7 +91,7 @@ func (gpointer_data)
 	g_object_unref (G_OBJECT (iter));
 	g_object_unref (G_OBJECT (accounts));
 
-	queue = modest_mail_operation_queue_get_instance ();
+	queue = modest_tny_platform_factory_get_modest_mail_operation_queue_instance (fact);
 	mail_op = modest_mail_operation_new ();
 	
 	g_signal_connect (G_OBJECT (mail_op), "progress_changed", 

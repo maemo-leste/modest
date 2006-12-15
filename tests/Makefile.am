@@ -4,21 +4,25 @@
 
 MAINTAINERCLEANFILES    = Makefile.in
 
-TESTS_ENVIRONMENT       = top_builddir=$(top_builddir)
+TESTS_ENVIRONMENT       = top_builddir=$(top_builddir)  \
+			  CK_FORK=yes 			\
+			  CK_VERBOSITY=verbose
 
 TESTS                   =                           \
+			check_modest-presets        \
                         check_folder-xfer           \
-                        check_update-account        \
+			check_text-utils            \
 			check_modest-conf           \
-			check_text-utils	    \
-			check_modest-presets	 
+                        check_update-account        \
+			check_account-mgr           
 
 noinst_PROGRAMS=				    \
 			check_folder-xfer           \
 			check_update-account        \
 			check_modest-conf	    \
 			check_text-utils            \
-			check_modest-presets	 
+			check_modest-presets	    \
+			check_account-mgr
 
 INCLUDES=\
 	@CHECK_CFLAGS@ \
@@ -70,3 +74,7 @@ check_text_utils_LDADD = $(objects)
 check_modest_presets_SOURCES=\
 	check_modest-presets.c
 check_modest_presets_LDADD = $(objects)
+
+check_account_mgr_SOURCES=\
+	check_account-mgr.c
+check_account_mgr_LDADD = $(objects)

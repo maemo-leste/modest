@@ -27,7 +27,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
+#include <string.h>
 #include <gtk/gtk.h>
 #include <gtkhtml/gtkhtml.h>
 #include <tny-gtk-text-buffer-stream.h>

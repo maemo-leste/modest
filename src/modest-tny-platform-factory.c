@@ -50,6 +50,7 @@ static void tny_platform_factory_init (gpointer g, gpointer iface_data);
 static TnyAccountStore *modest_tny_platform_factory_new_account_store (TnyPlatformFactory *self);
 static TnyDevice *modest_tny_platform_factory_new_device (TnyPlatformFactory *self);
 static TnyMsgView *modest_tny_platform_factory_new_msg_view (TnyPlatformFactory *self);
+
 /* list my signals  */
 enum {
 	/* MY_SIGNAL_1, */
@@ -59,10 +60,12 @@ enum {
 
 typedef struct _ModestTnyPlatformFactoryPrivate ModestTnyPlatformFactoryPrivate;
 struct _ModestTnyPlatformFactoryPrivate {
-	ModestTnyAccountStore *account_store;
-	ModestConf *conf;
-	ModestAccountMgr *account_mgr;
+	ModestTnyAccountStore    *account_store;
+	ModestConf               *conf;
+	ModestAccountMgr         *account_mgr;
+	ModestMailOperationQueue *mail_op_queue;
 };
+
 #define MODEST_TNY_PLATFORM_FACTORY_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                          MODEST_TYPE_TNY_PLATFORM_FACTORY, \
                                                          ModestTnyPlatformFactoryPrivate))
@@ -130,6 +133,7 @@ modest_tny_platform_factory_init (ModestTnyPlatformFactory *obj)
 	priv->account_mgr   = NULL;
 	priv->conf          = NULL;
 	priv->account_store = NULL;
+	priv->mail_op_queue = NULL;
 }
 
 static GObject*
@@ -158,20 +162,17 @@ modest_tny_platform_factory_finalize (GObject *obj)
 
 	priv = MODEST_TNY_PLATFORM_FACTORY_GET_PRIVATE(obj);
 
-	if (priv->account_mgr) {
+	if (priv->account_mgr)
 		g_object_unref (priv->account_mgr);
-		priv->account_mgr = NULL;
-	}
 
-	if (priv->conf) {
+	if (priv->conf)
 		g_object_unref (priv->conf);
-		priv->conf = NULL;
-	}
 
-	if (priv->account_store) {
+	if (priv->account_store)
 		g_object_unref (priv->account_store);
-		priv->account_store = NULL;
-	}
+
+	if (priv->mail_op_queue)
+		g_object_unref (priv->mail_op_queue);
 	
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
@@ -261,4 +262,17 @@ modest_tny_platform_factory_get_modest_conf_instance (TnyPlatformFactory *fact)
 		priv->conf = modest_conf_new ();
 
 	return priv->conf;
+}
+
+ModestMailOperationQueue*   
+modest_tny_platform_factory_get_modest_mail_operation_queue_instance (TnyPlatformFactory *fact)
+{
+	ModestTnyPlatformFactoryPrivate *priv;
+
+	priv = MODEST_TNY_PLATFORM_FACTORY_GET_PRIVATE(fact);
+
+	if (!priv->mail_op_queue)
+		priv->mail_op_queue = modest_mail_operation_queue_new ();
+
+	return priv->mail_op_queue;
 }

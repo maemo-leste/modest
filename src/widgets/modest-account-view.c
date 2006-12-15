@@ -311,3 +311,22 @@ modest_account_view_new (ModestAccountMgr *account_mgr)
 	return MODEST_ACCOUNT_VIEW(obj);
 }
 
+const gchar *
+modest_account_view_get_selected_account (ModestAccountView *self)
+{
+	const gchar *account_name = NULL;
+	GtkTreeSelection *sel;
+	GtkTreeModel *model;
+	GtkTreeIter iter;
+
+	g_return_val_if_fail (MODEST_IS_ACCOUNT_VIEW (self), NULL);
+
+	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (self));
+	if (gtk_tree_selection_get_selected (sel, &model, &iter)) {
+		gtk_tree_model_get (model, &iter,
+				    NAME_COLUMN, &account_name,
+				    -1);
+	}
+
+	return account_name;
+}

@@ -150,7 +150,35 @@ on_selection_changed (GtkTreeSelection *sel, ModestAccountViewWindow *self)
 static void
 on_remove_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 {
-	g_message (__FUNCTION__);
+	TnyPlatformFactory *fact;
+	ModestAccountViewWindowPrivate *priv;
+	ModestAccountMgr *account_mgr;
+	ModestAccountView *account_view;
+	gchar *account_name;
+	
+	priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE(self);
+	fact = modest_tny_platform_factory_get_instance ();
+	account_mgr = modest_tny_platform_factory_get_modest_account_mgr_instance (fact);
+
+	account_view = modest_widget_factory_get_account_view (priv->widget_factory);
+	account_name = modest_account_view_get_selected_account (account_view);
+
+	if (account_name) {
+		gboolean removed;
+		GError *err = NULL;
+
+		removed = modest_account_mgr_remove_account (account_mgr,
+							     account_name,
+							     FALSE,
+							     &err);
+		if (removed) {
+			/* Show confirmation dialog */
+			/* Remove from model & reload it */
+		} else {
+			if (err)
+				g_error_free (err);
+		}
+	}
 }
 
 static void
