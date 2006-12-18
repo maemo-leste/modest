@@ -219,54 +219,37 @@ modest_conf_get_bool (ModestConf* self, const gchar* key, GError **err)
 }
 
 
-
-gchar*
-modest_conf_get_string_or_default (ModestConf* self, const gchar* key,
-				   const gchar *defaultval)
+GSList * 
+modest_conf_get_list (ModestConf* self, const gchar* key, ModestConfValueType list_type,
+		      GError **err)
 {
-	ModestConfPrivate *priv;
-	GConfValue *val;
-	const gchar *str;
+       ModestConfPrivate *priv;
+       GConfValueType gconf_type;
+       
+       g_return_val_if_fail (self, NULL);
+       g_return_val_if_fail (key,  NULL);
 
-	g_return_val_if_fail (self, g_strdup(defaultval));
-	g_return_val_if_fail (key,  g_strdup(defaultval));
+       priv = MODEST_CONF_GET_PRIVATE(self);
 
-	priv = MODEST_CONF_GET_PRIVATE(self);
-	val = gconf_client_get (priv->gconf_client, key, NULL);
-
-	if (!val)
-		str = defaultval;
-	else {
-		str = gconf_value_get_string (val);
-		gconf_value_free (val);
-	}
-	
-	return g_strdup (str);
-}
-
-
-gint
-modest_conf_get_int_or_default (ModestConf* self, const gchar* key,
-				gint defaultval)
-{
-	ModestConfPrivate *priv;
-	GConfValue *val;
-	gint retval;
-	
-	g_return_val_if_fail (self, defaultval);
-	g_return_val_if_fail (key,  defaultval);
-
-	priv = MODEST_CONF_GET_PRIVATE(self);
-	val = gconf_client_get (priv->gconf_client, key, NULL);
-
-	if (!val)
-		retval = defaultval;
-	else {
-		retval = gconf_value_get_int (val);
-		gconf_value_free (val);
-	}	
-
-	return retval;
+       switch (list_type) {
+       case MODEST_CONF_VALUE_INT:
+               gconf_type = GCONF_VALUE_INT;
+               break;
+       case MODEST_CONF_VALUE_BOOL:
+               gconf_type = GCONF_VALUE_BOOL;
+               break;
+       case MODEST_CONF_VALUE_FLOAT:
+               gconf_type = GCONF_VALUE_FLOAT;
+               break;
+       case MODEST_CONF_VALUE_STRING:
+               gconf_type = GCONF_VALUE_STRING;
+               break;
+       default:
+               g_printerr ("modest: invalid list type %d requested\n", list_type);
+	       /* FIXME: fill GError */
+	       return NULL;
+       }
+       return gconf_client_get_list (priv->gconf_client, key, gconf_type, err);
 }
 
 
@@ -392,7 +375,7 @@ modest_conf_key_exists (ModestConf* self, const gchar* key, GError **err)
 
 
 gchar*
-modest_conf_key_escape (ModestConf *self, const gchar* key)
+modest_conf_key_escape (const gchar* key)
 {
 	g_return_val_if_fail (key, NULL);
 
@@ -401,7 +384,7 @@ modest_conf_key_escape (ModestConf *self, const gchar* key)
 
 
 gchar*
-modest_conf_key_unescape (ModestConf *self, const gchar* key)
+modest_conf_key_unescape (const gchar* key)
 {
 	g_return_val_if_fail (key, NULL);
 
@@ -425,33 +408,3 @@ modest_conf_on_change (GConfClient *client, guint conn_id, GConfEntry *entry,
 		       key, event);
 }
 
-GSList * 
-modest_conf_get_list (ModestConf* self, const gchar* key, ModestConfValueType list_type, GError **err)
-{
-	ModestConfPrivate *priv;
-	GConfValueType gconf_type;
-	
-	g_return_val_if_fail (self, NULL);
-	g_return_val_if_fail (key,  NULL);
-
-	priv = MODEST_CONF_GET_PRIVATE(self);
-
-	switch (list_type) {
-	case MODEST_CONF_VALUE_INT:
-		gconf_type = GCONF_VALUE_INT;
-		break;
-	case MODEST_CONF_VALUE_BOOL:
-		gconf_type = GCONF_VALUE_BOOL;
-		break;
-	case MODEST_CONF_VALUE_FLOAT:
-		gconf_type = GCONF_VALUE_FLOAT;
-		break;
-	case MODEST_CONF_VALUE_STRING:
-		gconf_type = GCONF_VALUE_STRING;
-		break;
-	default:
-		return NULL;
-	}
-
-	return gconf_client_get_list (priv->gconf_client, key, gconf_type, err);
-}

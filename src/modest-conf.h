@@ -195,6 +195,22 @@ gboolean     modest_conf_set_bool    (ModestConf* self, const gchar* key, gboole
 				      GError **err);
 
 
+/** 
+ * modest_conf_get_list:
+ * @self: a ModestConf instance
+ * @key: the key of the value to retrieve
+ * @list_type: the type of the elements of the list
+ * @err: a GError ptr, or NULL to ignore.
+ * 
+ * get a list of values from the configuration system
+ *  
+ * Returns: a list with the values for the key, or NULL in case of error or
+ * if the list is empty; @err gives details in case of error
+ */
+GSList *     modest_conf_get_list    (ModestConf* self, const gchar* key, 
+				      ModestConfValueType list_type, GError **err);
+
+
 /**
  * modest_conf_list_subkeys:
  * @self: a ModestConf instance
@@ -205,7 +221,7 @@ gboolean     modest_conf_set_bool    (ModestConf* self, const gchar* key, gboole
  * 
  * Returns: a newly allocated list or NULL in case of error
  * the returned GSList must be freed by the caller
- * @err gives details in case of error
+ * @err might give details in case of error
  */
 GSList*     modest_conf_list_subkeys    (ModestConf* self, const gchar* key,
 					GError **err);
@@ -220,7 +236,7 @@ GSList*     modest_conf_list_subkeys    (ModestConf* self, const gchar* key,
  * attempts to remove @key and all its subkeys
  * 
  * Returns: TRUE if succeeded or FALSE in case of error.
- * @err gives details in case of error
+ * @err might give details in case of error
  */
 gboolean   modest_conf_remove_key    (ModestConf* self, const gchar* key, GError **err);
 
@@ -241,26 +257,27 @@ gboolean   modest_conf_key_exists   (ModestConf* self, const gchar* key, GError 
 
 /**
  * modest_conf_key_escape:
- * @self: a ModestConf instance. Not used, but for consistency with other ModestConf funcs
  * @str: a string to escape
  *
  * returns an escaped version of @str, ie. something suitable as a key
+ * This is a *class* function, and therefore does not require a ModestConf
+ * instance
  * 
  * Returns: a newly allocated string with the escaped version
  */
-gchar* modest_conf_key_escape (ModestConf *self, const gchar* str);
+gchar* modest_conf_key_escape (const gchar* str);
 
 
 /**
  * modest_conf_key_escape:
- * @self: a ModestConf instance. Not used, but for consistency with other ModestConf funcs
  * @str: a string to escape
  *
- * returns an unescaped version of @str
+ * returns an unescaped version of @str. This is a *class* function, and
+ * therefore does not require a ModestConf instance
  * 
  * Returns: a newly allocated string with the unescaped version
  */
-gchar* modest_conf_key_unescape (ModestConf *self, const gchar* str);
+gchar* modest_conf_key_unescape (const gchar* str);
 
 
 G_END_DECLS
