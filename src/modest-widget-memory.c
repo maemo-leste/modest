@@ -47,7 +47,7 @@ static gchar*
 get_keyname (ModestConf *conf, const gchar *name, const gchar *param)
 {
 	gchar *esc_name, *keyname;
-	esc_name = modest_conf_key_escape (conf, name);
+	esc_name = modest_conf_key_escape (name);
 
 	keyname = g_strdup_printf ("%s/%s/%s",
 				   MODEST_CONF_WIDGET_NAMESPACE, 
@@ -61,7 +61,7 @@ static gchar*
 get_keyname_with_type (ModestConf *conf, const gchar *name, guint type, const gchar *param)
 {
 	gchar *esc_name, *keyname;
-	esc_name = modest_conf_key_escape (conf, name);
+	esc_name = modest_conf_key_escape (name);
 
 	keyname = g_strdup_printf ("%s/%s/%s_%d",
 				   MODEST_CONF_WIDGET_NAMESPACE, 
