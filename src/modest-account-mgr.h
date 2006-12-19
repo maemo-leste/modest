@@ -112,7 +112,7 @@ ModestAccountMgr*        modest_account_mgr_new            (ModestConf *modest_c
 /**
  * modest_account_mgr_add_account:
  * @self: a ModestAccountMgr instance
- * @name: the name of the account to create
+ * @name: name (id) of the account, which is a valid UTF8 string that does not contain '/'
  * @store_name: the store account (ie. POP/IMAP)
  * @transport_name: the transport account (ie. sendmail/SMTP)
  * @err: a GError ptr, or NULL to ignore.
@@ -132,7 +132,7 @@ gboolean        modest_account_mgr_add_account    (ModestAccountMgr *self,
 /**
  * modest_account_mgr_add_server_account:
  * @self: a ModestAccountMgr instance
- * @name: name (id) of the account
+ * @name: name (id) of the account, which is a valid UTF8 string that does not contain '/'
  * @hostname: the hostname
  * @username: the username
  * @password: the password

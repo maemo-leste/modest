@@ -391,6 +391,13 @@ modest_conf_key_unescape (const gchar* key)
 	return gconf_unescape_key (key, strlen(key));
 }
 
+gboolean
+modest_conf_key_is_valid (const gchar* key)
+{
+	return gconf_valid_key (key, NULL);
+}
+
+
 
 
 static void

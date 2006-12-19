@@ -34,7 +34,7 @@
 
 /* ----------------------- Defines ---------------------- */
 
-#define TEST_MODEST_ACCOUNT_NAME  "modest-unit-tests-account"
+#define TEST_MODEST_ACCOUNT_NAME  "modest-unit-tests-àccount"
 
 /* ------------------ Global variables ------------------ */
 
@@ -45,7 +45,6 @@ static ModestAccountMgr *account_mgr = NULL;
 static void
 fx_setup_default_account_mgr ()
 {
-  int argc = 0;
   ModestConf *conf = NULL;
 
   g_type_init ();
@@ -244,7 +243,7 @@ START_TEST (test_add_exists_remove_account_invalid)
 
 	/* Test 3*/
 	result = modest_account_mgr_add_account (account_mgr,
-						 "ïnválid_accountñ_nÄméç",
+						 "ïnválid//accountñ//nÄméç",
 						 "store_account",
 						 "transport_account",
 						 NULL);
@@ -275,15 +274,15 @@ START_TEST (test_add_exists_remove_account_invalid)
 		     "FALSE when passing a NULL account name");
 
 	/* Test 6 */
-	result = modest_account_mgr_add_server_account (account_mgr,
-							"ïnválid_accountñ_nÄméç",
-							"hostname",
-							"username",
-							"password",
-							"proto");
-	fail_unless (!result,
-		     "modest_account_mgr_add_server_account does not return " \
-		     "FALSE when passing an invalid account name");
+ 	result = modest_account_mgr_add_server_account (account_mgr, 
+ 							"ïnválid//accountñ//nÄméç",
+ 							"hostname", 
+ 							"username", 
+ 							"password", 
+ 							"proto"); 
+ 	fail_unless (!result, 
+ 		     "modest_account_mgr_add_server_account does not return " \
+ 		     "FALSE when passing an invalid account name"); 
 
 	/* Test 7 */
 	result = modest_account_mgr_remove_account (account_mgr,

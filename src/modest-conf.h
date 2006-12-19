@@ -255,13 +255,27 @@ gboolean   modest_conf_remove_key    (ModestConf* self, const gchar* key, GError
 gboolean   modest_conf_key_exists   (ModestConf* self, const gchar* key, GError **err);
 
 
+
+/**
+ * modest_conf_key_valid:
+ * @str: some key
+ *
+ * check whether @str is a valid key in the config system
+ * This is a *class* function, and therefore does not require a ModestConf
+ * instance
+ * 
+ * Returns: TRUE if it is valid, FALSE otherwise
+ */
+gboolean modest_conf_key_is_valid (const gchar* str);
+
+
 /**
  * modest_conf_key_escape:
  * @str: a string to escape
  *
  * returns an escaped version of @str, ie. something suitable as a key
  * This is a *class* function, and therefore does not require a ModestConf
- * instance
+ * instance. Note: this for is invidual elements in a key
  * 
  * Returns: a newly allocated string with the escaped version
  */
@@ -274,6 +288,7 @@ gchar* modest_conf_key_escape (const gchar* str);
  *
  * returns an unescaped version of @str. This is a *class* function, and
  * therefore does not require a ModestConf instance
+ * Note: this for is invidual elements in a key
  * 
  * Returns: a newly allocated string with the unescaped version
  */
