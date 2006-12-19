@@ -562,8 +562,8 @@ modest_mail_operation_update_account (ModestMailOperation *mail_op,
 	TnyList *folders;
 	TnyFolderStoreQuery *query;
 
-	g_return_if_fail (MODEST_IS_MAIL_OPERATION (mail_op));
-	g_return_if_fail (TNY_IS_STORE_ACCOUNT(store_account));
+	g_return_val_if_fail (MODEST_IS_MAIL_OPERATION (mail_op), FALSE);
+	g_return_val_if_fail (TNY_IS_STORE_ACCOUNT(store_account), FALSE);
 
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(mail_op);
 
