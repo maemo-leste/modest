@@ -48,26 +48,13 @@
 #include "modest-tny-platform-factory.h"
 #include "modest-marshal.h"
 #include "modest-formatter.h"
+#include "modest-error.h"
 
 /* 'private'/'protected' functions */
 static void modest_mail_operation_class_init (ModestMailOperationClass *klass);
 static void modest_mail_operation_init       (ModestMailOperation *obj);
 static void modest_mail_operation_finalize   (GObject *obj);
 
-#define MODEST_ERROR modest_error_quark ()
-
-typedef enum _ModestMailOperationErrorCode ModestMailOperationErrorCode;
-enum _ModestMailOperationErrorCode {
-        MODEST_MAIL_OPERATION_ERROR_BAD_ACCOUNT,
-        MODEST_MAIL_OPERATION_ERROR_MISSING_PARAMETER,
-	MODEST_MAIL_OPERATION_ERROR_OPERATION_CANCELED,
-
-	MODEST_MAIL_OPERATION_NUM_ERROR_CODES
-};
-
-static void     set_error            (ModestMailOperation *mail_operation, 
-				      ModestMailOperationErrorCode error_code,
-				      const gchar *fmt, ...);
 static void     status_update_cb     (TnyFolder *folder, 
 				      const gchar *what, 
 				      gint status, 
@@ -247,15 +234,18 @@ modest_mail_operation_send_new_mail (ModestMailOperation *mail_op,
 	TnyMsg *new_msg;
 	TnyHeader *header;
 	gchar *content_type;
+	ModestMailOperationPrivate *priv = NULL;
 
 	g_return_if_fail (MODEST_IS_MAIL_OPERATION (mail_op));
 	g_return_if_fail (TNY_IS_TRANSPORT_ACCOUNT (transport_account));
 
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(mail_op);
+
 	/* Check parametters */
 	if (to == NULL) {
-		set_error (mail_op,
-			   MODEST_MAIL_OPERATION_ERROR_MISSING_PARAMETER,
-			   _("Error trying to send a mail. You need to set almost one a recipient"));
+		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
+			     MODEST_MAIL_OPERATION_ERROR_MISSING_PARAMETER,
+			     _("Error trying to send a mail. You need to set almost one a recipient"));
 		return;
 	}
 
@@ -491,9 +481,9 @@ folder_refresh_cb (TnyFolder *folder, gboolean canceled, GError **err, gpointer 
 		helper->failed++;
 	} else if (canceled) {
 		helper->canceled++;
-		set_error (mail_op,
-			   MODEST_MAIL_OPERATION_ERROR_OPERATION_CANCELED,
-			   _("Error trying to refresh folder %s. Operation canceled"),
+		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
+			     MODEST_MAIL_OPERATION_ERROR_OPERATION_CANCELED,
+			     _("Error trying to refresh folder %s. Operation canceled"),
 			   tny_folder_get_name (folder));
 	} else {
 		priv->done++;
@@ -968,32 +958,6 @@ modest_error_quark (void)
 		err_q = g_quark_from_static_string ("modest-error-quark");
 	
 	return err_q;
-}
-
-
-static void 
-set_error (ModestMailOperation *mail_op, 
-	   ModestMailOperationErrorCode error_code,
-	   const gchar *fmt, ...)
-{
-	ModestMailOperationPrivate *priv;
-	GError* error;
-	va_list args;
-	gchar* orig;
-
-	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(mail_op);
-
-	va_start (args, fmt);
-
-	orig = g_strdup_vprintf(fmt, args);
-	error = g_error_new (MODEST_ERROR, error_code, orig);
-
-	va_end (args);
-
-	if (priv->error)
-		g_object_unref (priv->error);
-
-	priv->error = error;
 }
 
 static void

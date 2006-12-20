@@ -66,7 +66,8 @@ modest_SOURCES=\
 	modest-tny-platform-factory.c \
 	modest-tny-platform-factory.h \
 	modest-formatter.c \
-	modest-formatter.h
+	modest-formatter.h \
+	modest-error.h
 
 modest_LDADD = 						\
 	$(MODEST_GSTUFF_LIBS) 				\

@@ -246,6 +246,9 @@ button_box_new (ModestAccountViewWindow *self)
 	priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE(self);
 	
 	button_box   = gtk_vbutton_box_new ();
+	gtk_button_box_set_spacing (GTK_BUTTON_BOX (button_box), 6);
+	gtk_button_box_set_layout (GTK_BUTTON_BOX (button_box), 
+				   GTK_BUTTONBOX_START);
 
 	add_button    = gtk_button_new_from_stock(GTK_STOCK_ADD);
 	remove_button = gtk_button_new_from_stock(GTK_STOCK_REMOVE);
