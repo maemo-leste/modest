@@ -433,8 +433,8 @@ void
 strip_prefix_from_elements (GSList * lst, guint n)
 {
 	while (lst) {
-		memmove (lst->data + n, lst->data,
-			 strlen(lst->data) + 1);
+		memmove (lst->data, lst->data + n,
+			 strlen(lst->data) - n + 1);
 		lst = lst->next;
 	}
 }
