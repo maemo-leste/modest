@@ -266,10 +266,9 @@ send_mail (ModestEditMsgWindow *self)
 	body  = gtk_text_buffer_get_text (buf, &b, &e,
 					  FALSE); /* free this one */
 
-	/* FIXME: Code added just for testing. The transport_account
-	   should be provided by the account manager, maybe using
-	   _get_current_account () or _get_default_account
-	   (TRANSPORT_ACCOUNT). These methods do not exist currently. */
+	/* FIXME: Code added just for testing. The final version will
+	   use the send queue provided by tinymail and some
+	   classifier */
 	{
 		TnyList *accounts;
 		TnyIterator *iter;
@@ -289,6 +288,11 @@ send_mail (ModestEditMsgWindow *self)
 			return;
 		}
 		transport_account = TNY_TRANSPORT_ACCOUNT (tny_iterator_get_current(iter));
+		g_object_ref (transport_account);
+
+		tny_list_foreach (accounts, (GFunc) g_object_unref, NULL);
+		g_object_unref (G_OBJECT (accounts));
+		g_object_unref (G_OBJECT (iter));
 	}
 
 	mail_operation = modest_mail_operation_new ();
@@ -298,7 +302,8 @@ send_mail (ModestEditMsgWindow *self)
 					     from, to, cc, bcc,
 					     subject, body, NULL);
 	/* Clean up */
-	g_object_unref (mail_operation);
+	g_object_unref (G_OBJECT (mail_operation));
+	g_object_unref (G_OBJECT (transport_account));
 	g_free (from);
 	g_free (body);
 }
@@ -439,15 +444,14 @@ on_delete_event (GtkWidget *widget, GdkEvent *event, ModestEditMsgWindow *self)
 
 GtkWidget*
 modest_edit_msg_window_new (ModestWidgetFactory *factory,
-			    ModestEditType type, TnyMsg *msg)
+			    ModestEditType type)
 {
 	GObject *obj;
 	ModestEditMsgWindowPrivate *priv;
 
 	g_return_val_if_fail (factory, NULL);
 	g_return_val_if_fail (type < MODEST_EDIT_TYPE_NUM, NULL);
-	g_return_val_if_fail (!(type==MODEST_EDIT_TYPE_NEW && msg), NULL); 
-	g_return_val_if_fail (!(type!=MODEST_EDIT_TYPE_NEW && !msg), NULL); 	
+/* 	g_return_val_if_fail (!(type!=MODEST_EDIT_TYPE_NEW && !msg), NULL); 	 */
 	
 	obj = g_object_new(MODEST_TYPE_EDIT_MSG_WINDOW, NULL);
 	priv = MODEST_EDIT_MSG_WINDOW_GET_PRIVATE(obj);
@@ -465,32 +469,46 @@ modest_edit_msg_window_new (ModestWidgetFactory *factory,
 
 	g_signal_connect (G_OBJECT(obj), "delete-event",
 			  G_CALLBACK(on_delete_event), obj);
-	
-	if (msg) {
-		/* Testing code. Should be into a set_msg method */
-		TnyHeader *header;
-		GtkTextBuffer *buf;
-
-		header = tny_msg_get_header (msg);
-		gtk_entry_set_text (GTK_ENTRY(priv->to_field),
-				    tny_header_get_to (header));
-		gtk_entry_set_text (GTK_ENTRY(priv->cc_field),
-				    tny_header_get_cc (header));
-		gtk_entry_set_text (GTK_ENTRY(priv->bcc_field),
-				    tny_header_get_bcc (header));
-		gtk_entry_set_text (GTK_ENTRY(priv->subject_field),
-				    tny_header_get_subject (header));	
-
-		buf = gtk_text_view_get_buffer (GTK_TEXT_VIEW(priv->msg_body));
-		gtk_text_buffer_set_text (buf,
-					  (const gchar *) modest_tny_msg_actions_find_body (msg, TRUE),
-					  -1);
-
-		/* TODO: lower priority, select in the From: combo to
-		   the value that comes from msg */
-
-		/* TODO: set attachments */
-	}
 
 	return GTK_WIDGET (obj);
+}
+
+void
+modest_edit_msg_window_set_msg (ModestEditMsgWindow *self, TnyMsg *msg)
+{
+	TnyHeader *header;
+	GtkTextBuffer *buf;
+	const gchar *to, *cc, *bcc, *subject;
+	ModestEditMsgWindowPrivate *priv;
+
+	g_return_if_fail (MODEST_IS_EDIT_MSG_WINDOW (self));
+	g_return_if_fail (TNY_IS_MSG (msg));
+
+	priv = MODEST_EDIT_MSG_WINDOW_GET_PRIVATE (self);
+
+	header = tny_msg_get_header (msg);
+	to      = tny_header_get_to (header);
+	cc      = tny_header_get_cc (header);
+	bcc     = tny_header_get_bcc (header);
+	subject = tny_header_get_subject (header);
+
+	if (to)
+		gtk_entry_set_text (GTK_ENTRY(priv->to_field),  to);
+	if (cc)
+		gtk_entry_set_text (GTK_ENTRY(priv->cc_field),  cc);
+	if (bcc)
+		gtk_entry_set_text (GTK_ENTRY(priv->bcc_field), bcc);
+	if (subject)
+		gtk_entry_set_text (GTK_ENTRY(priv->subject_field), subject);	
+	
+	buf = gtk_text_view_get_buffer (GTK_TEXT_VIEW(priv->msg_body));
+	gtk_text_buffer_set_text (buf,
+				  (const gchar *) modest_tny_msg_actions_find_body (msg, TRUE),
+				  -1);
+
+	/* TODO: lower priority, select in the From: combo to the
+	   value that comes from msg <- not sure, should it be
+	   allowed? */
+	
+	/* TODO: set attachments */
 }

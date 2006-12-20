@@ -75,7 +75,16 @@ typedef enum _ModestEditType {
 GType        modest_edit_msg_window_get_type    (void) G_GNUC_CONST;
 
 GtkWidget*   modest_edit_msg_window_new         (ModestWidgetFactory *factory,
-						 ModestEditType type,
+						 ModestEditType type);
+
+/**
+ * modest_edit_msg_window_set_msg:
+ * @self: a #ModestEditMsgWindow
+ * @msg: a #TnyMsg
+ * 
+ * shows the message @msg in a #ModestEditMsgWindow
+ **/
+void         modest_edit_msg_window_set_msg     (ModestEditMsgWindow *self, 
 						 TnyMsg *msg);
 G_END_DECLS
 

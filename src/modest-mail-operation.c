@@ -484,7 +484,7 @@ folder_refresh_cb (TnyFolder *folder, gboolean canceled, GError **err, gpointer 
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 			     MODEST_MAIL_OPERATION_ERROR_OPERATION_CANCELED,
 			     _("Error trying to refresh folder %s. Operation canceled"),
-			   tny_folder_get_name (folder));
+			     tny_folder_get_name (folder));
 	} else {
 		priv->done++;
 	}
@@ -526,6 +526,12 @@ update_folders_cb (TnyFolderStore *self, TnyList *list, GError **err, gpointer u
 
 	mail_op = MODEST_MAIL_OPERATION (user_data);
 	priv    = MODEST_MAIL_OPERATION_GET_PRIVATE (mail_op);
+
+	if (*err) {
+		priv->error = g_error_copy (*err);
+		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
+		return;
+	}
 
 	priv->total = tny_list_get_length (list);
 	priv->done = 0;

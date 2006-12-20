@@ -223,8 +223,7 @@ on_menu_new_message (ModestMainWindow *self, guint action, GtkWidget *widget)
 	priv  = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
 
 	msg_win = modest_edit_msg_window_new (priv->widget_factory,
-					      MODEST_EDIT_TYPE_NEW,
-					      NULL);
+					      MODEST_EDIT_TYPE_NEW);
 	gtk_widget_show (msg_win);
 }
 
@@ -273,8 +272,9 @@ get_msg_cb (TnyFolder *folder, TnyMsg *msg, GError **err, gpointer user_data)
 		
 		/* Show edit window */
 		msg_win = modest_edit_msg_window_new (priv->widget_factory,
-						      edit_type,
-						      new_msg);
+						      edit_type);
+		modest_edit_msg_window_set_msg (MODEST_EDIT_MSG_WINDOW (msg_win),
+						new_msg);
 		gtk_widget_show (msg_win);
 		
 		/* Clean and go on */
