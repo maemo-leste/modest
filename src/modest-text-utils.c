@@ -213,16 +213,18 @@ modest_text_utils_derived_subject (const gchar *subject, const gchar *prefix)
 	}
 }
 
-gchar *
+gchar*
 modest_text_utils_remove_address (const gchar *address_list, const gchar *address)
 {
-	char *dup, *token, *ptr, *result;
+	gchar *dup, *token, *ptr, *result;
 	GString *filtered_emails;
 
-	if (!address_list)
-		return NULL;
+	g_return_val_if_fail (address_list, NULL);
 
-	/* Search for substring */
+	if (!address)
+		return g_strdup (address_list);
+	
+	/* search for substring */
 	if (!strstr ((const char *) address_list, (const char *) address))
 		return g_strdup (address_list);
 
