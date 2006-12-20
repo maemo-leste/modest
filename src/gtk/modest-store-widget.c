@@ -220,13 +220,13 @@ imap_pop_configuration (ModestStoreWidget *self)
 	gtk_label_set_markup (GTK_LABEL(label),_("<b>Security</b>"));
 	gtk_box_pack_start (GTK_BOX(box), label, FALSE, FALSE, 0);
 
+	priv->security = modest_widget_factory_get_combo_box (priv->factory, 
+							      MODEST_COMBO_BOX_TYPE_SECURITY_PROTOS);
 	hbox = gtk_hbox_new (FALSE, 6);
 	label = gtk_label_new(NULL);
 	gtk_label_set_text (GTK_LABEL(label),_("Connection type:"));
 	gtk_box_pack_start (GTK_BOX(hbox), label, FALSE, FALSE, 0);
-	gtk_box_pack_start (GTK_BOX(hbox),  modest_widget_factory_get_combo_box
-			    (priv->factory, MODEST_COMBO_BOX_TYPE_SECURITY_PROTOS),
-			    FALSE, FALSE,0);
+	gtk_box_pack_start (GTK_BOX(hbox),  priv->security, FALSE, FALSE,0);
 	gtk_box_pack_start (GTK_BOX(box), hbox, FALSE, FALSE, 0);
 	
 	hbox = gtk_hbox_new (FALSE, 6);
@@ -347,9 +347,8 @@ modest_store_widget_get_proto (ModestStoreWidget *self)
 {
 	ModestStoreWidgetPrivate *priv;
 
-	g_return_val_if_fail (self, FALSE);
+	g_return_val_if_fail (self, NULL);
 	priv = MODEST_STORE_WIDGET_GET_PRIVATE(self);
 
 	return priv->proto;
 }
-

@@ -782,6 +782,29 @@ modest_account_mgr_set_bool (ModestAccountMgr * self, const gchar * name,
 	return retval;
 }
 
+void 
+modest_account_mgr_set_list (ModestAccountMgr *self,
+			     const gchar *name,
+			     const gchar *key,
+			     GSList *val,
+			     ModestConfValueType list_type,
+			     gboolean server_account,
+			     GError **err)
+{
+	ModestAccountMgrPrivate *priv;
+	gchar *keyname;
+	
+	g_return_if_fail (self);
+	g_return_if_fail (name);
+	g_return_if_fail (key);
+	g_return_if_fail (val);
+
+	keyname = get_account_keyname (name, key, server_account);
+	
+	priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
+	modest_conf_set_list (priv->modest_conf, keyname, val, list_type, err);
+	g_free (keyname);
+}
 
 gboolean
 modest_account_mgr_account_exists (ModestAccountMgr * self, const gchar * name,

@@ -29,6 +29,7 @@
 
 #include <gconf/gconf-client.h>
 #include <string.h>
+#include <glib/gi18n.h>
 #include "modest-conf.h"
 #include "modest-marshal.h"
 
@@ -37,6 +38,8 @@ static void   modest_conf_init           (ModestConf *obj);
 static void   modest_conf_finalize       (GObject *obj);
 static void   modest_conf_on_change	 (GConfClient *client, guint conn_id,
 					  GConfEntry *entry, gpointer data);
+static GConfValueType modest_conf_type_to_gconf_type (ModestConfValueType value_type, 
+						      GError **err);
 /* list my signals */
 enum {
 	KEY_CHANGED_SIGNAL,
@@ -225,31 +228,19 @@ modest_conf_get_list (ModestConf* self, const gchar* key, ModestConfValueType li
 {
        ModestConfPrivate *priv;
        GConfValueType gconf_type;
+       GSList *retval = NULL;
        
        g_return_val_if_fail (self, NULL);
        g_return_val_if_fail (key,  NULL);
 
        priv = MODEST_CONF_GET_PRIVATE(self);
 
-       switch (list_type) {
-       case MODEST_CONF_VALUE_INT:
-               gconf_type = GCONF_VALUE_INT;
-               break;
-       case MODEST_CONF_VALUE_BOOL:
-               gconf_type = GCONF_VALUE_BOOL;
-               break;
-       case MODEST_CONF_VALUE_FLOAT:
-               gconf_type = GCONF_VALUE_FLOAT;
-               break;
-       case MODEST_CONF_VALUE_STRING:
-               gconf_type = GCONF_VALUE_STRING;
-               break;
-       default:
-               g_printerr ("modest: invalid list type %d requested\n", list_type);
-	       /* FIXME: fill GError */
-	       return NULL;
-       }
-       return gconf_client_get_list (priv->gconf_client, key, gconf_type, err);
+       gconf_type = modest_conf_type_to_gconf_type (list_type, err);
+
+       if (!err)
+	       retval = gconf_client_get_list (priv->gconf_client, key, gconf_type, err);
+
+       return retval;
 }
 
 
@@ -315,6 +306,24 @@ modest_conf_set_bool (ModestConf* self, const gchar* key, gboolean val,
 }
 
 
+void 
+modest_conf_set_list (ModestConf* self, const gchar* key, 
+		      GSList *val, ModestConfValueType list_type, 
+		      GError **err)
+{
+       ModestConfPrivate *priv;
+       GConfValueType gconf_type;
+       
+       g_return_if_fail (self);
+       g_return_if_fail (key);
+
+       priv = MODEST_CONF_GET_PRIVATE(self);
+
+       gconf_type = modest_conf_type_to_gconf_type (list_type, err);
+
+       if (!err)
+	       gconf_client_set_list (priv->gconf_client, key, gconf_type, val, err);
+}
 
 
 GSList*
@@ -415,3 +424,27 @@ modest_conf_on_change (GConfClient *client, guint conn_id, GConfEntry *entry,
 		       key, event);
 }
 
+static GConfValueType
+modest_conf_type_to_gconf_type (ModestConfValueType value_type, GError **err)
+{
+	GConfValueType gconf_type;
+
+	switch (value_type) {
+	case MODEST_CONF_VALUE_INT:
+		gconf_type = GCONF_VALUE_INT;
+		break;
+	case MODEST_CONF_VALUE_BOOL:
+		gconf_type = GCONF_VALUE_BOOL;
+		break;
+	case MODEST_CONF_VALUE_FLOAT:
+		gconf_type = GCONF_VALUE_FLOAT;
+		break;
+	case MODEST_CONF_VALUE_STRING:
+		gconf_type = GCONF_VALUE_STRING;
+		break;
+	default:
+		/* FIXME: use MODEST_ERROR, and error code */
+		*err = g_error_new_literal (0, 0, _("Invalid list value type"));
+	}
+	return gconf_type;
+}

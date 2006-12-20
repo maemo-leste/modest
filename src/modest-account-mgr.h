@@ -327,6 +327,27 @@ gboolean	modest_account_mgr_get_bool       (ModestAccountMgr *self,
 						   GError **err);
 
 /**
+ * modest_account_mgr_get_list:
+ * @self: a ModestAccountMgr instance
+ * @name: the name of the account
+ * @key: the key of the value to get
+ * @list_type: the type of the members of the list
+ * @server_account: if TRUE, this is a server account
+ * @err: a GError ptr, or NULL to ignore.
+ * 
+ * get a config list of values of type @list_type of an account
+ *
+ * Returns: a newly allocated list of elements
+ * @err gives details in case of error
+ */
+GSList*	        modest_account_mgr_get_list       (ModestAccountMgr *self,
+						   const gchar *name,
+						   const gchar *key,
+						   ModestConfValueType list_type,
+						   gboolean server_account,
+						   GError **err);
+
+/**
  * modest_account_mgr_set_account_string:
  * @self: a ModestAccountMgr instance
  * @name: the name of the account
@@ -387,24 +408,23 @@ gboolean	modest_account_mgr_set_bool       (ModestAccountMgr *self,
 						   gboolean server_account,
 						   GError **err);
 
-
 /**
- * modest_account_mgr_get_list:
+ * modest_account_mgr_set_list:
  * @self: a ModestAccountMgr instance
  * @name: the name of the account
- * @key: the key of the value to get
+ * @key: the key of the value to set
+ * @key: the list with the values to set
  * @list_type: the type of the members of the list
  * @server_account: if TRUE, this is a server account
  * @err: a GError ptr, or NULL to ignore.
  * 
- * get a config list of values of type @list_type of an account
- *
- * Returns: a newly allocated list of elements
+ * set a config list of values of type @list_type of an account
  * @err gives details in case of error
  */
-GSList*	        modest_account_mgr_get_list       (ModestAccountMgr *self,
+void	        modest_account_mgr_set_list       (ModestAccountMgr *self,
 						   const gchar *name,
 						   const gchar *key,
+						   GSList *val,
 						   ModestConfValueType list_type,
 						   gboolean server_account,
 						   GError **err);

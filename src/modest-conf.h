@@ -196,19 +196,19 @@ gboolean     modest_conf_set_bool    (ModestConf* self, const gchar* key, gboole
 
 
 /** 
- * modest_conf_get_list:
+ * modest_conf_set_list:
  * @self: a ModestConf instance
  * @key: the key of the value to retrieve
+ * @val: the list with the values to set
  * @list_type: the type of the elements of the list
  * @err: a GError ptr, or NULL to ignore.
  * 
- * get a list of values from the configuration system
- *  
- * Returns: a list with the values for the key, or NULL in case of error or
- * if the list is empty; @err gives details in case of error
+ * set a list of values in the configuration system
+ * @err gives details in case of error
  */
-GSList *     modest_conf_get_list    (ModestConf* self, const gchar* key, 
-				      ModestConfValueType list_type, GError **err);
+void         modest_conf_set_list    (ModestConf* self, const gchar* key, 
+				      GSList *val, ModestConfValueType list_type, 
+				      GError **err);
 
 
 /**
