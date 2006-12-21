@@ -386,11 +386,11 @@
     </para>
   </chapter>
   
-  <chapter>
+  <reference>
     <title>Object Index</title>
-  </chapter>
+  </reference>
   
-  <chapter>
+  <reference>
     <title>API Reference</title>
       <chapter id="src">
         <title>Modest</title>
@@ -425,5 +425,5 @@
       <chapter id="widgets">
         <title>Widgets</title>
       </chapter>
-  </chapter>
+  </reference>
 </book>
