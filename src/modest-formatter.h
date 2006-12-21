@@ -60,9 +60,110 @@ GType modest_formatter_get_type (void);
 
 ModestFormatter* modest_formatter_new (const gchar *content_type);
 
+/**
+ * modest_formatter_cite:
+ * @self: a #ModestFormatter
+ * @part: a non-NULL #TnyMimePart with the body of the original message
+ * @header: a non-NULL #TnyHeader of the original message
+ * 
+ * Creates a new message with a text body made from the body of the
+ * original message cited. This function is locale-sensitive.
+ *
+ * Example of cited message:
+ * <programlisting><para>
+ * Original message
+ * ----------------
+ * Date: 1970/01/01
+ * From: somemail@modest.org
+ * Body: "This is the body of the text"
+ * </para><para>
+ * Cited message
+ * -------------
+ * Body:
+ * On 1970/01/01 somemail@modest.org wrote:
+ * This is the body of the text
+ * </para></programlisting>
+ *
+ * Returns: a newly formatted #TnyMsg or NULL in case of error
+ **/
 TnyMsg * modest_formatter_cite   (ModestFormatter *self, TnyMimePart *part, TnyHeader *header);
+
+
+/**
+ * modest_formatter_quote:
+ * @self: a #ModestFormatter
+ * @part: a non-NULL #TnyMimePart with the body of the original message
+ * @header: a non-NULL #TnyHeader of the original message
+ * 
+ * Creates a new message with a text body made from the body of the
+ * original message quoted. This function is locale-sensitive.
+ *
+ * Example of cited message:
+ * <programlisting><para>
+ * Original message
+ * ----------------
+ * Date: 1970/01/01
+ * From: somemail@modest.org
+ * Body: "This is the body of the text"
+ * </para><para>
+ * Quoted message
+ * -------------
+ * Body:
+ * On 1970/01/01 somemail@modest.org wrote:
+ * > This is the body of the text
+ * </para></programlisting>
+ *
+ * Returns: a newly formatted #TnyMsg or NULL in case of error
+ **/
 TnyMsg * modest_formatter_quote  (ModestFormatter *self, TnyMimePart *part, TnyHeader *header);
+
+
+/**
+ * modest_formatter_inline:
+ * @self: a #ModestFormatter
+ * @part: a non-NULL #TnyMimePart with the body of the original message
+ * @header: a non-NULL #TnyHeader of the original message
+ * 
+ * Creates a new message with a text body made from the body of the
+ * original message inlined ready to be forwarded. This function is
+ * locale-sensitive.
+ *
+ * Example of cited message:
+ * <programlisting><para>
+ * Original message
+ * ----------------
+ * Date: 1970/01/01
+ * From: somemail@modest.org
+ * To: mymail@modest.org
+ * Subject: Mail subject
+ * Body: "This is the body of the text"
+ * </para><para>
+ * Inlined message
+ * -------------
+ * Body:
+ * -----Forwarded Message-----
+ * From: somemail@modest.org
+ * Sent: 1970/01/01
+ * To: mymail@modest.org
+ * Subject: Fw: Mail subject
+ * On 1970/01/01 somemail@modest.org wrote:
+ * This is the body of the text
+ * </para></programlisting>
+ *
+ * Returns: a newly formatted #TnyMsg or NULL in case of error
+ **/
 TnyMsg * modest_formatter_inline (ModestFormatter *self, TnyMimePart *part, TnyHeader *header);
+
+/**
+ * modest_formatter_attach:
+ * @self: a #ModestFormatter
+ * @part: a non-NULL #TnyMimePart with the body of the original message
+ * @header: a non-NULL #TnyHeader of the original message
+ * 
+ * Creates a new message with the original message as attachment
+ *
+ * Returns: a newly formatted #TnyMsg or NULL in case of error
+ **/
 TnyMsg * modest_formatter_attach (ModestFormatter *self, TnyMimePart *part, TnyHeader *header);
 
 

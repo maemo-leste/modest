@@ -129,6 +129,11 @@ modest_formatter_do (ModestFormatter *self,
 	gchar *body_text = NULL, *txt = NULL;
 	ModestFormatterPrivate *priv;
 
+	g_return_val_if_fail (self, NULL);
+	g_return_val_if_fail (body, NULL);
+	g_return_val_if_fail (header, NULL);
+	g_return_val_if_fail (func, NULL);
+
 	/* Build new part */
 	new_msg = TNY_MSG (tny_camel_msg_new ());
 	body_text = extract_text (self, body);

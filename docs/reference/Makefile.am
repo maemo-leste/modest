@@ -88,12 +88,14 @@ GTKDOC_LIBS=\
 	${top_builddir}/src/modest-marshal.o \
 	${top_builddir}/src/modest-tny-account-store.o \
 	${top_builddir}/src/modest-mail-operation.o \
+	${top_builddir}/src/modest-mail-operation-queue.o \
 	${top_builddir}/src/modest-tny-msg-actions.o \
 	${top_builddir}/src/modest-tny-attachment.o \
 	${top_builddir}/src/modest-tny-stream-gtkhtml.o \
 	${top_builddir}/src/modest-widget-factory.o \
 	${top_builddir}/src/modest-widget-memory.o \
 	${top_builddir}/src/modest-icon-factory.o \
+	${top_builddir}/src/modest-formatter.o \
 	${top_builddir}/src/modest-text-utils.o
 
 # This includes the standard gtk-doc make rules, copied by gtkdocize.
