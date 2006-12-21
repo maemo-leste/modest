@@ -163,7 +163,13 @@ modest_mail_operation_class_init (ModestMailOperationClass *klass)
 
 	g_type_class_add_private (gobject_class, sizeof(ModestMailOperationPrivate));
 
-	/* signal definitions go here, e.g.: */
+	/**
+	 * ModestMailOperation::progress-changed
+	 * @self: the #MailOperation that emits the signal
+	 * @user_data: user data set when the signal handler was connected
+	 *
+	 * Emitted when the progress of a mail operation changes
+	 */
  	signals[PROGRESS_CHANGED_SIGNAL] = 
 		g_signal_new ("progress_changed",
 			      G_TYPE_FROM_CLASS (gobject_class),
@@ -353,15 +359,6 @@ create_reply_forward_mail (TnyMsg *msg, const gchar *from, gboolean is_reply, gu
 	return new_msg;
 }
 
-/**
- * modest_mail_operation_create_forward_mail:
- * @msg: a valid #TnyMsg instance
- * @forward_type: the type of forwarded message
- * 
- * creates a forwarded message from an existing one
- * 
- * Returns: a new #TnyMsg, or NULL in case of error
- **/
 TnyMsg* 
 modest_mail_operation_create_forward_mail (TnyMsg *msg, 
 					   const gchar *from,
@@ -386,16 +383,6 @@ modest_mail_operation_create_forward_mail (TnyMsg *msg,
 	return new_msg;
 }
 
-/**
- * modest_mail_operation_create_reply_mail:
- * @msg: a valid #TnyMsg instance
- * @reply_type: the format of the new message
- * @reply_mode: the mode of reply, to the sender only, to a mail list or to all
- * 
- * creates a new message to reply to an existing one
- * 
- * Returns: Returns: a new #TnyMsg, or NULL in case of error
- **/
 TnyMsg* 
 modest_mail_operation_create_reply_mail (TnyMsg *msg, 
 					 const gchar *from,
@@ -579,9 +566,9 @@ modest_mail_operation_get_status (ModestMailOperation *mail_op)
 {
 	ModestMailOperationPrivate *priv;
 
-/* 	g_return_val_if_fail (mail_op, MODEST_MAIL_OPERATION_STATUS_INVALID); */
-/* 	g_return_val_if_fail (MODEST_IS_MAIL_OPERATION (mail_op),  */
-/* 			      MODEST_MAIL_OPERATION_STATUS_INVALID); */
+	g_return_val_if_fail (mail_op, MODEST_MAIL_OPERATION_STATUS_INVALID);
+	g_return_val_if_fail (MODEST_IS_MAIL_OPERATION (mail_op),
+			      MODEST_MAIL_OPERATION_STATUS_INVALID);
 
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (mail_op);
 	return priv->status;
@@ -592,17 +579,18 @@ modest_mail_operation_get_error (ModestMailOperation *mail_op)
 {
 	ModestMailOperationPrivate *priv;
 
-/* 	g_return_val_if_fail (mail_op, NULL); */
-/* 	g_return_val_if_fail (MODEST_IS_MAIL_OPERATION (mail_op), NULL); */
+	g_return_val_if_fail (mail_op, NULL);
+	g_return_val_if_fail (MODEST_IS_MAIL_OPERATION (mail_op), NULL);
 
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (mail_op);
 	return priv->error;
 }
 
-void 
-modest_mail_operation_cancel (ModestMailOperation *mail_op)
+gboolean 
+modest_mail_operation_cancel (ModestMailOperation *self)
 {
 	/* TODO */
+	return TRUE;
 }
 
 guint 
@@ -722,6 +710,7 @@ modest_mail_operation_rename_folder (ModestMailOperation *mail_op,
 {
 	g_return_if_fail (MODEST_IS_MAIL_OPERATION (mail_op));
 	g_return_if_fail (TNY_IS_FOLDER_STORE (folder));
+	g_return_if_fail (name);
 
 	/* FIXME: better error handling */
 	if (strrchr (name, '/') != NULL)

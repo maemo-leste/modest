@@ -86,7 +86,7 @@ struct _ModestMailOperationClass {
 	GObjectClass parent_class;
 
 	/* Signals */
-	void (*progress_changed) (ModestMailOperation *mail_op, gpointer user_data);
+	void (*progress_changed) (ModestMailOperation *self, gpointer user_data);
 };
 
 /* member functions */
@@ -96,11 +96,40 @@ GType        modest_mail_operation_get_type    (void) G_GNUC_CONST;
 ModestMailOperation*    modest_mail_operation_new         (void);
 
 /* fill in other public functions, eg.: */
-void    modest_mail_operation_send_mail       (ModestMailOperation *mail_op,
+
+/**
+ * modest_mail_operation_send_mail:
+ * @self: a #ModestMailOperation
+ * @transport_account: a non-NULL #TnyTransportAccount
+ * @msg: a non-NULL #TnyMsg
+ * 
+ * Sends and already existing message using the provided
+ * #TnyTransportAccount. This operation is synchronous, so the
+ * #ModestMailOperation should not be added to any
+ * #ModestMailOperationQueue
+ **/
+void    modest_mail_operation_send_mail       (ModestMailOperation *self,
 					       TnyTransportAccount *transport_account,
 					       TnyMsg* msg);
 
-void    modest_mail_operation_send_new_mail   (ModestMailOperation *mail_op,
+/**
+ * modest_mail_operation_send_new_mail:
+ * @self: a #ModestMailOperation
+ * @transport_account: a non-NULL #TnyTransportAccount
+ * @from: the email address of the mail sender
+ * @to: a non-NULL email address of the mail receiver
+ * @cc: a comma-separated list of email addresses where to send a carbon copy
+ * @bcc: a comma-separated list of email addresses where to send a blind carbon copy
+ * @subject: the subject of the new mail
+ * @body: the body of the new mail
+ * @attachments_list: a #GList of attachments, each attachment must be a #TnyMimePart
+ * 
+ * Sends a new mail message using the provided
+ * #TnyTransportAccount. This operation is synchronous, so the
+ * #ModestMailOperation should not be added to any
+ * #ModestMailOperationQueue
+ **/
+void    modest_mail_operation_send_new_mail   (ModestMailOperation *self,
 					       TnyTransportAccount *transport_account,
 					       const gchar *from,
 					       const gchar *to,
@@ -110,66 +139,257 @@ void    modest_mail_operation_send_new_mail   (ModestMailOperation *mail_op,
 					       const gchar *body,
 					       const GList *attachments_list);
 
+/**
+ * modest_mail_operation_create_forward_mail:
+ * @msg: a valid #TnyMsg instance
+ * @forward_type: the type of formatting used to create the forwarded message
+ * 
+ * Creates a forwarded message from an existing one
+ * 
+ * Returns: a new #TnyMsg, or NULL in case of error
+ **/
 TnyMsg* modest_mail_operation_create_forward_mail (TnyMsg *msg, 
 						   const gchar *from,
 						   ModestMailOperationForwardType forward_type);
 
+/**
+ * modest_mail_operation_create_reply_mail:
+ * @msg: a valid #TnyMsg instance
+ * @reply_type: the type of formatting used to create the reply message
+ * @reply_mode: the mode of reply: to the sender only, to a mail list or to all
+ * 
+ * Creates a new message to reply to an existing one
+ * 
+ * Returns: Returns: a new #TnyMsg, or NULL in case of error
+ **/
 TnyMsg* modest_mail_operation_create_reply_mail    (TnyMsg *msg, 
 						    const gchar *from,
 						    ModestMailOperationReplyType reply_type,
 						    ModestMailOperationReplyMode reply_mode);
 
-gboolean      modest_mail_operation_update_account (ModestMailOperation *mail_op,
+/**
+ * modest_mail_operation_update_account:
+ * @self: a #ModestMailOperation
+ * @store_account: a #TnyStoreAccount
+ * 
+ * Asynchronously refreshes the root folders of the given store
+ * account. The caller should add the #ModestMailOperation to a
+ * #ModestMailOperationQueue and then free it. The caller will be
+ * notified by the "progress_changed" signal each time the progress of
+ * the operation changes.
+ * Example
+ * <informalexample><programlisting>
+ * queue = modest_tny_platform_factory_get_modest_mail_operation_queue_instance (fact)
+ * mail_op = modest_mail_operation_new ();
+ * g_signal_connect (G_OBJECT (mail_op), "progress_changed", G_CALLBACK (on_progress_changed), queue);
+ * if (modest_mail_operation_update_account (mail_op, account))
+ * {
+ *     modest_mail_operation_queue_add (queue, mail_op);
+ * }
+ * g_object_unref (G_OBJECT (mail_op));
+ * </programlisting></informalexample>
+ * 
+ * Returns: TRUE if the mail operation could be started, or FALSE otherwise
+ **/
+gboolean      modest_mail_operation_update_account (ModestMailOperation *self,
 						    TnyStoreAccount *store_account);
 
 /* Functions that perform store operations */
-TnyFolder*    modest_mail_operation_create_folder  (ModestMailOperation *mail_op,
+
+/**
+ * modest_mail_operation_create_folder:
+ * @self: a #ModestMailOperation
+ * @parent: the #TnyFolderStore which is the parent of the new folder
+ * @name: the non-NULL new name for the new folder
+ * 
+ * Creates a new folder as a children of a existing one. If the store
+ * account supports subscriptions this method also sets the new folder
+ * as subscribed. This operation is synchronous, so the
+ * #ModestMailOperation should not be added to any
+ * #ModestMailOperationQueue
+ * 
+ * Returns: a newly created #TnyFolder or NULL in case of error.
+ **/
+TnyFolder*    modest_mail_operation_create_folder  (ModestMailOperation *self,
 						    TnyFolderStore *parent,
 						    const gchar *name);
 
-void          modest_mail_operation_remove_folder  (ModestMailOperation *mail_op,
+/**
+ * modest_mail_operation_remove_folder:
+ * @self: a #ModestMailOperation
+ * @folder: a #TnyFolder
+ * @remove_to_trash: TRUE to move it to trash or FALSE to delete
+ * permanently
+ * 
+ * Removes a folder. This operation is synchronous, so the
+ * #ModestMailOperation should not be added to any
+ * #ModestMailOperationQueue
+ **/
+void          modest_mail_operation_remove_folder  (ModestMailOperation *self,
 						    TnyFolder *folder,
 						    gboolean remove_to_trash);
 
-void          modest_mail_operation_rename_folder  (ModestMailOperation *mail_op,
+/**
+ * modest_mail_operation_rename_folder:
+ * @self: a #ModestMailOperation
+ * @folder: a #TnyFolder
+ * @name: a non-NULL name without "/"
+ * 
+ * Renames a given folder with the provided new name. This operation
+ * is synchronous, so the #ModestMailOperation should not be added to
+ * any #ModestMailOperationQueue
+ **/
+void          modest_mail_operation_rename_folder  (ModestMailOperation *self,
 						    TnyFolder *folder, 
 						    const gchar *name);
 
-void          modest_mail_operation_move_folder    (ModestMailOperation *mail_op,
+/**
+ * modest_mail_operation_move_folder:
+ * @self: a #ModestMailOperation
+ * @folder: a #TnyFolder
+ * @parent: the new parent of the folder as #TnyFolderStore
+ * 
+ * Sets the given @folder as child of a provided #TnyFolderStore. This
+ * operation moves also all the messages contained in the folder and
+ * all of his children folders with their messages as well. This
+ * operation is synchronous, so the #ModestMailOperation should not be
+ * added to any #ModestMailOperationQueue
+ **/
+void          modest_mail_operation_move_folder    (ModestMailOperation *self,
 						    TnyFolder *folder, 
 						    TnyFolderStore *parent);
 
-void          modest_mail_operation_copy_folder    (ModestMailOperation *mail_op,
+/**
+ * modest_mail_operation_copy_folder:
+ * @self: a #ModestMailOperation
+ * @folder: a #TnyFolder
+ * @parent: a #TnyFolderStore that will be the parent of the copied folder
+ * 
+ * Sets a copy of the given @folder as child of a provided
+ * #TnyFolderStore. This operation copies also all the messages
+ * contained in the folder and all of his children folders with their
+ * messages as well. This operation is synchronous, so the
+ * #ModestMailOperation should not be added to any
+ * #ModestMailOperationQueue
+ **/
+void          modest_mail_operation_copy_folder    (ModestMailOperation *self,
 						    TnyFolder *folder, 
 						    TnyFolderStore *parent);
 
 /* Functions that performs msg operations */
 
-void          modest_mail_operation_copy_msg       (ModestMailOperation *mail_op,
+/**
+ * modest_mail_operation_copy_msg:
+ * @self: a #ModestMailOperation
+ * @header: the #TnyHeader of the message to copy
+ * @folder: the #TnyFolder where the message will be copied
+ * 
+ * Copies a message from its current folder to another one. This
+ * operation is synchronous, so the #ModestMailOperation should not be
+ * added to any #ModestMailOperationQueue
+ **/
+void          modest_mail_operation_copy_msg       (ModestMailOperation *self,
 						    TnyHeader *header, 
 						    TnyFolder *folder);
 
-void          modest_mail_operation_move_msg       (ModestMailOperation *mail_op,
+/**
+ * modest_mail_operation_move_msg:
+ * @self: a #ModestMailOperation
+ * @header: the #TnyHeader of the message to move
+ * @folder: the #TnyFolder where the message will be moved
+ * 
+ * Moves a message from its current folder to another one. This
+ * operation is synchronous, so the #ModestMailOperation should not be
+ * added to any #ModestMailOperationQueue
+ **/
+void          modest_mail_operation_move_msg       (ModestMailOperation *self,
 						    TnyHeader *header, 
 						    TnyFolder *folder);
 
-void          modest_mail_operation_remove_msg     (ModestMailOperation *mail_op,
+/**
+ * modest_mail_operation_remove_msg:
+ * @self: a #ModestMailOperation
+ * @header: the #TnyHeader of the message to move
+ * @remove_to_trash: TRUE to move it to trash or FALSE to delete it
+ * permanently
+ * 
+ * Deletes a message. This operation is synchronous, so the
+ * #ModestMailOperation should not be added to any
+ * #ModestMailOperationQueue
+ **/
+void          modest_mail_operation_remove_msg     (ModestMailOperation *self,
 						    TnyHeader *header,
 						    gboolean remove_to_trash);
 
 /* Functions to control mail operations */
-guint     modest_mail_operation_get_task_done      (ModestMailOperation *mail_op);
+/**
+ * modest_mail_operation_get_task_done:
+ * @self: a #ModestMailOperation
+ * 
+ * Gets the amount of work done for a given mail operation. This
+ * amount of work is an absolute value.
+ * 
+ * Returns: the amount of work completed
+ **/
+guint     modest_mail_operation_get_task_done      (ModestMailOperation *self);
 
-guint     modest_mail_operation_get_task_total     (ModestMailOperation *mail_op);
+/**
+ * modest_mail_operation_get_task_total:
+ * @self: a #ModestMailOperation
+ * 
+ * Gets the total amount of work that must be done to complete a given
+ * mail operation. This amount of work is an absolute value.
+ * 
+ * Returns: the total required amount of work
+ **/
+guint     modest_mail_operation_get_task_total     (ModestMailOperation *self);
 
 
-gboolean                  modest_mail_operation_is_finished (ModestMailOperation *mail_op);
+/**
+ * modest_mail_operation_is_finished:
+ * @self: a #ModestMailOperation
+ * 
+ * Checks if the operation is finished. A #ModestMailOperation is
+ * finished if it's in any of the following states:
+ * MODEST_MAIL_OPERATION_STATUS_SUCCESS,
+ * MODEST_MAIL_OPERATION_STATUS_FAILED,
+ * MODEST_MAIL_OPERATION_STATUS_CANCELED or
+ * MODEST_MAIL_OPERATION_STATUS_FINISHED_WITH_ERRORS
+ * 
+ * Returns: TRUE if the operation is finished, FALSE otherwise
+ **/
+gboolean                  modest_mail_operation_is_finished (ModestMailOperation *self);
 
-ModestMailOperationStatus modest_mail_operation_get_status  (ModestMailOperation *mail_op);
+/**
+ * modest_mail_operation_is_finished:
+ * @self: a #ModestMailOperation
+ * 
+ * Gets the current status of the given mail operation
+ *
+ * Returns: the current status or MODEST_MAIL_OPERATION_STATUS_INVALID in case of error
+ **/
+ModestMailOperationStatus modest_mail_operation_get_status  (ModestMailOperation *self);
 
-const GError*             modest_mail_operation_get_error   (ModestMailOperation *mail_op);
+/**
+ * modest_mail_operation_get_error:
+ * @self: a #ModestMailOperation
+ * 
+ * Gets the error associated to the mail operation if exists
+ * 
+ * Returns: the #GError associated to the #ModestMailOperation if it
+ * exists or NULL otherwise
+ **/
+const GError*             modest_mail_operation_get_error   (ModestMailOperation *self);
 
-void                      modest_mail_operation_cancel      (ModestMailOperation *mail_op);
+/**
+ * modest_mail_operation_cancel:
+ * @self: a #ModestMailOperation
+ *
+ * Cancels an active mail operation
+ * 
+ * Returns: TRUE if the operation was succesfully canceled, FALSE otherwise
+ **/
+gboolean                  modest_mail_operation_cancel      (ModestMailOperation *self);
 
 G_END_DECLS
 
