@@ -2,7 +2,7 @@
 ModestTnyMsgView
 
 <!-- ##### SECTION Short_Description ##### -->
-
+A widget that displays the body of a message
 
 <!-- ##### SECTION Long_Description ##### -->
 <para>

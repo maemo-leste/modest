@@ -2,7 +2,7 @@
 modest-widget-memory
 
 <!-- ##### SECTION Short_Description ##### -->
-
+An object that stores preferences of the widgets
 
 <!-- ##### SECTION Long_Description ##### -->
 <para>

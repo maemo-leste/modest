@@ -2,7 +2,7 @@
 ModestTransportWidget
 
 <!-- ##### SECTION Short_Description ##### -->
-
+A widget that shows the server information for a transport account
 
 <!-- ##### SECTION Long_Description ##### -->
 <para>

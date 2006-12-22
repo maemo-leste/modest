@@ -2,7 +2,7 @@
 ModestEditMsgWindow
 
 <!-- ##### SECTION Short_Description ##### -->
-
+A window used for composing messages
 
 <!-- ##### SECTION Long_Description ##### -->
 <para>

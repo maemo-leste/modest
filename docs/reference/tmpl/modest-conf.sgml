@@ -2,7 +2,7 @@
 ModestConf
 
 <!-- ##### SECTION Short_Description ##### -->
-
+A wrapper to the underlying configuration system (currently GConf)
 
 <!-- ##### SECTION Long_Description ##### -->
 <para>

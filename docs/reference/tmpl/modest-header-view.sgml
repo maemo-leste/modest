@@ -2,7 +2,7 @@
 ModestHeaderView
 
 <!-- ##### SECTION Short_Description ##### -->
-
+A widget that shows a list of email headers
 
 <!-- ##### SECTION Long_Description ##### -->
 <para>

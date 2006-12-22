@@ -2,7 +2,7 @@
 ModestMailOperation
 
 <!-- ##### SECTION Short_Description ##### -->
-
+An object that performs mail operations
 
 <!-- ##### SECTION Long_Description ##### -->
 <para>

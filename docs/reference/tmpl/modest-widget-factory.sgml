@@ -2,7 +2,7 @@
 ModestWidgetFactory
 
 <!-- ##### SECTION Short_Description ##### -->
-
+A factory that creates the widgets of the UI
 
 <!-- ##### SECTION Long_Description ##### -->
 <para>

@@ -2,7 +2,7 @@
 modest-proto
 
 <!-- ##### SECTION Short_Description ##### -->
-
+An object that provides lists with the supported email protocols
 
 <!-- ##### SECTION Long_Description ##### -->
 <para>

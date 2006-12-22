@@ -2,7 +2,7 @@
 ModestMailOperationQueue
 
 <!-- ##### SECTION Short_Description ##### -->
-
+An object that stores a queue of #ModestMailOperation
 
 <!-- ##### SECTION Long_Description ##### -->
 <para>

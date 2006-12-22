@@ -2,7 +2,7 @@
 ModestMainWindow
 
 <!-- ##### SECTION Short_Description ##### -->
-
+A widget that shows the Modest main window
 
 <!-- ##### SECTION Long_Description ##### -->
 <para>

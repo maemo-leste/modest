@@ -2,7 +2,7 @@
 ModestFolderView
 
 <!-- ##### SECTION Short_Description ##### -->
-
+A widget that shows the list of folders of email accounts
 
 <!-- ##### SECTION Long_Description ##### -->
 <para>
