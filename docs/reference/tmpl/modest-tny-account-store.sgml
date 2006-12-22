@@ -36,36 +36,38 @@ ModestTnyAccountStore
 
 </para>
 
-@modesttnyaccountstore: the object which received the signal.
-@arg1: 
+@: 
+@: 
 
 <!-- ##### SIGNAL ModestTnyAccountStore::password-requested ##### -->
 <para>
 
 </para>
 
-@modesttnyaccountstore: the object which received the signal.
-@arg1: 
-@arg2: 
-@arg3: 
+@: 
+@: 
+@: 
+@: 
+@Param5: 
 
 <!-- ##### SIGNAL ModestTnyAccountStore::account-update ##### -->
 <para>
 
 </para>
 
-@modesttnyaccountstore: the object which received the signal.
-@arg1: 
+@: 
+@: 
 
 <!-- ##### SIGNAL ModestTnyAccountStore::password-requested ##### -->
 <para>
 
 </para>
 
-@modesttnyaccountstore: the object which received the signal.
-@arg1: 
-@arg2: 
-@arg3: 
+@: 
+@: 
+@: 
+@: 
+@Param5: 
 
 <!-- ##### FUNCTION modest_tny_account_store_new ##### -->
 <para>

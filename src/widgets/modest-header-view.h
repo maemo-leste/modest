@@ -165,7 +165,6 @@ gboolean modest_header_view_set_columns (ModestHeaderView *self,
 /**
  * modest_header_view_get_columns:
  * @self: a ModestHeaderView instance
- * @folder: a TnyFolder object
  * 
  * get the GtkTreeColumns for this ModestHeaderView. Each one of the
  * tree columns will have property  than can be retrieved

@@ -453,6 +453,26 @@ modest.glade
 @err: 
 @Returns: 
 
+<!-- ##### FUNCTION modest_conf_get_int_or_default ##### -->
+<para>
+
+</para>
+
+@self: 
+@key: 
+@defaultval: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_conf_get_string_or_default ##### -->
+<para>
+
+</para>
+
+@self: 
+@key: 
+@defaultval: 
+@Returns: 
+
 <!-- ##### FUNCTION modest_edit_window_new ##### -->
 <para>
 
@@ -617,6 +637,93 @@ modest.glade
 @attachments_list: 
 @Returns: 
 
+<!-- ##### FUNCTION modest_ui_editor_window_set_bcc_header ##### -->
+<para>
+
+</para>
+
+@bcc: 
+@window_data: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_ui_editor_window_set_body ##### -->
+<para>
+
+</para>
+
+@body: 
+@window_data: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_ui_editor_window_set_cc_header ##### -->
+<para>
+
+</para>
+
+@cc: 
+@window_data: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_ui_editor_window_set_subject_header ##### -->
+<para>
+
+</para>
+
+@subject: 
+@window_data: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_ui_editor_window_set_to_header ##### -->
+<para>
+
+</para>
+
+@to: 
+@window_data: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_ui_editor_window_update_attachments ##### -->
+<para>
+
+</para>
+
+@window_data: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_ui_new_edit_window ##### -->
+<para>
+
+</para>
+
+@ui: 
+@to: 
+@cc: 
+@bcc: 
+@subject: 
+@body: 
+@att: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_ui_new_editor_window ##### -->
+<para>
+
+</para>
+
+@modest_ui: 
+@user_data: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_ui_new_viewer_window ##### -->
+<para>
+
+</para>
+
+@modest_ui: 
+@msg_view: 
+@msg: 
+@user_data: 
+@Returns: 
+
 <!-- ##### FUNCTION modest_ui_show_edit_window ##### -->
 <para>
 
@@ -629,6 +736,14 @@ modest.glade
 @subject: 
 @body: 
 @att: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_ui_show_main_window ##### -->
+<para>
+
+</para>
+
+@ui: 
 @Returns: 
 
 <!-- ##### FUNCTION modest_window_mgr_find_by_id ##### -->

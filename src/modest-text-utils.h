@@ -53,7 +53,7 @@ gchar* modest_text_utils_derived_subject (const gchar *subject,
 
 /**
  * modest_text_utils_quote:
- * @buf: a string which contains the message to quote
+ * @text: a string which contains the message to quote
  * @from: the sender of the original message
  * @sent_date: sent date/time of the original message
  * @limit: specifies the maximum characters per line in the quoted text
@@ -126,7 +126,7 @@ gchar*   modest_text_utils_remove_address (const gchar *address_list,
  * 
  * Returns: a newly allocated string containing the html
  */
-gchar*  modest_text_utils_convert_to_html (const gchar *data);
+gchar*  modest_text_utils_convert_to_html (const gchar *txt);
 
 
 /**

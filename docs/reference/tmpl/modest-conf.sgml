@@ -48,18 +48,18 @@ ModestConf
 
 </para>
 
-@: 
-@: 
-@: 
+@modestconf: the object which received the signal.
+@arg1: 
+@arg2: 
 
 <!-- ##### SIGNAL ModestConf::key-changed ##### -->
 <para>
 
 </para>
 
-@: 
-@: 
-@: 
+@modestconf: the object which received the signal.
+@arg1: 
+@arg2: 
 
 <!-- ##### FUNCTION modest_conf_new ##### -->
 <para>
@@ -102,25 +102,15 @@ ModestConf
 @Returns: 
 
 
-<!-- ##### FUNCTION modest_conf_get_string_or_default ##### -->
+<!-- ##### FUNCTION modest_conf_get_list ##### -->
 <para>
 
 </para>
 
 @self: 
 @key: 
-@defaultval: 
-@Returns: 
-
-
-<!-- ##### FUNCTION modest_conf_get_int_or_default ##### -->
-<para>
-
-</para>
-
-@self: 
-@key: 
-@defaultval: 
+@list_type: 
+@err: 
 @Returns: 
 
 
@@ -160,6 +150,18 @@ ModestConf
 @Returns: 
 
 
+<!-- ##### FUNCTION modest_conf_set_list ##### -->
+<para>
+
+</para>
+
+@self: 
+@key: 
+@val: 
+@list_type: 
+@err: 
+
+
 <!-- ##### FUNCTION modest_conf_list_subkeys ##### -->
 <para>
 
@@ -193,12 +195,20 @@ ModestConf
 @Returns: 
 
 
+<!-- ##### FUNCTION modest_conf_key_is_valid ##### -->
+<para>
+
+</para>
+
+@str: 
+@Returns: 
+
+
 <!-- ##### FUNCTION modest_conf_key_escape ##### -->
 <para>
 
 </para>
 
-@self: 
 @str: 
 @Returns: 
 
@@ -208,20 +218,7 @@ ModestConf
 
 </para>
 
-@self: 
 @str: 
-@Returns: 
-
-
-<!-- ##### FUNCTION modest_conf_get_list ##### -->
-<para>
-
-</para>
-
-@self: 
-@key: 
-@list_type: 
-@err: 
 @Returns: 
 
 

@@ -1535,19 +1535,6 @@ modest_proto_auth_protos
 </SECTION>
 
 <SECTION>
-<FILE>modest-widget-memory</FILE>
-modest_widget_memory_save
-modest_widget_memory_restore
-</SECTION>
-
-<SECTION>
-<FILE>modest-tny-msg-actions</FILE>
-modest_tny_msg_actions_find_body_part
-modest_tny_msg_actions_find_nth_part
-modest_tny_msg_actions_find_body
-</SECTION>
-
-<SECTION>
 <FILE>modest-marshal</FILE>
 modest_marshal_VOID__POINTER_POINTER
 modest_marshal_VOID__POINTER_POINTER_POINTER
@@ -1560,6 +1547,19 @@ modest_marshal_VOID__STRING_BOOL
 modest_marshal_VOID__STRING_STRING_BOOLEAN
 modest_marshal_VOID__STRING_STRING_BOOL
 modest_marshal_VOID__STRING_POINTER_POINTER_POINTER
+</SECTION>
+
+<SECTION>
+<FILE>modest-widget-memory</FILE>
+modest_widget_memory_save
+modest_widget_memory_restore
+</SECTION>
+
+<SECTION>
+<FILE>modest-tny-msg-actions</FILE>
+modest_tny_msg_actions_find_body_part
+modest_tny_msg_actions_find_nth_part
+modest_tny_msg_actions_find_body
 </SECTION>
 
 <SECTION>
@@ -1761,19 +1761,6 @@ modest_proto_auth_protos
 </SECTION>
 
 <SECTION>
-<FILE>modest-widget-memory</FILE>
-modest_widget_memory_save
-modest_widget_memory_restore
-</SECTION>
-
-<SECTION>
-<FILE>modest-tny-msg-actions</FILE>
-modest_tny_msg_actions_find_body_part
-modest_tny_msg_actions_find_nth_part
-modest_tny_msg_actions_find_body
-</SECTION>
-
-<SECTION>
 <FILE>modest-marshal</FILE>
 modest_marshal_VOID__POINTER_POINTER
 modest_marshal_VOID__POINTER_POINTER_POINTER
@@ -1786,6 +1773,19 @@ modest_marshal_VOID__STRING_BOOL
 modest_marshal_VOID__STRING_STRING_BOOLEAN
 modest_marshal_VOID__STRING_STRING_BOOL
 modest_marshal_VOID__STRING_POINTER_POINTER_POINTER
+</SECTION>
+
+<SECTION>
+<FILE>modest-widget-memory</FILE>
+modest_widget_memory_save
+modest_widget_memory_restore
+</SECTION>
+
+<SECTION>
+<FILE>modest-tny-msg-actions</FILE>
+modest_tny_msg_actions_find_body_part
+modest_tny_msg_actions_find_nth_part
+modest_tny_msg_actions_find_body
 </SECTION>
 
 <SECTION>

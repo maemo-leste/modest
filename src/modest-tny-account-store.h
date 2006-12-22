@@ -83,7 +83,7 @@ GType  modest_tny_account_store_get_type   (void) G_GNUC_CONST;
 
 /**
  * modest_tny_account_store_new:
- * @modest_acc_mgr: account manager to use for new account store
+ * @account_mgr: account manager to use for new account store
  *
  * creates new (tinymail) account store for account manager modest_acc_mgr
  *

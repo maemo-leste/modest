@@ -63,7 +63,7 @@ ModestPair* modest_pair_new           (gpointer first, gpointer second, gboolean
  * destroy a ModestPair instance. If it was created with own==TRUE, the elements
  * will be g_free'd as well. If pair==NULL, nothing will be done.
  */
-void        modest_pair_destroy       (ModestPair *pair);
+void        modest_pair_destroy       (ModestPair *self);
 
 
 /**

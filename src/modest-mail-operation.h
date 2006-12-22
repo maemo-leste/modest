@@ -107,7 +107,7 @@ ModestMailOperation*    modest_mail_operation_new         (void);
  * #TnyTransportAccount. This operation is synchronous, so the
  * #ModestMailOperation should not be added to any
  * #ModestMailOperationQueue
- **/
+  **/
 void    modest_mail_operation_send_mail       (ModestMailOperation *self,
 					       TnyTransportAccount *transport_account,
 					       TnyMsg* msg);
@@ -128,7 +128,7 @@ void    modest_mail_operation_send_mail       (ModestMailOperation *self,
  * #TnyTransportAccount. This operation is synchronous, so the
  * #ModestMailOperation should not be added to any
  * #ModestMailOperationQueue
- **/
+  **/
 void    modest_mail_operation_send_new_mail   (ModestMailOperation *self,
 					       TnyTransportAccount *transport_account,
 					       const gchar *from,

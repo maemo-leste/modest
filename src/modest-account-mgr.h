@@ -413,7 +413,7 @@ gboolean	modest_account_mgr_set_bool       (ModestAccountMgr *self,
  * @self: a ModestAccountMgr instance
  * @name: the name of the account
  * @key: the key of the value to set
- * @key: the list with the values to set
+ * @val: the list with the values to set
  * @list_type: the type of the members of the list
  * @server_account: if TRUE, this is a server account
  * @err: a GError ptr, or NULL to ignore.

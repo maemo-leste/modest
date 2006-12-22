@@ -18,9 +18,3 @@ which gnome-autogen.sh || {
     exit 1
 }
 USE_GNOME2_MACROS=1 . gnome-autogen.sh
-
-gtkdocize || {
-    echo -n "**Error**: gtkdoc not found. Please install"
-    exit 1
-}
-

@@ -65,7 +65,6 @@ GType        modest_tny_platform_factory_get_type    (void) G_GNUC_CONST;
 
 /**
  * modest_tny_platform_factory_get_instance:
- * @void: 
  * 
  * Gets a new instance of the platform factory if it is the first call
  * to the function, or the current one otherwise. This object is

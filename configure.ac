@@ -111,7 +111,7 @@ AC_HELP_STRING([--enable-docs],
 esac],[build_docs=false])
 AM_CONDITIONAL(BUILD_DOCS, test x$build_docs = xtrue)
 
-dnl ## is the check package installed?
+dnl ## gtk-doc
 GTK_DOC_CHECK([1.0])
 
 

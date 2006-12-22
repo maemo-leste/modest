@@ -30,38 +30,38 @@ ModestAccountMgr
 
 </para>
 
-@modestaccountmgr: the object which received the signal.
-@arg1: 
-@arg2: 
-@arg3: 
+@: 
+@: 
+@: 
+@: 
 
 <!-- ##### SIGNAL ModestAccountMgr::account-removed ##### -->
 <para>
 
 </para>
 
-@modestaccountmgr: the object which received the signal.
-@arg1: 
-@arg2: 
+@: 
+@: 
+@: 
 
 <!-- ##### SIGNAL ModestAccountMgr::account-changed ##### -->
 <para>
 
 </para>
 
-@modestaccountmgr: the object which received the signal.
-@arg1: 
-@arg2: 
-@arg3: 
+@: 
+@: 
+@: 
+@: 
 
 <!-- ##### SIGNAL ModestAccountMgr::account-removed ##### -->
 <para>
 
 </para>
 
-@modestaccountmgr: the object which received the signal.
-@arg1: 
-@arg2: 
+@: 
+@: 
+@: 
 
 <!-- ##### STRUCT ModestServerAccountData ##### -->
 <para>
@@ -247,6 +247,20 @@ ModestAccountMgr
 @Returns: 
 
 
+<!-- ##### FUNCTION modest_account_mgr_get_list ##### -->
+<para>
+
+</para>
+
+@self: 
+@name: 
+@key: 
+@list_type: 
+@server_account: 
+@err: 
+@Returns: 
+
+
 <!-- ##### FUNCTION modest_account_mgr_set_string ##### -->
 <para>
 
@@ -289,7 +303,7 @@ ModestAccountMgr
 @Returns: 
 
 
-<!-- ##### FUNCTION modest_account_mgr_get_list ##### -->
+<!-- ##### FUNCTION modest_account_mgr_set_list ##### -->
 <para>
 
 </para>
@@ -297,7 +311,20 @@ ModestAccountMgr
 @self: 
 @name: 
 @key: 
+@val: 
 @list_type: 
+@server_account: 
+@err: 
+
+
+<!-- ##### FUNCTION modest_account_mgr_unset ##### -->
+<para>
+
+</para>
+
+@self: 
+@name: 
+@key: 
 @server_account: 
 @err: 
 @Returns: 

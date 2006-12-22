@@ -46,7 +46,6 @@
 
 ]>
 
-<!--<book id="index" xmlns:xi="http://www.w3.org/2003/XInclude">-->
 <book id="index">
   <bookinfo>
     <title>modest technical documentation</title>
@@ -388,6 +387,7 @@
   
   <reference>
     <title>Object Index</title>
+      &index-Object-Tree;
   </reference>
   
   <reference>
@@ -421,9 +421,28 @@
       </chapter>
       <chapter id="gtk">
         <title>Gtk</title>
+          &gtk-ModestAccountViewWindow;
+          &gtk-ModestAccountAssistant;
+          &gtk-ModestEditMsgWindow;
+          &gtk-ModestMainWindow;
+          &gtk-ModestStoreWidget;
+          &gtk-modestTransportWidget;
+          &gtk-modestUi;
       </chapter>
       <chapter id="widgets">
         <title>Widgets</title>
+          &widgets-ModestAccountView;
+          &widgets-ModestComboBox;
+          &widgets-ModestFolderView;
+          &widgets-ModestHeaderView;
+          &widgets-ModestMsgView;
+          &widgets-modestToolbar;
       </chapter>
   </reference>
+
+
+  <index>
+    <title>Index</title>
+  </index>
+
 </book>

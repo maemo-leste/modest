@@ -85,9 +85,6 @@ GType        modest_widget_factory_get_type    (void) G_GNUC_CONST;
 
 /**
  * modest_widget_factory_new
- * @conf: a modest conf instance
- * @acc_store: a modest account store instance
- * @acc_mgr: a modest account mgr instance
  *
  * instantiates a ModestWidgetFactory
  *

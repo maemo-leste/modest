@@ -85,7 +85,8 @@ gchar **                  modest_presets_get_providers   (ModestPresets *self, g
  * modest_presets_get_server:
  * @self: a valid ModestPresets instance
  * @provider: name of the provider 
- * @incoming: get the incoming mailserver if TRUE, get the outgoing server otherwise
+ * @incoming_server: get the incoming mailserver if TRUE, get the
+ * outgoing server otherwise
  *
  * get the name of a incoming or outgoing mailserver
  * 
@@ -100,7 +101,8 @@ gchar *                   modest_presets_get_server      (ModestPresets *self,
  * modest_presets_get_info:
  * @self: a valid ModestPresets instance
  * @provider: name of the provider 
- * @incoming: get the incoming mailserver if TRUE, get the outgoing server otherwise
+ * @incoming_server: get the incoming mailserver if TRUE, get the
+ * outgoing server otherwise
  *
  * get information about some incoming or outgoing mailserver
  *

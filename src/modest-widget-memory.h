@@ -37,7 +37,7 @@ G_BEGIN_DECLS
 
 /**
  * modest_widget_memory_save:
- * @self: a ModestConf instance
+ * @conf: a ModestConf instance
  * @widget: the widget to save the settings for
  * @name: the unique name for this widget
  * 
@@ -49,7 +49,7 @@ gboolean modest_widget_memory_save (ModestConf *conf, GObject *widget, const gch
 
 /**
  * modest_widget_memory_restore:
- * @self: a ModestConf instance
+ * @conf: a ModestConf instance
  * @widget: the widget to save the settings for
  * @name: the unique name for this widget
  * 
