@@ -1,0 +1,69 @@
+<!-- ##### SECTION Title ##### -->
+ModestMsgView
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### STRUCT ModestMsgView ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SIGNAL ModestMsgView::attachment-clicked ##### -->
+<para>
+
+</para>
+
+@modestmsgview: the object which received the signal.
+@arg1: 
+
+<!-- ##### SIGNAL ModestMsgView::link-clicked ##### -->
+<para>
+
+</para>
+
+@modestmsgview: the object which received the signal.
+@arg1: 
+
+<!-- ##### SIGNAL ModestMsgView::link-hover ##### -->
+<para>
+
+</para>
+
+@modestmsgview: the object which received the signal.
+@arg1: 
+
+<!-- ##### FUNCTION modest_msg_view_new ##### -->
+<para>
+
+</para>
+
+@tny_msg: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_msg_view_set_message ##### -->
+<para>
+
+</para>
+
+@self: 
+@tny_msg: 
+
+

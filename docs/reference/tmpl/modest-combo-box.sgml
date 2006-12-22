@@ -1,0 +1,54 @@
+<!-- ##### SECTION Title ##### -->
+ModestComboBox
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### STRUCT ModestComboBox ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### FUNCTION modest_combo_box_new ##### -->
+<para>
+
+</para>
+
+@hash: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_combo_box_get_active_id ##### -->
+<para>
+
+</para>
+
+@self: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_combo_box_get_active_display_name ##### -->
+<para>
+
+</para>
+
+@self: 
+@Returns: 
+
+

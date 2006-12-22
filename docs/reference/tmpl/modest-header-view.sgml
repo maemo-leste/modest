@@ -1,0 +1,170 @@
+<!-- ##### SECTION Title ##### -->
+ModestHeaderView
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### MACRO MODEST_HEADER_VIEW_COLUMN ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### ENUM ModestHeaderViewColumn ##### -->
+<para>
+
+</para>
+
+@MODEST_HEADER_VIEW_COLUMN_FROM: 
+@MODEST_HEADER_VIEW_COLUMN_TO: 
+@MODEST_HEADER_VIEW_COLUMN_SUBJECT: 
+@MODEST_HEADER_VIEW_COLUMN_SENT_DATE: 
+@MODEST_HEADER_VIEW_COLUMN_RECEIVED_DATE: 
+@MODEST_HEADER_VIEW_COLUMN_MSGTYPE: 
+@MODEST_HEADER_VIEW_COLUMN_ATTACH: 
+@MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER: 
+@MODEST_HEADER_VIEW_COLUMN_NUM: 
+
+<!-- ##### ENUM ModestHeaderViewStyle ##### -->
+<para>
+
+</para>
+
+@MODEST_HEADER_VIEW_STYLE_NORMAL: 
+@MODEST_HEADER_VIEW_STYLE_COMPACT: 
+@MODEST_HEADER_VIEW_STYLE_NUM: 
+
+<!-- ##### ENUM ModestItemType ##### -->
+<para>
+
+</para>
+
+@MODEST_ITEM_TYPE_MESSAGE: 
+@MODEST_ITEM_TYPE_FOLDER: 
+@MODEST_ITEM_TYPE_NUM: 
+
+<!-- ##### STRUCT ModestHeaderView ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SIGNAL ModestHeaderView::item-not-found ##### -->
+<para>
+
+</para>
+
+@: 
+@: 
+
+<!-- ##### SIGNAL ModestHeaderView::message-selected ##### -->
+<para>
+
+</para>
+
+@: 
+@: 
+
+<!-- ##### SIGNAL ModestHeaderView::status-update ##### -->
+<para>
+
+</para>
+
+@: 
+@: 
+@: 
+@: 
+
+<!-- ##### FUNCTION modest_header_view_new ##### -->
+<para>
+
+</para>
+
+@folder: 
+@columns: 
+@style: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_header_view_set_folder ##### -->
+<para>
+
+</para>
+
+@self: 
+@folder: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_header_view_get_folder ##### -->
+<para>
+
+</para>
+
+@self: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_header_view_set_columns ##### -->
+<para>
+
+</para>
+
+@self: 
+@columns: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_header_view_get_columns ##### -->
+<para>
+
+</para>
+
+@self: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_header_view_set_style ##### -->
+<para>
+
+</para>
+
+@self: 
+@style: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_header_view_get_style ##### -->
+<para>
+
+</para>
+
+@self: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_header_view_get_selected_headers ##### -->
+<para>
+
+</para>
+
+@self: 
+@Returns: 
+
+

@@ -1,0 +1,57 @@
+<!-- ##### SECTION Title ##### -->
+modest-tny-store-actions
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### FUNCTION modest_tny_store_actions_create_folder ##### -->
+<para>
+
+</para>
+
+@parent: 
+@name: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_tny_store_actions_remove_folder ##### -->
+<para>
+
+</para>
+
+@folder: 
+
+
+<!-- ##### FUNCTION modest_tny_store_actions_rename_folder ##### -->
+<para>
+
+</para>
+
+@folder: 
+@name: 
+
+
+<!-- ##### FUNCTION modest_tny_store_actions_move_folder ##### -->
+<para>
+
+</para>
+
+@folder: 
+@parent: 
+
+

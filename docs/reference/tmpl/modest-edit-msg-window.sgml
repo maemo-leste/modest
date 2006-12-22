@@ -1,0 +1,57 @@
+<!-- ##### SECTION Title ##### -->
+ModestEditMsgWindow
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### STRUCT ModestEditMsgWindow ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### ENUM ModestEditType ##### -->
+<para>
+
+</para>
+
+@MODEST_EDIT_TYPE_NEW: 
+@MODEST_EDIT_TYPE_REPLY: 
+@MODEST_EDIT_TYPE_FORWARD: 
+@MODEST_EDIT_TYPE_VIEW: 
+@MODEST_EDIT_TYPE_NUM: 
+
+<!-- ##### FUNCTION modest_edit_msg_window_new ##### -->
+<para>
+
+</para>
+
+@factory: 
+@type: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_edit_msg_window_set_msg ##### -->
+<para>
+
+</para>
+
+@self: 
+@msg: 
+
+

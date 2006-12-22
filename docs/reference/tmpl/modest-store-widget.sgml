@@ -1,0 +1,73 @@
+<!-- ##### SECTION Title ##### -->
+ModestStoreWidget
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### STRUCT ModestStoreWidget ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### FUNCTION modest_store_widget_new ##### -->
+<para>
+
+</para>
+
+@factory: 
+@proto: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_store_widget_get_remember_password ##### -->
+<para>
+
+</para>
+
+@self: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_store_widget_get_username ##### -->
+<para>
+
+</para>
+
+@self: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_store_widget_get_servername ##### -->
+<para>
+
+</para>
+
+@self: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_store_widget_get_proto ##### -->
+<para>
+
+</para>
+
+@self: 
+@Returns: 
+
+

@@ -1,0 +1,114 @@
+<!-- ##### SECTION Title ##### -->
+ModestTnyAttachment
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### STRUCT ModestTnyAttachment ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### FUNCTION modest_tny_attachment_new ##### -->
+<para>
+
+</para>
+
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_tny_attachment_set_name ##### -->
+<para>
+
+</para>
+
+@self: 
+@thing: 
+
+
+<!-- ##### FUNCTION modest_tny_attachment_get_name ##### -->
+<para>
+
+</para>
+
+@self: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_tny_attachment_set_filename ##### -->
+<para>
+
+</para>
+
+@self: 
+@thing: 
+
+
+<!-- ##### FUNCTION modest_tny_attachment_get_filename ##### -->
+<para>
+
+</para>
+
+@self: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_tny_attachment_set_mime_type ##### -->
+<para>
+
+</para>
+
+@self: 
+@thing: 
+
+
+<!-- ##### FUNCTION modest_tny_attachment_get_mime_type ##### -->
+<para>
+
+</para>
+
+@self: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_tny_attachment_guess_mime_type ##### -->
+<para>
+
+</para>
+
+@self: 
+
+
+<!-- ##### FUNCTION modest_tny_attachment_get_stream ##### -->
+<para>
+
+</para>
+
+@self: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_tny_attachment_free_list ##### -->
+<para>
+
+</para>
+
+@list: 
+
+

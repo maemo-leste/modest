@@ -1,0 +1,43 @@
+<!-- ##### SECTION Title ##### -->
+modest-widget-memory
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### FUNCTION modest_widget_memory_save ##### -->
+<para>
+
+</para>
+
+@conf: 
+@widget: 
+@name: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_widget_memory_restore ##### -->
+<para>
+
+</para>
+
+@conf: 
+@widget: 
+@name: 
+@Returns: 
+
+

@@ -1,0 +1,70 @@
+<!-- ##### SECTION Title ##### -->
+ModestMailOperationQueue
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### STRUCT ModestMailOperationQueue ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### FUNCTION modest_mail_operation_queue_new ##### -->
+<para>
+
+</para>
+
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_mail_operation_queue_add ##### -->
+<para>
+
+</para>
+
+@op_queue: 
+@mail_op: 
+
+
+<!-- ##### FUNCTION modest_mail_operation_queue_remove ##### -->
+<para>
+
+</para>
+
+@op_queue: 
+@mail_op: 
+
+
+<!-- ##### FUNCTION modest_mail_operation_queue_cancel ##### -->
+<para>
+
+</para>
+
+@op_queue: 
+@mail_op: 
+
+
+<!-- ##### FUNCTION modest_mail_operation_queue_cancel_all ##### -->
+<para>
+
+</para>
+
+@op_queue: 
+
+

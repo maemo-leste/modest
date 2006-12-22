@@ -1,0 +1,80 @@
+<!-- ##### SECTION Title ##### -->
+ModestFormatter
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### STRUCT ModestFormatter ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### FUNCTION modest_formatter_new ##### -->
+<para>
+
+</para>
+
+@content_type: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_formatter_cite ##### -->
+<para>
+
+</para>
+
+@self: 
+@part: 
+@header: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_formatter_quote ##### -->
+<para>
+
+</para>
+
+@self: 
+@part: 
+@header: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_formatter_inline ##### -->
+<para>
+
+</para>
+
+@self: 
+@part: 
+@header: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_formatter_attach ##### -->
+<para>
+
+</para>
+
+@self: 
+@part: 
+@header: 
+@Returns: 
+
+

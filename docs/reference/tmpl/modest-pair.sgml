@@ -1,0 +1,58 @@
+<!-- ##### SECTION Title ##### -->
+modest-pair
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### STRUCT ModestPair ##### -->
+<para>
+
+</para>
+
+@first: 
+@second: 
+@own: 
+
+<!-- ##### FUNCTION modest_pair_new ##### -->
+<para>
+
+</para>
+
+@first: 
+@second: 
+@own: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_pair_destroy ##### -->
+<para>
+
+</para>
+
+@self: 
+
+
+<!-- ##### FUNCTION modest_pair_gslist_destroy ##### -->
+<para>
+
+</para>
+
+@pairs: 
+@Returns: 
+
+

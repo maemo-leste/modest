@@ -1,0 +1,110 @@
+<!-- ##### SECTION Title ##### -->
+modest-text-utils
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### FUNCTION modest_text_utils_derived_subject ##### -->
+<para>
+
+</para>
+
+@subject: 
+@prefix: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_text_utils_quote ##### -->
+<para>
+
+</para>
+
+@text: 
+@content_type: 
+@from: 
+@sent_date: 
+@limit: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_text_utils_cite ##### -->
+<para>
+
+</para>
+
+@text: 
+@content_type: 
+@from: 
+@sent_date: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_text_utils_inline ##### -->
+<para>
+
+</para>
+
+@text: 
+@content_type: 
+@from: 
+@sent_date: 
+@to: 
+@subject: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_text_utils_remove_address ##### -->
+<para>
+
+</para>
+
+@address_list: 
+@address: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_text_utils_convert_to_html ##### -->
+<para>
+
+</para>
+
+@txt: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_text_utils_strftime ##### -->
+<para>
+
+</para>
+
+@s: 
+@max: 
+@fmt: 
+@tm: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_text_utils_display_address ##### -->
+<para>
+
+</para>
+
+@address: 
+@Returns: 
+
+

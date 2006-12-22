@@ -1,0 +1,37 @@
+<!-- ##### SECTION Title ##### -->
+ModestAccountAssistant
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### STRUCT ModestAccountAssistant ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### FUNCTION modest_account_assistant_new ##### -->
+<para>
+
+</para>
+
+@account_mgr: 
+@factory: 
+@Returns: 
+
+

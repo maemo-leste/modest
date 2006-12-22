@@ -44,25 +44,6 @@ ModestAccountMgr
 @: 
 @: 
 
-<!-- ##### SIGNAL ModestAccountMgr::account-changed ##### -->
-<para>
-
-</para>
-
-@: 
-@: 
-@: 
-@: 
-
-<!-- ##### SIGNAL ModestAccountMgr::account-removed ##### -->
-<para>
-
-</para>
-
-@: 
-@: 
-@: 
-
 <!-- ##### STRUCT ModestServerAccountData ##### -->
 <para>
 

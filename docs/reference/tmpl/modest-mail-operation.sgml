@@ -1,0 +1,273 @@
+<!-- ##### SECTION Title ##### -->
+ModestMailOperation
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### ENUM ModestMailOperationForwardType ##### -->
+<para>
+
+</para>
+
+@MODEST_MAIL_OPERATION_FORWARD_TYPE_INLINE: 
+@MODEST_MAIL_OPERATION_FORWARD_TYPE_ATTACHMENT: 
+
+<!-- ##### ENUM ModestMailOperationReplyType ##### -->
+<para>
+
+</para>
+
+@MODEST_MAIL_OPERATION_REPLY_TYPE_CITE: 
+@MODEST_MAIL_OPERATION_REPLY_TYPE_QUOTE: 
+
+<!-- ##### ENUM ModestMailOperationReplyMode ##### -->
+<para>
+
+</para>
+
+@MODEST_MAIL_OPERATION_REPLY_MODE_SENDER: 
+@MODEST_MAIL_OPERATION_REPLY_MODE_LIST: 
+@MODEST_MAIL_OPERATION_REPLY_MODE_ALL: 
+
+<!-- ##### ENUM ModestMailOperationStatus ##### -->
+<para>
+
+</para>
+
+@MODEST_MAIL_OPERATION_STATUS_INVALID: 
+@MODEST_MAIL_OPERATION_STATUS_SUCCESS: 
+@MODEST_MAIL_OPERATION_STATUS_FINISHED_WITH_ERRORS: 
+@MODEST_MAIL_OPERATION_STATUS_FAILED: 
+@MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS: 
+@MODEST_MAIL_OPERATION_STATUS_CANCELED: 
+
+<!-- ##### STRUCT ModestMailOperation ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SIGNAL ModestMailOperation::progress-changed ##### -->
+<para>
+
+</para>
+
+@: 
+
+<!-- ##### FUNCTION modest_mail_operation_new ##### -->
+<para>
+
+</para>
+
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_mail_operation_send_mail ##### -->
+<para>
+
+</para>
+
+@self: 
+@transport_account: 
+@msg: 
+
+
+<!-- ##### FUNCTION modest_mail_operation_send_new_mail ##### -->
+<para>
+
+</para>
+
+@self: 
+@transport_account: 
+@from: 
+@to: 
+@cc: 
+@bcc: 
+@subject: 
+@body: 
+@attachments_list: 
+
+
+<!-- ##### FUNCTION modest_mail_operation_create_forward_mail ##### -->
+<para>
+
+</para>
+
+@msg: 
+@from: 
+@forward_type: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_mail_operation_create_reply_mail ##### -->
+<para>
+
+</para>
+
+@msg: 
+@from: 
+@reply_type: 
+@reply_mode: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_mail_operation_update_account ##### -->
+<para>
+
+</para>
+
+@self: 
+@store_account: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_mail_operation_create_folder ##### -->
+<para>
+
+</para>
+
+@self: 
+@parent: 
+@name: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_mail_operation_remove_folder ##### -->
+<para>
+
+</para>
+
+@self: 
+@folder: 
+@remove_to_trash: 
+
+
+<!-- ##### FUNCTION modest_mail_operation_rename_folder ##### -->
+<para>
+
+</para>
+
+@self: 
+@folder: 
+@name: 
+
+
+<!-- ##### FUNCTION modest_mail_operation_move_folder ##### -->
+<para>
+
+</para>
+
+@self: 
+@folder: 
+@parent: 
+
+
+<!-- ##### FUNCTION modest_mail_operation_copy_folder ##### -->
+<para>
+
+</para>
+
+@self: 
+@folder: 
+@parent: 
+
+
+<!-- ##### FUNCTION modest_mail_operation_copy_msg ##### -->
+<para>
+
+</para>
+
+@self: 
+@header: 
+@folder: 
+
+
+<!-- ##### FUNCTION modest_mail_operation_move_msg ##### -->
+<para>
+
+</para>
+
+@self: 
+@header: 
+@folder: 
+
+
+<!-- ##### FUNCTION modest_mail_operation_remove_msg ##### -->
+<para>
+
+</para>
+
+@self: 
+@header: 
+@remove_to_trash: 
+
+
+<!-- ##### FUNCTION modest_mail_operation_get_task_done ##### -->
+<para>
+
+</para>
+
+@self: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_mail_operation_get_task_total ##### -->
+<para>
+
+</para>
+
+@self: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_mail_operation_is_finished ##### -->
+<para>
+
+</para>
+
+@self: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_mail_operation_get_status ##### -->
+<para>
+
+</para>
+
+@self: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_mail_operation_get_error ##### -->
+<para>
+
+</para>
+
+@self: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_mail_operation_cancel ##### -->
+<para>
+
+</para>
+
+@self: 
+@Returns: 
+
+

@@ -1,0 +1,91 @@
+<!-- ##### SECTION Title ##### -->
+modest-presets
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### STRUCT ModestPresets ##### -->
+<para>
+
+</para>
+
+@keyfile: 
+
+<!-- ##### ENUM ModestPresetsInfo ##### -->
+<para>
+
+</para>
+
+@MODEST_PRESETS_INFO_NONE: 
+@MODEST_PRESETS_INFO_IMAP: 
+@MODEST_PRESETS_INFO_POP: 
+@MODEST_PRESETS_INFO_SMTP: 
+@MODEST_PRESETS_INFO_APOP: 
+@MODEST_PRESETS_INFO_SECURE_SMTP: 
+@MODEST_PRESETS_INFO_SECURE_INCOMING: 
+
+<!-- ##### FUNCTION modest_presets_new ##### -->
+<para>
+
+</para>
+
+@presetfile: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_presets_get_providers ##### -->
+<para>
+
+</para>
+
+@self: 
+@mcc: 
+@include_globals: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_presets_get_server ##### -->
+<para>
+
+</para>
+
+@self: 
+@provider: 
+@incoming_server: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_presets_get_info ##### -->
+<para>
+
+</para>
+
+@self: 
+@provider: 
+@incoming_server: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_presets_destroy ##### -->
+<para>
+
+</para>
+
+@self: 
+
+

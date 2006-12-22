@@ -1,0 +1,36 @@
+<!-- ##### SECTION Title ##### -->
+ModestAccountViewWindow
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### STRUCT ModestAccountViewWindow ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### FUNCTION modest_account_view_window_new ##### -->
+<para>
+
+</para>
+
+@factory: 
+@Returns: 
+
+

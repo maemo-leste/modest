@@ -1,0 +1,62 @@
+<!-- ##### SECTION Title ##### -->
+ModestTnyPlatformFactory
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### STRUCT ModestTnyPlatformFactory ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### FUNCTION modest_tny_platform_factory_get_instance ##### -->
+<para>
+
+</para>
+
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_tny_platform_factory_get_modest_account_mgr_instance ##### -->
+<para>
+
+</para>
+
+@fact: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_tny_platform_factory_get_modest_conf_instance ##### -->
+<para>
+
+</para>
+
+@fact: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_tny_platform_factory_get_modest_mail_operation_queue_instance ##### -->
+<para>
+
+</para>
+
+@fact: 
+@Returns: 
+
+

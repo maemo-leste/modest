@@ -1,0 +1,224 @@
+<!-- ##### SECTION Title ##### -->
+modest-icon-names
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### MACRO PIXMAP_PREFIX ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO MODEST_APP_ICON ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO MODEST_HEADER_ICON_READ ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO MODEST_HEADER_ICON_UNREAD ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO MODEST_HEADER_ICON_DELETED ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO MODEST_HEADER_ICON_ATTACH ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO MODEST_FOLDER_ICON_OPEN ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO MODEST_FOLDER_ICON_CLOSED ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO MODEST_FOLDER_ICON_ACCOUNT ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO MODEST_FOLDER_ICON_INBOX ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO MODEST_FOLDER_ICON_OUTBOX ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO MODEST_FOLDER_ICON_SENT ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO MODEST_FOLDER_ICON_TRASH ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO MODEST_FOLDER_ICON_JUNK ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO MODEST_FOLDER_ICON_DRAFTS ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO MODEST_FOLDER_ICON_NORMAL ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO MODEST_FOLDER_ICON_CONTACTS ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO MODEST_FOLDER_ICON_NOTES ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO MODEST_FOLDER_ICON_CALENDAR ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO MODEST_TOOLBAR_ICON_MAIL_SEND ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO MODEST_TOOLBAR_ICON_NEW_MAIL ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO MODEST_TOOLBAR_ICON_SEND_RECEIVE ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO MODEST_TOOLBAR_ICON_REPLY ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO MODEST_TOOLBAR_ICON_REPLY_ALL ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO MODEST_TOOLBAR_ICON_FORWARD ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO MODEST_TOOLBAR_ICON_DELETE ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO MODEST_TOOLBAR_ICON_NEXT ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO MODEST_TOOLBAR_ICON_PREV ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO MODEST_TOOLBAR_ICON_STOP ##### -->
+<para>
+
+</para>
+
+
+

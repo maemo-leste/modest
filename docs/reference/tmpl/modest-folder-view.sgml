@@ -1,0 +1,82 @@
+<!-- ##### SECTION Title ##### -->
+ModestFolderView
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### STRUCT ModestFolderView ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SIGNAL ModestFolderView::folder-selection-changed ##### -->
+<para>
+
+</para>
+
+@: 
+@: 
+@: 
+
+<!-- ##### FUNCTION modest_folder_view_new ##### -->
+<para>
+
+</para>
+
+@account_store: 
+@query: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_folder_view_set_title ##### -->
+<para>
+
+</para>
+
+@self: 
+@title: 
+
+
+<!-- ##### FUNCTION modest_folder_view_is_empty ##### -->
+<para>
+
+</para>
+
+@self: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_folder_view_guess_folder_type ##### -->
+<para>
+
+</para>
+
+@folder: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_folder_view_get_selected_account ##### -->
+<para>
+
+</para>
+
+@self: 
+@Returns: 
+
+

@@ -1,0 +1,148 @@
+<!-- ##### SECTION Title ##### -->
+ModestWidgetFactory
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### STRUCT ModestWidgetFactory ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### ENUM ModestComboBoxType ##### -->
+<para>
+
+</para>
+
+@MODEST_COMBO_BOX_TYPE_STORE_PROTOS: 
+@MODEST_COMBO_BOX_TYPE_TRANSPORT_PROTOS: 
+@MODEST_COMBO_BOX_TYPE_SECURITY_PROTOS: 
+@MODEST_COMBO_BOX_TYPE_AUTH_PROTOS: 
+@MODEST_COMBO_BOX_TYPE_TRANSPORTS: 
+
+<!-- ##### FUNCTION modest_widget_factory_new ##### -->
+<para>
+
+</para>
+
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_widget_factory_get_folder_view ##### -->
+<para>
+
+</para>
+
+@self: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_widget_factory_get_header_view ##### -->
+<para>
+
+</para>
+
+@self: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_widget_factory_get_msg_preview ##### -->
+<para>
+
+</para>
+
+@self: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_widget_factory_get_account_view ##### -->
+<para>
+
+</para>
+
+@self: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_widget_factory_get_progress_bar ##### -->
+<para>
+
+</para>
+
+@self: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_widget_factory_get_status_bar ##### -->
+<para>
+
+</para>
+
+@self: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_widget_factory_get_combo_box ##### -->
+<para>
+
+</para>
+
+@self: 
+@type: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_widget_factory_get_online_toggle ##### -->
+<para>
+
+</para>
+
+@self: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_widget_factory_get_folder_info_label ##### -->
+<para>
+
+</para>
+
+@self: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_widget_factory_get_main_toolbar ##### -->
+<para>
+
+</para>
+
+@self: 
+@items: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_widget_factory_get_edit_toolbar ##### -->
+<para>
+
+</para>
+
+@self: 
+@items: 
+@Returns: 
+
+

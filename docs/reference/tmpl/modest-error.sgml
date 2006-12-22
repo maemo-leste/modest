@@ -1,0 +1,37 @@
+<!-- ##### SECTION Title ##### -->
+modest-error
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### ENUM ModestErrorDomain ##### -->
+<para>
+
+</para>
+
+@MODEST_MAIL_OPERATION_ERROR: 
+
+<!-- ##### ENUM ModestErrorCode ##### -->
+<para>
+
+</para>
+
+@MODEST_MAIL_OPERATION_ERROR_BAD_ACCOUNT: 
+@MODEST_MAIL_OPERATION_ERROR_MISSING_PARAMETER: 
+@MODEST_MAIL_OPERATION_ERROR_OPERATION_CANCELED: 
+
