@@ -1,0 +1,47 @@
+  <preface>
+    <title>Introduction</title>
+    <para><application>modest</application> is a mail user agent
+      (<abbrev>MUA</abbrev>) targetting small devices, in particular Nokia's
+      <productname>Nokia 770 Internet Tablet</productname>. This document
+      describes the design and implementation of this software.
+    </para>
+    
+    <para><application>modest</application> lives at the top of a extensive
+      stack of software. It is built on top
+      of <application>tinymail</application>, and uses its libcamel
+      backend. It strives to the be a simple yet powerful program, geared
+      towards small devices, for example (but not limited
+      to) <productname>Nokia's 770 internet tablet</productname>. An important
+      goal is to minimize memory usage while still being able to handle
+      significant amounts of email quickly; much of that is achieved simply by
+      using <application>tinymail</application>, which uses a number of clever
+      tricks for that, such as the proxy design pattern for listing email
+      headers, and not needing memory for headers which are not currently
+      visible.
+    </para>
+    
+    <para>
+      <application>modest</application>, in turn, also tries to be efficient,
+      fast and scalable. That means that the <abbrev>MUA</abbrev> should
+      support multiple user-interfaces, perhaps making it even possible to
+      switch between them during runtime.
+    </para>
+    
+    <para>To summarize the goals for <application>modest</application>:
+      <itemizedlist>
+	<listitem>target devices with limited amounts of memory ('limited' in 2006
+	  terms means less than 64Mb, and of which only part can be used for
+	  e-mail);</listitem>
+	<listitem>target Linux/Unix-like environments with GLib/GTK+-based
+	  support;</listitem>
+	<listitem>support multiple user-interface (UIs) with as much code
+	  sharing as possible between the different UIs.</listitem>
+    </itemizedlist></para>
+    
+    <para>Like <application>tinymail</application>
+      and <application>libcamel</application>, <application>modest</application>
+      is programmed in C, using the <package>GObject</package>-system for
+      object-oriented (OO) features. For now, it specifically targets \gtk based
+      UIs (and derivatives like 'Hildon').</para>
+
+  </preface>

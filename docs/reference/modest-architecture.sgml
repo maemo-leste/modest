@@ -1,0 +1,28 @@
+  <part>
+    <title>Architecture</title>
+    <partintro>
+      <para><application>modest</application> tries to be quite flexible in its
+	design. However, it's always important not to make things too
+	generic. Both for reasons of time limitations and keeping the software
+	understandable and 'modest', it's important to limit the scope.
+      </para>
+      
+      <para>
+	For <application>modest</application>, the following:
+	<itemizedlist>
+	  <listitem><application>modest</application> is a e-mail program
+	    using the <package>tinymail</package> and <package>camel</package>
+	    libraries;</listitem>
+	  <listitem><application>modest</application> targets gtk and
+	    gconf-based user-interfaces, including the Hildon
+	    environment;</listitem>
+	  <listitem><application>modest</application> main use-case is in
+	    small, mobile device such as the <productname>Nokia 770 Internet
+	      Tablet</productname>;</listitem>
+	  <listitem>However, effort is made also to
+	    make <application>modest</application> usable as a general-purpose
+	    e-mail client on normal desktop computer.</listitem>
+	</itemizedlist>
+      </para>
+    </partintro>
+  </part>

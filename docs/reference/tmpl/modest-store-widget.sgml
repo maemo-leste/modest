@@ -2,7 +2,7 @@
 ModestStoreWidget
 
 <!-- ##### SECTION Short_Description ##### -->
-A widget that shows the server information for a store account
+
 
 <!-- ##### SECTION Long_Description ##### -->
 <para>
@@ -24,6 +24,20 @@ A widget that shows the server information for a store account
 
 </para>
 
+
+<!-- ##### SIGNAL ModestStoreWidget::data-changed ##### -->
+<para>
+
+</para>
+
+@modeststorewidget: the object which received the signal.
+
+<!-- ##### SIGNAL ModestStoreWidget::data-changed ##### -->
+<para>
+
+</para>
+
+@modeststorewidget: the object which received the signal.
 
 <!-- ##### FUNCTION modest_store_widget_new ##### -->
 <para>

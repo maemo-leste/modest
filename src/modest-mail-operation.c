@@ -80,10 +80,10 @@ static void modest_mail_operation_xfer_folder (ModestMailOperation *self,
 					       TnyFolderStore *parent,
 					       gboolean delete_original);
 
-static void modest_mail_operation_xfer_msg    (ModestMailOperation *self,
-					       TnyHeader *header, 
-					       TnyFolder *folder, 
-					       gboolean delete_original);
+static gboolean    modest_mail_operation_xfer_msg          (ModestMailOperation *self,
+							    TnyHeader *header, 
+							    TnyFolder *folder, 
+							    gboolean delete_original);
 
 static TnyFolder * modest_mail_operation_find_trash_folder (ModestMailOperation *self,
 							    TnyStoreAccount *store_account);
@@ -839,26 +839,26 @@ modest_mail_operation_find_trash_folder (ModestMailOperation *self,
 /* **************************  MSG  ACTIONS  ************************* */
 /* ******************************************************************* */
 
-void 
+gboolean 
 modest_mail_operation_copy_msg (ModestMailOperation *self,
 				TnyHeader *header, 
 				TnyFolder *folder)
 {
-	g_return_if_fail (TNY_IS_HEADER (header));
-	g_return_if_fail (TNY_IS_FOLDER (folder));
+	g_return_val_if_fail (TNY_IS_HEADER (header), FALSE);
+	g_return_val_if_fail (TNY_IS_FOLDER (folder), FALSE);
 
-	modest_mail_operation_xfer_msg (self, header, folder, FALSE);
+	return modest_mail_operation_xfer_msg (self, header, folder, FALSE);
 }
 
-void 
+gboolean 
 modest_mail_operation_move_msg (ModestMailOperation *self,
 				TnyHeader *header, 
 				TnyFolder *folder)
 {
-	g_return_if_fail (TNY_IS_HEADER (header));
-	g_return_if_fail (TNY_IS_FOLDER (folder));
+	g_return_val_if_fail (TNY_IS_HEADER (header), FALSE);
+	g_return_val_if_fail (TNY_IS_FOLDER (folder), FALSE);
 
-	modest_mail_operation_xfer_msg (self, header, folder, TRUE);
+	return modest_mail_operation_xfer_msg (self, header, folder, TRUE);
 }
 
 void 
@@ -893,24 +893,44 @@ modest_mail_operation_remove_msg (ModestMailOperation *self,
 }
 
 static void
+transfer_msgs_cb (TnyFolder *folder, GError **err, gpointer user_data)
+{
+	ModestMailOperationPrivate *priv;
+
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(user_data);
+	priv->done = 1;
+	priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
+
+	g_signal_emit (G_OBJECT (user_data), signals[PROGRESS_CHANGED_SIGNAL], 0, NULL);
+}
+
+static gboolean
 modest_mail_operation_xfer_msg (ModestMailOperation *self,
 				TnyHeader *header, 
 				TnyFolder *folder, 
 				gboolean delete_original)
 {
+	ModestMailOperationPrivate *priv;
 	TnyFolder *src_folder;
 	TnyList *headers;
 
 	src_folder = tny_header_get_folder (header);
 	headers = tny_simple_list_new ();
 
-	/* Move */
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
+	priv->total = 1;
+	priv->done = 0;
+	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
+
 	tny_list_prepend (headers, G_OBJECT (header));
-	tny_folder_transfer_msgs (src_folder, headers, folder, delete_original, NULL); /* FIXME */
+	tny_folder_transfer_msgs_async (src_folder, headers, folder, 
+					delete_original, transfer_msgs_cb, self);
 
 	/* Free */
 	g_object_unref (headers);
 	g_object_unref (folder);
+
+	return TRUE;
 }
 
 

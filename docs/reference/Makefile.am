@@ -22,10 +22,10 @@ SCANGOBJ_OPTIONS=
 
 # Extra options to supply to gtkdoc-scan.
 # e.g. SCAN_OPTIONS=--deprecated-guards="GTK_DISABLE_DEPRECATED" 
-SCAN_OPTIONS=\
-	--source-dir=$(top_srcdir)/src \
+SCAN_OPTIONS= \
+	--source-dir=$(top_srcdir)/src/widgets \
 	--source-dir=$(top_srcdir)/src/gtk \
-	--source-dir=$(top_srcdir)/src/widgets
+	--source-dir=$(top_srcdir)/src
 
 # Extra options to supply to gtkdoc-mkdb.
 # e.g. MKDB_OPTIONS=--sgml-mode --output-format=xml
@@ -42,8 +42,8 @@ FIXXREF_OPTIONS=
 # Used for dependencies. The docs will be rebuilt if any of these change.
 # e.g. HFILE_GLOB=$(top_srcdir)/*.h
 # e.g. CFILE_GLOB=$(top_srcdir)/*.c
-HFILE_GLOB=$(top_srcdir)/src/*.h 
-CFILE_GLOB=$(top_srcdir)/src/*.c 
+HFILE_GLOB=$(top_srcdir)/src/*.h $(top_srcdir)/src/widgets/*.h  $(top_srcdir)/src/gtk/*.h 
+CFILE_GLOB=$(top_srcdir)/src/*.c $(top_srcdir)/src/widgets/*.c  $(top_srcdir)/src/gtk/*.c 
 
 # Header files to ignore when scanning.
 # e.g. IGNORE_HFILES=gtkdebug.h gtkintl.h
@@ -55,7 +55,12 @@ HTML_IMAGES=
 
 # Extra SGML files that are included by $(DOC_MAIN_SGML_FILE).
 # e.g. content_files=running.sgml building.sgml changes-2.0.sgml
-content_files=xml/tree_index.sgml
+content_files= \
+	xml/tree_index.sgml \
+	modest-preface.sgml \
+	modest-architecture.sgml \
+	modest-design.sgml \
+	modest-coding-guidelines.sgml
 
 # SGML files where gtk-doc abbrevations (#GtkWidget) are expanded
 # These files must be listed here *and* in content_files
@@ -74,30 +79,31 @@ INCLUDES=						\
 	-I$(top_srcdir)/src/widgets
 
 
-GTKDOC_LIBS=\
+GTKDOC_LIBS= \
 	$(MODEST_LIBTINYMAIL_GNOME_DESKTOP_LIBS)	\
 	$(MODEST_LIBTINYMAIL_MAEMO_LIBS) 		\
 	$(MODEST_GSTUFF_LIBS)			\
 	$(top_builddir)/src/gtk/libmodest-ui.la		\
 	$(top_builddir)/src/widgets/libmodest-widgets.la\
-	${top_builddir}/src/modest-conf.o \
 	${top_builddir}/src/modest-account-mgr.o \
-	${top_builddir}/src/modest-tny-platform-factory.o \
-	${top_builddir}/src/modest-protocol-mgr.o \
-	${top_builddir}/src/modest-proto.o \
-	${top_builddir}/src/modest-pair.o \
-	${top_builddir}/src/modest-marshal.o \
-	${top_builddir}/src/modest-tny-account-store.o \
+	${top_builddir}/src/modest-conf.o \
+	${top_builddir}/src/modest-formatter.o \
+	${top_builddir}/src/modest-icon-factory.o \
 	${top_builddir}/src/modest-mail-operation.o \
 	${top_builddir}/src/modest-mail-operation-queue.o \
-	${top_builddir}/src/modest-tny-msg-actions.o \
+	${top_builddir}/src/modest-marshal.o \
+	${top_builddir}/src/modest-pair.o \
+	${top_builddir}/src/modest-presets.o \
+	${top_builddir}/src/modest-protocol-mgr.o \
+	${top_builddir}/src/modest-proto.o \
+	${top_builddir}/src/modest-text-utils.o \
+	${top_builddir}/src/modest-tny-account-store.o \
 	${top_builddir}/src/modest-tny-attachment.o \
+	${top_builddir}/src/modest-tny-msg-actions.o \
+	${top_builddir}/src/modest-tny-platform-factory.o \
 	${top_builddir}/src/modest-tny-stream-gtkhtml.o \
 	${top_builddir}/src/modest-widget-factory.o \
-	${top_builddir}/src/modest-widget-memory.o \
-	${top_builddir}/src/modest-icon-factory.o \
-	${top_builddir}/src/modest-formatter.o \
-	${top_builddir}/src/modest-text-utils.o
+	${top_builddir}/src/modest-widget-memory.o
 
 # This includes the standard gtk-doc make rules, copied by gtkdocize.
 include $(top_srcdir)/gtk-doc.make

@@ -2,7 +2,7 @@
 ModestEditMsgWindow
 
 <!-- ##### SECTION Short_Description ##### -->
-A window used for composing messages
+
 
 <!-- ##### SECTION Long_Description ##### -->
 <para>
@@ -44,14 +44,5 @@ A window used for composing messages
 @factory: 
 @type: 
 @Returns: 
-
-
-<!-- ##### FUNCTION modest_edit_msg_window_set_msg ##### -->
-<para>
-
-</para>
-
-@self: 
-@msg: 
 
 

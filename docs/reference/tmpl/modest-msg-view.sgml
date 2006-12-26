@@ -2,7 +2,7 @@
 ModestMsgView
 
 <!-- ##### SECTION Short_Description ##### -->
-A widget that shows the body of a message
+
 
 <!-- ##### SECTION Long_Description ##### -->
 <para>
@@ -30,24 +30,24 @@ A widget that shows the body of a message
 
 </para>
 
-@modestmsgview: the object which received the signal.
-@arg1: 
+@: 
+@: 
 
 <!-- ##### SIGNAL ModestMsgView::link-clicked ##### -->
 <para>
 
 </para>
 
-@modestmsgview: the object which received the signal.
-@arg1: 
+@: 
+@: 
 
 <!-- ##### SIGNAL ModestMsgView::link-hover ##### -->
 <para>
 
 </para>
 
-@modestmsgview: the object which received the signal.
-@arg1: 
+@: 
+@: 
 
 <!-- ##### FUNCTION modest_msg_view_new ##### -->
 <para>

@@ -1,0 +1,175 @@
+  <part>
+    <title>Design</title>
+    <partintro>
+      <para>In this part, we'll discuss the design of various parts of
+	<application>modest</application>. We'll not go into the details of
+	various APIs in this chapter.  Please consult the documentation generated
+	from the source code (<systemitem>gtk-doc</systemitem>) for that.
+      </para>
+    </partintro>
+    
+    <chapter>
+      <title>Configuration</title>
+      <para>Configuration is the part of <application>modest</application>
+	that deals with storing all settings. While the design allows for
+	alternative implementations, currently
+	only <systemitem>GConf</systemitem> is supported as a backend.
+      </para>
+      
+      <para>
+	All dealing with configuration is done with
+	the <classname>ModestConf</classname>-class. It is declared
+	in <filename> modest-conf.h</filename>, and
+	the <systemitem>GConf</systemitem>-based implementation in 
+	<filename>modest-conf.c</filename>. As said, there could be
+	different implementations --
+	nothing <systemitem>GConf</systemitem>-specific is visible in the
+	<classname>ModestConf</classname>-<abbrev>API</abbrev>.
+      </para>
+    </chapter>
+    
+    <chapter>
+      <title>Account Management</title>
+      <para>
+	Account Management is the part of <application>modest</application>
+	that deals with the setting related to sending and receiving of
+	e-mail. We will follow the libcamel-convention of using the
+	term <emphasis>store</emphasis> for an e-mail storage/retrieval
+	server, and a <emphasis>transport</emphasis> for a server that
+	transports mail to its destination.
+      </para>
+      
+      <para>
+	In practice, the following types are available:
+	<itemizedlist>
+	  <listitem><emphasis>stores</emphasis>: <abbrev>POP</abbrev>
+	    and <abbrev>IMAP</abbrev>; </listitem>
+	  <listitem> <emphasis>transports</emphasis>: <systemitem>sendmail</systemitem>
+	    and <abbrev>SMTP</abbrev>.</listitem>
+	</itemizedlist>
+      </para>
+      
+      <sect1>
+	<title>Definitions</title>
+	<itemizedlist>
+	  <listitem>An <emphasis>account</emphasis> is a named entity
+	    consisting of a <emphasis>store</emphasis> and
+	    a <emphasis>transport</emphasis>. Note: For our mobile use-cases,
+	    the <emphasis>transport</emphasis> cannot be a static entity, but
+	    may depend on the network connection. That is however not part of
+	    Account Management, so not discussed here</listitem>
+	  <listitem>A <emphasis>server account</emphasis> is account
+	    describing the connection with a specific server. Server accounts
+	    come in two type:
+	    <itemizedlist>
+	      <listitem>A <emphasis>transport</emphasis> describes the connection information
+		(servername, username, password etc.) for a transport
+		server;</listitem>
+	      <listitem>A <emphasis>store</emphasis> describes the connection information for
+		a store server;</listitem>
+	    </itemizedlist>
+	  </listitem>
+	</itemizedlist>
+      </sect1>
+      
+      <sect1>
+	<title>Code</title>
+	<para>The functions to deal with account and server accounts are
+	  located in <classname>ModestAccountMgr</classname>, ie. in 
+	  <filename>modest-account-mgr.[ch]</filename>. There function to add
+	  specific values for both, to list the available ones, etc. Please
+	  refer to the source code documentation for details.
+	</para>
+      </sect1>
+      
+      <sect1>
+	<title>Location in configuration database</title>
+	<para>
+	  <emphasis>Accounts</emphasis> can be found
+	  in <systemitem>/apps/modest/accounts</systemitem>,
+	  while <emphasis>server accounts</emphasis> can be found
+	  in <systemitem>/app/modest/server_accounts</systemitem>.
+	</para>
+	
+	<para>
+	  The following image show an
+	  account <systemitem>accountstest</systemitem> with server accounts
+	  <systemitem>mystore</systemitem>
+	  and <systemitem>mytransport</systemitem>.
+	  <imagedata fileref="modest-account-mgr.png"/>
+	</para>
+
+	<para>
+	  For each of the stores, there are number of parameters specified:
+	  <itemizedlist>
+	    <listitem><emphasis>hostname</emphasis> - the place where the server resides;</listitem>
+	    <listitem><emphasis>username</emphasis> - the username;</listitem>
+	    <listitem><emphasis>password</emphasis> - the password;</listitem>
+	    <listitem><emphasis>proto</emphasis> - the protocal for communication with this server - for
+	      now these are the following valid values (literal strings):
+	      <itemizedlist>
+		<listitem><emphasis>sendmail</emphasis>;</listitem>
+		<listitem><emphasis>smtp</emphasis>;</listitem>
+		<listitem><emphasis>pop</emphasis></listitem>
+		<listitem><emphasis>imap</emphasis>.</listitem>
+	      </itemizedlist>
+	    </listitem>
+	  </itemizedlist>
+	</para>
+	
+	<para>In <filename>modest-proto.[ch]</filename> there are various
+	  functions to check whether something is a valid protocol, and
+	  whether it is a transport of a store.
+	</para>
+	
+	<para>Note that server accounts and accounts are relatively independent. While
+	  accounts refer to two server accounts, these server accounts can be
+	  used by other accounts as well.
+	</para>
+	
+	<para>The reason two keep accounts and server accounts separately, is a bit of
+	  flexibility. In mobile use-cases, quite often it's desirable to use a
+	  network-specific smtp-server. The chosen structure makes it easy to iterate
+	  over all smtp-servers and find the right one.
+	</para>
+      </sect1>
+      
+      <sect1>
+	<title>Account Management and Tinymail</title>
+	<para>
+	  Tinymail needs the information about all configured accounts - and the
+	  mechanism that it uses for that
+	  is <interface>TnyAccountStoreIface</interface>. We don't want to use
+	  the tinymail-provided <classname>TnyAccountStore</classname>, but
+	  provide our own implementation
+	  instead: <classname>ModestTnyAccountStore</classname>. This class
+	  implements the <interface>TnyAccountStoreIface</interface>-interace in
+	  terms of the aforementioned <classname>ModestAccountMgr</classname>.
+	</para>
+	
+	<para>
+	  One unexpected function
+	  that  <classname>ModestTnyAccountStore</classname> needs to implement
+	  is <symbol>tny account_store get_session</symbol> (to get the
+	  Camel-session). This function must be provided as a public function,
+	  with that exact name.
+	</para>
+      </sect1>
+    </chapter>
+    
+    <chapter>
+      <title>Finding the right transport</title>
+      <para>
+	One of the interesting topics in designing a mobile e-mail client is
+	to deal with transports (in
+	particular, <acronym>SMTP</acronym>). The reason for that is that
+	the majority of <acronym>SMTP</acronym>-servers only allow e-mail
+	from the same network. That means that for example <systemitem>
+	  smtp.some-isp.com</systemitem> will only accept mail from
+	(<command>MAIL FROM:</command>) <systemitem>
+	  user@some-isp.com</systemitem>, and refuse mail
+	from <systemitem>user@some-other-isp.com</systemitem>, unless the
+	recipient (<command>RCPT TO:</command>) is on the same network.
+      </para>
+    </chapter>
+  </part>

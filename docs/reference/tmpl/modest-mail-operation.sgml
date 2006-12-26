@@ -2,7 +2,7 @@
 ModestMailOperation
 
 <!-- ##### SECTION Short_Description ##### -->
-An object that performs mail operations
+
 
 <!-- ##### SECTION Long_Description ##### -->
 <para>
@@ -195,6 +195,7 @@ An object that performs mail operations
 @self: 
 @header: 
 @folder: 
+@Returns: 
 
 
 <!-- ##### FUNCTION modest_mail_operation_move_msg ##### -->
@@ -205,6 +206,7 @@ An object that performs mail operations
 @self: 
 @header: 
 @folder: 
+@Returns: 
 
 
 <!-- ##### FUNCTION modest_mail_operation_remove_msg ##### -->

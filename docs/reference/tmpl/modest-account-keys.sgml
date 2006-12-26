@@ -131,6 +131,13 @@ modest-account-keys
 
 
 
+<!-- ##### MACRO MODEST_ACCOUNT_TYPE ##### -->
+<para>
+
+</para>
+
+
+
 <!-- ##### MACRO MODEST_ACCOUNT_LEAVE_ON_SERVER ##### -->
 <para>
 

@@ -2,7 +2,7 @@
 ModestTnyStreamGtkhtml
 
 <!-- ##### SECTION Short_Description ##### -->
-An implementation of a #TnyStream that uses a #GtkHTMLStream
+
 
 <!-- ##### SECTION Long_Description ##### -->
 <para>

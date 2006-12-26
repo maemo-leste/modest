@@ -2,7 +2,7 @@
 ModestComboBox
 
 <!-- ##### SECTION Short_Description ##### -->
-A wrapper for a #GtkComboBox that shows lists of #ModestPair objects
+
 
 <!-- ##### SECTION Long_Description ##### -->
 <para>

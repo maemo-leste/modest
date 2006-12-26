@@ -154,7 +154,8 @@ gboolean modest_account_mgr_add_server_account    (ModestAccountMgr *self,
  * modest_account_mgr_remove_account:
  * @self: a ModestAccountMgr instance
  * @name: the name of the account to remove
- * @err: a GError ptr, or NULL to ignore.
+ * @server_account: TRUE if the account to remove is a server account
+ * @err: a #GError ptr, or NULL to ignore.
  * 
  * remove an existing account. the account with @name should already exist
  *

@@ -47,27 +47,42 @@ G_BEGIN_DECLS
 typedef struct _ModestMailOperation      ModestMailOperation;
 typedef struct _ModestMailOperationClass ModestMailOperationClass;
 
-/* typedef enum _ModestMailOperationForwardType ModestMailOperationForwardType; */
-/* typedef enum _ModestMailOperationReplyType   ModestMailOperationReplyType; */
-/* typedef enum _ModestMailOperationReplyMode   ModestMailOperationReplyMode; */
-/* typedef enum _ModestMailOperationStatus      ModestMailOperationStatus; */
-
+/**
+ * ModestMailOperationForwardType:
+ *
+ * How the original message will be forwarded to the recipient
+ */
 typedef enum _ModestMailOperationForwardType {
 	MODEST_MAIL_OPERATION_FORWARD_TYPE_INLINE = 1,
 	MODEST_MAIL_OPERATION_FORWARD_TYPE_ATTACHMENT
 } ModestMailOperationForwardType;
 
+/**
+ * ModestMailOperationReplyType:
+ *
+ * How the original message will be forwarded to the recipient
+ */
 typedef enum _ModestMailOperationReplyType {
 	MODEST_MAIL_OPERATION_REPLY_TYPE_CITE = 1,
 	MODEST_MAIL_OPERATION_REPLY_TYPE_QUOTE
 } ModestMailOperationReplyType;
 
+/**
+ * ModestMailOperationReplyMode:
+ *
+ * Who will be the recipients of the replied message
+ */
 typedef enum _ModestMailOperationReplyMode {
 	MODEST_MAIL_OPERATION_REPLY_MODE_SENDER,
 	MODEST_MAIL_OPERATION_REPLY_MODE_LIST,
 	MODEST_MAIL_OPERATION_REPLY_MODE_ALL
 } ModestMailOperationReplyMode;
 
+/**
+ * ModestMailOperationStatus:
+ *
+ * The state of a mail operation
+ */
 typedef enum _ModestMailOperationStatus {
 	MODEST_MAIL_OPERATION_STATUS_INVALID,
 	MODEST_MAIL_OPERATION_STATUS_SUCCESS,
@@ -181,7 +196,7 @@ TnyMsg* modest_mail_operation_create_reply_mail    (TnyMsg *msg,
  * <informalexample><programlisting>
  * queue = modest_tny_platform_factory_get_modest_mail_operation_queue_instance (fact)
  * mail_op = modest_mail_operation_new ();
- * g_signal_connect (G_OBJECT (mail_op), "progress_changed", G_CALLBACK (on_progress_changed), queue);
+ * g_signal_connect (G_OBJECT (mail_op), "progress_changed", G_CALLBACK(on_progress_changed), queue);
  * if (modest_mail_operation_update_account (mail_op, account))
  * {
  *     modest_mail_operation_queue_add (queue, mail_op);
@@ -284,11 +299,26 @@ void          modest_mail_operation_copy_folder    (ModestMailOperation *self,
  * @header: the #TnyHeader of the message to copy
  * @folder: the #TnyFolder where the message will be copied
  * 
- * Copies a message from its current folder to another one. This
- * operation is synchronous, so the #ModestMailOperation should not be
- * added to any #ModestMailOperationQueue
+ * Asynchronously copies a message from its current folder to another
+ * one. The caller should add the #ModestMailOperation to a
+ * #ModestMailOperationQueue and then free it. The caller will be
+ * notified by the "progress_changed" when the operation is completed.
+ * 
+ * Example
+ * <informalexample><programlisting>
+ * queue = modest_tny_platform_factory_get_modest_mail_operation_queue_instance (fact);
+ * mail_op = modest_mail_operation_new ();
+ * if (modest_mail_operation_copy_msg (mail_op, account))
+ * {
+ *     g_signal_connect (G_OBJECT (mail_op), "progress_changed", G_CALLBACK(on_progress_changed), queue);
+ *     modest_mail_operation_queue_add (queue, mail_op);
+ * }
+ * g_object_unref (G_OBJECT (mail_op));
+ * </programlisting></informalexample>
+ *
+ * Returns: TRUE if the mail operation could be started, or FALSE otherwise
  **/
-void          modest_mail_operation_copy_msg       (ModestMailOperation *self,
+gboolean      modest_mail_operation_copy_msg       (ModestMailOperation *self,
 						    TnyHeader *header, 
 						    TnyFolder *folder);
 
@@ -298,11 +328,26 @@ void          modest_mail_operation_copy_msg       (ModestMailOperation *self,
  * @header: the #TnyHeader of the message to move
  * @folder: the #TnyFolder where the message will be moved
  * 
- * Moves a message from its current folder to another one. This
- * operation is synchronous, so the #ModestMailOperation should not be
- * added to any #ModestMailOperationQueue
+ * Asynchronously moves a message from its current folder to another
+ * one. The caller should add the #ModestMailOperation to a
+ * #ModestMailOperationQueue and then free it. The caller will be
+ * notified by the "progress_changed" when the operation is completed.
+ * 
+ * Example
+ * <informalexample><programlisting>
+ * queue = modest_tny_platform_factory_get_modest_mail_operation_queue_instance (fact);
+ * mail_op = modest_mail_operation_new ();
+ * if (modest_mail_operation_move_msg (mail_op, account))
+ * {
+ *     g_signal_connect (G_OBJECT (mail_op), "progress_changed", G_CALLBACK(on_progress_changed), queue);
+ *     modest_mail_operation_queue_add (queue, mail_op);
+ * }
+ * g_object_unref (G_OBJECT (mail_op));
+ * </programlisting></informalexample>
+ *
+ * Returns: TRUE if the mail operation could be started, or FALSE otherwise
  **/
-void          modest_mail_operation_move_msg       (ModestMailOperation *self,
+gboolean      modest_mail_operation_move_msg       (ModestMailOperation *self,
 						    TnyHeader *header, 
 						    TnyFolder *folder);
 

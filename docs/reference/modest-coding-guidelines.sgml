@@ -1,0 +1,76 @@
+  <part>
+    <title>Coding guidelines</title>
+    <partintro>
+      When hacking on modest, please honour these time-tested coding guidelines.
+      First, please follow the <emphasis>Linux CodingStyle guidelines</emphasis>
+      (<filename>/usr/src/linux/Documentation/CodingStyle</filename>).
+    </partintro>
+    
+    <para>
+      Here are only some additional notes.
+    </para>
+    
+    <para>
+      Your editor may help you with this, for example for <application>emacs</application>:
+      <programlisting>
+	(c-set-style "K&amp;R")
+	(setq tab-width 8)
+	(setq indent-tabs-mode t)
+	(setq c-basic-offset 8)
+      </programlisting>
+      
+      Or the equivalent in your favourite editor.
+    </para>
+    
+    <para>
+      Lines must not exceed 100 characters.
+    </para>
+    
+    <para>
+      Functions should do one thing, and do it well. In general, functions
+      should not be much longer than 20-30 lines (except for, say, handling
+      many different cases in a 'switch'-statement). Files should not get to
+      big either; if there are more than, say, 800 lines, it's a sign that
+      some refactoring should take place.
+    </para>
+    
+    <para>
+      Code should compile cleanly
+      with <command>gcc</command>'s <symbol>-Wall</symbol> compile option. Of
+      course this might not always be possible due to problems in dependent
+      libraries and/or compiler version. Therefore, do not
+      include <symbol>-Werror</symbol> in the standard compile options; but
+      do use it when building / testing things yourself.
+    </para>
+
+    <para>
+      Code should also run cleanly. GTK+/GLib warnings and errors must be
+      taken very seriously. If you run <application>modest</application> with
+      the <symbol>-d</symbol>-flag, it will <symbol>abort</symbol> whenever
+      there is such a warning. This can be useful when running inside the
+      debugger. 
+    </para>
+    
+    <para>Global functions (the ones in <filename>.h</filename>-files) must
+      be commented using <systemitem>gtk-doc</systemitem>. This way, we
+      generate nice documentation. After installing
+      (under <filename>/usr/local</filename>), we can browse the results
+      with <application>DevHelp</application>. Just
+      add <systemitem>/usr/local/share/gtk-doc/html</systemitem> to the
+      <systemitem>DEVHELP_SEARCH_PATH</systemitem>-environment variable.  
+    </para>
+    <para>
+      Furthermore, please follow 'conventional wisdom' for programming with 
+      GLib/GTK+/GObject. Some things to remember:
+      <itemizedlist>
+	<listitem> <function>g_new</function>, <function>g_malloc</function> and
+	  friends <emphasis>never</emphasis> return <function>NULL</function>. They terminate
+	  the application if it happens (normally).  No need to check
+	  for <function>NULL</function> returns;</listitem>
+	<listitem> <function>g_return_if_fail</function> and friends may be
+	  'turned off', ie. they are to be used for error checking,
+	  but <emphasis>not</emphasis> for your programming logic
+	</listitem>
+      </itemizedlist>
+    </para>
+  </part>

@@ -74,13 +74,13 @@ ModestFormatter* modest_formatter_new (const gchar *content_type);
  * Original message
  * ----------------
  * Date: 1970/01/01
- * From: somemail@modest.org
+ * From: somemailATmodest.org
  * Body: "This is the body of the text"
  * </para><para>
  * Cited message
  * -------------
  * Body:
- * On 1970/01/01 somemail@modest.org wrote:
+ * On 1970/01/01 somemailATmodest.org wrote:
  * This is the body of the text
  * </para></programlisting>
  *
@@ -103,13 +103,13 @@ TnyMsg * modest_formatter_cite   (ModestFormatter *self, TnyMimePart *part, TnyH
  * Original message
  * ----------------
  * Date: 1970/01/01
- * From: somemail@modest.org
+ * From: somemailATmodest.org
  * Body: "This is the body of the text"
  * </para><para>
  * Quoted message
  * -------------
  * Body:
- * On 1970/01/01 somemail@modest.org wrote:
+ * On 1970/01/01 somemailATmodest.org wrote:
  * > This is the body of the text
  * </para></programlisting>
  *
@@ -133,8 +133,8 @@ TnyMsg * modest_formatter_quote  (ModestFormatter *self, TnyMimePart *part, TnyH
  * Original message
  * ----------------
  * Date: 1970/01/01
- * From: somemail@modest.org
- * To: mymail@modest.org
+ * From: somemailATmodest.org
+ * To: mymailATmodest.org
  * Subject: Mail subject
  * Body: "This is the body of the text"
  * </para><para>
@@ -142,11 +142,11 @@ TnyMsg * modest_formatter_quote  (ModestFormatter *self, TnyMimePart *part, TnyH
  * -------------
  * Body:
  * -----Forwarded Message-----
- * From: somemail@modest.org
+ * From: somemailATmodest.org
  * Sent: 1970/01/01
- * To: mymail@modest.org
+ * To: mymailATmodest.org
  * Subject: Fw: Mail subject
- * On 1970/01/01 somemail@modest.org wrote:
+ * On 1970/01/01 somemailATmodest.org wrote:
  * This is the body of the text
  * </para></programlisting>
  *
