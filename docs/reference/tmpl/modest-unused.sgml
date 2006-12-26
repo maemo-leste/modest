@@ -83,7 +83,7 @@ ModestTnyHeaderTreeView
 
 
 <!-- ##### SECTION ./tmpl/modest-tny-msg-view.sgml:Short_Description ##### -->
-
+A widget that displays the body of a message
 
 
 <!-- ##### SECTION ./tmpl/modest-tny-msg-view.sgml:Stability_Level ##### -->

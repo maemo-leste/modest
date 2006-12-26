@@ -109,6 +109,19 @@ modest_transport_widget_finalize (GObject *obj)
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
+static void
+on_button_toggled (GtkToggleButton *button, gpointer user_data)
+{
+	ModestTransportWidgetPrivate *priv;
+
+	priv = (ModestTransportWidgetPrivate *) user_data;
+
+	if (gtk_toggle_button_get_active (button))
+		gtk_widget_set_sensitive (gtk_widget_get_parent (priv->username), TRUE);
+	else
+		gtk_widget_set_sensitive (gtk_widget_get_parent (priv->username), FALSE);
+}
+
 
 static GtkWidget*
 smtp_configuration (ModestTransportWidget *self)
@@ -125,17 +138,30 @@ smtp_configuration (ModestTransportWidget *self)
 	gtk_box_pack_start (GTK_BOX(box), label, FALSE, FALSE, 6);
 
 	priv->servername = gtk_entry_new_with_max_length (40);
-	
+	priv->username = gtk_entry_new_with_max_length (40);
+
+	/* Servername */	
 	hbox = gtk_hbox_new (FALSE, 6);
 	gtk_box_pack_start (GTK_BOX(hbox), gtk_label_new (_("Servername: ")),
 			    FALSE, FALSE, 6);
-	gtk_box_pack_start (GTK_BOX(hbox), priv->servername,
-			    TRUE, TRUE, 6);
+	gtk_box_pack_start (GTK_BOX(hbox), priv->servername, TRUE, TRUE, 6);
 	gtk_box_pack_start (GTK_BOX(box), hbox, TRUE, TRUE, 6);
 
+	/* Auth */
 	priv->auth = gtk_check_button_new_with_label (_("Requires authentication"));
 	gtk_box_pack_start (GTK_BOX(box), priv->auth, TRUE, FALSE, 6);
+
+	g_signal_connect (priv->auth, "toggled", G_CALLBACK (on_button_toggled), priv);
 	
+	/* Username */
+	hbox = gtk_hbox_new (FALSE, 6);
+	gtk_box_pack_start (GTK_BOX(hbox), gtk_label_new (_("Username: ")),
+			    FALSE, FALSE, 6);
+	gtk_box_pack_start (GTK_BOX(hbox), priv->username, TRUE, TRUE, 6);
+	gtk_widget_set_sensitive (hbox, FALSE);
+	gtk_box_pack_start (GTK_BOX(box), hbox, TRUE, TRUE, 6);
+
+	/* Security */
 	label = gtk_label_new(NULL);
 	gtk_label_set_markup (GTK_LABEL(label),_("<b>Security</b>"));
 	gtk_box_pack_start (GTK_BOX(box), label, FALSE, FALSE, 0);
@@ -148,6 +174,7 @@ smtp_configuration (ModestTransportWidget *self)
 			    (priv->factory, MODEST_COMBO_BOX_TYPE_SECURITY_PROTOS),
 			    FALSE, FALSE,0);
 	gtk_box_pack_start (GTK_BOX(box), hbox, FALSE, FALSE, 0);
+
 	
 	hbox = gtk_hbox_new (FALSE, 6);
 	label = gtk_label_new(NULL);
@@ -209,6 +236,16 @@ modest_transport_widget_get_remember_password (ModestTransportWidget *self)
 	return gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON(priv->remember_pwd));
 }
 
+gboolean
+modest_transport_widget_get_requires_auth (ModestTransportWidget *self)
+{
+	ModestTransportWidgetPrivate *priv;
+
+	g_return_val_if_fail (self, FALSE);
+	priv = MODEST_TRANSPORT_WIDGET_GET_PRIVATE(self);
+
+	return gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON(priv->auth));
+}
 
 const gchar*
 modest_transport_widget_get_username (ModestTransportWidget *self)

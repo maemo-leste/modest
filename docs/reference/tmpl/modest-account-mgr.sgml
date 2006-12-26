@@ -2,7 +2,7 @@
 ModestAccountMgr
 
 <!-- ##### SECTION Short_Description ##### -->
-Manages email accounts
+
 
 <!-- ##### SECTION Long_Description ##### -->
 <para>
@@ -24,6 +24,25 @@ Manages email accounts
 
 </para>
 
+
+<!-- ##### SIGNAL ModestAccountMgr::account-changed ##### -->
+<para>
+
+</para>
+
+@: 
+@: 
+@: 
+@: 
+
+<!-- ##### SIGNAL ModestAccountMgr::account-removed ##### -->
+<para>
+
+</para>
+
+@: 
+@: 
+@: 
 
 <!-- ##### SIGNAL ModestAccountMgr::account-changed ##### -->
 <para>

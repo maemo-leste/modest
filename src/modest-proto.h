@@ -122,8 +122,5 @@ const gchar**     modest_proto_security_protos   (void);
  */
 const gchar**     modest_proto_auth_protos   (void);
 
-
-
-
 #endif /*__MODEST_SERVER_PROTO_H__*/
                             

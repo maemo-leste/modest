@@ -35,10 +35,7 @@
 #include <tny-store-account.h>
 #include <tny-folder-store.h>
 #include <tny-folder-store-query.h>
-#include <tny-camel-msg.h>
-#include <tny-camel-header.h>
 #include <tny-camel-stream.h>
-#include <tny-camel-mime-part.h>
 #include <tny-simple-list.h>
 #include <camel/camel-stream-mem.h>
 #include <glib/gi18n.h>
@@ -237,6 +234,7 @@ modest_mail_operation_send_new_mail (ModestMailOperation *self,
 				     const gchar *body,
 				     const GList *attachments_list)
 {
+	TnyPlatformFactory *fact;
 	TnyMsg *new_msg;
 	TnyHeader *header;
 	gchar *content_type;
@@ -256,8 +254,9 @@ modest_mail_operation_send_new_mail (ModestMailOperation *self,
 	}
 
 	/* Create new msg */
-	new_msg          = TNY_MSG (tny_camel_msg_new ());
-	header           = TNY_HEADER (tny_camel_header_new ());
+	fact    = modest_tny_platform_factory_get_instance ();
+	new_msg = tny_platform_factory_new_msg (fact);
+	header  = tny_platform_factory_new_header (fact);
 
 	/* WARNING: set the header before assign values to it */
 	tny_msg_set_header (new_msg, header);
@@ -303,6 +302,7 @@ add_if_attachment (gpointer data, gpointer user_data)
 static TnyMsg *
 create_reply_forward_mail (TnyMsg *msg, const gchar *from, gboolean is_reply, guint type)
 {
+	TnyPlatformFactory *fact;
 	TnyMsg *new_msg;
 	TnyHeader *new_header, *header;
 	gchar *new_subject;
@@ -341,14 +341,16 @@ create_reply_forward_mail (TnyMsg *msg, const gchar *from, gboolean is_reply, gu
 	g_object_unref (G_OBJECT (formatter));
 
 	/* Fill the header */
-	new_header = TNY_HEADER (tny_camel_header_new ());
-	tny_msg_set_header  (new_msg, new_header);
+	fact = modest_tny_platform_factory_get_instance ();
+	new_header = TNY_HEADER (tny_platform_factory_new_header (fact));
+	tny_msg_set_header (new_msg, new_header);
 	tny_header_set_from (new_header, from);
 	tny_header_set_replyto (new_header, from);
 
 	/* Change the subject */
-	new_subject = (gchar *) modest_text_utils_derived_subject (tny_header_get_subject(header), 
-								   (is_reply) ? _("Re:") : _("Fwd:"));
+	new_subject = 
+		(gchar *) modest_text_utils_derived_subject (tny_header_get_subject(header), 
+							     (is_reply) ? _("Re:") : _("Fwd:"));
 	tny_header_set_subject (new_header, (const gchar *) new_subject);
 	g_free (new_subject);
 
@@ -963,13 +965,15 @@ add_attachments (TnyMsg *msg, GList *attachments_list)
 	const gchar *attachment_content_type;
 	const gchar *attachment_filename;
 	TnyStream *attachment_stream;
+	TnyPlatformFactory *fact;
 
+	fact = modest_tny_platform_factory_get_instance ();
 	for (pos = (GList *)attachments_list; pos; pos = pos->next) {
 
 		old_attachment = pos->data;
 		attachment_filename = tny_mime_part_get_filename (old_attachment);
 		attachment_stream = tny_mime_part_get_stream (old_attachment);
-		attachment_part = TNY_MIME_PART (tny_camel_mime_part_new (camel_mime_part_new()));
+		attachment_part = tny_platform_factory_new_mime_part (fact);
 		
 		attachment_content_type = tny_mime_part_get_content_type (old_attachment);
 				 
@@ -994,6 +998,9 @@ add_body_part (TnyMsg *msg,
 {
 	TnyMimePart *text_body_part = NULL;
 	TnyStream *text_body_stream;
+	TnyPlatformFactory *fact;
+
+	fact = modest_tny_platform_factory_get_instance ();
 
 	/* Create the stream */
 	text_body_stream = TNY_STREAM (tny_camel_stream_new
@@ -1002,8 +1009,7 @@ add_body_part (TnyMsg *msg,
 
 	/* Create body part if needed */
 	if (has_attachments)
-		text_body_part = 
-			TNY_MIME_PART (tny_camel_mime_part_new (camel_mime_part_new()));
+		text_body_part = tny_platform_factory_new_mime_part (fact);
 	else
 		text_body_part = TNY_MIME_PART(msg);
 

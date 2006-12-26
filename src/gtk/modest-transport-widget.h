@@ -37,6 +37,7 @@ GType        modest_transport_widget_get_type    (void) G_GNUC_CONST;
 GtkWidget*   modest_transport_widget_new         (ModestWidgetFactory *factory, const gchar *proto);
 
 gboolean       modest_transport_widget_get_remember_password (ModestTransportWidget *self);
+gboolean       modest_transport_widget_get_requires_auth     (ModestTransportWidget *self);
 const gchar*   modest_transport_widget_get_username          (ModestTransportWidget *self);
 const gchar*   modest_transport_widget_get_servername        (ModestTransportWidget *self);
 const gchar*   modest_transport_widget_get_proto             (ModestTransportWidget *self);

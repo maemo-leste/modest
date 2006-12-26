@@ -50,6 +50,8 @@ modest_SOURCES=\
 	modest-presets.h\
 	modest-protocol-mgr.h\
 	modest-protocol-mgr.c\
+	modest-proto.h\
+	modest-proto.c\
 	modest-ui.h\
 	modest-text-utils.h\
 	modest-text-utils.c\

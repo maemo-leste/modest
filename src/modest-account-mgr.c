@@ -28,9 +28,10 @@
  */
 
 #include <string.h>
-#include <modest-marshal.h>
-#include <modest-account-keys.h>
-#include <modest-account-mgr.h>
+#include "modest-proto.h"
+#include "modest-marshal.h"
+#include "modest-account-keys.h"
+#include "modest-account-mgr.h"
 
 /* 'private'/'protected' functions */
 static void modest_account_mgr_class_init (ModestAccountMgrClass * klass);
@@ -357,6 +358,7 @@ modest_account_mgr_add_server_account (ModestAccountMgr * self,
 {
 	ModestAccountMgrPrivate *priv;
 	gchar *key;
+	ModestProtoType proto_type = MODEST_PROTO_TYPE_ANY;
 
 	g_return_val_if_fail (self, FALSE);
 	g_return_val_if_fail (name, FALSE);
@@ -390,6 +392,14 @@ modest_account_mgr_add_server_account (ModestAccountMgr * self,
 	modest_conf_set_string (priv->modest_conf, key,	null_means_empty (proto), NULL);
 	g_free (key);
 	
+	/* type */
+	key = get_account_keyname (name, MODEST_ACCOUNT_TYPE, TRUE);
+	proto_type = modest_proto_type (proto);
+	modest_conf_set_string (priv->modest_conf, key,	
+				(proto_type == MODEST_PROTO_TYPE_TRANSPORT) ? "transport" : "store", 
+				NULL);
+	g_free (key);
+
 	return TRUE;
 }
 

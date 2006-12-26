@@ -44,6 +44,7 @@ objects=\
         ${top_srcdir}/src/modest-tny-platform-factory.o \
         ${top_srcdir}/src/modest-conf.o \
         ${top_srcdir}/src/modest-protocol-mgr.o \
+        ${top_srcdir}/src/modest-proto.o \
         ${top_srcdir}/src/modest-formatter.o \
         ${top_srcdir}/src/modest-presets.o \
         ${top_srcdir}/src/modest-pair.o \

@@ -84,6 +84,7 @@ GTKDOC_LIBS=\
 	${top_builddir}/src/modest-account-mgr.o \
 	${top_builddir}/src/modest-tny-platform-factory.o \
 	${top_builddir}/src/modest-protocol-mgr.o \
+	${top_builddir}/src/modest-proto.o \
 	${top_builddir}/src/modest-pair.o \
 	${top_builddir}/src/modest-marshal.o \
 	${top_builddir}/src/modest-tny-account-store.o \

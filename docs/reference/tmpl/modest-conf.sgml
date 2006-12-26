@@ -2,7 +2,7 @@
 ModestConf
 
 <!-- ##### SECTION Short_Description ##### -->
-A wrapper to the underlying configuration system (currently GConf)
+
 
 <!-- ##### SECTION Long_Description ##### -->
 <para>
@@ -42,6 +42,15 @@ A wrapper to the underlying configuration system (currently GConf)
 
 </para>
 
+
+<!-- ##### SIGNAL ModestConf::key-changed ##### -->
+<para>
+
+</para>
+
+@: 
+@: 
+@: 
 
 <!-- ##### SIGNAL ModestConf::key-changed ##### -->
 <para>

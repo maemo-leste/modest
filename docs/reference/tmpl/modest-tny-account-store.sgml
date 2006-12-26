@@ -2,7 +2,7 @@
 ModestTnyAccountStore
 
 <!-- ##### SECTION Short_Description ##### -->
-An implementation of #TnyAccountStore
+
 
 <!-- ##### SECTION Long_Description ##### -->
 <para>
@@ -30,6 +30,25 @@ An implementation of #TnyAccountStore
 
 </para>
 
+
+<!-- ##### SIGNAL ModestTnyAccountStore::account-update ##### -->
+<para>
+
+</para>
+
+@: 
+@: 
+
+<!-- ##### SIGNAL ModestTnyAccountStore::password-requested ##### -->
+<para>
+
+</para>
+
+@: 
+@: 
+@: 
+@: 
+@Param5: 
 
 <!-- ##### SIGNAL ModestTnyAccountStore::account-update ##### -->
 <para>

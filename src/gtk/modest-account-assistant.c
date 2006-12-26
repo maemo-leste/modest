@@ -31,6 +31,7 @@
 #include "modest-account-assistant.h"
 #include "modest-store-widget.h"
 #include "modest-transport-widget.h"
+#include "modest-proto.h"
 
 #include <string.h>
 
@@ -228,6 +229,29 @@ add_identity_page (ModestAccountAssistant *self)
 
 
 static void
+receiving_page_update_completeness (GtkEditable *editable,
+				    ModestAccountAssistant *self)
+{
+	ModestAccountAssistantPrivate *priv;
+	const gchar *txt;
+
+	priv = MODEST_ACCOUNT_ASSISTANT_GET_PRIVATE(self);
+
+	txt = modest_store_widget_get_username (priv->store_widget);
+	if (!txt || strlen(txt) == 0) {
+		set_current_page_complete (self, FALSE);
+		return;
+	}
+
+	txt = modest_store_widget_get_servername (priv->store_widget);
+	if (!txt || strlen(txt) == 0) {
+		set_current_page_complete (self, FALSE);
+		return;
+	}
+	set_current_page_complete (self, TRUE);
+}
+
+static void
 on_receiving_combo_box_changed (GtkComboBox *combo, ModestAccountAssistant *self)
 {
 	ModestAccountAssistantPrivate *priv;
@@ -240,7 +264,17 @@ on_receiving_combo_box_changed (GtkComboBox *combo, ModestAccountAssistant *self
 		gtk_container_remove (GTK_CONTAINER(priv->store_holder),
 				      priv->store_widget);
 	
+	/* FIXME: we could have these widgets cached instead of
+	   creating them every time */
 	priv->store_widget = modest_store_widget_new (priv->factory, chosen);
+	if (!strcmp (chosen, MODEST_PROTO_POP) || !strcmp (chosen, MODEST_PROTO_IMAP)) {
+		g_signal_connect (priv->store_widget, 
+				  "data_changed", 
+				  receiving_page_update_completeness, 
+				  self);
+		set_current_page_complete (self, FALSE);
+	} else
+		set_current_page_complete (self, TRUE);
 
 	gtk_container_add (GTK_CONTAINER(priv->store_holder),
 			   priv->store_widget);
@@ -275,12 +309,15 @@ add_receiving_page (ModestAccountAssistant *self)
 
 	gtk_box_pack_start (GTK_BOX(box), combo, FALSE,FALSE,6);
 	gtk_box_pack_start (GTK_BOX(page), box, FALSE,FALSE, 6);
-	
+
 	gtk_box_pack_start (GTK_BOX(page), gtk_hseparator_new(), FALSE, FALSE, 0);
 
 	priv->store_holder = gtk_hbox_new (FALSE, 0);
 	gtk_box_pack_start (GTK_BOX(page), priv->store_holder,
 			    TRUE, TRUE, 0);
+
+	/* Force the selection */
+	on_receiving_combo_box_changed (combo, self);
 	
 	gtk_assistant_append_page (GTK_ASSISTANT(self), page);
 		
@@ -289,7 +326,7 @@ add_receiving_page (ModestAccountAssistant *self)
 	gtk_assistant_set_page_type (GTK_ASSISTANT(self), page,
 				     GTK_ASSISTANT_PAGE_INTRO);
 	gtk_assistant_set_page_complete (GTK_ASSISTANT(self),
-					 page, TRUE);
+					 page, FALSE);
 	gtk_widget_show_all (page);
 }
 
@@ -347,13 +384,16 @@ add_sending_page (ModestAccountAssistant *self)
 
 	gtk_box_pack_start (GTK_BOX(box), combo, FALSE,FALSE,0);
 	gtk_box_pack_start (GTK_BOX(page), box, FALSE,FALSE, 0);
-	
+
 	gtk_box_pack_start (GTK_BOX(page), gtk_hseparator_new(), FALSE, FALSE, 0);
 
 	priv->transport_holder = gtk_hbox_new (FALSE, 0);
 	gtk_box_pack_start (GTK_BOX(page), priv->transport_holder,
 			    FALSE, FALSE, 0);
-	
+
+	/* Force the selection */
+	on_sending_combo_box_changed (combo, self);
+
 	gtk_assistant_append_page (GTK_ASSISTANT(self), page);
 		
 	gtk_assistant_set_page_title (GTK_ASSISTANT(self), page,
@@ -519,29 +559,48 @@ static void
 on_apply (ModestAccountAssistant *self, gpointer user_data)
 {
 	ModestAccountAssistantPrivate *priv;
-	gchar *store_name;
-	const gchar *account_name;
+	gchar *store_name, *transport_name;
+	const gchar *account_name, *username, *servername, *proto;
 	ModestStoreWidget *store;
+	ModestTransportWidget *transport;
 
 	priv = MODEST_ACCOUNT_ASSISTANT_GET_PRIVATE(self);
 
-	/* create account */
-
 	/* create server account -> store */
 	store = MODEST_STORE_WIDGET(priv->store_widget);
-	store_name = g_strdup_printf ("%s:%s@%s",
-				      modest_store_widget_get_proto (store),
-				      modest_store_widget_get_username (store),
-				      modest_store_widget_get_servername (store));
+	proto = modest_store_widget_get_proto (store);
+	username = modest_store_widget_get_username (store);
+	servername = modest_store_widget_get_servername (store);
+	store_name = g_strdup_printf ("%s:%s@%s", proto, username, servername);
 	
-	modest_account_mgr_add_server_account (priv->account_mgr,
-						store_name,
-						modest_store_widget_get_servername (store),
-						modest_store_widget_get_username (store),
-						NULL,
-						modest_store_widget_get_proto (store));
+	modest_account_mgr_add_server_account (priv->account_mgr, store_name, servername,
+						username, NULL, proto);
 
 	/* create server account -> transport */
+	transport = MODEST_TRANSPORT_WIDGET(priv->transport_widget);
+	proto = modest_transport_widget_get_proto (transport);
+
+	if (!strcmp (proto, MODEST_PROTO_SMTP)) {
+		servername = modest_transport_widget_get_servername (transport);
+		if (modest_transport_widget_get_requires_auth (transport))
+			username = modest_transport_widget_get_username (transport);
+		else
+			username = g_get_user_name ();
+	} else {
+		username = g_get_user_name ();
+		servername = "localhost";
+
+	}
+	transport_name = g_strdup_printf ("%s:%s@%s", proto, username, servername);
+	
+	modest_account_mgr_add_server_account (priv->account_mgr,
+						transport_name,
+						servername,
+						username,
+						NULL,
+						proto);
+
+	/* create account */
 	account_name = get_account_name (self);
 	modest_account_mgr_add_account (priv->account_mgr,
 					account_name,
@@ -555,8 +614,10 @@ on_apply (ModestAccountAssistant *self, gpointer user_data)
 				       account_name,
 				       MODEST_ACCOUNT_EMAIL,
 				       get_email(self), FALSE, NULL);
-	
+
+	/* Frees */	
 	g_free (store_name);
+	g_free (transport_name);
 }
 
 

@@ -27,8 +27,8 @@ struct _ModestStoreWidget {
 
 struct _ModestStoreWidgetClass {
 	GtkVBoxClass parent_class;
-	/* insert signal callback declarations, eg. */
-	/* void (* my_event) (ModestStoreWidget* obj); */
+
+	void (* data_changed) (ModestStoreWidget* obj);
 };
 
 /* member functions */

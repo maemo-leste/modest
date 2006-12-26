@@ -37,8 +37,7 @@ static void modest_store_widget_init       (ModestStoreWidget *obj);
 static void modest_store_widget_finalize   (GObject *obj);
 /* list my signals  */
 enum {
-	/* MY_SIGNAL_1, */
-	/* MY_SIGNAL_2, */
+	DATA_CHANGED_SIGNAL,
 	LAST_SIGNAL
 };
 
@@ -63,7 +62,7 @@ struct _ModestStoreWidgetPrivate {
 static GtkContainerClass *parent_class = NULL;
 
 /* uncomment the following if you have defined any signals */
-/* static guint signals[LAST_SIGNAL] = {0}; */
+static guint signals[LAST_SIGNAL] = {0};
 
 GType
 modest_store_widget_get_type (void)
@@ -101,11 +100,14 @@ modest_store_widget_class_init (ModestStoreWidgetClass *klass)
 	g_type_class_add_private (gobject_class, sizeof(ModestStoreWidgetPrivate));
 
 	/* signal definitions go here, e.g.: */
-/* 	signals[MY_SIGNAL_1] = */
-/* 		g_signal_new ("my_signal_1",....); */
-/* 	signals[MY_SIGNAL_2] = */
-/* 		g_signal_new ("my_signal_2",....); */
-/* 	etc. */
+	signals[DATA_CHANGED_SIGNAL] =
+		g_signal_new ("data_changed",
+			      G_TYPE_FROM_CLASS (klass),
+			      G_SIGNAL_RUN_FIRST,
+			      G_STRUCT_OFFSET(ModestStoreWidgetClass, data_changed),
+			      NULL, NULL,
+			      g_cclosure_marshal_VOID__VOID,
+			      G_TYPE_NONE, 0);
 }
 
 static void
@@ -186,6 +188,11 @@ mbox_configuration (ModestStoreWidget *self)
 	return box;
 }
 
+static void
+on_entry_changed (GtkEntry *entry, gpointer user_data)
+{
+	g_signal_emit (MODEST_STORE_WIDGET (user_data), signals[DATA_CHANGED_SIGNAL], 0);
+}
 
 static GtkWidget*
 imap_pop_configuration (ModestStoreWidget *self)
@@ -244,6 +251,10 @@ imap_pop_configuration (ModestStoreWidget *self)
 			    FALSE, FALSE, 0);
 	
 	gtk_box_pack_start (GTK_BOX(box), hbox, FALSE, FALSE, 0);
+
+	/* Handle entry modifications */
+	g_signal_connect (priv->username, "changed", on_entry_changed, self);
+	g_signal_connect (priv->servername, "changed", on_entry_changed, self);
 
 	return box;
 }
@@ -305,7 +316,6 @@ modest_store_widget_new (ModestWidgetFactory *factory, const gchar *proto)
 
 	return GTK_WIDGET(self);
 }
-
 
 gboolean
 modest_store_widget_get_remember_password (ModestStoreWidget *self)

@@ -47,9 +47,14 @@ static void modest_tny_platform_factory_finalize   (GObject *obj);
 static GObject *modest_tny_platform_factory_constructor (GType type, guint n_construct_params,
 							 GObjectConstructParam *construct_params);
 static void tny_platform_factory_init (gpointer g, gpointer iface_data);
-static TnyAccountStore *modest_tny_platform_factory_new_account_store (TnyPlatformFactory *self);
-static TnyDevice *modest_tny_platform_factory_new_device (TnyPlatformFactory *self);
-static TnyMsgView *modest_tny_platform_factory_new_msg_view (TnyPlatformFactory *self);
+
+static TnyAccountStore* modest_tny_platform_factory_new_account_store (TnyPlatformFactory *self);
+static TnyDevice*       modest_tny_platform_factory_new_device        (TnyPlatformFactory *self);
+static TnyMsgView*      modest_tny_platform_factory_new_msg_view      (TnyPlatformFactory *self);
+static TnyMsg*          modest_tny_platform_factory_new_msg           (TnyPlatformFactory *self);
+static TnyMimePart*     modest_tny_platform_factory_new_mime_part     (TnyPlatformFactory *self);
+static TnyHeader*       modest_tny_platform_factory_new_header        (TnyPlatformFactory *self);
+
 
 /* list my signals  */
 enum {
@@ -185,6 +190,9 @@ tny_platform_factory_init (gpointer g, gpointer iface_data)
 	klass->new_account_store_func = modest_tny_platform_factory_new_account_store;
 	klass->new_device_func = modest_tny_platform_factory_new_device;
 	klass->new_msg_view_func = modest_tny_platform_factory_new_msg_view;
+	klass->new_msg_func = modest_tny_platform_factory_new_msg;
+	klass->new_mime_part_func = modest_tny_platform_factory_new_mime_part;
+	klass->new_header_func = modest_tny_platform_factory_new_header;
 
 	return;
 }
@@ -233,6 +241,27 @@ modest_tny_platform_factory_new_msg_view (TnyPlatformFactory *self)
 	/* TODO */
 	return NULL;
 }
+
+static TnyMsg*
+modest_tny_platform_factory_new_msg (TnyPlatformFactory *self)
+{
+	return tny_camel_msg_new ();
+}
+
+
+static TnyMimePart*
+modest_tny_platform_factory_new_mime_part (TnyPlatformFactory *self)
+{
+	return tny_camel_mime_part_new ();
+}
+
+
+static TnyHeader*
+modest_tny_platform_factory_new_header (TnyPlatformFactory *self)
+{
+	return tny_camel_header_new ();
+}
+
 
 ModestAccountMgr *
 modest_tny_platform_factory_get_modest_account_mgr_instance (TnyPlatformFactory *fact)

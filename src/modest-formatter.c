@@ -33,10 +33,10 @@
 #include <tny-header.h>
 #include <tny-gtk-text-buffer-stream.h>
 #include <tny-camel-stream.h>
-#include <tny-camel-msg.h>
 #include <camel/camel-stream-mem.h>
 #include "modest-formatter.h"
 #include "modest-text-utils.h"
+#include "modest-tny-platform-factory.h"
 
 typedef struct _ModestFormatterPrivate ModestFormatterPrivate;
 struct _ModestFormatterPrivate {
@@ -128,6 +128,7 @@ modest_formatter_do (ModestFormatter *self,
 	TnyMsg *new_msg;
 	gchar *body_text = NULL, *txt = NULL;
 	ModestFormatterPrivate *priv;
+	TnyPlatformFactory *fact;
 
 	g_return_val_if_fail (self, NULL);
 	g_return_val_if_fail (body, NULL);
@@ -135,7 +136,8 @@ modest_formatter_do (ModestFormatter *self,
 	g_return_val_if_fail (func, NULL);
 
 	/* Build new part */
-	new_msg = TNY_MSG (tny_camel_msg_new ());
+	fact = modest_tny_platform_factory_get_instance ();
+	new_msg = tny_platform_factory_new_msg (fact);
 	body_text = extract_text (self, body);
 	txt = (gchar *) func (self, (const gchar*) body_text, header);
 	priv = MODEST_FORMATTER_GET_PRIVATE (self);
@@ -173,11 +175,13 @@ modest_formatter_attach (ModestFormatter *self, TnyMimePart *body, TnyHeader *he
 	gchar *attach_text = NULL;
 	TnyMimePart *body_part = NULL, *attach_part = NULL;
 	ModestFormatterPrivate *priv;
+	TnyPlatformFactory *fact;
 
+	fact = modest_tny_platform_factory_get_instance ();
 	/* Build new part */
-	new_msg     = TNY_MSG (tny_camel_msg_new ());
-	body_part   = TNY_MIME_PART (tny_camel_mime_part_new (camel_mime_part_new()));
-	attach_part = TNY_MIME_PART (tny_camel_mime_part_new (camel_mime_part_new()));
+	new_msg     = tny_platform_factory_new_msg (fact);
+	body_part   = tny_platform_factory_new_mime_part (fact);
+	attach_part = tny_platform_factory_new_mime_part (fact);
 
 	/* Create the two parts */
 	priv = MODEST_FORMATTER_GET_PRIVATE (self);
