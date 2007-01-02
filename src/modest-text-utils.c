@@ -659,7 +659,7 @@ hyperlinkify_plain_text (GString *txt)
 
 
 gchar*
-modest_text_utils_display_address (gchar *address)
+modest_text_utils_get_display_address (gchar *address)
 {
 	gchar *cursor;
 	
@@ -689,3 +689,87 @@ modest_text_utils_display_address (gchar *address)
 	return address;
 }
 
+
+
+gint 
+modest_text_utils_get_subject_prefix_len (const gchar *sub)
+{
+	gint i;
+	static const gchar* prefix[] = {
+		"Re:", "RE:", "Fwd:", "FWD:", "FW:", NULL
+	};
+		
+	if (!sub || (sub[0] != 'R' && sub[0] != 'F')) /* optimization */
+		return 0;
+
+	i = 0;
+	
+	while (prefix[i]) {
+		if (g_str_has_prefix(sub, prefix[i])) {
+			int prefix_len = strlen(prefix[i]); 
+			if (sub[prefix_len] == ' ')
+				++prefix_len; /* ignore space after prefix as well */
+			return prefix_len; 
+		}
+		++i;
+	}
+	return 0;
+}
+
+
+gint
+modest_text_utils_utf8_strcmp (const gchar* s1, const gchar *s2, gboolean insensitive)
+{
+	gint result = 0;
+	gchar *n1, *n2;
+
+	/* work even when s1 and/or s2 == NULL */
+	if (G_UNLIKELY(s1 == s2))
+		return 0;
+	if (G_UNLIKELY(!s1))
+		return -1;
+	if (G_UNLIKELY(!s2))
+		return 1;	
+
+	/* if it's not case sensitive */
+	if (!insensitive)
+		return strcmp (s1, s2);
+	
+	n1 = g_utf8_collate_key (s1, -1);
+	n2 = g_utf8_collate_key (s2, -1);
+	
+	result = strcmp (n1, n2);
+
+	g_free (n1);
+	g_free (n2);
+	
+	return result;
+}
+
+
+const gchar*
+modest_text_utils_get_display_date (time_t date)
+{
+	struct tm date_tm, now_tm; 
+	time_t now;
+
+	const gint buf_size = 64; 
+	static gchar date_buf[64]; /* buf_size is not ... */
+	static gchar now_buf[64];  /* ...const enough... */
+	
+	now = time (NULL);
+	
+	localtime_r(&now, &now_tm);
+	localtime_r(&date, &date_tm);
+
+	/* get today's date */
+	modest_text_utils_strftime (date_buf, buf_size, "%x", &date_tm);
+	modest_text_utils_strftime (now_buf,  buf_size, "%x",  &now_tm);
+	/* today */
+
+	/* if this is today, get the time instead of the date */
+	if (strcmp (date_buf, now_buf) == 0)
+		strftime (date_buf, buf_size, _("%X"), &date_tm); 
+		
+	return date_buf;
+}

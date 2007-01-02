@@ -152,11 +152,11 @@ msgtype_cell_data (GtkTreeViewColumn *column, GtkCellRenderer *renderer,
 			    &flags, -1);
 
 	if (flags & TNY_HEADER_FLAG_DELETED)
-		pixbuf = modest_icon_factory_get_small_icon (MODEST_HEADER_ICON_DELETED);
+		pixbuf = modest_icon_factory_get_icon (MODEST_HEADER_ICON_DELETED);
 	else if (flags & TNY_HEADER_FLAG_SEEN)
-		pixbuf = modest_icon_factory_get_small_icon (MODEST_HEADER_ICON_READ);
+		pixbuf = modest_icon_factory_get_icon (MODEST_HEADER_ICON_READ);
 	else
-		pixbuf = modest_icon_factory_get_small_icon (MODEST_HEADER_ICON_UNREAD);
+		pixbuf = modest_icon_factory_get_icon (MODEST_HEADER_ICON_UNREAD);
 		
 	g_object_set (G_OBJECT (renderer), "pixbuf", pixbuf, NULL);
 }
@@ -215,7 +215,7 @@ sender_receiver_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *rendere
 	
 	g_object_set (G_OBJECT(renderer),
 		      "text",
-		      modest_text_utils_display_address (address),
+		      modest_text_utils_get_display_address (address),
 		      "weight",
 		      (flags & TNY_HEADER_FLAG_SEEN) ? 400 : 800,
 		      "style",
@@ -224,38 +224,6 @@ sender_receiver_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *rendere
 
 	g_free (address);	
 }
-
-
-
-
-/* not reentrant/thread-safe */
-const gchar*
-display_date (time_t date)
-{
-	struct tm date_tm, now_tm; 
-	time_t now;
-
-	const gint buf_size = 64; 
-	static gchar date_buf[64]; /* buf_size is not ... */
-	static gchar now_buf[64];  /* ...const enough... */
-	
-	now = time (NULL);
-	
-	localtime_r(&now, &now_tm);
-	localtime_r(&date, &date_tm);
-
-	/* get today's date */
-	modest_text_utils_strftime (date_buf, buf_size, "%x", &date_tm);
-	modest_text_utils_strftime (now_buf,  buf_size, "%x",  &now_tm);
-	/* today */
-
-	/* if this is today, get the time instead of the date */
-	if (strcmp (date_buf, now_buf) == 0)
-		strftime (date_buf, buf_size, _("%X"), &date_tm); 
-		
-	return date_buf;
-}
-
 
 static void
 compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
@@ -276,8 +244,8 @@ compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer
 	rendobj = G_OBJECT(renderer);		
 
 	header = g_strdup_printf ("%s %s\n%s",
-				  modest_text_utils_display_address (from),
-				  display_date(date),
+				  modest_text_utils_get_display_address (from),
+				  modest_text_utils_get_display_date (date),
 				  subject);
 	
 	g_object_set (G_OBJECT(renderer),
@@ -300,7 +268,7 @@ get_new_column (const gchar *name, GtkCellRenderer *renderer,
 	GtkTreeViewColumn *column;
 
 	column =  gtk_tree_view_column_new_with_attributes(name, renderer, NULL);
-	gtk_tree_view_column_set_sizing (column, GTK_TREE_VIEW_COLUMN_FIXED);
+	gtk_tree_view_column_set_sizing (column, GTK_TREE_VIEW_COLUMN_AUTOSIZE);
 
 	gtk_tree_view_column_set_resizable (column, resizable);
 	if (resizable)
@@ -603,62 +571,6 @@ modest_header_view_get_style (ModestHeaderView *self)
 }
 
 
-
-/* get the length of any prefix that should be ignored for sorting */
-static inline int 
-get_prefix_len (const gchar *sub)
-{
-	gint i;
-	static const gchar* prefix[] = {
-		"Re:", "RE:", "Fwd:", "FWD:", "FW:", NULL
-	};
-		
-	if (!sub || (sub[0] != 'R' && sub[0] != 'F')) /* optimization */
-		return 0;
-
-	i = 0;
-	
-	while (prefix[i]) {
-		if (g_str_has_prefix(sub, prefix[i])) {
-			int prefix_len = strlen(prefix[i]); 
-			if (sub[prefix_len] == ' ')
-				++prefix_len; /* ignore space after prefix as well */
-			return prefix_len; 
-		}
-		++i;
-	}
-	return 0;
-}
-
-
-
-/* a strcmp that is case insensitive and NULL-safe */
-static gint
-cmp_insensitive_str (const gchar* s1, const gchar *s2)
-{
-	gint result = 0;
-	gchar *n1, *n2;
-
-	/* work even when s1 and/or s2 == NULL */
-	if (s1 == s2)
-		return 0;
-	if (!s1)
-		return -1;
-	if (!s2)
-		return 1;
-
-	n1 = g_utf8_collate_key (s1, -1);
-	n2 = g_utf8_collate_key (s2, -1);
-	
-	result = strcmp (n1, n2);
-
-	g_free (n1);
-	g_free (n2);
-	
-	return result;
-}
-
-
 static gint
 cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 	  gpointer user_data)
@@ -716,7 +628,9 @@ cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 				    -1);
 
 		/* the prefix ('Re:', 'Fwd:' etc.) we ignore */ 
-		cmp = cmp_insensitive_str (s1 + get_prefix_len(s1), s2 + get_prefix_len(s2));
+		cmp = modest_text_utils_utf8_strcmp (s1 + modest_text_utils_get_subject_prefix_len(s1),
+						     s2 + modest_text_utils_get_subject_prefix_len(s2),
+						     TRUE);
 
 		g_free (s1);
 		g_free (s2);
@@ -734,7 +648,7 @@ cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 				    TNY_GTK_HEADER_LIST_MODEL_FROM_COLUMN, &s2,
 				    TNY_GTK_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN, &t2,
 				    -1);
-		cmp = cmp_insensitive_str (s1, s2);
+		cmp = modest_text_utils_utf8_strcmp (s1, s2, TRUE);
 		g_free (s1);
 		g_free (s2);
 		
@@ -750,7 +664,7 @@ cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 				    TNY_GTK_HEADER_LIST_MODEL_TO_COLUMN, &s2,
 				    TNY_GTK_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN, &t2,
 				    -1);
-		cmp = cmp_insensitive_str (s1, s2);
+		cmp = modest_text_utils_utf8_strcmp (s1, s2, TRUE);
 		g_free (s1);
 		g_free (s2);
 		

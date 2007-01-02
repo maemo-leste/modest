@@ -146,7 +146,7 @@ size_t modest_text_utils_strftime(char *s, size_t max, const char  *fmt, const  
 
 
 /**
- * modest_text_utils_display_addres:
+ * modest_text_utils_get_display_addres:
  * @address: original address (UTF8 string)
  *
  * make a 'display address' from an address:
@@ -157,7 +157,46 @@ size_t modest_text_utils_strftime(char *s, size_t max, const char  *fmt, const  
  * Returns: the new address. The string is *not* newly allocated.
  * NULL in case of error
  */
-gchar* modest_text_utils_display_address (gchar *address);
+gchar* modest_text_utils_get_display_address (gchar *address);
 
+
+/**
+ * modest_text_utils_get_subject_prefix_len:
+ * @subject: original subject (UTF8 string)
+ *
+ * determine the length of the "Re:/RE:/Fwd:" prefix in an e-mail address
+ * 
+ * Returns: the length of the  prefix, or 0 if there is none
+ */
+gint modest_text_utils_get_subject_prefix_len (const gchar *sub);
+
+
+/**
+ * modest_text_utils_utf8_strcmp:
+ * @s1: the first string
+ * @s2: the second string
+ * @insensitive: should the comparison be case-insensitive?
+ *
+ * a strcmp that is NULL-safe, can deal with UTF8 and case-insensitive comparison 
+ *
+ * Returns: an integer less than, equal to, or greater than zero if s1 is found,
+ * respectively, to be less than, to match, or be greater than s2.
+ */
+gint modest_text_utils_utf8_strcmp (const gchar* s1, const gchar *s2, gboolean insensitive);
+
+
+
+/**
+ * modest_text_utils_get_display_date:
+ * @date: the date to display
+ *
+ * get a string representation for a date.
+ * 
+ * 
+ * Returns: the new display date. The string is *not* newly allocated,
+ * but is a static buffer (for optimization reasons). Therefore, when
+ * you call this function, you will loose the data.
+ */
+const gchar* modest_text_utils_get_display_date (time_t date);
 
 #endif /* __MODEST_TEXT_UTILS_H__ */
