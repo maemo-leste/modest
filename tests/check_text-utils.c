@@ -60,7 +60,7 @@ START_TEST (test_display_address_regular)
 	/* Tests 1, 2, 3, 4 */
 	for (i = 0; i !=  sizeof(tests)/sizeof(StringPair); ++i) {
 		gchar *str = g_strdup (tests[i].original);
-		str = modest_text_utils_display_address (str);
+		str = modest_text_utils_get_display_address (str);
 		fail_unless (str && strcmp(str, tests[i].expected) == 0,
 			"modest_text_utils_display_address failed for '%s': "
 			     "expected '%s' but got '%s'",
@@ -78,7 +78,7 @@ END_TEST
 START_TEST (test_display_address_invalid)
 {
 	/* Test 1 */
-	fail_unless (modest_text_utils_display_address (NULL) == NULL,
+	fail_unless (modest_text_utils_get_display_address (NULL) == NULL,
 		     "modest_text_utils_display_address(NULL) should be NULL");
 
 }
