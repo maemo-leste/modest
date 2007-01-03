@@ -45,17 +45,33 @@ static ModestAccountMgr *account_mgr = NULL;
 static void
 fx_setup_default_account_mgr ()
 {
-  ModestConf *conf = NULL;
+	ModestConf *conf = NULL;
 
-  g_type_init ();
+	g_type_init ();
 
-  conf = modest_conf_new ();
-  fail_unless (MODEST_IS_CONF (conf), 
-	       "modest_conf_new failed");
+	conf = modest_conf_new ();
+	fail_unless (MODEST_IS_CONF (conf), 
+		     "modest_conf_new failed");
 
-  account_mgr = modest_account_mgr_new (conf);
-  fail_unless (MODEST_IS_ACCOUNT_MGR (account_mgr),
-	       "modest_account_mgr_new failed");
+	account_mgr = modest_account_mgr_new (conf);
+	fail_unless (MODEST_IS_ACCOUNT_MGR (account_mgr),
+		     "modest_account_mgr_new failed");
+
+  	/* cleanup old garbage (from previous runs)*/
+	if (modest_account_mgr_account_exists(account_mgr,
+					      TEST_MODEST_ACCOUNT_NAME,
+					      FALSE, NULL))
+		modest_account_mgr_remove_account (account_mgr,
+						   TEST_MODEST_ACCOUNT_NAME,
+						   FALSE,
+						   NULL);
+	if (modest_account_mgr_account_exists(account_mgr,
+					      TEST_MODEST_ACCOUNT_NAME,
+					      TRUE, NULL))
+		modest_account_mgr_remove_account (account_mgr,
+						   TEST_MODEST_ACCOUNT_NAME,
+						   TRUE,
+						   NULL);
 }
 
 static void
@@ -92,9 +108,8 @@ START_TEST (test_add_exists_remove_account_regular)
 	gchar *proto = NULL;
 	GError *error = NULL;
 	gboolean result;
-
+	
 	name = g_strdup (TEST_MODEST_ACCOUNT_NAME);
-
 	/* Test 1 */
 	store_account = g_strdup ("imap://me@myserver");
 	transport_account = g_strdup ("local-smtp");
@@ -132,6 +147,7 @@ START_TEST (test_add_exists_remove_account_regular)
 		     "modest_account_mgr_remove_account failed:\nname: %s\nerror: %s",
 		     name,  error ? error->message : "");
 
+
 	/* Test 4 */
 	hostname = g_strdup ("myhostname.mydomain.com");
 	username = g_strdup ("myusername");
@@ -152,7 +168,7 @@ START_TEST (test_add_exists_remove_account_regular)
 	g_free (username);
 	g_free (password);
 	g_free (proto);
-
+	
 	/* Test 5 */
 	result = modest_account_mgr_account_exists (account_mgr,
 						    name,
