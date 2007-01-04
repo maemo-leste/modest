@@ -36,12 +36,12 @@ START_TEST (test_modest_presets_new)
 	ModestPresets *presets;
 	
 	presets = modest_presets_new ("provider-data-test.keyfile");
-	fail_unless (presets,
+	fail_unless (presets != NULL,
 		     "modest_presets_new should return a valid ModestPresets*");
 	modest_presets_destroy (presets);
 	
 	presets = modest_presets_new ("/foo/bar/cuux");
-	fail_unless (!presets,
+	fail_unless (presets == NULL,
 		     "modest_presets_new should return NULL when given an invalid file");
 	if (presets)
 		modest_presets_destroy (presets);	
@@ -54,45 +54,35 @@ START_TEST (test_modest_presets_get_providers)
 {
 	ModestPresets *presets;
 	gchar **providers;
-	gchar **cursor;
 	int len, i;
 	
 	presets = modest_presets_new ("provider-data-test.keyfile");
-	fail_unless (presets,
-		     "modest_presets_new should return a valid ModestPresets*");
+	fail_unless (presets != NULL,
+		     "modest_presets_new should return a valid ModestPresets");
 	
 	/* get all providers */
-	providers = modest_presets_get_providers (presets, -1, TRUE);
+	providers = modest_presets_get_providers (presets, 0, TRUE);
 	len = g_strv_length(providers);
-	fail_unless (presets && len == 5,
-		     "modest_presets_get_providers(presets, -1, TRUE) should return 5 providers "
+//	for (i = 0; i != len; ++i)
+//		g_print ("%s\n", providers[i]);
+	
+	fail_unless (providers && len == 5,
+		     "modest_presets_get_providers(presets, 0, TRUE) should return 5 providers "
 		     "but I got %d", len);
 	g_strfreev (providers);
 	
-	/* get all non-global providers */
-	providers = modest_presets_get_providers (presets, -1, FALSE);
-	len = g_strv_length(providers);
-	for (i = 0; i != len; ++i)
-		g_print ("%s\n", providers[i]);
-
-	
-	fail_unless (presets && len == 3,
-		     "modest_presets_get_providers(presets, -1, FALSE) should return 3 providers "
-		     "but I got %d", len);
-	g_strfreev (providers);
-
 	/* get all providers in Finland */
 	providers = modest_presets_get_providers (presets, 244, FALSE);
 	len = g_strv_length(providers);
-	fail_unless (presets && len == 2,
+	fail_unless (providers && len == 2,
 		     "modest_presets_get_providers (presets,244, FALSE) should return 2 providers "
 		     "but I got %d", len);
 	g_strfreev (providers);
 
-	/* get all providers in Afghanistan + internaltion */
+	/* get all providers in Afghanistan + international */
 	providers = modest_presets_get_providers (presets, 412, TRUE);
 	len = g_strv_length(providers);
-	fail_unless (presets && len == 3,
+	fail_unless (providers && len == 3,
 		     "modest_presets_get_providers (presets, 412, TRUE) should return 3 providers "
 		     "but I got %d", len);
 	g_strfreev (providers);
@@ -111,7 +101,7 @@ modest_presets_suite (void)
 
 	TCase *tc_core = tcase_create ("core");
 	tcase_add_test (tc_core, test_modest_presets_new);
-//	tcase_add_test (tc_core, test_modest_presets_get_providers);
+	tcase_add_test (tc_core, test_modest_presets_get_providers);
 	
 	suite_add_tcase (suite, tc_core);
 

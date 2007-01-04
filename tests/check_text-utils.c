@@ -28,6 +28,7 @@
  */
 
 #include <check.h>
+#include <stdlib.h>
 #include <string.h>
 #include <modest-text-utils.h>
 
@@ -39,7 +40,7 @@ typedef struct {
 /* ----------------- display address tests -------------- */
 
 /**
- * Test regular usage of modest_text_utils_display_address
+ * Test regular usage of modest_text_utils_get_display_address
  *  - Test 1: Check "<...>" deletion
  *  - Test 2: Check "(...)" deletion
  *  - Test 3: Check address left and right trim, also non ASCII chars
@@ -62,7 +63,7 @@ START_TEST (test_display_address_regular)
 		gchar *str = g_strdup (tests[i].original);
 		str = modest_text_utils_get_display_address (str);
 		fail_unless (str && strcmp(str, tests[i].expected) == 0,
-			"modest_text_utils_display_address failed for '%s': "
+			"modest_text_utils_get_display_address failed for '%s': "
 			     "expected '%s' but got '%s'",
 			     tests[i].original, tests[i].expected, str);
 		g_free (str);
@@ -72,15 +73,14 @@ END_TEST
 
 
 /**
- * Test invalid usage of modest_text_utils_display_address
+ * Test invalid usage of modest_text_utils_get_display_address
  *  - Test 1: Check with NULL address (should return NULL)
  */
 START_TEST (test_display_address_invalid)
 {
 	/* Test 1 */
 	fail_unless (modest_text_utils_get_display_address (NULL) == NULL,
-		     "modest_text_utils_display_address(NULL) should be NULL");
-
+		     "modest_text_utils_get_display_address(NULL) should be NULL");
 }
 END_TEST
 
@@ -155,9 +155,9 @@ START_TEST (test_quote_regular)
 		{ "This text should be quoted", 
 		  "On Thu Jan  1 01:00:00 1970, foo@bar wrote:\n> This text\n> should be quoted\n> \n" },
 		{ "These are several\nlines\nof plain text", 
-		  "On Thu Jan  1 01:00:00 1970, foo@bar wrote:\n> These are\n> several\n> lines\n> of text\n> \n" },
+		  "On Thu Jan  1 01:00:00 1970, foo@bar wrote:\n> These are\n> several lines\n> of plain text\n" },
 		{ "áéíÍÓÚäëïÏÖÜñÑçÇŽÊîš", 
-		  "On Thu Jan  1 01:00:00 1970, foo@bar wrote:\n> áéíÍÓÚäëïÏÖÜñÑçÇŽÊîš" },
+		  "On Thu Jan  1 01:00:00 1970, foo@bar wrote:\n> áéíÍÓÚäëïÏÖÜñÑçÇŽÊîš\n" },
 	};
 
 	for (i = 0; i !=  sizeof(tests)/sizeof(StringPair); ++i) {
@@ -211,15 +211,15 @@ START_TEST (test_quote_invalid)
 		     quoted_text);
 	g_free (quoted_text);
 	
-
+	
 	/* Test 2 (Fault) */
 	text = g_strdup ("Text");
-	expected_quoted_text = g_strdup ("On Thu Jan  1 01:00:00 1970, foo@bar wrote:\n> Text\n> \n");
+	expected_quoted_text = g_strdup ("On Thu Jan  1 01:00:00 1970, foo@bar wrote:\n> Text\n");
 	quoted_text = modest_text_utils_quote (text, NULL, "foo@bar",  0, 15);
-	fail_unless (quoted_text && !strcmp (expected_quoted_text, quoted_text),
-		     "modest_text_utils_quote failed:\nOriginal text:\n\"%s\"\n" \
-		     "Expected quotation:\n\"%s\"\nQuoted text:\n\"%s\"",
-		     text, expected_quoted_text, quoted_text);
+	fail_unless (quoted_text == NULL,
+		     "modest_text_utils_quote failed:\nOriginal text: NULL\n" \
+		     "Expected quotation: NULL\nQuoted text: \"%s\"",
+		     quoted_text);
 	g_free (text);
 	g_free (expected_quoted_text);
 	g_free (quoted_text);
@@ -228,10 +228,10 @@ START_TEST (test_quote_invalid)
 	text = g_strdup ("Text");
 	expected_quoted_text = g_strdup ("On Thu Jan  1 01:00:00 1970, (null) wrote:\n> Text\n");
 	quoted_text = modest_text_utils_quote (text, "text/plain", NULL,  0, 15);
-	fail_unless (quoted_text && !strcmp (expected_quoted_text, quoted_text),
-		     "modest_text_utils_quote failed:\nOriginal text:\n\"%s\"\n" \
-		     "Expected quotation:\n\"%s\"\nQuoted text:\n\"%s\"",
-		     text, expected_quoted_text, quoted_text);
+	fail_unless (quoted_text == NULL,
+		     "modest_text_utils_quote failed:\nOriginal text: NULL\n" \
+		     "Expected quotation: NULL\nQuoted text: \"%s\"",
+		     quoted_text);
 	g_free (text);
 	g_free (expected_quoted_text);
 	g_free (quoted_text);
@@ -404,10 +404,8 @@ START_TEST (test_inline_invalid)
 						  0, 
 						  "bar@foo", 
 						  "Any subject");
-	fail_unless (inlined_text && !strcmp (expected_inline, inlined_text),
-		     "modest_text_utils_inline failed:\nOriginal text:\nNULL\n" \
-		     "Expected inline:\n\"%s\"\nInline obtained:\n\"%s\"",
-		     expected_inline, inlined_text);
+	fail_unless (inlined_text == NULL, 
+		     "modest_text_utils_inline failed: it should return NULL");
 	g_free (inlined_text);
 
 	/* Test 2 (Fault) */
@@ -424,10 +422,8 @@ START_TEST (test_inline_invalid)
 						  0,
 						  "bar@foo",
 						  "Any subject");
-	fail_unless (inlined_text && !strcmp (expected_inline, inlined_text),
-		     "modest_text_utils_inline failed:\nOriginal text:\n\"%s\"\n" \
-		     "Expected inline:\n\"%s\"\nInline obtained:\n\"%s\"",
-		     text, expected_inline, inlined_text);
+	fail_unless (inlined_text == NULL, 
+		     "modest_text_utils_inline failed: it should return NULL");
 	g_free (inlined_text);
 
 	/* Test 3 */
@@ -444,10 +440,9 @@ START_TEST (test_inline_invalid)
 						  0, 
 						  "bar@foo", 
 						  "Any subject");
-	fail_unless (inlined_text && !strcmp (expected_inline, inlined_text),
-		     "modest_text_utils_inline failed:\nOriginal text:\n\"%s\"\n" \
-		     "Expected inline:\n\"%s\"\nInline obtained:\n\"%s\"",
-		     text, expected_inline, inlined_text);
+	fail_unless (inlined_text == NULL, 
+		     "modest_text_utils_inline failed: it should return NULL");
+
 	g_free (inlined_text);
 
 	/* Test 4 */
@@ -464,10 +459,8 @@ START_TEST (test_inline_invalid)
 						  0, 
 						  NULL, 
 						  "Any subject");
-	fail_unless (inlined_text && !strcmp (expected_inline, inlined_text),
-		     "modest_text_utils_inline failed:\nOriginal text:\n\"%s\"\n" \
-		     "Expected inline:\n\"%s\"\nInline obtained:\n\"%s\"",
-		     text, expected_inline, inlined_text);
+	fail_unless (inlined_text == NULL, 
+		     "modest_text_utils_inline failed: it should return NULL");
 	g_free (inlined_text);
 	
 	/* Test 5 */
@@ -484,10 +477,9 @@ START_TEST (test_inline_invalid)
 						  0, 
 						  "bar@foo", 
 						  NULL);
-	fail_unless (inlined_text && !strcmp (expected_inline, inlined_text),
-		     "modest_text_utils_inline failed:\nOriginal text:\n\"%s\"\n" \
-		     "Expected inline:\n\"%s\"\nInline obtained:\n\"%s\"",
-		     text, expected_inline, inlined_text);
+	fail_unless (inlined_text == NULL, 
+		     "modest_text_utils_inline failed: it should return NULL");
+
 	g_free (inlined_text);
 }
 END_TEST
@@ -709,7 +701,7 @@ END_TEST
  */
 START_TEST (test_convert_to_html_regular)
 {
-	gchar text_in_html[256];
+	gchar *text_in_html;
 	gchar *html_start = NULL;
 	gchar *html_end = NULL;
 	gchar *html = NULL;
@@ -728,20 +720,20 @@ START_TEST (test_convert_to_html_regular)
 		html = modest_text_utils_convert_to_html (tests[i].original);
 		fail_unless (html != NULL,
 			     "modest_text_utils_convert_to_html failed:" \
-			     "Original text:\n\"%s\"\nExpected html:\n\"%s\"\nObtained html:\n\NULL",
+			     "Original text:\n\"%s\"\nExpected html:\n\"%s\"\nObtained html:\nNULL",
 			     tests[i].original, tests[i].expected);
 		html_start = strstr (html, "<tt>");
 		html_end = strstr (html, "</body>");
 		bytes = html_end - html_start;
-		memset (text_in_html, 0, 256);
-		memcpy (text_in_html, html_start, bytes);
+		text_in_html = g_strndup (html_start, bytes);
+		
 		fail_unless (strstr (html, tests[i].expected) != NULL,
 			     "modest_text_utils_convert_to_html failed:" \
 			     "Original text:\n\"%s\"\nExpected html:\n\"%s\"\nObtained html:\n\"%s\"",
 			     tests[i].original, tests[i].expected, text_in_html);
-		g_free (html_start);
-		g_free (html_end);
-		g_free (html);
+//		g_free (html_start);
+//		g_free (text_in_html);
+//		g_free (html);
 	}
 }
 END_TEST
@@ -826,6 +818,8 @@ main ()
 	Suite   *suite;
 	int     failures;
 
+	setenv ("TZ", "Europe/Paris", 1);
+	
 	suite   = text_utils_suite ();
 	srunner = srunner_create (suite);
 	

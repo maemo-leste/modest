@@ -1,10 +1,12 @@
 [Bla]
+MCC=0
 OutgoingMailServer=smtp.bla.com
 SecureSmtp=true
 IncomingMailServer=pop.bla.com:995
 IncomingSecurity=2
 MailboxType=pop
 [Foo]
+MCC=0
 OutgoingMailServer=mail.foo.com
 IncomingMailServer=smtp.foo.com
 IncomingSecurity=0
@@ -27,4 +29,3 @@ OutgoingMailServer=smtp.rrr.af
 IncomingMailServer=mail.rrr.af
 IncomingSecurity=0
 MailboxType=imap
-
