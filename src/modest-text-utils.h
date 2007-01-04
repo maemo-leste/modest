@@ -53,8 +53,9 @@ gchar* modest_text_utils_derived_subject (const gchar *subject,
 
 /**
  * modest_text_utils_quote:
- * @text: a string which contains the message to quote
- * @from: the sender of the original message
+ * @text: a non-NULL string which contains the message to quote
+ * @from: a non-NULL  sender of the original message
+ * @content_type: the non-NULL content type for the quoting, e.g. "text/html"
  * @sent_date: sent date/time of the original message
  * @limit: specifies the maximum characters per line in the quoted text
  * 
@@ -86,11 +87,11 @@ gchar* modest_text_utils_cite (const gchar *text,
 
 /**
  * modest_text_utils_inlined_text
- * @from: the sender of the original message
+ * @from: the non-NULL sender of the original message
  * @sent_date: sent date/time of the original message
- * @to: sent date/time of the original message
- * @subject: sent date/time of the original message
- * @text: sent date/time of the original message
+ * @to: 
+ * @subject: 
+ * @text: 
  *
  * creates a new string with the "Original message" text prepended to
  * the text passed as argument and some data of the header

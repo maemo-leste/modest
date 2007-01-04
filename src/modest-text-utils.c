@@ -117,15 +117,19 @@ modest_text_utils_quote (const gchar *text,
 {
 	gchar *retval, *cited;
 
-	cited = cite (sent_date, from);
+	g_return_val_if_fail (text, NULL);
+	g_return_val_if_fail (content_type, NULL);
+	g_return_val_if_fail (from, NULL);
 
-	if (!strcmp (content_type, "text/html"))
+	cited = cite (sent_date, from);
+	
+	if (content_type && strcmp (content_type, "text/html") == 0)
 		/* TODO: extract the <body> of the HTML and pass it to
 		   the function */
 		retval = modest_text_utils_quote_html (text, cited, limit);
 	else
 		retval = modest_text_utils_quote_plain_text (text, cited, limit);
-		
+	
 	g_free (cited);
 
 	return retval;
@@ -166,6 +170,13 @@ modest_text_utils_inline (const gchar *text,
 		"<br><br>%s";
 	const gchar *format;
 
+	g_return_val_if_fail (text, NULL);
+	g_return_val_if_fail (content_type, NULL);
+	g_return_val_if_fail (from, NULL);
+	g_return_val_if_fail (text, NULL);
+	g_return_val_if_fail (to, NULL);
+	g_return_val_if_fail (subject, NULL);
+	
 	modest_text_utils_strftime (sent_str, 100, "%c", localtime (&sent_date));
 
 	if (!strcmp (content_type, "text/html"))

@@ -40,6 +40,7 @@
 #define MODEST_PRESETS_KEY_SECURE_SMTP       "SecureSMTP"
 #define MODEST_PRESETS_KEY_TRUE		     "true"
 
+
 ModestPresets*
 modest_presets_new (const gchar *presetfile)
 {
@@ -70,39 +71,47 @@ modest_presets_new (const gchar *presetfile)
 }
 
 gchar**
-modest_presets_get_providers  (ModestPresets *self, gint mcc, gboolean include_globals)
+modest_presets_get_providers  (ModestPresets *self, guint mcc,
+			       gboolean include_globals)
 {
 	gchar **providers = NULL;
 	gchar **filtered  = NULL;
+	GError *err       = NULL;
+	guint i, j, len;
 	
 	g_return_val_if_fail (self && self->keyfile, NULL);
 
 	providers = g_key_file_get_groups (self->keyfile, NULL);
-
+	
 	/* return *all* providers? */
-	if (mcc < 0 && include_globals)
+	if (mcc == 0 && include_globals)
 		return providers;
+	
+	/* nope: filter them */
+	len = g_strv_length(providers);
+	filtered = g_new(gchar*, len + 1);
 
-	/* nope: filter them instead */
-	filtered = g_new(gchar*, g_strv_length(providers));
+	for (i=0, j=0; i != len; ++i) {
 
-	if (filtered && providers) {
-		int i = 0, j = 0;
-		while (providers[i]) {
-
-			int this_mcc;
-			this_mcc = g_key_file_get_integer (self->keyfile, providers[i],
-							   MODEST_PRESETS_KEY_MCC,
-							   NULL);
-			if (this_mcc == mcc || (this_mcc == 0 && include_globals)) {
-				filtered[j++] = providers[i];
-				providers[i] = NULL; /*  g_strfreev: leave it alone */
-			}
-			++i;
+		int this_mcc;
+		this_mcc = g_key_file_get_integer (self->keyfile, providers[i],
+						   MODEST_PRESETS_KEY_MCC, &err);
+		if (err) {
+			g_strfreev (providers);
+			g_strfreev (filtered);
+			g_error_free (err);
+			g_printerr ("modest: error parsing keyfile: %s\n", err->message);
+			return NULL;
+		}
+		
+		if (this_mcc == mcc || (this_mcc == 0 && include_globals)) {
+			filtered[j++]   = providers[i];
+			filtered[j] = NULL; /* the array must be NULL-terminated */
+			providers[i]  = NULL; /*  g_strfreev: leave it alone */
 		}
 	}
-	g_strfreev (providers);
 	
+	g_strfreev (providers);
 	return filtered;
 }
 

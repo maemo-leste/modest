@@ -69,17 +69,17 @@ ModestPresets*            modest_presets_new             (const gchar *presetfil
  * modest_presets_get_providers:
  * @self: a valid ModestPresets instance
  * @mcc: limit the search to providers with this mcc (Mobile Country Code),
- *       or <0 to get all
- * @include_globals: include providers without MCC (such as GMail, Yahoo) if @mcc != 0?
+ *       or 0  to get all
+ * @include_globals: include (global) providers without MCC (such as GMail, Yahoo)
  * 
- * get a list of providers
+ * get a list of providers matching certian criteria
  *
  * Returns: a newly allocated array of strings, or NULL in case of error
  * should be freed with g_strvfree
  * 
  **/
-gchar **                  modest_presets_get_providers   (ModestPresets *self, gint mcc,
-							  gboolean include_globals);
+gchar **         modest_presets_get_providers   (ModestPresets *self, guint mcc,
+						 gboolean include_globals);
 
 /**
  * modest_presets_get_server:
