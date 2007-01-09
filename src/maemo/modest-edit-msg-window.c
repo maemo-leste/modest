@@ -28,12 +28,16 @@
  */
 #include <glib/gi18n.h>
 #include <tny-account-store.h>
-#include "modest-edit-msg-window.h"
+#include <widgets/modest-edit-msg-window.h>
+#include <hildon-widgets/hildon-window.h>
+#include <widgets/modest-toolbar.h>
 #include "modest-widget-memory.h"
 #include "modest-mail-operation.h"
 #include "modest-tny-platform-factory.h"
 #include "modest-tny-msg-actions.h"
 #include <tny-simple-list.h>
+#include <string.h>
+
 
 static void  modest_edit_msg_window_class_init   (ModestEditMsgWindowClass *klass);
 static void  modest_edit_msg_window_init         (ModestEditMsgWindow *obj);
@@ -153,56 +157,6 @@ restore_settings (ModestEditMsgWindow *self)
 
 	
 
-static void
-on_menu_quit (ModestEditMsgWindow *self, guint action, GtkWidget *widget)
-{
-	save_settings (self);
-	gtk_widget_destroy (GTK_WIDGET(self));
-}
-
-
-/* Our menu, an array of GtkItemFactoryEntry structures that defines each menu item */
-static const gchar* UI_DEF=
-	"<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-	"<ui>"
-	"  <popup>"
-	"    <menu name=\"Message\" \"MenuMessage\">"
-	"      <menuitem name=\"New\" action=\"on_menu_quit\" />"
-	"    </menu>"
-//	"    <menu name=\"JustifyMenu\" action=\"JustifyMenuAction\">"
-//	"      <menuitem name=\"Left\" action=\"justify-left\"/>"
-//	"      <menuitem name=\"Centre\" action=\"justify-center\"/>"
-//	"      <menuitem name=\"Right\" action=\"justify-right\"/>"
-//	"      <menuitem name=\"Fill\" action=\"justify-fill\"/>"
-//	"    </menu>"
-	"  </popup>"
-	"</ui>";
-
-
-static GtkMenu *
-get_menu (ModestEditMsgWindow *self)
-{
-	GtkWidget *w;
-	int i = 0;
-	
-	ModestEditMsgWindowPrivate *priv;
-	priv = MODEST_EDIT_MSG_WINDOW_GET_PRIVATE(self);
-
-	priv->ui_manager = gtk_ui_manager_new ();
-
-	gtk_ui_manager_add_ui_from_string (priv->ui_manager,
-					   UI_DEF, strlen(UI_DEF),
-					   NULL);
-
-	w = gtk_ui_manager_get_widget (priv->ui_manager, "/popup");
-	g_warning ("==> GtkMenu? ==> %s", GTK_IS_MENU(w) ? "yes" : "no"); 
-
-	return GTK_MENU(w);
-}
-
-
-
-
 
 static void
 send_mail (ModestEditMsgWindow *self)
@@ -316,7 +270,7 @@ toolbar_new (ModestEditMsgWindow *self)
 	for (i = 0 ; i != sizeof(button_ids) / sizeof(ModestToolbarButton); ++i)
 		buttons = g_slist_append (buttons, GINT_TO_POINTER(button_ids[i]));
 	
-	toolbar = modest_widget_factory_get_edit_toolbar (priv->factory, buttons);
+	toolbar = modest_toolbar_new (buttons);
 	g_slist_free (buttons);
 
 	g_signal_connect (G_OBJECT(toolbar), "button_clicked",
@@ -406,16 +360,13 @@ on_delete_event (GtkWidget *widget, GdkEvent *event, ModestEditMsgWindow *self)
 
 
 GtkWidget*
-modest_edit_msg_window_new (ModestWidgetFactory *factory,
-			    ModestEditType type, TnyMsg *msg)
+modest_edit_msg_window_new (ModestWidgetFactory *factory, ModestEditType type)
 {
 	GObject *obj;
 	ModestEditMsgWindowPrivate *priv;
 
 	g_return_val_if_fail (factory, NULL);
 	g_return_val_if_fail (type < MODEST_EDIT_TYPE_NUM, NULL);
-	g_return_val_if_fail (!(type==MODEST_EDIT_TYPE_NEW && msg), NULL); 
-	g_return_val_if_fail (!(type!=MODEST_EDIT_TYPE_NEW && !msg), NULL); 	
 	
 	obj = g_object_new(MODEST_TYPE_EDIT_MSG_WINDOW, NULL);
 	priv = MODEST_EDIT_MSG_WINDOW_GET_PRIVATE(obj);
@@ -434,31 +385,48 @@ modest_edit_msg_window_new (ModestWidgetFactory *factory,
 	g_signal_connect (G_OBJECT(obj), "delete-event",
 			  G_CALLBACK(on_delete_event), obj);
 	
-	if (msg) {
-		/* Testing code. Should be into a set_msg method */
-		TnyHeader *header;
-		GtkTextBuffer *buf;
-
-		header = tny_msg_get_header (msg);
-		gtk_entry_set_text (GTK_ENTRY(priv->to_field),
-				    tny_header_get_to (header));
-		gtk_entry_set_text (GTK_ENTRY(priv->cc_field),
-				    tny_header_get_cc (header));
-		gtk_entry_set_text (GTK_ENTRY(priv->bcc_field),
-				    tny_header_get_bcc (header));
-		gtk_entry_set_text (GTK_ENTRY(priv->subject_field),
-				    tny_header_get_subject (header));	
-
-		buf = gtk_text_view_get_buffer (GTK_TEXT_VIEW(priv->msg_body));
-		gtk_text_buffer_set_text (buf,
-					  (const gchar *) modest_tny_msg_actions_find_body (msg, FALSE),
-					  -1);
-
-		/* TODO: lower priority, select in the From: combo to
-		   the value that comes from msg */
-
-		/* TODO: set attachments */
-	}
 
 	return GTK_WIDGET (obj);
+}
+
+
+
+void
+modest_edit_msg_window_set_msg (ModestEditMsgWindow *self, TnyMsg *msg)
+{
+	TnyHeader *header;
+	GtkTextBuffer *buf;
+	const gchar *to, *cc, *bcc, *subject;
+	ModestEditMsgWindowPrivate *priv;
+
+	g_return_if_fail (MODEST_IS_EDIT_MSG_WINDOW (self));
+	g_return_if_fail (TNY_IS_MSG (msg));
+
+	priv = MODEST_EDIT_MSG_WINDOW_GET_PRIVATE (self);
+
+	header = tny_msg_get_header (msg);
+	to      = tny_header_get_to (header);
+	cc      = tny_header_get_cc (header);
+	bcc     = tny_header_get_bcc (header);
+	subject = tny_header_get_subject (header);
+
+	if (to)
+		gtk_entry_set_text (GTK_ENTRY(priv->to_field),  to);
+	if (cc)
+		gtk_entry_set_text (GTK_ENTRY(priv->cc_field),  cc);
+	if (bcc)
+		gtk_entry_set_text (GTK_ENTRY(priv->bcc_field), bcc);
+	if (subject)
+		gtk_entry_set_text (GTK_ENTRY(priv->subject_field), subject);	
+	
+	buf = gtk_text_view_get_buffer (GTK_TEXT_VIEW(priv->msg_body));
+	gtk_text_buffer_set_text (buf,
+				  (const gchar *) modest_tny_msg_actions_find_body (msg, TRUE),
+				  -1);
+
+	/* TODO: lower priority, select in the From: combo to the
+	   value that comes from msg <- not sure, should it be
+	   allowed? */
+	
+	/* TODO: set attachments */
 }

@@ -33,6 +33,7 @@
 #include <gtk/gtk.h>
 #include <modest-widget-factory.h>
 #include <modest-account-mgr.h>
+#include <hildon-widgets/hildon-wizard-dialog.h>
 
 G_BEGIN_DECLS
 
@@ -48,12 +49,12 @@ typedef struct _ModestAccountAssistant      ModestAccountAssistant;
 typedef struct _ModestAccountAssistantClass ModestAccountAssistantClass;
 
 struct _ModestAccountAssistant {
-	 GtkAssistant parent;
+	 HildonWizardDialog parent;
 	/* insert public members, if any */
 };
 
 struct _ModestAccountAssistantClass {
-	GtkAssistantClass parent_class;
+	HildonWizardDialogClass parent_class;
 	/* insert signal callback declarations, eg. */
 	/* void (* my_event) (ModestAccountAssistant* obj); */
 };

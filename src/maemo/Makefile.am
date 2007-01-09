@@ -20,7 +20,6 @@ PIXMAP_FILES=\
 	pixmaps/*.png 
 
 libmodest_ui_la_SOURCES=              \
-	modest-ui.c                   \
 	modest-icon-names.h           \
 	modest-main-window.h          \
 	modest-main-window.c          \

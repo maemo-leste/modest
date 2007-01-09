@@ -30,15 +30,16 @@
 #include <glib/gi18n.h>
 #include <gtk/gtktreeviewcolumn.h>
 
-#include "modest-main-window.h"
-#include "modest-widget-factory.h"
+#include <widgets/modest-main-window.h>
+#include <widgets/modest-edit-msg-window.h>
+#include <modest-widget-factory.h>
 #include "modest-widget-memory.h"
 #include "modest-icon-factory.h"
 #include "modest-ui.h"
 #include "modest-account-view-window.h"
 #include "modest-account-mgr.h"
 #include "modest-conf.h"
-#include "modest-edit-msg-window.h"
+
 #include "modest-tny-platform-factory.h"
 #include "modest-tny-msg-actions.h"
 #include "modest-mail-operation.h"
@@ -66,8 +67,6 @@ struct _ModestMainWindowPrivate {
 
 	GtkWidget *toolbar;
 	GtkWidget *menubar;
-
-	GtkWidget *folder_paned;
 	GtkWidget *msg_paned;
 	GtkWidget *main_paned;
 	
@@ -76,7 +75,7 @@ struct _ModestMainWindowPrivate {
 	
 	ModestHeaderView *header_view;
 	ModestFolderView *folder_view;
-	ModestMsgView    *msg_preview;
+	//ModestMsgView    *msg_preview;
 };
 
 
@@ -176,10 +175,7 @@ header_view_new (ModestMainWindow *self)
 	ModestHeaderViewColumn cols[] = {
 		MODEST_HEADER_VIEW_COLUMN_MSGTYPE,
 		MODEST_HEADER_VIEW_COLUMN_ATTACH,
-/* 		MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER, */
-		MODEST_HEADER_VIEW_COLUMN_FROM,
- 		MODEST_HEADER_VIEW_COLUMN_SUBJECT,
-		MODEST_HEADER_VIEW_COLUMN_RECEIVED_DATE
+ 		MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER_IN,
 	};
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
 	
@@ -188,8 +184,10 @@ header_view_new (ModestMainWindow *self)
 
 	header_view = modest_widget_factory_get_header_view (priv->widget_factory);
 	modest_header_view_set_columns (header_view, columns);
-	g_list_free (columns);
+	modest_header_view_set_style (header_view, 0); /* don't show headers */
 
+	
+	g_list_free (columns);
 	return header_view;
 }
 
@@ -205,10 +203,6 @@ restore_sizes (ModestMainWindow *self)
 
 	modest_widget_memory_restore (conf,G_OBJECT(self),
 				      "modest-main-window");
-	modest_widget_memory_restore (conf, G_OBJECT(priv->folder_paned),
-				      "modest-folder-paned");
-	modest_widget_memory_restore (conf, G_OBJECT(priv->msg_paned),
-				      "modest-msg-paned");
 	modest_widget_memory_restore (conf, G_OBJECT(priv->main_paned),
 				      "modest-main-paned");
 	modest_widget_memory_restore (conf, G_OBJECT(priv->header_view),
@@ -226,10 +220,6 @@ save_sizes (ModestMainWindow *self)
 	conf = modest_tny_platform_factory_get_modest_conf_instance (priv->factory);
 	
 	modest_widget_memory_save (conf,G_OBJECT(self), "modest-main-window");
-	modest_widget_memory_save (conf, G_OBJECT(priv->folder_paned),
-				   "modest-folder-paned");
-	modest_widget_memory_save (conf, G_OBJECT(priv->msg_paned),
-				   "modest-msg-paned");
 	modest_widget_memory_save (conf, G_OBJECT(priv->main_paned),
 				   "modest-main-paned");
 	modest_widget_memory_save (conf, G_OBJECT(priv->header_view), "header-view");
@@ -296,7 +286,6 @@ modest_main_window_new (ModestWidgetFactory *widget_factory,
 	/* widgets from factory */
 	priv->folder_view = modest_widget_factory_get_folder_view (widget_factory);
 	priv->header_view = header_view_new (MODEST_MAIN_WINDOW(obj));
-	priv->msg_preview = modest_widget_factory_get_msg_preview (widget_factory);
 	
 	folder_win = wrapped_in_scrolled_window (GTK_WIDGET(priv->folder_view),
 						 FALSE);
@@ -304,15 +293,11 @@ modest_main_window_new (ModestWidgetFactory *widget_factory,
 						 FALSE);			   
 
 	/* paned */
-	priv->folder_paned = gtk_vpaned_new ();
-	priv->msg_paned = gtk_vpaned_new ();
 	priv->main_paned = gtk_hpaned_new ();
 	gtk_paned_add1 (GTK_PANED(priv->main_paned), folder_win);
-	gtk_paned_add2 (GTK_PANED(priv->main_paned), priv->msg_paned);
-	gtk_paned_add1 (GTK_PANED(priv->msg_paned), header_win);
-	gtk_paned_add2 (GTK_PANED(priv->msg_paned), GTK_WIDGET(priv->msg_preview));
-
+	gtk_paned_add2 (GTK_PANED(priv->main_paned), header_win);
 	gtk_widget_show (GTK_WIDGET(priv->header_view));
+	
 	gtk_tree_view_columns_autosize (GTK_TREE_VIEW(priv->header_view));
 
 	
