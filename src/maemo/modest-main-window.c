@@ -66,7 +66,6 @@ struct _ModestMainWindowPrivate {
 	GtkUIManager *ui_manager;
 
 	GtkWidget *toolbar;
-	GtkWidget *menubar;
 	GtkWidget *msg_paned;
 	GtkWidget *main_paned;
 	
@@ -279,8 +278,6 @@ modest_main_window_new (ModestWidgetFactory *widget_factory,
 
 	/* Toolbar / Menubar */
 	priv->toolbar = gtk_ui_manager_get_widget (priv->ui_manager, "/ToolBar");
-	priv->menubar = gtk_ui_manager_get_widget (priv->ui_manager, "/MenuBar");
-
 	gtk_toolbar_set_tooltips (GTK_TOOLBAR (priv->toolbar), TRUE);
 
 	/* widgets from factory */
@@ -318,15 +315,15 @@ modest_main_window_new (ModestWidgetFactory *widget_factory,
 
 	/* putting it all together... */
 	main_vbox = gtk_vbox_new (FALSE, 6);
-	gtk_box_pack_start (GTK_BOX(main_vbox), priv->menubar, FALSE, FALSE, 0);
-	gtk_box_pack_start (GTK_BOX(main_vbox), priv->toolbar, FALSE, FALSE, 0);
 	gtk_box_pack_start (GTK_BOX(main_vbox), priv->main_paned, TRUE, TRUE,0);
+	gtk_box_pack_start (GTK_BOX(main_vbox), priv->toolbar, FALSE, FALSE, 0);
 	gtk_box_pack_start (GTK_BOX(main_vbox), status_hbox, FALSE, FALSE, 0);
+
 	
 	gtk_container_add (GTK_CONTAINER(obj), main_vbox);
 	restore_sizes (MODEST_MAIN_WINDOW(obj));	
 
-	gtk_window_set_title (GTK_WINDOW(obj), "Modest");
+	gtk_window_set_title (GTK_WINDOW(obj), _("Modest"));
 	gtk_window_set_icon  (GTK_WINDOW(obj),
 			      modest_icon_factory_get_icon (MODEST_APP_ICON));
 	
