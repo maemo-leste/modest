@@ -66,17 +66,6 @@ struct _ModestFolderViewClass {
 	                          TnyAccountStore *account_store);
 };
 
-
-
-/* FIXME: move these to TnyMail */
-enum {
-	TNY_FOLDER_TYPE_NOTES = TNY_FOLDER_TYPE_ROOT + 1, /* urgh */
-	TNY_FOLDER_TYPE_DRAFTS,
-	TNY_FOLDER_TYPE_CONTACTS,
-	TNY_FOLDER_TYPE_CALENDAR,
-};
-
-
 /**
  * modest_folder_view_get_type:
  * 
