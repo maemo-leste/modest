@@ -70,11 +70,10 @@ struct _ModestFolderViewClass {
 
 /* FIXME: move these to TnyMail */
 enum {
-
 	TNY_FOLDER_TYPE_NOTES = TNY_FOLDER_TYPE_ROOT + 1, /* urgh */
 	TNY_FOLDER_TYPE_DRAFTS,
 	TNY_FOLDER_TYPE_CONTACTS,
-	TNY_FOLDER_TYPE_CALENDAR
+	TNY_FOLDER_TYPE_CALENDAR,
 };
 
 

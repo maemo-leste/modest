@@ -173,12 +173,11 @@ init_widgets (ModestWidgetFactory *self)
 	/* header view */
 	if (!(priv->header_view =
 	      MODEST_HEADER_VIEW(modest_header_view_new
-				 (NULL, NULL,MODEST_HEADER_VIEW_STYLE_NORMAL)))) {
+				 (NULL, NULL,0)))) {
 		g_printerr ("modest: cannot instantiate header view\n");
 		return FALSE;
 	}
-	
-	
+		
 	/* msg preview */
 	if (!(priv->msg_preview = MODEST_MSG_VIEW(modest_msg_view_new (NULL)))) {
 		g_printerr ("modest: cannot instantiate header view\n");

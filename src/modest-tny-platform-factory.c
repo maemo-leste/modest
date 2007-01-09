@@ -192,11 +192,11 @@ tny_platform_factory_init (gpointer g, gpointer iface_data)
 	TnyPlatformFactoryIface *klass = (TnyPlatformFactoryIface *)g;
 
 	klass->new_account_store_func = modest_tny_platform_factory_new_account_store;
-	klass->new_device_func = modest_tny_platform_factory_new_device;
-	klass->new_msg_view_func = modest_tny_platform_factory_new_msg_view;
-	klass->new_msg_func = modest_tny_platform_factory_new_msg;
-	klass->new_mime_part_func = modest_tny_platform_factory_new_mime_part;
-	klass->new_header_func = modest_tny_platform_factory_new_header;
+	klass->new_device_func        = modest_tny_platform_factory_new_device;
+	klass->new_msg_view_func      = modest_tny_platform_factory_new_msg_view;
+	klass->new_msg_func           = modest_tny_platform_factory_new_msg;
+	klass->new_mime_part_func     = modest_tny_platform_factory_new_mime_part;
+	klass->new_header_func        = modest_tny_platform_factory_new_header;
 
 	return;
 }

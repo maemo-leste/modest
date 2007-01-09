@@ -46,6 +46,7 @@
 #include "modest-widget-factory.h"
 #include "modest-tny-platform-factory.h"
 
+#include <modest-widget-memory.h>
 #include "modest-edit-msg-window.h"
 #include "modest-account-view-window.h"
 #include "modest-icon-names.h"
