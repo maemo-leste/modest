@@ -28,17 +28,15 @@
  */
 
 
-/* modest-tny-icon-names.h */
+/* modest-icon-names.h */
 
 /*
  * FIXME: this should go the front-end dirs,
  * with specific icons
  */
 
-#ifndef __MODEST_TNY_ICON_NAMES_H__
-#define __MODEST_TNY_ICON_NAMES_H__
-
-#define PIXMAP_PREFIX PREFIX "/share/modest/pixmaps/"
+#ifndef __MODEST_ICON_NAMES_H__
+#define __MODEST_ICON_NAMES_H__
 
 /* icons */
 
@@ -77,4 +75,16 @@
 #define  MODEST_TOOLBAR_ICON_PREV		PIXMAP_PREFIX "back.png"
 #define  MODEST_TOOLBAR_ICON_STOP		PIXMAP_PREFIX "stock-stop.svg"
 
-#endif  /*__MODEST_TNY_ICON_NAMES_H__*/
+/* Stock icon names */
+#define  MODEST_STOCK_MAIL_SEND	   "modest-stock-mail-send"
+#define  MODEST_STOCK_NEW_MAIL	   "modest-stock-new-mail"
+#define  MODEST_STOCK_SEND_RECEIVE "modest-stock-send-receive"
+#define  MODEST_STOCK_REPLY        "modest-stock-reply"
+#define  MODEST_STOCK_REPLY_ALL	   "modest-stock-reply-all"
+#define  MODEST_STOCK_FORWARD      "modest-stock-forward"
+#define  MODEST_STOCK_DELETE       "modest-stock-delete"
+#define  MODEST_STOCK_NEXT         "modest-stock-next"
+#define  MODEST_STOCK_PREV         "modest-stock-prev"
+#define  MODEST_STOCK_STOP         "modest-stock-stop"
+
+#endif  /*__MODEST_ICON_NAMES_H__*/

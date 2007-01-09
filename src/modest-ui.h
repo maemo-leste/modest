@@ -31,9 +31,7 @@
 #define __MODEST_UI_H__
 
 #include <glib-object.h>
-#include <gtk/gtkcontainer.h>
-#include "modest-conf.h"
-#include "widgets/modest-msg-view.h"
+#include <tny-account-store.h>
 
 G_BEGIN_DECLS
 
@@ -59,7 +57,6 @@ struct _ModestUIClass {
 	/* void (* my_event) (ModestUI* obj); */
 };
 
-
 /**
  * modest_ui_get_type:
  * 
@@ -71,19 +68,26 @@ GType        modest_ui_get_type        (void) G_GNUC_CONST;
 
 /**
  * modest_ui_new:
+ * @account_store: a #TnyAccountStore
  *  
  * Returns: a new ModestUI, or NULL in case of error
  */
-ModestUI*     modest_ui_new             (void);
+ModestUI*     modest_ui_new            (TnyAccountStore *account_store);
 
 
 /**
  * modest_ui_main_window:
  * @modest_ui: a ModestUI instance 
  *  
- * Returns: a new main window, or NULL in case of error
+ * Creates an new main window and returns it. If there is already a
+ * main window then the current one is returned and no new window is
+ * created
+ *
+ * Returns: a #ModestMainWindow, or NULL in case of error
  */
-GtkWidget *modest_ui_main_window (ModestUI *modest_ui);
+GtkWidget*    modest_ui_main_window    (ModestUI *modest_ui);
+
+
 
 G_END_DECLS
 #endif /* __MODEST_UI_H__ */

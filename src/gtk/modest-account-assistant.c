@@ -237,13 +237,13 @@ receiving_page_update_completeness (GtkEditable *editable,
 
 	priv = MODEST_ACCOUNT_ASSISTANT_GET_PRIVATE(self);
 
-	txt = modest_store_widget_get_username (priv->store_widget);
+	txt = modest_store_widget_get_username (MODEST_STORE_WIDGET (priv->store_widget));
 	if (!txt || strlen(txt) == 0) {
 		set_current_page_complete (self, FALSE);
 		return;
 	}
 
-	txt = modest_store_widget_get_servername (priv->store_widget);
+	txt = modest_store_widget_get_servername (MODEST_STORE_WIDGET (priv->store_widget));
 	if (!txt || strlen(txt) == 0) {
 		set_current_page_complete (self, FALSE);
 		return;
@@ -270,7 +270,7 @@ on_receiving_combo_box_changed (GtkComboBox *combo, ModestAccountAssistant *self
 	if (!strcmp (chosen, MODEST_PROTO_POP) || !strcmp (chosen, MODEST_PROTO_IMAP)) {
 		g_signal_connect (priv->store_widget, 
 				  "data_changed", 
-				  receiving_page_update_completeness, 
+				  G_CALLBACK (receiving_page_update_completeness), 
 				  self);
 		set_current_page_complete (self, FALSE);
 	} else
@@ -317,7 +317,7 @@ add_receiving_page (ModestAccountAssistant *self)
 			    TRUE, TRUE, 0);
 
 	/* Force the selection */
-	on_receiving_combo_box_changed (combo, self);
+	on_receiving_combo_box_changed (GTK_COMBO_BOX (combo), self);
 	
 	gtk_assistant_append_page (GTK_ASSISTANT(self), page);
 		
@@ -392,7 +392,7 @@ add_sending_page (ModestAccountAssistant *self)
 			    FALSE, FALSE, 0);
 
 	/* Force the selection */
-	on_sending_combo_box_changed (combo, self);
+	on_sending_combo_box_changed (GTK_COMBO_BOX (combo), self);
 
 	gtk_assistant_append_page (GTK_ASSISTANT(self), page);
 		

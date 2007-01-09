@@ -30,6 +30,10 @@
 /* modest-tny-platform-factory.c */
 #include <config.h>
 
+#include <tny-camel-header.h>
+#include <tny-camel-mime-part.h>
+#include <tny-camel-msg.h>
+
 /* MODES_PLATFORM_ID: 1 ==> gtk, 2==> maemo */
 #if MODEST_PLATFORM_ID==1   
 #include <tny-gnome-device.h>

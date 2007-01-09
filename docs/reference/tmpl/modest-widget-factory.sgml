@@ -126,23 +126,3 @@ ModestWidgetFactory
 @Returns: 
 
 
-<!-- ##### FUNCTION modest_widget_factory_get_main_toolbar ##### -->
-<para>
-
-</para>
-
-@self: 
-@items: 
-@Returns: 
-
-
-<!-- ##### FUNCTION modest_widget_factory_get_edit_toolbar ##### -->
-<para>
-
-</para>
-
-@self: 
-@items: 
-@Returns: 
-
-

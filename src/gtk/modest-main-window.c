@@ -28,23 +28,21 @@
  */
 
 #include <glib/gi18n.h>
-#include <gtk/gtkaboutdialog.h>
 #include <gtk/gtktreeviewcolumn.h>
 
-#include <modest-widget-memory.h>
-#include <modest-icon-factory.h>
-
-#include <widgets/modest-toolbar.h>
-
 #include "modest-main-window.h"
+#include "modest-widget-factory.h"
+#include "modest-widget-memory.h"
+#include "modest-icon-factory.h"
+#include "modest-ui.h"
 #include "modest-account-view-window.h"
 #include "modest-account-mgr.h"
 #include "modest-conf.h"
 #include "modest-edit-msg-window.h"
-#include "modest-icon-names.h"
 #include "modest-tny-platform-factory.h"
 #include "modest-tny-msg-actions.h"
 #include "modest-mail-operation.h"
+#include "modest-icon-names.h"
 
 /* 'private'/'protected' functions */
 static void modest_main_window_class_init    (ModestMainWindowClass *klass);
@@ -53,7 +51,6 @@ static void modest_main_window_finalize      (GObject *obj);
 
 static void restore_sizes (ModestMainWindow *self);
 static void save_sizes (ModestMainWindow *self);
-static void get_msg_cb (TnyFolder *folder, TnyMsg *msg, GError **err, gpointer user_data);
 
 /* list my signals */
 enum {
@@ -64,6 +61,8 @@ enum {
 
 typedef struct _ModestMainWindowPrivate ModestMainWindowPrivate;
 struct _ModestMainWindowPrivate {
+
+	GtkUIManager *ui_manager;
 
 	GtkWidget *toolbar;
 	GtkWidget *menubar;
@@ -167,332 +166,6 @@ modest_main_window_finalize (GObject *obj)
 }
 
 
-static void
-on_menu_about (GtkWidget *widget, gpointer data)
-{
-	GtkWidget *about;
-	const gchar *authors[] = {
-		"Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>",
-		NULL
-	};	
-	about = gtk_about_dialog_new ();
-	gtk_about_dialog_set_name (GTK_ABOUT_DIALOG(about), PACKAGE_NAME);
-	gtk_about_dialog_set_version (GTK_ABOUT_DIALOG(about),PACKAGE_VERSION);
-	gtk_about_dialog_set_copyright (
-		GTK_ABOUT_DIALOG(about),
-		_("Copyright (c) 2006, Nokia Corporation\n"
-		  "All rights reserved."));
-	gtk_about_dialog_set_comments (	GTK_ABOUT_DIALOG(about),
-		_("a modest e-mail client\n\n"
-		  "design and implementation: Dirk-Jan C. Binnema\n"
-		  "contributions from the fine people at KernelConcepts and Igalia\n"
-		  "uses the tinymail email framework written by Philip van Hoof"));
-	gtk_about_dialog_set_authors (GTK_ABOUT_DIALOG(about), authors);
-	gtk_about_dialog_set_website (GTK_ABOUT_DIALOG(about), "http://modest.garage.maemo.org");
-
-	gtk_dialog_run (GTK_DIALOG (about));
-	gtk_widget_destroy(about);
-}
-
-
-static void
-on_menu_accounts (ModestMainWindow *self, guint action, GtkWidget *widget)
-{
-	GtkWidget *account_win;
-	ModestMainWindowPrivate *priv;
-
-	g_return_if_fail (widget);
-	g_return_if_fail (self);
-	
-	priv        = MODEST_MAIN_WINDOW_GET_PRIVATE(self);	
-	account_win = modest_account_view_window_new (priv->widget_factory);
-
-	gtk_window_set_transient_for (GTK_WINDOW(account_win),
-				      GTK_WINDOW(self));
-				      
-	gtk_widget_show (account_win);
-}
-
-
-static void
-on_menu_new_message (ModestMainWindow *self, guint action, GtkWidget *widget)
-{
-	GtkWidget *msg_win;
-	ModestMainWindowPrivate *priv;
-
-	priv  = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
-
-	msg_win = modest_edit_msg_window_new (priv->widget_factory,
-					      MODEST_EDIT_TYPE_NEW);
-	gtk_widget_show (msg_win);
-}
-
-static void
-get_msg_cb (TnyFolder *folder, TnyMsg *msg, GError **err, gpointer user_data)
-{
-	GtkWidget *msg_win;
-	TnyHeader *new_header;
-	TnyMsg *new_msg;
-	ModestMainWindowPrivate *priv;
-	ModestEditType edit_type = -2;
-	GetMsgAsyncHelper *helper;
-
-	helper = (GetMsgAsyncHelper *) (user_data);
-
-	/* FIXME: select proper action */
-	priv  = helper->main_window_private;
-	new_msg = NULL;
-	switch (helper->action) {
-	case 1:
-		new_msg = 
-			modest_mail_operation_create_reply_mail (msg, helper->from, helper->reply_type,
-								 MODEST_MAIL_OPERATION_REPLY_MODE_SENDER);
-		edit_type = MODEST_EDIT_TYPE_REPLY;
-		break;
-	case 2:
-		new_msg = 
-			modest_mail_operation_create_reply_mail (msg, helper->from, helper->reply_type,
-								 MODEST_MAIL_OPERATION_REPLY_MODE_ALL);
-		edit_type = MODEST_EDIT_TYPE_REPLY;
-		break;
-	case 3:
-		new_msg = 
-			modest_mail_operation_create_forward_mail (msg, helper->from, helper->forward_type);
-		edit_type = MODEST_EDIT_TYPE_FORWARD;
-		break;
-	default:
-		g_warning ("unexpected action type: %d", helper->action);
-	}
-	
-	if (new_msg) {
-		/* Set from */
-		new_header = tny_msg_get_header (new_msg);
-		tny_header_set_from (new_header, helper->from);
-		g_object_unref (G_OBJECT (new_header));
-		
-		/* Show edit window */
-		msg_win = modest_edit_msg_window_new (priv->widget_factory,
-						      edit_type);
-		modest_edit_msg_window_set_msg (MODEST_EDIT_MSG_WINDOW (msg_win),
-						new_msg);
-		gtk_widget_show (msg_win);
-		
-		/* Clean and go on */
-		g_object_unref (new_msg);
-	}
-
-	tny_iterator_next (helper->iter);
-	if (tny_iterator_is_done (helper->iter)) {
-		TnyList *headers;
-		headers = tny_iterator_get_list (helper->iter);
-		g_object_unref (G_OBJECT (headers));
-		g_object_unref (G_OBJECT (helper->iter));
-		g_slice_free (GetMsgAsyncHelper, helper);
-	} else
-		tny_folder_get_msg_async (folder, TNY_HEADER (tny_iterator_get_current (helper->iter)), 
-					  get_msg_cb, helper);
-}
-
-static void
-on_menu_reply_forward (ModestMainWindow *self, guint action, GtkWidget *widget)
-{
-	ModestMainWindowPrivate *priv;
-	ModestHeaderView *header_view;
-	TnyList *header_list;
-	gchar *reply_key, *forward_key;
-	ModestMailOperationReplyType reply_type;
-	ModestMailOperationForwardType forward_type;
-	ModestConf *conf;
-	GError *error;
-
-	priv  = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
-	conf = modest_tny_platform_factory_get_modest_conf_instance (priv->factory);
-
-	header_view = modest_widget_factory_get_header_view (priv->widget_factory);
-	header_list = modest_header_view_get_selected_headers (header_view);
-
-	/* Get reply and forward types */
-	error = NULL;
-	reply_key = g_strdup_printf ("%s/%s", MODEST_CONF_NAMESPACE, MODEST_CONF_REPLY_TYPE);
-	reply_type = modest_conf_get_int (conf, reply_key, &error);
-	if (error || reply_type == 0) {
-		g_warning ("key %s not defined", reply_key);
-		reply_type = MODEST_MAIL_OPERATION_REPLY_TYPE_CITE;
-		if (error) {
-			g_error_free (error);
-			error = NULL;
-		}
-	}
-	g_free (reply_key);
-	
-	forward_key = g_strdup_printf ("%s/%s", MODEST_CONF_NAMESPACE, MODEST_CONF_FORWARD_TYPE);
-	forward_type = modest_conf_get_int (conf, forward_key, &error);
-	if (error || forward_type == 0) {
-		g_warning ("key %s not defined", forward_key);
-		forward_type = MODEST_MAIL_OPERATION_FORWARD_TYPE_INLINE;
-		if (error) {
-			g_error_free (error);
-			error = NULL;
-		}
-	}
-	g_free (forward_key);
-	
-	if (header_list) {
-		TnyHeader *header;
-		TnyFolder *folder;
-		gchar *from, *email_key;
-		const gchar *account_name;
-		GetMsgAsyncHelper *helper;
-
-		/* We assume that we can only select messages of the
-		   same folder and that we reply all of them from the
-		   same account. In fact the interface currently only
-		   allows single selection */
-		account_name = modest_folder_view_get_selected_account (priv->folder_view);
-		email_key = g_strdup_printf ("%s/%s/%s", MODEST_ACCOUNT_NAMESPACE, 
-					     account_name, MODEST_ACCOUNT_EMAIL);
-		from = modest_conf_get_string (conf, email_key, NULL);
-		if (!from)
-			from = g_strdup ("Invalid");
-		g_free (email_key);
-
-		helper = g_slice_new0 (GetMsgAsyncHelper);
-		helper->main_window_private = priv;
-		helper->reply_type = reply_type;
-		helper->forward_type = forward_type;
-		helper->action = action;
-		helper->from = from;
-		helper->iter = tny_list_create_iterator (header_list);
-
-		header = TNY_HEADER (tny_iterator_get_current (helper->iter));
-		folder = tny_header_get_folder (header);
-
-		/* The callback will call it per each header */
-		tny_folder_get_msg_async (folder, header, get_msg_cb, helper);
-
-		/* Clean */
-		g_object_unref (G_OBJECT (folder));
-	}
-}
-
-static void
-on_menu_quit (ModestMainWindow *self, guint action, GtkWidget *widget)
-{
-	save_sizes (self);
-	gtk_widget_destroy (GTK_WIDGET(self));
-}
-
-static void
-on_menu_delete (ModestMainWindow *self, guint action, GtkWidget *widget)
-{
-	ModestMainWindowPrivate *priv;
-	ModestHeaderView *header_view;
-	TnyList *header_list;
-	TnyIterator *iter;
-	GtkTreeModel *model;
-
-	priv  = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
-
-	header_view = modest_widget_factory_get_header_view (priv->widget_factory);
-	header_list = modest_header_view_get_selected_headers (header_view);
-	
-	if (header_list) {
-		iter = tny_list_create_iterator (header_list);
-		model = gtk_tree_view_get_model (GTK_TREE_VIEW (header_view));
-		if (GTK_IS_TREE_MODEL_SORT (model))
-			model = gtk_tree_model_sort_get_model (GTK_TREE_MODEL_SORT (model));
-		do {
-			TnyHeader *header;
-			ModestMailOperation *mail_op;
-
-			header = TNY_HEADER (tny_iterator_get_current (iter));
-			/* TODO: thick grain mail operation involving
-			   a list of objects. Composite pattern ??? */
-			mail_op = modest_mail_operation_new ();
-
-			/* Move to trash */
-			modest_mail_operation_remove_msg (mail_op, header, TRUE);
-
-			/* Remove from tree model */
-			tny_list_remove (TNY_LIST (model), G_OBJECT (header));
-
-			g_object_unref (G_OBJECT (mail_op));
-			g_object_unref (header);
-			tny_iterator_next (iter);
-
-		} while (!tny_iterator_is_done (iter));
-	}
-}
-
-
-/* Our menu, an array of GtkItemFactoryEntry structures that defines each menu item */
-static GtkItemFactoryEntry menu_items[] = {
-	{ "/_File",		NULL,			NULL,           0, "<Branch>", NULL },
-	{ "/File/_New",		"<control>N",		NULL,		0, "<StockItem>", GTK_STOCK_NEW },
-	{ "/File/_Open",	"<control>O",		NULL,		0, "<StockItem>", GTK_STOCK_OPEN },
-	{ "/File/_Save",	"<control>S",		NULL,		0, "<StockItem>", GTK_STOCK_SAVE },
-	{ "/File/Save _As",	NULL,			NULL,           0, "<Item>", NULL },
-	{ "/File/sep1",		NULL,			NULL,           0, "<Separator>", NULL },
-	{ "/File/_Quit",	"<CTRL>Q",		on_menu_quit,  0, "<StockItem>", GTK_STOCK_QUIT },
-
-	{ "/_Edit",		NULL,			NULL,           0, "<Branch>", NULL },
-	{ "/Edit/_Undo",	"<CTRL>Z",		NULL,		0, "<StockItem>", GTK_STOCK_UNDO },
-	{ "/Edit/_Redo",	"<shift><CTRL>Z",	NULL,		0, "<StockItem>", GTK_STOCK_REDO },
-	{ "/Edit/sep1",		NULL,			NULL,           0, "<Separator>", NULL },
-	{ "/Edit/Cut",		"<control>X",		NULL,		0, "<StockItem>", GTK_STOCK_CUT  },
-	{ "/Edit/Copy",		"<CTRL>C",		NULL,           0, "<StockItem>", GTK_STOCK_COPY },
-	{ "/Edit/Paste",	NULL,			NULL,           0, "<StockItem>", GTK_STOCK_PASTE},
-	{ "/Edit/sep2",		NULL,			NULL,           0, "<Separator>", NULL },
-	{ "/Edit/Delete",	"<CTRL>Q",		NULL,           0, "<Item>" ,NULL},
-	{ "/Edit/Select all",	"<CTRL>A",		NULL,           0, "<Item>" ,NULL},
-	{ "/Edit/Deelect all",  "<Shift><CTRL>A",	NULL,           0, "<Item>" ,NULL},
-
-	{ "/_Actions",                NULL,		NULL,		0, "<Branch>" ,NULL},
-	{ "/Actions/_New Message",    NULL,		on_menu_new_message,		0, "<Item>",NULL },
-	{ "/Actions/_Reply",    NULL,			on_menu_reply_forward,		1, "<Item>" ,NULL},
-	{ "/Actions/_Forward",  NULL,			on_menu_reply_forward,		3, "<Item>" ,NULL},
-	{ "/Actions/_Bounce",   NULL,			NULL,		0, "<Item>",NULL },	
-	
-	{ "/_Options",		 NULL,			NULL,		0, "<Branch>" ,NULL},
-	{ "/Options/_Accounts",  NULL,			on_menu_accounts,0, "<Item>" ,NULL},
-	{ "/Options/_Contacts",  NULL,			NULL,		0, "<Item>" ,NULL },
-
-
-	{ "/_Help",         NULL,                       NULL,           0, "<Branch>" ,NULL},
-	{ "/_Help/About",   NULL,                       on_menu_about,  0, "<StockItem>", GTK_STOCK_ABOUT},
-};
-
-static gint nmenu_items = sizeof (menu_items) / sizeof (menu_items[0]);
-
-
-static GtkWidget *
-menubar_new (ModestMainWindow *self)
-{
-	GtkItemFactory *item_factory;
-	GtkAccelGroup *accel_group;
-	
-	/* Make an accelerator group (shortcut keys) */
-	accel_group = gtk_accel_group_new ();
-	
-	/* Make an ItemFactory (that makes a menubar) */
-	item_factory = gtk_item_factory_new (GTK_TYPE_MENU_BAR, "<main>",
-					     accel_group);
-	
-	/* This function generates the menu items. Pass the item factory,
-	   the number of items in the array, the array itself, and any
-	   callback data for the the menu items. */
-	gtk_item_factory_create_items (item_factory, nmenu_items, menu_items, self);
-	
-	///* Attach the new accelerator group to the window. */
-	gtk_window_add_accel_group (GTK_WINDOW (self), accel_group);
-	
-	/* Finally, return the actual menu bar created by the item factory. */
-	return gtk_item_factory_get_widget (item_factory, "<main>");
-}
-
-
-
-
 static ModestHeaderView*
 header_view_new (ModestMainWindow *self)
 {
@@ -519,95 +192,6 @@ header_view_new (ModestMainWindow *self)
 
 	return header_view;
 }
-
-static void
-on_toolbar_button_clicked (ModestToolbar *toolbar, ModestToolbarButton button_id,
-			   ModestMainWindow *self)
-{
-	GtkTreeSelection *sel;
-	GtkTreeIter iter;
-	GtkTreeModel *model;
-	ModestMainWindowPrivate *priv;
-
-	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
-	
-	switch (button_id) {
-	case MODEST_TOOLBAR_BUTTON_NEW_MAIL:
-		on_menu_new_message (self, 0, NULL);
-		break;
-	case MODEST_TOOLBAR_BUTTON_REPLY:
-		on_menu_reply_forward (self, 1, NULL);
-		break;
-	case MODEST_TOOLBAR_BUTTON_REPLY_ALL:
-		on_menu_reply_forward (self, 2, NULL);
-		break;
-	case MODEST_TOOLBAR_BUTTON_FORWARD:
-		on_menu_reply_forward (self, 3, NULL);
-		break;
-	case MODEST_TOOLBAR_BUTTON_SEND_RECEIVE:
-		
-
-	case MODEST_TOOLBAR_BUTTON_NEXT:
-		sel = gtk_tree_view_get_selection (GTK_TREE_VIEW(priv->header_view));
-		if (sel) {
-			gtk_tree_selection_get_selected (sel, &model, &iter);
-			gtk_tree_model_iter_next (model, &iter);
-			gtk_tree_selection_select_iter (sel, &iter);
-		}
-		
-	case MODEST_TOOLBAR_BUTTON_PREV:
-	/* 	if (sel) { */
-/* 			gtk_tree_selection_get_selected (sel, &model, &iter); */
-/* 			gtk_tree_model_iter_prev (model, &iter); */
-/* 			gtk_tree_selection_select_iter (sel, &iter); */
-/* 		} */
-
-		break;
-	case MODEST_TOOLBAR_BUTTON_DELETE:
-		on_menu_delete (self, 0, GTK_WIDGET (toolbar));
-		break;
-
-	default:
-		g_printerr ("modest: key %d pressed\n", button_id);
-	}
-}
-
-static ModestToolbar*
-toolbar_new (ModestMainWindow *self)
-{
-	int i;
-	ModestToolbar *toolbar;
-	GSList *buttons = NULL;
-	ModestMainWindowPrivate *priv;
-
-	ModestToolbarButton button_ids[] = {
-		MODEST_TOOLBAR_BUTTON_NEW_MAIL,
-		MODEST_TOOLBAR_BUTTON_REPLY,
-		MODEST_TOOLBAR_BUTTON_REPLY_ALL,
-		MODEST_TOOLBAR_BUTTON_FORWARD,
-		MODEST_TOOLBAR_SEPARATOR,
-		MODEST_TOOLBAR_BUTTON_SEND_RECEIVE,
-		MODEST_TOOLBAR_SEPARATOR,
-		MODEST_TOOLBAR_BUTTON_PREV,
-		MODEST_TOOLBAR_BUTTON_NEXT,
-		MODEST_TOOLBAR_SEPARATOR,		
-		MODEST_TOOLBAR_BUTTON_DELETE
-	};		
-	
-	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
-
-	for (i = 0 ; i != sizeof(button_ids) / sizeof(ModestToolbarButton); ++i)
-		buttons = g_slist_append (buttons, GINT_TO_POINTER(button_ids[i]));
-	
-	toolbar = modest_widget_factory_get_main_toolbar (priv->widget_factory, buttons);
-	g_slist_free (buttons);
-	
-	g_signal_connect (G_OBJECT(toolbar), "button_clicked",
-			  G_CALLBACK(on_toolbar_button_clicked), self);
-	
-	return toolbar;
-}
-
 
 
 static void
@@ -681,11 +265,11 @@ on_delete_event (GtkWidget *widget, GdkEvent  *event, ModestMainWindow *self)
 
 
 GtkWidget*
-modest_main_window_new (ModestWidgetFactory *widget_factory)
+modest_main_window_new (ModestWidgetFactory *widget_factory,
+			GtkUIManager *ui_manager)
 {
 	GObject *obj;
 	ModestMainWindowPrivate *priv;
-	
 	GtkWidget *main_vbox;
 	GtkWidget *status_hbox;
 	GtkWidget *header_win, *folder_win;
@@ -695,8 +279,19 @@ modest_main_window_new (ModestWidgetFactory *widget_factory)
 	obj  = g_object_new(MODEST_TYPE_MAIN_WINDOW, NULL);
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(obj);
 
-	g_object_ref (widget_factory);
-	priv->widget_factory = widget_factory;
+	priv->widget_factory = g_object_ref (widget_factory);
+	priv->ui_manager = g_object_ref (ui_manager);
+
+	/* Add accelerators */
+	gtk_window_add_accel_group (GTK_WINDOW (obj), 
+				    gtk_ui_manager_get_accel_group (priv->ui_manager));
+
+
+	/* Toolbar / Menubar */
+	priv->toolbar = gtk_ui_manager_get_widget (priv->ui_manager, "/ToolBar");
+	priv->menubar = gtk_ui_manager_get_widget (priv->ui_manager, "/MenuBar");
+
+	gtk_toolbar_set_tooltips (GTK_TOOLBAR (priv->toolbar), TRUE);
 
 	/* widgets from factory */
 	priv->folder_view = modest_widget_factory_get_folder_view (widget_factory);
@@ -707,10 +302,6 @@ modest_main_window_new (ModestWidgetFactory *widget_factory)
 						 FALSE);
 	header_win = wrapped_in_scrolled_window (GTK_WIDGET(priv->header_view),
 						 FALSE);			   
-	
-	/* tool/menubar */
-	priv->menubar = menubar_new (MODEST_MAIN_WINDOW(obj));
-	priv->toolbar = GTK_WIDGET(toolbar_new (MODEST_MAIN_WINDOW(obj)));
 
 	/* paned */
 	priv->folder_paned = gtk_vpaned_new ();

@@ -39,6 +39,27 @@ ModestStoreWidget
 
 @modeststorewidget: the object which received the signal.
 
+<!-- ##### SIGNAL ModestStoreWidget::data-changed ##### -->
+<para>
+
+</para>
+
+@modeststorewidget: the object which received the signal.
+
+<!-- ##### SIGNAL ModestStoreWidget::data-changed ##### -->
+<para>
+
+</para>
+
+@modeststorewidget: the object which received the signal.
+
+<!-- ##### SIGNAL ModestStoreWidget::data-changed ##### -->
+<para>
+
+</para>
+
+@modeststorewidget: the object which received the signal.
+
 <!-- ##### FUNCTION modest_store_widget_new ##### -->
 <para>
 

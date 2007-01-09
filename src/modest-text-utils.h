@@ -169,7 +169,7 @@ gchar* modest_text_utils_get_display_address (gchar *address);
  * 
  * Returns: the length of the  prefix, or 0 if there is none
  */
-gint modest_text_utils_get_subject_prefix_len (const gchar *sub);
+gint modest_text_utils_get_subject_prefix_len (const gchar *subject);
 
 
 /**

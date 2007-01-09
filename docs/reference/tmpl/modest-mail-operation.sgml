@@ -69,6 +69,13 @@ ModestMailOperation
 
 @: 
 
+<!-- ##### SIGNAL ModestMailOperation::progress-changed ##### -->
+<para>
+
+</para>
+
+@: 
+
 <!-- ##### FUNCTION modest_mail_operation_new ##### -->
 <para>
 

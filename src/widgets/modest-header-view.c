@@ -47,7 +47,7 @@ static void on_selection_changed (GtkTreeSelection *sel, gpointer user_data);
 #define MODEST_HEADER_VIEW_PTR "modest-header-view"
 
 enum {
-	MESSAGE_SELECTED_SIGNAL,
+	HEADER_SELECTED_SIGNAL,
 	ITEM_NOT_FOUND_SIGNAL,
 	STATUS_UPDATE_SIGNAL,
 	LAST_SIGNAL
@@ -66,11 +66,6 @@ struct _ModestHeaderViewPrivate {
 #define MODEST_HEADER_VIEW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
 						MODEST_TYPE_HEADER_VIEW, \
                                                 ModestHeaderViewPrivate))
-
-typedef struct _GetMsgAsyncHelper {
-	ModestHeaderView *self;
-	TnyHeader *header;
-} GetMsgAsyncHelper;
 
 /* globals */
 static GObjectClass *parent_class = NULL;
@@ -113,11 +108,11 @@ modest_header_view_class_init (ModestHeaderViewClass *klass)
 	
 	g_type_class_add_private (gobject_class, sizeof(ModestHeaderViewPrivate));
 	
-	signals[MESSAGE_SELECTED_SIGNAL] = 
-		g_signal_new ("message_selected",
+	signals[HEADER_SELECTED_SIGNAL] = 
+		g_signal_new ("header_selected",
 			      G_TYPE_FROM_CLASS (gobject_class),
 			      G_SIGNAL_RUN_FIRST,
-			      G_STRUCT_OFFSET (ModestHeaderViewClass,message_selected),
+			      G_STRUCT_OFFSET (ModestHeaderViewClass,header_selected),
 			      NULL, NULL,
 			      g_cclosure_marshal_VOID__POINTER,
 			      G_TYPE_NONE, 1, G_TYPE_POINTER);
@@ -131,14 +126,14 @@ modest_header_view_class_init (ModestHeaderViewClass *klass)
 			      g_cclosure_marshal_VOID__INT,
 			      G_TYPE_NONE, 1, G_TYPE_INT);
 
-	signals[STATUS_UPDATE_SIGNAL] = 
+	signals[STATUS_UPDATE_SIGNAL] =
 		g_signal_new ("status_update",
 			      G_TYPE_FROM_CLASS (gobject_class),
 			      G_SIGNAL_RUN_FIRST,
-			      G_STRUCT_OFFSET (ModestHeaderViewClass,message_selected),
+			      G_STRUCT_OFFSET (ModestHeaderViewClass,status_update),
 			      NULL, NULL,
 			      modest_marshal_VOID__STRING_INT_INT,
-			      G_TYPE_NONE, 3, G_TYPE_STRING, G_TYPE_INT, G_TYPE_INT); 	
+			      G_TYPE_NONE, 3, G_TYPE_STRING, G_TYPE_INT, G_TYPE_INT);
 }
 
 static void
@@ -539,6 +534,20 @@ modest_header_view_get_selected_headers (ModestHeaderView *self)
 	return header_list;
 }
 
+void 
+modest_header_view_select_next (ModestHeaderView *self)
+{
+	GtkTreeSelection *sel;
+	GtkTreeIter iter;
+	GtkTreeModel *model;
+
+	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (self));
+	if (sel) {
+		gtk_tree_selection_get_selected (sel, &model, &iter);
+		gtk_tree_model_iter_next (model, &iter);
+		gtk_tree_selection_select_iter (sel, &iter);
+	}
+}
 
 GList*
 modest_header_view_get_columns (ModestHeaderView *self)
@@ -546,9 +555,6 @@ modest_header_view_get_columns (ModestHeaderView *self)
  	g_return_val_if_fail (self, FALSE);
 	return gtk_tree_view_get_columns (GTK_TREE_VIEW(self)); 
 }
-
-
-
 
 gboolean
 modest_header_view_set_style (ModestHeaderView *self,
@@ -704,6 +710,7 @@ on_refresh_folder (TnyFolder *folder, gboolean cancelled, GError **err,
 	GtkTreeModel *sortable; 
 	ModestHeaderView *self;
 	ModestHeaderViewPrivate *priv;
+	GError *error = NULL;
 
 	if (cancelled)
 		return;
@@ -722,13 +729,19 @@ on_refresh_folder (TnyFolder *folder, gboolean cancelled, GError **err,
 			g_object_unref (priv->headers);
 
 		priv->headers = TNY_LIST(tny_gtk_header_list_model_new ());
-		tny_folder_get_headers (folder, priv->headers, FALSE, NULL); /* FIXME */
-		
+		tny_folder_get_headers (folder, priv->headers, FALSE, &error); /* FIXME */
+		if (error) {
+			g_signal_emit (G_OBJECT(self), signals[ITEM_NOT_FOUND_SIGNAL],
+				       0, MODEST_ITEM_TYPE_MESSAGE);
+			g_print (error->message);
+			g_error_free (error);
+			return;
+		}
+
 		tny_gtk_header_list_model_set_folder
 			(TNY_GTK_HEADER_LIST_MODEL(priv->headers),folder, TRUE); /*async*/
-			
-		sortable = gtk_tree_model_sort_new_with_model
-			(GTK_TREE_MODEL(priv->headers));
+
+		sortable = gtk_tree_model_sort_new_with_model (GTK_TREE_MODEL(priv->headers));
 
 		/* install our special sorting functions */
 		cursor = cols = gtk_tree_view_get_columns (GTK_TREE_VIEW(self));
@@ -746,7 +759,6 @@ on_refresh_folder (TnyFolder *folder, gboolean cancelled, GError **err,
 		gtk_tree_view_set_model (GTK_TREE_VIEW (self), sortable);
 		gtk_tree_view_set_headers_clickable (GTK_TREE_VIEW(self),TRUE);
 		gtk_tree_view_set_headers_visible (GTK_TREE_VIEW(self), TRUE);
-		/* no need to unref sortable */	
 	}
 }
 
@@ -795,33 +807,9 @@ modest_header_view_set_folder (ModestHeaderView *self, TnyFolder *folder)
 	}
 	
 	/* no message selected */
-	g_signal_emit (G_OBJECT(self), signals[MESSAGE_SELECTED_SIGNAL], 0,
+	g_signal_emit (G_OBJECT(self), signals[HEADER_SELECTED_SIGNAL], 0,
 		       NULL);
 	return TRUE;
-}
-
-static void
-get_msg_cb (TnyFolder *folder, TnyMsg *msg, GError **err, gpointer user_data)
-{
-	GetMsgAsyncHelper *helper;
-	TnyHeaderFlags header_flags;
-
-	helper = (GetMsgAsyncHelper *) user_data;
-
-	if (msg) {
-		g_signal_emit (G_OBJECT(helper->self), signals[MESSAGE_SELECTED_SIGNAL], 0,
-			       msg);
-	
-		/* mark message as seen; _set_flags crashes, bug in tinymail? */
-		header_flags = tny_header_get_flags (helper->header);
-		tny_header_set_flags (helper->header, header_flags | TNY_HEADER_FLAG_SEEN);
-	} else {
-		g_signal_emit (G_OBJECT(helper->self), signals[ITEM_NOT_FOUND_SIGNAL], 
-			       0, MODEST_ITEM_TYPE_MESSAGE);
-	}
-
-	/* Frees */
-	g_slice_free (GetMsgAsyncHelper, helper);
 }
 
 static void
@@ -832,8 +820,6 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 	GtkTreeIter iter;
 	ModestHeaderView *self;
 	ModestHeaderViewPrivate *priv;
-	TnyFolder *folder;
-	GetMsgAsyncHelper *helper;
 	
 	g_return_if_fail (sel);
 	g_return_if_fail (user_data);
@@ -847,31 +833,11 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 	gtk_tree_model_get (model, &iter,
 			    TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN,
 			    &header, -1);
-	
-	if (!header) {
-		g_printerr ("modest: cannot find header\n");
-		return;
-	}
 
-	folder = tny_header_get_folder (TNY_HEADER(header));
-	if (!folder) {
-		g_signal_emit (G_OBJECT(self), signals[ITEM_NOT_FOUND_SIGNAL], 0,
-			       MODEST_ITEM_TYPE_FOLDER);
-		return;
-	}
-
-	helper = g_slice_new0 (GetMsgAsyncHelper);
-	helper->self = self;
-	helper->header = header;
-
-	/* Get message asynchronously. The callback will issue a
-	   signal if the message was retrieved correctly and then will
-	   set the header flags as read. */
-	tny_folder_get_msg_async (TNY_FOLDER(folder), 
-				  header, get_msg_cb, helper);
-
-	/* Frees */
-	g_object_unref (G_OBJECT (folder));
+	/* Emit signal */
+	g_signal_emit (G_OBJECT(self), 
+		       signals[HEADER_SELECTED_SIGNAL], 
+		       0, header);
 }
 
 

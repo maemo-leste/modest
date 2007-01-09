@@ -8,11 +8,14 @@ INCLUDES=\
 	$(MODEST_GSTUFF_CFLAGS)\
 	$(MODEST_LIBTINYMAIL_GNOME_DESKTOP_CFLAGS) \
 	$(MODEST_LIBTINYMAIL_MAEMO_CFLAGS) \
+	-I ${top_srcdir}/src/widgets \
 	-I$(MODEST_PLATFORM) \
 	-DPREFIX=\"@prefix@\" \
-	-DMODESTLOCALEDIR=\""$(modestlocaledir)"\" \
+	-DMODEST_LOCALEDIR=\"$(MODEST_LOCALEDIR)\" \
 	-DMODEST_PLATFORM=\"$(MODEST_PLATFORM)\" \
-	-DMODEST_PLATFORM_ID=$(MODEST_PLATFORM_ID)
+	-DMODEST_PLATFORM_ID=$(MODEST_PLATFORM_ID) \
+	-DPIXMAP_PREFIX=\"${datadir}/pixmaps/modest/\" \
+	-DMODEST_UIDIR=\"$(datadir)/modest/ui/\"
 
 BUILT_SOURCES = modest-marshal.c modest-marshal.h
 
@@ -52,6 +55,7 @@ modest_SOURCES=\
 	modest-protocol-mgr.c\
 	modest-proto.h\
 	modest-proto.c\
+	modest-ui.c\
 	modest-ui.h\
 	modest-text-utils.h\
 	modest-text-utils.c\
@@ -78,4 +82,10 @@ modest_LDADD = 						\
 	$(MODEST_PLATFORM)/libmodest-ui.la		\
 	widgets/libmodest-widgets.la			
 
-EXTRA_DIST=modest-marshal.list
+EXTRA_DIST=modest-marshal.list ui/*
+
+UI_FILES=\
+	ui/modest-ui.xml
+
+uidir = $(datadir)/modest/ui
+ui_DATA = $(UI_FILES)

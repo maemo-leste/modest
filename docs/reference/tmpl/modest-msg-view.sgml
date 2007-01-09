@@ -49,6 +49,54 @@ ModestMsgView
 @: 
 @: 
 
+<!-- ##### SIGNAL ModestMsgView::attachment-clicked ##### -->
+<para>
+
+</para>
+
+@: 
+@: 
+
+<!-- ##### SIGNAL ModestMsgView::link-clicked ##### -->
+<para>
+
+</para>
+
+@: 
+@: 
+
+<!-- ##### SIGNAL ModestMsgView::link-hover ##### -->
+<para>
+
+</para>
+
+@: 
+@: 
+
+<!-- ##### SIGNAL ModestMsgView::attachment-clicked ##### -->
+<para>
+
+</para>
+
+@: 
+@: 
+
+<!-- ##### SIGNAL ModestMsgView::link-clicked ##### -->
+<para>
+
+</para>
+
+@: 
+@: 
+
+<!-- ##### SIGNAL ModestMsgView::link-hover ##### -->
+<para>
+
+</para>
+
+@: 
+@: 
+
 <!-- ##### FUNCTION modest_msg_view_new ##### -->
 <para>
 

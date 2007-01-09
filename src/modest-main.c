@@ -63,7 +63,8 @@
 static gboolean hildon_init (); /* NOP if HILDON is not defined */
 
 static int start_ui (const gchar* mailto, const gchar *cc,
-		     const gchar *bcc, const gchar* subject, const gchar *body);
+		     const gchar *bcc, const gchar* subject, const gchar *body,
+		     TnyAccountStore *account_store);
 
 static int send_mail (const gchar* mailto, const gchar *cc, const gchar *bcc,
 		      const gchar* subject, const gchar *body);
@@ -71,9 +72,10 @@ static int send_mail (const gchar* mailto, const gchar *cc, const gchar *bcc,
 int
 main (int argc, char *argv[])
 {
-	GOptionContext   *context        = NULL;
-	TnyPlatformFactory *fact         = NULL;
-	ModestConf       *modest_conf    = NULL;
+	GOptionContext     *context       = NULL;
+	TnyPlatformFactory *fact          = NULL;
+	TnyAccountStore    *account_store = NULL;
+	ModestConf         *modest_conf   = NULL;
 
 	GError *err = NULL;
 	int retval  = MODEST_ERR_NONE;
@@ -99,7 +101,7 @@ main (int argc, char *argv[])
 		{ NULL, 0, 0, 0, NULL, NULL, NULL }
 	};
 
-	bindtextdomain (GETTEXT_PACKAGE, MODESTLOCALEDIR);
+	bindtextdomain (GETTEXT_PACKAGE, MODEST_LOCALEDIR);
 	bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
 	textdomain (GETTEXT_PACKAGE);
 
@@ -118,14 +120,25 @@ main (int argc, char *argv[])
 		goto cleanup;
 	}
 	g_option_context_free (context);
-	
+
+	/* Get platform factory */	
 	fact = modest_tny_platform_factory_get_instance ();
+
+	/* Check modest conf */
 	modest_conf = modest_tny_platform_factory_get_modest_conf_instance (fact);
 	if (!modest_conf) {
 		g_printerr ("modest: failed to initialize config system, exiting\n");
 		retval = MODEST_ERR_CONF;
 		goto cleanup;
 	}
+
+	/* Get the account store */
+	account_store = tny_platform_factory_new_account_store (fact);
+	if (!account_store) {
+		g_printerr ("modest: could not initialize a ModestTnyAccountStore instance\n");
+		retval = MODEST_ERR_RUN;
+		goto cleanup;
+        }
 
 	if (debug)
 		g_log_set_always_fatal (G_LOG_LEVEL_CRITICAL|G_LOG_LEVEL_WARNING);
@@ -135,7 +148,7 @@ main (int argc, char *argv[])
 	
 	if (!batch) {
 		gtk_init (&argc, &argv);
-		retval = start_ui (mailto, cc, bcc, subject, body);
+		retval = start_ui (mailto, cc, bcc, subject, body, account_store);
 	} else 
 		retval = send_mail (mailto, cc, bcc, subject, body);
 		
@@ -148,7 +161,8 @@ cleanup:
 
 static int
 start_ui (const gchar* mailto, const gchar *cc, const gchar *bcc,
-	  const gchar* subject, const gchar *body)
+	  const gchar* subject, const gchar *body,
+	  TnyAccountStore *account_store)
 {
 
 	ModestUI *modest_ui;
@@ -158,7 +172,7 @@ start_ui (const gchar* mailto, const gchar *cc, const gchar *bcc,
 	GtkWidget *win;
 	#endif
 	
-	modest_ui = MODEST_UI(modest_ui_new ());
+	modest_ui = MODEST_UI(modest_ui_new (account_store));
 	if (!modest_ui) {
 		g_printerr ("modest: failed to initialize ui, exiting\n");
 		retval = MODEST_ERR_UI;
@@ -186,9 +200,17 @@ start_ui (const gchar* mailto, const gchar *cc, const gchar *bcc,
 		win = modest_ui_main_window (modest_ui);
 	
 	if (win) {
+		TnyDevice *device;
+
 		gtk_widget_show (win);
+	
+		/* Go online */
+		device = tny_account_store_get_device (account_store);
+		tny_device_force_online (device);
+		g_object_unref (G_OBJECT (device));
+
 		gtk_main();
-	}	
+	}
 cleanup:
 	if (modest_ui)
 		g_object_unref (modest_ui);

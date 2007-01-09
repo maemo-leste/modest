@@ -52,6 +52,22 @@ ModestToolbar
 @: 
 @: 
 
+<!-- ##### SIGNAL ModestToolbar::button-clicked ##### -->
+<para>
+
+</para>
+
+@: 
+@: 
+
+<!-- ##### SIGNAL ModestToolbar::button-clicked ##### -->
+<para>
+
+</para>
+
+@: 
+@: 
+
 <!-- ##### FUNCTION modest_toolbar_new ##### -->
 <para>
 

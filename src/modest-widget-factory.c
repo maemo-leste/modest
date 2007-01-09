@@ -48,35 +48,6 @@ static void modest_widget_factory_init          (ModestWidgetFactory *obj);
 static void modest_widget_factory_finalize      (GObject *obj);
 
 
-/* callbacks */
-static void on_folder_selection_changed         (ModestFolderView *folder_view,
-						 TnyFolder *folder, gboolean selected,
-						 ModestWidgetFactory *self);
-static void on_folder_key_press_event  (ModestFolderView *header_view, 
-				        GdkEventKey *event, 
-				        gpointer user_data);
-static void on_message_selected        (ModestHeaderView *header_view, TnyMsg *msg,
-					ModestWidgetFactory *self);
-static void on_header_status_update    (ModestHeaderView *header_view, const gchar *msg,
-					gint num, gint total, ModestWidgetFactory *self);
-static void on_msg_link_hover          (ModestMsgView *msgview, const gchar* link,
-					ModestWidgetFactory *self);
-static void on_msg_link_clicked        (ModestMsgView *msgview, const gchar* link,
-					ModestWidgetFactory *self);
-static void on_msg_attachment_clicked  (ModestMsgView *msgview, int index,
-					ModestWidgetFactory *self);
-
-static void on_connection_changed (TnyDevice *device, gboolean online,
-				   ModestWidgetFactory *self);
-static void on_online_toggle_toggled (GtkToggleButton *toggle, ModestWidgetFactory *factory);
-
-static void on_password_requested (ModestTnyAccountStore *account_store, const gchar* account_name,
-				   gchar **password, gboolean *cancel, gboolean *remember, ModestWidgetFactory *self);
-
-static void on_item_not_found     (ModestHeaderView* header_view, ModestItemType type,
-				   ModestWidgetFactory *self);
-
-
 /* list my signals */
 enum {
 	/* MY_SIGNAL_1, */
@@ -94,7 +65,6 @@ struct _ModestWidgetFactoryPrivate {
 	ModestHeaderView            *header_view;
 	ModestFolderView            *folder_view;
 	ModestMsgView               *msg_preview;
-	ModestToolbar               *main_toolbar, *edit_toolbar;
 
 	GtkWidget                   *progress_bar;
 	GtkWidget                   *status_bar;
@@ -181,58 +151,6 @@ modest_widget_factory_finalize (GObject *obj)
 }
 
 
-
-/* FIXME: uninit these as well */
-static void
-init_signals (ModestWidgetFactory *self)
-{
-	TnyDevice *device;
-	ModestWidgetFactoryPrivate *priv;
-	
-	priv = MODEST_WIDGET_FACTORY_GET_PRIVATE(self);
-
-	/* folder view */
-	g_signal_connect (G_OBJECT(priv->folder_view), "folder_selection_changed",
-			  G_CALLBACK(on_folder_selection_changed), self);
-	g_signal_connect (G_OBJECT(priv->folder_view), "key-press-event",
-			  G_CALLBACK(on_folder_key_press_event), self);
-
-	/* header view */
-	g_signal_connect (G_OBJECT(priv->header_view), "status_update",
-			  G_CALLBACK(on_header_status_update), self);
-	g_signal_connect (G_OBJECT(priv->header_view), "message_selected",
-			  G_CALLBACK(on_message_selected), self);
-	g_signal_connect (G_OBJECT(priv->header_view), "item_not_found",
-			  G_CALLBACK(on_item_not_found), self);
-
-	
-	/* msg preview */
-	g_signal_connect (G_OBJECT(priv->msg_preview), "link_clicked",
-			  G_CALLBACK(on_msg_link_clicked), self);
-	g_signal_connect (G_OBJECT(priv->msg_preview), "link_hover",
-			  G_CALLBACK(on_msg_link_hover), self);
-	g_signal_connect (G_OBJECT(priv->msg_preview), "attachment_clicked",
-			  G_CALLBACK(on_msg_attachment_clicked), self);
-
-	/* account store */	
-	g_signal_connect (G_OBJECT (priv->account_store), "password_requested",
-			  G_CALLBACK(on_password_requested), self);	
-
-	/* FIXME: const casting is evil ==> tinymail */
-	device = (TnyDevice*) tny_account_store_get_device (priv->account_store);
-	if (device) {
-		g_signal_connect (G_OBJECT(device), "connection_changed",
-				  G_CALLBACK(on_connection_changed), self);
-		g_signal_connect (G_OBJECT(priv->online_toggle), "toggled",
-				  G_CALLBACK(on_online_toggle_toggled), self);
-		
-		/* init toggle in correct state */
-		on_connection_changed (device,
-				       tny_device_is_online (device),
-				       self);
-	}
-}
-
 static gboolean
 init_widgets (ModestWidgetFactory *self)
 {
@@ -276,7 +194,7 @@ init_widgets (ModestWidgetFactory *self)
 	   the current folder */
 	priv->folder_info_label = gtk_label_new (NULL);
 	
-	init_signals (self);
+/* 	init_signals (self); */
 	
 	return TRUE;
 }
@@ -450,376 +368,41 @@ modest_widget_factory_get_folder_info_label (ModestWidgetFactory *self)
 	return MODEST_WIDGET_FACTORY_GET_PRIVATE(self)->folder_info_label;
 }
 
-ModestToolbar*
-modest_widget_factory_get_main_toolbar (ModestWidgetFactory *self, 
-					GSList *items)
-{
-	ModestWidgetFactoryPrivate *priv;
-	priv = MODEST_WIDGET_FACTORY_GET_PRIVATE(self);
-
-	if (priv->main_toolbar)
-		return priv->main_toolbar;
-
-	priv->main_toolbar = modest_toolbar_new (items);
-	if (!priv->main_toolbar) {
-		g_printerr ("modest: failed to create main toolbar\n");
-		return NULL;
-	}
-	
-	return priv->main_toolbar;
-}
-
-
-ModestToolbar*
-modest_widget_factory_get_edit_toolbar (ModestWidgetFactory *self, 
-					GSList *items)
-{
-	return modest_toolbar_new (items);
-}
-
-
-
-static void
-on_folder_selection_changed (ModestFolderView *folder_view, TnyFolder *folder,
-			     gboolean selected,
-			     ModestWidgetFactory *self)
-{
-	ModestWidgetFactoryPrivate *priv;
-	gchar *txt;	
-
-	priv = MODEST_WIDGET_FACTORY_GET_PRIVATE(self);
-
-	if (folder) {
-		ModestConf *conf;
-		
-		conf = modest_tny_platform_factory_get_modest_conf_instance (priv->fact);
-
-		if (!selected) { /* the folder was unselected; save it's settings  */
-			modest_widget_memory_save (conf, G_OBJECT (priv->header_view),
-						   "header-view");
-		} else {  /* the folder was selected */
-			guint num, unread;
-			num    = tny_folder_get_all_count    (folder);
-			unread = tny_folder_get_unread_count (folder);
-			
-			txt = g_strdup_printf (_("%d %s, %d unread"),
-					       num, num==1 ? _("item") : _("items"), unread);		
-			gtk_label_set_label (GTK_LABEL(priv->folder_info_label), txt);
-			g_free (txt);
-			
-			modest_header_view_set_folder (priv->header_view, folder);
-			modest_widget_memory_restore (conf, G_OBJECT(priv->header_view),
-							      "header-view");
-		}
-	} else
-		gtk_label_set_label (GTK_LABEL(priv->folder_info_label), "");
-}
 
 /*********************** Test code ********************/
-static void
-on_folder_key_press_event (ModestFolderView *folder_view, GdkEventKey *event, gpointer user_data)
-{
-	GtkTreeSelection *selection;
-	GtkTreeModel *model;
-	GtkTreeIter iter;
-	TnyFolderStore *folder;
-	gint type;
-	ModestMailOperation *mail_op;
+/* static void */
+/* on_folder_key_press_event (ModestFolderView *folder_view, GdkEventKey *event, gpointer user_data) */
+/* { */
+/* 	GtkTreeSelection *selection; */
+/* 	GtkTreeModel *model; */
+/* 	GtkTreeIter iter; */
+/* 	TnyFolderStore *folder; */
+/* 	gint type; */
+/* 	ModestMailOperation *mail_op; */
 
-	selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (folder_view));
-	gtk_tree_selection_get_selected (selection, &model, &iter);
+/* 	selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (folder_view)); */
+/* 	gtk_tree_selection_get_selected (selection, &model, &iter); */
 	
-	gtk_tree_model_get (model, &iter, 
-			    TNY_GTK_FOLDER_STORE_TREE_MODEL_TYPE_COLUMN, &type, 
-			    TNY_GTK_FOLDER_STORE_TREE_MODEL_INSTANCE_COLUMN, &folder, 
-			    -1);
+/* 	gtk_tree_model_get (model, &iter,  */
+/* 			    TNY_GTK_FOLDER_STORE_TREE_MODEL_TYPE_COLUMN, &type,  */
+/* 			    TNY_GTK_FOLDER_STORE_TREE_MODEL_INSTANCE_COLUMN, &folder,  */
+/* 			    -1); */
 
-	mail_op = modest_mail_operation_new ();
+/* 	mail_op = modest_mail_operation_new (); */
 
-	if (event->keyval == GDK_C || event->keyval == GDK_c) {
-		if (type != TNY_FOLDER_TYPE_ROOT)
-			modest_mail_operation_create_folder (mail_op, folder, "New");
-	} else if (event->keyval == GDK_D || event->keyval == GDK_d) {
-		if (type != TNY_FOLDER_TYPE_ROOT)
-			modest_mail_operation_remove_folder (mail_op, TNY_FOLDER (folder), FALSE);
-	} else if (event->keyval == GDK_N || event->keyval == GDK_n) {
-		if (type != TNY_FOLDER_TYPE_ROOT)
-			modest_mail_operation_rename_folder (mail_op, TNY_FOLDER (folder), "New Name");
-	} else if (event->keyval == GDK_T || event->keyval == GDK_t) {
-		if (type != TNY_FOLDER_TYPE_ROOT)
-			modest_mail_operation_remove_folder (mail_op, TNY_FOLDER (folder), TRUE);
-	}
+/* 	if (event->keyval == GDK_C || event->keyval == GDK_c) { */
+/* 		if (type != TNY_FOLDER_TYPE_ROOT) */
+/* 			modest_mail_operation_create_folder (mail_op, folder, "New"); */
+/* 	} else if (event->keyval == GDK_D || event->keyval == GDK_d) { */
+/* 		if (type != TNY_FOLDER_TYPE_ROOT) */
+/* 			modest_mail_operation_remove_folder (mail_op, TNY_FOLDER (folder), FALSE); */
+/* 	} else if (event->keyval == GDK_N || event->keyval == GDK_n) { */
+/* 		if (type != TNY_FOLDER_TYPE_ROOT) */
+/* 			modest_mail_operation_rename_folder (mail_op, TNY_FOLDER (folder), "New Name"); */
+/* 	} else if (event->keyval == GDK_T || event->keyval == GDK_t) { */
+/* 		if (type != TNY_FOLDER_TYPE_ROOT) */
+/* 			modest_mail_operation_remove_folder (mail_op, TNY_FOLDER (folder), TRUE); */
+/* 	} */
 
-	g_object_unref (G_OBJECT (mail_op));
-}
-/****************************************************/
-
-static void
-on_message_selected (ModestHeaderView *folder_view, TnyMsg *msg,
-		     ModestWidgetFactory *self)
-{	
-	ModestWidgetFactoryPrivate *priv;
-	priv = MODEST_WIDGET_FACTORY_GET_PRIVATE(self);
-	
-	modest_msg_view_set_message (priv->msg_preview, msg);
-}
-
-
-/*
- * below some stuff to clearup statusbar messages after 1,5 seconds....
- */
-typedef struct {
-	GtkWidget *status_bar;
-	GtkWidget *progress_bar;
-	guint     msg_id;
-} StatusRemoveData;
-
-
-static gboolean
-on_statusbar_remove_msg (StatusRemoveData *data)
-{
-	/* we need to test types, as this callback maybe called after the
-	 * widgets have been destroyed
-	 */
-	if (GTK_IS_STATUSBAR(data->status_bar)) 
-		gtk_statusbar_remove (GTK_STATUSBAR(data->status_bar),
-				      0, data->msg_id);
-	if (GTK_IS_PROGRESS_BAR(data->progress_bar))
-		gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR(data->progress_bar),
-					       1.0);
-	g_free (data);
-	return FALSE;
-}
-
-
-static void
-statusbar_push (ModestWidgetFactory *self, guint context_id, const gchar *msg)
-{
-	guint id;
-	StatusRemoveData *data;
-	ModestWidgetFactoryPrivate *priv;
-	
-	priv = MODEST_WIDGET_FACTORY_GET_PRIVATE(self);
-	
-	if (!msg)
-		return;
-	
-	id = gtk_statusbar_push (GTK_STATUSBAR(priv->status_bar), 0, msg);
-
-	data = g_new (StatusRemoveData, 1);
-	data->status_bar   = priv->status_bar;
-	data->progress_bar = priv->progress_bar;
-	data->msg_id     = id;
-
-	g_timeout_add (1500, (GSourceFunc)on_statusbar_remove_msg, data);
-}
-/****************************************************************************/
-
-
-static void
-on_header_status_update (ModestHeaderView *header_view, const gchar *msg,
-			 gint num, gint total, ModestWidgetFactory *self)
-{
-	ModestWidgetFactoryPrivate *priv;
-	
-	priv = MODEST_WIDGET_FACTORY_GET_PRIVATE(self);
-
-	if (total != 0)
-		gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR(priv->progress_bar),
-					       (gdouble)num/(gdouble)total);
-	else
-		gtk_progress_bar_pulse (GTK_PROGRESS_BAR(priv->progress_bar));
-
-	statusbar_push (self, 0, msg);
-}
-
-
-static void
-on_msg_link_hover (ModestMsgView *msgview, const gchar* link,
-		   ModestWidgetFactory *self)
-{
-	ModestWidgetFactoryPrivate *priv;
-	priv = MODEST_WIDGET_FACTORY_GET_PRIVATE(self);
-	
-	statusbar_push (self, 0, link);
-
-}	
-
-
-static void
-on_msg_link_clicked  (ModestMsgView *msgview, const gchar* link,
-		      ModestWidgetFactory *self)
-{
-	gchar *msg;
-	msg = g_strdup_printf (_("Opening %s..."), link);
-	statusbar_push (self, 0, msg);
-	g_free (msg);
-}
-
-static void
-on_msg_attachment_clicked  (ModestMsgView *msgview, int index,
-			    ModestWidgetFactory *self)
-{
-	gchar *msg;
-	
-	msg = g_strdup_printf (_("Opening attachment %d..."), index);
-	statusbar_push (self, 0, msg);
-	
-	g_free (msg);
-}
-
-
-static void
-on_connection_changed (TnyDevice *device, gboolean online,
-		       ModestWidgetFactory *self)
-{
-	ModestWidgetFactoryPrivate *priv;
-
-	priv = MODEST_WIDGET_FACTORY_GET_PRIVATE(self);
-
-	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(priv->online_toggle),
-				      online);
-	gtk_button_set_label (GTK_BUTTON(priv->online_toggle),
-			      online ? _("Online") : _("Offline"));
-
-	statusbar_push (self, 0, online ? _("Modest went online") : _("Modest went offline"));
-
-	/* If Modest has became online and the header view has a
-	   header selected then show it */
-	if (online) {
-		GtkTreeSelection *selected;
-
-		selected = gtk_tree_view_get_selection (GTK_TREE_VIEW (priv->header_view));
-		_modest_header_view_change_selection (selected, priv->header_view);
-	}
-}
-
-
-static void
-on_online_toggle_toggled (GtkToggleButton *toggle, ModestWidgetFactory *self)
-{
-	gboolean online;
-	const TnyDevice *device;
-	ModestWidgetFactoryPrivate *priv;
-	
-	priv    = MODEST_WIDGET_FACTORY_GET_PRIVATE(self);
-	online  = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON(priv->online_toggle));
-	device  = tny_account_store_get_device (priv->account_store); 
-
-	/* FIXME: const casting should not be necessary ==> tinymail */
-	if (online)  /* we're moving to online state */
-		tny_device_force_online ((TnyDevice*)device);
-	else  /* we're moving to offline state */
-		tny_device_force_offline ((TnyDevice*)device);
-}
-
-
-static void
-on_item_not_found (ModestHeaderView* header_view, ModestItemType type,
-		   ModestWidgetFactory *self)
-{
-	/* FIXME ==> ask from UI... */
-	GtkWidget *dialog, *window;
-	gchar *txt;
-	gboolean online;
-	gchar *item = type == MODEST_ITEM_TYPE_FOLDER ? "folder" : "message";
-	
-	TnyDevice *device;
-	ModestWidgetFactoryPrivate *priv;
-	
-	priv    = MODEST_WIDGET_FACTORY_GET_PRIVATE(self);
-	device  = tny_account_store_get_device (priv->account_store);
-	
-	gdk_threads_enter ();
-	online = tny_device_is_online (device);
-	/* FIXME: get main window */
-	window = NULL;
-	if (online) {
-		/* already online -- the item is simply not there... */
-		dialog = gtk_message_dialog_new (window,
-						 GTK_DIALOG_MODAL,
-						 GTK_MESSAGE_WARNING,
-						 GTK_BUTTONS_OK,
-						 _("The %s you selected cannot be found"),
-						 item);
-		gtk_dialog_run (GTK_DIALOG(dialog));
-	} else {
-
-		dialog = gtk_dialog_new_with_buttons (_("Connection requested"),
-						      window,
-						      GTK_DIALOG_MODAL,
-						      GTK_STOCK_CANCEL,
-						      GTK_RESPONSE_REJECT,
-						      GTK_STOCK_OK,
-						      GTK_RESPONSE_ACCEPT,
-						      NULL);
-
-		txt = g_strdup_printf (_("This %s is not available in offline mode.\n"
-					 "Do you want to get online?"), item);
-		gtk_box_pack_start (GTK_BOX(GTK_DIALOG(dialog)->vbox), 
-				    gtk_label_new (txt), FALSE, FALSE, 0);
-		gtk_widget_show_all (GTK_WIDGET(GTK_DIALOG(dialog)->vbox));
-		g_free (txt);
-
-		gtk_window_set_default_size (GTK_WINDOW(dialog), 300, 300);
-		if (gtk_dialog_run (GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
-			tny_device_force_online (device);
-		}
-	}
-	gtk_widget_destroy (dialog);
-	gdk_threads_leave ();
-}
-
-
-
-static void
-on_password_requested (ModestTnyAccountStore *account_store, const gchar* account_name,
-		       gchar **password, gboolean *cancel, gboolean *remember, ModestWidgetFactory *self)
-{
-	gchar *txt;
-	GtkWidget *dialog, *entry, *remember_pass_check, *window;
-	
-	/* FIXME: get main window */
-	window = NULL;
-	dialog = gtk_dialog_new_with_buttons (_("Password requested"),
-					      window,
-					      GTK_DIALOG_MODAL,
-					      GTK_STOCK_CANCEL,
-					      GTK_RESPONSE_REJECT,
-					      GTK_STOCK_OK,
-					      GTK_RESPONSE_ACCEPT,
-					      NULL);
-
-	txt = g_strdup_printf (_("Please enter your password for %s"), account_name);
-	gtk_box_pack_start (GTK_BOX(GTK_DIALOG(dialog)->vbox), gtk_label_new(txt),
-			    FALSE, FALSE, 0);
-	g_free (txt);
-
-	entry = gtk_entry_new_with_max_length (40);
-	gtk_entry_set_visibility (GTK_ENTRY(entry), FALSE);
-	gtk_entry_set_invisible_char (GTK_ENTRY(entry), 0x2022); /* bullet unichar */
-	
-	gtk_box_pack_start (GTK_BOX(GTK_DIALOG(dialog)->vbox), entry,
-			    TRUE, FALSE, 0);	
-
-	remember_pass_check = gtk_check_button_new_with_label (_("Remember password"));
-	gtk_box_pack_start (GTK_BOX(GTK_DIALOG(dialog)->vbox), remember_pass_check,
-			    TRUE, FALSE, 0);
-
-	gtk_widget_show_all (GTK_WIDGET(GTK_DIALOG(dialog)->vbox));
-	
-	if (gtk_dialog_run (GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
-		*password = g_strdup (gtk_entry_get_text (GTK_ENTRY(entry)));
-		*cancel   = FALSE;
-	} else {
-		*password = NULL;
-		*cancel   = TRUE;
-	}
-	if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (remember_pass_check)))
-		*remember = TRUE;
-	else
-		*remember = FALSE;
-
-	gtk_widget_destroy (dialog);
-}
-
+/* 	g_object_unref (G_OBJECT (mail_op)); */
+/* } */

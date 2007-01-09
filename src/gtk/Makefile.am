@@ -9,8 +9,11 @@
 INCLUDES=\
 	$(MODEST_GSTUFF_CFLAGS) \
 	$(MODEST_LIBTINYMAIL_GNOME_DESKTOP_CFLAGS) \
+	-I ${top_srcdir}/src/widgets  \
 	-I ${top_srcdir}/src  \
 	-DPREFIX=\"@prefix@\" \
+	-DPIXMAP_PREFIX=\"${datadir}/pixmaps/modest/\" \
+	-DMODEST_UIDIR=\""$(datadir)/modest/ui/"\" \
 	-Wall
 
 noinst_LTLIBRARIES=\
@@ -21,8 +24,6 @@ PIXMAP_FILES=\
 	pixmaps/*.svg
 
 libmodest_ui_la_SOURCES=              \
-	modest-ui.c                   \
-	modest-icon-names.h           \
 	modest-main-window.h          \
 	modest-main-window.c          \
 	modest-account-view-window.c  \
@@ -42,5 +43,5 @@ LDADD = \
 
 EXTRA_DIST=pixmaps/*
 
-pixmapdir = $(prefix)/share/modest/pixmaps
+pixmapdir = $(datadir)/pixmaps/modest
 pixmap_DATA = $(PIXMAP_FILES)

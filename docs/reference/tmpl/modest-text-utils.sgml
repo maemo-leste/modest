@@ -99,12 +99,41 @@ modest-text-utils
 @Returns: 
 
 
-<!-- ##### FUNCTION modest_text_utils_display_address ##### -->
+<!-- ##### FUNCTION modest_text_utils_get_display_address ##### -->
 <para>
 
 </para>
 
 @address: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_text_utils_get_subject_prefix_len ##### -->
+<para>
+
+</para>
+
+@subject: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_text_utils_utf8_strcmp ##### -->
+<para>
+
+</para>
+
+@s1: 
+@s2: 
+@insensitive: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_text_utils_get_display_date ##### -->
+<para>
+
+</para>
+
+@date: 
 @Returns: 
 
 

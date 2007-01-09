@@ -253,8 +253,8 @@ imap_pop_configuration (ModestStoreWidget *self)
 	gtk_box_pack_start (GTK_BOX(box), hbox, FALSE, FALSE, 0);
 
 	/* Handle entry modifications */
-	g_signal_connect (priv->username, "changed", on_entry_changed, self);
-	g_signal_connect (priv->servername, "changed", on_entry_changed, self);
+	g_signal_connect (priv->username, "changed", G_CALLBACK (on_entry_changed), self);
+	g_signal_connect (priv->servername, "changed", G_CALLBACK (on_entry_changed), self);
 
 	return box;
 }

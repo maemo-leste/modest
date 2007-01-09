@@ -30,7 +30,7 @@
 #include <check.h>
 #include <stdlib.h>
 #include <string.h>
-#include <modest-text-utils.h>
+#include "modest-text-utils.h"
 
 typedef struct {
 	const gchar *original;
@@ -47,7 +47,7 @@ typedef struct {
  *  - Test 4: Check issues in tests 1, 2 and 3 together
  *  - Test 5: Check with an empty address
  */
-START_TEST (test_display_address_regular)
+START_TEST (test_get_display_address_regular)
 {
 	gint i;
 	const StringPair tests[] = {
@@ -76,7 +76,7 @@ END_TEST
  * Test invalid usage of modest_text_utils_get_display_address
  *  - Test 1: Check with NULL address (should return NULL)
  */
-START_TEST (test_display_address_invalid)
+START_TEST (test_get_display_address_invalid)
 {
 	/* Test 1 */
 	fail_unless (modest_text_utils_get_display_address (NULL) == NULL,
@@ -765,8 +765,8 @@ text_utils_suite (void)
 
 	/* Tests case for "display adress" */
 	tc = tcase_create ("display_adress");
-	tcase_add_test (tc, test_display_address_regular);
-	tcase_add_test (tc, test_display_address_invalid);
+	tcase_add_test (tc, test_get_display_address_regular);
+	tcase_add_test (tc, test_get_display_address_invalid);
 	suite_add_tcase (suite, tc);
 
 	/* Test case for "derived subject" */

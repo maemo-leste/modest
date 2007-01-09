@@ -44,6 +44,25 @@ ModestAccountMgr
 @arg1: 
 @arg2: 
 
+<!-- ##### SIGNAL ModestAccountMgr::account-changed ##### -->
+<para>
+
+</para>
+
+@modestaccountmgr: the object which received the signal.
+@arg1: 
+@arg2: 
+@arg3: 
+
+<!-- ##### SIGNAL ModestAccountMgr::account-removed ##### -->
+<para>
+
+</para>
+
+@modestaccountmgr: the object which received the signal.
+@arg1: 
+@arg2: 
+
 <!-- ##### STRUCT ModestServerAccountData ##### -->
 <para>
 

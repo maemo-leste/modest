@@ -382,6 +382,7 @@ MODEST_EDIT_MSG_WINDOW_GET_CLASS
 <TITLE>ModestMainWindow</TITLE>
 ModestMainWindow
 modest_main_window_new
+modest_main_window_get_widget_factory
 <SUBSECTION Standard>
 MODEST_MAIN_WINDOW
 MODEST_IS_MAIN_WINDOW
@@ -802,6 +803,7 @@ MODEST_EDIT_MSG_WINDOW_GET_CLASS
 <TITLE>ModestMainWindow</TITLE>
 ModestMainWindow
 modest_main_window_new
+modest_main_window_get_widget_factory
 <SUBSECTION Standard>
 MODEST_MAIN_WINDOW
 MODEST_IS_MAIN_WINDOW
@@ -1196,6 +1198,7 @@ MODEST_EDIT_MSG_WINDOW_GET_CLASS
 <TITLE>ModestMainWindow</TITLE>
 ModestMainWindow
 modest_main_window_new
+modest_main_window_get_widget_factory
 <SUBSECTION Standard>
 MODEST_MAIN_WINDOW
 MODEST_IS_MAIN_WINDOW
@@ -1456,7 +1459,10 @@ modest_text_utils_inline
 modest_text_utils_remove_address
 modest_text_utils_convert_to_html
 modest_text_utils_strftime
-modest_text_utils_display_address
+modest_text_utils_get_display_address
+modest_text_utils_get_subject_prefix_len
+modest_text_utils_utf8_strcmp
+modest_text_utils_get_display_date
 </SECTION>
 
 <SECTION>
@@ -1539,19 +1545,6 @@ modest_proto_auth_protos
 </SECTION>
 
 <SECTION>
-<FILE>modest-widget-memory</FILE>
-modest_widget_memory_save
-modest_widget_memory_restore
-</SECTION>
-
-<SECTION>
-<FILE>modest-tny-msg-actions</FILE>
-modest_tny_msg_actions_find_body_part
-modest_tny_msg_actions_find_nth_part
-modest_tny_msg_actions_find_body
-</SECTION>
-
-<SECTION>
 <FILE>modest-marshal</FILE>
 modest_marshal_VOID__POINTER_POINTER
 modest_marshal_VOID__POINTER_POINTER_POINTER
@@ -1564,6 +1557,19 @@ modest_marshal_VOID__STRING_BOOL
 modest_marshal_VOID__STRING_STRING_BOOLEAN
 modest_marshal_VOID__STRING_STRING_BOOL
 modest_marshal_VOID__STRING_POINTER_POINTER_POINTER
+</SECTION>
+
+<SECTION>
+<FILE>modest-widget-memory</FILE>
+modest_widget_memory_save
+modest_widget_memory_restore
+</SECTION>
+
+<SECTION>
+<FILE>modest-tny-msg-actions</FILE>
+modest_tny_msg_actions_find_body_part
+modest_tny_msg_actions_find_nth_part
+modest_tny_msg_actions_find_body
 </SECTION>
 
 <SECTION>
@@ -1603,6 +1609,26 @@ MODEST_TOOLBAR_ICON_DELETE
 MODEST_TOOLBAR_ICON_NEXT
 MODEST_TOOLBAR_ICON_PREV
 MODEST_TOOLBAR_ICON_STOP
+MODEST_STOCK_MAIL_SEND
+MODEST_STOCK_NEW_MAIL
+MODEST_STOCK_SEND_RECEIVE
+MODEST_STOCK_REPLY
+MODEST_STOCK_REPLY_ALL
+MODEST_STOCK_FORWARD
+MODEST_STOCK_DELETE
+MODEST_STOCK_NEXT
+MODEST_STOCK_PREV
+MODEST_STOCK_STOP
+</SECTION>
+
+<SECTION>
+<FILE>modest-ui-actions</FILE>
+modest_ui_actions_on_about
+modest_ui_actions_on_delete
+modest_ui_actions_on_quit
+modest_ui_actions_on_accounts
+modest_ui_actions_on_new_msg
+modest_ui_actions_on_reply_forward
 </SECTION>
 
 <SECTION>
@@ -1644,39 +1670,6 @@ MODEST_TOOLBAR_ICON_STOP
 
 <SECTION>
 <FILE>modest-header-view-priv</FILE>
-</SECTION>
-
-<SECTION>
-<FILE>modest-icon-names</FILE>
-PIXMAP_PREFIX
-MODEST_APP_ICON
-MODEST_HEADER_ICON_READ
-MODEST_HEADER_ICON_UNREAD
-MODEST_HEADER_ICON_DELETED
-MODEST_HEADER_ICON_ATTACH
-MODEST_FOLDER_ICON_OPEN
-MODEST_FOLDER_ICON_CLOSED
-MODEST_FOLDER_ICON_ACCOUNT
-MODEST_FOLDER_ICON_INBOX
-MODEST_FOLDER_ICON_OUTBOX
-MODEST_FOLDER_ICON_SENT
-MODEST_FOLDER_ICON_TRASH
-MODEST_FOLDER_ICON_JUNK
-MODEST_FOLDER_ICON_DRAFTS
-MODEST_FOLDER_ICON_NORMAL
-MODEST_FOLDER_ICON_CONTACTS
-MODEST_FOLDER_ICON_NOTES
-MODEST_FOLDER_ICON_CALENDAR
-MODEST_TOOLBAR_ICON_MAIL_SEND
-MODEST_TOOLBAR_ICON_NEW_MAIL
-MODEST_TOOLBAR_ICON_SEND_RECEIVE
-MODEST_TOOLBAR_ICON_REPLY
-MODEST_TOOLBAR_ICON_REPLY_ALL
-MODEST_TOOLBAR_ICON_FORWARD
-MODEST_TOOLBAR_ICON_DELETE
-MODEST_TOOLBAR_ICON_NEXT
-MODEST_TOOLBAR_ICON_PREV
-MODEST_TOOLBAR_ICON_STOP
 </SECTION>
 
 <SECTION>
@@ -1720,7 +1713,10 @@ modest_text_utils_inline
 modest_text_utils_remove_address
 modest_text_utils_convert_to_html
 modest_text_utils_strftime
-modest_text_utils_display_address
+modest_text_utils_get_display_address
+modest_text_utils_get_subject_prefix_len
+modest_text_utils_utf8_strcmp
+modest_text_utils_get_display_date
 </SECTION>
 
 <SECTION>
@@ -1803,19 +1799,6 @@ modest_proto_auth_protos
 </SECTION>
 
 <SECTION>
-<FILE>modest-widget-memory</FILE>
-modest_widget_memory_save
-modest_widget_memory_restore
-</SECTION>
-
-<SECTION>
-<FILE>modest-tny-msg-actions</FILE>
-modest_tny_msg_actions_find_body_part
-modest_tny_msg_actions_find_nth_part
-modest_tny_msg_actions_find_body
-</SECTION>
-
-<SECTION>
 <FILE>modest-marshal</FILE>
 modest_marshal_VOID__POINTER_POINTER
 modest_marshal_VOID__POINTER_POINTER_POINTER
@@ -1828,6 +1811,19 @@ modest_marshal_VOID__STRING_BOOL
 modest_marshal_VOID__STRING_STRING_BOOLEAN
 modest_marshal_VOID__STRING_STRING_BOOL
 modest_marshal_VOID__STRING_POINTER_POINTER_POINTER
+</SECTION>
+
+<SECTION>
+<FILE>modest-widget-memory</FILE>
+modest_widget_memory_save
+modest_widget_memory_restore
+</SECTION>
+
+<SECTION>
+<FILE>modest-tny-msg-actions</FILE>
+modest_tny_msg_actions_find_body_part
+modest_tny_msg_actions_find_nth_part
+modest_tny_msg_actions_find_body
 </SECTION>
 
 <SECTION>
@@ -1867,6 +1863,26 @@ MODEST_TOOLBAR_ICON_DELETE
 MODEST_TOOLBAR_ICON_NEXT
 MODEST_TOOLBAR_ICON_PREV
 MODEST_TOOLBAR_ICON_STOP
+MODEST_STOCK_MAIL_SEND
+MODEST_STOCK_NEW_MAIL
+MODEST_STOCK_SEND_RECEIVE
+MODEST_STOCK_REPLY
+MODEST_STOCK_REPLY_ALL
+MODEST_STOCK_FORWARD
+MODEST_STOCK_DELETE
+MODEST_STOCK_NEXT
+MODEST_STOCK_PREV
+MODEST_STOCK_STOP
+</SECTION>
+
+<SECTION>
+<FILE>modest-ui-actions</FILE>
+modest_ui_actions_on_about
+modest_ui_actions_on_delete
+modest_ui_actions_on_quit
+modest_ui_actions_on_accounts
+modest_ui_actions_on_new_msg
+modest_ui_actions_on_reply_forward
 </SECTION>
 
 <SECTION>

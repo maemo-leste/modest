@@ -36,7 +36,6 @@
 #include "widgets/modest-folder-view.h"
 #include "widgets/modest-msg-view.h"
 #include "widgets/modest-account-view.h"
-#include "widgets/modest-toolbar.h"
 #include "widgets/modest-combo-box.h"
 
 G_BEGIN_DECLS
@@ -193,60 +192,27 @@ GtkWidget*     modest_widget_factory_get_status_bar (ModestWidgetFactory *self);
 GtkWidget*     modest_widget_factory_get_combo_box (ModestWidgetFactory *self,
 						    ModestComboBoxType type);
 
-
 /**
- * modest_widget_factory_get_online_combo
+ * modest_widget_factory_get_online_toggle
  * @self: a ModestWidgetFactory instance
- * 
+ *
  * return a toggle which with one can see whether online/offline mode is active.
  * In case of auto-connect, this will automatically be sync'd with the
  * account_store / device
- *  
- * Returns: the combo box
+ *
+ * Returns: the toggle button
  */
 GtkWidget*  modest_widget_factory_get_online_toggle (ModestWidgetFactory *self);
-
-
-
 
 /**
  * modest_widget_factory_get_folder_info_label
  * @self: a ModestWidgetFactory instance
- * 
+ *
  * return a label with the number of items, unread items in the current folder
- *  
+ *
  * Returns: the label
  */
-GtkWidget* modest_widget_factory_get_folder_info_label (ModestWidgetFactory *self);
-
-
-/**
- * modest_widget_factory_get_main_toolbar
- * @self: a ModestWidgetFactory instance
- * @items: a list of ModestToolbarButtons (button_ids)
- *
- * returns the main toolbar widget; their enabled/disabled state synchronized with
- * the other widgets. Note that after the first calling, this function will
- * always return the same toolbar, regardless of the items
- *  
- * Returns: the toolbar
- */
-ModestToolbar *modest_widget_factory_get_main_toolbar (ModestWidgetFactory *self, 
-						       GSList *items);
-
-/**
- * modest_widget_factory_get_edit_toolbar
- * @self: a ModestWidgetFactory instance
- * @items: a list of ModestToolbarButtons (button_ids)
- *
- * returns the toolbar widget for edit windows; the enabled/disabled
- * state synchronized with the other widgets.
- *  
- * Returns: the toolbar
- */
-ModestToolbar *modest_widget_factory_get_edit_toolbar (ModestWidgetFactory *self, 
-						       GSList *items);
-
+GtkWidget*  modest_widget_factory_get_folder_info_label (ModestWidgetFactory *self);
 
 G_END_DECLS
 

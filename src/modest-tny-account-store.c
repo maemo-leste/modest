@@ -217,7 +217,7 @@ get_password (TnyAccount *account, const gchar *prompt, gboolean *cancel)
 	gchar *pwd = NULL;
 	gboolean already_asked;
 	
-	g_return_val_if_fail (account, NULL);
+	gdk_threads_enter ();
 
 	key           = tny_account_get_id (account);
 	account_store = TNY_ACCOUNT_STORE(get_account_store_for_account (account));
@@ -226,7 +226,7 @@ get_password (TnyAccount *account, const gchar *prompt, gboolean *cancel)
         priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
 
 	/* is it in the hash? if it's already there, it must be wrong... */
-	already_asked = g_hash_table_lookup_extended (priv->password_hash, 
+	already_asked = g_hash_table_lookup_extended (priv->password_hash,
 						      key, NULL, (gpointer *) &pwd);
 
 	/* if the password is not already there, try ModestConf */
@@ -245,8 +245,6 @@ get_password (TnyAccount *account, const gchar *prompt, gboolean *cancel)
 		gboolean remember;
 		pwd = NULL;
 
-		gdk_threads_enter ();
-	
 		g_signal_emit (G_OBJECT(self), signals[PASSWORD_REQUESTED_SIGNAL], 0,
 			       name, &pwd, cancel, &remember);
 
@@ -254,7 +252,7 @@ get_password (TnyAccount *account, const gchar *prompt, gboolean *cancel)
 			if (remember)
 				modest_account_mgr_set_string (priv->account_mgr,
 							       key, MODEST_ACCOUNT_PASSWORD,
-							       pwd, 
+							       pwd,
 							       TRUE, NULL);
 			/* We need to dup the string even knowing that
 			   it's already a dup of the contents of an
@@ -266,9 +264,10 @@ get_password (TnyAccount *account, const gchar *prompt, gboolean *cancel)
 			g_free (pwd);
 			pwd = NULL;
 		}
-		gdk_threads_leave ();
 	} else
 		*cancel = FALSE;
+
+	gdk_threads_leave ();
 
 	return pwd;
 }
@@ -301,8 +300,6 @@ forget_password (TnyAccount *account) {
 				  key, MODEST_ACCOUNT_PASSWORD,
 				  TRUE, NULL);
 }
-
-
 
 /* create a tnyaccount for the server account connected to the account with name 'key'
  */
@@ -496,7 +493,7 @@ modest_tny_account_store_new (ModestAccountMgr *account_mgr) {
 		g_object_unref (obj);
 		return NULL;
 	}
-	tny_device_force_online (priv->device);
+/* 	tny_device_force_online (priv->device); */
 	
 	priv->tny_session_camel = tny_session_camel_new (TNY_ACCOUNT_STORE(obj));
 

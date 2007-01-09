@@ -52,6 +52,15 @@ ModestConf
 @arg1: 
 @arg2: 
 
+<!-- ##### SIGNAL ModestConf::key-changed ##### -->
+<para>
+
+</para>
+
+@modestconf: the object which received the signal.
+@arg1: 
+@arg2: 
+
 <!-- ##### FUNCTION modest_conf_new ##### -->
 <para>
 

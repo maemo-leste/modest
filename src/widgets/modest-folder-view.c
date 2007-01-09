@@ -58,7 +58,6 @@ static void         on_subscription_changed  (TnyStoreAccount *store_account, Tn
 
 static gboolean     modest_folder_view_update_model     (ModestFolderView *self,
 							 TnyAccountStore *account_store);
-static const gchar *get_account_name_from_folder        (GtkTreeModel *model, GtkTreeIter iter);
 
 static void         modest_folder_view_disconnect_store_account_handlers (GtkTreeView *self);
 
@@ -468,21 +467,6 @@ modest_folder_view_new (ModestTnyAccountStore *account_store,
 }
 
 
-const gchar *
-modest_folder_view_get_selected_account (ModestFolderView *self)
-{
-	GtkTreeModel *model;
-	GtkTreeIter iter;
-	ModestFolderViewPrivate *priv;
-	
-	g_return_val_if_fail (self, NULL);
-	priv = MODEST_FOLDER_VIEW_GET_PRIVATE(self);
-
-	gtk_tree_selection_get_selected (priv->cur_selection, &model, &iter);
-
-	return get_account_name_from_folder (model, iter);
-}
-
 static gboolean
 update_model_empty (ModestFolderView *self)
 {
@@ -661,27 +645,4 @@ modest_folder_view_update_model (ModestFolderView *self, TnyAccountStore *accoun
 		       0, NULL, TRUE);
 
 	return retval;
-}
-
-
-/* ugly */
-static const gchar *
-get_account_name_from_folder (GtkTreeModel *model, GtkTreeIter iter)
-{
-	GtkTreePath *path;
-	GtkTreeIter new_iter;
-	TnyFolder *account_folder;
-	gint depth, i;
-
-	path = gtk_tree_model_get_path (model, &iter);
-	depth = gtk_tree_path_get_depth (path);
-
-	for (i = 1; i < depth; ++i)
-		gtk_tree_path_up (path);
-
-	gtk_tree_model_get_iter (model, &new_iter, path);
-	gtk_tree_model_get (model, &new_iter, 
-			    TNY_GTK_FOLDER_STORE_TREE_MODEL_INSTANCE_COLUMN, &account_folder, 
-			    -1);
-	return tny_account_get_name (TNY_ACCOUNT (account_folder));
 }

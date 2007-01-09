@@ -84,9 +84,9 @@ typedef enum _ModestItemType {
 struct _ModestHeaderViewClass {
 	GtkTreeViewClass parent_class;
 
-	void (*message_selected) (ModestHeaderView* self,
-				  TnyMsg *msg,
-				  gpointer user_data);
+	void (*header_selected) (ModestHeaderView* self,
+				 TnyHeader *header,
+				 gpointer user_data);
 
 	void (*item_not_found) (ModestHeaderView* self,
 				ModestItemType type,
@@ -208,6 +208,15 @@ ModestHeaderViewStyle   modest_header_view_get_style (ModestHeaderView *self);
  * Returns: the list with the currently selected headers
  */
 TnyList* modest_header_view_get_selected_headers (ModestHeaderView *self);
+
+
+/**
+ * modest_header_view_select_next:
+ * @self: a #ModestHeaderView
+ * 
+ * Selects the header next to the current selected one
+ **/
+void     modest_header_view_select_next          (ModestHeaderView *self);
 
 G_END_DECLS
 

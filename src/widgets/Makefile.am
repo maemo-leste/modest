@@ -6,9 +6,10 @@ INCLUDES=\
 	$(MODEST_GSTUFF_CFLAGS) \
 	$(MODEST_LIBTINYMAIL_GNOME_DESKTOP_CFLAGS) \
 	$(MODEST_LIBTINYMAIL_MAEMO_CFLAGS) \
-	-I${top_srcdir}/src/$(MODEST_PLATFORM) \
-	-DPREFIX=\"@prefix@\" \
+	-I ${top_srcdir}/src/$(MODEST_PLATFORM) \
 	-I ${top_srcdir}/src \
+	-DPREFIX=\"@prefix@\" \
+	-DPIXMAP_PREFIX=\"${datadir}/pixmaps/modest/\" \
 	-Wall
 
 noinst_LTLIBRARIES=\
@@ -24,8 +25,8 @@ libmodest_widgets_la_SOURCES=   \
 	modest-header-view-priv.h \
 	modest-msg-view.c       \
 	modest-msg-view.h	\
-	modest-toolbar.h	\
-	modest-toolbar.c	\
+	modest-toolbar.c        \
+	modest-toolbar.h        \
 	modest-combo-box.c	\
 	modest-combo-box.h
  

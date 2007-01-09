@@ -233,6 +233,14 @@ modest.glade
 
 @parent: 
 
+<!-- ##### SIGNAL ModestHeaderView::message-selected ##### -->
+<para>
+
+</para>
+
+@modestheaderview: the object which received the signal.
+@arg1: 
+
 <!-- ##### STRUCT ModestOpenWindow ##### -->
 <para>
 
@@ -278,6 +286,12 @@ modest.glade
 @parent: 
 
 <!-- ##### TYPEDEF ModestWindowType ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### MACRO PIXMAP_PREFIX ##### -->
 <para>
 
 </para>
@@ -532,6 +546,14 @@ modest.glade
 @subject: 
 @Returns: 
 
+<!-- ##### FUNCTION modest_text_utils_display_address ##### -->
+<para>
+
+</para>
+
+@address: 
+@Returns: 
+
 <!-- ##### FUNCTION modest_text_utils_remove_mail_from_mail_list ##### -->
 <para>
 
@@ -636,6 +658,54 @@ modest.glade
 @body: 
 @attachments_list: 
 @Returns: 
+
+<!-- ##### FUNCTION modest_ui_actions_on_about ##### -->
+<para>
+
+</para>
+
+@widget: 
+@user_data: 
+
+<!-- ##### FUNCTION modest_ui_actions_on_accounts ##### -->
+<para>
+
+</para>
+
+@widget: 
+@main_window: 
+
+<!-- ##### FUNCTION modest_ui_actions_on_delete ##### -->
+<para>
+
+</para>
+
+@widget: 
+@main_window: 
+
+<!-- ##### FUNCTION modest_ui_actions_on_new_msg ##### -->
+<para>
+
+</para>
+
+@widget: 
+@main_window: 
+
+<!-- ##### FUNCTION modest_ui_actions_on_quit ##### -->
+<para>
+
+</para>
+
+@widget: 
+@main_window: 
+
+<!-- ##### FUNCTION modest_ui_actions_on_reply_forward ##### -->
+<para>
+
+</para>
+
+@widget: 
+@main_window: 
 
 <!-- ##### FUNCTION modest_ui_editor_window_set_bcc_header ##### -->
 <para>
@@ -744,6 +814,24 @@ modest.glade
 </para>
 
 @ui: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_widget_factory_get_edit_toolbar ##### -->
+<para>
+
+</para>
+
+@self: 
+@items: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_widget_factory_get_main_toolbar ##### -->
+<para>
+
+</para>
+
+@self: 
+@items: 
 @Returns: 
 
 <!-- ##### FUNCTION modest_window_mgr_find_by_id ##### -->

@@ -880,7 +880,19 @@ modest_mail_operation_remove_msg (ModestMailOperation *self,
 		store_account = TNY_STORE_ACCOUNT (tny_folder_get_account (folder));
 		trash_folder = modest_mail_operation_find_trash_folder (self, store_account);
 
-		modest_mail_operation_move_msg (self, header, trash_folder);
+		if (trash_folder) {
+			modest_mail_operation_move_msg (self, header, trash_folder);
+/* 			g_object_unref (trash_folder); */
+		} else {
+			ModestMailOperationPrivate *priv;
+
+			/* Set status failed and set an error */
+			priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
+			priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
+			g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
+				     MODEST_MAIL_OPERATION_ERROR_ITEM_NOT_FOUND,
+				     _("Error trying to delete a message. Trash folder not found"));
+		}
 
 		g_object_unref (G_OBJECT (store_account));
 	} else {
@@ -964,17 +976,6 @@ get_content_type(const gchar *s)
 		}
 	}
 	return g_string_free(type, FALSE);
-}
-
-static GQuark 
-modest_error_quark (void)
-{
-	static GQuark err_q = 0;
-	
-	if (err_q == 0)
-		err_q = g_quark_from_static_string ("modest-error-quark");
-	
-	return err_q;
 }
 
 static void

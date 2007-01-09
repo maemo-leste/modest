@@ -65,15 +65,15 @@ ModestHeaderView
 </para>
 
 
-<!-- ##### SIGNAL ModestHeaderView::item-not-found ##### -->
+<!-- ##### SIGNAL ModestHeaderView::header-selected ##### -->
 <para>
 
 </para>
 
-@: 
-@: 
+@modestheaderview: the object which received the signal.
+@arg1: 
 
-<!-- ##### SIGNAL ModestHeaderView::message-selected ##### -->
+<!-- ##### SIGNAL ModestHeaderView::item-not-found ##### -->
 <para>
 
 </para>
@@ -86,10 +86,62 @@ ModestHeaderView
 
 </para>
 
+@modestheaderview: the object which received the signal.
+@arg1: 
+@arg2: 
+@arg3: 
+
+<!-- ##### SIGNAL ModestHeaderView::header-selected ##### -->
+<para>
+
+</para>
+
+@modestheaderview: the object which received the signal.
+@arg1: 
+
+<!-- ##### SIGNAL ModestHeaderView::item-not-found ##### -->
+<para>
+
+</para>
+
 @: 
 @: 
+
+<!-- ##### SIGNAL ModestHeaderView::status-update ##### -->
+<para>
+
+</para>
+
+@modestheaderview: the object which received the signal.
+@arg1: 
+@arg2: 
+@arg3: 
+
+<!-- ##### SIGNAL ModestHeaderView::header-selected ##### -->
+<para>
+
+</para>
+
+@modestheaderview: the object which received the signal.
+@arg1: 
+
+<!-- ##### SIGNAL ModestHeaderView::item-not-found ##### -->
+<para>
+
+</para>
+
 @: 
 @: 
+
+<!-- ##### SIGNAL ModestHeaderView::status-update ##### -->
+<para>
+
+</para>
+
+@modestheaderview: the object which received the signal.
+@arg1: 
+@arg2: 
+@arg3: 
 
 <!-- ##### FUNCTION modest_header_view_new ##### -->
 <para>

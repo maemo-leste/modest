@@ -4,7 +4,7 @@
 #ifndef __MODEST_MAIN_WINDOW_H__
 #define __MODEST_MAIN_WINDOW_H__
 
-#include <hildon-widgets/hildon-window.h>
+#include <gtk/gtkwindow.h>
 #include <modest-widget-factory.h>
 
 #ifdef HAVE_CONFIG_H
@@ -25,23 +25,23 @@ typedef struct _ModestMainWindow      ModestMainWindow;
 typedef struct _ModestMainWindowClass ModestMainWindowClass;
 
 struct _ModestMainWindow {
-	 HildonWindow parent;
+	 GtkWindow parent;
 	/* insert public members, if any */
 };
 
 struct _ModestMainWindowClass {
-	HildonWindowClass parent_class;
+	GtkWindowClass parent_class;
 	/* insert signal callback declarations, eg. */
 	/* void (* my_event) (ModestMainWindow* obj); */
 };
 
 /* member functions */
-GType        modest_main_window_get_type    (void) G_GNUC_CONST;
+GType modest_main_window_get_type (void) G_GNUC_CONST;
 
 
-GtkWidget*   modest_main_window_new         (ModestWidgetFactory *factory);
+GtkWidget* modest_main_window_new (ModestWidgetFactory *factory,
+				   GtkUIManager *ui_manager);
 
 G_END_DECLS
 
 #endif /* __MODEST_MAIN_WINDOW_H__ */
-

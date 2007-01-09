@@ -102,6 +102,7 @@ GTKDOC_LIBS= \
 	${top_builddir}/src/modest-tny-msg-actions.o \
 	${top_builddir}/src/modest-tny-platform-factory.o \
 	${top_builddir}/src/modest-tny-stream-gtkhtml.o \
+	${top_builddir}/src/modest-ui.o \
 	${top_builddir}/src/modest-widget-factory.o \
 	${top_builddir}/src/modest-widget-memory.o
 

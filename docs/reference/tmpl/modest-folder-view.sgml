@@ -34,6 +34,24 @@ ModestFolderView
 @: 
 @: 
 
+<!-- ##### SIGNAL ModestFolderView::folder-selection-changed ##### -->
+<para>
+
+</para>
+
+@: 
+@: 
+@: 
+
+<!-- ##### SIGNAL ModestFolderView::folder-selection-changed ##### -->
+<para>
+
+</para>
+
+@: 
+@: 
+@: 
+
 <!-- ##### FUNCTION modest_folder_view_new ##### -->
 <para>
 

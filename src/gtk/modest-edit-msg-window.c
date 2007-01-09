@@ -28,6 +28,7 @@
  */
 #include <glib/gi18n.h>
 #include <tny-account-store.h>
+#include "modest-toolbar.h"
 #include "modest-edit-msg-window.h"
 #include "modest-widget-memory.h"
 #include "modest-mail-operation.h"
@@ -353,7 +354,7 @@ toolbar_new (ModestEditMsgWindow *self)
 	for (i = 0 ; i != sizeof(button_ids) / sizeof(ModestToolbarButton); ++i)
 		buttons = g_slist_append (buttons, GINT_TO_POINTER(button_ids[i]));
 	
-	toolbar = modest_widget_factory_get_edit_toolbar (priv->factory, buttons);
+	toolbar = modest_toolbar_new (buttons);
 	g_slist_free (buttons);
 
 	g_signal_connect (G_OBJECT(toolbar), "button_clicked",
