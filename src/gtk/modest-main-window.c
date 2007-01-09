@@ -203,8 +203,6 @@ restore_sizes (ModestMainWindow *self)
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
 	conf = modest_tny_platform_factory_get_modest_conf_instance (priv->factory);
 
-	modest_widget_memory_restore (conf,G_OBJECT(self),
-				      "modest-main-window");
 	modest_widget_memory_restore (conf, G_OBJECT(priv->folder_paned),
 				      "modest-folder-paned");
 	modest_widget_memory_restore (conf, G_OBJECT(priv->msg_paned),
@@ -213,6 +211,8 @@ restore_sizes (ModestMainWindow *self)
 				      "modest-main-paned");
 	modest_widget_memory_restore (conf, G_OBJECT(priv->header_view),
 				      "header-view");
+	modest_widget_memory_restore (conf,G_OBJECT(self),
+				      "modest-main-window");
 }
 
 
@@ -341,7 +341,7 @@ modest_main_window_new (ModestWidgetFactory *widget_factory,
 	gtk_container_add (GTK_CONTAINER(obj), main_vbox);
 	restore_sizes (MODEST_MAIN_WINDOW(obj));	
 
-	gtk_window_set_title (GTK_WINDOW(obj), "Modest");
+	gtk_window_set_title (GTK_WINDOW(obj), _("Modest"));
 	gtk_window_set_icon  (GTK_WINDOW(obj),
 			      modest_icon_factory_get_icon (MODEST_APP_ICON));
 	

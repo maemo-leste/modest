@@ -1,6 +1,6 @@
 #
 # Makefile.am
-# Time-stamp: <2006-07-29 20:47:31 (djcb)>
+# Time-stamp: <2007-01-09 17:04:51 (djcb)>
 #
 #
 # use Automake 'trick' ==> convenience static libraries, which
@@ -9,6 +9,7 @@
 INCLUDES=\
 	$(MODEST_GSTUFF_CFLAGS) \
 	$(MODEST_LIBTINYMAIL_GNOME_DESKTOP_CFLAGS) \
+	-DMODEST_PLATFORM_ID=$(MODEST_PLATFORM_ID) \
 	-I ${top_srcdir}/src/widgets  \
 	-I ${top_srcdir}/src  \
 	-DPREFIX=\"@prefix@\" \
