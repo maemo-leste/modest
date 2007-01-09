@@ -1,4 +1,4 @@
-/* Copyright (c) 2006, Nokia Corporation
+/* Copyright (c) 2006,2007 Nokia Corporation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,15 +32,15 @@
 
 #include <gtk/gtk.h>
 #include <tny-msg.h>
-#include "modest-conf.h"
-#include "modest-widget-factory.h"
+#include <widgets/modest-window.h>
+#include <modest-widget-factory.h>
 
 G_BEGIN_DECLS
 
 /* convenience macros */
 #define MODEST_TYPE_EDIT_MSG_WINDOW             (modest_edit_msg_window_get_type())
 #define MODEST_EDIT_MSG_WINDOW(obj)             (G_TYPE_CHECK_INSTANCE_CAST((obj),MODEST_TYPE_EDIT_MSG_WINDOW,ModestEditMsgWindow))
-#define MODEST_EDIT_MSG_WINDOW_CLASS(klass)     (G_TYPE_CHECK_CLASS_CAST((klass),MODEST_TYPE_EDIT_MSG_WINDOW,GtkWindow))
+#define MODEST_EDIT_MSG_WINDOW_CLASS(klass)     (G_TYPE_CHECK_CLASS_CAST((klass),MODEST_TYPE_EDIT_MSG_WINDOW,ModestWindow))
 #define MODEST_IS_EDIT_MSG_WINDOW(obj)          (G_TYPE_CHECK_INSTANCE_TYPE((obj),MODEST_TYPE_EDIT_MSG_WINDOW))
 #define MODEST_IS_EDIT_MSG_WINDOW_CLASS(klass)  (G_TYPE_CHECK_CLASS_TYPE((klass),MODEST_TYPE_EDIT_MSG_WINDOW))
 #define MODEST_EDIT_MSG_WINDOW_GET_CLASS(obj)   (G_TYPE_INSTANCE_GET_CLASS((obj),MODEST_TYPE_EDIT_MSG_WINDOW,ModestEditMsgWindowClass))
@@ -49,12 +49,12 @@ typedef struct _ModestEditMsgWindow      ModestEditMsgWindow;
 typedef struct _ModestEditMsgWindowClass ModestEditMsgWindowClass;
 
 struct _ModestEditMsgWindow {
-	 GtkWindow parent;
+	 ModestWindow parent;
 	/* insert public members, if any */
 };
 
 struct _ModestEditMsgWindowClass {
-	GtkWindowClass parent_class;
+	ModestWindowClass parent_class;
 	/* insert signal callback declarations, eg. */
 	/* void (* my_event) (ModestEditMsgWindow* obj); */
 };
