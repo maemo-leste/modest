@@ -65,14 +65,24 @@ typedef enum _ModestHeaderViewColumn {
 	MODEST_HEADER_VIEW_COLUMN_RECEIVED_DATE,
 	MODEST_HEADER_VIEW_COLUMN_MSGTYPE,
 	MODEST_HEADER_VIEW_COLUMN_ATTACH,
-	MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER,
+
+	/*
+	 * these two are for compact display on small devices,
+	 * with two line display with all relevant headers
+	 */
+	MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER_IN,  /* incoming mail */
+	MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER_OUT, /* outgoing mail */
+	
 	MODEST_HEADER_VIEW_COLUMN_NUM
+
 } ModestHeaderViewColumn;
 
+/*
+ * this can be extended with more style thingies,
+ * to make a small-device specific display
+ */
 typedef enum _ModestHeaderViewStyle {
-	MODEST_HEADER_VIEW_STYLE_NORMAL,
-	MODEST_HEADER_VIEW_STYLE_COMPACT,
-	MODEST_HEADER_VIEW_STYLE_NUM
+	MODEST_HEADER_VIEW_STYLE_SHOW_HEADERS = 0x01
 } ModestHeaderViewStyle;
 
 typedef enum _ModestItemType {
@@ -177,12 +187,25 @@ gboolean modest_header_view_set_columns (ModestHeaderView *self,
 GList*  modest_header_view_get_columns (ModestHeaderView *self);
 	
 
+
+/**
+ * modest_header_view_is_empty
+ * @self: a ModestHeaderView instance
+ * 
+ * is the header view empty? Note that even in the empty case, the treeview
+ * will *not* be empty, because there is a '(no items)' note.
+ *
+ * Returns: TRUE if the header view is empty, FALSE otherwise.
+ */
+gboolean modest_header_view_is_empty (ModestHeaderView *self);
+
+
 /**
  * modest_header_view_set_style:
  * @self: a ModestHeaderView instance
  * @style: the style for this tree view
  * 
- * set the style this ModestHeaderView
+ * set the style for this ModestHeaderView
  *  
  * Returns: TRUE if it succeeded, FALSE otherwise
  */
@@ -198,6 +221,8 @@ gboolean   modest_header_view_set_style (ModestHeaderView *self,
  * Returns: the current style
  */
 ModestHeaderViewStyle   modest_header_view_get_style (ModestHeaderView *self);
+
+
 
 /**
  * modest_header_view_get_selected_headers:

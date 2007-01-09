@@ -61,8 +61,9 @@ struct _ModestHeaderViewPrivate {
 	GMutex		     *lock;
 	ModestHeaderViewStyle style;
 	gulong               sig1;
-
+	gboolean              is_empty;
 };
+
 #define MODEST_HEADER_VIEW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
 						MODEST_TYPE_HEADER_VIEW, \
                                                 ModestHeaderViewPrivate))
@@ -219,27 +220,44 @@ sender_receiver_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *rendere
 
 	g_free (address);	
 }
-
+/*
+ * this for both incoming and outgoing mail, depending on the the user_data
+ * parameter. in the incoming case, show 'From' and 'Received date', in the
+ * outgoing case, show 'To' and 'Sent date'
+ */
 static void
 compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 			   GtkTreeModel *tree_model,  GtkTreeIter *iter,  gpointer user_data)
 {
 	GObject *rendobj;
 	TnyHeaderFlags flags;
-	gchar *from, *subject;
+	gchar *address, *subject;
 	gchar *header;
 	time_t date;
-		
-	gtk_tree_model_get (tree_model, iter,
-			    TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN, &flags,
-			    TNY_GTK_HEADER_LIST_MODEL_FROM_COLUMN,  &from,
-			    TNY_GTK_HEADER_LIST_MODEL_SUBJECT_COLUMN, &subject,
-			    TNY_GTK_HEADER_LIST_MODEL_DATE_RECEIVED_TIME_T_COLUMN, &date,   
-			    -1);
+	gboolean is_incoming;
+
+	is_incoming = GPOINTER_TO_INT(user_data); /* GPOINTER_TO_BOOLEAN is not available
+						   * in older versions of glib...*/
+
+	if (is_incoming)
+		gtk_tree_model_get (tree_model, iter,
+				    TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN, &flags,
+				    TNY_GTK_HEADER_LIST_MODEL_FROM_COLUMN,  &address,
+				    TNY_GTK_HEADER_LIST_MODEL_SUBJECT_COLUMN, &subject,
+				    TNY_GTK_HEADER_LIST_MODEL_DATE_RECEIVED_TIME_T_COLUMN, &date,   
+				    -1);
+	else
+		gtk_tree_model_get (tree_model, iter,
+				    TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN, &flags,
+				    TNY_GTK_HEADER_LIST_MODEL_TO_COLUMN,  &address,
+				    TNY_GTK_HEADER_LIST_MODEL_SUBJECT_COLUMN, &subject,
+				    TNY_GTK_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN, &date,   
+				    -1);
+	
 	rendobj = G_OBJECT(renderer);		
 
 	header = g_strdup_printf ("%s %s\n%s",
-				  modest_text_utils_get_display_address (from),
+				  modest_text_utils_get_display_address (address),
 				  modest_text_utils_get_display_date (date),
 				  subject);
 	
@@ -249,10 +267,12 @@ compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer
 		      "style",  (flags & TNY_HEADER_FLAG_DELETED) ?
 		                 PANGO_STYLE_ITALIC : PANGO_STYLE_NORMAL,
 		      NULL);	
+
 	g_free (header);
-	g_free (from);
+	g_free (address);
 	g_free (subject);
 }
+
 
 
 static GtkTreeViewColumn*
@@ -292,12 +312,54 @@ remove_all_columns (ModestHeaderView *obj)
 {
 	GList *columns, *cursor;
 
+	gtk_tree_view_set_model (GTK_TREE_VIEW(obj), NULL);
+	
 	columns = gtk_tree_view_get_columns (GTK_TREE_VIEW(obj));
 
 	for (cursor = columns; cursor; cursor = cursor->next)
 		gtk_tree_view_remove_column (GTK_TREE_VIEW(obj),
 					     GTK_TREE_VIEW_COLUMN(cursor->data));
 	g_list_free (columns);	
+}
+
+
+
+gboolean
+modest_header_view_is_empty (ModestHeaderView *self)
+{
+	g_return_val_if_fail (MODEST_IS_HEADER_VIEW (self), TRUE);
+	
+	return MODEST_HEADER_VIEW_GET_PRIVATE(self)->is_empty;
+}
+
+
+static gboolean
+set_empty (ModestHeaderView *self)
+{
+	ModestHeaderViewPrivate *priv;	
+	GtkTreeViewColumn *column;
+	GtkListStore *store;
+	GtkTreeIter iter;
+
+	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self); 
+
+	remove_all_columns (self);
+
+	store = gtk_list_store_new (1, G_TYPE_STRING);
+	gtk_list_store_append (store, &iter);
+	gtk_list_store_set (store, &iter, 0, _("<b>(No items in this folder)</b>"), -1); 
+	gtk_tree_view_set_model(GTK_TREE_VIEW(self), GTK_TREE_MODEL(store));
+	g_object_unref (store);
+	
+	column = gtk_tree_view_column_new_with_attributes ("", gtk_cell_renderer_text_new(),
+							   "markup", 0, NULL);
+	gtk_tree_view_column_set_resizable (column, FALSE);
+	gtk_tree_view_column_set_alignment (column, 0.5);
+	
+	gtk_tree_view_append_column (GTK_TREE_VIEW(self), column);		
+	priv->is_empty = TRUE;
+	
+	return TRUE;
 }
 
 
@@ -370,12 +432,20 @@ modest_header_view_set_columns (ModestHeaderView *self, const GList *columns)
 						 GINT_TO_POINTER(FALSE));
 			break;
 			
-		case MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER:
+		case MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER_IN:
 			column = get_new_column (_("Header"), renderer_header, TRUE,
 						 TNY_GTK_HEADER_LIST_MODEL_FROM_COLUMN,
 						 TRUE, (GtkTreeCellDataFunc)compact_header_cell_data,
-						 NULL);
+						 GINT_TO_POINTER(TRUE));
 			break;
+
+		case MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER_OUT:
+						column = get_new_column (_("Header"), renderer_header, TRUE,
+						 TNY_GTK_HEADER_LIST_MODEL_FROM_COLUMN,
+						 TRUE, (GtkTreeCellDataFunc)compact_header_cell_data,
+						 GINT_TO_POINTER(FALSE));
+			break;
+
 			
 		case MODEST_HEADER_VIEW_COLUMN_SUBJECT:
 			column = get_new_column (_("Subject"), renderer_header, TRUE,
@@ -465,15 +535,16 @@ modest_header_view_new (TnyFolder *folder, const GList *columns,
 	obj  = G_OBJECT(g_object_new(MODEST_TYPE_HEADER_VIEW, NULL));
 	self = MODEST_HEADER_VIEW(obj);
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
-	
+
+	modest_header_view_set_style   (self, style);
+	modest_header_view_set_columns (self, columns);
+
 	if (!modest_header_view_set_folder (self, NULL)) {
 		g_warning ("could not set the folder");
 		g_object_unref (obj);
 		return NULL;
 	}
 	
-	modest_header_view_set_style   (self, style);
-	modest_header_view_set_columns (self, columns);
 	
 	/* all cols */
 	gtk_tree_view_set_headers_visible   (GTK_TREE_VIEW(obj), TRUE);
@@ -561,12 +632,21 @@ modest_header_view_set_style (ModestHeaderView *self,
 			      ModestHeaderViewStyle style)
 {
 	g_return_val_if_fail (self, FALSE);
-	g_return_val_if_fail (style < MODEST_HEADER_VIEW_STYLE_NUM, FALSE);
-	
+
 	MODEST_HEADER_VIEW_GET_PRIVATE(self)->style = style;
+
+	gtk_tree_view_set_headers_visible   (GTK_TREE_VIEW(self),
+					     style & MODEST_HEADER_VIEW_STYLE_SHOW_HEADERS);
+	gtk_tree_view_set_headers_clickable (GTK_TREE_VIEW(self),
+					     style & MODEST_HEADER_VIEW_STYLE_SHOW_HEADERS);	
+
+	gtk_tree_view_columns_autosize (GTK_TREE_VIEW(self));
+	gtk_tree_view_set_rules_hint (GTK_TREE_VIEW(self),
+				      TRUE); /* alternating row colors */
 	
 	return TRUE;
 }
+
 
 ModestHeaderViewStyle
 modest_header_view_get_style (ModestHeaderView *self)
@@ -601,7 +681,7 @@ cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 	switch (col_id) {
 
 		/* first one, we decide based on the time */
-	case MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER:
+	case MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER_IN:
 	case MODEST_HEADER_VIEW_COLUMN_RECEIVED_DATE:
 		gtk_tree_model_get (tree_model, iter1,
 				    TNY_GTK_HEADER_LIST_MODEL_DATE_RECEIVED_TIME_T_COLUMN,
@@ -610,7 +690,8 @@ cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 				    TNY_GTK_HEADER_LIST_MODEL_DATE_RECEIVED_TIME_T_COLUMN,
 				    &t2,-1);
 		return t1 - t2;
-		
+
+	case MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER_OUT:
 	case MODEST_HEADER_VIEW_COLUMN_SENT_DATE:
 		gtk_tree_model_get (tree_model, iter1,
 				    TNY_GTK_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN,
@@ -722,8 +803,14 @@ on_refresh_folder (TnyFolder *folder, gboolean cancelled, GError **err,
 	
 	if (!folder)  /* when there is no folder */
 		gtk_tree_view_set_headers_visible (GTK_TREE_VIEW(self), FALSE);
+	
+	else if (tny_folder_get_all_count(folder) == 0)
+		 set_empty (self); /* display the 'no items' message */
+	
 	else { /* it's a new one or a refresh */
 		GList *cols, *cursor;
+
+		priv->is_empty = FALSE;
 
 		if (priv->headers)
 			g_object_unref (priv->headers);
@@ -826,10 +913,13 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 	
 	self = MODEST_HEADER_VIEW (user_data);
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);	
+
+	if (priv->is_empty) /* if the folder is empty, nothing to do */
+		return;
 	
 	if (!gtk_tree_selection_get_selected (sel, &model, &iter))
 		return; /* msg was _un_selected */
-	
+
 	gtk_tree_model_get (model, &iter,
 			    TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN,
 			    &header, -1);
