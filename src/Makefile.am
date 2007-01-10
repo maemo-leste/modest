@@ -61,8 +61,6 @@ modest_SOURCES=\
 	modest-text-utils.c\
 	modest-tny-stream-gtkhtml.h\
 	modest-tny-stream-gtkhtml.c\
-	modest-tny-attachment.h\
-	modest-tny-attachment.c\
 	modest-marshal.c \
 	modest-marshal.h \
 	modest-mail-operation.c \
@@ -85,7 +83,8 @@ modest_LDADD = 						\
 EXTRA_DIST=modest-marshal.list ui/*
 
 UI_FILES=\
-	ui/modest-ui.xml
+	ui/modest-ui.xml \
+	ui/modest-edit-msg-window-ui.xml
 
 uidir = $(datadir)/modest/ui
 ui_DATA = $(UI_FILES)
