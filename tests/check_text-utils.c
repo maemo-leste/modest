@@ -30,7 +30,8 @@
 #include <check.h>
 #include <stdlib.h>
 #include <string.h>
-#include "modest-text-utils.h"
+#include <stdlib.h>
+#include <modest-text-utils.h>
 
 typedef struct {
 	const gchar *original;
@@ -164,7 +165,7 @@ START_TEST (test_quote_regular)
 		text = g_strdup (tests[i].original);
 		expected_quoted_text = g_strdup (tests[i].expected);
 		quoted_text = modest_text_utils_quote (text, "text/plain", "foo@bar",  0, 15);
-		fail_unless (quoted_text && !strcmp (expected_quoted_text, quoted_text),
+		fail_unless (quoted_text && strcmp(expected_quoted_text, quoted_text)==0,
 			     "modest_text_utils_quote failed:\nOriginal text:\n\"%s\"\n" \
 			     "Expected quotation:\n\"%s\"\nQuoted text:\n\"%s\"",
 			     text, expected_quoted_text, quoted_text);
@@ -636,7 +637,7 @@ START_TEST (test_remove_address_limits)
 	gchar *list = NULL;
 	gchar *new_list = NULL;
 	gchar *expected_list = NULL;
-	gchar *address = NULL;
+	//gchar *address = NULL;
 	gint i;
 
 	const StringPair tests[] = {
@@ -822,7 +823,7 @@ main ()
 	
 	suite   = text_utils_suite ();
 	srunner = srunner_create (suite);
-	
+		
 	srunner_run_all (srunner, CK_ENV);
 	failures = srunner_ntests_failed (srunner);
 	srunner_free (srunner);
