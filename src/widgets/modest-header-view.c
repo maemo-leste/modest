@@ -534,8 +534,7 @@ modest_header_view_set_columns (ModestHeaderView *self, const GList *columns)
 		/* we need this ptr when sorting the rows */
 		g_object_set_data (G_OBJECT(column), MODEST_HEADER_VIEW_PTR,
 				   self);
-		
-		gtk_tree_view_column_set_visible   (column, TRUE);
+
 		gtk_tree_view_append_column (GTK_TREE_VIEW(self), column);		
 	}	
 	return TRUE;
@@ -605,11 +604,8 @@ modest_header_view_new (TnyFolder *folder, const GList *columns,
 		g_object_unref (obj);
 		return NULL;
 	}
-	
-	
+		
 	/* all cols */
-	gtk_tree_view_set_headers_visible   (GTK_TREE_VIEW(obj), TRUE);
-	gtk_tree_view_set_headers_clickable (GTK_TREE_VIEW(obj), TRUE);
 	gtk_tree_view_columns_autosize (GTK_TREE_VIEW(obj));
 	
 	gtk_tree_view_set_rules_hint (GTK_TREE_VIEW(obj),
@@ -695,7 +691,7 @@ modest_header_view_set_style (ModestHeaderView *self,
 	g_return_val_if_fail (self, FALSE);
 
 	MODEST_HEADER_VIEW_GET_PRIVATE(self)->style = style;
-
+	
 	gtk_tree_view_set_headers_visible   (GTK_TREE_VIEW(self),
 					     style & MODEST_HEADER_VIEW_STYLE_SHOW_HEADERS);
 	gtk_tree_view_set_headers_clickable (GTK_TREE_VIEW(self),
@@ -900,8 +896,7 @@ on_refresh_folder (TnyFolder *folder, gboolean cancelled, GError **err,
 		g_list_free (cols);
 		
 		gtk_tree_view_set_model (GTK_TREE_VIEW (self), sortable);
-		gtk_tree_view_set_headers_clickable (GTK_TREE_VIEW(self),TRUE);
-		gtk_tree_view_set_headers_visible (GTK_TREE_VIEW(self), TRUE);
+		modest_header_view_set_style (self, priv->style);
 	}
 }
 
