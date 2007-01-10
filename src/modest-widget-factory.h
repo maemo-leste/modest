@@ -68,7 +68,8 @@ typedef enum _ModestComboBoxType {
 	MODEST_COMBO_BOX_TYPE_TRANSPORT_PROTOS,
 	MODEST_COMBO_BOX_TYPE_SECURITY_PROTOS,
 	MODEST_COMBO_BOX_TYPE_AUTH_PROTOS,
-	MODEST_COMBO_BOX_TYPE_TRANSPORTS
+	MODEST_COMBO_BOX_TYPE_TRANSPORTS,
+	MODEST_COMBO_BOX_TYPE_REMOTE_STORES
 } ModestComboBoxType;
 
 
@@ -191,6 +192,7 @@ GtkWidget*     modest_widget_factory_get_status_bar (ModestWidgetFactory *self);
  */
 GtkWidget*     modest_widget_factory_get_combo_box (ModestWidgetFactory *self,
 						    ModestComboBoxType type);
+
 
 /**
  * modest_widget_factory_get_online_toggle

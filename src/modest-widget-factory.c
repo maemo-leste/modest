@@ -32,6 +32,7 @@
 #include <tny-gtk-account-list-model.h>
 #include <tny-gtk-folder-store-tree-model.h>
 #include <tny-account-store.h>
+#include <tny-simple-list.h>
 #include <tny-device.h>
 #include <tny-folder-store-query.h>
 #include "modest-widget-factory.h"
@@ -311,6 +312,44 @@ get_transports (ModestWidgetFactory *self)
 }
 
 
+#if 0
+static const GSList*
+get_stores (ModestWidgetFactory *self, gboolean only_remote)
+{
+	ModestWidgetFactoryPrivate *priv;
+	TnyAccountStore *account_store;
+	TnyList *stores;
+	TnyIterator *iter;
+	
+	priv = MODEST_WIDGET_FACTORY_GET_PRIVATE(self);
+
+	account_store =
+		tny_platform_factory_new_account_store (priv->fact);			
+
+	stores = tny_simple_list_new ();
+	tny_account_store_get_accounts (account_store, stores,
+					 TNY_ACCOUNT_STORE_STORE_ACCOUNTS);
+
+	/* simply return all the stores */
+	if (!only_remote)
+		return stores;
+
+	/*  remove the non-remote stores from the list */
+	if (only_remote) {
+		iter = tny_list_create_iterator (stores);
+		while (!tny_iterator_is_done (iter)) {
+			TnyAccount *acc = (TnyAccount*)tny_iterator_get_current(iter);
+			/* is it a local account? if so, remove */
+			if (strcmp (tny_account_get_proto(acc), "local") == 0)
+				tny_list_remove (stores, acc); /* FIXME: iter still valid? */
+			tny_iterator_next (iter);
+		}
+		g_object_unref (G_OBJECT(iter));
+	}
+	return stores;		
+}
+#endif
+
 GtkWidget*
 modest_widget_factory_get_combo_box (ModestWidgetFactory *self, ModestComboBoxType type)
 {
@@ -338,6 +377,12 @@ modest_widget_factory_get_combo_box (ModestWidgetFactory *self, ModestComboBoxTy
 	case MODEST_COMBO_BOX_TYPE_TRANSPORTS:
 		list = get_transports (self);
 		break;
+/* 	case MODEST_COMBO_BOX_TYPE_REMOTE_STORES: */
+/* 		// FIXME */
+/* 		list = get_stores (self, TRUE); /\* get all *remote* stores *\/ */
+/* 		combo_box = gtk_combo_box_new_with_model (GTK_TREE_MODEL(list)); */
+/* 		g_object_unref (G_OBJECT(list)); */
+/* 		//return combo_box; */
 	default:
 		g_warning ("invalid combo box type: %d", type);
 		return NULL;
