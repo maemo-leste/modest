@@ -60,8 +60,8 @@ struct _ModestHeaderViewPrivate {
 	TnyList              *headers;
 	GMutex		     *lock;
 	ModestHeaderViewStyle style;
-	gulong               sig1;
-	gboolean              is_empty;
+	gulong                sig1;
+	ModestHeaderViewState state;
 };
 
 #define MODEST_HEADER_VIEW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -283,7 +283,7 @@ get_new_column (const gchar *name, GtkCellRenderer *renderer,
 	GtkTreeViewColumn *column;
 
 	column =  gtk_tree_view_column_new_with_attributes(name, renderer, NULL);
-	gtk_tree_view_column_set_sizing (column, GTK_TREE_VIEW_COLUMN_AUTOSIZE);
+	gtk_tree_view_column_set_sizing (column, GTK_TREE_VIEW_COLUMN_FIXED);
 
 	gtk_tree_view_column_set_resizable (column, resizable);
 	if (resizable)
@@ -324,15 +324,6 @@ remove_all_columns (ModestHeaderView *obj)
 
 
 
-gboolean
-modest_header_view_is_empty (ModestHeaderView *self)
-{
-	g_return_val_if_fail (MODEST_IS_HEADER_VIEW (self), TRUE);
-	
-	return MODEST_HEADER_VIEW_GET_PRIVATE(self)->is_empty;
-}
-
-
 static gboolean
 set_empty (ModestHeaderView *self)
 {
@@ -357,9 +348,79 @@ set_empty (ModestHeaderView *self)
 	gtk_tree_view_column_set_alignment (column, 0.5);
 	
 	gtk_tree_view_append_column (GTK_TREE_VIEW(self), column);		
-	priv->is_empty = TRUE;
+	priv->state = MODEST_HEADER_VIEW_STATE_IS_EMPTY;
 	
 	return TRUE;
+}
+
+
+
+ModestHeaderViewState
+modest_header_view_get_state (ModestHeaderView *self)
+{
+	g_return_val_if_fail (MODEST_IS_HEADER_VIEW (self), TRUE);
+	
+	return MODEST_HEADER_VIEW_GET_PRIVATE(self)->state;
+}
+
+
+static void
+set_state (ModestHeaderView *self, ModestHeaderViewState state)
+{
+	ModestHeaderViewState oldstate =
+		MODEST_HEADER_VIEW_GET_PRIVATE(self)->state;
+	
+	if (oldstate != state) {
+		if (oldstate & MODEST_HEADER_VIEW_STATE_IS_EMPTY !=
+		    state & MODEST_HEADER_VIEW_STATE_IS_EMPTY)
+			set_empty (self);
+		
+		MODEST_HEADER_VIEW_GET_PRIVATE(self)->state = state; 
+		/* FIXME: emit signal if the state changed*/
+	}
+}
+
+
+static void
+update_state (ModestHeaderView *self)
+{
+	GtkTreePath *path;
+	GtkTreeSelection *sel;
+	ModestHeaderViewState state = 0;
+	ModestHeaderViewPrivate *priv;	
+
+	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self); 
+
+	if (!priv->folder || tny_folder_get_all_count(priv->folder) == 0)
+		state = MODEST_HEADER_VIEW_STATE_IS_EMPTY;
+	else {
+		gtk_tree_view_get_cursor (GTK_TREE_VIEW(self), &path, NULL);
+		if (path) {
+			GtkTreePath *path2;
+			
+			state |= MODEST_HEADER_VIEW_STATE_HAS_CURSOR;	
+			path2= gtk_tree_path_copy (path);
+			
+			gtk_tree_path_next (path);
+			if (gtk_tree_path_compare (path, path2) != 0)
+				state |= MODEST_HEADER_VIEW_STATE_AT_LAST_ITEM;
+			
+			if (!gtk_tree_path_prev (path2))
+				state |= MODEST_HEADER_VIEW_STATE_AT_FIRST_ITEM;
+			
+			gtk_tree_path_free (path);
+			gtk_tree_path_free (path2);
+		}
+		
+		sel = gtk_tree_view_get_selection (GTK_TREE_VIEW(self));
+		if (sel) {
+			state |= MODEST_HEADER_VIEW_STATE_HAS_SELECTION;
+			if (gtk_tree_selection_count_selected_rows (sel) > 1)
+				state |= MODEST_HEADER_VIEW_STATE_HAS_MULTIPLE_SELECTION;
+		}
+	}
+
+	set_state (self, state);	
 }
 
 
@@ -800,17 +861,12 @@ on_refresh_folder (TnyFolder *folder, gboolean cancelled, GError **err,
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
 
 	priv->folder = folder;
+	update_state (self);
 	
-	if (!folder)  /* when there is no folder */
-		gtk_tree_view_set_headers_visible (GTK_TREE_VIEW(self), FALSE);
-	
-	else if (tny_folder_get_all_count(folder) == 0)
-		 set_empty (self); /* display the 'no items' message */
-	
+	if (!folder || priv->state & MODEST_HEADER_VIEW_STATE_IS_EMPTY)  
+		gtk_tree_view_set_headers_visible (GTK_TREE_VIEW(self), FALSE);	
 	else { /* it's a new one or a refresh */
 		GList *cols, *cursor;
-
-		priv->is_empty = FALSE;
 
 		if (priv->headers)
 			g_object_unref (priv->headers);
@@ -914,7 +970,8 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 	self = MODEST_HEADER_VIEW (user_data);
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);	
 
-	if (priv->is_empty) /* if the folder is empty, nothing to do */
+	/* if the folder is empty, nothing to do */
+	if (priv->state & MODEST_HEADER_VIEW_STATE_IS_EMPTY) 
 		return;
 	
 	if (!gtk_tree_selection_get_selected (sel, &model, &iter))

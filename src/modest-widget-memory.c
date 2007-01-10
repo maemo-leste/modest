@@ -205,8 +205,9 @@ save_settings_header_view (ModestConf *conf, ModestHeaderView *header_view,
 	TnyFolder *folder;
 	TnyFolderType type;
 
-	if (modest_header_view_is_empty (header_view))
-	    return TRUE; /* don't save the settings in the empty case */
+	if (modest_header_view_get_state (header_view) &
+	    MODEST_HEADER_VIEW_STATE_IS_EMPTY)
+		return TRUE; /* don't save the settings in the empty case */
 
 	folder = modest_header_view_get_folder (header_view);
 	if (!folder) 

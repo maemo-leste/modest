@@ -91,6 +91,16 @@ typedef enum _ModestItemType {
 	MODEST_ITEM_TYPE_NUM
 } ModestItemType;
 
+
+typedef enum _ModestHeaderViewState {
+	MODEST_HEADER_VIEW_STATE_IS_EMPTY               = 0x01,
+	MODEST_HEADER_VIEW_STATE_HAS_CURSOR             = 0x02,
+	MODEST_HEADER_VIEW_STATE_HAS_SELECTION          = 0x04,
+	MODEST_HEADER_VIEW_STATE_HAS_MULTIPLE_SELECTION = 0x08,
+	MODEST_HEADER_VIEW_STATE_AT_FIRST_ITEM          = 0x0f,
+	MODEST_HEADER_VIEW_STATE_AT_LAST_ITEM           = 0x10
+} ModestHeaderViewState;
+
 struct _ModestHeaderViewClass {
 	GtkTreeViewClass parent_class;
 
@@ -189,15 +199,16 @@ GList*  modest_header_view_get_columns (ModestHeaderView *self);
 
 
 /**
- * modest_header_view_is_empty
+ * modest_header_view_get_state
  * @self: a ModestHeaderView instance
  * 
- * is the header view empty? Note that even in the empty case, the treeview
- * will *not* be empty, because there is a '(no items)' note.
- *
- * Returns: TRUE if the header view is empty, FALSE otherwise.
+ * get the state for this header view; see the ModestHeaderViewState enum
+ * for possible values.
+ * 
+ * Returns: the state for this header view
  */
-gboolean modest_header_view_is_empty (ModestHeaderView *self);
+ModestHeaderViewState modest_header_view_get_state (ModestHeaderView *self);
+
 
 
 /**
