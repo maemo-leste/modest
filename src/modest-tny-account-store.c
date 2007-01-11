@@ -43,6 +43,8 @@
 #include "modest-tny-account-store.h"
 #include "modest-tny-platform-factory.h"
 
+#include <camel/camel.h>
+
 /* 'private'/'protected' functions */
 static void modest_tny_account_store_class_init   (ModestTnyAccountStoreClass *klass);
 //static void modest_tny_account_store_init         (ModestTnyAccountStore *obj);
@@ -433,7 +435,7 @@ modest_tny_account_store_finalize (GObject *obj)
 	}
 
 	if (priv->tny_session_camel) {
-		// FIXME: how to kill a camel
+		camel_object_unref (CAMEL_OBJECT(priv->tny_session_camel));
 		priv->tny_session_camel = NULL;
 	}
 

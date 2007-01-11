@@ -154,6 +154,8 @@ main (int argc, char *argv[])
 		
 	
 cleanup:
+	g_object_unref (G_OBJECT(fact));
+	/* this will clean up account_store as well */
 	
 	return retval;
 }
