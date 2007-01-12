@@ -98,7 +98,6 @@ GTKDOC_LIBS= \
 	${top_builddir}/src/modest-proto.o \
 	${top_builddir}/src/modest-text-utils.o \
 	${top_builddir}/src/modest-tny-account-store.o \
-	${top_builddir}/src/modest-tny-attachment.o \
 	${top_builddir}/src/modest-tny-msg-actions.o \
 	${top_builddir}/src/modest-tny-platform-factory.o \
 	${top_builddir}/src/modest-tny-stream-gtkhtml.o \
