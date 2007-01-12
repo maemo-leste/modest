@@ -19,7 +19,6 @@
 <!ENTITY ModestProto SYSTEM "xml/modest-proto.xml">
 <!ENTITY ModestTextUtils SYSTEM "xml/modest-text-utils.xml">
 <!ENTITY ModestTnyAccountStore SYSTEM "xml/modest-tny-account-store.xml">
-<!ENTITY ModestTnyAttachment SYSTEM "xml/modest-tny-attachment.xml">
 <!ENTITY ModestTnyMsgActions SYSTEM "xml/modest-tny-msg-actions.xml">
 <!ENTITY ModestTnyPlatformFactory SYSTEM "xml/modest-tny-platform-factory.xml">
 <!ENTITY ModestTnyStoreActions SYSTEM "xml/modest-tny-store-actions.xml">
@@ -94,7 +93,6 @@
           &ModestProto;
           &ModestTextUtils;
           &ModestTnyAccountStore;
-          &ModestTnyAttachment;
           &ModestTnyMsgActions;
           &ModestTnyPlatformFactory;
           &ModestTnyStoreActions;
