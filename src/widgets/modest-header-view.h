@@ -30,7 +30,6 @@
 #ifndef __MODEST_HEADER_VIEW_H__
 #define __MODEST_HEADER_VIEW_H__
 
-#include <gtk/gtk.h>
 #include <tny-folder.h>
 #include <tny-gtk-account-list-model.h>
 #include <tny-msg.h>
@@ -82,7 +81,8 @@ typedef enum _ModestHeaderViewColumn {
  * to make a small-device specific display
  */
 typedef enum _ModestHeaderViewStyle {
-	MODEST_HEADER_VIEW_STYLE_SHOW_HEADERS = 0x01
+	MODEST_HEADER_VIEW_STYLE_SHOW_HEADERS = 0x01,
+	MODEST_HEADER_VIEW_STYLE_NORMAL = 0x02,
 } ModestHeaderViewStyle;
 
 typedef enum _ModestItemType {

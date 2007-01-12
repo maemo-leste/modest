@@ -35,6 +35,7 @@
 #include "modest-widget-memory.h"
 #include "modest-icon-factory.h"
 #include "modest-ui.h"
+#include "modest-main-window-ui.h"
 #include "modest-account-view-window.h"
 #include "modest-account-mgr.h"
 #include "modest-conf.h"
@@ -63,16 +64,16 @@ typedef struct _ModestMainWindowPrivate ModestMainWindowPrivate;
 struct _ModestMainWindowPrivate {
 
 	GtkUIManager *ui_manager;
-
+	ModestWidgetFactory *widget_factory;
+	TnyPlatformFactory *factory;
+	TnyAccountStore *account_store;
+	
 	GtkWidget *toolbar;
 	GtkWidget *menubar;
 
 	GtkWidget *folder_paned;
 	GtkWidget *msg_paned;
 	GtkWidget *main_paned;
-	
-	ModestWidgetFactory *widget_factory;
-	TnyPlatformFactory *factory;
 	
 	ModestHeaderView *header_view;
 	ModestFolderView *folder_view;
@@ -150,6 +151,9 @@ modest_main_window_init (ModestMainWindow *obj)
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(obj);
 	
 	priv->factory = modest_tny_platform_factory_get_instance ();
+	priv->widget_factory = NULL;
+	priv->ui_manager = NULL;
+	priv->account_store = NULL;
 }
 
 static void
@@ -160,6 +164,14 @@ modest_main_window_finalize (GObject *obj)
 	if (priv->widget_factory) {
 		g_object_unref (G_OBJECT(priv->widget_factory));
 		priv->widget_factory = NULL;
+	}
+	if (priv->ui_manager) {
+		g_object_unref (G_OBJECT(priv->ui_manager));
+		priv->ui_manager = NULL;
+	}
+	if (priv->account_store) {
+		g_object_unref (G_OBJECT(priv->account_store));
+		priv->account_store = NULL;
 	}
 
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
@@ -264,15 +276,17 @@ on_delete_event (GtkWidget *widget, GdkEvent  *event, ModestMainWindow *self)
 }
 
 
-GtkWidget*
+ModestWindow *
 modest_main_window_new (ModestWidgetFactory *widget_factory,
-			GtkUIManager *ui_manager)
+			TnyAccountStore *account_store)
 {
 	GObject *obj;
 	ModestMainWindowPrivate *priv;
 	GtkWidget *main_vbox;
 	GtkWidget *status_hbox;
 	GtkWidget *header_win, *folder_win;
+	GtkActionGroup *action_group;
+	GError *error = NULL;
 	
 	g_return_val_if_fail (widget_factory, NULL);
 
@@ -280,7 +294,30 @@ modest_main_window_new (ModestWidgetFactory *widget_factory,
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(obj);
 
 	priv->widget_factory = g_object_ref (widget_factory);
-	priv->ui_manager = g_object_ref (ui_manager);
+	priv->account_store  = g_object_ref (account_store);
+
+	/* ***************** */
+	priv->ui_manager = gtk_ui_manager_new();
+	action_group = gtk_action_group_new ("ModestMainWindowActions");
+
+	/* Add common actions */
+	gtk_action_group_add_actions (action_group,
+				      modest_action_entries,
+				      G_N_ELEMENTS (modest_action_entries),
+				      obj);
+
+	gtk_ui_manager_insert_action_group (priv->ui_manager, action_group, 0);
+	g_object_unref (action_group);
+
+	/* Load the UI definition */
+	gtk_ui_manager_add_ui_from_file (priv->ui_manager, MODEST_UIDIR "modest-ui.xml", &error);
+	if (error != NULL) {
+		g_warning ("Could not merge modest-ui.xml: %s", error->message);
+		g_error_free (error);
+		error = NULL;
+	}
+	/* *************** */
+/* 	priv->ui_manager = g_object_ref (ui_manager); */
 
 	/* Add accelerators */
 	gtk_window_add_accel_group (GTK_WINDOW (obj), 
@@ -350,5 +387,29 @@ modest_main_window_new (ModestWidgetFactory *widget_factory,
 	g_signal_connect (G_OBJECT(obj), "delete-event",
 			  G_CALLBACK(on_delete_event), obj);
 	
-	return GTK_WIDGET(obj);
+	return (ModestWindow *) obj;
+}
+
+ModestWidgetFactory *
+modest_main_window_get_widget_factory (ModestMainWindow *main_window)
+{
+	ModestMainWindowPrivate *priv;
+	
+	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW (main_window), NULL);
+
+	priv = MODEST_MAIN_WINDOW_GET_PRIVATE (main_window);
+
+	return g_object_ref (priv->widget_factory);
+}
+
+TnyAccountStore * 
+modest_main_window_get_account_store (ModestMainWindow *main_window)
+{
+	ModestMainWindowPrivate *priv;
+	
+	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW (main_window), NULL);
+
+	priv = MODEST_MAIN_WINDOW_GET_PRIVATE (main_window);
+
+	return g_object_ref (priv->account_store);
 }

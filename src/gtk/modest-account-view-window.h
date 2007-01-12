@@ -4,7 +4,6 @@
 #ifndef __MODEST_ACCOUNT_VIEW_WINDOW_H__
 #define __MODEST_ACCOUNT_VIEW_WINDOW_H__
 
-#include <gtk/gtk.h>
 #include <modest-widget-factory.h>
 
 G_BEGIN_DECLS

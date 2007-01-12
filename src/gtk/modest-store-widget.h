@@ -4,7 +4,6 @@
 #ifndef __MODEST_STORE_WIDGET_H__
 #define __MODEST_STORE_WIDGET_H__
 
-#include <gtk/gtk.h>
 #include <modest-widget-factory.h>
 
 G_BEGIN_DECLS

@@ -30,7 +30,7 @@
 
 #include <glib.h>
 #include <glib/gi18n.h>
-#include <gtk/gtk.h>
+#include <gtk/gtkwidget.h>
 #include <tny-list.h>
 #include <tny-transport-account.h>
 #include <tny-account-store.h>
@@ -171,7 +171,7 @@ start_ui (const gchar* mailto, const gchar *cc, const gchar *bcc,
 	gint retval = 0;
 
 	#ifndef OLD_UI_STUFF
-	GtkWidget *win;
+	ModestWindow *win;
 	#endif
 	
 	modest_ui = MODEST_UI(modest_ui_new (account_store));
@@ -204,7 +204,7 @@ start_ui (const gchar* mailto, const gchar *cc, const gchar *bcc,
 	if (win) {
 		TnyDevice *device;
 
-		gtk_widget_show (win);
+		gtk_widget_show (GTK_WIDGET (win));
 	
 		/* Go online */
 		device = tny_account_store_get_device (account_store);

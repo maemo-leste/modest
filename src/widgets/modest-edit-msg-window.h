@@ -30,10 +30,9 @@
 #ifndef __MODEST_EDIT_MSG_WINDOW_H__
 #define __MODEST_EDIT_MSG_WINDOW_H__
 
-#include <gtk/gtk.h>
 #include <tny-msg.h>
-#include <widgets/modest-window.h>
-#include <modest-widget-factory.h>
+#include "modest-window.h"
+#include "modest-widget-factory.h"
 
 G_BEGIN_DECLS
 
@@ -68,14 +67,19 @@ typedef enum _ModestEditType {
 	
 	MODEST_EDIT_TYPE_NUM
 } ModestEditType;
+
+typedef struct _MsgData {
+	gchar *from, *to, *cc, *bcc, *subject, *body;
+} MsgData;
 /* typedef enum _ModestEditType ModestEditType; */
 
 
 /* member functions */
 GType        modest_edit_msg_window_get_type    (void) G_GNUC_CONST;
 
-GtkWidget*   modest_edit_msg_window_new         (ModestWidgetFactory *factory,
-						 ModestEditType type);
+ModestWindow*   modest_edit_msg_window_new         (ModestWidgetFactory *factory,
+						    TnyAccountStore *account_store,
+						    ModestEditType type);
 
 /**
  * modest_edit_msg_window_set_msg:
@@ -86,6 +90,16 @@ GtkWidget*   modest_edit_msg_window_new         (ModestWidgetFactory *factory,
  **/
 void         modest_edit_msg_window_set_msg     (ModestEditMsgWindow *self, 
 						 TnyMsg *msg);
+
+ModestWidgetFactory *   modest_edit_msg_window_get_widget_factory    (ModestEditMsgWindow *edit_window);
+
+TnyAccountStore *       modest_edit_msg_window_get_account_store     (ModestEditMsgWindow *edit_window);
+
+MsgData *               modest_edit_msg_window_get_msg_data          (ModestEditMsgWindow *edit_window);
+
+void                    modest_edit_msg_window_free_msg_data         (ModestEditMsgWindow *edit_window,
+								      MsgData *data);
+
 G_END_DECLS
 
 #endif /* __MODEST_EDIT_MSG_WINDOW_H__ */

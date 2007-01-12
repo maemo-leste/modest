@@ -28,13 +28,16 @@
  */
 #include <glib/gi18n.h>
 #include <tny-account-store.h>
-#include "modest-toolbar.h"
 #include "modest-edit-msg-window.h"
+#include "modest-edit-msg-window-ui.h"
+#include "modest-icon-names.h"
+#include "modest-icon-factory.h"
 #include "modest-widget-memory.h"
 #include "modest-mail-operation.h"
 #include "modest-tny-platform-factory.h"
 #include "modest-tny-msg-actions.h"
 #include <tny-simple-list.h>
+#include "modest-ui-actions.h"
 
 static void  modest_edit_msg_window_class_init   (ModestEditMsgWindowClass *klass);
 static void  modest_edit_msg_window_init         (ModestEditMsgWindow *obj);
@@ -50,14 +53,17 @@ enum {
 typedef struct _ModestEditMsgWindowPrivate ModestEditMsgWindowPrivate;
 struct _ModestEditMsgWindowPrivate {
 
-	ModestWidgetFactory *factory;
+	ModestWidgetFactory *widget_factory;
 	TnyPlatformFactory *fact;
+	TnyAccountStore *account_store;
+	GtkUIManager *ui_manager;
 	
 	GtkWidget      *toolbar, *menubar;
 	GtkWidget      *msg_body;
 	GtkWidget      *from_field, *to_field, *cc_field, *bcc_field,
 		       *subject_field;
 };
+
 #define MODEST_EDIT_MSG_WINDOW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                     MODEST_TYPE_EDIT_MSG_WINDOW, \
                                                     ModestEditMsgWindowPrivate))
@@ -117,7 +123,7 @@ modest_edit_msg_window_init (ModestEditMsgWindow *obj)
 	priv = MODEST_EDIT_MSG_WINDOW_GET_PRIVATE(obj);
 
 	priv->fact = modest_tny_platform_factory_get_instance ();
-	priv->factory = NULL;
+	priv->widget_factory = NULL;
 	priv->toolbar = NULL;
 	priv->menubar = NULL;
 }
@@ -149,220 +155,6 @@ restore_settings (ModestEditMsgWindow *self)
 	modest_widget_memory_restore (conf, G_OBJECT(self), "modest-edit-msg-window");
 }
 
-	
-
-static void
-on_menu_quit (ModestEditMsgWindow *self, guint action, GtkWidget *widget)
-{
-	save_settings (self);
-	gtk_widget_destroy (GTK_WIDGET(self));
-}
-
-
-
-
-
-/* Our menu, an array of GtkItemFactoryEntry structures that defines each menu item */
-static GtkItemFactoryEntry menu_items[] = {
-	{ "/_File",		NULL,			NULL,           0, "<Branch>" ,NULL},
-	{ "/File/_New",		"<control>N",		NULL,		0, "<StockItem>", GTK_STOCK_NEW },
-	{ "/File/_Open",	"<control>O",		NULL,		0, "<StockItem>", GTK_STOCK_OPEN },
-	{ "/File/_Save",	"<control>S",		NULL,		0, "<StockItem>", GTK_STOCK_SAVE },
-	{ "/File/Save _As",	NULL,			NULL,           0, "<Item>", NULL} ,
-	{ "/File/Save Draft",	"<control><shift>S",	NULL,           0, "<Item>",NULL },
-
-
-	{ "/File/sep1",		NULL,			NULL,           0, "<Separator>" ,NULL },
-	{ "/File/_Quit",	"<CTRL>Q",		on_menu_quit,   0, "<StockItem>", GTK_STOCK_QUIT },
-
-	{ "/_Edit",		NULL,			NULL,           0, "<Branch>" ,NULL },
-	{ "/Edit/_Undo",	"<CTRL>Z",		NULL,		0, "<StockItem>", GTK_STOCK_UNDO },
-	{ "/Edit/_Redo",	"<shift><CTRL>Z",	NULL,		0, "<StockItem>", GTK_STOCK_REDO },
-	{ "/File/sep1",		NULL,			NULL,           0, "<Separator>",NULL },
-	{ "/Edit/Cut",		"<control>X",		NULL,		0, "<StockItem>", GTK_STOCK_CUT  },
-	{ "/Edit/Copy",		"<CTRL>C",		NULL,           0, "<StockItem>", GTK_STOCK_COPY },
-	{ "/Edit/Paste",	NULL,			NULL,           0, "<StockItem>", GTK_STOCK_PASTE},
-	{ "/Edit/sep1",		NULL,			NULL,           0, "<Separator>",NULL },
-	{ "/Edit/Delete",	"<CTRL>Q",		NULL,           0, "<Item>" ,NULL },
-	{ "/Edit/Select all",	"<CTRL>A",		NULL,           0, "<Item>" ,NULL },
-	{ "/Edit/Deselect all",  "<Shift><CTRL>A",	NULL,           0, "<Item>",NULL },
-
-	{ "/_View",             NULL,		NULL,		        0, "<Branch>",NULL },
-	{ "/View/To-field",          NULL,		NULL,		0, "<CheckItem>",NULL },
-	
-	{ "/View/Cc-field:",          NULL,		NULL,		0, "<CheckItem>",NULL },
-	{ "/View/Bcc-field:",          NULL,		NULL,		0, "<CheckItem>",NULL },
-	
-	
-	{ "/_Insert",             NULL,		NULL,		0, "<Branch>",NULL },
-/* 	{ "/Actions/_Reply",    NULL,			NULL,		0, "<Item>" }, */
-/* 	{ "/Actions/_Forward",  NULL,			NULL,		0, "<Item>" }, */
-/* 	{ "/Actions/_Bounce",   NULL,			NULL,		0, "<Item>" },	 */
-	
-	{ "/_Format",		 NULL,			NULL,		0, "<Branch>",NULL }
-/* 	{ "/Options/_Accounts",  NULL,			on_menu_accounts,0, "<Item>" }, */
-/* 	{ "/Options/_Contacts",  NULL,			NULL,		0, "<Item>" }, */
-
-
-/* 	{ "/_Help",         NULL,                       NULL,           0, "<Branch>" }, */
-/* 	{ "/_Help/About",   NULL,                       on_menu_about,  0, "<StockItem>", GTK_STOCK_ABOUT}, */
-};
-
-static gint nmenu_items = sizeof (menu_items) / sizeof (menu_items[0]);
-
-
-static GtkWidget *
-menubar_new (ModestEditMsgWindow *self)
-{
-	GtkItemFactory *item_factory;
-	GtkAccelGroup *accel_group;
-	
-	/* Make an accelerator group (shortcut keys) */
-	accel_group = gtk_accel_group_new ();
-	
-	/* Make an ItemFactory (that makes a menubar) */
-	item_factory = gtk_item_factory_new (GTK_TYPE_MENU_BAR, "<main>",
-					     accel_group);
-	
-	/* This function generates the menu items. Pass the item factory,
-	   the number of items in the array, the array itself, and any
-	   callback data for the the menu items. */
-	gtk_item_factory_create_items (item_factory, nmenu_items, menu_items, self);
-	
-	///* Attach the new accelerator group to the window. */
-	gtk_window_add_accel_group (GTK_WINDOW (self), accel_group);
-	
-	/* Finally, return the actual menu bar created by the item factory. */
-	return gtk_item_factory_get_widget (item_factory, "<main>");
-}
-
-
-static void
-send_mail (ModestEditMsgWindow *self)
-{
-	const gchar *to, *cc, *bcc, *subject;
-	gchar *body, *from;
-	ModestEditMsgWindowPrivate *priv;
-	TnyTransportAccount *transport_account;
-	ModestMailOperation *mail_operation;
-	ModestAccountData *data;
-	
-	GtkTextBuffer *buf;
-	GtkTextIter b, e;
-	
-	priv = MODEST_EDIT_MSG_WINDOW_GET_PRIVATE(self);
-	data = modest_combo_box_get_active_id (MODEST_COMBO_BOX (priv->from_field));
-
-	/* don't free these (except from) */
-	from    =  g_strdup_printf ("%s <%s>", data->full_name, data->email) ;
-	to      =  gtk_entry_get_text (GTK_ENTRY(priv->to_field));
-	cc      =  gtk_entry_get_text (GTK_ENTRY(priv->cc_field));
-	bcc     =  gtk_entry_get_text (GTK_ENTRY(priv->bcc_field));
-	subject =  gtk_entry_get_text (GTK_ENTRY(priv->subject_field));
-	
-	/* don't unref */
-	buf   =  gtk_text_view_get_buffer (GTK_TEXT_VIEW(priv->msg_body));
-	
-	gtk_text_buffer_get_bounds (buf, &b, &e);
-	body  = gtk_text_buffer_get_text (buf, &b, &e,
-					  FALSE); /* free this one */
-
-	/* FIXME: Code added just for testing. The final version will
-	   use the send queue provided by tinymail and some
-	   classifier */
-	{
-		TnyList *accounts;
-		TnyIterator *iter;
-		TnyAccountStore *account_store;
-
-		accounts = TNY_LIST(tny_simple_list_new ());
-		account_store = tny_platform_factory_new_account_store (priv->fact);
-		tny_account_store_get_accounts (account_store, accounts,
-						TNY_ACCOUNT_STORE_TRANSPORT_ACCOUNTS);
-
-		iter = tny_list_create_iterator(accounts);
-		tny_iterator_first (iter);
-		if (tny_iterator_is_done (iter)) {
-			/* FIXME: Add error handling through mail operation */
-			g_printerr("modest: no transport accounts defined\n");
-			g_free (body);
-			return;
-		}
-		transport_account = TNY_TRANSPORT_ACCOUNT (tny_iterator_get_current(iter));
-		g_object_ref (transport_account);
-
-		tny_list_foreach (accounts, (GFunc) g_object_unref, NULL);
-		g_object_unref (G_OBJECT (accounts));
-		g_object_unref (G_OBJECT (iter));
-	}
-
-	mail_operation = modest_mail_operation_new ();
-
-	modest_mail_operation_send_new_mail (mail_operation,
-					     transport_account,
-					     from, to, cc, bcc,
-					     subject, body, NULL);
-	/* Clean up */
-	g_object_unref (G_OBJECT (mail_operation));
-	g_object_unref (G_OBJECT (transport_account));
-	g_free (from);
-	g_free (body);
-}
-
-
-static void
-on_toolbar_button_clicked (ModestToolbar *toolbar, ModestToolbarButton button_id,
-			   ModestEditMsgWindow *self)
-{
-	switch (button_id) {
-	case MODEST_TOOLBAR_BUTTON_MAIL_SEND:
-		send_mail (self);
-		save_settings (self);
-		gtk_widget_destroy (GTK_WIDGET(self));
-		break;
-		
-	case MODEST_TOOLBAR_BUTTON_REPLY:
-	case MODEST_TOOLBAR_BUTTON_REPLY_ALL:
-	case MODEST_TOOLBAR_BUTTON_FORWARD:
-	case MODEST_TOOLBAR_BUTTON_SEND_RECEIVE:
-	case MODEST_TOOLBAR_BUTTON_NEXT:
-	case MODEST_TOOLBAR_BUTTON_PREV:
-	case MODEST_TOOLBAR_BUTTON_DELETE:
-
-	default:
-		g_printerr ("modest: key %d pressed\n", button_id);
-	}
-}
-
-
-
-
-static ModestToolbar*
-toolbar_new (ModestEditMsgWindow *self)
-{
-	int i;
-	ModestToolbar *toolbar;
-	GSList *buttons = NULL;
-	ModestEditMsgWindowPrivate *priv;
-
-	ModestToolbarButton button_ids[] = {
-		MODEST_TOOLBAR_BUTTON_MAIL_SEND
-	};		
-	
-	priv = MODEST_EDIT_MSG_WINDOW_GET_PRIVATE(self);
-
-	for (i = 0 ; i != sizeof(button_ids) / sizeof(ModestToolbarButton); ++i)
-		buttons = g_slist_append (buttons, GINT_TO_POINTER(button_ids[i]));
-	
-	toolbar = modest_toolbar_new (buttons);
-	g_slist_free (buttons);
-
-	g_signal_connect (G_OBJECT(toolbar), "button_clicked",
-			  G_CALLBACK(on_toolbar_button_clicked), self);
-	
-	return toolbar;
-}
-
 
 static void
 init_window (ModestEditMsgWindow *obj)
@@ -378,7 +170,7 @@ init_window (ModestEditMsgWindow *obj)
 	cc_button     = gtk_button_new_with_label (_("Cc..."));
 	bcc_button    = gtk_button_new_with_label (_("Bcc..."));
 
-	priv->from_field    = modest_widget_factory_get_combo_box (priv->factory,
+	priv->from_field    = modest_widget_factory_get_combo_box (priv->widget_factory,
 								   MODEST_COMBO_BOX_TYPE_TRANSPORTS);
 	priv->to_field      = gtk_entry_new_with_max_length (80);
 	priv->cc_field      = gtk_entry_new_with_max_length (80);
@@ -405,9 +197,6 @@ init_window (ModestEditMsgWindow *obj)
 	
 	main_vbox = gtk_vbox_new  (FALSE, 6);
 
-	priv->menubar = menubar_new (obj);
-	priv->toolbar = GTK_WIDGET(toolbar_new (obj));
-
 	gtk_box_pack_start (GTK_BOX(main_vbox), priv->menubar, FALSE, FALSE, 0);
 	gtk_box_pack_start (GTK_BOX(main_vbox), priv->toolbar, FALSE, FALSE, 0);
 	gtk_box_pack_start (GTK_BOX(main_vbox), header_table, FALSE, FALSE, 6);
@@ -426,8 +215,8 @@ modest_edit_msg_window_finalize (GObject *obj)
 
 	priv = MODEST_EDIT_MSG_WINDOW_GET_PRIVATE(obj);
 
-	g_object_unref (G_OBJECT(priv->factory));
-	priv->factory = NULL;
+	g_object_unref (G_OBJECT(priv->widget_factory));
+	priv->widget_factory = NULL;
 	
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 
@@ -443,23 +232,62 @@ on_delete_event (GtkWidget *widget, GdkEvent *event, ModestEditMsgWindow *self)
 }
 
 
-GtkWidget*
+ModestWindow *
 modest_edit_msg_window_new (ModestWidgetFactory *factory,
+			    TnyAccountStore *account_store,
 			    ModestEditType type)
 {
 	GObject *obj;
 	ModestEditMsgWindowPrivate *priv;
+	GtkActionGroup *action_group;
+	GError *error = NULL;
 
 	g_return_val_if_fail (factory, NULL);
 	g_return_val_if_fail (type < MODEST_EDIT_TYPE_NUM, NULL);
-/* 	g_return_val_if_fail (!(type!=MODEST_EDIT_TYPE_NEW && !msg), NULL); 	 */
 	
 	obj = g_object_new(MODEST_TYPE_EDIT_MSG_WINDOW, NULL);
 	priv = MODEST_EDIT_MSG_WINDOW_GET_PRIVATE(obj);
 
-	g_object_ref (factory);
-	priv->factory = factory;
+	priv->widget_factory = g_object_ref (factory);
+	priv->account_store  = g_object_ref (account_store);
 
+	/* ****** */
+	priv->ui_manager = gtk_ui_manager_new();
+	action_group = gtk_action_group_new ("ModestEditMsgWindowActions");
+
+	/* Add common actions */
+	gtk_action_group_add_actions (action_group,
+				      modest_edit_msg_action_entries,
+				      G_N_ELEMENTS (modest_edit_msg_action_entries),
+				      obj);
+	gtk_action_group_add_toggle_actions (action_group,
+					     modest_edit_msg_toggle_action_entries,
+					     G_N_ELEMENTS (modest_edit_msg_toggle_action_entries),
+					     obj);
+	gtk_ui_manager_insert_action_group (priv->ui_manager, action_group, 0);
+	g_object_unref (action_group);
+
+	/* Load the UI definition */
+	gtk_ui_manager_add_ui_from_file (priv->ui_manager, MODEST_UIDIR "modest-edit-msg-window-ui.xml", &error);
+	if (error != NULL) {
+		g_warning ("Could not merge modest-edit-msg-window-ui.xml: %s", error->message);
+		g_error_free (error);
+		error = NULL;
+	}
+	/* ****** */
+
+	/* Add accelerators */
+	gtk_window_add_accel_group (GTK_WINDOW (obj), 
+				    gtk_ui_manager_get_accel_group (priv->ui_manager));
+
+
+	/* Toolbar / Menubar */
+	priv->toolbar = gtk_ui_manager_get_widget (priv->ui_manager, "/EditMsgWindowToolBar");
+	priv->menubar = gtk_ui_manager_get_widget (priv->ui_manager, "/EditMsgWindowMenuBar");
+
+	gtk_toolbar_set_tooltips (GTK_TOOLBAR (priv->toolbar), TRUE);
+
+	/* Init window */
 	init_window (MODEST_EDIT_MSG_WINDOW(obj));
 
 	restore_settings (MODEST_EDIT_MSG_WINDOW(obj));
@@ -471,7 +299,7 @@ modest_edit_msg_window_new (ModestWidgetFactory *factory,
 	g_signal_connect (G_OBJECT(obj), "delete-event",
 			  G_CALLBACK(on_delete_event), obj);
 
-	return GTK_WIDGET (obj);
+	return (ModestWindow *) (obj);
 }
 
 void
@@ -512,4 +340,68 @@ modest_edit_msg_window_set_msg (ModestEditMsgWindow *self, TnyMsg *msg)
 	   allowed? */
 	
 	/* TODO: set attachments */
+}
+
+ModestWidgetFactory *
+modest_edit_msg_window_get_widget_factory (ModestEditMsgWindow *edit_window)
+{
+	ModestEditMsgWindowPrivate *priv;
+	
+	g_return_val_if_fail (MODEST_IS_EDIT_MSG_WINDOW (edit_window), NULL);
+
+	priv = MODEST_EDIT_MSG_WINDOW_GET_PRIVATE (edit_window);
+
+	return g_object_ref (priv->widget_factory);
+}
+
+TnyAccountStore * 
+modest_edit_msg_window_get_account_store (ModestEditMsgWindow *edit_window)
+{
+	ModestEditMsgWindowPrivate *priv;
+	
+	g_return_val_if_fail (MODEST_IS_EDIT_MSG_WINDOW (edit_window), NULL);
+
+	priv = MODEST_EDIT_MSG_WINDOW_GET_PRIVATE (edit_window);
+
+	return g_object_ref (priv->account_store);
+}
+
+MsgData * 
+modest_edit_msg_window_get_msg_data (ModestEditMsgWindow *edit_window)
+{
+	MsgData *data;
+	ModestAccountData *account_data;
+	GtkTextBuffer *buf;
+	GtkTextIter b, e;
+	ModestEditMsgWindowPrivate *priv;
+	
+	g_return_val_if_fail (MODEST_IS_EDIT_MSG_WINDOW (edit_window), NULL);
+
+	priv = MODEST_EDIT_MSG_WINDOW_GET_PRIVATE (edit_window);
+	
+	account_data = modest_combo_box_get_active_id (MODEST_COMBO_BOX (priv->from_field));
+	buf = gtk_text_view_get_buffer (GTK_TEXT_VIEW (priv->msg_body));	
+	gtk_text_buffer_get_bounds (buf, &b, &e);
+
+	/* don't free these (except from) */
+	data = g_slice_new0 (MsgData);
+	data->from    =  g_strdup_printf ("%s <%s>", account_data->full_name, account_data->email) ;
+	data->to      =  (gchar*) gtk_entry_get_text (GTK_ENTRY(priv->to_field));
+	data->cc      =  (gchar*) gtk_entry_get_text (GTK_ENTRY(priv->cc_field));
+	data->bcc     =  (gchar*) gtk_entry_get_text (GTK_ENTRY(priv->bcc_field));
+	data->subject =  (gchar*) gtk_entry_get_text (GTK_ENTRY(priv->subject_field));	
+	data->body    =  gtk_text_buffer_get_text (buf, &b, &e, FALSE);
+
+	return data;
+}
+
+void 
+modest_edit_msg_window_free_msg_data (ModestEditMsgWindow *edit_window,
+				      MsgData *data)
+{
+	g_return_if_fail (MODEST_IS_EDIT_MSG_WINDOW (edit_window));
+
+	g_free (data->from);
+	g_free (data->body);
+	g_slice_free (MsgData, data);
 }

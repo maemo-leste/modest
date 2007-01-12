@@ -33,7 +33,7 @@
 #ifndef __MODEST_ICON_FACTORY_H__
 #define __MODEST_ICON_FACTORY_H__
 
-#include <gtk/gtk.h>
+#include <gdk/gdkpixbuf.h>
 
 /**
  * modest_icon_factory_init

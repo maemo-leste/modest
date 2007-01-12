@@ -30,7 +30,6 @@
 #ifndef __MODEST_MSG_VIEW_H__
 #define __MODEST_MSG_VIEW_H__
 
-#include <gtk/gtk.h>
 #include <tny-stream.h>
 #include <tny-msg.h>
 #include <tny-mime-part.h>

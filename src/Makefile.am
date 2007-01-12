@@ -80,11 +80,4 @@ modest_LDADD = 						\
 	$(MODEST_PLATFORM)/libmodest-ui.la		\
 	widgets/libmodest-widgets.la			
 
-EXTRA_DIST=modest-marshal.list ui/*
-
-UI_FILES=\
-	ui/modest-ui.xml \
-	ui/modest-edit-msg-window-ui.xml
-
-uidir = $(datadir)/modest/ui
-ui_DATA = $(UI_FILES)
+EXTRA_DIST=modest-marshal.list

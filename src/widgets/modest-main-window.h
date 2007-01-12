@@ -35,8 +35,8 @@
 #include <config.h>
 #endif /*HAVE_CONFIG_H*/
 
-#include <modest-widget-factory.h>
-#include <widgets/modest-window.h>
+#include "modest-widget-factory.h"
+#include "modest-window.h"
 
 G_BEGIN_DECLS
 
@@ -67,8 +67,13 @@ struct _ModestMainWindowClass {
 GType modest_main_window_get_type (void) G_GNUC_CONST;
 
 
-GtkWidget* modest_main_window_new (ModestWidgetFactory *factory,
-				   GtkUIManager *ui_manager);
+ModestWindow* modest_main_window_new (ModestWidgetFactory *factory,
+				      TnyAccountStore *account_store);
+
+ModestWidgetFactory *   modest_main_window_get_widget_factory    (ModestMainWindow *main_window);
+
+TnyAccountStore *       modest_main_window_get_account_store     (ModestMainWindow *main_window);
+
 
 G_END_DECLS
 

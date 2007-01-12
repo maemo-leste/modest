@@ -30,7 +30,6 @@
 #ifndef __MODEST_ACCOUNT_ASSISTANT_H__
 #define __MODEST_ACCOUNT_ASSISTANT_H__
 
-#include <gtk/gtk.h>
 #include <modest-widget-factory.h>
 #include <modest-account-mgr.h>
 

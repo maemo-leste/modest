@@ -41,7 +41,16 @@ LDADD = \
 	$(MODEST_GSTUFF_LIBS) \
 	$(MODEST_LIBTINYMAIL_GNOME_DESKTOP_LIBS)
 
-EXTRA_DIST=pixmaps/*
+EXTRA_DIST=\
+	pixmaps/* \
+	ui/*
 
-pixmapdir = $(prefix)/share/pixmaps/modest/
+pixmapdir = $(datadir)/pixmaps/modest
 pixmap_DATA = $(PIXMAP_FILES)
+
+UI_FILES=\
+	ui/modest-ui.xml \
+	ui/modest-edit-msg-window-ui.xml
+
+uidir = $(datadir)/modest/ui
+ui_DATA = $(UI_FILES)

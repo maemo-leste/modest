@@ -32,6 +32,9 @@
 
 #include <glib-object.h>
 #include <tny-account-store.h>
+#include <gtk/gtkactiongroup.h>
+#include "modest-window.h"
+#include "modest-edit-msg-window.h"
 
 G_BEGIN_DECLS
 
@@ -54,7 +57,6 @@ struct _ModestUI {
 struct _ModestUIClass {
 	GObjectClass parent_class;
 	/* insert signal callback declarations, eg. */
-	/* void (* my_event) (ModestUI* obj); */
 };
 
 /**
@@ -85,8 +87,22 @@ ModestUI*     modest_ui_new            (TnyAccountStore *account_store);
  *
  * Returns: a #ModestMainWindow, or NULL in case of error
  */
-GtkWidget*    modest_ui_main_window    (ModestUI *modest_ui);
+ModestWindow*    modest_ui_main_window    (ModestUI *modest_ui);
 
+
+/**
+ * modest_edit_msg_ui_main_window:
+ * @modest_edit_msg_ui: a ModestEditMsgUI instance 
+ * @edit_type: the type of edit window
+ *  
+ * Creates an new main window and returns it. If there is already a
+ * main window then the current one is returned and no new window is
+ * created
+ *
+ * Returns: a #ModestEditMsgWindow, or NULL in case of error
+ */
+ModestWindow*    modest_ui_edit_window    (ModestUI       *modest_ui,
+					   ModestEditType  edit_type);
 
 
 G_END_DECLS

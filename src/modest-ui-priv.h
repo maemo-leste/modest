@@ -27,38 +27,23 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __MODEST_WIDGET_MEMORY_H__
-#define __MODEST_WIDGET_MEMORY_H__
+#ifndef __MODEST_UI_PRIV_H__
+#define __MODEST_UI_PRIV_H__
 
-#include <modest-conf.h>
+#include <gtk/gtkuimanager.h>
+#include <tny-account-store.h>
+#include "modest-widget-factory.h"
+#include "modest-window.h"
 
 G_BEGIN_DECLS
 
-/**
- * modest_widget_memory_save:
- * @conf: a ModestConf instance
- * @widget: the widget to save the settings for
- * @name: the unique name for this widget
- * 
- * store a the settings for a widget in the configuration system
- * 
- * Returns: TRUE if succeeded or FALSE in case of error.
- */
-gboolean modest_widget_memory_save (ModestConf *conf, GObject *widget, const gchar *name);
-
-/**
- * modest_widget_memory_restore:
- * @conf: a ModestConf instance
- * @widget: the widget to save the settings for
- * @name: the unique name for this widget
- * 
- * restore the settings for a widget configuration system
- * 
- * Returns: TRUE if succeeded or FALSE in case of error.
- */
-gboolean modest_widget_memory_restore (ModestConf *conf, GObject *widget, const gchar *name);
-
+typedef struct _ModestUIPrivate ModestUIPrivate;
+struct _ModestUIPrivate {
+	ModestWidgetFactory  *widget_factory;	
+	TnyAccountStore      *account_store;
+	ModestWindow         *main_window;
+	GtkUIManager         *ui_manager;
+};
 
 G_END_DECLS
-
-#endif /*__MODEST_WIDGET_MEMORY_H__*/
+#endif /* __MODEST_UI_PRIV_H__ */

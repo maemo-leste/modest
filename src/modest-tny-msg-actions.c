@@ -28,7 +28,6 @@
  */
 
 #include <string.h>
-#include <gtk/gtk.h>
 #include <gtkhtml/gtkhtml.h>
 #include <tny-gtk-text-buffer-stream.h>
 #include <tny-simple-list.h>

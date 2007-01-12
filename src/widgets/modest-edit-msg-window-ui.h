@@ -1,5 +1,4 @@
-<!--
- * Copyright (c) 2006, Nokia Corporation
+/* Copyright (c) 2006, Nokia Corporation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,48 +25,35 @@
  * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
--->
+ */
 
-<ui>
+#ifndef __MODEST_MAIN_WINDOW_UI_PRIV_H__
+#define __MODEST_MAIN_WINDOW_UI_PRIV_H__
 
-  <menubar name="EditMsgWindowMenuBar">
-    <menu name="FileMenu" action="File">
-      <menuitem name="FileNewMenu" action="FileNew"/>
-      <menuitem name="FileOpenMenu" action="FileOpen"/>
-      <separator/>
-      <menuitem name="FileSaveMenu" action="FileSave"/>
-      <menuitem name="FileSaveAsMenu" action="FileSaveAs"/>
-      <separator/>
-      <menuitem name="FileQuitMenu" action="FileQuit"/>
-    </menu>
+#include <glib/gi18n.h>
+#include "modest-icon-names.h"
+#include "modest-ui-actions.h"
 
-    <menu name="EditMenu" action="Edit">
-      <menuitem name="EditUndoMenu" action="EditUndo"/>
-      <menuitem name="EditRedoMenu" action="EditRedo"/>
-      <separator/>
-      <menuitem name="EditCutMenu" action="EditCut"/>
-      <menuitem name="EditCopyMenu" action="EditCopy"/>
-      <menuitem name="EditPasteMenu" action="EditPaste"/>
-      <menuitem name="EditDeleteMenu" action="EditDelete"/>
-      <separator/>
-      <menuitem name="EditSelectAllMenu" action="EditSelectAll"/>
-      <menuitem name="EditDeselectAllMenu" action="EditDeselectAll"/>
-    </menu>
+G_BEGIN_DECLS
 
-    <menu name="ViewMenu" action="View">
-      <menuitem name="ViewToFieldMenu" action="ViewToField"/>
-      <menuitem name="ViewCcFieldMenu" action="ViewCcField"/>
-      <menuitem name="ViewBccFieldMenu" action="ViewBccField"/>
-    </menu>
+static const GtkActionEntry modest_edit_msg_action_entries [] = {
 
-    <menu name="ActionsMenu" action="Actions">
-      <menuitem name="ActionsSendMenu" action="ActionsSend"/>
-    </menu>
+	/* Toplevel menus */
+	{ "View", NULL, N_("_View") },
+	{ "Insert", NULL, N_("_Insert") },
+	{ "Format", NULL, N_("For_mat") },
 
-  </menubar>
+	/* ACTIONS */
+	{ "ActionsSend", MODEST_STOCK_MAIL_SEND, N_("Send"),  NULL, N_("Send a message"),  G_CALLBACK (_modest_ui_actions_on_send) },
+};
 
-  <toolbar name="EditMsgWindowToolBar">
-    <toolitem action="ActionsSend"/>
-  </toolbar>
+static const GtkToggleActionEntry modest_edit_msg_toggle_action_entries [] = {
 
-</ui>
+	/* VIEW */
+	{ "ViewToField",   NULL,    N_("To: field"),  NULL, N_("Shows the To: field"),  NULL, TRUE  },
+	{ "ViewCcField",   NULL,    N_("Cc: field"),  NULL, N_("Shows the Cc: field"),  NULL, TRUE  },
+	{ "ViewBccField",  NULL,    N_("Bcc: filed"), NULL, N_("Shows the Bcc: field"), NULL, FALSE },
+};
+
+G_END_DECLS
+#endif /* __MODEST_MAIN_WINDOW_UI_PRIV_H__ */

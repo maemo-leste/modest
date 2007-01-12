@@ -30,8 +30,8 @@
 #ifndef __MODEST_ACCOUNT_VIEW_H__
 #define __MODEST_ACCOUNT_VIEW_H__
 
-#include <gtk/gtk.h>
-#include <modest-account-mgr.h>
+#include "modest-account-mgr.h"
+#include <gtk/gtktreeview.h>
 
 G_BEGIN_DECLS
 
