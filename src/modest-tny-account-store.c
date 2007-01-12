@@ -36,7 +36,8 @@
 #include <tny-device.h>
 #include <tny-account-store.h>
 #include <tny-camel-transport-account.h>
-#include <tny-camel-store-account.h>
+#include <tny-camel-imap-store-account.h>
+#include <tny-camel-pop-store-account.h>
 #include <modest-marshal.h>
 #include <glib/gi18n.h>
 #include "modest-account-mgr.h"
@@ -44,6 +45,7 @@
 #include "modest-tny-platform-factory.h"
 
 #include <camel/camel.h>
+#include <gdk/gdk.h>
 
 /* 'private'/'protected' functions */
 static void modest_tny_account_store_class_init   (ModestTnyAccountStoreClass *klass);
@@ -303,6 +305,39 @@ forget_password (TnyAccount *account) {
 				  TRUE, NULL);
 }
 
+
+
+/* instantiate the correct tny account subclass */
+static TnyAccount*
+tny_account_for_proto (const gchar* proto /* ugly */, ModestProtocolType modest_type) 
+{
+	TnyAccount *tny_account = NULL;
+	
+	/* is it a store or a transport? */
+	if  (modest_type == MODEST_PROTOCOL_TYPE_STORE) {
+		if (strcmp (proto, "pop") == 0) 
+			tny_account = TNY_ACCOUNT(tny_camel_pop_store_account_new ());
+		else if (strcmp (proto, "imap") == 0)
+			tny_account = TNY_ACCOUNT(tny_camel_imap_store_account_new ());
+
+	}  else if (modest_type == MODEST_PROTOCOL_TYPE_TRANSPORT) {
+		if (strcmp (proto, "sendmail") == 0) 
+			tny_account = TNY_ACCOUNT(tny_camel_transport_account_new ());
+		else if (strcmp (proto, "smtp") == 0)
+			tny_account = TNY_ACCOUNT(tny_camel_transport_account_new ());
+	}
+	
+	if (tny_account) {
+		tny_account_set_proto (tny_account, proto);
+	} else
+		g_printerr ("modest: could not get tny %s account (%d)\n",
+			    proto, modest_type);
+	
+	return tny_account;
+}
+
+
+
 /* create a tnyaccount for the server account connected to the account with name 'key'
  */
 static TnyAccount*
@@ -320,17 +355,19 @@ tny_account_from_name (ModestTnyAccountStore *self, const gchar *account,
 	g_return_val_if_fail (server_account, NULL);
 
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
+	
+	/* proto */
+	val = modest_account_mgr_get_string (priv->account_mgr, server_account,
+					     MODEST_ACCOUNT_PROTO, TRUE, NULL);
+	if (!val) {
+		g_printerr ("modest: protocol not defined for '%s:%s'\n", 
+			    account, server_account);
+		return NULL;
+	}
 
-	/* is it a store or a transport? */
-	if  (modest_type == MODEST_PROTOCOL_TYPE_STORE) 
-		tny_account = TNY_ACCOUNT(tny_camel_store_account_new ());
-	else if (modest_type == MODEST_PROTOCOL_TYPE_TRANSPORT)
-		tny_account = TNY_ACCOUNT(tny_camel_transport_account_new ());
-	else
-		g_assert_not_reached ();
-
+	tny_account = tny_account_for_proto (val, modest_type);
 	if (!tny_account) {
-		g_printerr ("modest: failed to create new tny account for '%s:%s'\n",
+		g_printerr ("modest: could not create account for '%s:%s'\n",
 			    account, server_account);
 		return NULL;
 	}
@@ -352,19 +389,6 @@ tny_account_from_name (ModestTnyAccountStore *self, const gchar *account,
 		g_free (val);
 	} else {
 		g_printerr ("modest: display name not defined for '%s:%s'\n", 
-			    account, server_account);
-		g_object_unref (G_OBJECT(tny_account));
-		return NULL;
-	}
-
-	/* proto */
-	val = modest_account_mgr_get_string (priv->account_mgr, server_account,
-					     MODEST_ACCOUNT_PROTO, TRUE, NULL);
-	if (val) {
-		tny_account_set_proto (tny_account, val);
-		g_free (val);
-	} else {
-		g_printerr ("modest: protocol not defined for '%s:%s'\n", 
 			    account, server_account);
 		g_object_unref (G_OBJECT(tny_account));
 		return NULL;
