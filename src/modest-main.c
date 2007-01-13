@@ -37,17 +37,17 @@
 #include <tny-list.h>
 #include <tny-simple-list.h>
 
-#include "config.h"
-#include "modest-conf.h"
-#include "modest-account-mgr.h"
-#include "modest-ui.h"
-#include "modest-icon-factory.h"
-#include "modest-tny-account-store.h"
-#include "modest-tny-platform-factory.h"
-#include "modest-mail-operation.h"
+#include <config.h>
+#include <modest-conf.h>
+#include <modest-account-mgr.h>
+#include <modest-ui.h>
+#include <modest-debug.h>
+#include <modest-icon-factory.h>
+#include <modest-tny-account-store.h>
+#include <modest-tny-platform-factory.h>
+#include <modest-mail-operation.h>
 
-
-#if MODEST_PLATFORM_ID==2 
+#if MODEST_PLATFORM_ID==2 /* maemo */
 #include <libosso.h>
 #endif /* MODEST_PLATFORM==2 */
 
@@ -61,7 +61,6 @@
 #define MODEST_ERR_SEND    6
 
 static gboolean hildon_init (); /* NOP if HILDON is not defined */
-
 static int start_ui (const gchar* mailto, const gchar *cc,
 		     const gchar *bcc, const gchar* subject, const gchar *body,
 		     TnyAccountStore *account_store);
@@ -76,16 +75,14 @@ main (int argc, char *argv[])
 	TnyPlatformFactory *fact          = NULL;
 	TnyAccountStore    *account_store = NULL;
 	ModestConf         *modest_conf   = NULL;
-
+	
 	GError *err = NULL;
 	int retval  = MODEST_ERR_NONE;
 		
-	static gboolean debug=FALSE, batch=FALSE;
+	static gboolean batch=FALSE;
 	static gchar    *mailto, *subject, *bcc, *cc, *body;
 
 	static GOptionEntry options[] = {
-		{ "debug",  'd', 0, G_OPTION_ARG_NONE, &debug,
-		  "Run in debug mode", NULL},
 		{ "mailto", 'm', 0, G_OPTION_ARG_STRING, &mailto,
 		  "New email to <addresses> (comma-separated)", NULL},
 		{ "subject", 's', 0, G_OPTION_ARG_STRING, &subject,
@@ -105,10 +102,11 @@ main (int argc, char *argv[])
 	bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
 	textdomain (GETTEXT_PACKAGE);
 
-	g_type_init ();		
-	g_thread_init (NULL);
-	gdk_threads_init ();
+	modest_debug_g_type_init  ();		
+	modest_debug_logging_init ();
 
+	g_thread_init (NULL);
+	
 	context = g_option_context_new (NULL);
 	g_option_context_add_main_entries (context, options, NULL);
 	
@@ -139,14 +137,12 @@ main (int argc, char *argv[])
 		retval = MODEST_ERR_RUN;
 		goto cleanup;
         }
-
-	if (debug)
-		g_log_set_always_fatal (G_LOG_LEVEL_CRITICAL|G_LOG_LEVEL_WARNING);
 	
 	if (!getenv("DISPLAY"))
 		batch = TRUE; 
 	
 	if (!batch) {
+		gdk_threads_init ();
 		gtk_init (&argc, &argv);
 		retval = start_ui (mailto, cc, bcc, subject, body, account_store);
 	} else 
@@ -166,13 +162,9 @@ start_ui (const gchar* mailto, const gchar *cc, const gchar *bcc,
 	  const gchar* subject, const gchar *body,
 	  TnyAccountStore *account_store)
 {
-
 	ModestUI *modest_ui;
-	gint retval = 0;
-
-	#ifndef OLD_UI_STUFF
 	ModestWindow *win;
-	#endif
+	gint retval = 0;
 	
 	modest_ui = MODEST_UI(modest_ui_new (account_store));
 	if (!modest_ui) {
@@ -220,7 +212,7 @@ cleanup:
 	modest_icon_factory_uninit ();
 	return retval;
 }
-
+	
 
 static gboolean
 hildon_init ()
@@ -239,7 +231,6 @@ hildon_init ()
 
 	return TRUE;
 }
-
 
 
 static int
@@ -277,11 +268,11 @@ send_mail (const gchar* mailto, const gchar *cc, const gchar *bcc,
 	mail_operation = modest_mail_operation_new ();
 
 	modest_mail_operation_send_new_mail (mail_operation,
-					     account,
-					     "djcb@djcbsoftware.nl", mailto, cc, bcc, 
+					     account, "test@example.com",
+					     mailto, cc, bcc, 
 					     subject, body, NULL);
-
-
+	
+	
 	if (modest_mail_operation_get_status (mail_operation) == 
 	    MODEST_MAIL_OPERATION_STATUS_FAILED) {
 		retval = MODEST_ERR_SEND;
@@ -290,9 +281,12 @@ send_mail (const gchar* mailto, const gchar *cc, const gchar *bcc,
 		retval = MODEST_ERR_NONE; /* hurray! */
 
 cleanup:
-	if (iter) g_object_unref (G_OBJECT (iter));
-	if (accounts) g_object_unref (G_OBJECT (accounts));
-	if (mail_operation) g_object_unref (G_OBJECT (mail_operation));
+	if (iter)
+		g_object_unref (G_OBJECT (iter));
+	if (accounts)
+		g_object_unref (G_OBJECT (accounts));
+	if (mail_operation)
+		g_object_unref (G_OBJECT (mail_operation));
 
 	return retval;
 }
