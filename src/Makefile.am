@@ -1,6 +1,6 @@
 #
 # Makefile.am
-# Time-stamp: <2007-01-13 14:46:41 (djcb)>
+# Time-stamp: <2007-01-13 23:06:05 (djcb)>
 SUBDIRS=$(MODEST_PLATFORM) widgets
 DIST_SUBDIRS = widgets gtk maemo
 
@@ -30,50 +30,50 @@ bin_PROGRAMS=\
 	modest
 
 modest_SOURCES=\
-	modest-main.c\
-	modest-conf-keys.h\
-	modest-conf.h \
-	modest-conf.c\
-	modest-pair.h\
-	modest-pair.c\
-	modest-widget-factory.h	\
-	modest-widget-factory.c	\
-	modest-widget-memory.h\
-	modest-widget-memory.c\
 	modest-account-keys.h\
-	modest-account-mgr.h\
 	modest-account-mgr.c\
+	modest-account-mgr.h\
+	modest-conf-keys.h\
+	modest-conf.c\
+	modest-conf.h \
 	modest-debug.c\
 	modest-debug.h\
-	modest-icon-factory.c\
-	modest-icon-factory.h\
-	modest-tny-account-store.h\
-	modest-tny-account-store.c\
-	modest-tny-msg-actions.h\
-	modest-tny-msg-actions.c\
-	modest-presets.c\
-	modest-presets.h\
-	modest-protocol-mgr.h\
-	modest-protocol-mgr.c\
-	modest-proto.h\
-	modest-proto.c\
-	modest-ui.c\
-	modest-ui.h\
-	modest-text-utils.h\
-	modest-text-utils.c\
-	modest-tny-stream-gtkhtml.h\
-	modest-tny-stream-gtkhtml.c\
-	modest-marshal.c \
-	modest-marshal.h \
-	modest-mail-operation.c \
-	modest-mail-operation.h \
-	modest-mail-operation-queue.c \
-	modest-mail-operation-queue.h \
-	modest-tny-platform-factory.c \
-	modest-tny-platform-factory.h \
+	modest-error.h \
 	modest-formatter.c \
 	modest-formatter.h \
-	modest-error.h
+	modest-icon-factory.c\
+	modest-icon-factory.h\
+	modest-mail-operation-queue.c \
+	modest-mail-operation-queue.h \
+	modest-mail-operation.c \
+	modest-mail-operation.h \
+	modest-main.c\
+	modest-marshal.c \
+	modest-marshal.h \
+	modest-pair.c\
+	modest-pair.h\
+	modest-presets.c\
+	modest-presets.h\
+	modest-proto.c\
+	modest-proto.h\
+	modest-protocol-mgr.c\
+	modest-protocol-mgr.h\
+	modest-text-utils.c\
+	modest-text-utils.h\
+	modest-tny-account-store.c\
+	modest-tny-account-store.h\
+	modest-tny-folder.c \
+	modest-tny-folder.h \
+	modest-tny-msg-actions.c\
+	modest-tny-msg-actions.h\
+	modest-tny-platform-factory.c \
+	modest-tny-platform-factory.h \
+	modest-ui.c\
+	modest-ui.h\
+	modest-widget-factory.c	\
+	modest-widget-factory.h	\
+	modest-widget-memory.c\
+	modest-widget-memory.h
 
 modest_LDADD = 						\
 	$(MODEST_GSTUFF_LIBS) 				\

@@ -30,6 +30,7 @@
 #include "modest-widget-memory.h"
 
 #include <modest-tny-platform-factory.h>
+#include <modest-tny-folder.h>
 #include <widgets/modest-header-view.h>
 #include <widgets/modest-msg-view.h>
 #include <widgets/modest-folder-view.h>
@@ -213,7 +214,7 @@ save_settings_header_view (ModestConf *conf, ModestHeaderView *header_view,
 	if (!folder) 
 		return TRUE; /* no folder: no settings */ 
 	
-	type = modest_folder_view_guess_folder_type (folder);
+	type = modest_tny_folder_guess_folder_type (folder);
 	key = get_keyname_with_type (conf, name, type, PARAM_COLUMN_WIDTH);
 
 	cursor = cols = modest_header_view_get_columns (header_view);
@@ -256,7 +257,7 @@ restore_settings_header_view (ModestConf *conf, ModestHeaderView *header_view,
 	if (!folder) 
 		return TRUE; /* no folder: no settings */ 
 	
-	type = modest_folder_view_guess_folder_type (folder);
+	type = modest_tny_folder_guess_folder_type (folder);
 	
 	key = get_keyname_with_type (conf, name, type, PARAM_COLUMN_WIDTH);
 	if (modest_conf_key_exists (conf, key, NULL)) {

@@ -100,32 +100,6 @@ GtkWidget* modest_folder_view_new         (ModestTnyAccountStore *account_store,
 void  modest_folder_view_set_title (ModestFolderView *self, const gchar *title);
 
 
-
-/**
- * modest_folder_view_is_empty:
- * @self: a ModestFolderView instance
- * 
- * check to see of the view is empty. Note that when it is empty,
- * there will still be one item, telling "(empty)" or similar
- *  
- * Returns: TRUE if the tree view is empty, FALSE otherwise
- */
-gboolean     modest_folder_view_is_empty    (ModestFolderView *self);
-
-
-/**
- * modest_folder_view_guess_folder_type:
- * @folder: a tnymail folder
- * 
- * guess the type of the folder, this is a class method so it does not need
- * an ModestFolderView instance
- *  
- * Returns: the folder type, or -1 in case of error
- */
-TnyFolderType  modest_folder_view_guess_folder_type    (TnyFolder *folder);
-
-
-
 /* FIXME: this is ugly */
 const gchar* modest_folder_view_get_selected_account (ModestFolderView *self);
 

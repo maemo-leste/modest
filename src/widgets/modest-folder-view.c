@@ -36,6 +36,7 @@
 #include <tny-account-store.h>
 #include <tny-account.h>
 #include <tny-folder.h>
+#include <modest-tny-folder.h>
 #include <modest-marshal.h>
 #include <modest-icon-names.h>
 #include <modest-icon-factory.h>
@@ -140,7 +141,6 @@ modest_folder_view_class_init (ModestFolderViewClass *klass)
 }
 
 
-
 static void
 text_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 		 GtkTreeModel *tree_model,  GtkTreeIter *iter,  gpointer data)
@@ -167,69 +167,6 @@ text_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 }
 
 
-/* guess the folder type based on the name, or -1 in case of error */
-static TnyFolderType
-guess_type_from_name (const gchar* name)
-{
-	gint  type;
-	gchar *folder;
-	
-	if (!name)
-		return -1;
-	
-	type = TNY_FOLDER_TYPE_NORMAL;
-	folder = g_utf8_strdown (name, strlen(name));
-
-	if (strcmp (folder, "inbox") == 0 ||
-	    strcmp (folder, _("inbox")) == 0)
-		type = TNY_FOLDER_TYPE_INBOX;
-	else if (strcmp (folder, "outbox") == 0 ||
-		 strcmp (folder, _("outbox")) == 0)
-		type = TNY_FOLDER_TYPE_OUTBOX;
-	else if (g_str_has_prefix(folder, "junk") ||
-		 g_str_has_prefix(folder, _("junk")))
-		type = TNY_FOLDER_TYPE_JUNK;
-	else if (g_str_has_prefix(folder, "trash") ||
-		 g_str_has_prefix(folder, _("trash")))
-		type = TNY_FOLDER_TYPE_JUNK;
-	else if (g_str_has_prefix(folder, "sent") ||
-		 g_str_has_prefix(folder, _("sent")))
-		type = TNY_FOLDER_TYPE_SENT;
-
-	/* these are not *really* TNY_ types */
-	else if (g_str_has_prefix(folder, "draft") ||
-		 g_str_has_prefix(folder, _("draft")))
-		type = TNY_FOLDER_TYPE_DRAFTS;
-	else if (g_str_has_prefix(folder, "notes") ||
-		 g_str_has_prefix(folder, _("notes")))
-		type = TNY_FOLDER_TYPE_NOTES;
-	else if (g_str_has_prefix(folder, "contacts") ||
-		 g_str_has_prefix(folder, _("contacts")))
-		type = TNY_FOLDER_TYPE_CONTACTS;
-	else if (g_str_has_prefix(folder, "calendar") ||
-		 g_str_has_prefix(folder, _("calendar")))
-		type = TNY_FOLDER_TYPE_CALENDAR;
-	
-	g_free (folder);
-	return type;
-}
-
-
-
-TnyFolderType
-modest_folder_view_guess_folder_type (TnyFolder *folder)
-{
-	TnyFolderType type;
-
-	g_return_val_if_fail (folder, -1);
-
-	type = tny_folder_get_folder_type (folder);
-	if (type == TNY_FOLDER_TYPE_NORMAL)
-		type = guess_type_from_name (tny_folder_get_name (folder));
-
-	return type;
-}
-
 
 static void
 icon_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
@@ -248,11 +185,9 @@ icon_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 			    TNY_GTK_FOLDER_STORE_TREE_MODEL_UNREAD_COLUMN, &unread, -1);
 	rendobj = G_OBJECT(renderer);
 	
-	if (type == TNY_FOLDER_TYPE_NORMAL)
-		type = guess_type_from_name (fname);
-	
-	if (fname)
-		g_free (fname);
+	if (type == TNY_FOLDER_TYPE_NORMAL || type == TNY_FOLDER_TYPE_UNKNOWN)
+		type = modest_tny_folder_guess_folder_type_from_name (fname);
+	g_free (fname);
 
 	switch (type) {
 	case TNY_FOLDER_TYPE_ROOT:
@@ -462,7 +397,7 @@ modest_folder_view_new (ModestTnyAccountStore *account_store,
 	sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(self));
 	priv->sig2 = g_signal_connect (sel, "changed",
 				       G_CALLBACK(on_selection_changed), self);
-				     	
+
 	return GTK_WIDGET(self);
 }
 
