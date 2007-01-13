@@ -73,7 +73,7 @@
 #define  MODEST_TOOLBAR_ICON_DELETE		PIXMAP_PREFIX "mail-mark-junk.png"
 #define  MODEST_TOOLBAR_ICON_NEXT		PIXMAP_PREFIX "forward.png"
 #define  MODEST_TOOLBAR_ICON_PREV		PIXMAP_PREFIX "back.png"
-#define  MODEST_TOOLBAR_ICON_STOP		PIXMAP_PREFIX "stock-stop.svg"
+#define  MODEST_TOOLBAR_ICON_STOP		PIXMAP_PREFIX "stock-stop.png"
 
 /* Stock icon names */
 #define  MODEST_STOCK_MAIL_SEND	   "modest-stock-mail-send"
