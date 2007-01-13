@@ -82,7 +82,7 @@ typedef enum _ModestHeaderViewColumn {
  */
 typedef enum _ModestHeaderViewStyle {
 	MODEST_HEADER_VIEW_STYLE_SHOW_HEADERS = 0x01,
-	MODEST_HEADER_VIEW_STYLE_NORMAL = 0x02,
+	MODEST_HEADER_VIEW_STYLE_NORMAL       = 0x02,
 } ModestHeaderViewStyle;
 
 typedef enum _ModestItemType {

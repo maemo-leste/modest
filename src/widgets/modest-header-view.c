@@ -283,7 +283,7 @@ get_new_column (const gchar *name, GtkCellRenderer *renderer,
 	GtkTreeViewColumn *column;
 
 	column =  gtk_tree_view_column_new_with_attributes(name, renderer, NULL);
-	gtk_tree_view_column_set_sizing (column, GTK_TREE_VIEW_COLUMN_FIXED);
+	gtk_tree_view_column_set_sizing (column, GTK_TREE_VIEW_COLUMN_GROW_ONLY);
 
 	gtk_tree_view_column_set_resizable (column, resizable);
 	if (resizable)
@@ -297,6 +297,7 @@ get_new_column (const gchar *name, GtkCellRenderer *renderer,
 
 	gtk_tree_view_column_set_sort_indicator (column, FALSE);
 	gtk_tree_view_column_set_reorderable (column, TRUE);
+	gtk_tree_view_column_set_sizing (column, GTK_TREE_VIEW_COLUMN_FIXED);
 
 	if (cell_data_func)
 		gtk_tree_view_column_set_cell_data_func(column, renderer, cell_data_func,
@@ -607,7 +608,8 @@ modest_header_view_new (TnyFolder *folder, const GList *columns,
 		
 	/* all cols */
 	gtk_tree_view_columns_autosize (GTK_TREE_VIEW(obj));
-	
+	gtk_tree_view_set_fixed_height_mode (GTK_TREE_VIEW(obj),TRUE);
+
 	gtk_tree_view_set_rules_hint (GTK_TREE_VIEW(obj),
 				      TRUE); /* alternating row colors */
 

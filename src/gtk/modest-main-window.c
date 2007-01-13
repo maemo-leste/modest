@@ -200,8 +200,9 @@ header_view_new (ModestMainWindow *self)
 
 	header_view = modest_widget_factory_get_header_view (priv->widget_factory);
 	modest_header_view_set_columns (header_view, columns);
+	modest_header_view_set_style (header_view,
+				      MODEST_HEADER_VIEW_STYLE_SHOW_HEADERS);
 	g_list_free (columns);
-
 	return header_view;
 }
 
@@ -350,8 +351,6 @@ modest_main_window_new (ModestWidgetFactory *widget_factory,
 	gtk_paned_add2 (GTK_PANED(priv->msg_paned), GTK_WIDGET(priv->msg_preview));
 
 	gtk_widget_show (GTK_WIDGET(priv->header_view));
-	gtk_tree_view_columns_autosize (GTK_TREE_VIEW(priv->header_view));
-
 	
 	/* status bar / progress */
 	status_hbox = gtk_hbox_new (FALSE, 0);
@@ -380,8 +379,7 @@ modest_main_window_new (ModestWidgetFactory *widget_factory,
 
 	gtk_window_set_title (GTK_WINDOW(obj), _("Modest"));
 	gtk_window_set_icon  (GTK_WINDOW(obj),
-			      modest_icon_factory_get_icon (MODEST_APP_ICON));
-	
+			      modest_icon_factory_get_icon (MODEST_APP_ICON));	
 	gtk_widget_show_all (main_vbox);
 
 	g_signal_connect (G_OBJECT(obj), "delete-event",
