@@ -28,6 +28,7 @@
  */
 
 #include <string.h>
+#include <glib/gi18n.h>
 
 #include <tny-account.h>
 #include <tny-account-store.h>
@@ -39,7 +40,7 @@
 #include <tny-camel-imap-store-account.h>
 #include <tny-camel-pop-store-account.h>
 #include <modest-marshal.h>
-#include <glib/gi18n.h>
+#include <modest-protocol-info.h>
 #include "modest-account-mgr.h"
 #include "modest-tny-account-store.h"
 #include "modest-tny-platform-factory.h"
@@ -561,7 +562,7 @@ add_account  (TnyAccountStore *self, TnyAccount *account) {
 	return modest_account_mgr_add_server_account (priv->account_mgr,
 						      account_name,
 						      hostname, username, NULL,
-						      proto);
+						      modest_protocol_info_get_protocol(proto));
 }
 
 
@@ -649,7 +650,7 @@ modest_tny_account_store_get_accounts  (TnyAccountStore *iface,
 		modest_type = MODEST_PROTOCOL_TYPE_STORE;
 		break;
 	case TNY_ACCOUNT_STORE_BOTH:
-		modest_type = MODEST_PROTOCOL_TYPE_ANY;
+		modest_type = MODEST_PROTOCOL_TYPE_UNKNOWN;
 		break;
 	default:
 		g_assert_not_reached ();
@@ -673,7 +674,7 @@ modest_tny_account_store_get_accounts  (TnyAccountStore *iface,
 			continue;
  		} 
 		
-		if (modest_type == MODEST_PROTOCOL_TYPE_TRANSPORT || modest_type == MODEST_PROTOCOL_TYPE_ANY) {
+		if (modest_type == MODEST_PROTOCOL_TYPE_TRANSPORT || modest_type == MODEST_PROTOCOL_TYPE_UNKNOWN) {
 			server_account = get_server_account_for_account (self, account_name,
 									 MODEST_PROTOCOL_TYPE_TRANSPORT);
 			if (server_account) {
@@ -692,7 +693,7 @@ modest_tny_account_store_get_accounts  (TnyAccountStore *iface,
 			g_free (server_account);
 		}
 		
-		if (modest_type == MODEST_PROTOCOL_TYPE_STORE || modest_type == MODEST_PROTOCOL_TYPE_ANY) {
+		if (modest_type == MODEST_PROTOCOL_TYPE_STORE || modest_type == MODEST_PROTOCOL_TYPE_UNKNOWN) {
 			server_account = get_server_account_for_account (self, account_name,
 									 MODEST_PROTOCOL_TYPE_STORE);
 			if (server_account) {

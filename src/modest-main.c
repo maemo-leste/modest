@@ -47,6 +47,8 @@
 #include <modest-tny-platform-factory.h>
 #include <modest-mail-operation.h>
 
+#include <camel/camel-url.h>
+
 #if MODEST_PLATFORM_ID==2 /* maemo */
 #include <libosso.h>
 #endif /* MODEST_PLATFORM==2 */
@@ -80,21 +82,23 @@ main (int argc, char *argv[])
 	int retval  = MODEST_ERR_NONE;
 		
 	static gboolean batch=FALSE;
-	static gchar    *mailto, *subject, *bcc, *cc, *body;
+	static gchar    *mailto, *subject, *bcc, *cc, *body, *account;
 
 	static GOptionEntry options[] = {
 		{ "mailto", 'm', 0, G_OPTION_ARG_STRING, &mailto,
-		  "New email to <addresses> (comma-separated)", NULL},
+		  N_("New email to <addresses> (comma-separated)"), NULL},
 		{ "subject", 's', 0, G_OPTION_ARG_STRING, &subject,
-		  "Subject for a new mail", NULL},
+		  N_("Subject for a new mail"), NULL},
 		{ "body", 'b', 0, G_OPTION_ARG_STRING, &body,
-		  "Body for a new email", NULL},
+		  N_("Body for a new email"), NULL},
 		{ "cc",  'c', 0, G_OPTION_ARG_STRING, &cc,
-		  "Cc: addresses for a new mail (comma-separated)", NULL},
+		  N_("Cc: addresses for a new mail (comma-separated)"), NULL},
 		{ "bcc", 'x', 0, G_OPTION_ARG_STRING, &bcc,
-		  "Bcc: addresses for a new mail (comma-separated)", NULL},
+		  N_("Bcc: addresses for a new mail (comma-separated)"), NULL},
+		{ "account", 'a', 0, G_OPTION_ARG_STRING, &account,
+		  N_("Account to use (if specified, default account is used)"), NULL},
 		{ "batch", 'y', 0, G_OPTION_ARG_NONE, &batch,
-		  "Run in batch mode (don't show UI)", NULL},
+		  N_("Run in batch mode (don't show UI)"), NULL},
 		{ NULL, 0, 0, 0, NULL, NULL, NULL }
 	};
 
@@ -147,10 +151,10 @@ main (int argc, char *argv[])
 		retval = start_ui (mailto, cc, bcc, subject, body, account_store);
 	} else 
 		retval = send_mail (mailto, cc, bcc, subject, body);
-		
 	
 cleanup:
-	g_object_unref (G_OBJECT(fact));
+	if (fact)
+		g_object_unref (G_OBJECT(fact));
 	/* this will clean up account_store as well */
 	
 	return retval;
@@ -233,6 +237,7 @@ hildon_init ()
 }
 
 
+
 static int
 send_mail (const gchar* mailto, const gchar *cc, const gchar *bcc,
 	   const gchar* subject, const gchar *body)
@@ -240,7 +245,7 @@ send_mail (const gchar* mailto, const gchar *cc, const gchar *bcc,
 	ModestAccountMgr *acc_mgr = NULL;
 	TnyPlatformFactory *fact = NULL;
 	TnyAccountStore *acc_store = NULL;
-	ModestMailOperation *mail_operation;
+	ModestMailOperation *mail_operation = NULL;
 
 	TnyList *accounts = NULL;
 	TnyIterator *iter = NULL;

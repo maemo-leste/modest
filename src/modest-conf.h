@@ -45,8 +45,6 @@ G_BEGIN_DECLS
 
 typedef struct _ModestConf        ModestConf;
 typedef struct _ModestConfClass   ModestConfClass;
-/* typedef enum   _ModestConfEvent   ModestConfEvent; */
-/* typedef enum   _ModestConfValueType   ModestConfValueType; */
 
 typedef enum _ModestConfValueType {
 	MODEST_CONF_VALUE_INT,
