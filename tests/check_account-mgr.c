@@ -31,6 +31,7 @@
 #include <string.h>
 #include <modest-conf.h>
 #include <modest-account-mgr.h>
+#include <modest-protocol-info.h>
 
 /* ----------------------- Defines ---------------------- */
 
@@ -105,7 +106,7 @@ START_TEST (test_add_exists_remove_account_regular)
 	gchar *hostname = NULL;
 	gchar *username = NULL;
 	gchar *password = NULL;
-	gchar *proto = NULL;
+	ModestProtocol proto;
 	GError *error = NULL;
 	gboolean result;
 	
@@ -152,7 +153,7 @@ START_TEST (test_add_exists_remove_account_regular)
 	hostname = g_strdup ("myhostname.mydomain.com");
 	username = g_strdup ("myusername");
 	password = g_strdup ("mypassword");
-	proto = g_strdup ("smtp");
+	proto = MODEST_PROTOCOL_TRANSPORT_SMTP;
 	result = modest_account_mgr_add_server_account (account_mgr,
 							name,
 							hostname,
@@ -167,7 +168,6 @@ START_TEST (test_add_exists_remove_account_regular)
 	g_free (hostname);
 	g_free (username);
 	g_free (password);
-	g_free (proto);
 	
 	/* Test 5 */
 	result = modest_account_mgr_account_exists (account_mgr,
@@ -273,7 +273,7 @@ START_TEST (test_add_exists_remove_account_invalid)
 							"hostname",
 							"username",
 							"password",
-							"proto");
+							MODEST_PROTOCOL_STORE_IMAP);
 	fail_unless (!result,
 		     "modest_account_mgr_add_server_account does not return " \
 		     "FALSE when passing a NULL ModestAccountMgr");
@@ -284,7 +284,7 @@ START_TEST (test_add_exists_remove_account_invalid)
 							"hostname",
 							"username",
 							"password",
-							"proto");
+							MODEST_PROTOCOL_STORE_IMAP);
 	fail_unless (!result,
 		     "modest_account_mgr_add_server_account does not return " \
 		     "FALSE when passing a NULL account name");
@@ -295,7 +295,7 @@ START_TEST (test_add_exists_remove_account_invalid)
  							"hostname", 
  							"username", 
  							"password", 
- 							"proto"); 
+ 							MODEST_PROTOCOL_STORE_IMAP); 
  	fail_unless (!result, 
  		     "modest_account_mgr_add_server_account does not return " \
  		     "FALSE when passing an invalid account name"); 
