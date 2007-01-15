@@ -44,9 +44,8 @@
 #include "modest-account-mgr.h"
 #include "modest-tny-account-store.h"
 #include "modest-tny-platform-factory.h"
-
+#include <tny-gtk-lockable.h>
 #include <camel/camel.h>
-#include <gdk/gdk.h>
 
 /* 'private'/'protected' functions */
 static void modest_tny_account_store_class_init   (ModestTnyAccountStoreClass *klass);
@@ -222,8 +221,6 @@ get_password (TnyAccount *account, const gchar *prompt, gboolean *cancel)
 	gchar *pwd = NULL;
 	gboolean already_asked;
 	
-	gdk_threads_enter ();
-
 	key           = tny_account_get_id (account);
 	account_store = TNY_ACCOUNT_STORE(get_account_store_for_account (account));
 
@@ -271,8 +268,6 @@ get_password (TnyAccount *account, const gchar *prompt, gboolean *cancel)
 		}
 	} else
 		*cancel = FALSE;
-
-	gdk_threads_leave ();
 
 	return pwd;
 }
@@ -520,7 +515,6 @@ modest_tny_account_store_new (ModestAccountMgr *account_mgr) {
 		g_object_unref (obj);
 		return NULL;
 	}
-/* 	tny_device_force_online (priv->device); */
 	
 	priv->tny_session_camel = tny_session_camel_new (TNY_ACCOUNT_STORE(obj));
 
@@ -529,6 +523,8 @@ modest_tny_account_store_new (ModestAccountMgr *account_mgr) {
 		g_object_unref (obj);
 		return NULL;
 	}
+
+	tny_session_camel_set_ui_locker (priv->tny_session_camel, tny_gtk_lockable_new ());
 
 	return MODEST_TNY_ACCOUNT_STORE(obj);
 }

@@ -86,8 +86,12 @@ modest_tny_folder_guess_folder_type (const TnyFolder *folder)
 
 	type = tny_folder_get_folder_type ((TnyFolder*)folder); /* FIXME: cast tinymail */
 	
-	if (type == TNY_FOLDER_TYPE_UNKNOWN)
-		type =	modest_tny_folder_guess_folder_type_from_name (tny_folder_get_name (folder));
+	if (type == TNY_FOLDER_TYPE_UNKNOWN) {
+		const gchar *folder_name;
+
+		folder_name = tny_folder_get_name (TNY_FOLDER (folder));
+		type =	modest_tny_folder_guess_folder_type_from_name (folder_name);
+	}
 
 	return type;
 }

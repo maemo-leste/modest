@@ -369,7 +369,7 @@ modest_widget_factory_get_combo_box (ModestWidgetFactory *self, ModestComboBoxTy
 		protos = modest_protocol_info_get_protocol_pair_list (MODEST_PROTOCOL_TYPE_AUTH);
 		break;
 	case MODEST_COMBO_BOX_TYPE_TRANSPORTS:
-		protos = get_transports (self);
+		protos = (ModestPairList *) get_transports (self);
 		break;
 /* 	case MODEST_COMBO_BOX_TYPE_REMOTE_STORES: */
 /* 		// FIXME */

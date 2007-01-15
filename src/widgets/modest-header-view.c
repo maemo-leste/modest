@@ -372,8 +372,8 @@ set_state (ModestHeaderView *self, ModestHeaderViewState state)
 		MODEST_HEADER_VIEW_GET_PRIVATE(self)->state;
 	
 	if (oldstate != state) {
-		if (oldstate & MODEST_HEADER_VIEW_STATE_IS_EMPTY !=
-		    state & MODEST_HEADER_VIEW_STATE_IS_EMPTY)
+		if ((oldstate & MODEST_HEADER_VIEW_STATE_IS_EMPTY) !=
+		    (state & MODEST_HEADER_VIEW_STATE_IS_EMPTY))
 			set_empty (self);
 		
 		MODEST_HEADER_VIEW_GET_PRIVATE(self)->state = state; 
