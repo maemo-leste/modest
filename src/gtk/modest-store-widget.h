@@ -34,12 +34,12 @@ struct _ModestStoreWidgetClass {
 GType        modest_store_widget_get_type    (void) G_GNUC_CONST;
 
 GtkWidget*   modest_store_widget_new         (ModestWidgetFactory *factory,
-					      const gchar* proto);
+					      ModestProtocol proto);
 
-gboolean       modest_store_widget_get_remember_password (ModestStoreWidget *self);
-const gchar*   modest_store_widget_get_username          (ModestStoreWidget *self);
-const gchar*   modest_store_widget_get_servername        (ModestStoreWidget *self);
-const gchar*   modest_store_widget_get_proto             (ModestStoreWidget *self);
+gboolean        modest_store_widget_get_remember_password (ModestStoreWidget *self);
+const gchar*    modest_store_widget_get_username          (ModestStoreWidget *self);
+const gchar*    modest_store_widget_get_servername        (ModestStoreWidget *self);
+ModestProtocol  modest_store_widget_get_proto             (ModestStoreWidget *self);
 
 G_END_DECLS
 

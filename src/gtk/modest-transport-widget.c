@@ -19,15 +19,13 @@ enum {
 
 typedef struct _ModestTransportWidgetPrivate ModestTransportWidgetPrivate;
 struct _ModestTransportWidgetPrivate {
-
-	gchar *proto;
+	ModestProtocol proto;
 	ModestWidgetFactory *factory;
 
 	GtkWidget *servername;
 	GtkWidget *username;
 	GtkWidget *auth;
 	GtkWidget *remember_pwd;
-
 };
 #define MODEST_TRANSPORT_WIDGET_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                      MODEST_TYPE_TRANSPORT_WIDGET, \
@@ -87,7 +85,7 @@ modest_transport_widget_init (ModestTransportWidget *obj)
 	ModestTransportWidgetPrivate *priv;
 	priv = MODEST_TRANSPORT_WIDGET_GET_PRIVATE(obj); 
 	
-	priv->proto = NULL;
+	priv->proto = MODEST_PROTOCOL_UNKNOWN;
 }
 
 static void
@@ -99,11 +97,6 @@ modest_transport_widget_finalize (GObject *obj)
 	if (priv->factory) {
 		g_object_unref (priv->factory);
 		priv->factory = NULL;
-	}
-
-	if (priv->proto) {
-		g_free (priv->proto);
-		priv->proto = NULL;
 	}
 
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
@@ -192,9 +185,8 @@ smtp_configuration (ModestTransportWidget *self)
 }
 
 
-
 GtkWidget*
-modest_transport_widget_new (ModestWidgetFactory *factory, const gchar* proto)
+modest_transport_widget_new (ModestWidgetFactory *factory, ModestProtocol proto)
 {
 	GObject *obj;
 	GtkWidget *w;
@@ -211,11 +203,11 @@ modest_transport_widget_new (ModestWidgetFactory *factory, const gchar* proto)
 	g_object_ref (factory);
 	priv->factory = factory;
 
-	priv->proto = g_strdup (proto);
+	priv->proto = proto;
 	
-	if (strcmp (proto, MODEST_PROTOCOL_TRANSPORT_SMTP) == 0) {
+	if (proto == MODEST_PROTOCOL_TRANSPORT_SMTP) 
 		w = smtp_configuration (self);
-	} else
+	else
 		w = gtk_label_new ("");
 	
 	gtk_widget_show_all (w);
@@ -270,12 +262,12 @@ modest_transport_widget_get_servername (ModestTransportWidget *self)
 }
 
 
-const gchar*
+ModestProtocol
 modest_transport_widget_get_proto (ModestTransportWidget *self)
 {
 	ModestTransportWidgetPrivate *priv;
 
-	g_return_val_if_fail (self, FALSE);
+	g_return_val_if_fail (self, MODEST_PROTOCOL_UNKNOWN);
 	priv = MODEST_TRANSPORT_WIDGET_GET_PRIVATE(self);
 
 	return priv->proto;

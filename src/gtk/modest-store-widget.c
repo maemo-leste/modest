@@ -44,15 +44,14 @@ enum {
 typedef struct _ModestStoreWidgetPrivate ModestStoreWidgetPrivate;
 struct _ModestStoreWidgetPrivate {
 	
-	gchar* proto;
-	
 	GtkWidget *servername;
 	GtkWidget *username;
 	GtkWidget *security;
 	GtkWidget *auth;
 	GtkWidget *chooser;
 	GtkWidget *remember_pwd;
-	
+
+	ModestProtocol proto;
 	ModestWidgetFactory *factory;
 };
 #define MODEST_STORE_WIDGET_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -116,8 +115,7 @@ modest_store_widget_init (ModestStoreWidget *obj)
  	ModestStoreWidgetPrivate *priv;
 	
 	priv = MODEST_STORE_WIDGET_GET_PRIVATE(obj); 
-
-	priv->proto = NULL;
+	priv->proto = MODEST_PROTOCOL_UNKNOWN;
 }
 
 
@@ -271,18 +269,13 @@ modest_store_widget_finalize (GObject *obj)
 		priv->factory = NULL;
 	}
 
-	if (priv->proto) {
-		g_free (priv->proto);
-		priv->proto = NULL;
-	}
-
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
 
 
 GtkWidget*
-modest_store_widget_new (ModestWidgetFactory *factory, const gchar *proto)
+modest_store_widget_new (ModestWidgetFactory *factory, ModestProtocol proto)
 {
 	GObject *obj;
 	GtkWidget *w;
@@ -299,16 +292,15 @@ modest_store_widget_new (ModestWidgetFactory *factory, const gchar *proto)
 	g_object_ref (factory);
 	priv->factory = factory;
 
-	priv->proto = g_strdup (proto);
+	priv->proto = proto;
 	
-	if (strcmp (proto, MODEST_PROTOCOL_STORE_POP) == 0 ||
-	    strcmp (proto, MODEST_PROTOCOL_STORE_IMAP) == 0) {
+	if (proto == MODEST_PROTOCOL_STORE_POP || proto == MODEST_PROTOCOL_STORE_IMAP)
 		w = imap_pop_configuration (self);
-	} else if (strcmp (proto, MODEST_PROTOCOL_STORE_MAILDIR) == 0) {
+	else if (proto == MODEST_PROTOCOL_STORE_MAILDIR) 
 		w = maildir_configuration (self);
-	}  else if (strcmp (proto, MODEST_PROTOCOL_STORE_MBOX) == 0) {
+	else if (proto == MODEST_PROTOCOL_STORE_MBOX)
 		w = mbox_configuration (self);
-	} else
+	else
 		w = gtk_label_new ("");
 	
 	gtk_widget_show_all (w);
@@ -352,12 +344,12 @@ modest_store_widget_get_servername (ModestStoreWidget *self)
 }
 
 
-const gchar*
+ModestProtocol
 modest_store_widget_get_proto (ModestStoreWidget *self)
 {
 	ModestStoreWidgetPrivate *priv;
 
-	g_return_val_if_fail (self, NULL);
+	g_return_val_if_fail (self, MODEST_PROTOCOL_UNKNOWN);
 	priv = MODEST_STORE_WIDGET_GET_PRIVATE(self);
 
 	return priv->proto;

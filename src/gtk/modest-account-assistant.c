@@ -31,7 +31,7 @@
 #include "modest-account-assistant.h"
 #include "modest-store-widget.h"
 #include "modest-transport-widget.h"
-#include "modest-proto.h"
+#include <modest-protocol-info.h>
 
 #include <string.h>
 
@@ -256,18 +256,20 @@ on_receiving_combo_box_changed (GtkComboBox *combo, ModestAccountAssistant *self
 {
 	ModestAccountAssistantPrivate *priv;
 	gchar *chosen;
+	ModestProtocol proto;
 	
 	priv = MODEST_ACCOUNT_ASSISTANT_GET_PRIVATE(self);
 	chosen = gtk_combo_box_get_active_text (GTK_COMBO_BOX(combo));
-
 	if (priv->store_widget)
 		gtk_container_remove (GTK_CONTAINER(priv->store_holder),
 				      priv->store_widget);
+
+	proto = modest_protocol_info_get_protocol (chosen);
 	
 	/* FIXME: we could have these widgets cached instead of
 	   creating them every time */
-	priv->store_widget = modest_store_widget_new (priv->factory, chosen);
-	if (!strcmp (chosen, MODEST_PROTO_POP) || !strcmp (chosen, MODEST_PROTO_IMAP)) {
+	priv->store_widget = modest_store_widget_new (priv->factory, proto);
+	if (proto == MODEST_PROTOCOL_STORE_POP || proto == MODEST_PROTOCOL_STORE_IMAP) {
 		g_signal_connect (priv->store_widget, 
 				  "data_changed", 
 				  G_CALLBACK (receiving_page_update_completeness), 
@@ -348,7 +350,7 @@ on_sending_combo_box_changed (GtkComboBox *combo, ModestAccountAssistant *self)
 				      priv->transport_widget);
 	
 	priv->transport_widget = modest_transport_widget_new (priv->factory,
-							      chosen);
+							      modest_protocol_info_get_protocol(chosen));
 
 	gtk_container_add (GTK_CONTAINER(priv->transport_holder),
 			   priv->transport_widget);
@@ -559,8 +561,9 @@ static void
 on_apply (ModestAccountAssistant *self, gpointer user_data)
 {
 	ModestAccountAssistantPrivate *priv;
+	ModestProtocol proto;
 	gchar *store_name, *transport_name;
-	const gchar *account_name, *username, *servername, *proto;
+	const gchar *account_name, *username, *servername;
 	ModestStoreWidget *store;
 	ModestTransportWidget *transport;
 
@@ -568,19 +571,20 @@ on_apply (ModestAccountAssistant *self, gpointer user_data)
 
 	/* create server account -> store */
 	store = MODEST_STORE_WIDGET(priv->store_widget);
-	proto = modest_store_widget_get_proto (store);
+	proto    = modest_store_widget_get_proto (store);
 	username = modest_store_widget_get_username (store);
 	servername = modest_store_widget_get_servername (store);
-	store_name = g_strdup_printf ("%s:%s@%s", proto, username, servername);
+	store_name = g_strdup_printf ("%s:%s@%s", modest_protocol_info_get_protocol_name(proto),
+				      username, servername);
 	
 	modest_account_mgr_add_server_account (priv->account_mgr, store_name, servername,
-						username, NULL, proto);
+					       username, NULL, proto);
 
 	/* create server account -> transport */
 	transport = MODEST_TRANSPORT_WIDGET(priv->transport_widget);
 	proto = modest_transport_widget_get_proto (transport);
-
-	if (!strcmp (proto, MODEST_PROTO_SMTP)) {
+	
+	if (proto == MODEST_PROTOCOL_TRANSPORT_SMTP) {
 		servername = modest_transport_widget_get_servername (transport);
 		if (modest_transport_widget_get_requires_auth (transport))
 			username = modest_transport_widget_get_username (transport);
@@ -591,8 +595,9 @@ on_apply (ModestAccountAssistant *self, gpointer user_data)
 		servername = "localhost";
 
 	}
-	transport_name = g_strdup_printf ("%s:%s@%s", proto, username, servername);
-	
+	transport_name = g_strdup_printf ("%s:%s@%s",
+					  modest_protocol_info_get_protocol_name(proto),
+					  username, servername);
 	modest_account_mgr_add_server_account (priv->account_mgr,
 						transport_name,
 						servername,
