@@ -45,7 +45,7 @@ modest_pair_new     (gpointer first, gpointer second, gboolean own)
 
 
 void
-modest_pair_destroy (ModestPair *pair)
+modest_pair_free (ModestPair *pair)
 {
 	if (!pair)
 		return;
@@ -59,13 +59,12 @@ modest_pair_destroy (ModestPair *pair)
 
 
 
-
-GSList*
-modest_pair_gslist_destroy (GSList *pairs)
+ModestPairList*
+modest_pair_list_free (ModestPairList *pairs)
 {
-	GSList *cursor = pairs;
+	ModestPairList *cursor = pairs;
 	while (cursor) {
-		modest_pair_destroy ((ModestPair*)cursor->data);
+		modest_pair_free ((ModestPair*)cursor->data);
 		cursor = cursor->next;
 	}
 	g_slist_free (pairs);

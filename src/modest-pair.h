@@ -34,12 +34,13 @@
 
 G_BEGIN_DECLS
 
-struct _ModestPair {
+typedef struct _ModestPair {
 	gpointer *first;
 	gpointer *second;
 	gboolean own;
-};
-typedef struct _ModestPair ModestPair;
+} ModestPair;
+
+typedef GSList ModestPairList;
 
 
 /**
@@ -52,30 +53,30 @@ typedef struct _ModestPair ModestPair;
  *
  * Returns: a newly allocated ModestPair instance
  */
-ModestPair* modest_pair_new           (gpointer first, gpointer second, gboolean own);
+ModestPair* modest_pair_new   (gpointer first, gpointer second, gboolean own);
 
 
 
 /**
- * modest_pair_destroy:
+ * modest_pair_free:
  * @self: a valid ModestPair instance or NULL
  *
- * destroy a ModestPair instance. If it was created with own==TRUE, the elements
+ * free a ModestPair instance. If it was created with own==TRUE, the elements
  * will be g_free'd as well. If pair==NULL, nothing will be done.
  */
-void        modest_pair_destroy       (ModestPair *self);
+void        modest_pair_free       (ModestPair *self);
+
 
 
 /**
- * modest_pair_gslist_destroy:
- * @pairs: a list of ModestPair instances
+ * modest_pair_list_free:
+ * @pairs: a valid ModestPairList
  *
  * convenience function to destroy all pairs in a list 
  *
  * Returns: NULL
  */
-GSList      *modest_pair_gslist_destroy (GSList *pairs);
-
+ModestPairList      *modest_pair_list_free (ModestPairList *pairs);
 
 G_END_DECLS
 
