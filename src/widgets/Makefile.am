@@ -28,8 +28,6 @@ libmodest_widgets_la_SOURCES=       \
 	modest-tny-stream-gtkhtml.h \
 	modest-msg-view.c           \
 	modest-msg-view.h	    \
-	modest-toolbar.c            \
-	modest-toolbar.h            \
 	modest-combo-box.c	    \
 	modest-combo-box.h          \
 	modest-window.h             \

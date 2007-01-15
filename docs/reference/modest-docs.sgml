@@ -33,7 +33,6 @@
 <!ENTITY widgets-ModestHeaderView SYSTEM "xml/modest-header-view.xml">
 <!ENTITY widgets-ModestMainWindow SYSTEM "xml/modest-main-window.xml">
 <!ENTITY widgets-ModestMsgView SYSTEM "xml/modest-msg-view.xml">
-<!ENTITY widgets-modestToolbar SYSTEM "xml/modest-toolbar.xml">
 
 <!ENTITY gtk-ModestAccountViewWindow SYSTEM "xml/modest-account-view-window.xml">
 <!ENTITY gtk-ModestAccountAssistant SYSTEM "xml/modest-account-assistant.xml">
