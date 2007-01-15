@@ -41,7 +41,7 @@
 #include <gtk/gtkwindow.h>
 typedef GtkWindow      ModestWindow;
 typedef GtkWindowClass ModestWindowClass;
-#elif MODEST_PLATFORM_ID==2   /* hildon */
+#elif MODEST_PLATFORM_ID==2   /* hildon (maemo) */
 #include <hildon-widgets/hildon-window.h>
 typedef HildonWindow      ModestWindow;
 typedef HildonWindowClass ModestWindowClass;

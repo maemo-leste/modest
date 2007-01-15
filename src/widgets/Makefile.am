@@ -16,22 +16,24 @@ INCLUDES=\
 noinst_LTLIBRARIES=\
 	libmodest-widgets.la
 
-libmodest_widgets_la_SOURCES=   \
-	modest-account-view.c   \
-	modest-account-view.h   \
-	modest-folder-view.c    \
-	modest-folder-view.h    \
-	modest-header-view.c    \
-	modest-header-view.h    \
-	modest-header-view-priv.h \
-	modest-msg-view.c       \
-	modest-msg-view.h	\
-	modest-toolbar.c        \
-	modest-toolbar.h        \
-	modest-combo-box.c	\
-	modest-combo-box.h      \
-	modest-window.h         \
-	modest-main-window.h	\
+libmodest_widgets_la_SOURCES=       \
+	modest-account-view.c       \
+	modest-account-view.h       \
+	modest-folder-view.c        \
+	modest-folder-view.h        \
+	modest-header-view.c        \
+	modest-header-view.h        \
+	modest-header-view-priv.h   \
+	modest-tny-stream-gtkhtml.c \
+	modest-tny-stream-gtkhtml.h \
+	modest-msg-view.c           \
+	modest-msg-view.h	    \
+	modest-toolbar.c            \
+	modest-toolbar.h            \
+	modest-combo-box.c	    \
+	modest-combo-box.h          \
+	modest-window.h             \
+	modest-main-window.h	    \
 	modest-edit-msg-window.h
  
 LDADD = \
