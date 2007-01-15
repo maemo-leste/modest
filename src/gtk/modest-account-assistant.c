@@ -31,6 +31,7 @@
 #include "modest-account-assistant.h"
 #include "modest-store-widget.h"
 #include "modest-transport-widget.h"
+#include "modest-text-utils.h"
 #include <modest-protocol-info.h>
 
 #include <string.h>
@@ -149,9 +150,11 @@ set_current_page_complete (ModestAccountAssistant *self, gboolean complete)
 	gint pageno;
 
 	pageno = gtk_assistant_get_current_page (GTK_ASSISTANT(self));
-	page   = gtk_assistant_get_nth_page (GTK_ASSISTANT(self), pageno);
 
-	gtk_assistant_set_page_complete (GTK_ASSISTANT(self), page, complete);
+	if (pageno != -1) {
+		page   = gtk_assistant_get_nth_page (GTK_ASSISTANT(self), pageno);
+		gtk_assistant_set_page_complete (GTK_ASSISTANT(self), page, complete);
+	}
 }
 
 
@@ -172,11 +175,10 @@ identity_page_update_completeness (GtkEditable *editable,
 
 	/* FIXME: regexp check for email address */
 	txt = gtk_entry_get_text (GTK_ENTRY(priv->email));
-	if (!txt || strlen(txt) == 0) {
+	if (!modest_text_utils_validate_email_address (txt))
 		set_current_page_complete (self, FALSE);
-		return;
-	}
-	set_current_page_complete (self, TRUE);
+	else
+		set_current_page_complete (self, TRUE);
 }
 
 

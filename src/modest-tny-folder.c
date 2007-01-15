@@ -84,7 +84,7 @@ modest_tny_folder_guess_folder_type (const TnyFolder *folder)
 
 	g_return_val_if_fail (folder, TNY_FOLDER_TYPE_UNKNOWN);
 
-	type = tny_folder_get_folder_type ((TnyFolder*)folder); /* FIXME: cast tinymail */
+	type = tny_folder_get_folder_type (TNY_FOLDER (folder));
 	
 	if (type == TNY_FOLDER_TYPE_UNKNOWN) {
 		const gchar *folder_name;

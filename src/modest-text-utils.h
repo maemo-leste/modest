@@ -200,4 +200,15 @@ gint modest_text_utils_utf8_strcmp (const gchar* s1, const gchar *s2, gboolean i
  */
 const gchar* modest_text_utils_get_display_date (time_t date);
 
+
+/**
+ * modest_text_utils_validate_email_address:
+ * @email_address: a string
+ * 
+ * validates the email address passed as argument
+ * 
+ * Returns: TRUE if the address is valid, FALSE otherwise
+ **/
+gboolean     modest_text_utils_validate_email_address (const gchar *email_address);
+
 #endif /* __MODEST_TEXT_UTILS_H__ */

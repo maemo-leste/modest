@@ -784,3 +784,60 @@ modest_text_utils_get_display_date (time_t date)
 		
 	return date_buf;
 }
+
+gboolean 
+modest_text_utils_validate_email_address (const gchar *email_address)
+{
+	int count = 0;
+	const gchar *c, *domain;
+	static gchar *rfc822_specials = "()<>@,;:\\\"[]";
+
+	/* first we validate the name portion (name@domain) */
+	for (c = email_address;  *c;  c++) {
+		if (*c == '\"' && 
+		    (c == email_address || 
+		     *(c - 1) == '.' || 
+		     *(c - 1) == '\"')) {
+			while (*++c) {
+				if (*c == '\"') 
+					break;
+				if (*c == '\\' && (*++c == ' ')) 
+					continue;
+				if (*c <= ' ' || *c >= 127) 
+					return FALSE;
+			}
+			if (!*c++) 
+				return FALSE;
+			if (*c == '@') 
+				break;
+			if (*c != '.') 
+				return FALSE;
+			continue;
+		}
+		if (*c == '@') 
+			break;
+		if (*c <= ' ' || *c >= 127) 
+			return FALSE;
+		if (strchr(rfc822_specials, *c)) 
+			return FALSE;
+	}
+	if (c == email_address || *(c - 1) == '.') 
+		return FALSE;
+
+	/* next we validate the domain portion (name@domain) */
+	if (!*(domain = ++c)) 
+		return FALSE;
+	do {
+		if (*c == '.') {
+			if (c == domain || *(c - 1) == '.') 
+				return FALSE;
+			count++;
+		}
+		if (*c <= ' ' || *c >= 127) 
+			return FALSE;
+		if (strchr(rfc822_specials, *c)) 
+			return FALSE;
+	} while (*++c);
+
+	return (count >= 1) ? TRUE : FALSE;
+}

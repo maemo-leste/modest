@@ -60,7 +60,7 @@ const guint PROTOCOL_MAP_SIZE = sizeof(ProtocolMap)/sizeof(ProtocolInfo);
 GSList*
 modest_protocol_info_get_protocol_list (ModestProtocolType type)
 {
-	GSList *proto_list;
+	GSList *proto_list = NULL;
 	int i;
 	
 	g_return_val_if_fail (type > MODEST_PROTOCOL_TYPE_UNKNOWN &&
@@ -80,7 +80,7 @@ modest_protocol_info_get_protocol_list (ModestProtocolType type)
 ModestPairList*
 modest_protocol_info_get_protocol_pair_list (ModestProtocolType type)
 {
-	ModestPairList *proto_list;
+	ModestPairList *proto_list = NULL;
 	int i;
 	
 	g_return_val_if_fail (type > MODEST_PROTOCOL_TYPE_UNKNOWN && type < MODEST_PROTOCOL_TYPE_NUM,
