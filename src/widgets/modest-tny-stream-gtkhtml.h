@@ -60,6 +60,15 @@ struct _ModestTnyStreamGtkhtmlClass {
 
 GType       modest_tny_stream_gtkhtml_get_type    (void) G_GNUC_CONST;
 
+
+/**
+ * modest_tny_stream_gtkhtml_new:
+ * @stream: a #GtkHTMLStream
+ * 
+ * creates a new #ModestTnyStreamGtkhtml
+ * 
+ * Returns: a new #ModestTnyStreamGtkhtml
+ **/
 GObject*    modest_tny_stream_gtkhtml_new         (GtkHTMLStream* stream);
 
 

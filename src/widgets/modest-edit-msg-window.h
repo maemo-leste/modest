@@ -91,12 +91,47 @@ ModestWindow*   modest_edit_msg_window_new         (ModestWidgetFactory *factory
 void         modest_edit_msg_window_set_msg     (ModestEditMsgWindow *self, 
 						 TnyMsg *msg);
 
+
+/**
+ * modest_edit_msg_window_get_widget_factory:
+ * @edit_window: a #ModestEditMsgWindow
+ * 
+ * gets the #ModestWidgetFactory associated with the edit message window
+ * 
+ * Returns: the widget factory
+ **/
 ModestWidgetFactory *   modest_edit_msg_window_get_widget_factory    (ModestEditMsgWindow *edit_window);
 
+
+/**
+ * modest_edit_msg_window_get_account_store:
+ * @edit_window: a #ModestEditMsgWindow
+ * 
+ * gets the account store associated with the edit message window
+ * 
+ * Returns: the account store
+ **/
 TnyAccountStore *       modest_edit_msg_window_get_account_store     (ModestEditMsgWindow *edit_window);
 
+/**
+ * modest_edit_msg_window_get_msg_data:
+ * @edit_window: a #ModestEditMsgWindow
+ * 
+ * gets the message data already present in the edit message
+ * window. The message data must be freed with
+ * modest_edit_msg_window_free_msg_data
+ * 
+ * Returns: the message data
+ **/
 MsgData *               modest_edit_msg_window_get_msg_data          (ModestEditMsgWindow *edit_window);
 
+/**
+ * modest_edit_msg_window_free_msg_data:
+ * @edit_window: a #ModestEditMsgWindow
+ * @data: 
+ * 
+ * frees the message data passed as argument
+ **/
 void                    modest_edit_msg_window_free_msg_data         (ModestEditMsgWindow *edit_window,
 								      MsgData *data);
 

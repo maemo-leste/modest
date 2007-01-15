@@ -99,10 +99,6 @@ GtkWidget* modest_folder_view_new         (ModestTnyAccountStore *account_store,
  */
 void  modest_folder_view_set_title (ModestFolderView *self, const gchar *title);
 
-
-/* FIXME: this is ugly */
-const gchar* modest_folder_view_get_selected_account (ModestFolderView *self);
-
 G_END_DECLS
 
 #endif /* __MODEST_FOLDER_VIEW_H__ */

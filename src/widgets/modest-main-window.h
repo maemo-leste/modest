@@ -70,8 +70,24 @@ GType modest_main_window_get_type (void) G_GNUC_CONST;
 ModestWindow* modest_main_window_new (ModestWidgetFactory *factory,
 				      TnyAccountStore *account_store);
 
+/**
+ * modest_main_window_get_widget_factory:
+ * @edit_window: a #ModestMainWindow
+ * 
+ * gets the #ModestWidgetFactory associated with the main window
+ * 
+ * Returns: the widget factory
+ **/
 ModestWidgetFactory *   modest_main_window_get_widget_factory    (ModestMainWindow *main_window);
 
+/**
+ * modest_main_window_get_account_store:
+ * @edit_window: a #ModestMainWindow
+ * 
+ * gets the account store associated with the main window
+ * 
+ * Returns: the account store
+ **/
 TnyAccountStore *       modest_main_window_get_account_store     (ModestMainWindow *main_window);
 
 
