@@ -28,7 +28,6 @@
  */
 
 #include <string.h>
-#include "modest-proto.h"
 #include "modest-marshal.h"
 #include "modest-account-keys.h"
 #include "modest-account-mgr.h"
@@ -51,7 +50,6 @@ enum {
 typedef struct _ModestAccountMgrPrivate ModestAccountMgrPrivate;
 struct _ModestAccountMgrPrivate {
 	ModestConf        *modest_conf;
-	ModestProtocolMgr *proto_mgr;
 };
 
 #define MODEST_ACCOUNT_MGR_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -214,7 +212,6 @@ modest_account_mgr_init (ModestAccountMgr * obj)
 		MODEST_ACCOUNT_MGR_GET_PRIVATE (obj);
 
 	priv->modest_conf = NULL;
-	priv->proto_mgr   = modest_protocol_mgr_new ();
 }
 
 static void
@@ -226,11 +223,6 @@ modest_account_mgr_finalize (GObject * obj)
 	if (priv->modest_conf) {
 		g_object_unref (G_OBJECT(priv->modest_conf));
 		priv->modest_conf = NULL;
-	}
-
-	if (priv->proto_mgr) {
-		g_object_unref (G_OBJECT(priv->proto_mgr));
-		priv->proto_mgr = NULL;
 	}
 
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
@@ -354,16 +346,20 @@ gboolean
 modest_account_mgr_add_server_account (ModestAccountMgr * self,
 				       const gchar * name, const gchar *hostname,
 				       const gchar * username, const gchar * password,
-				       const gchar * proto)
+				       ModestProtocol proto)
 {
 	ModestAccountMgrPrivate *priv;
 	gchar *key;
-	ModestProtoType proto_type = MODEST_PROTO_TYPE_ANY;
-
+	ModestProtocolType proto_type;
+	
 	g_return_val_if_fail (self, FALSE);
 	g_return_val_if_fail (name, FALSE);
 	g_return_val_if_fail (strchr(name, '/') == NULL, FALSE);
 
+	proto_type = modest_protocol_info_get_protocol_type (proto);
+	g_return_val_if_fail (proto_type == MODEST_PROTOCOL_TYPE_TRANSPORT ||
+			      proto_type == MODEST_PROTOCOL_TYPE_STORE, FALSE);
+			      
 	priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
 	
 	/* hostname */
@@ -389,17 +385,11 @@ modest_account_mgr_add_server_account (ModestAccountMgr * self,
 
 	/* proto */
 	key = get_account_keyname (name, MODEST_ACCOUNT_PROTO, TRUE);
-	modest_conf_set_string (priv->modest_conf, key,	null_means_empty (proto), NULL);
-	g_free (key);
-	
-	/* type */
-	key = get_account_keyname (name, MODEST_ACCOUNT_TYPE, TRUE);
-	proto_type = modest_proto_type (proto);
-	modest_conf_set_string (priv->modest_conf, key,	
-				(proto_type == MODEST_PROTO_TYPE_TRANSPORT) ? "transport" : "store", 
+	modest_conf_set_string (priv->modest_conf, key,
+				modest_protocol_info_get_protocol_name(proto),
 				NULL);
 	g_free (key);
-
+	
 	return TRUE;
 }
 
@@ -439,7 +429,7 @@ modest_account_mgr_remove_account (ModestAccountMgr * self,
  * length >= n, and also that data can be freed.
  * change is in-place
  */
-void
+static void
 strip_prefix_from_elements (GSList * lst, guint n)
 {
 	while (lst) {
@@ -450,11 +440,11 @@ strip_prefix_from_elements (GSList * lst, guint n)
 }
 
 
-GSList *
+GSList*
 modest_account_mgr_search_server_accounts (ModestAccountMgr * self,
 					   const gchar * account_name,
 					   ModestProtocolType type,
-					   const gchar *proto)
+					   ModestProtocol proto)
 {
 	GSList *accounts;
 	GSList *cursor;
@@ -464,6 +454,13 @@ modest_account_mgr_search_server_accounts (ModestAccountMgr * self,
 	
 	g_return_val_if_fail (self, NULL);
 
+	if (proto != MODEST_PROTOCOL_UNKNOWN) {
+		ModestProtocolType proto_type;
+		proto_type = modest_protocol_info_get_protocol_type (proto);
+		g_return_val_if_fail (proto_type == MODEST_PROTOCOL_TYPE_TRANSPORT ||
+				      proto_type == MODEST_PROTOCOL_TYPE_STORE, NULL);
+	}
+	
 	key      = get_account_keyname (account_name, NULL, TRUE);
 	priv     = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
 	
@@ -475,47 +472,36 @@ modest_account_mgr_search_server_accounts (ModestAccountMgr * self,
 		return NULL;
 	}
 	
-	/* no restrictions, return everything */
-	if (type == MODEST_PROTOCOL_TYPE_ANY && !proto) {
-		strip_prefix_from_elements (accounts, strlen(key)+1);
-		return accounts;
-		/* +1 because we must remove the ending '/' as well */
-	}
-	
-	/* otherwise, filter out the none-matching ones */
+	/* filter out the ones with the wrong protocol */
+	/* we could optimize for unknown proto / unknown type, but it will only
+	 * make the code more complex */
 	cursor = accounts;
-	while (cursor) {
-		gchar *account;
-		gchar *acc_proto;
-		
-		account = account_from_key ((gchar*)cursor->data, NULL, NULL);
-		acc_proto = modest_account_mgr_get_string (self, account, MODEST_ACCOUNT_PROTO,
-							   TRUE, NULL);
-		if ((!acc_proto) ||	                           /* proto not defined? */
-		    (type != MODEST_PROTOCOL_TYPE_ANY &&	           /* proto type ...     */
-		     !modest_protocol_mgr_protocol_is_valid (priv->proto_mgr,
-							     acc_proto,type)) ||	   /* ... matches?       */
-		    (proto && strcmp (proto, acc_proto) != 0)) {  /* proto matches?     */
-			/* match! remove from the list */
+	while (cursor) { 
+		gchar *account   = account_from_key ((gchar*)cursor->data, NULL, NULL);
+		gchar *acc_proto = modest_account_mgr_get_string (self, account, MODEST_ACCOUNT_PROTO,
+								  TRUE, NULL);
+		ModestProtocol     this_proto = modest_protocol_info_get_protocol (acc_proto);
+		ModestProtocolType this_type  = modest_protocol_info_get_protocol_type (this_proto);
+
+		if ((this_type  != MODEST_PROTOCOL_TYPE_UNKNOWN && this_type  != type) ||
+		    (this_proto != MODEST_PROTOCOL_UNKNOWN      && this_proto != proto)) {
 			GSList *nxt = cursor->next;
 			accounts = g_slist_delete_link (accounts, cursor);
 			cursor = nxt;
 		} else
 			cursor = cursor->next;
-
+		
 		g_free (account);
 		g_free (acc_proto);
 	}
-
+	
 	/* +1 because we must remove the ending '/' as well */
 	strip_prefix_from_elements (accounts, strlen(key)+1);
-
-	return accounts;
-	
+	return accounts;	
 }
 
 
-GSList *
+GSList*
 modest_account_mgr_account_names (ModestAccountMgr * self, GError ** err)
 {
 	GSList *accounts;
@@ -538,6 +524,7 @@ static ModestServerAccountData*
 modest_account_mgr_get_server_account_data (ModestAccountMgr *self, const gchar* name)
 {
 	ModestServerAccountData *data;
+	gchar *proto;
 	
 	g_return_val_if_fail (modest_account_mgr_account_exists (self, name,
 								 TRUE, NULL), NULL);	
@@ -550,9 +537,12 @@ modest_account_mgr_get_server_account_data (ModestAccountMgr *self, const gchar*
 	data->username     = modest_account_mgr_get_string (self, name,
 							    MODEST_ACCOUNT_USERNAME,
 							    TRUE, NULL);
-	data->proto        = modest_account_mgr_get_string (self, name,
-							    MODEST_ACCOUNT_PROTO,
-							    TRUE, NULL);
+	
+	proto        = modest_account_mgr_get_string (self, name, MODEST_ACCOUNT_PROTO,
+						      TRUE, NULL);
+	data->proto  = modest_protocol_info_get_protocol (proto);
+	g_free (proto);
+	
 	data->password     = modest_account_mgr_get_string (self, name,
 							    MODEST_ACCOUNT_PASSWORD,
 							    TRUE, NULL);
@@ -572,7 +562,6 @@ modest_account_mgr_free_server_account_data (ModestAccountMgr *self,
 	g_free (data->account_name);
 	g_free (data->hostname);
 	g_free (data->username);
-	g_free (data->proto);
 	g_free (data->password);
 
 	g_free (data);

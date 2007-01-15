@@ -34,7 +34,7 @@
 #include <glib-object.h>
 #include <modest-conf.h>
 #include <modest-account-keys.h>
-#include <modest-protocol-mgr.h>
+#include <modest-protocol-info.h>
 
 G_BEGIN_DECLS
 
@@ -71,7 +71,7 @@ struct _ModestServerAccountData {
 	gchar *account_name;
 	gchar *hostname;
 	gchar *username;
-	gchar *proto;
+	ModestProtocol proto;
 	gchar *password;
 };
 typedef struct _ModestServerAccountData ModestServerAccountData;
@@ -90,7 +90,7 @@ typedef struct _ModestAccountData ModestAccountData;
 
 
 /**
- * modest_ui_get_type:
+ * modest_account_mgr_get_type:
  * 
  * get the GType for ModestAccountMgr
  *  
@@ -148,7 +148,7 @@ gboolean modest_account_mgr_add_server_account    (ModestAccountMgr *self,
 						   const gchar *hostname,
 						   const gchar *username,
 						   const gchar *password,
-						   const gchar *proto);  
+						   ModestProtocol proto);  
 
 /**
  * modest_account_mgr_remove_account:
@@ -198,7 +198,7 @@ GSList*	        modest_account_mgr_account_names    (ModestAccountMgr *self, GEr
 GSList*  modest_account_mgr_search_server_accounts  (ModestAccountMgr *self,
 						     const gchar*       account_name,
 						     ModestProtocolType type,
-						     const gchar*       proto);
+						     ModestProtocol     proto);
 
 /**
  * modest_account_mgr_account_exists:

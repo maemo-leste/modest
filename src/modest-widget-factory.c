@@ -37,7 +37,7 @@
 #include <tny-folder-store-query.h>
 #include "modest-widget-factory.h"
 #include "modest-widget-memory.h"
-#include "modest-protocol-mgr.h"
+#include <modest-protocol-info.h>
 #include "modest-tny-platform-factory.h"
 #include "modest-account-mgr.h"
 #include "modest-mail-operation.h"
@@ -60,7 +60,6 @@ typedef struct _ModestWidgetFactoryPrivate ModestWidgetFactoryPrivate;
 struct _ModestWidgetFactoryPrivate {
 	
 	TnyPlatformFactory          *fact;
-	ModestProtocolMgr           *proto_mgr;
 	TnyAccountStore             *account_store;
 	
 	ModestHeaderView            *header_view;
@@ -126,7 +125,6 @@ modest_widget_factory_init (ModestWidgetFactory *obj)
 
 	priv->fact          = modest_tny_platform_factory_get_instance ();
 	priv->account_store = tny_platform_factory_new_account_store (priv->fact);
-	priv->proto_mgr     = modest_protocol_mgr_new ();
 	
 	priv->progress_bar = gtk_progress_bar_new ();
 	gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR(priv->progress_bar),
@@ -142,11 +140,6 @@ modest_widget_factory_finalize (GObject *obj)
 {
 	ModestWidgetFactoryPrivate *priv;
 	priv = MODEST_WIDGET_FACTORY_GET_PRIVATE(obj);
-
-	if (priv->proto_mgr) {
-		g_object_unref (G_OBJECT(priv->proto_mgr));
-		priv->proto_mgr = NULL;
-	}
 
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
@@ -208,7 +201,7 @@ modest_widget_factory_new (void)
 
 	obj  = g_object_new (MODEST_TYPE_WIDGET_FACTORY, NULL);	
 	priv = MODEST_WIDGET_FACTORY_GET_PRIVATE(obj);
-
+	
 	if (!init_widgets (MODEST_WIDGET_FACTORY(obj))) {
 		g_printerr ("modest: widget factory failed to init widgets\n");
 		g_object_unref (obj);
@@ -340,7 +333,8 @@ get_stores (ModestWidgetFactory *self, gboolean only_remote)
 		while (!tny_iterator_is_done (iter)) {
 			TnyAccount *acc = (TnyAccount*)tny_iterator_get_current(iter);
 			/* is it a local account? if so, remove */
-			if (strcmp (tny_account_get_proto(acc), "local") == 0)
+			ModestProtocol proto = modest_protocol_info_get_protocol (tny_account_get_proto(acc));
+			if (modest_protocol_info_protocol_is_local_store(proto))
 				tny_list_remove (stores, acc); /* FIXME: iter still valid? */
 			tny_iterator_next (iter);
 		}
@@ -354,7 +348,7 @@ GtkWidget*
 modest_widget_factory_get_combo_box (ModestWidgetFactory *self, ModestComboBoxType type)
 {
 	ModestWidgetFactoryPrivate *priv;
-	const GSList *list = NULL;
+	ModestPairList *protos = NULL;
 	GtkWidget* combo_box;
 	
 	g_return_val_if_fail (self, NULL);
@@ -363,19 +357,19 @@ modest_widget_factory_get_combo_box (ModestWidgetFactory *self, ModestComboBoxTy
 	
 	switch (type) {
 	case MODEST_COMBO_BOX_TYPE_STORE_PROTOS:
-		list = modest_protocol_mgr_get_store_protocols (priv->proto_mgr);
+		protos = modest_protocol_info_get_protocol_pair_list (MODEST_PROTOCOL_TYPE_STORE);
 		break;
 	case MODEST_COMBO_BOX_TYPE_TRANSPORT_PROTOS:
-		list = modest_protocol_mgr_get_transport_protocols (priv->proto_mgr);
+		protos = modest_protocol_info_get_protocol_pair_list (MODEST_PROTOCOL_TYPE_TRANSPORT);
 		break;
 	case MODEST_COMBO_BOX_TYPE_SECURITY_PROTOS:
-		list = modest_protocol_mgr_get_security_protocols (priv->proto_mgr);
+		protos = modest_protocol_info_get_protocol_pair_list (MODEST_PROTOCOL_TYPE_SECURITY);
 		break;
 	case MODEST_COMBO_BOX_TYPE_AUTH_PROTOS:
-		list = modest_protocol_mgr_get_auth_protocols (priv->proto_mgr);
+		protos = modest_protocol_info_get_protocol_pair_list (MODEST_PROTOCOL_TYPE_AUTH);
 		break;
 	case MODEST_COMBO_BOX_TYPE_TRANSPORTS:
-		list = get_transports (self);
+		protos = get_transports (self);
 		break;
 /* 	case MODEST_COMBO_BOX_TYPE_REMOTE_STORES: */
 /* 		// FIXME */
@@ -388,7 +382,9 @@ modest_widget_factory_get_combo_box (ModestWidgetFactory *self, ModestComboBoxTy
 		return NULL;
 	}
 
-	combo_box = modest_combo_box_new (list);
+	combo_box = modest_combo_box_new (protos);
+	modest_pair_list_free (protos);
+	
 	gtk_combo_box_set_active (GTK_COMBO_BOX(combo_box), 0);
 	
 	return combo_box;
