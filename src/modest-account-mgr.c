@@ -306,7 +306,6 @@ modest_account_mgr_add_account (ModestAccountMgr *self,
 	
 	ok = modest_conf_set_string (priv->modest_conf, key, name, err);
 	g_free (key);
-
 	if (!ok) {
 		g_printerr ("modest: cannot set display name\n");
 		return FALSE;
@@ -560,13 +559,19 @@ modest_account_mgr_free_server_account_data (ModestAccountMgr *self,
 		return; /* not an error */
 
 	g_free (data->account_name);
+	data->account_name = NULL;
+	
 	g_free (data->hostname);
+	data->hostname = NULL;
+	
 	g_free (data->username);
-	g_free (data->password);
+	data->username = NULL;
 
+	g_free (data->password);
+	data->password = NULL;
+	
 	g_free (data);
 }
-
 
 ModestAccountData*
 modest_account_mgr_get_account_data     (ModestAccountMgr *self, const gchar* name)
@@ -581,9 +586,13 @@ modest_account_mgr_get_account_data     (ModestAccountMgr *self, const gchar* na
 	data = g_new0 (ModestAccountData, 1);
 
 	data->account_name = g_strdup (name);
-	data->full_name    = modest_account_mgr_get_string (self, name,
-							    MODEST_ACCOUNT_FULLNAME,
+
+	data->display_name = modest_account_mgr_get_string (self, name,
+							    MODEST_ACCOUNT_DISPLAY_NAME,
 							    FALSE, NULL);
+	data->fullname      = modest_account_mgr_get_string (self, name,
+							      MODEST_ACCOUNT_FULLNAME,
+							       FALSE, NULL);
 	data->email        = modest_account_mgr_get_string (self, name,
 							    MODEST_ACCOUNT_EMAIL,
 							    FALSE, NULL);
@@ -620,11 +629,12 @@ modest_account_mgr_free_account_data (ModestAccountMgr *self, ModestAccountData 
 {
 	g_return_if_fail (self);
 
-	if (!data)
+	if (!data) /* not an error */ 
 		return;
 
 	g_free (data->account_name);
-	g_free (data->full_name);
+	g_free (data->display_name);
+	g_free (data->fullname);
 	g_free (data->email);
 
 	modest_account_mgr_free_server_account_data (self, data->store_account);

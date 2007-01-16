@@ -55,7 +55,7 @@ static void modest_tny_account_store_finalize     (GObject *obj);
 /* implementations for tny-account-store-iface */
 static void    modest_tny_account_store_instance_init (ModestTnyAccountStore *obj);
 
-static void    modest_tny_account_store_init              (gpointer g, gpointer iface_data);
+static void    modest_tny_account_store_init                     (gpointer g, gpointer iface_data);
 static void    modest_tny_account_store_add_store_account       (TnyAccountStore *self,
 								 TnyStoreAccount *account);
 static void    modest_tny_account_store_add_transport_account   (TnyAccountStore *self,
@@ -71,17 +71,12 @@ enum {
 
 typedef struct _ModestTnyAccountStorePrivate ModestTnyAccountStorePrivate;
 struct _ModestTnyAccountStorePrivate {
-
-	GMutex *store_lock;	
-	gchar *cache_dir;
-	gulong sig1, sig2;
-
-	GHashTable *password_hash;
-	
-	TnySessionCamel *tny_session_camel;
-	TnyDevice  *device;
-	
-        ModestAccountMgr *account_mgr;
+	GMutex             *store_lock;	
+	gchar              *cache_dir;
+	GHashTable         *password_hash;
+	TnyDevice          *device;
+	TnyPlatformFactory *platform_fact;
+	TnySessionCamel    *tny_session_camel;
 };
 
 #define MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -164,11 +159,11 @@ modest_tny_account_store_instance_init (ModestTnyAccountStore *obj)
 	ModestTnyAccountStorePrivate *priv =
 		MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(obj);
 
-	priv->account_mgr            = NULL;
-	priv->device                 = NULL;
 	priv->cache_dir              = NULL;
-        priv->tny_session_camel      = NULL;
-
+	priv->platform_fact          = NULL;
+	priv->tny_session_camel      = NULL;
+	priv->device                 = NULL;
+	
 	priv->password_hash          = g_hash_table_new_full (g_str_hash, g_str_equal,
 							      g_free, g_free);
 }
@@ -215,25 +210,29 @@ static gchar*
 get_password (TnyAccount *account, const gchar *prompt, gboolean *cancel)
 {
 	const gchar *key;
+	ModestAccountMgr *account_mgr;
 	const TnyAccountStore *account_store;
 	ModestTnyAccountStore *self;
 	ModestTnyAccountStorePrivate *priv;
 	gchar *pwd = NULL;
 	gboolean already_asked;
-	
+		
 	key           = tny_account_get_id (account);
 	account_store = TNY_ACCOUNT_STORE(get_account_store_for_account (account));
 
 	self = MODEST_TNY_ACCOUNT_STORE (account_store);
         priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
-
+	
+	account_mgr = modest_tny_platform_factory_get_account_mgr_instance
+		(MODEST_TNY_PLATFORM_FACTORY(priv->platform_fact));
+	
 	/* is it in the hash? if it's already there, it must be wrong... */
 	already_asked = g_hash_table_lookup_extended (priv->password_hash,
 						      key, NULL, (gpointer *) &pwd);
 
 	/* if the password is not already there, try ModestConf */
 	if (!already_asked) {
-		pwd  = modest_account_mgr_get_string (priv->account_mgr,
+		pwd  = modest_account_mgr_get_string (account_mgr,
 						      key, MODEST_ACCOUNT_PASSWORD,
 						      TRUE, NULL);
 		g_hash_table_insert (priv->password_hash, g_strdup (key), g_strdup (pwd));
@@ -252,7 +251,7 @@ get_password (TnyAccount *account, const gchar *prompt, gboolean *cancel)
 
 		if (!*cancel) {
 			if (remember)
-				modest_account_mgr_set_string (priv->account_mgr,
+				modest_account_mgr_set_string (account_mgr,
 							       key, MODEST_ACCOUNT_PASSWORD,
 							       pwd,
 							       TRUE, NULL);
@@ -281,7 +280,8 @@ forget_password (TnyAccount *account) {
 	const TnyAccountStore *account_store;
 	gchar *pwd;
 	const gchar *key;
-
+	ModestAccountMgr *account_mgr;
+	
         account_store = TNY_ACCOUNT_STORE(get_account_store_for_account (account));
 	self = MODEST_TNY_ACCOUNT_STORE (account_store);
         priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
@@ -295,8 +295,11 @@ forget_password (TnyAccount *account) {
 		g_hash_table_insert (priv->password_hash, g_strdup (key), NULL);
 	}
 
+	account_mgr = modest_tny_platform_factory_get_account_mgr_instance
+		(MODEST_TNY_PLATFORM_FACTORY(priv->platform_fact));
+
 	/* Remove from configuration system */
-	modest_account_mgr_unset (priv->account_mgr,
+	modest_account_mgr_unset (account_mgr,
 				  key, MODEST_ACCOUNT_PASSWORD,
 				  TRUE, NULL);
 }
@@ -305,130 +308,65 @@ forget_password (TnyAccount *account) {
 
 /* instantiate the correct tny account subclass */
 static TnyAccount*
-tny_account_for_proto (const gchar* proto /* ugly */, ModestProtocolType modest_type) 
+tny_account_for_proto (ModestProtocol proto) 
 {
+	ModestProtocolType type;	
 	TnyAccount *tny_account = NULL;
 	
-	/* is it a store or a transport? */
-	if  (modest_type == MODEST_PROTOCOL_TYPE_STORE) {
-		if (strcmp (proto, "pop") == 0) 
-			tny_account = TNY_ACCOUNT(tny_camel_pop_store_account_new ());
-		else if (strcmp (proto, "imap") == 0)
-			tny_account = TNY_ACCOUNT(tny_camel_imap_store_account_new ());
+	type  = modest_protocol_info_get_protocol_type (proto);
 
-	}  else if (modest_type == MODEST_PROTOCOL_TYPE_TRANSPORT) {
-		if (strcmp (proto, "sendmail") == 0) 
-			tny_account = TNY_ACCOUNT(tny_camel_transport_account_new ());
-		else if (strcmp (proto, "smtp") == 0)
-			tny_account = TNY_ACCOUNT(tny_camel_transport_account_new ());
-	}
+	if (type == MODEST_PROTOCOL_TYPE_TRANSPORT) 
+		tny_account = TNY_ACCOUNT(tny_camel_transport_account_new ());
+	else if (proto == MODEST_PROTOCOL_STORE_POP)
+		tny_account = TNY_ACCOUNT(tny_camel_pop_store_account_new ());
+	else if (proto == MODEST_PROTOCOL_STORE_IMAP)
+		tny_account = TNY_ACCOUNT(tny_camel_imap_store_account_new ());
+	else
+		g_return_val_if_reached (NULL);
 	
-	if (tny_account) {
-		tny_account_set_proto (tny_account, proto);
-	} else
-		g_printerr ("modest: could not get tny %s account (%d)\n",
-			    proto, modest_type);
-	
+	if (tny_account)
+		tny_account_set_proto (tny_account,
+				       modest_protocol_info_get_protocol_name(proto));
+	else
+		g_printerr ("modest: could not get tny account for %d\n",
+			    proto);    
 	return tny_account;
 }
-
 
 
 /* create a tnyaccount for the server account connected to the account with name 'key'
  */
 static TnyAccount*
-tny_account_from_name (ModestTnyAccountStore *self, const gchar *account, 
-		       const gchar *server_account, ModestProtocolType modest_type)
+get_tny_account_from_server_account (ModestTnyAccountStore *self,
+				     ModestServerAccountData *account_data,
+				     ModestProtocolType modest_type)
 {
 	TnyAccount *tny_account;
 	ModestTnyAccountStorePrivate *priv;
-	gchar *val;
-	GSList *options = NULL;
-	GError *error = NULL;
-	
+		
 	g_return_val_if_fail (self, NULL);
-	g_return_val_if_fail (account, NULL);
-	g_return_val_if_fail (server_account, NULL);
+	g_return_val_if_fail (account_data, NULL);
 
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
 	
 	/* proto */
-	val = modest_account_mgr_get_string (priv->account_mgr, server_account,
-					     MODEST_ACCOUNT_PROTO, TRUE, NULL);
-	if (!val) {
-		g_printerr ("modest: protocol not defined for '%s:%s'\n", 
-			    account, server_account);
-		return NULL;
-	}
-
-	tny_account = tny_account_for_proto (val, modest_type);
+	tny_account = tny_account_for_proto (account_data->proto);
 	if (!tny_account) {
-		g_printerr ("modest: could not create account for '%s:%s'\n",
-			    account, server_account);
+		g_printerr ("modest: could not create tny account for '%s'\n",
+			    account_data->account_name);
 		return NULL;
 	}
 	
 	set_account_store_for_account (TNY_ACCOUNT(tny_account), self);
+	tny_camel_account_set_session (TNY_CAMEL_ACCOUNT(tny_account), 	/* session */
+				       priv->tny_session_camel);	
+	tny_account_set_id            (tny_account, account_data->account_name); /* id */
 
-	/* session */
-	tny_camel_account_set_session (TNY_CAMEL_ACCOUNT(tny_account),
-				       priv->tny_session_camel);
-	
-	/* id */
-	tny_account_set_id   (tny_account, server_account);
+	if (account_data->hostname)
+		tny_account_set_hostname (tny_account, account_data->hostname);
 
-	/* name */
-	val = modest_account_mgr_get_string (priv->account_mgr, account,
-					     MODEST_ACCOUNT_DISPLAY_NAME, FALSE, NULL);
-	if (val) {
-		tny_account_set_name (tny_account, val);
-		g_free (val);
-	} else {
-		g_printerr ("modest: display name not defined for '%s:%s'\n", 
-			    account, server_account);
-		g_object_unref (G_OBJECT(tny_account));
-		return NULL;
-	}
-
-	/* Options */
-	options = modest_account_mgr_get_list (priv->account_mgr,
-					       tny_account_get_id (tny_account),
-					       MODEST_ACCOUNT_OPTIONS,
-					       MODEST_CONF_VALUE_STRING,
-					       TRUE,
-					       &error);
-	
-	if (error) {
-		g_warning ("Error retrieving account %s options: %s",
-			   tny_account_get_id (tny_account), error->message);
-		g_error_free (error);
-	} else {
-		GSList *tmp = options;
-		while (options) {
-			tny_camel_account_add_option (TNY_CAMEL_ACCOUNT (tny_account), options->data);
-			g_free (options->data);
-			options = g_slist_next (options);
-		}
-		g_slist_free (tmp);
-	}
-
-	/* hostname */
-	val = modest_account_mgr_get_string (priv->account_mgr, server_account,
-					     MODEST_ACCOUNT_HOSTNAME, TRUE,
-					     NULL);
-	if (val) {
-		tny_account_set_hostname (tny_account, val);
-		g_free (val);
-	}
-
-	/* username */
-	val = modest_account_mgr_get_string (priv->account_mgr, server_account,
-					     MODEST_ACCOUNT_USERNAME, TRUE,
-					     NULL);
-	if (val) {
-		tny_account_set_user (tny_account, val);
-		g_free (val);
-	}
+	if (account_data->username) 
+		tny_account_set_user (tny_account, account_data->username);
 
 	tny_account_set_pass_func (tny_account, get_password);
         tny_account_set_forget_pass_func (tny_account, forget_password);
@@ -441,27 +379,12 @@ tny_account_from_name (ModestTnyAccountStore *self, const gchar *account,
 static void
 modest_tny_account_store_finalize (GObject *obj)
 {
-	ModestTnyAccountStore *self = MODEST_TNY_ACCOUNT_STORE(obj);
-	ModestTnyAccountStorePrivate *priv =
-		MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
-
-	if (priv->account_mgr) {
-		g_signal_handler_disconnect (G_OBJECT(priv->account_mgr),
-					     priv->sig1);
-		g_signal_handler_disconnect (G_OBJECT(priv->account_mgr),
-					     priv->sig2);
-		g_object_unref (G_OBJECT(priv->account_mgr));
-		priv->account_mgr = NULL;
-	}
+	ModestTnyAccountStore *self        = MODEST_TNY_ACCOUNT_STORE(obj);
+	ModestTnyAccountStorePrivate *priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
 
 	if (priv->tny_session_camel) {
 		camel_object_unref (CAMEL_OBJECT(priv->tny_session_camel));
 		priv->tny_session_camel = NULL;
-	}
-
-	if (priv->device) {
-		g_object_unref (G_OBJECT(priv->device));
-		priv->device = NULL;
 	}
 
 	if (priv->store_lock)
@@ -470,11 +393,16 @@ modest_tny_account_store_finalize (GObject *obj)
 	g_free (priv->cache_dir);
 	priv->cache_dir = NULL;
 
+	if (priv->device) {
+		g_object_unref (priv->device);
+		priv->device = NULL;
+	}
+	
 	if (priv->password_hash) {
 		g_hash_table_destroy (priv->password_hash);
 		priv->password_hash = NULL;
 	}
-
+	
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
@@ -489,35 +417,23 @@ modest_tny_account_store_new (ModestAccountMgr *account_mgr) {
 	g_return_val_if_fail (account_mgr, NULL);
 
 	obj  = G_OBJECT(g_object_new(MODEST_TYPE_TNY_ACCOUNT_STORE, NULL));
-
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(obj);
 
-	g_object_ref(G_OBJECT(account_mgr));
-	priv->account_mgr = account_mgr;
-
-	priv->sig1 = g_signal_connect (G_OBJECT(account_mgr), "account_changed",
+	g_signal_connect (G_OBJECT(account_mgr), "account_changed",
 				       G_CALLBACK (on_account_changed), obj);
-	priv->sig2 = g_signal_connect (G_OBJECT(account_mgr), "account_removed",
+	g_signal_connect (G_OBJECT(account_mgr), "account_removed",
 				       G_CALLBACK (on_account_removed), obj);
-	
 	priv->store_lock = g_mutex_new ();
 
 	pfact = TNY_PLATFORM_FACTORY (modest_tny_platform_factory_get_instance());
 	if (!pfact) {
-		g_printerr ("modest: cannot create platform factory\n");
+		g_printerr ("modest: cannot get platform factory instance\n");
 		g_object_unref (obj);
 		return NULL;
-	}
-	
-	priv->device = TNY_DEVICE(tny_platform_factory_new_device(pfact));
-	if (!priv->device) {
-		g_printerr ("modest: cannot create device instance\n");
-		g_object_unref (obj);
-		return NULL;
-	}
+	} else
+		priv->platform_fact = pfact;
 	
 	priv->tny_session_camel = tny_session_camel_new (TNY_ACCOUNT_STORE(obj));
-
 	if (!priv->tny_session_camel) {
 		g_printerr ("modest: cannot create TnySessionCamel instance\n");
 		g_object_unref (obj);
@@ -535,7 +451,7 @@ add_account  (TnyAccountStore *self, TnyAccount *account) {
 
 	ModestTnyAccountStore *account_store;
 	ModestTnyAccountStorePrivate *priv;
-
+	ModestAccountMgr *account_mgr;	
 	const gchar *account_name;
 	const gchar *hostname, *username, *proto;
 
@@ -544,7 +460,10 @@ add_account  (TnyAccountStore *self, TnyAccount *account) {
 
 	account_store  = MODEST_TNY_ACCOUNT_STORE(self);
 	priv           = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
-
+	account_mgr    = modest_tny_platform_factory_get_account_mgr_instance
+		            (MODEST_TNY_PLATFORM_FACTORY(priv->platform_fact));
+	
+	
 	account_name   = tny_account_get_id(account);
 	if (!account_name) {
 		g_printerr ("modest: failed to retrieve account name\n");
@@ -555,7 +474,7 @@ add_account  (TnyAccountStore *self, TnyAccount *account) {
 	username =  tny_account_get_user(account);
 	proto    =  tny_account_get_proto(account);
 
-	return modest_account_mgr_add_server_account (priv->account_mgr,
+	return modest_account_mgr_add_server_account (account_mgr,
 						      account_name,
 						      hostname, username, NULL,
 						      modest_protocol_info_get_protocol(proto));
@@ -585,134 +504,84 @@ modest_tny_account_store_add_transport_account  (TnyAccountStore *self,
 	
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
 	tny_camel_account_set_session (TNY_CAMEL_ACCOUNT(account),
-				       priv->tny_session_camel);
-	
+				       priv->tny_session_camel);	
 	if (!add_account (self, TNY_ACCOUNT(account)))
 		g_printerr ("modest: failed to add transport account\n");
 }
 
 
-static gchar*
-get_server_account_for_account (ModestTnyAccountStore *self, const gchar *account_name,
-				ModestProtocolType modest_type)
+static TnyAccount*
+get_tny_account_from_account (ModestTnyAccountStore *self, ModestAccountData *account_data,
+			      TnyGetAccountsRequestType type) 
 {
-	ModestTnyAccountStorePrivate *priv;
-	gchar *server;
-	gchar *key;
+	TnyAccount *tny_account = NULL;
+	ModestServerAccountData *server_account;
 
-	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
-
-	if (modest_type == MODEST_PROTOCOL_TYPE_STORE)
-		key = MODEST_ACCOUNT_STORE_ACCOUNT;
-	else if (modest_type == MODEST_PROTOCOL_TYPE_TRANSPORT)
-		key = MODEST_ACCOUNT_TRANSPORT_ACCOUNT;
+	if (type == TNY_ACCOUNT_STORE_STORE_ACCOUNTS && account_data->store_account)
+		server_account = account_data->store_account;
+	else if (type == TNY_ACCOUNT_STORE_TRANSPORT_ACCOUNTS && account_data->transport_account)
+		server_account = account_data->transport_account;
 	else
-		g_assert_not_reached();
+		g_return_val_if_reached (NULL);
 	
-	server = modest_account_mgr_get_string (priv->account_mgr,
-						account_name,
-						key, FALSE, NULL);
-	if (!server)
-		return NULL;
-	
-	if (!modest_account_mgr_account_exists (priv->account_mgr,
-						server, TRUE, NULL)) {
-		g_free (server);
+	if (!server_account) {
+		g_printerr ("modest: no %s account defined for '%s'\n",
+			    type == TNY_ACCOUNT_STORE_STORE_ACCOUNTS ? "store" : "transport",
+			    account_data->display_name);
 		return NULL;
 	}
-	return server;
+	
+	tny_account = get_tny_account_from_server_account (self, server_account, type);
+	if (!tny_account) { 
+		g_printerr ("modest: failed to create tny account for %s\n",
+			    account_data->account_name);
+		return NULL;
+	}
+	
+	if (account_data->display_name)
+		tny_account_set_name (tny_account, account_data->display_name); 
+
+	return tny_account;
 }
 
+
 static void
-modest_tny_account_store_get_accounts  (TnyAccountStore *iface,
-					TnyList *list,
+modest_tny_account_store_get_accounts  (TnyAccountStore *iface, TnyList *list,
 					TnyGetAccountsRequestType type)
 {
 	ModestTnyAccountStore        *self;
 	ModestTnyAccountStorePrivate *priv;
 	GSList                       *accounts, *cursor;
-	ModestProtocolType            modest_type;
+	ModestAccountMgr             *account_mgr; 
 	
 	g_return_if_fail (iface);
+	g_return_if_fail (TNY_IS_LIST(list));
 
-	self = MODEST_TNY_ACCOUNT_STORE(iface);
-	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
-
-	switch (type) {
-	case TNY_ACCOUNT_STORE_TRANSPORT_ACCOUNTS:
-		modest_type = MODEST_PROTOCOL_TYPE_TRANSPORT;
-		break;
-	case TNY_ACCOUNT_STORE_STORE_ACCOUNTS:
-		modest_type = MODEST_PROTOCOL_TYPE_STORE;
-		break;
-	case TNY_ACCOUNT_STORE_BOTH:
-		modest_type = MODEST_PROTOCOL_TYPE_UNKNOWN;
-		break;
-	default:
-		g_assert_not_reached ();
+	self        = MODEST_TNY_ACCOUNT_STORE(iface);
+	priv        = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
+	account_mgr = modest_tny_platform_factory_get_account_mgr_instance
+		(MODEST_TNY_PLATFORM_FACTORY(priv->platform_fact));
+	
+	if (type == TNY_ACCOUNT_STORE_BOTH) {
+		modest_tny_account_store_get_accounts (iface, list, TNY_ACCOUNT_STORE_STORE_ACCOUNTS);
+		modest_tny_account_store_get_accounts (iface, list, TNY_ACCOUNT_STORE_TRANSPORT_ACCOUNTS);
 	}
-
-	cursor = accounts = modest_account_mgr_account_names (priv->account_mgr, NULL); 
-
-	while (cursor) {
-		gchar       *account_name;
-		gchar       *server_account;
-		TnyAccount  *account;
-		gboolean     is_server_account;
-
-		account_name      = (gchar*)cursor->data;
-		account           = NULL;
-		is_server_account = FALSE;
-		
- 		if (!modest_account_mgr_account_get_enabled (priv->account_mgr, account_name)) { 
- 			g_free (account_name); 
- 			cursor = cursor->next;
-			continue;
- 		} 
-		
-		if (modest_type == MODEST_PROTOCOL_TYPE_TRANSPORT || modest_type == MODEST_PROTOCOL_TYPE_UNKNOWN) {
-			server_account = get_server_account_for_account (self, account_name,
-									 MODEST_PROTOCOL_TYPE_TRANSPORT);
-			if (server_account) {
-				account = tny_account_from_name (self, account_name, 
-								       server_account,
-								       MODEST_PROTOCOL_TYPE_TRANSPORT);
-				is_server_account = TRUE;
-			}
-
-			if (!account)
-				g_printerr ("modest: no transport account for '%s'\n",
-					    account_name);
-			else
-				tny_list_prepend (list, G_OBJECT(account));
-		
-			g_free (server_account);
+	
+	accounts = modest_account_mgr_account_names (account_mgr, NULL); 
+	for (cursor = accounts; cursor; cursor = cursor->next) {
+		TnyAccount *tny_account;
+		ModestAccountData *account_data =
+			modest_account_mgr_get_account_data (account_mgr, 
+		 					     (gchar*)cursor->data);
+		if (account_data && account_data->enabled) {
+			tny_account = get_tny_account_from_account (self, account_data, type);
+			if (tny_account)
+				tny_list_prepend (list, G_OBJECT(tny_account));
 		}
-		
-		if (modest_type == MODEST_PROTOCOL_TYPE_STORE || modest_type == MODEST_PROTOCOL_TYPE_UNKNOWN) {
-			server_account = get_server_account_for_account (self, account_name,
-									 MODEST_PROTOCOL_TYPE_STORE);
-			if (server_account) {
-				account = tny_account_from_name (self, account_name, 
-								       server_account,
-								       MODEST_PROTOCOL_TYPE_STORE);
-				is_server_account = TRUE;
-			}
-
-			if (!account)
-				g_printerr ("modest: no store account for '%s'\n",
-					    account_name);
-			else
-				tny_list_prepend (list, G_OBJECT(account));
-			g_free (server_account);
-		}
-
-		g_free (account_name);
-		cursor = cursor->next;
+		g_free (cursor->data);
+		modest_account_mgr_free_account_data (account_mgr, account_data);
 	}
-
 	g_slist_free (accounts);
-
 	tny_session_camel_set_account_store (priv->tny_session_camel, iface);
 }
 
@@ -728,10 +597,8 @@ modest_tny_account_store_get_cache_dir (TnyAccountStore *self)
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
 	
 	if (!priv->cache_dir)
-		priv->cache_dir = g_build_filename (g_get_home_dir(),
-						    ".modest",
-						    "cache",
-						    NULL);
+		priv->cache_dir = g_build_filename (g_get_home_dir(), ".modest",
+						    "cache", NULL);
 	return priv->cache_dir;
 }
 
@@ -746,6 +613,9 @@ modest_tny_account_store_get_device (TnyAccountStore *self)
 
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE (self);
 
+	if (!priv->device) 
+		priv->device = tny_platform_factory_new_device (priv->platform_fact);
+	
 	return g_object_ref (G_OBJECT(priv->device));
 }
 
@@ -755,9 +625,7 @@ static gboolean
 modest_tny_account_store_alert (TnyAccountStore *self, TnyAlertType type,
 				const gchar *prompt)
 {
-	g_printerr ("modest: alert [%d]: %s",
-		    type, prompt);
-
+	g_printerr ("modest: alert [%d]: %s", type, prompt);
 	return TRUE;
 }
 
@@ -797,7 +665,6 @@ modest_tny_account_store_set_get_pass_func (ModestTnyAccountStore *self,
 TnySessionCamel*
 tny_account_store_get_session    (TnyAccountStore *self)
 {
-	g_return_val_if_fail (self, NULL);
-	
+	g_return_val_if_fail (self, NULL);	
 	return MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self)->tny_session_camel;
 }
