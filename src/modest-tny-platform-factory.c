@@ -218,7 +218,7 @@ modest_tny_platform_factory_new_account_store (TnyPlatformFactory *self)
 
 	if (!priv->account_store) {
 		if (!priv->account_mgr)
-			modest_tny_platform_factory_get_account_mgr_instance (self);
+			modest_tny_platform_factory_get_account_mgr_instance (MODEST_TNY_PLATFORM_FACTORY (self));
 
 		priv->account_store = modest_tny_account_store_new (priv->account_mgr);
 	}
