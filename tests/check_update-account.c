@@ -76,7 +76,7 @@ func (gpointer_data)
 	TnyList *accounts;
 
 	fact = TNY_PLATFORM_FACTORY (modest_tny_platform_factory_get_instance ());
-	acc_mgr = MODEST_ACCOUNT_MGR (modest_tny_platform_factory_get_modest_account_mgr_instance (fact));
+	acc_mgr = MODEST_ACCOUNT_MGR (modest_tny_platform_factory_get_account_mgr_instance (MODEST_TNY_PLATFORM_FACTORY (fact)));
 	account_store = tny_platform_factory_new_account_store (fact);	
 
 	/* Get accounts */
@@ -91,7 +91,7 @@ func (gpointer_data)
 	g_object_unref (G_OBJECT (iter));
 	g_object_unref (G_OBJECT (accounts));
 
-	queue = modest_tny_platform_factory_get_modest_mail_operation_queue_instance (fact);
+	queue = modest_tny_platform_factory_get_mail_operation_queue_instance (MODEST_TNY_PLATFORM_FACTORY (fact));
 	mail_op = modest_mail_operation_new ();
 	
 	g_signal_connect (G_OBJECT (mail_op), "progress_changed", 

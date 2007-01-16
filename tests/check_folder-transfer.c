@@ -126,7 +126,7 @@ main (int argc, char **argv)
 	g_option_context_free (context);
 
 	fact = TNY_PLATFORM_FACTORY (modest_tny_platform_factory_get_instance ());
-	acc_mgr = MODEST_ACCOUNT_MGR (modest_tny_platform_factory_get_modest_account_mgr_instance (fact));
+	acc_mgr = MODEST_ACCOUNT_MGR (modest_tny_platform_factory_get_account_mgr_instance (MODEST_TNY_PLATFORM_FACTORY (fact)));
 	account_store = tny_platform_factory_new_account_store (fact);	
 
 	if (cachedir)

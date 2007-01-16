@@ -41,7 +41,6 @@ objects=\
         ${top_srcdir}/src/$(MODEST_PLATFORM)/libmodest-ui.la \
         ${top_srcdir}/src/widgets/libmodest-widgets.la \
         ${top_srcdir}/src/modest-account-mgr.o \
-        ${top_srcdir}/src/modest-tny-platform-factory.o \
         ${top_srcdir}/src/modest-conf.o \
         ${top_srcdir}/src/modest-protocol-info.o \
         ${top_srcdir}/src/modest-formatter.o \
@@ -49,9 +48,11 @@ objects=\
         ${top_srcdir}/src/modest-pair.o \
         ${top_srcdir}/src/modest-marshal.o \
         ${top_srcdir}/src/modest-tny-account-store.o \
+        ${top_srcdir}/src/modest-tny-platform-factory.o \
         ${top_srcdir}/src/modest-mail-operation-queue.o \
         ${top_srcdir}/src/modest-mail-operation.o \
         ${top_srcdir}/src/modest-tny-msg-actions.o \
+        ${top_srcdir}/src/modest-tny-folder.o \
         ${top_srcdir}/src/modest-text-utils.o
 
 
