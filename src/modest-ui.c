@@ -845,11 +845,19 @@ _modest_ui_actions_on_folder_selection_changed (ModestFolderView *folder_view,
 	if (!selected) { /* the folder was unselected; save it's settings  */
 		modest_widget_memory_save (conf, G_OBJECT (header_view),
 					   "header-view");
+		gtk_window_set_title (GTK_WINDOW(main_window), "Modest");
 	} else {  /* the folder was selected */
 		guint num, unread;
+		gchar *title;
 		num    = tny_folder_get_all_count    (folder);
 		unread = tny_folder_get_unread_count (folder);
-			
+
+		title = g_strdup_printf ("Modest: %s",
+					 tny_folder_get_name (folder));
+		
+		gtk_window_set_title (GTK_WINDOW(main_window), title);
+		g_free (title);
+
 		txt = g_strdup_printf (_("%d %s, %d unread"),
 				       num, num==1 ? _("item") : _("items"), unread);		
 		gtk_label_set_label (GTK_LABEL(folder_info_label), txt);
