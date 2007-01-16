@@ -39,6 +39,7 @@
 #include "modest-tny-platform-factory.h"
 #include "modest-account-view-window.h"
 #include "modest-main-window.h"
+#include <modest-widget-memory.h>
 #include <tny-error.h>
 #include <tny-simple-list.h>
 
@@ -183,7 +184,8 @@ modest_ui_new (TnyAccountStore *account_store)
 	
 	priv->account_store = account_store;
 
-	account_mgr = modest_tny_platform_factory_get_modest_account_mgr_instance (fact);
+	account_mgr = modest_tny_platform_factory_get_account_mgr_instance
+		(MODEST_TNY_PLATFORM_FACTORY(fact));
 	if (!account_mgr) {
 		g_printerr ("modest: could not create ModestAccountMgr instance\n");
 		g_object_unref (obj);
@@ -267,7 +269,6 @@ register_stock_icons ()
 	if (!registered) {
 		GdkPixbuf *pixbuf;
 		GtkIconFactory *factory;
-		gchar *filename;
 		gint i;
 
 		static GtkStockItem items[] = {
@@ -612,13 +613,13 @@ reply_forward (GtkWidget *widget,
 	TnyHeader *header;
 	TnyFolder *folder;
 	gchar *from, *key;
-	ModestFolderView *folder_view;
 	GetMsgAsyncHelper *helper;
 	ReplyForwardHelper *rf_helper;
 
 	/* Get ModestConf */
 	plat_factory = modest_tny_platform_factory_get_instance ();
-	conf = modest_tny_platform_factory_get_modest_conf_instance (plat_factory);
+	conf = modest_tny_platform_factory_get_conf_instance
+		(MODEST_TNY_PLATFORM_FACTORY(plat_factory));
 
 	/* Get reply or forward type */
 	key = g_strdup_printf ("%s/%s", MODEST_CONF_NAMESPACE, 
@@ -788,7 +789,6 @@ _modest_ui_actions_on_header_selected (ModestHeaderView *folder_view,
 	TnyFolder *folder;
 	GetMsgAsyncHelper *helper;
 	TnyList *list;
-	TnyIterator *iter;
 
 	if (!header)
 		return;
@@ -838,7 +838,8 @@ _modest_ui_actions_on_folder_selection_changed (ModestFolderView *folder_view,
 
 	factory = modest_tny_platform_factory_get_instance ();
 	header_view = modest_widget_factory_get_header_view (widget_factory);
-	conf = modest_tny_platform_factory_get_modest_conf_instance (factory);
+	conf = modest_tny_platform_factory_get_conf_instance
+		(MODEST_TNY_PLATFORM_FACTORY(factory));
 	g_object_unref (G_OBJECT (widget_factory));
 
 	if (!selected) { /* the folder was unselected; save it's settings  */

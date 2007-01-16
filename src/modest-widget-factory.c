@@ -247,9 +247,8 @@ modest_widget_factory_get_account_view (ModestWidgetFactory *self)
 	g_return_val_if_fail (self, NULL);
 	priv =  MODEST_WIDGET_FACTORY_GET_PRIVATE(self);
 
-	account_mgr = 
-		modest_tny_platform_factory_get_modest_account_mgr_instance (priv->fact);
-	
+	account_mgr = modest_tny_platform_factory_get_account_mgr_instance
+		(MODEST_TNY_PLATFORM_FACTORY(priv->fact));
 	return modest_account_view_new (account_mgr);
 }
 
@@ -282,8 +281,9 @@ get_transports (ModestWidgetFactory *self)
 	
 	priv = MODEST_WIDGET_FACTORY_GET_PRIVATE(self);
 
-	account_mgr = 
-		modest_tny_platform_factory_get_modest_account_mgr_instance (priv->fact);
+	account_mgr =
+		modest_tny_platform_factory_get_account_mgr_instance
+		(MODEST_TNY_PLATFORM_FACTORY(priv->fact));
 	cursor = accounts = modest_account_mgr_account_names (account_mgr, NULL);
 	while (cursor) {
 		ModestAccountData *data;

@@ -127,7 +127,8 @@ main (int argc, char *argv[])
 	fact = modest_tny_platform_factory_get_instance ();
 
 	/* Check modest conf */
-	modest_conf = modest_tny_platform_factory_get_modest_conf_instance (fact);
+	modest_conf = modest_tny_platform_factory_get_conf_instance
+		(MODEST_TNY_PLATFORM_FACTORY(fact));
 	if (!modest_conf) {
 		g_printerr ("modest: failed to initialize config system, exiting\n");
 		retval = MODEST_ERR_CONF;
@@ -253,7 +254,8 @@ send_mail (const gchar* mailto, const gchar *cc, const gchar *bcc,
 	int retval;
 
 	fact = modest_tny_platform_factory_get_instance ();
-	acc_mgr = modest_tny_platform_factory_get_modest_account_mgr_instance (fact);
+	acc_mgr = modest_tny_platform_factory_get_account_mgr_instance
+		(MODEST_TNY_PLATFORM_FACTORY(fact));
 	acc_store = tny_platform_factory_new_account_store (fact);	
 
 	accounts = TNY_LIST(tny_simple_list_new ());

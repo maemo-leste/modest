@@ -338,7 +338,7 @@ modest_widget_memory_save (ModestConf *conf, GObject *widget, const gchar *name)
 	g_return_val_if_fail (conf, FALSE);
 	g_return_val_if_fail (widget, FALSE);
 	g_return_val_if_fail (name, FALSE);
-	
+
 	if (GTK_IS_WINDOW(widget))
 		return save_settings_window (conf, GTK_WINDOW(widget), name);
 	else if (GTK_IS_PANED(widget))
