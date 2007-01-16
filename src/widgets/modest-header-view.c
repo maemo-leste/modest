@@ -712,7 +712,6 @@ modest_header_view_set_folder (ModestHeaderView *self, TnyFolder *folder)
 					  on_refresh_folder_status_update,
 					  self);
 	}
-	
 	/* no message selected */
 	g_signal_emit (G_OBJECT(self), signals[HEADER_SELECTED_SIGNAL], 0,
 		       NULL);

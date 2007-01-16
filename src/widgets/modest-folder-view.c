@@ -428,7 +428,6 @@ update_model_empty (ModestFolderView *self)
 	gtk_tree_view_set_model (GTK_TREE_VIEW(self),
 				 GTK_TREE_MODEL(store));
 	g_object_unref (store);
-
 	priv->view_is_empty = TRUE;
 
 	g_signal_emit (G_OBJECT(self), signals[FOLDER_SELECTION_CHANGED_SIGNAL], 0,
@@ -481,6 +480,9 @@ update_model (ModestFolderView *self, ModestTnyAccountStore *account_store)
 	GtkTreeModel     *model, *sortable;
 
 	g_return_val_if_fail (account_store, FALSE);
+
+	update_model_empty (self);
+
 	priv =	MODEST_FOLDER_VIEW_GET_PRIVATE(self);
 	
 	model        = tny_gtk_folder_store_tree_model_new (TRUE, NULL);
@@ -529,7 +531,7 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 	if (!gtk_tree_selection_get_selected (sel, &model, &iter)) {
 		priv->cur_folder = NULL; /* FIXME: need this? */
                return; 
-       }
+	}
 	
 	tree_view = MODEST_FOLDER_VIEW (user_data);
 	gtk_tree_model_get (model, &iter,
@@ -539,7 +541,7 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 
 	if (type == TNY_FOLDER_TYPE_ROOT)
 		return;
-
+	
 	/* emit 2 signals: one for the unselection of the old one,
 	 * and one for the selection of the new on */
 	g_signal_emit (G_OBJECT(tree_view), signals[FOLDER_SELECTION_CHANGED_SIGNAL], 0,
@@ -571,13 +573,11 @@ on_subscription_changed  (TnyStoreAccount *store_account,
 static gboolean
 modest_folder_view_update_model (ModestFolderView *self, TnyAccountStore *account_store)
 {
-	gboolean retval;
-
 	g_return_val_if_fail (MODEST_IS_FOLDER_VIEW (self), FALSE);
-	retval = update_model (self, MODEST_TNY_ACCOUNT_STORE(account_store)); /* ugly */
 
 	g_signal_emit (G_OBJECT(self), signals[FOLDER_SELECTION_CHANGED_SIGNAL],
 		       0, NULL, TRUE);
+	
 
-	return retval;
+	return update_model (self, MODEST_TNY_ACCOUNT_STORE(account_store)); /* ugly */
 }
