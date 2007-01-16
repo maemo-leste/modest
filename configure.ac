@@ -7,7 +7,7 @@ AC_INIT([modest],[0.0.1],[http://maemo.org])
 AC_CONFIG_HEADERS([config.h])
 
 AC_CONFIG_SRCDIR(src/modest-main.c)
-AM_INIT_AUTOMAKE([dist-bzip2 no-dist-gzip])
+AM_INIT_AUTOMAKE([dist-bzip2])
 
 # Check for gettext support
 GETTEXT_PACKAGE=modest
