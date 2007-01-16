@@ -480,14 +480,14 @@ folder_refresh_cb (TnyFolder *folder, gboolean canceled, GError **err, gpointer 
 
 	if (priv->done == priv->total)
 		priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
-	else if ((priv->done + helper->canceled + helper->failed) == priv->total)
+	else if ((priv->done + helper->canceled + helper->failed) == priv->total) {
 		if (helper->failed == priv->total)
 			priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 		else if (helper->failed == priv->total)
 			priv->status = MODEST_MAIL_OPERATION_STATUS_CANCELED;
 		else
 			priv->status = MODEST_MAIL_OPERATION_STATUS_FINISHED_WITH_ERRORS;
-
+	}
 	tny_iterator_next (helper->iter);
 	if (tny_iterator_is_done (helper->iter)) {
 		TnyList *list;
@@ -510,7 +510,6 @@ update_folders_cb (TnyFolderStore *folder_store, TnyList *list, GError **err, gp
 {
 	ModestMailOperation *self;
 	ModestMailOperationPrivate *priv;
-	TnyList *folders;
 	RefreshFolderAsyncHelper *helper;
 
 	self  = MODEST_MAIL_OPERATION (user_data);
