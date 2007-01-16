@@ -316,7 +316,7 @@ modest_edit_msg_window_set_msg (ModestEditMsgWindow *self, TnyMsg *msg)
 
 	priv = MODEST_EDIT_MSG_WINDOW_GET_PRIVATE (self);
 
-	header = tny_msg_get_header (msg);
+	header  = tny_msg_get_header (msg);
 	to      = tny_header_get_to (header);
 	cc      = tny_header_get_cc (header);
 	bcc     = tny_header_get_bcc (header);
@@ -333,7 +333,7 @@ modest_edit_msg_window_set_msg (ModestEditMsgWindow *self, TnyMsg *msg)
 	
 	buf = gtk_text_view_get_buffer (GTK_TEXT_VIEW(priv->msg_body));
 	gtk_text_buffer_set_text (buf,
-				  (const gchar *) modest_tny_msg_actions_find_body (msg, TRUE),
+				  (const gchar *) modest_tny_msg_actions_find_body (msg, FALSE),
 				  -1);
 
 	/* TODO: lower priority, select in the From: combo to the

@@ -309,9 +309,10 @@ create_reply_forward_mail (TnyMsg *msg, const gchar *from, gboolean is_reply, gu
 	TnyMimePart *body;
 	ModestFormatter *formatter;
 
-	/* Get body from original msg */
+	/* Get body from original msg. Always look for the text/plain
+	   part of the message to create the reply/forwarded mail */
 	header = tny_msg_get_header (msg);
-	body   = modest_tny_msg_actions_find_body_part (msg, TRUE);
+	body   = modest_tny_msg_actions_find_body_part (msg, FALSE);
 
 	/* TODO: select the formatter from account prefs */
 	formatter = modest_formatter_new ("text/plain");

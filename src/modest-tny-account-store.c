@@ -71,7 +71,6 @@ enum {
 
 typedef struct _ModestTnyAccountStorePrivate ModestTnyAccountStorePrivate;
 struct _ModestTnyAccountStorePrivate {
-	GMutex             *store_lock;	
 	gchar              *cache_dir;
 	GHashTable         *password_hash;
 	TnyDevice          *device;
@@ -387,9 +386,6 @@ modest_tny_account_store_finalize (GObject *obj)
 		priv->tny_session_camel = NULL;
 	}
 
-	if (priv->store_lock)
-		g_mutex_free (priv->store_lock);
-
 	g_free (priv->cache_dir);
 	priv->cache_dir = NULL;
 
@@ -423,7 +419,6 @@ modest_tny_account_store_new (ModestAccountMgr *account_mgr) {
 				       G_CALLBACK (on_account_changed), obj);
 	g_signal_connect (G_OBJECT(account_mgr), "account_removed",
 				       G_CALLBACK (on_account_removed), obj);
-	priv->store_lock = g_mutex_new ();
 
 	pfact = TNY_PLATFORM_FACTORY (modest_tny_platform_factory_get_instance());
 	if (!pfact) {
