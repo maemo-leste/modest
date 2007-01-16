@@ -38,7 +38,7 @@
 <!ENTITY gtk-ModestStoreWidget SYSTEM "xml/modest-store-widget.xml">
 <!ENTITY gtk-modestTransportWidget SYSTEM "xml/modest-transport-widget.xml">
 
-<!ENTITY index-Object-Tree SYSTEM "xml/tree_index.sgml">
+<!-- <!ENTITY index-Object-Tree SYSTEM "xml/tree_index.sgml"> -->
 
 <!ENTITY preface SYSTEM "modest-preface.sgml">
 <!ENTITY architecture SYSTEM "modest-architecture.sgml">
@@ -64,11 +64,12 @@
   
   &coding-guidelines;
   
+<!--
   <reference>
     <title>Object Index</title>
       &index-Object-Tree;
   </reference>
-  
+-->
   <reference>
     <title>API Reference</title>
       <chapter id="src">

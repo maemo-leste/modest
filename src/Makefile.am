@@ -68,6 +68,7 @@ modest_SOURCES=\
 	modest-tny-platform-factory.h \
 	modest-ui.c\
 	modest-ui.h\
+	modest-ui-actions.h\
 	modest-widget-factory.c	\
 	modest-widget-factory.h	\
 	modest-widget-memory.c\

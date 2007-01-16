@@ -19,22 +19,24 @@ noinst_LTLIBRARIES=\
 libmodest_widgets_la_SOURCES=       \
 	modest-account-view.c       \
 	modest-account-view.h       \
+	modest-combo-box.c	    \
+	modest-combo-box.h          \
+	modest-edit-msg-window.h    \
+	modest-edit-msg-window-ui.h \
 	modest-folder-view.c        \
 	modest-folder-view.h        \
 	modest-header-view.c        \
 	modest-header-view.h        \
-	modest-header-view-render.c \
 	modest-header-view-priv.h   \
-	modest-tny-stream-gtkhtml.c \
-	modest-tny-stream-gtkhtml.h \
+	modest-header-view-render.c \
+	modest-main-window.h	    \
+	modest-main-window-ui.h	    \
 	modest-msg-view.c           \
 	modest-msg-view.h	    \
-	modest-combo-box.c	    \
-	modest-combo-box.h          \
-	modest-window.h             \
-	modest-main-window.h	    \
-	modest-edit-msg-window.h
- 
+	modest-tny-stream-gtkhtml.c \
+	modest-tny-stream-gtkhtml.h \
+	modest-window.h             
+
 LDADD = \
 	$(MODEST_GSTUFF_LIBS) 				\
 	$(MODEST_LIBTINYMAIL_GNOME_DESKTOP_LIBS)        \

@@ -25,26 +25,21 @@ PIXMAP_FILES=\
 	pixmaps/*.svg
 
 libmodest_ui_la_SOURCES=              \
-	modest-main-window.h          \
-	modest-main-window.c          \
-	modest-account-view-window.c  \
-	modest-account-view-window.h  \
 	modest-account-assistant.c    \
 	modest-account-assistant.h    \
+	modest-account-view-window.c  \
+	modest-account-view-window.h  \
 	modest-edit-msg-window.c      \
-	modest-edit-msg-window.h      \
-	modest-transport-widget.c     \
-	modest-transport-widget.h     \
+	modest-icon-names.h           \
+	modest-main-window.c          \
 	modest-store-widget.c         \
-	modest-store-widget.h
+	modest-store-widget.h         \
+	modest-transport-widget.c     \
+	modest-transport-widget.h     
 
 LDADD = \
 	$(MODEST_GSTUFF_LIBS) \
 	$(MODEST_LIBTINYMAIL_GNOME_DESKTOP_LIBS)
-
-EXTRA_DIST=\
-	pixmaps/* \
-	ui/*
 
 pixmapdir = $(datadir)/pixmaps/modest
 pixmap_DATA = $(PIXMAP_FILES)
@@ -55,3 +50,8 @@ UI_FILES=\
 
 uidir = $(datadir)/modest/ui
 ui_DATA = $(UI_FILES)
+
+EXTRA_DIST=\
+	$(UI_FILES) \
+	$(PIXMAP_FILES)
+

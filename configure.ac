@@ -7,7 +7,7 @@ AC_INIT([modest],[0.0.1],[http://maemo.org])
 AC_CONFIG_HEADERS([config.h])
 
 AC_CONFIG_SRCDIR(src/modest-main.c)
-AM_INIT_AUTOMAKE(AC_PACKAGE_NAME,AC_PACKAGE_VERSION)
+AM_INIT_AUTOMAKE([dist-bzip2 no-dist-gzip])
 
 # Check for gettext support
 GETTEXT_PACKAGE=modest
@@ -114,7 +114,8 @@ AM_CONDITIONAL(BUILD_DOCS, test x$build_docs = xtrue)
 dnl ## gtk-doc
 GTK_DOC_CHECK([1.0])
 
-
+dnl Intltool utility programs
+IT_PROG_INTLTOOL([0.35.0])
 
 
 AC_OUTPUT([

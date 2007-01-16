@@ -56,7 +56,7 @@ HTML_IMAGES=
 # Extra SGML files that are included by $(DOC_MAIN_SGML_FILE).
 # e.g. content_files=running.sgml building.sgml changes-2.0.sgml
 content_files= \
-	xml/tree_index.sgml \
+#	xml/tree_index.sgml \
 	modest-preface.sgml \
 	modest-architecture.sgml \
 	modest-design.sgml \
