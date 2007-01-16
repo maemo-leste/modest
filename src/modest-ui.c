@@ -353,10 +353,7 @@ connect_signals (ModestUI *self)
 	/* folder view */
 	g_signal_connect (G_OBJECT(folder_view), "folder_selection_changed",
 			  G_CALLBACK(_modest_ui_actions_on_folder_selection_changed),
-			  priv->main_window);
-/* 	g_signal_connect (G_OBJECT(folder_view), "key-press-event", */
-/* 			  G_CALLBACK(on_folder_key_press_event), priv->widget_factory); */
-
+			  priv->main_window);	
 	/* header view */
 	g_signal_connect (G_OBJECT(header_view), "status_update",
 			  G_CALLBACK(_modest_ui_actions_on_header_status_update), 
@@ -366,9 +363,7 @@ connect_signals (ModestUI *self)
 			  priv->main_window);
 	g_signal_connect (G_OBJECT(header_view), "item_not_found",
 			  G_CALLBACK(_modest_ui_actions_on_item_not_found), 
-			  priv->main_window);
-
-	
+			  priv->main_window);	
 	/* msg preview */
 	g_signal_connect (G_OBJECT(msg_view), "link_clicked",
 			  G_CALLBACK(_modest_ui_actions_on_msg_link_clicked), 
@@ -790,8 +785,15 @@ _modest_ui_actions_on_header_selected (ModestHeaderView *folder_view,
 	GetMsgAsyncHelper *helper;
 	TnyList *list;
 
-	if (!header)
+	/* when there's no header, clear the msgview */
+	if (!header) {
+		ModestMsgView *msg_view;
+		ModestWidgetFactory *widget_factory;
+		widget_factory = modest_main_window_get_widget_factory (main_window);
+		msg_view       = modest_widget_factory_get_msg_preview (widget_factory);
+		modest_msg_view_set_message (msg_view, NULL);
 		return;
+	}
 
 	folder = tny_header_get_folder (TNY_HEADER(header));
 
@@ -806,8 +808,7 @@ _modest_ui_actions_on_header_selected (ModestHeaderView *folder_view,
 	helper->func = read_msg_func;
 
 	tny_folder_get_msg_async (TNY_FOLDER(folder),
-				  header,
-				  get_msg_cb,
+				  header, get_msg_cb,
 				  helper);
 
 	/* Frees */
@@ -846,6 +847,7 @@ _modest_ui_actions_on_folder_selection_changed (ModestFolderView *folder_view,
 		modest_widget_memory_save (conf, G_OBJECT (header_view),
 					   "header-view");
 		gtk_window_set_title (GTK_WINDOW(main_window), "Modest");
+		modest_header_view_set_folder (header_view, NULL);
 	} else {  /* the folder was selected */
 		guint num, unread;
 		gchar *title;
