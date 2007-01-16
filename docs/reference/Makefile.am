@@ -94,13 +94,12 @@ GTKDOC_LIBS= \
 	${top_builddir}/src/modest-marshal.o \
 	${top_builddir}/src/modest-pair.o \
 	${top_builddir}/src/modest-presets.o \
-	${top_builddir}/src/modest-protocol-mgr.o \
-	${top_builddir}/src/modest-proto.o \
+	${top_builddir}/src/modest-protocol-info.o \
 	${top_builddir}/src/modest-text-utils.o \
 	${top_builddir}/src/modest-tny-account-store.o \
+	${top_builddir}/src/modest-tny-folder.o \
 	${top_builddir}/src/modest-tny-msg-actions.o \
 	${top_builddir}/src/modest-tny-platform-factory.o \
-	${top_builddir}/src/modest-tny-stream-gtkhtml.o \
 	${top_builddir}/src/modest-ui.o \
 	${top_builddir}/src/modest-widget-factory.o \
 	${top_builddir}/src/modest-widget-memory.o

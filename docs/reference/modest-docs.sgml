@@ -21,8 +21,6 @@
 <!ENTITY ModestTnyFolder SYSTEM "xml/modest-tny-folder.xml">
 <!ENTITY ModestTnyMsgActions SYSTEM "xml/modest-tny-msg-actions.xml">
 <!ENTITY ModestTnyPlatformFactory SYSTEM "xml/modest-tny-platform-factory.xml">
-<!ENTITY ModestTnyStoreActions SYSTEM "xml/modest-tny-store-actions.xml">
-<!ENTITY ModestTnyStreamGtkhtml SYSTEM "xml/modest-tny-stream-gtkhtml.xml">
 <!ENTITY ModestUI SYSTEM "xml/modest-ui.xml">
 <!ENTITY ModestWidgetFactory SYSTEM "xml/modest-widget-factory.xml">
 <!ENTITY ModestWidgetMemory SYSTEM "xml/modest-widget-memory.xml">
@@ -94,8 +92,6 @@
           &ModestTnyFolder;
           &ModestTnyMsgActions;
           &ModestTnyPlatformFactory;
-          &ModestTnyStoreActions;
-          &ModestTnyStreamGtkhtml;
           &ModestUI;
           &ModestWidgetFactory;
           &ModestWidgetMemory;
@@ -108,7 +104,6 @@
           &widgets-ModestHeaderView;
           &widgets-ModestMainWindow;
           &widgets-ModestMsgView;
-          &widgets-modestToolbar;
       </chapter>
       <chapter id="gtk">
         <title>Gtk</title>
