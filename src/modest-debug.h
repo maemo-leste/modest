@@ -27,8 +27,13 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef __MODEST_DEBUG_H__
+#define __MODEST_DEBUG_H__
+
 #include <glib.h>
 #include <glib-object.h>
+
+G_BEGIN_DECLS
 
 #define MODEST_DEBUG "MODEST_DEBUG"
 
@@ -76,3 +81,7 @@ void modest_debug_g_type_init (void);
  * we should abort when a warning occurs.
  */
 void modest_debug_logging_init (void);
+
+G_END_DECLS
+
+#endif /*__MODEST_DEBUG_H__*/
