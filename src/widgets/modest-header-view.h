@@ -64,7 +64,7 @@ typedef enum _ModestHeaderViewColumn {
 	MODEST_HEADER_VIEW_COLUMN_RECEIVED_DATE,
 	MODEST_HEADER_VIEW_COLUMN_MSGTYPE,
 	MODEST_HEADER_VIEW_COLUMN_ATTACH,
-
+	MODEST_HEADER_VIEW_COLUMN_SIZE,
 	/*
 	 * these two are for compact display on small devices,
 	 * with two line display with all relevant headers
@@ -253,15 +253,6 @@ TnyList* modest_header_view_get_selected_headers (ModestHeaderView *self);
  * Selects the header next to the current selected one
  **/
 void     modest_header_view_select_next          (ModestHeaderView *self);
-
-
-/* PROTECTED method. It's useful when we want to force a given
-   selection to reload a msg. For example if we have selected a header
-   in offline mode, when Modest become online, we want to reload the
-   message automatically without an user click over the header */
-void 
-_modest_header_view_change_selection (GtkTreeSelection *selection,
-				      gpointer user_data);
 
 G_END_DECLS
 
