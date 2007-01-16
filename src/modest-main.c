@@ -81,7 +81,7 @@ main (int argc, char *argv[])
 	GError *err = NULL;
 	int retval  = MODEST_ERR_NONE;
 		
-	static gboolean batch=FALSE;
+	static gboolean batch=FALSE, factory_settings=FALSE;
 	static gchar    *mailto, *subject, *bcc, *cc, *body, *account;
 
 	static GOptionEntry options[] = {
@@ -99,6 +99,8 @@ main (int argc, char *argv[])
 		  N_("Account to use (if specified, default account is used)"), NULL},
 		{ "batch", 'y', 0, G_OPTION_ARG_NONE, &batch,
 		  N_("Run in batch mode (don't show UI)"), NULL},
+		{ "factory-settings", 0, 0, G_OPTION_ARG_NONE, &factory_settings,
+		  N_("return to factory settings"), NULL},
 		{ NULL, 0, 0, 0, NULL, NULL, NULL }
 	};
 
@@ -134,7 +136,7 @@ main (int argc, char *argv[])
 		retval = MODEST_ERR_CONF;
 		goto cleanup;
 	}
-
+	
 	/* Get the account store */
 	account_store = tny_platform_factory_new_account_store (fact);
 	if (!account_store) {
@@ -142,6 +144,7 @@ main (int argc, char *argv[])
 		retval = MODEST_ERR_RUN;
 		goto cleanup;
         }
+
 	
 	if (!getenv("DISPLAY"))
 		batch = TRUE; 
@@ -149,6 +152,8 @@ main (int argc, char *argv[])
 	if (!batch) {
 		gdk_threads_init ();
 		gtk_init (&argc, &argv);
+		modest_init_header_columns (factory_settings);
+		
 		retval = start_ui (mailto, cc, bcc, subject, body, account_store);
 	} else 
 		retval = send_mail (mailto, cc, bcc, subject, body);

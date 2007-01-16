@@ -27,27 +27,24 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "modest-widget-memory.h"
+#include <modest-widget-memory.h>
+#include <modest-widget-memory-priv.h>
 
 #include <modest-tny-platform-factory.h>
 #include <modest-tny-folder.h>
 #include <widgets/modest-header-view.h>
 #include <widgets/modest-msg-view.h>
 #include <widgets/modest-folder-view.h>
-
 #include <string.h>
 
-#define PARAM_X             "x"
-#define PARAM_Y             "y"
-#define PARAM_HEIGHT        "height"
-#define PARAM_WIDTH         "width"
-#define PARAM_POS           "pos"
-#define PARAM_COLUMN_WIDTH  "column-width"
-
-static gchar*
-get_keyname (ModestConf *conf, const gchar *name, const gchar *param)
+gchar*
+_modest_widget_memory_get_keyname (const gchar *name, const gchar *param)
 {
 	gchar *esc_name, *keyname;
+
+	g_return_val_if_fail (name, NULL);
+	g_return_val_if_fail (param, NULL);
+	
 	esc_name = modest_conf_key_escape (name);
 
 	keyname = g_strdup_printf ("%s/%s/%s",
@@ -58,10 +55,15 @@ get_keyname (ModestConf *conf, const gchar *name, const gchar *param)
 }
 
 
-static gchar*
-get_keyname_with_type (ModestConf *conf, const gchar *name, guint type, const gchar *param)
+gchar*
+_modest_widget_memory_get_keyname_with_type (const gchar *name, guint type,
+					     const gchar *param)
 {
 	gchar *esc_name, *keyname;
+	
+	g_return_val_if_fail (name, NULL);
+	g_return_val_if_fail (param, NULL);
+
 	esc_name = modest_conf_key_escape (name);
 
 	keyname = g_strdup_printf ("%s/%s/%s_%d",
@@ -77,11 +79,11 @@ save_settings_widget (ModestConf *conf, GtkWidget *widget, const gchar *name)
 {
 	gchar *key;
 
-	key = get_keyname (conf, name, PARAM_HEIGHT);
+	key = _modest_widget_memory_get_keyname (name, MODEST_WIDGET_MEMORY_PARAM_HEIGHT);
 	modest_conf_set_int (conf, key, GTK_WIDGET(widget)->allocation.height, NULL);
 	g_free (key);
 	
-	key = get_keyname (conf, name, PARAM_WIDTH);
+	key = _modest_widget_memory_get_keyname (name, MODEST_WIDGET_MEMORY_PARAM_WIDTH);
 	modest_conf_set_int (conf, key, GTK_WIDGET(widget)->allocation.width, NULL);
 	g_free (key);
 
@@ -95,14 +97,14 @@ restore_settings_widget (ModestConf *conf, GtkWidget *widget, const gchar *name)
 	GtkRequisition req;
 	gchar *key;
 
-	key = get_keyname (conf, name, PARAM_HEIGHT);
+	key = _modest_widget_memory_get_keyname (name, MODEST_WIDGET_MEMORY_PARAM_HEIGHT);
 	
 	if (modest_conf_key_exists (conf, key, NULL))
 		req.height = modest_conf_get_int (conf, key, NULL);
 
 	g_free (key);
 	
-	key = get_keyname (conf, name, PARAM_WIDTH);
+	key = _modest_widget_memory_get_keyname (name, MODEST_WIDGET_MEMORY_PARAM_WIDTH);
 	if (modest_conf_key_exists (conf, key, NULL))
 		req.width = modest_conf_get_int (conf, key, NULL);
 	g_free (key);
@@ -124,11 +126,11 @@ save_settings_window (ModestConf *conf, GtkWindow *win, const gchar *name)
 	
 	gtk_window_get_size (win, &width, &height);
 	
-	key = get_keyname (conf, name, PARAM_HEIGHT);
+	key = _modest_widget_memory_get_keyname (name, MODEST_WIDGET_MEMORY_PARAM_HEIGHT);
 	modest_conf_set_int (conf, key, height, NULL);
 	g_free (key);
 	
-	key = get_keyname (conf, name, PARAM_WIDTH);
+	key = _modest_widget_memory_get_keyname (name, MODEST_WIDGET_MEMORY_PARAM_WIDTH);
 	modest_conf_set_int (conf, key, width, NULL);
 	g_free (key);
 	
@@ -142,14 +144,14 @@ restore_settings_window (ModestConf *conf, GtkWindow *win, const gchar *name)
 	gchar *key;
 	int height = 0, width = 0;
 
-	key = get_keyname (conf, name, PARAM_HEIGHT);
+	key = _modest_widget_memory_get_keyname (name, MODEST_WIDGET_MEMORY_PARAM_HEIGHT);
 	
 	if (modest_conf_key_exists (conf, key, NULL))
 		height = modest_conf_get_int (conf, key, NULL);
 
 	g_free (key);
 
-	key = get_keyname (conf, name, PARAM_WIDTH);
+	key = _modest_widget_memory_get_keyname (name, MODEST_WIDGET_MEMORY_PARAM_WIDTH);
 	if (modest_conf_key_exists (conf, key, NULL))
 		width = modest_conf_get_int (conf, key, NULL);
 
@@ -170,7 +172,7 @@ save_settings_paned (ModestConf *conf, GtkPaned *paned, const gchar *name)
 
 	pos = gtk_paned_get_position (paned);
 	
-	key = get_keyname (conf, name, PARAM_POS);
+	key = _modest_widget_memory_get_keyname (name, MODEST_WIDGET_MEMORY_PARAM_POS);
 	modest_conf_set_int (conf, key, pos, NULL);
 	g_free (key);
 	
@@ -184,7 +186,7 @@ restore_settings_paned (ModestConf *conf, GtkPaned *paned, const gchar *name)
  	gchar *key;
 	int pos;
 	
-	key = get_keyname (conf, name, PARAM_POS);
+	key = _modest_widget_memory_get_keyname (name, MODEST_WIDGET_MEMORY_PARAM_POS);
 	
 	if (modest_conf_key_exists (conf, key, NULL)) {
 		pos = modest_conf_get_int (conf, key, NULL);
@@ -215,11 +217,15 @@ save_settings_header_view (ModestConf *conf, ModestHeaderView *header_view,
 		return TRUE; /* no folder: no settings */ 
 	
 	type = modest_tny_folder_guess_folder_type (folder);
-	key = get_keyname_with_type (conf, name, type, PARAM_COLUMN_WIDTH);
+	key = _modest_widget_memory_get_keyname_with_type (name, type,
+							   MODEST_WIDGET_MEMORY_PARAM_COLUMN_WIDTH);
 
 	cursor = cols = modest_header_view_get_columns (header_view);
 	str = g_string_new (NULL);
-	
+
+	/* NOTE: the exact details of this format are important, as they
+	 * are also used in modest-init.
+	 */
 	while (cursor) {
 
 		int col_id, width;
@@ -259,7 +265,8 @@ restore_settings_header_view (ModestConf *conf, ModestHeaderView *header_view,
 	
 	type = modest_tny_folder_guess_folder_type (folder);
 	
-	key = get_keyname_with_type (conf, name, type, PARAM_COLUMN_WIDTH);
+	key = _modest_widget_memory_get_keyname_with_type (name, type,
+							   MODEST_WIDGET_MEMORY_PARAM_COLUMN_WIDTH);
 	if (modest_conf_key_exists (conf, key, NULL)) {
 		
 		gchar *data, *cursor;

@@ -27,37 +27,40 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __MODEST_WIDGET_MEMORY_H__
-#define __MODEST_WIDGET_MEMORY_H__
+#ifndef __MODEST_INIT_H__
+#define __MODEST_INIT_H__
 
-#include <modest-conf.h>
+#include <glib.h>
+#include <glib-object.h>
+
+/*
+ * functions to initialize various parts of the modest system
+ */
 
 G_BEGIN_DECLS
 
 /**
- * modest_widget_memory_save:
- * @conf: a ModestConf instance
- * @widget: the widget to save the settings for
- * @name: the unique name for this widget
+ * modest_init_header_columns:
+ * @overwrite: write the setting, even if it already exists
  * 
- * store a the settings for a widget in the configuration system
+ * will set defaults for the columns to show for folder,
+ * if there are no such settings yet (in ModestWidgetMemory)
  * 
- * Returns: TRUE if succeeded or FALSE in case of error.
+ * Returns: TRUE if succeeded, FALSE in case of error
  */
-gboolean modest_widget_memory_save (ModestConf *conf, GObject *widget, const gchar *name);
+gboolean modest_init_header_columns (gboolean overwrite);
 
 /**
- * modest_widget_memory_restore:
- * @conf: a ModestConf instance
- * @widget: the widget to save the settings for
- * @name: the unique name for this widget
+ * modest_init_local_folders:
  * 
- * restore the settings for a widget configuration system
+ * create the Local Folders folder under cache, if they
+ * do not exist yet.
  * 
- * Returns: TRUE if succeeded or FALSE in case of error.
+ * Returns: TRUE if the folder were already there, or
+ * they were created, FALSE otherwise
  */
-gboolean modest_widget_memory_restore (ModestConf *conf, GObject *widget, const gchar *name);
+gboolean modest_init_local_folders  (void);
 
 G_END_DECLS
 
-#endif /*__MODEST_WIDGET_MEMORY_H__*/
+#endif /*__MODEST_INIT_H__*/

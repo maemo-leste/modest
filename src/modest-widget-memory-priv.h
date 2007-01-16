@@ -27,37 +27,28 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __MODEST_WIDGET_MEMORY_H__
-#define __MODEST_WIDGET_MEMORY_H__
-
-#include <modest-conf.h>
+#ifndef __MODEST_WIDGET_MEMORY_PRIV_H__
+#define __MODEST_WIDGET_MEMORY_PRIV_H__
 
 G_BEGIN_DECLS
 
-/**
- * modest_widget_memory_save:
- * @conf: a ModestConf instance
- * @widget: the widget to save the settings for
- * @name: the unique name for this widget
- * 
- * store a the settings for a widget in the configuration system
- * 
- * Returns: TRUE if succeeded or FALSE in case of error.
- */
-gboolean modest_widget_memory_save (ModestConf *conf, GObject *widget, const gchar *name);
 
-/**
- * modest_widget_memory_restore:
- * @conf: a ModestConf instance
- * @widget: the widget to save the settings for
- * @name: the unique name for this widget
- * 
- * restore the settings for a widget configuration system
- * 
- * Returns: TRUE if succeeded or FALSE in case of error.
- */
-gboolean modest_widget_memory_restore (ModestConf *conf, GObject *widget, const gchar *name);
+#define MODEST_WIDGET_MEMORY_PARAM_X             "x"
+#define MODEST_WIDGET_MEMORY_PARAM_Y             "y"
+#define MODEST_WIDGET_MEMORY_PARAM_HEIGHT        "height"
+#define MODEST_WIDGET_MEMORY_PARAM_WIDTH         "width"
+#define MODEST_WIDGET_MEMORY_PARAM_POS           "pos"
+#define MODEST_WIDGET_MEMORY_PARAM_COLUMN_WIDTH  "column-width"
+
+/* private functions, only for use in modest-widget-memory and modest-init */
+gchar* _modest_widget_memory_get_keyname           (const gchar *name, const gchar *param);
+gchar* _modest_widget_memory_get_keyname_with_type (const gchar *name, guint type,
+						    const gchar *param);
 
 G_END_DECLS
 
-#endif /*__MODEST_WIDGET_MEMORY_H__*/
+#endif /*__MODEST_WIDGET_MEMORY_PRIV_H__*/
+
+
+
+
