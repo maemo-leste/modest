@@ -286,8 +286,10 @@ get_new_column (const gchar *name, GtkCellRenderer *renderer,
 	gtk_tree_view_column_set_sizing (column, GTK_TREE_VIEW_COLUMN_GROW_ONLY);
 
 	gtk_tree_view_column_set_resizable (column, resizable);
-	if (resizable)
+	if (resizable) {
 		gtk_tree_view_column_set_min_width (column, 100);
+		gtk_tree_view_column_set_expand (column, TRUE);
+	}
 	
 	if (show_as_text) 
 		gtk_tree_view_column_add_attribute (column, renderer, "text",
@@ -298,7 +300,7 @@ get_new_column (const gchar *name, GtkCellRenderer *renderer,
 	gtk_tree_view_column_set_sort_indicator (column, FALSE);
 	gtk_tree_view_column_set_reorderable (column, TRUE);
 	gtk_tree_view_column_set_sizing (column, GTK_TREE_VIEW_COLUMN_FIXED);
-
+	
 	if (cell_data_func)
 		gtk_tree_view_column_set_cell_data_func(column, renderer, cell_data_func,
 							user_data, NULL);
