@@ -66,7 +66,7 @@ struct _ModestMainWindowPrivate {
 	GtkUIManager *ui_manager;
 	ModestWidgetFactory *widget_factory;
 	TnyPlatformFactory *factory;
-	TnyAccountStore *account_store;
+	ModestTnyAccountStore *account_store;
 	
 	GtkWidget *toolbar;
 	GtkWidget *menubar;
@@ -213,7 +213,8 @@ restore_sizes (ModestMainWindow *self)
 	ModestMainWindowPrivate *priv;
 	
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
-	conf = modest_tny_platform_factory_get_modest_conf_instance (priv->factory);
+	conf = modest_tny_platform_factory_get_conf_instance
+		(MODEST_TNY_PLATFORM_FACTORY(priv->factory));
 
 	modest_widget_memory_restore (conf, G_OBJECT(priv->folder_paned),
 				      "modest-folder-paned");
@@ -235,7 +236,8 @@ save_sizes (ModestMainWindow *self)
 	ModestConf *conf;
 	
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
-	conf = modest_tny_platform_factory_get_modest_conf_instance (priv->factory);
+	conf = modest_tny_platform_factory_get_conf_instance
+		(MODEST_TNY_PLATFORM_FACTORY(priv->factory));
 	
 	modest_widget_memory_save (conf,G_OBJECT(self), "modest-main-window");
 	modest_widget_memory_save (conf, G_OBJECT(priv->folder_paned),
@@ -380,7 +382,7 @@ modest_main_window_new (ModestWidgetFactory *widget_factory,
 	gtk_window_set_icon  (GTK_WINDOW(obj),
 			      modest_icon_factory_get_icon (MODEST_APP_ICON));	
 	gtk_widget_show_all (main_vbox);
-
+	
 	g_signal_connect (G_OBJECT(obj), "delete-event",
 			  G_CALLBACK(on_delete_event), obj);
 	

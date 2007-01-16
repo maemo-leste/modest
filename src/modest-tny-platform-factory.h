@@ -75,7 +75,7 @@ GType        modest_tny_platform_factory_get_type    (void) G_GNUC_CONST;
 TnyPlatformFactory*    modest_tny_platform_factory_get_instance         (void);
 
 /**
- * modest_tny_platform_factory_get_modest_account_mgr_instance:
+ * modest_tny_platform_factory_get_account_mgr_instance:
  * @fact: the #TnyPlatformFactory that holds the #ModestAccountMgr instance
  * 
  * Gets a new instance of a #ModestAccountMgr if it is the first call
@@ -84,10 +84,10 @@ TnyPlatformFactory*    modest_tny_platform_factory_get_instance         (void);
  * 
  * Returns: an instance of a #ModestAccountMgr
  **/
-ModestAccountMgr*  modest_tny_platform_factory_get_modest_account_mgr_instance (TnyPlatformFactory *fact);
+ModestAccountMgr*  modest_tny_platform_factory_get_account_mgr_instance (ModestTnyPlatformFactory *fact);
 
 /**
- * modest_tny_platform_factory_get_modest_conf_instance:
+ * modest_tny_platform_factory_get_conf_instance:
  * @fact: the #TnyPlatformFactory that holds the #ModestConf instance
  * 
  * Gets a new instance of a #ModestConf if it is the first call to the
@@ -96,10 +96,10 @@ ModestAccountMgr*  modest_tny_platform_factory_get_modest_account_mgr_instance (
  * 
  * Returns: an instance of a #ModestConf
  **/
-ModestConf*     modest_tny_platform_factory_get_modest_conf_instance (TnyPlatformFactory *fact);
+ModestConf*     modest_tny_platform_factory_get_conf_instance (ModestTnyPlatformFactory *fact);
 
 /**
- * modest_tny_platform_factory_get_modest_mail_operation_queue_instance:
+ * modest_tny_platform_factory_get_mail_operation_queue_instance:
  * @fact: the #TnyPlatformFactory that holds the #ModestMailOperationQueue instance
  * 
  * Gets a new instance of a #ModestMailOperationQueue if it is the
@@ -108,7 +108,7 @@ ModestConf*     modest_tny_platform_factory_get_modest_conf_instance (TnyPlatfor
  * 
  * Returns: an instance of a #ModestMailOperationQueue
  **/
-ModestMailOperationQueue*   modest_tny_platform_factory_get_modest_mail_operation_queue_instance (TnyPlatformFactory *fact);
+ModestMailOperationQueue*   modest_tny_platform_factory_get_mail_operation_queue_instance (ModestTnyPlatformFactory *fact);
 
 G_END_DECLS
 

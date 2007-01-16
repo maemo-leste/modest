@@ -218,7 +218,7 @@ modest_tny_platform_factory_new_account_store (TnyPlatformFactory *self)
 
 	if (!priv->account_store) {
 		if (!priv->account_mgr)
-			modest_tny_platform_factory_get_modest_account_mgr_instance (self);
+			modest_tny_platform_factory_get_account_mgr_instance (self);
 
 		priv->account_store = modest_tny_account_store_new (priv->account_mgr);
 	}
@@ -235,7 +235,7 @@ modest_tny_platform_factory_new_device (TnyPlatformFactory *self)
 #elif MODEST_PLATFORM_ID==2
 	return TNY_DEVICE (tny_maemo_device_new ());
 #else
-	return NULL;
+	g_return_val_if_reached (NULL);
 #endif /* MODEST_PLATFORM */
 }
 
@@ -268,7 +268,7 @@ modest_tny_platform_factory_new_header (TnyPlatformFactory *self)
 
 
 ModestAccountMgr *
-modest_tny_platform_factory_get_modest_account_mgr_instance (TnyPlatformFactory *fact)
+modest_tny_platform_factory_get_account_mgr_instance (ModestTnyPlatformFactory *fact)
 {
 	ModestTnyPlatformFactoryPrivate *priv;
 
@@ -276,8 +276,7 @@ modest_tny_platform_factory_get_modest_account_mgr_instance (TnyPlatformFactory 
 
 	if (!priv->account_mgr) {
 		if (!priv->conf)
-			modest_tny_platform_factory_get_modest_conf_instance (fact);
-
+			modest_tny_platform_factory_get_conf_instance (fact);
 		priv->account_mgr = modest_account_mgr_new (priv->conf);
 	}
 
@@ -285,7 +284,7 @@ modest_tny_platform_factory_get_modest_account_mgr_instance (TnyPlatformFactory 
 }
 
 ModestConf *
-modest_tny_platform_factory_get_modest_conf_instance (TnyPlatformFactory *fact)
+modest_tny_platform_factory_get_conf_instance (ModestTnyPlatformFactory *fact)
 {
 	ModestTnyPlatformFactoryPrivate *priv;
 
@@ -298,7 +297,7 @@ modest_tny_platform_factory_get_modest_conf_instance (TnyPlatformFactory *fact)
 }
 
 ModestMailOperationQueue*   
-modest_tny_platform_factory_get_modest_mail_operation_queue_instance (TnyPlatformFactory *fact)
+modest_tny_platform_factory_get_mail_operation_queue_instance (ModestTnyPlatformFactory *fact)
 {
 	ModestTnyPlatformFactoryPrivate *priv;
 

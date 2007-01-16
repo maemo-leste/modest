@@ -137,7 +137,8 @@ save_settings (ModestEditMsgWindow *self)
 	ModestConf *conf;
 
 	priv = MODEST_EDIT_MSG_WINDOW_GET_PRIVATE(self);
-	conf = modest_tny_platform_factory_get_modest_conf_instance (priv->fact);
+	conf = modest_tny_platform_factory_get_conf_instance
+		(MODEST_TNY_PLATFORM_FACTORY(priv->fact));
 
 	modest_widget_memory_save (conf, G_OBJECT(self), "modest-edit-msg-window");
 }
@@ -150,8 +151,8 @@ restore_settings (ModestEditMsgWindow *self)
 	ModestConf *conf;
 
 	priv = MODEST_EDIT_MSG_WINDOW_GET_PRIVATE(self);
-	conf = modest_tny_platform_factory_get_modest_conf_instance (priv->fact);
-
+	conf = modest_tny_platform_factory_get_conf_instance
+		(MODEST_TNY_PLATFORM_FACTORY(priv->fact));
 	modest_widget_memory_restore (conf, G_OBJECT(self), "modest-edit-msg-window");
 }
 
@@ -385,7 +386,7 @@ modest_edit_msg_window_get_msg_data (ModestEditMsgWindow *edit_window)
 
 	/* don't free these (except from) */
 	data = g_slice_new0 (MsgData);
-	data->from    =  g_strdup_printf ("%s <%s>", account_data->full_name, account_data->email) ;
+	data->from    =  g_strdup_printf ("%s <%s>", account_data->fullname, account_data->email) ;
 	data->to      =  (gchar*) gtk_entry_get_text (GTK_ENTRY(priv->to_field));
 	data->cc      =  (gchar*) gtk_entry_get_text (GTK_ENTRY(priv->cc_field));
 	data->bcc     =  (gchar*) gtk_entry_get_text (GTK_ENTRY(priv->bcc_field));
