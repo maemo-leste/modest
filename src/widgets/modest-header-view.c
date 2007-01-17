@@ -234,29 +234,37 @@ set_empty (ModestHeaderView *self)
 
 
 
-ModestHeaderViewState
-modest_header_view_get_state (ModestHeaderView *self)
-{
-	g_return_val_if_fail (MODEST_IS_HEADER_VIEW (self), TRUE);
-	
-	return MODEST_HEADER_VIEW_GET_PRIVATE(self)->state;
-}
-
-
 static void
 set_state (ModestHeaderView *self, ModestHeaderViewState state)
 {
 	ModestHeaderViewState oldstate =
 		MODEST_HEADER_VIEW_GET_PRIVATE(self)->state;
+
+	return; /* FIXME: this is recursing */
 	
 	if (oldstate != state) {
 		if ((oldstate & MODEST_HEADER_VIEW_STATE_IS_EMPTY) !=
-		    (state & MODEST_HEADER_VIEW_STATE_IS_EMPTY))
-			set_empty (self);
+		    (state & MODEST_HEADER_VIEW_STATE_IS_EMPTY)) {
+			//set_empty (self);
+		}
 		
 		MODEST_HEADER_VIEW_GET_PRIVATE(self)->state = state; 
 		/* FIXME: emit signal if the state changed*/
 	}
+
+	g_warning ("state:\n"
+		   "is empty: %s\n"
+		   "has cursor: %s\n"
+		   "at last item: %s\n"
+		   "at first item: %s\n"
+		   "has selection: %s\n"
+		   "has multi selection: %s\n",
+		   state & MODEST_HEADER_VIEW_STATE_IS_EMPTY ? "yes" : "no",
+		   state & MODEST_HEADER_VIEW_STATE_HAS_CURSOR ? "yes" : "no",
+		   state & MODEST_HEADER_VIEW_STATE_AT_LAST_ITEM ? "yes" : "no",
+		   state & MODEST_HEADER_VIEW_STATE_AT_FIRST_ITEM ? "yes" : "no",
+		   state & MODEST_HEADER_VIEW_STATE_HAS_SELECTION ? "yes" : "no",
+		   state & MODEST_HEADER_VIEW_STATE_HAS_MULTIPLE_SELECTION ? "yes" : "no");
 }
 
 
@@ -302,6 +310,15 @@ update_state (ModestHeaderView *self)
 	set_state (self, state);	
 }
 
+
+ModestHeaderViewState
+modest_header_view_get_state (ModestHeaderView *self)
+{
+	g_return_val_if_fail (MODEST_IS_HEADER_VIEW (self), TRUE);
+	update_state (self);
+	
+	return MODEST_HEADER_VIEW_GET_PRIVATE(self)->state;
+}
 
 
 gboolean
@@ -477,7 +494,8 @@ modest_header_view_finalize (GObject *obj)
 	
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
-	
+
+
 GtkWidget*
 modest_header_view_new (TnyFolder *folder, const GList *columns,
 			ModestHeaderViewStyle style)
@@ -511,6 +529,7 @@ modest_header_view_new (TnyFolder *folder, const GList *columns,
 	
 	priv->sig1 = g_signal_connect (sel, "changed",
 				       G_CALLBACK(on_selection_changed), self);
+		
 	return GTK_WIDGET(self);
 }
 
@@ -736,8 +755,10 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 	/* if the folder is empty, nothing to do */
 	if (priv->state & MODEST_HEADER_VIEW_STATE_IS_EMPTY) 
 		return;
+
+	update_state (self);
 	
-	if (!gtk_tree_selection_get_selected (sel, &model, &iter))
+	if (!gtk_tree_selection_get_selected (sel, &model, &iter)) 
 		return; /* msg was _un_selected */
 
 	gtk_tree_model_get (model, &iter,
