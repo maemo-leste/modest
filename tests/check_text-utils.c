@@ -707,6 +707,8 @@ START_TEST (test_convert_to_html_regular)
 	gchar *html_end = NULL;
 	gchar *html = NULL;
 	gint bytes;
+	int i;
+
 	const StringPair tests[] = {
 		{ "This is some text.", 
 		  "<tt>This is some text.</tt>" },

@@ -29,7 +29,7 @@
 
 #include <check.h>
 #include <modest-conf.h>
-
+#include <string.h>
 
 START_TEST (test_modest_conf_new)
 {

@@ -54,7 +54,7 @@ START_TEST (test_modest_presets_get_providers)
 {
 	ModestPresets *presets;
 	gchar **providers;
-	int len, i;
+	int len;
 	
 	presets = modest_presets_new ("provider-data-test.keyfile");
 	fail_unless (presets != NULL,

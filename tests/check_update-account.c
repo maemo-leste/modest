@@ -49,7 +49,6 @@ GMainLoop *main_loop;
 static void
 on_progress_changed (ModestMailOperation *mail_op, gpointer user_data)
 {
-	ModestMailOperationStatus status;
 	ModestMailOperationQueue *queue = NULL;
 
 	g_print ("Refreshed %d of %d\n", 
@@ -114,7 +113,7 @@ main (int argc, char **argv)
 	g_thread_init(NULL);
 
 	main_loop = g_main_loop_new (NULL, FALSE);
-        id = g_timeout_add(1000, func, main_loop);
+        id = g_timeout_add(10, func, main_loop);
 
 	g_main_loop_run(main_loop);
 
