@@ -55,14 +55,9 @@ static void modest_tny_account_store_finalize     (GObject *obj);
 
 /* implementations for tny-account-store-iface */
 static void    modest_tny_account_store_instance_init (ModestTnyAccountStore *obj);
-
 static void    modest_tny_account_store_init                     (gpointer g, gpointer iface_data);
-static void    modest_tny_account_store_add_store_account       (TnyAccountStore *self,
-								 TnyStoreAccount *account);
-static void    modest_tny_account_store_add_transport_account   (TnyAccountStore *self,
-								 TnyTransportAccount *account);
-static void    modest_tny_account_store_get_accounts            (TnyAccountStore *iface, TnyList *list,
-								 TnyGetAccountsRequestType type);
+
+
 /* list my signals */
 enum {
 	PASSWORD_REQUESTED_SIGNAL,
@@ -444,68 +439,21 @@ modest_tny_account_store_new (ModestAccountMgr *account_mgr) {
 	return MODEST_TNY_ACCOUNT_STORE(obj);
 }
 
-
-static gboolean
-add_account  (TnyAccountStore *self, TnyAccount *account) {
-
-	ModestTnyAccountStore *account_store;
-	ModestTnyAccountStorePrivate *priv;
-	ModestAccountMgr *account_mgr;	
-	const gchar *account_name;
-	const gchar *hostname, *username, *proto;
-
-	g_return_val_if_fail (self, FALSE);
-	g_return_val_if_fail (account, FALSE);
-
-	account_store  = MODEST_TNY_ACCOUNT_STORE(self);
-	priv           = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
-	account_mgr    = modest_tny_platform_factory_get_account_mgr_instance
-		            (MODEST_TNY_PLATFORM_FACTORY(priv->platform_fact));
-	
-	
-	account_name   = tny_account_get_id(account);
-	if (!account_name) {
-		g_printerr ("modest: failed to retrieve account name\n");
-		return FALSE;
-	}
-
-	hostname =  tny_account_get_hostname(account);
-	username =  tny_account_get_user(account);
-	proto    =  tny_account_get_proto(account);
-
-	return modest_account_mgr_add_server_account (account_mgr,
-						      account_name,
-						      hostname, username, NULL,
-						      modest_protocol_info_get_protocol(proto));
-}
-
-
 static void
 modest_tny_account_store_add_store_account  (TnyAccountStore *self,
 					     TnyStoreAccount *account)
 {
-	ModestTnyAccountStorePrivate *priv;
-
-	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
-	tny_camel_account_set_session (TNY_CAMEL_ACCOUNT(account),
-				       priv->tny_session_camel);
-	
-	if (!add_account (self, TNY_ACCOUNT(account)))
-		g_printerr ("modest: failed to add store account\n");
+	/* we should not need this...*/
+	g_printerr ("modest: add_store_account_func not implemented\n");
 }
 
 
 static void
 modest_tny_account_store_add_transport_account  (TnyAccountStore *self,
 						 TnyTransportAccount *account)
-{
-	ModestTnyAccountStorePrivate *priv;
-	
-	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
-	tny_camel_account_set_session (TNY_CAMEL_ACCOUNT(account),
-				       priv->tny_session_camel);	
-	if (!add_account (self, TNY_ACCOUNT(account)))
-		g_printerr ("modest: failed to add transport account\n");
+{	
+	/* we should not need this...*/
+	g_printerr ("modest: add_transport_account_func not implemented\n");
 }
 
 
@@ -671,7 +619,8 @@ static gboolean
 modest_tny_account_store_alert (TnyAccountStore *self, TnyAlertType type,
 				const gchar *prompt)
 {
-	g_printerr ("modest: alert [%d]: %s", type, prompt);
+	g_printerr ("modest: alert_func not implemented (%d, %s)\n",
+		    type, prompt);
 	return TRUE;
 }
 
