@@ -33,7 +33,7 @@
 #include <modest-tny-platform-factory.h>
 #include <modest-widget-memory.h>
 #include <modest-widget-memory-priv.h>
-#include <modest-tny-folder.h>
+#include <modest-local-folder-info.h>
 #include <modest-init.h>
 #include <glib/gstdio.h>
 
@@ -41,7 +41,6 @@ typedef struct {
 	ModestHeaderViewColumn col;
 	guint                  width;
 } FolderCols;
-
 
 
 #if MODEST_PLATFORM_ID==1   /*gtk*/
@@ -205,7 +204,7 @@ modest_init_local_folders  (void)
 		for (j = 0; j != G_N_ELEMENTS(maildirs); ++j) {
 			gchar *dir;
 			dir = g_build_filename (path, "local_folders",
-						modest_tny_folder_get_local_folder_type_name(LOCAL_FOLDERS[i]),
+						modest_local_folder_info_get_type_name(LOCAL_FOLDERS[i]),
 						maildirs[j],
 						NULL);
 			if (g_mkdir_with_parents (dir, 0755) < 0) {
