@@ -91,7 +91,6 @@ GType  modest_tny_account_store_get_type   (void) G_GNUC_CONST;
  */
 ModestTnyAccountStore*    modest_tny_account_store_new (ModestAccountMgr *account_mgr);
 
-
 /**
  * tny_account_store_get_session
  * @self: a TnyAccountStore instance

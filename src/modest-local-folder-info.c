@@ -90,3 +90,10 @@ modest_local_folder_info_get_type_display_name (ModestLocalFolderType type)
 }
 
 
+gchar *
+modest_local_folder_info_get_maildir_path (void)
+{
+	return g_build_filename (g_get_home_dir(), ".modest",
+				 "local_folders", NULL);
+}
+

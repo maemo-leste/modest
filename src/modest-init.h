@@ -36,7 +36,6 @@
 /*
  * functions to initialize various parts of the modest system
  */
-
 G_BEGIN_DECLS
 
 /**
@@ -60,6 +59,7 @@ gboolean modest_init_header_columns (gboolean overwrite);
  * they were created, FALSE otherwise
  */
 gboolean modest_init_local_folders  (void);
+
 
 G_END_DECLS
 

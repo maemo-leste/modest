@@ -110,6 +110,7 @@ ModestConf*     modest_tny_platform_factory_get_conf_instance (ModestTnyPlatform
  **/
 ModestMailOperationQueue*   modest_tny_platform_factory_get_mail_operation_queue_instance (ModestTnyPlatformFactory *fact);
 
+
 G_END_DECLS
 
 #endif /* __MODEST_TNY_PLATFORM_FACTORY_H__ */

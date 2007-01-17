@@ -72,7 +72,7 @@ ModestLocalFolderType modest_local_folder_info_get_type (const gchar *name);
 const gchar* modest_local_folder_info_get_type_name (ModestLocalFolderType type);
 
 /**
- * modest_local_folder_get_type_display_name
+ * modest_local_folder_info_get_type_display_name
  * @type: the type of the local folder
  * 
  * get the localized display name for some local folder
@@ -82,6 +82,19 @@ const gchar* modest_local_folder_info_get_type_name (ModestLocalFolderType type)
  *
  */
 const gchar* modest_local_folder_info_get_type_display_name (ModestLocalFolderType type);
+
+
+/**
+ * modest_local_folder_info_get_maildir_path
+ * @type: the type of the local folder
+ * 
+ * get the path to the Maildir where the local folders are stored
+ *  
+ * Returns: the local_folders Maildir path as a newly allocated
+ * string, which must be freed by the caller.
+ *
+ */
+gchar *modest_local_folder_info_get_maildir_path (void);
 
 
 G_END_DECLS

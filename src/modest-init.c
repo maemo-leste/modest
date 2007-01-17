@@ -186,36 +186,31 @@ gboolean
 modest_init_local_folders  (void)
 {
 	int i;
-	gchar *path;
+	gchar *maildir_path;
 	static const gchar* maildirs[] = {
 		"cur", "new", "tmp"
 	};
 	
-	path = g_build_filename (g_get_home_dir(), ".modest", NULL);
-
-	if (g_access (path, W_OK) != 0) {
-		g_printerr ("modest: cannot write into %s\n", path);
-		g_free (path);
-		return FALSE;
-	}
+	maildir_path = modest_local_folder_info_get_maildir_path ();
 
 	for (i = 0; i != G_N_ELEMENTS(LOCAL_FOLDERS); ++i) {
 		int j;
 		for (j = 0; j != G_N_ELEMENTS(maildirs); ++j) {
 			gchar *dir;
-			dir = g_build_filename (path, "local_folders",
+			dir = g_build_filename (maildir_path,
 						modest_local_folder_info_get_type_name(LOCAL_FOLDERS[i]),
 						maildirs[j],
 						NULL);
 			if (g_mkdir_with_parents (dir, 0755) < 0) {
 				g_printerr ("modest: failed to create %s\n", dir);
 				g_free (dir);
+				g_free (maildir_path);
 				return FALSE;
 			}
 			g_free(dir);
 		}
 	}
 	
-	g_free (path);
+	g_free (maildir_path);
 	return TRUE;
 }
