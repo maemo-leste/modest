@@ -32,6 +32,69 @@
 #include <string.h>
 #include <modest-tny-folder.h>
 
+
+typedef struct {
+	ModestLocalFolderType   type;
+	const gchar             *name;
+	const gchar             *display_name;
+} ModestLocalFolder;
+
+const ModestLocalFolder ModestLocalFolderMap[] = {
+	{ MODEST_LOCAL_FOLDER_TYPE_JUNK,    "junk",    N_("junk")},
+	{ MODEST_LOCAL_FOLDER_TYPE_TRASH,   "trash",   N_("trash")},
+	{ MODEST_LOCAL_FOLDER_TYPE_DRAFTS,  "drafts",  N_("drafts")},
+	{ MODEST_LOCAL_FOLDER_TYPE_SENT,    "sent",    N_("sent")},
+	{ MODEST_LOCAL_FOLDER_TYPE_OUTBOX,  "outbox",  N_("outbox")},
+	{ MODEST_LOCAL_FOLDER_TYPE_ARCHIVE, "archive", N_("archive")}
+};
+
+
+ModestLocalFolderType
+modest_tny_folder_get_local_folder_type (const gchar *name)
+{
+	int i;
+
+	g_return_val_if_fail (name, MODEST_LOCAL_FOLDER_TYPE_UNKNOWN);
+
+	for (i = 0; i != G_N_ELEMENTS(ModestLocalFolderMap); ++i) {
+		if (strcmp (ModestLocalFolderMap[i].name, name) == 0)
+			return ModestLocalFolderMap[i].type;
+	}
+	return MODEST_LOCAL_FOLDER_TYPE_UNKNOWN;
+}
+
+const gchar*
+modest_tny_folder_get_local_folder_type_name (ModestLocalFolderType type)
+{
+	int i = 0;
+	g_return_val_if_fail (type > MODEST_LOCAL_FOLDER_TYPE_UNKNOWN &&
+			      type < MODEST_LOCAL_FOLDER_TYPE_NUM, NULL);
+	
+	for (i = 0; i != G_N_ELEMENTS(ModestLocalFolderMap); ++i) {
+		if (ModestLocalFolderMap[i].type == type)
+			return ModestLocalFolderMap[i].name;
+	}
+	return NULL;	
+}
+
+
+const gchar*
+modest_tny_folder_get_local_folder_type_display_name (ModestLocalFolderType type)
+{
+	int i = 0;
+	g_return_val_if_fail (type > MODEST_LOCAL_FOLDER_TYPE_UNKNOWN &&
+			      type < MODEST_LOCAL_FOLDER_TYPE_NUM, NULL);
+	
+	for (i = 0; i != G_N_ELEMENTS(ModestLocalFolderMap); ++i) {
+		if (ModestLocalFolderMap[i].type == type)
+			return ModestLocalFolderMap[i].display_name;
+	}
+	return NULL;	
+}
+
+
+
+
 TnyFolderType
 modest_tny_folder_guess_folder_type_from_name (const gchar* name)
 {

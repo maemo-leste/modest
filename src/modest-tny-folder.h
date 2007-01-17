@@ -43,6 +43,18 @@ typedef enum {
 	MODEST_FOLDER_RULES_FOLDER_DELETABLE 
 } ModestTnyFolderRules;
 
+typedef enum {
+	MODEST_LOCAL_FOLDER_TYPE_UNKNOWN,
+	
+	MODEST_LOCAL_FOLDER_TYPE_DRAFTS,
+	MODEST_LOCAL_FOLDER_TYPE_SENT,
+	MODEST_LOCAL_FOLDER_TYPE_OUTBOX,
+	MODEST_LOCAL_FOLDER_TYPE_ARCHIVE,
+	MODEST_LOCAL_FOLDER_TYPE_JUNK,
+	MODEST_LOCAL_FOLDER_TYPE_TRASH,
+	
+	MODEST_LOCAL_FOLDER_TYPE_NUM	
+} ModestLocalFolderType;
 
 
 /**
@@ -83,6 +95,13 @@ TnyFolderType  modest_tny_folder_guess_folder_type_from_name   (const gchar *fol
  * folder
  */
 ModestTnyFolderRules  modest_tny_folder_get_rules   (const TnyFolder *folder);
+
+
+/* some class-function (ie. don't require TnyFolder* */
+ModestLocalFolderType modest_tny_folder_get_local_folder_type (const gchar *name);
+const gchar* modest_tny_folder_get_local_folder_type_name (ModestLocalFolderType type);
+const gchar* modest_tny_folder_get_local_folder_type_display_name (ModestLocalFolderType type);
+
 
 
 G_END_DECLS

@@ -33,12 +33,15 @@
 #include <modest-tny-platform-factory.h>
 #include <modest-widget-memory.h>
 #include <modest-widget-memory-priv.h>
+#include <modest-tny-folder.h>
 #include <modest-init.h>
+#include <glib/gstdio.h>
 
 typedef struct {
 	ModestHeaderViewColumn col;
 	guint                  width;
 } FolderCols;
+
 
 
 #if MODEST_PLATFORM_ID==1   /*gtk*/
@@ -71,6 +74,13 @@ static const FolderCols OUTBOX_COLUMNS = {
 	 {MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER_OUT,150},
 };
 #endif /*MODEST_PLATFORM*/
+
+static const ModestLocalFolderType LOCAL_FOLDERS[] = {
+	MODEST_LOCAL_FOLDER_TYPE_OUTBOX,
+	MODEST_LOCAL_FOLDER_TYPE_DRAFTS,
+	MODEST_LOCAL_FOLDER_TYPE_SENT,
+	MODEST_LOCAL_FOLDER_TYPE_ARCHIVE	
+};
 
 
 static ModestTnyPlatformFactory*
@@ -176,5 +186,37 @@ modest_init_header_columns (gboolean overwrite)
 gboolean
 modest_init_local_folders  (void)
 {
+	int i;
+	gchar *path;
+	static const gchar* maildirs[] = {
+		"cur", "new", "tmp"
+	};
+	
+	path = g_build_filename (g_get_home_dir(), ".modest", NULL);
+
+	if (g_access (path, W_OK) != 0) {
+		g_printerr ("modest: cannot write into %s\n", path);
+		g_free (path);
+		return FALSE;
+	}
+
+	for (i = 0; i != G_N_ELEMENTS(LOCAL_FOLDERS); ++i) {
+		int j;
+		for (j = 0; j != G_N_ELEMENTS(maildirs); ++j) {
+			gchar *dir;
+			dir = g_build_filename (path, "local_folders",
+						modest_tny_folder_get_local_folder_type_name(LOCAL_FOLDERS[i]),
+						maildirs[j],
+						NULL);
+			if (g_mkdir_with_parents (dir, 0755) < 0) {
+				g_printerr ("modest: failed to create %s\n", dir);
+				g_free (dir);
+				return FALSE;
+			}
+			g_free(dir);
+		}
+	}
+	
+	g_free (path);
 	return TRUE;
 }

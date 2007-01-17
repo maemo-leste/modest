@@ -54,13 +54,16 @@
 #endif /* MODEST_PLATFORM==2 */
 
 /* return values */
-#define MODEST_ERR_NONE    0
-#define MODEST_ERR_OPTIONS 1
-#define MODEST_ERR_CONF    2
-#define MODEST_ERR_UI      3
-#define MODEST_ERR_HILDON  4
-#define MODEST_ERR_RUN     5
-#define MODEST_ERR_SEND    6
+enum {
+	MODEST_ERR_NONE    = 0,
+	MODEST_ERR_OPTIONS, 
+	MODEST_ERR_CONF,    
+	MODEST_ERR_UI,      
+	MODEST_ERR_HILDON,  
+	MODEST_ERR_RUN,     
+	MODEST_ERR_SEND,    
+	MODEST_ERR_INIT,
+};
 
 static gboolean hildon_init (); /* NOP if HILDON is not defined */
 static int start_ui (const gchar* mailto, const gchar *cc,
@@ -134,6 +137,12 @@ main (int argc, char *argv[])
 	if (!modest_conf) {
 		g_printerr ("modest: failed to initialize config system, exiting\n");
 		retval = MODEST_ERR_CONF;
+		goto cleanup;
+	}
+
+	if (!modest_init_local_folders ()) {
+		g_printerr ("modest: failed to initialize local folders, exiting\n");
+		retval = MODEST_ERR_INIT;
 		goto cleanup;
 	}
 	
