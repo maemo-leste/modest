@@ -424,7 +424,7 @@ update_model_empty (ModestFolderView *self)
 	gtk_tree_store_append (store, &iter, NULL);
 
 	gtk_tree_store_set (store, &iter, 0, _("(empty)"), -1);
-
+	
 	gtk_tree_view_set_model (GTK_TREE_VIEW(self),
 				 GTK_TREE_MODEL(store));
 	g_object_unref (store);

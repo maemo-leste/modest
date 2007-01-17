@@ -33,8 +33,8 @@
 #include <glib-object.h>
 #include <tny-account-store.h>
 #include <gtk/gtkactiongroup.h>
-#include "modest-window.h"
-#include "modest-edit-msg-window.h"
+#include <widgets/modest-window.h>
+#include <widgets/modest-edit-msg-window.h>
 
 G_BEGIN_DECLS
 

@@ -1,6 +1,6 @@
 #
 # Makefile.am
-# Time-stamp: <2007-01-09 17:08:25 (djcb)>
+# Time-stamp: <2007-01-17 16:00:38 (djcb)>
 #
 #
 # use Automake 'trick' ==> convenience static libraries, which
@@ -19,8 +19,6 @@ noinst_LTLIBRARIES=\
 	libmodest-ui.la
 
 libmodest_ui_la_SOURCES=              \
-	modest-account-assistant.c    \
-	modest-account-assistant.h    \
 	modest-account-view-window.c  \
 	modest-account-view-window.h  \
 	modest-edit-msg-window.c      \
@@ -30,6 +28,9 @@ libmodest_ui_la_SOURCES=              \
 	modest-store-widget.h         \
 	modest-transport-widget.c     \
 	modest-transport-widget.h     
+
+#	modest-account-assistant.c    
+#	modest-account-assistant.h    
 
 
 LDADD = \

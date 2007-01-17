@@ -167,7 +167,6 @@ modest_main_window_finalize (GObject *obj)
 static ModestHeaderView*
 header_view_new (ModestMainWindow *self)
 {
-	int i;
 	ModestHeaderView *header_view;
 	ModestMainWindowPrivate *priv;
 	
@@ -186,7 +185,8 @@ restore_sizes (ModestMainWindow *self)
 	ModestMainWindowPrivate *priv;
 	
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
-	conf = modest_tny_platform_factory_get_modest_conf_instance (priv->factory);
+	conf = modest_tny_platform_factory_get_conf_instance
+		(MODEST_TNY_PLATFORM_FACTORY(priv->factory));
 
 	modest_widget_memory_restore (conf,G_OBJECT(self),
 				      "modest-main-window");
@@ -204,7 +204,8 @@ save_sizes (ModestMainWindow *self)
 	ModestConf *conf;
 	
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
-	conf = modest_tny_platform_factory_get_modest_conf_instance (priv->factory);
+	conf = modest_tny_platform_factory_get_conf_instance
+		(MODEST_TNY_PLATFORM_FACTORY(priv->factory));
 	
 	modest_widget_memory_save (conf,G_OBJECT(self), "modest-main-window");
 	modest_widget_memory_save (conf, G_OBJECT(priv->main_paned),
@@ -241,9 +242,9 @@ on_delete_event (GtkWidget *widget, GdkEvent  *event, ModestMainWindow *self)
 }
 
 
-GtkWidget*
+ModestWindow*
 modest_main_window_new (ModestWidgetFactory *widget_factory,
-			GtkUIManager *ui_manager)
+			TnyAccountStore *account_store)
 {
 	GObject *obj;
 	ModestMainWindowPrivate *priv;
@@ -257,7 +258,7 @@ modest_main_window_new (ModestWidgetFactory *widget_factory,
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(obj);
 
 	priv->widget_factory = g_object_ref (widget_factory);
-	priv->ui_manager = g_object_ref (ui_manager);
+	//priv->ui_manager = g_object_ref (ui_manager);
 
 	/* Add accelerators */
 	gtk_window_add_accel_group (GTK_WINDOW (obj), 

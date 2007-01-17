@@ -28,7 +28,7 @@
  */
 #include <glib/gi18n.h>
 #include <tny-account-store.h>
-#include "modest-edit-msg-window.h"
+#include <widgets/modest-edit-msg-window.h>
 #include "modest-icon-names.h"
 #include "modest-icon-factory.h"
 #include "modest-widget-memory.h"
@@ -134,7 +134,8 @@ save_settings (ModestEditMsgWindow *self)
 	ModestConf *conf;
 
 	priv = MODEST_EDIT_MSG_WINDOW_GET_PRIVATE(self);
-	conf = modest_tny_platform_factory_get_modest_conf_instance (priv->fact);
+	conf = modest_tny_platform_factory_get_conf_instance
+		(MODEST_TNY_PLATFORM_FACTORY(priv->fact));
 
 	modest_widget_memory_save (conf, G_OBJECT(self), "modest-edit-msg-window");
 }
@@ -147,7 +148,8 @@ restore_settings (ModestEditMsgWindow *self)
 	ModestConf *conf;
 
 	priv = MODEST_EDIT_MSG_WINDOW_GET_PRIVATE(self);
-	conf = modest_tny_platform_factory_get_modest_conf_instance (priv->fact);
+	conf = modest_tny_platform_factory_get_conf_instance
+		(MODEST_TNY_PLATFORM_FACTORY(priv->fact));
 
 	modest_widget_memory_restore (conf, G_OBJECT(self), "modest-edit-msg-window");
 }
@@ -377,9 +379,9 @@ on_delete_event (GtkWidget *widget, GdkEvent *event, ModestEditMsgWindow *self)
 }
 
 
-GtkWidget*
+ModestWindow*
 modest_edit_msg_window_new (ModestWidgetFactory *factory,
-			    GtkUIManager *ui_manager,
+			    TnyAccountStore *account_store,
 			    ModestEditType type)
 {
 	GObject *obj;
@@ -392,7 +394,7 @@ modest_edit_msg_window_new (ModestWidgetFactory *factory,
 	priv = MODEST_EDIT_MSG_WINDOW_GET_PRIVATE(obj);
 
 	priv->widget_factory = g_object_ref (factory);
-	priv->ui_manager = g_object_ref (ui_manager);
+	//priv->ui_manager = g_object_ref (ui_manager);
 
 	/* Add accelerators */
 	gtk_window_add_accel_group (GTK_WINDOW (obj), 
@@ -417,7 +419,7 @@ modest_edit_msg_window_new (ModestWidgetFactory *factory,
 	g_signal_connect (G_OBJECT(obj), "delete-event",
 			  G_CALLBACK(on_delete_event), obj);
 
-	return GTK_WIDGET (obj);
+	return (ModestWindow*)obj;
 }
 
 void
