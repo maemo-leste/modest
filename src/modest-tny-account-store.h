@@ -34,6 +34,7 @@
 #define __MODEST_TNY_ACCOUNT_STORE_H__
 
 #include <glib-object.h>
+#include <modest-defs.h>
 #include <tny-account-store.h>
 #include <tny-session-camel.h>
 #include <tny-shared.h>

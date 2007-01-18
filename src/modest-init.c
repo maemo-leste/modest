@@ -28,6 +28,7 @@
  */
 
 #include <config.h>
+#include <modest-defs.h>
 #include <widgets/modest-header-view.h>
 #include <widgets/modest-folder-view.h>
 #include <modest-tny-platform-factory.h>

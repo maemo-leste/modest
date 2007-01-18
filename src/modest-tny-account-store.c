@@ -579,11 +579,6 @@ modest_tny_account_store_get_accounts  (TnyAccountStore *iface, TnyList *list,
 	tny_session_camel_set_account_store (priv->tny_session_camel, iface);
 }
 
-
-/*
- * the cache dir will be ~/.modest/cache
- * might want to change this in a simple #define...
- */
 static const gchar*
 modest_tny_account_store_get_cache_dir (TnyAccountStore *self)
 {
@@ -591,7 +586,9 @@ modest_tny_account_store_get_cache_dir (TnyAccountStore *self)
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
 	
 	if (!priv->cache_dir)
-		priv->cache_dir = g_build_filename (g_get_home_dir(), ".modest",
+		priv->cache_dir = g_build_filename (g_get_home_dir(), 
+						    MODEST_DIR,
+						    MODEST_CACHE_DIR,
 						    "cache", NULL);
 	return priv->cache_dir;
 }

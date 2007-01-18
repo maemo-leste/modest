@@ -33,6 +33,7 @@
 G_BEGIN_DECLS
 
 #include <glib.h>
+#include <modest-defs.h>
 
 typedef enum {
 	MODEST_LOCAL_FOLDER_TYPE_UNKNOWN,

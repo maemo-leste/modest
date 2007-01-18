@@ -29,7 +29,6 @@
 
 #include <string.h>
 #include "modest-marshal.h"
-#include "modest-account-keys.h"
 #include "modest-account-mgr.h"
 
 /* 'private'/'protected' functions */
