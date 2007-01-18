@@ -32,6 +32,7 @@
 #include <gtk/gtkcellrenderertoggle.h>
 #include <gtk/gtkcellrenderertext.h>
 #include <gtk/gtktreeselection.h>
+#include <gtk/gtkliststore.h>
 
 /* 'private'/'protected' functions */
 static void modest_account_view_class_init    (ModestAccountViewClass *klass);
