@@ -33,7 +33,7 @@
 
 #include <glib-object.h>
 #include <modest-conf.h>
-#include <modest-account-keys.h>
+#include <modest-defs.h>
 #include <modest-protocol-info.h>
 
 G_BEGIN_DECLS

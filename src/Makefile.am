@@ -30,14 +30,13 @@ bin_PROGRAMS=\
 	modest
 
 modest_SOURCES=\
-	modest-account-keys.h\
 	modest-account-mgr.c\
 	modest-account-mgr.h\
-	modest-conf-keys.h\
 	modest-conf.c\
 	modest-conf.h \
 	modest-debug.c\
 	modest-debug.h\
+	modest-defs.h\
 	modest-error.h \
 	modest-formatter.c \
 	modest-formatter.h \
