@@ -54,6 +54,7 @@ struct _ModestEditMsgWindowPrivate {
 	ModestWidgetFactory *widget_factory;
 	TnyPlatformFactory *fact;
 	GtkUIManager *ui_manager;
+	TnyAccountStore *account_store;
 	
 	GtkWidget      *toolbar, *menubar;
 	GtkWidget      *msg_body;
@@ -123,6 +124,8 @@ modest_edit_msg_window_init (ModestEditMsgWindow *obj)
 	priv->widget_factory = NULL;
 	priv->toolbar = NULL;
 	priv->menubar = NULL;
+	priv->ui_manager = NULL;
+	priv->account_store = NULL;
 }
 
 
@@ -153,154 +156,6 @@ restore_settings (ModestEditMsgWindow *self)
 
 	modest_widget_memory_restore (conf, G_OBJECT(self), "modest-edit-msg-window");
 }
-
-
-/* /\* Our menu, an array of GtkItemFactoryEntry structures that defines each menu item *\/ */
-/* static GtkItemFactoryEntry menu_items[] = { */
-/* 	{ "/_File",		NULL,			NULL,           0, "<Branch>" ,NULL}, */
-/* 	{ "/File/_New",		"<control>N",		NULL,		0, "<StockItem>", GTK_STOCK_NEW }, */
-/* 	{ "/File/_Open",	"<control>O",		NULL,		0, "<StockItem>", GTK_STOCK_OPEN }, */
-/* 	{ "/File/_Save",	"<control>S",		NULL,		0, "<StockItem>", GTK_STOCK_SAVE }, */
-/* 	{ "/File/Save _As",	NULL,			NULL,           0, "<Item>", NULL} , */
-/* 	{ "/File/Save Draft",	"<control><shift>S",	NULL,           0, "<Item>",NULL }, */
-
-
-/* 	{ "/File/sep1",		NULL,			NULL,           0, "<Separator>" ,NULL }, */
-/* 	{ "/File/_Quit",	"<CTRL>Q",		on_menu_quit,   0, "<StockItem>", GTK_STOCK_QUIT }, */
-
-/* 	{ "/_Edit",		NULL,			NULL,           0, "<Branch>" ,NULL }, */
-/* 	{ "/Edit/_Undo",	"<CTRL>Z",		NULL,		0, "<StockItem>", GTK_STOCK_UNDO }, */
-/* 	{ "/Edit/_Redo",	"<shift><CTRL>Z",	NULL,		0, "<StockItem>", GTK_STOCK_REDO }, */
-/* 	{ "/File/sep1",		NULL,			NULL,           0, "<Separator>",NULL }, */
-/* 	{ "/Edit/Cut",		"<control>X",		NULL,		0, "<StockItem>", GTK_STOCK_CUT  }, */
-/* 	{ "/Edit/Copy",		"<CTRL>C",		NULL,           0, "<StockItem>", GTK_STOCK_COPY }, */
-/* 	{ "/Edit/Paste",	NULL,			NULL,           0, "<StockItem>", GTK_STOCK_PASTE}, */
-/* 	{ "/Edit/sep1",		NULL,			NULL,           0, "<Separator>",NULL }, */
-/* 	{ "/Edit/Delete",	"<CTRL>Q",		NULL,           0, "<Item>" ,NULL }, */
-/* 	{ "/Edit/Select all",	"<CTRL>A",		NULL,           0, "<Item>" ,NULL }, */
-/* 	{ "/Edit/Deselect all",  "<Shift><CTRL>A",	NULL,           0, "<Item>",NULL }, */
-
-/* 	{ "/_View",             NULL,		NULL,		        0, "<Branch>",NULL }, */
-/* 	{ "/View/To-field",          NULL,		NULL,		0, "<CheckItem>",NULL }, */
-	
-/* 	{ "/View/Cc-field:",          NULL,		NULL,		0, "<CheckItem>",NULL }, */
-/* 	{ "/View/Bcc-field:",          NULL,		NULL,		0, "<CheckItem>",NULL }, */
-	
-	
-/* 	{ "/_Insert",             NULL,		NULL,		0, "<Branch>",NULL }, */
-/* /\* 	{ "/Actions/_Reply",    NULL,			NULL,		0, "<Item>" }, *\/ */
-/* /\* 	{ "/Actions/_Forward",  NULL,			NULL,		0, "<Item>" }, *\/ */
-/* /\* 	{ "/Actions/_Bounce",   NULL,			NULL,		0, "<Item>" },	 *\/ */
-	
-/* 	{ "/_Format",		 NULL,			NULL,		0, "<Branch>",NULL } */
-/* /\* 	{ "/Options/_Accounts",  NULL,			on_menu_accounts,0, "<Item>" }, *\/ */
-/* /\* 	{ "/Options/_Contacts",  NULL,			NULL,		0, "<Item>" }, *\/ */
-
-
-/* /\* 	{ "/_Help",         NULL,                       NULL,           0, "<Branch>" }, *\/ */
-/* /\* 	{ "/_Help/About",   NULL,                       on_menu_about,  0, "<StockItem>", GTK_STOCK_ABOUT}, *\/ */
-/* }; */
-
-/* static gint nmenu_items = sizeof (menu_items) / sizeof (menu_items[0]); */
-
-
-/* static void */
-/* send_mail (ModestEditMsgWindow *self) */
-/* { */
-/* 	const gchar *to, *cc, *bcc, *subject; */
-/* 	gchar *body, *from; */
-/* 	ModestEditMsgWindowPrivate *priv; */
-/* 	TnyTransportAccount *transport_account; */
-/* 	ModestMailOperation *mail_operation; */
-/* 	ModestAccountData *data; */
-	
-/* 	GtkTextBuffer *buf; */
-/* 	GtkTextIter b, e; */
-	
-/* 	priv = MODEST_EDIT_MSG_WINDOW_GET_PRIVATE(self); */
-/* 	data = modest_combo_box_get_active_id (MODEST_COMBO_BOX (priv->from_field)); */
-
-/* 	/\* don't free these (except from) *\/ */
-/* 	from    =  g_strdup_printf ("%s <%s>", data->full_name, data->email) ; */
-/* 	to      =  gtk_entry_get_text (GTK_ENTRY(priv->to_field)); */
-/* 	cc      =  gtk_entry_get_text (GTK_ENTRY(priv->cc_field)); */
-/* 	bcc     =  gtk_entry_get_text (GTK_ENTRY(priv->bcc_field)); */
-/* 	subject =  gtk_entry_get_text (GTK_ENTRY(priv->subject_field)); */
-	
-/* 	/\* don't unref *\/ */
-/* 	buf   =  gtk_text_view_get_buffer (GTK_TEXT_VIEW(priv->msg_body)); */
-	
-/* 	gtk_text_buffer_get_bounds (buf, &b, &e); */
-/* 	body  = gtk_text_buffer_get_text (buf, &b, &e, */
-/* 					  FALSE); /\* free this one *\/ */
-
-/* 	/\* FIXME: Code added just for testing. The final version will */
-/* 	   use the send queue provided by tinymail and some */
-/* 	   classifier *\/ */
-/* 	{ */
-/* 		TnyList *accounts; */
-/* 		TnyIterator *iter; */
-/* 		TnyAccountStore *account_store; */
-
-/* 		accounts = TNY_LIST(tny_simple_list_new ()); */
-/* 		account_store = tny_platform_factory_new_account_store (priv->fact); */
-/* 		tny_account_store_get_accounts (account_store, accounts, */
-/* 						TNY_ACCOUNT_STORE_TRANSPORT_ACCOUNTS); */
-
-/* 		iter = tny_list_create_iterator(accounts); */
-/* 		tny_iterator_first (iter); */
-/* 		if (tny_iterator_is_done (iter)) { */
-/* 			/\* FIXME: Add error handling through mail operation *\/ */
-/* 			g_printerr("modest: no transport accounts defined\n"); */
-/* 			g_free (body); */
-/* 			return; */
-/* 		} */
-/* 		transport_account = TNY_TRANSPORT_ACCOUNT (tny_iterator_get_current(iter)); */
-/* 		g_object_ref (transport_account); */
-
-/* 		tny_list_foreach (accounts, (GFunc) g_object_unref, NULL); */
-/* 		g_object_unref (G_OBJECT (accounts)); */
-/* 		g_object_unref (G_OBJECT (iter)); */
-/* 	} */
-
-/* 	mail_operation = modest_mail_operation_new (); */
-
-/* 	modest_mail_operation_send_new_mail (mail_operation, */
-/* 					     transport_account, */
-/* 					     from, to, cc, bcc, */
-/* 					     subject, body, NULL); */
-/* 	/\* Clean up *\/ */
-/* 	g_object_unref (G_OBJECT (mail_operation)); */
-/* 	g_object_unref (G_OBJECT (transport_account)); */
-/* 	g_free (from); */
-/* 	g_free (body); */
-/* } */
-
-
-/* static void */
-/* on_toolbar_button_clicked (ModestToolbar *toolbar, ModestToolbarButton button_id, */
-/* 			   ModestEditMsgWindow *self) */
-/* { */
-/* 	switch (button_id) { */
-/* 	case MODEST_TOOLBAR_BUTTON_MAIL_SEND: */
-/* 		send_mail (self); */
-/* 		save_settings (self); */
-/* 		gtk_widget_destroy (GTK_WIDGET(self)); */
-/* 		break; */
-		
-/* 	case MODEST_TOOLBAR_BUTTON_REPLY: */
-/* 	case MODEST_TOOLBAR_BUTTON_REPLY_ALL: */
-/* 	case MODEST_TOOLBAR_BUTTON_FORWARD: */
-/* 	case MODEST_TOOLBAR_BUTTON_SEND_RECEIVE: */
-/* 	case MODEST_TOOLBAR_BUTTON_NEXT: */
-/* 	case MODEST_TOOLBAR_BUTTON_PREV: */
-/* 	case MODEST_TOOLBAR_BUTTON_DELETE: */
-
-/* 	default: */
-/* 		g_printerr ("modest: key %d pressed\n", button_id); */
-/* 	} */
-/* } */
-
 
 
 static void
@@ -362,11 +217,19 @@ modest_edit_msg_window_finalize (GObject *obj)
 
 	priv = MODEST_EDIT_MSG_WINDOW_GET_PRIVATE(obj);
 
-	g_object_unref (G_OBJECT(priv->widget_factory));
-	priv->widget_factory = NULL;
-	
+	if (priv->widget_factory) {
+		g_object_unref (G_OBJECT(priv->widget_factory));
+		priv->widget_factory = NULL;
+	}
+	if (priv->ui_manager) {
+		g_object_unref (G_OBJECT(priv->ui_manager));
+		priv->ui_manager = NULL;
+	}
+	if (priv->account_store) {
+		g_object_unref (G_OBJECT(priv->account_store));
+		priv->account_store = NULL;
+	}
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
-
 }
 
 
@@ -460,4 +323,68 @@ modest_edit_msg_window_set_msg (ModestEditMsgWindow *self, TnyMsg *msg)
 	   allowed? */
 	
 	/* TODO: set attachments */
+}
+
+ModestWidgetFactory *
+modest_edit_msg_window_get_widget_factory (ModestEditMsgWindow *edit_window)
+{
+	ModestEditMsgWindowPrivate *priv;
+			
+	g_return_val_if_fail (MODEST_IS_EDIT_MSG_WINDOW (edit_window), NULL);
+
+	priv = MODEST_EDIT_MSG_WINDOW_GET_PRIVATE (edit_window);
+
+	return g_object_ref (priv->widget_factory);
+}
+
+TnyAccountStore * 
+modest_edit_msg_window_get_account_store (ModestEditMsgWindow *edit_window)
+{
+	ModestEditMsgWindowPrivate *priv;
+			
+	g_return_val_if_fail (MODEST_IS_EDIT_MSG_WINDOW (edit_window), NULL);
+
+	priv = MODEST_EDIT_MSG_WINDOW_GET_PRIVATE (edit_window);
+
+	return g_object_ref (priv->account_store);
+}
+
+MsgData * 
+modest_edit_msg_window_get_msg_data (ModestEditMsgWindow *edit_window)
+{
+	MsgData *data;
+	ModestAccountData *account_data;
+	GtkTextBuffer *buf;
+	GtkTextIter b, e;
+	ModestEditMsgWindowPrivate *priv;
+	
+	g_return_val_if_fail (MODEST_IS_EDIT_MSG_WINDOW (edit_window), NULL);
+
+	priv = MODEST_EDIT_MSG_WINDOW_GET_PRIVATE (edit_window);
+									
+	account_data = modest_combo_box_get_active_id (MODEST_COMBO_BOX (priv->from_field));
+	buf = gtk_text_view_get_buffer (GTK_TEXT_VIEW (priv->msg_body));	
+	gtk_text_buffer_get_bounds (buf, &b, &e);
+
+	/* don't free these (except from) */
+	data = g_slice_new0 (MsgData);
+	data->from    =  g_strdup_printf ("%s <%s>", account_data->fullname, account_data->email) ;
+	data->to      =  (gchar*) gtk_entry_get_text (GTK_ENTRY(priv->to_field));
+	data->cc      =  (gchar*) gtk_entry_get_text (GTK_ENTRY(priv->cc_field));
+	data->bcc     =  (gchar*) gtk_entry_get_text (GTK_ENTRY(priv->bcc_field));
+	data->subject =  (gchar*) gtk_entry_get_text (GTK_ENTRY(priv->subject_field));	
+	data->body    =  gtk_text_buffer_get_text (buf, &b, &e, FALSE);
+
+	return data;
+}
+
+void 
+modest_edit_msg_window_free_msg_data (ModestEditMsgWindow *edit_window,
+						      MsgData *data)
+{
+	g_return_if_fail (MODEST_IS_EDIT_MSG_WINDOW (edit_window));
+
+	g_free (data->from);
+	g_free (data->body);
+	g_slice_free (MsgData, data);
 }

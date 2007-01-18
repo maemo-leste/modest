@@ -169,7 +169,7 @@ on_add_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 	
 	priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE(self);
 	fact = modest_tny_platform_factory_get_instance ();
-	account_mgr = modest_tny_platform_factory_get_modest_account_mgr_instance (fact);
+	account_mgr = modest_tny_platform_factory_get_account_mgr_instance (fact);
 /* FIXME:
 	assistant = modest_account_assistant_new (account_mgr,
 						  priv->widget_factory);
