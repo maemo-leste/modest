@@ -888,22 +888,24 @@ _modest_ui_actions_on_folder_selection_changed (ModestFolderView *folder_view,
 		gtk_window_set_title (GTK_WINDOW(main_window), "Modest");
 		modest_header_view_set_folder (header_view, NULL);
 	} else {  /* the folder was selected */
-		guint num, unread;
-		gchar *title;
-		num    = tny_folder_get_all_count    (folder);
-		unread = tny_folder_get_unread_count (folder);
+		if (folder) { /* folder may be NULL */
+			guint num, unread;
+			gchar *title;
 
-		title = g_strdup_printf ("Modest: %s",
-					 tny_folder_get_name (folder));
-		
-		gtk_window_set_title (GTK_WINDOW(main_window), title);
-		g_free (title);
-
-		txt = g_strdup_printf (_("%d %s, %d unread"),
-				       num, num==1 ? _("item") : _("items"), unread);		
-		gtk_label_set_label (GTK_LABEL(folder_info_label), txt);
-		g_free (txt);
+			num    = tny_folder_get_all_count    (folder);
+			unread = tny_folder_get_unread_count (folder);
 			
+			title = g_strdup_printf ("Modest: %s",
+						 tny_folder_get_name (folder));
+			
+			gtk_window_set_title (GTK_WINDOW(main_window), title);
+			g_free (title);
+			
+			txt = g_strdup_printf (_("%d %s, %d unread"),
+				       num, num==1 ? _("item") : _("items"), unread);		
+			gtk_label_set_label (GTK_LABEL(folder_info_label), txt);
+			g_free (txt);
+		}
 		modest_header_view_set_folder (header_view, folder);
 		modest_widget_memory_restore (conf, G_OBJECT(header_view),
 					      "header-view");
