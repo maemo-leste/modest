@@ -44,7 +44,9 @@ G_BEGIN_DECLS
 gchar* _modest_widget_memory_get_keyname           (const gchar *name, const gchar *param);
 gchar* _modest_widget_memory_get_keyname_with_type (const gchar *name, guint type,
 						    const gchar *param);
-
+gchar* _modest_widget_memory_get_keyname_with_double_type (const gchar *name,
+							   guint type1, guint type2,
+							   const gchar *param);
 G_END_DECLS
 
 #endif /*__MODEST_WIDGET_MEMORY_PRIV_H__*/

@@ -74,6 +74,27 @@ _modest_widget_memory_get_keyname_with_type (const gchar *name, guint type,
 }
 
 
+gchar*
+_modest_widget_memory_get_keyname_with_double_type (const gchar *name,
+						    guint type1, guint type2,
+						    const gchar *param)
+{
+	gchar *esc_name, *keyname;
+	
+	g_return_val_if_fail (name, NULL);
+	g_return_val_if_fail (param, NULL);
+
+	esc_name = modest_conf_key_escape (name);
+
+	keyname = g_strdup_printf ("%s/%s/%s_%d_%d",
+				   MODEST_CONF_WIDGET_NAMESPACE, 
+				   esc_name, param, type1, type2);
+	g_free (esc_name);
+	return keyname;
+}
+
+
+
 static gboolean
 save_settings_widget (ModestConf *conf, GtkWidget *widget, const gchar *name)
 {
@@ -207,19 +228,19 @@ save_settings_header_view (ModestConf *conf, ModestHeaderView *header_view,
 	GList *cols, *cursor;
 	TnyFolder *folder;
 	TnyFolderType type;
-
-	if (modest_header_view_get_state (header_view) &
-	    MODEST_HEADER_VIEW_STATE_IS_EMPTY)
-		return TRUE; /* don't save the settings in the empty case */
-
+	ModestHeaderViewStyle style;
+	
 	folder = modest_header_view_get_folder (header_view);
 	if (!folder) 
 		return TRUE; /* no folder: no settings */ 
 	
-	type = modest_tny_folder_guess_folder_type (folder);
-	key = _modest_widget_memory_get_keyname_with_type (name, type,
-							   MODEST_WIDGET_MEMORY_PARAM_COLUMN_WIDTH);
+	type  = modest_tny_folder_guess_folder_type (folder);
+	style = modest_header_view_get_style   (header_view);
+	
+	key = _modest_widget_memory_get_keyname_with_double_type (name, type, style,
+								  MODEST_WIDGET_MEMORY_PARAM_COLUMN_WIDTH);
 
+	g_warning ("saving %s", key);	
 	cursor = cols = modest_header_view_get_columns (header_view);
 	str = g_string_new (NULL);
 
@@ -258,15 +279,20 @@ restore_settings_header_view (ModestConf *conf, ModestHeaderView *header_view,
 	gchar *key;
 	TnyFolder *folder;
 	TnyFolderType type;
+	ModestHeaderViewStyle style;
 
 	folder = modest_header_view_get_folder (header_view);
 	if (!folder) 
 		return TRUE; /* no folder: no settings */ 
 	
 	type = modest_tny_folder_guess_folder_type (folder);
+	style = modest_header_view_get_style   (header_view);
+
+	key = _modest_widget_memory_get_keyname_with_double_type (name, type, style,
+								  MODEST_WIDGET_MEMORY_PARAM_COLUMN_WIDTH);
 	
-	key = _modest_widget_memory_get_keyname_with_type (name, type,
-							   MODEST_WIDGET_MEMORY_PARAM_COLUMN_WIDTH);
+	g_warning ("restoring %s", key);	
+	
 	if (modest_conf_key_exists (conf, key, NULL)) {
 		
 		gchar *data, *cursor;
@@ -291,8 +317,8 @@ restore_settings_header_view (ModestConf *conf, ModestHeaderView *header_view,
 			while (colcursor && widthcursor) {
 				int width = GPOINTER_TO_INT(widthcursor->data);
 				if (width > 0)
-					gtk_tree_view_column_set_fixed_width(GTK_TREE_VIEW_COLUMN(colcursor->data),
-									     width);
+					gtk_tree_view_column_set_max_width(GTK_TREE_VIEW_COLUMN(colcursor->data),
+									   width);
 				colcursor = g_list_next (colcursor);
 				widthcursor = g_list_next (widthcursor);
 			}
