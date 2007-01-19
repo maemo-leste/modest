@@ -71,7 +71,7 @@ typedef enum _ModestHeaderViewColumn {
 	 */
 	MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER_IN,  /* incoming mail */
 	MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER_OUT, /* outgoing mail */
-	
+
 	MODEST_HEADER_VIEW_COLUMN_NUM
 
 } ModestHeaderViewColumn;
@@ -81,8 +81,11 @@ typedef enum _ModestHeaderViewColumn {
  * to make a small-device specific display
  */
 typedef enum _ModestHeaderViewStyle {
-	MODEST_HEADER_VIEW_STYLE_SHOW_HEADERS = 0x01,
-	MODEST_HEADER_VIEW_STYLE_NORMAL       = 0x02,
+	MODEST_HEADER_VIEW_STYLE_DETAILS, /* many columns, single line, col headers visible */
+	MODEST_HEADER_VIEW_STYLE_TWOLINES, /* two-line headers, col headers invisible */
+	MODEST_HEADER_VIEW_STYLE_EMPTY,   /* empty view (for empty folders) */
+
+	MODEST_HEADER_VIEW_STYLE_NUM	
 } ModestHeaderViewStyle;
 
 typedef enum _ModestItemType {
@@ -91,15 +94,6 @@ typedef enum _ModestItemType {
 	MODEST_ITEM_TYPE_NUM
 } ModestItemType;
 
-
-typedef enum _ModestHeaderViewState {
-	MODEST_HEADER_VIEW_STATE_IS_EMPTY               = 0x01,
-	MODEST_HEADER_VIEW_STATE_HAS_CURSOR             = 0x02,
-	MODEST_HEADER_VIEW_STATE_HAS_SELECTION          = 0x04,
-	MODEST_HEADER_VIEW_STATE_HAS_MULTIPLE_SELECTION = 0x08,
-	MODEST_HEADER_VIEW_STATE_AT_FIRST_ITEM          = 0x0f,
-	MODEST_HEADER_VIEW_STATE_AT_LAST_ITEM           = 0x10
-} ModestHeaderViewState;
 
 struct _ModestHeaderViewClass {
 	GtkTreeViewClass parent_class;
@@ -195,20 +189,6 @@ gboolean modest_header_view_set_columns (ModestHeaderView *self,
  * You must free the list with g_list_free
  */
 GList*  modest_header_view_get_columns (ModestHeaderView *self);
-	
-
-
-/**
- * modest_header_view_get_state
- * @self: a ModestHeaderView instance
- * 
- * get the state for this header view; see the ModestHeaderViewState enum
- * for possible values.
- * 
- * Returns: the state for this header view
- */
-ModestHeaderViewState modest_header_view_get_state (ModestHeaderView *self);
-
 
 
 /**
@@ -233,8 +213,6 @@ gboolean   modest_header_view_set_style (ModestHeaderView *self,
  */
 ModestHeaderViewStyle   modest_header_view_get_style (ModestHeaderView *self);
 
-
-
 /**
  * modest_header_view_get_selected_headers:
  * @self: a ModestHeaderView instance
@@ -253,6 +231,16 @@ TnyList* modest_header_view_get_selected_headers (ModestHeaderView *self);
  * Selects the header next to the current selected one
  **/
 void     modest_header_view_select_next          (ModestHeaderView *self);
+
+
+
+/* PROTECTED method. It's useful when we want to force a given
+   selection to reload a msg. For example if we have selected a header
+   in offline mode, when Modest become online, we want to reload the
+   message automatically without an user click over the header */
+void 
+_modest_header_view_change_selection (GtkTreeSelection *selection,
+				      gpointer user_data);
 
 G_END_DECLS
 

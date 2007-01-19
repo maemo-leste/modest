@@ -66,7 +66,6 @@ struct _ModestHeaderViewPrivate {
 	GMutex		     *lock;
 	ModestHeaderViewStyle style;
 	gulong                sig1;
-	ModestHeaderViewState state;
 };
 
 #define MODEST_HEADER_VIEW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -142,12 +141,6 @@ modest_header_view_class_init (ModestHeaderViewClass *klass)
 			      G_TYPE_NONE, 3, G_TYPE_STRING, G_TYPE_INT, G_TYPE_INT);
 }
 
-
-
-
-
-
-
 static GtkTreeViewColumn*
 get_new_column (const gchar *name, GtkCellRenderer *renderer,
 		gboolean resizable, gint sort_col_id, gboolean show_as_text,
@@ -159,10 +152,8 @@ get_new_column (const gchar *name, GtkCellRenderer *renderer,
 	gtk_tree_view_column_set_sizing (column, GTK_TREE_VIEW_COLUMN_FIXED);
 
 	gtk_tree_view_column_set_resizable (column, resizable);
-	if (resizable) {
-		gtk_tree_view_column_set_min_width (column, 100);
-		//gtk_tree_view_column_set_expand (column, TRUE);
-	}
+	if (resizable) 
+		gtk_tree_view_column_set_expand (column, TRUE);
 	
 	if (show_as_text) 
 		gtk_tree_view_column_add_attribute (column, renderer, "text",
@@ -187,8 +178,6 @@ remove_all_columns (ModestHeaderView *obj)
 {
 	GList *columns, *cursor;
 
-	gtk_tree_view_set_model (GTK_TREE_VIEW(obj), NULL);
-	
 	columns = gtk_tree_view_get_columns (GTK_TREE_VIEW(obj));
 
 	for (cursor = columns; cursor; cursor = cursor->next)
@@ -202,133 +191,25 @@ remove_all_columns (ModestHeaderView *obj)
 static gboolean
 set_empty (ModestHeaderView *self)
 {
+	GList *columns = NULL;
 	ModestHeaderViewPrivate *priv;	
-	GtkTreeViewColumn *column;
-	GtkListStore *store;
-	GtkTreeIter iter;
-	GtkCellRenderer* renderer;
+	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
 	
-	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self); 	
-	remove_all_columns (self);
-
-	store = gtk_list_store_new (1, G_TYPE_STRING);
-	gtk_list_store_append (store, &iter);
-	gtk_list_store_set (store, &iter, 0, _("(No items in this folder)"), -1); 
+	columns = g_list_append (columns,GINT_TO_POINTER(0));
+	modest_header_view_set_columns (self, columns);
+	g_list_free (columns);
 	
-	renderer = gtk_cell_renderer_text_new ();
-	g_object_set (G_OBJECT(renderer), "weight", 800, NULL);
-
-	column = gtk_tree_view_column_new_with_attributes ("", renderer, "text", 0, NULL);
-	
-	gtk_tree_view_column_set_resizable (column, FALSE);
-	gtk_tree_view_column_set_alignment (column, 0.5);
-	gtk_tree_view_column_set_sizing (column, GTK_TREE_VIEW_COLUMN_FIXED);
-	gtk_tree_view_append_column (GTK_TREE_VIEW(self), column);
-
-	gtk_tree_view_set_model(GTK_TREE_VIEW(self), GTK_TREE_MODEL(store));
-	g_object_unref (store);
-	
-	priv->state = MODEST_HEADER_VIEW_STATE_IS_EMPTY;
 	return TRUE;
 }
 
-
-
-static void
-set_state (ModestHeaderView *self, ModestHeaderViewState state)
-{
-	ModestHeaderViewState oldstate =
-		MODEST_HEADER_VIEW_GET_PRIVATE(self)->state;
-
-	return; /* FIXME: this is recursing */
-	
-	if (oldstate != state) {
-		if ((oldstate & MODEST_HEADER_VIEW_STATE_IS_EMPTY) !=
-		    (state & MODEST_HEADER_VIEW_STATE_IS_EMPTY)) {
-			//set_empty (self);
-		}
-		
-		MODEST_HEADER_VIEW_GET_PRIVATE(self)->state = state; 
-		/* FIXME: emit signal if the state changed*/
-	}
-
-	g_warning ("state:\n"
-		   "is empty: %s\n"
-		   "has cursor: %s\n"
-		   "at last item: %s\n"
-		   "at first item: %s\n"
-		   "has selection: %s\n"
-		   "has multi selection: %s\n",
-		   state & MODEST_HEADER_VIEW_STATE_IS_EMPTY ? "yes" : "no",
-		   state & MODEST_HEADER_VIEW_STATE_HAS_CURSOR ? "yes" : "no",
-		   state & MODEST_HEADER_VIEW_STATE_AT_LAST_ITEM ? "yes" : "no",
-		   state & MODEST_HEADER_VIEW_STATE_AT_FIRST_ITEM ? "yes" : "no",
-		   state & MODEST_HEADER_VIEW_STATE_HAS_SELECTION ? "yes" : "no",
-		   state & MODEST_HEADER_VIEW_STATE_HAS_MULTIPLE_SELECTION ? "yes" : "no");
-}
-
-
-static void
-update_state (ModestHeaderView *self)
-{
-	GtkTreePath *path;
-	GtkTreeSelection *sel;
-	ModestHeaderViewState state = 0;
-	ModestHeaderViewPrivate *priv;	
-
-	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self); 
-
-	if (!priv->folder || tny_folder_get_all_count(priv->folder) == 0)
-		state = MODEST_HEADER_VIEW_STATE_IS_EMPTY;
-	else {
-		gtk_tree_view_get_cursor (GTK_TREE_VIEW(self), &path, NULL);
-		if (path) {
-			GtkTreePath *path2;
-			
-			state |= MODEST_HEADER_VIEW_STATE_HAS_CURSOR;	
-			path2= gtk_tree_path_copy (path);
-			
-			gtk_tree_path_next (path);
-			if (gtk_tree_path_compare (path, path2) != 0)
-				state |= MODEST_HEADER_VIEW_STATE_AT_LAST_ITEM;
-			
-			if (!gtk_tree_path_prev (path2))
-				state |= MODEST_HEADER_VIEW_STATE_AT_FIRST_ITEM;
-			
-			gtk_tree_path_free (path);
-			gtk_tree_path_free (path2);
-		}
-		
-		sel = gtk_tree_view_get_selection (GTK_TREE_VIEW(self));
-		if (sel) {
-			state |= MODEST_HEADER_VIEW_STATE_HAS_SELECTION;
-			if (gtk_tree_selection_count_selected_rows (sel) > 1)
-				state |= MODEST_HEADER_VIEW_STATE_HAS_MULTIPLE_SELECTION;
-		}
-	}
-
-	set_state (self, state);	
-}
-
-
-ModestHeaderViewState
-modest_header_view_get_state (ModestHeaderView *self)
-{
-	g_return_val_if_fail (MODEST_IS_HEADER_VIEW (self), TRUE);
-	update_state (self);
-	
-	return MODEST_HEADER_VIEW_GET_PRIVATE(self)->state;
-}
 
 
 gboolean
 modest_header_view_set_columns (ModestHeaderView *self, const GList *columns)
 {
 	GtkTreeViewColumn *column=NULL;
-	GtkCellRenderer *renderer_msgtype,
-		*renderer_header,
+	GtkCellRenderer *renderer_msgtype,*renderer_header,
 		*renderer_attach;
-
 	ModestHeaderViewPrivate *priv;
 	const GList *cursor;
 	
@@ -431,10 +312,11 @@ modest_header_view_set_columns (ModestHeaderView *self, const GList *columns)
 		case MODEST_HEADER_VIEW_COLUMN_SIZE:
 			column = get_new_column (_("Size"), renderer_header, TRUE,
 						 TNY_GTK_HEADER_LIST_MODEL_MESSAGE_SIZE_COLUMN,
-						 TRUE,
+						 FALSE,
 						 (GtkTreeCellDataFunc)_modest_header_view_size_cell_data,
 						 NULL); 
 			break;
+
 		default:
 			g_return_val_if_reached(FALSE);
 		}
@@ -446,13 +328,10 @@ modest_header_view_set_columns (ModestHeaderView *self, const GList *columns)
 		/* we need this ptr when sorting the rows */
 		g_object_set_data (G_OBJECT(column), MODEST_HEADER_VIEW_PTR,
 				   self);
-
 		gtk_tree_view_append_column (GTK_TREE_VIEW(self), column);		
 	}	
 	return TRUE;
 }
-
-
 
 static void
 modest_header_view_init (ModestHeaderView *obj)
@@ -591,7 +470,6 @@ modest_header_view_select_next (ModestHeaderView *self)
 		gtk_tree_selection_select_iter (sel, &iter);
 	}
 }
-
 GList*
 modest_header_view_get_columns (ModestHeaderView *self)
 {
@@ -599,23 +477,41 @@ modest_header_view_get_columns (ModestHeaderView *self)
 	return gtk_tree_view_get_columns (GTK_TREE_VIEW(self)); 
 }
 
+
 gboolean
 modest_header_view_set_style (ModestHeaderView *self,
 			      ModestHeaderViewStyle style)
 {
+	ModestHeaderViewPrivate *priv;
+	gboolean show_col_headers = FALSE;
+	ModestHeaderViewStyle old_style;
+	
 	g_return_val_if_fail (self, FALSE);
+	g_return_val_if_fail (style >= 0 && MODEST_HEADER_VIEW_STYLE_NUM,
+			      FALSE);
 
-	MODEST_HEADER_VIEW_GET_PRIVATE(self)->style = style;
+	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
+	if (priv->style == style)
+		return TRUE; /* nothing to do */
 	
-	gtk_tree_view_set_headers_visible   (GTK_TREE_VIEW(self),
-					     style & MODEST_HEADER_VIEW_STYLE_SHOW_HEADERS);
-	gtk_tree_view_set_headers_clickable (GTK_TREE_VIEW(self),
-					     style & MODEST_HEADER_VIEW_STYLE_SHOW_HEADERS);	
+	switch (style) {
+	case MODEST_HEADER_VIEW_STYLE_DETAILS:
+		show_col_headers = TRUE;
+		break;
+	case MODEST_HEADER_VIEW_STYLE_TWOLINES:
+		break;
+	case MODEST_HEADER_VIEW_STYLE_EMPTY:
+		set_empty (self);
+		break;
+	default:
+		g_return_val_if_reached (FALSE);
+	}
+	gtk_tree_view_set_headers_visible   (GTK_TREE_VIEW(self), show_col_headers);
+	gtk_tree_view_set_headers_clickable (GTK_TREE_VIEW(self), show_col_headers);	
 
-	gtk_tree_view_columns_autosize (GTK_TREE_VIEW(self));
-	gtk_tree_view_set_rules_hint (GTK_TREE_VIEW(self),
-				      TRUE); /* alternating row colors */
-	
+	old_style   = priv->style;
+	priv->style = style;
+
 	return TRUE;
 }
 
@@ -624,7 +520,6 @@ ModestHeaderViewStyle
 modest_header_view_get_style (ModestHeaderView *self)
 {
 	g_return_val_if_fail (self, FALSE);
-
 	return MODEST_HEADER_VIEW_GET_PRIVATE(self)->style;
 }
 
@@ -645,11 +540,11 @@ on_refresh_folder (TnyFolder *folder, gboolean cancelled, GError **err,
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
 
 	priv->folder = folder;
-	update_state (self);
 	
-	if (!folder || priv->state & MODEST_HEADER_VIEW_STATE_IS_EMPTY)  
-		gtk_tree_view_set_headers_visible (GTK_TREE_VIEW(self), FALSE);	
-	else { /* it's a new one or a refresh */
+	if (!folder) {  
+		gtk_tree_view_set_headers_visible (GTK_TREE_VIEW(self), FALSE);
+		set_empty (self);	
+	} else { /* it's a new one or a refresh */
 		GList *cols, *cursor;
 
 		if (priv->headers)
@@ -681,10 +576,8 @@ on_refresh_folder (TnyFolder *folder, gboolean cancelled, GError **err,
 							 cursor->data, NULL);
 			cursor = g_list_next(cursor);
 		}
-		g_list_free (cols);
-		
+		g_list_free (cols);		
 		gtk_tree_view_set_model (GTK_TREE_VIEW (self), sortable);
-		modest_header_view_set_style (self, priv->style);
 	}
 }
 
@@ -722,15 +615,11 @@ modest_header_view_set_folder (ModestHeaderView *self, TnyFolder *folder)
 
 	priv->folder = folder;
 	
-	if (!folder)  {/* when there is no folder */
-		gtk_tree_view_set_headers_visible (GTK_TREE_VIEW(self), FALSE);
-		gtk_tree_view_set_model (GTK_TREE_VIEW (self), NULL);
-	} else { /* it's a new one or a refresh */
+	if (folder)
 		tny_folder_refresh_async (folder,
 					  on_refresh_folder,
 					  on_refresh_folder_status_update,
 					  self);
-	}
 	/* no message selected */
 	g_signal_emit (G_OBJECT(self), signals[HEADER_SELECTED_SIGNAL], 0,
 		       NULL);
@@ -751,12 +640,6 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 	
 	self = MODEST_HEADER_VIEW (user_data);
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);	
-
-	/* if the folder is empty, nothing to do */
-	if (priv->state & MODEST_HEADER_VIEW_STATE_IS_EMPTY) 
-		return;
-
-	update_state (self);
 	
 	if (!gtk_tree_selection_get_selected (sel, &model, &iter)) 
 		return; /* msg was _un_selected */
