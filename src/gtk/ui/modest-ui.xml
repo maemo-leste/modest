@@ -84,6 +84,8 @@
     <toolitem action="GotoNext"/>
     <separator/>
     <toolitem action="ActionsDelete"/>
+    <separator/>
+    <toolitem name="ToggleView" action="ToggleView"/>
   </toolbar>
 
 </ui>

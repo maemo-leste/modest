@@ -64,6 +64,9 @@ static const GtkActionEntry modest_action_entries [] = {
 	{ "EditSelectAll",   NULL, 	       N_("Select all"),   "<CTRL>A",	      N_("Select all"), NULL },
 	{ "EditDeselectAll", NULL,             N_("Deselect all"), "<Shift><CTRL>A",  N_("Deselect all"), NULL },
 
+	/* VIEW */
+	{ "ToggleView",        GTK_STOCK_CDROM,   N_("_Toggle view"), NULL,        N_("Toggle the list view"),  G_CALLBACK(_modest_ui_actions_toggle_view) },
+	
 	/* ACTIONS */
 	{ "ActionsNew",         MODEST_STOCK_NEW_MAIL, N_("_New Message"),   NULL, N_("Compose a new message"), G_CALLBACK (_modest_ui_actions_on_new_msg) },
 	{ "ActionsReply",       MODEST_STOCK_REPLY, N_("_Reply"),         NULL, N_("Reply to a message"), G_CALLBACK (_modest_ui_actions_on_reply) },

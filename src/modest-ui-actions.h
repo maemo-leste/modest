@@ -54,6 +54,8 @@ void     _modest_ui_actions_on_reply_all     (GtkWidget *widget, ModestMainWindo
 
 void     _modest_ui_actions_on_next          (GtkWidget *widget, ModestMainWindow *main_window);
 
+void	 _modest_ui_actions_toggle_view	     (GtkWidget *widget, ModestMainWindow *main_window);
+
 /* Widget actions */
 void     _modest_ui_actions_on_header_selected          (ModestHeaderView *folder_view, 
 							 TnyHeader *header,

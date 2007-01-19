@@ -363,7 +363,7 @@ connect_signals (ModestUI *self)
 			  priv->main_window);
 	g_signal_connect (G_OBJECT(header_view), "item_not_found",
 			  G_CALLBACK(_modest_ui_actions_on_item_not_found), 
-			  priv->main_window);	
+			  priv->main_window);
 	/* msg preview */
 	g_signal_connect (G_OBJECT(msg_view), "link_clicked",
 			  G_CALLBACK(_modest_ui_actions_on_msg_link_clicked), 
@@ -566,6 +566,8 @@ reply_forward_func (gpointer data, gpointer user_data)
 			modest_mail_operation_create_forward_mail (msg, rf_helper->from, rf_helper->reply_forward_type);
 		edit_type = MODEST_EDIT_TYPE_FORWARD;
 		break;
+	default:
+		g_return_if_reached ();
 	}
 
 	/* Set from */
@@ -695,6 +697,36 @@ _modest_ui_actions_on_next (GtkWidget *widget,
 
 	modest_header_view_select_next (header_view);
 }
+
+void
+_modest_ui_actions_toggle_view (GtkWidget *widget,
+				ModestMainWindow *main_window)
+{
+	ModestHeaderView *header_view;
+	ModestWidgetFactory *widget_factory;
+	ModestConf *conf;
+	TnyPlatformFactory *plat_factory;
+
+	/* Get ModestConf */
+	plat_factory = modest_tny_platform_factory_get_instance ();
+	conf = modest_tny_platform_factory_get_conf_instance
+		(MODEST_TNY_PLATFORM_FACTORY(plat_factory));
+	widget_factory = modest_main_window_get_widget_factory (main_window);
+	header_view = modest_widget_factory_get_header_view (widget_factory);
+	g_object_unref (G_OBJECT(widget_factory));
+
+	/* what is saved/restored is depending on the style; thus; we save with
+	 * old style, then update the style, and restore for this new style*/
+	modest_widget_memory_save (conf, G_OBJECT(header_view), "header-view");
+	
+	if (modest_header_view_get_style (header_view) == MODEST_HEADER_VIEW_STYLE_DETAILS)
+		modest_header_view_set_style (header_view, MODEST_HEADER_VIEW_STYLE_TWOLINES);
+	else
+		modest_header_view_set_style (header_view, MODEST_HEADER_VIEW_STYLE_DETAILS);
+
+	modest_widget_memory_restore (conf, G_OBJECT(header_view), "header-view");
+}
+
 
 
 /*
@@ -1092,6 +1124,8 @@ _modest_ui_actions_on_item_not_found (ModestHeaderView *header_view,
 	gdk_threads_leave ();
 }
 
+
+
 void
 _modest_ui_actions_on_header_status_update (ModestHeaderView *header_view, 
 					    const gchar *msg,
@@ -1116,6 +1150,7 @@ _modest_ui_actions_on_header_status_update (ModestHeaderView *header_view,
 	/* Free */
 	g_object_unref (G_OBJECT (widget_factory));
 }
+
 
 
 void

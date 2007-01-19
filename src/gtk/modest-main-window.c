@@ -181,14 +181,12 @@ modest_main_window_finalize (GObject *obj)
 static ModestHeaderView*
 header_view_new (ModestMainWindow *self)
 {
-	int i;
 	ModestHeaderView *header_view;
 	ModestMainWindowPrivate *priv;
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
 	
 	header_view = modest_widget_factory_get_header_view (priv->widget_factory);
-	modest_header_view_set_style (header_view,
-				      MODEST_HEADER_VIEW_STYLE_SHOW_HEADERS);
+	modest_header_view_set_style (header_view, MODEST_HEADER_VIEW_STYLE_DETAILS);
 	return header_view;
 }
 
