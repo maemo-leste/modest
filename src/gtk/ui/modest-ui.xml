@@ -63,6 +63,7 @@
       <menuitem name="ActionsFolderNewMenu" action="ActionsFolderNew"/>
       <menuitem name="ActionsFolderDeleteMenu" action="ActionsFolderDelete"/>
       <menuitem name="ActionsFolderRenameMenu" action="ActionsFolderRename"/>
+      <menuitem name="ActionsFolderMoveToTrashMenu" action="ActionsFolderMoveToTrash"/>
     </menu>
 
     <menu name="OptionsMenu" action="Options">
@@ -101,6 +102,5 @@
     <menuitem action="ActionsFolderNew"/>
     <menuitem action="ActionsFolderDelete"/>
     <menuitem action="ActionsFolderRename"/>
+    <menuitem action="ActionsFolderMoveToTrash"/>
   </popup>
-
-</ui>

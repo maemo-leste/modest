@@ -13,6 +13,7 @@ TESTS                   =                           \
                         check_folder-xfer           \
 			check_text-utils            \
 			check_modest-conf           \
+			check_update_account        \
 			check_account-mgr           
 
 noinst_PROGRAMS=				    \
@@ -20,6 +21,7 @@ noinst_PROGRAMS=				    \
 			check_modest-conf	    \
 			check_text-utils            \
 			check_modest-presets	    \
+			check_update_account        \
 			check_account-mgr
 
 INCLUDES=\

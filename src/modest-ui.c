@@ -44,6 +44,7 @@
 #include <modest-widget-memory.h>
 #include <tny-error.h>
 #include <tny-simple-list.h>
+#include <tny-msg-view.h>
 
 #define MODEST_UI_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                        MODEST_TYPE_UI, \
@@ -1353,12 +1354,62 @@ void
 _modest_ui_actions_on_rename_folder (GtkWidget *widget,
 				     ModestMainWindow *main_window)
 {
-	g_print ("Rename Folder");
+	TnyFolder *folder;
+	ModestFolderView *folder_view;
+	ModestWidgetFactory *widget_factory;
+
+	widget_factory = modest_window_get_widget_factory (MODEST_WINDOW (main_window));
+	folder_view = modest_widget_factory_get_folder_view (widget_factory);
+	folder = modest_folder_view_get_selected (folder_view);
+
+	if (folder) {
+		gchar *folder_name;
+
+		folder_name = ask_for_folder_name (GTK_WINDOW (main_window),
+						   _("Please enter a new name for the folder"));
+
+		if (folder_name != NULL && strlen (folder_name) > 0) {
+			ModestMailOperation *mail_op;
+
+			mail_op = modest_mail_operation_new ();
+			modest_mail_operation_rename_folder (mail_op,
+							     folder,
+							     (const gchar *) folder_name);
+			g_object_unref (mail_op);
+		}
+		g_object_unref (folder);
+	}
+	g_object_unref (G_OBJECT (widget_factory));
+}
+
+static void
+delete_folder (ModestMainWindow *main_window,
+	       gboolean move_to_trash) 
+{
+	TnyFolder *folder;
+	ModestFolderView *folder_view;
+	ModestWidgetFactory *widget_factory;
+	ModestMailOperation *mail_op;
+			
+	widget_factory = modest_window_get_widget_factory (MODEST_WINDOW (main_window));
+	folder_view = modest_widget_factory_get_folder_view (widget_factory);
+	folder = modest_folder_view_get_selected (folder_view);
+
+	mail_op = modest_mail_operation_new ();
+	modest_mail_operation_remove_folder (mail_op, folder, move_to_trash);
+	g_object_unref (mail_op);
 }
 
 void 
 _modest_ui_actions_on_delete_folder (GtkWidget *widget,
 				     ModestMainWindow *main_window)
 {
-	g_print ("Delete Folder");
+	delete_folder (main_window, FALSE);
+}
+
+void 
+_modest_ui_actions_on_move_to_trash_folder (GtkWidget *widget,
+					    ModestMainWindow *main_window)
+{
+	delete_folder (main_window, TRUE);
 }

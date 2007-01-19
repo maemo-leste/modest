@@ -75,10 +75,10 @@ static TnyMimePart *         add_body_part    (TnyMsg *msg,
 					       gboolean has_attachments);
 
 
-static void modest_mail_operation_xfer_folder (ModestMailOperation *self,
-					       TnyFolder *folder,
-					       TnyFolderStore *parent,
-					       gboolean delete_original);
+static void        modest_mail_operation_xfer_folder       (ModestMailOperation *self,
+							    TnyFolder *folder,
+							    TnyFolderStore *parent,
+							    gboolean delete_original);
 
 static gboolean    modest_mail_operation_xfer_msg          (ModestMailOperation *self,
 							    TnyHeader *header, 

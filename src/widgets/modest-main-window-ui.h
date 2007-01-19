@@ -78,6 +78,7 @@ static const GtkActionEntry modest_action_entries [] = {
 	{ "ActionsFolderNew",   NULL, N_("New Folder"),   NULL, N_("Create a new folder"), G_CALLBACK (_modest_ui_actions_on_new_folder) },
 	{ "ActionsFolderDelete",   NULL, N_("Delete Folder"),   NULL, N_("Delete the folder"), G_CALLBACK (_modest_ui_actions_on_delete_folder) },
 	{ "ActionsFolderRename",   NULL, N_("Rename Folder"),   NULL, N_("Rename the folder"), G_CALLBACK (_modest_ui_actions_on_rename_folder) },
+	{ "ActionsFolderMoveToTrash",   NULL, N_("Move Folder to Trash"),   NULL, N_("Move folder to Trash"), G_CALLBACK (_modest_ui_actions_on_move_to_trash_folder) },
 
 
 	/* GOTO */

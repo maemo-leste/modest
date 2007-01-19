@@ -109,5 +109,8 @@ void     _modest_ui_actions_on_rename_folder            (GtkWidget *widget,
 void     _modest_ui_actions_on_delete_folder            (GtkWidget *widget,
 							 ModestMainWindow *main_window);
 
+void     _modest_ui_actions_on_move_to_trash_folder     (GtkWidget *widget,
+							 ModestMainWindow *main_window);
+
 G_END_DECLS
 #endif /* __MODEST_UI_ACTIONS_H__ */

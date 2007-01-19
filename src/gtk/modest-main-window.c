@@ -427,7 +427,6 @@ on_folder_view_button_press_event (ModestFolderView *folder_view,
         return FALSE;
 }
 
-
 static gboolean 
 show_context_popup_menu (ModestMainWindow *window,
 			 GtkTreeView *tree_view,
