@@ -312,14 +312,14 @@ tny_account_for_proto (ModestProtocol proto)
 	TnyAccount *tny_account = NULL;
 	
 	type  = modest_protocol_info_get_protocol_type (proto);
-
+	
 	if (type == MODEST_PROTOCOL_TYPE_TRANSPORT) 
 		tny_account = TNY_ACCOUNT(tny_camel_transport_account_new ());
 	else if (proto == MODEST_PROTOCOL_STORE_POP)
 		tny_account = TNY_ACCOUNT(tny_camel_pop_store_account_new ());
 	else if (proto == MODEST_PROTOCOL_STORE_IMAP)
 		tny_account = TNY_ACCOUNT(tny_camel_imap_store_account_new ());
-	else
+	else 
 		g_return_val_if_reached (NULL);
 	
 	if (tny_account)
@@ -348,6 +348,12 @@ get_tny_account_from_server_account (ModestTnyAccountStore *self,
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
 	
 	/* proto */
+	if (account_data->proto == MODEST_PROTOCOL_UNKNOWN) {
+		g_printerr ("modest: '%s' does not provide a protocol\n",
+			    account_data->account_name);
+		return NULL;
+	}
+		
 	tny_account = tny_account_for_proto (account_data->proto);
 	if (!tny_account) {
 		g_printerr ("modest: could not create tny account for '%s'\n",
@@ -506,8 +512,6 @@ get_tny_account_from_account (ModestTnyAccountStore *self, ModestAccountData *ac
 		server_account = account_data->store_account;
 	else if (type == TNY_ACCOUNT_STORE_TRANSPORT_ACCOUNTS && account_data->transport_account)
 		server_account = account_data->transport_account;
-	else
-		g_return_val_if_reached (NULL);
 	
 	if (!server_account) {
 		g_printerr ("modest: no %s account defined for '%s'\n",

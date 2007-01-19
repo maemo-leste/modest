@@ -120,9 +120,9 @@ modest_protocol_info_get_protocol_type (ModestProtocol proto)
 	case MODEST_PROTOCOL_AUTH_NONE:
 	case MODEST_PROTOCOL_AUTH_PASSWORD:
 		return MODEST_PROTOCOL_TYPE_AUTH;
-
+		
 	default:
-		g_return_val_if_reached (MODEST_PROTOCOL_TYPE_UNKNOWN);
+		return MODEST_PROTOCOL_TYPE_UNKNOWN;
 	}
 }
 
