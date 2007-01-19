@@ -240,7 +240,6 @@ save_settings_header_view (ModestConf *conf, ModestHeaderView *header_view,
 	key = _modest_widget_memory_get_keyname_with_double_type (name, type, style,
 								  MODEST_WIDGET_MEMORY_PARAM_COLUMN_WIDTH);
 
-	g_warning ("saving %s", key);	
 	cursor = cols = modest_header_view_get_columns (header_view);
 	str = g_string_new (NULL);
 
@@ -290,9 +289,6 @@ restore_settings_header_view (ModestConf *conf, ModestHeaderView *header_view,
 
 	key = _modest_widget_memory_get_keyname_with_double_type (name, type, style,
 								  MODEST_WIDGET_MEMORY_PARAM_COLUMN_WIDTH);
-	
-	g_warning ("restoring %s", key);	
-	
 	if (modest_conf_key_exists (conf, key, NULL)) {
 		
 		gchar *data, *cursor;
