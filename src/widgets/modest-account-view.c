@@ -105,13 +105,6 @@ modest_account_view_class_init (ModestAccountViewClass *klass)
 	gobject_class->finalize = modest_account_view_finalize;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestAccountViewPrivate));
-
-	/* signal definitions go here, e.g.: */
-/* 	signals[MY_SIGNAL_1] = */
-/* 		g_signal_new ("my_signal_1",....); */
-/* 	signals[MY_SIGNAL_2] = */
-/* 		g_signal_new ("my_signal_2",....); */
-/* 	etc. */
 }
 
 static void
@@ -160,32 +153,38 @@ update_account_view (ModestAccountMgr *account_mgr, ModestAccountView *view)
 
 	while (cursor) {
 		gchar    *proto = NULL;
-		gchar    *store, *account_name;
+		gchar    *store, *account_name, *display_name;
 		gboolean enabled;
 
 		account_name = (gchar*)cursor->data;
 		
-		store        = modest_account_mgr_get_string (account_mgr,
+		display_name = modest_account_mgr_get_string (account_mgr,
 							      account_name,
-							      MODEST_ACCOUNT_STORE_ACCOUNT,
+							      MODEST_ACCOUNT_DISPLAY_NAME,
 							      FALSE, NULL);
+		/* don't display accounts without stores */
 		if (store) {
-
-			proto = modest_account_mgr_get_string (account_mgr,
-							       store,
-							       MODEST_ACCOUNT_PROTO,
-							       TRUE, NULL);
-			g_free(store);
+			store = modest_account_mgr_get_string (account_mgr,
+							       account_name,
+							       MODEST_ACCOUNT_STORE_ACCOUNT,
+							       FALSE, NULL);
+			if (store) {
+				proto = modest_account_mgr_get_string (account_mgr,
+								       store,
+								       MODEST_ACCOUNT_PROTO,
+								       TRUE, NULL);
+				g_free(store);
+			}
+		
+			enabled = modest_account_mgr_account_get_enabled (account_mgr, account_name);
+			gtk_list_store_insert_with_values (
+				model, NULL, 0,
+				ENABLED_COLUMN, enabled,
+				NAME_COLUMN,  display_name,
+				PROTO_COLUMN, proto,
+				-1);
 		}
-		
-		enabled = modest_account_mgr_account_get_enabled (account_mgr, account_name);
-		gtk_list_store_insert_with_values (
-			model, NULL, 0,
-			ENABLED_COLUMN, enabled,
-			NAME_COLUMN,  account_name,
-			PROTO_COLUMN, proto,
-			-1);
-		
+		g_free (display_name);
 		g_free (account_name);
 		g_free (proto);
 		
