@@ -163,7 +163,7 @@ update_account_view (ModestAccountMgr *account_mgr, ModestAccountView *view)
 							      MODEST_ACCOUNT_DISPLAY_NAME,
 							      FALSE, NULL);
 		/* don't display accounts without stores */
-		if (store) {
+		if (display_name) {
 			store = modest_account_mgr_get_string (account_mgr,
 							       account_name,
 							       MODEST_ACCOUNT_STORE_ACCOUNT,

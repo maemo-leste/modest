@@ -395,6 +395,9 @@ modest_mail_operation_create_reply_mail (TnyMsg *msg,
 	TnyMsg *new_msg;
 	TnyHeader *new_header, *header;
 	const gchar* reply_to;
+	gchar *new_cc = NULL;
+	const gchar *cc = NULL, *bcc = NULL;
+	GString *tmp = NULL;
 
 	new_msg = create_reply_forward_mail (msg, from, TRUE, reply_type);
 
@@ -408,10 +411,6 @@ modest_mail_operation_create_reply_mail (TnyMsg *msg,
 		tny_header_set_to (new_header, tny_header_get_from (header));
 
 	switch (reply_mode) {
-		gchar *new_cc = NULL;
-		const gchar *cc = NULL, *bcc = NULL;
-		GString *tmp = NULL;
-
 	case MODEST_MAIL_OPERATION_REPLY_MODE_SENDER:
 		/* Do not fill neither cc nor bcc */
 		break;

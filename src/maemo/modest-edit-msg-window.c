@@ -29,6 +29,7 @@
 #include <glib/gi18n.h>
 #include <tny-account-store.h>
 #include <widgets/modest-edit-msg-window.h>
+#include "modest-edit-msg-window-ui.h"
 #include "modest-icon-names.h"
 #include "modest-icon-factory.h"
 #include "modest-widget-memory.h"
@@ -249,6 +250,8 @@ modest_edit_msg_window_new (ModestWidgetFactory *factory,
 {
 	GObject *obj;
 	ModestEditMsgWindowPrivate *priv;
+	GtkActionGroup *action_group;
+	GError *error = NULL;
 
 	g_return_val_if_fail (factory, NULL);
 	g_return_val_if_fail (type < MODEST_EDIT_TYPE_NUM, NULL);
@@ -257,7 +260,30 @@ modest_edit_msg_window_new (ModestWidgetFactory *factory,
 	priv = MODEST_EDIT_MSG_WINDOW_GET_PRIVATE(obj);
 
 	priv->widget_factory = g_object_ref (factory);
-	//priv->ui_manager = g_object_ref (ui_manager);
+	priv->account_store = g_object_ref (account_store);
+
+	priv->ui_manager = gtk_ui_manager_new();
+	action_group = gtk_action_group_new ("ModestEditMsgWindowActions");
+
+	/* Add common actions */
+	gtk_action_group_add_actions (action_group,
+				      modest_edit_msg_action_entries,
+				      G_N_ELEMENTS (modest_edit_msg_action_entries),
+				      obj);
+	gtk_action_group_add_toggle_actions (action_group,
+					     modest_edit_msg_toggle_action_entries,
+					     G_N_ELEMENTS (modest_edit_msg_toggle_action_entries),
+					     obj);
+	gtk_ui_manager_insert_action_group (priv->ui_manager, action_group, 0);
+	g_object_unref (action_group);
+
+	/* Load the UI definition */
+	gtk_ui_manager_add_ui_from_file (priv->ui_manager, MODEST_UIDIR "modest-edit-msg-window-ui.xml", &error);
+	if (error != NULL) {
+		g_warning ("Could not merge modest-edit-msg-window-ui.xml: %s", error->message);
+		g_error_free (error);
+		error = NULL;
+	}
 
 	/* Add accelerators */
 	gtk_window_add_accel_group (GTK_WINDOW (obj), 

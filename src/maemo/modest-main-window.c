@@ -27,6 +27,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <hildon-widgets/hildon-window.h>
+
 #include <glib/gi18n.h>
 #include <gtk/gtktreeviewcolumn.h>
 
@@ -34,8 +36,10 @@
 #include <widgets/modest-edit-msg-window.h>
 #include <modest-widget-factory.h>
 #include "modest-widget-memory.h"
+#include "modest-window-priv.h"
 #include "modest-icon-factory.h"
 #include "modest-ui.h"
+#include "modest-main-window-ui.h"
 #include "modest-account-view-window.h"
 #include "modest-account-mgr.h"
 #include "modest-conf.h"
@@ -63,12 +67,6 @@ enum {
 typedef struct _ModestMainWindowPrivate ModestMainWindowPrivate;
 struct _ModestMainWindowPrivate {
 
-	GtkUIManager *ui_manager;
-	ModestWidgetFactory *widget_factory;
-	TnyPlatformFactory *factory;
-	ModestTnyAccountStore *account_store;
-
-	GtkWidget *toolbar;
 	GtkWidget *msg_paned;
 	GtkWidget *main_paned;
 	
@@ -114,7 +112,7 @@ modest_main_window_get_type (void)
 			(GInstanceInitFunc) modest_main_window_init,
 			NULL
 		};
-		my_type = g_type_register_static (GTK_TYPE_WINDOW,
+		my_type = g_type_register_static (MODEST_TYPE_WINDOW,
 		                                  "ModestMainWindow",
 		                                  &my_info, 0);
 	}
@@ -131,13 +129,6 @@ modest_main_window_class_init (ModestMainWindowClass *klass)
 	gobject_class->finalize = modest_main_window_finalize;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestMainWindowPrivate));
-
-	/* signal definitions go here, e.g.: */
-/* 	signals[MY_SIGNAL_1] = */
-/* 		g_signal_new ("my_signal_1",....); */
-/* 	signals[MY_SIGNAL_2] = */
-/* 		g_signal_new ("my_signal_2",....); */
-/* 	etc. */
 }
 
 static void
@@ -146,31 +137,17 @@ modest_main_window_init (ModestMainWindow *obj)
 	ModestMainWindowPrivate *priv;
 
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(obj);
-	
-	priv->factory = modest_tny_platform_factory_get_instance ();
-	priv->widget_factory = NULL;
-	priv->ui_manager = NULL;
-	priv->account_store = NULL;
+
+	priv->msg_paned    = NULL;
+	priv->main_paned   = NULL;	
+	priv->header_view  = NULL;
+	priv->folder_view  = NULL;
+	priv->msg_preview  = NULL;	
 }
 
 static void
 modest_main_window_finalize (GObject *obj)
 {
-	ModestMainWindowPrivate *priv;	
-	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(obj);
-	if (priv->widget_factory) {
-		g_object_unref (G_OBJECT(priv->widget_factory));
-		priv->widget_factory = NULL;
-	}
-	if (priv->ui_manager) {
-		g_object_unref (G_OBJECT(priv->ui_manager));
-		priv->ui_manager = NULL;
-	}
-	if (priv->account_store) {
-		g_object_unref (G_OBJECT(priv->account_store));
-		priv->account_store = NULL;
-	}
-	
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
@@ -179,10 +156,10 @@ static ModestHeaderView*
 header_view_new (ModestMainWindow *self)
 {
 	ModestHeaderView *header_view;
-	ModestMainWindowPrivate *priv;
+	ModestWindowPrivate *parent_priv;
 	
-	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
-	header_view = modest_widget_factory_get_header_view (priv->widget_factory);
+	parent_priv = MODEST_WINDOW_GET_PRIVATE(self);
+	header_view = modest_widget_factory_get_header_view (parent_priv->widget_factory);
 	modest_header_view_set_style (header_view, 0); /* don't show headers */
 	
 	return header_view;
@@ -194,10 +171,13 @@ restore_sizes (ModestMainWindow *self)
 {
 	ModestConf *conf;
 	ModestMainWindowPrivate *priv;
+	ModestWindowPrivate *parent_priv;
 	
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
+	parent_priv = MODEST_WINDOW_GET_PRIVATE(self);
+
 	conf = modest_tny_platform_factory_get_conf_instance
-		(MODEST_TNY_PLATFORM_FACTORY(priv->factory));
+		(MODEST_TNY_PLATFORM_FACTORY(parent_priv->plat_factory));
 
 	modest_widget_memory_restore (conf,G_OBJECT(self),
 				      "modest-main-window");
@@ -212,11 +192,14 @@ static void
 save_sizes (ModestMainWindow *self)
 {
 	ModestMainWindowPrivate *priv;
+	ModestWindowPrivate *parent_priv;
 	ModestConf *conf;
 	
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
+	parent_priv = MODEST_WINDOW_GET_PRIVATE(self);
+
 	conf = modest_tny_platform_factory_get_conf_instance
-		(MODEST_TNY_PLATFORM_FACTORY(priv->factory));
+		(MODEST_TNY_PLATFORM_FACTORY (parent_priv->plat_factory));
 	
 	modest_widget_memory_save (conf,G_OBJECT(self), "modest-main-window");
 	modest_widget_memory_save (conf, G_OBJECT(priv->main_paned),
@@ -259,31 +242,60 @@ modest_main_window_new (ModestWidgetFactory *widget_factory,
 {
 	GObject *obj;
 	ModestMainWindowPrivate *priv;
+	ModestWindowPrivate *parent_priv;
 	GtkWidget *main_vbox;
 	GtkWidget *status_hbox;
 	GtkWidget *header_win, *folder_win;
+	GtkActionGroup *action_group;
+	GError *error = NULL;
 	
 	g_return_val_if_fail (widget_factory, NULL);
 
 	obj  = g_object_new(MODEST_TYPE_MAIN_WINDOW, NULL);
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(obj);
+	parent_priv = MODEST_WINDOW_GET_PRIVATE(obj);
 
-	priv->widget_factory = g_object_ref (widget_factory);
-	priv->account_store = g_object_ref (account_store);
-	//priv->ui_manager = g_object_ref (ui_manager);
+	parent_priv->widget_factory = g_object_ref (widget_factory);
+	parent_priv->account_store = g_object_ref (account_store);
+
+	parent_priv->ui_manager = gtk_ui_manager_new();
+	action_group = gtk_action_group_new ("ModestMainWindowActions");
+
+	/* Add common actions */
+	gtk_action_group_add_actions (action_group,
+				      modest_action_entries,
+				      G_N_ELEMENTS (modest_action_entries),
+				      obj);
+
+	gtk_ui_manager_insert_action_group (parent_priv->ui_manager, action_group, 0);
+	g_object_unref (action_group);
+
+	/* Load the UI definition */
+	gtk_ui_manager_add_ui_from_file (parent_priv->ui_manager, MODEST_UIDIR "modest-ui.xml", &error);
+	if (error != NULL) {
+		g_warning ("Could not merge modest-ui.xml: %s", error->message);
+		g_error_free (error);
+		error = NULL;
+	}
 
 	/* Add accelerators */
 	gtk_window_add_accel_group (GTK_WINDOW (obj), 
-				    gtk_ui_manager_get_accel_group (priv->ui_manager));
+				    gtk_ui_manager_get_accel_group (parent_priv->ui_manager));
 
 
 	/* Toolbar / Menubar */
-	priv->toolbar = gtk_ui_manager_get_widget (priv->ui_manager, "/ToolBar");
-	gtk_toolbar_set_tooltips (GTK_TOOLBAR (priv->toolbar), TRUE);
+	parent_priv->toolbar = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar");
+	gtk_toolbar_set_tooltips (GTK_TOOLBAR (parent_priv->toolbar), TRUE);
+	hildon_window_add_toolbar (HILDON_WINDOW (obj), GTK_TOOLBAR (parent_priv->toolbar));
+	gtk_widget_show_all (parent_priv->toolbar);
+
+	parent_priv->menubar = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/MenuBar");
+	hildon_window_set_menu (HILDON_WINDOW (obj), GTK_MENU (parent_priv->menubar));
 
 	/* widgets from factory */
 	priv->folder_view = modest_widget_factory_get_folder_view (widget_factory);
 	priv->header_view = header_view_new (MODEST_MAIN_WINDOW(obj));
+	priv->msg_preview = modest_widget_factory_get_msg_preview (widget_factory);
 	
 	folder_win = wrapped_in_scrolled_window (GTK_WIDGET(priv->folder_view),
 						 FALSE);
@@ -317,7 +329,7 @@ modest_main_window_new (ModestWidgetFactory *widget_factory,
 	/* putting it all together... */
 	main_vbox = gtk_vbox_new (FALSE, 6);
 	gtk_box_pack_start (GTK_BOX(main_vbox), priv->main_paned, TRUE, TRUE,0);
-	gtk_box_pack_start (GTK_BOX(main_vbox), priv->toolbar, FALSE, FALSE, 0);
+/* 	gtk_box_pack_start (GTK_BOX(main_vbox), parent_priv->toolbar, FALSE, FALSE, 0); */
 	gtk_box_pack_start (GTK_BOX(main_vbox), status_hbox, FALSE, FALSE, 0);
 
 	
@@ -334,29 +346,4 @@ modest_main_window_new (ModestWidgetFactory *widget_factory,
 			  G_CALLBACK(on_delete_event), obj);
 	
 	return (ModestWindow *) obj;
-}
-
-ModestWidgetFactory *
-modest_main_window_get_widget_factory (ModestMainWindow *main_window)
-{
-	ModestMainWindowPrivate *priv;
-			
-	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW (main_window), NULL);
-
-	priv = MODEST_MAIN_WINDOW_GET_PRIVATE (main_window);
-
-	return g_object_ref (priv->widget_factory);
-}
-	
-TnyAccountStore * 
-modest_main_window_get_account_store (ModestMainWindow *main_window)
-{
-	ModestMainWindowPrivate *priv;
-			
-
-	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW (main_window), NULL);
-
-	priv = MODEST_MAIN_WINDOW_GET_PRIVATE (main_window);
-
-	return g_object_ref (priv->account_store);
 }

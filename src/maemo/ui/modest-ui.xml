@@ -30,7 +30,7 @@
 
 <ui>
 
-  <menubar name="MenuBar">
+  <menu name="Menu">
     <menu name="FileMenu" action="File">
       <menuitem name="FileNewMenu" action="FileNew"/>
       <menuitem name="FileOpenMenu" action="FileOpen"/>
@@ -59,6 +59,11 @@
       <menuitem name="ActionsReplyMenu" action="ActionsReply"/>
       <menuitem name="ActionsForwardMenu" action="ActionsForward"/>
       <menuitem name="ActionsBounceMenu" action="ActionsBounce"/>
+      <separator/>
+      <menuitem name="ActionsFolderNewMenu" action="ActionsFolderNew"/>
+      <menuitem name="ActionsFolderDeleteMenu" action="ActionsFolderDelete"/>
+      <menuitem name="ActionsFolderRenameMenu" action="ActionsFolderRename"/>
+      <menuitem name="ActionsFolderMoveToTrashMenu" action="ActionsFolderMoveToTrash"/>
     </menu>
 
     <menu name="OptionsMenu" action="Options">
@@ -85,5 +90,17 @@
     <separator/>
     <toolitem action="ActionsDelete"/>
   </toolbar>
+
+  <popup name="HeaderViewContextMenu">
+    <menuitem action="ActionsReply"/>
+    <menuitem action="ActionsForward"/>
+  </popup>
+
+  <popup name="FolderViewContextMenu">
+    <menuitem action="ActionsFolderNew"/>
+    <menuitem action="ActionsFolderDelete"/>
+    <menuitem action="ActionsFolderRename"/>
+    <menuitem action="ActionsFolderMoveToTrash"/>
+  </popup>
 
 </ui>

@@ -10,9 +10,11 @@ INCLUDES=\
 	$(MODEST_GSTUFF_CFLAGS) \
 	$(MODEST_LIBTINYMAIL_GNOME_DESKTOP_CFLAGS) \
 	-DMODEST_PLATFORM_ID=$(MODEST_PLATFORM_ID) \
+	-I ${top_srcdir}/src/widgets  \
 	-I ${top_srcdir}/src  \
-	-DPIXMAP_PREFIX=\"${datadir}/pixmaps/modest/\" \
 	-DPREFIX=\"@prefix@\" \
+	-DPIXMAP_PREFIX=\"${datadir}/pixmaps/modest/\" \
+	-DMODEST_UIDIR=\""$(datadir)/modest/ui/"\" \
 	-Wall
 
 noinst_LTLIBRARIES=\
