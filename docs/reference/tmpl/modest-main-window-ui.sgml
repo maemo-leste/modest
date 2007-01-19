@@ -1,18 +1,20 @@
 <!-- ##### SECTION Title ##### -->
-ModestTnyMsgView
+modest-main-window-ui
 
 <!-- ##### SECTION Short_Description ##### -->
-A widget that displays the body of a message
+
 
 <!-- ##### SECTION Long_Description ##### -->
 <para>
 
 </para>
 
+
 <!-- ##### SECTION See_Also ##### -->
 <para>
 
 </para>
+
 
 <!-- ##### SECTION Stability_Level ##### -->
 

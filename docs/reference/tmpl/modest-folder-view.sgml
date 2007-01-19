@@ -25,33 +25,6 @@ ModestFolderView
 </para>
 
 
-<!-- ##### SIGNAL ModestFolderView::folder-selection-changed ##### -->
-<para>
-
-</para>
-
-@: 
-@: 
-@: 
-
-<!-- ##### SIGNAL ModestFolderView::folder-selection-changed ##### -->
-<para>
-
-</para>
-
-@: 
-@: 
-@: 
-
-<!-- ##### SIGNAL ModestFolderView::folder-selection-changed ##### -->
-<para>
-
-</para>
-
-@: 
-@: 
-@: 
-
 <!-- ##### FUNCTION modest_folder_view_new ##### -->
 <para>
 
@@ -71,25 +44,7 @@ ModestFolderView
 @title: 
 
 
-<!-- ##### FUNCTION modest_folder_view_is_empty ##### -->
-<para>
-
-</para>
-
-@self: 
-@Returns: 
-
-
-<!-- ##### FUNCTION modest_folder_view_guess_folder_type ##### -->
-<para>
-
-</para>
-
-@folder: 
-@Returns: 
-
-
-<!-- ##### FUNCTION modest_folder_view_get_selected_account ##### -->
+<!-- ##### FUNCTION modest_folder_view_get_selected ##### -->
 <para>
 
 </para>

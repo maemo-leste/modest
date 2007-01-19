@@ -67,14 +67,7 @@ ModestMailOperation
 
 </para>
 
-@: 
-
-<!-- ##### SIGNAL ModestMailOperation::progress-changed ##### -->
-<para>
-
-</para>
-
-@: 
+@modestmailoperation: the object which received the signal.
 
 <!-- ##### FUNCTION modest_mail_operation_new ##### -->
 <para>

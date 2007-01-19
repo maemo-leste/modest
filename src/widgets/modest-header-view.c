@@ -816,4 +816,3 @@ cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 		return &iter1 - &iter2; /* oughhhh  */
 	}
 }
-

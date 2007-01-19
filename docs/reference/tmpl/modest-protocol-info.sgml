@@ -1,0 +1,114 @@
+<!-- ##### SECTION Title ##### -->
+modest-protocol-info
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### ENUM ModestProtocol ##### -->
+<para>
+
+</para>
+
+@MODEST_PROTOCOL_UNKNOWN: 
+@MODEST_PROTOCOL_TRANSPORT_SENDMAIL: 
+@MODEST_PROTOCOL_TRANSPORT_SMTP: 
+@MODEST_PROTOCOL_STORE_POP: 
+@MODEST_PROTOCOL_STORE_IMAP: 
+@MODEST_PROTOCOL_STORE_MAILDIR: 
+@MODEST_PROTOCOL_STORE_MBOX: 
+@MODEST_PROTOCOL_SECURITY_SSL: 
+@MODEST_PROTOCOL_SECURITY_TLS: 
+@MODEST_PROTOCOL_AUTH_NONE: 
+@MODEST_PROTOCOL_AUTH_PASSWORD: 
+@MODEST_PROTOCOL_NUM: 
+
+<!-- ##### ENUM ModestProtocolType ##### -->
+<para>
+
+</para>
+
+@MODEST_PROTOCOL_TYPE_UNKNOWN: 
+@MODEST_PROTOCOL_TYPE_TRANSPORT: 
+@MODEST_PROTOCOL_TYPE_STORE: 
+@MODEST_PROTOCOL_TYPE_SECURITY: 
+@MODEST_PROTOCOL_TYPE_AUTH: 
+@MODEST_PROTOCOL_TYPE_NUM: 
+
+<!-- ##### FUNCTION modest_protocol_info_get_protocol_list ##### -->
+<para>
+
+</para>
+
+@type: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_protocol_info_get_protocol_pair_list ##### -->
+<para>
+
+</para>
+
+@type: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_protocol_info_get_protocol_type ##### -->
+<para>
+
+</para>
+
+@proto: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_protocol_info_get_protocol ##### -->
+<para>
+
+</para>
+
+@name: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_protocol_info_get_protocol_name ##### -->
+<para>
+
+</para>
+
+@proto: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_protocol_info_get_protocol_display_name ##### -->
+<para>
+
+</para>
+
+@proto: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_protocol_info_protocol_is_local_store ##### -->
+<para>
+
+</para>
+
+@proto: 
+@Returns: 
+
+

@@ -243,8 +243,7 @@ gboolean  modest_header_view_is_empty (ModestHeaderView *self);
  * 
  * Selects the header next to the current selected one
  **/
-void     modest_header_view_select_next          (ModestHeaderView *self);
-
+void         modest_header_view_select_next          (ModestHeaderView *self);
 
 
 /* PROTECTED method. It's useful when we want to force a given

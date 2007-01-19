@@ -1,5 +1,5 @@
 <!-- ##### SECTION Title ##### -->
-ModestUI
+ModestWindow
 
 <!-- ##### SECTION Short_Description ##### -->
 
@@ -19,37 +19,39 @@ ModestUI
 <!-- ##### SECTION Stability_Level ##### -->
 
 
-<!-- ##### STRUCT ModestUI ##### -->
+<!-- ##### TYPEDEF ModestWindowParent ##### -->
 <para>
 
 </para>
 
 
-<!-- ##### FUNCTION modest_ui_new ##### -->
+<!-- ##### TYPEDEF ModestWindowParentClass ##### -->
 <para>
 
 </para>
 
-@account_store: 
+
+<!-- ##### STRUCT ModestWindow ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### FUNCTION modest_window_get_account_store ##### -->
+<para>
+
+</para>
+
+@window: 
 @Returns: 
 
 
-<!-- ##### FUNCTION modest_ui_main_window ##### -->
+<!-- ##### FUNCTION modest_window_get_widget_factory ##### -->
 <para>
 
 </para>
 
-@modest_ui: 
-@Returns: 
-
-
-<!-- ##### FUNCTION modest_ui_edit_window ##### -->
-<para>
-
-</para>
-
-@modest_ui: 
-@edit_type: 
+@window: 
 @Returns: 
 
 

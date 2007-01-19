@@ -1,0 +1,56 @@
+<!-- ##### SECTION Title ##### -->
+modest-tny-folder
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### ENUM ModestTnyFolderRules ##### -->
+<para>
+
+</para>
+
+@MODEST_FOLDER_RULES_FOLDER_READ_ONLY: 
+@MODEST_FOLDER_RULES_FOLDER_DELETABLE: 
+
+<!-- ##### FUNCTION modest_tny_folder_guess_folder_type ##### -->
+<para>
+
+</para>
+
+@folder: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_tny_folder_guess_folder_type_from_name ##### -->
+<para>
+
+</para>
+
+@folder_name: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_tny_folder_get_rules ##### -->
+<para>
+
+</para>
+
+@folder: 
+@Returns: 
+
+

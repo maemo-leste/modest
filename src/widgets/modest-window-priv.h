@@ -1,4 +1,4 @@
-/* Copyright (c) 2006,2007 Nokia Corporation
+/* Copyright (c) 2006, Nokia Corporation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,42 +27,32 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef __MODEST_WINDOW_PRIV_H__
+#define __MODEST_WINDOW_PRIV_H__
 
-#ifndef __MODEST_MAIN_WINDOW_H__
-#define __MODEST_MAIN_WINDOW_H__
-
+#include <gtk/gtkuimanager.h>
+#include <tny-account-store.h>
+#include "modest-tny-platform-factory.h"
 #include "modest-widget-factory.h"
-#include "modest-window.h"
 
 G_BEGIN_DECLS
 
-/* convenience macros */
-#define MODEST_TYPE_MAIN_WINDOW             (modest_main_window_get_type())
-#define MODEST_MAIN_WINDOW(obj)             (G_TYPE_CHECK_INSTANCE_CAST((obj),MODEST_TYPE_MAIN_WINDOW,ModestMainWindow))
-#define MODEST_MAIN_WINDOW_CLASS(klass)     (G_TYPE_CHECK_CLASS_CAST((klass),MODEST_TYPE_MAIN_WINDOW,ModestWindow))
+typedef struct _ModestWindowPrivate ModestWindowPrivate;
+struct _ModestWindowPrivate {
 
-#define MODEST_IS_MAIN_WINDOW(obj)          (G_TYPE_CHECK_INSTANCE_TYPE((obj),MODEST_TYPE_MAIN_WINDOW))
-#define MODEST_IS_MAIN_WINDOW_CLASS(klass)  (G_TYPE_CHECK_CLASS_TYPE((klass),MODEST_TYPE_MAIN_WINDOW))
-#define MODEST_MAIN_WINDOW_GET_CLASS(obj)   (G_TYPE_INSTANCE_GET_CLASS((obj),MODEST_TYPE_MAIN_WINDOW,ModestMainWindowClass))
+	ModestWidgetFactory  *widget_factory;
+	TnyPlatformFactory   *plat_factory;
 
-typedef struct _ModestMainWindow      ModestMainWindow;
-typedef struct _ModestMainWindowClass ModestMainWindowClass;
+	TnyAccountStore      *account_store;
+	GtkUIManager         *ui_manager;
 
-struct _ModestMainWindow {
-	ModestWindow parent;
+	GtkWidget            *toolbar;
+	GtkWidget            *menubar;
 };
 
-struct _ModestMainWindowClass {
-	ModestWindowClass parent_class;
-};
-
-/* member functions */
-GType modest_main_window_get_type (void) G_GNUC_CONST;
-
-
-ModestWindow* modest_main_window_new (ModestWidgetFactory *factory,
-				      TnyAccountStore *account_store);
+#define MODEST_WINDOW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
+                                           MODEST_TYPE_WINDOW, \
+                                           ModestWindowPrivate))
 
 G_END_DECLS
-
-#endif /* __MODEST_MAIN_WINDOW_H__ */
+#endif /* __MODEST_WINDOW_PRIV_H__ */

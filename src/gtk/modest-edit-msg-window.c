@@ -33,6 +33,7 @@
 #include "modest-icon-names.h"
 #include "modest-icon-factory.h"
 #include "modest-widget-memory.h"
+#include "modest-window-priv.h"
 #include "modest-mail-operation.h"
 #include "modest-tny-platform-factory.h"
 #include "modest-tny-msg-actions.h"
@@ -53,15 +54,15 @@ enum {
 typedef struct _ModestEditMsgWindowPrivate ModestEditMsgWindowPrivate;
 struct _ModestEditMsgWindowPrivate {
 
-	ModestWidgetFactory *widget_factory;
-	TnyPlatformFactory *fact;
-	TnyAccountStore *account_store;
-	GtkUIManager *ui_manager;
-	
-	GtkWidget      *toolbar, *menubar;
-	GtkWidget      *msg_body;
-	GtkWidget      *from_field, *to_field, *cc_field, *bcc_field,
-		       *subject_field;
+	GtkWidget   *toolbar;
+	GtkWidget   *menubar;
+
+	GtkWidget   *msg_body;
+	GtkWidget   *from_field;
+	GtkWidget   *to_field;
+	GtkWidget   *cc_field;
+	GtkWidget   *bcc_field;
+	GtkWidget   *subject_field;
 };
 
 #define MODEST_EDIT_MSG_WINDOW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -90,7 +91,7 @@ modest_edit_msg_window_get_type (void)
 			(GInstanceInitFunc) modest_edit_msg_window_init,
 			NULL
 		};
-		my_type = g_type_register_static (GTK_TYPE_WINDOW,
+		my_type = g_type_register_static (MODEST_TYPE_WINDOW,
 		                                  "ModestEditMsgWindow",
 		                                  &my_info, 0);
 	}
@@ -107,13 +108,6 @@ modest_edit_msg_window_class_init (ModestEditMsgWindowClass *klass)
 	gobject_class->finalize = modest_edit_msg_window_finalize;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestEditMsgWindowPrivate));
-
-	/* signal definitions go here, e.g.: */
-/* 	signals[MY_SIGNAL_1] = */
-/* 		g_signal_new ("my_signal_1",....); */
-/* 	signals[MY_SIGNAL_2] = */
-/* 		g_signal_new ("my_signal_2",....); */
-/* 	etc. */
 }
 
 static void
@@ -122,23 +116,25 @@ modest_edit_msg_window_init (ModestEditMsgWindow *obj)
 	ModestEditMsgWindowPrivate *priv;
 	priv = MODEST_EDIT_MSG_WINDOW_GET_PRIVATE(obj);
 
-	priv->fact = modest_tny_platform_factory_get_instance ();
-	priv->widget_factory = NULL;
-	priv->toolbar = NULL;
-	priv->menubar = NULL;
+	priv->toolbar       = NULL;
+	priv->menubar       = NULL;
+	priv->msg_body      = NULL;
+	priv->from_field    = NULL;
+	priv->to_field      = NULL;
+	priv->cc_field      = NULL;
+	priv->bcc_field     = NULL;
+	priv->subject_field = NULL;
 }
-
-
 
 static void
 save_settings (ModestEditMsgWindow *self)
 {
-	ModestEditMsgWindowPrivate *priv;
+	ModestWindowPrivate *parent_priv;
 	ModestConf *conf;
 
-	priv = MODEST_EDIT_MSG_WINDOW_GET_PRIVATE(self);
+	parent_priv = MODEST_WINDOW_GET_PRIVATE(self);
 	conf = modest_tny_platform_factory_get_conf_instance
-		(MODEST_TNY_PLATFORM_FACTORY(priv->fact));
+		(MODEST_TNY_PLATFORM_FACTORY(parent_priv->plat_factory));
 
 	modest_widget_memory_save (conf, G_OBJECT(self), "modest-edit-msg-window");
 }
@@ -147,12 +143,12 @@ save_settings (ModestEditMsgWindow *self)
 static void
 restore_settings (ModestEditMsgWindow *self)
 {
-	ModestEditMsgWindowPrivate *priv;
+	ModestWindowPrivate *parent_priv;
 	ModestConf *conf;
 
-	priv = MODEST_EDIT_MSG_WINDOW_GET_PRIVATE(self);
+	parent_priv = MODEST_WINDOW_GET_PRIVATE(self);
 	conf = modest_tny_platform_factory_get_conf_instance
-		(MODEST_TNY_PLATFORM_FACTORY(priv->fact));
+		(MODEST_TNY_PLATFORM_FACTORY(parent_priv->plat_factory));
 	modest_widget_memory_restore (conf, G_OBJECT(self), "modest-edit-msg-window");
 }
 
@@ -163,15 +159,17 @@ init_window (ModestEditMsgWindow *obj)
 	GtkWidget *to_button, *cc_button, *bcc_button; 
 	GtkWidget *header_table;
 	GtkWidget *main_vbox;
-	
 	ModestEditMsgWindowPrivate *priv;
+	ModestWindowPrivate *parent_priv;
+
 	priv = MODEST_EDIT_MSG_WINDOW_GET_PRIVATE(obj);
+	parent_priv = MODEST_WINDOW_GET_PRIVATE(obj);
 
 	to_button     = gtk_button_new_with_label (_("To..."));
 	cc_button     = gtk_button_new_with_label (_("Cc..."));
 	bcc_button    = gtk_button_new_with_label (_("Bcc..."));
 
-	priv->from_field    = modest_widget_factory_get_combo_box (priv->widget_factory,
+	priv->from_field    = modest_widget_factory_get_combo_box (parent_priv->widget_factory,
 								   MODEST_COMBO_BOX_TYPE_TRANSPORTS);
 	priv->to_field      = gtk_entry_new_with_max_length (80);
 	priv->cc_field      = gtk_entry_new_with_max_length (80);
@@ -212,13 +210,6 @@ init_window (ModestEditMsgWindow *obj)
 static void
 modest_edit_msg_window_finalize (GObject *obj)
 {
-	ModestEditMsgWindowPrivate *priv;
-
-	priv = MODEST_EDIT_MSG_WINDOW_GET_PRIVATE(obj);
-
-	g_object_unref (G_OBJECT(priv->widget_factory));
-	priv->widget_factory = NULL;
-	
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 
 }
@@ -240,6 +231,7 @@ modest_edit_msg_window_new (ModestWidgetFactory *factory,
 {
 	GObject *obj;
 	ModestEditMsgWindowPrivate *priv;
+	ModestWindowPrivate *parent_priv;
 	GtkActionGroup *action_group;
 	GError *error = NULL;
 
@@ -248,12 +240,13 @@ modest_edit_msg_window_new (ModestWidgetFactory *factory,
 	
 	obj = g_object_new(MODEST_TYPE_EDIT_MSG_WINDOW, NULL);
 	priv = MODEST_EDIT_MSG_WINDOW_GET_PRIVATE(obj);
+	parent_priv = MODEST_WINDOW_GET_PRIVATE(obj);
 
-	priv->widget_factory = g_object_ref (factory);
-	priv->account_store  = g_object_ref (account_store);
+	parent_priv->widget_factory = g_object_ref (factory);
+	parent_priv->account_store  = g_object_ref (account_store);
 
 	/* ****** */
-	priv->ui_manager = gtk_ui_manager_new();
+	parent_priv->ui_manager = gtk_ui_manager_new();
 	action_group = gtk_action_group_new ("ModestEditMsgWindowActions");
 
 	/* Add common actions */
@@ -265,11 +258,11 @@ modest_edit_msg_window_new (ModestWidgetFactory *factory,
 					     modest_edit_msg_toggle_action_entries,
 					     G_N_ELEMENTS (modest_edit_msg_toggle_action_entries),
 					     obj);
-	gtk_ui_manager_insert_action_group (priv->ui_manager, action_group, 0);
+	gtk_ui_manager_insert_action_group (parent_priv->ui_manager, action_group, 0);
 	g_object_unref (action_group);
 
 	/* Load the UI definition */
-	gtk_ui_manager_add_ui_from_file (priv->ui_manager, MODEST_UIDIR "modest-edit-msg-window-ui.xml", &error);
+	gtk_ui_manager_add_ui_from_file (parent_priv->ui_manager, MODEST_UIDIR "modest-edit-msg-window-ui.xml", &error);
 	if (error != NULL) {
 		g_warning ("Could not merge modest-edit-msg-window-ui.xml: %s", error->message);
 		g_error_free (error);
@@ -279,12 +272,12 @@ modest_edit_msg_window_new (ModestWidgetFactory *factory,
 
 	/* Add accelerators */
 	gtk_window_add_accel_group (GTK_WINDOW (obj), 
-				    gtk_ui_manager_get_accel_group (priv->ui_manager));
+				    gtk_ui_manager_get_accel_group (parent_priv->ui_manager));
 
 
 	/* Toolbar / Menubar */
-	priv->toolbar = gtk_ui_manager_get_widget (priv->ui_manager, "/EditMsgWindowToolBar");
-	priv->menubar = gtk_ui_manager_get_widget (priv->ui_manager, "/EditMsgWindowMenuBar");
+	priv->toolbar = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/EditMsgWindowToolBar");
+	priv->menubar = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/EditMsgWindowMenuBar");
 
 	gtk_toolbar_set_tooltips (GTK_TOOLBAR (priv->toolbar), TRUE);
 
@@ -341,30 +334,6 @@ modest_edit_msg_window_set_msg (ModestEditMsgWindow *self, TnyMsg *msg)
 	   allowed? */
 	
 	/* TODO: set attachments */
-}
-
-ModestWidgetFactory *
-modest_edit_msg_window_get_widget_factory (ModestEditMsgWindow *edit_window)
-{
-	ModestEditMsgWindowPrivate *priv;
-	
-	g_return_val_if_fail (MODEST_IS_EDIT_MSG_WINDOW (edit_window), NULL);
-
-	priv = MODEST_EDIT_MSG_WINDOW_GET_PRIVATE (edit_window);
-
-	return g_object_ref (priv->widget_factory);
-}
-
-TnyAccountStore * 
-modest_edit_msg_window_get_account_store (ModestEditMsgWindow *edit_window)
-{
-	ModestEditMsgWindowPrivate *priv;
-	
-	g_return_val_if_fail (MODEST_IS_EDIT_MSG_WINDOW (edit_window), NULL);
-
-	priv = MODEST_EDIT_MSG_WINDOW_GET_PRIVATE (edit_window);
-
-	return g_object_ref (priv->account_store);
 }
 
 MsgData * 

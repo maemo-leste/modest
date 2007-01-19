@@ -581,3 +581,17 @@ modest_folder_view_update_model (ModestFolderView *self, TnyAccountStore *accoun
 
 	return update_model (self, MODEST_TNY_ACCOUNT_STORE(account_store)); /* ugly */
 }
+
+TnyFolder *
+modest_folder_view_get_selected (ModestFolderView *self)
+{
+	ModestFolderViewPrivate *priv;
+
+	g_return_val_if_fail (self, NULL);
+	
+	priv = MODEST_FOLDER_VIEW_GET_PRIVATE(self);
+	if (priv->cur_folder)
+		g_object_ref (priv->cur_folder);
+
+	return priv->cur_folder;
+}

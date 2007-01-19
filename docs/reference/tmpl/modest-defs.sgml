@@ -1,5 +1,5 @@
 <!-- ##### SECTION Title ##### -->
-modest-account-keys
+modest-defs
 
 <!-- ##### SECTION Short_Description ##### -->
 
@@ -19,7 +19,35 @@ modest-account-keys
 <!-- ##### SECTION Stability_Level ##### -->
 
 
-<!-- ##### MACRO MODEST_CONF_DEFAULT_ACCOUNT ##### -->
+<!-- ##### MACRO MODEST_DIR ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO MODEST_CACHE_DIR ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO MODEST_LOCAL_FOLDERS_MAILDIR ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO MODEST_CONF_NAMESPACE ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO MODEST_CONF_WIDGET_NAMESPACE ##### -->
 <para>
 
 </para>

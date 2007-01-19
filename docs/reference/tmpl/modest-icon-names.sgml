@@ -215,3 +215,73 @@ modest-icon-names
 
 
 
+<!-- ##### MACRO MODEST_STOCK_MAIL_SEND ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO MODEST_STOCK_NEW_MAIL ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO MODEST_STOCK_SEND_RECEIVE ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO MODEST_STOCK_REPLY ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO MODEST_STOCK_REPLY_ALL ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO MODEST_STOCK_FORWARD ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO MODEST_STOCK_DELETE ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO MODEST_STOCK_NEXT ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO MODEST_STOCK_PREV ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO MODEST_STOCK_STOP ##### -->
+<para>
+
+</para>
+
+
+

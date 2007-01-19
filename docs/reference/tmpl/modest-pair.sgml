@@ -28,6 +28,12 @@ modest-pair
 @second: 
 @own: 
 
+<!-- ##### TYPEDEF ModestPairList ##### -->
+<para>
+
+</para>
+
+
 <!-- ##### FUNCTION modest_pair_new ##### -->
 <para>
 
@@ -39,7 +45,7 @@ modest-pair
 @Returns: 
 
 
-<!-- ##### FUNCTION modest_pair_destroy ##### -->
+<!-- ##### FUNCTION modest_pair_free ##### -->
 <para>
 
 </para>
@@ -47,7 +53,7 @@ modest-pair
 @self: 
 
 
-<!-- ##### FUNCTION modest_pair_gslist_destroy ##### -->
+<!-- ##### FUNCTION modest_pair_list_free ##### -->
 <para>
 
 </para>

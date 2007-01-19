@@ -137,3 +137,12 @@ modest-text-utils
 @Returns: 
 
 
+<!-- ##### FUNCTION modest_text_utils_validate_email_address ##### -->
+<para>
+
+</para>
+
+@email_address: 
+@Returns: 
+
+

@@ -31,7 +31,7 @@
 #include <gtk/gtktreeviewcolumn.h>
 
 #include "modest-main-window.h"
-#include "modest-widget-factory.h"
+#include "modest-window-priv.h"
 #include "modest-widget-memory.h"
 #include "modest-icon-factory.h"
 #include "modest-ui.h"
@@ -40,7 +40,6 @@
 #include "modest-account-mgr.h"
 #include "modest-conf.h"
 #include "modest-edit-msg-window.h"
-#include "modest-tny-platform-factory.h"
 #include "modest-tny-msg-actions.h"
 #include "modest-mail-operation.h"
 #include "modest-icon-names.h"
@@ -53,6 +52,19 @@ static void modest_main_window_finalize      (GObject *obj);
 static void restore_sizes (ModestMainWindow *self);
 static void save_sizes (ModestMainWindow *self);
 
+static gboolean     on_header_view_button_press_event   (ModestHeaderView *header_view,
+							 GdkEventButton   *event,
+							 ModestMainWindow *self);
+
+static gboolean     on_folder_view_button_press_event   (ModestFolderView *folder_view,
+							 GdkEventButton   *event,
+							 ModestMainWindow *self);
+
+static gboolean     show_context_popup_menu             (ModestMainWindow *window,
+							 GtkTreeView      *tree_view,
+							 GdkEventButton   *event,
+							 GtkWidget        *menu);
+
 /* list my signals */
 enum {
 	/* MY_SIGNAL_1, */
@@ -62,14 +74,6 @@ enum {
 
 typedef struct _ModestMainWindowPrivate ModestMainWindowPrivate;
 struct _ModestMainWindowPrivate {
-
-	GtkUIManager *ui_manager;
-	ModestWidgetFactory *widget_factory;
-	TnyPlatformFactory *factory;
-	ModestTnyAccountStore *account_store;
-	
-	GtkWidget *toolbar;
-	GtkWidget *menubar;
 
 	GtkWidget *folder_paned;
 	GtkWidget *msg_paned;
@@ -117,7 +121,7 @@ modest_main_window_get_type (void)
 			(GInstanceInitFunc) modest_main_window_init,
 			NULL
 		};
-		my_type = g_type_register_static (GTK_TYPE_WINDOW,
+		my_type = g_type_register_static (MODEST_TYPE_WINDOW,
 		                                  "ModestMainWindow",
 		                                  &my_info, 0);
 	}
@@ -134,13 +138,6 @@ modest_main_window_class_init (ModestMainWindowClass *klass)
 	gobject_class->finalize = modest_main_window_finalize;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestMainWindowPrivate));
-
-	/* signal definitions go here, e.g.: */
-/* 	signals[MY_SIGNAL_1] = */
-/* 		g_signal_new ("my_signal_1",....); */
-/* 	signals[MY_SIGNAL_2] = */
-/* 		g_signal_new ("my_signal_2",....); */
-/* 	etc. */
 }
 
 static void
@@ -150,30 +147,17 @@ modest_main_window_init (ModestMainWindow *obj)
 
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(obj);
 	
-	priv->factory = modest_tny_platform_factory_get_instance ();
-	priv->widget_factory = NULL;
-	priv->ui_manager = NULL;
-	priv->account_store = NULL;
+	priv->folder_paned = NULL;
+	priv->msg_paned    = NULL;
+	priv->main_paned   = NULL;	
+	priv->header_view  = NULL;
+	priv->folder_view  = NULL;
+	priv->msg_preview  = NULL;
 }
 
 static void
 modest_main_window_finalize (GObject *obj)
 {
-	ModestMainWindowPrivate *priv;	
-	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(obj);
-	if (priv->widget_factory) {
-		g_object_unref (G_OBJECT(priv->widget_factory));
-		priv->widget_factory = NULL;
-	}
-	if (priv->ui_manager) {
-		g_object_unref (G_OBJECT(priv->ui_manager));
-		priv->ui_manager = NULL;
-	}
-	if (priv->account_store) {
-		g_object_unref (G_OBJECT(priv->account_store));
-		priv->account_store = NULL;
-	}
-
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
@@ -182,10 +166,11 @@ static ModestHeaderView*
 header_view_new (ModestMainWindow *self)
 {
 	ModestHeaderView *header_view;
-	ModestMainWindowPrivate *priv;
-	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
+	ModestWindowPrivate *parent_priv;
+
+	parent_priv = MODEST_WINDOW_GET_PRIVATE(self);
 	
-	header_view = modest_widget_factory_get_header_view (priv->widget_factory);
+	header_view = modest_widget_factory_get_header_view (parent_priv->widget_factory);
 	modest_header_view_set_style (header_view, MODEST_HEADER_VIEW_STYLE_DETAILS);
 	return header_view;
 }
@@ -196,10 +181,13 @@ restore_sizes (ModestMainWindow *self)
 {
 	ModestConf *conf;
 	ModestMainWindowPrivate *priv;
+	ModestWindowPrivate *parent_priv;
 	
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
+	parent_priv = MODEST_WINDOW_GET_PRIVATE(self);
+
 	conf = modest_tny_platform_factory_get_conf_instance
-		(MODEST_TNY_PLATFORM_FACTORY(priv->factory));
+		(MODEST_TNY_PLATFORM_FACTORY(parent_priv->plat_factory));
 
 	modest_widget_memory_restore (conf, G_OBJECT(priv->folder_paned),
 				      "modest-folder-paned");
@@ -217,12 +205,15 @@ restore_sizes (ModestMainWindow *self)
 static void
 save_sizes (ModestMainWindow *self)
 {
+	ModestWindowPrivate *parent_priv;
 	ModestMainWindowPrivate *priv;
 	ModestConf *conf;
 	
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
+	parent_priv = MODEST_WINDOW_GET_PRIVATE(self);
+
 	conf = modest_tny_platform_factory_get_conf_instance
-		(MODEST_TNY_PLATFORM_FACTORY(priv->factory));
+		(MODEST_TNY_PLATFORM_FACTORY(parent_priv->plat_factory));
 	
 	modest_widget_memory_save (conf,G_OBJECT(self), "modest-main-window");
 	modest_widget_memory_save (conf, G_OBJECT(priv->folder_paned),
@@ -269,6 +260,7 @@ modest_main_window_new (ModestWidgetFactory *widget_factory,
 {
 	GObject *obj;
 	ModestMainWindowPrivate *priv;
+	ModestWindowPrivate *parent_priv;
 	GtkWidget *main_vbox;
 	GtkWidget *status_hbox;
 	GtkWidget *header_win, *folder_win;
@@ -279,12 +271,13 @@ modest_main_window_new (ModestWidgetFactory *widget_factory,
 
 	obj  = g_object_new(MODEST_TYPE_MAIN_WINDOW, NULL);
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(obj);
+	parent_priv = MODEST_WINDOW_GET_PRIVATE(obj);
 
-	priv->widget_factory = g_object_ref (widget_factory);
-	priv->account_store  = g_object_ref (account_store);
+	parent_priv->widget_factory = g_object_ref (widget_factory);
+	parent_priv->account_store  = g_object_ref (account_store);
 
 	/* ***************** */
-	priv->ui_manager = gtk_ui_manager_new();
+	parent_priv->ui_manager = gtk_ui_manager_new();
 	action_group = gtk_action_group_new ("ModestMainWindowActions");
 
 	/* Add common actions */
@@ -293,29 +286,28 @@ modest_main_window_new (ModestWidgetFactory *widget_factory,
 				      G_N_ELEMENTS (modest_action_entries),
 				      obj);
 
-	gtk_ui_manager_insert_action_group (priv->ui_manager, action_group, 0);
+	gtk_ui_manager_insert_action_group (parent_priv->ui_manager, action_group, 0);
 	g_object_unref (action_group);
 
 	/* Load the UI definition */
-	gtk_ui_manager_add_ui_from_file (priv->ui_manager, MODEST_UIDIR "modest-ui.xml", &error);
+	gtk_ui_manager_add_ui_from_file (parent_priv->ui_manager, MODEST_UIDIR "modest-ui.xml", &error);
 	if (error != NULL) {
 		g_warning ("Could not merge modest-ui.xml: %s", error->message);
 		g_error_free (error);
 		error = NULL;
 	}
 	/* *************** */
-/* 	priv->ui_manager = g_object_ref (ui_manager); */
 
 	/* Add accelerators */
 	gtk_window_add_accel_group (GTK_WINDOW (obj), 
-				    gtk_ui_manager_get_accel_group (priv->ui_manager));
+				    gtk_ui_manager_get_accel_group (parent_priv->ui_manager));
 
 
 	/* Toolbar / Menubar */
-	priv->toolbar = gtk_ui_manager_get_widget (priv->ui_manager, "/ToolBar");
-	priv->menubar = gtk_ui_manager_get_widget (priv->ui_manager, "/MenuBar");
+	parent_priv->toolbar = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar");
+	parent_priv->menubar = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/MenuBar");
 
-	gtk_toolbar_set_tooltips (GTK_TOOLBAR (priv->toolbar), TRUE);
+	gtk_toolbar_set_tooltips (GTK_TOOLBAR (parent_priv->toolbar), TRUE);
 
 	/* widgets from factory */
 	priv->folder_view = modest_widget_factory_get_folder_view (widget_factory);
@@ -326,6 +318,25 @@ modest_main_window_new (ModestWidgetFactory *widget_factory,
 						 FALSE);
 	header_win = wrapped_in_scrolled_window (GTK_WIDGET(priv->header_view),
 						 FALSE);			   
+
+	/* Connect platform specific signals */
+	g_signal_connect (priv->header_view,
+			  "button-press-event",
+			  G_CALLBACK (on_header_view_button_press_event),
+			  obj);
+	g_signal_connect (priv->header_view,
+			  "popup-menu",
+			  G_CALLBACK (on_header_view_button_press_event),
+			  obj);
+	g_signal_connect (priv->folder_view,
+			  "button-press-event",
+			  G_CALLBACK (on_folder_view_button_press_event),
+			  obj);
+	g_signal_connect (priv->folder_view,
+			  "popup-menu",
+			  G_CALLBACK (on_folder_view_button_press_event),
+			  obj);
+
 
 	/* paned */
 	priv->folder_paned = gtk_vpaned_new ();
@@ -355,8 +366,8 @@ modest_main_window_new (ModestWidgetFactory *widget_factory,
 
 	/* putting it all together... */
 	main_vbox = gtk_vbox_new (FALSE, 6);
-	gtk_box_pack_start (GTK_BOX(main_vbox), priv->menubar, FALSE, FALSE, 0);
-	gtk_box_pack_start (GTK_BOX(main_vbox), priv->toolbar, FALSE, FALSE, 0);
+	gtk_box_pack_start (GTK_BOX(main_vbox), parent_priv->menubar, FALSE, FALSE, 0);
+	gtk_box_pack_start (GTK_BOX(main_vbox), parent_priv->toolbar, FALSE, FALSE, 0);
 	gtk_box_pack_start (GTK_BOX(main_vbox), priv->main_paned, TRUE, TRUE,0);
 	gtk_box_pack_start (GTK_BOX(main_vbox), status_hbox, FALSE, FALSE, 0);
 	
@@ -374,26 +385,84 @@ modest_main_window_new (ModestWidgetFactory *widget_factory,
 	return (ModestWindow *) obj;
 }
 
-ModestWidgetFactory *
-modest_main_window_get_widget_factory (ModestMainWindow *main_window)
+static gboolean 
+on_header_view_button_press_event (ModestHeaderView *header_view,
+				   GdkEventButton   *event,
+				   ModestMainWindow *self)
 {
-	ModestMainWindowPrivate *priv;
+	if (event->type == GDK_BUTTON_PRESS && event->button == 3) {
+		GtkWidget *menu;
+		ModestWindowPrivate *parent_priv;
 	
-	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW (main_window), NULL);
+		parent_priv = MODEST_WINDOW_GET_PRIVATE (self);
+		menu = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/HeaderViewContextMenu");
 
-	priv = MODEST_MAIN_WINDOW_GET_PRIVATE (main_window);
+		return show_context_popup_menu (self,
+						GTK_TREE_VIEW (header_view), 
+						event, 
+						menu);
+        }
 
-	return g_object_ref (priv->widget_factory);
+        return FALSE;
 }
 
-TnyAccountStore * 
-modest_main_window_get_account_store (ModestMainWindow *main_window)
+static gboolean 
+on_folder_view_button_press_event (ModestFolderView *folder_view,
+				   GdkEventButton   *event,
+				   ModestMainWindow *self)
 {
-	ModestMainWindowPrivate *priv;
+	if (event->type == GDK_BUTTON_PRESS && event->button == 3) {
+		GtkWidget *menu;
+		ModestWindowPrivate *parent_priv;
 	
-	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW (main_window), NULL);
+		parent_priv = MODEST_WINDOW_GET_PRIVATE (self);
+		menu = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/FolderViewContextMenu");
 
-	priv = MODEST_MAIN_WINDOW_GET_PRIVATE (main_window);
+		return show_context_popup_menu (self,
+						GTK_TREE_VIEW (folder_view), 
+						event, 
+						menu);
+        }
 
-	return g_object_ref (priv->account_store);
+        return FALSE;
+}
+
+
+static gboolean 
+show_context_popup_menu (ModestMainWindow *window,
+			 GtkTreeView *tree_view,
+			 GdkEventButton   *event,			 
+			 GtkWidget *menu)
+{
+	g_return_val_if_fail (menu, FALSE);
+
+        if (event != NULL) {
+		/* Ensure that the header is selected */
+		GtkTreeSelection *selection;
+
+		selection = gtk_tree_view_get_selection (tree_view);
+	
+		if (gtk_tree_selection_count_selected_rows (selection) <= 1) {
+			GtkTreePath *path;
+		
+			/* Get tree path for row that was clicked */
+			if (gtk_tree_view_get_path_at_pos (tree_view,
+							   (gint) event->x, 
+							   (gint) event->y,
+							   &path, 
+							   NULL, NULL, NULL)) {
+				gtk_tree_selection_unselect_all (selection);
+				gtk_tree_selection_select_path (selection, path);
+				gtk_tree_path_free (path);
+			}
+		}
+
+		/* Show popup */
+		if (gtk_tree_selection_count_selected_rows(selection) == 1)
+			gtk_menu_popup (GTK_MENU (menu), NULL, NULL,
+					NULL, NULL,
+					event->button, event->time);
+	}
+
+	return TRUE;
 }

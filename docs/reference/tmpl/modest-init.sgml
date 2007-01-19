@@ -1,5 +1,5 @@
 <!-- ##### SECTION Title ##### -->
-modest.glade
+modest-init
 
 <!-- ##### SECTION Short_Description ##### -->
 
@@ -9,11 +9,30 @@ modest.glade
 
 </para>
 
+
 <!-- ##### SECTION See_Also ##### -->
 <para>
 
 </para>
 
+
 <!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### FUNCTION modest_init_header_columns ##### -->
+<para>
+
+</para>
+
+@overwrite: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_init_local_folders ##### -->
+<para>
+
+</para>
+
+@Returns: 
 
 

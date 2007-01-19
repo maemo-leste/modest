@@ -59,8 +59,7 @@ content_files= \
 	modest-preface.sgml \
 	modest-architecture.sgml \
 	modest-design.sgml \
-	modest-coding-guidelines.sgml \
-	xml/tree_index.sgml
+	modest-coding-guidelines.sgml
 
 # SGML files where gtk-doc abbrevations (#GtkWidget) are expanded
 # These files must be listed here *and* in content_files
@@ -89,6 +88,7 @@ GTKDOC_LIBS= \
 	${top_builddir}/src/modest-conf.o \
 	${top_builddir}/src/modest-formatter.o \
 	${top_builddir}/src/modest-icon-factory.o \
+	${top_builddir}/src/modest-local-folder-info.o \
 	${top_builddir}/src/modest-mail-operation.o \
 	${top_builddir}/src/modest-mail-operation-queue.o \
 	${top_builddir}/src/modest-marshal.o \

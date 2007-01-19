@@ -1,0 +1,70 @@
+<!-- ##### SECTION Title ##### -->
+modest-local-folder-info
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### ENUM ModestLocalFolderType ##### -->
+<para>
+
+</para>
+
+@MODEST_LOCAL_FOLDER_TYPE_UNKNOWN: 
+@MODEST_LOCAL_FOLDER_TYPE_DRAFTS: 
+@MODEST_LOCAL_FOLDER_TYPE_SENT: 
+@MODEST_LOCAL_FOLDER_TYPE_OUTBOX: 
+@MODEST_LOCAL_FOLDER_TYPE_ARCHIVE: 
+@MODEST_LOCAL_FOLDER_TYPE_JUNK: 
+@MODEST_LOCAL_FOLDER_TYPE_TRASH: 
+@MODEST_LOCAL_FOLDER_TYPE_NUM: 
+
+<!-- ##### FUNCTION modest_local_folder_info_get_type ##### -->
+<para>
+
+</para>
+
+@name: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_local_folder_info_get_type_name ##### -->
+<para>
+
+</para>
+
+@type: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_local_folder_info_get_type_display_name ##### -->
+<para>
+
+</para>
+
+@type: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_local_folder_info_get_maildir_path ##### -->
+<para>
+
+</para>
+
+@Returns: 
+
+

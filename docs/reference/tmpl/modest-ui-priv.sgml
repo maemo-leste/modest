@@ -1,5 +1,5 @@
 <!-- ##### SECTION Title ##### -->
-ModestTnyTransportActions
+modest-ui-priv
 
 <!-- ##### SECTION Short_Description ##### -->
 
@@ -9,27 +9,23 @@ ModestTnyTransportActions
 
 </para>
 
+
 <!-- ##### SECTION See_Also ##### -->
 <para>
 
 </para>
 
+
 <!-- ##### SECTION Stability_Level ##### -->
 
 
-<!-- ##### FUNCTION modest_tny_transport_actions_send_message ##### -->
+<!-- ##### STRUCT ModestUIPrivate ##### -->
 <para>
 
 </para>
 
-@transport_account: 
-@from: 
-@to: 
-@cc: 
-@bcc: 
-@subject: 
-@body: 
-@attachments_list: 
-@Returns: 
-
+@widget_factory: 
+@account_store: 
+@main_window: 
+@ui_manager: 
 

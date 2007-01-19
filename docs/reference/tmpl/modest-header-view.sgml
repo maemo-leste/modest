@@ -38,7 +38,9 @@ ModestHeaderView
 @MODEST_HEADER_VIEW_COLUMN_RECEIVED_DATE: 
 @MODEST_HEADER_VIEW_COLUMN_MSGTYPE: 
 @MODEST_HEADER_VIEW_COLUMN_ATTACH: 
-@MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER: 
+@MODEST_HEADER_VIEW_COLUMN_SIZE: 
+@MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER_IN: 
+@MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER_OUT: 
 @MODEST_HEADER_VIEW_COLUMN_NUM: 
 
 <!-- ##### ENUM ModestHeaderViewStyle ##### -->
@@ -46,8 +48,8 @@ ModestHeaderView
 
 </para>
 
-@MODEST_HEADER_VIEW_STYLE_NORMAL: 
-@MODEST_HEADER_VIEW_STYLE_COMPACT: 
+@MODEST_HEADER_VIEW_STYLE_DETAILS: 
+@MODEST_HEADER_VIEW_STYLE_TWOLINES: 
 @MODEST_HEADER_VIEW_STYLE_NUM: 
 
 <!-- ##### ENUM ModestItemType ##### -->
@@ -64,84 +66,6 @@ ModestHeaderView
 
 </para>
 
-
-<!-- ##### SIGNAL ModestHeaderView::header-selected ##### -->
-<para>
-
-</para>
-
-@modestheaderview: the object which received the signal.
-@arg1: 
-
-<!-- ##### SIGNAL ModestHeaderView::item-not-found ##### -->
-<para>
-
-</para>
-
-@: 
-@: 
-
-<!-- ##### SIGNAL ModestHeaderView::status-update ##### -->
-<para>
-
-</para>
-
-@modestheaderview: the object which received the signal.
-@arg1: 
-@arg2: 
-@arg3: 
-
-<!-- ##### SIGNAL ModestHeaderView::header-selected ##### -->
-<para>
-
-</para>
-
-@modestheaderview: the object which received the signal.
-@arg1: 
-
-<!-- ##### SIGNAL ModestHeaderView::item-not-found ##### -->
-<para>
-
-</para>
-
-@: 
-@: 
-
-<!-- ##### SIGNAL ModestHeaderView::status-update ##### -->
-<para>
-
-</para>
-
-@modestheaderview: the object which received the signal.
-@arg1: 
-@arg2: 
-@arg3: 
-
-<!-- ##### SIGNAL ModestHeaderView::header-selected ##### -->
-<para>
-
-</para>
-
-@modestheaderview: the object which received the signal.
-@arg1: 
-
-<!-- ##### SIGNAL ModestHeaderView::item-not-found ##### -->
-<para>
-
-</para>
-
-@: 
-@: 
-
-<!-- ##### SIGNAL ModestHeaderView::status-update ##### -->
-<para>
-
-</para>
-
-@modestheaderview: the object which received the signal.
-@arg1: 
-@arg2: 
-@arg3: 
 
 <!-- ##### FUNCTION modest_header_view_new ##### -->
 <para>
@@ -218,5 +142,22 @@ ModestHeaderView
 
 @self: 
 @Returns: 
+
+
+<!-- ##### FUNCTION modest_header_view_is_empty ##### -->
+<para>
+
+</para>
+
+@self: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_header_view_select_next ##### -->
+<para>
+
+</para>
+
+@self: 
 
 

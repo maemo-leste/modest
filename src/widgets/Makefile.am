@@ -35,6 +35,7 @@ libmodest_widgets_la_SOURCES=       \
 	modest-msg-view.h	    \
 	modest-tny-stream-gtkhtml.c \
 	modest-tny-stream-gtkhtml.h \
+	modest-window.c             \
 	modest-window.h             
 
 LDADD = \

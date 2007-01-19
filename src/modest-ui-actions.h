@@ -100,5 +100,14 @@ void     _modest_ui_actions_on_msg_attachment_clicked   (ModestMsgView *msgview,
 void     _modest_ui_actions_on_send                     (GtkWidget *widget, 
 							 ModestEditMsgWindow *edit_window);
 
+void     _modest_ui_actions_on_new_folder               (GtkWidget *widget,
+							 ModestMainWindow *main_window);
+
+void     _modest_ui_actions_on_rename_folder            (GtkWidget *widget,
+							 ModestMainWindow *main_window);
+
+void     _modest_ui_actions_on_delete_folder            (GtkWidget *widget,
+							 ModestMainWindow *main_window);
+
 G_END_DECLS
 #endif /* __MODEST_UI_ACTIONS_H__ */

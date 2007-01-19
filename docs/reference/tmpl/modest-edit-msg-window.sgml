@@ -36,13 +36,53 @@ ModestEditMsgWindow
 @MODEST_EDIT_TYPE_VIEW: 
 @MODEST_EDIT_TYPE_NUM: 
 
+<!-- ##### STRUCT MsgData ##### -->
+<para>
+
+</para>
+
+@from: 
+@to: 
+@cc: 
+@bcc: 
+@subject: 
+@body: 
+
 <!-- ##### FUNCTION modest_edit_msg_window_new ##### -->
 <para>
 
 </para>
 
 @factory: 
+@account_store: 
 @type: 
 @Returns: 
+
+
+<!-- ##### FUNCTION modest_edit_msg_window_set_msg ##### -->
+<para>
+
+</para>
+
+@self: 
+@msg: 
+
+
+<!-- ##### FUNCTION modest_edit_msg_window_get_msg_data ##### -->
+<para>
+
+</para>
+
+@edit_window: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_edit_msg_window_free_msg_data ##### -->
+<para>
+
+</para>
+
+@edit_window: 
+@data: 
 
 

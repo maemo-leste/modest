@@ -59,6 +59,10 @@
       <menuitem name="ActionsReplyMenu" action="ActionsReply"/>
       <menuitem name="ActionsForwardMenu" action="ActionsForward"/>
       <menuitem name="ActionsBounceMenu" action="ActionsBounce"/>
+      <separator/>
+      <menuitem name="ActionsFolderNewMenu" action="ActionsFolderNew"/>
+      <menuitem name="ActionsFolderDeleteMenu" action="ActionsFolderDelete"/>
+      <menuitem name="ActionsFolderRenameMenu" action="ActionsFolderRename"/>
     </menu>
 
     <menu name="OptionsMenu" action="Options">
@@ -87,5 +91,16 @@
     <separator/>
     <toolitem name="ToggleView" action="ToggleView"/>
   </toolbar>
+
+  <popup name="HeaderViewContextMenu">
+    <menuitem action="ActionsReply"/>
+    <menuitem action="ActionsForward"/>
+  </popup>
+
+  <popup name="FolderViewContextMenu">
+    <menuitem action="ActionsFolderNew"/>
+    <menuitem action="ActionsFolderDelete"/>
+    <menuitem action="ActionsFolderRename"/>
+  </popup>
 
 </ui>

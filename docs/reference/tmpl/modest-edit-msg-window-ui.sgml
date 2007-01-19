@@ -1,5 +1,5 @@
 <!-- ##### SECTION Title ##### -->
-ModestMainWindow
+modest-edit-msg-window-ui
 
 <!-- ##### SECTION Short_Description ##### -->
 
@@ -17,21 +17,5 @@ ModestMainWindow
 
 
 <!-- ##### SECTION Stability_Level ##### -->
-
-
-<!-- ##### STRUCT ModestMainWindow ##### -->
-<para>
-
-</para>
-
-
-<!-- ##### FUNCTION modest_main_window_new ##### -->
-<para>
-
-</para>
-
-@factory: 
-@account_store: 
-@Returns: 
 
 

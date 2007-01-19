@@ -1,0 +1,60 @@
+<!-- ##### SECTION Title ##### -->
+modest-debug
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### MACRO MODEST_DEBUG ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### ENUM ModestDebugFlags ##### -->
+<para>
+
+</para>
+
+@MODEST_DEBUG_ABORT_ON_WARNING: 
+@MODEST_DEBUG_LOG_ACTIONS: 
+@MODEST_DEBUG_DEBUG_OBJECTS: 
+@MODEST_DEBUG_DEBUG_SIGNALS: 
+
+<!-- ##### FUNCTION modest_debug_get_flags ##### -->
+<para>
+
+</para>
+
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_debug_g_type_init ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### FUNCTION modest_debug_logging_init ##### -->
+<para>
+
+</para>
+
+
+

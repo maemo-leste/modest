@@ -1,5 +1,5 @@
 <!-- ##### SECTION Title ##### -->
-ModestUI
+modest-window-priv
 
 <!-- ##### SECTION Short_Description ##### -->
 
@@ -19,37 +19,23 @@ ModestUI
 <!-- ##### SECTION Stability_Level ##### -->
 
 
-<!-- ##### STRUCT ModestUI ##### -->
+<!-- ##### STRUCT ModestWindowPrivate ##### -->
 <para>
 
 </para>
 
-
-<!-- ##### FUNCTION modest_ui_new ##### -->
-<para>
-
-</para>
-
+@widget_factory: 
+@plat_factory: 
 @account_store: 
-@Returns: 
+@ui_manager: 
+@toolbar: 
+@menubar: 
 
-
-<!-- ##### FUNCTION modest_ui_main_window ##### -->
+<!-- ##### MACRO MODEST_WINDOW_GET_PRIVATE ##### -->
 <para>
 
 </para>
 
-@modest_ui: 
-@Returns: 
-
-
-<!-- ##### FUNCTION modest_ui_edit_window ##### -->
-<para>
-
-</para>
-
-@modest_ui: 
-@edit_type: 
-@Returns: 
+@o: 
 
 

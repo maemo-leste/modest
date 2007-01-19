@@ -33,7 +33,7 @@ ModestTnyPlatformFactory
 @Returns: 
 
 
-<!-- ##### FUNCTION modest_tny_platform_factory_get_modest_account_mgr_instance ##### -->
+<!-- ##### FUNCTION modest_tny_platform_factory_get_account_mgr_instance ##### -->
 <para>
 
 </para>
@@ -42,7 +42,7 @@ ModestTnyPlatformFactory
 @Returns: 
 
 
-<!-- ##### FUNCTION modest_tny_platform_factory_get_modest_conf_instance ##### -->
+<!-- ##### FUNCTION modest_tny_platform_factory_get_conf_instance ##### -->
 <para>
 
 </para>
@@ -51,7 +51,7 @@ ModestTnyPlatformFactory
 @Returns: 
 
 
-<!-- ##### FUNCTION modest_tny_platform_factory_get_modest_mail_operation_queue_instance ##### -->
+<!-- ##### FUNCTION modest_tny_platform_factory_get_mail_operation_queue_instance ##### -->
 <para>
 
 </para>

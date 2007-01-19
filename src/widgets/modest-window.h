@@ -27,25 +27,78 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 #ifndef __MODEST_WINDOW_H__
 #define __MODEST_WINDOW_H__
+
+#include <glib-object.h>
+#include <tny-account-store.h>
+#include "modest-widget-factory.h"
+
+G_BEGIN_DECLS
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif /*HAVE_CONFIG_H*/
 
-/* admittedly, the ifdefs for gtk and maemo are rather ugly; still this way
- * is probably the easiest to maintain*/
+/* 
+ * admittedly, the ifdefs for gtk and maemo are rather ugly; still
+ * this way is probably the easiest to maintain
+ */
 #if MODEST_PLATFORM_ID==1   /* gtk */
 #include <gtk/gtkwindow.h>
-typedef GtkWindow      ModestWindow;
-typedef GtkWindowClass ModestWindowClass;
+typedef GtkWindow      ModestWindowParent;
+typedef GtkWindowClass ModestWindowParentClass;
 #elif MODEST_PLATFORM_ID==2   /* hildon (maemo) */
 #include <hildon-widgets/hildon-window.h>
-typedef HildonWindow      ModestWindow;
-typedef HildonWindowClass ModestWindowClass;
+typedef HildonWindow      ModestWindowParent;
+typedef HildonWindowClass ModestWindowParentClass;
 #endif /*MODEST_PLATFORM_ID*/
-/************************************************/
 
-#endif /* MODEST_WINDOW_H__ */
+/* convenience macros */
+#define MODEST_TYPE_WINDOW             (modest_window_get_type())
+#define MODEST_WINDOW(obj)             (G_TYPE_CHECK_INSTANCE_CAST((obj),MODEST_TYPE_WINDOW,ModestWindow))
+#define MODEST_WINDOW_CLASS(klass)     (G_TYPE_CHECK_CLASS_CAST((klass),MODEST_TYPE_WINDOW,GObject))
+#define MODEST_IS_WINDOW(obj)          (G_TYPE_CHECK_INSTANCE_TYPE((obj),MODEST_TYPE_WINDOW))
+#define MODEST_IS_WINDOW_CLASS(klass)  (G_TYPE_CHECK_CLASS_TYPE((klass),MODEST_TYPE_WINDOW))
+#define MODEST_WINDOW_GET_CLASS(obj)   (G_TYPE_INSTANCE_GET_CLASS((obj),MODEST_TYPE_WINDOW,ModestWindowClass))
+
+typedef struct _ModestWindow      ModestWindow;
+typedef struct _ModestWindowClass ModestWindowClass;
+
+struct _ModestWindow {
+	 ModestWindowParent parent;
+};
+
+struct _ModestWindowClass {
+	ModestWindowParentClass parent_class;
+};
+
+/* member functions */
+GType        modest_window_get_type    (void) G_GNUC_CONST;
+
+/**
+ * modest_window_get_account_store:
+ * @window: a #ModestWindow
+ * 
+ * gets a new reference to the account store associated with the main
+ * window. The caller must free the returned instance
+ * 
+ * Returns: the account store
+ **/
+TnyAccountStore*        modest_window_get_account_store     (ModestWindow *window);
+
+/**
+ * modest_window_get_widget_factory:
+ * @window: a #ModestWindow
+ * 
+ * gets a reference to the #ModestWidgetFactory associated with the
+ * Modest Window. The caller must free the returned instance
+ * 
+ * Returns: the widget factory
+ **/
+ModestWidgetFactory*    modest_window_get_widget_factory    (ModestWindow *window);
+
+
+G_END_DECLS
+
+#endif /* __MODEST_WINDOW_H__ */

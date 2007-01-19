@@ -93,27 +93,6 @@ void         modest_edit_msg_window_set_msg     (ModestEditMsgWindow *self,
 
 
 /**
- * modest_edit_msg_window_get_widget_factory:
- * @edit_window: a #ModestEditMsgWindow
- * 
- * gets the #ModestWidgetFactory associated with the edit message window
- * 
- * Returns: the widget factory
- **/
-ModestWidgetFactory *   modest_edit_msg_window_get_widget_factory    (ModestEditMsgWindow *edit_window);
-
-
-/**
- * modest_edit_msg_window_get_account_store:
- * @edit_window: a #ModestEditMsgWindow
- * 
- * gets the account store associated with the edit message window
- * 
- * Returns: the account store
- **/
-TnyAccountStore *       modest_edit_msg_window_get_account_store     (ModestEditMsgWindow *edit_window);
-
-/**
  * modest_edit_msg_window_get_msg_data:
  * @edit_window: a #ModestEditMsgWindow
  * 

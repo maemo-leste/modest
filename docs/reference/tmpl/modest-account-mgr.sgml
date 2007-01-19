@@ -44,25 +44,6 @@ ModestAccountMgr
 @arg1: 
 @arg2: 
 
-<!-- ##### SIGNAL ModestAccountMgr::account-changed ##### -->
-<para>
-
-</para>
-
-@modestaccountmgr: the object which received the signal.
-@arg1: 
-@arg2: 
-@arg3: 
-
-<!-- ##### SIGNAL ModestAccountMgr::account-removed ##### -->
-<para>
-
-</para>
-
-@modestaccountmgr: the object which received the signal.
-@arg1: 
-@arg2: 
-
 <!-- ##### STRUCT ModestServerAccountData ##### -->
 <para>
 
@@ -80,7 +61,8 @@ ModestAccountMgr
 </para>
 
 @account_name: 
-@full_name: 
+@display_name: 
+@fullname: 
 @email: 
 @enabled: 
 @transport_account: 
@@ -134,6 +116,25 @@ ModestAccountMgr
 @Returns: 
 
 
+<!-- ##### FUNCTION modest_account_mgr_get_account_data ##### -->
+<para>
+
+</para>
+
+@self: 
+@name: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_account_mgr_free_account_data ##### -->
+<para>
+
+</para>
+
+@self: 
+@data: 
+
+
 <!-- ##### FUNCTION modest_account_mgr_account_names ##### -->
 <para>
 
@@ -166,25 +167,6 @@ ModestAccountMgr
 @server_account: 
 @err: 
 @Returns: 
-
-
-<!-- ##### FUNCTION modest_account_mgr_get_account_data ##### -->
-<para>
-
-</para>
-
-@self: 
-@name: 
-@Returns: 
-
-
-<!-- ##### FUNCTION modest_account_mgr_free_account_data ##### -->
-<para>
-
-</para>
-
-@self: 
-@data: 
 
 
 <!-- ##### FUNCTION modest_account_mgr_account_set_enabled ##### -->

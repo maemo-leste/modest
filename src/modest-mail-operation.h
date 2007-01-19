@@ -31,6 +31,7 @@
 #define __MODEST_MAIL_OPERATION_H__
 
 #include <tny-transport-account.h>
+#include <tny-folder-store.h>
 
 G_BEGIN_DECLS
 

@@ -1,0 +1,63 @@
+<!-- ##### SECTION Title ##### -->
+modest-widget-memory-priv
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### MACRO MODEST_WIDGET_MEMORY_PARAM_X ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO MODEST_WIDGET_MEMORY_PARAM_Y ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO MODEST_WIDGET_MEMORY_PARAM_HEIGHT ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO MODEST_WIDGET_MEMORY_PARAM_WIDTH ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO MODEST_WIDGET_MEMORY_PARAM_POS ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO MODEST_WIDGET_MEMORY_PARAM_COLUMN_WIDTH ##### -->
+<para>
+
+</para>
+
+
+

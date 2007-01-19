@@ -97,7 +97,19 @@ GtkWidget* modest_folder_view_new         (ModestTnyAccountStore *account_store,
  * set the title for the folder view; if title is NULL, the title column
  * header will be hidden
  */
-void  modest_folder_view_set_title (ModestFolderView *self, const gchar *title);
+void          modest_folder_view_set_title       (ModestFolderView *self, 
+						  const gchar *title);
+
+
+/**
+ * modest_folder_view_get_selected:
+ * @self: a #ModestFolderView
+ * 
+ * returns a new reference to the #TnyFolder that is already selected
+ * 
+ * Returns: the selected folder or NULL if none is selected
+ **/
+TnyFolder*    modest_folder_view_get_selected    (ModestFolderView *self);
 
 G_END_DECLS
 
