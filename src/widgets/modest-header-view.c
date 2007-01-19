@@ -66,6 +66,7 @@ struct _ModestHeaderViewPrivate {
 	GMutex		     *lock;
 	ModestHeaderViewStyle style;
 	gulong                sig1;
+	gboolean	      is_empty;
 };
 
 #define MODEST_HEADER_VIEW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -191,13 +192,29 @@ remove_all_columns (ModestHeaderView *obj)
 static gboolean
 set_empty (ModestHeaderView *self)
 {
-	GList *columns = NULL;
-	ModestHeaderViewPrivate *priv;	
-	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
+	GtkListStore *store;
+	GtkTreeIter iter;
+
+	gtk_tree_view_set_model (GTK_TREE_VIEW(self), NULL);
+	gtk_tree_view_set_headers_visible (GTK_TREE_VIEW(self),
+					   FALSE);
+	remove_all_columns (self);
+
+	return TRUE; /* FIXME */
+
 	
-	columns = g_list_append (columns,GINT_TO_POINTER(0));
-	modest_header_view_set_columns (self, columns);
-	g_list_free (columns);
+	store = gtk_list_store_new(1,G_TYPE_STRING);		
+	gtk_list_store_append (store, &iter);
+	gtk_list_store_set (store, &iter, 0, _("No items in this folder"), -1);
+
+	gtk_tree_view_insert_column_with_attributes (GTK_TREE_VIEW(self),
+						     0, "", gtk_cell_renderer_text_new (),
+						     "text", 0,
+						     "weight", 800, /* bold */
+						     NULL);
+	gtk_tree_view_set_model (GTK_TREE_VIEW(self), GTK_TREE_MODEL(store));
+	g_object_unref (G_OBJECT(store));
+	MODEST_HEADER_VIEW_GET_PRIVATE(self)->is_empty = TRUE;
 	
 	return TRUE;
 }
@@ -341,6 +358,7 @@ modest_header_view_init (ModestHeaderView *obj)
 
 	priv->lock = g_mutex_new ();
 	priv->sig1 = 0;
+	priv->is_empty = TRUE;
 }
 
 static void
@@ -477,6 +495,13 @@ modest_header_view_get_columns (ModestHeaderView *self)
 	return gtk_tree_view_get_columns (GTK_TREE_VIEW(self)); 
 }
 
+gboolean
+modest_header_view_is_empty (ModestHeaderView *self)
+{
+	g_return_val_if_fail (self, FALSE);
+	return MODEST_HEADER_VIEW_GET_PRIVATE(self)->is_empty;
+}
+
 
 gboolean
 modest_header_view_set_style (ModestHeaderView *self,
@@ -499,9 +524,6 @@ modest_header_view_set_style (ModestHeaderView *self,
 		show_col_headers = TRUE;
 		break;
 	case MODEST_HEADER_VIEW_STYLE_TWOLINES:
-		break;
-	case MODEST_HEADER_VIEW_STYLE_EMPTY:
-		set_empty (self);
 		break;
 	default:
 		g_return_val_if_reached (FALSE);
@@ -540,13 +562,13 @@ on_refresh_folder (TnyFolder *folder, gboolean cancelled, GError **err,
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
 
 	priv->folder = folder;
-	
-	if (!folder) {  
-		gtk_tree_view_set_headers_visible (GTK_TREE_VIEW(self), FALSE);
+	if (!folder || tny_folder_get_all_count(folder) == 0) {
 		set_empty (self);	
 	} else { /* it's a new one or a refresh */
 		GList *cols, *cursor;
 
+		priv->is_empty = FALSE;
+		
 		if (priv->headers)
 			g_object_unref (priv->headers);
 

@@ -83,8 +83,6 @@ typedef enum _ModestHeaderViewColumn {
 typedef enum _ModestHeaderViewStyle {
 	MODEST_HEADER_VIEW_STYLE_DETAILS, /* many columns, single line, col headers visible */
 	MODEST_HEADER_VIEW_STYLE_TWOLINES, /* two-line headers, col headers invisible */
-	MODEST_HEADER_VIEW_STYLE_EMPTY,   /* empty view (for empty folders) */
-
 	MODEST_HEADER_VIEW_STYLE_NUM	
 } ModestHeaderViewStyle;
 
@@ -222,6 +220,21 @@ ModestHeaderViewStyle   modest_header_view_get_style (ModestHeaderView *self);
  * Returns: the list with the currently selected headers
  */
 TnyList* modest_header_view_get_selected_headers (ModestHeaderView *self);
+
+
+/**
+ * modest_header_view_is_empty:
+ * @self: a valid ModestHeaderView instance
+ * 
+ * see if this header view is empty; use this function instead of
+ * using the GtkTreeView parent directly, as 'empty' in this case
+ * may mean that there is one "This is empty"-message, and of course
+ * GtkTreeView then thinks it is *not* empty
+ *  
+ * Returns: TRUE if the header view is empty, FALSE otherwise
+ */
+gboolean  modest_header_view_is_empty (ModestHeaderView *self);
+
 
 
 /**
