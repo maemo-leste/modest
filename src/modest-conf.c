@@ -427,7 +427,7 @@ modest_conf_on_change (GConfClient *client, guint conn_id, GConfEntry *entry,
 static GConfValueType
 modest_conf_type_to_gconf_type (ModestConfValueType value_type, GError **err)
 {
-	GConfValueType gconf_type;
+	GConfValueType gconf_type = 0;
 
 	switch (value_type) {
 	case MODEST_CONF_VALUE_INT:
