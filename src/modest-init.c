@@ -43,38 +43,34 @@ typedef struct {
 	guint                  width;
 } FolderCols;
 
-
-#if MODEST_PLATFORM_ID==1   /*gtk*/
-static const FolderCols INBOX_COLUMNS[] = {
+static const FolderCols INBOX_COLUMNS_DETAILS[] = {
 	{MODEST_HEADER_VIEW_COLUMN_MSGTYPE, 20},
 	{MODEST_HEADER_VIEW_COLUMN_ATTACH,  20},
 	{MODEST_HEADER_VIEW_COLUMN_FROM,    50},
 	{MODEST_HEADER_VIEW_COLUMN_SUBJECT, 50},
 	{MODEST_HEADER_VIEW_COLUMN_RECEIVED_DATE, 50},
-	{MODEST_HEADER_VIEW_COLUMN_SIZE, 30},
+	{MODEST_HEADER_VIEW_COLUMN_SIZE, 30}
+};
+static const FolderCols INBOX_COLUMNS_TWOLINES[] = {
+	{MODEST_HEADER_VIEW_COLUMN_MSGTYPE, 20},
+	{MODEST_HEADER_VIEW_COLUMN_ATTACH,  20},
+	{MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER_IN, 150}
 };
 
-static const FolderCols OUTBOX_COLUMNS[] = {
+static const FolderCols OUTBOX_COLUMNS_DETAILS[] = {
 	 {MODEST_HEADER_VIEW_COLUMN_MSGTYPE, 20},
 	 {MODEST_HEADER_VIEW_COLUMN_ATTACH,  20},
 	 {MODEST_HEADER_VIEW_COLUMN_TO,    50},
 	 {MODEST_HEADER_VIEW_COLUMN_SUBJECT, 50},
 	 {MODEST_HEADER_VIEW_COLUMN_SENT_DATE, 50},
-	 {MODEST_HEADER_VIEW_COLUMN_SIZE, 30},
+	 {MODEST_HEADER_VIEW_COLUMN_SIZE, 30}
 };
-#elif MODEST_PLATFORM==2  /*maemo*/
-static const FolderCols INBOX_COLUMNS = {
-	{MODEST_HEADER_VIEW_COLUMN_MSGTYPE, 20},
-	{MODEST_HEADER_VIEW_COLUMN_ATTACH,  20},
-	{MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER_IN,150},
-};
-static const FolderCols OUTBOX_COLUMNS = {
+static const FolderCols OUTBOX_COLUMNS_TWOLINES[] = {
 	 {MODEST_HEADER_VIEW_COLUMN_MSGTYPE, 20},
 	 {MODEST_HEADER_VIEW_COLUMN_ATTACH,  20},
 	 {MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER_OUT,150},
 };
-#endif /*MODEST_PLATFORM*/
-
+	 
 static const ModestLocalFolderType LOCAL_FOLDERS[] = {
 	MODEST_LOCAL_FOLDER_TYPE_OUTBOX,
 	MODEST_LOCAL_FOLDER_TYPE_DRAFTS,
@@ -118,8 +114,9 @@ get_modest_conf (void)
  * for this with widget-memory
  */
 static gboolean
-save_header_settings (ModestConf *conf, TnyFolderType type, const FolderCols* cols,
-		     guint col_num, gboolean overwrite)
+save_header_settings (ModestConf *conf, TnyFolderType type,
+		      ModestHeaderViewStyle style,  const FolderCols* cols,
+		      guint col_num, gboolean overwrite)
 {
 	int i;
 	gchar *key;
@@ -127,9 +124,9 @@ save_header_settings (ModestConf *conf, TnyFolderType type, const FolderCols* co
 
 	g_return_val_if_fail (cols, FALSE);
 
-	key = _modest_widget_memory_get_keyname_with_type ("header-view",
-							   type,
-							   MODEST_WIDGET_MEMORY_PARAM_COLUMN_WIDTH);
+	key = _modest_widget_memory_get_keyname_with_double_type ("header-view",
+								  type, style,
+								  MODEST_WIDGET_MEMORY_PARAM_COLUMN_WIDTH);
 	/* if we're not in overwrite mode, only write stuff it
 	 * there was nothing before */
 	if (!overwrite &&  modest_conf_key_exists(conf, key, NULL)) {
@@ -170,14 +167,29 @@ modest_init_header_columns (gboolean overwrite)
 		case TNY_FOLDER_TYPE_OUTBOX:
 		case TNY_FOLDER_TYPE_SENT:
 		case TNY_FOLDER_TYPE_DRAFTS:
-			save_header_settings (conf, folder_type, OUTBOX_COLUMNS,
-					      G_N_ELEMENTS(OUTBOX_COLUMNS),
-					      overwrite);
-			break;
+		save_header_settings (conf, folder_type,
+				      MODEST_HEADER_VIEW_STYLE_DETAILS,
+				      OUTBOX_COLUMNS_DETAILS,
+				      G_N_ELEMENTS(OUTBOX_COLUMNS_DETAILS),
+				      overwrite);
+		save_header_settings (conf, folder_type,
+				      MODEST_HEADER_VIEW_STYLE_TWOLINES,
+				      OUTBOX_COLUMNS_TWOLINES,
+				      G_N_ELEMENTS(OUTBOX_COLUMNS_TWOLINES),
+				      overwrite);
+		break;
+
 		default:
-			save_header_settings (conf, folder_type, INBOX_COLUMNS,
-					      G_N_ELEMENTS(INBOX_COLUMNS),
-					      overwrite);
+		save_header_settings (conf, folder_type,
+				      MODEST_HEADER_VIEW_STYLE_DETAILS,
+				      INBOX_COLUMNS_DETAILS,
+				      G_N_ELEMENTS(INBOX_COLUMNS_DETAILS),
+				      overwrite);
+		save_header_settings (conf, folder_type,
+				      MODEST_HEADER_VIEW_STYLE_TWOLINES,
+				      INBOX_COLUMNS_TWOLINES,
+				      G_N_ELEMENTS(INBOX_COLUMNS_TWOLINES),
+				      overwrite);
 		};
 	}
 	return TRUE;
