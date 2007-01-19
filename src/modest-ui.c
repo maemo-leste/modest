@@ -535,7 +535,7 @@ _modest_ui_actions_on_new_msg (GtkWidget *widget,
 	g_object_unref (G_OBJECT (widget_factory));
 	g_object_unref (G_OBJECT (account_store));
 
-	gtk_widget_show (GTK_WIDGET (msg_win));
+	gtk_widget_show_all (GTK_WIDGET (msg_win));
 }
 
 static void
@@ -592,7 +592,7 @@ reply_forward_func (gpointer data, gpointer user_data)
 	g_object_unref (G_OBJECT (account_store));
 	modest_edit_msg_window_set_msg (MODEST_EDIT_MSG_WINDOW (msg_win),
 					new_msg);
-	gtk_widget_show (GTK_WIDGET (msg_win));
+	gtk_widget_show_all (GTK_WIDGET (msg_win));
 	
 	/* Clean */
 	g_object_unref (G_OBJECT (new_msg));

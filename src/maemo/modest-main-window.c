@@ -235,6 +235,30 @@ on_delete_event (GtkWidget *widget, GdkEvent  *event, ModestMainWindow *self)
 	return FALSE;
 }
 
+static GtkWidget *
+menubar_to_menu (GtkUIManager *ui_manager)
+{
+	GtkWidget *main_menu;
+	GtkWidget *menubar;
+	GList *iter;
+
+	/* Create new main menu */
+	main_menu = gtk_menu_new();
+
+	/* Get the menubar from the UI manager */
+	menubar = gtk_ui_manager_get_widget (ui_manager, "/MenuBar");
+
+	iter = gtk_container_get_children (GTK_CONTAINER (menubar));
+	while (iter) {
+		GtkWidget *menu;
+
+		menu = GTK_WIDGET (iter->data);
+		gtk_widget_reparent(menu, main_menu);
+
+		iter = g_list_next (iter);
+	}
+	return main_menu;
+}
 
 ModestWindow*
 modest_main_window_new (ModestWidgetFactory *widget_factory,
@@ -252,6 +276,7 @@ modest_main_window_new (ModestWidgetFactory *widget_factory,
 	g_return_val_if_fail (widget_factory, NULL);
 
 	obj  = g_object_new(MODEST_TYPE_MAIN_WINDOW, NULL);
+
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(obj);
 	parent_priv = MODEST_WINDOW_GET_PRIVATE(obj);
 
@@ -283,13 +308,12 @@ modest_main_window_new (ModestWidgetFactory *widget_factory,
 				    gtk_ui_manager_get_accel_group (parent_priv->ui_manager));
 
 
-	/* Toolbar / Menubar */
+	/* Toolbar */
 	parent_priv->toolbar = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar");
-	gtk_toolbar_set_tooltips (GTK_TOOLBAR (parent_priv->toolbar), TRUE);
 	hildon_window_add_toolbar (HILDON_WINDOW (obj), GTK_TOOLBAR (parent_priv->toolbar));
-	gtk_widget_show_all (parent_priv->toolbar);
 
-	parent_priv->menubar = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/MenuBar");
+	/* Menubar */
+	parent_priv->menubar = menubar_to_menu (parent_priv->ui_manager);
 	hildon_window_set_menu (HILDON_WINDOW (obj), GTK_MENU (parent_priv->menubar));
 
 	/* widgets from factory */

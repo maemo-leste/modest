@@ -30,7 +30,7 @@
 
 <ui>
 
-  <menu name="Menu">
+  <menubar name="MenuBar">
     <menu name="FileMenu" action="File">
       <menuitem name="FileNewMenu" action="FileNew"/>
       <menuitem name="FileOpenMenu" action="FileOpen"/>

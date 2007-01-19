@@ -30,17 +30,17 @@
 
 <ui>
 
-  <menubar name="EditMsgWindowMenuBar">
+  <menubar name="MenuBar">
 
     <menu name="ViewMenu" action="View">
-      <menuitem name="ViewToFieldMenu" action="ViewToField"/>
-      <menuitem name="ViewCcFieldMenu" action="ViewCcField"/>
+      <menuitem name="ViewToFieldMenu"  action="ViewToField"/>
+      <menuitem name="ViewCcFieldMenu"  action="ViewCcField"/>
       <menuitem name="ViewBccFieldMenu" action="ViewBccField"/>
     </menu>
 
   </menubar>
 
-  <toolbar name="EditMsgWindowToolBar">
+  <toolbar name="ToolBar">
     <toolitem action="ActionsSend"/>
   </toolbar>
 

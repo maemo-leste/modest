@@ -215,7 +215,7 @@ start_ui (const gchar* mailto, const gchar *cc, const gchar *bcc,
 	if (win) {
 		TnyDevice *device;
 
-		gtk_widget_show (GTK_WIDGET (win));
+		gtk_widget_show_all (GTK_WIDGET (win));
 	
 		/* Go online */
 		device = tny_account_store_get_device (account_store);

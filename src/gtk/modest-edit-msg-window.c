@@ -276,8 +276,8 @@ modest_edit_msg_window_new (ModestWidgetFactory *factory,
 
 
 	/* Toolbar / Menubar */
-	priv->toolbar = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/EditMsgWindowToolBar");
-	priv->menubar = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/EditMsgWindowMenuBar");
+	priv->toolbar = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar");
+	priv->menubar = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/MenuBar");
 
 	gtk_toolbar_set_tooltips (GTK_TOOLBAR (priv->toolbar), TRUE);
 

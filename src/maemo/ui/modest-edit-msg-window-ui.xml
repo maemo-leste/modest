@@ -30,7 +30,7 @@
 
 <ui>
 
-  <menubar name="EditMsgWindowMenuBar">
+  <menubar name="MenuBar">
 
     <menu name="ViewMenu" action="View">
       <menuitem name="ViewToFieldMenu" action="ViewToField"/>
@@ -40,7 +40,7 @@
 
   </menubar>
 
-  <toolbar name="EditMsgWindowToolBar">
+  <toolbar name="ToolBar">
     <toolitem action="ActionsSend"/>
   </toolbar>
 
