@@ -104,3 +104,5 @@
     <menuitem action="ActionsFolderRename"/>
     <menuitem action="ActionsFolderMoveToTrash"/>
   </popup>
+
+</ui>
