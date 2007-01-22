@@ -27,17 +27,19 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <config.h>
 
 #include <glib.h>
 #include <glib/gi18n.h>
 #include <gtk/gtkwidget.h>
+
 #include <tny-list.h>
 #include <tny-transport-account.h>
 #include <tny-account-store.h>
 #include <tny-list.h>
 #include <tny-simple-list.h>
 
-#include <config.h>
+#include <modest-defs.h>
 #include <modest-conf.h>
 #include <modest-account-mgr.h>
 #include <modest-ui.h>
@@ -47,23 +49,9 @@
 #include <modest-tny-platform-factory.h>
 #include <modest-mail-operation.h>
 
-#include <camel/camel-url.h>
-
 #if MODEST_PLATFORM_ID==2 /* maemo */
 #include <libosso.h>
 #endif /* MODEST_PLATFORM==2 */
-
-/* return values */
-enum {
-	MODEST_ERR_NONE    = 0,
-	MODEST_ERR_OPTIONS, 
-	MODEST_ERR_CONF,    
-	MODEST_ERR_UI,      
-	MODEST_ERR_HILDON,  
-	MODEST_ERR_RUN,     
-	MODEST_ERR_SEND,    
-	MODEST_ERR_INIT,
-};
 
 static gboolean hildon_init (); /* NOP if HILDON is not defined */
 static int start_ui (const gchar* mailto, const gchar *cc,
@@ -79,7 +67,6 @@ main (int argc, char *argv[])
 	GOptionContext     *context       = NULL;
 	TnyPlatformFactory *fact          = NULL;
 	TnyAccountStore    *account_store = NULL;
-	ModestConf         *modest_conf   = NULL;
 	
 	GError *err = NULL;
 	int retval  = MODEST_ERR_NONE;
@@ -130,15 +117,6 @@ main (int argc, char *argv[])
 
 	/* Get platform factory */	
 	fact = modest_tny_platform_factory_get_instance ();
-
-	/* Check modest conf */
-	modest_conf = modest_tny_platform_factory_get_conf_instance
-		(MODEST_TNY_PLATFORM_FACTORY(fact));
-	if (!modest_conf) {
-		g_printerr ("modest: failed to initialize config system, exiting\n");
-		retval = MODEST_ERR_CONF;
-		goto cleanup;
-	}
 
 	if (!modest_init_local_folders ()) {
 		g_printerr ("modest: failed to initialize local folders, exiting\n");
@@ -192,8 +170,6 @@ start_ui (const gchar* mailto, const gchar *cc, const gchar *bcc,
 		goto cleanup;
 	}
 	
-	modest_icon_factory_init ();	
-
 	if (!hildon_init ()) { /* NOP  if hildon is not defined */
 		g_printerr ("modest: failed to initialize hildon, exiting\n");
 		retval = MODEST_ERR_HILDON;
@@ -228,7 +204,6 @@ cleanup:
 	if (modest_ui)
 		g_object_unref (modest_ui);
 
-	modest_icon_factory_uninit ();
 	return retval;
 }
 	
@@ -292,8 +267,7 @@ send_mail (const gchar* mailto, const gchar *cc, const gchar *bcc,
 					     account, "test@example.com",
 					     mailto, cc, bcc, 
 					     subject, body, NULL);
-	
-	
+		
 	if (modest_mail_operation_get_status (mail_operation) == 
 	    MODEST_MAIL_OPERATION_STATUS_FAILED) {
 		retval = MODEST_ERR_SEND;

@@ -30,55 +30,23 @@
 
 /* modest-icon-factory.c */
 
-#include <string.h>
-#include "modest-icon-factory.h"
+#include <modest-icon-factory.h>
+#include <modest-tny-platform-factory.h>
 
-static GHashTable *icon_hash = NULL;
-
-static
-gboolean equal_func (const gchar *s1, const gchar *s2)
+static GHashTable*
+get_icon_cache (void)
 {
-	return strcmp (s1, s2) == 0;
-}
+	TnyPlatformFactory *fakt;
+	ModestCacheMgr     *cache_mgr;
 
-static
-void free_pixbuf (GdkPixbuf *pixbuf)
-{
-	if (pixbuf)
-		g_object_unref (G_OBJECT(pixbuf));
-}
-
-
-void
-modest_icon_factory_init   (void)
-{
-	if (icon_hash) {
-		g_printerr ("modest: modest_icon_factory_init " 
-			    "should be called only once\n");
-		return;
-	}
+	fakt = modest_tny_platform_factory_get_instance ();
 	
-	icon_hash = g_hash_table_new_full (g_str_hash,
-					   (GEqualFunc)equal_func,
-					   (GDestroyNotify)g_free,
-					   (GDestroyNotify)free_pixbuf);
+	cache_mgr =  modest_tny_platform_factory_get_cache_mgr_instance
+		(MODEST_TNY_PLATFORM_FACTORY(fakt));
+
+	return modest_cache_mgr_get_cache (cache_mgr,
+					   MODEST_CACHE_MGR_CACHE_TYPE_PIXBUF);
 }
-
-
-void
-modest_icon_factory_uninit (void)
-{
-	if (!icon_hash) {
-		g_printerr ("modest: modest_icon_factory_uninit "
-			   "must only be called with initialized "
-			   "ModestIconFactories\n");
-		return;
-	}
-
-	g_hash_table_destroy (icon_hash);
-	icon_hash = NULL;
-}
-
 
 
 GdkPixbuf*
@@ -87,29 +55,25 @@ modest_icon_factory_get_icon (const gchar *name)
 	GError *err = NULL;
 	GdkPixbuf *pixbuf;
 	gpointer orig_key;
-
-	g_return_val_if_fail (name, NULL);
+	static GHashTable *icon_cache = NULL;
 	
-	if (!icon_hash) {
-		g_printerr ("modest: ModestIconFactory must be initialized first\n");
-		return NULL;
-	}
+	g_return_val_if_fail (name, NULL);
 
-	/* is it already in the hashtable?
-	 * note: this can be NULL
-	 */
-	if (!g_hash_table_lookup_extended (icon_hash, name, &orig_key,
-					   (gpointer*)&pixbuf)) {
+	if (G_UNLIKELY(!icon_cache))
+		icon_cache = get_icon_cache ();
+	
+	if (!icon_cache || !g_hash_table_lookup_extended (icon_cache, name, &orig_key,
+							  (gpointer*)&pixbuf)) {
 		pixbuf = gdk_pixbuf_new_from_file (name, &err);
 		if (!pixbuf) {
 			g_printerr ("modest: error in icon factory while loading '%s': %s\n",
 				    name, err->message);
 			g_error_free (err);
 		}
-		/* if we cannot find it, we still insert, so we get the error
+		/* if we cannot find it, we still insert (if we have a cache), so we get the error
 		 * only once */
-		g_hash_table_insert (icon_hash, g_strdup(name),
-				     (gpointer)pixbuf);
+		if (icon_cache)
+			g_hash_table_insert (icon_cache, g_strdup(name),(gpointer)pixbuf);
 	}
 	return pixbuf;
 }
@@ -122,14 +86,13 @@ modest_icon_factory_get_icon_at_size (const gchar *name, guint width, guint heig
 	/* FIXME, somehow, cache scaled icons as well... */
 	GError *err = NULL;
 	GdkPixbuf *pixbuf = NULL;
-
-	g_return_val_if_fail (name, NULL);
+	static GHashTable *icon_cache = NULL;
 	
-	if (!icon_hash) {
-		g_printerr ("modest: ModestIconFactory must be initialized first\n");
-		return NULL;
-	}
+	g_return_val_if_fail (name, NULL);
 
+	if (G_UNLIKELY(!icon_cache))
+		icon_cache = get_icon_cache ();
+	
 	pixbuf = gdk_pixbuf_new_from_file_at_size (name, width, height, &err);
 	if (!pixbuf) {
 		g_printerr ("modest: error in icon factory while loading '%s'@(%dx%d): %s\n",
@@ -138,9 +101,8 @@ modest_icon_factory_get_icon_at_size (const gchar *name, guint width, guint heig
 	}
 	
 	/* we insert it, so it will be freed... FIXME... */
-	if (pixbuf)
-		g_hash_table_insert (icon_hash, g_strdup_printf ("%s-%d-%d",name,width,height),
+	if (pixbuf && icon_cache)
+		g_hash_table_insert (icon_cache, g_strdup_printf ("%s-%d-%d",name,width,height),
 				     (gpointer)pixbuf);
-	
 	return pixbuf;
 }

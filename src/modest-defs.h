@@ -31,6 +31,20 @@
 #ifndef __MODEST_DEFS_H__
 #define __MODEST_DEFS_H__
 
+
+/* exit codes for the modest executable*/
+enum {
+	MODEST_ERR_NONE    = 0,  /* no error */
+	MODEST_ERR_OPTIONS,      /* error in the options */
+	MODEST_ERR_CONF,         /* error getting confuration db */
+	MODEST_ERR_UI,           /* error in the UI */
+	MODEST_ERR_HILDON,       /* error with Hildon (maemo-only) */
+	MODEST_ERR_RUN,          /* errr running */
+	MODEST_ERR_SEND,         /* error sending mail */
+	MODEST_ERR_INIT          /* error in initialization */
+};
+
+
 /* some interesting dirs. NOTE, they should be prefixed
  * with $HOME; also, except MODEST_DIR itself, they
  * need to be prefixed with MODEST_DIR;
@@ -41,7 +55,6 @@
 #define MODEST_DIR	             ".modest"
 #define MODEST_CACHE_DIR             "cache"
 #define MODEST_LOCAL_FOLDERS_MAILDIR "local_folder"
-
 
 
 /* configuration key definitions for modest */
