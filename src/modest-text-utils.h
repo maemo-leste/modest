@@ -193,10 +193,8 @@ gint modest_text_utils_utf8_strcmp (const gchar* s1, const gchar *s2, gboolean i
  *
  * get a string representation for a date.
  * 
- * 
- * Returns: the new display date. The string is *not* newly allocated,
- * but is a static buffer (for optimization reasons). Therefore, when
- * you call this function, you will loose the data.
+ * Returns: the new display date, as a constant string.
+ * must NOT be freed
  */
 const gchar* modest_text_utils_get_display_date (time_t date);
 

@@ -33,6 +33,7 @@
 #include <stdlib.h>
 #include <glib/gi18n.h>
 #include <regex.h>
+#include <modest-tny-platform-factory.h>
 #include "modest-text-utils.h"
 
 
@@ -491,7 +492,6 @@ modest_text_utils_quote_plain_text (const gchar *text,
 	gint indent, breakpoint, rem_indent = 0;
 	GString *q, *l, *remaining;
 	gsize len;
-	gchar *tmp;
 
 	/* remaining will store the rest of the line if we have to break it */
 	q = g_string_new (cite);
@@ -757,17 +757,43 @@ modest_text_utils_utf8_strcmp (const gchar* s1, const gchar *s2, gboolean insens
 	return result;
 }
 
+static GHashTable*
+get_display_date_cache (void)
+{
+	TnyPlatformFactory *fakt;
+	ModestCacheMgr     *cache_mgr;
+
+	fakt = modest_tny_platform_factory_get_instance ();
+	
+	cache_mgr =  modest_tny_platform_factory_get_cache_mgr_instance
+		(MODEST_TNY_PLATFORM_FACTORY(fakt));
+	
+	return modest_cache_mgr_get_cache (cache_mgr,
+					   MODEST_CACHE_MGR_CACHE_TYPE_DATE_STRING);
+}
+
+
 
 const gchar*
 modest_text_utils_get_display_date (time_t date)
 {
+	static GHashTable *date_cache = NULL;
+
 	struct tm date_tm, now_tm; 
 	time_t now;
 
 	const gint buf_size = 64; 
 	static gchar date_buf[64]; /* buf_size is not ... */
 	static gchar now_buf[64];  /* ...const enough... */
+	gchar* cached_val;
 	
+	if (G_UNLIKELY(!date_cache))
+		date_cache = get_display_date_cache ();
+	
+	cached_val = g_hash_table_lookup (date_cache, &date);
+	if (cached_val)
+		return cached_val;
+						    
 	now = time (NULL);
 	
 	localtime_r(&now, &now_tm);
@@ -781,8 +807,11 @@ modest_text_utils_get_display_date (time_t date)
 	/* if this is today, get the time instead of the date */
 	if (strcmp (date_buf, now_buf) == 0)
 		strftime (date_buf, buf_size, _("%X"), &date_tm); 
-		
-	return date_buf;
+
+	cached_val = g_strdup(date_buf);
+	g_hash_table_insert (date_cache, (gpointer)&date, (gpointer)cached_val);
+	
+	return cached_val;
 }
 
 gboolean 
