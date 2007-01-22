@@ -126,7 +126,6 @@ GType        modest_header_view_get_type    (void) G_GNUC_CONST;
 /**
  * modest_header_view_new:
  * @folder: a TnyMsgFolder object
- * @columns: a list of ModestHeaderViewColumn
  * @style: a ModestHeaderViewColumn with the style of this listview
  *  (	MODEST_HEADER_VIEW_STYLE_NORMAL or MODEST_HEADER_VIEW_STYLE_COMPACT)
  * 
@@ -135,7 +134,6 @@ GType        modest_header_view_get_type    (void) G_GNUC_CONST;
  * Returns: a new GtkWidget (a GtkTreeView-subclass)
  */
 GtkWidget*   modest_header_view_new        (TnyFolder *folder,
-					    const GList *columns,
 					    ModestHeaderViewStyle style);
 
 /**
@@ -149,9 +147,6 @@ GtkWidget*   modest_header_view_new        (TnyFolder *folder,
  */
 gboolean     modest_header_view_set_folder (ModestHeaderView *self,
 					    TnyFolder *folder);
-
-
-
 
 /**
  * modest_header_view_get_folder:

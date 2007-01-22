@@ -36,24 +36,73 @@
 #include <glib/gi18n.h>
 
 
+/*
+ * optimization
+ */
+static GdkPixbuf*
+get_pixbuf_for_flag (TnyHeaderFlags flag)
+{
+	/* optimization */
+	static GdkPixbuf *deleted_pixbuf       = NULL;
+	static GdkPixbuf *seen_pixbuf          = NULL;
+	static GdkPixbuf *unread_pixbuf        = NULL;
+	static GdkPixbuf *attachments_pixbuf   = NULL;
+	
+	switch (flag) {
+	case TNY_HEADER_FLAG_DELETED:
+		if (G_UNLIKELY(!deleted_pixbuf))
+			deleted_pixbuf = modest_icon_factory_get_icon (MODEST_HEADER_ICON_DELETED);
+		return deleted_pixbuf;
+	case TNY_HEADER_FLAG_SEEN:
+		if (G_UNLIKELY(!seen_pixbuf))
+			seen_pixbuf = modest_icon_factory_get_icon (MODEST_HEADER_ICON_READ);
+		return seen_pixbuf;
+	case TNY_HEADER_FLAG_ATTACHMENTS:
+		if (G_UNLIKELY(!attachments_pixbuf))
+			attachments_pixbuf = modest_icon_factory_get_icon (MODEST_HEADER_ICON_ATTACH);
+		return attachments_pixbuf;
+	default:
+		if (G_UNLIKELY(!unread_pixbuf))
+			unread_pixbuf = modest_icon_factory_get_icon (MODEST_HEADER_ICON_UNREAD);
+		return unread_pixbuf;
+	}
+}
+
+
+static const gchar*
+get_display_date (time_t date)
+{
+	static guint        cached_date     = 0;
+	static const gchar* cached_date_str = NULL;
+	
+	/* optimization; if the date didn't changed, just reuse the old date str*/
+	if (cached_date == date) 
+		return cached_date_str;
+	else {
+		cached_date = date;
+		return cached_date_str = modest_text_utils_get_display_date (date);
+	}	
+}
+
+		
 void
 _modest_header_view_msgtype_cell_data (GtkTreeViewColumn *column, GtkCellRenderer *renderer,
 		   GtkTreeModel *tree_model, GtkTreeIter *iter, gpointer user_data)
 {
 	TnyHeaderFlags flags;
-	GdkPixbuf *pixbuf = NULL;
-	
+		
 	gtk_tree_model_get (tree_model, iter, TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN,
 			    &flags, -1);
 
 	if (flags & TNY_HEADER_FLAG_DELETED)
-		pixbuf = modest_icon_factory_get_icon (MODEST_HEADER_ICON_DELETED);
+		g_object_set (G_OBJECT (renderer), "pixbuf",
+			      get_pixbuf_for_flag (TNY_HEADER_FLAG_DELETED), NULL);	      
 	else if (flags & TNY_HEADER_FLAG_SEEN)
-		pixbuf = modest_icon_factory_get_icon (MODEST_HEADER_ICON_READ);
-	else
-		pixbuf = modest_icon_factory_get_icon (MODEST_HEADER_ICON_UNREAD);
-		
-	g_object_set (G_OBJECT (renderer), "pixbuf", pixbuf, NULL);
+		g_object_set (G_OBJECT (renderer), "pixbuf",
+			      get_pixbuf_for_flag (TNY_HEADER_FLAG_SEEN), NULL);	      
+	else 
+		g_object_set (G_OBJECT (renderer), "pixbuf",
+			      get_pixbuf_for_flag (0), NULL); /* ughh, FIXME */		      
 }
 
 void
@@ -61,17 +110,15 @@ _modest_header_view_attach_cell_data (GtkTreeViewColumn *column, GtkCellRenderer
 				      GtkTreeModel *tree_model, GtkTreeIter *iter, gpointer user_data)
 {
 	TnyHeaderFlags flags;
-	GdkPixbuf *pixbuf = NULL;
 
 	gtk_tree_model_get (tree_model, iter, TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN,
 			    &flags, -1);
 
 	if (flags & TNY_HEADER_FLAG_ATTACHMENTS)
-		pixbuf = modest_icon_factory_get_small_icon (MODEST_HEADER_ICON_ATTACH);
-
-	g_object_set (G_OBJECT (renderer), "pixbuf", pixbuf, NULL);
+		g_object_set (G_OBJECT (renderer), "pixbuf",
+			      get_pixbuf_for_flag (TNY_HEADER_FLAG_ATTACHMENTS),
+			      NULL);
 }
-
 
 void
 _modest_header_view_header_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
@@ -96,26 +143,23 @@ _modest_header_view_date_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer
 {
 	TnyHeaderFlags flags;
 	guint date, date_col;
-	const gchar *date_str;
 	gboolean received = GPOINTER_TO_INT(user_data);
 
 	if (received)
-		date_col = TNY_GTK_HEADER_LIST_MODEL_DATE_RECEIVED_COLUMN;
+		date_col = TNY_GTK_HEADER_LIST_MODEL_DATE_RECEIVED_TIME_T_COLUMN;
 	else
-		date_col = TNY_GTK_HEADER_LIST_MODEL_DATE_SENT_COLUMN;
-	
+		date_col = TNY_GTK_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN;
+
 	gtk_tree_model_get (tree_model, iter,
 			    TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN, &flags,
 			    date_col, &date,
 			    -1);
 	
-	date_str = modest_text_utils_get_display_date (date);
-	
 	g_object_set (G_OBJECT(renderer),
 		      "weight", (flags & TNY_HEADER_FLAG_SEEN) ? 400: 800,
 		      "style",  (flags & TNY_HEADER_FLAG_DELETED) ?
 		                 PANGO_STYLE_ITALIC : PANGO_STYLE_NORMAL,
-		      "text",    date_str,       
+		      "text",    get_display_date (date),
 		      NULL);
 }
 
@@ -161,7 +205,6 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 	GObject *rendobj;
 	TnyHeaderFlags flags;
 	gchar *address, *subject, *header;
-	const gchar *date_str;
 	time_t date;
 	gboolean is_incoming;
 
@@ -183,12 +226,10 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 				    TNY_GTK_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN, &date,   
 				    -1);
 	
-	rendobj = G_OBJECT(renderer);		
-
-	date_str = modest_text_utils_get_display_date (date);
+	rendobj = G_OBJECT(renderer);			
 	header = g_strdup_printf ("%s %s\n%s",
 				  modest_text_utils_get_display_address (address),
-				  date_str,
+				  get_display_date (date),
 				  subject);
 	g_free (address);
 	g_free (subject);
