@@ -85,6 +85,7 @@ GTKDOC_LIBS= \
 	$(top_builddir)/src/gtk/libmodest-ui.la		\
 	$(top_builddir)/src/widgets/libmodest-widgets.la\
 	${top_builddir}/src/modest-account-mgr.o \
+	${top_builddir}/src/modest-cache-mgr.o \
 	${top_builddir}/src/modest-conf.o \
 	${top_builddir}/src/modest-formatter.o \
 	${top_builddir}/src/modest-icon-factory.o \

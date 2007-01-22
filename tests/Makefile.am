@@ -42,6 +42,7 @@ objects=\
         ${top_srcdir}/src/widgets/libmodest-widgets.la \
         ${top_srcdir}/src/modest-account-mgr.o \
         ${top_srcdir}/src/modest-conf.o \
+        ${top_srcdir}/src/modest-cache-mgr.o \
         ${top_srcdir}/src/modest-protocol-info.o \
         ${top_srcdir}/src/modest-formatter.o \
         ${top_srcdir}/src/modest-presets.o \
