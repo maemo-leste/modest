@@ -158,7 +158,6 @@ modest_ui_init (ModestUI *obj)
 static void
 modest_ui_finalize (GObject *obj)
 {
-	
 	ModestUIPrivate *priv = MODEST_UI_GET_PRIVATE(obj);
 	
 	if (priv->widget_factory) {
@@ -170,7 +169,7 @@ modest_ui_finalize (GObject *obj)
 		g_object_unref (G_OBJECT(priv->ui_manager));
 		priv->ui_manager = NULL;
 	}
-	
+
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 

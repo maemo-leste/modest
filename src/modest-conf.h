@@ -46,14 +46,14 @@ G_BEGIN_DECLS
 typedef struct _ModestConf        ModestConf;
 typedef struct _ModestConfClass   ModestConfClass;
 
-typedef enum _ModestConfValueType {
+typedef enum {
 	MODEST_CONF_VALUE_INT,
 	MODEST_CONF_VALUE_BOOL,
 	MODEST_CONF_VALUE_FLOAT,
 	MODEST_CONF_VALUE_STRING
 } ModestConfValueType;
 
-typedef enum _ModestConfEvent {
+typedef enum {
 	MODEST_CONF_EVENT_KEY_CHANGED,
 	MODEST_CONF_EVENT_KEY_UNSET
 } ModestConfEvent;
