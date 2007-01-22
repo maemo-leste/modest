@@ -83,6 +83,7 @@ typedef enum _ModestHeaderViewColumn {
 typedef enum _ModestHeaderViewStyle {
 	MODEST_HEADER_VIEW_STYLE_DETAILS, /* many columns, single line, col headers visible */
 	MODEST_HEADER_VIEW_STYLE_TWOLINES, /* two-line headers, col headers invisible */
+
 	MODEST_HEADER_VIEW_STYLE_NUM	
 } ModestHeaderViewStyle;
 

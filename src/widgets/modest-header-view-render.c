@@ -90,39 +90,33 @@ _modest_header_view_header_cell_data  (GtkTreeViewColumn *column,  GtkCellRender
 
 
 void
-_modest_header_view_size_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
-		 GtkTreeModel *tree_model,  GtkTreeIter *iter,  gpointer user_data)
+_modest_header_view_date_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
+				     GtkTreeModel *tree_model,  GtkTreeIter *iter,
+				     gpointer user_data)
 {
 	TnyHeaderFlags flags;
-	guint size;
-	gchar *size_str;
-	const gchar* unit;
+	guint date, date_col;
+	const gchar *date_str;
+	gboolean received = GPOINTER_TO_INT(user_data);
+
+	if (received)
+		date_col = TNY_GTK_HEADER_LIST_MODEL_DATE_RECEIVED_COLUMN;
+	else
+		date_col = TNY_GTK_HEADER_LIST_MODEL_DATE_SENT_COLUMN;
 	
 	gtk_tree_model_get (tree_model, iter,
 			    TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN, &flags,
-			    TNY_GTK_HEADER_LIST_MODEL_MESSAGE_SIZE_COLUMN, &size,
+			    date_col, &date,
 			    -1);
-
-	if (size < 1024*1024) {
-		unit = _("Kb");
-		size /= 1024;
-	} else if (size < 1024*1024*1024) {
-		unit = _("Mb");
-		size /= (1024*1024);
-	} else {
-		unit = _("Gb");
-		size /= (1024*1024*1024);
-	}
-
-	size_str = g_strdup_printf ("%d %s", size, unit);
-				
+	
+	date_str = modest_text_utils_get_display_date (date);
+	
 	g_object_set (G_OBJECT(renderer),
 		      "weight", (flags & TNY_HEADER_FLAG_SEEN) ? 400: 800,
 		      "style",  (flags & TNY_HEADER_FLAG_DELETED) ?
 		                 PANGO_STYLE_ITALIC : PANGO_STYLE_NORMAL,
-		      "text",    size_str,       
+		      "text",    date_str,       
 		      NULL);
-	g_free (size_str);
 }
 
 
@@ -162,12 +156,12 @@ _modest_header_view_sender_receiver_cell_data  (GtkTreeViewColumn *column,  GtkC
  */
 void
 _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
-			   GtkTreeModel *tree_model,  GtkTreeIter *iter,  gpointer user_data)
+					       GtkTreeModel *tree_model,  GtkTreeIter *iter,  gpointer user_data)
 {
 	GObject *rendobj;
 	TnyHeaderFlags flags;
-	gchar *address, *subject;
-	gchar *header;
+	gchar *address, *subject, *header;
+	const gchar *date_str;
 	time_t date;
 	gboolean is_incoming;
 
@@ -191,10 +185,13 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 	
 	rendobj = G_OBJECT(renderer);		
 
+	date_str = modest_text_utils_get_display_date (date);
 	header = g_strdup_printf ("%s %s\n%s",
 				  modest_text_utils_get_display_address (address),
-				  modest_text_utils_get_display_date (date),
+				  date_str,
 				  subject);
+	g_free (address);
+	g_free (subject);
 	
 	g_object_set (G_OBJECT(renderer),
 		      "text",  header,
@@ -202,8 +199,44 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 		      "style",  (flags & TNY_HEADER_FLAG_DELETED) ?
 		                 PANGO_STYLE_ITALIC : PANGO_STYLE_NORMAL,
 		      NULL);	
-
 	g_free (header);
-	g_free (address);
-	g_free (subject);
 }
+
+
+void
+_modest_header_view_size_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
+				     GtkTreeModel *tree_model,  GtkTreeIter *iter,
+				     gpointer user_data)
+{
+        TnyHeaderFlags flags;
+       guint size;
+       gchar *size_str;
+       const gchar* unit;
+
+       gtk_tree_model_get (tree_model, iter,
+			   TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN, &flags,
+			   TNY_GTK_HEADER_LIST_MODEL_MESSAGE_SIZE_COLUMN, &size,
+			   -1);
+       
+       if (size < 1024*1024) {
+               unit = _("Kb");
+               size /= 1024;
+       } else if (size < 1024*1024*1024) {
+               unit = _("Mb");
+               size /= (1024*1024);
+       } else {
+               unit = _("Gb");
+               size /= (1024*1024*1024);
+       }
+
+       size_str = g_strdup_printf ("%d %s", size, unit);
+
+       g_object_set (G_OBJECT(renderer),
+		     "weight", (flags & TNY_HEADER_FLAG_SEEN) ? 400: 800,
+		     "style",  (flags & TNY_HEADER_FLAG_DELETED) ?
+		     PANGO_STYLE_ITALIC : PANGO_STYLE_NORMAL,
+		     "text",    size_str,       
+                      NULL);
+       g_free (size_str);
+
+ }

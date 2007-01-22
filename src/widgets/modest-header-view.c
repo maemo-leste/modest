@@ -314,16 +314,16 @@ modest_header_view_set_columns (ModestHeaderView *self, const GList *columns)
 			column = get_new_column (_("Received"), renderer_header, TRUE,
 						 TNY_GTK_HEADER_LIST_MODEL_DATE_RECEIVED_COLUMN,
 						 TRUE,
-						 (GtkTreeCellDataFunc)_modest_header_view_header_cell_data,
-						 NULL);
+						 (GtkTreeCellDataFunc)_modest_header_view_date_cell_data,
+						 GINT_TO_POINTER(TRUE));
 			break;
 			
 		case MODEST_HEADER_VIEW_COLUMN_SENT_DATE:
 			column = get_new_column (_("Sent"), renderer_header, TRUE,
 						 TNY_GTK_HEADER_LIST_MODEL_DATE_SENT_COLUMN,
 						 TRUE,
-						 (GtkTreeCellDataFunc)_modest_header_view_header_cell_data,
-						 NULL);
+						 (GtkTreeCellDataFunc)_modest_header_view_date_cell_data,
+						 GINT_TO_POINTER(FALSE));
 			break;
 			
 		case MODEST_HEADER_VIEW_COLUMN_SIZE:
@@ -402,10 +402,13 @@ modest_header_view_new (TnyFolder *folder, const GList *columns,
 	ModestHeaderView *self;
 	ModestHeaderViewPrivate *priv;
 	
+	g_return_val_if_fail (style >= 0 && style < MODEST_HEADER_VIEW_STYLE_NUM,
+			      NULL);
+	
 	obj  = G_OBJECT(g_object_new(MODEST_TYPE_HEADER_VIEW, NULL));
 	self = MODEST_HEADER_VIEW(obj);
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
-
+	
 	modest_header_view_set_style   (self, style);
 	modest_header_view_set_columns (self, columns);
 
