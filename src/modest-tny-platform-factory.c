@@ -73,6 +73,7 @@ struct _ModestTnyPlatformFactoryPrivate {
 	ModestConf               *conf;
 	ModestAccountMgr         *account_mgr;
 	ModestMailOperationQueue *mail_op_queue;
+	ModestCacheMgr           *cache_mgr;
 };
 
 #define MODEST_TNY_PLATFORM_FACTORY_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -143,6 +144,7 @@ modest_tny_platform_factory_init (ModestTnyPlatformFactory *obj)
 	priv->conf          = NULL;
 	priv->account_store = NULL;
 	priv->mail_op_queue = NULL;
+	priv->cache_mgr     = NULL;
 }
 
 static GObject*
@@ -172,16 +174,19 @@ modest_tny_platform_factory_finalize (GObject *obj)
 	priv = MODEST_TNY_PLATFORM_FACTORY_GET_PRIVATE(obj);
 
 	if (priv->account_mgr)
-		g_object_unref (priv->account_mgr);
+		g_object_unref (G_OBJECT(priv->account_mgr));
 
 	if (priv->conf)
-		g_object_unref (priv->conf);
+		g_object_unref (G_OBJECT(priv->conf));
 
 	if (priv->account_store)
-		g_object_unref (priv->account_store);
+		g_object_unref (G_OBJECT(priv->account_store));
 
 	if (priv->mail_op_queue)
-		g_object_unref (priv->mail_op_queue);
+		g_object_unref (G_OBJECT(priv->mail_op_queue));
+
+	if (priv->cache_mgr)
+		g_object_unref (G_OBJECT(priv->cache_mgr));
 	
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
@@ -272,6 +277,8 @@ modest_tny_platform_factory_get_account_mgr_instance (ModestTnyPlatformFactory *
 {
 	ModestTnyPlatformFactoryPrivate *priv;
 
+	g_return_val_if_fail (fact, NULL);
+	
 	priv = MODEST_TNY_PLATFORM_FACTORY_GET_PRIVATE(fact);
 
 	if (!priv->account_mgr) {
@@ -287,7 +294,9 @@ ModestConf *
 modest_tny_platform_factory_get_conf_instance (ModestTnyPlatformFactory *fact)
 {
 	ModestTnyPlatformFactoryPrivate *priv;
-
+	
+	g_return_val_if_fail (fact, NULL);
+	
 	priv = MODEST_TNY_PLATFORM_FACTORY_GET_PRIVATE(fact);
 
 	if (!priv->conf)
@@ -301,10 +310,29 @@ modest_tny_platform_factory_get_mail_operation_queue_instance (ModestTnyPlatform
 {
 	ModestTnyPlatformFactoryPrivate *priv;
 
+	g_return_val_if_fail (fact, NULL);
+	
 	priv = MODEST_TNY_PLATFORM_FACTORY_GET_PRIVATE(fact);
 
 	if (!priv->mail_op_queue)
 		priv->mail_op_queue = modest_mail_operation_queue_new ();
 
 	return priv->mail_op_queue;
+}
+
+
+
+ModestCacheMgr*
+modest_tny_platform_factory_get_cache_mgr_instance (ModestTnyPlatformFactory *fact)
+{
+	ModestTnyPlatformFactoryPrivate *priv;
+
+	g_return_val_if_fail (fact, NULL);
+	
+	priv = MODEST_TNY_PLATFORM_FACTORY_GET_PRIVATE(fact);
+
+	if (!priv->cache_mgr)
+		priv->cache_mgr = modest_cache_mgr_new ();
+		
+	return priv->cache_mgr;
 }

@@ -35,9 +35,10 @@
 #include <glib-object.h>
 
 #include <tny-platform-factory.h>
-#include "modest-account-mgr.h"
-#include "modest-conf.h"
-#include "modest-mail-operation-queue.h"
+#include <modest-account-mgr.h>
+#include <modest-conf.h>
+#include <modest-mail-operation-queue.h>
+#include <modest-cache-mgr.h>
 
 G_BEGIN_DECLS
 
@@ -109,6 +110,21 @@ ModestConf*     modest_tny_platform_factory_get_conf_instance (ModestTnyPlatform
  * Returns: an instance of a #ModestMailOperationQueue
  **/
 ModestMailOperationQueue*   modest_tny_platform_factory_get_mail_operation_queue_instance (ModestTnyPlatformFactory *fact);
+
+
+/**
+ * modest_tny_platform_factory_get_cache_mgr_instance:
+ * @fact: the #TnyPlatformFactory that holds the #ModestCacheMgr instance
+ * 
+ * Gets a new instance of a #ModestCacheMgr if it is the
+ * first call to the function, or the current instantiated one
+ * otherwise. This object is supposed to be a singleton
+ * 
+ * Returns: an instance of a #ModestCacheMgr.
+ **/
+ModestCacheMgr*   modest_tny_platform_factory_get_cache_mgr_instance (ModestTnyPlatformFactory *fact);
+
+
 
 
 G_END_DECLS
