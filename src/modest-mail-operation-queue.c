@@ -141,18 +141,15 @@ modest_mail_operation_queue_new (void)
 }
 
 void 
-modest_mail_operation_queue_add (ModestMailOperationQueue *op_queue, 
+modest_mail_operation_queue_add (ModestMailOperationQueue *self, 
 				 ModestMailOperation *mail_op)
 {
 	ModestMailOperationQueuePrivate *priv;
 
-	if (!MODEST_IS_MAIL_OPERATION (mail_op) ||
-	    !MODEST_IS_MAIL_OPERATION_QUEUE (op_queue)) {
-		g_warning ("%s: bad parametters", G_GNUC_FUNCTION);
-		return;
-	}
-
-	priv = MODEST_MAIL_OPERATION_QUEUE_GET_PRIVATE(op_queue);
+	g_return_if_fail (MODEST_IS_MAIL_OPERATION_QUEUE (self));
+	g_return_if_fail (MODEST_IS_MAIL_OPERATION (mail_op));
+	
+	priv = MODEST_MAIL_OPERATION_QUEUE_GET_PRIVATE(self);
 
 	g_mutex_lock (priv->queue_lock);
 	g_queue_push_tail (priv->op_queue, g_object_ref (mail_op));
@@ -160,18 +157,15 @@ modest_mail_operation_queue_add (ModestMailOperationQueue *op_queue,
 }
 
 void 
-modest_mail_operation_queue_remove (ModestMailOperationQueue *op_queue, 
+modest_mail_operation_queue_remove (ModestMailOperationQueue *self, 
 				    ModestMailOperation *mail_op)
 {
 	ModestMailOperationQueuePrivate *priv;
 
-	if (!MODEST_IS_MAIL_OPERATION (mail_op) ||
-	    !MODEST_IS_MAIL_OPERATION_QUEUE (op_queue)) {
-		g_warning ("%s: invalid paramette", G_GNUC_FUNCTION);
-		return;
-	}
+	g_return_if_fail (MODEST_IS_MAIL_OPERATION_QUEUE (self));
+	g_return_if_fail (MODEST_IS_MAIL_OPERATION (mail_op));
 
-	priv = MODEST_MAIL_OPERATION_QUEUE_GET_PRIVATE(op_queue);
+	priv = MODEST_MAIL_OPERATION_QUEUE_GET_PRIVATE(self);
 
 	g_mutex_lock (priv->queue_lock);
 	g_queue_remove (priv->op_queue, mail_op);
@@ -181,14 +175,14 @@ modest_mail_operation_queue_remove (ModestMailOperationQueue *op_queue,
 
 /* Utility function intended to be used with g_queue_foreach */
 static void
-modest_mail_operation_queue_cancel_no_block_wrapper (ModestMailOperation *mail_op,
+modest_mail_operation_queue_cancel_no_block_wrapper (ModestMailOperation *self,
 						     ModestMailOperationQueue *op_queue)
 {
-	modest_mail_operation_queue_cancel_no_block (op_queue, mail_op);
+	modest_mail_operation_queue_cancel_no_block (op_queue, self);
 }
 
 static void 
-modest_mail_operation_queue_cancel_no_block (ModestMailOperationQueue *op_queue,
+modest_mail_operation_queue_cancel_no_block (ModestMailOperationQueue *self,
 					     ModestMailOperation *mail_op)
 {
 	if (modest_mail_operation_is_finished (mail_op))
@@ -198,44 +192,37 @@ modest_mail_operation_queue_cancel_no_block (ModestMailOperationQueue *op_queue,
 	modest_mail_operation_cancel (mail_op);
 
 	/* Remove from the queue */
-	modest_mail_operation_queue_remove (op_queue, mail_op);
+	modest_mail_operation_queue_remove (self, mail_op);
 }
 
 void 
-modest_mail_operation_queue_cancel (ModestMailOperationQueue *op_queue, 
+modest_mail_operation_queue_cancel (ModestMailOperationQueue *self, 
 				    ModestMailOperation *mail_op)
 {
 	ModestMailOperationQueuePrivate *priv;
-	GList *iter;
 
-	if (!MODEST_IS_MAIL_OPERATION (mail_op) ||
-	    !MODEST_IS_MAIL_OPERATION_QUEUE (op_queue)) {
-		g_warning ("%s: invalid paramette", G_GNUC_FUNCTION);
-		return;
-	}
+	g_return_if_fail (MODEST_IS_MAIL_OPERATION_QUEUE (self));
+	g_return_if_fail (MODEST_IS_MAIL_OPERATION (mail_op));
 
-	priv = MODEST_MAIL_OPERATION_QUEUE_GET_PRIVATE(op_queue);
+	priv = MODEST_MAIL_OPERATION_QUEUE_GET_PRIVATE(self);
 
 	g_mutex_lock (priv->queue_lock);
-	modest_mail_operation_queue_cancel_no_block (op_queue, mail_op);
+	modest_mail_operation_queue_cancel_no_block (self, mail_op);
 	g_mutex_unlock (priv->queue_lock);
 }
 
 void 
-modest_mail_operation_queue_cancel_all (ModestMailOperationQueue *op_queue)
+modest_mail_operation_queue_cancel_all (ModestMailOperationQueue *self)
 {
 	ModestMailOperationQueuePrivate *priv;
 
-	if (!MODEST_IS_MAIL_OPERATION_QUEUE (op_queue)) {
-		g_warning ("%s: invalid paramette", G_GNUC_FUNCTION);
-		return;
-	}
+	g_return_if_fail (MODEST_IS_MAIL_OPERATION_QUEUE (self));
 
-	priv = MODEST_MAIL_OPERATION_QUEUE_GET_PRIVATE(op_queue);
+	priv = MODEST_MAIL_OPERATION_QUEUE_GET_PRIVATE(self);
 
 	g_mutex_lock (priv->queue_lock);
 	g_queue_foreach (priv->op_queue, 
 			 (GFunc) modest_mail_operation_queue_cancel_no_block_wrapper, 
-			 op_queue);
+			 self);
 	g_mutex_unlock (priv->queue_lock);
 }
