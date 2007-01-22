@@ -61,7 +61,7 @@ modest_debug_g_type_init (void)
 {
 	GTypeDebugFlags gflags;
 	ModestDebugFlags mflags;
-
+	
 	gflags = 0;
 	mflags = modest_debug_get_debug_flags ();
 

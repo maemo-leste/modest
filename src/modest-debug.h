@@ -41,12 +41,12 @@ typedef enum {
 	MODEST_DEBUG_ABORT_ON_WARNING      = 1 << 0,
 	MODEST_DEBUG_LOG_ACTIONS           = 1 << 1, /* not in use atm */
 	MODEST_DEBUG_DEBUG_OBJECTS         = 1 << 2, /* for g_type_init */
-	MODEST_DEBUG_DEBUG_SIGNALS         = 1 << 3  /* for g_type_init */
+	MODEST_DEBUG_DEBUG_SIGNALS         = 1 << 3, /* for g_type_init */
 } ModestDebugFlags;
 
 
 /**
- * modest_debug_get_flags 
+ * modest_debug_get_debug_flags 
  *
  * get the debug flags for modest; they are read from the MODEST_DEBUG
  * environment variable; the flags specified as strings, separated by ':'.
@@ -58,6 +58,7 @@ typedef enum {
  *  g_type_init_with_debug_flags
  *  - "track-signals": track the use of (g)signals in the program. this option influences
  *  g_type_init_with_debug_flags
+ *  - "disable-cache": disable caching of strings and pixbuf
  * if you would want to track signals and log actions, you could do something like:
  *  MODEST_DEBUG="log-actions:track-signals" ./modest
  * NOTE that the flags will stay the same during the run of the program, even
@@ -65,7 +66,7 @@ typedef enum {
  * 
  * Returns: the bitwise OR of the debug flags
  */
-ModestDebugFlags modest_debug_get_flags  (void) G_GNUC_CONST;
+ModestDebugFlags modest_debug_get_debug_flags  (void) G_GNUC_CONST;
 
 /**
  * modest_g_type_init
