@@ -52,10 +52,10 @@ enum {
  * building of dirs from their components..
  * g_build_dir is your friend
  */
-#define MODEST_DIR	             ".modest"
-#define MODEST_CACHE_DIR             "cache"
-#define MODEST_LOCAL_FOLDERS_MAILDIR "local_folder"
-
+#define MODEST_DIR	                  ".modest"
+#define MODEST_CACHE_DIR                  "cache"
+#define MODEST_LOCAL_FOLDERS_MAILDIR      "local_folders"
+#define MODEST_LOCAL_FOLDERS_ACCOUNT_NAME "local_folders"
 
 /* configuration key definitions for modest */
 #define MODEST_CONF_NAMESPACE		"/apps/modest"
