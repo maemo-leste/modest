@@ -487,12 +487,12 @@ get_local_folder_account (ModestTnyAccountStore *self)
 
 	url_string = camel_url_to_string (url, 0);
 	tny_account_set_url_string (TNY_ACCOUNT(tny_account), url_string);
-
+	
 	tny_camel_account_set_session (TNY_CAMEL_ACCOUNT(tny_account),
 				       priv->tny_session_camel);
-
-	tny_account_set_name (TNY_ACCOUNT(tny_account), _("Local folders")); 
-			      
+	tny_account_set_name (TNY_ACCOUNT(tny_account), MODEST_LOCAL_FOLDERS_ACCOUNT_NAME); 
+	tny_account_set_id (TNY_ACCOUNT(tny_account), MODEST_LOCAL_FOLDERS_ACCOUNT_NAME); 
+	
 	camel_url_free (url);
 	g_free (maildir);
 	g_free (url_string);
