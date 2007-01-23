@@ -9,7 +9,6 @@ TESTS_ENVIRONMENT       = top_builddir=$(top_builddir)  \
 			  CK_VERBOSITY=verbose
 
 TESTS                   =                           \
-			check_modest-presets        \
                         check_folder-xfer           \
 			check_text-utils            \
 			check_modest-conf           \
@@ -20,7 +19,6 @@ noinst_PROGRAMS=				    \
 			check_folder-xfer           \
 			check_modest-conf	    \
 			check_text-utils            \
-			check_modest-presets	    \
 			check_update_account        \
 			check_account-mgr
 
@@ -73,10 +71,6 @@ check_modest_conf_LDADD = $(objects)
 check_text_utils_SOURCES=\
 	check_text-utils.c
 check_text_utils_LDADD = $(objects)
-
-check_modest_presets_SOURCES=\
-	check_modest-presets.c
-check_modest_presets_LDADD = $(objects)
 
 check_account_mgr_SOURCES=\
 	check_account-mgr.c

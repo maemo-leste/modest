@@ -57,8 +57,6 @@ modest_SOURCES=\
 	modest-marshal.h \
 	modest-pair.c\
 	modest-pair.h\
-	modest-presets.c\
-	modest-presets.h\
 	modest-protocol-info.c\
 	modest-protocol-info.h\
 	modest-text-utils.c\
