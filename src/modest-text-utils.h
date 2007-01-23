@@ -200,6 +200,18 @@ const gchar* modest_text_utils_get_display_date (time_t date);
 
 
 /**
+ * modest_text_utils_get_display_size:
+ * @size: size in bytes
+ *
+ * get a string representation for a size in bytes.
+ * 
+ * Returns: the newly allocated display string for the
+ * size in bytes. must be freed.
+ */
+gchar * modest_text_utils_get_display_size (gint size);
+
+
+/**
  * modest_text_utils_validate_email_address:
  * @email_address: a string
  * 

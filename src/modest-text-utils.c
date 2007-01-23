@@ -870,3 +870,29 @@ modest_text_utils_validate_email_address (const gchar *email_address)
 
 	return (count >= 1) ? TRUE : FALSE;
 }
+
+
+
+
+gchar *
+modest_text_utils_get_display_size (gint size)
+{
+	const int KB=1024;
+	const int MB=1024 * KB;
+	const int GB=1024 * MB;
+	const int TB=1024 * GB;
+	const int PB=1024 * TB;
+
+	if (size < KB)
+		return g_strdup_printf (_("%0.2f Kb"), (double)size / KB);
+	else if (size < MB)
+		return g_strdup_printf (_("%d Kb"), size / KB);
+	else if (size < GB)
+		return g_strdup_printf (_("%d Mb"), size / MB);
+	else if (size < TB)
+		return g_strdup_printf (_("%d Gb"), size/ GB);
+	else if (size < PB)
+		return g_strdup_printf (_("%d Tb"), size/ TB);
+	else
+		return g_strdup_printf (_("Very big"));
+}

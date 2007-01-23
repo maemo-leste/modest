@@ -84,7 +84,7 @@ get_display_date (time_t date)
 	}	
 }
 
-		
+
 void
 _modest_header_view_msgtype_cell_data (GtkTreeViewColumn *column, GtkCellRenderer *renderer,
 		   GtkTreeModel *tree_model, GtkTreeIter *iter, gpointer user_data)
@@ -250,33 +250,22 @@ _modest_header_view_size_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer
 				     gpointer user_data)
 {
         TnyHeaderFlags flags;
-       guint size;
-       gchar *size_str;
-       const gchar* unit;
-
-       gtk_tree_model_get (tree_model, iter,
+	guint size;
+	gchar *size_str;
+	const gchar* unit;
+	
+	gtk_tree_model_get (tree_model, iter,
 			   TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN, &flags,
 			   TNY_GTK_HEADER_LIST_MODEL_MESSAGE_SIZE_COLUMN, &size,
-			   -1);
-       
-       if (size < 1024*1024) {
-               unit = _("Kb");
-               size /= 1024;
-       } else if (size < 1024*1024*1024) {
-               unit = _("Mb");
-               size /= (1024*1024);
-       } else {
-               unit = _("Gb");
-               size /= (1024*1024*1024);
-       }
-
-       size_str = g_strdup_printf ("%d %s", size, unit);
-
-       g_object_set (G_OBJECT(renderer),
-		     "weight", (flags & TNY_HEADER_FLAG_SEEN) ? 400: 800,
-		     "style",  (flags & TNY_HEADER_FLAG_DELETED) ?
-		     PANGO_STYLE_ITALIC : PANGO_STYLE_NORMAL,
-		     "text",    size_str,       
+			    -1);
+	
+	size_str = modest_text_utils_get_display_size (size);
+	
+	g_object_set (G_OBJECT(renderer),
+		      "weight", (flags & TNY_HEADER_FLAG_SEEN) ? 400: 800,
+		      "style",  (flags & TNY_HEADER_FLAG_DELETED) ?
+		      PANGO_STYLE_ITALIC : PANGO_STYLE_NORMAL,
+		      "text",    size_str,       
                       NULL);
        g_free (size_str);
 
