@@ -782,9 +782,9 @@ modest_text_utils_get_display_date (time_t date)
 	struct tm date_tm, now_tm; 
 	time_t now;
 
-	const gint buf_size = 64; 
-	static gchar date_buf[64]; /* buf_size is not ... */
-	static gchar now_buf[64];  /* ...const enough... */
+	const guint BUF_SIZE = 64; 
+	gchar date_buf[BUF_SIZE];  
+	gchar now_buf [BUF_SIZE];  
 	gchar* cached_val;
 	
 	if (G_UNLIKELY(!date_cache))
@@ -800,13 +800,13 @@ modest_text_utils_get_display_date (time_t date)
 	localtime_r(&date, &date_tm);
 
 	/* get today's date */
-	modest_text_utils_strftime (date_buf, buf_size, "%x", &date_tm);
-	modest_text_utils_strftime (now_buf,  buf_size, "%x",  &now_tm);
+	modest_text_utils_strftime (date_buf, BUF_SIZE, "%x", &date_tm);
+	modest_text_utils_strftime (now_buf,  BUF_SIZE, "%x",  &now_tm);
 	/* today */
 
 	/* if this is today, get the time instead of the date */
 	if (strcmp (date_buf, now_buf) == 0)
-		strftime (date_buf, buf_size, _("%X"), &date_tm); 
+		strftime (date_buf, BUF_SIZE, _("%X"), &date_tm); 
 
 	cached_val = g_strdup(date_buf);
 	g_hash_table_insert (date_cache, (gpointer)&date, (gpointer)cached_val);
@@ -875,13 +875,12 @@ modest_text_utils_validate_email_address (const gchar *email_address)
 
 
 gchar *
-modest_text_utils_get_display_size (gint size)
+modest_text_utils_get_display_size (guint size)
 {
-	const int KB=1024;
-	const int MB=1024 * KB;
-	const int GB=1024 * MB;
-	const int TB=1024 * GB;
-	const int PB=1024 * TB;
+	const guint KB=1024;
+	const guint MB=1024 * KB;
+	const guint GB=1024 * MB;
+	const guint TB=1024 * GB;
 
 	if (size < KB)
 		return g_strdup_printf (_("%0.2f Kb"), (double)size / KB);
@@ -891,8 +890,6 @@ modest_text_utils_get_display_size (gint size)
 		return g_strdup_printf (_("%d Mb"), size / MB);
 	else if (size < TB)
 		return g_strdup_printf (_("%d Gb"), size/ GB);
-	else if (size < PB)
-		return g_strdup_printf (_("%d Tb"), size/ TB);
 	else
 		return g_strdup_printf (_("Very big"));
 }
