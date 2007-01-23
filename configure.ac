@@ -75,8 +75,7 @@ AC_SUBST(MODEST_GSTUFF_LIBS)
 
 dnl dnl now, determine what to build
 AC_MSG_NOTICE([Determining what platform to build])
-PKG_CHECK_MODULES(MODEST_LIBTINYMAIL_MAEMO,libosso,[with_platform=maemo],true)
-
+PKG_CHECK_MODULES(LIBOSSO,libosso,[with_platform=maemo],true)
 
 AC_ARG_WITH(platform,
 [--with-platform=gtk		platform to build for [gtk]],
