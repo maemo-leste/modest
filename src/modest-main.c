@@ -40,6 +40,7 @@
 #include <tny-simple-list.h>
 
 #include <modest-defs.h>
+#include <modest-init.h>
 #include <modest-conf.h>
 #include <modest-account-mgr.h>
 #include <modest-ui.h>
@@ -102,6 +103,7 @@ main (int argc, char *argv[])
 	modest_debug_logging_init ();
 
 	g_thread_init (NULL);
+	gdk_threads_init (); /* hmmm... not really needed if we're not doing */
 	
 	context = g_option_context_new (NULL);
 	g_option_context_add_main_entries (context, options, NULL);
@@ -131,25 +133,26 @@ main (int argc, char *argv[])
 		retval = MODEST_ERR_RUN;
 		goto cleanup;
         }
-
 	
 	if (!getenv("DISPLAY"))
 		batch = TRUE; 
 	
 	if (!batch) {
-		gdk_threads_init ();
-		gtk_init (&argc, &argv);
-		modest_init_header_columns (factory_settings);
-		
+		if (!gtk_init_check(&argc, &argv)) {
+			g_printerr ("modest: failed to start graphical ui\n");
+			goto cleanup;
+		}
+		modest_init_header_columns (factory_settings);	
 		retval = start_ui (mailto, cc, bcc, subject, body, account_store);
+		
 	} else 
 		retval = send_mail (mailto, cc, bcc, subject, body);
 	
 cleanup:
 	if (fact)
 		g_object_unref (G_OBJECT(fact));
+
 	/* this will clean up account_store as well */
-	
 	return retval;
 }
 
@@ -160,7 +163,7 @@ start_ui (const gchar* mailto, const gchar *cc, const gchar *bcc,
 	  TnyAccountStore *account_store)
 {
 	ModestUI *modest_ui;
-	ModestWindow *win;
+	ModestWindow *win = NULL;
 	gint retval = 0;
 	
 	modest_ui = MODEST_UI(modest_ui_new (account_store));
@@ -177,7 +180,6 @@ start_ui (const gchar* mailto, const gchar *cc, const gchar *bcc,
 	}
 
 	if (mailto||cc||bcc||subject||body) {
-
 /* 		ok = modest_ui_new_edit_window (modest_ui, */
 /* 						mailto,  /\* to *\/ */
 /* 						cc,      /\* cc *\/ */
@@ -220,9 +222,7 @@ hildon_init ()
 		g_printerr ("modest: failed to acquire osso context\n");
 		return FALSE;
 	}
-	
 #endif /* MODEST_PLATFORM_ID==2 */
-
 	return TRUE;
 }
 
