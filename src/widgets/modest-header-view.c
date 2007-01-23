@@ -731,13 +731,9 @@ cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 		gtk_tree_model_get (tree_model, iter1,
 				    TNY_GTK_HEADER_LIST_MODEL_DATE_RECEIVED_TIME_T_COLUMN,
 				    &t1,-1);
-
-		g_warning ("%d", t1);
 		gtk_tree_model_get (tree_model, iter2,
 				    TNY_GTK_HEADER_LIST_MODEL_DATE_RECEIVED_TIME_T_COLUMN,
 				    &t2,-1);
-
-		g_warning ("%d", t2);
 		return t1 - t2;
 
 	case MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER_OUT:
