@@ -4,7 +4,6 @@
 #ifndef __MODEST_STORE_WIDGET_H__
 #define __MODEST_STORE_WIDGET_H__
 
-#include <gtk/gtk.h>
 #include <modest-widget-factory.h>
 
 G_BEGIN_DECLS
@@ -27,20 +26,20 @@ struct _ModestStoreWidget {
 
 struct _ModestStoreWidgetClass {
 	GtkVBoxClass parent_class;
-	/* insert signal callback declarations, eg. */
-	/* void (* my_event) (ModestStoreWidget* obj); */
+
+	void (* data_changed) (ModestStoreWidget* obj);
 };
 
 /* member functions */
 GType        modest_store_widget_get_type    (void) G_GNUC_CONST;
 
 GtkWidget*   modest_store_widget_new         (ModestWidgetFactory *factory,
-					      const gchar* proto);
+					      ModestProtocol proto);
 
-gboolean       modest_store_widget_get_remember_password (ModestStoreWidget *self);
-const gchar*   modest_store_widget_get_username          (ModestStoreWidget *self);
-const gchar*   modest_store_widget_get_servername        (ModestStoreWidget *self);
-const gchar*   modest_store_widget_get_proto             (ModestStoreWidget *self);
+gboolean        modest_store_widget_get_remember_password (ModestStoreWidget *self);
+const gchar*    modest_store_widget_get_username          (ModestStoreWidget *self);
+const gchar*    modest_store_widget_get_servername        (ModestStoreWidget *self);
+ModestProtocol  modest_store_widget_get_proto             (ModestStoreWidget *self);
 
 G_END_DECLS
 

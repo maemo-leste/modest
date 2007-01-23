@@ -37,15 +37,12 @@ static void modest_store_widget_init       (ModestStoreWidget *obj);
 static void modest_store_widget_finalize   (GObject *obj);
 /* list my signals  */
 enum {
-	/* MY_SIGNAL_1, */
-	/* MY_SIGNAL_2, */
+	DATA_CHANGED_SIGNAL,
 	LAST_SIGNAL
 };
 
 typedef struct _ModestStoreWidgetPrivate ModestStoreWidgetPrivate;
 struct _ModestStoreWidgetPrivate {
-	
-	gchar* proto;
 	
 	GtkWidget *servername;
 	GtkWidget *username;
@@ -53,7 +50,8 @@ struct _ModestStoreWidgetPrivate {
 	GtkWidget *auth;
 	GtkWidget *chooser;
 	GtkWidget *remember_pwd;
-	
+
+	ModestProtocol proto;
 	ModestWidgetFactory *factory;
 };
 #define MODEST_STORE_WIDGET_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -63,7 +61,7 @@ struct _ModestStoreWidgetPrivate {
 static GtkContainerClass *parent_class = NULL;
 
 /* uncomment the following if you have defined any signals */
-/* static guint signals[LAST_SIGNAL] = {0}; */
+static guint signals[LAST_SIGNAL] = {0};
 
 GType
 modest_store_widget_get_type (void)
@@ -101,11 +99,14 @@ modest_store_widget_class_init (ModestStoreWidgetClass *klass)
 	g_type_class_add_private (gobject_class, sizeof(ModestStoreWidgetPrivate));
 
 	/* signal definitions go here, e.g.: */
-/* 	signals[MY_SIGNAL_1] = */
-/* 		g_signal_new ("my_signal_1",....); */
-/* 	signals[MY_SIGNAL_2] = */
-/* 		g_signal_new ("my_signal_2",....); */
-/* 	etc. */
+	signals[DATA_CHANGED_SIGNAL] =
+		g_signal_new ("data_changed",
+			      G_TYPE_FROM_CLASS (klass),
+			      G_SIGNAL_RUN_FIRST,
+			      G_STRUCT_OFFSET(ModestStoreWidgetClass, data_changed),
+			      NULL, NULL,
+			      g_cclosure_marshal_VOID__VOID,
+			      G_TYPE_NONE, 0);
 }
 
 static void
@@ -114,8 +115,7 @@ modest_store_widget_init (ModestStoreWidget *obj)
  	ModestStoreWidgetPrivate *priv;
 	
 	priv = MODEST_STORE_WIDGET_GET_PRIVATE(obj); 
-
-	priv->proto = NULL;
+	priv->proto = MODEST_PROTOCOL_UNKNOWN;
 }
 
 
@@ -186,6 +186,11 @@ mbox_configuration (ModestStoreWidget *self)
 	return box;
 }
 
+static void
+on_entry_changed (GtkEntry *entry, gpointer user_data)
+{
+	g_signal_emit (MODEST_STORE_WIDGET (user_data), signals[DATA_CHANGED_SIGNAL], 0);
+}
 
 static GtkWidget*
 imap_pop_configuration (ModestStoreWidget *self)
@@ -220,13 +225,13 @@ imap_pop_configuration (ModestStoreWidget *self)
 	gtk_label_set_markup (GTK_LABEL(label),_("<b>Security</b>"));
 	gtk_box_pack_start (GTK_BOX(box), label, FALSE, FALSE, 0);
 
+	priv->security = modest_widget_factory_get_combo_box (priv->factory, 
+							      MODEST_COMBO_BOX_TYPE_SECURITY_PROTOS);
 	hbox = gtk_hbox_new (FALSE, 6);
 	label = gtk_label_new(NULL);
 	gtk_label_set_text (GTK_LABEL(label),_("Connection type:"));
 	gtk_box_pack_start (GTK_BOX(hbox), label, FALSE, FALSE, 0);
-	gtk_box_pack_start (GTK_BOX(hbox),  modest_widget_factory_get_combo_box
-			    (priv->factory, MODEST_COMBO_BOX_TYPE_SECURITY_PROTOS),
-			    FALSE, FALSE,0);
+	gtk_box_pack_start (GTK_BOX(hbox),  priv->security, FALSE, FALSE,0);
 	gtk_box_pack_start (GTK_BOX(box), hbox, FALSE, FALSE, 0);
 	
 	hbox = gtk_hbox_new (FALSE, 6);
@@ -245,6 +250,10 @@ imap_pop_configuration (ModestStoreWidget *self)
 	
 	gtk_box_pack_start (GTK_BOX(box), hbox, FALSE, FALSE, 0);
 
+	/* Handle entry modifications */
+	g_signal_connect (priv->username, "changed", G_CALLBACK (on_entry_changed), self);
+	g_signal_connect (priv->servername, "changed", G_CALLBACK (on_entry_changed), self);
+
 	return box;
 }
 
@@ -260,18 +269,13 @@ modest_store_widget_finalize (GObject *obj)
 		priv->factory = NULL;
 	}
 
-	if (priv->proto) {
-		g_free (priv->proto);
-		priv->proto = NULL;
-	}
-
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
 
 
 GtkWidget*
-modest_store_widget_new (ModestWidgetFactory *factory, const gchar *proto)
+modest_store_widget_new (ModestWidgetFactory *factory, ModestProtocol proto)
 {
 	GObject *obj;
 	GtkWidget *w;
@@ -288,16 +292,15 @@ modest_store_widget_new (ModestWidgetFactory *factory, const gchar *proto)
 	g_object_ref (factory);
 	priv->factory = factory;
 
-	priv->proto = g_strdup (proto);
+	priv->proto = proto;
 	
-	if (strcmp (proto, MODEST_PROTOCOL_STORE_POP) == 0 ||
-	    strcmp (proto, MODEST_PROTOCOL_STORE_IMAP) == 0) {
+	if (proto == MODEST_PROTOCOL_STORE_POP || proto == MODEST_PROTOCOL_STORE_IMAP)
 		w = imap_pop_configuration (self);
-	} else if (strcmp (proto, MODEST_PROTOCOL_STORE_MAILDIR) == 0) {
+	else if (proto == MODEST_PROTOCOL_STORE_MAILDIR) 
 		w = maildir_configuration (self);
-	}  else if (strcmp (proto, MODEST_PROTOCOL_STORE_MBOX) == 0) {
+	else if (proto == MODEST_PROTOCOL_STORE_MBOX)
 		w = mbox_configuration (self);
-	} else
+	else
 		w = gtk_label_new ("");
 	
 	gtk_widget_show_all (w);
@@ -305,7 +308,6 @@ modest_store_widget_new (ModestWidgetFactory *factory, const gchar *proto)
 
 	return GTK_WIDGET(self);
 }
-
 
 gboolean
 modest_store_widget_get_remember_password (ModestStoreWidget *self)
@@ -342,14 +344,13 @@ modest_store_widget_get_servername (ModestStoreWidget *self)
 }
 
 
-const gchar*
+ModestProtocol
 modest_store_widget_get_proto (ModestStoreWidget *self)
 {
 	ModestStoreWidgetPrivate *priv;
 
-	g_return_val_if_fail (self, FALSE);
+	g_return_val_if_fail (self, MODEST_PROTOCOL_UNKNOWN);
 	priv = MODEST_STORE_WIDGET_GET_PRIVATE(self);
 
 	return priv->proto;
 }
-
