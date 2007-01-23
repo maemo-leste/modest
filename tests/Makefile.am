@@ -43,7 +43,6 @@ objects=\
         ${top_srcdir}/src/modest-cache-mgr.o \
         ${top_srcdir}/src/modest-protocol-info.o \
         ${top_srcdir}/src/modest-formatter.o \
-        ${top_srcdir}/src/modest-presets.o \
         ${top_srcdir}/src/modest-pair.o \
         ${top_srcdir}/src/modest-marshal.o \
         ${top_srcdir}/src/modest-tny-account-store.o \
