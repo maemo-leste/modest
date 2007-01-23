@@ -79,30 +79,3 @@ modest_icon_factory_get_icon (const gchar *name)
 }
 
 
-
-GdkPixbuf*
-modest_icon_factory_get_icon_at_size (const gchar *name, guint width, guint height)
-{
-	/* FIXME, somehow, cache scaled icons as well... */
-	GError *err = NULL;
-	GdkPixbuf *pixbuf = NULL;
-	static GHashTable *icon_cache = NULL;
-	
-	g_return_val_if_fail (name, NULL);
-
-	if (G_UNLIKELY(!icon_cache))
-		icon_cache = get_icon_cache ();
-	
-	pixbuf = gdk_pixbuf_new_from_file_at_size (name, width, height, &err);
-	if (!pixbuf) {
-		g_printerr ("modest: error in icon factory while loading '%s'@(%dx%d): %s\n",
-			    name, width, height, err->message);
-		g_error_free (err);
-	}
-	
-	/* we insert it, so it will be freed... FIXME... */
-	if (pixbuf && icon_cache)
-		g_hash_table_insert (icon_cache, g_strdup_printf ("%s-%d-%d",name,width,height),
-				     (gpointer)pixbuf);
-	return pixbuf;
-}

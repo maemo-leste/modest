@@ -44,20 +44,4 @@
  */
 GdkPixbuf* modest_icon_factory_get_icon (const gchar *name);
 
-/**
- * modest_icon_factory_get_icon_at_size:
- * @name: the filename of a certain icon
- * @width: the desired width of the icon
- * @height: the desired height of the icon
- *
- * Returns: a GdkPixBuf for this icon, or NULL in case of error
- * You should NOT unref or modify the pixbuf in any way
- */
-GdkPixbuf* modest_icon_factory_get_icon_at_size (const gchar *name, guint width, guint height);
-
-/* FIXME */
-#define modest_icon_factory_get_small_icon(n) modest_icon_factory_get_icon_at_size(n,16,16)
-#define modest_icon_factory_get_big_icon(n)   modest_icon_factory_get_icon_at_size(n,24,24)
-
-
 #endif /*__MODEST_ICON_FACTORY_H__ */
