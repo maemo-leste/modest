@@ -65,8 +65,6 @@ struct _ModestHeaderViewPrivate {
 	TnyList              *headers;
 	GMutex		     *lock;
 	ModestHeaderViewStyle style;
-	gulong                sig1;
-	gboolean	      is_empty;
 };
 
 #define MODEST_HEADER_VIEW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -189,38 +187,6 @@ remove_all_columns (ModestHeaderView *obj)
 
 
 
-static gboolean
-set_empty (ModestHeaderView *self)
-{
-	GtkListStore *store;
-	GtkTreeIter iter;
-
-	gtk_tree_view_set_model (GTK_TREE_VIEW(self), NULL);
-	gtk_tree_view_set_headers_visible (GTK_TREE_VIEW(self),
-					   FALSE);
-	remove_all_columns (self);
-
-	return TRUE; /* FIXME */
-
-	
-	store = gtk_list_store_new(1,G_TYPE_STRING);		
-	gtk_list_store_append (store, &iter);
-	gtk_list_store_set (store, &iter, 0, _("No items in this folder"), -1);
-
-	gtk_tree_view_insert_column_with_attributes (GTK_TREE_VIEW(self),
-						     0, "", gtk_cell_renderer_text_new (),
-						     "text", 0,
-						     "weight", 800, /* bold */
-						     NULL);
-	gtk_tree_view_set_model (GTK_TREE_VIEW(self), GTK_TREE_MODEL(store));
-	g_object_unref (G_OBJECT(store));
-	MODEST_HEADER_VIEW_GET_PRIVATE(self)->is_empty = TRUE;
-	
-	return TRUE;
-}
-
-
-
 gboolean
 modest_header_view_set_columns (ModestHeaderView *self, const GList *columns)
 {
@@ -236,7 +202,7 @@ modest_header_view_set_columns (ModestHeaderView *self, const GList *columns)
 	/* FIXME: check whether these renderers need to be freed */
 	renderer_msgtype = gtk_cell_renderer_pixbuf_new ();
 	renderer_attach  = gtk_cell_renderer_pixbuf_new ();
-	renderer_header  = gtk_cell_renderer_text_new (); 
+	renderer_header  = gtk_cell_renderer_text_new ();
 	
 	remove_all_columns (self);
 
@@ -365,11 +331,11 @@ static void
 modest_header_view_init (ModestHeaderView *obj)
 {
 	ModestHeaderViewPrivate *priv;
+
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(obj); 
 
 	priv->lock = g_mutex_new ();
-	priv->sig1 = 0;
-	priv->is_empty = TRUE;
+
 }
 
 static void
@@ -386,12 +352,7 @@ modest_header_view_finalize (GObject *obj)
 		g_object_unref (G_OBJECT(priv->headers));
 
 	sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(self));
-
-	if (sel && priv->sig1 != 0) {
-		g_signal_handler_disconnect (G_OBJECT(sel), priv->sig1);
-		priv->sig1 = 0;
-	}
-		
+	
 	if (priv->lock) {
 		g_mutex_free (priv->lock);
 		priv->lock = NULL;
@@ -434,8 +395,8 @@ modest_header_view_new (TnyFolder *folder, ModestHeaderViewStyle style)
 				      TRUE); /* alternating row colors */
 	sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(self));
 	
-	priv->sig1 = g_signal_connect (sel, "changed",
-				       G_CALLBACK(on_selection_changed), self);
+	g_signal_connect (sel, "changed",
+			  G_CALLBACK(on_selection_changed), self);
 		
 	return GTK_WIDGET(self);
 }
@@ -509,7 +470,7 @@ gboolean
 modest_header_view_is_empty (ModestHeaderView *self)
 {
 	g_return_val_if_fail (self, FALSE);
-	return MODEST_HEADER_VIEW_GET_PRIVATE(self)->is_empty;
+	return FALSE; /* FIXME */
 }
 
 
@@ -572,12 +533,9 @@ on_refresh_folder (TnyFolder *folder, gboolean cancelled, GError **err,
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
 
 	priv->folder = folder;
-	if (!folder || tny_folder_get_all_count(folder) == 0) {
-		set_empty (self);	
-	} else { /* it's a new one or a refresh */
+		
+	if (folder) { /* it's a new one or a refresh */
 		GList *cols, *cursor;
-
-		priv->is_empty = FALSE;
 		
 		if (priv->headers)
 			g_object_unref (priv->headers);
@@ -624,6 +582,11 @@ on_refresh_folder_status_update (TnyFolder *folder, const gchar *msg,
 	self = MODEST_HEADER_VIEW(user_data);
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
 
+	/* FIXME: this is a hack ==> tinymail gives us this when
+	 * it has nothing better to do */
+	if (num == 1 && total == 100)
+		return;
+	
 	g_signal_emit (G_OBJECT(self), signals[STATUS_UPDATE_SIGNAL],
 		       0, msg, num, total);
 }
@@ -646,7 +609,7 @@ modest_header_view_set_folder (ModestHeaderView *self, TnyFolder *folder)
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
 
 	priv->folder = folder;
-	
+
 	if (folder)
 		tny_folder_refresh_async (folder,
 					  on_refresh_folder,
