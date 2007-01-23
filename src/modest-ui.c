@@ -968,37 +968,28 @@ _modest_ui_actions_on_password_requested (ModestTnyAccountStore *account_store,
 		gtk_main_iteration ();
 }
 
-/****************************************************/
-/*
- * below some stuff to clearup statusbar messages after 1,5 seconds....
- */
-typedef struct {
-	GtkWidget *status_bar;
-	GtkWidget *progress_bar;
-	guint     msg_id;
-} StatusRemoveData;
 
 static gboolean
-on_statusbar_remove_msg (StatusRemoveData *data)
+progress_bar_clean (GtkWidget *bar)
 {
-	/* we need to test types, as this callback maybe called after the
-	 * widgets have been destroyed
-	 */
-	if (GTK_IS_STATUSBAR(data->status_bar)) 
-		gtk_statusbar_remove (GTK_STATUSBAR(data->status_bar),
-				      0, data->msg_id);
-	if (GTK_IS_PROGRESS_BAR(data->progress_bar))
-		gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR(data->progress_bar),
-					       1.0);
-	g_free (data);
+	if (GTK_IS_PROGRESS_BAR(bar)) {
+		gtk_progress_bar_set_text     (GTK_PROGRESS_BAR(bar), "");
+		gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR(bar), 1.0);
+	}
 	return FALSE;
 }
+static gboolean
+statusbar_clean (GtkWidget *bar)
+{
+	if (GTK_IS_STATUSBAR(bar))
+		gtk_statusbar_push (GTK_STATUSBAR(bar), 0, "");
+	return FALSE;
+}
+
 
 static void
 statusbar_push (ModestWidgetFactory *factory, guint context_id, const gchar *msg)
 {
-	guint id;
-	StatusRemoveData *data;
 	GtkWidget *status_bar, *progress_bar;
 	
 	if (!msg)
@@ -1006,15 +997,14 @@ statusbar_push (ModestWidgetFactory *factory, guint context_id, const gchar *msg
 
 	progress_bar = modest_widget_factory_get_progress_bar (factory);
 	status_bar   = modest_widget_factory_get_status_bar (factory);
-	
-	id = gtk_statusbar_push (GTK_STATUSBAR(status_bar), 0, msg);
 
-	data = g_new (StatusRemoveData, 1);
-	data->status_bar   = status_bar;
-	data->progress_bar = progress_bar;
-	data->msg_id     = id;
+	gtk_widget_show (GTK_WIDGET(status_bar));
+	gtk_widget_show (GTK_WIDGET(progress_bar));
 
-	g_timeout_add (1500, (GSourceFunc)on_statusbar_remove_msg, data);
+	gtk_statusbar_push (GTK_STATUSBAR(status_bar), 0, msg);
+
+	g_timeout_add (2000, (GSourceFunc)statusbar_clean, status_bar);
+	g_timeout_add (1000, (GSourceFunc)progress_bar_clean, progress_bar);
 }
 /****************************************************************************/
 
@@ -1143,7 +1133,8 @@ _modest_ui_actions_on_header_status_update (ModestHeaderView *header_view,
 {
 	GtkWidget *progress_bar;
 	ModestWidgetFactory *widget_factory;
-
+	char* txt;
+	
 	widget_factory = modest_window_get_widget_factory (MODEST_WINDOW (main_window));
 	progress_bar = modest_widget_factory_get_progress_bar (widget_factory);
 
@@ -1153,8 +1144,12 @@ _modest_ui_actions_on_header_status_update (ModestHeaderView *header_view,
 	else
 		gtk_progress_bar_pulse (GTK_PROGRESS_BAR(progress_bar));
 
+	txt = g_strdup_printf (_("Downloading %d of %d"), num, total);
+	gtk_progress_bar_set_text (GTK_PROGRESS_BAR(progress_bar), txt);
+	g_free (txt);
+	
 	statusbar_push (widget_factory, 0, msg);
-
+	
 	/* Free */
 	g_object_unref (G_OBJECT (widget_factory));
 }
