@@ -1,12 +1,12 @@
 Source: modest
 Section: user/unknown
 Priority: optional
-Maintainer: unknown <arne@unknown>
-Build-Depends: debhelper (>= 4.0.0)
+Maintainer: Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com> 
+Build-Depends: debhelper (>= 4.0.0), cdbs, dpkg-dev (>= 1.13.18)
 Standards-Version: 3.6.0
 
 Package: modest
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: an email client with modest resource-needs
- TODO: description
+Description: an e-mail client for platforms with modest resources,
+ built on top of the tinymail framework
