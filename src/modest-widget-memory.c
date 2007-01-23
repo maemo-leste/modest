@@ -231,7 +231,7 @@ save_settings_header_view (ModestConf *conf, ModestHeaderView *header_view,
 	ModestHeaderViewStyle style;
 
 	folder = modest_header_view_get_folder (header_view);
-	if (!folder || modest_header_view_is_empty (header_view))
+	if (!folder || modest_header_view_is_empty (header_view)) 
 		return TRUE; /* no non-empty folder: no settings */ 
 	
 	type  = modest_tny_folder_guess_folder_type (folder);
@@ -257,7 +257,6 @@ save_settings_header_view (ModestConf *conf, ModestHeaderView *header_view,
 		width = gtk_tree_view_column_get_width (col);
 		
 		g_string_append_printf (str, "%d:%d ", col_id, width);  
-		
 		cursor = g_list_next (cursor);
 	}
 
@@ -281,8 +280,8 @@ restore_settings_header_view (ModestConf *conf, ModestHeaderView *header_view,
 	ModestHeaderViewStyle style;
 
 	folder = modest_header_view_get_folder (header_view);
-	if (!folder) 
-		return TRUE; /* no folder: no settings */ 
+	if (!folder || modest_header_view_is_empty (header_view)) 
+		return TRUE; /* no non-empty folder: no settings */ 
 	
 	type = modest_tny_folder_guess_folder_type (folder);
 	style = modest_header_view_get_style   (header_view);
