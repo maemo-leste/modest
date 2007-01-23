@@ -17,4 +17,17 @@ which gnome-autogen.sh || {
     echo "You need to install gnome-common from GNOME CVS"
     exit 1
 }
-USE_GNOME2_MACROS=1 . gnome-autogen.sh
+export USE_GNOME2_MACROS=1
+
+gnome-autogen.sh || {
+    	echo "gnome autoconf does not work, trying the other way..."
+
+	glib-gettextize --copy --force
+	libtoolize --automake --copy --force
+	intltoolize --automake --copy --force
+	aclocal-1.8
+	autoconf --force
+	autoheader --force
+	automake-1.8 --add-missing --copy --force-missing --foreign
+	./configure $@
+}	
