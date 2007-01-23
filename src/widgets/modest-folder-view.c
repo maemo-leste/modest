@@ -41,6 +41,7 @@
 #include <modest-icon-names.h>
 #include <modest-icon-factory.h>
 #include <modest-tny-account-store.h>
+#include <modest-text-utils.h>
 
 #include "modest-folder-view.h"
 
@@ -61,6 +62,10 @@ static gboolean     modest_folder_view_update_model     (ModestFolderView *self,
 							 TnyAccountStore *account_store);
 
 static void         modest_folder_view_disconnect_store_account_handlers (GtkTreeView *self);
+
+static gint         cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
+			      gpointer user_data);
+
 
 enum {
 	FOLDER_SELECTION_CHANGED_SIGNAL,
@@ -194,32 +199,32 @@ icon_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 		pixbuf = modest_icon_factory_get_icon (MODEST_FOLDER_ICON_ACCOUNT);
                 break;
 	case TNY_FOLDER_TYPE_INBOX:
-                pixbuf = modest_icon_factory_get_small_icon (MODEST_FOLDER_ICON_INBOX);
+                pixbuf = modest_icon_factory_get_icon (MODEST_FOLDER_ICON_INBOX);
                 break;
         case TNY_FOLDER_TYPE_OUTBOX:
-                pixbuf = modest_icon_factory_get_small_icon (MODEST_FOLDER_ICON_OUTBOX);
+                pixbuf = modest_icon_factory_get_icon (MODEST_FOLDER_ICON_OUTBOX);
                 break;
         case TNY_FOLDER_TYPE_JUNK:
-                pixbuf = modest_icon_factory_get_small_icon (MODEST_FOLDER_ICON_JUNK);
+                pixbuf = modest_icon_factory_get_icon (MODEST_FOLDER_ICON_JUNK);
                 break;
         case TNY_FOLDER_TYPE_SENT:
-                pixbuf = modest_icon_factory_get_small_icon (MODEST_FOLDER_ICON_SENT);
+                pixbuf = modest_icon_factory_get_icon (MODEST_FOLDER_ICON_SENT);
                 break;
 	case TNY_FOLDER_TYPE_DRAFTS:
-		pixbuf = modest_icon_factory_get_small_icon (MODEST_FOLDER_ICON_DRAFTS);
+		pixbuf = modest_icon_factory_get_icon (MODEST_FOLDER_ICON_DRAFTS);
                 break;
 	case TNY_FOLDER_TYPE_NOTES:
-		pixbuf = modest_icon_factory_get_small_icon (MODEST_FOLDER_ICON_NOTES);
+		pixbuf = modest_icon_factory_get_icon (MODEST_FOLDER_ICON_NOTES);
                 break;
 	case TNY_FOLDER_TYPE_CALENDAR:
-		pixbuf = modest_icon_factory_get_small_icon (MODEST_FOLDER_ICON_CALENDAR);
+		pixbuf = modest_icon_factory_get_icon (MODEST_FOLDER_ICON_CALENDAR);
                 break;
 	case TNY_FOLDER_TYPE_CONTACTS:
-                pixbuf = modest_icon_factory_get_small_icon (MODEST_FOLDER_ICON_CONTACTS);
+                pixbuf = modest_icon_factory_get_icon (MODEST_FOLDER_ICON_CONTACTS);
                 break;
 	case TNY_FOLDER_TYPE_NORMAL:
         default:
-                pixbuf = modest_icon_factory_get_small_icon (MODEST_FOLDER_ICON_NORMAL);
+                pixbuf = modest_icon_factory_get_icon (MODEST_FOLDER_ICON_NORMAL);
                 break;
         }
 
@@ -397,7 +402,6 @@ modest_folder_view_new (ModestTnyAccountStore *account_store,
 	sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(self));
 	priv->sig2 = g_signal_connect (sel, "changed",
 				       G_CALLBACK(on_selection_changed), self);
-
 	return GTK_WIDGET(self);
 }
 
@@ -492,16 +496,19 @@ update_model (ModestFolderView *self, ModestTnyAccountStore *account_store)
 					account_list,
 					TNY_ACCOUNT_STORE_STORE_ACCOUNTS);
 
+	
 	if (account_list) {
 		sortable = gtk_tree_model_sort_new_with_model (model);
-		gtk_tree_sortable_set_sort_column_id (GTK_TREE_SORTABLE (sortable),
+		gtk_tree_sortable_set_sort_column_id (GTK_TREE_SORTABLE(sortable),
 						      TNY_GTK_FOLDER_STORE_TREE_MODEL_NAME_COLUMN, 
 						      GTK_SORT_ASCENDING);
+		gtk_tree_sortable_set_sort_func (GTK_TREE_SORTABLE (sortable),
+						 TNY_GTK_FOLDER_STORE_TREE_MODEL_NAME_COLUMN, 
+						 cmp_rows, NULL, NULL);
 		gtk_tree_view_set_model (GTK_TREE_VIEW(self), sortable);
-
 		update_store_account_handlers (self, account_list);
 	}
-
+	
 	g_object_unref (model);
 	return TRUE;
 }
@@ -548,7 +555,6 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 		       priv->cur_folder, FALSE);
 	g_signal_emit (G_OBJECT(tree_view), signals[FOLDER_SELECTION_CHANGED_SIGNAL], 0,
 		       folder, TRUE);
-	
 	if (priv->cur_folder)
 		tny_folder_expunge (priv->cur_folder, NULL); /* FIXME */
 	priv->cur_folder = folder;
@@ -578,7 +584,6 @@ modest_folder_view_update_model (ModestFolderView *self, TnyAccountStore *accoun
 	g_signal_emit (G_OBJECT(self), signals[FOLDER_SELECTION_CHANGED_SIGNAL],
 		       0, NULL, TRUE);
 	
-
 	return update_model (self, MODEST_TNY_ACCOUNT_STORE(account_store)); /* ugly */
 }
 
@@ -594,4 +599,57 @@ modest_folder_view_get_selected (ModestFolderView *self)
 		g_object_ref (priv->cur_folder);
 
 	return priv->cur_folder;
+}
+
+
+
+static const gchar*
+get_account_name (TnyFolder *folder)
+{
+	TnyAccount *account;
+
+	account = tny_folder_get_account (folder);
+	if (!account)
+		return NULL;
+	else
+		return tny_account_get_name (account);
+	
+}
+	
+static gint
+cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
+	  gpointer user_data)
+{
+	gint cmp;
+	gchar         *name1, *name2;
+	TnyFolderType type;
+	TnyFolder     *folder1, *folder2;
+	
+	gtk_tree_model_get (tree_model, iter1,
+			    TNY_GTK_FOLDER_STORE_TREE_MODEL_NAME_COLUMN, &name1,
+			    TNY_GTK_FOLDER_STORE_TREE_MODEL_TYPE_COLUMN, &type,
+			    TNY_GTK_FOLDER_STORE_TREE_MODEL_INSTANCE_COLUMN, &folder1,
+			    -1);
+	gtk_tree_model_get (tree_model, iter2,
+			    TNY_GTK_FOLDER_STORE_TREE_MODEL_NAME_COLUMN, &name2,
+			    TNY_GTK_FOLDER_STORE_TREE_MODEL_INSTANCE_COLUMN, &folder2,
+			    -1);
+
+	/* local_folders should be the last one */
+	if (type == TNY_FOLDER_TYPE_ROOT) {
+		/* the account name is also the name of the root folder
+		 * in case of local folders */
+		if (strcmp (name1, MODEST_LOCAL_FOLDERS_ACCOUNT_NAME) == 0)
+			cmp = +1;
+		else if (strcmp (name2, MODEST_LOCAL_FOLDERS_ACCOUNT_NAME) == 0)
+			cmp = -1;
+		else 
+			cmp = modest_text_utils_utf8_strcmp (name1, name2, TRUE);
+	} else {
+		cmp = modest_text_utils_utf8_strcmp (name1, name2, TRUE);
+	}
+	g_free (name1);
+	g_free (name2);
+
+	return cmp;	
 }
