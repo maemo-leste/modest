@@ -1,6 +1,6 @@
 # List of source files which contain translatable strings.
 src/modest-mail-operation.c
-src/modest-protocol-mgr.c
+src/modest-protocol-info.c
 src/modest-text-utils.c
 src/modest-widget-factory.c
 src/gtk/modest-account-view-window.c
@@ -12,4 +12,3 @@ src/widgets/modest-account-view.c
 src/widgets/modest-folder-view.c
 src/widgets/modest-header-view.c
 src/widgets/modest-msg-view.c
-src/widgets/modest-toolbar.c
