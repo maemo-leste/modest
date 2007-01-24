@@ -76,6 +76,11 @@ modest_account_mgr_get_server_account_data (ModestAccountMgr *self, const gchar*
 	data->password     = modest_account_mgr_get_string (self, name,
 							    MODEST_ACCOUNT_PASSWORD,
 							    TRUE, NULL);
+
+	data->options = modest_account_mgr_get_list (self, name,
+						     MODEST_ACCOUNT_OPTIONS,
+						     MODEST_CONF_VALUE_STRING,
+						     TRUE, NULL);
 	return data;
 }
 
@@ -101,6 +106,15 @@ modest_account_mgr_free_server_account_data (ModestAccountMgr *self,
 	g_free (data->password);
 	data->password = NULL;
 	
+	if (data->options) {
+		GSList *tmp = data->options;
+		while (tmp) {
+			g_free (tmp->data);
+			tmp = g_slist_next (tmp);
+		}
+		g_slist_free (data->options);
+	}
+
 	g_free (data);
 }
 

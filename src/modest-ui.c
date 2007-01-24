@@ -96,13 +96,6 @@ static void     reply_forward          (GtkWidget *widget,
 static gchar*   ask_for_folder_name    (GtkWindow *parent_window,
 					const gchar *title);
 
-static void    _modest_ui_actions_on_password_requested   (ModestTnyAccountStore *account_store, 
-							 const gchar* account_name,
-							 gchar **password, 
-							 gboolean *cancel, 
-							 gboolean *remember, 
-							 ModestMainWindow *main_window);
-
 GType
 modest_ui_get_type (void)
 {
@@ -287,7 +280,7 @@ register_stock_icons ()
 			{ MODEST_STOCK_DELETE, "delete", 0, 0, NULL },
 			{ MODEST_STOCK_NEXT, "next", 0, 0, NULL },
 			{ MODEST_STOCK_PREV, "prev", 0, 0, NULL },
-			{ MODEST_STOCK_STOP, "stop", 0, 0, NULL }
+/* 			{ MODEST_STOCK_STOP, "stop", 0, 0, NULL } */
 		};
       
 		static gchar *items_names [] = {
@@ -300,7 +293,7 @@ register_stock_icons ()
 			MODEST_TOOLBAR_ICON_DELETE,
 			MODEST_TOOLBAR_ICON_NEXT,
 			MODEST_TOOLBAR_ICON_PREV,
-			MODEST_TOOLBAR_ICON_STOP
+/* 			MODEST_TOOLBAR_ICON_STOP */
 		};
 
 		registered = TRUE;
@@ -389,12 +382,6 @@ connect_signals (ModestUI *self)
 			  G_CALLBACK(_modest_ui_actions_on_online_toggle_toggled),
 			  priv->main_window);
 		
-	/* account store */
-	g_signal_connect (G_OBJECT (priv->account_store), 
-			  "password_requested",
-			  G_CALLBACK(_modest_ui_actions_on_password_requested),
-			  priv->main_window);
-
 	/* Destroy window */
 	g_signal_connect (G_OBJECT(priv->main_window), 
 			  "destroy",
@@ -787,8 +774,8 @@ get_msg_cb (TnyFolder *folder, TnyMsg *msg, GError **err, gpointer user_data)
 		widget_factory = modest_window_get_widget_factory (MODEST_WINDOW (helper->main_window));
 		header_view = modest_widget_factory_get_header_view (widget_factory);
 		g_object_unref (G_OBJECT (widget_factory));
-		_modest_ui_actions_on_item_not_found (header_view, 
-						      MODEST_ITEM_TYPE_MESSAGE, 
+		_modest_ui_actions_on_item_not_found (header_view,
+						      MODEST_ITEM_TYPE_MESSAGE,
 						      helper->main_window);
 		return;
 	}
@@ -911,62 +898,6 @@ _modest_ui_actions_on_folder_selection_changed (ModestFolderView *folder_view,
 	}
 }
 
-void
-_modest_ui_actions_on_password_requested (ModestTnyAccountStore *account_store, 
-					 const gchar* account_name,
-					 gchar **password, 
-					 gboolean *cancel, 
-					 gboolean *remember, 
-					 ModestMainWindow *main_window)
-{
-	gchar *txt;
-	GtkWidget *dialog, *entry, *remember_pass_check;
-
-	dialog = gtk_dialog_new_with_buttons (_("Password requested"),
-					      GTK_WINDOW (main_window),
-					      GTK_DIALOG_MODAL,
-					      GTK_STOCK_CANCEL,
-					      GTK_RESPONSE_REJECT,
-					      GTK_STOCK_OK,
-					      GTK_RESPONSE_ACCEPT,
-					      NULL);
-
-	txt = g_strdup_printf (_("Please enter your password for %s"), account_name);
-	gtk_box_pack_start (GTK_BOX(GTK_DIALOG(dialog)->vbox), gtk_label_new(txt),
-			    FALSE, FALSE, 0);
-	g_free (txt);
-
-	entry = gtk_entry_new_with_max_length (40);
-	gtk_entry_set_visibility (GTK_ENTRY(entry), FALSE);
-	gtk_entry_set_invisible_char (GTK_ENTRY(entry), 0x2022); /* bullet unichar */
-	
-	gtk_box_pack_start (GTK_BOX(GTK_DIALOG(dialog)->vbox), entry,
-			    TRUE, FALSE, 0);	
-
-	remember_pass_check = gtk_check_button_new_with_label (_("Remember password"));
-	gtk_box_pack_start (GTK_BOX(GTK_DIALOG(dialog)->vbox), remember_pass_check,
-			    TRUE, FALSE, 0);
-
-	gtk_widget_show_all (GTK_WIDGET(GTK_DIALOG(dialog)->vbox));
-	
-	if (gtk_dialog_run (GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
-		*password = g_strdup (gtk_entry_get_text (GTK_ENTRY(entry)));
-		*cancel   = FALSE;
-	} else {
-		*password = NULL;
-		*cancel   = TRUE;
-	}
-
-	if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (remember_pass_check)))
-		*remember = TRUE;
-	else
-		*remember = FALSE;
-
-	gtk_widget_destroy (dialog);
-
-	while (gtk_events_pending ())
-		gtk_main_iteration ();
-}
 
 
 static gboolean
@@ -1082,8 +1013,9 @@ _modest_ui_actions_on_item_not_found (ModestHeaderView *header_view,
 	factory = modest_tny_platform_factory_get_instance ();
 	account_store = tny_platform_factory_new_account_store (factory);
 	device = tny_account_store_get_device (account_store);
-	
-	gdk_threads_enter ();
+
+	if (g_main_depth > 0)	
+		gdk_threads_enter ();
 	online = tny_device_is_online (device);
 
 	if (online) {
@@ -1119,7 +1051,8 @@ _modest_ui_actions_on_item_not_found (ModestHeaderView *header_view,
 		}
 	}
 	gtk_widget_destroy (dialog);
-	gdk_threads_leave ();
+	if (g_main_depth > 0)	
+		gdk_threads_leave ();
 }
 
 

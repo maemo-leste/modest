@@ -447,7 +447,6 @@ modest_account_mgr_account_names (ModestAccountMgr * self, GError ** err)
 }
 
 
-
 gchar *
 modest_account_mgr_get_string (ModestAccountMgr *self, const gchar *name,
 			       const gchar *key, gboolean server_account, GError **err) {

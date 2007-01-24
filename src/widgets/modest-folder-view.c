@@ -77,7 +77,6 @@ struct _ModestFolderViewPrivate {
 
 	TnyAccountStore     *account_store;
 	TnyFolder           *cur_folder;
-	gboolean             view_is_empty;
 
 	gulong               sig1, sig2;
 	gulong              *store_accounts_handlers;
@@ -155,11 +154,18 @@ text_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 	gint unread;
 	TnyFolderType type;
 	
+	g_return_if_fail (column);
+	g_return_if_fail (tree_model);
+
 	gtk_tree_model_get (tree_model, iter,
 			    TNY_GTK_FOLDER_STORE_TREE_MODEL_NAME_COLUMN, &fname,
+			    TNY_GTK_FOLDER_STORE_TREE_MODEL_UNREAD_COLUMN, &unread,
 			    TNY_GTK_FOLDER_STORE_TREE_MODEL_TYPE_COLUMN, &type,
-			    TNY_GTK_FOLDER_STORE_TREE_MODEL_UNREAD_COLUMN, &unread, -1);
+			    -1);
 	rendobj = G_OBJECT(renderer);
+
+	if (!fname)
+		return;
 
 	if (unread > 0) {
 		gchar *folder_title = g_strdup_printf ("%s (%d)", fname, unread);
@@ -247,7 +253,6 @@ modest_folder_view_init (ModestFolderView *obj)
 	
 	priv =	MODEST_FOLDER_VIEW_GET_PRIVATE(obj);
 	
-	priv->view_is_empty  = TRUE;
 	priv->account_store  = NULL;
 	priv->cur_folder     = NULL;
 	priv->query          = NULL;
@@ -349,8 +354,6 @@ static void
 on_account_update (TnyAccountStore *account_store, const gchar *account,
 		   gpointer user_data)
 {
-	update_model_empty (MODEST_FOLDER_VIEW(user_data));
-	
 	if (!update_model (MODEST_FOLDER_VIEW(user_data), 
 			   MODEST_TNY_ACCOUNT_STORE(account_store)))
 		g_printerr ("modest: failed to update model for changes in '%s'",
@@ -409,8 +412,6 @@ modest_folder_view_new (ModestTnyAccountStore *account_store,
 static gboolean
 update_model_empty (ModestFolderView *self)
 {
-	GtkTreeIter  iter;
-	GtkTreeStore *store;
 	ModestFolderViewPrivate *priv;
 	
 	g_return_val_if_fail (self, FALSE);
@@ -422,17 +423,6 @@ update_model_empty (ModestFolderView *self)
 		g_free (priv->store_accounts_handlers);
 		priv->store_accounts_handlers = NULL;
 	}
-
-	/* Create the new model */
-	store = gtk_tree_store_new (1, G_TYPE_STRING);
-	gtk_tree_store_append (store, &iter, NULL);
-
-	gtk_tree_store_set (store, &iter, 0, _("(empty)"), -1);
-	
-	gtk_tree_view_set_model (GTK_TREE_VIEW(self),
-				 GTK_TREE_MODEL(store));
-	g_object_unref (store);
-	priv->view_is_empty = TRUE;
 
 	g_signal_emit (G_OBJECT(self), signals[FOLDER_SELECTION_CHANGED_SIGNAL], 0,
 		       NULL, TRUE);
@@ -459,7 +449,6 @@ update_store_account_handlers (ModestFolderView *self, TnyList *account_list)
 	if (!tny_iterator_is_done (iter)) {
 		gint i = 0;
 
-		priv->view_is_empty = FALSE;
 		do  {
 			
 			priv->store_accounts_handlers [i++] =
@@ -489,7 +478,7 @@ update_model (ModestFolderView *self, ModestTnyAccountStore *account_store)
 
 	priv =	MODEST_FOLDER_VIEW_GET_PRIVATE(self);
 	
-	model        = tny_gtk_folder_store_tree_model_new (TRUE, NULL);
+	model        = tny_gtk_folder_store_tree_model_new (FALSE, NULL);
 	account_list = TNY_LIST(model);
 
 	tny_account_store_get_accounts (TNY_ACCOUNT_STORE(account_store),
@@ -530,10 +519,6 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 	priv = MODEST_FOLDER_VIEW_GET_PRIVATE(user_data);
 	priv->cur_selection = sel;
 	
-	/* is_empty means that there is only the 'empty' item */
-	if (priv->view_is_empty)
-		return;
-
 	/* folder was _un_selected if true */
 	if (!gtk_tree_selection_get_selected (sel, &model, &iter)) {
 		priv->cur_folder = NULL; /* FIXME: need this? */

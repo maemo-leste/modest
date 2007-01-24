@@ -41,6 +41,7 @@ typedef struct {
 	gchar *username;
 	ModestProtocol proto;
 	gchar *password;
+	GSList *options;
 } ModestServerAccountData;
 
 typedef struct {

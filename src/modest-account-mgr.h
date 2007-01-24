@@ -64,7 +64,6 @@ struct _ModestAccountMgrClass {
 				    gpointer user_data);
 };
 
-
 /**
  * modest_account_mgr_get_type:
  * 

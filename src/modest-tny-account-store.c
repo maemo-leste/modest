@@ -63,7 +63,6 @@ static void    modest_tny_account_store_init                     (gpointer g, gp
 
 /* list my signals */
 enum {
-	PASSWORD_REQUESTED_SIGNAL,
 	ACCOUNT_UPDATE_SIGNAL,
 	LAST_SIGNAL
 };
@@ -82,6 +81,13 @@ struct _ModestTnyAccountStorePrivate {
 #define MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                       MODEST_TYPE_TNY_ACCOUNT_STORE, \
                                                       ModestTnyAccountStorePrivate))
+
+static void    on_password_requested        (ModestTnyAccountStore *account_store, 
+					     const gchar* account_name,
+					     gchar **password, 
+					     gboolean *cancel, 
+					     gboolean *remember);
+
 /* globals */
 static GObjectClass *parent_class = NULL;
 
@@ -133,15 +139,6 @@ modest_tny_account_store_class_init (ModestTnyAccountStoreClass *klass)
 	g_type_class_add_private (gobject_class,
 				  sizeof(ModestTnyAccountStorePrivate));
 
- 	signals[PASSWORD_REQUESTED_SIGNAL] =
- 		g_signal_new ("password_requested",
-			      G_TYPE_FROM_CLASS (gobject_class),
-			      G_SIGNAL_RUN_FIRST,
-			      G_STRUCT_OFFSET(ModestTnyAccountStoreClass, password_requested),
-			      NULL, NULL,
-			      modest_marshal_VOID__STRING_POINTER_POINTER_POINTER,
-			      G_TYPE_NONE, 4, G_TYPE_STRING, G_TYPE_POINTER, G_TYPE_POINTER, G_TYPE_POINTER);
-	
 	signals[ACCOUNT_UPDATE_SIGNAL] =
  		g_signal_new ("account_update",
 			      G_TYPE_FROM_CLASS (gobject_class),
@@ -207,6 +204,62 @@ set_account_store_for_account (TnyAccount *account, ModestTnyAccountStore *store
 	g_object_set_data (G_OBJECT(account), "account_store", (gpointer)store);
 }
 
+static void
+on_password_requested (ModestTnyAccountStore *account_store, 
+		       const gchar* account_name,
+		       gchar **password, 
+		       gboolean *cancel, 
+		       gboolean *remember)
+{
+	gchar *txt;
+	GtkWidget *dialog, *entry, *remember_pass_check;
+
+	dialog = gtk_dialog_new_with_buttons (_("Password requested"),
+					      NULL,
+					      GTK_DIALOG_MODAL,
+					      GTK_STOCK_CANCEL,
+					      GTK_RESPONSE_REJECT,
+					      GTK_STOCK_OK,
+					      GTK_RESPONSE_ACCEPT,
+					      NULL);
+
+	txt = g_strdup_printf (_("Please enter your password for %s"), account_name);
+	gtk_box_pack_start (GTK_BOX(GTK_DIALOG(dialog)->vbox), gtk_label_new(txt),
+			    FALSE, FALSE, 0);
+	g_free (txt);
+
+	entry = gtk_entry_new_with_max_length (40);
+	gtk_entry_set_visibility (GTK_ENTRY(entry), FALSE);
+	gtk_entry_set_invisible_char (GTK_ENTRY(entry), 0x2022); /* bullet unichar */
+	
+	gtk_box_pack_start (GTK_BOX(GTK_DIALOG(dialog)->vbox), entry,
+			    TRUE, FALSE, 0);	
+
+	remember_pass_check = gtk_check_button_new_with_label (_("Remember password"));
+	gtk_box_pack_start (GTK_BOX(GTK_DIALOG(dialog)->vbox), remember_pass_check,
+			    TRUE, FALSE, 0);
+
+	gtk_widget_show_all (GTK_WIDGET(GTK_DIALOG(dialog)->vbox));
+	
+	if (gtk_dialog_run (GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
+		*password = g_strdup (gtk_entry_get_text (GTK_ENTRY(entry)));
+		*cancel   = FALSE;
+	} else {
+		*password = NULL;
+		*cancel   = TRUE;
+	}
+
+	if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (remember_pass_check)))
+		*remember = TRUE;
+	else
+		*remember = FALSE;
+
+	gtk_widget_destroy (dialog);
+
+	while (gtk_events_pending ())
+		gtk_main_iteration ();
+}
+
 static gchar*
 get_password (TnyAccount *account, const gchar *prompt, gboolean *cancel)
 {
@@ -248,13 +301,12 @@ get_password (TnyAccount *account, const gchar *prompt, gboolean *cancel)
 	/* if it was already asked, it must have been wrong, so ask again */
 	if (already_asked || !pwd || strlen(pwd) == 0) {
 
-		/* we don't have it yet. we emit a signal to get the password somewhere */
+		/* we don't have it yet. Get the password from the user */
 		const gchar* name = tny_account_get_name (account);
 		gboolean remember;
 		pwd = NULL;
 
-		g_signal_emit (G_OBJECT(self), signals[PASSWORD_REQUESTED_SIGNAL], 0,
-			       name, &pwd, cancel, &remember);
+		on_password_requested (self, name, &pwd, cancel, &remember);
 
 		if (!*cancel) {
 			if (remember)
@@ -370,17 +422,29 @@ get_tny_account_from_server_account (ModestTnyAccountStore *self,
 		return NULL;
 	}
 	
+	/* Set account store, session and id */
 	set_account_store_for_account (TNY_ACCOUNT(tny_account), self);
 	tny_camel_account_set_session (TNY_CAMEL_ACCOUNT(tny_account), 	/* session */
-				       priv->tny_session_camel);	
-	tny_account_set_id            (tny_account, account_data->account_name); /* id */
+				       priv->tny_session_camel);
+	tny_account_set_id (tny_account, account_data->account_name); /* id */
+
+	/* Options */
+	if (account_data->options) {
+		GSList *tmp = account_data->options;
+		while (tmp) {
+			tny_camel_account_add_option (TNY_CAMEL_ACCOUNT (tny_account),
+						      tmp->data);
+			tmp = g_slist_next (tmp);
+		}
+	}
+	/* Hostname & Username */
+	if (account_data->username) 
+		tny_account_set_user (tny_account, account_data->username);
 
 	if (account_data->hostname)
 		tny_account_set_hostname (tny_account, account_data->hostname);
 
-	if (account_data->username) 
-		tny_account_set_user (tny_account, account_data->username);
-
+	/* Password functions */
 	tny_account_set_pass_func (tny_account, get_password);
         tny_account_set_forget_pass_func (tny_account, forget_password);
 
@@ -429,11 +493,6 @@ modest_tny_account_store_new (ModestAccountMgr *account_mgr) {
 	obj  = G_OBJECT(g_object_new(MODEST_TYPE_TNY_ACCOUNT_STORE, NULL));
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(obj);
 
-	g_signal_connect (G_OBJECT(account_mgr), "account_changed",
-				       G_CALLBACK (on_account_changed), obj);
-	g_signal_connect (G_OBJECT(account_mgr), "account_removed",
-				       G_CALLBACK (on_account_removed), obj);
-
 	pfact = TNY_PLATFORM_FACTORY (modest_tny_platform_factory_get_instance());
 	if (!pfact) {
 		g_printerr ("modest: cannot get platform factory instance\n");
@@ -441,15 +500,22 @@ modest_tny_account_store_new (ModestAccountMgr *account_mgr) {
 		return NULL;
 	} else
 		priv->platform_fact = pfact;
-	
+
+	/* The session needs the platform factory */
 	priv->tny_session_camel = tny_session_camel_new (TNY_ACCOUNT_STORE(obj));
 	if (!priv->tny_session_camel) {
 		g_printerr ("modest: cannot create TnySessionCamel instance\n");
 		g_object_unref (obj);
 		return NULL;
 	}
-
 	tny_session_camel_set_ui_locker (priv->tny_session_camel, tny_gtk_lockable_new ());
+
+
+	/* Connect signals */
+	g_signal_connect (G_OBJECT(account_mgr), "account_changed",
+				       G_CALLBACK (on_account_changed), obj);
+	g_signal_connect (G_OBJECT(account_mgr), "account_removed",
+				       G_CALLBACK (on_account_removed), obj);
 
 	return MODEST_TNY_ACCOUNT_STORE(obj);
 }
@@ -544,7 +610,7 @@ get_tny_account_from_account (ModestTnyAccountStore *self, ModestAccountData *ac
 
 
 static void
-modest_tny_account_store_get_accounts  (TnyAccountStore *iface, TnyList *list,
+modest_tny_account_store_get_accounts  (TnyAccountStore *account_store, TnyList *list,
 					TnyGetAccountsRequestType type)
 {
 	ModestTnyAccountStore        *self;
@@ -553,22 +619,22 @@ modest_tny_account_store_get_accounts  (TnyAccountStore *iface, TnyList *list,
 	ModestAccountMgr             *account_mgr; 
 	TnyAccount                   *local_folder_account;
 	
-	g_return_if_fail (iface);
+	g_return_if_fail (account_store);
 	g_return_if_fail (TNY_IS_LIST(list));
 
-	self        = MODEST_TNY_ACCOUNT_STORE(iface);
+	self        = MODEST_TNY_ACCOUNT_STORE(account_store);
 	priv        = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
 	account_mgr = modest_tny_platform_factory_get_account_mgr_instance
 		(MODEST_TNY_PLATFORM_FACTORY(priv->platform_fact));
 	
 	if (type == TNY_ACCOUNT_STORE_BOTH) {
-		modest_tny_account_store_get_accounts (iface, list, TNY_ACCOUNT_STORE_STORE_ACCOUNTS);
-		modest_tny_account_store_get_accounts (iface, list, TNY_ACCOUNT_STORE_TRANSPORT_ACCOUNTS);
+		modest_tny_account_store_get_accounts (account_store, list, TNY_ACCOUNT_STORE_STORE_ACCOUNTS);
+		modest_tny_account_store_get_accounts (account_store, list, TNY_ACCOUNT_STORE_TRANSPORT_ACCOUNTS);
 	}
-	
+
 	accounts = modest_account_mgr_account_names (account_mgr, NULL); 
 	for (cursor = accounts; cursor; cursor = cursor->next) {
-		TnyAccount *tny_account;
+		TnyAccount *tny_account = NULL;
 		ModestAccountData *account_data =
 			modest_account_mgr_get_account_data (account_mgr, 
 		 					     (gchar*)cursor->data);
@@ -584,12 +650,12 @@ modest_tny_account_store_get_accounts  (TnyAccountStore *iface, TnyList *list,
 
 	/* also, add the local folder pseudo-account */
 	local_folder_account = get_local_folder_account (MODEST_TNY_ACCOUNT_STORE(self));
-	if (!local_folder_account) 
+	if (!local_folder_account)
 		g_printerr ("modest: failed to add local folders account\n");
 	else
 		tny_list_prepend (list, G_OBJECT(local_folder_account));
 	
-	tny_session_camel_set_account_store (priv->tny_session_camel, iface);
+	tny_session_camel_set_account_store (priv->tny_session_camel, account_store);
 }
 
 static const gchar*
