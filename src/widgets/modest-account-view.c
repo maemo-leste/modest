@@ -29,6 +29,10 @@
 
 #include <glib/gi18n.h>
 #include "modest-account-view.h"
+
+#include <modest-account-mgr.h>
+#include <modest-account-mgr-helpers.h>
+
 #include <gtk/gtkcellrenderertoggle.h>
 #include <gtk/gtkcellrenderertext.h>
 #include <gtk/gtktreeselection.h>
