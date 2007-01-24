@@ -175,3 +175,48 @@ modest_account_mgr_free_account_data (ModestAccountMgr *self, ModestAccountData 
 }
 
 
+gchar*
+modest_account_mgr_get_default_account  (ModestAccountMgr *self)
+{
+	gchar *account;	
+	ModestConf *conf;
+	
+	g_return_val_if_fail (self, NULL);
+
+	conf = MODEST_ACCOUNT_MGR_GET_PRIVATE (self)->modest_conf;
+	account = modest_conf_get_string (conf, MODEST_CONF_DEFAULT_ACCOUNT,
+					  NULL);
+	
+	/* it's not really an error if there is no default account */
+	if (!account) 
+		return NULL;
+
+	/* sanity check */
+	if (!modest_account_mgr_account_exists (self, account, FALSE, NULL)) {
+		g_printerr ("modest: default account does not exist\n");
+		g_free (account);
+		return NULL;
+	}
+	return account;
+}
+
+
+gboolean
+modest_account_mgr_set_default_account  (ModestAccountMgr *self, const gchar* account)
+{
+	ModestConf *conf;
+	
+	g_return_val_if_fail (self,    FALSE);
+	g_return_val_if_fail (account, FALSE);
+	g_return_val_if_fail (modest_account_mgr_account_exists (self, account, FALSE, NULL),
+			      FALSE);
+	
+	conf = MODEST_ACCOUNT_MGR_GET_PRIVATE (self)->modest_conf;
+		
+	return modest_conf_set_string (conf, MODEST_CONF_DEFAULT_ACCOUNT,
+				       account, NULL);
+
+}
+
+
+

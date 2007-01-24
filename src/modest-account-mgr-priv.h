@@ -31,6 +31,7 @@
 #define __MODEST_ACCOUNT_MGR_PRIV_H__
 
 #include <glib.h>
+#include <modest-conf.h>
 
 /*
  * private functions, only for use in modest-account-mgr and
@@ -43,6 +44,16 @@ gchar* _modest_account_mgr_account_from_key (const gchar *key, gboolean *is_acco
 					     gboolean *is_server_account);
 gchar * _modest_account_mgr_get_account_keyname (const gchar *account_name, const gchar * name,
 						 gboolean server_account);
+
+/* below is especially very _private_ stuff */
+typedef struct _ModestAccountMgrPrivate ModestAccountMgrPrivate;
+struct _ModestAccountMgrPrivate {
+	ModestConf        *modest_conf;
+};
+
+#define MODEST_ACCOUNT_MGR_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
+                                                MODEST_TYPE_ACCOUNT_MGR, \
+                                                ModestAccountMgrPrivate))
 
 G_END_DECLS
 #endif /* __MODEST_ACCOUNT_MGR_PRIV_H__ */

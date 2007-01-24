@@ -68,6 +68,28 @@ typedef struct {
 ModestAccountData *modest_account_mgr_get_account_data     (ModestAccountMgr *self,
 							    const gchar* name);
 
+/**
+ * modest_account_mgr_get_default_account:
+ * @self: a ModestAccountMgr instance
+ * 
+ * get the default account name, or NULL if none is found
+ *
+ * Returns: the default account name (as newly allocated string, which
+ * must be g_free'd), or NULL
+ */
+gchar* modest_account_mgr_get_default_account  (ModestAccountMgr *self);
+
+/**
+ * modest_account_mgr_get_default_account:
+ * @self: a ModestAccountMgr instance
+ * @account: the name of an existing account
+ * 
+ * set the default account name (which must be valid account)
+ *
+ * Returns: TRUE if succeeded, FALSE otherwise
+ */
+gboolean modest_account_mgr_set_default_account  (ModestAccountMgr *self,
+						  const gchar* account);
 
 /**
  * modest_account_mgr_free_account_data:
@@ -80,23 +102,6 @@ void       modest_account_mgr_free_account_data     (ModestAccountMgr *self,
 						     ModestAccountData *data);
 
 
-/**
- * modest_account_mgr_server_account_names:
- * @self: a ModestAccountMgr instance
- * @account_name: get only server accounts for @account_name, or NULL for any
- * @type: get only server accounts from protocol type @type, or MODEST_PROTO_TYPE_ANY
- * @proto: get only server account with protocol @proto, or NULL for any
- * @only_enabled: get only enabled server accounts if TRUE
- * 
- * list all the server account names
- *
- * Returns: a newly allocated list of server account names, or NULL in case of
- * error or if there are no server accounts. The caller must free the returned GSList
- */
-GSList*  modest_account_mgr_search_server_accounts  (ModestAccountMgr *self,
-						     const gchar*       account_name,
-						     ModestProtocolType type,
-						     ModestProtocol     proto);
 
 /**
  * modest_account_mgr_account_set_enabled
@@ -122,6 +127,11 @@ gboolean modest_account_mgr_account_set_enabled (ModestAccountMgr *self, const g
  * Returns: TRUE if it is enabled, FALSE otherwise
  */
 gboolean modest_account_mgr_account_get_enabled (ModestAccountMgr *self, const gchar* name);
+
+
+
+
+
 
 
 G_END_DECLS

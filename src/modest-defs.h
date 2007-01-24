@@ -65,9 +65,12 @@ enum {
 
 /* configuration key definitions for modest */
 #define MODEST_ACCOUNT_NAMESPACE         MODEST_CONF_NAMESPACE "/" "accounts"
+#define MODEST_CONF_DEFAULT_ACCOUNT      MODEST_CONF_NAMESPACE "/" "default_account"
+
 #define MODEST_SERVER_ACCOUNT_NAMESPACE  MODEST_CONF_NAMESPACE "/" "server_accounts"
 #define MODEST_CONF_REPLY_TYPE           "reply_type"        /*  int  */
 #define MODEST_CONF_FORWARD_TYPE         "forward_type"      /*  int  */
+
 
 /* per-account data */
 #define MODEST_ACCOUNT_DISPLAY_NAME      "display_name"      /* string */

@@ -31,21 +31,13 @@
 #include <modest-marshal.h>
 #include <modest-account-mgr.h>
 #include <modest-account-mgr-priv.h>
+#include <modest-account-mgr-helpers.h>
 
 /* 'private'/'protected' functions */
 static void modest_account_mgr_class_init (ModestAccountMgrClass * klass);
 static void modest_account_mgr_init       (ModestAccountMgr * obj);
 static void modest_account_mgr_finalize   (GObject * obj);
 
-
-typedef struct _ModestAccountMgrPrivate ModestAccountMgrPrivate;
-struct _ModestAccountMgrPrivate {
-	ModestConf        *modest_conf;
-};
-
-#define MODEST_ACCOUNT_MGR_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
-                                                MODEST_TYPE_ACCOUNT_MGR, \
-                                                ModestAccountMgrPrivate))
 /* list my signals */
 enum {
 	ACCOUNT_CHANGED_SIGNAL,
