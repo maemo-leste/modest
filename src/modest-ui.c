@@ -1003,8 +1003,8 @@ statusbar_push (ModestWidgetFactory *factory, guint context_id, const gchar *msg
 
 	gtk_statusbar_push (GTK_STATUSBAR(status_bar), 0, msg);
 
-	g_timeout_add (2000, (GSourceFunc)statusbar_clean, status_bar);
-	g_timeout_add (1000, (GSourceFunc)progress_bar_clean, progress_bar);
+	g_timeout_add (1500, (GSourceFunc)statusbar_clean, status_bar);
+	g_timeout_add (3000, (GSourceFunc)progress_bar_clean, progress_bar);
 }
 /****************************************************************************/
 
