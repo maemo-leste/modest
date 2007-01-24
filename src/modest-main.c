@@ -101,9 +101,11 @@ main (int argc, char *argv[])
 
 	modest_debug_g_type_init  ();		
 	modest_debug_logging_init ();
-
+	
 	g_thread_init (NULL);
-	gdk_threads_init (); /* hmmm... not really needed if we're not doing */
+	modest_init_default_account_maybe ();
+
+	gdk_threads_init (); /* hmmm... not really needed if we're not doing  ui*/
 	
 	context = g_option_context_new (NULL);
 	g_option_context_add_main_entries (context, options, NULL);
@@ -144,7 +146,7 @@ main (int argc, char *argv[])
 		}
 		modest_init_header_columns (factory_settings);	
 		retval = start_ui (mailto, cc, bcc, subject, body, account_store);
-		
+
 	} else 
 		retval = send_mail (mailto, cc, bcc, subject, body);
 	
@@ -153,6 +155,8 @@ cleanup:
 		g_object_unref (G_OBJECT(fact));
 
 	/* this will clean up account_store as well */
+
+
 	return retval;
 }
 

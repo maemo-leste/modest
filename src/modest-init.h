@@ -61,6 +61,19 @@ gboolean modest_init_header_columns (gboolean overwrite);
 gboolean modest_init_local_folders  (void);
 
 
+/**
+ * modest_init_default_account_maybe:
+ *
+ * if there are accounts defined, but there is no default account,
+ * it will be defined.
+ * 
+ * Returns: TRUE if there was a default account already,
+ *  or one has been created or there are no accounts yet,
+ *  returns FALSE in case of error
+ */
+gboolean modest_init_default_account_maybe  (void);
+
+
 G_END_DECLS
 
 #endif /*__MODEST_INIT_H__*/
