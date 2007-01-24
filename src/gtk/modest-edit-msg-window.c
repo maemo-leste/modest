@@ -353,7 +353,7 @@ modest_edit_msg_window_get_msg_data (ModestEditMsgWindow *edit_window)
 	priv = MODEST_EDIT_MSG_WINDOW_GET_PRIVATE (edit_window);
 	
 	account_data = modest_combo_box_get_active_id (MODEST_COMBO_BOX (priv->from_field));
-	buf = gtk_text_view_get_buffer (GTK_TEXT_VIEW (priv->msg_body));	
+	buf = gtk_text_view_get_buffer (GTK_TEXT_VIEW (priv->msg_body));
 	gtk_text_buffer_get_bounds (buf, &b, &e);
 
 	/* don't free these (except from) */
@@ -362,7 +362,7 @@ modest_edit_msg_window_get_msg_data (ModestEditMsgWindow *edit_window)
 	data->to      =  (gchar*) gtk_entry_get_text (GTK_ENTRY(priv->to_field));
 	data->cc      =  (gchar*) gtk_entry_get_text (GTK_ENTRY(priv->cc_field));
 	data->bcc     =  (gchar*) gtk_entry_get_text (GTK_ENTRY(priv->bcc_field));
-	data->subject =  (gchar*) gtk_entry_get_text (GTK_ENTRY(priv->subject_field));	
+	data->subject =  (gchar*) gtk_entry_get_text (GTK_ENTRY(priv->subject_field));
 	data->body    =  gtk_text_buffer_get_text (buf, &b, &e, FALSE);
 
 	return data;

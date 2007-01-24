@@ -908,6 +908,16 @@ _modest_ui_actions_on_folder_selection_changed (ModestFolderView *folder_view,
 }
 
 
+/****************************************************/
+/*
+ * below some stuff to clearup statusbar messages after 1,5 seconds....
+ */
+typedef struct {
+	GtkWidget *status_bar;
+	GtkWidget *progress_bar;
+	guint     msg_id;
+} StatusRemoveData;
+
 
 static gboolean
 progress_bar_clean (GtkWidget *bar)
@@ -918,6 +928,7 @@ progress_bar_clean (GtkWidget *bar)
 	}
 	return FALSE;
 }
+
 static gboolean
 statusbar_clean (GtkWidget *bar)
 {

@@ -649,12 +649,13 @@ modest_tny_account_store_get_accounts  (TnyAccountStore *account_store, TnyList 
 	g_slist_free (accounts);
 
 	/* also, add the local folder pseudo-account */
-	local_folder_account = get_local_folder_account (MODEST_TNY_ACCOUNT_STORE(self));
-	if (!local_folder_account)
-		g_printerr ("modest: failed to add local folders account\n");
-	else
-		tny_list_prepend (list, G_OBJECT(local_folder_account));
-	
+	if (type != TNY_ACCOUNT_STORE_TRANSPORT_ACCOUNTS) {
+		local_folder_account = get_local_folder_account (MODEST_TNY_ACCOUNT_STORE(self));
+		if (!local_folder_account)
+			g_printerr ("modest: failed to add local folders account\n");
+		else
+			tny_list_prepend (list, G_OBJECT(local_folder_account));
+	}
 	tny_session_camel_set_account_store (priv->tny_session_camel, account_store);
 }
 

@@ -293,10 +293,11 @@ get_transports (ModestWidgetFactory *self)
 
 		data = modest_account_mgr_get_account_data (account_mgr, account_name);
 		if (data && data->transport_account) {
+			ModestPair *pair;
 			gchar *display_name = g_strdup_printf ("%s (%s)", data->email, account_name);
-			ModestPair *pair = modest_pair_new ((gpointer) data,
-							    (gpointer) display_name , TRUE);
-			transports = g_slist_append (transports, pair);
+			pair = modest_pair_new ((gpointer) data,
+						(gpointer) display_name , TRUE);
+			transports = g_slist_prepend (transports, pair);
 		}
 		/* don't free account name; it's freed when the transports list is freed */
 		cursor = cursor->next;
@@ -385,7 +386,7 @@ modest_widget_factory_get_combo_box (ModestWidgetFactory *self, ModestComboBoxTy
 	}
 
 	combo_box = modest_combo_box_new (protos);
-	modest_pair_list_free (protos);
+	g_slist_free (protos);
 	
 	gtk_combo_box_set_active (GTK_COMBO_BOX(combo_box), 0);
 	
@@ -409,42 +410,3 @@ modest_widget_factory_get_folder_info_label (ModestWidgetFactory *self)
 	g_return_val_if_fail (self, NULL);
 	return MODEST_WIDGET_FACTORY_GET_PRIVATE(self)->folder_info_label;
 }
-
-
-/*********************** Test code ********************/
-/* static void */
-/* on_folder_key_press_event (ModestFolderView *folder_view, GdkEventKey *event, gpointer user_data) */
-/* { */
-/* 	GtkTreeSelection *selection; */
-/* 	GtkTreeModel *model; */
-/* 	GtkTreeIter iter; */
-/* 	TnyFolderStore *folder; */
-/* 	gint type; */
-/* 	ModestMailOperation *mail_op; */
-
-/* 	selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (folder_view)); */
-/* 	gtk_tree_selection_get_selected (selection, &model, &iter); */
-	
-/* 	gtk_tree_model_get (model, &iter,  */
-/* 			    TNY_GTK_FOLDER_STORE_TREE_MODEL_TYPE_COLUMN, &type,  */
-/* 			    TNY_GTK_FOLDER_STORE_TREE_MODEL_INSTANCE_COLUMN, &folder,  */
-/* 			    -1); */
-
-/* 	mail_op = modest_mail_operation_new (); */
-
-/* 	if (event->keyval == GDK_C || event->keyval == GDK_c) { */
-/* 		if (type != TNY_FOLDER_TYPE_ROOT) */
-/* 			modest_mail_operation_create_folder (mail_op, folder, "New"); */
-/* 	} else if (event->keyval == GDK_D || event->keyval == GDK_d) { */
-/* 		if (type != TNY_FOLDER_TYPE_ROOT) */
-/* 			modest_mail_operation_remove_folder (mail_op, TNY_FOLDER (folder), FALSE); */
-/* 	} else if (event->keyval == GDK_N || event->keyval == GDK_n) { */
-/* 		if (type != TNY_FOLDER_TYPE_ROOT) */
-/* 			modest_mail_operation_rename_folder (mail_op, TNY_FOLDER (folder), "New Name"); */
-/* 	} else if (event->keyval == GDK_T || event->keyval == GDK_t) { */
-/* 		if (type != TNY_FOLDER_TYPE_ROOT) */
-/* 			modest_mail_operation_remove_folder (mail_op, TNY_FOLDER (folder), TRUE); */
-/* 	} */
-
-/* 	g_object_unref (G_OBJECT (mail_op)); */
-/* } */
