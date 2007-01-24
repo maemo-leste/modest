@@ -39,6 +39,8 @@ objects=\
         ${top_srcdir}/src/$(MODEST_PLATFORM)/libmodest-ui.la \
         ${top_srcdir}/src/widgets/libmodest-widgets.la \
         ${top_srcdir}/src/modest-account-mgr.o \
+        ${top_srcdir}/src/modest-account-mgr-helpers.o \
+        ${top_srcdir}/src/modest-account-mgr-priv.o \
         ${top_srcdir}/src/modest-conf.o \
         ${top_srcdir}/src/modest-cache-mgr.o \
         ${top_srcdir}/src/modest-protocol-info.o \
