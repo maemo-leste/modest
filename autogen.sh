@@ -17,6 +17,6 @@ which gnome-autogen.sh || {
     echo "You need to install gnome-common from GNOME CVS"
     exit 1
 }
-export USE_GNOME2_MACROS=1
 
-USE_GNOME2_MACROS=1 . gnome-autogen.sh 
+USE_GNOME2_MACROS=1 . gnome-autogen.sh
+
