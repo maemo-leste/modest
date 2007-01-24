@@ -548,6 +548,7 @@ reply_forward_func (gpointer data, gpointer user_data)
 								 rf_helper->from, 
 								 rf_helper->reply_forward_type,
 								 MODEST_MAIL_OPERATION_REPLY_MODE_SENDER);
+		break;
 	case ACTION_REPLY_TO_ALL:
 		new_msg = 
 			modest_mail_operation_create_reply_mail (msg, rf_helper->from, rf_helper->reply_forward_type,
@@ -563,10 +564,15 @@ reply_forward_func (gpointer data, gpointer user_data)
 		g_return_if_reached ();
 	}
 
-	/* Set from */
-	new_header = tny_msg_get_header (new_msg);
-	tny_header_set_from (new_header, rf_helper->from);
-	g_object_unref (G_OBJECT (new_header));
+	if (!new_msg) {
+		g_warning ("Unable to create a message");
+		goto cleanup;
+	}
+
+/* 	/\* Set from *\/ */
+/* 	new_header = tny_msg_get_header (new_msg); */
+/* 	tny_header_set_from (new_header, rf_helper->from); */
+/* 	g_object_unref (G_OBJECT (new_header)); */
 		
 	/* Show edit window */
 	widget_factory = modest_window_get_widget_factory (MODEST_WINDOW (helper->main_window));
@@ -576,12 +582,15 @@ reply_forward_func (gpointer data, gpointer user_data)
 					      MODEST_EDIT_TYPE_NEW);
 	g_object_unref (G_OBJECT (widget_factory));
 	g_object_unref (G_OBJECT (account_store));
+
 	modest_edit_msg_window_set_msg (MODEST_EDIT_MSG_WINDOW (msg_win),
 					new_msg);
 	gtk_widget_show_all (GTK_WIDGET (msg_win));
 	
 	/* Clean */
 	g_object_unref (G_OBJECT (new_msg));
+
+ cleanup:
 	g_free (rf_helper->from);
 	g_slice_free (ReplyForwardHelper, rf_helper);
 }
