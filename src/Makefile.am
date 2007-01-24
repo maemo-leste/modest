@@ -1,6 +1,6 @@
 #
 # Makefile.am
-# Time-stamp: <2007-01-21 21:41:46 (djcb)>
+# Time-stamp: <2007-01-24 09:06:54 (djcb)>
 SUBDIRS=$(MODEST_PLATFORM) widgets
 DIST_SUBDIRS = widgets gtk maemo
 
@@ -32,6 +32,10 @@ bin_PROGRAMS=\
 modest_SOURCES=\
 	modest-account-mgr.c\
 	modest-account-mgr.h\
+	modest-account-mgr-helpers.h\
+	modest-account-mgr-helpers.c\
+	modest-account-mgr-priv.h\
+	modest-account-mgr-priv.c\
 	modest-cache-mgr.c\
 	modest-cache-mgr.h\
 	modest-conf.c\

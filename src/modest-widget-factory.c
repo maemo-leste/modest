@@ -39,7 +39,10 @@
 #include "modest-widget-memory.h"
 #include <modest-protocol-info.h>
 #include "modest-tny-platform-factory.h"
-#include "modest-account-mgr.h"
+
+#include <modest-account-mgr.h>
+#include <modest-account-mgr-helpers.h>
+
 #include "modest-mail-operation.h"
 #include "widgets/modest-header-view-priv.h"
 

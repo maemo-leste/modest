@@ -28,6 +28,10 @@
  */
 #include <glib/gi18n.h>
 #include <tny-account-store.h>
+
+#include <modest-account-mgr.h>
+#include <modest-account-mgr-helpers.h>
+
 #include "modest-edit-msg-window.h"
 #include "modest-edit-msg-window-ui.h"
 #include "modest-icon-names.h"
@@ -211,7 +215,6 @@ static void
 modest_edit_msg_window_finalize (GObject *obj)
 {
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
-
 }
 
 
@@ -263,8 +266,8 @@ modest_edit_msg_window_new (ModestWidgetFactory *factory,
 
 	/* Load the UI definition */
 	gtk_ui_manager_add_ui_from_file (parent_priv->ui_manager, MODEST_UIDIR "modest-edit-msg-window-ui.xml", &error);
-	if (error != NULL) {
-		g_warning ("Could not merge modest-edit-msg-window-ui.xml: %s", error->message);
+	if (error) {
+		g_printerr ("modest: could not merge modest-edit-msg-window-ui.xml: %s\n", error->message);
 		g_error_free (error);
 		error = NULL;
 	}

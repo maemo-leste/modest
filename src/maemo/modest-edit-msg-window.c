@@ -28,6 +28,10 @@
  */
 #include <glib/gi18n.h>
 #include <tny-account-store.h>
+
+#include <modest-account-mgr.h>
+#include <modest-account-mgr-helpers.h>
+
 #include <widgets/modest-edit-msg-window.h>
 #include "modest-edit-msg-window-ui.h"
 #include "modest-icon-names.h"
