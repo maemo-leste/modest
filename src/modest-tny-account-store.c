@@ -42,7 +42,10 @@
 #include <modest-marshal.h>
 #include <modest-protocol-info.h>
 #include <modest-local-folder-info.h>
-#include "modest-account-mgr.h"
+
+#include <modest-account-mgr.h>
+#include <modest-account-mgr-helpers.h>
+
 #include "modest-tny-account-store.h"
 #include "modest-tny-platform-factory.h"
 #include <tny-gtk-lockable.h>
@@ -213,8 +216,10 @@ get_password (TnyAccount *account, const gchar *prompt, gboolean *cancel)
 	ModestTnyAccountStore *self;
 	ModestTnyAccountStorePrivate *priv;
 	gchar *pwd = NULL;
+	gpointer pwd_ptr;
 	gboolean already_asked;
-		
+
+	
 	key           = tny_account_get_id (account);
 	account_store = TNY_ACCOUNT_STORE(get_account_store_for_account (account));
 
@@ -225,8 +230,12 @@ get_password (TnyAccount *account, const gchar *prompt, gboolean *cancel)
 		(MODEST_TNY_PLATFORM_FACTORY(priv->platform_fact));
 	
 	/* is it in the hash? if it's already there, it must be wrong... */
+	pwd_ptr = (gpointer)&pwd; /* pwd_ptr so the compiler does not complained about
+				   * type-punned ptrs...*/
 	already_asked = g_hash_table_lookup_extended (priv->password_hash,
-						      key, NULL, (gpointer *) &pwd);
+						      key,
+						      NULL,
+						      (gpointer*)&pwd_ptr);
 
 	/* if the password is not already there, try ModestConf */
 	if (!already_asked) {
@@ -506,7 +515,7 @@ get_tny_account_from_account (ModestTnyAccountStore *self, ModestAccountData *ac
 			      TnyGetAccountsRequestType type) 
 {
 	TnyAccount *tny_account = NULL;
-	ModestServerAccountData *server_account;
+	ModestServerAccountData *server_account = NULL;
 
 	if (type == TNY_ACCOUNT_STORE_STORE_ACCOUNTS && account_data->store_account)
 		server_account = account_data->store_account;
