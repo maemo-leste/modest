@@ -64,25 +64,6 @@ struct _ModestAccountMgrClass {
 				    gpointer user_data);
 };
 
-typedef struct {
-	gchar *account_name;
-	gchar *hostname;
-	gchar *username;
-	ModestProtocol proto;
-	gchar *password;
-} ModestServerAccountData;
-
-typedef struct {
-	gchar *account_name;
-	gchar *display_name;
-	gchar *fullname;
-	gchar *email;
-	gboolean enabled;
-	ModestServerAccountData *transport_account;
-	ModestServerAccountData *store_account;
-} ModestAccountData;
-
-
 
 /**
  * modest_account_mgr_get_type:
@@ -162,32 +143,6 @@ gboolean        modest_account_mgr_remove_account         (ModestAccountMgr *sel
 							   gboolean server_account,
 							   GError **err);
 
-/**
- * modest_account_mgr_get_account_data:
- * @self: a ModestAccountMgr instance
- * @name: the name of the account
- * 
- * get information about an account
- *
- * Returns: a ModestAccountData structure with information about the account.
- * the data should not be changed, and be freed with modest_account_mgr_free_account_data
- * The function does a sanity check, an if it's not returning NULL,
- * it is a valid account
- */
-ModestAccountData *modest_account_mgr_get_account_data     (ModestAccountMgr *self,
-							    const gchar* name);
-
-
-/**
- * modest_account_mgr_free_account_data:
- * @self: a ModestAccountMgr instance
- * @data: a ModestAccountData instance
- * 
- * free the account data structure
- */
-void       modest_account_mgr_free_account_data     (ModestAccountMgr *self,
-						     ModestAccountData *data);
-
 
 /**
  * modest_account_mgr_account_names:
@@ -238,31 +193,6 @@ gboolean	modest_account_mgr_account_exists	  (ModestAccountMgr *self,
 							   gboolean server_account,
 							   GError **err);
 
-/**
- * modest_account_mgr_account_set_enabled
- * @self: a ModestAccountMgr instance
- * @name: the account name 
- * @enabled: if TRUE, the account will be enabled, if FALSE, it will be disabled
- * 
- * enable/disabled an account
- *
- * Returns: TRUE if it worked, FALSE otherwise
- */
-gboolean modest_account_mgr_account_set_enabled (ModestAccountMgr *self, const gchar* name,
-						 gboolean enabled);
-
-
-/**
- * modest_account_mgr_account_get_enabled:
- * @self: a ModestAccountMgr instance
- * @name: the account name to check
- *
- * check whether a certain account is enabled
- *
- * Returns: TRUE if it is enabled, FALSE otherwise
- */
-gboolean modest_account_mgr_account_get_enabled (ModestAccountMgr *self, const gchar* name);
-
 
 /**
  * modest_account_mgr_get_account_string:
@@ -282,7 +212,6 @@ gchar*	        modest_account_mgr_get_string     (ModestAccountMgr *self,
 						   const gchar *key,
 						   gboolean server_account,
 						   GError **err);
-
 
 /**
  * modest_account_mgr_get_account_int:

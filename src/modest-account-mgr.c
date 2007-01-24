@@ -28,23 +28,15 @@
  */
 
 #include <string.h>
-#include "modest-marshal.h"
-#include "modest-account-mgr.h"
+#include <modest-marshal.h>
+#include <modest-account-mgr.h>
+#include <modest-account-mgr-priv.h>
 
 /* 'private'/'protected' functions */
 static void modest_account_mgr_class_init (ModestAccountMgrClass * klass);
 static void modest_account_mgr_init       (ModestAccountMgr * obj);
 static void modest_account_mgr_finalize   (GObject * obj);
 
-static gchar *get_account_keyname         (const gchar * accname, const gchar * name,
-					   gboolean server_account);
-
-/* list my signals */
-enum {
-	ACCOUNT_CHANGED_SIGNAL,
-	ACCOUNT_REMOVED_SIGNAL,
-	LAST_SIGNAL
-};
 
 typedef struct _ModestAccountMgrPrivate ModestAccountMgrPrivate;
 struct _ModestAccountMgrPrivate {
@@ -54,53 +46,17 @@ struct _ModestAccountMgrPrivate {
 #define MODEST_ACCOUNT_MGR_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                 MODEST_TYPE_ACCOUNT_MGR, \
                                                 ModestAccountMgrPrivate))
+/* list my signals */
+enum {
+	ACCOUNT_CHANGED_SIGNAL,
+	ACCOUNT_REMOVED_SIGNAL,
+	LAST_SIGNAL
+};
+
+
 /* globals */
 static GObjectClass *parent_class = NULL;
 static guint signals[LAST_SIGNAL] = {0};
-
-static gchar*
-account_from_key (const gchar *key, gboolean *is_account_key, gboolean *is_server_account)
-{
-	const gchar* account_ns        = MODEST_ACCOUNT_NAMESPACE "/";
-	const gchar* server_account_ns = MODEST_SERVER_ACCOUNT_NAMESPACE "/";
-	gchar *cursor;
-	gchar *account = NULL;
-
-	/* determine whether it's an account or a server account,
-	 * based on the prefix */
-	if (g_str_has_prefix (key, account_ns)) {
-
-		if (is_server_account)
-			*is_server_account = FALSE;
-		
-		account = g_strdup (key + strlen (account_ns));
-
-	} else if (g_str_has_prefix (key, server_account_ns)) {
-
-		if (is_server_account)
-			*is_server_account = TRUE;
-		
-		account = g_strdup (key + strlen (server_account_ns));	
-	} else
-		return NULL;
-
-	/* if there are any slashes left in the key, it's not
-	 * the toplevel entry for an account
-	 */
-	cursor = strstr(account, "/");
-	
-	if (is_account_key && cursor)
-		*is_account_key = TRUE;
-
-	/* put a NULL where the first slash was */
-	if (cursor)
-		*cursor = '\0';
-
-	return account;
-}
-
-
-
 
 static void
 on_key_change (ModestConf *conf, const gchar *key, ModestConfEvent event, gpointer user_data)
@@ -115,7 +71,7 @@ on_key_change (ModestConf *conf, const gchar *key, ModestConfEvent event, gpoint
 	self = MODEST_ACCOUNT_MGR (user_data);
 	priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
 	
-	account = account_from_key (key, &is_account_key, &is_server_account);
+	account = _modest_account_mgr_account_from_key (key, &is_account_key, &is_server_account);
 
 	/* if this is not an account-related key change, ignore */
 	if (!account)
@@ -257,25 +213,6 @@ null_means_empty (const gchar * str)
 
 
 gboolean
-modest_account_mgr_account_set_enabled (ModestAccountMgr *self, const gchar* name,
-					gboolean enabled)
-{
-	return modest_account_mgr_set_bool (self, name,
-					    MODEST_ACCOUNT_ENABLED, enabled,
-					    FALSE, NULL);
-}
-
-
-gboolean
-modest_account_mgr_account_get_enabled (ModestAccountMgr *self, const gchar* name)
-{
-	return modest_account_mgr_get_bool (self, name,
-					    MODEST_ACCOUNT_ENABLED, FALSE,
-					    NULL);
-}
-
-
-gboolean
 modest_account_mgr_add_account (ModestAccountMgr *self,
 				const gchar *name,
 				const gchar *store_account,
@@ -296,7 +233,7 @@ modest_account_mgr_add_account (ModestAccountMgr *self,
 	 * we create the account by adding an account 'dir', with the name <name>,
 	 * and in that the 'display_name' string key
 	 */
-	key = get_account_keyname (name, MODEST_ACCOUNT_DISPLAY_NAME, FALSE);
+	key = _modest_account_mgr_get_account_keyname (name, MODEST_ACCOUNT_DISPLAY_NAME, FALSE);
 	if (modest_account_mgr_account_exists (self, key, FALSE, err)) {
 		g_printerr ("modest: account already exists\n");
 		g_free (key);
@@ -311,7 +248,7 @@ modest_account_mgr_add_account (ModestAccountMgr *self,
 	}
 	
 	if (store_account) {
-		key = get_account_keyname (name, MODEST_ACCOUNT_STORE_ACCOUNT, FALSE);
+		key = _modest_account_mgr_get_account_keyname (name, MODEST_ACCOUNT_STORE_ACCOUNT, FALSE);
 		ok = modest_conf_set_string (priv->modest_conf, key, store_account, err);
 		g_free (key);
 		if (!ok) {
@@ -322,7 +259,7 @@ modest_account_mgr_add_account (ModestAccountMgr *self,
 	}
 
 	if (transport_account) {
-		key = get_account_keyname (name, MODEST_ACCOUNT_TRANSPORT_ACCOUNT, FALSE);
+		key = _modest_account_mgr_get_account_keyname (name, MODEST_ACCOUNT_TRANSPORT_ACCOUNT, FALSE);
 		ok = modest_conf_set_string (priv->modest_conf, key, transport_account, err);
 		g_free (key);
 		if (!ok) {
@@ -361,7 +298,7 @@ modest_account_mgr_add_server_account (ModestAccountMgr * self,
 	priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
 	
 	/* hostname */
-	key = get_account_keyname (name, MODEST_ACCOUNT_HOSTNAME, TRUE);
+	key = _modest_account_mgr_get_account_keyname (name, MODEST_ACCOUNT_HOSTNAME, TRUE);
 	if (modest_conf_key_exists (priv->modest_conf, key, NULL)) {
 		g_printerr ("modest: server account '%s' already exists", name);
 		g_free (key);
@@ -372,17 +309,17 @@ modest_account_mgr_add_server_account (ModestAccountMgr * self,
 	g_free (key);
 
 	/* username */
-	key = get_account_keyname (name, MODEST_ACCOUNT_USERNAME, TRUE);
+	key = _modest_account_mgr_get_account_keyname (name, MODEST_ACCOUNT_USERNAME, TRUE);
 	modest_conf_set_string (priv->modest_conf, key,	null_means_empty (username), NULL);
 	g_free (key);
 
 	/* password */
-	key = get_account_keyname (name, MODEST_ACCOUNT_PASSWORD, TRUE);
+	key = _modest_account_mgr_get_account_keyname (name, MODEST_ACCOUNT_PASSWORD, TRUE);
 	modest_conf_set_string (priv->modest_conf, key,	null_means_empty (password), NULL);
 	g_free (key);
 
 	/* proto */
-	key = get_account_keyname (name, MODEST_ACCOUNT_PROTO, TRUE);
+	key = _modest_account_mgr_get_account_keyname (name, MODEST_ACCOUNT_PROTO, TRUE);
 	modest_conf_set_string (priv->modest_conf, key,
 				modest_protocol_info_get_protocol_name(proto),
 				NULL);
@@ -412,7 +349,7 @@ modest_account_mgr_remove_account (ModestAccountMgr * self,
 	}
 
 	priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
-	key = get_account_keyname (name, NULL, server_account);
+	key = _modest_account_mgr_get_account_keyname (name, NULL, server_account);
 
 	retval = modest_conf_remove_key (priv->modest_conf, key, NULL);
 
@@ -459,7 +396,7 @@ modest_account_mgr_search_server_accounts (ModestAccountMgr * self,
 				      proto_type == MODEST_PROTOCOL_TYPE_STORE, NULL);
 	}
 	
-	key      = get_account_keyname (account_name, NULL, TRUE);
+	key      = _modest_account_mgr_get_account_keyname (account_name, NULL, TRUE);
 	priv     = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
 	
 	/* get the list of all server accounts */
@@ -475,7 +412,7 @@ modest_account_mgr_search_server_accounts (ModestAccountMgr * self,
 	 * make the code more complex */
 	cursor = accounts;
 	while (cursor) { 
-		gchar *account   = account_from_key ((gchar*)cursor->data, NULL, NULL);
+		gchar *account   = _modest_account_mgr_account_from_key ((gchar*)cursor->data, NULL, NULL);
 		gchar *acc_proto = modest_account_mgr_get_string (self, account, MODEST_ACCOUNT_PROTO,
 								  TRUE, NULL);
 		ModestProtocol     this_proto = modest_protocol_info_get_protocol (acc_proto);
@@ -518,130 +455,6 @@ modest_account_mgr_account_names (ModestAccountMgr * self, GError ** err)
 }
 
 
-static ModestServerAccountData*
-modest_account_mgr_get_server_account_data (ModestAccountMgr *self, const gchar* name)
-{
-	ModestServerAccountData *data;
-	gchar *proto;
-	
-	g_return_val_if_fail (modest_account_mgr_account_exists (self, name,
-								 TRUE, NULL), NULL);	
-	data = g_new0 (ModestServerAccountData, 1);
-
-	data->account_name = g_strdup (name);
-	data->hostname     = modest_account_mgr_get_string (self, name,
-							    MODEST_ACCOUNT_HOSTNAME,
-							    TRUE, NULL);
-	data->username     = modest_account_mgr_get_string (self, name,
-							    MODEST_ACCOUNT_USERNAME,
-							    TRUE, NULL);
-	
-	proto        = modest_account_mgr_get_string (self, name, MODEST_ACCOUNT_PROTO,
-						      TRUE, NULL);
-	data->proto  = modest_protocol_info_get_protocol (proto);
-	g_free (proto);
-	
-	data->password     = modest_account_mgr_get_string (self, name,
-							    MODEST_ACCOUNT_PASSWORD,
-							    TRUE, NULL);
-	return data;
-}
-
-
-static void
-modest_account_mgr_free_server_account_data (ModestAccountMgr *self,
-					     ModestServerAccountData* data)
-{
-	g_return_if_fail (self);
-
-	if (!data)
-		return; /* not an error */
-
-	g_free (data->account_name);
-	data->account_name = NULL;
-	
-	g_free (data->hostname);
-	data->hostname = NULL;
-	
-	g_free (data->username);
-	data->username = NULL;
-
-	g_free (data->password);
-	data->password = NULL;
-	
-	g_free (data);
-}
-
-ModestAccountData*
-modest_account_mgr_get_account_data     (ModestAccountMgr *self, const gchar* name)
-{
-	ModestAccountData *data;
-	gchar *server_account;
-	
-	g_return_val_if_fail (self, NULL);
-	g_return_val_if_fail (name, NULL);
-	g_return_val_if_fail (modest_account_mgr_account_exists (self, name,
-								 FALSE, NULL), NULL);	
-	data = g_new0 (ModestAccountData, 1);
-
-	data->account_name = g_strdup (name);
-
-	data->display_name = modest_account_mgr_get_string (self, name,
-							    MODEST_ACCOUNT_DISPLAY_NAME,
-							    FALSE, NULL);
-	data->fullname      = modest_account_mgr_get_string (self, name,
-							      MODEST_ACCOUNT_FULLNAME,
-							       FALSE, NULL);
-	data->email        = modest_account_mgr_get_string (self, name,
-							    MODEST_ACCOUNT_EMAIL,
-							    FALSE, NULL);
-	data->enabled      = modest_account_mgr_account_get_enabled (self, name);
-
-	/* store */
-	server_account     = modest_account_mgr_get_string (self, name,
-							    MODEST_ACCOUNT_STORE_ACCOUNT,
-							    FALSE, NULL);
-	if (server_account) {
-		data->store_account =
-			modest_account_mgr_get_server_account_data (self,
-								    server_account);
-		g_free (server_account);
-	}
-
-	/* transport */
-	server_account = modest_account_mgr_get_string (self, name,
-							MODEST_ACCOUNT_TRANSPORT_ACCOUNT,
-							FALSE, NULL);
-	if (server_account) {
-		data->transport_account =
-			modest_account_mgr_get_server_account_data (self,
-								    server_account);
-		g_free (server_account);
-	}
-
-	return data;
-}
-
-
-void
-modest_account_mgr_free_account_data (ModestAccountMgr *self, ModestAccountData *data)
-{
-	g_return_if_fail (self);
-
-	if (!data) /* not an error */ 
-		return;
-
-	g_free (data->account_name);
-	g_free (data->display_name);
-	g_free (data->fullname);
-	g_free (data->email);
-
-	modest_account_mgr_free_server_account_data (self, data->store_account);
-	modest_account_mgr_free_server_account_data (self, data->transport_account);
-	
-	g_free (data);
-}
-
 
 gchar *
 modest_account_mgr_get_string (ModestAccountMgr *self, const gchar *name,
@@ -656,7 +469,7 @@ modest_account_mgr_get_string (ModestAccountMgr *self, const gchar *name,
 	g_return_val_if_fail (name, NULL);
 	g_return_val_if_fail (key, NULL);
 
-	keyname = get_account_keyname (name, key, server_account);
+	keyname = _modest_account_mgr_get_account_keyname (name, key, server_account);
 	
 	priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
 	retval = modest_conf_get_string (priv->modest_conf, keyname, err);
@@ -679,7 +492,7 @@ modest_account_mgr_get_int (ModestAccountMgr *self, const gchar *name,
 	g_return_val_if_fail (name, -1);
 	g_return_val_if_fail (key, -1);
 
-	keyname = get_account_keyname (name, key, server_account);
+	keyname = _modest_account_mgr_get_account_keyname (name, key, server_account);
 
 	priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
 	retval = modest_conf_get_int (priv->modest_conf, keyname, err);
@@ -703,7 +516,7 @@ modest_account_mgr_get_bool (ModestAccountMgr * self, const gchar *account,
 	g_return_val_if_fail (account, FALSE);
 	g_return_val_if_fail (key, FALSE);
 
-	keyname = get_account_keyname (account, key, server_account);
+	keyname = _modest_account_mgr_get_account_keyname (account, key, server_account);
 	
 	priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
 	retval = modest_conf_get_bool (priv->modest_conf, keyname, err);
@@ -728,7 +541,7 @@ modest_account_mgr_set_string (ModestAccountMgr * self, const gchar * name,
 	g_return_val_if_fail (name, FALSE);
 	g_return_val_if_fail (key, FALSE);
 
-	keyname = get_account_keyname (name, key, server_account);
+	keyname = _modest_account_mgr_get_account_keyname (name, key, server_account);
 	
 	priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
 
@@ -754,7 +567,7 @@ modest_account_mgr_set_int (ModestAccountMgr * self, const gchar * name,
 	g_return_val_if_fail (name, FALSE);
 	g_return_val_if_fail (key, FALSE);
 
-	keyname = get_account_keyname (name, key, server_account);
+	keyname = _modest_account_mgr_get_account_keyname (name, key, server_account);
 	
 	priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
 
@@ -780,7 +593,7 @@ modest_account_mgr_set_bool (ModestAccountMgr * self, const gchar * name,
 	g_return_val_if_fail (name, FALSE);
 	g_return_val_if_fail (key, FALSE);
 
-	keyname = get_account_keyname (name, key, server_account);
+	keyname = _modest_account_mgr_get_account_keyname (name, key, server_account);
 
 	priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
 
@@ -807,7 +620,7 @@ modest_account_mgr_set_list (ModestAccountMgr *self,
 	g_return_if_fail (key);
 	g_return_if_fail (val);
 
-	keyname = get_account_keyname (name, key, server_account);
+	keyname = _modest_account_mgr_get_account_keyname (name, key, server_account);
 	
 	priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
 	modest_conf_set_list (priv->modest_conf, keyname, val, list_type, err);
@@ -826,7 +639,7 @@ modest_account_mgr_account_exists (ModestAccountMgr * self, const gchar * name,
 	g_return_val_if_fail (self, FALSE);
         g_return_val_if_fail (name, FALSE);
 
-	keyname = get_account_keyname (name, NULL, server_account);
+	keyname = _modest_account_mgr_get_account_keyname (name, NULL, server_account);
 
 	priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
 	retval = modest_conf_key_exists (priv->modest_conf, keyname, err);
@@ -853,7 +666,7 @@ modest_account_mgr_get_list (ModestAccountMgr *self,
 	g_return_val_if_fail (name, NULL);
 	g_return_val_if_fail (key, NULL);
 
-	keyname = get_account_keyname (name, key, server_account);
+	keyname = _modest_account_mgr_get_account_keyname (name, key, server_account);
 	
 	priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
 	retval = modest_conf_get_list (priv->modest_conf, keyname, list_type, err);
@@ -879,47 +692,11 @@ modest_account_mgr_unset (ModestAccountMgr *self,
         g_return_val_if_fail (name, FALSE);
         g_return_val_if_fail (key, FALSE);
 
-	keyname = get_account_keyname (name, key, server_account);
+	keyname = _modest_account_mgr_get_account_keyname (name, key, server_account);
 
 	priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
 	retval = modest_conf_remove_key (priv->modest_conf, keyname, err);
 
 	g_free (keyname);
-	return retval;
-}
-
-
-
-/* must be freed by caller */
-static gchar *
-get_account_keyname (const gchar *account_name, const gchar * name, gboolean server_account)
-{
-	gchar *namespace;
-	gchar *retval;
-	
-	namespace = server_account ? MODEST_SERVER_ACCOUNT_NAMESPACE : MODEST_ACCOUNT_NAMESPACE;
-	
-	if (!account_name)
-		return g_strdup (namespace);
-	
-	if (name)
-		retval = g_strconcat (namespace, "/", account_name, "/", name, NULL);
-	else
-		retval = g_strconcat (namespace, "/", account_name, NULL);
-
-	/* special case: the key has some weird characters */
-	if (!modest_conf_key_is_valid (retval)) {
-
-		gchar *account_name_esc, *name_esc;
-		g_free (retval);
-		
-		account_name_esc = account_name ? modest_conf_key_escape (account_name) : NULL;
-		name_esc         = name ? modest_conf_key_escape (name) : NULL;
-		
-		retval =  get_account_keyname (account_name_esc, name_esc, server_account);
-
-		g_free (account_name_esc);
-		g_free (name_esc);
-	}
 	return retval;
 }
