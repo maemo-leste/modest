@@ -586,20 +586,6 @@ modest_folder_view_get_selected (ModestFolderView *self)
 	return priv->cur_folder;
 }
 
-
-
-static const gchar*
-get_account_name (TnyFolder *folder)
-{
-	TnyAccount *account;
-
-	account = tny_folder_get_account (folder);
-	if (!account)
-		return NULL;
-	else
-		return tny_account_get_name (account);
-	
-}
 	
 static gint
 cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,

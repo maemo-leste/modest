@@ -349,8 +349,8 @@ create_reply_forward_mail (TnyMsg *msg, const gchar *from, gboolean is_reply, gu
 	tny_header_set_replyto (new_header, from);
 
 	/* Change the subject */
-	new_subject = 
-		(gchar *) modest_text_utils_derived_subject (tny_header_get_subject(header), 
+	new_subject =
+		(gchar *) modest_text_utils_derived_subject (tny_header_get_subject(header),
 							     (is_reply) ? _("Re:") : _("Fwd:"));
 	tny_header_set_subject (new_header, (const gchar *) new_subject);
 	g_free (new_subject);
@@ -392,7 +392,7 @@ modest_mail_operation_create_reply_mail (TnyMsg *msg,
 					 ModestMailOperationReplyType reply_type,
 					 ModestMailOperationReplyMode reply_mode)
 {
-	TnyMsg *new_msg;
+	TnyMsg *new_msg = NULL;
 	TnyHeader *new_header, *header;
 	const gchar* reply_to;
 	gchar *new_cc = NULL;
@@ -429,8 +429,8 @@ modest_mail_operation_create_reply_mail (TnyMsg *msg,
                /* Remove my own address from the cc list. TODO:
                   remove also the To: of the new message, needed due
                   to the new reply_to feature */
-		new_cc = (gchar *) 
-			modest_text_utils_remove_address ((const gchar *) tmp->str, 
+		new_cc = (gchar *)
+			modest_text_utils_remove_address ((const gchar *) tmp->str,
 							  from);
 		/* FIXME: remove also the mails from the new To: */
 		tny_header_set_cc (new_header, new_cc);

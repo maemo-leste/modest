@@ -123,7 +123,7 @@ modest_formatter_do (ModestFormatter *self,
 		     TnyHeader *header,
 		     FormatterFunc func)
 {
-	TnyMsg *new_msg;
+	TnyMsg *new_msg = NULL;
 	gchar *body_text = NULL, *txt = NULL;
 	ModestFormatterPrivate *priv;
 	TnyPlatformFactory *fact;

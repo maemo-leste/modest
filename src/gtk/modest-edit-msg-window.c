@@ -325,7 +325,7 @@ modest_edit_msg_window_set_msg (ModestEditMsgWindow *self, TnyMsg *msg)
 	if (bcc)
 		gtk_entry_set_text (GTK_ENTRY(priv->bcc_field), bcc);
 	if (subject)
-		gtk_entry_set_text (GTK_ENTRY(priv->subject_field), subject);	
+		gtk_entry_set_text (GTK_ENTRY(priv->subject_field), subject);
 	
 	buf = gtk_text_view_get_buffer (GTK_TEXT_VIEW(priv->msg_body));
 	gtk_text_buffer_set_text (buf,
