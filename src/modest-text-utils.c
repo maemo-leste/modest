@@ -737,17 +737,13 @@ modest_text_utils_utf8_strcmp (const gchar* s1, const gchar *s2, gboolean insens
 	/* work even when s1 and/or s2 == NULL */
 	if (G_UNLIKELY(s1 == s2))
 		return 0;
-	if (G_UNLIKELY(!s1))
-		return -1;
-	if (G_UNLIKELY(!s2))
-		return 1;	
 
 	/* if it's not case sensitive */
 	if (!insensitive)
-		return strcmp (s1, s2);
+		return strcmp (s1 ? s1 : "", s2 ? s2 : "");
 	
-	n1 = g_utf8_collate_key (s1, -1);
-	n2 = g_utf8_collate_key (s2, -1);
+	n1 = g_utf8_collate_key (s1 ? s1 : "", -1);
+	n2 = g_utf8_collate_key (s2 ? s2 : "", -1);
 	
 	result = strcmp (n1, n2);
 
@@ -883,7 +879,7 @@ modest_text_utils_get_display_size (guint size)
 	const guint TB=1024 * GB;
 
 	if (size < KB)
-		return g_strdup_printf (_("%0.2f Kb"), (double)size / KB);
+		return g_strdup_printf (_("%0.1f Kb"), (double)size / KB);
 	else if (size < MB)
 		return g_strdup_printf (_("%d Kb"), size / KB);
 	else if (size < GB)
