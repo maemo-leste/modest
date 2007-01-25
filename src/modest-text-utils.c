@@ -178,7 +178,7 @@ modest_text_utils_inline (const gchar *text,
 	g_return_val_if_fail (to, NULL);
 	g_return_val_if_fail (subject, NULL);
 	
-	modest_text_utils_strftime (sent_str, 100, "%c", localtime (&sent_date));
+	modest_text_utils_strftime (sent_str, 100, "%c", sent_date);
 
 	if (!strcmp (content_type, "text/html"))
 		/* TODO: extract the <body> of the HTML and pass it to
@@ -199,10 +199,14 @@ modest_text_utils_inline (const gchar *text,
 /* just to prevent warnings:
  * warning: `%x' yields only last 2 digits of year in some locales
  */
-size_t
-modest_text_utils_strftime(char *s, size_t max, const char  *fmt, const  struct tm *tm)
+gsize
+modest_text_utils_strftime(char *s, gsize max, const char *fmt, time_t timet)
 {
-	return strftime(s, max, fmt, tm);
+	static GDate date;
+
+	g_date_set_time_t (&date, timet);
+
+	return g_date_strftime (s, max, fmt, (const GDate*) &date);
 }
 
 gchar *
@@ -478,7 +482,7 @@ cite (const time_t sent_date, const gchar *from)
 	gchar sent_str[101];
 
 	/* format sent_date */
-	modest_text_utils_strftime (sent_str, 100, "%c", localtime (&sent_date));
+	modest_text_utils_strftime (sent_str, 100, "%c", sent_date);
 	return g_strdup_printf (N_("On %s, %s wrote:\n"), sent_str, from);
 }
 
@@ -775,9 +779,7 @@ modest_text_utils_get_display_date (time_t date)
 {
 	static GHashTable *date_cache = NULL;
 
-	struct tm date_tm, now_tm; 
 	time_t now;
-
 	const guint BUF_SIZE = 64; 
 	gchar date_buf[BUF_SIZE];  
 	gchar now_buf [BUF_SIZE];  
@@ -792,17 +794,14 @@ modest_text_utils_get_display_date (time_t date)
 						    
 	now = time (NULL);
 	
-	localtime_r(&now, &now_tm);
-	localtime_r(&date, &date_tm);
-
 	/* get today's date */
-	modest_text_utils_strftime (date_buf, BUF_SIZE, "%x", &date_tm);
-	modest_text_utils_strftime (now_buf,  BUF_SIZE, "%x",  &now_tm);
+	modest_text_utils_strftime (date_buf, BUF_SIZE, "%x", date);
+	modest_text_utils_strftime (now_buf,  BUF_SIZE, "%x",  now);
 	/* today */
 
 	/* if this is today, get the time instead of the date */
 	if (strcmp (date_buf, now_buf) == 0)
-		strftime (date_buf, BUF_SIZE, _("%X"), &date_tm); 
+		modest_text_utils_strftime (date_buf, BUF_SIZE, _("%X"), date);
 
 	cached_val = g_strdup(date_buf);
 	g_hash_table_insert (date_cache, (gpointer)&date, (gpointer)cached_val);

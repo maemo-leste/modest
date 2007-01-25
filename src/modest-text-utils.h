@@ -135,14 +135,14 @@ gchar*  modest_text_utils_convert_to_html (const gchar *txt);
  * @s:
  * @max:
  * @fmt:
- * @tm
+ * @timet:
  *
  * this is just an alias for strftime(3), so we can use that without
  * getting warning from gcc
  * 
  * Returns: a formatted string of max length @max in @s
  */
-size_t modest_text_utils_strftime(char *s, size_t max, const char  *fmt, const  struct tm *tm);
+size_t modest_text_utils_strftime(char *s, size_t max, const char  *fmt, time_t timet);
 
 
 

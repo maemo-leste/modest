@@ -39,6 +39,7 @@
 #include "modest-icon-names.h"
 #include "modest-tny-platform-factory.h"
 #include "modest-account-view-window.h"
+#include "modest-account-mgr-helpers.h"
 #include "modest-main-window.h"
 #include "modest-mail-operation.h"
 #include <modest-widget-memory.h>
@@ -604,14 +605,16 @@ reply_forward (GtkWidget *widget,
 	       ModestMainWindow *main_window)
 {
 	ModestHeaderView *header_view;
+	ModestAccountMgr *account_mgr;
 	ModestWidgetFactory *widget_factory;
 	TnyList *header_list;
 	guint reply_forward_type;
-	ModestConf *conf;
+	ModestConf *conf;	
+	ModestAccountData *default_account_data;
 	TnyPlatformFactory *plat_factory;
 	TnyHeader *header;
 	TnyFolder *folder;
-	gchar *from, *key;
+	gchar *from, *key, *default_account_name;
 	GetMsgAsyncHelper *helper;
 	ReplyForwardHelper *rf_helper;
 
@@ -639,9 +642,15 @@ reply_forward (GtkWidget *widget,
 	   same folder and that we reply all of them from the
 	   same account. In fact the interface currently only
 	   allows single selection */
-
-	/* TODO: get the from string from account */
-	from = g_strdup ("Invalid");
+	account_mgr = modest_tny_platform_factory_get_account_mgr_instance
+		(MODEST_TNY_PLATFORM_FACTORY(plat_factory));
+	default_account_name = modest_account_mgr_get_default_account (account_mgr);
+	default_account_data = 
+		modest_account_mgr_get_account_data (account_mgr,
+						     (const gchar*) default_account_name);
+	from = g_strdup (default_account_data->email);
+	modest_account_mgr_free_account_data (account_mgr, default_account_data);
+	g_free (default_account_name);
 	
 	/* Fill helpers */
 	rf_helper = g_slice_new0 (ReplyForwardHelper);

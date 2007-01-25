@@ -27,22 +27,23 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <glib/gi18n.h>
+#include <string.h>
 #include <tny-account-store.h>
+#include <tny-simple-list.h>
 
-#include <modest-account-mgr.h>
-#include <modest-account-mgr-helpers.h>
-
+#include "modest-account-mgr.h"
+#include "modest-account-mgr-helpers.h"
 #include "modest-edit-msg-window.h"
 #include "modest-edit-msg-window-ui.h"
 #include "modest-icon-names.h"
 #include "modest-icon-factory.h"
-#include "modest-widget-memory.h"
-#include "modest-window-priv.h"
 #include "modest-mail-operation.h"
+#include "modest-text-utils.h"
 #include "modest-tny-platform-factory.h"
 #include "modest-tny-msg-actions.h"
-#include <tny-simple-list.h>
 #include "modest-ui-actions.h"
+#include "modest-widget-memory.h"
+#include "modest-window-priv.h"
 
 static void  modest_edit_msg_window_class_init   (ModestEditMsgWindowClass *klass);
 static void  modest_edit_msg_window_init         (ModestEditMsgWindow *obj);
@@ -318,12 +319,14 @@ modest_edit_msg_window_set_msg (ModestEditMsgWindow *self, TnyMsg *msg)
 	bcc     = tny_header_get_bcc (header);
 	subject = tny_header_get_subject (header);
 
-	if (to)
-		gtk_entry_set_text (GTK_ENTRY(priv->to_field),  to);
-	if (cc)
-		gtk_entry_set_text (GTK_ENTRY(priv->cc_field),  cc);
-	if (bcc)
-		gtk_entry_set_text (GTK_ENTRY(priv->bcc_field), bcc);
+	/* TODO: the comparison with Invalid is ugly, should be fixed
+	   in tinymail -> TnyCamelHeader */
+	if (strcmp (to, "Invalid"))
+		gtk_entry_set_text (GTK_ENTRY(priv->to_field), to);
+	if (strcmp (cc, "Invalid"))
+		gtk_entry_set_text (GTK_ENTRY(priv->cc_field), cc);
+	if (strcmp (bcc, "Invalid"))
+		gtk_entry_set_text (GTK_ENTRY(priv->bcc_field),  bcc);
 	if (subject)
 		gtk_entry_set_text (GTK_ENTRY(priv->subject_field), subject);
 	
