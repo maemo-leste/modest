@@ -76,6 +76,8 @@ struct _ModestTnyAccountStorePrivate {
 	TnyDevice          *device;
 	TnyPlatformFactory *platform_fact;
 	TnySessionCamel    *tny_session_camel;
+
+	TnyAccount         *local_folders;
 };
 
 #define MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -150,6 +152,7 @@ modest_tny_account_store_class_init (ModestTnyAccountStoreClass *klass)
 	
 }
 
+
 static void
 modest_tny_account_store_instance_init (ModestTnyAccountStore *obj)
 {
@@ -164,7 +167,50 @@ modest_tny_account_store_instance_init (ModestTnyAccountStore *obj)
 	
 	priv->password_hash          = g_hash_table_new_full (g_str_hash, g_str_equal,
 							      g_free, g_free);
+
+	priv->local_folders          = NULL;
 }
+
+
+
+
+/* create a pseudo-account for our local folders */
+static TnyAccount*
+get_local_folders_account (ModestTnyAccountStore *self)
+{
+	TnyStoreAccount *tny_account;
+	CamelURL *url;
+	gchar *maildir, *url_string;
+	ModestTnyAccountStorePrivate *priv;
+
+	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
+	
+	tny_account = tny_camel_store_account_new ();
+	if (!tny_account) {
+		g_printerr ("modest: cannot create account for local folders");
+		return NULL;
+	}
+
+	maildir = modest_local_folder_info_get_maildir_path ();
+	
+	url = camel_url_new ("maildir:", NULL);
+	camel_url_set_path (url, maildir);
+
+	url_string = camel_url_to_string (url, 0);
+	tny_account_set_url_string (TNY_ACCOUNT(tny_account), url_string);
+	
+	tny_camel_account_set_session (TNY_CAMEL_ACCOUNT(tny_account),
+				       priv->tny_session_camel);
+	tny_account_set_name (TNY_ACCOUNT(tny_account), MODEST_LOCAL_FOLDERS_ACCOUNT_NAME); 
+	tny_account_set_id (TNY_ACCOUNT(tny_account), MODEST_LOCAL_FOLDERS_ACCOUNT_NAME); 
+	
+	camel_url_free (url);
+	g_free (maildir);
+	g_free (url_string);
+
+	return TNY_ACCOUNT(tny_account);
+}
+
 
 
 static void
@@ -509,8 +555,8 @@ modest_tny_account_store_new (ModestAccountMgr *account_mgr) {
 		return NULL;
 	}
 	tny_session_camel_set_ui_locker (priv->tny_session_camel, tny_gtk_lockable_new ());
-
-
+	priv->local_folders = get_local_folders_account (obj); /* FIXME: unref this in the end? */
+	
 	/* Connect signals */
 	g_signal_connect (G_OBJECT(account_mgr), "account_changed",
 				       G_CALLBACK (on_account_changed), obj);
@@ -537,43 +583,6 @@ modest_tny_account_store_add_transport_account  (TnyAccountStore *self,
 	g_printerr ("modest: add_transport_account_func not implemented\n");
 }
 
-
-/* create a pseudo-account for our local folders */
-static TnyAccount*
-get_local_folder_account (ModestTnyAccountStore *self)
-{
-	TnyStoreAccount *tny_account;
-	CamelURL *url;
-	gchar *maildir, *url_string;
-	ModestTnyAccountStorePrivate *priv;
-
-	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
-	
-	tny_account = tny_camel_store_account_new ();
-	if (!tny_account) {
-		g_printerr ("modest: cannot create account for local folders");
-		return NULL;
-	}
-
-	maildir = modest_local_folder_info_get_maildir_path ();
-	
-	url = camel_url_new ("maildir:", NULL);
-	camel_url_set_path (url, maildir);
-
-	url_string = camel_url_to_string (url, 0);
-	tny_account_set_url_string (TNY_ACCOUNT(tny_account), url_string);
-	
-	tny_camel_account_set_session (TNY_CAMEL_ACCOUNT(tny_account),
-				       priv->tny_session_camel);
-	tny_account_set_name (TNY_ACCOUNT(tny_account), MODEST_LOCAL_FOLDERS_ACCOUNT_NAME); 
-	tny_account_set_id (TNY_ACCOUNT(tny_account), MODEST_LOCAL_FOLDERS_ACCOUNT_NAME); 
-	
-	camel_url_free (url);
-	g_free (maildir);
-	g_free (url_string);
-
-	return TNY_ACCOUNT(tny_account);
-}
 
 
 static TnyAccount*
@@ -604,7 +613,7 @@ get_tny_account_from_account (ModestTnyAccountStore *self, ModestAccountData *ac
 	
 	if (account_data->display_name)
 		tny_account_set_name (tny_account, account_data->display_name); 
-
+	
 	return tny_account;
 }
 
@@ -617,7 +626,6 @@ modest_tny_account_store_get_accounts  (TnyAccountStore *account_store, TnyList 
 	ModestTnyAccountStorePrivate *priv;
 	GSList                       *accounts, *cursor;
 	ModestAccountMgr             *account_mgr; 
-	TnyAccount                   *local_folder_account;
 	
 	g_return_if_fail (account_store);
 	g_return_if_fail (TNY_IS_LIST(list));
@@ -652,11 +660,10 @@ modest_tny_account_store_get_accounts  (TnyAccountStore *account_store, TnyList 
 
 	/* also, add the local folder pseudo-account */
 	if (type != TNY_ACCOUNT_STORE_TRANSPORT_ACCOUNTS) {
-		local_folder_account = get_local_folder_account (MODEST_TNY_ACCOUNT_STORE(self));
-		if (!local_folder_account)
-			g_printerr ("modest: failed to add local folders account\n");
+		if (!priv->local_folders)
+			g_printerr ("modest: no local folders account\n");
 		else
-			tny_list_prepend (list, G_OBJECT(local_folder_account));
+			tny_list_prepend (list, G_OBJECT(priv->local_folders));
 	}
 	tny_session_camel_set_account_store (priv->tny_session_camel, account_store);
 }
@@ -736,8 +743,38 @@ modest_tny_account_store_set_get_pass_func (ModestTnyAccountStore *self,
 }
 
 TnySessionCamel*
-tny_account_store_get_session    (TnyAccountStore *self)
+tny_account_store_get_session  (TnyAccountStore *self)
 {
 	g_return_val_if_fail (self, NULL);	
 	return MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self)->tny_session_camel;
+}
+
+
+
+TnyAccount*
+modest_tny_account_store_get_local_folders_account    (ModestTnyAccountStore *self)
+{
+	g_return_val_if_fail (self, NULL);
+	
+	return MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE (self)->local_folders;
+}
+
+
+/* for now, ignore the account ===> the special folders are the same,
+ * local folders for all accounts
+ * this might change, ie, IMAP might have server-side sent-items
+ */
+TnyFolder *
+modest_tny_account_store_get_special_folder (ModestTnyAccountStore*self, TnyAccount *account,
+					     TnyFolderType special_type)
+{
+	g_return_val_if_fail (self, NULL);
+	g_return_val_if_fail (account, NULL);
+	g_return_val_if_fail (0 <= special_type && special_type < TNY_FOLDER_TYPE_NUM,
+			      NULL);
+	//TnyAccount *local_account =
+	//	tny_account_store_get_local_folders_account (self);
+
+	/* FIXME: implement this */
+	return NULL;
 }
