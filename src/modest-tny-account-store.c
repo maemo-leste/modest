@@ -628,8 +628,10 @@ modest_tny_account_store_get_accounts  (TnyAccountStore *account_store, TnyList 
 		(MODEST_TNY_PLATFORM_FACTORY(priv->platform_fact));
 	
 	if (type == TNY_ACCOUNT_STORE_BOTH) {
-		modest_tny_account_store_get_accounts (account_store, list, TNY_ACCOUNT_STORE_STORE_ACCOUNTS);
-		modest_tny_account_store_get_accounts (account_store, list, TNY_ACCOUNT_STORE_TRANSPORT_ACCOUNTS);
+		modest_tny_account_store_get_accounts (account_store, list,
+						       TNY_ACCOUNT_STORE_STORE_ACCOUNTS);
+		modest_tny_account_store_get_accounts (account_store, list,
+						       TNY_ACCOUNT_STORE_TRANSPORT_ACCOUNTS);
 	}
 
 	accounts = modest_account_mgr_account_names (account_mgr, NULL); 
@@ -729,11 +731,9 @@ void
 modest_tny_account_store_set_get_pass_func (ModestTnyAccountStore *self,
 					    ModestTnyGetPassFunc func)
 {
-	g_message (__FUNCTION__);
-	return; /* not implemented, we use signals */
+	/* not implemented, we use signals */
+	g_printerr ("modest: set_get_pass_func not implemented\n");
 }
-
-
 
 TnySessionCamel*
 tny_account_store_get_session    (TnyAccountStore *self)
