@@ -54,6 +54,8 @@ typedef struct {
 	ModestServerAccountData *store_account;
 } ModestAccountData;
 
+
+
 /**
  * modest_account_mgr_get_account_data:
  * @self: a ModestAccountMgr instance
@@ -116,7 +118,6 @@ void       modest_account_mgr_free_account_data     (ModestAccountMgr *self,
  */
 gboolean modest_account_mgr_account_set_enabled (ModestAccountMgr *self, const gchar* name,
 						 gboolean enabled);
-
 
 /**
  * modest_account_mgr_account_get_enabled:

@@ -46,6 +46,7 @@
 #include <tny-error.h>
 #include <tny-simple-list.h>
 #include <tny-msg-view.h>
+#include <tny-device.h>
 
 #define MODEST_UI_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                        MODEST_TYPE_UI, \
@@ -529,7 +530,7 @@ static void
 reply_forward_func (gpointer data, gpointer user_data)
 {
 	ModestWidgetFactory *widget_factory;
-	TnyHeader *new_header;
+	//TnyHeader *new_header;
 	TnyMsg *msg, *new_msg;
 	TnyAccountStore *account_store;
 	GetMsgAsyncHelper *helper;
@@ -976,6 +977,8 @@ _modest_ui_actions_on_connection_changed (TnyDevice *device,
 	GtkWidget *online_toggle;
 	ModestHeaderView *header_view;
 	ModestWidgetFactory *widget_factory;
+
+	g_return_if_fail (main_window);
 	
 	widget_factory = modest_window_get_widget_factory (MODEST_WINDOW (main_window));
 	header_view   = modest_widget_factory_get_header_view (widget_factory);
