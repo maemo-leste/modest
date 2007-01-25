@@ -35,6 +35,7 @@
 #define __MODEST_TNY_FOLDER_H__
 
 #include <tny-folder.h>
+#include <modest-local-folder-info.h>
 
 G_BEGIN_DECLS
 
@@ -70,6 +71,29 @@ TnyFolderType  modest_tny_folder_guess_folder_type   (const TnyFolder *folder);
 TnyFolderType  modest_tny_folder_guess_folder_type_from_name   (const gchar *folder_name);
 
 
+
+/**
+ * modest_tny_folder_is_local_folder:
+ * @folder: a valid tnymail folder
+ * 
+ * checks if the folder is part of the "local folders" pseudo-account
+ *  
+ * Returns: TRUE if it's a local folder, FALSE otherwise
+ */
+gboolean modest_tny_folder_is_local_folder   (const TnyFolder *folder);
+
+/**
+ * modest_tny_folder_get_local_folder_type:
+ * @folder: a valid tnymail folder
+ * 
+ * checks if the folder is part of the "local folders" pseudo-account
+ *  
+ * Returns: TRUE if it's a local folder, FALSE otherwise
+ */
+TnyFolderType modest_tny_folder_get_local_folder_type  (const TnyFolder *folder);
+
+
+
 /**
  * modest_tny_folder_get_rules:
  * @folder: a valid tnymail folder
@@ -81,6 +105,11 @@ TnyFolderType  modest_tny_folder_guess_folder_type_from_name   (const gchar *fol
  * folder
  */
 ModestTnyFolderRules  modest_tny_folder_get_rules   (const TnyFolder *folder);
+
+
+
+
+
 
 G_END_DECLS
 

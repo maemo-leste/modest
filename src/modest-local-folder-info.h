@@ -34,18 +34,7 @@ G_BEGIN_DECLS
 
 #include <glib.h>
 #include <modest-defs.h>
-
-typedef enum {
-	MODEST_LOCAL_FOLDER_TYPE_UNKNOWN,
-	MODEST_LOCAL_FOLDER_TYPE_DRAFTS,
-	MODEST_LOCAL_FOLDER_TYPE_SENT,
-	MODEST_LOCAL_FOLDER_TYPE_OUTBOX,
-	MODEST_LOCAL_FOLDER_TYPE_ARCHIVE,
-	MODEST_LOCAL_FOLDER_TYPE_JUNK,
-	MODEST_LOCAL_FOLDER_TYPE_TRASH,	
-	MODEST_LOCAL_FOLDER_TYPE_NUM	
-} ModestLocalFolderType;
-
+#include <tny-folder.h>
 
 /**
  * modest_local_folder_info_get_type
@@ -58,7 +47,7 @@ typedef enum {
  * in case of error
  *
  */
-ModestLocalFolderType modest_local_folder_info_get_type (const gchar *name);
+TnyFolderType modest_local_folder_info_get_type (const gchar *name);
 
 /**
  * modest_local_folder_get_type_name
@@ -70,7 +59,7 @@ ModestLocalFolderType modest_local_folder_info_get_type (const gchar *name);
  * the returned name should NOT be freed or modified
  *
  */
-const gchar* modest_local_folder_info_get_type_name (ModestLocalFolderType type);
+const gchar* modest_local_folder_info_get_type_name (TnyFolderType type);
 
 /**
  * modest_local_folder_info_get_type_display_name
@@ -82,7 +71,7 @@ const gchar* modest_local_folder_info_get_type_name (ModestLocalFolderType type)
  * the returned name should NOT be freed or modified
  *
  */
-const gchar* modest_local_folder_info_get_type_display_name (ModestLocalFolderType type);
+const gchar* modest_local_folder_info_get_type_display_name (TnyFolderType type);
 
 
 /**

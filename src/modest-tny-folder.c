@@ -31,7 +31,8 @@
 #include <glib/gi18n.h>
 #include <string.h>
 #include <modest-tny-folder.h>
-
+#include <tny-camel-folder.h>
+#include <camel/camel-folder.h>
 
 TnyFolderType
 modest_tny_folder_guess_folder_type_from_name (const gchar* name)
@@ -105,4 +106,46 @@ modest_tny_folder_get_folder_rules   (const TnyFolder *folder)
 	
 	/* FIXME -- implement this */
 	return 0;
+}
+
+
+gboolean
+modest_tny_folder_is_local_folder   (const TnyFolder *folder)
+{
+	TnyAccount*  account;
+	const gchar* account_name;
+	
+	g_return_val_if_fail (folder, FALSE);
+	
+	account = tny_folder_get_account ((TnyFolder*)folder);
+	if (!account)
+		return FALSE;
+
+	account_name = tny_account_get_id (account);
+	if (!account_name)
+		return FALSE;
+
+	return (strcmp (account_name, MODEST_LOCAL_FOLDERS_ACCOUNT_NAME) == 0);
+}	
+
+
+TnyFolderType
+modest_tny_folder_get_local_folder_type  (const TnyFolder *folder)
+{
+	CamelFolder *camel_folder;
+	const gchar *full_name;
+	
+	g_return_val_if_fail (folder, TNY_FOLDER_TYPE_UNKNOWN);
+	g_return_val_if_fail (modest_tny_folder_is_local_folder(folder),
+			      TNY_FOLDER_TYPE_UNKNOWN);
+
+	camel_folder = tny_camel_folder_get_folder (TNY_CAMEL_FOLDER(folder));
+	if (!camel_folder)
+		return TNY_FOLDER_TYPE_UNKNOWN;
+
+	full_name = camel_folder_get_full_name (camel_folder);
+	if (!full_name)
+		return TNY_FOLDER_TYPE_UNKNOWN;
+
+	return modest_local_folder_info_get_type (full_name);
 }

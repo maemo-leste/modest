@@ -36,6 +36,7 @@
 #include <tny-account-store.h>
 #include <tny-account.h>
 #include <tny-folder.h>
+#include <tny-camel-folder.h>
 #include <modest-tny-folder.h>
 #include <modest-marshal.h>
 #include <modest-icon-names.h>
@@ -145,6 +146,7 @@ modest_folder_view_class_init (ModestFolderViewClass *klass)
 }
 
 
+
 static void
 text_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 		 GtkTreeModel *tree_model,  GtkTreeIter *iter,  gpointer data)
@@ -153,6 +155,7 @@ text_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 	gchar *fname;
 	gint unread;
 	TnyFolderType type;
+	TnyFolder *folder;
 	
 	g_return_if_fail (column);
 	g_return_if_fail (tree_model);
@@ -161,12 +164,29 @@ text_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 			    TNY_GTK_FOLDER_STORE_TREE_MODEL_NAME_COLUMN, &fname,
 			    TNY_GTK_FOLDER_STORE_TREE_MODEL_UNREAD_COLUMN, &unread,
 			    TNY_GTK_FOLDER_STORE_TREE_MODEL_TYPE_COLUMN, &type,
+			    TNY_GTK_FOLDER_STORE_TREE_MODEL_INSTANCE_COLUMN, &folder,
 			    -1);
 	rendobj = G_OBJECT(renderer);
 
 	if (!fname)
 		return;
-
+	
+	if (folder && type != TNY_FOLDER_TYPE_ROOT) { /* FIXME: tnymail bug? crashes with root folders */
+		if (modest_tny_folder_is_local_folder (folder)) {
+			TnyFolderType type;
+			type = modest_tny_folder_get_local_folder_type (folder);
+			if (type != TNY_FOLDER_TYPE_UNKNOWN) {
+				g_free (fname);
+				fname = g_strdup(modest_local_folder_info_get_type_display_name (type));
+			}
+		}
+	} else if (folder && type == TNY_FOLDER_TYPE_ROOT) {
+		if (strcmp (fname, MODEST_LOCAL_FOLDERS_ACCOUNT_NAME) == 0) {/* FIXME: hack */
+			g_free (fname);
+			fname = g_strdup (MODEST_LOCAL_FOLDERS_DISPLAY_NAME);
+		}
+	}
+			
 	if (unread > 0) {
 		gchar *folder_title = g_strdup_printf ("%s (%d)", fname, unread);
 		g_object_set (rendobj,"text", folder_title,  "weight", 800, NULL);
@@ -586,7 +606,6 @@ modest_folder_view_get_selected (ModestFolderView *self)
 	return priv->cur_folder;
 }
 
-	
 static gint
 cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 	  gpointer user_data)

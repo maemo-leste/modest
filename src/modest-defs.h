@@ -31,6 +31,7 @@
 #ifndef __MODEST_DEFS_H__
 #define __MODEST_DEFS_H__
 
+#include <glib/gi18n.h>
 
 /* exit codes for the modest executable*/
 enum {
@@ -56,6 +57,7 @@ enum {
 #define MODEST_CACHE_DIR                  "cache"
 #define MODEST_LOCAL_FOLDERS_MAILDIR      "local_folders"
 #define MODEST_LOCAL_FOLDERS_ACCOUNT_NAME "local_folders"
+#define MODEST_LOCAL_FOLDERS_DISPLAY_NAME N_("Local folders")
 
 /* configuration key definitions for modest */
 #define MODEST_CONF_NAMESPACE		"/apps/modest"
