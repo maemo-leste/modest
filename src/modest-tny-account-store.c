@@ -555,7 +555,8 @@ modest_tny_account_store_new (ModestAccountMgr *account_mgr) {
 		return NULL;
 	}
 	tny_session_camel_set_ui_locker (priv->tny_session_camel, tny_gtk_lockable_new ());
-	priv->local_folders = get_local_folders_account (obj); /* FIXME: unref this in the end? */
+	priv->local_folders = get_local_folders_account (MODEST_TNY_ACCOUNT_STORE(obj));
+	/* FIXME: unref this in the end? */
 	
 	/* Connect signals */
 	g_signal_connect (G_OBJECT(account_mgr), "account_changed",

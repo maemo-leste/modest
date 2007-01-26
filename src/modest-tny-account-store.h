@@ -38,6 +38,7 @@
 #include <tny-account-store.h>
 #include <tny-session-camel.h>
 #include <tny-shared.h>
+#include <tny-folder.h>
 #include <modest-account-mgr.h>
 
 /* other include files */
