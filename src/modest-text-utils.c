@@ -202,11 +202,17 @@ modest_text_utils_inline (const gchar *text,
 gsize
 modest_text_utils_strftime(char *s, gsize max, const char *fmt, time_t timet)
 {
-	static GDate date;
+	/* only since Gtk 2.10
+	 *
+	 *static GDate date;
+	 *g_date_set_time_t (&date, timet);
+	 *return g_date_strftime (s, max, fmt, (const GDate*) &date);
+	 */
 
-	g_date_set_time_t (&date, timet);
-
-	return g_date_strftime (s, max, fmt, (const GDate*) &date);
+	struct tm *time_tm;
+	time_tm = localtime (&timet);
+	
+	return strftime (s, max, fmt, time_tm);
 }
 
 gchar *
