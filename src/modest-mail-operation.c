@@ -807,7 +807,7 @@ modest_mail_operation_find_trash_folder (ModestMailOperation *self,
 	TnyIterator *iter;
 	gboolean found;
 	/*TnyFolderStoreQuery *query;*/
-	TnyFolder *trash_folder;
+	TnyFolder *trash_folder = NULL;
 
 	/* Look for Trash folder */
 	folders = TNY_LIST (tny_simple_list_new ());
@@ -898,7 +898,7 @@ modest_mail_operation_remove_msg (ModestMailOperation *self,
 		g_object_unref (G_OBJECT (store_account));
 	} else {
 		tny_folder_remove_msg (folder, header, NULL); /* FIXME */
-		tny_folder_expunge (folder, NULL); /* FIXME */
+		tny_folder_sync(folder, TRUE, NULL); /* FIXME */
 	}
 
 	/* Free */

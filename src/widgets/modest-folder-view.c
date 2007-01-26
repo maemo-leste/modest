@@ -561,7 +561,7 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 	g_signal_emit (G_OBJECT(tree_view), signals[FOLDER_SELECTION_CHANGED_SIGNAL], 0,
 		       folder, TRUE);
 	if (priv->cur_folder)
-		tny_folder_expunge (priv->cur_folder, NULL); /* FIXME */
+		tny_folder_sync (priv->cur_folder, TRUE, NULL); /* FIXME */
 	priv->cur_folder = folder;
 
 }
