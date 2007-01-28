@@ -171,8 +171,18 @@ modest_tny_account_store_instance_init (ModestTnyAccountStore *obj)
 }
 
 
-
-
+/* we need these dummy functions, or tinymail will complain */
+static gchar*
+get_password_dummy (TnyAccount *account, const gchar *prompt, gboolean *cancel)
+{
+	return NULL;
+}
+static void
+forget_password_dummy (TnyAccount *account)
+{
+	return;
+}
+	
 /* create a pseudo-account for our local folders */
 static TnyAccount*
 get_local_folders_account (ModestTnyAccountStore *self)
@@ -200,7 +210,9 @@ get_local_folders_account (ModestTnyAccountStore *self)
 	tny_account_set_url_string (TNY_ACCOUNT(tny_account), url_string);
 	tny_account_set_name (TNY_ACCOUNT(tny_account), MODEST_LOCAL_FOLDERS_ACCOUNT_NAME); 
 	tny_account_set_id (TNY_ACCOUNT(tny_account), MODEST_LOCAL_FOLDERS_ACCOUNT_NAME); 
-	
+	tny_account_set_pass_func (TNY_ACCOUNT(tny_account), get_password_dummy);
+        tny_account_set_forget_pass_func (TNY_ACCOUNT(tny_account), forget_password_dummy);
+
 	camel_url_free (url);
 	g_free (maildir);
 	g_free (url_string);
