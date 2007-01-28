@@ -96,10 +96,7 @@ modest_window_init (ModestWindow *obj)
 
 	priv = MODEST_WINDOW_GET_PRIVATE(obj);
 
-	priv->plat_factory  = modest_tny_platform_factory_get_instance ();
 	priv->ui_manager    = NULL;
-	priv->account_store = NULL;
-
 	priv->toolbar       = NULL;
 	priv->menubar       = NULL;
 }
@@ -115,34 +112,6 @@ modest_window_finalize (GObject *obj)
 		g_object_unref (G_OBJECT(priv->ui_manager));
 		priv->ui_manager = NULL;
 	}
-	if (priv->account_store) {
-		g_object_unref (G_OBJECT(priv->account_store));
-		priv->account_store = NULL;
-	}
 
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
-}
-
-TnyAccountStore * 
-modest_window_get_account_store (ModestWindow *window)
-{
-	ModestWindowPrivate *priv;
-	
-	g_return_val_if_fail (MODEST_IS_WINDOW (window), NULL);
-
-	priv = MODEST_WINDOW_GET_PRIVATE (window);
-
-	return g_object_ref (priv->account_store);
-}
-
-ModestWidgetFactory *
-modest_window_get_widget_factory (ModestWindow *window)
-{
-	ModestWindowPrivate *priv;
-	
-	g_return_val_if_fail (MODEST_IS_WINDOW (window), NULL);
-
-	priv = MODEST_WINDOW_GET_PRIVATE (window);
-
-	return g_object_ref (priv->widget_factory);
 }

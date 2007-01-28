@@ -31,23 +31,7 @@
 /* modest-icon-factory.c */
 
 #include <modest-icon-factory.h>
-#include <modest-tny-platform-factory.h>
-
-static GHashTable*
-get_icon_cache (void)
-{
-	TnyPlatformFactory *fakt;
-	ModestCacheMgr     *cache_mgr;
-
-	fakt = modest_tny_platform_factory_get_instance ();
-	
-	cache_mgr =  modest_tny_platform_factory_get_cache_mgr_instance
-		(MODEST_TNY_PLATFORM_FACTORY(fakt));
-
-	return modest_cache_mgr_get_cache (cache_mgr,
-					   MODEST_CACHE_MGR_CACHE_TYPE_PIXBUF);
-}
-
+#include <modest-runtime.h>
 
 GdkPixbuf*
 modest_icon_factory_get_icon (const gchar *name)
@@ -60,7 +44,8 @@ modest_icon_factory_get_icon (const gchar *name)
 	g_return_val_if_fail (name, NULL);
 
 	if (G_UNLIKELY(!icon_cache))
-		icon_cache = get_icon_cache ();
+		icon_cache = modest_cache_mgr_get_cache (modest_runtime_get_cache_mgr(),
+							 MODEST_CACHE_MGR_CACHE_TYPE_PIXBUF);
 	
 	if (!icon_cache || !g_hash_table_lookup_extended (icon_cache, name, &orig_key,
 							  (gpointer*)&pixbuf)) {

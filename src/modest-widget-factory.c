@@ -42,6 +42,7 @@
 
 #include <modest-account-mgr.h>
 #include <modest-account-mgr-helpers.h>
+#include <modest-runtime.h>
 
 #include "modest-mail-operation.h"
 #include "widgets/modest-header-view-priv.h"
@@ -60,10 +61,9 @@ enum {
 };
 
 typedef struct _ModestWidgetFactoryPrivate ModestWidgetFactoryPrivate;
-struct _ModestWidgetFactoryPrivate {
-	
-	TnyPlatformFactory          *fact;
-	TnyAccountStore             *account_store;
+struct _ModestWidgetFactoryPrivate {	
+
+	ModestTnyAccountStore       *account_store;
 	
 	ModestHeaderView            *header_view;
 	ModestFolderView            *folder_view;
@@ -125,9 +125,8 @@ modest_widget_factory_init (ModestWidgetFactory *obj)
 {
 	ModestWidgetFactoryPrivate *priv;
 	priv = MODEST_WIDGET_FACTORY_GET_PRIVATE(obj);
-
-	priv->fact          = modest_tny_platform_factory_get_instance ();
-	priv->account_store = tny_platform_factory_new_account_store (priv->fact);
+	
+	priv->account_store = NULL;
 	
 	priv->progress_bar = gtk_progress_bar_new ();
 	gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR(priv->progress_bar),
@@ -141,9 +140,8 @@ modest_widget_factory_init (ModestWidgetFactory *obj)
 static void
 modest_widget_factory_finalize (GObject *obj)
 {
-	ModestWidgetFactoryPrivate *priv;
-	priv = MODEST_WIDGET_FACTORY_GET_PRIVATE(obj);
-
+	/* no need to unref account_store; we don't own the reference */
+	
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
@@ -159,28 +157,28 @@ init_widgets (ModestWidgetFactory *self)
 	/* folder view */
 	query = tny_folder_store_query_new ();
 	tny_folder_store_query_add_item (query, NULL, TNY_FOLDER_STORE_QUERY_OPTION_SUBSCRIBED);
-	if (!(priv->folder_view =
-	      MODEST_FOLDER_VIEW(modest_folder_view_new (MODEST_TNY_ACCOUNT_STORE (priv->account_store),
-							 query)))) {
+
+	priv->folder_view =  MODEST_FOLDER_VIEW(modest_folder_view_new (priv->account_store,query));
+	if (!priv->folder_view) {
 		g_printerr ("modest: cannot instantiate folder view\n");
 		return FALSE;
-	}
+	}	
 	g_object_unref (G_OBJECT (query));
-
+	
 	/* header view */
-	if (!(priv->header_view =
-	      MODEST_HEADER_VIEW(modest_header_view_new (NULL,MODEST_HEADER_VIEW_STYLE_DETAILS)))) {
+	priv->header_view =
+		MODEST_HEADER_VIEW(modest_header_view_new (NULL, MODEST_HEADER_VIEW_STYLE_DETAILS));
+	if (!priv->header_view) {
 		g_printerr ("modest: cannot instantiate header view\n");
 		return FALSE;
 	}
 		
 	/* msg preview */
-	if (!(priv->msg_preview = MODEST_MSG_VIEW(modest_msg_view_new (NULL)))) {
+	priv->msg_preview = MODEST_MSG_VIEW(modest_msg_view_new (NULL));
+	if (!priv->msg_preview) {
 		g_printerr ("modest: cannot instantiate header view\n");
 		return FALSE;
 	}
-
-
 
 	/* online/offline combo */
 	priv->online_toggle = gtk_toggle_button_new ();
@@ -189,20 +187,22 @@ init_widgets (ModestWidgetFactory *self)
 	   the current folder */
 	priv->folder_info_label = gtk_label_new (NULL);
 	
-/* 	init_signals (self); */
-	
 	return TRUE;
 }
 
 
 ModestWidgetFactory*
-modest_widget_factory_new (void)
+modest_widget_factory_new (ModestTnyAccountStore *account_store)
 {
 	GObject *obj;
 	ModestWidgetFactoryPrivate *priv;
 
+	g_return_val_if_fail (account_store, NULL);
+	
 	obj  = g_object_new (MODEST_TYPE_WIDGET_FACTORY, NULL);	
 	priv = MODEST_WIDGET_FACTORY_GET_PRIVATE(obj);
+	
+	priv->account_store = account_store;
 	
 	if (!init_widgets (MODEST_WIDGET_FACTORY(obj))) {
 		g_printerr ("modest: widget factory failed to init widgets\n");
@@ -243,15 +243,7 @@ modest_widget_factory_get_msg_preview (ModestWidgetFactory *self)
 ModestAccountView*
 modest_widget_factory_get_account_view (ModestWidgetFactory *self)
 {
-	ModestWidgetFactoryPrivate *priv;
-	ModestAccountMgr *account_mgr;
-	
-	g_return_val_if_fail (self, NULL);
-	priv =  MODEST_WIDGET_FACTORY_GET_PRIVATE(self);
-
-	account_mgr = modest_tny_platform_factory_get_account_mgr_instance
-		(MODEST_TNY_PLATFORM_FACTORY(priv->fact));
-	return modest_account_view_new (account_mgr);
+	return modest_account_view_new (modest_runtime_get_account_mgr());
 }
 
 
@@ -283,9 +275,7 @@ get_transports (ModestWidgetFactory *self)
 	
 	priv = MODEST_WIDGET_FACTORY_GET_PRIVATE(self);
 
-	account_mgr =
-		modest_tny_platform_factory_get_account_mgr_instance
-		(MODEST_TNY_PLATFORM_FACTORY(priv->fact));
+	account_mgr = modest_runtime_get_account_mgr();
 	cursor = accounts = modest_account_mgr_account_names (account_mgr, NULL);
 	while (cursor) {
 		ModestAccountData *data;

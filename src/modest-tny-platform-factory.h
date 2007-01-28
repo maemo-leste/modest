@@ -33,12 +33,7 @@
 #define __MODEST_TNY_PLATFORM_FACTORY_H__
 
 #include <glib-object.h>
-
 #include <tny-platform-factory.h>
-#include <modest-account-mgr.h>
-#include <modest-conf.h>
-#include <modest-mail-operation-queue.h>
-#include <modest-cache-mgr.h>
 
 G_BEGIN_DECLS
 
@@ -61,7 +56,14 @@ struct _ModestTnyPlatformFactoryClass {
 	GObjectClass parent_class;
 };
 
-/* member functions */
+
+/**
+ * modest_tny_platform_factory_get_type:
+ * 
+ * get the GType for #ModestTnyPlatformFactory
+ *  
+ * Returns: the GType for #ModestTnyPlatformFactory
+ */
 GType        modest_tny_platform_factory_get_type    (void) G_GNUC_CONST;
 
 /**
@@ -74,58 +76,6 @@ GType        modest_tny_platform_factory_get_type    (void) G_GNUC_CONST;
  * Returns: the instance of a #ModestTnyPlatformFactory
  **/
 TnyPlatformFactory*    modest_tny_platform_factory_get_instance         (void);
-
-/**
- * modest_tny_platform_factory_get_account_mgr_instance:
- * @fact: the #TnyPlatformFactory that holds the #ModestAccountMgr instance
- * 
- * Gets a new instance of a #ModestAccountMgr if it is the first call
- * to the function, or the current instantiated one otherwise. This
- * object is supposed to be a singleton
- * 
- * Returns: an instance of a #ModestAccountMgr
- **/
-ModestAccountMgr*  modest_tny_platform_factory_get_account_mgr_instance (ModestTnyPlatformFactory *fact);
-
-/**
- * modest_tny_platform_factory_get_conf_instance:
- * @fact: the #TnyPlatformFactory that holds the #ModestConf instance
- * 
- * Gets a new instance of a #ModestConf if it is the first call to the
- * function, or the current instantiated one otherwise. This object is
- * supposed to be a singleton
- * 
- * Returns: an instance of a #ModestConf
- **/
-ModestConf*     modest_tny_platform_factory_get_conf_instance (ModestTnyPlatformFactory *fact);
-
-/**
- * modest_tny_platform_factory_get_mail_operation_queue_instance:
- * @fact: the #TnyPlatformFactory that holds the #ModestMailOperationQueue instance
- * 
- * Gets a new instance of a #ModestMailOperationQueue if it is the
- * first call to the function, or the current instantiated one
- * otherwise. This object is supposed to be a singleton
- * 
- * Returns: an instance of a #ModestMailOperationQueue
- **/
-ModestMailOperationQueue*   modest_tny_platform_factory_get_mail_operation_queue_instance (ModestTnyPlatformFactory *fact);
-
-
-/**
- * modest_tny_platform_factory_get_cache_mgr_instance:
- * @fact: the #TnyPlatformFactory that holds the #ModestCacheMgr instance
- * 
- * Gets a new instance of a #ModestCacheMgr if it is the
- * first call to the function, or the current instantiated one
- * otherwise. This object is supposed to be a singleton
- * 
- * Returns: an instance of a #ModestCacheMgr.
- **/
-ModestCacheMgr*   modest_tny_platform_factory_get_cache_mgr_instance (ModestTnyPlatformFactory *fact);
-
-
-
 
 G_END_DECLS
 

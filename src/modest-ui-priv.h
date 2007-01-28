@@ -39,8 +39,6 @@ G_BEGIN_DECLS
 
 typedef struct _ModestUIPrivate ModestUIPrivate;
 struct _ModestUIPrivate {
-	ModestWidgetFactory  *widget_factory;	
-	TnyAccountStore      *account_store;
 	ModestWindow         *main_window;
 	GtkUIManager         *ui_manager;
 };

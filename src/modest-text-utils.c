@@ -34,7 +34,8 @@
 #include <glib/gi18n.h>
 #include <regex.h>
 #include <modest-tny-platform-factory.h>
-#include "modest-text-utils.h"
+#include <modest-text-utils.h>
+#include <modest-runtime.h>
 
 
 #ifdef HAVE_CONFIG_H
@@ -766,15 +767,7 @@ modest_text_utils_utf8_strcmp (const gchar* s1, const gchar *s2, gboolean insens
 static GHashTable*
 get_display_date_cache (void)
 {
-	TnyPlatformFactory *fakt;
-	ModestCacheMgr     *cache_mgr;
-
-	fakt = modest_tny_platform_factory_get_instance ();
-	
-	cache_mgr =  modest_tny_platform_factory_get_cache_mgr_instance
-		(MODEST_TNY_PLATFORM_FACTORY(fakt));
-	
-	return modest_cache_mgr_get_cache (cache_mgr,
+	return modest_cache_mgr_get_cache (modest_runtime_get_cache_mgr (),
 					   MODEST_CACHE_MGR_CACHE_TYPE_DATE_STRING);
 }
 

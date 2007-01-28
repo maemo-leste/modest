@@ -31,8 +31,7 @@
 #define __MODEST_EDIT_MSG_WINDOW_H__
 
 #include <tny-msg.h>
-#include "modest-window.h"
-#include "modest-widget-factory.h"
+#include <modest-window.h>
 
 G_BEGIN_DECLS
 
@@ -58,8 +57,7 @@ struct _ModestEditMsgWindowClass {
 	/* void (* my_event) (ModestEditMsgWindow* obj); */
 };
 
-
-typedef enum _ModestEditType {
+typedef enum  {
 	MODEST_EDIT_TYPE_NEW,
 	MODEST_EDIT_TYPE_REPLY,
 	MODEST_EDIT_TYPE_FORWARD,
@@ -71,15 +69,27 @@ typedef enum _ModestEditType {
 typedef struct _MsgData {
 	gchar *from, *to, *cc, *bcc, *subject, *body;
 } MsgData;
-/* typedef enum _ModestEditType ModestEditType; */
 
 
-/* member functions */
+/**
+ * modest_edit_msg_window_get_type:
+ * 
+ * get the GType for the #ModestEditMsgWindow class
+ *
+ * Returns: a GType for #ModestEditMsgWindow
+ */
 GType        modest_edit_msg_window_get_type    (void) G_GNUC_CONST;
 
-ModestWindow*   modest_edit_msg_window_new         (ModestWidgetFactory *factory,
-						    TnyAccountStore *account_store,
-						    ModestEditType type);
+
+/**
+ * modest_edit_msg_window_new:
+ * 
+ * instantiates a new #ModestEditMsgWindow widget
+ *
+ * Returns: a new #ModestEditMsgWindow, or NULL in case of error
+ */
+ModestWindow*   modest_edit_msg_window_new         (ModestEditType type);
+
 
 /**
  * modest_edit_msg_window_set_msg:
@@ -94,7 +104,7 @@ void         modest_edit_msg_window_set_msg     (ModestEditMsgWindow *self,
 
 /**
  * modest_edit_msg_window_get_msg_data:
- * @edit_window: a #ModestEditMsgWindow
+ * @self: a #ModestEditMsgWindow
  * 
  * gets the message data already present in the edit message
  * window. The message data must be freed with
@@ -102,18 +112,17 @@ void         modest_edit_msg_window_set_msg     (ModestEditMsgWindow *self,
  * 
  * Returns: the message data
  **/
-MsgData *               modest_edit_msg_window_get_msg_data          (ModestEditMsgWindow *edit_window);
+MsgData *               modest_edit_msg_window_get_msg_data          (ModestEditMsgWindow *self);
 
 /**
  * modest_edit_msg_window_free_msg_data:
- * @edit_window: a #ModestEditMsgWindow
+ * @self: a #ModestEditMsgWindow
  * @data: 
  * 
  * frees the message data passed as argument
  **/
-void                    modest_edit_msg_window_free_msg_data         (ModestEditMsgWindow *edit_window,
+void                    modest_edit_msg_window_free_msg_data         (ModestEditMsgWindow *self,
 								      MsgData *data);
-
 G_END_DECLS
 
 #endif /* __MODEST_EDIT_MSG_WINDOW_H__ */

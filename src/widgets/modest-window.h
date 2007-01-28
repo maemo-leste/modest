@@ -76,29 +76,6 @@ struct _ModestWindowClass {
 /* member functions */
 GType        modest_window_get_type    (void) G_GNUC_CONST;
 
-/**
- * modest_window_get_account_store:
- * @window: a #ModestWindow
- * 
- * gets a new reference to the account store associated with the main
- * window. The caller must free the returned instance
- * 
- * Returns: the account store
- **/
-TnyAccountStore*        modest_window_get_account_store     (ModestWindow *window);
-
-/**
- * modest_window_get_widget_factory:
- * @window: a #ModestWindow
- * 
- * gets a reference to the #ModestWidgetFactory associated with the
- * Modest Window. The caller must free the returned instance
- * 
- * Returns: the widget factory
- **/
-ModestWidgetFactory*    modest_window_get_widget_factory    (ModestWindow *window);
-
-
 G_END_DECLS
 
 #endif /* __MODEST_WINDOW_H__ */

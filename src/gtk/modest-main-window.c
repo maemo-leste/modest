@@ -29,6 +29,7 @@
 
 #include <glib/gi18n.h>
 #include <gtk/gtktreeviewcolumn.h>
+#include <modest-runtime.h>
 
 #include "modest-main-window.h"
 #include "modest-window-priv.h"
@@ -166,12 +167,12 @@ static ModestHeaderView*
 header_view_new (ModestMainWindow *self)
 {
 	ModestHeaderView *header_view;
-	ModestWindowPrivate *parent_priv;
-
-	parent_priv = MODEST_WINDOW_GET_PRIVATE(self);
 	
-	header_view = modest_widget_factory_get_header_view (parent_priv->widget_factory);
-	modest_header_view_set_style (header_view, MODEST_HEADER_VIEW_STYLE_DETAILS);
+	header_view = modest_widget_factory_get_header_view
+		(modest_runtime_get_widget_factory());
+	modest_header_view_set_style
+		(header_view, MODEST_HEADER_VIEW_STYLE_DETAILS);
+
 	return header_view;
 }
 
@@ -186,9 +187,8 @@ restore_sizes (ModestMainWindow *self)
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
 	parent_priv = MODEST_WINDOW_GET_PRIVATE(self);
 
-	conf = modest_tny_platform_factory_get_conf_instance
-		(MODEST_TNY_PLATFORM_FACTORY(parent_priv->plat_factory));
-
+	conf = modest_runtime_get_conf ();
+	
 	modest_widget_memory_restore (conf, G_OBJECT(priv->folder_paned),
 				      "modest-folder-paned");
 	modest_widget_memory_restore (conf, G_OBJECT(priv->msg_paned),
@@ -212,8 +212,7 @@ save_sizes (ModestMainWindow *self)
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
 	parent_priv = MODEST_WINDOW_GET_PRIVATE(self);
 
-	conf = modest_tny_platform_factory_get_conf_instance
-		(MODEST_TNY_PLATFORM_FACTORY(parent_priv->plat_factory));
+	conf = modest_runtime_get_conf ();
 	
 	modest_widget_memory_save (conf,G_OBJECT(self), "modest-main-window");
 	modest_widget_memory_save (conf, G_OBJECT(priv->folder_paned),
@@ -255,8 +254,7 @@ on_delete_event (GtkWidget *widget, GdkEvent  *event, ModestMainWindow *self)
 
 
 ModestWindow *
-modest_main_window_new (ModestWidgetFactory *widget_factory,
-			TnyAccountStore *account_store)
+modest_main_window_new (void)
 {
 	GObject *obj;
 	ModestMainWindowPrivate *priv;
@@ -264,22 +262,21 @@ modest_main_window_new (ModestWidgetFactory *widget_factory,
 	GtkWidget *main_vbox;
 	GtkWidget *status_hbox;
 	GtkWidget *header_win, *folder_win;
+	ModestWidgetFactory *widget_factory;
 	GtkActionGroup *action_group;
 	GError *error = NULL;
 	
-	g_return_val_if_fail (widget_factory, NULL);
-
+	
 	obj  = g_object_new(MODEST_TYPE_MAIN_WINDOW, NULL);
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(obj);
 	parent_priv = MODEST_WINDOW_GET_PRIVATE(obj);
-
-	parent_priv->widget_factory = g_object_ref (widget_factory);
-	parent_priv->account_store  = g_object_ref (account_store);
-
+	
 	/* ***************** */
 	parent_priv->ui_manager = gtk_ui_manager_new();
 	action_group = gtk_action_group_new ("ModestMainWindowActions");
 
+	widget_factory = modest_runtime_get_widget_factory ();
+	
 	/* Add common actions */
 	gtk_action_group_add_actions (action_group,
 				      modest_action_entries,
@@ -292,7 +289,7 @@ modest_main_window_new (ModestWidgetFactory *widget_factory,
 	/* Load the UI definition */
 	gtk_ui_manager_add_ui_from_file (parent_priv->ui_manager, MODEST_UIDIR "modest-ui.xml", &error);
 	if (error != NULL) {
-		g_warning ("Could not merge modest-ui.xml: %s", error->message);
+		g_printerr ("modest: could not merge modest-ui.xml: %s", error->message);
 		g_error_free (error);
 		error = NULL;
 	}
@@ -301,7 +298,6 @@ modest_main_window_new (ModestWidgetFactory *widget_factory,
 	/* Add accelerators */
 	gtk_window_add_accel_group (GTK_WINDOW (obj), 
 				    gtk_ui_manager_get_accel_group (parent_priv->ui_manager));
-
 
 	/* Toolbar / Menubar */
 	parent_priv->toolbar = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar");
@@ -336,7 +332,6 @@ modest_main_window_new (ModestWidgetFactory *widget_factory,
 			  "popup-menu",
 			  G_CALLBACK (on_folder_view_button_press_event),
 			  obj);
-
 
 	/* paned */
 	priv->folder_paned = gtk_vpaned_new ();

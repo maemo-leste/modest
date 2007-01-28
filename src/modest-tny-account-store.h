@@ -99,8 +99,6 @@ ModestTnyAccountStore*    modest_tny_account_store_new (ModestAccountMgr *accoun
  */
 TnySessionCamel*    tny_account_store_get_session    (TnyAccountStore *self);
 
-
-
 /**
  * tny_account_store_get_local_folders_account 
  * @self: a ModestTnyAccountStore instance
@@ -110,20 +108,6 @@ TnySessionCamel*    tny_account_store_get_session    (TnyAccountStore *self);
  * Returns: the tnyaccount for the local folders
  */
 TnyAccount*    modest_tny_account_store_get_local_folders_account    (ModestTnyAccountStore *self);
-
-
-/**
- * tny_account_store_get_special_folder
- * @self: a ModestTnyAccountStore instance
- * @type: some tny folder type
- * 
- * get the special (Inbox,Outbox,Sent,Draft etc.) folder for this account
- *
- * Returns: the tny folder corresponding to this special folder, or NULL
- */
-TnyFolder*    modest_tny_account_store_get_special_folder   (ModestTnyAccountStore *self,
-							     TnyAccount *account,
-							     TnyFolderType special_type);
 
 G_END_DECLS
 

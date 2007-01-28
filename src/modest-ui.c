@@ -33,6 +33,7 @@
 
 #include <glib/gi18n.h>
 #include <string.h>
+#include <modest-runtime.h>
 #include "modest-ui-priv.h"
 #include "modest-ui.h"
 #include "modest-ui-actions.h"
@@ -144,9 +145,7 @@ modest_ui_init (ModestUI *obj)
 
 	priv = MODEST_UI_GET_PRIVATE(obj);
 
-	priv->widget_factory = NULL;
 	priv->main_window    = NULL;
-	priv->account_store  = NULL;
 }
 
 
@@ -155,50 +154,26 @@ modest_ui_finalize (GObject *obj)
 {
 	ModestUIPrivate *priv = MODEST_UI_GET_PRIVATE(obj);
 	
-	if (priv->widget_factory) {
-		g_object_unref (G_OBJECT(priv->widget_factory));
-		priv->widget_factory = NULL;
-	}
-
 	if (priv->ui_manager) {
 		g_object_unref (G_OBJECT(priv->ui_manager));
 		priv->ui_manager = NULL;
 	}
+
+	priv->main_window = NULL;
 
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
 
 ModestUI*
-modest_ui_new (TnyAccountStore *account_store)
+modest_ui_new (void)
 {
 	GObject *obj;
 	ModestUIPrivate *priv;
-	TnyPlatformFactory *fact;
-	ModestAccountMgr *account_mgr;
 
 	obj  = g_object_new(MODEST_TYPE_UI, NULL);
 	priv = MODEST_UI_GET_PRIVATE(obj);
-
-	/* Get the platform-dependent instances */
-	fact = modest_tny_platform_factory_get_instance ();
 	
-	priv->account_store = account_store;
-
-	account_mgr = modest_tny_platform_factory_get_account_mgr_instance
-		(MODEST_TNY_PLATFORM_FACTORY(fact));
-	if (!account_mgr) {
-		g_printerr ("modest: could not create ModestAccountMgr instance\n");
-		g_object_unref (obj);
-		return NULL;
-        }
-
-	priv->widget_factory = modest_widget_factory_new ();
-	if (!priv->widget_factory) {
-		g_printerr ("modest: could not initialize widget factory\n");
-		return NULL;
-	}
-
 	/* Register our own icons as stock icons in order to
 	   use them with the UI manager */
 	register_stock_icons ();
@@ -224,11 +199,7 @@ modest_ui_main_window (ModestUI *self)
 	priv = MODEST_UI_GET_PRIVATE(self);
 
 	if (!priv->main_window) {
-
-		/* Create main window */
-		priv->main_window = modest_main_window_new (priv->widget_factory,
-							    priv->account_store);
-
+		priv->main_window = modest_main_window_new ();
 		connect_signals (self);
 	}
 		
@@ -248,9 +219,7 @@ modest_ui_edit_window (ModestUI *self, ModestEditType edit_type)
 	priv = MODEST_UI_GET_PRIVATE(self);
 
 	/* Create window */
-	edit_window = modest_edit_msg_window_new (priv->widget_factory, 
-						  priv->account_store,
-						  edit_type);
+	edit_window = modest_edit_msg_window_new (edit_type);
 	
 	/* Connect Edit Window signals */
 /* 	connect_edit_window_signals (self); */
@@ -342,14 +311,18 @@ connect_signals (ModestUI *self)
 	ModestHeaderView *header_view;
 	ModestMsgView *msg_view;
 	GtkWidget *toggle;
+	ModestWidgetFactory *widget_factory;
 	
 	priv = MODEST_UI_GET_PRIVATE(self);
 
-	folder_view = modest_widget_factory_get_folder_view (priv->widget_factory);
-	header_view = modest_widget_factory_get_header_view (priv->widget_factory);
-	msg_view    = modest_widget_factory_get_msg_preview (priv->widget_factory);
-	toggle      = modest_widget_factory_get_online_toggle (priv->widget_factory);
-	device      = tny_account_store_get_device (priv->account_store);
+	widget_factory = modest_runtime_get_widget_factory (); 
+	
+	folder_view = modest_widget_factory_get_folder_view (widget_factory);
+	header_view = modest_widget_factory_get_header_view (widget_factory);
+	msg_view    = modest_widget_factory_get_msg_preview (widget_factory);
+	toggle      = modest_widget_factory_get_online_toggle (widget_factory);
+	device      = tny_account_store_get_device
+		(TNY_ACCOUNT_STORE(modest_runtime_get_account_store()));
 
 	/* folder view */
 	g_signal_connect (G_OBJECT(folder_view), "folder_selection_changed",
@@ -438,10 +411,9 @@ _modest_ui_actions_on_delete (GtkWidget *widget,
 	TnyIterator *iter;
 	GtkTreeModel *model;
 
-	widget_factory = modest_window_get_widget_factory (MODEST_WINDOW (main_window));
+	widget_factory = modest_runtime_get_widget_factory ();
 	header_view = modest_widget_factory_get_header_view (widget_factory);
 	header_list = modest_header_view_get_selected_headers (header_view);
-	g_object_unref (G_OBJECT(widget_factory));
 	
 	if (header_list) {
 		iter = tny_list_create_iterator (header_list);
@@ -492,14 +464,10 @@ _modest_ui_actions_on_quit (GtkWidget *widget,
 
 void
 _modest_ui_actions_on_accounts (GtkWidget *widget, 
-			       ModestMainWindow *main_window)
+				ModestMainWindow *main_window)
 {
 	GtkWidget *account_win;
-	ModestWidgetFactory *widget_factory;
-
-	widget_factory = modest_window_get_widget_factory (MODEST_WINDOW (main_window));
-	account_win = modest_account_view_window_new (widget_factory);
-	g_object_unref (G_OBJECT(widget_factory));
+	account_win = modest_account_view_window_new (modest_runtime_get_widget_factory());
 
 	gtk_window_set_transient_for (GTK_WINDOW (account_win),
 				      GTK_WINDOW (main_window));
@@ -512,27 +480,14 @@ _modest_ui_actions_on_new_msg (GtkWidget *widget,
 			       ModestMainWindow *main_window)
 {
 	ModestWindow *msg_win;
-	ModestWidgetFactory *widget_factory;
-	TnyAccountStore *account_store;
-
-	widget_factory = modest_window_get_widget_factory (MODEST_WINDOW (main_window));
-	account_store = modest_window_get_account_store (MODEST_WINDOW (main_window));
-	msg_win = modest_edit_msg_window_new (widget_factory, 
-					      account_store,
-					      MODEST_EDIT_TYPE_NEW);
-	g_object_unref (G_OBJECT (widget_factory));
-	g_object_unref (G_OBJECT (account_store));
-
+	msg_win = modest_edit_msg_window_new (MODEST_EDIT_TYPE_NEW);
 	gtk_widget_show_all (GTK_WIDGET (msg_win));
 }
 
 static void
 reply_forward_func (gpointer data, gpointer user_data)
 {
-	ModestWidgetFactory *widget_factory;
-	//TnyHeader *new_header;
 	TnyMsg *msg, *new_msg;
-	TnyAccountStore *account_store;
 	GetMsgAsyncHelper *helper;
 	ReplyForwardHelper *rf_helper;
 	ModestWindow *msg_win;
@@ -570,21 +525,9 @@ reply_forward_func (gpointer data, gpointer user_data)
 		g_warning ("Unable to create a message");
 		goto cleanup;
 	}
-
-/* 	/\* Set from *\/ */
-/* 	new_header = tny_msg_get_header (new_msg); */
-/* 	tny_header_set_from (new_header, rf_helper->from); */
-/* 	g_object_unref (G_OBJECT (new_header)); */
 		
 	/* Show edit window */
-	widget_factory = modest_window_get_widget_factory (MODEST_WINDOW (helper->main_window));
-	account_store = modest_window_get_account_store (MODEST_WINDOW (helper->main_window));
-	msg_win = modest_edit_msg_window_new (widget_factory, 
-					      account_store,
-					      MODEST_EDIT_TYPE_NEW);
-	g_object_unref (G_OBJECT (widget_factory));
-	g_object_unref (G_OBJECT (account_store));
-
+	msg_win = modest_edit_msg_window_new (MODEST_EDIT_TYPE_NEW);
 	modest_edit_msg_window_set_msg (MODEST_EDIT_MSG_WINDOW (msg_win),
 					new_msg);
 	gtk_widget_show_all (GTK_WIDGET (msg_win));
@@ -607,23 +550,18 @@ reply_forward (GtkWidget *widget,
 {
 	ModestHeaderView *header_view;
 	ModestAccountMgr *account_mgr;
-	ModestWidgetFactory *widget_factory;
 	TnyList *header_list;
 	guint reply_forward_type;
 	ModestConf *conf;	
 	ModestAccountData *default_account_data;
-	TnyPlatformFactory *plat_factory;
 	TnyHeader *header;
 	TnyFolder *folder;
 	gchar *from, *key, *default_account_name;
 	GetMsgAsyncHelper *helper;
 	ReplyForwardHelper *rf_helper;
 
-	/* Get ModestConf */
-	plat_factory = modest_tny_platform_factory_get_instance ();
-	conf = modest_tny_platform_factory_get_conf_instance
-		(MODEST_TNY_PLATFORM_FACTORY(plat_factory));
-
+	conf = modest_runtime_get_conf ();
+	
 	/* Get reply or forward type */
 	key = g_strdup_printf ("%s/%s", MODEST_CONF_NAMESPACE, 
 			       (action == ACTION_FORWARD) ? MODEST_CONF_FORWARD_TYPE : MODEST_CONF_REPLY_TYPE);
@@ -631,11 +569,8 @@ reply_forward (GtkWidget *widget,
 	g_free (key);
 
 	/* Get the list of headers */
-	widget_factory = modest_window_get_widget_factory (MODEST_WINDOW (main_window));
-	header_view = modest_widget_factory_get_header_view (widget_factory);
-	header_list = modest_header_view_get_selected_headers (header_view);
-	g_object_unref (G_OBJECT(widget_factory));
-
+	header_view = modest_widget_factory_get_header_view (modest_runtime_get_widget_factory());
+	header_list = modest_header_view_get_selected_headers (header_view);	
 	if (!header_list)
 		return;
 
@@ -643,8 +578,7 @@ reply_forward (GtkWidget *widget,
 	   same folder and that we reply all of them from the
 	   same account. In fact the interface currently only
 	   allows single selection */
-	account_mgr = modest_tny_platform_factory_get_account_mgr_instance
-		(MODEST_TNY_PLATFORM_FACTORY(plat_factory));
+	account_mgr = modest_runtime_get_account_mgr();
 	default_account_name = modest_account_mgr_get_default_account (account_mgr);
 	default_account_data = 
 		modest_account_mgr_get_account_data (account_mgr,
@@ -701,11 +635,9 @@ _modest_ui_actions_on_next (GtkWidget *widget,
 			   ModestMainWindow *main_window)
 {
 	ModestHeaderView *header_view;
-	ModestWidgetFactory *widget_factory;
 
-	widget_factory = modest_window_get_widget_factory (MODEST_WINDOW (main_window));
-	header_view = modest_widget_factory_get_header_view (widget_factory);
-	g_object_unref (G_OBJECT(widget_factory));
+	header_view = modest_widget_factory_get_header_view
+		(modest_runtime_get_widget_factory());
 
 	modest_header_view_select_next (header_view);
 }
@@ -714,19 +646,14 @@ void
 _modest_ui_actions_toggle_view (GtkWidget *widget,
 				ModestMainWindow *main_window)
 {
-	ModestHeaderView *header_view;
-	ModestWidgetFactory *widget_factory;
 	ModestConf *conf;
-	TnyPlatformFactory *plat_factory;
+	ModestHeaderView *header_view;
 
-	/* Get ModestConf */
-	plat_factory = modest_tny_platform_factory_get_instance ();
-	conf = modest_tny_platform_factory_get_conf_instance
-		(MODEST_TNY_PLATFORM_FACTORY(plat_factory));
-	widget_factory = modest_window_get_widget_factory (MODEST_WINDOW (main_window));
-	header_view = modest_widget_factory_get_header_view (widget_factory);
-	g_object_unref (G_OBJECT(widget_factory));
+	header_view = modest_widget_factory_get_header_view
+		(modest_runtime_get_widget_factory());
 
+	conf = modest_runtime_get_conf ();
+	
 	/* what is saved/restored is depending on the style; thus; we save with
 	 * old style, then update the style, and restore for this new style*/
 	modest_widget_memory_save (conf, G_OBJECT(header_view), "header-view");
@@ -748,7 +675,6 @@ static void
 read_msg_func (gpointer data, gpointer user_data)
 {
 	ModestMsgView *msg_view;
-	ModestWidgetFactory *widget_factory;
 	TnyMsg *msg;
 	TnyHeader *header;
 	GetMsgAsyncHelper *helper;
@@ -764,9 +690,8 @@ read_msg_func (gpointer data, gpointer user_data)
 	g_object_unref (G_OBJECT (header));
 
 	/* Set message on msg view */
-	widget_factory = modest_window_get_widget_factory (MODEST_WINDOW (helper->main_window));
-	msg_view = modest_widget_factory_get_msg_preview (widget_factory);
-	g_object_unref (G_OBJECT(widget_factory));
+	msg_view = modest_widget_factory_get_msg_preview
+		(modest_runtime_get_widget_factory());
 	modest_msg_view_set_message (msg_view, msg);
 }
 
@@ -788,11 +713,8 @@ get_msg_cb (TnyFolder *folder, TnyMsg *msg, GError **err, gpointer user_data)
 
 	if (*err && ((*err)->code == TNY_FOLDER_ERROR_GET_MSG)) {
 		ModestHeaderView *header_view;
-		ModestWidgetFactory *widget_factory;
-
-		widget_factory = modest_window_get_widget_factory (MODEST_WINDOW (helper->main_window));
-		header_view = modest_widget_factory_get_header_view (widget_factory);
-		g_object_unref (G_OBJECT (widget_factory));
+		header_view = modest_widget_factory_get_header_view
+			(modest_runtime_get_widget_factory());
 		_modest_ui_actions_on_item_not_found (header_view,
 						      MODEST_ITEM_TYPE_MESSAGE,
 						      helper->main_window);
@@ -832,9 +754,8 @@ _modest_ui_actions_on_header_selected (ModestHeaderView *folder_view,
 	/* when there's no header, clear the msgview */
 	if (!header) {
 		ModestMsgView *msg_view;
-		ModestWidgetFactory *widget_factory;
-		widget_factory = modest_window_get_widget_factory (MODEST_WINDOW (main_window));
-		msg_view       = modest_widget_factory_get_msg_preview (widget_factory);
+		msg_view       = modest_widget_factory_get_msg_preview
+			(modest_runtime_get_widget_factory());
 		modest_msg_view_set_message (msg_view, NULL);
 		return;
 	}
@@ -866,26 +787,21 @@ _modest_ui_actions_on_folder_selection_changed (ModestFolderView *folder_view,
 					       ModestMainWindow *main_window)
 {
 	GtkLabel *folder_info_label;
-	TnyPlatformFactory *factory;
 	gchar *txt;	
 	ModestConf *conf;
 	ModestHeaderView *header_view;
-	ModestWidgetFactory *widget_factory;
 
-	widget_factory = modest_window_get_widget_factory (MODEST_WINDOW (main_window));
 	folder_info_label = 
-		GTK_LABEL (modest_widget_factory_get_folder_info_label (widget_factory));
+		GTK_LABEL (modest_widget_factory_get_folder_info_label
+			   (modest_runtime_get_widget_factory()));
 
 	if (!folder) {
 		gtk_label_set_label (GTK_LABEL(folder_info_label), "");
 		return;
 	}
-
-	factory = modest_tny_platform_factory_get_instance ();
-	header_view = modest_widget_factory_get_header_view (widget_factory);
-	conf = modest_tny_platform_factory_get_conf_instance
-		(MODEST_TNY_PLATFORM_FACTORY(factory));
-	g_object_unref (G_OBJECT (widget_factory));
+	
+	header_view = modest_widget_factory_get_header_view (modest_runtime_get_widget_factory());
+	conf = modest_runtime_get_conf ();
 
 	if (!selected) { /* the folder was unselected; save it's settings  */
 		modest_widget_memory_save (conf, G_OBJECT (header_view),
@@ -970,9 +886,8 @@ statusbar_push (ModestWidgetFactory *factory, guint context_id, const gchar *msg
 /****************************************************************************/
 
 void
-_modest_ui_actions_on_connection_changed (TnyDevice *device, 
-					 gboolean online,
-					 ModestMainWindow *main_window)
+_modest_ui_actions_on_connection_changed (TnyDevice *device, gboolean online,
+					  ModestMainWindow *main_window)
 {
 	GtkWidget *online_toggle;
 	ModestHeaderView *header_view;
@@ -980,7 +895,7 @@ _modest_ui_actions_on_connection_changed (TnyDevice *device,
 
 	g_return_if_fail (main_window);
 	
-	widget_factory = modest_window_get_widget_factory (MODEST_WINDOW (main_window));
+	widget_factory = modest_runtime_get_widget_factory ();
 	header_view   = modest_widget_factory_get_header_view (widget_factory);
 	online_toggle = modest_widget_factory_get_online_toggle (widget_factory);
 
@@ -991,8 +906,7 @@ _modest_ui_actions_on_connection_changed (TnyDevice *device,
 
 	statusbar_push (widget_factory, 0, 
 			online ? _("Modest went online") : _("Modest went offline"));
-	g_object_unref (G_OBJECT (widget_factory));
-
+	
 	/* If Modest has became online and the header view has a
 	   header selected then show it */
 	if (online) {
@@ -1009,14 +923,9 @@ _modest_ui_actions_on_online_toggle_toggled (GtkToggleButton *toggle,
 {
 	gboolean online;
 	TnyDevice *device;
-	TnyPlatformFactory *factory;
-	TnyAccountStore *account_store;
 
-	/* Get device. Do not ask the platform factory for it, because
-	   it returns always a new one */
-	factory = modest_tny_platform_factory_get_instance ();
-	account_store = tny_platform_factory_new_account_store (factory);
-	device = tny_account_store_get_device (account_store);
+	device = tny_account_store_get_device
+		(TNY_ACCOUNT_STORE(modest_runtime_get_account_store()));
 
 	online  = gtk_toggle_button_get_active (toggle);
 
@@ -1097,12 +1006,10 @@ _modest_ui_actions_on_header_status_update (ModestHeaderView *header_view,
 					    ModestMainWindow *main_window)
 {
 	GtkWidget *progress_bar;
-	ModestWidgetFactory *widget_factory;
 	char* txt;
 	
-	widget_factory = modest_window_get_widget_factory (MODEST_WINDOW (main_window));
-	progress_bar = modest_widget_factory_get_progress_bar (widget_factory);
-
+	progress_bar = modest_widget_factory_get_progress_bar
+		(modest_runtime_get_widget_factory());
 	if (total != 0)
 		gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR(progress_bar),
 					       (gdouble)num/(gdouble)total);
@@ -1113,10 +1020,7 @@ _modest_ui_actions_on_header_status_update (ModestHeaderView *header_view,
 	gtk_progress_bar_set_text (GTK_PROGRESS_BAR(progress_bar), txt);
 	g_free (txt);
 	
-	statusbar_push (widget_factory, 0, msg);
-	
-	/* Free */
-	g_object_unref (G_OBJECT (widget_factory));
+	statusbar_push (modest_runtime_get_widget_factory(), 0, msg);
 }
 
 
@@ -1126,11 +1030,7 @@ _modest_ui_actions_on_msg_link_hover (ModestMsgView *msgview,
 				      const gchar* link,
 				      ModestMainWindow *main_window)
 {
-	ModestWidgetFactory *widget_factory;
-
-	widget_factory = modest_window_get_widget_factory (MODEST_WINDOW (main_window));
-	statusbar_push (widget_factory, 0, link);
-	g_object_unref (G_OBJECT (widget_factory));	
+	statusbar_push (modest_runtime_get_widget_factory(), 0, link);
 
 	/* TODO: do something */
 }	
@@ -1142,14 +1042,9 @@ _modest_ui_actions_on_msg_link_clicked (ModestMsgView *msgview,
 					ModestMainWindow *main_window)
 {
 	gchar *msg;
-	ModestWidgetFactory *widget_factory;
 
 	msg = g_strdup_printf (_("Opening %s..."), link);
-	widget_factory = modest_window_get_widget_factory (MODEST_WINDOW (main_window));
-	statusbar_push (widget_factory, 0, msg);
-
-	g_object_unref (G_OBJECT (widget_factory));	
-
+	statusbar_push (modest_runtime_get_widget_factory(), 0, msg);
 	g_free (msg);
 
 	/* TODO: do something */
@@ -1161,14 +1056,11 @@ _modest_ui_actions_on_msg_attachment_clicked (ModestMsgView *msgview,
 					      ModestMainWindow *main_window)
 {
 	gchar *msg;
-	ModestWidgetFactory *widget_factory;
 	
 	msg = g_strdup_printf (_("Opening attachment %d..."), index);
-	widget_factory = modest_window_get_widget_factory (MODEST_WINDOW (main_window));
-	statusbar_push (widget_factory, 0, msg);
+	statusbar_push (modest_runtime_get_widget_factory(), 0, msg);
 	
 	g_free (msg);
-	g_object_unref (G_OBJECT (widget_factory));
 	/* TODO: do something */
 }
 
@@ -1188,13 +1080,11 @@ _modest_ui_actions_on_send (GtkWidget *widget,
 	{
 		TnyList *accounts;
 		TnyIterator *iter;
-		TnyAccountStore *account_store;
-
+		
 		accounts = TNY_LIST(tny_simple_list_new ());
-		account_store = modest_window_get_account_store (MODEST_WINDOW (edit_window));
-		tny_account_store_get_accounts (account_store, accounts,
+		tny_account_store_get_accounts (TNY_ACCOUNT_STORE(modest_runtime_get_account_store()),
+						accounts,
 						TNY_ACCOUNT_STORE_TRANSPORT_ACCOUNTS);
-		g_object_unref (G_OBJECT (account_store));
 
 		iter = tny_list_create_iterator(accounts);
 		tny_iterator_first (iter);
@@ -1279,12 +1169,11 @@ _modest_ui_actions_on_new_folder (GtkWidget *widget,
 {
 	TnyFolder *parent_folder;
 	ModestFolderView *folder_view;
-	ModestWidgetFactory *widget_factory;
 
-	widget_factory = modest_window_get_widget_factory (MODEST_WINDOW (main_window));
-	folder_view = modest_widget_factory_get_folder_view (widget_factory);
+	folder_view = modest_widget_factory_get_folder_view
+		(modest_runtime_get_widget_factory());
 	parent_folder = modest_folder_view_get_selected (folder_view);
-
+	
 	if (parent_folder) {
 		gchar *folder_name;
 
@@ -1308,7 +1197,6 @@ _modest_ui_actions_on_new_folder (GtkWidget *widget,
 		}
 		g_object_unref (parent_folder);
 	}
-	g_object_unref (G_OBJECT (widget_factory));
 }
 
 void 
@@ -1317,10 +1205,8 @@ _modest_ui_actions_on_rename_folder (GtkWidget *widget,
 {
 	TnyFolder *folder;
 	ModestFolderView *folder_view;
-	ModestWidgetFactory *widget_factory;
-
-	widget_factory = modest_window_get_widget_factory (MODEST_WINDOW (main_window));
-	folder_view = modest_widget_factory_get_folder_view (widget_factory);
+	
+	folder_view = modest_widget_factory_get_folder_view (modest_runtime_get_widget_factory());
 	folder = modest_folder_view_get_selected (folder_view);
 
 	if (folder) {
@@ -1340,7 +1226,6 @@ _modest_ui_actions_on_rename_folder (GtkWidget *widget,
 		}
 		g_object_unref (folder);
 	}
-	g_object_unref (G_OBJECT (widget_factory));
 }
 
 static void
@@ -1349,11 +1234,9 @@ delete_folder (ModestMainWindow *main_window,
 {
 	TnyFolder *folder;
 	ModestFolderView *folder_view;
-	ModestWidgetFactory *widget_factory;
 	ModestMailOperation *mail_op;
-			
-	widget_factory = modest_window_get_widget_factory (MODEST_WINDOW (main_window));
-	folder_view = modest_widget_factory_get_folder_view (widget_factory);
+	
+	folder_view = modest_widget_factory_get_folder_view (modest_runtime_get_widget_factory());
 	folder = modest_folder_view_get_selected (folder_view);
 
 	mail_op = modest_mail_operation_new ();

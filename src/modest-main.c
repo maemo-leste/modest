@@ -39,26 +39,17 @@
 #include <tny-list.h>
 #include <tny-simple-list.h>
 
+#include <modest-runtime.h>
 #include <modest-defs.h>
-#include <modest-init.h>
-#include <modest-conf.h>
-#include <modest-account-mgr.h>
 #include <modest-ui.h>
-#include <modest-debug.h>
 #include <modest-icon-factory.h>
 #include <modest-tny-account-store.h>
 #include <modest-tny-platform-factory.h>
 #include <modest-mail-operation.h>
 
-#if MODEST_PLATFORM_ID==2 /* maemo */
-#include <libosso.h>
-#endif /* MODEST_PLATFORM==2 */
 
-static gboolean hildon_init (); /* NOP if HILDON is not defined */
-static int start_ui (const gchar* mailto, const gchar *cc,
-		     const gchar *bcc, const gchar* subject, const gchar *body,
-		     TnyAccountStore *account_store);
-
+static int start_ui (const gchar* mailto, const gchar *cc, const gchar *bcc,
+		     const gchar* subject, const gchar *body);
 static int send_mail (const gchar* mailto, const gchar *cc, const gchar *bcc,
 		      const gchar* subject, const gchar *body);
 
@@ -66,8 +57,6 @@ int
 main (int argc, char *argv[])
 {
 	GOptionContext     *context       = NULL;
-	TnyPlatformFactory *fact          = NULL;
-	TnyAccountStore    *account_store = NULL;
 	
 	GError *err = NULL;
 	int retval  = MODEST_ERR_NONE;
@@ -95,17 +84,10 @@ main (int argc, char *argv[])
 		{ NULL, 0, 0, 0, NULL, NULL, NULL }
 	};
 
-	bindtextdomain (GETTEXT_PACKAGE, MODEST_LOCALEDIR);
-	bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
-	textdomain (GETTEXT_PACKAGE);
-
-	modest_debug_g_type_init  ();		
-	modest_debug_logging_init ();
-	
-	g_thread_init (NULL);
-	modest_init_default_account_maybe ();
-
-	gdk_threads_init (); /* hmmm... not really needed if we're not doing  ui*/
+	if (!modest_runtime_init ()) {
+		g_printerr ("modest: cannot init runtime\n");
+		return MODEST_ERR_INIT;
+	}
 	
 	context = g_option_context_new (NULL);
 	g_option_context_add_main_entries (context, options, NULL);
@@ -118,23 +100,6 @@ main (int argc, char *argv[])
 		goto cleanup;
 	}
 	g_option_context_free (context);
-
-	/* Get platform factory */	
-	fact = modest_tny_platform_factory_get_instance ();
-
-	if (!modest_init_local_folders ()) {
-		g_printerr ("modest: failed to initialize local folders, exiting\n");
-		retval = MODEST_ERR_INIT;
-		goto cleanup;
-	}
-	
-	/* Get the account store */
-	account_store = tny_platform_factory_new_account_store (fact);
-	if (!account_store) {
-		g_printerr ("modest: could not initialize a ModestTnyAccountStore instance\n");
-		retval = MODEST_ERR_RUN;
-		goto cleanup;
-        }
 	
 	if (!getenv("DISPLAY"))
 		batch = TRUE; 
@@ -144,18 +109,14 @@ main (int argc, char *argv[])
 			g_printerr ("modest: failed to start graphical ui\n");
 			goto cleanup;
 		}
-		modest_init_header_columns (factory_settings);	
-		retval = start_ui (mailto, cc, bcc, subject, body, account_store);
+		retval = start_ui (mailto, cc, bcc, subject, body);
 
 	} else 
 		retval = send_mail (mailto, cc, bcc, subject, body);
 	
 cleanup:
-	if (fact)
-		g_object_unref (G_OBJECT(fact));
-
-	/* this will clean up account_store as well */
-
+	if (!modest_runtime_uninit ()) 
+		g_printerr ("modest: modest_runtime_uninit failed\n");
 
 	return retval;
 }
@@ -163,27 +124,17 @@ cleanup:
 
 static int
 start_ui (const gchar* mailto, const gchar *cc, const gchar *bcc,
-	  const gchar* subject, const gchar *body,
-	  TnyAccountStore *account_store)
+	  const gchar* subject, const gchar *body)
 {
-	ModestUI *modest_ui;
 	ModestWindow *win = NULL;
+	ModestUI *modest_ui = NULL;
+	
 	gint retval = 0;
-	
-	modest_ui = MODEST_UI(modest_ui_new (account_store));
-	if (!modest_ui) {
-		g_printerr ("modest: failed to initialize ui, exiting\n");
-		retval = MODEST_ERR_UI;
-		goto cleanup;
-	}
-	
-	if (!hildon_init ()) { /* NOP  if hildon is not defined */
-		g_printerr ("modest: failed to initialize hildon, exiting\n");
-		retval = MODEST_ERR_HILDON;
-		goto cleanup;
-	}
+
+	modest_ui = modest_ui_new ();
 
 	if (mailto||cc||bcc||subject||body) {
+		g_warning ("FIXME: implement this");
 /* 		ok = modest_ui_new_edit_window (modest_ui, */
 /* 						mailto,  /\* to *\/ */
 /* 						cc,      /\* cc *\/ */
@@ -195,39 +146,13 @@ start_ui (const gchar* mailto, const gchar *cc, const gchar *bcc,
 		win = modest_ui_main_window (modest_ui);
 	
 	if (win) {
-		TnyDevice *device;
-
 		gtk_widget_show_all (GTK_WIDGET (win));
-	
-		/* Go online */
-		device = tny_account_store_get_device (account_store);
-		tny_device_force_online (device);
-		g_object_unref (G_OBJECT (device));
-
 		gtk_main();
 	}
-cleanup:
 	if (modest_ui)
-		g_object_unref (modest_ui);
-
+		g_object_unref (G_OBJECT(modest_ui));
+	
 	return retval;
-}
-	
-
-static gboolean
-hildon_init ()
-{
-#if MODEST_PLATFORM_ID==2 
-	
-	osso_context_t *osso_context =
-		osso_initialize(PACKAGE, PACKAGE_VERSION,
-				TRUE, NULL);	
-	if (!osso_context) {
-		g_printerr ("modest: failed to acquire osso context\n");
-		return FALSE;
-	}
-#endif /* MODEST_PLATFORM_ID==2 */
-	return TRUE;
 }
 
 
@@ -236,24 +161,16 @@ static int
 send_mail (const gchar* mailto, const gchar *cc, const gchar *bcc,
 	   const gchar* subject, const gchar *body)
 {
-	ModestAccountMgr *acc_mgr = NULL;
-	TnyPlatformFactory *fact = NULL;
-	TnyAccountStore *acc_store = NULL;
 	ModestMailOperation *mail_operation = NULL;
-
 	TnyList *accounts = NULL;
 	TnyIterator *iter = NULL;
 	TnyTransportAccount *account = NULL;	
 	int retval;
 
-	fact = modest_tny_platform_factory_get_instance ();
-	acc_mgr = modest_tny_platform_factory_get_account_mgr_instance
-		(MODEST_TNY_PLATFORM_FACTORY(fact));
-	acc_store = tny_platform_factory_new_account_store (fact);	
-
 	accounts = TNY_LIST(tny_simple_list_new ());
-	tny_account_store_get_accounts (TNY_ACCOUNT_STORE(acc_store), accounts,
-					      TNY_ACCOUNT_STORE_TRANSPORT_ACCOUNTS);
+	tny_account_store_get_accounts (TNY_ACCOUNT_STORE(modest_runtime_get_account_store()),
+					accounts,
+					TNY_ACCOUNT_STORE_TRANSPORT_ACCOUNTS);
 
 	iter = tny_list_create_iterator(accounts);
 	tny_iterator_first (iter);
@@ -264,7 +181,6 @@ send_mail (const gchar* mailto, const gchar *cc, const gchar *bcc,
 	}
 
 	account = TNY_TRANSPORT_ACCOUNT (tny_iterator_get_current(iter));
-
 	mail_operation = modest_mail_operation_new ();
 
 	modest_mail_operation_send_new_mail (mail_operation,
@@ -278,7 +194,6 @@ send_mail (const gchar* mailto, const gchar *cc, const gchar *bcc,
 		goto cleanup;
 	} else
 		retval = MODEST_ERR_NONE; /* hurray! */
-
 cleanup:
 	if (iter)
 		g_object_unref (G_OBJECT (iter));
@@ -286,7 +201,6 @@ cleanup:
 		g_object_unref (G_OBJECT (accounts));
 	if (mail_operation)
 		g_object_unref (G_OBJECT (mail_operation));
-
 	return retval;
 }
 

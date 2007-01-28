@@ -74,9 +74,9 @@ struct _ModestTnyAccountStorePrivate {
 	
 	GHashTable         *password_hash;
 	TnyDevice          *device;
-	TnyPlatformFactory *platform_fact;
 	TnySessionCamel    *tny_session_camel;
 
+	ModestAccountMgr   *account_mgr;
 	TnyAccount         *local_folders;
 };
 
@@ -160,8 +160,7 @@ modest_tny_account_store_instance_init (ModestTnyAccountStore *obj)
 		MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(obj);
 
 	priv->cache_dir              = NULL;
-	
-	priv->platform_fact          = NULL;
+	priv->account_mgr            = NULL;
 	priv->tny_session_camel      = NULL;
 	priv->device                 = NULL;
 	
@@ -190,17 +189,15 @@ get_local_folders_account (ModestTnyAccountStore *self)
 		g_printerr ("modest: cannot create account for local folders");
 		return NULL;
 	}
-
-	maildir = modest_local_folder_info_get_maildir_path ();
 	
+	tny_camel_account_set_session (TNY_CAMEL_ACCOUNT(tny_account),priv->tny_session_camel);
+	
+	maildir = modest_local_folder_info_get_maildir_path ();
 	url = camel_url_new ("maildir:", NULL);
 	camel_url_set_path (url, maildir);
-
 	url_string = camel_url_to_string (url, 0);
-	tny_account_set_url_string (TNY_ACCOUNT(tny_account), url_string);
 	
-	tny_camel_account_set_session (TNY_CAMEL_ACCOUNT(tny_account),
-				       priv->tny_session_camel);
+	tny_account_set_url_string (TNY_ACCOUNT(tny_account), url_string);
 	tny_account_set_name (TNY_ACCOUNT(tny_account), MODEST_LOCAL_FOLDERS_ACCOUNT_NAME); 
 	tny_account_set_id (TNY_ACCOUNT(tny_account), MODEST_LOCAL_FOLDERS_ACCOUNT_NAME); 
 	
@@ -239,7 +236,8 @@ on_account_changed (ModestAccountMgr *acc_mgr, const gchar *account, gboolean se
 static ModestTnyAccountStore*
 get_account_store_for_account (TnyAccount *account)
 {
-	return MODEST_TNY_ACCOUNT_STORE(g_object_get_data (G_OBJECT(account), "account_store"));
+	return MODEST_TNY_ACCOUNT_STORE(g_object_get_data (G_OBJECT(account),
+							   "account_store"));
 }
 
 
@@ -310,7 +308,6 @@ static gchar*
 get_password (TnyAccount *account, const gchar *prompt, gboolean *cancel)
 {
 	const gchar *key;
-	ModestAccountMgr *account_mgr;
 	const TnyAccountStore *account_store;
 	ModestTnyAccountStore *self;
 	ModestTnyAccountStorePrivate *priv;
@@ -321,12 +318,9 @@ get_password (TnyAccount *account, const gchar *prompt, gboolean *cancel)
 	
 	key           = tny_account_get_id (account);
 	account_store = TNY_ACCOUNT_STORE(get_account_store_for_account (account));
-
+	
 	self = MODEST_TNY_ACCOUNT_STORE (account_store);
         priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
-	
-	account_mgr = modest_tny_platform_factory_get_account_mgr_instance
-		(MODEST_TNY_PLATFORM_FACTORY(priv->platform_fact));
 	
 	/* is it in the hash? if it's already there, it must be wrong... */
 	pwd_ptr = (gpointer)&pwd; /* pwd_ptr so the compiler does not complained about
@@ -338,7 +332,7 @@ get_password (TnyAccount *account, const gchar *prompt, gboolean *cancel)
 
 	/* if the password is not already there, try ModestConf */
 	if (!already_asked) {
-		pwd  = modest_account_mgr_get_string (account_mgr,
+		pwd  = modest_account_mgr_get_string (priv->account_mgr,
 						      key, MODEST_ACCOUNT_PASSWORD,
 						      TRUE, NULL);
 		g_hash_table_insert (priv->password_hash, g_strdup (key), g_strdup (pwd));
@@ -356,7 +350,7 @@ get_password (TnyAccount *account, const gchar *prompt, gboolean *cancel)
 
 		if (!*cancel) {
 			if (remember)
-				modest_account_mgr_set_string (account_mgr,
+				modest_account_mgr_set_string (priv->account_mgr,
 							       key, MODEST_ACCOUNT_PASSWORD,
 							       pwd,
 							       TRUE, NULL);
@@ -378,14 +372,13 @@ get_password (TnyAccount *account, const gchar *prompt, gboolean *cancel)
 
 
 static void
-forget_password (TnyAccount *account) {
-
+forget_password (TnyAccount *account)
+{
 	ModestTnyAccountStore *self;
 	ModestTnyAccountStorePrivate *priv;
 	const TnyAccountStore *account_store;
 	gchar *pwd;
 	const gchar *key;
-	ModestAccountMgr *account_mgr;
 	
         account_store = TNY_ACCOUNT_STORE(get_account_store_for_account (account));
 	self = MODEST_TNY_ACCOUNT_STORE (account_store);
@@ -400,11 +393,8 @@ forget_password (TnyAccount *account) {
 		g_hash_table_insert (priv->password_hash, g_strdup (key), NULL);
 	}
 
-	account_mgr = modest_tny_platform_factory_get_account_mgr_instance
-		(MODEST_TNY_PLATFORM_FACTORY(priv->platform_fact));
-
 	/* Remove from configuration system */
-	modest_account_mgr_unset (account_mgr,
+	modest_account_mgr_unset (priv->account_mgr,
 				  key, MODEST_ACCOUNT_PASSWORD,
 				  TRUE, NULL);
 }
@@ -522,6 +512,11 @@ modest_tny_account_store_finalize (GObject *obj)
 		g_hash_table_destroy (priv->password_hash);
 		priv->password_hash = NULL;
 	}
+
+	if (priv->account_mgr) {
+		g_object_unref (priv->account_mgr);
+		priv->account_mgr = NULL;
+	}
 	
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
@@ -532,21 +527,15 @@ modest_tny_account_store_new (ModestAccountMgr *account_mgr) {
 
 	GObject *obj;
 	ModestTnyAccountStorePrivate *priv;
-	TnyPlatformFactory *pfact;
 	
 	g_return_val_if_fail (account_mgr, NULL);
 
 	obj  = G_OBJECT(g_object_new(MODEST_TYPE_TNY_ACCOUNT_STORE, NULL));
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(obj);
 
-	pfact = TNY_PLATFORM_FACTORY (modest_tny_platform_factory_get_instance());
-	if (!pfact) {
-		g_printerr ("modest: cannot get platform factory instance\n");
-		g_object_unref (obj);
-		return NULL;
-	} else
-		priv->platform_fact = pfact;
-
+	priv->account_mgr = account_mgr;
+	g_object_ref (G_OBJECT(priv->account_mgr));
+	
 	/* The session needs the platform factory */
 	priv->tny_session_camel = tny_session_camel_new (TNY_ACCOUNT_STORE(obj));
 	if (!priv->tny_session_camel) {
@@ -554,8 +543,8 @@ modest_tny_account_store_new (ModestAccountMgr *account_mgr) {
 		g_object_unref (obj);
 		return NULL;
 	}
+	
 	tny_session_camel_set_ui_locker (priv->tny_session_camel, tny_gtk_lockable_new ());
-	priv->local_folders = get_local_folders_account (MODEST_TNY_ACCOUNT_STORE(obj));
 	/* FIXME: unref this in the end? */
 	
 	/* Connect signals */
@@ -626,15 +615,12 @@ modest_tny_account_store_get_accounts  (TnyAccountStore *account_store, TnyList 
 	ModestTnyAccountStore        *self;
 	ModestTnyAccountStorePrivate *priv;
 	GSList                       *accounts, *cursor;
-	ModestAccountMgr             *account_mgr; 
 	
 	g_return_if_fail (account_store);
 	g_return_if_fail (TNY_IS_LIST(list));
 
 	self        = MODEST_TNY_ACCOUNT_STORE(account_store);
 	priv        = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
-	account_mgr = modest_tny_platform_factory_get_account_mgr_instance
-		(MODEST_TNY_PLATFORM_FACTORY(priv->platform_fact));
 	
 	if (type == TNY_ACCOUNT_STORE_BOTH) {
 		modest_tny_account_store_get_accounts (account_store, list,
@@ -643,11 +629,11 @@ modest_tny_account_store_get_accounts  (TnyAccountStore *account_store, TnyList 
 						       TNY_ACCOUNT_STORE_TRANSPORT_ACCOUNTS);
 	}
 
-	accounts = modest_account_mgr_account_names (account_mgr, NULL); 
+	accounts = modest_account_mgr_account_names (priv->account_mgr, NULL); 
 	for (cursor = accounts; cursor; cursor = cursor->next) {
 		TnyAccount *tny_account = NULL;
 		ModestAccountData *account_data =
-			modest_account_mgr_get_account_data (account_mgr, 
+			modest_account_mgr_get_account_data (priv->account_mgr, 
 		 					     (gchar*)cursor->data);
 		if (account_data && account_data->enabled) {
 			tny_account = get_tny_account_from_account (self, account_data, type);
@@ -655,12 +641,14 @@ modest_tny_account_store_get_accounts  (TnyAccountStore *account_store, TnyList 
 				tny_list_prepend (list, G_OBJECT(tny_account));
 		}
 		g_free (cursor->data);
-		modest_account_mgr_free_account_data (account_mgr, account_data);
+		modest_account_mgr_free_account_data (priv->account_mgr, account_data);
 	}
 	g_slist_free (accounts);
 
 	/* also, add the local folder pseudo-account */
 	if (type != TNY_ACCOUNT_STORE_TRANSPORT_ACCOUNTS) {
+		if (!priv->local_folders)
+			priv->local_folders = get_local_folders_account (self);
 		if (!priv->local_folders)
 			g_printerr ("modest: no local folders account\n");
 		else
@@ -695,7 +683,8 @@ modest_tny_account_store_get_device (TnyAccountStore *self)
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE (self);
 
 	if (!priv->device) 
-		priv->device = tny_platform_factory_new_device (priv->platform_fact);
+		priv->device = tny_platform_factory_new_device
+			(modest_tny_platform_factory_get_instance());
 	
 	return g_object_ref (G_OBJECT(priv->device));
 }
@@ -751,7 +740,6 @@ tny_account_store_get_session  (TnyAccountStore *self)
 }
 
 
-
 TnyAccount*
 modest_tny_account_store_get_local_folders_account    (ModestTnyAccountStore *self)
 {
@@ -760,22 +748,3 @@ modest_tny_account_store_get_local_folders_account    (ModestTnyAccountStore *se
 	return MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE (self)->local_folders;
 }
 
-
-/* for now, ignore the account ===> the special folders are the same,
- * local folders for all accounts
- * this might change, ie, IMAP might have server-side sent-items
- */
-TnyFolder *
-modest_tny_account_store_get_special_folder (ModestTnyAccountStore*self, TnyAccount *account,
-					     TnyFolderType special_type)
-{
-	g_return_val_if_fail (self, NULL);
-	g_return_val_if_fail (account, NULL);
-	g_return_val_if_fail (0 <= special_type && special_type < TNY_FOLDER_TYPE_NUM,
-			      NULL);
-	//TnyAccount *local_account =
-	//	tny_account_store_get_local_folders_account (self);
-
-	/* FIXME: implement this */
-	return NULL;
-}

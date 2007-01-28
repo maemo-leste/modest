@@ -56,34 +56,24 @@ struct _ModestMainWindowClass {
 	ModestWindowClass parent_class;
 };
 
-/* member functions */
+/**
+ * modest_main_window_get_type:
+ * 
+ * get the GType for the ModestMainWindow class
+ *
+ * Returns: a GType for ModestMainWindow
+ */
 GType modest_main_window_get_type (void) G_GNUC_CONST;
 
 
-ModestWindow* modest_main_window_new (ModestWidgetFactory *factory,
-				      TnyAccountStore *account_store);
-
 /**
- * modest_main_window_get_widget_factory:
- * @edit_window: a #ModestMainWindow
+ * modest_main_window_new
  * 
- * gets a new reference to the #ModestWidgetFactory associated with
- * the main window
- * 
- * Returns: the widget factory
- **/
-ModestWidgetFactory *   modest_main_window_get_widget_factory    (ModestMainWindow *main_window);
-
-/**
- * modest_main_window_get_account_store:
- * @edit_window: a #ModestMainWindow
- * 
- * gets a new reference to the account store associated with the main
- * window
- * 
- * Returns: the account store
- **/
-TnyAccountStore *       modest_main_window_get_account_store     (ModestMainWindow *main_window);
+ * instantiates a new ModestMainWindow widget
+ *
+ * Returns: a new ModestMainWindow, or NULL in case of error
+ */
+ModestWindow* modest_main_window_new (void);
 
 G_END_DECLS
 

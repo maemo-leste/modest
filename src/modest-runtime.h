@@ -27,26 +27,55 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __MODEST_DEBUG_H__
-#define __MODEST_DEBUG_H__
+#ifndef __MODEST_RUNTIME_H__
+#define __MODEST_RUNTIME_H__
 
 #include <glib.h>
 #include <glib-object.h>
+#include <modest-conf.h>
+#include <modest-account-mgr.h>
+#include <modest-cache-mgr.h>
+#include <modest-mail-operation-queue.h>
+#include <modest-tny-account-store.h>
+#include <modest-widget-factory.h>
 
 G_BEGIN_DECLS
 
 #define MODEST_DEBUG "MODEST_DEBUG"
 
 typedef enum {
-	MODEST_DEBUG_ABORT_ON_WARNING      = 1 << 0,
-	MODEST_DEBUG_LOG_ACTIONS           = 1 << 1, /* not in use atm */
-	MODEST_DEBUG_DEBUG_OBJECTS         = 1 << 2, /* for g_type_init */
-	MODEST_DEBUG_DEBUG_SIGNALS         = 1 << 3, /* for g_type_init */
-} ModestDebugFlags;
+	MODEST_RUNTIME_DEBUG_ABORT_ON_WARNING      = 1 << 0,
+	MODEST_RUNTIME_DEBUG_LOG_ACTIONS           = 1 << 1, /* not in use atm */
+	MODEST_RUNTIME_DEBUG_DEBUG_OBJECTS         = 1 << 2, /* for g_type_init */
+	MODEST_RUNTIME_DEBUG_DEBUG_SIGNALS         = 1 << 3, /* for g_type_init */
+} ModestRuntimeDebugFlags;
+
+/**
+ * modest_runtime_init:
+ *
+ * initialize the modest runtime system (which sets up the
+ * environment, instantiates singletons and so on)
+ * modest_runtime_init should only be called once, and
+ * when done with it, modest_runtime_uninit should be called
+ *  
+ * TRUE if this succeeded, FALSE otherwise.
+ */
+gboolean modest_runtime_init (void);
 
 
 /**
- * modest_debug_get_debug_flags 
+ * modest_runtime_uinit:
+ *
+ * uninitialize the modest runtime system; free all the
+ * resources and so on.
+ *
+ * TRUE if this succeeded, FALSE otherwise
+ */
+gboolean modest_runtime_uninit (void);
+
+
+/**
+ * modest_runtime_get_debug_flags 
  *
  * get the debug flags for modest; they are read from the MODEST_DEBUG
  * environment variable; the flags specified as strings, separated by ':'.
@@ -66,23 +95,67 @@ typedef enum {
  * 
  * Returns: the bitwise OR of the debug flags
  */
-ModestDebugFlags modest_debug_get_debug_flags  (void) G_GNUC_CONST;
+ModestRuntimeDebugFlags modest_runtime_get_debug_flags  (void) G_GNUC_CONST;
 
 /**
- * modest_g_type_init
- *
- * do a g_type_init_with_debug_flags based on the modest debug flags
- */
-void modest_debug_g_type_init (void);
+ * modest_runtime_get_conf:
+ * 
+ * get the ModestConf singleton instance
+ * 
+ * Returns: the ModestConf singleton
+ **/
+ModestConf*         modest_runtime_get_conf   (void);
+
 
 /**
- * modest_g_type_init
+ * modest_runtime_get_account_mgr:
+ * 
+ * get the ModestAccountMgr singleton instance
+ * 
+ * Returns: the ModestAccountMgr singleton
+ **/
+ModestAccountMgr*         modest_runtime_get_account_mgr   (void);
+
+/**
+ * modest_runtime_get_account_store:
+ * 
+ * get the ModestTnyAccountStore singleton instance
  *
- * do set the logging based on the modest debug flags (ie. whether
- * we should abort when a warning occurs.
- */
-void modest_debug_logging_init (void);
+ * Returns: the ModestTnyAccountStore singleton
+ **/
+ModestTnyAccountStore*    modest_runtime_get_account_store (void);
+
+
+/**
+ * modest_runtime_get_cache_mgr:
+ * 
+ * get the ModestCacheMgr singleton instance
+ *
+ * Returns: the ModestCacheMgr singleton
+ **/
+ModestCacheMgr*           modest_runtime_get_cache_mgr     (void);
+
+
+/**
+ * modest_runtime_get_mail_operation_queue:
+ * 
+ * get the ModestMailOperationQueue singleton instance
+ *
+ * Returns: the ModestMailOperationQueue singleton
+ **/
+ModestMailOperationQueue* modest_runtime_get_mail_operation_queue (void);
+
+
+/**
+ * modest_runtime_get_widget_factory
+ * 
+ * get the ModestWidgetFactory singleton instance
+ *
+ * Returns: the ModestCacheMgr singleton
+ **/
+ModestWidgetFactory*      modest_runtime_get_widget_factory     (void);
+
 
 G_END_DECLS
 
-#endif /*__MODEST_DEBUG_H__*/
+#endif /*__MODEST_RUNTIME_H__*/

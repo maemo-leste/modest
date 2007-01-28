@@ -28,17 +28,38 @@
  */
 
 #include <config.h>
+#include <glib.h>
+#include <glib-object.h>
+#include <glib/gstdio.h>
+#include <modest-runtime.h>
 #include <modest-defs.h>
+#include <modest-singletons.h>
 #include <widgets/modest-header-view.h>
 #include <widgets/modest-folder-view.h>
 #include <modest-tny-platform-factory.h>
 #include <modest-widget-memory.h>
 #include <modest-widget-memory-priv.h>
 #include <modest-local-folder-info.h>
-#include <modest-init.h>
-#include <glib/gstdio.h>
 #include <modest-account-mgr.h>
 #include <modest-account-mgr-helpers.h>
+
+#if MODEST_PLATFORM_ID==2 /* maemo/hildon */
+#include <libosso.h>
+static gboolean hildon_init (void);
+#endif /* MODEST_PLATFORM_ID==2 */
+
+static gboolean init_header_columns (ModestConf *conf, gboolean overwrite);
+static gboolean init_local_folders  (void);
+static gboolean init_default_account_maybe  (ModestAccountMgr *acc_mgr);
+static void     init_i18n (void);
+static void     debug_g_type_init (void);
+static void     debug_logging_init (void);
+
+static ModestSingletons *_singletons = NULL;
+
+/*
+ * defaults for the column headers
+ */
 
 typedef struct {
 	ModestHeaderViewColumn col;
@@ -80,49 +101,158 @@ static const TnyFolderType LOCAL_FOLDERS[] = {
 	TNY_FOLDER_TYPE_ARCHIVE	
 };
 
-static ModestTnyPlatformFactory*
-get_platform_factory (void)
-{
-	TnyPlatformFactory *fact =
-		modest_tny_platform_factory_get_instance ();
 
-	if (!fact) {
-		g_printerr ("modest: cannot get platform factory instance\n");
-		return NULL;
+gboolean
+modest_runtime_init (void)
+{
+	ModestSingletons *my_singletons;
+	
+	if (_singletons) {
+		g_printerr ("modest: modest_runtime_init can only be called once\n");
+		return FALSE;
+	}
+	
+	init_i18n();
+	debug_g_type_init();
+	debug_logging_init();
+
+	g_thread_init(NULL);
+	gdk_threads_init (); 
+
+	my_singletons = modest_singletons_new ();
+	if (!my_singletons) {
+		g_printerr ("modest: failed to initialize singletons\n");
+		return FALSE;
 	}
 
-	return MODEST_TNY_PLATFORM_FACTORY(fact);
+#if MODEST_PLATFORM_ID==2 
+	if (!hildon_init ()) {
+		modest_runtime_uninit ();
+		g_printerr ("modest: failed to initialize hildon\n");
+		return FALSE;
+	}
+#endif /* MODEST_PLATFORM_ID==2 */
+	
+	if (!init_header_columns(modest_singletons_get_conf (my_singletons),
+				 FALSE)) {
+		modest_runtime_uninit ();
+		g_printerr ("modest: failed to init header columns\n");
+		return FALSE;
+	}
+
+	if (!init_local_folders()) {
+		modest_runtime_uninit ();
+		g_printerr ("modest: failed to init local folders\n");
+		return FALSE;
+	}
+	
+	if (!init_default_account_maybe(modest_singletons_get_account_mgr (my_singletons))) {
+		modest_runtime_uninit ();
+		g_printerr ("modest: failed to init default account\n");
+		return FALSE;
+	}
+
+	/* don't initialize _singletons before all the other init stuff
+	 * is done; thus, using any of the singleton stuff before
+	 * runtime is fully init'ed  is avoided
+	 */
+	_singletons = my_singletons;
+	
+	return TRUE;
 }
 
 
-static ModestConf*
-get_modest_conf (void)
+gboolean
+modest_runtime_uninit (void)
 {
-	ModestTnyPlatformFactory *fact =
-		get_platform_factory ();
-	ModestConf *conf =
-		modest_tny_platform_factory_get_conf_instance (fact);
-	if (!conf) {
-		g_printerr ("modest: cannot get modest conf instance\n");
-		return NULL;
+	if (!_singletons) {
+		g_printerr ("modest: modest_runtime is not initialized\n");
+		return FALSE;
 	}
-	return conf;
+	
+	g_object_unref (G_OBJECT(_singletons));
+	_singletons = NULL;
+
+	return TRUE;
 }
 
 
-static ModestAccountMgr*
-get_account_mgr (void)
+ModestAccountMgr*
+modest_runtime_get_account_mgr   (void)
 {
-	ModestTnyPlatformFactory *fact =
-		get_platform_factory ();
-	ModestAccountMgr *acc_mgr =
-		modest_tny_platform_factory_get_account_mgr_instance (fact);
-	if (!acc_mgr) {
-		g_printerr ("modest: cannot get modest account mgr instance\n");
-		return NULL;
-	}
-	return acc_mgr;
+	g_return_val_if_fail (_singletons, NULL);
+	return modest_singletons_get_account_mgr (_singletons);
 }
+
+ModestTnyAccountStore*
+modest_runtime_get_account_store   (void)
+{
+	g_return_val_if_fail (_singletons, NULL);
+	return modest_singletons_get_account_store (_singletons);
+
+}
+
+ModestConf*
+modest_runtime_get_conf (void)
+{
+	g_return_val_if_fail (_singletons, NULL);
+	return modest_singletons_get_conf (_singletons);
+}
+
+
+ModestCacheMgr*
+modest_runtime_get_cache_mgr (void)
+{
+	g_return_val_if_fail (_singletons, NULL);
+	return modest_singletons_get_cache_mgr (_singletons);
+}
+
+
+ModestMailOperationQueue*
+modest_runtime_get_mail_operation_queue (void)
+{
+	g_return_val_if_fail (_singletons, NULL);
+	return modest_singletons_get_mail_operation_queue (_singletons);
+}
+
+
+ModestWidgetFactory*
+modest_runtime_get_widget_factory     (void)
+{
+	g_return_val_if_fail (_singletons, NULL);
+	return modest_singletons_get_widget_factory (_singletons);
+}
+
+
+
+/* http://primates.ximian.com/~federico/news-2006-04.html#memory-debugging-infrastructure*/
+ModestRuntimeDebugFlags
+modest_runtime_get_debug_flags ()
+{
+	GDebugKey debug_keys[] = {
+		{ "abort-on-warning", MODEST_RUNTIME_DEBUG_ABORT_ON_WARNING },
+		{ "log-actions",      MODEST_RUNTIME_DEBUG_LOG_ACTIONS },
+		{ "debug-objects",    MODEST_RUNTIME_DEBUG_DEBUG_OBJECTS },
+		{ "debug-signals",    MODEST_RUNTIME_DEBUG_DEBUG_SIGNALS }
+	};
+	const gchar *str;
+	static ModestRuntimeDebugFlags debug_flags = -1;
+
+	if (debug_flags != -1)
+		return debug_flags;
+	
+	str = g_getenv (MODEST_DEBUG);
+	
+	if (str != NULL)
+		debug_flags = g_parse_debug_string (str, debug_keys, G_N_ELEMENTS (debug_keys));
+	else
+		debug_flags = 0;
+	
+	return debug_flags;
+}
+
+
+
 
 
 /* NOTE: the exact details of this format are important, as they
@@ -163,18 +293,19 @@ save_header_settings (ModestConf *conf, TnyFolderType type,
 	return TRUE;
 }
 
-/* we set the the defaults here for all folder types */
-gboolean
-modest_init_header_columns (gboolean overwrite)
+/**
+ * modest_init_header_columns:
+ * @overwrite: write the setting, even if it already exists
+ * 
+ * will set defaults for the columns to show for folder,
+ * if there are no such settings yet (in ModestWidgetMemory)
+ * 
+ * Returns: TRUE if succeeded, FALSE in case of error
+ */
+static gboolean
+init_header_columns (ModestConf *conf, gboolean overwrite)
 {
-	ModestConf *conf;
 	int folder_type;
-
-	conf = get_modest_conf ();
-	if (!conf) {
-		g_printerr ("modest: cannot get modest conf\n");
-		return FALSE;
-	}
 	
 	for (folder_type = TNY_FOLDER_TYPE_UNKNOWN;
 	     folder_type <= TNY_FOLDER_TYPE_CALENDAR; ++folder_type) {		
@@ -211,8 +342,17 @@ modest_init_header_columns (gboolean overwrite)
 	return TRUE;
 }
 
-gboolean
-modest_init_local_folders  (void)
+/**
+ * init_local_folders:
+ * 
+ * create the Local Folders folder under cache, if they
+ * do not exist yet.
+ * 
+ * Returns: TRUE if the folder were already there, or
+ * they were created, FALSE otherwise
+ */
+static gboolean
+init_local_folders  (void)
 {
 	int i;
 	gchar *maildir_path;
@@ -253,21 +393,24 @@ free_element (gpointer data, gpointer user_data)
 }
 
 
-gboolean
-modest_init_default_account_maybe  (void)
-{
-	ModestAccountMgr *acc_mgr;
 
+/**
+ * init_default_account_maybe:
+ *
+ * if there are accounts defined, but there is no default account,
+ * it will be defined.
+ * 
+ * Returns: TRUE if there was a default account already,
+ *  or one has been created or there are no accounts yet,
+ *  returns FALSE in case of error
+ */
+static gboolean
+init_default_account_maybe  (ModestAccountMgr *acc_mgr)
+{
 	GSList *all_accounts = NULL;
 	gchar *default_account;
 	gboolean retval = TRUE;
 	
-	acc_mgr = get_account_mgr ();
-	if (!acc_mgr) {
-		g_printerr ("modest: cannot get modest account mgr\n");
-		return FALSE;
-	}
-
 	all_accounts = modest_account_mgr_account_names (acc_mgr, NULL);
 	if (all_accounts) { /* if there are any accounts, there should be a default one */
 		default_account = 
@@ -289,3 +432,59 @@ modest_init_default_account_maybe  (void)
 	}
 	return retval;
 }
+
+
+
+static void
+debug_g_type_init (void)
+{
+	GTypeDebugFlags gflags;
+	ModestRuntimeDebugFlags mflags;
+	
+	gflags = 0;
+	mflags = modest_runtime_get_debug_flags ();
+
+	if (mflags & MODEST_RUNTIME_DEBUG_DEBUG_OBJECTS)
+		gflags |= G_TYPE_DEBUG_OBJECTS;
+	if (mflags & MODEST_RUNTIME_DEBUG_DEBUG_SIGNALS)
+		gflags |= G_TYPE_DEBUG_SIGNALS;
+	
+	g_type_init_with_debug_flags (gflags);
+
+}
+
+static void
+debug_logging_init (void)
+{
+	ModestRuntimeDebugFlags mflags;
+	mflags = modest_runtime_get_debug_flags ();
+	
+	if (mflags & MODEST_RUNTIME_DEBUG_ABORT_ON_WARNING)
+		g_log_set_always_fatal (G_LOG_LEVEL_ERROR |
+					G_LOG_LEVEL_CRITICAL |
+					G_LOG_LEVEL_WARNING);
+}
+
+
+static void
+init_i18n (void)
+{
+	bindtextdomain (GETTEXT_PACKAGE, MODEST_LOCALEDIR);
+	bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
+	textdomain (GETTEXT_PACKAGE);
+
+}
+
+
+#if MODEST_PLATFORM_ID==2 
+static gboolean
+hildon_init (void)
+{
+	osso_context_t *osso_context =
+		osso_initialize(PACKAGE, PACKAGE_VERSION,
+				TRUE, NULL);	
+	if (!osso_context) {
+		g_printerr ("modest: failed to acquire osso context\n");
+		return FALSE;
+	}
+#endif /* MODEST_PLATFORM_ID==2 */

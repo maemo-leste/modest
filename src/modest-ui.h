@@ -74,7 +74,7 @@ GType        modest_ui_get_type        (void) G_GNUC_CONST;
  *  
  * Returns: a new ModestUI, or NULL in case of error
  */
-ModestUI*     modest_ui_new            (TnyAccountStore *account_store);
+ModestUI*     modest_ui_new            (void);
 
 
 /**

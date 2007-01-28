@@ -28,6 +28,7 @@
  */
 
 #include <glib/gi18n.h>
+#include <modest-runtime.h>
 #include "modest-account-view-window.h"
 #include "modest-account-assistant.h"
 #include "modest-tny-platform-factory.h"
@@ -150,16 +151,13 @@ on_selection_changed (GtkTreeSelection *sel, ModestAccountViewWindow *self)
 static void
 on_remove_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 {
-	TnyPlatformFactory *fact;
 	ModestAccountViewWindowPrivate *priv;
 	ModestAccountMgr *account_mgr;
 	const gchar *account_name;
 	
 	priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE(self);
-	fact = modest_tny_platform_factory_get_instance ();
-	account_mgr = modest_tny_platform_factory_get_account_mgr_instance
-		(MODEST_TNY_PLATFORM_FACTORY(fact));
 
+	account_mgr = modest_runtime_get_account_mgr();	
 	account_name = modest_account_view_get_selected_account (priv->account_view);
 
 	if (account_name) {
@@ -212,15 +210,9 @@ on_add_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 {
 	GtkWidget *assistant;
 	ModestAccountViewWindowPrivate *priv;
-	TnyPlatformFactory *fact;
-	ModestAccountMgr *account_mgr;
 	
 	priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE(self);
-	fact = modest_tny_platform_factory_get_instance ();
-	account_mgr = modest_tny_platform_factory_get_account_mgr_instance
-		(MODEST_TNY_PLATFORM_FACTORY(fact));
-
-	assistant = modest_account_assistant_new (account_mgr,
+	assistant = modest_account_assistant_new (modest_runtime_get_account_mgr(),
 						  priv->widget_factory);
 	gtk_window_set_transient_for (GTK_WINDOW(assistant),
 				      GTK_WINDOW(self));

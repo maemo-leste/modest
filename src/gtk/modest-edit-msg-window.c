@@ -30,6 +30,8 @@
 #include <string.h>
 #include <tny-account-store.h>
 #include <tny-simple-list.h>
+#include <modest-conf.h>
+#include <modest-runtime.h>
 
 #include "modest-account-mgr.h"
 #include "modest-account-mgr-helpers.h"
@@ -134,27 +136,16 @@ modest_edit_msg_window_init (ModestEditMsgWindow *obj)
 static void
 save_settings (ModestEditMsgWindow *self)
 {
-	ModestWindowPrivate *parent_priv;
-	ModestConf *conf;
-
-	parent_priv = MODEST_WINDOW_GET_PRIVATE(self);
-	conf = modest_tny_platform_factory_get_conf_instance
-		(MODEST_TNY_PLATFORM_FACTORY(parent_priv->plat_factory));
-
-	modest_widget_memory_save (conf, G_OBJECT(self), "modest-edit-msg-window");
+	modest_widget_memory_save (modest_runtime_get_conf (),
+				    G_OBJECT(self), "modest-edit-msg-window");
 }
 
 
 static void
 restore_settings (ModestEditMsgWindow *self)
 {
-	ModestWindowPrivate *parent_priv;
-	ModestConf *conf;
-
-	parent_priv = MODEST_WINDOW_GET_PRIVATE(self);
-	conf = modest_tny_platform_factory_get_conf_instance
-		(MODEST_TNY_PLATFORM_FACTORY(parent_priv->plat_factory));
-	modest_widget_memory_restore (conf, G_OBJECT(self), "modest-edit-msg-window");
+	modest_widget_memory_restore (modest_runtime_get_conf (),
+				      G_OBJECT(self), "modest-edit-msg-window");
 }
 
 
@@ -174,7 +165,7 @@ init_window (ModestEditMsgWindow *obj)
 	cc_button     = gtk_button_new_with_label (_("Cc..."));
 	bcc_button    = gtk_button_new_with_label (_("Bcc..."));
 
-	priv->from_field    = modest_widget_factory_get_combo_box (parent_priv->widget_factory,
+	priv->from_field    = modest_widget_factory_get_combo_box (modest_runtime_get_widget_factory(),
 								   MODEST_COMBO_BOX_TYPE_TRANSPORTS);
 	priv->to_field      = gtk_entry_new_with_max_length (80);
 	priv->cc_field      = gtk_entry_new_with_max_length (80);
@@ -209,7 +200,6 @@ init_window (ModestEditMsgWindow *obj)
 	gtk_widget_show_all (GTK_WIDGET(main_vbox));
 	gtk_container_add (GTK_CONTAINER(obj), main_vbox);
 }
-	
 
 
 static void
@@ -229,9 +219,7 @@ on_delete_event (GtkWidget *widget, GdkEvent *event, ModestEditMsgWindow *self)
 
 
 ModestWindow *
-modest_edit_msg_window_new (ModestWidgetFactory *factory,
-			    TnyAccountStore *account_store,
-			    ModestEditType type)
+modest_edit_msg_window_new (ModestEditType type)
 {
 	GObject *obj;
 	ModestEditMsgWindowPrivate *priv;
@@ -239,17 +227,12 @@ modest_edit_msg_window_new (ModestWidgetFactory *factory,
 	GtkActionGroup *action_group;
 	GError *error = NULL;
 
-	g_return_val_if_fail (factory, NULL);
 	g_return_val_if_fail (type < MODEST_EDIT_TYPE_NUM, NULL);
 	
 	obj = g_object_new(MODEST_TYPE_EDIT_MSG_WINDOW, NULL);
 	priv = MODEST_EDIT_MSG_WINDOW_GET_PRIVATE(obj);
 	parent_priv = MODEST_WINDOW_GET_PRIVATE(obj);
-
-	parent_priv->widget_factory = g_object_ref (factory);
-	parent_priv->account_store  = g_object_ref (account_store);
-
-	/* ****** */
+	
 	parent_priv->ui_manager = gtk_ui_manager_new();
 	action_group = gtk_action_group_new ("ModestEditMsgWindowActions");
 

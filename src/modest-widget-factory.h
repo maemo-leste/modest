@@ -53,13 +53,10 @@ typedef struct _ModestWidgetFactoryClass ModestWidgetFactoryClass;
 
 struct _ModestWidgetFactory {
 	 GObject parent;
-	/* insert public members, if any */
 };
 
 struct _ModestWidgetFactoryClass {
 	GObjectClass parent_class;
-	/* insert signal callback declarations, eg. */
-	/* void (* my_event) (ModestWidgetFactory* obj); */
 };
 
 
@@ -85,12 +82,15 @@ GType        modest_widget_factory_get_type    (void) G_GNUC_CONST;
 
 /**
  * modest_widget_factory_new
- *
+ * @account_store: a valid ModestTnyAccountStore instance
+ * 
  * instantiates a ModestWidgetFactory
  *
  * Returns: a new ModestWidgetFactory, or NULL in case of error
  */
-ModestWidgetFactory*      modest_widget_factory_new   (void);
+ModestWidgetFactory*      modest_widget_factory_new   (ModestTnyAccountStore *account_store);
+
+
 /**
  * modest_widget_factory_get_folder_view
  * @self: a ModestWidgetFactory instance
@@ -130,7 +130,7 @@ ModestHeaderView*    modest_widget_factory_get_header_view (ModestWidgetFactory 
  *
  * Returns: a header tree view, or NULL in case of error
  */
-ModestMsgView*           modest_widget_factory_get_msg_preview (ModestWidgetFactory *self);
+ModestMsgView*        modest_widget_factory_get_msg_preview (ModestWidgetFactory *self);
 
 
 /**

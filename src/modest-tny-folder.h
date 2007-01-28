@@ -82,6 +82,7 @@ TnyFolderType  modest_tny_folder_guess_folder_type_from_name   (const gchar *fol
  */
 gboolean modest_tny_folder_is_local_folder   (const TnyFolder *folder);
 
+
 /**
  * modest_tny_folder_get_local_folder_type:
  * @folder: a valid tnymail folder
