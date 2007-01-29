@@ -111,6 +111,10 @@ void          modest_folder_view_set_title       (ModestFolderView *self,
  **/
 TnyFolder*    modest_folder_view_get_selected    (ModestFolderView *self);
 
+
+gboolean      modest_folder_view_update_model    (ModestFolderView *self,
+						  TnyAccountStore *account_store);
+
 G_END_DECLS
 
 #endif /* __MODEST_FOLDER_VIEW_H__ */

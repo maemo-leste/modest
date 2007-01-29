@@ -402,8 +402,7 @@ modest_mail_operation_create_reply_mail (TnyMsg *msg,
 	new_header = tny_msg_get_header (new_msg);
 	reply_to = tny_header_get_replyto (header);
 
-	/* TODO: tinymail returns Invalid and it should return NULL */
-	if (strcmp (reply_to, "Invalid"))
+	if (reply_to)
 		tny_header_set_to (new_header, reply_to);
 	else
 		tny_header_set_to (new_header, tny_header_get_from (header));

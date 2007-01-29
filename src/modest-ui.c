@@ -99,6 +99,9 @@ static void     reply_forward          (GtkWidget *widget,
 static gchar*   ask_for_folder_name    (GtkWindow *parent_window,
 					const gchar *title);
 
+static void     _modest_ui_actions_on_accounts_reloaded (TnyAccountStore *store, 
+							 gpointer user_data);
+
 GType
 modest_ui_get_type (void)
 {
@@ -306,6 +309,7 @@ static void
 connect_signals (ModestUI *self)
 {
 	TnyDevice *device;
+	TnyAccountStore *account_store;
 	ModestUIPrivate *priv;
 	ModestFolderView *folder_view;
 	ModestHeaderView *header_view;
@@ -317,12 +321,12 @@ connect_signals (ModestUI *self)
 
 	widget_factory = modest_runtime_get_widget_factory (); 
 	
-	folder_view = modest_widget_factory_get_folder_view (widget_factory);
-	header_view = modest_widget_factory_get_header_view (widget_factory);
-	msg_view    = modest_widget_factory_get_msg_preview (widget_factory);
-	toggle      = modest_widget_factory_get_online_toggle (widget_factory);
-	device      = tny_account_store_get_device
-		(TNY_ACCOUNT_STORE(modest_runtime_get_account_store()));
+	folder_view   = modest_widget_factory_get_folder_view (widget_factory);
+	header_view   = modest_widget_factory_get_header_view (widget_factory);
+	msg_view      = modest_widget_factory_get_msg_preview (widget_factory);
+	toggle        = modest_widget_factory_get_online_toggle (widget_factory);
+	account_store = TNY_ACCOUNT_STORE(modest_runtime_get_account_store());
+	device        = tny_account_store_get_device (account_store);
 
 	/* folder view */
 	g_signal_connect (G_OBJECT(folder_view), "folder_selection_changed",
@@ -349,6 +353,11 @@ connect_signals (ModestUI *self)
 			  G_CALLBACK(_modest_ui_actions_on_msg_attachment_clicked), 
 			  priv->main_window);
 
+	/* Account store */
+	g_signal_connect (G_OBJECT (account_store), "accounts_reloaded",
+			  G_CALLBACK (_modest_ui_actions_on_accounts_reloaded),
+			  priv->main_window);
+
 	/* Device */
 	g_signal_connect (G_OBJECT(device), "connection_changed",
 			  G_CALLBACK(_modest_ui_actions_on_connection_changed), 
@@ -362,7 +371,6 @@ connect_signals (ModestUI *self)
 			  "destroy",
 			  G_CALLBACK(on_main_window_destroy), 
 			  NULL);
-
 
 	/* Init toggle in correct state */
 	_modest_ui_actions_on_connection_changed (device,
@@ -1253,4 +1261,15 @@ _modest_ui_actions_on_move_to_trash_folder (GtkWidget *widget,
 					    ModestMainWindow *main_window)
 {
 	delete_folder (main_window, TRUE);
+}
+
+static void
+_modest_ui_actions_on_accounts_reloaded (TnyAccountStore *store, gpointer user_data)
+{
+	ModestFolderView *folder_view;
+	ModestMailOperation *mail_op;
+	
+	folder_view = modest_widget_factory_get_folder_view (modest_runtime_get_widget_factory());
+
+	modest_folder_view_update_model (folder_view, store);
 }

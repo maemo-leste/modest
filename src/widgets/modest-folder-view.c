@@ -59,9 +59,6 @@ static void         on_selection_changed     (GtkTreeSelection *sel, gpointer da
 static void         on_subscription_changed  (TnyStoreAccount *store_account, TnyFolder *folder,
 					      ModestFolderView *self);
 
-static gboolean     modest_folder_view_update_model     (ModestFolderView *self,
-							 TnyAccountStore *account_store);
-
 static void         modest_folder_view_disconnect_store_account_handlers (GtkTreeView *self);
 
 static gint         cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
@@ -581,7 +578,7 @@ on_subscription_changed  (TnyStoreAccount *store_account,
 }
 
 
-static gboolean
+gboolean
 modest_folder_view_update_model (ModestFolderView *self, TnyAccountStore *account_store)
 {
 	g_return_val_if_fail (MODEST_IS_FOLDER_VIEW (self), FALSE);
