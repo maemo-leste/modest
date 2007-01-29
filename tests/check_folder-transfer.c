@@ -38,7 +38,8 @@
 #include <tny-folder.h>
 #include <tny-folder-store.h>
 #include <modest-tny-platform-factory.h>
-
+#include <modest-widget-factory.h>
+#include <modest-runtime.h>
 
 #include <modest-account-mgr.h>
 #include <modest-mail-operation.h>
@@ -106,10 +107,9 @@ main (int argc, char **argv)
 	TnyStoreAccount *account;
 	TnyIterator *iter;
 	TnyFolder *folder_src = NULL, *folder_dst = NULL;
-	TnyPlatformFactory *fact = NULL;
 	ModestAccountMgr *acc_mgr = NULL;
 	ModestMailOperation *mail_op = NULL;
-	TnyAccountStore *account_store = NULL;
+	ModestTnyAccountStore *account_store = NULL;
 	guint src_num_headers = 0, dst_num_headers = 0;
 	GError *err;
     
@@ -125,9 +125,8 @@ main (int argc, char **argv)
 	}
 	g_option_context_free (context);
 
-	fact = TNY_PLATFORM_FACTORY (modest_tny_platform_factory_get_instance ());
-	acc_mgr = MODEST_ACCOUNT_MGR (modest_tny_platform_factory_get_account_mgr_instance (MODEST_TNY_PLATFORM_FACTORY (fact)));
-	account_store = tny_platform_factory_new_account_store (fact);	
+	acc_mgr = modest_runtime_get_account_mgr ();
+	account_store = modest_runtime_get_account_store();
 
 	if (cachedir)
 		g_print ("Using %s as cache directory\n", cachedir);
@@ -140,8 +139,9 @@ main (int argc, char **argv)
 	/* Get accounts */
 	accounts = tny_simple_list_new ();
 
-	tny_account_store_get_accounts (account_store, accounts,
-	      TNY_ACCOUNT_STORE_STORE_ACCOUNTS);
+	tny_account_store_get_accounts (TNY_ACCOUNT_STORE(account_store),
+					accounts,
+					TNY_ACCOUNT_STORE_STORE_ACCOUNTS);
     
 	iter = tny_list_create_iterator (accounts);
 	account = (TnyStoreAccount*) tny_iterator_get_current (iter);

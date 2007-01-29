@@ -39,7 +39,7 @@
 #include <tny-folder.h>
 #include <tny-folder-store.h>
 
-#include "modest-tny-platform-factory.h"
+#include <modest-runtime.h>
 #include "modest-account-mgr.h"
 #include "modest-mail-operation.h"
 #include "modest-mail-operation-queue.h"
@@ -67,21 +67,18 @@ func (gpointer_data)
 {
 	TnyStoreAccount *account;
 	TnyIterator *iter;
-	TnyPlatformFactory *fact = NULL;
 	ModestAccountMgr *acc_mgr = NULL;
 	ModestMailOperation *mail_op = NULL;
 	ModestMailOperationQueue *queue = NULL;
-	TnyAccountStore *account_store = NULL;
+	ModestTnyAccountStore *account_store = NULL;
 	TnyList *accounts;
 
-	fact = TNY_PLATFORM_FACTORY (modest_tny_platform_factory_get_instance ());
-	acc_mgr = MODEST_ACCOUNT_MGR (modest_tny_platform_factory_get_account_mgr_instance (MODEST_TNY_PLATFORM_FACTORY (fact)));
-	account_store = tny_platform_factory_new_account_store (fact);	
+	acc_mgr       = modest_runtime_get_account_mgr();
+	account_store = modest_runtime_get_account_store();
 
 	/* Get accounts */
 	accounts = tny_simple_list_new ();
-
-	tny_account_store_get_accounts (account_store, accounts,
+	tny_account_store_get_accounts (TNY_ACCOUNT_STORE(account_store), accounts,
 					TNY_ACCOUNT_STORE_STORE_ACCOUNTS);
     
 	iter = tny_list_create_iterator (accounts);
@@ -90,7 +87,7 @@ func (gpointer_data)
 	g_object_unref (G_OBJECT (iter));
 	g_object_unref (G_OBJECT (accounts));
 
-	queue = modest_tny_platform_factory_get_mail_operation_queue_instance (MODEST_TNY_PLATFORM_FACTORY (fact));
+	queue   = modest_runtime_get_mail_operation_queue ();
 	mail_op = modest_mail_operation_new ();
 	
 	g_signal_connect (G_OBJECT (mail_op), "progress_changed", 

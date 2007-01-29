@@ -45,10 +45,15 @@ objects=\
         ${top_srcdir}/src/modest-cache-mgr.o \
         ${top_srcdir}/src/modest-protocol-info.o \
         ${top_srcdir}/src/modest-formatter.o \
+	${top_srcdir}/src/modest-runtime.o \
+	${top_srcdir}/src/modest-singletons.o \
         ${top_srcdir}/src/modest-pair.o \
         ${top_srcdir}/src/modest-marshal.o \
+	${top_srcdir}/src/modest-widget-memory.o \
+	${top_srcdir}/src/modest-icon-factory.o \
         ${top_srcdir}/src/modest-tny-account-store.o \
         ${top_srcdir}/src/modest-tny-platform-factory.o \
+	${top_srcdir}/src/modest-widget-factory.o \
         ${top_srcdir}/src/modest-mail-operation-queue.o \
         ${top_srcdir}/src/modest-mail-operation.o \
         ${top_srcdir}/src/modest-tny-msg-actions.o \
