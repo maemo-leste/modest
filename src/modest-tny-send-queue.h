@@ -31,7 +31,6 @@
 #ifndef __MODEST_TNY_SEND_QUEUE_H__
 #define __MODEST_TNY_SEND_QUEUE_H__
 
-#include <tny-send-queue.h>
 #include <glib.h>
 #include <glib-object.h>
 #include <tny-send-queue.h>
@@ -58,10 +57,10 @@ struct _ModestTnySendQueue {
 struct _ModestTnySendQueueClass {
 	GObjectClass parent_class;
 	
-        void (*add_func)              (TnySendQueue *self, TnyMsg *msg);
-        TnyFolder*                    (*get_sentbox_func) (TnySendQueue *self);
-        TnyFolder* (*get_outbox_func) (TnySendQueue *self);
-        void (*cancel_func)           (TnySendQueue *self, gboolean remove);	
+        void (*add_func)               (TnySendQueue *self, TnyMsg *msg);
+        TnyFolder* (*get_sentbox_func) (TnySendQueue *self);
+        TnyFolder* (*get_outbox_func)  (TnySendQueue *self);
+        void (*cancel_func)            (TnySendQueue *self, gboolean remove);	
 };
 
 /* member functions */
@@ -69,8 +68,7 @@ GType        modest_tny_send_queue_get_type    (void) G_GNUC_CONST;
 
 /* typical parameter-less _new function */
 /* if this is a kind of GtkWidget, it should probably return at GtkWidget* */
-ModestTnySendQueue*    modest_tny_send_queue_new         (TnyCamelTransportAccount *trans_account);
-
+ModestTnySendQueue*    modest_tny_send_queue_new         (TnyTransportAccount *account);
 
 G_END_DECLS
 

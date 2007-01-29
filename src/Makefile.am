@@ -1,6 +1,6 @@
 #
 # Makefile.am
-# Time-stamp: <2007-01-27 18:11:31 (djcb)>
+# Time-stamp: <2007-01-30 00:21:56 (djcb)>
 SUBDIRS=$(MODEST_PLATFORM) widgets
 DIST_SUBDIRS = widgets gtk maemo
 
@@ -30,12 +30,12 @@ bin_PROGRAMS=\
 	modest
 
 modest_SOURCES=\
+	modest-account-mgr-helpers.c\
+	modest-account-mgr-helpers.h\
+	modest-account-mgr-priv.c\
+	modest-account-mgr-priv.h\
 	modest-account-mgr.c\
 	modest-account-mgr.h\
-	modest-account-mgr-helpers.h\
-	modest-account-mgr-helpers.c\
-	modest-account-mgr-priv.h\
-	modest-account-mgr-priv.c\
 	modest-cache-mgr.c\
 	modest-cache-mgr.h\
 	modest-conf.c\
@@ -46,8 +46,8 @@ modest_SOURCES=\
 	modest-formatter.h \
 	modest-icon-factory.c\
 	modest-icon-factory.h\
-	modest-local-folder-info.h \
 	modest-local-folder-info.c \
+	modest-local-folder-info.h \
 	modest-mail-operation-queue.c \
 	modest-mail-operation-queue.h \
 	modest-mail-operation.c \
@@ -65,24 +65,26 @@ modest_SOURCES=\
 	modest-singletons.h\
 	modest-text-utils.c\
 	modest-text-utils.h\
-	modest-tny-account.c\
-	modest-tny-account.h\
 	modest-tny-account-store.c\
 	modest-tny-account-store.h\
+	modest-tny-account.c\
+	modest-tny-account.h\
 	modest-tny-folder.c \
 	modest-tny-folder.h \
 	modest-tny-msg-actions.c\
 	modest-tny-msg-actions.h\
 	modest-tny-platform-factory.c \
 	modest-tny-platform-factory.h \
+	modest-tny-send-queue.c\
+	modest-tny-send-queue.h\
+	modest-ui-actions.h\
 	modest-ui.c\
 	modest-ui.h\
-	modest-ui-actions.h\
 	modest-widget-factory.c	\
 	modest-widget-factory.h	\
+	modest-widget-memory-priv.h \
 	modest-widget-memory.c\
-	modest-widget-memory.h \
-	modest-widget-memory-priv.h
+	modest-widget-memory.h 
 
 modest_LDADD = 						\
 	$(MODEST_GSTUFF_LIBS) 				\
