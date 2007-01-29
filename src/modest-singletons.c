@@ -133,34 +133,53 @@ modest_singletons_init (ModestSingletons *obj)
 	 */
 }
 
+
+static void
+check_object_is_dead (GObject *obj, gchar *name)
+{
+	if (G_IS_OBJECT(obj))
+		g_printerr ("modest: %s is still alive\n", name);
+}
+
 static void
 modest_singletons_finalize (GObject *obj)
 {
 	ModestSingletonsPrivate *priv;
 	priv = MODEST_SINGLETONS_GET_PRIVATE(obj);
 
-	if (priv->conf) {
-		g_object_unref (G_OBJECT(priv->conf));
-		priv->conf = NULL;
+	if (priv->widget_factory) {
+		g_object_unref (G_OBJECT(priv->widget_factory));
+		check_object_is_dead ((GObject*)priv->widget_factory,
+				      "priv->widget_factory");
+		priv->widget_factory = NULL;
 	}
-	
-	if (priv->account_mgr) {
-		g_object_unref (G_OBJECT(priv->account_mgr));
-		priv->account_mgr = NULL;
-	}
+
 	if (priv->account_store) {
 		g_object_unref (G_OBJECT(priv->account_store));
+		check_object_is_dead ((GObject*)priv->account_store,
+				      "priv->account_store");
 		priv->account_store = NULL;
+	}
+
+	if (priv->account_mgr) {
+		g_object_unref (G_OBJECT(priv->account_mgr));
+		check_object_is_dead ((GObject*)priv->account_mgr,
+				      "priv->account_mgr");
+		priv->account_mgr = NULL;
+	}
+
+	if (priv->conf) {
+		g_object_unref (G_OBJECT(priv->conf));
+		check_object_is_dead ((GObject*)priv->conf,
+				      "priv->conf");
+		priv->conf = NULL;
 	}
 
 	if (priv->cache_mgr) {
 		g_object_unref (G_OBJECT(priv->cache_mgr));
+		check_object_is_dead ((GObject*)priv->cache_mgr,
+				      "priv->cache_mgr");
 		priv->cache_mgr = NULL;
-	}
-
-	if (priv->widget_factory) {
-		g_object_unref (G_OBJECT(priv->widget_factory));
-		priv->widget_factory = NULL;
 	}
 	
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
