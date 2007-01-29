@@ -39,7 +39,7 @@
 #include <tny-simple-list.h>
 #include <camel/camel-stream-mem.h>
 #include <glib/gi18n.h>
-#include <modest-tny-account.h>
+
 #include "modest-text-utils.h"
 #include "modest-tny-msg-actions.h"
 #include "modest-tny-platform-factory.h"
@@ -84,6 +84,10 @@ static gboolean    modest_mail_operation_xfer_msg          (ModestMailOperation 
 							    TnyHeader *header, 
 							    TnyFolder *folder, 
 							    gboolean delete_original);
+
+static TnyFolder * modest_mail_operation_find_trash_folder (ModestMailOperation *self,
+							    TnyStoreAccount *store_account);
+
 
 enum _ModestMailOperationSignals 
 {
@@ -345,8 +349,8 @@ create_reply_forward_mail (TnyMsg *msg, const gchar *from, gboolean is_reply, gu
 	tny_header_set_replyto (new_header, from);
 
 	/* Change the subject */
-	new_subject =
-		(gchar *) modest_text_utils_derived_subject (tny_header_get_subject(header),
+	new_subject = 
+		(gchar *) modest_text_utils_derived_subject (tny_header_get_subject(header), 
 							     (is_reply) ? _("Re:") : _("Fwd:"));
 	tny_header_set_subject (new_header, (const gchar *) new_subject);
 	g_free (new_subject);
@@ -388,7 +392,7 @@ modest_mail_operation_create_reply_mail (TnyMsg *msg,
 					 ModestMailOperationReplyType reply_type,
 					 ModestMailOperationReplyMode reply_mode)
 {
-	TnyMsg *new_msg = NULL;
+	TnyMsg *new_msg;
 	TnyHeader *new_header, *header;
 	const gchar* reply_to;
 	gchar *new_cc = NULL;
@@ -401,7 +405,6 @@ modest_mail_operation_create_reply_mail (TnyMsg *msg,
 	header = tny_msg_get_header (msg);
 	new_header = tny_msg_get_header (new_msg);
 	reply_to = tny_header_get_replyto (header);
-
 	if (reply_to)
 		tny_header_set_to (new_header, reply_to);
 	else
@@ -426,8 +429,8 @@ modest_mail_operation_create_reply_mail (TnyMsg *msg,
                /* Remove my own address from the cc list. TODO:
                   remove also the To: of the new message, needed due
                   to the new reply_to feature */
-		new_cc = (gchar *)
-			modest_text_utils_remove_address ((const gchar *) tmp->str,
+		new_cc = (gchar *) 
+			modest_text_utils_remove_address ((const gchar *) tmp->str, 
 							  from);
 		/* FIXME: remove also the mails from the new To: */
 		tny_header_set_cc (new_header, new_cc);
@@ -684,9 +687,10 @@ modest_mail_operation_remove_folder (ModestMailOperation *self,
 	/* Delete folder or move to trash */
 	if (remove_to_trash) {
 		TnyFolder *trash_folder;
-		trash_folder = modest_tny_account_get_special_folder (TNY_ACCOUNT(folder_store),
-								      TNY_FOLDER_TYPE_TRASH);
-		
+
+		trash_folder = modest_mail_operation_find_trash_folder (self,
+									TNY_STORE_ACCOUNT (folder_store));
+
 		/* TODO: error_handling */
 		modest_mail_operation_move_folder (self, 
 						   folder, 
@@ -791,6 +795,45 @@ modest_mail_operation_xfer_folder (ModestMailOperation *self,
 }
 
 
+/* FIXME: this method should be rewritten when the policy for the
+   Trash folder becomes clearer */
+static TnyFolder *
+modest_mail_operation_find_trash_folder (ModestMailOperation *self,
+					 TnyStoreAccount *store_account)
+{
+	TnyList *folders;
+	TnyIterator *iter;
+	gboolean found;
+	/*TnyFolderStoreQuery *query;*/
+	TnyFolder *trash_folder;
+
+	/* Look for Trash folder */
+	folders = TNY_LIST (tny_simple_list_new ());
+	tny_folder_store_get_folders (TNY_FOLDER_STORE (store_account),
+				      folders, NULL, NULL); /* FIXME */
+	iter = tny_list_create_iterator (folders);
+
+	found = FALSE;
+	while (!tny_iterator_is_done (iter) && !found) {
+
+		trash_folder = TNY_FOLDER (tny_iterator_get_current (iter));
+		if (tny_folder_get_folder_type (trash_folder) == TNY_FOLDER_TYPE_TRASH)
+			found = TRUE;
+		else
+			tny_iterator_next (iter);
+	}
+
+	/* Clean up */
+	g_object_unref (G_OBJECT (folders));
+	g_object_unref (G_OBJECT (iter));
+
+	/* TODO: better error handling management */
+	if (!found) 
+		return NULL;
+	else
+		return trash_folder;
+}
+
 /* ******************************************************************* */
 /* **************************  MSG  ACTIONS  ************************* */
 /* ******************************************************************* */
@@ -834,8 +877,8 @@ modest_mail_operation_remove_msg (ModestMailOperation *self,
 		TnyStoreAccount *store_account;
 
 		store_account = TNY_STORE_ACCOUNT (tny_folder_get_account (folder));
-		trash_folder = modest_tny_account_get_special_folder (TNY_ACCOUNT(store_account),
-								      TNY_FOLDER_TYPE_TRASH);
+		trash_folder = modest_mail_operation_find_trash_folder (self, store_account);
+
 		if (trash_folder) {
 			modest_mail_operation_move_msg (self, header, trash_folder);
 /* 			g_object_unref (trash_folder); */
@@ -853,7 +896,7 @@ modest_mail_operation_remove_msg (ModestMailOperation *self,
 		g_object_unref (G_OBJECT (store_account));
 	} else {
 		tny_folder_remove_msg (folder, header, NULL); /* FIXME */
-		tny_folder_sync(folder, TRUE, NULL); /* FIXME */
+		tny_folder_sync (folder, TRUE, NULL); /* FIXME */
 	}
 
 	/* Free */
