@@ -711,7 +711,7 @@ get_msg_cb (TnyFolder *folder, TnyMsg *msg, GError **err, gpointer user_data)
 
 	helper = (GetMsgAsyncHelper *) user_data;
 
-	if (*err && ((*err)->code == TNY_FOLDER_ERROR_GET_MSG)) {
+	if ((*err && ((*err)->code == TNY_FOLDER_ERROR_GET_MSG)) || !msg) {
 		ModestHeaderView *header_view;
 		header_view = modest_widget_factory_get_header_view
 			(modest_runtime_get_widget_factory());
@@ -720,9 +720,6 @@ get_msg_cb (TnyFolder *folder, TnyMsg *msg, GError **err, gpointer user_data)
 						      helper->main_window);
 		return;
 	}
-
-	if (!msg)
-		return;
 
 	/* Call user function */
 	helper->func (msg, user_data);
