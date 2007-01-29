@@ -39,7 +39,7 @@
 #include <tny-simple-list.h>
 #include <camel/camel-stream-mem.h>
 #include <glib/gi18n.h>
-
+#include <modest-tny-account.h>
 #include "modest-text-utils.h"
 #include "modest-tny-msg-actions.h"
 #include "modest-tny-platform-factory.h"
@@ -84,10 +84,6 @@ static gboolean    modest_mail_operation_xfer_msg          (ModestMailOperation 
 							    TnyHeader *header, 
 							    TnyFolder *folder, 
 							    gboolean delete_original);
-
-static TnyFolder * modest_mail_operation_find_trash_folder (ModestMailOperation *self,
-							    TnyStoreAccount *store_account);
-
 
 enum _ModestMailOperationSignals 
 {
@@ -689,10 +685,9 @@ modest_mail_operation_remove_folder (ModestMailOperation *self,
 	/* Delete folder or move to trash */
 	if (remove_to_trash) {
 		TnyFolder *trash_folder;
-
-		trash_folder = modest_mail_operation_find_trash_folder (self,
-									TNY_STORE_ACCOUNT (folder_store));
-
+		trash_folder = modest_tny_account_get_special_folder (TNY_ACCOUNT(folder_store),
+								      TNY_FOLDER_TYPE_TRASH);
+		
 		/* TODO: error_handling */
 		modest_mail_operation_move_folder (self, 
 						   folder, 
@@ -797,45 +792,6 @@ modest_mail_operation_xfer_folder (ModestMailOperation *self,
 }
 
 
-/* FIXME: this method should be rewritten when the policy for the
-   Trash folder becomes clearer */
-static TnyFolder *
-modest_mail_operation_find_trash_folder (ModestMailOperation *self,
-					 TnyStoreAccount *store_account)
-{
-	TnyList *folders;
-	TnyIterator *iter;
-	gboolean found;
-	/*TnyFolderStoreQuery *query;*/
-	TnyFolder *trash_folder = NULL;
-
-	/* Look for Trash folder */
-	folders = TNY_LIST (tny_simple_list_new ());
-	tny_folder_store_get_folders (TNY_FOLDER_STORE (store_account),
-				      folders, NULL, NULL); /* FIXME */
-	iter = tny_list_create_iterator (folders);
-
-	found = FALSE;
-	while (!tny_iterator_is_done (iter) && !found) {
-
-		trash_folder = TNY_FOLDER (tny_iterator_get_current (iter));
-		if (tny_folder_get_folder_type (trash_folder) == TNY_FOLDER_TYPE_TRASH)
-			found = TRUE;
-		else
-			tny_iterator_next (iter);
-	}
-
-	/* Clean up */
-	g_object_unref (G_OBJECT (folders));
-	g_object_unref (G_OBJECT (iter));
-
-	/* TODO: better error handling management */
-	if (!found) 
-		return NULL;
-	else
-		return trash_folder;
-}
-
 /* ******************************************************************* */
 /* **************************  MSG  ACTIONS  ************************* */
 /* ******************************************************************* */
@@ -879,8 +835,8 @@ modest_mail_operation_remove_msg (ModestMailOperation *self,
 		TnyStoreAccount *store_account;
 
 		store_account = TNY_STORE_ACCOUNT (tny_folder_get_account (folder));
-		trash_folder = modest_mail_operation_find_trash_folder (self, store_account);
-
+		trash_folder = modest_tny_account_get_special_folder (TNY_ACCOUNT(store_account),
+								      TNY_FOLDER_TYPE_TRASH);
 		if (trash_folder) {
 			modest_mail_operation_move_msg (self, header, trash_folder);
 /* 			g_object_unref (trash_folder); */
