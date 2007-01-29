@@ -252,6 +252,49 @@ menubar_to_menu (GtkUIManager *ui_manager)
 	return main_menu;
 }
 
+static GtkWidget*
+get_toolbar (ModestMainWindow *self)
+{
+	GtkWidget   *progress_bar,
+		    *toolbar, *progress_box, *progress_alignment;
+	GtkToolItem *progress_item;
+	ModestWindowPrivate *parent_priv;
+	ModestWidgetFactory *widget_factory;
+	GtkWidget   *stop_icon;
+	
+	parent_priv = MODEST_WINDOW_GET_PRIVATE(self);
+	widget_factory = modest_runtime_get_widget_factory();
+	
+	/* Toolbar */
+	progress_bar  = modest_widget_factory_get_progress_bar(widget_factory);
+	toolbar       = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar");
+
+	gtk_progress_bar_set_text (GTK_PROGRESS_BAR(progress_bar), "Connecting...");
+
+	progress_box        = gtk_hbox_new (FALSE, HILDON_MARGIN_DEFAULT);
+	progress_alignment  = gtk_alignment_new (0.5, 0.5, 1, 0);
+	
+	gtk_container_add  (GTK_CONTAINER(progress_alignment), progress_bar);
+	gtk_box_pack_start (GTK_BOX(progress_box), progress_alignment, TRUE, TRUE, 0);
+	
+	progress_item  = gtk_tool_item_new ();
+	gtk_container_add (GTK_CONTAINER(progress_item), progress_box);
+	gtk_tool_item_set_homogeneous (progress_item, FALSE);
+	gtk_tool_item_set_expand(progress_item, TRUE);
+	
+	stop_icon = gtk_image_new_from_icon_name("qgn_toolb_gene_stop", GTK_ICON_SIZE_BUTTON);
+	gtk_toolbar_insert (GTK_TOOLBAR(toolbar), gtk_tool_button_new(stop_icon, NULL),
+			    gtk_toolbar_get_n_items(GTK_TOOLBAR(toolbar)));
+
+	gtk_toolbar_insert (GTK_TOOLBAR(toolbar), progress_item,
+			    gtk_toolbar_get_n_items(GTK_TOOLBAR(toolbar)));
+	
+
+	
+	gtk_widget_show_all (toolbar);
+	return toolbar;
+}
+	
 ModestWindow*
 modest_main_window_new (void)
 {
@@ -260,7 +303,6 @@ modest_main_window_new (void)
 	ModestWidgetFactory *widget_factory;
 	ModestWindowPrivate *parent_priv;
 	GtkWidget *main_vbox;
-	GtkWidget *status_hbox;
 	GtkWidget *header_win, *folder_win;
 	GtkActionGroup *action_group;
 	GError *error = NULL;
@@ -296,14 +338,14 @@ modest_main_window_new (void)
 	gtk_window_add_accel_group (GTK_WINDOW (obj), 
 				    gtk_ui_manager_get_accel_group (parent_priv->ui_manager));
 
-
-	/* Toolbar */
-	parent_priv->toolbar = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar");
+	/* add the toolbar */
+	parent_priv->toolbar = get_toolbar(MODEST_MAIN_WINDOW(obj));
 	hildon_window_add_toolbar (HILDON_WINDOW (obj), GTK_TOOLBAR (parent_priv->toolbar));
 
 	/* Menubar */
 	parent_priv->menubar = menubar_to_menu (parent_priv->ui_manager);
 	hildon_window_set_menu (HILDON_WINDOW (obj), GTK_MENU (parent_priv->menubar));
+
 
 	/* widgets from factory */
 	priv->folder_view = modest_widget_factory_get_folder_view (widget_factory);
@@ -323,29 +365,10 @@ modest_main_window_new (void)
 	
 	gtk_tree_view_columns_autosize (GTK_TREE_VIEW(priv->header_view));
 
-	
-	/* status bar / progress */
-	status_hbox = gtk_hbox_new (FALSE, 0);
-	gtk_box_pack_start (GTK_BOX(status_hbox),
-			    modest_widget_factory_get_folder_info_label (widget_factory),
-			    FALSE,FALSE, 6);
-	gtk_box_pack_start (GTK_BOX(status_hbox),
-			    modest_widget_factory_get_status_bar(widget_factory),
-			    TRUE, TRUE, 0);
-	gtk_box_pack_start (GTK_BOX(status_hbox),
-			    modest_widget_factory_get_progress_bar(widget_factory),
-			    FALSE, FALSE, 0);
-	gtk_box_pack_start (GTK_BOX(status_hbox),
-			  modest_widget_factory_get_online_toggle(widget_factory),
-			  FALSE, FALSE, 0);
-
 	/* putting it all together... */
 	main_vbox = gtk_vbox_new (FALSE, 6);
 	gtk_box_pack_start (GTK_BOX(main_vbox), priv->main_paned, TRUE, TRUE,0);
-/* 	gtk_box_pack_start (GTK_BOX(main_vbox), parent_priv->toolbar, FALSE, FALSE, 0); */
-	gtk_box_pack_start (GTK_BOX(main_vbox), status_hbox, FALSE, FALSE, 0);
 
-	
 	gtk_container_add (GTK_CONTAINER(obj), main_vbox);
 	restore_sizes (MODEST_MAIN_WINDOW(obj));	
 

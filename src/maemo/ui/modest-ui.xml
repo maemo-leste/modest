@@ -83,13 +83,15 @@
     <toolitem action="ActionsReplyAll"/>
     <toolitem action="ActionsForward"/>
     <separator/>
-    <toolitem action="ActionsSendReceive"/>
+<!--    <toolitem action="GotoPrevious"/>
+    <toolitem action="GotoNext"/> -->
     <separator/>
-    <toolitem action="GotoPrevious"/>
-    <toolitem action="GotoNext"/>
+    <toolitem action="ActionsSendReceive"/>
+    <toolitem name="ToggleView" action="ToggleView"/>
     <separator/>
     <toolitem action="ActionsDelete"/>
-  </toolbar>
+      <separator/>
+</toolbar>
 
   <popup name="HeaderViewContextMenu">
     <menuitem action="ActionsReply"/>
