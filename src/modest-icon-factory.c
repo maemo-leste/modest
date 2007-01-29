@@ -46,9 +46,8 @@ modest_icon_factory_get_icon (const gchar *name)
 	if (G_UNLIKELY(!icon_cache))
 		icon_cache = modest_cache_mgr_get_cache (modest_runtime_get_cache_mgr(),
 							 MODEST_CACHE_MGR_CACHE_TYPE_PIXBUF);
-	
-	if (!icon_cache || !g_hash_table_lookup_extended (icon_cache, name, &orig_key,
-							  (gpointer*)&pixbuf)) {
+
+	if (!icon_cache || !g_hash_table_lookup_extended (icon_cache, name, &orig_key,(gpointer*)&pixbuf)) {
 		pixbuf = gdk_pixbuf_new_from_file (name, &err);
 		if (!pixbuf) {
 			g_printerr ("modest: error in icon factory while loading '%s': %s\n",

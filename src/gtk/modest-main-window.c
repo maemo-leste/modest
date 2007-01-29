@@ -356,8 +356,8 @@ modest_main_window_new (void)
 			    modest_widget_factory_get_progress_bar(widget_factory),
 			    FALSE, FALSE, 0);
 	gtk_box_pack_start (GTK_BOX(status_hbox),
-			  modest_widget_factory_get_online_toggle(widget_factory),
-			  FALSE, FALSE, 0);
+			    modest_widget_factory_get_online_toggle(widget_factory),
+			    FALSE, FALSE, 0);
 
 	/* putting it all together... */
 	main_vbox = gtk_vbox_new (FALSE, 6);

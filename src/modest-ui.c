@@ -897,18 +897,22 @@ _modest_ui_actions_on_connection_changed (TnyDevice *device, gboolean online,
 	GtkWidget *online_toggle;
 	ModestHeaderView *header_view;
 	ModestWidgetFactory *widget_factory;
+	GtkWidget *icon;
+	const gchar *icon_name;
 
+	g_return_if_fail (device);
 	g_return_if_fail (main_window);
-	
+
+	icon_name = online ? GTK_STOCK_CONNECT : GTK_STOCK_DISCONNECT;
+	icon      = gtk_image_new_from_icon_name (icon_name, GTK_ICON_SIZE_BUTTON);
+
 	widget_factory = modest_runtime_get_widget_factory ();
 	header_view   = modest_widget_factory_get_header_view (widget_factory);
 	online_toggle = modest_widget_factory_get_online_toggle (widget_factory);
 
 	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(online_toggle),
 				      online);
-	gtk_button_set_label (GTK_BUTTON(online_toggle),
-			      online ? _("Online") : _("Offline"));
-
+	gtk_button_set_image (GTK_BUTTON(online_toggle), icon);
 	statusbar_push (widget_factory, 0, 
 			online ? _("Modest went online") : _("Modest went offline"));
 	
@@ -1267,9 +1271,7 @@ static void
 _modest_ui_actions_on_accounts_reloaded (TnyAccountStore *store, gpointer user_data)
 {
 	ModestFolderView *folder_view;
-	ModestMailOperation *mail_op;
 	
 	folder_view = modest_widget_factory_get_folder_view (modest_runtime_get_widget_factory());
-
 	modest_folder_view_update_model (folder_view, store);
 }
