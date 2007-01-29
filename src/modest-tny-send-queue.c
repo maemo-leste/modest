@@ -43,8 +43,8 @@ enum {
 
 typedef struct _ModestTnySendQueuePrivate ModestTnySendQueuePrivate;
 struct _ModestTnySendQueuePrivate {
-	/* my private members go here, eg. */
-	/* gboolean frobnicate_mode; */
+	TnyTransportAccount *account;
+	
 };
 #define MODEST_TNY_SEND_QUEUE_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                    MODEST_TYPE_TNY_SEND_QUEUE, \
@@ -95,21 +95,43 @@ modest_tny_send_queue_cancel_default (TnySendQueue *self, gboolean remove)
 static void
 modest_tny_send_queue_add_default (TnySendQueue *self, TnyMsg *msg)
 {
+	ModestTnySendQueuePriv *priv; 
+
+	g_return_if_fail (self, NULL);
+	g_return_if_fail (TNY_IS_CAMEL_MSG(msg), NULL);
+	
+	priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE (self);
+
 	/* FIXME */
+	
 }
 
 
 static TnyFolder*
 modest_tny_send_queue_get_sentbox_default (TnySendQueue *self)
 {
-	MODEST_TNY_SENT_QUEUE_GET_CLASS(self)->get_sentbox (self);
+	ModestTnySendQueuePriv *priv; 
+	
+	g_return_val_if_fail (self, NULL);
+
+	priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE (self);
+	
+	return modest_tny_account_get_special_folder (priv->account,
+						      TNY_FOLDER_TYPE_SENT);
 }
 
 
 static TnyFolder*
-modest_tny_send_queue_get_outbox_default (TnySendQueue *self, TnyMsg *msg)
+modest_tny_send_queue_get_outbox_default (TnySendQueue *self)
 {
-	MODEST_TNY_SENT_QUEUE_GET_CLASS(self)->get_outbox (self);
+	ModestTnySendQueuePriv *priv; 
+
+	g_return_val_if_fail (self, NULL);
+	
+	priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE (self);
+
+	return modest_tny_account_get_special_folder (priv->account,
+						      TNY_FOLDER_TYPE_OUTBOX);
 }
 
 
@@ -174,26 +196,43 @@ modest_tny_send_queue_class_init (ModestTnySendQueueClass *klass)
 static void
 modest_tny_send_queue_instance_init (GTypeInstance *instance, gpointer g_class)
 {
-	TnyCamelSendQueue *self;  
-        TnyCamelSendQueuePriv *priv; 
+	ModestTnySendQueue *self;  
+        ModestTnySendQueuePriv *priv; 
 
-	self = (TnyCamelSendQueue*)instance;
-	priv = TNY_CAMEL_SEND_QUEUE_GET_PRIVATE (self);
-	
-        priv->sentbox_cache = NULL;
-        priv->outbox_cache = NULL;
+	self = (ModestTnySendQueue*)instance;
+	priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE (self);
+
+	priv->account = NULL;
 }
 
 static void
 modest_tny_send_queue_finalize (GObject *obj)
 {
-/* 	free/unref instance resources here */
+	ModestTnySendQueuePriv *priv; 
+	priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE (obj);
+	
+	if (priv->account) {
+		g_object_unref (priv->account);
+		priv->account = NULL;
+	}
+	
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
 ModestTnySendQueue*
-modest_tny_send_queue_new (void)
+modest_tny_send_queue_new (TnyTransportAccount *account)
 {
-	return MODEST_TNY_SEND_QUEUE(g_object_new(MODEST_TYPE_TNY_SEND_QUEUE, NULL));
+	ModestTnySendQueue *self;
+	ModestTnySendQueuePrivate *priv;
+
+	g_return_val_if_fail (account, NULL);
+	
+	self = MODEST_TNY_SEND_QUEUE(g_object_new(MODEST_TYPE_TNY_SEND_QUEUE, NULL));
+	priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE (self);
+
+	priv->account = account;
+	g_object_ref (G_OBJECT(priv->account));
+	
+	return self;
 }
 
