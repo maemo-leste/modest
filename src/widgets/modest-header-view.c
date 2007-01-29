@@ -390,7 +390,8 @@ modest_header_view_new (TnyFolder *folder, ModestHeaderViewStyle style)
 
 	gtk_tree_view_columns_autosize (GTK_TREE_VIEW(obj));
 	gtk_tree_view_set_fixed_height_mode (GTK_TREE_VIEW(obj),TRUE);
-
+	gtk_tree_view_set_enable_search (GTK_TREE_VIEW(obj), TRUE);
+	
 	gtk_tree_view_set_rules_hint (GTK_TREE_VIEW(obj),
 				      TRUE); /* alternating row colors */
 	sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(self));

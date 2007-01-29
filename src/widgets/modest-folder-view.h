@@ -112,6 +112,14 @@ void          modest_folder_view_set_title       (ModestFolderView *self,
 TnyFolder*    modest_folder_view_get_selected    (ModestFolderView *self);
 
 
+/**
+ * modest_folder_view_update_model:
+ * @self: a #ModestFolderView
+ * 
+ * returns a new reference to the #TnyFolder that is already selected
+ * 
+ * Returns: the selected folder or NULL if none is selected
+ **/
 gboolean      modest_folder_view_update_model    (ModestFolderView *self,
 						  TnyAccountStore *account_store);
 

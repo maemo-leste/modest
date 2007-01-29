@@ -72,7 +72,6 @@ enum {
 
 typedef struct _ModestFolderViewPrivate ModestFolderViewPrivate;
 struct _ModestFolderViewPrivate {
-
 	TnyAccountStore     *account_store;
 	TnyFolder           *cur_folder;
 
@@ -481,6 +480,22 @@ update_store_account_handlers (ModestFolderView *self, TnyList *account_list)
 
 
 
+/* this feels dirty; any other way to expand all the root items? */
+static void
+expand_root_items (ModestFolderView *self)
+{
+	GtkTreePath *path;
+	path = gtk_tree_path_new_first ();
+
+	/* all folders should have child items, so.. */
+	while (gtk_tree_view_expand_row (GTK_TREE_VIEW(self), path, FALSE))
+		gtk_tree_path_next (path);
+	
+	gtk_tree_path_free (path);
+}
+
+
+
 static gboolean
 update_model (ModestFolderView *self, ModestTnyAccountStore *account_store)
 {
@@ -500,9 +515,7 @@ update_model (ModestFolderView *self, ModestTnyAccountStore *account_store)
 
 	tny_account_store_get_accounts (TNY_ACCOUNT_STORE(account_store),
 					account_list,
-					TNY_ACCOUNT_STORE_STORE_ACCOUNTS);
-
-	
+					TNY_ACCOUNT_STORE_STORE_ACCOUNTS);	
 	if (account_list) {
 		sortable = gtk_tree_model_sort_new_with_model (model);
 		gtk_tree_sortable_set_sort_column_id (GTK_TREE_SORTABLE(sortable),
@@ -512,6 +525,8 @@ update_model (ModestFolderView *self, ModestTnyAccountStore *account_store)
 						 TNY_GTK_FOLDER_STORE_TREE_MODEL_NAME_COLUMN, 
 						 cmp_rows, NULL, NULL);
 		gtk_tree_view_set_model (GTK_TREE_VIEW(self), sortable);
+		expand_root_items (self); /* expand all account folders */
+	
 		update_store_account_handlers (self, account_list);
 	}
 	
