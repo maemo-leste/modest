@@ -47,7 +47,6 @@
 #include <modest-tny-platform-factory.h>
 #include <modest-mail-operation.h>
 
-
 static int start_ui (const gchar* mailto, const gchar *cc, const gchar *bcc,
 		     const gchar* subject, const gchar *body);
 static int send_mail (const gchar* mailto, const gchar *cc, const gchar *bcc,
@@ -56,12 +55,12 @@ static int send_mail (const gchar* mailto, const gchar *cc, const gchar *bcc,
 int
 main (int argc, char *argv[])
 {
-	GOptionContext     *context       = NULL;
+	GOptionContext     *context = NULL;
 	
 	GError *err = NULL;
 	int retval  = MODEST_ERR_NONE;
 		
-	static gboolean batch=FALSE, factory_settings=FALSE;
+	static gboolean batch = FALSE;
 	static gchar    *mailto, *subject, *bcc, *cc, *body, *account;
 
 	static GOptionEntry options[] = {
@@ -79,8 +78,6 @@ main (int argc, char *argv[])
 		  N_("Account to use (if specified, default account is used)"), NULL},
 		{ "batch", 'y', 0, G_OPTION_ARG_NONE, &batch,
 		  N_("Run in batch mode (don't show UI)"), NULL},
-		{ "factory-settings", 0, 0, G_OPTION_ARG_NONE, &factory_settings,
-		  N_("return to factory settings"), NULL},
 		{ NULL, 0, 0, 0, NULL, NULL, NULL }
 	};
 
@@ -101,16 +98,13 @@ main (int argc, char *argv[])
 	}
 	g_option_context_free (context);
 	
-	if (!getenv("DISPLAY"))
-		batch = TRUE; 
-	
 	if (!batch) {
-		if (!gtk_init_check(&argc, &argv)) {
-			g_printerr ("modest: failed to start graphical ui\n");
+		if (!modest_runtime_init_ui (argc, argv)) {
+			g_printerr ("modest: cannot start UI\n");
+			retval = MODEST_ERR_UI;
 			goto cleanup;
-		}
-		retval = start_ui (mailto, cc, bcc, subject, body);
-
+		} else
+			retval = start_ui (mailto, cc, bcc, subject, body);
 	} else 
 		retval = send_mail (mailto, cc, bcc, subject, body);
 	
@@ -130,7 +124,6 @@ start_ui (const gchar* mailto, const gchar *cc, const gchar *bcc,
 	ModestUI *modest_ui = NULL;
 	
 	gint retval = 0;
-
 	modest_ui = modest_ui_new ();
 
 	if (mailto||cc||bcc||subject||body) {

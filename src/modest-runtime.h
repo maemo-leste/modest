@@ -48,6 +48,7 @@ typedef enum {
 	MODEST_RUNTIME_DEBUG_LOG_ACTIONS           = 1 << 1, /* not in use atm */
 	MODEST_RUNTIME_DEBUG_DEBUG_OBJECTS         = 1 << 2, /* for g_type_init */
 	MODEST_RUNTIME_DEBUG_DEBUG_SIGNALS         = 1 << 3, /* for g_type_init */
+	MODEST_RUNTIME_DEBUG_FACTORY_SETTINGS      = 1 << 4, /* reset to factory defaults */
 } ModestRuntimeDebugFlags;
 
 /**
@@ -62,6 +63,18 @@ typedef enum {
  */
 gboolean modest_runtime_init (void);
 
+
+/**
+ * modest_runtime_init_ui:
+ * @argc: the #argc argument to the main function
+ * @argv: the #argv argument to the main function
+ * 
+ * initialize the modest UI; this replaces the call to
+ * gtk_init
+ *  
+ * TRUE if this succeeded, FALSE otherwise.
+ */
+gboolean modest_runtime_init_ui (gint argc, gchar** argv);
 
 /**
  * modest_runtime_uinit:

@@ -106,6 +106,7 @@ gboolean
 modest_runtime_init (void)
 {
 	ModestSingletons *my_singletons;
+	gboolean reset;
 	
 	if (_singletons) {
 		g_printerr ("modest: modest_runtime_init can only be called once\n");
@@ -132,9 +133,10 @@ modest_runtime_init (void)
 		return FALSE;
 	}
 #endif /* MODEST_PLATFORM_ID==2 */
-	
-	if (!init_header_columns(modest_singletons_get_conf (my_singletons),
-				 FALSE)) {
+
+	/* based on the debug settings, we decide whether to overwrite old settings */
+	reset = modest_runtime_get_debug_flags () & MODEST_RUNTIME_DEBUG_FACTORY_SETTINGS;
+	if (!init_header_columns(modest_singletons_get_conf (my_singletons), reset)) {
 		modest_runtime_uninit ();
 		g_printerr ("modest: failed to init header columns\n");
 		return FALSE;
@@ -158,6 +160,17 @@ modest_runtime_init (void)
 	 */
 	_singletons = my_singletons;
 	
+	return TRUE;
+}
+
+
+gboolean
+modest_runtime_init_ui (gint argc, gchar** argv)
+{
+	if (!gtk_init_check(&argc, &argv)) {
+		g_printerr ("modest: failed to initialize graphical ui\n");
+		return FALSE;
+	}
 	return TRUE;
 }
 
@@ -229,11 +242,12 @@ modest_runtime_get_widget_factory     (void)
 ModestRuntimeDebugFlags
 modest_runtime_get_debug_flags ()
 {
-	GDebugKey debug_keys[] = {
+	static const GDebugKey debug_keys[] = {
 		{ "abort-on-warning", MODEST_RUNTIME_DEBUG_ABORT_ON_WARNING },
 		{ "log-actions",      MODEST_RUNTIME_DEBUG_LOG_ACTIONS },
 		{ "debug-objects",    MODEST_RUNTIME_DEBUG_DEBUG_OBJECTS },
-		{ "debug-signals",    MODEST_RUNTIME_DEBUG_DEBUG_SIGNALS }
+		{ "debug-signals",    MODEST_RUNTIME_DEBUG_DEBUG_SIGNALS },
+		{ "factory-settings", MODEST_RUNTIME_DEBUG_FACTORY_SETTINGS }
 	};
 	const gchar *str;
 	static ModestRuntimeDebugFlags debug_flags = -1;
@@ -448,9 +462,8 @@ debug_g_type_init (void)
 		gflags |= G_TYPE_DEBUG_OBJECTS;
 	if (mflags & MODEST_RUNTIME_DEBUG_DEBUG_SIGNALS)
 		gflags |= G_TYPE_DEBUG_SIGNALS;
-	
-	g_type_init_with_debug_flags (gflags);
 
+	g_type_init_with_debug_flags (gflags);
 }
 
 static void
