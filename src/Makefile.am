@@ -65,6 +65,8 @@ modest_SOURCES=\
 	modest-singletons.h\
 	modest-text-utils.c\
 	modest-text-utils.h\
+	modest-tny-account.c\
+	modest-tny-account.h\
 	modest-tny-account-store.c\
 	modest-tny-account-store.h\
 	modest-tny-folder.c \

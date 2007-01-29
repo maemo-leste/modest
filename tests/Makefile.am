@@ -12,14 +12,14 @@ TESTS                   =                           \
                         check_folder-xfer           \
 			check_text-utils            \
 			check_modest-conf           \
-			check_update_account        \
+			check_update-account        \
 			check_account-mgr           
 
 noinst_PROGRAMS=				    \
 			check_folder-xfer           \
 			check_modest-conf	    \
 			check_text-utils            \
-			check_update_account        \
+			check_update-account        \
 			check_account-mgr
 
 INCLUDES=\
@@ -56,7 +56,8 @@ objects=\
 	${top_srcdir}/src/modest-widget-factory.o \
         ${top_srcdir}/src/modest-mail-operation-queue.o \
         ${top_srcdir}/src/modest-mail-operation.o \
-        ${top_srcdir}/src/modest-tny-msg-actions.o \
+        ${top_srcdir}/src/modest-tny-account.o \
+	${top_srcdir}/src/modest-tny-msg-actions.o \
         ${top_srcdir}/src/modest-local-folder-info.o \
         ${top_srcdir}/src/modest-tny-folder.o \
         ${top_srcdir}/src/modest-text-utils.o
