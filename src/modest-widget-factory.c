@@ -131,6 +131,8 @@ modest_widget_factory_init (ModestWidgetFactory *obj)
 	priv->progress_bar = gtk_progress_bar_new ();
 	gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR(priv->progress_bar),
 				       1.0);
+	gtk_progress_bar_set_ellipsize (GTK_PROGRESS_BAR(priv->progress_bar),
+					PANGO_ELLIPSIZE_END);
 	priv->status_bar   = gtk_statusbar_new ();
 	gtk_statusbar_set_has_resize_grip (GTK_STATUSBAR(priv->status_bar),
 					   FALSE);

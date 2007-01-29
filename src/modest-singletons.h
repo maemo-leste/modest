@@ -40,6 +40,7 @@
 #include <modest-cache-mgr.h>
 #include <modest-widget-factory.h>
 
+
 G_BEGIN_DECLS
 
 /* convenience macros */
