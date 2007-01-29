@@ -146,6 +146,10 @@ modest_text_utils_cite (const gchar *text,
 {
 	gchar *tmp, *retval;
 
+	g_return_val_if_fail (text, NULL);
+	g_return_val_if_fail (content_type, NULL);
+	g_return_val_if_fail (from, NULL);
+
 	tmp = cite (sent_date, from);
 	retval = g_strdup_printf ("%s%s\n", tmp, text);
 	g_free (tmp);
@@ -177,7 +181,6 @@ modest_text_utils_inline (const gchar *text,
 	g_return_val_if_fail (from, NULL);
 	g_return_val_if_fail (text, NULL);
 	g_return_val_if_fail (to, NULL);
-	g_return_val_if_fail (subject, NULL);
 	
 	modest_text_utils_strftime (sent_str, 100, "%c", sent_date);
 

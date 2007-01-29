@@ -27,6 +27,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <glib/gi18n.h>
 #include <string.h>
 #include <tny-header.h>
 #include <tny-gtk-text-buffer-stream.h>
@@ -171,6 +172,7 @@ modest_formatter_attach (ModestFormatter *self, TnyMimePart *body, TnyHeader *he
 {
 	TnyMsg *new_msg = NULL;
 	gchar *attach_text = NULL;
+	const gchar *subject;
 	TnyMimePart *body_part = NULL, *attach_part = NULL;
 	ModestFormatterPrivate *priv;
 	TnyPlatformFactory *fact;
@@ -186,7 +188,8 @@ modest_formatter_attach (ModestFormatter *self, TnyMimePart *body, TnyHeader *he
 	attach_text = extract_text (self, body);
 	construct_from_text (body_part, "", priv->content_type);
 	construct_from_text (attach_part, (const gchar*) attach_text, priv->content_type);
-	tny_mime_part_set_filename (attach_part, tny_header_get_subject (header));
+	subject = tny_header_get_subject (header);
+	tny_mime_part_set_filename (attach_part, subject ? subject : _("No subject"));
 
 	/* Add parts */
 	tny_mime_part_add_part (TNY_MIME_PART (new_msg), body_part);

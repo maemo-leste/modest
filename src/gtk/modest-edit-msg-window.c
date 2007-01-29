@@ -302,13 +302,11 @@ modest_edit_msg_window_set_msg (ModestEditMsgWindow *self, TnyMsg *msg)
 	bcc     = tny_header_get_bcc (header);
 	subject = tny_header_get_subject (header);
 
-	/* TODO: the comparison with Invalid is ugly, should be fixed
-	   in tinymail -> TnyCamelHeader */
-	if (strcmp (to, "Invalid"))
+	if (to)
 		gtk_entry_set_text (GTK_ENTRY(priv->to_field), to);
-	if (strcmp (cc, "Invalid"))
+	if (cc)
 		gtk_entry_set_text (GTK_ENTRY(priv->cc_field), cc);
-	if (strcmp (bcc, "Invalid"))
+	if (bcc)
 		gtk_entry_set_text (GTK_ENTRY(priv->bcc_field),  bcc);
 	if (subject)
 		gtk_entry_set_text (GTK_ENTRY(priv->subject_field), subject);
