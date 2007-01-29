@@ -31,7 +31,7 @@
 
 #include <glib/gi18n.h>
 #include <gtk/gtktreeviewcolumn.h>
-
+#include <modest-runtime.h>
 #include <widgets/modest-main-window.h>
 #include <widgets/modest-edit-msg-window.h>
 #include <modest-widget-factory.h>
@@ -156,12 +156,11 @@ static ModestHeaderView*
 header_view_new (ModestMainWindow *self)
 {
 	ModestHeaderView *header_view;
-	ModestWindowPrivate *parent_priv;
 	
-	parent_priv = MODEST_WINDOW_GET_PRIVATE(self);
-	header_view = modest_widget_factory_get_header_view (parent_priv->widget_factory);
+	header_view = modest_widget_factory_get_header_view
+		(modest_runtime_get_widget_factory());
 	modest_header_view_set_style (header_view, 0); /* don't show headers */
-	
+							     
 	return header_view;
 }
 
@@ -171,14 +170,11 @@ restore_sizes (ModestMainWindow *self)
 {
 	ModestConf *conf;
 	ModestMainWindowPrivate *priv;
-	ModestWindowPrivate *parent_priv;
-	
+
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
-	parent_priv = MODEST_WINDOW_GET_PRIVATE(self);
 
-	conf = modest_tny_platform_factory_get_conf_instance
-		(MODEST_TNY_PLATFORM_FACTORY(parent_priv->plat_factory));
-
+	conf = modest_runtime_get_conf ();
+	
 	modest_widget_memory_restore (conf,G_OBJECT(self),
 				      "modest-main-window");
 	modest_widget_memory_restore (conf, G_OBJECT(priv->main_paned),
@@ -191,15 +187,11 @@ restore_sizes (ModestMainWindow *self)
 static void
 save_sizes (ModestMainWindow *self)
 {
-	ModestMainWindowPrivate *priv;
-	ModestWindowPrivate *parent_priv;
 	ModestConf *conf;
-	
+	ModestMainWindowPrivate *priv;
+		
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
-	parent_priv = MODEST_WINDOW_GET_PRIVATE(self);
-
-	conf = modest_tny_platform_factory_get_conf_instance
-		(MODEST_TNY_PLATFORM_FACTORY (parent_priv->plat_factory));
+	conf = modest_runtime_get_conf ();
 	
 	modest_widget_memory_save (conf,G_OBJECT(self), "modest-main-window");
 	modest_widget_memory_save (conf, G_OBJECT(priv->main_paned),
@@ -261,28 +253,25 @@ menubar_to_menu (GtkUIManager *ui_manager)
 }
 
 ModestWindow*
-modest_main_window_new (ModestWidgetFactory *widget_factory,
-			TnyAccountStore *account_store)
+modest_main_window_new (void)
 {
 	GObject *obj;
 	ModestMainWindowPrivate *priv;
+	ModestWidgetFactory *widget_factory;
 	ModestWindowPrivate *parent_priv;
 	GtkWidget *main_vbox;
 	GtkWidget *status_hbox;
 	GtkWidget *header_win, *folder_win;
 	GtkActionGroup *action_group;
 	GError *error = NULL;
-	
-	g_return_val_if_fail (widget_factory, NULL);
 
 	obj  = g_object_new(MODEST_TYPE_MAIN_WINDOW, NULL);
 
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(obj);
 	parent_priv = MODEST_WINDOW_GET_PRIVATE(obj);
 
-	parent_priv->widget_factory = g_object_ref (widget_factory);
-	parent_priv->account_store = g_object_ref (account_store);
-
+	widget_factory = modest_runtime_get_widget_factory ();
+	
 	parent_priv->ui_manager = gtk_ui_manager_new();
 	action_group = gtk_action_group_new ("ModestMainWindowActions");
 

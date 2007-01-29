@@ -162,22 +162,7 @@ on_edit_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 static void
 on_add_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 {
-/* 	GtkWidget *assistant; */
-	ModestAccountViewWindowPrivate *priv;
-	ModestTnyPlatformFactory *fact;
-	ModestAccountMgr *account_mgr;
-	
-	priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE(self);
-	fact = MODEST_TNY_PLATFORM_FACTORY (modest_tny_platform_factory_get_instance ());
-	account_mgr = modest_tny_platform_factory_get_account_mgr_instance (fact);
-/* FIXME:
-	assistant = modest_account_assistant_new (account_mgr,
-						  priv->widget_factory);
-	gtk_window_set_transient_for (GTK_WINDOW(assistant),
-				      GTK_WINDOW(self));
-
-	gtk_widget_show (GTK_WIDGET(assistant));
-*/
+	g_message (__FUNCTION__);
 }
 
 

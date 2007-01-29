@@ -500,4 +500,5 @@ hildon_init (void)
 		g_printerr ("modest: failed to acquire osso context\n");
 		return FALSE;
 	}
+}
 #endif /* MODEST_PLATFORM_ID==2 */
