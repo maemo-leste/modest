@@ -99,8 +99,13 @@ static void     reply_forward          (GtkWidget *widget,
 static gchar*   ask_for_folder_name    (GtkWindow *parent_window,
 					const gchar *title);
 
-static void     _modest_ui_actions_on_accounts_reloaded (TnyAccountStore *store, 
-							 gpointer user_data);
+static void     _modest_ui_actions_on_connection_changed    (TnyDevice *device,
+							     gboolean online,
+							     ModestUI *modest_ui);
+
+
+static void     _modest_ui_actions_on_accounts_reloaded     (TnyAccountStore *store, 
+							     gpointer user_data);
 
 GType
 modest_ui_get_type (void)
@@ -361,10 +366,12 @@ connect_signals (ModestUI *self)
 	/* Device */
 	g_signal_connect (G_OBJECT(device), "connection_changed",
 			  G_CALLBACK(_modest_ui_actions_on_connection_changed), 
-			  priv->main_window);
-	g_signal_connect (G_OBJECT(toggle), "toggled",
-			  G_CALLBACK(_modest_ui_actions_on_online_toggle_toggled),
-			  priv->main_window);
+			  self);
+
+	priv->toggle_button_signal=
+		g_signal_connect (G_OBJECT(toggle), "toggled",
+				  G_CALLBACK(_modest_ui_actions_on_online_toggle_toggled),
+				  priv->main_window);
 		
 	/* Destroy window */
 	g_signal_connect (G_OBJECT(priv->main_window), 
@@ -375,7 +382,7 @@ connect_signals (ModestUI *self)
 	/* Init toggle in correct state */
 	_modest_ui_actions_on_connection_changed (device,
 						 tny_device_is_online (device),
-						 MODEST_MAIN_WINDOW (priv->main_window));
+						 self);
 }
 
 
@@ -890,18 +897,22 @@ statusbar_push (ModestWidgetFactory *factory, guint context_id, const gchar *msg
 }
 /****************************************************************************/
 
-void
-_modest_ui_actions_on_connection_changed (TnyDevice *device, gboolean online,
-					  ModestMainWindow *main_window)
+static void
+_modest_ui_actions_on_connection_changed (TnyDevice *device, 
+					  gboolean online,
+					  ModestUI *self)
 {
 	GtkWidget *online_toggle;
 	ModestHeaderView *header_view;
 	ModestWidgetFactory *widget_factory;
+	ModestUIPrivate *priv;
 	GtkWidget *icon;
 	const gchar *icon_name;
 
 	g_return_if_fail (device);
-	g_return_if_fail (main_window);
+	g_return_if_fail (self);
+
+	priv = MODEST_UI_GET_PRIVATE (self);
 
 	icon_name = online ? GTK_STOCK_CONNECT : GTK_STOCK_DISCONNECT;
 	icon      = gtk_image_new_from_icon_name (icon_name, GTK_ICON_SIZE_BUTTON);
@@ -910,20 +921,26 @@ _modest_ui_actions_on_connection_changed (TnyDevice *device, gboolean online,
 	header_view   = modest_widget_factory_get_header_view (widget_factory);
 	online_toggle = modest_widget_factory_get_online_toggle (widget_factory);
 
-	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(online_toggle),
-				      online);
+	/* Block handlers in order to avoid unnecessary calls */
+	g_signal_handler_block (G_OBJECT (online_toggle), priv->toggle_button_signal);
+	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(online_toggle), online);
+	g_signal_handler_unblock (G_OBJECT (online_toggle), priv->toggle_button_signal);
+
 	gtk_button_set_image (GTK_BUTTON(online_toggle), icon);
 	statusbar_push (widget_factory, 0, 
 			online ? _("Modest went online") : _("Modest went offline"));
 	
 	/* If Modest has became online and the header view has a
 	   header selected then show it */
-	if (online) {
-		GtkTreeSelection *selected;
+	/* FIXME: there is a race condition if some account needs to
+	   ask the user for a password */
 
-		selected = gtk_tree_view_get_selection (GTK_TREE_VIEW (header_view));
-		_modest_header_view_change_selection (selected, header_view);
-	}
+/* 	if (online) { */
+/* 		GtkTreeSelection *selected; */
+
+/* 		selected = gtk_tree_view_get_selection (GTK_TREE_VIEW (header_view)); */
+/* 		_modest_header_view_change_selection (selected, header_view); */
+/* 	} */
 }
 
 void
@@ -953,15 +970,13 @@ _modest_ui_actions_on_item_not_found (ModestHeaderView *header_view,
 	gchar *txt, *item;
 	gboolean online;
 	TnyDevice *device;
-	TnyPlatformFactory *factory;
 	TnyAccountStore *account_store;
 
 	item = (type == MODEST_ITEM_TYPE_FOLDER) ? "folder" : "message";
 
 	/* Get device. Do not ask the platform factory for it, because
 	   it returns always a new one */
-	factory = modest_tny_platform_factory_get_instance ();
-	account_store = tny_platform_factory_new_account_store (factory);
+	account_store = TNY_ACCOUNT_STORE (modest_runtime_get_account_store ());
 	device = tny_account_store_get_device (account_store);
 
 	if (g_main_depth > 0)	

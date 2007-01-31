@@ -66,10 +66,6 @@ void     _modest_ui_actions_on_folder_selection_changed (ModestFolderView *folde
 							 gboolean selected,
 							 ModestMainWindow *main_window);
 
-void     _modest_ui_actions_on_connection_changed       (TnyDevice *device, 
-							 gboolean online,
-							 ModestMainWindow *main_window);
-
 void     _modest_ui_actions_on_online_toggle_toggled    (GtkToggleButton *toggle,
 							 ModestMainWindow *main_window);
 

@@ -41,6 +41,7 @@ typedef struct _ModestUIPrivate ModestUIPrivate;
 struct _ModestUIPrivate {
 	ModestWindow         *main_window;
 	GtkUIManager         *ui_manager;
+	guint                 toggle_button_signal;
 };
 
 G_END_DECLS

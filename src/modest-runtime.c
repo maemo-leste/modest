@@ -118,7 +118,7 @@ modest_runtime_init (void)
 	debug_logging_init();
 
 	g_thread_init(NULL);
-	gdk_threads_init (); 
+	gdk_threads_init ();
 
 	my_singletons = modest_singletons_new ();
 	if (!my_singletons) {
