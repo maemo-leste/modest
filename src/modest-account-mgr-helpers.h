@@ -32,6 +32,7 @@
 #define __MODEST_ACCOUNT_MGR_HELPERS_H__
 
 #include <modest-account-mgr.h>
+#include <modest-tny-account-store.h>
 
 G_BEGIN_DECLS
 
@@ -129,11 +130,6 @@ gboolean modest_account_mgr_account_set_enabled (ModestAccountMgr *self, const g
  * Returns: TRUE if it is enabled, FALSE otherwise
  */
 gboolean modest_account_mgr_account_get_enabled (ModestAccountMgr *self, const gchar* name);
-
-
-
-
-
 
 
 G_END_DECLS

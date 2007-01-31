@@ -199,8 +199,6 @@ modest_tny_send_queue_get_outbox_default (TnySendQueue *self)
 }
 
 
-
-
 GType
 modest_tny_send_queue_get_type (void)
 {
