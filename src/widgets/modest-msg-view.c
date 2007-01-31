@@ -283,13 +283,12 @@ find_cid_image (TnyMsg *msg, const gchar *cid)
 		if (part_cid && strcmp (cid, part_cid) == 0)
 			break;
 
+		g_object_unref (G_OBJECT(part));
+	
 		part = NULL;
 		tny_iterator_next (iter);
 	}
 	
-	if (part)
-		g_object_ref (G_OBJECT(part));
-
 	g_object_unref (G_OBJECT(iter));	
 	g_object_unref (G_OBJECT(parts));
 	
@@ -299,8 +298,7 @@ find_cid_image (TnyMsg *msg, const gchar *cid)
 
 static gboolean
 on_url_requested (GtkWidget *widget, const gchar *uri,
-		  GtkHTMLStream *stream,
-		  ModestMsgView *msg_view)
+		  GtkHTMLStream *stream, ModestMsgView *msg_view)
 {
 	ModestMsgViewPrivate *priv;
 	priv = MODEST_MSG_VIEW_GET_PRIVATE (msg_view);
@@ -425,7 +423,8 @@ set_text_message (ModestMsgView *self, TnyMimePart *tny_body, TnyMsg *msg)
 {
 	GtkTextBuffer *buf;
 	GtkTextIter begin, end;
-	TnyStream* txt_stream, *gtkhtml_stream;
+	TnyStream* txt_stream, *tny_stream;
+	GtkHTMLStream *gtkhtml_stream;
 	gchar *txt, *html_attachments;
 	ModestMsgViewPrivate *priv;
 		
@@ -438,38 +437,38 @@ set_text_message (ModestMsgView *self, TnyMimePart *tny_body, TnyMsg *msg)
 	txt_stream     = TNY_STREAM(tny_gtk_text_buffer_stream_new (buf));
 		
 	tny_stream_reset (txt_stream);
-	
-	gtkhtml_stream =
-		TNY_STREAM(modest_tny_stream_gtkhtml_new
-				 (gtk_html_begin(GTK_HTML(priv->gtkhtml))));
+
+	gtkhtml_stream = gtk_html_begin(GTK_HTML(priv->gtkhtml)); 
+	tny_stream =  TNY_STREAM(modest_tny_stream_gtkhtml_new (gtkhtml_stream));
 
 	html_attachments = attachments_as_html(self, msg);
 	if (html_attachments) {
-		tny_stream_write (gtkhtml_stream, html_attachments,
+		tny_stream_write (tny_stream, html_attachments,
 					strlen(html_attachments));
-		tny_stream_reset (gtkhtml_stream);
+		tny_stream_reset (tny_stream);
 		g_free (html_attachments);
 	}
 
 	// FIXME: tinymail
-	tny_mime_part_decode_to_stream ((TnyMimePart*)tny_body,
-						  txt_stream);
+	tny_mime_part_decode_to_stream ((TnyMimePart*)tny_body, txt_stream);
 	tny_stream_reset (txt_stream);		
 	
 	gtk_text_buffer_get_bounds (buf, &begin, &end);
 	txt = gtk_text_buffer_get_text (buf, &begin, &end, FALSE);
 	if (txt) {
 		gchar *html = modest_text_utils_convert_to_html (txt);
-		tny_stream_write (gtkhtml_stream, html, strlen(html));
-		tny_stream_reset (gtkhtml_stream);
+		tny_stream_write (tny_stream, html, strlen(html));
+		tny_stream_reset (tny_stream);
 		g_free (txt);
 		g_free (html);
 	}
 	
-	g_object_unref (G_OBJECT(gtkhtml_stream));
+	g_object_unref (G_OBJECT(tny_stream));
 	g_object_unref (G_OBJECT(txt_stream));
 	g_object_unref (G_OBJECT(buf));
-
+	
+	gtk_html_stream_destroy (gtkhtml_stream);
+	
 	return TRUE;
 }
 
@@ -498,7 +497,6 @@ modest_msg_view_set_message (ModestMsgView *self, TnyMsg *msg)
 	g_return_if_fail (self);
 	
 	priv = MODEST_MSG_VIEW_GET_PRIVATE(self);
-
 
 	if (msg != priv->msg) {
 		if (priv->msg)
