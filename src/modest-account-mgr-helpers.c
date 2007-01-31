@@ -211,6 +211,7 @@ modest_account_mgr_get_default_account  (ModestAccountMgr *self)
 		g_free (account);
 		return NULL;
 	}
+
 	return account;
 }
 

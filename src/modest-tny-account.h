@@ -56,6 +56,7 @@ G_BEGIN_DECLS
 TnyFolder*    modest_tny_account_get_special_folder   (TnyAccount *self,
 						       TnyFolderType special_type);
 
+
 G_END_DECLS
 
 #endif /* __MODEST_TNY_ACCOUNT_H__*/
