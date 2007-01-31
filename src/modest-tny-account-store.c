@@ -211,8 +211,8 @@ get_local_folders_account (ModestTnyAccountStore *self)
 	tny_account_set_url_string (TNY_ACCOUNT(tny_account), url_string);
 	tny_account_set_name (TNY_ACCOUNT(tny_account), MODEST_LOCAL_FOLDERS_ACCOUNT_NAME); 
 	tny_account_set_id (TNY_ACCOUNT(tny_account), MODEST_LOCAL_FOLDERS_ACCOUNT_NAME); 
-	tny_account_set_pass_func (TNY_ACCOUNT(tny_account), get_password_dummy);
         tny_account_set_forget_pass_func (TNY_ACCOUNT(tny_account), forget_password_dummy);
+	tny_account_set_pass_func (TNY_ACCOUNT(tny_account), get_password_dummy);
 
 	camel_url_free (url);
 	g_free (maildir);
@@ -253,13 +253,6 @@ get_account_store_for_account (TnyAccount *account)
 							   "account_store"));
 }
 
-
-
-static void
-set_account_store_for_account (TnyAccount *account, ModestTnyAccountStore *store)
-{
-	g_object_set_data (G_OBJECT(account), "account_store", (gpointer)store);
-}
 
 static void
 on_password_requested (ModestTnyAccountStore *account_store, 
@@ -312,9 +305,6 @@ on_password_requested (ModestTnyAccountStore *account_store,
 		*remember = FALSE;
 
 	gtk_widget_destroy (dialog);
-
-	while (gtk_events_pending ())
-		gtk_main_iteration ();
 }
 
 static gchar*
@@ -432,12 +422,6 @@ tny_account_for_proto (ModestProtocol proto)
 	else 
 		g_return_val_if_reached (NULL);
 	
-	if (tny_account)
-		tny_account_set_proto (tny_account,
-				       modest_protocol_info_get_protocol_name(proto));
-	else
-		g_printerr ("modest: could not get tny account for %d\n",
-			    proto);    
 	return tny_account;
 }
 
@@ -472,10 +456,14 @@ get_tny_account_from_server_account (ModestTnyAccountStore *self,
 	}
 	
 	/* Set account store, session and id */
-	set_account_store_for_account (TNY_ACCOUNT(tny_account), self);
 	tny_camel_account_set_session (TNY_CAMEL_ACCOUNT(tny_account), 	/* session */
 				       priv->tny_session_camel);
-	tny_account_set_id (tny_account, account_data->account_name); /* id */
+
+	/* Proto */
+	tny_account_set_proto (tny_account,
+			       modest_protocol_info_get_protocol_name(account_data->proto));
+
+	g_object_set_data (G_OBJECT(tny_account), "account_store", (gpointer)self);
 
 	/* Options */
 	if (account_data->options) {
@@ -486,6 +474,9 @@ get_tny_account_from_server_account (ModestTnyAccountStore *self,
 			tmp = g_slist_next (tmp);
 		}
 	}
+	/* id */
+	tny_account_set_id (tny_account, account_data->account_name);
+
 	/* Hostname & Username */
 	if (account_data->username) 
 		tny_account_set_user (tny_account, account_data->username);
@@ -494,8 +485,8 @@ get_tny_account_from_server_account (ModestTnyAccountStore *self,
 		tny_account_set_hostname (tny_account, account_data->hostname);
 
 	/* Password functions */
-	tny_account_set_pass_func (tny_account, get_password);
         tny_account_set_forget_pass_func (tny_account, forget_password);
+	tny_account_set_pass_func (tny_account, get_password);
 
 	return tny_account;
 }
@@ -640,6 +631,7 @@ modest_tny_account_store_get_accounts  (TnyAccountStore *account_store, TnyList 
 						       TNY_ACCOUNT_STORE_STORE_ACCOUNTS);
 		modest_tny_account_store_get_accounts (account_store, list,
 						       TNY_ACCOUNT_STORE_TRANSPORT_ACCOUNTS);
+		return;
 	}
 
 	accounts = modest_account_mgr_account_names (priv->account_mgr, NULL); 
@@ -667,7 +659,6 @@ modest_tny_account_store_get_accounts  (TnyAccountStore *account_store, TnyList 
 		else
 			tny_list_prepend (list, G_OBJECT(priv->local_folders));
 	}
-	tny_session_camel_set_account_store (priv->tny_session_camel, account_store);
 }
 
 static const gchar*
@@ -708,19 +699,33 @@ static gboolean
 modest_tny_account_store_alert (TnyAccountStore *self, TnyAlertType type,
 				const gchar *prompt)
 {
-	const gchar* typename;
+	GtkMessageType gtktype;
+	gboolean retval = FALSE;
+	GtkWidget *dialog;
 
-	switch (type) {
-	case TNY_ALERT_TYPE_INFO   : typename = "info"; break;
-	case TNY_ALERT_TYPE_WARNING: typename = "warning"; break;
-	case TNY_ALERT_TYPE_ERROR  : typename = "error"; break;
-	default: g_return_val_if_reached (FALSE);
+	switch (type)
+	{
+		case TNY_ALERT_TYPE_INFO:
+		gtktype = GTK_MESSAGE_INFO;
+		break;
+		case TNY_ALERT_TYPE_WARNING:
+		gtktype = GTK_MESSAGE_WARNING;
+		break;
+		case TNY_ALERT_TYPE_ERROR:
+		default:
+		gtktype = GTK_MESSAGE_ERROR;
+		break;
 	}
-		
-	g_printerr ("modest: alert_func not implemented (%s:%s)\n",
-		    typename, prompt);
-	
-	return TRUE;
+
+	dialog = gtk_message_dialog_new (NULL, GTK_DIALOG_MODAL,
+		gtktype, GTK_BUTTONS_YES_NO, prompt);
+
+	if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_YES)
+		retval = TRUE;
+
+	gtk_widget_destroy (dialog);
+
+	return retval;
 }
 
 
