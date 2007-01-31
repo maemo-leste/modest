@@ -49,9 +49,7 @@ static GObjectClass *parent_class = NULL;
 
 typedef gchar* FormatterFunc (ModestFormatter *self, const gchar *text, TnyHeader *header);
 
-static TnyMsg *modest_formatter_do (ModestFormatter *self, 
-				    TnyMimePart *body, 
-				    TnyHeader *header, 
+static TnyMsg *modest_formatter_do (ModestFormatter *self, TnyMimePart *body,  TnyHeader *header, 
 				    FormatterFunc func);
 
 static gchar*  modest_formatter_wrapper_cite   (ModestFormatter *self, const gchar *text, TnyHeader *header);
@@ -74,26 +72,23 @@ extract_text (ModestFormatter *self, TnyMimePart *body)
 	tny_stream_reset (stream);
 
 	g_object_unref (G_OBJECT(stream));
-	g_object_unref (G_OBJECT(body));
 	
 	gtk_text_buffer_get_bounds (buf, &start, &end);
 	text = gtk_text_buffer_get_text (buf, &start, &end, FALSE);
-	g_object_unref (buf);
+	g_object_unref (G_OBJECT(buf));
 
 	/* Convert to desired content type if needed */
 	priv = MODEST_FORMATTER_GET_PRIVATE (self);
 
-	if (strcmp (tny_mime_part_get_content_type (body), priv->content_type)) {
+	if (strcmp (tny_mime_part_get_content_type (body), priv->content_type) == 0) {
 		if (!strcmp (priv->content_type, "text/html"))
 			converted_text = modest_text_utils_convert_to_html  (text);
 		else
 			converted_text = g_strdup (text);
-/* 			converted_text = modest_text_utils_convert_to_plain (text); */
 
 		g_free (text);
 		text = converted_text;
 	}
-
 	return text;
 }
 
@@ -119,10 +114,7 @@ construct_from_text (TnyMimePart *part,
 }
 
 static TnyMsg *
-modest_formatter_do (ModestFormatter *self, 
-		     TnyMimePart *body, 
-		     TnyHeader *header,
-		     FormatterFunc func)
+modest_formatter_do (ModestFormatter *self, TnyMimePart *body, TnyHeader *header, FormatterFunc func)
 {
 	TnyMsg *new_msg = NULL;
 	gchar *body_text = NULL, *txt = NULL;
@@ -130,14 +122,18 @@ modest_formatter_do (ModestFormatter *self,
 	TnyPlatformFactory *fact;
 
 	g_return_val_if_fail (self, NULL);
-	g_return_val_if_fail (body, NULL);
 	g_return_val_if_fail (header, NULL);
 	g_return_val_if_fail (func, NULL);
 
 	/* Build new part */
 	fact = modest_tny_platform_factory_get_instance ();
 	new_msg = tny_platform_factory_new_msg (fact);
-	body_text = extract_text (self, body);
+
+	if (body)
+		body_text = extract_text (self, body);
+	else
+		body_text = g_strdup ("");
+
 	txt = (gchar *) func (self, (const gchar*) body_text, header);
 	priv = MODEST_FORMATTER_GET_PRIVATE (self);
 	construct_from_text (TNY_MIME_PART (new_msg), (const gchar*) txt, priv->content_type);

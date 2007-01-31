@@ -32,20 +32,13 @@
 #include <tny-simple-list.h>
 #include <modest-conf.h>
 #include <modest-runtime.h>
-
-#include "modest-account-mgr.h"
-#include "modest-account-mgr-helpers.h"
-#include "modest-edit-msg-window.h"
-#include "modest-edit-msg-window-ui.h"
-#include "modest-icon-names.h"
-#include "modest-icon-factory.h"
-#include "modest-mail-operation.h"
-#include "modest-text-utils.h"
-#include "modest-tny-platform-factory.h"
-#include "modest-tny-msg-actions.h"
-#include "modest-ui-actions.h"
-#include "modest-widget-memory.h"
-#include "modest-window-priv.h"
+#include <modest-tny-msg.h>
+#include <modest-window-priv.h>
+#include <modest-edit-msg-window.h>
+#include <modest-widget-memory.h>
+#include <widgets/modest-edit-msg-window-ui.h>
+#include <modest-icon-factory.h>
+#include <modest-account-mgr-helpers.h>
 
 static void  modest_edit_msg_window_class_init   (ModestEditMsgWindowClass *klass);
 static void  modest_edit_msg_window_init         (ModestEditMsgWindow *obj);
@@ -290,7 +283,8 @@ modest_edit_msg_window_set_msg (ModestEditMsgWindow *self, TnyMsg *msg)
 	GtkTextBuffer *buf;
 	const gchar *to, *cc, *bcc, *subject;
 	ModestEditMsgWindowPrivate *priv;
-
+	gchar *body;
+	
 	g_return_if_fail (MODEST_IS_EDIT_MSG_WINDOW (self));
 	g_return_if_fail (TNY_IS_MSG (msg));
 
@@ -311,11 +305,12 @@ modest_edit_msg_window_set_msg (ModestEditMsgWindow *self, TnyMsg *msg)
 	if (subject)
 		gtk_entry_set_text (GTK_ENTRY(priv->subject_field), subject);
 	
-	buf = gtk_text_view_get_buffer (GTK_TEXT_VIEW(priv->msg_body));
-	gtk_text_buffer_set_text (buf,
-				  (const gchar *) modest_tny_msg_actions_find_body (msg, FALSE),
-				  -1);
-
+	buf  = gtk_text_view_get_buffer (GTK_TEXT_VIEW(priv->msg_body));
+	body = modest_tny_msg_get_body (msg, FALSE);
+	if (body) 
+		gtk_text_buffer_set_text (buf, body, -1);
+	g_free (body);
+	
 	/* TODO: lower priority, select in the From: combo to the
 	   value that comes from msg <- not sure, should it be
 	   allowed? */

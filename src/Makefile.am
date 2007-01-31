@@ -71,8 +71,8 @@ modest_SOURCES=\
 	modest-tny-account.h\
 	modest-tny-folder.c \
 	modest-tny-folder.h \
-	modest-tny-msg-actions.c\
-	modest-tny-msg-actions.h\
+	modest-tny-msg.c\
+	modest-tny-msg.h\
 	modest-tny-platform-factory.c \
 	modest-tny-platform-factory.h \
 	modest-tny-send-queue.c\

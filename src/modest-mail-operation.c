@@ -41,7 +41,7 @@
 #include <glib/gi18n.h>
 #include <modest-tny-account.h>
 #include "modest-text-utils.h"
-#include "modest-tny-msg-actions.h"
+#include "modest-tny-msg.h"
 #include "modest-tny-platform-factory.h"
 #include "modest-marshal.h"
 #include "modest-formatter.h"
@@ -308,7 +308,7 @@ create_reply_forward_mail (TnyMsg *msg, const gchar *from, gboolean is_reply, gu
 	/* Get body from original msg. Always look for the text/plain
 	   part of the message to create the reply/forwarded mail */
 	header = tny_msg_get_header (msg);
-	body   = modest_tny_msg_actions_find_body_part (msg, FALSE);
+	body   = modest_tny_msg_find_body_part (msg, FALSE);
 
 	/* TODO: select the formatter from account prefs */
 	formatter = modest_formatter_new ("text/plain");
@@ -335,8 +335,9 @@ create_reply_forward_mail (TnyMsg *msg, const gchar *from, gboolean is_reply, gu
 			break;
 		}
 	}
-	g_object_unref (G_OBJECT (formatter));
-
+	g_object_unref (G_OBJECT(formatter));
+	g_object_unref (G_OBJECT(body));
+	
 	/* Fill the header */
 	fact = modest_tny_platform_factory_get_instance ();
 	new_header = TNY_HEADER (tny_platform_factory_new_header (fact));

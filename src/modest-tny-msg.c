@@ -37,19 +37,20 @@
 #include <config.h>
 #endif /*HAVE_CONFIG_H */
 
-#include "modest-tny-msg-actions.h"
+#include <modest-tny-msg.h>
 #include "modest-text-utils.h"
 
-static const gchar *
-get_body_text (TnyMsg *msg, gboolean want_html)
+
+gchar * 
+modest_tny_msg_get_body (TnyMsg *msg, gboolean want_html)
 {
 	TnyStream *stream;
 	TnyMimePart *body;
 	GtkTextBuffer *buf;
 	GtkTextIter start, end;
-	const gchar *to_quote;
+	gchar *to_quote;
 
-	body = modest_tny_msg_actions_find_body_part(msg, want_html);
+	body = modest_tny_msg_find_body_part(msg, want_html);
 	if (!body)
 		return NULL;
 
@@ -69,8 +70,9 @@ get_body_text (TnyMsg *msg, gboolean want_html)
 	return to_quote;
 }
 
-static TnyMimePart*
-modest_tny_msg_actions_find_body_part_from_mime_part (TnyMimePart *msg, gboolean want_html)
+
+TnyMimePart*
+modest_tny_msg_find_body_part_from_mime_part (TnyMimePart *msg, gboolean want_html)
 {
 	const gchar *mime_type = want_html ? "text/html" : "text/plain";
 	TnyMimePart *part = NULL;
@@ -89,42 +91,39 @@ modest_tny_msg_actions_find_body_part_from_mime_part (TnyMimePart *msg, gboolean
 	if (tny_iterator_is_done(iter)) 
 		return TNY_MIME_PART (g_object_ref(G_OBJECT(msg)));
 	else {
+		gchar *content_type = NULL;
 		do {
-			const gchar *ct;
-			gchar *content_type;
 			part = TNY_MIME_PART(tny_iterator_get_current (iter));
 
 			/* we need to strdown the content type, because
 			 * tny_mime_part_has_content_type does not do it...
 			 */
-			ct = tny_mime_part_get_content_type (part);
-			content_type = g_ascii_strdown (ct, strlen(ct));
-						
+			content_type = g_ascii_strdown
+				(tny_mime_part_get_content_type (part), -1);
+							
 			if (g_str_has_prefix (content_type, mime_type) &&
-			    !tny_mime_part_is_attachment (part)) {
-				g_free (content_type);
+			    !tny_mime_part_is_attachment (part))
 				break;
-			}
 			
 			if (g_str_has_prefix(content_type, "multipart")) {
-				part = modest_tny_msg_actions_find_body_part_from_mime_part (part,
-											     want_html);
-				g_free (content_type);
+				part = modest_tny_msg_find_body_part_from_mime_part (part, want_html);
 				if (part)
 					break;
 			}
+			if (part)
+				g_object_unref (G_OBJECT(part));
 
-			g_free (content_type);
 			part = NULL;
-			tny_iterator_next (iter);
+			
+			g_free (content_type);
+			content_type = NULL;
 
+			tny_iterator_next (iter);
+			
 		} while (!tny_iterator_is_done(iter));
+		g_free (content_type);
 	}
 	
-	/* did we find a matching part? */
-	if (part)
-		g_object_ref (G_OBJECT(part));
-
 	g_object_unref (G_OBJECT(iter));
 	g_object_unref (G_OBJECT(parts));
 
@@ -132,25 +131,23 @@ modest_tny_msg_actions_find_body_part_from_mime_part (TnyMimePart *msg, gboolean
 	 * try to find a text/plain part instead
 	 */
 	if (!part && want_html) 
-		return modest_tny_msg_actions_find_body_part_from_mime_part (msg, FALSE);
-
-	if (!part)
-		g_printerr ("modest: cannot find body part\n");
-	
-	return part ? part : NULL;
+		return modest_tny_msg_find_body_part_from_mime_part (msg, FALSE);
+	else
+		return part; /* this maybe NULL, this is not an error; some message just don't have a body
+			      * part */
 }
 
 
 TnyMimePart*
-modest_tny_msg_actions_find_body_part (TnyMsg *msg, gboolean want_html)
+modest_tny_msg_find_body_part (TnyMsg *msg, gboolean want_html)
 {
-	return modest_tny_msg_actions_find_body_part_from_mime_part (TNY_MIME_PART(msg),
+	return modest_tny_msg_find_body_part_from_mime_part (TNY_MIME_PART(msg),
 								     want_html);
 }
 
 
 TnyMimePart *
-modest_tny_msg_actions_find_nth_part (TnyMsg *msg, gint index)
+modest_tny_msg_find_nth_part (TnyMsg *msg, gint index)
 {
 	TnyMimePart *part;
 	TnyList *parts;
@@ -174,17 +171,4 @@ modest_tny_msg_actions_find_nth_part (TnyMsg *msg, gint index)
 	g_object_unref (G_OBJECT(parts));
 
 	return part;
-}
-
-gchar * 
-modest_tny_msg_actions_find_body (TnyMsg *msg, gboolean want_html)
-{
-	const gchar *body;
-
-	body = get_body_text (msg, want_html);
-
-	if (body)
-		return g_strdup (body);
-	else 
-		return NULL;
 }

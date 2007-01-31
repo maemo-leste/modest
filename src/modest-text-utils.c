@@ -526,7 +526,7 @@ modest_text_utils_quote_plain_text (const gchar *text,
 			} else {
 				do {
 					breakpoint =
-						get_breakpoint (remaining->	str,
+						get_breakpoint (remaining->str,
 								rem_indent,
 								limit);
 					append_quoted (q, rem_indent,

@@ -41,7 +41,7 @@
 #include "modest-account-mgr.h"
 #include "modest-conf.h"
 #include "modest-edit-msg-window.h"
-#include "modest-tny-msg-actions.h"
+#include <modest-tny-msg.h>
 #include "modest-mail-operation.h"
 #include "modest-icon-names.h"
 

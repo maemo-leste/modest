@@ -38,7 +38,7 @@
 #include <tny-list.h>
 #include <tny-simple-list.h>
 
-#include <modest-tny-msg-actions.h>
+#include <modest-tny-msg.h>
 #include <modest-text-utils.h>
 #include "modest-msg-view.h"
 #include "modest-tny-stream-gtkhtml.h"
@@ -98,7 +98,7 @@ modest_msg_view_get_type (void)
 			(GInstanceInitFunc) modest_msg_view_init,
 			NULL
 		};
-		my_type = g_type_register_static (GTK_TYPE_SCROLLED_WINDOW,
+ 		my_type = g_type_register_static (GTK_TYPE_SCROLLED_WINDOW,
 		                                  "ModestMsgView",
 		                                  &my_info, 0);
 	}
@@ -352,8 +352,7 @@ attachments_as_html (ModestMsgView *self, TnyMsg *msg)
 	while (!tny_iterator_is_done(iter)) {
 		TnyMimePart *part;
 
-		++index; /* attachment numbers are 1-based */
-		
+		++index; /* attachment numbers are 1-based */	
 		part = TNY_MIME_PART(tny_iterator_get_current (iter));
 
 		if (tny_mime_part_is_attachment (part)) {
@@ -365,9 +364,12 @@ attachments_as_html (ModestMsgView *self, TnyMsg *msg)
 			g_string_append_printf (appendix, "<a href=\"%s%d\">%s</a> \n",
 						ATT_PREFIX, index, filename);			 
 		}
+		
+		g_object_unref (G_OBJECT(part));
 		tny_iterator_next (iter);
 	}
 	g_object_unref (G_OBJECT(iter));
+	g_object_unref (G_OBJECT(parts));
 	
 	if (appendix->len == 0) 
 		return g_string_free (appendix, TRUE);
@@ -386,7 +388,8 @@ static gboolean
 set_html_message (ModestMsgView *self, TnyMimePart *tny_body, TnyMsg *msg)
 {
 	gchar *html_attachments;
-	TnyStream *gtkhtml_stream;	
+	GtkHTMLStream *gtkhtml_stream;
+	TnyStream *tny_stream;	
 	ModestMsgViewPrivate *priv;
 	
 	g_return_val_if_fail (self, FALSE);
@@ -394,25 +397,22 @@ set_html_message (ModestMsgView *self, TnyMimePart *tny_body, TnyMsg *msg)
 	
 	priv = MODEST_MSG_VIEW_GET_PRIVATE(self);
 
-	gtkhtml_stream =
-		TNY_STREAM(modest_tny_stream_gtkhtml_new
-				 (gtk_html_begin(GTK_HTML(priv->gtkhtml))));
-	
-	tny_stream_reset (gtkhtml_stream);
+	gtkhtml_stream = gtk_html_begin(GTK_HTML(priv->gtkhtml));
+
+	tny_stream     = TNY_STREAM(modest_tny_stream_gtkhtml_new (gtkhtml_stream));
+	tny_stream_reset (tny_stream);
 	
 	html_attachments = attachments_as_html(self, msg);
 	if (html_attachments) {
-		tny_stream_write (gtkhtml_stream, html_attachments,
-					strlen(html_attachments));
-		tny_stream_reset (gtkhtml_stream);
+		tny_stream_write (tny_stream, html_attachments, strlen(html_attachments));
+		tny_stream_reset (tny_stream);
 		g_free (html_attachments);
 	}
 
-	// FIXME: tinymail
-	tny_mime_part_decode_to_stream ((TnyMimePart*)tny_body,
-						  gtkhtml_stream);
-
-	g_object_unref (G_OBJECT(gtkhtml_stream));
+	tny_mime_part_decode_to_stream ((TnyMimePart*)tny_body, tny_stream);
+	g_object_unref (G_OBJECT(tny_stream));
+	
+	gtk_html_stream_destroy (gtkhtml_stream);
 	
 	return TRUE;
 }
@@ -513,7 +513,7 @@ modest_msg_view_set_message (ModestMsgView *self, TnyMsg *msg)
 		return;
 	}
 		
-	body = modest_tny_msg_actions_find_body_part (msg, TRUE);
+	body = modest_tny_msg_find_body_part (msg, TRUE);
 	if (body) {
 		if (tny_mime_part_content_type_is (body, "text/html"))
 			set_html_message (self, body, msg);

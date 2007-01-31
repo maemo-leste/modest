@@ -27,11 +27,11 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __MODEST_TNY_MSG_ACTIONS_H__
-#define __MODEST_TNY_MSG_ACTIONS_H__
+#ifndef __MODEST_TNY_MSG_H__
+#define __MODEST_TNY_MSG_H__
 
 /**
- * modest_tny_msg_actions_find_body_part:
+ * modest_tny_msg_find_body_part:
  * @self: a message
  * @want_html: prefer HTML-part when there are multiple body parts?
  * 
@@ -40,11 +40,11 @@
  * 
  * Returns: the TnyMsgMimePart for the found part, or NULL if no matching part is found
  */	 
-TnyMimePart *modest_tny_msg_actions_find_body_part (TnyMsg * self, gboolean want_html);
+TnyMimePart *modest_tny_msg_find_body_part (TnyMsg * self, gboolean want_html);
 
 
 /**
- * modest_tny_msg_actions_get_nth_part:
+ * modest_tny_msg_get_nth_part:
  * @self: a message
  * @index: number (1-based) of the part to retrieve
  * 
@@ -53,19 +53,20 @@ TnyMimePart *modest_tny_msg_actions_find_body_part (TnyMsg * self, gboolean want
  * Returns: the TnyMsgMimePart for the found part, or NULL if no
  * matching part is foundi; must be unref'd
  */
-TnyMimePart* modest_tny_msg_actions_find_nth_part (TnyMsg *msg, gint index);
+TnyMimePart* modest_tny_msg_find_nth_part (TnyMsg *msg, gint index);
 
 
 /**
- * modest_tny_msg_actions_find_body:
+ * modest_tny_msg_find_body:
  * @self: 
  * @want_html: 
  * 
  * gets the body of a message as text, if @want_html is true, try HTML mail
  * first.
  * 
- * Returns: the body of the message as text
+ * Returns: the body of the message as text, or NULL if it is not found
+ * the text should be freed with 
  **/
-gchar* modest_tny_msg_actions_find_body (TnyMsg *self, gboolean want_html);
+gchar* modest_tny_msg_get_body (TnyMsg *self, gboolean want_html);
 
-#endif /* __MODEST_TNY_MSG_ACTIONS_H__ */
+#endif /* __MODEST_TNY_MSG_H__ */
