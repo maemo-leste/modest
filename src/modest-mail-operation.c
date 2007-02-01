@@ -687,10 +687,8 @@ modest_mail_operation_remove_folder (ModestMailOperation *self,
 		TnyFolder *trash_folder;
 		trash_folder = modest_tny_account_get_special_folder (TNY_ACCOUNT(folder_store),
 								      TNY_FOLDER_TYPE_TRASH);
-		
 		/* TODO: error_handling */
-		modest_mail_operation_move_folder (self, 
-						   folder, 
+		modest_mail_operation_move_folder (self, folder, 
 						   TNY_FOLDER_STORE (trash_folder));
 	} else {
 		tny_folder_store_remove_folder (folder_store, folder, NULL); /* FIXME */
@@ -758,8 +756,7 @@ modest_mail_operation_xfer_folder (ModestMailOperation *self,
 
 	/* Create the destination folder */
 	folder_name = tny_folder_get_name (folder);
-	dest_folder = modest_mail_operation_create_folder (self, 
-							   parent, folder_name);
+	dest_folder = modest_mail_operation_create_folder (self, parent, folder_name);
 
 	/* Transfer messages */
 	headers = TNY_LIST (tny_simple_list_new ());
@@ -772,12 +769,11 @@ modest_mail_operation_xfer_folder (ModestMailOperation *self,
 	iter = tny_list_create_iterator (folders);
 
 	while (!tny_iterator_is_done (iter)) {
-
 		child = TNY_FOLDER (tny_iterator_get_current (iter));
-		modest_mail_operation_xfer_folder (self, child,
-						   TNY_FOLDER_STORE (dest_folder),
+		modest_mail_operation_xfer_folder (self, child, TNY_FOLDER_STORE (dest_folder),
 						   delete_original);
 		tny_iterator_next (iter);
+		g_object_unref (G_OBJECT(child));
 	}
 
 	/* Delete source folder (if needed) */
