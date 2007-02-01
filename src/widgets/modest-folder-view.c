@@ -209,8 +209,9 @@ icon_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 			    TNY_GTK_FOLDER_STORE_TREE_MODEL_UNREAD_COLUMN, &unread, -1);
 	rendobj = G_OBJECT(renderer);
 	
-	if (type == TNY_FOLDER_TYPE_NORMAL || type == TNY_FOLDER_TYPE_UNKNOWN)
+	if (type == TNY_FOLDER_TYPE_NORMAL || type == TNY_FOLDER_TYPE_UNKNOWN) {
 		type = modest_tny_folder_guess_folder_type_from_name (fname);
+	}
 	g_free (fname);
 
 	switch (type) {
@@ -229,6 +230,9 @@ icon_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
         case TNY_FOLDER_TYPE_SENT:
                 pixbuf = modest_icon_factory_get_icon (MODEST_FOLDER_ICON_SENT);
                 break;
+	case TNY_FOLDER_TYPE_TRASH:
+		pixbuf = modest_icon_factory_get_icon (MODEST_FOLDER_ICON_TRASH);
+                break;
 	case TNY_FOLDER_TYPE_DRAFTS:
 		pixbuf = modest_icon_factory_get_icon (MODEST_FOLDER_ICON_DRAFTS);
                 break;
@@ -244,16 +248,9 @@ icon_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 	case TNY_FOLDER_TYPE_NORMAL:
         default:
                 pixbuf = modest_icon_factory_get_icon (MODEST_FOLDER_ICON_NORMAL);
-                break;
+		break;
         }
-
-	g_object_set (rendobj,
-		      "pixbuf-expander-open",
-		      modest_icon_factory_get_icon (MODEST_FOLDER_ICON_OPEN),
-		      "pixbuf-expander-closed",
-		      modest_icon_factory_get_icon (MODEST_FOLDER_ICON_CLOSED),
-		      "pixbuf", pixbuf,
-		      NULL);
+	g_object_set (rendobj, "pixbuf", pixbuf, NULL);
 }
 
 static void
@@ -571,9 +568,9 @@ cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 			cmp = -1;
 		else 
 			cmp = modest_text_utils_utf8_strcmp (name1, name2, TRUE);
-	} else {
+	} else 
 		cmp = modest_text_utils_utf8_strcmp (name1, name2, TRUE);
-	}
+	
 	g_free (name1);
 	g_free (name2);
 
