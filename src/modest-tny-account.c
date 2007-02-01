@@ -62,7 +62,7 @@ modest_tny_account_get_special_folder (TnyAccount *account,
 	folders = TNY_LIST (tny_simple_list_new ());
 
 	/* no need to do this _async, as these are local folders */
-	tny_folder_store_get_folders (TNY_FOLDER_STORE (account),
+	tny_folder_store_get_folders (TNY_FOLDER_STORE (local_account),
 				      folders, NULL, NULL);
 	iter = tny_list_create_iterator (folders);
 
@@ -73,6 +73,7 @@ modest_tny_account_get_special_folder (TnyAccount *account,
 			special_folder = folder;
 			break;
 		}
+		g_object_unref (G_OBJECT(folder));
 		tny_iterator_next (iter);
 	}
 	g_object_unref (G_OBJECT (folders));
