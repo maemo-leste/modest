@@ -621,6 +621,7 @@ reply_forward (GtkWidget *widget,
 	tny_folder_get_msg_async (folder, header, get_msg_cb, helper);
 	
 	/* Clean */
+	g_object_unref (G_OBJECT (header));
 	g_object_unref (G_OBJECT (folder));
 }
 
@@ -748,10 +749,13 @@ get_msg_cb (TnyFolder *folder, TnyMsg *msg, GError **err, gpointer user_data)
 		g_object_unref (G_OBJECT (headers));
 		g_object_unref (G_OBJECT (helper->iter));
 		g_slice_free (GetMsgAsyncHelper, helper);
-	} else
-		tny_folder_get_msg_async (folder, 
-					  TNY_HEADER (tny_iterator_get_current (helper->iter)), 
+	} else {
+		TnyHeader *header;
+		header = TNY_HEADER (tny_iterator_get_current (helper->iter)); 
+		tny_folder_get_msg_async (folder, header,			  
 					  get_msg_cb, helper);
+		g_object_unref (G_OBJECT(header));
+	}
 }
 
 void 
@@ -1095,42 +1099,38 @@ _modest_ui_actions_on_send (GtkWidget *widget,
 	TnyTransportAccount *transport_account;
 	ModestMailOperation *mail_operation;
 	MsgData *data;
-
+	gchar *account_name, *from;
+	ModestAccountMgr *account_mgr;
+	
+	
 	data = modest_edit_msg_window_get_msg_data (edit_window);
 
 	/* FIXME: Code added just for testing. The final version will
 	   use the send queue provided by tinymail and some
 	   classifier */
-	{
-		TnyList *accounts;
-		TnyIterator *iter;
-		
-		accounts = TNY_LIST(tny_simple_list_new ());
-		tny_account_store_get_accounts (TNY_ACCOUNT_STORE(modest_runtime_get_account_store()),
-						accounts,
-						TNY_ACCOUNT_STORE_TRANSPORT_ACCOUNTS);
-
-		iter = tny_list_create_iterator(accounts);
-		tny_iterator_first (iter);
-		if (tny_iterator_is_done (iter)) {
-			/* FIXME: Add error handling through mail operation */
-			g_printerr("modest: no transport accounts defined\n");
-			modest_edit_msg_window_free_msg_data (edit_window, data);
-			return;
-		}
-		transport_account = TNY_TRANSPORT_ACCOUNT (tny_iterator_get_current(iter));
-		g_object_ref (transport_account);
-
-		tny_list_foreach (accounts, (GFunc) g_object_unref, NULL);
-		g_object_unref (G_OBJECT (accounts));
-		g_object_unref (G_OBJECT (iter));
+	account_mgr = modest_runtime_get_account_mgr();
+	account_name = modest_account_mgr_get_default_account (account_mgr);
+	if (!account_name) {
+		g_printerr ("modest: no default account found\n");
+		modest_edit_msg_window_free_msg_data (edit_window, data);
+		return;
 	}
-
+	transport_account =
+		TNY_TRANSPORT_ACCOUNT(modest_account_mgr_get_tny_account (account_mgr,
+									  account_name,
+									  TNY_ACCOUNT_TYPE_TRANSPORT));
+	if (!transport_account) {
+		g_printerr ("modest: no transport account found\n");
+		g_free (account_name);
+		modest_edit_msg_window_free_msg_data (edit_window, data);
+		return;
+	}
+	from = modest_account_mgr_get_from_string (account_mgr, account_name);
+		
 	mail_operation = modest_mail_operation_new ();
-
 	modest_mail_operation_send_new_mail (mail_operation,
 					     transport_account,
-					     data->from, 
+					     from,
 					     data->to, 
 					     data->cc, 
 					     data->bcc,
@@ -1138,6 +1138,8 @@ _modest_ui_actions_on_send (GtkWidget *widget,
 					     data->body, 
 					     NULL);
 	/* Frees */
+	g_free (from);
+	g_free (account_name);
 	g_object_unref (G_OBJECT (mail_operation));
 	g_object_unref (G_OBJECT (transport_account));
 	modest_edit_msg_window_free_msg_data (edit_window, data);

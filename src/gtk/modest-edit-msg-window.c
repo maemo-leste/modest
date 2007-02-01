@@ -150,7 +150,7 @@ init_window (ModestEditMsgWindow *obj)
 	GtkWidget *main_vbox;
 	ModestEditMsgWindowPrivate *priv;
 	ModestWindowPrivate *parent_priv;
-
+	
 	priv = MODEST_EDIT_MSG_WINDOW_GET_PRIVATE(obj);
 	parent_priv = MODEST_WINDOW_GET_PRIVATE(obj);
 

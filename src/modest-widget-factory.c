@@ -280,64 +280,25 @@ get_transports (ModestWidgetFactory *self)
 	account_mgr = modest_runtime_get_account_mgr();
 	cursor = accounts = modest_account_mgr_account_names (account_mgr, NULL);
 	while (cursor) {
-		ModestAccountData *data;
 		gchar *account_name = (gchar*)cursor->data;
-
-		data = modest_account_mgr_get_account_data (account_mgr, account_name);
-		if (data && data->transport_account) {
+		gchar *from_string  = modest_account_mgr_get_from_string (account_mgr,
+									    account_name);
+		if (!from_string)  {
+			/* something went wrong: ignore this one */
+			g_free (account_name);
+			cursor->data = NULL;
+		} else {
 			ModestPair *pair;
-			gchar *display_name = g_strdup_printf ("%s (%s)", data->email, account_name);
-			pair = modest_pair_new ((gpointer) data,
-						(gpointer) display_name , TRUE);
+			pair = modest_pair_new ((gpointer) account_name,
+						(gpointer) from_string , TRUE);
 			transports = g_slist_prepend (transports, pair);
-		}
-		/* don't free account name; it's freed when the transports list is freed */
+		} /* don't free account name; it's freed when the transports list is freed */
 		cursor = cursor->next;
 	}
 	g_slist_free (accounts);
-	
 	return transports;
 }
 
-
-#if 0
-static const GSList*
-get_stores (ModestWidgetFactory *self, gboolean only_remote)
-{
-	ModestWidgetFactoryPrivate *priv;
-	TnyAccountStore *account_store;
-	TnyList *stores;
-	TnyIterator *iter;
-	
-	priv = MODEST_WIDGET_FACTORY_GET_PRIVATE(self);
-
-	account_store =
-		tny_platform_factory_new_account_store (priv->fact);			
-
-	stores = tny_simple_list_new ();
-	tny_account_store_get_accounts (account_store, stores,
-					 TNY_ACCOUNT_STORE_STORE_ACCOUNTS);
-
-	/* simply return all the stores */
-	if (!only_remote)
-		return stores;
-
-	/*  remove the non-remote stores from the list */
-	if (only_remote) {
-		iter = tny_list_create_iterator (stores);
-		while (!tny_iterator_is_done (iter)) {
-			TnyAccount *acc = (TnyAccount*)tny_iterator_get_current(iter);
-			/* is it a local account? if so, remove */
-			ModestProtocol proto = modest_protocol_info_get_protocol (tny_account_get_proto(acc));
-			if (modest_protocol_info_protocol_is_local_store(proto))
-				tny_list_remove (stores, acc); /* FIXME: iter still valid? */
-			tny_iterator_next (iter);
-		}
-		g_object_unref (G_OBJECT(iter));
-	}
-	return stores;		
-}
-#endif
 
 GtkWidget*
 modest_widget_factory_get_combo_box (ModestWidgetFactory *self, ModestComboBoxType type)
@@ -366,12 +327,6 @@ modest_widget_factory_get_combo_box (ModestWidgetFactory *self, ModestComboBoxTy
 	case MODEST_COMBO_BOX_TYPE_TRANSPORTS:
 		protos = (ModestPairList *) get_transports (self);
 		break;
-/* 	case MODEST_COMBO_BOX_TYPE_REMOTE_STORES: */
-/* 		// FIXME */
-/* 		list = get_stores (self, TRUE); /\* get all *remote* stores *\/ */
-/* 		combo_box = gtk_combo_box_new_with_model (GTK_TREE_MODEL(list)); */
-/* 		g_object_unref (G_OBJECT(list)); */
-/* 		//return combo_box; */
 	default:
 		g_warning ("invalid combo box type: %d", type);
 		return NULL;
