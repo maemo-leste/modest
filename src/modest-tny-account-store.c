@@ -775,31 +775,3 @@ modest_tny_account_store_get_local_folders_account    (ModestTnyAccountStore *se
 	
 	return MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE (self)->local_folders;
 }
-
-TnyAccount*
-modest_tny_account_store_get_tny_account_from_server_account (ModestTnyAccountStore *self,
-							      const gchar* server_account)
-{
-	TnyAccount      *account = NULL;
-	TnyList         *accounts;
-	TnyIterator     *iter;
-	
-	g_return_val_if_fail (self, NULL);
-	g_return_val_if_fail (server_account, NULL);
-
-	accounts = tny_simple_list_new ();
-	modest_tny_account_store_get_accounts (TNY_ACCOUNT_STORE(self),
-					       accounts, TNY_ACCOUNT_STORE_BOTH);	
-	iter = tny_list_create_iterator (accounts);
-	
-	while (tny_iterator_is_done (iter)) {
-		account = TNY_ACCOUNT(tny_iterator_get_current(iter));
-		if (strcmp (tny_account_get_id (account), server_account) == 0)
-			break;
-	}
-	
-	g_object_unref (G_OBJECT(iter));
-	g_object_unref (G_OBJECT(accounts));
-
-	return account;
-}

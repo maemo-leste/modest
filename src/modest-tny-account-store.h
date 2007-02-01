@@ -109,19 +109,6 @@ TnySessionCamel*    tny_account_store_get_session    (TnyAccountStore *self);
  */
 TnyAccount*    modest_tny_account_store_get_local_folders_account    (ModestTnyAccountStore *self);
 
-
-/**
- * modest_tny_account_store_get_account_from_server_account
- * @server_account: the server account name
- * 
- * this function gets a reference to the #TnyAccount corresponding
- * to a given server account.
- *
- * Returns: a  #TnyFolder corresponding to a given server account, or NULL in case
- * of error
- */
-TnyAccount*  modest_tny_account_store_get_tny_account_from_server_account
-                   (ModestTnyAccountStore *self, const gchar* server_account);
 G_END_DECLS
 
 #endif /* __MODEST_TNY_ACCOUNT_STORE_H__ */
