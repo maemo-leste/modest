@@ -57,7 +57,7 @@ objects=\
         ${top_srcdir}/src/modest-mail-operation-queue.o \
         ${top_srcdir}/src/modest-mail-operation.o \
         ${top_srcdir}/src/modest-tny-account.o \
-	${top_srcdir}/src/modest-tny-msg-actions.o \
+	${top_srcdir}/src/modest-tny-msg.o \
         ${top_srcdir}/src/modest-local-folder-info.o \
         ${top_srcdir}/src/modest-tny-folder.o \
         ${top_srcdir}/src/modest-text-utils.o
