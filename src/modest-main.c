@@ -42,7 +42,6 @@
 #include <modest-runtime.h>
 #include <modest-defs.h>
 #include <modest-ui.h>
-#include <modest-icon-factory.h>
 #include <modest-tny-account-store.h>
 #include <modest-tny-platform-factory.h>
 #include <modest-mail-operation.h>
@@ -206,8 +205,8 @@ send_mail (const gchar* account_name,
 	g_return_val_if_fail (account_name, MODEST_ERR_SEND);
 
 	account_mgr = modest_runtime_get_account_mgr ();	
-	account = modest_account_mgr_get_tny_account (account_mgr, account_name,
-						      TNY_ACCOUNT_TYPE_TRANSPORT);	
+	account = TNY_TRANSPORT_ACCOUNT(modest_account_mgr_get_tny_account (account_mgr, account_name,
+									    TNY_ACCOUNT_TYPE_TRANSPORT));	
 	if (!account) {
 		g_printerr ("modest: no transport defined account for %s\n",
 			    account_name);

@@ -31,9 +31,39 @@
 #include <modest-header-view.h>
 #include <modest-header-view-priv.h>
 #include <modest-icon-names.h>
-#include <modest-icon-factory.h>
 #include <modest-text-utils.h>
+#include <modest-runtime.h>
 #include <glib/gi18n.h>
+
+static GdkPixbuf*
+get_cached_icon (const gchar *name)
+{
+	GError *err = NULL;
+	GdkPixbuf *pixbuf;
+	gpointer orig_key;
+	static GHashTable *icon_cache = NULL;
+	
+	g_return_val_if_fail (name, NULL);
+
+	if (G_UNLIKELY(!icon_cache))
+		icon_cache = modest_cache_mgr_get_cache (modest_runtime_get_cache_mgr(),
+							 MODEST_CACHE_MGR_CACHE_TYPE_PIXBUF);
+	
+	if (!icon_cache || !g_hash_table_lookup_extended (icon_cache, name, &orig_key,(gpointer*)&pixbuf)) {
+		pixbuf = gdk_pixbuf_new_from_file (name, &err);
+		if (!pixbuf) {
+			g_printerr ("modest: error in icon factory while loading '%s': %s\n",
+				    name, err->message);
+			g_error_free (err);
+		}
+		/* if we cannot find it, we still insert (if we have a cache), so we get the error
+		 * only once */
+		if (icon_cache)
+			g_hash_table_insert (icon_cache, g_strdup(name),(gpointer)pixbuf);
+	}
+	return pixbuf;
+}
+
 
 
 /*
@@ -51,19 +81,19 @@ get_pixbuf_for_flag (TnyHeaderFlags flag)
 	switch (flag) {
 	case TNY_HEADER_FLAG_DELETED:
 		if (G_UNLIKELY(!deleted_pixbuf))
-			deleted_pixbuf = modest_icon_factory_get_icon (MODEST_HEADER_ICON_DELETED);
+			deleted_pixbuf = get_cached_icon (MODEST_HEADER_ICON_DELETED);
 		return deleted_pixbuf;
 	case TNY_HEADER_FLAG_SEEN:
 		if (G_UNLIKELY(!seen_pixbuf))
-			seen_pixbuf = modest_icon_factory_get_icon (MODEST_HEADER_ICON_READ);
+			seen_pixbuf = get_cached_icon (MODEST_HEADER_ICON_READ);
 		return seen_pixbuf;
 	case TNY_HEADER_FLAG_ATTACHMENTS:
 		if (G_UNLIKELY(!attachments_pixbuf))
-			attachments_pixbuf = modest_icon_factory_get_icon (MODEST_HEADER_ICON_ATTACH);
+			attachments_pixbuf = get_cached_icon (MODEST_HEADER_ICON_ATTACH);
 		return attachments_pixbuf;
 	default:
 		if (G_UNLIKELY(!unread_pixbuf))
-			unread_pixbuf = modest_icon_factory_get_icon (MODEST_HEADER_ICON_UNREAD);
+			unread_pixbuf = get_cached_icon (MODEST_HEADER_ICON_UNREAD);
 		return unread_pixbuf;
 	}
 }

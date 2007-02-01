@@ -38,7 +38,6 @@
 #include <modest-marshal.h>
 #include <modest-text-utils.h>
 #include <modest-icon-names.h>
-#include <modest-icon-factory.h>
 
 static void modest_header_view_class_init  (ModestHeaderViewClass *klass);
 static void modest_header_view_init        (ModestHeaderView *obj);

@@ -44,8 +44,6 @@ modest_SOURCES=\
 	modest-error.h \
 	modest-formatter.c \
 	modest-formatter.h \
-	modest-icon-factory.c\
-	modest-icon-factory.h\
 	modest-local-folder-info.c \
 	modest-local-folder-info.h \
 	modest-mail-operation-queue.c \

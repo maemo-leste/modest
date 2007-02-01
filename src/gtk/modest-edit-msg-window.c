@@ -37,7 +37,6 @@
 #include <modest-edit-msg-window.h>
 #include <modest-widget-memory.h>
 #include <widgets/modest-edit-msg-window-ui.h>
-#include <modest-icon-factory.h>
 #include <modest-account-mgr-helpers.h>
 
 static void  modest_edit_msg_window_class_init   (ModestEditMsgWindowClass *klass);
@@ -267,8 +266,7 @@ modest_edit_msg_window_new (ModestEditType type)
 	restore_settings (MODEST_EDIT_MSG_WINDOW(obj));
 	
 	gtk_window_set_title (GTK_WINDOW(obj), "Modest");
-	gtk_window_set_icon  (GTK_WINDOW(obj),
-			      modest_icon_factory_get_icon (MODEST_APP_ICON));
+	gtk_window_set_icon_from_file (GTK_WINDOW(obj), MODEST_APP_ICON, NULL);
 
 	g_signal_connect (G_OBJECT(obj), "delete-event",
 			  G_CALLBACK(on_delete_event), obj);

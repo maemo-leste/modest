@@ -40,10 +40,9 @@
 #include <modest-tny-folder.h>
 #include <modest-marshal.h>
 #include <modest-icon-names.h>
-#include <modest-icon-factory.h>
 #include <modest-tny-account-store.h>
 #include <modest-text-utils.h>
-
+#include <modest-runtime.h>
 #include "modest-folder-view.h"
 
 /* 'private'/'protected' functions */
@@ -191,6 +190,35 @@ text_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 }
 
 
+static GdkPixbuf*
+get_cached_icon (const gchar *name)
+{
+	GError *err = NULL;
+	GdkPixbuf *pixbuf;
+	gpointer orig_key;
+	static GHashTable *icon_cache = NULL;
+	
+	g_return_val_if_fail (name, NULL);
+
+	if (G_UNLIKELY(!icon_cache))
+		icon_cache = modest_cache_mgr_get_cache (modest_runtime_get_cache_mgr(),
+							 MODEST_CACHE_MGR_CACHE_TYPE_PIXBUF);
+	
+	if (!icon_cache || !g_hash_table_lookup_extended (icon_cache, name, &orig_key,(gpointer*)&pixbuf)) {
+		pixbuf = gdk_pixbuf_new_from_file (name, &err);
+		if (!pixbuf) {
+			g_printerr ("modest: error in icon factory while loading '%s': %s\n",
+				    name, err->message);
+			g_error_free (err);
+		}
+		/* if we cannot find it, we still insert (if we have a cache), so we get the error
+		 * only once */
+		if (icon_cache)
+			g_hash_table_insert (icon_cache, g_strdup(name),(gpointer)pixbuf);
+	}
+	return pixbuf;
+}
+
 
 static void
 icon_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
@@ -216,38 +244,38 @@ icon_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 
 	switch (type) {
 	case TNY_FOLDER_TYPE_ROOT:
-		pixbuf = modest_icon_factory_get_icon (MODEST_FOLDER_ICON_ACCOUNT);
+		pixbuf = get_cached_icon (MODEST_FOLDER_ICON_ACCOUNT);
                 break;
 	case TNY_FOLDER_TYPE_INBOX:
-                pixbuf = modest_icon_factory_get_icon (MODEST_FOLDER_ICON_INBOX);
+                pixbuf = get_cached_icon (MODEST_FOLDER_ICON_INBOX);
                 break;
         case TNY_FOLDER_TYPE_OUTBOX:
-                pixbuf = modest_icon_factory_get_icon (MODEST_FOLDER_ICON_OUTBOX);
+                pixbuf = get_cached_icon (MODEST_FOLDER_ICON_OUTBOX);
                 break;
         case TNY_FOLDER_TYPE_JUNK:
-                pixbuf = modest_icon_factory_get_icon (MODEST_FOLDER_ICON_JUNK);
+                pixbuf = get_cached_icon (MODEST_FOLDER_ICON_JUNK);
                 break;
         case TNY_FOLDER_TYPE_SENT:
-                pixbuf = modest_icon_factory_get_icon (MODEST_FOLDER_ICON_SENT);
+                pixbuf = get_cached_icon (MODEST_FOLDER_ICON_SENT);
                 break;
 	case TNY_FOLDER_TYPE_TRASH:
-		pixbuf = modest_icon_factory_get_icon (MODEST_FOLDER_ICON_TRASH);
+		pixbuf = get_cached_icon (MODEST_FOLDER_ICON_TRASH);
                 break;
 	case TNY_FOLDER_TYPE_DRAFTS:
-		pixbuf = modest_icon_factory_get_icon (MODEST_FOLDER_ICON_DRAFTS);
+		pixbuf = get_cached_icon (MODEST_FOLDER_ICON_DRAFTS);
                 break;
 	case TNY_FOLDER_TYPE_NOTES:
-		pixbuf = modest_icon_factory_get_icon (MODEST_FOLDER_ICON_NOTES);
+		pixbuf = get_cached_icon (MODEST_FOLDER_ICON_NOTES);
                 break;
 	case TNY_FOLDER_TYPE_CALENDAR:
-		pixbuf = modest_icon_factory_get_icon (MODEST_FOLDER_ICON_CALENDAR);
+		pixbuf = get_cached_icon (MODEST_FOLDER_ICON_CALENDAR);
                 break;
 	case TNY_FOLDER_TYPE_CONTACTS:
-                pixbuf = modest_icon_factory_get_icon (MODEST_FOLDER_ICON_CONTACTS);
+                pixbuf = get_cached_icon (MODEST_FOLDER_ICON_CONTACTS);
                 break;
 	case TNY_FOLDER_TYPE_NORMAL:
         default:
-                pixbuf = modest_icon_factory_get_icon (MODEST_FOLDER_ICON_NORMAL);
+                pixbuf = get_cached_icon (MODEST_FOLDER_ICON_NORMAL);
 		break;
         }
 	g_object_set (rendobj, "pixbuf", pixbuf, NULL);
