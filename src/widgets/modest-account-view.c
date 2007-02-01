@@ -180,7 +180,7 @@ update_account_view (ModestAccountMgr *account_mgr, ModestAccountView *view)
 				g_free(store);
 			}
 		
-			enabled = modest_account_mgr_account_get_enabled (account_mgr, account_name);
+			enabled = modest_account_mgr_get_enabled (account_mgr, account_name);
 			gtk_list_store_insert_with_values (
 				model, NULL, 0,
 				ENABLED_COLUMN, enabled,
@@ -241,7 +241,7 @@ on_account_enable_toggled (GtkCellRendererToggle *cell_renderer, gchar *path,
 			    -1);
 	
 	/* toggle enabled / disabled */
-	modest_account_mgr_account_set_enabled (priv->account_mgr, account_name, !enabled);
+	modest_account_mgr_set_enabled (priv->account_mgr, account_name, !enabled);
 	g_free (account_name);
 }
 

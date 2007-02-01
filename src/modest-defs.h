@@ -42,6 +42,7 @@ enum {
 	MODEST_ERR_HILDON,       /* error with Hildon (maemo-only) */
 	MODEST_ERR_RUN,          /* errr running */
 	MODEST_ERR_SEND,         /* error sending mail */
+	MODEST_ERR_PARAM,        /* error in one or more of the parameters */
 	MODEST_ERR_INIT          /* error in initialization */
 };
 

@@ -81,7 +81,7 @@ on_key_change (ModestConf *conf, const gchar *key, ModestConfEvent event, gpoint
 	if (is_server_account)
 		enabled = TRUE;
 	else 
-		enabled = modest_account_mgr_account_get_enabled (self, account);
+		enabled = modest_account_mgr_get_enabled (self, account);
 
 	/* account was changed.
 	 * and always notify when enabled/disabled changes
@@ -260,8 +260,7 @@ modest_account_mgr_add_account (ModestAccountMgr *self,
 			return FALSE;
 		}
 	}
-
-	modest_account_mgr_account_set_enabled (self, name, TRUE);
+	modest_account_mgr_set_enabled (self, name, TRUE);
 	
 	return TRUE;
 }

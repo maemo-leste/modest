@@ -34,23 +34,28 @@
 #include <modest-account-mgr.h>
 #include <modest-tny-account-store.h>
 
+#include <tny-account.h>
+#include <tny-store-account.h>
+#include <tny-transport-account.h>
+
 G_BEGIN_DECLS
 
 typedef struct {
-	gchar *account_name;
-	gchar *hostname;
-	gchar *username;
+	TnyAccount    *tny_account;
+	gchar         *account_name;
+	gchar         *hostname;
+	gchar         *username;
 	ModestProtocol proto;
-	gchar *password;
-	GSList *options;
+	gchar         *password;
+	GSList        *options;
 } ModestServerAccountData;
 
 typedef struct {
-	gchar *account_name;
-	gchar *display_name;
-	gchar *fullname;
-	gchar *email;
-	gboolean enabled;
+	gchar                  *account_name;
+	gchar                  *display_name;
+	gchar                  *fullname;
+	gchar                  *email;
+	gboolean                enabled;
 	ModestServerAccountData *transport_account;
 	ModestServerAccountData *store_account;
 } ModestAccountData;
@@ -108,7 +113,7 @@ void       modest_account_mgr_free_account_data     (ModestAccountMgr *self,
 
 
 /**
- * modest_account_mgr_account_set_enabled
+ * modest_account_mgr_set_enabled
  * @self: a ModestAccountMgr instance
  * @name: the account name 
  * @enabled: if TRUE, the account will be enabled, if FALSE, it will be disabled
@@ -117,11 +122,11 @@ void       modest_account_mgr_free_account_data     (ModestAccountMgr *self,
  *
  * Returns: TRUE if it worked, FALSE otherwise
  */
-gboolean modest_account_mgr_account_set_enabled (ModestAccountMgr *self, const gchar* name,
-						 gboolean enabled);
+gboolean modest_account_mgr_set_enabled (ModestAccountMgr *self, const gchar* name,
+					 gboolean enabled);
 
 /**
- * modest_account_mgr_account_get_enabled:
+ * modest_account_mgr_get_enabled:
  * @self: a ModestAccountMgr instance
  * @name: the account name to check
  *
@@ -129,7 +134,35 @@ gboolean modest_account_mgr_account_set_enabled (ModestAccountMgr *self, const g
  *
  * Returns: TRUE if it is enabled, FALSE otherwise
  */
-gboolean modest_account_mgr_account_get_enabled (ModestAccountMgr *self, const gchar* name);
+gboolean modest_account_mgr_get_enabled (ModestAccountMgr *self, const gchar* name);
+
+
+
+/**
+ * modest_account_mgr_get_tny_account:
+ * @self: a #ModestAccountMgr instance
+ * @name: the account name
+ * @type: the #TnyAccountType to check; either TNY_ACCOUNT_TYPE_TRANSPORT or TNY_ACCOUNT_TYPE_STORE
+ *
+ * get the TnyAccount corresponding to the store/transport (server) accounts for some account.
+ * ie., every account has two server accounts, and for every server account there is a corresponding
+ * TnyAccount 
+ *
+ * Returns: the requested TnyAccount, or NULL in case of error
+ */
+TnyAccount*  modest_account_mgr_get_tny_account (ModestAccountMgr *self, const gchar* name,
+						 TnyAccountType type);
+
+/**
+ * modest_account_mgr_get_from_string
+ * @self: a #ModestAccountMgr instance
+ * @name: the account name
+ *
+ * get the From: string for some account; ie. "Foo Bar" <foo.bar@cuux.yy>"
+ *
+ * Returns: the newly allocated from-string, or NULL in case of error
+ */
+gchar * modest_account_mgr_get_from_string (ModestAccountMgr *self, const gchar* name);
 
 
 G_END_DECLS

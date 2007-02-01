@@ -29,10 +29,12 @@
 
 #include <modest-account-mgr-helpers.h>
 #include <modest-account-mgr-priv.h>
-
+#include <tny-simple-list.h>
+#include <modest-runtime.h>
+#include <string.h>
 
 gboolean
-modest_account_mgr_account_set_enabled (ModestAccountMgr *self, const gchar* name,
+modest_account_mgr_set_enabled (ModestAccountMgr *self, const gchar* name,
 					gboolean enabled)
 {
 	return modest_account_mgr_set_bool (self, name,
@@ -42,7 +44,7 @@ modest_account_mgr_account_set_enabled (ModestAccountMgr *self, const gchar* nam
 
 
 gboolean
-modest_account_mgr_account_get_enabled (ModestAccountMgr *self, const gchar* name)
+modest_account_mgr_get_enabled (ModestAccountMgr *self, const gchar* name)
 {
 	return modest_account_mgr_get_bool (self, name,
 					    MODEST_ACCOUNT_ENABLED, FALSE,
@@ -135,13 +137,13 @@ modest_account_mgr_get_account_data     (ModestAccountMgr *self, const gchar* na
 	data->display_name = modest_account_mgr_get_string (self, name,
 							    MODEST_ACCOUNT_DISPLAY_NAME,
 							    FALSE, NULL);
-	data->fullname      = modest_account_mgr_get_string (self, name,
+ 	data->fullname      = modest_account_mgr_get_string (self, name,
 							      MODEST_ACCOUNT_FULLNAME,
 							       FALSE, NULL);
 	data->email        = modest_account_mgr_get_string (self, name,
 							    MODEST_ACCOUNT_EMAIL,
 							    FALSE, NULL);
-	data->enabled      = modest_account_mgr_account_get_enabled (self, name);
+	data->enabled      = modest_account_mgr_get_enabled (self, name);
 
 	/* store */
 	server_account     = modest_account_mgr_get_string (self, name,
@@ -234,4 +236,83 @@ modest_account_mgr_set_default_account  (ModestAccountMgr *self, const gchar* ac
 }
 
 
+TnyAccount*
+modest_account_mgr_get_tny_account (ModestAccountMgr *self, const gchar* account_name,
+					TnyAccountType type)
+{
+	TnyAccount      *account = NULL;
+	TnyList         *accounts;
+	TnyIterator     *iter;
+	gchar           *server_account;
+	const gchar     *conf_key;
+	
+	g_return_val_if_fail (self, NULL);
+	g_return_val_if_fail (account_name, NULL);
 
+	switch (type) {
+	case TNY_ACCOUNT_TYPE_STORE:
+		conf_key = MODEST_ACCOUNT_STORE_ACCOUNT; break;
+	case TNY_ACCOUNT_TYPE_TRANSPORT:
+		conf_key = MODEST_ACCOUNT_TRANSPORT_ACCOUNT; break;
+	default:
+		g_return_val_if_reached (NULL);
+	}
+	
+	server_account = modest_account_mgr_get_string (self, account_name, conf_key, FALSE, NULL);
+	if (!server_account) {
+		g_printerr ("modest: no %s account specified for %s\n",
+			    type == TNY_ACCOUNT_TYPE_TRANSPORT ? "transport" : "store", account_name);
+		return NULL;
+	}
+	
+	accounts = tny_simple_list_new ();
+	tny_account_store_get_accounts (TNY_ACCOUNT_STORE(modest_runtime_get_account_store()),
+					accounts, type);	
+	iter = tny_list_create_iterator (accounts);	
+	while (tny_iterator_is_done (iter)) {
+		account = TNY_ACCOUNT(tny_iterator_get_current(iter));
+		if (strcmp (tny_account_get_id (account), server_account) == 0)
+			break;
+	}
+	
+	g_object_unref (G_OBJECT(iter));
+	g_object_unref (G_OBJECT(accounts));
+	
+	if (!account)
+		g_printerr ("modest: no tny %s account found for %s\n",
+			    type == TNY_ACCOUNT_TYPE_TRANSPORT ? "transport" : "store", account_name);
+	else {
+		/* sanity check */
+		if ((type == TNY_ACCOUNT_TYPE_TRANSPORT && !TNY_IS_TRANSPORT_ACCOUNT(account)) ||
+		    (type == TNY_ACCOUNT_TYPE_STORE && !TNY_IS_STORE_ACCOUNT(account))) {
+			g_printerr ("modest: tny %s acccount found for %s, but was expecting %s account\n",
+				    type == TNY_ACCOUNT_TYPE_TRANSPORT ? "transport" : "store", account_name,
+				    type == TNY_ACCOUNT_TYPE_TRANSPORT ? "store" : "transport");
+			g_object_unref (G_OBJECT(account));
+			account = NULL;
+		}
+	}
+	return account;
+}
+
+
+gchar*
+modest_account_mgr_get_from_string (ModestAccountMgr *self, const gchar* name)
+{
+	gchar *fullname, *email, *from;
+	
+	g_return_val_if_fail (self, NULL);
+	g_return_val_if_fail (name, NULL);
+
+	fullname      = modest_account_mgr_get_string (self, name,MODEST_ACCOUNT_FULLNAME,
+						       FALSE, NULL);
+	email         = modest_account_mgr_get_string (self, name, MODEST_ACCOUNT_EMAIL,
+						       FALSE, NULL);
+	from = g_strdup_printf ("%s <%s>",
+				fullname ? fullname : "",
+				email    ? email    : "");
+	g_free (fullname);
+	g_free (email);
+
+	return from;
+}

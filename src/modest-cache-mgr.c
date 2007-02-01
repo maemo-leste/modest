@@ -69,7 +69,7 @@ modest_cache_mgr_get_type (void)
 			NULL,		/* class finalize */
 			NULL,		/* class data */
 			sizeof(ModestCacheMgr),
-			1,		/* n_preallocs */
+			0,		/* n_preallocs */
 			(GInstanceInitFunc) modest_cache_mgr_init,
 			NULL
 		};

@@ -46,13 +46,11 @@
 #include <modest-tny-account-store.h>
 #include <modest-tny-platform-factory.h>
 #include <modest-mail-operation.h>
+
+#include <modest-account-mgr.h>
 #include <modest-account-mgr-helpers.h>
 
-static gchar*  check_account (ModestAccountMgr* account_mgr, const gchar *account);
-TnyAccount*    get_transport_account (ModestAccountMgr *account_mgr,
-				      ModestAccountData *account_data,
-				      const gchar *account);
-
+static gchar*  check_account (const gchar *account);
 static int     start_ui (const gchar* mailto, const gchar *cc, const gchar *bcc,
 			 const gchar* subject, const gchar *body);
 static int     send_mail (const gchar* account,
@@ -68,8 +66,8 @@ main (int argc, char *argv[])
 		
 	static gboolean batch = FALSE;
 	static gchar    *mailto=NULL, *subject=NULL, *bcc=NULL,
-		        *cc=NULL, *body=NULL, *account=NULL;
-
+		*cc=NULL, *body=NULL, *account=NULL;
+	
 	static GOptionEntry options[] = {
 		{ "mailto", 'm', 0, G_OPTION_ARG_STRING, &mailto,
 		  N_("New email to <addresses> (comma-separated)"), NULL},
@@ -105,7 +103,6 @@ main (int argc, char *argv[])
 		goto cleanup;
 	}
 	g_option_context_free (context);
-
 	
 	if (!batch) {
 		if (!modest_runtime_init_ui (argc, argv)) {
@@ -114,8 +111,18 @@ main (int argc, char *argv[])
 			goto cleanup;
 		} else
 			retval = start_ui (mailto, cc, bcc, subject, body);
-	} else 
+	} else {
+		gchar *account_or_default;
+		account_or_default = check_account (account);
+		g_free (account);
+
+		if (!account_or_default) {
+			g_printerr ("modest: account is not valid\n");
+			retval = MODEST_ERR_PARAM;
+			goto cleanup;
+		} 
 		retval = send_mail (account, mailto, cc, bcc, subject, body);
+	}
 	
 cleanup:
 	g_free (mailto);
@@ -164,115 +171,65 @@ start_ui (const gchar* mailto, const gchar *cc, const gchar *bcc,
 	return retval;
 }
 
+static gchar*
+check_account (const gchar* account)
+{
+	gchar *retval;
+	ModestAccountMgr *account_mgr;
+
+	account_mgr = modest_runtime_get_account_mgr();
+	
+	if (!account)
+		retval = modest_account_mgr_get_default_account (account_mgr);
+	else
+		retval = g_strdup (account);
+
+	/* sanity check */
+	if (!modest_account_mgr_account_exists (account_mgr, account, FALSE, NULL)) {
+		g_free (retval);
+		retval = NULL;
+	}
+	return retval;
+}
 
 static int
-send_mail (const gchar* account_,
+send_mail (const gchar* account_name,
 	   const gchar* mailto, const gchar *cc, const gchar *bcc,
 	   const gchar* subject, const gchar *body)
 {
-	ModestAccountMgr *account_mgr;
-	ModestMailOperation *mail_operation = NULL;
-	TnyTransportAccount *account = NULL;
-	ModestAccountData *account_data;
-	gchar *account_name = NULL, *sender_name = NULL;
 	int retval;
-
-	account_mgr = modest_runtime_get_account_mgr ();
+	TnyTransportAccount *account;
+	ModestMailOperation *mail_operation = NULL;
+	ModestAccountMgr    *account_mgr;
+	gchar               *from_string;
 	
-	account_name = check_account (account_mgr, account_);	
-	if (!account_name) 
-		return MODEST_ERR_SEND;
+	g_return_val_if_fail (account_name, MODEST_ERR_SEND);
 
-	account_data = modest_account_mgr_get_account_data (account_mgr, account_name);
-	if (!account_data) {
-		g_printerr ("modest: cannot get account data for %s\n", account_name);
-		g_free (account_name);
-		return MODEST_ERR_SEND;
-	}
-	account = TNY_TRANSPORT_ACCOUNT(get_transport_account (account_mgr, account_data,
-							       account_name));
+	account_mgr = modest_runtime_get_account_mgr ();	
+	account = modest_account_mgr_get_tny_account (account_mgr, account_name,
+						      TNY_ACCOUNT_TYPE_TRANSPORT);	
 	if (!account) {
-		g_printerr ("modest: cannot get transport account for %s\n", account_name);
-		g_free (account_name);
-		modest_account_mgr_free_account_data (account_mgr, account_data);
+		g_printerr ("modest: no transport defined account for %s\n",
+			    account_name);
 		return MODEST_ERR_SEND;
 	}
-
-	sender_name = g_strdup_printf ("%s <%s>",
-				       account_data->fullname ?  account_data->fullname : "",
-				       account_data->email    ?  account_data->email : "");
+	from_string = modest_account_mgr_get_from_string (account_mgr, account_name);
 
 	mail_operation = modest_mail_operation_new ();
-	modest_mail_operation_send_new_mail (mail_operation,
-					     account,
-					     sender_name,
-					     mailto,
+	modest_mail_operation_send_new_mail (mail_operation, account,
+					     from_string, mailto,
 					     cc, bcc, subject, body,
 					     NULL);
-
 	if (modest_mail_operation_get_status (mail_operation) == 
 	    MODEST_MAIL_OPERATION_STATUS_FAILED) {
 		retval = MODEST_ERR_SEND;
 	} else
 		retval = MODEST_ERR_NONE; /* hurray! */
 
-	g_free (sender_name);
-	g_free (account_name);
-	modest_account_mgr_free_account_data (account_mgr, account_data);
-			
+	g_object_unref (G_OBJECT(mail_operation));
+	g_free (from_string);
+	
 	return retval;
-}
-
-
-
-		
-static gchar*
-check_account (ModestAccountMgr* account_mgr, const gchar *account)
-{
-	gchar *account_or_default;
-
-	if (account)
-		account_or_default = g_strdup(account);
-	else {
-		account_or_default = modest_account_mgr_get_default_account (account_mgr);
-		if (!account_or_default) {
-			g_printerr ("modest: no default account has been defined\n");
-			return NULL;
-		}
-	} 		
-
-	if (!modest_account_mgr_account_exists (account_mgr, account_or_default, FALSE, NULL)) {
-		g_printerr ("modest: account %s is undefined\n", account_or_default);
-		return NULL;
-	}
-
-	return account_or_default;
-}
-
-
-TnyAccount*
-get_transport_account (ModestAccountMgr *account_mgr,
-		       ModestAccountData *account_data,
-		       const gchar *account_name)
-{
-	TnyAccount *account;
-	
-	if (!account_data->transport_account || !account_data->transport_account->account_name) {
-		g_printerr ("modest: no transport account defined for %s\n", account_name);
-		return NULL;
-	}
-
-	account = (modest_tny_account_store_get_tny_account_from_server_account (
-			   modest_runtime_get_account_store(),
-			   account_data->transport_account->account_name));
-	
-	if (!TNY_IS_TRANSPORT_ACCOUNT(account)) {
-		g_printerr ("modest: no valid transport account defined for %s\n", account_name);
-		g_object_unref (G_OBJECT(account));
-		return NULL;
-	}
-
-	return account;
 }
 
 	
