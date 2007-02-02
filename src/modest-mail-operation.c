@@ -494,10 +494,11 @@ folder_refresh_cb (TnyFolder *folder, gboolean canceled, GError **err, gpointer 
 		g_object_unref (G_OBJECT (list));
 		g_slice_free (RefreshFolderAsyncHelper, helper);
 	} else {
-		tny_folder_refresh_async (TNY_FOLDER (tny_iterator_get_current (helper->iter)),
-					  folder_refresh_cb,
+		TnyFolder *folder = TNY_FOLDER (tny_iterator_get_current (helper->iter));
+		tny_folder_refresh_async (folder, folder_refresh_cb,
 					  status_update_cb, 
 					  helper);
+		g_object_unref (G_OBJECT(folder));
 	}
 	g_signal_emit (G_OBJECT (self), signals[PROGRESS_CHANGED_SIGNAL], 0, NULL);
 }
@@ -509,7 +510,8 @@ update_folders_cb (TnyFolderStore *folder_store, TnyList *list, GError **err, gp
 	ModestMailOperation *self;
 	ModestMailOperationPrivate *priv;
 	RefreshFolderAsyncHelper *helper;
-
+	TnyFolder *folder;
+	
 	self  = MODEST_MAIL_OPERATION (user_data);
 	priv  = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
 
@@ -530,10 +532,10 @@ update_folders_cb (TnyFolderStore *folder_store, TnyList *list, GError **err, gp
 	helper->canceled = 0;
 
 	/* Async refresh folders */
-	tny_folder_refresh_async (TNY_FOLDER (tny_iterator_get_current (helper->iter)),
-				  folder_refresh_cb,
-				  status_update_cb, 
-				  helper);
+	folder = TNY_FOLDER (tny_iterator_get_current (helper->iter));
+	tny_folder_refresh_async (folder, folder_refresh_cb,
+				  status_update_cb, helper);
+	g_object_unref (G_OBJECT(folder));
 }
 
 gboolean

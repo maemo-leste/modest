@@ -142,33 +142,5 @@ TnyMimePart*
 modest_tny_msg_find_body_part (TnyMsg *msg, gboolean want_html)
 {
 	return modest_tny_msg_find_body_part_from_mime_part (TNY_MIME_PART(msg),
-								     want_html);
-}
-
-
-TnyMimePart *
-modest_tny_msg_find_nth_part (TnyMsg *msg, gint index)
-{
-	TnyMimePart *part;
-	TnyList *parts;
-	TnyIterator *iter;
-
-	g_return_val_if_fail (msg, NULL);
-	g_return_val_if_fail (index > 0, NULL);
-		
-	parts = TNY_LIST(tny_simple_list_new());
-	tny_mime_part_get_parts (TNY_MIME_PART(msg), parts);
-	iter  = tny_list_create_iterator (parts);
-
-	part = NULL;
-	
-	if (!tny_iterator_is_done(iter)) {
-		tny_iterator_nth (iter, index);
-		part = TNY_MIME_PART(tny_iterator_get_current (iter));
-	}
-
-	g_object_unref (G_OBJECT(iter));
-	g_object_unref (G_OBJECT(parts));
-
-	return part;
+							     want_html);
 }

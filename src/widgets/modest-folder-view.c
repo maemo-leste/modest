@@ -194,7 +194,7 @@ static GdkPixbuf*
 get_cached_icon (const gchar *name)
 {
 	GError *err = NULL;
-	GdkPixbuf *pixbuf;
+	gpointer pixbuf;
 	gpointer orig_key;
 	static GHashTable *icon_cache = NULL;
 	
@@ -204,8 +204,8 @@ get_cached_icon (const gchar *name)
 		icon_cache = modest_cache_mgr_get_cache (modest_runtime_get_cache_mgr(),
 							 MODEST_CACHE_MGR_CACHE_TYPE_PIXBUF);
 	
-	if (!icon_cache || !g_hash_table_lookup_extended (icon_cache, name, &orig_key,(gpointer*)&pixbuf)) {
-		pixbuf = gdk_pixbuf_new_from_file (name, &err);
+	if (!icon_cache || !g_hash_table_lookup_extended (icon_cache, name, &orig_key, &pixbuf)) {
+		pixbuf = (gpointer)gdk_pixbuf_new_from_file (name, &err);
 		if (!pixbuf) {
 			g_printerr ("modest: error in icon factory while loading '%s': %s\n",
 				    name, err->message);
@@ -216,7 +216,7 @@ get_cached_icon (const gchar *name)
 		if (icon_cache)
 			g_hash_table_insert (icon_cache, g_strdup(name),(gpointer)pixbuf);
 	}
-	return pixbuf;
+	return GDK_PIXBUF(pixbuf);
 }
 
 

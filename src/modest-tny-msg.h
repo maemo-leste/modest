@@ -44,19 +44,6 @@ TnyMimePart *modest_tny_msg_find_body_part (TnyMsg * self, gboolean want_html);
 
 
 /**
- * modest_tny_msg_get_nth_part:
- * @self: a message
- * @index: number (1-based) of the part to retrieve
- * 
- * search for the nth (mime) part in the message
- * 
- * Returns: the TnyMsgMimePart for the found part, or NULL if no
- * matching part is foundi; must be unref'd
- */
-TnyMimePart* modest_tny_msg_find_nth_part (TnyMsg *msg, gint index);
-
-
-/**
  * modest_tny_msg_find_body:
  * @self: 
  * @want_html: 

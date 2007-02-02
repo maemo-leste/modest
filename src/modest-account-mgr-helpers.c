@@ -273,6 +273,7 @@ modest_account_mgr_get_tny_account (ModestAccountMgr *self, const gchar* account
 		account = TNY_ACCOUNT(tny_iterator_get_current(iter));
 		if (strcmp (tny_account_get_id (account), server_account) == 0)
 			break;
+		g_object_unref (G_OBJECT(account));
 	}
 	
 	g_object_unref (G_OBJECT(iter));
