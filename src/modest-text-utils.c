@@ -600,9 +600,11 @@ get_url_matches (GString *txt)
 
 	/* initalize the regexps */
 	for (i = 0; i != pattern_num; ++i) {
-		patterns[i].preg = g_new0 (regex_t,1);
-		g_assert(regcomp (patterns[i].preg, patterns[i].regex,
-				  REG_ICASE|REG_EXTENDED|REG_NEWLINE) == 0);
+		patterns[i].preg = g_slice_new0 (regex_t);
+
+		/* this should not happen */
+		g_return_val_if_fail (regcomp (patterns[i].preg, patterns[i].regex,
+					       REG_ICASE|REG_EXTENDED|REG_NEWLINE) == 0, NULL);
 	}
         /* find all the matches */
 	for (i = 0; i != pattern_num; ++i) {
@@ -610,7 +612,7 @@ get_url_matches (GString *txt)
 		while (1) {
 			int test_offset;
 			if ((rv = regexec (patterns[i].preg, txt->str + offset, 1, &rm, 0)) != 0) {
-				g_assert (rv == REG_NOMATCH); /* this should not happen */
+				g_return_val_if_fail (rv == REG_NOMATCH, NULL); /* this should not happen */
 				break; /* try next regexp */ 
 			}
 			if (rm.rm_so == -1)
@@ -624,7 +626,7 @@ get_url_matches (GString *txt)
 			
 			/* make a list of our matches (<offset, len, prefix> tupels)*/
 			if (test_offset != -1) {
-				url_match_t *match = g_new (url_match_t,1);
+				url_match_t *match = g_slice_new (url_match_t);
 				match->offset = offset + rm.rm_so;
 				match->len    = rm.rm_eo - rm.rm_so;
 				match->prefix = patterns[i].prefix;
@@ -636,7 +638,7 @@ get_url_matches (GString *txt)
 
 	for (i = 0; i != pattern_num; ++i) {
 		regfree (patterns[i].preg);
-		g_free  (patterns[i].preg);
+		g_slice_free  (regex_t, patterns[i].preg);
 	} /* don't free patterns itself -- it's static */
 	
 	/* now sort the list, so the matches are in reverse order of occurence.
@@ -675,7 +677,7 @@ hyperlinkify_plain_text (GString *txt)
 		g_free (url);
 		g_free (repl);
 
-		g_free (cursor->data);	
+		g_slice_free (url_match_t, match);	
 	}
 	
 	g_slist_free (match_list);

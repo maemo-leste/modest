@@ -67,16 +67,14 @@ ModestPair* modest_pair_new   (gpointer first, gpointer second, gboolean own);
 void        modest_pair_free       (ModestPair *self);
 
 
-
 /**
  * modest_pair_list_free:
  * @pairs: a valid ModestPairList
  *
  * convenience function to destroy all pairs in a list 
  *
- * Returns: NULL
  */
-ModestPairList      *modest_pair_list_free (ModestPairList *pairs);
+void  modest_pair_list_free (ModestPairList *pairs);
 
 G_END_DECLS
 

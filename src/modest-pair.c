@@ -34,11 +34,11 @@ modest_pair_new     (gpointer first, gpointer second, gboolean own)
 {
 	ModestPair *pair;
 
-	pair = g_new (ModestPair, 1);
+	pair = g_slice_new (ModestPair);
 
-	pair->first = first;
+	pair->first  = first;
 	pair->second = second;
-	pair->own = own;
+	pair->own    = own;
 	
 	return pair;
 }
@@ -54,12 +54,13 @@ modest_pair_free (ModestPair *pair)
 		g_free (pair->first);
 		g_free (pair->second);
 	}
-	g_free (pair);
+	
+	g_slice_free (ModestPair, pair);
 }
 
 
 
-ModestPairList*
+void
 modest_pair_list_free (ModestPairList *pairs)
 {
 	ModestPairList *cursor = pairs;
@@ -68,5 +69,4 @@ modest_pair_list_free (ModestPairList *pairs)
 		cursor = cursor->next;
 	}
 	g_slist_free (pairs);
-	return NULL;
 }

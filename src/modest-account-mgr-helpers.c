@@ -60,8 +60,8 @@ modest_account_mgr_get_server_account_data (ModestAccountMgr *self, const gchar*
 	
 	g_return_val_if_fail (modest_account_mgr_account_exists (self, name,
 								 TRUE, NULL), NULL);	
-	data = g_new0 (ModestServerAccountData, 1);
-
+	data = g_slice_new0 (ModestServerAccountData);
+	
 	data->account_name = g_strdup (name);
 	data->hostname     = modest_account_mgr_get_string (self, name,
 							    MODEST_ACCOUNT_HOSTNAME,
@@ -117,7 +117,7 @@ modest_account_mgr_free_server_account_data (ModestAccountMgr *self,
 		g_slist_free (data->options);
 	}
 
-	g_free (data);
+	g_slice_free (ModestServerAccountData, data);
 }
 
 ModestAccountData*
@@ -130,7 +130,7 @@ modest_account_mgr_get_account_data     (ModestAccountMgr *self, const gchar* na
 	g_return_val_if_fail (name, NULL);
 	g_return_val_if_fail (modest_account_mgr_account_exists (self, name,
 								 FALSE, NULL), NULL);	
-	data = g_new0 (ModestAccountData, 1);
+	data = g_slice_new0 (ModestAccountData);
 
 	data->account_name = g_strdup (name);
 
@@ -187,7 +187,7 @@ modest_account_mgr_free_account_data (ModestAccountMgr *self, ModestAccountData 
 	modest_account_mgr_free_server_account_data (self, data->store_account);
 	modest_account_mgr_free_server_account_data (self, data->transport_account);
 	
-	g_free (data);
+	g_slice_free (ModestAccountData, data);
 }
 
 
