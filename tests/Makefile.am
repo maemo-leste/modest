@@ -50,7 +50,6 @@ objects=\
         ${top_srcdir}/src/modest-pair.o \
         ${top_srcdir}/src/modest-marshal.o \
 	${top_srcdir}/src/modest-widget-memory.o \
-	${top_srcdir}/src/modest-icon-factory.o \
         ${top_srcdir}/src/modest-tny-account-store.o \
         ${top_srcdir}/src/modest-tny-platform-factory.o \
 	${top_srcdir}/src/modest-widget-factory.o \
