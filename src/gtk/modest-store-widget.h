@@ -40,6 +40,8 @@ gboolean        modest_store_widget_get_remember_password (ModestStoreWidget *se
 const gchar*    modest_store_widget_get_username          (ModestStoreWidget *self);
 const gchar*    modest_store_widget_get_servername        (ModestStoreWidget *self);
 ModestProtocol  modest_store_widget_get_proto             (ModestStoreWidget *self);
+gchar *         modest_store_widget_get_path              (ModestStoreWidget *self);
+
 
 G_END_DECLS
 

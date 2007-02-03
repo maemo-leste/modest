@@ -317,9 +317,11 @@ modest_store_widget_get_remember_password (ModestStoreWidget *self)
 	g_return_val_if_fail (self, FALSE);
 	priv = MODEST_STORE_WIDGET_GET_PRIVATE(self);
 
-	return gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON(priv->remember_pwd));
+	if (GTK_IS_TOGGLE_BUTTON(priv->remember_pwd)) 
+		return gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON(priv->remember_pwd));
+	else
+		return FALSE;
 }
-
 
 const gchar*
 modest_store_widget_get_username (ModestStoreWidget *self)
@@ -328,8 +330,11 @@ modest_store_widget_get_username (ModestStoreWidget *self)
 
 	g_return_val_if_fail (self, NULL);
 	priv = MODEST_STORE_WIDGET_GET_PRIVATE(self);
-	
-	return gtk_entry_get_text (GTK_ENTRY(priv->username));
+
+	if (GTK_IS_ENTRY(priv->username)) 
+		return gtk_entry_get_text (GTK_ENTRY(priv->username));
+	else
+		return NULL;
 }
 
 const gchar*
@@ -340,7 +345,10 @@ modest_store_widget_get_servername (ModestStoreWidget *self)
 	g_return_val_if_fail (self, NULL);
 	priv = MODEST_STORE_WIDGET_GET_PRIVATE(self);
 	
-	return gtk_entry_get_text (GTK_ENTRY(priv->servername));
+	if (GTK_IS_ENTRY(priv->servername)) 
+		return gtk_entry_get_text (GTK_ENTRY(priv->servername));
+	else
+		return NULL;
 }
 
 
@@ -353,4 +361,19 @@ modest_store_widget_get_proto (ModestStoreWidget *self)
 	priv = MODEST_STORE_WIDGET_GET_PRIVATE(self);
 
 	return priv->proto;
+}
+
+
+gchar *
+modest_store_widget_get_path (ModestStoreWidget *self)
+{
+	ModestStoreWidgetPrivate *priv;
+	
+	g_return_val_if_fail (self, MODEST_PROTOCOL_UNKNOWN);
+	priv = MODEST_STORE_WIDGET_GET_PRIVATE(self);
+
+	if (GTK_IS_FILE_CHOOSER(priv->chooser))
+		return gtk_file_chooser_get_filename (GTK_FILE_CHOOSER(priv->chooser));
+	else
+		return NULL;
 }

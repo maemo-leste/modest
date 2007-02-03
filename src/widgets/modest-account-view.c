@@ -32,6 +32,7 @@
 
 #include <modest-account-mgr.h>
 #include <modest-account-mgr-helpers.h>
+#include <modest-text-utils.h>
 
 #include <gtk/gtkcellrenderertoggle.h>
 #include <gtk/gtkcellrenderertext.h>
@@ -44,13 +45,16 @@ static void modest_account_view_init          (ModestAccountView *obj);
 static void modest_account_view_finalize      (GObject *obj);
 
 
-enum _AccountViewColumns {
-	ENABLED_COLUMN,
-	NAME_COLUMN,
-	PROTO_COLUMN,
-	N_COLUMNS
-};
-typedef enum _AccountViewColumns AccountViewColumns;
+typedef enum {
+	MODEST_ACCOUNT_VIEW_NAME_COLUMN,
+	MODEST_ACCOUNT_VIEW_DISPLAY_NAME_COLUMN,
+	MODEST_ACCOUNT_VIEW_IS_ENABLED_COLUMN,
+	MODEST_ACCOUNT_VIEW_IS_DEFAULT_COLUMN,
+	MODEST_ACCOUNT_VIEW_PROTO_COLUMN,
+	MODEST_ACCOUNT_VIEW_LAST_UPDATED_COLUMN,
+
+	MODEST_ACCOUNT_VIEW_COLUMN_NUM
+} AccountViewColumns;
 
 
 /* list my signals */
@@ -128,11 +132,6 @@ modest_account_view_finalize (GObject *obj)
 
 	priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE(obj);
 
-	g_signal_handler_disconnect (G_OBJECT(priv->account_mgr),
-				     priv->sig1);
-	g_signal_handler_disconnect (G_OBJECT(priv->account_mgr),
-				     priv->sig2);
-
 	if (priv->account_mgr) {
 		g_object_unref (G_OBJECT(priv->account_mgr));
 		priv->account_mgr = NULL; 
@@ -156,42 +155,46 @@ update_account_view (ModestAccountMgr *account_mgr, ModestAccountView *view)
 		modest_account_mgr_account_names (account_mgr, NULL);
 
 	while (cursor) {
-		gchar    *proto = NULL;
-		gchar    *store, *account_name, *display_name;
-		gboolean enabled;
-
+		gchar *account_name;
+		ModestAccountData *account_data;
+		
 		account_name = (gchar*)cursor->data;
 		
-		display_name = modest_account_mgr_get_string (account_mgr,
-							      account_name,
-							      MODEST_ACCOUNT_DISPLAY_NAME,
-							      FALSE, NULL);
+		account_data = modest_account_mgr_get_account_data (account_mgr, account_name);
+		if (!account_data) {
+			g_printerr ("modest: failed to get account data for %s\n", account_name);
+			continue;
+		}
+
 		/* don't display accounts without stores */
-		if (display_name) {
-			store = modest_account_mgr_get_string (account_mgr,
-							       account_name,
-							       MODEST_ACCOUNT_STORE_ACCOUNT,
-							       FALSE, NULL);
-			if (store) {
-				proto = modest_account_mgr_get_string (account_mgr,
-								       store,
-								       MODEST_ACCOUNT_PROTO,
-								       TRUE, NULL);
-				g_free(store);
-			}
-		
-			enabled = modest_account_mgr_get_enabled (account_mgr, account_name);
+		if (account_data->store_account) {
+			
+			time_t last_updated; 
+			gchar *last_updated_string;
+			
+			/* FIXME: let's assume that 'last update' applies to the store account... */
+			last_updated = account_data->store_account->last_updated;
+			if (last_updated > 0) 
+				last_updated_string = modest_text_utils_get_display_date(last_updated);
+			else
+				last_updated_string = g_strdup (_("Never"));
+			
 			gtk_list_store_insert_with_values (
 				model, NULL, 0,
-				ENABLED_COLUMN, enabled,
-				NAME_COLUMN,  display_name,
-				PROTO_COLUMN, proto,
+				MODEST_ACCOUNT_VIEW_NAME_COLUMN,          account_name,
+				MODEST_ACCOUNT_VIEW_DISPLAY_NAME_COLUMN,  account_data->display_name,
+				MODEST_ACCOUNT_VIEW_IS_ENABLED_COLUMN,    account_data->is_enabled,
+				MODEST_ACCOUNT_VIEW_IS_DEFAULT_COLUMN,    account_data->is_default,
+
+				MODEST_ACCOUNT_VIEW_PROTO_COLUMN,
+				modest_protocol_info_get_protocol_name  (account_data->store_account->proto),
+
+				MODEST_ACCOUNT_VIEW_LAST_UPDATED_COLUMN,  last_updated_string,
 				-1);
+			g_free (last_updated_string);
 		}
-		g_free (display_name);
-		g_free (account_name);
-		g_free (proto);
-		
+
+		modest_account_mgr_free_account_data (account_mgr, account_data);
 		cursor = cursor->next;
 	}
 	g_slist_free (account_names);
@@ -235,9 +238,8 @@ on_account_enable_toggled (GtkCellRendererToggle *cell_renderer, gchar *path,
 		g_printerr ("modest: cannot find iterator\n");
 		return;
 	}
-	
-	gtk_tree_model_get (model, &iter, ENABLED_COLUMN, &enabled,
-			    NAME_COLUMN, &account_name,
+	gtk_tree_model_get (model, &iter, MODEST_ACCOUNT_VIEW_IS_ENABLED_COLUMN, &enabled,
+			    MODEST_ACCOUNT_VIEW_NAME_COLUMN, &account_name,
 			    -1);
 	
 	/* toggle enabled / disabled */
@@ -245,49 +247,77 @@ on_account_enable_toggled (GtkCellRendererToggle *cell_renderer, gchar *path,
 	g_free (account_name);
 }
 
+
+void
+bold_if_default_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
+			    GtkTreeModel *tree_model,  GtkTreeIter *iter,  gpointer user_data)
+{
+	gboolean is_default;
+	gtk_tree_model_get (tree_model, iter, MODEST_ACCOUNT_VIEW_IS_DEFAULT_COLUMN,
+			    &is_default, -1);
+	g_object_set (G_OBJECT(renderer),
+		      "weight", is_default ? 800: 400,
+		      NULL);
+}
+
+
 static void
 init_view (ModestAccountView *self)
 {
 	ModestAccountViewPrivate *priv;
-	GtkCellRenderer *renderer;
+	GtkCellRenderer *toggle_renderer, *text_renderer;
 	GtkListStore *model;
+	GtkTreeViewColumn *column;
 	
 	priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE(self);
 		
-	model = gtk_list_store_new (3,
-				    G_TYPE_BOOLEAN, /* checkbox */
+	model = gtk_list_store_new (6,
 				    G_TYPE_STRING,  /* account name */
-				    G_TYPE_STRING); /* account type (pop, imap,...) */
+				    G_TYPE_STRING,  /* account display name */
+				    G_TYPE_BOOLEAN, /* is-enabled */
+				    G_TYPE_BOOLEAN, /* is-default */
+				    G_TYPE_STRING,  /* account proto (pop, imap,...) */
+				    G_TYPE_STRING   /* last updated (time_t) */
+		); 
 
 	gtk_tree_view_set_model (GTK_TREE_VIEW(self), GTK_TREE_MODEL(model));
 
-	renderer = gtk_cell_renderer_toggle_new ();
-	g_object_set (G_OBJECT(renderer), "activatable", TRUE,"radio", FALSE, NULL);
+	toggle_renderer = gtk_cell_renderer_toggle_new ();
+	text_renderer = gtk_cell_renderer_text_new ();
 
-	g_signal_connect (G_OBJECT(renderer), "toggled",
-			  G_CALLBACK(on_account_enable_toggled),
+	/* the is_enabled column */
+	g_object_set (G_OBJECT(toggle_renderer), "activatable", TRUE,"radio", FALSE, NULL);
+	g_signal_connect (G_OBJECT(toggle_renderer), "toggled", G_CALLBACK(on_account_enable_toggled),
 			  self);
+	gtk_tree_view_append_column (GTK_TREE_VIEW(self),
+				     gtk_tree_view_column_new_with_attributes (
+					     _("Enabled"), toggle_renderer,
+					     "active", MODEST_ACCOUNT_VIEW_IS_ENABLED_COLUMN, NULL));
 	
-	gtk_tree_view_append_column (GTK_TREE_VIEW(self),
-				     gtk_tree_view_column_new_with_attributes (
-					     _("Enabled"), renderer,
-					     "active", ENABLED_COLUMN, NULL));
-	gtk_tree_view_append_column (GTK_TREE_VIEW(self),
-				     gtk_tree_view_column_new_with_attributes (
-					     _("Account"),
-					     gtk_cell_renderer_text_new (),
-					     "text", NAME_COLUMN, NULL));
-	gtk_tree_view_append_column (GTK_TREE_VIEW(self),
-				     gtk_tree_view_column_new_with_attributes (
-					     _("Type"),
-					     gtk_cell_renderer_text_new (),
-					     "text", PROTO_COLUMN, NULL));
+	/* account name */
+	column =  gtk_tree_view_column_new_with_attributes (_("Account"), text_renderer,"text",
+							    MODEST_ACCOUNT_VIEW_DISPLAY_NAME_COLUMN, NULL);
+	gtk_tree_view_append_column (GTK_TREE_VIEW(self),column);
+	gtk_tree_view_column_set_cell_data_func(column, text_renderer, bold_if_default_cell_data,
+						NULL, NULL);
 
-	priv->sig1 = g_signal_connect (G_OBJECT(priv->account_mgr),
-				       "account_removed",
+	/* account type */
+	column =  gtk_tree_view_column_new_with_attributes (_("Type"), text_renderer,"text",
+							    MODEST_ACCOUNT_VIEW_PROTO_COLUMN, NULL);
+	gtk_tree_view_append_column (GTK_TREE_VIEW(self),column);
+	gtk_tree_view_column_set_cell_data_func(column, text_renderer, bold_if_default_cell_data,
+						NULL, NULL);
+
+	/* last update for this account */
+	column =  gtk_tree_view_column_new_with_attributes (_("Last update"), text_renderer,"text",
+							    MODEST_ACCOUNT_VIEW_LAST_UPDATED_COLUMN, NULL);
+	gtk_tree_view_append_column (GTK_TREE_VIEW(self),column);
+	gtk_tree_view_column_set_cell_data_func(column, text_renderer, bold_if_default_cell_data,
+						NULL, NULL);
+
+	g_signal_connect (G_OBJECT(priv->account_mgr),"account_removed",
 				       G_CALLBACK(on_account_removed), self);
-	priv->sig2 = g_signal_connect (G_OBJECT(priv->account_mgr),
-				       "account_changed",
+	g_signal_connect (G_OBJECT(priv->account_mgr), "account_changed",
 				       G_CALLBACK(on_account_changed), self);
 }
 
@@ -322,11 +352,10 @@ modest_account_view_get_selected_account (ModestAccountView *self)
 	GtkTreeIter iter;
 
 	g_return_val_if_fail (MODEST_IS_ACCOUNT_VIEW (self), NULL);
-
+	
 	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (self));
 	if (gtk_tree_selection_get_selected (sel, &model, &iter)) {
-		gtk_tree_model_get (model, &iter,
-				    NAME_COLUMN, &account_name,
+		gtk_tree_model_get (model, &iter, MODEST_ACCOUNT_VIEW_NAME_COLUMN, &account_name,
 				    -1);
 	}
 

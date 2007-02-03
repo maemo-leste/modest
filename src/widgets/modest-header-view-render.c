@@ -157,6 +157,7 @@ _modest_header_view_date_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer
 {
 	TnyHeaderFlags flags;
 	guint date, date_col;
+	gchar *display_date;
 	gboolean received = GPOINTER_TO_INT(user_data);
 
 	if (received)
@@ -168,13 +169,15 @@ _modest_header_view_date_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer
 			    TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN, &flags,
 			    date_col, &date,
 			    -1);
-	
+
+	display_date = modest_text_utils_get_display_date (date);
 	g_object_set (G_OBJECT(renderer),
 		      "weight", (flags & TNY_HEADER_FLAG_SEEN) ? 400: 800,
 		      "style",  (flags & TNY_HEADER_FLAG_DELETED) ?
 		                 PANGO_STYLE_ITALIC : PANGO_STYLE_NORMAL,
-		      "text",    modest_text_utils_get_display_date (date),
+		      "text",    display_date,
 		      NULL);
+	g_free (display_date);
 }
 
 
@@ -218,7 +221,7 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 {
 	GObject *rendobj;
 	TnyHeaderFlags flags;
-	gchar *address, *subject, *header;
+	gchar *address, *subject, *header, *display_date;
 	time_t date;
 	gboolean is_incoming;
 
@@ -240,13 +243,14 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 				    TNY_GTK_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN, &date,   
 				    -1);
 	
-	rendobj = G_OBJECT(renderer);			
+	rendobj = G_OBJECT(renderer);
+	display_date = modest_text_utils_get_display_date (date);
 	header = g_strdup_printf ("%s %s\n%s",
 				  modest_text_utils_get_display_address (address),
-				  modest_text_utils_get_display_date (date),
-				  subject);
+				  display_date, subject);
 	g_free (address);
 	g_free (subject);
+	g_free (display_date);
 	
 	g_object_set (G_OBJECT(renderer),
 		      "text",  header,

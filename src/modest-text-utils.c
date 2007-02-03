@@ -769,48 +769,25 @@ modest_text_utils_utf8_strcmp (const gchar* s1, const gchar *s2, gboolean insens
 	return result;
 }
 
-static GHashTable*
-get_display_date_cache (void)
-{
-	return modest_cache_mgr_get_cache (modest_runtime_get_cache_mgr (),
-					   MODEST_CACHE_MGR_CACHE_TYPE_DATE_STRING);
-}
 
-
-
-const gchar*
+gchar*
 modest_text_utils_get_display_date (time_t date)
 {
-	static GHashTable *date_cache = NULL;
-
 	time_t now;
 	const guint BUF_SIZE = 64; 
 	gchar date_buf[BUF_SIZE];  
 	gchar now_buf [BUF_SIZE];  
-	gchar* cached_val;
 	
-	if (G_UNLIKELY(!date_cache))
-		date_cache = get_display_date_cache ();
-	
-	cached_val = g_hash_table_lookup (date_cache, &date);
-	if (cached_val)
-		return cached_val;
-						    
 	now = time (NULL);
-	
-	/* get today's date */
-	modest_text_utils_strftime (date_buf, BUF_SIZE, "%x", date);
-	modest_text_utils_strftime (now_buf,  BUF_SIZE, "%x",  now);
-	/* today */
 
+	modest_text_utils_strftime (date_buf, BUF_SIZE, "%x", date);
+	modest_text_utils_strftime (now_buf,  BUF_SIZE, "%x",  now); /* today */
+	
 	/* if this is today, get the time instead of the date */
 	if (strcmp (date_buf, now_buf) == 0)
 		modest_text_utils_strftime (date_buf, BUF_SIZE, _("%X"), date);
-
-	cached_val = g_strdup(date_buf);
-	g_hash_table_insert (date_cache, (gpointer)&date, (gpointer)cached_val);
 	
-	return cached_val;
+	return g_strdup(date_buf);
 }
 
 gboolean 

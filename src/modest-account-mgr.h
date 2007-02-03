@@ -125,6 +125,23 @@ gboolean modest_account_mgr_add_server_account    (ModestAccountMgr *self,
 						   const gchar *password,
 						   ModestProtocol proto);  
 
+
+/**
+ * modest_account_mgr_add_server_account_uri:
+ * @self: a ModestAccountMgr instance
+ * @name: name (id) of the account, which is a valid UTF8 string that does not contain '/'
+ * @proto:    the protocol (imap, smtp, ...) used for this account
+ * @uri: the URI
+ * 
+ * add a server account to the configuration, based on the account-URI
+ * 
+ * Returns: TRUE if succeeded, FALSE otherwise,
+ */
+gboolean modest_account_mgr_add_server_account_uri    (ModestAccountMgr *self,
+						       const gchar *name,
+						       ModestProtocol proto,
+						       const gchar* uri);
+
 /**
  * modest_account_mgr_remove_account:
  * @self: a ModestAccountMgr instance

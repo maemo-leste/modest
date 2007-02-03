@@ -419,7 +419,9 @@ tny_account_for_proto (ModestProtocol proto)
 		tny_account = TNY_ACCOUNT(tny_camel_pop_store_account_new ());
 	else if (proto == MODEST_PROTOCOL_STORE_IMAP)
 		tny_account = TNY_ACCOUNT(tny_camel_imap_store_account_new ());
-	else 
+	else if (proto == MODEST_PROTOCOL_STORE_MAILDIR || proto == MODEST_PROTOCOL_STORE_MBOX)
+		tny_account = TNY_ACCOUNT(tny_camel_store_account_new());
+	else
 		g_return_val_if_reached (NULL);
 	
 	return tny_account;
@@ -447,47 +449,39 @@ get_tny_account_from_server_account (ModestTnyAccountStore *self,
 			    account_data->account_name);
 		return NULL;
 	}
-		
 	tny_account = tny_account_for_proto (account_data->proto);
 	if (!tny_account) {
 		g_printerr ("modest: could not create tny account for '%s'\n",
 			    account_data->account_name);
 		return NULL;
 	}
-	
-	/* Set account store, session and id */
-	tny_camel_account_set_session (TNY_CAMEL_ACCOUNT(tny_account), 	/* session */
-				       priv->tny_session_camel);
+	tny_account_set_id (tny_account, account_data->account_name);
+	tny_camel_account_set_session (TNY_CAMEL_ACCOUNT(tny_account),  priv->tny_session_camel);
+	tny_account_set_forget_pass_func (tny_account, forget_password);
+	tny_account_set_pass_func (tny_account, get_password);
 
 	/* Proto */
 	tny_account_set_proto (tny_account,
 			       modest_protocol_info_get_protocol_name(account_data->proto));
-
 	g_object_set_data (G_OBJECT(tny_account), "account_store", (gpointer)self);
 
-	/* Options */
-	if (account_data->options) {
-		GSList *tmp = account_data->options;
-		while (tmp) {
-			tny_camel_account_add_option (TNY_CAMEL_ACCOUNT (tny_account),
-						      tmp->data);
-			tmp = g_slist_next (tmp);
+
+	if (account_data->uri) 
+		tny_account_set_url_string (TNY_ACCOUNT(tny_account), account_data->uri);
+	else {
+		if (account_data->options) {
+			GSList *options = account_data->options;
+			while (options) {
+				tny_camel_account_add_option (TNY_CAMEL_ACCOUNT (tny_account),
+							      options->data);
+				options = g_slist_next (options);
+			}
 		}
+		if (account_data->username) 
+			tny_account_set_user (tny_account, account_data->username);
+		if (account_data->hostname)
+			tny_account_set_hostname (tny_account, account_data->hostname);
 	}
-	/* id */
-	tny_account_set_id (tny_account, account_data->account_name);
-
-	/* Hostname & Username */
-	if (account_data->username) 
-		tny_account_set_user (tny_account, account_data->username);
-
-	if (account_data->hostname)
-		tny_account_set_hostname (tny_account, account_data->hostname);
-
-	/* Password functions */
-        tny_account_set_forget_pass_func (tny_account, forget_password);
-	tny_account_set_pass_func (tny_account, get_password);
-
 	return tny_account;
 }
 
@@ -640,7 +634,7 @@ modest_tny_account_store_get_accounts  (TnyAccountStore *account_store, TnyList 
 		ModestAccountData *account_data =
 			modest_account_mgr_get_account_data (priv->account_mgr, 
 		 					     (gchar*)cursor->data);
-		if (account_data && account_data->enabled) {
+		if (account_data && account_data->is_enabled) {
 			tny_account = get_tny_account_from_account (self, account_data, type);
 			if (tny_account)
 				tny_list_prepend (list, G_OBJECT(tny_account));

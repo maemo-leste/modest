@@ -62,9 +62,20 @@ on_key_change (ModestConf *conf, const gchar *key, ModestConfEvent event, gpoint
 
 	self = MODEST_ACCOUNT_MGR (user_data);
 	priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
+
+	/* there is only one not-really-account key which will still emit
+	 * a signal: a change in MODEST_CONF_DEFAULT_ACCOUNT */
+	if (key && strcmp (key, MODEST_CONF_DEFAULT_ACCOUNT) == 0) {
+		gchar *default_account =
+			modest_account_mgr_get_default_account (self);
+		g_signal_emit (G_OBJECT(self), signals[ACCOUNT_CHANGED_SIGNAL], 0,
+			       default_account, key, FALSE);
+		g_free (default_account);
+		return;
+	}
 	
 	account = _modest_account_mgr_account_from_key (key, &is_account_key, &is_server_account);
-
+	
 	/* if this is not an account-related key change, ignore */
 	if (!account)
 		return;
@@ -83,10 +94,12 @@ on_key_change (ModestConf *conf, const gchar *key, ModestConfEvent event, gpoint
 	else 
 		enabled = modest_account_mgr_get_enabled (self, account);
 
-	/* account was changed.
+	/* server account was changed, default account was changed
 	 * and always notify when enabled/disabled changes
 	 */
-	if (enabled || g_str_has_suffix (key, MODEST_ACCOUNT_ENABLED)) 
+	if (enabled ||
+	    g_str_has_suffix (key, MODEST_ACCOUNT_ENABLED) ||
+	    strcmp (key, MODEST_CONF_DEFAULT_ACCOUNT) == 0)
 		g_signal_emit (G_OBJECT(self), signals[ACCOUNT_CHANGED_SIGNAL], 0,
 			       account, key, is_server_account);
 
@@ -175,6 +188,7 @@ modest_account_mgr_finalize (GObject * obj)
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
+
 ModestAccountMgr *
 modest_account_mgr_new (ModestConf * conf)
 {
@@ -214,7 +228,8 @@ modest_account_mgr_add_account (ModestAccountMgr *self,
 	ModestAccountMgrPrivate *priv;
 	gchar *key;
 	gboolean ok;
-
+	gchar *default_account;
+	
 	g_return_val_if_fail (self, FALSE);
 	g_return_val_if_fail (name, FALSE);
 	g_return_val_if_fail (strchr(name, '/') == NULL, FALSE);
@@ -261,6 +276,12 @@ modest_account_mgr_add_account (ModestAccountMgr *self,
 		}
 	}
 	modest_account_mgr_set_enabled (self, name, TRUE);
+
+	/* if no default account has been defined yet, do so now */
+	default_account = modest_account_mgr_get_default_account (self);
+	if (!default_account)
+		modest_account_mgr_set_default_account (self, name);
+	g_free (default_account);
 	
 	return TRUE;
 }
@@ -316,6 +337,37 @@ modest_account_mgr_add_server_account (ModestAccountMgr * self,
 				NULL);
 	g_free (key);
 	
+	return TRUE;
+}
+
+
+gboolean
+modest_account_mgr_add_server_account_uri (ModestAccountMgr * self,
+					   const gchar *name, ModestProtocol proto,
+					   const gchar *uri)
+{
+	ModestAccountMgrPrivate *priv;
+	gchar *key;
+	
+	g_return_val_if_fail (self, FALSE);
+	g_return_val_if_fail (name, FALSE);
+	g_return_val_if_fail (strchr(name, '/') == NULL, FALSE);
+	g_return_val_if_fail (uri, FALSE);
+	
+	priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
+
+
+	/* proto */
+	key = _modest_account_mgr_get_account_keyname (name, MODEST_ACCOUNT_PROTO, TRUE);
+	modest_conf_set_string (priv->modest_conf, key,
+				modest_protocol_info_get_protocol_name(proto), NULL);
+	g_free (key);
+	
+	/* uri */
+	key = _modest_account_mgr_get_account_keyname (name, MODEST_ACCOUNT_URI, TRUE);
+	modest_conf_set_string (priv->modest_conf, key,	uri, NULL);
+	g_free (key);
+
 	return TRUE;
 }
 

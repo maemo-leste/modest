@@ -41,21 +41,24 @@
 G_BEGIN_DECLS
 
 typedef struct {
-	TnyAccount    *tny_account;
-	gchar         *account_name;
-	gchar         *hostname;
-	gchar         *username;
-	ModestProtocol proto;
-	gchar         *password;
-	GSList        *options;
+	TnyAccount       *tny_account;
+	gchar            *account_name;
+	gchar            *hostname;
+	gchar            *username;
+	gchar	         *uri;
+	ModestProtocol    proto;
+	gchar            *password;
+	time_t		  last_updated;
+	GSList           *options;
 } ModestServerAccountData;
 
 typedef struct {
-	gchar                  *account_name;
-	gchar                  *display_name;
-	gchar                  *fullname;
-	gchar                  *email;
-	gboolean                enabled;
+	gchar            *account_name;
+	gchar            *display_name;
+	gchar            *fullname;
+	gchar            *email;
+	gboolean         is_enabled;
+	gboolean         is_default;
 	ModestServerAccountData *transport_account;
 	ModestServerAccountData *store_account;
 } ModestAccountData;

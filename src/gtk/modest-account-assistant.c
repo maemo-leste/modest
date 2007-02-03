@@ -559,13 +559,61 @@ on_close (ModestAccountAssistant *self, gpointer user_data)
 	gtk_widget_hide (GTK_WIDGET (self));
 }
 
+
+/*
+ * FIXME: hmmmm this a Camel internal thing, should move this
+ * somewhere else
+ */
+static gchar*
+get_account_uri (ModestProtocol proto, const gchar* path)
+{
+	CamelURL *url;
+	gchar *uri;
+	
+	switch (proto) {
+	case MODEST_PROTOCOL_STORE_MBOX:
+		url = camel_url_new ("mbox:", NULL); break;
+	case MODEST_PROTOCOL_STORE_MAILDIR:
+		url = camel_url_new ("maildir:", NULL); break;
+	default:
+		g_return_val_if_reached (NULL);
+	}
+	camel_url_set_path (url, path);
+	uri = camel_url_to_string (url, 0);
+	camel_url_free (url);
+
+	return uri;	
+}
+
+static gchar*
+get_new_server_account_name (ModestAccountMgr* acc_mgr, ModestProtocol proto,
+			     const gchar* username, const gchar *servername)
+{
+	gchar *name;
+	gint  i = 0;
+	
+	while (TRUE) {
+		name = g_strdup_printf ("%s:%s@%s:%d",
+					modest_protocol_info_get_protocol_name(proto),
+					username   ? username   : "<none>",
+					servername ? servername : "<none>",
+					i++);
+		if (modest_account_mgr_account_exists (acc_mgr, name, TRUE, NULL))
+			g_free (name);
+		else
+			break;
+	}
+	return name;
+}
+
+
 static void
 on_apply (ModestAccountAssistant *self, gpointer user_data)
 {
 	ModestAccountAssistantPrivate *priv;
 	ModestProtocol proto;
 	gchar *store_name, *transport_name;
-	const gchar *account_name, *username, *servername;
+	const gchar *account_name, *username, *servername, *path;
 	ModestStoreWidget *store;
 	ModestTransportWidget *transport;
 
@@ -576,35 +624,33 @@ on_apply (ModestAccountAssistant *self, gpointer user_data)
 	proto    = modest_store_widget_get_proto (store);
 	username = modest_store_widget_get_username (store);
 	servername = modest_store_widget_get_servername (store);
-	store_name = g_strdup_printf ("%s:%s@%s", modest_protocol_info_get_protocol_name(proto),
-				      username, servername);
-	
-	modest_account_mgr_add_server_account (priv->account_mgr, store_name, servername,
-					       username, NULL, proto);
+	path       = modest_store_widget_get_path (store);
+	store_name = get_new_server_account_name (priv->account_mgr, proto,username, servername);
 
+	if (proto == MODEST_PROTOCOL_STORE_MAILDIR ||
+	    proto == MODEST_PROTOCOL_STORE_MBOX) {
+		gchar *uri = get_account_uri (proto, path);
+		modest_account_mgr_add_server_account_uri (priv->account_mgr, store_name, proto, uri);
+		g_free (uri);
+	} else
+		modest_account_mgr_add_server_account (priv->account_mgr, store_name, servername,
+						       username, NULL, proto);
+		
 	/* create server account -> transport */
 	transport = MODEST_TRANSPORT_WIDGET(priv->transport_widget);
 	proto = modest_transport_widget_get_proto (transport);
-	
+	username   = NULL;
+	servername = NULL;
 	if (proto == MODEST_PROTOCOL_TRANSPORT_SMTP) {
 		servername = modest_transport_widget_get_servername (transport);
 		if (modest_transport_widget_get_requires_auth (transport))
 			username = modest_transport_widget_get_username (transport);
-		else
-			username = g_get_user_name ();
-	} else {
-		username = g_get_user_name ();
-		servername = "localhost";
-
 	}
-	transport_name = g_strdup_printf ("%s:%s@%s",
-					  modest_protocol_info_get_protocol_name(proto),
-					  username, servername);
+	
+	transport_name = get_new_server_account_name (priv->account_mgr, proto,username, servername);
 	modest_account_mgr_add_server_account (priv->account_mgr,
-						transport_name,
-						servername,
-						username,
-						NULL,
+						transport_name,	servername,
+						username, NULL,
 						proto);
 
 	/* create account */

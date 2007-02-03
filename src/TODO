@@ -21,7 +21,7 @@ i012: use the platform icons (don't ship icons unlesss not provide by platform)
 i013: maemo: make tnymaemodevice track online/offline correctly
 i014: maemo: make all the platform integration stuff work (icons, .desktop, .service)
 i015: add 'edit' support to the account editor
-i016: add 'make default' to the account editor
+done: i016:: add 'make default' to the account editor
 i017: port account setup / editor to maemo
 i018: make d&d work
 

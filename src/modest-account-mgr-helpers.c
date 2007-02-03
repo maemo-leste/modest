@@ -74,11 +74,19 @@ modest_account_mgr_get_server_account_data (ModestAccountMgr *self, const gchar*
 						      TRUE, NULL);
 	data->proto  = modest_protocol_info_get_protocol (proto);
 	g_free (proto);
+
+
+	data->last_updated = modest_account_mgr_get_int    (self, name,
+							    MODEST_ACCOUNT_LAST_UPDATED,
+							    TRUE, NULL);
 	
 	data->password     = modest_account_mgr_get_string (self, name,
 							    MODEST_ACCOUNT_PASSWORD,
 							    TRUE, NULL);
-
+	
+	data->uri          = modest_account_mgr_get_string (self, name,
+							    MODEST_ACCOUNT_URI,
+							    TRUE, NULL);
 	data->options = modest_account_mgr_get_list (self, name,
 						     MODEST_ACCOUNT_OPTIONS,
 						     MODEST_CONF_VALUE_STRING,
@@ -125,6 +133,7 @@ modest_account_mgr_get_account_data     (ModestAccountMgr *self, const gchar* na
 {
 	ModestAccountData *data;
 	gchar *server_account;
+	gchar *default_account;
 	
 	g_return_val_if_fail (self, NULL);
 	g_return_val_if_fail (name, NULL);
@@ -137,13 +146,17 @@ modest_account_mgr_get_account_data     (ModestAccountMgr *self, const gchar* na
 	data->display_name = modest_account_mgr_get_string (self, name,
 							    MODEST_ACCOUNT_DISPLAY_NAME,
 							    FALSE, NULL);
- 	data->fullname      = modest_account_mgr_get_string (self, name,
+ 	data->fullname     = modest_account_mgr_get_string (self, name,
 							      MODEST_ACCOUNT_FULLNAME,
 							       FALSE, NULL);
 	data->email        = modest_account_mgr_get_string (self, name,
 							    MODEST_ACCOUNT_EMAIL,
 							    FALSE, NULL);
-	data->enabled      = modest_account_mgr_get_enabled (self, name);
+	data->is_enabled   = modest_account_mgr_get_enabled (self, name);
+
+	default_account    = modest_account_mgr_get_default_account (self);
+	data->is_default   = (default_account && strcmp (default_account, name) == 0);
+	g_free (default_account);
 
 	/* store */
 	server_account     = modest_account_mgr_get_string (self, name,

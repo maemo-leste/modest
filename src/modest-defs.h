@@ -87,9 +87,12 @@ enum {
 #define MDOEST_ACCOUNT_REMEMBER_PWD	 "remember_pwd"      /* boolean */
 #define MODEST_ACCOUNT_HOSTNAME          "hostname"          /* string */
 #define MODEST_ACCOUNT_USERNAME          "username"          /* string */
+#define MODEST_ACCOUNT_URI		 "uri"	             /* string */
+
 #define MODEST_ACCOUNT_PROTO             "proto"             /* string */
 #define MODEST_ACCOUNT_ENABLED		 "enabled"	     /* boolean */
 #define MODEST_ACCOUNT_TYPE		 "type"	             /* string */
+#define MODEST_ACCOUNT_LAST_UPDATED      "last_updated"      /* int */
 
 #define MODEST_ACCOUNT_LEAVE_ON_SERVER   "leave_on_server"   /* boolean */
 #define MODEST_ACCOUNT_PREFERRED_CNX     "preferred_cnx"     /* string */
