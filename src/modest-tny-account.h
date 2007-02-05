@@ -36,12 +36,30 @@
 
 #include <tny-account.h>
 #include <tny-folder.h>
+#include <modest-account-mgr.h>
 #include <modest-local-folder-info.h>
 
 G_BEGIN_DECLS
 
 /**
- * modest_tny_account_get_special_folder
+ * modest_tny_account_new_from_account:
+ * @account_mgr: a valid account mgr instance
+ * @account_name: the account name for which to create a corresponding tny account
+ * @type: the type of account to create (TNY_ACCOUNT_TYPE_STORE or TNY_ACCOUNT_TYPE_TRANSPORT)
+ * 
+ * get a tnyaccount corresponding to the server_accounts (store or transport) for this account.
+ * NOTE: this function does not set the camel session or the get/forget password functions
+ * 
+ * Returns: a new TnyAccount or NULL in case of error.
+ */
+TnyAccount*  modest_tny_account_new_from_account (ModestAccountMgr *account_mgr,
+						  const gchar *account_name, TnyAccountType type);
+
+
+
+
+/**
+ * modest_tny_account_get_special_folder:
  * @self: a TnyAccount
  * @special_type: the special folder to get
  * 
@@ -55,7 +73,6 @@ G_BEGIN_DECLS
  */
 TnyFolder*    modest_tny_account_get_special_folder   (TnyAccount *self,
 						       TnyFolderType special_type);
-
 
 G_END_DECLS
 
