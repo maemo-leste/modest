@@ -37,12 +37,11 @@
 
 #include "modest-edit-msg-window-ui.h"
 #include "modest-icon-names.h"
-#include "modest-icon-factory.h"
 #include "modest-widget-memory.h"
 #include "modest-window-priv.h"
 #include "modest-mail-operation.h"
 #include "modest-tny-platform-factory.h"
-#include "modest-tny-msg-actions.h"
+#include "modest-tny-msg.h"
 #include <tny-simple-list.h>
 
 static void  modest_edit_msg_window_class_init   (ModestEditMsgWindowClass *klass);
@@ -292,8 +291,7 @@ modest_edit_msg_window_new (ModestEditType type)
 	restore_settings (MODEST_EDIT_MSG_WINDOW(obj));
 	
 	gtk_window_set_title (GTK_WINDOW(obj), "Modest");
-	gtk_window_set_icon  (GTK_WINDOW(obj),
-			      modest_icon_factory_get_icon (MODEST_APP_ICON));
+	gtk_window_set_icon_from_file (GTK_WINDOW(obj), MODEST_APP_ICON, NULL);
 
 	g_signal_connect (G_OBJECT(obj), "delete-event",
 			  G_CALLBACK(on_delete_event), obj);
@@ -331,7 +329,7 @@ modest_edit_msg_window_set_msg (ModestEditMsgWindow *self, TnyMsg *msg)
 	
 	buf = gtk_text_view_get_buffer (GTK_TEXT_VIEW(priv->msg_body));
 	gtk_text_buffer_set_text (buf,
-				  (const gchar *) modest_tny_msg_actions_find_body (msg, FALSE),
+				  (const gchar *) modest_tny_msg_get_body (msg, FALSE),
 				  -1);
 
 	/* TODO: lower priority, select in the From: combo to the

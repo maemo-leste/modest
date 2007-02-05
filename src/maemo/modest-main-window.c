@@ -37,7 +37,6 @@
 #include <modest-widget-factory.h>
 #include "modest-widget-memory.h"
 #include "modest-window-priv.h"
-#include "modest-icon-factory.h"
 #include "modest-ui.h"
 #include "modest-main-window-ui.h"
 #include "modest-account-view-window.h"
@@ -45,7 +44,7 @@
 #include "modest-conf.h"
 
 #include "modest-tny-platform-factory.h"
-#include "modest-tny-msg-actions.h"
+#include "modest-tny-msg.h"
 #include "modest-mail-operation.h"
 #include "modest-icon-names.h"
 
@@ -371,8 +370,7 @@ modest_main_window_new (void)
 	restore_sizes (MODEST_MAIN_WINDOW(obj));	
 
 	gtk_window_set_title (GTK_WINDOW(obj), _("Modest"));
-	gtk_window_set_icon  (GTK_WINDOW(obj),
-			      modest_icon_factory_get_icon (MODEST_APP_ICON));
+	gtk_window_set_icon_from_file (GTK_WINDOW(obj), MODEST_APP_ICON, NULL);
 	
 	gtk_widget_show_all (main_vbox);
 
