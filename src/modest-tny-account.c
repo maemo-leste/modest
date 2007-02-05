@@ -81,3 +81,5 @@ modest_tny_account_get_special_folder (TnyAccount *account,
 
 	return special_folder;
 }
+
+

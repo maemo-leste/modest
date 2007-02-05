@@ -61,6 +61,7 @@ typedef enum {
 	MODEST_CACHE_MGR_CACHE_TYPE_DATE_STRING,       /* time_t => string */
 	MODEST_CACHE_MGR_CACHE_TYPE_DISPLAY_STRING,    /* gchar* => gchar* */
 	MODEST_CACHE_MGR_CACHE_TYPE_PIXBUF,            /* gchar* => GdkPixbuf */
+	MODEST_CACHE_MGR_CACHE_TYPE_SEND_QUEUE,        /* TnyAccount* => TnySendQueue* */
 
 	MODEST_CACHE_MGR_CACHE_TYPE_NUM
 } ModestCacheMgrCacheType;
@@ -92,9 +93,7 @@ ModestCacheMgr*    modest_cache_mgr_new          (void);
  * 
  * get the cache (GHashTable) of the requested type
  * 
- * Returns: the requested cache (GHashTable) or NULL in case caching
- * has been disabled (MODEST_DEBUG_DISABLE_CACHE); clients are supposed
- * to handle that case
+ * Returns: the requested cache (GHashTable) 
  * 
  * the returned  hashtable should NOT be destroyed or unref'd.
  */

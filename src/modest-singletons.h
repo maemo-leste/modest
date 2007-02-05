@@ -88,6 +88,7 @@ ModestSingletons*    modest_singletons_new         (void);
 
 /**
  * modest_singletons_get_conf:
+ * @self: a valid ModestSingletons instance
  * 
  * get the ModestConf singleton instance
  * don't use this function directly, use the modest-runtime
@@ -100,6 +101,7 @@ ModestConf*               modest_singletons_get_conf          (ModestSingletons 
 
 /**
  * modest_singletons_get_account_mgr:
+ * @self: a valid ModestSingletons instance
  * 
  * get the ModestAccountMgr singleton instance
  * don't use this function directly, use the modest-runtime
@@ -112,30 +114,45 @@ ModestAccountMgr*         modest_singletons_get_account_mgr   (ModestSingletons 
 
 /**
  * modest_singletons_get_account_store:
+ * @self: a valid #ModestSingletons instance
  * 
- * get the ModestTnyAccountStore singleton instance
+ * get the #ModestTnyAccountStore singleton instance
  * don't use this function directly, use the modest-runtime
  * functions instead.
  *
- * Returns: the ModestTnyAccountStore singleton
+ * Returns: the #ModestTnyAccountStore singleton
  **/
 ModestTnyAccountStore*    modest_singletons_get_account_store (ModestSingletons *self);
 
 
 /**
- * modest_singletons_get_cache_mgr:
+ * modest_singletons_get_widget_factory:
+ * @self: a valid #ModestSingletons instance
  * 
- * get the ModestCacheMgr singleton instance
+ * get the #ModestWidgetFactory singleton instance
  * don't use this function directly, use the modest-runtime
  * functions instead.
  *
- * Returns: the ModestCacheMgr singleton
+ * Returns: the #ModestWidgetFactory singleton
+ **/
+ModestWidgetFactory* modest_singletons_get_widget_factory (ModestSingletons *self);
+
+/**
+ * modest_singletons_get_cache_mgr:
+ * @self: a valid #ModestSingletons instance
+ * 
+ * get the #ModestCacheMgr singleton instance
+ * don't use this function directly, use the modest-runtime
+ * functions instead.
+ *
+ * Returns: the #ModestCacheMgr singleton
  **/
 ModestCacheMgr*           modest_singletons_get_cache_mgr     (ModestSingletons *self);
 
 
 /**
  * modest_singletons_get_mail_operation_queue:
+ * @self: a valid ModestSingletons instance
  * 
  * get the ModestMailOperationQueue singleton instance
  * don't use this function directly, use the modest-runtime
@@ -144,21 +161,6 @@ ModestCacheMgr*           modest_singletons_get_cache_mgr     (ModestSingletons 
  * Returns: the ModestMailOperationQueue singleton
  **/
 ModestMailOperationQueue* modest_singletons_get_mail_operation_queue (ModestSingletons *self);
-
-
-
-
-/**
- * modest_singletons_get_widget_factory:
- * 
- * get the ModestWidgetFactory singleton instance
- * don't use this function directly, use the modest-runtime
- * functions instead.
- *
- * Returns: the ModestWidgetFactory singleton
- **/
-ModestWidgetFactory* modest_singletons_get_widget_factory (ModestSingletons *self);
-
 
 G_END_DECLS
 

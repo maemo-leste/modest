@@ -38,6 +38,7 @@
 #include <modest-mail-operation-queue.h>
 #include <modest-tny-account-store.h>
 #include <modest-widget-factory.h>
+#include <modest-tny-send-queue.h>
 
 G_BEGIN_DECLS
 
@@ -152,21 +153,35 @@ ModestCacheMgr*           modest_runtime_get_cache_mgr     (void);
 /**
  * modest_runtime_get_mail_operation_queue:
  * 
- * get the ModestMailOperationQueue singleton instance
+ * get the #ModestMailOperationQueue singleton instance
  *
- * Returns: the ModestMailOperationQueue singleton
+ * Returns: the #ModestMailOperationQueue singleton
  **/
 ModestMailOperationQueue* modest_runtime_get_mail_operation_queue (void);
 
 
 /**
- * modest_runtime_get_widget_factory
+ * modest_runtime_get_widget_factory:
  * 
- * get the ModestWidgetFactory singleton instance
+ * get the #ModestWidgetFactory singleton instance
  *
- * Returns: the ModestCacheMgr singleton
+ * Returns: the #ModestCacheMgr singleton
  **/
 ModestWidgetFactory*      modest_runtime_get_widget_factory     (void);
+
+
+
+/**
+ * modest_runtime_get_send_queue:
+ * @account: a valid TnyTransportAccount
+ * 
+ * get the send queue for the given account
+ *
+ * Returns: the #ModestTnySendQueue singleton instance for this account
+ * (ie., one singleton per account)
+ **/
+ModestTnySendQueue* modest_runtime_get_send_queue        (TnyTransportAccount *account);
+
 
 
 G_END_DECLS

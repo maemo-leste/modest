@@ -70,9 +70,9 @@ struct _ModestConfClass {
 /**
  * modest_conf_get_type:
  * 
- * get the GType for ModestConf
+ * get the #GType for #ModestConf
  *  
- * Returns: the GType
+ * Returns: the #GType
  */
 GType        modest_conf_get_type    (void) G_GNUC_CONST;
 
@@ -80,9 +80,9 @@ GType        modest_conf_get_type    (void) G_GNUC_CONST;
 /**
  * modest_conf_new:
  * 
- * create a new modest ModestConf object. 
+ * create a new modest #ModestConf object. 
  * 
- * Returns: a new ModestConf instance, or NULL in case
+ * Returns: a new #ModestConf instance, or NULL in case
  * of any error
  */
 ModestConf*     modest_conf_new         (void);

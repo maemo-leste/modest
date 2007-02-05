@@ -40,6 +40,8 @@
 #include <camel/camel-stream-mem.h>
 #include <glib/gi18n.h>
 #include <modest-tny-account.h>
+#include <modest-tny-send-queue.h>
+#include <modest-runtime.h>
 #include "modest-text-utils.h"
 #include "modest-tny-msg.h"
 #include "modest-tny-platform-factory.h"
@@ -213,10 +215,14 @@ modest_mail_operation_send_mail (ModestMailOperation *self,
 				 TnyTransportAccount *transport_account,
 				 TnyMsg* msg)
 {
+	TnySendQueue *send_queue;
+	
 	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
 	g_return_if_fail (TNY_IS_TRANSPORT_ACCOUNT (transport_account));
 
-	tny_transport_account_send (transport_account, msg, NULL); /* FIXME */
+	send_queue = TNY_SEND_QUEUE (modest_runtime_get_send_queue (transport_account));
+	
+	tny_send_queue_add (send_queue, msg);
 }
 
 void
@@ -273,7 +279,7 @@ modest_mail_operation_send_new_mail (ModestMailOperation *self,
 	add_attachments (new_msg, (GList*) attachments_list);
 
 	/* Send mail */
-	tny_transport_account_send (transport_account, new_msg, NULL); /* FIXME */
+	modest_mail_operation_send_mail (self, transport_account, new_msg);
 
 	/* Clean */
 	g_object_unref (header);

@@ -46,6 +46,7 @@ struct _ModestCacheMgrPrivate {
 	GHashTable *date_str_cache;
 	GHashTable *display_str_cache;
 	GHashTable *pixbuf_cache;
+	GHashTable *send_queue_cache;
 };
 #define MODEST_CACHE_MGR_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                               MODEST_TYPE_CACHE_MGR, \
@@ -94,10 +95,10 @@ modest_cache_mgr_class_init (ModestCacheMgrClass *klass)
 
 
 static
-void pixbuf_unref (GObject *pixbuf)
+void my_object_unref (GObject *obj)
 {
-	if (pixbuf)
-		g_object_unref (pixbuf);
+	if (obj)
+		g_object_unref (obj);
 }
 
 static void
@@ -121,7 +122,13 @@ modest_cache_mgr_init (ModestCacheMgr *obj)
 		g_hash_table_new_full (g_str_hash,   /* gchar* */
 				       g_str_equal,  
 				       g_free,       /* gchar*/
-				       (GDestroyNotify)pixbuf_unref);
+				       (GDestroyNotify)my_object_unref);
+	priv->send_queue_cache =
+		g_hash_table_new_full (g_direct_hash,   /* ptr */
+				       g_direct_equal,  
+				       (GDestroyNotify)my_object_unref,   /* ref'd GObject */
+				       (GDestroyNotify)my_object_unref);   /* ref'd GObject */  
+
 }
 
 
@@ -139,6 +146,7 @@ modest_cache_mgr_finalize (GObject *obj)
 	priv->date_str_cache    = NULL;
 	priv->display_str_cache = NULL;
 	priv->pixbuf_cache      = NULL;
+	priv->send_queue_cache  = NULL;
 
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
@@ -153,6 +161,8 @@ get_cache (ModestCacheMgrPrivate *priv, ModestCacheMgrCacheType type)
 		return priv->display_str_cache;
 	case MODEST_CACHE_MGR_CACHE_TYPE_PIXBUF:
 		return priv->pixbuf_cache;
+	case MODEST_CACHE_MGR_CACHE_TYPE_SEND_QUEUE:
+		return priv->send_queue_cache;	
 	default:
 		g_return_val_if_reached(NULL); /* should not happen */
 	}

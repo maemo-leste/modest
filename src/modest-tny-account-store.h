@@ -69,8 +69,6 @@ struct _ModestTnyAccountStoreClass {
 				   gpointer user_data);
 };
 
-/* member functions */
-
 /**
  * modest_tny_account_store_get_type:
  *

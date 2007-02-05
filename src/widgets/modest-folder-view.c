@@ -590,9 +590,9 @@ cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 	if (type == TNY_FOLDER_TYPE_ROOT) {
 		/* the account name is also the name of the root folder
 		 * in case of local folders */
-		if (strcmp (name1, MODEST_LOCAL_FOLDERS_ACCOUNT_NAME) == 0)
+		if (name1 && strcmp (name1, MODEST_LOCAL_FOLDERS_ACCOUNT_NAME) == 0)
 			cmp = +1;
-		else if (strcmp (name2, MODEST_LOCAL_FOLDERS_ACCOUNT_NAME) == 0)
+		else if (name2 && strcmp (name2, MODEST_LOCAL_FOLDERS_ACCOUNT_NAME) == 0)
 			cmp = -1;
 		else 
 			cmp = modest_text_utils_utf8_strcmp (name1, name2, TRUE);

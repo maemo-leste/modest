@@ -402,38 +402,11 @@ forget_password (TnyAccount *account)
 				  TRUE, NULL);
 }
 
-
-
-/* instantiate the correct tny account subclass */
-static TnyAccount*
-tny_account_for_proto (ModestProtocol proto) 
-{
-	ModestProtocolType type;	
-	TnyAccount *tny_account = NULL;
-	
-	type  = modest_protocol_info_get_protocol_type (proto);
-	
-	if (type == MODEST_PROTOCOL_TYPE_TRANSPORT) 
-		tny_account = TNY_ACCOUNT(tny_camel_transport_account_new ());
-	else if (proto == MODEST_PROTOCOL_STORE_POP)
-		tny_account = TNY_ACCOUNT(tny_camel_pop_store_account_new ());
-	else if (proto == MODEST_PROTOCOL_STORE_IMAP)
-		tny_account = TNY_ACCOUNT(tny_camel_imap_store_account_new ());
-	else if (proto == MODEST_PROTOCOL_STORE_MAILDIR || proto == MODEST_PROTOCOL_STORE_MBOX)
-		tny_account = TNY_ACCOUNT(tny_camel_store_account_new());
-	else
-		g_return_val_if_reached (NULL);
-	
-	return tny_account;
-}
-
-
 /* create a tnyaccount for the server account connected to the account with name 'key'
  */
 static TnyAccount*
 get_tny_account_from_server_account (ModestTnyAccountStore *self,
-				     ModestServerAccountData *account_data,
-				     ModestProtocolType modest_type)
+				     ModestServerAccountData *account_data, TnyAccountType type)
 {
 	TnyAccount *tny_account;
 	ModestTnyAccountStorePrivate *priv;
@@ -443,20 +416,50 @@ get_tny_account_from_server_account (ModestTnyAccountStore *self,
 
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
 	
-	/* proto */
+	/* sanity checks */
 	if (account_data->proto == MODEST_PROTOCOL_UNKNOWN) {
 		g_printerr ("modest: '%s' does not provide a protocol\n",
 			    account_data->account_name);
 		return NULL;
 	}
-	tny_account = tny_account_for_proto (account_data->proto);
+	if ((account_data->proto == MODEST_PROTOCOL_TYPE_TRANSPORT && type != TNY_ACCOUNT_TYPE_TRANSPORT) ||
+	    (account_data->proto == MODEST_PROTOCOL_TYPE_STORE     && type != TNY_ACCOUNT_TYPE_STORE)) {
+		g_printerr ("modest: protocol types do not match <%d,%d>\n", account_data->proto, type);
+		return NULL;
+	}
+	
+	switch (account_data->proto) {
+	case MODEST_PROTOCOL_TRANSPORT_SENDMAIL:
+	case MODEST_PROTOCOL_TRANSPORT_SMTP:
+		tny_account = TNY_ACCOUNT(tny_camel_transport_account_new ()); break;
+	case MODEST_PROTOCOL_STORE_POP:
+		tny_account = TNY_ACCOUNT(tny_camel_pop_store_account_new ()); break;
+	case MODEST_PROTOCOL_STORE_IMAP:
+		tny_account = TNY_ACCOUNT(tny_camel_imap_store_account_new ()); break;
+	case MODEST_PROTOCOL_STORE_MAILDIR:
+	case MODEST_PROTOCOL_STORE_MBOX:
+		tny_account = TNY_ACCOUNT(tny_camel_store_account_new()); break;
+	default:
+		g_return_val_if_reached (NULL);
+	}
+
 	if (!tny_account) {
 		g_printerr ("modest: could not create tny account for '%s'\n",
 			    account_data->account_name);
 		return NULL;
 	}
 	tny_account_set_id (tny_account, account_data->account_name);
-	tny_camel_account_set_session (TNY_CAMEL_ACCOUNT(tny_account),  priv->tny_session_camel);
+
+	/*
+	 * FIXME --> bug in tinymail
+	 */
+	if (type == TNY_ACCOUNT_TYPE_TRANSPORT) {
+		g_printerr ("modest: BUG: cannot create transports accounts... stay tuned\n");
+		g_object_unref (G_OBJECT(tny_account));
+		return NULL;
+	}
+	
+	tny_camel_account_set_session (TNY_CAMEL_ACCOUNT(tny_account), priv->tny_session_camel);
 	tny_account_set_forget_pass_func (tny_account, forget_password);
 	tny_account_set_pass_func (tny_account, get_password);
 
@@ -464,7 +467,6 @@ get_tny_account_from_server_account (ModestTnyAccountStore *self,
 	tny_account_set_proto (tny_account,
 			       modest_protocol_info_get_protocol_name(account_data->proto));
 	g_object_set_data (G_OBJECT(tny_account), "account_store", (gpointer)self);
-
 
 	if (account_data->uri) 
 		tny_account_set_url_string (TNY_ACCOUNT(tny_account), account_data->uri);
@@ -554,51 +556,35 @@ modest_tny_account_store_new (ModestAccountMgr *account_mgr) {
 	return MODEST_TNY_ACCOUNT_STORE(obj);
 }
 
-static void
-modest_tny_account_store_add_store_account  (TnyAccountStore *self,
-					     TnyStoreAccount *account)
-{
-	/* we should not need this...*/
-	g_printerr ("modest: add_store_account_func not implemented\n");
-}
-
-
-static void
-modest_tny_account_store_add_transport_account  (TnyAccountStore *self,
-						 TnyTransportAccount *account)
-{	
-	/* we should not need this...*/
-	g_printerr ("modest: add_transport_account_func not implemented\n");
-}
-
-
 
 static TnyAccount*
 get_tny_account_from_account (ModestTnyAccountStore *self, ModestAccountData *account_data,
-			      TnyGetAccountsRequestType type) 
+			      TnyAccountType type) 
 {
 	TnyAccount *tny_account = NULL;
 	ModestServerAccountData *server_account = NULL;
 
-	if (type == TNY_ACCOUNT_STORE_STORE_ACCOUNTS && account_data->store_account)
+	if (type == TNY_ACCOUNT_TYPE_STORE && account_data->store_account)
 		server_account = account_data->store_account;
-	else if (type == TNY_ACCOUNT_STORE_TRANSPORT_ACCOUNTS && account_data->transport_account)
+	else if (type == TNY_ACCOUNT_TYPE_TRANSPORT && account_data->transport_account)
 		server_account = account_data->transport_account;
 	
 	if (!server_account) {
 		g_printerr ("modest: no %s account defined for '%s'\n",
-			    type == TNY_ACCOUNT_STORE_STORE_ACCOUNTS ? "store" : "transport",
+			    type == TNY_ACCOUNT_TYPE_STORE ? "store" : "transport",
 			    account_data->display_name);
 		return NULL;
 	}
 	
 	tny_account = get_tny_account_from_server_account (self, server_account, type);
 	if (!tny_account) { 
-		g_printerr ("modest: failed to create tny account for %s\n",
-			    account_data->account_name);
+		g_printerr ("modest: failed to create tny account for %s (%s)\n",
+			    account_data->account_name, server_account->account_name);
 		return NULL;
 	}
-	
+
+	/* this name is what shows up in the folder view -- so for some POP/IMAP/... server
+	 * account, we set its name to the acount of which it is part */
 	if (account_data->display_name)
 		tny_account_set_name (tny_account, account_data->display_name); 
 	
@@ -608,19 +594,23 @@ get_tny_account_from_account (ModestTnyAccountStore *self, ModestAccountData *ac
 
 static void
 modest_tny_account_store_get_accounts  (TnyAccountStore *account_store, TnyList *list,
-					TnyGetAccountsRequestType type)
+					TnyGetAccountsRequestType request_type)
 {
+	TnyAccountType               type;
 	ModestTnyAccountStore        *self;
 	ModestTnyAccountStorePrivate *priv;
 	GSList                       *accounts, *cursor;
 	
 	g_return_if_fail (account_store);
 	g_return_if_fail (TNY_IS_LIST(list));
-
+	g_return_if_fail (request_type == TNY_ACCOUNT_STORE_STORE_ACCOUNTS ||
+			  request_type == TNY_ACCOUNT_STORE_TRANSPORT_ACCOUNTS ||
+			  request_type == TNY_ACCOUNT_STORE_BOTH);
+	
 	self        = MODEST_TNY_ACCOUNT_STORE(account_store);
 	priv        = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
 	
-	if (type == TNY_ACCOUNT_STORE_BOTH) {
+	if (request_type == TNY_ACCOUNT_STORE_BOTH) {
 		modest_tny_account_store_get_accounts (account_store, list,
 						       TNY_ACCOUNT_STORE_STORE_ACCOUNTS);
 		modest_tny_account_store_get_accounts (account_store, list,
@@ -628,6 +618,15 @@ modest_tny_account_store_get_accounts  (TnyAccountStore *account_store, TnyList 
 		return;
 	}
 
+	/*
+	 * confusingly, tinymail uses both TnyAccountRequestType and TnyAccountType
+	 */
+	switch (request_type) {
+	case TNY_ACCOUNT_STORE_STORE_ACCOUNTS    : type = TNY_ACCOUNT_TYPE_STORE; break;
+	case TNY_ACCOUNT_STORE_TRANSPORT_ACCOUNTS: type = TNY_ACCOUNT_TYPE_TRANSPORT; break;
+	default: g_return_if_reached (); /* 'BOTH' is not possible here */
+	}
+	
 	accounts = modest_account_mgr_account_names (priv->account_mgr, NULL); 
 	for (cursor = accounts; cursor; cursor = cursor->next) {
 		TnyAccount *tny_account = NULL;
@@ -636,8 +635,10 @@ modest_tny_account_store_get_accounts  (TnyAccountStore *account_store, TnyList 
 		 					     (gchar*)cursor->data);
 		if (account_data && account_data->is_enabled) {
 			tny_account = get_tny_account_from_account (self, account_data, type);
-			if (tny_account)
+			if (tny_account) {
 				tny_list_prepend (list, G_OBJECT(tny_account));
+				g_object_unref (G_OBJECT(tny_account));
+			}
 		}
 		g_free (cursor->data);
 		modest_account_mgr_free_account_data (priv->account_mgr, account_data);
@@ -645,12 +646,12 @@ modest_tny_account_store_get_accounts  (TnyAccountStore *account_store, TnyList 
 	g_slist_free (accounts);
 
 	/* also, add the local folder pseudo-account */
-	if (type != TNY_ACCOUNT_STORE_TRANSPORT_ACCOUNTS) {
+	if (request_type != TNY_ACCOUNT_STORE_TRANSPORT_ACCOUNTS) {
 		if (!priv->local_folders)
 			priv->local_folders = get_local_folders_account (self);
 		if (!priv->local_folders)
 			g_printerr ("modest: no local folders account\n");
-		else
+		else 
 			tny_list_prepend (list, G_OBJECT(priv->local_folders));
 	}
 }
@@ -721,6 +722,26 @@ modest_tny_account_store_alert (TnyAccountStore *self, TnyAlertType type,
 
 	return retval;
 }
+
+
+
+static void
+modest_tny_account_store_add_store_account  (TnyAccountStore *self,
+					     TnyStoreAccount *account)
+{
+	/* we should not need this...*/
+	g_printerr ("modest: add_store_account_func not implemented\n");
+}
+
+
+static void
+modest_tny_account_store_add_transport_account  (TnyAccountStore *self,
+						 TnyTransportAccount *account)
+{	
+	/* we should not need this...*/
+	g_printerr ("modest: add_transport_account_func not implemented\n");
+}
+
 
 
 static void

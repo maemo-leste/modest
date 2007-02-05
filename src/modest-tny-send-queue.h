@@ -34,6 +34,7 @@
 #include <glib.h>
 #include <glib-object.h>
 #include <tny-send-queue.h>
+#include <tny-camel-send-queue.h>
 #include <tny-msg.h>
 #include <tny-camel-transport-account.h>
 
@@ -51,24 +52,33 @@ typedef struct _ModestTnySendQueue      ModestTnySendQueue;
 typedef struct _ModestTnySendQueueClass ModestTnySendQueueClass;
 
 struct _ModestTnySendQueue {
-	GObject  parent;
+	TnyCamelSendQueue  parent;
 };
 
 struct _ModestTnySendQueueClass {
-	GObjectClass parent_class;
-	
-        void (*add_func)               (TnySendQueue *self, TnyMsg *msg);
-        TnyFolder* (*get_sentbox_func) (TnySendQueue *self);
-        TnyFolder* (*get_outbox_func)  (TnySendQueue *self);
-        void (*cancel_func)            (TnySendQueue *self, gboolean remove);	
+	TnyCamelSendQueueClass parent_class;
 };
 
-/* member functions */
+/**
+ * modest_tny_send_queue_get_type:
+ * 
+ * get the #GType for #ModestTnySendQueue
+ *  
+ * Returns: the #GType
+ */
 GType        modest_tny_send_queue_get_type    (void) G_GNUC_CONST;
 
-/* typical parameter-less _new function */
-/* if this is a kind of GtkWidget, it should probably return at GtkWidget* */
-ModestTnySendQueue*    modest_tny_send_queue_new         (TnyTransportAccount *account);
+
+/**
+ * modest_tny_send_queue_new:
+ * @account: a valid camel transport account
+ * 
+ * create a new modest #ModestTnySendQueue object. 
+ * 
+ * Returns: a new #ModestTnySendQueue instance, or NULL in case
+ * of any error
+ */
+ModestTnySendQueue*    modest_tny_send_queue_new        (TnyCamelTransportAccount *account);
 
 G_END_DECLS
 

@@ -238,6 +238,29 @@ modest_runtime_get_widget_factory     (void)
 }
 
 
+ModestTnySendQueue*
+modest_runtime_get_send_queue  (TnyTransportAccount *account)
+{
+	ModestCacheMgr *cache_mgr;
+	GHashTable     *send_queue_cache;
+	gpointer       orig_key, send_queue;
+	
+	g_return_val_if_fail (_singletons, NULL);
+	g_return_val_if_fail (!TNY_IS_TRANSPORT_ACCOUNT(account), NULL);
+
+	cache_mgr = modest_singletons_get_cache_mgr (_singletons);
+	send_queue_cache = modest_cache_mgr_get_cache (cache_mgr,
+						       MODEST_CACHE_MGR_CACHE_TYPE_PIXBUF);
+	if (!g_hash_table_lookup_extended (send_queue_cache, account, &orig_key, &send_queue)) {
+		send_queue = (gpointer)modest_tny_send_queue_new (TNY_CAMEL_TRANSPORT_ACCOUNT(account));
+		g_hash_table_insert (send_queue_cache, account, send_queue);
+	}
+
+	return MODEST_TNY_SEND_QUEUE(send_queue);
+}
+
+
+
 
 /* http://primates.ximian.com/~federico/news-2006-04.html#memory-debugging-infrastructure*/
 ModestRuntimeDebugFlags

@@ -116,7 +116,7 @@ TnyFolder*    modest_folder_view_get_selected    (ModestFolderView *self);
  * modest_folder_view_update_model:
  * @self: a #ModestFolderView
  * 
- * returns a new reference to the #TnyFolder that is already selected
+ * refresh the current model
  * 
  * Returns: the selected folder or NULL if none is selected
  **/

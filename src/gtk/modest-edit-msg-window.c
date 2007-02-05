@@ -320,22 +320,31 @@ MsgData *
 modest_edit_msg_window_get_msg_data (ModestEditMsgWindow *edit_window)
 {
 	MsgData *data;
-	ModestAccountData *account_data;
 	GtkTextBuffer *buf;
 	GtkTextIter b, e;
+	const gchar *account_name;
+	gchar *from_string = NULL;
 	ModestEditMsgWindowPrivate *priv;
 	
 	g_return_val_if_fail (MODEST_IS_EDIT_MSG_WINDOW (edit_window), NULL);
 
 	priv = MODEST_EDIT_MSG_WINDOW_GET_PRIVATE (edit_window);
 	
-	account_data = modest_combo_box_get_active_id (MODEST_COMBO_BOX (priv->from_field));
+	account_name = (gchar*)modest_combo_box_get_active_id (MODEST_COMBO_BOX (priv->from_field));
+	if (account_name) 
+		from_string = modest_account_mgr_get_from_string (
+			modest_runtime_get_account_mgr(), account_name);
+	if (!from_string) {
+		g_printerr ("modest: cannot get from string\n");
+		return NULL;
+	}
+	
 	buf = gtk_text_view_get_buffer (GTK_TEXT_VIEW (priv->msg_body));
 	gtk_text_buffer_get_bounds (buf, &b, &e);
 
 	/* don't free these (except from) */
 	data = g_slice_new0 (MsgData);
-	data->from    =  g_strdup_printf ("%s <%s>", account_data->fullname, account_data->email) ;
+	data->from    =  from_string, /* will be freed when data is freed */
 	data->to      =  (gchar*) gtk_entry_get_text (GTK_ENTRY(priv->to_field));
 	data->cc      =  (gchar*) gtk_entry_get_text (GTK_ENTRY(priv->cc_field));
 	data->bcc     =  (gchar*) gtk_entry_get_text (GTK_ENTRY(priv->bcc_field));

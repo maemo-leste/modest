@@ -251,22 +251,27 @@ modest_account_mgr_set_default_account  (ModestAccountMgr *self, const gchar* ac
 
 TnyAccount*
 modest_account_mgr_get_tny_account (ModestAccountMgr *self, const gchar* account_name,
-					TnyAccountType type)
+				    TnyAccountType type)
 {
 	TnyAccount      *account = NULL;
 	TnyList         *accounts;
 	TnyIterator     *iter;
 	gchar           *server_account;
 	const gchar     *conf_key;
+	TnyGetAccountsRequestType request_type;  /* really confusing.... */
 	
 	g_return_val_if_fail (self, NULL);
 	g_return_val_if_fail (account_name, NULL);
 
 	switch (type) {
 	case TNY_ACCOUNT_TYPE_STORE:
-		conf_key = MODEST_ACCOUNT_STORE_ACCOUNT; break;
+		conf_key     = MODEST_ACCOUNT_STORE_ACCOUNT;
+		request_type = TNY_ACCOUNT_STORE_STORE_ACCOUNTS;
+		break;
 	case TNY_ACCOUNT_TYPE_TRANSPORT:
-		conf_key = MODEST_ACCOUNT_TRANSPORT_ACCOUNT; break;
+		conf_key = MODEST_ACCOUNT_TRANSPORT_ACCOUNT;
+		request_type =  TNY_ACCOUNT_STORE_TRANSPORT_ACCOUNTS;
+		break;
 	default:
 		g_return_val_if_reached (NULL);
 	}
@@ -280,7 +285,7 @@ modest_account_mgr_get_tny_account (ModestAccountMgr *self, const gchar* account
 	
 	accounts = tny_simple_list_new ();
 	tny_account_store_get_accounts (TNY_ACCOUNT_STORE(modest_runtime_get_account_store()),
-					accounts, type);	
+					accounts, request_type);
 	iter = tny_list_create_iterator (accounts);	
 	while (tny_iterator_is_done (iter)) {
 		account = TNY_ACCOUNT(tny_iterator_get_current(iter));

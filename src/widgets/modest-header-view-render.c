@@ -27,7 +27,6 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 #include <modest-header-view.h>
 #include <modest-header-view-priv.h>
 #include <modest-icon-names.h>
@@ -52,7 +51,7 @@ get_cached_icon (const gchar *name)
 	if (!icon_cache || !g_hash_table_lookup_extended (icon_cache, name, &orig_key,&pixbuf)) {
 		pixbuf = (gpointer)gdk_pixbuf_new_from_file (name, &err);
 		if (!pixbuf) {
-			g_printerr ("modest: error in icon factory while loading '%s': %s\n",
+			g_printerr ("modest: error while loading '%s': %s\n",
 				    name, err->message);
 			g_error_free (err);
 		}

@@ -260,3 +260,4 @@ modest_singletons_get_widget_factory (ModestSingletons *self)
 	}
 	return priv->widget_factory;
 }
+

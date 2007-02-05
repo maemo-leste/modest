@@ -37,7 +37,6 @@
 
 /* 'private'/'protected' functions */
 static void modest_tny_send_queue_class_init (ModestTnySendQueueClass *klass);
-static void modest_tny_send_queue_init       (gpointer g, gpointer iface_data);
 static void modest_tny_send_queue_finalize   (GObject *obj);
 static void modest_tny_send_queue_instance_init (GTypeInstance *instance, gpointer g_class);
 
@@ -50,16 +49,13 @@ enum {
 
 typedef struct _ModestTnySendQueuePrivate ModestTnySendQueuePrivate;
 struct _ModestTnySendQueuePrivate {
-	TnyTransportAccount *account;
-	GThread *flush_outbox_thread;
-	GMutex  *flush_lock;
-	
+	TnyCamelTransportAccount *account;	
 };
 #define MODEST_TNY_SEND_QUEUE_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                    MODEST_TYPE_TNY_SEND_QUEUE, \
                                                    ModestTnySendQueuePrivate))
 /* globals */
-static GObjectClass *parent_class = NULL;
+static TnyCamelSendQueueClass *parent_class = NULL;
 
 /* uncomment the following if you have defined any signals */
 /* static guint signals[LAST_SIGNAL] = {0}; */
@@ -68,111 +64,31 @@ static GObjectClass *parent_class = NULL;
 /*
  * this thread actually tries to send all the mails in the outbox
  */
-static void
-flush_outbox_thread (TnySendQueue *self)
-{
-	TnyFolder *outbox, *sentbox;
-	TnyMsg    *msg;
-	TnyHeader *header;
-
-	TnyList *headers;		
-	TnyIterator *iter;
-
-	ModestTnySendQueuePrivate *priv;
-
-	priv    = MODEST_TNY_SEND_QUEUE_GET_PRIVATE (self);
-
-	outbox  = tny_send_queue_get_outbox (self);
-	sentbox = tny_send_queue_get_sentbox (self);
-	
-	headers = tny_simple_list_new ();
-
-	g_mutex_lock (priv->flush_lock);
-	tny_folder_get_headers (outbox, headers, TRUE, NULL); /* FIXME: err */
-	iter = tny_list_create_iterator (headers);
-
-	while (!tny_iterator_is_done (iter)) {
-		header = TNY_HEADER(tny_iterator_get_current(iter));
-		msg = tny_folder_get_msg (outbox, header, NULL);	
-		tny_transport_account_send (priv->account,
-					    msg, NULL); /* FIXME: err */
-		tny_folder_add_msg    (sentbox, msg, NULL); /* FIXME: err */
-		tny_folder_remove_msg (outbox, header, NULL); /* FIXME: err */
-
-		g_object_unref (G_OBJECT(header));
-		g_object_unref (G_OBJECT(msg));
-
-		tny_iterator_next (iter);
-	}
-	
-	
-	g_object_unref (G_OBJECT(headers));
-	g_object_unref (G_OBJECT(iter));
-
-	priv->flush_outbox_thread = NULL;
-	g_mutex_unlock (priv->flush_lock);
-	
-	g_thread_exit (NULL);
-}
 
 
 static void
 modest_tny_send_queue_cancel (TnySendQueue *self, gboolean remove)
 {
-	MODEST_TNY_SEND_QUEUE_GET_CLASS(self)->cancel_func (self, remove);
+	TNY_CAMEL_SEND_QUEUE_GET_CLASS(parent_class)->cancel_func (self, remove);
 }
 
 static void
 modest_tny_send_queue_add (TnySendQueue *self, TnyMsg *msg)
 {
-	MODEST_TNY_SEND_QUEUE_GET_CLASS(self)->add_func (self, msg);
-}
-
-
-static TnyFolder*
-modest_tny_send_queue_get_sentbox (TnySendQueue *self)
-{
-	return MODEST_TNY_SEND_QUEUE_GET_CLASS(self)->get_sentbox_func (self);
-}
-
-
-static TnyFolder*
-modest_tny_send_queue_get_outbox (TnySendQueue *self)
-{
-	return MODEST_TNY_SEND_QUEUE_GET_CLASS(self)->get_outbox_func (self);
-}
-
-
-
-
-static void
-modest_tny_send_queue_cancel_default (TnySendQueue *self, gboolean remove)
-{
-	/* FIXME */
-}
-
-
-static void
-modest_tny_send_queue_add_default (TnySendQueue *self, TnyMsg *msg)
-{
 	ModestTnySendQueuePrivate *priv; 
-	TnyFolder *outbox;
 	
 	g_return_if_fail (self);
 	g_return_if_fail (TNY_IS_CAMEL_MSG(msg));
 	
 	priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE (self);
-	
-	outbox = tny_send_queue_get_outbox (self);
-	tny_folder_add_msg (outbox, msg, NULL);
 
-	priv->flush_outbox_thread = g_thread_create (
-		(GThreadFunc)flush_outbox_thread,
-		self, FALSE, NULL);
+	/* FIXME: do something smart here... */
+		
+	TNY_CAMEL_SEND_QUEUE_GET_CLASS(parent_class)->add_func (self, msg);
 }
 
 static TnyFolder*
-modest_tny_send_queue_get_sentbox_default (TnySendQueue *self)
+modest_tny_send_queue_get_sentbox (TnySendQueue *self)
 {
 	ModestTnySendQueuePrivate *priv; 
 
@@ -186,7 +102,7 @@ modest_tny_send_queue_get_sentbox_default (TnySendQueue *self)
 
 
 static TnyFolder*
-modest_tny_send_queue_get_outbox_default (TnySendQueue *self)
+modest_tny_send_queue_get_outbox (TnySendQueue *self)
 {
 	ModestTnySendQueuePrivate *priv; 
 
@@ -204,14 +120,7 @@ modest_tny_send_queue_get_type (void)
 {
 	static GType my_type = 0;
 
-	if (G_UNLIKELY (!camel_type_init_done)) {
-		if (!g_thread_supported ()) 
-			g_thread_init (NULL);
-		camel_type_init ();
-		camel_type_init_done = TRUE;
-	}
-	
-	if (!my_type) {
+	if (my_type == 0) {
 		static const GTypeInfo my_info = {
 			sizeof(ModestTnySendQueueClass),
 			NULL,		/* base init */
@@ -220,40 +129,16 @@ modest_tny_send_queue_get_type (void)
 			NULL,		/* class finalize */
 			NULL,		/* class data */
 			sizeof(ModestTnySendQueue),
-			1,		/* n_preallocs */
+			0,		/* n_preallocs */
 			(GInstanceInitFunc) modest_tny_send_queue_instance_init,
 			NULL
 		};
-
-		static const GInterfaceInfo tny_send_queue_info = {
-			(GInterfaceInitFunc) modest_tny_send_queue_init,
-			/* interface_init */
-			NULL,         /* interface_finalize */
-			NULL          /* interface_data */
-		};
-	
 		my_type = g_type_register_static (G_TYPE_OBJECT,
 						  "ModestTnySendQueue",
-		                                  &my_info, 0);
-		g_type_add_interface_static (my_type, TNY_TYPE_SEND_QUEUE,
-					     &tny_send_queue_info);
+						  &my_info, 0);
 	}
-	
 	return my_type;
 }
-
-
-static void
-modest_tny_send_queue_init (gpointer g, gpointer iface_data)
-{
-	TnySendQueueIface *klass = (TnySendQueueIface*)g;
-	
-	klass->add_func         = modest_tny_send_queue_add;
-	klass->get_outbox_func  = modest_tny_send_queue_get_outbox;
-        klass->get_sentbox_func = modest_tny_send_queue_get_sentbox;
-        klass->cancel_func      = modest_tny_send_queue_cancel;
-}
-
 
 
 static void
@@ -266,10 +151,10 @@ modest_tny_send_queue_class_init (ModestTnySendQueueClass *klass)
 	parent_class            = g_type_class_peek_parent (klass);
 	gobject_class->finalize = modest_tny_send_queue_finalize;
 
-	klass->add_func         = modest_tny_send_queue_add_default;
-	klass->get_outbox_func  = modest_tny_send_queue_get_outbox_default;
-        klass->get_sentbox_func = modest_tny_send_queue_get_sentbox_default;
-        klass->cancel_func      = modest_tny_send_queue_cancel_default;
+	parent_class->add_func         = modest_tny_send_queue_add;
+	parent_class->get_outbox_func  = modest_tny_send_queue_get_outbox;
+        parent_class->get_sentbox_func = modest_tny_send_queue_get_sentbox;
+        parent_class->cancel_func      = modest_tny_send_queue_cancel;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestTnySendQueuePrivate));
 }
@@ -283,8 +168,6 @@ modest_tny_send_queue_instance_init (GTypeInstance *instance, gpointer g_class)
 	self = (ModestTnySendQueue*)instance;
 	priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE (self);
 
-	priv->flush_lock          = g_mutex_new ();
-	priv->flush_outbox_thread = NULL;
 	priv->account = NULL;
 }
 
@@ -299,21 +182,16 @@ modest_tny_send_queue_finalize (GObject *obj)
 		priv->account = NULL;
 	}
 
-	if (priv->flush_lock) {
-		g_mutex_free (priv->flush_lock);
-		priv->flush_lock = NULL;
-	}
-	
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
 ModestTnySendQueue*
-modest_tny_send_queue_new (TnyTransportAccount *account)
+modest_tny_send_queue_new (TnyCamelTransportAccount *account)
 {
 	ModestTnySendQueue *self;
 	ModestTnySendQueuePrivate *priv;
 
-	g_return_val_if_fail (account, NULL);
+	g_return_val_if_fail (TNY_IS_CAMEL_TRANSPORT_ACCOUNT(account), NULL);
 	
 	self = MODEST_TNY_SEND_QUEUE(g_object_new(MODEST_TYPE_TNY_SEND_QUEUE, NULL));
 	priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE (self);

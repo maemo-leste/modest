@@ -48,15 +48,6 @@ static void on_selection_changed (GtkTreeSelection *sel, gpointer user_data);
 static gint cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 		      gpointer user_data);
 
-#define MODEST_HEADER_VIEW_PTR "modest-header-view"
-
-enum {
-	HEADER_SELECTED_SIGNAL,
-	ITEM_NOT_FOUND_SIGNAL,
-	STATUS_UPDATE_SIGNAL,
-	LAST_SIGNAL
-};
-
 
 typedef struct _ModestHeaderViewPrivate ModestHeaderViewPrivate;
 struct _ModestHeaderViewPrivate {
@@ -69,6 +60,17 @@ struct _ModestHeaderViewPrivate {
 #define MODEST_HEADER_VIEW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
 						MODEST_TYPE_HEADER_VIEW, \
                                                 ModestHeaderViewPrivate))
+
+
+
+#define MODEST_HEADER_VIEW_PTR "modest-header-view"
+
+enum {
+	HEADER_SELECTED_SIGNAL,
+	ITEM_NOT_FOUND_SIGNAL,
+	STATUS_UPDATE_SIGNAL,
+	LAST_SIGNAL
+};
 
 /* globals */
 static GObjectClass *parent_class = NULL;
