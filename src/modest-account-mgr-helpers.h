@@ -41,7 +41,6 @@
 G_BEGIN_DECLS
 
 typedef struct {
-	TnyAccount       *tny_account;
 	gchar            *account_name;
 	gchar            *hostname;
 	gchar            *username;
@@ -113,8 +112,6 @@ gboolean modest_account_mgr_set_default_account  (ModestAccountMgr *self,
 void       modest_account_mgr_free_account_data     (ModestAccountMgr *self,
 						     ModestAccountData *data);
 
-
-
 /**
  * modest_account_mgr_set_enabled
  * @self: a ModestAccountMgr instance
@@ -139,22 +136,6 @@ gboolean modest_account_mgr_set_enabled (ModestAccountMgr *self, const gchar* na
  */
 gboolean modest_account_mgr_get_enabled (ModestAccountMgr *self, const gchar* name);
 
-
-
-/**
- * modest_account_mgr_get_tny_account:
- * @self: a #ModestAccountMgr instance
- * @name: the account name
- * @type: the #TnyAccountType to check; either TNY_ACCOUNT_TYPE_TRANSPORT or TNY_ACCOUNT_TYPE_STORE
- *
- * get the TnyAccount corresponding to the store/transport (server) accounts for some account.
- * ie., every account has two server accounts, and for every server account there is a corresponding
- * TnyAccount 
- *
- * Returns: the requested TnyAccount, or NULL in case of error
- */
-TnyAccount*  modest_account_mgr_get_tny_account (ModestAccountMgr *self, const gchar* name,
-						 TnyAccountType type);
 
 /**
  * modest_account_mgr_get_from_string

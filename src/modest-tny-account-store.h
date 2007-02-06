@@ -86,6 +86,36 @@ GType  modest_tny_account_store_get_type   (void) G_GNUC_CONST;
  */
 ModestTnyAccountStore*    modest_tny_account_store_new (ModestAccountMgr *account_mgr);
 
+
+/**
+ * modest_tny_account_store_get_account_by_id 
+ * @self: a ModestTnyAccountStore instance
+ * @id: some ID
+ * 
+ * get the account with the given ID or NULL if it's not found
+ * 
+ * Returns: the tnyaccount or NULL,
+ * g_object_unref when it's no longer needed
+ */
+TnyAccount* modest_tny_account_store_get_tny_account_by_id  (ModestTnyAccountStore *self,
+							     const gchar *id);
+
+
+/**
+ * modest_tny_account_store_get_tny_account_by_account
+ * @self: a ModestTnyAccountStore instance
+ * @account_name: an account name
+ * @type: the tny account type
+ * 
+ * get the tny account corresponding to one of the  server_accounts for account with @account_name
+ * 
+ * Returns: the tnyaccount or NULL in case it's not found or error,
+ * g_object_unref when it's no longer needed
+ */
+TnyAccount* modest_tny_account_store_get_tny_account_by_account (ModestTnyAccountStore *self,
+								 const gchar *account_name,
+								 TnyAccountType type);
+
 /**
  * tny_account_store_get_session
  * @self: a TnyAccountStore instance
@@ -97,15 +127,6 @@ ModestTnyAccountStore*    modest_tny_account_store_new (ModestAccountMgr *accoun
  */
 TnySessionCamel*    tny_account_store_get_session    (TnyAccountStore *self);
 
-/**
- * tny_account_store_get_local_folders_account 
- * @self: a ModestTnyAccountStore instance
- * 
- * return the account corresponding to the local folders
- *
- * Returns: the tnyaccount for the local folders
- */
-TnyAccount*    modest_tny_account_store_get_local_folders_account    (ModestTnyAccountStore *self);
 
 G_END_DECLS
 

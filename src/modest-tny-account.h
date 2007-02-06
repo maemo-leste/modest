@@ -38,6 +38,7 @@
 #include <tny-folder.h>
 #include <modest-account-mgr.h>
 #include <modest-local-folder-info.h>
+#include <tny-session-camel.h>
 
 G_BEGIN_DECLS
 
@@ -46,17 +47,34 @@ G_BEGIN_DECLS
  * @account_mgr: a valid account mgr instance
  * @account_name: the account name for which to create a corresponding tny account
  * @type: the type of account to create (TNY_ACCOUNT_TYPE_STORE or TNY_ACCOUNT_TYPE_TRANSPORT)
+ * @session: a tny camel session
+ * @get_pass_func: the get-password function
+ * @forget_pass_func: the forget-password function
  * 
  * get a tnyaccount corresponding to the server_accounts (store or transport) for this account.
  * NOTE: this function does not set the camel session or the get/forget password functions
  * 
  * Returns: a new TnyAccount or NULL in case of error.
  */
-TnyAccount*  modest_tny_account_new_from_account (ModestAccountMgr *account_mgr,
-						  const gchar *account_name, TnyAccountType type);
+TnyAccount*
+modest_tny_account_new_from_account (ModestAccountMgr *account_mgr, const gchar *account_name,
+				     TnyAccountType type,
+				     TnySessionCamel *session,
+				     TnyGetPassFunc get_pass_func,
+				     TnyForgetPassFunc forget_pass_func);
 
 
-
+/**
+ * modest_tny_account_new_for_local_folders:
+ * @account_mgr: a valid account mgr instance
+ * @session: a tny camel session
+ * 
+ * get the local folders (pseudo) account; you should only need one such account.
+ * 
+ * Returns: a new local folders TnyAccount or NULL in case of error.
+ */
+TnyAccount* modest_tny_account_new_for_local_folders (ModestAccountMgr *account_mgr,
+						      TnySessionCamel *session);
 
 /**
  * modest_tny_account_get_special_folder:

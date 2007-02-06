@@ -45,7 +45,7 @@
 #include <modest-tny-account-store.h>
 #include <modest-tny-platform-factory.h>
 #include <modest-mail-operation.h>
-
+#include <modest-tny-account.h>
 #include <modest-account-mgr.h>
 #include <modest-account-mgr-helpers.h>
 
@@ -199,20 +199,20 @@ send_mail (const gchar* account_name,
 	int retval;
 	TnyTransportAccount *account;
 	ModestMailOperation *mail_operation = NULL;
-	ModestAccountMgr    *account_mgr;
 	gchar               *from_string;
 	
 	g_return_val_if_fail (account_name, MODEST_ERR_SEND);
 
-	account_mgr = modest_runtime_get_account_mgr ();	
-	account = TNY_TRANSPORT_ACCOUNT(modest_account_mgr_get_tny_account (account_mgr, account_name,
-									    TNY_ACCOUNT_TYPE_TRANSPORT));	
+	account = TNY_TRANSPORT_ACCOUNT (modest_tny_account_store_get_tny_account_by_account
+					 (modest_runtime_get_account_store(), account_name,
+					  TNY_ACCOUNT_TYPE_TRANSPORT));
 	if (!account) {
 		g_printerr ("modest: no transport defined account for %s\n",
 			    account_name);
 		return MODEST_ERR_SEND;
 	}
-	from_string = modest_account_mgr_get_from_string (account_mgr, account_name);
+	from_string = modest_account_mgr_get_from_string (modest_runtime_get_account_mgr(),
+							  account_name);
 
 	mail_operation = modest_mail_operation_new ();
 	modest_mail_operation_send_new_mail (mail_operation, account,
@@ -225,6 +225,7 @@ send_mail (const gchar* account_name,
 	} else
 		retval = MODEST_ERR_NONE; /* hurray! */
 
+	g_object_unref (G_OBJECT(account));
 	g_object_unref (G_OBJECT(mail_operation));
 	g_free (from_string);
 	

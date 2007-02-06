@@ -1109,11 +1109,12 @@ _modest_ui_actions_on_send (GtkWidget *widget,
 		return;
 	}
 	transport_account =
-		TNY_TRANSPORT_ACCOUNT(modest_account_mgr_get_tny_account (account_mgr,
-									  account_name,
-									  TNY_ACCOUNT_TYPE_TRANSPORT));
+		TNY_TRANSPORT_ACCOUNT(modest_tny_account_store_get_tny_account_by_account
+				      (modest_runtime_get_account_store(),
+				       account_name,
+				       TNY_ACCOUNT_TYPE_TRANSPORT));
 	if (!transport_account) {
-		g_printerr ("modest: no transport account found\n");
+		g_printerr ("modest: no transport account found for '%s'\n", account_name);
 		g_free (account_name);
 		modest_edit_msg_window_free_msg_data (edit_window, data);
 		return;
@@ -1135,6 +1136,7 @@ _modest_ui_actions_on_send (GtkWidget *widget,
 	g_free (account_name);
 	g_object_unref (G_OBJECT (mail_operation));
 	g_object_unref (G_OBJECT (transport_account));
+
 	modest_edit_msg_window_free_msg_data (edit_window, data);
 
 	/* Save settings and close the window */

@@ -56,9 +56,11 @@ enum {
  */
 #define MODEST_DIR	                  ".modest"
 #define MODEST_CACHE_DIR                  "cache"
-#define MODEST_LOCAL_FOLDERS_MAILDIR      "local_folders"
 #define MODEST_LOCAL_FOLDERS_ACCOUNT_NAME "local_folders"
-#define MODEST_LOCAL_FOLDERS_DISPLAY_NAME N_("Local folders")
+#define MODEST_LOCAL_FOLDERS_ACCOUNT_ID   MODEST_LOCAL_FOLDERS_ACCOUNT_NAME
+#define MODEST_LOCAL_FOLDERS_MAILDIR      MODEST_LOCAL_FOLDERS_ACCOUNT_NAME
+
+#define MODEST_LOCAL_FOLDERS_DISPLAY_NAME N_(MODEST_LOCAL_FOLDERS_ACCOUNT_NAME)
 
 /* configuration key definitions for modest */
 #define MODEST_CONF_NAMESPACE		"/apps/modest"

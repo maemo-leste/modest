@@ -59,7 +59,7 @@ static void modest_tny_account_store_finalize     (GObject *obj);
 
 /* implementations for tny-account-store-iface */
 static void    modest_tny_account_store_instance_init (ModestTnyAccountStore *obj);
-static void    modest_tny_account_store_init                     (gpointer g, gpointer iface_data);
+static void    modest_tny_account_store_init          (gpointer g, gpointer iface_data);
 
 
 /* list my signals */
@@ -70,15 +70,15 @@ enum {
 
 typedef struct _ModestTnyAccountStorePrivate ModestTnyAccountStorePrivate;
 struct _ModestTnyAccountStorePrivate {
-
-	gchar              *cache_dir;
-	
+	gchar              *cache_dir;	
 	GHashTable         *password_hash;
 	TnyDevice          *device;
-	TnySessionCamel    *tny_session_camel;
-
 	ModestAccountMgr   *account_mgr;
-	TnyAccount         *local_folders;
+	TnySessionCamel    *session;
+	
+	/* we cache them here */
+	GSList             *store_accounts;
+	GSList             *transport_accounts;
 };
 
 #define MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -149,8 +149,7 @@ modest_tny_account_store_class_init (ModestTnyAccountStoreClass *klass)
 			      G_STRUCT_OFFSET(ModestTnyAccountStoreClass, account_update),
 			      NULL, NULL,
 			      g_cclosure_marshal_VOID__STRING,
-			      G_TYPE_NONE, 1, G_TYPE_STRING);
-	
+			      G_TYPE_NONE, 1, G_TYPE_STRING);	
 }
 
 
@@ -162,76 +161,43 @@ modest_tny_account_store_instance_init (ModestTnyAccountStore *obj)
 
 	priv->cache_dir              = NULL;
 	priv->account_mgr            = NULL;
-	priv->tny_session_camel      = NULL;
 	priv->device                 = NULL;
+	priv->session                = NULL;
 	
 	priv->password_hash          = g_hash_table_new_full (g_str_hash, g_str_equal,
 							      g_free, g_free);
-
-	priv->local_folders          = NULL;
 }
 
-
-/* we need these dummy functions, or tinymail will complain */
-static gchar*
-get_password_dummy (TnyAccount *account, const gchar *prompt, gboolean *cancel)
-{
-	return NULL;
-}
 static void
-forget_password_dummy (TnyAccount *account)
+account_list_free (GSList *accounts)
 {
-	return;
-}
-	
-/* create a pseudo-account for our local folders */
-static TnyAccount*
-get_local_folders_account (ModestTnyAccountStore *self)
-{
-	TnyStoreAccount *tny_account;
-	CamelURL *url;
-	gchar *maildir, *url_string;
-	ModestTnyAccountStorePrivate *priv;
-
-	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
-	
-	tny_account = tny_camel_store_account_new ();
-	if (!tny_account) {
-		g_printerr ("modest: cannot create account for local folders");
-		return NULL;
+	GSList *cursor = accounts;
+	while (cursor) {
+		g_object_unref (G_OBJECT(cursor->data));
+		cursor = cursor->next;
 	}
-	
-	tny_camel_account_set_session (TNY_CAMEL_ACCOUNT(tny_account),priv->tny_session_camel);
-	
-	maildir = modest_local_folder_info_get_maildir_path ();
-	url = camel_url_new ("maildir:", NULL);
-	camel_url_set_path (url, maildir);
-	url_string = camel_url_to_string (url, 0);
-	
-	tny_account_set_url_string (TNY_ACCOUNT(tny_account), url_string);
-	tny_account_set_name (TNY_ACCOUNT(tny_account), MODEST_LOCAL_FOLDERS_ACCOUNT_NAME); 
-	tny_account_set_id (TNY_ACCOUNT(tny_account), MODEST_LOCAL_FOLDERS_ACCOUNT_NAME); 
-        tny_account_set_forget_pass_func (TNY_ACCOUNT(tny_account), forget_password_dummy);
-	tny_account_set_pass_func (TNY_ACCOUNT(tny_account), get_password_dummy);
-
-	camel_url_free (url);
-	g_free (maildir);
-	g_free (url_string);
-
-	return TNY_ACCOUNT(tny_account);
+	g_slist_free (accounts);
 }
-
 
 
 static void
 on_account_removed (ModestAccountMgr *acc_mgr, const gchar *account, gboolean server_account,
 		    gpointer user_data)
 {
-	ModestTnyAccountStore *self = MODEST_TNY_ACCOUNT_STORE(user_data);
+	ModestTnyAccountStore *self        = MODEST_TNY_ACCOUNT_STORE(user_data);
+	ModestTnyAccountStorePrivate *priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
 
+	/* FIXME: make this more finegrained; changes do not really affect _all_
+	 * accounts, and some do not affect tny accounts at all (such as 'last_update')
+	 */
+	account_list_free (priv->store_accounts);
+	priv->store_accounts = NULL;
+	
+	account_list_free (priv->transport_accounts);
+	priv->transport_accounts = NULL;
+	
 	g_signal_emit (G_OBJECT(self), signals[ACCOUNT_UPDATE_SIGNAL], 0,
 		       account);
-	
 }
 
 
@@ -240,6 +206,17 @@ on_account_changed (ModestAccountMgr *acc_mgr, const gchar *account, gboolean se
 		    const gchar *key, gpointer user_data)
 {
 	ModestTnyAccountStore *self = MODEST_TNY_ACCOUNT_STORE(user_data);
+	ModestTnyAccountStorePrivate *priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
+	
+	/* FIXME: make this more finegrained; changes do not really affect _all_
+	 * accounts, and some do not affect tny accounts at all (such as 'last_update')
+	 */
+	account_list_free (priv->store_accounts);
+	priv->store_accounts = NULL;
+	
+	account_list_free (priv->transport_accounts);
+	priv->transport_accounts = NULL;
+
 	
 	g_signal_emit (G_OBJECT(self), signals[ACCOUNT_UPDATE_SIGNAL], 0,
 		       account);
@@ -317,7 +294,6 @@ get_password (TnyAccount *account, const gchar *prompt, gboolean *cancel)
 	gchar *pwd = NULL;
 	gpointer pwd_ptr;
 	gboolean already_asked;
-
 	
 	key           = tny_account_get_id (account);
 	account_store = TNY_ACCOUNT_STORE(get_account_store_for_account (account));
@@ -409,11 +385,6 @@ modest_tny_account_store_finalize (GObject *obj)
 	ModestTnyAccountStore *self        = MODEST_TNY_ACCOUNT_STORE(obj);
 	ModestTnyAccountStorePrivate *priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
 
-	if (priv->tny_session_camel) {
-		camel_object_unref (CAMEL_OBJECT(priv->tny_session_camel));
-		priv->tny_session_camel = NULL;
-	}
-
 	g_free (priv->cache_dir);
 	priv->cache_dir = NULL;
 
@@ -432,6 +403,18 @@ modest_tny_account_store_finalize (GObject *obj)
 		priv->account_mgr = NULL;
 	}
 	
+	if (priv->session) {
+		camel_object_unref (CAMEL_OBJECT(priv->session));
+		priv->session = NULL;
+	}
+	
+	/* this includes the local folder */
+	account_list_free (priv->store_accounts);
+	priv->store_accounts = NULL;
+	
+	account_list_free (priv->transport_accounts);
+	priv->transport_accounts = NULL;
+	
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
@@ -441,6 +424,7 @@ modest_tny_account_store_new (ModestAccountMgr *account_mgr) {
 
 	GObject *obj;
 	ModestTnyAccountStorePrivate *priv;
+	TnyList *list;
 	
 	g_return_val_if_fail (account_mgr, NULL);
 
@@ -449,17 +433,17 @@ modest_tny_account_store_new (ModestAccountMgr *account_mgr) {
 
 	priv->account_mgr = account_mgr;
 	g_object_ref (G_OBJECT(priv->account_mgr));
+
+	priv->session = tny_session_camel_new (TNY_ACCOUNT_STORE(obj));
 	
-	/* The session needs the platform factory */
-	priv->tny_session_camel = tny_session_camel_new (TNY_ACCOUNT_STORE(obj));
-	if (!priv->tny_session_camel) {
-		g_printerr ("modest: cannot create TnySessionCamel instance\n");
-		g_object_unref (obj);
-		return NULL;
-	}
-	
-	tny_session_camel_set_ui_locker (priv->tny_session_camel, tny_gtk_lockable_new ());
+	tny_session_camel_set_ui_locker (priv->session,	 tny_gtk_lockable_new ());
 	/* FIXME: unref this in the end? */
+
+	/* force a cache fill... ugly */
+	list = TNY_LIST(tny_simple_list_new());
+	tny_account_store_get_accounts (TNY_ACCOUNT_STORE(obj), list,
+					TNY_ACCOUNT_STORE_BOTH);
+	g_object_unref(list);
 	
 	/* Connect signals */
 	g_signal_connect (G_OBJECT(account_mgr), "account_changed",
@@ -472,71 +456,102 @@ modest_tny_account_store_new (ModestAccountMgr *account_mgr) {
 
 
 static void
-modest_tny_account_store_get_accounts  (TnyAccountStore *account_store, TnyList *list,
-					TnyGetAccountsRequestType request_type)
+get_cached_accounts (TnyAccountStore *self, TnyList *list, TnyAccountType type)
 {
-	TnyAccountType               type;
-	ModestTnyAccountStore        *self;
 	ModestTnyAccountStorePrivate *priv;
 	GSList                       *accounts, *cursor;
 	
-	g_return_if_fail (account_store);
-	g_return_if_fail (TNY_IS_LIST(list));
-	g_return_if_fail (request_type == TNY_ACCOUNT_STORE_STORE_ACCOUNTS ||
-			  request_type == TNY_ACCOUNT_STORE_TRANSPORT_ACCOUNTS ||
-			  request_type == TNY_ACCOUNT_STORE_BOTH);
-	
-	self        = MODEST_TNY_ACCOUNT_STORE(account_store);
-	priv        = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
-	
-	if (request_type == TNY_ACCOUNT_STORE_BOTH) {
-		modest_tny_account_store_get_accounts (account_store, list,
-						       TNY_ACCOUNT_STORE_STORE_ACCOUNTS);
-		modest_tny_account_store_get_accounts (account_store, list,
-						       TNY_ACCOUNT_STORE_TRANSPORT_ACCOUNTS);
-		return;
-	}
+	priv     = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
+	accounts = (type == TNY_ACCOUNT_TYPE_STORE ? priv->store_accounts : priv->transport_accounts);
 
-	/*
-	 * confusingly, tinymail uses both TnyAccountRequestType and TnyAccountType
-	 */
-	switch (request_type) {
-	case TNY_ACCOUNT_STORE_STORE_ACCOUNTS    : type = TNY_ACCOUNT_TYPE_STORE; break;
-	case TNY_ACCOUNT_STORE_TRANSPORT_ACCOUNTS: type = TNY_ACCOUNT_TYPE_TRANSPORT; break;
-	default: g_return_if_reached (); /* 'BOTH' is not possible here */
+	cursor = accounts;
+	while (cursor) {
+		tny_list_prepend (list, G_OBJECT(cursor->data));
+		cursor = cursor->next;
 	}
+}
+
+/* this function fills the TnyList, and also returns a GSList of the accounts,
+ * for caching purposes
+ */
+static GSList*
+get_accounts  (TnyAccountStore *self, TnyList *list, TnyAccountType type)
+{
+	ModestTnyAccountStorePrivate *priv;
+	GSList                       *account_names, *cursor;
+	GSList                       *accounts = NULL;
 	
-	accounts = modest_account_mgr_account_names (priv->account_mgr, NULL); 
-	for (cursor = accounts; cursor; cursor = cursor->next) {
+	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
+ 
+	account_names = modest_account_mgr_account_names (priv->account_mgr, NULL);
+	
+	for (cursor = account_names; cursor; cursor = cursor->next) {
+		
 		gchar *account_name = (gchar*)cursor->data;
-		if (modest_account_mgr_get_enabled(priv->account_mgr, account_name) == TRUE) {
-			TnyAccount *tny_account = modest_tny_account_new_from_account (priv->account_mgr, account_name,
-										       type);
-			if (tny_account) {
-				tny_camel_account_set_session (TNY_CAMEL_ACCOUNT(tny_account), priv->tny_session_camel);
-
-				tny_account_set_forget_pass_func (tny_account, forget_password);
-				tny_account_set_pass_func (tny_account, get_password);
+		
+		/* only return enabled accounts */
+		if (modest_account_mgr_get_enabled(priv->account_mgr, account_name)) {
+			TnyAccount *tny_account = 
+				modest_tny_account_new_from_account (priv->account_mgr, account_name,
+								     type, priv->session, get_password,
+								     forget_password);
+			if (tny_account) { /* something went wrong */
 				g_object_set_data (G_OBJECT(tny_account), "account_store", (gpointer)self);
-				
 				tny_list_prepend (list, G_OBJECT(tny_account));
-				g_object_unref (G_OBJECT(tny_account));
-			}
+				accounts = g_slist_append (accounts, tny_account); /* cache it */
+			} else
+				g_printerr ("modest: failed to create account for %s\n", account_name);
 		}
 		g_free (account_name);
 	}
-	g_slist_free (accounts);
-	
+	g_slist_free (account_names);
+
 	/* also, add the local folder pseudo-account */
-	if (request_type == TNY_ACCOUNT_STORE_STORE_ACCOUNTS) {
-		if (!priv->local_folders)
-			priv->local_folders = get_local_folders_account (self);
-		if (!priv->local_folders)
-			g_printerr ("modest: no local folders account\n");
-		else 
-			tny_list_prepend (list, G_OBJECT(priv->local_folders));
+	if (type == TNY_ACCOUNT_TYPE_STORE) {
+		TnyAccount *tny_account =
+			modest_tny_account_new_for_local_folders (priv->account_mgr, priv->session);
+		tny_list_prepend (list, G_OBJECT(tny_account));
+		accounts = g_slist_append (accounts, tny_account); /* cache it */
 	}
+
+	return accounts;
 }
+	
+
+static void
+modest_tny_account_store_get_accounts  (TnyAccountStore *self, TnyList *list,
+					TnyGetAccountsRequestType request_type)
+{
+	ModestTnyAccountStorePrivate *priv;
+	
+	g_return_if_fail (self);
+	g_return_if_fail (TNY_IS_LIST(list));
+	
+	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
+	
+	if (request_type == TNY_ACCOUNT_STORE_BOTH) {
+		modest_tny_account_store_get_accounts (self, list, TNY_ACCOUNT_STORE_STORE_ACCOUNTS);
+		modest_tny_account_store_get_accounts (self, list, TNY_ACCOUNT_STORE_TRANSPORT_ACCOUNTS);
+		return;
+	}
+	
+	if (request_type == TNY_ACCOUNT_STORE_STORE_ACCOUNTS)  {
+		
+		if (!priv->store_accounts)
+			priv->store_accounts = get_accounts (self, list, TNY_ACCOUNT_TYPE_STORE);
+		else
+			get_cached_accounts (self, list, TNY_ACCOUNT_TYPE_STORE);
+
+	} else if (request_type == TNY_ACCOUNT_STORE_TRANSPORT_ACCOUNTS) {
+
+		if (!priv->transport_accounts)
+			priv->transport_accounts = get_accounts (self, list, TNY_ACCOUNT_TYPE_TRANSPORT);
+		else
+			get_cached_accounts (self, list, TNY_ACCOUNT_TYPE_TRANSPORT);
+	} else
+		g_return_if_reached (); /* incorrect req type */
+}
+
 
 static const gchar*
 modest_tny_account_store_get_cache_dir (TnyAccountStore *self)
@@ -661,14 +676,81 @@ TnySessionCamel*
 tny_account_store_get_session  (TnyAccountStore *self)
 {
 	g_return_val_if_fail (self, NULL);	
-	return MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self)->tny_session_camel;
+	return MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE (self)->session;
 }
 
 
 TnyAccount*
-modest_tny_account_store_get_local_folders_account    (ModestTnyAccountStore *self)
+modest_tny_account_store_get_tny_account_by_id  (ModestTnyAccountStore *self, const gchar *id)
 {
+	TnyAccount *account = NULL;
+	ModestTnyAccountStorePrivate *priv;	
+	GSList *cursor;
+
 	g_return_val_if_fail (self, NULL);
+	g_return_val_if_fail (id, NULL);
 	
-	return MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE (self)->local_folders;
+	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
+
+	for (cursor = priv->store_accounts; cursor ; cursor = cursor->next) {
+		const gchar *acc_id = tny_account_get_id (TNY_ACCOUNT(cursor->data));
+		if (acc_id && strcmp (acc_id, id) == 0) {
+			account = TNY_ACCOUNT(cursor->data);
+			break;
+		}
+	}
+
+	/* if we already found something, no need to search the transport accounts */
+	for (cursor = priv->transport_accounts; !account && cursor ; cursor = cursor->next) {
+		const gchar *acc_id = tny_account_get_id (TNY_ACCOUNT(cursor->data));
+		if (acc_id && strcmp (acc_id, id) == 0) {
+			account = TNY_ACCOUNT(cursor->data);
+			break;
+		}
+	}
+
+	if (account)
+		g_object_ref (G_OBJECT(account));
+	
+	return account;
+}
+
+
+TnyAccount*
+modest_tny_account_store_get_tny_account_by_account (ModestTnyAccountStore *self,
+						     const gchar *account_name,
+						     TnyAccountType type)
+{
+	TnyAccount *account = NULL;
+	ModestAccountData *account_data;
+	const gchar *id = NULL;
+	ModestTnyAccountStorePrivate *priv;	
+
+	g_return_val_if_fail (self, NULL);
+	g_return_val_if_fail (account_name, NULL);
+	g_return_val_if_fail (type == TNY_ACCOUNT_TYPE_STORE || type == TNY_ACCOUNT_TYPE_TRANSPORT,
+			      NULL);
+	
+	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
+	
+	account_data = modest_account_mgr_get_account_data (priv->account_mgr, account_name);
+	if (!account_data) {
+		g_printerr ("modest: cannot get account data for account '%s'\n", account_name);
+		return NULL;
+	}
+
+	if (type == TNY_ACCOUNT_TYPE_STORE && account_data->store_account)
+		id = account_data->store_account->account_name;
+	else if (account_data->transport_account)
+		id = account_data->transport_account->account_name;
+
+	if (id) 
+		account =  modest_tny_account_store_get_tny_account_by_id  (self, id);
+	if (!account)
+		g_printerr ("modest: could not get tny %s account for %s (id=%s)\n",
+			    type == TNY_ACCOUNT_TYPE_STORE? "store" : "transport",
+			    account_name, id ? id : "<none>");
+
+	modest_account_mgr_free_account_data (priv->account_mgr, account_data);
+	return account;	
 }

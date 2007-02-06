@@ -183,7 +183,6 @@ ModestWidgetFactory*      modest_runtime_get_widget_factory     (void);
 ModestTnySendQueue* modest_runtime_get_send_queue        (TnyTransportAccount *account);
 
 
-
 G_END_DECLS
 
 #endif /*__MODEST_RUNTIME_H__*/

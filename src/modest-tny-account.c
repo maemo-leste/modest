@@ -54,9 +54,9 @@ modest_tny_account_get_special_folder (TnyAccount *account,
 	g_return_val_if_fail (account, NULL);
 	g_return_val_if_fail (0 <= special_type && special_type < TNY_FOLDER_TYPE_NUM,
 			      NULL);
-
-	local_account = modest_tny_account_store_get_local_folders_account
-		(modest_runtime_get_account_store());
+	
+	local_account = modest_tny_account_store_get_tny_account_by_id (modest_runtime_get_account_store(),
+									MODEST_LOCAL_FOLDERS_ACCOUNT_ID);
 	if (!local_account) {
 		g_printerr ("modest: cannot get local account\n");
 		return NULL;
@@ -105,14 +105,14 @@ modest_tny_account_new_from_server_account (ModestAccountMgr *account_mgr,
 		
 	g_return_val_if_fail (account_mgr, NULL);
 	g_return_val_if_fail (account_data, NULL);
-	
+
 	/* sanity checks */
 	if (account_data->proto == MODEST_PROTOCOL_UNKNOWN) {
 		g_printerr ("modest: '%s' does not provide a protocol\n",
 			    account_data->account_name);
 		return NULL;
 	}
-	
+
 	switch (account_data->proto) {
 	case MODEST_PROTOCOL_TRANSPORT_SENDMAIL:
 	case MODEST_PROTOCOL_TRANSPORT_SMTP:
@@ -134,20 +134,9 @@ modest_tny_account_new_from_server_account (ModestAccountMgr *account_mgr,
 	}
 	tny_account_set_id (tny_account, account_data->account_name);
 
-	/*
-	 * FIXME --> bug in tinymail
-	 */
-	if (account_data->proto == MODEST_PROTOCOL_TRANSPORT_SENDMAIL ||
-	    account_data->proto == MODEST_PROTOCOL_TRANSPORT_SMTP) {
-		g_printerr ("modest: BUG: cannot create transports accounts... stay tuned\n");
-		g_object_unref (G_OBJECT(tny_account));
-		return NULL;
-	}
-
 	/* Proto */
 	tny_account_set_proto (tny_account,
 			       modest_protocol_info_get_protocol_name(account_data->proto));
-	
 	if (account_data->uri) 
 		tny_account_set_url_string (TNY_ACCOUNT(tny_account), account_data->uri);
 	else {
@@ -168,14 +157,32 @@ modest_tny_account_new_from_server_account (ModestAccountMgr *account_mgr,
 }
 
 
+/* we need these dummy functions, or tinymail will complain */
+static gchar*
+get_pass_dummy (TnyAccount *account, const gchar *prompt, gboolean *cancel)
+{
+	return NULL;
+}
+static void
+forget_pass_dummy (TnyAccount *account)
+{
+	/* intentionally left blank */
+}
+
 TnyAccount*
 modest_tny_account_new_from_account (ModestAccountMgr *account_mgr, const gchar *account_name,
-				     TnyAccountType type) 
+				     TnyAccountType type,
+				     TnySessionCamel *session,
+				     TnyGetPassFunc get_pass_func,
+				     TnyForgetPassFunc forget_pass_func) 
 {
 	TnyAccount *tny_account = NULL;
 	ModestAccountData *account_data = NULL;
 	ModestServerAccountData *server_data = NULL;
-	
+
+	g_return_val_if_fail (account_mgr, NULL);
+	g_return_val_if_fail (account_name, NULL);
+
 	account_data = modest_account_mgr_get_account_data (account_mgr, account_name);
 	if (!account_data) {
 		g_printerr ("modest: cannot get account data for account %s\n", account_name);
@@ -202,6 +209,12 @@ modest_tny_account_new_from_account (ModestAccountMgr *account_mgr, const gchar 
 		return NULL;
 	}
 	
+	tny_camel_account_set_session (TNY_CAMEL_ACCOUNT(tny_account), session);
+	tny_account_set_forget_pass_func (tny_account,
+					  forget_pass_func ? forget_pass_func : forget_pass_dummy);
+	tny_account_set_pass_func (tny_account,
+				   get_pass_func ? get_pass_func: get_pass_dummy);
+
 	/* this name is what shows up in the folder view -- so for some POP/IMAP/... server
 	 * account, we set its name to the acount of which it is part */
 	if (account_data->display_name)
@@ -210,4 +223,40 @@ modest_tny_account_new_from_account (ModestAccountMgr *account_mgr, const gchar 
 	modest_account_mgr_free_account_data (account_mgr, account_data);
 	return tny_account;
 }
+
+
+TnyAccount*
+modest_tny_account_new_for_local_folders (ModestAccountMgr *account_mgr, TnySessionCamel *session)
+{
+	TnyStoreAccount *tny_account;
+	CamelURL *url;
+	gchar *maildir, *url_string;
+
+	g_return_val_if_fail (account_mgr, NULL);
+	
+	tny_account = tny_camel_store_account_new ();
+	if (!tny_account) {
+		g_printerr ("modest: cannot create account for local folders");
+		return NULL;
+	}
+	tny_camel_account_set_session (TNY_CAMEL_ACCOUNT(tny_account), session);
+	
+	maildir = modest_local_folder_info_get_maildir_path ();
+	url = camel_url_new ("maildir:", NULL);
+	camel_url_set_path (url, maildir);
+	url_string = camel_url_to_string (url, 0);
+	
+	tny_account_set_url_string (TNY_ACCOUNT(tny_account), url_string);
+	tny_account_set_name (TNY_ACCOUNT(tny_account), MODEST_LOCAL_FOLDERS_ACCOUNT_NAME); 
+	tny_account_set_id (TNY_ACCOUNT(tny_account), MODEST_LOCAL_FOLDERS_ACCOUNT_ID); 
+        tny_account_set_forget_pass_func (TNY_ACCOUNT(tny_account), forget_pass_dummy);
+	tny_account_set_pass_func (TNY_ACCOUNT(tny_account), get_pass_dummy);
+
+	camel_url_free (url);
+	g_free (maildir);
+	g_free (url_string);
+
+	return TNY_ACCOUNT(tny_account);
+}
+
 

@@ -60,7 +60,6 @@ static TnyCamelSendQueueClass *parent_class = NULL;
 /* uncomment the following if you have defined any signals */
 /* static guint signals[LAST_SIGNAL] = {0}; */
 
-
 /*
  * this thread actually tries to send all the mails in the outbox
  */
@@ -69,7 +68,9 @@ static TnyCamelSendQueueClass *parent_class = NULL;
 static void
 modest_tny_send_queue_cancel (TnySendQueue *self, gboolean remove)
 {
-	TNY_CAMEL_SEND_QUEUE_GET_CLASS(parent_class)->cancel_func (self, remove);
+	g_warning (__FUNCTION__);
+
+	TNY_CAMEL_SEND_QUEUE_CLASS(parent_class)->cancel_func (self, remove);
 }
 
 static void
@@ -77,20 +78,24 @@ modest_tny_send_queue_add (TnySendQueue *self, TnyMsg *msg)
 {
 	ModestTnySendQueuePrivate *priv; 
 	
-	g_return_if_fail (self);
+	g_return_if_fail (TNY_IS_SEND_QUEUE(self));
 	g_return_if_fail (TNY_IS_CAMEL_MSG(msg));
+
+	g_warning (__FUNCTION__);
 	
 	priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE (self);
 
 	/* FIXME: do something smart here... */
-		
-	TNY_CAMEL_SEND_QUEUE_GET_CLASS(parent_class)->add_func (self, msg);
+	
+	TNY_CAMEL_SEND_QUEUE_CLASS(parent_class)->add_func (self, msg);
 }
 
 static TnyFolder*
 modest_tny_send_queue_get_sentbox (TnySendQueue *self)
 {
 	ModestTnySendQueuePrivate *priv; 
+
+	g_warning (__FUNCTION__);
 
 	g_return_val_if_fail (self, NULL);
 
@@ -107,6 +112,8 @@ modest_tny_send_queue_get_outbox (TnySendQueue *self)
 	ModestTnySendQueuePrivate *priv; 
 
 	g_return_val_if_fail (self, NULL);
+
+	g_warning (__FUNCTION__);
 	
 	priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE (self);
 
@@ -133,7 +140,7 @@ modest_tny_send_queue_get_type (void)
 			(GInstanceInitFunc) modest_tny_send_queue_instance_init,
 			NULL
 		};
-		my_type = g_type_register_static (G_TYPE_OBJECT,
+		my_type = g_type_register_static (TNY_TYPE_CAMEL_SEND_QUEUE,
 						  "ModestTnySendQueue",
 						  &my_info, 0);
 	}
@@ -151,10 +158,10 @@ modest_tny_send_queue_class_init (ModestTnySendQueueClass *klass)
 	parent_class            = g_type_class_peek_parent (klass);
 	gobject_class->finalize = modest_tny_send_queue_finalize;
 
-	parent_class->add_func         = modest_tny_send_queue_add;
-	parent_class->get_outbox_func  = modest_tny_send_queue_get_outbox;
-        parent_class->get_sentbox_func = modest_tny_send_queue_get_sentbox;
-        parent_class->cancel_func      = modest_tny_send_queue_cancel;
+	TNY_CAMEL_SEND_QUEUE_CLASS(klass)->add_func         = modest_tny_send_queue_add;
+	TNY_CAMEL_SEND_QUEUE_CLASS(klass)->get_outbox_func  = modest_tny_send_queue_get_outbox;
+        TNY_CAMEL_SEND_QUEUE_CLASS(klass)->get_sentbox_func = modest_tny_send_queue_get_sentbox;
+        TNY_CAMEL_SEND_QUEUE_CLASS(klass)->cancel_func      = modest_tny_send_queue_cancel;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestTnySendQueuePrivate));
 }

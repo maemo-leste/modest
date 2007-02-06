@@ -221,8 +221,10 @@ modest_mail_operation_send_mail (ModestMailOperation *self,
 	g_return_if_fail (TNY_IS_TRANSPORT_ACCOUNT (transport_account));
 
 	send_queue = TNY_SEND_QUEUE (modest_runtime_get_send_queue (transport_account));
-	
-	tny_send_queue_add (send_queue, msg);
+	if (!TNY_IS_SEND_QUEUE(send_queue))
+		g_printerr ("modest: could not find send queue for account\n");
+	else
+		tny_send_queue_add (send_queue, msg);
 }
 
 void

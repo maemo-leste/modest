@@ -109,13 +109,13 @@ modest_singletons_init (ModestSingletons *obj)
 		g_printerr ("modest: cannot create modest account mgr instance\n");
 		return;
 	}
-
+	
 	priv->account_store  = modest_tny_account_store_new (priv->account_mgr);
 	if (!priv->account_store) {
 		g_printerr ("modest: cannot create modest tny account store instance\n");
 		return;
 	}
-
+	
 	priv->cache_mgr     = modest_cache_mgr_new ();
 	if (!priv->cache_mgr) {
 		g_printerr ("modest: cannot create modest cache mgr instance\n");
@@ -161,6 +161,7 @@ modest_singletons_finalize (GObject *obj)
 		priv->account_store = NULL;
 	}
 
+	
 	if (priv->account_mgr) {
 		g_object_unref (G_OBJECT(priv->account_mgr));
 		check_object_is_dead ((GObject*)priv->account_mgr,
@@ -233,7 +234,6 @@ modest_singletons_get_cache_mgr (ModestSingletons *self)
 	g_return_val_if_fail (self, NULL);
 	return MODEST_SINGLETONS_GET_PRIVATE(self)->cache_mgr;
 }
-
 
 ModestMailOperationQueue*
 modest_singletons_get_mail_operation_queue (ModestSingletons *self)
