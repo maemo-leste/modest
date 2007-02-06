@@ -499,6 +499,16 @@ _modest_ui_actions_on_new_msg (GtkWidget *widget,
 	gtk_widget_show_all (GTK_WIDGET (msg_win));
 }
 
+
+void
+_modest_ui_actions_on_open (GtkWidget *widget,
+			    ModestMainWindow *main_window)
+{
+	/* FIXME */
+	
+}
+
+
 static void
 reply_forward_func (gpointer data, gpointer user_data)
 {

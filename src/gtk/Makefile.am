@@ -1,6 +1,6 @@
 #
 # Makefile.am
-# Time-stamp: <2007-01-09 17:04:51 (djcb)>
+# Time-stamp: <2007-02-06 17:27:20 (djcb)>
 #
 #
 # use Automake 'trick' ==> convenience static libraries, which
@@ -33,6 +33,8 @@ libmodest_ui_la_SOURCES=              \
 	modest-icon-names.h           \
 	modest-main-window.c          \
 	modest-main-window-ui.h	      \
+	modest-msg-view-window.c      \
+	modest-msg-view-window.h      \
 	modest-store-widget.c         \
 	modest-store-widget.h         \
 	modest-transport-widget.c     \
@@ -47,7 +49,9 @@ pixmap_DATA = $(PIXMAP_FILES)
 
 UI_FILES=\
 	ui/modest-ui.xml \
-	ui/modest-edit-msg-window-ui.xml
+	ui/modest-edit-msg-window-ui.xml \
+	ui/modest-msg-view-window-ui.xml 
+
 
 uidir = $(datadir)/modest/ui
 ui_DATA = $(UI_FILES)

@@ -65,6 +65,7 @@ struct _ModestMsgViewClass {
 
 
 /**
+ *
  * modest_msg_view_get_type
  *
  * get the GType for the this class

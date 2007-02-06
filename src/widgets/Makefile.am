@@ -1,6 +1,6 @@
 #
 # Makefile.am
-# Time-stamp: <2007-01-16 14:57:35 (djcb)>
+# Time-stamp: <2007-02-06 17:27:49 (djcb)>
 
 INCLUDES=\
 	$(MODEST_GSTUFF_CFLAGS) \
@@ -23,6 +23,7 @@ libmodest_widgets_la_SOURCES=       \
 	modest-combo-box.h          \
 	modest-edit-msg-window.h    \
 	modest-edit-msg-window-ui.h \
+	modest-msg-view-window.h    \
 	modest-folder-view.c        \
 	modest-folder-view.h        \
 	modest-header-view.c        \
