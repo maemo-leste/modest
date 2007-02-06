@@ -32,6 +32,7 @@ libmodest_ui_la_SOURCES=              \
 	modest-edit-msg-window.c      \
 	modest-icon-names.h           \
 	modest-main-window.c          \
+	modest-main-window-ui.h	      \
 	modest-store-widget.c         \
 	modest-store-widget.h         \
 	modest-transport-widget.c     \

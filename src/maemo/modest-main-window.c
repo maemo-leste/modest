@@ -281,13 +281,14 @@ get_toolbar (ModestMainWindow *self)
 	gtk_tool_item_set_homogeneous (progress_item, FALSE);
 	gtk_tool_item_set_expand(progress_item, TRUE);
 	
-	stop_icon = gtk_image_new_from_icon_name("qgn_toolb_gene_stop", GTK_ICON_SIZE_BUTTON);
+	gtk_toolbar_insert (GTK_TOOLBAR(toolbar), progress_item,
+			    gtk_toolbar_get_n_items(GTK_TOOLBAR(toolbar)));
 
+	stop_icon = gtk_image_new_from_icon_name("qgn_toolb_gene_stop", GTK_ICON_SIZE_BUTTON);
 	gtk_toolbar_insert (GTK_TOOLBAR(toolbar), gtk_tool_button_new(stop_icon, NULL),
 			    gtk_toolbar_get_n_items(GTK_TOOLBAR(toolbar)));
 
-	gtk_toolbar_insert (GTK_TOOLBAR(toolbar), progress_item,
-			    gtk_toolbar_get_n_items(GTK_TOOLBAR(toolbar)));
+
 	gtk_widget_show_all (toolbar);
 	return toolbar;
 }

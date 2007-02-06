@@ -30,7 +30,6 @@ libmodest_widgets_la_SOURCES=       \
 	modest-header-view-priv.h   \
 	modest-header-view-render.c \
 	modest-main-window.h	    \
-	modest-main-window-ui.h	    \
 	modest-msg-view.c           \
 	modest-msg-view.h	    \
 	modest-tny-stream-gtkhtml.c \

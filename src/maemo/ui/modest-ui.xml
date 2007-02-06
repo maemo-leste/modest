@@ -31,78 +31,100 @@
 <ui>
 
   <menubar name="MenuBar">
-    <menu name="FileMenu" action="File">
-      <menuitem name="FileNewMenu" action="FileNew"/>
-      <menuitem name="FileOpenMenu" action="FileOpen"/>
+    
+    <menu name="MessageMenu" action="Message">
+      <menuitem name="MessageNewMenu"  action="MessageNew"/>
+      <menuitem name="MessageOpenMenu" action="MessageOpen"/>
       <separator/>
-      <menuitem name="FileSaveMenu" action="FileSave"/>
-      <menuitem name="FileSaveAsMenu" action="FileSaveAs"/>
+      <menuitem name="MessageCancelSendingMenu"  action="MessageCancelSending"/>
+      <menuitem name="MessageSendMenu" action="MessageSend"/>
       <separator/>
-      <menuitem name="FileQuitMenu" action="FileQuit"/>
+      <menuitem name="MessageDeleteMenu" action="MessageDelete"/>
+      <separator/>
+      <menuitem name="MessageSendReceiveMenu"  action="MessageSendReceive"/>
+      <menuitem name="MessageContentsMenu"     action="MessageContents"/>
+      <menuitem name="MessageDetailsMenu"      action="MessageDetails"/>
     </menu>
-
+    
     <menu name="EditMenu" action="Edit">
       <menuitem name="EditUndoMenu" action="EditUndo"/>
-      <menuitem name="EditRedoMenu" action="EditRedo"/>
       <separator/>
       <menuitem name="EditCutMenu" action="EditCut"/>
       <menuitem name="EditCopyMenu" action="EditCopy"/>
       <menuitem name="EditPasteMenu" action="EditPaste"/>
-      <menuitem name="EditDeleteMenu" action="EditDelete"/>
       <separator/>
-      <menuitem name="EditSelectAllMenu" action="EditSelectAll"/>
-      <menuitem name="EditDeselectAllMenu" action="EditDeselectAll"/>
-    </menu>
+      <menuitem name="EditSelectMenu" action="EditSelect"/>
+      <menuitem name="EditMoveToMenu" action="EditMoveTo"/>
+    </menu> 
 
-    <menu name="ActionsMenu" action="Actions">
-      <menuitem name="ActionsNewMenu" action="ActionsNew"/>
-      <menuitem name="ActionsReplyMenu" action="ActionsReply"/>
-      <menuitem name="ActionsForwardMenu" action="ActionsForward"/>
-      <menuitem name="ActionsBounceMenu" action="ActionsBounce"/>
+    <menu name="ViewMenu" action="View">
+      <menuitem name="ViewSortMenu" action="ViewSort"/>
       <separator/>
-      <menuitem name="ActionsFolderNewMenu" action="ActionsFolderNew"/>
-      <menuitem name="ActionsFolderDeleteMenu" action="ActionsFolderDelete"/>
-      <menuitem name="ActionsFolderRenameMenu" action="ActionsFolderRename"/>
-      <menuitem name="ActionsFolderMoveToTrashMenu" action="ActionsFolderMoveToTrash"/>
-    </menu>
+      <menuitem name="ViewFoldersMenu" action="ViewFolders"/>
+      <menuitem name="ViewFullscreenMenu" action="ViewFullscreen"/>
+      <separator/>
+      <menuitem name="ViewThumbnailsMenu" action="ViewThumbnails"/>
+      <menuitem name="ViewDetailsMenu" action="ViewDetails"/>
+      <separator/>
+      <menuitem name="ViewShowToolbarMenu" action="ViewShowToolbar"/>
+   </menu>
 
-    <menu name="OptionsMenu" action="Options">
-      <menuitem name="OptionsAccountsMenu" action="OptionsAccounts"/>
-      <menuitem name="OptionsContactsMenu" action="OptionsContacts"/>
+    <menu name="FoldersMenu" action="Folders">
+      <menuitem name="FoldersNewMenu"    action="FoldersNew"/>
+      <menuitem name="FoldersManageMenu" action="FoldersManage"/>
+      <separator/>
+      <menuitem name="FoldersDetailsMenu" action="FoldersDetails"/>
+      <separator/>
     </menu>
-
-    <menu name="HelpMenu" action="Help">
-      <menuitem name="HelpAboutMenu" action="HelpAbout"/>
+    
+    <menu name="AccountsMenu" action="Accounts">
+      <menuitem name="AccountsNewMenu"    action="AccountsNew"/>
+      <separator/>
+      <menuitem name="AccountsManageMenu" action="AccountsManage"/>
+      <menuitem name="AccountsConfigureSMTPMenu" action="AccountsConfigureSMTP"/>
+    </menu>
+    
+    <menu name="ToolsMenu" action="Tools">
+      <menuitem name="ToolsSettingsMenu" action="ToolsSettings"/>
+      <separator/>
+      <menuitem name="ToolsContactsMenu" action="ToolsContacts"/>
+      <menuitem name="ToolsFontSettingsMenu" action="ToolsFontSettings"/>
+      <separator/>
+      <menuitem name="ToolsSearchMessagesMenu" action="ToolsSearchMessages"/>
+      <separator/>
+      <menuitem name="ToolsHelpMenu" action="ToolsHelp"/>
+    </menu>
+    
+    <menu name="CloseMenu" action="Close">
+      <menuitem name="CloseWindowMenu"     action="CloseWindow"/>
+      <menuitem name="CloseAllWindowsMenu" action="CloseAllWindows"/>
     </menu>
   </menubar>
 
   <toolbar name="ToolBar">
-    <toolitem action="ActionsNew"/>
+    <toolitem action="ToolbarMessageNew"/> 
     <separator/>
-    <toolitem action="ActionsReply"/>
-    <toolitem action="ActionsReplyAll"/>
-    <toolitem action="ActionsForward"/>
+    <toolitem action="ToolbarMessageReply"/> 
+    <toolitem action="ToolbarMessageReplyAll"/>
+    <toolitem action="ToolbarMessageForward"/> 
     <separator/>
-<!--    <toolitem action="GotoPrevious"/>
-    <toolitem action="GotoNext"/> -->
+    <toolitem action="ToolbarSendReceive"/>
+    <toolitem  action="ToolbarToggleView"/>
     <separator/>
-    <toolitem action="ActionsSendReceive"/>
-    <toolitem name="ToggleView" action="ToggleView"/>
+    <toolitem action="ToolbarDeleteMessage"/>
     <separator/>
-    <toolitem action="ActionsDelete"/>
-      <separator/>
-</toolbar>
+  </toolbar>
 
   <popup name="HeaderViewContextMenu">
-    <menuitem action="ActionsReply"/>
-    <menuitem action="ActionsForward"/>
+    <menuitem action="MessageReply"/>
+    <menuitem action="MessageForward"/>
   </popup>
-
+  
   <popup name="FolderViewContextMenu">
-    <menuitem action="ActionsFolderNew"/>
-    <menuitem action="ActionsFolderDelete"/>
-    <menuitem action="ActionsFolderRename"/>
-    <menuitem action="ActionsFolderMoveToTrash"/>
+    <menuitem action="FoldersNew"/>
+    <menuitem action="FoldersDelete"/>
+    <menuitem action="FoldersRename"/>
+    <menuitem action="FoldersMoveToTrash"/>
   </popup>
 
 </ui>
