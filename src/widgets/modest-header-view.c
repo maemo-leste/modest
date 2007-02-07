@@ -43,6 +43,7 @@ static void modest_header_view_class_init  (ModestHeaderViewClass *klass);
 static void modest_header_view_init        (ModestHeaderView *obj);
 static void modest_header_view_finalize    (GObject *obj);
 
+static gboolean on_header_clicked (GtkWidget *widget, GdkEventButton *event, gpointer user_data);
 static void on_selection_changed (GtkTreeSelection *sel, gpointer user_data);
 
 static gint cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
@@ -67,6 +68,7 @@ struct _ModestHeaderViewPrivate {
 
 enum {
 	HEADER_SELECTED_SIGNAL,
+	HEADER_ACTIVATED_SIGNAL,
 	ITEM_NOT_FOUND_SIGNAL,
 	STATUS_UPDATE_SIGNAL,
 	LAST_SIGNAL
@@ -122,6 +124,16 @@ modest_header_view_class_init (ModestHeaderViewClass *klass)
 			      g_cclosure_marshal_VOID__POINTER,
 			      G_TYPE_NONE, 1, G_TYPE_POINTER);
 
+	signals[HEADER_ACTIVATED_SIGNAL] = 
+		g_signal_new ("header_activated",
+			      G_TYPE_FROM_CLASS (gobject_class),
+			      G_SIGNAL_RUN_FIRST,
+			      G_STRUCT_OFFSET (ModestHeaderViewClass,header_activated),
+			      NULL, NULL,
+			      g_cclosure_marshal_VOID__POINTER,
+			      G_TYPE_NONE, 1, G_TYPE_POINTER);
+	
+	
 	signals[ITEM_NOT_FOUND_SIGNAL] = 
 		g_signal_new ("item_not_found",
 			      G_TYPE_FROM_CLASS (gobject_class),
@@ -399,7 +411,10 @@ modest_header_view_new (TnyFolder *folder, ModestHeaderViewStyle style)
 	
 	g_signal_connect (sel, "changed",
 			  G_CALLBACK(on_selection_changed), self);
-		
+	
+	g_signal_connect (self, "button-press-event",
+			  G_CALLBACK(on_header_clicked), NULL);
+	
 	return GTK_WIDGET(self);
 }
 
@@ -623,6 +638,42 @@ modest_header_view_set_folder (ModestHeaderView *self, TnyFolder *folder)
 		       NULL);
 	return TRUE;
 }
+
+static gboolean
+on_header_clicked (GtkWidget *widget, GdkEventButton *event, gpointer user_data)
+{
+	ModestHeaderView *self;
+	ModestHeaderViewPrivate *priv;
+	GtkTreeIter iter;
+	GtkTreeSelection *sel;
+	GtkTreeModel *model;
+	TnyHeader *header;
+
+	/* ignore everything but doubleclick */
+	if (event->type != GDK_2BUTTON_PRESS)
+		return FALSE;
+
+	self = MODEST_HEADER_VIEW (widget);
+	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
+	
+	sel   = gtk_tree_view_get_selection(GTK_TREE_VIEW(self));
+	model = gtk_tree_view_get_model (GTK_TREE_VIEW(self));
+	
+	if (!gtk_tree_selection_get_selected (sel, &model, &iter)) 
+		return FALSE; /* msg was _un_selected */
+
+	/* get the first selected item */
+	gtk_tree_model_get (model, &iter,
+			    TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN,
+			    &header, -1);
+	/* Emit signal */
+	g_signal_emit (G_OBJECT(self), 
+		       signals[HEADER_ACTIVATED_SIGNAL], 
+		       0, header);
+
+	return TRUE;
+}
+
 
 static void
 on_selection_changed (GtkTreeSelection *sel, gpointer user_data)

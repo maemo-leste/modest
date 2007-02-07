@@ -104,7 +104,11 @@ struct _ModestHeaderViewClass {
 	void (*item_not_found) (ModestHeaderView* self,
 				ModestItemType type,
 				gpointer user_data);
-	
+
+	void (*header_activated) (ModestHeaderView* self,
+				  TnyHeader *header,
+				  gpointer user_data);
+
 	/* msg == NULL implies that the operation is finished, ie.
 	 * the progress indictation can be hidden */
 	void (*status_update) (ModestHeaderView* self,
