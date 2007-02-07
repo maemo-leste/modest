@@ -43,6 +43,7 @@
 #include "modest-account-mgr-helpers.h"
 #include "modest-main-window.h"
 #include "modest-mail-operation.h"
+#include "modest-msg-view-window.h"
 #include <modest-widget-memory.h>
 #include <tny-error.h>
 #include <tny-simple-list.h>
@@ -106,6 +107,12 @@ static void     _modest_ui_actions_on_connection_changed    (TnyDevice *device,
 
 static void     _modest_ui_actions_on_accounts_reloaded     (TnyAccountStore *store, 
 							     gpointer user_data);
+
+static void     _modest_ui_actions_on_folder_moved          (ModestFolderView *folder_view,
+							     TnyFolder        *folder, 
+							     TnyFolderStore   *parent,
+							     gboolean         *done,
+							     gpointer          user_data);
 
 GType
 modest_ui_get_type (void)
@@ -336,7 +343,11 @@ connect_signals (ModestUI *self)
 	/* folder view */
 	g_signal_connect (G_OBJECT(folder_view), "folder_selection_changed",
 			  G_CALLBACK(_modest_ui_actions_on_folder_selection_changed),
-			  priv->main_window);	
+			  priv->main_window);
+	g_signal_connect (G_OBJECT(folder_view), "folder_moved",
+			  G_CALLBACK(_modest_ui_actions_on_folder_moved),
+			  NULL);
+
 	/* header view */
 	g_signal_connect (G_OBJECT(header_view), "status_update",
 			  G_CALLBACK(_modest_ui_actions_on_header_status_update), 
@@ -1012,6 +1023,8 @@ _modest_ui_actions_on_online_toggle_toggled (GtkToggleButton *toggle,
 		tny_device_force_online (device);
 	else
 		tny_device_force_offline (device);
+
+	g_object_unref (G_OBJECT (device));
 }
 
 void 
@@ -1266,8 +1279,11 @@ _modest_ui_actions_on_new_folder (GtkWidget *widget,
 									  TNY_FOLDER_STORE (parent_folder),
 									  (const gchar *) folder_name);
 			if (new_folder) {
-				/* Do anything more? The model
-				   is automatically updated */
+				/* TODO: tinymail should do this. 
+				   Update view */
+				modest_folder_view_add_subfolder (folder_view, new_folder);
+
+				/* Free new folder */
 				g_object_unref (new_folder);
 			}
 			g_object_unref (mail_op);
@@ -1294,11 +1310,21 @@ _modest_ui_actions_on_rename_folder (GtkWidget *widget,
 
 		if (folder_name != NULL && strlen (folder_name) > 0) {
 			ModestMailOperation *mail_op;
+			const GError *error;
 
 			mail_op = modest_mail_operation_new ();
 			modest_mail_operation_rename_folder (mail_op,
 							     folder,
 							     (const gchar *) folder_name);
+
+			error = modest_mail_operation_get_error (mail_op);
+			if (!error)
+				/* TODO: tinymail should do this. 
+				   Update view */
+				modest_folder_view_rename (folder_view);
+
+			/* TODO: else ? notify error ? */
+
 			g_object_unref (mail_op);
 		}
 		g_object_unref (folder);
@@ -1342,4 +1368,27 @@ _modest_ui_actions_on_accounts_reloaded (TnyAccountStore *store, gpointer user_d
 	
 	folder_view = modest_widget_factory_get_folder_view (modest_runtime_get_widget_factory());
 	modest_folder_view_update_model (folder_view, store);
+}
+
+static void 
+_modest_ui_actions_on_folder_moved (ModestFolderView *folder_view,
+				    TnyFolder        *folder, 
+				    TnyFolderStore   *parent,
+				    gboolean         *done,
+				    gpointer          user_data)
+{
+	ModestMailOperation *mail_op;
+	const GError *error;
+
+	*done = TRUE;
+
+	/* Try to move the folder */	
+	mail_op = modest_mail_operation_new ();
+	modest_mail_operation_move_folder (mail_op, folder, parent);
+
+	error = modest_mail_operation_get_error (mail_op);
+	if (error)
+		*done = FALSE;
+
+	g_object_unref (G_OBJECT (mail_op));
 }
