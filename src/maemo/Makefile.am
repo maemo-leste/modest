@@ -51,7 +51,8 @@ libmodest_ui_la_SOURCES=              \
 	modest-store-widget.c         \
 	modest-store-widget.h         \
 	modest-transport-widget.c     \
-	modest-transport-widget.h     
+	modest-transport-widget.h     \
+        modest-msg-view-window.c	
 
 
 LDADD = \
@@ -66,7 +67,8 @@ pixmap_DATA = $(PIXMAP_FILES)
 
 UI_FILES=\
 	ui/modest-ui.xml \
-	ui/modest-edit-msg-window-ui.xml
+	ui/modest-edit-msg-window-ui.xml \
+	ui/modest-msg-view-window-ui.xml
 
 uidir = $(datadir)/modest/ui
 ui_DATA = $(UI_FILES)

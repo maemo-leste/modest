@@ -60,6 +60,9 @@ void	 _modest_ui_actions_toggle_view	     (GtkWidget *widget, ModestMainWindow *
 void     _modest_ui_actions_on_header_selected          (ModestHeaderView *folder_view, 
 							 TnyHeader *header,
 							 ModestMainWindow *main_window);
+void     _modest_ui_actions_on_header_activated         (ModestHeaderView *folder_view, 
+						         TnyHeader *header,
+						         ModestMainWindow *main_window);
 
 void     _modest_ui_actions_on_folder_selection_changed (ModestFolderView *folder_view,
 							 TnyFolder *folder, 

@@ -1,7 +1,5 @@
 todo
 ----
-i001: add a message view window; it's quite different from the edit view,
-      as it is readonly, and will use the html-view instead of text-view
 i002: message view and message edit window should know what account they apply to;
       thus, the 'From:' information and TransportAccount can be decided
 i003: when creating a new message, the information should be set according to i002
@@ -27,7 +25,8 @@ i018: make d&d work
 done
 ----
 i016:: add 'make default' to the account editor
-
+i001: add a message view window; it's quite different from the edit view,
+      as it is readonly, and will use the html-view instead of text-view
 
 later
 -----

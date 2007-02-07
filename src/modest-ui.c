@@ -344,6 +344,9 @@ connect_signals (ModestUI *self)
 	g_signal_connect (G_OBJECT(header_view), "header_selected",
 			  G_CALLBACK(_modest_ui_actions_on_header_selected), 
 			  priv->main_window);
+	g_signal_connect (G_OBJECT(header_view), "header_activated",
+			  G_CALLBACK(_modest_ui_actions_on_header_activated), 
+			  priv->main_window);
 	g_signal_connect (G_OBJECT(header_view), "item_not_found",
 			  G_CALLBACK(_modest_ui_actions_on_item_not_found), 
 			  priv->main_window);
@@ -805,6 +808,49 @@ _modest_ui_actions_on_header_selected (ModestHeaderView *folder_view,
 	/* Frees */
 	g_object_unref (G_OBJECT (folder));
 }
+
+
+
+void 
+_modest_ui_actions_on_header_activated (ModestHeaderView *folder_view, 
+					TnyHeader *header,
+					ModestMainWindow *main_window)
+{
+	ModestWindow *win;
+	TnyFolder *folder = NULL;
+	TnyMsg    *msg    = NULL;
+	
+	if (!header)
+		return;
+
+	folder = tny_header_get_folder (header);
+	if (!folder) {
+		g_printerr ("modest: cannot get folder for header\n");
+		goto cleanup;
+	}
+
+	/* FIXME: make async?; check error  */
+	msg = tny_folder_get_msg (folder, header, NULL);
+	if (!msg) {
+		g_printerr ("modest: cannot get msg for header\n");
+		goto cleanup;
+	}
+
+	win = modest_msg_view_window_new (msg);
+	gtk_window_set_transient_for (GTK_WINDOW (win), GTK_WINDOW (main_window));
+
+	gtk_widget_show_all (GTK_WIDGET(win));
+	
+cleanup:
+	if (folder)
+		g_object_unref (G_OBJECT (folder));
+	if (msg)
+		g_object_unref (G_OBJECT (folder));
+}
+
+
+
+
 
 void 
 _modest_ui_actions_on_folder_selection_changed (ModestFolderView *folder_view,

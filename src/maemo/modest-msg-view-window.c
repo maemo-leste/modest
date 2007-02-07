@@ -128,6 +128,33 @@ restore_settings (ModestMsgViewWindow *self)
 }
 
 
+
+static GtkWidget *
+menubar_to_menu (GtkUIManager *ui_manager)
+{
+	GtkWidget *main_menu;
+	GtkWidget *menubar;
+	GList *iter;
+
+	/* Create new main menu */
+	main_menu = gtk_menu_new();
+
+	/* Get the menubar from the UI manager */
+	menubar = gtk_ui_manager_get_widget (ui_manager, "/MenuBar");
+
+	iter = gtk_container_get_children (GTK_CONTAINER (menubar));
+	while (iter) {
+		GtkWidget *menu;
+
+		menu = GTK_WIDGET (iter->data);
+		gtk_widget_reparent(menu, main_menu);
+
+		iter = g_list_next (iter);
+	}
+	return main_menu;
+}
+
+
 static void
 init_window (ModestMsgViewWindow *obj, TnyMsg *msg)
 {
@@ -140,14 +167,22 @@ init_window (ModestMsgViewWindow *obj, TnyMsg *msg)
 
 	priv->msg_view = modest_msg_view_new (msg);
 	main_vbox = gtk_vbox_new  (FALSE, 6);
-	
-	gtk_box_pack_start (GTK_BOX(main_vbox), priv->menubar, FALSE, FALSE, 0);
-	gtk_box_pack_start (GTK_BOX(main_vbox), priv->toolbar, FALSE, FALSE, 0);
-	gtk_box_pack_start (GTK_BOX(main_vbox), priv->msg_view, TRUE, TRUE, 6);
 
-	gtk_widget_show_all (GTK_WIDGET(main_vbox));
+	/* Toolbar / Menubar */
+	
+	parent_priv->menubar = menubar_to_menu (parent_priv->ui_manager);
+	gtk_widget_show_all (GTK_WIDGET(parent_priv->menubar));
+	hildon_window_set_menu    (HILDON_WINDOW(obj), GTK_MENU(parent_priv->menubar));
+
+	parent_priv->toolbar = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar");
+	gtk_widget_show_all (GTK_WIDGET(parent_priv->toolbar));
+	hildon_window_add_toolbar (HILDON_WINDOW(obj), GTK_TOOLBAR(parent_priv->toolbar));
+
+	gtk_box_pack_start (GTK_BOX(main_vbox), priv->msg_view, TRUE, TRUE, 6);
 	gtk_container_add   (GTK_CONTAINER(obj), main_vbox);
-}
+	
+	gtk_widget_show_all (GTK_WIDGET(main_vbox));
+}	
 
 
 static void
@@ -164,6 +199,7 @@ on_delete_event (GtkWidget *widget, GdkEvent *event, ModestMsgViewWindow *self)
 	save_settings (self);
 	return FALSE;
 }
+
 
 
 ModestWindow *
@@ -205,13 +241,7 @@ modest_msg_view_window_new (TnyMsg *msg)
 	/* Add accelerators */
 	gtk_window_add_accel_group (GTK_WINDOW (obj), 
 				    gtk_ui_manager_get_accel_group (parent_priv->ui_manager));
-
-	/* Toolbar / Menubar */
-	priv->toolbar = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar");
-	priv->menubar = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/MenuBar");
-
-	gtk_toolbar_set_tooltips (GTK_TOOLBAR (priv->toolbar), TRUE);
-
+	
 	/* Init window */
 	init_window (MODEST_MSG_VIEW_WINDOW(obj), msg);
 	restore_settings (MODEST_MSG_VIEW_WINDOW(obj));

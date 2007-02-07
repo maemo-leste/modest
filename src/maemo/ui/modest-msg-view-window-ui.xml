@@ -29,35 +29,29 @@
 -->
 
 <ui>
+
   <menubar name="MenuBar">
+       
     <menu name="EditMenu" action="Edit">
       <menuitem name="EditUndoMenu" action="EditUndo"/>
-      <menuitem name="EditRedoMenu" action="EditRedo"/>
       <separator/>
       <menuitem name="EditCutMenu" action="EditCut"/>
       <menuitem name="EditCopyMenu" action="EditCopy"/>
       <menuitem name="EditPasteMenu" action="EditPaste"/>
-      <menuitem name="EditDeleteMenu" action="EditDelete"/>
       <separator/>
-      <menuitem name="EditSelectAllMenu" action="EditSelectAll"/>
-      <menuitem name="EditDeselectAllMenu" action="EditDeselectAll"/>
-    </menu>
+      <menuitem name="EditSelectMenu" action="EditSelect"/>
+      <menuitem name="EditMoveToMenu" action="EditMoveTo"/>
+    </menu> 
 
-    <menu name="ActionsMenu" action="Actions">
-      <menuitem name="ActionsReplyMenu" action="ActionsReply"/>
-      <menuitem name="ActionsReplyAllMenu" action="ActionsReplyAll"/>
-      <menuitem name="ActionsForwardMenu" action="ActionsForward"/>
-      <separator/>
-      <menuitem name="ActionsFolderNewMenu" action="ActionsFolderNew"/>
-      <menuitem name="ActionsFolderDeleteMenu" action="ActionsFolderDelete"/>
-      <menuitem name="ActionsFolderRenameMenu" action="ActionsFolderRename"/>
-      <menuitem name="ActionsFolderMoveToTrashMenu" action="ActionsFolderMoveToTrash"/>
+   <menu name="CloseMenu" action="Close">
+      <menuitem name="CloseWindowMenu"     action="CloseWindow"/>
     </menu>
   </menubar>
 
   <toolbar name="ToolBar">
-    <toolitem action="ActionsReply"/>
-    <toolitem action="ActionsReplyAll"/>
-    <toolitem action="ActionsForward"/>
+    <toolitem action="ToolbarMessageReply"/> 
+    <toolitem action="ToolbarMessageReplyAll"/>
+    <toolitem action="ToolbarMessageForward"/> 
   </toolbar>
-</ui>
+
+  </ui>
