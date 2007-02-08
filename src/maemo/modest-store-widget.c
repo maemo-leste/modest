@@ -28,6 +28,8 @@
  */
 
 #include <glib/gi18n.h>
+#include <gtk/gtk.h>
+#include <widgets/modest-combo-box.h>
 #include "modest-store-widget.h"
 #include <string.h>
 
@@ -52,7 +54,6 @@ struct _ModestStoreWidgetPrivate {
 	GtkWidget *remember_pwd;
 
 	ModestProtocol proto;
-	ModestWidgetFactory *factory;
 };
 #define MODEST_STORE_WIDGET_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                  MODEST_TYPE_STORE_WIDGET, \
@@ -195,9 +196,11 @@ on_entry_changed (GtkEntry *entry, gpointer user_data)
 static GtkWidget*
 imap_pop_configuration (ModestStoreWidget *self)
 {
+	ModestPairList *protos;
 	ModestStoreWidgetPrivate *priv;
 	GtkWidget *label, *box, *hbox;
-
+	GtkWidget *combo;
+	
 	priv = MODEST_STORE_WIDGET_GET_PRIVATE(self);
 	box = gtk_vbox_new (FALSE, 6);
 	
@@ -225,8 +228,10 @@ imap_pop_configuration (ModestStoreWidget *self)
 	gtk_label_set_markup (GTK_LABEL(label),_("<b>Security</b>"));
 	gtk_box_pack_start (GTK_BOX(box), label, FALSE, FALSE, 0);
 
-	priv->security = modest_widget_factory_get_combo_box (priv->factory, 
-							      MODEST_COMBO_BOX_TYPE_SECURITY_PROTOS);
+	protos = modest_protocol_info_get_protocol_pair_list (MODEST_PROTOCOL_TYPE_SECURITY);
+	priv->security = modest_combo_box_new (protos);
+	modest_pair_list_free (protos);
+	
 	hbox = gtk_hbox_new (FALSE, 6);
 	label = gtk_label_new(NULL);
 	gtk_label_set_text (GTK_LABEL(label),_("Connection type:"));
@@ -239,10 +244,12 @@ imap_pop_configuration (ModestStoreWidget *self)
 
 	gtk_label_set_text (GTK_LABEL(label),_("Authentication:"));
 	gtk_box_pack_start (GTK_BOX(hbox), label, FALSE, FALSE, 6);
-	gtk_box_pack_start (GTK_BOX(hbox),   modest_widget_factory_get_combo_box
-			    (priv->factory, MODEST_COMBO_BOX_TYPE_AUTH_PROTOS),
-			    FALSE, FALSE, 0);
+	
+	protos = modest_protocol_info_get_protocol_pair_list (MODEST_PROTOCOL_TYPE_AUTH);
+	combo =  modest_combo_box_new (protos);
+	modest_pair_list_free (protos);
 
+	gtk_box_pack_start (GTK_BOX(hbox), combo, FALSE, FALSE, 0);
 	priv->remember_pwd =
 		gtk_check_button_new_with_label (_("Remember password"));
 	gtk_box_pack_start (GTK_BOX(hbox),priv->remember_pwd,
@@ -261,21 +268,13 @@ imap_pop_configuration (ModestStoreWidget *self)
 static void
 modest_store_widget_finalize (GObject *obj)
 {
-	ModestStoreWidgetPrivate *priv;
-	priv = MODEST_STORE_WIDGET_GET_PRIVATE(obj);
-	
-	if (priv->factory) {
-		g_object_unref (priv->factory);
-		priv->factory = NULL;
-	}
-
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
 
 
 GtkWidget*
-modest_store_widget_new (ModestWidgetFactory *factory, ModestProtocol proto)
+modest_store_widget_new (ModestProtocol proto)
 {
 	GObject *obj;
 	GtkWidget *w;
@@ -283,14 +282,10 @@ modest_store_widget_new (ModestWidgetFactory *factory, ModestProtocol proto)
 	ModestStoreWidgetPrivate *priv;
 	
 	g_return_val_if_fail (proto, NULL);
-	g_return_val_if_fail (factory, NULL);
 
 	obj = g_object_new(MODEST_TYPE_STORE_WIDGET, NULL);
 	self = MODEST_STORE_WIDGET(obj);
 	priv = MODEST_STORE_WIDGET_GET_PRIVATE(self);
-
-	g_object_ref (factory);
-	priv->factory = factory;
 
 	priv->proto = proto;
 	
@@ -317,9 +312,11 @@ modest_store_widget_get_remember_password (ModestStoreWidget *self)
 	g_return_val_if_fail (self, FALSE);
 	priv = MODEST_STORE_WIDGET_GET_PRIVATE(self);
 
-	return gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON(priv->remember_pwd));
+	if (GTK_IS_TOGGLE_BUTTON(priv->remember_pwd)) 
+		return gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON(priv->remember_pwd));
+	else
+		return FALSE;
 }
-
 
 const gchar*
 modest_store_widget_get_username (ModestStoreWidget *self)
@@ -328,8 +325,11 @@ modest_store_widget_get_username (ModestStoreWidget *self)
 
 	g_return_val_if_fail (self, NULL);
 	priv = MODEST_STORE_WIDGET_GET_PRIVATE(self);
-	
-	return gtk_entry_get_text (GTK_ENTRY(priv->username));
+
+	if (GTK_IS_ENTRY(priv->username)) 
+		return gtk_entry_get_text (GTK_ENTRY(priv->username));
+	else
+		return NULL;
 }
 
 const gchar*
@@ -340,7 +340,10 @@ modest_store_widget_get_servername (ModestStoreWidget *self)
 	g_return_val_if_fail (self, NULL);
 	priv = MODEST_STORE_WIDGET_GET_PRIVATE(self);
 	
-	return gtk_entry_get_text (GTK_ENTRY(priv->servername));
+	if (GTK_IS_ENTRY(priv->servername)) 
+		return gtk_entry_get_text (GTK_ENTRY(priv->servername));
+	else
+		return NULL;
 }
 
 
@@ -353,4 +356,19 @@ modest_store_widget_get_proto (ModestStoreWidget *self)
 	priv = MODEST_STORE_WIDGET_GET_PRIVATE(self);
 
 	return priv->proto;
+}
+
+
+gchar *
+modest_store_widget_get_path (ModestStoreWidget *self)
+{
+	ModestStoreWidgetPrivate *priv;
+	
+	g_return_val_if_fail (self, MODEST_PROTOCOL_UNKNOWN);
+	priv = MODEST_STORE_WIDGET_GET_PRIVATE(self);
+
+	if (GTK_IS_FILE_CHOOSER(priv->chooser))
+		return gtk_file_chooser_get_filename (GTK_FILE_CHOOSER(priv->chooser));
+	else
+		return NULL;
 }

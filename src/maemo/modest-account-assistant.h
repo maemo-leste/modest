@@ -31,7 +31,6 @@
 #define __MODEST_ACCOUNT_ASSISTANT_H__
 
 #include <gtk/gtk.h>
-#include <modest-widget-factory.h>
 #include <modest-account-mgr.h>
 #include <hildon-widgets/hildon-wizard-dialog.h>
 
@@ -62,8 +61,7 @@ struct _ModestAccountAssistantClass {
 /* member functions */
 GType        modest_account_assistant_get_type    (void) G_GNUC_CONST;
 
-GtkWidget*    modest_account_assistant_new        (ModestAccountMgr* account_mgr,
-						   ModestWidgetFactory *factory);
+GtkWidget*    modest_account_assistant_new        (ModestAccountMgr* account_mgr);
 
 
 G_END_DECLS

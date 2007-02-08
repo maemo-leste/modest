@@ -44,7 +44,6 @@ noinst_LTLIBRARIES=\
 libmodest_ui_la_SOURCES=              \
 	modest-account-view-window.c  \
 	modest-account-view-window.h  \
-	modest-edit-msg-window.c      \
 	modest-icon-names.h           \
 	modest-main-window.c          \
 	modest-main-window-ui.h       \
@@ -52,7 +51,8 @@ libmodest_ui_la_SOURCES=              \
 	modest-store-widget.h         \
 	modest-transport-widget.c     \
 	modest-transport-widget.h     \
-        modest-msg-view-window.c	
+        modest-msg-view-window.c      \
+	modest-msg-edit-window.c    
 
 
 LDADD = \
@@ -66,10 +66,10 @@ pixmapdir = $(datadir)/pixmaps/modest
 pixmap_DATA = $(PIXMAP_FILES)
 
 UI_FILES=\
-	ui/modest-ui.xml \
-	ui/modest-edit-msg-window-ui.xml \
+	ui/modest-main-window-ui.xml \
+	ui/modest-msg-edit-window-ui.xml \
 	ui/modest-msg-view-window-ui.xml
-
+		
 uidir = $(datadir)/modest/ui
 ui_DATA = $(UI_FILES)
 

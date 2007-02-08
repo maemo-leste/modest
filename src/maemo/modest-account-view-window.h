@@ -5,7 +5,6 @@
 #define __MODEST_ACCOUNT_VIEW_WINDOW_H__
 
 #include <gtk/gtk.h>
-#include <modest-widget-factory.h>
 
 G_BEGIN_DECLS
 
@@ -34,7 +33,7 @@ struct _ModestAccountViewWindowClass {
 /* member functions */
 GType        modest_account_view_window_get_type    (void) G_GNUC_CONST;
 
-GtkWidget*   modest_account_view_window_new         (ModestWidgetFactory *factory);
+GtkWidget*   modest_account_view_window_new         (void);
 
 G_END_DECLS
 

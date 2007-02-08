@@ -50,14 +50,14 @@ static const GtkActionEntry modest_action_entries [] = {
 	{ "Close",   NULL, N_("Close") },
 
 	/* Message */
-	{ "MessageNew",         NULL,  N_("_New message"),      "<CTRL>N", NULL,   G_CALLBACK (_modest_ui_actions_on_new_msg) },
+	{ "MessageNew",         NULL,  N_("_New message"),      "<CTRL>N", NULL,   G_CALLBACK (modest_ui_actions_on_new_msg) },
 	{ "MessageOpen",        NULL,  N_("_Open"),	        "<CTRL>O", NULL,   NULL },
 	{ "MessageCancelSending",  NULL,  N_("Cancel sending"),	NULL,      NULL,   NULL },
 	{ "MessageSend",        NULL,  N_("Send"),	        NULL,      NULL,   NULL },
-	{ "MessageReply",       NULL,  N_("_Reply"),            NULL,      NULL,   G_CALLBACK (_modest_ui_actions_on_reply) },
-	{ "MessageReplyAll",    NULL,  N_("Reply to all"),      NULL,      NULL,   G_CALLBACK (_modest_ui_actions_on_reply_all) },
-	{ "MessageForward",     NULL,  N_("_Forward"),          NULL,      NULL,   G_CALLBACK (_modest_ui_actions_on_forward) },
-	{ "MessageDelete",      NULL,  N_("Delete message"),    NULL,      NULL,   G_CALLBACK (_modest_ui_actions_on_delete) },
+	{ "MessageReply",       NULL,  N_("_Reply"),            NULL,      NULL,   G_CALLBACK (modest_ui_actions_on_reply) },
+	{ "MessageReplyAll",    NULL,  N_("Reply to all"),      NULL,      NULL,   G_CALLBACK (modest_ui_actions_on_reply_all) },
+	{ "MessageForward",     NULL,  N_("_Forward"),          NULL,      NULL,   G_CALLBACK (modest_ui_actions_on_forward) },
+	{ "MessageDelete",      NULL,  N_("Delete message"),    NULL,      NULL,   G_CALLBACK (modest_ui_actions_on_delete) },
 	{ "MessageSendReceive", NULL,  N_("Send and receive"),  NULL,      NULL,   NULL },
 	{ "MessageContents",    NULL,  N_("Retrieve contents"), NULL,      NULL,   NULL },
 	{ "MessageDetails",     NULL,  N_("Details..."),        NULL,      NULL,   NULL },
@@ -83,17 +83,17 @@ static const GtkActionEntry modest_action_entries [] = {
 
 		
 	/* Folders */
-	{ "FoldersNew",          NULL,       N_("New folder"),       NULL, NULL, G_CALLBACK (_modest_ui_actions_on_new_folder) },
+	{ "FoldersNew",          NULL,       N_("New folder"),       NULL, NULL, G_CALLBACK (modest_ui_actions_on_new_folder) },
 	{ "FoldersManage",       NULL,       N_("Manage..."),        NULL, NULL, NULL },
 	{ "FoldersDetails",      NULL,       N_("Details..."),       NULL, NULL, NULL },
-	{ "FoldersDelete",       NULL,       N_("Delete"),           NULL, NULL, G_CALLBACK (_modest_ui_actions_on_delete_folder) },
-	{ "FoldersRename",       NULL,       N_("Rename"),           NULL, NULL, G_CALLBACK (_modest_ui_actions_on_rename_folder) },
-	{ "FoldersMoveToTrash",  NULL,       N_("Move to trash"),    NULL, NULL, G_CALLBACK (_modest_ui_actions_on_move_to_trash_folder) },
+	{ "FoldersDelete",       NULL,       N_("Delete"),           NULL, NULL, G_CALLBACK (modest_ui_actions_on_delete_folder) },
+	{ "FoldersRename",       NULL,       N_("Rename"),           NULL, NULL, G_CALLBACK (modest_ui_actions_on_rename_folder) },
+	{ "FoldersMoveToTrash",  NULL,       N_("Move to trash"),    NULL, NULL, G_CALLBACK (modest_ui_actions_on_move_folder_to_trash_folder) },
 
 	
 	/* Accounts */
 	{ "AccountsNew",          NULL,    N_("_New account..."),	      NULL, NULL,  NULL },
-	{ "AccountsManage",        NULL,    N_("Manage..."),                  NULL, NULL,  G_CALLBACK (_modest_ui_actions_on_accounts) },
+	{ "AccountsManage",        NULL,    N_("Manage..."),                  NULL, NULL,  G_CALLBACK (modest_ui_actions_on_accounts) },
 	{ "AccountsConfigureSMTP", NULL,    N_("Configure SMTP servers..."),  NULL, NULL,  NULL },
 	
 	/* Tools */
@@ -105,20 +105,20 @@ static const GtkActionEntry modest_action_entries [] = {
 
 	/* Close */
 	{ "CloseWindow",          NULL,     N_("Close window"),               NULL, NULL,  NULL },
-	{ "CloseAllWindows",      NULL,     N_("Close all windows"),          NULL, NULL,  G_CALLBACK (_modest_ui_actions_on_quit) },
+	{ "CloseAllWindows",      NULL,     N_("Close all windows"),          NULL, NULL,  G_CALLBACK (modest_ui_actions_on_quit) },
 
 
 	/* Toolbar items; they is some overlap with the menu items,
 	 * but we need to specificy them differently, they have icons for example
 	 */
 	/* Headers Toolbar */
-	{ "ToolbarMessageNew",        MODEST_STOCK_NEW_MAIL,     N_("Compose a new message"), NULL, NULL,  G_CALLBACK (_modest_ui_actions_on_new_msg) },
-	{ "ToolbarMessageReply",      MODEST_STOCK_REPLY,     N_("Reply a message"),       NULL, NULL,  G_CALLBACK (_modest_ui_actions_on_reply) },
-	{ "ToolbarMessageReplyAll",   MODEST_STOCK_REPLY_ALL,     N_("Reply to all"),          NULL, NULL,  G_CALLBACK (_modest_ui_actions_on_reply_all) },
-	{ "ToolbarMessageForward",    MODEST_STOCK_FORWARD,     N_("Forward a message"),     NULL, NULL,  G_CALLBACK (_modest_ui_actions_on_forward) },
-	{ "ToolbarSendReceive",       MODEST_STOCK_SEND_RECEIVE,   N_("Send & receive"),        NULL, NULL,  G_CALLBACK (_modest_ui_actions_on_forward) },
-	{ "ToolbarToggleView",        GTK_STOCK_CDROM,      N_("Toggle view"),           NULL, NULL,  G_CALLBACK (_modest_ui_actions_toggle_view) },
-	{ "ToolbarDeleteMessage",     GTK_STOCK_DELETE,     N_("Delete message"),        NULL, NULL,  G_CALLBACK (_modest_ui_actions_on_delete) },
+	{ "ToolbarMessageNew",        MODEST_STOCK_NEW_MAIL,     N_("Compose a new message"), NULL, NULL,  G_CALLBACK (modest_ui_actions_on_new_msg) },
+	{ "ToolbarMessageReply",      MODEST_STOCK_REPLY,     N_("Reply a message"),       NULL, NULL,  G_CALLBACK (modest_ui_actions_on_reply) },
+	{ "ToolbarMessageReplyAll",   MODEST_STOCK_REPLY_ALL,     N_("Reply to all"),          NULL, NULL,  G_CALLBACK (modest_ui_actions_on_reply_all) },
+	{ "ToolbarMessageForward",    MODEST_STOCK_FORWARD,     N_("Forward a message"),     NULL, NULL,  G_CALLBACK (modest_ui_actions_on_forward) },
+	{ "ToolbarSendReceive",       MODEST_STOCK_SEND_RECEIVE,   N_("Send & receive"),        NULL, NULL,  G_CALLBACK (modest_ui_actions_on_forward) },
+	{ "ToolbarToggleView",        GTK_STOCK_CDROM,      N_("Toggle view"),           NULL, NULL,  G_CALLBACK (modest_ui_actions_toggle_view) },
+	{ "ToolbarDeleteMessage",     GTK_STOCK_DELETE,     N_("Delete message"),        NULL, NULL,  G_CALLBACK (modest_ui_actions_on_delete) },
 };
 
 
