@@ -36,15 +36,17 @@
 G_BEGIN_DECLS
 
 /* Menu & toolbar actions */
-void     modest_ui_actions_on_about         (GtkWidget *widget, ModestMainWindow *main_window);
+void     modest_ui_actions_on_about         (GtkWidget *widget, ModestWindow *win);
 
 void     modest_ui_actions_on_delete        (GtkWidget *widget, ModestMainWindow *main_window);
 
-void     modest_ui_actions_on_quit          (GtkWidget *widget, ModestMainWindow *main_window);
+void     modest_ui_actions_on_quit          (GtkWidget *widget, ModestWindow *win);
 
-void     modest_ui_actions_on_accounts      (GtkWidget *widget, ModestMainWindow *main_window);
+void     modest_ui_actions_on_accounts      (GtkWidget *widget, ModestWindow *win);
 
-void     modest_ui_actions_on_new_msg       (GtkWidget *widget, ModestMainWindow *main_window);
+void     modest_ui_actions_on_new_msg       (GtkWidget *widget, ModestWindow *win);
+
+void     modest_ui_actions_on_open           (GtkWidget *widget, ModestWindow *win);
 
 void     modest_ui_actions_on_reply         (GtkWidget *widget, ModestMainWindow *main_window);
 
@@ -58,8 +60,8 @@ void	 modest_ui_actions_toggle_view	     (GtkWidget *widget, ModestMainWindow *m
 
 /* Widget actions */
 void     modest_ui_actions_on_header_selected          (ModestHeaderView *folder_view, 
-							 TnyHeader *header,
-							 ModestMainWindow *main_window);
+							TnyHeader *header,
+							ModestMainWindow *main_window);
 void     modest_ui_actions_on_header_activated         (ModestHeaderView *folder_view, 
 						         TnyHeader *header,
 						         ModestMainWindow *main_window);
@@ -74,7 +76,7 @@ void     modest_ui_actions_on_online_toggle_toggled    (GtkToggleButton *toggle,
 
 void     modest_ui_actions_on_item_not_found           (ModestHeaderView *header_view,
 							 ModestItemType type,
-							 ModestMainWindow *main_window);
+							 ModestWindow *window);
 
 void     modest_ui_actions_on_header_status_update     (ModestHeaderView *header_view, 
 							 const gchar *msg,
@@ -82,21 +84,16 @@ void     modest_ui_actions_on_header_status_update     (ModestHeaderView *header
 							 gint total, 
 							 ModestMainWindow *main_window);
 
-void     modest_ui_actions_on_msg_link_hover           (ModestMsgView *msgview, 
-							 const gchar* link,
-							 ModestMainWindow *main_window);
+void     modest_ui_actions_on_msg_link_hover           (ModestMsgView *msgview, const gchar* link,
+							ModestWindow *win);
 
+void     modest_ui_actions_on_msg_link_clicked         (ModestMsgView *msgview, const gchar* link,
+							ModestWindow *win);
 
-void     modest_ui_actions_on_msg_link_clicked         (ModestMsgView *msgview, 
-							 const gchar* link,
-							 ModestMainWindow *main_window);
+void     modest_ui_actions_on_msg_attachment_clicked   (ModestMsgView *msgview, int index,
+							ModestWindow *win);
 
-void     modest_ui_actions_on_msg_attachment_clicked   (ModestMsgView *msgview, 
-							 int index,
-							 ModestMainWindow *main_window);
-
-
-void     modest_ui_actions_on_send                     (GtkWidget *widget, 
+void     modest_ui_actions_on_send                     (GtkWidget *widget,
 							ModestMsgEditWindow *edit_window);
 
 void     modest_ui_actions_on_new_folder               (GtkWidget *widget,
@@ -108,8 +105,8 @@ void     modest_ui_actions_on_rename_folder            (GtkWidget *widget,
 void     modest_ui_actions_on_delete_folder            (GtkWidget *widget,
 							 ModestMainWindow *main_window);
 
-void     modest_ui_actions_on_move_to_trash_folder     (GtkWidget *widget,
-							 ModestMainWindow *main_window);
+void     modest_ui_actions_on_move_folder_to_trash_folder     (GtkWidget *widget,
+							       ModestMainWindow *main_window);
 
 void     modest_ui_actions_on_connection_changed    (TnyDevice *device, gboolean online,
 						     ModestMainWindow *main_window);
