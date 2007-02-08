@@ -809,18 +809,23 @@ drag_data_received_cb (GtkWidget *widget,
 	GtkTreeIter parent_iter, iter;
 	TnyFolder *folder;
 	TnyFolderStore *parent_folder;
-	gboolean done;
+	gboolean done, success = FALSE;
 
+	/* Do not allow further process */
 	g_signal_stop_emission_by_name (widget, "drag-data-received");
-	model_sort = gtk_tree_view_get_model (GTK_TREE_VIEW (widget));
+
+	if (selection_data->length == 0)
+		goto out;
 
 	/* Get the unsorted model, and the path to the source row */
+	model_sort = gtk_tree_view_get_model (GTK_TREE_VIEW (widget));
 	gtk_tree_get_row_drag_data (selection_data,
 				    &model,
 				    &source_row);
 
-	/* Can not call gtk_tree_view_get_drag_dest_row() because it's
-	   not selected anymore */
+	/* Get the path to the destination row. Can not call
+	   gtk_tree_view_get_drag_dest_row() because the source row
+	   it's not selected anymore */
 	gtk_tree_view_get_dest_row_at_pos (GTK_TREE_VIEW (widget),
 					   x, y,
 					   &dest_row,
@@ -830,17 +835,21 @@ drag_data_received_cb (GtkWidget *widget,
 	if (!dest_row || 
 	    pos == GTK_TREE_VIEW_DROP_BEFORE ||
 	    pos == GTK_TREE_VIEW_DROP_AFTER)
-		return;
+		goto out;
 
+	/* Get the destination row in the usorted model */
 	child_dest_row = 
 		gtk_tree_model_sort_convert_path_to_child_path (GTK_TREE_MODEL_SORT (model_sort),
 								dest_row);
 	gtk_tree_path_free (dest_row);
 
+	/* Check if the drag is possible */
 	if (!gtk_tree_drag_dest_row_drop_possible (GTK_TREE_DRAG_DEST (model),
 						   child_dest_row,
-						   selection_data))
+						   selection_data)) {
+		gtk_tree_path_free (child_dest_row);
 		goto out;
+	}
 
 	/* Do the mail operation */
 	gtk_tree_model_get_iter (model, &parent_iter, child_dest_row);
@@ -856,7 +865,9 @@ drag_data_received_cb (GtkWidget *widget,
 		goto out;
 
 	/* Get a row reference to the source path because the path
-	   could change after the insertion */
+	   could change after the insertion. The gtk_drag_finish() is
+	   not able to delete the source because that, so we have to
+	   do it manually */
 	source_row_reference = gtk_tree_row_reference_new (model, source_row);
 	gtk_tree_path_free (source_row);
 
@@ -878,13 +889,17 @@ drag_data_received_cb (GtkWidget *widget,
 		gtk_tree_drag_source_drag_data_delete (GTK_TREE_DRAG_SOURCE (model),
 						       source_row);
 
+		success = TRUE;
+
 		gtk_tree_path_free (source_row);
 	}
 
 	gtk_tree_row_reference_free (source_row_reference);
-	
- out:
 	gtk_tree_path_free (child_dest_row);
+ out:
+	/* Never delete the source, we do it manually */
+	gtk_drag_finish (context, success, FALSE, time);
+
 }
 
 static gint
