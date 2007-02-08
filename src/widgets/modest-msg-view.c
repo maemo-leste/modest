@@ -381,9 +381,55 @@ attachments_as_html (ModestMsgView *self, TnyMsg *msg)
 
 
 
+static gchar*
+get_header_info (TnyMsg *msg, gboolean outgoing)
+{
+	GString *str;
+	TnyHeader *header;
+	
+	if (!msg)
+		return NULL;
+	
+	header = tny_msg_get_header (msg);
+	if (!header) {
+		g_printerr ("modest: cannot get header info for message\n");
+		return NULL;
+	}
+	
+	str = g_string_new ("<table border=\"0\">\n");
+
+	if (outgoing) {
+		if (tny_header_get_to(header))
+			g_string_append_printf (str, "<tr><td><b>%s</b>:</td><td>%s</td></tr>\n", _("To"), tny_header_get_to(header));
+	} else {
+		if (tny_header_get_from (header))
+			g_string_append_printf (str, "<tr><td><b>%s</b>:</td><td>%s</td></tr>\n", _("From"), tny_header_get_from(header));
+	}
+	
+	if (tny_header_get_subject (header))
+		g_string_append_printf (str, "<tr><td><b>%s</b>:</td><td>%s</td></tr>\n", _("Subject"), tny_header_get_subject(header));
+
+
+	if (outgoing) {
+		gchar *sent = 	modest_text_utils_get_display_date (tny_header_get_date_sent (header));
+		g_string_append_printf (str, "<tr><td><b>%s</b>:</td><td>%s</td></tr>\n", _("Sent"), sent);
+		g_free (sent);
+	} else {
+		gchar *received = modest_text_utils_get_display_date (tny_header_get_date_received (header));
+		g_string_append_printf (str, "<tr><td><b>%s</b>:</td><td>%s</td></tr>\n", _("Received"), received);
+		g_free (received);
+	}
+
+	g_string_append (str, "</table>\n<hr>\n");
+	
+	g_object_unref (G_OBJECT(header));
+	return g_string_free (str, FALSE);
+}
+
+
 
 static gboolean
-set_html_message (ModestMsgView *self, TnyMimePart *tny_body, TnyMsg *msg)
+set_html_message (ModestMsgView *self, const gchar* header_info, TnyMimePart *tny_body, TnyMsg *msg)
 {
 	gchar *html_attachments;
 	GtkHTMLStream *gtkhtml_stream;
@@ -399,6 +445,11 @@ set_html_message (ModestMsgView *self, TnyMimePart *tny_body, TnyMsg *msg)
 
 	tny_stream     = TNY_STREAM(modest_tny_stream_gtkhtml_new (gtkhtml_stream));
 	tny_stream_reset (tny_stream);
+
+	if (header_info) {
+		tny_stream_write (tny_stream, header_info, strlen(header_info));
+		tny_stream_reset (tny_stream);
+	}
 	
 	html_attachments = attachments_as_html(self, msg);
 	if (html_attachments) {
@@ -419,7 +470,7 @@ set_html_message (ModestMsgView *self, TnyMimePart *tny_body, TnyMsg *msg)
 /* FIXME: this is a hack --> we use the tny_text_buffer_stream to
  * get the message text, then write to gtkhtml 'by hand' */
 static gboolean
-set_text_message (ModestMsgView *self, TnyMimePart *tny_body, TnyMsg *msg)
+set_text_message (ModestMsgView *self, const gchar* header_info, TnyMimePart *tny_body, TnyMsg *msg)
 {
 	GtkTextBuffer *buf;
 	GtkTextIter begin, end;
@@ -440,7 +491,12 @@ set_text_message (ModestMsgView *self, TnyMimePart *tny_body, TnyMsg *msg)
 
 	gtkhtml_stream = gtk_html_begin(GTK_HTML(priv->gtkhtml)); 
 	tny_stream =  TNY_STREAM(modest_tny_stream_gtkhtml_new (gtkhtml_stream));
-
+	
+	if (header_info) {
+		tny_stream_write (tny_stream, header_info, strlen(header_info));
+		tny_stream_reset (tny_stream);
+	}
+	
 	html_attachments = attachments_as_html(self, msg);
 	if (html_attachments) {
 		tny_stream_write (tny_stream, html_attachments,
@@ -493,7 +549,8 @@ modest_msg_view_set_message (ModestMsgView *self, TnyMsg *msg)
 {
 	TnyMimePart *body;
 	ModestMsgViewPrivate *priv;
-
+	gchar *header_info;
+	
 	g_return_if_fail (self);
 	
 	priv = MODEST_MSG_VIEW_GET_PRIVATE(self);
@@ -510,14 +567,17 @@ modest_msg_view_set_message (ModestMsgView *self, TnyMsg *msg)
 		set_empty_message (self);
 		return;
 	}
-		
-	body = modest_tny_msg_find_body_part (msg, TRUE);
+
+	header_info = get_header_info (msg, TRUE);
+	
+	body = modest_tny_msg_find_body_part (msg,TRUE);
 	if (body) {
 		if (tny_mime_part_content_type_is (body, "text/html"))
-			set_html_message (self, body, msg);
+			set_html_message (self, header_info, body, msg);
 		else
-			set_text_message (self, body, msg);
-		return;
+			set_text_message (self, header_info, body, msg);
 	} else 
 		set_empty_message (self);
+
+	g_free (header_info);
 }
