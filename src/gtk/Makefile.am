@@ -1,6 +1,6 @@
 #
 # Makefile.am
-# Time-stamp: <2007-02-06 17:27:20 (djcb)>
+# Time-stamp: <2007-02-07 22:26:18 (djcb)>
 #
 #
 # use Automake 'trick' ==> convenience static libraries, which
@@ -10,7 +10,6 @@ INCLUDES=\
 	$(MODEST_GSTUFF_CFLAGS) \
 	$(MODEST_LIBTINYMAIL_GNOME_DESKTOP_CFLAGS) \
 	-DMODEST_PLATFORM_ID=$(MODEST_PLATFORM_ID) \
-	-I ${top_srcdir}/src/widgets  \
 	-I ${top_srcdir}/src  \
 	-DPREFIX=\"@prefix@\" \
 	-DPIXMAP_PREFIX=\"${datadir}/pixmaps/modest/\" \
@@ -29,12 +28,11 @@ libmodest_ui_la_SOURCES=              \
 	modest-account-assistant.h    \
 	modest-account-view-window.c  \
 	modest-account-view-window.h  \
-	modest-edit-msg-window.c      \
+	modest-msg-edit-window.c      \
 	modest-icon-names.h           \
 	modest-main-window.c          \
 	modest-main-window-ui.h	      \
 	modest-msg-view-window.c      \
-	modest-msg-view-window.h      \
 	modest-store-widget.c         \
 	modest-store-widget.h         \
 	modest-transport-widget.c     \
@@ -48,10 +46,9 @@ pixmapdir = $(datadir)/pixmaps/modest
 pixmap_DATA = $(PIXMAP_FILES)
 
 UI_FILES=\
-	ui/modest-ui.xml \
-	ui/modest-edit-msg-window-ui.xml \
-	ui/modest-msg-view-window-ui.xml 
-
+	ui/modest-main-window-ui.xml \
+	ui/modest-msg-view-window-ui.xml \
+	ui/modest-msg-edit-window-ui.xml 
 
 uidir = $(datadir)/modest/ui
 ui_DATA = $(UI_FILES)

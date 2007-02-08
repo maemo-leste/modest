@@ -31,11 +31,13 @@
 #include <tny-account-store.h>
 #include <tny-simple-list.h>
 #include <modest-tny-msg.h>
-#include <modest-msg-view-window.h>
-#include <modest-main-window-ui.h>
+
+#include <widgets/modest-msg-view-window.h>
+#include "modest-main-window-ui.h"
+#include <widgets/modest-window-priv.h>
+
 #include <modest-widget-memory.h>
 #include <modest-runtime.h>
-#include <modest-window-priv.h>
 
 static void  modest_msg_view_window_class_init   (ModestMsgViewWindowClass *klass);
 static void  modest_msg_view_window_init         (ModestMsgViewWindow *obj);
@@ -191,9 +193,10 @@ modest_msg_view_window_new (TnyMsg *msg)
 				      obj);
 	gtk_ui_manager_insert_action_group (parent_priv->ui_manager, action_group, 0);
 	g_object_unref (action_group);
-
+	
 	/* Load the UI definition */
-	gtk_ui_manager_add_ui_from_file (parent_priv->ui_manager, MODEST_UIDIR "modest-msg-view-window-ui.xml",
+	gtk_ui_manager_add_ui_from_file (parent_priv->ui_manager,
+					 MODEST_UIDIR "modest-msg-view-window-ui.xml",
 					 &error);
 	if (error) {
 		g_printerr ("modest: could not merge modest-msg-view-window-ui.xml: %s\n", error->message);

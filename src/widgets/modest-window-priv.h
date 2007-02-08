@@ -33,7 +33,6 @@
 #include <gtk/gtkuimanager.h>
 #include <tny-account-store.h>
 #include "modest-tny-platform-factory.h"
-#include "modest-widget-factory.h"
 
 G_BEGIN_DECLS
 

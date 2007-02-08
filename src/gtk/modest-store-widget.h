@@ -4,7 +4,8 @@
 #ifndef __MODEST_STORE_WIDGET_H__
 #define __MODEST_STORE_WIDGET_H__
 
-#include <modest-widget-factory.h>
+#include <gtk/gtkvbox.h>
+#include <modest-protocol-info.h>
 
 G_BEGIN_DECLS
 
@@ -33,8 +34,7 @@ struct _ModestStoreWidgetClass {
 /* member functions */
 GType        modest_store_widget_get_type    (void) G_GNUC_CONST;
 
-GtkWidget*   modest_store_widget_new         (ModestWidgetFactory *factory,
-					      ModestProtocol proto);
+GtkWidget*   modest_store_widget_new         (ModestProtocol proto);
 
 gboolean        modest_store_widget_get_remember_password (ModestStoreWidget *self);
 const gchar*    modest_store_widget_get_username          (ModestStoreWidget *self);

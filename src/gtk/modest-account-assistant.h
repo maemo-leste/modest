@@ -30,7 +30,7 @@
 #ifndef __MODEST_ACCOUNT_ASSISTANT_H__
 #define __MODEST_ACCOUNT_ASSISTANT_H__
 
-#include <modest-widget-factory.h>
+#include <gtk/gtkassistant.h>
 #include <modest-account-mgr.h>
 
 G_BEGIN_DECLS
@@ -47,7 +47,7 @@ typedef struct _ModestAccountAssistant      ModestAccountAssistant;
 typedef struct _ModestAccountAssistantClass ModestAccountAssistantClass;
 
 struct _ModestAccountAssistant {
-	 GtkAssistant parent;
+	GtkAssistant parent;
 	/* insert public members, if any */
 };
 
@@ -57,11 +57,9 @@ struct _ModestAccountAssistantClass {
 	/* void (* my_event) (ModestAccountAssistant* obj); */
 };
 
-/* member functions */
-GType        modest_account_assistant_get_type    (void) G_GNUC_CONST;
+GType         modest_account_assistant_get_type    (void) G_GNUC_CONST;
 
-GtkWidget*    modest_account_assistant_new        (ModestAccountMgr* account_mgr,
-						   ModestWidgetFactory *factory);
+GtkWidget*    modest_account_assistant_new        (ModestAccountMgr* account_mgr);
 
 
 G_END_DECLS

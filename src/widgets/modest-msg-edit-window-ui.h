@@ -27,8 +27,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __MODEST_MAIN_WINDOW_UI_PRIV_H__
-#define __MODEST_MAIN_WINDOW_UI_PRIV_H__
+#ifndef __MODEST_MSG_EDIT_WINDOW_UI_H__
+#define __MODEST_MSG_EDIT_WINDOW_UI_H__
 
 #include <glib/gi18n.h>
 #include "modest-icon-names.h"
@@ -36,7 +36,7 @@
 
 G_BEGIN_DECLS
 
-static const GtkActionEntry modest_edit_msg_action_entries [] = {
+static const GtkActionEntry modest_msg_edit_action_entries [] = {
 
 	/* Toplevel menus */
 	{ "View", NULL, N_("_View") },
@@ -44,10 +44,10 @@ static const GtkActionEntry modest_edit_msg_action_entries [] = {
 	{ "Format", NULL, N_("For_mat") },
 
 	/* ACTIONS */
-	{ "ActionsSend", MODEST_STOCK_MAIL_SEND, N_("Send"),  NULL, N_("Send a message"),  G_CALLBACK (_modest_ui_actions_on_send) },
+	{ "ActionsSend", MODEST_STOCK_MAIL_SEND, N_("Send"),  NULL, N_("Send a message"),  G_CALLBACK (modest_ui_actions_on_send) },
 };
 
-static const GtkToggleActionEntry modest_edit_msg_toggle_action_entries [] = {
+static const GtkToggleActionEntry modest_msg_edit_toggle_action_entries [] = {
 
 	/* VIEW */
 	{ "ViewToField",   NULL,    N_("To: field"),  NULL, N_("Shows the To: field"),  NULL, TRUE  },
@@ -56,4 +56,4 @@ static const GtkToggleActionEntry modest_edit_msg_toggle_action_entries [] = {
 };
 
 G_END_DECLS
-#endif /* __MODEST_MAIN_WINDOW_UI_PRIV_H__ */
+#endif /* __MODEST_MSG_EDIT_WINDOW_UI_H__ */

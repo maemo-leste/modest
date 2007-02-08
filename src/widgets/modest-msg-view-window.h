@@ -31,7 +31,7 @@
 #define __MODEST_MSG_VIEW_WINDOW_H__
 
 #include <tny-msg.h>
-#include <modest-window.h>
+#include <widgets/modest-window.h>
 
 G_BEGIN_DECLS
 

@@ -42,18 +42,20 @@
 #include <modest-local-folder-info.h>
 #include <modest-account-mgr.h>
 #include <modest-account-mgr-helpers.h>
+#include <modest-icon-names.h>
 
 #if MODEST_PLATFORM_ID==2 /* maemo/hildon */
 #include <libosso.h>
-static gboolean hildon_init (void);
+static gboolean init_hildon (void);
 #endif /* MODEST_PLATFORM_ID==2 */
 
 static gboolean init_header_columns (ModestConf *conf, gboolean overwrite);
 static gboolean init_local_folders  (void);
 static gboolean init_default_account_maybe  (ModestAccountMgr *acc_mgr);
 static void     init_i18n (void);
-static void     debug_g_type_init (void);
-static void     debug_logging_init (void);
+static void     init_stock_icons (void);
+static void     init_debug_g_type (void);
+static void     init_debug_logging (void);
 
 static ModestSingletons *_singletons = NULL;
 
@@ -115,8 +117,8 @@ modest_runtime_init (void)
 	}
 	
 	init_i18n();
-	debug_g_type_init();
-	debug_logging_init();
+	init_debug_g_type();
+	init_debug_logging();
 
 	g_thread_init(NULL);
 	gdk_threads_init ();
@@ -128,7 +130,7 @@ modest_runtime_init (void)
 	}
 
 #if MODEST_PLATFORM_ID==2 
-	if (!hildon_init ()) {
+	if (!init_hildon ()) {
 		modest_runtime_uninit ();
 		g_printerr ("modest: failed to initialize hildon\n");
 		return FALSE;
@@ -172,6 +174,8 @@ modest_runtime_init_ui (gint argc, gchar** argv)
 		g_printerr ("modest: failed to initialize graphical ui\n");
 		return FALSE;
 	}
+
+	init_stock_icons ();
 	return TRUE;
 }
 
@@ -227,14 +231,6 @@ modest_runtime_get_mail_operation_queue (void)
 {
 	g_return_val_if_fail (_singletons, NULL);
 	return modest_singletons_get_mail_operation_queue (_singletons);
-}
-
-
-ModestWidgetFactory*
-modest_runtime_get_widget_factory     (void)
-{
-	g_return_val_if_fail (_singletons, NULL);
-	return modest_singletons_get_widget_factory (_singletons);
 }
 
 
@@ -475,7 +471,7 @@ init_default_account_maybe  (ModestAccountMgr *acc_mgr)
 
 
 static void
-debug_g_type_init (void)
+init_debug_g_type (void)
 {
 	GTypeDebugFlags gflags;
 	ModestRuntimeDebugFlags mflags;
@@ -492,7 +488,7 @@ debug_g_type_init (void)
 }
 
 static void
-debug_logging_init (void)
+init_debug_logging (void)
 {
 	ModestRuntimeDebugFlags mflags;
 	mflags = modest_runtime_get_debug_flags ();
@@ -516,7 +512,7 @@ init_i18n (void)
 
 #if MODEST_PLATFORM_ID==2 
 static gboolean
-hildon_init (void)
+init_hildon (void)
 {
 	osso_context_t *osso_context =
 		osso_initialize(PACKAGE, PACKAGE_VERSION,
@@ -527,3 +523,78 @@ hildon_init (void)
 	}
 }
 #endif /* MODEST_PLATFORM_ID==2 */
+
+
+/* 
+ *  This function registers our custom toolbar icons, so they can be
+ *  themed. The idea of this function was taken from the gtk-demo
+ */
+static void
+init_stock_icons (void)
+{
+	static gboolean registered = FALSE;
+  
+	if (!registered) {
+		GdkPixbuf *pixbuf;
+		GtkIconFactory *factory;
+		gint i;
+
+		static GtkStockItem items[] = {
+			{ MODEST_STOCK_MAIL_SEND, "send mail", 0, 0, NULL },
+			{ MODEST_STOCK_NEW_MAIL, "new mail", 0, 0, NULL },
+			{ MODEST_STOCK_SEND_RECEIVE, "send receive", 0, 0, NULL },
+			{ MODEST_STOCK_REPLY, "reply", 0, 0, NULL },
+			{ MODEST_STOCK_REPLY_ALL, "reply all", 0, 0, NULL },
+			{ MODEST_STOCK_FORWARD, "forward", 0, 0, NULL },
+			{ MODEST_STOCK_DELETE, "delete", 0, 0, NULL },
+			{ MODEST_STOCK_NEXT, "next", 0, 0, NULL },
+			{ MODEST_STOCK_PREV, "prev", 0, 0, NULL },
+/* 			{ MODEST_STOCK_STOP, "stop", 0, 0, NULL } */
+		};
+      
+		static gchar *items_names [] = {
+			MODEST_TOOLBAR_ICON_MAIL_SEND,
+			MODEST_TOOLBAR_ICON_NEW_MAIL,		
+			MODEST_TOOLBAR_ICON_SEND_RECEIVE,
+			MODEST_TOOLBAR_ICON_REPLY,	
+			MODEST_TOOLBAR_ICON_REPLY_ALL,
+			MODEST_TOOLBAR_ICON_FORWARD,
+			MODEST_TOOLBAR_ICON_DELETE,
+			MODEST_TOOLBAR_ICON_NEXT,
+			MODEST_TOOLBAR_ICON_PREV,
+/* 			MODEST_TOOLBAR_ICON_STOP */
+		};
+
+		registered = TRUE;
+
+		/* Register our stock items */
+		gtk_stock_add (items, G_N_ELEMENTS (items));
+      
+		/* Add our custom icon factory to the list of defaults */
+		factory = gtk_icon_factory_new ();
+		gtk_icon_factory_add_default (factory);
+
+		/* Register icons to accompany stock items */
+		for (i = 0; i < G_N_ELEMENTS (items); i++) {
+			pixbuf = NULL;
+			pixbuf = gdk_pixbuf_new_from_file (items_names[i], NULL);
+
+			if (pixbuf != NULL) {
+				GtkIconSet *icon_set;
+				GdkPixbuf *transparent;
+
+				transparent = gdk_pixbuf_add_alpha (pixbuf, TRUE, 0xff, 0xff, 0xff);
+
+				icon_set = gtk_icon_set_new_from_pixbuf (transparent);
+				gtk_icon_factory_add (factory, items[i].stock_id, icon_set);
+				gtk_icon_set_unref (icon_set);
+				g_object_unref (pixbuf);
+				g_object_unref (transparent);
+			}
+			else
+				g_warning ("failed to load %s icon", items_names[i]);
+		}
+		/* Drop our reference to the factory, GTK will hold a reference. */
+		g_object_unref (factory);
+	}
+}

@@ -429,6 +429,8 @@ modest_header_view_get_selected_headers (ModestHeaderView *self)
 	GList *list, *tmp = NULL;
 	GtkTreeModel *tree_model = NULL;
 	GtkTreeIter iter;
+
+	g_return_val_if_fail (self, NULL);
 	
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
 

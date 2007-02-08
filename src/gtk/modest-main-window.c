@@ -31,15 +31,17 @@
 #include <gtk/gtktreeviewcolumn.h>
 #include <modest-runtime.h>
 
-#include "modest-main-window.h"
-#include "modest-window-priv.h"
-#include "modest-widget-memory.h"
-#include "modest-ui.h"
-#include "modest-main-window-ui.h"
+#include <widgets/modest-main-window.h>
+#include <widgets/modest-window-priv.h>
+#include <widgets/modest-msg-edit-window.h>
 #include "modest-account-view-window.h"
+
+
+#include "modest-widget-memory.h"
+#include "modest-ui-actions.h"
+#include "modest-main-window-ui.h"
 #include "modest-account-mgr.h"
 #include "modest-conf.h"
-#include "modest-edit-msg-window.h"
 #include <modest-tny-msg.h>
 #include "modest-mail-operation.h"
 #include "modest-icon-names.h"
@@ -65,6 +67,9 @@ static gboolean     show_context_popup_menu             (ModestMainWindow *windo
 							 GdkEventButton   *event,
 							 GtkWidget        *menu);
 
+static void         connect_signals                      (ModestMainWindow *self);
+
+
 /* list my signals */
 enum {
 	/* MY_SIGNAL_1, */
@@ -79,9 +84,8 @@ struct _ModestMainWindowPrivate {
 	GtkWidget *msg_paned;
 	GtkWidget *main_paned;
 	
-	ModestHeaderView *header_view;
-	ModestFolderView *folder_view;
-	ModestMsgView    *msg_preview;
+	GtkWidget *online_toggle;
+	GtkWidget *folder_info_label;
 };
 
 
@@ -144,35 +148,60 @@ static void
 modest_main_window_init (ModestMainWindow *obj)
 {
 	ModestMainWindowPrivate *priv;
-
+	TnyFolderStoreQuery     *query;
+	
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(obj);
 	
 	priv->folder_paned = NULL;
 	priv->msg_paned    = NULL;
 	priv->main_paned   = NULL;	
-	priv->header_view  = NULL;
-	priv->folder_view  = NULL;
-	priv->msg_preview  = NULL;
+
+	/* folder view */
+	query = tny_folder_store_query_new ();
+	tny_folder_store_query_add_item (query, NULL,
+					 TNY_FOLDER_STORE_QUERY_OPTION_SUBSCRIBED);
+
+	obj->folder_view =
+		MODEST_FOLDER_VIEW(modest_folder_view_new (modest_runtime_get_account_store(),
+							   query));
+	if (!obj->folder_view)
+		g_printerr ("modest: cannot instantiate folder view\n");	
+	g_object_unref (G_OBJECT (query));
+
+	/* header view */
+	obj->header_view  =
+		MODEST_HEADER_VIEW(modest_header_view_new (NULL, MODEST_HEADER_VIEW_STYLE_DETAILS));
+	if (!obj->header_view)
+		g_printerr ("modest: cannot instantiate header view\n");
+
+	/* msg preview */
+	obj->msg_preview = MODEST_MSG_VIEW(modest_msg_view_new (NULL));
+	if (!obj->msg_preview)
+		g_printerr ("modest: cannot instantiate msgpreiew\n");
+
+	/* online/offline combo */
+	priv->online_toggle = gtk_toggle_button_new ();
+
+	/* label with number of items, unread items for 
+	   the current folder */
+	priv->folder_info_label = gtk_label_new (NULL);
+
+	/* status bar */
+	obj->status_bar   = gtk_statusbar_new ();
+        gtk_statusbar_set_has_resize_grip (GTK_STATUSBAR(obj->status_bar),
+                                           FALSE);
+
+	/* progress bar */
+	obj->progress_bar = gtk_progress_bar_new ();
+	gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR(obj->progress_bar), 1.0);
+	gtk_progress_bar_set_ellipsize (GTK_PROGRESS_BAR(obj->progress_bar),
+					PANGO_ELLIPSIZE_END);
 }
 
 static void
 modest_main_window_finalize (GObject *obj)
 {
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
-}
-
-
-static ModestHeaderView*
-header_view_new (ModestMainWindow *self)
-{
-	ModestHeaderView *header_view;
-	
-	header_view = modest_widget_factory_get_header_view
-		(modest_runtime_get_widget_factory());
-	modest_header_view_set_style
-		(header_view, MODEST_HEADER_VIEW_STYLE_DETAILS);
-
-	return header_view;
 }
 
 
@@ -194,10 +223,8 @@ restore_sizes (ModestMainWindow *self)
 				      "modest-msg-paned");
 	modest_widget_memory_restore (conf, G_OBJECT(priv->main_paned),
 				      "modest-main-paned");
-	modest_widget_memory_restore (conf, G_OBJECT(priv->header_view),
-				      "header-view");
-	modest_widget_memory_restore (conf,G_OBJECT(self),
-				      "modest-main-window");
+	modest_widget_memory_restore (conf, G_OBJECT(self->header_view),"header-view");
+	modest_widget_memory_restore (conf,G_OBJECT(self), "modest-main-window");
 }
 
 
@@ -220,8 +247,137 @@ save_sizes (ModestMainWindow *self)
 				   "modest-msg-paned");
 	modest_widget_memory_save (conf, G_OBJECT(priv->main_paned),
 				   "modest-main-paned");
-	modest_widget_memory_save (conf, G_OBJECT(priv->header_view), "header-view");
+	modest_widget_memory_save (conf, G_OBJECT(self->header_view), "header-view");
 }
+
+
+static void
+on_connection_changed (TnyDevice *device, gboolean online, ModestMainWindow *self)
+{
+	GtkWidget *icon;
+	const gchar *icon_name;
+	ModestMainWindowPrivate *priv;
+	
+	g_return_if_fail (device);
+	g_return_if_fail (self);
+
+	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
+
+	icon_name = online ? GTK_STOCK_CONNECT : GTK_STOCK_DISCONNECT;
+	icon      = gtk_image_new_from_icon_name (icon_name, GTK_ICON_SIZE_BUTTON);
+
+	/* Block handlers in order to avoid unnecessary calls */
+	//g_signal_handler_block (G_OBJECT (priv->online_toggle), priv->toggle_button_signal);
+	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(priv->online_toggle), online);
+	//g_signal_handler_unblock (G_OBJECT (online_toggle), priv->toggle_button_signal);
+
+	gtk_button_set_image (GTK_BUTTON(priv->online_toggle), icon);
+	//statusbar_push (widget_factory, 0, online ? _("Modest went online") : _("Modest went offline"));
+	
+	/* If Modest has became online and the header view has a
+	   header selected then show it */
+	/* FIXME: there is a race condition if some account needs to
+	   ask the user for a password */
+
+/* 	if (online) { */
+/* 		GtkTreeSelection *selected; */
+
+/* 		selected = gtk_tree_view_get_selection (GTK_TREE_VIEW (header_view)); */
+/* 		_modest_header_view_change_selection (selected, header_view); */
+/* 	} */
+}
+
+void
+on_online_toggle_toggled (GtkToggleButton *toggle, ModestMainWindow *self)
+{
+	gboolean online;
+	TnyDevice *device;
+	ModestMainWindowPrivate *priv;
+
+	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
+
+	device = tny_account_store_get_device
+		(TNY_ACCOUNT_STORE(modest_runtime_get_account_store()));
+
+	online  = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON(priv->online_toggle));
+
+	if (online)
+		tny_device_force_online (device);
+	else
+		tny_device_force_offline (device);
+
+	g_object_unref (G_OBJECT (device));
+}
+
+static gboolean
+on_delete_event (GtkWidget *widget, GdkEvent  *event, ModestMainWindow *self)
+{
+	save_sizes (self);
+	return FALSE;
+}
+
+
+static void
+connect_signals (ModestMainWindow *self)
+{	
+	ModestWindowPrivate *parent_priv;
+	ModestMainWindowPrivate *priv;
+	TnyDevice *device;
+	ModestTnyAccountStore *account_store;
+	
+	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
+	parent_priv = MODEST_WINDOW_GET_PRIVATE(self);
+
+	account_store = modest_runtime_get_account_store ();
+	device        = tny_account_store_get_device(TNY_ACCOUNT_STORE(account_store));
+	
+	/* folder view */
+	g_signal_connect (G_OBJECT(self->folder_view), "folder_selection_changed",
+			  G_CALLBACK(modest_ui_actions_on_folder_selection_changed), self);
+	g_signal_connect (G_OBJECT(self->folder_view), "folder_moved",
+			  G_CALLBACK(modest_ui_actions_on_folder_moved), NULL);
+	g_signal_connect (G_OBJECT(self->folder_view), "button-press-event",
+			  G_CALLBACK (on_folder_view_button_press_event),self);
+	g_signal_connect (self->folder_view,"popup-menu",
+			  G_CALLBACK (on_folder_view_button_press_event),self);
+
+	/* header view */
+	g_signal_connect (G_OBJECT(self->header_view), "status_update",
+			  G_CALLBACK(modest_ui_actions_on_header_status_update), self);
+	g_signal_connect (G_OBJECT(self->header_view), "header_selected",
+			  G_CALLBACK(modest_ui_actions_on_header_selected), self);
+	g_signal_connect (G_OBJECT(self->header_view), "header_activated",
+			  G_CALLBACK(modest_ui_actions_on_header_activated), self);
+	g_signal_connect (G_OBJECT(self->header_view), "item_not_found",
+			  G_CALLBACK(modest_ui_actions_on_item_not_found), self);
+	g_signal_connect (G_OBJECT(self->header_view), "button-press-event",
+			  G_CALLBACK (on_header_view_button_press_event), self);
+	g_signal_connect (G_OBJECT(self->header_view),"popup-menu",
+			  G_CALLBACK (on_header_view_button_press_event), self);
+		
+	/* msg preview */
+	g_signal_connect (G_OBJECT(self->msg_preview), "link_clicked",
+			  G_CALLBACK(modest_ui_actions_on_msg_link_clicked), self);
+	g_signal_connect (G_OBJECT(self->msg_preview), "link_hover",
+			  G_CALLBACK(modest_ui_actions_on_msg_link_hover), self);
+	g_signal_connect (G_OBJECT(self->msg_preview), "attachment_clicked",
+			  G_CALLBACK(modest_ui_actions_on_msg_attachment_clicked), self);
+
+	/* Account store */
+	g_signal_connect (G_OBJECT (modest_runtime_get_account_store()), "accounts_reloaded",
+			  G_CALLBACK (modest_ui_actions_on_accounts_reloaded), self);
+	
+	/* Device */
+	g_signal_connect (G_OBJECT(device), "connection_changed",
+			  G_CALLBACK(on_connection_changed), self);
+	g_signal_connect (G_OBJECT(priv->online_toggle), "toggled",
+			  G_CALLBACK(on_online_toggle_toggled), NULL);
+	
+	/* window */
+	//g_signal_connect (G_OBJECT(self), "destroy", G_CALLBACK(on_main_window_destroy), NULL);
+	g_signal_connect (G_OBJECT(self), "delete-event", G_CALLBACK(on_delete_event), self);
+}
+
 
 static GtkWidget*
 wrapped_in_scrolled_window (GtkWidget *widget, gboolean needs_viewport)
@@ -244,37 +400,30 @@ wrapped_in_scrolled_window (GtkWidget *widget, gboolean needs_viewport)
 }
 
 
-static gboolean
-on_delete_event (GtkWidget *widget, GdkEvent  *event, ModestMainWindow *self)
-{
-	save_sizes (self);
-	return FALSE;
-}
 
 
 ModestWindow *
 modest_main_window_new (void)
 {
 	GObject *obj;
+	ModestMainWindow *self;
 	ModestMainWindowPrivate *priv;
 	ModestWindowPrivate *parent_priv;
 	GtkWidget *main_vbox;
 	GtkWidget *status_hbox;
 	GtkWidget *header_win, *folder_win;
-	ModestWidgetFactory *widget_factory;
 	GtkActionGroup *action_group;
 	GError *error = NULL;
-	
-	
+		
 	obj  = g_object_new(MODEST_TYPE_MAIN_WINDOW, NULL);
-	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(obj);
-	parent_priv = MODEST_WINDOW_GET_PRIVATE(obj);
+	self = MODEST_MAIN_WINDOW(obj);
+	
+	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
+	parent_priv = MODEST_WINDOW_GET_PRIVATE(self);
 	
 	/* ***************** */
 	parent_priv->ui_manager = gtk_ui_manager_new();
 	action_group = gtk_action_group_new ("ModestMainWindowActions");
-
-	widget_factory = modest_runtime_get_widget_factory ();
 	
 	/* Add common actions */
 	gtk_action_group_add_actions (action_group,
@@ -286,9 +435,10 @@ modest_main_window_new (void)
 	g_object_unref (action_group);
 
 	/* Load the UI definition */
-	gtk_ui_manager_add_ui_from_file (parent_priv->ui_manager, MODEST_UIDIR "modest-ui.xml", &error);
+	gtk_ui_manager_add_ui_from_file (parent_priv->ui_manager,
+					 MODEST_UIDIR "modest-main-window-ui.xml", &error);
 	if (error != NULL) {
-		g_printerr ("modest: could not merge modest-ui.xml: %s", error->message);
+		g_printerr ("modest: could not merge modest-main-window-ui.xml: %s", error->message);
 		g_error_free (error);
 		error = NULL;
 	}
@@ -302,35 +452,9 @@ modest_main_window_new (void)
 	parent_priv->toolbar = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar");
 	parent_priv->menubar = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/MenuBar");
 
-	gtk_toolbar_set_tooltips (GTK_TOOLBAR (parent_priv->toolbar), TRUE);
-
-	/* widgets from factory */
-	priv->folder_view = modest_widget_factory_get_folder_view (widget_factory);
-	priv->header_view = header_view_new (MODEST_MAIN_WINDOW(obj));
-	priv->msg_preview = modest_widget_factory_get_msg_preview (widget_factory);
-	
-	folder_win = wrapped_in_scrolled_window (GTK_WIDGET(priv->folder_view),
-						 FALSE);
-	header_win = wrapped_in_scrolled_window (GTK_WIDGET(priv->header_view),
-						 FALSE);			   
-
-	/* Connect platform specific signals */
-	g_signal_connect (priv->header_view,
-			  "button-press-event",
-			  G_CALLBACK (on_header_view_button_press_event),
-			  obj);
-	g_signal_connect (priv->header_view,
-			  "popup-menu",
-			  G_CALLBACK (on_header_view_button_press_event),
-			  obj);
-	g_signal_connect (priv->folder_view,
-			  "button-press-event",
-			  G_CALLBACK (on_folder_view_button_press_event),
-			  obj);
-	g_signal_connect (priv->folder_view,
-			  "popup-menu",
-			  G_CALLBACK (on_folder_view_button_press_event),
-			  obj);
+	gtk_toolbar_set_tooltips (GTK_TOOLBAR (parent_priv->toolbar), TRUE);	
+	folder_win = wrapped_in_scrolled_window (GTK_WIDGET(self->folder_view), FALSE);
+	header_win = wrapped_in_scrolled_window (GTK_WIDGET(self->header_view), FALSE);			   
 
 	/* paned */
 	priv->folder_paned = gtk_vpaned_new ();
@@ -339,24 +463,16 @@ modest_main_window_new (void)
 	gtk_paned_add1 (GTK_PANED(priv->main_paned), folder_win);
 	gtk_paned_add2 (GTK_PANED(priv->main_paned), priv->msg_paned);
 	gtk_paned_add1 (GTK_PANED(priv->msg_paned), header_win);
-	gtk_paned_add2 (GTK_PANED(priv->msg_paned), GTK_WIDGET(priv->msg_preview));
+	gtk_paned_add2 (GTK_PANED(priv->msg_paned), GTK_WIDGET(self->msg_preview));
 
-	gtk_widget_show (GTK_WIDGET(priv->header_view));
+	gtk_widget_show (GTK_WIDGET(self->header_view));
 	
 	/* status bar / progress */
 	status_hbox = gtk_hbox_new (FALSE, 0);
-	gtk_box_pack_start (GTK_BOX(status_hbox),
-			    modest_widget_factory_get_folder_info_label (widget_factory),
-			    FALSE,FALSE, 6);
-	gtk_box_pack_start (GTK_BOX(status_hbox),
-			    modest_widget_factory_get_status_bar(widget_factory),
-			    TRUE, TRUE, 0);
-	gtk_box_pack_start (GTK_BOX(status_hbox),
-			    modest_widget_factory_get_progress_bar(widget_factory),
-			    FALSE, FALSE, 0);
-	gtk_box_pack_start (GTK_BOX(status_hbox),
-			    modest_widget_factory_get_online_toggle(widget_factory),
-			    FALSE, FALSE, 0);
+	gtk_box_pack_start (GTK_BOX(status_hbox), priv->folder_info_label, FALSE,FALSE, 6);
+	gtk_box_pack_start (GTK_BOX(status_hbox), self->status_bar, TRUE, TRUE, 0);
+	gtk_box_pack_start (GTK_BOX(status_hbox), self->progress_bar,FALSE, FALSE, 0);
+	gtk_box_pack_start (GTK_BOX(status_hbox), priv->online_toggle,FALSE, FALSE, 0);
 
 	/* putting it all together... */
 	main_vbox = gtk_vbox_new (FALSE, 6);
@@ -372,9 +488,10 @@ modest_main_window_new (void)
 	gtk_window_set_icon_from_file  (GTK_WINDOW(obj), MODEST_APP_ICON, NULL);	
 	gtk_widget_show_all (main_vbox);
 	
-	g_signal_connect (G_OBJECT(obj), "delete-event",
-			  G_CALLBACK(on_delete_event), obj);
-	
+	/* Init toggle in correct state */
+	//modest_ui_actions_on_connection_changed (device, tny_device_is_online (device), self);
+
+	connect_signals (MODEST_MAIN_WINDOW(obj));
 	return (ModestWindow *) obj;
 }
 
@@ -455,6 +572,5 @@ show_context_popup_menu (ModestMainWindow *window,
 					NULL, NULL,
 					event->button, event->time);
 	}
-
 	return TRUE;
 }

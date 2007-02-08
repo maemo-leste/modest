@@ -38,7 +38,6 @@
 #include <modest-tny-account-store.h>
 #include <modest-mail-operation-queue.h>
 #include <modest-cache-mgr.h>
-#include <modest-widget-factory.h>
 
 G_BEGIN_DECLS
 
@@ -122,19 +121,6 @@ ModestAccountMgr*         modest_singletons_get_account_mgr   (ModestSingletons 
  * Returns: the #ModestTnyAccountStore singleton
  **/
 ModestTnyAccountStore*    modest_singletons_get_account_store (ModestSingletons *self);
-
-
-/**
- * modest_singletons_get_widget_factory:
- * @self: a valid #ModestSingletons instance
- * 
- * get the #ModestWidgetFactory singleton instance
- * don't use this function directly, use the modest-runtime
- * functions instead.
- *
- * Returns: the #ModestWidgetFactory singleton
- **/
-ModestWidgetFactory* modest_singletons_get_widget_factory (ModestSingletons *self);
 
 /**
  * modest_singletons_get_cache_mgr:

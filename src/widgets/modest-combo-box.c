@@ -171,7 +171,8 @@ modest_combo_box_new (const GSList *pairs)
 						renderer, "text",
 						COLUMN_DISPLAY_NAME, NULL); 
 	}
-	
+
+	gtk_combo_box_set_active (GTK_COMBO_BOX(obj), 0);
 	return GTK_WIDGET(obj);
 }
 

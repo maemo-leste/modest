@@ -21,8 +21,8 @@ libmodest_widgets_la_SOURCES=       \
 	modest-account-view.h       \
 	modest-combo-box.c	    \
 	modest-combo-box.h          \
-	modest-edit-msg-window.h    \
-	modest-edit-msg-window-ui.h \
+	modest-msg-edit-window.h    \
+	modest-msg-edit-window-ui.h \
 	modest-msg-view-window.h    \
 	modest-folder-view.c        \
 	modest-folder-view.h        \

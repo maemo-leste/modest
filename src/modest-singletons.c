@@ -41,7 +41,6 @@ struct _ModestSingletonsPrivate {
 	ModestTnyAccountStore     *account_store;
 	ModestCacheMgr            *cache_mgr;	
 	ModestMailOperationQueue  *mail_op_queue;
-	ModestWidgetFactory       *widget_factory;
 };
 #define MODEST_SINGLETONS_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                MODEST_TYPE_SINGLETONS, \
@@ -96,7 +95,6 @@ modest_singletons_init (ModestSingletons *obj)
 	priv->account_store  = NULL;
 	priv->cache_mgr      = NULL;
 	priv->mail_op_queue  = NULL;
-	priv->widget_factory = NULL;
 	
 	priv->conf           = modest_conf_new ();
 	if (!priv->conf) {
@@ -127,10 +125,6 @@ modest_singletons_init (ModestSingletons *obj)
 		g_printerr ("modest: cannot create modest mail operation queue instance\n");
 		return;
 	}
-
-	/* don't initialize widget_factory here, but do it lazily, so we can
-	 * instaniatie modest-singletons before gtk_init
-	 */
 }
 
 
@@ -147,13 +141,6 @@ modest_singletons_finalize (GObject *obj)
 	ModestSingletonsPrivate *priv;
 	priv = MODEST_SINGLETONS_GET_PRIVATE(obj);
 
-	if (priv->widget_factory) {
-		g_object_unref (G_OBJECT(priv->widget_factory));
-		check_object_is_dead ((GObject*)priv->widget_factory,
-				      "priv->widget_factory");
-		priv->widget_factory = NULL;
-	}
-
 	if (priv->account_store) {
 		g_object_unref (G_OBJECT(priv->account_store));
 		check_object_is_dead ((GObject*)priv->account_store,
@@ -161,7 +148,6 @@ modest_singletons_finalize (GObject *obj)
 		priv->account_store = NULL;
 	}
 
-	
 	if (priv->account_mgr) {
 		g_object_unref (G_OBJECT(priv->account_mgr));
 		check_object_is_dead ((GObject*)priv->account_mgr,
@@ -241,23 +227,3 @@ modest_singletons_get_mail_operation_queue (ModestSingletons *self)
 	g_return_val_if_fail (self, NULL);
 	return MODEST_SINGLETONS_GET_PRIVATE(self)->mail_op_queue;
 }
-
-
-ModestWidgetFactory*
-modest_singletons_get_widget_factory (ModestSingletons *self)
-{
-	ModestSingletonsPrivate *priv;
-
-	g_return_val_if_fail (self, NULL);
-
-	priv = MODEST_SINGLETONS_GET_PRIVATE(self);
-
-	if (G_UNLIKELY(!priv->widget_factory))  
-		priv->widget_factory = modest_widget_factory_new (priv->account_store);
-	if (G_UNLIKELY(!priv->widget_factory)) {
-		g_printerr ("modest: cannot create modest widget factory instance\n");
-		return NULL;
-	}
-	return priv->widget_factory;
-}
-

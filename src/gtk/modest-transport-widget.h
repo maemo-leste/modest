@@ -4,9 +4,9 @@
 #ifndef __MODEST_TRANSPORT_WIDGET_H__
 #define __MODEST_TRANSPORT_WIDGET_H__
 
-#include <modest-widget-factory.h>
-
 G_BEGIN_DECLS
+
+#include <gtk/gtkvbox.h>
 
 /* convenience macros */
 #define MODEST_TYPE_TRANSPORT_WIDGET             (modest_transport_widget_get_type())
@@ -33,7 +33,7 @@ struct _ModestTransportWidgetClass {
 /* member functions */
 GType        modest_transport_widget_get_type    (void) G_GNUC_CONST;
 
-GtkWidget*   modest_transport_widget_new         (ModestWidgetFactory *factory, ModestProtocol proto);
+GtkWidget*   modest_transport_widget_new         (ModestProtocol proto);
 
 gboolean        modest_transport_widget_get_remember_password (ModestTransportWidget *self);
 gboolean        modest_transport_widget_get_requires_auth     (ModestTransportWidget *self);

@@ -41,13 +41,15 @@
 
 #include <modest-runtime.h>
 #include <modest-defs.h>
-#include <modest-ui.h>
 #include <modest-tny-account-store.h>
 #include <modest-tny-platform-factory.h>
 #include <modest-mail-operation.h>
 #include <modest-tny-account.h>
 #include <modest-account-mgr.h>
 #include <modest-account-mgr-helpers.h>
+
+#include <widgets/modest-main-window.h>
+
 
 static gchar*  check_account (const gchar *account);
 static int     start_ui (const gchar* mailto, const gchar *cc, const gchar *bcc,
@@ -143,10 +145,9 @@ start_ui (const gchar* mailto, const gchar *cc, const gchar *bcc,
 	  const gchar* subject, const gchar *body)
 {
 	ModestWindow *win = NULL;
-	ModestUI *modest_ui = NULL;
 	
 	gint retval = 0;
-	modest_ui = modest_ui_new ();
+	//odest_ui = modest_ui_new ();
 
 	if (mailto||cc||bcc||subject||body) {
 		g_warning ("FIXME: implement this");
@@ -158,14 +159,12 @@ start_ui (const gchar* mailto, const gchar *cc, const gchar *bcc,
 /* 		 				body,    /\* body *\/ */
 /* 						NULL);   /\* attachments *\/ */
 	} else 
-		win = modest_ui_main_window (modest_ui);
+		win = modest_main_window_new ();
 	
 	if (win) {
 		gtk_widget_show_all (GTK_WIDGET (win));
 		gtk_main();
 	}
-	if (modest_ui)
-		g_object_unref (G_OBJECT(modest_ui));
 	
 	return retval;
 }

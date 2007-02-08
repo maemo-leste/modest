@@ -37,7 +37,6 @@
 #include <modest-cache-mgr.h>
 #include <modest-mail-operation-queue.h>
 #include <modest-tny-account-store.h>
-#include <modest-widget-factory.h>
 #include <modest-tny-send-queue.h>
 
 G_BEGIN_DECLS
@@ -158,17 +157,6 @@ ModestCacheMgr*           modest_runtime_get_cache_mgr     (void);
  * Returns: the #ModestMailOperationQueue singleton
  **/
 ModestMailOperationQueue* modest_runtime_get_mail_operation_queue (void);
-
-
-/**
- * modest_runtime_get_widget_factory:
- * 
- * get the #ModestWidgetFactory singleton instance
- *
- * Returns: the #ModestCacheMgr singleton
- **/
-ModestWidgetFactory*      modest_runtime_get_widget_factory     (void);
-
 
 
 /**

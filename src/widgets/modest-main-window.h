@@ -31,8 +31,12 @@
 #ifndef __MODEST_MAIN_WINDOW_H__
 #define __MODEST_MAIN_WINDOW_H__
 
-#include "modest-widget-factory.h"
-#include "modest-window.h"
+#include <gtk/gtkwidget.h>
+#include <widgets/modest-window.h>
+#include <widgets/modest-header-view.h>
+#include <widgets/modest-folder-view.h>
+#include <widgets/modest-msg-view.h>
+
 
 G_BEGIN_DECLS
 
@@ -50,6 +54,17 @@ typedef struct _ModestMainWindowClass ModestMainWindowClass;
 
 struct _ModestMainWindow {
 	ModestWindow parent;
+
+	/* public members;
+	 * NOTE: these can be NULL as not all frontends
+	 * (gtk, maemo, ...) may use all of them.
+	 */
+	ModestHeaderView *header_view;
+	ModestFolderView *folder_view;
+	ModestMsgView    *msg_preview;
+
+	GtkWidget        *status_bar;
+	GtkWidget        *progress_bar;
 };
 
 struct _ModestMainWindowClass {
@@ -74,6 +89,7 @@ GType modest_main_window_get_type (void) G_GNUC_CONST;
  * Returns: a new ModestMainWindow, or NULL in case of error
  */
 ModestWindow* modest_main_window_new (void);
+
 
 G_END_DECLS
 

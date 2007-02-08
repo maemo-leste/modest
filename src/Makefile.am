@@ -1,6 +1,6 @@
 #
 # Makefile.am
-# Time-stamp: <2007-01-30 00:21:56 (djcb)>
+# Time-stamp: <2007-02-07 23:11:40 (djcb)>
 SUBDIRS=$(MODEST_PLATFORM) widgets
 DIST_SUBDIRS = widgets gtk maemo
 
@@ -8,7 +8,6 @@ INCLUDES=\
 	$(MODEST_GSTUFF_CFLAGS)\
 	$(MODEST_LIBTINYMAIL_GNOME_DESKTOP_CFLAGS) \
 	$(MODEST_LIBTINYMAIL_MAEMO_CFLAGS) \
-	-I ${top_srcdir}/src/widgets \
 	-I$(MODEST_PLATFORM) \
 	-DPREFIX=\"@prefix@\" \
 	-DMODEST_LOCALEDIR=\"$(MODEST_LOCALEDIR)\" \
@@ -75,11 +74,8 @@ modest_SOURCES=\
 	modest-tny-platform-factory.h \
 	modest-tny-send-queue.c\
 	modest-tny-send-queue.h\
+	modest-ui-actions.c\
 	modest-ui-actions.h\
-	modest-ui.c\
-	modest-ui.h\
-	modest-widget-factory.c	\
-	modest-widget-factory.h	\
 	modest-widget-memory-priv.h \
 	modest-widget-memory.c\
 	modest-widget-memory.h 

@@ -28,6 +28,9 @@
  */
 
 #include <glib/gi18n.h>
+#include <gtk/gtk.h>
+#include <camel/camel-url.h>
+#include <widgets/modest-combo-box.h>
 #include "modest-account-assistant.h"
 #include "modest-store-widget.h"
 #include "modest-transport-widget.h"
@@ -51,7 +54,6 @@ enum {
 typedef struct _ModestAccountAssistantPrivate ModestAccountAssistantPrivate;
 struct _ModestAccountAssistantPrivate {
 
-	ModestWidgetFactory *factory;
 	ModestAccountMgr *account_mgr;
 
 	GtkWidget *account_name;
@@ -270,7 +272,7 @@ on_receiving_combo_box_changed (GtkComboBox *combo, ModestAccountAssistant *self
 	
 	/* FIXME: we could have these widgets cached instead of
 	   creating them every time */
-	priv->store_widget = modest_store_widget_new (priv->factory, proto);
+	priv->store_widget = modest_store_widget_new (proto);
 	if (proto == MODEST_PROTOCOL_STORE_POP || proto == MODEST_PROTOCOL_STORE_IMAP) {
 		g_signal_connect (priv->store_widget, 
 				  "data_changed", 
@@ -291,7 +293,7 @@ static void
 add_receiving_page (ModestAccountAssistant *self)
 {
 	GtkWidget *page, *box, *combo;
-
+	ModestPairList *protos;
 	ModestAccountAssistantPrivate *priv;
 
 	priv = MODEST_ACCOUNT_ASSISTANT_GET_PRIVATE(self);	
@@ -306,8 +308,10 @@ add_receiving_page (ModestAccountAssistant *self)
 			    gtk_label_new(_("Server type")),
 			    FALSE,FALSE,6);
 
-	combo = modest_widget_factory_get_combo_box (priv->factory,
-						     MODEST_COMBO_BOX_TYPE_STORE_PROTOS);
+	protos = modest_protocol_info_get_protocol_pair_list (MODEST_PROTOCOL_TYPE_STORE);
+	combo = modest_combo_box_new (protos);
+	modest_pair_list_free (protos);
+	
 	g_signal_connect (G_OBJECT(combo), "changed",
 			  G_CALLBACK(on_receiving_combo_box_changed), self);
 
@@ -350,9 +354,8 @@ on_sending_combo_box_changed (GtkComboBox *combo, ModestAccountAssistant *self)
 	if (priv->transport_widget)
 		gtk_container_remove (GTK_CONTAINER(priv->transport_holder),
 				      priv->transport_widget);
-	
-	priv->transport_widget = modest_transport_widget_new (priv->factory,
-							      modest_protocol_info_get_protocol(chosen));
+	priv->transport_widget =
+		modest_transport_widget_new (modest_protocol_info_get_protocol(chosen));
 
 	gtk_container_add (GTK_CONTAINER(priv->transport_holder),
 			   priv->transport_widget);
@@ -366,7 +369,7 @@ static void
 add_sending_page (ModestAccountAssistant *self)
 {
 	GtkWidget *page, *box, *combo;
-
+	ModestPairList *protos;
 	ModestAccountAssistantPrivate *priv;
 
 	priv = MODEST_ACCOUNT_ASSISTANT_GET_PRIVATE(self);
@@ -380,9 +383,11 @@ add_sending_page (ModestAccountAssistant *self)
 	gtk_box_pack_start (GTK_BOX(box),
 			    gtk_label_new(_("Server type")),
 			    FALSE,FALSE,0);
+	
+	protos = modest_protocol_info_get_protocol_pair_list (MODEST_PROTOCOL_TYPE_TRANSPORT);
+	combo = modest_combo_box_new (protos);
+	modest_pair_list_free (protos);
 
-	combo = modest_widget_factory_get_combo_box (priv->factory,
-						     MODEST_COMBO_BOX_TYPE_TRANSPORT_PROTOS);
 	g_signal_connect (G_OBJECT(combo), "changed",
 			  G_CALLBACK(on_sending_combo_box_changed), self);
 
@@ -451,10 +456,9 @@ add_final_page (ModestAccountAssistant *self)
 static void
 modest_account_assistant_init (ModestAccountAssistant *obj)
 {	
-	ModestAccountAssistantPrivate *priv;
-		
+	ModestAccountAssistantPrivate *priv;	
 	priv = MODEST_ACCOUNT_ASSISTANT_GET_PRIVATE(obj);	
-	priv->factory           = NULL;
+
 	priv->account_mgr	= NULL;
 
 	priv->store_widget	= NULL;
@@ -467,18 +471,11 @@ modest_account_assistant_finalize (GObject *obj)
 	ModestAccountAssistantPrivate *priv;
 		
 	priv = MODEST_ACCOUNT_ASSISTANT_GET_PRIVATE(obj);
-
-	if (priv->factory) {
-		g_object_unref (G_OBJECT(priv->factory));
-		priv->factory = NULL;
-	}
 	
 	if (priv->account_mgr) {
 		g_object_unref (G_OBJECT(priv->account_mgr));
 		priv->account_mgr = NULL;
 	}
-
-
 
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
@@ -674,23 +671,19 @@ on_apply (ModestAccountAssistant *self, gpointer user_data)
 
 
 GtkWidget*
-modest_account_assistant_new (ModestAccountMgr *account_mgr, ModestWidgetFactory *factory)
+modest_account_assistant_new (ModestAccountMgr *account_mgr)
 {
 	GObject *obj;
 	ModestAccountAssistant *self;
 	ModestAccountAssistantPrivate *priv;
-		
-	g_return_val_if_fail (factory, NULL);
+
 	g_return_val_if_fail (account_mgr, NULL);
 	
 	obj  = g_object_new(MODEST_TYPE_ACCOUNT_ASSISTANT, NULL);
 	self = MODEST_ACCOUNT_ASSISTANT(obj);
 
 	priv = MODEST_ACCOUNT_ASSISTANT_GET_PRIVATE(self);
-	
-	g_object_ref (factory);
-	priv->factory = factory;
-	
+
 	g_object_ref (account_mgr);
 	priv->account_mgr = account_mgr;
 
