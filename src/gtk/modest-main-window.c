@@ -316,6 +316,13 @@ on_delete_event (GtkWidget *widget, GdkEvent  *event, ModestMainWindow *self)
 	return FALSE;
 }
 
+static void
+on_destroy (GtkWidget *widget, GdkEvent  *event, ModestMainWindow *self)
+{
+	gtk_main_quit();
+}
+
+
 
 static void
 connect_signals (ModestMainWindow *self)
@@ -374,7 +381,7 @@ connect_signals (ModestMainWindow *self)
 			  G_CALLBACK(on_online_toggle_toggled), NULL);
 	
 	/* window */
-	//g_signal_connect (G_OBJECT(self), "destroy", G_CALLBACK(on_main_window_destroy), NULL);
+	g_signal_connect (G_OBJECT(self), "destroy", G_CALLBACK(on_destroy), NULL);
 	g_signal_connect (G_OBJECT(self), "delete-event", G_CALLBACK(on_delete_event), self);
 }
 

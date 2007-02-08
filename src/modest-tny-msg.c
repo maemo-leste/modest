@@ -32,6 +32,10 @@
 #include <tny-gtk-text-buffer-stream.h>
 #include <tny-simple-list.h>
 #include <tny-folder.h>
+#include <modest-tny-platform-factory.h>
+#include <tny-camel-stream.h>
+#include <camel/camel-stream-mem.h>
+
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -39,6 +43,124 @@
 
 #include <modest-tny-msg.h>
 #include "modest-text-utils.h"
+
+static TnyMimePart * add_body_part (TnyMsg *msg, const gchar *body,
+				    const gchar *content_type, gboolean has_attachments);
+static void add_attachments (TnyMsg *msg, GList *attachments_list);
+static char * get_content_type(const gchar *s);
+static gboolean is_ascii(const gchar *s);
+
+TnyMsg*
+modest_tny_msg_new (const gchar* mailto, const gchar* from, const gchar *cc,
+		    const gchar *bcc, const gchar* subject, const gchar *body,
+		    GSList *attachments)
+{
+	TnyPlatformFactory *fact;
+	TnyMsg *new_msg;
+	TnyHeader *header;
+	gchar *content_type;
+	
+	/* Create new msg */
+	fact    = modest_tny_platform_factory_get_instance ();
+	new_msg = tny_platform_factory_new_msg (fact);
+	header  = tny_platform_factory_new_header (fact);
+	
+	/* WARNING: set the header before assign values to it */
+	tny_msg_set_header (new_msg, header);
+	tny_header_set_from (TNY_HEADER (header), from);
+	tny_header_set_replyto (TNY_HEADER (header), from);
+	tny_header_set_to (TNY_HEADER (header), mailto);
+	tny_header_set_cc (TNY_HEADER (header), cc);
+	tny_header_set_bcc (TNY_HEADER (header), bcc);
+	tny_header_set_subject (TNY_HEADER (header), subject);
+
+	content_type = get_content_type(body);
+	
+	
+	/* Add the body of the new mail */	
+	add_body_part (new_msg, body, content_type, (attachments ? TRUE: FALSE));
+		       
+	/* Add attachments */
+	add_attachments (new_msg, (GList*) attachments);
+
+	return new_msg;
+}
+
+
+/* FIXME: this func copy from modest-mail-operation: refactor */
+static TnyMimePart *
+add_body_part (TnyMsg *msg, 
+	       const gchar *body,
+	       const gchar *content_type,
+	       gboolean has_attachments)
+{
+	TnyMimePart *text_body_part = NULL;
+	TnyStream *text_body_stream;
+	TnyPlatformFactory *fact;
+
+	fact = modest_tny_platform_factory_get_instance ();
+
+	/* Create the stream */
+	text_body_stream = TNY_STREAM (tny_camel_stream_new
+				       (camel_stream_mem_new_with_buffer
+					(body, strlen(body))));
+
+	/* Create body part if needed */
+	if (has_attachments)
+		text_body_part = tny_platform_factory_new_mime_part (fact);
+	else
+		text_body_part = TNY_MIME_PART(msg);
+
+	/* Construct MIME part */
+	tny_stream_reset (text_body_stream);
+	tny_mime_part_construct_from_stream (text_body_part,
+					     text_body_stream,
+					     content_type);
+	tny_stream_reset (text_body_stream);
+
+	/* Add part if needed */
+	if (has_attachments) {
+		tny_mime_part_add_part (TNY_MIME_PART (msg), text_body_part);
+		g_object_unref (G_OBJECT(text_body_part));
+	}
+
+	/* Clean */
+	g_object_unref (text_body_stream);
+
+	return text_body_part;
+}
+
+static void
+add_attachments (TnyMsg *msg, GList *attachments_list)
+{
+	GList *pos;
+	TnyMimePart *attachment_part, *old_attachment;
+	const gchar *attachment_content_type;
+	const gchar *attachment_filename;
+	TnyStream *attachment_stream;
+	TnyPlatformFactory *fact;
+
+	fact = modest_tny_platform_factory_get_instance ();
+	for (pos = (GList *)attachments_list; pos; pos = pos->next) {
+
+		old_attachment = pos->data;
+		attachment_filename = tny_mime_part_get_filename (old_attachment);
+		attachment_stream = tny_mime_part_get_stream (old_attachment);
+		attachment_part = tny_platform_factory_new_mime_part (fact);
+		
+		attachment_content_type = tny_mime_part_get_content_type (old_attachment);
+				 
+		tny_mime_part_construct_from_stream (attachment_part,
+						     attachment_stream,
+						     attachment_content_type);
+		tny_stream_reset (attachment_stream);
+		
+		tny_mime_part_set_filename (attachment_part, attachment_filename);
+		
+		tny_mime_part_add_part (TNY_MIME_PART (msg), attachment_part);
+/* 		g_object_unref (attachment_part); */
+	}
+}
 
 
 gchar * 
@@ -143,4 +265,35 @@ modest_tny_msg_find_body_part (TnyMsg *msg, gboolean want_html)
 {
 	return modest_tny_msg_find_body_part_from_mime_part (TNY_MIME_PART(msg),
 							     want_html);
+}
+
+
+
+static gboolean
+is_ascii(const gchar *s)
+{
+	while (s[0]) {
+		if (s[0] & 128 || s[0] < 32)
+			return FALSE;
+		s++;
+	}
+	return TRUE;
+}
+
+static char *
+get_content_type(const gchar *s)
+{
+	GString *type;
+	
+	type = g_string_new("text/plain");
+	if (!is_ascii(s)) {
+		if (g_utf8_validate(s, -1, NULL)) {
+			g_string_append(type, "; charset=\"utf-8\"");
+		} else {
+			/* it should be impossible to reach this, but better safe than sorry */
+			g_warning("invalid utf8 in message");
+			g_string_append(type, "; charset=\"latin1\"");
+		}
+	}
+	return g_string_free(type, FALSE);
 }

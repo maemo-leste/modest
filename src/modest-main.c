@@ -45,18 +45,34 @@
 #include <modest-tny-platform-factory.h>
 #include <modest-mail-operation.h>
 #include <modest-tny-account.h>
+#include <modest-tny-msg.h>
 #include <modest-account-mgr.h>
 #include <modest-account-mgr-helpers.h>
 
 #include <widgets/modest-main-window.h>
+#include <widgets/modest-msg-edit-window.h>
 
+typedef enum {
+	MODEST_ERR_NONE    = 0,  /* no error */
+	MODEST_ERR_OPTIONS,      /* error in the options */
+	MODEST_ERR_CONF,         /* error getting confuration db */
+	MODEST_ERR_UI,           /* error in the UI */
+	MODEST_ERR_HILDON,       /* error with Hildon (maemo-only) */
+	MODEST_ERR_RUN,          /* errr running */
+	MODEST_ERR_SEND,         /* error sending mail */
+	MODEST_ERR_PARAM,        /* error in one or more of the parameters */
+	MODEST_ERR_INIT          /* error in initialization */
+} ModestErrorCode;
 
-static gchar*  check_account (const gchar *account);
-static int     start_ui (const gchar* mailto, const gchar *cc, const gchar *bcc,
-			 const gchar* subject, const gchar *body);
-static int     send_mail (const gchar* account,
-			  const gchar* mailto, const gchar *cc, const gchar *bcc,
-			  const gchar* subject, const gchar *body);
+static gchar*           check_account (const gchar *account);
+
+static ModestErrorCode  start_ui      (const gchar *account,
+				       const gchar* mailto, const gchar *cc,
+				       const gchar *bcc, const gchar* subject, const gchar *body);
+
+static ModestErrorCode  send_mail     (const gchar* account,
+				       const gchar* mailto, const gchar *cc, const gchar *bcc,
+				       const gchar* subject, const gchar *body);
 int
 main (int argc, char *argv[])
 {
@@ -68,7 +84,7 @@ main (int argc, char *argv[])
 	static gboolean batch = FALSE;
 	static gchar    *mailto=NULL, *subject=NULL, *bcc=NULL,
 		*cc=NULL, *body=NULL, *account=NULL;
-	
+	gchar *account_or_default;
 	static GOptionEntry options[] = {
 		{ "mailto", 'm', 0, G_OPTION_ARG_STRING, &mailto,
 		  N_("New email to <addresses> (comma-separated)"), NULL},
@@ -104,25 +120,21 @@ main (int argc, char *argv[])
 		goto cleanup;
 	}
 	g_option_context_free (context);
+
+	account_or_default = check_account (account);
+	g_free (account);
 	
 	if (!batch) {
 		if (!modest_runtime_init_ui (argc, argv)) {
-			g_printerr ("modest: cannot start UI\n");
+			g_printerr ("modest: cannot start ui\n");
 			retval = MODEST_ERR_UI;
 			goto cleanup;
 		} else
-			retval = start_ui (mailto, cc, bcc, subject, body);
+			retval = start_ui (account_or_default,
+					   mailto, cc, bcc, subject, body);
 	} else {
-		gchar *account_or_default;
-		account_or_default = check_account (account);
-		g_free (account);
-
-		if (!account_or_default) {
-			g_printerr ("modest: account is not valid\n");
-			retval = MODEST_ERR_PARAM;
-			goto cleanup;
-		} 
-		retval = send_mail (account, mailto, cc, bcc, subject, body);
+		retval = send_mail (account_or_default,
+				    mailto, cc, bcc, subject, body);
 	}
 	
 cleanup:
@@ -140,33 +152,40 @@ cleanup:
 }
 
 
-static int
-start_ui (const gchar* mailto, const gchar *cc, const gchar *bcc,
+static ModestErrorCode 
+start_ui (const gchar *account, const gchar* mailto, const gchar *cc, const gchar *bcc,
 	  const gchar* subject, const gchar *body)
 {
 	ModestWindow *win = NULL;
-	
-	gint retval = 0;
-	//odest_ui = modest_ui_new ();
 
-	if (mailto||cc||bcc||subject||body) {
-		g_warning ("FIXME: implement this");
-/* 		ok = modest_ui_new_edit_window (modest_ui, */
-/* 						mailto,  /\* to *\/ */
-/* 						cc,      /\* cc *\/ */
-/* 						bcc,     /\* bcc *\/ */
-/* 						subject,    /\* subject *\/ */
-/* 		 				body,    /\* body *\/ */
-/* 						NULL);   /\* attachments *\/ */
+	if (mailto||cc||bcc||subject||body) {		
+		gchar *from;
+		TnyMsg *msg;
+
+		if (!account) {
+			g_printerr ("modest: no valid account provided, nor is default one available\n");
+			return MODEST_ERR_PARAM;
+		}
+		from = modest_account_mgr_get_from_string (modest_runtime_get_account_mgr(), account);
+		msg  = modest_tny_msg_new (mailto,from,cc,bcc,subject,body,NULL);
+		
+		win = modest_msg_edit_window_new (MODEST_EDIT_TYPE_NEW);
+		modest_msg_edit_window_set_msg  (MODEST_MSG_EDIT_WINDOW(win), msg);
+		
+		g_object_unref (G_OBJECT(msg));
+		g_free (from);
 	} else 
 		win = modest_main_window_new ();
-	
-	if (win) {
-		gtk_widget_show_all (GTK_WIDGET (win));
-		gtk_main();
+
+	if (!win) {
+		g_printerr ("modest: failed to create window\n");
+		return MODEST_ERR_UI;
 	}
 	
-	return retval;
+	gtk_widget_show_all (GTK_WIDGET (win));
+	gtk_main();
+	
+	return MODEST_ERR_NONE;
 }
 
 static gchar*
@@ -174,7 +193,7 @@ check_account (const gchar* account)
 {
 	gchar *retval;
 	ModestAccountMgr *account_mgr;
-
+	
 	account_mgr = modest_runtime_get_account_mgr();
 	
 	if (!account)
@@ -183,14 +202,14 @@ check_account (const gchar* account)
 		retval = g_strdup (account);
 
 	/* sanity check */
-	if (!modest_account_mgr_account_exists (account_mgr, account, FALSE, NULL)) {
+	if (!account || !modest_account_mgr_account_exists (account_mgr, account, FALSE, NULL)) {
 		g_free (retval);
 		retval = NULL;
 	}
 	return retval;
 }
 
-static int
+static ModestErrorCode
 send_mail (const gchar* account_name,
 	   const gchar* mailto, const gchar *cc, const gchar *bcc,
 	   const gchar* subject, const gchar *body)
@@ -223,7 +242,7 @@ send_mail (const gchar* account_name,
 		retval = MODEST_ERR_SEND;
 	} else
 		retval = MODEST_ERR_NONE; /* hurray! */
-
+	
 	g_object_unref (G_OBJECT(account));
 	g_object_unref (G_OBJECT(mail_operation));
 	g_free (from_string);

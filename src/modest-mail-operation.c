@@ -70,13 +70,6 @@ static void     update_folders_cb    (TnyFolderStore *self,
 static void     add_attachments      (TnyMsg *msg, 
 				      GList *attachments_list);
 
-
-static TnyMimePart *         add_body_part    (TnyMsg *msg, 
-					       const gchar *body,
-					       const gchar *content_type, 
-					       gboolean has_attachments);
-
-
 static void        modest_mail_operation_xfer_folder       (ModestMailOperation *self,
 							    TnyFolder *folder,
 							    TnyFolderStore *parent,
@@ -119,10 +112,6 @@ typedef struct _RefreshFolderAsyncHelper
 	guint canceled;
 
 } RefreshFolderAsyncHelper;
-
-/* some utility functions */
-static char * get_content_type(const gchar *s);
-static gboolean is_ascii(const gchar *s);
 
 /* globals */
 static GObjectClass *parent_class = NULL;
@@ -236,18 +225,12 @@ modest_mail_operation_send_mail (ModestMailOperation *self,
 void
 modest_mail_operation_send_new_mail (ModestMailOperation *self,
 				     TnyTransportAccount *transport_account,
-				     const gchar *from,
-				     const gchar *to,
-				     const gchar *cc,
-				     const gchar *bcc,
-				     const gchar *subject,
-				     const gchar *body,
+				     const gchar *from,  const gchar *to,
+				     const gchar *cc,  const gchar *bcc,
+				     const gchar *subject, const gchar *body,
 				     const GList *attachments_list)
 {
-	TnyPlatformFactory *fact;
 	TnyMsg *new_msg;
-	TnyHeader *header;
-	gchar *content_type;
 	ModestMailOperationPrivate *priv = NULL;
 
 	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
@@ -259,40 +242,19 @@ modest_mail_operation_send_new_mail (ModestMailOperation *self,
 	if (to == NULL) {
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 			     MODEST_MAIL_OPERATION_ERROR_MISSING_PARAMETER,
-			     _("Error trying to send a mail. You need to set almost one a recipient"));
+			     _("Error trying to send a mail. You need to set at least one recipient"));
 		return;
 	}
 
-	/* Create new msg */
-	fact    = modest_tny_platform_factory_get_instance ();
-	new_msg = tny_platform_factory_new_msg (fact);
-	header  = tny_platform_factory_new_header (fact);
-
-	/* WARNING: set the header before assign values to it */
-	tny_msg_set_header (new_msg, header);
-	tny_header_set_from (TNY_HEADER (header), from);
-	tny_header_set_replyto (TNY_HEADER (header), from);
-	tny_header_set_to (TNY_HEADER (header), to);
-	tny_header_set_cc (TNY_HEADER (header), cc);
-	tny_header_set_bcc (TNY_HEADER (header), bcc);
-	tny_header_set_subject (TNY_HEADER (header), subject);
-
-	content_type = get_content_type(body);
-
-	/* Add the body of the new mail */	
-	add_body_part (new_msg, body, (const gchar *) content_type,
-		       (attachments_list == NULL) ? FALSE : TRUE);
-
-	/* Add attachments */
-	add_attachments (new_msg, (GList*) attachments_list);
-
-	/* Send mail */
+	new_msg = modest_tny_msg_new (to, from, cc, bcc, subject, body, NULL); /* FIXME: attachments */
+	if (!new_msg) {
+		g_printerr ("modest: failed to create a new msg\n");
+		return;
+	}
+	
 	modest_mail_operation_send_mail (self, transport_account, new_msg);
 
-	/* Clean */
-	g_object_unref (header);
-	g_object_unref (new_msg);
-	g_free(content_type);
+	g_object_unref (G_OBJECT(new_msg));
 }
 
 static void
@@ -391,7 +353,8 @@ modest_mail_operation_create_forward_mail (TnyMsg *msg,
 	add_attachments (new_msg, attachments_list);
 
 	/* Clean */
-	if (attachments_list) g_list_free (attachments_list);
+	if (attachments_list)
+		g_list_free (attachments_list);
 	g_object_unref (G_OBJECT (parts));
 
 	return new_msg;
@@ -938,34 +901,6 @@ modest_mail_operation_xfer_msg (ModestMailOperation *self,
 /* ******************************************************************* */
 /* ************************* UTILIY FUNCTIONS ************************ */
 /* ******************************************************************* */
-static gboolean
-is_ascii(const gchar *s)
-{
-	while (s[0]) {
-		if (s[0] & 128 || s[0] < 32)
-			return FALSE;
-		s++;
-	}
-	return TRUE;
-}
-
-static char *
-get_content_type(const gchar *s)
-{
-	GString *type;
-	
-	type = g_string_new("text/plain");
-	if (!is_ascii(s)) {
-		if (g_utf8_validate(s, -1, NULL)) {
-			g_string_append(type, "; charset=\"utf-8\"");
-		} else {
-			/* it should be impossible to reach this, but better safe than sorry */
-			g_warning("invalid utf8 in message");
-			g_string_append(type, "; charset=\"latin1\"");
-		}
-	}
-	return g_string_free(type, FALSE);
-}
 
 static void
 add_attachments (TnyMsg *msg, GList *attachments_list)
@@ -999,45 +934,3 @@ add_attachments (TnyMsg *msg, GList *attachments_list)
 	}
 }
 
-
-static TnyMimePart *
-add_body_part (TnyMsg *msg, 
-	       const gchar *body,
-	       const gchar *content_type,
-	       gboolean has_attachments)
-{
-	TnyMimePart *text_body_part = NULL;
-	TnyStream *text_body_stream;
-	TnyPlatformFactory *fact;
-
-	fact = modest_tny_platform_factory_get_instance ();
-
-	/* Create the stream */
-	text_body_stream = TNY_STREAM (tny_camel_stream_new
-				       (camel_stream_mem_new_with_buffer
-					(body, strlen(body))));
-
-	/* Create body part if needed */
-	if (has_attachments)
-		text_body_part = tny_platform_factory_new_mime_part (fact);
-	else
-		text_body_part = TNY_MIME_PART(msg);
-
-	/* Construct MIME part */
-	tny_stream_reset (text_body_stream);
-	tny_mime_part_construct_from_stream (text_body_part,
-					     text_body_stream,
-					     content_type);
-	tny_stream_reset (text_body_stream);
-
-	/* Add part if needed */
-	if (has_attachments) {
-		tny_mime_part_add_part (TNY_MIME_PART (msg), text_body_part);
-		g_object_unref (G_OBJECT(text_body_part));
-	}
-
-	/* Clean */
-	g_object_unref (text_body_stream);
-
-	return text_body_part;
-}

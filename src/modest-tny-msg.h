@@ -31,6 +31,24 @@
 #define __MODEST_TNY_MSG_H__
 
 /**
+ * modest_tny_msg_new:
+ * @mailto: recipient for the message
+ * @mailfrom: sender of this message
+ * @cc: Cc: address for the message
+ * @bcc: Bcc: address for the message
+ * @subject: subject for the messdage
+ * @body: body for the message
+ * @attachments: a list of attachments (local URIs)
+ * 
+ * create a new TnyMsg with the given parameters
+ * 
+ * Returns: a new TnyMsg (free with g_object_unref)
+ */	 
+TnyMsg* modest_tny_msg_new (const gchar* mailto, const gchar* mailfrom, const gchar *cc,
+			    const gchar *bcc, const gchar* subject, const gchar *body,
+			    GSList *attachments);
+
+/**
  * modest_tny_msg_find_body_part:
  * @self: a message
  * @want_html: prefer HTML-part when there are multiple body parts?
