@@ -459,6 +459,36 @@ modest_header_view_get_selected_headers (ModestHeaderView *self)
 	return header_list;
 }
 
+
+/* scroll our list view so the selected item is visible */
+static void
+scroll_to_selected (ModestHeaderView *self, GtkTreeIter *iter, gboolean up)
+{
+	GtkTreePath *selected_path;
+	GtkTreePath *start, *end;
+	
+	GtkTreeModel *model;
+	
+	model         = gtk_tree_view_get_model (GTK_TREE_VIEW(self));
+	selected_path = gtk_tree_model_get_path (model, iter);
+
+	start = gtk_tree_path_new ();
+	end   = gtk_tree_path_new ();
+
+	gtk_tree_view_get_visible_range (GTK_TREE_VIEW(self), &start, &end);
+
+	if (gtk_tree_path_compare (selected_path, start) < 0 ||
+	    gtk_tree_path_compare (end, selected_path) < 0)
+		gtk_tree_view_scroll_to_cell (GTK_TREE_VIEW(self),
+					      selected_path, NULL, TRUE,
+					      up ? 0.0 : 1.0,
+					      up ? 0.0 : 1.0);
+	gtk_tree_path_free (selected_path);
+	gtk_tree_path_free (start);
+	gtk_tree_path_free (end);
+}
+
+
 void 
 modest_header_view_select_next (ModestHeaderView *self)
 {
@@ -468,8 +498,10 @@ modest_header_view_select_next (ModestHeaderView *self)
 
 	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (self));
 	if (gtk_tree_selection_get_selected (sel, &model, &iter)) {
-		if (gtk_tree_model_iter_next (model, &iter))
+		if (gtk_tree_model_iter_next (model, &iter)) {
 			gtk_tree_selection_select_iter (sel, &iter);
+			scroll_to_selected (self, &iter, FALSE);	
+		}
 	}
 }
 
@@ -488,9 +520,11 @@ modest_header_view_select_prev (ModestHeaderView *self)
 		/* Move path up */
 		if (gtk_tree_path_prev (path)) {
 			gtk_tree_model_get_iter (model, &iter, path);
-
+			
 			/* Select the new one */
 			gtk_tree_selection_select_iter (sel, &iter);
+			scroll_to_selected (self, &iter, TRUE);	
+
 		}
 		gtk_tree_path_free (path);
 	}
