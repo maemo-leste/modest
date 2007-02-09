@@ -73,7 +73,6 @@ ModestHeaderView
 </para>
 
 @folder: 
-@columns: 
 @style: 
 @Returns: 
 

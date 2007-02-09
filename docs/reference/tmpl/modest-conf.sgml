@@ -48,9 +48,9 @@ ModestConf
 
 </para>
 
-@modestconf: the object which received the signal.
-@arg1: 
-@arg2: 
+@: 
+@: 
+@: 
 
 <!-- ##### FUNCTION modest_conf_new ##### -->
 <para>

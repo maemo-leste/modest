@@ -85,24 +85,27 @@ GTKDOC_LIBS= \
 	$(top_builddir)/src/gtk/libmodest-ui.la		\
 	$(top_builddir)/src/widgets/libmodest-widgets.la\
 	${top_builddir}/src/modest-account-mgr.o \
+	${top_builddir}/src/modest-account-mgr-helpers.o \
+	${top_builddir}/src/modest-account-mgr-priv.o \
 	${top_builddir}/src/modest-cache-mgr.o \
 	${top_builddir}/src/modest-conf.o \
 	${top_builddir}/src/modest-formatter.o \
-	${top_builddir}/src/modest-icon-factory.o \
 	${top_builddir}/src/modest-local-folder-info.o \
 	${top_builddir}/src/modest-mail-operation.o \
 	${top_builddir}/src/modest-mail-operation-queue.o \
 	${top_builddir}/src/modest-marshal.o \
 	${top_builddir}/src/modest-pair.o \
-	${top_builddir}/src/modest-presets.o \
 	${top_builddir}/src/modest-protocol-info.o \
+	${top_builddir}/src/modest-runtime.o \
+	${top_builddir}/src/modest-singletons.o \
 	${top_builddir}/src/modest-text-utils.o \
+	${top_builddir}/src/modest-tny-account.o \
 	${top_builddir}/src/modest-tny-account-store.o \
 	${top_builddir}/src/modest-tny-folder.o \
-	${top_builddir}/src/modest-tny-msg-actions.o \
+	${top_builddir}/src/modest-tny-msg.o \
 	${top_builddir}/src/modest-tny-platform-factory.o \
-	${top_builddir}/src/modest-ui.o \
-	${top_builddir}/src/modest-widget-factory.o \
+	${top_builddir}/src/modest-tny-send-queue.o \
+	${top_builddir}/src/modest-ui-actions.o \
 	${top_builddir}/src/modest-widget-memory.o
 
 # This includes the standard gtk-doc make rules, copied by gtkdocize.

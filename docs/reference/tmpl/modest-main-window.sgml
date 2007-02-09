@@ -30,8 +30,6 @@ ModestMainWindow
 
 </para>
 
-@factory: 
-@account_store: 
 @Returns: 
 
 

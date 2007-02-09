@@ -45,6 +45,24 @@ modest-tny-folder
 @Returns: 
 
 
+<!-- ##### FUNCTION modest_tny_folder_is_local_folder ##### -->
+<para>
+
+</para>
+
+@folder: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_tny_folder_get_local_folder_type ##### -->
+<para>
+
+</para>
+
+@folder: 
+@Returns: 
+
+
 <!-- ##### FUNCTION modest_tny_folder_get_rules ##### -->
 <para>
 

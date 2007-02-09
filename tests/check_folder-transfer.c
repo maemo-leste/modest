@@ -38,7 +38,6 @@
 #include <tny-folder.h>
 #include <tny-folder-store.h>
 #include <modest-tny-platform-factory.h>
-#include <modest-widget-factory.h>
 #include <modest-runtime.h>
 
 #include <modest-account-mgr.h>

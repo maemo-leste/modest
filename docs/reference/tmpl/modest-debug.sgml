@@ -36,14 +36,6 @@ modest-debug
 @MODEST_DEBUG_DEBUG_OBJECTS: 
 @MODEST_DEBUG_DEBUG_SIGNALS: 
 
-<!-- ##### FUNCTION modest_debug_get_flags ##### -->
-<para>
-
-</para>
-
-@Returns: 
-
-
 <!-- ##### FUNCTION modest_debug_g_type_init ##### -->
 <para>
 

@@ -37,21 +37,3 @@ ModestWindow
 </para>
 
 
-<!-- ##### FUNCTION modest_window_get_account_store ##### -->
-<para>
-
-</para>
-
-@window: 
-@Returns: 
-
-
-<!-- ##### FUNCTION modest_window_get_widget_factory ##### -->
-<para>
-
-</para>
-
-@window: 
-@Returns: 
-
-

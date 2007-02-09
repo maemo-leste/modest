@@ -30,12 +30,20 @@ ModestTransportWidget
 
 </para>
 
-@factory: 
 @proto: 
 @Returns: 
 
 
 <!-- ##### FUNCTION modest_transport_widget_get_remember_password ##### -->
+<para>
+
+</para>
+
+@self: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_transport_widget_get_requires_auth ##### -->
 <para>
 
 </para>

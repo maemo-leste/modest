@@ -53,3 +53,32 @@ ModestFolderView
 @Returns: 
 
 
+<!-- ##### FUNCTION modest_folder_view_rename ##### -->
+<para>
+
+</para>
+
+@self: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_folder_view_add_subfolder ##### -->
+<para>
+
+</para>
+
+@self: 
+@folder: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_folder_view_update_model ##### -->
+<para>
+
+</para>
+
+@self: 
+@account_store: 
+@Returns: 
+
+

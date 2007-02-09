@@ -30,7 +30,6 @@ ModestStoreWidget
 
 </para>
 
-@factory: 
 @proto: 
 @Returns: 
 
@@ -63,6 +62,15 @@ ModestStoreWidget
 
 
 <!-- ##### FUNCTION modest_store_widget_get_proto ##### -->
+<para>
+
+</para>
+
+@self: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_store_widget_get_path ##### -->
 <para>
 
 </para>

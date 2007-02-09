@@ -1,37 +1,15 @@
 <SECTION>
-<FILE>modest-ui</FILE>
-<TITLE>ModestUI</TITLE>
-ModestUI
-modest_ui_new
-modest_ui_main_window
-modest_ui_edit_window
-<SUBSECTION Standard>
-MODEST_UI
-MODEST_IS_UI
-MODEST_TYPE_UI
-modest_ui_get_type
-MODEST_UI_CLASS
-MODEST_IS_UI_CLASS
-MODEST_UI_GET_CLASS
-</SECTION>
-
-<SECTION>
 <FILE>modest-account-mgr</FILE>
 <TITLE>ModestAccountMgr</TITLE>
 ModestAccountMgr
-ModestServerAccountData
-ModestAccountData
 modest_account_mgr_new
 modest_account_mgr_add_account
 modest_account_mgr_add_server_account
+modest_account_mgr_add_server_account_uri
 modest_account_mgr_remove_account
-modest_account_mgr_get_account_data
-modest_account_mgr_free_account_data
 modest_account_mgr_account_names
 modest_account_mgr_search_server_accounts
 modest_account_mgr_account_exists
-modest_account_mgr_account_set_enabled
-modest_account_mgr_account_get_enabled
 modest_account_mgr_get_string
 modest_account_mgr_get_int
 modest_account_mgr_get_bool
@@ -106,9 +84,6 @@ MODEST_FORMATTER_GET_CLASS
 <TITLE>ModestTnyPlatformFactory</TITLE>
 ModestTnyPlatformFactory
 modest_tny_platform_factory_get_instance
-modest_tny_platform_factory_get_account_mgr_instance
-modest_tny_platform_factory_get_conf_instance
-modest_tny_platform_factory_get_mail_operation_queue_instance
 <SUBSECTION Standard>
 MODEST_TNY_PLATFORM_FACTORY
 MODEST_IS_TNY_PLATFORM_FACTORY
@@ -177,36 +152,13 @@ MODEST_MAIL_OPERATION_GET_CLASS
 </SECTION>
 
 <SECTION>
-<FILE>modest-widget-factory</FILE>
-<TITLE>ModestWidgetFactory</TITLE>
-ModestWidgetFactory
-ModestComboBoxType
-modest_widget_factory_new
-modest_widget_factory_get_folder_view
-modest_widget_factory_get_header_view
-modest_widget_factory_get_msg_preview
-modest_widget_factory_get_account_view
-modest_widget_factory_get_progress_bar
-modest_widget_factory_get_status_bar
-modest_widget_factory_get_combo_box
-modest_widget_factory_get_online_toggle
-modest_widget_factory_get_folder_info_label
-<SUBSECTION Standard>
-MODEST_WIDGET_FACTORY
-MODEST_IS_WIDGET_FACTORY
-MODEST_TYPE_WIDGET_FACTORY
-modest_widget_factory_get_type
-MODEST_WIDGET_FACTORY_CLASS
-MODEST_IS_WIDGET_FACTORY_CLASS
-MODEST_WIDGET_FACTORY_GET_CLASS
-</SECTION>
-
-<SECTION>
 <FILE>modest-tny-account-store</FILE>
 ModestTnyGetPassFunc
 <TITLE>ModestTnyAccountStore</TITLE>
 ModestTnyAccountStore
 modest_tny_account_store_new
+modest_tny_account_store_get_tny_account_by_id
+modest_tny_account_store_get_tny_account_by_account
 tny_account_store_get_session
 <SUBSECTION Standard>
 MODEST_TNY_ACCOUNT_STORE
@@ -219,6 +171,61 @@ MODEST_TNY_ACCOUNT_STORE_GET_CLASS
 </SECTION>
 
 <SECTION>
+<FILE>modest-cache-mgr</FILE>
+<TITLE>ModestCacheMgr</TITLE>
+ModestCacheMgr
+ModestCacheMgrCacheType
+modest_cache_mgr_new
+modest_cache_mgr_get_cache
+modest_cache_mgr_flush
+modest_cache_mgr_flush_all
+modest_cache_mgr_get_size
+<SUBSECTION Standard>
+MODEST_CACHE_MGR
+MODEST_IS_CACHE_MGR
+MODEST_TYPE_CACHE_MGR
+modest_cache_mgr_get_type
+MODEST_CACHE_MGR_CLASS
+MODEST_IS_CACHE_MGR_CLASS
+MODEST_CACHE_MGR_GET_CLASS
+</SECTION>
+
+<SECTION>
+<FILE>modest-tny-send-queue</FILE>
+<TITLE>ModestTnySendQueue</TITLE>
+ModestTnySendQueue
+modest_tny_send_queue_new
+<SUBSECTION Standard>
+MODEST_TNY_SEND_QUEUE
+MODEST_IS_TNY_SEND_QUEUE
+MODEST_TYPE_TNY_SEND_QUEUE
+modest_tny_send_queue_get_type
+MODEST_TNY_SEND_QUEUE_CLASS
+MODEST_IS_TNY_SEND_QUEUE_CLASS
+MODEST_TNY_SEND_QUEUE_GET_CLASS
+</SECTION>
+
+<SECTION>
+<FILE>modest-singletons</FILE>
+<TITLE>ModestSingletons</TITLE>
+ModestSingletons
+modest_singletons_new
+modest_singletons_get_conf
+modest_singletons_get_account_mgr
+modest_singletons_get_account_store
+modest_singletons_get_cache_mgr
+modest_singletons_get_mail_operation_queue
+<SUBSECTION Standard>
+MODEST_SINGLETONS
+MODEST_IS_SINGLETONS
+MODEST_TYPE_SINGLETONS
+modest_singletons_get_type
+MODEST_SINGLETONS_CLASS
+MODEST_IS_SINGLETONS_CLASS
+MODEST_SINGLETONS_GET_CLASS
+</SECTION>
+
+<SECTION>
 <FILE>modest-account-assistant</FILE>
 <TITLE>ModestAccountAssistant</TITLE>
 ModestAccountAssistant
@@ -257,6 +264,7 @@ modest_store_widget_get_remember_password
 modest_store_widget_get_username
 modest_store_widget_get_servername
 modest_store_widget_get_proto
+modest_store_widget_get_path
 <SUBSECTION Standard>
 MODEST_STORE_WIDGET
 MODEST_IS_STORE_WIDGET
@@ -326,6 +334,7 @@ modest_store_widget_get_remember_password
 modest_store_widget_get_username
 modest_store_widget_get_servername
 modest_store_widget_get_proto
+modest_store_widget_get_path
 <SUBSECTION Standard>
 MODEST_STORE_WIDGET
 MODEST_IS_STORE_WIDGET
@@ -342,6 +351,7 @@ MODEST_STORE_WIDGET_GET_CLASS
 ModestTransportWidget
 modest_transport_widget_new
 modest_transport_widget_get_remember_password
+modest_transport_widget_get_requires_auth
 modest_transport_widget_get_username
 modest_transport_widget_get_servername
 modest_transport_widget_get_proto
@@ -356,6 +366,21 @@ MODEST_TRANSPORT_WIDGET_GET_CLASS
 </SECTION>
 
 <SECTION>
+<FILE>modest-msg-view-window</FILE>
+<TITLE>ModestMsgViewWindow</TITLE>
+ModestMsgViewWindow
+modest_msg_view_window_new
+<SUBSECTION Standard>
+MODEST_MSG_VIEW_WINDOW
+MODEST_IS_MSG_VIEW_WINDOW
+MODEST_TYPE_MSG_VIEW_WINDOW
+modest_msg_view_window_get_type
+MODEST_MSG_VIEW_WINDOW_CLASS
+MODEST_IS_MSG_VIEW_WINDOW_CLASS
+MODEST_MSG_VIEW_WINDOW_GET_CLASS
+</SECTION>
+
+<SECTION>
 <FILE>modest-header-view</FILE>
 MODEST_HEADER_VIEW_COLUMN
 ModestHeaderViewColumn
@@ -415,23 +440,23 @@ MODEST_TNY_STREAM_GTKHTML_GET_CLASS
 </SECTION>
 
 <SECTION>
-<FILE>modest-edit-msg-window</FILE>
-<TITLE>ModestEditMsgWindow</TITLE>
-ModestEditMsgWindow
+<FILE>modest-msg-edit-window</FILE>
+<TITLE>ModestMsgEditWindow</TITLE>
+ModestMsgEditWindow
 ModestEditType
 MsgData
-modest_edit_msg_window_new
-modest_edit_msg_window_set_msg
-modest_edit_msg_window_get_msg_data
-modest_edit_msg_window_free_msg_data
+modest_msg_edit_window_new
+modest_msg_edit_window_set_msg
+modest_msg_edit_window_get_msg_data
+modest_msg_edit_window_free_msg_data
 <SUBSECTION Standard>
-MODEST_EDIT_MSG_WINDOW
-MODEST_IS_EDIT_MSG_WINDOW
-MODEST_TYPE_EDIT_MSG_WINDOW
-modest_edit_msg_window_get_type
-MODEST_EDIT_MSG_WINDOW_CLASS
-MODEST_IS_EDIT_MSG_WINDOW_CLASS
-MODEST_EDIT_MSG_WINDOW_GET_CLASS
+MODEST_MSG_EDIT_WINDOW
+MODEST_IS_MSG_EDIT_WINDOW
+MODEST_TYPE_MSG_EDIT_WINDOW
+modest_msg_edit_window_get_type
+MODEST_MSG_EDIT_WINDOW_CLASS
+MODEST_IS_MSG_EDIT_WINDOW_CLASS
+MODEST_MSG_EDIT_WINDOW_GET_CLASS
 </SECTION>
 
 <SECTION>
@@ -441,6 +466,9 @@ ModestFolderView
 modest_folder_view_new
 modest_folder_view_set_title
 modest_folder_view_get_selected
+modest_folder_view_rename
+modest_folder_view_add_subfolder
+modest_folder_view_update_model
 <SUBSECTION Standard>
 MODEST_FOLDER_VIEW
 MODEST_IS_FOLDER_VIEW
@@ -505,8 +533,6 @@ ModestWindowParent
 ModestWindowParentClass
 <TITLE>ModestWindow</TITLE>
 ModestWindow
-modest_window_get_account_store
-modest_window_get_widget_factory
 <SUBSECTION Standard>
 MODEST_WINDOW
 MODEST_IS_WINDOW
@@ -518,6 +544,21 @@ MODEST_WINDOW_GET_CLASS
 </SECTION>
 
 <SECTION>
+<FILE>modest-msg-view-window</FILE>
+<TITLE>ModestMsgViewWindow</TITLE>
+ModestMsgViewWindow
+modest_msg_view_window_new
+<SUBSECTION Standard>
+MODEST_MSG_VIEW_WINDOW
+MODEST_IS_MSG_VIEW_WINDOW
+MODEST_TYPE_MSG_VIEW_WINDOW
+modest_msg_view_window_get_type
+MODEST_MSG_VIEW_WINDOW_CLASS
+MODEST_IS_MSG_VIEW_WINDOW_CLASS
+MODEST_MSG_VIEW_WINDOW_GET_CLASS
+</SECTION>
+
+<SECTION>
 <FILE>modest-header-view</FILE>
 MODEST_HEADER_VIEW_COLUMN
 ModestHeaderViewColumn
@@ -577,23 +618,23 @@ MODEST_TNY_STREAM_GTKHTML_GET_CLASS
 </SECTION>
 
 <SECTION>
-<FILE>modest-edit-msg-window</FILE>
-<TITLE>ModestEditMsgWindow</TITLE>
-ModestEditMsgWindow
+<FILE>modest-msg-edit-window</FILE>
+<TITLE>ModestMsgEditWindow</TITLE>
+ModestMsgEditWindow
 ModestEditType
 MsgData
-modest_edit_msg_window_new
-modest_edit_msg_window_set_msg
-modest_edit_msg_window_get_msg_data
-modest_edit_msg_window_free_msg_data
+modest_msg_edit_window_new
+modest_msg_edit_window_set_msg
+modest_msg_edit_window_get_msg_data
+modest_msg_edit_window_free_msg_data
 <SUBSECTION Standard>
-MODEST_EDIT_MSG_WINDOW
-MODEST_IS_EDIT_MSG_WINDOW
-MODEST_TYPE_EDIT_MSG_WINDOW
-modest_edit_msg_window_get_type
-MODEST_EDIT_MSG_WINDOW_CLASS
-MODEST_IS_EDIT_MSG_WINDOW_CLASS
-MODEST_EDIT_MSG_WINDOW_GET_CLASS
+MODEST_MSG_EDIT_WINDOW
+MODEST_IS_MSG_EDIT_WINDOW
+MODEST_TYPE_MSG_EDIT_WINDOW
+modest_msg_edit_window_get_type
+MODEST_MSG_EDIT_WINDOW_CLASS
+MODEST_IS_MSG_EDIT_WINDOW_CLASS
+MODEST_MSG_EDIT_WINDOW_GET_CLASS
 </SECTION>
 
 <SECTION>
@@ -603,6 +644,9 @@ ModestFolderView
 modest_folder_view_new
 modest_folder_view_set_title
 modest_folder_view_get_selected
+modest_folder_view_rename
+modest_folder_view_add_subfolder
+modest_folder_view_update_model
 <SUBSECTION Standard>
 MODEST_FOLDER_VIEW
 MODEST_IS_FOLDER_VIEW
@@ -667,8 +711,6 @@ ModestWindowParent
 ModestWindowParentClass
 <TITLE>ModestWindow</TITLE>
 ModestWindow
-modest_window_get_account_store
-modest_window_get_widget_factory
 <SUBSECTION Standard>
 MODEST_WINDOW
 MODEST_IS_WINDOW
@@ -718,6 +760,7 @@ modest_store_widget_get_remember_password
 modest_store_widget_get_username
 modest_store_widget_get_servername
 modest_store_widget_get_proto
+modest_store_widget_get_path
 <SUBSECTION Standard>
 MODEST_STORE_WIDGET
 MODEST_IS_STORE_WIDGET
@@ -746,42 +789,20 @@ modest_transport_widget_get_type
 MODEST_TRANSPORT_WIDGET_CLASS
 MODEST_IS_TRANSPORT_WIDGET_CLASS
 MODEST_TRANSPORT_WIDGET_GET_CLASS
-</SECTION>
-
-<SECTION>
-<FILE>modest-ui</FILE>
-<TITLE>ModestUI</TITLE>
-ModestUI
-modest_ui_new
-modest_ui_main_window
-modest_ui_edit_window
-<SUBSECTION Standard>
-MODEST_UI
-MODEST_IS_UI
-MODEST_TYPE_UI
-modest_ui_get_type
-MODEST_UI_CLASS
-MODEST_IS_UI_CLASS
-MODEST_UI_GET_CLASS
 </SECTION>
 
 <SECTION>
 <FILE>modest-account-mgr</FILE>
 <TITLE>ModestAccountMgr</TITLE>
 ModestAccountMgr
-ModestServerAccountData
-ModestAccountData
 modest_account_mgr_new
 modest_account_mgr_add_account
 modest_account_mgr_add_server_account
+modest_account_mgr_add_server_account_uri
 modest_account_mgr_remove_account
-modest_account_mgr_get_account_data
-modest_account_mgr_free_account_data
 modest_account_mgr_account_names
 modest_account_mgr_search_server_accounts
 modest_account_mgr_account_exists
-modest_account_mgr_account_set_enabled
-modest_account_mgr_account_get_enabled
 modest_account_mgr_get_string
 modest_account_mgr_get_int
 modest_account_mgr_get_bool
@@ -856,9 +877,6 @@ MODEST_FORMATTER_GET_CLASS
 <TITLE>ModestTnyPlatformFactory</TITLE>
 ModestTnyPlatformFactory
 modest_tny_platform_factory_get_instance
-modest_tny_platform_factory_get_account_mgr_instance
-modest_tny_platform_factory_get_conf_instance
-modest_tny_platform_factory_get_mail_operation_queue_instance
 <SUBSECTION Standard>
 MODEST_TNY_PLATFORM_FACTORY
 MODEST_IS_TNY_PLATFORM_FACTORY
@@ -927,36 +945,13 @@ MODEST_MAIL_OPERATION_GET_CLASS
 </SECTION>
 
 <SECTION>
-<FILE>modest-widget-factory</FILE>
-<TITLE>ModestWidgetFactory</TITLE>
-ModestWidgetFactory
-ModestComboBoxType
-modest_widget_factory_new
-modest_widget_factory_get_folder_view
-modest_widget_factory_get_header_view
-modest_widget_factory_get_msg_preview
-modest_widget_factory_get_account_view
-modest_widget_factory_get_progress_bar
-modest_widget_factory_get_status_bar
-modest_widget_factory_get_combo_box
-modest_widget_factory_get_online_toggle
-modest_widget_factory_get_folder_info_label
-<SUBSECTION Standard>
-MODEST_WIDGET_FACTORY
-MODEST_IS_WIDGET_FACTORY
-MODEST_TYPE_WIDGET_FACTORY
-modest_widget_factory_get_type
-MODEST_WIDGET_FACTORY_CLASS
-MODEST_IS_WIDGET_FACTORY_CLASS
-MODEST_WIDGET_FACTORY_GET_CLASS
-</SECTION>
-
-<SECTION>
 <FILE>modest-tny-account-store</FILE>
 ModestTnyGetPassFunc
 <TITLE>ModestTnyAccountStore</TITLE>
 ModestTnyAccountStore
 modest_tny_account_store_new
+modest_tny_account_store_get_tny_account_by_id
+modest_tny_account_store_get_tny_account_by_account
 tny_account_store_get_session
 <SUBSECTION Standard>
 MODEST_TNY_ACCOUNT_STORE
@@ -966,6 +961,61 @@ modest_tny_account_store_get_type
 MODEST_TNY_ACCOUNT_STORE_CLASS
 MODEST_IS_TNY_ACCOUNT_STORE_CLASS
 MODEST_TNY_ACCOUNT_STORE_GET_CLASS
+</SECTION>
+
+<SECTION>
+<FILE>modest-cache-mgr</FILE>
+<TITLE>ModestCacheMgr</TITLE>
+ModestCacheMgr
+ModestCacheMgrCacheType
+modest_cache_mgr_new
+modest_cache_mgr_get_cache
+modest_cache_mgr_flush
+modest_cache_mgr_flush_all
+modest_cache_mgr_get_size
+<SUBSECTION Standard>
+MODEST_CACHE_MGR
+MODEST_IS_CACHE_MGR
+MODEST_TYPE_CACHE_MGR
+modest_cache_mgr_get_type
+MODEST_CACHE_MGR_CLASS
+MODEST_IS_CACHE_MGR_CLASS
+MODEST_CACHE_MGR_GET_CLASS
+</SECTION>
+
+<SECTION>
+<FILE>modest-tny-send-queue</FILE>
+<TITLE>ModestTnySendQueue</TITLE>
+ModestTnySendQueue
+modest_tny_send_queue_new
+<SUBSECTION Standard>
+MODEST_TNY_SEND_QUEUE
+MODEST_IS_TNY_SEND_QUEUE
+MODEST_TYPE_TNY_SEND_QUEUE
+modest_tny_send_queue_get_type
+MODEST_TNY_SEND_QUEUE_CLASS
+MODEST_IS_TNY_SEND_QUEUE_CLASS
+MODEST_TNY_SEND_QUEUE_GET_CLASS
+</SECTION>
+
+<SECTION>
+<FILE>modest-singletons</FILE>
+<TITLE>ModestSingletons</TITLE>
+ModestSingletons
+modest_singletons_new
+modest_singletons_get_conf
+modest_singletons_get_account_mgr
+modest_singletons_get_account_store
+modest_singletons_get_cache_mgr
+modest_singletons_get_mail_operation_queue
+<SUBSECTION Standard>
+MODEST_SINGLETONS
+MODEST_IS_SINGLETONS
+MODEST_TYPE_SINGLETONS
+modest_singletons_get_type
+MODEST_SINGLETONS_CLASS
+MODEST_IS_SINGLETONS_CLASS
+MODEST_SINGLETONS_GET_CLASS
 </SECTION>
 
 <SECTION>
@@ -1007,6 +1057,7 @@ modest_store_widget_get_remember_password
 modest_store_widget_get_username
 modest_store_widget_get_servername
 modest_store_widget_get_proto
+modest_store_widget_get_path
 <SUBSECTION Standard>
 MODEST_STORE_WIDGET
 MODEST_IS_STORE_WIDGET
@@ -1076,6 +1127,7 @@ modest_store_widget_get_remember_password
 modest_store_widget_get_username
 modest_store_widget_get_servername
 modest_store_widget_get_proto
+modest_store_widget_get_path
 <SUBSECTION Standard>
 MODEST_STORE_WIDGET
 MODEST_IS_STORE_WIDGET
@@ -1092,6 +1144,7 @@ MODEST_STORE_WIDGET_GET_CLASS
 ModestTransportWidget
 modest_transport_widget_new
 modest_transport_widget_get_remember_password
+modest_transport_widget_get_requires_auth
 modest_transport_widget_get_username
 modest_transport_widget_get_servername
 modest_transport_widget_get_proto
@@ -1103,6 +1156,21 @@ modest_transport_widget_get_type
 MODEST_TRANSPORT_WIDGET_CLASS
 MODEST_IS_TRANSPORT_WIDGET_CLASS
 MODEST_TRANSPORT_WIDGET_GET_CLASS
+</SECTION>
+
+<SECTION>
+<FILE>modest-msg-view-window</FILE>
+<TITLE>ModestMsgViewWindow</TITLE>
+ModestMsgViewWindow
+modest_msg_view_window_new
+<SUBSECTION Standard>
+MODEST_MSG_VIEW_WINDOW
+MODEST_IS_MSG_VIEW_WINDOW
+MODEST_TYPE_MSG_VIEW_WINDOW
+modest_msg_view_window_get_type
+MODEST_MSG_VIEW_WINDOW_CLASS
+MODEST_IS_MSG_VIEW_WINDOW_CLASS
+MODEST_MSG_VIEW_WINDOW_GET_CLASS
 </SECTION>
 
 <SECTION>
@@ -1165,23 +1233,23 @@ MODEST_TNY_STREAM_GTKHTML_GET_CLASS
 </SECTION>
 
 <SECTION>
-<FILE>modest-edit-msg-window</FILE>
-<TITLE>ModestEditMsgWindow</TITLE>
-ModestEditMsgWindow
+<FILE>modest-msg-edit-window</FILE>
+<TITLE>ModestMsgEditWindow</TITLE>
+ModestMsgEditWindow
 ModestEditType
 MsgData
-modest_edit_msg_window_new
-modest_edit_msg_window_set_msg
-modest_edit_msg_window_get_msg_data
-modest_edit_msg_window_free_msg_data
+modest_msg_edit_window_new
+modest_msg_edit_window_set_msg
+modest_msg_edit_window_get_msg_data
+modest_msg_edit_window_free_msg_data
 <SUBSECTION Standard>
-MODEST_EDIT_MSG_WINDOW
-MODEST_IS_EDIT_MSG_WINDOW
-MODEST_TYPE_EDIT_MSG_WINDOW
-modest_edit_msg_window_get_type
-MODEST_EDIT_MSG_WINDOW_CLASS
-MODEST_IS_EDIT_MSG_WINDOW_CLASS
-MODEST_EDIT_MSG_WINDOW_GET_CLASS
+MODEST_MSG_EDIT_WINDOW
+MODEST_IS_MSG_EDIT_WINDOW
+MODEST_TYPE_MSG_EDIT_WINDOW
+modest_msg_edit_window_get_type
+MODEST_MSG_EDIT_WINDOW_CLASS
+MODEST_IS_MSG_EDIT_WINDOW_CLASS
+MODEST_MSG_EDIT_WINDOW_GET_CLASS
 </SECTION>
 
 <SECTION>
@@ -1191,6 +1259,9 @@ ModestFolderView
 modest_folder_view_new
 modest_folder_view_set_title
 modest_folder_view_get_selected
+modest_folder_view_rename
+modest_folder_view_add_subfolder
+modest_folder_view_update_model
 <SUBSECTION Standard>
 MODEST_FOLDER_VIEW
 MODEST_IS_FOLDER_VIEW
@@ -1255,8 +1326,6 @@ ModestWindowParent
 ModestWindowParentClass
 <TITLE>ModestWindow</TITLE>
 ModestWindow
-modest_window_get_account_store
-modest_window_get_widget_factory
 <SUBSECTION Standard>
 MODEST_WINDOW
 MODEST_IS_WINDOW
@@ -1269,6 +1338,34 @@ MODEST_WINDOW_GET_CLASS
 
 <SECTION>
 <FILE>modest-ui-actions</FILE>
+modest_ui_actions_on_about
+modest_ui_actions_on_delete
+modest_ui_actions_on_quit
+modest_ui_actions_on_accounts
+modest_ui_actions_on_new_msg
+modest_ui_actions_on_open
+modest_ui_actions_on_reply
+modest_ui_actions_on_forward
+modest_ui_actions_on_reply_all
+modest_ui_actions_on_next
+modest_ui_actions_toggle_view
+modest_ui_actions_on_header_selected
+modest_ui_actions_on_header_activated
+modest_ui_actions_on_folder_selection_changed
+modest_ui_actions_on_online_toggle_toggled
+modest_ui_actions_on_item_not_found
+modest_ui_actions_on_header_status_update
+modest_ui_actions_on_msg_link_hover
+modest_ui_actions_on_msg_link_clicked
+modest_ui_actions_on_msg_attachment_clicked
+modest_ui_actions_on_send
+modest_ui_actions_on_new_folder
+modest_ui_actions_on_rename_folder
+modest_ui_actions_on_delete_folder
+modest_ui_actions_on_move_folder_to_trash_folder
+modest_ui_actions_on_connection_changed
+modest_ui_actions_on_accounts_reloaded
+modest_ui_actions_on_folder_moved
 </SECTION>
 
 <SECTION>
@@ -1284,6 +1381,7 @@ modest_text_utils_get_display_address
 modest_text_utils_get_subject_prefix_len
 modest_text_utils_utf8_strcmp
 modest_text_utils_get_display_date
+modest_text_utils_get_display_size
 modest_text_utils_validate_email_address
 </SECTION>
 
@@ -1292,18 +1390,9 @@ modest_text_utils_validate_email_address
 ModestTnyFolderRules
 modest_tny_folder_guess_folder_type
 modest_tny_folder_guess_folder_type_from_name
+modest_tny_folder_is_local_folder
+modest_tny_folder_get_local_folder_type
 modest_tny_folder_get_rules
-</SECTION>
-
-<SECTION>
-<FILE>modest-presets</FILE>
-ModestPresets
-ModestPresetsInfo
-modest_presets_new
-modest_presets_get_providers
-modest_presets_get_server
-modest_presets_get_info
-modest_presets_destroy
 </SECTION>
 
 <SECTION>
@@ -1316,23 +1405,17 @@ modest_pair_list_free
 </SECTION>
 
 <SECTION>
-<FILE>modest-icon-factory</FILE>
-modest_icon_factory_init
-modest_icon_factory_uninit
-modest_icon_factory_get_icon
-modest_icon_factory_get_icon_at_size
-modest_icon_factory_get_small_icon
-modest_icon_factory_get_big_icon
-</SECTION>
-
-<SECTION>
 <FILE>modest-defs</FILE>
 MODEST_DIR
 MODEST_CACHE_DIR
+MODEST_LOCAL_FOLDERS_ACCOUNT_NAME
+MODEST_LOCAL_FOLDERS_ACCOUNT_ID
 MODEST_LOCAL_FOLDERS_MAILDIR
+MODEST_LOCAL_FOLDERS_DISPLAY_NAME
 MODEST_CONF_NAMESPACE
 MODEST_CONF_WIDGET_NAMESPACE
 MODEST_ACCOUNT_NAMESPACE
+MODEST_CONF_DEFAULT_ACCOUNT
 MODEST_SERVER_ACCOUNT_NAMESPACE
 MODEST_CONF_REPLY_TYPE
 MODEST_CONF_FORWARD_TYPE
@@ -1345,21 +1428,30 @@ MODEST_ACCOUNT_PASSWORD
 MDOEST_ACCOUNT_REMEMBER_PWD
 MODEST_ACCOUNT_HOSTNAME
 MODEST_ACCOUNT_USERNAME
+MODEST_ACCOUNT_URI
 MODEST_ACCOUNT_PROTO
 MODEST_ACCOUNT_ENABLED
 MODEST_ACCOUNT_TYPE
+MODEST_ACCOUNT_LAST_UPDATED
 MODEST_ACCOUNT_LEAVE_ON_SERVER
 MODEST_ACCOUNT_PREFERRED_CNX
 MODEST_ACCOUNT_OPTIONS
 </SECTION>
 
 <SECTION>
-<FILE>modest-debug</FILE>
+<FILE>modest-runtime</FILE>
 MODEST_DEBUG
-ModestDebugFlags
-modest_debug_get_flags
-modest_debug_g_type_init
-modest_debug_logging_init
+ModestRuntimeDebugFlags
+modest_runtime_init
+modest_runtime_init_ui
+modest_runtime_uninit
+modest_runtime_get_debug_flags
+modest_runtime_get_conf
+modest_runtime_get_account_mgr
+modest_runtime_get_account_store
+modest_runtime_get_cache_mgr
+modest_runtime_get_mail_operation_queue
+modest_runtime_get_send_queue
 </SECTION>
 
 <SECTION>
@@ -1388,18 +1480,6 @@ modest_protocol_info_protocol_is_local_store
 </SECTION>
 
 <SECTION>
-<FILE>modest-ui-priv</FILE>
-ModestUIPrivate
-</SECTION>
-
-<SECTION>
-<FILE>modest-tny-msg-actions</FILE>
-modest_tny_msg_actions_find_body_part
-modest_tny_msg_actions_find_nth_part
-modest_tny_msg_actions_find_body
-</SECTION>
-
-<SECTION>
 <FILE>modest-marshal</FILE>
 modest_marshal_VOID__POINTER_POINTER
 modest_marshal_VOID__POINTER_POINTER_POINTER
@@ -1411,18 +1491,17 @@ modest_marshal_VOID__STRING_BOOLEAN
 modest_marshal_VOID__STRING_BOOL
 modest_marshal_VOID__STRING_STRING_BOOLEAN
 modest_marshal_VOID__STRING_STRING_BOOL
-modest_marshal_VOID__STRING_POINTER_POINTER_POINTER
 </SECTION>
 
 <SECTION>
-<FILE>modest-init</FILE>
-modest_init_header_columns
-modest_init_local_folders
+<FILE>modest-tny-msg</FILE>
+modest_tny_msg_new
+modest_tny_msg_find_body_part
+modest_tny_msg_get_body
 </SECTION>
 
 <SECTION>
 <FILE>modest-local-folder-info</FILE>
-ModestLocalFolderType
 modest_local_folder_info_get_type
 modest_local_folder_info_get_type_name
 modest_local_folder_info_get_type_display_name
@@ -1440,6 +1519,32 @@ MODEST_WIDGET_MEMORY_PARAM_COLUMN_WIDTH
 </SECTION>
 
 <SECTION>
+<FILE>modest-account-mgr-helpers</FILE>
+ModestServerAccountData
+ModestAccountData
+modest_account_mgr_get_account_data
+modest_account_mgr_get_default_account
+modest_account_mgr_set_default_account
+modest_account_mgr_free_account_data
+modest_account_mgr_set_enabled
+modest_account_mgr_get_enabled
+modest_account_mgr_get_from_string
+</SECTION>
+
+<SECTION>
+<FILE>modest-tny-account</FILE>
+modest_tny_account_new_from_account
+modest_tny_account_new_for_local_folders
+modest_tny_account_get_special_folder
+</SECTION>
+
+<SECTION>
+<FILE>modest-account-mgr-priv</FILE>
+ModestAccountMgrPrivate
+MODEST_ACCOUNT_MGR_GET_PRIVATE
+</SECTION>
+
+<SECTION>
 <FILE>modest-icon-names</FILE>
 MODEST_APP_ICON
 MODEST_HEADER_ICON_READ
@@ -1479,6 +1584,10 @@ MODEST_STOCK_DELETE
 MODEST_STOCK_NEXT
 MODEST_STOCK_PREV
 MODEST_STOCK_STOP
+</SECTION>
+
+<SECTION>
+<FILE>modest-main-window-ui</FILE>
 </SECTION>
 
 <SECTION>
@@ -1532,7 +1641,7 @@ MODEST_STOCK_STOP
 </SECTION>
 
 <SECTION>
-<FILE>modest-edit-msg-window-ui</FILE>
+<FILE>modest-msg-edit-window-ui</FILE>
 </SECTION>
 
 <SECTION>
@@ -1542,15 +1651,11 @@ MODEST_WINDOW_GET_PRIVATE
 </SECTION>
 
 <SECTION>
-<FILE>modest-main-window-ui</FILE>
-</SECTION>
-
-<SECTION>
 <FILE>modest-header-view-priv</FILE>
 </SECTION>
 
 <SECTION>
-<FILE>modest-edit-msg-window-ui</FILE>
+<FILE>modest-msg-edit-window-ui</FILE>
 </SECTION>
 
 <SECTION>
@@ -1599,10 +1704,42 @@ MODEST_STOCK_DELETE
 MODEST_STOCK_NEXT
 MODEST_STOCK_PREV
 MODEST_STOCK_STOP
+</SECTION>
+
+<SECTION>
+<FILE>modest-main-window-ui</FILE>
 </SECTION>
 
 <SECTION>
 <FILE>modest-ui-actions</FILE>
+modest_ui_actions_on_about
+modest_ui_actions_on_delete
+modest_ui_actions_on_quit
+modest_ui_actions_on_accounts
+modest_ui_actions_on_new_msg
+modest_ui_actions_on_open
+modest_ui_actions_on_reply
+modest_ui_actions_on_forward
+modest_ui_actions_on_reply_all
+modest_ui_actions_on_next
+modest_ui_actions_toggle_view
+modest_ui_actions_on_header_selected
+modest_ui_actions_on_header_activated
+modest_ui_actions_on_folder_selection_changed
+modest_ui_actions_on_online_toggle_toggled
+modest_ui_actions_on_item_not_found
+modest_ui_actions_on_header_status_update
+modest_ui_actions_on_msg_link_hover
+modest_ui_actions_on_msg_link_clicked
+modest_ui_actions_on_msg_attachment_clicked
+modest_ui_actions_on_send
+modest_ui_actions_on_new_folder
+modest_ui_actions_on_rename_folder
+modest_ui_actions_on_delete_folder
+modest_ui_actions_on_move_folder_to_trash_folder
+modest_ui_actions_on_connection_changed
+modest_ui_actions_on_accounts_reloaded
+modest_ui_actions_on_folder_moved
 </SECTION>
 
 <SECTION>
@@ -1618,6 +1755,7 @@ modest_text_utils_get_display_address
 modest_text_utils_get_subject_prefix_len
 modest_text_utils_utf8_strcmp
 modest_text_utils_get_display_date
+modest_text_utils_get_display_size
 modest_text_utils_validate_email_address
 </SECTION>
 
@@ -1626,18 +1764,9 @@ modest_text_utils_validate_email_address
 ModestTnyFolderRules
 modest_tny_folder_guess_folder_type
 modest_tny_folder_guess_folder_type_from_name
+modest_tny_folder_is_local_folder
+modest_tny_folder_get_local_folder_type
 modest_tny_folder_get_rules
-</SECTION>
-
-<SECTION>
-<FILE>modest-presets</FILE>
-ModestPresets
-ModestPresetsInfo
-modest_presets_new
-modest_presets_get_providers
-modest_presets_get_server
-modest_presets_get_info
-modest_presets_destroy
 </SECTION>
 
 <SECTION>
@@ -1650,23 +1779,17 @@ modest_pair_list_free
 </SECTION>
 
 <SECTION>
-<FILE>modest-icon-factory</FILE>
-modest_icon_factory_init
-modest_icon_factory_uninit
-modest_icon_factory_get_icon
-modest_icon_factory_get_icon_at_size
-modest_icon_factory_get_small_icon
-modest_icon_factory_get_big_icon
-</SECTION>
-
-<SECTION>
 <FILE>modest-defs</FILE>
 MODEST_DIR
 MODEST_CACHE_DIR
+MODEST_LOCAL_FOLDERS_ACCOUNT_NAME
+MODEST_LOCAL_FOLDERS_ACCOUNT_ID
 MODEST_LOCAL_FOLDERS_MAILDIR
+MODEST_LOCAL_FOLDERS_DISPLAY_NAME
 MODEST_CONF_NAMESPACE
 MODEST_CONF_WIDGET_NAMESPACE
 MODEST_ACCOUNT_NAMESPACE
+MODEST_CONF_DEFAULT_ACCOUNT
 MODEST_SERVER_ACCOUNT_NAMESPACE
 MODEST_CONF_REPLY_TYPE
 MODEST_CONF_FORWARD_TYPE
@@ -1679,21 +1802,30 @@ MODEST_ACCOUNT_PASSWORD
 MDOEST_ACCOUNT_REMEMBER_PWD
 MODEST_ACCOUNT_HOSTNAME
 MODEST_ACCOUNT_USERNAME
+MODEST_ACCOUNT_URI
 MODEST_ACCOUNT_PROTO
 MODEST_ACCOUNT_ENABLED
 MODEST_ACCOUNT_TYPE
+MODEST_ACCOUNT_LAST_UPDATED
 MODEST_ACCOUNT_LEAVE_ON_SERVER
 MODEST_ACCOUNT_PREFERRED_CNX
 MODEST_ACCOUNT_OPTIONS
 </SECTION>
 
 <SECTION>
-<FILE>modest-debug</FILE>
+<FILE>modest-runtime</FILE>
 MODEST_DEBUG
-ModestDebugFlags
-modest_debug_get_flags
-modest_debug_g_type_init
-modest_debug_logging_init
+ModestRuntimeDebugFlags
+modest_runtime_init
+modest_runtime_init_ui
+modest_runtime_uninit
+modest_runtime_get_debug_flags
+modest_runtime_get_conf
+modest_runtime_get_account_mgr
+modest_runtime_get_account_store
+modest_runtime_get_cache_mgr
+modest_runtime_get_mail_operation_queue
+modest_runtime_get_send_queue
 </SECTION>
 
 <SECTION>
@@ -1722,18 +1854,6 @@ modest_protocol_info_protocol_is_local_store
 </SECTION>
 
 <SECTION>
-<FILE>modest-ui-priv</FILE>
-ModestUIPrivate
-</SECTION>
-
-<SECTION>
-<FILE>modest-tny-msg-actions</FILE>
-modest_tny_msg_actions_find_body_part
-modest_tny_msg_actions_find_nth_part
-modest_tny_msg_actions_find_body
-</SECTION>
-
-<SECTION>
 <FILE>modest-marshal</FILE>
 modest_marshal_VOID__POINTER_POINTER
 modest_marshal_VOID__POINTER_POINTER_POINTER
@@ -1745,18 +1865,17 @@ modest_marshal_VOID__STRING_BOOLEAN
 modest_marshal_VOID__STRING_BOOL
 modest_marshal_VOID__STRING_STRING_BOOLEAN
 modest_marshal_VOID__STRING_STRING_BOOL
-modest_marshal_VOID__STRING_POINTER_POINTER_POINTER
 </SECTION>
 
 <SECTION>
-<FILE>modest-init</FILE>
-modest_init_header_columns
-modest_init_local_folders
+<FILE>modest-tny-msg</FILE>
+modest_tny_msg_new
+modest_tny_msg_find_body_part
+modest_tny_msg_get_body
 </SECTION>
 
 <SECTION>
 <FILE>modest-local-folder-info</FILE>
-ModestLocalFolderType
 modest_local_folder_info_get_type
 modest_local_folder_info_get_type_name
 modest_local_folder_info_get_type_display_name
@@ -1771,6 +1890,32 @@ MODEST_WIDGET_MEMORY_PARAM_HEIGHT
 MODEST_WIDGET_MEMORY_PARAM_WIDTH
 MODEST_WIDGET_MEMORY_PARAM_POS
 MODEST_WIDGET_MEMORY_PARAM_COLUMN_WIDTH
+</SECTION>
+
+<SECTION>
+<FILE>modest-account-mgr-helpers</FILE>
+ModestServerAccountData
+ModestAccountData
+modest_account_mgr_get_account_data
+modest_account_mgr_get_default_account
+modest_account_mgr_set_default_account
+modest_account_mgr_free_account_data
+modest_account_mgr_set_enabled
+modest_account_mgr_get_enabled
+modest_account_mgr_get_from_string
+</SECTION>
+
+<SECTION>
+<FILE>modest-tny-account</FILE>
+modest_tny_account_new_from_account
+modest_tny_account_new_for_local_folders
+modest_tny_account_get_special_folder
+</SECTION>
+
+<SECTION>
+<FILE>modest-account-mgr-priv</FILE>
+ModestAccountMgrPrivate
+MODEST_ACCOUNT_MGR_GET_PRIVATE
 </SECTION>
 
 <SECTION>
@@ -1813,6 +1958,10 @@ MODEST_STOCK_DELETE
 MODEST_STOCK_NEXT
 MODEST_STOCK_PREV
 MODEST_STOCK_STOP
+</SECTION>
+
+<SECTION>
+<FILE>modest-main-window-ui</FILE>
 </SECTION>
 
 <SECTION>
@@ -1866,7 +2015,7 @@ MODEST_STOCK_STOP
 </SECTION>
 
 <SECTION>
-<FILE>modest-edit-msg-window-ui</FILE>
+<FILE>modest-msg-edit-window-ui</FILE>
 </SECTION>
 
 <SECTION>

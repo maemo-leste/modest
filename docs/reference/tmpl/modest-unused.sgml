@@ -1,0 +1,690 @@
+<!-- ##### SECTION ./tmpl/modest-debug.sgml:Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION ./tmpl/modest-debug.sgml:See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION ./tmpl/modest-debug.sgml:Short_Description ##### -->
+
+
+
+<!-- ##### SECTION ./tmpl/modest-debug.sgml:Stability_Level ##### -->
+
+
+
+<!-- ##### SECTION ./tmpl/modest-debug.sgml:Title ##### -->
+modest-debug
+
+
+<!-- ##### SECTION ./tmpl/modest-edit-msg-window-ui.sgml:Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION ./tmpl/modest-edit-msg-window-ui.sgml:See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION ./tmpl/modest-edit-msg-window-ui.sgml:Short_Description ##### -->
+
+
+
+<!-- ##### SECTION ./tmpl/modest-edit-msg-window-ui.sgml:Stability_Level ##### -->
+
+
+
+<!-- ##### SECTION ./tmpl/modest-edit-msg-window-ui.sgml:Title ##### -->
+modest-edit-msg-window-ui
+
+
+<!-- ##### SECTION ./tmpl/modest-edit-msg-window.sgml:Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION ./tmpl/modest-edit-msg-window.sgml:See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION ./tmpl/modest-edit-msg-window.sgml:Short_Description ##### -->
+
+
+
+<!-- ##### SECTION ./tmpl/modest-edit-msg-window.sgml:Stability_Level ##### -->
+
+
+
+<!-- ##### SECTION ./tmpl/modest-edit-msg-window.sgml:Title ##### -->
+ModestEditMsgWindow
+
+
+<!-- ##### SECTION ./tmpl/modest-icon-factory.sgml:Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION ./tmpl/modest-icon-factory.sgml:See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION ./tmpl/modest-icon-factory.sgml:Short_Description ##### -->
+
+
+
+<!-- ##### SECTION ./tmpl/modest-icon-factory.sgml:Stability_Level ##### -->
+
+
+
+<!-- ##### SECTION ./tmpl/modest-icon-factory.sgml:Title ##### -->
+modest-icon-factory
+
+
+<!-- ##### SECTION ./tmpl/modest-init.sgml:Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION ./tmpl/modest-init.sgml:See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION ./tmpl/modest-init.sgml:Short_Description ##### -->
+
+
+
+<!-- ##### SECTION ./tmpl/modest-init.sgml:Stability_Level ##### -->
+
+
+
+<!-- ##### SECTION ./tmpl/modest-init.sgml:Title ##### -->
+modest-init
+
+
+<!-- ##### SECTION ./tmpl/modest-presets.sgml:Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION ./tmpl/modest-presets.sgml:See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION ./tmpl/modest-presets.sgml:Short_Description ##### -->
+
+
+
+<!-- ##### SECTION ./tmpl/modest-presets.sgml:Stability_Level ##### -->
+
+
+
+<!-- ##### SECTION ./tmpl/modest-presets.sgml:Title ##### -->
+modest-presets
+
+
+<!-- ##### SECTION ./tmpl/modest-tny-msg-actions.sgml:Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION ./tmpl/modest-tny-msg-actions.sgml:See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION ./tmpl/modest-tny-msg-actions.sgml:Short_Description ##### -->
+
+
+
+<!-- ##### SECTION ./tmpl/modest-tny-msg-actions.sgml:Stability_Level ##### -->
+
+
+
+<!-- ##### SECTION ./tmpl/modest-tny-msg-actions.sgml:Title ##### -->
+modest-tny-msg-actions
+
+
+<!-- ##### SECTION ./tmpl/modest-ui-priv.sgml:Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION ./tmpl/modest-ui-priv.sgml:See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION ./tmpl/modest-ui-priv.sgml:Short_Description ##### -->
+
+
+
+<!-- ##### SECTION ./tmpl/modest-ui-priv.sgml:Stability_Level ##### -->
+
+
+
+<!-- ##### SECTION ./tmpl/modest-ui-priv.sgml:Title ##### -->
+modest-ui-priv
+
+
+<!-- ##### SECTION ./tmpl/modest-ui.sgml:Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION ./tmpl/modest-ui.sgml:See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION ./tmpl/modest-ui.sgml:Short_Description ##### -->
+
+
+
+<!-- ##### SECTION ./tmpl/modest-ui.sgml:Stability_Level ##### -->
+
+
+
+<!-- ##### SECTION ./tmpl/modest-ui.sgml:Title ##### -->
+ModestUI
+
+
+<!-- ##### SECTION ./tmpl/modest-widget-factory.sgml:Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION ./tmpl/modest-widget-factory.sgml:See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION ./tmpl/modest-widget-factory.sgml:Short_Description ##### -->
+
+
+
+<!-- ##### SECTION ./tmpl/modest-widget-factory.sgml:Stability_Level ##### -->
+
+
+
+<!-- ##### SECTION ./tmpl/modest-widget-factory.sgml:Title ##### -->
+ModestWidgetFactory
+
+
+<!-- ##### ENUM ModestComboBoxType ##### -->
+<para>
+
+</para>
+
+@MODEST_COMBO_BOX_TYPE_STORE_PROTOS: 
+@MODEST_COMBO_BOX_TYPE_TRANSPORT_PROTOS: 
+@MODEST_COMBO_BOX_TYPE_SECURITY_PROTOS: 
+@MODEST_COMBO_BOX_TYPE_AUTH_PROTOS: 
+@MODEST_COMBO_BOX_TYPE_TRANSPORTS: 
+@MODEST_COMBO_BOX_TYPE_REMOTE_STORES: 
+
+<!-- ##### ENUM ModestDebugFlags ##### -->
+<para>
+
+</para>
+
+@MODEST_DEBUG_ABORT_ON_WARNING: 
+@MODEST_DEBUG_LOG_ACTIONS: 
+@MODEST_DEBUG_DEBUG_OBJECTS: 
+@MODEST_DEBUG_DEBUG_SIGNALS: 
+
+<!-- ##### STRUCT ModestEditMsgWindow ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### ENUM ModestLocalFolderType ##### -->
+<para>
+
+</para>
+
+@MODEST_LOCAL_FOLDER_TYPE_UNKNOWN: 
+@MODEST_LOCAL_FOLDER_TYPE_DRAFTS: 
+@MODEST_LOCAL_FOLDER_TYPE_SENT: 
+@MODEST_LOCAL_FOLDER_TYPE_OUTBOX: 
+@MODEST_LOCAL_FOLDER_TYPE_ARCHIVE: 
+@MODEST_LOCAL_FOLDER_TYPE_JUNK: 
+@MODEST_LOCAL_FOLDER_TYPE_TRASH: 
+@MODEST_LOCAL_FOLDER_TYPE_NUM: 
+
+<!-- ##### STRUCT ModestPresets ##### -->
+<para>
+
+</para>
+
+@keyfile: 
+
+<!-- ##### ENUM ModestPresetsInfo ##### -->
+<para>
+
+</para>
+
+@MODEST_PRESETS_INFO_NONE: 
+@MODEST_PRESETS_INFO_IMAP: 
+@MODEST_PRESETS_INFO_POP: 
+@MODEST_PRESETS_INFO_SMTP: 
+@MODEST_PRESETS_INFO_APOP: 
+@MODEST_PRESETS_INFO_SECURE_SMTP: 
+@MODEST_PRESETS_INFO_SECURE_INCOMING: 
+
+<!-- ##### SIGNAL ModestTnyAccountStore::password-requested ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### STRUCT ModestUI ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### STRUCT ModestUIPrivate ##### -->
+<para>
+
+</para>
+
+@widget_factory: 
+@account_store: 
+@main_window: 
+@ui_manager: 
+
+<!-- ##### STRUCT ModestWidgetFactory ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### FUNCTION modest_account_mgr_account_get_enabled ##### -->
+<para>
+
+</para>
+
+@self: 
+@name: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_account_mgr_account_set_enabled ##### -->
+<para>
+
+</para>
+
+@self: 
+@name: 
+@enabled: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_debug_g_type_init ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### FUNCTION modest_debug_get_flags ##### -->
+<para>
+
+</para>
+
+@Returns: 
+
+<!-- ##### FUNCTION modest_debug_logging_init ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### FUNCTION modest_edit_msg_window_free_msg_data ##### -->
+<para>
+
+</para>
+
+@edit_window: 
+@data: 
+
+<!-- ##### FUNCTION modest_edit_msg_window_get_msg_data ##### -->
+<para>
+
+</para>
+
+@edit_window: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_edit_msg_window_new ##### -->
+<para>
+
+</para>
+
+@factory: 
+@account_store: 
+@type: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_edit_msg_window_set_msg ##### -->
+<para>
+
+</para>
+
+@self: 
+@msg: 
+
+<!-- ##### MACRO modest_icon_factory_get_big_icon ##### -->
+<para>
+
+</para>
+
+@n: 
+
+<!-- ##### FUNCTION modest_icon_factory_get_icon ##### -->
+<para>
+
+</para>
+
+@name: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_icon_factory_get_icon_at_size ##### -->
+<para>
+
+</para>
+
+@name: 
+@width: 
+@height: 
+@Returns: 
+
+<!-- ##### MACRO modest_icon_factory_get_small_icon ##### -->
+<para>
+
+</para>
+
+@n: 
+
+<!-- ##### FUNCTION modest_icon_factory_init ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### FUNCTION modest_icon_factory_uninit ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### FUNCTION modest_init_header_columns ##### -->
+<para>
+
+</para>
+
+@overwrite: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_init_local_folders ##### -->
+<para>
+
+</para>
+
+@Returns: 
+
+<!-- ##### FUNCTION modest_marshal_VOID__STRING_POINTER_POINTER_POINTER ##### -->
+<para>
+
+</para>
+
+@closure: 
+@return_value: 
+@n_param_values: 
+@param_values: 
+@invocation_hint: 
+@marshal_data: 
+
+<!-- ##### FUNCTION modest_presets_destroy ##### -->
+<para>
+
+</para>
+
+@self: 
+
+<!-- ##### FUNCTION modest_presets_get_info ##### -->
+<para>
+
+</para>
+
+@self: 
+@provider: 
+@incoming_server: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_presets_get_providers ##### -->
+<para>
+
+</para>
+
+@self: 
+@mcc: 
+@include_globals: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_presets_get_server ##### -->
+<para>
+
+</para>
+
+@self: 
+@provider: 
+@incoming_server: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_presets_new ##### -->
+<para>
+
+</para>
+
+@presetfile: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_tny_msg_actions_find_body ##### -->
+<para>
+
+</para>
+
+@self: 
+@want_html: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_tny_msg_actions_find_body_part ##### -->
+<para>
+
+</para>
+
+@self: 
+@want_html: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_tny_msg_actions_find_nth_part ##### -->
+<para>
+
+</para>
+
+@msg: 
+@index: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_tny_platform_factory_get_account_mgr_instance ##### -->
+<para>
+
+</para>
+
+@fact: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_tny_platform_factory_get_conf_instance ##### -->
+<para>
+
+</para>
+
+@fact: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_tny_platform_factory_get_mail_operation_queue_instance ##### -->
+<para>
+
+</para>
+
+@fact: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_ui_edit_window ##### -->
+<para>
+
+</para>
+
+@modest_ui: 
+@edit_type: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_ui_main_window ##### -->
+<para>
+
+</para>
+
+@modest_ui: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_ui_new ##### -->
+<para>
+
+</para>
+
+@account_store: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_widget_factory_get_account_view ##### -->
+<para>
+
+</para>
+
+@self: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_widget_factory_get_combo_box ##### -->
+<para>
+
+</para>
+
+@self: 
+@type: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_widget_factory_get_folder_info_label ##### -->
+<para>
+
+</para>
+
+@self: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_widget_factory_get_folder_view ##### -->
+<para>
+
+</para>
+
+@self: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_widget_factory_get_header_view ##### -->
+<para>
+
+</para>
+
+@self: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_widget_factory_get_msg_preview ##### -->
+<para>
+
+</para>
+
+@self: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_widget_factory_get_online_toggle ##### -->
+<para>
+
+</para>
+
+@self: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_widget_factory_get_progress_bar ##### -->
+<para>
+
+</para>
+
+@self: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_widget_factory_get_status_bar ##### -->
+<para>
+
+</para>
+
+@self: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_widget_factory_new ##### -->
+<para>
+
+</para>
+
+@Returns: 
+
+<!-- ##### FUNCTION modest_window_get_account_store ##### -->
+<para>
+
+</para>
+
+@window: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_window_get_widget_factory ##### -->
+<para>
+
+</para>
+
+@window: 
+@Returns: 
+

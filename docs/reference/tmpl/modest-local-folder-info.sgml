@@ -19,20 +19,6 @@ modest-local-folder-info
 <!-- ##### SECTION Stability_Level ##### -->
 
 
-<!-- ##### ENUM ModestLocalFolderType ##### -->
-<para>
-
-</para>
-
-@MODEST_LOCAL_FOLDER_TYPE_UNKNOWN: 
-@MODEST_LOCAL_FOLDER_TYPE_DRAFTS: 
-@MODEST_LOCAL_FOLDER_TYPE_SENT: 
-@MODEST_LOCAL_FOLDER_TYPE_OUTBOX: 
-@MODEST_LOCAL_FOLDER_TYPE_ARCHIVE: 
-@MODEST_LOCAL_FOLDER_TYPE_JUNK: 
-@MODEST_LOCAL_FOLDER_TYPE_TRASH: 
-@MODEST_LOCAL_FOLDER_TYPE_NUM: 
-
 <!-- ##### FUNCTION modest_local_folder_info_get_type ##### -->
 <para>
 

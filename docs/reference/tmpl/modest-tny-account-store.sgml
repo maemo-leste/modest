@@ -36,19 +36,8 @@ ModestTnyAccountStore
 
 </para>
 
-@modesttnyaccountstore: the object which received the signal.
-@arg1: 
-
-<!-- ##### SIGNAL ModestTnyAccountStore::password-requested ##### -->
-<para>
-
-</para>
-
-@modesttnyaccountstore: the object which received the signal.
-@arg1: 
-@arg2: 
-@arg3: 
-@arg4: 
+@: 
+@: 
 
 <!-- ##### FUNCTION modest_tny_account_store_new ##### -->
 <para>
@@ -56,6 +45,27 @@ ModestTnyAccountStore
 </para>
 
 @account_mgr: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_tny_account_store_get_tny_account_by_id ##### -->
+<para>
+
+</para>
+
+@self: 
+@id: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_tny_account_store_get_tny_account_by_account ##### -->
+<para>
+
+</para>
+
+@self: 
+@account_name: 
+@type: 
 @Returns: 
 
 

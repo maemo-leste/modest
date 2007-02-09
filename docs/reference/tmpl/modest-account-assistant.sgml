@@ -31,7 +31,6 @@ ModestAccountAssistant
 </para>
 
 @account_mgr: 
-@factory: 
 @Returns: 
 
 

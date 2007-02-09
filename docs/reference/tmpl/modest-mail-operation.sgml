@@ -67,7 +67,7 @@ ModestMailOperation
 
 </para>
 
-@modestmailoperation: the object which received the signal.
+@: 
 
 <!-- ##### FUNCTION modest_mail_operation_new ##### -->
 <para>

@@ -19,20 +19,6 @@ modest-icon-factory
 <!-- ##### SECTION Stability_Level ##### -->
 
 
-<!-- ##### FUNCTION modest_icon_factory_init ##### -->
-<para>
-
-</para>
-
-
-
-<!-- ##### FUNCTION modest_icon_factory_uninit ##### -->
-<para>
-
-</para>
-
-
-
 <!-- ##### FUNCTION modest_icon_factory_get_icon ##### -->
 <para>
 
@@ -40,32 +26,5 @@ modest-icon-factory
 
 @name: 
 @Returns: 
-
-
-<!-- ##### FUNCTION modest_icon_factory_get_icon_at_size ##### -->
-<para>
-
-</para>
-
-@name: 
-@width: 
-@height: 
-@Returns: 
-
-
-<!-- ##### MACRO modest_icon_factory_get_small_icon ##### -->
-<para>
-
-</para>
-
-@n: 
-
-
-<!-- ##### MACRO modest_icon_factory_get_big_icon ##### -->
-<para>
-
-</para>
-
-@n: 
 
 

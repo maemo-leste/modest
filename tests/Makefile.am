@@ -52,7 +52,6 @@ objects=\
 	${top_srcdir}/src/modest-widget-memory.o \
         ${top_srcdir}/src/modest-tny-account-store.o \
         ${top_srcdir}/src/modest-tny-platform-factory.o \
-	${top_srcdir}/src/modest-widget-factory.o \
         ${top_srcdir}/src/modest-tny-send-queue.o \
         ${top_srcdir}/src/modest-mail-operation-queue.o \
         ${top_srcdir}/src/modest-mail-operation.o \

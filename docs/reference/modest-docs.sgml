@@ -21,8 +21,6 @@
 <!ENTITY ModestTnyFolder SYSTEM "xml/modest-tny-folder.xml">
 <!ENTITY ModestTnyMsgActions SYSTEM "xml/modest-tny-msg-actions.xml">
 <!ENTITY ModestTnyPlatformFactory SYSTEM "xml/modest-tny-platform-factory.xml">
-<!ENTITY ModestUI SYSTEM "xml/modest-ui.xml">
-<!ENTITY ModestWidgetFactory SYSTEM "xml/modest-widget-factory.xml">
 <!ENTITY ModestWidgetMemory SYSTEM "xml/modest-widget-memory.xml">
 
 <!ENTITY widgets-ModestAccountView SYSTEM "xml/modest-account-view.xml">
@@ -93,8 +91,6 @@
           &ModestTnyFolder;
           &ModestTnyMsgActions;
           &ModestTnyPlatformFactory;
-          &ModestUI;
-          &ModestWidgetFactory;
           &ModestWidgetMemory;
       </chapter>
       <chapter id="widgets">

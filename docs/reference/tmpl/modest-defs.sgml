@@ -33,7 +33,28 @@ modest-defs
 
 
 
+<!-- ##### MACRO MODEST_LOCAL_FOLDERS_ACCOUNT_NAME ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO MODEST_LOCAL_FOLDERS_ACCOUNT_ID ##### -->
+<para>
+
+</para>
+
+
+
 <!-- ##### MACRO MODEST_LOCAL_FOLDERS_MAILDIR ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO MODEST_LOCAL_FOLDERS_DISPLAY_NAME ##### -->
 <para>
 
 </para>
@@ -55,6 +76,13 @@ modest-defs
 
 
 <!-- ##### MACRO MODEST_ACCOUNT_NAMESPACE ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO MODEST_CONF_DEFAULT_ACCOUNT ##### -->
 <para>
 
 </para>
@@ -145,6 +173,13 @@ modest-defs
 
 
 
+<!-- ##### MACRO MODEST_ACCOUNT_URI ##### -->
+<para>
+
+</para>
+
+
+
 <!-- ##### MACRO MODEST_ACCOUNT_PROTO ##### -->
 <para>
 
@@ -160,6 +195,13 @@ modest-defs
 
 
 <!-- ##### MACRO MODEST_ACCOUNT_TYPE ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO MODEST_ACCOUNT_LAST_UPDATED ##### -->
 <para>
 
 </para>

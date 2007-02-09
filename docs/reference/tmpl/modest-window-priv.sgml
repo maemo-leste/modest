@@ -24,9 +24,6 @@ modest-window-priv
 
 </para>
 
-@widget_factory: 
-@plat_factory: 
-@account_store: 
 @ui_manager: 
 @toolbar: 
 @menubar: 

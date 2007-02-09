@@ -95,7 +95,7 @@ modest-text-utils
 @s: 
 @max: 
 @fmt: 
-@tm: 
+@timet: 
 @Returns: 
 
 
@@ -134,6 +134,15 @@ modest-text-utils
 </para>
 
 @date: 
+@Returns: 
+
+
+<!-- ##### FUNCTION modest_text_utils_get_display_size ##### -->
+<para>
+
+</para>
+
+@size: 
 @Returns: 
 
 
