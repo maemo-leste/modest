@@ -380,7 +380,6 @@ attachments_as_html (ModestMsgView *self, TnyMsg *msg)
 }
 
 
-
 static gchar*
 get_header_info (TnyMsg *msg, gboolean outgoing)
 {

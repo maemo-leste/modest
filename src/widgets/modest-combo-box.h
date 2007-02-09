@@ -63,24 +63,39 @@ GType        modest_combo_box_get_type    (void) G_GNUC_CONST;
 
 /**
  * modest_combo_box_new
- * @hash: a ptr to a GSList; each element should be a ptr to
- * a ModestPair 
+ * @pairs: a #ModestPairList; each element should be a ptr to a #ModestPair 
+ * @cmp_id_func: a GEqualFunc to compare the ids (= the first elements of the pairs)
+ * For example, if the ids are strings, you can use g_str_equal.
  *
+ * (If you provide NULL for this parameter, the id ptr address will be compared)
+ * 
  * create a new modest combo box
  * 
  * Returns: a new GtkComboBox instance, or NULL in case of failure
  */
-GtkWidget*   modest_combo_box_new         (const GSList *hash);
+GtkWidget*   modest_combo_box_new         (const ModestPairList* pairs,
+					   GEqualFunc id_equal_func);
 
 /**
  * modest_combo_box_get_active_id
  * @self: a valid ModestComboBox instance 
  * 
- * get the id for the currently active lemma, or NULL if there's nothing chosen
+ * get the id for the currently active item, or NULL if there's nothing chosen
+ * (ie., the id is the first element of the pair)
  * 
  * Returns: the id or NULL if there's nothing chosen.
  */
 gpointer   modest_combo_box_get_active_id  (ModestComboBox *self);
+
+/**
+ * modest_combo_box_set_active_id
+ * @self: a valid ModestComboBox instance
+ * @id: the id to make active
+ * 
+ * set the active item
+ * 
+ */
+void       modest_combo_box_set_active_id (ModestComboBox *self, gpointer id);
 
 /**
  * modest_combo_box_get_active_display_name
@@ -91,7 +106,7 @@ gpointer   modest_combo_box_get_active_id  (ModestComboBox *self);
  * 
  * Returns: the display name or NULL if there's nothing chosen.
  */
-gpointer   modest_combo_box_get_active_display_name  (ModestComboBox *self);
+const gchar* modest_combo_box_get_active_display_name  (ModestComboBox *self);
 
 G_END_DECLS
 

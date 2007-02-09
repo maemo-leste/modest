@@ -41,6 +41,8 @@ struct _ModestWindowPrivate {
 	GtkUIManager         *ui_manager;
 	GtkWidget            *toolbar;
 	GtkWidget            *menubar;
+
+	gchar                *active_account;
 };
 
 #define MODEST_WINDOW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \

@@ -96,9 +96,11 @@ modest_window_init (ModestWindow *obj)
 
 	priv = MODEST_WINDOW_GET_PRIVATE(obj);
 
-	priv->ui_manager    = NULL;
-	priv->toolbar       = NULL;
-	priv->menubar       = NULL;
+	priv->ui_manager     = NULL;
+	priv->toolbar        = NULL;
+	priv->menubar        = NULL;
+
+	priv->active_account = NULL;
 }
 
 static void
@@ -113,5 +115,32 @@ modest_window_finalize (GObject *obj)
 		priv->ui_manager = NULL;
 	}
 
+	g_free (priv->active_account);
+	
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
+}
+
+
+
+const gchar*
+modest_window_get_active_account (ModestWindow *self)
+{
+	g_return_val_if_fail (self, NULL);
+
+	return MODEST_WINDOW_GET_PRIVATE(self)->active_account;
+}
+
+void
+modest_window_set_active_account (ModestWindow *self, const gchar *active_account)
+{
+	ModestWindowPrivate *priv;	
+
+	priv = MODEST_WINDOW_GET_PRIVATE(self);
+
+	if (active_account == priv->active_account)
+		return;
+	else {
+		g_free (priv->active_account);
+		priv->active_account = g_strdup (active_account);
+	}
 }

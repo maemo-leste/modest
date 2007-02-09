@@ -66,12 +66,15 @@ GType        modest_msg_view_window_get_type    (void) G_GNUC_CONST;
 
 /**
  * modest_msg_view_window_new:
+ * @msg: an #TnyMsg instance
+ * @account: the account name 
  * 
- * instantiates a new #ModestMsgViewWindow widget
+ * instantiates a new #ModestMsgViewWindow widget. The account name is used to
+ * set the proper account when choosing reply/forward from the msg view window
  *
  * Returns: a new #ModestMsgViewWindow, or NULL in case of error
  */
-ModestWindow*   modest_msg_view_window_new         (TnyMsg *msg);
+ModestWindow*   modest_msg_view_window_new         (TnyMsg *msg, const gchar *account);
 
 G_END_DECLS
 

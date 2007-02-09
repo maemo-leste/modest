@@ -61,12 +61,11 @@ typedef enum  {
 	MODEST_EDIT_TYPE_NEW,
 	MODEST_EDIT_TYPE_REPLY,
 	MODEST_EDIT_TYPE_FORWARD,
-	MODEST_EDIT_TYPE_VIEW,
 	
 	MODEST_EDIT_TYPE_NUM
 } ModestEditType;
 
-typedef struct _MsgData {
+typedef struct  {
 	gchar *from, *to, *cc, *bcc, *subject, *body;
 } MsgData;
 
@@ -83,23 +82,14 @@ GType        modest_msg_edit_window_get_type    (void) G_GNUC_CONST;
 
 /**
  * modest_msg_edit_window_new:
+ * #msg: a #TnyMsg instance
+ * #account_name: the account this message applies to
  * 
  * instantiates a new #ModestMsgEditWindow widget
  *
  * Returns: a new #ModestMsgEditWindow, or NULL in case of error
  */
-ModestWindow*   modest_msg_edit_window_new         (ModestEditType type);
-
-
-/**
- * modest_msg_edit_window_set_msg:
- * @self: a #ModestMsgEditWindow
- * @msg: a #TnyMsg
- * 
- * shows the message @msg in a #ModestMsgEditWindow
- **/
-void         modest_msg_edit_window_set_msg     (ModestMsgEditWindow *self, 
-						 TnyMsg *msg);
+ModestWindow*   modest_msg_edit_window_new         (TnyMsg *msg, const gchar *account_name);
 
 
 /**

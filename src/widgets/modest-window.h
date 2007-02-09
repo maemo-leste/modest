@@ -72,8 +72,38 @@ struct _ModestWindowClass {
 	ModestWindowParentClass parent_class;
 };
 
-/* member functions */
+/**
+ * modest_window_get_type:
+ *
+ * get the #GType for #ModestWindow
+ * 
+ * Returns: the type
+ */	
 GType        modest_window_get_type    (void) G_GNUC_CONST;
+
+
+/**
+ * modest_window_get_active_account:
+ * @self: a modest window instance
+ * 
+ * get the name of the active account
+ * 
+ * Returns: the active account name as a constant string
+ */	
+const gchar* modest_window_get_active_account (ModestWindow *self);
+
+
+
+/**
+ * modest_window_set_active_account:
+ * @self: a modest window instance
+ * @active_account: a new active account name for this window
+ * 
+ * set the active account for this window
+ * 
+ */	
+void modest_window_set_active_account (ModestWindow *self, const gchar *active_account);
+
 
 G_END_DECLS
 

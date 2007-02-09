@@ -52,8 +52,8 @@ enum {
 
 typedef struct _ModestComboBoxPrivate ModestComboBoxPrivate;
 struct _ModestComboBoxPrivate {
-	/* my private members go here, eg. */
-	/* gboolean frobnicate_mode; */
+	GEqualFunc id_equal_func;
+	
 };
 #define MODEST_COMBO_BOX_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                               MODEST_TYPE_COMBO_BOX, \
@@ -125,7 +125,7 @@ modest_combo_box_finalize (GObject *obj)
 }
 
 static GtkTreeModel*
-get_model (const GSList *pairs)
+get_model (const ModestPairList *pairs)
 {
 	GtkTreeIter iter;
 	GtkListStore *store;
@@ -149,16 +149,19 @@ get_model (const GSList *pairs)
 
 
 GtkWidget*
-modest_combo_box_new (const GSList *pairs)
+modest_combo_box_new (const ModestPairList *pairs, GEqualFunc id_equal_func)
 {
 	GtkTreeModel *model;
 	GtkCellRenderer *renderer;
 	GObject *obj;
+	ModestComboBoxPrivate *priv;
 
+	g_return_val_if_fail (pairs,         NULL);
+	
 	obj  = G_OBJECT(g_object_new(MODEST_TYPE_COMBO_BOX, NULL));
-		
+	priv = MODEST_COMBO_BOX_GET_PRIVATE(obj);
+	
 	model = get_model (pairs);
-
 	if (model) {
 		gtk_combo_box_set_model (GTK_COMBO_BOX(obj), model);
 		g_object_unref (model);
@@ -173,6 +176,12 @@ modest_combo_box_new (const GSList *pairs)
 	}
 
 	gtk_combo_box_set_active (GTK_COMBO_BOX(obj), 0);
+
+	if (id_equal_func)
+		priv->id_equal_func = id_equal_func;
+	else
+		priv->id_equal_func = g_direct_equal; /* compare the ptr values */
+	
 	return GTK_WIDGET(obj);
 }
 
@@ -182,7 +191,6 @@ static void
 get_active (ModestComboBox *self, GValue *val, gint column)
 {
 	GtkTreeIter iter;
-	
 	g_return_if_fail (self);
 
 	if (gtk_combo_box_get_active_iter (GTK_COMBO_BOX(self), &iter)) {
@@ -196,10 +204,11 @@ get_active (ModestComboBox *self, GValue *val, gint column)
 gpointer
 modest_combo_box_get_active_id (ModestComboBox *self)
 {
-	g_return_val_if_fail (self, NULL);
 	GValue val = {0,};
 	gpointer retval;
 
+	g_return_val_if_fail (self, NULL);
+	
 	/* Do not unset the GValue */
 	get_active (self, &val, COLUMN_ID);
 	retval = g_value_peek_pointer (&val);
@@ -207,16 +216,49 @@ modest_combo_box_get_active_id (ModestComboBox *self)
 	return retval;
 }
 
-gpointer
+
+void
+modest_combo_box_set_active_id (ModestComboBox *self, gpointer id)
+{
+	GtkTreeModel *model;
+	GtkTreeIter iter;
+	ModestComboBoxPrivate *priv;
+	gboolean found;
+	
+	g_return_if_fail (self);
+
+	priv = MODEST_COMBO_BOX_GET_PRIVATE(self);
+	
+	model = gtk_combo_box_get_model (GTK_COMBO_BOX(self));
+	if (!gtk_tree_model_get_iter_first (model, &iter))
+		return; /* empty list */
+
+	do {
+		gpointer row_id;
+		gtk_tree_model_get (model, &iter, COLUMN_ID, &row_id, -1);
+		if ((priv->id_equal_func)(id, row_id) == 0) {
+			gtk_combo_box_set_active_iter (GTK_COMBO_BOX(self), &iter);
+			found = TRUE;
+		}
+	} while (!found && gtk_tree_model_iter_next (model, &iter));
+
+	if (!found)
+		g_printerr ("modest: could not set the active id\n"); 
+}
+
+
+
+const gchar*
 modest_combo_box_get_active_display_name (ModestComboBox *self)
 {
-	g_return_val_if_fail (self, NULL);
 	GValue val = {0,};
 	gpointer retval;
+
+	g_return_val_if_fail (self, NULL);
 
 	/* Do not unset the GValue */
 	get_active (self, &val, COLUMN_DISPLAY_NAME);
 	retval = g_value_peek_pointer (&val);
 
-	return retval;
+	return (gchar*) retval;
 }
