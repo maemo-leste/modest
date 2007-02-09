@@ -149,6 +149,9 @@ modest_main_window_init (ModestMainWindow *obj)
 {
 	ModestMainWindowPrivate *priv;
 	TnyFolderStoreQuery     *query;
+	TnyDevice               *device;
+	GtkWidget               *icon;
+	gboolean                online;
 	
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(obj);
 	
@@ -181,6 +184,12 @@ modest_main_window_init (ModestMainWindow *obj)
 
 	/* online/offline combo */
 	priv->online_toggle = gtk_toggle_button_new ();
+	device  = tny_account_store_get_device(TNY_ACCOUNT_STORE(modest_runtime_get_account_store()));;
+	online  = tny_device_is_online (device);
+	icon    = gtk_image_new_from_icon_name (online ? GTK_STOCK_CONNECT : GTK_STOCK_DISCONNECT,
+						GTK_ICON_SIZE_BUTTON);
+	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(priv->online_toggle), online);
+	gtk_button_set_image (GTK_BUTTON(priv->online_toggle),icon);
 
 	/* label with number of items, unread items for 
 	   the current folder */

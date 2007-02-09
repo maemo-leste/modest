@@ -309,7 +309,7 @@ add_receiving_page (ModestAccountAssistant *self)
 			    FALSE,FALSE,6);
 
 	protos = modest_protocol_info_get_protocol_pair_list (MODEST_PROTOCOL_TYPE_STORE);
-	combo = modest_combo_box_new (protos);
+	combo = modest_combo_box_new (protos, g_str_equal);
 	modest_pair_list_free (protos);
 	
 	g_signal_connect (G_OBJECT(combo), "changed",
@@ -385,7 +385,7 @@ add_sending_page (ModestAccountAssistant *self)
 			    FALSE,FALSE,0);
 	
 	protos = modest_protocol_info_get_protocol_pair_list (MODEST_PROTOCOL_TYPE_TRANSPORT);
-	combo = modest_combo_box_new (protos);
+	combo = modest_combo_box_new (protos, g_str_equal);
 	modest_pair_list_free (protos);
 
 	g_signal_connect (G_OBJECT(combo), "changed",

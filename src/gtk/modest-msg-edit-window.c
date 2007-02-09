@@ -175,9 +175,17 @@ get_transports (void)
 }
 
 
+static void
+on_from_combo_changed (ModestComboBox *combo, ModestWindow *win)
+{
+	modest_window_set_active_account (
+		win, modest_combo_box_get_active_id(combo));
+}
+
+
 
 static void
-init_window (ModestMsgEditWindow *obj)
+init_window (ModestMsgEditWindow *obj, const gchar* account)
 {
 	GtkWidget *to_button, *cc_button, *bcc_button; 
 	GtkWidget *header_table;
@@ -192,11 +200,17 @@ init_window (ModestMsgEditWindow *obj)
 	to_button     = gtk_button_new_with_label (_("To..."));
 	cc_button     = gtk_button_new_with_label (_("Cc..."));
 	bcc_button    = gtk_button_new_with_label (_("Bcc..."));
-
 	
 	protos = get_transports ();
- 	priv->from_field    = modest_combo_box_new (protos);
+ 	priv->from_field    = modest_combo_box_new (protos, g_str_equal);
 	modest_pair_list_free (protos);
+	if (account) {
+		modest_combo_box_set_active_id (MODEST_COMBO_BOX(priv->from_field),
+						(gpointer)account);
+		modest_window_set_active_account (MODEST_WINDOW(obj), account);
+	}
+	/* auto-update the active account */
+	g_signal_connect (G_OBJECT(priv->from_field), "changed", G_CALLBACK(on_from_combo_changed), obj);
 	
 	priv->to_field      = gtk_entry_new_with_max_length (80);
 	priv->cc_field      = gtk_entry_new_with_max_length (80);
@@ -249,74 +263,8 @@ on_delete_event (GtkWidget *widget, GdkEvent *event, ModestMsgEditWindow *self)
 }
 
 
-ModestWindow *
-modest_msg_edit_window_new (ModestEditType type)
-{
-	GObject *obj;
-	ModestMsgEditWindowPrivate *priv;
-	ModestWindowPrivate *parent_priv;
-	GtkActionGroup *action_group;
-	GError *error = NULL;
-
-	g_return_val_if_fail (type < MODEST_EDIT_TYPE_NUM, NULL);
-	
-	obj = g_object_new(MODEST_TYPE_MSG_EDIT_WINDOW, NULL);
-	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE(obj);
-	parent_priv = MODEST_WINDOW_GET_PRIVATE(obj);
-	
-	parent_priv->ui_manager = gtk_ui_manager_new();
-	action_group = gtk_action_group_new ("ModestMsgEditWindowActions");
-
-	/* Add common actions */
-	gtk_action_group_add_actions (action_group,
-				      modest_msg_edit_action_entries,
-				      G_N_ELEMENTS (modest_msg_edit_action_entries),
-				      obj);
-	gtk_action_group_add_toggle_actions (action_group,
-					     modest_msg_edit_toggle_action_entries,
-					     G_N_ELEMENTS (modest_msg_edit_toggle_action_entries),
-					     obj);
-	gtk_ui_manager_insert_action_group (parent_priv->ui_manager, action_group, 0);
-	g_object_unref (action_group);
-
-	/* Load the UI definition */
-	gtk_ui_manager_add_ui_from_file (parent_priv->ui_manager,
-					 MODEST_UIDIR "modest-msg-edit-window-ui.xml",
-					 &error);
-	if (error) {
-		g_printerr ("modest: could not merge modest-msg-edit-window-ui.xml: %s\n", error->message);
-		g_error_free (error);
-		error = NULL;
-	}
-	/* ****** */
-
-	/* Add accelerators */
-	gtk_window_add_accel_group (GTK_WINDOW (obj), 
-				    gtk_ui_manager_get_accel_group (parent_priv->ui_manager));
-
-
-	/* Toolbar / Menubar */
-	priv->toolbar = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar");
-	priv->menubar = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/MenuBar");
-
-	gtk_toolbar_set_tooltips (GTK_TOOLBAR (priv->toolbar), TRUE);
-
-	/* Init window */
-	init_window (MODEST_MSG_EDIT_WINDOW(obj));
-
-	restore_settings (MODEST_MSG_EDIT_WINDOW(obj));
-	
-	gtk_window_set_title (GTK_WINDOW(obj), "Modest");
-	gtk_window_set_icon_from_file (GTK_WINDOW(obj), MODEST_APP_ICON, NULL);
-
-	g_signal_connect (G_OBJECT(obj), "delete-event",
-			  G_CALLBACK(on_delete_event), obj);
-
-	return (ModestWindow *) (obj);
-}
-
-void
-modest_msg_edit_window_set_msg (ModestMsgEditWindow *self, TnyMsg *msg)
+static void
+set_msg (ModestMsgEditWindow *self, TnyMsg *msg)
 {
 	TnyHeader *header;
 	GtkTextBuffer *buf;
@@ -343,19 +291,83 @@ modest_msg_edit_window_set_msg (ModestMsgEditWindow *self, TnyMsg *msg)
 		gtk_entry_set_text (GTK_ENTRY(priv->bcc_field),  bcc);
 	if (subject)
 		gtk_entry_set_text (GTK_ENTRY(priv->subject_field), subject);
+
 	
 	buf  = gtk_text_view_get_buffer (GTK_TEXT_VIEW(priv->msg_body));
 	body = modest_tny_msg_get_body (msg, FALSE);
 	if (body) 
 		gtk_text_buffer_set_text (buf, body, -1);
 	g_free (body);
-	
-	/* TODO: lower priority, select in the From: combo to the
-	   value that comes from msg <- not sure, should it be
-	   allowed? */
-	
-	/* TODO: set attachments */
 }
+
+
+ModestWindow *
+modest_msg_edit_window_new (TnyMsg *msg, const gchar *account)
+{
+	ModestMsgEditWindow *self;
+	ModestMsgEditWindowPrivate *priv;
+	ModestWindowPrivate *parent_priv;
+	GtkActionGroup *action_group;
+	GError *error = NULL;
+
+	g_return_val_if_fail (msg, NULL);
+	
+	self = MODEST_MSG_EDIT_WINDOW(g_object_new(MODEST_TYPE_MSG_EDIT_WINDOW, NULL));
+	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE(self);
+	parent_priv = MODEST_WINDOW_GET_PRIVATE(self);
+	
+	parent_priv->ui_manager = gtk_ui_manager_new();
+	action_group = gtk_action_group_new ("ModestMsgEditWindowActions");
+
+	/* Add common actions */
+	gtk_action_group_add_actions (action_group,
+				      modest_msg_edit_action_entries,
+				      G_N_ELEMENTS (modest_msg_edit_action_entries),
+				      self);
+	gtk_action_group_add_toggle_actions (action_group,
+					     modest_msg_edit_toggle_action_entries,
+					     G_N_ELEMENTS (modest_msg_edit_toggle_action_entries),
+					     self);
+	gtk_ui_manager_insert_action_group (parent_priv->ui_manager, action_group, 0);
+	g_object_unref (action_group);
+
+	/* Load the UI definition */
+	gtk_ui_manager_add_ui_from_file (parent_priv->ui_manager,
+					 MODEST_UIDIR "modest-msg-edit-window-ui.xml",
+					 &error);
+	if (error) {
+		g_printerr ("modest: could not merge modest-msg-edit-window-ui.xml: %s\n", error->message);
+		g_error_free (error);
+		error = NULL;
+	}
+	/* ****** */
+
+	/* Add accelerators */
+	gtk_window_add_accel_group (GTK_WINDOW (self), 
+				    gtk_ui_manager_get_accel_group (parent_priv->ui_manager));
+
+	/* Toolbar / Menubar */
+	priv->toolbar = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar");
+	priv->menubar = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/MenuBar");
+
+	gtk_toolbar_set_tooltips (GTK_TOOLBAR (priv->toolbar), TRUE);
+
+	/* Init window */
+	init_window (MODEST_MSG_EDIT_WINDOW(self), account);
+
+	restore_settings (MODEST_MSG_EDIT_WINDOW(self));
+	
+	gtk_window_set_title (GTK_WINDOW(self), "Modest");
+	gtk_window_set_icon_from_file (GTK_WINDOW(self), MODEST_APP_ICON, NULL);
+
+	g_signal_connect (G_OBJECT(self), "delete-event",
+			  G_CALLBACK(on_delete_event), self);
+	
+	set_msg (self, msg);
+	
+	return MODEST_WINDOW(self);
+}
+
 
 MsgData * 
 modest_msg_edit_window_get_msg_data (ModestMsgEditWindow *edit_window)

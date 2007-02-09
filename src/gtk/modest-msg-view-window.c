@@ -52,7 +52,6 @@ enum {
 
 typedef struct _ModestMsgViewWindowPrivate ModestMsgViewWindowPrivate;
 struct _ModestMsgViewWindowPrivate {
-
 	GtkWidget   *toolbar;
 	GtkWidget   *menubar;
 	GtkWidget   *msg_view;
@@ -154,7 +153,7 @@ init_window (ModestMsgViewWindow *obj, TnyMsg *msg)
 
 static void
 modest_msg_view_window_finalize (GObject *obj)
-{
+{	
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
@@ -169,7 +168,7 @@ on_delete_event (GtkWidget *widget, GdkEvent *event, ModestMsgViewWindow *self)
 
 
 ModestWindow *
-modest_msg_view_window_new (TnyMsg *msg)
+modest_msg_view_window_new (TnyMsg *msg, const gchar *account)
 {
 	GObject *obj;
 	ModestMsgViewWindowPrivate *priv;
@@ -178,10 +177,13 @@ modest_msg_view_window_new (TnyMsg *msg)
 	GError *error = NULL;
 
 	g_return_val_if_fail (msg, NULL);
+	g_return_val_if_fail (msg, NULL);
 	
 	obj = g_object_new(MODEST_TYPE_MSG_VIEW_WINDOW, NULL);
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE(obj);
 	parent_priv = MODEST_WINDOW_GET_PRIVATE(obj);
+
+	modest_window_set_active_account (MODEST_WINDOW(obj), account);
 	
 	parent_priv->ui_manager = gtk_ui_manager_new();
 	action_group = gtk_action_group_new ("ModestMsgViewWindowActions");
@@ -193,6 +195,7 @@ modest_msg_view_window_new (TnyMsg *msg)
 				      obj);
 	gtk_ui_manager_insert_action_group (parent_priv->ui_manager, action_group, 0);
 	g_object_unref (action_group);
+
 	
 	/* Load the UI definition */
 	gtk_ui_manager_add_ui_from_file (parent_priv->ui_manager,
@@ -224,5 +227,5 @@ modest_msg_view_window_new (TnyMsg *msg)
 
 	g_signal_connect (G_OBJECT(obj), "delete-event", G_CALLBACK(on_delete_event), obj);
 
-	return (ModestWindow *) (obj);
+	return MODEST_WINDOW(obj);
 }
