@@ -364,7 +364,7 @@ modest_main_window_new (void)
 	g_object_unref (action_group);
 
 	/* Load the UI definition */
-	gtk_ui_manager_add_ui_from_file (parent_priv->ui_manager, MODEST_UIDIR "modest-ui.xml", &error);
+	gtk_ui_manager_add_ui_from_file (parent_priv->ui_manager, MODEST_UIDIR "modest-main-window-ui.xml", &error);
 	if (error != NULL) {
 		g_warning ("Could not merge modest-ui.xml: %s", error->message);
 		g_error_free (error);
