@@ -58,7 +58,7 @@ static const GtkActionEntry modest_action_entries [] = {
 	{ "MessageReplyAll",    NULL,  N_("Reply to all"),      NULL,      NULL,   G_CALLBACK (modest_ui_actions_on_reply_all) },
 	{ "MessageForward",     NULL,  N_("_Forward"),          NULL,      NULL,   G_CALLBACK (modest_ui_actions_on_forward) },
 	{ "MessageDelete",      NULL,  N_("Delete message"),    NULL,      NULL,   G_CALLBACK (modest_ui_actions_on_delete) },
-	{ "MessageSendReceive", NULL,  N_("Send and receive"),  NULL,      NULL,   NULL },
+	{ "MessageSendReceive", NULL,  N_("Send and receive"),  NULL,      NULL,   G_CALLBACK (modest_ui_actions_on_send_receive) },
 	{ "MessageContents",    NULL,  N_("Retrieve contents"), NULL,      NULL,   NULL },
 	{ "MessageDetails",     NULL,  N_("Details..."),        NULL,      NULL,   NULL },
 	

@@ -203,7 +203,7 @@ on_delete_event (GtkWidget *widget, GdkEvent *event, ModestMsgViewWindow *self)
 
 
 ModestWindow *
-modest_msg_view_window_new (TnyMsg *msg)
+modest_msg_view_window_new (TnyMsg *msg, const gchar *account_name)
 {
 	GObject *obj;
 	ModestMsgViewWindowPrivate *priv;
@@ -251,5 +251,6 @@ modest_msg_view_window_new (TnyMsg *msg)
 
 	g_signal_connect (G_OBJECT(obj), "delete-event", G_CALLBACK(on_delete_event), obj);
 
-	return (ModestWindow *) (obj);
+	modest_window_set_active_account (MODEST_WINDOW(obj), account_name);
+	return MODEST_WINDOW(obj);
 }

@@ -195,7 +195,7 @@ init_window (ModestMsgEditWindow *obj)
 
 		
 	protos = get_transports ();
- 	priv->from_field    = modest_combo_box_new (protos);
+ 	priv->from_field    = modest_combo_box_new (protos, g_str_equal);
 	modest_pair_list_free (protos);
 
 	priv->to_field      = gtk_entry_new_with_max_length (80);
@@ -272,8 +272,50 @@ menubar_to_menu (GtkUIManager *ui_manager)
 	return main_menu;
 }
 
+
+static void
+set_msg (ModestMsgEditWindow *self, TnyMsg *msg)
+{
+	TnyHeader *header;
+	GtkTextBuffer *buf;
+	const gchar *to, *cc, *bcc, *subject;
+	ModestMsgEditWindowPrivate *priv;
+
+	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (self));
+	g_return_if_fail (TNY_IS_MSG (msg));
+
+	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (self);
+
+	header = tny_msg_get_header (msg);
+	to      = tny_header_get_to (header);
+	cc      = tny_header_get_cc (header);
+	bcc     = tny_header_get_bcc (header);
+	subject = tny_header_get_subject (header);
+
+	if (to)
+		gtk_entry_set_text (GTK_ENTRY(priv->to_field),  to);
+	if (cc)
+		gtk_entry_set_text (GTK_ENTRY(priv->cc_field),  cc);
+	if (bcc)
+		gtk_entry_set_text (GTK_ENTRY(priv->bcc_field), bcc);
+	if (subject)
+		gtk_entry_set_text (GTK_ENTRY(priv->subject_field), subject);	
+	
+	buf = gtk_text_view_get_buffer (GTK_TEXT_VIEW(priv->msg_body));
+	gtk_text_buffer_set_text (buf,
+				  (const gchar *) modest_tny_msg_get_body (msg, FALSE),
+				  -1);
+
+	/* TODO: lower priority, select in the From: combo to the
+	   value that comes from msg <- not sure, should it be
+	   allowed? */
+	
+	/* TODO: set attachments */
+}
+
+
 ModestWindow*
-modest_msg_edit_window_new (ModestEditType type)
+modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name)
 {
 	GObject *obj;
 	ModestWindowPrivate *parent_priv;
@@ -281,7 +323,7 @@ modest_msg_edit_window_new (ModestEditType type)
 	GtkActionGroup *action_group;
 	GError *error = NULL;
 
-	g_return_val_if_fail (type < MODEST_EDIT_TYPE_NUM, NULL);
+	g_return_val_if_fail (msg, NULL);
 	
 	obj = g_object_new(MODEST_TYPE_MSG_EDIT_WINDOW, NULL);
 
@@ -335,47 +377,8 @@ modest_msg_edit_window_new (ModestEditType type)
 	g_signal_connect (G_OBJECT(obj), "delete-event",
 			  G_CALLBACK(on_delete_event), obj);
 
+	modest_window_set_active_account (MODEST_WINDOW(obj), account_name);
 	return (ModestWindow*)obj;
-}
-
-void
-modest_msg_edit_window_set_msg (ModestMsgEditWindow *self, TnyMsg *msg)
-{
-	TnyHeader *header;
-	GtkTextBuffer *buf;
-	const gchar *to, *cc, *bcc, *subject;
-	ModestMsgEditWindowPrivate *priv;
-
-	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (self));
-	g_return_if_fail (TNY_IS_MSG (msg));
-
-	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (self);
-
-	header = tny_msg_get_header (msg);
-	to      = tny_header_get_to (header);
-	cc      = tny_header_get_cc (header);
-	bcc     = tny_header_get_bcc (header);
-	subject = tny_header_get_subject (header);
-
-	if (to)
-		gtk_entry_set_text (GTK_ENTRY(priv->to_field),  to);
-	if (cc)
-		gtk_entry_set_text (GTK_ENTRY(priv->cc_field),  cc);
-	if (bcc)
-		gtk_entry_set_text (GTK_ENTRY(priv->bcc_field), bcc);
-	if (subject)
-		gtk_entry_set_text (GTK_ENTRY(priv->subject_field), subject);	
-	
-	buf = gtk_text_view_get_buffer (GTK_TEXT_VIEW(priv->msg_body));
-	gtk_text_buffer_set_text (buf,
-				  (const gchar *) modest_tny_msg_get_body (msg, FALSE),
-				  -1);
-
-	/* TODO: lower priority, select in the From: combo to the
-	   value that comes from msg <- not sure, should it be
-	   allowed? */
-	
-	/* TODO: set attachments */
 }
 
 MsgData * 
