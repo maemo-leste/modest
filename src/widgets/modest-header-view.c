@@ -467,8 +467,7 @@ modest_header_view_select_next (ModestHeaderView *self)
 	GtkTreeModel *model;
 
 	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (self));
-	if (sel) {
-		gtk_tree_selection_get_selected (sel, &model, &iter);
+	if (gtk_tree_selection_get_selected (sel, &model, &iter)) {
 		if (gtk_tree_model_iter_next (model, &iter))
 			gtk_tree_selection_select_iter (sel, &iter);
 	}
@@ -483,8 +482,7 @@ modest_header_view_select_prev (ModestHeaderView *self)
 	GtkTreePath *path;
 
 	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (self));
-	if (sel) {
-		gtk_tree_selection_get_selected (sel, &model, &iter);
+	if (gtk_tree_selection_get_selected (sel, &model, &iter)) {		
 		path = gtk_tree_model_get_path (model, &iter);
 
 		/* Move path up */
