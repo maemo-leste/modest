@@ -146,10 +146,8 @@ GtkWidget*   modest_header_view_new        (TnyFolder *folder,
  * @folder: a TnyFolder object
  * 
  * set the folder for this ModestHeaderView
- *  
- * Returns: TRUE if it succeeded, FALSE otherwise
  */
-gboolean     modest_header_view_set_folder (ModestHeaderView *self,
+void         modest_header_view_set_folder (ModestHeaderView *self,
 					    TnyFolder *folder);
 
 /**
@@ -244,6 +242,14 @@ gboolean  modest_header_view_is_empty (ModestHeaderView *self);
  * Selects the header next to the current selected one
  **/
 void         modest_header_view_select_next          (ModestHeaderView *self);
+
+/**
+ * modest_header_view_select_prev:
+ * @self: a #ModestHeaderView
+ * 
+ * Selects the previous header of the current selected one
+ **/
+void         modest_header_view_select_prev          (ModestHeaderView *self);
 
 
 /* PROTECTED method. It's useful when we want to force a given

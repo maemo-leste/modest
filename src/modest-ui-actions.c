@@ -360,6 +360,17 @@ modest_ui_actions_on_next (GtkWidget *widget,
 		modest_header_view_select_next (main_window->header_view); 
 }
 
+void 
+modest_ui_actions_on_prev (GtkWidget *widget, 
+			   ModestMainWindow *main_window)
+{
+	g_return_if_fail (MODEST_IS_MAIN_WINDOW(main_window));
+
+	if (main_window->header_view)
+		modest_header_view_select_prev (main_window->header_view); 
+}
+
+
 void
 modest_ui_actions_toggle_view (GtkWidget *widget, ModestMainWindow *main_window)
 {

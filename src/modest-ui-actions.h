@@ -56,6 +56,8 @@ void     modest_ui_actions_on_reply_all     (GtkWidget *widget, ModestMainWindow
 
 void     modest_ui_actions_on_next          (GtkWidget *widget, ModestMainWindow *main_window);
 
+void     modest_ui_actions_on_prev          (GtkWidget *widget, ModestMainWindow *main_window);
+
 void	 modest_ui_actions_toggle_view	     (GtkWidget *widget, ModestMainWindow *main_window);
 
 /* Widget actions */

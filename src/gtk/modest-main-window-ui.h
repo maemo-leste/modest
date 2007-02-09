@@ -81,7 +81,7 @@ static const GtkActionEntry modest_action_entries [] = {
 
 
 	/* GOTO */
-	{ "GotoPrevious", MODEST_STOCK_PREV, N_("Previous"), NULL, N_("Go to previous message"), NULL },
+	{ "GotoPrevious", MODEST_STOCK_PREV, N_("Previous"), NULL, N_("Go to previous message"), G_CALLBACK (modest_ui_actions_on_prev) },
 	{ "GotoNext",     MODEST_STOCK_NEXT, N_("Next"),     NULL, N_("Go to next message"), G_CALLBACK (modest_ui_actions_on_next) },
 
 	/* OPTIONS */

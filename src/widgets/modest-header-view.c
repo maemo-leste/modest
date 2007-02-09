@@ -394,12 +394,7 @@ modest_header_view_new (TnyFolder *folder, ModestHeaderViewStyle style)
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
 	
 	modest_header_view_set_style   (self, style);
-
-	if (!modest_header_view_set_folder (self, NULL)) {
-		g_printerr ("modest: could not set the folder\n");
-		g_object_unref (obj);
-		return NULL;
-	}
+	modest_header_view_set_folder (self, NULL);
 
 	gtk_tree_view_columns_autosize (GTK_TREE_VIEW(obj));
 	gtk_tree_view_set_fixed_height_mode (GTK_TREE_VIEW(obj),TRUE);
@@ -474,10 +469,35 @@ modest_header_view_select_next (ModestHeaderView *self)
 	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (self));
 	if (sel) {
 		gtk_tree_selection_get_selected (sel, &model, &iter);
-		gtk_tree_model_iter_next (model, &iter);
-		gtk_tree_selection_select_iter (sel, &iter);
+		if (gtk_tree_model_iter_next (model, &iter))
+			gtk_tree_selection_select_iter (sel, &iter);
 	}
 }
+
+void 
+modest_header_view_select_prev (ModestHeaderView *self)
+{
+	GtkTreeSelection *sel;
+	GtkTreeIter iter;
+	GtkTreeModel *model;
+	GtkTreePath *path;
+
+	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (self));
+	if (sel) {
+		gtk_tree_selection_get_selected (sel, &model, &iter);
+		path = gtk_tree_model_get_path (model, &iter);
+
+		/* Move path up */
+		if (gtk_tree_path_prev (path)) {
+			gtk_tree_model_get_iter (model, &iter, path);
+
+			/* Select the new one */
+			gtk_tree_selection_select_iter (sel, &iter);
+		}
+		gtk_tree_path_free (path);
+	}
+}
+
 GList*
 modest_header_view_get_columns (ModestHeaderView *self)
 {
@@ -545,8 +565,13 @@ on_refresh_folder (TnyFolder *folder, gboolean cancelled, GError **err,
 	ModestHeaderViewPrivate *priv;
 	GError *error = NULL;
 
-	if (cancelled)
+	if (cancelled) {
+		GtkTreeSelection *selection;
+
+		selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (user_data));
+		gtk_tree_selection_unselect_all (selection);
 		return;
+	}
 	
 	self = MODEST_HEADER_VIEW(user_data);
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
@@ -621,7 +646,7 @@ modest_header_view_get_folder (ModestHeaderView *self)
 }
 
 
-gboolean
+void
 modest_header_view_set_folder (ModestHeaderView *self, TnyFolder *folder)
 {
 	ModestHeaderViewPrivate *priv;
@@ -629,16 +654,16 @@ modest_header_view_set_folder (ModestHeaderView *self, TnyFolder *folder)
 
 	priv->folder = folder;
 
-	if (folder)
+	if (folder) {
 		tny_folder_refresh_async (folder,
 					  on_refresh_folder,
 					  on_refresh_folder_status_update,
 					  self);
 
-	/* no message selected */
-	g_signal_emit (G_OBJECT(self), signals[HEADER_SELECTED_SIGNAL], 0,
-		       NULL);
-	return TRUE;
+		/* no message selected */		
+		g_signal_emit (G_OBJECT(self), signals[HEADER_SELECTED_SIGNAL], 0,
+			       NULL);
+	}
 }
 
 static gboolean

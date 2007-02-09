@@ -299,7 +299,7 @@ on_online_toggle_toggled (GtkToggleButton *toggle, ModestMainWindow *self)
 	device = tny_account_store_get_device
 		(TNY_ACCOUNT_STORE(modest_runtime_get_account_store()));
 
-	online  = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON(priv->online_toggle));
+	online  = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (priv->online_toggle));
 
 	if (online)
 		tny_device_force_online (device);
@@ -378,7 +378,7 @@ connect_signals (ModestMainWindow *self)
 	g_signal_connect (G_OBJECT(device), "connection_changed",
 			  G_CALLBACK(on_connection_changed), self);
 	g_signal_connect (G_OBJECT(priv->online_toggle), "toggled",
-			  G_CALLBACK(on_online_toggle_toggled), NULL);
+			  G_CALLBACK(on_online_toggle_toggled), self);
 	
 	/* window */
 	g_signal_connect (G_OBJECT(self), "destroy", G_CALLBACK(on_destroy), NULL);
@@ -473,7 +473,7 @@ modest_main_window_new (void)
 	gtk_paned_add2 (GTK_PANED(priv->msg_paned), GTK_WIDGET(self->msg_preview));
 
 	gtk_widget_show (GTK_WIDGET(self->header_view));
-	
+
 	/* status bar / progress */
 	status_hbox = gtk_hbox_new (FALSE, 0);
 	gtk_box_pack_start (GTK_BOX(status_hbox), priv->folder_info_label, FALSE,FALSE, 6);
