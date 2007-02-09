@@ -98,6 +98,8 @@ void     modest_ui_actions_on_msg_attachment_clicked   (ModestMsgView *msgview, 
 void     modest_ui_actions_on_send                     (GtkWidget *widget,
 							ModestMsgEditWindow *edit_window);
 
+void    modest_ui_actions_on_send_receive              (GtkWidget *widget, ModestWindow *win);
+
 void     modest_ui_actions_on_new_folder               (GtkWidget *widget,
 							 ModestMainWindow *main_window);
 

@@ -147,6 +147,8 @@ ModestCacheMgr*           modest_singletons_get_cache_mgr     (ModestSingletons 
  **/
 ModestMailOperationQueue* modest_singletons_get_mail_operation_queue (ModestSingletons *self);
 
+
+
 G_END_DECLS
 
 #endif /* __MODEST_SINGLETONS_H__ */

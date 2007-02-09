@@ -34,7 +34,9 @@
 #include <glib/gi18n.h>
 #include <string.h>
 #include <modest-runtime.h>
+#include <modest-tny-msg.h>
 #include "modest-ui-actions.h"
+
 #include "modest-tny-platform-factory.h"
 
 #include <widgets/modest-main-window.h>
@@ -66,7 +68,7 @@ typedef enum _ReplyForwardAction {
 typedef struct _ReplyForwardHelper {
 guint reply_forward_type;
 	ReplyForwardAction action;
-	gchar *from;
+	gchar *account;
 } ReplyForwardHelper;
 
 
@@ -184,10 +186,25 @@ void
 modest_ui_actions_on_new_msg (GtkWidget *widget, ModestWindow *win)
 {
 	ModestWindow *msg_win;
-	msg_win = modest_msg_edit_window_new (MODEST_EDIT_TYPE_NEW);
+	TnyMsg *msg;
+	gchar *account;
+	gchar *from_str;
+
+	account = g_strdup(modest_window_get_active_account (win));
+	if (!account)
+		account = modest_account_mgr_get_default_account (modest_runtime_get_account_mgr());
+	
+	from_str = modest_account_mgr_get_from_string (modest_runtime_get_account_mgr(),
+						       account);
+	
+	msg = modest_tny_msg_new ("", from_str, "", "", "", "", NULL);
+	msg_win = modest_msg_edit_window_new (msg, account);
 	if (win)
 		gtk_window_set_transient_for (GTK_WINDOW (msg_win),
-					      GTK_WINDOW (win));
+					      GTK_WINDOW (win));	
+	g_free (account);
+	g_free (from_str);
+	g_object_unref (G_OBJECT(msg));
 	
 	gtk_widget_show_all (GTK_WIDGET (msg_win));
 }
@@ -201,6 +218,8 @@ modest_ui_actions_on_open (GtkWidget *widget, ModestWindow *win)
 }
 
 
+
+
 static void
 reply_forward_func (gpointer data, gpointer user_data)
 {
@@ -209,29 +228,32 @@ reply_forward_func (gpointer data, gpointer user_data)
 	ReplyForwardHelper *rf_helper;
 	ModestWindow *msg_win;
 	ModestEditType edit_type;
-
+	gchar *from;
+	
 	msg = TNY_MSG (data);
 	helper = (GetMsgAsyncHelper *) user_data;
 	rf_helper = (ReplyForwardHelper *) helper->user_data;
 
+	from = modest_account_mgr_get_from_string (modest_runtime_get_account_mgr(),
+						   rf_helper->account);
 	/* Create reply mail */
 	switch (rf_helper->action) {
 	case ACTION_REPLY:
 		new_msg = 
 			modest_mail_operation_create_reply_mail (msg, 
-								 rf_helper->from, 
+								 from, 
 								 rf_helper->reply_forward_type,
 								 MODEST_MAIL_OPERATION_REPLY_MODE_SENDER);
 		break;
 	case ACTION_REPLY_TO_ALL:
 		new_msg = 
-			modest_mail_operation_create_reply_mail (msg, rf_helper->from, rf_helper->reply_forward_type,
+			modest_mail_operation_create_reply_mail (msg, from, rf_helper->reply_forward_type,
 								 MODEST_MAIL_OPERATION_REPLY_MODE_ALL);
 		edit_type = MODEST_EDIT_TYPE_REPLY;
 		break;
 	case ACTION_FORWARD:
 		new_msg = 
-			modest_mail_operation_create_forward_mail (msg, rf_helper->from, rf_helper->reply_forward_type);
+			modest_mail_operation_create_forward_mail (msg, from, rf_helper->reply_forward_type);
 		edit_type = MODEST_EDIT_TYPE_FORWARD;
 		break;
 	default:
@@ -244,16 +266,14 @@ reply_forward_func (gpointer data, gpointer user_data)
 	}
 		
 	/* Show edit window */
-	msg_win = modest_msg_edit_window_new (MODEST_EDIT_TYPE_NEW);
-	modest_msg_edit_window_set_msg (MODEST_MSG_EDIT_WINDOW (msg_win),
-					new_msg);
+	msg_win = modest_msg_edit_window_new (new_msg, rf_helper->account);
 	gtk_widget_show_all (GTK_WIDGET (msg_win));
 	
 	/* Clean */
 	g_object_unref (G_OBJECT (new_msg));
 
  cleanup:
-	g_free (rf_helper->from);
+	g_free (rf_helper->account);
 	g_slice_free (ReplyForwardHelper, rf_helper);
 }
 
@@ -264,14 +284,10 @@ static void
 reply_forward (GtkWidget *widget, ReplyForwardAction action,
 	       ModestMainWindow *main_window)
 {
-	ModestAccountMgr *account_mgr;
 	TnyList *header_list;
 	guint reply_forward_type;
-	ModestConf *conf;	
-	ModestAccountData *default_account_data;
 	TnyHeader *header;
 	TnyFolder *folder;
-	gchar *from, *key, *default_account_name;
 	GetMsgAsyncHelper *helper;
 	ReplyForwardHelper *rf_helper;
 
@@ -281,34 +297,21 @@ reply_forward (GtkWidget *widget, ReplyForwardAction action,
 	header_list = modest_header_view_get_selected_headers (main_window->header_view);	
 	if (!header_list)
 		return;
-
-	conf = modest_runtime_get_conf ();
 	
-	/* Get reply or forward type */
-	key = g_strdup_printf ("%s/%s", MODEST_CONF_NAMESPACE, 
-			       (action == ACTION_FORWARD) ? MODEST_CONF_FORWARD_TYPE : MODEST_CONF_REPLY_TYPE);
-	reply_forward_type = modest_conf_get_int (conf, key, NULL);
-	g_free (key);
-
+	reply_forward_type = modest_conf_get_int (modest_runtime_get_conf (),
+						  (action == ACTION_FORWARD) ? MODEST_CONF_FORWARD_TYPE : MODEST_CONF_REPLY_TYPE,
+						  NULL);
 	/* We assume that we can only select messages of the
 	   same folder and that we reply all of them from the
 	   same account. In fact the interface currently only
 	   allows single selection */
-	account_mgr = modest_runtime_get_account_mgr();
-	default_account_name = modest_account_mgr_get_default_account (account_mgr);
-	default_account_data = 
-		modest_account_mgr_get_account_data (account_mgr,
-						     (const gchar*) default_account_name);
-	from = g_strdup (default_account_data->email);
-	modest_account_mgr_free_account_data (account_mgr, default_account_data);
-	g_free (default_account_name);
-	
+		
 	/* Fill helpers */
 	rf_helper = g_slice_new0 (ReplyForwardHelper);
 	rf_helper->reply_forward_type = reply_forward_type;
 	rf_helper->action = action;
-	rf_helper->from = from;
-	
+	rf_helper->account = modest_account_mgr_get_default_account (modest_runtime_get_account_mgr());;
+
 	helper = g_slice_new0 (GetMsgAsyncHelper);
 	helper->main_window = main_window;
 	helper->func = reply_forward_func;
@@ -369,6 +372,24 @@ modest_ui_actions_on_prev (GtkWidget *widget,
 	if (main_window->header_view)
 		modest_header_view_select_prev (main_window->header_view); 
 }
+
+
+void
+modest_ui_actions_on_send_receive (GtkWidget *widget,  ModestWindow *win)
+{
+	TnyDevice *device;
+	TnyAccountStore *account_store;
+	
+	/* Get device. Do not ask the platform factory for it, because
+	   it returns always a new one */
+	account_store = TNY_ACCOUNT_STORE (modest_runtime_get_account_store ());
+	device = tny_account_store_get_device (account_store);
+	
+	tny_device_force_online (device);
+	
+	/* FIXME: refresh the folders */
+}
+
 
 
 void
@@ -522,7 +543,8 @@ modest_ui_actions_on_header_activated (ModestHeaderView *folder_view, TnyHeader 
 	ModestWindow *win;
 	TnyFolder *folder = NULL;
 	TnyMsg    *msg    = NULL;
-
+	gchar *account    = NULL;
+	
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW(main_window));
 	
 	if (!header)
@@ -541,13 +563,19 @@ modest_ui_actions_on_header_activated (ModestHeaderView *folder_view, TnyHeader 
 		goto cleanup;
 	}
 
-	win = modest_msg_view_window_new (msg);
+	account =  g_strdup(modest_window_get_active_account(MODEST_WINDOW(main_window)));
+	if (!account)
+		account = modest_account_mgr_get_default_account (modest_runtime_get_account_mgr());
+	
+	win = modest_msg_view_window_new (msg, account);
 	gtk_window_set_transient_for (GTK_WINDOW (win),
 				      GTK_WINDOW (main_window));
 
 	gtk_widget_show_all (GTK_WIDGET(win));
 	
 cleanup:
+	g_free (account);
+	
 	if (folder)
 		g_object_unref (G_OBJECT (folder));
 	if (msg)
@@ -785,9 +813,11 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 	   use the send queue provided by tinymail and some
 	   classifier */
 	account_mgr = modest_runtime_get_account_mgr();
-	account_name = modest_account_mgr_get_default_account (account_mgr);
+	account_name = g_strdup(modest_window_get_active_account (MODEST_WINDOW(edit_window)));
+	if (!account_name) 
+		account_name = modest_account_mgr_get_default_account (account_mgr);
 	if (!account_name) {
-		g_printerr ("modest: no default account found\n");
+		g_printerr ("modest: no account found\n");
 		modest_msg_edit_window_free_msg_data (edit_window, data);
 		return;
 	}

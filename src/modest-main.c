@@ -169,8 +169,7 @@ start_ui (const gchar *account, const gchar* mailto, const gchar *cc, const gcha
 		from = modest_account_mgr_get_from_string (modest_runtime_get_account_mgr(), account);
 		msg  = modest_tny_msg_new (mailto,from,cc,bcc,subject,body,NULL);
 		
-		win = modest_msg_edit_window_new (MODEST_EDIT_TYPE_NEW);
-		modest_msg_edit_window_set_msg  (MODEST_MSG_EDIT_WINDOW(win), msg);
+		win = modest_msg_edit_window_new (msg, account);
 		
 		g_object_unref (G_OBJECT(msg));
 		g_free (from);

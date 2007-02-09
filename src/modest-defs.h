@@ -51,16 +51,19 @@
 /* configuration key definitions for modest */
 #define MODEST_CONF_NAMESPACE		"/apps/modest"
 
+/* configuration key definitions for modest */
+#define MODEST_ACCOUNT_NAMESPACE         MODEST_CONF_NAMESPACE "/accounts"
+#define MODEST_CONF_DEFAULT_ACCOUNT      MODEST_CONF_NAMESPACE "/default_account"
+
+#define MODEST_CONF_REPLY_TYPE           MODEST_CONF_NAMESPACE "/reply_type"        /*  int  */
+#define MODEST_CONF_FORWARD_TYPE         MODEST_CONF_NAMESPACE "/forward_type"      /*  int  */
+
 /* place for widget settings */
 #define MODEST_CONF_WIDGET_NAMESPACE     MODEST_CONF_NAMESPACE "/widgets"
 
-/* configuration key definitions for modest */
-#define MODEST_ACCOUNT_NAMESPACE         MODEST_CONF_NAMESPACE "/" "accounts"
-#define MODEST_CONF_DEFAULT_ACCOUNT      MODEST_CONF_NAMESPACE "/" "default_account"
+
 
 #define MODEST_SERVER_ACCOUNT_NAMESPACE  MODEST_CONF_NAMESPACE "/" "server_accounts"
-#define MODEST_CONF_REPLY_TYPE           "reply_type"        /*  int  */
-#define MODEST_CONF_FORWARD_TYPE         "forward_type"      /*  int  */
 
 
 /* per-account data */

@@ -234,6 +234,7 @@ modest_runtime_get_mail_operation_queue (void)
 }
 
 
+
 ModestTnySendQueue*
 modest_runtime_get_send_queue  (TnyTransportAccount *account)
 {
