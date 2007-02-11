@@ -35,11 +35,11 @@
 
 #include <widgets/modest-main-window.h>
 #include <widgets/modest-msg-edit-window.h>
+#include <widgets/modest-account-view-window.h>
 
 #include "modest-widget-memory.h"
 #include "modest-window-priv.h"
 #include "modest-main-window-ui.h"
-#include "modest-account-view-window.h"
 #include "modest-account-mgr.h"
 #include "modest-conf.h"
 
@@ -68,6 +68,10 @@ typedef struct _ModestMainWindowPrivate ModestMainWindowPrivate;
 struct _ModestMainWindowPrivate {
 	GtkWidget *msg_paned;
 	GtkWidget *main_paned;
+
+	ModestHeaderView *header_view;
+	ModestFolderView *folder_view;
+
 };
 
 
@@ -149,6 +153,33 @@ static void
 modest_main_window_finalize (GObject *obj)
 {
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
+}
+
+
+GtkWidget*
+modest_main_window_get_child_widget (ModestMainWindow *self,
+				     ModestWidgetType widget_type)
+{
+	ModestMainWindowPrivate *priv;
+	GtkWidget *widget;
+	
+	g_return_val_if_fail (self, NULL);
+	g_return_val_if_fail (widget_type >= 0 && widget_type < MODEST_WIDGET_TYPE_NUM,
+			      NULL);
+	
+	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
+
+	switch (widget_type) {
+	case MODEST_WIDGET_TYPE_HEADER_VIEW:
+		widget = (GtkWidget*)priv->header_view; break;
+	case MODEST_WIDGET_TYPE_FOLDER_VIEW:
+		widget = (GtkWidget*)priv->folder_view; break;
+	default:
+		g_return_val_if_reached (NULL);
+		return NULL;
+	}
+
+	return widget ? GTK_WIDGET(widget) : NULL;
 }
 
 

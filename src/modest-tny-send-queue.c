@@ -66,15 +66,15 @@ static TnyCamelSendQueueClass *parent_class = NULL;
 
 
 static void
-modest_tny_send_queue_cancel (TnySendQueue *self, gboolean remove)
+modest_tny_send_queue_cancel (TnySendQueue *self, gboolean remove, GError **err)
 {
 	g_warning (__FUNCTION__);
-
-	TNY_CAMEL_SEND_QUEUE_CLASS(parent_class)->cancel_func (self, remove);
+	
+	TNY_CAMEL_SEND_QUEUE_CLASS(parent_class)->cancel_func (self, remove, err); /* FIXME */
 }
 
 static void
-modest_tny_send_queue_add (TnySendQueue *self, TnyMsg *msg)
+modest_tny_send_queue_add (TnySendQueue *self, TnyMsg *msg, GError **err)
 {
 	ModestTnySendQueuePrivate *priv; 
 	
@@ -87,7 +87,7 @@ modest_tny_send_queue_add (TnySendQueue *self, TnyMsg *msg)
 
 	/* FIXME: do something smart here... */
 	
-	TNY_CAMEL_SEND_QUEUE_CLASS(parent_class)->add_func (self, msg);
+	TNY_CAMEL_SEND_QUEUE_CLASS(parent_class)->add_func (self, msg, err); /* FIXME */
 }
 
 static TnyFolder*

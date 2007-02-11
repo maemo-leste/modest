@@ -356,15 +356,12 @@ modest_header_view_finalize (GObject *obj)
 {
 	ModestHeaderView        *self;
 	ModestHeaderViewPrivate *priv;
-	GtkTreeSelection        *sel;
 	
 	self = MODEST_HEADER_VIEW(obj);
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
 
 	if (priv->headers)	
 		g_object_unref (G_OBJECT(priv->headers));
-
-	sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(self));
 	
 	if (priv->lock) {
 		g_mutex_free (priv->lock);
@@ -440,14 +437,10 @@ modest_header_view_get_selected_headers (ModestHeaderView *self)
 		tmp = list;
 		while (tmp) {			
 			/* get header from selection */
-			gtk_tree_model_get_iter (tree_model,
-						 &iter,
-						 (GtkTreePath *) (tmp->data));
-									  
+			gtk_tree_model_get_iter (tree_model, &iter, (GtkTreePath *) (tmp->data));
 			gtk_tree_model_get (tree_model, &iter,
 					    TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN,
 					    &header, -1);
-
 			/* Prepend to list */
 			tny_list_prepend (header_list, G_OBJECT (header));
 			tmp = g_list_next (tmp);

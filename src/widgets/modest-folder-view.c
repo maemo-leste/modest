@@ -34,6 +34,7 @@
 #include <tny-gtk-folder-store-tree-model.h>
 #include <tny-gtk-header-list-model.h>
 #include <tny-folder.h>
+#include <tny-folder-monitor.h>
 #include <tny-account-store.h>
 #include <tny-account.h>
 #include <tny-folder.h>
@@ -65,14 +66,14 @@ static gint         cmp_rows               (GtkTreeModel *tree_model,
 					    gpointer user_data);
 
 /* DnD functions */
-static void         drag_data_get_cb       (GtkWidget *widget, 
+static void         on_drag_data_get       (GtkWidget *widget, 
 					    GdkDragContext *context, 
 					    GtkSelectionData *selection_data, 
 					    guint info, 
 					    guint time, 
 					    gpointer data);
 
-static void         drag_data_received_cb  (GtkWidget *widget, 
+static void         on_drag_data_received  (GtkWidget *widget, 
 					    GdkDragContext *context, 
 					    gint x, 
 					    gint y, 
@@ -81,7 +82,7 @@ static void         drag_data_received_cb  (GtkWidget *widget,
 					    guint time, 
 					    gpointer data);
 
-static gboolean     drag_motion_cb         (GtkWidget      *widget,
+static gboolean     on_drag_motion         (GtkWidget      *widget,
 					    GdkDragContext *context,
 					    gint            x,
 					    gint            y,
@@ -113,13 +114,16 @@ struct _ModestFolderViewPrivate {
 
 	gulong               sig1, sig2;
 	GMutex              *lock;
+	
 	GtkTreeSelection    *cur_selection;
 	TnyFolderStoreQuery *query;
 	guint                timer_expander;
+
+	TnyFolderMonitor    *monitor;
 };
-#define MODEST_FOLDER_VIEW_GET_PRIVATE(o)			        \
-	(G_TYPE_INSTANCE_GET_PRIVATE((o),				\
-				     MODEST_TYPE_FOLDER_VIEW,	        \
+#define MODEST_FOLDER_VIEW_GET_PRIVATE(o)			\
+	(G_TYPE_INSTANCE_GET_PRIVATE((o),			\
+				     MODEST_TYPE_FOLDER_VIEW,	\
 				     ModestFolderViewPrivate))
 /* globals */
 static GObjectClass *parent_class = NULL;
@@ -355,8 +359,10 @@ modest_folder_view_init (ModestFolderView *obj)
 	priv->cur_folder     = NULL;
 	priv->cur_row        = NULL;
 	priv->query          = NULL;
+	priv->monitor	     = NULL;
+
 	priv->lock           = g_mutex_new ();
-	
+
 	column = gtk_tree_view_column_new ();	
 	gtk_tree_view_append_column (GTK_TREE_VIEW(obj),column);
 	
@@ -489,6 +495,16 @@ update_model_empty (ModestFolderView *self)
 	g_return_val_if_fail (self, FALSE);
 	priv = MODEST_FOLDER_VIEW_GET_PRIVATE(self);
 
+	g_mutex_lock (priv->lock);
+	{
+		if (priv->monitor) {
+			tny_folder_monitor_stop (priv->monitor);
+			g_object_unref(G_OBJECT(priv->monitor));
+			priv->monitor = NULL;
+		}
+	}
+	g_mutex_unlock (priv->lock);
+	
 	g_signal_emit (G_OBJECT(self), signals[FOLDER_SELECTION_CHANGED_SIGNAL], 0,
 		       NULL, TRUE);
 	return TRUE;
@@ -570,7 +586,7 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 	if (!gtk_tree_selection_get_selected (sel, &model_sort, &iter_sort)) {
 		priv->cur_folder = NULL; /* FIXME: need this? */
 		priv->cur_row = NULL; /* FIXME: need this? */
-               return; 
+		return; 
 	}
 
 	model = gtk_tree_model_sort_get_model (GTK_TREE_MODEL_SORT (model_sort));
@@ -592,14 +608,14 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 	 * and one for the selection of the new on */
 	g_signal_emit (G_OBJECT(tree_view), signals[FOLDER_SELECTION_CHANGED_SIGNAL], 0,
 		       priv->cur_folder, FALSE);
-	g_signal_emit (G_OBJECT(tree_view), signals[FOLDER_SELECTION_CHANGED_SIGNAL], 0,
-		       folder, TRUE);
 	if (priv->cur_folder) {
 		tny_folder_sync (priv->cur_folder, TRUE, NULL); /* FIXME */
 		gtk_tree_row_reference_free (priv->cur_row);
 	}
-
 	priv->cur_folder = folder;
+	g_signal_emit (G_OBJECT(tree_view), signals[FOLDER_SELECTION_CHANGED_SIGNAL], 0,
+		       folder, TRUE);
+ 
 	path = gtk_tree_model_get_path (model_sort, &iter_sort);
 	priv->cur_row = gtk_tree_row_reference_new (model_sort, path);
 	gtk_tree_path_free (path);
@@ -763,7 +779,7 @@ cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 /*                        DRAG and DROP stuff                                */
 /*****************************************************************************/
 static void
-drag_data_get_cb (GtkWidget *widget, 
+on_drag_data_get (GtkWidget *widget, 
 		  GdkDragContext *context, 
 		  GtkSelectionData *selection_data, 
 		  guint info, 
@@ -793,7 +809,7 @@ drag_data_get_cb (GtkWidget *widget,
 }
 
 static void 
-drag_data_received_cb (GtkWidget *widget, 
+on_drag_data_received (GtkWidget *widget, 
 		       GdkDragContext *context, 
 		       gint x, 
 		       gint y, 
@@ -896,7 +912,7 @@ drag_data_received_cb (GtkWidget *widget,
 
 	gtk_tree_row_reference_free (source_row_reference);
 	gtk_tree_path_free (child_dest_row);
- out:
+out:
 	/* Never delete the source, we do it manually */
 	gtk_drag_finish (context, success, FALSE, time);
 
@@ -905,38 +921,38 @@ drag_data_received_cb (GtkWidget *widget,
 static gint
 expand_row_timeout (gpointer data)
 {
-  GtkTreeView *tree_view = data;
-  GtkTreePath *dest_path = NULL;
-  GtkTreeViewDropPosition pos;
-  gboolean result = FALSE;
+	GtkTreeView *tree_view = data;
+	GtkTreePath *dest_path = NULL;
+	GtkTreeViewDropPosition pos;
+	gboolean result = FALSE;
+	
+	GDK_THREADS_ENTER ();
+	
+	gtk_tree_view_get_drag_dest_row (tree_view,
+					 &dest_path,
+					 &pos);
+	
+	if (dest_path &&
+	    (pos == GTK_TREE_VIEW_DROP_INTO_OR_AFTER ||
+	     pos == GTK_TREE_VIEW_DROP_INTO_OR_BEFORE)) {
+		gtk_tree_view_expand_row (tree_view, dest_path, FALSE);
+		gtk_tree_path_free (dest_path);
+	}
+	else {
+		if (dest_path)
+			gtk_tree_path_free (dest_path);
+		
+		result = TRUE;
+	}
+	
+	GDK_THREADS_LEAVE ();
 
-  GDK_THREADS_ENTER ();
-
-  gtk_tree_view_get_drag_dest_row (tree_view,
-                                   &dest_path,
-                                   &pos);
-
-  if (dest_path &&
-      (pos == GTK_TREE_VIEW_DROP_INTO_OR_AFTER ||
-       pos == GTK_TREE_VIEW_DROP_INTO_OR_BEFORE)) {
-	  gtk_tree_view_expand_row (tree_view, dest_path, FALSE);
-	  gtk_tree_path_free (dest_path);
-  }
-  else {
-	  if (dest_path)
-		  gtk_tree_path_free (dest_path);
-	  
-	  result = TRUE;
-  }
-  
-  GDK_THREADS_LEAVE ();
-
-  return result;
+	return result;
 }
 
 
 static gboolean
-drag_motion_cb (GtkWidget      *widget,
+on_drag_motion (GtkWidget      *widget,
 		GdkDragContext *context,
 		gint            x,
 		gint            y,
@@ -983,7 +999,7 @@ setup_drag_and_drop (GtkTreeView *self)
 
 	gtk_signal_connect(GTK_OBJECT (self),
 			   "drag_data_received",
-			   GTK_SIGNAL_FUNC(drag_data_received_cb),
+			   GTK_SIGNAL_FUNC(on_drag_data_received),
 			   NULL);
 
 
@@ -996,12 +1012,12 @@ setup_drag_and_drop (GtkTreeView *self)
 
 	gtk_signal_connect(GTK_OBJECT (self),
 			   "drag_motion",
-			   GTK_SIGNAL_FUNC(drag_motion_cb),
+			   GTK_SIGNAL_FUNC(on_drag_motion),
 			   NULL);
 
 
 	gtk_signal_connect(GTK_OBJECT (self),
 			   "drag_data_get",
-			   GTK_SIGNAL_FUNC(drag_data_get_cb),
+			   GTK_SIGNAL_FUNC(on_drag_data_get),
 			   NULL);
 }

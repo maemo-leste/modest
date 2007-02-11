@@ -177,8 +177,7 @@ modest_msg_view_window_new (TnyMsg *msg, const gchar *account)
 	GError *error = NULL;
 
 	g_return_val_if_fail (msg, NULL);
-	g_return_val_if_fail (msg, NULL);
-	
+
 	obj = g_object_new(MODEST_TYPE_MSG_VIEW_WINDOW, NULL);
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE(obj);
 	parent_priv = MODEST_WINDOW_GET_PRIVATE(obj);
@@ -228,4 +227,16 @@ modest_msg_view_window_new (TnyMsg *msg, const gchar *account)
 	g_signal_connect (G_OBJECT(obj), "delete-event", G_CALLBACK(on_delete_event), obj);
 
 	return MODEST_WINDOW(obj);
+}
+
+
+TnyMsg*
+modest_msg_view_window_get_message (ModestMsgViewWindow *self)
+{
+	GtkWidget *msg_view;	
+	g_return_val_if_fail (self, NULL);
+
+	msg_view = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE(self)->msg_view;
+
+	return modest_msg_view_get_message (MODEST_MSG_VIEW(msg_view));
 }

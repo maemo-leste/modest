@@ -34,8 +34,7 @@
 #include <widgets/modest-main-window.h>
 #include <widgets/modest-window-priv.h>
 #include <widgets/modest-msg-edit-window.h>
-#include "modest-account-view-window.h"
-
+#include <widgets/modest-account-view-window.h>
 
 #include "modest-widget-memory.h"
 #include "modest-ui-actions.h"
@@ -86,6 +85,14 @@ struct _ModestMainWindowPrivate {
 	
 	GtkWidget *online_toggle;
 	GtkWidget *folder_info_label;
+
+	ModestHeaderView *header_view;
+	ModestFolderView *folder_view;
+	ModestMsgView    *msg_preview;
+
+	GtkWidget        *status_bar;
+	GtkWidget        *progress_bar;
+
 };
 
 
@@ -164,22 +171,22 @@ modest_main_window_init (ModestMainWindow *obj)
 	tny_folder_store_query_add_item (query, NULL,
 					 TNY_FOLDER_STORE_QUERY_OPTION_SUBSCRIBED);
 
-	obj->folder_view =
+	priv->folder_view =
 		MODEST_FOLDER_VIEW(modest_folder_view_new (modest_runtime_get_account_store(),
 							   query));
-	if (!obj->folder_view)
+	if (!priv->folder_view)
 		g_printerr ("modest: cannot instantiate folder view\n");	
 	g_object_unref (G_OBJECT (query));
 
 	/* header view */
-	obj->header_view  =
+	priv->header_view  =
 		MODEST_HEADER_VIEW(modest_header_view_new (NULL, MODEST_HEADER_VIEW_STYLE_DETAILS));
-	if (!obj->header_view)
+	if (!priv->header_view)
 		g_printerr ("modest: cannot instantiate header view\n");
 
 	/* msg preview */
-	obj->msg_preview = MODEST_MSG_VIEW(modest_msg_view_new (NULL));
-	if (!obj->msg_preview)
+	priv->msg_preview = MODEST_MSG_VIEW(modest_msg_view_new (NULL));
+	if (!priv->msg_preview)
 		g_printerr ("modest: cannot instantiate msgpreiew\n");
 
 	/* online/offline combo */
@@ -196,14 +203,14 @@ modest_main_window_init (ModestMainWindow *obj)
 	priv->folder_info_label = gtk_label_new (NULL);
 
 	/* status bar */
-	obj->status_bar   = gtk_statusbar_new ();
-        gtk_statusbar_set_has_resize_grip (GTK_STATUSBAR(obj->status_bar),
+	priv->status_bar   = gtk_statusbar_new ();
+        gtk_statusbar_set_has_resize_grip (GTK_STATUSBAR(priv->status_bar),
                                            FALSE);
 
 	/* progress bar */
-	obj->progress_bar = gtk_progress_bar_new ();
-	gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR(obj->progress_bar), 1.0);
-	gtk_progress_bar_set_ellipsize (GTK_PROGRESS_BAR(obj->progress_bar),
+	priv->progress_bar = gtk_progress_bar_new ();
+	gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR(priv->progress_bar), 1.0);
+	gtk_progress_bar_set_ellipsize (GTK_PROGRESS_BAR(priv->progress_bar),
 					PANGO_ELLIPSIZE_END);
 }
 
@@ -211,6 +218,39 @@ static void
 modest_main_window_finalize (GObject *obj)
 {
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
+}
+
+
+GtkWidget*
+modest_main_window_get_child_widget (ModestMainWindow *self,
+				     ModestWidgetType widget_type)
+{
+	ModestMainWindowPrivate *priv;
+	GtkWidget *widget;
+	
+	g_return_val_if_fail (self, NULL);
+	g_return_val_if_fail (widget_type >= 0 && widget_type < MODEST_WIDGET_TYPE_NUM,
+			      NULL);
+				
+	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
+
+	switch (widget_type) {
+	case MODEST_WIDGET_TYPE_HEADER_VIEW:
+		widget = (GtkWidget*)priv->header_view; break;
+	case MODEST_WIDGET_TYPE_FOLDER_VIEW:
+		widget = (GtkWidget*)priv->folder_view; break;
+	case MODEST_WIDGET_TYPE_MSG_PREVIEW:
+		widget = (GtkWidget*)priv->msg_preview; break;
+	case MODEST_WIDGET_TYPE_STATUS_BAR:
+		widget = (GtkWidget*)priv->status_bar; break;
+	case MODEST_WIDGET_TYPE_PROGRESS_BAR:
+		widget = (GtkWidget*)priv->progress_bar; break;
+	default:
+		g_return_val_if_reached (NULL);
+		return NULL;
+	}
+
+	return widget ? GTK_WIDGET(widget) : NULL;
 }
 
 
@@ -232,7 +272,7 @@ restore_sizes (ModestMainWindow *self)
 				      "modest-msg-paned");
 	modest_widget_memory_restore (conf, G_OBJECT(priv->main_paned),
 				      "modest-main-paned");
-	modest_widget_memory_restore (conf, G_OBJECT(self->header_view),"header-view");
+	modest_widget_memory_restore (conf, G_OBJECT(priv->header_view),"header-view");
 	modest_widget_memory_restore (conf,G_OBJECT(self), "modest-main-window");
 }
 
@@ -256,7 +296,7 @@ save_sizes (ModestMainWindow *self)
 				   "modest-msg-paned");
 	modest_widget_memory_save (conf, G_OBJECT(priv->main_paned),
 				   "modest-main-paned");
-	modest_widget_memory_save (conf, G_OBJECT(self->header_view), "header-view");
+	modest_widget_memory_save (conf, G_OBJECT(priv->header_view), "header-view");
 }
 
 
@@ -348,40 +388,42 @@ connect_signals (ModestMainWindow *self)
 	device        = tny_account_store_get_device(TNY_ACCOUNT_STORE(account_store));
 	
 	/* folder view */
-	g_signal_connect (G_OBJECT(self->folder_view), "folder_selection_changed",
+	g_signal_connect (G_OBJECT(priv->folder_view), "folder_selection_changed",
 			  G_CALLBACK(modest_ui_actions_on_folder_selection_changed), self);
-	g_signal_connect (G_OBJECT(self->folder_view), "folder_moved",
+	g_signal_connect (G_OBJECT(priv->folder_view), "folder_moved",
 			  G_CALLBACK(modest_ui_actions_on_folder_moved), NULL);
-	g_signal_connect (G_OBJECT(self->folder_view), "button-press-event",
+	g_signal_connect (G_OBJECT(priv->folder_view), "button-press-event",
 			  G_CALLBACK (on_folder_view_button_press_event),self);
-	g_signal_connect (self->folder_view,"popup-menu",
+	g_signal_connect (priv->folder_view,"popup-menu",
 			  G_CALLBACK (on_folder_view_button_press_event),self);
 
 	/* header view */
-	g_signal_connect (G_OBJECT(self->header_view), "status_update",
+	g_signal_connect (G_OBJECT(priv->header_view), "status_update",
 			  G_CALLBACK(modest_ui_actions_on_header_status_update), self);
-	g_signal_connect (G_OBJECT(self->header_view), "header_selected",
+	g_signal_connect (G_OBJECT(priv->header_view), "header_selected",
 			  G_CALLBACK(modest_ui_actions_on_header_selected), self);
-	g_signal_connect (G_OBJECT(self->header_view), "header_activated",
+	g_signal_connect (G_OBJECT(priv->header_view), "header_activated",
 			  G_CALLBACK(modest_ui_actions_on_header_activated), self);
-	g_signal_connect (G_OBJECT(self->header_view), "item_not_found",
+	g_signal_connect (G_OBJECT(priv->header_view), "item_not_found",
 			  G_CALLBACK(modest_ui_actions_on_item_not_found), self);
-	g_signal_connect (G_OBJECT(self->header_view), "button-press-event",
+	g_signal_connect (G_OBJECT(priv->header_view), "button-press-event",
 			  G_CALLBACK (on_header_view_button_press_event), self);
-	g_signal_connect (G_OBJECT(self->header_view),"popup-menu",
+	g_signal_connect (G_OBJECT(priv->header_view),"popup-menu",
 			  G_CALLBACK (on_header_view_button_press_event), self);
 		
 	/* msg preview */
-	g_signal_connect (G_OBJECT(self->msg_preview), "link_clicked",
+	g_signal_connect (G_OBJECT(priv->msg_preview), "link_clicked",
 			  G_CALLBACK(modest_ui_actions_on_msg_link_clicked), self);
-	g_signal_connect (G_OBJECT(self->msg_preview), "link_hover",
+	g_signal_connect (G_OBJECT(priv->msg_preview), "link_hover",
 			  G_CALLBACK(modest_ui_actions_on_msg_link_hover), self);
-	g_signal_connect (G_OBJECT(self->msg_preview), "attachment_clicked",
+	g_signal_connect (G_OBJECT(priv->msg_preview), "attachment_clicked",
 			  G_CALLBACK(modest_ui_actions_on_msg_attachment_clicked), self);
 
 	/* Account store */
 	g_signal_connect (G_OBJECT (modest_runtime_get_account_store()), "accounts_reloaded",
 			  G_CALLBACK (modest_ui_actions_on_accounts_reloaded), self);
+	g_signal_connect (G_OBJECT (modest_runtime_get_account_store()), "password_requested",
+			  G_CALLBACK (modest_ui_actions_on_password_requested), self);
 	
 	/* Device */
 	g_signal_connect (G_OBJECT(device), "connection_changed",
@@ -469,8 +511,8 @@ modest_main_window_new (void)
 	parent_priv->menubar = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/MenuBar");
 
 	gtk_toolbar_set_tooltips (GTK_TOOLBAR (parent_priv->toolbar), TRUE);	
-	folder_win = wrapped_in_scrolled_window (GTK_WIDGET(self->folder_view), FALSE);
-	header_win = wrapped_in_scrolled_window (GTK_WIDGET(self->header_view), FALSE);			   
+	folder_win = wrapped_in_scrolled_window (GTK_WIDGET(priv->folder_view), FALSE);
+	header_win = wrapped_in_scrolled_window (GTK_WIDGET(priv->header_view), FALSE);			   
 
 	/* paned */
 	priv->folder_paned = gtk_vpaned_new ();
@@ -479,15 +521,15 @@ modest_main_window_new (void)
 	gtk_paned_add1 (GTK_PANED(priv->main_paned), folder_win);
 	gtk_paned_add2 (GTK_PANED(priv->main_paned), priv->msg_paned);
 	gtk_paned_add1 (GTK_PANED(priv->msg_paned), header_win);
-	gtk_paned_add2 (GTK_PANED(priv->msg_paned), GTK_WIDGET(self->msg_preview));
+	gtk_paned_add2 (GTK_PANED(priv->msg_paned), GTK_WIDGET(priv->msg_preview));
 
-	gtk_widget_show (GTK_WIDGET(self->header_view));
+	gtk_widget_show (GTK_WIDGET(priv->header_view));
 
 	/* status bar / progress */
 	status_hbox = gtk_hbox_new (FALSE, 0);
 	gtk_box_pack_start (GTK_BOX(status_hbox), priv->folder_info_label, FALSE,FALSE, 6);
-	gtk_box_pack_start (GTK_BOX(status_hbox), self->status_bar, TRUE, TRUE, 0);
-	gtk_box_pack_start (GTK_BOX(status_hbox), self->progress_bar,FALSE, FALSE, 0);
+	gtk_box_pack_start (GTK_BOX(status_hbox), priv->status_bar, TRUE, TRUE, 0);
+	gtk_box_pack_start (GTK_BOX(status_hbox), priv->progress_bar,FALSE, FALSE, 0);
 	gtk_box_pack_start (GTK_BOX(status_hbox), priv->online_toggle,FALSE, FALSE, 0);
 
 	/* putting it all together... */

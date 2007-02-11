@@ -76,6 +76,17 @@ GType        modest_msg_view_window_get_type    (void) G_GNUC_CONST;
  */
 ModestWindow*   modest_msg_view_window_new         (TnyMsg *msg, const gchar *account);
 
+
+/**
+ * modest_msg_view_window_get_message:
+ * @msg: an #ModestMsgViewWindow instance
+ * 
+ * get the message in this msg view
+ * 
+ * Returns: a new #TnyMsg instance, or NULL in case of error
+ */
+TnyMsg*         modest_msg_view_window_get_message (ModestMsgViewWindow *window);
+
 G_END_DECLS
 
 #endif /* __MODEST_MSG_VIEW_WINDOW_H__ */

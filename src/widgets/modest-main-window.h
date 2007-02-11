@@ -54,17 +54,6 @@ typedef struct _ModestMainWindowClass ModestMainWindowClass;
 
 struct _ModestMainWindow {
 	ModestWindow parent;
-
-	/* public members;
-	 * NOTE: these can be NULL as not all frontends
-	 * (gtk, maemo, ...) may use all of them.
-	 */
-	ModestHeaderView *header_view;
-	ModestFolderView *folder_view;
-	ModestMsgView    *msg_preview;
-
-	GtkWidget        *status_bar;
-	GtkWidget        *progress_bar;
 };
 
 struct _ModestMainWindowClass {
@@ -90,6 +79,30 @@ GType modest_main_window_get_type (void) G_GNUC_CONST;
  */
 ModestWindow* modest_main_window_new (void);
 
+/*
+ * we could use the GType instead, but that would require
+ * that there only on widget of a certain type; that is
+ * true now, but might not be. Therefore, these types
+ */
+typedef enum {
+	MODEST_WIDGET_TYPE_HEADER_VIEW,
+	MODEST_WIDGET_TYPE_FOLDER_VIEW,
+	MODEST_WIDGET_TYPE_MSG_PREVIEW,
+	MODEST_WIDGET_TYPE_STATUS_BAR,
+	MODEST_WIDGET_TYPE_PROGRESS_BAR,
+	
+	MODEST_WIDGET_TYPE_NUM,
+} ModestWidgetType;
+
+/**
+ * modest_main_window_get_child_widget
+ * 
+ * get a child window for this window
+ *
+ * Returns: a child window or NULL
+ */
+GtkWidget* modest_main_window_get_child_widget (ModestMainWindow *self,
+						ModestWidgetType widget_type);
 
 G_END_DECLS
 

@@ -1,6 +1,6 @@
 #
 # Makefile.am
-# Time-stamp: <2007-02-06 17:27:49 (djcb)>
+# Time-stamp: <2007-02-10 14:48:38 (djcb)>
 
 INCLUDES=\
 	$(MODEST_GSTUFF_CFLAGS) \
@@ -16,26 +16,27 @@ INCLUDES=\
 noinst_LTLIBRARIES=\
 	libmodest-widgets.la
 
-libmodest_widgets_la_SOURCES=       \
-	modest-account-view.c       \
-	modest-account-view.h       \
-	modest-combo-box.c	    \
-	modest-combo-box.h          \
-	modest-msg-edit-window.h    \
-	modest-msg-edit-window-ui.h \
-	modest-msg-view-window.h    \
-	modest-folder-view.c        \
-	modest-folder-view.h        \
-	modest-header-view.c        \
-	modest-header-view.h        \
-	modest-header-view-priv.h   \
-	modest-header-view-render.c \
-	modest-main-window.h	    \
-	modest-msg-view.c           \
-	modest-msg-view.h	    \
-	modest-tny-stream-gtkhtml.c \
-	modest-tny-stream-gtkhtml.h \
-	modest-window.c             \
+libmodest_widgets_la_SOURCES=          \
+	modest-account-view-window.h   \
+	modest-account-view.c          \
+	modest-account-view.h          \
+	modest-combo-box.c	       \
+	modest-combo-box.h             \
+	modest-folder-view.c           \
+	modest-folder-view.h           \
+	modest-header-view-priv.h      \
+	modest-header-view-render.c    \
+	modest-header-view.c           \
+	modest-header-view.h           \
+	modest-main-window.h	       \
+	modest-msg-edit-window-ui.h    \
+	modest-msg-edit-window.h       \
+	modest-msg-view-window.h       \
+	modest-msg-view.c              \
+	modest-msg-view.h	       \
+	modest-tny-stream-gtkhtml.c    \
+	modest-tny-stream-gtkhtml.h    \
+	modest-window.c                \
 	modest-window.h             
 
 LDADD = \

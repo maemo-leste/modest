@@ -29,11 +29,13 @@
 
 #include <glib/gi18n.h>
 #include <gtk/gtk.h>
+
+#include <widgets/modest-account-view-window.h>
+#include <widgets/modest-account-view.h>
+
 #include <modest-runtime.h>
 #include <modest-account-mgr-helpers.h>
-#include <widgets/modest-account-view.h>
 #include <string.h>
-#include "modest-account-view-window.h"
 #include "modest-account-assistant.h"
 #include "modest-tny-platform-factory.h"
 

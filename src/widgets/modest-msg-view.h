@@ -98,6 +98,20 @@ GtkWidget*   modest_msg_view_new          (TnyMsg *tny_msg);
  *  */
 void         modest_msg_view_set_message  (ModestMsgView *self, TnyMsg *tny_msg);
 
+
+
+/**
+ * modest_msg_view_set_message
+ * @self: a ModestMsgView instance
+ *
+ * get the @tny_msg e-mail message.
+ *
+ * Returns: the message or NULL
+ */
+TnyMsg*      modest_msg_view_get_message  (ModestMsgView *self);
+
+
+
 G_END_DECLS
 
 #endif /* __MODEST_MSG_VIEW_H__ */

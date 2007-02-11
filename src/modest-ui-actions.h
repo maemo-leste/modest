@@ -38,7 +38,7 @@ G_BEGIN_DECLS
 /* Menu & toolbar actions */
 void     modest_ui_actions_on_about         (GtkWidget *widget, ModestWindow *win);
 
-void     modest_ui_actions_on_delete        (GtkWidget *widget, ModestMainWindow *main_window);
+void     modest_ui_actions_on_delete        (GtkWidget *widget, ModestWindow *win);
 
 void     modest_ui_actions_on_quit          (GtkWidget *widget, ModestWindow *win);
 
@@ -48,11 +48,11 @@ void     modest_ui_actions_on_new_msg       (GtkWidget *widget, ModestWindow *wi
 
 void     modest_ui_actions_on_open           (GtkWidget *widget, ModestWindow *win);
 
-void     modest_ui_actions_on_reply         (GtkWidget *widget, ModestMainWindow *main_window);
+void     modest_ui_actions_on_reply         (GtkWidget *widget, ModestWindow *win);
 
-void     modest_ui_actions_on_forward       (GtkWidget *widget, ModestMainWindow *main_window);
+void     modest_ui_actions_on_forward       (GtkWidget *widget, ModestWindow *win);
 
-void     modest_ui_actions_on_reply_all     (GtkWidget *widget, ModestMainWindow *main_window);
+void     modest_ui_actions_on_reply_all     (GtkWidget *widget, ModestWindow *win);
 
 void     modest_ui_actions_on_next          (GtkWidget *widget, ModestMainWindow *main_window);
 
@@ -124,5 +124,11 @@ void     modest_ui_actions_on_folder_moved          (ModestFolderView *folder_vi
 						     TnyFolderStore   *parent,
 						     gboolean         *done,
 						     gpointer          user_data);
+
+void     modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
+						  const gchar* account_name,
+						  gchar **password,  gboolean *cancel, 
+						  gboolean *remember, ModestMainWindow *main_window);
+
 G_END_DECLS
 #endif /* __MODEST_UI_ACTIONS_H__ */

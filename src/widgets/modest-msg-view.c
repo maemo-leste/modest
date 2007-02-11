@@ -66,7 +66,6 @@ enum {
 
 typedef struct _ModestMsgViewPrivate ModestMsgViewPrivate;
 struct _ModestMsgViewPrivate {
-
 	GtkWidget   *gtkhtml;
 	TnyMsg      *msg;
 
@@ -204,7 +203,6 @@ modest_msg_view_new (TnyMsg *msg)
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(self),
 				       GTK_POLICY_AUTOMATIC,
 				       GTK_POLICY_AUTOMATIC);
-
 	if (priv->gtkhtml) 
 		gtk_container_add (GTK_CONTAINER(obj), priv->gtkhtml);
 	
@@ -399,14 +397,17 @@ get_header_info (TnyMsg *msg, gboolean outgoing)
 
 	if (outgoing) {
 		if (tny_header_get_to(header))
-			g_string_append_printf (str, "<tr><td><b>%s</b>:</td><td>%s</td></tr>\n", _("To"), tny_header_get_to(header));
+			g_string_append_printf (str, "<tr><td><b>%s</b>:</td><td>%s</td></tr>\n", _("To"),
+						tny_header_get_to(header));
 	} else {
 		if (tny_header_get_from (header))
-			g_string_append_printf (str, "<tr><td><b>%s</b>:</td><td>%s</td></tr>\n", _("From"), tny_header_get_from(header));
+			g_string_append_printf (str, "<tr><td><b>%s</b>:</td><td>%s</td></tr>\n", _("From"),
+						tny_header_get_from(header));
 	}
 	
 	if (tny_header_get_subject (header))
-		g_string_append_printf (str, "<tr><td><b>%s</b>:</td><td>%s</td></tr>\n", _("Subject"), tny_header_get_subject(header));
+		g_string_append_printf (str, "<tr><td><b>%s</b>:</td><td>%s</td></tr>\n", _("Subject"),
+					tny_header_get_subject(header));
 
 
 	if (outgoing) {
@@ -415,10 +416,10 @@ get_header_info (TnyMsg *msg, gboolean outgoing)
 		g_free (sent);
 	} else {
 		gchar *received = modest_text_utils_get_display_date (tny_header_get_date_received (header));
-		g_string_append_printf (str, "<tr><td><b>%s</b>:</td><td>%s</td></tr>\n", _("Received"), received);
+		g_string_append_printf (str, "<tr><td><b>%s</b>:</td><td>%s</td></tr>\n", _("Received"),
+					received);
 		g_free (received);
 	}
-
 	g_string_append (str, "</table>\n<hr>\n");
 	
 	g_object_unref (G_OBJECT(header));
@@ -579,4 +580,13 @@ modest_msg_view_set_message (ModestMsgView *self, TnyMsg *msg)
 		set_empty_message (self);
 
 	g_free (header_info);
+}
+
+
+TnyMsg*
+modest_msg_view_get_message (ModestMsgView *self)
+{
+	g_return_val_if_fail (self, NULL);
+	
+	return MODEST_MSG_VIEW_GET_PRIVATE(self)->msg;
 }

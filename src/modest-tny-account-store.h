@@ -64,9 +64,17 @@ struct _ModestTnyAccountStore {
 struct _ModestTnyAccountStoreClass {
 	GObjectClass parent_class;
 
-	void (*account_update)    (ModestTnyAccountStore *self,
-				   const gchar *account_name,
-				   gpointer user_data);
+	void (*account_update)        (ModestTnyAccountStore *self,
+				      const gchar *account_name,
+				      gpointer user_data);
+	void (*password_requested)    (ModestTnyAccountStore *self,
+				       const gchar *account_name,
+				       gchar **password,
+				       gboolean *remember,
+				       gboolean *cancel,
+				       gpointer user_data);
+
+	
 };
 
 /**

@@ -65,6 +65,7 @@ static void    modest_tny_account_store_init          (gpointer g, gpointer ifac
 /* list my signals */
 enum {
 	ACCOUNT_UPDATE_SIGNAL,
+	PASSWORD_REQUESTED_SIGNAL,
 	LAST_SIGNAL
 };
 
@@ -84,12 +85,6 @@ struct _ModestTnyAccountStorePrivate {
 #define MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                       MODEST_TYPE_TNY_ACCOUNT_STORE, \
                                                       ModestTnyAccountStorePrivate))
-
-static void    on_password_requested        (ModestTnyAccountStore *account_store, 
-					     const gchar* account_name,
-					     gchar **password, 
-					     gboolean *cancel, 
-					     gboolean *remember);
 
 /* globals */
 static GObjectClass *parent_class = NULL;
@@ -142,14 +137,24 @@ modest_tny_account_store_class_init (ModestTnyAccountStoreClass *klass)
 	g_type_class_add_private (gobject_class,
 				  sizeof(ModestTnyAccountStorePrivate));
 
-	signals[ACCOUNT_UPDATE_SIGNAL] =
+	 signals[ACCOUNT_UPDATE_SIGNAL] =
  		g_signal_new ("account_update",
 			      G_TYPE_FROM_CLASS (gobject_class),
 			      G_SIGNAL_RUN_FIRST,
 			      G_STRUCT_OFFSET(ModestTnyAccountStoreClass, account_update),
 			      NULL, NULL,
 			      g_cclosure_marshal_VOID__STRING,
-			      G_TYPE_NONE, 1, G_TYPE_STRING);	
+			      G_TYPE_NONE, 1, G_TYPE_STRING);
+	 
+	 signals[PASSWORD_REQUESTED_SIGNAL] =
+		 g_signal_new ("password_requested",
+			       G_TYPE_FROM_CLASS (gobject_class),
+			       G_SIGNAL_RUN_FIRST,
+			       G_STRUCT_OFFSET(ModestTnyAccountStoreClass, password_requested),
+			       NULL, NULL,
+			       modest_marshal_VOID__STRING_POINTER_POINTER_POINTER,
+			       G_TYPE_NONE, 4, G_TYPE_STRING, G_TYPE_POINTER, G_TYPE_POINTER,
+			       G_TYPE_POINTER);
 }
 
 
@@ -230,60 +235,6 @@ get_account_store_for_account (TnyAccount *account)
 							   "account_store"));
 }
 
-
-static void
-on_password_requested (ModestTnyAccountStore *account_store, 
-		       const gchar* account_name,
-		       gchar **password, 
-		       gboolean *cancel, 
-		       gboolean *remember)
-{
-	gchar *txt;
-	GtkWidget *dialog, *entry, *remember_pass_check;
-
-	dialog = gtk_dialog_new_with_buttons (_("Password requested"),
-					      NULL,
-					      GTK_DIALOG_MODAL,
-					      GTK_STOCK_CANCEL,
-					      GTK_RESPONSE_REJECT,
-					      GTK_STOCK_OK,
-					      GTK_RESPONSE_ACCEPT,
-					      NULL);
-
-	txt = g_strdup_printf (_("Please enter your password for %s"), account_name);
-	gtk_box_pack_start (GTK_BOX(GTK_DIALOG(dialog)->vbox), gtk_label_new(txt),
-			    FALSE, FALSE, 0);
-	g_free (txt);
-
-	entry = gtk_entry_new_with_max_length (40);
-	gtk_entry_set_visibility (GTK_ENTRY(entry), FALSE);
-	gtk_entry_set_invisible_char (GTK_ENTRY(entry), 0x2022); /* bullet unichar */
-	
-	gtk_box_pack_start (GTK_BOX(GTK_DIALOG(dialog)->vbox), entry,
-			    TRUE, FALSE, 0);	
-
-	remember_pass_check = gtk_check_button_new_with_label (_("Remember password"));
-	gtk_box_pack_start (GTK_BOX(GTK_DIALOG(dialog)->vbox), remember_pass_check,
-			    TRUE, FALSE, 0);
-
-	gtk_widget_show_all (GTK_WIDGET(GTK_DIALOG(dialog)->vbox));
-	
-	if (gtk_dialog_run (GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
-		*password = g_strdup (gtk_entry_get_text (GTK_ENTRY(entry)));
-		*cancel   = FALSE;
-	} else {
-		*password = NULL;
-		*cancel   = TRUE;
-	}
-
-	if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (remember_pass_check)))
-		*remember = TRUE;
-	else
-		*remember = FALSE;
-
-	gtk_widget_destroy (dialog);
-}
-
 static gchar*
 get_password (TnyAccount *account, const gchar *prompt, gboolean *cancel)
 {
@@ -300,6 +251,8 @@ get_password (TnyAccount *account, const gchar *prompt, gboolean *cancel)
 	
 	self = MODEST_TNY_ACCOUNT_STORE (account_store);
         priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
+
+	g_warning ("prompt: %s", prompt);
 	
 	/* is it in the hash? if it's already there, it must be wrong... */
 	pwd_ptr = (gpointer)&pwd; /* pwd_ptr so the compiler does not complained about
@@ -322,17 +275,17 @@ get_password (TnyAccount *account, const gchar *prompt, gboolean *cancel)
 
 		/* we don't have it yet. Get the password from the user */
 		const gchar* name = tny_account_get_name (account);
-		gboolean remember;
+		gboolean remember = FALSE;
 		pwd = NULL;
-
-		on_password_requested (self, name, &pwd, cancel, &remember);
-
+		
+		g_signal_emit (G_OBJECT(self), signals[PASSWORD_REQUESTED_SIGNAL], 0,
+			       name, &pwd, cancel, &remember);
+		
 		if (!*cancel) {
 			if (remember)
-				modest_account_mgr_set_string (priv->account_mgr,
-							       key, MODEST_ACCOUNT_PASSWORD,
-							       pwd,
-							       TRUE, NULL);
+				modest_account_mgr_set_string (priv->account_mgr,key,
+							       MODEST_ACCOUNT_PASSWORD,
+							       pwd, TRUE, NULL);
 			/* We need to dup the string even knowing that
 			   it's already a dup of the contents of an
 			   entry, because it if it's wrong, then camel
@@ -346,6 +299,8 @@ get_password (TnyAccount *account, const gchar *prompt, gboolean *cancel)
 	} else
 		*cancel = FALSE;
 
+	//g_warning ("pwd: '%s', cancel:%s", pwd, *cancel?"yes":"no");
+ 
 	return pwd;
 }
 

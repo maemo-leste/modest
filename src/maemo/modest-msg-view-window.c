@@ -254,3 +254,16 @@ modest_msg_view_window_new (TnyMsg *msg, const gchar *account_name)
 	modest_window_set_active_account (MODEST_WINDOW(obj), account_name);
 	return MODEST_WINDOW(obj);
 }
+
+
+
+TnyMsg*
+modest_msg_view_window_get_message (ModestMsgViewWindow *self)
+{
+	ModestMsgView *msg_view;	
+	g_return_val_if_fail (self, NULL);
+
+	msg_view = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE(obj)->msg_view;
+
+	return modest_msg_view_get_message (msg_view);
+}
