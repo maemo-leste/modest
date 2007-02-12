@@ -27,16 +27,15 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
-#ifndef __MODEST_TNY_SEND_QUEUE_H__
-#define __MODEST_TNY_SEND_QUEUE_H__
-
 #include <glib.h>
 #include <glib-object.h>
 #include <tny-send-queue.h>
 #include <tny-camel-send-queue.h>
 #include <tny-msg.h>
 #include <tny-camel-transport-account.h>
+
+#ifndef __MODEST_TNY_SEND_QUEUE_H__
+#define __MODEST_TNY_SEND_QUEUE_H__
 
 G_BEGIN_DECLS
 
@@ -79,6 +78,18 @@ GType        modest_tny_send_queue_get_type    (void) G_GNUC_CONST;
  * of any error
  */
 ModestTnySendQueue*    modest_tny_send_queue_new        (TnyCamelTransportAccount *account);
+
+
+
+/**
+ * modest_tny_send_queue_flush:
+ * @self: a valid #ModestTnySendQueue instance
+ * 
+ * (try to) send the messages in the outbox folder 
+ * 
+ */
+void modest_tny_send_queue_flush (ModestTnySendQueue* self);
+
 
 G_END_DECLS
 

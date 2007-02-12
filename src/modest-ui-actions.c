@@ -113,24 +113,29 @@ get_selected_headers (ModestWindow *win)
 {
 	if (MODEST_IS_MAIN_WINDOW(win)) {
 		GtkWidget *header_view;		
-
+		
 		header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(win),
 								   MODEST_WIDGET_TYPE_HEADER_VIEW);
 		return modest_header_view_get_selected_headers (MODEST_HEADER_VIEW(header_view));
-
+		
 	} else if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
 		/* for MsgViewWindows, we simply return a list with one element */
 		TnyMsg *msg;
-		TnyList *list;
+		TnyHeader *header;
+		TnyList *list = NULL;
 		
 		msg  = modest_msg_view_window_get_message (MODEST_MSG_VIEW_WINDOW(win));
-		list = tny_simple_list_new ();
-		tny_list_prepend (list, G_OBJECT(msg));
-
+		if (msg) {
+			header = tny_msg_get_header (msg);
+			list = tny_simple_list_new ();
+			tny_list_prepend (list, G_OBJECT(header));
+			g_object_unref (G_OBJECT(header));
+		}
 		return list;
+
 	} else
 		return NULL;
-
+	
 }
 void
 modest_ui_actions_on_delete (GtkWidget *widget, ModestWindow *win)
@@ -339,13 +344,15 @@ reply_forward (GtkWidget *widget, ReplyForwardAction action, ModestWindow *win)
 	
 	header = TNY_HEADER (tny_iterator_get_current (helper->iter));
 	folder = tny_header_get_folder (header);
-	
-	/* The callback will call it per each header */
-	tny_folder_get_msg_async (folder, header, get_msg_cb, helper);
+	if (folder) {
+		/* The callback will call it per each header */
+		tny_folder_get_msg_async (folder, header, get_msg_cb, helper);
+		g_object_unref (G_OBJECT (folder));
+	} else
+		g_printerr ("modest: no folder for header\n");
 	
 	/* Clean */
 	g_object_unref (G_OBJECT (header));
-	g_object_unref (G_OBJECT (folder));
 }
 
 void
@@ -408,15 +415,37 @@ modest_ui_actions_on_send_receive (GtkWidget *widget,  ModestWindow *win)
 {
 	TnyDevice *device;
 	TnyAccountStore *account_store;
+	gchar *account_name;
+	TnyAccount *tny_account;
+	ModestTnySendQueue *send_queue;
 	
 	/* Get device. Do not ask the platform factory for it, because
 	   it returns always a new one */
 	account_store = TNY_ACCOUNT_STORE (modest_runtime_get_account_store ());
 	device = tny_account_store_get_device (account_store);
-	
-	tny_device_force_online (device);
-	
-	/* FIXME: refresh the folders */
+		
+	account_name =
+		g_strdup(modest_window_get_active_account(MODEST_WINDOW(win)));
+	if (!account_name)
+		account_name  = modest_account_mgr_get_default_account (modest_runtime_get_account_mgr());
+	if (!account_name) {
+		g_printerr ("modest: cannot get account\n");
+		return;
+	}
+
+	tny_account = 
+		modest_tny_account_store_get_tny_account_by_account (modest_runtime_get_account_store(),
+								     account_name, TNY_ACCOUNT_TYPE_TRANSPORT);
+	if (!tny_account) {
+		g_printerr ("modest: cannot get tny transport account\n");
+		return;
+	}
+
+	send_queue = modest_tny_send_queue_new (TNY_CAMEL_TRANSPORT_ACCOUNT(tny_account));
+	modest_tny_send_queue_flush (send_queue);
+
+	g_object_unref (G_OBJECT(send_queue));
+	g_object_unref (G_OBJECT(tny_account));
 }
 
 

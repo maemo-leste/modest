@@ -338,7 +338,7 @@ modest_tny_account_store_finalize (GObject *obj)
 	priv->cache_dir = NULL;
 
 	if (priv->device) {
-		g_object_unref (priv->device);
+		g_object_unref (G_OBJECT(priv->device));
 		priv->device = NULL;
 	}
 	
@@ -348,21 +348,22 @@ modest_tny_account_store_finalize (GObject *obj)
 	}
 
 	if (priv->account_mgr) {
-		g_object_unref (priv->account_mgr);
+		g_object_unref (G_OBJECT(priv->account_mgr));
 		priv->account_mgr = NULL;
 	}
-	
-	if (priv->session) {
-		camel_object_unref (CAMEL_OBJECT(priv->session));
-		priv->session = NULL;
-	}
-	
+
 	/* this includes the local folder */
 	account_list_free (priv->store_accounts);
 	priv->store_accounts = NULL;
 	
 	account_list_free (priv->transport_accounts);
 	priv->transport_accounts = NULL;
+
+	if (priv->session) {
+		camel_object_unref (CAMEL_OBJECT(priv->session));
+		priv->session = NULL;
+	}
+	
 	
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }

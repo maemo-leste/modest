@@ -100,7 +100,6 @@ gboolean modest_runtime_uninit (void);
  *  g_type_init_with_debug_flags
  *  - "track-signals": track the use of (g)signals in the program. this option influences
  *  g_type_init_with_debug_flags
- *  - "disable-cache": disable caching of strings and pixbuf
  * if you would want to track signals and log actions, you could do something like:
  *  MODEST_DEBUG="log-actions:track-signals" ./modest
  * NOTE that the flags will stay the same during the run of the program, even

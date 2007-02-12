@@ -49,7 +49,7 @@ enum {
 
 typedef struct _ModestTnySendQueuePrivate ModestTnySendQueuePrivate;
 struct _ModestTnySendQueuePrivate {
-	TnyCamelTransportAccount *account;	
+	/* empty */
 };
 #define MODEST_TNY_SEND_QUEUE_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                    MODEST_TYPE_TNY_SEND_QUEUE, \
@@ -67,9 +67,7 @@ static TnyCamelSendQueueClass *parent_class = NULL;
 
 static void
 modest_tny_send_queue_cancel (TnySendQueue *self, gboolean remove, GError **err)
-{
-	g_warning (__FUNCTION__);
-	
+{	
 	TNY_CAMEL_SEND_QUEUE_CLASS(parent_class)->cancel_func (self, remove, err); /* FIXME */
 }
 
@@ -80,8 +78,6 @@ modest_tny_send_queue_add (TnySendQueue *self, TnyMsg *msg, GError **err)
 	
 	g_return_if_fail (TNY_IS_SEND_QUEUE(self));
 	g_return_if_fail (TNY_IS_CAMEL_MSG(msg));
-
-	g_warning (__FUNCTION__);
 	
 	priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE (self);
 
@@ -93,32 +89,42 @@ modest_tny_send_queue_add (TnySendQueue *self, TnyMsg *msg, GError **err)
 static TnyFolder*
 modest_tny_send_queue_get_sentbox (TnySendQueue *self)
 {
-	ModestTnySendQueuePrivate *priv; 
-
-	g_warning (__FUNCTION__);
+	TnyFolder *folder;
+	TnyCamelTransportAccount *account;
 
 	g_return_val_if_fail (self, NULL);
 
-	priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE (self);
-	
-	return  modest_tny_account_get_special_folder (TNY_ACCOUNT(priv->account),
-						       TNY_FOLDER_TYPE_SENT);
+	account = tny_camel_send_queue_get_transport_account (TNY_CAMEL_SEND_QUEUE(self));
+	if (!account) {
+		g_printerr ("modest: no account for send queue\n");
+		return NULL;
+	}
+	folder  = modest_tny_account_get_special_folder (TNY_ACCOUNT(account),
+							 TNY_FOLDER_TYPE_SENT);
+	g_object_unref (G_OBJECT(account));
+
+	return folder;
 }
 
 
 static TnyFolder*
 modest_tny_send_queue_get_outbox (TnySendQueue *self)
 {
-	ModestTnySendQueuePrivate *priv; 
+	TnyFolder *folder;
+	TnyCamelTransportAccount *account;
 
 	g_return_val_if_fail (self, NULL);
 
-	g_warning (__FUNCTION__);
-	
-	priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE (self);
+	account = tny_camel_send_queue_get_transport_account (TNY_CAMEL_SEND_QUEUE(self));
+	if (!account) {
+		g_printerr ("modest: no account for send queue\n");
+		return NULL;
+	}
+	folder  = modest_tny_account_get_special_folder (TNY_ACCOUNT(account),
+							 TNY_FOLDER_TYPE_OUTBOX);
+	g_object_unref (G_OBJECT(account));
 
-	return modest_tny_account_get_special_folder (TNY_ACCOUNT(priv->account),
-						      TNY_FOLDER_TYPE_OUTBOX);
+	return folder;
 }
 
 
@@ -169,26 +175,12 @@ modest_tny_send_queue_class_init (ModestTnySendQueueClass *klass)
 static void
 modest_tny_send_queue_instance_init (GTypeInstance *instance, gpointer g_class)
 {
-	ModestTnySendQueue *self;  
-        ModestTnySendQueuePrivate *priv; 
-
-	self = (ModestTnySendQueue*)instance;
-	priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE (self);
-
-	priv->account = NULL;
+   
 }
 
 static void
 modest_tny_send_queue_finalize (GObject *obj)
 {
-	ModestTnySendQueuePrivate *priv; 
-	priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE (obj);
-	
-	if (priv->account) {
-		g_object_unref (priv->account);
-		priv->account = NULL;
-	}
-
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
@@ -203,12 +195,15 @@ modest_tny_send_queue_new (TnyCamelTransportAccount *account)
 	self = MODEST_TNY_SEND_QUEUE(g_object_new(MODEST_TYPE_TNY_SEND_QUEUE, NULL));
 	priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE(self);
 	
-	priv->account = account;
-	g_object_ref (G_OBJECT(priv->account));
-
-//	tny_camel_send_queue_set_transport_account (TNY_CAMEL_SEND_QUEUE(self),
-//						    account); /* hmmm */
-	
+	tny_camel_send_queue_set_transport_account (TNY_CAMEL_SEND_QUEUE(self),
+						    account); 
 	return self;
 }
 
+
+
+void
+modest_tny_send_queue_flush (ModestTnySendQueue* self)
+{
+	tny_camel_send_queue_flush (TNY_CAMEL_SEND_QUEUE(self));
+}
