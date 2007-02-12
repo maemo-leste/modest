@@ -78,21 +78,19 @@ struct _ModestFolderViewClass {
  *  
  * Returns: the GType
  */
-GType        modest_folder_view_get_type    (void) G_GNUC_CONST;
+GType        modest_folder_view_get_type        (void) G_GNUC_CONST;
 
 
 
 /**
  * modest_folder_view_new:
- * @account_store: a ModestTnyAccountStore instance
- * @query: a folder store query for the folders to watch
+ * @query: a #TnyFolderStoreQuery that specifies the folders to show
  * 
- * create a new ModestFolderView instance, based on an account store
+ * create a new #ModestFolderView instance
  *  
- * Returns: a new GtkWidget (a GtkTreeView-subclass)
+ * Returns: a new #GtkWidget (a #GtkTreeView subclass)
  */
-GtkWidget* modest_folder_view_new         (ModestTnyAccountStore *account_store,
-					   TnyFolderStoreQuery *query);
+GtkWidget*    modest_folder_view_new            (TnyFolderStoreQuery *query);
 
 /**
  * modest_folder_view_set_title:

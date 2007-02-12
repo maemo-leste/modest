@@ -533,7 +533,8 @@ get_msg_cb (TnyFolder *folder, TnyMsg *msg, GError **err, gpointer user_data)
 }
 
 void 
-modest_ui_actions_on_header_selected (ModestHeaderView *folder_view, TnyHeader *header,
+modest_ui_actions_on_header_selected (ModestHeaderView *folder_view, 
+				      TnyHeader *header,
 				      ModestMainWindow *main_window)
 {
 	GtkWidget *msg_preview;
@@ -825,7 +826,7 @@ void
 modest_ui_actions_on_msg_link_hover (ModestMsgView *msgview, const gchar* link,
 				     ModestWindow *win)
 {
-	g_warning (__FUNCTION__);
+	g_message (__FUNCTION__);
 }	
 
 
@@ -833,14 +834,14 @@ void
 modest_ui_actions_on_msg_link_clicked (ModestMsgView *msgview, const gchar* link,
 					ModestWindow *win)
 {
-	g_warning (__FUNCTION__);
+	g_message (__FUNCTION__);
 }
 
 void
 modest_ui_actions_on_msg_attachment_clicked (ModestMsgView *msgview, int index,
 					     ModestWindow *win)
 {
-	g_warning (__FUNCTION__);
+	g_message (__FUNCTION__);
 	
 }
 

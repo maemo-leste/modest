@@ -29,13 +29,14 @@
 
 #include <glib/gi18n.h>
 #include <gtk/gtktreeviewcolumn.h>
-#include <modest-runtime.h>
+#include <tny-account-store-view.h>
 
 #include <widgets/modest-main-window.h>
 #include <widgets/modest-window-priv.h>
 #include <widgets/modest-msg-edit-window.h>
 #include <widgets/modest-account-view-window.h>
 
+#include <modest-runtime.h>
 #include "modest-widget-memory.h"
 #include "modest-ui-actions.h"
 #include "modest-main-window-ui.h"
@@ -154,6 +155,7 @@ modest_main_window_class_init (ModestMainWindowClass *klass)
 static void
 modest_main_window_init (ModestMainWindow *obj)
 {
+	TnyAccountStore         *account_store;
 	ModestMainWindowPrivate *priv;
 	TnyFolderStoreQuery     *query;
 	TnyDevice               *device;
@@ -166,32 +168,11 @@ modest_main_window_init (ModestMainWindow *obj)
 	priv->msg_paned    = NULL;
 	priv->main_paned   = NULL;	
 
-	/* folder view */
-	query = tny_folder_store_query_new ();
-	tny_folder_store_query_add_item (query, NULL,
-					 TNY_FOLDER_STORE_QUERY_OPTION_SUBSCRIBED);
-
-	priv->folder_view =
-		MODEST_FOLDER_VIEW(modest_folder_view_new (modest_runtime_get_account_store(),
-							   query));
-	if (!priv->folder_view)
-		g_printerr ("modest: cannot instantiate folder view\n");	
-	g_object_unref (G_OBJECT (query));
-
-	/* header view */
-	priv->header_view  =
-		MODEST_HEADER_VIEW(modest_header_view_new (NULL, MODEST_HEADER_VIEW_STYLE_DETAILS));
-	if (!priv->header_view)
-		g_printerr ("modest: cannot instantiate header view\n");
-
-	/* msg preview */
-	priv->msg_preview = MODEST_MSG_VIEW(modest_msg_view_new (NULL));
-	if (!priv->msg_preview)
-		g_printerr ("modest: cannot instantiate msgpreiew\n");
+	account_store = TNY_ACCOUNT_STORE (modest_runtime_get_account_store ());
 
 	/* online/offline combo */
 	priv->online_toggle = gtk_toggle_button_new ();
-	device  = tny_account_store_get_device(TNY_ACCOUNT_STORE(modest_runtime_get_account_store()));;
+	device  = tny_account_store_get_device (account_store);
 	online  = tny_device_is_online (device);
 	icon    = gtk_image_new_from_icon_name (online ? GTK_STOCK_CONNECT : GTK_STOCK_DISCONNECT,
 						GTK_ICON_SIZE_BUTTON);
@@ -212,6 +193,27 @@ modest_main_window_init (ModestMainWindow *obj)
 	gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR(priv->progress_bar), 1.0);
 	gtk_progress_bar_set_ellipsize (GTK_PROGRESS_BAR(priv->progress_bar),
 					PANGO_ELLIPSIZE_END);
+
+	/* msg preview */
+	priv->msg_preview = MODEST_MSG_VIEW(modest_msg_view_new (NULL));
+	if (!priv->msg_preview)
+		g_printerr ("modest: cannot instantiate msgpreiew\n");
+
+	/* header view */
+	priv->header_view  =
+		MODEST_HEADER_VIEW(modest_header_view_new (NULL, MODEST_HEADER_VIEW_STYLE_DETAILS));
+	if (!priv->header_view)
+		g_printerr ("modest: cannot instantiate header view\n");
+
+	/* folder view */
+	query = tny_folder_store_query_new ();
+	tny_folder_store_query_add_item (query, NULL,
+					 TNY_FOLDER_STORE_QUERY_OPTION_SUBSCRIBED);
+
+	priv->folder_view = MODEST_FOLDER_VIEW (modest_folder_view_new (query));
+	if (!priv->folder_view)
+		g_printerr ("modest: cannot instantiate folder view\n");	
+	g_object_unref (G_OBJECT (query));
 }
 
 static void
@@ -546,10 +548,13 @@ modest_main_window_new (void)
 	gtk_window_set_icon_from_file  (GTK_WINDOW(obj), MODEST_APP_ICON, NULL);	
 	gtk_widget_show_all (main_vbox);
 	
-	/* Init toggle in correct state */
-	//modest_ui_actions_on_connection_changed (device, tny_device_is_online (device), self);
-
+	/* Connect signals */
 	connect_signals (MODEST_MAIN_WINDOW(obj));
+
+	/* Set account store */
+	tny_account_store_view_set_account_store (TNY_ACCOUNT_STORE_VIEW (priv->folder_view),
+						  TNY_ACCOUNT_STORE (modest_runtime_get_account_store ()));
+
 	return (ModestWindow *) obj;
 }
 

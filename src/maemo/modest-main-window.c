@@ -418,9 +418,7 @@ modest_main_window_new (void)
 	query = tny_folder_store_query_new ();
 	tny_folder_store_query_add_item (query, NULL,
 					 TNY_FOLDER_STORE_QUERY_OPTION_SUBSCRIBED);
-	self->folder_view =
-		MODEST_FOLDER_VIEW(modest_folder_view_new (modest_runtime_get_account_store(),
-							   query));
+	self->folder_view = MODEST_FOLDER_VIEW(modest_folder_view_new (query));
 	if (!self->folder_view)
 		g_printerr ("modest: cannot instantiate folder view\n");	
 	g_object_unref (G_OBJECT (query));
@@ -457,6 +455,11 @@ modest_main_window_new (void)
 	g_signal_connect (G_OBJECT(self), "delete-event",
 			  G_CALLBACK(on_delete_event), self);
 
+	/* Connect signals */
 	connect_signals (self);
+
+	/* Set account store */
+	tny_account_store_view_set_account_store (TNY_ACCOUNT_STORE_VIEW (priv->folder_view),
+						  TNY_ACCOUNT_STORE (modest_runtime_get_account_store ()));
 	return MODEST_WINDOW(self);
 }

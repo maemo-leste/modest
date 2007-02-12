@@ -43,12 +43,19 @@ static void modest_header_view_class_init  (ModestHeaderViewClass *klass);
 static void modest_header_view_init        (ModestHeaderView *obj);
 static void modest_header_view_finalize    (GObject *obj);
 
-static gboolean on_header_clicked (GtkWidget *widget, GdkEventButton *event, gpointer user_data);
-static void on_selection_changed (GtkTreeSelection *sel, gpointer user_data);
+static gboolean     on_header_clicked      (GtkWidget *widget, 
+					    GdkEventButton *event, 
+					    gpointer user_data);
 
-static gint cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
-		      gpointer user_data);
+static void         on_selection_changed   (GtkTreeSelection *sel, 
+					    gpointer user_data);
 
+static gint         cmp_rows               (GtkTreeModel *tree_model, 
+					    GtkTreeIter *iter1, 
+					    GtkTreeIter *iter2,
+					    gpointer user_data);
+
+static void         setup_drag_and_drop    (GtkTreeView *self);
 
 typedef struct _ModestHeaderViewPrivate ModestHeaderViewPrivate;
 struct _ModestHeaderViewPrivate {
@@ -347,8 +354,11 @@ modest_header_view_init (ModestHeaderView *obj)
 
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(obj); 
 
-	priv->lock = g_mutex_new ();
+	priv->lock    = g_mutex_new ();
+	priv->folder  = NULL;
+	priv->headers = NULL;
 
+	setup_drag_and_drop (GTK_TREE_VIEW (obj));
 }
 
 static void
@@ -895,4 +905,48 @@ cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 	default:
 		return &iter1 - &iter2; /* oughhhh  */
 	}
+}
+
+static const GtkTargetEntry drag_types[] =
+{
+	{ "GTK_TREE_MODEL_ROW", GTK_TARGET_SAME_APP, 0 }
+};
+
+static void
+drag_data_get_cb (GtkWidget *widget, 
+		  GdkDragContext *context, 
+		  GtkSelectionData *selection_data, 
+		  guint info, 
+		  guint time, 
+		  gpointer data)
+{
+	GtkTreeSelection *selection;
+	GtkTreeModel *model;
+	GtkTreeIter iter;
+	GtkTreePath *source_row;
+
+	selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (widget));
+	gtk_tree_selection_get_selected (selection, &model, &iter);
+	source_row = gtk_tree_model_get_path (model, &iter);
+
+	gtk_tree_set_row_drag_data (selection_data,
+				    model,
+				    source_row);
+
+	gtk_tree_path_free (source_row);
+}
+
+static void
+setup_drag_and_drop (GtkTreeView *self)
+{
+	gtk_drag_source_set (GTK_WIDGET (self),
+			     GDK_BUTTON1_MASK | GDK_BUTTON3_MASK,
+			     drag_types,
+			     G_N_ELEMENTS (drag_types),
+			     GDK_ACTION_MOVE);
+
+	gtk_signal_connect(GTK_OBJECT (self),
+			   "drag_data_get",
+			   GTK_SIGNAL_FUNC(drag_data_get_cb),
+			   NULL);
 }

@@ -664,8 +664,12 @@ modest_mail_operation_remove_folder (ModestMailOperation *self,
 				     gboolean remove_to_trash)
 {
 	TnyFolderStore *folder_store;
+	ModestMailOperationPrivate *priv;
 
+	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
 	g_return_if_fail (TNY_IS_FOLDER (folder));
+
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
 
 	/* Get folder store */
 	folder_store = TNY_FOLDER_STORE (tny_folder_get_account (folder));
@@ -679,7 +683,9 @@ modest_mail_operation_remove_folder (ModestMailOperation *self,
 		modest_mail_operation_move_folder (self, folder, 
 						   TNY_FOLDER_STORE (trash_folder));
 	} else {
-		tny_folder_store_remove_folder (folder_store, folder, NULL); /* FIXME */
+		tny_folder_store_remove_folder (folder_store, folder, &(priv->error));
+		CHECK_EXCEPTION (priv, MODEST_MAIL_OPERATION_STATUS_FAILED, );
+
 		g_object_unref (G_OBJECT (folder));
 	}
 
