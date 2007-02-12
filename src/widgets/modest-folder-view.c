@@ -601,7 +601,10 @@ update_model (ModestFolderView *self, ModestTnyAccountStore *account_store)
 	/* Notify that there is no folder selected */
 	update_model_empty (self);
 	
-	model        = tny_gtk_folder_store_tree_model_new (TRUE, priv->query);
+	/* FIXME: the local accounts are not shown when the query
+	   selects only the subscribed folders. */
+/* 	model        = tny_gtk_folder_store_tree_model_new (TRUE, priv->query); */
+	model        = tny_gtk_folder_store_tree_model_new (TRUE, NULL);
 	account_list = TNY_LIST(model);
 
 	tny_account_store_get_accounts (TNY_ACCOUNT_STORE(account_store),
