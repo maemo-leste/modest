@@ -306,7 +306,7 @@ modest_conf_set_bool (ModestConf* self, const gchar* key, gboolean val,
 }
 
 
-void 
+gboolean
 modest_conf_set_list (ModestConf* self, const gchar* key, 
 		      GSList *val, ModestConfValueType list_type, 
 		      GError **err)
@@ -314,15 +314,16 @@ modest_conf_set_list (ModestConf* self, const gchar* key,
        ModestConfPrivate *priv;
        GConfValueType gconf_type;
        
-       g_return_if_fail (self);
-       g_return_if_fail (key);
+       g_return_val_if_fail (self, FALSE);
+       g_return_val_if_fail (key, FALSE);
 
        priv = MODEST_CONF_GET_PRIVATE(self);
 
        gconf_type = modest_conf_type_to_gconf_type (list_type, err);
+       if (err)
+	       return FALSE;
 
-       if (!err)
-	       gconf_client_set_list (priv->gconf_client, key, gconf_type, val, err);
+       return gconf_client_set_list (priv->gconf_client, key, gconf_type, val, err);
 }
 
 

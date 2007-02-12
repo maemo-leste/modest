@@ -73,8 +73,6 @@ struct _ModestTnyAccountStoreClass {
 				       gboolean *remember,
 				       gboolean *cancel,
 				       gpointer user_data);
-
-	
 };
 
 /**

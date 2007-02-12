@@ -251,8 +251,6 @@ get_password (TnyAccount *account, const gchar *prompt, gboolean *cancel)
 	
 	self = MODEST_TNY_ACCOUNT_STORE (account_store);
         priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
-
-	g_warning ("prompt: %s", prompt);
 	
 	/* is it in the hash? if it's already there, it must be wrong... */
 	pwd_ptr = (gpointer)&pwd; /* pwd_ptr so the compiler does not complained about
@@ -265,8 +263,7 @@ get_password (TnyAccount *account, const gchar *prompt, gboolean *cancel)
 	/* if the password is not already there, try ModestConf */
 	if (!already_asked) {
 		pwd  = modest_account_mgr_get_string (priv->account_mgr,
-						      key, MODEST_ACCOUNT_PASSWORD,
-						      TRUE, NULL);
+						      key, MODEST_ACCOUNT_PASSWORD,TRUE);
 		g_hash_table_insert (priv->password_hash, g_strdup (key), g_strdup (pwd));
 	}
 
@@ -285,7 +282,7 @@ get_password (TnyAccount *account, const gchar *prompt, gboolean *cancel)
 			if (remember)
 				modest_account_mgr_set_string (priv->account_mgr,key,
 							       MODEST_ACCOUNT_PASSWORD,
-							       pwd, TRUE, NULL);
+							       pwd, TRUE);
 			/* We need to dup the string even knowing that
 			   it's already a dup of the contents of an
 			   entry, because it if it's wrong, then camel
@@ -298,8 +295,6 @@ get_password (TnyAccount *account, const gchar *prompt, gboolean *cancel)
 		}
 	} else
 		*cancel = FALSE;
-
-	//g_warning ("pwd: '%s', cancel:%s", pwd, *cancel?"yes":"no");
  
 	return pwd;
 }
@@ -329,8 +324,7 @@ forget_password (TnyAccount *account)
 
 	/* Remove from configuration system */
 	modest_account_mgr_unset (priv->account_mgr,
-				  key, MODEST_ACCOUNT_PASSWORD,
-				  TRUE, NULL);
+				  key, MODEST_ACCOUNT_PASSWORD, TRUE);
 }
 
 
@@ -438,7 +432,7 @@ get_accounts  (TnyAccountStore *self, TnyList *list, TnyAccountType type)
 	
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
  
-	account_names = modest_account_mgr_account_names (priv->account_mgr, NULL);
+	account_names = modest_account_mgr_account_names (priv->account_mgr);
 	
 	for (cursor = account_names; cursor; cursor = cursor->next) {
 		

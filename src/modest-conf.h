@@ -144,7 +144,7 @@ gboolean     modest_conf_get_bool    (ModestConf* self, const gchar* key, GError
  * Returns: a list with the values for the key, or NULL in case of error
  * @err gives details in case of error
  */
-GSList *     modest_conf_get_list    (ModestConf* self, const gchar* key, 
+GSList*     modest_conf_get_list    (ModestConf* self, const gchar* key, 
 				      ModestConfValueType list_type, GError **err);
 
 /**
@@ -202,9 +202,11 @@ gboolean     modest_conf_set_bool    (ModestConf* self, const gchar* key, gboole
  * @err: a GError ptr, or NULL to ignore.
  * 
  * set a list of values in the configuration system
+ *
+ * Returns: TRUE if succeeded or FALSE in case of error.
  * @err gives details in case of error
  */
-void         modest_conf_set_list    (ModestConf* self, const gchar* key, 
+gboolean     modest_conf_set_list    (ModestConf* self, const gchar* key, 
 				      GSList *val, ModestConfValueType list_type, 
 				      GError **err);
 

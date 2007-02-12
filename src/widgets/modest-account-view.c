@@ -151,8 +151,7 @@ update_account_view (ModestAccountMgr *account_mgr, ModestAccountView *view)
 	model = GTK_LIST_STORE(gtk_tree_view_get_model (GTK_TREE_VIEW(view)));	
 	gtk_list_store_clear (model);
 
-	cursor = account_names =
-		modest_account_mgr_account_names (account_mgr, NULL);
+	cursor = account_names = modest_account_mgr_account_names (account_mgr);
 
 	while (cursor) {
 		gchar *account_name;

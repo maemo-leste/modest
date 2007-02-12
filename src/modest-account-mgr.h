@@ -100,9 +100,7 @@ ModestAccountMgr*        modest_account_mgr_new            (ModestConf *modest_c
 gboolean        modest_account_mgr_add_account    (ModestAccountMgr *self,
 						   const gchar* name,
 						   const gchar* store_name,
-						   const gchar* transport_name,
-						   GError **err);
-
+						   const gchar* transport_name);
 
 /**
  * modest_account_mgr_add_server_account:
@@ -156,22 +154,19 @@ gboolean modest_account_mgr_add_server_account_uri    (ModestAccountMgr *self,
  */
 gboolean        modest_account_mgr_remove_account         (ModestAccountMgr *self,
 							   const gchar* name,
-							   gboolean server_account,
-							   GError **err);
+							   gboolean server_account);
 
 
 /**
  * modest_account_mgr_account_names:
  * @self: a ModestAccountMgr instance
- * @err: a GError ptr, or NULL to ignore.
  * 
  * list all account names
  *
  * Returns: a newly allocated list of account names, or NULL in case of error or
  * if there are no accounts. The caller must free the returned GSList
- * @err gives details in case of error
  */
-GSList*	        modest_account_mgr_account_names    (ModestAccountMgr *self, GError **err);
+GSList*	        modest_account_mgr_account_names    (ModestAccountMgr *self);
 
 
 /**
@@ -197,77 +192,84 @@ GSList*  modest_account_mgr_search_server_accounts  (ModestAccountMgr *self,
  * @self: a ModestAccountMgr instance
  * @name: the account name to check
  * @server_account: if TRUE, this is a server account
- * @err: a GError ptr, or NULL to ignore.
  * 
  * check whether account @name exists
  *
  * Returns: TRUE if the account with name @name exists, FALSE otherwise (or in case of error)
- * @err gives details in case of error
  */
 gboolean	modest_account_mgr_account_exists	  (ModestAccountMgr *self,
 							   const gchar *name,
-							   gboolean server_account,
-							   GError **err);
+							   gboolean server_account);
 
 
 /**
- * modest_account_mgr_get_account_string:
+ * modest_account_mgr_get_string:
  * @self: self a ModestAccountMgr instance
  * @name: the name of the account
  * @key: the key of the value to retrieve
  * @server_account: if TRUE, this is a server account
- * @err: a GError ptr, or NULL to ignore.
  * 
  * get a config string from an account
  *
  * Returns: a newly allocated string with the value for the key,
- * or NULL in case of error. @err gives details in case of error
+ * or NULL in case of error. 
  */
 gchar*	        modest_account_mgr_get_string     (ModestAccountMgr *self,
 						   const gchar *name,
 						   const gchar *key,
-						   gboolean server_account,
-						   GError **err);
+						   gboolean server_account);
+
 
 /**
- * modest_account_mgr_get_account_int:
+ * modest_account_mgr_get_password:
+ * @self: self a ModestAccountMgr instance
+ * @name: the name of the account
+ * @key: the key of the value to retrieve
+ * @server_account: if TRUE, this is a server account
+ * 
+ * get a password from an account
+ *
+ * Returns: a newly allocated string with the value for the key,
+ * or NULL in case of error.
+ */
+gchar*	        modest_account_mgr_get_password     (ModestAccountMgr *self,
+						     const gchar *name,
+						     const gchar *key,
+						     gboolean server_account);
+
+/**
+ * modest_account_mgr_get_int:
  * @self: a ModestAccountMgr instance
  * @name: the name of the account
  * @key: the key of the value to retrieve
  * @server_account: if TRUE, this is a server account
- * @err: a GError ptr, or NULL to ignore.
  * 
  * get a config int from an account
  *
  * Returns: an integer with the value for the key, or -1 in case of
  * error (but of course -1 does not necessarily imply an error)
- * @err gives details in case of error
  */
 gint	        modest_account_mgr_get_int        (ModestAccountMgr *self,
 						   const gchar *name,
 						   const gchar *key,
-						   gboolean server_account,
-						   GError **err);
+						   gboolean server_account);
 
 /**
- * modest_account_mgr_get_account_bool:
+ * modest_account_mgr_get_bool:
  * @self: a ModestAccountMgr instance
  * @name: the name of the account
  * @key: the key of the value to retrieve
  * @server_account: if TRUE, this is a server account
- * @err: a GError ptr, or NULL to ignore.
  * 
  * get a config boolean from an account
  *
  * Returns: an boolean with the value for the key, or FALSE in case of
  * error (but of course FALSE does not necessarily imply an error)
- * @err gives details in case of error
  */
 gboolean	modest_account_mgr_get_bool       (ModestAccountMgr *self,
 						   const gchar *name,
 						   const gchar *key,
-						   gboolean server_account,
-						   GError **err);
+						   gboolean server_account);
 
 /**
  * modest_account_mgr_get_list:
@@ -276,80 +278,86 @@ gboolean	modest_account_mgr_get_bool       (ModestAccountMgr *self,
  * @key: the key of the value to get
  * @list_type: the type of the members of the list
  * @server_account: if TRUE, this is a server account
- * @err: a GError ptr, or NULL to ignore.
  * 
  * get a config list of values of type @list_type of an account
  *
  * Returns: a newly allocated list of elements
- * @err gives details in case of error
  */
 GSList*	        modest_account_mgr_get_list       (ModestAccountMgr *self,
 						   const gchar *name,
 						   const gchar *key,
 						   ModestConfValueType list_type,
-						   gboolean server_account,
-						   GError **err);
+						   gboolean server_account);
 
 /**
- * modest_account_mgr_set_account_string:
+ * modest_account_mgr_set_string:
  * @self: a ModestAccountMgr instance
  * @name: the name of the account
  * @key: the key of the value to set
  * @val: the value to set
  * @server_account: if TRUE, this is a server account
- * @err: a GError ptr, or NULL to ignore.
  * 
  * set a config string for an account.
  *
  * Returns: TRUE if setting the value succeeded, or FALSE in case of error.
- * @err gives details in case of error
  */
 gboolean	modest_account_mgr_set_string     (ModestAccountMgr *self,
 						   const gchar *name,
 						   const gchar *key, const gchar* val,
-						   gboolean server_account,
-						   GError **err);
+						   gboolean server_account);
+
 
 /**
- * modest_account_mgr_set_account_int:
+ * modest_account_mgr_set_password:
  * @self: a ModestAccountMgr instance
  * @name: the name of the account
  * @key: the key of the value to set
  * @val: the value to set
  * @server_account: if TRUE, this is a server account
- * @err: a GError ptr, or NULL to ignore.
+ * 
+ * set a password for an account.
+ *
+ * Returns: TRUE if setting the value succeeded, or FALSE in case of error.
+* @err gives details in case of error
+ */
+gboolean	modest_account_mgr_set_password     (ModestAccountMgr *self,
+						     const gchar *name,
+						     const gchar *key, const gchar* val,
+						     gboolean server_account);
+
+/**
+ * modest_account_mgr_set_int:
+ * @self: a ModestAccountMgr instance
+ * @name: the name of the account
+ * @key: the key of the value to set
+ * @val: the value to set
+ * @server_account: if TRUE, this is a server account
  * 
  * set a config int for an account
  *
  * Returns: TRUE if setting the value succeeded, or FALSE in case of error.
- * @err gives details in case of error
  */
 gboolean	modest_account_mgr_set_int        (ModestAccountMgr *self,
 						   const gchar *name,
 						   const gchar *key, gint val,
-						   gboolean server_account,
-						   GError **err);
-
+						   gboolean server_account);
 
 /**
- * modest_account_mgr_set_account_bool:
+ * modest_account_mgr_set_bool:
  * @self: a ModestAccountMgr instance
  * @name: the name of the account
  * @key: the key of the value to set
  * @val: the value to set
  * @server_account: if TRUE, this is a server account
- * @err: a GError ptr, or NULL to ignore.
  * 
  * set a config bool for an account
  *
  * Returns: TRUE if setting the value succeeded, or FALSE in case of error.
- * @err gives details in case of error
  */
 gboolean	modest_account_mgr_set_bool       (ModestAccountMgr *self,
 						   const gchar *name,
 						   const gchar *key, gboolean val,
-						   gboolean server_account,
-						   GError **err);
+						   gboolean server_account);
 
 /**
  * modest_account_mgr_set_list:
@@ -359,18 +367,17 @@ gboolean	modest_account_mgr_set_bool       (ModestAccountMgr *self,
  * @val: the list with the values to set
  * @list_type: the type of the members of the list
  * @server_account: if TRUE, this is a server account
- * @err: a GError ptr, or NULL to ignore.
+ *
+ * * set a config list of values of type @list_type of an account
  * 
- * set a config list of values of type @list_type of an account
- * @err gives details in case of error
+ * returns TRUE if this succeeded, FALSE otherwise 
  */
-void	        modest_account_mgr_set_list       (ModestAccountMgr *self,
-						   const gchar *name,
-						   const gchar *key,
-						   GSList *val,
-						   ModestConfValueType list_type,
-						   gboolean server_account,
-						   GError **err);
+gboolean	        modest_account_mgr_set_list       (ModestAccountMgr *self,
+							   const gchar *name,
+							   const gchar *key,
+							   GSList *val,
+							   ModestConfValueType list_type,
+							   gboolean server_account);
 
 /**
  * modest_account_mgr_unset:
@@ -386,10 +393,9 @@ void	        modest_account_mgr_set_list       (ModestAccountMgr *self,
  * @err gives details in case of error
  */
 gboolean        modest_account_mgr_unset           (ModestAccountMgr *self,
-						   const gchar *name,
-						   const gchar *key,
-						   gboolean server_account,
-						   GError **err);
+						    const gchar *name,
+						    const gchar *key,
+						    gboolean server_account);
 
 G_END_DECLS
 

@@ -592,7 +592,7 @@ get_new_server_account_name (ModestAccountMgr* acc_mgr, ModestProtocol proto,
 	while (TRUE) {
 		name = g_strdup_printf ("%s:%d",
 					modest_protocol_info_get_protocol_name(proto), i++);
-		if (modest_account_mgr_account_exists (acc_mgr, name, TRUE, NULL))
+		if (modest_account_mgr_account_exists (acc_mgr, name, TRUE))
 			g_free (name);
 		else
 			break;
@@ -652,16 +652,15 @@ on_apply (ModestAccountAssistant *self, gpointer user_data)
 	modest_account_mgr_add_account (priv->account_mgr,
 					account_name,
 					store_name,
-					transport_name,
-					NULL);
+					transport_name);
 	modest_account_mgr_set_string (priv->account_mgr,
 				       account_name,
 				       MODEST_ACCOUNT_FULLNAME,
-				       get_fullname(self), FALSE, NULL);
+				       get_fullname(self), FALSE);
 	modest_account_mgr_set_string (priv->account_mgr,
 				       account_name,
 				       MODEST_ACCOUNT_EMAIL,
-				       get_email(self), FALSE, NULL);
+				       get_email(self), FALSE);
 
 	/* Frees */	
 	g_free (store_name);

@@ -201,7 +201,7 @@ check_account (const gchar* account)
 		retval = g_strdup (account);
 
 	/* sanity check */
-	if (!account || !modest_account_mgr_account_exists (account_mgr, account, FALSE, NULL)) {
+	if (!account || !modest_account_mgr_account_exists (account_mgr, account, FALSE)) {
 		g_free (retval);
 		retval = NULL;
 	}

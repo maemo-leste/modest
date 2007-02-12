@@ -197,14 +197,17 @@ modest_tny_send_queue_new (TnyCamelTransportAccount *account)
 {
 	ModestTnySendQueue *self;
 	ModestTnySendQueuePrivate *priv;
-
+	
 	g_return_val_if_fail (TNY_IS_CAMEL_TRANSPORT_ACCOUNT(account), NULL);
 	
 	self = MODEST_TNY_SEND_QUEUE(g_object_new(MODEST_TYPE_TNY_SEND_QUEUE, NULL));
-	priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE (self);
-
+	priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE(self);
+	
 	priv->account = account;
 	g_object_ref (G_OBJECT(priv->account));
+
+//	tny_camel_send_queue_set_transport_account (TNY_CAMEL_SEND_QUEUE(self),
+//						    account); /* hmmm */
 	
 	return self;
 }
