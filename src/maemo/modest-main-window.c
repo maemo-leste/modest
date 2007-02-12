@@ -31,6 +31,7 @@
 
 #include <glib/gi18n.h>
 #include <gtk/gtktreeviewcolumn.h>
+#include <tny-account-store-view.h>
 #include <modest-runtime.h>
 
 #include <widgets/modest-main-window.h>
@@ -68,6 +69,7 @@ typedef struct _ModestMainWindowPrivate ModestMainWindowPrivate;
 struct _ModestMainWindowPrivate {
 	GtkWidget *msg_paned;
 	GtkWidget *main_paned;
+	GtkWidget *progress_bar;
 
 	ModestHeaderView *header_view;
 	ModestFolderView *folder_view;
@@ -139,13 +141,13 @@ modest_main_window_init (ModestMainWindow *obj)
 
 	priv->msg_paned    = NULL;
 	priv->main_paned   = NULL;	
-	obj->header_view  = NULL;
-	obj->folder_view  = NULL;
+	priv->header_view  = NULL;
+	priv->folder_view  = NULL;
 
 	/* progress bar */
-	obj->progress_bar = gtk_progress_bar_new ();
-	gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR(obj->progress_bar), 1.0);
-	gtk_progress_bar_set_ellipsize (GTK_PROGRESS_BAR(obj->progress_bar),
+	priv->progress_bar = gtk_progress_bar_new ();
+	gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR(priv->progress_bar), 1.0);
+	gtk_progress_bar_set_ellipsize (GTK_PROGRESS_BAR(priv->progress_bar),
 					PANGO_ELLIPSIZE_END);
 }
 
@@ -198,7 +200,7 @@ restore_sizes (ModestMainWindow *self)
 				      "modest-main-window");
 	modest_widget_memory_restore (conf, G_OBJECT(priv->main_paned),
 				      "modest-main-paned");
-	modest_widget_memory_restore (conf, G_OBJECT(self->header_view),
+	modest_widget_memory_restore (conf, G_OBJECT(priv->header_view),
 				      "header-view");
 }
 
@@ -215,7 +217,7 @@ save_sizes (ModestMainWindow *self)
 	modest_widget_memory_save (conf,G_OBJECT(self), "modest-main-window");
 	modest_widget_memory_save (conf, G_OBJECT(priv->main_paned),
 				   "modest-main-paned");
-	modest_widget_memory_save (conf, G_OBJECT(self->header_view), "header-view");
+	modest_widget_memory_save (conf, G_OBJECT(priv->header_view), "header-view");
 }
 
 static GtkWidget*
@@ -277,19 +279,21 @@ get_toolbar (ModestMainWindow *self)
 	GtkWidget   *toolbar, *progress_box, *progress_alignment;
 	GtkToolItem *progress_item;
 	ModestWindowPrivate *parent_priv;
+	ModestMainWindowPrivate *priv;
 	GtkWidget   *stop_icon;
 	
 	parent_priv = MODEST_WINDOW_GET_PRIVATE(self);
+	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
 	
 	/* Toolbar */
 	toolbar       = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar");
 
-	gtk_progress_bar_set_text (GTK_PROGRESS_BAR(self->progress_bar), "Connecting...");
+	gtk_progress_bar_set_text (GTK_PROGRESS_BAR(priv->progress_bar), "Connecting...");
 
 	progress_box        = gtk_hbox_new (FALSE, HILDON_MARGIN_DEFAULT);
 	progress_alignment  = gtk_alignment_new (0.5, 0.5, 1, 0);
 	
-	gtk_container_add  (GTK_CONTAINER(progress_alignment), self->progress_bar);
+	gtk_container_add  (GTK_CONTAINER(progress_alignment), priv->progress_bar);
 	gtk_box_pack_start (GTK_BOX(progress_box), progress_alignment, TRUE, TRUE, 0);
 	
 	progress_item  = gtk_tool_item_new ();
@@ -331,9 +335,9 @@ connect_signals (ModestMainWindow *self)
 	device        = tny_account_store_get_device(TNY_ACCOUNT_STORE(account_store));
 	
 	/* folder view */
-	g_signal_connect (G_OBJECT(self->folder_view), "folder_selection_changed",
+	g_signal_connect (G_OBJECT(priv->folder_view), "folder_selection_changed",
 			  G_CALLBACK(modest_ui_actions_on_folder_selection_changed), self);
-	g_signal_connect (G_OBJECT(self->folder_view), "folder_moved",
+	g_signal_connect (G_OBJECT(priv->folder_view), "folder_moved",
 			  G_CALLBACK(modest_ui_actions_on_folder_moved), NULL);
 //	g_signal_connect (G_OBJECT(self->folder_view), "button-press-event",
 //			  G_CALLBACK (on_folder_view_button_press_event),self);
@@ -341,13 +345,13 @@ connect_signals (ModestMainWindow *self)
 //			  G_CALLBACK (on_folder_view_button_press_event),self);
 
 	/* header view */
-	g_signal_connect (G_OBJECT(self->header_view), "status_update",
+	g_signal_connect (G_OBJECT(priv->header_view), "status_update",
 			  G_CALLBACK(modest_ui_actions_on_header_status_update), self);
-	g_signal_connect (G_OBJECT(self->header_view), "header_selected",
+	g_signal_connect (G_OBJECT(priv->header_view), "header_selected",
 			  G_CALLBACK(modest_ui_actions_on_header_selected), self);
-	g_signal_connect (G_OBJECT(self->header_view), "header_activated",
+	g_signal_connect (G_OBJECT(priv->header_view), "header_activated",
 			  G_CALLBACK(modest_ui_actions_on_header_activated), self);
-	g_signal_connect (G_OBJECT(self->header_view), "item_not_found",
+	g_signal_connect (G_OBJECT(priv->header_view), "item_not_found",
 			  G_CALLBACK(modest_ui_actions_on_item_not_found), self);
 //	g_signal_connect (G_OBJECT(self->header_view), "button-press-event",
 //			  G_CALLBACK (on_header_view_button_press_event), self);
@@ -418,27 +422,27 @@ modest_main_window_new (void)
 	query = tny_folder_store_query_new ();
 	tny_folder_store_query_add_item (query, NULL,
 					 TNY_FOLDER_STORE_QUERY_OPTION_SUBSCRIBED);
-	self->folder_view = MODEST_FOLDER_VIEW(modest_folder_view_new (query));
-	if (!self->folder_view)
+	priv->folder_view = MODEST_FOLDER_VIEW(modest_folder_view_new (query));
+	if (!priv->folder_view)
 		g_printerr ("modest: cannot instantiate folder view\n");	
 	g_object_unref (G_OBJECT (query));
 	
 	/* header view */
-	self->header_view  =
+	priv->header_view  =
 		MODEST_HEADER_VIEW(modest_header_view_new (NULL, MODEST_HEADER_VIEW_STYLE_DETAILS));
-	if (!self->header_view)
+	if (!priv->header_view)
 		g_printerr ("modest: cannot instantiate header view\n");
 	
 	
-	folder_win = wrapped_in_scrolled_window (GTK_WIDGET(self->folder_view), FALSE);
-	header_win = wrapped_in_scrolled_window (GTK_WIDGET(self->header_view), FALSE);			   
+	folder_win = wrapped_in_scrolled_window (GTK_WIDGET(priv->folder_view), FALSE);
+	header_win = wrapped_in_scrolled_window (GTK_WIDGET(priv->header_view), FALSE);			   
 
 	/* paned */
 	priv->main_paned = gtk_hpaned_new ();
 	gtk_paned_add1 (GTK_PANED(priv->main_paned), folder_win);
 	gtk_paned_add2 (GTK_PANED(priv->main_paned), header_win);
-	gtk_widget_show (GTK_WIDGET(self->header_view));
-	gtk_tree_view_columns_autosize (GTK_TREE_VIEW(self->header_view));
+	gtk_widget_show (GTK_WIDGET(priv->header_view));
+	gtk_tree_view_columns_autosize (GTK_TREE_VIEW(priv->header_view));
 
 	/* putting it all together... */
 	main_vbox = gtk_vbox_new (FALSE, 6);

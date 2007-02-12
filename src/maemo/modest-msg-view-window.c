@@ -260,10 +260,14 @@ modest_msg_view_window_new (TnyMsg *msg, const gchar *account_name)
 TnyMsg*
 modest_msg_view_window_get_message (ModestMsgViewWindow *self)
 {
-	ModestMsgView *msg_view;	
+	ModestMsgView *msg_view;
+	ModestMsgViewWindowPrivate *priv;
+
 	g_return_val_if_fail (self, NULL);
 
-	msg_view = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE(obj)->msg_view;
+	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE(self);
+
+	msg_view = MODEST_MSG_VIEW (priv->msg_view);
 
 	return modest_msg_view_get_message (msg_view);
 }

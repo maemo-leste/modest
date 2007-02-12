@@ -155,7 +155,7 @@ get_transports (void)
 	GSList *cursor, *accounts;
 	
 	account_mgr = modest_runtime_get_account_mgr();
-	cursor = accounts = modest_account_mgr_account_names (account_mgr, NULL);
+/* 	cursor = accounts = modest_account_mgr_account_names (account_mgr, NULL); */
 	while (cursor) {
 		gchar *account_name = (gchar*)cursor->data;
 		gchar *from_string  = modest_account_mgr_get_from_string (account_mgr,
