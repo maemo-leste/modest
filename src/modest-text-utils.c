@@ -48,6 +48,7 @@
 #define SENT_STRING _("Sent:")
 #define TO_STRING _("To:")
 #define	SUBJECT_STRING _("Subject:")
+#define EMPTY_STRING ""
 
 /*
  * we need these regexps to find URLs in plain text e-mails
@@ -121,7 +122,6 @@ modest_text_utils_quote (const gchar *text,
 
 	g_return_val_if_fail (text, NULL);
 	g_return_val_if_fail (content_type, NULL);
-	g_return_val_if_fail (from, NULL);
 
 	cited = cite (sent_date, from);
 	
@@ -148,7 +148,6 @@ modest_text_utils_cite (const gchar *text,
 
 	g_return_val_if_fail (text, NULL);
 	g_return_val_if_fail (content_type, NULL);
-	g_return_val_if_fail (from, NULL);
 
 	tmp = cite (sent_date, from);
 	retval = g_strdup_printf ("%s%s\n", tmp, text);
@@ -178,9 +177,7 @@ modest_text_utils_inline (const gchar *text,
 
 	g_return_val_if_fail (text, NULL);
 	g_return_val_if_fail (content_type, NULL);
-	g_return_val_if_fail (from, NULL);
 	g_return_val_if_fail (text, NULL);
-	g_return_val_if_fail (to, NULL);
 	
 	modest_text_utils_strftime (sent_str, 100, "%c", sent_date);
 
@@ -193,10 +190,10 @@ modest_text_utils_inline (const gchar *text,
 
 	return g_strdup_printf (format, 
 				FORWARD_STRING,
-				FROM_STRING, from,
+				FROM_STRING, (from) ? from : EMPTY_STRING,
 				SENT_STRING, sent_str,
-				TO_STRING, to,
-				SUBJECT_STRING, subject,
+				TO_STRING, (to) ? to : EMPTY_STRING,
+				SUBJECT_STRING, (subject) ? subject : EMPTY_STRING,
 				text);
 }
 
@@ -206,17 +203,10 @@ modest_text_utils_inline (const gchar *text,
 gsize
 modest_text_utils_strftime(char *s, gsize max, const char *fmt, time_t timet)
 {
-	/* only since Gtk 2.10
-	 *
-	 *static GDate date;
-	 *g_date_set_time_t (&date, timet);
-	 *return g_date_strftime (s, max, fmt, (const GDate*) &date);
-	 */
+	static GDate date;
 
-	struct tm *time_tm;
-	time_tm = localtime (&timet);
-	
-	return strftime (s, max, fmt, time_tm);
+	g_date_set_time_t (&date, timet);
+	return g_date_strftime (s, max, fmt, (const GDate*) &date);
 }
 
 gchar *
@@ -493,7 +483,9 @@ cite (const time_t sent_date, const gchar *from)
 
 	/* format sent_date */
 	modest_text_utils_strftime (sent_str, 100, "%c", sent_date);
-	return g_strdup_printf (N_("On %s, %s wrote:\n"), sent_str, from);
+	return g_strdup_printf (N_("On %s, %s wrote:\n"), 
+				sent_str, 
+				(from) ? from : EMPTY_STRING);
 }
 
 
@@ -667,7 +659,8 @@ hyperlinkify_plain_text (GString *txt)
 
 		/* the prefix is NULL: use the one that is already there */
 		repl = g_strdup_printf ("<a href=\"%s%s\">%s</a>",
-					match->prefix ? match->prefix : "", url, url);
+					match->prefix ? match->prefix : EMPTY_STRING, 
+					url, url);
 
 		/* replace the old thing with our hyperlink
 		 * replacement thing */
