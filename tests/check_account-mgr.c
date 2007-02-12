@@ -61,18 +61,16 @@ fx_setup_default_account_mgr ()
   	/* cleanup old garbage (from previous runs)*/
 	if (modest_account_mgr_account_exists(account_mgr,
 					      TEST_MODEST_ACCOUNT_NAME,
-					      FALSE, NULL))
+					      FALSE))
 		modest_account_mgr_remove_account (account_mgr,
 						   TEST_MODEST_ACCOUNT_NAME,
-						   FALSE,
-						   NULL);
+						   FALSE);
 	if (modest_account_mgr_account_exists(account_mgr,
 					      TEST_MODEST_ACCOUNT_NAME,
-					      TRUE, NULL))
+					      TRUE))
 		modest_account_mgr_remove_account (account_mgr,
 						   TEST_MODEST_ACCOUNT_NAME,
-						   TRUE,
-						   NULL);
+						   TRUE);
 }
 
 static void
@@ -107,7 +105,6 @@ START_TEST (test_add_exists_remove_account_regular)
 	gchar *username = NULL;
 	gchar *password = NULL;
 	ModestProtocol proto;
-	GError *error = NULL;
 	gboolean result;
 	
 	name = g_strdup (TEST_MODEST_ACCOUNT_NAME);
@@ -117,13 +114,11 @@ START_TEST (test_add_exists_remove_account_regular)
 	result = modest_account_mgr_add_account (account_mgr,
 						 name,
 						 store_account,
-						 transport_account,
-						 &error);
-	fail_unless (result && !error,
+						 transport_account);
+	fail_unless (result,
 		     "modest_account_mgr_add_account failed:\n" \
-		     "name: %s\nstore: %s\ntransport: %s\nerror: %s",
-		     name, store_account, transport_account,
-		     error ? error->message : "");
+		     "name: %s\nstore: %s\ntransport: %s\n",
+		     name, store_account, transport_account);
 	
 	g_free (store_account);
 	g_free (transport_account);
@@ -131,22 +126,19 @@ START_TEST (test_add_exists_remove_account_regular)
 	/* Test 2 */
 	result = modest_account_mgr_account_exists (account_mgr,
 						    name,
-						    FALSE,
-						    &error);
-	fail_unless (result && !error,
+						    FALSE);
+	fail_unless (result,
 		     "modest_account_mgr_account_exists failed: " \
-		     "Account with name \"%s\" should exist. Error: %s",
-		     name, error ? error->message : "");
+		     "Account with name \"%s\" should exist.\n", name);
 	
 
 	/* Test 3 */
 	result = modest_account_mgr_remove_account (account_mgr,
 						    name,
-						    FALSE,
-						    &error);
-	fail_unless (result && !error,
+						    FALSE);
+	fail_unless (result,
 		     "modest_account_mgr_remove_account failed:\nname: %s\nerror: %s",
-		     name,  error ? error->message : "");
+		     name);
 
 
 	/* Test 4 */
@@ -170,44 +162,36 @@ START_TEST (test_add_exists_remove_account_regular)
 	g_free (password);
 	
 	/* Test 5 */
-	result = modest_account_mgr_account_exists (account_mgr,
-						    name,
-						    TRUE,
-						    &error);
-	fail_unless (result && !error,
+	result = modest_account_mgr_account_exists (account_mgr,name,TRUE);
+	fail_unless (result,
 		     "modest_account_mgr_account_exists failed: " \
-		     "Server account with name \"%s\" should exist. Error: %s",
-		     name, error ? error->message : "");
-
+		     "Server account with name \"%s\" should exist. Error: %s", name);
 
 	/* Test 6 */
 	result = modest_account_mgr_remove_account (account_mgr,
 						    name,
-						    TRUE,
-						    &error);
-	fail_unless (result && !error,
+						    TRUE);
+	fail_unless (result,
 		     "modest_account_mgr_remove_account failed:\nname: %s\nerror: %s",
-		     name, error ? error->message : "");
+		     name);
 
 
 	/* Test 7 */
 	result = modest_account_mgr_account_exists (account_mgr,
 						    "a_name_that_does_not_exist",
-						    FALSE,
-						    NULL);
-	fail_unless (!result,
+						    FALSE);
+	fail_unless (result,
 		     "modest_account_mgr_exists_account does not return " \
 		     "FALSE when passing an account that does not exist");
 
 	/* Test 8 */
 	result = modest_account_mgr_account_exists (account_mgr,
 						    "a_name_that_does_not_exist",
-						    TRUE,
-						    NULL);
-	fail_unless (!result,
+						    TRUE);
+	fail_unless (result,
 		     "modest_account_mgr_exists_account does not return " \
 		     "FALSE when passing a server account that does not exist");
-
+	
 	g_free (name);
 }
 END_TEST
@@ -241,8 +225,7 @@ START_TEST (test_add_exists_remove_account_invalid)
 	result = modest_account_mgr_add_account (NULL,
 						 TEST_MODEST_ACCOUNT_NAME,
 						 "store_account",
-						 "transport_account",
-						 NULL);
+						 "transport_account");
 	fail_unless (!result,
 		     "modest_account_mgr_add_account does not return FALSE when" \
 		     "passing a NULL ModestAccountMgr");
@@ -251,8 +234,7 @@ START_TEST (test_add_exists_remove_account_invalid)
 	result = modest_account_mgr_add_account (account_mgr,
 						 NULL,
 						 "store_account",
-						 "transport_account",
-						 NULL);
+						 "transport_account");
 	fail_unless (!result,
 		     "modest_account_mgr_add_account does not return FALSE when" \
 		     "passing a NULL account name");
@@ -261,8 +243,7 @@ START_TEST (test_add_exists_remove_account_invalid)
 	result = modest_account_mgr_add_account (account_mgr,
 						 "ïnválid//accountñ//nÄméç",
 						 "store_account",
-						 "transport_account",
-						 NULL);
+						 "transport_account");
 	fail_unless (!result,
 		     "modest_account_mgr_add_account does not return FALSE when" \
 		     "passing an invalid account name");
@@ -303,8 +284,7 @@ START_TEST (test_add_exists_remove_account_invalid)
 	/* Test 7 */
 	result = modest_account_mgr_remove_account (account_mgr,
 						    "a_name_that_does_not_exist",
-						    FALSE,
-						    NULL);
+						    FALSE);
 	fail_unless (!result,
 		     "modest_account_mgr_remove_acccount does not return FALSE " \
 		     "when trying to remove an account that does not exist");
@@ -312,8 +292,7 @@ START_TEST (test_add_exists_remove_account_invalid)
 	/* Test 8 */
 	result = modest_account_mgr_remove_account (account_mgr,
 						    "a_name_that_does_not_exist",
-						    TRUE,
-						    NULL);
+						    TRUE);
 	fail_unless (!result,
 		     "modest_account_mgr_remove_acccount does not return FALSE " \
 		     "when trying to remove a server account that does not exist");
@@ -321,8 +300,7 @@ START_TEST (test_add_exists_remove_account_invalid)
 	/* Test 9 */
 	result = modest_account_mgr_remove_account (NULL,
 						    TEST_MODEST_ACCOUNT_NAME,
-						    FALSE,
-						    NULL);
+						    FALSE);
 	fail_unless (!result,
 		     "modest_account_mgr_remove_acccount does not return " \
 		     "FALSE when passing a NULL ModestAccountMgr");
@@ -330,8 +308,7 @@ START_TEST (test_add_exists_remove_account_invalid)
 	/* Test 10 */
 	result = modest_account_mgr_remove_account (account_mgr,
 						    NULL,
-						    FALSE,
-						    NULL);
+						    FALSE);
 	fail_unless (!result,
 		     "modest_account_mgr_remove_acccount does not return " \
 		     "FALSE when passing a NULL account name");
@@ -339,8 +316,7 @@ START_TEST (test_add_exists_remove_account_invalid)
 	/* Test 11 */
 	result = modest_account_mgr_account_exists (NULL,
 						    TEST_MODEST_ACCOUNT_NAME,
-						    TRUE,
-						    NULL);
+						    TRUE);
 	fail_unless (!result,
 		     "modest_account_mgr_exists_account does not return " \
 		     "FALSE when passing a NULL ModestAccountMgr");
@@ -348,8 +324,7 @@ START_TEST (test_add_exists_remove_account_invalid)
 	/* Test 12 */
 	result = modest_account_mgr_account_exists (NULL,
 						    TEST_MODEST_ACCOUNT_NAME,
-						    FALSE,
-						    NULL);
+						    FALSE);
 	fail_unless (!result,
 		     "modest_account_mgr_exists_account does not return " \
 		     "FALSE when passing a NULL ModestAccountMgr");
@@ -357,8 +332,7 @@ START_TEST (test_add_exists_remove_account_invalid)
 	/* Test 13 */
 	result = modest_account_mgr_account_exists (account_mgr,
 						    NULL,
-						    FALSE,
-						    NULL);
+						    FALSE);
 	fail_unless (!result,
 		     "modest_account_mgr_exists_acccount does not return " \
 		     "FALSE when passing a NULL account name");
@@ -366,8 +340,7 @@ START_TEST (test_add_exists_remove_account_invalid)
 	/* Test 14 */
 	result = modest_account_mgr_account_exists (account_mgr,
 						    NULL,
-						    TRUE,
-						    NULL);
+						    TRUE);
 	fail_unless (!result,
 		     "modest_account_mgr_exists_account does not return " \
 		     "FALSE when passing a NULL server account name");
