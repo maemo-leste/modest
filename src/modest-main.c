@@ -53,15 +53,15 @@
 #include <widgets/modest-msg-edit-window.h>
 
 typedef enum {
-	MODEST_ERR_NONE    = 0,  /* no error */
-	MODEST_ERR_OPTIONS,      /* error in the options */
-	MODEST_ERR_CONF,         /* error getting confuration db */
-	MODEST_ERR_UI,           /* error in the UI */
-	MODEST_ERR_HILDON,       /* error with Hildon (maemo-only) */
-	MODEST_ERR_RUN,          /* errr running */
-	MODEST_ERR_SEND,         /* error sending mail */
-	MODEST_ERR_PARAM,        /* error in one or more of the parameters */
-	MODEST_ERR_INIT          /* error in initialization */
+	MODEST_ERR_NONE    = 0,   /* no error */
+	MODEST_ERR_OPTIONS = 1,   /* error in the options */
+	MODEST_ERR_CONF    = 2,   /* error getting confuration db */
+	MODEST_ERR_UI      = 3,   /* error in the UI */
+	MODEST_ERR_HILDON  = 4,   /* error with Hildon (maemo-only) */
+	MODEST_ERR_RUN     = 5,   /* error running */
+	MODEST_ERR_SEND    = 6,   /* error sending mail */
+	MODEST_ERR_PARAM   = 7,   /* error in one or more of the parameters */
+	MODEST_ERR_INIT    = 8    /* error in initialization */
 } ModestErrorCode;
 
 static gchar*           check_account (const gchar *account);
