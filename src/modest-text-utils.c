@@ -205,8 +205,11 @@ modest_text_utils_strftime(char *s, gsize max, const char *fmt, time_t timet)
 {
 	static GDate date;
 
-	/* FIXME: deprecated in newer glib versions */
-	g_date_set_time (&date, (GTime) timet);
+#if MODEST_PLATFORM_ID==1   /* gtk */
+	g_date_set_time_t (&date, timet);	
+#elif MODEST_PLATFORM_ID==2   /* hildon (maemo) */
+	g_date_set_time (&date, (GTime) timet);	
+#endif
 	return g_date_strftime (s, max, fmt, (const GDate*) &date);
 }
 
