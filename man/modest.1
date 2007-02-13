@@ -1,0 +1,133 @@
+.\" -*-nroff-*-
+.\"
+.\"
+.\"    Copyright (c) 2006,2007 Nokia Corporation
+.\"    All rights reserved.
+.\"    
+.\"    Redistribution and use in source and binary forms, with or without
+.\"    modification, are permitted provided that the following conditions are
+.\"    met:
+.\"    
+.\"    * Redistributions of source code must retain the above copyright
+.\"      notice, this list of conditions and the following disclaimer.
+.\"    * Redistributions in binary form must reproduce the above copyright
+.\"      notice, this list of conditions and the following disclaimer in the
+.\"      documentation and/or other materials provided with the distribution.
+.\"    * Neither the name of the Nokia Corporation nor the names of its
+.\"      contributors may be used to endorse or promote products derived from
+.\"      this software without specific prior written permission.
+.\"    
+.\"    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+.\"    IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\"    TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+.\"    PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+.\"    OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+.\"    EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+.\"    PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+.\"    PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+.\"    LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+.\"    NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+.\"    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"    
+.\"
+.TH modest 1 "February 2007" Unix "User Manuals"
+.SH NAME
+modest \- The Modest Mail User Agent
+.SH SYNOPSIS
+.PP
+.B modest 
+[-m \fIaddress\fP] 
+[-s \fIsubject\fP]
+[-b \fIbody\fP]
+[-c \fIcc\fP]
+[-x \fIbcc\fP]
+[-a \fIaccount\fP]
+[-b]
+.SH DESCRIPTION
+.PP
+Modest is a graphical e-mail program, targetting resource constrained
+environments, such as older PCs and internet tablets. It aims to be
+easy to use and provide a complete e-mail experience, while keeping
+the resource usage at a modest level (by 2007 standards).
+.SH OPTIONS
+.PP
+.IP "-m, --mailto \fIaddress\fP"
+Specify the To: address for the message
+.IP "-s, --subject \fIsubject\fP"
+Specify the subject for the message
+.IP "-b, --body \fIbody\fP"
+Specify the body for the message
+.IP "-c, --cc \fIaddress\fP"
+Specify a Cc: address for the message
+.IP "-x, --bcc \fIaddress\fP"
+Specify a Bcc: address for the message
+.IP "-a, --account \fIaccount\fP"
+Use the given (named) account
+.IP "-y, --batch"
+Use batch mode (don't show graphical UI)
+.IP "-h"
+Display help.
+.SH ENVIRONMENT
+.PP
+.B "MODEST_DEBUG"
+The MODEST_DEBUG environment can contain an number of ':'-separated strings
+to trigger certain debugging features:
+.PP
+.IP "abort-on-warning"
+Abort the program when any Gtk/Glib warning or error occurs. This can be
+useful when running inside a debugger.
+.IP "log-actions"
+Log actions to the log file (not available yet)
+.IP "debug-objects"
+Debug GObject usage (G_TYPE_DEBUG_OBJECTS)
+.IP "debug-signals"
+Debug GSignal usage (G_TYPE_DEBUG_SIGNALS)
+.IP "factory-settings"
+Return all the user-settings to the 'factory defaults'
+.SH EXIT CODES
+.PP
+.IP "0: no error"
+.IP "1: error in the options given to the program"
+.IP "2: error getting configuration data"
+.IP "3: error int the graphical user interface"
+.IP "4: error with Hildon (maemo-only)"
+.IP "5: error running"
+.IP "6: error sending mail"
+.IP "7: error in one or more of the paramaters"
+.IP "8: error in initialization"
+.SH FILES
+.PP
+.IP "~/.modest/cache"
+Modest e-mail cache.
+.IP "~/.modest/local_folders"
+Root of the local folders hierarchy (in Maildir format)
+.SH BUGS
+.PP
+Some...  If you find one, please let us know!
+.SH NO WARRANTIES
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.SH SEE ALSO
+.PP
+.BR mutt (3),
+.BR maildir (5),
+.PP
+Modest Home Page: http://modest.garage.maemo.org/
+.PP
+.SH COPYRIGHTS
+Copyright (c) 2006,2007 Nokia Corporation
+All rights reserved.
+.PP
+.SH AUTHORS
+.PP
+Dirk-Jan C. Binnema and many others. Modest uses the Tinymail framework,
+written by Philip Van Hoof.

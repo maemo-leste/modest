@@ -175,6 +175,7 @@ dnl Intltool utility programs
 AC_OUTPUT([
 po/Makefile.in
 Makefile
+man/Makefile
 src/Makefile
 src/gtk/Makefile
 src/maemo/Makefile

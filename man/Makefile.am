@@ -24,34 +24,7 @@
 # PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
 # LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.b
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-SUBDIRS= src man
-#po
-
-if BUILD_TESTS
-SUBDIRS += tests
-endif
-
-if BUILD_DOCS
-SUBDIRS += docs
-endif
-
-
-
-EXTRA_DIST=                 \
-	mkinstalldirs       \
-	autogen.sh          \
-	COPYING             \
-	intltool-extract.in \
-	intltool-merge.in   \
-	intltool-update.in  \
-	debian/changelog    \
-	debian/copyright    \
-	debian/rules        \
-	debian/modest.links
-
-DISTCLEANFILES =            \
-	intltool-extract.in \
-	intltool-merge.in   \
-	intltool-update.in
+man_MANS = modest.1
+EXTRA_DIST = $(man_MANS)
