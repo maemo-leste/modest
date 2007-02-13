@@ -183,14 +183,13 @@ modest_runtime_init_ui (gint argc, gchar** argv)
 gboolean
 modest_runtime_uninit (void)
 {
-	if (!_singletons) {
-		g_printerr ("modest: modest_runtime is not initialized\n");
-		return FALSE;
+	if (_singletons) {
+		g_object_unref (G_OBJECT(_singletons));
+		_singletons = NULL;
 	}
+	if (G_IS_OBJECT(_singletons)) 
+		g_warning ("BUG: _singletons is still alive\n");
 	
-	g_object_unref (G_OBJECT(_singletons));
-	_singletons = NULL;
-
 	return TRUE;
 }
 

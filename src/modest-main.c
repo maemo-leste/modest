@@ -103,11 +103,6 @@ main (int argc, char *argv[])
 		{ NULL, 0, 0, 0, NULL, NULL, NULL }
 	};
 
-	if (!modest_runtime_init ()) {
-		g_printerr ("modest: cannot init runtime\n");
-		return MODEST_ERR_INIT;
-	}
-	
 	context = g_option_context_new (NULL);
 	g_option_context_add_main_entries (context, options, NULL);
 	
@@ -120,6 +115,12 @@ main (int argc, char *argv[])
 		goto cleanup;
 	}
 	g_option_context_free (context);
+	
+	if (!modest_runtime_init ()) {
+		g_printerr ("modest: cannot init runtime\n");
+		return MODEST_ERR_INIT;
+	}
+	
 
 	account_or_default = check_account (account);
 	g_free (account);
@@ -133,6 +134,11 @@ main (int argc, char *argv[])
 			retval = start_ui (account_or_default,
 					   mailto, cc, bcc, subject, body);
 	} else {
+		if (!account_or_default) {
+			g_printerr ("modest: no account has been defined yet\n");
+			retval = MODEST_ERR_CONF;
+			goto cleanup;
+		}
 		retval = send_mail (account_or_default,
 				    mailto, cc, bcc, subject, body);
 	}

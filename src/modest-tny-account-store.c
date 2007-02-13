@@ -336,11 +336,6 @@ modest_tny_account_store_finalize (GObject *obj)
 
 	g_free (priv->cache_dir);
 	priv->cache_dir = NULL;
-
-	if (priv->device) {
-		g_object_unref (G_OBJECT(priv->device));
-		priv->device = NULL;
-	}
 	
 	if (priv->password_hash) {
 		g_hash_table_destroy (priv->password_hash);
@@ -363,7 +358,12 @@ modest_tny_account_store_finalize (GObject *obj)
 		camel_object_unref (CAMEL_OBJECT(priv->session));
 		priv->session = NULL;
 	}
-	
+
+	/* the device should be unref'ed *AFTER* the session */
+	if (priv->device) {
+		g_object_unref (G_OBJECT(priv->device));
+		priv->device = NULL;
+	}
 	
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }

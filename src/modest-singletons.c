@@ -132,7 +132,7 @@ static void
 check_object_is_dead (GObject *obj, gchar *name)
 {
 	if (G_IS_OBJECT(obj))
-		g_printerr ("modest: %s is still alive\n", name);
+		g_warning ("BUG: %s is still alive\n", name);
 }
 
 static void
