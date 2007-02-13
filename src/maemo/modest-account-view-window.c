@@ -165,7 +165,6 @@ on_remove_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 
 	if (account_name) {
 		gboolean removed;
-		GError *err = NULL;
 		GtkWidget *dialog;
 		gchar *txt;
 
@@ -188,14 +187,11 @@ on_remove_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 			   the account from the ModestAccountView */
 			removed = modest_account_mgr_remove_account (account_mgr,
 								     account_name,
-								     FALSE,
-								     &err);
+								     FALSE);						 
 			if (removed) {
 				/* Show confirmation dialog ??? */
 			} else {
 				/* Show error dialog ??? */
-				if (err)
-					g_error_free (err);
 			}
 		}
 		gtk_widget_destroy (dialog);
