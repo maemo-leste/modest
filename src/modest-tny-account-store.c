@@ -34,12 +34,12 @@
 #include <tny-account-store.h>
 #include <tny-store-account.h>
 #include <tny-transport-account.h>
-#include <tny-device.h>
 #include <tny-simple-list.h>
 #include <tny-account-store.h>
 #include <tny-camel-transport-account.h>
 #include <tny-camel-imap-store-account.h>
 #include <tny-camel-pop-store-account.h>
+#include <modest-runtime.h>
 #include <modest-marshal.h>
 #include <modest-protocol-info.h>
 #include <modest-local-folder-info.h>
@@ -73,9 +73,9 @@ typedef struct _ModestTnyAccountStorePrivate ModestTnyAccountStorePrivate;
 struct _ModestTnyAccountStorePrivate {
 	gchar              *cache_dir;	
 	GHashTable         *password_hash;
-	TnyDevice          *device;
 	ModestAccountMgr   *account_mgr;
 	TnySessionCamel    *session;
+	TnyDevice          *device;
 	
 	/* we cache them here */
 	GSList             *store_accounts;
@@ -166,8 +166,8 @@ modest_tny_account_store_instance_init (ModestTnyAccountStore *obj)
 
 	priv->cache_dir              = NULL;
 	priv->account_mgr            = NULL;
-	priv->device                 = NULL;
 	priv->session                = NULL;
+	priv->device                 = NULL;
 	
 	priv->password_hash          = g_hash_table_new_full (g_str_hash, g_str_equal,
 							      g_free, g_free);
@@ -179,6 +179,9 @@ account_list_free (GSList *accounts)
 	GSList *cursor = accounts;
 	while (cursor) {
 		g_object_unref (G_OBJECT(cursor->data));
+/* 		if (G_IS_OBJECT(cursor->data)) */
+/* 			g_warning ("BUG: account %s still holds refs", */
+/* 				   tny_account_get_id (TNY_ACCOUNT(cursor->data))); */
 		cursor = cursor->next;
 	}
 	g_slist_free (accounts);
@@ -222,7 +225,6 @@ on_account_changed (ModestAccountMgr *acc_mgr, const gchar *account, gboolean se
 	account_list_free (priv->transport_accounts);
 	priv->transport_accounts = NULL;
 
-	
 	g_signal_emit (G_OBJECT(self), signals[ACCOUNT_UPDATE_SIGNAL], 0,
 		       account);
 }
@@ -347,6 +349,11 @@ modest_tny_account_store_finalize (GObject *obj)
 		priv->account_mgr = NULL;
 	}
 
+	if (priv->device) {
+		g_object_unref (G_OBJECT(priv->device));
+		priv->device = NULL;
+	}
+
 	/* this includes the local folder */
 	account_list_free (priv->store_accounts);
 	priv->store_accounts = NULL;
@@ -358,25 +365,20 @@ modest_tny_account_store_finalize (GObject *obj)
 		camel_object_unref (CAMEL_OBJECT(priv->session));
 		priv->session = NULL;
 	}
-
-	/* the device should be unref'ed *AFTER* the session */
-	if (priv->device) {
-		g_object_unref (G_OBJECT(priv->device));
-		priv->device = NULL;
-	}
 	
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
 
 ModestTnyAccountStore*
-modest_tny_account_store_new (ModestAccountMgr *account_mgr) {
+modest_tny_account_store_new (ModestAccountMgr *account_mgr, TnyDevice *device) {
 
 	GObject *obj;
 	ModestTnyAccountStorePrivate *priv;
 	TnyList *list;
 	
 	g_return_val_if_fail (account_mgr, NULL);
+	g_return_val_if_fail (device, NULL);
 
 	obj  = G_OBJECT(g_object_new(MODEST_TYPE_TNY_ACCOUNT_STORE, NULL));
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(obj);
@@ -384,6 +386,9 @@ modest_tny_account_store_new (ModestAccountMgr *account_mgr) {
 	priv->account_mgr = account_mgr;
 	g_object_ref (G_OBJECT(priv->account_mgr));
 
+	priv->device = device;
+	g_object_ref (priv->device);
+	
 	priv->session = tny_session_camel_new (TNY_ACCOUNT_STORE(obj));
 	
 	tny_session_camel_set_ui_locker (priv->session,	 tny_gtk_lockable_new ());
@@ -498,8 +503,10 @@ modest_tny_account_store_get_accounts  (TnyAccountStore *self, TnyList *list,
 			priv->transport_accounts = get_accounts (self, list, TNY_ACCOUNT_TYPE_TRANSPORT);
 		else
 			get_cached_accounts (self, list, TNY_ACCOUNT_TYPE_TRANSPORT);
-	} else
+	} else {
 		g_return_if_reached (); /* incorrect req type */
+		return;
+	}
 }
 
 
@@ -526,13 +533,14 @@ modest_tny_account_store_get_device (TnyAccountStore *self)
 {
 	ModestTnyAccountStorePrivate *priv;
 
-	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE (self);
+	g_return_val_if_fail (self, NULL);
 	
-	if (!priv->device) 
-		priv->device = tny_platform_factory_new_device
-			(modest_tny_platform_factory_get_instance());
-	
-	return g_object_ref (G_OBJECT(priv->device));
+	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
+
+	if (priv->device)
+		return g_object_ref (G_OBJECT(priv->device));
+	else
+		return NULL;
 }
 
 

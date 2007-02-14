@@ -281,7 +281,6 @@ add_if_attachment (gpointer data, gpointer user_data)
 static TnyMsg *
 create_reply_forward_mail (TnyMsg *msg, const gchar *from, gboolean is_reply, guint type)
 {
-	TnyPlatformFactory *fact;
 	TnyMsg *new_msg;
 	TnyHeader *new_header, *header;
 	gchar *new_subject;
@@ -322,8 +321,8 @@ create_reply_forward_mail (TnyMsg *msg, const gchar *from, gboolean is_reply, gu
 	g_object_unref (G_OBJECT(body));
 	
 	/* Fill the header */
-	fact = modest_tny_platform_factory_get_instance ();
-	new_header = TNY_HEADER (tny_platform_factory_new_header (fact));
+	new_header = TNY_HEADER (tny_platform_factory_new_header
+				 (modest_runtime_get_platform_factory()));
 	tny_msg_set_header (new_msg, new_header);
 	tny_header_set_from (new_header, from);
 	tny_header_set_replyto (new_header, from);
@@ -923,15 +922,14 @@ add_attachments (TnyMsg *msg, GList *attachments_list)
 	const gchar *attachment_content_type;
 	const gchar *attachment_filename;
 	TnyStream *attachment_stream;
-	TnyPlatformFactory *fact;
 
-	fact = modest_tny_platform_factory_get_instance ();
 	for (pos = (GList *)attachments_list; pos; pos = pos->next) {
 
 		old_attachment = pos->data;
 		attachment_filename = tny_mime_part_get_filename (old_attachment);
 		attachment_stream = tny_mime_part_get_stream (old_attachment);
-		attachment_part = tny_platform_factory_new_mime_part (fact);
+		attachment_part = tny_platform_factory_new_mime_part
+			(modest_runtime_get_platform_factory());
 		
 		attachment_content_type = tny_mime_part_get_content_type (old_attachment);
 				 

@@ -36,6 +36,7 @@
 #include "modest-formatter.h"
 #include "modest-text-utils.h"
 #include "modest-tny-platform-factory.h"
+#include <modest-runtime.h>
 
 typedef struct _ModestFormatterPrivate ModestFormatterPrivate;
 struct _ModestFormatterPrivate {
@@ -119,15 +120,13 @@ modest_formatter_do (ModestFormatter *self, TnyMimePart *body, TnyHeader *header
 	TnyMsg *new_msg = NULL;
 	gchar *body_text = NULL, *txt = NULL;
 	ModestFormatterPrivate *priv;
-	TnyPlatformFactory *fact;
 
 	g_return_val_if_fail (self, NULL);
 	g_return_val_if_fail (header, NULL);
 	g_return_val_if_fail (func, NULL);
 
 	/* Build new part */
-	fact = modest_tny_platform_factory_get_instance ();
-	new_msg = tny_platform_factory_new_msg (fact);
+	new_msg = tny_platform_factory_new_msg (modest_runtime_get_platform_factory());
 
 	if (body)
 		body_text = extract_text (self, body);
@@ -173,7 +172,7 @@ modest_formatter_attach (ModestFormatter *self, TnyMimePart *body, TnyHeader *he
 	ModestFormatterPrivate *priv;
 	TnyPlatformFactory *fact;
 
-	fact = modest_tny_platform_factory_get_instance ();
+	fact = modest_runtime_get_platform_factory ();
 	/* Build new part */
 	new_msg     = tny_platform_factory_new_msg (fact);
 	body_part   = tny_platform_factory_new_mime_part (fact);

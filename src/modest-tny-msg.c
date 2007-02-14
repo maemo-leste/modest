@@ -61,7 +61,7 @@ modest_tny_msg_new (const gchar* mailto, const gchar* from, const gchar *cc,
 	gchar *content_type;
 	
 	/* Create new msg */
-	fact    = modest_tny_platform_factory_get_instance ();
+	fact    = modest_runtime_get_platform_factory ();
 	new_msg = tny_platform_factory_new_msg (fact);
 	header  = tny_platform_factory_new_header (fact);
 	
@@ -96,9 +96,6 @@ add_body_part (TnyMsg *msg,
 {
 	TnyMimePart *text_body_part = NULL;
 	TnyStream *text_body_stream;
-	TnyPlatformFactory *fact;
-
-	fact = modest_tny_platform_factory_get_instance ();
 
 	/* Create the stream */
 	text_body_stream = TNY_STREAM (tny_camel_stream_new
@@ -107,7 +104,8 @@ add_body_part (TnyMsg *msg,
 
 	/* Create body part if needed */
 	if (has_attachments)
-		text_body_part = tny_platform_factory_new_mime_part (fact);
+		text_body_part = tny_platform_factory_new_mime_part
+			(modest_runtime_get_platform_factory ());
 	else
 		text_body_part = TNY_MIME_PART(msg);
 
@@ -138,15 +136,14 @@ add_attachments (TnyMsg *msg, GList *attachments_list)
 	const gchar *attachment_content_type;
 	const gchar *attachment_filename;
 	TnyStream *attachment_stream;
-	TnyPlatformFactory *fact;
 
-	fact = modest_tny_platform_factory_get_instance ();
 	for (pos = (GList *)attachments_list; pos; pos = pos->next) {
 
 		old_attachment = pos->data;
 		attachment_filename = tny_mime_part_get_filename (old_attachment);
 		attachment_stream = tny_mime_part_get_stream (old_attachment);
-		attachment_part = tny_platform_factory_new_mime_part (fact);
+		attachment_part = tny_platform_factory_new_mime_part (
+			modest_runtime_get_platform_factory());
 		
 		attachment_content_type = tny_mime_part_get_content_type (old_attachment);
 				 

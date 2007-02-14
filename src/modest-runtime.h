@@ -38,6 +38,7 @@
 #include <modest-mail-operation-queue.h>
 #include <modest-tny-account-store.h>
 #include <modest-tny-send-queue.h>
+#include <tny-platform-factory.h>
 
 G_BEGIN_DECLS
 
@@ -143,20 +144,31 @@ ModestTnyAccountStore*    modest_runtime_get_account_store (void);
  * 
  * get the ModestCacheMgr singleton instance
  *
- * Returns: the ModestCacheMgr singleton. This should NOT be unref'd.
+ * Returns: the #ModestCacheMgr singleton. This should NOT be unref'd.
  **/
 ModestCacheMgr*           modest_runtime_get_cache_mgr     (void);
 
 
 
 /**
- * modest_runtime_get_cache_mgr:
+ * modest_runtime_get_device:
  * 
- * get the TnyDevice singleton instance
+ * get the #TnyDevice singleton instance
  *
- * Returns: the TnyDevice singleton. This should NOT be unref'd.
+ * Returns: the #TnyDevice singleton. This should NOT be unref'd.
  **/
-TnyDevice*           modest_runtime_get_device     (void);
+TnyDevice*                    modest_runtime_get_device     (void);
+
+
+/**
+ * modest_runtime_get_platform_factory:
+ * 
+ * get the #TnyPlatformFactory singleton instance
+ *
+ * Returns: the #TnyPlatformFactory singleton. This should NOT be unref'd.
+ **/
+TnyPlatformFactory*           modest_runtime_get_platform_factory     (void);
+
 
 
 

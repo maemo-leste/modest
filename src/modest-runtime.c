@@ -242,6 +242,14 @@ modest_runtime_get_device (void)
 }
 
 
+TnyPlatformFactory*
+modest_runtime_get_platform_factory  (void)
+{
+	g_return_val_if_fail (_singletons, NULL);
+	return modest_singletons_get_platform_factory (_singletons);
+}
+
+
 
 
 ModestTnySendQueue*

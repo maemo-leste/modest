@@ -111,8 +111,20 @@ modest_singletons_init (ModestSingletons *obj)
 		g_printerr ("modest: cannot create modest account mgr instance\n");
 		return;
 	}
+
+	priv->platform_fact  = modest_tny_platform_factory_get_instance ();
+	if (!priv->platform_fact) {
+		g_printerr ("modest: cannot create platform factory instance\n");
+		return;
+	}
+
+	priv->device  = tny_platform_factory_new_device (priv->platform_fact);
+	if (!priv->device) {
+		g_printerr ("modest: cannot create tny device instance\n");
+		return;
+	}
 	
-	priv->account_store  = modest_tny_account_store_new (priv->account_mgr);
+	priv->account_store  = modest_tny_account_store_new (priv->account_mgr, priv->device);
 	if (!priv->account_store) {
 		g_printerr ("modest: cannot create modest tny account store instance\n");
 		return;
@@ -128,21 +140,7 @@ modest_singletons_init (ModestSingletons *obj)
 	if (!priv->mail_op_queue) {
 		g_printerr ("modest: cannot create modest mail operation queue instance\n");
 		return;
-	}
-
-	priv->platform_fact  = modest_tny_platform_factory_get_instance ();
-	if (!priv->platform_fact) {
-		g_printerr ("modest: cannot create platform factory instance\n");
-		return;
-	}
-	
-	priv->device  = tny_platform_factory_new_device (priv->platform_fact);
-	if (!priv->device) {
-		g_printerr ("modest: cannot create tny device instance\n");
-		return;
-	}
-
-	
+	}	
 }
 
 

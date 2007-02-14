@@ -413,17 +413,10 @@ modest_ui_actions_on_prev (GtkWidget *widget,
 void
 modest_ui_actions_on_send_receive (GtkWidget *widget,  ModestWindow *win)
 {
-	TnyDevice *device;
-	TnyAccountStore *account_store;
 	gchar *account_name;
 	TnyAccount *tny_account;
 	ModestTnySendQueue *send_queue;
 	
-	/* Get device. Do not ask the platform factory for it, because
-	   it returns always a new one */
-	account_store = TNY_ACCOUNT_STORE (modest_runtime_get_account_store ());
-	device = tny_account_store_get_device (account_store);
-		
 	account_name =
 		g_strdup(modest_window_get_active_account(MODEST_WINDOW(win)));
 	if (!account_name)
@@ -432,10 +425,11 @@ modest_ui_actions_on_send_receive (GtkWidget *widget,  ModestWindow *win)
 		g_printerr ("modest: cannot get account\n");
 		return;
 	}
-
+	
 	tny_account = 
 		modest_tny_account_store_get_tny_account_by_account (modest_runtime_get_account_store(),
-								     account_name, TNY_ACCOUNT_TYPE_TRANSPORT);
+								     account_name,
+								     TNY_ACCOUNT_TYPE_TRANSPORT);
 	if (!tny_account) {
 		g_printerr ("modest: cannot get tny transport account\n");
 		return;
@@ -771,19 +765,12 @@ modest_ui_actions_on_item_not_found (ModestHeaderView *header_view,ModestItemTyp
 	GtkWidget *dialog;
 	gchar *txt, *item;
 	gboolean online;
-	TnyDevice *device;
-	TnyAccountStore *account_store;
 
 	item = (type == MODEST_ITEM_TYPE_FOLDER) ? "folder" : "message";
 	
-	/* Get device. Do not ask the platform factory for it, because
-	   it returns always a new one */
-	account_store = TNY_ACCOUNT_STORE (modest_runtime_get_account_store ());
-	device = tny_account_store_get_device (account_store);
-
 	if (g_main_depth > 0)	
 		gdk_threads_enter ();
-	online = tny_device_is_online (device);
+	online = tny_device_is_online (modest_runtime_get_device());
 
 	if (online) {
 		/* already online -- the item is simply not there... */
@@ -812,7 +799,7 @@ modest_ui_actions_on_item_not_found (ModestHeaderView *header_view,ModestItemTyp
 
 		gtk_window_set_default_size (GTK_WINDOW(dialog), 300, 300);
 		if (gtk_dialog_run (GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
-			tny_device_force_online (device);
+			tny_device_force_online (modest_runtime_get_device());
 		}
 	}
 	gtk_widget_destroy (dialog);

@@ -184,7 +184,8 @@ static TnyAccountStore *
 modest_tny_platform_factory_new_account_store (TnyPlatformFactory *self)
 {
 	return TNY_ACCOUNT_STORE(modest_tny_account_store_new
-				 (modest_runtime_get_account_mgr()));
+				 (modest_runtime_get_account_mgr(),
+				  modest_runtime_get_device()));
 }
 
 static TnyDevice *

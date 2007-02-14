@@ -90,7 +90,8 @@ GType  modest_tny_account_store_get_type   (void) G_GNUC_CONST;
  *
  * Returns: newly created account store or NULL in case of error
  */
-ModestTnyAccountStore*    modest_tny_account_store_new (ModestAccountMgr *account_mgr);
+ModestTnyAccountStore*    modest_tny_account_store_new (ModestAccountMgr *account_mgr,
+							TnyDevice *device);
 
 
 /**
