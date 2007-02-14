@@ -325,14 +325,9 @@ connect_signals (ModestMainWindow *self)
 {	
 	ModestWindowPrivate *parent_priv;
 	ModestMainWindowPrivate *priv;
-	TnyDevice *device;
-	ModestTnyAccountStore *account_store;
 	
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
 	parent_priv = MODEST_WINDOW_GET_PRIVATE(self);
-
-	account_store = modest_runtime_get_account_store ();
-	device        = tny_account_store_get_device(TNY_ACCOUNT_STORE(account_store));
 	
 	/* folder view */
 	g_signal_connect (G_OBJECT(priv->folder_view), "folder_selection_changed",
@@ -361,8 +356,7 @@ connect_signals (ModestMainWindow *self)
 	/* Account store */
 	g_signal_connect (G_OBJECT (modest_runtime_get_account_store()), "accounts_reloaded",
 			  G_CALLBACK (modest_ui_actions_on_accounts_reloaded), self);
-	
-	
+		
 	/* window */
 	g_signal_connect (G_OBJECT(self), "destroy", G_CALLBACK(on_destroy), NULL);
 	g_signal_connect (G_OBJECT(self), "delete-event", G_CALLBACK(on_delete_event), self);

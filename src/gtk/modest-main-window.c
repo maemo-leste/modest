@@ -158,7 +158,6 @@ modest_main_window_init (ModestMainWindow *obj)
 	TnyAccountStore         *account_store;
 	ModestMainWindowPrivate *priv;
 	TnyFolderStoreQuery     *query;
-	TnyDevice               *device;
 	GtkWidget               *icon;
 	gboolean                online;
 	
@@ -172,8 +171,7 @@ modest_main_window_init (ModestMainWindow *obj)
 
 	/* online/offline combo */
 	priv->online_toggle = gtk_toggle_button_new ();
-	device  = tny_account_store_get_device (account_store);
-	online  = tny_device_is_online (device);
+	online  = tny_device_is_online (modest_runtime_get_device());
 	icon    = gtk_image_new_from_icon_name (online ? GTK_STOCK_CONNECT : GTK_STOCK_DISCONNECT,
 						GTK_ICON_SIZE_BUTTON);
 	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(priv->online_toggle), online);
@@ -347,17 +345,13 @@ on_online_toggle_toggled (GtkToggleButton *toggle, ModestMainWindow *self)
 
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
 
-	device = tny_account_store_get_device
-		(TNY_ACCOUNT_STORE(modest_runtime_get_account_store()));
-
+	device = modest_runtime_get_device ();
 	online  = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (priv->online_toggle));
 
 	if (online)
 		tny_device_force_online (device);
 	else
 		tny_device_force_offline (device);
-
-	g_object_unref (G_OBJECT (device));
 }
 
 static gboolean
@@ -380,14 +374,12 @@ connect_signals (ModestMainWindow *self)
 {	
 	ModestWindowPrivate *parent_priv;
 	ModestMainWindowPrivate *priv;
-	TnyDevice *device;
 	ModestTnyAccountStore *account_store;
 	
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
 	parent_priv = MODEST_WINDOW_GET_PRIVATE(self);
 
 	account_store = modest_runtime_get_account_store ();
-	device        = tny_account_store_get_device(TNY_ACCOUNT_STORE(account_store));
 	
 	/* folder view */
 	g_signal_connect (G_OBJECT(priv->folder_view), "folder_selection_changed",
@@ -428,7 +420,7 @@ connect_signals (ModestMainWindow *self)
 			  G_CALLBACK (modest_ui_actions_on_password_requested), self);
 	
 	/* Device */
-	g_signal_connect (G_OBJECT(device), "connection_changed",
+	g_signal_connect (G_OBJECT(modest_runtime_get_device()), "connection_changed",
 			  G_CALLBACK(on_connection_changed), self);
 	g_signal_connect (G_OBJECT(priv->online_toggle), "toggled",
 			  G_CALLBACK(on_online_toggle_toggled), self);
