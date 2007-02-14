@@ -114,7 +114,7 @@ ModestRuntimeDebugFlags modest_runtime_get_debug_flags  (void) G_GNUC_CONST;
  * 
  * get the ModestConf singleton instance
  * 
- * Returns: the ModestConf singleton
+ * Returns: the ModestConf singleton. This should NOT be unref'd.
  **/
 ModestConf*         modest_runtime_get_conf   (void);
 
@@ -124,7 +124,7 @@ ModestConf*         modest_runtime_get_conf   (void);
  * 
  * get the ModestAccountMgr singleton instance
  * 
- * Returns: the ModestAccountMgr singleton
+ * Returns: the ModestAccountMgr singleton. This should NOT be unref'd.
  **/
 ModestAccountMgr*         modest_runtime_get_account_mgr   (void);
 
@@ -133,7 +133,7 @@ ModestAccountMgr*         modest_runtime_get_account_mgr   (void);
  * 
  * get the ModestTnyAccountStore singleton instance
  *
- * Returns: the ModestTnyAccountStore singleton
+ * Returns: the ModestTnyAccountStore singleton. This should NOT be unref'd.
  **/
 ModestTnyAccountStore*    modest_runtime_get_account_store (void);
 
@@ -143,9 +143,21 @@ ModestTnyAccountStore*    modest_runtime_get_account_store (void);
  * 
  * get the ModestCacheMgr singleton instance
  *
- * Returns: the ModestCacheMgr singleton
+ * Returns: the ModestCacheMgr singleton. This should NOT be unref'd.
  **/
 ModestCacheMgr*           modest_runtime_get_cache_mgr     (void);
+
+
+
+/**
+ * modest_runtime_get_cache_mgr:
+ * 
+ * get the TnyDevice singleton instance
+ *
+ * Returns: the TnyDevice singleton. This should NOT be unref'd.
+ **/
+TnyDevice*           modest_runtime_get_device     (void);
+
 
 
 /**
@@ -153,7 +165,7 @@ ModestCacheMgr*           modest_runtime_get_cache_mgr     (void);
  * 
  * get the #ModestMailOperationQueue singleton instance
  *
- * Returns: the #ModestMailOperationQueue singleton
+ * Returns: the #ModestMailOperationQueue singleton. This should NOT be unref'd.
  **/
 ModestMailOperationQueue* modest_runtime_get_mail_operation_queue (void);
 
@@ -165,7 +177,7 @@ ModestMailOperationQueue* modest_runtime_get_mail_operation_queue (void);
  * get the send queue for the given account
  *
  * Returns: the #ModestTnySendQueue singleton instance for this account
- * (ie., one singleton per account)
+ * (ie., one singleton per account). This should NOT be unref'd.
  **/
 ModestTnySendQueue* modest_runtime_get_send_queue        (TnyTransportAccount *account);
 

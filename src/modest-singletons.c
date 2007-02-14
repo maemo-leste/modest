@@ -41,6 +41,8 @@ struct _ModestSingletonsPrivate {
 	ModestTnyAccountStore     *account_store;
 	ModestCacheMgr            *cache_mgr;	
 	ModestMailOperationQueue  *mail_op_queue;
+	TnyPlatformFactory        *platform_fact;
+	TnyDevice                 *device;
 };
 #define MODEST_SINGLETONS_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                MODEST_TYPE_SINGLETONS, \
@@ -95,6 +97,8 @@ modest_singletons_init (ModestSingletons *obj)
 	priv->account_store  = NULL;
 	priv->cache_mgr      = NULL;
 	priv->mail_op_queue  = NULL;
+	priv->platform_fact  = NULL;
+	priv->device         = NULL;
 	
 	priv->conf           = modest_conf_new ();
 	if (!priv->conf) {
@@ -125,6 +129,20 @@ modest_singletons_init (ModestSingletons *obj)
 		g_printerr ("modest: cannot create modest mail operation queue instance\n");
 		return;
 	}
+
+	priv->platform_fact  = modest_tny_platform_factory_get_instance ();
+	if (!priv->platform_fact) {
+		g_printerr ("modest: cannot create platform factory instance\n");
+		return;
+	}
+	
+	priv->device  = tny_platform_factory_new_device (priv->platform_fact);
+	if (!priv->device) {
+		g_printerr ("modest: cannot create tny device instance\n");
+		return;
+	}
+
+	
 }
 
 
@@ -168,6 +186,22 @@ modest_singletons_finalize (GObject *obj)
 				      "priv->cache_mgr");
 		priv->cache_mgr = NULL;
 	}
+
+	if (priv->device) {
+		g_object_unref (G_OBJECT(priv->device));
+		check_object_is_dead ((GObject*)priv->cache_mgr,
+				      "priv->device");
+		priv->device = NULL;
+	}
+
+	if (priv->platform_fact) {
+		g_object_unref (G_OBJECT(priv->platform_fact));
+		check_object_is_dead ((GObject*)priv->cache_mgr,
+				      "priv->platform_fact");
+		priv->platform_fact = NULL;
+	}
+
+
 	
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
@@ -183,7 +217,7 @@ modest_singletons_new (void)
 
 	/* widget_factory will still be NULL, as it is initialized lazily */
 	if (!(priv->conf && priv->account_mgr && priv->account_store &&
-	      priv->cache_mgr && priv->mail_op_queue)) {
+	      priv->cache_mgr && priv->mail_op_queue && priv->device && priv->platform_fact)) {
 		g_printerr ("modest: failed to create singletons instance\n");
 		g_object_unref (G_OBJECT(self));
 		self = NULL;
@@ -226,4 +260,22 @@ modest_singletons_get_mail_operation_queue (ModestSingletons *self)
 {
 	g_return_val_if_fail (self, NULL);
 	return MODEST_SINGLETONS_GET_PRIVATE(self)->mail_op_queue;
+}
+
+
+
+TnyDevice*
+modest_singletons_get_device (ModestSingletons *self)
+{
+	g_return_val_if_fail (self, NULL);
+	return MODEST_SINGLETONS_GET_PRIVATE(self)->device;
+}
+
+
+
+TnyPlatformFactory*
+modest_singletons_get_platform_factory (ModestSingletons *self)
+{
+	g_return_val_if_fail (self, NULL);
+	return MODEST_SINGLETONS_GET_PRIVATE(self)->platform_fact;
 }

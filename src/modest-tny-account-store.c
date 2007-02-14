@@ -527,7 +527,7 @@ modest_tny_account_store_get_device (TnyAccountStore *self)
 	ModestTnyAccountStorePrivate *priv;
 
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE (self);
-
+	
 	if (!priv->device) 
 		priv->device = tny_platform_factory_new_device
 			(modest_tny_platform_factory_get_instance());

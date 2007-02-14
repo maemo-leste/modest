@@ -234,6 +234,16 @@ modest_runtime_get_mail_operation_queue (void)
 
 
 
+TnyDevice*
+modest_runtime_get_device (void)
+{
+	g_return_val_if_fail (_singletons, NULL);
+	return modest_singletons_get_device (_singletons);
+}
+
+
+
+
 ModestTnySendQueue*
 modest_runtime_get_send_queue  (TnyTransportAccount *account)
 {

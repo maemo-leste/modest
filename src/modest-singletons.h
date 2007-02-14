@@ -38,6 +38,7 @@
 #include <modest-tny-account-store.h>
 #include <modest-mail-operation-queue.h>
 #include <modest-cache-mgr.h>
+#include <modest-tny-platform-factory.h>
 
 G_BEGIN_DECLS
 
@@ -133,6 +134,33 @@ ModestTnyAccountStore*    modest_singletons_get_account_store (ModestSingletons 
  * Returns: the #ModestCacheMgr singleton
  **/
 ModestCacheMgr*           modest_singletons_get_cache_mgr     (ModestSingletons *self);
+
+
+
+/**
+ * modest_singletons_get_platform_factory:
+ * @self: a valid #ModestSingletons instance
+ * 
+ * get the #TnyPlatformFactory singleton instance
+ * don't use this function directly, use the modest-runtime
+ * functions instead.
+ *
+ * Returns: the #TnyPlatformFactory singleton
+ **/
+TnyPlatformFactory*       modest_singletons_get_platform_factory  (ModestSingletons *self);
+
+
+/**
+ * modest_singletons_get_device:
+ * @self: a valid #ModestSingletons instance
+ * 
+ * get the #TnyDevice singleton instance
+ * don't use this function directly, use the modest-runtime
+ * functions instead.
+ *
+ * Returns: the #TnyDevice singleton
+ **/
+TnyDevice*                 modest_singletons_get_device       (ModestSingletons *self);
 
 
 /**
