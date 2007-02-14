@@ -55,7 +55,7 @@ typedef struct _ModestAccountAssistantPrivate ModestAccountAssistantPrivate;
 struct _ModestAccountAssistantPrivate {
 
 	ModestAccountMgr *account_mgr;
-
+	
 	GtkWidget *account_name;
 	GtkWidget *fullname;
 	GtkWidget *email;
@@ -71,7 +71,7 @@ struct _ModestAccountAssistantPrivate {
                                                       MODEST_TYPE_ACCOUNT_ASSISTANT, \
                                                       ModestAccountAssistantPrivate))
 /* globals */
-static GtkAssistantClass *parent_class = NULL;
+static GtkNotebookClass *parent_class = NULL;
 
 /* uncomment the following if you have defined any signals */
 /* static guint signals[LAST_SIGNAL] = {0}; */
@@ -93,7 +93,7 @@ modest_account_assistant_get_type (void)
 			(GInstanceInitFunc) modest_account_assistant_init,
 			NULL
 		};
-		my_type = g_type_register_static (GTK_TYPE_ASSISTANT,
+		my_type = g_type_register_static (GTK_TYPE_NOTEBOOK,
 		                                  "ModestAccountAssistant",
 		                                  &my_info, 0);
 	}
@@ -122,10 +122,13 @@ modest_account_assistant_class_init (ModestAccountAssistantClass *klass)
 
 
 static void
-add_intro_page (ModestAccountAssistant *assistant)
+add_intro_page (ModestAccountAssistant *self)
 {
 	GtkWidget *page, *label;
-	
+	ModestAccountAssistantPrivate *priv;
+
+	priv = MODEST_ACCOUNT_ASSISTANT_GET_PRIVATE(self);
+
 	page = gtk_vbox_new (FALSE, 6);
 	
 	label = gtk_label_new (
@@ -134,17 +137,17 @@ add_intro_page (ModestAccountAssistant *assistant)
 	gtk_box_pack_start (GTK_BOX(page), label, FALSE, FALSE, 6);
 	gtk_widget_show_all (page);
 	
-	gtk_assistant_append_page (GTK_ASSISTANT(assistant), page);
-		
-	gtk_assistant_set_page_title (GTK_ASSISTANT(assistant), page,
-				      _("Modest Account Assistant"));
-	gtk_assistant_set_page_type (GTK_ASSISTANT(assistant), page,
-				     GTK_ASSISTANT_PAGE_INTRO);
-	gtk_assistant_set_page_complete (GTK_ASSISTANT(assistant),
-					 page, TRUE);
+	gtk_notebook_append_page (GTK_NOTEBOOK(self), page, gtk_label_new(_("Modest Account Assistant")));
+	
+	//gtk_assistant_set_page_title (GTK_ASSISTANT(assistant), page,
+	//			      _("Modest Account Assistant"));
+	//gtk_assistant_set_page_type (GTK_ASSISTANT(assistant), page,
+	//			     GTK_ASSISTANT_PAGE_INTRO);
+	//gtk_assistant_set_page_complete (GTK_ASSISTANT(assistant),
+        //					 page, TRUE);
 }
 
-
+#if 0
 static void
 set_current_page_complete (ModestAccountAssistant *self, gboolean complete)
 {
@@ -182,7 +185,7 @@ identity_page_update_completeness (GtkEditable *editable,
 	else
 		set_current_page_complete (self, TRUE);
 }
-
+#endif
 
 static void
 add_identity_page (ModestAccountAssistant *self)
@@ -211,27 +214,28 @@ add_identity_page (ModestAccountAssistant *self)
 	gtk_table_attach_defaults (GTK_TABLE(table),priv->email,
 				   1,2,1,2);
 
-	g_signal_connect (G_OBJECT(priv->fullname), "changed",
-			  G_CALLBACK(identity_page_update_completeness),
-			  self);
-	g_signal_connect (G_OBJECT(priv->email), "changed",
-			  G_CALLBACK(identity_page_update_completeness),
-			  self);
+/* 	g_signal_connect (G_OBJECT(priv->fullname), "changed", */
+/* 			  G_CALLBACK(identity_page_update_completeness), */
+/* 			  self); */
+/* 	g_signal_connect (G_OBJECT(priv->email), "changed", */
+/* 			  G_CALLBACK(identity_page_update_completeness), */
+/* 			  self); */
 	
 	gtk_box_pack_start (GTK_BOX(page), table, FALSE, FALSE, 6);
 	gtk_widget_show_all (page);
 	
-	gtk_assistant_append_page (GTK_ASSISTANT(self), page);
+	gtk_notebook_append_page (GTK_NOTEBOOK(self), page, gtk_label_new (_("Identity")));
 	
-	gtk_assistant_set_page_title (GTK_ASSISTANT(self), page,
-				      _("Identity"));
-	gtk_assistant_set_page_type (GTK_ASSISTANT(self), page,
-				     GTK_ASSISTANT_PAGE_INTRO);
-	gtk_assistant_set_page_complete (GTK_ASSISTANT(self),
-					 page, FALSE);
+/* 	gtk_assistant_set_page_title (GTK_ASSISTANT(self), page, */
+/* 				      _("Identity")); */
+/* 	gtk_assistant_set_page_type (GTK_ASSISTANT(self), page, */
+/* 				     GTK_ASSISTANT_PAGE_INTRO); */
+/* 	gtk_assistant_set_page_complete (GTK_ASSISTANT(self), */
+/* 					 page, FALSE); */
 }	
 
 
+#if 0
 static void
 receiving_page_update_completeness (GtkEditable *editable,
 				    ModestAccountAssistant *self)
@@ -254,6 +258,7 @@ receiving_page_update_completeness (GtkEditable *editable,
 	}
 	set_current_page_complete (self, TRUE);
 }
+#endif
 
 static void
 on_receiving_combo_box_changed (GtkComboBox *combo, ModestAccountAssistant *self)
@@ -273,14 +278,14 @@ on_receiving_combo_box_changed (GtkComboBox *combo, ModestAccountAssistant *self
 	/* FIXME: we could have these widgets cached instead of
 	   creating them every time */
 	priv->store_widget = modest_store_widget_new (proto);
-	if (proto == MODEST_PROTOCOL_STORE_POP || proto == MODEST_PROTOCOL_STORE_IMAP) {
-		g_signal_connect (priv->store_widget, 
-				  "data_changed", 
-				  G_CALLBACK (receiving_page_update_completeness), 
-				  self);
-		set_current_page_complete (self, FALSE);
-	} else
-		set_current_page_complete (self, TRUE);
+/* 	if (proto == MODEST_PROTOCOL_STORE_POP || proto == MODEST_PROTOCOL_STORE_IMAP) { */
+/* 		g_signal_connect (priv->store_widget,  */
+/* 				  "data_changed",  */
+/* 				  G_CALLBACK (receiving_page_update_completeness),  */
+/* 				  self); */
+/* 		set_current_page_complete (self, FALSE); */
+/* 	} else */
+/* 		set_current_page_complete (self, TRUE); */
 
 	gtk_container_add (GTK_CONTAINER(priv->store_holder),
 			   priv->store_widget);
@@ -288,6 +293,7 @@ on_receiving_combo_box_changed (GtkComboBox *combo, ModestAccountAssistant *self
 	gtk_widget_show_all (priv->store_holder);
 	
 }	
+
 
 static void
 add_receiving_page (ModestAccountAssistant *self)
@@ -327,14 +333,14 @@ add_receiving_page (ModestAccountAssistant *self)
 	/* Force the selection */
 	on_receiving_combo_box_changed (GTK_COMBO_BOX (combo), self);
 	
-	gtk_assistant_append_page (GTK_ASSISTANT(self), page);
+	gtk_notebook_append_page (GTK_NOTEBOOK(self), page, gtk_label_new(_("Receiving mail")));
 		
-	gtk_assistant_set_page_title (GTK_ASSISTANT(self), page,
-				      _("Receiving mail"));
-	gtk_assistant_set_page_type (GTK_ASSISTANT(self), page,
-				     GTK_ASSISTANT_PAGE_INTRO);
-	gtk_assistant_set_page_complete (GTK_ASSISTANT(self),
-					 page, FALSE);
+	/* gtk_assistant_set_page_title (GTK_ASSISTANT(self), page, */
+/* 				      _("Receiving mail")); */
+/* 	gtk_assistant_set_page_type (GTK_ASSISTANT(self), page, */
+/* 				     GTK_ASSISTANT_PAGE_INTRO); */
+/* 	gtk_assistant_set_page_complete (GTK_ASSISTANT(self), */
+/* 					 page, FALSE); */
 	gtk_widget_show_all (page);
 }
 
@@ -403,14 +409,14 @@ add_sending_page (ModestAccountAssistant *self)
 	/* Force the selection */
 	on_sending_combo_box_changed (GTK_COMBO_BOX (combo), self);
 
-	gtk_assistant_append_page (GTK_ASSISTANT(self), page);
-		
-	gtk_assistant_set_page_title (GTK_ASSISTANT(self), page,
-				      _("Sending mail"));
-	gtk_assistant_set_page_type (GTK_ASSISTANT(self), page,
-				     GTK_ASSISTANT_PAGE_INTRO);
-	gtk_assistant_set_page_complete (GTK_ASSISTANT(self),
-					 page, TRUE);
+	gtk_notebook_append_page (GTK_NOTEBOOK(self), page, gtk_label_new (_("Sending mail")));
+	
+/* 	gtk_assistant_set_page_title (GTK_ASSISTANT(self), page, */
+/* 				      _("Sending mail")); */
+/* 	gtk_assistant_set_page_type (GTK_ASSISTANT(self), page, */
+/* 				     GTK_ASSISTANT_PAGE_INTRO); */
+/* 	gtk_assistant_set_page_complete (GTK_ASSISTANT(self), */
+/* 					 page, TRUE); */
 	gtk_widget_show_all (page);
 }
 
@@ -440,15 +446,15 @@ add_final_page (ModestAccountAssistant *self)
 	
 	gtk_box_pack_start (GTK_BOX(page), box, FALSE, FALSE, 6);
 	
-	gtk_assistant_append_page (GTK_ASSISTANT(self), page);
+	gtk_notebook_append_page (GTK_NOTEBOOK(self), page, gtk_label_new (_("Account Management")));
 		
-	gtk_assistant_set_page_title (GTK_ASSISTANT(self), page,
-				      _("Account Management"));
-	gtk_assistant_set_page_type (GTK_ASSISTANT(self), page,
-				     GTK_ASSISTANT_PAGE_CONFIRM);
+/* 	gtk_assistant_set_page_title (GTK_ASSISTANT(self), page, */
+/* 				      _("Account Management")); */
+/* 	gtk_assistant_set_page_type (GTK_ASSISTANT(self), page, */
+/* 				     GTK_ASSISTANT_PAGE_CONFIRM); */
 
-	gtk_assistant_set_page_complete (GTK_ASSISTANT(self),
-					 page, TRUE);
+/* 	gtk_assistant_set_page_complete (GTK_ASSISTANT(self), */
+/* 					 page, TRUE); */
 	gtk_widget_show_all (page);
 }
 
@@ -460,7 +466,6 @@ modest_account_assistant_init (ModestAccountAssistant *obj)
 	priv = MODEST_ACCOUNT_ASSISTANT_GET_PRIVATE(obj);	
 
 	priv->account_mgr	= NULL;
-
 	priv->store_widget	= NULL;
 	priv->transport_widget  = NULL;
 }
@@ -516,7 +521,8 @@ on_cancel (ModestAccountAssistant *self, gpointer user_data)
 		/* don't do anything */
 		break;
 	default: g_assert_not_reached ();
-
+ 		return;
+		
 	};			     
 }
 
@@ -592,7 +598,7 @@ get_new_server_account_name (ModestAccountMgr* acc_mgr, ModestProtocol proto,
 	while (TRUE) {
 		name = g_strdup_printf ("%s:%d",
 					modest_protocol_info_get_protocol_name(proto), i++);
-		if (modest_account_mgr_account_exists (acc_mgr, name, TRUE, NULL))
+		if (modest_account_mgr_account_exists (acc_mgr, name, TRUE))
 			g_free (name);
 		else
 			break;
@@ -652,16 +658,15 @@ on_apply (ModestAccountAssistant *self, gpointer user_data)
 	modest_account_mgr_add_account (priv->account_mgr,
 					account_name,
 					store_name,
-					transport_name,
-					NULL);
+					transport_name);
 	modest_account_mgr_set_string (priv->account_mgr,
 				       account_name,
 				       MODEST_ACCOUNT_FULLNAME,
-				       get_fullname(self), FALSE, NULL);
+				       get_fullname(self), FALSE);
 	modest_account_mgr_set_string (priv->account_mgr,
 				       account_name,
 				       MODEST_ACCOUNT_EMAIL,
-				       get_email(self), FALSE, NULL);
+				       get_email(self), FALSE);
 
 	/* Frees */	
 	g_free (store_name);
@@ -676,7 +681,7 @@ modest_account_assistant_new (ModestAccountMgr *account_mgr)
 	GObject *obj;
 	ModestAccountAssistant *self;
 	ModestAccountAssistantPrivate *priv;
-
+	
 	g_return_val_if_fail (account_mgr, NULL);
 	
 	obj  = g_object_new(MODEST_TYPE_ACCOUNT_ASSISTANT, NULL);
@@ -693,20 +698,13 @@ modest_account_assistant_new (ModestAccountMgr *account_mgr)
 	add_sending_page (self);
 	add_final_page (self);
 
-	gtk_assistant_set_current_page (GTK_ASSISTANT(self), 0);
-	gtk_window_set_title (GTK_WINDOW(self),
-			      _("Modest Account Wizard"));
-	gtk_window_set_resizable (GTK_WINDOW(self), TRUE); 	
-	gtk_window_set_default_size (GTK_WINDOW(self), 400, 400);
 	
-	gtk_window_set_modal (GTK_WINDOW(self), TRUE);
-
-	g_signal_connect (G_OBJECT(self), "apply",
-			  G_CALLBACK(on_apply), NULL);
+ 	g_signal_connect (G_OBJECT(self), "apply", 
+ 			  G_CALLBACK(on_apply), NULL); 
 	g_signal_connect (G_OBJECT(self), "cancel",
-			  G_CALLBACK(on_cancel), NULL);
-	g_signal_connect (G_OBJECT(self), "close",
+ 			  G_CALLBACK(on_cancel), NULL);
+ 	g_signal_connect (G_OBJECT(self), "close",
 			  G_CALLBACK(on_close), NULL);
-
+	
 	return GTK_WIDGET(self);
 }

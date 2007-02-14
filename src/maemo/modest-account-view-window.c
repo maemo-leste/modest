@@ -207,17 +207,19 @@ on_edit_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 static void
 on_add_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 {
-	GtkWidget *assistant;
+	GtkWidget *notebook, *assistant;
 	ModestAccountViewWindowPrivate *priv;
-	
+
+	g_message (__FUNCTION__);
+	return;
+
 	priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE(self);
-	/* FIXME */
-	g_warning (__FUNCTION__);
-	//assistant = modest_account_assistant_new (modest_runtime_get_account_mgr());
-	gtk_window_set_transient_for (GTK_WINDOW(assistant),
-				      GTK_WINDOW(self));
+
+	notebook = modest_account_assistant_new (modest_runtime_get_account_mgr());
+	assistant = hildon_wizard_dialog_new (GTK_WINDOW(self), _("Account setup wizard"),
+					      GTK_NOTEBOOK(notebook));
 	
-	gtk_widget_show (GTK_WIDGET(assistant));
+	gtk_dialog_run (GTK_DIALOG(assistant));
 }
 
 

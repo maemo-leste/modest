@@ -167,7 +167,8 @@ update_account_view (ModestAccountMgr *account_mgr, ModestAccountView *view)
 
 		/* don't display accounts without stores */
 		if (account_data->store_account) {
-			
+
+			GtkTreeIter iter;
 			time_t last_updated; 
 			gchar *last_updated_string;
 			
@@ -179,7 +180,7 @@ update_account_view (ModestAccountMgr *account_mgr, ModestAccountView *view)
 				last_updated_string = g_strdup (_("Never"));
 			
 			gtk_list_store_insert_with_values (
-				model, NULL, 0,
+				model, &iter, 0,
 				MODEST_ACCOUNT_VIEW_NAME_COLUMN,          account_name,
 				MODEST_ACCOUNT_VIEW_DISPLAY_NAME_COLUMN,  account_data->display_name,
 				MODEST_ACCOUNT_VIEW_IS_ENABLED_COLUMN,    account_data->is_enabled,

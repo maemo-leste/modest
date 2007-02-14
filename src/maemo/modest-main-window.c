@@ -177,7 +177,6 @@ modest_main_window_get_child_widget (ModestMainWindow *self,
 	case MODEST_WIDGET_TYPE_FOLDER_VIEW:
 		widget = (GtkWidget*)priv->folder_view; break;
 	default:
-		g_return_val_if_reached (NULL);
 		return NULL;
 	}
 
@@ -459,5 +458,7 @@ modest_main_window_new (void)
 	/* Set account store */
 	tny_account_store_view_set_account_store (TNY_ACCOUNT_STORE_VIEW (priv->folder_view),
 						  TNY_ACCOUNT_STORE (modest_runtime_get_account_store ()));
+
+	tny_device_force_online (modest_runtime_get_device());
 	return MODEST_WINDOW(self);
 }

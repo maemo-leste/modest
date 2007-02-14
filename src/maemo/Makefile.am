@@ -51,7 +51,9 @@ libmodest_ui_la_SOURCES=              \
 	modest-transport-widget.c     \
 	modest-transport-widget.h     \
         modest-msg-view-window.c      \
-	modest-msg-edit-window.c    
+	modest-msg-edit-window.c      \
+	modest-account-assistant.c    \
+	modest-account-assistant.h
 
 
 LDADD = \
