@@ -75,8 +75,7 @@ modest_tny_msg_new (const gchar* mailto, const gchar* from, const gchar *cc,
 	tny_header_set_subject (TNY_HEADER (header), subject);
 
 	content_type = get_content_type(body);
-	
-	
+		
 	/* Add the body of the new mail */	
 	add_body_part (new_msg, body, content_type, (attachments ? TRUE: FALSE));
 		       
@@ -269,6 +268,8 @@ modest_tny_msg_find_body_part (TnyMsg *msg, gboolean want_html)
 static gboolean
 is_ascii(const gchar *s)
 {
+	if (!s)
+		return TRUE;
 	while (s[0]) {
 		if (s[0] & 128 || s[0] < 32)
 			return FALSE;

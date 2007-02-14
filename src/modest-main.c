@@ -167,14 +167,28 @@ start_ui (const gchar *account, const gchar* mailto, const gchar *cc, const gcha
 	if (mailto||cc||bcc||subject||body) {		
 		gchar *from;
 		TnyMsg *msg;
-
+		TnyFolder *folder;
 		if (!account) {
 			g_printerr ("modest: no valid account provided, nor is default one available\n");
 			return MODEST_ERR_PARAM;
 		}
 		from = modest_account_mgr_get_from_string (modest_runtime_get_account_mgr(), account);
 		msg  = modest_tny_msg_new (mailto,from,cc,bcc,subject,body,NULL);
-		
+		if (!msg) {
+			g_printerr ("modest: failed to create message\n");
+			g_free (from);
+			return MODEST_ERR_SEND;
+		}
+		folder = modest_tny_account_get_special_folder (account,
+								TNY_FOLDER_TYPE_DRAFTS);
+		if (!folder) {
+			g_printerr ("modest: failed to find Drafts folder\n");
+			g_free (from);
+			g_object_unref (G_OBJECT(msg));
+			return MODEST_ERR_SEND;
+		}
+		tny_folder_add_msg (folder, msg, NULL); /* FIXME: check err */
+
 		win = modest_msg_edit_window_new (msg, account);
 		
 		g_object_unref (G_OBJECT(msg));

@@ -35,6 +35,8 @@
 #include <string.h>
 #include <modest-runtime.h>
 #include <modest-tny-msg.h>
+#include <modest-tny-account.h>
+
 #include "modest-ui-actions.h"
 
 #include "modest-tny-platform-factory.h"
@@ -68,7 +70,7 @@ typedef enum _ReplyForwardAction {
 typedef struct _ReplyForwardHelper {
 guint reply_forward_type;
 	ReplyForwardAction action;
-	gchar *account;
+	gchar *account_name;
 } ReplyForwardHelper;
 
 
@@ -175,7 +177,8 @@ modest_ui_actions_on_delete (GtkWidget *widget, ModestWindow *win)
 				/* TODO: error handling management */
 				const GError *error;
 				error = modest_mail_operation_get_error (mail_op);
-				g_warning (error->message);
+				if (error)
+					g_warning (error->message);
 			}
 
 			g_object_unref (G_OBJECT (mail_op));
@@ -211,27 +214,62 @@ void
 modest_ui_actions_on_new_msg (GtkWidget *widget, ModestWindow *win)
 {
 	ModestWindow *msg_win;
-	TnyMsg *msg;
-	gchar *account;
-	gchar *from_str;
+	TnyMsg *msg = NULL;
+	TnyFolder *folder = NULL;
+	gchar *account_name = NULL;
+	gchar *from_str = NULL;
+	GError *err = NULL;
+	TnyAccount *account;
+	
+	account_name = g_strdup(modest_window_get_active_account (win));
+	if (!account_name)
+		account_name = modest_account_mgr_get_default_account (modest_runtime_get_account_mgr());
+	
+	account = modest_tny_account_store_get_tny_account_by_account (modest_runtime_get_account_store(),
+								       account_name,
+								       TNY_ACCOUNT_TYPE_STORE);
+	if (!account) {
+		g_printerr ("modest: failed to get tnyaccount for '%s'\n", account_name);
+		goto cleanup;
+	}
 
-	account = g_strdup(modest_window_get_active_account (win));
-	if (!account)
-		account = modest_account_mgr_get_default_account (modest_runtime_get_account_mgr());
+	from_str = modest_account_mgr_get_from_string (modest_runtime_get_account_mgr(), account_name);
+
+	msg    = modest_tny_msg_new ("", from_str, "", "", "", "", NULL);
+	if (!msg) {
+		g_printerr ("modest: failed to create new msg\n");
+		goto cleanup;
+	}
 	
-	from_str = modest_account_mgr_get_from_string (modest_runtime_get_account_mgr(),
-						       account);
+	folder = modest_tny_account_get_special_folder (account, TNY_FOLDER_TYPE_DRAFTS);
+	if (!folder) {
+		g_printerr ("modest: failed to find Drafts folder\n");
+		goto cleanup;
+	}
 	
-	msg = modest_tny_msg_new ("", from_str, "", "", "", "", NULL);
-	msg_win = modest_msg_edit_window_new (msg, account);
+	tny_folder_add_msg (folder, msg, &err);
+	if (err) {
+		g_printerr ("modest: error adding msg to Drafts folder: %s",
+			    err->message);
+		g_error_free (err);
+		goto cleanup;
+	}
+
+	msg_win = modest_msg_edit_window_new (msg, account_name);
 	if (win)
 		gtk_window_set_transient_for (GTK_WINDOW (msg_win),
 					      GTK_WINDOW (win));	
-	g_free (account);
-	g_free (from_str);
-	g_object_unref (G_OBJECT(msg));
-	
 	gtk_widget_show_all (GTK_WIDGET (msg_win));
+
+cleanup:
+	g_free (account_name);
+	g_free (from_str);
+	if (account)
+		g_object_unref (G_OBJECT(account));
+	if (msg)
+		g_object_unref (G_OBJECT(msg));
+	if (folder)
+		g_object_unref (G_OBJECT(folder));
 }
 
 
@@ -254,19 +292,21 @@ reply_forward_func (gpointer data, gpointer user_data)
 	ModestWindow *msg_win;
 	ModestEditType edit_type;
 	gchar *from;
+	GError *err = NULL;
+	TnyFolder *folder = NULL;
+	TnyAccount *account = NULL;
 	
 	msg = TNY_MSG (data);
 	helper = (GetMsgAsyncHelper *) user_data;
 	rf_helper = (ReplyForwardHelper *) helper->user_data;
 
 	from = modest_account_mgr_get_from_string (modest_runtime_get_account_mgr(),
-						   rf_helper->account);
+						   rf_helper->account_name);
 	/* Create reply mail */
 	switch (rf_helper->action) {
 	case ACTION_REPLY:
 		new_msg = 
-			modest_mail_operation_create_reply_mail (msg, 
-								 from, 
+			modest_mail_operation_create_reply_mail (msg,  from, 
 								 rf_helper->reply_forward_type,
 								 MODEST_MAIL_OPERATION_REPLY_MODE_SENDER);
 		break;
@@ -283,22 +323,49 @@ reply_forward_func (gpointer data, gpointer user_data)
 		break;
 	default:
 		g_return_if_reached ();
+		return;
 	}
 
 	if (!new_msg) {
-		g_warning ("Unable to create a message");
+		g_printerr ("modest: failed to create message\n");
 		goto cleanup;
 	}
-		
-	/* Show edit window */
-	msg_win = modest_msg_edit_window_new (new_msg, rf_helper->account);
-	gtk_widget_show_all (GTK_WIDGET (msg_win));
-	
-	/* Clean */
-	g_object_unref (G_OBJECT (new_msg));
 
- cleanup:
-	g_free (rf_helper->account);
+	account = modest_tny_account_store_get_tny_account_by_account (modest_runtime_get_account_store(),
+								       rf_helper->account_name,
+								       TNY_ACCOUNT_TYPE_STORE);
+	if (!account) {
+		g_printerr ("modest: failed to get tnyaccount for '%s'\n", rf_helper->account_name);
+		goto cleanup;
+	}
+
+	folder = modest_tny_account_get_special_folder (account, TNY_FOLDER_TYPE_DRAFTS);
+	if (!folder) {
+		g_printerr ("modest: failed to find Drafts folder\n");
+		goto cleanup;
+	}
+	
+	tny_folder_add_msg (folder, msg, &err);
+	if (err) {
+		g_printerr ("modest: error adding msg to Drafts folder: %s",
+			    err->message);
+		g_error_free (err);
+		goto cleanup;
+	}	
+			
+	/* Show edit window */
+	msg_win = modest_msg_edit_window_new (new_msg, rf_helper->account_name);
+	gtk_widget_show_all (GTK_WIDGET (msg_win));
+
+cleanup:
+	if (new_msg)
+		g_object_unref (G_OBJECT (new_msg));
+	if (folder)
+		g_object_unref (G_OBJECT (folder));
+	if (account)
+		g_object_unref (G_OBJECT (account));
+	
+	g_free (rf_helper->account_name);
 	g_slice_free (ReplyForwardHelper, rf_helper);
 }
 
@@ -314,7 +381,7 @@ reply_forward (GtkWidget *widget, ReplyForwardAction action, ModestWindow *win)
 	TnyFolder *folder;
 	GetMsgAsyncHelper *helper;
 	ReplyForwardHelper *rf_helper;
-
+	
 	g_return_if_fail (MODEST_IS_WINDOW(win));
 
 	header_list = get_selected_headers (win);	
@@ -324,7 +391,6 @@ reply_forward (GtkWidget *widget, ReplyForwardAction action, ModestWindow *win)
 	reply_forward_type = modest_conf_get_int (modest_runtime_get_conf (),
 						  (action == ACTION_FORWARD) ? MODEST_CONF_FORWARD_TYPE : MODEST_CONF_REPLY_TYPE,
 						  NULL);
-
 	/* We assume that we can only select messages of the
 	   same folder and that we reply all of them from the
 	   same account. In fact the interface currently only
@@ -334,7 +400,10 @@ reply_forward (GtkWidget *widget, ReplyForwardAction action, ModestWindow *win)
 	rf_helper = g_slice_new0 (ReplyForwardHelper);
 	rf_helper->reply_forward_type = reply_forward_type;
 	rf_helper->action = action;
-	rf_helper->account = modest_account_mgr_get_default_account (modest_runtime_get_account_mgr());;
+
+	rf_helper->account_name = g_strdup (modest_window_get_active_account (win));
+	if (!rf_helper->account_name)
+		rf_helper->account_name = modest_account_mgr_get_default_account (modest_runtime_get_account_mgr());
 
 	helper = g_slice_new0 (GetMsgAsyncHelper);
 	//helper->main_window = NULL;
