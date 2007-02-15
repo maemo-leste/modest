@@ -38,6 +38,7 @@
 #include <modest-marshal.h>
 #include <modest-text-utils.h>
 #include <modest-icon-names.h>
+#include <modest-runtime.h>
 
 static void modest_header_view_class_init  (ModestHeaderViewClass *klass);
 static void modest_header_view_init        (ModestHeaderView *obj);
@@ -620,9 +621,10 @@ on_refresh_folder (TnyFolder *folder, gboolean cancelled, GError **err,
 	if (folder) { /* it's a new one or a refresh */
 		GList *cols, *cursor;
 		
-		if (priv->headers)
+		if (priv->headers) {
 			g_object_unref (priv->headers);
-
+			modest_runtime_verify_object_death(priv->headers,"");
+		}
 		priv->headers = TNY_LIST(tny_gtk_header_list_model_new ());
 		tny_folder_get_headers (folder, priv->headers, FALSE, &error); /* FIXME */
 		if (error) {

@@ -144,67 +144,46 @@ modest_singletons_init (ModestSingletons *obj)
 	}	
 }
 
-
-static void
-check_object_is_dead (GObject *obj, gchar *name)
-{
-	if (G_IS_OBJECT(obj))
-		g_warning ("BUG: %s still has %d ref(s)\n", name, obj->ref_count);
-}
-
 static void
 modest_singletons_finalize (GObject *obj)
 {
 	ModestSingletonsPrivate *priv;
-	gboolean debug = modest_runtime_get_debug_flags() & MODEST_RUNTIME_DEBUG_DEBUG_OBJECTS;
 		
 	priv = MODEST_SINGLETONS_GET_PRIVATE(obj);
 
 	if (priv->account_store) {
 		g_object_unref (G_OBJECT(priv->account_store));
-		if (debug)
-			check_object_is_dead ((GObject*)priv->account_store,
-					      "priv->account_store");
+		modest_runtime_verify_object_death(priv->account_store,"");
 		priv->account_store = NULL;
 	}
 
 	if (priv->account_mgr) {
 		g_object_unref (G_OBJECT(priv->account_mgr));
-		if (debug)
-			check_object_is_dead ((GObject*)priv->account_mgr,
-					      "priv->account_mgr");
+		modest_runtime_verify_object_death(priv->account_mgr,"");
 		priv->account_mgr = NULL;
 	}
 
 	if (priv->conf) {
 		g_object_unref (G_OBJECT(priv->conf));
-		if (debug)
-			check_object_is_dead ((GObject*)priv->conf,
-					      "priv->conf");
+		modest_runtime_verify_object_death(priv->conf,"");
 		priv->conf = NULL;
 	}
 
 	if (priv->cache_mgr) {
 		g_object_unref (G_OBJECT(priv->cache_mgr));
-		if (debug)
-			check_object_is_dead ((GObject*)priv->cache_mgr,
-					      "priv->cache_mgr");
+		modest_runtime_verify_object_death(priv->cache_mgr,"");
 		priv->cache_mgr = NULL;
 	}
 
 	if (priv->device) {
 		g_object_unref (G_OBJECT(priv->device));
-		if (debug)
-			check_object_is_dead ((GObject*)priv->cache_mgr,
-					      "priv->device");
+		modest_runtime_verify_object_death(priv->device,"");
 		priv->device = NULL;
 	}
 
 	if (priv->platform_fact) {
 		g_object_unref (G_OBJECT(priv->platform_fact));
-		if (debug)
-			check_object_is_dead ((GObject*)priv->cache_mgr,
-					      "priv->platform_fact");
+		modest_runtime_verify_object_death(priv->platform_fact,"");
 		priv->platform_fact = NULL;
 	}
 

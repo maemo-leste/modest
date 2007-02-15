@@ -177,14 +177,13 @@ static void
 account_list_free (GSList *accounts)
 {
 	GSList *cursor = accounts;
-	gboolean debug = modest_runtime_get_debug_flags() & MODEST_RUNTIME_DEBUG_DEBUG_OBJECTS;
 
 	while (cursor) {
 		g_object_unref (G_OBJECT(cursor->data));
-		if (debug && G_IS_OBJECT(cursor->data))
- 			g_warning ("BUG: account %s still holds %d ref(s)",
-				   tny_account_get_id (TNY_ACCOUNT(cursor->data)),
-				   G_OBJECT(cursor->data)->ref_count);
+		if (G_IS_OBJECT(cursor->data)) { /* check twice... */
+			const gchar *id = tny_account_get_id(TNY_ACCOUNT(cursor->data));
+			modest_runtime_verify_object_death(cursor->data,id);
+		}			
 		cursor = cursor->next;
 	}
 	g_slist_free (accounts);
@@ -369,8 +368,8 @@ modest_tny_account_store_finalize (GObject *obj)
 	if (priv->session) {
 		camel_object_unref (CAMEL_OBJECT(priv->session));
 		if (debug && CAMEL_IS_OBJECT(priv->session))
-				g_warning ("BUG: TnyCamelSession still holds %d ref(s)",
-				   CAMEL_OBJECT(priv->session)->ref_count);	
+			g_warning ("%s:%d: TnyCamelSession still holds a refcount of %d",
+				   __FILE__,__LINE__,CAMEL_OBJECT(priv->session)->ref_count);	
 		priv->session = NULL;
 	}
 	

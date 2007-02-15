@@ -194,6 +194,26 @@ ModestMailOperationQueue* modest_runtime_get_mail_operation_queue (void);
 ModestTnySendQueue* modest_runtime_get_send_queue        (TnyTransportAccount *account);
 
 
+
+/**
+ * modest_runtime_verify_object_death
+ * @obj: some (GObject) ptr
+ *
+ * macro to check whether @obj is 'dead', ie, it is no longer a valid GObject. If
+ * not, a g_warning will be issued on stderr. NOTE: this is only active
+ * when MODEST_DEBUG contains "debug-objects".
+ *
+ ***/
+#define modest_runtime_verify_object_death(OBJ,name)			\
+	do {								\
+		if (modest_runtime_get_debug_flags() & MODEST_RUNTIME_DEBUG_DEBUG_OBJECTS) \
+			if (G_IS_OBJECT(OBJ))				\
+				g_warning ("%s:%d: %s ("	\
+					   #OBJ ") still holds a ref count of %d", \
+					   __FILE__,__LINE__,name, G_OBJECT(OBJ)->ref_count); \
+	} while (0)
+
+
 G_END_DECLS
 
 #endif /*__MODEST_RUNTIME_H__*/
