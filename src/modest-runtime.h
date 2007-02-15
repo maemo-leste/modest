@@ -49,7 +49,7 @@ typedef enum {
 	MODEST_RUNTIME_DEBUG_LOG_ACTIONS           = 1 << 1, /* not in use atm */
 	MODEST_RUNTIME_DEBUG_DEBUG_OBJECTS         = 1 << 2, /* for g_type_init */
 	MODEST_RUNTIME_DEBUG_DEBUG_SIGNALS         = 1 << 3, /* for g_type_init */
-	MODEST_RUNTIME_DEBUG_FACTORY_SETTINGS      = 1 << 4, /* reset to factory defaults */
+	MODEST_RUNTIME_DEBUG_FACTORY_SETTINGS      = 1 << 4  /* reset to factory defaults */
 } ModestRuntimeDebugFlags;
 
 /**
@@ -97,9 +97,9 @@ gboolean modest_runtime_uninit (void);
  * - "abort-on-warning": abort the program when a gtk/glib/.. warning occurs.
  * useful when running in debugger
  * - "log-actions": log user actions (not in use atm)
- * - "track-object": track the use of (g)objects in the program. this option influences
+ * - "debug-objects": track the use of (g)objects in the program. this option influences
  *  g_type_init_with_debug_flags
- *  - "track-signals": track the use of (g)signals in the program. this option influences
+ *  - "debug-signals": track the use of (g)signals in the program. this option influences
  *  g_type_init_with_debug_flags
  * if you would want to track signals and log actions, you could do something like:
  *  MODEST_DEBUG="log-actions:track-signals" ./modest

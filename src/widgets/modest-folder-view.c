@@ -276,6 +276,9 @@ text_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 		g_object_set (rendobj,"text", fname, "weight", 400, NULL);
 		
 	g_free (fname);
+	if (folder)
+		g_object_unref (G_OBJECT(folder));
+	
 }
 
 
@@ -622,9 +625,12 @@ update_model (ModestFolderView *self, ModestTnyAccountStore *account_store)
 		/* Set new model */
 		gtk_tree_view_set_model (GTK_TREE_VIEW(self), sortable);
 		expand_root_items (self); /* expand all account folders */
+		g_object_unref (account_list);
 	}
 	
-	g_object_unref (model);
+	//if (model)
+	//	g_object_unref (model);
+		
 	return TRUE;
 }
 
@@ -833,6 +839,12 @@ cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 			cmp = modest_text_utils_utf8_strcmp (name1, name2, TRUE);
 	} else 
 		cmp = modest_text_utils_utf8_strcmp (name1, name2, TRUE);
+
+	
+	if (folder1)
+		g_object_unref(G_OBJECT(folder1));
+	if (folder2)
+		g_object_unref(G_OBJECT(folder2));
 	
 	g_free (name1);
 	g_free (name2);
@@ -1003,6 +1015,12 @@ on_drag_data_received (GtkWidget *widget,
 			success = TRUE;
 		}
 		gtk_tree_row_reference_free (source_row_reference);
+		
+		if (folder)
+			g_object_unref (G_OBJECT(folder));
+		if (parent_folder)
+			g_object_unref (G_OBJECT(parent_folder));
+		
 	}
  out:
 	gtk_tree_path_free (child_dest_row);

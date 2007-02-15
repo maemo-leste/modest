@@ -28,6 +28,7 @@
  */
 
 #include "modest-singletons.h"
+#include "modest-runtime.h"
 
 /* 'private'/'protected' functions */
 static void modest_singletons_class_init (ModestSingletonsClass *klass);
@@ -148,54 +149,62 @@ static void
 check_object_is_dead (GObject *obj, gchar *name)
 {
 	if (G_IS_OBJECT(obj))
-		g_warning ("BUG: %s is still alive\n", name);
+		g_warning ("BUG: %s still has %d ref(s)\n", name, obj->ref_count);
 }
 
 static void
 modest_singletons_finalize (GObject *obj)
 {
 	ModestSingletonsPrivate *priv;
+	gboolean debug = modest_runtime_get_debug_flags() & MODEST_RUNTIME_DEBUG_DEBUG_OBJECTS;
+		
 	priv = MODEST_SINGLETONS_GET_PRIVATE(obj);
 
 	if (priv->account_store) {
 		g_object_unref (G_OBJECT(priv->account_store));
-		check_object_is_dead ((GObject*)priv->account_store,
-				      "priv->account_store");
+		if (debug)
+			check_object_is_dead ((GObject*)priv->account_store,
+					      "priv->account_store");
 		priv->account_store = NULL;
 	}
 
 	if (priv->account_mgr) {
 		g_object_unref (G_OBJECT(priv->account_mgr));
-		check_object_is_dead ((GObject*)priv->account_mgr,
-				      "priv->account_mgr");
+		if (debug)
+			check_object_is_dead ((GObject*)priv->account_mgr,
+					      "priv->account_mgr");
 		priv->account_mgr = NULL;
 	}
 
 	if (priv->conf) {
 		g_object_unref (G_OBJECT(priv->conf));
-		check_object_is_dead ((GObject*)priv->conf,
-				      "priv->conf");
+		if (debug)
+			check_object_is_dead ((GObject*)priv->conf,
+					      "priv->conf");
 		priv->conf = NULL;
 	}
 
 	if (priv->cache_mgr) {
 		g_object_unref (G_OBJECT(priv->cache_mgr));
-		check_object_is_dead ((GObject*)priv->cache_mgr,
-				      "priv->cache_mgr");
+		if (debug)
+			check_object_is_dead ((GObject*)priv->cache_mgr,
+					      "priv->cache_mgr");
 		priv->cache_mgr = NULL;
 	}
 
 	if (priv->device) {
 		g_object_unref (G_OBJECT(priv->device));
-		check_object_is_dead ((GObject*)priv->cache_mgr,
-				      "priv->device");
+		if (debug)
+			check_object_is_dead ((GObject*)priv->cache_mgr,
+					      "priv->device");
 		priv->device = NULL;
 	}
 
 	if (priv->platform_fact) {
 		g_object_unref (G_OBJECT(priv->platform_fact));
-		check_object_is_dead ((GObject*)priv->cache_mgr,
-				      "priv->platform_fact");
+		if (debug)
+			check_object_is_dead ((GObject*)priv->cache_mgr,
+					      "priv->platform_fact");
 		priv->platform_fact = NULL;
 	}
 

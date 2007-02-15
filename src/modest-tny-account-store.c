@@ -177,11 +177,14 @@ static void
 account_list_free (GSList *accounts)
 {
 	GSList *cursor = accounts;
+	gboolean debug = modest_runtime_get_debug_flags() & MODEST_RUNTIME_DEBUG_DEBUG_OBJECTS;
+
 	while (cursor) {
 		g_object_unref (G_OBJECT(cursor->data));
-/* 		if (G_IS_OBJECT(cursor->data)) */
-/* 			g_warning ("BUG: account %s still holds refs", */
-/* 				   tny_account_get_id (TNY_ACCOUNT(cursor->data))); */
+		if (debug && G_IS_OBJECT(cursor->data))
+ 			g_warning ("BUG: account %s still holds %d ref(s)",
+				   tny_account_get_id (TNY_ACCOUNT(cursor->data)),
+				   G_OBJECT(cursor->data)->ref_count);
 		cursor = cursor->next;
 	}
 	g_slist_free (accounts);
@@ -335,6 +338,8 @@ modest_tny_account_store_finalize (GObject *obj)
 {
 	ModestTnyAccountStore *self        = MODEST_TNY_ACCOUNT_STORE(obj);
 	ModestTnyAccountStorePrivate *priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
+	
+	gboolean debug = modest_runtime_get_debug_flags() & MODEST_RUNTIME_DEBUG_DEBUG_OBJECTS;
 
 	g_free (priv->cache_dir);
 	priv->cache_dir = NULL;
@@ -363,6 +368,9 @@ modest_tny_account_store_finalize (GObject *obj)
 
 	if (priv->session) {
 		camel_object_unref (CAMEL_OBJECT(priv->session));
+		if (debug && CAMEL_IS_OBJECT(priv->session))
+				g_warning ("BUG: TnyCamelSession still holds %d ref(s)",
+				   CAMEL_OBJECT(priv->session)->ref_count);	
 		priv->session = NULL;
 	}
 	
@@ -447,15 +455,19 @@ get_accounts  (TnyAccountStore *self, TnyList *list, TnyAccountType type)
 		/* only return enabled accounts */
 		if (modest_account_mgr_get_enabled(priv->account_mgr, account_name)) {
 			TnyAccount *tny_account = 
-				modest_tny_account_new_from_account (priv->account_mgr, account_name,
-								     type, priv->session, get_password,
+				modest_tny_account_new_from_account (priv->account_mgr,
+								     account_name,
+								     type, priv->session,
+								     get_password,
 								     forget_password);
 			if (tny_account) { /* something went wrong */
-				g_object_set_data (G_OBJECT(tny_account), "account_store", (gpointer)self);
+				g_object_set_data (G_OBJECT(tny_account), "account_store",
+						   (gpointer)self);
 				tny_list_prepend (list, G_OBJECT(tny_account));
 				accounts = g_slist_append (accounts, tny_account); /* cache it */
 			} else
-				g_printerr ("modest: failed to create account for %s\n", account_name);
+				g_printerr ("modest: failed to create account for %s\n",
+					    account_name);
 		}
 		g_free (account_name);
 	}
@@ -485,8 +497,10 @@ modest_tny_account_store_get_accounts  (TnyAccountStore *self, TnyList *list,
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
 	
 	if (request_type == TNY_ACCOUNT_STORE_BOTH) {
-		modest_tny_account_store_get_accounts (self, list, TNY_ACCOUNT_STORE_STORE_ACCOUNTS);
-		modest_tny_account_store_get_accounts (self, list, TNY_ACCOUNT_STORE_TRANSPORT_ACCOUNTS);
+		modest_tny_account_store_get_accounts (self, list,
+						       TNY_ACCOUNT_STORE_STORE_ACCOUNTS);
+		modest_tny_account_store_get_accounts (self, list,
+						       TNY_ACCOUNT_STORE_TRANSPORT_ACCOUNTS);
 		return;
 	}
 	
@@ -500,7 +514,8 @@ modest_tny_account_store_get_accounts  (TnyAccountStore *self, TnyList *list,
 	} else if (request_type == TNY_ACCOUNT_STORE_TRANSPORT_ACCOUNTS) {
 
 		if (!priv->transport_accounts)
-			priv->transport_accounts = get_accounts (self, list, TNY_ACCOUNT_TYPE_TRANSPORT);
+			priv->transport_accounts =
+				get_accounts (self, list, TNY_ACCOUNT_TYPE_TRANSPORT);
 		else
 			get_cached_accounts (self, list, TNY_ACCOUNT_TYPE_TRANSPORT);
 	} else {

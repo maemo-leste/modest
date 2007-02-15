@@ -159,39 +159,57 @@ cleanup:
 
 
 static ModestErrorCode 
-start_ui (const gchar *account, const gchar* mailto, const gchar *cc, const gchar *bcc,
+start_ui (const gchar *account_name, const gchar* mailto, const gchar *cc, const gchar *bcc,
 	  const gchar* subject, const gchar *body)
 {
 	ModestWindow *win = NULL;
 
 	if (mailto||cc||bcc||subject||body) {		
 		gchar *from;
-		TnyMsg *msg;
-		TnyFolder *folder;
-		if (!account) {
-			g_printerr ("modest: no valid account provided, nor is default one available\n");
+		TnyMsg     *msg;
+		TnyFolder  *folder;
+		TnyAccount *account;
+		
+		if (!account_name) {
+			g_printerr ("modest: no valid account provided, "
+				    "nor is default one available\n");
 			return MODEST_ERR_PARAM;
 		}
-		from = modest_account_mgr_get_from_string (modest_runtime_get_account_mgr(), account);
+		from = modest_account_mgr_get_from_string (modest_runtime_get_account_mgr(),
+							   account_name);
 		msg  = modest_tny_msg_new (mailto,from,cc,bcc,subject,body,NULL);
 		if (!msg) {
 			g_printerr ("modest: failed to create message\n");
 			g_free (from);
 			return MODEST_ERR_SEND;
 		}
+
+		account = modest_tny_account_store_get_tny_account_by_account (
+			modest_runtime_get_account_store(), account_name,
+			TNY_ACCOUNT_TYPE_TRANSPORT);
+		if (!account) {
+			g_printerr ("modest: failed to get tny account folder\n");
+			g_free (from);
+			g_object_unref (G_OBJECT(msg));
+			return MODEST_ERR_SEND;
+		}
+		
 		folder = modest_tny_account_get_special_folder (account,
 								TNY_FOLDER_TYPE_DRAFTS);
 		if (!folder) {
 			g_printerr ("modest: failed to find Drafts folder\n");
 			g_free (from);
 			g_object_unref (G_OBJECT(msg));
+			g_object_unref (G_OBJECT(account));
 			return MODEST_ERR_SEND;
 		}
 		tny_folder_add_msg (folder, msg, NULL); /* FIXME: check err */
 
-		win = modest_msg_edit_window_new (msg, account);
+		win = modest_msg_edit_window_new (msg, account_name);
 		
 		g_object_unref (G_OBJECT(msg));
+		g_object_unref (G_OBJECT(account));
+		g_object_unref (G_OBJECT(folder));
 		g_free (from);
 	} else 
 		win = modest_main_window_new ();

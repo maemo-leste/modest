@@ -32,10 +32,9 @@
 #include <tny-gtk-text-buffer-stream.h>
 #include <tny-simple-list.h>
 #include <tny-folder.h>
-#include <modest-tny-platform-factory.h>
+#include <modest-runtime.h>
 #include <tny-camel-stream.h>
 #include <camel/camel-stream-mem.h>
-
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
