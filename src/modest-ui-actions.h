@@ -115,13 +115,6 @@ void     modest_ui_actions_on_move_folder_to_trash_folder     (GtkWidget *widget
 void     modest_ui_actions_on_connection_changed    (TnyDevice *device, gboolean online,
 						     ModestMainWindow *main_window);
 
-void     modest_ui_actions_on_folder_xfer           (ModestFolderView *folder_view,
-						     TnyFolder        *folder, 
-						     TnyFolderStore   *parent,
-						     gboolean          delete_source,
-						     TnyFolder        **new_folder,
-						     gpointer          user_data);
-
 void     modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 						  const gchar* account_name,
 						  gchar **password,  gboolean *cancel, 

@@ -710,10 +710,6 @@ cleanup:
 		g_object_unref (G_OBJECT (msg));
 }
 
-
-
-
-
 void 
 modest_ui_actions_on_folder_selection_changed (ModestFolderView *folder_view,
 					       TnyFolder *folder, 
@@ -1158,30 +1154,6 @@ modest_ui_actions_on_move_folder_to_trash_folder (GtkWidget *widget, ModestMainW
 	
 	delete_folder (main_window, TRUE);
 }
-
-void 
-modest_ui_actions_on_folder_xfer (ModestFolderView *folder_view,  
-				  TnyFolder        *folder, 
-				  TnyFolderStore   *parent,
-				  gboolean          delete_source,
-				  TnyFolder        **new_folder,
-				  gpointer          user_data)
-{
-	ModestMailOperation *mail_op;
-	const GError *error;
-
-	/* Try to move the folder */
-	mail_op = modest_mail_operation_new ();
-	*new_folder = modest_mail_operation_xfer_folder (mail_op, folder, parent, delete_source);
-
-	error = modest_mail_operation_get_error (mail_op);
-	if (error)
-		g_warning ("Error transferring folder: %s\n", error->message);
-
-	g_object_unref (G_OBJECT (mail_op));
-}
-
-
 
 void
 modest_ui_actions_on_password_requested (TnyAccountStore *account_store, 
