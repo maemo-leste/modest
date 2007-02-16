@@ -331,8 +331,8 @@ connect_signals (ModestMainWindow *self)
 	/* folder view */
 	g_signal_connect (G_OBJECT(priv->folder_view), "folder_selection_changed",
 			  G_CALLBACK(modest_ui_actions_on_folder_selection_changed), self);
-	g_signal_connect (G_OBJECT(priv->folder_view), "folder_moved",
-			  G_CALLBACK(modest_ui_actions_on_folder_moved), NULL);
+	g_signal_connect (G_OBJECT(priv->folder_view), "folder_xfer",
+			  G_CALLBACK(modest_ui_actions_on_folder_xfer), NULL);
 //	g_signal_connect (G_OBJECT(self->folder_view), "button-press-event",
 //			  G_CALLBACK (on_folder_view_button_press_event),self);
 //	g_signal_connect (self->folder_view,"popup-menu",
@@ -352,10 +352,6 @@ connect_signals (ModestMainWindow *self)
 //	g_signal_connect (G_OBJECT(self->header_view),"popup-menu",0
 //			  G_CALLBACK (on_header_view_button_press_event), self);
 
-	/* Account store */
-	g_signal_connect (G_OBJECT (modest_runtime_get_account_store()), "accounts_reloaded",
-			  G_CALLBACK (modest_ui_actions_on_accounts_reloaded), self);
-		
 	/* window */
 	g_signal_connect (G_OBJECT(self), "destroy", G_CALLBACK(on_destroy), NULL);
 	g_signal_connect (G_OBJECT(self), "delete-event", G_CALLBACK(on_delete_event), self);

@@ -31,13 +31,15 @@
 #include <tny-account-store.h>
 #include <tny-simple-list.h>
 #include <modest-tny-msg.h>
-
-#include <widgets/modest-msg-view-window.h>
-#include "modest-main-window-ui.h"
-#include <widgets/modest-window-priv.h>
-
+#include "modest-icon-names.h"
+#include "modest-ui-actions.h"
 #include <modest-widget-memory.h>
 #include <modest-runtime.h>
+
+#include <widgets/modest-msg-view-window.h>
+#include <widgets/modest-window-priv.h>
+#include "widgets/modest-msg-view.h"
+
 
 static void  modest_msg_view_window_class_init   (ModestMsgViewWindowClass *klass);
 static void  modest_msg_view_window_init         (ModestMsgViewWindow *obj);
@@ -63,8 +65,36 @@ struct _ModestMsgViewWindowPrivate {
 /* globals */
 static GtkWindowClass *parent_class = NULL;
 
-/* uncomment the following if you have defined any signals */
-/* static guint signals[LAST_SIGNAL] = {0}; */
+/* Action entries */
+static const GtkActionEntry modest_action_entries [] = {
+
+	/* Toplevel menus */
+	{ "Edit", NULL, N_("_Edit") },
+	{ "Actions", NULL, N_("_Actions") },
+	{ "Help", NULL, N_("_Help") },
+
+	/* EDIT */
+	{ "EditUndo",        GTK_STOCK_UNDO,   N_("_Undo"), "<CTRL>Z",        N_("Undo last action"),  NULL },
+	{ "EditRedo",        GTK_STOCK_REDO,   N_("_Redo"), "<shift><CTRL>Z", N_("Redo previous action"),  NULL },
+	{ "EditCut",         GTK_STOCK_CUT,    N_("Cut"),   "<CTRL>X",        N_("_Cut"), NULL   },
+	{ "EditCopy",        GTK_STOCK_COPY,   N_("Copy"),  "<CTRL>C",        N_("Copy"), NULL },
+	{ "EditPaste",       GTK_STOCK_PASTE,  N_("Paste"), "<CTRL>V",        N_("Paste"), NULL },
+	{ "EditDelete",      GTK_STOCK_DELETE, N_("_Delete"),      "<CTRL>Q",	      N_("Delete"), NULL },
+	{ "EditSelectAll",   NULL, 	       N_("Select all"),   "<CTRL>A",	      N_("Select all"), NULL },
+	{ "EditDeselectAll", NULL,             N_("Deselect all"), "<Shift><CTRL>A",  N_("Deselect all"), NULL },
+
+	/* ACTIONS */
+	{ "ActionsReply",       MODEST_STOCK_REPLY, N_("_Reply"),         NULL, N_("Reply to a message"), G_CALLBACK (modest_ui_actions_on_reply) },
+	{ "ActionsReplyAll",    MODEST_STOCK_REPLY_ALL, N_("Reply to all"),   NULL, N_("Reply to all"), G_CALLBACK (modest_ui_actions_on_reply_all) },
+	{ "ActionsForward",     MODEST_STOCK_FORWARD, N_("_Forward"),       NULL, N_("Forward a message"), G_CALLBACK (modest_ui_actions_on_forward) },
+	{ "ActionsBounce",      NULL, N_("_Bounce"),        NULL, N_("Bounce a message"),          NULL },
+	{ "ActionsSendReceive", MODEST_STOCK_SEND_RECEIVE, N_("Send/Receive"),   NULL, N_("Send and receive messages"), NULL },
+	{ "ActionsDelete",      MODEST_STOCK_DELETE, N_("Delete message"), NULL, N_("Delete messages"), G_CALLBACK (modest_ui_actions_on_delete) },
+
+	/* HELP */
+	{ "HelpAbout", GTK_STOCK_ABOUT, N_("About"), NULL, N_("About Modest"), G_CALLBACK (modest_ui_actions_on_about) },
+};
+
 
 GType
 modest_msg_view_window_get_type (void)

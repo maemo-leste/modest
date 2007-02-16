@@ -48,21 +48,21 @@ static gboolean     on_header_clicked      (GtkWidget *widget,
 					    GdkEventButton *event, 
 					    gpointer user_data);
 
-static void         on_selection_changed   (GtkTreeSelection *sel, 
-					    gpointer user_data);
-
 static gint         cmp_rows               (GtkTreeModel *tree_model, 
 					    GtkTreeIter *iter1, 
 					    GtkTreeIter *iter2,
 					    gpointer user_data);
 
+static void         on_selection_changed   (GtkTreeSelection *sel, 
+					    gpointer user_data);
+
 static void         setup_drag_and_drop    (GtkTreeView *self);
+
 
 typedef struct _ModestHeaderViewPrivate ModestHeaderViewPrivate;
 struct _ModestHeaderViewPrivate {
 	TnyFolder            *folder;
 	TnyList              *headers;
-	GMutex		     *lock;
 	ModestHeaderViewStyle style;
 };
 
@@ -206,8 +206,6 @@ remove_all_columns (ModestHeaderView *obj)
 	g_list_free (columns);	
 }
 
-
-
 gboolean
 modest_header_view_set_columns (ModestHeaderView *self, const GList *columns)
 {
@@ -227,11 +225,9 @@ modest_header_view_set_columns (ModestHeaderView *self, const GList *columns)
 	
 	remove_all_columns (self);
 
-	if (priv->headers)
-		sortable = gtk_tree_model_sort_new_with_model (GTK_TREE_MODEL(priv->headers));
-	else
-		sortable = NULL;
-	
+	sortable = gtk_tree_view_get_model (GTK_TREE_VIEW (self));
+
+	/* Add new columns */
 	for (cursor = columns; cursor; cursor = g_list_next(cursor)) {
 		ModestHeaderViewColumn col =
 			(ModestHeaderViewColumn) GPOINTER_TO_INT(cursor->data);
@@ -345,6 +341,7 @@ modest_header_view_set_columns (ModestHeaderView *self, const GList *columns)
 				   self);
 		gtk_tree_view_append_column (GTK_TREE_VIEW(self), column);		
 	}	
+
 	return TRUE;
 }
 
@@ -355,7 +352,6 @@ modest_header_view_init (ModestHeaderView *obj)
 
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(obj); 
 
-	priv->lock    = g_mutex_new ();
 	priv->folder  = NULL;
 	priv->headers = NULL;
 
@@ -371,16 +367,15 @@ modest_header_view_finalize (GObject *obj)
 	self = MODEST_HEADER_VIEW(obj);
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
 
-	if (priv->headers)	
+	if (priv->headers) {
 		g_object_unref (G_OBJECT(priv->headers));
-	
-	if (priv->lock) {
-		g_mutex_free (priv->lock);
-		priv->lock = NULL;
+		priv->headers  = NULL;
 	}
-
-	priv->headers  = NULL;
-	priv->folder   = NULL;
+	
+	if (priv->folder) {
+		g_object_unref (G_OBJECT (priv->folder));
+		priv->folder   = NULL;
+	}
 	
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
@@ -454,6 +449,8 @@ modest_header_view_get_selected_headers (ModestHeaderView *self)
 					    &header, -1);
 			/* Prepend to list */
 			tny_list_prepend (header_list, G_OBJECT (header));
+			g_object_unref (G_OBJECT (header));
+
 			tmp = g_list_next (tmp);
 		}
 		/* Clean up*/
@@ -597,13 +594,15 @@ modest_header_view_get_style (ModestHeaderView *self)
 
 
 static void
-on_refresh_folder (TnyFolder *folder, gboolean cancelled, GError **err,
-		   gpointer user_data)
+on_refresh_folder (TnyFolder   *folder, 
+		   gboolean     cancelled, 
+		   GError     **error,
+		   gpointer     user_data)
 {
 	GtkTreeModel *sortable; 
 	ModestHeaderView *self;
 	ModestHeaderViewPrivate *priv;
-	GError *error = NULL;
+	GList *cols, *cursor;
 
 	if (cancelled) {
 		GtkTreeSelection *selection;
@@ -616,44 +615,34 @@ on_refresh_folder (TnyFolder *folder, gboolean cancelled, GError **err,
 	self = MODEST_HEADER_VIEW(user_data);
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
 
-	priv->folder = folder;
-		
-	if (folder) { /* it's a new one or a refresh */
-		GList *cols, *cursor;
-		
-		if (priv->headers) {
-			g_object_unref (priv->headers);
-			modest_runtime_verify_object_death(priv->headers,"");
-		}
-		priv->headers = TNY_LIST(tny_gtk_header_list_model_new ());
-		tny_folder_get_headers (folder, priv->headers, FALSE, &error); /* FIXME */
-		if (error) {
-			g_signal_emit (G_OBJECT(self), signals[ITEM_NOT_FOUND_SIGNAL],
-				       0, MODEST_ITEM_TYPE_MESSAGE);
-			g_print (error->message);
-			g_error_free (error);
-			return;
-		}
-
-		tny_gtk_header_list_model_set_folder
-			(TNY_GTK_HEADER_LIST_MODEL(priv->headers),folder, TRUE); /*async*/
-
-		sortable = gtk_tree_model_sort_new_with_model (GTK_TREE_MODEL(priv->headers));
-
-		/* install our special sorting functions */
-		cursor = cols = gtk_tree_view_get_columns (GTK_TREE_VIEW(self));
-		while (cursor) {
-			gint col_id = GPOINTER_TO_INT (g_object_get_data(G_OBJECT(cursor->data),
-									 MODEST_HEADER_VIEW_COLUMN));
-			gtk_tree_sortable_set_sort_func (GTK_TREE_SORTABLE(sortable),
-							 col_id,
-							 (GtkTreeIterCompareFunc)cmp_rows,
-							 cursor->data, NULL);
-			cursor = g_list_next(cursor);
-		}
-		g_list_free (cols);		
-		gtk_tree_view_set_model (GTK_TREE_VIEW (self), sortable);
+	if (priv->headers) {
+		g_object_unref (priv->headers);
+		modest_runtime_verify_object_death(priv->headers,"");
 	}
+
+	priv->headers = TNY_LIST(tny_gtk_header_list_model_new ());
+
+	tny_gtk_header_list_model_set_folder (TNY_GTK_HEADER_LIST_MODEL(priv->headers),
+					      folder, TRUE);
+
+	sortable = gtk_tree_model_sort_new_with_model (GTK_TREE_MODEL(priv->headers));
+
+	/* install our special sorting functions */
+	cursor = cols = gtk_tree_view_get_columns (GTK_TREE_VIEW(self));
+	while (cursor) {
+		gint col_id = GPOINTER_TO_INT (g_object_get_data(G_OBJECT(cursor->data),
+								 MODEST_HEADER_VIEW_COLUMN));
+		gtk_tree_sortable_set_sort_func (GTK_TREE_SORTABLE(sortable),
+						 col_id,
+						 (GtkTreeIterCompareFunc)cmp_rows,
+						 cursor->data, NULL);
+		cursor = g_list_next(cursor);
+	}
+	g_list_free (cols);
+
+	/* Set new model */
+	gtk_tree_view_set_model (GTK_TREE_VIEW (self), sortable); 
+	g_object_unref (G_OBJECT (sortable));
 }
 
 
@@ -683,6 +672,9 @@ modest_header_view_get_folder (ModestHeaderView *self)
 	ModestHeaderViewPrivate *priv;
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
 
+	if (priv->folder)
+		g_object_ref (priv->folder);
+
 	return priv->folder;
 }
 
@@ -693,9 +685,15 @@ modest_header_view_set_folder (ModestHeaderView *self, TnyFolder *folder)
 	ModestHeaderViewPrivate *priv;
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
 
+	/* Unset the old one */
+	if (priv->folder)
+		g_object_unref (priv->folder);
+
 	priv->folder = folder;
 
 	if (folder) {
+		g_object_ref (priv->folder);	
+
 		tny_folder_refresh_async (folder,
 					  on_refresh_folder,
 					  on_refresh_folder_status_update,
@@ -704,6 +702,9 @@ modest_header_view_set_folder (ModestHeaderView *self, TnyFolder *folder)
 		/* no message selected */		
 		g_signal_emit (G_OBJECT(self), signals[HEADER_SELECTED_SIGNAL], 0,
 			       NULL);
+	} else {
+		gtk_tree_view_set_model (GTK_TREE_VIEW (self), NULL); 
+/* 		gtk_widget_show (GTK_WIDGET (self)); */
 	}
 }
 
@@ -738,6 +739,9 @@ on_header_clicked (GtkWidget *widget, GdkEventButton *event, gpointer user_data)
 	g_signal_emit (G_OBJECT(self), 
 		       signals[HEADER_ACTIVATED_SIGNAL], 
 		       0, header);
+
+	/* Free */
+	g_object_unref (G_OBJECT (header));
 
 	return TRUE;
 }
@@ -942,17 +946,48 @@ drag_data_get_cb (GtkWidget *widget,
 	gtk_tree_path_free (source_row);
 }
 
+static void 
+drag_data_delete_cb (GtkWidget      *widget,
+		     GdkDragContext *context,
+		     gpointer        user_data)
+{
+	GtkTreeIter iter;
+	GtkTreePath *source_row;
+	GtkTreeModel *model_sort, *model;
+	TnyHeader *header;
+
+	model_sort = gtk_tree_view_get_model (GTK_TREE_VIEW (widget));
+	model = gtk_tree_model_sort_get_model (GTK_TREE_MODEL_SORT (model_sort));
+/* 	source_row = g_object_steal_data (G_OBJECT (widget), ROW_REF_DATA_NAME); */
+	source_row = g_object_steal_data (G_OBJECT (widget), "row-ref");
+
+	/* Delete the source row */
+	gtk_tree_model_get_iter (model, &iter, source_row);
+	gtk_tree_model_get (model, &iter, 
+			    TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN, &header, 
+			    -1);
+	tny_list_remove (TNY_LIST (model), G_OBJECT (header));
+	g_object_unref (G_OBJECT (header));
+
+	gtk_tree_path_free (source_row);
+}
+
 static void
 setup_drag_and_drop (GtkTreeView *self)
 {
 	gtk_drag_source_set (GTK_WIDGET (self),
-			     GDK_BUTTON1_MASK | GDK_BUTTON3_MASK,
+			     GDK_BUTTON1_MASK,
 			     drag_types,
 			     G_N_ELEMENTS (drag_types),
-			     GDK_ACTION_MOVE);
+			     GDK_ACTION_MOVE | GDK_ACTION_COPY);
 
 	gtk_signal_connect(GTK_OBJECT (self),
 			   "drag_data_get",
 			   GTK_SIGNAL_FUNC(drag_data_get_cb),
+			   NULL);
+
+	gtk_signal_connect(GTK_OBJECT (self),
+			   "drag_data_delete",
+			   GTK_SIGNAL_FUNC(drag_data_delete_cb),
 			   NULL);
 }

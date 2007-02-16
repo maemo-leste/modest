@@ -228,7 +228,6 @@ modest_conf_get_list (ModestConf* self, const gchar* key, ModestConfValueType li
 {
        ModestConfPrivate *priv;
        GConfValueType gconf_type;
-       GSList *retval = NULL;
        
        g_return_val_if_fail (self, NULL);
        g_return_val_if_fail (key,  NULL);
@@ -237,10 +236,7 @@ modest_conf_get_list (ModestConf* self, const gchar* key, ModestConfValueType li
 
        gconf_type = modest_conf_type_to_gconf_type (list_type, err);
 
-       if (!err)
-	       retval = gconf_client_get_list (priv->gconf_client, key, gconf_type, err);
-
-       return retval;
+       return gconf_client_get_list (priv->gconf_client, key, gconf_type, err);
 }
 
 

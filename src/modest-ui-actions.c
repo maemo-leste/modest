@@ -55,7 +55,7 @@
 
 
 typedef struct _GetMsgAsyncHelper {
-	ModestMainWindow *main_window;
+	ModestWindow *window;
 	TnyIterator *iter;
 	GFunc func;
 	gpointer user_data;
@@ -137,8 +137,8 @@ get_selected_headers (ModestWindow *win)
 
 	} else
 		return NULL;
-	
 }
+
 void
 modest_ui_actions_on_delete (GtkWidget *widget, ModestWindow *win)
 {
@@ -368,7 +368,6 @@ cleanup:
 	g_free (rf_helper->account_name);
 	g_slice_free (ReplyForwardHelper, rf_helper);
 }
-
 /*
  * Common code for the reply and forward actions
  */
@@ -384,7 +383,7 @@ reply_forward (GtkWidget *widget, ReplyForwardAction action, ModestWindow *win)
 	
 	g_return_if_fail (MODEST_IS_WINDOW(win));
 
-	header_list = get_selected_headers (win);	
+	header_list = get_selected_headers (win);
 	if (!header_list)
 		return;
 	
@@ -406,7 +405,7 @@ reply_forward (GtkWidget *widget, ReplyForwardAction action, ModestWindow *win)
 		rf_helper->account_name = modest_account_mgr_get_default_account (modest_runtime_get_account_mgr());
 
 	helper = g_slice_new0 (GetMsgAsyncHelper);
-	//helper->main_window = NULL;
+	helper->window = win;
 	helper->func = reply_forward_func;
 	helper->iter = tny_list_create_iterator (header_list);
 	helper->user_data = rf_helper;
@@ -561,7 +560,7 @@ read_msg_func (gpointer data, gpointer user_data)
 	msg = TNY_MSG (data);
 	helper = (GetMsgAsyncHelper *) user_data;
 
-	msg_preview = modest_main_window_get_child_widget (helper->main_window,
+	msg_preview = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (helper->window),
 							   MODEST_WIDGET_TYPE_MSG_PREVIEW);
 	if (!msg_preview)
 		return;
@@ -593,13 +592,9 @@ get_msg_cb (TnyFolder *folder, TnyMsg *msg, GError **err, gpointer user_data)
 	helper = (GetMsgAsyncHelper *) user_data;
 
 	if ((*err && ((*err)->code == TNY_FOLDER_ERROR_GET_MSG)) || !msg) {
-		GtkWidget *header_view =
-			modest_main_window_get_child_widget(helper->main_window,
-							    MODEST_WIDGET_TYPE_HEADER_VIEW);
-		if (header_view)
-			modest_ui_actions_on_item_not_found (MODEST_HEADER_VIEW(header_view),
-							     MODEST_ITEM_TYPE_MESSAGE,
-							     MODEST_WINDOW(helper->main_window));
+		modest_ui_actions_on_item_not_found (NULL,
+						     MODEST_ITEM_TYPE_MESSAGE,
+						     helper->window);
 		return;
 	}
 
@@ -655,7 +650,7 @@ modest_ui_actions_on_header_selected (ModestHeaderView *folder_view,
 
 	/* Fill helper data */
 	helper = g_slice_new0 (GetMsgAsyncHelper);
-	helper->main_window = main_window;
+	helper->window = MODEST_WINDOW (main_window);
 	helper->iter = tny_list_create_iterator (list);
 	helper->func = read_msg_func;
 
@@ -712,7 +707,7 @@ cleanup:
 	if (folder)
 		g_object_unref (G_OBJECT (folder));
 	if (msg)
-		g_object_unref (G_OBJECT (folder));
+		g_object_unref (G_OBJECT (msg));
 }
 
 
@@ -1110,8 +1105,9 @@ modest_ui_actions_on_rename_folder (GtkWidget *widget,
 				/* TODO: tinymail should do this. 
 				   Update view */
 				modest_folder_view_rename (MODEST_FOLDER_VIEW(folder_view));
-
-			/* TODO: else ? notify error ? */
+			else
+				/* TODO: notify error ? */
+				g_warning ("Could not rename a folder: %s\n", error->message);
 
 			g_object_unref (mail_op);
 		}
@@ -1125,6 +1121,7 @@ delete_folder (ModestMainWindow *main_window, gboolean move_to_trash)
 	TnyFolder *folder;
 	ModestMailOperation *mail_op;
 	GtkWidget *folder_view;
+	const GError *error;
 	
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW(main_window));
 
@@ -1137,6 +1134,11 @@ delete_folder (ModestMainWindow *main_window, gboolean move_to_trash)
 	
 	mail_op = modest_mail_operation_new ();
 	modest_mail_operation_remove_folder (mail_op, folder, move_to_trash);
+
+	error = modest_mail_operation_get_error (mail_op);
+	if (error)
+		g_warning ("%s\n", error->message);
+
 	g_object_unref (mail_op);
 }
 
@@ -1157,33 +1159,24 @@ modest_ui_actions_on_move_folder_to_trash_folder (GtkWidget *widget, ModestMainW
 	delete_folder (main_window, TRUE);
 }
 
-void
-modest_ui_actions_on_accounts_reloaded (TnyAccountStore *store, gpointer user_data)
-{
-	/* FIXME */
-	/* ModestFolderView *folder_view; */
-	
-/* 	folder_view = modest_widget_factory_get_folder_view (modest_runtime_get_widget_factory()); */
-/* 	modest_folder_view_update_model (folder_view, store); */
-}
-
 void 
-modest_ui_actions_on_folder_moved (ModestFolderView *folder_view,  TnyFolder *folder, 
-				    TnyFolderStore *parent,  gboolean *done,
-				    gpointer user_data)
+modest_ui_actions_on_folder_xfer (ModestFolderView *folder_view,  
+				  TnyFolder        *folder, 
+				  TnyFolderStore   *parent,
+				  gboolean          delete_source,
+				  TnyFolder        **new_folder,
+				  gpointer          user_data)
 {
 	ModestMailOperation *mail_op;
 	const GError *error;
 
-	*done = TRUE;
-
-	/* Try to move the folder */	
+	/* Try to move the folder */
 	mail_op = modest_mail_operation_new ();
-	modest_mail_operation_move_folder (mail_op, folder, parent);
+	*new_folder = modest_mail_operation_xfer_folder (mail_op, folder, parent, delete_source);
 
 	error = modest_mail_operation_get_error (mail_op);
 	if (error)
-		*done = FALSE;
+		g_warning ("Error transferring folder: %s\n", error->message);
 
 	g_object_unref (G_OBJECT (mail_op));
 }

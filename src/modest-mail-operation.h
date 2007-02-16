@@ -258,85 +258,51 @@ void          modest_mail_operation_rename_folder  (ModestMailOperation *self,
 						    const gchar *name);
 
 /**
- * modest_mail_operation_move_folder:
+ * modest_mail_operation_xfer_folder:
  * @self: a #ModestMailOperation
  * @folder: a #TnyFolder
  * @parent: the new parent of the folder as #TnyFolderStore
+ * @delete_original: wheter or not delete the original folder
  * 
  * Sets the given @folder as child of a provided #TnyFolderStore. This
- * operation moves also all the messages contained in the folder and
- * all of his children folders with their messages as well. This
+ * operation also transfers all the messages contained in the folder
+ * and all of his children folders with their messages as well. This
  * operation is synchronous, so the #ModestMailOperation should not be
- * added to any #ModestMailOperationQueue
+ * added to any #ModestMailOperationQueue.
+ *
+ * If @delete_original is TRUE this function moves the original
+ * folder, if it is FALSE the it just copies it
+ *
+ * Returns: the newly transfered folder
  **/
-void          modest_mail_operation_move_folder    (ModestMailOperation *self,
+TnyFolder*    modest_mail_operation_xfer_folder    (ModestMailOperation *self,
 						    TnyFolder *folder, 
-						    TnyFolderStore *parent);
+						    TnyFolderStore *parent,
+						    gboolean delete_original);
 
-/**
- * modest_mail_operation_copy_folder:
- * @self: a #ModestMailOperation
- * @folder: a #TnyFolder
- * @parent: a #TnyFolderStore that will be the parent of the copied folder
- * 
- * Sets a copy of the given @folder as child of a provided
- * #TnyFolderStore. This operation copies also all the messages
- * contained in the folder and all of his children folders with their
- * messages as well. This operation is synchronous, so the
- * #ModestMailOperation should not be added to any
- * #ModestMailOperationQueue
- **/
-void          modest_mail_operation_copy_folder    (ModestMailOperation *self,
-						    TnyFolder *folder, 
-						    TnyFolderStore *parent);
 
 /* Functions that performs msg operations */
 
 /**
- * modest_mail_operation_copy_msg:
- * @self: a #ModestMailOperation
- * @header: the #TnyHeader of the message to copy
- * @folder: the #TnyFolder where the message will be copied
- * 
- * Asynchronously copies a message from its current folder to another
- * one. The caller should add the #ModestMailOperation to a
- * #ModestMailOperationQueue and then free it. The caller will be
- * notified by the "progress_changed" when the operation is completed.
- * 
- * Example
- * <informalexample><programlisting>
- * queue = modest_tny_platform_factory_get_modest_mail_operation_queue_instance (fact);
- * mail_op = modest_mail_operation_new ();
- * if (modest_mail_operation_copy_msg (mail_op, account))
- * {
- *     g_signal_connect (G_OBJECT (mail_op), "progress_changed", G_CALLBACK(on_progress_changed), queue);
- *     modest_mail_operation_queue_add (queue, mail_op);
- * }
- * g_object_unref (G_OBJECT (mail_op));
- * </programlisting></informalexample>
- *
- * Returns: TRUE if the mail operation could be started, or FALSE otherwise
- **/
-gboolean      modest_mail_operation_copy_msg       (ModestMailOperation *self,
-						    TnyHeader *header, 
-						    TnyFolder *folder);
-
-/**
- * modest_mail_operation_move_msg:
+ * modest_mail_operation_xfer_msg:
  * @self: a #ModestMailOperation
  * @header: the #TnyHeader of the message to move
  * @folder: the #TnyFolder where the message will be moved
+ * @delete_original: whether or not delete the source message
  * 
- * Asynchronously moves a message from its current folder to another
- * one. The caller should add the #ModestMailOperation to a
+ * Asynchronously transfers a message from its current folder to
+ * another one. The caller should add the #ModestMailOperation to a
  * #ModestMailOperationQueue and then free it. The caller will be
  * notified by the "progress_changed" when the operation is completed.
+ *
+ * If the @delete_original paramter is TRUE then this function moves
+ * the message between folders, otherwise it copies it.
  * 
  * Example
  * <informalexample><programlisting>
  * queue = modest_tny_platform_factory_get_modest_mail_operation_queue_instance (fact);
  * mail_op = modest_mail_operation_new ();
- * if (modest_mail_operation_move_msg (mail_op, account))
+ * if (modest_mail_operation_xfer_msg (mail_op, header, folder, TRUE))
  * {
  *     g_signal_connect (G_OBJECT (mail_op), "progress_changed", G_CALLBACK(on_progress_changed), queue);
  *     modest_mail_operation_queue_add (queue, mail_op);
@@ -346,9 +312,10 @@ gboolean      modest_mail_operation_copy_msg       (ModestMailOperation *self,
  *
  * Returns: TRUE if the mail operation could be started, or FALSE otherwise
  **/
-gboolean      modest_mail_operation_move_msg       (ModestMailOperation *self,
+gboolean      modest_mail_operation_xfer_msg       (ModestMailOperation *self,
 						    TnyHeader *header, 
-						    TnyFolder *folder);
+						    TnyFolder *folder,
+						    gboolean delete_original);
 
 /**
  * modest_mail_operation_remove_msg:

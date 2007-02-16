@@ -47,11 +47,6 @@
       <menuitem name="ActionsReplyMenu" action="ActionsReply"/>
       <menuitem name="ActionsReplyAllMenu" action="ActionsReplyAll"/>
       <menuitem name="ActionsForwardMenu" action="ActionsForward"/>
-      <separator/>
-      <menuitem name="ActionsFolderNewMenu" action="ActionsFolderNew"/>
-      <menuitem name="ActionsFolderDeleteMenu" action="ActionsFolderDelete"/>
-      <menuitem name="ActionsFolderRenameMenu" action="ActionsFolderRename"/>
-      <menuitem name="ActionsFolderMoveToTrashMenu" action="ActionsFolderMoveToTrash"/>
     </menu>
   </menubar>
 

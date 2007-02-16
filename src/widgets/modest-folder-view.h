@@ -62,13 +62,11 @@ struct _ModestFolderViewClass {
 					      gboolean selected,
 					      gpointer user_data);
 
-	void     (*folder_moved)             (ModestFolderView *self, 
+	void     (*folder_xfer)              (ModestFolderView *self, 
 					      TnyFolder        *folder,
 					      TnyFolderStore   *parent,
-					      gboolean         *done);
-	
-	gboolean (*update_model)             (ModestFolderView *self, 
-					      TnyAccountStore  *account_store);
+					      gboolean          delete_original,
+					      TnyFolder         *new_folder);
 };
 
 /**

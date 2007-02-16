@@ -71,6 +71,9 @@ static void         on_account_update      (TnyAccountStore *account_store,
 					    const gchar *account,
 					    gpointer user_data);
 
+static void         on_accounts_reloaded   (TnyAccountStore *store, 
+					    gpointer user_data);
+
 static gint         cmp_rows               (GtkTreeModel *tree_model, 
 					    GtkTreeIter *iter1, 
 					    GtkTreeIter *iter2,
@@ -117,7 +120,7 @@ static const GtkTargetEntry drag_types[] =
 
 enum {
 	FOLDER_SELECTION_CHANGED_SIGNAL,
-	FOLDER_MOVED_SIGNAL,
+	FOLDER_XFER_SIGNAL,
 	LAST_SIGNAL
 };
 
@@ -127,7 +130,9 @@ struct _ModestFolderViewPrivate {
 	TnyFolder           *cur_folder;
 	GtkTreeRowReference *cur_row;
 
-	gulong               sig1, sig2;
+	gulong               account_update_signal;
+	gulong               changed_signal;
+	gulong               accounts_reloaded_signal;
 	GMutex              *lock;
 	
 	GtkTreeSelection    *cur_selection;
@@ -189,8 +194,6 @@ modest_folder_view_class_init (ModestFolderViewClass *klass)
 
 	parent_class            = g_type_class_peek_parent (klass);
 	gobject_class->finalize = modest_folder_view_finalize;
-	
-	klass->update_model = modest_folder_view_update_model;
 
 	g_type_class_add_private (gobject_class,
 				  sizeof(ModestFolderViewPrivate));
@@ -216,14 +219,15 @@ modest_folder_view_class_init (ModestFolderViewClass *klass)
 	 * Emitted when a the user wants to move a folder through a
 	 * drag and drop action
 	 */
- 	signals[FOLDER_MOVED_SIGNAL] = 
-		g_signal_new ("folder_moved",
+ 	signals[FOLDER_XFER_SIGNAL] = 
+		g_signal_new ("folder_xfer",
 			      G_TYPE_FROM_CLASS (gobject_class),
 			      G_SIGNAL_RUN_FIRST,
-			      G_STRUCT_OFFSET (ModestFolderViewClass, folder_moved),
+			      G_STRUCT_OFFSET (ModestFolderViewClass, folder_xfer),
 			      NULL, NULL,
-			      modest_marshal_VOID__POINTER_POINTER_POINTER,
-			      G_TYPE_NONE, 3, G_TYPE_POINTER, G_TYPE_POINTER, G_TYPE_POINTER);
+			      modest_marshal_VOID__POINTER_POINTER_BOOL_POINTER,
+			      G_TYPE_NONE, 4, 
+			      G_TYPE_POINTER, G_TYPE_POINTER, G_TYPE_BOOLEAN, G_TYPE_POINTER);
 }
 
 
@@ -233,10 +237,10 @@ text_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 		 GtkTreeModel *tree_model,  GtkTreeIter *iter,  gpointer data)
 {
 	GObject *rendobj;
-	gchar *fname;
+	gchar *fname = NULL;
 	gint unread;
 	TnyFolderType type;
-	TnyFolder *folder;
+	TnyFolder *folder = NULL;
 	
 	g_return_if_fail (column);
 	g_return_if_fail (tree_model);
@@ -248,7 +252,7 @@ text_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 			    TNY_GTK_FOLDER_STORE_TREE_MODEL_INSTANCE_COLUMN, &folder,
 			    -1);
 	rendobj = G_OBJECT(renderer);
-
+ 
 	if (!fname)
 		return;
 	
@@ -276,9 +280,7 @@ text_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 		g_object_set (rendobj,"text", fname, "weight", 400, NULL);
 		
 	g_free (fname);
-	if (folder)
-		g_object_unref (G_OBJECT(folder));
-	
+	if (folder) g_object_unref (G_OBJECT (folder));
 }
 
 
@@ -326,7 +328,8 @@ icon_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 	gtk_tree_model_get (tree_model, iter,
 			    TNY_GTK_FOLDER_STORE_TREE_MODEL_TYPE_COLUMN, &type,
 			    TNY_GTK_FOLDER_STORE_TREE_MODEL_NAME_COLUMN, &fname,
-			    TNY_GTK_FOLDER_STORE_TREE_MODEL_UNREAD_COLUMN, &unread, -1);
+			    TNY_GTK_FOLDER_STORE_TREE_MODEL_UNREAD_COLUMN, &unread, 
+			    -1);
 	rendobj = G_OBJECT(renderer);
 	
 	if (type == TNY_FOLDER_TYPE_NORMAL || type == TNY_FOLDER_TYPE_UNKNOWN) {
@@ -444,7 +447,9 @@ modest_folder_view_finalize (GObject *obj)
 
 	if (priv->account_store) {
 		g_signal_handler_disconnect (G_OBJECT(priv->account_store),
-					     priv->sig1);
+					     priv->account_update_signal);
+		g_signal_handler_disconnect (G_OBJECT(priv->account_store),
+					     priv->accounts_reloaded_signal);
 		g_object_unref (G_OBJECT(priv->account_store));
 		priv->account_store = NULL;
 	}
@@ -461,7 +466,7 @@ modest_folder_view_finalize (GObject *obj)
 
 	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW(obj));
 	if (sel)
-		g_signal_handler_disconnect (G_OBJECT(sel), priv->sig2);
+		g_signal_handler_disconnect (G_OBJECT(sel), priv->changed_signal);
 	
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
@@ -480,22 +485,28 @@ modest_folder_view_set_account_store (TnyAccountStoreView *self, TnyAccountStore
 	device = tny_account_store_get_device (account_store);
 
 	if (G_UNLIKELY (priv->account_store)) {
-		TnyDevice *old_device; 
-		
-		old_device = tny_account_store_get_device (priv->account_store);
 
-		if (g_signal_handler_is_connected (G_OBJECT (old_device), priv->sig1))
-			g_signal_handler_disconnect (G_OBJECT (old_device), 
-						     priv->sig1);
+		if (g_signal_handler_is_connected (G_OBJECT (priv->account_store), 
+						   priv->account_update_signal))
+			g_signal_handler_disconnect (G_OBJECT (priv->account_store), 
+						     priv->account_update_signal);
+		if (g_signal_handler_is_connected (G_OBJECT (priv->account_store), 
+						   priv->accounts_reloaded_signal))
+			g_signal_handler_disconnect (G_OBJECT (priv->account_store), 
+						     priv->accounts_reloaded_signal);
 
 		g_object_unref (G_OBJECT (priv->account_store));
-		g_object_unref (G_OBJECT (old_device));
 	}
 
 	priv->account_store = g_object_ref (G_OBJECT (account_store));
 
-	priv->sig1 = g_signal_connect (G_OBJECT(account_store), "account_update",
-				       G_CALLBACK (on_account_update), self);
+	priv->account_update_signal = 
+		g_signal_connect (G_OBJECT(account_store), "account_update",
+				  G_CALLBACK (on_account_update), self);
+
+	priv->accounts_reloaded_signal = 
+		g_signal_connect (G_OBJECT(account_store), "accounts_reloaded",
+				  G_CALLBACK (on_accounts_reloaded), self);
 	
 	if (!update_model (MODEST_FOLDER_VIEW (self),
 			   MODEST_TNY_ACCOUNT_STORE (priv->account_store)))
@@ -512,6 +523,14 @@ on_account_update (TnyAccountStore *account_store, const gchar *account,
 			   MODEST_TNY_ACCOUNT_STORE(account_store)))
 		g_printerr ("modest: failed to update model for changes in '%s'",
 			    account);
+}
+
+static void 
+on_accounts_reloaded   (TnyAccountStore *account_store, 
+			gpointer user_data)
+{
+	update_model (MODEST_FOLDER_VIEW (user_data), 
+		      MODEST_TNY_ACCOUNT_STORE(account_store));
 }
 
 void
@@ -545,8 +564,8 @@ modest_folder_view_new (TnyFolderStoreQuery *query)
 	priv->query = g_object_ref (query);
 	
 	sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(self));
-	priv->sig2 = g_signal_connect (sel, "changed",
-				       G_CALLBACK (on_selection_changed), self);
+	priv->changed_signal = g_signal_connect (sel, "changed",
+						 G_CALLBACK (on_selection_changed), self);
 	return GTK_WIDGET(self);
 }
 
@@ -628,9 +647,6 @@ update_model (ModestFolderView *self, ModestTnyAccountStore *account_store)
 		g_object_unref (account_list);
 	}
 	
-	//if (model)
-	//	g_object_unref (model);
-		
 	return TRUE;
 }
 
@@ -655,7 +671,8 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 	/* folder was _un_selected if true */
 	if (!gtk_tree_selection_get_selected (sel, &model_sort, &iter_sort)) {
 		priv->cur_folder = NULL; /* FIXME: need this? */
-		priv->cur_row = NULL; /* FIXME: need this? */
+		gtk_tree_row_reference_free (priv->cur_row);
+		priv->cur_row = NULL;
 		return; 
 	}
 
@@ -671,36 +688,33 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 			    TNY_GTK_FOLDER_STORE_TREE_MODEL_INSTANCE_COLUMN, &folder,
 			    -1);
 
-	if (type == TNY_FOLDER_TYPE_ROOT)
+	if (type == TNY_FOLDER_TYPE_ROOT) {
+		g_object_unref (folder);
 		return;
+	}
 	
-	/* emit 2 signals: one for the unselection of the old one,
-	 * and one for the selection of the new on */
+	/* Current folder was unselected */
 	g_signal_emit (G_OBJECT(tree_view), signals[FOLDER_SELECTION_CHANGED_SIGNAL], 0,
 		       priv->cur_folder, FALSE);
 
-	if (priv->cur_folder) {
+	if (priv->cur_row) {
 /* 		tny_folder_sync (priv->cur_folder, TRUE, NULL); /\* FIXME *\/ */
 		gtk_tree_row_reference_free (priv->cur_row);
 	}
-	priv->cur_folder = folder;
-	g_signal_emit (G_OBJECT(tree_view), signals[FOLDER_SELECTION_CHANGED_SIGNAL], 0,
-		       folder, TRUE);
- 
+
+	/* New current references */
 	path = gtk_tree_model_get_path (model_sort, &iter_sort);
+	priv->cur_folder = folder;
 	priv->cur_row = gtk_tree_row_reference_new (model_sort, path);
+
+	/* Frees */
 	gtk_tree_path_free (path);
-}
+	g_object_unref (G_OBJECT (folder));
 
-gboolean
-modest_folder_view_update_model (ModestFolderView *self, TnyAccountStore *account_store)
-{
-	g_return_val_if_fail (MODEST_IS_FOLDER_VIEW (self), FALSE);
-
-	g_signal_emit (G_OBJECT(self), signals[FOLDER_SELECTION_CHANGED_SIGNAL],
-		       0, NULL, TRUE);
-	
-	return update_model (self, MODEST_TNY_ACCOUNT_STORE(account_store)); /* ugly */
+	/* New folder has been selected */
+	g_signal_emit (G_OBJECT(tree_view), 
+		       signals[FOLDER_SELECTION_CHANGED_SIGNAL], 
+		       0, folder, TRUE); 
 }
 
 TnyFolder *
@@ -755,7 +769,6 @@ modest_folder_view_rename (ModestFolderView *self)
 	GtkTreeModel *model;
 	GtkTreeIter iter;
 	ModestFolderViewPrivate *priv;
-	gchar *old_name;
 
 	g_return_val_if_fail (MODEST_IS_FOLDER_VIEW (self), FALSE);
 
@@ -764,12 +777,6 @@ modest_folder_view_rename (ModestFolderView *self)
 	if (!get_model_iter (self, &model, &iter))
 		return FALSE;
 
-	/* Remove old name */
-	gtk_tree_model_get (model, &iter,
-			    TNY_GTK_FOLDER_STORE_TREE_MODEL_NAME_COLUMN, 
-			    &old_name, -1);
-	g_free (old_name);
-		
 	/* Set new name */
 	gtk_tree_store_set (GTK_TREE_STORE (model), &iter,
 			    TNY_GTK_FOLDER_STORE_TREE_MODEL_NAME_COLUMN,
@@ -796,9 +803,9 @@ modest_folder_view_add_subfolder (ModestFolderView *self, TnyFolder *folder)
 	/* Append a new child to the folder */
 	gtk_tree_store_append (GTK_TREE_STORE (model), &child, &iter);
 	gtk_tree_store_set (GTK_TREE_STORE (model), &child,
-			    TNY_GTK_FOLDER_STORE_TREE_MODEL_NAME_COLUMN, 
+			    TNY_GTK_FOLDER_STORE_TREE_MODEL_NAME_COLUMN,
 			    tny_folder_get_name (TNY_FOLDER (folder)),
-			    TNY_GTK_FOLDER_STORE_TREE_MODEL_UNREAD_COLUMN, 
+			    TNY_GTK_FOLDER_STORE_TREE_MODEL_UNREAD_COLUMN,
 			    tny_folder_get_unread_count (TNY_FOLDER (folder)),
 			    TNY_GTK_FOLDER_STORE_TREE_MODEL_TYPE_COLUMN,
 			    tny_folder_get_folder_type (TNY_FOLDER (folder)),
@@ -892,6 +899,22 @@ on_drag_data_get (GtkWidget *widget,
 	gtk_tree_path_free (source_row);
 }
 
+
+static void
+on_progress_changed (ModestMailOperation *mail_op, gpointer user_data)
+{
+	ModestMailOperationQueue *queue;
+
+	if (modest_mail_operation_get_status (mail_op) == 
+	    MODEST_MAIL_OPERATION_STATUS_SUCCESS) {
+		g_print ("Bien bien");
+	}
+	queue = modest_runtime_get_mail_operation_queue ();
+
+	modest_mail_operation_queue_remove (queue, mail_op);
+	g_object_unref (G_OBJECT (mail_op));
+}
+
 /*
  * This function receives the data set by the "drag-data-get" signal
  * handler. This information comes within the #GtkSelectionData. This
@@ -958,20 +981,54 @@ on_drag_data_received (GtkWidget *widget,
 	child_dest_row = 
 		gtk_tree_model_sort_convert_path_to_child_path (GTK_TREE_MODEL_SORT (model_sort),
 								dest_row);
-	gtk_tree_path_free (dest_row);
 
 	/* Drags from the header view */
 	if ((target_type == TARGET_TREE_ROW) && (source_widget != widget)) {
+		TnyHeader *header;
+		TnyFolder *folder;
+		ModestMailOperationQueue *queue;
+		ModestMailOperation *mail_op;
+		gboolean started;
+		GtkTreeIter source_iter, dest_iter;
 
-		/* TODO: do the mail operation */
+		/* Get header */
+		gtk_tree_model_get_iter (source_model, &source_iter, source_row);
+		gtk_tree_model_get (source_model, &source_iter, 
+				    TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN, 
+				    &header, -1);
 
+		/* Get Folder */
+		gtk_tree_model_get_iter (dest_model, &dest_iter, dest_row);
+		gtk_tree_model_get (dest_model, &dest_iter, 
+				    TNY_GTK_FOLDER_STORE_TREE_MODEL_INSTANCE_COLUMN, 
+				    &folder, -1);
+
+		/* Transfer message */
+		queue = modest_runtime_get_mail_operation_queue ();
+		mail_op = modest_mail_operation_new ();
+		started = modest_mail_operation_xfer_msg (mail_op, header,
+							  folder, delete_source);
+		if (started) {
+			g_signal_connect (G_OBJECT (mail_op), "progress_changed", 
+					  G_CALLBACK (on_progress_changed), queue);
+			modest_mail_operation_queue_add (queue, mail_op);
+		} else {
+			const GError *error;
+			error = modest_mail_operation_get_error (mail_op);
+			g_warning ("Error trying to transfer messages: %s\n",
+				   error->message);
+		}
+		g_object_unref (G_OBJECT (mail_op));
+		g_object_unref (G_OBJECT (header));
+		g_object_unref (G_OBJECT (folder));
+
+		/* FIXME */
 		success = TRUE;
 	} else {
 		GtkTreeRowReference *source_row_reference;
 		GtkTreeIter parent_iter, iter;
-		TnyFolder *folder;
+		TnyFolder *folder, *new_folder;
 		TnyFolderStore *parent_folder;
-		gboolean done;
 
 		/* Check if the drag is possible */
 		if (!gtk_tree_path_compare (source_row, child_dest_row))
@@ -988,13 +1045,17 @@ on_drag_data_received (GtkWidget *widget,
 		gtk_tree_model_get (source_model, &parent_iter, 
 				    TNY_GTK_FOLDER_STORE_TREE_MODEL_INSTANCE_COLUMN, 
 				    &parent_folder, -1);
-		gtk_tree_model_get (source_model, &iter, 
-				    TNY_GTK_FOLDER_STORE_TREE_MODEL_INSTANCE_COLUMN, 
+		gtk_tree_model_get (source_model, &iter,
+				    TNY_GTK_FOLDER_STORE_TREE_MODEL_INSTANCE_COLUMN,
 				    &folder, -1);
 		
-		g_signal_emit (G_OBJECT (widget), signals[FOLDER_MOVED_SIGNAL], 0,
-			       folder, parent_folder, &done);
-		if (!done)
+		g_signal_emit (G_OBJECT (widget), signals[FOLDER_XFER_SIGNAL], 0,
+			       folder, parent_folder, delete_source, &new_folder);
+
+		g_object_unref (G_OBJECT (parent_folder));
+		g_object_unref (G_OBJECT (folder));
+
+		if (!new_folder)
 			goto out;
 
 		/* Get a row reference to the source path because the path
@@ -1010,6 +1071,15 @@ on_drag_data_received (GtkWidget *widget,
 							   child_dest_row,
 							   selection_data)) {
 
+			{
+				GtkTreeIter iter;
+
+				gtk_tree_model_get_iter (dest_model, &iter, child_dest_row);
+				gtk_tree_store_set (GTK_TREE_STORE (dest_model), &iter,
+						    TNY_GTK_FOLDER_STORE_TREE_MODEL_INSTANCE_COLUMN, new_folder, -1);
+				g_object_unref (G_OBJECT (new_folder));
+			}
+
 			source_row = gtk_tree_row_reference_get_path (source_row_reference);
 
 			success = TRUE;
@@ -1023,14 +1093,20 @@ on_drag_data_received (GtkWidget *widget,
 		
 	}
  out:
+	gtk_tree_path_free (dest_row);
 	gtk_tree_path_free (child_dest_row);
 
 	/* Save the new path, will be used by the
 	   drag-data-delete handler */
-	if (success)
+	if (success && delete_source)
 		g_object_set_data (G_OBJECT (source_widget),
 				   ROW_REF_DATA_NAME,
 				   gtk_tree_path_copy (source_row));
+
+	/* Clean dest row */
+	gtk_tree_view_set_drag_dest_row (GTK_TREE_VIEW (widget),
+					 NULL,
+					 GTK_TREE_VIEW_DROP_BEFORE);
 
  finish:
 	gtk_drag_finish (context, success, (success && delete_source), time);
@@ -1076,11 +1152,6 @@ drag_data_delete_cb (GtkWidget      *widget,
 {
 	GtkTreePath *source_row;
 	GtkTreeModel *model_sort, *model;
-
-	/* Clean dest row */
-	gtk_tree_view_set_drag_dest_row (GTK_TREE_VIEW (widget),
-					 NULL,
-					 GTK_TREE_VIEW_DROP_BEFORE);
 
 	model_sort = gtk_tree_view_get_model (GTK_TREE_VIEW (widget));
 	model = gtk_tree_model_sort_get_model (GTK_TREE_MODEL_SORT (model_sort));

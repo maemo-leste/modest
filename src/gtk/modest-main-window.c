@@ -384,8 +384,8 @@ connect_signals (ModestMainWindow *self)
 	/* folder view */
 	g_signal_connect (G_OBJECT(priv->folder_view), "folder_selection_changed",
 			  G_CALLBACK(modest_ui_actions_on_folder_selection_changed), self);
-	g_signal_connect (G_OBJECT(priv->folder_view), "folder_moved",
-			  G_CALLBACK(modest_ui_actions_on_folder_moved), NULL);
+	g_signal_connect (G_OBJECT(priv->folder_view), "folder_xfer",
+			  G_CALLBACK(modest_ui_actions_on_folder_xfer), NULL);
 	g_signal_connect (G_OBJECT(priv->folder_view), "button-press-event",
 			  G_CALLBACK (on_folder_view_button_press_event),self);
 	g_signal_connect (priv->folder_view,"popup-menu",
@@ -414,8 +414,6 @@ connect_signals (ModestMainWindow *self)
 			  G_CALLBACK(modest_ui_actions_on_msg_attachment_clicked), self);
 
 	/* Account store */
-	g_signal_connect (G_OBJECT (modest_runtime_get_account_store()), "accounts_reloaded",
-			  G_CALLBACK (modest_ui_actions_on_accounts_reloaded), self);
 	g_signal_connect (G_OBJECT (modest_runtime_get_account_store()), "password_requested",
 			  G_CALLBACK (modest_ui_actions_on_password_requested), self);
 	
@@ -516,8 +514,6 @@ modest_main_window_new (void)
 	gtk_paned_add2 (GTK_PANED(priv->main_paned), priv->msg_paned);
 	gtk_paned_add1 (GTK_PANED(priv->msg_paned), header_win);
 	gtk_paned_add2 (GTK_PANED(priv->msg_paned), GTK_WIDGET(priv->msg_preview));
-
-	gtk_widget_show (GTK_WIDGET(priv->header_view));
 
 	/* status bar / progress */
 	status_hbox = gtk_hbox_new (FALSE, 0);
