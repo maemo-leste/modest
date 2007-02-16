@@ -48,6 +48,7 @@
 #include <modest-text-utils.h>
 #include <modest-runtime.h>
 #include "modest-folder-view.h"
+#include <modest-dnd.h>
 
 /* 'private'/'protected' functions */
 static void modest_folder_view_class_init  (ModestFolderViewClass *klass);
@@ -106,17 +107,6 @@ static gboolean     on_drag_motion         (GtkWidget      *widget,
 static gint         expand_row_timeout     (gpointer data);
 
 static void         setup_drag_and_drop    (GtkTreeView *self);
-
-enum {
-	TARGET_TREE_ROW,
-};
-
-static const GtkTargetEntry drag_types[] =
-{
-	{ "GTK_TREE_MODEL_ROW", GTK_TARGET_SAME_WIDGET, TARGET_TREE_ROW },
-};
-
-#define ROW_REF_DATA_NAME "row-ref"
 
 enum {
 	FOLDER_SELECTION_CHANGED_SIGNAL,
@@ -983,7 +973,7 @@ on_drag_data_received (GtkWidget *widget,
 								dest_row);
 
 	/* Drags from the header view */
-	if ((target_type == TARGET_TREE_ROW) && (source_widget != widget)) {
+	if ((target_type == FOLDER_ROW) && (source_widget != widget)) {
 		TnyHeader *header;
 		TnyFolder *folder;
 		ModestMailOperationQueue *queue;
@@ -1259,6 +1249,13 @@ on_drag_motion (GtkWidget      *widget,
 	return TRUE;
 }
 
+
+/* Folder view drag types */
+const GtkTargetEntry folder_view_drag_types[] =
+{
+	{ "GTK_TREE_MODEL_ROW", GTK_TARGET_SAME_WIDGET, FOLDER_ROW },
+};
+
 /*
  * This function sets the treeview as a source and a target for dnd
  * events. It also connects all the requirede signals.
@@ -1271,8 +1268,8 @@ setup_drag_and_drop (GtkTreeView *self)
 	   behaviour */
 	gtk_drag_dest_set (GTK_WIDGET (self),
 			   GTK_DEST_DEFAULT_HIGHLIGHT,
-			   drag_types,
-			   G_N_ELEMENTS (drag_types),
+			   folder_view_drag_types,
+			   G_N_ELEMENTS (folder_view_drag_types),
 			   GDK_ACTION_MOVE | GDK_ACTION_COPY);
 
 	gtk_signal_connect(GTK_OBJECT (self),
@@ -1284,8 +1281,8 @@ setup_drag_and_drop (GtkTreeView *self)
 	/* Set up the treeview as a dnd source */
 	gtk_drag_source_set (GTK_WIDGET (self),
 			     GDK_BUTTON1_MASK,
-			     drag_types,
-			     G_N_ELEMENTS (drag_types),
+			     folder_view_drag_types,
+			     G_N_ELEMENTS (folder_view_drag_types),
 			     GDK_ACTION_MOVE | GDK_ACTION_COPY);
 
 	gtk_signal_connect(GTK_OBJECT (self),

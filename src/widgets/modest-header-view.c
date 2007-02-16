@@ -34,6 +34,7 @@
 
 #include <modest-header-view.h>
 #include <modest-header-view-priv.h>
+#include <modest-dnd.h>
 
 #include <modest-marshal.h>
 #include <modest-text-utils.h>
@@ -917,11 +918,6 @@ cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 	}
 }
 
-static const GtkTargetEntry drag_types[] =
-{
-	{ "GTK_TREE_MODEL_ROW", GTK_TARGET_SAME_APP, 0 }
-};
-
 static void
 drag_data_get_cb (GtkWidget *widget, 
 		  GdkDragContext *context, 
@@ -958,8 +954,7 @@ drag_data_delete_cb (GtkWidget      *widget,
 
 	model_sort = gtk_tree_view_get_model (GTK_TREE_VIEW (widget));
 	model = gtk_tree_model_sort_get_model (GTK_TREE_MODEL_SORT (model_sort));
-/* 	source_row = g_object_steal_data (G_OBJECT (widget), ROW_REF_DATA_NAME); */
-	source_row = g_object_steal_data (G_OBJECT (widget), "row-ref");
+	source_row = g_object_steal_data (G_OBJECT (widget), ROW_REF_DATA_NAME);
 
 	/* Delete the source row */
 	gtk_tree_model_get_iter (model, &iter, source_row);
@@ -972,13 +967,19 @@ drag_data_delete_cb (GtkWidget      *widget,
 	gtk_tree_path_free (source_row);
 }
 
+/* Header view drag types */
+const GtkTargetEntry header_view_drag_types[] =
+{
+	{ "GTK_TREE_MODEL_ROW", GTK_TARGET_SAME_APP, HEADER_ROW }
+};
+
 static void
 setup_drag_and_drop (GtkTreeView *self)
 {
 	gtk_drag_source_set (GTK_WIDGET (self),
 			     GDK_BUTTON1_MASK,
-			     drag_types,
-			     G_N_ELEMENTS (drag_types),
+			     header_view_drag_types,
+			     G_N_ELEMENTS (header_view_drag_types),
 			     GDK_ACTION_MOVE | GDK_ACTION_COPY);
 
 	gtk_signal_connect(GTK_OBJECT (self),
