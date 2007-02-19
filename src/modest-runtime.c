@@ -560,26 +560,26 @@ init_stock_icons (void)
 		static GtkStockItem items[] = {
 			{ MODEST_STOCK_MAIL_SEND, "send mail", 0, 0, NULL },
 			{ MODEST_STOCK_NEW_MAIL, "new mail", 0, 0, NULL },
-			{ MODEST_STOCK_SEND_RECEIVE, "send receive", 0, 0, NULL },
+/* 			{ MODEST_STOCK_SEND_RECEIVE, "send receive", 0, 0, NULL }, */
 			{ MODEST_STOCK_REPLY, "reply", 0, 0, NULL },
 			{ MODEST_STOCK_REPLY_ALL, "reply all", 0, 0, NULL },
 			{ MODEST_STOCK_FORWARD, "forward", 0, 0, NULL },
-			{ MODEST_STOCK_DELETE, "delete", 0, 0, NULL },
-			{ MODEST_STOCK_NEXT, "next", 0, 0, NULL },
-			{ MODEST_STOCK_PREV, "prev", 0, 0, NULL },
+/* 			{ MODEST_STOCK_DELETE, "delete", 0, 0, NULL }, */
+/* 			{ MODEST_STOCK_NEXT, "next", 0, 0, NULL }, */
+/* 			{ MODEST_STOCK_PREV, "prev", 0, 0, NULL }, */
 /* 			{ MODEST_STOCK_STOP, "stop", 0, 0, NULL } */
 		};
       
 		static gchar *items_names [] = {
 			MODEST_TOOLBAR_ICON_MAIL_SEND,
-			MODEST_TOOLBAR_ICON_NEW_MAIL,		
+/* 			MODEST_TOOLBAR_ICON_NEW_MAIL,		 */
 			MODEST_TOOLBAR_ICON_SEND_RECEIVE,
 			MODEST_TOOLBAR_ICON_REPLY,	
 			MODEST_TOOLBAR_ICON_REPLY_ALL,
 			MODEST_TOOLBAR_ICON_FORWARD,
-			MODEST_TOOLBAR_ICON_DELETE,
-			MODEST_TOOLBAR_ICON_NEXT,
-			MODEST_TOOLBAR_ICON_PREV,
+/* 			MODEST_TOOLBAR_ICON_DELETE, */
+/* 			MODEST_TOOLBAR_ICON_NEXT, */
+/* 			MODEST_TOOLBAR_ICON_PREV, */
 /* 			MODEST_TOOLBAR_ICON_STOP */
 		};
 

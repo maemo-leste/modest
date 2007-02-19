@@ -67,13 +67,13 @@ static const GtkActionEntry modest_action_entries [] = {
 	/* VIEW */
 	{ "ToggleView",        GTK_STOCK_CDROM,   N_("_Toggle view"), NULL,        N_("Toggle the list view"),  G_CALLBACK(modest_ui_actions_toggle_view) },
 	/* ACTIONS */
-	{ "ActionsNew",         MODEST_STOCK_NEW_MAIL, N_("_New Message"),   NULL, N_("Compose a new message"), G_CALLBACK (modest_ui_actions_on_new_msg) },
+	{ "ActionsNew",         GTK_STOCK_NEW, N_("_New Message"),   NULL, N_("Compose a new message"), G_CALLBACK (modest_ui_actions_on_new_msg) },
 	{ "ActionsReply",       MODEST_STOCK_REPLY, N_("_Reply"),         NULL, N_("Reply to a message"), G_CALLBACK (modest_ui_actions_on_reply) },
 	{ "ActionsReplyAll",    MODEST_STOCK_REPLY_ALL, N_("Reply to all"),   NULL, N_("Reply to all"), G_CALLBACK (modest_ui_actions_on_reply_all) },
 	{ "ActionsForward",     MODEST_STOCK_FORWARD, N_("_Forward"),       NULL, N_("Forward a message"), G_CALLBACK (modest_ui_actions_on_forward) },
 	{ "ActionsBounce",      NULL, N_("_Bounce"),        NULL, N_("Bounce a message"),          NULL },
-	{ "ActionsSendReceive", MODEST_STOCK_SEND_RECEIVE, N_("Send/Receive"),   NULL, N_("Send and receive messages"), NULL },
-	{ "ActionsDelete",      MODEST_STOCK_DELETE, N_("Delete message"), NULL, N_("Delete messages"), G_CALLBACK (modest_ui_actions_on_delete) },
+	{ "ActionsSendReceive", GTK_STOCK_REFRESH, N_("Send/Receive"),   NULL, N_("Send and receive messages"), NULL },
+	{ "ActionsDelete",      GTK_STOCK_DELETE, N_("Delete message"), NULL, N_("Delete messages"), G_CALLBACK (modest_ui_actions_on_delete) },
 	{ "ActionsFolderNew",   NULL, N_("New Folder"),   NULL, N_("Create a new folder"), G_CALLBACK (modest_ui_actions_on_new_folder) },
 	{ "ActionsFolderDelete",   NULL, N_("Delete Folder"),   NULL, N_("Delete the folder"), G_CALLBACK (modest_ui_actions_on_delete_folder) },
 	{ "ActionsFolderRename",   NULL, N_("Rename Folder"),   NULL, N_("Rename the folder"), G_CALLBACK (modest_ui_actions_on_rename_folder) },
@@ -81,8 +81,8 @@ static const GtkActionEntry modest_action_entries [] = {
 
 
 	/* GOTO */
-	{ "GotoPrevious", MODEST_STOCK_PREV, N_("Previous"), NULL, N_("Go to previous message"), G_CALLBACK (modest_ui_actions_on_prev) },
-	{ "GotoNext",     MODEST_STOCK_NEXT, N_("Next"),     NULL, N_("Go to next message"), G_CALLBACK (modest_ui_actions_on_next) },
+	{ "GotoPrevious", GTK_STOCK_GO_BACK, N_("Previous"), NULL, N_("Go to previous message"), G_CALLBACK (modest_ui_actions_on_prev) },
+	{ "GotoNext",     GTK_STOCK_GO_FORWARD, N_("Next"),     NULL, N_("Go to next message"), G_CALLBACK (modest_ui_actions_on_next) },
 
 	/* OPTIONS */
 	{ "OptionsAccounts",  NULL, N_("_Accounts"), NULL, N_("Manage accounts"), G_CALLBACK (modest_ui_actions_on_accounts) },
