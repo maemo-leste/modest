@@ -781,8 +781,15 @@ transfer_msgs_cb (TnyFolder *folder, GError **err, gpointer user_data)
 	ModestMailOperationPrivate *priv;
 
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(user_data);
-	priv->done = 1;
-	priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
+
+	if (*err) {
+		priv->error = g_error_copy (*err);
+		priv->done = 0;
+		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
+	} else {
+		priv->done = 1;
+		priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
+	}
 
 	g_signal_emit (G_OBJECT (user_data), signals[PROGRESS_CHANGED_SIGNAL], 0, NULL);
 }
@@ -815,7 +822,7 @@ modest_mail_operation_xfer_msg (ModestMailOperation *self,
 
 	/* Free */
 	g_object_unref (headers);
-	g_object_unref (folder);
+	g_object_unref (src_folder);
 
 	return TRUE;
 }

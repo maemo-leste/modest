@@ -608,6 +608,8 @@ on_refresh_folder (TnyFolder   *folder,
 	if (cancelled) {
 		GtkTreeSelection *selection;
 
+		g_warning ("Operation_cancelled %s\n", (*error) ? (*error)->message : "unknown");
+
 		selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (user_data));
 		gtk_tree_selection_unselect_all (selection);
 		return;
@@ -693,7 +695,7 @@ modest_header_view_set_folder (ModestHeaderView *self, TnyFolder *folder)
 	priv->folder = folder;
 
 	if (folder) {
-		g_object_ref (priv->folder);	
+		g_object_ref (priv->folder);
 
 		tny_folder_refresh_async (folder,
 					  on_refresh_folder,

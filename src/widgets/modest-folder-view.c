@@ -731,58 +731,6 @@ get_model_iter (ModestFolderView *self,
 	return TRUE;
 }
 
-gboolean 
-modest_folder_view_rename (ModestFolderView *self)
-{
-	GtkTreeModel *model;
-	GtkTreeIter iter;
-	ModestFolderViewPrivate *priv;
-
-	g_return_val_if_fail (MODEST_IS_FOLDER_VIEW (self), FALSE);
-
-	priv = MODEST_FOLDER_VIEW_GET_PRIVATE(self);
-
-	if (!get_model_iter (self, &model, &iter))
-		return FALSE;
-
-	/* Set new name */
-	gtk_tree_store_set (GTK_TREE_STORE (model), &iter,
-			    TNY_GTK_FOLDER_STORE_TREE_MODEL_NAME_COLUMN,
-			    tny_folder_get_name (priv->cur_folder), -1);
-
-	/* Invalidate selection */
-	g_signal_emit (G_OBJECT(self), signals[FOLDER_SELECTION_CHANGED_SIGNAL], 0,
-		       priv->cur_folder, TRUE);
-
-	return TRUE;
-}
-
-gboolean 
-modest_folder_view_add_subfolder (ModestFolderView *self, TnyFolder *folder)
-{
-	GtkTreeModel *model;
-	GtkTreeIter iter, child;
-
-	g_return_val_if_fail (MODEST_IS_FOLDER_VIEW (self), FALSE);
-
-	if (!get_model_iter (self, &model, &iter))
-		return FALSE;
-
-	/* Append a new child to the folder */
-	gtk_tree_store_append (GTK_TREE_STORE (model), &child, &iter);
-	gtk_tree_store_set (GTK_TREE_STORE (model), &child,
-			    TNY_GTK_FOLDER_STORE_TREE_MODEL_NAME_COLUMN,
-			    tny_folder_get_name (TNY_FOLDER (folder)),
-			    TNY_GTK_FOLDER_STORE_TREE_MODEL_UNREAD_COLUMN,
-			    tny_folder_get_unread_count (TNY_FOLDER (folder)),
-			    TNY_GTK_FOLDER_STORE_TREE_MODEL_TYPE_COLUMN,
-			    tny_folder_get_folder_type (TNY_FOLDER (folder)),
-			    TNY_GTK_FOLDER_STORE_TREE_MODEL_INSTANCE_COLUMN,
-			    folder, -1);
-
-	return TRUE;
-}
-
 static gint
 cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 	  gpointer user_data)
@@ -914,8 +862,13 @@ on_progress_changed (ModestMailOperation *mail_op, gpointer user_data)
 	helper = (DndHelper *) user_data;
 
 	if (modest_mail_operation_get_status (mail_op) == 
-	    MODEST_MAIL_OPERATION_STATUS_SUCCESS)
+	    MODEST_MAIL_OPERATION_STATUS_SUCCESS) {
 		success = TRUE;
+	} else {
+		const GError *error;
+		error = modest_mail_operation_get_error (mail_op);
+		g_warning ("Error transferring messages: %s\n", error->message);
+	}
 
 	/* Remove the mail operation */	
 	queue = modest_runtime_get_mail_operation_queue ();
@@ -968,14 +921,15 @@ drag_and_drop_from_header_view (GtkTreeModel *source_model,
 	started = modest_mail_operation_xfer_msg (mail_op, header,
 						  folder, helper->delete_source);
 	if (started) {
-		g_signal_connect (G_OBJECT (mail_op), "progress_changed", 
+		g_signal_connect (G_OBJECT (mail_op), "progress_changed",
 				  G_CALLBACK (on_progress_changed), helper);
 		modest_mail_operation_queue_add (queue, mail_op);
 	} else {
 		const GError *error;
 		error = modest_mail_operation_get_error (mail_op);
-		g_warning ("Error trying to transfer messages: %s\n",
-			   error->message);
+		if (error)
+			g_warning ("Error trying to transfer messages: %s\n",
+				   error->message);
 
 		g_slice_free (DndHelper, helper);
 	}
@@ -1094,7 +1048,7 @@ on_drag_data_received (GtkWidget *widget,
 {
 	GtkWidget *source_widget;
 	GtkTreeModel *model_sort, *dest_model, *source_model;
- 	GtkTreePath *source_row, *dest_row;
+ 	GtkTreePath *source_row, *dest_row, *child_dest_row;
 	GtkTreeViewDropPosition pos;
 	gboolean success = FALSE, delete_source = FALSE;
 	DndHelper *helper;
@@ -1112,17 +1066,17 @@ on_drag_data_received (GtkWidget *widget,
 
 	/* Get the models */
 	source_widget = gtk_drag_get_source_widget (context);
-	model_sort = gtk_tree_view_get_model (GTK_TREE_VIEW (widget));
 	gtk_tree_get_row_drag_data (selection_data,
 				    &source_model,
 				    &source_row);
 
 	/* Select the destination model */
-	if (source_widget == widget)
+	if (source_widget == widget) {
 		dest_model = source_model;
-	else
+	} else {
+		model_sort = gtk_tree_view_get_model (GTK_TREE_VIEW (widget));
 		dest_model = gtk_tree_model_sort_get_model (GTK_TREE_MODEL_SORT (model_sort));
-
+	}
 
 	/* Get the path to the destination row. Can not call
 	   gtk_tree_view_get_drag_dest_row() because the source row
@@ -1136,7 +1090,6 @@ on_drag_data_received (GtkWidget *widget,
 
 	/* Create the helper */
 	helper = g_slice_new0 (DndHelper);
-/* 	helper->selection_data = selection_data; */
 	helper->delete_source = delete_source;
 	helper->source_widget = source_widget;
 	helper->dest_widget = widget;
@@ -1144,32 +1097,29 @@ on_drag_data_received (GtkWidget *widget,
 	helper->context = context;
 	helper->time = time;
 
+	/* Get path from the unsorted model */
+	child_dest_row = 
+		gtk_tree_model_sort_convert_path_to_child_path (GTK_TREE_MODEL_SORT (model_sort),
+								dest_row);
+	gtk_tree_path_free (dest_row);
+
 	/* Drags from the header view */
-	if ((target_type == FOLDER_ROW) && (source_widget != widget)) {
+	if (source_widget != widget) {
 
 		drag_and_drop_from_header_view (source_model,
 						dest_model,
-						dest_row,
+						child_dest_row,
 						helper);
-
-		gtk_tree_path_free (dest_row);
-
 	} else {
-		GtkTreePath *child_dest_row;
 
-		/* Get path from the unsorted model */
-		child_dest_row = 
-			gtk_tree_model_sort_convert_path_to_child_path (GTK_TREE_MODEL_SORT (model_sort),
-									dest_row);
-		gtk_tree_path_free (dest_row);
 
 		drag_and_drop_from_folder_view (source_model,
 						dest_model,
 						child_dest_row,
 						selection_data, 
 						helper);
-		gtk_tree_path_free (child_dest_row);
 	}
+	gtk_tree_path_free (child_dest_row);
 }
 
 /*
@@ -1187,14 +1137,16 @@ drag_drop_cb (GtkWidget      *widget,
 	      guint           time,
 	      gpointer        user_data) 
 {
+	gpointer target;
+
 	if (!context->targets)
 		return FALSE;
 
+	/* Check if we're dragging a folder row */
+	target = gtk_drag_dest_find_target (widget, context, NULL);
+
 	/* Request the data from the source. */
-	gtk_drag_get_data(widget, 
-			  context, 
-			  GDK_POINTER_TO_ATOM (context->targets->data), 
-			  time);
+	gtk_drag_get_data(widget, context, target, time);
 
     return TRUE;
 }
@@ -1324,6 +1276,7 @@ on_drag_motion (GtkWidget      *widget,
 const GtkTargetEntry folder_view_drag_types[] =
 {
 	{ "GTK_TREE_MODEL_ROW", GTK_TARGET_SAME_WIDGET, FOLDER_ROW },
+	{ "GTK_TREE_MODEL_ROW", GTK_TARGET_SAME_APP, HEADER_ROW }
 };
 
 /*

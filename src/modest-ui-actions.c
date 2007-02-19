@@ -1052,13 +1052,12 @@ modest_ui_actions_on_new_folder (GtkWidget *widget, ModestMainWindow *main_windo
 									  TNY_FOLDER_STORE (parent_folder),
 									  (const gchar *) folder_name);
 			if (new_folder) {
-				/* TODO: tinymail should do this. 
-				   Update view */
-				modest_folder_view_add_subfolder (MODEST_FOLDER_VIEW(folder_view),
-								  new_folder);
-
-				/* Free new folder */
 				g_object_unref (new_folder);
+			} else {
+				const GError *error;
+				error = modest_mail_operation_get_error (mail_op);
+				if (error)
+					g_warning ("Error adding a subfolder: %s\n", error->message);
 			}
 			g_object_unref (mail_op);
 		}
@@ -1097,11 +1096,7 @@ modest_ui_actions_on_rename_folder (GtkWidget *widget,
 							     (const gchar *) folder_name);
 
 			error = modest_mail_operation_get_error (mail_op);
-			if (!error)
-				/* TODO: tinymail should do this. 
-				   Update view */
-				modest_folder_view_rename (MODEST_FOLDER_VIEW(folder_view));
-			else
+			if (error)
 				/* TODO: notify error ? */
 				g_warning ("Could not rename a folder: %s\n", error->message);
 

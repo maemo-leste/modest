@@ -107,9 +107,6 @@ void          modest_folder_view_set_title       (ModestFolderView *self,
 TnyFolder*    modest_folder_view_get_selected    (ModestFolderView *self);
 
 
-gboolean      modest_folder_view_rename (ModestFolderView *self);
-gboolean      modest_folder_view_add_subfolder (ModestFolderView *self, TnyFolder *folder);
-
 /**
  * modest_folder_view_update_model:
  * @self: a #ModestFolderView
