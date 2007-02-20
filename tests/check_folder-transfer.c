@@ -168,14 +168,9 @@ main (int argc, char **argv)
 
 	mail_op = modest_mail_operation_new ();
 		
-	if (move)
-		modest_mail_operation_move_folder (mail_op, 
-						   folder_src, 
-						   TNY_FOLDER_STORE (folder_dst));
-	else
-		modest_mail_operation_copy_folder (mail_op, 
-						   folder_src, 
-						   TNY_FOLDER_STORE (folder_dst));
+	modest_mail_operation_xfer_folder (mail_op, 
+					   folder_src, 
+					   TNY_FOLDER_STORE (folder_dst), move);
 	
 	g_object_unref (G_OBJECT (src_headers));
 	g_object_unref (G_OBJECT (mail_op));
