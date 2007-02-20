@@ -87,6 +87,7 @@ gboolean modest_runtime_init_ui (gint argc, gchar** argv);
  */
 gboolean modest_runtime_uninit (void);
 
+	
 
 /**
  * modest_runtime_get_debug_flags 
@@ -197,8 +198,9 @@ ModestTnySendQueue* modest_runtime_get_send_queue        (TnyTransportAccount *a
 
 /**
  * modest_runtime_verify_object_death
- * @obj: some (GObject) ptr
- *
+ * @OBJ: some (GObject) ptr
+ * @NAME: name of @OBJ
+ * 
  * macro to check whether @obj is 'dead', ie, it is no longer a valid GObject. If
  * not, a g_warning will be issued on stderr. NOTE: this is only active
  * when MODEST_DEBUG contains "debug-objects".
@@ -212,6 +214,30 @@ ModestTnySendQueue* modest_runtime_get_send_queue        (TnyTransportAccount *a
 					   #OBJ ") still holds a ref count of %d", \
 					   __FILE__,__LINE__,name, G_OBJECT(OBJ)->ref_count); \
 	} while (0)
+
+
+
+/**
+ * modest_runtime_not_implemented
+ * @WIN: the parent GtkWindow, or NULL
+ *
+ * give a not-implemented-yet warning popup or g_warning
+ *
+ ***/
+#define modest_runtime_not_implemented(WIN)    \
+	do {				       \
+		if (gtk_main_level() > 0) {    \
+			GtkWidget *popup;      \
+			popup = gtk_message_dialog_new (WIN,\
+							GTK_DIALOG_MODAL|GTK_DIALOG_DESTROY_WITH_PARENT,\
+							GTK_MESSAGE_WARNING, \
+							GTK_BUTTONS_OK,	\
+							"Not yet implemented");\
+			gtk_dialog_run (GTK_DIALOG(popup));		\
+			gtk_widget_destroy (popup);			\
+		} else							\
+			g_warning ("%s:%d: Not yet implemented",__FILE__,__LINE__); \
+	} while (0)							\
 
 
 G_END_DECLS

@@ -59,10 +59,10 @@ static void     init_debug_logging (void);
 
 static ModestSingletons *_singletons = NULL;
 
+
 /*
  * defaults for the column headers
  */
-
 typedef struct {
 	ModestHeaderViewColumn col;
 	guint                  width;
@@ -187,8 +187,7 @@ modest_runtime_uninit (void)
 		g_object_unref (G_OBJECT(_singletons));
 		_singletons = NULL;
 	}
-	if (G_IS_OBJECT(_singletons)) 
-		g_warning ("BUG: _singletons is still alive\n");
+	modest_runtime_verify_object_death (_singletons, "_singletons");
 	
 	return TRUE;
 }

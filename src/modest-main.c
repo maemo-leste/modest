@@ -138,7 +138,7 @@ main (int argc, char *argv[])
 			g_printerr ("modest: no account has been defined yet\n");
 			retval = MODEST_ERR_CONF;
 			goto cleanup;
-		}
+		}	
 		retval = send_mail (account_or_default,
 				    mailto, cc, bcc, subject, body);
 	}
@@ -258,6 +258,11 @@ send_mail (const gchar* account_name,
 	
 	g_return_val_if_fail (account_name, MODEST_ERR_SEND);
 
+	////////////////////// FIXME ////////
+	modest_runtime_not_implemented (NULL);
+	return MODEST_ERR_NONE;
+	//////////////////////////////////////
+	
 	account = TNY_TRANSPORT_ACCOUNT (modest_tny_account_store_get_tny_account_by_account
 					 (modest_runtime_get_account_store(), account_name,
 					  TNY_ACCOUNT_TYPE_TRANSPORT));

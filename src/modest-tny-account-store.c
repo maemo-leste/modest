@@ -173,6 +173,8 @@ modest_tny_account_store_instance_init (ModestTnyAccountStore *obj)
 							      g_free, g_free);
 }
 
+
+
 static void
 account_list_free (GSList *accounts)
 {
@@ -200,6 +202,8 @@ on_account_removed (ModestAccountMgr *acc_mgr, const gchar *account, gboolean se
 	/* FIXME: make this more finegrained; changes do not really affect _all_
 	 * accounts, and some do not affect tny accounts at all (such as 'last_update')
 	 */
+	
+	
 	account_list_free (priv->store_accounts);
 	priv->store_accounts = NULL;
 	

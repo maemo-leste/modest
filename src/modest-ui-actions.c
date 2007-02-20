@@ -276,10 +276,8 @@ cleanup:
 void
 modest_ui_actions_on_open (GtkWidget *widget, ModestWindow *win)
 {
-	/* FIXME */
-	
+	modest_runtime_not_implemented (GTK_WINDOW(win)); /* FIXME */
 }
-
 
 
 
@@ -402,26 +400,38 @@ reply_forward (GtkWidget *widget, ReplyForwardAction action, ModestWindow *win)
 
 	rf_helper->account_name = g_strdup (modest_window_get_active_account (win));
 	if (!rf_helper->account_name)
-		rf_helper->account_name = modest_account_mgr_get_default_account (modest_runtime_get_account_mgr());
+		rf_helper->account_name =
+			modest_account_mgr_get_default_account (modest_runtime_get_account_mgr());
 
 	helper = g_slice_new0 (GetMsgAsyncHelper);
 	helper->window = win;
 	helper->func = reply_forward_func;
 	helper->iter = tny_list_create_iterator (header_list);
 	helper->user_data = rf_helper;
-	
-	header = TNY_HEADER (tny_iterator_get_current (helper->iter));
-	folder = tny_header_get_folder (header);
-	if (folder) {
-		/* The callback will call it per each header */
-		tny_folder_get_msg_async (folder, header, get_msg_cb, helper);
-		g_object_unref (G_OBJECT (folder));
-	} else
-		g_printerr ("modest: no folder for header\n");
-	
-	/* Clean */
-	g_object_unref (G_OBJECT (header));
+
+	if (MODEST_IS_MSG_VIEW_WINDOW(win)) {
+		TnyMsg *msg;
+		msg = modest_msg_view_window_get_message(MODEST_MSG_VIEW_WINDOW(win));
+		if (!msg) {
+			g_printerr ("modest: no message found\n");
+			return;
+		} else
+			reply_forward_func (msg, helper);
+	} else {
+		header = TNY_HEADER (tny_iterator_get_current (helper->iter));
+		folder = tny_header_get_folder (header);
+		if (folder) {
+			/* The callback will call it per each header */
+			tny_folder_get_msg_async (folder, header, get_msg_cb, helper);
+			g_object_unref (G_OBJECT (folder));
+		} else 
+			g_printerr ("modest: no folder for header\n");
+		
+		/* Clean */
+		g_object_unref (G_OBJECT (header));
+	}
 }
+
 
 void
 modest_ui_actions_on_reply (GtkWidget *widget, ModestWindow *win)
@@ -812,7 +822,7 @@ statusbar_push (ModestMainWindow *main_window, guint context_id, const gchar *ms
 	if (status_bar) {
 		gtk_widget_show (status_bar);
 		gtk_statusbar_push (GTK_STATUSBAR(status_bar), 0, msg);
-		g_timeout_add (1500, (GSourceFunc)statusbar_clean, status_bar);
+		g_timeout_add (2500, (GSourceFunc)statusbar_clean, status_bar);
 	}
 
 }

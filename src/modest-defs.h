@@ -90,4 +90,7 @@
 #define MODEST_ACCOUNT_PREFERRED_CNX     "preferred_cnx"     /* string */
 #define MODEST_ACCOUNT_OPTIONS		 "options"	     /* list */
 
+
+
+
 #endif /*__MODEST_DEFS_H__*/
