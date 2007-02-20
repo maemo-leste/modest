@@ -30,9 +30,26 @@ struct _ModestAccountViewWindowClass {
 	/* void (* my_event) (ModestAccountViewWindow* obj); */
 };
 
-/* member functions */
+/**
+ * modest_account_view_window_get_type
+ *
+ * Gets the #GType for the account view window class
+ * 
+ * Returns: the #GType
+ **/
 GType        modest_account_view_window_get_type    (void) G_GNUC_CONST;
 
+
+
+
+/**
+ * modest_account_view_window_new:
+ * @account_view: a #ModestAccountView
+ * 
+ * Create a new acccount view window
+ * 
+ * Returns: a new account view window, or NULL in case of error
+ **/
 GtkWidget*   modest_account_view_window_new         (void);
 
 G_END_DECLS

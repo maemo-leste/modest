@@ -48,19 +48,33 @@ typedef struct _ModestAccountViewClass ModestAccountViewClass;
 
 struct _ModestAccountView {
 	 GtkTreeView parent;
-	/* insert public members, if any */
 };
 
 struct _ModestAccountViewClass {
 	GtkTreeViewClass parent_class;
-	/* insert signal callback declarations, eg. */
-	/* void (* my_event) (ModestAccountView* obj); */
 };
 
-/* member functions */
+
+/**
+ * modest_account_view_get_type
+ *
+ * Gets the #GType for the account view class
+ * 
+ * Returns: the #GType
+ **/
 GType        modest_account_view_get_type    (void) G_GNUC_CONST;
 
+
+/**
+ * modest_account_view_new:
+ * @account_view: a #ModestAccountView
+ * 
+ * Create a new acccount view widget = ie, a list with accounts
+ * 
+ * Returns: a new account view widget, or NULL in case of error
+ **/
 ModestAccountView*   modest_account_view_new         (ModestAccountMgr *account_mgr);
+
 
 /**
  * modest_account_view_get_selected_account:
