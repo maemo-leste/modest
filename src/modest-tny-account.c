@@ -220,6 +220,9 @@ modest_tny_account_new_from_account (ModestAccountMgr *account_mgr, const gchar 
 	if (account_data->display_name)
 		tny_account_set_name (tny_account, account_data->display_name); 
 
+	g_object_set_data_full (G_OBJECT(tny_account), "modest_account",
+				(gpointer*)account_name, g_free);
+	
 	modest_account_mgr_free_account_data (account_mgr, account_data);
 	return tny_account;
 }
@@ -252,6 +255,9 @@ modest_tny_account_new_for_local_folders (ModestAccountMgr *account_mgr, TnySess
         tny_account_set_forget_pass_func (TNY_ACCOUNT(tny_account), forget_pass_dummy);
 	tny_account_set_pass_func (TNY_ACCOUNT(tny_account), get_pass_dummy);
 
+	g_object_set_data (G_OBJECT(tny_account), "modest_account",
+			   (gpointer*)MODEST_LOCAL_FOLDERS_ACCOUNT_ID);
+	
 	camel_url_free (url);
 	g_free (maildir);
 	g_free (url_string);
