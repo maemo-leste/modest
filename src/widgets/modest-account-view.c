@@ -123,6 +123,8 @@ modest_account_view_init (ModestAccountView *obj)
 	priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE(obj);
 	
 	priv->account_mgr = NULL; 
+	priv->sig1 = 0;
+	priv->sig2 = 0;
 }
 
 static void
@@ -133,6 +135,12 @@ modest_account_view_finalize (GObject *obj)
 	priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE(obj);
 
 	if (priv->account_mgr) {
+		if (priv->sig1)
+			g_signal_handler_disconnect (priv->account_mgr, priv->sig1);
+
+		if (priv->sig2)
+			g_signal_handler_disconnect (priv->account_mgr, priv->sig2);
+
 		g_object_unref (G_OBJECT(priv->account_mgr));
 		priv->account_mgr = NULL; 
 	}
@@ -315,9 +323,9 @@ init_view (ModestAccountView *self)
 	gtk_tree_view_column_set_cell_data_func(column, text_renderer, bold_if_default_cell_data,
 						NULL, NULL);
 
-	g_signal_connect (G_OBJECT(priv->account_mgr),"account_removed",
+	priv->sig1 = g_signal_connect (G_OBJECT(priv->account_mgr),"account_removed",
 				       G_CALLBACK(on_account_removed), self);
-	g_signal_connect (G_OBJECT(priv->account_mgr), "account_changed",
+	priv->sig2 = g_signal_connect (G_OBJECT(priv->account_mgr), "account_changed",
 				       G_CALLBACK(on_account_changed), self);
 }
 
@@ -334,13 +342,13 @@ modest_account_view_new (ModestAccountMgr *account_mgr)
 	obj  = g_object_new(MODEST_TYPE_ACCOUNT_VIEW, NULL);
 	priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE(obj);
 	
-	g_object_ref (G_OBJECT(account_mgr));
+	g_object_ref (G_OBJECT (account_mgr));
 	priv->account_mgr = account_mgr;
 
 	init_view (MODEST_ACCOUNT_VIEW (obj));
-	update_account_view (account_mgr, MODEST_ACCOUNT_VIEW(obj));
+	update_account_view (account_mgr, MODEST_ACCOUNT_VIEW (obj));
 	
-	return MODEST_ACCOUNT_VIEW(obj);
+	return MODEST_ACCOUNT_VIEW (obj);
 }
 
 gchar *
