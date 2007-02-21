@@ -71,7 +71,6 @@ static const GtkActionEntry modest_action_entries [] = {
 	{ "EditDelete",      NULL,      N_("_Delete"),       NULL,	  NULL, NULL },
 	{ "EditSelect",      NULL, 	N_("Select..."),     NULL,	  NULL, NULL },   /* submenu */
 	{ "EditMoveTo",      NULL, 	N_("Move to..."),    NULL,	  NULL, NULL },
-
 	
 	/* View */
 	{ "ViewSort",            NULL,        N_("Sort..."),     NULL,      NULL,  NULL },
@@ -80,7 +79,6 @@ static const GtkActionEntry modest_action_entries [] = {
 	{ "ViewDetails",         NULL,        N_("Details"),     NULL,     NULL,  NULL },
 	{ "ViewThumbnails",      NULL,        N_("Thumbnails"),  NULL,     NULL,  NULL },
 	{ "ViewShowToolbar",     NULL,        N_("Show toolbar"), NULL,   NULL,  NULL },    /* submenu */
-
 		
 	/* Folders */
 	{ "FoldersNew",          NULL,       N_("New folder"),       NULL, NULL, G_CALLBACK (modest_ui_actions_on_new_folder) },
@@ -90,9 +88,8 @@ static const GtkActionEntry modest_action_entries [] = {
 	{ "FoldersRename",       NULL,       N_("Rename"),           NULL, NULL, G_CALLBACK (modest_ui_actions_on_rename_folder) },
 	{ "FoldersMoveToTrash",  NULL,       N_("Move to trash"),    NULL, NULL, G_CALLBACK (modest_ui_actions_on_move_folder_to_trash_folder) },
 
-	
 	/* Accounts */
-	{ "AccountsNew",          NULL,    N_("_New account..."),	      NULL, NULL,  NULL },
+	{ "AccountsNew",          NULL,     N_("_New account..."),	      NULL, NULL,  NULL },
 	{ "AccountsManage",        NULL,    N_("Manage..."),                  NULL, NULL,  G_CALLBACK (modest_ui_actions_on_accounts) },
 	{ "AccountsConfigureSMTP", NULL,    N_("Configure SMTP servers..."),  NULL, NULL,  NULL },
 	
@@ -116,7 +113,7 @@ static const GtkActionEntry modest_action_entries [] = {
 	{ "ToolbarMessageReply",      MODEST_STOCK_REPLY,     N_("Reply a message"),       NULL, NULL,  G_CALLBACK (modest_ui_actions_on_reply) },
 	{ "ToolbarMessageReplyAll",   MODEST_STOCK_REPLY_ALL,     N_("Reply to all"),          NULL, NULL,  G_CALLBACK (modest_ui_actions_on_reply_all) },
 	{ "ToolbarMessageForward",    MODEST_STOCK_FORWARD,     N_("Forward a message"),     NULL, NULL,  G_CALLBACK (modest_ui_actions_on_forward) },
-	{ "ToolbarSendReceive",       MODEST_STOCK_SEND_RECEIVE,   N_("Send & receive"),        NULL, NULL,  G_CALLBACK (modest_ui_actions_on_forward) },
+	{ "ToolbarSendReceive",       MODEST_STOCK_SEND_RECEIVE,   N_("Send & receive"),        NULL, NULL,  G_CALLBACK (modest_ui_actions_on_send_receive) },
 	{ "ToolbarToggleView",        GTK_STOCK_CDROM,      N_("Toggle view"),           NULL, NULL,  G_CALLBACK (modest_ui_actions_toggle_view) },
 	{ "ToolbarDeleteMessage",     GTK_STOCK_DELETE,     N_("Delete message"),        NULL, NULL,  G_CALLBACK (modest_ui_actions_on_delete) },
 };

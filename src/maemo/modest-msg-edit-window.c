@@ -140,7 +140,6 @@ save_settings (ModestMsgEditWindow *self)
 static void
 restore_settings (ModestMsgEditWindow *self)
 {
-
 	modest_widget_memory_restore (modest_runtime_get_conf(),
 				      G_OBJECT(self), "modest-edit-msg-window");
 }
@@ -186,13 +185,12 @@ init_window (ModestMsgEditWindow *obj)
 	GtkWidget *main_vbox;
 	ModestMsgEditWindowPrivate *priv;
 	ModestPairList *protos;
-	
+
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE(obj);
 
 	to_button     = gtk_button_new_with_label (_("To..."));
 	cc_button     = gtk_button_new_with_label (_("Cc..."));
 	bcc_button    = gtk_button_new_with_label (_("Bcc..."));
-
 		
 	protos = get_transports ();
  	priv->from_field    = modest_combo_box_new (protos, g_str_equal);
@@ -227,6 +225,12 @@ init_window (ModestMsgEditWindow *obj)
 	gtk_box_pack_start (GTK_BOX(main_vbox), priv->msg_body, TRUE, TRUE, 6);
 
 	gtk_widget_show_all (GTK_WIDGET(main_vbox));
+	
+	if (!modest_conf_get_bool(modest_runtime_get_conf(), MODEST_CONF_SHOW_CC, NULL))
+		gtk_widget_hide (priv->cc_field);
+	if (!modest_conf_get_bool(modest_runtime_get_conf(), MODEST_CONF_SHOW_BCC, NULL))
+		gtk_widget_hide (priv->bcc_field);
+
 	gtk_container_add (GTK_CONTAINER(obj), main_vbox);
 }
 	
@@ -314,6 +318,8 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg)
 }
 
 
+	
+
 ModestWindow*
 modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name)
 {
@@ -362,15 +368,20 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name)
 	parent_priv->toolbar = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar");
 	hildon_window_add_toolbar (HILDON_WINDOW (obj), GTK_TOOLBAR (parent_priv->toolbar));
 
+	/* should we hide the toolbar? */
+	if (!modest_conf_get_bool (modest_runtime_get_conf (), MODEST_CONF_SHOW_TOOLBAR, NULL))
+		gtk_widget_hide (parent_priv->toolbar);
+
+	
 	/* Menubar */
 	parent_priv->menubar = menubar_to_menu (parent_priv->ui_manager);
 	hildon_window_set_menu (HILDON_WINDOW (obj), GTK_MENU (parent_priv->menubar));
 
 	/* Init window */
 	init_window (MODEST_MSG_EDIT_WINDOW(obj));
-
-	restore_settings (MODEST_MSG_EDIT_WINDOW(obj));
 	
+	restore_settings (MODEST_MSG_EDIT_WINDOW(obj));
+		
 	gtk_window_set_title (GTK_WINDOW(obj), "Modest");
 	gtk_window_set_icon_from_file (GTK_WINDOW(obj), MODEST_APP_ICON, NULL);
 
@@ -385,7 +396,7 @@ MsgData *
 modest_msg_edit_window_get_msg_data (ModestMsgEditWindow *edit_window)
 {
 	MsgData *data;
-	ModestAccountData *account_data;
+	const gchar *account_name;
 	GtkTextBuffer *buf;
 	GtkTextIter b, e;
 	ModestMsgEditWindowPrivate *priv;
@@ -394,13 +405,16 @@ modest_msg_edit_window_get_msg_data (ModestMsgEditWindow *edit_window)
 
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (edit_window);
 									
-	account_data = modest_combo_box_get_active_id (MODEST_COMBO_BOX (priv->from_field));
+	account_name = modest_combo_box_get_active_id (MODEST_COMBO_BOX (priv->from_field));
+	g_return_val_if_fail (account_name, NULL);
+	
 	buf = gtk_text_view_get_buffer (GTK_TEXT_VIEW (priv->msg_body));	
 	gtk_text_buffer_get_bounds (buf, &b, &e);
-
+	
 	/* don't free these (except from) */
 	data = g_slice_new0 (MsgData);
-	data->from    =  g_strdup_printf ("%s <%s>", account_data->fullname, account_data->email) ;
+	data->from    =  modest_account_mgr_get_from_string (modest_runtime_get_account_mgr(),
+							     account_name);
 	data->to      =  (gchar*) gtk_entry_get_text (GTK_ENTRY(priv->to_field));
 	data->cc      =  (gchar*) gtk_entry_get_text (GTK_ENTRY(priv->cc_field));
 	data->bcc     =  (gchar*) gtk_entry_get_text (GTK_ENTRY(priv->bcc_field));

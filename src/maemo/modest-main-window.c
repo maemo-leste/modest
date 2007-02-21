@@ -286,9 +286,6 @@ get_toolbar (ModestMainWindow *self)
 	
 	/* Toolbar */
 	toolbar       = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar");
-
-	gtk_progress_bar_set_text (GTK_PROGRESS_BAR(priv->progress_bar), "Connecting...");
-
 	progress_box        = gtk_hbox_new (FALSE, HILDON_MARGIN_DEFAULT);
 	progress_alignment  = gtk_alignment_new (0.5, 0.5, 1, 0);
 	
@@ -306,7 +303,6 @@ get_toolbar (ModestMainWindow *self)
 	stop_icon = gtk_image_new_from_icon_name("qgn_toolb_gene_stop", GTK_ICON_SIZE_BUTTON);
 	gtk_toolbar_insert (GTK_TOOLBAR(toolbar), gtk_tool_button_new(stop_icon, NULL),
 			    gtk_toolbar_get_n_items(GTK_TOOLBAR(toolbar)));
-
 
 	gtk_widget_show_all (toolbar);
 	return toolbar;
@@ -331,10 +327,6 @@ connect_signals (ModestMainWindow *self)
 	/* folder view */
 	g_signal_connect (G_OBJECT(priv->folder_view), "folder_selection_changed",
 			  G_CALLBACK(modest_ui_actions_on_folder_selection_changed), self);
-//	g_signal_connect (G_OBJECT(self->folder_view), "button-press-event",
-//			  G_CALLBACK (on_folder_view_button_press_event),self);
-//	g_signal_connect (self->folder_view,"popup-menu",
-//			  G_CALLBACK (on_folder_view_button_press_event),self);
 
 	/* header view */
 	g_signal_connect (G_OBJECT(priv->header_view), "status_update",
@@ -345,10 +337,6 @@ connect_signals (ModestMainWindow *self)
 			  G_CALLBACK(modest_ui_actions_on_header_activated), self);
 	g_signal_connect (G_OBJECT(priv->header_view), "item_not_found",
 			  G_CALLBACK(modest_ui_actions_on_item_not_found), self);
-//	g_signal_connect (G_OBJECT(self->header_view), "button-press-event",
-//			  G_CALLBACK (on_header_view_button_press_event), self);
-//	g_signal_connect (G_OBJECT(self->header_view),"popup-menu",0
-//			  G_CALLBACK (on_header_view_button_press_event), self);
 
 	/* window */
 	g_signal_connect (G_OBJECT(self), "destroy", G_CALLBACK(on_destroy), NULL);
@@ -356,7 +344,14 @@ connect_signals (ModestMainWindow *self)
 }
 
 
+gboolean
+sync_accounts_cb (ModestMainWindow *win)
+{
+	modest_ui_actions_on_send_receive (GTK_WIDGET(win), MODEST_WINDOW(win));
+	return FALSE;
+}
 
+	
 ModestWindow*
 modest_main_window_new (void)
 {
@@ -423,7 +418,6 @@ modest_main_window_new (void)
 	
 	folder_win = wrapped_in_scrolled_window (GTK_WIDGET(priv->folder_view), FALSE);
 	header_win = wrapped_in_scrolled_window (GTK_WIDGET(priv->header_view), FALSE);			   
-
 	/* paned */
 	priv->main_paned = gtk_hpaned_new ();
 	gtk_paned_add1 (GTK_PANED(priv->main_paned), folder_win);
@@ -440,11 +434,14 @@ modest_main_window_new (void)
 
 	gtk_window_set_title (GTK_WINDOW(self), _("Modest"));
 	gtk_window_set_icon_from_file (GTK_WINDOW(self), MODEST_APP_ICON, NULL);
-	
 	gtk_widget_show_all (main_vbox);
 
 	g_signal_connect (G_OBJECT(self), "delete-event",
 			  G_CALLBACK(on_delete_event), self);
+
+	/* should we hide the toolbar? */
+	if (!modest_conf_get_bool (modest_runtime_get_conf (), MODEST_CONF_SHOW_TOOLBAR, NULL))
+		gtk_widget_hide (parent_priv->toolbar);
 
 	/* Connect signals */
 	connect_signals (self);
@@ -452,7 +449,8 @@ modest_main_window_new (void)
 	/* Set account store */
 	tny_account_store_view_set_account_store (TNY_ACCOUNT_STORE_VIEW (priv->folder_view),
 						  TNY_ACCOUNT_STORE (modest_runtime_get_account_store ()));
+	g_idle_add ((GSourceFunc)sync_accounts_cb, self);
+	/* do send & receive when we are idle */
 
-	tny_device_force_online (modest_runtime_get_device());
 	return MODEST_WINDOW(self);
 }
