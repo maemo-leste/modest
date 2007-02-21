@@ -627,14 +627,16 @@ on_apply (ModestAccountAssistant *self, gpointer user_data)
 	path       = modest_store_widget_get_path (store);
 	store_name = get_new_server_account_name (priv->account_mgr, proto,username, servername);
 
-	if (proto == MODEST_PROTOCOL_STORE_MAILDIR ||
-	    proto == MODEST_PROTOCOL_STORE_MBOX) {
-		gchar *uri = get_account_uri (proto, path);
+	if (proto	     == MODEST_PROTOCOL_STORE_MAILDIR	||
+	    proto	     == MODEST_PROTOCOL_STORE_MBOX) {
+		gchar	*uri  = get_account_uri (proto, path);
 		modest_account_mgr_add_server_account_uri (priv->account_mgr, store_name, proto, uri);
 		g_free (uri);
 	} else
 		modest_account_mgr_add_server_account (priv->account_mgr, store_name, servername,
-						       username, NULL, proto);
+						       username, NULL, proto,
+						       MODEST_PROTOCOL_SECURITY_NONE,
+						       MODEST_PROTOCOL_AUTH_NONE); /* FIXME */
 		
 	/* create server account -> transport */
 	transport = MODEST_TRANSPORT_WIDGET(priv->transport_widget);
@@ -649,9 +651,11 @@ on_apply (ModestAccountAssistant *self, gpointer user_data)
 	
 	transport_name = get_new_server_account_name (priv->account_mgr, proto,username, servername);
 	modest_account_mgr_add_server_account (priv->account_mgr,
-						transport_name,	servername,
-						username, NULL,
-						proto);
+					       transport_name,	servername,
+					       username, NULL,
+					       proto,
+					       MODEST_PROTOCOL_SECURITY_NONE,
+					       MODEST_PROTOCOL_AUTH_NONE); /* FIXME */
 
 	/* create account */
 	account_name = get_account_name (self);

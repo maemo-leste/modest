@@ -277,6 +277,7 @@ menubar_to_menu (GtkUIManager *ui_manager)
 }
 
 
+#if 0
 static void
 set_msg (ModestMsgEditWindow *self, TnyMsg *msg)
 {
@@ -316,7 +317,7 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg)
 	
 	/* TODO: set attachments */
 }
-
+#endif
 
 	
 

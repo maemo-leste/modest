@@ -151,7 +151,9 @@ START_TEST (test_add_exists_remove_account_regular)
 							hostname,
 							username,
 							password,
-							proto);
+							proto,
+							MODEST_PROTOCOL_SECURITY_NONE,
+							MODEST_PROTOCOL_AUTH_NONE); 
 	fail_unless (result,
 		     "modest_account_mgr_add_server_account failed:\n" \
 		     "name: %s\nhostname: %s\nusername: %s\npassword: %s\nproto: %s",
@@ -254,7 +256,9 @@ START_TEST (test_add_exists_remove_account_invalid)
 							"hostname",
 							"username",
 							"password",
-							MODEST_PROTOCOL_STORE_IMAP);
+							MODEST_PROTOCOL_STORE_IMAP,
+						       MODEST_PROTOCOL_SECURITY_NONE,
+						       MODEST_PROTOCOL_AUTH_NONE);
 	fail_unless (!result,
 		     "modest_account_mgr_add_server_account does not return " \
 		     "FALSE when passing a NULL ModestAccountMgr");
@@ -265,7 +269,9 @@ START_TEST (test_add_exists_remove_account_invalid)
 							"hostname",
 							"username",
 							"password",
-							MODEST_PROTOCOL_STORE_IMAP);
+							MODEST_PROTOCOL_STORE_IMAP,
+							MODEST_PROTOCOL_SECURITY_NONE,
+							MODEST_PROTOCOL_AUTH_NONE); 
 	fail_unless (!result,
 		     "modest_account_mgr_add_server_account does not return " \
 		     "FALSE when passing a NULL account name");
@@ -276,7 +282,9 @@ START_TEST (test_add_exists_remove_account_invalid)
  							"hostname", 
  							"username", 
  							"password", 
- 							MODEST_PROTOCOL_STORE_IMAP); 
+ 							MODEST_PROTOCOL_STORE_IMAP,
+							MODEST_PROTOCOL_SECURITY_NONE,
+							MODEST_PROTOCOL_AUTH_NONE); 
  	fail_unless (!result, 
  		     "modest_account_mgr_add_server_account does not return " \
  		     "FALSE when passing an invalid account name"); 

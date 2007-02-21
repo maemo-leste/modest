@@ -223,7 +223,7 @@ modest_combo_box_set_active_id (ModestComboBox *self, gpointer id)
 	GtkTreeModel *model;
 	GtkTreeIter iter;
 	ModestComboBoxPrivate *priv;
-	gboolean found;
+	gboolean found = FALSE;
 	
 	g_return_if_fail (self);
 

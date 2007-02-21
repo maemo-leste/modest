@@ -59,10 +59,13 @@
 #define MODEST_CONF_REPLY_TYPE           MODEST_CONF_NAMESPACE "/reply_type"        /*  int  */
 #define MODEST_CONF_FORWARD_TYPE         MODEST_CONF_NAMESPACE "/forward_type"      /*  int  */
 
+#define MODEST_CONF_SHOW_TOOLBAR         MODEST_CONF_NAMESPACE "/show_toolbar"      
+#define MODEST_CONF_SHOW_CC              MODEST_CONF_NAMESPACE "/show_cc"           
+#define MODEST_CONF_SHOW_BCC             MODEST_CONF_NAMESPACE "/show_bcc"           
+
+
 /* place for widget settings */
 #define MODEST_CONF_WIDGET_NAMESPACE     MODEST_CONF_NAMESPACE "/widgets"
-
-
 
 #define MODEST_SERVER_ACCOUNT_NAMESPACE  MODEST_CONF_NAMESPACE "/" "server_accounts"
 

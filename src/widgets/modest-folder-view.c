@@ -1047,7 +1047,7 @@ on_drag_data_received (GtkWidget *widget,
 		       gpointer data)
 {
 	GtkWidget *source_widget;
-	GtkTreeModel *model_sort, *dest_model, *source_model;
+	GtkTreeModel *model_sort=NULL, *dest_model, *source_model; /* FIXME -- removing = NULL gives warn */
  	GtkTreePath *source_row, *dest_row, *child_dest_row;
 	GtkTreeViewDropPosition pos;
 	gboolean success = FALSE, delete_source = FALSE;
