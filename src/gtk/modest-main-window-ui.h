@@ -48,7 +48,7 @@ static const GtkActionEntry modest_action_entries [] = {
 	{ "Help", NULL, N_("_Help") },
 
 	/* FILE */
-	{ "FileNew",    GTK_STOCK_NEW,     N_("_New"),	   "<CTRL>N", N_("Compose new message"),  G_CALLBACK (modest_ui_actions_on_new_msg) },
+	{ "FileNew",    MODEST_STOCK_NEW_MAIL,     N_("_New"),	   "<CTRL>N", N_("Compose new message"),  G_CALLBACK (modest_ui_actions_on_new_msg) },
 	{ "FileOpen",   GTK_STOCK_OPEN,    N_("_Open"),	   "<CTRL>O", N_("Open a message"),       NULL },
 	{ "FileSave",   GTK_STOCK_SAVE,    N_("_Save"),	   "<CTRL>S", N_("Save a message"),       NULL },
 	{ "FileSaveAs", GTK_STOCK_SAVE_AS, N_("Save _As"), NULL,      N_("Save a message as"),    NULL },
@@ -67,7 +67,7 @@ static const GtkActionEntry modest_action_entries [] = {
 	/* VIEW */
 	{ "ToggleView",        GTK_STOCK_CDROM,   N_("_Toggle view"), NULL,        N_("Toggle the list view"),  G_CALLBACK(modest_ui_actions_toggle_view) },
 	/* ACTIONS */
-	{ "ActionsNew",         GTK_STOCK_NEW, N_("_New Message"),   NULL, N_("Compose a new message"), G_CALLBACK (modest_ui_actions_on_new_msg) },
+	{ "ActionsNew",         MODEST_STOCK_NEW_MAIL, N_("_New Message"),   NULL, N_("Compose a new message"), G_CALLBACK (modest_ui_actions_on_new_msg) },
 	{ "ActionsReply",       MODEST_STOCK_REPLY, N_("_Reply"),         NULL, N_("Reply to a message"), G_CALLBACK (modest_ui_actions_on_reply) },
 	{ "ActionsReplyAll",    MODEST_STOCK_REPLY_ALL, N_("Reply to all"),   NULL, N_("Reply to all"), G_CALLBACK (modest_ui_actions_on_reply_all) },
 	{ "ActionsForward",     MODEST_STOCK_FORWARD, N_("_Forward"),       NULL, N_("Forward a message"), G_CALLBACK (modest_ui_actions_on_forward) },

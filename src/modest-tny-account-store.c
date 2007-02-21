@@ -405,11 +405,11 @@ modest_tny_account_store_new (ModestAccountMgr *account_mgr, TnyDevice *device) 
 	tny_session_camel_set_ui_locker (priv->session,	 tny_gtk_lockable_new ());
 	/* FIXME: unref this in the end? */
 
-	/* force a cache fill... ugly */
-	list = TNY_LIST(tny_simple_list_new());
-	tny_account_store_get_accounts (TNY_ACCOUNT_STORE(obj), list,
-					TNY_ACCOUNT_STORE_BOTH);
-	g_object_unref(list);
+/* 	/\* force a cache fill... ugly *\/ */
+/* 	list = TNY_LIST(tny_simple_list_new()); */
+/* 	tny_account_store_get_accounts (TNY_ACCOUNT_STORE(obj), list, */
+/* 					TNY_ACCOUNT_STORE_BOTH); */
+/* 	g_object_unref(list); */
 	
 	/* Connect signals */
 	g_signal_connect (G_OBJECT(account_mgr), "account_changed",

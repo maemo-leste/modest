@@ -66,14 +66,14 @@
 
 /* toolbar */
 #define  MODEST_TOOLBAR_ICON_MAIL_SEND		PIXMAP_PREFIX "qgn_list_messagin_sent.png"
-#define  MODEST_TOOLBAR_ICON_NEW_MAIL		PIXMAP_PREFIX "qgn_list_messagin_editor.png"
-#define  MODEST_TOOLBAR_ICON_SEND_RECEIVE	PIXMAP_PREFIX "gtk-refresh.png"
+#define  MODEST_TOOLBAR_ICON_NEW_MAIL		PIXMAP_PREFIX "mail-message-new.png"
+/* #define  MODEST_TOOLBAR_ICON_SEND_RECEIVE	PIXMAP_PREFIX "gtk-refresh.png" */
 #define  MODEST_TOOLBAR_ICON_REPLY		PIXMAP_PREFIX "mail-reply-sender.png"
 #define  MODEST_TOOLBAR_ICON_REPLY_ALL		PIXMAP_PREFIX "mail-reply-all.png"
 #define  MODEST_TOOLBAR_ICON_FORWARD		PIXMAP_PREFIX "mail-forward.png"
-#define  MODEST_TOOLBAR_ICON_DELETE		PIXMAP_PREFIX "mail-mark-junk.png"
-#define  MODEST_TOOLBAR_ICON_NEXT		PIXMAP_PREFIX "forward.png"
-#define  MODEST_TOOLBAR_ICON_PREV		PIXMAP_PREFIX "back.png"
+/* #define  MODEST_TOOLBAR_ICON_DELETE		PIXMAP_PREFIX "mail-mark-junk.png" */
+/* #define  MODEST_TOOLBAR_ICON_NEXT		PIXMAP_PREFIX "forward.png" */
+/* #define  MODEST_TOOLBAR_ICON_PREV		PIXMAP_PREFIX "back.png" */
 #define  MODEST_TOOLBAR_ICON_STOP		PIXMAP_PREFIX "stock-stop.png"
 
 /* Stock icon names */
