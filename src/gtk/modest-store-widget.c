@@ -51,7 +51,6 @@ struct _ModestStoreWidgetPrivate {
 	GtkWidget *security;
 	GtkWidget *auth;
 	GtkWidget *chooser;
-	GtkWidget *remember_pwd;
 
 	ModestProtocol proto;
 };
@@ -199,7 +198,6 @@ imap_pop_configuration (ModestStoreWidget *self)
 	ModestPairList *protos;
 	ModestStoreWidgetPrivate *priv;
 	GtkWidget *label, *box, *hbox;
-	GtkWidget *combo;
 	
 	priv = MODEST_STORE_WIDGET_GET_PRIVATE(self);
 	box = gtk_vbox_new (FALSE, 6);
@@ -246,14 +244,10 @@ imap_pop_configuration (ModestStoreWidget *self)
 	gtk_box_pack_start (GTK_BOX(hbox), label, FALSE, FALSE, 6);
 	
 	protos = modest_protocol_info_get_protocol_pair_list (MODEST_PROTOCOL_TYPE_AUTH);
-	combo =  modest_combo_box_new (protos, g_str_equal);
+	priv->auth =  modest_combo_box_new (protos, g_str_equal);
 	modest_pair_list_free (protos);
 
-	gtk_box_pack_start (GTK_BOX(hbox), combo, FALSE, FALSE, 0);
-	priv->remember_pwd =
-		gtk_check_button_new_with_label (_("Remember password"));
-	gtk_box_pack_start (GTK_BOX(hbox),priv->remember_pwd,
-			    FALSE, FALSE, 0);
+	gtk_box_pack_start (GTK_BOX(hbox), priv->auth, FALSE, FALSE, 0);
 	
 	gtk_box_pack_start (GTK_BOX(box), hbox, FALSE, FALSE, 0);
 
@@ -302,20 +296,6 @@ modest_store_widget_new (ModestProtocol proto)
 	gtk_box_pack_start (GTK_BOX(self), w, FALSE, FALSE, 2);
 
 	return GTK_WIDGET(self);
-}
-
-gboolean
-modest_store_widget_get_remember_password (ModestStoreWidget *self)
-{
-	ModestStoreWidgetPrivate *priv;
-
-	g_return_val_if_fail (self, FALSE);
-	priv = MODEST_STORE_WIDGET_GET_PRIVATE(self);
-
-	if (GTK_IS_TOGGLE_BUTTON(priv->remember_pwd)) 
-		return gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON(priv->remember_pwd));
-	else
-		return FALSE;
 }
 
 const gchar*
@@ -371,4 +351,40 @@ modest_store_widget_get_path (ModestStoreWidget *self)
 		return gtk_file_chooser_get_filename (GTK_FILE_CHOOSER(priv->chooser));
 	else
 		return NULL;
+}
+
+static ModestProtocol
+get_protocol_from_combo (GtkWidget *combo)
+{
+	gchar *chosen;
+
+	if (!combo)
+		return MODEST_PROTOCOL_UNKNOWN;
+
+	chosen = gtk_combo_box_get_active_text (GTK_COMBO_BOX (combo));
+
+	return modest_protocol_info_get_protocol (chosen);
+
+}
+
+ModestProtocol
+modest_store_widget_get_auth (ModestStoreWidget *self)
+{
+	ModestStoreWidgetPrivate *priv;	
+
+	g_return_val_if_fail (self, MODEST_PROTOCOL_UNKNOWN);
+	priv = MODEST_STORE_WIDGET_GET_PRIVATE(self);
+
+	return get_protocol_from_combo (priv->auth);
+}
+
+ModestProtocol
+modest_store_widget_get_security (ModestStoreWidget *self)
+{
+	ModestStoreWidgetPrivate *priv;	
+
+	g_return_val_if_fail (self, MODEST_PROTOCOL_UNKNOWN);
+	priv = MODEST_STORE_WIDGET_GET_PRIVATE(self);
+
+	return get_protocol_from_combo (priv->security);
 }

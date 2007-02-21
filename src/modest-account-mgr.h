@@ -110,6 +110,8 @@ gboolean        modest_account_mgr_add_account    (ModestAccountMgr *self,
  * @username: the username
  * @password: the password
  * @proto:    the protocol (imap, smtp, ...) used for this account
+ * @security: the security options, (SSL, TLS ...) used to access the server
+ * @auth: the authentication method (password, none ...) used to access the server
  * 
  * add a server account to the configuration.
  * the server account with @name should not already exist
@@ -121,7 +123,9 @@ gboolean modest_account_mgr_add_server_account    (ModestAccountMgr *self,
 						   const gchar *hostname,
 						   const gchar *username,
 						   const gchar *password,
-						   ModestProtocol proto);  
+						   ModestProtocol proto,
+						   ModestProtocol security,
+						   ModestProtocol auth);
 
 
 /**

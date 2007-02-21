@@ -89,8 +89,6 @@
 #define MODEST_ACCOUNT_LEAVE_ON_SERVER   "leave_on_server"   /* boolean */
 #define MODEST_ACCOUNT_PREFERRED_CNX     "preferred_cnx"     /* string */
 #define MODEST_ACCOUNT_OPTIONS		 "options"	     /* list */
-
-
-
+#define MODEST_ACCOUNT_AUTH_MECH	 "auth_mech"	     /* string */
 
 #endif /*__MODEST_DEFS_H__*/

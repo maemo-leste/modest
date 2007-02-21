@@ -605,7 +605,7 @@ static void
 on_apply (ModestAccountAssistant *self, gpointer user_data)
 {
 	ModestAccountAssistantPrivate *priv;
-	ModestProtocol proto;
+	ModestProtocol proto, security, auth;
 	gchar *store_name, *transport_name;
 	const gchar *account_name, *username, *servername, *path;
 	ModestStoreWidget *store;
@@ -619,6 +619,8 @@ on_apply (ModestAccountAssistant *self, gpointer user_data)
 	username = modest_store_widget_get_username (store);
 	servername = modest_store_widget_get_servername (store);
 	path       = modest_store_widget_get_path (store);
+	security = modest_store_widget_get_security (store);
+	auth = modest_store_widget_get_auth (store);
 	store_name = get_new_server_account_name (priv->account_mgr, proto,username, servername);
 
 	if (proto == MODEST_PROTOCOL_STORE_MAILDIR ||
@@ -628,7 +630,7 @@ on_apply (ModestAccountAssistant *self, gpointer user_data)
 		g_free (uri);
 	} else
 		modest_account_mgr_add_server_account (priv->account_mgr, store_name, servername,
-						       username, NULL, proto);
+						       username, NULL, proto, security, auth);
 		
 	/* create server account -> transport */
 	transport = MODEST_TRANSPORT_WIDGET(priv->transport_widget);
@@ -645,7 +647,7 @@ on_apply (ModestAccountAssistant *self, gpointer user_data)
 	modest_account_mgr_add_server_account (priv->account_mgr,
 						transport_name,	servername,
 						username, NULL,
-						proto);
+						proto, security, auth);
 
 	/* create account */
 	account_name = get_account_name (self);

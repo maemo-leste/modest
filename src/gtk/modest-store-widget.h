@@ -32,16 +32,16 @@ struct _ModestStoreWidgetClass {
 };
 
 /* member functions */
-GType        modest_store_widget_get_type    (void) G_GNUC_CONST;
+GType           modest_store_widget_get_type    (void) G_GNUC_CONST;
 
-GtkWidget*   modest_store_widget_new         (ModestProtocol proto);
+GtkWidget*      modest_store_widget_new         (ModestProtocol proto);
 
-gboolean        modest_store_widget_get_remember_password (ModestStoreWidget *self);
 const gchar*    modest_store_widget_get_username          (ModestStoreWidget *self);
 const gchar*    modest_store_widget_get_servername        (ModestStoreWidget *self);
 ModestProtocol  modest_store_widget_get_proto             (ModestStoreWidget *self);
 gchar *         modest_store_widget_get_path              (ModestStoreWidget *self);
-
+ModestProtocol  modest_store_widget_get_auth              (ModestStoreWidget *self);
+ModestProtocol  modest_store_widget_get_security          (ModestStoreWidget *self);
 
 G_END_DECLS
 

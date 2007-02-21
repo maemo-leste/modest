@@ -791,7 +791,7 @@ gboolean
 modest_text_utils_validate_email_address (const gchar *email_address)
 {
 	int count = 0;
-	const gchar *c, *domain;
+	const gchar *c = NULL, *domain = NULL;
 	static gchar *rfc822_specials = "()<>@,;:\\\"[]";
 
 	/* first we validate the name portion (name@domain) */

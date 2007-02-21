@@ -316,7 +316,7 @@ modest_conf_set_list (ModestConf* self, const gchar* key,
        priv = MODEST_CONF_GET_PRIVATE(self);
 
        gconf_type = modest_conf_type_to_gconf_type (list_type, err);
-       if (err)
+       if (*err)
 	       return FALSE;
 
        return gconf_client_set_list (priv->gconf_client, key, gconf_type, val, err);

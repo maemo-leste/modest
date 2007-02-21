@@ -48,10 +48,12 @@ static const ProtocolInfo ProtocolMap[] = {
 	{ MODEST_PROTOCOL_STORE_MAILDIR,      "maildir",  N_("Maildir") },
 	{ MODEST_PROTOCOL_STORE_MBOX,         "mbox",     N_("MBox") },     
 
+	{ MODEST_PROTOCOL_SECURITY_NONE,      "none",     N_("None") },   
 	{ MODEST_PROTOCOL_SECURITY_SSL,       "ssl",      N_("SSL") },   
 	{ MODEST_PROTOCOL_SECURITY_TLS,       "tls",      N_("TLS") },
+	{ MODEST_PROTOCOL_SECURITY_TLS_OP,    "tls-op",   N_("TLS when possible") }, /* op stands for optional */
 
-	{ MODEST_PROTOCOL_AUTH_NONE,          "none",     N_("none") },
+	{ MODEST_PROTOCOL_AUTH_NONE,          "none",     N_("None") },
 	{ MODEST_PROTOCOL_AUTH_PASSWORD,      "password", N_("Password") }
 };
 const guint PROTOCOL_MAP_SIZE = sizeof(ProtocolMap)/sizeof(ProtocolInfo);
@@ -113,8 +115,10 @@ modest_protocol_info_get_protocol_type (ModestProtocol proto)
 	case MODEST_PROTOCOL_STORE_MBOX:
 		return MODEST_PROTOCOL_TYPE_STORE;
 
+	case MODEST_PROTOCOL_SECURITY_NONE:
 	case MODEST_PROTOCOL_SECURITY_SSL:   
 	case MODEST_PROTOCOL_SECURITY_TLS:
+	case MODEST_PROTOCOL_SECURITY_TLS_OP:
 		return MODEST_PROTOCOL_TYPE_SECURITY;
 
 	case MODEST_PROTOCOL_AUTH_NONE:

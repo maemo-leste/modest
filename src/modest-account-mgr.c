@@ -307,12 +307,14 @@ gboolean
 modest_account_mgr_add_server_account (ModestAccountMgr * self,
 				       const gchar * name, const gchar *hostname,
 				       const gchar * username, const gchar * password,
-				       ModestProtocol proto)
+				       ModestProtocol proto,
+				       ModestProtocol security,
+				       ModestProtocol auth)
 {
 	ModestAccountMgrPrivate *priv;
 	gchar *key;
 	ModestProtocolType proto_type;
-	gboolean ok;
+	gboolean ok = TRUE;
 	GError *err = NULL;
 	
 	g_return_val_if_fail (MODEST_IS_ACCOUNT_MGR(self), FALSE);
@@ -332,7 +334,6 @@ modest_account_mgr_add_server_account (ModestAccountMgr * self,
 		g_free (key);
 		ok =  FALSE;
 	}
-	g_free (key);
 	if (!ok)
 		goto cleanup;
 	
@@ -381,6 +382,58 @@ modest_account_mgr_add_server_account (ModestAccountMgr * self,
 		ok = FALSE;
 	}
 	g_free (key);
+	if (!ok)
+		goto cleanup;
+
+	/* auth mechanism */
+	key = _modest_account_mgr_get_account_keyname (name, MODEST_ACCOUNT_AUTH_MECH, TRUE);
+	ok = modest_conf_set_string (priv->modest_conf, key,
+				     modest_protocol_info_get_protocol_name (auth), &err);
+	if (err) {
+		g_printerr ("modest: failed to set %s: %s\n", key, err->message);
+		g_error_free (err);
+		ok = FALSE;
+	}
+	g_free (key);
+	if (!ok)
+		goto cleanup;
+
+	if (proto_type == MODEST_PROTOCOL_TYPE_STORE) {
+
+		GSList *option_list = NULL;
+
+		/* Connection options. Some options are only valid for IMAP
+		   accounts but it's OK for just now since POP is still not
+		   supported */
+		key = _modest_account_mgr_get_account_keyname (name, MODEST_ACCOUNT_OPTIONS, TRUE);
+		/* Enable subscriptions and check the mails in all folders */
+		option_list = g_slist_append (option_list, "use_lsub");
+		option_list = g_slist_append (option_list, "check_all");
+		/* Security options */
+		switch (security) {
+		case MODEST_PROTOCOL_SECURITY_NONE:
+			option_list = g_slist_append (option_list, "use_ssl=never");
+			break;
+		case MODEST_PROTOCOL_SECURITY_SSL:
+		case MODEST_PROTOCOL_SECURITY_TLS:
+			option_list = g_slist_append (option_list, "use_ssl=always");
+			break;
+		case MODEST_PROTOCOL_SECURITY_TLS_OP:
+			option_list = g_slist_append (option_list, "use_ssl=when-possible");
+			break;
+		default:
+			g_warning ("Invalid security option");
+		}
+		ok = modest_conf_set_list (priv->modest_conf, key, 
+					   option_list, MODEST_CONF_VALUE_STRING, &err);
+		if (err) {
+			g_printerr ("modest: failed to set %s: %s\n", key, err->message);
+			g_error_free (err);
+			ok = FALSE;
+		}
+		g_slist_free (option_list);
+		g_free (key);
+	}
 
 cleanup:
 	if (!ok) {
