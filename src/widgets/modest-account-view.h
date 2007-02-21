@@ -85,7 +85,7 @@ ModestAccountView*   modest_account_view_new         (ModestAccountMgr *account_
  * Returns: the name of the selected account or NULL if none is
  * selected
  **/
-const gchar*   modest_account_view_get_selected_account    (ModestAccountView *account_view);
+gchar*   modest_account_view_get_selected_account    (ModestAccountView *account_view);
 
 G_END_DECLS
 

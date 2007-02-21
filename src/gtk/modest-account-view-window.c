@@ -102,13 +102,6 @@ modest_account_view_window_class_init (ModestAccountViewWindowClass *klass)
 	gobject_class->finalize = modest_account_view_window_finalize;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestAccountViewWindowPrivate));
-
-	/* signal definitions go here, e.g.: */
-/* 	signals[MY_SIGNAL_1] = */
-/* 		g_signal_new ("my_signal_1",....); */
-/* 	signals[MY_SIGNAL_2] = */
-/* 		g_signal_new ("my_signal_2",....); */
-/* 	etc. */
 }
 
 static void
@@ -131,7 +124,7 @@ on_selection_changed (GtkTreeSelection *sel, ModestAccountViewWindow *self)
 	GtkTreeModel                   *model;
 	GtkTreeIter                    iter;
 	gboolean                       has_selection;
-	const gchar                   *account_name;
+	gchar                         *account_name;
 	gchar                         *default_account_name;
 	
 	priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE(self);
@@ -148,6 +141,7 @@ on_selection_changed (GtkTreeSelection *sel, ModestAccountViewWindow *self)
 	gtk_widget_set_sensitive (priv->default_button,
 				  default_account_name == NULL || account_name == NULL ||
 				  strcmp (default_account_name, account_name) != 0);
+	g_free (account_name);
 	g_free (default_account_name);
 }
 
@@ -156,7 +150,7 @@ on_remove_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 {
 	ModestAccountViewWindowPrivate *priv;
 	ModestAccountMgr *account_mgr;
-	const gchar *account_name;
+	gchar *account_name;
 	
 	priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE(self);
 
@@ -179,7 +173,7 @@ on_remove_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 		txt = g_strdup_printf (_("Do you really want to delete the account %s?"), account_name);
 		gtk_box_pack_start (GTK_BOX(GTK_DIALOG(dialog)->vbox), 
 				    gtk_label_new (txt), FALSE, FALSE, 0);
-		gtk_widget_show_all (GTK_WIDGET(GTK_DIALOG(dialog)->vbox));
+/* 		gtk_widget_show_all (GTK_WIDGET(GTK_DIALOG(dialog)->vbox)); */
 		g_free (txt);
 
 		if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT) {
@@ -192,9 +186,11 @@ on_remove_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 				/* Show confirmation dialog ??? */
 			} else {
 				/* Show error dialog ??? */
+				g_warning ("Error removing account %s", account_name);
 			}
 		}
 		gtk_widget_destroy (dialog);
+		g_free (account_name);
 	}
 }
 
@@ -224,7 +220,7 @@ on_default_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 {
 	ModestAccountViewWindowPrivate *priv;
 	ModestAccountMgr *account_mgr;
-	const gchar *account_name;
+	gchar *account_name;
 	
 	priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE(self);
 
@@ -232,6 +228,8 @@ on_default_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 	account_name = modest_account_view_get_selected_account (priv->account_view);
 
 	modest_account_mgr_set_default_account (account_mgr, account_name);
+
+	g_free (account_name);
 }
 
 

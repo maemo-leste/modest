@@ -699,37 +699,37 @@ modest_folder_view_get_selected (ModestFolderView *self)
 	return priv->cur_folder;
 }
 
-static gboolean
-get_model_iter (ModestFolderView *self, 
-		GtkTreeModel **model, 
-		GtkTreeIter *iter)
-{
-	GtkTreeModel *model_sort;
-	GtkTreeIter iter_sort;
-	GtkTreePath *path;
-	ModestFolderViewPrivate *priv;
+/* static gboolean */
+/* get_model_iter (ModestFolderView *self,  */
+/* 		GtkTreeModel **model,  */
+/* 		GtkTreeIter *iter) */
+/* { */
+/* 	GtkTreeModel *model_sort; */
+/* 	GtkTreeIter iter_sort; */
+/* 	GtkTreePath *path; */
+/* 	ModestFolderViewPrivate *priv; */
 
-	priv = MODEST_FOLDER_VIEW_GET_PRIVATE(self);
+/* 	priv = MODEST_FOLDER_VIEW_GET_PRIVATE(self); */
 
-	if (!priv->cur_folder)
-		return FALSE;
+/* 	if (!priv->cur_folder) */
+/* 		return FALSE; */
 
-	if (!gtk_tree_row_reference_valid (priv->cur_row))
-		return FALSE;
+/* 	if (!gtk_tree_row_reference_valid (priv->cur_row)) */
+/* 		return FALSE; */
 
-	model_sort = gtk_tree_view_get_model (GTK_TREE_VIEW (self));
-	*model = gtk_tree_model_sort_get_model (GTK_TREE_MODEL_SORT (model_sort));
+/* 	model_sort = gtk_tree_view_get_model (GTK_TREE_VIEW (self)); */
+/* 	*model = gtk_tree_model_sort_get_model (GTK_TREE_MODEL_SORT (model_sort)); */
 
-	/* Get path to retrieve iter */
-	path = gtk_tree_row_reference_get_path (priv->cur_row);
-	if (!gtk_tree_model_get_iter (model_sort, &iter_sort, path))
-		return FALSE;
+/* 	/\* Get path to retrieve iter *\/ */
+/* 	path = gtk_tree_row_reference_get_path (priv->cur_row); */
+/* 	if (!gtk_tree_model_get_iter (model_sort, &iter_sort, path)) */
+/* 		return FALSE; */
 
-	gtk_tree_model_sort_convert_iter_to_child_iter (GTK_TREE_MODEL_SORT (model_sort),
-							iter,
-							&iter_sort);
-	return TRUE;
-}
+/* 	gtk_tree_model_sort_convert_iter_to_child_iter (GTK_TREE_MODEL_SORT (model_sort), */
+/* 							iter, */
+/* 							&iter_sort); */
+/* 	return TRUE; */
+/* } */
 
 static gint
 cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,

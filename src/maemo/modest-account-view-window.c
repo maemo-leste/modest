@@ -129,10 +129,10 @@ on_selection_changed (GtkTreeSelection *sel, ModestAccountViewWindow *self)
 {
 	ModestAccountViewWindowPrivate *priv;
 	GtkTreeModel                   *model;
-	GtkTreeIter                    iter;
-	gboolean                       has_selection;
-	const gchar                   *account_name;
-	gchar                         *default_account_name;
+	GtkTreeIter                     iter;
+	gboolean                        has_selection;
+	gchar                          *account_name;
+	gchar                          *default_account_name;
 	
 	priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE(self);
 
@@ -148,6 +148,7 @@ on_selection_changed (GtkTreeSelection *sel, ModestAccountViewWindow *self)
 	gtk_widget_set_sensitive (priv->default_button,
 				  default_account_name == NULL || account_name == NULL ||
 				  strcmp (default_account_name, account_name) != 0);
+	g_free (account_name);
 	g_free (default_account_name);
 }
 
@@ -156,7 +157,7 @@ on_remove_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 {
 	ModestAccountViewWindowPrivate *priv;
 	ModestAccountMgr *account_mgr;
-	const gchar *account_name;
+	gchar *account_name;
 	
 	priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE(self);
 
@@ -195,6 +196,7 @@ on_remove_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 			}
 		}
 		gtk_widget_destroy (dialog);
+		g_free (account_name);
 	}
 }
 
@@ -228,7 +230,7 @@ on_default_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 {
 	ModestAccountViewWindowPrivate *priv;
 	ModestAccountMgr *account_mgr;
-	const gchar *account_name;
+	gchar *account_name;
 	
 	priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE(self);
 
@@ -236,6 +238,8 @@ on_default_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 	account_name = modest_account_view_get_selected_account (priv->account_view);
 
 	modest_account_mgr_set_default_account (account_mgr, account_name);
+
+	g_free (account_name);
 }
 
 

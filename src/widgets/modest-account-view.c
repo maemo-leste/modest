@@ -260,7 +260,6 @@ bold_if_default_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *rendere
 		      NULL);
 }
 
-
 static void
 init_view (ModestAccountView *self)
 {
@@ -281,6 +280,7 @@ init_view (ModestAccountView *self)
 		); 
 
 	gtk_tree_view_set_model (GTK_TREE_VIEW(self), GTK_TREE_MODEL(model));
+	g_object_unref (G_OBJECT (model));
 
 	toggle_renderer = gtk_cell_renderer_toggle_new ();
 	text_renderer = gtk_cell_renderer_text_new ();
@@ -343,10 +343,10 @@ modest_account_view_new (ModestAccountMgr *account_mgr)
 	return MODEST_ACCOUNT_VIEW(obj);
 }
 
-const gchar *
+gchar *
 modest_account_view_get_selected_account (ModestAccountView *self)
 {
-	const gchar *account_name = NULL;
+	gchar *account_name = NULL;
 	GtkTreeSelection *sel;
 	GtkTreeModel *model;
 	GtkTreeIter iter;
@@ -355,8 +355,9 @@ modest_account_view_get_selected_account (ModestAccountView *self)
 	
 	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (self));
 	if (gtk_tree_selection_get_selected (sel, &model, &iter)) {
-		gtk_tree_model_get (model, &iter, MODEST_ACCOUNT_VIEW_NAME_COLUMN, &account_name,
-				    -1);
+		gtk_tree_model_get (model, &iter, 
+				    MODEST_ACCOUNT_VIEW_NAME_COLUMN, 
+				    &account_name, -1);
 	}
 
 	return account_name;

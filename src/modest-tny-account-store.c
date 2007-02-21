@@ -386,7 +386,7 @@ modest_tny_account_store_new (ModestAccountMgr *account_mgr, TnyDevice *device) 
 
 	GObject *obj;
 	ModestTnyAccountStorePrivate *priv;
-	TnyList *list;
+/* 	TnyList *list; */
 	
 	g_return_val_if_fail (account_mgr, NULL);
 	g_return_val_if_fail (device, NULL);
