@@ -404,8 +404,7 @@ modest_conf_key_is_valid (const gchar* key)
 }
 
 
-
-
+/* hmmm... might need to make specific callback for specific keys */
 static void
 modest_conf_on_change (GConfClient *client, guint conn_id, GConfEntry *entry,
 		       gpointer data)

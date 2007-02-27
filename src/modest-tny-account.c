@@ -250,11 +250,12 @@ modest_tny_account_new_for_local_folders (ModestAccountMgr *account_mgr, TnySess
 	url_string = camel_url_to_string (url, 0);
 	
 	tny_account_set_url_string (TNY_ACCOUNT(tny_account), url_string);
-	tny_account_set_name (TNY_ACCOUNT(tny_account), _(MODEST_LOCAL_FOLDERS_ACCOUNT_NAME)); 
+
+	tny_account_set_name (TNY_ACCOUNT(tny_account), MODEST_LOCAL_FOLDERS_DEFAULT_DISPLAY_NAME); 
 	tny_account_set_id (TNY_ACCOUNT(tny_account), MODEST_LOCAL_FOLDERS_ACCOUNT_ID); 
         tny_account_set_forget_pass_func (TNY_ACCOUNT(tny_account), forget_pass_dummy);
 	tny_account_set_pass_func (TNY_ACCOUNT(tny_account), get_pass_dummy);
-
+	
 	g_object_set_data (G_OBJECT(tny_account), "modest_account",
 			   (gpointer*)MODEST_LOCAL_FOLDERS_ACCOUNT_ID);
 	

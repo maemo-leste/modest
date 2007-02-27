@@ -46,7 +46,6 @@
 #define MODEST_LOCAL_FOLDERS_ACCOUNT_ID   "local_folders"
 #define MODEST_LOCAL_FOLDERS_ACCOUNT_NAME MODEST_LOCAL_FOLDERS_ACCOUNT_ID
 #define MODEST_LOCAL_FOLDERS_MAILDIR      MODEST_LOCAL_FOLDERS_ACCOUNT_ID
-#define MODEST_LOCAL_FOLDERS_DISPLAY_NAME  N_("Local folders")
 
 
 /* configuration key definitions for modest */
@@ -62,6 +61,18 @@
 #define MODEST_CONF_SHOW_TOOLBAR         MODEST_CONF_NAMESPACE "/show_toolbar"      
 #define MODEST_CONF_SHOW_CC              MODEST_CONF_NAMESPACE "/show_cc"           
 #define MODEST_CONF_SHOW_BCC             MODEST_CONF_NAMESPACE "/show_bcc"           
+
+
+/*
+ * in the maemo case, we try to replace this
+ * with the device name
+ */
+#define MODEST_LOCAL_FOLDERS_DEFAULT_DISPLAY_NAME  N_("Local folders")
+
+/* the name of the device; in case of maemo this is set and updated
+ * using dbus; see modest-maemo-utils.[ch]
+ */
+#define MODEST_CONF_DEVICE_NAME       MODEST_CONF_NAMESPACE "/device_name"
 
 
 /* place for widget settings */

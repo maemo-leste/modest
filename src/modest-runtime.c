@@ -144,7 +144,7 @@ modest_runtime_init (void)
 		g_printerr ("modest: failed to init header columns\n");
 		return FALSE;
 	}
-
+	
 	if (!init_local_folders()) {
 		modest_runtime_uninit ();
 		g_printerr ("modest: failed to init local folders\n");

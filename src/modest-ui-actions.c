@@ -567,7 +567,6 @@ read_msg_func (gpointer data, gpointer user_data)
 	if (!msg_preview)
 		return;
 	
-	/* mark message as seen; _set_flags crashes, bug in tinymail? */
 	header = TNY_HEADER (tny_iterator_get_current (helper->iter));
 	header_flags = tny_header_get_flags (header);
 	tny_header_set_flags (header, header_flags | TNY_HEADER_FLAG_SEEN);
