@@ -172,8 +172,7 @@ _modest_header_view_date_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer
 	display_date = modest_text_utils_get_display_date (date);
 	g_object_set (G_OBJECT(renderer),
 		      "weight", (flags & TNY_HEADER_FLAG_SEEN) ? 400: 800,
-		      "style",  (flags & TNY_HEADER_FLAG_DELETED) ?
-		                 PANGO_STYLE_ITALIC : PANGO_STYLE_NORMAL,
+		      "strikethrough",  (flags & TNY_HEADER_FLAG_DELETED) ? TRUE:FALSE,
 		      "text",    display_date,
 		      NULL);
 	g_free (display_date);
@@ -203,8 +202,8 @@ _modest_header_view_sender_receiver_cell_data  (GtkTreeViewColumn *column,  GtkC
 		      modest_text_utils_get_display_address (address),
 		      "weight",
 		      (flags & TNY_HEADER_FLAG_SEEN) ? 400 : 800,
-		      "style",
-		      (flags & TNY_HEADER_FLAG_DELETED)?PANGO_STYLE_ITALIC:PANGO_STYLE_NORMAL,
+		      "striketrough",
+		      (flags & TNY_HEADER_FLAG_DELETED)?TRUE:FALSE,
 		      NULL);
 
 	g_free (address);	
@@ -254,8 +253,7 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 	g_object_set (G_OBJECT(renderer),
 		      "text",  header,
 		      "weight", (flags & TNY_HEADER_FLAG_SEEN) ? 400: 800,
-		      "style",  (flags & TNY_HEADER_FLAG_DELETED) ?
-		                 PANGO_STYLE_ITALIC : PANGO_STYLE_NORMAL,
+		      "strikethrough",  (flags & TNY_HEADER_FLAG_DELETED) ? TRUE: FALSE,
 		      NULL);	
 	g_free (header);
 }
@@ -279,8 +277,7 @@ _modest_header_view_size_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer
 	
 	g_object_set (G_OBJECT(renderer),
 		      "weight", (flags & TNY_HEADER_FLAG_SEEN) ? 400: 800,
-		      "style",  (flags & TNY_HEADER_FLAG_DELETED) ?
-		      PANGO_STYLE_ITALIC : PANGO_STYLE_NORMAL,
+		      "striketrough",  (flags & TNY_HEADER_FLAG_DELETED) ? TRUE:FALSE,
 		      "text",    size_str,       
                       NULL);
        g_free (size_str);

@@ -234,10 +234,8 @@ text_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 			}
 		}
 	} else if (folder && type == TNY_FOLDER_TYPE_ROOT) {
-		if (strcmp (fname, MODEST_LOCAL_FOLDERS_ACCOUNT_NAME) == 0) {/* FIXME: hack */
-			g_free (fname);
-			fname = g_strdup (MODEST_LOCAL_FOLDERS_DISPLAY_NAME);
-		}
+		g_warning ("fname: %s", fname);
+		/* FIXME: todo */
 	}
 			
 	if (unread > 0) {
@@ -815,8 +813,7 @@ on_drag_data_get (GtkWidget *widget,
 	gtk_tree_path_free (source_row);
 }
 
-typedef struct _DndHelper
-{
+typedef struct _DndHelper {
 	gboolean delete_source;
 	GtkWidget *source_widget;
 	GtkWidget *dest_widget;
