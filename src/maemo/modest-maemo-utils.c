@@ -121,8 +121,6 @@ get_device_name_from_dbus ()
 	DBusMessage *request;
 	DBusError error;
 	DBusPendingCall *call = NULL;
-
-	g_warning ("get device name from dbus");
 	
 	dbus_error_init (&error);
 	if (!conn) {

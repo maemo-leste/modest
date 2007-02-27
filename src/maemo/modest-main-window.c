@@ -392,7 +392,7 @@ connect_signals (ModestMainWindow *self)
 gboolean
 sync_accounts_cb (ModestMainWindow *win)
 {
-	modest_ui_actions_on_send_receive (GTK_WIDGET(win), MODEST_WINDOW(win));
+	modest_ui_actions_on_send_receive (NULL, MODEST_WINDOW(win));
 	return FALSE;
 }
 

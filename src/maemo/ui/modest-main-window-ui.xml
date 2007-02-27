@@ -109,7 +109,7 @@
     <toolitem action="ToolbarMessageForward"/> 
     <separator/>
     <toolitem action="ToolbarSendReceive"/>
-    <toolitem  action="ToolbarToggleView"/>
+    <!--    <toolitem  action="ToolbarToggleView"/> -->
     <separator/>
     <toolitem action="ToolbarDeleteMessage"/>
     <separator/>

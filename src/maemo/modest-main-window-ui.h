@@ -110,12 +110,12 @@ static const GtkActionEntry modest_action_entries [] = {
 	 */
 	/* Headers Toolbar */
 	{ "ToolbarMessageNew",        MODEST_STOCK_NEW_MAIL,     N_("Compose a new message"), NULL, NULL,  G_CALLBACK (modest_ui_actions_on_new_msg) },
-	{ "ToolbarMessageReply",      MODEST_STOCK_REPLY,     N_("Reply a message"),       NULL, NULL,  G_CALLBACK (modest_ui_actions_on_reply) },
-	{ "ToolbarMessageReplyAll",   MODEST_STOCK_REPLY_ALL,     N_("Reply to all"),          NULL, NULL,  G_CALLBACK (modest_ui_actions_on_reply_all) },
-	{ "ToolbarMessageForward",    MODEST_STOCK_FORWARD,     N_("Forward a message"),     NULL, NULL,  G_CALLBACK (modest_ui_actions_on_forward) },
-	{ "ToolbarSendReceive",       MODEST_STOCK_SEND_RECEIVE,   N_("Send & receive"),        NULL, NULL,  G_CALLBACK (modest_ui_actions_on_send_receive) },
-	{ "ToolbarToggleView",        GTK_STOCK_CDROM,      N_("Toggle view"),           NULL, NULL,  G_CALLBACK (modest_ui_actions_toggle_view) },
-	{ "ToolbarDeleteMessage",     GTK_STOCK_DELETE,     N_("Delete message"),        NULL, NULL,  G_CALLBACK (modest_ui_actions_on_delete) },
+	{ "ToolbarMessageReply",      MODEST_STOCK_REPLY,     N_("Reply a message"),          NULL, NULL,  G_CALLBACK (modest_ui_actions_on_reply) },
+	{ "ToolbarMessageReplyAll",   MODEST_STOCK_REPLY_ALL,     N_("Reply to all"),         NULL, NULL,  G_CALLBACK (modest_ui_actions_on_reply_all) },
+	{ "ToolbarMessageForward",    MODEST_STOCK_FORWARD,     N_("Forward a message"),      NULL, NULL,  G_CALLBACK (modest_ui_actions_on_forward) },
+	{ "ToolbarSendReceive",       MODEST_STOCK_SEND_RECEIVE,   N_("Send & receive"),      NULL, NULL,  G_CALLBACK (modest_ui_actions_on_send_receive) },
+	{ "ToolbarToggleView",        GTK_STOCK_CDROM,      N_("Toggle view"),                "<CTRL>t", NULL,  G_CALLBACK (modest_ui_actions_toggle_view) },
+	{ "ToolbarDeleteMessage",     GTK_STOCK_DELETE,     N_("Delete message"),             NULL, NULL,  G_CALLBACK (modest_ui_actions_on_delete) },
 };
 
 

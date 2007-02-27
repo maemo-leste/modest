@@ -353,9 +353,9 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name)
 	g_object_unref (action_group);
 
 	/* Load the UI definition */
-	gtk_ui_manager_add_ui_from_file (parent_priv->ui_manager, MODEST_UIDIR "modest-edit-msg-window-ui.xml", &error);
+	gtk_ui_manager_add_ui_from_file (parent_priv->ui_manager, MODEST_UIDIR "modest-msg-edit-window-ui.xml", &error);
 	if (error != NULL) {
-		g_warning ("Could not merge modest-edit-msg-window-ui.xml: %s", error->message);
+		g_warning ("Could not merge modest-msg-edit-window-ui.xml: %s", error->message);
 		g_error_free (error);
 		error = NULL;
 	}
