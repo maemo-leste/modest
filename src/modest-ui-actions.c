@@ -144,7 +144,6 @@ modest_ui_actions_on_delete (GtkWidget *widget, ModestWindow *win)
 {
 	TnyList *header_list;
 	TnyIterator *iter;
-//	GtkTreeModel *model;
 
 	g_return_if_fail (MODEST_IS_WINDOW(win));
 		
@@ -152,9 +151,6 @@ modest_ui_actions_on_delete (GtkWidget *widget, ModestWindow *win)
 	
 	if (header_list) {
 		iter = tny_list_create_iterator (header_list);
-/* 		model = gtk_tree_view_get_model (GTK_TREE_VIEW (header_view)); */
-/* 		if (GTK_IS_TREE_MODEL_SORT (model)) */
-/* 			model = gtk_tree_model_sort_get_model (GTK_TREE_MODEL_SORT (model)); */
 		do {
 			TnyHeader *header;
 			ModestMailOperation *mail_op;
@@ -166,15 +162,11 @@ modest_ui_actions_on_delete (GtkWidget *widget, ModestWindow *win)
 
 			/* TODO: add confirmation dialog */
 
-			/* Move to trash */
-			modest_mail_operation_remove_msg (mail_op, header, TRUE);
+			/* Move to trash. TODO: Still not supported */
+			modest_mail_operation_remove_msg (mail_op, header, FALSE);
 
-			/* Remove from tree model */
-			if (modest_mail_operation_get_status (mail_op) ==
+			if (modest_mail_operation_get_status (mail_op) !=
 			    MODEST_MAIL_OPERATION_STATUS_SUCCESS) {
-/* 				tny_list_remove (TNY_LIST (model), G_OBJECT (header)); */
-			} else {
-				/* TODO: error handling management */
 				const GError *error;
 				error = modest_mail_operation_get_error (mail_op);
 				if (error)
