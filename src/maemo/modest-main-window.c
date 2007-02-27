@@ -33,6 +33,7 @@
 #include <gtk/gtktreeviewcolumn.h>
 #include <tny-account-store-view.h>
 #include <modest-runtime.h>
+#include <string.h>
 
 #include <widgets/modest-main-window.h>
 #include <widgets/modest-msg-edit-window.h>
@@ -44,6 +45,7 @@
 #include "modest-account-mgr.h"
 #include "modest-conf.h"
 
+#include "modest-maemo-utils.h"
 #include "modest-tny-platform-factory.h"
 #include "modest-tny-msg.h"
 #include "modest-mail-operation.h"
@@ -132,6 +134,37 @@ modest_main_window_class_init (ModestMainWindowClass *klass)
 	g_type_class_add_private (gobject_class, sizeof(ModestMainWindowPrivate));
 }
 
+
+static void
+on_key_changed (ModestConf* conf, const gchar *key, ModestConfEvent event, ModestMainWindow *win)
+{
+	TnyAccount *account;
+	
+	if (!key || strcmp (key, MODEST_CONF_DEVICE_NAME) != 0)
+		return; /* wrong key */
+	
+	/* ok, the device name changed; thus, we have to update the
+	 * local folder account name*/
+	account =
+		modest_tny_account_store_get_tny_account_by_account (modest_runtime_get_account_store(),
+								     MODEST_LOCAL_FOLDERS_ACCOUNT_ID,
+								     TNY_ACCOUNT_TYPE_STORE);
+	if (!account) {
+		g_printerr ("modest: could not get account\n");
+		return;
+	}
+
+	if (event == MODEST_CONF_EVENT_KEY_UNSET) 
+		tny_account_set_name (account, MODEST_LOCAL_FOLDERS_DEFAULT_DISPLAY_NAME);
+	else {
+		gchar *device_name = modest_conf_get_string (modest_runtime_get_conf(),
+							     MODEST_CONF_DEVICE_NAME, NULL);
+		tny_account_set_name (account, device_name);
+		g_free (device_name);
+	}
+	g_object_unref (G_OBJECT(account));	
+}
+
 static void
 modest_main_window_init (ModestMainWindow *obj)
 {
@@ -156,7 +189,6 @@ modest_main_window_finalize (GObject *obj)
 {
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
-
 
 GtkWidget*
 modest_main_window_get_child_widget (ModestMainWindow *self,
@@ -341,6 +373,19 @@ connect_signals (ModestMainWindow *self)
 	/* window */
 	g_signal_connect (G_OBJECT(self), "destroy", G_CALLBACK(on_destroy), NULL);
 	g_signal_connect (G_OBJECT(self), "delete-event", G_CALLBACK(on_delete_event), self);
+
+	
+	/* modest_maemo_utils_get_device_name will probably change
+	 * MODEST_CONF_DEVICE_NAME. If that happens, we update the local folders
+	 * account name in the callback
+	 */
+	g_signal_connect (G_OBJECT(modest_runtime_get_conf()), "key_changed",
+			  G_CALLBACK(on_key_changed), self);
+
+	
+	g_signal_connect (G_OBJECT(self), "delete-event", G_CALLBACK(on_delete_event), self);
+
+
 }
 
 
@@ -350,6 +395,7 @@ sync_accounts_cb (ModestMainWindow *win)
 	modest_ui_actions_on_send_receive (GTK_WIDGET(win), MODEST_WINDOW(win));
 	return FALSE;
 }
+
 
 	
 ModestWindow*
@@ -381,7 +427,8 @@ modest_main_window_new (void)
 	g_object_unref (action_group);
 
 	/* Load the UI definition */
-	gtk_ui_manager_add_ui_from_file (parent_priv->ui_manager, MODEST_UIDIR "modest-main-window-ui.xml", &error);
+	gtk_ui_manager_add_ui_from_file (parent_priv->ui_manager,
+					 MODEST_UIDIR "modest-main-window-ui.xml", &error);
 	if (error != NULL) {
 		g_warning ("Could not merge modest-ui.xml: %s", error->message);
 		g_error_free (error);
@@ -407,8 +454,9 @@ modest_main_window_new (void)
 	priv->folder_view = MODEST_FOLDER_VIEW(modest_folder_view_new (query));
 	if (!priv->folder_view)
 		g_printerr ("modest: cannot instantiate folder view\n");	
-	g_object_unref (G_OBJECT (query));
-	
+	g_object_unref (G_OBJECT (query));	
+	modest_maemo_utils_get_device_name ();
+
 	/* header view */
 	priv->header_view  =
 		MODEST_HEADER_VIEW(modest_header_view_new (NULL, MODEST_HEADER_VIEW_STYLE_DETAILS));
@@ -436,9 +484,6 @@ modest_main_window_new (void)
 	gtk_window_set_icon_from_file (GTK_WINDOW(self), MODEST_APP_ICON, NULL);
 	gtk_widget_show_all (main_vbox);
 
-	g_signal_connect (G_OBJECT(self), "delete-event",
-			  G_CALLBACK(on_delete_event), self);
-
 	/* should we hide the toolbar? */
 	if (!modest_conf_get_bool (modest_runtime_get_conf (), MODEST_CONF_SHOW_TOOLBAR, NULL))
 		gtk_widget_hide (parent_priv->toolbar);
@@ -451,6 +496,12 @@ modest_main_window_new (void)
 						  TNY_ACCOUNT_STORE (modest_runtime_get_account_store ()));
 	g_idle_add ((GSourceFunc)sync_accounts_cb, self);
 	/* do send & receive when we are idle */
-
+	
 	return MODEST_WINDOW(self);
 }
+
+
+
+
+
+

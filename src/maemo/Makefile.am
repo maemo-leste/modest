@@ -53,8 +53,9 @@ libmodest_ui_la_SOURCES=              \
         modest-msg-view-window.c      \
 	modest-msg-edit-window.c      \
 	modest-account-assistant.c    \
-	modest-account-assistant.h
-
+	modest-account-assistant.h    \
+	modest-maemo-utils.c          \
+	modest-maemo-utils.h
 
 LDADD = \
 	$(MODEST_GSTUFF_LIBS) \
