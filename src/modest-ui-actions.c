@@ -78,13 +78,12 @@ static void     reply_forward_func     (gpointer data, gpointer user_data);
 static void     read_msg_func          (gpointer data, gpointer user_data);
 static void     get_msg_cb             (TnyFolder *folder, TnyMsg *msg,	GError **err, 
 					gpointer user_data);
-static void     reply_forward          (GtkWidget *widget, ReplyForwardAction action,
-					ModestWindow *win);
+static void     reply_forward          (ReplyForwardAction action, ModestWindow *win);
 static gchar*   ask_for_folder_name    (GtkWindow *parent_window, const gchar *title);
 
 
 void   
-modest_ui_actions_on_about (GtkWidget *widget, ModestWindow *win)
+modest_ui_actions_on_about (GtkAction *action, ModestWindow *win)
 {
 	GtkWidget *about;
 	const gchar *authors[] = {
@@ -140,7 +139,7 @@ get_selected_headers (ModestWindow *win)
 }
 
 void
-modest_ui_actions_on_delete (GtkWidget *widget, ModestWindow *win)
+modest_ui_actions_on_delete (GtkAction *action, ModestWindow *win)
 {
 	TnyList *header_list;
 	TnyIterator *iter;
@@ -183,7 +182,7 @@ modest_ui_actions_on_delete (GtkWidget *widget, ModestWindow *win)
 
 
 void
-modest_ui_actions_on_quit (GtkWidget *widget, ModestWindow *win)
+modest_ui_actions_on_quit (GtkAction *action, ModestWindow *win)
 {
 	/* FIXME: save size of main window */
 /* 	save_sizes (main_window); */
@@ -191,7 +190,7 @@ modest_ui_actions_on_quit (GtkWidget *widget, ModestWindow *win)
 }
 
 void
-modest_ui_actions_on_accounts (GtkWidget *widget, ModestWindow *win)
+modest_ui_actions_on_accounts (GtkAction *action, ModestWindow *win)
 {
 	GtkWidget *account_win;
 	account_win = modest_account_view_window_new ();
@@ -203,7 +202,7 @@ modest_ui_actions_on_accounts (GtkWidget *widget, ModestWindow *win)
 }
 
 void
-modest_ui_actions_on_new_msg (GtkWidget *widget, ModestWindow *win)
+modest_ui_actions_on_new_msg (GtkAction *action, ModestWindow *win)
 {
 	ModestWindow *msg_win;
 	TnyMsg *msg = NULL;
@@ -266,7 +265,7 @@ cleanup:
 
 
 void
-modest_ui_actions_on_open (GtkWidget *widget, ModestWindow *win)
+modest_ui_actions_on_open (GtkAction *action, ModestWindow *win)
 {
 	modest_runtime_not_implemented (GTK_WINDOW(win)); /* FIXME */
 }
@@ -362,7 +361,7 @@ cleanup:
  * Common code for the reply and forward actions
  */
 static void
-reply_forward (GtkWidget *widget, ReplyForwardAction action, ModestWindow *win)
+reply_forward (ReplyForwardAction action, ModestWindow *win)
 {
 	TnyList *header_list;
 	guint reply_forward_type;
@@ -426,31 +425,31 @@ reply_forward (GtkWidget *widget, ReplyForwardAction action, ModestWindow *win)
 
 
 void
-modest_ui_actions_on_reply (GtkWidget *widget, ModestWindow *win)
+modest_ui_actions_on_reply (GtkAction *action, ModestWindow *win)
 {
 	g_return_if_fail (MODEST_IS_WINDOW(win));
 
-	reply_forward (widget, ACTION_REPLY, win);
+	reply_forward (ACTION_REPLY, win);
 }
 
 void
-modest_ui_actions_on_forward (GtkWidget *widget, ModestWindow *win)
+modest_ui_actions_on_forward (GtkAction *action, ModestWindow *win)
 {
 	g_return_if_fail (MODEST_IS_WINDOW(win));
 
-	reply_forward (widget, ACTION_FORWARD, win);
+	reply_forward (ACTION_FORWARD, win);
 }
 
 void
-modest_ui_actions_on_reply_all (GtkWidget *widget,ModestWindow *win)
+modest_ui_actions_on_reply_all (GtkAction *action, ModestWindow *win)
 {
 	g_return_if_fail (MODEST_IS_WINDOW(win));
 
-	reply_forward (widget, ACTION_REPLY_TO_ALL, win);
+	reply_forward (ACTION_REPLY_TO_ALL, win);
 }
 
 void 
-modest_ui_actions_on_next (GtkWidget *widget, 
+modest_ui_actions_on_next (GtkAction *action, 
 			   ModestMainWindow *main_window)
 {
 	GtkWidget *header_view;
@@ -465,7 +464,7 @@ modest_ui_actions_on_next (GtkWidget *widget,
 }
 
 void 
-modest_ui_actions_on_prev (GtkWidget *widget, 
+modest_ui_actions_on_prev (GtkAction *action, 
 			   ModestMainWindow *main_window)
 {
 	GtkWidget *header_view;
@@ -481,7 +480,7 @@ modest_ui_actions_on_prev (GtkWidget *widget,
 
 
 void
-modest_ui_actions_on_send_receive (GtkWidget *widget,  ModestWindow *win)
+modest_ui_actions_on_send_receive (GtkAction *action,  ModestWindow *win)
 {
 	gchar *account_name;
 	TnyAccount *tny_account;
@@ -515,7 +514,7 @@ modest_ui_actions_on_send_receive (GtkWidget *widget,  ModestWindow *win)
 
 
 void
-modest_ui_actions_toggle_view (GtkWidget *widget, ModestMainWindow *main_window)
+modest_ui_actions_toggle_view (GtkAction *action, ModestMainWindow *main_window)
 {
 	ModestConf *conf;
 	GtkWidget *header_view;
@@ -1024,7 +1023,7 @@ ask_for_folder_name (GtkWindow *parent_window,
 }
 
 void 
-modest_ui_actions_on_new_folder (GtkWidget *widget, ModestMainWindow *main_window)
+modest_ui_actions_on_new_folder (GtkAction *action, ModestMainWindow *main_window)
 {
 	TnyFolder *parent_folder;
 	GtkWidget *folder_view;
@@ -1067,7 +1066,7 @@ modest_ui_actions_on_new_folder (GtkWidget *widget, ModestMainWindow *main_windo
 }
 
 void 
-modest_ui_actions_on_rename_folder (GtkWidget *widget,
+modest_ui_actions_on_rename_folder (GtkAction *action,
 				     ModestMainWindow *main_window)
 {
 	TnyFolder *folder;
@@ -1135,7 +1134,7 @@ delete_folder (ModestMainWindow *main_window, gboolean move_to_trash)
 }
 
 void 
-modest_ui_actions_on_delete_folder (GtkWidget *widget,
+modest_ui_actions_on_delete_folder (GtkAction *action,
 				     ModestMainWindow *main_window)
 {
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW(main_window));
@@ -1144,7 +1143,7 @@ modest_ui_actions_on_delete_folder (GtkWidget *widget,
 }
 
 void 
-modest_ui_actions_on_move_folder_to_trash_folder (GtkWidget *widget, ModestMainWindow *main_window)
+modest_ui_actions_on_move_folder_to_trash_folder (GtkAction *action, ModestMainWindow *main_window)
 {
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW(main_window));
 	

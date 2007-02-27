@@ -36,29 +36,29 @@
 G_BEGIN_DECLS
 
 /* Menu & toolbar actions */
-void     modest_ui_actions_on_about         (GtkWidget *widget, ModestWindow *win);
+void     modest_ui_actions_on_about         (GtkAction *action, ModestWindow *win);
 
-void     modest_ui_actions_on_delete        (GtkWidget *widget, ModestWindow *win);
+void     modest_ui_actions_on_delete        (GtkAction *action, ModestWindow *win);
 
-void     modest_ui_actions_on_quit          (GtkWidget *widget, ModestWindow *win);
+void     modest_ui_actions_on_quit          (GtkAction *action, ModestWindow *win);
 
-void     modest_ui_actions_on_accounts      (GtkWidget *widget, ModestWindow *win);
+void     modest_ui_actions_on_accounts      (GtkAction *action, ModestWindow *win);
 
-void     modest_ui_actions_on_new_msg       (GtkWidget *widget, ModestWindow *win);
+void     modest_ui_actions_on_new_msg       (GtkAction *action, ModestWindow *win);
 
-void     modest_ui_actions_on_open           (GtkWidget *widget, ModestWindow *win);
+void     modest_ui_actions_on_open           (GtkAction *action, ModestWindow *win);
 
-void     modest_ui_actions_on_reply         (GtkWidget *widget, ModestWindow *win);
+void     modest_ui_actions_on_reply         (GtkAction *action, ModestWindow *win);
 
-void     modest_ui_actions_on_forward       (GtkWidget *widget, ModestWindow *win);
+void     modest_ui_actions_on_forward       (GtkAction *action, ModestWindow *win);
 
-void     modest_ui_actions_on_reply_all     (GtkWidget *widget, ModestWindow *win);
+void     modest_ui_actions_on_reply_all     (GtkAction *action, ModestWindow *win);
 
-void     modest_ui_actions_on_next          (GtkWidget *widget, ModestMainWindow *main_window);
+void     modest_ui_actions_on_next          (GtkAction *action, ModestMainWindow *main_window);
 
-void     modest_ui_actions_on_prev          (GtkWidget *widget, ModestMainWindow *main_window);
+void     modest_ui_actions_on_prev          (GtkAction *action, ModestMainWindow *main_window);
 
-void	 modest_ui_actions_toggle_view	     (GtkWidget *widget, ModestMainWindow *main_window);
+void	 modest_ui_actions_toggle_view	     (GtkAction *action, ModestMainWindow *main_window);
 
 /* Widget actions */
 void     modest_ui_actions_on_header_selected          (ModestHeaderView *folder_view, 
@@ -98,18 +98,18 @@ void     modest_ui_actions_on_msg_attachment_clicked   (ModestMsgView *msgview, 
 void     modest_ui_actions_on_send                     (GtkWidget *widget,
 							ModestMsgEditWindow *edit_window);
 
-void    modest_ui_actions_on_send_receive              (GtkWidget *widget, ModestWindow *win);
+void    modest_ui_actions_on_send_receive              (GtkAction *action, ModestWindow *win);
 
-void     modest_ui_actions_on_new_folder               (GtkWidget *widget,
+void     modest_ui_actions_on_new_folder               (GtkAction *action,
+							ModestMainWindow *main_window);
+
+void     modest_ui_actions_on_rename_folder            (GtkAction *action,
+							ModestMainWindow *main_window);
+
+void     modest_ui_actions_on_delete_folder            (GtkAction *action,
 							 ModestMainWindow *main_window);
 
-void     modest_ui_actions_on_rename_folder            (GtkWidget *widget,
-							 ModestMainWindow *main_window);
-
-void     modest_ui_actions_on_delete_folder            (GtkWidget *widget,
-							 ModestMainWindow *main_window);
-
-void     modest_ui_actions_on_move_folder_to_trash_folder     (GtkWidget *widget,
+void     modest_ui_actions_on_move_folder_to_trash_folder     (GtkAction *action,
 							       ModestMainWindow *main_window);
 
 void     modest_ui_actions_on_connection_changed    (TnyDevice *device, gboolean online,
