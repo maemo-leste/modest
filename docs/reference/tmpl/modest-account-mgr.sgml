@@ -24,25 +24,7 @@ ModestAccountMgr
 
 </para>
 
-
-<!-- ##### SIGNAL ModestAccountMgr::account-changed ##### -->
-<para>
-
-</para>
-
-@: 
-@: 
-@: 
-@: 
-
-<!-- ##### SIGNAL ModestAccountMgr::account-removed ##### -->
-<para>
-
-</para>
-
-@: 
-@: 
-@: 
+@parent: 
 
 <!-- ##### FUNCTION modest_account_mgr_new ##### -->
 <para>
@@ -62,7 +44,6 @@ ModestAccountMgr
 @name: 
 @store_name: 
 @transport_name: 
-@err: 
 @Returns: 
 
 
@@ -77,6 +58,8 @@ ModestAccountMgr
 @username: 
 @password: 
 @proto: 
+@security: 
+@auth: 
 @Returns: 
 
 
@@ -100,7 +83,6 @@ ModestAccountMgr
 @self: 
 @name: 
 @server_account: 
-@err: 
 @Returns: 
 
 
@@ -110,7 +92,6 @@ ModestAccountMgr
 </para>
 
 @self: 
-@err: 
 @Returns: 
 
 
@@ -134,7 +115,6 @@ ModestAccountMgr
 @self: 
 @name: 
 @server_account: 
-@err: 
 @Returns: 
 
 
@@ -147,7 +127,6 @@ ModestAccountMgr
 @name: 
 @key: 
 @server_account: 
-@err: 
 @Returns: 
 
 
@@ -160,7 +139,6 @@ ModestAccountMgr
 @name: 
 @key: 
 @server_account: 
-@err: 
 @Returns: 
 
 
@@ -173,7 +151,6 @@ ModestAccountMgr
 @name: 
 @key: 
 @server_account: 
-@err: 
 @Returns: 
 
 
@@ -187,7 +164,6 @@ ModestAccountMgr
 @key: 
 @list_type: 
 @server_account: 
-@err: 
 @Returns: 
 
 
@@ -201,7 +177,6 @@ ModestAccountMgr
 @key: 
 @val: 
 @server_account: 
-@err: 
 @Returns: 
 
 
@@ -215,7 +190,6 @@ ModestAccountMgr
 @key: 
 @val: 
 @server_account: 
-@err: 
 @Returns: 
 
 
@@ -229,7 +203,6 @@ ModestAccountMgr
 @key: 
 @val: 
 @server_account: 
-@err: 
 @Returns: 
 
 
@@ -244,7 +217,7 @@ ModestAccountMgr
 @val: 
 @list_type: 
 @server_account: 
-@err: 
+@Returns: 
 
 
 <!-- ##### FUNCTION modest_account_mgr_unset ##### -->
@@ -256,7 +229,6 @@ ModestAccountMgr
 @name: 
 @key: 
 @server_account: 
-@err: 
 @Returns: 
 
 

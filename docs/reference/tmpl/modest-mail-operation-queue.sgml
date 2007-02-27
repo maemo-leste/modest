@@ -24,6 +24,7 @@ ModestMailOperationQueue
 
 </para>
 
+@parent: 
 
 <!-- ##### FUNCTION modest_mail_operation_queue_new ##### -->
 <para>

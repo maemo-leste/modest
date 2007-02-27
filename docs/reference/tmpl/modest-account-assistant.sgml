@@ -24,6 +24,7 @@ ModestAccountAssistant
 
 </para>
 
+@parent: 
 
 <!-- ##### FUNCTION modest_account_assistant_new ##### -->
 <para>

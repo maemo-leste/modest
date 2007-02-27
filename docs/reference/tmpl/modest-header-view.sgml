@@ -66,6 +66,7 @@ ModestHeaderView
 
 </para>
 
+@parent: 
 
 <!-- ##### FUNCTION modest_header_view_new ##### -->
 <para>
@@ -84,7 +85,6 @@ ModestHeaderView
 
 @self: 
 @folder: 
-@Returns: 
 
 
 <!-- ##### FUNCTION modest_header_view_get_folder ##### -->

@@ -27,6 +27,7 @@ modest-window-priv
 @ui_manager: 
 @toolbar: 
 @menubar: 
+@active_account: 
 
 <!-- ##### MACRO MODEST_WINDOW_GET_PRIVATE ##### -->
 <para>

@@ -24,6 +24,7 @@ ModestTnyStreamGtkhtml
 
 </para>
 
+@parent: 
 
 <!-- ##### FUNCTION modest_tny_stream_gtkhtml_new ##### -->
 <para>

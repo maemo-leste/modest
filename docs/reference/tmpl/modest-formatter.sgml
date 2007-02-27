@@ -24,6 +24,7 @@ ModestFormatter
 
 </para>
 
+@parent: 
 
 <!-- ##### FUNCTION modest_formatter_new ##### -->
 <para>

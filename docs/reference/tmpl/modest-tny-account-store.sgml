@@ -30,14 +30,7 @@ ModestTnyAccountStore
 
 </para>
 
-
-<!-- ##### SIGNAL ModestTnyAccountStore::account-update ##### -->
-<para>
-
-</para>
-
-@: 
-@: 
+@parent: 
 
 <!-- ##### FUNCTION modest_tny_account_store_new ##### -->
 <para>
@@ -45,6 +38,7 @@ ModestTnyAccountStore
 </para>
 
 @account_mgr: 
+@device: 
 @Returns: 
 
 

@@ -42,15 +42,7 @@ ModestConf
 
 </para>
 
-
-<!-- ##### SIGNAL ModestConf::key-changed ##### -->
-<para>
-
-</para>
-
-@: 
-@: 
-@: 
+@parent: 
 
 <!-- ##### FUNCTION modest_conf_new ##### -->
 <para>
@@ -151,6 +143,7 @@ ModestConf
 @val: 
 @list_type: 
 @err: 
+@Returns: 
 
 
 <!-- ##### FUNCTION modest_conf_list_subkeys ##### -->

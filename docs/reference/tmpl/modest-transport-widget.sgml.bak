@@ -22,6 +22,7 @@ ModestTransportWidget
 
 </para>
 
+@parent: 
 
 <!-- ##### FUNCTION modest_transport_widget_new ##### -->
 <para>

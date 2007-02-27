@@ -24,6 +24,7 @@ ModestStoreWidget
 
 </para>
 
+@parent: 
 
 <!-- ##### FUNCTION modest_store_widget_new ##### -->
 <para>

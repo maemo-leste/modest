@@ -24,6 +24,7 @@ ModestMainWindow
 
 </para>
 
+@parent: 
 
 <!-- ##### FUNCTION modest_main_window_new ##### -->
 <para>

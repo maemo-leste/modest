@@ -61,13 +61,7 @@ ModestMailOperation
 
 </para>
 
-
-<!-- ##### SIGNAL ModestMailOperation::progress-changed ##### -->
-<para>
-
-</para>
-
-@: 
+@parent: 
 
 <!-- ##### FUNCTION modest_mail_operation_new ##### -->
 <para>
@@ -165,48 +159,6 @@ ModestMailOperation
 @self: 
 @folder: 
 @name: 
-
-
-<!-- ##### FUNCTION modest_mail_operation_move_folder ##### -->
-<para>
-
-</para>
-
-@self: 
-@folder: 
-@parent: 
-
-
-<!-- ##### FUNCTION modest_mail_operation_copy_folder ##### -->
-<para>
-
-</para>
-
-@self: 
-@folder: 
-@parent: 
-
-
-<!-- ##### FUNCTION modest_mail_operation_copy_msg ##### -->
-<para>
-
-</para>
-
-@self: 
-@header: 
-@folder: 
-@Returns: 
-
-
-<!-- ##### FUNCTION modest_mail_operation_move_msg ##### -->
-<para>
-
-</para>
-
-@self: 
-@header: 
-@folder: 
-@Returns: 
 
 
 <!-- ##### FUNCTION modest_mail_operation_remove_msg ##### -->

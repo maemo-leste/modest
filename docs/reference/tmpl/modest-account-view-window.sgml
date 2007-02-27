@@ -24,6 +24,7 @@ ModestAccountViewWindow
 
 </para>
 
+@parent: 
 
 <!-- ##### FUNCTION modest_account_view_window_new ##### -->
 <para>

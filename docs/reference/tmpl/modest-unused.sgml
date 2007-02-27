@@ -238,6 +238,33 @@ ModestUI
 ModestWidgetFactory
 
 
+<!-- ##### MACRO MDOEST_ACCOUNT_REMEMBER_PWD ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SIGNAL ModestAccountMgr::account-changed ##### -->
+<para>
+
+</para>
+
+@: 
+@: 
+@: 
+@:
+
+
+<!-- ##### SIGNAL ModestAccountMgr::account-removed ##### -->
+<para>
+
+</para>
+
+@: 
+@: 
+@:
+
+
 <!-- ##### ENUM ModestComboBoxType ##### -->
 <para>
 
@@ -249,6 +276,16 @@ ModestWidgetFactory
 @MODEST_COMBO_BOX_TYPE_AUTH_PROTOS: 
 @MODEST_COMBO_BOX_TYPE_TRANSPORTS: 
 @MODEST_COMBO_BOX_TYPE_REMOTE_STORES: 
+
+<!-- ##### SIGNAL ModestConf::key-changed ##### -->
+<para>
+
+</para>
+
+@: 
+@: 
+@:
+
 
 <!-- ##### ENUM ModestDebugFlags ##### -->
 <para>
@@ -280,6 +317,14 @@ ModestWidgetFactory
 @MODEST_LOCAL_FOLDER_TYPE_TRASH: 
 @MODEST_LOCAL_FOLDER_TYPE_NUM: 
 
+<!-- ##### SIGNAL ModestMailOperation::progress-changed ##### -->
+<para>
+
+</para>
+
+@:
+
+
 <!-- ##### STRUCT ModestPresets ##### -->
 <para>
 
@@ -299,6 +344,15 @@ ModestWidgetFactory
 @MODEST_PRESETS_INFO_APOP: 
 @MODEST_PRESETS_INFO_SECURE_SMTP: 
 @MODEST_PRESETS_INFO_SECURE_INCOMING: 
+
+<!-- ##### SIGNAL ModestTnyAccountStore::account-update ##### -->
+<para>
+
+</para>
+
+@: 
+@:
+
 
 <!-- ##### SIGNAL ModestTnyAccountStore::password-requested ##### -->
 <para>
@@ -400,6 +454,23 @@ ModestWidgetFactory
 @self: 
 @msg: 
 
+<!-- ##### FUNCTION modest_folder_view_add_subfolder ##### -->
+<para>
+
+</para>
+
+@self: 
+@folder: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_folder_view_rename ##### -->
+<para>
+
+</para>
+
+@self: 
+@Returns: 
+
 <!-- ##### MACRO modest_icon_factory_get_big_icon ##### -->
 <para>
 
@@ -459,7 +530,147 @@ ModestWidgetFactory
 
 @Returns: 
 
+<!-- ##### FUNCTION modest_mail_operation_copy_folder ##### -->
+<para>
+
+</para>
+
+@self: 
+@folder: 
+@parent: 
+
+<!-- ##### FUNCTION modest_mail_operation_copy_msg ##### -->
+<para>
+
+</para>
+
+@self: 
+@header: 
+@folder: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_mail_operation_move_folder ##### -->
+<para>
+
+</para>
+
+@self: 
+@folder: 
+@parent: 
+
+<!-- ##### FUNCTION modest_mail_operation_move_msg ##### -->
+<para>
+
+</para>
+
+@self: 
+@header: 
+@folder: 
+@Returns: 
+
+<!-- ##### MACRO modest_marshal_VOID__POINTER_BOOL ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### FUNCTION modest_marshal_VOID__POINTER_BOOLEAN ##### -->
+<para>
+
+</para>
+
+@closure: 
+@return_value: 
+@n_param_values: 
+@param_values: 
+@invocation_hint: 
+@marshal_data: 
+
+<!-- ##### FUNCTION modest_marshal_VOID__POINTER_POINTER ##### -->
+<para>
+
+</para>
+
+@closure: 
+@return_value: 
+@n_param_values: 
+@param_values: 
+@invocation_hint: 
+@marshal_data: 
+
+<!-- ##### FUNCTION modest_marshal_VOID__POINTER_POINTER_POINTER ##### -->
+<para>
+
+</para>
+
+@closure: 
+@return_value: 
+@n_param_values: 
+@param_values: 
+@invocation_hint: 
+@marshal_data: 
+
+<!-- ##### MACRO modest_marshal_VOID__STRING_BOOL ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### FUNCTION modest_marshal_VOID__STRING_BOOLEAN ##### -->
+<para>
+
+</para>
+
+@closure: 
+@return_value: 
+@n_param_values: 
+@param_values: 
+@invocation_hint: 
+@marshal_data: 
+
+<!-- ##### FUNCTION modest_marshal_VOID__STRING_INT ##### -->
+<para>
+
+</para>
+
+@closure: 
+@return_value: 
+@n_param_values: 
+@param_values: 
+@invocation_hint: 
+@marshal_data: 
+
+<!-- ##### FUNCTION modest_marshal_VOID__STRING_INT_INT ##### -->
+<para>
+
+</para>
+
+@closure: 
+@return_value: 
+@n_param_values: 
+@param_values: 
+@invocation_hint: 
+@marshal_data: 
+
 <!-- ##### FUNCTION modest_marshal_VOID__STRING_POINTER_POINTER_POINTER ##### -->
+<para>
+
+</para>
+
+@closure: 
+@return_value: 
+@n_param_values: 
+@param_values: 
+@invocation_hint: 
+@marshal_data: 
+
+<!-- ##### MACRO modest_marshal_VOID__STRING_STRING_BOOL ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### FUNCTION modest_marshal_VOID__STRING_STRING_BOOLEAN ##### -->
 <para>
 
 </para>
@@ -566,6 +777,25 @@ ModestWidgetFactory
 
 @fact: 
 @Returns: 
+
+<!-- ##### FUNCTION modest_ui_actions_on_accounts_reloaded ##### -->
+<para>
+
+</para>
+
+@store: 
+@user_data: 
+
+<!-- ##### FUNCTION modest_ui_actions_on_folder_moved ##### -->
+<para>
+
+</para>
+
+@folder_view: 
+@folder: 
+@parent: 
+@done: 
+@user_data: 
 
 <!-- ##### FUNCTION modest_ui_edit_window ##### -->
 <para>

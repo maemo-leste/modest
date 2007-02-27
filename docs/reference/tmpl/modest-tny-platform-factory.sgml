@@ -24,6 +24,7 @@ ModestTnyPlatformFactory
 
 </para>
 
+@parent: 
 
 <!-- ##### FUNCTION modest_tny_platform_factory_get_instance ##### -->
 <para>

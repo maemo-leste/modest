@@ -34,7 +34,7 @@ modest-ui-actions
 </para>
 
 @widget: 
-@main_window: 
+@win: 
 
 
 <!-- ##### FUNCTION modest_ui_actions_on_quit ##### -->
@@ -79,7 +79,7 @@ modest-ui-actions
 </para>
 
 @widget: 
-@main_window: 
+@win: 
 
 
 <!-- ##### FUNCTION modest_ui_actions_on_forward ##### -->
@@ -88,7 +88,7 @@ modest-ui-actions
 </para>
 
 @widget: 
-@main_window: 
+@win: 
 
 
 <!-- ##### FUNCTION modest_ui_actions_on_reply_all ##### -->
@@ -97,7 +97,7 @@ modest-ui-actions
 </para>
 
 @widget: 
-@main_window: 
+@win: 
 
 
 <!-- ##### FUNCTION modest_ui_actions_on_next ##### -->
@@ -263,26 +263,5 @@ modest-ui-actions
 @device: 
 @online: 
 @main_window: 
-
-
-<!-- ##### FUNCTION modest_ui_actions_on_accounts_reloaded ##### -->
-<para>
-
-</para>
-
-@store: 
-@user_data: 
-
-
-<!-- ##### FUNCTION modest_ui_actions_on_folder_moved ##### -->
-<para>
-
-</para>
-
-@folder_view: 
-@folder: 
-@parent: 
-@done: 
-@user_data: 
 
 

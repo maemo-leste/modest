@@ -2,24 +2,20 @@
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" 
           "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [
 
-<!ENTITY ModestAccountKeys SYSTEM "xml/modest-account-keys.xml">
 <!ENTITY ModestAccountMgr SYSTEM "xml/modest-account-mgr.xml">
-<!ENTITY ModestConfKeys SYSTEM "xml/modest-conf-keys.xml">
 <!ENTITY ModestConf SYSTEM "xml/modest-conf.xml">
+<!ENTITY ModestDefs SYSTEM "xml/modest-defs.xml">
 <!ENTITY ModestError SYSTEM "xml/modest-error.xml">
 <!ENTITY ModestFormatter SYSTEM "xml/modest-formatter.xml">
-<!ENTITY ModestIconFactory SYSTEM "xml/modest-icon-factory.xml">
 <!ENTITY ModestIconNames SYSTEM "xml/modest-icon-names.xml">
 <!ENTITY ModestMailOperation SYSTEM "xml/modest-mail-operation.xml">
 <!ENTITY ModestMailOperationQueue SYSTEM "xml/modest-mail-operation-queue.xml">
 <!ENTITY ModestMarshal SYSTEM "xml/modest-marshal.xml">
 <!ENTITY ModestPair SYSTEM "xml/modest-pair.xml">
-<!ENTITY ModestPresets SYSTEM "xml/modest-presets.xml">
 <!ENTITY ModestProtocolInfo SYSTEM "xml/modest-protocol-info.xml">
 <!ENTITY ModestTextUtils SYSTEM "xml/modest-text-utils.xml">
 <!ENTITY ModestTnyAccountStore SYSTEM "xml/modest-tny-account-store.xml">
 <!ENTITY ModestTnyFolder SYSTEM "xml/modest-tny-folder.xml">
-<!ENTITY ModestTnyMsgActions SYSTEM "xml/modest-tny-msg-actions.xml">
 <!ENTITY ModestTnyPlatformFactory SYSTEM "xml/modest-tny-platform-factory.xml">
 <!ENTITY ModestWidgetMemory SYSTEM "xml/modest-widget-memory.xml">
 
@@ -32,7 +28,7 @@
 
 <!ENTITY gtk-ModestAccountViewWindow SYSTEM "xml/modest-account-view-window.xml">
 <!ENTITY gtk-ModestAccountAssistant SYSTEM "xml/modest-account-assistant.xml">
-<!ENTITY gtk-ModestEditMsgWindow SYSTEM "xml/modest-edit-msg-window.xml">
+<!ENTITY gtk-ModestMsgEditWindow SYSTEM "xml/modest-msg-edit-window.xml">
 <!ENTITY gtk-ModestStoreWidget SYSTEM "xml/modest-store-widget.xml">
 <!ENTITY gtk-modestTransportWidget SYSTEM "xml/modest-transport-widget.xml">
 
@@ -72,24 +68,20 @@
     <title>API Reference</title>
       <chapter id="src">
         <title>Modest</title>
-          &ModestAccountKeys;
           &ModestAccountMgr;
-          &ModestConfKeys;
           &ModestConf;
+	  &ModestDefs;
           &ModestError;
           &ModestFormatter;
-          &ModestIconFactory;
           &ModestIconNames;
           &ModestMailOperation;
           &ModestMailOperationQueue;
           &ModestMarshal;
           &ModestPair;
-          &ModestPresets;
           &ModestProtocolInfo;
           &ModestTextUtils;
           &ModestTnyAccountStore;
           &ModestTnyFolder;
-          &ModestTnyMsgActions;
           &ModestTnyPlatformFactory;
           &ModestWidgetMemory;
       </chapter>
@@ -106,7 +98,7 @@
         <title>Gtk</title>
           &gtk-ModestAccountViewWindow;
           &gtk-ModestAccountAssistant;
-          &gtk-ModestEditMsgWindow;
+          &gtk-ModestMsgEditWindow;
           &gtk-ModestStoreWidget;
           &gtk-modestTransportWidget;
       </chapter>

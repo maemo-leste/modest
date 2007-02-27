@@ -24,6 +24,7 @@ ModestMsgView
 
 </para>
 
+@parent: 
 
 <!-- ##### FUNCTION modest_msg_view_new ##### -->
 <para>

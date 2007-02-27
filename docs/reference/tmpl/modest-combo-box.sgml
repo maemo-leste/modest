@@ -24,13 +24,15 @@ ModestComboBox
 
 </para>
 
+@parent: 
 
 <!-- ##### FUNCTION modest_combo_box_new ##### -->
 <para>
 
 </para>
 
-@hash: 
+@pairs: 
+@id_equal_func: 
 @Returns: 
 
 

@@ -24,13 +24,13 @@ ModestFolderView
 
 </para>
 
+@parent: 
 
 <!-- ##### FUNCTION modest_folder_view_new ##### -->
 <para>
 
 </para>
 
-@account_store: 
 @query: 
 @Returns: 
 
@@ -50,25 +50,6 @@ ModestFolderView
 </para>
 
 @self: 
-@Returns: 
-
-
-<!-- ##### FUNCTION modest_folder_view_rename ##### -->
-<para>
-
-</para>
-
-@self: 
-@Returns: 
-
-
-<!-- ##### FUNCTION modest_folder_view_add_subfolder ##### -->
-<para>
-
-</para>
-
-@self: 
-@folder: 
 @Returns: 
 
 
