@@ -1047,7 +1047,7 @@ on_drag_data_received (GtkWidget *widget,
 		       gpointer data)
 {
 	GtkWidget *source_widget;
-	GtkTreeModel *model_sort=NULL, *dest_model, *source_model; /* FIXME -- removing = NULL gives warn */
+	GtkTreeModel *model_sort, *dest_model, *source_model;
  	GtkTreePath *source_row, *dest_row, *child_dest_row;
 	GtkTreeViewDropPosition pos;
 	gboolean success = FALSE, delete_source = FALSE;
@@ -1070,11 +1070,11 @@ on_drag_data_received (GtkWidget *widget,
 				    &source_model,
 				    &source_row);
 
+	model_sort = gtk_tree_view_get_model (GTK_TREE_VIEW (widget));
 	/* Select the destination model */
 	if (source_widget == widget) {
 		dest_model = source_model;
 	} else {
-		model_sort = gtk_tree_view_get_model (GTK_TREE_VIEW (widget));
 		dest_model = gtk_tree_model_sort_get_model (GTK_TREE_MODEL_SORT (model_sort));
 	}
 
