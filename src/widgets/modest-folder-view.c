@@ -35,7 +35,6 @@
 #include <tny-gtk-folder-store-tree-model.h>
 #include <tny-gtk-header-list-model.h>
 #include <tny-folder.h>
-#include <tny-folder-monitor.h>
 #include <tny-account-store.h>
 #include <tny-account.h>
 #include <tny-folder.h>
@@ -63,8 +62,6 @@ static void         modest_folder_view_set_account_store (TnyAccountStoreView *s
 
 static gboolean     update_model           (ModestFolderView *self,
 					    ModestTnyAccountStore *account_store);
-
-static gboolean     update_model_empty     (ModestFolderView *self);
 
 static void         on_selection_changed   (GtkTreeSelection *sel, gpointer data);
 
@@ -122,13 +119,10 @@ struct _ModestFolderViewPrivate {
 	gulong               account_update_signal;
 	gulong               changed_signal;
 	gulong               accounts_reloaded_signal;
-	GMutex              *lock;
 	
 	GtkTreeSelection    *cur_selection;
 	TnyFolderStoreQuery *query;
 	guint                timer_expander;
-
-	TnyFolderMonitor    *monitor;
 };
 #define MODEST_FOLDER_VIEW_GET_PRIVATE(o)			\
 	(G_TYPE_INSTANCE_GET_PRIVATE((o),			\
@@ -233,10 +227,10 @@ text_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 				fname = g_strdup(modest_local_folder_info_get_type_display_name (type));
 			}
 		}
-	} else if (folder && type == TNY_FOLDER_TYPE_ROOT) {
-		g_warning ("fname: %s", fname);
-		/* FIXME: todo */
-	}
+	}/*  else if (folder && type == TNY_FOLDER_TYPE_ROOT) { */
+/* 		g_warning ("fname: %s", fname); */
+/* 		/\* FIXME: todo *\/ */
+/* 	} */
 			
 	if (unread > 0) {
 		gchar *folder_title = g_strdup_printf ("%s (%d)", fname, unread);
@@ -357,9 +351,6 @@ modest_folder_view_init (ModestFolderView *obj)
 	priv->cur_folder     = NULL;
 	priv->cur_row        = NULL;
 	priv->query          = NULL;
-	priv->monitor	     = NULL;
-
-	priv->lock           = g_mutex_new ();
 
 	column = gtk_tree_view_column_new ();	
 	gtk_tree_view_append_column (GTK_TREE_VIEW(obj),column);
@@ -418,11 +409,6 @@ modest_folder_view_finalize (GObject *obj)
 					     priv->accounts_reloaded_signal);
 		g_object_unref (G_OBJECT(priv->account_store));
 		priv->account_store = NULL;
-	}
-
-	if (priv->lock) {
-		g_mutex_free (priv->lock);
-		priv->lock = NULL;
 	}
 
 	if (priv->query) {
@@ -535,31 +521,6 @@ modest_folder_view_new (TnyFolderStoreQuery *query)
 	return GTK_WIDGET(self);
 }
 
-
-static gboolean
-update_model_empty (ModestFolderView *self)
-{
-	ModestFolderViewPrivate *priv;
-	
-	g_return_val_if_fail (self, FALSE);
-	priv = MODEST_FOLDER_VIEW_GET_PRIVATE(self);
-
-	g_mutex_lock (priv->lock);
-	{
-		if (priv->monitor) {
-			tny_folder_monitor_stop (priv->monitor);
-			g_object_unref(G_OBJECT(priv->monitor));
-			priv->monitor = NULL;
-		}
-	}
-	g_mutex_unlock (priv->lock);
-	
-	g_signal_emit (G_OBJECT(self), signals[FOLDER_SELECTION_CHANGED_SIGNAL], 0,
-		       NULL, TRUE);
-	return TRUE;
-}
-
-
 /* this feels dirty; any other way to expand all the root items? */
 static void
 expand_root_items (ModestFolderView *self)
@@ -587,7 +548,9 @@ update_model (ModestFolderView *self, ModestTnyAccountStore *account_store)
 	priv =	MODEST_FOLDER_VIEW_GET_PRIVATE(self);
 	
 	/* Notify that there is no folder selected */
-	update_model_empty (self);
+	g_signal_emit (G_OBJECT(self), 
+		       signals[FOLDER_SELECTION_CHANGED_SIGNAL], 0,
+		       NULL, TRUE);
 	
 	/* FIXME: the local accounts are not shown when the query
 	   selects only the subscribed folders. */

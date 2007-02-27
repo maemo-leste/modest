@@ -30,6 +30,7 @@
 #include <glib/gi18n.h>
 #include <tny-list.h>
 #include <tny-simple-list.h>
+#include <tny-folder-monitor.h>
 #include <string.h>
 
 #include <modest-header-view.h>
@@ -65,6 +66,9 @@ struct _ModestHeaderViewPrivate {
 	TnyFolder            *folder;
 	TnyList              *headers;
 	ModestHeaderViewStyle style;
+
+	TnyFolderMonitor     *monitor;
+	GMutex               *monitor_lock;
 };
 
 #define MODEST_HEADER_VIEW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -356,6 +360,10 @@ modest_header_view_init (ModestHeaderView *obj)
 	priv->folder  = NULL;
 	priv->headers = NULL;
 
+	priv->monitor	     = NULL;
+	priv->monitor_lock   = g_mutex_new ();
+
+
 	setup_drag_and_drop (GTK_TREE_VIEW (obj));
 }
 
@@ -372,7 +380,15 @@ modest_header_view_finalize (GObject *obj)
 		g_object_unref (G_OBJECT(priv->headers));
 		priv->headers  = NULL;
 	}
-	
+
+	g_mutex_lock (priv->monitor_lock);
+	if (priv->monitor) {
+		tny_folder_monitor_stop (priv->monitor);
+		g_object_unref (G_OBJECT (priv->monitor));
+	}
+	g_mutex_unlock (priv->monitor_lock);
+	g_mutex_free (priv->monitor_lock);
+
 	if (priv->folder) {
 		g_object_unref (G_OBJECT (priv->folder));
 		priv->folder   = NULL;
@@ -643,6 +659,19 @@ on_refresh_folder (TnyFolder   *folder,
 	}
 	g_list_free (cols);
 
+	/* Add a folder observer */
+	g_mutex_lock (priv->monitor_lock);
+	
+/* 	if (priv->monitor) { */
+/* 		tny_folder_monitor_stop (priv->monitor); */
+/* 		g_object_unref (G_OBJECT (priv->monitor)); */
+/* 	} */
+/* 	priv->monitor = TNY_FOLDER_MONITOR (tny_folder_monitor_new (folder)); */
+/* 	tny_folder_monitor_add_list (priv->monitor, TNY_LIST (priv->headers)); */
+/* 	tny_folder_monitor_start (priv->monitor); */
+	
+	g_mutex_unlock (priv->monitor_lock);
+
 	/* Set new model */
 	gtk_tree_view_set_model (GTK_TREE_VIEW (self), sortable); 
 	g_object_unref (G_OBJECT (sortable));
@@ -707,7 +736,6 @@ modest_header_view_set_folder (ModestHeaderView *self, TnyFolder *folder)
 			       NULL);
 	} else {
 		gtk_tree_view_set_model (GTK_TREE_VIEW (self), NULL); 
-/* 		gtk_widget_show (GTK_WIDGET (self)); */
 	}
 }
 
@@ -960,8 +988,8 @@ drag_data_delete_cb (GtkWidget      *widget,
 
 	/* Delete the source row */
 	gtk_tree_model_get_iter (model, &iter, source_row);
-	gtk_tree_model_get (model, &iter, 
-			    TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN, &header, 
+	gtk_tree_model_get (model, &iter,
+			    TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN, &header,
 			    -1);
 	tny_list_remove (TNY_LIST (model), G_OBJECT (header));
 	g_object_unref (G_OBJECT (header));
