@@ -4,7 +4,7 @@
 #ifndef __MODEST_ACCOUNT_VIEW_WINDOW_H__
 #define __MODEST_ACCOUNT_VIEW_WINDOW_H__
 
-#include <gtk/gtkwidget.h>
+#include <widgets/modest-window.h>
 
 G_BEGIN_DECLS
 
@@ -20,12 +20,12 @@ typedef struct _ModestAccountViewWindow      ModestAccountViewWindow;
 typedef struct _ModestAccountViewWindowClass ModestAccountViewWindowClass;
 
 struct _ModestAccountViewWindow {
-	 GtkWindow parent;
+	 GtkDialog parent;
 	/* insert public members, if any */
 };
 
 struct _ModestAccountViewWindowClass {
-	GtkWindowClass parent_class;
+	GtkDialogClass parent_class;
 	/* insert signal callback declarations, eg. */
 	/* void (* my_event) (ModestAccountViewWindow* obj); */
 };
@@ -38,7 +38,6 @@ struct _ModestAccountViewWindowClass {
  * Returns: the #GType
  **/
 GType        modest_account_view_window_get_type    (void) G_GNUC_CONST;
-
 
 
 

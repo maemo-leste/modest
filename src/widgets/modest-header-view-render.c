@@ -97,6 +97,15 @@ get_pixbuf_for_flag (TnyHeaderFlags flag)
 	}
 }
 
+static void
+set_common_flags (GtkCellRenderer *renderer, TnyHeaderFlags flags)
+{
+	g_object_set (G_OBJECT(renderer),
+		      "weight", (flags & TNY_HEADER_FLAG_SEEN) ? 400: 800,
+		      "strikethrough",  (flags & TNY_HEADER_FLAG_DELETED) ?  TRUE:FALSE,
+		      NULL);	
+}
+
 
 void
 _modest_header_view_msgtype_cell_data (GtkTreeViewColumn *column, GtkCellRenderer *renderer,
@@ -141,11 +150,7 @@ _modest_header_view_header_cell_data  (GtkTreeViewColumn *column,  GtkCellRender
 	
 	gtk_tree_model_get (tree_model, iter, TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN,
 			    &flags, -1);
-
-	g_object_set (G_OBJECT(renderer),
-		      "weight", (flags & TNY_HEADER_FLAG_SEEN) ? 400: 800,
-		      "strikethrough",  (flags & TNY_HEADER_FLAG_DELETED) ?  TRUE:FALSE,
-		      NULL);	
+	set_common_flags (renderer, flags);
 }
 
 
@@ -171,10 +176,10 @@ _modest_header_view_date_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer
 
 	display_date = modest_text_utils_get_display_date (date);
 	g_object_set (G_OBJECT(renderer),
-		      "weight", (flags & TNY_HEADER_FLAG_SEEN) ? 400: 800,
-		      "strikethrough",  (flags & TNY_HEADER_FLAG_DELETED) ? TRUE:FALSE,
 		      "text",    display_date,
 		      NULL);
+
+	set_common_flags (renderer, flags);
 	g_free (display_date);
 }
 
@@ -200,13 +205,9 @@ _modest_header_view_sender_receiver_cell_data  (GtkTreeViewColumn *column,  GtkC
 	g_object_set (G_OBJECT(renderer),
 		      "text",
 		      modest_text_utils_get_display_address (address),
-		      "weight",
-		      (flags & TNY_HEADER_FLAG_SEEN) ? 400 : 800,
-		      "striketrough",
-		      (flags & TNY_HEADER_FLAG_DELETED)?TRUE:FALSE,
 		      NULL);
-
-	g_free (address);	
+	g_free (address);
+	set_common_flags (renderer, flags);
 }
 /*
  * this for both incoming and outgoing mail, depending on the the user_data
@@ -250,11 +251,9 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 	g_free (subject);
 	g_free (display_date);
 	
-	g_object_set (G_OBJECT(renderer),
-		      "text",  header,
-		      "weight", (flags & TNY_HEADER_FLAG_SEEN) ? 400: 800,
-		      "strikethrough",  (flags & TNY_HEADER_FLAG_DELETED) ? TRUE: FALSE,
-		      NULL);	
+	g_object_set (G_OBJECT(renderer), "text", header, NULL);	
+	set_common_flags (renderer, flags);
+	
 	g_free (header);
 }
 
@@ -275,11 +274,8 @@ _modest_header_view_size_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer
 	
 	size_str = modest_text_utils_get_display_size (size);
 	
-	g_object_set (G_OBJECT(renderer),
-		      "weight", (flags & TNY_HEADER_FLAG_SEEN) ? 400: 800,
-		      "striketrough",  (flags & TNY_HEADER_FLAG_DELETED) ? TRUE:FALSE,
-		      "text",    size_str,       
-                      NULL);
-       g_free (size_str);
+	g_object_set (G_OBJECT(renderer), "text", size_str, NULL);
+	set_common_flags (renderer, flags);
 
+	g_free (size_str);
  }

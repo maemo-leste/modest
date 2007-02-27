@@ -227,10 +227,9 @@ text_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 				fname = g_strdup(modest_local_folder_info_get_type_display_name (type));
 			}
 		}
-	}/*  else if (folder && type == TNY_FOLDER_TYPE_ROOT) { */
-/* 		g_warning ("fname: %s", fname); */
-/* 		/\* FIXME: todo *\/ */
-/* 	} */
+	} else if (folder && type == TNY_FOLDER_TYPE_ROOT) {
+		/* FIXME: todo */
+	}
 			
 	if (unread > 0) {
 		gchar *folder_title = g_strdup_printf ("%s (%d)", fname, unread);
