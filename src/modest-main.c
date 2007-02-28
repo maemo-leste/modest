@@ -219,7 +219,7 @@ start_ui (const gchar *account_name, const gchar* mailto, const gchar *cc, const
 		return MODEST_ERR_UI;
 	}
 	
-	gtk_widget_show_all (GTK_WIDGET (win));
+	gtk_widget_show (GTK_WIDGET (win));
 	gtk_main();
 	
 	return MODEST_ERR_NONE;

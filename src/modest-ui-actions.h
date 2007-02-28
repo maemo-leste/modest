@@ -32,6 +32,7 @@
 
 #include <widgets/modest-main-window.h>
 #include <widgets/modest-msg-edit-window.h>
+#include <widgets/modest-recpt-view.h>
 
 G_BEGIN_DECLS
 
@@ -94,6 +95,9 @@ void     modest_ui_actions_on_msg_link_clicked         (ModestMsgView *msgview, 
 
 void     modest_ui_actions_on_msg_attachment_clicked   (ModestMsgView *msgview, int index,
 							ModestWindow *win);
+
+void     modest_ui_actions_on_msg_recpt_activated   (ModestMsgView *msgview, ModestRecptView *recpt_view,
+						     ModestWindow *win);
 
 void     modest_ui_actions_on_send                     (GtkWidget *widget,
 							ModestMsgEditWindow *edit_window);

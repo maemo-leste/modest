@@ -333,6 +333,50 @@ modest_text_utils_convert_to_html (const gchar *data)
 	return g_string_free (html, FALSE);
 }
 
+GSList *
+modest_text_utils_split_addresses_list (const gchar *addresses)
+{
+	gchar *current, *start, *last_blank;
+	GSList *result = NULL;
+
+	start = (gchar *) addresses;
+	current = start;
+	last_blank = start;
+
+	while (*current != '\0') {
+		if ((start == current)&&((*current == ' ')||(*current == ','))) {
+			start++;
+			last_blank = current;
+		} else if (*current == ',') {
+			gchar *new_address = NULL;
+			new_address = g_strndup (start, current - last_blank);
+			result = g_slist_prepend (result, new_address);
+			start = current + 1;
+			last_blank = start;
+		} else if (*current == '\"') {
+			if (current == start) {
+				current++;
+				start++;
+			}
+			while ((*current != '\"')&&(*current != '\0'))
+				current++;
+		}
+				
+		current++;
+	}
+
+	if (start != current) {
+		gchar *new_address = NULL;
+		new_address = g_strndup (start, current - last_blank);
+		result = g_slist_prepend (result, new_address);
+	}
+
+	result = g_slist_reverse (result);
+	return result;
+
+}
+
+
 /* ******************************************************************* */
 /* ************************* UTILIY FUNCTIONS ************************ */
 /* ******************************************************************* */

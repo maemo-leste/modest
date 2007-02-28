@@ -221,4 +221,15 @@ gchar * modest_text_utils_get_display_size (guint size);
  **/
 gboolean     modest_text_utils_validate_email_address (const gchar *email_address);
 
+/**
+ * modest_text_utils_split_addresses_list:
+ * @addresses: a string
+ *
+ * obtains a GSList of addresses from a string of addresses
+ * in the format understood by email protocols
+ *
+ * Returns: a GSList of strings
+ **/
+GSList      *modest_text_utils_split_addresses_list (const gchar *addresses);
+
 #endif /* __MODEST_TEXT_UTILS_H__ */

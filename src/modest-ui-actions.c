@@ -966,6 +966,27 @@ modest_ui_actions_on_msg_attachment_clicked (ModestMsgView *msgview, int index,
 }
 
 void
+modest_ui_actions_on_msg_recpt_activated (ModestMsgView *msgview,
+					  ModestRecptView *recpt_view,
+					  ModestWindow *win)
+{
+	gint start, end;
+	gchar *utf_start, *utf_end;
+	gchar *full_string = NULL;
+	gchar *substring;
+
+	gtk_label_get_selection_bounds (GTK_LABEL (recpt_view), &start, &end);
+	full_string = (gchar *) gtk_label_get_text (GTK_LABEL (recpt_view));
+	utf_start = g_utf8_offset_to_pointer (full_string, start);
+	utf_end = g_utf8_offset_to_pointer (full_string, end);
+	substring = g_strndup (utf_start, utf_end - utf_start);
+	g_message ("%s %s", __FUNCTION__, substring);
+
+	g_free (substring);
+	
+}
+
+void
 modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 {
 	TnyTransportAccount *transport_account;

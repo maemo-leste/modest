@@ -34,6 +34,7 @@
 #include <tny-msg.h>
 #include <tny-mime-part.h>
 #include <tny-msg-view.h>
+#include <widgets/modest-recpt-view.h>
 
 G_BEGIN_DECLS
 
@@ -49,17 +50,19 @@ typedef struct _ModestMsgView      ModestMsgView;
 typedef struct _ModestMsgViewClass ModestMsgViewClass;
 
 struct _ModestMsgView {
-	GtkScrolledWindow parent;
+	GtkVBox parent;
 };
 
 struct _ModestMsgViewClass {
-	GtkScrolledWindowClass parent_class;
+	GtkVBoxClass parent_class;
 
 	void (*link_hover)         (ModestMsgView *msgview, const gchar* link,
 				    gpointer user_data);
 	void (*link_clicked)       (ModestMsgView *msgview, const gchar* link,
 				    gpointer user_data);
 	void (*attachment_clicked) (ModestMsgView *msgview, int index,
+				    gpointer user_data);
+	void (*recpt_activated)    (ModestMsgView *msgview, ModestRecptView *recpt_view,
 				    gpointer user_data);
 };
 

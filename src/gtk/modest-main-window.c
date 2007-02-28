@@ -410,6 +410,8 @@ connect_signals (ModestMainWindow *self)
 			  G_CALLBACK(modest_ui_actions_on_msg_link_hover), self);
 	g_signal_connect (G_OBJECT(priv->msg_preview), "attachment_clicked",
 			  G_CALLBACK(modest_ui_actions_on_msg_attachment_clicked), self);
+	g_signal_connect (G_OBJECT(priv->msg_preview), "recpt-activated",
+			  G_CALLBACK(modest_ui_actions_on_msg_recpt_activated), self);
 
 	/* Account store */
 	g_signal_connect (G_OBJECT (modest_runtime_get_account_store()), "password_requested",
@@ -436,6 +438,8 @@ wrapped_in_scrolled_window (GtkWidget *widget, gboolean needs_viewport)
 	gtk_scrolled_window_set_policy
 		(GTK_SCROLLED_WINDOW (win),GTK_POLICY_NEVER,
 		 GTK_POLICY_AUTOMATIC);
+	gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (win),
+					     GTK_SHADOW_IN);
 	
 	if (needs_viewport)
 		gtk_scrolled_window_add_with_viewport
@@ -521,7 +525,7 @@ modest_main_window_new (void)
 	gtk_box_pack_start (GTK_BOX(status_hbox), priv->online_toggle,FALSE, FALSE, 0);
 
 	/* putting it all together... */
-	main_vbox = gtk_vbox_new (FALSE, 6);
+	main_vbox = gtk_vbox_new (FALSE, 0);
 	gtk_box_pack_start (GTK_BOX(main_vbox), parent_priv->menubar, FALSE, FALSE, 0);
 	gtk_box_pack_start (GTK_BOX(main_vbox), parent_priv->toolbar, FALSE, FALSE, 0);
 	gtk_box_pack_start (GTK_BOX(main_vbox), priv->main_paned, TRUE, TRUE,0);

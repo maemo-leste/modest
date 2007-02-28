@@ -28,12 +28,16 @@ libmodest_widgets_la_SOURCES=          \
 	modest-header-view-render.c    \
 	modest-header-view.c           \
 	modest-header-view.h           \
+	modest-mail-header-view.c      \
+	modest-mail-header-view.h      \
 	modest-main-window.h	       \
 	modest-msg-edit-window-ui.h    \
 	modest-msg-edit-window.h       \
 	modest-msg-view-window.h       \
 	modest-msg-view.c              \
 	modest-msg-view.h	       \
+	modest-recpt-view.c            \
+	modest-recpt-view.h            \
 	modest-tny-stream-gtkhtml.c    \
 	modest-tny-stream-gtkhtml.h    \
 	modest-window.c                \

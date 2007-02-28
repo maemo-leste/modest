@@ -42,6 +42,7 @@
 #include <modest-text-utils.h>
 #include "modest-msg-view.h"
 #include "modest-tny-stream-gtkhtml.h"
+#include <modest-mail-header-view.h>
 
 
 /* 'private'/'protected' functions */
@@ -49,6 +50,7 @@ static void     modest_msg_view_class_init   (ModestMsgViewClass *klass);
 static void     modest_msg_view_init         (ModestMsgView *obj);
 static void     modest_msg_view_finalize     (GObject *obj);
 
+static void on_recpt_activated (ModestMailHeaderView *header_view, ModestRecptView *recpt_view, ModestMsgView *msg_view);
 static gboolean on_link_clicked (GtkWidget *widget, const gchar *uri, ModestMsgView *msg_view);
 static gboolean on_url_requested (GtkWidget *widget, const gchar *uri, GtkHTMLStream *stream,
 				  ModestMsgView *msg_view);
@@ -61,12 +63,14 @@ enum {
 	LINK_CLICKED_SIGNAL,
 	LINK_HOVER_SIGNAL,
 	ATTACHMENT_CLICKED_SIGNAL,
+	RECPT_ACTIVATED_SIGNAL,
 	LAST_SIGNAL
 };
 
 typedef struct _ModestMsgViewPrivate ModestMsgViewPrivate;
 struct _ModestMsgViewPrivate {
 	GtkWidget   *gtkhtml;
+	GtkWidget   *mail_header_view;
 	TnyMsg      *msg;
 
 	gulong  sig1, sig2, sig3;
@@ -97,7 +101,7 @@ modest_msg_view_get_type (void)
 			(GInstanceInitFunc) modest_msg_view_init,
 			NULL
 		};
- 		my_type = g_type_register_static (GTK_TYPE_SCROLLED_WINDOW,
+ 		my_type = g_type_register_static (GTK_TYPE_VBOX,
 		                                  "ModestMsgView",
 		                                  &my_info, 0);
 	}
@@ -142,6 +146,15 @@ modest_msg_view_class_init (ModestMsgViewClass *klass)
 			      NULL, NULL,
 			      g_cclosure_marshal_VOID__STRING,
 			      G_TYPE_NONE, 1, G_TYPE_STRING);
+
+	signals[RECPT_ACTIVATED_SIGNAL] =
+		g_signal_new ("recpt_activated",
+			      G_TYPE_FROM_CLASS (gobject_class),
+			      G_SIGNAL_RUN_FIRST,
+			      G_STRUCT_OFFSET(ModestMsgViewClass, recpt_activated),
+			      NULL, NULL,
+			      g_cclosure_marshal_VOID__POINTER,
+			      G_TYPE_NONE, 1, MODEST_TYPE_RECPT_VIEW);
 }
 
 static void
@@ -153,6 +166,8 @@ modest_msg_view_init (ModestMsgView *obj)
 
 	priv->msg                     = NULL;
 	priv->gtkhtml                 = gtk_html_new();
+	priv->mail_header_view        = GTK_WIDGET(modest_mail_header_view_new ());
+	gtk_widget_set_no_show_all (priv->mail_header_view, TRUE);
 	
 	gtk_html_set_editable        (GTK_HTML(priv->gtkhtml), FALSE);
 	gtk_html_allow_selection     (GTK_HTML(priv->gtkhtml), TRUE);
@@ -166,6 +181,9 @@ modest_msg_view_init (ModestMsgView *obj)
 				       G_CALLBACK(on_url_requested), obj);
 	priv->sig3 = g_signal_connect (G_OBJECT(priv->gtkhtml), "on_url",
 				       G_CALLBACK(on_link_hover), obj);
+	
+	g_signal_connect (G_OBJECT (priv->mail_header_view), "recpt-activated", 
+			  G_CALLBACK (on_recpt_activated), obj);
 }
 	
 
@@ -195,23 +213,41 @@ modest_msg_view_new (TnyMsg *msg)
 	GObject *obj;
 	ModestMsgView* self;
 	ModestMsgViewPrivate *priv;
+	GtkWidget *scrolled_window;
 	
 	obj  = G_OBJECT(g_object_new(MODEST_TYPE_MSG_VIEW, NULL));
 	self = MODEST_MSG_VIEW(obj);
 	priv = MODEST_MSG_VIEW_GET_PRIVATE (self);
 
-	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(self),
-				       GTK_POLICY_AUTOMATIC,
-				       GTK_POLICY_AUTOMATIC);
-	if (priv->gtkhtml) 
-		gtk_container_add (GTK_CONTAINER(obj), priv->gtkhtml);
+	gtk_box_set_spacing (GTK_BOX (self), 0);
+	gtk_box_set_homogeneous (GTK_BOX (self), FALSE);
+
+	if (priv->mail_header_view)
+		gtk_box_pack_start (GTK_BOX(self), priv->mail_header_view, FALSE, FALSE, 0);
 	
-	if (msg)
-		modest_msg_view_set_message (self, msg);
+	if (priv->gtkhtml) {
+		scrolled_window = gtk_scrolled_window_new (NULL, NULL);
+		gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled_window),
+					       GTK_POLICY_AUTOMATIC,
+					       GTK_POLICY_AUTOMATIC);
+		gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW(scrolled_window),
+						     GTK_SHADOW_IN);
+		gtk_container_add (GTK_CONTAINER (scrolled_window), priv->gtkhtml);
+		gtk_box_pack_start (GTK_BOX(self), scrolled_window, TRUE, TRUE, 0);
+	}
+
+	modest_msg_view_set_message (self, msg);
 	
 	return GTK_WIDGET(self);
 }
 
+static void
+on_recpt_activated (ModestMailHeaderView *header_view, 
+		    ModestRecptView *recpt_view,
+		    ModestMsgView * view)
+{
+  g_signal_emit (G_OBJECT (view), signals[RECPT_ACTIVATED_SIGNAL], 0, recpt_view);
+}
 
 static gboolean
 on_link_clicked (GtkWidget *widget, const gchar *uri, ModestMsgView *msg_view)
@@ -378,58 +414,10 @@ attachments_as_html (ModestMsgView *self, TnyMsg *msg)
 }
 
 
-static gchar*
-get_header_info (TnyMsg *msg, gboolean outgoing)
-{
-	GString *str;
-	TnyHeader *header;
-	
-	if (!msg)
-		return NULL;
-	
-	header = tny_msg_get_header (msg);
-	if (!header) {
-		g_printerr ("modest: cannot get header info for message\n");
-		return NULL;
-	}
-	
-	str = g_string_new ("<table border=\"0\">\n");
-
-	if (outgoing) {
-		if (tny_header_get_to(header))
-			g_string_append_printf (str, "<tr><td><b>%s</b>:</td><td>%s</td></tr>\n", _("To"),
-						tny_header_get_to(header));
-	} else {
-		if (tny_header_get_from (header))
-			g_string_append_printf (str, "<tr><td><b>%s</b>:</td><td>%s</td></tr>\n", _("From"),
-						tny_header_get_from(header));
-	}
-	
-	if (tny_header_get_subject (header))
-		g_string_append_printf (str, "<tr><td><b>%s</b>:</td><td>%s</td></tr>\n", _("Subject"),
-					tny_header_get_subject(header));
-
-
-	if (outgoing) {
-		gchar *sent = 	modest_text_utils_get_display_date (tny_header_get_date_sent (header));
-		g_string_append_printf (str, "<tr><td><b>%s</b>:</td><td>%s</td></tr>\n", _("Sent"), sent);
-		g_free (sent);
-	} else {
-		gchar *received = modest_text_utils_get_display_date (tny_header_get_date_received (header));
-		g_string_append_printf (str, "<tr><td><b>%s</b>:</td><td>%s</td></tr>\n", _("Received"),
-					received);
-		g_free (received);
-	}
-	g_string_append (str, "</table>\n<hr>\n");
-	
-	g_object_unref (G_OBJECT(header));
-	return g_string_free (str, FALSE);
-}
-
 
 
 static gboolean
-set_html_message (ModestMsgView *self, const gchar* header_info, TnyMimePart *tny_body, TnyMsg *msg)
+set_html_message (ModestMsgView *self, TnyMimePart *tny_body, TnyMsg *msg)
 {
 	gchar *html_attachments;
 	GtkHTMLStream *gtkhtml_stream;
@@ -446,11 +434,6 @@ set_html_message (ModestMsgView *self, const gchar* header_info, TnyMimePart *tn
 	tny_stream     = TNY_STREAM(modest_tny_stream_gtkhtml_new (gtkhtml_stream));
 	tny_stream_reset (tny_stream);
 
-	if (header_info) {
-		tny_stream_write (tny_stream, header_info, strlen(header_info));
-		tny_stream_reset (tny_stream);
-	}
-	
 	html_attachments = attachments_as_html(self, msg);
 	if (html_attachments) {
 		tny_stream_write (tny_stream, html_attachments, strlen(html_attachments));
@@ -470,7 +453,7 @@ set_html_message (ModestMsgView *self, const gchar* header_info, TnyMimePart *tn
 /* FIXME: this is a hack --> we use the tny_text_buffer_stream to
  * get the message text, then write to gtkhtml 'by hand' */
 static gboolean
-set_text_message (ModestMsgView *self, const gchar* header_info, TnyMimePart *tny_body, TnyMsg *msg)
+set_text_message (ModestMsgView *self, TnyMimePart *tny_body, TnyMsg *msg)
 {
 	GtkTextBuffer *buf;
 	GtkTextIter begin, end;
@@ -491,11 +474,6 @@ set_text_message (ModestMsgView *self, const gchar* header_info, TnyMimePart *tn
 
 	gtkhtml_stream = gtk_html_begin(GTK_HTML(priv->gtkhtml)); 
 	tny_stream =  TNY_STREAM(modest_tny_stream_gtkhtml_new (gtkhtml_stream));
-	
-	if (header_info) {
-		tny_stream_write (tny_stream, header_info, strlen(header_info));
-		tny_stream_reset (tny_stream);
-	}
 	
 	html_attachments = attachments_as_html(self, msg);
 	if (html_attachments) {
@@ -549,11 +527,12 @@ modest_msg_view_set_message (ModestMsgView *self, TnyMsg *msg)
 {
 	TnyMimePart *body;
 	ModestMsgViewPrivate *priv;
-	gchar *header_info;
+	TnyHeader *header;
 	
 	g_return_if_fail (self);
 	
 	priv = MODEST_MSG_VIEW_GET_PRIVATE(self);
+	gtk_widget_set_no_show_all (priv->mail_header_view, FALSE);
 
 	if (msg != priv->msg) {
 		if (priv->msg)
@@ -564,22 +543,28 @@ modest_msg_view_set_message (ModestMsgView *self, TnyMsg *msg)
 	}
 	
 	if (!msg) {
+		tny_header_view_clear (TNY_HEADER_VIEW (priv->mail_header_view));
+		gtk_widget_hide_all (priv->mail_header_view);
+		gtk_widget_set_no_show_all (priv->mail_header_view, TRUE);
 		set_empty_message (self);
 		return;
 	}
 
-	header_info = get_header_info (msg, TRUE);
+	header = tny_msg_get_header (msg);
+	tny_header_view_set_header (TNY_HEADER_VIEW (priv->mail_header_view), header);
+	g_object_unref (header);
 	
 	body = modest_tny_msg_find_body_part (msg,TRUE);
 	if (body) {
 		if (tny_mime_part_content_type_is (body, "text/html"))
-			set_html_message (self, header_info, body, msg);
+			set_html_message (self, body, msg);
 		else
-			set_text_message (self, header_info, body, msg);
+			set_text_message (self, body, msg);
 	} else 
 		set_empty_message (self);
-
-	g_free (header_info);
+	
+	gtk_widget_show_all (priv->mail_header_view);
+	gtk_widget_set_no_show_all (priv->mail_header_view, TRUE);
 }
 
 
