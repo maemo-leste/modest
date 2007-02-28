@@ -205,6 +205,8 @@ modest_mail_operation_send_mail (ModestMailOperation *self,
 	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
 	g_return_if_fail (TNY_IS_TRANSPORT_ACCOUNT (transport_account));
 
+	g_message ("modest: send mail");
+	
 	send_queue = TNY_SEND_QUEUE (modest_runtime_get_send_queue (transport_account));
 	if (!TNY_IS_SEND_QUEUE(send_queue))
 		g_printerr ("modest: could not find send queue for account\n");
@@ -215,7 +217,8 @@ modest_mail_operation_send_mail (ModestMailOperation *self,
 			g_printerr ("modest: error adding msg to send queue: %s\n",
 				    err->message);
 			g_error_free (err);
-		}
+		} else
+			g_message ("modest: message added to send queue");
 	}
 }
 
@@ -468,10 +471,12 @@ folder_refresh_cb (TnyFolder *folder, gboolean canceled, GError **err, gpointer 
 		g_slice_free (RefreshFolderAsyncHelper, helper);
 	} else {
 		TnyFolder *folder = TNY_FOLDER (tny_iterator_get_current (helper->iter));
-		tny_folder_refresh_async (folder, folder_refresh_cb,
-					  status_update_cb, 
-					  helper);
-		g_object_unref (G_OBJECT(folder));
+		if (folder) {
+			g_message ("modest: refreshing folder %s",
+				   tny_folder_get_name (folder));
+			tny_folder_refresh_async (folder, folder_refresh_cb, status_update_cb, helper);
+			g_object_unref (G_OBJECT(folder)); // FIXME: don't unref yet
+		}
 	}
 	g_signal_emit (G_OBJECT (self), signals[PROGRESS_CHANGED_SIGNAL], 0, NULL);
 }
@@ -506,9 +511,12 @@ update_folders_cb (TnyFolderStore *folder_store, TnyList *list, GError **err, gp
 
 	/* Async refresh folders */
 	folder = TNY_FOLDER (tny_iterator_get_current (helper->iter));
-	tny_folder_refresh_async (folder, folder_refresh_cb,
-				  status_update_cb, helper);
-	g_object_unref (G_OBJECT(folder));
+	if (folder) {
+		g_message ("modest: refreshing folder %s", tny_folder_get_name (folder));
+		tny_folder_refresh_async (folder, folder_refresh_cb,
+					  status_update_cb, helper);
+	}
+	//g_object_unref (G_OBJECT(folder)); /* FIXME -==> don't unref yet... */
 }
 
 gboolean
@@ -530,8 +538,8 @@ modest_mail_operation_update_account (ModestMailOperation *self,
 	tny_folder_store_query_add_item (query, NULL, TNY_FOLDER_STORE_QUERY_OPTION_SUBSCRIBED);
 	tny_folder_store_get_folders_async (TNY_FOLDER_STORE (store_account),
 					    folders, update_folders_cb, query, self);
-	g_object_unref (query);
-
+	g_object_unref (query); /* FIXME */
+	
 	return TRUE;
 }
 
@@ -679,7 +687,8 @@ modest_mail_operation_remove_folder (ModestMailOperation *self,
 		tny_folder_store_remove_folder (parent, folder, &(priv->error));
 		CHECK_EXCEPTION (priv, MODEST_MAIL_OPERATION_STATUS_FAILED, );
 
-		if (parent) g_object_unref (G_OBJECT (parent));
+		if (parent)
+			g_object_unref (G_OBJECT (parent));
 	}
 	g_object_unref (G_OBJECT (account));
 }
@@ -818,11 +827,13 @@ modest_mail_operation_xfer_msg (ModestMailOperation *self,
 
 	tny_list_prepend (headers, G_OBJECT (header));
 	tny_folder_transfer_msgs_async (src_folder, headers, folder, 
-					delete_original, transfer_msgs_cb, self);
+					delete_original, transfer_msgs_cb, 
+					g_object_ref(self));
 
 	/* Free */
-	g_object_unref (headers);
-	g_object_unref (src_folder);
+	/* FIXME: don't free 'm yet */
+	///g_object_unref (headers);
+	///g_object_unref (src_folder);
 
 	return TRUE;
 }

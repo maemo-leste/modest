@@ -56,6 +56,8 @@ static void     init_i18n (void);
 static void     init_stock_icons (void);
 static void     init_debug_g_type (void);
 static void     init_debug_logging (void);
+static void     init_test_accounts (ModestAccountMgr *acc_mgr);
+
 
 static ModestSingletons *_singletons = NULL;
 
@@ -157,6 +159,10 @@ modest_runtime_init (void)
 		return FALSE;
 	}
 
+	/* create the test accounts if the debug flag for that is set */
+	if (modest_runtime_get_debug_flags () & MODEST_RUNTIME_DEBUG_TINY_TEST_ACCOUNTS)
+		init_test_accounts (modest_singletons_get_account_mgr (my_singletons));	
+	
 	/* don't initialize _singletons before all the other init stuff
 	 * is done; thus, using any of the singleton stuff before
 	 * runtime is fully init'ed  is avoided
@@ -281,11 +287,12 @@ ModestRuntimeDebugFlags
 modest_runtime_get_debug_flags ()
 {
 	static const GDebugKey debug_keys[] = {
-		{ "abort-on-warning", MODEST_RUNTIME_DEBUG_ABORT_ON_WARNING },
-		{ "log-actions",      MODEST_RUNTIME_DEBUG_LOG_ACTIONS },
-		{ "debug-objects",    MODEST_RUNTIME_DEBUG_DEBUG_OBJECTS },
-		{ "debug-signals",    MODEST_RUNTIME_DEBUG_DEBUG_SIGNALS },
-		{ "factory-settings", MODEST_RUNTIME_DEBUG_FACTORY_SETTINGS }
+		{ "abort-on-warning",   MODEST_RUNTIME_DEBUG_ABORT_ON_WARNING },
+		{ "log-actions",        MODEST_RUNTIME_DEBUG_LOG_ACTIONS },
+		{ "debug-objects",      MODEST_RUNTIME_DEBUG_DEBUG_OBJECTS },
+		{ "debug-signals",      MODEST_RUNTIME_DEBUG_DEBUG_SIGNALS },
+		{ "factory-settings",   MODEST_RUNTIME_DEBUG_FACTORY_SETTINGS},
+		{ "tiny-test-accounts", MODEST_RUNTIME_DEBUG_TINY_TEST_ACCOUNTS}
 	};
 	const gchar *str;
 	static ModestRuntimeDebugFlags debug_flags = -1;
@@ -559,11 +566,11 @@ init_stock_icons (void)
 		static GtkStockItem items[] = {
 			{ MODEST_STOCK_MAIL_SEND, "send mail", 0, 0, NULL },
 			{ MODEST_STOCK_NEW_MAIL, "new mail", 0, 0, NULL },
-/* 			{ MODEST_STOCK_SEND_RECEIVE, "send receive", 0, 0, NULL }, */
+ 			{ MODEST_STOCK_SEND_RECEIVE, "send receive", 0, 0, NULL }, 
 			{ MODEST_STOCK_REPLY, "reply", 0, 0, NULL },
 			{ MODEST_STOCK_REPLY_ALL, "reply all", 0, 0, NULL },
 			{ MODEST_STOCK_FORWARD, "forward", 0, 0, NULL },
-/* 			{ MODEST_STOCK_DELETE, "delete", 0, 0, NULL }, */
+ 			{ MODEST_STOCK_DELETE, "delete", 0, 0, NULL }, 
 /* 			{ MODEST_STOCK_NEXT, "next", 0, 0, NULL }, */
 /* 			{ MODEST_STOCK_PREV, "prev", 0, 0, NULL }, */
 /* 			{ MODEST_STOCK_STOP, "stop", 0, 0, NULL } */
@@ -572,11 +579,11 @@ init_stock_icons (void)
 		static gchar *items_names [] = {
 			MODEST_TOOLBAR_ICON_MAIL_SEND,
 			MODEST_TOOLBAR_ICON_NEW_MAIL,
-/* 			MODEST_TOOLBAR_ICON_SEND_RECEIVE, */
+ 			MODEST_TOOLBAR_ICON_SEND_RECEIVE, 
 			MODEST_TOOLBAR_ICON_REPLY,	
 			MODEST_TOOLBAR_ICON_REPLY_ALL,
 			MODEST_TOOLBAR_ICON_FORWARD,
-/* 			MODEST_TOOLBAR_ICON_DELETE, */
+ 			MODEST_TOOLBAR_ICON_DELETE, 
 /* 			MODEST_TOOLBAR_ICON_NEXT, */
 /* 			MODEST_TOOLBAR_ICON_PREV, */
 /* 			MODEST_TOOLBAR_ICON_STOP */
@@ -614,4 +621,41 @@ init_stock_icons (void)
 		/* Drop our reference to the factory, GTK will hold a reference. */
 		g_object_unref (factory);
 	}
+}
+
+
+static void
+init_test_accounts (ModestAccountMgr *acc_mgr)
+{
+	const gchar *imap_test = "TnyImapTest";
+	const gchar *pop_test  = "TnyPopTest";
+	const gchar *smtp_test = "TnySmtpTest";
+
+	if (!modest_account_mgr_account_exists (acc_mgr, imap_test, FALSE)) 
+		modest_account_mgr_add_server_account (acc_mgr,
+						       imap_test,
+						       "imap2.tinymail.org",
+						       "tnytest", "tnytest",
+						       MODEST_PROTOCOL_STORE_IMAP,
+						       MODEST_PROTOCOL_SECURITY_NONE,
+						       MODEST_PROTOCOL_AUTH_NONE);
+	if (!modest_account_mgr_account_exists (acc_mgr, pop_test, FALSE)) 
+		modest_account_mgr_add_server_account (acc_mgr,
+						       pop_test,
+						       "imap2.tinymail.org",
+						       "tnytest", "tnytest",
+						       MODEST_PROTOCOL_STORE_POP,
+						       MODEST_PROTOCOL_SECURITY_NONE,
+						       MODEST_PROTOCOL_AUTH_NONE);
+	if (!modest_account_mgr_account_exists (acc_mgr, smtp_test, FALSE)) 
+		modest_account_mgr_add_server_account (acc_mgr,
+						       smtp_test,
+						       "127.0.0.1",
+						       NULL,NULL,
+						       MODEST_PROTOCOL_TRANSPORT_SMTP,
+						       MODEST_PROTOCOL_SECURITY_NONE,
+						       MODEST_PROTOCOL_AUTH_NONE);
+	
+	modest_account_mgr_add_account (acc_mgr, imap_test, imap_test, smtp_test);
+	modest_account_mgr_add_account (acc_mgr,  pop_test, pop_test,  smtp_test);
 }

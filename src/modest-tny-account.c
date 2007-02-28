@@ -266,4 +266,3 @@ modest_tny_account_new_for_local_folders (ModestAccountMgr *account_mgr, TnySess
 	return TNY_ACCOUNT(tny_account);
 }
 
-

@@ -386,7 +386,7 @@ modest_tny_account_store_new (ModestAccountMgr *account_mgr, TnyDevice *device) 
 
 	GObject *obj;
 	ModestTnyAccountStorePrivate *priv;
-/* 	TnyList *list; */
+ 	TnyList *list; 
 	
 	g_return_val_if_fail (account_mgr, NULL);
 	g_return_val_if_fail (device, NULL);
@@ -404,12 +404,13 @@ modest_tny_account_store_new (ModestAccountMgr *account_mgr, TnyDevice *device) 
 	
 	tny_session_camel_set_ui_locker (priv->session,	 tny_gtk_lockable_new ());
 	/* FIXME: unref this in the end? */
-
+	tny_session_camel_set_async_connecting (priv->session, TRUE);
+	
 /* 	/\* force a cache fill... ugly *\/ */
-/* 	list = TNY_LIST(tny_simple_list_new()); */
-/* 	tny_account_store_get_accounts (TNY_ACCOUNT_STORE(obj), list, */
-/* 					TNY_ACCOUNT_STORE_BOTH); */
-/* 	g_object_unref(list); */
+	list = TNY_LIST(tny_simple_list_new());
+	tny_account_store_get_accounts (TNY_ACCOUNT_STORE(obj), list,
+					TNY_ACCOUNT_STORE_BOTH);
+	g_object_unref(list);
 	
 	/* Connect signals */
 	g_signal_connect (G_OBJECT(account_mgr), "account_changed",
@@ -436,6 +437,8 @@ get_cached_accounts (TnyAccountStore *self, TnyList *list, TnyAccountType type)
 		cursor = cursor->next;
 	}
 }
+
+
 
 /* this function fills the TnyList, and also returns a GSList of the accounts,
  * for caching purposes
@@ -482,11 +485,10 @@ get_accounts  (TnyAccountStore *self, TnyList *list, TnyAccountType type)
 			modest_tny_account_new_for_local_folders (priv->account_mgr, priv->session);
 		tny_list_prepend (list, G_OBJECT(tny_account));
 		accounts = g_slist_append (accounts, tny_account); /* cache it */
-	}
-
+	}	
 	return accounts;
-}
-	
+}	
+
 
 static void
 modest_tny_account_store_get_accounts  (TnyAccountStore *self, TnyList *list,
@@ -671,7 +673,7 @@ modest_tny_account_store_get_tny_account_by_id  (ModestTnyAccountStore *self, co
 	for (cursor = priv->store_accounts; cursor ; cursor = cursor->next) {
 		const gchar *acc_id = tny_account_get_id (TNY_ACCOUNT(cursor->data));
 		if (acc_id && strcmp (acc_id, id) == 0) {
-			account = TNY_ACCOUNT(cursor->data);
+		account = TNY_ACCOUNT(cursor->data);
 			break;
 		}
 	}

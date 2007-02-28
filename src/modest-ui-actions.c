@@ -192,13 +192,35 @@ modest_ui_actions_on_quit (GtkAction *action, ModestWindow *win)
 void
 modest_ui_actions_on_accounts (GtkAction *action, ModestWindow *win)
 {
-	GtkWidget *account_win;
-	account_win = modest_account_view_window_new ();
+	/* GtkDialog *account_win; */
+/* 	account_win = GTK_DIALOG(modest_account_view_window_new ()); */
+	
 
-	if (win)
-		gtk_window_set_transient_for (GTK_WINDOW (account_win), GTK_WINDOW (win));
+/* 	gtk_dialog_run (account_win); */
+	//gtk_widget_destroy (GTK_WIDGET(account_win));
+ GtkWidget *dialog, *label;
+   
+   /* Create the widgets */
+   
+   dialog = gtk_dialog_new_with_buttons ("Message",
+                                         GTK_WINDOW(win),
+                                         GTK_DIALOG_DESTROY_WITH_PARENT,
+                                         GTK_STOCK_OK,
+                                         GTK_RESPONSE_NONE,
+                                         NULL);
+   label = gtk_label_new ("Hello World!");
+   
+   /* Ensure that the dialog box is destroyed when the user responds. */
+   
+   g_signal_connect_swapped (dialog, "response", 
+                             G_CALLBACK (gtk_widget_destroy),
+                             dialog);
 
-	gtk_widget_show (account_win);
+   /* Add the label, and show everything we've added to the dialog. */
+
+   gtk_container_add (GTK_CONTAINER (GTK_DIALOG(dialog)->vbox),
+                      label);
+   gtk_widget_show_all (dialog);
 }
 
 void
@@ -484,7 +506,8 @@ modest_ui_actions_on_send_receive (GtkAction *action,  ModestWindow *win)
 {
 	gchar *account_name;
 	TnyAccount *tny_account;
-	ModestTnySendQueue *send_queue;
+	//ModestTnySendQueue *send_queue;
+	ModestMailOperation *mail_op;
 	
 	account_name =
 		g_strdup(modest_window_get_active_account(MODEST_WINDOW(win)));
@@ -494,21 +517,42 @@ modest_ui_actions_on_send_receive (GtkAction *action,  ModestWindow *win)
 		g_printerr ("modest: cannot get account\n");
 		return;
 	}
-	
+	/* FIXME */
+#if 0
 	tny_account = 
 		modest_tny_account_store_get_tny_account_by_account (modest_runtime_get_account_store(),
 								     account_name,
 								     TNY_ACCOUNT_TYPE_TRANSPORT);
 	if (!tny_account) {
-		g_printerr ("modest: cannot get tny transport account\n");
+		g_printerr ("modest: cannot get tny transport account for %s\n", account_name);
 		return;
 	}
 
 	send_queue = modest_tny_send_queue_new (TNY_CAMEL_TRANSPORT_ACCOUNT(tny_account));
+	if (!send_queue) {
+		g_object_unref (G_OBJECT(tny_account));
+		g_printerr ("modest: cannot get send queue for %s\n", account_name);
+		return;
+	} 
 	modest_tny_send_queue_flush (send_queue);
 
 	g_object_unref (G_OBJECT(send_queue));
 	g_object_unref (G_OBJECT(tny_account));
+#endif /*  0 */
+	tny_account = 
+		modest_tny_account_store_get_tny_account_by_account (modest_runtime_get_account_store(),
+								     account_name,
+								     TNY_ACCOUNT_TYPE_STORE);
+	if (!tny_account) {
+		g_printerr ("modest: cannot get tny store account for %s\n", account_name);
+		return;
+	}
+
+	mail_op = modest_mail_operation_new ();
+	modest_mail_operation_update_account (mail_op, TNY_STORE_ACCOUNT(tny_account));
+
+	g_object_unref (G_OBJECT(tny_account));
+	/* g_object_unref (G_OBJECT(mail_op)); FIXME: this is still in use... */
 }
 
 
