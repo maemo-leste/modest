@@ -566,7 +566,7 @@ init_stock_icons (void)
 		static GtkStockItem items[] = {
 			{ MODEST_STOCK_MAIL_SEND, "send mail", 0, 0, NULL },
 			{ MODEST_STOCK_NEW_MAIL, "new mail", 0, 0, NULL },
- 			{ MODEST_STOCK_SEND_RECEIVE, "send receive", 0, 0, NULL }, 
+/*  			{ MODEST_STOCK_SEND_RECEIVE, "send receive", 0, 0, NULL },  */
 			{ MODEST_STOCK_REPLY, "reply", 0, 0, NULL },
 			{ MODEST_STOCK_REPLY_ALL, "reply all", 0, 0, NULL },
 			{ MODEST_STOCK_FORWARD, "forward", 0, 0, NULL },
@@ -579,7 +579,7 @@ init_stock_icons (void)
 		static gchar *items_names [] = {
 			MODEST_TOOLBAR_ICON_MAIL_SEND,
 			MODEST_TOOLBAR_ICON_NEW_MAIL,
- 			MODEST_TOOLBAR_ICON_SEND_RECEIVE, 
+/*  			MODEST_TOOLBAR_ICON_SEND_RECEIVE,  */
 			MODEST_TOOLBAR_ICON_REPLY,	
 			MODEST_TOOLBAR_ICON_REPLY_ALL,
 			MODEST_TOOLBAR_ICON_FORWARD,

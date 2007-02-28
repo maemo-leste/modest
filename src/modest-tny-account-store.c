@@ -406,7 +406,7 @@ modest_tny_account_store_new (ModestAccountMgr *account_mgr, TnyDevice *device) 
 	/* FIXME: unref this in the end? */
 	tny_session_camel_set_async_connecting (priv->session, TRUE);
 	
-/* 	/\* force a cache fill... ugly *\/ */
+	/* force a cache fill... ugly */
 	list = TNY_LIST(tny_simple_list_new());
 	tny_account_store_get_accounts (TNY_ACCOUNT_STORE(obj), list,
 					TNY_ACCOUNT_STORE_BOTH);

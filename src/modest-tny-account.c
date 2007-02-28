@@ -221,7 +221,7 @@ modest_tny_account_new_from_account (ModestAccountMgr *account_mgr, const gchar 
 		tny_account_set_name (tny_account, account_data->display_name); 
 
 	g_object_set_data_full (G_OBJECT(tny_account), "modest_account",
-				(gpointer*)account_name, g_free);
+				(gpointer*) g_strdup (account_name), g_free);
 	
 	modest_account_mgr_free_account_data (account_mgr, account_data);
 	return tny_account;

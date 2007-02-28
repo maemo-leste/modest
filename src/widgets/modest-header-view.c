@@ -64,7 +64,6 @@ static void         setup_drag_and_drop    (GtkTreeView *self);
 typedef struct _ModestHeaderViewPrivate ModestHeaderViewPrivate;
 struct _ModestHeaderViewPrivate {
 	TnyFolder            *folder;
-	TnyList              *headers;
 	ModestHeaderViewStyle style;
 
 	TnyFolderMonitor     *monitor;
@@ -358,7 +357,6 @@ modest_header_view_init (ModestHeaderView *obj)
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(obj); 
 
 	priv->folder  = NULL;
-	priv->headers = NULL;
 
 	priv->monitor	     = NULL;
 	priv->monitor_lock   = g_mutex_new ();
@@ -375,11 +373,6 @@ modest_header_view_finalize (GObject *obj)
 	
 	self = MODEST_HEADER_VIEW(obj);
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
-
-	if (priv->headers) {
-		g_object_unref (G_OBJECT(priv->headers));
-		priv->headers  = NULL;
-	}
 
 	g_mutex_lock (priv->monitor_lock);
 	if (priv->monitor) {
@@ -609,7 +602,6 @@ modest_header_view_get_style (ModestHeaderView *self)
 	return MODEST_HEADER_VIEW_GET_PRIVATE(self)->style;
 }
 
-
 static void
 on_refresh_folder (TnyFolder   *folder, 
 		   gboolean     cancelled, 
@@ -620,11 +612,12 @@ on_refresh_folder (TnyFolder   *folder,
 	ModestHeaderView *self;
 	ModestHeaderViewPrivate *priv;
 	GList *cols, *cursor;
+	TnyList *headers;
 
 	if (cancelled) {
 		GtkTreeSelection *selection;
 
-		g_warning ("Operation_cancelled %s\n", (*error) ? (*error)->message : "unknown");
+		g_warning ("Operation cancelled %s\n", (*error) ? (*error)->message : "unknown");
 
 		selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (user_data));
 		gtk_tree_selection_unselect_all (selection);
@@ -634,17 +627,12 @@ on_refresh_folder (TnyFolder   *folder,
 	self = MODEST_HEADER_VIEW(user_data);
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
 
-	if (priv->headers) {
-		g_object_unref (priv->headers);
-		modest_runtime_verify_object_death(priv->headers,"");
-	}
+	headers = TNY_LIST(tny_gtk_header_list_model_new ());
 
-	priv->headers = TNY_LIST(tny_gtk_header_list_model_new ());
-
-	tny_gtk_header_list_model_set_folder (TNY_GTK_HEADER_LIST_MODEL(priv->headers),
+	tny_gtk_header_list_model_set_folder (TNY_GTK_HEADER_LIST_MODEL(headers),
 					      folder, TRUE);
 
-	sortable = gtk_tree_model_sort_new_with_model (GTK_TREE_MODEL(priv->headers));
+	sortable = gtk_tree_model_sort_new_with_model (GTK_TREE_MODEL(headers));
 
 	/* install our special sorting functions */
 	cursor = cols = gtk_tree_view_get_columns (GTK_TREE_VIEW(self));
@@ -661,14 +649,14 @@ on_refresh_folder (TnyFolder   *folder,
 
 	/* Add a folder observer */
 	g_mutex_lock (priv->monitor_lock);
-	
-/* 	if (priv->monitor) { */
-/* 		tny_folder_monitor_stop (priv->monitor); */
-/* 		g_object_unref (G_OBJECT (priv->monitor)); */
-/* 	} */
-/* 	priv->monitor = TNY_FOLDER_MONITOR (tny_folder_monitor_new (folder)); */
-/* 	tny_folder_monitor_add_list (priv->monitor, TNY_LIST (priv->headers)); */
-/* 	tny_folder_monitor_start (priv->monitor); */
+	if (priv->monitor) {
+		tny_folder_monitor_stop (priv->monitor);
+		g_object_unref (G_OBJECT (priv->monitor));
+	}
+	priv->monitor = TNY_FOLDER_MONITOR (tny_folder_monitor_new (folder));
+	tny_folder_monitor_add_list (priv->monitor, TNY_LIST (headers));
+	g_object_unref (G_OBJECT (headers));
+	tny_folder_monitor_start (priv->monitor);
 	
 	g_mutex_unlock (priv->monitor_lock);
 
@@ -948,6 +936,7 @@ cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 	}
 }
 
+/* Drag and drop stuff */
 static void
 drag_data_get_cb (GtkWidget *widget, 
 		  GdkDragContext *context, 
@@ -972,31 +961,6 @@ drag_data_get_cb (GtkWidget *widget,
 	gtk_tree_path_free (source_row);
 }
 
-static void 
-drag_data_delete_cb (GtkWidget      *widget,
-		     GdkDragContext *context,
-		     gpointer        user_data)
-{
-	GtkTreeIter iter;
-	GtkTreePath *source_row;
-	GtkTreeModel *model_sort, *model;
-	TnyHeader *header;
-
-	model_sort = gtk_tree_view_get_model (GTK_TREE_VIEW (widget));
-	model = gtk_tree_model_sort_get_model (GTK_TREE_MODEL_SORT (model_sort));
-	source_row = g_object_steal_data (G_OBJECT (widget), ROW_REF_DATA_NAME);
-
-	/* Delete the source row */
-	gtk_tree_model_get_iter (model, &iter, source_row);
-	gtk_tree_model_get (model, &iter,
-			    TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN, &header,
-			    -1);
-	tny_list_remove (TNY_LIST (model), G_OBJECT (header));
-	g_object_unref (G_OBJECT (header));
-
-	gtk_tree_path_free (source_row);
-}
-
 /* Header view drag types */
 const GtkTargetEntry header_view_drag_types[] =
 {
@@ -1015,10 +979,5 @@ setup_drag_and_drop (GtkTreeView *self)
 	gtk_signal_connect(GTK_OBJECT (self),
 			   "drag_data_get",
 			   GTK_SIGNAL_FUNC(drag_data_get_cb),
-			   NULL);
-
-	gtk_signal_connect(GTK_OBJECT (self),
-			   "drag_data_delete",
-			   GTK_SIGNAL_FUNC(drag_data_delete_cb),
 			   NULL);
 }

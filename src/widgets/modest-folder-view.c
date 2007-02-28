@@ -834,11 +834,14 @@ on_progress_changed (ModestMailOperation *mail_op, gpointer user_data)
 	modest_mail_operation_queue_remove (queue, mail_op);
 	g_object_unref (G_OBJECT (mail_op));
 
-	/* Save and clean */
-	save_and_clean (helper, success);	
+	/* Save and clean. HACK: Force success to FALSE in order not
+	   to save data in the source widget */
+	gtk_tree_path_free (helper->source_row);
+	save_and_clean (helper, FALSE);
 	
-	/* Notify the drag source */
-	gtk_drag_finish (helper->context, success, (success && helper->delete_source), helper->time);
+	/* Notify the drag source. Never call delete, the monitor will
+	   do the job if needed */
+	gtk_drag_finish (helper->context, success, FALSE, helper->time);
 
 	/* Free the helper */
 	g_slice_free (DndHelper, helper);
