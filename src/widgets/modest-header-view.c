@@ -602,6 +602,40 @@ modest_header_view_get_style (ModestHeaderView *self)
 	return MODEST_HEADER_VIEW_GET_PRIVATE(self)->style;
 }
 
+/* 
+ * This function sets a sortable model in the header view. It's just
+ * used for developing purposes, because it only does a
+ * gtk_tree_view_set_model
+ */
+static void
+modest_header_view_set_model (GtkTreeView *header_view, GtkTreeModel *model)
+{
+	GtkTreeModel *old_model_sort = gtk_tree_view_get_model (GTK_TREE_VIEW (header_view));
+
+	if (old_model_sort && GTK_IS_TREE_MODEL_SORT (old_model_sort)) { 
+		GtkTreeModel *old_model;
+
+		old_model = gtk_tree_model_sort_get_model (GTK_TREE_MODEL_SORT (old_model_sort));
+		gtk_tree_view_set_model (header_view, model);
+		modest_runtime_verify_object_death (old_model, "");
+		modest_runtime_verify_object_death (old_model_sort, "");
+	} else {
+		ModestHeaderViewPrivate *priv;
+
+		priv = MODEST_HEADER_VIEW_GET_PRIVATE(header_view);
+		g_mutex_lock (priv->monitor_lock);
+		if (priv->monitor) {
+			tny_folder_monitor_stop (priv->monitor);
+			g_object_unref (G_OBJECT (priv->monitor));
+			priv->monitor = NULL;
+		}
+		g_mutex_unlock (priv->monitor_lock);
+		gtk_tree_view_set_model (header_view, model);
+	}
+
+	return;
+}
+
 static void
 on_refresh_folder (TnyFolder   *folder, 
 		   gboolean     cancelled, 
@@ -615,24 +649,26 @@ on_refresh_folder (TnyFolder   *folder,
 	TnyList *headers;
 
 	if (cancelled) {
-		GtkTreeSelection *selection;
+/* 		GtkTreeSelection *selection; */
+		
+/* 		selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (user_data)); */
+/* 		gtk_tree_selection_unselect_all (selection); */
 
-		g_warning ("Operation cancelled %s\n", (*error) ? (*error)->message : "unknown");
+                g_warning ("Operation cancelled %s\n", (*error) ? (*error)->message : "unknown");
 
-		selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (user_data));
-		gtk_tree_selection_unselect_all (selection);
 		return;
 	}
 	
 	self = MODEST_HEADER_VIEW(user_data);
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
 
-	headers = TNY_LIST(tny_gtk_header_list_model_new ());
+	headers = TNY_LIST (tny_gtk_header_list_model_new ());
 
 	tny_gtk_header_list_model_set_folder (TNY_GTK_HEADER_LIST_MODEL(headers),
 					      folder, TRUE);
 
 	sortable = gtk_tree_model_sort_new_with_model (GTK_TREE_MODEL(headers));
+	g_object_unref (G_OBJECT (headers));
 
 	/* install our special sorting functions */
 	cursor = cols = gtk_tree_view_get_columns (GTK_TREE_VIEW(self));
@@ -641,7 +677,7 @@ on_refresh_folder (TnyFolder   *folder,
 								 MODEST_HEADER_VIEW_COLUMN));
 		gtk_tree_sortable_set_sort_func (GTK_TREE_SORTABLE(sortable),
 						 col_id,
-						 (GtkTreeIterCompareFunc)cmp_rows,
+						 (GtkTreeIterCompareFunc) cmp_rows,
 						 cursor->data, NULL);
 		cursor = g_list_next(cursor);
 	}
@@ -655,13 +691,11 @@ on_refresh_folder (TnyFolder   *folder,
 	}
 	priv->monitor = TNY_FOLDER_MONITOR (tny_folder_monitor_new (folder));
 	tny_folder_monitor_add_list (priv->monitor, TNY_LIST (headers));
-	g_object_unref (G_OBJECT (headers));
 	tny_folder_monitor_start (priv->monitor);
-	
 	g_mutex_unlock (priv->monitor_lock);
 
 	/* Set new model */
-	gtk_tree_view_set_model (GTK_TREE_VIEW (self), sortable); 
+	modest_header_view_set_model (GTK_TREE_VIEW (self), sortable);
 	g_object_unref (G_OBJECT (sortable));
 }
 
@@ -705,25 +739,25 @@ modest_header_view_set_folder (ModestHeaderView *self, TnyFolder *folder)
 	ModestHeaderViewPrivate *priv;
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
 
-	/* Unset the old one */
-	if (priv->folder)
+	if (priv->folder) {
 		g_object_unref (priv->folder);
-
-	priv->folder = folder;
+		priv->folder = NULL;
+	}
 
 	if (folder) {
-		g_object_ref (priv->folder);
+
+		priv->folder = g_object_ref (folder);
 
 		tny_folder_refresh_async (folder,
 					  on_refresh_folder,
 					  on_refresh_folder_status_update,
 					  self);
 
-		/* no message selected */		
+		/* no message selected */	
 		g_signal_emit (G_OBJECT(self), signals[HEADER_SELECTED_SIGNAL], 0,
 			       NULL);
 	} else {
-		gtk_tree_view_set_model (GTK_TREE_VIEW (self), NULL); 
+		modest_header_view_set_model (GTK_TREE_VIEW (self), NULL); 
 	}
 }
 
@@ -792,6 +826,8 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 	g_signal_emit (G_OBJECT(self), 
 		       signals[HEADER_SELECTED_SIGNAL], 
 		       0, header);
+
+	g_object_unref (G_OBJECT (header));
 }
 
 

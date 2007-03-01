@@ -598,8 +598,11 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 	
 	/* folder was _un_selected if true */
 	if (!gtk_tree_selection_get_selected (sel, &model_sort, &iter_sort)) {
-		priv->cur_folder = NULL; /* FIXME: need this? */
-		gtk_tree_row_reference_free (priv->cur_row);
+		if (priv->cur_folder)
+			g_object_unref (priv->cur_folder);
+		if (priv->cur_row)
+			gtk_tree_row_reference_free (priv->cur_row);
+		priv->cur_folder = NULL;
 		priv->cur_row = NULL;
 		return; 
 	}
@@ -616,19 +619,21 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 			    TNY_GTK_FOLDER_STORE_TREE_MODEL_INSTANCE_COLUMN, &folder,
 			    -1);
 
-	if (type == TNY_FOLDER_TYPE_ROOT) {
+	/* If the folder is the same or is a root folder do not notify */
+	if ((type == TNY_FOLDER_TYPE_ROOT) || (priv->cur_folder == folder)) {
 		g_object_unref (folder);
 		return;
 	}
 	
 	/* Current folder was unselected */
-	g_signal_emit (G_OBJECT(tree_view), signals[FOLDER_SELECTION_CHANGED_SIGNAL], 0,
-		       priv->cur_folder, FALSE);
-
-	if (priv->cur_row) {
-/* 		tny_folder_sync (priv->cur_folder, TRUE, NULL); /\* FIXME *\/ */
-		gtk_tree_row_reference_free (priv->cur_row);
+	if (priv->cur_folder) {
+		g_signal_emit (G_OBJECT(tree_view), signals[FOLDER_SELECTION_CHANGED_SIGNAL], 0,
+			       priv->cur_folder, FALSE);
+		g_object_unref (priv->cur_folder);
 	}
+
+	if (priv->cur_row)
+		gtk_tree_row_reference_free (priv->cur_row);
 
 	/* New current references */
 	path = gtk_tree_model_get_path (model_sort, &iter_sort);
@@ -637,7 +642,6 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 
 	/* Frees */
 	gtk_tree_path_free (path);
-	g_object_unref (G_OBJECT (folder));
 
 	/* New folder has been selected */
 	g_signal_emit (G_OBJECT(tree_view), 
@@ -658,38 +662,6 @@ modest_folder_view_get_selected (ModestFolderView *self)
 
 	return priv->cur_folder;
 }
-
-/* static gboolean */
-/* get_model_iter (ModestFolderView *self,  */
-/* 		GtkTreeModel **model,  */
-/* 		GtkTreeIter *iter) */
-/* { */
-/* 	GtkTreeModel *model_sort; */
-/* 	GtkTreeIter iter_sort; */
-/* 	GtkTreePath *path; */
-/* 	ModestFolderViewPrivate *priv; */
-
-/* 	priv = MODEST_FOLDER_VIEW_GET_PRIVATE(self); */
-
-/* 	if (!priv->cur_folder) */
-/* 		return FALSE; */
-
-/* 	if (!gtk_tree_row_reference_valid (priv->cur_row)) */
-/* 		return FALSE; */
-
-/* 	model_sort = gtk_tree_view_get_model (GTK_TREE_VIEW (self)); */
-/* 	*model = gtk_tree_model_sort_get_model (GTK_TREE_MODEL_SORT (model_sort)); */
-
-/* 	/\* Get path to retrieve iter *\/ */
-/* 	path = gtk_tree_row_reference_get_path (priv->cur_row); */
-/* 	if (!gtk_tree_model_get_iter (model_sort, &iter_sort, path)) */
-/* 		return FALSE; */
-
-/* 	gtk_tree_model_sort_convert_iter_to_child_iter (GTK_TREE_MODEL_SORT (model_sort), */
-/* 							iter, */
-/* 							&iter_sort); */
-/* 	return TRUE; */
-/* } */
 
 static gint
 cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,

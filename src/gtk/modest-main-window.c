@@ -386,8 +386,8 @@ connect_signals (ModestMainWindow *self)
 			  G_CALLBACK(modest_ui_actions_on_folder_selection_changed), self);
 	g_signal_connect (G_OBJECT(priv->folder_view), "button-press-event",
 			  G_CALLBACK (on_folder_view_button_press_event),self);
-	g_signal_connect (priv->folder_view,"popup-menu",
-			  G_CALLBACK (on_folder_view_button_press_event),self);
+/* 	g_signal_connect (priv->folder_view, "popup-menu", */
+/* 			  G_CALLBACK (on_folder_view_button_press_event),self); */
 
 	/* header view */
 	g_signal_connect (G_OBJECT(priv->header_view), "status_update",

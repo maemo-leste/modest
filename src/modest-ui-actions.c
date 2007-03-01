@@ -760,19 +760,9 @@ modest_ui_actions_on_folder_selection_changed (ModestFolderView *folder_view,
 					       gboolean selected,
 					       ModestMainWindow *main_window)
 {
-//	GtkLabel *folder_info_label;
-	gchar *txt;	
+	gchar *txt;
 	ModestConf *conf;
 	GtkWidget *header_view;
-	
-/* 	folder_info_label =  */
-/* 		GTK_LABEL (modest_widget_factory_get_folder_info_label */
-/* 			   (modest_runtime_get_widget_factory())); */
-
-/* 	if (!folder) { */
-/* 		gtk_label_set_label (GTK_LABEL(folder_info_label), ""); */
-/* 		return; */
-/* 	} */
 	
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW(main_window));
 
@@ -1186,7 +1176,7 @@ delete_folder (ModestMainWindow *main_window, gboolean move_to_trash)
 	if (!folder_view)
 		return;
 
-	folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW(folder_view));
+	folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW (folder_view));
 	
 	mail_op = modest_mail_operation_new ();
 	modest_mail_operation_remove_folder (mail_op, folder, move_to_trash);
@@ -1195,7 +1185,8 @@ delete_folder (ModestMainWindow *main_window, gboolean move_to_trash)
 	if (error)
 		g_warning ("%s\n", error->message);
 
-	g_object_unref (mail_op);
+	g_object_unref (G_OBJECT (mail_op));
+	g_object_unref (G_OBJECT (folder));
 }
 
 void 
