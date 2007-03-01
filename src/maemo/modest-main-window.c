@@ -381,11 +381,8 @@ connect_signals (ModestMainWindow *self)
 	 */
 	g_signal_connect (G_OBJECT(modest_runtime_get_conf()), "key_changed",
 			  G_CALLBACK(on_key_changed), self);
-
 	
 	g_signal_connect (G_OBJECT(self), "delete-event", G_CALLBACK(on_delete_event), self);
-
-
 }
 
 
@@ -462,7 +459,7 @@ modest_main_window_new (void)
 		MODEST_HEADER_VIEW(modest_header_view_new (NULL, MODEST_HEADER_VIEW_STYLE_DETAILS));
 	if (!priv->header_view)
 		g_printerr ("modest: cannot instantiate header view\n");
-	
+	modest_header_view_set_style (priv->header_view, MODEST_HEADER_VIEW_STYLE_TWOLINES);
 	
 	folder_win = wrapped_in_scrolled_window (GTK_WIDGET(priv->folder_view), FALSE);
 	header_win = wrapped_in_scrolled_window (GTK_WIDGET(priv->header_view), FALSE);			   
