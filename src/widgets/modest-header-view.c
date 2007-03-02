@@ -614,8 +614,22 @@ modest_header_view_set_model (GtkTreeView *header_view, GtkTreeModel *model)
 
 	if (old_model_sort && GTK_IS_TREE_MODEL_SORT (old_model_sort)) { 
 		GtkTreeModel *old_model;
+		ModestHeaderViewPrivate *priv;
+
+		priv = MODEST_HEADER_VIEW_GET_PRIVATE (header_view);
 		old_model = gtk_tree_model_sort_get_model (GTK_TREE_MODEL_SORT (old_model_sort));
+
+		/* Clean monitors */
+		g_mutex_lock (priv->monitor_lock);
+		if (priv->monitor) {
+			tny_folder_monitor_stop (priv->monitor);
+			g_object_unref (G_OBJECT (priv->monitor));
+		}
+		g_mutex_unlock (priv->monitor_lock);
+
+		/* Set new model */
 		gtk_tree_view_set_model (header_view, model);
+
 		modest_runtime_verify_object_death (old_model, "");
 		modest_runtime_verify_object_death (old_model_sort, "");
 	} else
@@ -671,20 +685,16 @@ on_refresh_folder (TnyFolder   *folder,
 	}
 	g_list_free (cols);
 
+	/* Set new model */
+	modest_header_view_set_model (GTK_TREE_VIEW (self), sortable);
+	g_object_unref (G_OBJECT (sortable));
+
 	/* Add a folder observer */
 	g_mutex_lock (priv->monitor_lock);
-	if (priv->monitor) {
-		tny_folder_monitor_stop (priv->monitor);
-		g_object_unref (G_OBJECT (priv->monitor));
-	}
 	priv->monitor = TNY_FOLDER_MONITOR (tny_folder_monitor_new (folder));
 	tny_folder_monitor_add_list (priv->monitor, TNY_LIST (headers));
 	tny_folder_monitor_start (priv->monitor);
 	g_mutex_unlock (priv->monitor_lock);
-
-	/* Set new model */
-	modest_header_view_set_model (GTK_TREE_VIEW (self), sortable);
-	g_object_unref (G_OBJECT (sortable));
 }
 
 
