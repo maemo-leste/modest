@@ -614,24 +614,12 @@ modest_header_view_set_model (GtkTreeView *header_view, GtkTreeModel *model)
 
 	if (old_model_sort && GTK_IS_TREE_MODEL_SORT (old_model_sort)) { 
 		GtkTreeModel *old_model;
-
 		old_model = gtk_tree_model_sort_get_model (GTK_TREE_MODEL_SORT (old_model_sort));
 		gtk_tree_view_set_model (header_view, model);
 		modest_runtime_verify_object_death (old_model, "");
 		modest_runtime_verify_object_death (old_model_sort, "");
-	} else {
-		ModestHeaderViewPrivate *priv;
-
-		priv = MODEST_HEADER_VIEW_GET_PRIVATE(header_view);
-		g_mutex_lock (priv->monitor_lock);
-		if (priv->monitor) {
-			tny_folder_monitor_stop (priv->monitor);
-			g_object_unref (G_OBJECT (priv->monitor));
-			priv->monitor = NULL;
-		}
-		g_mutex_unlock (priv->monitor_lock);
+	} else
 		gtk_tree_view_set_model (header_view, model);
-	}
 
 	return;
 }
