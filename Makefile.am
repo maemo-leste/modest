@@ -37,8 +37,6 @@ if BUILD_DOCS
 SUBDIRS += docs
 endif
 
-
-
 EXTRA_DIST=                 \
 	mkinstalldirs       \
 	autogen.sh          \

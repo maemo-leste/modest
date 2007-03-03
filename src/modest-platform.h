@@ -27,33 +27,49 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef __MODEST_PLATFORM_H__
+#define __MODEST_PLATFORM_H__
 
-#ifndef __MODEST_MAEMO_UTILS_H__
-#define __MODEST_MAEMO_UTILS_H__
-
-#include <gtk/gtk.h>
-
-/**
- * modest_maemo_utils_menubar_to_menu:
- * @ui_manager: a ui manager, with the menubar at "/MenuBar" 
- * 
- * convert a menubar description (in a GtkUIManager) in to a menu
- * 
- * Returns: a new menu, or NULL in case of error
- */
-GtkWidget*    modest_maemo_utils_menubar_to_menu (GtkUIManager *ui_manager);
-
+#include <glib.h>
+#include <tny-device.h>
 
 /**
- * modest_maemo_utils_get_device_name
+ * modest_platform_platform_init:
  *
- * get the name for this device. Note: this queries the bluetooth
- * name over DBUS, and may block. The result will be available in
- * MODEST_DEVICE_NAME in ModestConf; it will be updated when it
- * changes
+ * platform specific initialization function
  * 
+ * Returns: TRUE if succeeded, FALSE otherwise
  */
-void modest_maemo_utils_get_device_name (void);
+gboolean modest_platform_init (void);
 
 
-#endif /*__MODEST_MAEMO_UTILS_H__*/
+/**
+ * modest_platform_get_new_device:
+ *
+ * platform specific initialization function
+ * 
+ * Returns: TRUE if succeeded, FALSE otherwise
+ */
+TnyDevice*  modest_platform_get_new_device (void);
+
+
+/**
+ * modest_platform_get_file_icon:
+ * @name: the name of the file, or NULL
+ * @mime_type: the mime-type, or NULL
+ * @effective_mime_type: out-param which receives the 'effective mime-type', ie., the mime type
+ * that will be used. May be NULL if you're not interested in this. Note: the returned string
+ * is newly allocated, and should be g_free'd when done with it.
+ *
+ * this function gets the icon for the file, based on the file name and/or the mime type,
+ * using the following strategy:
+ * (1) if mime_type != NULL and mime_type != application/octet-stream, find the
+ *     the icon name for this mime type
+ * (2) otherwise, guess the icon type from the file name, and then goto (1)
+ *
+ * Returns: the icon name
+ */
+const gchar*  modest_platform_get_file_icon (const gchar* name, const gchar* mime_type,
+					     gchar **effective_mime_type);
+
+#endif /* __MODEST_PLATFORM_UTILS_H__ */

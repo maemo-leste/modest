@@ -330,7 +330,7 @@ modest_account_mgr_add_server_account (ModestAccountMgr * self,
 	/* hostname */
 	key = _modest_account_mgr_get_account_keyname (name, MODEST_ACCOUNT_HOSTNAME, TRUE);
 	if (modest_conf_key_exists (priv->modest_conf, key, &err)) {
-		g_printerr ("modest: server account '%s' already exists", name);
+		g_printerr ("modest: server account '%s' already exists\n", name);
 		g_free (key);
 		ok =  FALSE;
 	}

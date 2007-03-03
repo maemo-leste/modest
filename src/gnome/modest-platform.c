@@ -27,33 +27,53 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <modest-platform.h>
+#include <libgnomevfs/gnome-vfs-mime.h>
+#include <libgnomeui/gnome-icon-lookup.h>
+#include <tny-gnome-device.h>
 
-#ifndef __MODEST_MAEMO_UTILS_H__
-#define __MODEST_MAEMO_UTILS_H__
-
-#include <gtk/gtk.h>
-
-/**
- * modest_maemo_utils_menubar_to_menu:
- * @ui_manager: a ui manager, with the menubar at "/MenuBar" 
- * 
- * convert a menubar description (in a GtkUIManager) in to a menu
- * 
- * Returns: a new menu, or NULL in case of error
- */
-GtkWidget*    modest_maemo_utils_menubar_to_menu (GtkUIManager *ui_manager);
+gboolean
+modest_platform_init (void)
+{	
+	return TRUE; /* nothing to do */
+}
 
 
-/**
- * modest_maemo_utils_get_device_name
- *
- * get the name for this device. Note: this queries the bluetooth
- * name over DBUS, and may block. The result will be available in
- * MODEST_DEVICE_NAME in ModestConf; it will be updated when it
- * changes
- * 
- */
-void modest_maemo_utils_get_device_name (void);
+TnyDevice*
+modest_platform_get_new_device (void)
+{
+	return TNY_DEVICE (tny_gnome_device_new ());
+}
 
 
-#endif /*__MODEST_MAEMO_UTILS_H__*/
+gchar*
+modest_platform_get_file_icon_name (const gchar* name, const gchar* mime_type,
+					  gchar **effective_mime_type)
+{
+	GString *mime_str = NULL;
+	gchar *icon_name  = NULL;
+	gchar *uri;
+	const static gchar* octet_stream = "application/octet-stream";
+	
+	g_return_val_if_fail (name || mime_type, NULL);
+
+	if (!mime_type || g_ascii_strcasecmp (mime_type, octet_stream)) 
+		mime_str = g_string_new(gnome_vfs_mime_type_from_name_or_default
+					(name, "application/octet-stream"));
+	else {
+		mime_str = g_string_new (mime_type);
+		g_string_ascii_down (mime_str);
+	}
+
+	uri = g_strconcat ("file:///", name ? name : "dummy", NULL);
+	icon_name  = gnome_icon_lookup (gtk_icon_theme_get_default(), NULL,
+					uri, NULL, NULL, mime_str->str, 0, 0);
+	g_free (uri);
+
+	if (effective_mime_type)
+		*effective_mime_type = g_string_free (mime_str, FALSE);
+	else
+		g_string_free (mime_str, TRUE);
+
+	return icon_name;
+}

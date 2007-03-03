@@ -35,13 +35,6 @@
 #include <tny-camel-mime-part.h>
 #include <tny-camel-msg.h>
 
-/* MODES_PLATFORM_ID: 1 ==> gtk, 2==> maemo */
-#if MODEST_PLATFORM_ID==1   
-#include <tny-gnome-device.h>
-#elif MODEST_PLATFORM_ID==2
-#include <tny-maemo-device.h>
-#endif
-
 #include "modest-tny-platform-factory.h"
 #include "modest-tny-account-store.h"
 
@@ -191,14 +184,7 @@ modest_tny_platform_factory_new_account_store (TnyPlatformFactory *self)
 static TnyDevice *
 modest_tny_platform_factory_new_device (TnyPlatformFactory *self)
 {
-/* MODES_PLATFORM_ID: 1 ==> gtk, 2==> maemo */
-#if MODEST_PLATFORM_ID==1   
-	return TNY_DEVICE (tny_gnome_device_new ());
-#elif MODEST_PLATFORM_ID==2
-	return TNY_DEVICE (tny_maemo_device_new ());
-#else
-	g_return_val_if_reached (NULL);
-#endif /* MODEST_PLATFORM */
+	return modest_platform_get_new_device ();
 }
 
 static TnyMsgView*

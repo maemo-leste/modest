@@ -29,7 +29,7 @@
 
 INCLUDES=\
 	$(MODEST_GSTUFF_CFLAGS) \
-	$(MODEST_LIBTINYMAIL_GNOME_DESKTOP_CFLAGS) \
+	$(MODEST_LIBTINYMAIL_MAEMO_CFLAGS) \
 	-DMODEST_PLATFORM_ID=$(MODEST_PLATFORM_ID) \
 	-I ${top_srcdir}/src/widgets  \
 	-I ${top_srcdir}/src  \
@@ -46,6 +46,7 @@ libmodest_ui_la_SOURCES=              \
 	modest-icon-names.h           \
 	modest-main-window.c          \
 	modest-main-window-ui.h       \
+	modest-platform.c	      \
 	modest-store-widget.c         \
 	modest-store-widget.h         \
 	modest-transport-widget.c     \
@@ -59,7 +60,7 @@ libmodest_ui_la_SOURCES=              \
 
 LDADD = \
 	$(MODEST_GSTUFF_LIBS) \
-	$(MODEST_LIBTINYMAIL_GNOME_DESKTOP_LIBS)
+	$(MODEST_LIBTINYMAIL_MAEMO_LIBS)
 
 PIXMAP_FILES=\
 	pixmaps/*.png 

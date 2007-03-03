@@ -54,6 +54,38 @@
                           "',member='" BTNAME_SIG_CHANGED "'"
 
 
+GtkWidget*
+modest_maemo_utils_menubar_to_menu (GtkUIManager *ui_manager)
+{
+	GtkWidget *main_menu;
+	GtkWidget *menubar;
+	GList *iter;
+
+	g_return_val_if_fail (ui_manager, NULL);
+	
+	/* Create new main menu */
+	main_menu = gtk_menu_new();
+
+	/* Get the menubar from the UI manager */
+	menubar = gtk_ui_manager_get_widget (ui_manager, "/MenuBar");
+
+	iter = gtk_container_get_children (GTK_CONTAINER (menubar));
+	while (iter) {
+		GtkWidget *menu;
+
+		menu = GTK_WIDGET (iter->data);
+		gtk_widget_reparent(menu, main_menu);
+
+		iter = g_list_next (iter);
+	}
+	return main_menu;
+}
+
+
+
+
+
+
 static void
 update_device_name_from_msg (DBusMessage *message)
 {

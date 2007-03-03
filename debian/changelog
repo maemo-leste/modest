@@ -1,5 +1,6 @@
-modest (0.0.1) UNRELEASED; urgency=low
+modest (0.0.1-svn-870) unstable; urgency=low
 
-  * Initial release.
+  * Package subversion revision 870
 
- -- Dirk-Jan Binnema <dirk-jan.binnema@nokia.com>  Sat, 11 Nov 2006 15:21:06 +0100
+ -- Dirk-Jan Binnema <djcb@djcbsoftware.nl>  Thu, 01 Mar 2007 20:06:15 +0000
+

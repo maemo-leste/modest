@@ -68,28 +68,26 @@ fi
 
 
 dnl # GLib/Gobject/Gtk/Gconf => mandatory
-PKG_CHECK_MODULES(MODEST_GSTUFF,glib-2.0 >= 2.6 gobject-2.0 gtk+-2.0 >= 2.6 gconf-2.0 libgtkhtml-3.8 libtinymail-1.0 libtinymail-camel-1.0 libtinymailui-1.0 libtinymailui-gtk-1.0) 
+PKG_CHECK_MODULES(MODEST_GSTUFF,glib-2.0 >= 2.6 gobject-2.0 gtk+-2.0 >= 2.6 gconf-2.0 gnome-vfs-2.0 libgtkhtml-3.8 libtinymail-1.0 libtinymail-camel-1.0 libtinymailui-1.0 libtinymailui-gtk-1.0) 
 AC_SUBST(MODEST_GSTUFF_CFLAGS)
 AC_SUBST(MODEST_GSTUFF_LIBS)
-
 
 dnl dnl now, determine what to build
 AC_MSG_NOTICE([Determining what platform to build])
 PKG_CHECK_MODULES(LIBOSSO,libosso,[with_platform=maemo],true)
 
 AC_ARG_WITH(platform,
-[--with-platform=gtk		platform to build for [gtk]],
+[--with-platform=gnome		platform to build for [gnome]],
 [case "${with_platform}" in
-       gtk)    MODEST_PLATFORM=gtk;;
+       gnome)    MODEST_PLATFORM=gnome;;
        maemo) MODEST_PLATFORM=maemo;;
        *)      MODEST_PLATFORM=${with_platform}
-esac], [MODEST_PLATFORM=gtk
-               with_platform=gtk])
+esac], [MODEST_PLATFORM=gnome
+               with_platform=gnome])
 AC_SUBST(MODEST_PLATFORM)
 
-
 if test "x$with_platform" = "xmaemo"; then
-   PKG_CHECK_MODULES(MODEST_LIBTINYMAIL_MAEMO,libtinymail-maemo-1.0 hildon-libs libosso)
+   PKG_CHECK_MODULES(MODEST_LIBTINYMAIL_MAEMO,libtinymail-maemo-1.0 hildon-libs libosso libossomime)
    AC_SUBST(MODEST_LIBTINYMAIL_MAEMO_CFLAGS)
    AC_SUBST(MODEST_LIBTINYMAIL_MAEMO_LIBS) 
  
@@ -127,7 +125,7 @@ else
    MODEST_PLATFORM_ID=1
 fi
 
-dnl 1==>gtk, 2==>maemo
+dnl 1==>gnome, 2==>maemo
 AC_SUBST(MODEST_PLATFORM_ID)
 
 
@@ -177,7 +175,7 @@ po/Makefile.in
 Makefile
 man/Makefile
 src/Makefile
-src/gtk/Makefile
+src/gnome/Makefile
 src/maemo/Makefile
 src/widgets/Makefile
 docs/Makefile

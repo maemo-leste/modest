@@ -39,13 +39,13 @@
 #include <widgets/modest-msg-edit-window.h>
 #include <widgets/modest-account-view-window.h>
 
+
 #include "modest-widget-memory.h"
 #include "modest-window-priv.h"
 #include "modest-main-window-ui.h"
 #include "modest-account-mgr.h"
 #include "modest-conf.h"
-
-#include "modest-maemo-utils.h"
+#include <modest-maemo-utils.h>
 #include "modest-tny-platform-factory.h"
 #include "modest-tny-msg.h"
 #include "modest-mail-operation.h"
@@ -279,30 +279,6 @@ on_delete_event (GtkWidget *widget, GdkEvent  *event, ModestMainWindow *self)
 	return FALSE;
 }
 
-static GtkWidget *
-menubar_to_menu (GtkUIManager *ui_manager)
-{
-	GtkWidget *main_menu;
-	GtkWidget *menubar;
-	GList *iter;
-
-	/* Create new main menu */
-	main_menu = gtk_menu_new();
-
-	/* Get the menubar from the UI manager */
-	menubar = gtk_ui_manager_get_widget (ui_manager, "/MenuBar");
-
-	iter = gtk_container_get_children (GTK_CONTAINER (menubar));
-	while (iter) {
-		GtkWidget *menu;
-
-		menu = GTK_WIDGET (iter->data);
-		gtk_widget_reparent(menu, main_menu);
-
-		iter = g_list_next (iter);
-	}
-	return main_menu;
-}
 
 static GtkWidget*
 get_toolbar (ModestMainWindow *self)
@@ -441,7 +417,7 @@ modest_main_window_new (void)
 	hildon_window_add_toolbar (HILDON_WINDOW (self), GTK_TOOLBAR (parent_priv->toolbar));
 
 	/* Menubar */
-	parent_priv->menubar = menubar_to_menu (parent_priv->ui_manager);
+	parent_priv->menubar = modest_maemo_utils_menubar_to_menu (parent_priv->ui_manager);
 	hildon_window_set_menu (HILDON_WINDOW (self), GTK_MENU (parent_priv->menubar));
 
 	/* folder view */

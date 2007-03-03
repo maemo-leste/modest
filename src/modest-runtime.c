@@ -37,17 +37,13 @@
 #include <widgets/modest-header-view.h>
 #include <widgets/modest-folder-view.h>
 #include <modest-tny-platform-factory.h>
+#include <modest-platform.h>
 #include <modest-widget-memory.h>
 #include <modest-widget-memory-priv.h>
 #include <modest-local-folder-info.h>
 #include <modest-account-mgr.h>
 #include <modest-account-mgr-helpers.h>
 #include <modest-icon-names.h>
-
-#if MODEST_PLATFORM_ID==2 /* maemo/hildon */
-#include <libosso.h>
-static gboolean init_hildon (void);
-#endif /* MODEST_PLATFORM_ID==2 */
 
 static gboolean init_header_columns (ModestConf *conf, gboolean overwrite);
 static gboolean init_local_folders  (void);
@@ -130,14 +126,12 @@ modest_runtime_init (void)
 		g_printerr ("modest: failed to initialize singletons\n");
 		return FALSE;
 	}
-
-#if MODEST_PLATFORM_ID==2 
-	if (!init_hildon ()) {
+	
+	if (!modest_platform_init()) {
 		modest_runtime_uninit ();
-		g_printerr ("modest: failed to initialize hildon\n");
+		g_printerr ("modest: failed to run platform-specific initialization\n");
 		return FALSE;
 	}
-#endif /* MODEST_PLATFORM_ID==2 */
 
 	/* based on the debug settings, we decide whether to overwrite old settings */
 	reset = modest_runtime_get_debug_flags () & MODEST_RUNTIME_DEBUG_FACTORY_SETTINGS;
@@ -532,21 +526,6 @@ init_i18n (void)
 	textdomain (GETTEXT_PACKAGE);
 
 }
-
-
-#if MODEST_PLATFORM_ID==2 
-static gboolean
-init_hildon (void)
-{
-	osso_context_t *osso_context =
-		osso_initialize(PACKAGE, PACKAGE_VERSION,
-				TRUE, NULL);	
-	if (!osso_context) {
-		g_printerr ("modest: failed to acquire osso context\n");
-		return FALSE;
-	}
-}
-#endif /* MODEST_PLATFORM_ID==2 */
 
 
 /* 
