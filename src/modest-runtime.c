@@ -53,6 +53,7 @@ static void     init_stock_icons (void);
 static void     init_debug_g_type (void);
 static void     init_debug_logging (void);
 static void     init_test_accounts (ModestAccountMgr *acc_mgr);
+static void     init_default_settings (ModestConf *conf);
 
 
 static ModestSingletons *_singletons = NULL;
@@ -140,6 +141,8 @@ modest_runtime_init (void)
 		g_printerr ("modest: failed to init header columns\n");
 		return FALSE;
 	}
+
+	init_default_settings (modest_singletons_get_conf (my_singletons));
 	
 	if (!init_local_folders()) {
 		modest_runtime_uninit ();
@@ -637,4 +640,18 @@ init_test_accounts (ModestAccountMgr *acc_mgr)
 	
 	modest_account_mgr_add_account (acc_mgr, imap_test, imap_test, smtp_test);
 	modest_account_mgr_add_account (acc_mgr,  pop_test, pop_test,  smtp_test);
+}
+
+
+static void
+init_default_settings (ModestConf *conf)
+{
+	if (!modest_conf_key_exists (conf, MODEST_CONF_SHOW_TOOLBAR, NULL))
+		modest_conf_set_bool (conf, MODEST_CONF_SHOW_TOOLBAR, TRUE, NULL);
+
+	if (!modest_conf_key_exists (conf, MODEST_CONF_SHOW_CC, NULL))
+		modest_conf_set_bool (conf, MODEST_CONF_SHOW_CC, TRUE, NULL);
+
+	if (!modest_conf_key_exists (conf, MODEST_CONF_SHOW_BCC, NULL))
+		modest_conf_set_bool (conf, MODEST_CONF_SHOW_BCC, FALSE, NULL);
 }
