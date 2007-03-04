@@ -293,7 +293,7 @@ get_toolbar (ModestMainWindow *self)
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
 	
 	/* Toolbar */
-	toolbar       = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar");
+	toolbar             = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar");
 	progress_box        = gtk_hbox_new (FALSE, HILDON_MARGIN_DEFAULT);
 	progress_alignment  = gtk_alignment_new (0.5, 0.5, 1, 0);
 	
@@ -452,14 +452,14 @@ modest_main_window_new (void)
 
 	gtk_container_add (GTK_CONTAINER(self), main_vbox);
 	restore_sizes (MODEST_MAIN_WINDOW(self));	
-
+	
 	gtk_window_set_title (GTK_WINDOW(self), _("Modest"));
 	gtk_window_set_icon_from_file (GTK_WINDOW(self), MODEST_APP_ICON, NULL);
 	gtk_widget_show_all (main_vbox);
 
 	/* should we hide the toolbar? */
-	if (!modest_conf_get_bool (modest_runtime_get_conf (), MODEST_CONF_SHOW_TOOLBAR, NULL))
-		gtk_widget_hide (parent_priv->toolbar);
+	//if (!modest_conf_get_bool (modest_runtime_get_conf (), MODEST_CONF_SHOW_TOOLBAR, NULL))
+	//	gtk_widget_hide (parent_priv->toolbar);
 
 	/* Connect signals */
 	connect_signals (self);

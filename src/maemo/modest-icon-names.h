@@ -54,8 +54,8 @@
 #define MODEST_FOLDER_ICON_INBOX		PIXMAP_PREFIX "qgn_list_messagin_inbox.png"
 #define MODEST_FOLDER_ICON_OUTBOX		PIXMAP_PREFIX "qgn_list_messagin_outbox.png"
 #define MODEST_FOLDER_ICON_SENT			PIXMAP_PREFIX "qgn_list_messagin_sent.png"
-#define MODEST_FOLDER_ICON_TRASH		PIXMAP_PREFIX "qgn_list_messagin_mail_deleted.png"
-#define MODEST_FOLDER_ICON_JUNK			PIXMAP_PREFIX "qgn_list_messagin_mail_deleted.png"
+#define MODEST_FOLDER_ICON_TRASH		PIXMAP_PREFIX "qgn_toolb_messagin_delete.png"
+#define MODEST_FOLDER_ICON_JUNK			PIXMAP_PREFIX "qgn_toolb_messagin_delete.png"
 #define MODEST_FOLDER_ICON_DRAFTS		PIXMAP_PREFIX "qgn_list_messagin_drafts.png"
 #define MODEST_FOLDER_ICON_NORMAL		PIXMAP_PREFIX "qgn_list_gene_fldr_cls.png"
 
