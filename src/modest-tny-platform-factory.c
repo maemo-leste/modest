@@ -31,6 +31,8 @@
 #include <config.h>
 
 #include <modest-runtime.h>
+#include <modest-platform.h>
+
 #include <tny-camel-header.h>
 #include <tny-camel-mime-part.h>
 #include <tny-camel-msg.h>
