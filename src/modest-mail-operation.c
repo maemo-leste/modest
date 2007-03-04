@@ -204,8 +204,6 @@ modest_mail_operation_send_mail (ModestMailOperation *self,
 	
 	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
 	g_return_if_fail (TNY_IS_TRANSPORT_ACCOUNT (transport_account));
-
-	g_message ("modest: send mail");
 	
 	send_queue = TNY_SEND_QUEUE (modest_runtime_get_send_queue (transport_account));
 	if (!TNY_IS_SEND_QUEUE(send_queue))
@@ -534,11 +532,16 @@ modest_mail_operation_update_account (ModestMailOperation *self,
 
 	/* Get subscribed folders & refresh them */
     	folders = TNY_LIST (tny_simple_list_new ());
-	query = tny_folder_store_query_new ();
-	tny_folder_store_query_add_item (query, NULL, TNY_FOLDER_STORE_QUERY_OPTION_SUBSCRIBED);
+	query = NULL; //tny_folder_store_query_new ();
+
+	/* FIXME: is this needed? */
+	tny_device_force_online (TNY_DEVICE(modest_runtime_get_device()));
+	
+	/* FIXME: let query be NULL: do it for all */ 
+	//tny_folder_store_query_add_item (query, NULL, TNY_FOLDER_STORE_QUERY_OPTION_SUBSCRIBED);
 	tny_folder_store_get_folders_async (TNY_FOLDER_STORE (store_account),
 					    folders, update_folders_cb, query, self);
-	g_object_unref (query); /* FIXME */
+	//g_object_unref (query); /* FIXME */
 	
 	return TRUE;
 }

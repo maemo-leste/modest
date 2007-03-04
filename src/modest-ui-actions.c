@@ -506,7 +506,7 @@ modest_ui_actions_on_send_receive (GtkAction *action,  ModestWindow *win)
 {
 	gchar *account_name;
 	TnyAccount *tny_account;
-	//ModestTnySendQueue *send_queue;
+	ModestTnySendQueue *send_queue;
 	ModestMailOperation *mail_op;
 	
 	account_name =
@@ -517,8 +517,7 @@ modest_ui_actions_on_send_receive (GtkAction *action,  ModestWindow *win)
 		g_printerr ("modest: cannot get account\n");
 		return;
 	}
-	/* FIXME */
-#if 0
+
 	tny_account = 
 		modest_tny_account_store_get_tny_account_by_account (modest_runtime_get_account_store(),
 								     account_name,
@@ -527,18 +526,17 @@ modest_ui_actions_on_send_receive (GtkAction *action,  ModestWindow *win)
 		g_printerr ("modest: cannot get tny transport account for %s\n", account_name);
 		return;
 	}
-
 	send_queue = modest_tny_send_queue_new (TNY_CAMEL_TRANSPORT_ACCOUNT(tny_account));
 	if (!send_queue) {
 		g_object_unref (G_OBJECT(tny_account));
 		g_printerr ("modest: cannot get send queue for %s\n", account_name);
 		return;
 	} 
-	modest_tny_send_queue_flush (send_queue);
+	//modest_tny_send_queue_flush (send_queue);
 
 	g_object_unref (G_OBJECT(send_queue));
 	g_object_unref (G_OBJECT(tny_account));
-#endif /*  0 */
+
 	tny_account = 
 		modest_tny_account_store_get_tny_account_by_account (modest_runtime_get_account_store(),
 								     account_name,
