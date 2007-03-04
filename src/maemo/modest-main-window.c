@@ -458,8 +458,8 @@ modest_main_window_new (void)
 	gtk_widget_show_all (main_vbox);
 
 	/* should we hide the toolbar? */
-	//if (!modest_conf_get_bool (modest_runtime_get_conf (), MODEST_CONF_SHOW_TOOLBAR, NULL))
-	//	gtk_widget_hide (parent_priv->toolbar);
+	if (!modest_conf_get_bool (modest_runtime_get_conf (), MODEST_CONF_SHOW_TOOLBAR, NULL))
+		gtk_widget_hide (parent_priv->toolbar);
 
 	/* Connect signals */
 	connect_signals (self);
