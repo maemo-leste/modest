@@ -523,10 +523,8 @@ modest_tny_account_store_get_accounts  (TnyAccountStore *self, TnyList *list,
 				get_accounts (self, list, TNY_ACCOUNT_TYPE_TRANSPORT);
 		else
 			get_cached_accounts (self, list, TNY_ACCOUNT_TYPE_TRANSPORT);
-	} else {
+	} else
 		g_return_if_reached (); /* incorrect req type */
-		return;
-	}
 }
 
 
@@ -538,9 +536,7 @@ modest_tny_account_store_get_cache_dir (TnyAccountStore *self)
 	
 	if (!priv->cache_dir)
 		priv->cache_dir = g_build_filename (g_get_home_dir(), 
-						    MODEST_DIR,
-						    MODEST_CACHE_DIR,
-						    "cache", NULL);
+						    MODEST_DIR, MODEST_CACHE_DIR, NULL);
 	return priv->cache_dir;
 }
 
