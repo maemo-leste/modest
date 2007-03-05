@@ -81,6 +81,7 @@ modest_tny_account_get_special_folder (TnyAccount *account,
 	}
 	g_object_unref (G_OBJECT (folders));
 	g_object_unref (G_OBJECT (iter));
+	g_object_unref (G_OBJECT (local_account));
 
 	return special_folder;
 }
