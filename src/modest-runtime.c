@@ -654,4 +654,8 @@ init_default_settings (ModestConf *conf)
 
 	if (!modest_conf_key_exists (conf, MODEST_CONF_SHOW_BCC, NULL))
 		modest_conf_set_bool (conf, MODEST_CONF_SHOW_BCC, FALSE, NULL);
+
+	if (!modest_conf_key_exists (conf, MODEST_CONF_CONNECT_AT_STARTUP, NULL))
+		modest_conf_set_bool (conf, MODEST_CONF_CONNECT_AT_STARTUP, TRUE, NULL);
+
 }

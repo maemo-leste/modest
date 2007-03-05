@@ -124,7 +124,10 @@ main (int argc, char *argv[])
 
 	account_or_default = check_account (account);
 	g_free (account);
-	
+
+	if (modest_conf_get_bool (modest_runtime_get_conf(), MODEST_CONF_CONNECT_AT_STARTUP, NULL))
+		tny_device_force_online (modest_runtime_get_device());
+			
 	if (!batch) {
 		if (!modest_runtime_init_ui (argc, argv)) {
 			g_printerr ("modest: cannot start ui\n");

@@ -468,8 +468,11 @@ modest_main_window_new (void)
 	tny_account_store_view_set_account_store (TNY_ACCOUNT_STORE_VIEW (priv->folder_view),
 						  TNY_ACCOUNT_STORE (modest_runtime_get_account_store ()));
 	g_idle_add ((GSourceFunc)sync_accounts_cb, self);
-	/* do send & receive when we are idle */
-	
+	/* do send & receive when we are idle */	
+
+	g_message ("online? %s",
+		   tny_device_is_online (modest_runtime_get_device()) ? "yes" : "no");
+
 	return MODEST_WINDOW(self);
 }
 
