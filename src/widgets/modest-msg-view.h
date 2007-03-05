@@ -62,7 +62,7 @@ struct _ModestMsgViewClass {
 				    gpointer user_data);
 	void (*attachment_clicked) (ModestMsgView *msgview, int index,
 				    gpointer user_data);
-	void (*recpt_activated)    (ModestMsgView *msgview, ModestRecptView *recpt_view,
+	void (*recpt_activated)    (ModestMsgView *msgview, const gchar *address,
 				    gpointer user_data);
 };
 

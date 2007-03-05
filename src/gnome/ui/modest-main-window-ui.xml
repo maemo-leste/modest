@@ -67,7 +67,9 @@
     </menu>
 
     <menu name="OptionsMenu" action="Options">
+      <menuitem name="OptionsAddToContactsMenu" action="OptionsAddToContacts"/>
       <menuitem name="OptionsAccountsMenu" action="OptionsAccounts"/>
+      <separator/>
       <menuitem name="OptionsContactsMenu" action="OptionsContacts"/>
     </menu>
 

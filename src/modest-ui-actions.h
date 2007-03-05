@@ -45,6 +45,8 @@ void     modest_ui_actions_on_quit          (GtkAction *action, ModestWindow *wi
 
 void     modest_ui_actions_on_accounts      (GtkAction *action, ModestWindow *win);
 
+void     modest_ui_actions_on_add_to_contacts   (GtkAction *action, ModestWindow *win);
+
 void     modest_ui_actions_on_new_msg       (GtkAction *action, ModestWindow *win);
 
 void     modest_ui_actions_on_open           (GtkAction *action, ModestWindow *win);
@@ -96,7 +98,7 @@ void     modest_ui_actions_on_msg_link_clicked         (ModestMsgView *msgview, 
 void     modest_ui_actions_on_msg_attachment_clicked   (ModestMsgView *msgview, int index,
 							ModestWindow *win);
 
-void     modest_ui_actions_on_msg_recpt_activated   (ModestMsgView *msgview, ModestRecptView *recpt_view,
+void     modest_ui_actions_on_msg_recpt_activated   (ModestMsgView *msgview, const gchar *address,
 						     ModestWindow *win);
 
 void     modest_ui_actions_on_send                     (GtkWidget *widget,

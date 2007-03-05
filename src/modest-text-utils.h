@@ -120,6 +120,24 @@ gchar*   modest_text_utils_remove_address (const gchar *address_list,
 					   const gchar *address);
 
 /**
+ * modest_text_utils_address_range_at_position:
+ * @address_list: utf8 string containing a list of addresses
+ * @position: a gint
+ * @start: a gint pointer
+ * @end: a gint pointer
+ *
+ * Finds the start and end positions of the address at @position,
+ * in @recipients_list, a list of addresses in the format of a 
+ * recipient list in email. It stores the results in @start and
+ * @end
+ */
+void     modest_text_utils_address_range_at_position (const gchar *recipients_list,
+						      gint position,
+						      gint *start,
+						      gint *end);
+						      
+
+/**
  * modest_text_utils_convert_to_html:
  * @txt: a string which contains the message to quote
  *

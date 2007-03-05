@@ -85,6 +85,7 @@ static const GtkActionEntry modest_action_entries [] = {
 	{ "GotoNext",     GTK_STOCK_GO_FORWARD, N_("Next"),     NULL, N_("Go to next message"), G_CALLBACK (modest_ui_actions_on_next) },
 
 	/* OPTIONS */
+	{ "OptionsAddToContacts", NULL, N_("A_dd to accounts"), NULL, N_("Add selection to accounts"), G_CALLBACK (modest_ui_actions_on_add_to_contacts) },
 	{ "OptionsAccounts",  NULL, N_("_Accounts"), NULL, N_("Manage accounts"), G_CALLBACK (modest_ui_actions_on_accounts) },
 	{ "OptionsContacts",  NULL, N_("_Contacts"), NULL, N_("Manage contacts"), NULL },
 

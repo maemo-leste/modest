@@ -27,42 +27,32 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef MODEST_RECPT_VIEW_H
-#define MODEST_RECPT_VIEW_H
-#include <gtk/gtk.h>
-#include <glib-object.h>
+/* modest-address-book.h */
 
-G_BEGIN_DECLS
+#ifndef __MODEST_ADDRESS_BOOK_H__
+#define __MODEST_ADDRESS_BOOK_H__
 
-#define MODEST_TYPE_RECPT_VIEW             (modest_recpt_view_get_type ())
-#define MODEST_RECPT_VIEW(obj)             (G_TYPE_CHECK_INSTANCE_CAST ((obj), MODEST_TYPE_RECPT_VIEW, ModestRecptView))
-#define MODEST_RECPT_VIEW_CLASS(vtable)    (G_TYPE_CHECK_CLASS_CAST ((vtable), MODEST_TYPE_RECPT_VIEW, ModestRecptViewClass))
-#define MODEST_IS_RECPT_VIEW(obj)          (G_TYPE_CHECK_INSTANCE_TYPE ((obj), MODEST_TYPE_RECPT_VIEW))
-#define MODEST_IS_RECPT_VIEW_CLASS(vtable) (G_TYPE_CHECK_CLASS_TYPE ((vtable), MODEST_TYPE_RECPT_VIEW))
-#define MODEST_RECPT_VIEW_GET_CLASS(inst)  (G_TYPE_INSTANCE_GET_CLASS ((inst), MODEST_TYPE_RECPT_VIEW, ModestRecptViewClass))
+#include <glib.h>
 
-typedef struct _ModestRecptView ModestRecptView;
-typedef struct _ModestRecptViewClass ModestRecptViewClass;
+/**
+ * modest_address_book_add_address:
+ * @address: a string
+ *
+ * launches the UI for adding @address to the addressbook
+ */
+void
+modest_address_book_add_address (const gchar *address);
 
-struct _ModestRecptView
-{
-	GtkScrolledWindow parent;
+/**
+ * modest_address_book_select_addresses:
+ * 
+ * Shows a dialog to select some addresses from the 
+ * address book.
+ *
+ * Returns: a string with the addresses
+ */
+gchar *
+modest_address_book_select_addresses (void);
 
-};
 
-struct _ModestRecptViewClass
-{
-	GtkScrolledWindowClass parent_class;
-
-	void (*activate)           (ModestRecptView *recpt_view, const gchar *address);
-};
-
-GType modest_recpt_view_get_type (void);
-
-GtkWidget* modest_recpt_view_new (void);
-
-void modest_recpt_view_set_recipients (ModestRecptView *recpt_view, const gchar *recipients);
-
-G_END_DECLS
-
-#endif
+#endif /* __MODEST_ADDRESS_BOOK_H__ */

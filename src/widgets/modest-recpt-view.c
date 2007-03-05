@@ -34,7 +34,8 @@
 #include <string.h>
 #include <gtk/gtk.h>
 
-#include "modest-recpt-view.h"
+#include <modest-text-utils.h>
+#include <modest-recpt-view.h>
 
 static GObjectClass *parent_class = NULL;
 
@@ -48,14 +49,17 @@ typedef struct _ModestRecptViewPriv ModestRecptViewPriv;
 
 struct _ModestRecptViewPriv
 {
+	GtkWidget *text_view;
 	gboolean button_pressed;
 	gdouble pressed_x, pressed_y;
+	gint line_height;
 };
 
 #define MODEST_RECPT_VIEW_GET_PRIVATE(o)	\
 	(G_TYPE_INSTANCE_GET_PRIVATE ((o), MODEST_TYPE_RECPT_VIEW, ModestRecptViewPriv))
 
 static guint signals[LAST_SIGNAL] = {0};
+
 
 /**
  * modest_recpt_view_new:
@@ -70,107 +74,103 @@ modest_recpt_view_new (void)
 	return GTK_WIDGET (self);
 }
 
-static void
-address_bounds_at_position (const gchar *recipients_list, gint position, gint *start, gint *end)
+void
+modest_recpt_view_set_recipients (ModestRecptView *recpt_view, const gchar *recipients)
 {
-	gchar *current = NULL;
-	gint range_start = 0;
-	gint range_end = 0;
-	gint index;
-	gboolean is_quoted = FALSE;
+	GtkTextBuffer *buffer = NULL;
+	ModestRecptViewPriv *priv = MODEST_RECPT_VIEW_GET_PRIVATE (recpt_view);
 
-	index = 0;
-	for (current = (gchar *) recipients_list; *current != '\0'; current = g_utf8_find_next_char (current, NULL)) {
-		gunichar c = g_utf8_get_char (current);
+	buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (priv->text_view));
+	gtk_text_buffer_set_text (buffer, recipients, -1);
+	gtk_widget_queue_resize (GTK_WIDGET (recpt_view));
 
-		if ((c == ',') && (!is_quoted)) {
-			if (index < position) {
-				range_start = index + 1;
-			} else {
-				break;
-			}
-		} else if (c == '\"') {
-			is_quoted = !is_quoted;
-		} else if ((c == ' ') &&(range_start == index)) {
-			range_start ++;
-		}
-		index ++;
-		range_end = index;
-	}
-
-	if (start)
-		*start = range_start;
-	if (end)
-		*end = range_end;
 }
 
-static gboolean
+static gint
 button_press_event (GtkWidget *widget,
 		    GdkEventButton *event,
 		    gpointer user_data)
 {
-	ModestRecptViewPriv *priv = MODEST_RECPT_VIEW_GET_PRIVATE (MODEST_RECPT_VIEW (widget));
+	ModestRecptViewPriv *priv = MODEST_RECPT_VIEW_GET_PRIVATE (MODEST_RECPT_VIEW (user_data));
 
-	if (!gtk_label_get_selectable (GTK_LABEL (widget)))
-		return FALSE;
-
-	if (event->type == GDK_BUTTON_PRESS) {
+	if (event->type == GDK_BUTTON_PRESS && event->button == 1) {
 		priv->button_pressed = TRUE;
 		priv->pressed_x = event->x;
 		priv->pressed_y = event->y;
 	}
-	return FALSE;
+	return TRUE;
 }
 
-static gboolean
+static gint
 button_release_event (GtkWidget *widget,
-		     GdkEventButton *event,
-		     gpointer user_data)
+		      GdkEventButton *event,
+		      gpointer user_data)
 {
-	ModestRecptViewPriv *priv = MODEST_RECPT_VIEW_GET_PRIVATE (MODEST_RECPT_VIEW (widget));
-
-	if (!gtk_label_get_selectable (GTK_LABEL (widget)))
-		return TRUE;
+	ModestRecptViewPriv *priv = MODEST_RECPT_VIEW_GET_PRIVATE (MODEST_RECPT_VIEW (user_data));
 
 	if (event->type != GDK_BUTTON_RELEASE)
 		return TRUE;
 
 	if ((priv->button_pressed) &&
-	    (event->type == GDK_BUTTON_RELEASE) && 
+	    (event->type == GDK_BUTTON_RELEASE) &&
 	    (priv->pressed_x == event->x) &&
 	    (priv->pressed_y == event->y)) {
 		priv->button_pressed = FALSE;
 		if (event->button == 1) {
-			PangoLayout *layout = NULL;
+			gint buffer_x, buffer_y;
 			int index;
-			layout = gtk_label_get_layout (GTK_LABEL (widget));
-			if (pango_layout_xy_to_index (layout, event->x*PANGO_SCALE, event->y*PANGO_SCALE, &index, NULL)) {
+			GtkTextIter iter;
+			gtk_text_view_window_to_buffer_coords (GTK_TEXT_VIEW (priv->text_view), GTK_TEXT_WINDOW_WIDGET,
+							       event->x, event->y, &buffer_x, &buffer_y);
+			gtk_text_view_get_iter_at_location (GTK_TEXT_VIEW (priv->text_view), &iter, buffer_x, buffer_y);
+			index = gtk_text_iter_get_offset (&iter);
+			
+			if (!gtk_text_iter_is_end (&iter)) {
 				int selection_start, selection_end;
 				gboolean selected = FALSE;
-				if (gtk_label_get_selection_bounds (GTK_LABEL (widget),
-								    &selection_start,
-								    &selection_end) &&
-				    (index >= selection_start)&&(index < selection_end)) {
+				GtkTextIter start_iter, end_iter;
+				GtkTextBuffer *buffer;
+
+				buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (priv->text_view));
+				if (gtk_text_buffer_get_selection_bounds (buffer, &start_iter, &end_iter) &&
+				    gtk_text_iter_in_range (&iter, &start_iter, &end_iter)) {
 					selected = TRUE;
+				} else {
+					gchar *text = NULL;
+					GtkTextIter start_iter, end_iter;
+
+					gtk_text_buffer_get_start_iter (buffer, &start_iter);
+					gtk_text_buffer_get_end_iter (buffer, &end_iter);
+					text = gtk_text_buffer_get_text (buffer, &start_iter, &end_iter, FALSE);
+
+					modest_text_utils_address_range_at_position (text,
+										     index,
+										     &selection_start, &selection_end);
+					/* TODO: now gtk label tries to select more than the label as usual,
+					 *  and we force it to recover the selected region for the defined area.
+					 *  It should be fixed (maybe preventing gtklabel to manage selections
+					 *  in parallel with us
+					 */
+					gtk_text_buffer_get_iter_at_offset (buffer, &start_iter, selection_start);
+					gtk_text_buffer_get_iter_at_offset (buffer, &end_iter, selection_end);
+					gtk_text_buffer_select_range (buffer, &start_iter, &end_iter);
+					
+					if (text)
+						g_free (text);
+								      
 				}
 
-				address_bounds_at_position (gtk_label_get_text (GTK_LABEL (widget)),
-							    index,
-							    &selection_start, &selection_end);
-				/* TODO: now gtk label tries to select more than the label as usual,
-				 *  and we force it to recover the selected region for the defined area.
-				 *  It should be fixed (maybe preventing gtklabel to manage selections
-				 *  in parallel with us
-				 */
-				gtk_label_select_region (GTK_LABEL (widget), 
-							 selection_start,
-							 selection_end);
-				
-				if (selected)
-					g_signal_emit (G_OBJECT (widget), signals[ACTIVATE_SIGNAL], 0);
+				if (selected) {
+					gchar *selection;
 
-				return TRUE;
+					gtk_text_buffer_get_selection_bounds (buffer, &start_iter, &end_iter);
+					selection = gtk_text_buffer_get_text (buffer, &start_iter, &end_iter, FALSE);
+					g_signal_emit (G_OBJECT (user_data), signals[ACTIVATE_SIGNAL], 0, selection);
+					g_free (selection);
+				}
+
 			}
+			return TRUE;
 		}
 	}
 	priv->button_pressed = FALSE;
@@ -178,15 +178,88 @@ button_release_event (GtkWidget *widget,
 }
 
 static void
+text_view_size_request (GtkWidget *widget,
+			GtkRequisition *requisition,
+			gpointer user_data)
+{
+	GtkTextBuffer *buffer = NULL;
+	GtkTextIter iter;
+	int line;
+	GdkRectangle iter_rectangle;
+	GtkWidget *text_view = GTK_WIDGET (user_data);
+	GtkAdjustment *adj = NULL;
+	ModestRecptViewPriv *priv = MODEST_RECPT_VIEW_GET_PRIVATE (widget);
+
+	buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (text_view));
+
+	gtk_text_buffer_get_start_iter (buffer, &iter);
+	gtk_text_view_get_iter_location (GTK_TEXT_VIEW (text_view), &iter, &iter_rectangle);
+
+	for (line = 0; line < 2; line++) {
+		if (!gtk_text_view_forward_display_line (GTK_TEXT_VIEW (text_view), &iter))
+			break;
+	}
+
+	gtk_text_buffer_get_start_iter (buffer, &iter);
+
+	gtk_text_view_scroll_to_iter (GTK_TEXT_VIEW (text_view), &iter, 0.0, TRUE, 0.0, 0.0);
+
+	adj = gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (widget));
+	if (adj != NULL) {
+		g_object_set (G_OBJECT (adj), "page-increment", (gdouble) iter_rectangle.height, "step-increment", (gdouble) iter_rectangle.height, NULL);
+		gtk_adjustment_changed (adj);
+	}
+
+	if (line > 0) {
+		requisition->height = iter_rectangle.height * 2;
+	} else {
+		requisition->height = iter_rectangle.height;
+	}
+
+	priv->line_height = iter_rectangle.height;
+	
+}
+
+static void
+view_size_allocate (GtkWidget *widget,
+		    GtkAllocation *allocation,
+		    gpointer user_data)
+{
+	GtkAdjustment *adj = NULL;
+	ModestRecptViewPriv *priv = MODEST_RECPT_VIEW_GET_PRIVATE (widget);
+
+	adj = gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (widget));
+	if (adj != NULL) {		
+		g_object_set (G_OBJECT (adj), "page-increment", (gdouble) priv->line_height, "step-increment", (gdouble) priv->line_height, NULL);
+	}
+	gtk_adjustment_changed (adj);
+}
+
+static void
 modest_recpt_view_instance_init (GTypeInstance *instance, gpointer g_class)
 {
+	ModestRecptViewPriv *priv = MODEST_RECPT_VIEW_GET_PRIVATE (instance);
 
-	gtk_label_set_justify (GTK_LABEL (instance), GTK_JUSTIFY_LEFT);
-	gtk_label_set_line_wrap (GTK_LABEL (instance), TRUE);
-	gtk_label_set_selectable (GTK_LABEL (instance), TRUE);
+	priv->text_view = gtk_text_view_new ();
 
-	g_signal_connect (G_OBJECT (instance), "button-press-event", G_CALLBACK(button_press_event), NULL);
-	g_signal_connect (G_OBJECT (instance), "button-release-event", G_CALLBACK(button_release_event), NULL);
+	gtk_text_view_set_editable (GTK_TEXT_VIEW (priv->text_view), FALSE);
+	gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (priv->text_view), GTK_WRAP_WORD_CHAR);
+	gtk_text_view_set_pixels_above_lines (GTK_TEXT_VIEW (priv->text_view), 0);
+	gtk_text_view_set_pixels_below_lines (GTK_TEXT_VIEW (priv->text_view), 0);
+	gtk_text_view_set_justification (GTK_TEXT_VIEW (priv->text_view), GTK_JUSTIFY_LEFT);
+	gtk_text_view_set_left_margin (GTK_TEXT_VIEW (priv->text_view), 0);
+	gtk_text_view_set_right_margin (GTK_TEXT_VIEW (priv->text_view), 0);
+	gtk_text_view_set_cursor_visible (GTK_TEXT_VIEW (priv->text_view), FALSE);
+	gtk_drag_dest_unset (priv->text_view);
+
+	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (instance), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
+
+	gtk_container_add (GTK_CONTAINER (instance), priv->text_view);
+
+	g_signal_connect (G_OBJECT (instance), "size-request", G_CALLBACK (text_view_size_request), priv->text_view);
+	g_signal_connect (G_OBJECT (instance), "size-allocate", G_CALLBACK (view_size_allocate), NULL);
+	g_signal_connect (G_OBJECT (priv->text_view), "button-press-event", G_CALLBACK (button_press_event), instance);
+	g_signal_connect (G_OBJECT (priv->text_view), "button-release-event", G_CALLBACK (button_release_event), instance);
 
 	return;
 }
@@ -203,9 +276,11 @@ static void
 modest_recpt_view_class_init (ModestRecptViewClass *klass)
 {
 	GObjectClass *object_class;
+	GtkWidgetClass *widget_class;
 
 	parent_class = g_type_class_peek_parent (klass);
 	object_class = (GObjectClass*) klass;
+	widget_class = GTK_WIDGET_CLASS (klass);
 
 	object_class->finalize = modest_recpt_view_finalize;
 
@@ -219,8 +294,8 @@ modest_recpt_view_class_init (ModestRecptViewClass *klass)
 			      G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION,
 			      G_STRUCT_OFFSET(ModestRecptViewClass, activate),
 			      NULL, NULL,
-			      g_cclosure_marshal_VOID__VOID,
-			      G_TYPE_NONE, 0);
+			      g_cclosure_marshal_VOID__STRING,
+			      G_TYPE_NONE, 1, G_TYPE_STRING);
 	
 	return;
 }
@@ -245,7 +320,7 @@ modest_recpt_view_get_type (void)
 		  modest_recpt_view_instance_init    /* instance_init */
 		};
 
-		type = g_type_register_static (GTK_TYPE_LABEL,
+		type = g_type_register_static (GTK_TYPE_SCROLLED_WINDOW,
 			"ModestRecptView",
 			&info, 0);
 

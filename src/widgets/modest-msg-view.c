@@ -50,7 +50,7 @@ static void     modest_msg_view_class_init   (ModestMsgViewClass *klass);
 static void     modest_msg_view_init         (ModestMsgView *obj);
 static void     modest_msg_view_finalize     (GObject *obj);
 
-static void on_recpt_activated (ModestMailHeaderView *header_view, ModestRecptView *recpt_view, ModestMsgView *msg_view);
+static void on_recpt_activated (ModestMailHeaderView *header_view, const gchar *address, ModestMsgView *msg_view);
 static gboolean on_link_clicked (GtkWidget *widget, const gchar *uri, ModestMsgView *msg_view);
 static gboolean on_url_requested (GtkWidget *widget, const gchar *uri, GtkHTMLStream *stream,
 				  ModestMsgView *msg_view);
@@ -153,8 +153,8 @@ modest_msg_view_class_init (ModestMsgViewClass *klass)
 			      G_SIGNAL_RUN_FIRST,
 			      G_STRUCT_OFFSET(ModestMsgViewClass, recpt_activated),
 			      NULL, NULL,
-			      g_cclosure_marshal_VOID__POINTER,
-			      G_TYPE_NONE, 1, MODEST_TYPE_RECPT_VIEW);
+			      g_cclosure_marshal_VOID__STRING,
+			      G_TYPE_NONE, 1, G_TYPE_STRING);
 }
 
 static void
@@ -243,10 +243,10 @@ modest_msg_view_new (TnyMsg *msg)
 
 static void
 on_recpt_activated (ModestMailHeaderView *header_view, 
-		    ModestRecptView *recpt_view,
+		    const gchar *address,
 		    ModestMsgView * view)
 {
-  g_signal_emit (G_OBJECT (view), signals[RECPT_ACTIVATED_SIGNAL], 0, recpt_view);
+  g_signal_emit (G_OBJECT (view), signals[RECPT_ACTIVATED_SIGNAL], 0, address);
 }
 
 static gboolean

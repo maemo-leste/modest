@@ -36,6 +36,7 @@
 #include <modest-runtime.h>
 #include <modest-tny-msg.h>
 #include <modest-tny-account.h>
+#include <modest-address-book.h>
 
 #include "modest-ui-actions.h"
 
@@ -187,6 +188,19 @@ modest_ui_actions_on_quit (GtkAction *action, ModestWindow *win)
 	/* FIXME: save size of main window */
 /* 	save_sizes (main_window); */
 	gtk_widget_destroy (GTK_WIDGET (win));
+}
+
+void
+modest_ui_actions_on_add_to_contacts (GtkAction *action, ModestWindow *win)
+{
+	GtkClipboard *clipboard = NULL;
+	gchar *selection = NULL;
+
+	clipboard = gtk_clipboard_get (GDK_SELECTION_PRIMARY);
+	selection = gtk_clipboard_wait_for_text (clipboard);
+
+	modest_address_book_add_address (selection);
+	g_free (selection);
 }
 
 void
@@ -955,23 +969,10 @@ modest_ui_actions_on_msg_attachment_clicked (ModestMsgView *msgview, int index,
 
 void
 modest_ui_actions_on_msg_recpt_activated (ModestMsgView *msgview,
-					  ModestRecptView *recpt_view,
+					  const gchar *address,
 					  ModestWindow *win)
 {
-	gint start, end;
-	gchar *utf_start, *utf_end;
-	gchar *full_string = NULL;
-	gchar *substring;
-
-	gtk_label_get_selection_bounds (GTK_LABEL (recpt_view), &start, &end);
-	full_string = (gchar *) gtk_label_get_text (GTK_LABEL (recpt_view));
-	utf_start = g_utf8_offset_to_pointer (full_string, start);
-	utf_end = g_utf8_offset_to_pointer (full_string, end);
-	substring = g_strndup (utf_start, utf_end - utf_start);
-	g_message ("%s %s", __FUNCTION__, substring);
-
-	g_free (substring);
-	
+	g_message ("%s %s", __FUNCTION__, address);
 }
 
 void

@@ -43,6 +43,10 @@
       <menuitem name="EditMoveToMenu" action="EditMoveTo"/>
     </menu> 
 
+   <menu name="ToolsMenu" action="Tools">
+      <menuitem name="ToolsAddToContactsMenu" action="ToolsAddToContacts"/>
+   </menu>
+
    <menu name="CloseMenu" action="Close">
       <menuitem name="CloseWindowMenu"     action="CloseWindow"/>
     </menu>

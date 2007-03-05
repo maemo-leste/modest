@@ -64,11 +64,11 @@ struct _ModestMailHeaderViewPriv
 static guint signals[LAST_SIGNAL] = {0};
 
 static void
-activate_recpt (GtkWidget *recpt_view, gpointer user_data)
+activate_recpt (GtkWidget *recpt_view, const gchar *address, gpointer user_data)
 {
 	ModestMailHeaderView * view = MODEST_MAIL_HEADER_VIEW (user_data);
 
-	g_signal_emit (G_OBJECT (view), signals[RECPT_ACTIVATED_SIGNAL], 0, recpt_view);
+	g_signal_emit (G_OBJECT (view), signals[RECPT_ACTIVATED_SIGNAL], 0, address);
 }
 
 static void
@@ -108,9 +108,7 @@ add_recpt_header (ModestMailHeaderView *widget, const gchar *field, const gchar 
 	gtk_label_set_markup (GTK_LABEL (label_field), field);
 	gtk_misc_set_alignment (GTK_MISC (label_field), 0.0, 0.0);
 	label_value = modest_recpt_view_new ();
-	gtk_label_set_text (GTK_LABEL (label_value), value);
-	gtk_label_set_selectable (GTK_LABEL (label_value), TRUE);
-	gtk_misc_set_alignment (GTK_MISC (label_value), 0.0, 0.0);
+	modest_recpt_view_set_recipients (MODEST_RECPT_VIEW(label_value), value);
 	g_signal_connect (G_OBJECT (label_value), "activate", G_CALLBACK (activate_recpt), widget);
 
 	gtk_box_pack_start (GTK_BOX (hbox), label_field, FALSE, FALSE, 0);
@@ -173,14 +171,14 @@ modest_mail_header_view_set_header_default (TnyHeaderView *self, TnyHeader *head
 			gchar *sent = modest_text_utils_get_display_date (tny_header_get_date_sent (header));
 			gtk_label_set_markup (GTK_LABEL (priv->fromto_label), _("<b>To:</b>"));
 			if (to)
-				gtk_label_set_text (GTK_LABEL (priv->fromto_contents), to);
+				modest_recpt_view_set_recipients (MODEST_RECPT_VIEW (priv->fromto_contents), to);
 			add_header (MODEST_MAIL_HEADER_VIEW (self), _("<b>Sent:</b>"), sent);
 			g_free (sent);
 		} else {
 			gchar *received = modest_text_utils_get_display_date (tny_header_get_date_received (header));
 			gtk_label_set_markup (GTK_LABEL (priv->fromto_label), _("<b>From:</b>"));
 			if (from)
-				gtk_label_set_text (GTK_LABEL (priv->fromto_contents), from);
+				modest_recpt_view_set_recipients (MODEST_RECPT_VIEW (priv->fromto_contents), from);
 			add_header (MODEST_MAIL_HEADER_VIEW (self), _("<b>Received:</b>"), received);
 			g_free (received);
 		}
@@ -214,7 +212,7 @@ modest_mail_header_view_clear_default (TnyHeaderView *self)
 	clean_headers (priv->headers_vbox);
 
 	gtk_label_set_text (GTK_LABEL (priv->fromto_label), "");
-	gtk_label_set_text (GTK_LABEL (priv->fromto_contents), "");
+	modest_recpt_view_set_recipients (MODEST_RECPT_VIEW (priv->fromto_contents), "");
 
 	gtk_widget_hide (GTK_WIDGET(self));
 
@@ -226,6 +224,9 @@ expander_activate (GtkWidget *expander, ModestMailHeaderView *header_view)
 {
 	ModestMailHeaderViewPriv *priv = MODEST_MAIL_HEADER_VIEW_GET_PRIVATE (header_view);
 
+	gtk_widget_queue_resize (GTK_WIDGET (header_view));
+	gtk_widget_queue_draw (GTK_WIDGET (header_view));
+
 	if (gtk_expander_get_expanded (GTK_EXPANDER (expander))) {
 		if (gtk_widget_get_parent (priv->headers_vbox) == NULL) {
 			gtk_box_pack_start (GTK_BOX(priv->main_vbox), priv->headers_vbox, TRUE, TRUE, 0);
@@ -236,8 +237,8 @@ expander_activate (GtkWidget *expander, ModestMailHeaderView *header_view)
 			gtk_container_remove (GTK_CONTAINER (priv->main_vbox), priv->headers_vbox);
 		}
 	}
-	gtk_widget_queue_resize (GTK_WIDGET (header_view));
-	gtk_widget_queue_draw (GTK_WIDGET (header_view));
+	gtk_widget_queue_resize (GTK_WIDGET (priv->expander));
+	gtk_widget_queue_draw (GTK_WIDGET (priv->expander));
 }
 
 /**
@@ -271,10 +272,8 @@ modest_mail_header_view_instance_init (GTypeInstance *instance, gpointer g_class
 
 	fromto_hbox = gtk_hbox_new (FALSE, 12);
 	priv->fromto_label = gtk_label_new (NULL);
-	priv->fromto_contents = modest_recpt_view_new ();
-	gtk_label_set_selectable (GTK_LABEL (priv->fromto_contents), TRUE);
 	gtk_misc_set_alignment (GTK_MISC (priv->fromto_label), 0.0, 0.0);
-	gtk_misc_set_alignment (GTK_MISC (priv->fromto_contents), 0.0, 0.0);
+	priv->fromto_contents = modest_recpt_view_new ();
 	g_signal_connect (G_OBJECT (priv->fromto_contents), "activate", G_CALLBACK (activate_recpt), instance);
 
 	gtk_box_pack_start (GTK_BOX (fromto_hbox), priv->fromto_label, FALSE, FALSE, 0);
@@ -284,13 +283,15 @@ modest_mail_header_view_instance_init (GTypeInstance *instance, gpointer g_class
 	priv->labels_size_group = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);
 	gtk_size_group_add_widget (priv->labels_size_group, priv->fromto_label);
 	
-	priv->headers_vbox = gtk_vbox_new (FALSE, 1);
+	priv->headers_vbox = gtk_vbox_new (FALSE, 0);
 	g_object_ref (priv->headers_vbox);
 
 	expander_group = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);
 	gtk_size_group_add_widget (expander_group, priv->headers_vbox);
 	gtk_size_group_add_widget (expander_group, fromto_hbox);
 	g_object_unref (expander_group);
+
+	gtk_container_set_reallocate_redraws (GTK_CONTAINER (instance), TRUE);
 
 	priv->is_sent = FALSE;
 
@@ -353,9 +354,9 @@ modest_mail_header_view_class_init (ModestMailHeaderViewClass *klass)
 			      G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION,
 			      G_STRUCT_OFFSET(ModestMailHeaderViewClass, recpt_activated),
 			      NULL, NULL,
-			      g_cclosure_marshal_VOID__POINTER,
+			      g_cclosure_marshal_VOID__STRING,
 			      G_TYPE_NONE, 1, 
-			      MODEST_TYPE_RECPT_VIEW);
+			      G_TYPE_STRING);
 
 
 	return;

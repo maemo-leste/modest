@@ -376,6 +376,43 @@ modest_text_utils_split_addresses_list (const gchar *addresses)
 
 }
 
+void
+modest_text_utils_address_range_at_position (const gchar *recipients_list,
+					     gint position,
+					     gint *start,
+					     gint *end)
+{
+	gchar *current = NULL;
+	gint range_start = 0;
+	gint range_end = 0;
+	gint index;
+	gboolean is_quoted = FALSE;
+
+	index = 0;
+	for (current = (gchar *) recipients_list; *current != '\0'; current = g_utf8_find_next_char (current, NULL)) {
+		gunichar c = g_utf8_get_char (current);
+
+		if ((c == ',') && (!is_quoted)) {
+			if (index < position) {
+				range_start = index + 1;
+			} else {
+				break;
+			}
+		} else if (c == '\"') {
+			is_quoted = !is_quoted;
+		} else if ((c == ' ') &&(range_start == index)) {
+			range_start ++;
+		}
+		index ++;
+		range_end = index;
+	}
+
+	if (start)
+		*start = range_start;
+	if (end)
+		*end = range_end;
+}
+
 
 /* ******************************************************************* */
 /* ************************* UTILIY FUNCTIONS ************************ */

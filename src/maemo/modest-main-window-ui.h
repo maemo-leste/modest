@@ -95,6 +95,7 @@ static const GtkActionEntry modest_action_entries [] = {
 	
 	/* Tools */
 	{ "ToolsSettings",        NULL,      N_("Settings..."),	              NULL, NULL,  NULL },
+	{ "ToolsAddToContacts",        NULL,      N_("Add to contact..."),                NULL, NULL,  G_CALLBACK (modest_ui_actions_on_add_to_contacts) },
 	{ "ToolsContacts",        NULL,      N_("Contact..."),                NULL, NULL,  NULL },
 	{ "ToolsFontSettings",    NULL,      N_("Font settings..."),          NULL, NULL,  NULL },
 	{ "ToolsSearchMessages",  NULL,      N_("Search messages..."),        NULL, NULL,  NULL },

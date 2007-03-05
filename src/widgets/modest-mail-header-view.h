@@ -63,7 +63,7 @@ struct _ModestMailHeaderViewClass
 	void (*clear_func) (TnyHeaderView *self);
 
 	/* signals */
-	void (*recpt_activated) (ModestRecptView *recpt_view);
+	void (*recpt_activated) (const gchar *address);
 };
 
 GType modest_mail_header_view_get_type (void);

@@ -87,6 +87,7 @@
     <menu name="ToolsMenu" action="Tools">
       <menuitem name="ToolsSettingsMenu" action="ToolsSettings"/>
       <separator/>
+      <menuitem name="ToolsAddToContactsMenu" action="ToolsAddToContacts"/>
       <menuitem name="ToolsContactsMenu" action="ToolsContacts"/>
       <menuitem name="ToolsFontSettingsMenu" action="ToolsFontSettings"/>
       <separator/>

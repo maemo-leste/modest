@@ -43,6 +43,7 @@ noinst_LTLIBRARIES=\
 
 libmodest_ui_la_SOURCES=              \
 	modest-account-view-window.c  \
+	modest-address-book.c	      \
 	modest-icon-names.h           \
 	modest-main-window.c          \
 	modest-main-window-ui.h       \

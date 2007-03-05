@@ -87,7 +87,7 @@ esac], [MODEST_PLATFORM=gnome
 AC_SUBST(MODEST_PLATFORM)
 
 if test "x$with_platform" = "xmaemo"; then
-   PKG_CHECK_MODULES(MODEST_LIBTINYMAIL_MAEMO,libtinymail-maemo-1.0 hildon-libs libosso libossomime)
+   PKG_CHECK_MODULES(MODEST_LIBTINYMAIL_MAEMO,libtinymail-maemo-1.0 hildon-libs libosso libossomime osso-addressbook-1.0)
    AC_SUBST(MODEST_LIBTINYMAIL_MAEMO_CFLAGS)
    AC_SUBST(MODEST_LIBTINYMAIL_MAEMO_LIBS) 
  
