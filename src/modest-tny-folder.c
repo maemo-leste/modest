@@ -33,6 +33,7 @@
 #include <modest-tny-folder.h>
 #include <tny-camel-folder.h>
 #include <camel/camel-folder.h>
+#include <modest-protocol-info.h>
 
 TnyFolderType
 modest_tny_folder_guess_folder_type_from_name (const gchar* name)
@@ -99,13 +100,55 @@ modest_tny_folder_guess_folder_type (const TnyFolder *folder)
 }
 
 
+/* FIXME: encode all folder rules here */
 ModestTnyFolderRules
 modest_tny_folder_get_folder_rules   (const TnyFolder *folder)
 {
-	g_return_val_if_fail (folder, 0);
+	ModestTnyFolderRules rules = 0;
+	TnyFolderType type;
+
+	g_return_val_if_fail (TNY_IS_FOLDER(folder), -1);
+
+	if (modest_tny_folder_is_local_folder (folder)) {
 	
-	/* FIXME -- implement this */
-	return 0;
+		type = modest_tny_folder_get_local_folder_type (folder);
+		
+		switch (type) {
+		case TNY_FOLDER_TYPE_DRAFTS:
+		case TNY_FOLDER_TYPE_OUTBOX:
+			rules |= MODEST_FOLDER_RULES_FOLDER_NON_WRITEABLE;
+		case TNY_FOLDER_TYPE_INBOX:
+		case TNY_FOLDER_TYPE_JUNK:
+		case TNY_FOLDER_TYPE_TRASH:
+		case TNY_FOLDER_TYPE_SENT:
+			rules |= MODEST_FOLDER_RULES_FOLDER_NON_DELETABLE;
+			rules |= MODEST_FOLDER_RULES_FOLDER_NON_MOVEABLE;
+			rules |= MODEST_FOLDER_RULES_FOLDER_NON_RENAMEABLE;
+		}
+	} else {
+		ModestProtocol proto;
+		TnyAccount *account =
+			tny_folder_get_account ((TnyFolder*)folder);
+		if (!account)
+			return -1; /* no account: nothing is allowed */
+		
+		proto = modest_protocol_info_get_protocol (
+			tny_account_get_proto (account));
+
+		if (proto == MODEST_PROTOCOL_STORE_IMAP) {
+			rules = 0;
+		} else {
+			/* pop, nntp, ... */
+			rules =
+				MODEST_FOLDER_RULES_FOLDER_NON_WRITEABLE |
+				MODEST_FOLDER_RULES_FOLDER_NON_DELETABLE |
+				MODEST_FOLDER_RULES_FOLDER_NON_MOVEABLE  |
+				MODEST_FOLDER_RULES_FOLDER_NON_RENAMEABLE;
+
+		}
+		g_object_unref (G_OBJECT(account));
+	}
+	return rules;
 }
 
 
@@ -125,6 +168,8 @@ modest_tny_folder_is_local_folder   (const TnyFolder *folder)
 	if (!account_name)
 		return FALSE;
 
+	g_object_unref (G_OBJECT(account));
+	
 	return (strcmp (account_name, MODEST_LOCAL_FOLDERS_ACCOUNT_NAME) == 0);
 }	
 
