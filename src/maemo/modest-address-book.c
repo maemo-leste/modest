@@ -115,5 +115,6 @@ gchar *
 modest_address_book_select_addresses (void)
 {
 	g_message (__FUNCTION__);
+	return NULL;
 }
 

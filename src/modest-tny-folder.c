@@ -121,6 +121,7 @@ modest_tny_folder_get_folder_rules   (const TnyFolder *folder)
 		case TNY_FOLDER_TYPE_JUNK:
 		case TNY_FOLDER_TYPE_TRASH:
 		case TNY_FOLDER_TYPE_SENT:
+		default:
 			rules |= MODEST_FOLDER_RULES_FOLDER_NON_DELETABLE;
 			rules |= MODEST_FOLDER_RULES_FOLDER_NON_MOVEABLE;
 			rules |= MODEST_FOLDER_RULES_FOLDER_NON_RENAMEABLE;
