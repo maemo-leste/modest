@@ -193,5 +193,7 @@ modest_tny_folder_get_local_folder_type  (const TnyFolder *folder)
 	if (!full_name)
 		return TNY_FOLDER_TYPE_UNKNOWN;
 
+	camel_object_unref (CAMEL_OBJECT(camel_folder));
+
 	return modest_local_folder_info_get_type (full_name);
 }
