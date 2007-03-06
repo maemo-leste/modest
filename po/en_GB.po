@@ -1,509 +1,2759 @@
-# English translations for modest package.
-# Copyright (C) 2006 THE modest'S COPYRIGHT HOLDER
-# This file is distributed under the same license as the modest package.
-#  <svillar@igalia.com>, 2006.
+# Copyright (C) 2006 Nokia Corporation.
+# This file is distributed under the same license as the modest package
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: modest 0.0.1\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-01-16 16:52+0200\n"
-"PO-Revision-Date: 2006-11-09 20:16+0100\n"
-"Last-Translator:  <svillar@igalia.com>\n"
-"Language-Team: English <en_gb@li.org>\n"
+"Project-Id-Version: modest-0.1\n"
+"Report-Msgid-Bugs-To: dirk-jan.binnema@nokia.com\n"
+"POT-Creation-Date: 2007.01.02 11:34+0200\n"
+"PO-Revision-Date: 2007.01.02 11:34+0200\n"
+"Last-Translator:\n"
+"Language-Team: en_GB\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=ASCII\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
 
-#: src/modest-mail-operation.c:252
-#, c-format
-msgid "Error trying to send a mail. You need to set almost one a recipient"
-msgstr "Error trying to send a mail. You need to set almost one a recipient"
+# E-mail application title
+msgid "mcen_ap_name"
+msgstr "E-mail"
 
-#: src/modest-mail-operation.c:354
-msgid "Re:"
-msgstr "Re:"
+# Information text shown in Message list when selected folder is empty
+msgid "mcen_ia_nomessages"
+msgstr "(no messages to show)"
 
-#: src/modest-mail-operation.c:354
-#, fuzzy
-msgid "Fwd:"
-msgstr "Fw:"
+# Inbox folder
+msgid "mcen_me_folder_inbox"
+msgstr "Inbox"
 
-#: src/modest-mail-operation.c:476
-#, c-format
-msgid "Error trying to refresh folder %s. Operation canceled"
-msgstr ""
+# Outbox folder
+msgid "mcen_me_folder_outbox"
+msgstr "Outbox"
 
-#: src/modest-mail-operation.c:894
-#, fuzzy, c-format
-msgid "Error trying to delete a message. Trash folder not found"
-msgstr "Error trying to send a mail. Use a transport account"
+# Drafts folder
+msgid "mcen_me_folder_drafts"
+msgstr "Drafts"
 
-#: src/modest-protocol-info.c:43
-msgid "Sendmail"
-msgstr "Sendmail"
-
-#: src/modest-protocol-info.c:44
-#, fuzzy
-msgid "SMTP Server"
-msgstr "SMTP-server"
-
-#: src/modest-protocol-info.c:46
-msgid "POP3"
-msgstr "POP3"
-
-#: src/modest-protocol-info.c:47
-#, fuzzy
-msgid "IMAPv4"
-msgstr "IMAP v4"
-
-#: src/modest-protocol-info.c:48
-msgid "Maildir"
-msgstr "Maildir"
-
-#: src/modest-protocol-info.c:49
-#, fuzzy
-msgid "MBox"
-msgstr "Mbox"
-
-#: src/modest-protocol-info.c:51
-msgid "SSL"
-msgstr "SSL"
-
-#: src/modest-protocol-info.c:52
-msgid "TLS"
-msgstr "TLS"
-
-#: src/modest-protocol-info.c:54
-#, fuzzy
-msgid "none"
-msgstr "(none)"
-
-#: src/modest-protocol-info.c:55
-msgid "Password"
-msgstr "Password"
-
-#. defines
-#: src/modest-text-utils.c:44
-#, fuzzy
-msgid "-----Forwarded Message-----"
-msgstr "-----Original message-----"
-
-#: src/modest-text-utils.c:45 src/gtk/modest-edit-msg-window.c:183
-msgid "From:"
-msgstr "From:"
-
-#: src/modest-text-utils.c:46
-msgid "Sent:"
-msgstr "Sent:"
-
-#: src/modest-text-utils.c:47
-msgid "To:"
-msgstr "To:"
-
-#: src/modest-text-utils.c:48 src/gtk/modest-edit-msg-window.c:188
-msgid "Subject:"
-msgstr "Subject:"
-
-#: src/modest-text-utils.c:481
-#, c-format
-msgid "On %s, %s wrote:\n"
-msgstr "On %s, %s wrote:\n"
-
-#: src/modest-text-utils.c:783
-#, c-format
-msgid "%X"
-msgstr "%X"
-
-#: src/gtk/modest-account-view-window.c:171
-msgid "Confirmation dialog"
-msgstr ""
-
-#: src/gtk/modest-account-view-window.c:179
-#, fuzzy, c-format
-msgid "Do you really want to delete the account %s?"
-msgstr ""
-"Are you sure you want to cancel\n"
-"setting up a new account?"
-
-#: src/gtk/modest-account-view-window.c:347
-msgid "Accounts"
-msgstr "Accounts"
-
-#: src/gtk/modest-account-assistant.c:130
-msgid ""
-"Welcome to the account assistant\n"
-"\n"
-"It will help to set up a new e-mail account\n"
-msgstr ""
-"Welcome to the account assistant\n"
-"\n"
-"It will help to set up a new e-mail account\n"
-
-#: src/gtk/modest-account-assistant.c:138
-msgid "Modest Account Assistant"
-msgstr "Modest Account Assistant"
-
-#: src/gtk/modest-account-assistant.c:199
-msgid ""
-"Please enter your name and your e-mail address below.\n"
-"\n"
-msgstr ""
-"Please enter your name and your e-mail address below.\n"
-"\n"
-
-#: src/gtk/modest-account-assistant.c:203
-msgid "Full name"
-msgstr "Full name"
-
-#: src/gtk/modest-account-assistant.c:205
-msgid "E-mail address"
-msgstr "E-mail address"
-
-#: src/gtk/modest-account-assistant.c:225
-msgid "Identity"
-msgstr "Identity"
-
-#: src/gtk/modest-account-assistant.c:302
-#: src/gtk/modest-account-assistant.c:377
-msgid "Please select among the following options"
-msgstr "Please select among the following options"
-
-#: src/gtk/modest-account-assistant.c:306
-#: src/gtk/modest-account-assistant.c:381
-msgid "Server type"
-msgstr "Server type"
-
-#: src/gtk/modest-account-assistant.c:329
-msgid "Receiving mail"
-msgstr "Receiving mail"
-
-#: src/gtk/modest-account-assistant.c:404
-msgid "Sending mail"
-msgstr "Sending mail"
-
-#: src/gtk/modest-account-assistant.c:425
-msgid "We're almost done. Press 'Apply' to store this new account"
-msgstr "We're almost done. Press 'Apply' to store this new account"
-
-#: src/gtk/modest-account-assistant.c:432
-msgid "Account name:"
-msgstr "Account name:"
-
-#: src/gtk/modest-account-assistant.c:441
-msgid "Account Management"
-msgstr "Account Management"
-
-#: src/gtk/modest-account-assistant.c:493
-msgid ""
-"Are you sure you want to cancel\n"
-"setting up a new account?"
-msgstr ""
-"Are you sure you want to cancel\n"
-"setting up a new account?"
-
-#: src/gtk/modest-account-assistant.c:496
-msgid "Cancel"
-msgstr "Cancel"
-
-#: src/gtk/modest-account-assistant.c:661
-msgid "Modest Account Wizard"
-msgstr "Modest Account Wizard"
-
-#: src/gtk/modest-edit-msg-window.c:170
-msgid "To..."
-msgstr "To..."
-
-#: src/gtk/modest-edit-msg-window.c:171
-msgid "Cc..."
-msgstr "Cc..."
-
-#: src/gtk/modest-edit-msg-window.c:172
-msgid "Bcc..."
-msgstr "Bcc..."
-
-#: src/gtk/modest-transport-widget.c:130
-msgid "<b>SMTP configuration</b>"
-msgstr "<b>SMTP configuration</b>"
-
-#: src/gtk/modest-transport-widget.c:138
-msgid "Servername: "
-msgstr "Servername: "
-
-#. Auth
-#: src/gtk/modest-transport-widget.c:144
-msgid "Requires authentication"
-msgstr "Requires authentication"
-
-#: src/gtk/modest-transport-widget.c:151
-#, fuzzy
-msgid "Username: "
-msgstr "Username:"
-
-#: src/gtk/modest-transport-widget.c:159 src/gtk/modest-store-widget.c:225
-msgid "<b>Security</b>"
-msgstr "<b>Security</b>"
-
-#: src/gtk/modest-transport-widget.c:164 src/gtk/modest-store-widget.c:232
-msgid "Connection type:"
-msgstr "Connection type:"
-
-#: src/gtk/modest-transport-widget.c:175 src/gtk/modest-store-widget.c:240
-msgid "Authentication:"
-msgstr "Authentication:"
-
-#: src/gtk/modest-transport-widget.c:181 src/gtk/modest-store-widget.c:247
-msgid "Remember password"
-msgstr "Remember password"
-
-#: src/gtk/modest-store-widget.c:134
-msgid "<b>Maildir configuration</b>"
-msgstr "<b>Maildir configuration</b>"
-
-#: src/gtk/modest-store-widget.c:138
-msgid "Please select the path to your Maildir below"
-msgstr "Please select the path to your Maildir below"
-
-#: src/gtk/modest-store-widget.c:141
-msgid "Path:"
-msgstr "Path:"
-
-#: src/gtk/modest-store-widget.c:144 src/gtk/modest-store-widget.c:178
-msgid "(none)"
-msgstr "(none)"
-
-#: src/gtk/modest-store-widget.c:168
-msgid "<b>Mbox configuration</b>"
-msgstr "<b>Mbox configuration</b>"
-
-#: src/gtk/modest-store-widget.c:172
-msgid "Please select your mbox file below"
-msgstr "Please select your mbox file below"
-
-#: src/gtk/modest-store-widget.c:175
-msgid "mbox:"
-msgstr "mbox:"
-
-#: src/gtk/modest-store-widget.c:205
-msgid "<b>Server configuration</b>"
-msgstr "<b>Server configuration</b>"
-
-#: src/gtk/modest-store-widget.c:209
-msgid "Username:"
-msgstr "Username:"
-
-#: src/gtk/modest-store-widget.c:217
-msgid "Server:"
-msgstr "Server:"
-
-#: src/widgets/modest-account-view.c:269
-msgid "Enabled"
-msgstr "Enabled"
-
-#: src/widgets/modest-account-view.c:273
-msgid "Account"
-msgstr "Account"
-
-#: src/widgets/modest-account-view.c:278
-msgid "Type"
-msgstr "Type"
-
-#: src/widgets/modest-folder-view.c:426
-msgid "(empty)"
-msgstr "(empty)"
-
-#: src/widgets/modest-header-view.c:216
-msgid "(No items in this folder)"
-msgstr ""
-
-#: src/widgets/modest-header-view.c:353
-msgid "M"
-msgstr "M"
-
-#: src/widgets/modest-header-view.c:362
-msgid "A"
-msgstr "A"
-
-#: src/widgets/modest-header-view.c:372
-msgid "From"
-msgstr "From"
-
-#: src/widgets/modest-header-view.c:380
-msgid "To"
-msgstr "To"
-
-#: src/widgets/modest-header-view.c:388 src/widgets/modest-header-view.c:396
-msgid "Header"
-msgstr "Header"
-
-#: src/widgets/modest-header-view.c:405
-msgid "Subject"
-msgstr "Subject"
-
-#: src/widgets/modest-header-view.c:413
-msgid "Received"
-msgstr "Received"
-
-#: src/widgets/modest-header-view.c:421
-msgid "Sent"
+# Sent folder
+msgid "mcen_me_folder_sent"
 msgstr "Sent"
 
-#: src/widgets/modest-header-view.c:429
-msgid "Size"
-msgstr ""
+# Archive folder
+msgid "mcen_me_folder_archive"
+msgstr "Archive"
 
-#: src/widgets/modest-header-view.c:806
-msgid "Sorting..."
-msgstr ""
+# Column header
+msgid "mcen_ia_column_subject"
+msgstr "Subject"
 
-#: src/widgets/modest-msg-view.c:363
-msgid "attachment"
-msgstr "attachment"
+# Column header
+msgid "mcen_ia_column_from"
+msgstr "From"
 
-#: src/widgets/modest-msg-view.c:376
-msgid "Attachments"
+# Column header
+msgid "mcen_ia_column_to"
+msgstr "To"
+
+# Column header
+msgid "mcen_ia_column_date"
+msgstr "Date"
+
+# Column header
+msgid "mcen_ia_column_messagestatus"
+msgstr "Status"
+
+# Subject field that contains no user given data i.e. the field is empty. 
+msgid "mail_va_no_subject"
+msgstr "(no subject)"
+
+# String in message status column when message is waiting to be sent in queue. 
+msgid "mcen_li_outbox_waiting"
+msgstr "Waiting"
+
+# String in message status column when message is no longer queued and is actually being sent 
+msgid "mcen_li_outbox_sending"
+msgstr "Sending"
+
+# String in message status column when message failed to be sent.
+msgid "mcen_li_outbox_failed"
+msgstr "Failed"
+
+# String in message status column when the message sending has been canceled using ‘Cancel sending’ command. 
+msgid "mcen_li_outbox_suspended"
+msgstr "Suspended"
+
+# Progress indication text when a connection is opened to e-mail server
+msgid "mcen_me_connecting"
+msgstr "Connecting"
+
+# Progress indication when messages are received from the e-mail server: %d is number of messages / headers downloaded so far for this account and %d1 is number of messages / headers to be downloaded this session
+msgid "mcen_me_receiving"
+msgstr "Receiving %1$s/%2$s"
+
+# Progress indication text displayed when messages are sent: %d is number of messages sent so far for this account and %d1 is number of messages to be sent this session
+msgid "mcen_me_sending"
+msgstr "Sending %1$s/%2$s"
+
+# From field in the message viewer.
+msgid "mail_va_from"
+msgstr "From:"
+
+# To field in the message viewer.
+msgid "mail_va_to"
+msgstr "To:"
+
+# CC field in the message viewer. 
+msgid "mail_va_cc"
+msgstr "Cc:"
+
+# Subject field in message viewer.
+msgid "mail_va_subject"
+msgstr "Subject:"
+
+# Date field in message viewer.
+msgid "mail_va_date"
+msgstr "Date:"
+
+# Time field in message viewer.
+msgid "mail_va_time"
+msgstr "Time:"
+
+# Attachment field in viewer.
+msgid "mail_va_attachment"
+msgstr "Attachment:"
+
+# Progress indication text when a connection is opened to e-mail server (MSG-NOT245).
+msgid "mail_me_connecting"
+msgstr "Connecting"
+
+# This text will be displayed within the download toolbar bar when receiving a single message to viewer window (MSG-NOT620).
+msgid "mail_me_receiving"
+msgstr "Receiving"
+
+# This text will be displayed within the download toolbar progress bar when opening a message (MSG-TXT311)
+msgid "mail_me_opening"
+msgstr "Opening"
+
+# BCC field in message editor.
+msgid "mail_va_hotfix1"
+msgstr "Bcc:"
+
+# Replied content history will be separated from the new content by this string. 
+msgid "mcen_ia_editor_original_message"
+msgstr "----- Original message -----"
+
+# This string is used to indicate the attachments that previously existed in original message when replied. 
+msgid "mcen_ia_editor_attach_filename"
+msgstr "<Attachment:> "
+
+# String that is attached to message subject when a message is replied. 
+msgid "mail_va_re"
+msgstr "Re"
+
+# String that is attached to message subject when a message is forwarded.
+msgid "mail_va_fw"
+msgstr "Fw"
+
+# String that is attached to message subject when a new message is created. 
+msgid "mail_va_new_email"
+msgstr "New message"
+
+# This is given after a message is saved to drafts, variable %S is replaced with the folder name (MSG-NOT047).
+msgid "mail_va_saved_to_drafts"
+msgstr "Saved to %s"
+
+# This is given while a message is saved to drafts folder (MSG-NOT046)
+msgid "mail_va_saving"
+msgstr "Saving"
+
+# This string is used as Sent time label in the original text used for replying or forwarding a message.
+msgid "mail_ln_sent"
+msgstr "Sent"
+
+# Menu title
+msgid "mcen_me_inbox_message"
+msgstr "Message"
+
+# Menu command
+msgid "mcen_me_inbox_newemail"
+msgstr "New message"
+
+# Menu command
+msgid "mcen_me_inbox_open"
+msgstr "Open"
+
+# Menu command
+msgid "mcen_me_inbox_reply"
+msgstr "Reply"
+
+# Menu command
+msgid "mcen_me_inbox_replytoall"
+msgstr "Reply to all"
+
+# Menu command
+msgid "mcen_me_inbox_forward"
+msgstr "Forward"
+
+# Menu command
+msgid "mcen_me_sent_resend"
+msgstr "Resend"
+
+# Menu command
+msgid "mcen_me_outbox_cancelsend"
+msgstr "Cancel sending"
+
+# Menu command
+msgid "mcen_me_outbox_send"
+msgstr "Send"
+
+# Menu command
+msgid "mcen_me_inbox_delete"
+msgstr "Delete"
+
+# Submenu title
+msgid "mcen_me_inbox_senandreceive"
+msgstr "Send & receive"
+
+# Submenu command
+msgid "mcen_me_inbox_sendandreceive_all"
+msgstr "All"
+
+# Menu command
+msgid "mcen_me_inbox_retrieve_contents"
+msgstr "Retrieve contents"
+
+# Menu command
+msgid "mcen_me_inbox_purge_attachments"
+msgstr "Purge attachments"
+
+# Menu command
+msgid "mcen_me_inbox_messagedetails"
+msgstr "Details…"
+
+# Menu title
+msgid "mcen_me_inbox_edit"
+msgstr "Edit"
+
+# Menu command
+msgid "mcen_me_inbox_undo"
+msgstr "Undo"
+
+# Menu command
+msgid "mcen_me_inbox_cut"
+msgstr "Cut"
+
+# Menu command
+msgid "mcen_me_inbox_copy"
+msgstr "Copy"
+
+# Menu command
+msgid "mcen_me_inbox_paste"
+msgstr "Paste"
+
+# Submenu title
+msgid "mcen_me_inbox_select"
+msgstr "Select"
+
+# Submenu command
+msgid "mcen_me_inbox_markall"
+msgstr "Mark all"
+
+# Submenu command
+msgid "mcen_me_inbox_clearmarks"
+msgstr "Unmark all"
+
+# Menu command
+msgid "mcen_me_inbox_moveto"
+msgstr "Move to…"
+
+# Menu title
+msgid "mcen_me_inbox_view"
+msgstr "View"
+
+# Menu command
+msgid "mcen_me_inbox_sort"
+msgstr "Sort…"
+
+# Menu command
+msgid "mcen_me_inbox_hidefolders"
+msgstr "Folders"
+
+# Menu command
+msgid "mcen_me_inbox_fullscreen"
+msgstr "Full screen"
+
+# Submenu title
+msgid "mcen_me_inbox_toolbar"
+msgstr "Show toolbar"
+
+# Submenu command
+msgid "mcen_me_inbox_normalview"
+msgstr "Normal screen"
+
+# Submenu command
+msgid "mcen_me_inbox_optimizedview"
+msgstr "Full screen"
+
+# Menu title
+msgid "mcen_me_inbox_folders"
+msgstr "Folders"
+
+# Menu command
+msgid "mcen_me_inbox_newfolder"
+msgstr "New folder…"
+
+# Menu command
+msgid "mcen_me_inbox_manage_folders"
+msgstr "Manage…"
+
+# Menu command
+msgid "mcen_me_inbox_folderdetails"
+msgstr "Details…"
+
+# Menu title
+msgid "mcen_me_inbox_accounts"
+msgstr "Accounts"
+
+# Menu command
+msgid "mcen_me_inbox_newaccount"
+msgstr "New account…"
+
+# Menu command
+msgid "mcen_me_inbox_accountsettings"
+msgstr "Manage…"
+
+# Menu command
+msgid "mcen_me_inbox_globalsmtpservers"
+msgstr "Configure SMTP servers…"
+
+# Menu title
+msgid "mcen_me_inbox_tools"
+msgstr "Tools"
+
+# Menu command
+msgid "mcen_me_inbox_options"
+msgstr "Settings…"
+
+# Menu command
+msgid "mcen_me_inbox_open_addressbook"
+msgstr "Contacts…"
+
+# Menu command
+msgid "mcen_me_inbox_signatures"
+msgstr "Signatures…"
+
+# Menu command
+msgid "mcen_me_inbox_fonts"
+msgstr "Font settings…"
+
+# Menu command
+msgid "mcen_me_inbox_search"
+msgstr "Search messages…"
+
+# Menu command
+msgid "mcen_me_inbox_help"
+msgstr "Help"
+
+# Menu title
+msgid "mcen_me_inbox_close"
+msgstr "Close"
+
+# Menu command
+msgid "mcen_me_inbox_close_window"
+msgstr "Close window"
+
+# Menu command
+msgid "mcen_me_inbox_close_windows"
+msgstr "Close all windows"
+
+# Menu title
+msgid "mcen_me_viewer_message"
+msgstr "Message"
+
+# Menu command
+msgid "mcen_me_viewer_reply"
+msgstr "Reply"
+
+# Menu command
+msgid "mcen_me_viewer_replytoall"
+msgstr "Reply to all"
+
+# Menu command
+msgid "mcen_me_viewer_forward"
+msgstr "Forward"
+
+# Menu command
+msgid "mcen_me_viewer_newemail"
+msgstr "New message"
+
+# Menu command
+msgid "mcen_me_viewer_delete_message"
+msgstr "Delete"
+
+# Menu command
+msgid "mcen_me_viewer_details"
+msgstr "Details…"
+
+# Menu title
+msgid "mcen_me_viewer_edit"
+msgstr "Edit"
+
+# Menu command
+msgid "mcen_me_viewer_cut"
+msgstr "Cut"
+
+# Menu command
+msgid "mcen_me_viewer_copy"
+msgstr "Copy"
+
+# Menu command
+msgid "mcen_me_viewer_paste"
+msgstr "Paste"
+
+# Menu command
+msgid "mcen_me_viewer_selectall"
+msgstr "Select all"
+
+# Menu command
+msgid "mcen_me_viewer_moveto"
+msgstr "Move to…"
+
+# Menu title
+msgid "mcen_me_viewer_view"
+msgstr "View"
+
+# Submenu title
+msgid "mcen_me_viewer_zoom"
+msgstr "Zoom"
+
+# Submenu command
+msgid "mcen_me_viewer_50"
+msgstr "50 %%"
+
+# Submenu command
+msgid "mcen_me_viewer_80"
+msgstr "80 %%"
+
+# Submenu command
+msgid "mcen_me_viewer_100"
+msgstr "100 %%"
+
+# Submenu command
+msgid "mcen_me_viewer_120"
+msgstr "120 %%"
+
+# Submenu command
+msgid "mcen_me_viewer_150"
+msgstr "150 %%"
+
+# Submenu command
+msgid "mcen_me_viewer_200"
+msgstr "200 %%"
+
+# Menu command
+msgid "mcen_me_viewer_fullscreen"
+msgstr "Full screen"
+
+# Submenu title
+msgid "mcen_me_viewer_toolbar"
+msgstr "Show toolbar"
+
+# Submenu command
+msgid "mcen_me_viewer_normalview"
+msgstr "Normal screen"
+
+# Submenu command
+msgid "mcen_me_viewer_optimizedview"
+msgstr "Full screen"
+
+# Menu command
+msgid "mcen_me_viewer_nextmessage"
+msgstr "Next message"
+
+# Menu command
+msgid "mcen_me_viewer_previousmessage"
+msgstr "Previous message"
+
+# Menu title
+msgid "mcen_me_viewer_attachments"
 msgstr "Attachments"
 
-#~ msgid "None"
-#~ msgstr "None"
+# Menu command
+msgid "mcen_me_viewer_view_attachment"
+msgstr "View attachment"
 
-#~ msgid "inbox"
-#~ msgstr "inbox"
+# Menu command
+msgid "mcen_me_viewer_save_attachment"
+msgstr "Save attachment…"
 
-#~ msgid "outbox"
-#~ msgstr "outbox"
+# Menu command
+msgid "mcen_me_viewer_purge_attachments"
+msgstr "Purge attachment"
 
-#~ msgid "junk"
-#~ msgstr "junk"
+# Menu title
+msgid "mcen_me_viewer_tools"
+msgstr "Tools"
 
-#~ msgid "trash"
-#~ msgstr "trash"
+# Menu command
+msgid "mcen_me_viewer_addtocontacts"
+msgstr "Add to Contacts…"
 
-#~ msgid "sent"
-#~ msgstr "sent"
+# Menu command
+msgid "mcen_me_viewer_sec_properties"
+msgstr "Security details"
 
-#~ msgid "draft"
-#~ msgstr "draft"
+# Menu command
+msgid "mcen_me_viewer_find"
+msgstr "Find on page"
 
-#~ msgid "notes"
-#~ msgstr "notes"
+# Menu command
+msgid "mcen_me_viewer_searchemails"
+msgstr "Search messages…"
 
-#~ msgid "contacts"
-#~ msgstr "contacts"
+# Menu command
+msgid "mcen_me_viewer_help"
+msgstr "Help"
 
-#~ msgid "calendar"
-#~ msgstr "calendar"
+# Menu title
+msgid "mcen_me_viewer_close"
+msgstr "Close"
 
-#~ msgid "Send"
-#~ msgstr "Send"
+# Menu command
+msgid "mcen_me_viewer_close_window"
+msgstr "Close window"
 
-#~ msgid "Send the current email message"
-#~ msgstr "Send the current email message"
+# Menu command
+msgid "mcen_me_viewer_close_windows"
+msgstr "Close all windows"
 
-#~ msgid "New mail"
-#~ msgstr "New mail"
+# Menu title
+msgid "mcen_me_editor_message"
+msgstr "Message"
 
-#~ msgid "Compose a new email message"
-#~ msgstr "Compose a new email message"
+# Menu command
+msgid "mcen_me_editor_send"
+msgstr "Send"
 
-#~ msgid "Send/Receive"
-#~ msgstr "Send/Receive"
+# Menu command
+msgid "mcen_me_editor_selectrecipients"
+msgstr "Select contacts…"
 
-#~ msgid "Send and receive messages"
-#~ msgstr "Send and receive messages"
+# Menu command
+msgid "mcen_me_editor_checknames"
+msgstr "Check names"
 
-#~ msgid "Reply"
-#~ msgstr "Reply"
+# Menu command
+msgid "mcen_me_editor_newemail"
+msgstr "New message"
 
-#~ msgid "Reply to the selected email message"
-#~ msgstr "Reply to the selected email message"
+# Menu command
+msgid "mcen_me_editor_deletemessage"
+msgstr "Delete "
 
-#~ msgid "Reply all"
-#~ msgstr "Reply all"
+# Menu title
+msgid "mcen_me_editor_edit"
+msgstr "Edit"
 
-#~ msgid "Reply to all people the selected email was sent to"
-#~ msgstr "Reply to all people the selected email was sent to"
+# Menu command
+msgid "mcen_me_editor_undo"
+msgstr "Undo"
 
-#~ msgid "Forward"
-#~ msgstr "Forward"
+# Menu command
+msgid "mcen_me_editor_cut"
+msgstr "Cut"
 
-#~ msgid "Forward the selected email"
-#~ msgstr "Forward the selected email"
+# Menu command
+msgid "mcen_me_editor_copy"
+msgstr "Copy"
 
-#~ msgid "Delete"
-#~ msgstr "Delete"
+# Menu command
+msgid "mcen_me_editor_paste"
+msgstr "Paste"
 
-#~ msgid "Delete the selected email message(s)"
-#~ msgstr "Delete the selected email message(s)"
+# Menu command
+msgid "mcen_me_editor_selectall"
+msgstr "Select all"
 
-#~ msgid "Next"
-#~ msgstr "Next"
+# Menu title
+msgid "mcen_me_editor_view"
+msgstr "View"
 
-#~ msgid "Move to the next message"
-#~ msgstr "Move to the next message"
+# Submenu title
+msgid "mcen_me_editor_zoom"
+msgstr "Zoom"
 
-#~ msgid "Previous"
-#~ msgstr "Previous"
+# Submenu command
+msgid "mail_me_editor_50"
+msgstr "50 %%"
 
-#~ msgid "Move to the previous message"
-#~ msgstr "Move to the previous message"
+# Submenu command
+msgid "mail_me_editor_100"
+msgstr "100 %%"
 
-#~ msgid "Stop"
-#~ msgstr "Stop"
+# Submenu command
+msgid "mail_me_editor_150"
+msgstr "150 %%"
 
-#~ msgid "Stop whatever"
-#~ msgstr "Stop whatever"
+# Submenu command
+msgid "mail_me_editor_200"
+msgstr "200 %%"
 
-#, fuzzy
-#~ msgid "Error trying to update an account. Use a store account"
-#~ msgstr "Error trying to send a mail. Use a transport account"
+# Menu command
+msgid "mcen_me_editor_fullscreen"
+msgstr "Full screen"
 
-#~ msgid "%d %s, %d unread"
-#~ msgstr "%d %s, %d unread"
+# Submenu title
+msgid "mcen_me_editor_toolbar"
+msgstr "Show toolbar"
 
-#~ msgid "item"
-#~ msgstr "item"
+# Submenu command
+msgid "mcen_me_editor_normalview"
+msgstr "Normal screen"
 
-#~ msgid "items"
-#~ msgstr "items"
+# Submenu command
+msgid "mcen_me_editor_optimizedview"
+msgstr "Full screen"
 
-#~ msgid "Opening %s..."
-#~ msgstr "Opening %s..."
+# Menu command
+msgid "mcen_me_editor_showcc"
+msgstr "Show Cc"
 
-#~ msgid "Opening attachment %d..."
-#~ msgstr "Opening attachment %d..."
+# Menu command
+msgid "mcen_me_editor_showbcc"
+msgstr "Show Bcc"
 
-#~ msgid "Online"
-#~ msgstr "Online"
+# Menu title
+msgid "mcen_me_editor_format"
+msgstr "Format"
 
-#~ msgid "Offline"
-#~ msgstr "Offline"
+# Menu command
+msgid "mcen_me_editor_font"
+msgstr "Font…"
 
-#~ msgid "Modest went online"
-#~ msgstr "Modest went online"
+# Submenu title
+msgid "mcen_me_editor_align"
+msgstr "Alignment"
 
-#~ msgid "Modest went offline"
-#~ msgstr "Modest went offline"
+# Submenu command
+msgid "mcen_me_editor_align_left"
+msgstr "Left"
 
-#~ msgid "The %s you selected cannot be found"
-#~ msgstr "The %s you selected cannot be found"
+# Submenu command
+msgid "mcen_me_editor_align_centred"
+msgstr "Centred"
 
-#~ msgid "Connection requested"
-#~ msgstr "Connection requested"
+# Submenu command
+msgid "mcen_me_editor_align_right"
+msgstr "Right"
 
-#~ msgid ""
-#~ "This %s is not available in offline mode.\n"
-#~ "Do you want to get online?"
-#~ msgstr ""
-#~ "This %s is not available in offline mode.\n"
-#~ "Do you want to get online?"
+# Menu command
+msgid "mcen_me_editor_bullets"
+msgstr "Bullets"
 
-#~ msgid "Password requested"
-#~ msgstr "Password requested"
+# Menu command
+msgid "mcen_me_editor_numbers"
+msgstr "Numbers"
 
-#~ msgid "Please enter your password for %s"
-#~ msgstr "Please enter your password for %s"
+# Menu command
+msgid "mcen_me_editor_bgcolor"
+msgstr "Background colour…"
 
-#~ msgid "All Mail Folders"
-#~ msgstr "All Mail Folders"
+# Menu title
+msgid "mcen_me_editor_attachments"
+msgstr "Attachments"
+
+# Menu command
+msgid "mcen_me_editor_attachfile"
+msgstr "Attach file…"
+
+# Menu command
+msgid "mcen_me_editor_attach_inlineimage"
+msgstr "Insert image…"
+
+# Menu command
+msgid "mcen_me_editor_remove_attachments"
+msgstr "Remove attachment"
+
+# Menu title
+msgid "mcen_me_editor_tools"
+msgstr "Tools"
+
+# Menu command
+msgid "mcen_me_editor_send_options"
+msgstr "Sending options…"
+
+# Submenu title
+msgid "mcen_me_editor_security"
+msgstr "Security"
+
+# Submenu command
+msgid "mcen_me_editor_none"
+msgstr "None"
+
+# Submenu command
+msgid "mcen_me_editor_encrypt"
+msgstr "Encrypt"
+
+# Submenu command
+msgid "mcen_me_editor_sign"
+msgstr "Digitally sign"
+
+# Submenu command
+msgid "mcen_me_editor_encrypt_sign"
+msgstr "Digitally sign and encrypt"
+
+# Menu command
+msgid "mcen_me_editor_find"
+msgstr "Find on page"
+
+# Menu command
+msgid "mcen_me_editor_searchemails"
+msgstr "Search messages…"
+
+# Menu command
+msgid "mcen_me_editor_help"
+msgstr "Help"
+
+# Menu title
+msgid "mcen_me_editor_close"
+msgstr "Close"
+
+# Menu command
+msgid "mcen_me_editor_close_window"
+msgstr "Close window"
+
+# Menu command
+msgid "mcen_me_editor_close_windows"
+msgstr "Close all windows"
+
+# Menu command
+msgid "mcen_me_toolbar_sendreceive_all"
+msgstr "All"
+
+# Menu command
+msgid "mcen_me_toolbar_sendreceive_default"
+msgstr "%s"
+
+# Menu command
+msgid "mcen_me_toolbar_sendreceive_mailbox_n"
+msgstr "%s"
+
+# Menu command
+msgid "mcen_me_user_renamefolder"
+msgstr "Rename…"
+
+# Menu command
+msgid "mcen_me_user_deletefolder"
+msgstr "Delete"
+
+# Dialog button label
+msgid "mcen_bd_dialog_ok"
+msgstr "OK"
+
+# Dialog button label
+msgid "mcen_bd_dialog_cancel"
+msgstr "Cancel"
+
+# Title of a dialog
+msgid "mcen_ti_moveto_folders_title"
+msgstr "Move to folder"
+
+# Title in select file dialog when selecting a file to attach
+msgid "mcen_ti_select_attachment_title"
+msgstr "Select attachment"
+
+# Title in select file dialog when inserting an inline image
+msgid "mcen_ia_select_inline_image_title"
+msgstr "Select inline image"
+
+# Label in button. 
+msgid "sfil_bd_select_object_ok_select"
+msgstr "Select"
+
+# Title in Select <contact> dialog
+msgid "mcen_ti_select_recipients"
+msgstr "Select recipients"
+
+# Title of a dialog
+msgid "mcen_ti_select_email_title"
+msgstr "Select e-mail addresses"
+
+# Title of a dialog
+msgid "mcen_ti_add_email_title"
+msgstr "Add e-mail address to contact"
+
+# Label
+msgid "mcen_ia_add_email_name"
+msgstr "Name"
+
+# Label
+msgid "mcen_fi_add_email_name"
+msgstr "E-mail"
+
+# Dialog title
+msgid "emev_ti_edi_smtp_sendoptions"
+msgstr "Sending options for current message"
+
+# Field item
+msgid "emev_fi_edi_smtp_sendopt_priority"
+msgstr "Priority:"
+
+# List item in priority choicelist
+msgid "emev_va_smtp_sendopt_prihigh"
+msgstr "High"
+
+# List item in priority choicelist
+msgid "emev_va_smtp_sendopt_prireg"
+msgstr "Normal"
+
+# List item in priority choicelist
+msgid "emev_va_smtp_sendopt_prilow"
+msgstr "Low"
+
+# Field item
+msgid "emev_fi_edi_smtp_sendopt_smime"
+msgstr "S/MIME"
+
+# List item in S/MIME choise list
+msgid "emev_va_edi_smtp_sendopt_smime_none"
+msgstr "None"
+
+# List item in S/MIME choise list
+msgid "emev_va_edi_smtp_sendopt_smime_crypt"
+msgstr "Encrypt"
+
+# List item in S/MIME choise list
+msgid "emev_va_edi_smtp_sendopt_smime_sign"
+msgstr "Digitally sign"
+
+# List item in S/MIME choise list
+msgid "emev_va_edi_smtp_sendopt_smime_cryptsign"
+msgstr "Digitally sign and encrypt"
+
+# Field item 
+msgid "emev_fi_edi_smtp_sendopt_msgtype"
+msgstr "Message type:"
+
+# List item in message type choicelist
+msgid "emev_va_smtp_sendopt_mtype_html"
+msgstr "Formatted text (HTML)"
+
+# List item in message type choicelist
+msgid "emev_va_smtp_sendopt_mtype_plain"
+msgstr "Plain text"
+
+# Field item
+msgid "emev_fi_edi_smtp_sendopt_reqrcpt"
+msgstr "Request read report:"
+
+# Field item 
+msgid "emev_fi_edi_smtp_sendopt_service"
+msgstr "E-mail account in use:"
+
+# List item in connect using choicelist when user hasn’t defined any e-mail accounts
+msgid "emev_va_smtp_sendopt_none_defined"
+msgstr "None defined"
+
+# Title in Message properties dialog
+msgid "mcen_ti_message_properties"
+msgstr "Message details"
+
+# Label in Message properties dialog
+msgid "mcen_fi_message_properties_from"
+msgstr "From: "
+
+# Label in Message properties dialog
+msgid "mcen_fi_message_properties_subject"
+msgstr "Subject: "
+
+# Label in Message properties dialog
+msgid "mcen_fi_message_properties_received"
+msgstr "Received: "
+
+# Label in Message properties dialog
+msgid "mcen_fi_message_properties_created"
+msgstr "Modified: "
+
+# Label in Message properties dialog
+msgid "mcen_fi_message_properties_sent"
+msgstr "Sent: "
+
+# Label in Message properties dialog
+msgid "mcen_fi_message_properties_to"
+msgstr "To: "
+
+# Label in Message properties dialog
+msgid "mcen_fi_message_properties_cc"
+msgstr "Cc: "
+
+# Label in Message properties dialog
+msgid "mcen_fi_message_properties_size"
+msgstr "Size: "
+
+# 
+msgid "mcen_va_message_properties_size_noinfo"
+msgstr "-"
+
+# "Close" button in Message properties dialog
+msgid "mcen_bd_message_properties"
+msgstr "Close"
+
+# Title of a dialog 
+msgid "mcen_ti_delete_message"
+msgstr "Delete message"
+
+# Plural 0: Label describing the deletion process if one message has been selected for deletion
+msgid "mcen_fi_del_definition_msg_single"
+msgstr "Delete message from:"
+
+# Plural 1: Label describing the deletion process if several messages or a combination of messages and headers has been selected for deletion
+msgid "mcen_fi_del_definition_msg_plural"
+msgstr "Delete messages from:"
+
+# Label1 where %s is the name of the device <btdevicename>
+msgid "mcen_fi_del_from_device"
+msgstr "Delete from %s only"
+
+# Label2 where %s is the name of the device <btdevicename>
+msgid "mcen_fi_del_from_device_and_server"
+msgstr "Delete from %s and server"
+
+# Label describing the deletion of headers. Only shown if selection contains at least one header.
+msgid "mcen_fi_del_definition_headers"
+msgstr ""
+"Note: Deleting headers will remove the associated messages remotely from "
+"mail server."
+
+# Title of a dialog
+msgid "mcen_ti_emailsetup_accounts"
+msgstr "E-mail accounts"
+
+# Dialog button
+msgid "mcen_bd_emailsetup_setasdef"
+msgstr "Set as default"
+
+# Dialog button
+msgid "mcen_bd_emailsetup_edit"
+msgstr "Edit"
+
+# Dialog button
+msgid "mcen_bd_emailsetup_delete"
+msgstr "Delete"
+
+# Dialog button
+msgid "mcen_bd_emailsetup_close"
+msgstr "Close"
+
+# Text string
+msgid "mcen_ia_emailsetup_default"
+msgstr "<default>"
+
+# Title of a dialog
+msgid "mcen_ti_emailsetup_welcome"
+msgstr "E-mail account setup: Welcome"
+
+# Label
+msgid "mcen_ia_emailsetup_intro"
+msgstr ""
+"Account setup wizard allows you to define e-mail accounts for use on your "
+"device.\n"
+"Tap 'Next' to continue."
+
+# DialogButton
+msgid "mcen_bd_emailsetup_welcome_finish"
+msgstr "Finish"
+
+# DialogButton
+msgid "mcen_bd_emailsetup_welcome_back"
+msgstr "Back"
+
+# DialogButton
+msgid "mcen_bd_emailsetup_welcome_next"
+msgstr "Next"
+
+# DialogButton
+msgid "mcen_bd_emailsetup_welcome_cancel"
+msgstr "Cancel"
+
+# Title of a dialog
+msgid "mcen_ti_emailsetup_title_1_4"
+msgstr "E-mail account setup 1/4"
+
+# Label
+msgid "mcen_li_emailsetup_account_name"
+msgstr "Account name"
+
+# Label for default account name
+msgid "mcen_ia_emailsetup_defaultname"
+msgstr "Account"
+
+# Label
+msgid "mcen_li_emailsetup_type"
+msgstr "Account type"
+
+# List item POP3
+msgid "mail_fi_emailtype_pop3"
+msgstr "POP3"
+
+# List item IMAP4
+msgid "mail_fi_emailtype_imap"
+msgstr "IMAP4"
+
+# Label
+msgid "mcen_ia_emailsetup_account_type"
+msgstr "Note: Unable to edit account type once setup is complete"
+
+# DialogButton
+msgid "mcen_bd_emailsetup_pageone_finish"
+msgstr "Finish"
+
+# DialogButton
+msgid "mcen_bd_emailsetup_pageone_back"
+msgstr "Back"
+
+# DialogButton
+msgid "mcen_bd_emailsetup_pageone_next"
+msgstr "Next"
+
+# DialogButton
+msgid "mcen_bd_emailsetup_pageone_cancel"
+msgstr "Cancel"
+
+# Title of a dialog
+msgid "mcen_ti_emailsetup_title_2_4"
+msgstr "E-mail account setup 2/4"
+
+# Label
+msgid "mcen_li_emailsetup_name"
+msgstr "Name"
+
+# Label
+msgid "mcen_li_emailsetup_username"
+msgstr "User name"
+
+# Label
+msgid "mcen_li_emailsetup_password"
+msgstr "Password"
+
+# Label
+msgid "mcen_li_emailsetup_email_address"
+msgstr "E-mail address"
+
+# DialogButton
+msgid "mcen_bd_emailsetup_pagetwo_finish"
+msgstr "Finish"
+
+# DialogButton
+msgid "mcen_bd_emailsetup_pagetwo_back"
+msgstr "Back"
+
+# DialogButton
+msgid "mcen_bd_emailsetup_pagetwo_next"
+msgstr "Next"
+
+# DialogButton
+msgid "mcen_bd_emailsetup_pagetwo_cancel"
+msgstr "Cancel"
+
+# Title of a dialog
+msgid "mcen_ti_emailsetup_title_3_4"
+msgstr "E-mail account setup 3/4"
+
+# Label1 where %s is the type of the mail server
+msgid "mcen_li_emailsetup_servertype"
+msgstr "Incoming server (%s)"
+
+# String for servertype when its POP3
+msgid "mcen_li_emailsetup_servertype_pop"
+msgstr "POP3"
+
+# String for servertype when its IMAP4
+msgid "mcen_li_emailsetup_servertype_imap"
+msgstr "IMAP4"
+
+# Label
+msgid "mcen_li_emailsetup_smtp"
+msgstr "Outgoing server (SMTP)"
+
+# Label
+msgid "mcen_fi_advsetup_connection_smtp"
+msgstr "Use connection-specific SMTP servers:"
+
+# Label
+msgid "mcen_fi_advsetup_optional_smtp"
+msgstr "SMTP servers:"
+
+# DialogButton
+msgid "mcen_bd_advsetup_optional_smtp_configure"
+msgstr "Configure"
+
+# DialogButton
+msgid "mcen_bd_emailsetup_pagethree_finish"
+msgstr "Finish"
+
+# DialogButton
+msgid "mcen_bd_emailsetup_pagethree_back"
+msgstr "Back"
+
+# DialogButton
+msgid "mcen_bd_emailsetup_pagethree_next"
+msgstr "Next"
+
+# DialogButton
+msgid "mcen_bd_emailsetup_pagethree_cancel"
+msgstr "Cancel"
+
+# Title of a dialog
+msgid "mcen_ti_emailsetup_title_4_4"
+msgstr "E-mail account setup 4/4"
+
+# Label
+msgid "mcen_ia_emailsetup_setup_complete"
+msgstr ""
+"E-mail account setup is complete.\n"
+"Tap 'Finish' to save or 'Cancel' to discard the settings.\n"
+"Tap 'Advanced' to edit the advanced e-mail settings."
+
+# DialogButton
+msgid "mcen_bd_emailsetup_pagefour_finish"
+msgstr "Finish"
+
+# DialogButton
+msgid "mcen_bd_emailsetup_pagefour_back"
+msgstr "Back"
+
+# DialogButton
+msgid "mcen_bd_emailsetup_pagefour_next"
+msgstr "Next"
+
+# DialogButton
+msgid "mcen_bd_emailsetup_advanced"
+msgstr "Advanced"
+
+# DialogButton
+msgid "mcen_bd_emailsetup_pagefour_cancel"
+msgstr "Cancel"
+
+# Title of a dialog: "Advanced settings for %s" where %s is the name of the account 
+msgid "mcen_ti_advsetup_options"
+msgstr "Advanced settings for %s"
+
+# Tab title 
+msgid "mcen_ti_advsetup_retrieval"
+msgstr "Incoming"
+
+# Label
+msgid "mcen_fi_advsetup_retrievetype"
+msgstr "Retrieve"
+
+# Choice list item
+msgid "mcen_fi_advsetup_retrievetype_headers"
+msgstr "Headers only"
+
+# Choice list item
+msgid "mcen_fi_advsetup_retrievetype_messages"
+msgstr "Messages"
+
+# Choice list item
+msgid "mcen_fi_advsetup_retrievetype_messages_attachments"
+msgstr "Messages and attachments"
+
+# Label 
+msgid "mcen_fi_advsetup_leave_on_server"
+msgstr "Leave messages on server"
+
+# Label
+msgid "mcen_fi_advsetup_retrieve_number"
+msgstr "No. of messages to retrieve"
+
+# Choice list item
+msgid "mcen_fi_advsetup_retrieve_all"
+msgstr "All"
+
+# Choice list item
+msgid "mcen_fi_advsetup_retrieve_10"
+msgstr "10"
+
+# Choice list item
+msgid "mcen_fi_advsetup_retrieve_25"
+msgstr "25"
+
+# Choice list item
+msgid "mcen_fi_advsetup_retrieve_50"
+msgstr "50"
+
+# Label
+msgid "mcen_fi_advsetup_password_auth"
+msgstr "Password authentication"
+
+# Choice list item
+msgid "mcen_fi_advsetup_password_normal"
+msgstr "Normal"
+
+# Choice list item
+msgid "mcen_fi_advsetup_password_secure"
+msgstr "Secure"
+
+# Label
+msgid "mcen_fi_advsetup_other_security"
+msgstr "Security"
+
+# Choice list item
+msgid "mcen_fi_advsetup_other_security_none"
+msgstr "None"
+
+# Choice list item
+msgid "mcen_fi_advsetup_other_security_normal"
+msgstr "Normal (TLS)"
+
+# Choice list item
+msgid "mcen_fi_advsetup_other_security_securepop3s"
+msgstr "SSL (POP3S)"
+
+# Choice list item
+msgid "mcen_fi_advsetup_other_security_secureimap4s"
+msgstr "SSL (IMAP4S)"
+
+# Label
+msgid "mcen_fi_advsetup_port_incoming"
+msgstr "Incoming e-mail port"
+
+# Tab title
+msgid "mcen_ti_advsetup_sending"
+msgstr "Outgoing"
+
+# Label
+msgid "mcen_fi_advsetup_smtp_smtpauth"
+msgstr "SMTP authentication"
+
+# Choice list item
+msgid "mcen_fi_advsetup_smtp_none"
+msgstr "None"
+
+# Choice list item
+msgid "mcen_fi_advsetup_smtp_login"
+msgstr "Login"
+
+# Choice list item
+msgid "mcen_fi_advsetup_smtp_cram_md5"
+msgstr "CRAM-MD5"
+
+# Label
+msgid "mcen_fi_advsetup_smtp_username"
+msgstr "User name"
+
+# Label
+msgid "mcen_fi_advsetup_smtp_password"
+msgstr "Password"
+
+# Choice list item
+msgid "mcen_fi_advsetup_other_security_ssl"
+msgstr "SSL"
+
+# Label
+msgid "mcen_fi_advsetup_port_outgoing"
+msgstr "Outgoing e-mail port"
+
+# Tab title
+msgid "mcen_fi_advsetup_security"
+msgstr "Security"
+
+# Label
+msgid "mcen_fi_advsetup_encrypt_mess"
+msgstr "Encrypt messages by default"
+
+# Label
+msgid "mcen_fi_advsetup_sign_mess"
+msgstr "Digitally sign messages by default"
+
+# Label
+msgid "mcen_fi_advsetup_display_secdialog"
+msgstr "Display security indication for:"
+
+# Label
+msgid "mcen_fi_advsetup_encrypted_signed"
+msgstr "All encrypted and digitally signed messages"
+
+# Label
+msgid "mcen_fi_advsetup_untrusted"
+msgstr "All untrusted digital IDs"
+
+# Label
+msgid "mcen_fi_advsetup_expired_invalid"
+msgstr "All expired or invalid digital IDs"
+
+# Dialog button
+msgid "mcen_bd_advsetup_ok"
+msgstr "OK"
+
+# Dialog button
+msgid "mcen_bd_advsetup_cancel"
+msgstr "Cancel"
+
+# Title of a dialog
+msgid "mcen_ti_optionalsmtp_servers"
+msgstr "Connection-specific SMTP servers"
+
+# Label
+msgid "mcen_ia_optionalsmtp_note"
+msgstr ""
+"Select connection and edit SMTP server to be used when connection is active"
+
+# Column header
+msgid "mcen_ia_optionalsmtp_connection_name"
+msgstr "Connection name"
+
+# Column header
+msgid "mcen_ia_optionalsmtp_servername"
+msgstr "SMTP server name"
+
+# Label
+msgid "mcen_ia_optionalsmtp_noconnection"
+msgstr "(no connections)"
+
+# Label
+msgid "mcen_ia_optionalsmtp_notdefined"
+msgstr "Not defined"
+
+# DialogButton
+msgid "mcen_bd_optionalsmtp_close"
+msgstr "Close"
+
+# DialogButton
+msgid "mcen_bd_optionalsmtp_edit"
+msgstr "Edit"
+
+# Title of a dialog where %s is the name of the connection
+msgid "mcen_ti_connection_connection_name"
+msgstr "Connection-specific SMTP server: %s"
+
+# Label
+msgid "mcen_fi_connection_servername"
+msgstr "Server name:"
+
+# Label
+msgid "mcen_fi_connection_auth"
+msgstr "SMTP authentication:"
+
+# List item
+msgid "mcen_fi_connection_auth_none"
+msgstr "None"
+
+# List item
+msgid "mcen_fi_connection_auth_login"
+msgstr "Login"
+
+# List item
+msgid "mcen_fi_connection_auth_crammd5"
+msgstr "CRAM-MD5"
+
+# Label
+msgid "mcen_fi_connection_username"
+msgstr "User name:"
+
+# Label
+msgid "mcen_fi_connection_password"
+msgstr "Password:"
+
+# Label
+msgid "mcen_fi_connection_security"
+msgstr "Security:"
+
+# List item
+msgid "mcen_fi_connection_security_none"
+msgstr "None"
+
+# List item
+msgid "mcen_fi_connection_security_normal"
+msgstr "TLS"
+
+# List item
+msgid "mcen_fi_connection_security_ssl"
+msgstr "SSL"
+
+# Label
+msgid "mcen_fi_connection_outgoing_port"
+msgstr "Outgoing e-mail port:"
+
+# DialogButton
+msgid "mcen_bd_connection_ok"
+msgstr "OK"
+
+# DialogButton
+msgid "mcen_bd_connection_cancel"
+msgstr "Cancel"
+
+# Title of a dialog, choice 1
+msgid "mail_ti_signed_encrypted"
+msgstr "Encrypted and signed message"
+
+# Title of a dialog, choice 2
+msgid "mail_ti_signed"
+msgstr "Signed message"
+
+# Title of a dialog, choice 3
+msgid "mail_ti_signed_untrusted"
+msgstr "Untrusted signer"
+
+# Title of a dialog, choice 4
+msgid "mail_ti_encrypted"
+msgstr "Encrypted message"
+
+# Title of a dialog, choice 5
+msgid "mail_ti_signed_encrypted_untrusted"
+msgstr "Untrusted signer"
+
+# Security notification dialog 1a. This text is displayed if the message is encrypted and signed. 
+msgid "mcen_ia_smime_secnote_1a"
+msgstr ""
+"Message is encrypted and signed.\n"
+"Tap 'Read' to read the message."
+
+# Security notification dialog 1b. This text is displayed if the message is encrypted. 
+msgid "mcen_ia_smime_secnote_1b"
+msgstr ""
+"Message is encrypted.\n"
+"Tap 'Read' to read the message."
+
+# Security notification dialog 1c. This text is displayed if the message is signed. 
+msgid "mcen_ia_smime_secnote_1c"
+msgstr ""
+"Message is signed.\n"
+"Tap 'Read' to read the message."
+
+# Security notification dialog 2a. This text is displayed if the message is encrypted and signed. The digital ID of the sender is not trusted in the Certificate manager. 
+msgid "mcen_ia_smime_secnote_2a"
+msgstr ""
+"Message is encrypted and signed.\n"
+"Warning: you have selected not to trust the sender's digital ID.\n"
+"Tap 'Read' to read the message.\n"
+"Tap 'Edit trust settings' to change trust settings for this sender."
+
+# Security notification dialog 2b. This text is displayed if the message is signed. The digital ID of the sender is not trusted in the Certificate manager. 
+msgid "mcen_ia_smime_secnote_2b"
+msgstr ""
+"Message is digitally signed.\n"
+"Warning: you have selected not to trust the sender's digital ID.\n"
+"Tap 'Read' to read the message.\n"
+"Tap 'Edit trust settings' to change trust settings for this sender."
+
+# Security notification dialog 3a. This text is displayed if the message is encrypted and signed. The digital ID of the sender is invalid or expired. 
+msgid "mcen_ia_smime_secnote_3a"
+msgstr ""
+"Message is encrypted and signed.\n"
+"Warning: the sender's digital ID is invalid or has expired.\n"
+"Tap 'Read' to read the message.\n"
+"Tap 'Details' to read more information."
+
+# Security notification dialog 3b. This text is displayed if the message is signed. The digital ID of the sender is invalid or expired. 
+msgid "mcen_ia_smime_secnote_3b"
+msgstr ""
+"Message is signed.\n"
+"Warning: the sender's digital ID is invalid or has expired.\n"
+"Tap 'Read' to read the message.\n"
+"Tap 'Details' to read more information."
+
+# Security notification dialog 1a. This text is displayed if the message is encrypted and signed. 
+msgid "mcen_ia_smime_secnote_1ª"
+msgstr ""
+"Message is encrypted and signed.\n"
+"Tap 'Read' to read the message."
+
+# Label 
+msgid "mcen_va_smime_secnote_read"
+msgstr "Do not show this message again"
+
+# DialogButton
+msgid "mcen_bd_smime_secnote_read"
+msgstr "Read"
+
+# DialogButton
+msgid "mcen_bd_smime_secnote_edittrust"
+msgstr "Edit trust settings"
+
+# DialogButton
+msgid "mcen_bd_smime_secnote_properties"
+msgstr "Details"
+
+# Title of a dialog
+msgid "mcen_ti_smime_encryption_note"
+msgstr "Encryption key missing"
+
+# Label
+msgid "mcen_ia_smime_keys_not_found"
+msgstr ""
+"Unable to find valid encryption key for the following\n"
+"recipients. Select 'Send' to send message anyway."
+
+# Dialog button
+msgid "mcen_bd_smime_send"
+msgstr "Send"
+
+# Dialog button
+msgid "mcen_bd_smime_cancel"
+msgstr "Cancel"
+
+# Title of a dialog
+msgid "mail_ti_password_protected"
+msgstr "Password protected"
+
+# Label
+msgid "mail_ia_password_info"
+msgstr "Enter password for server %s"
+
+# Label
+msgid "mail_fi_password"
+msgstr "Password"
+
+# Label
+msgid "mail_fi_user_name"
+msgstr "User name"
+
+# Dialog button
+msgid "mail_bd_password_ok"
+msgstr "OK"
+
+# Dialog button
+msgid "mail_bd_password_cancel"
+msgstr "Cancel"
+
+# Title of a dialog
+msgid "mcen_ti_folder_properties"
+msgstr "Folder details"
+
+# Label
+msgid "mcen_fi_folder_properties_foldername"
+msgstr "Folder name"
+
+# Label
+msgid "mcen_fi_folder_properties_messages"
+msgstr "Number of messages"
+
+# Label
+msgid "mcen_fi_folder_properties_size"
+msgstr "Size"
+
+# Dialog button
+msgid "mcen_bd_folder_properties_close"
+msgstr "Close"
+
+# Title of a dialog
+msgid "mcen_ti_manage_folders_title"
+msgstr "Manage folders"
+
+# Dialog button
+msgid "mcen_bd_manage_folders_new"
+msgstr "New"
+
+# Dialog button
+msgid "mcen_bd_manage_folders_rename"
+msgstr "Rename"
+
+# Dialog button
+msgid "mcen_bd_manage_folders_delete"
+msgstr "Delete"
+
+# Dialog button
+msgid "mcen_bd_manage_folders_close"
+msgstr "Close"
+
+# Title in new folder dialog 
+msgid "mcen_ti_new_folder"
+msgstr "New folder"
+
+# "Name" text field in new folder dialog 
+msgid "mcen_fi_new_folder_name"
+msgstr "Name"
+
+# Default name for folder in new folder dialog 
+msgid "mcen_ia_default_folder_name"
+msgstr "New folder"
+
+# Default name for folder in new folder dialog if previously same foldername exists. %d is incremented if previous folder with a number exists. 
+msgid "mcen_ia_default_folder_name_s"
+msgstr "New folder %s"
+
+# "OK" button in new folder dialog
+msgid "mcen_bd_new_folder_ok"
+msgstr "OK"
+
+# "Cancel" button in new folder dialog
+msgid "mcen_bd_new_folder_cancel"
+msgstr "Cancel"
+
+# Choice item in sort dialog 
+msgid "mcen_li_sort_sender_recipient"
+msgstr "From/To"
+
+# Choice item in sort dialog 
+msgid "mcen_li_sort_date"
+msgstr "Date"
+
+# Choice item in sort dialog 
+msgid "mcen_li_sort_subject"
+msgstr "Subject"
+
+# Choice item in sort dialog 
+msgid "mcen_li_sort_attachment"
+msgstr "Attachment"
+
+# Choice item in sort dialog 
+msgid "mcen_li_sort_size"
+msgstr "Size"
+
+# Choice item in sort dialog 
+msgid "mcen_li_sort_priority"
+msgstr "Priority"
+
+# Title in font settings dialog
+msgid "mcen_ti_font_settings"
+msgstr "Font settings"
+
+# Tab title in font settings dialog
+msgid "mcen_fi_font_settings_viewing"
+msgstr "Viewing"
+
+# Tab title in font settings dialog
+msgid "mcen_fi_font_settings_editing"
+msgstr "Editing"
+
+# Label in font settings dialog
+msgid "mcen_fi_font_settings_default_plain"
+msgstr "Default font (plain text)"
+
+# Label in font settings dialog
+msgid "mcen_fi_font_settings_default_html"
+msgstr "Default font (HTML)"
+
+# "OK" button font settings dialog
+msgid "mcen_bd_font_settings_ok"
+msgstr "OK"
+
+# "Cancel" button font settings dialog
+msgid "mcen_bd_font_settings_cancel"
+msgstr "Cancel"
+
+# Title in e-mail signatures dialog
+msgid "mcen_ti_email_signatures_title"
+msgstr "E-mail signatures"
+
+# Text in e-mail signature editor dialog
+msgid "mcen_ia_email_signatures_dlg_label"
+msgstr "Enable and edit signatures for following e-mail accounts"
+
+# Label if signature not defined. 
+msgid "mcen_ia_email_signatures_notdefined"
+msgstr "Signature not defined"
+
+# "OK" button in e-mail signatures dialog
+msgid "mcen_bd_email_signatures_ok"
+msgstr "OK"
+
+# "Edit" button in e-mail signatures dialog
+msgid "mcen_bd_email_signatures_edit"
+msgstr "Edit"
+
+# "Cancel" button in e-mail signatures dialog
+msgid "mcen_bd_email_signatures_cancel"
+msgstr "Cancel"
+
+# Title in e-mail signature editor dialog
+msgid "mcen_ti_email_signatures_edit_title"
+msgstr "E-mail signature"
+
+# "OK" button in e-mail signature editor dialog
+msgid "mcen_bd_email_signatures_edit_ok"
+msgstr "OK"
+
+# "Cancel" button in e-mail signature editor dialog
+msgid "mcen_bd_email_signatures_edit_cancel"
+msgstr "Cancel"
+
+# Infoprint displayed if saving in e-mail signature editor went successfully
+msgid "mcen_ib_email_signatures_edit_saved"
+msgstr "Signature saved"
+
+# Text in e-mail signature editor dialog
+msgid "mcen_ia_email_signatures_edit_dlg_label"
+msgstr "Signature for account %s"
+
+# Title of a dialog 
+msgid "mcen_ti_options"
+msgstr "Settings"
+
+# Tab title 
+msgid "mcen_ti_options_updating"
+msgstr "Updating"
+
+# Label 
+msgid "mcen_fi_options_autoupdate"
+msgstr "Update automatically"
+
+# Label
+msgid "mcen_fi_options_connectiontype"
+msgstr "Update when connected via"
+
+# Choice list item
+msgid "mcen_va_options_connectiontype_wlan"
+msgstr "WLAN"
+
+# Choice list item
+msgid "mcen_va_options_connectiontype_all"
+msgstr "All connections"
+
+# Label
+msgid "mcen_fi_options_updateinterval"
+msgstr "Update interval"
+
+# Choice list item
+msgid "mcen_va_options_updateinterval_5min"
+msgstr "5 minutes"
+
+# Choice list item
+msgid "mcen_va_options_updateinterval_10min"
+msgstr "10 minutes"
+
+# Choice list item
+msgid "mcen_va_options_updateinterval_15min"
+msgstr "15 minutes"
+
+# Choice list item
+msgid "mcen_va_options_updateinterval_30min"
+msgstr "30 minutes"
+
+# Choice list item
+msgid "mcen_va_options_updateinterval_1h"
+msgstr "1 hour"
+
+# Choice list item
+msgid "mcen_va_options_updateinterval_2h"
+msgstr "2 hours"
+
+# Label
+msgid "mcen_fi_options_playsound"
+msgstr "Play sound when message arrives"
+
+# Label
+msgid "mcen_fi_advsetup_sizelimit"
+msgstr "Message size limit (kB)"
+
+# Tab title
+msgid "mcen_ti_options_composing"
+msgstr "Composing"
+
+# Label
+msgid "mcen_fi_options_messageformat"
+msgstr "Default message format"
+
+# Choice list item
+msgid "mcen_va_options_messageformat_html"
+msgstr "Formatted text (HTML)"
+
+# Choice list item
+msgid "mcen_va_options_messageformat_plain"
+msgstr "Plain text"
+
+# Label
+msgid "mcen_va_options_include_original_inreply"
+msgstr "Include original in reply"
+
+# Label
+msgid "mcen_va_options_read_receipt"
+msgstr "Request read receipt"
+
+# Tab title
+msgid "mcen_ti_options_cleanup"
+msgstr "Clean-up"
+
+# Label
+msgid "mcen_fi_options_cleanup"
+msgstr "Clean-up Sent folder"
+
+# Label
+msgid "mcen_fi_options_cleanup_older"
+msgstr "Remove messages older than"
+
+# Choice list item
+msgid "mcen_va_options_cleanup_older_1"
+msgstr "1 day"
+
+# Choice list item
+msgid "mcen_va_options_cleanup_older_7"
+msgstr "7 days"
+
+# Choice list item
+msgid "mcen_va_options_cleanup_older_14"
+msgstr "14 days"
+
+# Choice list item
+msgid "mcen_va_options_cleanup_older_30"
+msgstr "30 days"
+
+# Choice list item
+msgid "mcen_va_options_cleanup_older_90"
+msgstr "90 days"
+
+# Choice list item
+msgid "mcen_va_options_cleanup_older_180"
+msgstr "180 days"
+
+# Dialog button
+msgid "mcen_bd_options_ok"
+msgstr "OK"
+
+# Dialog button
+msgid "mcen_bd_options_cancel"
+msgstr "Cancel"
+
+# MSG-INF023: If user leaves either the Incoming or Outgoing e-mail server addresses blank in Mail account setup.
+msgid "mcen_ib_enter_ipname"
+msgstr "Enter server name or IP address first"
+
+# This banner is displayed e.g. if system is opening a large draft e-mail message from draft folder. Note: should not be used when opening message in e-mail viewer. (MSG-NOT185). 
+msgid "mail_ib_opening_draft_message"
+msgstr "Opening"
+
+# If user taps a link in a viewer that is not supported by the system.
+msgid "mcen_ib_unsupported_link"
+msgstr "Unsupported link type"
+
+# MSG-INF???: If moving a message to Outbox takes a considerable amount of time after Send command has been invoked
+msgid "mcen_ib_moving_to_outbox"
+msgstr "Moving to Outbox"
+
+# MSG-INF???: When message is sent from Editor this information banner indicates the user that the message is moved to Outbox for sending
+msgid "mcen_ib_outbox_waiting_to_be_sent"
+msgstr "Message moved to Outbox waiting to be sent"
+
+# When message is sent from stand-alone Editor this progress banner is displayed to provide feedback for the user that the system tries to send the message.
+msgid "mcen_ib_sending_message"
+msgstr "Sending"
+
+# When message is sent from stand-alone Editor this information banner is displayed to provide feedback for the user that the system was able to send the message.
+msgid "mcen_ib_message_sent"
+msgstr "Message sent"
+
+# MSG-INF028: If user tries to enter invalid e-mail address during mail account setup.
+msgid "mcen_ib_invalid_email"
+msgstr "Invalid e-mail address"
+
+# MSG-INF081: If user tries to enter invalid server name or IP address during mail account setup
+msgid "mcen_ib_invalid_servername"
+msgstr "Invalid server name or IP address"
+
+# MSG-INF262: If user tries to enter too big value in the server port field during mail account setup.
+msgid "mcen_ib_port_value_exceeded"
+msgstr "Maximum value is 65535"
+
+# MSG-INF263: If user tires to enter too small value in the server port field during mail account setup.
+msgid "mcen_ib_port_value_too_small"
+msgstr "Minimum value is 1"
+
+# MSG-INF???: If populating the connection specific server listing takes significant amount of time
+msgid "mcen_ib_smtp_servers_updating"
+msgstr "Updating"
+
+# MSG-INF???: To handle error conditions and failure of inter-application interaction with Address book 
+msgid "mail_ib_contacts_file_access_permission"
+msgstr "Unable to access contact information"
+
+# Displayed when saving e-mail certificate (where %d is distinquished name and %s is serial number)  
+msgid "cert_error_unable_to_save"
+msgstr "Unable to save %d (serial number: %s)"
+
+# MSG-INF140: This banner is displayed is the user cancels the Disconnect from Mail account confirmation note. 
+msgid "mcen_ib_changes_discarded"
+msgstr "Changes discarded"
+
+# MSG-INF079: If the user attempts to select the next button while no e-mail address has been entered in the e-mail set up wizard. 
+msgid "mcen_ib_required_email"
+msgstr "Enter e-mail address first"
+
+# MSG-INF080: If the user attempts to select the next button while no username has been entered in the e-mail set up wizard. 
+msgid "mcen_ib_enter_username"
+msgstr "Enter user name first"
+
+# MSG-INF077: If the user presses the next button while it is dimmed in the in the mail account setup wizard. 
+msgid "mcen_ib_enter_accountname"
+msgstr "Enter account name first"
+
+# MSG-INF069: If the user attempts to press the ‘Finish’ button in the Mail account setup wizard while it is dimmed. 
+msgid "mcen_ib_enter_fill_in_all_fields"
+msgstr "Fill in all required fields first"
+
+# MSG-INF097: If the user attempts to select align command if the focus is not in the message area. 
+msgid "mcen_ib_move_cursor_to_message"
+msgstr "Move cursor to message area first"
+
+# WID-INF266: If there are no memory cards present in the device when archiving to MMC is attempted. 
+msgid "mcen_ib_no_mmc_found"
+msgstr "No memory card detected"
+
+# MSG-INF018: If a user attempts to paste the object to originating folder. 
+msgid "mcen_ib_unable_to_copy_samefolder"
+msgstr "Unable to copy messages to original folder"
+
+# If the user selects the ‘Save as’ command while attached e-mails are attached in the e-mail message. (MSG-INF248)
+msgid "mcen_ib_unable_to_save_attach_mail"
+msgstr "Unable to save attached messages"
+
+# If the user enters a name for the new folder that is already being used by another existing folder at the same location. (WID-INF139)
+msgid "mcen_ib_folder_exists"
+msgstr "Folder name already in use"
+
+# If the user taps ‘OK’ without any text entered into the ‘New’ field in the ‘New folder’ dialog. (WID–INF140)
+msgid "mcen_ib_enter_name"
+msgstr "Enter name first"
+
+# If the user exceeds the number of permitted characters for the name field in the ‘New folder’ dialog. (WID–INF036)
+msgid "mcen_ib_maxchar_reached"
+msgstr "Max. number of characters reached"
+
+# If the maximum level of zoom is reached when a + hardware key is pressed. (WID – INF059)
+msgid "mcen_ib_maxzoom_level"
+msgstr "Maximum zoom level reached"
+
+# If the minimum level of zoom is reached when a – hardware key is pressed. (WID – INF060)
+msgid "mcen_ib_minzoom_level"
+msgstr "Minimum zoom level reached"
+
+# If the user attempts to check the box if the signature is blank in the ‘E-mail signatures’ dialog. (MSG-INF125)
+msgid "mcen_ib_no_sig"
+msgstr "Define signature first"
+
+# If the user attempts to access ‘Retrieve message contents’ when no messages are selected. (MSG-INF106)
+msgid "mcen_ib_select_headers"
+msgstr "Select message headers first"
+
+# If the user tries to select ‘Forward’ command while more than one message is selected. (MSG-INF101)
+msgid "mcen_ib_select_one_message"
+msgstr "Select 1 message only"
+
+# In case copy of selected mails fails due to unknown reason. Say if some or all of copied e-mails are deleted before the paste operation or they cannot be copied and pasted.(MSG-INF019)
+msgid "mcen_ib_cannot_copy_some"
+msgstr "Unable to copy some messages"
+
+# If the user attempts to edit an attachment that is read only. (MSG-INF309)
+msgid "mcen_ib_readonly_attachment"
+msgstr "Attachment is read-only"
+
+# If the user attempts to select ‘Alignment’ item for a plain text e-mail. (WID-INF058)
+msgid "mcen_ib_item_unavailable"
+msgstr "Not available"
+
+# If the one of the illegal characters < or > is input in the name field in the Mail account wizard. (WID-INF091)
+msgid "mcen_ib_illegal_chars_error"
+msgstr "Field cannot contain the characters %s"
+
+# If the user attempts to select the command ‘Delete’ while a message is being sent. (MSG-INF258)
+msgid "mcen_ib_unable_to_delete"
+msgstr "Unable to delete"
+
+# If the user attempts to view attachments when multiple attachments are highlighted. (MSG-INF032)
+msgid "mcen_ib_unable_to_display_more"
+msgstr "Select 1 attachment only"
+
+# If multiple messages are selected and one or more but not all the selected messages are in the process of being sent and the ‘Cut’ command is attempted. (MSG-INF257)
+msgid "mcen_ib_unable_to_cut_mess"
+msgstr "Unable to move messages while being sent"
+
+# If multiple messages are selected and one or more but not all the selected messages are in the process of being sent and the ‘Copy’ command is attempted.
+msgid "mcen_ib_unable_to_copy_sending_message"
+msgstr "Unable to copy messages while being sent"
+
+# If it not possible to paste the contents of the clipboard at the current location. (WID-INF051)
+msgid "mcen_ib_unable_to_paste"
+msgstr "Unable to paste here"
+
+# If the zoom button is pressed where the zoom is not supported. (WID – INF061)
+msgid "mcen_ib_unable_to_zoom"
+msgstr "Unable to zoom"
+
+# User tries to add more than one More than one e-mail recipient to Address book at once (MSG-INF500)
+msgid "mcen_ib_select_only_one_recipient"
+msgstr "Select 1 recipient only"
+
+# If user has selected multiple items and selects "Details" command this information banner is displayed. (MSG-INF105)
+msgid "mcen_ib_select_oneitem_only"
+msgstr "Select 1 item only"
+
+# If the username or password in the Mail account password dialog (MSG-DIA316) is wrong this Information banner is displayed. (MSG-INF304)
+msgid "mcen_ib_username_pw_incorrect"
+msgstr "User name or password incorrect"
+
+# If the user tries to move items to a same folder where they exist. (MSG-INF013)
+msgid "mcen_ib_unable_to_move_samefolder"
+msgstr "Unable to move messages to original folder"
+
+# if the message is attempted to be deleted in a viewer and it’s is already been deleted in a list view this note is displayed (MSG-INF020)
+msgid "mcen_ib_message_already_deleted"
+msgstr "Message already deleted"
+
+# If the user tries to copy messages that are in use or not downloaded.
+msgid "mcen_ib_messages_cannot_copy"
+msgstr ""
+"Unable to copy.\n"
+"Some messages not available."
+
+# If the user tries to delete a message that is open in a viewer or Editor. 
+msgid "mcen_ib_message_unableto_delete"
+msgstr ""
+"Unable to delete.\n"
+"Message is in use."
+
+# If the user tries to send a message that is open in a viewer or Editor.
+msgid "mcen_ib_message_unableto_send"
+msgstr ""
+"Unable to send.\n"
+"Message is in use."
+
+# If the user tries to cancel sending of a message that is open in a viewer or Editor.
+msgid "mcen_ib_message_unableto_cancel_send"
+msgstr ""
+"Unable to cancel sending.\n"
+"Message is in use."
+
+# This information banner is displayed after the user taps Copy command.
+msgid "mail_ib_copied_to_clipboard"
+msgstr "Copied"
+
+# This information banner is displayed if no matches has been found using ‘Find on page’ command. 
+msgid "mail_find_ib_not_found"
+msgstr "No matches found"
+
+# This information banner is displayed if user taps search button in the find toolbar and there is no text in the search field. 
+msgid "mail_find_ib_enter_the_text_to_be_found"
+msgstr "Enter the text to be found"
+
+# This information banner is displayed if user taps search button in the find toolbar and there are no more results to display. 
+msgid "mail_ib_search_complete"
+msgstr "Search complete"
+
+# This information banner is displayed if the message where find is attempted is empty. 
+msgid "mail_ib_nothing_to_find"
+msgstr "Nothing to find"
+
+# This error is shown when an unknown internal error occurs while doing some file operation.
+msgid "mail_ib_file_operation_failed"
+msgstr "File error"
+
+# If user is trying to purge a attachment of a POP message (MSG-INF096)
+msgid "mail_ib_unable_to_pure_attach_pop_mail_singular"
+msgstr "Unable to purge attachments for POP message"
+
+# If user tries to purge attachments and it is impossible.
+msgid "mail_ib_unable_to_purge_attachments"
+msgstr "Unable to purge attachments"
+
+# If user tries to purge attachments of an editable message.
+msgid "mail_ib_unable_to_purge_editable_msg"
+msgstr "Purging not available for editable messages"
+
+# When multiple mails are selected on the e-mail viewer and purge attachment menu command is selected then this error message is shown.
+msgid "mail_ib_unable_to_pure_attach_pop_mail_plural"
+msgstr "Unable to purge selected attachments"
+
+# If the user is attempting to save a mail account name that is already in use. 
+msgid "mail_ib_account_name_already_existing"
+msgstr "E-mail account name already in use"
+
+# Displayed if the attachment is not local and it is attempted to be purged. 
+msgid "mail_ib_attach_not_local"
+msgstr "Selected attachment has not been retrieved"
+
+# Displayed if the user taps Delete in the e-mail viewer when an attached e-mail message is viewed. 
+msgid "mail_ib_ln_attch_email_del"
+msgstr "Unable to delete attached message"
+
+# Displayed if the system is unable to save users settings in the last screen of mail account editing/creation wizard due to some unknown reason say due to missing file or folder permissions. The user should close the set-up wizard close the application and start again.
+msgid "mail_ib_setting_failed"
+msgstr "Unable to save settings"
+
+# This is a plural version of (WID – INF050). Displayed if the user selects a copy command on items that cannot be copied.
+msgid "mail_ib_ui_folder_copy_msgs_error"
+msgstr "Unable to copy messages"
+
+# Displayed if the user taps "Cancel" button in Mail account password dialog. 
+msgid "mail_ib_login_cancelled"
+msgstr "Login cancelled"
+
+# Displayed if the user attempts to purge already purged attachment from message. 
+msgid "mail_ib_attachment_already_purged"
+msgstr "Attachment already purged"
+
+# Displayed if the user taps the certificate details icon in the e-mail viewer and there is no information available e.g. user has not accepted certificate installation. 
+msgid "mail_ib_its_new_signer_cert_no_properties"
+msgstr "New signer certificate"
+
+# Displayed during recipient verification or similar action. (MSG-NOT026)
+msgid "mail_ib_checking_names"
+msgstr "Checking names"
+
+# Displayed when user saves the auto-retrieve settings and closes the dialog by OK button.
+msgid "mail_ib_autoretrieve_on"
+msgstr "Auto-retrieve enabled"
+
+# Displayed when user changes the auto-retrieve settings and closes the dialog by OK button.
+msgid "mail_ib_autoretrieve_off"
+msgstr "Auto-retrieve disabled"
+
+# Displayed if the attaching process takes considerable time e.g. when copying file over Bluetooth from a paired telephone. 
+msgid "mail_ib_attaching_large_file"
+msgstr "Attaching"
+
+# Displayed if user taps dimmed buttons or menu commands in E-mail viewer while downloading. 
+msgid "mail_ib_notavailable_downloading"
+msgstr "Not available while retrieving message"
+
+# Displayed if connection list in Connection specific SMTP servers dialog takes long time to update. 
+msgid "mcen_ib_optionalsmtp_updating"
+msgstr "Updating connection list"
+
+# If user tries to open a message that is currently being sent.
+msgid "mcen_ib_unable_to_open_while_sent"
+msgstr "Unable to open messages while being sent"
+
+# If user tries to retrieve contents of message(s) that have already been retrieved.
+msgid "mcen_ib_contents_already_retrieved"
+msgstr "Message contents have already been retrieved"
+
+# If user attempts to delete a message from the list view without first selecting one.
+msgid "mcen_ib_no_message_selected"
+msgstr "Select message first"
+
+# MSG-INF016: If a user attempts to paste the object to Outbox folder.
+msgid "mcen_ib_unable_to_copy_outbox"
+msgstr "Unable to copy messages to Outbox"
+
+# If a user attempts to paste the object to Sent folder. (MSG-INF017)
+msgid "mcen_ib_unable_to_copy_sentfolder"
+msgstr "Unable to copy messages to Sent folder"
+
+# If the user attempts to select the ‘Copy’ command while it is dimmed in the menu. (WID-INF050)
+msgid "mcen_ib_unable_to_copy"
+msgstr "Unable to copy"
+
+# If the user attempts to select the ‘Cut’ command while it is dimmed in the menu. (WID-INF048)
+msgid "mcen_ib_unable_to_cut"
+msgstr "Unable to cut"
+
+# If the user attempts to select ‘Send & receive’ while it is dimmed in the menu. (MSG-INF109)
+msgid "mcen_ib_already_retrieving"
+msgstr "Already in progress"
+
+# If the user attempts to access ‘Next message’ command when dimmed. (MSG-INF103)
+msgid "mcen_ib_nomore_messages"
+msgstr "No more messages"
+
+# If the user attempts to select ‘Save attachment’ command while it is dimmed. (MSG-INF279)
+msgid "mcen_ib_no_attachment_selected"
+msgstr "Select attachment first"
+
+# If the user attempts to select ‘Cancel sending’ command while it is dimmed. (MSG-INF044)
+msgid "mcen_ib_nothing_to_cancel"
+msgstr "Nothing to cancel"
+
+# If the user attempts to select ‘Delete’ option while it is dimmed. (WID-INF052)
+msgid "mcen_ib_nothing_to_del"
+msgstr "Nothing to delete"
+
+# If the user tries to select ‘Forward’ command while it is dimmed. (MSG-INF255)
+msgid "mcen_ib_nothing_to_fw"
+msgstr "Nothing to forward"
+
+# If the user tries to select ‘Open’ command while it is dimmed. (MSG-INF306)
+msgid "mcen_ib_nothing_to_open"
+msgstr "Nothing to open"
+
+# If the user tries to select ‘Paste’ command while it is dimmed. (WID-INF047)
+msgid "mcen_ib_nothing_to_paste"
+msgstr "Nothing to paste"
+
+# If the user tries to select ‘Reply’ command while it is dimmed. (MSG-INF256
+msgid "mcen_ib_nothing_to_reply"
+msgstr "Nothing to reply to"
+
+# If the user tries to select ‘Resend’ command while it is dimmed. (MSG-INF099)
+msgid "mcen_ib_nothing_to_resend"
+msgstr "Nothing to resend"
+
+# If the user tries to select ‘Send message’ command while it is dimmed. (MSG-INF045)
+msgid "mcen_ib_nothing_to_send"
+msgstr "Nothing to send"
+
+# If the user tries to select ‘Sort’ command while it is dimmed. (WID-INF181)
+msgid "mcen_ib_nothing_to_sort"
+msgstr "Nothing to sort"
+
+# If the user attempts to select ‘Add to Address book’ command while it is dimmed. (MSG-INF095)
+msgid "mcen_ib_nothing_to_add"
+msgstr "Nothing to add"
+
+# If the user attempts to select ‘Move to’ command while it is dimmed. (WID-INF092)
+msgid "mcen_ib_nothing_to_move"
+msgstr "Nothing to move"
+
+# If user tries to paste object to the Outbox. (MSG-INF011)
+msgid "mcen_ib_unable_to_move_outbox"
+msgstr "Unable to move messages to Outbox"
+
+# If user tries to move items to Sent folder. (MSG-INF012)
+msgid "mcen_ib_unable_to_move_sentfolder"
+msgstr "Unable to move messages to Sent folder"
+
+# If user tries to move mail attachment that is opened in a Viewer to a folder when "Move to" command is dimmed.
+msgid "mcen_ib_unable_to_move_mail_attachment"
+msgstr "Unable to move attached e-mail"
+
+# If the user tries to delete the drafts folder. (MSG-INF005)
+msgid "mcen_ib_unable_to_delete_drafts"
+msgstr "Unable to delete Drafts folder"
+
+# If the user tries to delete the Inbox folder. (MSG-INF001)
+msgid "mcen_ib_unable_to_delete_inbox"
+msgstr "Unable to delete Inbox"
+
+# If the user tries to delete the Outbox folder. (MSG-INF003)
+msgid "mcen_ib_unable_to_delete_outbox"
+msgstr "Unable to delete Outbox"
+
+# If the user tries to delete the Sent folder. (MSG-INF007)
+msgid "mcen_ib_unable_to_delete_sent"
+msgstr "Unable to delete Sent folder"
+
+# If the user tries to delete Archive folder when command is dimmed.
+msgid "mcen_ib_unable_to_delete_archive"
+msgstr "Unable to delete Archive folder"
+
+# If the user tries to rename inbox folder when command is dimmed. (MSG-INF002)
+msgid "mcen_ib_unable_to_rename_inbox"
+msgstr "Unable to rename Inbox"
+
+# If the user tries to rename Outbox folder when command is dimmed. (MSG-INF004)
+msgid "mcen_ib_unable_to_rename_outbox"
+msgstr "Unable to rename Outbox"
+
+# If the user tries to rename Drafts folder when command is dimmed. (MSG-INF006)
+msgid "mcen_ib_unable_to_rename_drafts"
+msgstr "Unable to rename Drafts folder"
+
+# If the user tries to rename Sent folder when command is dimmed. (MSG-INF008)
+msgid "mcen_ib_unable_to_rename_sent"
+msgstr "Unable to rename Sent folder"
+
+# If the user tries to rename Archive folder when command is dimmed. 
+msgid "mcen_ib_unable_to_rename_archive"
+msgstr "Unable to rename Archive folder"
+
+# Displayed if the user taps Properties menu item in Security menu when it’s dimmed. 
+msgid "mail_ib_no_security_properties"
+msgstr "No security details available"
+
+# Displayed if the user taps "Purge attachments" command when the command is dimmed. 
+msgid "mail_ib_nothing_to_purge"
+msgstr "Nothing to purge"
+
+# Displayed if the focus is on Inbox folder and dimmed Messagedetails command is tapped.
+msgid "mail_ib_no_details_inbox"
+msgstr "No details available. Select a message first."
+
+# Displayed if the focus is on Inbox folder and dimmed Folder settings command is tapped.
+msgid "mail_ib_no_settings_inbox"
+msgstr "No settings available for this folder"
+
+# Displayed if the focus is on Outbox folder and dimmed New folder command is tapped.
+msgid "mail_ib_unable_to_create_folder_outbox"
+msgstr "Unable to create folder in Outbox"
+
+# Displayed if the focus is on Drafts folder and dimmed New folder command is tapped.
+msgid "mail_ib_unable_to_create_folder_drafts"
+msgstr "Unable to create folder in Drafts"
+
+# Displayed if the focus is on Sent folder and dimmed New folder command is tapped.
+msgid "mail_ib_unable_to_create_folder_sent"
+msgstr "Unable to create folder in Sent"
+
+# Displayed if the focus is on Archive folder and dimmed New folder command is tapped.
+msgid "mail_ib_unable_to_create_folder_archive"
+msgstr "Unable to create folder in Archive"
+
+# Displayed if the focus is on a second-level user-created folder and a dimmed New folder command is tapped.
+msgid "mail_ib_unable_to_create_folder_2ndlevel"
+msgstr "Unable to create a third level folder"
+
+# MSG-NOT070
+msgid "mcen_ib_advsetup_settings_saved"
+msgstr "Settings saved"
+
+# Field item in unable to move message information note (MSG-NOT266)
+msgid "emev_nc_unabletomove_item"
+msgstr "Unable to move 1 item. Already in use."
+
+# Dialog button in unable to move message information note (MSG-NOT267)
+msgid "emev_bd_unabletomove_items"
+msgstr "Unable to move %d items. Already in use."
+
+# Cancel note displayed when user selects delete command and deleting takes time
+msgid "mcen_nw_deleting"
+msgstr "Deleting messages"
+
+# Button for cancel note 
+msgid "mcen_bd_deleting_stop"
+msgstr "Stop"
+
+# Field item in mail account not available note. MSG-NOT309
+msgid "emev_nc_mailbox_notavailable"
+msgstr "E-mail account not available"
+
+# Field item in mail account in use note. MSG-NOT310
+msgid "emev_nc_mailbox_inuse"
+msgstr "E-mail account in use"
+
+# Text in No matching contacts found
+msgid "mcen_nc_no_matching_contacts"
+msgstr "No matching contacts found"
+
+# Text in unable to delete %d messages notification
+msgid "mcen_nc_unable_to_delete_n_messages"
+msgstr ""
+"Unable to delete %s messages.\n"
+"Messages in use or already queued for deletion."
+
+# Text in unable to send %d messages notification
+msgid "mcen_nc_unable_to_send_n_messages"
+msgstr ""
+"Unable to send %s messages.\n"
+"Messages in use."
+
+# Text in information note
+msgid "mcen_nc_unable_to_send_from_editor"
+msgstr ""
+"Unable to send.\n"
+"Message stored in Outbox waiting to be sent."
+
+# Text in Security settings will not be saved information note. 
+msgid "mcen_nc_security_settings_not_saved"
+msgstr ""
+"Security settings will not be saved. Digitally sign and encrypt message "
+"before sending."
+
+# Label in information note
+msgid "mail_usr_not_available_on_server_dev"
+msgstr "Recipient not found on server"
+
+# Information note when viewer for attachment cannot be found when attachment is attempted to be opened.
+msgid "mcen_ni_noregistered_viewer"
+msgstr "No viewer found for this file type"
+
+# Notification displayed to inform the user that the attachment they have requested to download cannot be found on the server
+msgid "emev_ni_attachment_not_found"
+msgstr "Unable to find message or attachment on server"
+
+# Button label
+msgid "mcen_bd_yes"
+msgstr "OK"
+
+# Button label
+msgid "mcen_bd_no"
+msgstr "Cancel"
+
+# Label where %s is the name of the contact. If the name does not exist shows the nickname, or if that one does not exist either, shows the username (can be actually e-mail address).
+msgid "mcen_nc_email_address_not_defined"
+msgstr ""
+"No e-mail address defined for contact %s.\n"
+"Define one now?"
+
+# Label where %s is the name of the folder selected for deletion.
+msgid "mcen_nc_delete_folder_text"
+msgstr ""
+"Delete folder and its contents?\n"
+"%s"
+
+# Confirmation note label
+msgid "emev_nc_formatting_lost"
+msgstr ""
+"All current formatting will be removed.\n"
+"Continue anyway?"
+
+#  Label: Only one message header or partially downloaded message is to be moved
+msgid "mcen_nc_move_header"
+msgid_plural "mcen_nc_move_headers"
+msgstr[0] ""
+"Moving this message will retrieve and delete it from the e-mail server.\n"
+"Move anyway?"
+msgstr[1] ""
+"Moving these messages will retrieve and delete them from the e-mail server.\n"
+"Move anyway?"
+msgstr[2] ""
+
+#  Label: Only one retrieved message is to be moved.
+msgid "mcen_nc_move_retrieve"
+msgid_plural "mcen_nc_move_retrieves"
+msgstr[0] ""
+"Moving this message will delete it from the e-mail server.\n"
+"Move anyway?"
+msgstr[1] ""
+"Moving these messages will delete them from the e-mail server.\n"
+"Move anyway?"
+msgstr[2] ""
+
+#  Only one message is to be retrieved
+msgid "mcen_nc_get_msg_txt"
+msgid_plural "mcen_nc_get_multi_msg_txt"
+msgstr[0] "Message content must be retrieved first. Retrieve now?"
+msgstr[1] "Content of messages must be retrieved first. Retrieve now?"
+msgstr[2] ""
+
+# Confirmation note label
+msgid "mcen_nc_no_email_acnts_defined"
+msgstr "No e-mail account defined. Define now?"
+
+# Confirmation note label
+msgid "imum_nc_wizard_confirm_lose_changes"
+msgstr ""
+"All changes made to the e-mail account settings will be lost. Continue "
+"anyway?"
+
+# Confirmation note label where %s is the <btdevicename>
+msgid "emev_nc_delete_mailbox"
+msgstr ""
+"Deleting this e-mail account will remove all copies of messages retrieved to "
+"the %s Inbox. Delete anyway?"
+
+#  Confirmation note label when only one attachment is selected
+msgid "emev_nc_retrieve_attachment"
+msgid_plural "mail_nc_attachments_must_be_retrived"
+msgstr[0] "Attachment must be retrieved first. Retrieve now?"
+msgstr[1] "Attachments must be retrieved first. Retrieve now?"
+msgstr[2] ""
+
+# Confirmation note label 
+msgid "emev_nc_disconnect_account"
+msgstr ""
+"Online editing of e-mail account will cause it to disconnect and will cancel "
+"any current operations. Continue anyway?"
+
+# Confirmation note label 
+msgid "emev_nc_replace_files"
+msgstr "Replace existing folder contents of same name?"
+
+#  Confirmation note label where %s is the filename of the selected attachment to be deleted
+msgid "emev_nc_delete_attachment"
+msgid_plural "emev_nc_delete_attachments"
+msgstr[0] ""
+"Remove attachment from message?\n"
+"%s"
+msgstr[1] "Remove selected attachments from message?"
+msgstr[2] ""
+
+# Confirmation note label 
+msgid "emev_nc_close_windows"
+msgstr ""
+"Several windows currently open. Close all E-mail windows?\n"
+"Tap 'No' to close current view only."
+
+# Button label
+msgid "emev_bd_close_windows_yes"
+msgstr "Yes"
+
+# Button label
+msgid "emev_bd_close_windows_no"
+msgstr "No"
+
+# Confirmation note label 
+msgid "emev_nc_include_original"
+msgstr "Retrieve and include original message in reply?"
+
+# Button label
+msgid "emev_bd_include_original_yes"
+msgstr "OK"
+
+# Button label
+msgid "emev_bd_include_original_no"
+msgstr "Cancel"
+
+#  Label: Confirmation note label where %s is the filename of the selected attachment to be purged
+msgid "mcen_nc_purge_file_text"
+msgid_plural "mcen_nc_purge_files_text"
+msgstr[0] "This will remove attachment %s from message. Continue anyway?"
+msgstr[1] "This will remove %d attachments from message. Continue anyway?"
+msgstr[2] ""
+
+# Label: Confirmation note label is used when the number of messages is not yet known as in a case when message is not opened
+msgid "mcen_nc_purge_file_text_inbox"
+msgstr "This removes attachments from this message. Continue anyway?"
+
+# Confirmation note label 
+msgid "mcen_nc_removesent"
+msgstr "Remove old messages from Sent folder now?"
+
+# Confirmation note label 
+msgid "mcen_nc_recipient_missing"
+msgstr "No recipient has been added. Select one from Contacts?"
+
+# Confirmation note label 
+msgid "mcen_nc_some_attachments_not_local"
+msgstr ""
+"Some of the selected attachments have not been retrieved.\n"
+"Delete all retrieved attachments?"
+
+# Confirmation note label 
+msgid "mcen_nc_subject_is_empty_send"
+msgstr ""
+"Subject of message is empty.\n"
+"Send anyway?"
+
+# Confirmation note label where the %s is the messages subject. If the subject is not given a text "(no subject)" is used.
+msgid "emev_ni_ui_smtp_message_null"
+msgstr ""
+"Body of message %s empty.\n"
+"Send anyway?"
+
+# Confirmation note label
+msgid "mcen_nc_no_email_message_modified_save_changes"
+msgstr "Message modified. Save changes?"
+
+# Confirmation note label
+msgid "mcen_nc_no_email_message_modified_save_changes_to_folder"
+msgstr "Message modified. Save to %s?"
+
+# Confirmation note label
+msgid "emev_nc_retrieve_attachments"
+msgstr "Attachments must be retrieved first. Retrieve now?"
+
+#  Confirmation note label when one message has been selected for deletion (WID-NOT107). %s is the message subject/details. These details will be the same as shown in the "Subject/detail" column for the message in List views. If the column is blank, then the notification will only show the first line.
+msgid "emev_nc_delete_message"
+msgid_plural "emev_nc_delete_messages"
+msgstr[0] ""
+"Delete message?\n"
+"%s"
+msgstr[1] "Delete messages?"
+msgstr[2] ""
+
+# Sending a signed message. Information note. 
+msgid "mcen_in_smime_retrieverror"
+msgstr "Unable to retrieve certificate"
+
+# Sending a signed message. Information note. 
+msgid "mcen_in_smime_key_retrieverror"
+msgstr "Unable to retrieve private key"
+
+# Sending a signed message. Information note. 
+msgid "mcen_in_smime_sign_error"
+msgstr "Unable to sign message"
+
+# Sending a signed message. This message will be shown either when the default signer certificate is expired, revoked, not yet valid. Confirmation note with buttons "OK" and "Cancel". 
+msgid "mcen_cn_smime_invalid_cert"
+msgstr ""
+"Certificate invalid.\n"
+"Tap 'OK' to send message."
+
+# Sending an encrypted message. Information note. 
+msgid "mcen_in_smime_no_pub_cert"
+msgstr "No public certificate available"
+
+# Sending an encrypted message. Information note. 
+msgid "mcen_in_smime_unable_encrypt"
+msgstr "Unable to encrypt message"
+
+# Sending an encrypted message. Confirmation note with buttons "Continue" and "Cancel". 
+msgid "mcen_cn_smime_common_alg_error"
+msgstr ""
+"No common encryption algorithm available.\n"
+"Tap 'Continue' to send message using the default algorithm triple DES."
+
+# Sending an encrypted message. Confirmation note with buttons "Continue" and "Cancel". 
+msgid "mcen_in_smime_weak_alg"
+msgstr ""
+"Common algorithm is weak.\n"
+"Tap 'Continue' to send message using RC2/40 algorithm."
+
+# Verifying a signed message. Information note is displayed when not enough system resources are available. 
+msgid "mcen_in_smime_process_error_sig"
+msgstr "Processing error occurred while verifying signed message"
+
+# Verifying a signed message. Information note. 
+msgid "mcen_in_smime_signer_not_available"
+msgstr ""
+"Signer's certificate not available.\n"
+"Unable to verify message."
+
+# Verifying a signed message. Information note. 
+msgid "mcen_in_smime_verify_failure"
+msgstr ""
+"Verification failed.\n"
+"Message may have been tampered with during delivery."
+
+# Verifying a signed message. Confirmation note with buttons "Details" and "Cancel". 
+msgid "mcen_cn_smime_invalid_certificate"
+msgstr "Invalid certificate. Tap 'Details' to view certificate information."
+
+# Decrypting a message. Information note is displayed when not enough system resources are available. 
+msgid "mcen_in_smime_process_error_decrypt"
+msgstr "Processing error occurred while decrypting message"
+
+# Decrypting a message. If there is no private certificate available for decrypting this information note is displayed. 
+msgid "mcen_in_smime_cannot_decrypt"
+msgstr "Unable to decrypt message. No private certificate available."
+
+# Decrypting a message. If there is no private key available for decrypting this information note is displayed. 
+msgid "mcen_in_smime_no_private_key"
+msgstr ""
+"Unable to decrypt message.\n"
+"No private key available."
+
+# This information note is displayed if the certificate cannot be imported to the Certificate manager.
+msgid "mail_in_unable_to_import_cert"
+msgstr "Unable to import certificate"
+
+# "Continue" button. This button is used in confirmation dialog "Common algorithm is weak. Tap ‘Continue’ to send message using RC2/40 algorithm."
+msgid "mail_smime_continue"
+msgstr "OK"
+
+# "OK" button. This is used in information note "Certificate invalid. Tap ‘OK’ to send message."
+msgid "mail_smime_ok"
+msgstr "OK"
+
+# Information note: SMTP username not given (empty field) in the advanced settings in the SMTP server authentication page. The <mailboxname> is the e-mail account name and <SMTP server> is the SMTP server address either the default SMTP server or the connection-specific server depending which one was used to send the message(s).  This error note has to appear only in the following scenarios:
+# Username has not been defined, but Password has been defined. - 
+# Username and password has not been defined.
+# 
+# This error note has to appear only for CRAM-MD5 only
+msgid "emev_ni_ui_smtp_userid_invalid"
+msgstr ""
+"SMTP user name not defined. Edit e-mail account options for account %1$s and "
+"enter password for server %2$s."
+
+# Information note: SMTP password not given (empty field) in the advanced settings in the SMTP server authentication page or in the Connection-specific SMTP server dialog. The <mailboxname> is the e-mail account name and <SMTP server> is the SMTP server address.
+msgid "emev_ni_ui_smtp_passwd_invalid"
+msgstr ""
+"SMTP password not defined. Edit e-mail account options for account %s and "
+"enter password for server %s."
+
+# Information banner: If wrong servername given in the Mail account setup wizard is wrong or cannot be contacted. This note can also be displayed if the current internet connection cannot access the SMTP server. The <SMTP server> is the SMTP server address. 
+msgid "emev_ib_ui_smtp_server_invalid"
+msgstr ""
+"Unable to connect to SMTP server %s or it does not exist. Server may "
+"currently be unavailable. Check your network has access to server."
+
+# Information banner: Messages cannot be sent due to a Network/Server error. This is a general message for unspecified errors occuring during send operation.
+msgid "emev_ib_ui_smtp_send_error"
+msgstr "SMTP send operation failed. Please try again later."
+
+# Information note: In the send and receive operation the authentication fails for some of these reasons: username or password not correct, user has no permission to access the server or the server does not support authentication. The <SMTP server> is the SMTP server address.
+msgid "emev_ni_ui_smtp_authentication_fail_error"
+msgstr ""
+"SMTP authentication failed. Check user name and password or that you have "
+"access to %s."
+
+# Information note: General connection error in Send & receive operation.
+# If the application cannot connect to the POP3 server this Note is displayed. The <POP3servername> is the name of the POP server. 
+msgid "emev_ni_ui_pop3_msg_connect_error"
+msgstr "Unable to establish connection to %s"
+
+# Information note: This error may occur when getting messages from the server in Send & receive operation. If the user has given wrong username or password this Note is displayed. Where the first %s is the e-mail account name and second %s is the name of the POP server.
+msgid "emev_ib_ui_pop3_msg_auth_error"
+msgstr ""
+"Authentication to %s failed. Check e-mail account server settings for %s."
+
+# Information banner: This error may occur when getting messages from the server in Send & receive operation. User might be accessing the mail account from two applications. 
+msgid "emev_ib_ui_pop3_msg_lock_error"
+msgstr "Unable to access e-mail account. Another application may be using it."
+
+# Information note: This error may occur when trying to retrieve message body from the server. Two possible causes for this error are: message may not exist on the server or an error occurs when processing e-mail messages. 
+msgid "emev_ni_ui_pop3_msg_recv_error"
+msgstr ""
+"Error occurred while processing message.\n"
+"Message may not exist on server."
+
+# Information banner: If the user canceled the connection process this Note is displayed. 
+msgid "emev_ib_ui_pop3_msg_recv_cancel"
+msgstr "Session was cancelled by user"
+
+# Information banner: This can occur when the messages are retrieved to the device and there is not enough space for the new messages. 
+msgid "emev_ui_pop3_msg_io_error"
+msgstr "Not enough memory. Delete some messages from the Inbox and try again."
+
+# Information banner: When retrieving messages and there are some lost packets in the transmission. 
+msgid "emev_ui_pop3_msg_socket_error"
+msgstr ""
+"Error in socket operation. If using SSL encrypted e-mail, disable SSL and "
+"try again."
+
+# Information note: If the POP server closes the connection this Note is displayed. 
+msgid "emev_ni_ui_pop3_msg_eof"
+msgstr ""
+"Connection terminated by e-mail server.\n"
+"Message retrieval cancelled. Try connecting again."
+
+# Information note: While retrieving message that was too big. E-mail application has reached the message size limit. User should configure a bigger size limit to download the message. 
+msgid "emev_ni_ui_pop3_msg_sizelimit_error"
+msgstr ""
+"Some messages exceed the size limit. Unable to retrieve those messages. "
+"Change message size limit."
+
+# Information note: If an attempt to connect SSL server fails then this error message is shown. This error may occur in case server certificate is expired or cipher is not supported or incase of no root certificate available etc.
+msgid "mail_ni_ssl_certificate_error"
+msgstr "Secure connection failed"
+
+# Information note: When the application is trying to connect to the IMAP server. Any one of the following things may be problem: wrong user ID, wrong password, wrong servername or port number. <IMAPservername> is the name of the IMAP server.
+msgid "emev_ni_ui_imap_connect_server_error"
+msgstr ""
+"Unable to connect to %s. User name, password, server name or port number may "
+"be incorrect."
+
+# Information banner: If the user has focused the message header and selected to retrieve the message body from the server.
+msgid "emev_ib_ui_imap_uid_fetch_error"
+msgstr "Unable to retrieve message body"
+
+# Information banner: This can happen when retrieving messages. The Server is unable to retrieve messages from inbox. Restarting appl is the only possible way to recover
+msgid "emev_ui_imap_inbox_select_error"
+msgstr "Unable to select server Inbox. Restart application and try again."
+
+# Information banner: If the message is deleted locally and it is attempted to be deleted also from the server. 
+msgid "emev_ib_ui_imap_flag_set_error"
+msgstr "Unable to delete some messages on server. Try again later."
+
+# Information note: While retrieving message that was too big. E-mail application has reached the message size limit. User should configure a bigger size limit to download the message. 
+msgid "emev_ni_ui_imap_msg_size_exceed_error"
+msgstr ""
+"Some messages exceed the size limit. Unable to retrieve those messages. "
+"Change message size limit."
+
+# Information note: If the user attempts to download a message that was deleted from the server. The <messagesubject> is the message subject. 
+msgid "emev_ni_ui_imap_message_not_available_in_server"
+msgstr "Message %s not available on server."
+
+# Information banner: This note is displayed if the server does not support action That is attempted. 
+msgid "emev_ib_ui_imap_server_not_support_error"
+msgstr "Operation not supported by IMAP server"
+
+# Information banner: Error while trying to synchronize with IMAP server. Variable %s will be replaced with the mail account name. 
+msgid "mail_ib_imap_server_sync_error"
+msgstr ""
+"IMAP synchronisation error occurred while processing messages.\n"
+"Performing Send-Receive operation for e-mail account %s."
+
+# Information note: If for some reason a message cannot be opened from a message folder or some other unexpected error has occurred.
+msgid "emev_ni_internal_error"
+msgstr "Error occurred"
+
+# Information note: This error is shown when some internal error occurs while moving or copying messages between different folders.
+msgid "mail_ni_ui_folder_file_error"
+msgstr "File error"
+
+# Information note: When an attempt to the e-mail header info from an e-mail saved in any of the folder's fails then this error message is shown.
+msgid "mail_ni_ui_folder_get_header_error"
+msgstr "Unable to retrieve message header"
+
+# Information note: When an attempt to read e-mail from the file stored on Mail directory fails.
+msgid "mail_ni_ui_folder_get_msg_folder_error"
+msgstr "Unable to retrieve message"
+
+# Information note: This information note is displayed if the user is attempting to create a folder and the action is not successfull.
+msgid "mail_in_ui_folder_create_error"
+msgstr "Unable to create folder"
+
+# Information note: This information note is displayed if the user is attempting to delete a folder and the action is not successful for some other reason that the folder being one of the mandatory folders, e.g. user created folder. 
+msgid "mail_in_ui_folder_delete_error"
+msgstr "Unable to delete folder"
