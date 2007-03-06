@@ -62,10 +62,8 @@ modest_tny_msg_new (const gchar* mailto, const gchar* from, const gchar *cc,
 	/* Create new msg */
 	fact    = modest_runtime_get_platform_factory ();
 	new_msg = tny_platform_factory_new_msg (fact);
-	header  = tny_platform_factory_new_header (fact);
+	header  = tny_msg_get_header (new_msg);
 	
-	/* WARNING: set the header before assign values to it */
-	tny_msg_set_header (new_msg, header);
 	tny_header_set_from (TNY_HEADER (header), from);
 	tny_header_set_replyto (TNY_HEADER (header), from);
 	tny_header_set_to (TNY_HEADER (header), mailto);

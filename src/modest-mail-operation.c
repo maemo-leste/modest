@@ -37,6 +37,7 @@
 #include <tny-folder-store-query.h>
 #include <tny-camel-stream.h>
 #include <tny-simple-list.h>
+#include <tny-send-queue.h>
 #include <camel/camel-stream-mem.h>
 #include <glib/gi18n.h>
 #include <modest-tny-account.h>
@@ -312,9 +313,7 @@ create_reply_forward_mail (TnyMsg *msg, const gchar *from, gboolean is_reply, gu
 	g_object_unref (G_OBJECT(body));
 	
 	/* Fill the header */
-	new_header = TNY_HEADER (tny_platform_factory_new_header
-				 (modest_runtime_get_platform_factory()));
-	tny_msg_set_header (new_msg, new_header);
+	new_header = tny_msg_get_header (new_msg);	
 	tny_header_set_from (new_header, from);
 	tny_header_set_replyto (new_header, from);
 

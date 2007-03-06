@@ -53,8 +53,6 @@ static TnyDevice*       modest_tny_platform_factory_new_device        (TnyPlatfo
 static TnyMsgView*      modest_tny_platform_factory_new_msg_view      (TnyPlatformFactory *self);
 static TnyMsg*          modest_tny_platform_factory_new_msg           (TnyPlatformFactory *self);
 static TnyMimePart*     modest_tny_platform_factory_new_mime_part     (TnyPlatformFactory *self);
-static TnyHeader*       modest_tny_platform_factory_new_header        (TnyPlatformFactory *self);
-
 
 /* list my signals  */
 enum {
@@ -162,8 +160,6 @@ tny_platform_factory_init (gpointer g, gpointer iface_data)
 	klass->new_msg_view_func      = modest_tny_platform_factory_new_msg_view;
 	klass->new_msg_func           = modest_tny_platform_factory_new_msg;
 	klass->new_mime_part_func     = modest_tny_platform_factory_new_mime_part;
-	klass->new_header_func        = modest_tny_platform_factory_new_header;
-
 	return;
 }
 
@@ -210,8 +206,3 @@ modest_tny_platform_factory_new_mime_part (TnyPlatformFactory *self)
 }
 
 
-static TnyHeader*
-modest_tny_platform_factory_new_header (TnyPlatformFactory *self)
-{
-	return tny_camel_header_new ();
-}
