@@ -2,7 +2,7 @@
 # Makefile.am
 # Time-stamp: <2007-03-03 17:20:20 (djcb)>
 SUBDIRS=$(MODEST_PLATFORM) widgets
-DIST_SUBDIRS = widgets gtk maemo
+DIST_SUBDIRS = widgets gnome maemo
 
 INCLUDES=\
 	$(MODEST_GSTUFF_CFLAGS)\

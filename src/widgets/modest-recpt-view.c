@@ -217,7 +217,7 @@ text_view_size_request (GtkWidget *widget,
 	}
 
 	priv->line_height = iter_rectangle.height;
-	
+
 }
 
 static void
@@ -240,6 +240,9 @@ modest_recpt_view_instance_init (GTypeInstance *instance, gpointer g_class)
 {
 	ModestRecptViewPriv *priv = MODEST_RECPT_VIEW_GET_PRIVATE (instance);
 
+	gtk_scrolled_window_set_hadjustment (GTK_SCROLLED_WINDOW (instance), NULL);
+	gtk_scrolled_window_set_vadjustment (GTK_SCROLLED_WINDOW (instance), NULL);
+
 	priv->text_view = gtk_text_view_new ();
 
 	gtk_text_view_set_editable (GTK_TEXT_VIEW (priv->text_view), FALSE);
@@ -250,7 +253,6 @@ modest_recpt_view_instance_init (GTypeInstance *instance, gpointer g_class)
 	gtk_text_view_set_left_margin (GTK_TEXT_VIEW (priv->text_view), 0);
 	gtk_text_view_set_right_margin (GTK_TEXT_VIEW (priv->text_view), 0);
 	gtk_text_view_set_cursor_visible (GTK_TEXT_VIEW (priv->text_view), FALSE);
-	gtk_drag_dest_unset (priv->text_view);
 
 	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (instance), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
 

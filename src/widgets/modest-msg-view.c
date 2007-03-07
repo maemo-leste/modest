@@ -43,6 +43,7 @@
 #include "modest-msg-view.h"
 #include "modest-tny-stream-gtkhtml.h"
 #include <modest-mail-header-view.h>
+#include <modest-attachments-view.h>
 
 
 /* 'private'/'protected' functions */
@@ -71,6 +72,8 @@ typedef struct _ModestMsgViewPrivate ModestMsgViewPrivate;
 struct _ModestMsgViewPrivate {
 	GtkWidget   *gtkhtml;
 	GtkWidget   *mail_header_view;
+	GtkWidget   *attachments_view;
+
 	TnyMsg      *msg;
 
 	gulong  sig1, sig2, sig3;
@@ -165,16 +168,20 @@ modest_msg_view_init (ModestMsgView *obj)
 	priv = MODEST_MSG_VIEW_GET_PRIVATE(obj);
 
 	priv->msg                     = NULL;
+
 	priv->gtkhtml                 = gtk_html_new();
-	priv->mail_header_view        = GTK_WIDGET(modest_mail_header_view_new ());
-	gtk_widget_set_no_show_all (priv->mail_header_view, TRUE);
-	
 	gtk_html_set_editable        (GTK_HTML(priv->gtkhtml), FALSE);
 	gtk_html_allow_selection     (GTK_HTML(priv->gtkhtml), TRUE);
 	gtk_html_set_caret_mode      (GTK_HTML(priv->gtkhtml), FALSE);
 	gtk_html_set_blocking        (GTK_HTML(priv->gtkhtml), FALSE);
 	gtk_html_set_images_blocking (GTK_HTML(priv->gtkhtml), FALSE);
 
+	priv->mail_header_view        = GTK_WIDGET(modest_mail_header_view_new ());
+	gtk_widget_set_no_show_all (priv->mail_header_view, TRUE);
+
+	priv->attachments_view        = GTK_WIDGET(modest_attachments_view_new (NULL));
+	gtk_widget_set_no_show_all (priv->attachments_view, TRUE);
+	
 	priv->sig1 = g_signal_connect (G_OBJECT(priv->gtkhtml), "link_clicked",
 				       G_CALLBACK(on_link_clicked), obj);
 	priv->sig2 = g_signal_connect (G_OBJECT(priv->gtkhtml), "url_requested",
@@ -202,6 +209,7 @@ modest_msg_view_finalize (GObject *obj)
 	 * already dead */
 	
 	priv->gtkhtml = NULL;
+	priv->attachments_view = NULL;
 	
 	G_OBJECT_CLASS(parent_class)->finalize (obj);		
 }
@@ -225,6 +233,9 @@ modest_msg_view_new (TnyMsg *msg)
 	if (priv->mail_header_view)
 		gtk_box_pack_start (GTK_BOX(self), priv->mail_header_view, FALSE, FALSE, 0);
 	
+	if (priv->attachments_view)
+		gtk_box_pack_start (GTK_BOX(self), priv->attachments_view, FALSE, FALSE, 0);
+
 	if (priv->gtkhtml) {
 		scrolled_window = gtk_scrolled_window_new (NULL, NULL);
 		gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled_window),
@@ -358,68 +369,9 @@ on_url_requested (GtkWidget *widget, const gchar *uri,
 	return TRUE;
 }
 
-
-/* render the attachments as hyperlinks in html */
-static gchar*
-attachments_as_html (ModestMsgView *self, TnyMsg *msg)
-{
-	ModestMsgViewPrivate *priv;
-	GString *appendix;
-	TnyList *parts;
-	TnyIterator *iter;
-	gchar *html;
-	int index = 0;
-	
-	if (!msg)
-		return NULL;
-
-	priv  = MODEST_MSG_VIEW_GET_PRIVATE (self);
-
-	parts = TNY_LIST(tny_simple_list_new());
-	tny_mime_part_get_parts (TNY_MIME_PART (msg), parts);
-	iter  = tny_list_create_iterator (parts);
-	
-	appendix= g_string_new ("");
-	
-	while (!tny_iterator_is_done(iter)) {
-		TnyMimePart *part;
-
-		++index; /* attachment numbers are 1-based */	
-		part = TNY_MIME_PART(tny_iterator_get_current (iter));
-
-		if (tny_mime_part_is_attachment (part)) {
-
-			const gchar *filename = tny_mime_part_get_filename(part);
-			if (!filename)
-				filename = _("attachment");
-
-			g_string_append_printf (appendix, "<a href=\"%s%d\">%s</a> \n",
-						ATT_PREFIX, index, filename);			 
-		}
-		
-		g_object_unref (G_OBJECT(part));
-		tny_iterator_next (iter);
-	}
-	g_object_unref (G_OBJECT(iter));
-	g_object_unref (G_OBJECT(parts));
-	
-	if (appendix->len == 0) 
-		return g_string_free (appendix, TRUE);
-
-	html = g_strdup_printf ("<strong>%s:</strong> %s\n<hr>",
-				_("Attachments"), appendix->str);			 
-	g_string_free (appendix, TRUE);
-	
-	return html;
-}
-
-
-
-
 static gboolean
 set_html_message (ModestMsgView *self, TnyMimePart *tny_body, TnyMsg *msg)
 {
-	gchar *html_attachments;
 	GtkHTMLStream *gtkhtml_stream;
 	TnyStream *tny_stream;	
 	ModestMsgViewPrivate *priv;
@@ -433,13 +385,6 @@ set_html_message (ModestMsgView *self, TnyMimePart *tny_body, TnyMsg *msg)
 
 	tny_stream     = TNY_STREAM(modest_tny_stream_gtkhtml_new (gtkhtml_stream));
 	tny_stream_reset (tny_stream);
-
-	html_attachments = attachments_as_html(self, msg);
-	if (html_attachments) {
-		tny_stream_write (tny_stream, html_attachments, strlen(html_attachments));
-		tny_stream_reset (tny_stream);
-		g_free (html_attachments);
-	}
 
 	tny_mime_part_decode_to_stream ((TnyMimePart*)tny_body, tny_stream);
 	g_object_unref (G_OBJECT(tny_stream));
@@ -459,7 +404,7 @@ set_text_message (ModestMsgView *self, TnyMimePart *tny_body, TnyMsg *msg)
 	GtkTextIter begin, end;
 	TnyStream* txt_stream, *tny_stream;
 	GtkHTMLStream *gtkhtml_stream;
-	gchar *txt, *html_attachments;
+	gchar *txt;
 	ModestMsgViewPrivate *priv;
 		
 	g_return_val_if_fail (self, FALSE);
@@ -475,14 +420,6 @@ set_text_message (ModestMsgView *self, TnyMimePart *tny_body, TnyMsg *msg)
 	gtkhtml_stream = gtk_html_begin(GTK_HTML(priv->gtkhtml)); 
 	tny_stream =  TNY_STREAM(modest_tny_stream_gtkhtml_new (gtkhtml_stream));
 	
-	html_attachments = attachments_as_html(self, msg);
-	if (html_attachments) {
-		tny_stream_write (tny_stream, html_attachments,
-					strlen(html_attachments));
-		tny_stream_reset (tny_stream);
-		g_free (html_attachments);
-	}
-
 	// FIXME: tinymail
 	tny_mime_part_decode_to_stream ((TnyMimePart*)tny_body, txt_stream);
 	tny_stream_reset (txt_stream);		
@@ -553,6 +490,8 @@ modest_msg_view_set_message (ModestMsgView *self, TnyMsg *msg)
 	header = tny_msg_get_header (msg);
 	tny_header_view_set_header (TNY_HEADER_VIEW (priv->mail_header_view), header);
 	g_object_unref (header);
+
+	modest_attachments_view_set_message (priv->attachments_view, msg);
 	
 	body = modest_tny_msg_find_body_part (msg,TRUE);
 	if (body) {

@@ -1,4 +1,4 @@
-/* Copyright (c) 2006, Nokia Corporation
+/* Copyright (c) 2007, Nokia Corporation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,49 +27,43 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __MODEST_PLATFORM_H__
-#define __MODEST_PLATFORM_H__
+#ifndef MODEST_ATTACHMENTS_VIEW_H
+#define MODEST_ATTACHMENTS_VIEW_H
+#include <gtk/gtk.h>
+#include <glib-object.h>
+#include <tny-msg.h>
 
-#include <glib.h>
-#include <tny-device.h>
+G_BEGIN_DECLS
 
-/**
- * modest_platform_platform_init:
- *
- * platform specific initialization function
- * 
- * Returns: TRUE if succeeded, FALSE otherwise
- */
-gboolean modest_platform_init (void);
+#define MODEST_TYPE_ATTACHMENTS_VIEW             (modest_attachments_view_get_type ())
+#define MODEST_ATTACHMENTS_VIEW(obj)             (G_TYPE_CHECK_INSTANCE_CAST ((obj), MODEST_TYPE_ATTACHMENTS_VIEW, ModestAttachmentsView))
+#define MODEST_ATTACHMENTS_VIEW_CLASS(vtable)    (G_TYPE_CHECK_CLASS_CAST ((vtable), MODEST_TYPE_ATTACHMENTS_VIEW, ModestAttachmentsViewClass))
+#define MODEST_IS_ATTACHMENTS_VIEW(obj)          (G_TYPE_CHECK_INSTANCE_TYPE ((obj), MODEST_TYPE_ATTACHMENTS_VIEW))
+#define MODEST_IS_ATTACHMENTS_VIEW_CLASS(vtable) (G_TYPE_CHECK_CLASS_TYPE ((vtable), MODEST_TYPE_ATTACHMENTS_VIEW))
+#define MODEST_ATTACHMENTS_VIEW_GET_CLASS(inst)  (G_TYPE_INSTANCE_GET_CLASS ((inst), MODEST_TYPE_ATTACHMENTS_VIEW, ModestAttachmentsViewClass))
 
+typedef struct _ModestAttachmentsView ModestAttachmentsView;
+typedef struct _ModestAttachmentsViewClass ModestAttachmentsViewClass;
 
-/**
- * modest_platform_get_new_device:
- *
- * platform specific initialization function
- * 
- * Returns: TRUE if succeeded, FALSE otherwise
- */
-TnyDevice*  modest_platform_get_new_device (void);
+struct _ModestAttachmentsView
+{
+	GtkTextView parent;
 
+};
 
-/**
- * modest_platform_get_file_icon:
- * @name: the name of the file, or NULL
- * @mime_type: the mime-type, or NULL
- * @effective_mime_type: out-param which receives the 'effective mime-type', ie., the mime type
- * that will be used. May be NULL if you're not interested in this. Note: the returned string
- * is newly allocated, and should be g_free'd when done with it.
- *
- * this function gets the icon for the file, based on the file name and/or the mime type,
- * using the following strategy:
- * (1) if mime_type != NULL and mime_type != application/octet-stream, find the
- *     the icon name for this mime type
- * (2) otherwise, guess the icon type from the file name, and then goto (1)
- *
- * Returns: the icon name
- */
-gchar*  modest_platform_get_file_icon_name (const gchar* name, const gchar* mime_type,
-					    gchar **effective_mime_type);
+struct _ModestAttachmentsViewClass
+{
+	GtkTextViewClass parent_class;
 
-#endif /* __MODEST_PLATFORM_UTILS_H__ */
+	void (*activate)           (ModestAttachmentsView *attachments_view, gint index);
+};
+
+GType modest_attachments_view_get_type (void);
+
+GtkWidget* modest_attachments_view_new (TnyMsg *msg);
+
+void modest_attachments_view_set_message (ModestAttachmentsView *attachments_view, TnyMsg *msg);
+
+G_END_DECLS
+
+#endif

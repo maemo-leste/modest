@@ -35,6 +35,7 @@
 #include <gtk/gtk.h>
 #include <modest-text-utils.h>
 #include <modest-mail-header-view.h>
+#include <modest-tny-folder.h>
 
 static GObjectClass *parent_class = NULL;
 
@@ -139,6 +140,41 @@ modest_mail_header_view_set_header (TnyHeaderView *self, TnyHeader *header)
 	return;
 }
 
+static void
+modest_mail_header_view_update_is_sent (TnyHeaderView *self)
+{
+	ModestMailHeaderViewPriv *priv = MODEST_MAIL_HEADER_VIEW_GET_PRIVATE (self);
+	TnyFolder *folder = NULL;
+     
+	priv->is_sent = FALSE;
+
+	if (priv->header == NULL)
+		return;
+	
+	folder = tny_header_get_folder (priv->header);
+
+	if (folder) {
+		TnyFolderType folder_type;
+		folder_type = tny_folder_get_folder_type (folder);
+		if (folder_type == TNY_FOLDER_TYPE_NORMAL || folder_type == TNY_FOLDER_TYPE_UNKNOWN) {
+			gchar *fname = tny_folder_get_name (folder);
+			folder_type = modest_tny_folder_guess_folder_type_from_name (fname);
+		}
+
+		switch (folder_type) {
+		case TNY_FOLDER_TYPE_OUTBOX:
+		case TNY_FOLDER_TYPE_SENT:
+		case TNY_FOLDER_TYPE_DRAFTS:
+			priv->is_sent = TRUE;
+			break;
+		default:
+			priv->is_sent = FALSE;
+		}
+
+		g_object_unref (folder);
+	}
+}
+
 static void 
 modest_mail_header_view_set_header_default (TnyHeaderView *self, TnyHeader *header)
 {
@@ -156,8 +192,12 @@ modest_mail_header_view_set_header_default (TnyHeaderView *self, TnyHeader *head
 	if (header && G_IS_OBJECT (header))
 	{
 		const gchar *to, *from, *subject, *bcc, *cc;
+
 		g_object_ref (G_OBJECT (header)); 
 		priv->header = header;
+
+		modest_mail_header_view_update_is_sent (self);
+
 
 		to = tny_header_get_to (header);
 		from = tny_header_get_from (header);
