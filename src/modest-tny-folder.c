@@ -185,15 +185,19 @@ modest_tny_folder_get_local_folder_type  (const TnyFolder *folder)
 	g_return_val_if_fail (modest_tny_folder_is_local_folder(folder),
 			      TNY_FOLDER_TYPE_UNKNOWN);
 
+	/* we need to use the camel functions, because we want the
+	 * _full name_, that is, the full path name of the folder,
+	 * to distinguis between 'Outbox' and 'myfunkyfolder/Outbox'
+	 */
 	camel_folder = tny_camel_folder_get_folder (TNY_CAMEL_FOLDER(folder));
 	if (!camel_folder)
 		return TNY_FOLDER_TYPE_UNKNOWN;
 
 	full_name = camel_folder_get_full_name (camel_folder);
-	if (!full_name)
-		return TNY_FOLDER_TYPE_UNKNOWN;
-
 	camel_object_unref (CAMEL_OBJECT(camel_folder));
-
-	return modest_local_folder_info_get_type (full_name);
+	
+	if (!full_name) 
+		return TNY_FOLDER_TYPE_UNKNOWN;
+	else 
+		return modest_local_folder_info_get_type (full_name);
 }
