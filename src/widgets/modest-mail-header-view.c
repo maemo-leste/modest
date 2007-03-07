@@ -54,7 +54,7 @@ struct _ModestMailHeaderViewPriv
 	GtkWidget    *expander;
 	GtkWidget    *headers_vbox;
 	GtkSizeGroup *labels_size_group;
-	gboolean     is_sent;
+	gboolean     is_outgoing;
 	TnyHeader    *header;
 };
 
@@ -140,12 +140,12 @@ modest_mail_header_view_set_header (TnyHeaderView *self, TnyHeader *header)
 }
 
 static void
-modest_mail_header_view_update_is_sent (TnyHeaderView *self)
+modest_mail_header_view_update_is_outgoing (TnyHeaderView *self)
 {
 	ModestMailHeaderViewPriv *priv = MODEST_MAIL_HEADER_VIEW_GET_PRIVATE (self);
 	TnyFolder *folder = NULL;
      
-	priv->is_sent = FALSE;
+	priv->is_outgoing = FALSE;
 
 	if (priv->header == NULL)
 		return;
@@ -164,10 +164,10 @@ modest_mail_header_view_update_is_sent (TnyHeaderView *self)
 		case TNY_FOLDER_TYPE_OUTBOX:
 		case TNY_FOLDER_TYPE_SENT:
 		case TNY_FOLDER_TYPE_DRAFTS:
-			priv->is_sent = TRUE;
+			priv->is_outgoing = TRUE;
 			break;
 		default:
-			priv->is_sent = FALSE;
+			priv->is_outgoing = FALSE;
 		}
 
 		g_object_unref (folder);
@@ -195,7 +195,7 @@ modest_mail_header_view_set_header_default (TnyHeaderView *self, TnyHeader *head
 		g_object_ref (G_OBJECT (header)); 
 		priv->header = header;
 
-		modest_mail_header_view_update_is_sent (self);
+		modest_mail_header_view_update_is_outgoing (self);
 
 
 		to = tny_header_get_to (header);
@@ -206,7 +206,7 @@ modest_mail_header_view_set_header_default (TnyHeaderView *self, TnyHeader *head
 
 		if (subject)
 			add_header (MODEST_MAIL_HEADER_VIEW (self), _("<b>Subject:</b>"), subject);
-		if (priv->is_sent) {
+		if (priv->is_outgoing) {
 			gchar *sent = modest_text_utils_get_display_date (tny_header_get_date_sent (header));
 			gtk_label_set_markup (GTK_LABEL (priv->fromto_label), _("<b>To:</b>"));
 			if (to)
@@ -332,7 +332,7 @@ modest_mail_header_view_instance_init (GTypeInstance *instance, gpointer g_class
 
 	gtk_container_set_reallocate_redraws (GTK_CONTAINER (instance), TRUE);
 
-	priv->is_sent = FALSE;
+	priv->is_outgoing = FALSE;
 
 	return;
 }
