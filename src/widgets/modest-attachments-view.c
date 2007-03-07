@@ -29,7 +29,7 @@
 
 #include <config.h>
 
-#include <glib/gi18n-lib.h>
+//#include <glib/gi18n-lib.h>
 
 #include <string.h>
 #include <gtk/gtk.h>
@@ -92,11 +92,13 @@ modest_attachments_view_set_message (ModestAttachmentsView *attachments_view, Tn
 	GtkTextIter text_iter;
 	gint icon_height;
 
-	if (priv->msg) {
+	if (priv->msg) 
 		g_object_unref (priv->msg);
-	}
+	if (msg)
+		g_object_ref (G_OBJECT(msg));
+	
 	priv->msg = msg;
-
+	
 	buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (attachments_view));
 	gtk_text_buffer_set_text (buffer, "", -1);
 	gtk_text_buffer_get_end_iter (buffer, &text_iter);
@@ -189,7 +191,8 @@ button_release_event (GtkWidget *widget,
 			gint attachment_index = 0;
 
 			attachment_index = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (tag), "attachment-index"));
-			g_signal_emit (G_OBJECT (widget), signals[ACTIVATE_SIGNAL], NULL, attachment_index);
+			g_signal_emit (G_OBJECT (widget), signals[ACTIVATE_SIGNAL], 0,
+				       attachment_index);
 			break;
 		}
 		

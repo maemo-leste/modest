@@ -28,8 +28,7 @@
  */
 
 #include <config.h>
-
-#include <glib/gi18n-lib.h>
+//#include <glib/gi18n-lib.h>
 
 #include <string.h>
 #include <gtk/gtk.h>
@@ -157,7 +156,7 @@ modest_mail_header_view_update_is_sent (TnyHeaderView *self)
 		TnyFolderType folder_type;
 		folder_type = tny_folder_get_folder_type (folder);
 		if (folder_type == TNY_FOLDER_TYPE_NORMAL || folder_type == TNY_FOLDER_TYPE_UNKNOWN) {
-			gchar *fname = tny_folder_get_name (folder);
+			const gchar *fname = tny_folder_get_name (folder);
 			folder_type = modest_tny_folder_guess_folder_type_from_name (fname);
 		}
 

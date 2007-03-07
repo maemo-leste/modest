@@ -257,7 +257,7 @@ on_recpt_activated (ModestMailHeaderView *header_view,
 		    const gchar *address,
 		    ModestMsgView * view)
 {
-  g_signal_emit (G_OBJECT (view), signals[RECPT_ACTIVATED_SIGNAL], 0, address);
+	g_signal_emit (G_OBJECT (view), signals[RECPT_ACTIVATED_SIGNAL], 0, address);
 }
 
 static gboolean
@@ -491,7 +491,8 @@ modest_msg_view_set_message (ModestMsgView *self, TnyMsg *msg)
 	tny_header_view_set_header (TNY_HEADER_VIEW (priv->mail_header_view), header);
 	g_object_unref (header);
 
-	modest_attachments_view_set_message (priv->attachments_view, msg);
+	modest_attachments_view_set_message (MODEST_ATTACHMENTS_VIEW(priv->attachments_view),
+					     msg);
 	
 	body = modest_tny_msg_find_body_part (msg,TRUE);
 	if (body) {

@@ -546,7 +546,7 @@ update_model (ModestFolderView *self, ModestTnyAccountStore *account_store)
 
 	priv =	MODEST_FOLDER_VIEW_GET_PRIVATE(self);
 	
-	/* Notify that there is no folder selected */
+	/* Notify that there is no folder selected*/
 	g_signal_emit (G_OBJECT(self), 
 		       signals[FOLDER_SELECTION_CHANGED_SIGNAL], 0,
 		       NULL, TRUE);
