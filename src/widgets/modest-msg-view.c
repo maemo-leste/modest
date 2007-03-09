@@ -44,6 +44,7 @@
 #include "modest-tny-stream-gtkhtml.h"
 #include <modest-mail-header-view.h>
 #include <modest-attachments-view.h>
+#include <modest-marshal.h>
 
 
 /* 'private'/'protected' functions */
@@ -51,13 +52,20 @@ static void     modest_msg_view_class_init   (ModestMsgViewClass *klass);
 static void     modest_msg_view_init         (ModestMsgView *obj);
 static void     modest_msg_view_finalize     (GObject *obj);
 
+/* headers signals */
 static void on_recpt_activated (ModestMailHeaderView *header_view, const gchar *address, ModestMsgView *msg_view);
+static void on_attachment_activated (ModestAttachmentsView * att_view, gint index, gpointer);
+
+/* GtkHtml signals */
 static gboolean on_link_clicked (GtkWidget *widget, const gchar *uri, ModestMsgView *msg_view);
 static gboolean on_url_requested (GtkWidget *widget, const gchar *uri, GtkHTMLStream *stream,
 				  ModestMsgView *msg_view);
 static gboolean on_link_hover (GtkWidget *widget, const gchar *uri, ModestMsgView *msg_view);
 
-#define ATT_PREFIX "att:"
+/* size allocation handlers */
+static void size_request (GtkWidget *widget, GtkRequisition *req, gpointer userdata);
+static void size_allocate (GtkWidget *widget, GtkAllocation *alloc, gpointer userdata);
+static void html_adjustment_changed (GtkAdjustment *adj, ModestMsgView * view);
 
 /* list my signals */
 enum {
@@ -70,11 +78,17 @@ enum {
 
 typedef struct _ModestMsgViewPrivate ModestMsgViewPrivate;
 struct _ModestMsgViewPrivate {
+	GtkWidget   *table;
 	GtkWidget   *gtkhtml;
 	GtkWidget   *mail_header_view;
 	GtkWidget   *attachments_view;
 
 	TnyMsg      *msg;
+
+	GtkWidget   *headers_box;
+	GtkWidget   *html_scroll;
+
+	guint full_width, full_height, html_height;
 
 	gulong  sig1, sig2, sig3;
 };
@@ -104,7 +118,7 @@ modest_msg_view_get_type (void)
 			(GInstanceInitFunc) modest_msg_view_init,
 			NULL
 		};
- 		my_type = g_type_register_static (GTK_TYPE_VBOX,
+ 		my_type = g_type_register_static (GTK_TYPE_VIEWPORT,
 		                                  "ModestMsgView",
 		                                  &my_info, 0);
 	}
@@ -115,14 +129,15 @@ static void
 modest_msg_view_class_init (ModestMsgViewClass *klass)
 {
 	GObjectClass *gobject_class;
+	GtkWidgetClass *widget_class;
 	gobject_class = (GObjectClass*) klass;
+	widget_class = (GtkWidgetClass *) klass;
 
 	parent_class            = g_type_class_peek_parent (klass);
 	gobject_class->finalize = modest_msg_view_finalize;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestMsgViewPrivate));
 
-		
  	signals[LINK_CLICKED_SIGNAL] =
  		g_signal_new ("link_clicked",
 			      G_TYPE_FROM_CLASS (gobject_class),
@@ -160,12 +175,118 @@ modest_msg_view_class_init (ModestMsgViewClass *klass)
 			      G_TYPE_NONE, 1, G_TYPE_STRING);
 }
 
+/* THIS IS A HACK: we modify the size requisition and allocation system to negociate the
+ * size of the GtkHtml so that it gets the correct height, and reports it to this widget
+ * to propagate the new allocation. It should make it work when it's included in a scrolled
+ * window with a viewport */
+
+static void
+size_request (GtkWidget *widget,
+	      GtkRequisition *req,
+	      gpointer userdata)
+{
+	ModestMsgViewPrivate *priv = MODEST_MSG_VIEW_GET_PRIVATE (widget);
+	GtkRequisition req_headers;
+
+	g_message ("SIZE REQUEST START w %d h %d", req->width, req->height);
+
+	/* tries to allocate as much as possible of the current allocation for headers box */
+
+	req_headers.height = priv->full_height;
+	req_headers.width = req->width;
+	req->height = priv->full_height;
+
+	g_message ("SIZE REQUEST HEADER START w %d h %d", req_headers.width, req_headers.height);
+	gtk_widget_size_request (priv->headers_box, &req_headers);
+	g_message ("SIZE REQUEST HEADER END w %d h %d", req_headers.width, req_headers.height);
+	g_message ("SIZE REQUEST END w %d h %d", req->width, req->height);
+}
+
+static void
+size_allocate (GtkWidget *widget,
+	       GtkAllocation *alloc,
+	       gpointer userdata)
+{
+	ModestMsgViewPrivate *priv = MODEST_MSG_VIEW_GET_PRIVATE (widget);
+	GtkAllocation headers_alloc;
+	GtkAllocation html_alloc;
+	GtkAdjustment *hadj, *vadj;
+
+	g_message ("SIZE_ALLOCATE START w %d h %d", alloc->width, alloc->height);
+
+	priv->full_width = alloc->width;
+	priv->full_height = alloc->height;
+
+	hadj = gtk_viewport_get_hadjustment (GTK_VIEWPORT (widget));
+	vadj = gtk_viewport_get_vadjustment (GTK_VIEWPORT (widget));
+
+	/* allocates all the visible with for the header. The height is
+	   taken from the last requisition of the widget, supposing it's
+	   been calculated depending on this width */
+	headers_alloc.x = alloc->x;
+	headers_alloc.y = alloc->y;
+	headers_alloc.width = alloc->width;
+	headers_alloc.height = priv->headers_box->requisition.height;
+	if (priv->html_height != priv->gtkhtml->requisition.height)
+		gtk_widget_size_allocate (priv->headers_box, &headers_alloc);
+
+	/* allocates the gtk html space trying to negociate that it takes
+	 * the available space, and as much height as it needs. To do this,
+	 * it takes the internal adjustment upper value (see html_adjustment_changed)
+	 */
+	html_alloc.x = alloc->x;
+	html_alloc.y = alloc->y + headers_alloc.height;
+	html_alloc.width = alloc->width;
+ 	html_alloc.height = MAX(alloc->height, priv->html_height);
+	gtk_widget_size_allocate (priv->gtkhtml, &html_alloc);
+
+	/* Corrects the allocation of the full widget to include the final
+	 * gtkhtml height */
+	priv->full_height = headers_alloc.height + priv->html_height;
+	alloc->height = priv->full_height;
+
+	g_message ("SIZE_ALLOCATE END w %d h %d", alloc->width, alloc->height);
+
+}
+
+
+static void
+html_adjustment_changed (GtkAdjustment *adj,
+			 ModestMsgView * view)
+{
+	ModestMsgViewPrivate *priv = MODEST_MSG_VIEW_GET_PRIVATE (view);
+
+	g_message ("ADJUSTMENT CHANGED START upper %f html_height %d", adj->upper, priv->html_height);
+	
+	/* correct the html height calculation depending on the range exposed
+	 * by the html vertical adjustment
+	 */
+	if (((gint) adj->upper) != priv->gtkhtml->allocation.height) {
+		priv->html_height = (gint) adj->upper;
+	}
+	gtk_widget_queue_resize (GTK_WIDGET(view));
+}
+
+
 static void
 modest_msg_view_init (ModestMsgView *obj)
 {
  	ModestMsgViewPrivate *priv;
 	
 	priv = MODEST_MSG_VIEW_GET_PRIVATE(obj);
+
+
+	priv->full_width = 0;
+	priv->full_height = 0;
+	priv->html_height = G_MAXINT;
+
+	priv->table = gtk_table_new (2, 2, FALSE);
+
+	gtk_table_set_row_spacings (GTK_TABLE (priv->table), 0);
+	gtk_table_set_col_spacings (GTK_TABLE (priv->table), 0);
+
+	priv->html_scroll = gtk_scrolled_window_new (NULL, NULL);
+	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (priv->html_scroll), GTK_POLICY_NEVER, GTK_POLICY_NEVER);
 
 	priv->msg                     = NULL;
 
@@ -181,16 +302,19 @@ modest_msg_view_init (ModestMsgView *obj)
 
 	priv->attachments_view        = GTK_WIDGET(modest_attachments_view_new (NULL));
 	gtk_widget_set_no_show_all (priv->attachments_view, TRUE);
-	
+
 	priv->sig1 = g_signal_connect (G_OBJECT(priv->gtkhtml), "link_clicked",
 				       G_CALLBACK(on_link_clicked), obj);
 	priv->sig2 = g_signal_connect (G_OBJECT(priv->gtkhtml), "url_requested",
 				       G_CALLBACK(on_url_requested), obj);
 	priv->sig3 = g_signal_connect (G_OBJECT(priv->gtkhtml), "on_url",
 				       G_CALLBACK(on_link_hover), obj);
-	
+
 	g_signal_connect (G_OBJECT (priv->mail_header_view), "recpt-activated", 
 			  G_CALLBACK (on_recpt_activated), obj);
+
+	g_signal_connect (G_OBJECT (priv->attachments_view), "activate",
+			  G_CALLBACK (on_attachment_activated), obj);
 }
 	
 
@@ -210,10 +334,9 @@ modest_msg_view_finalize (GObject *obj)
 	
 	priv->gtkhtml = NULL;
 	priv->attachments_view = NULL;
-	
+
 	G_OBJECT_CLASS(parent_class)->finalize (obj);		
 }
-
 
 GtkWidget*
 modest_msg_view_new (TnyMsg *msg)
@@ -221,33 +344,35 @@ modest_msg_view_new (TnyMsg *msg)
 	GObject *obj;
 	ModestMsgView* self;
 	ModestMsgViewPrivate *priv;
-	GtkWidget *scrolled_window;
 	
 	obj  = G_OBJECT(g_object_new(MODEST_TYPE_MSG_VIEW, NULL));
 	self = MODEST_MSG_VIEW(obj);
 	priv = MODEST_MSG_VIEW_GET_PRIVATE (self);
 
-	gtk_box_set_spacing (GTK_BOX (self), 0);
-	gtk_box_set_homogeneous (GTK_BOX (self), FALSE);
+	priv->headers_box = gtk_vbox_new (0, FALSE);
 
 	if (priv->mail_header_view)
-		gtk_box_pack_start (GTK_BOX(self), priv->mail_header_view, FALSE, FALSE, 0);
+		gtk_box_pack_start (GTK_BOX(priv->headers_box), priv->mail_header_view, FALSE, FALSE, 0);
 	
 	if (priv->attachments_view)
-		gtk_box_pack_start (GTK_BOX(self), priv->attachments_view, FALSE, FALSE, 0);
+		gtk_box_pack_start (GTK_BOX(priv->headers_box), priv->attachments_view, FALSE, FALSE, 0);
+
+	gtk_table_attach (GTK_TABLE (priv->table), priv->headers_box, 0, 1, 0, 1, GTK_EXPAND, 0, 0, 0);
+	gtk_table_attach (GTK_TABLE (priv->table), gtk_label_new (""), 1, 2, 0, 1, 0, GTK_FILL|GTK_SHRINK, 0, 0);
 
 	if (priv->gtkhtml) {
-		scrolled_window = gtk_scrolled_window_new (NULL, NULL);
-		gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled_window),
-					       GTK_POLICY_AUTOMATIC,
-					       GTK_POLICY_AUTOMATIC);
-		gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW(scrolled_window),
-						     GTK_SHADOW_IN);
-		gtk_container_add (GTK_CONTAINER (scrolled_window), priv->gtkhtml);
-		gtk_box_pack_start (GTK_BOX(self), scrolled_window, TRUE, TRUE, 0);
+		gtk_container_add (GTK_CONTAINER (priv->html_scroll), priv->gtkhtml);
+		gtk_table_attach (GTK_TABLE(priv->table), priv->html_scroll, 0, 2, 1, 2, GTK_EXPAND, GTK_EXPAND, 0, 0);
 	}
 
+	gtk_container_add (GTK_CONTAINER (self), priv->table);
+
 	modest_msg_view_set_message (self, msg);
+
+	g_signal_connect (G_OBJECT (self), "size-request", G_CALLBACK (size_request), NULL);
+	g_signal_connect (G_OBJECT (self), "size-allocate", G_CALLBACK (size_allocate), NULL);
+	g_signal_connect (G_OBJECT (gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(priv->html_scroll))), 
+			  "changed", G_CALLBACK (html_adjustment_changed), self);
 	
 	return GTK_WIDGET(self);
 }
@@ -260,29 +385,26 @@ on_recpt_activated (ModestMailHeaderView *header_view,
 	g_signal_emit (G_OBJECT (view), signals[RECPT_ACTIVATED_SIGNAL], 0, address);
 }
 
+static void
+on_attachment_activated (ModestAttachmentsView * att_view, gint index, gpointer msg_view)
+{
+
+	
+	if (index == 0) {
+		/* index is 1-based, so 0 indicates an error */
+		g_printerr ("modest: invalid attachment index: %d\n", index);
+		return;
+	}
+
+	g_signal_emit (G_OBJECT(msg_view), signals[ATTACHMENT_CLICKED_SIGNAL],
+		       0, index);
+}
+
 static gboolean
 on_link_clicked (GtkWidget *widget, const gchar *uri, ModestMsgView *msg_view)
 {
-	int index;
-
 	g_return_val_if_fail (msg_view, FALSE);
 	
-	/* is it an attachment? */
-	if (g_str_has_prefix(uri, ATT_PREFIX)) {
-
-		index = atoi (uri + strlen(ATT_PREFIX));
-		
-		if (index == 0) {
-			/* index is 1-based, so 0 indicates an error */
-			g_printerr ("modest: invalid attachment id: %s\n", uri);
-			return FALSE;
-		}
-
-		g_signal_emit (G_OBJECT(msg_view), signals[ATTACHMENT_CLICKED_SIGNAL],
-			       0, index);
-		return FALSE;
-	}
-
 	g_signal_emit (G_OBJECT(msg_view), signals[LINK_CLICKED_SIGNAL],
 		       0, uri);
 
@@ -290,13 +412,9 @@ on_link_clicked (GtkWidget *widget, const gchar *uri, ModestMsgView *msg_view)
 }
 
 
-
 static gboolean
 on_link_hover (GtkWidget *widget, const gchar *uri, ModestMsgView *msg_view)
 {
-	if (uri && g_str_has_prefix (uri, ATT_PREFIX))
-		return FALSE;
-
 	g_signal_emit (G_OBJECT(msg_view), signals[LINK_HOVER_SIGNAL],
 		       0, uri);
 
@@ -502,9 +620,13 @@ modest_msg_view_set_message (ModestMsgView *self, TnyMsg *msg)
 			set_text_message (self, body, msg);
 	} else 
 		set_empty_message (self);
+
+	gtk_widget_queue_resize (GTK_WIDGET (self));
 	
+	gtk_widget_show (priv->gtkhtml);
 	gtk_widget_show_all (priv->mail_header_view);
 	gtk_widget_set_no_show_all (priv->mail_header_view, TRUE);
+
 }
 
 
@@ -515,3 +637,4 @@ modest_msg_view_get_message (ModestMsgView *self)
 	
 	return MODEST_MSG_VIEW_GET_PRIVATE(self)->msg;
 }
+

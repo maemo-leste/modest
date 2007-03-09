@@ -201,8 +201,9 @@ text_view_size_request (GtkWidget *widget,
 	}
 
 	gtk_text_buffer_get_start_iter (buffer, &iter);
+	gtk_text_buffer_place_cursor (buffer, &iter);
 
-	gtk_text_view_scroll_to_iter (GTK_TEXT_VIEW (text_view), &iter, 0.0, TRUE, 0.0, 0.0);
+	gtk_text_view_place_cursor_onscreen (GTK_TEXT_VIEW (text_view));
 
 	adj = gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (widget));
 	if (adj != NULL) {

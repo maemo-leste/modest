@@ -464,6 +464,7 @@ modest_main_window_new (void)
 	GtkWidget *main_vbox;
 	GtkWidget *status_hbox;
 	GtkWidget *header_win, *folder_win;
+	GtkWidget *preview_scroll;
 	GtkActionGroup *action_group;
 	GError *error = NULL;
 		
@@ -512,10 +513,15 @@ modest_main_window_new (void)
 	priv->folder_paned = gtk_vpaned_new ();
 	priv->msg_paned = gtk_vpaned_new ();
 	priv->main_paned = gtk_hpaned_new ();
+	preview_scroll = gtk_scrolled_window_new (NULL, NULL);
+	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (preview_scroll), 
+					GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 	gtk_paned_add1 (GTK_PANED(priv->main_paned), folder_win);
 	gtk_paned_add2 (GTK_PANED(priv->main_paned), priv->msg_paned);
 	gtk_paned_add1 (GTK_PANED(priv->msg_paned), header_win);
-	gtk_paned_add2 (GTK_PANED(priv->msg_paned), GTK_WIDGET(priv->msg_preview));
+	gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (preview_scroll), 
+					       GTK_WIDGET(priv->msg_preview));
+	gtk_paned_add2 (GTK_PANED(priv->msg_paned), preview_scroll);
 
 	/* status bar / progress */
 	status_hbox = gtk_hbox_new (FALSE, 0);

@@ -165,6 +165,7 @@ init_window (ModestMsgViewWindow *obj, TnyMsg *msg)
 	GtkWidget *main_vbox;
 	ModestMsgViewWindowPrivate *priv;
 	ModestWindowPrivate *parent_priv;
+	GtkScrolledWindow *scrolled_window;
 	
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE(obj);
 	parent_priv = MODEST_WINDOW_GET_PRIVATE(obj);
@@ -174,7 +175,12 @@ init_window (ModestMsgViewWindow *obj, TnyMsg *msg)
 	
 	gtk_box_pack_start (GTK_BOX(main_vbox), priv->menubar, FALSE, FALSE, 0);
 	gtk_box_pack_start (GTK_BOX(main_vbox), priv->toolbar, FALSE, FALSE, 0);
-	gtk_box_pack_start (GTK_BOX(main_vbox), priv->msg_view, TRUE, TRUE, 6);
+	scrolled_window = gtk_scrolled_window_new (NULL, NULL);
+	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolled_window),
+					GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+	gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (scrolled_window), 
+					       priv->msg_view);
+	gtk_box_pack_start (GTK_BOX(main_vbox), scrolled_window, TRUE, TRUE, 6);
 
 	gtk_widget_show_all (GTK_WIDGET(main_vbox));
 	gtk_container_add   (GTK_CONTAINER(obj), main_vbox);

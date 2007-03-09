@@ -50,11 +50,11 @@ typedef struct _ModestMsgView      ModestMsgView;
 typedef struct _ModestMsgViewClass ModestMsgViewClass;
 
 struct _ModestMsgView {
-	GtkVBox parent;
+	GtkViewport parent;
 };
 
 struct _ModestMsgViewClass {
-	GtkVBoxClass parent_class;
+	GtkViewportClass parent_class;
 
 	void (*link_hover)         (ModestMsgView *msgview, const gchar* link,
 				    gpointer user_data);
