@@ -119,7 +119,8 @@ if test "x$with_platform" = "xmaemo"; then
   MODEST_PLATFORM_ID=2
 
 else
-   PKG_CHECK_MODULES(MODEST_LIBTINYMAIL_GNOME_DESKTOP,libtinymail-gnome-desktop-1.0 libnm_glib glib-2.0 >= 2.8)
+   # gnome frontend 
+   PKG_CHECK_MODULES(MODEST_LIBTINYMAIL_GNOME_DESKTOP,libtinymail-gnome-desktop-1.0 libnm_glib glib-2.0 >= 2.8 gtk+-2.0 >= 2.10)
    AC_SUBST(MODEST_LIBTINYMAIL_GNOME_DESKTOP_CFLAGS)
    AC_SUBST(MODEST_LIBTINYMAIL_GNOME_DESKTOP_LIBS)
    MODEST_PLATFORM_ID=1
