@@ -162,10 +162,9 @@ restore_settings (ModestMsgViewWindow *self)
 static void
 init_window (ModestMsgViewWindow *obj, TnyMsg *msg)
 {
-	GtkWidget *main_vbox;
+	GtkWidget *main_vbox, *scrolled_window;
 	ModestMsgViewWindowPrivate *priv;
 	ModestWindowPrivate *parent_priv;
-	GtkScrolledWindow *scrolled_window;
 	
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE(obj);
 	parent_priv = MODEST_WINDOW_GET_PRIVATE(obj);
