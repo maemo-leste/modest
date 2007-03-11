@@ -560,6 +560,41 @@ modest_tny_account_store_get_device (TnyAccountStore *self)
 }
 
 
+static TnyAccount*
+modest_tny_account_store_find_account_by_url (TnyAccountStore *self, const gchar* url_string)
+{
+	TnyAccount *account = NULL;
+	ModestTnyAccountStorePrivate *priv;	
+	GSList *cursor;
+	
+	g_return_val_if_fail (self, NULL);
+	g_return_val_if_fail (url_string, NULL);
+	
+	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
+
+	for (cursor = priv->store_accounts; cursor ; cursor = cursor->next) {
+		if (tny_account_matches_url_string (TNY_ACCOUNT(cursor->data), url_string)) {
+			account = TNY_ACCOUNT(cursor->data);
+			break;
+		}
+	}
+
+	if (!account) {
+		for (cursor = priv->transport_accounts; !account && cursor ; cursor = cursor->next) {
+			if (tny_account_matches_url_string (TNY_ACCOUNT(cursor->data), url_string)) {
+				account = TNY_ACCOUNT(cursor->data);
+				break;
+			}
+		}
+	}
+
+	if (account)
+		g_object_ref (G_OBJECT(account));
+
+	return account;
+}
+
+
 
 static gboolean
 modest_tny_account_store_alert (TnyAccountStore *self, TnyAlertType type,
@@ -636,6 +671,8 @@ modest_tny_account_store_init (gpointer g, gpointer iface_data)
 		modest_tny_account_store_get_device;
 	klass->alert_func =
 		modest_tny_account_store_alert;
+	klass->find_account_func =
+		modest_tny_account_store_find_account_by_url;
 }
 
 void
