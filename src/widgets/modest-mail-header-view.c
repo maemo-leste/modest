@@ -77,19 +77,20 @@ add_header (ModestMailHeaderView *widget, const gchar *field, const gchar *value
 	ModestMailHeaderViewPriv *priv = MODEST_MAIL_HEADER_VIEW_GET_PRIVATE (widget);
 	GtkWidget *hbox;
 	GtkWidget *label_field, *label_value;
+	GtkWidget *scroll_text;
+	GtkTextBuffer *text_buffer;
 
 	hbox = gtk_hbox_new (FALSE, 12);
 	label_field = gtk_label_new (NULL);
 	gtk_label_set_markup (GTK_LABEL (label_field), field);
 	gtk_misc_set_alignment (GTK_MISC (label_field), 0.0, 0.0);
-	label_value = gtk_label_new (NULL);
-	gtk_label_set_text (GTK_LABEL (label_value), value);
-	gtk_label_set_selectable (GTK_LABEL (label_value), TRUE);
-	gtk_label_set_line_wrap (GTK_LABEL (label_value), TRUE);
-	gtk_misc_set_alignment (GTK_MISC (label_value), 0.0, 0.0);
+	scroll_text = modest_scroll_text_new (NULL, 2);
+	label_value = (GtkWidget *) modest_scroll_text_get_text_view (MODEST_SCROLL_TEXT (scroll_text));
+	text_buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (label_value));
+	gtk_text_buffer_set_text (text_buffer, value, -1);
 
 	gtk_box_pack_start (GTK_BOX (hbox), label_field, FALSE, FALSE, 0);
-	gtk_box_pack_start (GTK_BOX (hbox), label_value, TRUE, TRUE, 0);
+	gtk_box_pack_start (GTK_BOX (hbox), scroll_text, TRUE, TRUE, 0);
 	gtk_size_group_add_widget (priv->labels_size_group, label_field);
 	
 	gtk_box_pack_start (GTK_BOX (priv->headers_vbox), hbox, FALSE, FALSE, 0);

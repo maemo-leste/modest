@@ -40,6 +40,8 @@ libmodest_widgets_la_SOURCES=          \
 	modest-msg-view.h	       \
 	modest-recpt-view.c            \
 	modest-recpt-view.h            \
+	modest-scroll-text.c           \
+	modest-scroll-text.h           \
 	modest-tny-stream-gtkhtml.c    \
 	modest-tny-stream-gtkhtml.h    \
 	modest-window.c                \

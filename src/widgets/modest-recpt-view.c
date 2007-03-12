@@ -31,8 +31,7 @@
 
 #include <glib/gi18n-lib.h>
 
-#include <string.h>
-#include <gtk/gtk.h>
+#include <gtk/gtkwidget.h>
 
 #include <modest-text-utils.h>
 #include <modest-recpt-view.h>
@@ -49,10 +48,8 @@ typedef struct _ModestRecptViewPriv ModestRecptViewPriv;
 
 struct _ModestRecptViewPriv
 {
-	GtkWidget *text_view;
 	gboolean button_pressed;
 	gdouble pressed_x, pressed_y;
-	gint line_height;
 };
 
 #define MODEST_RECPT_VIEW_GET_PRIVATE(o)	\
@@ -77,12 +74,15 @@ modest_recpt_view_new (void)
 void
 modest_recpt_view_set_recipients (ModestRecptView *recpt_view, const gchar *recipients)
 {
+	const GtkWidget *text_view = NULL;
 	GtkTextBuffer *buffer = NULL;
-	ModestRecptViewPriv *priv = MODEST_RECPT_VIEW_GET_PRIVATE (recpt_view);
 
-	buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (priv->text_view));
+	text_view = modest_scroll_text_get_text_view (MODEST_SCROLL_TEXT (recpt_view));
+	buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (text_view));
+
 	gtk_text_buffer_set_text (buffer, recipients, -1);
-	gtk_widget_queue_resize (GTK_WIDGET (recpt_view));
+	if (GTK_WIDGET_REALIZED (recpt_view))
+		gtk_widget_queue_resize (GTK_WIDGET (recpt_view));
 
 }
 
@@ -107,6 +107,9 @@ button_release_event (GtkWidget *widget,
 		      gpointer user_data)
 {
 	ModestRecptViewPriv *priv = MODEST_RECPT_VIEW_GET_PRIVATE (MODEST_RECPT_VIEW (user_data));
+	const GtkWidget *text_view = NULL;
+
+	text_view = modest_scroll_text_get_text_view (MODEST_SCROLL_TEXT (user_data));
 
 	if (event->type != GDK_BUTTON_RELEASE)
 		return TRUE;
@@ -120,9 +123,9 @@ button_release_event (GtkWidget *widget,
 			gint buffer_x, buffer_y;
 			int index;
 			GtkTextIter iter;
-			gtk_text_view_window_to_buffer_coords (GTK_TEXT_VIEW (priv->text_view), GTK_TEXT_WINDOW_WIDGET,
+			gtk_text_view_window_to_buffer_coords (GTK_TEXT_VIEW (text_view), GTK_TEXT_WINDOW_WIDGET,
 							       event->x, event->y, &buffer_x, &buffer_y);
-			gtk_text_view_get_iter_at_location (GTK_TEXT_VIEW (priv->text_view), &iter, buffer_x, buffer_y);
+			gtk_text_view_get_iter_at_location (GTK_TEXT_VIEW (text_view), &iter, buffer_x, buffer_y);
 			index = gtk_text_iter_get_offset (&iter);
 			
 			if (!gtk_text_iter_is_end (&iter)) {
@@ -131,7 +134,7 @@ button_release_event (GtkWidget *widget,
 				GtkTextIter start_iter, end_iter;
 				GtkTextBuffer *buffer;
 
-				buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (priv->text_view));
+				buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (text_view));
 				if (gtk_text_buffer_get_selection_bounds (buffer, &start_iter, &end_iter) &&
 				    gtk_text_iter_in_range (&iter, &start_iter, &end_iter)) {
 					selected = TRUE;
@@ -178,91 +181,14 @@ button_release_event (GtkWidget *widget,
 }
 
 static void
-text_view_size_request (GtkWidget *widget,
-			GtkRequisition *requisition,
-			gpointer user_data)
-{
-	GtkTextBuffer *buffer = NULL;
-	GtkTextIter iter;
-	int line;
-	GdkRectangle iter_rectangle;
-	GtkWidget *text_view = GTK_WIDGET (user_data);
-	GtkAdjustment *adj = NULL;
-	ModestRecptViewPriv *priv = MODEST_RECPT_VIEW_GET_PRIVATE (widget);
-
-	buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (text_view));
-
-	gtk_text_buffer_get_start_iter (buffer, &iter);
-	gtk_text_view_get_iter_location (GTK_TEXT_VIEW (text_view), &iter, &iter_rectangle);
-
-	for (line = 0; line < 2; line++) {
-		if (!gtk_text_view_forward_display_line (GTK_TEXT_VIEW (text_view), &iter))
-			break;
-	}
-
-	gtk_text_buffer_get_start_iter (buffer, &iter);
-	gtk_text_buffer_place_cursor (buffer, &iter);
-
-	gtk_text_view_place_cursor_onscreen (GTK_TEXT_VIEW (text_view));
-
-	adj = gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (widget));
-	if (adj != NULL) {
-		g_object_set (G_OBJECT (adj), "page-increment", (gdouble) iter_rectangle.height, "step-increment", (gdouble) iter_rectangle.height, NULL);
-		gtk_adjustment_changed (adj);
-	}
-
-	if (line > 0) {
-		requisition->height = iter_rectangle.height * 2;
-	} else {
-		requisition->height = iter_rectangle.height;
-	}
-
-	priv->line_height = iter_rectangle.height;
-
-}
-
-static void
-view_size_allocate (GtkWidget *widget,
-		    GtkAllocation *allocation,
-		    gpointer user_data)
-{
-	GtkAdjustment *adj = NULL;
-	ModestRecptViewPriv *priv = MODEST_RECPT_VIEW_GET_PRIVATE (widget);
-
-	adj = gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (widget));
-	if (adj != NULL) {		
-		g_object_set (G_OBJECT (adj), "page-increment", (gdouble) priv->line_height, "step-increment", (gdouble) priv->line_height, NULL);
-	}
-	gtk_adjustment_changed (adj);
-}
-
-static void
 modest_recpt_view_instance_init (GTypeInstance *instance, gpointer g_class)
 {
-	ModestRecptViewPriv *priv = MODEST_RECPT_VIEW_GET_PRIVATE (instance);
+	const GtkTextView *text_view = NULL;
 
-	gtk_scrolled_window_set_hadjustment (GTK_SCROLLED_WINDOW (instance), NULL);
-	gtk_scrolled_window_set_vadjustment (GTK_SCROLLED_WINDOW (instance), NULL);
+	text_view = modest_scroll_text_get_text_view (MODEST_SCROLL_TEXT (instance));
 
-	priv->text_view = gtk_text_view_new ();
-
-	gtk_text_view_set_editable (GTK_TEXT_VIEW (priv->text_view), FALSE);
-	gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (priv->text_view), GTK_WRAP_WORD_CHAR);
-	gtk_text_view_set_pixels_above_lines (GTK_TEXT_VIEW (priv->text_view), 0);
-	gtk_text_view_set_pixels_below_lines (GTK_TEXT_VIEW (priv->text_view), 0);
-	gtk_text_view_set_justification (GTK_TEXT_VIEW (priv->text_view), GTK_JUSTIFY_LEFT);
-	gtk_text_view_set_left_margin (GTK_TEXT_VIEW (priv->text_view), 0);
-	gtk_text_view_set_right_margin (GTK_TEXT_VIEW (priv->text_view), 0);
-	gtk_text_view_set_cursor_visible (GTK_TEXT_VIEW (priv->text_view), FALSE);
-
-	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (instance), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
-
-	gtk_container_add (GTK_CONTAINER (instance), priv->text_view);
-
-	g_signal_connect (G_OBJECT (instance), "size-request", G_CALLBACK (text_view_size_request), priv->text_view);
-	g_signal_connect (G_OBJECT (instance), "size-allocate", G_CALLBACK (view_size_allocate), NULL);
-	g_signal_connect (G_OBJECT (priv->text_view), "button-press-event", G_CALLBACK (button_press_event), instance);
-	g_signal_connect (G_OBJECT (priv->text_view), "button-release-event", G_CALLBACK (button_release_event), instance);
+	g_signal_connect (G_OBJECT (text_view), "button-press-event", G_CALLBACK (button_press_event), instance);
+	g_signal_connect (G_OBJECT (text_view), "button-release-event", G_CALLBACK (button_release_event), instance);
 
 	return;
 }
@@ -323,7 +249,7 @@ modest_recpt_view_get_type (void)
 		  modest_recpt_view_instance_init    /* instance_init */
 		};
 
-		type = g_type_register_static (GTK_TYPE_SCROLLED_WINDOW,
+		type = g_type_register_static (MODEST_TYPE_SCROLL_TEXT,
 			"ModestRecptView",
 			&info, 0);
 

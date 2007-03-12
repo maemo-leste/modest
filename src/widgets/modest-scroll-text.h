@@ -27,41 +27,46 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef MODEST_RECPT_VIEW_H
-#define MODEST_RECPT_VIEW_H
+#ifndef MODEST_SCROLL_TEXT_H
+#define MODEST_SCROLL_TEXT_H
+#include <gtk/gtkscrolledwindow.h>
+#include <gtk/gtktextview.h>
 #include <glib-object.h>
-#include <widgets/modest-scroll-text.h>
 
 G_BEGIN_DECLS
 
-#define MODEST_TYPE_RECPT_VIEW             (modest_recpt_view_get_type ())
-#define MODEST_RECPT_VIEW(obj)             (G_TYPE_CHECK_INSTANCE_CAST ((obj), MODEST_TYPE_RECPT_VIEW, ModestRecptView))
-#define MODEST_RECPT_VIEW_CLASS(vtable)    (G_TYPE_CHECK_CLASS_CAST ((vtable), MODEST_TYPE_RECPT_VIEW, ModestRecptViewClass))
-#define MODEST_IS_RECPT_VIEW(obj)          (G_TYPE_CHECK_INSTANCE_TYPE ((obj), MODEST_TYPE_RECPT_VIEW))
-#define MODEST_IS_RECPT_VIEW_CLASS(vtable) (G_TYPE_CHECK_CLASS_TYPE ((vtable), MODEST_TYPE_RECPT_VIEW))
-#define MODEST_RECPT_VIEW_GET_CLASS(inst)  (G_TYPE_INSTANCE_GET_CLASS ((inst), MODEST_TYPE_RECPT_VIEW, ModestRecptViewClass))
+#define MODEST_TYPE_SCROLL_TEXT             (modest_scroll_text_get_type ())
+#define MODEST_SCROLL_TEXT(obj)             (G_TYPE_CHECK_INSTANCE_CAST ((obj), MODEST_TYPE_SCROLL_TEXT, ModestScrollText))
+#define MODEST_SCROLL_TEXT_CLASS(vtable)    (G_TYPE_CHECK_CLASS_CAST ((vtable), MODEST_TYPE_SCROLL_TEXT, ModestScrollTextClass))
+#define MODEST_IS_SCROLL_TEXT(obj)          (G_TYPE_CHECK_INSTANCE_TYPE ((obj), MODEST_TYPE_SCROLL_TEXT))
+#define MODEST_IS_SCROLL_TEXT_CLASS(vtable) (G_TYPE_CHECK_CLASS_TYPE ((vtable), MODEST_TYPE_SCROLL_TEXT))
+#define MODEST_SCROLL_TEXT_GET_CLASS(inst)  (G_TYPE_INSTANCE_GET_CLASS ((inst), MODEST_TYPE_SCROLL_TEXT, ModestScrollTextClass))
 
-typedef struct _ModestRecptView ModestRecptView;
-typedef struct _ModestRecptViewClass ModestRecptViewClass;
+typedef struct _ModestScrollText ModestScrollText;
+typedef struct _ModestScrollTextClass ModestScrollTextClass;
 
-struct _ModestRecptView
+struct _ModestScrollText
 {
-	ModestScrollText parent;
+	GtkScrolledWindow parent;
 
 };
 
-struct _ModestRecptViewClass
+struct _ModestScrollTextClass
 {
-	ModestScrollTextClass parent_class;
-
-	void (*activate)           (ModestRecptView *recpt_view, const gchar *address);
+	GtkScrolledWindowClass parent_class;
 };
 
-GType modest_recpt_view_get_type (void);
+GType modest_scroll_text_get_type (void);
 
-GtkWidget* modest_recpt_view_new (void);
+GtkWidget* modest_scroll_text_new (GtkTextView *text_view, guint line_limit);
 
-void modest_recpt_view_set_recipients (ModestRecptView *recpt_view, const gchar *recipients);
+void modest_scroll_text_set_text_view (ModestScrollText *scroll_text,
+				       GtkTextView *text_view);
+void modest_scroll_text_set_line_limit (ModestScrollText *scroll_text,
+					guint line_limit);
+
+const GtkWidget *modest_scroll_text_get_text_view (ModestScrollText *scroll_text);
+guint modest_scroll_text_get_line_limit (ModestScrollText *scroll_text);
 
 G_END_DECLS
 
