@@ -177,8 +177,8 @@ init_window (ModestMsgViewWindow *obj, TnyMsg *msg)
 	scrolled_window = gtk_scrolled_window_new (NULL, NULL);
 	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolled_window),
 					GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-	gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (scrolled_window), 
-					       priv->msg_view);
+	gtk_container_add (GTK_CONTAINER (scrolled_window), 
+			   priv->msg_view);
 	gtk_box_pack_start (GTK_BOX(main_vbox), scrolled_window, TRUE, TRUE, 6);
 
 	gtk_widget_show_all (GTK_WIDGET(main_vbox));

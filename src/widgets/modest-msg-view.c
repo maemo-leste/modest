@@ -51,6 +51,7 @@
 static void     modest_msg_view_class_init   (ModestMsgViewClass *klass);
 static void     modest_msg_view_init         (ModestMsgView *obj);
 static void     modest_msg_view_finalize     (GObject *obj);
+static void     modest_msg_view_destroy     (GtkObject *obj);
 
 /* headers signals */
 static void on_recpt_activated (ModestMailHeaderView *header_view, const gchar *address, ModestMsgView *msg_view);
@@ -62,10 +63,25 @@ static gboolean on_url_requested (GtkWidget *widget, const gchar *uri, GtkHTMLSt
 				  ModestMsgView *msg_view);
 static gboolean on_link_hover (GtkWidget *widget, const gchar *uri, ModestMsgView *msg_view);
 
-/* size allocation handlers */
-static void size_request (GtkWidget *widget, GtkRequisition *req, gpointer userdata);
-static void size_allocate (GtkWidget *widget, GtkAllocation *alloc, gpointer userdata);
-static void html_adjustment_changed (GtkAdjustment *adj, ModestMsgView * view);
+/* size allocation and drawing handlers */
+static void get_view_allocation (ModestMsgView *msg_view, GtkAllocation *allocation);
+static void size_request (GtkWidget *widget, GtkRequisition *req);
+static void size_allocate (GtkWidget *widget, GtkAllocation *alloc);
+static void realize (GtkWidget *widget);
+static void unrealize (GtkWidget *widget);
+static gint expose (GtkWidget *widget, GdkEventExpose *event);
+static void reclamp_adjustment (GtkAdjustment *adj, gboolean *value_changed);
+static void set_hadjustment_values (ModestMsgView *msg_view, gboolean *value_changed);
+static void set_scroll_adjustments (ModestMsgView *msg_view, GtkAdjustment *hadj, GtkAdjustment *vadj);
+static void adjustment_value_changed (GtkAdjustment *adj, gpointer data);
+static void html_adjustment_changed (GtkAdjustment *adj, gpointer data);
+static void disconnect_vadjustment (ModestMsgView *obj);
+static void disconnect_hadjustment (ModestMsgView *obj);
+
+/* GtkContainer methods */
+static void forall (GtkContainer *container, gboolean include_internals,
+		    GtkCallback callback, gpointer userdata);
+static void container_remove (GtkContainer *container, GtkWidget *widget);
 
 /* list my signals */
 enum {
@@ -78,17 +94,24 @@ enum {
 
 typedef struct _ModestMsgViewPrivate ModestMsgViewPrivate;
 struct _ModestMsgViewPrivate {
-	GtkWidget   *table;
 	GtkWidget   *gtkhtml;
 	GtkWidget   *mail_header_view;
 	GtkWidget   *attachments_view;
 
 	TnyMsg      *msg;
 
+	/* embedded elements */
 	GtkWidget   *headers_box;
 	GtkWidget   *html_scroll;
 
-	guint full_width, full_height, html_height;
+	/* internal adjustments for set_scroll_adjustments */
+	GtkAdjustment *hadj;
+	GtkAdjustment *vadj;
+
+	/* gdk windows for drawing */
+	GdkWindow *view_window;
+	GdkWindow *headers_window;
+	GdkWindow *html_window;
 
 	gulong  sig1, sig2, sig3;
 };
@@ -118,7 +141,7 @@ modest_msg_view_get_type (void)
 			(GInstanceInitFunc) modest_msg_view_init,
 			NULL
 		};
- 		my_type = g_type_register_static (GTK_TYPE_VIEWPORT,
+ 		my_type = g_type_register_static (GTK_TYPE_CONTAINER,
 		                                  "ModestMsgView",
 		                                  &my_info, 0);
 	}
@@ -130,11 +153,27 @@ modest_msg_view_class_init (ModestMsgViewClass *klass)
 {
 	GObjectClass *gobject_class;
 	GtkWidgetClass *widget_class;
+	GtkObjectClass *gtkobject_class;
+	GtkContainerClass *container_class;
 	gobject_class = (GObjectClass*) klass;
 	widget_class = (GtkWidgetClass *) klass;
+	gtkobject_class = (GtkObjectClass *) klass;
+	container_class = (GtkContainerClass *) klass;
 
 	parent_class            = g_type_class_peek_parent (klass);
 	gobject_class->finalize = modest_msg_view_finalize;
+	gtkobject_class->destroy = modest_msg_view_destroy;
+
+	widget_class->realize = realize;
+	widget_class->unrealize = unrealize;
+	widget_class->expose_event = expose;
+	widget_class->size_request = size_request;
+	widget_class->size_allocate = size_allocate;
+
+	container_class->forall = forall;
+	container_class->remove = container_remove;
+
+	klass->set_scroll_adjustments = set_scroll_adjustments;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestMsgViewPrivate));
 
@@ -173,119 +212,537 @@ modest_msg_view_class_init (ModestMsgViewClass *klass)
 			      NULL, NULL,
 			      g_cclosure_marshal_VOID__STRING,
 			      G_TYPE_NONE, 1, G_TYPE_STRING);
+
+	widget_class->set_scroll_adjustments_signal =
+		g_signal_new ("set_scroll_adjustments",
+			      G_OBJECT_CLASS_TYPE (gobject_class),
+			      G_SIGNAL_RUN_LAST|G_SIGNAL_ACTION,
+			      G_STRUCT_OFFSET (ModestMsgViewClass, set_scroll_adjustments),
+			      NULL, NULL,
+			      modest_marshal_VOID__POINTER_POINTER,
+			      G_TYPE_NONE, 2,
+			      GTK_TYPE_ADJUSTMENT,
+			      GTK_TYPE_ADJUSTMENT);
 }
 
-/* THIS IS A HACK: we modify the size requisition and allocation system to negociate the
- * size of the GtkHtml so that it gets the correct height, and reports it to this widget
- * to propagate the new allocation. It should make it work when it's included in a scrolled
- * window with a viewport */
+static void
+disconnect_hadjustment (ModestMsgView *msg_view)
+{
+	ModestMsgViewPrivate *priv = MODEST_MSG_VIEW_GET_PRIVATE (msg_view);
+
+	if (priv->hadj) {
+		g_signal_handlers_disconnect_by_func(priv->hadj, adjustment_value_changed, msg_view);
+		g_object_unref (priv->hadj);
+		priv->hadj = NULL;
+	}
+}
+
+static void
+disconnect_vadjustment (ModestMsgView *msg_view)
+{
+	ModestMsgViewPrivate *priv = MODEST_MSG_VIEW_GET_PRIVATE (msg_view);
+
+	if (priv->vadj) {
+		g_signal_handlers_disconnect_by_func(priv->vadj, adjustment_value_changed, msg_view);
+		g_object_unref (priv->vadj);
+		priv->vadj = NULL;
+	}
+}
+
+static void 
+get_view_allocation (ModestMsgView *msg_view, GtkAllocation *allocation)
+{
+	/* This method gets the allocation of the widget in parent widget. It's the
+	   real position and size of the widget */
+	
+	allocation->x = 0;
+	allocation->y = 0;
+
+	allocation->width = MAX (1, GTK_WIDGET (msg_view)->allocation.width);
+	allocation->height = MAX (1, GTK_WIDGET (msg_view)->allocation.height);
+
+}
+
+static void 
+reclamp_adjustment (GtkAdjustment *adj, 
+		    gboolean *value_changed)
+{
+	gdouble value = adj->value;
+
+	/* Correct value to be inside the expected values of a scroll */
+
+	value = CLAMP (value, 0, adj->upper - adj->page_size);
+
+	if (value != adj->value) {
+		adj->value = value;
+		if (value_changed)
+			*value_changed = TRUE;
+	} else if (value_changed) {
+		*value_changed = FALSE;
+	}
+}
+
+static void 
+set_hadjustment_values (ModestMsgView *msg_view,
+			gboolean *value_changed)
+{
+	GtkAllocation view_allocation;
+	GtkAdjustment *hadj = modest_msg_view_get_hadjustment (msg_view);
+
+	get_view_allocation (msg_view, &view_allocation);
+	hadj->page_size = view_allocation.width;
+	hadj->step_increment = view_allocation.width * 0.1;
+	hadj->page_increment = view_allocation.width * 0.9;
+
+	hadj->lower = 0;
+	hadj->upper = view_allocation.width;
+
+	reclamp_adjustment (hadj, value_changed);
+
+}
+
+static void 
+set_vadjustment_values (ModestMsgView *msg_view,
+			gboolean *value_changed)
+{
+	GtkAllocation view_allocation;
+	GtkAdjustment *vadj = modest_msg_view_get_vadjustment (msg_view);
+	ModestMsgViewPrivate *priv = MODEST_MSG_VIEW_GET_PRIVATE (msg_view);
+	gint full_height = 0;
+	GtkAdjustment *html_vadj;
+
+	get_view_allocation (msg_view, &view_allocation);
+	vadj->page_size = view_allocation.height;
+	vadj->step_increment = view_allocation.height * 0.1;
+	vadj->page_increment = view_allocation.height * 0.9;
+
+	vadj->lower = 0;
+
+	if (priv->headers_box && GTK_WIDGET_VISIBLE(priv->headers_box)) {
+		GtkRequisition child_requisition;
+
+		gtk_widget_get_child_requisition (priv->headers_box, &child_requisition);
+		full_height = child_requisition.height;
+	} else {
+		full_height = 0;
+	}
+	
+	/* Get the real height of the embedded html */
+	if (priv->html_scroll && GTK_WIDGET_VISIBLE(priv->html_scroll)) {
+		html_vadj = gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (priv->html_scroll));
+		full_height += html_vadj->upper;
+	}
+
+	vadj->upper = MAX (view_allocation.height, full_height);
+
+	reclamp_adjustment (vadj, value_changed);
+
+}
+
+static void
+set_scroll_adjustments (ModestMsgView *msg_view,
+			GtkAdjustment *hadj,
+			GtkAdjustment *vadj)
+{
+	modest_msg_view_set_hadjustment (msg_view, hadj);
+	modest_msg_view_set_vadjustment (msg_view, vadj);
+}
+
+static void
+realize (GtkWidget *widget)
+{
+	ModestMsgView *msg_view = MODEST_MSG_VIEW (widget);
+	ModestMsgViewPrivate *priv = MODEST_MSG_VIEW_GET_PRIVATE (msg_view);
+	GtkAdjustment *hadj = modest_msg_view_get_hadjustment (msg_view);
+	GtkAdjustment *vadj = modest_msg_view_get_vadjustment (msg_view);
+	GdkWindowAttr attributes;
+	gint event_mask;
+	gint attributes_mask;
+	GtkAllocation view_allocation;
+
+	GTK_WIDGET_SET_FLAGS (widget, GTK_REALIZED);
+
+	/* The structure of the GdkWindow's is:
+	 *    * widget->window: the shown gdkwindow embedding all the stuff inside
+	 *    * view_window: a backing store gdkwindow containing the headers and contents
+	 *      being scrolled. This window should have all the visible and non visible
+	 *      widgets inside.
+	 *    * headers_window: gdk window for headers_box.
+	 *    * html_window: gdk window for html_scroll (the scrolled window containing the
+	 *      gtkhtml showing the contents of the mail).
+	 */
+
+	attributes.x = widget->allocation.x;
+	attributes.y = widget->allocation.y;
+	attributes.width = widget->allocation.width;
+	attributes.height = widget->allocation.height;
+	attributes.window_type = GDK_WINDOW_CHILD;
+	attributes.wclass = GDK_INPUT_OUTPUT;
+	attributes.visual = gtk_widget_get_visual (widget);
+	attributes.colormap = gtk_widget_get_colormap (widget);
+
+	event_mask = gtk_widget_get_events (widget) | GDK_EXPOSURE_MASK;
+	attributes.event_mask = event_mask | GDK_BUTTON_PRESS_MASK;
+	attributes_mask = GDK_WA_X | GDK_WA_Y | GDK_WA_VISUAL | GDK_WA_COLORMAP;
+
+	widget->window = gdk_window_new (gtk_widget_get_parent_window (widget),
+					 &attributes, attributes_mask);
+	gdk_window_set_user_data (widget->window, msg_view);
+
+	get_view_allocation (msg_view, &view_allocation);
+
+	attributes.x = view_allocation.x;
+	attributes.y = view_allocation.y;
+	attributes.width = view_allocation.width;
+	attributes.height = view_allocation.height;
+	attributes.event_mask = 0;
+	priv->view_window = gdk_window_new (widget->window, &attributes, attributes_mask);
+	gdk_window_set_user_data (priv->view_window, msg_view);
+	gdk_window_set_back_pixmap (priv->view_window, NULL, FALSE);
+
+	attributes.x = -hadj->value;
+	attributes.y = -vadj->value;
+	attributes.width = hadj->upper;
+	if (priv->headers_box)
+		attributes.height = GTK_WIDGET (priv->headers_box)->allocation.height;
+	else
+		attributes.height = 1;
+	attributes.event_mask = event_mask;
+
+	priv->headers_window = gdk_window_new (priv->view_window, &attributes, attributes_mask);
+	gdk_window_set_user_data (priv->headers_window, msg_view);
+
+	if (priv->headers_box)
+		gtk_widget_set_parent_window (priv->headers_box, priv->headers_window);
+
+	attributes.x = -hadj->value;
+	if (priv->headers_box)
+		attributes.y = GTK_WIDGET (priv->headers_box)->allocation.height - vadj->value;
+	else 
+		attributes.y = -vadj->value;
+	attributes.width = hadj->upper;
+	if (priv->headers_box)
+		attributes.height = vadj->upper - GTK_WIDGET (priv->headers_box)->allocation.height;
+	else
+		attributes.height = vadj->upper;
+	attributes.event_mask = event_mask;
+
+	priv->html_window = gdk_window_new (priv->view_window, &attributes, attributes_mask);
+	gdk_window_set_user_data (priv->html_window, msg_view);
+
+	if (priv->html_scroll)
+		gtk_widget_set_parent_window (priv->html_scroll, priv->html_window);
+
+	widget->style = gtk_style_attach (widget->style, widget->window);
+	gtk_style_set_background (widget->style, widget->window, GTK_STATE_NORMAL);
+	gtk_style_set_background (widget->style, priv->headers_window, GTK_STATE_NORMAL);
+	gtk_style_set_background (widget->style, priv->html_window, GTK_STATE_NORMAL);
+
+	gtk_paint_flat_box(widget->style, priv->headers_window, GTK_STATE_NORMAL,
+			   GTK_SHADOW_NONE, 
+			   NULL, widget, "msgviewheaders",
+			   0,0,-1,-1);
+	gtk_paint_flat_box(widget->style, priv->html_window, GTK_STATE_NORMAL,
+			   GTK_SHADOW_NONE, 
+			   NULL, widget, "msgviewcontents",
+			   0,0,-1,-1);
+
+	gdk_window_show (priv->view_window);
+	gdk_window_show (priv->headers_window);
+	gdk_window_show (priv->html_window);
+
+}
+
+static void
+unrealize (GtkWidget *widget)
+{
+	ModestMsgView *msg_view = MODEST_MSG_VIEW (widget);
+	ModestMsgViewPrivate *priv = MODEST_MSG_VIEW_GET_PRIVATE (msg_view);
+
+	gdk_window_set_user_data (priv->view_window, NULL);
+	gdk_window_destroy (priv->view_window);
+	priv->view_window = NULL;
+
+	gdk_window_set_user_data (priv->headers_window, NULL);
+	gdk_window_destroy (priv->headers_window);
+	priv->headers_window = NULL;
+
+	gdk_window_set_user_data (priv->html_window, NULL);
+	gdk_window_destroy (priv->html_window);
+	priv->html_window = NULL;
+
+	if (GTK_WIDGET_CLASS (parent_class)->unrealize)
+		( * GTK_WIDGET_CLASS (parent_class)->unrealize) (widget);
+
+}
+
+static gint
+expose (GtkWidget *widget, 
+	GdkEventExpose *event)
+{
+	ModestMsgView *msg_view;
+	ModestMsgViewPrivate *priv;
+
+	if (GTK_WIDGET_DRAWABLE (widget)) {
+		msg_view = MODEST_MSG_VIEW (widget);
+		priv = MODEST_MSG_VIEW_GET_PRIVATE (msg_view);
+		if (event->window == widget->window) {
+			gtk_paint_shadow (widget->style, widget->window,
+					  GTK_STATE_NORMAL, GTK_SHADOW_NONE,
+					  &event->area, widget, "msgview",
+					  0,0,-1,-1);
+		} else if (event->window == priv->headers_window) {
+			gtk_paint_flat_box(widget->style, priv->headers_window, GTK_STATE_NORMAL,
+					   GTK_SHADOW_NONE, 
+					   &event->area, widget, "msgviewheaders",
+					   0,0,-1,-1);
+		} else if (event->window == priv->html_window) {
+			gtk_paint_flat_box(widget->style, priv->html_window, GTK_STATE_NORMAL,
+					   GTK_SHADOW_NONE, 
+					   &event->area, widget, "msgviewcontents",
+					   0,0,-1,-1);
+		}
+		if (priv->headers_box)
+			gtk_container_propagate_expose (GTK_CONTAINER (msg_view), priv->headers_box, event);
+		if (priv->html_scroll)
+			gtk_container_propagate_expose (GTK_CONTAINER (msg_view), priv->html_scroll, event);
+		(* GTK_WIDGET_CLASS (parent_class)->expose_event) (widget, event);
+	}
+
+	return FALSE;
+}
+
+static void 
+forall (GtkContainer *container, 
+	gboolean include_internals,
+	GtkCallback callback,
+	gpointer userdata)
+{
+	ModestMsgViewPrivate *priv = MODEST_MSG_VIEW_GET_PRIVATE (container);
+	g_return_if_fail (callback != NULL);
+
+	if (priv->headers_box)
+		(*callback) (priv->headers_box, userdata);
+	if (priv->html_scroll)
+		(*callback) (priv->html_scroll, userdata);
+}
+
+static void
+container_remove (GtkContainer *container,
+		  GtkWidget *widget)
+{
+	gboolean was_visible = FALSE;
+	ModestMsgViewPrivate *priv = MODEST_MSG_VIEW_GET_PRIVATE (container);
+	was_visible = GTK_WIDGET_VISIBLE (widget);
+	if (widget == priv->headers_box) {
+		gtk_widget_unparent (priv->headers_box);
+		priv->headers_box = NULL;
+	} else if (widget == priv->html_scroll) {
+		gtk_widget_unparent (priv->html_scroll);
+		priv->html_scroll = NULL;
+	} else {
+		return;
+	}
+	if (was_visible)
+		gtk_widget_queue_resize (GTK_WIDGET(container));
+
+}
 
 static void
 size_request (GtkWidget *widget,
-	      GtkRequisition *req,
-	      gpointer userdata)
+	      GtkRequisition *req)
 {
 	ModestMsgViewPrivate *priv = MODEST_MSG_VIEW_GET_PRIVATE (widget);
-	GtkRequisition req_headers;
+	GtkRequisition child_req;
 
-	g_message ("SIZE REQUEST START w %d h %d", req->width, req->height);
+	req->width = 0;
+	req->height = 0;
 
-	/* tries to allocate as much as possible of the current allocation for headers box */
+	gtk_widget_size_request (priv->headers_box, &child_req);
+	req->width = child_req.width;
+	req->height += child_req.height;
+	gtk_widget_size_request (priv->html_scroll, &child_req);
+	req->width = MAX (child_req.width, req->width);
+	req->height += child_req.height;
 
-	req_headers.height = priv->full_height;
-	req_headers.width = req->width;
-	req->height = priv->full_height;
-
-	g_message ("SIZE REQUEST HEADER START w %d h %d", req_headers.width, req_headers.height);
-	gtk_widget_size_request (priv->headers_box, &req_headers);
-	g_message ("SIZE REQUEST HEADER END w %d h %d", req_headers.width, req_headers.height);
-	g_message ("SIZE REQUEST END w %d h %d", req->width, req->height);
 }
 
 static void
 size_allocate (GtkWidget *widget,
-	       GtkAllocation *alloc,
-	       gpointer userdata)
+	       GtkAllocation *allocation)
 {
-	ModestMsgViewPrivate *priv = MODEST_MSG_VIEW_GET_PRIVATE (widget);
-	GtkAllocation headers_alloc;
-	GtkAllocation html_alloc;
-	GtkAdjustment *hadj, *vadj;
+	ModestMsgView *msg_view = MODEST_MSG_VIEW (widget);
+	ModestMsgViewPrivate *priv = MODEST_MSG_VIEW_GET_PRIVATE (msg_view);
+	gboolean hadj_value_changed, vadj_value_changed;
+	GtkAllocation headers_allocation, html_allocation;
+	GtkAdjustment *html_vadj;
 
-	g_message ("SIZE_ALLOCATE START w %d h %d", alloc->width, alloc->height);
+	widget->allocation = *allocation;
+	set_hadjustment_values (msg_view, &hadj_value_changed);
+	set_vadjustment_values (msg_view, &vadj_value_changed);
 
-	priv->full_width = alloc->width;
-	priv->full_height = alloc->height;
+	headers_allocation.x = 0;
+	headers_allocation.y = 0;
+	headers_allocation.width = allocation->width;
+	if (priv->headers_box)
+		headers_allocation.height = GTK_WIDGET (priv->headers_box)->requisition.height;
+	else
+		headers_allocation.height = 0;
 
-	hadj = gtk_viewport_get_hadjustment (GTK_VIEWPORT (widget));
-	vadj = gtk_viewport_get_vadjustment (GTK_VIEWPORT (widget));
+	html_vadj = gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (priv->html_scroll));
 
-	/* allocates all the visible with for the header. The height is
-	   taken from the last requisition of the widget, supposing it's
-	   been calculated depending on this width */
-	headers_alloc.x = alloc->x;
-	headers_alloc.y = alloc->y;
-	headers_alloc.width = alloc->width;
-	headers_alloc.height = priv->headers_box->requisition.height;
-	if (priv->html_height != priv->gtkhtml->requisition.height)
-		gtk_widget_size_allocate (priv->headers_box, &headers_alloc);
+	html_allocation.x = 0;
+	html_allocation.y = headers_allocation.height;
+	html_allocation.width = allocation->width;
+	html_allocation.height = MAX ((gint) html_vadj->upper, (gint)(priv->vadj->upper - headers_allocation.height));
 
-	/* allocates the gtk html space trying to negociate that it takes
-	 * the available space, and as much height as it needs. To do this,
-	 * it takes the internal adjustment upper value (see html_adjustment_changed)
-	 */
-	html_alloc.x = alloc->x;
-	html_alloc.y = alloc->y + headers_alloc.height;
-	html_alloc.width = alloc->width;
- 	html_alloc.height = MAX(alloc->height, priv->html_height);
-	gtk_widget_size_allocate (priv->gtkhtml, &html_alloc);
+	if (GTK_WIDGET_REALIZED (widget)) {
+		GtkAllocation view_allocation;
+		gdk_window_move_resize (widget->window,
+					allocation->x,
+					allocation->y,
+					allocation->width,
+					allocation->height);
 
-	/* Corrects the allocation of the full widget to include the final
-	 * gtkhtml height */
-	priv->full_height = headers_alloc.height + priv->html_height;
-	alloc->height = priv->full_height;
+		get_view_allocation (msg_view, &view_allocation);
 
-	g_message ("SIZE_ALLOCATE END w %d h %d", alloc->width, alloc->height);
+		gdk_window_move_resize (priv->view_window,
+					view_allocation.x,
+					view_allocation.y,
+					view_allocation.width,
+					view_allocation.height);
+		gdk_window_move_resize (priv->headers_window,
+					0,
+					(gint) (- priv->vadj->value),
+					allocation->width,
+					headers_allocation.height);
+		gdk_window_move_resize (priv->html_window,
+					(gint) (- priv->hadj->value),
+					(gint) (html_allocation.y - priv->vadj->value),
+					(gint) priv->hadj->upper,
+					html_allocation.height);
+	}
+
+	if (priv->headers_box && GTK_WIDGET_VISIBLE (priv->headers_box)) {
+		gtk_widget_size_allocate (priv->headers_box, &headers_allocation);
+	}
+	if (priv->html_scroll && GTK_WIDGET_VISIBLE (priv->html_scroll)) {
+		html_allocation.x = 0;
+		html_allocation.y = 0;
+		html_allocation.width = (gint) priv->hadj->upper;
+		html_allocation.height = (gint) priv->vadj->upper - headers_allocation.height;
+		gtk_widget_size_allocate (priv->html_scroll, &html_allocation);
+	}
+	gtk_adjustment_changed (priv->hadj);
+	gtk_adjustment_changed (priv->vadj);
+
+	if (hadj_value_changed)
+		gtk_adjustment_value_changed (priv->hadj);
+	if (vadj_value_changed)
+		gtk_adjustment_value_changed (priv->vadj);
 
 }
 
+static void 
+adjustment_value_changed (GtkAdjustment *adj, gpointer data)
+{
+	ModestMsgView *msg_view = NULL;
+	ModestMsgViewPrivate *priv = NULL;
+
+	g_return_if_fail (GTK_IS_ADJUSTMENT (adj));
+	g_return_if_fail (MODEST_IS_MSG_VIEW (data));
+
+	msg_view = MODEST_MSG_VIEW (data);
+	priv = MODEST_MSG_VIEW_GET_PRIVATE (msg_view);
+
+	if (GTK_WIDGET_REALIZED (msg_view)) {
+		GtkAdjustment *hadj = modest_msg_view_get_hadjustment (msg_view);
+		GtkAdjustment *vadj = modest_msg_view_get_vadjustment (msg_view);
+		gint headers_offset = 0;
+
+		gtk_widget_queue_resize (priv->html_scroll);
+
+		if (priv->headers_box && GTK_WIDGET_VISIBLE (priv->headers_box)) {
+			gint old_x, old_y;
+			gint new_x, new_y;
+			gdk_window_get_position (priv->headers_window, &old_x, &old_y);
+			new_x = 0;
+			new_y = -vadj->value;
+
+			headers_offset = GTK_WIDGET(priv->headers_box)->allocation.height;
+
+			if (new_x != old_x || new_y != old_y) {
+				gdk_window_move (priv->headers_window, new_x, new_y);
+				gdk_window_process_updates (priv->headers_window, TRUE);
+			}
+		}
+		
+		if (priv->html_scroll && GTK_WIDGET_VISIBLE (priv->html_scroll)) {
+			gint old_x, old_y;
+			gint new_x, new_y;
+			gdk_window_get_position (priv->html_window, &old_x, &old_y);
+			new_x = -hadj->value;
+			new_y = headers_offset - vadj->value;
+
+			if (new_x != old_x || new_y != old_y) {
+				gdk_window_move (priv->html_window, new_x, new_y);
+				gdk_window_process_updates (priv->html_window, TRUE);
+			}
+		}
+		
+	}
+}
 
 static void
 html_adjustment_changed (GtkAdjustment *adj,
-			 ModestMsgView * view)
+			 gpointer userdata)
 {
-	ModestMsgViewPrivate *priv = MODEST_MSG_VIEW_GET_PRIVATE (view);
+	ModestMsgView *msg_view = MODEST_MSG_VIEW (userdata);
+	ModestMsgViewPrivate *priv = MODEST_MSG_VIEW_GET_PRIVATE (msg_view);
+	GtkAdjustment *html_vadj = gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW(priv->html_scroll));
+	gboolean vadj_changed;
+	gint new_height;
 
-	g_message ("ADJUSTMENT CHANGED START upper %f html_height %d", adj->upper, priv->html_height);
+	priv->html_scroll->requisition.height = html_vadj->upper;
+	priv->html_scroll->allocation.height = html_vadj->upper;
+
+	set_vadjustment_values (msg_view, &vadj_changed);
+
+	new_height = MAX ((gint) html_vadj->upper, (gint) (priv->vadj->upper - priv->headers_box->allocation.height));
 	
-	/* correct the html height calculation depending on the range exposed
-	 * by the html vertical adjustment
-	 */
-	if (((gint) adj->upper) != priv->gtkhtml->allocation.height) {
-		priv->html_height = (gint) adj->upper;
+	gtk_adjustment_changed (priv->vadj);
+	if (GTK_WIDGET_DRAWABLE (priv->html_scroll)) {
+		gdk_window_resize (priv->html_window, (gint) priv->hadj->upper, (gint) new_height);
+		gdk_window_process_updates (priv->view_window, TRUE);
+		gtk_container_resize_children (GTK_CONTAINER (msg_view));
 	}
-	gtk_widget_queue_resize (GTK_WIDGET(view));
+	
 }
-
 
 static void
 modest_msg_view_init (ModestMsgView *obj)
 {
  	ModestMsgViewPrivate *priv;
+	GtkAdjustment *html_vadj;
+
+	GTK_WIDGET_UNSET_FLAGS (obj, GTK_NO_WINDOW);
+	gtk_widget_set_redraw_on_allocate (GTK_WIDGET (obj), TRUE);
+	gtk_container_set_reallocate_redraws (GTK_CONTAINER (obj), TRUE);
+	gtk_container_set_resize_mode (GTK_CONTAINER (obj), GTK_RESIZE_QUEUE);
 	
 	priv = MODEST_MSG_VIEW_GET_PRIVATE(obj);
 
+	priv->hadj = NULL;
+	priv->vadj = NULL;
+	priv->view_window = NULL;
+	priv->headers_window = NULL;
+	priv->html_window = NULL;
 
-	priv->full_width = 0;
-	priv->full_height = 0;
-	priv->html_height = G_MAXINT;
 
-	priv->table = gtk_table_new (2, 2, FALSE);
-
-	gtk_table_set_row_spacings (GTK_TABLE (priv->table), 0);
-	gtk_table_set_col_spacings (GTK_TABLE (priv->table), 0);
-
+	gtk_widget_push_composite_child ();
 	priv->html_scroll = gtk_scrolled_window_new (NULL, NULL);
+	gtk_widget_set_composite_name (priv->html_scroll, "contents");
+	gtk_widget_pop_composite_child ();
 	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (priv->html_scroll), GTK_POLICY_NEVER, GTK_POLICY_NEVER);
 
 	priv->msg                     = NULL;
@@ -315,6 +772,12 @@ modest_msg_view_init (ModestMsgView *obj)
 
 	g_signal_connect (G_OBJECT (priv->attachments_view), "activate",
 			  G_CALLBACK (on_attachment_activated), obj);
+
+	html_vadj = gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW(priv->html_scroll));
+
+	g_signal_connect (G_OBJECT (html_vadj), "changed",
+			  G_CALLBACK (html_adjustment_changed), obj);
+
 }
 	
 
@@ -332,10 +795,101 @@ modest_msg_view_finalize (GObject *obj)
 	/* we cannot disconnect sigs, because priv->gtkhtml is
 	 * already dead */
 	
+	disconnect_vadjustment (MODEST_MSG_VIEW(obj));
+	disconnect_hadjustment (MODEST_MSG_VIEW(obj));
+
 	priv->gtkhtml = NULL;
 	priv->attachments_view = NULL;
 
 	G_OBJECT_CLASS(parent_class)->finalize (obj);		
+}
+
+static void
+modest_msg_view_destroy (GtkObject *obj)
+{	
+	ModestMsgViewPrivate *priv = MODEST_MSG_VIEW_GET_PRIVATE (obj);
+	disconnect_vadjustment (MODEST_MSG_VIEW(obj));
+	disconnect_hadjustment (MODEST_MSG_VIEW(obj));
+
+	GTK_OBJECT_CLASS(parent_class)->destroy (obj);		
+}
+
+GtkAdjustment *
+modest_msg_view_get_vadjustment (ModestMsgView *msg_view)
+{
+	ModestMsgViewPrivate *priv = MODEST_MSG_VIEW_GET_PRIVATE (msg_view);
+
+	if (!priv->vadj)
+		modest_msg_view_set_vadjustment (msg_view, NULL);
+
+	return priv->vadj;
+	
+}
+
+GtkAdjustment *
+modest_msg_view_get_hadjustment (ModestMsgView *msg_view)
+{
+	ModestMsgViewPrivate *priv = MODEST_MSG_VIEW_GET_PRIVATE (msg_view);
+
+	if (!priv->hadj)
+		modest_msg_view_set_hadjustment (msg_view, NULL);
+
+	return priv->hadj;
+	
+}
+
+void
+modest_msg_view_set_hadjustment (ModestMsgView *msg_view, GtkAdjustment *hadj)
+{
+	ModestMsgViewPrivate *priv = MODEST_MSG_VIEW_GET_PRIVATE (msg_view);
+	gboolean value_changed;
+
+	if (hadj && hadj == priv->hadj)
+		return;
+
+	if (!hadj)
+		hadj = GTK_ADJUSTMENT (gtk_adjustment_new (0.0,0.0,0.0,0.0,0.0,0.0));
+	disconnect_hadjustment (msg_view);
+	g_object_ref (G_OBJECT (hadj));
+	gtk_object_sink (GTK_OBJECT (hadj));
+	priv->hadj = hadj;
+	set_hadjustment_values (msg_view, &value_changed);
+
+	g_signal_connect (hadj, "value_changed", G_CALLBACK (adjustment_value_changed),
+			  msg_view);
+
+	gtk_adjustment_changed (hadj);
+	if (value_changed)
+		gtk_adjustment_value_changed (hadj);
+	else
+		adjustment_value_changed (hadj, msg_view);
+}
+
+void
+modest_msg_view_set_vadjustment (ModestMsgView *msg_view, GtkAdjustment *vadj)
+{
+	ModestMsgViewPrivate *priv = MODEST_MSG_VIEW_GET_PRIVATE (msg_view);
+	gboolean value_changed;
+
+	if (vadj && vadj == priv->vadj)
+		return;
+
+	if (!vadj)
+		vadj = (GtkAdjustment *) gtk_adjustment_new (0.0,0.0,0.0,0.0,0.0,0.0);
+	disconnect_vadjustment (msg_view);
+	g_object_ref (G_OBJECT (vadj));
+	gtk_object_sink (GTK_OBJECT (vadj));
+	priv->vadj = vadj;
+	set_vadjustment_values (msg_view, &value_changed);
+
+	g_signal_connect (vadj, "value_changed", G_CALLBACK (adjustment_value_changed),
+			  msg_view);
+
+	gtk_adjustment_changed (vadj);
+	if (value_changed)
+		gtk_adjustment_value_changed (vadj);
+	else
+		adjustment_value_changed (vadj, msg_view);
 }
 
 GtkWidget*
@@ -349,7 +903,10 @@ modest_msg_view_new (TnyMsg *msg)
 	self = MODEST_MSG_VIEW(obj);
 	priv = MODEST_MSG_VIEW_GET_PRIVATE (self);
 
+	gtk_widget_push_composite_child ();
 	priv->headers_box = gtk_vbox_new (0, FALSE);
+	gtk_widget_set_composite_name (priv->headers_box, "headers");
+	gtk_widget_pop_composite_child ();
 
 	if (priv->mail_header_view)
 		gtk_box_pack_start (GTK_BOX(priv->headers_box), priv->mail_header_view, FALSE, FALSE, 0);
@@ -357,23 +914,15 @@ modest_msg_view_new (TnyMsg *msg)
 	if (priv->attachments_view)
 		gtk_box_pack_start (GTK_BOX(priv->headers_box), priv->attachments_view, FALSE, FALSE, 0);
 
-	gtk_table_attach (GTK_TABLE (priv->table), priv->headers_box, 0, 1, 0, 1, GTK_EXPAND, 0, 0, 0);
-	gtk_table_attach (GTK_TABLE (priv->table), gtk_label_new (""), 1, 2, 0, 1, 0, GTK_FILL|GTK_SHRINK, 0, 0);
+	gtk_widget_set_parent (priv->headers_box, GTK_WIDGET (self));
 
 	if (priv->gtkhtml) {
 		gtk_container_add (GTK_CONTAINER (priv->html_scroll), priv->gtkhtml);
-		gtk_table_attach (GTK_TABLE(priv->table), priv->html_scroll, 0, 2, 1, 2, GTK_EXPAND, GTK_EXPAND, 0, 0);
+		gtk_widget_set_parent (priv->html_scroll, GTK_WIDGET(self));
 	}
-
-	gtk_container_add (GTK_CONTAINER (self), priv->table);
 
 	modest_msg_view_set_message (self, msg);
 
-	g_signal_connect (G_OBJECT (self), "size-request", G_CALLBACK (size_request), NULL);
-	g_signal_connect (G_OBJECT (self), "size-allocate", G_CALLBACK (size_allocate), NULL);
-	g_signal_connect (G_OBJECT (gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(priv->html_scroll))), 
-			  "changed", G_CALLBACK (html_adjustment_changed), self);
-	
 	return GTK_WIDGET(self);
 }
 
@@ -600,8 +1149,12 @@ modest_msg_view_set_message (ModestMsgView *self, TnyMsg *msg)
 	if (!msg) {
 		tny_header_view_clear (TNY_HEADER_VIEW (priv->mail_header_view));
 		gtk_widget_hide_all (priv->mail_header_view);
+		gtk_widget_hide_all (priv->attachments_view);
+		gtk_widget_set_no_show_all (priv->attachments_view, TRUE);
 		gtk_widget_set_no_show_all (priv->mail_header_view, TRUE);
 		set_empty_message (self);
+		gtk_widget_queue_resize (GTK_WIDGET(self));
+		gtk_widget_queue_draw (GTK_WIDGET(self));
 		return;
 	}
 
@@ -621,11 +1174,17 @@ modest_msg_view_set_message (ModestMsgView *self, TnyMsg *msg)
 	} else 
 		set_empty_message (self);
 
-	gtk_widget_queue_resize (GTK_WIDGET (self));
-	
 	gtk_widget_show (priv->gtkhtml);
 	gtk_widget_show_all (priv->mail_header_view);
+	gtk_widget_show_all (priv->attachments_view);
 	gtk_widget_set_no_show_all (priv->mail_header_view, TRUE);
+	gtk_widget_queue_resize (GTK_WIDGET(self));
+	gtk_widget_queue_draw (GTK_WIDGET(self));
+
+	if (priv->hadj != NULL)
+		priv->hadj->value = 0.0;
+	if (priv->vadj != NULL)
+		priv->vadj->value = 0.0;
 
 }
 

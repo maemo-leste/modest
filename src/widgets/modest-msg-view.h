@@ -50,12 +50,16 @@ typedef struct _ModestMsgView      ModestMsgView;
 typedef struct _ModestMsgViewClass ModestMsgViewClass;
 
 struct _ModestMsgView {
-	GtkViewport parent;
+	GtkContainer parent;
 };
 
 struct _ModestMsgViewClass {
-	GtkViewportClass parent_class;
+	GtkContainerClass parent_class;
 
+	void (*set_scroll_adjustments)      (ModestMsgView *msg_view,
+					     GtkAdjustment *hadj,
+					     GtkAdjustment *vadj);
+	
 	void (*link_hover)         (ModestMsgView *msgview, const gchar* link,
 				    gpointer user_data);
 	void (*link_clicked)       (ModestMsgView *msgview, const gchar* link,
@@ -113,7 +117,10 @@ void         modest_msg_view_set_message  (ModestMsgView *self, TnyMsg *tny_msg)
  */
 TnyMsg*      modest_msg_view_get_message  (ModestMsgView *self);
 
-
+GtkAdjustment *modest_msg_view_get_vadjustment (ModestMsgView *self);
+GtkAdjustment *modest_msg_view_get_hadjustment (ModestMsgView *self);
+void modest_msg_view_set_vadjustment (ModestMsgView *self, GtkAdjustment *vadj);
+void modest_msg_view_set_hadjustment (ModestMsgView *self, GtkAdjustment *hadj);
 
 G_END_DECLS
 

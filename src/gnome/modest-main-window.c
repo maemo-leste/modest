@@ -519,8 +519,8 @@ modest_main_window_new (void)
 	gtk_paned_add1 (GTK_PANED(priv->main_paned), folder_win);
 	gtk_paned_add2 (GTK_PANED(priv->main_paned), priv->msg_paned);
 	gtk_paned_add1 (GTK_PANED(priv->msg_paned), header_win);
-	gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (preview_scroll), 
-					       GTK_WIDGET(priv->msg_preview));
+	gtk_container_add (GTK_CONTAINER (preview_scroll), 
+			   GTK_WIDGET(priv->msg_preview));
 	gtk_paned_add2 (GTK_PANED(priv->msg_paned), preview_scroll);
 
 	/* status bar / progress */
