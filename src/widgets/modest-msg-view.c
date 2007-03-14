@@ -807,7 +807,6 @@ modest_msg_view_finalize (GObject *obj)
 static void
 modest_msg_view_destroy (GtkObject *obj)
 {	
-	ModestMsgViewPrivate *priv = MODEST_MSG_VIEW_GET_PRIVATE (obj);
 	disconnect_vadjustment (MODEST_MSG_VIEW(obj));
 	disconnect_hadjustment (MODEST_MSG_VIEW(obj));
 

@@ -185,7 +185,7 @@ modest_recpt_view_instance_init (GTypeInstance *instance, gpointer g_class)
 {
 	const GtkTextView *text_view = NULL;
 
-	text_view = modest_scroll_text_get_text_view (MODEST_SCROLL_TEXT (instance));
+	text_view = GTK_TEXT_VIEW(modest_scroll_text_get_text_view (MODEST_SCROLL_TEXT (instance)));
 
 	g_signal_connect (G_OBJECT (text_view), "button-press-event", G_CALLBACK (button_press_event), instance);
 	g_signal_connect (G_OBJECT (text_view), "button-release-event", G_CALLBACK (button_release_event), instance);
