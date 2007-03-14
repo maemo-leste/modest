@@ -57,6 +57,13 @@ struct _ModestRecptViewPriv
 
 static guint signals[LAST_SIGNAL] = {0};
 
+/* static functions: GObject */
+static void modest_recpt_view_instance_init (GTypeInstance *instance, gpointer g_class);
+static void modest_recpt_view_finalize (GObject *object);
+static void modest_recpt_view_class_init (ModestRecptViewClass *klass);
+/* static functions: GtkWidget */
+static gint button_press_event (GtkWidget *widget, GdkEventButton *event, gpointer user_data);
+static gint button_release_event (GtkWidget *widget, GdkEventButton *event, gpointer user_data);
 
 /**
  * modest_recpt_view_new:

@@ -52,6 +52,8 @@ static void     modest_msg_view_class_init   (ModestMsgViewClass *klass);
 static void     modest_msg_view_init         (ModestMsgView *obj);
 static void     modest_msg_view_finalize     (GObject *obj);
 static void     modest_msg_view_destroy     (GtkObject *obj);
+static void     set_property (GObject *object, guint prop_id, const GValue *value, GParamSpec *pspec);
+static void     get_property (GObject *object, guint prop_id, GValue *value, GParamSpec *pspec);
 
 /* headers signals */
 static void on_recpt_activated (ModestMailHeaderView *header_view, const gchar *address, ModestMsgView *msg_view);
@@ -92,6 +94,14 @@ enum {
 	LAST_SIGNAL
 };
 
+/* list properties */
+enum {
+	PROP_0,
+	PROP_HADJUSTMENT,
+	PROP_VADJUSTMENT,
+	PROP_SHADOW_TYPE
+};
+
 typedef struct _ModestMsgViewPrivate ModestMsgViewPrivate;
 struct _ModestMsgViewPrivate {
 	GtkWidget   *gtkhtml;
@@ -107,6 +117,7 @@ struct _ModestMsgViewPrivate {
 	/* internal adjustments for set_scroll_adjustments */
 	GtkAdjustment *hadj;
 	GtkAdjustment *vadj;
+	GtkShadowType shadow_type;
 
 	/* gdk windows for drawing */
 	GdkWindow *view_window;
@@ -162,6 +173,8 @@ modest_msg_view_class_init (ModestMsgViewClass *klass)
 
 	parent_class            = g_type_class_peek_parent (klass);
 	gobject_class->finalize = modest_msg_view_finalize;
+	gobject_class->set_property = set_property;
+	gobject_class->get_property = get_property;
 	gtkobject_class->destroy = modest_msg_view_destroy;
 
 	widget_class->realize = realize;
@@ -176,6 +189,31 @@ modest_msg_view_class_init (ModestMsgViewClass *klass)
 	klass->set_scroll_adjustments = set_scroll_adjustments;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestMsgViewPrivate));
+
+	g_object_class_install_property (gobject_class,
+					 PROP_HADJUSTMENT,
+					 g_param_spec_object ("hadjustment", 
+							      _("Horizontal adjustment"),
+							      _("GtkAdjustment with information of the horizontal visible position"),
+							      GTK_TYPE_ADJUSTMENT,
+							      G_PARAM_READABLE | G_PARAM_WRITABLE | G_PARAM_CONSTRUCT));
+
+	g_object_class_install_property (gobject_class,
+					 PROP_VADJUSTMENT,
+					 g_param_spec_object ("vadjustment", 
+							      _("Vertical adjustment"),
+							      _("GtkAdjustment with information of the vertical visible position"),
+							      GTK_TYPE_ADJUSTMENT,
+							      G_PARAM_READABLE | G_PARAM_WRITABLE | G_PARAM_CONSTRUCT));
+
+	g_object_class_install_property (gobject_class,
+					 PROP_SHADOW_TYPE,
+					 g_param_spec_enum ("shadow_type", 
+							    _("Shadow type"),
+							    _("Kind of shadow that's shown around the view"),
+							    GTK_TYPE_SHADOW_TYPE,
+							    GTK_SHADOW_IN,
+							    G_PARAM_READABLE | G_PARAM_WRITABLE ));
 
  	signals[LINK_CLICKED_SIGNAL] =
  		g_signal_new ("link_clicked",
@@ -226,6 +264,55 @@ modest_msg_view_class_init (ModestMsgViewClass *klass)
 }
 
 static void
+set_property (GObject *object, 
+	      guint prop_id, 
+	      const GValue *value, 
+	      GParamSpec *pspec)
+{
+	ModestMsgView *msg_view = MODEST_MSG_VIEW (object);
+
+	switch (prop_id) {
+	case PROP_HADJUSTMENT:
+		modest_msg_view_set_hadjustment (msg_view, g_value_get_object (value));
+		break;
+	case PROP_VADJUSTMENT:
+		modest_msg_view_set_vadjustment (msg_view, g_value_get_object (value));
+		break;
+	case PROP_SHADOW_TYPE:
+		modest_msg_view_set_shadow_type (msg_view, g_value_get_enum (value));
+		break;
+	default:
+		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+		break;
+	}
+}
+
+static void
+get_property (GObject *object, 
+	      guint prop_id, 
+	      GValue *value, 
+	      GParamSpec *pspec)
+{
+	ModestMsgView *msg_view = MODEST_MSG_VIEW (object);
+	ModestMsgViewPrivate *priv = MODEST_MSG_VIEW_GET_PRIVATE (msg_view);
+
+	switch (prop_id) {
+	case PROP_HADJUSTMENT:
+		g_value_set_object (value, priv->hadj);
+		break;
+	case PROP_VADJUSTMENT:
+		g_value_set_object (value, priv->vadj);
+		break;
+	case PROP_SHADOW_TYPE:
+		g_value_set_enum (value, priv->shadow_type);
+		break;
+	default:
+		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+		break;
+	}
+}
+
+static void
 disconnect_hadjustment (ModestMsgView *msg_view)
 {
 	ModestMsgViewPrivate *priv = MODEST_MSG_VIEW_GET_PRIVATE (msg_view);
@@ -254,12 +341,18 @@ get_view_allocation (ModestMsgView *msg_view, GtkAllocation *allocation)
 {
 	/* This method gets the allocation of the widget in parent widget. It's the
 	   real position and size of the widget */
+	ModestMsgViewPrivate *priv = MODEST_MSG_VIEW_GET_PRIVATE (msg_view);
 	
 	allocation->x = 0;
 	allocation->y = 0;
 
-	allocation->width = MAX (1, GTK_WIDGET (msg_view)->allocation.width);
-	allocation->height = MAX (1, GTK_WIDGET (msg_view)->allocation.height);
+	if (priv->shadow_type != GTK_SHADOW_NONE) {
+		allocation->x = GTK_WIDGET (msg_view)->style->xthickness;
+		allocation->y = GTK_WIDGET (msg_view)->style->ythickness;
+	}
+
+	allocation->width = MAX (1, (GTK_WIDGET (msg_view)->allocation.width) - allocation->x * 2);
+	allocation->height = MAX (1, (GTK_WIDGET (msg_view)->allocation.height) - allocation->y * 2);
 
 }
 
@@ -488,7 +581,7 @@ expose (GtkWidget *widget,
 		priv = MODEST_MSG_VIEW_GET_PRIVATE (msg_view);
 		if (event->window == widget->window) {
 			gtk_paint_shadow (widget->style, widget->window,
-					  GTK_STATE_NORMAL, GTK_SHADOW_NONE,
+					  GTK_STATE_NORMAL, priv->shadow_type,
 					  &event->area, widget, "msgview",
 					  0,0,-1,-1);
 		} else if (event->window == priv->headers_window) {
@@ -576,6 +669,12 @@ size_allocate (GtkWidget *widget,
 	gboolean hadj_value_changed, vadj_value_changed;
 	GtkAllocation headers_allocation, html_allocation;
 	GtkAdjustment *html_vadj;
+
+	if (GTK_WIDGET_MAPPED (widget) &&
+	    priv->shadow_type != GTK_SHADOW_NONE && 
+	    (allocation->width != widget->allocation.width ||
+	     allocation->height != widget->allocation.height))
+		gdk_window_invalidate_rect (widget->window, NULL, FALSE);
 
 	widget->allocation = *allocation;
 	set_hadjustment_values (msg_view, &hadj_value_changed);
@@ -734,6 +833,7 @@ modest_msg_view_init (ModestMsgView *obj)
 
 	priv->hadj = NULL;
 	priv->vadj = NULL;
+	priv->shadow_type = GTK_SHADOW_IN;
 	priv->view_window = NULL;
 	priv->headers_window = NULL;
 	priv->html_window = NULL;
@@ -862,6 +962,8 @@ modest_msg_view_set_hadjustment (ModestMsgView *msg_view, GtkAdjustment *hadj)
 		gtk_adjustment_value_changed (hadj);
 	else
 		adjustment_value_changed (hadj, msg_view);
+
+	g_object_notify (G_OBJECT (msg_view), "hadjustment");
 }
 
 void
@@ -889,6 +991,53 @@ modest_msg_view_set_vadjustment (ModestMsgView *msg_view, GtkAdjustment *vadj)
 		gtk_adjustment_value_changed (vadj);
 	else
 		adjustment_value_changed (vadj, msg_view);
+
+	g_object_notify (G_OBJECT (msg_view), "vadjustment");
+}
+
+/** 
+ * modest_msg_view_set_shadow_type:
+ * @msg_view: a #ModestMsgView.
+ * @shadow_type: new shadow type.
+ *
+ * Sets a shadow type of the message view.
+ **/ 
+void
+modest_msg_view_set_shadow_type (ModestMsgView *msg_view,
+				 GtkShadowType shadow_type)
+{
+	ModestMsgViewPrivate *priv;
+	g_return_if_fail (MODEST_IS_MSG_VIEW (msg_view));
+
+	priv = MODEST_MSG_VIEW_GET_PRIVATE (msg_view);
+	
+	if (priv->shadow_type != shadow_type) {
+		priv->shadow_type = shadow_type;
+		
+		if (GTK_WIDGET_VISIBLE (msg_view)) {
+			gtk_widget_size_allocate (GTK_WIDGET (msg_view), &(GTK_WIDGET (msg_view)->allocation));
+			gtk_widget_queue_draw (GTK_WIDGET (msg_view));
+		}
+		g_object_notify (G_OBJECT (msg_view), "shadow-type");
+	}
+}
+
+/**
+ * modest_msg_view_get_shadow_type:
+ * @msg_view: a #ModestMsgView
+ *
+ * Gets the current shadow type of the #ModestMsgView.
+ *
+ * Return value: the shadow type 
+ **/
+GtkShadowType
+modest_msg_view_get_shadow_type (ModestMsgView *msg_view)
+{
+	ModestMsgViewPrivate *priv;
+	g_return_val_if_fail (MODEST_IS_MSG_VIEW (msg_view), GTK_SHADOW_NONE);
+	priv = MODEST_MSG_VIEW_GET_PRIVATE (msg_view);
+	
+	return priv->shadow_type;
 }
 
 GtkWidget*

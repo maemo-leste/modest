@@ -164,6 +164,7 @@ modest_scroll_text_set_text_view (ModestScrollText *scroll_text,
 				  GtkTextView *text_view)
 {
 	ModestScrollTextPriv *priv = MODEST_SCROLL_TEXT_GET_PRIVATE (scroll_text);
+	GtkStyle *style;
 
 	g_return_if_fail (MODEST_IS_SCROLL_TEXT (scroll_text));
 	if (text_view == NULL) {
@@ -188,6 +189,9 @@ modest_scroll_text_set_text_view (ModestScrollText *scroll_text,
 	gtk_text_view_set_justification (GTK_TEXT_VIEW (priv->text_view), GTK_JUSTIFY_LEFT);
 	gtk_text_view_set_left_margin (GTK_TEXT_VIEW (priv->text_view), 0);
 	gtk_text_view_set_right_margin (GTK_TEXT_VIEW (priv->text_view), 0);
+
+	style = gtk_rc_get_style (GTK_WIDGET (scroll_text));
+	gtk_widget_modify_base (priv->text_view, GTK_STATE_NORMAL, & (style->bg[GTK_STATE_NORMAL]));
 
 	gtk_container_add (GTK_CONTAINER (scroll_text), priv->text_view);
 

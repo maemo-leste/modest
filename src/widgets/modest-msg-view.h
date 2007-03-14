@@ -121,6 +121,8 @@ GtkAdjustment *modest_msg_view_get_vadjustment (ModestMsgView *self);
 GtkAdjustment *modest_msg_view_get_hadjustment (ModestMsgView *self);
 void modest_msg_view_set_vadjustment (ModestMsgView *self, GtkAdjustment *vadj);
 void modest_msg_view_set_hadjustment (ModestMsgView *self, GtkAdjustment *hadj);
+void modest_msg_view_set_shadow_type (ModestMsgView *self, GtkShadowType type);
+GtkShadowType modest_msg_view_get_shadow_type (ModestMsgView *self);
 
 G_END_DECLS
 
