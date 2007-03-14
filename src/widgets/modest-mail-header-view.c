@@ -80,10 +80,14 @@ add_header (ModestMailHeaderView *widget, const gchar *field, const gchar *value
 	GtkWidget *label_field, *label_value;
 	GtkWidget *scroll_text;
 	GtkTextBuffer *text_buffer;
+	gchar *bolded_field = NULL;
 
 	hbox = gtk_hbox_new (FALSE, 12);
 	label_field = gtk_label_new (NULL);
-	gtk_label_set_markup (GTK_LABEL (label_field), field);
+	if (field)
+		bolded_field = g_strconcat ("<b>", field, "</b>", NULL);
+	gtk_label_set_markup (GTK_LABEL (label_field), bolded_field);
+	g_free (bolded_field);
 	gtk_misc_set_alignment (GTK_MISC (label_field), 0.0, 0.0);
 	scroll_text = modest_scroll_text_new (NULL, 2);
 	label_value = (GtkWidget *) modest_scroll_text_get_text_view (MODEST_SCROLL_TEXT (scroll_text));
@@ -105,10 +109,14 @@ add_recpt_header (ModestMailHeaderView *widget, const gchar *field, const gchar 
 	ModestMailHeaderViewPriv *priv = MODEST_MAIL_HEADER_VIEW_GET_PRIVATE (widget);
 	GtkWidget *hbox;
 	GtkWidget *label_field, *label_value;
+	gchar *bolded_field = NULL;
 
 	hbox = gtk_hbox_new (FALSE, 12);
 	label_field = gtk_label_new (NULL);
-	gtk_label_set_markup (GTK_LABEL (label_field), field);
+	if (field != NULL)
+		bolded_field = g_strconcat ("<b>", field, "</b>", NULL);
+	gtk_label_set_markup (GTK_LABEL (label_field), bolded_field);
+	g_free (bolded_field);
 	gtk_misc_set_alignment (GTK_MISC (label_field), 0.0, 0.0);
 	label_value = modest_recpt_view_new ();
 	modest_recpt_view_set_recipients (MODEST_RECPT_VIEW(label_value), value);
@@ -209,29 +217,33 @@ modest_mail_header_view_set_header_default (TnyHeaderView *self, TnyHeader *head
 		bcc = tny_header_get_bcc (header);
 
 		if (subject)
-			add_header (MODEST_MAIL_HEADER_VIEW (self), _("<b>Subject:</b>"), subject);
+			add_header (MODEST_MAIL_HEADER_VIEW (self), _("mail_va_subject"), subject);
 		if (priv->is_outgoing) {
 			gchar *sent = modest_text_utils_get_display_date (tny_header_get_date_sent (header));
-			gtk_label_set_markup (GTK_LABEL (priv->fromto_label), _("<b>To:</b>"));
+			gchar *bolded_label = g_strconcat ("<b>", _("mail_va_to"), "</b>", NULL);
+			gtk_label_set_markup (GTK_LABEL (priv->fromto_label), bolded_label);
+			g_free (bolded_label);
 			if (to)
 				modest_recpt_view_set_recipients (MODEST_RECPT_VIEW (priv->fromto_contents), to);
 			if (priv->is_draft)
-				add_header (MODEST_MAIL_HEADER_VIEW (self), _("<b>Last saved:</b>"), sent);
+				add_header (MODEST_MAIL_HEADER_VIEW (self), _("fixme_Last saved:"), sent);
 			else
-				add_header (MODEST_MAIL_HEADER_VIEW (self), _("<b>Sent:</b>"), sent);
+				add_header (MODEST_MAIL_HEADER_VIEW (self), _("fixme_Sent:"), sent);
 			g_free (sent);
 		} else {
 			gchar *received = modest_text_utils_get_display_date (tny_header_get_date_received (header));
-			gtk_label_set_markup (GTK_LABEL (priv->fromto_label), _("<b>From:</b>"));
+			gchar *bolded_label = g_strconcat ("<b>", _("mail_va_from"), "</b>", NULL);
+			gtk_label_set_markup (GTK_LABEL (priv->fromto_label), bolded_label);
+			g_free (bolded_label);
 			if (from)
 				modest_recpt_view_set_recipients (MODEST_RECPT_VIEW (priv->fromto_contents), from);
-			add_header (MODEST_MAIL_HEADER_VIEW (self), _("<b>Received:</b>"), received);
+			add_header (MODEST_MAIL_HEADER_VIEW (self), _("fixme_Received:"), received);
 			g_free (received);
 		}
 		if (cc)
-			add_recpt_header (MODEST_MAIL_HEADER_VIEW (self), _("<b>Cc:</b>"), cc);
+			add_recpt_header (MODEST_MAIL_HEADER_VIEW (self), _("mail_va_cc"), cc);
 		if (bcc)
-			add_recpt_header (MODEST_MAIL_HEADER_VIEW (self), _("<b>Bcc:</b>"), bcc);
+			add_recpt_header (MODEST_MAIL_HEADER_VIEW (self), _("mail_va_hotfix1"), bcc);
 	}
 
 	gtk_widget_show_all (GTK_WIDGET (self));

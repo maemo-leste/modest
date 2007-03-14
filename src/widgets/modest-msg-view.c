@@ -667,7 +667,7 @@ size_allocate (GtkWidget *widget,
 	ModestMsgView *msg_view = MODEST_MSG_VIEW (widget);
 	ModestMsgViewPrivate *priv = MODEST_MSG_VIEW_GET_PRIVATE (msg_view);
 	gboolean hadj_value_changed, vadj_value_changed;
-	GtkAllocation headers_allocation, html_allocation;
+	GtkAllocation headers_allocation, html_allocation, view_allocation;
 	GtkAdjustment *html_vadj;
 
 	if (GTK_WIDGET_MAPPED (widget) &&
@@ -680,9 +680,11 @@ size_allocate (GtkWidget *widget,
 	set_hadjustment_values (msg_view, &hadj_value_changed);
 	set_vadjustment_values (msg_view, &vadj_value_changed);
 
+	get_view_allocation (msg_view, &view_allocation);
+
 	headers_allocation.x = 0;
 	headers_allocation.y = 0;
-	headers_allocation.width = allocation->width;
+	headers_allocation.width = view_allocation.width;
 	if (priv->headers_box)
 		headers_allocation.height = GTK_WIDGET (priv->headers_box)->requisition.height;
 	else
@@ -692,18 +694,15 @@ size_allocate (GtkWidget *widget,
 
 	html_allocation.x = 0;
 	html_allocation.y = headers_allocation.height;
-	html_allocation.width = allocation->width;
+	html_allocation.width = view_allocation.width;
 	html_allocation.height = MAX ((gint) html_vadj->upper, (gint)(priv->vadj->upper - headers_allocation.height));
 
 	if (GTK_WIDGET_REALIZED (widget)) {
-		GtkAllocation view_allocation;
 		gdk_window_move_resize (widget->window,
 					allocation->x,
 					allocation->y,
 					allocation->width,
 					allocation->height);
-
-		get_view_allocation (msg_view, &view_allocation);
 
 		gdk_window_move_resize (priv->view_window,
 					view_allocation.x,

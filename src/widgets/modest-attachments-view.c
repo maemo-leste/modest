@@ -143,7 +143,16 @@ modest_attachments_view_set_message (ModestAttachmentsView *attachments_view, Tn
 				pixbuf = gtk_icon_theme_load_icon (gtk_icon_theme_get_default (), file_icon_name, 
 								   icon_height, GTK_ICON_LOOKUP_USE_BUILTIN, NULL);
 				if (pixbuf) {
+					GtkTextTag *pixbuf_tag;
+					GtkTextIter iter2;
+					pixbuf_tag = gtk_text_buffer_create_tag (buffer, NULL, NULL);
+					g_object_set_data (G_OBJECT (pixbuf_tag), "attachment-index", GINT_TO_POINTER (index));
+					g_object_set_data (G_OBJECT (pixbuf_tag), "attachment-set", GINT_TO_POINTER (TRUE));
 					gtk_text_buffer_insert_pixbuf (buffer, &text_iter, pixbuf);
+					iter2 = text_iter;
+					gtk_text_iter_backward_char (&iter2);
+					gtk_text_buffer_apply_tag (buffer, pixbuf_tag, &iter2, &text_iter);
+					gtk_text_buffer_get_end_iter (buffer, &text_iter);
 				}
 			}
 			gtk_text_buffer_insert_with_tags (buffer, &text_iter, filename, -1, tag, NULL);
