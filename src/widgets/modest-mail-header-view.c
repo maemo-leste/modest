@@ -55,6 +55,7 @@ struct _ModestMailHeaderViewPriv
 	GtkWidget    *headers_vbox;
 	GtkSizeGroup *labels_size_group;
 	gboolean     is_outgoing;
+	gboolean     is_draft;
 	TnyHeader    *header;
 };
 
@@ -163,14 +164,15 @@ modest_mail_header_view_update_is_outgoing (TnyHeaderView *self)
 		}
 
 		switch (folder_type) {
+		case TNY_FOLDER_TYPE_DRAFTS:
 		case TNY_FOLDER_TYPE_OUTBOX:
 		case TNY_FOLDER_TYPE_SENT:
-		case TNY_FOLDER_TYPE_DRAFTS:
 			priv->is_outgoing = TRUE;
 			break;
 		default:
 			priv->is_outgoing = FALSE;
 		}
+		priv->is_draft = (folder_type == TNY_FOLDER_TYPE_DRAFTS);
 
 		g_object_unref (folder);
 	}
@@ -213,7 +215,10 @@ modest_mail_header_view_set_header_default (TnyHeaderView *self, TnyHeader *head
 			gtk_label_set_markup (GTK_LABEL (priv->fromto_label), _("<b>To:</b>"));
 			if (to)
 				modest_recpt_view_set_recipients (MODEST_RECPT_VIEW (priv->fromto_contents), to);
-			add_header (MODEST_MAIL_HEADER_VIEW (self), _("<b>Sent:</b>"), sent);
+			if (priv->is_draft)
+				add_header (MODEST_MAIL_HEADER_VIEW (self), _("<b>Last saved:</b>"), sent);
+			else
+				add_header (MODEST_MAIL_HEADER_VIEW (self), _("<b>Sent:</b>"), sent);
 			g_free (sent);
 		} else {
 			gchar *received = modest_text_utils_get_display_date (tny_header_get_date_received (header));
@@ -335,6 +340,7 @@ modest_mail_header_view_instance_init (GTypeInstance *instance, gpointer g_class
 	gtk_container_set_reallocate_redraws (GTK_CONTAINER (instance), TRUE);
 
 	priv->is_outgoing = FALSE;
+	priv->is_draft = FALSE;
 
 	return;
 }

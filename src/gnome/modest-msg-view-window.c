@@ -210,6 +210,8 @@ modest_msg_view_window_new (TnyMsg *msg, const gchar *account)
 	ModestWindowPrivate *parent_priv;
 	GtkActionGroup *action_group;
 	GError *error = NULL;
+	TnyHeader *header = NULL;
+	const gchar *subject = NULL;
 
 	g_return_val_if_fail (msg, NULL);
 
@@ -255,8 +257,19 @@ modest_msg_view_window_new (TnyMsg *msg, const gchar *account)
 	/* Init window */
 	init_window (MODEST_MSG_VIEW_WINDOW(obj), msg);
 	restore_settings (MODEST_MSG_VIEW_WINDOW(obj));
+
+	header = tny_msg_get_header (msg);
+	if (header)
+		subject = tny_header_get_subject (header);
 	
-	gtk_window_set_title (GTK_WINDOW(obj), "Modest");
+	if (subject != NULL)
+		gtk_window_set_title (GTK_WINDOW (obj), subject);
+	else
+		gtk_window_set_title (GTK_WINDOW(obj), "Modest");
+
+	if (header)
+		g_object_unref (header);
+
 	gtk_window_set_icon_from_file (GTK_WINDOW(obj), MODEST_APP_ICON, NULL);
 
 	g_signal_connect (G_OBJECT(obj), "delete-event", G_CALLBACK(on_delete_event), obj);
