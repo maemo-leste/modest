@@ -1147,6 +1147,7 @@ modest_msg_view_set_message (ModestMsgView *self, TnyMsg *msg)
 	
 	if (!msg) {
 		tny_header_view_clear (TNY_HEADER_VIEW (priv->mail_header_view));
+		modest_attachments_view_set_message (MODEST_ATTACHMENTS_VIEW (priv->attachments_view), NULL);
 		gtk_widget_hide_all (priv->mail_header_view);
 		gtk_widget_hide_all (priv->attachments_view);
 		gtk_widget_set_no_show_all (priv->attachments_view, TRUE);
