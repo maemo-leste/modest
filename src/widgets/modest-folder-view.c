@@ -749,34 +749,11 @@ on_drag_data_get (GtkWidget *widget,
 
 typedef struct _DndHelper {
 	gboolean delete_source;
-	GtkWidget *source_widget;
-	GtkWidget *dest_widget;
 	GtkTreePath *source_row;
 	GdkDragContext *context;
 	guint time;
 } DndHelper;
 
-
-/*
- * This function saves the source row in the source widget, will be
- * used by the drag-data-delete handler to remove the source row
- */
-static void
-save_and_clean (DndHelper *helper, 
-		gboolean success)
-{
-	/* Save row data */
-	if (success && helper->delete_source)
-		g_object_set_data (G_OBJECT (helper->source_widget),
-				   ROW_REF_DATA_NAME,
-				   gtk_tree_path_copy (helper->source_row));
-
-	/* Clean dest row */
-	gtk_tree_view_set_drag_dest_row (GTK_TREE_VIEW (helper->dest_widget),
-					 NULL,
-					 GTK_TREE_VIEW_DROP_BEFORE);
-
-}
 
 /*
  * This function is the callback of the
@@ -806,16 +783,12 @@ on_progress_changed (ModestMailOperation *mail_op, gpointer user_data)
 	modest_mail_operation_queue_remove (queue, mail_op);
 	g_object_unref (G_OBJECT (mail_op));
 
-	/* Save and clean. HACK: Force success to FALSE in order not
-	   to save data in the source widget */
-	gtk_tree_path_free (helper->source_row);
-	save_and_clean (helper, FALSE);
-	
 	/* Notify the drag source. Never call delete, the monitor will
 	   do the job if needed */
 	gtk_drag_finish (helper->context, success, FALSE, helper->time);
 
 	/* Free the helper */
+	gtk_tree_path_free (helper->source_row);	
 	g_slice_free (DndHelper, helper);
 }
 
@@ -888,9 +861,8 @@ drag_and_drop_from_folder_view (GtkTreeModel     *source_model,
 {
 	ModestMailOperation *mail_op;
 	const GError *error;
-	GtkTreeRowReference *source_row_reference;
 	GtkTreeIter parent_iter, iter;
-	TnyFolder *folder, *new_folder;
+	TnyFolder *folder;
 	TnyFolderStore *parent_folder;
 	gboolean success = FALSE;
 
@@ -915,8 +887,8 @@ drag_and_drop_from_folder_view (GtkTreeModel     *source_model,
 
 	/* Do the mail operation */
 	mail_op = modest_mail_operation_new ();
-	new_folder = modest_mail_operation_xfer_folder (mail_op, folder, parent_folder, 
-							helper->delete_source);
+	modest_mail_operation_xfer_folder (mail_op, folder, parent_folder, 
+					   helper->delete_source);
 
 	g_object_unref (G_OBJECT (parent_folder));
 	g_object_unref (G_OBJECT (folder));
@@ -928,40 +900,13 @@ drag_and_drop_from_folder_view (GtkTreeModel     *source_model,
 		goto out;
 	}
 	g_object_unref (G_OBJECT (mail_op));
-
-	/* Get a row reference to the source path because the path
-	   could change after the insertion. The gtk_drag_finish() is
-	   not able to delete the source because that, so we have to
-	   do it manually */
-	source_row_reference = gtk_tree_row_reference_new (source_model, helper->source_row);
-	gtk_tree_path_free (helper->source_row);
-
-	/* Insert the dragged row as a child of the dest row */
-	gtk_tree_path_down (dest_row);
-	if (gtk_tree_drag_dest_drag_data_received (GTK_TREE_DRAG_DEST (dest_model),
-						   dest_row,
-						   selection_data)) {
-
-		GtkTreeIter iter;
-
-		/* Set the newly created folder as the instance in the row */
-		gtk_tree_model_get_iter (dest_model, &iter, dest_row);
-		gtk_tree_store_set (GTK_TREE_STORE (dest_model), &iter,
-				    TNY_GTK_FOLDER_STORE_TREE_MODEL_INSTANCE_COLUMN, 
-				    new_folder, -1);
-		g_object_unref (G_OBJECT (new_folder));		
-
-		helper->source_row = gtk_tree_row_reference_get_path (source_row_reference);
-
-		success = TRUE;
-	}
-	gtk_tree_row_reference_free (source_row_reference);
-
-	/* Save and clean */
-	save_and_clean (helper, success);	
-
+	success = TRUE;
  out:
-	gtk_drag_finish (helper->context, success, (success && helper->delete_source), helper->time);
+	gtk_drag_finish (helper->context, success, FALSE, helper->time);
+
+	/* Free the helper */
+	gtk_tree_path_free (helper->source_row);	
+	g_slice_free (DndHelper, helper);
 }
 
 /*
@@ -996,7 +941,7 @@ on_drag_data_received (GtkWidget *widget,
 
 	/* Check if the get_data failed */
 	if (selection_data == NULL || selection_data->length < 0)
-		gtk_drag_finish (context, success, (success && delete_source), time);
+		gtk_drag_finish (context, success, FALSE, time);
 
 	/* Get the models */
 	source_widget = gtk_drag_get_source_widget (context);
@@ -1020,14 +965,12 @@ on_drag_data_received (GtkWidget *widget,
 
 	/* Only allow drops IN other rows */
 	if (!dest_row || pos == GTK_TREE_VIEW_DROP_BEFORE || pos == GTK_TREE_VIEW_DROP_AFTER)
-		gtk_drag_finish (context, success, (success && delete_source), time);
+		gtk_drag_finish (context, success, FALSE, time);
 
 	/* Create the helper */
 	helper = g_slice_new0 (DndHelper);
 	helper->delete_source = delete_source;
-	helper->source_widget = source_widget;
-	helper->dest_widget = widget;
-	helper->source_row = source_row;
+	helper->source_row = gtk_tree_path_copy (source_row);
 	helper->context = context;
 	helper->time = time;
 
@@ -1053,6 +996,9 @@ on_drag_data_received (GtkWidget *widget,
 						selection_data, 
 						helper);
 	}
+
+	/* Frees */
+	gtk_tree_path_free (source_row);
 	gtk_tree_path_free (child_dest_row);
 }
 
@@ -1083,31 +1029,6 @@ drag_drop_cb (GtkWidget      *widget,
 	gtk_drag_get_data(widget, context, target, time);
 
     return TRUE;
-}
-
-/*
- * This function deletes the data that has been dragged from its
- * source widget. Since is a function received by the source of the
- * drag, this function only deletes rows of the folder view
- * widget. The header view widget will need to define its own one.
- */
-static void 
-drag_data_delete_cb (GtkWidget      *widget,
-		     GdkDragContext *context,
-		     gpointer        user_data)
-{
-	GtkTreePath *source_row;
-	GtkTreeModel *model_sort, *model;
-
-	model_sort = gtk_tree_view_get_model (GTK_TREE_VIEW (widget));
-	model = gtk_tree_model_sort_get_model (GTK_TREE_MODEL_SORT (model_sort));
-	source_row = g_object_steal_data (G_OBJECT (widget), ROW_REF_DATA_NAME);
-
-	/* Delete the source row */
-	gtk_tree_drag_source_drag_data_delete (GTK_TREE_DRAG_SOURCE (model),
-					       source_row);
-
-	gtk_tree_path_free (source_row);
 }
 
 /*
@@ -1167,6 +1088,7 @@ on_drag_motion (GtkWidget      *widget,
 	GtkTreePath *dest_row;
 	ModestFolderViewPrivate *priv;
 	GdkDragAction suggested_action;
+	gboolean valid_location = FALSE;
 
 	priv = MODEST_FOLDER_VIEW_GET_PRIVATE (widget);
 
@@ -1180,8 +1102,17 @@ on_drag_motion (GtkWidget      *widget,
 					   &dest_row,
 					   &pos);
 
-	if (!dest_row)
-		return FALSE;
+	/* Do not allow drops between folders */
+	if (!dest_row ||
+	    pos == GTK_TREE_VIEW_DROP_BEFORE || 
+	    pos == GTK_TREE_VIEW_DROP_AFTER) {
+		gtk_tree_view_set_drag_dest_row(GTK_TREE_VIEW (widget), NULL, 0);
+		gdk_drag_status(context, 0, time);
+		valid_location = FALSE;
+		goto out;
+	} else {
+		valid_location = TRUE;
+	}
 
 	/* Expand the selected row after 1/2 second */
 	if (!gtk_tree_view_row_expanded (GTK_TREE_VIEW (widget), dest_row)) {
@@ -1202,7 +1133,9 @@ on_drag_motion (GtkWidget      *widget,
 	else
             gdk_drag_status(context, GDK_ACTION_DEFAULT, time);
 
-	return TRUE;
+ out:
+	g_signal_stop_emission_by_name (widget, "drag-motion");
+	return valid_location;
 }
 
 
@@ -1229,10 +1162,10 @@ setup_drag_and_drop (GtkTreeView *self)
 			   G_N_ELEMENTS (folder_view_drag_types),
 			   GDK_ACTION_MOVE | GDK_ACTION_COPY);
 
-	gtk_signal_connect(GTK_OBJECT (self),
-			   "drag_data_received",
-			   GTK_SIGNAL_FUNC(on_drag_data_received),
-			   NULL);
+	g_signal_connect (G_OBJECT (self),
+			  "drag_data_received",
+			  G_CALLBACK (on_drag_data_received),
+			  NULL);
 
 
 	/* Set up the treeview as a dnd source */
@@ -1242,24 +1175,18 @@ setup_drag_and_drop (GtkTreeView *self)
 			     G_N_ELEMENTS (folder_view_drag_types),
 			     GDK_ACTION_MOVE | GDK_ACTION_COPY);
 
-	gtk_signal_connect(GTK_OBJECT (self),
-			   "drag_data_delete",
-			   GTK_SIGNAL_FUNC(drag_data_delete_cb),
-			   NULL);
+	g_signal_connect (G_OBJECT (self),
+			  "drag_motion",
+			  G_CALLBACK (on_drag_motion),
+			  NULL);
+	
+	g_signal_connect (G_OBJECT (self),
+			  "drag_data_get",
+			  G_CALLBACK (on_drag_data_get),
+			  NULL);
 
-	gtk_signal_connect(GTK_OBJECT (self),
-			   "drag_motion",
-			   GTK_SIGNAL_FUNC(on_drag_motion),
-			   NULL);
-
-
-	gtk_signal_connect(GTK_OBJECT (self),
-			   "drag_data_get",
-			   GTK_SIGNAL_FUNC(on_drag_data_get),
-			   NULL);
-
-	gtk_signal_connect(GTK_OBJECT (self),
-			   "drag_drop",
-			   GTK_SIGNAL_FUNC(drag_drop_cb),
-			   NULL);
+	g_signal_connect (G_OBJECT (self),
+			  "drag_drop",
+			  G_CALLBACK (drag_drop_cb),
+			  NULL);
 }

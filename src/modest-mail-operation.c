@@ -647,12 +647,12 @@ modest_mail_operation_create_folder (ModestMailOperation *self,
 	new_folder = tny_folder_store_create_folder (parent, name, &(priv->error));
 	CHECK_EXCEPTION (priv, MODEST_MAIL_OPERATION_STATUS_FAILED, return NULL);
 
-	/* Subscribe to folder */
-	if (!tny_folder_is_subscribed (new_folder)) {
-		store_account = TNY_STORE_ACCOUNT (tny_folder_get_account (TNY_FOLDER (parent)));
-		tny_store_account_subscribe (store_account, new_folder);
-		g_object_unref (G_OBJECT (store_account));
-	}
+/* 	/\* Subscribe to folder *\/ */
+/* 	if (!tny_folder_is_subscribed (new_folder)) { */
+/* 		store_account = TNY_STORE_ACCOUNT (tny_folder_get_account (TNY_FOLDER (parent))); */
+/* 		tny_store_account_subscribe (store_account, new_folder); */
+/* 		g_object_unref (G_OBJECT (store_account)); */
+/* 	} */
 
 	return new_folder;
 }

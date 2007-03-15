@@ -745,7 +745,6 @@ modest_header_view_set_folder (ModestHeaderView *self, TnyFolder *folder)
 	if (folder) {
 
 		priv->folder = g_object_ref (folder);
-
 		tny_folder_refresh_async (folder,
 					  on_refresh_folder,
 					  on_refresh_folder_status_update,
