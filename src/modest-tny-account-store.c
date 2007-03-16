@@ -371,9 +371,7 @@ modest_tny_account_store_finalize (GObject *obj)
 
 	if (priv->session) {
 		camel_object_unref (CAMEL_OBJECT(priv->session));
-		if (debug && CAMEL_IS_OBJECT(priv->session))
-			g_warning ("%s:%d: TnyCamelSession still holds a refcount of %d",
-				   __FILE__,__LINE__,CAMEL_OBJECT(priv->session)->ref_count);	
+		modest_runtime_verify_object_death(priv->session, "");
 		priv->session = NULL;
 	}
 	
@@ -466,7 +464,7 @@ get_accounts  (TnyAccountStore *self, TnyList *list, TnyAccountType type)
 								     type, priv->session,
 								     get_password,
 								     forget_password);
-			if (tny_account) { /* something went wrong */
+			if (tny_account) {
 				g_object_set_data (G_OBJECT(tny_account), "account_store",
 						   (gpointer)self);
 				tny_list_prepend (list, G_OBJECT(tny_account));
