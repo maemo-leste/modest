@@ -392,11 +392,8 @@ modest_tny_account_store_new (ModestAccountMgr *account_mgr, TnyDevice *device) 
 	obj  = G_OBJECT(g_object_new(MODEST_TYPE_TNY_ACCOUNT_STORE, NULL));
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(obj);
 
-	priv->account_mgr = account_mgr;
-	g_object_ref (G_OBJECT(priv->account_mgr));
-
-	priv->device = device;
-	g_object_ref (priv->device);
+	priv->account_mgr = g_object_ref (G_OBJECT(account_mgr));
+	priv->device = g_object_ref (device);
 	
 	priv->session = tny_session_camel_new (TNY_ACCOUNT_STORE(obj));
 	
@@ -684,7 +681,7 @@ modest_tny_account_store_set_get_pass_func (ModestTnyAccountStore *self,
 TnySessionCamel*
 tny_account_store_get_session  (TnyAccountStore *self)
 {
-	g_return_val_if_fail (self, NULL);	
+	g_return_val_if_fail (self, NULL);
 	return MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE (self)->session;
 }
 

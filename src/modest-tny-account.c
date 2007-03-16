@@ -249,7 +249,7 @@ modest_tny_account_new_for_local_folders (ModestAccountMgr *account_mgr, TnySess
 	url = camel_url_new ("maildir:", NULL);
 	camel_url_set_path (url, maildir);
 	/* Needed by tinymail's DBC assertions */
-	camel_url_set_host (url, "localhost");
+ 	camel_url_set_host (url, "localhost");
 	url_string = camel_url_to_string (url, 0);
 	
 	tny_account_set_url_string (TNY_ACCOUNT(tny_account), url_string);
