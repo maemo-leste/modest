@@ -1142,8 +1142,8 @@ on_drag_motion (GtkWidget      *widget,
 /* Folder view drag types */
 const GtkTargetEntry folder_view_drag_types[] =
 {
-	{ "GTK_TREE_MODEL_ROW", GTK_TARGET_SAME_WIDGET, FOLDER_ROW },
-	{ "GTK_TREE_MODEL_ROW", GTK_TARGET_SAME_APP, HEADER_ROW }
+	{ "GTK_TREE_MODEL_ROW", GTK_TARGET_SAME_WIDGET, MODEST_FOLDER_ROW },
+	{ "GTK_TREE_MODEL_ROW", GTK_TARGET_SAME_APP,    MODEST_HEADER_ROW }
 };
 
 /*

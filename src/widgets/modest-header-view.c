@@ -971,12 +971,9 @@ cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 
 /* Drag and drop stuff */
 static void
-drag_data_get_cb (GtkWidget *widget, 
-		  GdkDragContext *context, 
+drag_data_get_cb (GtkWidget *widget, GdkDragContext *context, 
 		  GtkSelectionData *selection_data, 
-		  guint info, 
-		  guint time, 
-		  gpointer data)
+		  guint info,  guint time, gpointer data)
 {
 	GtkTreeSelection *selection;
 	GtkTreeModel *model;
@@ -987,17 +984,32 @@ drag_data_get_cb (GtkWidget *widget,
 	gtk_tree_selection_get_selected (selection, &model, &iter);
 	source_row = gtk_tree_model_get_path (model, &iter);
 
-	gtk_tree_set_row_drag_data (selection_data,
-				    model,
-				    source_row);
+	switch (info) {
+	case MODEST_HEADER_ROW:
+		gtk_tree_set_row_drag_data (selection_data, model, source_row);
+		break;
+	case MODEST_MSG: {
+		TnyHeader *hdr;
+		gtk_tree_model_get (model, &iter,
+				    TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN, &hdr,
+				    -1);
+		if (hdr) {
+			g_object_unref (G_OBJECT(hdr));
+		}
+		break;
+	}
+	default:
+		g_message ("default");
+	}
 
 	gtk_tree_path_free (source_row);
 }
 
 /* Header view drag types */
-const GtkTargetEntry header_view_drag_types[] =
-{
-	{ "GTK_TREE_MODEL_ROW", GTK_TARGET_SAME_APP, HEADER_ROW }
+const GtkTargetEntry header_view_drag_types[] = {
+	{ "GTK_TREE_MODEL_ROW", GTK_TARGET_SAME_APP, MODEST_HEADER_ROW },
+	{ "text/uri-list",      0,                   MODEST_MSG },
+ 
 };
 
 static void
@@ -1009,8 +1021,6 @@ setup_drag_and_drop (GtkTreeView *self)
 			     G_N_ELEMENTS (header_view_drag_types),
 			     GDK_ACTION_MOVE | GDK_ACTION_COPY);
 
-	gtk_signal_connect(GTK_OBJECT (self),
-			   "drag_data_get",
-			   GTK_SIGNAL_FUNC(drag_data_get_cb),
-			   NULL);
+	g_signal_connect(G_OBJECT (self), "drag_data_get",
+			 G_CALLBACK(drag_data_get_cb), NULL);
 }
