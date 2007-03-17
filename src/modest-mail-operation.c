@@ -636,7 +636,7 @@ modest_mail_operation_create_folder (ModestMailOperation *self,
 {
 	ModestMailOperationPrivate *priv;
 	TnyFolder *new_folder = NULL;
-	TnyStoreAccount *store_account;
+	//TnyStoreAccount *store_account;
 
 	g_return_val_if_fail (TNY_IS_FOLDER_STORE (parent), NULL);
 	g_return_val_if_fail (name, NULL);

@@ -342,7 +342,7 @@ modest_tny_account_store_finalize (GObject *obj)
 	ModestTnyAccountStore *self        = MODEST_TNY_ACCOUNT_STORE(obj);
 	ModestTnyAccountStorePrivate *priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
 	
-	gboolean debug = modest_runtime_get_debug_flags() & MODEST_RUNTIME_DEBUG_DEBUG_OBJECTS;
+	//gboolean debug = modest_runtime_get_debug_flags() & MODEST_RUNTIME_DEBUG_DEBUG_OBJECTS;
 
 	g_free (priv->cache_dir);
 	priv->cache_dir = NULL;
