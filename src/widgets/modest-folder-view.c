@@ -352,7 +352,6 @@ modest_folder_view_init (ModestFolderView *obj)
 	priv->query          = NULL;
 
 	column = gtk_tree_view_column_new ();	
-	gtk_tree_view_append_column (GTK_TREE_VIEW(obj),column);
 	
 	renderer = gtk_cell_renderer_pixbuf_new();
 	gtk_tree_view_column_pack_start (column, renderer, FALSE);
@@ -372,6 +371,8 @@ modest_folder_view_init (ModestFolderView *obj)
 	gtk_tree_view_column_set_fixed_width (column, TRUE);		
 	gtk_tree_view_set_headers_clickable (GTK_TREE_VIEW(obj), FALSE);
 	gtk_tree_view_set_enable_search     (GTK_TREE_VIEW(obj), FALSE);
+
+	gtk_tree_view_append_column (GTK_TREE_VIEW(obj),column);
 
 	setup_drag_and_drop (GTK_TREE_VIEW(obj));
 }

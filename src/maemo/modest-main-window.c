@@ -227,8 +227,6 @@ restore_sizes (ModestMainWindow *self)
 
 	conf = modest_runtime_get_conf ();
 	
-	modest_widget_memory_restore (conf,G_OBJECT(self),
-				      "modest-main-window");
 	modest_widget_memory_restore (conf, G_OBJECT(priv->main_paned),
 				      "modest-main-paned");
 	modest_widget_memory_restore (conf, G_OBJECT(priv->header_view),
@@ -328,6 +326,7 @@ connect_signals (ModestMainWindow *self)
 {	
 	ModestWindowPrivate *parent_priv;
 	ModestMainWindowPrivate *priv;
+	GtkWidget *menu;
 	
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
 	parent_priv = MODEST_WINDOW_GET_PRIVATE(self);
@@ -335,6 +334,9 @@ connect_signals (ModestMainWindow *self)
 	/* folder view */
 	g_signal_connect (G_OBJECT(priv->folder_view), "folder_selection_changed",
 			  G_CALLBACK(modest_ui_actions_on_folder_selection_changed), self);
+
+	menu = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/FolderViewContextMenu");
+	gtk_widget_tap_and_hold_setup (GTK_WIDGET (priv->folder_view), menu, NULL, 0);
 
 	/* header view */
 	g_signal_connect (G_OBJECT(priv->header_view), "status_update",
@@ -370,7 +372,6 @@ sync_accounts_cb (ModestMainWindow *win)
 }
 
 
-	
 ModestWindow*
 modest_main_window_new (void)
 {
@@ -451,7 +452,7 @@ modest_main_window_new (void)
 	gtk_box_pack_start (GTK_BOX(main_vbox), priv->main_paned, TRUE, TRUE,0);
 
 	gtk_container_add (GTK_CONTAINER(self), main_vbox);
-	restore_sizes (MODEST_MAIN_WINDOW(self));	
+	restore_sizes (MODEST_MAIN_WINDOW(self));
 	
 	gtk_window_set_title (GTK_WINDOW(self), _("Modest"));
 	gtk_window_set_icon_from_file (GTK_WINDOW(self), MODEST_APP_ICON, NULL);
@@ -475,9 +476,3 @@ modest_main_window_new (void)
 
 	return MODEST_WINDOW(self);
 }
-
-
-
-
-
-

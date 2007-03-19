@@ -534,7 +534,7 @@ modest_mail_operation_update_account (ModestMailOperation *self,
 	query = NULL; //tny_folder_store_query_new ();
 
 	/* FIXME: is this needed? */
-	tny_device_force_online (TNY_DEVICE(modest_runtime_get_device()));
+//	tny_device_force_online (TNY_DEVICE(modest_runtime_get_device()));
 	
 	/* FIXME: let query be NULL: do it for all */ 
 	//tny_folder_store_query_add_item (query, NULL, TNY_FOLDER_STORE_QUERY_OPTION_SUBSCRIBED);
