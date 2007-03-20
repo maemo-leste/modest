@@ -42,39 +42,35 @@
 
 #define MODEST_APP_ICON				PIXMAP_PREFIX "modest-icon.png"
 
-#define MODEST_HEADER_ICON_READ			PIXMAP_PREFIX "qgn_list_messagin_mail.png"
-#define MODEST_HEADER_ICON_UNREAD		PIXMAP_PREFIX "qgn_list_messagin_mail_unread.png"
-#define MODEST_HEADER_ICON_DELETED		PIXMAP_PREFIX "qgn_list_messagin_mail_deleted.png"
-#define MODEST_HEADER_ICON_ATTACH		PIXMAP_PREFIX "qgn_list_gene_attacpap.png"
+#define MODEST_HEADER_ICON_READ			"qgn_list_messagin_mail"
+#define MODEST_HEADER_ICON_UNREAD		"qgn_list_messagin_mail_unread"
+#define MODEST_HEADER_ICON_DELETED		"qgn_list_messagin_mail_deleted"
+#define MODEST_HEADER_ICON_ATTACH		"qgn_list_gene_attacpap"
 
-#define MODEST_FOLDER_ICON_OPEN			PIXMAP_PREFIX "qgn_list_gene_fldr_opn.png"
-#define MODEST_FOLDER_ICON_CLOSED		PIXMAP_PREFIX "qgn_list_gene_fldr_cls.png"
+#define MODEST_FOLDER_ICON_OPEN			"qgn_list_gene_fldr_opn"
+#define MODEST_FOLDER_ICON_CLOSED		"qgn_list_gene_fldr_cls"
 
-#define MODEST_FOLDER_ICON_ACCOUNT		PIXMAP_PREFIX "qgn_addr_icon_user_group.png"
-#define MODEST_FOLDER_ICON_INBOX		PIXMAP_PREFIX "qgn_list_messagin_inbox.png"
-#define MODEST_FOLDER_ICON_OUTBOX		PIXMAP_PREFIX "qgn_list_messagin_outbox.png"
-#define MODEST_FOLDER_ICON_SENT			PIXMAP_PREFIX "qgn_list_messagin_sent.png"
-#define MODEST_FOLDER_ICON_TRASH		PIXMAP_PREFIX "qgn_toolb_messagin_delete.png"
-#define MODEST_FOLDER_ICON_JUNK			PIXMAP_PREFIX "qgn_toolb_messagin_delete.png"
-#define MODEST_FOLDER_ICON_DRAFTS		PIXMAP_PREFIX "qgn_list_messagin_drafts.png"
-#define MODEST_FOLDER_ICON_NORMAL		PIXMAP_PREFIX "qgn_list_gene_fldr_cls.png"
+#define MODEST_FOLDER_ICON_ACCOUNT		"qgn_addr_icon_user_group"
+#define MODEST_FOLDER_ICON_INBOX		"qgn_list_messagin_inbox"
+#define MODEST_FOLDER_ICON_OUTBOX		"qgn_list_messagin_outbox"
+#define MODEST_FOLDER_ICON_SENT			"qgn_list_messagin_sent"
+#define MODEST_FOLDER_ICON_TRASH		"qgn_toolb_messagin_delete"
+#define MODEST_FOLDER_ICON_JUNK			"qgn_toolb_messagin_delete"
+#define MODEST_FOLDER_ICON_DRAFTS		"qgn_list_messagin_drafts"
+#define MODEST_FOLDER_ICON_NORMAL		"qgn_list_gene_fldr_cls"
 
-#define MODEST_FOLDER_ICON_CONTACTS		PIXMAP_PREFIX "qgn_addr_icon_user_group.png"
-#define MODEST_FOLDER_ICON_NOTES		PIXMAP_PREFIX "qgn_list_messagin_viewer.png"
-#define MODEST_FOLDER_ICON_CALENDAR     	PIXMAP_PREFIX "qgn_widg_datedit.png"
+#define MODEST_FOLDER_ICON_CONTACTS		"qgn_addr_icon_user_group"
+#define MODEST_FOLDER_ICON_NOTES		"qgn_list_messagin_viewer"
+#define MODEST_FOLDER_ICON_CALENDAR     	"qgn_widg_datedit"
 
 /* toolbar */
-#define  MODEST_TOOLBAR_ICON_MAIL_SEND		PIXMAP_PREFIX "qgn_list_messagin_sent.png"
-#define  MODEST_TOOLBAR_ICON_NEW_MAIL		PIXMAP_PREFIX "qgn_toolb_messagin_new.png"
-#define  MODEST_TOOLBAR_ICON_SEND_RECEIVE	PIXMAP_PREFIX "qgn_toolb_messagin_sendreceive.png"
-#define  MODEST_TOOLBAR_ICON_REPLY		PIXMAP_PREFIX "qgn_toolb_messagin_reply.png"
-#define  MODEST_TOOLBAR_ICON_REPLY_ALL		PIXMAP_PREFIX "qgn_toolb_messagin_replytoall.png"
-#define  MODEST_TOOLBAR_ICON_FORWARD		PIXMAP_PREFIX "qgn_toolb_messagin_forward.png"
-#define  MODEST_TOOLBAR_ICON_DELETE		PIXMAP_PREFIX "qgn_toolb_messagin_delete.png"
-#define  MODEST_TOOLBAR_ICON_NEXT		PIXMAP_PREFIX "forward.png"
-#define  MODEST_TOOLBAR_ICON_PREV		PIXMAP_PREFIX "back.png"
-#define  MODEST_TOOLBAR_ICON_STOP		PIXMAP_PREFIX "stock-stop.svg"
-
+#define  MODEST_TOOLBAR_ICON_MAIL_SEND		"qgn_list_messagin_sent"
+#define  MODEST_TOOLBAR_ICON_NEW_MAIL		"qgn_toolb_messagin_new"
+#define  MODEST_TOOLBAR_ICON_SEND_RECEIVE	"qgn_toolb_messagin_sendreceive"
+#define  MODEST_TOOLBAR_ICON_REPLY		"qgn_toolb_messagin_reply"
+#define  MODEST_TOOLBAR_ICON_REPLY_ALL		"qgn_toolb_messagin_replytoall"
+#define  MODEST_TOOLBAR_ICON_FORWARD		"qgn_toolb_messagin_forward"
+#define  MODEST_TOOLBAR_ICON_DELETE		"qgn_toolb_messagin_delete"
 
 /* Stock icon names */
 #define  MODEST_STOCK_MAIL_SEND    "modest-stock-mail-send"
@@ -87,7 +83,5 @@
 #define  MODEST_STOCK_NEXT         "modest-stock-next"
 #define  MODEST_STOCK_PREV         "modest-stock-prev"
 #define  MODEST_STOCK_STOP         "modest-stock-stop"
-
-
 
 #endif  /*__MODEST_TNY_ICON_NAMES_H__*/

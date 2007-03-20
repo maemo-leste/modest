@@ -541,6 +541,7 @@ init_stock_icons (void)
 	static gboolean registered = FALSE;
   
 	if (!registered) {
+		GtkIconTheme *current_theme;
 		GdkPixbuf *pixbuf;
 		GtkIconFactory *factory;
 		gint i;
@@ -580,17 +581,25 @@ init_stock_icons (void)
 		factory = gtk_icon_factory_new ();
 		gtk_icon_factory_add_default (factory);
 
+		current_theme = gtk_icon_theme_get_default ();
+
 		/* Register icons to accompany stock items */
 		for (i = 0; i < G_N_ELEMENTS (items); i++) {
-			pixbuf = NULL;
-			pixbuf = gdk_pixbuf_new_from_file (items_names[i], NULL);
 
+#if MODEST_PLATFORM_ID==1  /* MODES_PLATFORM_ID: 1 ==> gnome, 2==> maemo */ 
+			pixbuf = gdk_pixbuf_new_from_file (items_names[i], NULL);
+#else
+			pixbuf = gtk_icon_theme_load_icon (current_theme,
+							   items_names[i],
+							   26,
+							   GTK_ICON_LOOKUP_NO_SVG,
+							   NULL);
+#endif
 			if (pixbuf != NULL) {
 				GtkIconSet *icon_set;
 				GdkPixbuf *transparent;
 
 				transparent = gdk_pixbuf_add_alpha (pixbuf, TRUE, 0xff, 0xff, 0xff);
-
 				icon_set = gtk_icon_set_new_from_pixbuf (transparent);
 				gtk_icon_factory_add (factory, items[i].stock_id, icon_set);
 				gtk_icon_set_unref (icon_set);

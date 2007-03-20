@@ -258,7 +258,19 @@ get_cached_icon (const gchar *name)
 							 MODEST_CACHE_MGR_CACHE_TYPE_PIXBUF);
 	
 	if (!icon_cache || !g_hash_table_lookup_extended (icon_cache, name, &orig_key, &pixbuf)) {
-		pixbuf = (gpointer)gdk_pixbuf_new_from_file (name, &err);
+
+#if MODEST_PLATFORM_ID==1  /* MODES_PLATFORM_ID: 1 ==> gnome, 2==> maemo */ 
+		pixbuf = (gpointer) gdk_pixbuf_new_from_file (name, &err);
+#else
+		GtkIconTheme *current_theme;
+		current_theme = gtk_icon_theme_get_default ();
+		pixbuf = gtk_icon_theme_load_icon (current_theme,
+						   name,
+						   26,
+						   GTK_ICON_LOOKUP_NO_SVG,
+						   NULL);
+#endif
+
 		if (!pixbuf) {
 			g_printerr ("modest: error in icon factory while loading '%s': %s\n",
 				    name, err->message);
