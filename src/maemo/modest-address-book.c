@@ -79,7 +79,8 @@ open_addressbook ()
 		return FALSE;
 
 	e_book_async_open (book, FALSE, book_open_cb, NULL);
-		
+
+	return TRUE; /* FIXME */	
 }
 
 void
