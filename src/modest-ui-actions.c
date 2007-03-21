@@ -331,19 +331,19 @@ reply_forward_func (gpointer data, gpointer user_data)
 	switch (rf_helper->action) {
 	case ACTION_REPLY:
 		new_msg = 
-			modest_mail_operation_create_reply_mail (msg,  from, 
-								 rf_helper->reply_forward_type,
-								 MODEST_MAIL_OPERATION_REPLY_MODE_SENDER);
+			modest_tny_msg_create_reply_msg (msg,  from, 
+							 rf_helper->reply_forward_type,
+							 MODEST_TNY_MSG_REPLY_MODE_SENDER);
 		break;
 	case ACTION_REPLY_TO_ALL:
 		new_msg = 
-			modest_mail_operation_create_reply_mail (msg, from, rf_helper->reply_forward_type,
-								 MODEST_MAIL_OPERATION_REPLY_MODE_ALL);
+			modest_tny_msg_create_reply_msg (msg, from, rf_helper->reply_forward_type,
+							 MODEST_TNY_MSG_REPLY_MODE_ALL);
 		edit_type = MODEST_EDIT_TYPE_REPLY;
 		break;
 	case ACTION_FORWARD:
 		new_msg = 
-			modest_mail_operation_create_forward_mail (msg, from, rf_helper->reply_forward_type);
+			modest_tny_msg_create_forward_msg (msg, from, rf_helper->reply_forward_type);
 		edit_type = MODEST_EDIT_TYPE_FORWARD;
 		break;
 	default:

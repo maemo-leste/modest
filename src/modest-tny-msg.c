@@ -33,6 +33,7 @@
 #include <tny-simple-list.h>
 #include <tny-folder.h>
 #include <modest-runtime.h>
+#include "modest-formatter.h"
 #include <tny-camel-stream.h>
 #include <camel/camel-stream-mem.h>
 
@@ -260,6 +261,168 @@ modest_tny_msg_find_body_part (TnyMsg *msg, gboolean want_html)
 							     want_html);
 }
 
+
+static TnyMsg *
+create_reply_forward_mail (TnyMsg *msg, const gchar *from, gboolean is_reply, guint type)
+{
+	TnyMsg *new_msg;
+	TnyHeader *new_header, *header;
+	gchar *new_subject;
+	TnyMimePart *body;
+	ModestFormatter *formatter;
+
+	/* Get body from original msg. Always look for the text/plain
+	   part of the message to create the reply/forwarded mail */
+	header = tny_msg_get_header (msg);
+	body   = modest_tny_msg_find_body_part (msg, FALSE);
+
+	/* TODO: select the formatter from account prefs */
+	formatter = modest_formatter_new ("text/plain");
+
+	/* Format message body */
+	if (is_reply) {
+		switch (type) {
+		case MODEST_TNY_MSG_REPLY_TYPE_CITE:
+		default:
+			new_msg = modest_formatter_cite  (formatter, body, header);
+			break;
+		case MODEST_TNY_MSG_REPLY_TYPE_QUOTE:
+			new_msg = modest_formatter_quote (formatter, body, header);
+			break;
+		}
+	} else {
+		switch (type) {
+		case MODEST_TNY_MSG_FORWARD_TYPE_INLINE:
+		default:
+			new_msg = modest_formatter_inline  (formatter, body, header);
+			break;
+		case MODEST_TNY_MSG_FORWARD_TYPE_ATTACHMENT:
+			new_msg = modest_formatter_attach (formatter, body, header);
+			break;
+		}
+	}
+	g_object_unref (G_OBJECT(formatter));
+	g_object_unref (G_OBJECT(body));
+	
+	/* Fill the header */
+	new_header = tny_msg_get_header (new_msg);	
+	tny_header_set_from (new_header, from);
+	tny_header_set_replyto (new_header, from);
+
+	/* Change the subject */
+	new_subject =
+		(gchar *) modest_text_utils_derived_subject (tny_header_get_subject(header),
+							     (is_reply) ? _("Re:") : _("Fwd:"));
+	tny_header_set_subject (new_header, (const gchar *) new_subject);
+	g_free (new_subject);
+
+	/* Clean */
+	g_object_unref (G_OBJECT (new_header));
+	g_object_unref (G_OBJECT (header));
+
+	return new_msg;
+}
+
+static void
+add_if_attachment (gpointer data, gpointer user_data)
+{
+	TnyMimePart *part;
+	GList *attachments_list;
+
+	part = TNY_MIME_PART (data);
+	attachments_list = (GList *) user_data;
+
+	if (tny_mime_part_is_attachment (part))
+		attachments_list = g_list_prepend (attachments_list, part);
+}
+
+TnyMsg* 
+modest_tny_msg_create_forward_msg (TnyMsg *msg, 
+				   const gchar *from,
+				   ModestTnyMsgForwardType forward_type)
+{
+	TnyMsg *new_msg;
+	TnyList *parts = NULL;
+	GList *attachments_list = NULL;
+
+	new_msg = create_reply_forward_mail (msg, from, FALSE, forward_type);
+
+	/* Add attachments */
+	parts = TNY_LIST (tny_simple_list_new());
+	tny_mime_part_get_parts (TNY_MIME_PART (msg), parts);
+	tny_list_foreach (parts, add_if_attachment, attachments_list);
+	add_attachments (new_msg, attachments_list);
+
+	/* Clean */
+	if (attachments_list)
+		g_list_free (attachments_list);
+	g_object_unref (G_OBJECT (parts));
+
+	return new_msg;
+}
+
+TnyMsg* 
+modest_tny_msg_create_reply_msg (TnyMsg *msg, 
+				 const gchar *from,
+				 ModestTnyMsgReplyType reply_type,
+				 ModestTnyMsgReplyMode reply_mode)
+{
+	TnyMsg *new_msg = NULL;
+	TnyHeader *new_header, *header;
+	const gchar* reply_to;
+	gchar *new_cc = NULL;
+	const gchar *cc = NULL, *bcc = NULL;
+	GString *tmp = NULL;
+
+	new_msg = create_reply_forward_mail (msg, from, TRUE, reply_type);
+
+	/* Fill the header */
+	header = tny_msg_get_header (msg);
+	new_header = tny_msg_get_header (new_msg);
+	reply_to = tny_header_get_replyto (header);
+
+	if (reply_to)
+		tny_header_set_to (new_header, reply_to);
+	else
+		tny_header_set_to (new_header, tny_header_get_from (header));
+
+	switch (reply_mode) {
+	case MODEST_TNY_MSG_REPLY_MODE_SENDER:
+		/* Do not fill neither cc nor bcc */
+		break;
+	case MODEST_TNY_MSG_REPLY_MODE_LIST:
+		/* TODO */
+		break;
+	case MODEST_TNY_MSG_REPLY_MODE_ALL:
+		/* Concatenate to, cc and bcc */
+		cc = tny_header_get_cc (header);
+		bcc = tny_header_get_bcc (header);
+
+		tmp = g_string_new (tny_header_get_to (header));
+		if (cc)  g_string_append_printf (tmp, ",%s",cc);
+		if (bcc) g_string_append_printf (tmp, ",%s",bcc);
+
+               /* Remove my own address from the cc list. TODO:
+                  remove also the To: of the new message, needed due
+                  to the new reply_to feature */
+		new_cc = (gchar *)
+			modest_text_utils_remove_address ((const gchar *) tmp->str,
+							  from);
+		/* FIXME: remove also the mails from the new To: */
+		tny_header_set_cc (new_header, new_cc);
+
+		/* Clean */
+		g_string_free (tmp, TRUE);
+		g_free (new_cc);
+		break;
+	}
+
+	/* Clean */
+	g_object_unref (G_OBJECT (new_header));
+	g_object_unref (G_OBJECT (header));
+
+	return new_msg;
+}
 
 
 static gboolean

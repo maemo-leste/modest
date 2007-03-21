@@ -104,8 +104,8 @@ struct _ModestMainWindowPrivate {
 typedef struct _GetMsgAsyncHelper {
 	ModestMainWindowPrivate *main_window_private;
 	guint action;
-	ModestMailOperationReplyType reply_type;
-	ModestMailOperationForwardType forward_type;
+	ModestTnyMsgReplyType reply_type;
+	ModestTnyMsgForwardType forward_type;
 	gchar *from;
 	TnyIterator *iter;
 } GetMsgAsyncHelper;

@@ -47,37 +47,6 @@ typedef struct _ModestMailOperation      ModestMailOperation;
 typedef struct _ModestMailOperationClass ModestMailOperationClass;
 
 /**
- * ModestMailOperationForwardType:
- *
- * How the original message will be forwarded to the recipient
- */
-typedef enum _ModestMailOperationForwardType {
-	MODEST_MAIL_OPERATION_FORWARD_TYPE_INLINE = 1,
-	MODEST_MAIL_OPERATION_FORWARD_TYPE_ATTACHMENT
-} ModestMailOperationForwardType;
-
-/**
- * ModestMailOperationReplyType:
- *
- * How the original message will be forwarded to the recipient
- */
-typedef enum _ModestMailOperationReplyType {
-	MODEST_MAIL_OPERATION_REPLY_TYPE_CITE = 1,
-	MODEST_MAIL_OPERATION_REPLY_TYPE_QUOTE
-} ModestMailOperationReplyType;
-
-/**
- * ModestMailOperationReplyMode:
- *
- * Who will be the recipients of the replied message
- */
-typedef enum _ModestMailOperationReplyMode {
-	MODEST_MAIL_OPERATION_REPLY_MODE_SENDER,
-	MODEST_MAIL_OPERATION_REPLY_MODE_LIST,
-	MODEST_MAIL_OPERATION_REPLY_MODE_ALL
-} ModestMailOperationReplyMode;
-
-/**
  * ModestMailOperationStatus:
  *
  * The state of a mail operation
@@ -152,34 +121,6 @@ void    modest_mail_operation_send_new_mail   (ModestMailOperation *self,
 					       const gchar *subject,
 					       const gchar *body,
 					       const GList *attachments_list);
-
-/**
- * modest_mail_operation_create_forward_mail:
- * @msg: a valid #TnyMsg instance
- * @forward_type: the type of formatting used to create the forwarded message
- * 
- * Creates a forwarded message from an existing one
- * 
- * Returns: a new #TnyMsg, or NULL in case of error
- **/
-TnyMsg* modest_mail_operation_create_forward_mail (TnyMsg *msg, 
-						   const gchar *from,
-						   ModestMailOperationForwardType forward_type);
-
-/**
- * modest_mail_operation_create_reply_mail:
- * @msg: a valid #TnyMsg instance
- * @reply_type: the type of formatting used to create the reply message
- * @reply_mode: the mode of reply: to the sender only, to a mail list or to all
- * 
- * Creates a new message to reply to an existing one
- * 
- * Returns: Returns: a new #TnyMsg, or NULL in case of error
- **/
-TnyMsg* modest_mail_operation_create_reply_mail    (TnyMsg *msg, 
-						    const gchar *from,
-						    ModestMailOperationReplyType reply_type,
-						    ModestMailOperationReplyMode reply_mode);
 
 /**
  * modest_mail_operation_update_account:

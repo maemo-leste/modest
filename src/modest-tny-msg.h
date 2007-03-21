@@ -31,6 +31,37 @@
 #define __MODEST_TNY_MSG_H__
 
 /**
+ * ModestTnyMsgForwardType:
+ *
+ * How the original message will be forwarded to the recipient
+ */
+typedef enum _ModestTnyMsgForwardType {
+	MODEST_TNY_MSG_FORWARD_TYPE_INLINE = 1,
+	MODEST_TNY_MSG_FORWARD_TYPE_ATTACHMENT
+} ModestTnyMsgForwardType;
+
+/**
+ * ModestTnyMsgReplyType:
+ *
+ * How the original message will be forwarded to the recipient
+ */
+typedef enum _ModestTnyMsgReplyType {
+	MODEST_TNY_MSG_REPLY_TYPE_CITE = 1,
+	MODEST_TNY_MSG_REPLY_TYPE_QUOTE
+} ModestTnyMsgReplyType;
+
+/**
+ * ModestTnyMsgReplyMode:
+ *
+ * Who will be the recipients of the replied message
+ */
+typedef enum _ModestTnyMsgReplyMode {
+	MODEST_TNY_MSG_REPLY_MODE_SENDER,
+	MODEST_TNY_MSG_REPLY_MODE_LIST,
+	MODEST_TNY_MSG_REPLY_MODE_ALL
+} ModestTnyMsgReplyMode;
+
+/**
  * modest_tny_msg_new:
  * @mailto: recipient for the message
  * @mailfrom: sender of this message
@@ -58,7 +89,7 @@ TnyMsg* modest_tny_msg_new (const gchar* mailto, const gchar* mailfrom, const gc
  * 
  * Returns: the TnyMsgMimePart for the found part, or NULL if no matching part is found
  */	 
-TnyMimePart *modest_tny_msg_find_body_part (TnyMsg * self, gboolean want_html);
+TnyMimePart*  modest_tny_msg_find_body_part  (TnyMsg * self, gboolean want_html);
 
 
 /**
@@ -72,6 +103,38 @@ TnyMimePart *modest_tny_msg_find_body_part (TnyMsg * self, gboolean want_html);
  * Returns: the body of the message as text, or NULL if it is not found
  * the text should be freed with 
  **/
-gchar* modest_tny_msg_get_body (TnyMsg *self, gboolean want_html);
+gchar*        modest_tny_msg_get_body        (TnyMsg *self, gboolean want_html);
+
+
+/**
+ * modest_tny_msg_create_forward_msg:
+ * @msg: a valid #TnyMsg instance
+ * @from: the sender of the forwarded mail
+ * @forward_type: the type of formatting used to create the forwarded message
+ * 
+ * Creates a forwarded message from an existing one
+ * 
+ * Returns: a new #TnyMsg, or NULL in case of error
+ **/
+TnyMsg*       modest_tny_msg_create_forward_msg   (TnyMsg *msg, 
+						   const gchar *from,
+						   ModestTnyMsgForwardType forward_type);
+
+/**
+ * modest_tny_msg_create_reply_msg:
+ * @msg: a valid #TnyMsg instance
+ * @from: the sender of the forwarded mail
+ * @reply_type: the type of formatting used to create the reply message
+ * @reply_mode: the mode of reply: to the sender only, to a mail list or to all
+ * 
+ * Creates a new message to reply to an existing one
+ * 
+ * Returns: Returns: a new #TnyMsg, or NULL in case of error
+ **/
+TnyMsg*       modest_tny_msg_create_reply_msg     (TnyMsg *msg, 
+						   const gchar *from,
+						   ModestTnyMsgReplyType reply_type,
+						   ModestTnyMsgReplyMode reply_mode);
+
 
 #endif /* __MODEST_TNY_MSG_H__ */
