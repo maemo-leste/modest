@@ -619,14 +619,6 @@ modest_header_view_set_model (GtkTreeView *header_view, GtkTreeModel *model)
 		priv = MODEST_HEADER_VIEW_GET_PRIVATE (header_view);
 		old_model = gtk_tree_model_sort_get_model (GTK_TREE_MODEL_SORT (old_model_sort));
 
-		/* Clean monitors */
-		g_mutex_lock (priv->monitor_lock);
-		if (priv->monitor) {
-			tny_folder_monitor_stop (priv->monitor);
-			g_object_unref (G_OBJECT (priv->monitor));
-		}
-		g_mutex_unlock (priv->monitor_lock);
-
 		/* Set new model */
 		gtk_tree_view_set_model (header_view, model);
 
@@ -644,57 +636,13 @@ on_refresh_folder (TnyFolder   *folder,
 		   GError     **error,
 		   gpointer     user_data)
 {
-	GtkTreeModel *sortable; 
-	ModestHeaderView *self;
-	ModestHeaderViewPrivate *priv;
-	GList *cols, *cursor;
-	TnyList *headers;
-
 	if (cancelled) {
 /* 		GtkTreeSelection *selection; */
-		
 /* 		selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (user_data)); */
 /* 		gtk_tree_selection_unselect_all (selection); */
-
-                g_warning ("Operation cancelled %s\n", (*error) ? (*error)->message : "unknown");
-
+		g_warning ("Operation cancelled %s\n", (*error) ? (*error)->message : "unknown");
 		return;
 	}
-	
-	self = MODEST_HEADER_VIEW(user_data);
-	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
-
-	headers = TNY_LIST (tny_gtk_header_list_model_new ());
-
-	tny_gtk_header_list_model_set_folder (TNY_GTK_HEADER_LIST_MODEL(headers),
-					      folder, TRUE);
-
-	sortable = gtk_tree_model_sort_new_with_model (GTK_TREE_MODEL(headers));
-	g_object_unref (G_OBJECT (headers));
-
-	/* install our special sorting functions */
-	cursor = cols = gtk_tree_view_get_columns (GTK_TREE_VIEW(self));
-	while (cursor) {
-		gint col_id = GPOINTER_TO_INT (g_object_get_data(G_OBJECT(cursor->data),
-								 MODEST_HEADER_VIEW_COLUMN));
-		gtk_tree_sortable_set_sort_func (GTK_TREE_SORTABLE(sortable),
-						 col_id,
-						 (GtkTreeIterCompareFunc) cmp_rows,
-						 cursor->data, NULL);
-		cursor = g_list_next(cursor);
-	}
-	g_list_free (cols);
-
-	/* Set new model */
-	modest_header_view_set_model (GTK_TREE_VIEW (self), sortable);
-	g_object_unref (G_OBJECT (sortable));
-
-	/* Add a folder observer */
-	g_mutex_lock (priv->monitor_lock);
-	priv->monitor = TNY_FOLDER_MONITOR (tny_folder_monitor_new (folder));
-	tny_folder_monitor_add_list (priv->monitor, TNY_LIST (headers));
-	tny_folder_monitor_start (priv->monitor);
-	g_mutex_unlock (priv->monitor_lock);
 }
 
 
@@ -730,6 +678,54 @@ modest_header_view_get_folder (ModestHeaderView *self)
 	return priv->folder;
 }
 
+static void
+modest_header_view_set_folder_intern (ModestHeaderView *self, TnyFolder *folder)
+{
+	TnyList *headers;
+	ModestHeaderViewPrivate *priv;
+	GList *cols, *cursor;
+	GtkTreeModel *sortable; 
+
+	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
+
+	headers = TNY_LIST (tny_gtk_header_list_model_new ());
+
+	tny_gtk_header_list_model_set_folder (TNY_GTK_HEADER_LIST_MODEL(headers),
+					      folder, FALSE);
+
+	/* Add a folder observer */
+	g_mutex_lock (priv->monitor_lock);
+	if (priv->monitor) {
+		tny_folder_monitor_stop (priv->monitor);
+		g_object_unref (G_OBJECT (priv->monitor));
+	}
+	priv->monitor = TNY_FOLDER_MONITOR (tny_folder_monitor_new (folder));
+	tny_folder_monitor_add_list (priv->monitor, TNY_LIST (headers));
+	tny_folder_monitor_start (priv->monitor);
+	g_mutex_unlock (priv->monitor_lock);
+
+
+	sortable = gtk_tree_model_sort_new_with_model (GTK_TREE_MODEL(headers));
+	g_object_unref (G_OBJECT (headers));
+
+	/* install our special sorting functions */
+	cursor = cols = gtk_tree_view_get_columns (GTK_TREE_VIEW(self));
+	while (cursor) {
+		gint col_id = GPOINTER_TO_INT (g_object_get_data(G_OBJECT(cursor->data),
+								 MODEST_HEADER_VIEW_COLUMN));
+		gtk_tree_sortable_set_sort_func (GTK_TREE_SORTABLE(sortable),
+						 col_id,
+						 (GtkTreeIterCompareFunc) cmp_rows,
+						 cursor->data, NULL);
+		cursor = g_list_next(cursor);
+	}
+	g_list_free (cols);
+
+
+	/* Set new model */
+	modest_header_view_set_model (GTK_TREE_VIEW (self), sortable);
+	g_object_unref (G_OBJECT (sortable));
+}
 
 void
 modest_header_view_set_folder (ModestHeaderView *self, TnyFolder *folder)
@@ -743,18 +739,26 @@ modest_header_view_set_folder (ModestHeaderView *self, TnyFolder *folder)
 	}
 
 	if (folder) {
-
+		modest_header_view_set_folder_intern (self, folder);
 		priv->folder = g_object_ref (folder);
 		tny_folder_refresh_async (folder,
 					  on_refresh_folder,
 					  on_refresh_folder_status_update,
 					  self);
 
-		/* no message selected */	
+		/* no message selected */
 		g_signal_emit (G_OBJECT(self), signals[HEADER_SELECTED_SIGNAL], 0,
 			       NULL);
 	} else {
+		g_mutex_lock (priv->monitor_lock);
 		modest_header_view_set_model (GTK_TREE_VIEW (self), NULL); 
+
+		if (priv->monitor) {
+			tny_folder_monitor_stop (priv->monitor);
+			g_object_unref (G_OBJECT (priv->monitor));
+			priv->monitor = NULL;
+		}
+		g_mutex_unlock (priv->monitor_lock);
 	}
 }
 
