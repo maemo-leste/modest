@@ -71,6 +71,7 @@
 #define  MODEST_TOOLBAR_ICON_REPLY_ALL		"qgn_toolb_messagin_replytoall"
 #define  MODEST_TOOLBAR_ICON_FORWARD		"qgn_toolb_messagin_forward"
 #define  MODEST_TOOLBAR_ICON_DELETE		"qgn_toolb_messagin_delete"
+#define  MODEST_TOOLBAR_ICON_FORMAT_BULLETS     "qgn_list_gene_bullets"
 
 /* Stock icon names */
 #define  MODEST_STOCK_MAIL_SEND    "modest-stock-mail-send"

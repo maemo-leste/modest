@@ -104,7 +104,9 @@ void    modest_mail_operation_send_mail       (ModestMailOperation *self,
  * @cc: a comma-separated list of email addresses where to send a carbon copy
  * @bcc: a comma-separated list of email addresses where to send a blind carbon copy
  * @subject: the subject of the new mail
- * @body: the body of the new mail
+ * @plain_body: the plain text body of the new mail.
+ * @html_body: the html version of the body of the new mail. If NULL, the mail will
+ *             be sent with the plain body only.
  * @attachments_list: a #GList of attachments, each attachment must be a #TnyMimePart
  * 
  * Sends a new mail message using the provided
@@ -119,7 +121,8 @@ void    modest_mail_operation_send_new_mail   (ModestMailOperation *self,
 					       const gchar *cc,
 					       const gchar *bcc,
 					       const gchar *subject,
-					       const gchar *body,
+					       const gchar *plain_body,
+					       const gchar *html_body,
 					       const GList *attachments_list);
 
 /**

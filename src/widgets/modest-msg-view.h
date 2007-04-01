@@ -64,7 +64,7 @@ struct _ModestMsgViewClass {
 				    gpointer user_data);
 	void (*link_clicked)       (ModestMsgView *msgview, const gchar* link,
 				    gpointer user_data);
-	void (*attachment_clicked) (ModestMsgView *msgview, int index,
+	void (*attachment_clicked) (ModestMsgView *msgview, TnyMimePart *mime_part,
 				    gpointer user_data);
 	void (*recpt_activated)    (ModestMsgView *msgview, const gchar *address,
 				    gpointer user_data);

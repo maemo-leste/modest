@@ -960,7 +960,7 @@ modest_ui_actions_on_msg_link_clicked (ModestMsgView *msgview, const gchar* link
 }
 
 void
-modest_ui_actions_on_msg_attachment_clicked (ModestMsgView *msgview, int index,
+modest_ui_actions_on_msg_attachment_clicked (ModestMsgView *msgview, TnyMimePart *mime_part,
 					     ModestWindow *win)
 {
 	g_message (__FUNCTION__);
@@ -1021,8 +1021,9 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 					     data->cc, 
 					     data->bcc,
 					     data->subject, 
-					     data->body, 
-					     NULL);
+					     data->plain_body, 
+					     data->html_body,
+					     data->attachments);
 	/* Frees */
 	g_free (from);
 	g_free (account_name);
@@ -1034,6 +1035,131 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 	/* Save settings and close the window */
 	/* save_settings (edit_window) */
 	gtk_widget_destroy (GTK_WIDGET (edit_window));
+}
+
+void 
+modest_ui_actions_on_toggle_bold (GtkToggleAction *action,
+				  ModestMsgEditWindow *window)
+{
+	ModestMsgEditFormatState *format_state = NULL;
+
+	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
+	g_return_if_fail (GTK_IS_TOGGLE_ACTION (action));
+
+	if (modest_msg_edit_window_get_format (MODEST_MSG_EDIT_WINDOW (window)) == MODEST_MSG_EDIT_FORMAT_TEXT)
+		return;
+
+	format_state = modest_msg_edit_window_get_format_state (window);
+	g_return_if_fail (format_state != NULL);
+
+	format_state->bold = gtk_toggle_action_get_active (action);
+	modest_msg_edit_window_set_format_state (window, format_state);
+	g_free (format_state);
+	
+}
+
+void 
+modest_ui_actions_on_toggle_italics (GtkToggleAction *action,
+				     ModestMsgEditWindow *window)
+{
+	ModestMsgEditFormatState *format_state = NULL;
+
+	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
+	g_return_if_fail (GTK_IS_TOGGLE_ACTION (action));
+
+	if (modest_msg_edit_window_get_format (MODEST_MSG_EDIT_WINDOW(window)) == MODEST_MSG_EDIT_FORMAT_TEXT)
+		return;
+
+	format_state = modest_msg_edit_window_get_format_state (window);
+	g_return_if_fail (format_state != NULL);
+
+	format_state->italics = gtk_toggle_action_get_active (action);
+	modest_msg_edit_window_set_format_state (window, format_state);
+	g_free (format_state);
+	
+}
+
+void 
+modest_ui_actions_on_toggle_bullets (GtkToggleAction *action,
+				     ModestMsgEditWindow *window)
+{
+	ModestMsgEditFormatState *format_state = NULL;
+
+	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
+	g_return_if_fail (GTK_IS_TOGGLE_ACTION (action));
+
+	if (modest_msg_edit_window_get_format (MODEST_MSG_EDIT_WINDOW (window)) == MODEST_MSG_EDIT_FORMAT_TEXT)
+		return;
+
+	format_state = modest_msg_edit_window_get_format_state (window);
+	g_return_if_fail (format_state != NULL);
+
+	format_state->bullet = gtk_toggle_action_get_active (action);
+	modest_msg_edit_window_set_format_state (window, format_state);
+	g_free (format_state);
+	
+}
+
+void 
+modest_ui_actions_on_change_justify (GtkRadioAction *action,
+				     GtkRadioAction *selected,
+				     ModestMsgEditWindow *window)
+{
+	ModestMsgEditFormatState *format_state = NULL;
+	GtkJustification value;
+
+	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
+
+	if (modest_msg_edit_window_get_format (MODEST_MSG_EDIT_WINDOW(window)) == MODEST_MSG_EDIT_FORMAT_TEXT)
+		return;
+
+	value = gtk_radio_action_get_current_value (selected);
+
+	format_state = modest_msg_edit_window_get_format_state (window);
+	g_return_if_fail (format_state != NULL);
+
+	format_state->justification = value;
+	modest_msg_edit_window_set_format_state (window, format_state);
+	g_free (format_state);
+}
+
+void 
+modest_ui_actions_on_select_editor_color (GtkAction *action,
+					  ModestMsgEditWindow *window)
+{
+	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
+	g_return_if_fail (GTK_IS_ACTION (action));
+
+	if (modest_msg_edit_window_get_format (MODEST_MSG_EDIT_WINDOW(window)) == MODEST_MSG_EDIT_FORMAT_TEXT)
+		return;
+
+	modest_msg_edit_window_select_color (window);
+}
+
+void 
+modest_ui_actions_on_select_editor_background_color (GtkAction *action,
+						     ModestMsgEditWindow *window)
+{
+	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
+	g_return_if_fail (GTK_IS_ACTION (action));
+
+	if (modest_msg_edit_window_get_format (MODEST_MSG_EDIT_WINDOW(window)) == MODEST_MSG_EDIT_FORMAT_TEXT)
+		return;
+
+	modest_msg_edit_window_select_background_color (window);
+}
+
+void 
+modest_ui_actions_on_insert_image (GtkAction *action,
+				   ModestMsgEditWindow *window)
+{
+	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
+	g_return_if_fail (GTK_IS_ACTION (action));
+
+	if (modest_msg_edit_window_get_format (MODEST_MSG_EDIT_WINDOW(window)) == MODEST_MSG_EDIT_FORMAT_TEXT)
+		return;
+
+	modest_msg_edit_window_insert_image (window);
 }
 
 /*

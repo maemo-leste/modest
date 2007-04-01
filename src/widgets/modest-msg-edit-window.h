@@ -65,9 +65,25 @@ typedef enum  {
 	MODEST_EDIT_TYPE_NUM
 } ModestEditType;
 
+typedef enum {
+	MODEST_MSG_EDIT_FORMAT_TEXT,
+	MODEST_MSG_EDIT_FORMAT_HTML
+} ModestMsgEditFormat;
+
 typedef struct  {
-	gchar *from, *to, *cc, *bcc, *subject, *body;
+	gchar *from, *to, *cc, *bcc, *subject, *plain_body, *html_body;
+	GList *attachments;
 } MsgData;
+
+typedef struct {
+	gboolean bold;
+	gboolean italics;
+	gboolean bullet;
+	GdkColor color;
+	const gchar *font_family;
+	gint font_size;
+	GtkJustification justification;
+} ModestMsgEditFormatState;
 
 
 /**
@@ -113,6 +129,73 @@ MsgData *               modest_msg_edit_window_get_msg_data          (ModestMsgE
  **/
 void                    modest_msg_edit_window_free_msg_data         (ModestMsgEditWindow *self,
 								      MsgData *data);
+
+/**
+ * modest_msg_edit_window_get_format:
+ * @self: a #ModestMsgEditWindow
+ *
+ * obtains the format type of the message body.
+ *
+ * Returns: a #ModestMsgEditFormat
+ **/
+ModestMsgEditFormat     modest_msg_edit_window_get_format            (ModestMsgEditWindow *self);
+
+/**
+ * modest_msg_edit_window_set_format:
+ * @self: a #ModestMsgEditWindow
+ * @format: a #ModestMsgEditFormat
+ *
+ * set the @format of the edit window message body.
+ **/
+void                    modest_msg_edit_window_set_format            (ModestMsgEditWindow *self,
+								      ModestMsgEditFormat format);
+
+/**
+ * modest_msg_edit_window_get_format_state:
+ * @self: a #ModestMsgEditWindow
+ *
+ * get the current format state (the format attributes the text user inserts
+ * will get).
+ *
+ * Returns: a #ModestMsgEditFormatState structure that should be freed with g_free().
+ **/
+ModestMsgEditFormatState *modest_msg_edit_window_get_format_state    (ModestMsgEditWindow *self);
+
+/**
+ * modest_msg_edit_window_set_format_state:
+ * @self: a #ModestMsgEditWindow
+ * @format_state: a #ModestMsgEditWindowFormatState
+ *
+ * sets a new format state (the format attributes the text user inserts 
+ * will get).
+ **/
+void                    modest_msg_edit_window_set_format_state      (ModestMsgEditWindow *self,
+								      const ModestMsgEditFormatState *format_state);
+
+/**
+ * modest_msg_edit_window_select_color:
+ * @self: a #ModestMsgEditWindow
+ *
+ * show color selection dialog and update text color
+ */
+void                    modest_msg_edit_window_select_color          (ModestMsgEditWindow *window);
+
+/**
+ * modest_msg_edit_window_select_background_color:
+ * @self: a #ModestMsgEditWindow
+ *
+ * show color selection dialog and update background color
+ */
+void                    modest_msg_edit_window_select_background_color          (ModestMsgEditWindow *window);
+
+/**
+ * modest_msg_edit_window_insert_image:
+ * @self: a #ModestMsgEditWindow
+ *
+ * show a file selection dialog to insert an image
+ */
+void                    modest_msg_edit_window_insert_image          (ModestMsgEditWindow *window);
+
 G_END_DECLS
 
 #endif /* __MODEST_MSG_EDIT_WINDOW_H__ */

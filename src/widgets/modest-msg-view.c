@@ -57,7 +57,7 @@ static void     get_property (GObject *object, guint prop_id, GValue *value, GPa
 
 /* headers signals */
 static void on_recpt_activated (ModestMailHeaderView *header_view, const gchar *address, ModestMsgView *msg_view);
-static void on_attachment_activated (ModestAttachmentsView * att_view, gint index, gpointer);
+static void on_attachment_activated (ModestAttachmentsView * att_view, TnyMimePart *mime_part, gpointer userdata);
 
 /* GtkHtml signals */
 static gboolean on_link_clicked (GtkWidget *widget, const gchar *uri, ModestMsgView *msg_view);
@@ -113,6 +113,7 @@ struct _ModestMsgViewPrivate {
 	/* embedded elements */
 	GtkWidget   *headers_box;
 	GtkWidget   *html_scroll;
+	GtkWidget   *attachments_box;
 
 	/* internal adjustments for set_scroll_adjustments */
 	GtkAdjustment *hadj;
@@ -230,8 +231,8 @@ modest_msg_view_class_init (ModestMsgViewClass *klass)
 			      G_SIGNAL_RUN_FIRST,
 			      G_STRUCT_OFFSET(ModestMsgViewClass, attachment_clicked),
 			      NULL, NULL,
-			      g_cclosure_marshal_VOID__POINTER,
-			      G_TYPE_NONE, 1, G_TYPE_INT);
+			      g_cclosure_marshal_VOID__OBJECT,
+			      G_TYPE_NONE, 1, G_TYPE_OBJECT);
 	
 	signals[LINK_HOVER_SIGNAL] =
 		g_signal_new ("link_hover",
@@ -857,7 +858,6 @@ modest_msg_view_init (ModestMsgView *obj)
 	gtk_widget_set_no_show_all (priv->mail_header_view, TRUE);
 
 	priv->attachments_view        = GTK_WIDGET(modest_attachments_view_new (NULL));
-	gtk_widget_set_no_show_all (priv->attachments_view, TRUE);
 
 	priv->sig1 = g_signal_connect (G_OBJECT(priv->gtkhtml), "link_clicked",
 				       G_CALLBACK(on_link_clicked), obj);
@@ -1058,8 +1058,13 @@ modest_msg_view_new (TnyMsg *msg)
 	if (priv->mail_header_view)
 		gtk_box_pack_start (GTK_BOX(priv->headers_box), priv->mail_header_view, FALSE, FALSE, 0);
 	
-	if (priv->attachments_view)
-		gtk_box_pack_start (GTK_BOX(priv->headers_box), priv->attachments_view, FALSE, FALSE, 0);
+	if (priv->attachments_view) {
+		priv->attachments_box = (GtkWidget *) modest_mail_header_view_add_custom_header (MODEST_MAIL_HEADER_VIEW (priv->mail_header_view),
+												 _("Attachments:"), priv->attachments_view,
+												 FALSE, FALSE);
+		gtk_widget_hide_all (priv->attachments_box);
+/* 		gtk_widget_set_no_show_all (priv->attachments_box, TRUE); */
+	}
 
 	gtk_widget_set_parent (priv->headers_box, GTK_WIDGET (self));
 
@@ -1082,18 +1087,11 @@ on_recpt_activated (ModestMailHeaderView *header_view,
 }
 
 static void
-on_attachment_activated (ModestAttachmentsView * att_view, gint index, gpointer msg_view)
+on_attachment_activated (ModestAttachmentsView * att_view, TnyMimePart *mime_part, gpointer msg_view)
 {
 
-	
-	if (index == 0) {
-		/* index is 1-based, so 0 indicates an error */
-		g_printerr ("modest: invalid attachment index: %d\n", index);
-		return;
-	}
-
 	g_signal_emit (G_OBJECT(msg_view), signals[ATTACHMENT_CLICKED_SIGNAL],
-		       0, index);
+		       0, mime_part);
 }
 
 static gboolean
@@ -1297,8 +1295,7 @@ modest_msg_view_set_message (ModestMsgView *self, TnyMsg *msg)
 		tny_header_view_clear (TNY_HEADER_VIEW (priv->mail_header_view));
 		modest_attachments_view_set_message (MODEST_ATTACHMENTS_VIEW (priv->attachments_view), NULL);
 		gtk_widget_hide_all (priv->mail_header_view);
-		gtk_widget_hide_all (priv->attachments_view);
-		gtk_widget_set_no_show_all (priv->attachments_view, TRUE);
+		gtk_widget_hide_all (priv->attachments_box);
 		gtk_widget_set_no_show_all (priv->mail_header_view, TRUE);
 		set_empty_message (self);
 		gtk_widget_queue_resize (GTK_WIDGET(self));
@@ -1315,16 +1312,29 @@ modest_msg_view_set_message (ModestMsgView *self, TnyMsg *msg)
 	
 	body = modest_tny_msg_find_body_part (msg,TRUE);
 	if (body) {
+		GList *att_children;
 		if (tny_mime_part_content_type_is (body, "text/html"))
 			set_html_message (self, body, msg);
 		else
 			set_text_message (self, body, msg);
+
+		att_children = gtk_container_get_children (GTK_CONTAINER (priv->attachments_view));
+		if (att_children != NULL) {
+			gtk_widget_show_all (priv->attachments_box);
+			g_list_free (att_children);
+		} else {
+			gtk_widget_hide_all (priv->attachments_box);
+		}
+			
 	} else 
 		set_empty_message (self);
 
 	gtk_widget_show (priv->gtkhtml);
+	gtk_widget_set_no_show_all (priv->attachments_box, TRUE);
 	gtk_widget_show_all (priv->mail_header_view);
-	gtk_widget_show_all (priv->attachments_view);
+	gtk_widget_set_no_show_all (priv->attachments_box, FALSE);
+/* 	gtk_widget_show_all (priv->attachments_box); */
+/* 	gtk_widget_show_all (priv->attachments_box); */
 	gtk_widget_set_no_show_all (priv->mail_header_view, TRUE);
 	gtk_widget_queue_resize (GTK_WIDGET(self));
 	gtk_widget_queue_draw (GTK_WIDGET(self));

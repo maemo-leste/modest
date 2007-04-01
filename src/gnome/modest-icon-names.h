@@ -75,6 +75,7 @@
 /* #define  MODEST_TOOLBAR_ICON_NEXT		PIXMAP_PREFIX "forward.png" */
 /* #define  MODEST_TOOLBAR_ICON_PREV		PIXMAP_PREFIX "back.png" */
 #define  MODEST_TOOLBAR_ICON_STOP		PIXMAP_PREFIX "stock-stop.png"
+#define  MODEST_TOOLBAR_ICON_FORMAT_BULLETS     PIXMAP_PREFIX "qgn_list_gene_bullets"
 
 /* Stock icon names */
 #define  MODEST_STOCK_MAIL_SEND	   "modest-stock-mail-send"

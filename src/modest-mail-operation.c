@@ -223,11 +223,13 @@ modest_mail_operation_send_new_mail (ModestMailOperation *self,
 				     TnyTransportAccount *transport_account,
 				     const gchar *from,  const gchar *to,
 				     const gchar *cc,  const gchar *bcc,
-				     const gchar *subject, const gchar *body,
+				     const gchar *subject, const gchar *plain_body,
+				     const gchar *html_body,
 				     const GList *attachments_list)
 {
 	TnyMsg *new_msg;
 	ModestMailOperationPrivate *priv = NULL;
+	GList *node = NULL;
 
 	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
 	g_return_if_fail (TNY_IS_TRANSPORT_ACCOUNT (transport_account));
@@ -242,7 +244,11 @@ modest_mail_operation_send_new_mail (ModestMailOperation *self,
 		return;
 	}
 
-	new_msg = modest_tny_msg_new (to, from, cc, bcc, subject, body, NULL); /* FIXME: attachments */
+	if (html_body == NULL) {
+		new_msg = modest_tny_msg_new (to, from, cc, bcc, subject, plain_body, (GSList *) attachments_list); /* FIXME: attachments */
+	} else {
+		new_msg = modest_tny_msg_new_html_plain (to, from, cc, bcc, subject, html_body, plain_body, (GSList *) attachments_list);
+	}
 	if (!new_msg) {
 		g_printerr ("modest: failed to create a new msg\n");
 		return;

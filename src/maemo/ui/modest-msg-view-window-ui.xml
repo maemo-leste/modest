@@ -31,10 +31,20 @@
 <ui>
 
   <menubar name="MenuBar">
+
+    <menu name="MessageMenu" action="Message">
+      <menuitem name="MessageReplyMenu" action="MessageReply"/>
+      <menuitem name="MessageReplyToAllMenu" action="MessageReplyToAll"/>
+      <menuitem name="MessageForwardMenu" action="MessageForward"/>
+      <menuitem name="MessageNewMenu"  action="MessageNew"/>
+      <menuitem name="MessageOpenMenu" action="MessageOpen"/>
+      <separator/>
+      <menuitem name="MessageDeleteMenu" action="MessageDelete"/>
+      <separator/>
+      <menuitem name="MessageDetailsMenu"      action="MessageDetails"/>
+    </menu>
        
     <menu name="EditMenu" action="Edit">
-      <menuitem name="EditUndoMenu" action="EditUndo"/>
-      <separator/>
       <menuitem name="EditCutMenu" action="EditCut"/>
       <menuitem name="EditCopyMenu" action="EditCopy"/>
       <menuitem name="EditPasteMenu" action="EditPaste"/>

@@ -20,6 +20,8 @@ libmodest_widgets_la_SOURCES=          \
 	modest-account-view-window.h   \
 	modest-account-view.c          \
 	modest-account-view.h          \
+	modest-attachment-view.c       \
+	modest-attachment-view.h       \
 	modest-attachments-view.c      \
 	modest-attachments-view.h      \
 	modest-combo-box.c	       \

@@ -402,7 +402,9 @@ modest_msg_edit_window_get_msg_data (ModestMsgEditWindow *edit_window)
 	data->cc      =  (gchar*) gtk_entry_get_text (GTK_ENTRY(priv->cc_field));
 	data->bcc     =  (gchar*) gtk_entry_get_text (GTK_ENTRY(priv->bcc_field));
 	data->subject =  (gchar*) gtk_entry_get_text (GTK_ENTRY(priv->subject_field));
-	data->body    =  gtk_text_buffer_get_text (buf, &b, &e, FALSE);
+	data->plain_body    =  gtk_text_buffer_get_text (buf, &b, &e, FALSE);
+	/* No rich supported yet, then html body is NULL */
+	data->html_body = NULL;
 
 	return data;
 }
@@ -414,6 +416,76 @@ modest_msg_edit_window_free_msg_data (ModestMsgEditWindow *edit_window,
 	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (edit_window));
 
 	g_free (data->from);
-	g_free (data->body);
+	g_free (data->plain_body);
+	g_free (data->html_body);
 	g_slice_free (MsgData, data);
+}
+
+/* Rich formatting API functions */
+ModestMsgEditFormat
+modest_msg_edit_window_get_format (ModestMsgEditWindow *self)
+{
+	return MODEST_MSG_EDIT_FORMAT_TEXT;
+}
+
+void
+modest_msg_edit_window_set_format (ModestMsgEditWindow *self,
+				   ModestMsgEditFormat format)
+{
+	switch (format) {
+	case MODEST_MSG_EDIT_FORMAT_TEXT:
+		break;
+	case MODEST_MSG_EDIT_FORMAT_HTML:
+		g_message ("HTML format not supported in Gnome ModestMsgEditWindow");
+		break;
+	default:
+		break;
+	}
+}
+
+ModestMsgEditFormatState *
+modest_msg_edit_window_get_format_state (ModestMsgEditWindow *self)
+{
+	ModestMsgEditFormatState *format_state;
+
+	g_return_val_if_fail (MODEST_IS_MSG_EDIT_WINDOW (self), NULL);
+
+	format_state = g_new0 (ModestMsgEditFormatState, 1);
+
+	return format_state;
+}
+
+void
+modest_msg_edit_window_set_format_state (ModestMsgEditWindow *self, 
+					 const ModestMsgEditFormatState *format_state)
+{
+	g_return_if_fail (MODEST_MSG_EDIT_WINDOW (self));
+
+	/* Ends silently as set_format_state should do nothing when edit window format
+	   is not HTML */
+	return;
+}
+
+void
+modest_msg_edit_window_select_color (ModestMsgEditWindow *window)
+{
+	g_return_if_fail (MODEST_MSG_EDIT_WINDOW (window));
+
+	g_message ("Select color operation is not supported");
+}
+
+void
+modest_msg_edit_window_select_background_color (ModestMsgEditWindow *window)
+{
+	g_return_if_fail (MODEST_MSG_EDIT_WINDOW (window));
+
+	g_message ("Select background color operation is not supported");
+}
+
+void
+modest_msg_edit_window_insert_image (ModestMsgEditWindow *window)
+{
+	g_return_if_fail (MODEST_MSG_EDIT_WINDOW (window));
+
+	g_message ("Insert image operation is not supported");
 }

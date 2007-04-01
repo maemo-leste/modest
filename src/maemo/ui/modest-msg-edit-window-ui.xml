@@ -38,10 +38,31 @@
       <menuitem name="ViewBccFieldMenu" action="ViewBccField"/>
     </menu>
 
+    <menu name="AttachmentsMenu" action="Attachments">
+      <menuitem name="InsertImageMenu" action="InsertImage"/>
+    </menu>
+
+    <menu name="FormatMenu" action="Format">
+      <menuitem name="BackgroundColorMenu" action="BackgroundColor"/>
+      <menu name="AlignmentMenu" action="Alignment">
+         <menuitem name="AlignmentLeftMenu" action="AlignmentLeft"/>
+         <menuitem name="AlignmentCenterMenu" action="AlignmentCenter"/>
+         <menuitem name="AlignmentRightMenu" action="AlignmentRight"/>
+      </menu>
+      <menuitem name="BulletedListMenu" action="ActionsBulletedList"/>
+    </menu>
+
   </menubar>
 
   <toolbar name="ToolBar">
     <toolitem action="ActionsSend"/>
+    <!--<toolitem action="ActionFontFace"/>-->
+    <!--<toolitem action="ActionFontSize"/>-->
+    <toolitem action="ActionsBold"/>
+    <toolitem action="ActionsItalics"/>
+    <placeholder name="FontAttributes">
+    </placeholder>
+    <toolitem action="ActionsBulletedList"/>
   </toolbar>
 
 </ui>

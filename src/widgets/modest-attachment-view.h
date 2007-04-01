@@ -27,42 +27,46 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef MODEST_ATTACHMENTS_VIEW_H
-#define MODEST_ATTACHMENTS_VIEW_H
+#ifndef MODEST_ATTACHMENT_VIEW_H
+#define MODEST_ATTACHMENT_VIEW_H
 #include <gtk/gtk.h>
 #include <glib-object.h>
-#include <tny-msg.h>
+#include <tny-mime-part-view.h>
 
 G_BEGIN_DECLS
 
-#define MODEST_TYPE_ATTACHMENTS_VIEW             (modest_attachments_view_get_type ())
-#define MODEST_ATTACHMENTS_VIEW(obj)             (G_TYPE_CHECK_INSTANCE_CAST ((obj), MODEST_TYPE_ATTACHMENTS_VIEW, ModestAttachmentsView))
-#define MODEST_ATTACHMENTS_VIEW_CLASS(vtable)    (G_TYPE_CHECK_CLASS_CAST ((vtable), MODEST_TYPE_ATTACHMENTS_VIEW, ModestAttachmentsViewClass))
-#define MODEST_IS_ATTACHMENTS_VIEW(obj)          (G_TYPE_CHECK_INSTANCE_TYPE ((obj), MODEST_TYPE_ATTACHMENTS_VIEW))
-#define MODEST_IS_ATTACHMENTS_VIEW_CLASS(vtable) (G_TYPE_CHECK_CLASS_TYPE ((vtable), MODEST_TYPE_ATTACHMENTS_VIEW))
-#define MODEST_ATTACHMENTS_VIEW_GET_CLASS(inst)  (G_TYPE_INSTANCE_GET_CLASS ((inst), MODEST_TYPE_ATTACHMENTS_VIEW, ModestAttachmentsViewClass))
+#define MODEST_TYPE_ATTACHMENT_VIEW             (modest_attachment_view_get_type ())
+#define MODEST_ATTACHMENT_VIEW(obj)             (G_TYPE_CHECK_INSTANCE_CAST ((obj), MODEST_TYPE_ATTACHMENT_VIEW, ModestAttachmentView))
+#define MODEST_ATTACHMENT_VIEW_CLASS(vtable)    (G_TYPE_CHECK_CLASS_CAST ((vtable), MODEST_TYPE_ATTACHMENT_VIEW, ModestAttachmentViewClass))
+#define MODEST_IS_ATTACHMENT_VIEW(obj)          (G_TYPE_CHECK_INSTANCE_TYPE ((obj), MODEST_TYPE_ATTACHMENT_VIEW))
+#define MODEST_IS_ATTACHMENT_VIEW_CLASS(vtable) (G_TYPE_CHECK_CLASS_TYPE ((vtable), MODEST_TYPE_ATTACHMENT_VIEW))
+#define MODEST_ATTACHMENT_VIEW_GET_CLASS(inst)  (G_TYPE_INSTANCE_GET_CLASS ((inst), MODEST_TYPE_ATTACHMENT_VIEW, ModestAttachmentViewClass))
 
-typedef struct _ModestAttachmentsView ModestAttachmentsView;
-typedef struct _ModestAttachmentsViewClass ModestAttachmentsViewClass;
+typedef struct _ModestAttachmentView ModestAttachmentView;
+typedef struct _ModestAttachmentViewClass ModestAttachmentViewClass;
 
-struct _ModestAttachmentsView
+struct _ModestAttachmentView
 {
-	GtkVBox parent;
+	GtkHBox parent;
 
 };
 
-struct _ModestAttachmentsViewClass
+struct _ModestAttachmentViewClass
 {
-	GtkVBoxClass parent_class;
+	GtkHBoxClass parent_class;
 
-	void (*activate)           (ModestAttachmentsView *attachments_view, TnyMimePart *mime_part);
+	/* virtual methods */
+	TnyMimePart* (*get_part_func) (TnyMimePartView *self);
+	void (*set_part_func) (TnyMimePartView *self, TnyMimePart *part);
+	void (*clear_func) (TnyMimePartView *self);
+
+	/* signals */
+	void (*activate)           (ModestAttachmentView *attachment_view);
 };
 
-GType modest_attachments_view_get_type (void);
+GType modest_attachment_view_get_type (void);
 
-GtkWidget* modest_attachments_view_new (TnyMsg *msg);
-
-void modest_attachments_view_set_message (ModestAttachmentsView *attachments_view, TnyMsg *msg);
+GtkWidget* modest_attachment_view_new (TnyMimePart *mime_part);
 
 G_END_DECLS
 

@@ -280,7 +280,7 @@ send_mail (const gchar* account_name,
 	mail_operation = modest_mail_operation_new ();
 	modest_mail_operation_send_new_mail (mail_operation, account,
 					     from_string, mailto,
-					     cc, bcc, subject, body,
+					     cc, bcc, subject, body, NULL,
 					     NULL);
 	if (modest_mail_operation_get_status (mail_operation) == 
 	    MODEST_MAIL_OPERATION_STATUS_FAILED) {

@@ -42,9 +42,14 @@ static const GtkActionEntry modest_msg_edit_action_entries [] = {
 	{ "View", NULL, N_("_View") },
 	{ "Insert", NULL, N_("_Insert") },
 	{ "Format", NULL, N_("For_mat") },
+	{ "Alignment", NULL, N_("_Alignment") },
+	{ "Attachments", NULL, N_("Attachments") },
 
 	/* ACTIONS */
 	{ "ActionsSend", MODEST_STOCK_MAIL_SEND, N_("Send"),  NULL, N_("Send a message"),  G_CALLBACK (modest_ui_actions_on_send) },
+	{ "ActionsFontColor", GTK_STOCK_SELECT_COLOR, N_("Color"), NULL, N_("Change text color"), G_CALLBACK (modest_ui_actions_on_select_editor_color)},
+	{ "BackgroundColor", GTK_STOCK_SELECT_COLOR, N_("Background color"), NULL, N_("Change background color"), G_CALLBACK (modest_ui_actions_on_select_editor_background_color)},
+	{ "InsertImage", NULL, N_("Insert image..."), NULL, N_("Insert image"), G_CALLBACK (modest_ui_actions_on_insert_image)},
 };
 
 static const GtkToggleActionEntry modest_msg_edit_toggle_action_entries [] = {
@@ -53,6 +58,17 @@ static const GtkToggleActionEntry modest_msg_edit_toggle_action_entries [] = {
 	{ "ViewToField",   NULL,    N_("To: field"),  NULL, N_("Shows the To: field"),  NULL, TRUE  },
 	{ "ViewCcField",   NULL,    N_("Cc: field"),  NULL, N_("Shows the Cc: field"),  NULL, TRUE  },
 	{ "ViewBccField",  NULL,    N_("Bcc: filed"), NULL, N_("Shows the Bcc: field"), NULL, FALSE },
+
+	/* Rich text editor functions */
+	{ "ActionsBold", GTK_STOCK_BOLD, N_("Bold"), NULL, N_("Use bold"), G_CALLBACK (modest_ui_actions_on_toggle_bold), FALSE },
+	{ "ActionsItalics", GTK_STOCK_ITALIC, N_("Italics"), NULL, N_("Use italics"), G_CALLBACK (modest_ui_actions_on_toggle_italics), FALSE },
+	{ "ActionsBulletedList", MODEST_TOOLBAR_ICON_FORMAT_BULLETS, N_("Bullet list"), NULL, N_("Add a bullet list"), G_CALLBACK (modest_ui_actions_on_toggle_bullets), FALSE },
+};
+
+static const GtkRadioActionEntry modest_msg_edit_alignment_radio_action_entries [] = {
+	{ "AlignmentLeft", NULL, N_("Left"), NULL, N_("Align to the left"), GTK_JUSTIFY_LEFT },
+	{ "AlignmentCenter", NULL, N_("Center"), NULL, N_("Align to the center"), GTK_JUSTIFY_CENTER },
+	{ "AlignmentRight", NULL, N_("Right"), NULL, N_("Align to the right"), GTK_JUSTIFY_RIGHT },
 };
 
 G_END_DECLS

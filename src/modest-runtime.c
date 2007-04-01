@@ -570,6 +570,7 @@ init_stock_icons (void)
 /* 			MODEST_TOOLBAR_ICON_NEXT, */
 /* 			MODEST_TOOLBAR_ICON_PREV, */
 /* 			MODEST_TOOLBAR_ICON_STOP */
+			MODEST_TOOLBAR_ICON_FORMAT_BULLETS,
 		};
 
 		registered = TRUE;

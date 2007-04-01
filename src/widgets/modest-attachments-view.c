@@ -39,6 +39,7 @@
 
 #include <modest-platform.h>
 #include <modest-runtime.h>
+#include <modest-attachment-view.h>
 #include <modest-attachments-view.h>
 
 static GObjectClass *parent_class = NULL;
@@ -61,6 +62,16 @@ struct _ModestAttachmentsViewPriv
 
 static guint signals[LAST_SIGNAL] = {0};
 
+static void
+activate_attachment (ModestAttachmentView *attachment_view,
+		     gpointer userdata)
+{
+	TnyMimePart *mime_part;
+      
+	mime_part = tny_mime_part_view_get_part (TNY_MIME_PART_VIEW (attachment_view));
+	g_signal_emit (G_OBJECT (userdata), signals[ACTIVATE_SIGNAL], 0, mime_part);
+	g_object_unref (mime_part);
+}
 
 /**
  * modest_attachments_view_new:
@@ -73,7 +84,11 @@ static guint signals[LAST_SIGNAL] = {0};
 GtkWidget*
 modest_attachments_view_new (TnyMsg *msg)
 {
-	ModestAttachmentsView *self = g_object_new (MODEST_TYPE_ATTACHMENTS_VIEW, NULL);
+	ModestAttachmentsView *self = g_object_new (MODEST_TYPE_ATTACHMENTS_VIEW, 
+						    "homogeneous", FALSE,
+						    "spacing", 0,
+						    "resize-mode", GTK_RESIZE_PARENT,
+						    NULL);
 
 	modest_attachments_view_set_message (self, msg);
 
@@ -86,11 +101,7 @@ modest_attachments_view_set_message (ModestAttachmentsView *attachments_view, Tn
 	ModestAttachmentsViewPriv *priv = MODEST_ATTACHMENTS_VIEW_GET_PRIVATE (attachments_view);
 	TnyList *parts;
 	TnyIterator *iter;
-	gint index = 0;
-	GtkTextBuffer *buffer = NULL;
 	gboolean has_first = FALSE;
-	GtkTextIter text_iter;
-	gint icon_height;
 
 	if (priv->msg) 
 		g_object_unref (priv->msg);
@@ -98,13 +109,10 @@ modest_attachments_view_set_message (ModestAttachmentsView *attachments_view, Tn
 		g_object_ref (G_OBJECT(msg));
 	
 	priv->msg = msg;
-	
-	buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (attachments_view));
-	gtk_text_buffer_set_text (buffer, "", -1);
-	gtk_text_buffer_get_end_iter (buffer, &text_iter);
 
+	gtk_container_foreach (GTK_CONTAINER (attachments_view), (GtkCallback) gtk_widget_destroy, NULL);
+	
 	if (priv->msg == NULL) {
-		gtk_widget_hide (GTK_WIDGET (attachments_view));
 		return;
 	}
 
@@ -112,121 +120,30 @@ modest_attachments_view_set_message (ModestAttachmentsView *attachments_view, Tn
 	tny_mime_part_get_parts (TNY_MIME_PART (priv->msg), parts);
 	iter = tny_list_create_iterator (parts);
 
-	gtk_icon_size_lookup (GTK_ICON_SIZE_BUTTON, NULL, &icon_height);
-
 	while (!tny_iterator_is_done (iter)) {
 		TnyMimePart *part;
 
-		++index;
 		part = TNY_MIME_PART (tny_iterator_get_current (iter));
 		if (tny_mime_part_is_attachment (part)) {
-			const gchar *filename = tny_mime_part_get_filename (part);
-			gchar *file_icon_name = 
-				modest_platform_get_file_icon_name (filename, tny_mime_part_get_content_type(part) , NULL);
-			GdkPixbuf *pixbuf = NULL;
-			GtkTextTag *tag = NULL;
-
-			if (has_first) {
-				gtk_text_buffer_insert (buffer, &text_iter, ", ", -1);
-				gtk_text_buffer_get_end_iter (buffer, &text_iter);
-			}
-			
-			tag = gtk_text_buffer_create_tag (buffer, NULL,
-							  "underline", PANGO_UNDERLINE_SINGLE,
-							  "foreground", "blue",
-							  NULL);
-			
-			g_object_set_data (G_OBJECT (tag), "attachment-index", GINT_TO_POINTER (index));
-			g_object_set_data (G_OBJECT (tag), "attachment-set", GINT_TO_POINTER (TRUE));
-			
-			if (file_icon_name) {
-				pixbuf = gtk_icon_theme_load_icon (gtk_icon_theme_get_default (), file_icon_name, 
-								   icon_height, GTK_ICON_LOOKUP_USE_BUILTIN, NULL);
-				if (pixbuf) {
-					GtkTextTag *pixbuf_tag;
-					GtkTextIter iter2;
-					pixbuf_tag = gtk_text_buffer_create_tag (buffer, NULL, NULL);
-					g_object_set_data (G_OBJECT (pixbuf_tag), "attachment-index", GINT_TO_POINTER (index));
-					g_object_set_data (G_OBJECT (pixbuf_tag), "attachment-set", GINT_TO_POINTER (TRUE));
-					gtk_text_buffer_insert_pixbuf (buffer, &text_iter, pixbuf);
-					iter2 = text_iter;
-					gtk_text_iter_backward_char (&iter2);
-					gtk_text_buffer_apply_tag (buffer, pixbuf_tag, &iter2, &text_iter);
-					gtk_text_buffer_get_end_iter (buffer, &text_iter);
-				}
-			}
-			gtk_text_buffer_insert_with_tags (buffer, &text_iter, filename, -1, tag, NULL);
-			gtk_text_buffer_get_end_iter (buffer, &text_iter);
-			if (file_icon_name)
-				g_free (file_icon_name);
+			GtkWidget *att_view = NULL;
+			att_view = modest_attachment_view_new (part);
+			gtk_box_pack_end (GTK_BOX (attachments_view), att_view, FALSE, FALSE, 0);
+			gtk_widget_show_all (att_view);
+			g_signal_connect (G_OBJECT (att_view), "activate", G_CALLBACK (activate_attachment), (gpointer) attachments_view);
 			has_first = TRUE;
 		}
 		g_object_unref (part);
 		tny_iterator_next (iter);
 	}
 
-	if (has_first)
-		gtk_widget_show (GTK_WIDGET (attachments_view));
-	else
-		gtk_widget_hide (GTK_WIDGET (attachments_view));
+	gtk_widget_queue_draw (GTK_WIDGET (attachments_view));
 
-}
-
-static gboolean
-button_release_event (GtkWidget *widget,
-		      GdkEventButton *event,
-		      gpointer user_data)
-{
-	gint buffer_x, buffer_y;
-	GtkTextIter iter;
-	GSList *tags = NULL;
-	GSList *node = NULL;
-	
-	if ((event->type != GDK_BUTTON_RELEASE) 
-	    || (event->button != 1))
-		return FALSE;
-	
-	gtk_text_view_window_to_buffer_coords (GTK_TEXT_VIEW (widget), GTK_TEXT_WINDOW_WIDGET,
-					       event->x, event->y, &buffer_x, &buffer_y);
-	gtk_text_view_get_iter_at_location (GTK_TEXT_VIEW (widget), &iter, buffer_x, buffer_y);
-
-	tags = gtk_text_iter_get_tags (&iter);
-
-	for (node = tags; node != NULL; node = g_slist_next (node)) {
-		GtkTextTag *tag = node->data;
-		gboolean is_attachment = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (tag), "attachment-set"));
-
-		if (is_attachment) {
-			gint attachment_index = 0;
-
-			attachment_index = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (tag), "attachment-index"));
-			g_signal_emit (G_OBJECT (widget), signals[ACTIVATE_SIGNAL], 0,
-				       attachment_index);
-			break;
-		}
-		
-	}
-	return FALSE;
 }
 
 static void
 modest_attachments_view_instance_init (GTypeInstance *instance, gpointer g_class)
 {
 	ModestAttachmentsViewPriv *priv = MODEST_ATTACHMENTS_VIEW_GET_PRIVATE (instance);
-	GtkTextBuffer *buffer = NULL;
-
-	gtk_text_view_set_editable (GTK_TEXT_VIEW (instance), FALSE);
-	gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (instance), GTK_WRAP_WORD_CHAR);
-	gtk_text_view_set_pixels_above_lines (GTK_TEXT_VIEW (instance), 0);
-	gtk_text_view_set_pixels_below_lines (GTK_TEXT_VIEW (instance), 0);
-	gtk_text_view_set_justification (GTK_TEXT_VIEW (instance), GTK_JUSTIFY_LEFT);
-	gtk_text_view_set_left_margin (GTK_TEXT_VIEW (instance), 0);
-	gtk_text_view_set_right_margin (GTK_TEXT_VIEW (instance), 0);
-	gtk_text_view_set_cursor_visible (GTK_TEXT_VIEW (instance), FALSE);
-
-	buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (instance));
-
-	g_signal_connect (G_OBJECT (instance), "button-release-event", G_CALLBACK (button_release_event), NULL);
 
 	priv->msg = NULL;
 
@@ -270,8 +187,8 @@ modest_attachments_view_class_init (ModestAttachmentsViewClass *klass)
 			      G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION,
 			      G_STRUCT_OFFSET(ModestAttachmentsViewClass, activate),
 			      NULL, NULL,
-			      g_cclosure_marshal_VOID__INT,
-			      G_TYPE_NONE, 1, G_TYPE_INT);
+			      g_cclosure_marshal_VOID__OBJECT,
+			      G_TYPE_NONE, 1, G_TYPE_OBJECT);
 	
 	return;
 }
@@ -296,7 +213,7 @@ modest_attachments_view_get_type (void)
 		  modest_attachments_view_instance_init    /* instance_init */
 		};
 
-		type = g_type_register_static (GTK_TYPE_TEXT_VIEW,
+		type = g_type_register_static (GTK_TYPE_VBOX,
 			"ModestAttachmentsView",
 			&info, 0);
 

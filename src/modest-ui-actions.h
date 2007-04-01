@@ -95,7 +95,7 @@ void     modest_ui_actions_on_msg_link_hover           (ModestMsgView *msgview, 
 void     modest_ui_actions_on_msg_link_clicked         (ModestMsgView *msgview, const gchar* link,
 							ModestWindow *win);
 
-void     modest_ui_actions_on_msg_attachment_clicked   (ModestMsgView *msgview, int index,
+void     modest_ui_actions_on_msg_attachment_clicked   (ModestMsgView *msgview, TnyMimePart *mime_part,
 							ModestWindow *win);
 
 void     modest_ui_actions_on_msg_recpt_activated   (ModestMsgView *msgview, const gchar *address,
@@ -103,6 +103,28 @@ void     modest_ui_actions_on_msg_recpt_activated   (ModestMsgView *msgview, con
 
 void     modest_ui_actions_on_send                     (GtkWidget *widget,
 							ModestMsgEditWindow *edit_window);
+
+void     modest_ui_actions_on_toggle_bold              (GtkToggleAction *action,
+							ModestMsgEditWindow *window);
+
+void     modest_ui_actions_on_toggle_italics           (GtkToggleAction *action,
+							ModestMsgEditWindow *window);
+
+void     modest_ui_actions_on_toggle_bullets           (GtkToggleAction *action,
+							ModestMsgEditWindow *window);
+
+void     modest_ui_actions_on_change_justify      (GtkRadioAction *action,
+						   GtkRadioAction *selected,
+						   ModestMsgEditWindow *window);
+
+void     modest_ui_actions_on_select_editor_color      (GtkAction *action,
+							ModestMsgEditWindow *window);
+
+void     modest_ui_actions_on_select_editor_background_color      (GtkAction *action,
+								   ModestMsgEditWindow *window);
+
+void     modest_ui_actions_on_insert_image             (GtkAction *action,
+							ModestMsgEditWindow *window);
 
 void    modest_ui_actions_on_send_receive              (GtkAction *action, ModestWindow *win);
 
