@@ -158,26 +158,24 @@ modest_ui_actions_on_delete (GtkAction *action, ModestWindow *win)
 			header = TNY_HEADER (tny_iterator_get_current (iter));
 			/* TODO: thick grain mail operation involving
 			   a list of objects. Composite pattern ??? */
-			mail_op = modest_mail_operation_new ();
-
 			/* TODO: add confirmation dialog */
+			mail_op = modest_mail_operation_new ();
+			modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
+							 mail_op);
 
-			/* Move to trash. TODO: Still not supported */
+			/* Always delete. TODO: Move to trash still not supported */
 			modest_mail_operation_remove_msg (mail_op, header, FALSE);
 
-			if (modest_mail_operation_get_status (mail_op) !=
-			    MODEST_MAIL_OPERATION_STATUS_SUCCESS) {
-				const GError *error;
-				error = modest_mail_operation_get_error (mail_op);
-				if (error)
-					g_warning (error->message);
-			}
-
+			/* Frees */
 			g_object_unref (G_OBJECT (mail_op));
-			g_object_unref (header);
+			g_object_unref (G_OBJECT (header));
+
 			tny_iterator_next (iter);
 
 		} while (!tny_iterator_is_done (iter));
+
+		/* Free iter */
+		g_object_unref (G_OBJECT (iter));
 	}
 }
 
@@ -560,11 +558,14 @@ modest_ui_actions_on_send_receive (GtkAction *action,  ModestWindow *win)
 		return;
 	}
 
+	/* Create the mail operation */
 	mail_op = modest_mail_operation_new ();
+	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
 	modest_mail_operation_update_account (mail_op, TNY_STORE_ACCOUNT(tny_account));
 
-	g_object_unref (G_OBJECT(tny_account));
-	/* g_object_unref (G_OBJECT(mail_op)); FIXME: this is still in use... */
+	/* Frees */
+	g_object_unref (G_OBJECT (tny_account));
+	g_object_unref (G_OBJECT (mail_op));
 }
 
 
@@ -585,7 +586,8 @@ modest_ui_actions_toggle_view (GtkAction *action, ModestMainWindow *main_window)
 	conf = modest_runtime_get_conf ();
 	
 	/* what is saved/restored is depending on the style; thus; we save with
-	 * old style, then update the style, and restore for this new style*/
+	 * old style, then update the style, and restore for this new style
+	 */
 	modest_widget_memory_save (conf, G_OBJECT(header_view), "header-view");
 	
 	if (modest_header_view_get_style
@@ -814,56 +816,6 @@ modest_ui_actions_on_folder_selection_changed (ModestFolderView *folder_view,
 	}
 }
 
-
-/****************************************************/
-/*
- * below some stuff to clearup statusbar messages after 1,5 seconds....
- */
-static gboolean
-progress_bar_clean (GtkWidget *bar)
-{
-	if (GTK_IS_PROGRESS_BAR(bar)) {
-		gtk_progress_bar_set_text     (GTK_PROGRESS_BAR(bar), "");
-		gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR(bar), 1.0);
-	}
-	return FALSE;
-}
-
-static gboolean
-statusbar_clean (GtkWidget *bar)
-{
-	if (GTK_IS_STATUSBAR(bar))
-		gtk_statusbar_push (GTK_STATUSBAR(bar), 0, "");
-	return FALSE;
-}
-
-
-static void
-statusbar_push (ModestMainWindow *main_window, guint context_id, const gchar *msg)
-{
-	if (!msg)
-		return;
-
-	GtkWidget *progress_bar, *status_bar;
-
-	progress_bar = modest_main_window_get_child_widget (main_window,
-							    MODEST_WIDGET_TYPE_PROGRESS_BAR);
-	status_bar = modest_main_window_get_child_widget (main_window,
-							  MODEST_WIDGET_TYPE_STATUS_BAR);
-	if (progress_bar) {
-		gtk_widget_show (progress_bar);
-		g_timeout_add (3000, (GSourceFunc)progress_bar_clean, progress_bar);
-	}
-	
-	if (status_bar) {
-		gtk_widget_show (status_bar);
-		gtk_statusbar_push (GTK_STATUSBAR(status_bar), 0, msg);
-		g_timeout_add (2500, (GSourceFunc)statusbar_clean, status_bar);
-	}
-
-}
-/****************************************************************************/
-
 void 
 modest_ui_actions_on_item_not_found (ModestHeaderView *header_view,ModestItemType type,
 				     ModestWindow *win)
@@ -912,37 +864,6 @@ modest_ui_actions_on_item_not_found (ModestHeaderView *header_view,ModestItemTyp
 	if (g_main_depth > 0)	
 		gdk_threads_leave ();
 }
-
-
-
-void
-modest_ui_actions_on_header_status_update (ModestHeaderView *header_view, 
-					    const gchar *msg, gint num, 
-					    gint total,  ModestMainWindow *main_window)
-{
-	char* txt;
-	GtkWidget *progress_bar;
-
-	g_return_if_fail (MODEST_IS_MAIN_WINDOW(main_window));
-
-	progress_bar = modest_main_window_get_child_widget (main_window, 
-							    MODEST_WIDGET_TYPE_PROGRESS_BAR);	
-	if (!progress_bar)
-		return;
-	
-	if (total != 0)
-		gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR(progress_bar),
-					       (gdouble)num/(gdouble)total);
-	else
-		gtk_progress_bar_pulse (GTK_PROGRESS_BAR(progress_bar));
-
-	txt = g_strdup_printf (_("Downloading %d of %d"), num, total);
-	gtk_progress_bar_set_text (GTK_PROGRESS_BAR(progress_bar), txt);
-	g_free (txt);
-	
-	statusbar_push (main_window, 0, msg);
-}
-
 
 void
 modest_ui_actions_on_msg_link_hover (ModestMsgView *msgview, const gchar* link,
@@ -1012,8 +933,11 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 		return;
 	}
 	from = modest_account_mgr_get_from_string (account_mgr, account_name);
-		
+
+	/* Create the mail operation */		
 	mail_operation = modest_mail_operation_new ();
+	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_operation);
+
 	modest_mail_operation_send_new_mail (mail_operation,
 					     transport_account,
 					     from,
@@ -1027,13 +951,12 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 	/* Frees */
 	g_free (from);
 	g_free (account_name);
-	g_object_unref (G_OBJECT (mail_operation));
 	g_object_unref (G_OBJECT (transport_account));
+	g_object_unref (G_OBJECT (mail_operation));
 
 	modest_msg_edit_window_free_msg_data (edit_window, data);
 
 	/* Save settings and close the window */
-	/* save_settings (edit_window) */
 	gtk_widget_destroy (GTK_WIDGET (edit_window));
 }
 
@@ -1228,18 +1151,16 @@ modest_ui_actions_on_new_folder (GtkAction *action, ModestMainWindow *main_windo
 			ModestMailOperation *mail_op;
 
 			mail_op = modest_mail_operation_new ();
+			modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), 
+							 mail_op);
+
 			new_folder = modest_mail_operation_create_folder (mail_op,
 									  TNY_FOLDER_STORE (parent_folder),
 									  (const gchar *) folder_name);
-			if (new_folder) {
+			if (new_folder) 
 				g_object_unref (new_folder);
-			} else {
-				const GError *error;
-				error = modest_mail_operation_get_error (mail_op);
-				if (error)
-					g_warning ("Error adding a subfolder: %s\n", error->message);
-			}
 			g_object_unref (mail_op);
+			g_free (folder_name);
 		}
 		g_object_unref (parent_folder);
 	}
@@ -1268,19 +1189,17 @@ modest_ui_actions_on_rename_folder (GtkAction *action,
 
 		if (folder_name != NULL && strlen (folder_name) > 0) {
 			ModestMailOperation *mail_op;
-			const GError *error;
 
 			mail_op = modest_mail_operation_new ();
+			modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
+							 mail_op);
+
 			modest_mail_operation_rename_folder (mail_op,
 							     folder,
 							     (const gchar *) folder_name);
 
-			error = modest_mail_operation_get_error (mail_op);
-			if (error)
-				/* TODO: notify error ? */
-				g_warning ("Could not rename a folder: %s\n", error->message);
-
 			g_object_unref (mail_op);
+			g_free (folder_name);
 		}
 		g_object_unref (folder);
 	}
@@ -1292,7 +1211,6 @@ delete_folder (ModestMainWindow *main_window, gboolean move_to_trash)
 	TnyFolder *folder;
 	ModestMailOperation *mail_op;
 	GtkWidget *folder_view;
-	const GError *error;
 	
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW(main_window));
 
@@ -1304,11 +1222,9 @@ delete_folder (ModestMainWindow *main_window, gboolean move_to_trash)
 	folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW (folder_view));
 	
 	mail_op = modest_mail_operation_new ();
+	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
+					 mail_op);
 	modest_mail_operation_remove_folder (mail_op, folder, move_to_trash);
-
-	error = modest_mail_operation_get_error (mail_op);
-	if (error)
-		g_warning ("%s\n", error->message);
 
 	g_object_unref (G_OBJECT (mail_op));
 	g_object_unref (G_OBJECT (folder));

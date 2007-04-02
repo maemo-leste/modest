@@ -83,12 +83,6 @@ void     modest_ui_actions_on_item_not_found           (ModestHeaderView *header
 							 ModestItemType type,
 							 ModestWindow *window);
 
-void     modest_ui_actions_on_header_status_update     (ModestHeaderView *header_view, 
-							 const gchar *msg,
-							 gint num, 
-							 gint total, 
-							 ModestMainWindow *main_window);
-
 void     modest_ui_actions_on_msg_link_hover           (ModestMsgView *msgview, const gchar* link,
 							ModestWindow *win);
 

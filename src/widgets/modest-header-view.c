@@ -631,40 +631,54 @@ modest_header_view_set_model (GtkTreeView *header_view, GtkTreeModel *model)
 }
 
 static void
-on_refresh_folder (TnyFolder   *folder, 
-		   gboolean     cancelled, 
-		   GError     **error,
-		   gpointer     user_data)
+on_progress_changed (ModestMailOperation *mail_op,
+		     ModestHeaderView *self)
 {
-	if (cancelled) {
-/* 		GtkTreeSelection *selection; */
-/* 		selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (user_data)); */
-/* 		gtk_tree_selection_unselect_all (selection); */
-		g_warning ("Operation cancelled %s\n", (*error) ? (*error)->message : "unknown");
-		return;
-	}
-}
-
-
-static void
-on_refresh_folder_status_update (TnyFolder *folder, const gchar *msg,
-				 gint num, gint total,  gpointer user_data)
-{
-	ModestHeaderView *self;
+	GtkTreeModel *sortable; 
 	ModestHeaderViewPrivate *priv;
+	GList *cols, *cursor;
+	TnyList *headers;
 
-	self = MODEST_HEADER_VIEW(user_data);
-	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
+	if (!modest_mail_operation_is_finished (mail_op))
+		return;
 
-	/* FIXME: this is a hack ==> tinymail gives us this when
-	 * it has nothing better to do */
-	if (num == 1 && total == 100)
+	if (modest_mail_operation_get_error (mail_op))
 		return;
 	
-	g_signal_emit (G_OBJECT(self), signals[STATUS_UPDATE_SIGNAL],
-		       0, msg, num, total);
-}
+	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
 
+	headers = TNY_LIST (tny_gtk_header_list_model_new ());
+
+	tny_gtk_header_list_model_set_folder (TNY_GTK_HEADER_LIST_MODEL(headers),
+					      priv->folder, TRUE);
+
+	sortable = gtk_tree_model_sort_new_with_model (GTK_TREE_MODEL(headers));
+	g_object_unref (G_OBJECT (headers));
+
+	/* install our special sorting functions */
+	cursor = cols = gtk_tree_view_get_columns (GTK_TREE_VIEW(self));
+	while (cursor) {
+		gint col_id = GPOINTER_TO_INT (g_object_get_data(G_OBJECT(cursor->data),
+								 MODEST_HEADER_VIEW_COLUMN));
+		gtk_tree_sortable_set_sort_func (GTK_TREE_SORTABLE(sortable),
+						 col_id,
+						 (GtkTreeIterCompareFunc) cmp_rows,
+						 cursor->data, NULL);
+		cursor = g_list_next(cursor);
+	}
+	g_list_free (cols);
+
+	/* Set new model */
+	modest_header_view_set_model (GTK_TREE_VIEW (self), sortable);
+	g_object_unref (G_OBJECT (sortable));
+
+	/* Add a folder observer */
+	g_mutex_lock (priv->monitor_lock);
+	priv->monitor = TNY_FOLDER_MONITOR (tny_folder_monitor_new (priv->folder));
+	tny_folder_monitor_add_list (priv->monitor, TNY_LIST (headers));
+	tny_folder_monitor_start (priv->monitor);
+	g_mutex_unlock (priv->monitor_lock);
+}
 
 TnyFolder*
 modest_header_view_get_folder (ModestHeaderView *self)
@@ -731,6 +745,7 @@ void
 modest_header_view_set_folder (ModestHeaderView *self, TnyFolder *folder)
 {
 	ModestHeaderViewPrivate *priv;
+
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
 
 	if (priv->folder) {
@@ -739,16 +754,31 @@ modest_header_view_set_folder (ModestHeaderView *self, TnyFolder *folder)
 	}
 
 	if (folder) {
+		ModestMailOperation *mail_op;
+
 		modest_header_view_set_folder_intern (self, folder);
+
+		/* Pick my reference. Nothing to do with the mail operation */
 		priv->folder = g_object_ref (folder);
-		tny_folder_refresh_async (folder,
-					  on_refresh_folder,
-					  on_refresh_folder_status_update,
-					  self);
 
 		/* no message selected */
-		g_signal_emit (G_OBJECT(self), signals[HEADER_SELECTED_SIGNAL], 0,
-			       NULL);
+		g_signal_emit (G_OBJECT(self), signals[HEADER_SELECTED_SIGNAL], 0, NULL);
+
+		/* Create the mail operation */
+		mail_op = modest_mail_operation_new ();
+		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
+						 mail_op);
+
+		/* Register a mail operation observer */
+		g_signal_connect (mail_op, "progress-changed", 
+				  G_CALLBACK (on_progress_changed), self);
+
+		/* Refresh the folder asynchronously */
+		modest_mail_operation_refresh_folder (mail_op, folder);
+
+		/* Free */
+		g_object_unref (mail_op);
+
 	} else {
 		g_mutex_lock (priv->monitor_lock);
 		modest_header_view_set_model (GTK_TREE_VIEW (self), NULL); 

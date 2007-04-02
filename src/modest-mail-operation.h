@@ -135,15 +135,17 @@ void    modest_mail_operation_send_new_mail   (ModestMailOperation *self,
  * #ModestMailOperationQueue and then free it. The caller will be
  * notified by the "progress_changed" signal each time the progress of
  * the operation changes.
+ *
+ * Note that the store account passed as parametter will be freed by
+ * the mail operation so you must pass a new reference
+ *
  * Example
  * <informalexample><programlisting>
  * queue = modest_tny_platform_factory_get_modest_mail_operation_queue_instance (fact)
  * mail_op = modest_mail_operation_new ();
- * g_signal_connect (G_OBJECT (mail_op), "progress_changed", G_CALLBACK(on_progress_changed), queue);
- * if (modest_mail_operation_update_account (mail_op, account))
- * {
- *     modest_mail_operation_queue_add (queue, mail_op);
- * }
+ * g_signal_connect (G_OBJECT (mail_op), "progress_changed", G_CALLBACK(on_progress_changed), NULL);
+ * modest_mail_operation_queue_add (queue, mail_op);
+ * modest_mail_operation_update_account (mail_op, account)
  * g_object_unref (G_OBJECT (mail_op));
  * </programlisting></informalexample>
  * 
@@ -246,17 +248,16 @@ TnyFolder*    modest_mail_operation_xfer_folder    (ModestMailOperation *self,
  * <informalexample><programlisting>
  * queue = modest_tny_platform_factory_get_modest_mail_operation_queue_instance (fact);
  * mail_op = modest_mail_operation_new ();
- * if (modest_mail_operation_xfer_msg (mail_op, header, folder, TRUE))
- * {
- *     g_signal_connect (G_OBJECT (mail_op), "progress_changed", G_CALLBACK(on_progress_changed), queue);
- *     modest_mail_operation_queue_add (queue, mail_op);
- * }
+ * modest_mail_operation_queue_add (queue, mail_op);
+ * g_signal_connect (G_OBJECT (mail_op), "progress_changed", G_CALLBACK(on_progress_changed), queue);
+ *
+ * modest_mail_operation_xfer_msg (mail_op, header, folder, TRUE);
+ * 
  * g_object_unref (G_OBJECT (mail_op));
  * </programlisting></informalexample>
  *
- * Returns: TRUE if the mail operation could be started, or FALSE otherwise
  **/
-gboolean      modest_mail_operation_xfer_msg       (ModestMailOperation *self,
+void          modest_mail_operation_xfer_msg       (ModestMailOperation *self,
 						    TnyHeader *header, 
 						    TnyFolder *folder,
 						    gboolean delete_original);
@@ -313,7 +314,7 @@ guint     modest_mail_operation_get_task_total     (ModestMailOperation *self);
  * 
  * Returns: TRUE if the operation is finished, FALSE otherwise
  **/
-gboolean                  modest_mail_operation_is_finished (ModestMailOperation *self);
+gboolean  modest_mail_operation_is_finished        (ModestMailOperation *self);
 
 /**
  * modest_mail_operation_is_finished:
@@ -344,7 +345,29 @@ const GError*             modest_mail_operation_get_error   (ModestMailOperation
  * 
  * Returns: TRUE if the operation was succesfully canceled, FALSE otherwise
  **/
-gboolean                  modest_mail_operation_cancel      (ModestMailOperation *self);
+gboolean  modest_mail_operation_cancel          (ModestMailOperation *self);
+
+/**
+ * modest_mail_operation_refresh_folder
+ * @self: a #ModestMailOperation
+ * @folder: the #TnyFolder to refresh
+ * 
+ * Refreshes the contents of a folder
+ */
+void      modest_mail_operation_refresh_folder  (ModestMailOperation *self,
+						 TnyFolder *folder);
+
+/**
+ *
+ * This function is a workarround. It emits the progress-changed
+ * signal. It's used by the mail operation queue to notify the
+ * observers attached to that signal that the operation finished. We
+ * need to use that for the moment because tinymail does not give us
+ * the progress of a given operation very well. So we must delete it
+ * when tinymail has that functionality and remove the call to it in
+ * the queue as well.
+ */
+void _modest_mail_operation_notify_end (ModestMailOperation *self);
 
 G_END_DECLS
 

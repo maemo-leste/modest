@@ -27,12 +27,15 @@ libmodest_ui_la_SOURCES=              \
 	modest-account-assistant.c    \
 	modest-account-assistant.h    \
 	modest-account-view-window.c  \
-	modest-address-book.c          \
+	modest-address-book.c         \
 	modest-msg-edit-window.c      \
 	modest-icon-names.h           \
+	modest-gnome-info-bar.c       \
+	modest-gnome-info-bar.h       \
 	modest-main-window.c          \
 	modest-main-window-ui.h	      \
 	modest-msg-view-window.c      \
+	modest-platform.c	      \
 	modest-platform.c	      \
 	modest-store-widget.c         \
 	modest-store-widget.h         \

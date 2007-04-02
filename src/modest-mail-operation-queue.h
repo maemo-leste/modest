@@ -45,6 +45,11 @@ G_BEGIN_DECLS
 #define MODEST_IS_MAIL_OPERATION_QUEUE_CLASS(klass)  (G_TYPE_CHECK_CLASS_TYPE((klass),MODEST_TYPE_MAIL_OPERATION_QUEUE))
 #define MODEST_MAIL_OPERATION_QUEUE_GET_CLASS(obj)   (G_TYPE_INSTANCE_GET_CLASS((obj),MODEST_TYPE_MAIL_OPERATION_QUEUE,ModestMailOperationQueueClass))
 
+typedef enum _ModestMailOperationQueueNotification {
+	MODEST_MAIL_OPERATION_QUEUE_OPERATION_ADDED,
+	MODEST_MAIL_OPERATION_QUEUE_OPERATION_REMOVED
+} ModestMailOperationQueueNotification;
+
 typedef struct _ModestMailOperationQueue      ModestMailOperationQueue;
 typedef struct _ModestMailOperationQueueClass ModestMailOperationQueueClass;
 
@@ -54,6 +59,11 @@ struct _ModestMailOperationQueue {
 
 struct _ModestMailOperationQueueClass {
 	GObjectClass parent_class;
+
+	/* Signals */
+	void (*queue_changed) (ModestMailOperationQueue *self, 
+			       ModestMailOperation *mail_op,
+			       ModestMailOperationQueueNotification type);
 };
 
 /* member functions */

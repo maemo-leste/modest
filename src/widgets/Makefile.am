@@ -28,7 +28,6 @@ libmodest_widgets_la_SOURCES=          \
 	modest-combo-box.h             \
 	modest-folder-view.c           \
 	modest-folder-view.h           \
-	modest-header-view-priv.h      \
 	modest-header-view-render.c    \
 	modest-header-view.c           \
 	modest-header-view.h           \
@@ -47,7 +46,7 @@ libmodest_widgets_la_SOURCES=          \
 	modest-tny-stream-gtkhtml.c    \
 	modest-tny-stream-gtkhtml.h    \
 	modest-window.c                \
-	modest-window.h             
+	modest-window.h
 
 LDADD = \
 	$(MODEST_GSTUFF_LIBS) 				\

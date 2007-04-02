@@ -56,6 +56,8 @@ modest_SOURCES=\
 	modest-pair.c\
 	modest-pair.h\
 	modest-platform.h\
+	modest-progress-object.c\
+	modest-progress-object.h\
 	modest-protocol-info.c\
 	modest-protocol-info.h\
 	modest-runtime.c\

@@ -45,6 +45,7 @@
 #include <modest-tny-msg.h>
 #include "modest-mail-operation.h"
 #include "modest-icon-names.h"
+#include "modest-gnome-info-bar.h"
 
 /* 'private'/'protected' functions */
 static void modest_main_window_class_init    (ModestMainWindowClass *klass);
@@ -69,6 +70,16 @@ static gboolean     show_context_popup_menu             (ModestMainWindow *windo
 
 static void         connect_signals                      (ModestMainWindow *self);
 
+static void         on_queue_changed                     (ModestMailOperationQueue *queue,
+							  ModestMailOperation *mail_op,
+							  ModestMailOperationQueueNotification type,
+							  ModestMainWindow *self);
+
+static void         on_header_status_update              (ModestHeaderView *header_view, 
+							  const gchar *msg, 
+							  gint num, 
+							  gint total,  
+							  ModestMainWindow *main_window);
 
 /* list my signals */
 enum {
@@ -80,12 +91,12 @@ enum {
 typedef struct _ModestMainWindowPrivate ModestMainWindowPrivate;
 struct _ModestMainWindowPrivate {
 
-	GtkWidget *folder_paned;
-	GtkWidget *msg_paned;
-	GtkWidget *main_paned;
+	GtkWidget        *folder_paned;
+	GtkWidget        *msg_paned;
+	GtkWidget        *main_paned;
 	
-	GtkWidget *online_toggle;
-	GtkWidget *folder_info_label;
+	GtkWidget        *online_toggle;
+	GtkWidget        *folder_info_label;
 
 	ModestHeaderView *header_view;
 	ModestFolderView *folder_view;
@@ -94,6 +105,8 @@ struct _ModestMainWindowPrivate {
 	GtkWidget        *status_bar;
 	GtkWidget        *progress_bar;
 
+	GSList           *progress_widgets;
+	GtkWidget        *main_bar;
 };
 
 
@@ -166,10 +179,11 @@ modest_main_window_init (ModestMainWindow *obj)
 	priv->folder_paned = NULL;
 	priv->msg_paned    = NULL;
 	priv->main_paned   = NULL;	
+	priv->progress_widgets = NULL;
 
 	account_store = TNY_ACCOUNT_STORE (modest_runtime_get_account_store ());
 
-	/* online/offline combo */
+	/* online/offline toggle */
 	priv->online_toggle = gtk_toggle_button_new ();
 	online  = tny_device_is_online (modest_runtime_get_device());
 	icon    = gtk_image_new_from_icon_name (online ? GTK_STOCK_CONNECT : GTK_STOCK_DISCONNECT,
@@ -177,20 +191,16 @@ modest_main_window_init (ModestMainWindow *obj)
 	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(priv->online_toggle), online);
 	gtk_button_set_image (GTK_BUTTON(priv->online_toggle),icon);
 
-	/* label with number of items, unread items for 
-	   the current folder */
+	/* Paned */
+	priv->folder_paned = gtk_vpaned_new ();
+	priv->main_paned = gtk_hpaned_new ();
+	priv->msg_paned = gtk_vpaned_new ();
+
+	/* Main bar */
 	priv->folder_info_label = gtk_label_new (NULL);
-
-	/* status bar */
-	priv->status_bar   = gtk_statusbar_new ();
-        gtk_statusbar_set_has_resize_grip (GTK_STATUSBAR(priv->status_bar),
-                                           FALSE);
-
-	/* progress bar */
-	priv->progress_bar = gtk_progress_bar_new ();
-	gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR(priv->progress_bar), 1.0);
-	gtk_progress_bar_set_ellipsize (GTK_PROGRESS_BAR(priv->progress_bar),
-					PANGO_ELLIPSIZE_END);
+	priv->main_bar = modest_gnome_info_bar_new ();
+	priv->progress_widgets = g_slist_prepend (priv->progress_widgets, 
+							  priv->main_bar);
 
 	/* msg preview */
 	priv->msg_preview = MODEST_MSG_VIEW(modest_msg_view_new (NULL));
@@ -241,10 +251,6 @@ modest_main_window_get_child_widget (ModestMainWindow *self,
 		widget = (GtkWidget*)priv->folder_view; break;
 	case MODEST_WIDGET_TYPE_MSG_PREVIEW:
 		widget = (GtkWidget*)priv->msg_preview; break;
-	case MODEST_WIDGET_TYPE_STATUS_BAR:
-		widget = (GtkWidget*)priv->status_bar; break;
-	case MODEST_WIDGET_TYPE_PROGRESS_BAR:
-		widget = (GtkWidget*)priv->progress_bar; break;
 	default:
 		g_return_val_if_reached (NULL);
 		return NULL;
@@ -391,7 +397,7 @@ connect_signals (ModestMainWindow *self)
 
 	/* header view */
 	g_signal_connect (G_OBJECT(priv->header_view), "status_update",
-			  G_CALLBACK(modest_ui_actions_on_header_status_update), self);
+			  G_CALLBACK(on_header_status_update), self);
 	g_signal_connect (G_OBJECT(priv->header_view), "header_selected",
 			  G_CALLBACK(modest_ui_actions_on_header_selected), self);
 	g_signal_connect (G_OBJECT(priv->header_view), "header_activated",
@@ -422,6 +428,12 @@ connect_signals (ModestMainWindow *self)
 			  G_CALLBACK(on_connection_changed), self);
 	g_signal_connect (G_OBJECT(priv->online_toggle), "toggled",
 			  G_CALLBACK(on_online_toggle_toggled), self);
+
+	/* Mail Operation Queue */
+	g_signal_connect (G_OBJECT (modest_runtime_get_mail_operation_queue ()),
+			  "queue-changed",
+			  G_CALLBACK (on_queue_changed),
+			  self);
 	
 	/* window */
 	g_signal_connect (G_OBJECT(self), "destroy", G_CALLBACK(on_destroy), NULL);
@@ -474,7 +486,6 @@ modest_main_window_new (void)
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
 	parent_priv = MODEST_WINDOW_GET_PRIVATE(self);
 	
-	/* ***************** */
 	parent_priv->ui_manager = gtk_ui_manager_new();
 	action_group = gtk_action_group_new ("ModestMainWindowActions");
 	
@@ -495,7 +506,6 @@ modest_main_window_new (void)
 		g_error_free (error);
 		error = NULL;
 	}
-	/* *************** */
 
 	/* Add accelerators */
 	gtk_window_add_accel_group (GTK_WINDOW (obj), 
@@ -505,29 +515,25 @@ modest_main_window_new (void)
 	parent_priv->toolbar = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar");
 	parent_priv->menubar = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/MenuBar");
 
-	gtk_toolbar_set_tooltips (GTK_TOOLBAR (parent_priv->toolbar), TRUE);	
+	gtk_toolbar_set_tooltips (GTK_TOOLBAR (parent_priv->toolbar), TRUE);
 	folder_win = wrapped_in_scrolled_window (GTK_WIDGET(priv->folder_view), FALSE);
-	header_win = wrapped_in_scrolled_window (GTK_WIDGET(priv->header_view), FALSE);			   
+	header_win = wrapped_in_scrolled_window (GTK_WIDGET(priv->header_view), FALSE);
 
-	/* paned */
-	priv->folder_paned = gtk_vpaned_new ();
-	priv->msg_paned = gtk_vpaned_new ();
-	priv->main_paned = gtk_hpaned_new ();
+	/* Paned */
 	preview_scroll = gtk_scrolled_window_new (NULL, NULL);
-	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (preview_scroll), 
+	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (preview_scroll),
 					GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 	gtk_paned_add1 (GTK_PANED(priv->main_paned), folder_win);
 	gtk_paned_add2 (GTK_PANED(priv->main_paned), priv->msg_paned);
 	gtk_paned_add1 (GTK_PANED(priv->msg_paned), header_win);
-	gtk_container_add (GTK_CONTAINER (preview_scroll), 
+	gtk_container_add (GTK_CONTAINER (preview_scroll),
 			   GTK_WIDGET(priv->msg_preview));
 	gtk_paned_add2 (GTK_PANED(priv->msg_paned), preview_scroll);
 
-	/* status bar / progress */
+	/* Main Bar */
 	status_hbox = gtk_hbox_new (FALSE, 0);
 	gtk_box_pack_start (GTK_BOX(status_hbox), priv->folder_info_label, FALSE,FALSE, 6);
-	gtk_box_pack_start (GTK_BOX(status_hbox), priv->status_bar, TRUE, TRUE, 0);
-	gtk_box_pack_start (GTK_BOX(status_hbox), priv->progress_bar,FALSE, FALSE, 0);
+	gtk_box_pack_start (GTK_BOX(status_hbox), priv->main_bar, TRUE, TRUE, 0);
 	gtk_box_pack_start (GTK_BOX(status_hbox), priv->online_toggle,FALSE, FALSE, 0);
 
 	/* putting it all together... */
@@ -632,4 +638,56 @@ show_context_popup_menu (ModestMainWindow *window,
 					event->button, event->time);
 	}
 	return TRUE;
+}
+
+static void
+on_queue_changed (ModestMailOperationQueue *queue,
+		  ModestMailOperation *mail_op,
+		  ModestMailOperationQueueNotification type,
+		  ModestMainWindow *self)
+{
+	GSList *tmp;
+	ModestMainWindowPrivate *priv;
+
+	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
+
+	tmp = priv->progress_widgets;
+
+	switch (type) {
+	case MODEST_MAIL_OPERATION_QUEUE_OPERATION_ADDED:
+		while (tmp) {
+			modest_progress_object_add_operation (MODEST_PROGRESS_OBJECT (tmp->data),
+							      mail_op);
+			tmp = g_slist_next (tmp);
+		}
+		break;
+	case MODEST_MAIL_OPERATION_QUEUE_OPERATION_REMOVED:
+		while (tmp) {
+			modest_progress_object_remove_operation (MODEST_PROGRESS_OBJECT (tmp->data),
+								 mail_op);
+			tmp = g_slist_next (tmp);
+		}
+		break;
+	}
+}
+
+static void
+on_header_status_update (ModestHeaderView *header_view, 
+			 const gchar *msg, gint num, 
+			 gint total,  ModestMainWindow *self)
+{
+	ModestMainWindowPrivate *priv;
+	gchar *txt;
+
+	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
+
+	/* Set progress */
+	txt = g_strdup_printf (_("Downloading %d of %d"), num, total);
+	modest_gnome_info_bar_set_progress (MODEST_GNOME_INFO_BAR (priv->main_bar), 
+					    (const gchar*) txt,
+					    num, total);
+	g_free (txt);
+	
+	/* Set status message */
+	modest_gnome_info_bar_set_message (MODEST_GNOME_INFO_BAR (priv->main_bar), msg);
 }

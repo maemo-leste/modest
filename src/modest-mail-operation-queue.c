@@ -28,7 +28,9 @@
  */
 
 #include "config.h"
+#include "modest-marshal.h"
 #include "modest-mail-operation-queue.h"
+#include "modest-runtime.h"
 
 /* 'private'/'protected' functions */
 static void modest_mail_operation_queue_class_init (ModestMailOperationQueueClass *klass);
@@ -43,9 +45,8 @@ static void modest_mail_operation_queue_cancel_no_block         (ModestMailOpera
 
 /* list my signals  */
 enum {
-	/* MY_SIGNAL_1, */
-	/* MY_SIGNAL_2, */
-	LAST_SIGNAL
+	QUEUE_CHANGED_SIGNAL,
+	NUM_SIGNALS
 };
 
 typedef struct _ModestMailOperationQueuePrivate ModestMailOperationQueuePrivate;
@@ -59,8 +60,7 @@ struct _ModestMailOperationQueuePrivate {
 /* globals */
 static GObjectClass *parent_class = NULL;
 
-/* uncomment the following if you have defined any signals */
-/* static guint signals[LAST_SIGNAL] = {0}; */
+static guint signals[NUM_SIGNALS] = {0};
 
 GType
 modest_mail_operation_queue_get_type (void)
@@ -98,6 +98,24 @@ modest_mail_operation_queue_class_init (ModestMailOperationQueueClass *klass)
 	gobject_class->finalize    = modest_mail_operation_queue_finalize;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestMailOperationQueuePrivate));
+
+	/**
+	 * ModestMailOperationQueue::queue-changed
+	 * @self: the #ModestMailOperationQueue that emits the signal
+	 * @mail_op: the #ModestMailOperation affected
+	 * @type: the type of change in the queue
+	 * @user_data: user data set when the signal handler was connected
+	 *
+	 * Emitted whenever the contents of the queue change
+	 */
+	signals[QUEUE_CHANGED_SIGNAL] =
+		g_signal_new ("queue-changed",
+			      G_TYPE_FROM_CLASS (gobject_class),
+			      G_SIGNAL_RUN_FIRST,
+			      G_STRUCT_OFFSET (ModestMailOperationQueueClass, queue_changed),
+			      NULL, NULL,
+			      modest_marshal_VOID__POINTER_INT,
+			      G_TYPE_NONE, 2, G_TYPE_POINTER, G_TYPE_INT);
 }
 
 static void
@@ -154,6 +172,10 @@ modest_mail_operation_queue_add (ModestMailOperationQueue *self,
 	g_mutex_lock (priv->queue_lock);
 	g_queue_push_tail (priv->op_queue, g_object_ref (mail_op));
 	g_mutex_unlock (priv->queue_lock);
+
+	/* Notify observers */
+	g_signal_emit (self, signals[QUEUE_CHANGED_SIGNAL], 0,
+		       mail_op, MODEST_MAIL_OPERATION_QUEUE_OPERATION_ADDED);
 }
 
 void 
@@ -170,6 +192,25 @@ modest_mail_operation_queue_remove (ModestMailOperationQueue *self,
 	g_mutex_lock (priv->queue_lock);
 	g_queue_remove (priv->op_queue, mail_op);
 	g_mutex_unlock (priv->queue_lock);
+
+	/* HACK see the documentation of the function. Remove this
+	   call when tinymail provides accurate progress values */
+	_modest_mail_operation_notify_end (mail_op);
+
+	/* Notify observers */
+	g_signal_emit (self, signals[QUEUE_CHANGED_SIGNAL], 0,
+		       mail_op, MODEST_MAIL_OPERATION_QUEUE_OPERATION_REMOVED);
+
+	/* TODO: errors? */
+	{
+		const GError *err = modest_mail_operation_get_error (mail_op);
+		if (err)
+			g_warning (err->message);
+	}
+
+	/* Free object */
+	g_object_unref (G_OBJECT (mail_op));
+	modest_runtime_verify_object_death (mail_op, "");
 }
 
 

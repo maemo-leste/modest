@@ -54,15 +54,6 @@ static void modest_mail_operation_class_init (ModestMailOperationClass *klass);
 static void modest_mail_operation_init       (ModestMailOperation *obj);
 static void modest_mail_operation_finalize   (GObject *obj);
 
-static void     status_update_cb     (TnyFolder *folder, 
-				      const gchar *what, 
-				      gint status, 
-				      gint oftotal,
-				      gpointer user_data);
-static void     folder_refresh_cb    (TnyFolder *folder, 
-				      gboolean canceled,
-				      GError **err,
-				      gpointer user_data);
 static void     update_folders_cb    (TnyFolderStore *self, 
 				      TnyList *list, 
 				      GError **err, 
@@ -100,6 +91,15 @@ typedef struct _RefreshFolderAsyncHelper
 	guint canceled;
 
 } RefreshFolderAsyncHelper;
+
+typedef struct _XFerMsgAsyncHelper
+{
+	ModestMailOperation *mail_op;
+	TnyList *headers;
+	TnyFolder *dest_folder;
+
+} XFerMsgAsyncHelper;
+
 
 /* globals */
 static GObjectClass *parent_class = NULL;
@@ -149,7 +149,7 @@ modest_mail_operation_class_init (ModestMailOperationClass *klass)
 	 * Emitted when the progress of a mail operation changes
 	 */
  	signals[PROGRESS_CHANGED_SIGNAL] = 
-		g_signal_new ("progress_changed",
+		g_signal_new ("progress-changed",
 			      G_TYPE_FROM_CLASS (gobject_class),
 			      G_SIGNAL_RUN_FIRST,
 			      G_STRUCT_OFFSET (ModestMailOperationClass, progress_changed),
@@ -202,6 +202,7 @@ modest_mail_operation_send_mail (ModestMailOperation *self,
 	
 	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
 	g_return_if_fail (TNY_IS_TRANSPORT_ACCOUNT (transport_account));
+	g_return_if_fail (TNY_IS_MSG (msg));
 	
 	send_queue = TNY_SEND_QUEUE (modest_runtime_get_send_queue (transport_account));
 	if (!TNY_IS_SEND_QUEUE(send_queue))
@@ -216,6 +217,9 @@ modest_mail_operation_send_mail (ModestMailOperation *self,
 		} else
 			g_message ("modest: message added to send queue");
 	}
+
+	/* Notify the queue */
+	modest_mail_operation_queue_remove (modest_runtime_get_mail_operation_queue (), self);
 }
 
 void
@@ -253,79 +257,46 @@ modest_mail_operation_send_new_mail (ModestMailOperation *self,
 		g_printerr ("modest: failed to create a new msg\n");
 		return;
 	}
-	
+
+	/* Call mail operation */
 	modest_mail_operation_send_mail (self, transport_account, new_msg);
 
-	g_object_unref (G_OBJECT(new_msg));
+	/* Free */
+	g_object_unref (G_OBJECT (new_msg));
 }
 
 static void
-status_update_cb (TnyFolder *folder, const gchar *what, gint status, gint oftotal, gpointer user_data) 
+recurse_folders (TnyFolderStore *store, TnyFolderStoreQuery *query, TnyList *all_folders)
 {
-	g_print ("%s status: %d, of total %d\n", what, status, oftotal);
+	TnyIterator *iter;
+	TnyList *folders = tny_simple_list_new ();
+
+	tny_folder_store_get_folders (store, folders, query, NULL);
+	iter = tny_list_create_iterator (folders);
+
+	while (!tny_iterator_is_done (iter)) {
+
+		TnyFolderStore *folder = (TnyFolderStore*) tny_iterator_get_current (iter);
+
+		tny_list_prepend (all_folders, G_OBJECT (folder));
+
+		recurse_folders (folder, query, all_folders);
+	    
+ 		g_object_unref (G_OBJECT (folder));
+
+		tny_iterator_next (iter);
+	}
+	 g_object_unref (G_OBJECT (iter));
+	 g_object_unref (G_OBJECT (folders));
 }
-
-static void
-folder_refresh_cb (TnyFolder *folder, gboolean canceled, GError **err, gpointer user_data)
-{
-	ModestMailOperation *self = NULL;
-	ModestMailOperationPrivate *priv = NULL;
-	RefreshFolderAsyncHelper *helper;
-
-	helper = (RefreshFolderAsyncHelper *) user_data;
-	self = MODEST_MAIL_OPERATION (helper->mail_op);
-	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
-
-	if ((canceled && *err) || *err) {
-		priv->error = g_error_copy (*err);
-		helper->failed++;
-	} else if (canceled) {
-		helper->canceled++;
-		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
-			     MODEST_MAIL_OPERATION_ERROR_OPERATION_CANCELED,
-			     _("Error trying to refresh folder %s. Operation canceled"),
-			     tny_folder_get_name (folder));
-	} else {
-		priv->done++;
-	}
-
-	if (priv->done == priv->total)
-		priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
-	else if ((priv->done + helper->canceled + helper->failed) == priv->total) {
-		if (helper->failed == priv->total)
-			priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
-		else if (helper->failed == priv->total)
-			priv->status = MODEST_MAIL_OPERATION_STATUS_CANCELED;
-		else
-			priv->status = MODEST_MAIL_OPERATION_STATUS_FINISHED_WITH_ERRORS;
-	}
-	tny_iterator_next (helper->iter);
-	if (tny_iterator_is_done (helper->iter)) {
-		TnyList *list;
-		list = tny_iterator_get_list (helper->iter);
-		g_object_unref (G_OBJECT (helper->iter));
-		g_object_unref (G_OBJECT (list));
-		g_slice_free (RefreshFolderAsyncHelper, helper);
-	} else {
-		TnyFolder *folder = TNY_FOLDER (tny_iterator_get_current (helper->iter));
-		if (folder) {
-			g_message ("modest: refreshing folder %s",
-				   tny_folder_get_name (folder));
-			tny_folder_refresh_async (folder, folder_refresh_cb, status_update_cb, helper);
-			g_object_unref (G_OBJECT(folder)); // FIXME: don't unref yet
-		}
-	}
-	g_signal_emit (G_OBJECT (self), signals[PROGRESS_CHANGED_SIGNAL], 0, NULL);
-}
-
 
 static void
 update_folders_cb (TnyFolderStore *folder_store, TnyList *list, GError **err, gpointer user_data)
 {
 	ModestMailOperation *self;
 	ModestMailOperationPrivate *priv;
-	RefreshFolderAsyncHelper *helper;
-	TnyFolder *folder;
+	TnyIterator *iter;
+	TnyList *all_folders;
 	
 	self  = MODEST_MAIL_OPERATION (user_data);
 	priv  = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
@@ -333,27 +304,58 @@ update_folders_cb (TnyFolderStore *folder_store, TnyList *list, GError **err, gp
 	if (*err) {
 		priv->error = g_error_copy (*err);
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
-		return;
+		goto out;
 	}
 
-	priv->total = tny_list_get_length (list);
-	priv->done = 0;
-	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
+	/* Get all the folders We can do it synchronously because
+	   we're already running in a different thread than the UI */
+	all_folders = tny_list_copy (list);
+	iter = tny_list_create_iterator (all_folders);
+	while (!tny_iterator_is_done (iter)) {
+		TnyFolderStore *folder = TNY_FOLDER_STORE (tny_iterator_get_current (iter));
 
-	helper = g_slice_new0 (RefreshFolderAsyncHelper);
-	helper->mail_op = self;
-	helper->iter = tny_list_create_iterator (list);
-	helper->failed = 0;
-	helper->canceled = 0;
-
-	/* Async refresh folders */
-	folder = TNY_FOLDER (tny_iterator_get_current (helper->iter));
-	if (folder) {
-		g_message ("modest: refreshing folder %s", tny_folder_get_name (folder));
-		tny_folder_refresh_async (folder, folder_refresh_cb,
-					  status_update_cb, helper);
+		recurse_folders (folder, NULL, all_folders);
+		tny_iterator_next (iter);
 	}
-	//g_object_unref (G_OBJECT(folder)); /* FIXME -==> don't unref yet... */
+	g_object_unref (G_OBJECT (iter));
+
+	/* Refresh folders */
+	iter = tny_list_create_iterator (all_folders);
+	priv->total = tny_list_get_length (all_folders);
+
+	while (!tny_iterator_is_done (iter) && !priv->error) {
+
+		TnyFolderStore *folder = TNY_FOLDER_STORE (tny_iterator_get_current (iter));
+
+		/* Refresh the folder */
+		tny_folder_refresh (TNY_FOLDER (folder), &(priv->error));
+
+		if (priv->error) {
+			priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
+		} else {	
+			/* Update status and notify */
+			priv->done++;
+			g_signal_emit (G_OBJECT (self), signals[PROGRESS_CHANGED_SIGNAL], 0, NULL);
+		}
+    
+		g_object_unref (G_OBJECT (folder));
+	    
+		tny_iterator_next (iter);
+	}
+
+	g_object_unref (G_OBJECT (iter));
+ out:
+	g_object_unref (G_OBJECT (list));
+
+	/* Check if the operation was a success */
+	if (priv->done == priv->total && !priv->error)
+		priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
+
+	/* Free */
+	g_object_unref (G_OBJECT (folder_store));
+
+	/* Notify the queue */
+	modest_mail_operation_queue_remove (modest_runtime_get_mail_operation_queue (), self);
 }
 
 gboolean
@@ -362,25 +364,24 @@ modest_mail_operation_update_account (ModestMailOperation *self,
 {
 	ModestMailOperationPrivate *priv;
 	TnyList *folders;
-	TnyFolderStoreQuery *query;
 
 	g_return_val_if_fail (MODEST_IS_MAIL_OPERATION (self), FALSE);
 	g_return_val_if_fail (TNY_IS_STORE_ACCOUNT(store_account), FALSE);
 
+	/* Pick async call reference */
+	g_object_ref (store_account);
+
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
+
+	priv->total = 0;
+	priv->done  = 0;
+	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
 
 	/* Get subscribed folders & refresh them */
     	folders = TNY_LIST (tny_simple_list_new ());
-	query = NULL; //tny_folder_store_query_new ();
 
-	/* FIXME: is this needed? */
-//	tny_device_force_online (TNY_DEVICE(modest_runtime_get_device()));
-	
-	/* FIXME: let query be NULL: do it for all */ 
-	//tny_folder_store_query_add_item (query, NULL, TNY_FOLDER_STORE_QUERY_OPTION_SUBSCRIBED);
 	tny_folder_store_get_folders_async (TNY_FOLDER_STORE (store_account),
-					    folders, update_folders_cb, query, self);
-	//g_object_unref (query); /* FIXME */
+					    folders, update_folders_cb, NULL, self);
 	
 	return TRUE;
 }
@@ -476,7 +477,6 @@ modest_mail_operation_create_folder (ModestMailOperation *self,
 {
 	ModestMailOperationPrivate *priv;
 	TnyFolder *new_folder = NULL;
-	//TnyStoreAccount *store_account;
 
 	g_return_val_if_fail (TNY_IS_FOLDER_STORE (parent), NULL);
 	g_return_val_if_fail (name, NULL);
@@ -487,12 +487,8 @@ modest_mail_operation_create_folder (ModestMailOperation *self,
 	new_folder = tny_folder_store_create_folder (parent, name, &(priv->error));
 	CHECK_EXCEPTION (priv, MODEST_MAIL_OPERATION_STATUS_FAILED, return NULL);
 
-/* 	/\* Subscribe to folder *\/ */
-/* 	if (!tny_folder_is_subscribed (new_folder)) { */
-/* 		store_account = TNY_STORE_ACCOUNT (tny_folder_get_account (TNY_FOLDER (parent))); */
-/* 		tny_store_account_subscribe (store_account, new_folder); */
-/* 		g_object_unref (G_OBJECT (store_account)); */
-/* 	} */
+	/* Notify the queue */
+	modest_mail_operation_queue_remove (modest_runtime_get_mail_operation_queue (), self);
 
 	return new_folder;
 }
@@ -533,6 +529,9 @@ modest_mail_operation_remove_folder (ModestMailOperation *self,
 			g_object_unref (G_OBJECT (parent));
 	}
 	g_object_unref (G_OBJECT (account));
+
+	/* Notify the queue */
+	modest_mail_operation_queue_remove (modest_runtime_get_mail_operation_queue (), self);
 }
 
 void
@@ -550,11 +549,15 @@ modest_mail_operation_rename_folder (ModestMailOperation *self,
 
 	/* FIXME: better error handling */
 	if (strrchr (name, '/') != NULL)
-		return;
+		goto out;
 
 	/* Rename. Camel handles folder subscription/unsubscription */
 	tny_folder_set_name (folder, name, &(priv->error));
-	CHECK_EXCEPTION (priv, MODEST_MAIL_OPERATION_STATUS_FAILED, return);
+	CHECK_EXCEPTION (priv, MODEST_MAIL_OPERATION_STATUS_FAILED, goto out);
+
+ out:
+	/* Notify the queue */
+	modest_mail_operation_queue_remove (modest_runtime_get_mail_operation_queue (), self);
  }
 
 TnyFolder *
@@ -564,6 +567,7 @@ modest_mail_operation_xfer_folder (ModestMailOperation *self,
 				   gboolean delete_original)
 {
 	ModestMailOperationPrivate *priv;
+	TnyFolder *new_folder;
 
 	g_return_val_if_fail (MODEST_IS_MAIL_OPERATION (self), NULL);
 	g_return_val_if_fail (TNY_IS_FOLDER_STORE (parent), NULL);
@@ -571,11 +575,16 @@ modest_mail_operation_xfer_folder (ModestMailOperation *self,
 
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
 
-	return tny_folder_copy (folder, 
-				parent, 
-				tny_folder_get_name (folder), 
-				delete_original, 
-				&(priv->error));
+	new_folder = tny_folder_copy (folder,
+				      parent,
+				      tny_folder_get_name (folder),
+				      delete_original, 
+				      &(priv->error));
+
+	/* Notify the queue */
+	modest_mail_operation_queue_remove (modest_runtime_get_mail_operation_queue (), self);
+
+	return new_folder;
 }
 
 
@@ -589,10 +598,15 @@ modest_mail_operation_remove_msg (ModestMailOperation *self,
 				  gboolean remove_to_trash)
 {
 	TnyFolder *folder;
+	ModestMailOperationPrivate *priv;
 
+	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
 	g_return_if_fail (TNY_IS_HEADER (header));
 
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
 	folder = tny_header_get_folder (header);
+
+	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
 
 	/* Delete or move to trash */
 	if (remove_to_trash) {
@@ -618,20 +632,34 @@ modest_mail_operation_remove_msg (ModestMailOperation *self,
 
 		g_object_unref (G_OBJECT (store_account));
 	} else {
-		tny_folder_remove_msg (folder, header, NULL); /* FIXME */
-		tny_folder_sync(folder, TRUE, NULL); /* FIXME */
+		tny_folder_remove_msg (folder, header, &(priv->error));
+		if (!priv->error)
+			tny_folder_sync(folder, TRUE, &(priv->error));
 	}
 
+	/* Set status */
+	if (!priv->error)
+		priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
+	else
+		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
+
 	/* Free */
-	g_object_unref (folder);
+	g_object_unref (G_OBJECT (folder));
+
+	/* Notify the queue */
+	modest_mail_operation_queue_remove (modest_runtime_get_mail_operation_queue (), self);
 }
 
 static void
 transfer_msgs_cb (TnyFolder *folder, GError **err, gpointer user_data)
 {
+	XFerMsgAsyncHelper *helper;
+	ModestMailOperation *self;
 	ModestMailOperationPrivate *priv;
 
-	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(user_data);
+	helper = (XFerMsgAsyncHelper *) user_data;
+	self = helper->mail_op;
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
 
 	if (*err) {
 		priv->error = g_error_copy (*err);
@@ -642,10 +670,17 @@ transfer_msgs_cb (TnyFolder *folder, GError **err, gpointer user_data)
 		priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
 	}
 
-	g_signal_emit (G_OBJECT (user_data), signals[PROGRESS_CHANGED_SIGNAL], 0, NULL);
+	/* Free */
+	g_object_unref (helper->headers);
+	g_object_unref (helper->dest_folder);
+	g_object_unref (folder);
+	g_free (helper);
+
+	/* Notify the queue */
+	modest_mail_operation_queue_remove (modest_runtime_get_mail_operation_queue (), self);
 }
 
-gboolean
+void
 modest_mail_operation_xfer_msg (ModestMailOperation *self,
 				TnyHeader *header, 
 				TnyFolder *folder, 
@@ -654,28 +689,116 @@ modest_mail_operation_xfer_msg (ModestMailOperation *self,
 	ModestMailOperationPrivate *priv;
 	TnyFolder *src_folder;
 	TnyList *headers;
+	XFerMsgAsyncHelper *helper;
 
-	g_return_val_if_fail (MODEST_IS_MAIL_OPERATION (self), FALSE);
-	g_return_val_if_fail (TNY_IS_HEADER (header), FALSE);
-	g_return_val_if_fail (TNY_IS_FOLDER (folder), FALSE);
+	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
+	g_return_if_fail (TNY_IS_HEADER (header));
+	g_return_if_fail (TNY_IS_FOLDER (folder));
 
-	src_folder = tny_header_get_folder (header);
+	/* Pick references for async calls */
+	g_object_ref (folder);
+
 	headers = tny_simple_list_new ();
+	tny_list_prepend (headers, G_OBJECT (header));
 
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
 	priv->total = 1;
 	priv->done = 0;
 	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
 
-	tny_list_prepend (headers, G_OBJECT (header));
-	tny_folder_transfer_msgs_async (src_folder, headers, folder, 
-					delete_original, transfer_msgs_cb, 
-					g_object_ref(self));
+	/* Create the helper */
+	helper = g_malloc0 (sizeof (XFerMsgAsyncHelper));
+	helper->mail_op = self;
+	helper->dest_folder = folder;
+	helper->headers = headers;
 
+	src_folder = tny_header_get_folder (header);
+	tny_folder_transfer_msgs_async (src_folder, 
+					headers, 
+					folder, 
+					delete_original, 
+					transfer_msgs_cb, 
+					helper);
+}
+
+static void
+on_refresh_folder (TnyFolder   *folder, 
+		   gboolean     cancelled, 
+		   GError     **error,
+		   gpointer     user_data)
+{
+	ModestMailOperation *self;
+	ModestMailOperationPrivate *priv;
+
+	self = MODEST_MAIL_OPERATION (user_data);
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
+
+	if (*error) {
+		priv->error = g_error_copy (*error);
+		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
+		goto out;
+	}
+
+	if (cancelled) {
+		priv->status = MODEST_MAIL_OPERATION_STATUS_CANCELED;
+		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
+			     MODEST_MAIL_OPERATION_ERROR_ITEM_NOT_FOUND,
+			     _("Error trying to refresh the contents of %s"),
+			     tny_folder_get_name (folder));
+		goto out;
+	}
+
+	priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
+
+ out:
 	/* Free */
-	/* FIXME: don't free 'm yet */
-	///g_object_unref (headers);
-	///g_object_unref (src_folder);
+	g_object_unref (folder);
 
-	return TRUE;
+	/* Notify the queue */
+	modest_mail_operation_queue_remove (modest_runtime_get_mail_operation_queue (), self);
+}
+
+static void
+on_refresh_folder_status_update (TnyFolder *folder, const gchar *msg,
+				 gint num, gint total,  gpointer user_data)
+{
+	ModestMailOperation *self;
+	ModestMailOperationPrivate *priv;
+
+	self = MODEST_MAIL_OPERATION (user_data);
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
+
+	priv->done = num;
+	priv->total = total;
+
+	if (num == 1 && total == 100)
+		return;
+
+	g_signal_emit (G_OBJECT (self), signals[PROGRESS_CHANGED_SIGNAL], 0, NULL);
+}
+
+void 
+modest_mail_operation_refresh_folder  (ModestMailOperation *self,
+				       TnyFolder *folder)
+{
+	ModestMailOperationPrivate *priv;
+
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
+
+	/* Pick a reference */
+	g_object_ref (folder);
+
+	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
+
+	/* Refresh the folder */
+	tny_folder_refresh_async (folder,
+				  on_refresh_folder,
+				  on_refresh_folder_status_update,
+				  self);
+}
+
+void
+_modest_mail_operation_notify_end (ModestMailOperation *self)
+{
+	g_signal_emit (G_OBJECT (self), signals[PROGRESS_CHANGED_SIGNAL], 0, NULL);
 }

@@ -770,31 +770,30 @@ typedef struct _DndHelper {
 
 /*
  * This function is the callback of the
- * modest_mail_operation_xfer_msg() call. We check here if the message
- * was correctly asynchronously transfered
+ * modest_mail_operation_xfer_msg() and
+ * modest_mail_operation_xfer_folder() calls. We check here if the
+ * message/folder was correctly asynchronously transferred. The reason
+ * to use the same callback is that the code is the same, it only has
+ * to check that the operation went fine and then finalize the drag
+ * and drop action
  */
 static void
 on_progress_changed (ModestMailOperation *mail_op, gpointer user_data)
 {
-	ModestMailOperationQueue *queue;
-	gboolean success = FALSE;
+	gboolean success;
 	DndHelper *helper;
 
 	helper = (DndHelper *) user_data;
+
+	if (!modest_mail_operation_is_finished (mail_op))
+		return;
 
 	if (modest_mail_operation_get_status (mail_op) == 
 	    MODEST_MAIL_OPERATION_STATUS_SUCCESS) {
 		success = TRUE;
 	} else {
-		const GError *error;
-		error = modest_mail_operation_get_error (mail_op);
-		g_warning ("Error transferring messages: %s\n", error->message);
+		success = FALSE;
 	}
-
-	/* Remove the mail operation */	
-	queue = modest_runtime_get_mail_operation_queue ();
-	modest_mail_operation_queue_remove (queue, mail_op);
-	g_object_unref (G_OBJECT (mail_op));
 
 	/* Notify the drag source. Never call delete, the monitor will
 	   do the job if needed */
@@ -818,9 +817,7 @@ drag_and_drop_from_header_view (GtkTreeModel *source_model,
 {
 	TnyHeader *header;
 	TnyFolder *folder;
-	ModestMailOperationQueue *queue;
 	ModestMailOperation *mail_op;
-	gboolean started;
 	GtkTreeIter source_iter, dest_iter;
 
 	/* Get header */
@@ -836,23 +833,13 @@ drag_and_drop_from_header_view (GtkTreeModel *source_model,
 			    &folder, -1);
 
 	/* Transfer message */
-	queue = modest_runtime_get_mail_operation_queue ();
 	mail_op = modest_mail_operation_new ();
-	started = modest_mail_operation_xfer_msg (mail_op, header,
-						  folder, helper->delete_source);
-	if (started) {
-		g_signal_connect (G_OBJECT (mail_op), "progress_changed",
-				  G_CALLBACK (on_progress_changed), helper);
-		modest_mail_operation_queue_add (queue, mail_op);
-	} else {
-		const GError *error;
-		error = modest_mail_operation_get_error (mail_op);
-		if (error)
-			g_warning ("Error trying to transfer messages: %s\n",
-				   error->message);
+	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), 
+					 mail_op);
+	g_signal_connect (G_OBJECT (mail_op), "progress-changed",
+			  G_CALLBACK (on_progress_changed), helper);
 
-		g_slice_free (DndHelper, helper);
-	}
+	modest_mail_operation_xfer_msg (mail_op, header, folder, helper->delete_source);
 
 	/* Frees */
 	g_object_unref (G_OBJECT (mail_op));
@@ -873,20 +860,21 @@ drag_and_drop_from_folder_view (GtkTreeModel     *source_model,
 				DndHelper        *helper)
 {
 	ModestMailOperation *mail_op;
-	const GError *error;
 	GtkTreeIter parent_iter, iter;
-	TnyFolder *folder;
 	TnyFolderStore *parent_folder;
-	gboolean success = FALSE;
+	TnyFolder *folder;
 
 	/* Check if the drag is possible */
-	if (!gtk_tree_path_compare (helper->source_row, dest_row))
-		goto out;
-
-	if (!gtk_tree_drag_dest_row_drop_possible (GTK_TREE_DRAG_DEST (dest_model),
+	if (!gtk_tree_path_compare (helper->source_row, dest_row) ||
+	    !gtk_tree_drag_dest_row_drop_possible (GTK_TREE_DRAG_DEST (dest_model),
 						   dest_row,
-						   selection_data))
-		goto out;
+						   selection_data)) {
+
+		gtk_drag_finish (helper->context, FALSE, FALSE, helper->time);
+		gtk_tree_path_free (helper->source_row);	
+		g_slice_free (DndHelper, helper);
+		return;
+	}
 
 	/* Get data */
 	gtk_tree_model_get_iter (source_model, &parent_iter, dest_row);
@@ -900,26 +888,20 @@ drag_and_drop_from_folder_view (GtkTreeModel     *source_model,
 
 	/* Do the mail operation */
 	mail_op = modest_mail_operation_new ();
-	modest_mail_operation_xfer_folder (mail_op, folder, parent_folder, 
+	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), 
+					 mail_op);
+	g_signal_connect (G_OBJECT (mail_op), "progress-changed",
+			  G_CALLBACK (on_progress_changed), helper);
+
+	modest_mail_operation_xfer_folder (mail_op, 
+					   folder, 
+					   parent_folder,
 					   helper->delete_source);
 
+	/* Frees */
 	g_object_unref (G_OBJECT (parent_folder));
 	g_object_unref (G_OBJECT (folder));
-
-	error = modest_mail_operation_get_error (mail_op);
-	if (error) {
-		g_warning ("Error transferring folder: %s\n", error->message);
-		g_object_unref (G_OBJECT (mail_op));
-		goto out;
-	}
 	g_object_unref (G_OBJECT (mail_op));
-	success = TRUE;
- out:
-	gtk_drag_finish (helper->context, success, FALSE, helper->time);
-
-	/* Free the helper */
-	gtk_tree_path_free (helper->source_row);	
-	g_slice_free (DndHelper, helper);
 }
 
 /*
