@@ -339,8 +339,8 @@ connect_signals (ModestMainWindow *self)
 	gtk_widget_tap_and_hold_setup (GTK_WIDGET (priv->folder_view), menu, NULL, 0);
 
 	/* header view */
-	g_signal_connect (G_OBJECT(priv->header_view), "status_update",
-			  G_CALLBACK(modest_ui_actions_on_header_status_update), self);
+/* 	g_signal_connect (G_OBJECT(priv->header_view), "status_update", */
+/* 			  G_CALLBACK(modest_ui_actions_on_header_status_update), self); */
 	g_signal_connect (G_OBJECT(priv->header_view), "header_selected",
 			  G_CALLBACK(modest_ui_actions_on_header_selected), self);
 	g_signal_connect (G_OBJECT(priv->header_view), "header_activated",
