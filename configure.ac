@@ -68,7 +68,7 @@ fi
 
 
 dnl # GLib/Gobject/Gtk/Gconf => mandatory
-PKG_CHECK_MODULES(MODEST_GSTUFF,glib-2.0 >= 2.6 gobject-2.0 gtk+-2.0 >= 2.6 gconf-2.0 gnome-vfs-2.0 libgtkhtml-3.8 libtinymail-1.0 libtinymail-camel-1.0 libtinymailui-1.0 libtinymailui-gtk-1.0 wpeditor) 
+PKG_CHECK_MODULES(MODEST_GSTUFF,glib-2.0 >= 2.6 gobject-2.0 gtk+-2.0 >= 2.6 gconf-2.0 gnome-vfs-2.0 libgtkhtml-3.8 libtinymail-1.0 libtinymail-camel-1.0 libtinymailui-1.0 libtinymailui-gtk-1.0) 
 AC_SUBST(MODEST_GSTUFF_CFLAGS)
 AC_SUBST(MODEST_GSTUFF_LIBS)
 
@@ -87,7 +87,7 @@ esac], [MODEST_PLATFORM=gnome
 AC_SUBST(MODEST_PLATFORM)
 
 if test "x$with_platform" = "xmaemo"; then
-   PKG_CHECK_MODULES(MODEST_LIBTINYMAIL_MAEMO,libtinymail-maemo-1.0 hildon-libs libosso libossomime osso-addressbook-1.0)
+   PKG_CHECK_MODULES(MODEST_LIBTINYMAIL_MAEMO,libtinymail-maemo-1.0 hildon-libs libosso libossomime osso-addressbook-1.0 wpeditor)
    AC_SUBST(MODEST_LIBTINYMAIL_MAEMO_CFLAGS)
    AC_SUBST(MODEST_LIBTINYMAIL_MAEMO_LIBS) 
  
