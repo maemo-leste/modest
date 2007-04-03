@@ -277,40 +277,21 @@ on_delete_event (GtkWidget *widget, GdkEvent  *event, ModestMainWindow *self)
 	return FALSE;
 }
 
-
 static GtkWidget*
 get_toolbar (ModestMainWindow *self)
 {
-	GtkWidget   *toolbar, *progress_box, *progress_alignment;
-	GtkToolItem *progress_item;
+	GtkWidget   *toolbar, *reply_button, *menu;
 	ModestWindowPrivate *parent_priv;
-	ModestMainWindowPrivate *priv;
-/* 	GtkWidget   *stop_icon; */
 	
 	parent_priv = MODEST_WINDOW_GET_PRIVATE(self);
-	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
 	
 	/* Toolbar */
-	toolbar             = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar");
-	progress_box        = gtk_hbox_new (FALSE, HILDON_MARGIN_DEFAULT);
-	progress_alignment  = gtk_alignment_new (0.5, 0.5, 1, 0);
-	
-	gtk_container_add  (GTK_CONTAINER(progress_alignment), priv->progress_bar);
-	gtk_box_pack_start (GTK_BOX(progress_box), progress_alignment, TRUE, TRUE, 0);
-	
-	progress_item  = gtk_tool_item_new ();
-	gtk_container_add (GTK_CONTAINER(progress_item), progress_box);
-	gtk_tool_item_set_homogeneous (progress_item, FALSE);
-	gtk_tool_item_set_expand(progress_item, TRUE);
-	
-	gtk_toolbar_insert (GTK_TOOLBAR(toolbar), progress_item,
-			    gtk_toolbar_get_n_items(GTK_TOOLBAR(toolbar)));
+	toolbar = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar");
+	reply_button = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/ToolbarMessageReply");
 
-/* 	stop_icon = gtk_image_new_from_icon_name("qgn_toolb_gene_stop", GTK_ICON_SIZE_BUTTON); */
-/* 	gtk_toolbar_insert (GTK_TOOLBAR(toolbar), gtk_tool_button_new(stop_icon, NULL), */
-/* 			    gtk_toolbar_get_n_items(GTK_TOOLBAR(toolbar))); */
+	menu = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolbarReplyContextMenu");
+	gtk_widget_tap_and_hold_setup (GTK_WIDGET (reply_button), menu, NULL, 0);
 
-	gtk_widget_show_all (toolbar);
 	return toolbar;
 }
 
@@ -417,6 +398,7 @@ modest_main_window_new (void)
 	parent_priv->toolbar = get_toolbar(self);
 	hildon_window_add_toolbar (HILDON_WINDOW (self), GTK_TOOLBAR (parent_priv->toolbar));
 
+
 	/* Menubar */
 	parent_priv->menubar = modest_maemo_utils_menubar_to_menu (parent_priv->ui_manager);
 	hildon_window_set_menu (HILDON_WINDOW (self), GTK_MENU (parent_priv->menubar));
@@ -458,9 +440,9 @@ modest_main_window_new (void)
 	gtk_window_set_icon_from_file (GTK_WINDOW(self), MODEST_APP_ICON, NULL);
 	gtk_widget_show_all (main_vbox);
 
-	/* should we hide the toolbar? */
-	if (!modest_conf_get_bool (modest_runtime_get_conf (), MODEST_CONF_SHOW_TOOLBAR, NULL))
-		gtk_widget_hide (parent_priv->toolbar);
+/* 	/\* should we hide the toolbar? *\/ */
+/* 	if (!modest_conf_get_bool (modest_runtime_get_conf (), MODEST_CONF_SHOW_TOOLBAR, NULL)) */
+/* 		gtk_widget_hide (parent_priv->toolbar); */
 
 	/* Connect signals */
 	connect_signals (self);
@@ -473,6 +455,9 @@ modest_main_window_new (void)
 
 	g_message ("online? %s",
 		   tny_device_is_online (modest_runtime_get_device()) ? "yes" : "no");
+
+	/* Needed to show the contents of the toolbar */
+	gtk_widget_show_all (GTK_WIDGET (self));
 
 	return MODEST_WINDOW(self);
 }

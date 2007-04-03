@@ -114,11 +114,9 @@
   <toolbar name="ToolBar">
     <toolitem action="ToolbarMessageNew"/> 
     <toolitem action="ToolbarMessageReply"/> 
-<!--    <toolitem action="ToolbarMessageReplyAll"/>
-    <toolitem action="ToolbarMessageForward"/> -->
     <toolitem action="ToolbarDeleteMessage"/>
-    <toolitem  action="ToolbarToggleView"/>
-<!--    <toolitem action="ToolbarSort"/> -->
+    <toolitem action="ToolbarToggleView"/>
+    <toolitem action="ToolbarSort"/>
     <toolitem action="ToolbarSendReceive"/>
   </toolbar>
 
@@ -133,5 +131,12 @@
     <menuitem action="FoldersRename"/>
     <menuitem action="FoldersMoveToTrash"/>
   </popup>
+
+  <popup name="ToolbarReplyContextMenu">
+    <menuitem action="ToolbarMessageForward"/>
+    <menuitem action="ToolbarMessageReplyAll"/>
+    <menuitem action="ToolbarMessageReply"/>
+  </popup>
+
 
 </ui>

@@ -120,9 +120,10 @@ static const GtkActionEntry modest_action_entries [] = {
 	{ "ToolbarMessageReply",      MODEST_STOCK_REPLY,     N_("Reply a message"),          NULL, NULL,  G_CALLBACK (modest_ui_actions_on_reply) },
 	{ "ToolbarMessageReplyAll",   MODEST_STOCK_REPLY_ALL,     N_("Reply to all"),         NULL, NULL,  G_CALLBACK (modest_ui_actions_on_reply_all) },
 	{ "ToolbarMessageForward",    MODEST_STOCK_FORWARD,     N_("Forward a message"),      NULL, NULL,  G_CALLBACK (modest_ui_actions_on_forward) },
-	{ "ToolbarSendReceive",       GTK_STOCK_REFRESH,   N_("Send & receive"),      NULL, NULL,  G_CALLBACK (modest_ui_actions_on_send_receive) },
-	{ "ToolbarToggleView",        GTK_STOCK_CDROM,      N_("Toggle view"),                "<CTRL>t", NULL,  G_CALLBACK (modest_ui_actions_toggle_view) },
-	{ "ToolbarDeleteMessage",     GTK_STOCK_DELETE,     N_("Delete message"),             NULL, NULL,  G_CALLBACK (modest_ui_actions_on_delete) },
+	{ "ToolbarSendReceive",       MODEST_STOCK_REFRESH,   N_("Send & receive"),      NULL, NULL,  G_CALLBACK (modest_ui_actions_on_send_receive) },
+	{ "ToolbarToggleView",        MODEST_STOCK_SPLIT_VIEW,      N_("Toggle view"),                "<CTRL>t", NULL,  G_CALLBACK (modest_ui_actions_toggle_view) },
+	{ "ToolbarDeleteMessage",     MODEST_STOCK_DELETE,     N_("Delete message"),             NULL, NULL,  G_CALLBACK (modest_ui_actions_on_delete) },
+	{ "ToolbarSort",     MODEST_STOCK_SORT,     N_("Sort mail"),             NULL, NULL, NULL },
 };
 
 

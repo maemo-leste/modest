@@ -547,6 +547,11 @@ init_stock_icons (void)
 		gint i;
 
 		static GtkStockItem items[] = {
+#if MODEST_PLATFORM_ID==2
+			{ MODEST_STOCK_SPLIT_VIEW, "split view", 0, 0, NULL },
+			{ MODEST_STOCK_SORT, "sort mail", 0, 0, NULL },
+			{ MODEST_STOCK_REFRESH, "refresh mail", 0, 0, NULL },
+#endif
 			{ MODEST_STOCK_MAIL_SEND, "send mail", 0, 0, NULL },
 			{ MODEST_STOCK_NEW_MAIL, "new mail", 0, 0, NULL },
 /*  			{ MODEST_STOCK_SEND_RECEIVE, "send receive", 0, 0, NULL },  */
@@ -560,6 +565,11 @@ init_stock_icons (void)
 		};
       
 		static gchar *items_names [] = {
+#if MODEST_PLATFORM_ID==2
+			MODEST_TOOLBAR_ICON_SPLIT_VIEW,
+			MODEST_TOOLBAR_ICON_SORT,
+			MODEST_TOOLBAR_ICON_REFRESH,
+#endif
 			MODEST_TOOLBAR_ICON_MAIL_SEND,
 			MODEST_TOOLBAR_ICON_NEW_MAIL,
 /*  			MODEST_TOOLBAR_ICON_SEND_RECEIVE,  */

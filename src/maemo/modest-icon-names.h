@@ -70,8 +70,11 @@
 #define  MODEST_TOOLBAR_ICON_REPLY		"qgn_toolb_messagin_reply"
 #define  MODEST_TOOLBAR_ICON_REPLY_ALL		"qgn_toolb_messagin_replytoall"
 #define  MODEST_TOOLBAR_ICON_FORWARD		"qgn_toolb_messagin_forward"
-#define  MODEST_TOOLBAR_ICON_DELETE		"qgn_toolb_messagin_delete"
+#define  MODEST_TOOLBAR_ICON_DELETE		"qgn_toolb_gene_deletebutton"
 #define  MODEST_TOOLBAR_ICON_FORMAT_BULLETS     "qgn_list_gene_bullets"
+#define  MODEST_TOOLBAR_ICON_SPLIT_VIEW         "qgn_toolb_rss_fldonoff"
+#define  MODEST_TOOLBAR_ICON_SORT               "qgn_list_sort"
+#define  MODEST_TOOLBAR_ICON_REFRESH            "qgn_toolb_gene_refresh"
 
 /* Stock icon names */
 #define  MODEST_STOCK_MAIL_SEND    "modest-stock-mail-send"
@@ -84,5 +87,8 @@
 #define  MODEST_STOCK_NEXT         "modest-stock-next"
 #define  MODEST_STOCK_PREV         "modest-stock-prev"
 #define  MODEST_STOCK_STOP         "modest-stock-stop"
+#define  MODEST_STOCK_SPLIT_VIEW   "modest-stock-split-view"
+#define  MODEST_STOCK_SORT         "modest-stock-sort"
+#define  MODEST_STOCK_REFRESH      "modest-stock-refresh"
 
 #endif  /*__MODEST_TNY_ICON_NAMES_H__*/
