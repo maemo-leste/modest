@@ -113,16 +113,13 @@
 
   <toolbar name="ToolBar">
     <toolitem action="ToolbarMessageNew"/> 
-    <separator/>
     <toolitem action="ToolbarMessageReply"/> 
-    <toolitem action="ToolbarMessageReplyAll"/>
-    <toolitem action="ToolbarMessageForward"/> 
-    <separator/>
-    <toolitem action="ToolbarSendReceive"/>
-    <!--    <toolitem  action="ToolbarToggleView"/> -->
-    <separator/>
+<!--    <toolitem action="ToolbarMessageReplyAll"/>
+    <toolitem action="ToolbarMessageForward"/> -->
     <toolitem action="ToolbarDeleteMessage"/>
-    <separator/>
+    <toolitem  action="ToolbarToggleView"/>
+<!--    <toolitem action="ToolbarSort"/> -->
+    <toolitem action="ToolbarSendReceive"/>
   </toolbar>
 
   <popup name="HeaderViewContextMenu">

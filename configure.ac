@@ -185,7 +185,6 @@ docs/reference/Makefile
 tests/Makefile
 src/maemo/modest.desktop
 src/maemo/modest.service
-src/maemo/easysetup/Makefile
 ])
 
 
