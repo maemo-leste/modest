@@ -178,6 +178,7 @@ man/Makefile
 src/Makefile
 src/gnome/Makefile
 src/maemo/Makefile
+src/maemo/easysetup/Makefile
 src/widgets/Makefile
 docs/Makefile
 docs/reference/Makefile

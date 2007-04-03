@@ -1158,10 +1158,6 @@ msgstr "Messages"
 msgid "mcen_fi_advsetup_retrievetype_messages_attachments"
 msgstr "Messages and attachments"
 
-# Label 
-msgid "mcen_fi_advsetup_leave_on_server"
-msgstr "Leave messages on server"
-
 # Label
 msgid "mcen_fi_advsetup_retrieve_number"
 msgstr "No. of messages to retrieve"
@@ -2757,3 +2753,112 @@ msgstr "Unable to create folder"
 # Information note: This information note is displayed if the user is attempting to delete a folder and the action is not successful for some other reason that the folder being one of the mandatory folders, e.g. user created folder. 
 msgid "mail_in_ui_folder_delete_error"
 msgstr "Unable to delete folder"
+
+
+# Field title
+msgid "mcen_fi_remoteroot_account"
+msgstr "account"
+
+# column title
+msgid "mcen_ti_default"
+msgstr "Default"
+
+# column title 
+msgid "mcen_ti_account"
+msgstr "Account"
+
+# Dialog title. First %s is "POP" or "IMAP" and second %s is the value of user defined 'Description' -field of the account.
+msgid "mcen_ti_account_settings"
+msgstr "%s account settings for %s"
+
+# Tab title
+msgid "mcen_ti_account_settings_account"
+msgstr "Account"
+
+# field title
+msgid "mcen_fi_advsetup_limit_retrieve"
+msgstr "Limit retrieve"
+
+# Choice list item
+msgid "mcen_fi_advsetup_retrieve_nolimit"
+msgstr "No limit"
+
+# field title. Uses a checkbox
+msgid "mcen_fi_advsetup_leave_on_server"
+msgstr "Leave messages on server"
+
+# Tab title 
+msgid "mcen_ti_account_settings_userinfo"
+msgstr "User info"
+
+# field title for button 
+msgid "mcen_fi_email_signature"
+msgstr "Signature"
+
+# field title
+msgid "mcen_fi_emailsetup_port"
+msgstr "Port"
+
+# Label
+msgid "mail_fi_username"
+msgstr "Username"
+
+# wizard title
+msgid "mcen_ti_emailsetup"
+msgstr "Account setup"
+
+# dialog title
+msgid "mcen_ti_accountdetails"
+msgstr "Account details"
+
+# text
+msgid "mcen_ia_accountdetails"
+msgstr "Select your country and service provider from the list below."
+
+# field title
+msgid "mcen_fi_country"
+msgstr "Country"
+
+# field title
+msgid "mcen_fi_serviceprovider"
+msgstr "Service provider"
+
+# field title# Mandatory field
+msgid "mcen_fi_account_title"
+msgstr "Title*"
+
+# dialog title
+msgid "mcen_ti_emailsetup_userdetails"
+msgstr "User details"
+
+# dialog title
+msgid "mcen_ti_emailsetup_complete"
+msgstr "Complete"
+
+# text
+msgid "mcen_ia_easysetup_complete"
+msgstr "Tap 'Finish' to save or 'Cancel' to discard the settings. You can later change your settings from the 'Tools > Accounts...' in the menu."
+
+# dialog title
+msgid "mcen_ti_emailsetup_incomingdetails"
+msgstr "Incoming details"
+
+# field title
+msgid "mcen_li_emailsetup_secure_connection"
+msgstr "Secure connection"
+
+# field title
+msgid "mcen_li_emailsetup_secure_authentication"
+msgstr "Use Secure authentication"
+
+# dialog title
+msgid "mcen_ti_emailsetup_outgoingdetails"
+msgstr "Outgoing details"
+
+# text
+msgid "mcen_ia_customsetup_complete"
+msgstr "Tap 'Finish' to save or 'Cancel' to discard the settings.\nTap 'Edit' to modify the advanced account settings."
+
+# field title
+msgid "mcen_fi_advanced_settings"
+msgstr "Advanced settings:"

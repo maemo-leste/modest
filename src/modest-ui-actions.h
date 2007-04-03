@@ -43,6 +43,8 @@ void     modest_ui_actions_on_delete        (GtkAction *action, ModestWindow *wi
 
 void     modest_ui_actions_on_quit          (GtkAction *action, ModestWindow *win);
 
+void     modest_ui_actions_on_new_account      (GtkAction *action, ModestWindow *win);
+
 void     modest_ui_actions_on_accounts      (GtkAction *action, ModestWindow *win);
 
 void     modest_ui_actions_on_add_to_contacts   (GtkAction *action, ModestWindow *win);

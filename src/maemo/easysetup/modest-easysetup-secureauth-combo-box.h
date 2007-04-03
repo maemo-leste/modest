@@ -7,7 +7,7 @@
 #define _EASYSETUP_SECUREAUTH_COMBO_BOX
 
 #include <gtk/gtkcombobox.h>
-#include "modest-account-mgr/modest-protocol-info.h"
+#include "modest-protocol-info.h"
 
 G_BEGIN_DECLS
 

@@ -90,6 +90,7 @@ modest_LDADD = 						\
 	$(MODEST_LIBTINYMAIL_GNOME_DESKTOP_LIBS)	\
 	$(MODEST_LIBTINYMAIL_MAEMO_LIBS) 		\
 	$(MODEST_PLATFORM)/libmodest-ui.la		\
+	$(MODEST_PLATFORM)/easysetup/libmodest-easysetup.la		\
 	widgets/libmodest-widgets.la			
 
 EXTRA_DIST=modest-marshal.list

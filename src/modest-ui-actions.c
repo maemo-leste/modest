@@ -48,6 +48,7 @@
 
 #include "modest-account-mgr-helpers.h"
 #include "modest-mail-operation.h"
+#include "easysetup/modest-easysetup-wizard.h"
 #include <modest-widget-memory.h>
 #include <tny-error.h>
 #include <tny-simple-list.h>
@@ -233,6 +234,15 @@ modest_ui_actions_on_accounts (GtkAction *action, ModestWindow *win)
    gtk_container_add (GTK_CONTAINER (GTK_DIALOG(dialog)->vbox),
                       label);
    gtk_widget_show_all (dialog);
+}
+
+void
+modest_ui_actions_on_new_account (GtkAction *action, ModestWindow *win)
+{
+	ModestEasysetupWizardDialog *wizard = modest_easysetup_wizard_dialog_new ();
+	gtk_window_set_transient_for (GTK_WINDOW (wizard), win);
+	gtk_dialog_run (GTK_DIALOG (wizard));
+	gtk_widget_destroy (wizard);
 }
 
 void

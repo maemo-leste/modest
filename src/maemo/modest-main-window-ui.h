@@ -95,7 +95,7 @@ static const GtkActionEntry modest_action_entries [] = {
 	{ "FoldersMoveToTrash",  NULL,       N_("Move to trash"),    NULL, NULL, G_CALLBACK (modest_ui_actions_on_move_folder_to_trash_folder) },
 
 	/* Accounts */
-	{ "AccountsNew",          NULL,     N_("_New account..."),	      NULL, NULL,  NULL },
+	{ "AccountsNew",          NULL,     N_("_New account..."),	      NULL, NULL,  G_CALLBACK (modest_ui_actions_on_new_account) },
 	{ "AccountsManage",        NULL,    N_("Manage..."),                  NULL, NULL,  G_CALLBACK (modest_ui_actions_on_accounts) },
 	{ "AccountsConfigureSMTP", NULL,    N_("Configure SMTP servers..."),  NULL, NULL,  NULL },
 	

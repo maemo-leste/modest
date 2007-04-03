@@ -8,7 +8,7 @@
 
 /* #include <hildon-widgets/hildon-wizard-dialog.h> */
 #include "modest-wizard-dialog.h" /* We use a copied-and-improved HildonWizardDialog. */
-#include "modest-account-mgr/modest-account-mgr.h"
+#include "modest-account-mgr.h"
 #include <hildon-widgets/hildon-caption.h>
 
 G_BEGIN_DECLS

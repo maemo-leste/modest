@@ -22,7 +22,7 @@
 #include "modest-easysetup-secureauth-combo-box.h"
 #include "modest-validating-entry.h"
 #include "modest-text-utils.h"
-#include "modest-account-mgr/modest-account-mgr.h"
+#include "modest-account-mgr.h"
 #include <gconf/gconf-client.h>
 #include <string.h> /* For strlen(). */
 

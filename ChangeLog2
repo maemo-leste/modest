@@ -1,0 +1,17 @@
+2007-04-03  Murray Cumming  <murrayc@murrayc.com>
+
+	* configure.ac:
+	* src/Makefile.am:
+	* src/maemo/Makefile.am:
+	* src/maemo/easysetup/: Added files from the previously-exernal 
+	osso-modest-easysetup.
+	* src/maemo/modest-main-window-ui.h:
+	* src/modest-ui-actions.c: 
+	* src/modest-ui-actions.h:
+	Added modest_ui_actions_on_new_account() as a signal handler for the 
+	New Account menu item. It shows the easysetup wizard.
+	* po/en_GB.po: Added additional needed logical IDs and translations.
+	
+Started ChangeLog2 file, because I cannot work without a ChangeLog. murrayc.
+Apparently ChangeLog is not used for some vague Nokia legal reasons.
+
