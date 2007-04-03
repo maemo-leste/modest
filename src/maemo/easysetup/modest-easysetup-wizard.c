@@ -671,8 +671,20 @@ modest_easysetup_wizard_dialog_init (ModestEasysetupWizardDialog *self)
 
 	/* Read in the information about known service providers: */
 	ModestEasysetupWizardDialogPrivate *priv = WIZARD_DIALOG_GET_PRIVATE (self);
-	priv->presets = modest_presets_new ("provider-data-test.keyfile"); /* TODO: the actual filepath. */
-
+	
+	const gchar* filepath = "/usr/share/operator-wizard/provider-data.keyfile";
+	priv->presets = modest_presets_new (filepath); /* TODO: the actual filepath. */
+	if (!(priv->presets))
+	{
+		const gchar* filepath_hack = "./src/maemo/easysetup/provider-data-test.keyfile";
+		g_warning ("Could not locate the official provider data keyfile from %s, "
+			"so attempting to load it instead from %s", filepath, filepath_hack);
+		priv->presets = modest_presets_new (filepath_hack); /* TODO: the actual filepath. */
+	}
+	
+	g_assert(priv->presets);
+	
+	
 	/* Create the account manager object, 
 	 * so we can check for existing accounts,
 	 * and create new accounts: */

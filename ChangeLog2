@@ -1,5 +1,18 @@
 2007-04-03  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/maemo/easysetup/modest-easysetup-country-combo-box.c:
+	(load_from_file):
+	* src/maemo/easysetup/modest-easysetup-wizard.c:
+	(modest_easysetup_wizard_dialog_init):
+	* src/maemo/easysetup/modest-presets.c: (modest_presets_new): 
+	Use realistic paths (though they should use $prefix generically) to the 
+	mcc_mapping and provider-data.keyfile files which might work when they 
+	are installed by the future version of the operator-wizard package, 
+	and then fallback to paths in our source code, with an explanatory 
+	warning.
+
+2007-04-03  Murray Cumming  <murrayc@murrayc.com>
+
 	* configure.ac:
 	* src/Makefile.am:
 	* src/maemo/Makefile.am:

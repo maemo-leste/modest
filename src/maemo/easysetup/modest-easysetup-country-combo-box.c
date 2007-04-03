@@ -146,10 +146,18 @@ static void load_from_file (EasysetupCountryComboBox *self)
 	EasysetupCountryComboBoxPrivate *priv = COUNTRY_COMBO_BOX_GET_PRIVATE (self);
 	
 	/* Load the file one line at a time: */
-	FILE *file = fopen("mcc_mapping", "r");
+	const gchar* filepath = "/usr/share/operator-wizard/mcc_mapping";
+	FILE *file = fopen(filepath, "r");
 	if (!file)
 	{
-		g_warning("Could not open mcc_mapping file.\n");
+		const gchar* filepath_hack = "./src/maemo/easysetup/mcc_mapping";
+		g_warning ("Could not locate the official mcc_mapping countries list file from %s, "
+			"so attempting to load it instead from %s", filepath, filepath_hack);
+		file = fopen(filepath_hack, "r");
+	}
+	
+	if (!file) {
+		g_warning("Could not open mcc_mapping file");
 		return;
 	}
 

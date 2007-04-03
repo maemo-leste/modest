@@ -91,7 +91,7 @@ modest_presets_new (const gchar *presetfile)
 
 	if (!g_key_file_load_from_file (presets->keyfile, presetfile,
 					G_KEY_FILE_NONE, &err)) {
-		g_printerr ("modest: cannot open keyfile: %s\n",
+		g_printerr ("modest: cannot open keyfile from %s:\n  %s\n", presetfile,
 			    err ? err->message : "unknown reason");
 		g_error_free (err);
 		g_free (presets);
