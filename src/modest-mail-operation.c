@@ -765,6 +765,12 @@ on_refresh_folder_status_update (TnyFolder *folder, const gchar *msg,
 	ModestMailOperation *self;
 	ModestMailOperationPrivate *priv;
 
+	/* TODO: if tinymail issues a status update before the
+	   callback call then this could happen. If this is true the
+	   we must review the design */
+	if (!G_IS_OBJECT (user_data))
+	  return;
+
 	self = MODEST_MAIL_OPERATION (user_data);
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
 
