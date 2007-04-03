@@ -45,6 +45,7 @@ static const GtkActionEntry modest_action_entries [] = {
 	{ "Edit", NULL, N_("_Edit") },
 	{ "Actions", NULL, N_("_Actions") },
 	{ "Options", NULL, N_("_Options") },
+	{ "Email", NULL, N_("E_mail") },
 	{ "Help", NULL, N_("_Help") },
 
 	/* FILE */
@@ -57,11 +58,11 @@ static const GtkActionEntry modest_action_entries [] = {
 	/* EDIT */
 	{ "EditUndo",        GTK_STOCK_UNDO,   N_("_Undo"), "<CTRL>Z",        N_("Undo last action"),  NULL },
 	{ "EditRedo",        GTK_STOCK_REDO,   N_("_Redo"), "<shift><CTRL>Z", N_("Redo previous action"),  NULL },
-	{ "EditCut",         GTK_STOCK_CUT,    N_("Cut"),   "<CTRL>X",        N_("_Cut"), NULL   },
-	{ "EditCopy",        GTK_STOCK_COPY,   N_("Copy"),  "<CTRL>C",        N_("Copy"), NULL },
-	{ "EditPaste",       GTK_STOCK_PASTE,  N_("Paste"), "<CTRL>V",        N_("Paste"), NULL },
+	{ "Cut",         GTK_STOCK_CUT,    N_("Cut"),   "<CTRL>X",        N_("_Cut"), G_CALLBACK (modest_ui_actions_on_cut)   },
+	{ "Copy",        GTK_STOCK_COPY,   N_("Copy"),  "<CTRL>C",        N_("Copy"), G_CALLBACK (modest_ui_actions_on_copy) },
+	{ "Paste",       GTK_STOCK_PASTE,  N_("Paste"), "<CTRL>V",        N_("Paste"), G_CALLBACK (modest_ui_actions_on_paste) },
 	{ "EditDelete",      GTK_STOCK_DELETE, N_("_Delete"),      "<CTRL>Q",	      N_("Delete"), NULL },
-	{ "EditSelectAll",   NULL, 	       N_("Select all"),   "<CTRL>A",	      N_("Select all"), NULL },
+	{ "SelectAll",   NULL, 	       N_("Select all"),   "<CTRL>A",	      N_("Select all"), G_CALLBACK (modest_ui_actions_on_select_all) },
 	{ "EditDeselectAll", NULL,             N_("Deselect all"), "<Shift><CTRL>A",  N_("Deselect all"), NULL },
 
 	/* VIEW */

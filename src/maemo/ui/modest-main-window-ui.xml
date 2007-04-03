@@ -33,16 +33,24 @@
   <menubar name="MenuBar">
     
     <menu name="MessageMenu" action="Message">
-      <menuitem name="MessageNewMenu"  action="MessageNew"/>
+      <menu name="MessageNewMainMenu" action="New">
+	<menuitem name="MessageNewMenu"  action="MessageNew"/>
+	<menuitem name="MessageNewFolderMenu" action="MessageNewFolder"/>
+      </menu>
       <menuitem name="MessageOpenMenu" action="MessageOpen"/>
       <separator/>
-      <menuitem name="MessageCancelSendingMenu"  action="MessageCancelSending"/>
-      <menuitem name="MessageSendMenu" action="MessageSend"/>
+      <menuitem name="MessageReplyMenu" action="MessageReply"/>
+      <menuitem name="MessageReplyAllMenu" action="MessageReplyAll"/>
+      <menuitem name="MessageForwardMenu" action="MessageForward"/>
       <separator/>
+      <menuitem name="MessageContentsMenu"     action="MessageContents"/>
+      <menuitem name="MessagePurgeAttachmentsMenu" action="MessagePurgeAttachments"/>
+      <menu name="SendMainMenu" action="SendMain">
+	<menuitem name="SendNowMenu" action="MessageSendNow"/>
+	<menuitem name="MessageCancelSendingMenu" action="MessageCancelSending"/>
+      </menu>
       <menuitem name="MessageDeleteMenu" action="MessageDelete"/>
       <separator/>
-      <menuitem name="MessageSendReceiveMenu"  action="MessageSendReceive"/>
-      <menuitem name="MessageContentsMenu"     action="MessageContents"/>
       <menuitem name="MessageDetailsMenu"      action="MessageDetails"/>
     </menu>
     
@@ -53,7 +61,6 @@
       <menuitem name="EditCopyMenu" action="EditCopy"/>
       <menuitem name="EditPasteMenu" action="EditPaste"/>
       <separator/>
-      <menuitem name="EditSelectMenu" action="EditSelect"/>
       <menuitem name="EditMoveToMenu" action="EditMoveTo"/>
     </menu> 
 
@@ -87,10 +94,12 @@
     <menu name="ToolsMenu" action="Tools">
       <menuitem name="ToolsSettingsMenu" action="ToolsSettings"/>
       <separator/>
-      <menuitem name="ToolsAddToContactsMenu" action="ToolsAddToContacts"/>
-      <menuitem name="ToolsContactsMenu" action="ToolsContacts"/>
+      <menuitem name="MessageSendReceiveMenu"  action="MessageSendReceive"/>
+      <separator/>
       <menuitem name="ToolsFontSettingsMenu" action="ToolsFontSettings"/>
       <separator/>
+      <menuitem name="ToolsContactsMenu" action="ToolsContacts"/>
+      <menuitem name="ToolsAddToContactsMenu" action="ToolsAddToContacts"/>
       <menuitem name="ToolsSearchMessagesMenu" action="ToolsSearchMessages"/>
       <separator/>
       <menuitem name="ToolsHelpMenu" action="ToolsHelp"/>

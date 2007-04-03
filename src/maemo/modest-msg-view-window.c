@@ -167,6 +167,7 @@ init_window (ModestMsgViewWindow *obj, TnyMsg *msg)
 	parent_priv = MODEST_WINDOW_GET_PRIVATE(obj);
 
 	priv->msg_view = modest_msg_view_new (msg);
+	modest_msg_view_set_shadow_type (MODEST_MSG_VIEW (priv->msg_view), GTK_SHADOW_NONE);
 	main_vbox = gtk_vbox_new  (FALSE, 6);
 
 	/* Toolbar / Menubar */
@@ -181,6 +182,8 @@ init_window (ModestMsgViewWindow *obj, TnyMsg *msg)
 
 	scrolled_window = gtk_scrolled_window_new (NULL, NULL);
 	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolled_window), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
+	gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (scrolled_window), GTK_SHADOW_NONE);
+
 	gtk_container_add (GTK_CONTAINER (scrolled_window), priv->msg_view);
 	gtk_box_pack_start (GTK_BOX(main_vbox), scrolled_window, TRUE, TRUE, 6);
 	gtk_container_add   (GTK_CONTAINER(obj), main_vbox);
@@ -254,6 +257,15 @@ modest_msg_view_window_new (TnyMsg *msg, const gchar *account_name)
 	gtk_window_set_icon_from_file (GTK_WINDOW(obj), MODEST_APP_ICON, NULL);
 
 	g_signal_connect (G_OBJECT(obj), "delete-event", G_CALLBACK(on_delete_event), obj);
+
+	g_signal_connect (G_OBJECT(priv->msg_view), "link_clicked",
+			  G_CALLBACK (modest_ui_actions_on_msg_link_clicked), obj);
+	g_signal_connect (G_OBJECT(priv->msg_view), "link_hover",
+			  G_CALLBACK (modest_ui_actions_on_msg_link_hover), obj);
+	g_signal_connect (G_OBJECT(priv->msg_view), "attachment_clicked",
+			  G_CALLBACK (modest_ui_actions_on_msg_attachment_clicked), obj);
+	g_signal_connect (G_OBJECT(priv->msg_view), "recpt-activate",
+			  G_CALLBACK (modest_ui_actions_on_msg_recpt_activated), obj);
 
 	modest_window_set_active_account (MODEST_WINDOW(obj), account_name);
 	return MODEST_WINDOW(obj);

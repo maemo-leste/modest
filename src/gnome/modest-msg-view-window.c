@@ -72,18 +72,20 @@ static const GtkActionEntry modest_action_entries [] = {
 	{ "Edit", NULL, N_("_Edit") },
 	{ "Actions", NULL, N_("_Actions") },
 	{ "Help", NULL, N_("_Help") },
+	{ "Email", NULL, N_("E_mail") },
 
 	/* EDIT */
 	{ "EditUndo",        GTK_STOCK_UNDO,   N_("_Undo"), "<CTRL>Z",        N_("Undo last action"),  NULL },
 	{ "EditRedo",        GTK_STOCK_REDO,   N_("_Redo"), "<shift><CTRL>Z", N_("Redo previous action"),  NULL },
-	{ "EditCut",         GTK_STOCK_CUT,    N_("Cut"),   "<CTRL>X",        N_("_Cut"), NULL   },
-	{ "EditCopy",        GTK_STOCK_COPY,   N_("Copy"),  "<CTRL>C",        N_("Copy"), NULL },
-	{ "EditPaste",       GTK_STOCK_PASTE,  N_("Paste"), "<CTRL>V",        N_("Paste"), NULL },
+	{ "Cut",         GTK_STOCK_CUT,    N_("Cut"),   "<CTRL>X",        N_("_Cut"), G_CALLBACK (modest_ui_actions_on_cut)   },
+	{ "Copy",        GTK_STOCK_COPY,   N_("Copy"),  "<CTRL>C",        N_("Copy"), G_CALLBACK (modest_ui_actions_on_copy) },
+	{ "Paste",       GTK_STOCK_PASTE,  N_("Paste"), "<CTRL>V",        N_("Paste"), G_CALLBACK (modest_ui_actions_on_paste) },
 	{ "EditDelete",      GTK_STOCK_DELETE, N_("_Delete"),      "<CTRL>Q",	      N_("Delete"), NULL },
-	{ "EditSelectAll",   NULL, 	       N_("Select all"),   "<CTRL>A",	      N_("Select all"), NULL },
+	{ "SelectAll",   NULL, 	       N_("Select all"),   "<CTRL>A",	      N_("Select all"), G_CALLBACK (modest_ui_actions_on_select_all) },
 	{ "EditDeselectAll", NULL,             N_("Deselect all"), "<Shift><CTRL>A",  N_("Deselect all"), NULL },
 
 	/* ACTIONS */
+	{ "ActionsNewMessage",  MODEST_STOCK_NEW_MAIL, N_("_New"), "<CTRL>N", N_("Compose new message"), G_CALLBACK (modest_ui_actions_on_new_msg) },
 	{ "ActionsReply",       MODEST_STOCK_REPLY, N_("_Reply"),         NULL, N_("Reply to a message"), G_CALLBACK (modest_ui_actions_on_reply) },
 	{ "ActionsReplyAll",    MODEST_STOCK_REPLY_ALL, N_("Reply to all"),   NULL, N_("Reply to all"), G_CALLBACK (modest_ui_actions_on_reply_all) },
 	{ "ActionsForward",     MODEST_STOCK_FORWARD, N_("_Forward"),       NULL, N_("Forward a message"), G_CALLBACK (modest_ui_actions_on_forward) },

@@ -123,7 +123,6 @@ update_filename_request (ModestAttachmentView *self)
 	pango_layout_set_text (PANGO_LAYOUT (priv->layout_full_filename), 
 			       gtk_label_get_text (GTK_LABEL (priv->filename_view)), -1);
 
-	pango_layout_get_pixel_size (priv->layout_full_filename, &width, &height);
 
 }
 
@@ -352,6 +351,8 @@ modest_attachment_view_instance_init (GTypeInstance *instance, gpointer g_class)
 
 	context = gtk_widget_get_pango_context (priv->filename_view);
 	priv->layout_full_filename = pango_layout_new (context);
+	
+	pango_layout_set_ellipsize (priv->layout_full_filename, PANGO_ELLIPSIZE_NONE);
 
 	g_signal_connect (G_OBJECT (priv->filename_view), "button-press-event", G_CALLBACK (button_press_event), instance);
 	g_signal_connect (G_OBJECT (priv->filename_view), "button-release-event", G_CALLBACK (button_release_event), instance);
@@ -395,6 +396,8 @@ size_allocate (GtkWidget *widget, GtkAllocation *allocation)
 	gint width, width_diff;
 
 	GTK_WIDGET_CLASS (parent_class)->size_allocate (widget, allocation);
+	pango_layout_set_font_description (priv->layout_full_filename, pango_context_get_font_description(pango_layout_get_context (gtk_label_get_layout (GTK_LABEL (priv->filename_view)))));
+
 	pango_layout_get_pixel_size (priv->layout_full_filename, &width, NULL);
 	width_diff = priv->filename_view->allocation.width - width;
 	if (width_diff > 0) {

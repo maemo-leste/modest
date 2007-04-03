@@ -1301,3 +1301,84 @@ modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 
 	gtk_widget_destroy (dialog);
 }
+
+void
+modest_ui_actions_on_cut (GtkAction *action,
+			  ModestWindow *window)
+{
+	GtkWidget *focused_widget;
+
+	focused_widget = gtk_window_get_focus (GTK_WINDOW (window));
+	if (GTK_IS_EDITABLE (focused_widget)) {
+		gtk_editable_cut_clipboard (GTK_EDITABLE(focused_widget));
+	} else if (GTK_IS_TEXT_VIEW (focused_widget)) {
+		GtkTextBuffer *buffer;
+		GtkClipboard *clipboard;
+
+		clipboard = gtk_clipboard_get (GDK_SELECTION_PRIMARY);
+		buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (focused_widget));
+		gtk_text_buffer_cut_clipboard (buffer, clipboard, TRUE);
+	}
+}
+
+void
+modest_ui_actions_on_copy (GtkAction *action,
+			   ModestWindow *window)
+{
+	GtkClipboard *clipboard;
+	GtkWidget *focused_widget;
+
+	clipboard = gtk_clipboard_get (GDK_SELECTION_PRIMARY);
+	focused_widget = gtk_window_get_focus (GTK_WINDOW (window));
+	if (GTK_IS_LABEL (focused_widget)) {
+		gtk_clipboard_set_text (clipboard, gtk_label_get_text (GTK_LABEL (focused_widget)), -1);
+	} else if (GTK_IS_EDITABLE (focused_widget)) {
+		gtk_editable_copy_clipboard (GTK_EDITABLE(focused_widget));
+	} else if (GTK_IS_TEXT_VIEW (focused_widget)) {
+		GtkTextBuffer *buffer;
+
+		buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (focused_widget));
+		gtk_text_buffer_copy_clipboard (buffer, clipboard);
+	}
+}
+
+void
+modest_ui_actions_on_paste (GtkAction *action,
+			    ModestWindow *window)
+{
+	GtkWidget *focused_widget;
+
+	focused_widget = gtk_window_get_focus (GTK_WINDOW (window));
+	if (GTK_IS_EDITABLE (focused_widget)) {
+		gtk_editable_paste_clipboard (GTK_EDITABLE(focused_widget));
+	} else if (GTK_IS_TEXT_VIEW (focused_widget)) {
+		GtkTextBuffer *buffer;
+		GtkClipboard *clipboard;
+
+		clipboard = gtk_clipboard_get (GDK_SELECTION_PRIMARY);
+		buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (focused_widget));
+		gtk_text_buffer_paste_clipboard (buffer, clipboard, NULL, TRUE);
+	}
+}
+
+void
+modest_ui_actions_on_select_all (GtkAction *action,
+				 ModestWindow *window)
+{
+	GtkWidget *focused_widget;
+
+	focused_widget = gtk_window_get_focus (GTK_WINDOW (window));
+	if (GTK_IS_LABEL (focused_widget)) {
+		gtk_label_select_region (GTK_LABEL (focused_widget), 0, -1);
+	} else if (GTK_IS_EDITABLE (focused_widget)) {
+		gtk_editable_select_region (GTK_EDITABLE(focused_widget), 0, -1);
+	} else if (GTK_IS_TEXT_VIEW (focused_widget)) {
+		GtkTextBuffer *buffer;
+		GtkTextIter start, end;
+
+		buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (focused_widget));
+		gtk_text_buffer_get_start_iter (buffer, &start);
+		gtk_text_buffer_get_end_iter (buffer, &end);
+		gtk_text_buffer_select_range (buffer, &start, &end);
+	}
+}

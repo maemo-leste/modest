@@ -40,6 +40,7 @@ static const GtkActionEntry modest_msg_edit_action_entries [] = {
 
 	/* Toplevel menus */
 	{ "View", NULL, N_("_View") },
+	{ "Edit", NULL, N_("_Edit") },
 	{ "Insert", NULL, N_("_Insert") },
 	{ "Format", NULL, N_("For_mat") },
 	{ "Alignment", NULL, N_("_Alignment") },
@@ -50,6 +51,10 @@ static const GtkActionEntry modest_msg_edit_action_entries [] = {
 	{ "ActionsFontColor", GTK_STOCK_SELECT_COLOR, N_("Color"), NULL, N_("Change text color"), G_CALLBACK (modest_ui_actions_on_select_editor_color)},
 	{ "BackgroundColor", GTK_STOCK_SELECT_COLOR, N_("Background color"), NULL, N_("Change background color"), G_CALLBACK (modest_ui_actions_on_select_editor_background_color)},
 	{ "InsertImage", NULL, N_("Insert image..."), NULL, N_("Insert image"), G_CALLBACK (modest_ui_actions_on_insert_image)},
+	{ "Cut", GTK_STOCK_CUT, N_("Cut"), NULL, N_("Cut selection"), G_CALLBACK (modest_ui_actions_on_cut)},
+	{ "Copy", GTK_STOCK_COPY, N_("Copy"), NULL, N_("Copy selection"), G_CALLBACK (modest_ui_actions_on_copy)},
+	{ "Paste", GTK_STOCK_PASTE, N_("Paste"), NULL, N_("Paste selection"), G_CALLBACK (modest_ui_actions_on_paste)},
+	{ "SelectAll", NULL, N_("Select all"), NULL, N_("Select all"), G_CALLBACK (modest_ui_actions_on_select_all)},
 };
 
 static const GtkToggleActionEntry modest_msg_edit_toggle_action_entries [] = {

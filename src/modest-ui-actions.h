@@ -142,5 +142,14 @@ void     modest_ui_actions_on_password_requested (TnyAccountStore *account_store
 						  gchar **password,  gboolean *cancel, 
 						  gboolean *remember, ModestMainWindow *main_window);
 
+void     modest_ui_actions_on_cut (GtkAction *action,
+				   ModestWindow *window);
+void     modest_ui_actions_on_copy (GtkAction *action,
+				    ModestWindow *window);
+void     modest_ui_actions_on_paste (GtkAction *action,
+				     ModestWindow *window);
+void     modest_ui_actions_on_select_all (GtkAction *action,
+					  ModestWindow *window);
+
 G_END_DECLS
 #endif /* __MODEST_UI_ACTIONS_H__ */

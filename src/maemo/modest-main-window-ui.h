@@ -41,7 +41,9 @@ G_BEGIN_DECLS
 static const GtkActionEntry modest_action_entries [] = {
 
 	/* Toplevel menus */
-	{ "Message", NULL, N_("Message") },
+	{ "Message", NULL, N_("Email") },
+	{ "New", NULL, N_("New") },
+	{ "SendMain", NULL, N_("Send") },
 	{ "Edit",    NULL, N_("Edit") },
 	{ "View",    NULL, N_("View") },
 	{ "Folders", NULL, N_("Folders") },
@@ -51,9 +53,11 @@ static const GtkActionEntry modest_action_entries [] = {
 
 	/* Message */
 	{ "MessageNew",         NULL,  N_("_New message"),      "<CTRL>N", NULL,   G_CALLBACK (modest_ui_actions_on_new_msg) },
+	{ "MessageNewFolder",   NULL,  N_("New _folder"),       NULL,      NULL,   G_CALLBACK (modest_ui_actions_on_new_folder) },
 	{ "MessageOpen",        NULL,  N_("_Open"),	        "<CTRL>O", NULL,   NULL },
 	{ "MessageCancelSending",  NULL,  N_("Cancel sending"),	NULL,      NULL,   NULL },
 	{ "MessageSend",        NULL,  N_("Send"),	        NULL,      NULL,   NULL },
+	{ "MessageSendNow",        NULL,  N_("Send now"),	        NULL,      NULL,   NULL },
 	{ "MessageReply",       NULL,  N_("_Reply"),            NULL,      NULL,   G_CALLBACK (modest_ui_actions_on_reply) },
 	{ "MessageReplyAll",    NULL,  N_("Reply to all"),      NULL,      NULL,   G_CALLBACK (modest_ui_actions_on_reply_all) },
 	{ "MessageForward",     NULL,  N_("_Forward"),          NULL,      NULL,   G_CALLBACK (modest_ui_actions_on_forward) },
@@ -61,13 +65,15 @@ static const GtkActionEntry modest_action_entries [] = {
 	{ "MessageSendReceive", NULL,  N_("Send and receive"),  NULL,      NULL,   G_CALLBACK (modest_ui_actions_on_send_receive) },
 	{ "MessageContents",    NULL,  N_("Retrieve contents"), NULL,      NULL,   NULL },
 	{ "MessageDetails",     NULL,  N_("Details..."),        NULL,      NULL,   NULL },
+	{ "MessagePurgeAttachments", NULL, N_("Purge attachments"), NULL,  NULL,   NULL },
 	
 
 	/* Edit */
 	{ "EditUndo",        NULL,      N_("_Undo"),        "<CTRL>Z",    NULL, NULL },
-	{ "EditCut",         NULL,      N_("Cut"),          "<CTRL>X",    NULL, NULL },
-	{ "EditCopy",        NULL,      N_("Copy"),         "<CTRL>C",    NULL, NULL },
-	{ "EditPaste",       NULL,      N_("Paste"),        "<CTRL>V",    NULL, NULL },
+	{ "EditCut",         NULL,      N_("Cut"),          "<CTRL>X",    NULL, G_CALLBACK (modest_ui_actions_on_cut) },
+	{ "EditCopy",        NULL,      N_("Copy"),         "<CTRL>C",    NULL, G_CALLBACK (modest_ui_actions_on_copy) },
+	{ "EditPaste",       NULL,      N_("Paste"),        "<CTRL>V",    NULL, G_CALLBACK (modest_ui_actions_on_paste) },
+	{ "EditSelectAll",   NULL,      N_("Select all"),    NULL,        NULL, G_CALLBACK (modest_ui_actions_on_select_all) },
 	{ "EditDelete",      NULL,      N_("_Delete"),       NULL,	  NULL, NULL },
 	{ "EditSelect",      NULL, 	N_("Select..."),     NULL,	  NULL, NULL },   /* submenu */
 	{ "EditMoveTo",      NULL, 	N_("Move to..."),    NULL,	  NULL, NULL },

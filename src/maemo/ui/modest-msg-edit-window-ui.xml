@@ -32,6 +32,14 @@
 
   <menubar name="MenuBar">
 
+    <menu name="EditMenu" action="Edit">
+      <menuitem name="CutMenu" action="Cut"/>
+      <menuitem name="CopyMenu" action="Copy"/>
+      <menuitem name="PasteMenu" action="Paste"/>
+      <separator/>
+      <menuitem name="SelectAllMenu" action="SelectAll"/>
+    </menu>
+
     <menu name="ViewMenu" action="View">
       <menuitem name="ViewToFieldMenu" action="ViewToField"/>
       <menuitem name="ViewCcFieldMenu" action="ViewCcField"/>
