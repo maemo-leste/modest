@@ -122,6 +122,7 @@ activate_recpt (GtkWidget *recpt_view, const gchar *address, gpointer user_data)
 	g_signal_emit (G_OBJECT (view), signals[RECPT_ACTIVATED_SIGNAL], 0, address);
 }
 
+#if 0 /* This function is not used. murrayc. */
 static void
 add_header (ModestMailHeaderView *widget, const gchar *field, const gchar *value)
 {
@@ -152,6 +153,8 @@ add_header (ModestMailHeaderView *widget, const gchar *field, const gchar *value
 	gtk_widget_show (hbox);
 	
 }
+#endif
+
 
 static void
 add_recpt_header (ModestMailHeaderView *widget, const gchar *field, const gchar *value)

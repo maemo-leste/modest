@@ -233,7 +233,7 @@ modest_mail_operation_send_new_mail (ModestMailOperation *self,
 {
 	TnyMsg *new_msg;
 	ModestMailOperationPrivate *priv = NULL;
-	GList *node = NULL;
+	/* GList *node = NULL; */
 
 	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
 	g_return_if_fail (TNY_IS_TRANSPORT_ACCOUNT (transport_account));

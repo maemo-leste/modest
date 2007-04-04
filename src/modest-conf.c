@@ -384,7 +384,7 @@ gchar*
 modest_conf_key_escape (const gchar* key)
 {
 	g_return_val_if_fail (key, NULL);
-	g_return_val_if_fail (strlen (key) > 0, key);
+	g_return_val_if_fail (strlen (key) > 0, g_strdup (key));
 	
 	return gconf_escape_key (key, strlen(key));
 }

@@ -205,13 +205,16 @@ modest_ui_actions_on_add_to_contacts (GtkAction *action, ModestWindow *win)
 void
 modest_ui_actions_on_accounts (GtkAction *action, ModestWindow *win)
 {
-	/* GtkDialog *account_win; */
-/* 	account_win = GTK_DIALOG(modest_account_view_window_new ()); */
-	
-
-/* 	gtk_dialog_run (account_win); */
-	//gtk_widget_destroy (GTK_WIDGET(account_win));
- GtkWidget *dialog, *label;
+	/* This is currently only implemented for Maemo,
+	 * because it requires a providers preset file which is not publically available.
+	 */
+#ifdef MODEST_PLATFORM_MAEMO /* Defined in config.h */
+	GtkDialog *account_win = GTK_DIALOG(modest_account_view_window_new ());
+	gtk_window_set_transient_for (GTK_WINDOW (account_win), GTK_WINDOW(win));
+	gtk_dialog_run (account_win);
+	gtk_widget_destroy (GTK_WIDGET(account_win));
+#else
+   GtkWidget *dialog, *label;
    
    /* Create the widgets */
    
@@ -234,6 +237,7 @@ modest_ui_actions_on_accounts (GtkAction *action, ModestWindow *win)
    gtk_container_add (GTK_CONTAINER (GTK_DIALOG(dialog)->vbox),
                       label);
    gtk_widget_show_all (dialog);
+#endif /* MODEST_PLATFORM_MAEMO */
 }
 
 void
@@ -247,7 +251,7 @@ modest_ui_actions_on_new_account (GtkAction *action, ModestWindow *win)
 	gtk_window_set_transient_for (GTK_WINDOW (wizard), GTK_WINDOW (win));
 	gtk_dialog_run (GTK_DIALOG (wizard));
 	gtk_widget_destroy (GTK_WIDGET (wizard));
-#endif MODEST_PLATFORM_MAEMO
+#endif /* MODEST_PLATFORM_MAEMO */
 }
 
 void

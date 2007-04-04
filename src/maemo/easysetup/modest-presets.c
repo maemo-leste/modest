@@ -94,6 +94,8 @@ modest_presets_new (const gchar *presetfile)
 		return NULL;
 	}
 
+	/* TODO: Unobfuscate an obfuscated file and then load it with g_key_file_load_from_data() instead. */
+	
 	if (!g_key_file_load_from_file (presets->keyfile, presetfile,
 					G_KEY_FILE_NONE, &err)) {
 		g_printerr ("modest: cannot open keyfile from %s:\n  %s\n", presetfile,

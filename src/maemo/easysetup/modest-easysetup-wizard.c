@@ -1265,8 +1265,10 @@ create_account (ModestEasysetupWizardDialog *self)
 		protocol_authentication_outgoing = easysetup_secureauth_combo_box_get_active_secureauth (
 			EASYSETUP_SECUREAUTH_COMBO_BOX (self->combo_outgoing_auth));
 		
+		/* TODO: 
 		gboolean specific = gtk_toggle_button_get_active (
 			GTK_TOGGLE_BUTTON (self->checkbox_outgoing_smtp_specific));
+		*/
 		
 	}
 	    

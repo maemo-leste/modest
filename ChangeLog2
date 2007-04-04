@@ -1,5 +1,21 @@
 2007-04-04  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/maemo/easysetup/modest-easysetup-wizard.c: (create_account):
+	* src/maemo/easysetup/modest-presets.c: (modest_presets_new):
+	* src/maemo/modest-msg-edit-window.c:
+	(modest_msg_edit_window_insert_image):
+	* src/modest-conf.c: (modest_conf_key_escape):
+	* src/modest-mail-operation.c:
+	(modest_mail_operation_send_new_mail):
+	* src/modest-ui-actions.c: (modest_ui_actions_on_accounts),
+	(modest_ui_actions_on_new_account):
+	* src/widgets/modest-attachment-view.c: (update_filename_request):
+	* src/widgets/modest-mail-header-view.c: 
+	Corrected warnings that were breaking the build, by commenting out unused variables, 
+	and a function, and by including a header.
+
+2007-04-04  Murray Cumming  <murrayc@murrayc.com>
+
 	* configure.ac: Define MODEST_PLATFORM_MAEMO and MODEST_PLATFORM_GNOME in config.h, 
 	so we can #ifdef around platform-specific code when necessary.
 	* src/modest-ui-actions.c: (modest_ui_actions_on_new_account): Use MODEST_PLATFORM_MAEMO 

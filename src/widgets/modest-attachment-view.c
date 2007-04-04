@@ -118,7 +118,7 @@ static void
 update_filename_request (ModestAttachmentView *self)
 {
 	ModestAttachmentViewPriv *priv = MODEST_ATTACHMENT_VIEW_GET_PRIVATE (self);
-	gint width, height;
+	/* gint width, height; */
 	
 	pango_layout_set_text (PANGO_LAYOUT (priv->layout_full_filename), 
 			       gtk_label_get_text (GTK_LABEL (priv->filename_view)), -1);

@@ -30,6 +30,7 @@
 #include <fcntl.h>
 #include <glib/gstdio.h>
 #include <tny-account-store.h>
+#include <tny-fs-stream.h>
 
 #include <gtk/gtk.h>
 #include <modest-account-mgr.h>
@@ -860,8 +861,8 @@ modest_msg_edit_window_insert_image (ModestMsgEditWindow *window)
 	
 	ModestMsgEditWindowPrivate *priv;
 	GtkWidget *dialog = NULL;
-	gint response;
-	gchar *filename;
+	gint response = 0;
+	gchar *filename = NULL;
 	
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
 	
