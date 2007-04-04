@@ -41,31 +41,28 @@ G_BEGIN_DECLS
 static const GtkActionEntry modest_action_entries [] = {
 
 	/* Toplevel menus */
-	{ "Message", NULL, N_("Email") },
-	{ "New", NULL, N_("New") },
-	{ "SendMain", NULL, N_("Send") },
+	{ "Email", NULL, N_("Email") },
 	{ "Edit",    NULL, N_("Edit") },
 	{ "View",    NULL, N_("View") },
-	{ "Folders", NULL, N_("Folders") },
-	{ "Accounts",NULL, N_("Accounts") },
 	{ "Tools",   NULL, N_("Tools") },
 	{ "Close",   NULL, N_("Close") },
 
-	/* Message */
-	{ "MessageNew",         NULL,  N_("_New message"),      "<CTRL>N", NULL,   G_CALLBACK (modest_ui_actions_on_new_msg) },
-	{ "MessageNewFolder",   NULL,  N_("New _folder"),       NULL,      NULL,   G_CALLBACK (modest_ui_actions_on_new_folder) },
-	{ "MessageOpen",        NULL,  N_("_Open"),	        "<CTRL>O", NULL,   NULL },
+	/* Email */
+	{ "EmailNew", NULL, N_("New") }, /* submenu */
+	{ "EmailNewMessage",  NULL,  N_("_New message"),      "<CTRL>N", NULL,   G_CALLBACK (modest_ui_actions_on_new_msg) },
+	{ "EmailNewFolder",   NULL,  N_("New _folder"),       NULL,      NULL,   G_CALLBACK (modest_ui_actions_on_new_folder) },
+	{ "EmailOpen",        NULL,  N_("_Open"),	        "<CTRL>O", NULL,   NULL },
 	{ "MessageCancelSending",  NULL,  N_("Cancel sending"),	NULL,      NULL,   NULL },
 	{ "MessageSend",        NULL,  N_("Send"),	        NULL,      NULL,   NULL },
 	{ "MessageSendNow",        NULL,  N_("Send now"),	        NULL,      NULL,   NULL },
-	{ "MessageReply",       NULL,  N_("_Reply"),            NULL,      NULL,   G_CALLBACK (modest_ui_actions_on_reply) },
-	{ "MessageReplyAll",    NULL,  N_("Reply to all"),      NULL,      NULL,   G_CALLBACK (modest_ui_actions_on_reply_all) },
-	{ "MessageForward",     NULL,  N_("_Forward"),          NULL,      NULL,   G_CALLBACK (modest_ui_actions_on_forward) },
-	{ "MessageDelete",      NULL,  N_("Delete message"),    NULL,      NULL,   G_CALLBACK (modest_ui_actions_on_delete) },
+	{ "EmailReply",       NULL,  N_("_Reply"),            NULL,      NULL,   G_CALLBACK (modest_ui_actions_on_reply) },
+	{ "EmailReplyAll",    NULL,  N_("Reply to all"),      NULL,      NULL,   G_CALLBACK (modest_ui_actions_on_reply_all) },
+	{ "EmailForward",     NULL,  N_("_Forward"),          NULL,      NULL,   G_CALLBACK (modest_ui_actions_on_forward) },
+	{ "EmailDelete",      NULL,  N_("Delete message"),    NULL,      NULL,   G_CALLBACK (modest_ui_actions_on_delete) },
 	{ "MessageSendReceive", NULL,  N_("Send and receive"),  NULL,      NULL,   G_CALLBACK (modest_ui_actions_on_send_receive) },
-	{ "MessageContents",    NULL,  N_("Retrieve contents"), NULL,      NULL,   NULL },
-	{ "MessageDetails",     NULL,  N_("Details..."),        NULL,      NULL,   NULL },
-	{ "MessagePurgeAttachments", NULL, N_("Purge attachments"), NULL,  NULL,   NULL },
+	{ "EmailContents",    NULL,  N_("Retrieve contents"), NULL,      NULL,   NULL },
+	{ "EmailDetails",     NULL,  N_("Details..."),        NULL,      NULL,   NULL },
+	{ "EmailPurgeAttachments", NULL, N_("Purge attachments"), NULL,  NULL,   NULL },
 	
 
 	/* Edit */
@@ -75,6 +72,8 @@ static const GtkActionEntry modest_action_entries [] = {
 	{ "EditPaste",       NULL,      N_("Paste"),        "<CTRL>V",    NULL, G_CALLBACK (modest_ui_actions_on_paste) },
 	{ "EditSelectAll",   NULL,      N_("Select all"),    NULL,        NULL, G_CALLBACK (modest_ui_actions_on_select_all) },
 	{ "EditDelete",      NULL,      N_("_Delete"),       NULL,	  NULL, NULL },
+	{ "EditMarkAsRead", NULL,      N_("Mark as read"),       NULL,	  NULL, NULL },
+	{ "EditMarkAsUnread", NULL,      N_("Mark as unread"),       NULL,	  NULL, NULL },
 	{ "EditSelect",      NULL, 	N_("Select..."),     NULL,	  NULL, NULL },   /* submenu */
 	{ "EditMoveTo",      NULL, 	N_("Move to..."),    NULL,	  NULL, NULL },
 	
@@ -82,29 +81,19 @@ static const GtkActionEntry modest_action_entries [] = {
 	{ "ViewSort",            NULL,        N_("Sort..."),     NULL,      NULL,  NULL },
 	{ "ViewFolders",         NULL,        N_("Folders"),     NULL,     NULL,  NULL },
 	{ "ViewFullscreen",      NULL,        N_("Fullscreen"),  NULL,     NULL,  NULL },
-	{ "ViewDetails",         NULL,        N_("Details"),     NULL,     NULL,  NULL },
-	{ "ViewThumbnails",      NULL,        N_("Thumbnails"),  NULL,     NULL,  NULL },
-	{ "ViewShowToolbar",     NULL,        N_("Show toolbar"), NULL,   NULL,  NULL },    /* submenu */
-		
-	/* Folders */
-	{ "FoldersNew",          NULL,       N_("New folder"),       NULL, NULL, G_CALLBACK (modest_ui_actions_on_new_folder) },
-	{ "FoldersManage",       NULL,       N_("Manage..."),        NULL, NULL, NULL },
-	{ "FoldersDetails",      NULL,       N_("Details..."),       NULL, NULL, NULL },
-	{ "FoldersDelete",       NULL,       N_("Delete"),           NULL, NULL, G_CALLBACK (modest_ui_actions_on_delete_folder) },
-	{ "FoldersRename",       NULL,       N_("Rename"),           NULL, NULL, G_CALLBACK (modest_ui_actions_on_rename_folder) },
-	{ "FoldersMoveToTrash",  NULL,       N_("Move to trash"),    NULL, NULL, G_CALLBACK (modest_ui_actions_on_move_folder_to_trash_folder) },
-
-	/* Accounts */
-	{ "AccountsNew",          NULL,     N_("_New account..."),	      NULL, NULL,  G_CALLBACK (modest_ui_actions_on_new_account) },
-	{ "AccountsManage",        NULL,    N_("Manage..."),                  NULL, NULL,  G_CALLBACK (modest_ui_actions_on_accounts) },
-	{ "AccountsConfigureSMTP", NULL,    N_("Configure SMTP servers..."),  NULL, NULL,  NULL },
+	{ "ViewShowToolbar", NULL, N_("Show toolbar") }, /* submenu */
+	{ "ViewShowToolbarNormalScreen",         NULL,        N_("Normal screen"),     NULL,     NULL,  NULL },
+	{ "ViewShowToolbarFullScreen",      NULL,        N_("Full screen"),  NULL,     NULL,  NULL },
 	
 	/* Tools */
 	{ "ToolsSettings",        NULL,      N_("Settings..."),	              NULL, NULL,  NULL },
-	{ "ToolsAddToContacts",        NULL,      N_("Add to contact..."),                NULL, NULL,  G_CALLBACK (modest_ui_actions_on_add_to_contacts) },
-	{ "ToolsContacts",        NULL,      N_("Contact..."),                NULL, NULL,  NULL },
-	{ "ToolsFontSettings",    NULL,      N_("Font settings..."),          NULL, NULL,  NULL },
-	{ "ToolsSearchMessages",  NULL,      N_("Search messages..."),        NULL, NULL,  NULL },
+	{ "ToolsAccounts",        NULL,      N_("Accounts..."),                NULL, NULL,  NULL },
+	{ "ToolsSMTPServers",     NULL,      N_("SMTP servers..."),                NULL, NULL,  NULL },
+	{ "ToolsSendReceive", NULL, N_("Send & receive") }, /* submenu */
+	{ "ToolsSendReceiveAll",    NULL,      N_("All"),          NULL, NULL,  NULL },
+	{ "ToolsSendReceiveCancelSending",  NULL,      N_("Cancel sending"),        NULL, NULL,  NULL },
+	{ "ToolsContacts",            NULL,      N_("Contacts..."),                      NULL, NULL,  G_CALLBACK (modest_ui_actions_on_add_to_contacts) },
+	{ "ToolsSearchMessages",            NULL,      N_("Search messages..."),                      NULL, NULL,  NULL },
 	{ "ToolsHelp",            NULL,      N_("Help"),                      NULL, NULL,  NULL },
 
 	/* Close */

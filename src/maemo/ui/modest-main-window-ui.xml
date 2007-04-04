@@ -32,26 +32,23 @@
 
   <menubar name="MenuBar">
     
-    <menu name="MessageMenu" action="Message">
-      <menu name="MessageNewMainMenu" action="New">
-	<menuitem name="MessageNewMenu"  action="MessageNew"/>
-	<menuitem name="MessageNewFolderMenu" action="MessageNewFolder"/>
+    <menu name="EmailMenu" action="Email">
+      <menu name="EmailNewMainMenu" action="EmailNew">
+	<menuitem name="EmailNewMessageMenu"  action="EmailNewMessage"/>
+	<menuitem name="EmailNewFolderMenu" action="EmailNewFolder"/>
       </menu>
-      <menuitem name="MessageOpenMenu" action="MessageOpen"/>
+      <menuitem name="EmailOpenMenu" action="EmailOpen"/>
       <separator/>
-      <menuitem name="MessageReplyMenu" action="MessageReply"/>
-      <menuitem name="MessageReplyAllMenu" action="MessageReplyAll"/>
-      <menuitem name="MessageForwardMenu" action="MessageForward"/>
+      <menuitem name="EmailReplyMenu" action="EmailReply"/>
+      <menuitem name="EmailReplyAllMenu" action="EmailReplyAll"/>
+      <menuitem name="EmailForwardMenu" action="EmailForward"/>
       <separator/>
-      <menuitem name="MessageContentsMenu"     action="MessageContents"/>
-      <menuitem name="MessagePurgeAttachmentsMenu" action="MessagePurgeAttachments"/>
-      <menu name="SendMainMenu" action="SendMain">
-	<menuitem name="SendNowMenu" action="MessageSendNow"/>
-	<menuitem name="MessageCancelSendingMenu" action="MessageCancelSending"/>
-      </menu>
-      <menuitem name="MessageDeleteMenu" action="MessageDelete"/>
+      <menuitem name="EmailContentsMenu"     action="EmailContents"/>
+      <menuitem name="EmailPurgeAttachmentsMenu" action="EmailPurgeAttachments"/>
       <separator/>
-      <menuitem name="MessageDetailsMenu"      action="MessageDetails"/>
+      <menuitem name="EmailDeleteMenu" action="EmailDelete"/>
+      <separator/>
+      <menuitem name="EmailDetailsMenu" action="EmailDetails"/>
     </menu>
     
     <menu name="EditMenu" action="Edit">
@@ -60,6 +57,10 @@
       <menuitem name="EditCutMenu" action="EditCut"/>
       <menuitem name="EditCopyMenu" action="EditCopy"/>
       <menuitem name="EditPasteMenu" action="EditPaste"/>
+      <separator/>
+      <menuitem name="EditSelectAllMenu" action="EditSelectAll"/>
+      <menuitem name="EditMarkAsReadMenu" action="EditMarkAsRead"/>
+      <menuitem name="EditMarkAsUnreadMenu" action="EditMarkAsUnread"/>
       <separator/>
       <menuitem name="EditMoveToMenu" action="EditMoveTo"/>
     </menu> 
@@ -70,36 +71,25 @@
       <menuitem name="ViewFoldersMenu" action="ViewFolders"/>
       <menuitem name="ViewFullscreenMenu" action="ViewFullscreen"/>
       <separator/>
-      <menuitem name="ViewThumbnailsMenu" action="ViewThumbnails"/>
-      <menuitem name="ViewDetailsMenu" action="ViewDetails"/>
+      <menu name="ViewShowToolbarMainMenu" action="ViewShowToolbar">
+        <menuitem name="ViewShowToolbarNormalScreenMenu" action="ViewShowToolbarNormalScreen"/>
+        <menuitem name="ViewShowToolbarFullScreenMenu" action="ViewShowToolbarFullScreen"/>
+      </menu>
       <separator/>
-      <menuitem name="ViewShowToolbarMenu" action="ViewShowToolbar"/>
    </menu>
-
-    <menu name="FoldersMenu" action="Folders">
-      <menuitem name="FoldersNewMenu"    action="FoldersNew"/>
-      <menuitem name="FoldersManageMenu" action="FoldersManage"/>
-      <separator/>
-      <menuitem name="FoldersDetailsMenu" action="FoldersDetails"/>
-      <separator/>
-    </menu>
-    
-    <menu name="AccountsMenu" action="Accounts">
-      <menuitem name="AccountsNewMenu"    action="AccountsNew"/>
-      <separator/>
-      <menuitem name="AccountsManageMenu" action="AccountsManage"/>
-      <menuitem name="AccountsConfigureSMTPMenu" action="AccountsConfigureSMTP"/>
-    </menu>
     
     <menu name="ToolsMenu" action="Tools">
-      <menuitem name="ToolsSettingsMenu" action="ToolsSettings"/>
+      <menuitem name="ToolsSettingsMenu" action="ToolsSettings"/>   
+      <menuitem name="ToolsAccountsMenu" action="ToolsAccounts"/>
+      <menuitem name="ToolsSMTPServersMenu" action="ToolsSMTPServers"/>
       <separator/>
-      <menuitem name="MessageSendReceiveMenu"  action="MessageSendReceive"/>
-      <separator/>
-      <menuitem name="ToolsFontSettingsMenu" action="ToolsFontSettings"/>
+      <menu name="ToolsSendReceiveMainMenu" action="ToolsSendReceive">
+        <menuitem name="ToolsSendReceiveAllMenu"  action="ToolsSendReceiveAll"/>
+        <menuitem name="ToolsSendReceiveCancelSendingMenu"  action="ToolsSendReceiveCancelSending"/>
+        <separator/>
+      </menu>
       <separator/>
       <menuitem name="ToolsContactsMenu" action="ToolsContacts"/>
-      <menuitem name="ToolsAddToContactsMenu" action="ToolsAddToContacts"/>
       <menuitem name="ToolsSearchMessagesMenu" action="ToolsSearchMessages"/>
       <separator/>
       <menuitem name="ToolsHelpMenu" action="ToolsHelp"/>
