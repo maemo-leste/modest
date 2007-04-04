@@ -41,28 +41,28 @@ G_BEGIN_DECLS
 static const GtkActionEntry modest_action_entries [] = {
 
 	/* Toplevel menus */
-	{ "Email", NULL, N_("Email") },
+	{ "Email", NULL, N_("mcen_me_inbox_email") },
 	{ "Edit",    NULL, N_("Edit") },
 	{ "View",    NULL, N_("View") },
 	{ "Tools",   NULL, N_("Tools") },
 	{ "Close",   NULL, N_("Close") },
 
 	/* Email */
-	{ "EmailNew", NULL, N_("New") }, /* submenu */
-	{ "EmailNewMessage",  NULL,  N_("_New message"),      "<CTRL>N", NULL,   G_CALLBACK (modest_ui_actions_on_new_msg) },
-	{ "EmailNewFolder",   NULL,  N_("New _folder"),       NULL,      NULL,   G_CALLBACK (modest_ui_actions_on_new_folder) },
-	{ "EmailOpen",        NULL,  N_("_Open"),	        "<CTRL>O", NULL,   NULL },
-	{ "MessageCancelSending",  NULL,  N_("Cancel sending"),	NULL,      NULL,   NULL },
-	{ "MessageSend",        NULL,  N_("Send"),	        NULL,      NULL,   NULL },
-	{ "MessageSendNow",        NULL,  N_("Send now"),	        NULL,      NULL,   NULL },
-	{ "EmailReply",       NULL,  N_("_Reply"),            NULL,      NULL,   G_CALLBACK (modest_ui_actions_on_reply) },
-	{ "EmailReplyAll",    NULL,  N_("Reply to all"),      NULL,      NULL,   G_CALLBACK (modest_ui_actions_on_reply_all) },
-	{ "EmailForward",     NULL,  N_("_Forward"),          NULL,      NULL,   G_CALLBACK (modest_ui_actions_on_forward) },
-	{ "EmailDelete",      NULL,  N_("Delete message"),    NULL,      NULL,   G_CALLBACK (modest_ui_actions_on_delete) },
-	{ "MessageSendReceive", NULL,  N_("Send and receive"),  NULL,      NULL,   G_CALLBACK (modest_ui_actions_on_send_receive) },
-	{ "EmailContents",    NULL,  N_("Retrieve contents"), NULL,      NULL,   NULL },
-	{ "EmailDetails",     NULL,  N_("Details..."),        NULL,      NULL,   NULL },
-	{ "EmailPurgeAttachments", NULL, N_("Purge attachments"), NULL,  NULL,   NULL },
+	{ "EmailNew", NULL, N_("mcen_me_inbox_new") }, /* submenu */
+	{ "EmailNewMessage",  NULL,  N_("mcen_me_inbox_new"),      "<CTRL>N", NULL,   G_CALLBACK (modest_ui_actions_on_new_msg) },
+	{ "EmailNewFolder",   NULL,  N_("mcen_me_inbox_folder"),       NULL,      NULL,   G_CALLBACK (modest_ui_actions_on_new_folder) },
+	{ "EmailOpen",        NULL,  N_("mcen_me_inbox_open"),	        "<CTRL>O", NULL,   NULL },
+/* 	{ "MessageCancelSending",  NULL,  N_(""),	NULL,      NULL,   NULL }, */
+/* 	{ "MessageSend",        NULL,  N_("Send"),	        NULL,      NULL,   NULL }, */
+/* 	{ "MessageSendNow",        NULL,  N_("Send now"),	        NULL,      NULL,   NULL }, */
+	{ "EmailReply",       NULL,  N_("mcen_me_inbox_reply"),            NULL,      NULL,   G_CALLBACK (modest_ui_actions_on_reply) },
+	{ "EmailReplyAll",    NULL,  N_("mcen_me_inbox_replytoall"),      NULL,      NULL,   G_CALLBACK (modest_ui_actions_on_reply_all) },
+	{ "EmailForward",     NULL,  N_("mcen_me_inbox_forward"),          NULL,      NULL,   G_CALLBACK (modest_ui_actions_on_forward) },
+	{ "EmailDelete",      NULL,  N_("mcen_me_inbox_delete"),    NULL,      NULL,   G_CALLBACK (modest_ui_actions_on_delete) },
+/* 	{ "MessageSendReceive", NULL,  N_("Send and receive"),  NULL,      NULL,   G_CALLBACK (modest_ui_actions_on_send_receive) }, */
+	{ "EmailContents",    NULL,  N_("mcen_me_inbox_retrieve_contents"), NULL,      NULL,   NULL },
+	{ "EmailDetails",     NULL,  N_("mcen_me_inbox_messagedetails"),        NULL,      NULL,   NULL },
+	{ "EmailPurgeAttachments", NULL, N_("FIXME: Purge attachments"), NULL,  NULL,   NULL },
 	
 
 	/* Edit */
