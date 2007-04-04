@@ -30,6 +30,11 @@
 #include <string.h> /* for strcmp */
 #include "modest-presets.h"
 
+/* Include config.h so that _() works: */
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #define MODEST_PRESETS_KEY_NAME              "Name"
 #define MODEST_PRESETS_KEY_DOMAIN            "Domain"
 #define MODEST_PRESETS_KEY_MCC               "MCC"

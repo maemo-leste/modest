@@ -238,11 +238,11 @@ modest_ui_actions_on_accounts (GtkAction *action, ModestWindow *win)
 
 void
 modest_ui_actions_on_new_account (GtkAction *action, ModestWindow *win)
-{
+{	
 	ModestEasysetupWizardDialog *wizard = modest_easysetup_wizard_dialog_new ();
-	gtk_window_set_transient_for (GTK_WINDOW (wizard), win);
+	gtk_window_set_transient_for (GTK_WINDOW (wizard), GTK_WINDOW (win));
 	gtk_dialog_run (GTK_DIALOG (wizard));
-	gtk_widget_destroy (wizard);
+	gtk_widget_destroy (GTK_WIDGET (wizard));
 }
 
 void

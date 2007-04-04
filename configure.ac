@@ -33,16 +33,17 @@ AC_CONFIG_SRCDIR(src/modest-main.c)
 AM_INIT_AUTOMAKE([dist-bzip2])
 
 # Check for gettext support
-QGETTEXT_PACKAGE=modest
+GETTEXT_PACKAGE=modest
 AC_SUBST(GETTEXT_PACKAGE)
 AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE, "$GETTEXT_PACKAGE", ["Description"])
 
 ALL_LINGUAS="en_GB gl nl"
-#AM_GLIB_DEFINE_LOCALEDIR([MODEST_LOCALE_DIR])
+
+MODEST_LOCALE_DIR='$prefix/${DATADIRNAME}/locale'
+AM_GLIB_DEFINE_LOCALEDIR([MODEST_LOCALE_DIR])
 AM_GLIB_GNU_GETTEXT
 
-modestlocaledir='$prefix/${DATADIRNAME}/locale'
-AC_SUBST(modestlocaledir)
+
 
 if test x$prefix = xNONE; then
    prefix=/usr/local

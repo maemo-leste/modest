@@ -3,9 +3,6 @@
  *
  */
 
-#define _GNU_SOURCE /* So we can use the getline() function, which is a convenient GNU extension. */
-#include <stdio.h>
-
 #include "modest-easysetup-secureauth-combo-box.h"
 #include <gtk/gtkliststore.h>
 #include <gtk/gtkcelllayout.h>
@@ -14,6 +11,11 @@
 
 #include <stdlib.h>
 #include <string.h> /* For memcpy() */
+
+/* Include config.h so that _() works: */
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
 G_DEFINE_TYPE (EasysetupSecureauthComboBox, easysetup_secureauth_combo_box, GTK_TYPE_COMBO_BOX);
 

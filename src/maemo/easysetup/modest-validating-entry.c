@@ -7,6 +7,11 @@
 #include <gtk/gtksignal.h> /* For the gtk_signal_stop_emit_by_name() convenience function. */
 #include <string.h> /* For strlen(). */
 
+/* Include config.h so that _() works: */
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 G_DEFINE_TYPE (EasysetupValidatingEntry, easysetup_validating_entry, GTK_TYPE_ENTRY);
 
 #define VALIDATING_ENTRY_GET_PRIVATE(o) \

@@ -23,8 +23,14 @@
 #include "modest-validating-entry.h"
 #include "modest-text-utils.h"
 #include "modest-account-mgr.h"
+#include "modest-runtime.h" /* For modest_runtime_get_account_mgr(). */
 #include <gconf/gconf-client.h>
 #include <string.h> /* For strlen(). */
+
+/* Include config.h so that _() works: */
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
 #define EXAMPLE_EMAIL_ADDRESS "first.last@provider.com"
 
@@ -685,12 +691,11 @@ modest_easysetup_wizard_dialog_init (ModestEasysetupWizardDialog *self)
 	g_assert(priv->presets);
 	
 	
-	/* Create the account manager object, 
+	/* Get the account manager object, 
 	 * so we can check for existing accounts,
 	 * and create new accounts: */
-	ModestConf *conf = modest_conf_new (); /* Just a thin wrapper around GConfClient. */
-	self->account_manager = modest_account_mgr_new (conf);
-	g_object_unref (conf);
+	self->account_manager = modest_runtime_get_account_mgr ();
+	g_assert (self->account_manager);
 	
     /* Create the common pages, 
      */

@@ -524,10 +524,11 @@ init_debug_logging (void)
 static void
 init_i18n (void)
 {
-	bindtextdomain (GETTEXT_PACKAGE, MODEST_LOCALEDIR);
+	/* Setup gettext, to use our .po files: */
+	/* GETTEXT_PACKAGE and MODEST_LOCALE_DIR are defined in config.h */
+	bindtextdomain (GETTEXT_PACKAGE, MODEST_LOCALE_DIR);
 	bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
 	textdomain (GETTEXT_PACKAGE);
-
 }
 
 

@@ -16,6 +16,11 @@
 
 #include <libintl.h> /* For dgettext(). */
 
+/* Include config.h so that _() works: */
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 G_DEFINE_TYPE (EasysetupCountryComboBox, easysetup_country_combo_box, GTK_TYPE_COMBO_BOX);
 
 #define COUNTRY_COMBO_BOX_GET_PRIVATE(o) \

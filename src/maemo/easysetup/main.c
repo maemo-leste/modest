@@ -27,7 +27,7 @@ static gboolean modest_easysetup_init(int argc, char *argv[])
 {
         /* Setup gettext, to use our .po files: */
         /* GETTEXT_PACKAGE is defined in config.h */
-        /* OSSO_MODEST_EASYSETUP_LOCALEDIR is defined in the Makefile.am */
+        /* OSSO_MODEST_EASYSETUP_LOCALEDIR is defined in config.h */
 	bindtextdomain (GETTEXT_PACKAGE, OSSO_MODEST_EASYSETUP_LOCALEDIR);
 	bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
 	textdomain (GETTEXT_PACKAGE);

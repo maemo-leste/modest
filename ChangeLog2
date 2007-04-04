@@ -1,3 +1,14 @@
+2007-04-04  Murray Cumming  <murrayc@murrayc.com>
+
+	* Makefile.am:
+	* configure.ac:
+	* src/modest-runtime.c: (init_i18n): Restored the translation 
+	infrastructure, so that GETTEXT_PACKAGE and MODEST_LOCALE_DIR 
+	are defined in config.h, and the translations are installed.
+	
+	* src/maemo/easysetup/: Include config.h so that GETTEXT_PACKAGE 
+	is defined for translation.
+
 2007-04-03  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/maemo/easysetup/modest-easysetup-country-combo-box.c:
