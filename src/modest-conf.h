@@ -271,7 +271,7 @@ gboolean modest_conf_key_is_valid (const gchar* str);
 
 /**
  * modest_conf_key_escape:
- * @str: a string to escape
+ * @str: a non-empty string to escape
  *
  * returns an escaped version of @str, ie. something suitable as a key
  * This is a *class* function, and therefore does not require a ModestConf
