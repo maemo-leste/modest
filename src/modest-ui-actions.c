@@ -238,11 +238,16 @@ modest_ui_actions_on_accounts (GtkAction *action, ModestWindow *win)
 
 void
 modest_ui_actions_on_new_account (GtkAction *action, ModestWindow *win)
-{	
+{
+	/* This is currently only implemented for Maemo,
+	 * because it requires a providers preset file which is not publically available.
+	 */
+#ifdef MODEST_PLATFORM_MAEMO /* Defined in config.h */
 	ModestEasysetupWizardDialog *wizard = modest_easysetup_wizard_dialog_new ();
 	gtk_window_set_transient_for (GTK_WINDOW (wizard), GTK_WINDOW (win));
 	gtk_dialog_run (GTK_DIALOG (wizard));
 	gtk_widget_destroy (GTK_WIDGET (wizard));
+#endif MODEST_PLATFORM_MAEMO
 }
 
 void

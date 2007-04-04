@@ -91,6 +91,8 @@ if test "x$with_platform" = "xmaemo"; then
    PKG_CHECK_MODULES(MODEST_LIBTINYMAIL_MAEMO,libtinymail-maemo-1.0 hildon-libs libosso libossomime osso-addressbook-1.0 wpeditor)
    AC_SUBST(MODEST_LIBTINYMAIL_MAEMO_CFLAGS)
    AC_SUBST(MODEST_LIBTINYMAIL_MAEMO_LIBS) 
+   
+   AC_DEFINE_UNQUOTED(MODEST_PLATFORM_MAEMO, 1, ["Whether modest is being built for the Maemo platform."])
  
   desktopentrydir=`$PKG_CONFIG osso-af-settings --variable=desktopentrydir`
   serviceentrydir=`$PKG_CONFIG dbus-glib-1 --variable=prefix`/share/dbus-1/services
@@ -125,6 +127,8 @@ else
    AC_SUBST(MODEST_LIBTINYMAIL_GNOME_DESKTOP_CFLAGS)
    AC_SUBST(MODEST_LIBTINYMAIL_GNOME_DESKTOP_LIBS)
    MODEST_PLATFORM_ID=1
+   
+   AC_DEFINE_UNQUOTED(MODEST_PLATFORM_GNOME, 1, ["Whether modest is being built for the GNOME platform."])
 fi
 
 dnl 1==>gnome, 2==>maemo

@@ -1,5 +1,12 @@
 2007-04-04  Murray Cumming  <murrayc@murrayc.com>
 
+	* configure.ac: Define MODEST_PLATFORM_MAEMO and MODEST_PLATFORM_GNOME in config.h, 
+	so we can #ifdef around platform-specific code when necessary.
+	* src/modest-ui-actions.c: (modest_ui_actions_on_new_account): Use MODEST_PLATFORM_MAEMO 
+	to allow this to build for the GNOME platform too.
+
+2007-04-04  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/maemo/easysetup/modest-easysetup-wizard.c:
 	Added util_increment_name() and used it in create_page_account_details() 
 	to make sure that the default account name is always a new name.
