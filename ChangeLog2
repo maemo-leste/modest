@@ -1,5 +1,14 @@
 2007-04-04  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/maemo/easysetup/modest-easysetup-wizard.c:
+	Added util_increment_name() and used it in create_page_account_details() 
+	to make sure that the default account name is always a new name.
+	
+	(modest_easysetup_wizard_dialog_init), 
+	(set_default_custom_servernames): Some minor memory management fixes.
+
+2007-04-04  Murray Cumming  <murrayc@murrayc.com>
+
 	* Makefile.am:
 	* configure.ac:
 	* src/modest-runtime.c: (init_i18n): Restored the translation 

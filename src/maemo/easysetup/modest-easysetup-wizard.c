@@ -100,6 +100,9 @@ create_subsequent_easysetup_pages (ModestEasysetupWizardDialog *self);
 static void
 set_default_custom_servernames(ModestEasysetupWizardDialog *dialog);
 
+static gchar*
+util_increment_name (const gchar* text);
+
 static void
 invoke_enable_buttons_vfunc (ModestEasysetupWizardDialog *wizard_dialog)
 {
@@ -309,10 +312,21 @@ create_page_account_details (ModestEasysetupWizardDialog *self)
 	
 	/* The description widgets: */	
 	self->entry_account_title = GTK_WIDGET (easysetup_validating_entry_new ());
-	gtk_entry_set_text( GTK_ENTRY (self->entry_account_title), 
-		_("mcen_ia_emailsetup_defaultname")); /* default description. */
-	/* TODO: Check if an account with this default name exists, and increment if necessary. */
-		
+	
+	/* Set a default account title, choosing one that does not already exist: */
+	gchar* default_acount_name = g_strdup (_("mcen_ia_emailsetup_defaultname"));
+	while (modest_account_mgr_account_exists (self->account_manager, 
+		default_acount_name, TRUE /*  server_account */)) {
+			
+		gchar * default_account_name2 = util_increment_name (default_acount_name);
+		g_free (default_acount_name);
+		default_acount_name = default_account_name2;
+	}
+	
+	gtk_entry_set_text( GTK_ENTRY (self->entry_account_title), default_acount_name);
+	g_free (default_acount_name);
+	default_acount_name = NULL;
+
 	caption = create_caption_new_with_asterix (self, sizegroup, _("mcen_fi_account_title"), 
 		self->entry_account_title, NULL, HILDON_CAPTION_MANDATORY);
 	gtk_widget_show (self->entry_account_title);
@@ -696,6 +710,7 @@ modest_easysetup_wizard_dialog_init (ModestEasysetupWizardDialog *self)
 	 * and create new accounts: */
 	self->account_manager = modest_runtime_get_account_mgr ();
 	g_assert (self->account_manager);
+	g_object_ref (self->account_manager);
 	
     /* Create the common pages, 
      */
@@ -860,6 +875,62 @@ util_get_default_servername_from_email_address (const gchar* email_address, Mode
 	return g_strdup_printf ("%s.%s", hostname, domain);
 }
 
+/* Add a number to the end of the text, or increment a number that is already there.
+ */
+static gchar*
+util_increment_name (const gchar* text)
+{
+	/* Get the end character,
+	 * also doing a UTF-8 validation which is required for using g_utf8_prev_char().
+	 */
+	const gchar* end = NULL;
+	if (!g_utf8_validate (text, -1, &end))
+		return NULL;
+  
+  	if (!end)
+  		return NULL;
+  		
+  	--end; /* Go to before the null-termination. */
+  		
+  	/* Look at each UTF-8 characer, starting at the end: */
+  	const gchar* p = end;
+  	const gchar* alpha_end = NULL;
+  	while (p)
+  	{	
+  		/* Stop when we reach the first character that is not a numeric digit: */
+  		const gunichar ch = g_utf8_get_char (p);
+  		if (!g_unichar_isdigit (ch)) {
+  			alpha_end = p;
+  			break;
+  		}
+  		
+  		p = g_utf8_prev_char (p);	
+  	}
+  	
+  	if(!alpha_end) {
+  		/* The text must consist completely of numeric digits. */
+  		alpha_end = text;
+  	}
+  	else
+  		++alpha_end;
+  	
+  	/* Intepret and increment the number, if any: */
+  	gint num = atol (alpha_end);
+  	++num;
+  	
+	/* Get the name part: */
+  	gint name_len = alpha_end - text;
+  	gchar *name_without_number = g_malloc(name_len + 1);
+  	memcpy (name_without_number, text, name_len);
+  	name_without_number[name_len] = 0;\
+  	
+    /* Concatenate the text part and the new number: */	
+  	gchar *result = g_strdup_printf("%s%d", name_without_number, num);
+  	g_free (name_without_number);
+  	
+  	return result; 	
+}
+	
 static void set_default_custom_servernames (ModestEasysetupWizardDialog *account_wizard)
 {
 	/* Set a default domain for the server, based on the email address,
@@ -871,7 +942,10 @@ static void set_default_custom_servernames (ModestEasysetupWizardDialog *account
 		const ModestProtocol protocol = easysetup_servertype_combo_box_get_active_servertype (
 			EASYSETUP_SERVERTYPE_COMBO_BOX (account_wizard->combo_incoming_servertype));
 		const gchar* email_address = gtk_entry_get_text (GTK_ENTRY(account_wizard->entry_user_email));
-		gtk_entry_set_text (GTK_ENTRY (account_wizard->entry_incomingserver), util_get_default_servername_from_email_address (email_address, protocol));
+		
+		gchar* servername = util_get_default_servername_from_email_address (email_address, protocol);
+		gtk_entry_set_text (GTK_ENTRY (account_wizard->entry_incomingserver), servername);
+		g_free (servername);
 	}
 	
 	/* Set a default domain for the server, based on the email address,
@@ -881,7 +955,10 @@ static void set_default_custom_servernames (ModestEasysetupWizardDialog *account
 	if ((!outgoing_existing || (strlen(outgoing_existing) == 0)) 
 		&& account_wizard->entry_user_email) {
 		const gchar* email_address = gtk_entry_get_text (GTK_ENTRY(account_wizard->entry_user_email));
-		gtk_entry_set_text (GTK_ENTRY (account_wizard->entry_outgoingserver), util_get_default_servername_from_email_address (email_address, MODEST_PROTOCOL_TRANSPORT_SMTP));
+		
+		gchar* servername = util_get_default_servername_from_email_address (email_address, MODEST_PROTOCOL_TRANSPORT_SMTP);
+		gtk_entry_set_text (GTK_ENTRY (account_wizard->entry_outgoingserver), servername);
+		g_free (servername);
 	}
 }
 
@@ -906,9 +983,6 @@ on_before_next (ModestWizardDialog *dialog, GtkWidget *current_page, GtkWidget *
 		
 		if (name_in_use) {
 			/* Warn the user via a dialog: */
-			/* TODO: The UI spec says we should increment the title,
-			 * as well as warning. This seems contradictory.
-			 */
 			show_error (GTK_WINDOW (account_wizard), _("mail_ib_account_name_already_existing."));
             
 			return FALSE;
