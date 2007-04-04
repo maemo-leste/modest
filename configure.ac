@@ -120,7 +120,9 @@ if test "x$with_platform" = "xmaemo"; then
   AC_SUBST(plugindesktopentrydir)
 
   MODEST_PLATFORM_ID=2
-
+  # warnings are errors, but don't check format errors, because
+  # it breaks with logical id's
+  CFLAGS="$CFLAGS -Wno-format-extra-args -Werror"
 else
    # gnome frontend 
    PKG_CHECK_MODULES(MODEST_LIBTINYMAIL_GNOME_DESKTOP,libtinymail-gnome-desktop-1.0 libnm_glib glib-2.0 >= 2.8 gtk+-2.0 >= 2.10)
