@@ -231,9 +231,7 @@ on_account_removed (ModestAccountMgr *account_mgr,
 	on_account_changed (account_mgr, account, NULL, server_account, self);
 }
 
-
-
-
+#if 0
 static void
 on_account_enable_toggled (GtkCellRendererToggle *cell_renderer, gchar *path,
 			   ModestAccountView *self)
@@ -259,7 +257,48 @@ on_account_enable_toggled (GtkCellRendererToggle *cell_renderer, gchar *path,
 	modest_account_mgr_set_enabled (priv->account_mgr, account_name, !enabled);
 	g_free (account_name);
 }
+#endif
 
+static void
+on_account_default_toggled (GtkCellRendererToggle *cell_renderer, gchar *path,
+			   ModestAccountView *self)
+{
+	printf ("debug: on_account_default_toggled\n");
+	gboolean is_default = gtk_cell_renderer_toggle_get_active (cell_renderer);
+	printf ("debug: is_default: %d\n", is_default);
+	if (!is_default) {
+		/* Do not allow an account to be marked non-default.
+		 * Only allow this to be changed by setting another account to default: */
+		gtk_cell_renderer_toggle_set_active (cell_renderer, TRUE);
+		return;
+	}
+
+	ModestAccountViewPrivate *priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE(self);
+	GtkTreeModel *model = gtk_tree_view_get_model (GTK_TREE_VIEW(self));
+	
+	GtkTreeIter iter;
+	if (!gtk_tree_model_get_iter_from_string (model, &iter, path)) {
+		g_printerr ("modest: cannot find iterator\n");
+		return;
+	}
+	
+	gchar *account_name = NULL;
+	gtk_tree_model_get (model, &iter, MODEST_ACCOUNT_VIEW_NAME_COLUMN, &account_name,
+			    -1);
+	
+	/* toggle:  */
+	if (is_default) {
+		printf ("debug2: is_default: %d\n", is_default);
+		/* TODO: Will the model will be updated  */
+		modest_account_mgr_set_default_account (priv->account_mgr, account_name);
+	}
+	
+	/* toggle:  */
+	if (is_default)
+		modest_account_mgr_set_default_account (priv->account_mgr, account_name);
+
+	g_free (account_name);
+}
 
 void
 bold_if_default_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
@@ -298,35 +337,45 @@ init_view (ModestAccountView *self)
 	toggle_renderer = gtk_cell_renderer_toggle_new ();
 	text_renderer = gtk_cell_renderer_text_new ();
 
-	/* the is_enabled column */
-	g_object_set (G_OBJECT(toggle_renderer), "activatable", TRUE,"radio", FALSE, NULL);
-	g_signal_connect (G_OBJECT(toggle_renderer), "toggled", G_CALLBACK(on_account_enable_toggled),
-			  self);
+	/* the is_default column */
+	g_object_set (G_OBJECT(toggle_renderer), "activatable", TRUE, "radio", FALSE, NULL);
+	printf("debug: connecting to toggled signal.\n");
 	gtk_tree_view_append_column (GTK_TREE_VIEW(self),
 				     gtk_tree_view_column_new_with_attributes (
-					     _("Enabled"), toggle_renderer,
-					     "active", MODEST_ACCOUNT_VIEW_IS_ENABLED_COLUMN, NULL));
+					     _(" mcen_ti_default"), toggle_renderer,
+					     "active", MODEST_ACCOUNT_VIEW_IS_DEFAULT_COLUMN, NULL));
+					
+	/* Disable the Maemo GtkTreeView::allow-checkbox-mode Maemo modification, 
+	 * which causes the model column to be updated automatically when the row is clicked.
+	 * Making this the default in Maemo's GTK+ is obviously a bug:
+	 * https://maemo.org/bugzilla/show_bug.cgi?id=146
+	 * 
+	 *  This also stops the application's own signal handler from being called,
+	 *  though unsetting the Maemo properties does not seem to fix that:
+	 */     
+	g_object_set(G_OBJECT(self), "allow-checkbox-mode", FALSE, NULL);
+	g_object_set(G_OBJECT(toggle_renderer), "checkbox-mode", FALSE, NULL);
+	g_signal_connect (G_OBJECT(toggle_renderer), "toggled", G_CALLBACK(on_account_default_toggled),
+			  self);
 	
 	/* account name */
-	column =  gtk_tree_view_column_new_with_attributes (_("Account"), text_renderer,"text",
+	column =  gtk_tree_view_column_new_with_attributes (_("mcen_ti_account"), text_renderer, "text",
 							    MODEST_ACCOUNT_VIEW_DISPLAY_NAME_COLUMN, NULL);
-	gtk_tree_view_append_column (GTK_TREE_VIEW(self),column);
-	gtk_tree_view_column_set_cell_data_func(column, text_renderer, bold_if_default_cell_data,
-						NULL, NULL);
-
-	/* account type */
-	column =  gtk_tree_view_column_new_with_attributes (_("Type"), text_renderer,"text",
-							    MODEST_ACCOUNT_VIEW_PROTO_COLUMN, NULL);
-	gtk_tree_view_append_column (GTK_TREE_VIEW(self),column);
+	gtk_tree_view_append_column (GTK_TREE_VIEW(self), column);
 	gtk_tree_view_column_set_cell_data_func(column, text_renderer, bold_if_default_cell_data,
 						NULL, NULL);
 
 	/* last update for this account */
-	column =  gtk_tree_view_column_new_with_attributes (_("Last update"), text_renderer,"text",
+	column =  gtk_tree_view_column_new_with_attributes (_("mcen_ti_lastupdated"), text_renderer,"text",
 							    MODEST_ACCOUNT_VIEW_LAST_UPDATED_COLUMN, NULL);
 	gtk_tree_view_append_column (GTK_TREE_VIEW(self),column);
 	gtk_tree_view_column_set_cell_data_func(column, text_renderer, bold_if_default_cell_data,
 						NULL, NULL);
+			
+	/* Show the column headers,
+	 * which does not seem to be the default on Maemo.
+	 */			
+	gtk_tree_view_set_headers_visible (GTK_TREE_VIEW(self), TRUE);
 
 	priv->sig1 = g_signal_connect (G_OBJECT(priv->account_mgr),"account_removed",
 				       G_CALLBACK(on_account_removed), self);

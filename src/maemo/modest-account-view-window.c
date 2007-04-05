@@ -38,6 +38,7 @@
 #include <string.h>
 #include "modest-account-assistant.h"
 #include "modest-tny-platform-factory.h"
+#include "maemo/easysetup/modest-easysetup-wizard.h"
 
 /* 'private'/'protected' functions */
 static void                            modest_account_view_window_class_init   (ModestAccountViewWindowClass *klass);
@@ -201,21 +202,11 @@ on_edit_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 static void
 on_new_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 {
-	GtkWidget *notebook, *assistant;
-	ModestAccountViewWindowPrivate *priv;
-
-	/* TODO: */
-	modest_runtime_not_implemented (GTK_WINDOW(self));
-	return;
-
-	priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE(self);
-
-	notebook = modest_account_assistant_new (modest_runtime_get_account_mgr());
-	assistant = hildon_wizard_dialog_new (GTK_WINDOW(self), _("Account setup wizard"),
-					      GTK_NOTEBOOK(notebook));
-	
-	gtk_dialog_run (GTK_DIALOG(assistant));
-	gtk_widget_destroy (assistant);
+	/* Show the easy-setup wizard: */
+	ModestEasysetupWizardDialog *wizard = modest_easysetup_wizard_dialog_new ();
+	gtk_window_set_transient_for (GTK_WINDOW (wizard), GTK_WINDOW (self));
+	gtk_dialog_run (GTK_DIALOG (wizard));
+	gtk_widget_destroy (GTK_WIDGET (wizard));
 }
 
 

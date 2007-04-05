@@ -26,7 +26,8 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-
+# HACK_TOP_SRCDIR is temporary and should be remove.
+	
 INCLUDES=\
 	$(MODEST_GSTUFF_CFLAGS) \
 	$(MODEST_LIBTINYMAIL_MAEMO_CFLAGS) \
@@ -37,6 +38,7 @@ INCLUDES=\
 	-DMAEMO_CHANGES \
 	-DPIXMAP_PREFIX=\"${datadir}/pixmaps/modest/\" \
 	-DMODEST_UIDIR=\""$(datadir)/modest/ui/"\" \
+	-DHACK_TOP_SRCDIR=\"${top_srcdir}/\"  \
 	-Wall
 
 noinst_LTLIBRARIES=\

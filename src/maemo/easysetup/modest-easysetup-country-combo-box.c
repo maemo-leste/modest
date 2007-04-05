@@ -155,7 +155,7 @@ static void load_from_file (EasysetupCountryComboBox *self)
 	FILE *file = fopen(filepath, "r");
 	if (!file)
 	{
-		const gchar* filepath_hack = "./src/maemo/easysetup/mcc_mapping";
+		const gchar* filepath_hack = HACK_TOP_SRCDIR "src/maemo/easysetup/mcc_mapping";
 		g_warning ("Could not locate the official mcc_mapping countries list file from %s, "
 			"so attempting to load it instead from %s", filepath, filepath_hack);
 		file = fopen(filepath_hack, "r");

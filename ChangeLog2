@@ -1,5 +1,34 @@
 2007-04-05  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/maemo/easysetup/Makefile.am:
+	* src/maemo/easysetup/modest-easysetup-country-combo-box.c:
+	(load_from_file): 
+	* src/maemo/easysetup/modest-easysetup-wizard.c:
+	(modest_easysetup_wizard_dialog_init):
+	Try to get the source directory from the build system,
+	instead of hard-coding "./" into the source code, when opening our local 
+	copies of the configuration files.
+	But this still fails when opening the wizard from the Accounts window, 
+	maybe because the working directory seems to change at runtime.
+	So the wizard will fail the second time unless you copy the files into their 
+	proper locations - see the stdout warnings for the paths.
+	
+	(create_page_account_details),(on_before_next): 
+	Check for existing non-server accounts instead of server accounts, 
+	so the default account name is useful again, and to prevent trying to 
+	recreate accounts.
+	
+	* src/maemo/modest-account-view-window.c: (on_new_button_clicked): 
+	Show the wizard when New is clicked.
+	
+	* src/widgets/modest-account-view.c: (on_account_default_toggled),
+	(init_view): Show the column headers, and show the columns that are 
+	specified in the UI specs. However, something in Maemo's GTK+ prevents 
+	us from handling the GtkCellRendererToggle::toggled signal, so we cannot 
+	change the default account. This is despite unsetting the special properties.
+
+2007-04-05  Murray Cumming  <murrayc@murrayc.com>
+
 	* docs/reference/modest-design.sgml: Corrected spelling mistake.
 	* src/maemo/easysetup/modest-easysetup-wizard.c: (create_account): 
 	Create the 2 server accounts and then create the account, using the names of the 2 server accounts.

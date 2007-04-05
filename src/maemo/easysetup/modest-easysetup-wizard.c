@@ -317,7 +317,7 @@ create_page_account_details (ModestEasysetupWizardDialog *self)
 	/* Set a default account title, choosing one that does not already exist: */
 	gchar* default_acount_name = g_strdup (_("mcen_ia_emailsetup_defaultname"));
 	while (modest_account_mgr_account_exists (self->account_manager, 
-		default_acount_name, TRUE /*  server_account */)) {
+		default_acount_name, FALSE /*  server_account */)) {
 			
 		gchar * default_account_name2 = util_increment_name (default_acount_name);
 		g_free (default_acount_name);
@@ -724,7 +724,7 @@ modest_easysetup_wizard_dialog_init (ModestEasysetupWizardDialog *self)
 	priv->presets = modest_presets_new (filepath); /* TODO: the actual filepath. */
 	if (!(priv->presets))
 	{
-		const gchar* filepath_hack = "./src/maemo/easysetup/provider-data-test.keyfile";
+		const gchar* filepath_hack = HACK_TOP_SRCDIR "src/maemo/easysetup/provider-data-test.keyfile";
 		g_warning ("Could not locate the official provider data keyfile from %s, "
 			"so attempting to load it instead from %s", filepath, filepath_hack);
 		priv->presets = modest_presets_new (filepath_hack); /* TODO: the actual filepath. */
@@ -1010,7 +1010,7 @@ on_before_next (ModestWizardDialog *dialog, GtkWidget *current_page, GtkWidget *
 			
 		gboolean name_in_use = FALSE;
 		name_in_use = modest_account_mgr_account_exists (account_wizard->account_manager,
-			account_name, TRUE /*  server_account */);
+			account_name, FALSE /*  server_account */);
 		
 		if (name_in_use) {
 			/* Warn the user via a dialog: */

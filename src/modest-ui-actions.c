@@ -206,14 +206,6 @@ void
 modest_ui_actions_on_accounts (GtkAction *action, ModestWindow *win)
 {
 	GSList *account_names = modest_account_mgr_account_names (modest_runtime_get_account_mgr());
-	
-#if 0
-	GSList *account_names = modest_account_mgr_search_server_accounts (
-		modest_runtime_get_account_mgr(),
-		NULL /* account_name, any */,
-		MODEST_PROTOCOL_TYPE_UNKNOWN /* type */,
-		MODEST_PROTOCOL_UNKNOWN /* proto */);
-#endif
 						     
 	gboolean accounts_exist = account_names != NULL;
 	g_slist_free (account_names);
@@ -224,7 +216,6 @@ modest_ui_actions_on_accounts (GtkAction *action, ModestWindow *win)
 #ifdef MODEST_PLATFORM_MAEMO /* Defined in config.h */
 	/* To test, while modest_account_mgr_account_names() is broken: accounts_exist = TRUE; */
 	if (!accounts_exist) {
-		printf ("debug: modest_account_mgr_account_names() returned NULL.\n");
 		/* If there are no accounts yet, just show the easy-setup wizard, as per the UI spec: */
 		ModestEasysetupWizardDialog *wizard = modest_easysetup_wizard_dialog_new ();
 		gtk_window_set_transient_for (GTK_WINDOW (wizard), GTK_WINDOW (win));
