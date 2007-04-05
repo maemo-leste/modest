@@ -168,7 +168,11 @@ gboolean        modest_account_mgr_remove_account         (ModestAccountMgr *sel
  * list all account names
  *
  * Returns: a newly allocated list of account names, or NULL in case of error or
- * if there are no accounts. The caller must free the returned GSList
+ * if there are no accounts. The caller must free the returned GSList.
+ *
+ * TODO: I believe that the caller must free the strings in the GSList items too, 
+ * because this is implemented via gconf_client_all_dirs() which also requires a deep free, 
+ * though that's not documented. murrayc.
  */
 GSList*	        modest_account_mgr_account_names    (ModestAccountMgr *self);
 

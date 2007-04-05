@@ -961,6 +961,9 @@ util_increment_name (const gchar* text)
 	
 static void set_default_custom_servernames (ModestEasysetupWizardDialog *account_wizard)
 {
+	if (!account_wizard->entry_incomingserver)
+		return;
+		
 	/* Set a default domain for the server, based on the email address,
 	 * if no server name was already specified.
 	 */
@@ -1250,6 +1253,16 @@ create_account (ModestEasysetupWizardDialog *self)
 		show_error (GTK_WINDOW (self), _("An error occurred while creating the incoming account."));
 		return FALSE;	
 	}
+	
+	/* Sanity check: */
+	/* There must be at least one account now: */
+	GSList *account_names = modest_account_mgr_account_names (self->account_manager);
+	if(account_names != NULL)
+	{
+		g_warning ("modest_account_mgr_account_names() returned NULL after adding an account.");
+	}
+	g_slist_free (account_names);
+	
 	
 	/* Outgoing server: */
 	gchar* servername_outgoing = NULL;

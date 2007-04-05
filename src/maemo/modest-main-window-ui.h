@@ -87,7 +87,7 @@ static const GtkActionEntry modest_action_entries [] = {
 	
 	/* Tools */
 	{ "ToolsSettings",        NULL,      N_("Settings..."),	              NULL, NULL,  NULL },
-	{ "ToolsAccounts",        NULL,      N_("Accounts..."),                NULL, NULL,  NULL },
+	{ "ToolsAccounts",        NULL,      N_("Accounts..."),                NULL, NULL,  G_CALLBACK (modest_ui_actions_on_accounts) },
 	{ "ToolsSMTPServers",     NULL,      N_("SMTP servers..."),                NULL, NULL,  NULL },
 	{ "ToolsSendReceive", NULL, N_("Send & receive") }, /* submenu */
 	{ "ToolsSendReceiveAll",    NULL,      N_("All"),          NULL, NULL,  NULL },

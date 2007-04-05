@@ -205,14 +205,30 @@ modest_ui_actions_on_add_to_contacts (GtkAction *action, ModestWindow *win)
 void
 modest_ui_actions_on_accounts (GtkAction *action, ModestWindow *win)
 {
+	GSList *account_names = modest_account_mgr_account_names (modest_runtime_get_account_mgr());
+	const gboolean accounts_exist = account_names != NULL;
+	g_slist_free (account_names);
+	
 	/* This is currently only implemented for Maemo,
 	 * because it requires a providers preset file which is not publically available.
 	 */
 #ifdef MODEST_PLATFORM_MAEMO /* Defined in config.h */
-	GtkDialog *account_win = GTK_DIALOG(modest_account_view_window_new ());
-	gtk_window_set_transient_for (GTK_WINDOW (account_win), GTK_WINDOW(win));
-	gtk_dialog_run (account_win);
-	gtk_widget_destroy (GTK_WIDGET(account_win));
+	if (!accounts_exist) {
+		printf ("debug: modest_account_mgr_account_names() returned NULL.\n");
+		/* If there are no accounts yet, just show the easy-setup wizard, as per the UI spec: */
+		ModestEasysetupWizardDialog *wizard = modest_easysetup_wizard_dialog_new ();
+		gtk_window_set_transient_for (GTK_WINDOW (wizard), GTK_WINDOW (win));
+		gtk_dialog_run (GTK_DIALOG (wizard));
+		gtk_widget_destroy (GTK_WIDGET (wizard));
+	}
+	else
+	{
+		/* Show the list of accounts: */
+		GtkDialog *account_win = GTK_DIALOG(modest_account_view_window_new ());
+		gtk_window_set_transient_for (GTK_WINDOW (account_win), GTK_WINDOW(win));
+		gtk_dialog_run (account_win);
+		gtk_widget_destroy (GTK_WIDGET(account_win));
+	}
 #else
    GtkWidget *dialog, *label;
    
@@ -237,20 +253,6 @@ modest_ui_actions_on_accounts (GtkAction *action, ModestWindow *win)
    gtk_container_add (GTK_CONTAINER (GTK_DIALOG(dialog)->vbox),
                       label);
    gtk_widget_show_all (dialog);
-#endif /* MODEST_PLATFORM_MAEMO */
-}
-
-void
-modest_ui_actions_on_new_account (GtkAction *action, ModestWindow *win)
-{
-	/* This is currently only implemented for Maemo,
-	 * because it requires a providers preset file which is not publically available.
-	 */
-#ifdef MODEST_PLATFORM_MAEMO /* Defined in config.h */
-	ModestEasysetupWizardDialog *wizard = modest_easysetup_wizard_dialog_new ();
-	gtk_window_set_transient_for (GTK_WINDOW (wizard), GTK_WINDOW (win));
-	gtk_dialog_run (GTK_DIALOG (wizard));
-	gtk_widget_destroy (GTK_WIDGET (wizard));
 #endif /* MODEST_PLATFORM_MAEMO */
 }
 

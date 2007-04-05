@@ -1,5 +1,19 @@
 2007-04-05  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/maemo/easysetup/modest-easysetup-wizard.c:
+	(set_default_custom_servernames): Avoid a dereference of a destroyed widget.
+	(create_account): Do a sanity check, showing that modest_account_mgr_account_names() 
+	returns NULL after modest_account_mgr_add_server_account() returned TRUE, 
+	which seems wrong.
+	
+	* src/maemo/modest-main-window-ui.h: Specify the callback for the Accounts menu item.
+	* src/modest-ui-actions.c: (modest_ui_actions_on_accounts): Open the wizard if no 
+	accounts exist yet, as in the UI spec.
+	
+	* src/modest-account-mgr.h: Add TODO comment about a possible memory leak.
+
+2007-04-05  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/maemo/Makefile.am:
 	* src/maemo/modest-connection-specific-smtp-edit-window.c:
 	* src/maemo/modest-connection-specific-smtp-edit-window.h: 
