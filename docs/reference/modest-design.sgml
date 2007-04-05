@@ -127,7 +127,7 @@
 	  used by other accounts as well.
 	</para>
 	
-	<para>The reason two keep accounts and server accounts separately, is a bit of
+	<para>The reason to keep accounts and server accounts separately, is a bit of
 	  flexibility. In mobile use-cases, quite often it's desirable to use a
 	  network-specific smtp-server. The chosen structure makes it easy to iterate
 	  over all smtp-servers and find the right one.

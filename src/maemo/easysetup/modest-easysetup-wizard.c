@@ -1179,7 +1179,7 @@ create_account (ModestEasysetupWizardDialog *self)
 	 * but let's check again just in case:
 	 */
 	if (modest_account_mgr_account_exists (self->account_manager, account_name, FALSE)) 
-		return FALSE;
+		return FALSE;	
 		
 	/* username and password (for both incoming and outgoing): */
 	const gchar* username = gtk_entry_get_text (GTK_ENTRY (self->entry_user_username));
@@ -1238,8 +1238,13 @@ create_account (ModestEasysetupWizardDialog *self)
 		
 	}
 	
+	/* First we add the 2 server accounts, and then we add the account that uses them.
+	 * If we don't do it in this order then we will experience a crash. */
+	 
+	/* Add a (incoming) server account, to be used by the account: */
+	gchar *store_name = g_strconcat (account_name, "_store", NULL);
 	gboolean created = modest_account_mgr_add_server_account (self->account_manager,
-		account_name,
+		store_name,
 		servername_incoming,
 		username, password,
 		protocol_incoming,
@@ -1313,8 +1318,10 @@ create_account (ModestEasysetupWizardDialog *self)
 		
 	}
 	    
+	/* Add a (outgoing) server account to be used by the account: */
+	gchar *transport_name = g_strconcat (account_name, "_transport", NULL); /* What is this good for? */
 	created = modest_account_mgr_add_server_account (self->account_manager,
-		account_name,
+		transport_name,
 		servername_outgoing,
 		username, password,
 		protocol_outgoing,
@@ -1327,7 +1334,21 @@ create_account (ModestEasysetupWizardDialog *self)
 		/* TODO: Provide a Logical ID for the text: */
 		show_error (GTK_WINDOW (self), _("An error occurred while creating the outgoing account."));
 		return FALSE;	
-	}	     
+	}
+	
+	
+	/* Create the account, which will contain the two "server accounts": */
+ 	created = modest_account_mgr_add_account (self->account_manager, account_name, 
+ 		store_name, /* The name of our POP/IMAP server account. */
+		transport_name /* The name of our SMTP server account. */);
+	g_free (store_name);
+	g_free (transport_name);
+	
+	if (!created) {
+		/* TODO: Provide a Logical ID for the text: */
+		show_error (GTK_WINDOW (self), _("An error occurred while creating the account."));
+		return FALSE;	
+	}
 	
 	return FALSE;
 }

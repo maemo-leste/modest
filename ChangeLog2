@@ -1,5 +1,14 @@
 2007-04-05  Murray Cumming  <murrayc@murrayc.com>
 
+	* docs/reference/modest-design.sgml: Corrected spelling mistake.
+	* src/maemo/easysetup/modest-easysetup-wizard.c: (create_account): 
+	Create the 2 server accounts and then create the account, using the names of the 2 server accounts.
+	This seems to be how this should be used. If it is, then I will update the AccountMgr documentation 
+	to make that clearer.
+	* src/modest-account-mgr.h: Corrected the modest_account_mgr_search_server_account() documentation.
+
+2007-04-05  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/maemo/modest-account-view-window.c:
 	(modest_account_view_window_init),
 	(modest_account_view_window_new):

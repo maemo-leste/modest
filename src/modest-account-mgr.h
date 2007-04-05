@@ -178,14 +178,13 @@ GSList*	        modest_account_mgr_account_names    (ModestAccountMgr *self);
 
 
 /**
- * modest_account_mgr_server_account_names:
+ * modest_account_mgr_search_server_account:
  * @self: a ModestAccountMgr instance
  * @account_name: get only server accounts for @account_name, or NULL for any
- * @type: get only server accounts from protocol type @type, or MODEST_PROTO_TYPE_ANY
- * @proto: get only server account with protocol @proto, or NULL for any
- * @only_enabled: get only enabled server accounts if TRUE
+ * @type: get only server accounts from protocol type @type, or MODEST_PROTOCOL_TYPE_UNKNOWN
+ * @proto: get only server account with protocol @proto, or MODEST_PROTOCOL_UNKNOWN for any
  * 
- * list all the server account names
+ * List all the server account names, optionally narrowing the result down to one account.
  *
  * Returns: a newly allocated list of server account names, or NULL in case of
  * error or if there are no server accounts. The caller must free the returned GSList
