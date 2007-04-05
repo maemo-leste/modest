@@ -40,14 +40,14 @@ typedef struct {
 const ModestLocalFolder ModestLocalFolderMap[] = {
 	{ TNY_FOLDER_TYPE_UNKNOWN,  "<unknown>",  N_("<Unknown>")},
 	{ TNY_FOLDER_TYPE_NORMAL,   "<normal>",   N_("<Normal>")},
-	{ TNY_FOLDER_TYPE_INBOX,    "inbox",      N_("Inbox")},
-	{ TNY_FOLDER_TYPE_OUTBOX,   "outbox",     N_("Outbox")},
+	{ TNY_FOLDER_TYPE_INBOX,    "inbox",      N_("mcen_me_folder_inbox")},
+	{ TNY_FOLDER_TYPE_OUTBOX,   "outbox",     N_("mcen_me_folder_outbox")},
 	{ TNY_FOLDER_TYPE_TRASH,    "trash",      N_("Trash")},
 	{ TNY_FOLDER_TYPE_JUNK,     "junk",       N_("Junk")},
-	{ TNY_FOLDER_TYPE_SENT,     "sent",       N_("Sent items")},
+	{ TNY_FOLDER_TYPE_SENT,     "sent",       N_("mcen_me_folder_sent")},
 	{ TNY_FOLDER_TYPE_ROOT,     "<root>",     N_("<root>")},
 	{ TNY_FOLDER_TYPE_NOTES,    "notes",      N_("Notes")},
-	{ TNY_FOLDER_TYPE_DRAFTS,   "drafts",     N_("Drafts")},
+	{ TNY_FOLDER_TYPE_DRAFTS,   "drafts",     N_("mcen_me_folder_drafts")},
 	{ TNY_FOLDER_TYPE_OUTBOX,   "contacts",   N_("Contacts")},
 	{ TNY_FOLDER_TYPE_OUTBOX,   "calendar",   N_("Calendar")},
 	{ TNY_FOLDER_TYPE_ARCHIVE,  "archive",    N_("Archive")}

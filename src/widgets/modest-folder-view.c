@@ -330,15 +330,6 @@ icon_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 	case TNY_FOLDER_TYPE_DRAFTS:
 		pixbuf = get_cached_icon (MODEST_FOLDER_ICON_DRAFTS);
                 break;
-	case TNY_FOLDER_TYPE_NOTES:
-		pixbuf = get_cached_icon (MODEST_FOLDER_ICON_NOTES);
-                break;
-	case TNY_FOLDER_TYPE_CALENDAR:
-		pixbuf = get_cached_icon (MODEST_FOLDER_ICON_CALENDAR);
-                break;
-	case TNY_FOLDER_TYPE_CONTACTS:
-                pixbuf = get_cached_icon (MODEST_FOLDER_ICON_CONTACTS);
-                break;
 	case TNY_FOLDER_TYPE_NORMAL:
         default:
                 pixbuf = get_cached_icon (MODEST_FOLDER_ICON_NORMAL);

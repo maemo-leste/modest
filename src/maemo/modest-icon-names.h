@@ -50,7 +50,7 @@
 #define MODEST_FOLDER_ICON_OPEN			"qgn_list_gene_fldr_opn"
 #define MODEST_FOLDER_ICON_CLOSED		"qgn_list_gene_fldr_cls"
 
-#define MODEST_FOLDER_ICON_ACCOUNT		"qgn_addr_icon_user_group"
+#define MODEST_FOLDER_ICON_ACCOUNT		"qgn_list_browser"
 #define MODEST_FOLDER_ICON_INBOX		"qgn_list_messagin_inbox"
 #define MODEST_FOLDER_ICON_OUTBOX		"qgn_list_messagin_outbox"
 #define MODEST_FOLDER_ICON_SENT			"qgn_list_messagin_sent"
@@ -58,10 +58,8 @@
 #define MODEST_FOLDER_ICON_JUNK			"qgn_toolb_messagin_delete"
 #define MODEST_FOLDER_ICON_DRAFTS		"qgn_list_messagin_drafts"
 #define MODEST_FOLDER_ICON_NORMAL		"qgn_list_gene_fldr_cls"
+#define MODEST_FOLDER_ICON_LOCAL_FOLDERS	"qgn_list_shell_mydevice"
 
-#define MODEST_FOLDER_ICON_CONTACTS		"qgn_addr_icon_user_group"
-#define MODEST_FOLDER_ICON_NOTES		"qgn_list_messagin_viewer"
-#define MODEST_FOLDER_ICON_CALENDAR     	"qgn_widg_datedit"
 
 /* toolbar */
 #define  MODEST_TOOLBAR_ICON_MAIL_SEND		"qgn_list_messagin_sent"
