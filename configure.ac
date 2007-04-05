@@ -87,8 +87,18 @@ esac], [MODEST_PLATFORM=gnome
                with_platform=gnome])
 AC_SUBST(MODEST_PLATFORM)
 
+
 if test "x$with_platform" = "xmaemo"; then
-   PKG_CHECK_MODULES(MODEST_LIBTINYMAIL_MAEMO,libtinymail-maemo-1.0 hildon-libs libosso libossomime osso-addressbook-1.0 wpeditor)
+   
+   PKG_CHECK_MODULES(HILDON, hildon-1 >= 0.9.9, hildon1=yes, hildon1=no)	
+   if test "$hildon1" == "yes"; then   # the 'new' hildon      			
+      PKG_CHECK_MODULES(MODEST_LIBTINYMAIL_MAEMO, libtinymail-maemo-1.0 hildon-libs libosso libhildonmime osso-addressbook-1.0 wpeditor hildon-help libebook-1.2)     	
+   
+    else     # the old hildon
+     PKG_CHECK_MODULES(MODEST_LIBTINYMAIL_MAEMO,libtinymail-maemo-1.0 hildon-libs >= 0.12.0 libosso libossomime libossohelp osso-addressbook-1.0 wpeditor libebook-1.2)     	 
+        AC_DEFINE_UNQUOTED(MODEST_HILDON_VERSION_0, 1, ["The Hildon version we support."])   
+    fi 	
+   
    AC_SUBST(MODEST_LIBTINYMAIL_MAEMO_CFLAGS)
    AC_SUBST(MODEST_LIBTINYMAIL_MAEMO_LIBS) 
    
@@ -139,7 +149,6 @@ AC_SUBST(MODEST_PLATFORM_ID)
 
 
 
-
 dnl ## setup the testing framework (ie., make check)
 build_tests=false
 AC_ARG_ENABLE(tests,
@@ -151,6 +160,8 @@ AC_HELP_STRING([--enable-tests],
       *) build_tests=false ;;
 esac],[build_tests=false])
 AM_CONDITIONAL(BUILD_TESTS, test x$build_tests = xtrue)
+
+
 
 dnl ## is the check package installed?
 if test x$build_tests = xtrue; then
@@ -193,7 +204,6 @@ tests/Makefile
 src/maemo/modest.desktop
 src/maemo/modest.service
 ])
-
 
 
 echo

@@ -30,7 +30,13 @@
 #include <config.h>
 #include <modest-platform.h>
 #include <libosso.h>
+
+#ifdef MODEST_HILDON_VERSION_0
 #include <osso-mime.h>
+#else
+#include <hildon-mime.h>
+#endif /*MODEST_HILDON_VERSION_0*/
+
 #include <tny-maemo-device.h>
 #include <gtk/gtkicontheme.h>
 
@@ -103,8 +109,11 @@ modest_platform_get_file_icon_name (const gchar* name, const gchar* mime_type,
 		mime_str = g_string_new (mime_type);
 		g_string_ascii_down (mime_str);
 	}
-
+#ifdef MODEST_HILDON_VERSION_0
 	icons = osso_mime_get_icon_names (mime_str->str, NULL);
+#else
+	icons = hildon_mime_get_icon_names (mime_str->str, NULL);
+#endif /*MODEST_HILDON_VERSION_0*/
 	for (cursor = icons; cursor; ++cursor) {
 		if (gtk_icon_theme_has_icon (gtk_icon_theme_get_default(), *cursor)) {
 			icon_name = g_strdup (*cursor);

@@ -26,13 +26,16 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <gtk/gtk.h>
 #include <glib/gi18n.h>
 #include <fcntl.h>
 #include <glib/gstdio.h>
 #include <tny-account-store.h>
 #include <tny-fs-stream.h>
 
-#include <gtk/gtk.h>
+#include <config.h>
+
 #include <modest-account-mgr.h>
 #include <modest-account-mgr-helpers.h>
 
@@ -53,7 +56,13 @@
 #include <wptextbuffer.h>
 #include <hildon-widgets/hildon-color-selector.h>
 #include <hildon-widgets/hildon-color-button.h>
+
+#ifdef MODEST_HILDON_VERSION_0
 #include <hildon-widgets/hildon-file-chooser-dialog.h>
+#else
+#include <hildon/hildon-file-chooser-dialog.h>
+#endif /*MODEST_HILDON_VERSION_0 */
+
 
 #define DEFAULT_FONT_SIZE 3
 #define DEFAULT_FONT 2
