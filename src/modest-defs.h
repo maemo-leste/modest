@@ -47,6 +47,8 @@
 #define MODEST_LOCAL_FOLDERS_ACCOUNT_NAME MODEST_LOCAL_FOLDERS_ACCOUNT_ID
 #define MODEST_LOCAL_FOLDERS_MAILDIR      MODEST_LOCAL_FOLDERS_ACCOUNT_ID
 
+#define MODEST_MMC_ACCOUNT_ID             "mcc"
+#define MODEST_MCC_ACCOUNT_MAILDIR	  "/media/mmc1/.Maildir"
 
 /* configuration key definitions for modest */
 #define MODEST_CONF_NAMESPACE		"/apps/modest"
