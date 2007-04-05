@@ -1,5 +1,18 @@
 2007-04-05  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/maemo/Makefile.am:
+	* src/maemo/modest-connection-specific-smtp-edit-window.c:
+	* src/maemo/modest-connection-specific-smtp-edit-window.h: 
+	New window for editing connection-specific smtp details.
+	Not fully implemented.
+
+	* src/maemo/modest-connection-specific-smtp-window.c:
+	(modest_connection_specific_smtp_window_finalize) :
+	unref the tree model.
+	(on_button_edit): Show the edit window.
+
+2007-04-05  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/Makefile.am: Change sequence of sub-libraries, which fixed an undefined symbol 
 	error for me.
 	

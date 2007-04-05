@@ -1,6 +1,7 @@
 /* connection-specific-smtp-window.c */
 
 #include "modest-connection-specific-smtp-window.h"
+#include "modest-connection-specific-smtp-edit-window.h"
 #include <gtk/gtktreeview.h>
 #include <gtk/gtkcellrenderertext.h>
 #include <gtk/gtkliststore.h>
@@ -55,6 +56,10 @@ modest_connection_specific_smtp_window_dispose (GObject *object)
 static void
 modest_connection_specific_smtp_window_finalize (GObject *object)
 {
+	ModestConnectionSpecificSmtpWindowPrivate *priv = CONNECTION_SPECIFIC_SMTP_WINDOW_GET_PRIVATE (object);
+
+	g_object_unref (G_OBJECT (priv->model));
+	
 	G_OBJECT_CLASS (modest_connection_specific_smtp_window_parent_class)->finalize (object);
 }
 
@@ -84,10 +89,26 @@ fill_with_connections (ModestConnectionSpecificSmtpWindow *self)
 	* When TnyMaemoDevice provides enough of the libconic API to implement this. */
 }
 
+	
+static void
+on_edit_window_hide (GtkWindow *window, gpointer user_data)
+{
+	/* Destroy the window when it is closed: */
+	gtk_widget_destroy (GTK_WIDGET (window));
+}
+
+ 	
 static void
 on_button_edit (GtkButton *button, gpointer user_data)
 {
+	ModestConnectionSpecificSmtpWindow *self = MODEST_CONNECTION_SPECIFIC_SMTP_WINDOW (user_data);
 	
+	/* TODO: Specify the chosen connection to edit: */
+	GtkWidget * window = GTK_WIDGET (modest_connection_specific_smtp_edit_window_new ());
+	gtk_window_set_transient_for (GTK_WINDOW (self), GTK_WINDOW (window));
+	g_signal_connect (G_OBJECT (window), "hide",
+        	G_CALLBACK (on_edit_window_hide), self);
+	gtk_widget_show (window);
 }
 
 static void
