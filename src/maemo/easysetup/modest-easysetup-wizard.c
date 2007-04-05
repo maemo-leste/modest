@@ -15,15 +15,16 @@
 #include <gtk/gtkcheckbutton.h>
 #include <gtk/gtkmessagedialog.h>
 #include <hildon-widgets/hildon-caption.h>
-#include "modest-easysetup-country-combo-box.h"
-#include "modest-easysetup-provider-combo-box.h"
-#include "modest-easysetup-servertype-combo-box.h"
-#include "modest-easysetup-serversecurity-combo-box.h"
-#include "modest-easysetup-secureauth-combo-box.h"
-#include "modest-validating-entry.h"
+#include "maemo/easysetup/modest-easysetup-country-combo-box.h"
+#include "maemo/easysetup/modest-easysetup-provider-combo-box.h"
+#include "maemo/easysetup/modest-easysetup-servertype-combo-box.h"
+#include "maemo/easysetup/modest-easysetup-serversecurity-combo-box.h"
+#include "maemo/easysetup/modest-easysetup-secureauth-combo-box.h"
+#include "maemo/easysetup/modest-validating-entry.h"
 #include "modest-text-utils.h"
 #include "modest-account-mgr.h"
 #include "modest-runtime.h" /* For modest_runtime_get_account_mgr(). */
+#include "maemo/modest-connection-specific-smtp-window.h"
 #include <gconf/gconf-client.h>
 #include <string.h> /* For strlen(). */
 
@@ -575,6 +576,29 @@ enable_widget_for_togglebutton (GtkWidget *widget, GtkToggleButton* button)
 	on_toggle_button_changed (button, widget);
 }
 	
+static void
+on_smtp_servers_window_hide (GtkWindow *window, gpointer user_data)
+{
+	/* Destroy the window when it is closed: */
+	gtk_widget_destroy (GTK_WIDGET (window));
+}
+
+static void
+on_button_outgoing_smtp_servers (GtkButton *button, gpointer user_data)
+{
+
+	ModestEasysetupWizardDialog * self = MODEST_EASYSETUP_WIZARD_DIALOG (user_data);
+	
+	/* Show the window: */
+	/* TODO: Retrieve the chosen settings,
+	 * so we can supply them when creating the connection somehow.
+	 */
+	GtkWidget *window = GTK_WIDGET (modest_connection_specific_smtp_window_new ());
+	g_signal_connect (G_OBJECT (window), "hide",
+        	G_CALLBACK (on_smtp_servers_window_hide), self);
+    gtk_widget_show (window);
+}
+
 static GtkWidget* create_page_custom_outgoing (ModestEasysetupWizardDialog *self)
 {
 	GtkWidget *box = gtk_vbox_new (FALSE, 2);
@@ -637,6 +661,9 @@ static GtkWidget* create_page_custom_outgoing (ModestEasysetupWizardDialog *self
 	/* Only enable the button when the checkbox is checked: */
 	enable_widget_for_togglebutton (self->button_outgoing_smtp_servers, 
 		GTK_TOGGLE_BUTTON (self->checkbox_outgoing_smtp_specific));
+		
+	g_signal_connect (G_OBJECT (self->button_outgoing_smtp_servers), "clicked",
+        	G_CALLBACK (on_button_outgoing_smtp_servers), self);
 	
 	
 	gtk_widget_show (GTK_WIDGET (box));

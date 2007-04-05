@@ -1,3 +1,16 @@
+2007-04-05  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/Makefile.am: Change sequence of sub-libraries, which fixed an undefined symbol 
+	error for me.
+	
+	* src/maemo/Makefile.am:
+	* src/maemo/modest-connection-specific-smtp-window.c:
+	* src/maemo/modest-connection-specific-smtp-window.h:
+	New window for showing the list of connections, for connection-specific 
+	SMTP servers. Not fully implemented, because it needs an enhancement to TnyMaemoDevice.
+	* src/maemo/easysetup/modest-easysetup-wizard.c:
+	(create_page_custom_outgoing): Show the new window when the button is clicked.
+
 2007-04-04  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/maemo/easysetup/modest-easysetup-wizard.c: (create_account):
