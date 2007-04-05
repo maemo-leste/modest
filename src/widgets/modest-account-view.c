@@ -160,6 +160,11 @@ update_account_view (ModestAccountMgr *account_mgr, ModestAccountView *view)
 	gtk_list_store_clear (model);
 
 	cursor = account_names = modest_account_mgr_account_names (account_mgr);
+	
+	if(account_names == NULL)
+	{
+	  printf ("debug: modest_account_mgr_account_names() returned  NULL\n");
+	}
 
 	while (cursor) {
 		gchar *account_name;

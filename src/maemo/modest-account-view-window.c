@@ -53,10 +53,10 @@ enum {
 
 typedef struct _ModestAccountViewWindowPrivate ModestAccountViewWindowPrivate;
 struct _ModestAccountViewWindowPrivate {
-	GtkWidget           *add_button;
+	GtkWidget           *new_button;
 	GtkWidget           *edit_button;
-	GtkWidget           *remove_button;
-	GtkWidget	    *default_button;
+	GtkWidget           *delete_button;
+	GtkWidget	    *close_button;
 	ModestAccountView   *account_view;
 };
 #define MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -134,20 +134,18 @@ on_selection_changed (GtkTreeSelection *sel, ModestAccountViewWindow *self)
 		gtk_tree_selection_get_selected (sel, &model, &iter);
 
 	gtk_widget_set_sensitive (priv->edit_button, has_selection);
-	gtk_widget_set_sensitive (priv->remove_button, has_selection);	
+	gtk_widget_set_sensitive (priv->delete_button, has_selection);	
 
 	account_name = modest_account_view_get_selected_account (priv->account_view);
 	default_account_name = modest_account_mgr_get_default_account(
 		modest_runtime_get_account_mgr());
-	gtk_widget_set_sensitive (priv->default_button,
-				  default_account_name == NULL || account_name == NULL ||
-				  strcmp (default_account_name, account_name) != 0);
+
 	g_free (account_name);
 	g_free (default_account_name);
 }
 
 static void
-on_remove_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
+on_delete_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 {
 	ModestAccountViewWindowPrivate *priv;
 	ModestAccountMgr *account_mgr;
@@ -201,11 +199,12 @@ on_edit_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 }
 
 static void
-on_add_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
+on_new_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 {
 	GtkWidget *notebook, *assistant;
 	ModestAccountViewWindowPrivate *priv;
 
+	/* TODO: */
 	modest_runtime_not_implemented (GTK_WINDOW(self));
 	return;
 
@@ -221,20 +220,11 @@ on_add_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 
 
 static void
-on_default_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
+on_close_button_clicked (GtkWidget *button, gpointer user_data)
 {
-	ModestAccountViewWindowPrivate *priv;
-	ModestAccountMgr *account_mgr;
-	gchar *account_name;
-	
-	priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE(self);
+	ModestAccountViewWindow *self = MODEST_ACCOUNT_VIEW_WINDOW (user_data);
 
-	account_mgr = modest_runtime_get_account_mgr();	
-	account_name = modest_account_view_get_selected_account (priv->account_view);
-
-	modest_account_mgr_set_default_account (account_mgr, account_name);
-
-	g_free (account_name);
+	gtk_dialog_response (GTK_DIALOG (self), GTK_RESPONSE_OK);
 }
 
 
@@ -242,42 +232,38 @@ on_default_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 static GtkWidget*
 button_box_new (ModestAccountViewWindow *self)
 {
-	GtkWidget *button_box;
-	ModestAccountViewWindowPrivate *priv;
+	ModestAccountViewWindowPrivate *priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE(self);
 	
-	priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE(self);
-	
-	button_box   = gtk_hbutton_box_new ();
+	GtkWidget *button_box = gtk_hbutton_box_new ();
 	gtk_button_box_set_spacing (GTK_BUTTON_BOX (button_box), 6);
 	gtk_button_box_set_layout (GTK_BUTTON_BOX (button_box), 
 				   GTK_BUTTONBOX_START);
 	
-	priv->add_button     = gtk_button_new_from_stock(GTK_STOCK_ADD);
-	priv->default_button = gtk_button_new_with_label(_("Make default"));
-	priv->remove_button  = gtk_button_new_from_stock(GTK_STOCK_REMOVE);
-	priv->edit_button    = gtk_button_new_from_stock(GTK_STOCK_EDIT);
+	priv->new_button     = gtk_button_new_from_stock(_("mcen_bd_new"));
+	priv->edit_button = gtk_button_new_with_label(_("mcen_bd_emailsetup_edit"));
+	priv->delete_button  = gtk_button_new_from_stock(_("mcen_bd_emailsetup_delete"));
+	priv->close_button    = gtk_button_new_from_stock(_("mcen_bd_emailsetup_close"));
 	
-	g_signal_connect (G_OBJECT(priv->add_button), "clicked",
-			  G_CALLBACK(on_add_button_clicked),
+	g_signal_connect (G_OBJECT(priv->new_button), "clicked",
+			  G_CALLBACK(on_new_button_clicked),
 			  self);
-	g_signal_connect (G_OBJECT(priv->remove_button), "clicked",
-			  G_CALLBACK(on_remove_button_clicked),
+	g_signal_connect (G_OBJECT(priv->delete_button), "clicked",
+			  G_CALLBACK(on_delete_button_clicked),
 			  self);
 	g_signal_connect (G_OBJECT(priv->edit_button), "clicked",
 			  G_CALLBACK(on_edit_button_clicked),
 			  self);
-	g_signal_connect (G_OBJECT(priv->default_button), "clicked",
-			  G_CALLBACK(on_default_button_clicked),
+	g_signal_connect (G_OBJECT(priv->close_button), "clicked",
+			  G_CALLBACK(on_close_button_clicked),
 			  self);
 	
-	gtk_box_pack_start (GTK_BOX(button_box), priv->add_button, FALSE, FALSE,2);
-	gtk_box_pack_start (GTK_BOX(button_box), priv->default_button, FALSE, FALSE,2);
-	gtk_box_pack_start (GTK_BOX(button_box), priv->remove_button, FALSE, FALSE,2);
+	gtk_box_pack_start (GTK_BOX(button_box), priv->new_button, FALSE, FALSE,2);
 	gtk_box_pack_start (GTK_BOX(button_box), priv->edit_button, FALSE, FALSE,2);
+	gtk_box_pack_start (GTK_BOX(button_box), priv->delete_button, FALSE, FALSE,2);
+	gtk_box_pack_start (GTK_BOX(button_box), priv->close_button, FALSE, FALSE,2);
 
 	gtk_widget_set_sensitive (priv->edit_button, FALSE);
-	gtk_widget_set_sensitive (priv->remove_button, FALSE);	
-	gtk_widget_set_sensitive (priv->default_button, FALSE);
+	gtk_widget_set_sensitive (priv->delete_button, FALSE);	
 
 	gtk_widget_show_all (button_box);
 	return button_box;
@@ -287,26 +273,29 @@ button_box_new (ModestAccountViewWindow *self)
 static GtkWidget*
 window_vbox_new (ModestAccountViewWindow *self)
 {
-	ModestAccountViewWindowPrivate *priv;
-	GtkTreeSelection *sel;
-	GtkWidget *main_hbox, *main_vbox;
+	ModestAccountViewWindowPrivate *priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE(self);
 
-	priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE(self);
-
-	main_vbox     = gtk_vbox_new (FALSE, 6);
-	main_hbox     = gtk_hbox_new (FALSE, 6);
+	GtkWidget *main_vbox     = gtk_vbox_new (FALSE, 6);
+	GtkWidget *main_hbox     = gtk_hbox_new (FALSE, 6);
 	
 	priv->account_view = modest_account_view_new (modest_runtime_get_account_mgr());
 	gtk_widget_set_size_request (GTK_WIDGET(priv->account_view), 300, 400);
+	gtk_widget_show (GTK_WIDGET (priv->account_view));
 
-	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW(priv->account_view));
+	GtkTreeSelection *sel = gtk_tree_view_get_selection (GTK_TREE_VIEW(priv->account_view));
 	g_signal_connect (G_OBJECT(sel), "changed",  G_CALLBACK(on_selection_changed),
 			  self);
+			  
+	GtkWidget *scrolled_window = gtk_scrolled_window_new (NULL, NULL);
+	gtk_container_add (GTK_CONTAINER (scrolled_window), GTK_WIDGET (priv->account_view));
+	gtk_widget_show (GTK_WIDGET (scrolled_window));
 	
-	gtk_box_pack_start (GTK_BOX(main_hbox), GTK_WIDGET(priv->account_view), TRUE, TRUE, 2);
+	gtk_box_pack_start (GTK_BOX(main_hbox), GTK_WIDGET(scrolled_window), TRUE, TRUE, 2);
+	
 	gtk_box_pack_start (GTK_BOX(main_vbox), main_hbox, TRUE, TRUE, 2);
+	gtk_widget_show (GTK_WIDGET (main_hbox));
+	gtk_widget_show (GTK_WIDGET (main_vbox));
 
-	gtk_widget_show_all (main_vbox);
 	return main_vbox;
 }
 
@@ -314,11 +303,14 @@ window_vbox_new (ModestAccountViewWindow *self)
 static void
 modest_account_view_window_init (ModestAccountViewWindow *obj)
 {
-	ModestAccountViewWindowPrivate *priv;	
-	priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE(obj);
-		
-	//GTK_DIALOG(obj)->vbox        = window_vbox_new (MODEST_ACCOUNT_VIEW_WINDOW(obj));
-	GTK_DIALOG(obj)->action_area = window_vbox_new  (MODEST_ACCOUNT_VIEW_WINDOW(obj));
+/*
+	ModestAccountViewWindowPrivate *priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE(obj);
+*/		
+	gtk_box_pack_start (GTK_BOX((GTK_DIALOG (obj)->vbox)), GTK_WIDGET (window_vbox_new (obj)), 
+		TRUE, TRUE, 2);
+	
+	gtk_box_pack_start (GTK_BOX((GTK_DIALOG (obj)->action_area)), GTK_WIDGET (button_box_new (obj)), 
+		TRUE, TRUE, 2);
 }
 
 
@@ -326,9 +318,6 @@ GtkWidget*
 modest_account_view_window_new (void)
 {
 	GObject *obj = g_object_new(MODEST_TYPE_ACCOUNT_VIEW_WINDOW, NULL);
-	
-	GTK_DIALOG(obj)->vbox        = window_vbox_new (MODEST_ACCOUNT_VIEW_WINDOW(obj));
-	GTK_DIALOG(obj)->action_area = button_box_new  (MODEST_ACCOUNT_VIEW_WINDOW(obj));
 	
 	return GTK_WIDGET(obj);
 }

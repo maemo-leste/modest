@@ -1641,6 +1641,10 @@ msgstr ""
 msgid "Align to the right"
 msgstr ""
 
+
+msgid "mcen_bd_new"
+msgstr "New"
+
 # E-mail application title
 #~ msgid "mcen_ap_name"
 #~ msgstr "E-mail"
@@ -2472,12 +2476,12 @@ msgstr ""
 #~ msgstr "Set as default"
 
 # Dialog button
-#~ msgid "mcen_bd_emailsetup_delete"
-#~ msgstr "Delete"
+msgid "mcen_bd_emailsetup_delete"
+msgstr "Delete"
 
 # Dialog button
-#~ msgid "mcen_bd_emailsetup_close"
-#~ msgstr "Close"
+msgid "mcen_bd_emailsetup_close"
+msgstr "Close"
 
 # Text string
 #~ msgid "mcen_ia_emailsetup_default"

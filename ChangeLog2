@@ -1,5 +1,22 @@
 2007-04-05  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/maemo/modest-account-view-window.c:
+	(modest_account_view_window_init),
+	(modest_account_view_window_new):
+	Use the same buttons as specified in the 
+	UI spec. Add the widgets to the vbox and action_area instead of just assigning them to 
+	the existing widgets, which never had a chance of working.
+	Put the ModestAccountView treeview in a scrolled window.
+	Do not repeat the initialization in both _init() and _new().
+	
+	* src/widgets/modest-account-view.c: (update_account_view):
+	Add a warning about modest_account_mgr_account_names() returning NULL, which is why 
+	this widget and window shows no accounts.
+	
+	* po/en_GB.po: Added translations needed for the dialog button logical IDs.
+	
+2007-04-05  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/maemo/easysetup/modest-easysetup-wizard.c:
 	(set_default_custom_servernames): Avoid a dereference of a destroyed widget.
 	(create_account): Do a sanity check, showing that modest_account_mgr_account_names() 
