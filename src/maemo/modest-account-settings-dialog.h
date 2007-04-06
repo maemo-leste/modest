@@ -22,11 +22,11 @@ G_BEGIN_DECLS
 	(G_TYPE_CHECK_CLASS_CAST ((klass), \
 	MODEST_TYPE_ACCOUNT_SETTINGS_DIALOG, ModestAccountSettingsDialogClass))
 
-#define ACCOUNT_IS_WIZARD_DIALOG(obj) \
+#define MODEST_IS_ACCOUNT_SETTINGS_DIALOG(obj) \
 	(G_TYPE_CHECK_INSTANCE_TYPE ((obj), \
 	MODEST_TYPE_ACCOUNT_SETTINGS_DIALOG))
 
-#define MODEST_EASYSETUP_IS_WIZARD_DIALOG_CLASS(klass) \
+#define MODEST_IS_ACCOUNT_SETTINGS_DIALOG_CLASS(klass) \
 	(G_TYPE_CHECK_CLASS_TYPE ((klass), \
 	MODEST_TYPE_ACCOUNT_SETTINGS_DIALOG))
 
@@ -79,7 +79,7 @@ GType modest_account_settings_dialog_get_type (void);
 
 ModestAccountSettingsDialog* modest_account_settings_dialog_new (void);
 
-void modest_account_settings_dialog_set_account_name (const gchar* account_name);
+void modest_account_settings_dialog_set_account_name (ModestAccountSettingsDialog *dialog, const gchar* account_name);
 
 G_END_DECLS
 

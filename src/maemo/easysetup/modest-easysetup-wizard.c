@@ -101,6 +101,8 @@ create_subsequent_easysetup_pages (ModestEasysetupWizardDialog *self);
 static void
 set_default_custom_servernames(ModestEasysetupWizardDialog *dialog);
 
+static void on_combo_servertype_changed(GtkComboBox *combobox, gpointer user_data);
+
 static gchar*
 util_increment_name (const gchar* text);
 
@@ -482,7 +484,7 @@ static void update_incoming_server_security_choices (ModestEasysetupWizardDialog
 		EASYSETUP_SERVERSECURITY_COMBO_BOX (self->combo_incoming_security), protocol);
 }
 
-void on_combo_servertype_changed(GtkComboBox *combobox, gpointer user_data)
+static void on_combo_servertype_changed(GtkComboBox *combobox, gpointer user_data)
 {
 	ModestEasysetupWizardDialog *self = MODEST_EASYSETUP_WIZARD_DIALOG (user_data);
 	update_incoming_server_title (self);
@@ -875,7 +877,7 @@ static void create_subsequent_pages (ModestEasysetupWizardDialog *self)
 	}
 }
 
-gchar*
+static gchar*
 util_get_default_servername_from_email_address (const gchar* email_address, ModestProtocol servertype)
 {
 	if (!email_address)

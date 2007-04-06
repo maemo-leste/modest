@@ -1,3 +1,13 @@
+2007-04-06  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/maemo/Makefile.am:
+	* src/maemo/modest-account-settings-dialog.c:
+	* src/maemo/modest-account-settings-dialog.h: The beginnings of the dialog to edit 
+	an existing account. Doesn't do much yet.
+	
+	* src/maemo/modest-account-view-window.c: (on_edit_button_clicked): 
+	Open the accounts settings dialog when Edit is clicked.
+
 2007-04-05  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/maemo/easysetup/Makefile.am:

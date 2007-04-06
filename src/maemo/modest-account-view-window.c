@@ -38,6 +38,7 @@
 #include <string.h>
 #include "modest-tny-platform-factory.h"
 #include "maemo/easysetup/modest-easysetup-wizard.h"
+#include "maemo/modest-account-settings-dialog.h"
 
 /* 'private'/'protected' functions */
 static void                            modest_account_view_window_class_init   (ModestAccountViewWindowClass *klass);
@@ -195,13 +196,21 @@ on_delete_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 static void
 on_edit_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 {
+	ModestAccountViewWindowPrivate *priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE(self);
+	
+	gchar* account_name = modest_account_view_get_selected_account (priv->account_view);
+	if (!account_name)
+		return;
+		
 	/* Show the Account Settings window: */
-	ModestAccountSettingsDialog *dialog = modest_account_settings_dialog_new (void);
+	ModestAccountSettingsDialog *dialog = modest_account_settings_dialog_new ();
 	modest_account_settings_dialog_set_account_name (dialog, account_name);
 	
 	gtk_window_set_transient_for (GTK_WINDOW (dialog), GTK_WINDOW (self));
 	gtk_dialog_run (GTK_DIALOG (dialog));
 	gtk_widget_destroy (GTK_WIDGET (dialog));
+	
+	g_free (account_name);
 }
 
 static void
@@ -217,7 +226,7 @@ on_new_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 
 static void
 on_close_button_clicked (GtkWidget *button, gpointer user_data)
-{
+{		
 	ModestAccountViewWindow *self = MODEST_ACCOUNT_VIEW_WINDOW (user_data);
 
 	gtk_dialog_response (GTK_DIALOG (self), GTK_RESPONSE_OK);

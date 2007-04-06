@@ -4,7 +4,7 @@
  */
 
 
-#include "modest-account-settings-window.h"
+#include "modest-account-settings-dialog.h"
 #include <glib/gi18n.h>
 #include <gtk/gtknotebook.h>
 #include <gtk/gtkvbox.h>
@@ -334,7 +334,7 @@ static void update_incoming_server_security_choices (ModestAccountSettingsDialog
 		EASYSETUP_SERVERSECURITY_COMBO_BOX (self->combo_incoming_security), protocol);
 }
 
-void on_combo_servertype_changed(GtkComboBox *combobox, gpointer user_data)
+static void on_combo_servertype_changed(GtkComboBox *combobox, gpointer user_data)
 {
 	ModestAccountSettingsDialog *self = MODEST_ACCOUNT_SETTINGS_DIALOG (user_data);
 	update_incoming_server_title (self);
@@ -587,13 +587,13 @@ modest_account_settings_dialog_new (void)
 /** Update the UI with the stored account details, so they can be edited.
  * @account_name: Name of the account, which should contain incoming and outgoing server accounts.
  */
-void modest_account_settings_dialog_set_account_name (const gchar* account_name)
+void modest_account_settings_dialog_set_account_name (ModestAccountSettingsDialog *dialog, const gchar* account_name)
 {
 	
 	
 }
 
-gchar*
+static gchar*
 util_get_default_servername_from_email_address (const gchar* email_address, ModestProtocol servertype)
 {
 	if (!email_address)
