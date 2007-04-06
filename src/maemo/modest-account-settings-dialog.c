@@ -52,6 +52,9 @@ static void
 enable_buttons (ModestAccountSettingsDialog *self);
 
 static void
+save_configuration (ModestAccountSettingsDialog *dialog);
+
+static void
 modest_account_settings_dialog_get_property (GObject *object, guint property_id,
 															GValue *value, GParamSpec *pspec)
 {
@@ -83,6 +86,9 @@ modest_account_settings_dialog_finalize (GObject *object)
 {
 	ModestAccountSettingsDialog *self = MODEST_ACCOUNT_SETTINGS_DIALOG (object);
 	
+	if (self->original_account_name)
+		g_free (self->original_account_name);
+		
 	if (self->account_manager)
 		g_object_unref (G_OBJECT (self->account_manager));
 	
@@ -572,6 +578,11 @@ on_response (GtkDialog *wizard_dialog,
 {
 	ModestAccountSettingsDialog *self = MODEST_ACCOUNT_SETTINGS_DIALOG (wizard_dialog);
 	enable_buttons (self);
+	
+	/* TODO: Prevent the OK response if the data is invalid. */
+	
+	if (response_id == GTK_RESPONSE_OK)
+	  save_configuration (self);
 }
 
 static void
@@ -632,6 +643,15 @@ modest_account_settings_dialog_new (void)
  */
 void modest_account_settings_dialog_set_account_name (ModestAccountSettingsDialog *dialog, const gchar* account_name)
 {
+	if (!account_name)
+		return;
+		
+	/* Save the account name so we can refer to it if the user changes it: */
+	if (dialog->original_account_name)
+		g_free (dialog->original_account_name);
+	dialog->original_account_name = g_strdup (account_name);
+	
+	/* Get the account data for this account name: */
 	ModestAccountData *account_data = modest_account_mgr_get_account_data (dialog->account_manager, 
 		account_name);
 	if (!account_data) {
@@ -644,12 +664,18 @@ void modest_account_settings_dialog_set_account_name (ModestAccountSettingsDialo
 		return;
 	}
 		
+	/* Show the account data in the widgets: */
 	gtk_entry_set_text( GTK_ENTRY (dialog->entry_account_title),
 		account_name ? account_name : "");
 	gtk_entry_set_text( GTK_ENTRY (dialog->entry_user_name), 
-		account_data->fullname ? account_data->fullname : ""); /* TODO: Not working. */
-	gtk_entry_set_text( GTK_ENTRY (dialog->entry_user_email),  /* TODO: Not working. */
+		account_data->fullname ? account_data->fullname : "");
+	gtk_entry_set_text( GTK_ENTRY (dialog->entry_user_email), 
 		account_data->email ? account_data->email : "");
+		
+	const gboolean leave_on_server = modest_account_mgr_get_bool (dialog->account_manager, account_name,
+		MODEST_ACCOUNT_LEAVE_ON_SERVER, FALSE /* not server account */);
+	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (dialog->checkbox_leave_messages), leave_on_server);
+		
 		
 	ModestServerAccountData *incoming_account = account_data->store_account;
 	if (incoming_account) {
@@ -706,6 +732,36 @@ void modest_account_settings_dialog_set_account_name (ModestAccountSettingsDialo
 
 	modest_account_mgr_free_account_data (dialog->account_manager, account_data);
 }
+
+static void
+save_configuration (ModestAccountSettingsDialog *dialog)
+{
+	g_assert (dialog->original_account_name);
+	
+	const gchar* account_name = dialog->original_account_name;
+		
+	/* Set the account data from the widgets: */
+	const gchar* user_name = gtk_entry_get_text (GTK_ENTRY (dialog->entry_user_name));
+	modest_account_mgr_set_string (dialog->account_manager, account_name,
+		MODEST_ACCOUNT_FULLNAME, user_name, FALSE /* not server account */);
+		
+	const gchar* emailaddress = gtk_entry_get_text (GTK_ENTRY (dialog->entry_user_email));
+	modest_account_mgr_set_string (dialog->account_manager, account_name,
+		MODEST_ACCOUNT_EMAIL, emailaddress, FALSE /* not server account */);
+		
+	/* TODO: Change name: */
+	/* Possibly the account name may never change, but that should be hidden, 
+	 * and the display name may change, defaulting to the account name.
+	 */
+	
+	const gboolean leave_on_server = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (dialog->checkbox_leave_messages));
+	modest_account_mgr_set_bool (dialog->account_manager, account_name,
+		MODEST_ACCOUNT_LEAVE_ON_SERVER, leave_on_server, FALSE /* not server account */);
+	
+		
+	/* TODO: How can we change the incoming and outgoing server account details? */
+}
+
 	
 #if 0
 static gboolean

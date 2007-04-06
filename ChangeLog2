@@ -1,5 +1,19 @@
 2007-04-06  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/maemo/easysetup/modest-easysetup-wizard.c: (create_account): 
+	Set the email address and user fullname, which I now see must be 
+	done separately.
+	
+	* src/maemo/modest-account-settings-dialog.h:
+	* src/maemo/modest-account-settings-dialog.c:
+	 (on_response),
+	(modest_account_settings_dialog_set_account_name): Show the email address, fullname, 
+	leave-on-server and authentication.
+	(save_configuration): Save most of the non-server-account specific stuff, but I don't see 
+	how to do the rest.
+
+2007-04-06  Murray Cumming  <murrayc@murrayc.com>
+
 
 	* src/maemo/modest-account-settings-dialog.c:
 	* src/maemo/modest-account-settings-dialog.h:

@@ -1352,6 +1352,17 @@ create_account (ModestEasysetupWizardDialog *self)
 		return FALSE;	
 	}
 	
+	/* The user name and email address must be set additionally: */
+	const gchar* user_name = gtk_entry_get_text (GTK_ENTRY (self->entry_user_name));
+	modest_account_mgr_set_string (self->account_manager, account_name,
+		MODEST_ACCOUNT_FULLNAME, user_name, FALSE /* not server account */);
+		
+	const gchar* emailaddress = gtk_entry_get_text (GTK_ENTRY (self->entry_user_email));
+	modest_account_mgr_set_string (self->account_manager, account_name,
+		MODEST_ACCOUNT_EMAIL, emailaddress, FALSE /* not server account */);
+		
+	/* TODO: Should we set MODEST_ACCOUNT_DISPLAY_NAME? It's not clear what it is. */
+	
 	return FALSE;
 }
 
