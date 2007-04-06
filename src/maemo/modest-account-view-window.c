@@ -36,7 +36,6 @@
 #include <modest-runtime.h>
 #include <modest-account-mgr-helpers.h>
 #include <string.h>
-#include "modest-account-assistant.h"
 #include "modest-tny-platform-factory.h"
 #include "maemo/easysetup/modest-easysetup-wizard.h"
 

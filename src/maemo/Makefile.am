@@ -54,11 +54,11 @@ libmodest_ui_la_SOURCES=              \
 	modest-store-widget.h         \
 	modest-transport-widget.c     \
 	modest-transport-widget.h     \
-        modest-msg-view-window.c      \
+	modest-msg-view-window.c      \
 	modest-msg-edit-window.c      \
-	modest-account-assistant.c    \
-	modest-account-assistant.h    \
 	modest-maemo-utils.c          \
+	modest-account-settings.h \
+	modest-account-settings.c \
 	modest-connection-specific-smtp-window.h \
 	modest-connection-specific-smtp-window.c \
 	modest-connection-specific-smtp-edit-window.h \
