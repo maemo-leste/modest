@@ -557,11 +557,11 @@ init_stock_icons (void)
 		gint i;
 
 		static GtkStockItem items[] = {
-#if MODEST_PLATFORM_ID==2
+#ifdef MODEST_PLATFORM_MAEMO
 			{ MODEST_STOCK_SPLIT_VIEW, "split view", 0, 0, NULL },
 			{ MODEST_STOCK_SORT, "sort mail", 0, 0, NULL },
 			{ MODEST_STOCK_REFRESH, "refresh mail", 0, 0, NULL },
-#endif
+#endif /*MODEST_PLATFORM_MAEMO*/
 			{ MODEST_STOCK_MAIL_SEND, "send mail", 0, 0, NULL },
 			{ MODEST_STOCK_NEW_MAIL, "new mail", 0, 0, NULL },
 /*  			{ MODEST_STOCK_SEND_RECEIVE, "send receive", 0, 0, NULL },  */
@@ -575,11 +575,11 @@ init_stock_icons (void)
 		};
       
 		static gchar *items_names [] = {
-#if MODEST_PLATFORM_ID==2
+#ifdef MODEST_PLATFORM_MAEMO
 			MODEST_TOOLBAR_ICON_SPLIT_VIEW,
 			MODEST_TOOLBAR_ICON_SORT,
 			MODEST_TOOLBAR_ICON_REFRESH,
-#endif
+#endif /*MODEST_PLATFORM_MAEMO*/
 			MODEST_TOOLBAR_ICON_MAIL_SEND,
 			MODEST_TOOLBAR_ICON_NEW_MAIL,
 /*  			MODEST_TOOLBAR_ICON_SEND_RECEIVE,  */
@@ -607,15 +607,16 @@ init_stock_icons (void)
 		/* Register icons to accompany stock items */
 		for (i = 0; i < G_N_ELEMENTS (items); i++) {
 
-#if MODEST_PLATFORM_ID==1  /* MODES_PLATFORM_ID: 1 ==> gnome, 2==> maemo */ 
-			pixbuf = gdk_pixbuf_new_from_file (items_names[i], NULL);
-#else
+#ifdef MODEST_PLATFORM_MAEMO  /* MODES_PLATFORM_ID: 1 ==> gnome, 2==> maemo */ 
 			pixbuf = gtk_icon_theme_load_icon (current_theme,
 							   items_names[i],
 							   26,
 							   GTK_ICON_LOOKUP_NO_SVG,
 							   NULL);
+#else
+			pixbuf = gdk_pixbuf_new_from_file (items_names[i], NULL);
 #endif
+
 			if (pixbuf != NULL) {
 				GtkIconSet *icon_set;
 				GdkPixbuf *transparent;

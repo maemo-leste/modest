@@ -64,11 +64,11 @@ modest_window_get_type (void)
 			(GInstanceInitFunc) modest_window_init,
 			NULL
 		};
-#if MODEST_PLATFORM_ID==1   /* gtk */
-		parent_type = GTK_TYPE_WINDOW;
-#elif MODEST_PLATFORM_ID==2   /* hildon (maemo) */
+#ifdef MODEST_PLATFORM_MAEMO
 		parent_type = HILDON_TYPE_WINDOW;
-#endif
+#else
+		parent_type = GTK_TYPE_WINDOW;
+#endif 
 		my_type = g_type_register_static (parent_type,
 		                                  "ModestWindow",
 		                                  &my_info, 

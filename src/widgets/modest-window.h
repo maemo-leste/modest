@@ -43,15 +43,17 @@ G_BEGIN_DECLS
  * admittedly, the ifdefs for gtk and maemo are rather ugly; still
  * this way is probably the easiest to maintain
  */
-#if MODEST_PLATFORM_ID==1   /* gtk */
+#ifdef MODEST_PLATFORM_GNOME
 #include <gtk/gtkwindow.h>
 typedef GtkWindow      ModestWindowParent;
 typedef GtkWindowClass ModestWindowParentClass;
-#elif MODEST_PLATFORM_ID==2   /* hildon (maemo) */
+#endif /* MODEST_PLATFORM_GNOME */
+
+#ifdef MODEST_PLATFORM_MAEMO
 #include <hildon-widgets/hildon-window.h>
 typedef HildonWindow      ModestWindowParent;
 typedef HildonWindowClass ModestWindowParentClass;
-#endif /*MODEST_PLATFORM_ID*/
+#endif /*MODEST_PLATFORM_MAEMO */
 
 /* convenience macros */
 #define MODEST_TYPE_WINDOW             (modest_window_get_type())

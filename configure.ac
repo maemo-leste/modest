@@ -129,7 +129,6 @@ if test "x$with_platform" = "xmaemo"; then
   AC_SUBST(pluginlibdir)
   AC_SUBST(plugindesktopentrydir)
 
-  MODEST_PLATFORM_ID=2
   # warnings are errors, but don't check format errors, because
   # it breaks with logical id's
   CFLAGS="$CFLAGS -Wno-format-extra-args -Werror"
@@ -137,16 +136,15 @@ else
    # gnome frontend 
    PKG_CHECK_MODULES(MODEST_LIBTINYMAIL_GNOME_DESKTOP,libtinymail-gnome-desktop-1.0 libnm_glib glib-2.0 >= 2.8 gtk+-2.0 >= 2.10)
    AC_SUBST(MODEST_LIBTINYMAIL_GNOME_DESKTOP_CFLAGS)
-   AC_SUBST(MODEST_LIBTINYMAIL_GNOME_DESKTOP_LIBS)
-   MODEST_PLATFORM_ID=1
-   
+   AC_SUBST(MODEST_LIBTINYMAIL_GNOME_DESKTOP_LIBS)  
    AC_DEFINE_UNQUOTED(MODEST_PLATFORM_GNOME, 1, ["Whether modest is being built for the GNOME platform."])
 fi
 
-dnl 1==>gnome, 2==>maemo
-AC_SUBST(MODEST_PLATFORM_ID)
-
-
+dnl do we have the easy setup stuff?
+if test -d src/${with_platform}/easysetup; then	
+      AC_DEFINE_UNQUOTED(MODEST_HAVE_EASYSETUP, 1, ["Whether the easysetup feature is available."])
+fi
+AM_CONDITIONAL(MODEST_HAVE_EASYSETUP,test -d src/${with_platform}/easysetup) 
 
 
 dnl ## setup the testing framework (ie., make check)

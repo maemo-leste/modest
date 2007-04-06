@@ -48,7 +48,11 @@
 
 #include "modest-account-mgr-helpers.h"
 #include "modest-mail-operation.h"
+
+#ifdef MODEST_HAVE_EASYSETUP
 #include "easysetup/modest-easysetup-wizard.h"
+#endif /*MODEST_HAVE_EASYSETUP*/
+
 #include <modest-widget-memory.h>
 #include <tny-error.h>
 #include <tny-simple-list.h>
