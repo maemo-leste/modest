@@ -758,8 +758,66 @@ save_configuration (ModestAccountSettingsDialog *dialog)
 	modest_account_mgr_set_bool (dialog->account_manager, account_name,
 		MODEST_ACCOUNT_LEAVE_ON_SERVER, leave_on_server, FALSE /* not server account */);
 	
+	/* Incoming: */
+	gchar* incoming_account_name = modest_account_mgr_get_string (dialog->account_manager, account_name,
+		MODEST_ACCOUNT_STORE_ACCOUNT, FALSE /* not server account */);
+	g_assert (incoming_account_name);
+	
+	const gchar* hostname = gtk_entry_get_text (GTK_ENTRY (dialog->entry_incomingserver));
+	modest_account_mgr_set_string (dialog->account_manager, incoming_account_name,
+		MODEST_ACCOUNT_HOSTNAME, hostname, TRUE /* server account */);
 		
-	/* TODO: How can we change the incoming and outgoing server account details? */
+	const gchar* username = gtk_entry_get_text (GTK_ENTRY (dialog->entry_user_username));
+	modest_account_mgr_set_string (dialog->account_manager, incoming_account_name,
+		MODEST_ACCOUNT_USERNAME, username, TRUE /* server account */);
+		
+	const gchar* password = gtk_entry_get_text (GTK_ENTRY (dialog->entry_user_password));
+	modest_account_mgr_set_string (dialog->account_manager, incoming_account_name,
+		MODEST_ACCOUNT_PASSWORD, password, TRUE /*  server account */);
+	
+	/* TODO: How can we set these in the server account?:	
+	ModestProtocol protocol_authentication_incoming = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->checkbox_incoming_auth)) 
+			? MODEST_PROTOCOL_AUTH_PASSWORD
+			: MODEST_PROTOCOL_AUTH_NONE;
+			
+	ModestProtocol protocol_security_incoming = easysetup_serversecurity_combo_box_get_active_serversecurity (
+		EASYSETUP_SERVERSECURITY_COMBO_BOX (self->combo_incoming_security));
+	
+	*/
+	
+	g_free (incoming_account_name);
+	
+	/* Outgoing: */
+	gchar* outgoing_account_name = modest_account_mgr_get_string (dialog->account_manager, account_name,
+		MODEST_ACCOUNT_TRANSPORT_ACCOUNT, FALSE /* not server account */);
+	g_assert (outgoing_account_name);
+	
+	hostname = gtk_entry_get_text (GTK_ENTRY (dialog->entry_outgoingserver));
+	modest_account_mgr_set_string (dialog->account_manager, outgoing_account_name,
+		MODEST_ACCOUNT_HOSTNAME, hostname, TRUE /* server account */);
+		
+	username = gtk_entry_get_text (GTK_ENTRY (dialog->entry_outgoing_username));
+	modest_account_mgr_set_string (dialog->account_manager, outgoing_account_name,
+		MODEST_ACCOUNT_USERNAME, username, TRUE /* server account */);
+		
+	password = gtk_entry_get_text (GTK_ENTRY (dialog->entry_outgoing_password));
+	modest_account_mgr_set_string (dialog->account_manager, outgoing_account_name,
+		MODEST_ACCOUNT_PASSWORD, password, TRUE /*  server account */);
+			
+	password = gtk_entry_get_text (GTK_ENTRY (dialog->entry_outgoing_password));
+	modest_account_mgr_set_string (dialog->account_manager, outgoing_account_name,
+		MODEST_ACCOUNT_PASSWORD, password, TRUE /*  server account */);
+	
+	/* TODO: How do we set these in the account data?:
+	ModestProtocol protocol_security_outgoing = easysetup_serversecurity_combo_box_get_active_serversecurity (
+		EASYSETUP_SERVERSECURITY_COMBO_BOX (self->combo_outgoing_security));
+	
+	ModestProtocol protocol_authentication_outgoing = easysetup_secureauth_combo_box_get_active_secureauth (
+		EASYSETUP_SECUREAUTH_COMBO_BOX (self->combo_outgoing_auth));
+	 */
+		
+	g_free (outgoing_account_name);
+	
 }
 
 	
@@ -904,145 +962,5 @@ show_error (GtkWindow *parent_window, const gchar* text)
 }
 #endif
 
-#if 0
-/** Attempt to create the account from the information that the user has entered.
- * @result: TRUE if the account was successfully created.
- */
-gboolean
-create_account (ModestAccountSettingsDialog *self)
-{
-	ModestAccountSettingsDialogPrivate *priv = ACCOUNT_SETTINGS_DIALOG_GET_PRIVATE (self);
-	
-	const gchar* account_name = gtk_entry_get_text (GTK_ENTRY (self->entry_account_title));
-
-	/* Some checks: */
-	if (!account_name)
-		return FALSE;
-		
-	/* We should have checked for this already, 
-	 * and changed that name accordingly, 
-	 * but let's check again just in case:
-	 */
-	if (modest_account_mgr_account_exists (self->account_manager, account_name, FALSE)) 
-		return FALSE;	
-		
-	/* username and password (for both incoming and outgoing): */
-	const gchar* username = gtk_entry_get_text (GTK_ENTRY (self->entry_user_username));
-	const gchar* password = gtk_entry_get_text (GTK_ENTRY (self->entry_user_password));
-	
-	/* Incoming server: */
-	/* Note: We need something as default for the ModestProtocol values, 
-	 * or modest_account_mgr_add_server_account will fail. */
-	gchar* servername_incoming = NULL;
-	ModestProtocol protocol_incoming = MODEST_PROTOCOL_STORE_POP;
-	ModestProtocol protocol_security_incoming = MODEST_PROTOCOL_SECURITY_NONE;
-	ModestProtocol protocol_authentication_incoming = MODEST_PROTOCOL_AUTH_NONE;
-	
-	
-	/* Use custom pages because no preset was specified: */
-	servername_incoming = g_strdup (gtk_entry_get_text (GTK_ENTRY (self->entry_incomingserver) ));
-	
-	protocol_incoming = easysetup_servertype_combo_box_get_active_servertype (
-	EASYSETUP_SERVERTYPE_COMBO_BOX (self->combo_incoming_servertype));
-	
-	protocol_security_incoming = easysetup_serversecurity_combo_box_get_active_serversecurity (
-	EASYSETUP_SERVERSECURITY_COMBO_BOX (self->combo_incoming_security));
-	
-	protocol_authentication_incoming = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->checkbox_incoming_auth)) 
-		? MODEST_PROTOCOL_AUTH_PASSWORD
-		: MODEST_PROTOCOL_AUTH_NONE;
-		
-
-	
-	/* First we add the 2 server accounts, and then we add the account that uses them.
-	 * If we don't do it in this order then we will experience a crash. */
-	 
-	/* Add a (incoming) server account, to be used by the account: */
-	gchar *store_name = g_strconcat (account_name, "_store", NULL);
-	gboolean created = modest_account_mgr_add_server_account (self->account_manager,
-		store_name,
-		servername_incoming,
-		username, password,
-		protocol_incoming,
-		protocol_security_incoming,
-		protocol_authentication_incoming);		
-		
-	g_free (servername_incoming);
-	
-	if (!created) {
-		/* TODO: Provide a Logical ID for the text: */
-		show_error (GTK_WINDOW (self), _("An error occurred while creating the incoming account."));
-		return FALSE;	
-	}
-	
-	/* Sanity check: */
-	/* There must be at least one account now: */
-	GSList *account_names = modest_account_mgr_account_names (self->account_manager);
-	if(account_names != NULL)
-	{
-		g_warning ("modest_account_mgr_account_names() returned NULL after adding an account.");
-	}
-	g_slist_free (account_names);
-	
-	
-	/* Outgoing server: */
-	gchar* servername_outgoing = NULL;
-	ModestProtocol protocol_outgoing = MODEST_PROTOCOL_STORE_POP;
-	ModestProtocol protocol_security_outgoing = MODEST_PROTOCOL_SECURITY_NONE;
-	ModestProtocol protocol_authentication_outgoing = MODEST_PROTOCOL_AUTH_NONE;
-	
-	
-	/* Use custom pages because no preset was specified: */
-	servername_outgoing = g_strdup (gtk_entry_get_text (GTK_ENTRY (self->entry_outgoingserver) ));
-	
-	protocol_outgoing = MODEST_PROTOCOL_TRANSPORT_SMTP; /* It's always SMTP for outgoing. */
-
-	protocol_security_outgoing = easysetup_serversecurity_combo_box_get_active_serversecurity (
-		EASYSETUP_SERVERSECURITY_COMBO_BOX (self->combo_outgoing_security));
-	
-	protocol_authentication_outgoing = easysetup_secureauth_combo_box_get_active_secureauth (
-		EASYSETUP_SECUREAUTH_COMBO_BOX (self->combo_outgoing_auth));
-	
-	/* TODO: 
-	gboolean specific = gtk_toggle_button_get_active (
-		GTK_TOGGLE_BUTTON (self->checkbox_outgoing_smtp_specific));
-	*/
-		
-	    
-	/* Add a (outgoing) server account to be used by the account: */
-	gchar *transport_name = g_strconcat (account_name, "_transport", NULL); /* What is this good for? */
-	created = modest_account_mgr_add_server_account (self->account_manager,
-		transport_name,
-		servername_outgoing,
-		username, password,
-		protocol_outgoing,
-		protocol_security_outgoing,
-		protocol_authentication_outgoing);
-		
-	g_free (servername_outgoing);
-		
-	if (!created) {
-		/* TODO: Provide a Logical ID for the text: */
-		show_error (GTK_WINDOW (self), _("An error occurred while creating the outgoing account."));
-		return FALSE;	
-	}
-	
-	
-	/* Create the account, which will contain the two "server accounts": */
- 	created = modest_account_mgr_add_account (self->account_manager, account_name, 
- 		store_name, /* The name of our POP/IMAP server account. */
-		transport_name /* The name of our SMTP server account. */);
-	g_free (store_name);
-	g_free (transport_name);
-	
-	if (!created) {
-		/* TODO: Provide a Logical ID for the text: */
-		show_error (GTK_WINDOW (self), _("An error occurred while creating the account."));
-		return FALSE;	
-	}
-	
-	return FALSE;
-}
-#endif
 
 

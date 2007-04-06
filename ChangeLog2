@@ -1,5 +1,11 @@
 2007-04-06  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/maemo/modest-account-settings-dialog.c: (save_configuration): 
+	Saved much of the incoming and outgoing data too, though I cannot yet see how to 
+	save the security stuff.
+
+2007-04-06  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/maemo/easysetup/modest-easysetup-wizard.c: (create_account): 
 	Set the email address and user fullname, which I now see must be 
 	done separately.
