@@ -1,5 +1,14 @@
 2007-04-06  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/maemo/modest-account-settings-dialog.c:
+	(create_page_incoming),
+	(modest_account_settings_dialog_set_account_name): 
+	Added comments about the need for new API in ModestAccountMgr to handle the authentication 
+	and secure-connection stuff that is stored in the options GSList* with hard-coded names.
+	I will do this if nobody else gets there first.
+
+2007-04-06  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/maemo/modest-account-settings-dialog.c: (save_configuration): 
 	Saved much of the incoming and outgoing data too, though I cannot yet see how to 
 	save the security stuff.

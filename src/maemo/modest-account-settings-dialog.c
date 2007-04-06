@@ -371,8 +371,6 @@ static GtkWidget* create_page_incoming (ModestAccountSettingsDialog *self)
 	/* This will be filled by update_incoming_server_security_choices(). */
 	if (!self->combo_incoming_security)
 		self->combo_incoming_security = GTK_WIDGET (easysetup_serversecurity_combo_box_new ());
-	easysetup_serversecurity_combo_box_set_active_serversecurity (
-		EASYSETUP_SERVERSECURITY_COMBO_BOX (self->combo_incoming_security), MODEST_PROTOCOL_SECURITY_NONE);
 	GtkWidget *caption = hildon_caption_new (sizegroup, _("mcen_li_emailsetup_secure_connection"), 
 		self->combo_incoming_security, NULL, HILDON_CAPTION_OPTIONAL);
 	gtk_widget_show (self->combo_incoming_security);
@@ -687,6 +685,8 @@ void modest_account_settings_dialog_set_account_name (ModestAccountSettingsDialo
 		gtk_entry_set_text( GTK_ENTRY (dialog->entry_incomingserver), 
 			incoming_account->hostname ? incoming_account->hostname : "");
 			
+		easysetup_serversecurity_combo_box_set_active_serversecurity (
+			EASYSETUP_SERVERSECURITY_COMBO_BOX (dialog->combo_incoming_security), incoming_account->proto);
 		update_incoming_server_title (dialog, incoming_account->proto);
 		update_incoming_server_security_choices (dialog, incoming_account->proto);
 		
@@ -711,7 +711,9 @@ void modest_account_settings_dialog_set_account_name (ModestAccountSettingsDialo
 		gtk_entry_set_text( GTK_ENTRY (dialog->entry_outgoing_password), 
 			outgoing_account->password ? outgoing_account->password : "");
 		
-		/* How do we get the auth setting from the server account struct?: */
+		/* TODO: How do we get the auth setting from the server account struct?: */
+		/* This seems to be in ->options, with hard-coded option names.
+		 * This will need new API in ModestAccountMgr. */
 		easysetup_secureauth_combo_box_set_active_secureauth (
 			EASYSETUP_SECUREAUTH_COMBO_BOX (dialog->combo_outgoing_auth), MODEST_PROTOCOL_AUTH_NONE);
 		on_combo_outgoing_auth_changed (GTK_COMBO_BOX (dialog->combo_outgoing_auth), dialog);
