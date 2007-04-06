@@ -57,8 +57,8 @@ libmodest_ui_la_SOURCES=              \
 	modest-msg-view-window.c      \
 	modest-msg-edit-window.c      \
 	modest-maemo-utils.c          \
-	modest-account-settings.h \
-	modest-account-settings.c \
+	modest-account-settings-window.h \
+	modest-account-settings-window.c \
 	modest-connection-specific-smtp-window.h \
 	modest-connection-specific-smtp-window.c \
 	modest-connection-specific-smtp-edit-window.h \

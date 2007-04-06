@@ -195,7 +195,13 @@ on_delete_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 static void
 on_edit_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 {
-	modest_runtime_not_implemented (GTK_WINDOW(self));
+	/* Show the Account Settings window: */
+	ModestAccountSettingsDialog *dialog = modest_account_settings_dialog_new (void);
+	modest_account_settings_dialog_set_account_name (dialog, account_name);
+	
+	gtk_window_set_transient_for (GTK_WINDOW (dialog), GTK_WINDOW (self));
+	gtk_dialog_run (GTK_DIALOG (dialog));
+	gtk_widget_destroy (GTK_WIDGET (dialog));
 }
 
 static void

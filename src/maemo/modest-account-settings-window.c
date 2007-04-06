@@ -4,7 +4,7 @@
  */
 
 
-#include "modest-account-settings.h"
+#include "modest-account-settings-window.h"
 #include <glib/gi18n.h>
 #include <gtk/gtknotebook.h>
 #include <gtk/gtkvbox.h>
