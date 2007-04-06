@@ -42,20 +42,20 @@ typedef struct {
 	ModestAccountMgr *account_manager;
 	
 	GtkWidget *page_account_details;
-	GtkWidget *combo_account_country;
-	GtkWidget *combo_account_serviceprovider;
 	GtkWidget *entry_account_title;
+	GtkWidget *checkbox_leave_messages;
 	
 	GtkWidget *page_user_details;
 	GtkWidget *entry_user_name;
 	GtkWidget *entry_user_username;
 	GtkWidget *entry_user_password;
 	GtkWidget *entry_user_email;
+	GtkWidget *entry_incoming_port;
+	GtkWidget *button_signature;
 	
 	GtkWidget *page_complete_easysetup;
 	
 	GtkWidget *page_incoming;
-	GtkWidget *combo_incoming_servertype;
 	GtkWidget *caption_incoming;
 	GtkWidget *entry_incomingserver;
 	GtkWidget *combo_incoming_security;
@@ -63,8 +63,13 @@ typedef struct {
 
 	GtkWidget *page_outgoing;
 	GtkWidget *entry_outgoingserver;
+	GtkWidget *caption_outgoing_username;
+	GtkWidget *entry_outgoing_username;
+	GtkWidget *caption_outgoing_password;
+	GtkWidget *entry_outgoing_password;
 	GtkWidget *combo_outgoing_security;
 	GtkWidget *combo_outgoing_auth;
+	GtkWidget *entry_outgoing_port;
 	GtkWidget *checkbox_outgoing_smtp_specific;
 	GtkWidget *button_outgoing_smtp_servers;
 	

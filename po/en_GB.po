@@ -2620,88 +2620,88 @@ msgstr "Close"
 #~ msgstr "Advanced settings for %s"
 
 # Tab title 
-#~ msgid "mcen_ti_advsetup_retrieval"
-#~ msgstr "Incoming"
+msgid "mcen_ti_advsetup_retrieval"
+msgstr "Incoming"
 
 # Label
-#~ msgid "mcen_fi_advsetup_retrievetype"
-#~ msgstr "Retrieve"
+msgid "mcen_fi_advsetup_retrievetype"
+msgstr "Retrieve"
 
 # Choice list item
-#~ msgid "mcen_fi_advsetup_retrievetype_headers"
-#~ msgstr "Headers only"
+msgid "mcen_fi_advsetup_retrievetype_headers"
+msgstr "Headers only"
 
 # Choice list item
-#~ msgid "mcen_fi_advsetup_retrievetype_messages"
-#~ msgstr "Messages"
+msgid "mcen_fi_advsetup_retrievetype_messages"
+msgstr "Messages"
 
 # Choice list item
-#~ msgid "mcen_fi_advsetup_retrievetype_messages_attachments"
-#~ msgstr "Messages and attachments"
+msgid "mcen_fi_advsetup_retrievetype_messages_attachments"
+msgstr "Messages and attachments"
 
 # Label
-#~ msgid "mcen_fi_advsetup_retrieve_number"
-#~ msgstr "No. of messages to retrieve"
+msgid "mcen_fi_advsetup_retrieve_number"
+msgstr "No. of messages to retrieve"
 
 # Choice list item
-#~ msgid "mcen_fi_advsetup_retrieve_all"
-#~ msgstr "All"
+msgid "mcen_fi_advsetup_retrieve_all"
+msgstr "All"
 
 # Choice list item
-#~ msgid "mcen_fi_advsetup_retrieve_10"
-#~ msgstr "10"
+msgid "mcen_fi_advsetup_retrieve_10"
+msgstr "10"
 
 # Choice list item
-#~ msgid "mcen_fi_advsetup_retrieve_25"
-#~ msgstr "25"
+msgid "mcen_fi_advsetup_retrieve_25"
+msgstr "25"
 
 # Choice list item
-#~ msgid "mcen_fi_advsetup_retrieve_50"
-#~ msgstr "50"
+msgid "mcen_fi_advsetup_retrieve_50"
+msgstr "50"
 
 # Label
-#~ msgid "mcen_fi_advsetup_password_auth"
-#~ msgstr "Password authentication"
+msgid "mcen_fi_advsetup_password_auth"
+msgstr "Password authentication"
 
 # Choice list item
-#~ msgid "mcen_fi_advsetup_password_normal"
-#~ msgstr "Normal"
+msgid "mcen_fi_advsetup_password_normal"
+msgstr "Normal"
 
 # Choice list item
-#~ msgid "mcen_fi_advsetup_password_secure"
-#~ msgstr "Secure"
+msgid "mcen_fi_advsetup_password_secure"
+msgstr "Secure"
 
 # Label
-#~ msgid "mcen_fi_advsetup_other_security"
-#~ msgstr "Security"
+msgid "mcen_fi_advsetup_other_security"
+msgstr "Security"
 
 # Label
-#~ msgid "mcen_fi_advsetup_port_incoming"
-#~ msgstr "Incoming e-mail port"
+msgid "mcen_fi_advsetup_port_incoming"
+msgstr "Incoming e-mail port"
 
 # Tab title
-#~ msgid "mcen_ti_advsetup_sending"
-#~ msgstr "Outgoing"
+msgid "mcen_ti_advsetup_sending"
+msgstr "Outgoing"
 
 # Label
-#~ msgid "mcen_fi_advsetup_smtp_smtpauth"
-#~ msgstr "SMTP authentication"
+msgid "mcen_fi_advsetup_smtp_smtpauth"
+msgstr "SMTP authentication"
 
 # Label
-#~ msgid "mcen_fi_advsetup_smtp_username"
-#~ msgstr "User name"
+msgid "mcen_fi_advsetup_smtp_username"
+msgstr "User name"
 
 # Label
-#~ msgid "mcen_fi_advsetup_smtp_password"
-#~ msgstr "Password"
+msgid "mcen_fi_advsetup_smtp_password"
+msgstr "Password"
 
 # Label
-#~ msgid "mcen_fi_advsetup_port_outgoing"
-#~ msgstr "Outgoing e-mail port"
+msgid "mcen_fi_advsetup_port_outgoing"
+msgstr "Outgoing e-mail port"
 
 # Tab title
-#~ msgid "mcen_fi_advsetup_security"
-#~ msgstr "Security"
+msgid "mcen_fi_advsetup_security"
+msgstr "Security"
 
 # Label
 #~ msgid "mcen_fi_advsetup_encrypt_mess"
@@ -4193,24 +4193,24 @@ msgstr "Close"
 #~ msgstr "%s account settings for %s"
 
 # Tab title
-#~ msgid "mcen_ti_account_settings_account"
-#~ msgstr "Account"
+msgid "mcen_ti_account_settings_account"
+msgstr "Account"
 
 # field title
-#~ msgid "mcen_fi_advsetup_limit_retrieve"
-#~ msgstr "Limit retrieve"
+msgid "mcen_fi_advsetup_limit_retrieve"
+msgstr "Limit retrieve"
 
 # Choice list item
-#~ msgid "mcen_fi_advsetup_retrieve_nolimit"
-#~ msgstr "No limit"
+msgid "mcen_fi_advsetup_retrieve_nolimit"
+msgstr "No limit"
 
 # field title. Uses a checkbox
-#~ msgid "mcen_fi_advsetup_leave_on_server"
-#~ msgstr "Leave messages on server"
+msgid "mcen_fi_advsetup_leave_on_server"
+msgstr "Leave messages on server"
 
 # Tab title 
-#~ msgid "mcen_ti_account_settings_userinfo"
-#~ msgstr "User info"
+msgid "mcen_ti_account_settings_userinfo"
+msgstr "User info"
 
 # field title for button 
 #~ msgid "mcen_fi_email_signature"

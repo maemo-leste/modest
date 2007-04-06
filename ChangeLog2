@@ -1,5 +1,15 @@
 2007-04-06  Murray Cumming  <murrayc@murrayc.com>
 
+
+	* src/maemo/modest-account-settings-dialog.c:
+	* src/maemo/modest-account-settings-dialog.h:
+	Most (but not all) of the widgets are now present as specified by the UI spec.
+	No changes are yet saved, and some details are not properly shown yet.
+	
+	* po/en_GB.po: Added translations for logical IDs used by the Account Settings dialog.
+
+2007-04-06  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/maemo/Makefile.am:
 	* src/maemo/modest-account-settings-dialog.c:
 	* src/maemo/modest-account-settings-dialog.h: The beginnings of the dialog to edit 

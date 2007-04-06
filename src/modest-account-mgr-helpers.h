@@ -45,7 +45,7 @@ typedef struct {
 	gchar            *hostname;
 	gchar            *username;
 	gchar	         *uri;
-	ModestProtocol    proto;
+	ModestProtocol    proto; /*< The store or transport. Not ORed. */
 	gchar            *password;
 	time_t		  last_updated;
 	GSList           *options;
