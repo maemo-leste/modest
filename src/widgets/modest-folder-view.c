@@ -259,7 +259,7 @@ get_cached_icon (const gchar *name)
 	
 	if (!icon_cache || !g_hash_table_lookup_extended (icon_cache, name, &orig_key, &pixbuf)) {
 
-#if MODEST_PLATFORM_ID==1  /* MODES_PLATFORM_ID: 1 ==> gnome, 2==> maemo */ 
+#ifdef MODEST_PLATFORM_GNOME  
 		pixbuf = (gpointer) gdk_pixbuf_new_from_file (name, &err);
 #else
 		GtkIconTheme *current_theme;
@@ -269,7 +269,7 @@ get_cached_icon (const gchar *name)
 						   26,
 						   GTK_ICON_LOOKUP_NO_SVG,
 						   NULL);
-#endif
+#endif /*MODEST_PLATFORM_GNOME*/
 
 		if (!pixbuf) {
 			g_printerr ("modest: error in icon factory while loading '%s': %s\n",

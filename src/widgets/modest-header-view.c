@@ -475,7 +475,7 @@ modest_header_view_get_selected_headers (ModestHeaderView *self)
 static void
 scroll_to_selected (ModestHeaderView *self, GtkTreeIter *iter, gboolean up)
 {
-#if MODEST_PLATFORM_ID==1  /* MODES_PLATFORM_ID: 1 ==> gnome, 2==> maemo */ 
+#ifdef MODEST_PLATFORM_GNOME 
 
 	GtkTreePath *selected_path;
 	GtkTreePath *start, *end;
@@ -500,7 +500,7 @@ scroll_to_selected (ModestHeaderView *self, GtkTreeIter *iter, gboolean up)
 	gtk_tree_path_free (start);
 	gtk_tree_path_free (end);
 
-#endif /* MODEST_PLATFORM_ID */
+#endif /* MODEST_PLATFORM_GNOME */
 }
 
 
