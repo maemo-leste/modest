@@ -231,7 +231,9 @@ on_account_removed (ModestAccountMgr *account_mgr,
 	on_account_changed (account_mgr, account, NULL, server_account, self);
 }
 
-#if 0
+
+/* currently unused */
+#if 0 
 static void
 on_account_enable_toggled (GtkCellRendererToggle *cell_renderer, gchar *path,
 			   ModestAccountView *self)
@@ -266,7 +268,7 @@ on_account_default_toggled (GtkCellRendererToggle *cell_renderer, gchar *path,
 	printf ("debug: on_account_default_toggled\n");
 	gboolean is_default = gtk_cell_renderer_toggle_get_active (cell_renderer);
 	printf ("debug: is_default: %d\n", is_default);
-	if (!is_default) {
+	if (is_default) {
 		/* Do not allow an account to be marked non-default.
 		 * Only allow this to be changed by setting another account to default: */
 		gtk_cell_renderer_toggle_set_active (cell_renderer, TRUE);

@@ -700,8 +700,8 @@ modest_tny_account_store_get_tny_account_by_id  (ModestTnyAccountStore *self, co
 
 	for (cursor = priv->store_accounts; cursor ; cursor = cursor->next) {
 		const gchar *acc_id = tny_account_get_id (TNY_ACCOUNT(cursor->data));
-		if (acc_id && strcmp (acc_id, id) == 0) {
-		account = TNY_ACCOUNT(cursor->data);
+		if (acc_id && strcmp (acc_id, id) == 0) { 
+			account = TNY_ACCOUNT(cursor->data);
 			break;
 		}
 	}
