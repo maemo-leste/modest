@@ -39,6 +39,7 @@ INCLUDES=\
 	-DPIXMAP_PREFIX=\"${datadir}/pixmaps/modest/\" \
 	-DMODEST_UIDIR=\""$(datadir)/modest/ui/"\" \
 	-DHACK_TOP_SRCDIR=\"${top_srcdir}/\"  \
+	-DPROVIDER_DATA_DIR=\""${datadir}/modest/provider-data/"\" \
 	-Wall
 
 noinst_LTLIBRARIES=\
@@ -58,3 +59,11 @@ libmodest_easysetup_la_SOURCES=              \
 LDADD = \
 	$(MODEST_GSTUFF_LIBS) \
 	$(MODEST_LIBTINYMAIL_MAEMO_LIBS)
+
+# mcc_mapping will provided by other packages later
+PROVIDER_DATA_FILE=provider-data.keyfile mcc_mapping
+providerdatadir=$(datadir)/modest/provider-data
+providerdata_DATA = $(PROVIDER_DATA_FILE)
+
+EXTRA_DIST=\
+	$(PROVIDER_DATA_FILE)
