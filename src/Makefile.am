@@ -1,6 +1,6 @@
 #
 # Makefile.am
-# Time-stamp: <2007-04-06 16:29:33 (djcb)>
+# Time-stamp: <2007-04-10 10:58:05 (djcb)>
 SUBDIRS=$(MODEST_PLATFORM) widgets
 DIST_SUBDIRS = widgets gnome maemo
 
@@ -23,13 +23,6 @@ modest-marshal.c: modest-marshal.list
 
 modest-marshal.h: modest-marshal.list
 	glib-genmarshal --header --prefix=modest_marshal < modest-marshal.list > modest-marshal.h
-
-if MODEST_HAVE_EASYSETUP
-	easysetupmaybe=$(MODEST_PLATFORM)/easysetup/libmodest-easysetup.la
-else
-	easysetupmaybe=$(MODEST_PLATFORM)/easysetup/libmodest-easysetup.la	
-endif
-
 
 bin_PROGRAMS=\
 	modest

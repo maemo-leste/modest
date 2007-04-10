@@ -141,10 +141,12 @@ else
 fi
 
 dnl do we have the easy setup stuff?
+have_easysetup=false
 if test -d src/${with_platform}/easysetup; then	
-      AC_DEFINE_UNQUOTED(MODEST_HAVE_EASYSETUP, 1, ["Whether the easysetup feature is available."])
+      	have_easysetup=true
+	AC_DEFINE_UNQUOTED(MODEST_HAVE_EASYSETUP, 1, ["Whether the easysetup feature is available."])
 fi
-AM_CONDITIONAL(MODEST_HAVE_EASYSETUP,test -d src/${with_platform}/easysetup) 
+AM_CONDITIONAL(MODEST_HAVE_EASYSETUP,test x$have_easysetup = xtrue) 
 
 
 dnl ## setup the testing framework (ie., make check)
@@ -207,10 +209,11 @@ src/maemo/modest.service
 echo
 echo "modest configure results"
 echo "-----------------------------------"
-echo "Platform       : $with_platform"
-echo "Build tests    : $build_tests"
-echo "Build docs     : $build_docs"
-echo "Debug version  : $with_debug"
+echo "Platform         : $with_platform"
+echo "Build easy setup : $have_easysetup"
+echo "Build tests      : $build_tests"
+echo "Build docs       : $build_docs"
+echo "Debug version    : $with_debug"
 echo ""
 echo "NOTE: you should do a 'make clean' after changing architecture or platform (--with-platform=)"
 echo ""

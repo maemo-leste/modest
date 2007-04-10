@@ -64,9 +64,10 @@ libmodest_ui_la_SOURCES=              \
 	modest-connection-specific-smtp-edit-window.h \
 	modest-connection-specific-smtp-edit-window.c
 
-LDADD = \
+libmodest_ui_la_LIBADD = \
 	$(MODEST_GSTUFF_LIBS) \
-	$(MODEST_LIBTINYMAIL_MAEMO_LIBS)
+	$(MODEST_LIBTINYMAIL_MAEMO_LIBS) \
+	easysetup/libmodest-easysetup.la 
 
 PIXMAP_FILES=\
 	pixmaps/*.png 
