@@ -34,6 +34,10 @@
 static void modest_window_mgr_class_init (ModestWindowMgrClass *klass);
 static void modest_window_mgr_init       (ModestWindowMgr *obj);
 static void modest_window_mgr_finalize   (GObject *obj);
+
+static void on_window_destroy            (ModestWindow *window, 
+					  ModestWindowMgr *self);
+
 /* list my signals  */
 enum {
 	/* MY_SIGNAL_1, */
@@ -145,6 +149,15 @@ modest_window_mgr_register_window (ModestWindowMgr *self,
 	/* Add to list. Keep a reference to the window */
 	g_object_ref (window);
 	priv->window_list = g_list_prepend (priv->window_list, window);
+
+	/* Listen to object destruction */
+	g_signal_connect (window, "destroy", G_CALLBACK (on_window_destroy), self);
+}
+
+static void
+on_window_destroy (ModestWindow *window, ModestWindowMgr *self)
+{
+	modest_window_mgr_unregister_window (self, window);
 }
 
 void 

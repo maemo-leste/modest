@@ -758,30 +758,24 @@ on_refresh_folder (TnyFolder   *folder,
 	modest_mail_operation_queue_remove (modest_runtime_get_mail_operation_queue (), self);
 }
 
-static void
-on_refresh_folder_status_update (TnyFolder *folder, const gchar *msg,
-				 gint num, gint total,  gpointer user_data)
-{
-	ModestMailOperation *self;
-	ModestMailOperationPrivate *priv;
+/* static void */
+/* on_refresh_folder_status_update (TnyFolder *folder, const gchar *msg, */
+/* 				 gint num, gint total,  gpointer user_data) */
+/* { */
+/* 	ModestMailOperation *self; */
+/* 	ModestMailOperationPrivate *priv; */
 
-	/* TODO: if tinymail issues a status update before the
-	   callback call then this could happen. If this is true the
-	   we must review the design */
-	if (!G_IS_OBJECT (user_data))
-	  return;
+/* 	self = MODEST_MAIL_OPERATION (user_data); */
+/* 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self); */
 
-	self = MODEST_MAIL_OPERATION (user_data);
-	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
+/* 	priv->done = num; */
+/* 	priv->total = total; */
 
-	priv->done = num;
-	priv->total = total;
+/* 	if (num == 1 && total == 100) */
+/* 		return; */
 
-	if (num == 1 && total == 100)
-		return;
-
-	g_signal_emit (G_OBJECT (self), signals[PROGRESS_CHANGED_SIGNAL], 0, NULL);
-}
+/* 	g_signal_emit (G_OBJECT (self), signals[PROGRESS_CHANGED_SIGNAL], 0, NULL); */
+/* } */
 
 void 
 modest_mail_operation_refresh_folder  (ModestMailOperation *self,
@@ -796,10 +790,13 @@ modest_mail_operation_refresh_folder  (ModestMailOperation *self,
 
 	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
 
-	/* Refresh the folder */
+	/* Refresh the folder. TODO: tinymail could issue a status
+	   updates before the callback call then this could happen. We
+	   must review the design */
 	tny_folder_refresh_async (folder,
 				  on_refresh_folder,
-				  on_refresh_folder_status_update,
+/* 				  on_refresh_folder_status_update, */
+				  NULL,
 				  self);
 }
 

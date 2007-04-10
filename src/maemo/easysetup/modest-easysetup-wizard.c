@@ -596,10 +596,11 @@ on_button_outgoing_smtp_servers (GtkButton *button, gpointer user_data)
 	 * so we can supply them when creating the connection somehow.
 	 */
 	GtkWidget *window = GTK_WIDGET (modest_connection_specific_smtp_window_new ());
+
 	gtk_window_set_transient_for (GTK_WINDOW (self), GTK_WINDOW (window));
 	g_signal_connect (G_OBJECT (window), "hide",
         	G_CALLBACK (on_smtp_servers_window_hide), self);
-    gtk_widget_show (window);
+	gtk_widget_show (window);
 }
 
 static GtkWidget* create_page_custom_outgoing (ModestEasysetupWizardDialog *self)

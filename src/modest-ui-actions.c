@@ -271,6 +271,7 @@ modest_ui_actions_on_new_msg (GtkAction *action, ModestWindow *win)
 	gchar *from_str = NULL;
 	GError *err = NULL;
 	TnyAccount *account;
+	ModestWindowMgr *mgr;
 	
 	account_name = g_strdup(modest_window_get_active_account (win));
 	if (!account_name)
@@ -306,7 +307,11 @@ modest_ui_actions_on_new_msg (GtkAction *action, ModestWindow *win)
 		goto cleanup;
 	}
 
+	/* Create and register edit window */
 	msg_win = modest_msg_edit_window_new (msg, account_name);
+	mgr = modest_runtime_get_window_mgr ();
+	modest_window_mgr_register_window (mgr, msg_win);
+
 	if (win)
 		gtk_window_set_transient_for (GTK_WINDOW (msg_win),
 					      GTK_WINDOW (win));	
@@ -344,6 +349,7 @@ reply_forward_func (gpointer data, gpointer user_data)
 	GError *err = NULL;
 	TnyFolder *folder = NULL;
 	TnyAccount *account = NULL;
+	ModestWindowMgr *mgr;
 	
 	msg = TNY_MSG (data);
 	helper = (GetMsgAsyncHelper *) user_data;
@@ -401,9 +407,13 @@ reply_forward_func (gpointer data, gpointer user_data)
 		g_error_free (err);
 		goto cleanup;
 	}	
-			
-	/* Show edit window */
+
+	/* Create and register the windows */			
 	msg_win = modest_msg_edit_window_new (new_msg, rf_helper->account_name);
+	mgr = modest_runtime_get_window_mgr ();
+	modest_window_mgr_register_window (mgr, msg_win);
+
+	/* Show edit window */
 	gtk_widget_show_all (GTK_WIDGET (msg_win));
 
 cleanup:
@@ -756,6 +766,7 @@ modest_ui_actions_on_header_activated (ModestHeaderView *folder_view, TnyHeader 
 	TnyFolder *folder = NULL;
 	TnyMsg    *msg    = NULL;
 	gchar *account    = NULL;
+	ModestWindowMgr *mgr;
 	
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW(main_window));
 	
@@ -778,8 +789,12 @@ modest_ui_actions_on_header_activated (ModestHeaderView *folder_view, TnyHeader 
 	account =  g_strdup(modest_window_get_active_account(MODEST_WINDOW(main_window)));
 	if (!account)
 		account = modest_account_mgr_get_default_account (modest_runtime_get_account_mgr());
-	
+
+	/* Create and register message view window */	
 	win = modest_msg_view_window_new (msg, account);
+	mgr = modest_runtime_get_window_mgr ();
+	modest_window_mgr_register_window (mgr, win);
+
 	gtk_window_set_transient_for (GTK_WINDOW (win),
 				      GTK_WINDOW (main_window));
 

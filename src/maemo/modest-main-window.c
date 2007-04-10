@@ -295,13 +295,14 @@ get_toolbar (ModestMainWindow *self)
 	
 	/* Toolbar */
 	toolbar = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar");
-	reply_button = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/ToolbarMessageReply");
-
-	menu = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolbarReplyContextMenu");
-	gtk_widget_tap_and_hold_setup (GTK_WIDGET (reply_button), menu, NULL, 0);
 
 	/* Set homogeneous toolbar */
 	gtk_container_foreach (GTK_CONTAINER (toolbar), set_homogeneous, NULL);
+
+	/* Set reply message tap and hold menu */
+	reply_button = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/ToolbarMessageReply");
+	menu = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolbarReplyContextMenu");
+	gtk_widget_tap_and_hold_setup (GTK_WIDGET (reply_button), menu, NULL, 0);
 
 	return toolbar;
 }
