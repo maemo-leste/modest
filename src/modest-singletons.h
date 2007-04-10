@@ -39,6 +39,7 @@
 #include <modest-mail-operation-queue.h>
 #include <modest-cache-mgr.h>
 #include <modest-tny-platform-factory.h>
+#include "widgets/modest-window-mgr.h"
 
 G_BEGIN_DECLS
 
@@ -175,7 +176,16 @@ TnyDevice*                 modest_singletons_get_device       (ModestSingletons 
  **/
 ModestMailOperationQueue* modest_singletons_get_mail_operation_queue (ModestSingletons *self);
 
-
+/**
+ * modest_singletons_get_window_mgr:
+ * @self: 
+ * 
+ * Gets the #ModestWindowMgr singleton instance. Don't use this
+ * function directly, use the modest-runtime function instead.
+ *
+ * Return value: the singleton instance of #ModestWindowMgr
+ **/
+ModestWindowMgr*          modest_singletons_get_window_mgr           (ModestSingletons *self);
 
 G_END_DECLS
 

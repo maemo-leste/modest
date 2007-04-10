@@ -46,7 +46,9 @@ libmodest_widgets_la_SOURCES=          \
 	modest-tny-stream-gtkhtml.c    \
 	modest-tny-stream-gtkhtml.h    \
 	modest-window.c                \
-	modest-window.h
+	modest-window.h	               \
+	modest-window-mgr.h            \
+	modest-window-mgr.c
 
 LDADD = \
 	$(MODEST_GSTUFF_LIBS) 				\

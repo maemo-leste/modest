@@ -260,9 +260,6 @@ modest_runtime_get_platform_factory  (void)
 	return modest_singletons_get_platform_factory (_singletons);
 }
 
-
-
-
 ModestTnySendQueue*
 modest_runtime_get_send_queue  (TnyTransportAccount *account)
 {
@@ -285,8 +282,12 @@ modest_runtime_get_send_queue  (TnyTransportAccount *account)
 	return MODEST_TNY_SEND_QUEUE(send_queue);
 }
 
-
-
+ModestWindowMgr *
+modest_runtime_get_window_mgr (void)
+{
+	g_return_val_if_fail (_singletons, NULL);
+	return modest_singletons_get_window_mgr (_singletons);
+}
 
 /* http://primates.ximian.com/~federico/news-2006-04.html#memory-debugging-infrastructure*/
 ModestRuntimeDebugFlags

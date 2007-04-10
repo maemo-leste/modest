@@ -277,6 +277,14 @@ on_delete_event (GtkWidget *widget, GdkEvent  *event, ModestMainWindow *self)
 	return FALSE;
 }
 
+static void
+set_homogeneous (GtkWidget *widget,
+		 gpointer data)
+{
+	gtk_tool_item_set_expand (GTK_TOOL_ITEM (widget), TRUE);
+	gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (widget), TRUE);
+}
+
 static GtkWidget*
 get_toolbar (ModestMainWindow *self)
 {
@@ -291,6 +299,9 @@ get_toolbar (ModestMainWindow *self)
 
 	menu = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolbarReplyContextMenu");
 	gtk_widget_tap_and_hold_setup (GTK_WIDGET (reply_button), menu, NULL, 0);
+
+	/* Set homogeneous toolbar */
+	gtk_container_foreach (GTK_CONTAINER (toolbar), set_homogeneous, NULL);
 
 	return toolbar;
 }

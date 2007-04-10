@@ -39,6 +39,7 @@
 #include <modest-tny-account-store.h>
 #include <modest-tny-send-queue.h>
 #include <tny-platform-factory.h>
+#include "widgets/modest-window-mgr.h"
 
 G_BEGIN_DECLS
 
@@ -196,6 +197,14 @@ ModestMailOperationQueue* modest_runtime_get_mail_operation_queue (void);
 ModestTnySendQueue* modest_runtime_get_send_queue        (TnyTransportAccount *account);
 
 
+/**
+ * modest_runtime_get_window_mgr:
+ *
+ * get the #ModestWindowMgr singleton instance
+ *
+ * Returns: the #ModestWindowMgr singleton. This should NOT be unref'd.
+ **/
+ModestWindowMgr* modest_runtime_get_window_mgr (void);
 
 /**
  * modest_runtime_verify_object_death

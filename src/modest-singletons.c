@@ -44,6 +44,7 @@ struct _ModestSingletonsPrivate {
 	ModestMailOperationQueue  *mail_op_queue;
 	TnyPlatformFactory        *platform_fact;
 	TnyDevice                 *device;
+	ModestWindowMgr           *window_mgr;
 };
 #define MODEST_SINGLETONS_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                MODEST_TYPE_SINGLETONS, \
@@ -100,6 +101,7 @@ modest_singletons_init (ModestSingletons *obj)
 	priv->mail_op_queue  = NULL;
 	priv->platform_fact  = NULL;
 	priv->device         = NULL;
+	priv->window_mgr     = NULL;
 	
 	priv->conf           = modest_conf_new ();
 	if (!priv->conf) {
@@ -141,7 +143,13 @@ modest_singletons_init (ModestSingletons *obj)
 	if (!priv->mail_op_queue) {
 		g_printerr ("modest: cannot create modest mail operation queue instance\n");
 		return;
-	}	
+	}
+
+	priv->window_mgr = modest_window_mgr_new ();
+	if (!priv->window_mgr) {
+		g_printerr ("modest: cannot create modest window manager instance\n");
+		return;
+	}
 }
 
 static void
@@ -264,4 +272,11 @@ modest_singletons_get_platform_factory (ModestSingletons *self)
 {
 	g_return_val_if_fail (self, NULL);
 	return MODEST_SINGLETONS_GET_PRIVATE(self)->platform_fact;
+}
+
+ModestWindowMgr* 
+modest_singletons_get_window_mgr (ModestSingletons *self)
+{
+	g_return_val_if_fail (self, NULL);
+	return MODEST_SINGLETONS_GET_PRIVATE(self)->window_mgr;
 }
