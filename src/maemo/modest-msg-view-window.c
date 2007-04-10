@@ -264,7 +264,7 @@ modest_msg_view_window_new (TnyMsg *msg, const gchar *account_name)
 			  G_CALLBACK (modest_ui_actions_on_msg_link_hover), obj);
 	g_signal_connect (G_OBJECT(priv->msg_view), "attachment_clicked",
 			  G_CALLBACK (modest_ui_actions_on_msg_attachment_clicked), obj);
-	g_signal_connect (G_OBJECT(priv->msg_view), "recpt-activate",
+	g_signal_connect (G_OBJECT(priv->msg_view), "recpt_activated",
 			  G_CALLBACK (modest_ui_actions_on_msg_recpt_activated), obj);
 
 	modest_window_set_active_account (MODEST_WINDOW(obj), account_name);
