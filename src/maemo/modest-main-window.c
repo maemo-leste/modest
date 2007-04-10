@@ -371,6 +371,7 @@ modest_main_window_new (void)
 
 	parent_priv->ui_manager = gtk_ui_manager_new();
 	action_group = gtk_action_group_new ("ModestMainWindowActions");
+	gtk_action_group_set_translation_domain (action_group, GETTEXT_PACKAGE);
 
 	/* Add common actions */
 	gtk_action_group_add_actions (action_group,

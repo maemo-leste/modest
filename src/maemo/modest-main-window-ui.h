@@ -42,77 +42,71 @@ static const GtkActionEntry modest_action_entries [] = {
 
 	/* Toplevel menus */
 	{ "Email", NULL, N_("mcen_me_inbox_email") },
-	{ "Edit",    NULL, N_("Edit") },
-	{ "View",    NULL, N_("View") },
-	{ "Tools",   NULL, N_("Tools") },
-	{ "Close",   NULL, N_("Close") },
+	{ "Edit",    NULL, N_("mcen_me_inbox_edit") },
+	{ "View",    NULL, N_("mcen_me_inbox_view") },
+	{ "Tools",   NULL, N_("mcen_me_inbox_tools") },
+	{ "Close",   NULL, N_("mcen_me_inbox_close") },
 
 	/* Email */
 	{ "EmailNew", NULL, N_("mcen_me_inbox_new") }, /* submenu */
-	{ "EmailNewMessage",  NULL,  N_("mcen_me_inbox_new"),      "<CTRL>N", NULL,   G_CALLBACK (modest_ui_actions_on_new_msg) },
+	{ "EmailNewMessage",  NULL,  N_("mcen_me_inbox_message"),      "<CTRL>N", NULL,   G_CALLBACK (modest_ui_actions_on_new_msg) },
 	{ "EmailNewFolder",   NULL,  N_("mcen_me_inbox_folder"),       NULL,      NULL,   G_CALLBACK (modest_ui_actions_on_new_folder) },
 	{ "EmailOpen",        NULL,  N_("mcen_me_inbox_open"),	        "<CTRL>O", NULL,   NULL },
-/* 	{ "MessageCancelSending",  NULL,  N_(""),	NULL,      NULL,   NULL }, */
-/* 	{ "MessageSend",        NULL,  N_("Send"),	        NULL,      NULL,   NULL }, */
-/* 	{ "MessageSendNow",        NULL,  N_("Send now"),	        NULL,      NULL,   NULL }, */
 	{ "EmailReply",       NULL,  N_("mcen_me_inbox_reply"),            NULL,      NULL,   G_CALLBACK (modest_ui_actions_on_reply) },
 	{ "EmailReplyAll",    NULL,  N_("mcen_me_inbox_replytoall"),      NULL,      NULL,   G_CALLBACK (modest_ui_actions_on_reply_all) },
 	{ "EmailForward",     NULL,  N_("mcen_me_inbox_forward"),          NULL,      NULL,   G_CALLBACK (modest_ui_actions_on_forward) },
 	{ "EmailDelete",      NULL,  N_("mcen_me_inbox_delete"),    NULL,      NULL,   G_CALLBACK (modest_ui_actions_on_delete) },
-/* 	{ "MessageSendReceive", NULL,  N_("Send and receive"),  NULL,      NULL,   G_CALLBACK (modest_ui_actions_on_send_receive) }, */
 	{ "EmailContents",    NULL,  N_("mcen_me_inbox_retrieve_contents"), NULL,      NULL,   NULL },
 	{ "EmailDetails",     NULL,  N_("mcen_me_inbox_messagedetails"),        NULL,      NULL,   NULL },
 	{ "EmailPurgeAttachments", NULL, N_("FIXME: Purge attachments"), NULL,  NULL,   NULL },
 	
 
 	/* Edit */
-	{ "EditUndo",        NULL,      N_("_Undo"),        "<CTRL>Z",    NULL, NULL },
-	{ "EditCut",         NULL,      N_("Cut"),          "<CTRL>X",    NULL, G_CALLBACK (modest_ui_actions_on_cut) },
-	{ "EditCopy",        NULL,      N_("Copy"),         "<CTRL>C",    NULL, G_CALLBACK (modest_ui_actions_on_copy) },
-	{ "EditPaste",       NULL,      N_("Paste"),        "<CTRL>V",    NULL, G_CALLBACK (modest_ui_actions_on_paste) },
-	{ "EditSelectAll",   NULL,      N_("Select all"),    NULL,        NULL, G_CALLBACK (modest_ui_actions_on_select_all) },
-	{ "EditDelete",      NULL,      N_("_Delete"),       NULL,	  NULL, NULL },
-	{ "EditMarkAsRead", NULL,      N_("Mark as read"),       NULL,	  NULL, NULL },
-	{ "EditMarkAsUnread", NULL,      N_("Mark as unread"),       NULL,	  NULL, NULL },
-	{ "EditSelect",      NULL, 	N_("Select..."),     NULL,	  NULL, NULL },   /* submenu */
-	{ "EditMoveTo",      NULL, 	N_("Move to..."),    NULL,	  NULL, NULL },
+	{ "EditUndo",        NULL,      N_("mcen_me_inbox_undo"),        "<CTRL>Z",    NULL, NULL },
+	{ "EditCut",         NULL,      N_("mcen_me_inbox_cut"),          "<CTRL>X",    NULL, G_CALLBACK (modest_ui_actions_on_cut) },
+	{ "EditCopy",        NULL,      N_("mcen_me_inbox_copy"),         "<CTRL>C",    NULL, G_CALLBACK (modest_ui_actions_on_copy) },
+	{ "EditPaste",       NULL,      N_("mcen_me_inbox_paste"),        "<CTRL>V",    NULL, G_CALLBACK (modest_ui_actions_on_paste) },
+	{ "EditSelectAll",   NULL,      N_("mcen_me_inbox_selectall"),    NULL,        NULL, G_CALLBACK (modest_ui_actions_on_select_all) },
+	{ "EditMarkAsRead", NULL,      N_("mcen_me_inbox_mark_as_read"),       NULL,	  NULL, NULL },
+	{ "EditMarkAsUnread", NULL,      N_("mcen_me_inbox_mark_as_unread"),       NULL,	  NULL, NULL },
+	{ "EditMoveTo",      NULL, 	N_("mcen_me_inbox_moveto"),    NULL,	  NULL, NULL },
 	
 	/* View */
-	{ "ViewSort",            NULL,        N_("Sort..."),     NULL,      NULL,  NULL },
-	{ "ViewFolders",         NULL,        N_("Folders"),     NULL,     NULL,  NULL },
-	{ "ViewFullscreen",      NULL,        N_("Fullscreen"),  NULL,     NULL,  NULL },
-	{ "ViewShowToolbar", NULL, N_("Show toolbar") }, /* submenu */
-	{ "ViewShowToolbarNormalScreen",         NULL,        N_("Normal screen"),     NULL,     NULL,  NULL },
-	{ "ViewShowToolbarFullScreen",      NULL,        N_("Full screen"),  NULL,     NULL,  NULL },
+	{ "ViewSort",            NULL,        N_("mcen_me_inbox_sort"),     NULL,      NULL,  NULL },
+	{ "ViewFolders",         NULL,        N_("mcen_me_inbox_hidefolders"),     NULL,     NULL,  NULL },
+	{ "ViewFullscreen",      NULL,        N_("mcen_me_inbox_fullscreen"),  NULL,     NULL,  NULL },
+	{ "ViewShowToolbar", NULL, N_("mcen_me_inbox_toolbar") }, /* submenu */
+	{ "ViewShowToolbarNormalScreen",         NULL,        N_("mcen_me_inbox_normalview"),     NULL,     NULL,  NULL },
+	{ "ViewShowToolbarFullScreen",      NULL,        N_("mcen_me_inbox_optimizedview"),  NULL,     NULL,  NULL },
 	
 	/* Tools */
-	{ "ToolsSettings",        NULL,      N_("Settings..."),	              NULL, NULL,  NULL },
-	{ "ToolsAccounts",        NULL,      N_("Accounts..."),                NULL, NULL,  G_CALLBACK (modest_ui_actions_on_accounts) },
-	{ "ToolsSMTPServers",     NULL,      N_("SMTP servers..."),                NULL, NULL,  NULL },
-	{ "ToolsSendReceive", NULL, N_("Send & receive") }, /* submenu */
-	{ "ToolsSendReceiveAll",    NULL,      N_("All"),          NULL, NULL,  NULL },
-	{ "ToolsSendReceiveCancelSending",  NULL,      N_("Cancel sending"),        NULL, NULL,  NULL },
-	{ "ToolsContacts",            NULL,      N_("Contacts..."),                      NULL, NULL,  G_CALLBACK (modest_ui_actions_on_add_to_contacts) },
-	{ "ToolsSearchMessages",            NULL,      N_("Search messages..."),                      NULL, NULL,  NULL },
-	{ "ToolsHelp",            NULL,      N_("Help"),                      NULL, NULL,  NULL },
+	{ "ToolsSettings",        NULL,      N_("mcen_me_inbox_options"),	              NULL, NULL,  NULL },
+	{ "ToolsAccounts",        NULL,      N_("mcen_me_inbox_accounts"),                NULL, NULL,  NULL },
+	{ "ToolsSMTPServers",     NULL,      N_("mcen_me_inbox_globalsmtpservers"),                NULL, NULL,  NULL },
+	{ "ToolsSendReceive", NULL, N_("mcen_me_inbox_sendandreceive") }, /* submenu */
+	{ "ToolsSendReceiveAll",    NULL,      N_("mcen_me_inbox_sendandreceive_all"),          NULL, NULL,  NULL },
+	{ "ToolsSendReceiveCancelSending",  NULL,      N_("mcen_me_inbox_cancelsend"),        NULL, NULL,  NULL },
+	{ "ToolsContacts",            NULL,      N_("mcen_me_inbox_open_addressbook"),                      NULL, NULL,  G_CALLBACK (modest_ui_actions_on_add_to_contacts) },
+	{ "ToolsSearchMessages",            NULL,      N_("mcen_me_inbox_search"),                      NULL, NULL,  NULL },
+	{ "ToolsHelp",            NULL,      N_("mcen_me_inbox_help"),                      NULL, NULL,  NULL },
 
 	/* Close */
-	{ "CloseWindow",          NULL,     N_("Close window"),               NULL, NULL,  NULL },
-	{ "CloseAllWindows",      NULL,     N_("Close all windows"),          NULL, NULL,  G_CALLBACK (modest_ui_actions_on_quit) },
+	{ "CloseWindow",          NULL,     N_("mcen_me_inbox_close_window"),               NULL, NULL,  NULL },
+	{ "CloseAllWindows",      NULL,     N_("mcen_me_inbox_close_windows"),          NULL, NULL,  G_CALLBACK (modest_ui_actions_on_quit) },
 
 
 	/* Toolbar items; they is some overlap with the menu items,
 	 * but we need to specificy them differently, they have icons for example
 	 */
 	/* Headers Toolbar */
-	{ "ToolbarMessageNew",        MODEST_STOCK_NEW_MAIL,     N_("Compose a new message"), NULL, NULL,  G_CALLBACK (modest_ui_actions_on_new_msg) },
-	{ "ToolbarMessageReply",      MODEST_STOCK_REPLY,     N_("Reply a message"),          NULL, NULL,  G_CALLBACK (modest_ui_actions_on_reply) },
-	{ "ToolbarMessageReplyAll",   MODEST_STOCK_REPLY_ALL,     N_("Reply to all"),         NULL, NULL,  G_CALLBACK (modest_ui_actions_on_reply_all) },
-	{ "ToolbarMessageForward",    MODEST_STOCK_FORWARD,     N_("Forward a message"),      NULL, NULL,  G_CALLBACK (modest_ui_actions_on_forward) },
-	{ "ToolbarSendReceive",       MODEST_STOCK_REFRESH,   N_("Send & receive"),      NULL, NULL,  G_CALLBACK (modest_ui_actions_on_send_receive) },
-	{ "ToolbarToggleView",        MODEST_STOCK_SPLIT_VIEW,      N_("Toggle view"),                "<CTRL>t", NULL,  G_CALLBACK (modest_ui_actions_toggle_view) },
-	{ "ToolbarDeleteMessage",     MODEST_STOCK_DELETE,     N_("Delete message"),             NULL, NULL,  G_CALLBACK (modest_ui_actions_on_delete) },
-	{ "ToolbarSort",     MODEST_STOCK_SORT,     N_("Sort mail"),             NULL, NULL, NULL },
+	{ "ToolbarMessageNew",        MODEST_STOCK_NEW_MAIL,     N_("qgn_toolb_messagin_new"), NULL, NULL,  G_CALLBACK (modest_ui_actions_on_new_msg) },
+	{ "ToolbarMessageReply",      MODEST_STOCK_REPLY,     N_("qgn_toolb_messagin_reply"),          NULL, NULL,  G_CALLBACK (modest_ui_actions_on_reply) },
+	{ "ToolbarMessageReplyAll",   MODEST_STOCK_REPLY_ALL,     N_("qgn_toolb_messagin_replyall"),         NULL, NULL,  G_CALLBACK (modest_ui_actions_on_reply_all) },
+	{ "ToolbarMessageForward",    MODEST_STOCK_FORWARD,     N_("qgn_toolb_messagin_forward"),      NULL, NULL,  G_CALLBACK (modest_ui_actions_on_forward) },
+	{ "ToolbarSendReceive",       MODEST_STOCK_REFRESH,   N_("qgn_toolb_gene_refresh"),      NULL, NULL,  G_CALLBACK (modest_ui_actions_on_send_receive) },
+	{ "ToolbarToggleView",        MODEST_STOCK_SPLIT_VIEW,      N_("gqn_toolb_rss_fldonoff"),                "<CTRL>t", NULL,  G_CALLBACK (modest_ui_actions_toggle_view) },
+	{ "ToolbarDeleteMessage",     MODEST_STOCK_DELETE,     N_("qgn_toolb_gene_deletebutton"),             NULL, NULL,  G_CALLBACK (modest_ui_actions_on_delete) },
+	{ "ToolbarSort",     MODEST_STOCK_SORT,     N_("qgn_list_sort"),             NULL, NULL, NULL },
 };
 
 
