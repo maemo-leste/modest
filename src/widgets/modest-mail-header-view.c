@@ -523,7 +523,7 @@ modest_mail_header_view_class_init (ModestMailHeaderViewClass *klass)
 	g_type_class_add_private (object_class, sizeof (ModestMailHeaderViewPriv));
 
  	signals[RECPT_ACTIVATED_SIGNAL] =
- 		g_signal_new ("recpt-activated",
+ 		g_signal_new ("recpt_activated",
 			      G_TYPE_FROM_CLASS (object_class),
 			      G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION,
 			      G_STRUCT_OFFSET(ModestMailHeaderViewClass, recpt_activated),
