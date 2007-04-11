@@ -28,6 +28,7 @@
  */
 
 #include <hildon-widgets/hildon-window.h>
+#include <hildon-widgets/hildon-note.h>
 
 #include <glib/gi18n.h>
 #include <gtk/gtktreeviewcolumn.h>
@@ -77,8 +78,6 @@ struct _ModestMainWindowPrivate {
 	ModestFolderView *folder_view;
 
 };
-
-
 #define MODEST_MAIN_WINDOW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                 MODEST_TYPE_MAIN_WINDOW, \
                                                 ModestMainWindowPrivate))
@@ -91,6 +90,14 @@ typedef struct _GetMsgAsyncHelper {
 	gchar *from;
 	TnyIterator *iter;
 } GetMsgAsyncHelper;
+
+
+/* FIXME use an enum not values, UI actions must know them. Create a
+   modest-window-mgr-ui.h and include it here?  */
+static const GtkRadioActionEntry main_window_radio_action_entries [] = {
+	{ "ViewFolders", NULL, N_("mcen_me_inbox_hidefolders"), NULL, NULL, 0 },
+	{ "ViewFullscreen", NULL, N_("mcen_me_inbox_fullscreen"), NULL, NULL, 1 },
+};
 
 /* globals */
 static GtkWindowClass *parent_class = NULL;
@@ -307,13 +314,6 @@ get_toolbar (ModestMainWindow *self)
 	return toolbar;
 }
 
-
-static void
-on_destroy (GtkWidget *widget, GdkEvent  *event, ModestMainWindow *self)
-{
-	gtk_main_quit();
-}
-
 static void
 connect_signals (ModestMainWindow *self)
 {	
@@ -342,7 +342,6 @@ connect_signals (ModestMainWindow *self)
 			  G_CALLBACK(modest_ui_actions_on_item_not_found), self);
 
 	/* window */
-	g_signal_connect (G_OBJECT(self), "destroy", G_CALLBACK(on_destroy), NULL);
 	g_signal_connect (G_OBJECT(self), "delete-event", G_CALLBACK(on_delete_event), self);
 
 	
@@ -390,6 +389,13 @@ modest_main_window_new (void)
 				      modest_action_entries,
 				      G_N_ELEMENTS (modest_action_entries),
 				      self);
+
+	gtk_action_group_add_radio_actions (action_group,
+					    main_window_radio_action_entries,
+					    G_N_ELEMENTS (main_window_radio_action_entries),
+					    0,
+					    G_CALLBACK (modest_ui_actions_on_change_fullscreen),
+					    self);
 	
 	gtk_ui_manager_insert_action_group (parent_priv->ui_manager, action_group, 0);
 	g_object_unref (action_group);
@@ -473,4 +479,26 @@ modest_main_window_new (void)
 	gtk_widget_show_all (GTK_WIDGET (self));
 		
 	return MODEST_WINDOW(self);
+}
+
+gboolean 
+modest_main_window_close_all (ModestMainWindow *self)
+{
+	GtkWidget *note;
+	GtkResponseType response;
+
+	/* Create the confirmation dialog MSG-NOT308 */
+	note = hildon_note_new_confirmation_add_buttons (GTK_WINDOW (self),
+							 _("emev_nc_close_windows"),
+							 _("mcen_db_yes"), GTK_RESPONSE_YES,
+							 _("mcen_db_no"), GTK_RESPONSE_NO,
+							 NULL);
+
+	response = gtk_dialog_run (GTK_DIALOG (note));
+	gtk_widget_destroy (GTK_WIDGET (note));
+
+	if (response == GTK_RESPONSE_YES)
+		return TRUE;
+	else
+		return FALSE;
 }

@@ -195,8 +195,18 @@ modest_singletons_finalize (GObject *obj)
 		priv->platform_fact = NULL;
 	}
 
-
+	if (priv->mail_op_queue) {
+		g_object_unref (G_OBJECT(priv->mail_op_queue));
+		modest_runtime_verify_object_death(priv->mail_op_queue,"");
+		priv->mail_op_queue = NULL;
+	}
 	
+	if (priv->window_mgr) {
+		g_object_unref (G_OBJECT(priv->window_mgr));
+		modest_runtime_verify_object_death(priv->window_mgr,"");
+		priv->window_mgr = NULL;
+	}
+
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 

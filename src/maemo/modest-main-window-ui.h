@@ -79,8 +79,8 @@ static const GtkActionEntry modest_action_entries [] = {
 	
 	/* View */
 	{ "ViewSort",            NULL,        N_("mcen_me_inbox_sort"),     NULL,      NULL,  NULL },
-	{ "ViewFolders",         NULL,        N_("mcen_me_inbox_hidefolders"),     NULL,     NULL,  NULL },
-	{ "ViewFullscreen",      NULL,        N_("mcen_me_inbox_fullscreen"),  NULL,     NULL,  NULL },
+/* 	{ "ViewFolders",         NULL,        N_("mcen_me_inbox_hidefolders"),     NULL,     NULL,  NULL }, */
+/* 	{ "ViewFullscreen",      NULL,        N_("mcen_me_inbox_fullscreen"),  NULL,     NULL,  G_CALLBACK (modest_ui_actions_on_toggle_fullscreen) }, */
 	{ "ViewShowToolbar", NULL, N_("mcen_me_inbox_toolbar") }, /* submenu */
 	{ "ViewShowToolbarNormalScreen",         NULL,        N_("mcen_me_inbox_normalview"),     NULL,     NULL,  NULL },
 	{ "ViewShowToolbarFullScreen",      NULL,        N_("mcen_me_inbox_optimizedview"),  NULL,     NULL,  NULL },
@@ -125,7 +125,6 @@ static const GtkActionEntry modest_action_entries [] = {
 static const GtkToggleActionEntry modest_toggle_action_entries [] = {
 	{ "ShowToggleFullscreen",     GTK_STOCK_FULLSCREEN, N_("Full screen"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_toggle_fullscreen), FALSE },
 };
-
 
 G_END_DECLS
 #endif /* __MODEST_MAIN_WINDOW_UI_PRIV_H__ */

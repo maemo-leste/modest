@@ -821,10 +821,6 @@ modest_ui_actions_on_header_activated (ModestHeaderView *folder_view, TnyHeader 
 	ModestWindow *win;
 	TnyFolder *folder = NULL;
 	TnyMsg    *msg    = NULL;
-	gchar *account    = NULL;
-	GtkTreeModel *model = NULL;
-	GtkTreeSelection *sel = NULL;
-	GtkTreeIter iter;
 	ModestWindowMgr *mgr;
 	
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW(main_window));
@@ -845,28 +841,30 @@ modest_ui_actions_on_header_activated (ModestHeaderView *folder_view, TnyHeader 
 		goto cleanup;
 	}
 
-	account =  g_strdup(modest_window_get_active_account(MODEST_WINDOW(main_window)));
-	if (!account)
-		account = modest_account_mgr_get_default_account (modest_runtime_get_account_mgr());
-
-	/* Create and register message view window */	
-	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (folder_view));
-	if (gtk_tree_selection_get_selected (sel, &model, &iter)) {
-		win = modest_msg_view_window_new_with_header_model (msg, account, model, iter);
-	} else {
-		win = modest_msg_view_window_new (msg, account);
-	}
+	/* Look if we already have a message view for that header */	
 	mgr = modest_runtime_get_window_mgr ();
-	modest_window_mgr_register_window (mgr, win);
+	win = modest_window_mgr_find_window_by_msguid (mgr, tny_header_get_uid (header));
 
-	gtk_window_set_transient_for (GTK_WINDOW (win),
-				      GTK_WINDOW (main_window));
+	/* If not, create a new window */
+	if (!win) {
+		gchar *account;
+
+		account =  g_strdup(modest_window_get_active_account(MODEST_WINDOW(main_window)));
+		if (!account)
+			account = modest_account_mgr_get_default_account (modest_runtime_get_account_mgr());
+
+		win = modest_msg_view_window_new (msg, account);
+		modest_window_mgr_register_window (mgr, win);
+
+		gtk_window_set_transient_for (GTK_WINDOW (win),
+					      GTK_WINDOW (main_window));
+
+		g_free (account);
+	}
 
 	gtk_widget_show_all (GTK_WIDGET(win));
 	
 cleanup:
-	g_free (account);
-	
 	if (folder)
 		g_object_unref (G_OBJECT (folder));
 	if (msg)
@@ -1495,6 +1493,25 @@ modest_ui_actions_on_select_all (GtkAction *action,
 	}
 }
 
+void 
+modest_ui_actions_on_toggle_fullscreen (GtkAction *action,
+					ModestWindow *window)
+{
+	ModestWindowMgr *mgr;
+	gboolean active;
+
+	mgr = modest_runtime_get_window_mgr ();
+	/* set/unset the application fullscreen mode */
+	active = gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (action));
+	modest_window_mgr_set_fullscreen_mode (mgr, active);
+
+	/* Bring the current window to the front. The above call will
+	   put all the windows in fullscreen mode, so we can not be
+	   sure that the last fullscreen-ed window is the current
+	   one */
+	gtk_window_present (GTK_WINDOW (window));
+}
+
 void
 modest_ui_actions_on_change_zoom (GtkRadioAction *action,
 				  GtkRadioAction *selected,
@@ -1505,19 +1522,6 @@ modest_ui_actions_on_change_zoom (GtkRadioAction *action,
 	value = gtk_radio_action_get_current_value (selected);
 	if (MODEST_IS_WINDOW (window)) {
 		modest_window_set_zoom (MODEST_WINDOW (window), ((gdouble)value)/100);
-	}
-}
-
-void     
-modest_ui_actions_on_toggle_fullscreen    (GtkToggleAction *toggle,
-					   ModestWindow *window)
-{
-	g_return_if_fail (MODEST_IS_WINDOW (window));
-
-	if (gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (toggle))) {
-		gtk_window_fullscreen (GTK_WINDOW (window));
-	} else {
-		gtk_window_unfullscreen (GTK_WINDOW (window));
 	}
 }
 
@@ -1572,4 +1576,23 @@ modest_ui_actions_on_message_details (GtkAction *action,
 		   from the main window */
 		g_return_if_reached ();
 	}
+}
+
+void 
+modest_ui_actions_on_change_fullscreen (GtkRadioAction *action,
+					GtkRadioAction *selected,
+					ModestWindow *window)
+{
+	gint value;
+	ModestWindowMgr *mgr;
+
+	value = gtk_radio_action_get_current_value (selected);
+	mgr = modest_runtime_get_window_mgr ();
+
+	if (value == 0)
+		modest_window_mgr_set_fullscreen_mode (mgr, FALSE);
+	else
+		modest_window_mgr_set_fullscreen_mode (mgr, TRUE);
+
+	gtk_window_present (GTK_WINDOW (window));
 }

@@ -368,14 +368,6 @@ on_delete_event (GtkWidget *widget, GdkEvent  *event, ModestMainWindow *self)
 }
 
 static void
-on_destroy (GtkWidget *widget, GdkEvent  *event, ModestMainWindow *self)
-{
-	gtk_main_quit();
-}
-
-
-
-static void
 connect_signals (ModestMainWindow *self)
 {	
 	ModestWindowPrivate *parent_priv;
@@ -436,7 +428,6 @@ connect_signals (ModestMainWindow *self)
 			  self);
 	
 	/* window */
-	g_signal_connect (G_OBJECT(self), "destroy", G_CALLBACK(on_destroy), NULL);
 	g_signal_connect (G_OBJECT(self), "delete-event", G_CALLBACK(on_delete_event), self);
 }
 
@@ -690,4 +681,12 @@ on_header_status_update (ModestHeaderView *header_view,
 	
 	/* Set status message */
 	modest_gnome_info_bar_set_message (MODEST_GNOME_INFO_BAR (priv->main_bar), msg);
+}
+
+gboolean 
+modest_main_window_close_all (ModestMainWindow *self)
+{
+	/* TODO: show a dialog to ask the user for permission to close
+	   all */
+	return TRUE;
 }

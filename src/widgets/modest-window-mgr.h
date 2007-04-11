@@ -31,7 +31,7 @@
 #define __MODEST_WINDOW_MGR_H__
 
 #include <glib-object.h>
-#include "widgets/modest-window.h"
+#include "widgets/modest-msg-view-window.h"
 
 G_BEGIN_DECLS
 
@@ -88,20 +88,27 @@ void           modest_window_mgr_unregister_window     (ModestWindowMgr *self,
 
 
 /**
- * modest_window_mgr_find_window_for_msgid:
+ * modest_window_mgr_find_window_by_msguid:
  * @self: the #ModestWindowMgr
- * @msgid: the message id
- * @modest_window_type: the type of the #ModestWindow we're looking for
+ * @msgid: the message uid
  * 
- * Looks for a window of a given type that have a relationship with
- * the message specified by the message id passed as argument
+ * Looks for a #ModestWindow that shows the message specified by the
+ * message uid passed as argument
  *
  * Return value: the #ModestWindow if found, else NULL
  **/
-ModestWindow*  modest_window_mgr_find_window_for_msgid (ModestWindowMgr *self, 
-							gchar *msgid, 
-							GType modest_window_type);
- 
+ModestWindow*  modest_window_mgr_find_window_by_msguid (ModestWindowMgr *self, 
+							const gchar *msguid);
+
+/**
+ * modest_window_mgr_set_fullscreen_mode:
+ * @self: 
+ * @on: 
+ * 
+ * sets/unsets the application windows in fullscreen mode
+ **/
+void           modest_window_mgr_set_fullscreen_mode   (ModestWindowMgr *self,
+							gboolean on);
 G_END_DECLS
 
 #endif /* __MODEST_WINDOW_MGR_H__ */

@@ -102,7 +102,18 @@ ModestWindow*   modest_msg_view_window_new_with_header_model (TnyMsg *msg, const
  * 
  * Returns: a new #TnyMsg instance, or NULL in case of error
  */
-TnyMsg*         modest_msg_view_window_get_message (ModestMsgViewWindow *window);
+TnyMsg*         modest_msg_view_window_get_message     (ModestMsgViewWindow *window);
+
+/**
+ * modest_msg_view_window_get_message_uid:
+ * @msg: an #ModestMsgViewWindow instance
+ * 
+ * gets the unique identifier for the message in this msg view. The
+ * returned value *must* not be freed
+ * 
+ * Returns: the id of the #TnyMsg being shown, or NULL in case of error
+ */
+const gchar*    modest_msg_view_window_get_message_uid (ModestMsgViewWindow *window);
 
 /**
  * modest_msg_view_window_select_next_message:

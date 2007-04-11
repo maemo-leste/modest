@@ -466,6 +466,26 @@ modest_msg_view_window_get_message (ModestMsgViewWindow *self)
 	return modest_msg_view_get_message (msg_view);
 }
 
+const gchar*
+modest_msg_view_window_get_message_uid (ModestMsgViewWindow *self)
+{
+	TnyMsg *msg;
+	TnyHeader *header;
+	const gchar *retval = NULL;
+
+	msg = modest_msg_view_window_get_message (self);
+
+	if (!msg)
+		return NULL;
+
+	header = tny_msg_get_header (msg);
+	if (header) {
+		retval = tny_header_get_uid (header);
+		g_object_unref (header);
+	}
+	return retval;
+}
+
 static void 
 modest_msg_view_window_toggle_find_toolbar (GtkToggleAction *toggle,
 					    gpointer data)

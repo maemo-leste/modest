@@ -139,8 +139,9 @@ modest_mail_operation_queue_finalize (GObject *obj)
 	g_mutex_lock (priv->queue_lock);
 
 	if (priv->op_queue) {
+		/* Cancel all */
 		if (!g_queue_is_empty (priv->op_queue))
-			g_queue_foreach (priv->op_queue, (GFunc) g_object_unref, NULL);
+			modest_mail_operation_queue_cancel_all (MODEST_MAIL_OPERATION_QUEUE (obj));
 		g_queue_free (priv->op_queue);
 	}
 
