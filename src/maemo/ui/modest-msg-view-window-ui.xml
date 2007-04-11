@@ -72,6 +72,7 @@
 
    <menu name="ToolsMenu" action="Tools">
       <menuitem name="ToolsAddToContactsMenu" action="ToolsAddToContacts"/>
+      <separator/>
    </menu>
 
    <menu name="CloseMenu" action="Close">
@@ -102,7 +103,5 @@
   <accelerator name="AccelZoomMinus" action="ZoomMinus"/>
   <accelerator name="AccelZoomPlus" action="ZoomPlus"/>
   <accelerator name="AccelToggleFullscreen" action="ToggleFullscreen"/>
-  <accelerator name="AccelScrollUp" action="ScrollUp"/>
-  <accelerator name="AccelScrollDown" action="ScrollDown"/>
 
   </ui>
