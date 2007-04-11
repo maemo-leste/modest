@@ -77,3 +77,24 @@ modest_platform_get_file_icon_name (const gchar* name, const gchar* mime_type,
 
 	return icon_name;
 }
+
+
+GdkPixbuf*
+modest_platform_get_icon (const gchar *name)
+{
+	GError *err = NULL;
+	GdkPixbuf* pixbuf;
+
+	g_return_val_if_fail (name, NULL);
+
+	pixbuf = gdk_pixbuf_new_from_file (name, &err);
+
+	if (!pixbuf) {
+		g_printerr ("modest: error while loading icon '%s': %s\n",
+			    name, err->message);
+		g_error_free (err);
+	}
+	
+	return pixbuf;
+}
+

@@ -129,3 +129,27 @@ modest_platform_get_file_icon_name (const gchar* name, const gchar* mime_type,
 
 	return icon_name;
 }
+
+
+GdkPixbuf*
+modest_platform_get_icon (const gchar *name)
+{
+	GError *err = NULL;
+	GdkPixbuf* pixbuf;
+	GtkIconTheme *current_theme;
+
+	g_return_val_if_fail (name, NULL);
+
+	current_theme = gtk_icon_theme_get_default ();
+	pixbuf = gtk_icon_theme_load_icon (current_theme, name, 26,
+					   GTK_ICON_LOOKUP_NO_SVG,
+					   &err);
+	if (!pixbuf) {
+		g_printerr ("modest: error while loading icon '%s': %s\n",
+			    name, err->message);
+		g_error_free (err);
+	}
+	
+	return pixbuf;
+}
+

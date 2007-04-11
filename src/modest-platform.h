@@ -31,6 +31,7 @@
 #define __MODEST_PLATFORM_H__
 
 #include <glib.h>
+#include <gtk/gtk.h>
 #include <tny-device.h>
 
 /**
@@ -54,7 +55,7 @@ TnyDevice*  modest_platform_get_new_device (void);
 
 
 /**
- * modest_platform_get_file_icon:
+ * modest_platform_get_file_icon_name:
  * @name: the name of the file, or NULL
  * @mime_type: the mime-type, or NULL
  * @effective_mime_type: out-param which receives the 'effective mime-type', ie., the mime type
@@ -71,5 +72,15 @@ TnyDevice*  modest_platform_get_new_device (void);
  */
 gchar*  modest_platform_get_file_icon_name (const gchar* name, const gchar* mime_type,
 					    gchar **effective_mime_type);
+
+/**
+ * modest_platform_get_icon:
+ * @name: the name of the icon
+ *
+ * this function returns an icon, or NULL in case of error 
+ */
+GdkPixbuf* modest_platform_get_icon (const gchar *name);
+
+
 
 #endif /* __MODEST_PLATFORM_UTILS_H__ */

@@ -33,39 +33,9 @@
 #include <modest-text-utils.h>
 #include <modest-runtime.h>
 #include <glib/gi18n.h>
+#include <modest-platform.h>
 
 
-static GdkPixbuf*
-get_cached_icon (const gchar *name)
-{
-	GError *err = NULL;
-	GdkPixbuf* pixbuf;
-		
-#ifdef MODEST_PLATFORM_GNOME  
-	pixbuf = gdk_pixbuf_new_from_file (name, &err);
-#else
-	GtkIconTheme *current_theme;
-	current_theme = gtk_icon_theme_get_default ();
-	pixbuf = gtk_icon_theme_load_icon (current_theme,
-					   name,
-					   26,
-					   GTK_ICON_LOOKUP_NO_SVG,
-					   &err);
-#endif /*MODEST_PLATFORM_GNOME*/
-
-	if (!pixbuf) {
-		g_printerr ("modest: error in icon factory while loading '%s': %s\n",
-			    name, err->message);
-		g_error_free (err);
-	}
-	
-	return pixbuf;
-}
-
-
-/*
- * optimization
- */
 static GdkPixbuf*
 get_pixbuf_for_flag (TnyHeaderFlags flag)
 {
@@ -78,19 +48,19 @@ get_pixbuf_for_flag (TnyHeaderFlags flag)
 	switch (flag) {
 	case TNY_HEADER_FLAG_DELETED:
 		if (G_UNLIKELY(!deleted_pixbuf))
-			deleted_pixbuf = get_cached_icon (MODEST_HEADER_ICON_DELETED);
+			deleted_pixbuf = modest_platform_get_icon (MODEST_HEADER_ICON_DELETED);
 		return deleted_pixbuf;
 	case TNY_HEADER_FLAG_SEEN:
 		if (G_UNLIKELY(!seen_pixbuf))
-			seen_pixbuf = get_cached_icon (MODEST_HEADER_ICON_READ);
+			seen_pixbuf = modest_platform_get_icon (MODEST_HEADER_ICON_READ);
 		return seen_pixbuf;
 	case TNY_HEADER_FLAG_ATTACHMENTS:
 		if (G_UNLIKELY(!attachments_pixbuf))
-			attachments_pixbuf = get_cached_icon (MODEST_HEADER_ICON_ATTACH);
+			attachments_pixbuf = modest_platform_get_icon (MODEST_HEADER_ICON_ATTACH);
 		return attachments_pixbuf;
 	default:
 		if (G_UNLIKELY(!unread_pixbuf))
-			unread_pixbuf = get_cached_icon (MODEST_HEADER_ICON_UNREAD);
+			unread_pixbuf = modest_platform_get_icon (MODEST_HEADER_ICON_UNREAD);
 		return unread_pixbuf;
 	}
 }

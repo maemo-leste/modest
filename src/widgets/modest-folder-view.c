@@ -48,6 +48,7 @@
 #include <modest-runtime.h>
 #include "modest-folder-view.h"
 #include <modest-dnd.h>
+#include <modest-platform.h>
 
 /* 'private'/'protected' functions */
 static void modest_folder_view_class_init  (ModestFolderViewClass *klass);
@@ -243,33 +244,6 @@ text_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 }
 
 
-static GdkPixbuf*
-get_cached_icon (const gchar *name)
-{
-	GError *err = NULL;
-	GdkPixbuf* pixbuf;
-		
-#ifdef MODEST_PLATFORM_GNOME  
-	pixbuf = gdk_pixbuf_new_from_file (name, &err);
-#else
-	GtkIconTheme *current_theme;
-	current_theme = gtk_icon_theme_get_default ();
-	pixbuf = gtk_icon_theme_load_icon (current_theme,
-					   name,
-					   26,
-					   GTK_ICON_LOOKUP_NO_SVG,
-					   &err);
-#endif /*MODEST_PLATFORM_GNOME*/
-
-	if (!pixbuf) {
-		g_printerr ("modest: error in icon factory while loading '%s': %s\n",
-			    name, err->message);
-		g_error_free (err);
-	}
-	
-	return pixbuf;
-}
-
 
 static void
 icon_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
@@ -296,29 +270,29 @@ icon_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 
 	switch (type) {
 	case TNY_FOLDER_TYPE_ROOT:
-		pixbuf = get_cached_icon (MODEST_FOLDER_ICON_ACCOUNT);
+		pixbuf = modest_platform_get_icon (MODEST_FOLDER_ICON_ACCOUNT);
                 break;
 	case TNY_FOLDER_TYPE_INBOX:
-                pixbuf = get_cached_icon (MODEST_FOLDER_ICON_INBOX);
+                pixbuf = modest_platform_get_icon (MODEST_FOLDER_ICON_INBOX);
                 break;
         case TNY_FOLDER_TYPE_OUTBOX:
-                pixbuf = get_cached_icon (MODEST_FOLDER_ICON_OUTBOX);
+                pixbuf = modest_platform_get_icon (MODEST_FOLDER_ICON_OUTBOX);
                 break;
         case TNY_FOLDER_TYPE_JUNK:
-                pixbuf = get_cached_icon (MODEST_FOLDER_ICON_JUNK);
+                pixbuf = modest_platform_get_icon (MODEST_FOLDER_ICON_JUNK);
                 break;
         case TNY_FOLDER_TYPE_SENT:
-                pixbuf = get_cached_icon (MODEST_FOLDER_ICON_SENT);
+                pixbuf = modest_platform_get_icon (MODEST_FOLDER_ICON_SENT);
                 break;
 	case TNY_FOLDER_TYPE_TRASH:
-		pixbuf = get_cached_icon (MODEST_FOLDER_ICON_TRASH);
+		pixbuf = modest_platform_get_icon (MODEST_FOLDER_ICON_TRASH);
                 break;
 	case TNY_FOLDER_TYPE_DRAFTS:
-		pixbuf = get_cached_icon (MODEST_FOLDER_ICON_DRAFTS);
+		pixbuf = modest_platform_get_icon (MODEST_FOLDER_ICON_DRAFTS);
                 break;
 	case TNY_FOLDER_TYPE_NORMAL:
         default:
-                pixbuf = get_cached_icon (MODEST_FOLDER_ICON_NORMAL);
+                pixbuf = modest_platform_get_icon (MODEST_FOLDER_ICON_NORMAL);
 		break;
         }
 	g_object_set (rendobj, "pixbuf", pixbuf, NULL);
