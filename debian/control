@@ -7,6 +7,6 @@ Standards-Version: 3.6.0
 
 Package: modest
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, operator-wizard, osso-af-settings
+Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: an e-mail client for platforms with modest resources,
  built on top of the tinymail framework

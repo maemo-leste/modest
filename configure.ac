@@ -186,7 +186,7 @@ dnl ## gtk-doc
 GTK_DOC_CHECK([1.0])
 
 dnl Intltool utility programs
-#AC_PROG_INTLTOOL([0.33.0],[no-xml])
+AC_PROG_INTLTOOL([0.33.0],[no-xml])
 
 
 AC_OUTPUT([
