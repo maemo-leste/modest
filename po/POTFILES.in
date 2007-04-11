@@ -15,8 +15,6 @@ src/gnome/modest-transport-widget.c
 src/gnome/modest-gnome-info-bar.h
 src/gnome/modest-msg-edit-window.c
 src/gnome/modest-address-book.c
-src/gnome/modest-account-assistant.h
-src/gnome/modest-account-assistant.c
 src/gnome/modest-account-view-window.c
 src/modest-account-mgr-priv.c
 src/modest-conf.h
@@ -74,8 +72,6 @@ src/maemo/modest-msg-view-window.c
 src/maemo/modest-transport-widget.c
 src/maemo/modest-msg-edit-window.c
 src/maemo/modest-address-book.c
-src/maemo/modest-account-assistant.h
-src/maemo/modest-account-assistant.c
 src/maemo/modest-account-view-window.c
 src/modest-tny-msg.c
 src/modest-mail-operation.c
