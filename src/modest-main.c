@@ -119,23 +119,25 @@ main (int argc, char *argv[])
 	if (!modest_runtime_init ()) {
 		g_printerr ("modest: cannot init runtime\n");
 		return MODEST_ERR_INIT;
+		
 	}
-	
 
 	account_or_default = check_account (account);
 	g_free (account);
-
-/*	if (modest_conf_get_bool (modest_runtime_get_conf(), MODEST_CONF_CONNECT_AT_STARTUP, NULL))
-		tny_device_force_online (modest_runtime_get_device());
-*/			
+	
 	if (!batch) {
 		if (!modest_runtime_init_ui (argc, argv)) {
 			g_printerr ("modest: cannot start ui\n");
 			retval = MODEST_ERR_UI;
 			goto cleanup;
-		} else
+		} else {
+			if (modest_conf_get_bool (modest_runtime_get_conf(),
+						  MODEST_CONF_CONNECT_AT_STARTUP, NULL))
+				tny_device_force_online (modest_runtime_get_device());
+			
 			retval = start_ui (account_or_default,
 					   mailto, cc, bcc, subject, body);
+		}
 	} else {
 		if (!account_or_default) {
 			g_printerr ("modest: no account has been defined yet\n");

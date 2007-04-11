@@ -66,7 +66,11 @@ static gboolean on_link_clicked (GtkWidget *widget, const gchar *uri, ModestMsgV
 static gboolean on_url_requested (GtkWidget *widget, const gchar *uri, GtkHTMLStream *stream,
 				  ModestMsgView *msg_view);
 static gboolean on_link_hover (GtkWidget *widget, const gchar *uri, ModestMsgView *msg_view);
-static void     on_tap_and_hold (GtkWidget *widget, gpointer userdata);
+
+#ifdef MAEMO_CHANGES
+static void     on_tap_and_hold (GtkWidget *widget, gpointer userdata); 
+#endif /*MAEMO_CHANGES*/
+
 
 /* size allocation and drawing handlers */
 static void get_view_allocation (ModestMsgView *msg_view, GtkAllocation *allocation);

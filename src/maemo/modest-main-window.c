@@ -471,6 +471,6 @@ modest_main_window_new (void)
 
 	/* Needed to show the contents of the toolbar */
 	gtk_widget_show_all (GTK_WIDGET (self));
-
+		
 	return MODEST_WINDOW(self);
 }

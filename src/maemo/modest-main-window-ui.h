@@ -37,6 +37,11 @@
 G_BEGIN_DECLS
 
 
+#ifndef GTK_STOCK_FULLSCREEN
+#define GTK_STOCK_FULLSCREEN NULL
+#endif /*GTK_STOCK_FULLSCREEN*/
+
+
 /* Action entries */
 static const GtkActionEntry modest_action_entries [] = {
 
