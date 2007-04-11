@@ -72,6 +72,10 @@ struct _ModestWindow {
 
 struct _ModestWindowClass {
 	ModestWindowParentClass parent_class;
+
+	/* virtual methods */
+	void (*set_zoom_func) (ModestWindow *self, gdouble zoom);
+	gdouble (*get_zoom_func) (ModestWindow *self);
 };
 
 /**
@@ -106,6 +110,25 @@ const gchar* modest_window_get_active_account (ModestWindow *self);
  */	
 void modest_window_set_active_account (ModestWindow *self, const gchar *active_account);
 
+/**
+ * modest_window_set_zoom:
+ * @window: a #ModestWindow instance
+ * @zoom: the zoom level (1.0 is no zoom)
+ *
+ * sets the zoom level of the window
+ */
+void            modest_window_set_zoom    (ModestWindow *window,
+					   gdouble value);
+
+/**
+ * modest_window_get_zoom:
+ * @window: a #ModestWindow instance
+ *
+ * gets the zoom of the window
+ *
+ * Returns: the current zoom value (1.0 is no zoom)
+ */
+gdouble         modest_window_get_zoom    (ModestWindow *window);
 
 G_END_DECLS
 

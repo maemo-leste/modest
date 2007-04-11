@@ -16,7 +16,7 @@ make-orig-source:
 make-orig-source-internal:
 	echo -e "Source: modest\nBuild-Depends: subversion, autoconf, automake1.9, autotools-dev, libtool, gtk-doc-tools (>= 1.0), libglib2.0-dev (>= 2.6), gnome-common, devscripts, fakeroot\n\nPackage: modest\n" | dpkg-checkbuilddeps -
 	svn export . $(TMPNAME)/modest-$(UPSTREAMVER)
-	cd $(TMPNAME)/modest-$(UPSTREAMVER) && NOCONFIGURE=0 ./autogen.sh 
+	cd $(TMPNAME)/modest-$(UPSTREAMVER) && NOCONFIGURE=0 ./autogen.sh --enable-debug
 	cd $(TMPNAME) && tar czf modest_$(UPSTREAMVER).orig.tar.gz --exclude modest-$(UPSTREAMVER)/debian modest-$(UPSTREAMVER)
 	cd $(TMPNAME)/modest-$(UPSTREAMVER) && dch -bv $(UPSTREAMVER)-1 "Exported from SVN on $(DATE)"
 	cd $(TMPNAME)/modest-$(UPSTREAMVER) && dpkg-buildpackage -rfakeroot -S -uc -us && \

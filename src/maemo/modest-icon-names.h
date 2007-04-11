@@ -73,6 +73,7 @@
 #define  MODEST_TOOLBAR_ICON_SPLIT_VIEW         "qgn_toolb_rss_fldonoff"
 #define  MODEST_TOOLBAR_ICON_SORT               "qgn_list_sort"
 #define  MODEST_TOOLBAR_ICON_REFRESH            "qgn_toolb_gene_refresh"
+#define  MODEST_TOOLBAR_ICON_MOVE_TO_FOLDER     "qgn_toolb_gene_movetofldr"
 
 /* Stock icon names */
 #define  MODEST_STOCK_MAIL_SEND    "modest-stock-mail-send"

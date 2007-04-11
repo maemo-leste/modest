@@ -30,16 +30,49 @@
 #include <string.h>
 #include <tny-account-store.h>
 #include <tny-simple-list.h>
+#include <tny-header.h>
 #include <modest-tny-msg.h>
 #include <modest-msg-view-window.h>
 #include <modest-main-window-ui.h>
 #include <modest-widget-memory.h>
 #include <modest-runtime.h>
 #include <modest-window-priv.h>
+#include <modest-tny-folder.h>
+#include <hildon-widgets/hildon-find-toolbar.h>
+#include <hildon-widgets/hildon-defines.h>
+#include <hildon-widgets/hildon-banner.h>
+#include <gtkhtml/gtkhtml-search.h>
+#include <gdk/gdkkeysyms.h>
 
 static void  modest_msg_view_window_class_init   (ModestMsgViewWindowClass *klass);
 static void  modest_msg_view_window_init         (ModestMsgViewWindow *obj);
 static void  modest_msg_view_window_finalize     (GObject *obj);
+static void  modest_msg_view_window_toggle_find_toolbar (GtkToggleAction *obj,
+							 gpointer data);
+static void  modest_msg_view_window_find_toolbar_close (GtkWidget *widget,
+							ModestMsgViewWindow *obj);
+static void  modest_msg_view_window_find_toolbar_search (GtkWidget *widget,
+							ModestMsgViewWindow *obj);
+
+static void  modest_msg_view_window_set_zoom (ModestWindow *window,
+					      gdouble zoom);
+static gdouble modest_msg_view_window_get_zoom (ModestWindow *window);
+static void modest_msg_view_window_zoom_minus (GtkAction *action, ModestWindow *window);
+static void modest_msg_view_window_zoom_plus (GtkAction *action, ModestWindow *window);
+static gboolean modest_msg_view_window_key_release_event (GtkWidget *window,
+							  GdkEventKey *event,
+							  gpointer userdata);
+static void modest_msg_view_window_scroll_up (ModestWindow *window);
+static void modest_msg_view_window_scroll_down (ModestWindow *window);
+static void modest_msg_view_window_toggle_fullscreen (GtkAction *action, ModestWindow *window);
+static gboolean modest_msg_view_window_is_last_message (ModestMsgViewWindow *window);
+static gboolean modest_msg_view_window_is_first_message (ModestMsgViewWindow *window);
+static TnyFolderType modest_msg_view_window_get_folder_type (ModestMsgViewWindow *window);
+static void modest_msg_view_window_update_dimmed (ModestMsgViewWindow *window);
+static void modest_msg_view_window_update_priority (ModestMsgViewWindow *window);
+
+
+
 
 /* list my signals */
 enum {
@@ -48,12 +81,37 @@ enum {
 	LAST_SIGNAL
 };
 
+static const GtkToggleActionEntry msg_view_toggle_action_entries [] = {
+	{ "FindInMessage",    GTK_STOCK_FIND,    N_("qgn_toolb_gene_find"), NULL, NULL, G_CALLBACK (modest_msg_view_window_toggle_find_toolbar), FALSE },
+};
+
+static const GtkRadioActionEntry msg_view_zoom_action_entries [] = {
+	{ "Zoom50", NULL, N_("mcen_me_viewer_50"), NULL, NULL, 50 },
+	{ "Zoom80", NULL, N_("mcen_me_viewer_80"), NULL, NULL, 80 },
+	{ "Zoom100", NULL, N_("mcen_me_viewer_100"), NULL, NULL, 100 },
+	{ "Zoom120", NULL, N_("mcen_me_viewer_120"), NULL, NULL, 120 },
+	{ "Zoom150", NULL, N_("mcen_me_viewer_150"), NULL, NULL, 150 },
+	{ "Zoom200", NULL, N_("mcen_me_viewer_200"), NULL, NULL, 200 }
+};
+
+static const GtkActionEntry modest_msg_view_action_entries [] = {
+	{ "ZoomPlus", NULL, N_("Zoom +"), "F7", NULL, G_CALLBACK (modest_msg_view_window_zoom_plus) },
+	{ "ZoomMinus", NULL, N_("Zoom -"), "F8", NULL, G_CALLBACK (modest_msg_view_window_zoom_minus) },
+	{ "ToggleFullscreen", NULL, N_("Toggle fullscreen"), "F6", NULL, G_CALLBACK (modest_msg_view_window_toggle_fullscreen) },
+};
+
 typedef struct _ModestMsgViewWindowPrivate ModestMsgViewWindowPrivate;
 struct _ModestMsgViewWindowPrivate {
 
 	GtkWidget   *toolbar;
 	GtkWidget   *menubar;
 	GtkWidget   *msg_view;
+	GtkWidget   *main_scroll;
+	GtkWidget   *find_toolbar;
+	gchar       *last_search;
+
+	GtkTreeModel *header_model;
+	GtkTreeIter   iter;
 };
 
 #define MODEST_MSG_VIEW_WINDOW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -93,10 +151,15 @@ static void
 modest_msg_view_window_class_init (ModestMsgViewWindowClass *klass)
 {
 	GObjectClass *gobject_class;
+	ModestWindowClass *modest_window_class;
 	gobject_class = (GObjectClass*) klass;
+	modest_window_class = (ModestWindowClass *) klass;
 
 	parent_class            = g_type_class_peek_parent (klass);
 	gobject_class->finalize = modest_msg_view_window_finalize;
+
+	modest_window_class->set_zoom_func = modest_msg_view_window_set_zoom;
+	modest_window_class->get_zoom_func = modest_msg_view_window_get_zoom;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestMsgViewWindowPrivate));
 }
@@ -110,6 +173,8 @@ modest_msg_view_window_init (ModestMsgViewWindow *obj)
 	priv->toolbar       = NULL;
 	priv->menubar       = NULL;
 	priv->msg_view      = NULL;
+
+	priv->header_model  = NULL;
 }
 
 static void
@@ -154,6 +219,51 @@ menubar_to_menu (GtkUIManager *ui_manager)
 	return main_menu;
 }
 
+static GtkWidget*
+get_toolbar (ModestMsgViewWindow *self)
+{
+	GtkWidget *toolbar, *reply_button, *menu;
+	ModestWindowPrivate *parent_priv;
+	GtkWidget *button;
+
+	parent_priv = MODEST_WINDOW_GET_PRIVATE (self);
+	toolbar = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar");
+	reply_button = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/ToolbarMessageReply");
+
+	menu = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolbarReplyCSM");
+	gtk_widget_tap_and_hold_setup (GTK_WIDGET (reply_button), menu, NULL, 0);
+
+	button = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/ToolbarMessageNew");
+	gtk_tool_item_set_expand (GTK_TOOL_ITEM (button), TRUE);
+	gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (button), TRUE);
+
+	button = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/ToolbarMessageReply");
+	gtk_tool_item_set_expand (GTK_TOOL_ITEM (button), TRUE);
+	gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (button), TRUE);
+
+	button = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/ToolbarMessageMoveTo");
+	gtk_tool_item_set_expand (GTK_TOOL_ITEM (button), TRUE);
+	gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (button), TRUE);
+
+	button = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/ToolbarDeleteMessage");
+	gtk_tool_item_set_expand (GTK_TOOL_ITEM (button), TRUE);
+	gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (button), TRUE);
+
+	button = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/ToolbarMessageBack");
+	gtk_tool_item_set_expand (GTK_TOOL_ITEM (button), TRUE);
+	gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (button), TRUE);
+
+	button = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/ToolbarMessageForward");
+	gtk_tool_item_set_expand (GTK_TOOL_ITEM (button), TRUE);
+	gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (button), TRUE);
+
+	button = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/FindInMessage");
+	gtk_tool_item_set_expand (GTK_TOOL_ITEM (button), TRUE);
+	gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (button), TRUE);
+
+	return toolbar;
+}
+
 
 static void
 init_window (ModestMsgViewWindow *obj, TnyMsg *msg)
@@ -161,7 +271,7 @@ init_window (ModestMsgViewWindow *obj, TnyMsg *msg)
 	GtkWidget *main_vbox;
 	ModestMsgViewWindowPrivate *priv;
 	ModestWindowPrivate *parent_priv;
-	GtkWidget *scrolled_window;
+	GtkAccelGroup *accel_group;
 	
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE(obj);
 	parent_priv = MODEST_WINDOW_GET_PRIVATE(obj);
@@ -176,25 +286,42 @@ init_window (ModestMsgViewWindow *obj, TnyMsg *msg)
 	gtk_widget_show_all (GTK_WIDGET(parent_priv->menubar));
 	hildon_window_set_menu    (HILDON_WINDOW(obj), GTK_MENU(parent_priv->menubar));
 
-	parent_priv->toolbar = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar");
+	parent_priv->toolbar = get_toolbar (obj);
 	gtk_widget_show_all (GTK_WIDGET(parent_priv->toolbar));
 	hildon_window_add_toolbar (HILDON_WINDOW(obj), GTK_TOOLBAR(parent_priv->toolbar));
 
-	scrolled_window = gtk_scrolled_window_new (NULL, NULL);
-	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolled_window), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
-	gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (scrolled_window), GTK_SHADOW_NONE);
+	accel_group = gtk_ui_manager_get_accel_group (parent_priv->ui_manager);
+	gtk_window_add_accel_group (GTK_WINDOW (obj), accel_group);
 
-	gtk_container_add (GTK_CONTAINER (scrolled_window), priv->msg_view);
-	gtk_box_pack_start (GTK_BOX(main_vbox), scrolled_window, TRUE, TRUE, 6);
+	priv->main_scroll = gtk_scrolled_window_new (NULL, NULL);
+	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (priv->main_scroll), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
+	gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (priv->main_scroll), GTK_SHADOW_NONE);
+
+	gtk_container_add (GTK_CONTAINER (priv->main_scroll), priv->msg_view);
+	gtk_box_pack_start (GTK_BOX(main_vbox), priv->main_scroll, TRUE, TRUE, 0);
 	gtk_container_add   (GTK_CONTAINER(obj), main_vbox);
+
+	priv->find_toolbar = hildon_find_toolbar_new (NULL);
+	gtk_widget_set_no_show_all (priv->find_toolbar, TRUE);
+	g_signal_connect (G_OBJECT (priv->find_toolbar), "close", G_CALLBACK (modest_msg_view_window_find_toolbar_close), obj);
+	g_signal_connect (G_OBJECT (priv->find_toolbar), "search", G_CALLBACK (modest_msg_view_window_find_toolbar_search), obj);
 	
 	gtk_widget_show_all (GTK_WIDGET(main_vbox));
+	gtk_box_pack_end (GTK_BOX (main_vbox), priv->find_toolbar, FALSE, FALSE, 0);
 }	
 
 
 static void
 modest_msg_view_window_finalize (GObject *obj)
 {
+	ModestMsgViewWindowPrivate *priv;
+
+	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (obj);
+	if (priv->header_model != NULL) {
+		g_object_unref (priv->header_model);
+		priv->header_model = NULL;
+	}
+
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
@@ -207,6 +334,28 @@ on_delete_event (GtkWidget *widget, GdkEvent *event, ModestMsgViewWindow *self)
 	return FALSE;
 }
 
+ModestWindow *
+modest_msg_view_window_new_with_header_model (TnyMsg *msg, const gchar *account_name,
+					      GtkTreeModel *model, GtkTreeIter iter)
+{
+	ModestMsgViewWindow *window = NULL;
+	ModestMsgViewWindowPrivate *priv = NULL;
+
+	window = MODEST_MSG_VIEW_WINDOW(modest_msg_view_window_new (msg, account_name));
+	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (window), NULL);
+
+	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
+
+	g_object_ref (model);
+	priv->header_model = model;
+	priv->iter = iter;
+
+	modest_msg_view_window_update_priority (window);
+
+	modest_msg_view_window_update_dimmed (window);
+
+	return MODEST_WINDOW(window);
+}
 
 
 ModestWindow *
@@ -226,12 +375,32 @@ modest_msg_view_window_new (TnyMsg *msg, const gchar *account_name)
 	
 	parent_priv->ui_manager = gtk_ui_manager_new();
 	action_group = gtk_action_group_new ("ModestMsgViewWindowActions");
+	gtk_action_group_set_translation_domain (action_group, GETTEXT_PACKAGE);
 
 	/* Add common actions */
 	gtk_action_group_add_actions (action_group,
 				      modest_action_entries,
 				      G_N_ELEMENTS (modest_action_entries),
 				      obj);
+	gtk_action_group_add_actions (action_group,
+				      modest_msg_view_action_entries,
+				      G_N_ELEMENTS (modest_msg_view_action_entries),
+				      obj);
+	gtk_action_group_add_toggle_actions (action_group,
+				      modest_toggle_action_entries,
+				      G_N_ELEMENTS (modest_toggle_action_entries),
+				      obj);
+	gtk_action_group_add_toggle_actions (action_group,
+					     msg_view_toggle_action_entries,
+					     G_N_ELEMENTS (msg_view_toggle_action_entries),
+					     obj);
+	gtk_action_group_add_radio_actions (action_group,
+					    msg_view_zoom_action_entries,
+					    G_N_ELEMENTS (msg_view_zoom_action_entries),
+					    100,
+					    G_CALLBACK (modest_ui_actions_on_change_zoom),
+					    obj);
+
 	gtk_ui_manager_insert_action_group (parent_priv->ui_manager, action_group, 0);
 	g_object_unref (action_group);
 
@@ -266,8 +435,21 @@ modest_msg_view_window_new (TnyMsg *msg, const gchar *account_name)
 			  G_CALLBACK (modest_ui_actions_on_msg_attachment_clicked), obj);
 	g_signal_connect (G_OBJECT(priv->msg_view), "recpt_activated",
 			  G_CALLBACK (modest_ui_actions_on_msg_recpt_activated), obj);
+	g_signal_connect (G_OBJECT(priv->msg_view), "link_contextual",
+			  G_CALLBACK (modest_ui_actions_on_msg_link_contextual), obj);
+
+	g_signal_connect (G_OBJECT (obj), "key-release-event",
+			  G_CALLBACK (modest_msg_view_window_key_release_event),
+			  NULL);
 
 	modest_window_set_active_account (MODEST_WINDOW(obj), account_name);
+
+	priv->last_search = NULL;
+
+	modest_msg_view_window_update_dimmed (MODEST_MSG_VIEW_WINDOW (obj));
+
+	gtk_widget_grab_focus (priv->msg_view);
+
 	return MODEST_WINDOW(obj);
 }
 
@@ -286,4 +468,466 @@ modest_msg_view_window_get_message (ModestMsgViewWindow *self)
 	msg_view = MODEST_MSG_VIEW (priv->msg_view);
 
 	return modest_msg_view_get_message (msg_view);
+}
+
+static void 
+modest_msg_view_window_toggle_find_toolbar (GtkToggleAction *toggle,
+					    gpointer data)
+{
+	ModestMsgViewWindow *window = MODEST_MSG_VIEW_WINDOW (data);
+	ModestMsgViewWindowPrivate *priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
+
+	if (gtk_toggle_action_get_active (toggle)) {
+		gtk_widget_show (priv->find_toolbar);
+	} else {
+		gtk_widget_hide (priv->find_toolbar);
+	}
+
+	
+}
+
+static void
+modest_msg_view_window_find_toolbar_close (GtkWidget *widget,
+					   ModestMsgViewWindow *obj)
+{
+	GtkToggleAction *toggle;
+	ModestWindowPrivate *parent_priv;
+	parent_priv = MODEST_WINDOW_GET_PRIVATE (obj);
+	
+	toggle = GTK_TOGGLE_ACTION (gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/FindInMessage"));
+	gtk_toggle_action_set_active (toggle, FALSE);
+}
+
+static void
+modest_msg_view_window_find_toolbar_search (GtkWidget *widget,
+					   ModestMsgViewWindow *obj)
+{
+	gchar *current_search;
+	ModestMsgViewWindowPrivate *priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (obj);
+
+	g_object_get (G_OBJECT (widget), "prefix", &current_search, NULL);
+
+	if ((current_search == NULL) && (strcmp (current_search, "") == 0)) {
+		g_free (current_search);
+		return;
+	}
+
+	if ((priv->last_search == NULL) || (strcmp (priv->last_search, current_search) != 0)) {
+		gboolean result;
+		g_free (priv->last_search);
+		priv->last_search = g_strdup (current_search);
+		result = modest_msg_view_search (MODEST_MSG_VIEW (priv->msg_view),
+						 priv->last_search);
+	} else {
+		modest_msg_view_search_next (MODEST_MSG_VIEW (priv->msg_view));
+	}
+	
+	g_free (current_search);
+		
+}
+
+static void
+modest_msg_view_window_set_zoom (ModestWindow *window,
+				 gdouble zoom)
+{
+	ModestMsgViewWindowPrivate *priv;
+     
+	g_return_if_fail (MODEST_IS_MSG_VIEW_WINDOW (window));
+
+	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
+	modest_msg_view_set_zoom (MODEST_MSG_VIEW (priv->msg_view), zoom);
+}
+
+static gdouble
+modest_msg_view_window_get_zoom (ModestWindow *window)
+{
+	ModestMsgViewWindowPrivate *priv;
+     
+	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (window), 1.0);
+
+	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
+	return modest_msg_view_get_zoom (MODEST_MSG_VIEW (priv->msg_view));
+}
+
+static void
+modest_msg_view_window_zoom_plus (GtkAction *action, ModestWindow *window)
+{
+	ModestWindowPrivate *parent_priv;
+	GtkRadioAction *zoom_radio_action;
+	GSList *group, *node;
+
+	parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
+	zoom_radio_action = GTK_RADIO_ACTION (gtk_ui_manager_get_action (parent_priv->ui_manager, 
+									 "/MenuBar/ViewMenu/ZoomMenu/Zoom50Menu"));
+
+	group = gtk_radio_action_get_group (zoom_radio_action);
+
+	if (gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (group->data))) {
+		hildon_banner_show_information (NULL, NULL, _("mcen_ib_max_zoom_level"));
+		return;
+	}
+
+	for (node = group; node != NULL; node = g_slist_next (node)) {
+		if ((node->next != NULL) && gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (node->next->data))) {
+			gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (node->data), TRUE);
+			return;
+		}
+	}
+}
+
+static void
+modest_msg_view_window_zoom_minus (GtkAction *action, ModestWindow *window)
+{
+	ModestWindowPrivate *parent_priv;
+	GtkRadioAction *zoom_radio_action;
+	GSList *group, *node;
+
+	parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
+	zoom_radio_action = GTK_RADIO_ACTION (gtk_ui_manager_get_action (parent_priv->ui_manager, 
+									 "/MenuBar/ViewMenu/ZoomMenu/Zoom50Menu"));
+
+	group = gtk_radio_action_get_group (zoom_radio_action);
+
+	for (node = group; node != NULL; node = g_slist_next (node)) {
+		if (gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (node->data))) {
+			if (node->next != NULL)
+				gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (node->next->data), TRUE);
+			else
+				hildon_banner_show_information (NULL, NULL, _("mcen_ib_min_zoom_level"));
+			break;
+		}
+	}
+}
+
+static gboolean
+modest_msg_view_window_key_release_event (GtkWidget *window,
+					  GdkEventKey *event,
+					  gpointer userdata)
+{
+	if (event->type == GDK_KEY_RELEASE) {
+		switch (event->keyval) {
+		case GDK_Up:
+			modest_msg_view_window_scroll_up (MODEST_WINDOW (window));
+			return TRUE;
+			break;
+		case GDK_Down:
+			modest_msg_view_window_scroll_down (MODEST_WINDOW (window));
+			return TRUE;
+			break;
+		default:
+			return FALSE;
+			break;
+		};
+	} else {
+		return FALSE;
+	}
+}
+
+static void
+modest_msg_view_window_scroll_up (ModestWindow *window)
+{
+	ModestMsgViewWindowPrivate *priv;
+
+	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
+	g_signal_emit_by_name (G_OBJECT (priv->main_scroll), "scroll-child", GTK_SCROLL_STEP_UP, FALSE);
+}
+
+static void
+modest_msg_view_window_scroll_down (ModestWindow *window)
+{
+	ModestMsgViewWindowPrivate *priv;
+
+	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
+	g_signal_emit_by_name (G_OBJECT (priv->main_scroll), "scroll-child", GTK_SCROLL_STEP_DOWN, FALSE);
+}
+
+static gboolean 
+modest_msg_view_window_is_last_message (ModestMsgViewWindow *window)
+{
+	GtkTreePath *path;
+	ModestMsgViewWindowPrivate *priv;
+	GtkTreeIter tmp_iter;
+	gboolean has_next = FALSE;
+
+	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (window), TRUE);
+	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
+
+	if (priv->header_model) {
+		path = gtk_tree_model_get_path (priv->header_model, &priv->iter);
+		if (!path)
+			return TRUE;
+		while (!has_next) {
+			TnyHeader *header;
+			gtk_tree_path_next (path);
+			if (!gtk_tree_model_get_iter (priv->header_model, &tmp_iter, path))
+				break;
+			gtk_tree_model_get (priv->header_model, &tmp_iter, TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN,
+					    &header, -1);
+			if (!(tny_header_get_flags(header)&TNY_HEADER_FLAG_DELETED)) {
+				has_next = TRUE;
+				break;
+			}
+			
+		}
+		gtk_tree_path_free (path);
+		return !has_next;
+	} else {
+		return TRUE;
+	}
+	
+}
+
+static gboolean 
+modest_msg_view_window_is_first_message (ModestMsgViewWindow *window)
+{
+	GtkTreePath *path;
+	ModestMsgViewWindowPrivate *priv;
+	gboolean result;
+	GtkTreeIter tmp_iter;
+
+	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (window), TRUE);
+	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
+
+	if (priv->header_model) {
+		gchar * path_string;
+		path = gtk_tree_model_get_path (priv->header_model, &priv->iter);
+		if (!path)
+			return TRUE;
+
+		path_string = gtk_tree_path_to_string (path);
+		result = (strcmp (path_string, "0")==0);
+		if (result) {
+			g_free (path_string);
+			gtk_tree_path_free (path);
+			return result;
+		}
+
+		while (result) {
+			TnyHeader *header;
+
+			gtk_tree_path_prev (path);
+			
+			if (!gtk_tree_model_get_iter (priv->header_model, &tmp_iter, path))
+				break;
+			gtk_tree_model_get (priv->header_model, &tmp_iter, TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN,
+					    &header, -1);
+			if (!(tny_header_get_flags(header)&TNY_HEADER_FLAG_DELETED)) {
+				result = FALSE;
+				break;
+			}
+
+			path_string = gtk_tree_path_to_string (path);
+			if (strcmp(path_string, "0")==0) {
+				g_free (path_string);
+				break;
+			}
+			g_free (path_string);
+		}
+		gtk_tree_path_free (path);
+		return result;
+	} else {
+		return TRUE;
+	}
+	
+}
+
+gboolean        
+modest_msg_view_window_select_next_message (ModestMsgViewWindow *window)
+{
+	ModestMsgViewWindowPrivate *priv;
+	GtkTreeIter tmp_iter;
+	gboolean has_next = FALSE;
+
+	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (window), FALSE);
+	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
+
+	if (priv->header_model) {
+		tmp_iter = priv->iter;
+		while (gtk_tree_model_iter_next (priv->header_model, &tmp_iter)) {
+			TnyHeader *header;
+			TnyFolder *folder;
+			TnyMsg *msg;
+
+			priv->iter = tmp_iter;
+			gtk_tree_model_get (priv->header_model, &(priv->iter), TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN,
+					    &header, -1);
+			if (!header)
+				break;
+			if (tny_header_get_flags (header) & TNY_HEADER_FLAG_DELETED)
+				continue;
+
+			folder = tny_header_get_folder (header);
+			if (!folder)
+				break;
+			msg = tny_folder_get_msg (folder, header, NULL);
+			if (!msg) {
+				g_object_unref (folder);
+				break;
+			}
+			has_next = TRUE;
+			modest_msg_view_set_message (MODEST_MSG_VIEW (priv->msg_view), msg);
+			modest_msg_view_window_update_dimmed (window);
+			modest_msg_view_window_update_priority (window);
+			gtk_widget_grab_focus (priv->msg_view);
+
+			g_object_unref (msg);
+			break;
+		}
+
+		return has_next;
+	} else {
+		return FALSE;
+	}
+}
+
+gboolean        
+modest_msg_view_window_select_previous_message (ModestMsgViewWindow *window)
+{
+	ModestMsgViewWindowPrivate *priv;
+
+	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (window), FALSE);
+	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
+
+	if (priv->header_model) {
+		GtkTreePath *path;
+		gboolean has_prev = FALSE;
+
+		path = gtk_tree_model_get_path (priv->header_model, &(priv->iter));
+		while (gtk_tree_path_prev (path)) {
+			TnyHeader *header;
+			TnyFolder *folder;
+			TnyMsg *msg;
+
+			gtk_tree_model_get_iter (priv->header_model, &(priv->iter), path);
+			gtk_tree_model_get (priv->header_model, &(priv->iter), TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN,
+					    &header, -1);
+			if (!header)
+				break;
+			if (tny_header_get_flags (header) & TNY_HEADER_FLAG_DELETED)
+				continue;
+			folder = tny_header_get_folder (header);
+			if (!folder)
+				break;
+			msg = tny_folder_get_msg (folder, header, NULL);
+			if (!msg) {
+				g_object_unref (folder);
+				break;
+			}
+			has_prev = TRUE;
+			modest_msg_view_set_message (MODEST_MSG_VIEW (priv->msg_view), msg);
+			modest_msg_view_window_update_dimmed (window);
+			modest_msg_view_window_update_priority (window);
+			gtk_widget_grab_focus (priv->msg_view);
+
+			g_object_unref (msg);
+			break;
+		}
+		gtk_tree_path_free (path);
+		return has_prev;
+	} else {
+		return FALSE;
+	}
+}
+
+static TnyFolderType
+modest_msg_view_window_get_folder_type (ModestMsgViewWindow *window)
+{
+	ModestMsgViewWindowPrivate *priv;
+	TnyMsg *msg;
+	TnyFolderType folder_type;
+
+	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
+
+	folder_type = TNY_FOLDER_TYPE_UNKNOWN;
+
+	msg = modest_msg_view_get_message (MODEST_MSG_VIEW (priv->msg_view));
+	if (msg) {
+		TnyFolder *folder;
+
+		folder = tny_msg_get_folder (msg);
+		
+		if (folder) {
+			folder_type = tny_folder_get_folder_type (folder);
+			
+			if (folder_type == TNY_FOLDER_TYPE_NORMAL || folder_type == TNY_FOLDER_TYPE_UNKNOWN) {
+				const gchar *fname = tny_folder_get_name (folder);
+				folder_type = modest_tny_folder_guess_folder_type_from_name (fname);
+			}
+
+			g_object_unref (folder);
+		}
+	}
+
+	return folder_type;
+}
+
+static void
+modest_msg_view_window_update_dimmed (ModestMsgViewWindow *window)
+{
+	ModestWindowPrivate *parent_priv;
+	GtkAction *widget;
+	gboolean is_first, is_last;
+	TnyFolderType folder_type;
+	gboolean is_not_sent;
+
+	parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
+
+	is_first = modest_msg_view_window_is_first_message (window);
+	is_last = modest_msg_view_window_is_last_message (window);
+
+	widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ToolbarMessageBack");
+	gtk_action_set_sensitive (widget, !is_first);
+	widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/ViewMenu/ViewPreviousMessageMenu");
+	gtk_action_set_sensitive (widget, !is_first);
+		
+	widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ToolbarMessageForward");
+	gtk_action_set_sensitive (widget, !is_last);
+	widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/ViewMenu/ViewNextMessageMenu");
+	gtk_action_set_sensitive (widget, !is_last);
+
+	folder_type = modest_msg_view_window_get_folder_type (MODEST_MSG_VIEW_WINDOW (window));
+	is_not_sent = ((folder_type == TNY_FOLDER_TYPE_DRAFTS)||(folder_type == TNY_FOLDER_TYPE_OUTBOX));
+	widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ToolbarMessageReply");
+	gtk_action_set_sensitive (widget, !is_not_sent);
+	widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/MessageMenu/MessageReplyMenu");
+	gtk_action_set_sensitive (widget, !is_not_sent);
+	widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/MessageMenu/MessageReplyAllMenu");
+	gtk_action_set_sensitive (widget, !is_not_sent);
+	widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/MessageMenu/MessageForwardMenu");
+	gtk_action_set_sensitive (widget, !is_not_sent);
+		
+}
+
+static void
+modest_msg_view_window_update_priority (ModestMsgViewWindow *window)
+{
+	ModestMsgViewWindowPrivate *priv;
+	TnyHeaderFlags flags = 0;
+
+	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
+
+	if (priv->header_model) {
+		TnyHeader *header;
+
+		gtk_tree_model_get (priv->header_model, &(priv->iter), TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN,
+				    &header, -1);
+		flags = tny_header_get_flags (header);
+	}
+
+	modest_msg_view_set_priority (MODEST_MSG_VIEW(priv->msg_view), flags);
+
+}
+
+static void
+modest_msg_view_window_toggle_fullscreen (GtkAction *action, ModestWindow *window)
+{
+	ModestWindowPrivate *parent_priv;
+	GtkAction *fs_toggle_action;
+	gboolean active;
+
+	parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
+
+	fs_toggle_action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/ViewMenu/ShowToggleFullscreenMenu");
+	active = gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (fs_toggle_action));
+	gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (fs_toggle_action), !active);
 }

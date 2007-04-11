@@ -67,13 +67,17 @@ struct _ModestMailHeaderViewClass
 };
 
 GType modest_mail_header_view_get_type (void);
-TnyHeaderView* modest_mail_header_view_new (void);
+TnyHeaderView* modest_mail_header_view_new (gboolean expanded);
 
 const GtkWidget *modest_mail_header_view_add_custom_header (ModestMailHeaderView *header_view,
 							    const gchar *label,
 							    GtkWidget *custom_widget,
 							    gboolean with_expander,
 							    gboolean start);
+
+TnyHeaderFlags modest_mail_header_view_get_priority (ModestMailHeaderView *header_view);
+void modest_mail_header_view_set_priority (ModestMailHeaderView *header_view, TnyHeaderFlags flags);
+						     
 
 G_END_DECLS
 

@@ -32,6 +32,7 @@
 
 #include <tny-msg.h>
 #include <widgets/modest-window.h>
+#include <gtk/gtktreemodel.h>
 
 G_BEGIN_DECLS
 
@@ -76,16 +77,54 @@ GType        modest_msg_view_window_get_type    (void) G_GNUC_CONST;
  */
 ModestWindow*   modest_msg_view_window_new         (TnyMsg *msg, const gchar *account);
 
+/**
+ * modest_msg_view_window_new_with_header_model:
+ * @msg: an #TnyMsg instance
+ * @account: the account name 
+ * @model: a #GtkTreeModel, with the format used by #ModestHeaderView
+ * @iter: a #GtkTreeIter, pointing to the position of @msg in @model.
+ * 
+ * instantiates a new #ModestMsgViewWindow widget. The account name is used to
+ * set the proper account when choosing reply/forward from the msg view window.
+ * This constructor also passes a reference to the @model of the header view
+ * to allow selecting previous/next messages.
+ *
+ * Returns: a new #ModestMsgViewWindow, or NULL in case of error
+ */
+ModestWindow*   modest_msg_view_window_new_with_header_model (TnyMsg *msg, const gchar *account, GtkTreeModel *model, GtkTreeIter iter);
+
 
 /**
  * modest_msg_view_window_get_message:
- * @msg: an #ModestMsgViewWindow instance
+ * @window: an #ModestMsgViewWindow instance
  * 
  * get the message in this msg view
  * 
  * Returns: a new #TnyMsg instance, or NULL in case of error
  */
 TnyMsg*         modest_msg_view_window_get_message (ModestMsgViewWindow *window);
+
+/**
+ * modest_msg_view_window_select_next_message:
+ * @window: a #ModestMsgViewWindow instance
+ *
+ * select the next message obtained from the header view this view 
+ * was called from
+ *
+ * Returns: %TRUE if a new message is shown.
+ */
+gboolean        modest_msg_view_window_select_next_message (ModestMsgViewWindow *window);
+
+/**
+ * modest_msg_view_window_select_previous_message:
+ * @window: a #ModestMsgViewWindow instance
+ *
+ * select the previous message obtained from the header view this view 
+ * was called from
+ *
+ * Returns: %TRUE if a new message is shown.
+ */
+gboolean        modest_msg_view_window_select_previous_message (ModestMsgViewWindow *window);
 
 G_END_DECLS
 

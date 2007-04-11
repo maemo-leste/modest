@@ -35,6 +35,8 @@
 #include <glib/gi18n.h>
 #include <gtkhtml/gtkhtml.h>
 #include <gtkhtml/gtkhtml-stream.h>
+#include <gtkhtml/gtkhtml-search.h>
+#include <gtkhtml/gtkhtml-embedded.h>
 #include <tny-list.h>
 #include <tny-simple-list.h>
 
@@ -64,6 +66,7 @@ static gboolean on_link_clicked (GtkWidget *widget, const gchar *uri, ModestMsgV
 static gboolean on_url_requested (GtkWidget *widget, const gchar *uri, GtkHTMLStream *stream,
 				  ModestMsgView *msg_view);
 static gboolean on_link_hover (GtkWidget *widget, const gchar *uri, ModestMsgView *msg_view);
+static void     on_tap_and_hold (GtkWidget *widget, gpointer userdata);
 
 /* size allocation and drawing handlers */
 static void get_view_allocation (ModestMsgView *msg_view, GtkAllocation *allocation);
@@ -91,6 +94,7 @@ enum {
 	LINK_HOVER_SIGNAL,
 	ATTACHMENT_CLICKED_SIGNAL,
 	RECPT_ACTIVATED_SIGNAL,
+	LINK_CONTEXTUAL_SIGNAL,
 	LAST_SIGNAL
 };
 
@@ -124,6 +128,14 @@ struct _ModestMsgViewPrivate {
 	GdkWindow *view_window;
 	GdkWindow *headers_window;
 	GdkWindow *html_window;
+
+	/* zoom */
+	gdouble current_zoom;
+
+	/* link click management */
+	gchar *last_url;
+
+	TnyHeaderFlags priority_flags;
 
 	gulong  sig1, sig2, sig3;
 };
@@ -248,6 +260,15 @@ modest_msg_view_class_init (ModestMsgViewClass *klass)
 			      G_TYPE_FROM_CLASS (gobject_class),
 			      G_SIGNAL_RUN_FIRST,
 			      G_STRUCT_OFFSET(ModestMsgViewClass, recpt_activated),
+			      NULL, NULL,
+			      g_cclosure_marshal_VOID__STRING,
+			      G_TYPE_NONE, 1, G_TYPE_STRING);
+
+	signals[LINK_CONTEXTUAL_SIGNAL] =
+		g_signal_new ("link_contextual",
+			      G_TYPE_FROM_CLASS (gobject_class),
+			      G_SIGNAL_RUN_FIRST,
+			      G_STRUCT_OFFSET(ModestMsgViewClass, link_contextual),
 			      NULL, NULL,
 			      g_cclosure_marshal_VOID__STRING,
 			      G_TYPE_NONE, 1, G_TYPE_STRING);
@@ -438,8 +459,11 @@ set_scroll_adjustments (ModestMsgView *msg_view,
 			GtkAdjustment *hadj,
 			GtkAdjustment *vadj)
 {
+	ModestMsgViewPrivate *priv = MODEST_MSG_VIEW_GET_PRIVATE (msg_view);
 	modest_msg_view_set_hadjustment (msg_view, hadj);
 	modest_msg_view_set_vadjustment (msg_view, vadj);
+
+	gtk_container_set_focus_vadjustment (GTK_CONTAINER (priv->gtkhtml), vadj);
 }
 
 static void
@@ -831,6 +855,9 @@ modest_msg_view_init (ModestMsgView *obj)
 	
 	priv = MODEST_MSG_VIEW_GET_PRIVATE(obj);
 
+	priv->current_zoom = 1.0;
+	priv->priority_flags = 0;
+
 	priv->hadj = NULL;
 	priv->vadj = NULL;
 	priv->shadow_type = GTK_SHADOW_IN;
@@ -854,7 +881,7 @@ modest_msg_view_init (ModestMsgView *obj)
 	gtk_html_set_blocking        (GTK_HTML(priv->gtkhtml), FALSE);
 	gtk_html_set_images_blocking (GTK_HTML(priv->gtkhtml), FALSE);
 
-	priv->mail_header_view        = GTK_WIDGET(modest_mail_header_view_new ());
+	priv->mail_header_view        = GTK_WIDGET(modest_mail_header_view_new (TRUE));
 	gtk_widget_set_no_show_all (priv->mail_header_view, TRUE);
 
 	priv->attachments_view        = GTK_WIDGET(modest_attachments_view_new (NULL));
@@ -1045,6 +1072,7 @@ modest_msg_view_new (TnyMsg *msg)
 	GObject *obj;
 	ModestMsgView* self;
 	ModestMsgViewPrivate *priv;
+	GtkWidget *separator;
 	
 	obj  = G_OBJECT(g_object_new(MODEST_TYPE_MSG_VIEW, NULL));
 	self = MODEST_MSG_VIEW(obj);
@@ -1066,17 +1094,37 @@ modest_msg_view_new (TnyMsg *msg)
 /* 		gtk_widget_set_no_show_all (priv->attachments_box, TRUE); */
 	}
 
+	separator = gtk_hseparator_new ();
+	gtk_box_pack_start (GTK_BOX(priv->headers_box), separator, FALSE, FALSE, 0);
+
 	gtk_widget_set_parent (priv->headers_box, GTK_WIDGET (self));
 
 	if (priv->gtkhtml) {
 		gtk_container_add (GTK_CONTAINER (priv->html_scroll), priv->gtkhtml);
 		gtk_widget_set_parent (priv->html_scroll, GTK_WIDGET(self));
+#ifdef MAEMO_CHANGES
+		gtk_widget_tap_and_hold_setup (GTK_WIDGET (priv->gtkhtml), NULL, NULL, 0);
+		g_signal_connect (G_OBJECT (priv->gtkhtml), "tap-and-hold", G_CALLBACK (on_tap_and_hold), obj);
+#endif
 	}
 
 	modest_msg_view_set_message (self, msg);
 
 	return GTK_WIDGET(self);
 }
+
+#ifdef MAEMO_CHANGES
+static void
+on_tap_and_hold (GtkWidget *widget,
+		 gpointer data)
+{
+	ModestMsgView *msg_view = (ModestMsgView *) data;
+	ModestMsgViewPrivate *priv = MODEST_MSG_VIEW_GET_PRIVATE (msg_view);
+
+	g_signal_emit (G_OBJECT (msg_view), signals[LINK_CONTEXTUAL_SIGNAL],
+		       0, priv->last_url);
+}
+#endif
 
 static void
 on_recpt_activated (ModestMailHeaderView *header_view, 
@@ -1109,6 +1157,11 @@ on_link_clicked (GtkWidget *widget, const gchar *uri, ModestMsgView *msg_view)
 static gboolean
 on_link_hover (GtkWidget *widget, const gchar *uri, ModestMsgView *msg_view)
 {
+	ModestMsgViewPrivate *priv = MODEST_MSG_VIEW_GET_PRIVATE (msg_view);
+
+	g_free (priv->last_url);
+	priv->last_url = g_strdup (uri);
+
 	g_signal_emit (G_OBJECT(msg_view), signals[LINK_HOVER_SIGNAL],
 		       0, uri);
 
@@ -1355,3 +1408,101 @@ modest_msg_view_get_message (ModestMsgView *self)
 	return MODEST_MSG_VIEW_GET_PRIVATE(self)->msg;
 }
 
+gboolean 
+modest_msg_view_search (ModestMsgView *self, const gchar *search)
+{
+	ModestMsgViewPrivate *priv;
+	gboolean result;
+	GtkAdjustment *vadj, *tmp_vadj;
+	gdouble y_offset;
+
+	g_return_val_if_fail (MODEST_IS_MSG_VIEW (self), FALSE);
+
+	priv = MODEST_MSG_VIEW_GET_PRIVATE (self);
+	vadj = gtk_layout_get_vadjustment (GTK_LAYOUT (priv->gtkhtml));
+	g_object_ref (vadj);
+	tmp_vadj = GTK_ADJUSTMENT (gtk_adjustment_new (0.0, vadj->lower, vadj->upper, vadj->step_increment, 32.0, 32.0));
+	gtk_layout_set_vadjustment (GTK_LAYOUT (priv->gtkhtml), tmp_vadj);
+	result = gtk_html_engine_search (GTK_HTML (priv->gtkhtml),
+					 search,
+					 FALSE, TRUE, TRUE);
+	y_offset = tmp_vadj->value;
+	g_message ("VALUE %f", y_offset);
+	gtk_layout_set_vadjustment (GTK_LAYOUT (priv->gtkhtml), vadj);
+	g_object_unref (vadj);
+
+	return result;
+}
+
+gboolean
+modest_msg_view_search_next (ModestMsgView *self)
+{
+	ModestMsgViewPrivate *priv;
+	gboolean result;
+
+	g_return_val_if_fail (MODEST_IS_MSG_VIEW (self), FALSE);
+
+	priv = MODEST_MSG_VIEW_GET_PRIVATE (self);
+	result = gtk_html_engine_search_next (GTK_HTML (priv->gtkhtml));
+
+	{
+		GtkAdjustment *adj;
+
+		adj = gtk_container_get_focus_vadjustment (GTK_CONTAINER (priv->gtkhtml));
+		g_message ("ADJ value %f", adj->value);
+	}
+
+	return result;
+}
+
+void
+modest_msg_view_set_zoom (ModestMsgView *self, gdouble zoom)
+{
+	ModestMsgViewPrivate *priv;
+
+	g_return_if_fail (MODEST_IS_MSG_VIEW (self));
+
+	priv = MODEST_MSG_VIEW_GET_PRIVATE (self);
+	priv->current_zoom = zoom;
+	gtk_html_set_magnification (GTK_HTML(priv->gtkhtml), zoom);
+
+	gtk_widget_queue_resize (priv->gtkhtml);
+}
+
+gdouble
+modest_msg_view_get_zoom (ModestMsgView *self)
+{
+	ModestMsgViewPrivate *priv;
+
+	g_return_val_if_fail (MODEST_IS_MSG_VIEW (self), 1.0);
+
+	priv = MODEST_MSG_VIEW_GET_PRIVATE (self);
+
+	return priv->current_zoom;
+}
+
+TnyHeaderFlags
+modest_msg_view_get_priority (ModestMsgView *self)
+{
+	ModestMsgViewPrivate *priv;
+
+	g_return_val_if_fail (MODEST_IS_MSG_VIEW (self), 0);
+
+	priv = MODEST_MSG_VIEW_GET_PRIVATE (self);
+
+	return priv->priority_flags;
+}
+
+void
+modest_msg_view_set_priority (ModestMsgView *self, TnyHeaderFlags flags)
+{
+	ModestMsgViewPrivate *priv;
+
+	g_return_if_fail (MODEST_IS_MSG_VIEW (self));
+
+	priv = MODEST_MSG_VIEW_GET_PRIVATE (self);
+
+	priv->priority_flags = flags & (TNY_HEADER_FLAG_HIGH_PRIORITY);
+
+	modest_mail_header_view_set_priority (MODEST_MAIL_HEADER_VIEW (priv->mail_header_view), flags);
+}

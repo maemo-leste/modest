@@ -41,10 +41,12 @@
 #include "modest-ui-actions.h"
 
 #include "modest-tny-platform-factory.h"
+#include "modest-platform.h"
 
 #include <widgets/modest-main-window.h>
 #include <widgets/modest-msg-view-window.h>
 #include <widgets/modest-account-view-window.h>
+#include <widgets/modest-msg-view-details-dialog.h>
 
 #include "modest-account-mgr-helpers.h"
 #include "modest-mail-operation.h"
@@ -85,6 +87,8 @@ static void     read_msg_func          (gpointer data, gpointer user_data);
 static void     get_msg_cb             (TnyFolder *folder, TnyMsg *msg,	GError **err, 
 					gpointer user_data);
 static void     reply_forward          (ReplyForwardAction action, ModestWindow *win);
+static void     modest_ui_actions_message_details_cb (gpointer msg_data, 
+						      gpointer helper_data);
 static gchar*   ask_for_folder_name    (GtkWindow *parent_window, const gchar *title);
 
 
@@ -182,6 +186,10 @@ modest_ui_actions_on_delete (GtkAction *action, ModestWindow *win)
 		/* Free iter */
 		g_object_unref (G_OBJECT (iter));
 	}
+
+	if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
+		gtk_widget_destroy (GTK_WIDGET(win));
+	}
 }
 
 
@@ -190,7 +198,20 @@ modest_ui_actions_on_quit (GtkAction *action, ModestWindow *win)
 {
 	/* FIXME: save size of main window */
 /* 	save_sizes (main_window); */
-	gtk_widget_destroy (GTK_WIDGET (win));
+/* 	gtk_widget_destroy (GTK_WIDGET (win)); */
+	gtk_main_quit ();
+}
+
+void
+modest_ui_actions_on_close_window (GtkAction *action, ModestWindow *win)
+{
+	if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
+		gtk_widget_destroy (GTK_WIDGET (win));
+	} else if (MODEST_IS_WINDOW (win)) {
+		gtk_widget_destroy (GTK_WIDGET (win));
+	} else {
+		g_return_if_reached ();
+	}
 }
 
 void
@@ -520,32 +541,43 @@ modest_ui_actions_on_reply_all (GtkAction *action, ModestWindow *win)
 
 void 
 modest_ui_actions_on_next (GtkAction *action, 
-			   ModestMainWindow *main_window)
+			   ModestWindow *window)
 {
-	GtkWidget *header_view;
-	g_return_if_fail (MODEST_IS_MAIN_WINDOW(main_window));
+	if (MODEST_IS_MAIN_WINDOW (window)) {
+		GtkWidget *header_view;
 
-	header_view = modest_main_window_get_child_widget (main_window,
-							   MODEST_WIDGET_TYPE_HEADER_VIEW);
-	if (!header_view)
-		return;
+		header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(window),
+								   MODEST_WIDGET_TYPE_HEADER_VIEW);
+		if (!header_view)
+			return;
 	
-	modest_header_view_select_next (MODEST_HEADER_VIEW(header_view)); 
+		modest_header_view_select_next (MODEST_HEADER_VIEW(header_view)); 
+	} else if (MODEST_IS_MSG_VIEW_WINDOW (window)) {
+		modest_msg_view_window_select_next_message (MODEST_MSG_VIEW_WINDOW (window));
+	} else {
+		g_return_if_reached ();
+	}
 }
 
 void 
 modest_ui_actions_on_prev (GtkAction *action, 
-			   ModestMainWindow *main_window)
+			   ModestWindow *window)
 {
-	GtkWidget *header_view;
-	g_return_if_fail (MODEST_IS_MAIN_WINDOW(main_window));
+	g_return_if_fail (MODEST_IS_WINDOW(window));
 
-	header_view = modest_main_window_get_child_widget (main_window,
-							   MODEST_WIDGET_TYPE_HEADER_VIEW);
-	if (!header_view)
-		return;
-	
-	modest_header_view_select_prev (MODEST_HEADER_VIEW(header_view)); 
+	if (MODEST_IS_MAIN_WINDOW (window)) {
+		GtkWidget *header_view;
+		header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(window),
+								   MODEST_WIDGET_TYPE_HEADER_VIEW);
+		if (!header_view)
+			return;
+		
+		modest_header_view_select_prev (MODEST_HEADER_VIEW(header_view)); 
+	} else if (MODEST_IS_MSG_VIEW_WINDOW (window)) {
+		modest_msg_view_window_select_previous_message (MODEST_MSG_VIEW_WINDOW (window));
+	} else {
+		g_return_if_reached ();
+	}
 }
 
 
@@ -766,6 +798,9 @@ modest_ui_actions_on_header_activated (ModestHeaderView *folder_view, TnyHeader 
 	TnyFolder *folder = NULL;
 	TnyMsg    *msg    = NULL;
 	gchar *account    = NULL;
+	GtkTreeModel *model = NULL;
+	GtkTreeSelection *sel = NULL;
+	GtkTreeIter iter;
 	ModestWindowMgr *mgr;
 	
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW(main_window));
@@ -791,7 +826,12 @@ modest_ui_actions_on_header_activated (ModestHeaderView *folder_view, TnyHeader 
 		account = modest_account_mgr_get_default_account (modest_runtime_get_account_mgr());
 
 	/* Create and register message view window */	
-	win = modest_msg_view_window_new (msg, account);
+	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (folder_view));
+	if (gtk_tree_selection_get_selected (sel, &model, &iter)) {
+		win = modest_msg_view_window_new_with_header_model (msg, account, model, iter);
+	} else {
+		win = modest_msg_view_window_new (msg, account);
+	}
 	mgr = modest_runtime_get_window_mgr ();
 	modest_window_mgr_register_window (mgr, win);
 
@@ -910,7 +950,7 @@ void
 modest_ui_actions_on_msg_link_hover (ModestMsgView *msgview, const gchar* link,
 				     ModestWindow *win)
 {
-	g_message (__FUNCTION__);
+	g_message ("%s %s", __FUNCTION__, link);
 }	
 
 
@@ -918,7 +958,14 @@ void
 modest_ui_actions_on_msg_link_clicked (ModestMsgView *msgview, const gchar* link,
 					ModestWindow *win)
 {
-	g_message (__FUNCTION__);
+	modest_platform_activate_uri (link);
+}
+
+void
+modest_ui_actions_on_msg_link_contextual (ModestMsgView *msgview, const gchar* link,
+					  ModestWindow *win)
+{
+	modest_platform_show_uri_popup (link);
 }
 
 void
@@ -1421,5 +1468,84 @@ modest_ui_actions_on_select_all (GtkAction *action,
 		gtk_text_buffer_get_start_iter (buffer, &start);
 		gtk_text_buffer_get_end_iter (buffer, &end);
 		gtk_text_buffer_select_range (buffer, &start, &end);
+	}
+}
+
+void
+modest_ui_actions_on_change_zoom (GtkRadioAction *action,
+				  GtkRadioAction *selected,
+				  ModestWindow *window)
+{
+	gint value;
+
+	value = gtk_radio_action_get_current_value (selected);
+	if (MODEST_IS_WINDOW (window)) {
+		modest_window_set_zoom (MODEST_WINDOW (window), ((gdouble)value)/100);
+	}
+}
+
+void     
+modest_ui_actions_on_toggle_fullscreen    (GtkToggleAction *toggle,
+					   ModestWindow *window)
+{
+	g_return_if_fail (MODEST_IS_WINDOW (window));
+
+	if (gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (toggle))) {
+		gtk_window_fullscreen (GTK_WINDOW (window));
+	} else {
+		gtk_window_unfullscreen (GTK_WINDOW (window));
+	}
+}
+
+static void
+modest_ui_actions_message_details_cb (gpointer msg_data, 
+				      gpointer helper_data)
+{
+	GtkWidget *dialog;
+ 	TnyMsg *msg = (TnyMsg *) msg_data;
+	TnyHeader *header;
+	GetMsgAsyncHelper *helper = (GetMsgAsyncHelper *) helper_data;
+	
+	header = tny_msg_get_header (msg);
+	
+	dialog = modest_msg_view_details_dialog_new (GTK_WINDOW (helper->window), header);
+	g_object_unref (header);
+	gtk_widget_show_all (dialog);
+
+	gtk_dialog_run (GTK_DIALOG (dialog));
+
+	gtk_widget_destroy (dialog);
+}
+
+void     
+modest_ui_actions_on_message_details (GtkAction *action, 
+				      ModestWindow *win)
+{
+	TnyList * headers_list;
+	GetMsgAsyncHelper *helper;
+
+	headers_list = get_selected_headers (win);
+	if (!headers_list)
+		return;
+
+	helper = g_slice_new0 (GetMsgAsyncHelper);
+	helper->window = win;
+	helper->func = modest_ui_actions_message_details_cb;
+	helper->iter = tny_list_create_iterator (headers_list);
+	helper->user_data = NULL;
+
+	if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
+		TnyMsg *msg;
+
+		msg = modest_msg_view_window_get_message (MODEST_MSG_VIEW_WINDOW (win));
+		if (!msg)
+			return;
+		else {
+			modest_ui_actions_message_details_cb (msg, helper);
+		}
+	} else {
+		/* here we should add an implementation to run the message details dialog
+		   from the main window */
+		g_return_if_reached ();
 	}
 }

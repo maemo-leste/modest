@@ -35,6 +35,12 @@
 static void modest_window_class_init (ModestWindowClass *klass);
 static void modest_window_init       (ModestWindow *obj);
 static void modest_window_finalize   (GObject *obj);
+
+static void modest_window_set_zoom_default (ModestWindow *window,
+					    gdouble zoom);
+gdouble     modest_window_get_zoom_default (ModestWindow *window);
+
+
 /* list my signals  */
 enum {
 	LAST_SIGNAL
@@ -85,6 +91,9 @@ modest_window_class_init (ModestWindowClass *klass)
 
 	parent_class            = g_type_class_peek_parent (klass);
 	gobject_class->finalize = modest_window_finalize;
+
+	klass->set_zoom_func = modest_window_set_zoom_default;
+	klass->get_zoom_func = modest_window_get_zoom_default;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestWindowPrivate));
 }
@@ -143,4 +152,31 @@ modest_window_set_active_account (ModestWindow *self, const gchar *active_accoun
 		g_free (priv->active_account);
 		priv->active_account = g_strdup (active_account);
 	}
+}
+
+void
+modest_window_set_zoom (ModestWindow *window,
+			gdouble zoom)
+{
+	MODEST_WINDOW_GET_CLASS (window)->set_zoom_func (window, zoom);
+	return;
+}
+
+gdouble
+modest_window_get_zoom (ModestWindow *window)
+{
+	return MODEST_WINDOW_GET_CLASS (window)->get_zoom_func (window);
+}
+
+static void
+modest_window_set_zoom_default (ModestWindow *window,
+				gdouble zoom)
+{
+	return;
+}
+
+gdouble
+modest_window_get_zoom_default (ModestWindow *window)
+{
+	return 1.0;
 }

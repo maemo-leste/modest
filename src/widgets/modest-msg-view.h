@@ -64,6 +64,8 @@ struct _ModestMsgViewClass {
 				    gpointer user_data);
 	void (*link_clicked)       (ModestMsgView *msgview, const gchar* link,
 				    gpointer user_data);
+	void (*link_contextual)    (ModestMsgView *msgview, const gchar* link,
+				    gpointer user_data);
 	void (*attachment_clicked) (ModestMsgView *msgview, TnyMimePart *mime_part,
 				    gpointer user_data);
 	void (*recpt_activated)    (ModestMsgView *msgview, const gchar *address,
@@ -123,6 +125,14 @@ void modest_msg_view_set_vadjustment (ModestMsgView *self, GtkAdjustment *vadj);
 void modest_msg_view_set_hadjustment (ModestMsgView *self, GtkAdjustment *hadj);
 void modest_msg_view_set_shadow_type (ModestMsgView *self, GtkShadowType type);
 GtkShadowType modest_msg_view_get_shadow_type (ModestMsgView *self);
+
+gboolean modest_msg_view_search (ModestMsgView *self, const gchar *search);
+gboolean modest_msg_view_search_next (ModestMsgView *self);
+void modest_msg_view_set_zoom (ModestMsgView *self, gdouble zoom);
+gdouble modest_msg_view_get_zoom (ModestMsgView *self);
+TnyHeaderFlags modest_msg_view_get_priority (ModestMsgView *self);
+void modest_msg_view_set_priority (ModestMsgView *self, TnyHeaderFlags flags);
+
 
 G_END_DECLS
 

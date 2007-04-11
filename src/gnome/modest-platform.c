@@ -78,6 +78,17 @@ modest_platform_get_file_icon_name (const gchar* name, const gchar* mime_type,
 	return icon_name;
 }
 
+gboolean 
+modest_platform_activate_uri (const gchar *uri)
+{
+	g_message ("not implemented %s", __FUNCTION__);
+}
+
+gboolean 
+modest_platform_show_uri_popup (const gchar *uri)
+{
+	g_message ("not implemented %s", __FUNCTION__);
+}
 
 GdkPixbuf*
 modest_platform_get_icon (const gchar *name)
@@ -97,4 +108,3 @@ modest_platform_get_icon (const gchar *name)
 	
 	return pixbuf;
 }
-

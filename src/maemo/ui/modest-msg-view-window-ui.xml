@@ -32,16 +32,16 @@
 
   <menubar name="MenuBar">
 
-    <menu name="MessageMenu" action="Message">
-      <menuitem name="MessageReplyMenu" action="MessageReply"/>
-      <menuitem name="MessageReplyAllMenu" action="MessageReplyAll"/>
-      <menuitem name="MessageForwardMenu" action="MessageForward"/>
+    <menu name="MessageMenu" action="Email">
+      <menuitem name="MessageReplyMenu" action="EmailReply"/>
+      <menuitem name="MessageReplyAllMenu" action="EmailReplyAll"/>
+      <menuitem name="MessageForwardMenu" action="EmailForward"/>
       <separator/>
-      <menuitem name="MessageNewMenu"  action="MessageNew"/>
+      <menuitem name="MessageNewMenu"  action="EmailNew"/>
       <separator/>
-      <menuitem name="MessageDeleteMenu" action="MessageDelete"/>
+      <menuitem name="MessageDeleteMenu" action="EmailDelete"/>
       <separator/>
-      <menuitem name="MessageDetailsMenu"      action="MessageDetails"/>
+      <menuitem name="MessageDetailsMenu"      action="EmailDetails"/>
     </menu>
        
     <menu name="EditMenu" action="Edit">
@@ -53,6 +53,22 @@
       <separator/>
       <menuitem name="EditMoveToMenu" action="EditMoveTo"/>
     </menu> 
+ 
+    <menu name="ViewMenu" action="View">
+      <menu name="ZoomMenu" action="Zoom">
+	<menuitem name="Zoom50Menu" action="Zoom50"/>
+	<menuitem name="Zoom80Menu" action="Zoom80"/>
+	<menuitem name="Zoom100Menu" action="Zoom100"/>
+	<menuitem name="Zoom120Menu" action="Zoom120"/>
+	<menuitem name="Zoom150Menu" action="Zoom150"/>
+	<menuitem name="Zoom200Menu" action="Zoom200"/>
+      </menu>
+      <separator/>
+      <menuitem name="ShowToggleFullscreenMenu" action="ShowToggleFullscreen"/>
+      <separator/>
+      <menuitem name="ViewPreviousMessageMenu" action="ViewPreviousMessage"/>
+      <menuitem name="ViewNextMessageMenu" action="ViewNextMessage"/>
+    </menu>
 
    <menu name="ToolsMenu" action="Tools">
       <menuitem name="ToolsAddToContactsMenu" action="ToolsAddToContacts"/>
@@ -60,13 +76,33 @@
 
    <menu name="CloseMenu" action="Close">
       <menuitem name="CloseWindowMenu"     action="CloseWindow"/>
+      <menuitem name="CloseAllWindowsMenu"     action="CloseAllWindows"/>
     </menu>
   </menubar>
 
   <toolbar name="ToolBar">
+    <toolitem action="ToolbarMessageNew"/>
     <toolitem action="ToolbarMessageReply"/> 
-    <toolitem action="ToolbarMessageReplyAll"/>
-    <toolitem action="ToolbarMessageForward"/> 
+<!--     <toolitem action="ToolbarMessageReplyAll"/> -->
+<!--     <toolitem action="ToolbarMessageForward"/>  -->
+    <toolitem action="ToolbarMessageMoveTo"/>
+    <toolitem action="ToolbarDeleteMessage"/>
+    <toolitem action="FindInMessage"/>
+    <toolitem action="ToolbarMessageBack"/>
+    <toolitem action="ToolbarMessageForward"/>
+    <placeholder name="ToolbarProgressbar"/>
   </toolbar>
+
+  <popup name="ToolbarReplyCSM">
+      <menuitem name="MessageReplyMenu" action="EmailReply"/>
+      <menuitem name="MessageReplyAllMenu" action="EmailReplyAll"/>
+      <menuitem name="MessageForwardMenu" action="EmailForward"/>
+  </popup>
+
+  <accelerator name="AccelZoomMinus" action="ZoomMinus"/>
+  <accelerator name="AccelZoomPlus" action="ZoomPlus"/>
+  <accelerator name="AccelToggleFullscreen" action="ToggleFullscreen"/>
+  <accelerator name="AccelScrollUp" action="ScrollUp"/>
+  <accelerator name="AccelScrollDown" action="ScrollDown"/>
 
   </ui>

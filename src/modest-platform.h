@@ -74,13 +74,31 @@ gchar*  modest_platform_get_file_icon_name (const gchar* name, const gchar* mime
 					    gchar **effective_mime_type);
 
 /**
+ * modest_platform_activate_uri:
+ * @uri: the uri to activate
+ *
+ * This function activates an URI
+ *
+ * Returns: %TRUE if successful, %FALSE if not.
+ **/
+gboolean modest_platform_activate_uri (const gchar *uri);
+
+/**
+ * modest_platform_show_uri_popup:
+ * @uri: an URI with the string
+ *
+ * This function show the popup of actions for an URI
+ *
+ * Returns: %TRUE if successful, %FALSE if not.
+ **/
+gboolean modest_platform_show_uri_popup (const gchar *uri);
+
+/**
  * modest_platform_get_icon:
  * @name: the name of the icon
  *
  * this function returns an icon, or NULL in case of error 
  */
 GdkPixbuf* modest_platform_get_icon (const gchar *name);
-
-
 
 #endif /* __MODEST_PLATFORM_UTILS_H__ */

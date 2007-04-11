@@ -43,6 +43,8 @@ void     modest_ui_actions_on_delete        (GtkAction *action, ModestWindow *wi
 
 void     modest_ui_actions_on_quit          (GtkAction *action, ModestWindow *win);
 
+void     modest_ui_actions_on_close_window  (GtkAction *action, ModestWindow *win);
+
 void     modest_ui_actions_on_new_account      (GtkAction *action, ModestWindow *win);
 
 void     modest_ui_actions_on_accounts      (GtkAction *action, ModestWindow *win);
@@ -59,9 +61,11 @@ void     modest_ui_actions_on_forward       (GtkAction *action, ModestWindow *wi
 
 void     modest_ui_actions_on_reply_all     (GtkAction *action, ModestWindow *win);
 
-void     modest_ui_actions_on_next          (GtkAction *action, ModestMainWindow *main_window);
+void     modest_ui_actions_on_next          (GtkAction *action, ModestWindow *main_window);
 
-void     modest_ui_actions_on_prev          (GtkAction *action, ModestMainWindow *main_window);
+void     modest_ui_actions_on_prev          (GtkAction *action, ModestWindow *main_window);
+
+void     modest_ui_actions_on_message_details (GtkAction *action, ModestWindow *win);
 
 void	 modest_ui_actions_toggle_view	     (GtkAction *action, ModestMainWindow *main_window);
 
@@ -89,6 +93,9 @@ void     modest_ui_actions_on_msg_link_hover           (ModestMsgView *msgview, 
 							ModestWindow *win);
 
 void     modest_ui_actions_on_msg_link_clicked         (ModestMsgView *msgview, const gchar* link,
+							ModestWindow *win);
+
+void     modest_ui_actions_on_msg_link_contextual      (ModestMsgView *msgview, const gchar* link,
 							ModestWindow *win);
 
 void     modest_ui_actions_on_msg_attachment_clicked   (ModestMsgView *msgview, TnyMimePart *mime_part,
@@ -152,6 +159,14 @@ void     modest_ui_actions_on_paste (GtkAction *action,
 				     ModestWindow *window);
 void     modest_ui_actions_on_select_all (GtkAction *action,
 					  ModestWindow *window);
+
+void     modest_ui_actions_on_change_zoom (GtkRadioAction *action,
+					   GtkRadioAction *selected,
+					   ModestWindow *window);
+
+void     modest_ui_actions_on_toggle_fullscreen    (GtkToggleAction *toggle,
+						    ModestWindow *window);
+
 
 G_END_DECLS
 #endif /* __MODEST_UI_ACTIONS_H__ */

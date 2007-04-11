@@ -266,7 +266,7 @@ init_window (ModestMsgEditWindow *obj)
 	priv->text_buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (priv->msg_body));
 	g_object_set (priv->text_buffer, "font_scale", 1.0, NULL);
 	wp_text_buffer_enable_rich_text (WP_TEXT_BUFFER (priv->text_buffer), TRUE);
-	gtk_text_buffer_set_can_paste_rich_text (priv->text_buffer, TRUE);
+/* 	gtk_text_buffer_set_can_paste_rich_text (priv->text_buffer, TRUE); */
 	wp_text_buffer_reset_buffer (WP_TEXT_BUFFER (priv->text_buffer), TRUE);
 	g_signal_connect (G_OBJECT (priv->text_buffer), "refresh_attributes",
 			  G_CALLBACK (text_buffer_refresh_attributes), obj);
@@ -361,7 +361,7 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg)
 	if (subject)
 		gtk_entry_set_text (GTK_ENTRY(priv->subject_field), subject);	
 	
-	gtk_text_buffer_set_can_paste_rich_text (priv->text_buffer, TRUE);
+/* 	gtk_text_buffer_set_can_paste_rich_text (priv->text_buffer, TRUE); */
 	wp_text_buffer_reset_buffer (WP_TEXT_BUFFER (priv->text_buffer), TRUE);
 	body = modest_tny_msg_get_body (msg, FALSE);
 	if ((body!=NULL) && (body[0] != '\0')) {

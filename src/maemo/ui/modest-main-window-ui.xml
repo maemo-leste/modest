@@ -111,12 +111,12 @@
   </toolbar>
 
   <popup name="HeaderViewContextMenu">
-    <menuitem action="MessageReply"/>
-    <menuitem action="MessageForward"/>
+    <menuitem action="EmailReply"/>
+    <menuitem action="EmailForward"/>
   </popup>
   
   <popup name="FolderViewContextMenu">
-    <menuitem action="FoldersNew"/>
+    <menuitem action="EmailNewFolder"/>
     <menuitem action="FoldersDelete"/>
     <menuitem action="FoldersRename"/>
     <menuitem action="FoldersMoveToTrash"/>

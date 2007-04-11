@@ -18,5 +18,5 @@ which gnome-autogen.sh || {
     exit 1
 }
 
-USE_GNOME2_MACROS=1 . gnome-autogen.sh
+USE_GNOME2_MACROS=1 . gnome-autogen.sh $@
 

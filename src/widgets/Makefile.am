@@ -39,6 +39,8 @@ libmodest_widgets_la_SOURCES=          \
 	modest-msg-view-window.h       \
 	modest-msg-view.c              \
 	modest-msg-view.h	       \
+	modest-msg-view-details-dialog.c \
+	modest-msg-view-details-dialog.h \
 	modest-recpt-view.c            \
 	modest-recpt-view.h            \
 	modest-scroll-text.c           \

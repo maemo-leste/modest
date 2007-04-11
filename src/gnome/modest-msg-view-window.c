@@ -290,3 +290,32 @@ modest_msg_view_window_get_message (ModestMsgViewWindow *self)
 
 	return modest_msg_view_get_message (MODEST_MSG_VIEW(msg_view));
 }
+
+ModestWindow*   
+modest_msg_view_window_new_with_header_model (TnyMsg *msg, 
+					      const gchar *account, 
+					      GtkTreeModel *model, 
+					      GtkTreeIter iter)
+{
+	/* Currently we simply redirect to new constructor. It should store a
+	   reference to the header list model, to enable next/prev message
+	   actions */
+	g_message ("partially implemented %s", __FUNCTION__);
+
+	return modest_msg_view_window_new (msg, account);
+}
+
+
+gboolean
+modest_msg_view_window_select_next_message (ModestMsgViewWindow *window)
+{
+	g_message ("not implemented %s", __FUNCTION__);
+	return FALSE;
+}
+
+gboolean
+modest_msg_view_window_select_previous_message (ModestMsgViewWindow *window)
+{
+	g_message ("not implemented %s", __FUNCTION__);
+	return FALSE;
+}
