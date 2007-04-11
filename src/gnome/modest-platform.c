@@ -31,6 +31,7 @@
 #include <libgnomevfs/gnome-vfs-mime.h>
 #include <libgnomeui/gnome-icon-lookup.h>
 #include <tny-gnome-device.h>
+#include <modest-runtime.h>
 
 gboolean
 modest_platform_init (void)
@@ -81,13 +82,15 @@ modest_platform_get_file_icon_name (const gchar* name, const gchar* mime_type,
 gboolean 
 modest_platform_activate_uri (const gchar *uri)
 {
-	g_message ("not implemented %s", __FUNCTION__);
+	modest_runtime_not_implemented (NULL);
+	return FALSE;
 }
 
 gboolean 
 modest_platform_show_uri_popup (const gchar *uri)
 {
-	g_message ("not implemented %s", __FUNCTION__);
+	modest_runtime_not_implemented (NULL);
+	return FALSE;
 }
 
 GdkPixbuf*

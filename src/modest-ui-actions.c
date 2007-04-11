@@ -232,7 +232,7 @@ modest_ui_actions_on_accounts (GtkAction *action, ModestWindow *win)
 {
 	GSList *account_names = modest_account_mgr_account_names (modest_runtime_get_account_mgr());
 						     
-	gboolean accounts_exist = account_names != NULL;
+	//gboolean accounts_exist = account_names != NULL;
 	g_slist_free (account_names);
 	
 	/* This is currently only implemented for Maemo,
@@ -581,13 +581,71 @@ modest_ui_actions_on_prev (GtkAction *action,
 }
 
 
+static gboolean
+action_send (const gchar* account_name)
+{
+	TnyAccount *tny_account;
+	ModestTnySendQueue *send_queue;
+
+	g_return_val_if_fail (account_name, FALSE);
+
+	tny_account = 
+		modest_tny_account_store_get_tny_account_by_account (modest_runtime_get_account_store(),
+								     account_name,
+								     TNY_ACCOUNT_TYPE_TRANSPORT);
+	if (!tny_account) {
+		g_printerr ("modest: cannot get tny transport account for %s\n", account_name);
+		return FALSE;
+	}
+	send_queue = modest_tny_send_queue_new (TNY_CAMEL_TRANSPORT_ACCOUNT(tny_account));
+	if (!send_queue) {
+		g_object_unref (G_OBJECT(tny_account));
+		g_printerr ("modest: cannot get send queue for %s\n", account_name);
+		return FALSE;
+	}
+	
+	//modest_tny_send_queue_flush (send_queue);
+
+	g_object_unref (G_OBJECT(send_queue));
+	g_object_unref (G_OBJECT(tny_account));
+
+	return TRUE;
+}
+
+
+static gboolean
+action_receive (const gchar* account_name)
+{
+	TnyAccount *tny_account;
+	ModestMailOperation *mail_op;
+
+	g_return_val_if_fail (account_name, FALSE);
+
+	tny_account = 
+		modest_tny_account_store_get_tny_account_by_account (modest_runtime_get_account_store(),
+								     account_name,
+								     TNY_ACCOUNT_TYPE_STORE);
+	if (!tny_account) {
+		g_printerr ("modest: cannot get tny store account for %s\n", account_name);
+		return FALSE;
+	}
+
+	/* Create the mail operation */
+	mail_op = modest_mail_operation_new ();
+	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
+	modest_mail_operation_update_account (mail_op, TNY_STORE_ACCOUNT(tny_account));
+	g_object_unref (G_OBJECT(tny_account));
+	g_object_unref (G_OBJECT (mail_op));
+		
+	return TRUE;
+}
+
+
+
 void
 modest_ui_actions_on_send_receive (GtkAction *action,  ModestWindow *win)
 {
 	gchar *account_name;
-	TnyAccount *tny_account;
-	ModestTnySendQueue *send_queue;
-	ModestMailOperation *mail_op;
 	
 	account_name =
 		g_strdup(modest_window_get_active_account(MODEST_WINDOW(win)));
@@ -598,42 +656,10 @@ modest_ui_actions_on_send_receive (GtkAction *action,  ModestWindow *win)
 		return;
 	}
 
-	tny_account = 
-		modest_tny_account_store_get_tny_account_by_account (modest_runtime_get_account_store(),
-								     account_name,
-								     TNY_ACCOUNT_TYPE_TRANSPORT);
-	if (!tny_account) {
-		g_printerr ("modest: cannot get tny transport account for %s\n", account_name);
-		return;
-	}
-	send_queue = modest_tny_send_queue_new (TNY_CAMEL_TRANSPORT_ACCOUNT(tny_account));
-	if (!send_queue) {
-		g_object_unref (G_OBJECT(tny_account));
-		g_printerr ("modest: cannot get send queue for %s\n", account_name);
-		return;
-	} 
-	//modest_tny_send_queue_flush (send_queue);
-
-	g_object_unref (G_OBJECT(send_queue));
-	g_object_unref (G_OBJECT(tny_account));
-
-	tny_account = 
-		modest_tny_account_store_get_tny_account_by_account (modest_runtime_get_account_store(),
-								     account_name,
-								     TNY_ACCOUNT_TYPE_STORE);
-	if (!tny_account) {
-		g_printerr ("modest: cannot get tny store account for %s\n", account_name);
-		return;
-	}
-
-	/* Create the mail operation */
-	mail_op = modest_mail_operation_new ();
-	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
-	modest_mail_operation_update_account (mail_op, TNY_STORE_ACCOUNT(tny_account));
-
-	/* Frees */
-	g_object_unref (G_OBJECT (tny_account));
-	g_object_unref (G_OBJECT (mail_op));
+	if (!action_send(account_name))
+		g_printerr ("modest: failed to send\n");
+	if (!action_receive(account_name))
+		g_printerr ("modest: failed to receive\n");
 }
 
 
