@@ -34,35 +34,33 @@
 #include <modest-runtime.h>
 #include <glib/gi18n.h>
 
+
 static GdkPixbuf*
 get_cached_icon (const gchar *name)
 {
 	GError *err = NULL;
-	gpointer pixbuf;
-	gpointer orig_key;
-	static GHashTable *icon_cache = NULL;
-	
-	g_return_val_if_fail (name, NULL);
+	GdkPixbuf* pixbuf;
+		
+#ifdef MODEST_PLATFORM_GNOME  
+	pixbuf = gdk_pixbuf_new_from_file (name, &err);
+#else
+	GtkIconTheme *current_theme;
+	current_theme = gtk_icon_theme_get_default ();
+	pixbuf = gtk_icon_theme_load_icon (current_theme,
+					   name,
+					   26,
+					   GTK_ICON_LOOKUP_NO_SVG,
+					   &err);
+#endif /*MODEST_PLATFORM_GNOME*/
 
-	if (G_UNLIKELY(!icon_cache))
-		icon_cache = modest_cache_mgr_get_cache (modest_runtime_get_cache_mgr(),
-							 MODEST_CACHE_MGR_CACHE_TYPE_PIXBUF);
-	
-	if (!icon_cache || !g_hash_table_lookup_extended (icon_cache, name, &orig_key,&pixbuf)) {
-		pixbuf = (gpointer)gdk_pixbuf_new_from_file (name, &err);
-		if (!pixbuf) {
-			g_printerr ("modest: error while loading '%s': %s\n",
-				    name, err->message);
-			g_error_free (err);
-		}
-		/* if we cannot find it, we still insert (if we have a cache), so we get the error
-		 * only once */
-		if (icon_cache)
-			g_hash_table_insert (icon_cache, g_strdup(name),(gpointer)pixbuf);
+	if (!pixbuf) {
+		g_printerr ("modest: error in icon factory while loading '%s': %s\n",
+			    name, err->message);
+		g_error_free (err);
 	}
-	return GDK_PIXBUF(pixbuf);
+	
+	return pixbuf;
 }
-
 
 
 /*
