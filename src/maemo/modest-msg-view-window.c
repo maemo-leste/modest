@@ -271,7 +271,6 @@ init_window (ModestMsgViewWindow *obj, TnyMsg *msg)
 	GtkWidget *main_vbox;
 	ModestMsgViewWindowPrivate *priv;
 	ModestWindowPrivate *parent_priv;
-	GtkAccelGroup *accel_group;
 	
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE(obj);
 	parent_priv = MODEST_WINDOW_GET_PRIVATE(obj);
@@ -289,9 +288,6 @@ init_window (ModestMsgViewWindow *obj, TnyMsg *msg)
 	parent_priv->toolbar = get_toolbar (obj);
 	gtk_widget_show_all (GTK_WIDGET(parent_priv->toolbar));
 	hildon_window_add_toolbar (HILDON_WINDOW(obj), GTK_TOOLBAR(parent_priv->toolbar));
-
-	accel_group = gtk_ui_manager_get_accel_group (parent_priv->ui_manager);
-	gtk_window_add_accel_group (GTK_WINDOW (obj), accel_group);
 
 	priv->main_scroll = gtk_scrolled_window_new (NULL, NULL);
 	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (priv->main_scroll), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
