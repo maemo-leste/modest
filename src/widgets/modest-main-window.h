@@ -62,7 +62,7 @@ struct _ModestMainWindowClass {
 
 typedef enum _ModestMainWindowStyle {
 	MODEST_MAIN_WINDOW_STYLE_SIMPLE,
-	MODEST_MAIN_WINDOW_STYLE_SPLITTED
+	MODEST_MAIN_WINDOW_STYLE_SPLIT
 } ModestMainWindowStyle;
 
 /**
@@ -125,7 +125,7 @@ gboolean   modest_main_window_close_all        (ModestMainWindow *self);
  * @self: the #ModestMainWindow
  * @style: a #ModestMainWindowStyle that will be set
  * 
- * sets the style of the main window, a splitted view with folders at
+ * sets the style of the main window, a splitview with folders at
  * the left and messages at the right, or the simple view, with just
  * messages.
  **/

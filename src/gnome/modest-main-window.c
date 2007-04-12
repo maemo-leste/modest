@@ -702,5 +702,5 @@ ModestMainWindowStyle
 modest_main_window_get_style (ModestMainWindow *self)
 {
 	/* TODO */
-	return MODEST_MAIN_WINDOW_STYLE_SPLITTED;
+	return MODEST_MAIN_WINDOW_STYLE_SPLIT;
 }

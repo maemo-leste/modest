@@ -182,7 +182,7 @@ modest_main_window_init (ModestMainWindow *obj)
 	priv->main_vbox    = NULL;
 	priv->header_view  = NULL;
 	priv->folder_view  = NULL;
-	priv->style  = MODEST_MAIN_WINDOW_STYLE_SPLITTED;
+	priv->style  = MODEST_MAIN_WINDOW_STYLE_SPLIT;
 
 	/* progress bar */
 	priv->progress_bar = gtk_progress_bar_new ();
@@ -532,7 +532,7 @@ modest_main_window_set_style (ModestMainWindow *self,
 		/* Reparent header view with scrolled window */
 		gtk_widget_reparent (scrolled_win, priv->main_vbox);
 		break;
-	case MODEST_MAIN_WINDOW_STYLE_SPLITTED:
+	case MODEST_MAIN_WINDOW_STYLE_SPLIT:
 		/* Remove header view */
 		g_object_ref (scrolled_win);
 		gtk_container_remove (GTK_CONTAINER (priv->main_vbox), scrolled_win);

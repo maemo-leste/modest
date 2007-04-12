@@ -1646,10 +1646,10 @@ modest_ui_actions_toggle_main_view (GtkAction *action,
 	
 /* 	modest_widget_memory_save (conf, G_OBJECT(header_view), "header-view"); */
 	
-	if (modest_main_window_get_style (main_window) == MODEST_MAIN_WINDOW_STYLE_SPLITTED)
+	if (modest_main_window_get_style (main_window) == MODEST_MAIN_WINDOW_STYLE_SPLIT)
 		modest_main_window_set_style (main_window, MODEST_MAIN_WINDOW_STYLE_SIMPLE);
 	else
-		modest_main_window_set_style (main_window, MODEST_MAIN_WINDOW_STYLE_SPLITTED);
+		modest_main_window_set_style (main_window, MODEST_MAIN_WINDOW_STYLE_SPLIT);
 
 /* 	modest_widget_memory_restore (conf, G_OBJECT(header_view), */
 /* 				      "header-view"); */
