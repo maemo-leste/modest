@@ -60,6 +60,11 @@ struct _ModestMainWindowClass {
 	ModestWindowClass parent_class;
 };
 
+typedef enum _ModestMainWindowStyle {
+	MODEST_MAIN_WINDOW_STYLE_SIMPLE,
+	MODEST_MAIN_WINDOW_STYLE_SPLITTED
+} ModestMainWindowStyle;
+
 /**
  * modest_main_window_get_type:
  * 
@@ -113,6 +118,29 @@ GtkWidget* modest_main_window_get_child_widget (ModestMainWindow *self,
  * Returns: TRUE if the user selected to close all the windows, otherwise FALSE
  **/
 gboolean   modest_main_window_close_all        (ModestMainWindow *self);
+
+
+/**
+ * modest_main_window_set_style:
+ * @self: the #ModestMainWindow
+ * @style: a #ModestMainWindowStyle that will be set
+ * 
+ * sets the style of the main window, a splitted view with folders at
+ * the left and messages at the right, or the simple view, with just
+ * messages.
+ **/
+void       modest_main_window_set_style        (ModestMainWindow *self, 
+						ModestMainWindowStyle style);
+
+/**
+ * modest_main_window_get_style:
+ * @self: 
+ * 
+ * gets the current show style of the main window
+ * 
+ * Return value: the current #ModestWindowStyle
+ **/
+ModestMainWindowStyle       modest_main_window_get_style        (ModestMainWindow *self);
 
 G_END_DECLS
 

@@ -67,7 +67,30 @@ void     modest_ui_actions_on_prev          (GtkAction *action, ModestWindow *ma
 
 void     modest_ui_actions_on_message_details (GtkAction *action, ModestWindow *win);
 
-void	 modest_ui_actions_toggle_view	     (GtkAction *action, ModestMainWindow *main_window);
+
+/**
+ * modest_ui_actions_toggle_main_view:
+ * @action: the #GtkAction
+ * @main_window: the #ModestMainWindow
+ * 
+ * this action switches between split view (with a folders pane at the
+ * left) and simple view without the left pane with the folders and
+ * accounts. Maybe it's only useful for Maemo code, but as it uses
+ * generic code could be used also by the GNOME UI
+ **/
+void	 modest_ui_actions_toggle_main_view	     (GtkAction *action, 
+						      ModestMainWindow *main_window);
+
+/**
+ * modest_ui_actions_toggle_header_list_view:
+ * @action: the #GtkAction
+ * @main_window: the #ModestMainWindow
+ * 
+ * this action shows or hides the column titles of the header list
+ * view. It also enables the two lines rendering for the treeview rows
+ **/
+void	 modest_ui_actions_toggle_header_list_view    (GtkAction *action, 
+						       ModestMainWindow *main_window);
 
 /* Widget actions */
 void     modest_ui_actions_on_header_selected          (ModestHeaderView *folder_view, 
@@ -165,11 +188,13 @@ void     modest_ui_actions_on_zoom_minus (GtkAction *action,
 
 void     modest_ui_actions_on_toggle_fullscreen    (GtkToggleAction *toggle,
 						    ModestWindow *window);
+
+void     modest_ui_actions_on_change_fullscreen    (GtkAction *action,
+						    ModestWindow *window);
+
 void     modest_ui_actions_on_paste                    (GtkAction *action,
 							ModestWindow *window);
 
-void     modest_ui_actions_on_change_fullscreen    (GtkAction *toggle,
-						    ModestWindow *window);
 void     modest_ui_actions_on_select_all               (GtkAction *action,
 							ModestWindow *window);
 
@@ -182,6 +207,9 @@ void     modest_ui_actions_on_toggle_show_bcc (GtkToggleAction *toggle,
 void     modest_ui_actions_on_change_zoom              (GtkRadioAction *action,
 							GtkRadioAction *selected,
 							ModestWindow *window);
+
+
+
 
 
 G_END_DECLS

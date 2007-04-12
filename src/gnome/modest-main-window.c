@@ -690,3 +690,17 @@ modest_main_window_close_all (ModestMainWindow *self)
 	   all */
 	return TRUE;
 }
+
+void 
+modest_main_window_set_style (ModestMainWindow *self, 
+			      ModestMainWindowStyle style)
+{
+	/* TODO */
+}
+
+ModestMainWindowStyle
+modest_main_window_get_style (ModestMainWindow *self)
+{
+	/* TODO */
+	return MODEST_MAIN_WINDOW_STYLE_SPLITTED;
+}

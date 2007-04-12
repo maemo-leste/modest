@@ -31,6 +31,7 @@
 #define __MODEST_MSG_EDIT_WINDOW_UI_H__
 
 #include <glib/gi18n.h>
+#include <gtk/gtk.h>
 #include "modest-icon-names.h"
 #include "modest-ui-actions.h"
 

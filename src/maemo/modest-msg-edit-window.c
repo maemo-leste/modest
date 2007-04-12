@@ -58,12 +58,12 @@
 #include <hildon-widgets/hildon-color-button.h>
 #include <hildon-widgets/hildon-banner.h>
 #include <hildon-widgets/hildon-caption.h>
+#include "widgets/modest-msg-edit-window-ui.h"
 
 #ifdef MODEST_HILDON_VERSION_0
 #include <hildon-widgets/hildon-file-chooser-dialog.h>
 #else
 #include <hildon/hildon-file-chooser-dialog.h>
-#include <widgets/modest-msg-edit-window-ui.h>
 
 #endif /*MODEST_HILDON_VERSION_0 */
 

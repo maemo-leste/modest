@@ -75,11 +75,13 @@ typedef struct _ModestMainWindowPrivate ModestMainWindowPrivate;
 struct _ModestMainWindowPrivate {
 	GtkWidget *msg_paned;
 	GtkWidget *main_paned;
+	GtkWidget *main_vbox;
 	GtkWidget *progress_bar;
 
 	ModestHeaderView *header_view;
 	ModestFolderView *folder_view;
 
+	ModestMainWindowStyle style;
 };
 #define MODEST_MAIN_WINDOW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                 MODEST_TYPE_MAIN_WINDOW, \
@@ -177,8 +179,10 @@ modest_main_window_init (ModestMainWindow *obj)
 
 	priv->msg_paned    = NULL;
 	priv->main_paned   = NULL;	
+	priv->main_vbox    = NULL;
 	priv->header_view  = NULL;
 	priv->folder_view  = NULL;
+	priv->style  = MODEST_MAIN_WINDOW_STYLE_SPLITTED;
 
 	/* progress bar */
 	priv->progress_bar = gtk_progress_bar_new ();
@@ -370,7 +374,6 @@ modest_main_window_new (void)
 	ModestMainWindow *self;	
 	ModestMainWindowPrivate *priv;
 	ModestWindowPrivate *parent_priv;
-	GtkWidget *main_vbox;
 	GtkWidget *header_win, *folder_win;
 	GtkActionGroup *action_group;
 	GError *error = NULL;
@@ -438,7 +441,8 @@ modest_main_window_new (void)
 	modest_header_view_set_style (priv->header_view, MODEST_HEADER_VIEW_STYLE_TWOLINES);
 	
 	folder_win = wrapped_in_scrolled_window (GTK_WIDGET(priv->folder_view), FALSE);
-	header_win = wrapped_in_scrolled_window (GTK_WIDGET(priv->header_view), FALSE);			   
+	header_win = wrapped_in_scrolled_window (GTK_WIDGET(priv->header_view), FALSE);
+
 	/* paned */
 	priv->main_paned = gtk_hpaned_new ();
 	gtk_paned_add1 (GTK_PANED(priv->main_paned), folder_win);
@@ -447,15 +451,15 @@ modest_main_window_new (void)
 	gtk_tree_view_columns_autosize (GTK_TREE_VIEW(priv->header_view));
 
 	/* putting it all together... */
-	main_vbox = gtk_vbox_new (FALSE, 6);
-	gtk_box_pack_start (GTK_BOX(main_vbox), priv->main_paned, TRUE, TRUE,0);
+	priv->main_vbox = gtk_vbox_new (FALSE, 6);
+	gtk_box_pack_start (GTK_BOX(priv->main_vbox), priv->main_paned, TRUE, TRUE,0);
 
-	gtk_container_add (GTK_CONTAINER(self), main_vbox);
+	gtk_container_add (GTK_CONTAINER(self), priv->main_vbox);
 	restore_sizes (MODEST_MAIN_WINDOW(self));
 	
 	gtk_window_set_title (GTK_WINDOW(self), _("Modest"));
 	gtk_window_set_icon_from_file (GTK_WINDOW(self), MODEST_APP_ICON, NULL);
-	gtk_widget_show_all (main_vbox);
+	gtk_widget_show_all (priv->main_vbox);
 
 /* 	/\* should we hide the toolbar? *\/ */
 /* 	if (!modest_conf_get_bool (modest_runtime_get_conf (), MODEST_CONF_SHOW_TOOLBAR, NULL)) */
@@ -499,6 +503,61 @@ modest_main_window_close_all (ModestMainWindow *self)
 		return TRUE;
 	else
 		return FALSE;
+}
+
+void 
+modest_main_window_set_style (ModestMainWindow *self, 
+			      ModestMainWindowStyle style)
+{
+	ModestMainWindowPrivate *priv;
+	GtkWidget *scrolled_win;
+
+	g_return_if_fail (MODEST_IS_MAIN_WINDOW (self));
+
+	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
+
+	/* no change -> nothing to do */
+	if (priv->style == style)
+		return;
+
+	priv->style = style;
+	scrolled_win = gtk_widget_get_parent (GTK_WIDGET (priv->header_view));
+
+	switch (style) {
+	case MODEST_MAIN_WINDOW_STYLE_SIMPLE:
+		/* Remove main paned */
+		g_object_ref (priv->main_paned);
+		gtk_container_remove (GTK_CONTAINER (priv->main_vbox), priv->main_paned);
+
+		/* Reparent header view with scrolled window */
+		gtk_widget_reparent (scrolled_win, priv->main_vbox);
+		break;
+	case MODEST_MAIN_WINDOW_STYLE_SPLITTED:
+		/* Remove header view */
+		g_object_ref (scrolled_win);
+		gtk_container_remove (GTK_CONTAINER (priv->main_vbox), scrolled_win);
+
+		/* Reparent the main paned */
+		gtk_paned_add2 (GTK_PANED (priv->main_paned), scrolled_win);
+		gtk_container_add (GTK_CONTAINER (priv->main_vbox), priv->main_paned);
+		break;
+	default:
+		g_return_if_reached ();
+	}
+
+	/* Show changes */
+	gtk_widget_show (GTK_WIDGET (priv->main_vbox));
+}
+
+ModestMainWindowStyle
+modest_main_window_get_style (ModestMainWindow *self)
+{
+	ModestMainWindowPrivate *priv;
+
+	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW (self), -1);
+
+	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
+	return priv->style;
 }
 
 static gboolean

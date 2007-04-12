@@ -84,8 +84,6 @@ static const GtkActionEntry modest_action_entries [] = {
 	
 	/* View */
 	{ "ViewSort",            NULL,        N_("mcen_me_inbox_sort"),     NULL,      NULL,  NULL },
-/* 	{ "ViewFolders",         NULL,        N_("mcen_me_inbox_hidefolders"),     NULL,     NULL,  NULL }, */
-/* 	{ "ViewFullscreen",      NULL,        N_("mcen_me_inbox_fullscreen"),  NULL,     NULL,  G_CALLBACK (modest_ui_actions_on_toggle_fullscreen) }, */
 	{ "ViewShowToolbar", NULL, N_("mcen_me_inbox_toolbar") }, /* submenu */
 	{ "ViewShowToolbarNormalScreen",         NULL,        N_("mcen_me_inbox_normalview"),     NULL,     NULL,  NULL },
 	{ "ViewShowToolbarFullScreen",      NULL,        N_("mcen_me_inbox_optimizedview"),  NULL,     NULL,  NULL },
@@ -118,7 +116,7 @@ static const GtkActionEntry modest_action_entries [] = {
 	{ "ToolbarMessageReplyAll",   MODEST_STOCK_REPLY_ALL,     N_("qgn_toolb_messagin_replyall"),         NULL, NULL,  G_CALLBACK (modest_ui_actions_on_reply_all) },
 	{ "ToolbarMessageForward",    MODEST_STOCK_FORWARD,     N_("qgn_toolb_messagin_forward"),      NULL, NULL,  G_CALLBACK (modest_ui_actions_on_forward) },
 	{ "ToolbarSendReceive",       MODEST_STOCK_REFRESH,   N_("qgn_toolb_gene_refresh"),      NULL, NULL,  G_CALLBACK (modest_ui_actions_on_send_receive) },
-	{ "ToolbarToggleView",        MODEST_STOCK_SPLIT_VIEW,      N_("gqn_toolb_rss_fldonoff"),                "<CTRL>t", NULL,  G_CALLBACK (modest_ui_actions_toggle_view) },
+	{ "ToolbarToggleView",        MODEST_STOCK_SPLIT_VIEW,      N_("gqn_toolb_rss_fldonoff"),                "<CTRL>t", NULL,  G_CALLBACK (modest_ui_actions_toggle_main_view) },
 	{ "ToolbarDeleteMessage",     MODEST_STOCK_DELETE,     N_("qgn_toolb_gene_deletebutton"),             NULL, NULL,  G_CALLBACK (modest_ui_actions_on_delete) },
 	{ "ToolbarSort",     MODEST_STOCK_SORT,     N_("qgn_list_sort"),             NULL, NULL, NULL },
 	{ "ToolbarFindInMessage",     GTK_STOCK_FIND,       N_("qgn_toolb_gene_find"),         NULL, NULL, NULL },

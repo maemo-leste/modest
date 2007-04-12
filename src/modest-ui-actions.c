@@ -663,7 +663,7 @@ modest_ui_actions_on_send_receive (GtkAction *action,  ModestWindow *win)
 
 
 void
-modest_ui_actions_toggle_view (GtkAction *action, ModestMainWindow *main_window)
+modest_ui_actions_toggle_header_list_view (GtkAction *action, ModestMainWindow *main_window)
 {
 	ModestConf *conf;
 	GtkWidget *header_view;
@@ -1628,4 +1628,25 @@ modest_ui_actions_on_toggle_show_bcc (GtkToggleAction *toggle,
 	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
 
 	modest_msg_edit_window_show_bcc (window, gtk_toggle_action_get_active (toggle));
+}
+
+void
+modest_ui_actions_toggle_main_view (GtkAction *action, 
+				    ModestMainWindow *main_window)
+{
+	ModestConf *conf;
+	
+	g_return_if_fail (MODEST_IS_MAIN_WINDOW(main_window));
+
+	conf = modest_runtime_get_conf ();
+	
+/* 	modest_widget_memory_save (conf, G_OBJECT(header_view), "header-view"); */
+	
+	if (modest_main_window_get_style (main_window) == MODEST_MAIN_WINDOW_STYLE_SPLITTED)
+		modest_main_window_set_style (main_window, MODEST_MAIN_WINDOW_STYLE_SIMPLE);
+	else
+		modest_main_window_set_style (main_window, MODEST_MAIN_WINDOW_STYLE_SPLITTED);
+
+/* 	modest_widget_memory_restore (conf, G_OBJECT(header_view), */
+/* 				      "header-view"); */
 }
