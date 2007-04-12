@@ -58,8 +58,8 @@ static const GtkActionEntry modest_msg_edit_action_entries [] = {
 	{ "SelectAll", NULL, N_("Select all"), NULL, N_("Select all"), G_CALLBACK (modest_ui_actions_on_select_all)},
 
 	/* KEY ACCELERATOR ACTIONS */
-	{ "ZoomPlus", NULL, N_("Zoom +"), "F7", NULL, G_CALLBACK (modest_msg_edit_window_zoom_plus) },
-	{ "ZoomMinus", NULL, N_("Zoom -"), "F8", NULL, G_CALLBACK (modest_msg_edit_window_zoom_minus) },
+	{ "ZoomPlus", NULL, N_("Zoom +"), "F7", NULL, G_CALLBACK (modest_ui_actions_on_zoom_plus) },
+	{ "ZoomMinus", NULL, N_("Zoom -"), "F8", NULL, G_CALLBACK (modest_ui_actions_on_zoom_minus) },
  	{ "ToggleFullscreen", NULL, N_("Toggle fullscreen"), "F6", NULL, G_CALLBACK (modest_ui_actions_on_change_fullscreen) },
 
 };

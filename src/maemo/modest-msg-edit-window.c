@@ -63,6 +63,8 @@
 #include <hildon-widgets/hildon-file-chooser-dialog.h>
 #else
 #include <hildon/hildon-file-chooser-dialog.h>
+#include <widgets/modest-msg-edit-window-ui.h>
+
 #endif /*MODEST_HILDON_VERSION_0 */
 
 
@@ -93,10 +95,8 @@ static gboolean modest_msg_edit_window_window_state_event (GtkWidget *widget,
 /* ModestWindow methods implementation */
 static void  modest_msg_edit_window_set_zoom (ModestWindow *window, gdouble zoom);
 static gdouble modest_msg_edit_window_get_zoom (ModestWindow *window);
-static void modest_msg_edit_window_zoom_minus (GtkAction *action, ModestWindow *window);
-static void modest_msg_edit_window_zoom_plus (GtkAction *action, ModestWindow *window);
-
-#include <widgets/modest-msg-edit-window-ui.h>
+static gboolean modest_msg_edit_window_zoom_minus (ModestWindow *window);
+static gboolean modest_msg_edit_window_zoom_plus (ModestWindow *window);
 
 
 
@@ -182,6 +182,8 @@ modest_msg_edit_window_class_init (ModestMsgEditWindowClass *klass)
 
 	modest_window_class->set_zoom_func = modest_msg_edit_window_set_zoom;
 	modest_window_class->get_zoom_func = modest_msg_edit_window_get_zoom;
+	modest_window_class->zoom_plus_func = modest_msg_edit_window_zoom_plus;
+	modest_window_class->zoom_minus_func = modest_msg_edit_window_zoom_minus;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestMsgEditWindowPrivate));
 }
@@ -588,8 +590,6 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name)
 	gtk_window_add_accel_group (GTK_WINDOW (obj), 
 				    gtk_ui_manager_get_accel_group (parent_priv->ui_manager));
 
-
-	
 	/* Menubar */
 	parent_priv->menubar = menubar_to_menu (parent_priv->ui_manager);
 	hildon_window_set_menu (HILDON_WINDOW (obj), GTK_MENU (parent_priv->menubar));
@@ -1108,8 +1108,8 @@ modest_msg_edit_window_get_zoom (ModestWindow *window)
 	return priv->zoom_level;
 }
 
-static void
-modest_msg_edit_window_zoom_plus (GtkAction *action, ModestWindow *window)
+static gboolean
+modest_msg_edit_window_zoom_plus (ModestWindow *window)
 {
 	ModestWindowPrivate *parent_priv;
 	GtkRadioAction *zoom_radio_action;
@@ -1123,19 +1123,20 @@ modest_msg_edit_window_zoom_plus (GtkAction *action, ModestWindow *window)
 
 	if (gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (group->data))) {
 		hildon_banner_show_information (NULL, NULL, _("mcen_ib_max_zoom_level"));
-		return;
+		return FALSE;
 	}
 
 	for (node = group; node != NULL; node = g_slist_next (node)) {
 		if ((node->next != NULL) && gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (node->next->data))) {
 			gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (node->data), TRUE);
-			return;
+			return TRUE;
 		}
 	}
+	return FALSE;
 }
 
-static void
-modest_msg_edit_window_zoom_minus (GtkAction *action, ModestWindow *window)
+static gboolean
+modest_msg_edit_window_zoom_minus (ModestWindow *window)
 {
 	ModestWindowPrivate *parent_priv;
 	GtkRadioAction *zoom_radio_action;
@@ -1149,13 +1150,15 @@ modest_msg_edit_window_zoom_minus (GtkAction *action, ModestWindow *window)
 
 	for (node = group; node != NULL; node = g_slist_next (node)) {
 		if (gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (node->data))) {
-			if (node->next != NULL)
+			if (node->next != NULL) {
 				gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (node->next->data), TRUE);
-			else
+				return TRUE;
+			} else
 				hildon_banner_show_information (NULL, NULL, _("mcen_ib_min_zoom_level"));
 			break;
 		}
 	}
+	return FALSE;
 }
 
 static gboolean
@@ -1163,16 +1166,18 @@ modest_msg_edit_window_window_state_event (GtkWidget *widget, GdkEventWindowStat
 {
 	if (event->changed_mask & GDK_WINDOW_STATE_FULLSCREEN) {
 		ModestWindowPrivate *parent_priv;
+		ModestWindowMgr *mgr;
 		gboolean is_fullscreen;
 		GtkAction *fs_toggle_action;
 		gboolean active;
 
-		is_fullscreen = (event->new_window_state & GDK_WINDOW_STATE_FULLSCREEN)?1:0;
+		mgr = modest_runtime_get_window_mgr ();
+		is_fullscreen = (modest_window_mgr_get_fullscreen_mode (mgr))?1:0;
 
 		parent_priv = MODEST_WINDOW_GET_PRIVATE (widget);
 		
 		fs_toggle_action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/ViewMenu/ShowToggleFullscreenMenu");
-		active = gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (fs_toggle_action));
+		active = (gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (fs_toggle_action)))?1:0;
 		if (is_fullscreen != active)
 			gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (fs_toggle_action), is_fullscreen);
 	}
