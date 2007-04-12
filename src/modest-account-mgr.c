@@ -504,6 +504,31 @@ modest_account_mgr_remove_account (ModestAccountMgr * self,
 		return FALSE;
 	}
 
+	/* in case we're not deleting an account, also delete the dependent store and transport account */
+	if (!server_account) {
+		gchar *server_account_name;
+		
+		server_account_name = modest_account_mgr_get_string (self, name, MODEST_ACCOUNT_STORE_ACCOUNT,
+								    FALSE);
+		if (server_account_name) {
+			if (!modest_account_mgr_remove_account (self, server_account_name, TRUE))
+				g_printerr ("modest: failed to remove store account '%s' (%s)\n",
+					    server_account_name, name);
+			g_free (server_account_name);
+		} else
+			g_printerr ("modest: could not find the store account for %s\n", name);
+		
+		server_account_name = modest_account_mgr_get_string (self, name, MODEST_ACCOUNT_TRANSPORT_ACCOUNT,
+								    FALSE);
+		if (server_account_name) {
+			if (!modest_account_mgr_remove_account (self, server_account_name, TRUE))
+				g_printerr ("modest: failed to remove transport account '%s' (%s)\n",
+					    server_account_name, name);
+			g_free (server_account_name);
+		} else
+			g_printerr ("modest: could not find the transport account for %s\n", name);
+	}			
+			
 	priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
 	key = _modest_account_mgr_get_account_keyname (name, NULL, server_account);
 	

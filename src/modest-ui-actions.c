@@ -289,12 +289,16 @@ modest_ui_actions_on_new_msg (GtkAction *action, ModestWindow *win)
 	gchar *account_name = NULL;
 	gchar *from_str = NULL;
 	GError *err = NULL;
-	TnyAccount *account;
+	TnyAccount *account = NULL;
 	ModestWindowMgr *mgr;
 	
 	account_name = g_strdup(modest_window_get_active_account (win));
 	if (!account_name)
 		account_name = modest_account_mgr_get_default_account (modest_runtime_get_account_mgr());
+	if (!account_name) {
+		g_printerr ("modest: no account found\n");
+		goto cleanup;
+	}
 	
 	account = modest_tny_account_store_get_tny_account_by_account (modest_runtime_get_account_store(),
 								       account_name,

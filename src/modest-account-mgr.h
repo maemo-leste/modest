@@ -151,7 +151,9 @@ gboolean modest_account_mgr_add_server_account_uri    (ModestAccountMgr *self,
  * @server_account: TRUE if the account to remove is a server account
  * @err: a #GError ptr, or NULL to ignore.
  * 
- * remove an existing account. the account with @name should already exist
+ * remove an existing account. the account with @name should already exist; note
+ * that when deleting an account, also the corresponding server accounts will
+ * be deleted
  *
  * Returns: TRUE if the creation succeeded, FALSE otherwise,
  * @err gives details in case of error
