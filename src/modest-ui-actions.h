@@ -69,7 +69,7 @@ void     modest_ui_actions_on_message_details (GtkAction *action, ModestWindow *
 
 
 /**
- * modest_ui_actions_toggle_main_view:
+ * modest_ui_actions_toggle_folders_view:
  * @action: the #GtkAction
  * @main_window: the #ModestMainWindow
  * 
@@ -78,11 +78,11 @@ void     modest_ui_actions_on_message_details (GtkAction *action, ModestWindow *
  * accounts. Maybe it's only useful for Maemo code, but as it uses
  * generic code could be used also by the GNOME UI
  **/
-void	 modest_ui_actions_toggle_main_view	     (GtkAction *action, 
+void	 modest_ui_actions_toggle_folders_view	     (GtkAction *action, 
 						      ModestMainWindow *main_window);
 
 /**
- * modest_ui_actions_toggle_header_list_view:
+ * modest_ui_actions_toggle_folders_view:
  * @action: the #GtkAction
  * @main_window: the #ModestMainWindow
  * 

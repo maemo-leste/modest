@@ -952,7 +952,7 @@ modest_msg_view_window_window_state_event (GtkWidget *widget, GdkEventWindowStat
 
 		parent_priv = MODEST_WINDOW_GET_PRIVATE (widget);
 		
-		fs_toggle_action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/ViewMenu/ShowToggleFullscreenMenu");
+		fs_toggle_action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/ViewMenu/ViewToggleFullscreenMenu");
 		active = (gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (fs_toggle_action)))?1:0;
 		if (is_fullscreen != active) {
 			gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (fs_toggle_action), is_fullscreen);
@@ -970,7 +970,7 @@ modest_msg_view_window_toggle_fullscreen (ModestMsgViewWindow *window)
 		GtkAction *fs_toggle_action;
 		parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
 		
-		fs_toggle_action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/ViewMenu/ShowToggleFullscreenMenu");
+		fs_toggle_action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/ViewMenu/ViewToggleFullscreenMenu");
 		gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (fs_toggle_action),
 					      !gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (fs_toggle_action)));
 }

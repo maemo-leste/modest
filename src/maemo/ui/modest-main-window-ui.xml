@@ -68,8 +68,8 @@
     <menu name="ViewMenu" action="View">
       <menuitem name="ViewSortMenu" action="ViewSort"/>
       <separator/>
-      <menuitem name="ViewFoldersMenu" action="ViewFolders"/>
-      <menuitem name="ShowToggleFullscreenMenu" action="ShowToggleFullscreen"/>
+      <menuitem name="ViewToggleFoldersMenu" action="ViewToggleFolders"/>
+      <menuitem name="ViewToggleFullscreenMenu" action="ViewToggleFullscreen"/>
       <separator/>
       <menu name="ViewShowToolbarMainMenu" action="ViewShowToolbar">
         <menuitem name="ViewShowToolbarNormalScreenMenu" action="ViewShowToolbarNormalScreen"/>

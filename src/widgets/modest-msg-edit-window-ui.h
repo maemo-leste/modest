@@ -72,7 +72,7 @@ static const GtkToggleActionEntry modest_msg_edit_toggle_action_entries [] = {
 	{ "ViewBccField",  NULL,    N_("Bcc: filed"), NULL, N_("Shows the Bcc: field"), G_CALLBACK (modest_ui_actions_on_toggle_show_bcc), TRUE },
 
 	/* Fullscreen toggle */
-	{ "ShowToggleFullscreen", GTK_STOCK_FULLSCREEN, N_("Show fullscreen"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_toggle_fullscreen), FALSE},
+	{ "ViewToggleFullscreen", GTK_STOCK_FULLSCREEN, N_("Show fullscreen"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_toggle_fullscreen), FALSE},
 
 	/* Rich text editor functions */
 	{ "ActionsBold", GTK_STOCK_BOLD, N_("Bold"), NULL, N_("Use bold"), G_CALLBACK (modest_ui_actions_on_toggle_bold), FALSE },

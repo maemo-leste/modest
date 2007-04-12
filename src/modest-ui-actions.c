@@ -196,9 +196,6 @@ modest_ui_actions_on_delete (GtkAction *action, ModestWindow *win)
 void
 modest_ui_actions_on_quit (GtkAction *action, ModestWindow *win)
 {
-	/* FIXME: save size of main window */
-/* 	save_sizes (main_window); */
-/* 	gtk_widget_destroy (GTK_WIDGET (win)); */
 	gtk_main_quit ();
 }
 
@@ -822,7 +819,7 @@ void
 modest_ui_actions_on_header_activated (ModestHeaderView *folder_view, TnyHeader *header,
 				       ModestMainWindow *main_window)
 {
-	ModestWindow *win;
+	ModestWindow *win = NULL;
 	TnyFolder *folder = NULL;
 	TnyMsg    *msg    = NULL;
 	ModestWindowMgr *mgr;
@@ -835,7 +832,7 @@ modest_ui_actions_on_header_activated (ModestHeaderView *folder_view, TnyHeader 
 	folder = tny_header_get_folder (header);
 	if (!folder) {
 		g_printerr ("modest: cannot get folder for header\n");
-		goto cleanup;
+		return;
 	}
 
 	/* FIXME: make async?; check error  */
@@ -862,17 +859,14 @@ modest_ui_actions_on_header_activated (ModestHeaderView *folder_view, TnyHeader 
 
 		gtk_window_set_transient_for (GTK_WINDOW (win),
 					      GTK_WINDOW (main_window));
-
-		g_free (account);
 	}
 
 	gtk_widget_show_all (GTK_WIDGET(win));
+
+	g_object_unref (G_OBJECT (msg));
 	
 cleanup:
-	if (folder)
-		g_object_unref (G_OBJECT (folder));
-	if (msg)
-		g_object_unref (G_OBJECT (msg));
+	g_object_unref (G_OBJECT (folder));
 }
 
 void 
@@ -1635,8 +1629,8 @@ modest_ui_actions_on_toggle_show_bcc (GtkToggleAction *toggle,
 }
 
 void
-modest_ui_actions_toggle_main_view (GtkAction *action, 
-				    ModestMainWindow *main_window)
+modest_ui_actions_toggle_folders_view (GtkAction *action, 
+				       ModestMainWindow *main_window)
 {
 	ModestConf *conf;
 	
@@ -1644,13 +1638,8 @@ modest_ui_actions_toggle_main_view (GtkAction *action,
 
 	conf = modest_runtime_get_conf ();
 	
-/* 	modest_widget_memory_save (conf, G_OBJECT(header_view), "header-view"); */
-	
 	if (modest_main_window_get_style (main_window) == MODEST_MAIN_WINDOW_STYLE_SPLIT)
 		modest_main_window_set_style (main_window, MODEST_MAIN_WINDOW_STYLE_SIMPLE);
 	else
 		modest_main_window_set_style (main_window, MODEST_MAIN_WINDOW_STYLE_SPLIT);
-
-/* 	modest_widget_memory_restore (conf, G_OBJECT(header_view), */
-/* 				      "header-view"); */
 }
