@@ -157,29 +157,32 @@ void     modest_ui_actions_on_cut                      (GtkAction *action,
 void     modest_ui_actions_on_copy                     (GtkAction *action,
 							ModestWindow *window);
 
+void     modest_ui_actions_on_zoom_plus (GtkAction *action,
+					 ModestWindow *window);
+
+void     modest_ui_actions_on_zoom_minus (GtkAction *action,
+					  ModestWindow *window);
+
+void     modest_ui_actions_on_toggle_fullscreen    (GtkToggleAction *toggle,
+						    ModestWindow *window);
 void     modest_ui_actions_on_paste                    (GtkAction *action,
 							ModestWindow *window);
 
+void     modest_ui_actions_on_change_fullscreen    (GtkAction *toggle,
+						    ModestWindow *window);
 void     modest_ui_actions_on_select_all               (GtkAction *action,
 							ModestWindow *window);
 
-/**
- * modest_ui_actions_on_toggle_fullscreen:
- * @action: the #GtkAction
- * @window: the window that will be shown in fullscreen mode
- * 
- * puts a window in fullscreen mode
- **/
-void     modest_ui_actions_on_toggle_fullscreen        (GtkAction *action,
-							ModestWindow *window);
+void     modest_ui_actions_on_toggle_show_cc (GtkToggleAction *toggle,
+					      ModestMsgEditWindow *window);
+
+void     modest_ui_actions_on_toggle_show_bcc (GtkToggleAction *toggle,
+					      ModestMsgEditWindow *window);
 
 void     modest_ui_actions_on_change_zoom              (GtkRadioAction *action,
 							GtkRadioAction *selected,
 							ModestWindow *window);
 
-void     modest_ui_actions_on_change_fullscreen        (GtkRadioAction *action,
-							GtkRadioAction *selected,
-							ModestWindow *window);
 
 G_END_DECLS
 #endif /* __MODEST_UI_ACTIONS_H__ */

@@ -196,6 +196,33 @@ void                    modest_msg_edit_window_select_background_color          
  */
 void                    modest_msg_edit_window_insert_image          (ModestMsgEditWindow *window);
 
+/**
+ * modest_msg_edit_window_show_cc:
+ * @window: a #ModestMsgEditWindow
+ * @show: a #gboolean
+ *
+ * Set the CC field as visible (or not visible) depending on @show
+ */
+void                    modest_msg_edit_window_show_cc               (ModestMsgEditWindow *window, gboolean show);
+
+/**
+ * modest_msg_edit_window_show_bcc:
+ * @window: a #ModestMsgEditWindow
+ * @show: a #gboolean
+ *
+ * Set the BCC field as visible (or not visible) depending on @show
+ */
+void                    modest_msg_edit_window_show_bcc               (ModestMsgEditWindow *window, gboolean show);
+
+/**
+ * modest_msg_edit_window_toggle_fullscreen:
+ * @window: a #ModestMsgEditWindow
+ *
+ * toggles the current fullscreen status
+ */
+void            modest_msg_edit_window_toggle_fullscreen (ModestMsgEditWindow *window);
+
+
 G_END_DECLS
 
 #endif /* __MODEST_MSG_EDIT_WINDOW_H__ */

@@ -102,13 +102,23 @@ ModestWindow*  modest_window_mgr_find_window_by_msguid (ModestWindowMgr *self,
 
 /**
  * modest_window_mgr_set_fullscreen_mode:
- * @self: 
- * @on: 
+ * @self: a #ModestWindowMgr
+ * @on: a #gboolean
  * 
  * sets/unsets the application windows in fullscreen mode
  **/
 void           modest_window_mgr_set_fullscreen_mode   (ModestWindowMgr *self,
 							gboolean on);
+
+/**
+ * modest_window_mgr_set_fullscreen_mode:
+ * @self: a #ModestWindowMgr
+ * 
+ * gets the current fullscreen mode of the windows in the application.
+ *
+ * Returns: %TRUE if fullscreen mode is enabled, %FALSE if not.
+ **/
+gboolean       modest_window_mgr_get_fullscreen_mode   (ModestWindowMgr *self);
 G_END_DECLS
 
 #endif /* __MODEST_WINDOW_MGR_H__ */

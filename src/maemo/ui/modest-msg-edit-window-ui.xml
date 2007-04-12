@@ -41,7 +41,15 @@
     </menu>
 
     <menu name="ViewMenu" action="View">
-      <menuitem name="ViewToFieldMenu" action="ViewToField"/>
+      <menu name="ZoomMenu" action="Zoom">
+	<menuitem name="Zoom50Menu" action="Zoom50"/>
+	<menuitem name="Zoom100Menu" action="Zoom100"/>
+	<menuitem name="Zoom150Menu" action="Zoom150"/>
+	<menuitem name="Zoom200Menu" action="Zoom200"/>
+      </menu>
+      <separator/>
+      <menuitem name="ShowToggleFullscreenMenu" action="ShowToggleFullscreen"/>
+      <separator/>
       <menuitem name="ViewCcFieldMenu" action="ViewCcField"/>
       <menuitem name="ViewBccFieldMenu" action="ViewBccField"/>
     </menu>
@@ -72,5 +80,9 @@
     </placeholder>
     <toolitem action="ActionsBulletedList"/>
   </toolbar>
+
+  <accelerator name="AccelZoomMinus" action="ZoomMinus"/>
+  <accelerator name="AccelZoomPlus" action="ZoomPlus"/>
+  <accelerator name="AccelToggleFullscreen" action="ToggleFullscreen"/>
 
 </ui>

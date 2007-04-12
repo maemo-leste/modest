@@ -69,7 +69,7 @@
       <menuitem name="ViewSortMenu" action="ViewSort"/>
       <separator/>
       <menuitem name="ViewFoldersMenu" action="ViewFolders"/>
-      <menuitem name="ViewFullscreenMenu" action="ViewFullscreen"/>
+      <menuitem name="ShowToggleFullscreenMenu" action="ShowToggleFullscreen"/>
       <separator/>
       <menu name="ViewShowToolbarMainMenu" action="ViewShowToolbar">
         <menuitem name="ViewShowToolbarNormalScreenMenu" action="ViewShowToolbarNormalScreen"/>
@@ -128,5 +128,5 @@
     <menuitem action="ToolbarMessageReply"/>
   </popup>
 
-
+  <accelerator name="AccelToggleFullscreen" action="ToggleFullscreen"/>
 </ui>

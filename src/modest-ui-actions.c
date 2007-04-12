@@ -1493,25 +1493,6 @@ modest_ui_actions_on_select_all (GtkAction *action,
 	}
 }
 
-void 
-modest_ui_actions_on_toggle_fullscreen (GtkAction *action,
-					ModestWindow *window)
-{
-	ModestWindowMgr *mgr;
-	gboolean active;
-
-	mgr = modest_runtime_get_window_mgr ();
-	/* set/unset the application fullscreen mode */
-	active = gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (action));
-	modest_window_mgr_set_fullscreen_mode (mgr, active);
-
-	/* Bring the current window to the front. The above call will
-	   put all the windows in fullscreen mode, so we can not be
-	   sure that the last fullscreen-ed window is the current
-	   one */
-	gtk_window_present (GTK_WINDOW (window));
-}
-
 void
 modest_ui_actions_on_change_zoom (GtkRadioAction *action,
 				  GtkRadioAction *selected,
@@ -1523,6 +1504,59 @@ modest_ui_actions_on_change_zoom (GtkRadioAction *action,
 	if (MODEST_IS_WINDOW (window)) {
 		modest_window_set_zoom (MODEST_WINDOW (window), ((gdouble)value)/100);
 	}
+}
+
+void     
+modest_ui_actions_on_zoom_plus (GtkAction *action,
+				ModestWindow *window)
+{
+	g_return_if_fail (MODEST_IS_WINDOW (window));
+
+	modest_window_zoom_plus (MODEST_WINDOW (window));
+}
+
+void     
+modest_ui_actions_on_zoom_minus (GtkAction *action,
+				 ModestWindow *window)
+{
+	g_return_if_fail (MODEST_IS_WINDOW (window));
+
+	modest_window_zoom_minus (MODEST_WINDOW (window));
+}
+
+void     
+modest_ui_actions_on_toggle_fullscreen    (GtkToggleAction *toggle,
+					   ModestWindow *window)
+{
+	ModestWindowMgr *mgr;
+	gboolean fullscreen, active;
+	g_return_if_fail (MODEST_IS_WINDOW (window));
+
+	mgr = modest_runtime_get_window_mgr ();
+
+	active = (gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (toggle)))?1:0;
+	fullscreen = (modest_window_mgr_get_fullscreen_mode (mgr))?1:0;
+
+	if (active != fullscreen) {
+		modest_window_mgr_set_fullscreen_mode (mgr, active);
+		gtk_window_present (GTK_WINDOW (window));
+	}
+}
+
+void
+modest_ui_actions_on_change_fullscreen (GtkAction *action,
+					ModestWindow *window)
+{
+	ModestWindowMgr *mgr;
+	gboolean fullscreen;
+
+	g_return_if_fail (MODEST_IS_WINDOW (window));
+
+	mgr = modest_runtime_get_window_mgr ();
+	fullscreen = modest_window_mgr_get_fullscreen_mode (mgr);
+	modest_window_mgr_set_fullscreen_mode (mgr, !fullscreen);
+
+	gtk_window_present (GTK_WINDOW (window));
 }
 
 static void
@@ -1578,21 +1612,20 @@ modest_ui_actions_on_message_details (GtkAction *action,
 	}
 }
 
-void 
-modest_ui_actions_on_change_fullscreen (GtkRadioAction *action,
-					GtkRadioAction *selected,
-					ModestWindow *window)
+void     
+modest_ui_actions_on_toggle_show_cc (GtkToggleAction *toggle,
+				     ModestMsgEditWindow *window)
 {
-	gint value;
-	ModestWindowMgr *mgr;
+	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
 
-	value = gtk_radio_action_get_current_value (selected);
-	mgr = modest_runtime_get_window_mgr ();
+	modest_msg_edit_window_show_cc (window, gtk_toggle_action_get_active (toggle));
+}
 
-	if (value == 0)
-		modest_window_mgr_set_fullscreen_mode (mgr, FALSE);
-	else
-		modest_window_mgr_set_fullscreen_mode (mgr, TRUE);
+void     
+modest_ui_actions_on_toggle_show_bcc (GtkToggleAction *toggle,
+				      ModestMsgEditWindow *window)
+{
+	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
 
-	gtk_window_present (GTK_WINDOW (window));
+	modest_msg_edit_window_show_bcc (window, gtk_toggle_action_get_active (toggle));
 }

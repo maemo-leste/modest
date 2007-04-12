@@ -56,6 +56,9 @@
 static void modest_main_window_class_init    (ModestMainWindowClass *klass);
 static void modest_main_window_init          (ModestMainWindow *obj);
 static void modest_main_window_finalize      (GObject *obj);
+static gboolean modest_main_window_window_state_event (GtkWidget *widget, 
+							   GdkEventWindowState *event, 
+							   gpointer userdata);
 
 static void connect_signals (ModestMainWindow *self);
 static void restore_sizes (ModestMainWindow *self);
@@ -91,13 +94,6 @@ typedef struct _GetMsgAsyncHelper {
 	TnyIterator *iter;
 } GetMsgAsyncHelper;
 
-
-/* FIXME use an enum not values, UI actions must know them. Create a
-   modest-window-mgr-ui.h and include it here?  */
-static const GtkRadioActionEntry main_window_radio_action_entries [] = {
-	{ "ViewFolders", NULL, N_("mcen_me_inbox_hidefolders"), NULL, NULL, 0 },
-	{ "ViewFullscreen", NULL, N_("mcen_me_inbox_fullscreen"), NULL, NULL, 1 },
-};
 
 /* globals */
 static GtkWindowClass *parent_class = NULL;
@@ -343,6 +339,10 @@ connect_signals (ModestMainWindow *self)
 
 	/* window */
 	g_signal_connect (G_OBJECT(self), "delete-event", G_CALLBACK(on_delete_event), self);
+	g_signal_connect (G_OBJECT (self), "window-state-event",
+			  G_CALLBACK (modest_main_window_window_state_event),
+			  NULL);
+
 
 	
 	/* modest_maemo_utils_get_device_name will probably change
@@ -390,13 +390,11 @@ modest_main_window_new (void)
 				      G_N_ELEMENTS (modest_action_entries),
 				      self);
 
-	gtk_action_group_add_radio_actions (action_group,
-					    main_window_radio_action_entries,
-					    G_N_ELEMENTS (main_window_radio_action_entries),
-					    0,
-					    G_CALLBACK (modest_ui_actions_on_change_fullscreen),
-					    self);
-	
+	gtk_action_group_add_toggle_actions (action_group,
+					     modest_toggle_action_entries,
+					     G_N_ELEMENTS (modest_toggle_action_entries),
+					     self);
+
 	gtk_ui_manager_insert_action_group (parent_priv->ui_manager, action_group, 0);
 	g_object_unref (action_group);
 
@@ -501,4 +499,31 @@ modest_main_window_close_all (ModestMainWindow *self)
 		return TRUE;
 	else
 		return FALSE;
+}
+
+static gboolean
+modest_main_window_window_state_event (GtkWidget *widget, GdkEventWindowState *event, gpointer userdata)
+{
+	if (event->changed_mask & GDK_WINDOW_STATE_FULLSCREEN) {
+		ModestWindowPrivate *parent_priv;
+		ModestWindowMgr *mgr;
+		gboolean is_fullscreen;
+		GtkAction *fs_toggle_action;
+		gboolean active;
+		
+		mgr = modest_runtime_get_window_mgr ();
+		
+		is_fullscreen = modest_window_mgr_get_fullscreen_mode (mgr);
+
+		parent_priv = MODEST_WINDOW_GET_PRIVATE (widget);
+		
+		fs_toggle_action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/ViewMenu/ShowToggleFullscreenMenu");
+		active = (gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (fs_toggle_action)))?1:0;
+		if (is_fullscreen != active) {
+			gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (fs_toggle_action), is_fullscreen);
+		}
+	}
+
+	return FALSE;
+
 }

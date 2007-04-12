@@ -296,3 +296,15 @@ modest_window_mgr_set_fullscreen_mode (ModestWindowMgr *self,
 		win = g_list_next (win);
 	}
 }
+
+gboolean
+modest_window_mgr_get_fullscreen_mode (ModestWindowMgr *self)
+{
+	ModestWindowMgrPrivate *priv;
+
+	g_return_val_if_fail (MODEST_IS_WINDOW_MGR (self), FALSE);
+
+	priv = MODEST_WINDOW_MGR_GET_PRIVATE (self);
+
+	return priv->fullscreen_mode;
+}

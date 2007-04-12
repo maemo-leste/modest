@@ -53,6 +53,11 @@ static const GtkActionEntry modest_action_entries [] = {
 	{ "Close",   NULL, N_("mcen_me_inbox_close") },
 	{ "Zoom",   NULL, N_("Zoom") },
 
+	/* Zoom and fullscreen keyboard actions*/
+	{ "ZoomPlus", NULL, N_("Zoom +"), "F7", NULL, G_CALLBACK (modest_ui_actions_on_zoom_plus) },
+	{ "ZoomMinus", NULL, N_("Zoom -"), "F8", NULL, G_CALLBACK (modest_ui_actions_on_zoom_minus) },
+	{ "ToggleFullscreen", NULL, N_("Toggle fullscreen"), "F6", NULL, G_CALLBACK (modest_ui_actions_on_change_fullscreen) },
+
 	/* Email */
 	{ "EmailNew", NULL, N_("mcen_me_inbox_new") }, /* submenu */
 	{ "EmailNewMessage",  NULL,  N_("mcen_me_inbox_message"),      "<CTRL>N", NULL,   G_CALLBACK (modest_ui_actions_on_new_msg) },

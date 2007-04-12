@@ -57,14 +57,16 @@ static void  modest_msg_view_window_find_toolbar_search (GtkWidget *widget,
 static void  modest_msg_view_window_set_zoom (ModestWindow *window,
 					      gdouble zoom);
 static gdouble modest_msg_view_window_get_zoom (ModestWindow *window);
-static void modest_msg_view_window_zoom_minus (GtkAction *action, ModestWindow *window);
-static void modest_msg_view_window_zoom_plus (GtkAction *action, ModestWindow *window);
+static gboolean modest_msg_view_window_zoom_minus (ModestWindow *window);
+static gboolean modest_msg_view_window_zoom_plus (ModestWindow *window);
 static gboolean modest_msg_view_window_key_release_event (GtkWidget *window,
 							  GdkEventKey *event,
 							  gpointer userdata);
+static gboolean modest_msg_view_window_window_state_event (GtkWidget *widget, 
+							   GdkEventWindowState *event, 
+							   gpointer userdata);
 static void modest_msg_view_window_scroll_up (ModestWindow *window);
 static void modest_msg_view_window_scroll_down (ModestWindow *window);
-static void modest_msg_view_window_toggle_fullscreen (GtkAction *action, ModestWindow *window);
 static gboolean modest_msg_view_window_is_last_message (ModestMsgViewWindow *window);
 static gboolean modest_msg_view_window_is_first_message (ModestMsgViewWindow *window);
 static TnyFolderType modest_msg_view_window_get_folder_type (ModestMsgViewWindow *window);
@@ -92,12 +94,6 @@ static const GtkRadioActionEntry msg_view_zoom_action_entries [] = {
 	{ "Zoom120", NULL, N_("mcen_me_viewer_120"), NULL, NULL, 120 },
 	{ "Zoom150", NULL, N_("mcen_me_viewer_150"), NULL, NULL, 150 },
 	{ "Zoom200", NULL, N_("mcen_me_viewer_200"), NULL, NULL, 200 }
-};
-
-static const GtkActionEntry modest_msg_view_action_entries [] = {
-	{ "ZoomPlus", NULL, N_("Zoom +"), "F7", NULL, G_CALLBACK (modest_msg_view_window_zoom_plus) },
-	{ "ZoomMinus", NULL, N_("Zoom -"), "F8", NULL, G_CALLBACK (modest_msg_view_window_zoom_minus) },
-	{ "ToggleFullscreen", NULL, N_("Toggle fullscreen"), "F6", NULL, G_CALLBACK (modest_msg_view_window_toggle_fullscreen) },
 };
 
 typedef struct _ModestMsgViewWindowPrivate ModestMsgViewWindowPrivate;
@@ -160,6 +156,8 @@ modest_msg_view_window_class_init (ModestMsgViewWindowClass *klass)
 
 	modest_window_class->set_zoom_func = modest_msg_view_window_set_zoom;
 	modest_window_class->get_zoom_func = modest_msg_view_window_get_zoom;
+	modest_window_class->zoom_minus_func = modest_msg_view_window_zoom_minus;
+	modest_window_class->zoom_plus_func = modest_msg_view_window_zoom_plus;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestMsgViewWindowPrivate));
 }
@@ -378,14 +376,10 @@ modest_msg_view_window_new (TnyMsg *msg, const gchar *account_name)
 				      modest_action_entries,
 				      G_N_ELEMENTS (modest_action_entries),
 				      obj);
-	gtk_action_group_add_actions (action_group,
-				      modest_msg_view_action_entries,
-				      G_N_ELEMENTS (modest_msg_view_action_entries),
-				      obj);
 	gtk_action_group_add_toggle_actions (action_group,
-				      modest_toggle_action_entries,
-				      G_N_ELEMENTS (modest_toggle_action_entries),
-				      obj);
+					     modest_toggle_action_entries,
+					     G_N_ELEMENTS (modest_toggle_action_entries),
+					     obj);
 	gtk_action_group_add_toggle_actions (action_group,
 					     msg_view_toggle_action_entries,
 					     G_N_ELEMENTS (msg_view_toggle_action_entries),
@@ -436,6 +430,10 @@ modest_msg_view_window_new (TnyMsg *msg, const gchar *account_name)
 
 	g_signal_connect (G_OBJECT (obj), "key-release-event",
 			  G_CALLBACK (modest_msg_view_window_key_release_event),
+			  NULL);
+
+	g_signal_connect (G_OBJECT (obj), "window-state-event",
+			  G_CALLBACK (modest_msg_view_window_window_state_event),
 			  NULL);
 
 	modest_window_set_active_account (MODEST_WINDOW(obj), account_name);
@@ -565,8 +563,8 @@ modest_msg_view_window_get_zoom (ModestWindow *window)
 	return modest_msg_view_get_zoom (MODEST_MSG_VIEW (priv->msg_view));
 }
 
-static void
-modest_msg_view_window_zoom_plus (GtkAction *action, ModestWindow *window)
+static gboolean
+modest_msg_view_window_zoom_plus (ModestWindow *window)
 {
 	ModestWindowPrivate *parent_priv;
 	GtkRadioAction *zoom_radio_action;
@@ -580,19 +578,20 @@ modest_msg_view_window_zoom_plus (GtkAction *action, ModestWindow *window)
 
 	if (gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (group->data))) {
 		hildon_banner_show_information (NULL, NULL, _("mcen_ib_max_zoom_level"));
-		return;
+		return FALSE;
 	}
 
 	for (node = group; node != NULL; node = g_slist_next (node)) {
 		if ((node->next != NULL) && gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (node->next->data))) {
 			gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (node->data), TRUE);
-			return;
+			return TRUE;
 		}
 	}
+	return FALSE;
 }
 
-static void
-modest_msg_view_window_zoom_minus (GtkAction *action, ModestWindow *window)
+static gboolean
+modest_msg_view_window_zoom_minus (ModestWindow *window)
 {
 	ModestWindowPrivate *parent_priv;
 	GtkRadioAction *zoom_radio_action;
@@ -606,13 +605,17 @@ modest_msg_view_window_zoom_minus (GtkAction *action, ModestWindow *window)
 
 	for (node = group; node != NULL; node = g_slist_next (node)) {
 		if (gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (node->data))) {
-			if (node->next != NULL)
+			if (node->next != NULL) {
 				gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (node->next->data), TRUE);
-			else
+				return TRUE;
+			} else {
 				hildon_banner_show_information (NULL, NULL, _("mcen_ib_min_zoom_level"));
+				return FALSE;
+			}
 			break;
 		}
 	}
+	return FALSE;
 }
 
 static gboolean
@@ -934,16 +937,40 @@ modest_msg_view_window_update_priority (ModestMsgViewWindow *window)
 
 }
 
-static void
-modest_msg_view_window_toggle_fullscreen (GtkAction *action, ModestWindow *window)
+static gboolean
+modest_msg_view_window_window_state_event (GtkWidget *widget, GdkEventWindowState *event, gpointer userdata)
 {
-	ModestWindowPrivate *parent_priv;
-	GtkAction *fs_toggle_action;
-	gboolean active;
+	if (event->changed_mask & GDK_WINDOW_STATE_FULLSCREEN) {
+		ModestWindowPrivate *parent_priv;
+		ModestWindowMgr *mgr;
+		gboolean is_fullscreen;
+		GtkAction *fs_toggle_action;
+		gboolean active;
 
-	parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
+		mgr = modest_runtime_get_window_mgr ();
+		is_fullscreen = (modest_window_mgr_get_fullscreen_mode (mgr))?1:0;
 
-	fs_toggle_action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/ViewMenu/ShowToggleFullscreenMenu");
-	active = gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (fs_toggle_action));
-	gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (fs_toggle_action), !active);
+		parent_priv = MODEST_WINDOW_GET_PRIVATE (widget);
+		
+		fs_toggle_action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/ViewMenu/ShowToggleFullscreenMenu");
+		active = (gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (fs_toggle_action)))?1:0;
+		if (is_fullscreen != active) {
+			gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (fs_toggle_action), is_fullscreen);
+		}
+	}
+
+	return FALSE;
+
+}
+
+void
+modest_msg_view_window_toggle_fullscreen (ModestMsgViewWindow *window)
+{
+		ModestWindowPrivate *parent_priv;
+		GtkAction *fs_toggle_action;
+		parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
+		
+		fs_toggle_action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/ViewMenu/ShowToggleFullscreenMenu");
+		gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (fs_toggle_action),
+					      !gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (fs_toggle_action)));
 }

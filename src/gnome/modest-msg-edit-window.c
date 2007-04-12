@@ -489,3 +489,86 @@ modest_msg_edit_window_insert_image (ModestMsgEditWindow *window)
 
 	g_message ("Insert image operation is not supported");
 }
+
+void
+modest_msg_edit_window_show_cc (ModestMsgEditWindow *window, 
+				gboolean show)
+{
+	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
+
+	g_message ("not implemented yet %s", __FUNCTION__);
+}
+void
+modest_msg_edit_window_show_bcc (ModestMsgEditWindow *window, 
+				gboolean show)
+{
+	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
+
+	g_message ("not implemented yet %s", __FUNCTION__);
+}
+
+static void
+modest_msg_edit_window_set_zoom (ModestWindow *window,
+				 gdouble zoom)
+{
+	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
+
+}
+
+static gdouble
+modest_msg_edit_window_get_zoom (ModestWindow *window)
+{
+	g_return_val_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window), 1.0);
+
+	return 1.0;
+}
+
+static void
+modest_msg_edit_window_zoom_plus (GtkAction *action, ModestWindow *window)
+{
+	ModestWindowPrivate *parent_priv;
+	GtkRadioAction *zoom_radio_action;
+	GSList *group, *node;
+
+	parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
+	zoom_radio_action = GTK_RADIO_ACTION (gtk_ui_manager_get_action (parent_priv->ui_manager, 
+									 "/MenuBar/ViewMenu/ZoomMenu/Zoom50Menu"));
+
+	group = gtk_radio_action_get_group (zoom_radio_action);
+
+	if (gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (group->data))) {
+		hildon_banner_show_information (NULL, NULL, _("mcen_ib_max_zoom_level"));
+		return;
+	}
+
+	for (node = group; node != NULL; node = g_slist_next (node)) {
+		if ((node->next != NULL) && gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (node->next->data))) {
+			gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (node->data), TRUE);
+			return;
+		}
+	}
+}
+
+static void
+modest_msg_edit_window_zoom_minus (GtkAction *action, ModestWindow *window)
+{
+	ModestWindowPrivate *parent_priv;
+	GtkRadioAction *zoom_radio_action;
+	GSList *group, *node;
+
+	parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
+	zoom_radio_action = GTK_RADIO_ACTION (gtk_ui_manager_get_action (parent_priv->ui_manager, 
+									 "/MenuBar/ViewMenu/ZoomMenu/Zoom50Menu"));
+
+	group = gtk_radio_action_get_group (zoom_radio_action);
+
+	for (node = group; node != NULL; node = g_slist_next (node)) {
+		if (gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (node->data))) {
+			if (node->next != NULL)
+				gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (node->next->data), TRUE);
+			else
+				hildon_banner_show_information (NULL, NULL, _("mcen_ib_min_zoom_level"));
+			break;
+		}
+	}
+}

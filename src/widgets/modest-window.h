@@ -76,6 +76,8 @@ struct _ModestWindowClass {
 	/* virtual methods */
 	void (*set_zoom_func) (ModestWindow *self, gdouble zoom);
 	gdouble (*get_zoom_func) (ModestWindow *self);
+	gboolean (*zoom_plus_func) (ModestWindow *self);
+	gboolean (*zoom_minus_func) (ModestWindow *self);
 };
 
 /**
@@ -129,6 +131,26 @@ void            modest_window_set_zoom    (ModestWindow *window,
  * Returns: the current zoom value (1.0 is no zoom)
  */
 gdouble         modest_window_get_zoom    (ModestWindow *window);
+
+/**
+ * modest_window_zoom_plus:
+ * @window: a #ModestWindow
+ *
+ * increases one level the zoom.
+ *
+ * Returns: %TRUE if successful, %FALSE if increasing zoom is not available
+ */
+gboolean modest_window_zoom_plus (ModestWindow *window);
+
+/**
+ * modest_window_zoom_minus:
+ * @window: a #ModestWindow
+ *
+ * decreases one level the zoom.
+ *
+ * Returns: %TRUE if successful, %FALSE if increasing zoom is not available
+ */
+gboolean modest_window_zoom_minus (ModestWindow *window);
 
 G_END_DECLS
 

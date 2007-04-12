@@ -137,6 +137,13 @@ gboolean        modest_msg_view_window_select_next_message (ModestMsgViewWindow 
  */
 gboolean        modest_msg_view_window_select_previous_message (ModestMsgViewWindow *window);
 
+/**
+ * modest_msg_view_window_toggle_fullscreen:
+ * @window: a #ModestMsgViewWindow
+ *
+ * toggles the current fullscreen status
+ */
+void            modest_msg_view_window_toggle_fullscreen (ModestMsgViewWindow *window);
 G_END_DECLS
 
 #endif /* __MODEST_MSG_VIEW_WINDOW_H__ */

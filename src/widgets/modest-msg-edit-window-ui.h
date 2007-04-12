@@ -45,6 +45,7 @@ static const GtkActionEntry modest_msg_edit_action_entries [] = {
 	{ "Format", NULL, N_("For_mat") },
 	{ "Alignment", NULL, N_("_Alignment") },
 	{ "Attachments", NULL, N_("Attachments") },
+	{ "Zoom", NULL, N_("Zoom") },
 
 	/* ACTIONS */
 	{ "ActionsSend", MODEST_STOCK_MAIL_SEND, N_("Send"),  NULL, N_("Send a message"),  G_CALLBACK (modest_ui_actions_on_send) },
@@ -55,14 +56,22 @@ static const GtkActionEntry modest_msg_edit_action_entries [] = {
 	{ "Copy", GTK_STOCK_COPY, N_("Copy"), NULL, N_("Copy selection"), G_CALLBACK (modest_ui_actions_on_copy)},
 	{ "Paste", GTK_STOCK_PASTE, N_("Paste"), NULL, N_("Paste selection"), G_CALLBACK (modest_ui_actions_on_paste)},
 	{ "SelectAll", NULL, N_("Select all"), NULL, N_("Select all"), G_CALLBACK (modest_ui_actions_on_select_all)},
+
+	/* KEY ACCELERATOR ACTIONS */
+	{ "ZoomPlus", NULL, N_("Zoom +"), "F7", NULL, G_CALLBACK (modest_msg_edit_window_zoom_plus) },
+	{ "ZoomMinus", NULL, N_("Zoom -"), "F8", NULL, G_CALLBACK (modest_msg_edit_window_zoom_minus) },
+ 	{ "ToggleFullscreen", NULL, N_("Toggle fullscreen"), "F6", NULL, G_CALLBACK (modest_ui_actions_on_change_fullscreen) },
+
 };
 
 static const GtkToggleActionEntry modest_msg_edit_toggle_action_entries [] = {
 
 	/* VIEW */
-	{ "ViewToField",   NULL,    N_("To: field"),  NULL, N_("Shows the To: field"),  NULL, TRUE  },
-	{ "ViewCcField",   NULL,    N_("Cc: field"),  NULL, N_("Shows the Cc: field"),  NULL, TRUE  },
-	{ "ViewBccField",  NULL,    N_("Bcc: filed"), NULL, N_("Shows the Bcc: field"), NULL, FALSE },
+	{ "ViewCcField",   NULL,    N_("Cc: field"),  NULL, N_("Shows the Cc: field"),  G_CALLBACK (modest_ui_actions_on_toggle_show_cc), TRUE  },
+	{ "ViewBccField",  NULL,    N_("Bcc: filed"), NULL, N_("Shows the Bcc: field"), G_CALLBACK (modest_ui_actions_on_toggle_show_bcc), TRUE },
+
+	/* Fullscreen toggle */
+	{ "ShowToggleFullscreen", GTK_STOCK_FULLSCREEN, N_("Show fullscreen"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_toggle_fullscreen), FALSE},
 
 	/* Rich text editor functions */
 	{ "ActionsBold", GTK_STOCK_BOLD, N_("Bold"), NULL, N_("Use bold"), G_CALLBACK (modest_ui_actions_on_toggle_bold), FALSE },
@@ -75,6 +84,15 @@ static const GtkRadioActionEntry modest_msg_edit_alignment_radio_action_entries 
 	{ "AlignmentCenter", NULL, N_("Center"), NULL, N_("Align to the center"), GTK_JUSTIFY_CENTER },
 	{ "AlignmentRight", NULL, N_("Right"), NULL, N_("Align to the right"), GTK_JUSTIFY_RIGHT },
 };
+
+static const GtkRadioActionEntry modest_msg_edit_zoom_action_entries [] = {
+	{ "Zoom50", NULL, N_("mcen_me_viewer_50"), NULL, NULL, 50 },
+	{ "Zoom100", NULL, N_("mcen_me_viewer_100"), NULL, NULL, 100 },
+	{ "Zoom150", NULL, N_("mcen_me_viewer_150"), NULL, NULL, 150 },
+	{ "Zoom200", NULL, N_("mcen_me_viewer_200"), NULL, NULL, 200 }
+};
+
+
 
 G_END_DECLS
 #endif /* __MODEST_MSG_EDIT_WINDOW_UI_H__ */
