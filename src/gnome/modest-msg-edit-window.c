@@ -537,7 +537,8 @@ modest_msg_edit_window_zoom_plus (GtkAction *action, ModestWindow *window)
 	group = gtk_radio_action_get_group (zoom_radio_action);
 
 	if (gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (group->data))) {
-		hildon_banner_show_information (NULL, NULL, _("mcen_ib_max_zoom_level"));
+		/* FIXME: maemo */
+/* 		hildon_banner_show_information (NULL, NULL, _("mcen_ib_max_zoom_level")); */
 		return;
 	}
 
@@ -566,8 +567,9 @@ modest_msg_edit_window_zoom_minus (GtkAction *action, ModestWindow *window)
 		if (gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (node->data))) {
 			if (node->next != NULL)
 				gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (node->next->data), TRUE);
-			else
-				hildon_banner_show_information (NULL, NULL, _("mcen_ib_min_zoom_level"));
+			/* FIXME: maemo */
+/* 			else */
+/* 				hildon_banner_show_information (NULL, NULL, _("mcen_ib_min_zoom_level")); */
 			break;
 		}
 	}
