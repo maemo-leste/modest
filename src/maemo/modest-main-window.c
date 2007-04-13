@@ -248,6 +248,8 @@ restore_sizes (ModestMainWindow *self)
 				      "modest-main-paned");
 	modest_widget_memory_restore (conf, G_OBJECT(priv->header_view),
 				      "header-view");
+	modest_widget_memory_restore (conf, G_OBJECT(self), 
+				      "modest-main-window");
 }
 
 
@@ -526,7 +528,7 @@ modest_main_window_set_style (ModestMainWindow *self,
 	}
 
 	/* Show changes */
-	gtk_widget_show (GTK_WIDGET (priv->main_vbox));
+	gtk_widget_show_all (GTK_WIDGET (priv->main_vbox));
 }
 
 ModestMainWindowStyle
