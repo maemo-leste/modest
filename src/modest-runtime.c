@@ -683,6 +683,9 @@ init_default_settings (ModestConf *conf)
 {
 	if (!modest_conf_key_exists (conf, MODEST_CONF_SHOW_TOOLBAR, NULL))
 		modest_conf_set_bool (conf, MODEST_CONF_SHOW_TOOLBAR, TRUE, NULL);
+
+	if (!modest_conf_key_exists (conf, MODEST_CONF_SHOW_TOOLBAR_FULLSCREEN, NULL))
+		modest_conf_set_bool (conf, MODEST_CONF_SHOW_TOOLBAR_FULLSCREEN, TRUE, NULL);
 	
 	if (!modest_conf_key_exists (conf, MODEST_CONF_SHOW_CC, NULL))
 		modest_conf_set_bool (conf, MODEST_CONF_SHOW_CC, TRUE, NULL);

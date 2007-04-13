@@ -62,10 +62,10 @@
 
 #define MODEST_CONF_CONNECT_AT_STARTUP   MODEST_CONF_NAMESPACE "/connect_at_startup"      
 
-#define MODEST_CONF_SHOW_TOOLBAR         MODEST_CONF_NAMESPACE "/show_toolbar"      
 #define MODEST_CONF_SHOW_CC              MODEST_CONF_NAMESPACE "/show_cc"           
 #define MODEST_CONF_SHOW_BCC             MODEST_CONF_NAMESPACE "/show_bcc"           
-
+#define MODEST_CONF_SHOW_TOOLBAR         MODEST_CONF_NAMESPACE "/show_toolbar"
+#define MODEST_CONF_SHOW_TOOLBAR_FULLSCREEN         MODEST_CONF_NAMESPACE "/show_toolbar_fullscreen"
 
 /*
  * in the maemo case, we try to replace this

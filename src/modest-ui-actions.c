@@ -1533,7 +1533,7 @@ modest_ui_actions_on_toggle_fullscreen    (GtkToggleAction *toggle,
 	mgr = modest_runtime_get_window_mgr ();
 
 	active = (gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (toggle)))?1:0;
-	fullscreen = (modest_window_mgr_get_fullscreen_mode (mgr))?1:0;
+	fullscreen = modest_window_mgr_get_fullscreen_mode (mgr);
 
 	if (active != fullscreen) {
 		modest_window_mgr_set_fullscreen_mode (mgr, active);
@@ -1642,4 +1642,25 @@ modest_ui_actions_toggle_folders_view (GtkAction *action,
 		modest_main_window_set_style (main_window, MODEST_MAIN_WINDOW_STYLE_SIMPLE);
 	else
 		modest_main_window_set_style (main_window, MODEST_MAIN_WINDOW_STYLE_SPLIT);
+}
+
+void 
+modest_ui_actions_on_toggle_toolbar (GtkToggleAction *toggle, 
+				     ModestWindow *window)
+{
+	gboolean active, fullscreen = FALSE;
+	ModestWindowMgr *mgr;
+
+	active = gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (toggle));
+
+	/* Check if we want to toggle the toolbar vuew in fullscreen
+	   or normal mode */
+	if (!strcmp (gtk_action_get_name (GTK_ACTION (toggle)), 
+		     "ViewShowToolbarFullScreen")) {
+		fullscreen = TRUE;
+	}
+
+	/* Toggle toolbar */
+	mgr = modest_runtime_get_window_mgr ();
+	modest_window_mgr_show_toolbars (mgr, active, fullscreen);
 }

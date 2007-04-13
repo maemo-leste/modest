@@ -111,14 +111,32 @@ void           modest_window_mgr_set_fullscreen_mode   (ModestWindowMgr *self,
 							gboolean on);
 
 /**
- * modest_window_mgr_set_fullscreen_mode:
+ * modest_window_mgr_get_fullscreen_mode:
  * @self: a #ModestWindowMgr
  * 
- * gets the current fullscreen mode of the windows in the application.
+ * gets the application current fullscreen mode
  *
- * Returns: %TRUE if fullscreen mode is enabled, %FALSE if not.
+ * Return value: TRUE is the application is in fullscrenn mode,
+ * otherwise FALSE
  **/
 gboolean       modest_window_mgr_get_fullscreen_mode   (ModestWindowMgr *self);
+
+
+/**
+ * modest_window_mgr_show_toolbars:
+ * @self: a #ModestWindowMgr
+ * @show_toolbar: whether or not the toolbars should be shown
+ * @fullscreen: TRUE/FALSE for show/hide in fullscreen mode, otherwise
+ * it applies to normal mode
+ * 
+ * shows or hides the toolbars of the registered windows. Note that if
+ * the #fullscreen attribute is TRUE and the application is in normal
+ * mode, you will not see the changes until the application switches
+ * to fullscreen mode and viceversa
+ **/
+void           modest_window_mgr_show_toolbars         (ModestWindowMgr *self,
+							gboolean show_toolbars,
+							gboolean fullscreen);
 G_END_DECLS
 
 #endif /* __MODEST_WINDOW_MGR_H__ */

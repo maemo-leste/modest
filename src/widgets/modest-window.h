@@ -78,6 +78,9 @@ struct _ModestWindowClass {
 	gdouble (*get_zoom_func) (ModestWindow *self);
 	gboolean (*zoom_plus_func) (ModestWindow *self);
 	gboolean (*zoom_minus_func) (ModestWindow *self);
+	/* Used by view_toolbar, with no public interface */
+	void (*create_toolbar_func) (ModestWindow *self);
+	void (*show_toolbar_func) (ModestWindow *self, gboolean show_toolbar);
 };
 
 /**
@@ -151,6 +154,17 @@ gboolean modest_window_zoom_plus (ModestWindow *window);
  * Returns: %TRUE if successful, %FALSE if increasing zoom is not available
  */
 gboolean modest_window_zoom_minus (ModestWindow *window);
+
+
+/**
+ * modest_window_view_toolbar:
+ * @window: 
+ * @view_toolbar: whether or not the toolbar should be shown
+ * 
+ * shows/hides the window toolbar
+ **/
+void     modest_window_view_toolbar (ModestWindow *window, 
+				     gboolean view_toolbar);
 
 G_END_DECLS
 

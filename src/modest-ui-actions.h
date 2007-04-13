@@ -208,9 +208,15 @@ void     modest_ui_actions_on_change_zoom              (GtkRadioAction *action,
 							GtkRadioAction *selected,
 							ModestWindow *window);
 
-
-
-
+/**
+ * modest_ui_actions_on_toggle_toolbar:
+ * @toggle: 
+ * @window: 
+ * 
+ * Hides/Shows the toolbars of the #ModestWindow instances
+ **/
+void     modest_ui_actions_on_toggle_toolbar           (GtkToggleAction *toggle, 
+							ModestWindow *window);
 
 G_END_DECLS
 #endif /* __MODEST_UI_ACTIONS_H__ */
