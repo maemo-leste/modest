@@ -74,11 +74,13 @@
     <toolitem action="ActionsSend"/>
     <!--<toolitem action="ActionFontFace"/>-->
     <!--<toolitem action="ActionFontSize"/>-->
-    <toolitem action="ActionsBold"/>
-    <toolitem action="ActionsItalics"/>
+    <separator/>
     <placeholder name="FontAttributes">
     </placeholder>
-    <toolitem action="ActionsBulletedList"/>
+    <toolitem action="ActionsBold"/>
+    <toolitem action="ActionsItalics"/>
+    <placeholder name="FontColor">
+    </placeholder>
   </toolbar>
 
   <accelerator name="AccelZoomMinus" action="ZoomMinus"/>

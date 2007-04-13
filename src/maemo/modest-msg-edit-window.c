@@ -42,6 +42,7 @@
 
 #include <widgets/modest-msg-edit-window.h>
 #include <widgets/modest-combo-box.h>
+#include <widgets/modest-recpt-editor.h>
 
 #include <modest-runtime.h>
 
@@ -72,6 +73,7 @@
 
 #define DEFAULT_FONT_SIZE 3
 #define DEFAULT_FONT 2
+#define DEFAULT_SIZE_BUTTON_FONT_FAMILY "Sans"
 #define DEFAULT_SIZE_COMBOBOX_WIDTH 80
 #define DEFAULT_MAIN_VBOX_SPACING 6
 #define SUBJECT_MAX_LENGTH 1000
@@ -84,10 +86,10 @@ static void  text_buffer_refresh_attributes (WPTextBuffer *buffer, ModestMsgEdit
 static void  text_buffer_mark_set (GtkTextBuffer *buffer, GtkTextIter *location, GtkTextMark *mark, gpointer userdata);
 static void  modest_msg_edit_window_color_button_change (ModestMsgEditWindow *window,
 							 gpointer userdata);
-static void  modest_msg_edit_window_size_combobox_change (ModestMsgEditWindow *window,
-							  gpointer userdata);
-static void  modest_msg_edit_window_font_combobox_change (ModestMsgEditWindow *window,
-							  gpointer userdata);
+static void  modest_msg_edit_window_size_change (GtkCheckMenuItem *menu_item,
+						 gpointer userdata);
+static void  modest_msg_edit_window_font_change (GtkCheckMenuItem *menu_item,
+						 gpointer userdata);
 static void  modest_msg_edit_window_setup_toolbar (ModestMsgEditWindow *window);
 static gboolean modest_msg_edit_window_window_state_event (GtkWidget *widget, 
 							   GdkEventWindowState *event, 
@@ -124,8 +126,10 @@ struct _ModestMsgEditWindowPrivate {
 	GtkTextBuffer *text_buffer;
 
 	GtkWidget   *font_color_button;
-	GtkWidget   *size_combobox;
-	GtkWidget   *font_combobox;
+	GSList      *font_items_group;
+	GtkWidget   *font_tool_button_label;
+	GSList      *size_items_group;
+	GtkWidget   *size_tool_button_label;
 
 	GtkWidget   *scroll;
 
@@ -312,15 +316,10 @@ init_window (ModestMsgEditWindow *obj)
  	priv->from_field    = modest_combo_box_new (protos, g_str_equal);
 	modest_pair_list_free (protos);
 
-	priv->to_field      = gtk_entry_new_with_max_length (80);
-	g_object_set (G_OBJECT (priv->to_field), "autocap", FALSE, NULL);
-	priv->cc_field      = gtk_entry_new_with_max_length (80);
-	g_object_set (G_OBJECT (priv->cc_field), "autocap", FALSE, NULL);
-	priv->bcc_field     = gtk_entry_new_with_max_length (80);
-	g_object_set (G_OBJECT (priv->bcc_field), "autocap", FALSE, NULL);
-	priv->subject_field = gtk_entry_new_with_max_length (80);
-	g_object_set (G_OBJECT (priv->subject_field), "autocap", TRUE, NULL);
-	gtk_entry_set_max_length (GTK_ENTRY (priv->subject_field), SUBJECT_MAX_LENGTH);
+	priv->to_field      = modest_recpt_editor_new ();
+	priv->cc_field      = modest_recpt_editor_new ();
+	priv->bcc_field     = modest_recpt_editor_new ();
+	priv->subject_field = gtk_entry_new_with_max_length (SUBJECT_MAX_LENGTH);
 	
 	priv->header_box = gtk_vbox_new (FALSE, 0);
 	
@@ -329,6 +328,14 @@ init_window (ModestMsgEditWindow *obj)
 	priv->cc_caption = hildon_caption_new (size_group, _("Cc:"), priv->cc_field, NULL, 0);
 	priv->bcc_caption = hildon_caption_new (size_group, _("Bcc:"), priv->bcc_field, NULL, 0);
 	subject_caption = hildon_caption_new (size_group, _("Subject:"), priv->subject_field, NULL, 0);
+	g_object_unref (size_group);
+
+	size_group = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);
+	modest_recpt_editor_set_field_size_group (MODEST_RECPT_EDITOR (priv->to_field), size_group);
+	modest_recpt_editor_set_field_size_group (MODEST_RECPT_EDITOR (priv->cc_field), size_group);
+	modest_recpt_editor_set_field_size_group (MODEST_RECPT_EDITOR (priv->bcc_field), size_group);
+	gtk_size_group_add_widget (size_group, priv->subject_field);
+	g_object_unref (size_group);
 
 	gtk_box_pack_start (GTK_BOX (priv->header_box), from_caption, FALSE, FALSE, 0);
 	gtk_box_pack_start (GTK_BOX (priv->header_box), to_caption, FALSE, FALSE, 0);
@@ -353,8 +360,8 @@ init_window (ModestMsgEditWindow *obj)
 			  NULL);
 
 	priv->scroll = gtk_scrolled_window_new (NULL, NULL);
-	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (priv->scroll), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-	gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (priv->scroll), GTK_SCROLL_NONE);
+	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (priv->scroll), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
+	gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (priv->scroll), GTK_SHADOW_NONE);
 	
 	main_vbox = gtk_vbox_new  (FALSE, DEFAULT_MAIN_VBOX_SPACING);
 
@@ -435,11 +442,11 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg)
 	subject = tny_header_get_subject (header);
 
 	if (to)
-		gtk_entry_set_text (GTK_ENTRY(priv->to_field),  to);
+		modest_recpt_editor_set_recipients (MODEST_RECPT_EDITOR (priv->to_field),  to);
 	if (cc)
-		gtk_entry_set_text (GTK_ENTRY(priv->cc_field),  cc);
+		modest_recpt_editor_set_recipients (MODEST_RECPT_EDITOR (priv->cc_field),  cc);
 	if (bcc)
-		gtk_entry_set_text (GTK_ENTRY(priv->bcc_field), bcc);
+		modest_recpt_editor_set_recipients (MODEST_RECPT_EDITOR (priv->bcc_field), bcc);
 	if (subject)
 		gtk_entry_set_text (GTK_ENTRY(priv->subject_field), subject);	
 
@@ -481,15 +488,60 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg)
 }
 
 static void
+menu_tool_button_clicked_popup (GtkMenuToolButton *item,
+				gpointer data)
+{
+	GList *item_children, *node;
+	GtkWidget *bin_child;
+
+	bin_child = gtk_bin_get_child (GTK_BIN(item));
+
+	item_children = gtk_container_get_children (GTK_CONTAINER (bin_child));
+	
+	for (node = item_children; node != NULL; node = g_list_next (node)) {
+		if (GTK_IS_TOGGLE_BUTTON (node->data)) {
+			gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (node->data), TRUE);
+		}
+	}
+	g_list_free (item_children);
+}
+
+static void
+menu_tool_button_dont_expand (GtkMenuToolButton *item)
+{
+	GtkWidget *box;
+	GList *item_children, *node;
+
+	box = gtk_bin_get_child (GTK_BIN (item));
+	gtk_box_set_homogeneous (GTK_BOX (box), TRUE);
+	item_children = gtk_container_get_children (GTK_CONTAINER (box));
+	
+	for (node = item_children; node != NULL; node = g_list_next (node)) {
+		gtk_box_set_child_packing (GTK_BOX (box), GTK_WIDGET (node->data), TRUE, TRUE, 0, GTK_PACK_START);
+		if (GTK_IS_TOGGLE_BUTTON (node->data))
+			gtk_button_set_alignment (GTK_BUTTON (node->data), 0.0, 0.5);
+		else if (GTK_IS_BUTTON (node->data))
+			gtk_button_set_alignment (GTK_BUTTON (node->data), 1.0, 0.5);
+	}
+	g_list_free (item_children);
+}
+
+
+static void
 modest_msg_edit_window_setup_toolbar (ModestMsgEditWindow *window)
 {
 	ModestWindowPrivate *parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
 	ModestMsgEditWindowPrivate *priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
-	GtkWidget *font_placeholder;
+	GtkWidget *placeholder;
 	GtkWidget *tool_item;
 	gint insert_index;
+	gchar size_text[5];
 	gint size_index;
 	gint font_index;
+	GtkWidget *sizes_menu;
+	GtkWidget *fonts_menu;
+	GSList *radio_group = NULL;
+	gchar *markup;
 
 	/* Toolbar */
 	parent_priv->toolbar = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar");
@@ -499,39 +551,108 @@ modest_msg_edit_window_setup_toolbar (ModestMsgEditWindow *window)
 	if (!modest_conf_get_bool (modest_runtime_get_conf (), MODEST_CONF_SHOW_TOOLBAR, NULL))
 		gtk_widget_hide (parent_priv->toolbar);
 
-	/* Font management toolbar elements */
-	font_placeholder = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/FontAttributes");
-	insert_index = gtk_toolbar_get_item_index(GTK_TOOLBAR (parent_priv->toolbar), GTK_TOOL_ITEM(font_placeholder));
+	/* Font color placeholder */
+	placeholder = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/FontColor");
+	insert_index = gtk_toolbar_get_item_index(GTK_TOOLBAR (parent_priv->toolbar), GTK_TOOL_ITEM(placeholder));
 
 	/* font color */
 	tool_item = GTK_WIDGET (gtk_tool_item_new ());
 	priv->font_color_button = hildon_color_button_new ();
 	gtk_container_add (GTK_CONTAINER (tool_item), priv->font_color_button);
+	gtk_tool_item_set_expand (GTK_TOOL_ITEM (tool_item), TRUE);
+	gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (tool_item), TRUE);
 	gtk_toolbar_insert(GTK_TOOLBAR(parent_priv->toolbar), GTK_TOOL_ITEM (tool_item), insert_index);
 	g_signal_connect_swapped (G_OBJECT (priv->font_color_button), "notify::color", G_CALLBACK (modest_msg_edit_window_color_button_change), window);
 
+	/* Font size and face placeholder */
+	placeholder = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/FontAttributes");
+	insert_index = gtk_toolbar_get_item_index(GTK_TOOLBAR (parent_priv->toolbar), GTK_TOOL_ITEM(placeholder));
 	/* font_size */
-	priv->size_combobox = gtk_combo_box_new_text ();
-	gtk_widget_set_size_request (priv->size_combobox, DEFAULT_SIZE_COMBOBOX_WIDTH, -1);
+	tool_item = GTK_WIDGET (gtk_menu_tool_button_new (NULL, NULL));
+	priv->size_tool_button_label = gtk_label_new (NULL);
+	snprintf(size_text, sizeof(size_text), "%d", wp_font_size[DEFAULT_FONT_SIZE]);
+	markup = g_strconcat ("<span font_family='", DEFAULT_SIZE_BUTTON_FONT_FAMILY, "'>",
+			      size_text,"</span>", NULL);
+	gtk_label_set_markup (GTK_LABEL (priv->size_tool_button_label), markup);
+	g_free (markup);
+	gtk_tool_button_set_label_widget (GTK_TOOL_BUTTON (tool_item), priv->size_tool_button_label);
+	sizes_menu = gtk_menu_new ();
+	priv->size_items_group = NULL;
+	radio_group = NULL;
 	for (size_index = 0; size_index < WP_FONT_SIZE_COUNT; size_index++) {
-		gchar size_text[5];
-		snprintf(size_text, sizeof(size_text), "%d", wp_font_size[size_index]);
-		gtk_combo_box_append_text (GTK_COMBO_BOX (priv->size_combobox), size_text);
-	}
-	gtk_combo_box_set_active (GTK_COMBO_BOX (priv->size_combobox), wp_get_font_size_index(12, 4));
-	tool_item = GTK_WIDGET (gtk_tool_item_new ());
-	gtk_container_add (GTK_CONTAINER (tool_item), priv->size_combobox);
-	gtk_toolbar_insert(GTK_TOOLBAR(parent_priv->toolbar), GTK_TOOL_ITEM (tool_item), insert_index);
-	g_signal_connect_swapped (G_OBJECT (priv->size_combobox), "changed", G_CALLBACK (modest_msg_edit_window_size_combobox_change), window);
+		GtkWidget *size_menu_item;
 
-	priv->font_combobox = gtk_combo_box_new_text ();
-	for (font_index = 0; font_index < wp_get_font_count (); font_index++) {
-		gtk_combo_box_append_text (GTK_COMBO_BOX (priv->font_combobox), wp_get_font_name (font_index));
+		snprintf(size_text, sizeof(size_text), "%d", wp_font_size[size_index]);
+		size_menu_item = gtk_radio_menu_item_new_with_label (radio_group, size_text);
+		radio_group = gtk_radio_menu_item_get_group (GTK_RADIO_MENU_ITEM (size_menu_item));
+		gtk_menu_shell_append (GTK_MENU_SHELL (sizes_menu), size_menu_item);
+		gtk_check_menu_item_set_active (GTK_CHECK_MENU_ITEM (size_menu_item), (wp_font_size[size_index] == 12));
+		gtk_widget_show (size_menu_item);
+
+		priv->size_items_group = g_slist_prepend (priv->size_items_group, size_menu_item);
+			
+		g_signal_connect (G_OBJECT (size_menu_item), "toggled", G_CALLBACK (modest_msg_edit_window_size_change),
+				  window);
 	}
-	tool_item = GTK_WIDGET (gtk_tool_item_new ());
-	gtk_container_add (GTK_CONTAINER (tool_item), priv->font_combobox);
+	priv->size_items_group = g_slist_reverse (priv->size_items_group);
+	gtk_menu_tool_button_set_menu (GTK_MENU_TOOL_BUTTON (tool_item), sizes_menu);
+	g_signal_connect (G_OBJECT (tool_item), "clicked", G_CALLBACK (menu_tool_button_clicked_popup), NULL);
 	gtk_toolbar_insert (GTK_TOOLBAR (parent_priv->toolbar), GTK_TOOL_ITEM (tool_item), insert_index);
-	g_signal_connect_swapped (G_OBJECT (priv->font_combobox), "changed", G_CALLBACK (modest_msg_edit_window_font_combobox_change), window);
+	gtk_tool_item_set_expand (GTK_TOOL_ITEM (tool_item), TRUE);
+	gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (tool_item), TRUE);
+	menu_tool_button_dont_expand (GTK_MENU_TOOL_BUTTON (tool_item));
+
+	/* font face */
+	tool_item = GTK_WIDGET (gtk_menu_tool_button_new (NULL, NULL));
+	priv->font_tool_button_label = gtk_label_new (NULL);
+	markup = g_strconcat ("<span font_family='", wp_get_font_name(DEFAULT_FONT), "'>Tt</span>", NULL);
+	gtk_label_set_markup (GTK_LABEL (priv->font_tool_button_label), markup);
+	g_free(markup);
+	gtk_tool_button_set_label_widget (GTK_TOOL_BUTTON (tool_item), priv->font_tool_button_label);
+	fonts_menu = gtk_menu_new ();
+	priv->font_items_group = NULL;
+	radio_group = NULL;
+	for (font_index = 0; font_index < wp_get_font_count (); font_index++) {
+		GtkWidget *font_menu_item;
+		GtkWidget *child_label;
+
+		font_menu_item = gtk_radio_menu_item_new_with_label (radio_group, "");
+		child_label = gtk_bin_get_child (GTK_BIN (font_menu_item));
+		markup = g_strconcat ("<span font_family='", wp_get_font_name (font_index),"'>", 
+				      wp_get_font_name (font_index), "</span>", NULL);
+		gtk_label_set_markup (GTK_LABEL (child_label), markup);
+		g_free (markup);
+		
+		radio_group = gtk_radio_menu_item_get_group (GTK_RADIO_MENU_ITEM (font_menu_item));
+		gtk_menu_shell_append (GTK_MENU_SHELL (fonts_menu), font_menu_item);
+		gtk_check_menu_item_set_active (GTK_CHECK_MENU_ITEM (font_menu_item), (font_index == DEFAULT_FONT));
+		gtk_widget_show (font_menu_item);
+
+		priv->font_items_group = g_slist_prepend (priv->font_items_group, font_menu_item);
+			
+		g_signal_connect (G_OBJECT (font_menu_item), "toggled", G_CALLBACK (modest_msg_edit_window_font_change),
+				  window);
+	}
+	priv->font_items_group = g_slist_reverse (priv->font_items_group);
+	gtk_menu_tool_button_set_menu (GTK_MENU_TOOL_BUTTON (tool_item), fonts_menu);
+	g_signal_connect (G_OBJECT (tool_item), "clicked", G_CALLBACK (menu_tool_button_clicked_popup), NULL);
+	gtk_toolbar_insert (GTK_TOOLBAR (parent_priv->toolbar), GTK_TOOL_ITEM (tool_item), insert_index);
+	gtk_tool_item_set_expand (GTK_TOOL_ITEM (tool_item), TRUE);
+	gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (tool_item), TRUE);
+	menu_tool_button_dont_expand (GTK_MENU_TOOL_BUTTON (tool_item));
+
+	/* Set expand and homogeneous for remaining items */
+	tool_item = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/ActionsSend");
+	gtk_tool_item_set_expand (GTK_TOOL_ITEM (tool_item), TRUE);
+	gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (tool_item), TRUE);
+	tool_item = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/ActionsBold");
+	gtk_tool_item_set_expand (GTK_TOOL_ITEM (tool_item), TRUE);
+	gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (tool_item), TRUE);
+	tool_item = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/ActionsItalics");
+	gtk_tool_item_set_expand (GTK_TOOL_ITEM (tool_item), TRUE);
+	gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (tool_item), TRUE);
+
+
 }
 
 
@@ -669,9 +790,9 @@ modest_msg_edit_window_get_msg_data (ModestMsgEditWindow *edit_window)
 	data = g_slice_new0 (MsgData);
 	data->from    =  modest_account_mgr_get_from_string (modest_runtime_get_account_mgr(),
 							     account_name);
-	data->to      =  (gchar*) gtk_entry_get_text (GTK_ENTRY(priv->to_field));
-	data->cc      =  (gchar*) gtk_entry_get_text (GTK_ENTRY(priv->cc_field));
-	data->bcc     =  (gchar*) gtk_entry_get_text (GTK_ENTRY(priv->bcc_field));
+	data->to      =  (gchar*) modest_recpt_editor_get_recipients (MODEST_RECPT_EDITOR(priv->to_field));
+	data->cc      =  (gchar*) modest_recpt_editor_get_recipients (MODEST_RECPT_EDITOR(priv->cc_field));
+	data->bcc     =  (gchar*) modest_recpt_editor_get_recipients (MODEST_RECPT_EDITOR(priv->bcc_field));
 	data->subject =  (gchar*) gtk_entry_get_text (GTK_ENTRY(priv->subject_field));	
 	data->plain_body =  (gchar *) gtk_text_buffer_get_text (priv->text_buffer, &b, &e, FALSE);
 	data->html_body  =  get_formatted_data (edit_window);
@@ -855,6 +976,8 @@ text_buffer_refresh_attributes (WPTextBuffer *buffer, ModestMsgEditWindow *windo
 	GtkAction *action;
 	ModestWindowPrivate *parent_priv;
 	ModestMsgEditWindowPrivate *priv;
+	GtkWidget *new_size_menuitem;
+	GtkWidget *new_font_menuitem;
 	
 	parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
@@ -867,7 +990,7 @@ text_buffer_refresh_attributes (WPTextBuffer *buffer, ModestMsgEditWindow *windo
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ActionsItalics");
 	toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action), buffer_format->italic);
 
-	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ActionsBulletedList");
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/FormatMenu/BulletedListMenu");
 	toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action), buffer_format->bullet);
 
 	g_signal_handlers_block_by_func (G_OBJECT (priv->font_color_button), 
@@ -878,21 +1001,43 @@ text_buffer_refresh_attributes (WPTextBuffer *buffer, ModestMsgEditWindow *windo
 					   G_CALLBACK (modest_msg_edit_window_color_button_change),
 					   window);
 
-	g_signal_handlers_block_by_func (G_OBJECT (priv->size_combobox), 
-					 G_CALLBACK (modest_msg_edit_window_size_combobox_change),
-					 window);
-	gtk_combo_box_set_active (GTK_COMBO_BOX (priv->size_combobox), buffer_format->font_size);
-	g_signal_handlers_unblock_by_func (G_OBJECT (priv->size_combobox), 
-					   G_CALLBACK (modest_msg_edit_window_size_combobox_change),
-					   window);
+	new_size_menuitem = GTK_WIDGET ((g_slist_nth (priv->size_items_group, 
+						      buffer_format->font_size))->data);
+	if (!gtk_check_menu_item_get_active (GTK_CHECK_MENU_ITEM (new_size_menuitem))) {
+		GtkWidget *label;
+		gchar *markup;
 
-	g_signal_handlers_block_by_func (G_OBJECT (priv->font_combobox), 
-					 G_CALLBACK (modest_msg_edit_window_font_combobox_change),
-					 window);
-	gtk_combo_box_set_active (GTK_COMBO_BOX (priv->font_combobox), buffer_format->font);
-	g_signal_handlers_unblock_by_func (G_OBJECT (priv->font_combobox), 
-					   G_CALLBACK (modest_msg_edit_window_font_combobox_change),
-					   window);
+		label = gtk_bin_get_child (GTK_BIN (new_size_menuitem));
+		markup = g_strconcat ("<span font_family='Serif'>", gtk_label_get_text (GTK_LABEL (label)), "</span>", NULL);
+		gtk_label_set_markup (GTK_LABEL (priv->size_tool_button_label), markup);
+		g_free (markup);
+		g_signal_handlers_block_by_func (G_OBJECT (new_size_menuitem),
+						 G_CALLBACK (modest_msg_edit_window_size_change),
+						 window);
+		gtk_check_menu_item_set_active (GTK_CHECK_MENU_ITEM (new_size_menuitem), TRUE);
+		g_signal_handlers_unblock_by_func (G_OBJECT (new_size_menuitem),
+						   G_CALLBACK (modest_msg_edit_window_size_change),
+						   window);
+	}
+
+	new_font_menuitem = GTK_WIDGET ((g_slist_nth (priv->font_items_group, 
+						      buffer_format->font))->data);
+	if (!gtk_check_menu_item_get_active (GTK_CHECK_MENU_ITEM (new_font_menuitem))) {
+		GtkWidget *label;
+		gchar *markup;
+
+		label = gtk_bin_get_child (GTK_BIN (new_font_menuitem));
+		markup = g_strconcat ("<span font_family='", gtk_label_get_text (GTK_LABEL (label)),"'>Tt</span>", NULL);
+		gtk_label_set_markup (GTK_LABEL (priv->font_tool_button_label), markup);
+		g_free (markup);
+		g_signal_handlers_block_by_func (G_OBJECT (new_font_menuitem),
+						 G_CALLBACK (modest_msg_edit_window_font_change),
+						 window);
+		gtk_check_menu_item_set_active (GTK_CHECK_MENU_ITEM (new_font_menuitem), TRUE);
+		g_signal_handlers_unblock_by_func (G_OBJECT (new_font_menuitem),
+						   G_CALLBACK (modest_msg_edit_window_font_change),
+						   window);
+	}
 
 	g_free (buffer_format);
 
@@ -1055,39 +1200,65 @@ modest_msg_edit_window_color_button_change (ModestMsgEditWindow *window,
 }
 
 static void
-modest_msg_edit_window_size_combobox_change (ModestMsgEditWindow *window,
-					     gpointer userdata)
+modest_msg_edit_window_size_change (GtkCheckMenuItem *menu_item,
+				    gpointer userdata)
 {
 	ModestMsgEditWindowPrivate *priv;
 	gint new_size_index;
-
+	ModestMsgEditWindow *window;
+	GtkWidget *label;
+	
+	window = MODEST_MSG_EDIT_WINDOW (userdata);
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
 	gtk_widget_grab_focus (GTK_WIDGET (priv->msg_body));
 
-	new_size_index = gtk_combo_box_get_active (GTK_COMBO_BOX (priv->size_combobox));
+	if (gtk_check_menu_item_get_active (menu_item)) {
+		gchar *markup;
 
-	if (!wp_text_buffer_set_attribute (WP_TEXT_BUFFER (priv->text_buffer), WPT_FONT_SIZE, (gpointer) new_size_index))
-		wp_text_view_reset_and_show_im (WP_TEXT_VIEW (priv->msg_body));
+		label = gtk_bin_get_child (GTK_BIN (menu_item));
+		
+		new_size_index = atoi (gtk_label_get_text (GTK_LABEL (label)));
 
-	text_buffer_refresh_attributes (WP_TEXT_BUFFER (priv->text_buffer), MODEST_MSG_EDIT_WINDOW (window));;
+		if (!wp_text_buffer_set_attribute (WP_TEXT_BUFFER (priv->text_buffer), WPT_FONT_SIZE, 
+						   (gpointer) wp_get_font_size_index (new_size_index, 12)))
+			wp_text_view_reset_and_show_im (WP_TEXT_VIEW (priv->msg_body));
+		
+		text_buffer_refresh_attributes (WP_TEXT_BUFFER (priv->text_buffer), MODEST_MSG_EDIT_WINDOW (window));
+		markup = g_strconcat ("<span font_family='Serif'>", gtk_label_get_text (GTK_LABEL (label)), "</span>", NULL);
+		gtk_label_set_markup (GTK_LABEL (priv->size_tool_button_label), markup);
+		g_free (markup);
+	}
 }
 
 static void
-modest_msg_edit_window_font_combobox_change (ModestMsgEditWindow *window,
-					     gpointer userdata)
+modest_msg_edit_window_font_change (GtkCheckMenuItem *menu_item,
+				    gpointer userdata)
 {
 	ModestMsgEditWindowPrivate *priv;
 	gint new_font_index;
-
+	ModestMsgEditWindow *window;
+	GtkWidget *label;
+	
+	window = MODEST_MSG_EDIT_WINDOW (userdata);
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
 	gtk_widget_grab_focus (GTK_WIDGET (priv->msg_body));
 
-	new_font_index = gtk_combo_box_get_active (GTK_COMBO_BOX (priv->font_combobox));
+	if (gtk_check_menu_item_get_active (menu_item)) {
+		gchar *markup;
 
-	if (!wp_text_buffer_set_attribute (WP_TEXT_BUFFER (priv->text_buffer), WPT_FONT, (gpointer) new_font_index))
-		wp_text_view_reset_and_show_im (WP_TEXT_VIEW (priv->msg_body));
+		label = gtk_bin_get_child (GTK_BIN (menu_item));
+		
+		new_font_index = wp_get_font_index (gtk_label_get_text (GTK_LABEL (label)), DEFAULT_FONT);
 
-	text_buffer_refresh_attributes (WP_TEXT_BUFFER (priv->text_buffer), MODEST_MSG_EDIT_WINDOW (window));
+		if (!wp_text_buffer_set_attribute (WP_TEXT_BUFFER (priv->text_buffer), WPT_FONT, 
+						   (gpointer) new_font_index))
+			wp_text_view_reset_and_show_im (WP_TEXT_VIEW (priv->msg_body));
+		
+		text_buffer_refresh_attributes (WP_TEXT_BUFFER (priv->text_buffer), MODEST_MSG_EDIT_WINDOW (window));
+		    markup = g_strconcat ("<span font_family='",gtk_label_get_text (GTK_LABEL (label)),"'>Tt</span>", NULL);
+		gtk_label_set_markup (GTK_LABEL (priv->font_tool_button_label), markup);
+		g_free (markup);
+	}
 }
 
 static void
