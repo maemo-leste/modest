@@ -100,7 +100,9 @@ static void  modest_msg_edit_window_set_zoom (ModestWindow *window, gdouble zoom
 static gdouble modest_msg_edit_window_get_zoom (ModestWindow *window);
 static gboolean modest_msg_edit_window_zoom_minus (ModestWindow *window);
 static gboolean modest_msg_edit_window_zoom_plus (ModestWindow *window);
-
+static void modest_msg_edit_window_create_toolbar (ModestWindow *window);
+static void modest_msg_edit_window_show_toolbar   (ModestWindow *window,
+						   gboolean show_toolbar);
 
 
 /* list my signals */
@@ -189,6 +191,8 @@ modest_msg_edit_window_class_init (ModestMsgEditWindowClass *klass)
 	modest_window_class->get_zoom_func = modest_msg_edit_window_get_zoom;
 	modest_window_class->zoom_plus_func = modest_msg_edit_window_zoom_plus;
 	modest_window_class->zoom_minus_func = modest_msg_edit_window_zoom_minus;
+	modest_window_class->create_toolbar_func = modest_msg_edit_window_create_toolbar;
+	modest_window_class->show_toolbar_func = modest_msg_edit_window_show_toolbar;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestMsgEditWindowPrivate));
 }
@@ -1405,3 +1409,31 @@ modest_msg_edit_window_show_bcc (ModestMsgEditWindow *window,
 		gtk_widget_hide (priv->bcc_caption);
 }
 
+
+static void 
+modest_msg_edit_window_create_toolbar (ModestWindow *self)
+{
+	/* FIXME: we can not just use the code of
+	   modest_msg_edit_window_setup_toolbar because it has a
+	   mixture of both initialization and creation code. */
+}
+
+static void
+modest_msg_edit_window_show_toolbar (ModestWindow *self,
+				     gboolean show_toolbar)
+{
+	ModestWindowPrivate *parent_priv;
+	
+	parent_priv = MODEST_WINDOW_GET_PRIVATE(self);
+
+	if (!parent_priv->toolbar)
+		return;
+
+	if (show_toolbar) {
+		hildon_window_add_toolbar (HILDON_WINDOW (self), 
+					   GTK_TOOLBAR (parent_priv->toolbar));
+		gtk_widget_show_all (GTK_WIDGET (self));
+	} else
+		hildon_window_remove_toolbar (HILDON_WINDOW (self), 
+					      GTK_TOOLBAR (parent_priv->toolbar));
+}

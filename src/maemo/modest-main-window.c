@@ -357,8 +357,10 @@ modest_main_window_new (void)
 	GtkWidget *header_win, *folder_win;
 	GtkActionGroup *action_group;
 	GError *error = NULL;
-	TnyFolderStoreQuery     *query;
+	TnyFolderStoreQuery *query;
 	GdkPixbuf *window_icon;
+	ModestConf *conf;
+	GtkAction *action;
 
 	self  = MODEST_MAIN_WINDOW(g_object_new(MODEST_TYPE_MAIN_WINDOW, NULL));
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
@@ -395,8 +397,17 @@ modest_main_window_new (void)
 	gtk_window_add_accel_group (GTK_WINDOW (self), 
 				    gtk_ui_manager_get_accel_group (parent_priv->ui_manager));
 
-	/* Menubar */
+	/* Menubar. Update the state of some toggles */
 	parent_priv->menubar = modest_maemo_utils_menubar_to_menu (parent_priv->ui_manager);
+	conf = modest_runtime_get_conf ();
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, 
+					    "/MenuBar/ViewMenu/ViewShowToolbarMainMenu/ViewShowToolbarNormalScreenMenu");
+	gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (action),
+				      modest_conf_get_bool (conf, MODEST_CONF_SHOW_TOOLBAR, NULL));
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, 
+					    "/MenuBar/ViewMenu/ViewShowToolbarMainMenu/ViewShowToolbarFullScreenMenu");
+	gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (action),
+				      modest_conf_get_bool (conf, MODEST_CONF_SHOW_TOOLBAR_FULLSCREEN, NULL));
 	hildon_window_set_menu (HILDON_WINDOW (self), GTK_MENU (parent_priv->menubar));
 
 	/* folder view */
@@ -580,10 +591,9 @@ modest_main_window_create_toolbar (ModestWindow *self)
 	gtk_container_foreach (GTK_CONTAINER (parent_priv->toolbar), 
 			       set_homogeneous, NULL);
 
-	/* Set reply message tap and hold menu */
+	/* Set reply button tap and hold menu */
 	reply_button = gtk_ui_manager_get_widget (parent_priv->ui_manager, 
 						  "/ToolBar/ToolbarMessageReply");
-
 	menu = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolbarReplyContextMenu");
 	gtk_widget_tap_and_hold_setup (GTK_WIDGET (reply_button), menu, NULL, 0);
 }
@@ -599,13 +609,11 @@ modest_main_window_show_toolbar (ModestWindow *self,
 	if (!parent_priv->toolbar)
 		return;
 
-	if (show_toolbar)
+	if (show_toolbar) {
 		hildon_window_add_toolbar (HILDON_WINDOW (self), 
 					   GTK_TOOLBAR (parent_priv->toolbar));
-	else
-		hildon_window_remove_toolbar (HILDON_WINDOW (self), 
+		gtk_widget_show_all (GTK_WIDGET (self));
+	} else
+		hildon_window_remove_toolbar (HILDON_WINDOW (self),
 					      GTK_TOOLBAR (parent_priv->toolbar));
-
-	/* Needed to show the contents of the toolbar */
-	gtk_widget_show_all (GTK_WIDGET (self));
 }
