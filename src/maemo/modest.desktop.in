@@ -9,9 +9,9 @@ Exec=@prefix@/bin/modest
 X-Osso-Service=org.maemo.modest
 X-Osso-Type=application/x-executable
 
-Icon=modest-icon
-X-Window-Icon=modest-icon
-X-Window-Icon-Dimmed=modest-icon-dimmed
+Icon=qgn_list_messagin
+X-Window-Icon=qgn_list_messagin
+X-Window-Icon-Dimmed=qgn_list_messagin
 
 StartupWMClass=modest
 

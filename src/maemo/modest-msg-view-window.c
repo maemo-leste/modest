@@ -31,6 +31,7 @@
 #include <tny-account-store.h>
 #include <tny-simple-list.h>
 #include <tny-header.h>
+#include "modest-platform.h"
 #include <modest-tny-msg.h>
 #include <modest-msg-view-window.h>
 #include <modest-main-window-ui.h>
@@ -360,6 +361,7 @@ modest_msg_view_window_new (TnyMsg *msg, const gchar *account_name)
 	ModestWindowPrivate *parent_priv;
 	GtkActionGroup *action_group;
 	GError *error = NULL;
+	GdkPixbuf *window_icon = NULL;
 
 	g_return_val_if_fail (msg, NULL);
 	
@@ -441,6 +443,10 @@ modest_msg_view_window_new (TnyMsg *msg, const gchar *account_name)
 	priv->last_search = NULL;
 
 	modest_msg_view_window_update_dimmed (MODEST_MSG_VIEW_WINDOW (obj));
+
+	/* Set window icon */
+	window_icon = modest_platform_get_icon (MODEST_APP_MSG_VIEW_ICON);
+	gtk_window_set_icon (GTK_WINDOW (obj), window_icon);
 
 	gtk_widget_grab_focus (priv->msg_view);
 

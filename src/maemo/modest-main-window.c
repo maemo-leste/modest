@@ -40,7 +40,7 @@
 #include <widgets/modest-msg-edit-window.h>
 #include <widgets/modest-account-view-window.h>
 
-
+#include "modest-platform.h"
 #include "modest-widget-memory.h"
 #include "modest-window-priv.h"
 #include "modest-main-window-ui.h"
@@ -378,6 +378,7 @@ modest_main_window_new (void)
 	GtkActionGroup *action_group;
 	GError *error = NULL;
 	TnyFolderStoreQuery     *query;
+	GdkPixbuf *window_icon;
 
 	self  = MODEST_MAIN_WINDOW(g_object_new(MODEST_TYPE_MAIN_WINDOW, NULL));
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
@@ -456,10 +457,10 @@ modest_main_window_new (void)
 
 	gtk_container_add (GTK_CONTAINER(self), priv->main_vbox);
 	restore_sizes (MODEST_MAIN_WINDOW(self));
-	
-	gtk_window_set_title (GTK_WINDOW(self), _("Modest"));
-	gtk_window_set_icon_from_file (GTK_WINDOW(self), MODEST_APP_ICON, NULL);
-	gtk_widget_show_all (priv->main_vbox);
+
+	/* Set window icon */
+	window_icon = modest_platform_get_icon (MODEST_APP_ICON);
+	gtk_window_set_icon (GTK_WINDOW (self), window_icon);
 
 /* 	/\* should we hide the toolbar? *\/ */
 /* 	if (!modest_conf_get_bool (modest_runtime_get_conf (), MODEST_CONF_SHOW_TOOLBAR, NULL)) */

@@ -45,6 +45,7 @@
 
 #include <modest-runtime.h>
 
+#include "modest-platform.h"
 #include "modest-icon-names.h"
 #include "modest-widget-memory.h"
 #include "modest-window-priv.h"
@@ -543,6 +544,7 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name)
 	ModestMsgEditWindowPrivate *priv;
 	GtkActionGroup *action_group;
 	GError *error = NULL;
+	GdkPixbuf *window_icon = NULL;
 
 	g_return_val_if_fail (msg, NULL);
 	
@@ -612,6 +614,10 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name)
 	set_msg (MODEST_MSG_EDIT_WINDOW (obj), msg);
 
 	text_buffer_refresh_attributes (WP_TEXT_BUFFER (priv->text_buffer), MODEST_MSG_EDIT_WINDOW (obj));
+
+	/* Set window icon */
+	window_icon = modest_platform_get_icon (MODEST_APP_MSG_EDIT_ICON);
+	gtk_window_set_icon (GTK_WINDOW (obj), window_icon);
 	
 	return (ModestWindow*)obj;
 }

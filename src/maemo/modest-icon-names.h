@@ -40,7 +40,9 @@
 
 /* icons */
 
-#define MODEST_APP_ICON				PIXMAP_PREFIX "modest-icon.png"
+#define MODEST_APP_ICON				"qgn_list_messagin"
+#define MODEST_APP_MSG_VIEW_ICON		"qgn_list_messagin_viewer"
+#define MODEST_APP_MSG_EDIT_ICON		"qgn_list_messagin_editor"
 
 #define MODEST_HEADER_ICON_READ			"qgn_list_messagin_mail"
 #define MODEST_HEADER_ICON_UNREAD		"qgn_list_messagin_mail_unread"

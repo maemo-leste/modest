@@ -131,6 +131,9 @@ modest_runtime_init (void)
 	g_thread_init(NULL);
 	gdk_threads_init ();
 
+	/* Set application name */
+	g_set_application_name (_("FIXME Modest"));
+
 	my_singletons = modest_singletons_new ();
 	if (!my_singletons) {
 		g_printerr ("modest: failed to initialize singletons\n");
