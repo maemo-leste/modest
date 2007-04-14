@@ -55,6 +55,10 @@ typedef HildonWindow      ModestWindowParent;
 typedef HildonWindowClass ModestWindowParentClass;
 #endif /*MODEST_PLATFORM_MAEMO */
 
+#ifndef GTK_STOCK_FULLSCREEN
+#define GTK_STOCK_FULLSCREEN ""
+#endif /*GTK_STOCK_FULLSCREEN*/
+
 /* convenience macros */
 #define MODEST_TYPE_WINDOW             (modest_window_get_type())
 #define MODEST_WINDOW(obj)             (G_TYPE_CHECK_INSTANCE_CAST((obj),MODEST_TYPE_WINDOW,ModestWindow))

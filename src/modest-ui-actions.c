@@ -633,6 +633,7 @@ action_receive (const gchar* account_name)
 	mail_op = modest_mail_operation_new ();
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
 	modest_mail_operation_update_account (mail_op, TNY_STORE_ACCOUNT(tny_account));
+
 	g_object_unref (G_OBJECT(tny_account));
 	g_object_unref (G_OBJECT (mail_op));
 		

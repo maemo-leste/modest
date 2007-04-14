@@ -196,11 +196,11 @@ restore_settings_window (ModestConf *conf, GtkWindow *win, const gchar *name)
 		ModestMainWindowStyle style;
 
 		key = _modest_widget_memory_get_keyname (name, MODEST_WIDGET_MEMORY_PARAM_WINDOW_STYLE);
-		if (modest_conf_key_exists (conf, key, NULL))
-			style = (ModestMainWindowStyle) modest_conf_get_int (conf, key, NULL);	
-		g_free (key);
-
-		modest_main_window_set_style (MODEST_MAIN_WINDOW (win), style);
+		if (modest_conf_key_exists (conf, key, NULL)) {
+			style = (ModestMainWindowStyle) modest_conf_get_int (conf, key, NULL);		
+			modest_main_window_set_style (MODEST_MAIN_WINDOW (win), style);
+			g_free (key);
+		}
 	}
 
 	return TRUE;

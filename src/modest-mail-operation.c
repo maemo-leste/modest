@@ -301,6 +301,8 @@ update_folders_cb (TnyFolderStore *folder_store, TnyList *list, GError **err, gp
 	self  = MODEST_MAIL_OPERATION (user_data);
 	priv  = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
 
+	g_message (__FUNCTION__);
+	
 	if (*err) {
 		priv->error = g_error_copy (*err);
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
@@ -376,10 +378,11 @@ modest_mail_operation_update_account (ModestMailOperation *self,
 	priv->total = 0;
 	priv->done  = 0;
 	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
-
+	
 	/* Get subscribed folders & refresh them */
     	folders = TNY_LIST (tny_simple_list_new ());
 
+	g_message ("tny_folder_store_get_folders_async");
 	tny_folder_store_get_folders_async (TNY_FOLDER_STORE (store_account),
 					    folders, update_folders_cb, NULL, self);
 	
