@@ -41,7 +41,6 @@ static void        modest_window_set_zoom_default       (ModestWindow *window,
 static gdouble     modest_window_get_zoom_default       (ModestWindow *window);
 static gboolean    modest_window_zoom_plus_default      (ModestWindow *window);
 static gboolean    modest_window_zoom_minus_default     (ModestWindow *window);
-static void        modest_window_create_toolbar_default (ModestWindow *window);
 static void        modest_window_show_toolbar_default   (ModestWindow *window,
 							 gboolean show_toolbar);
 
@@ -100,7 +99,6 @@ modest_window_class_init (ModestWindowClass *klass)
 	klass->get_zoom_func = modest_window_get_zoom_default;
 	klass->zoom_plus_func = modest_window_zoom_plus_default;
 	klass->zoom_minus_func = modest_window_zoom_minus_default;
-	klass->create_toolbar_func = modest_window_create_toolbar_default;
 	klass->show_toolbar_func = modest_window_show_toolbar_default;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestWindowPrivate));
@@ -188,35 +186,12 @@ modest_window_zoom_minus (ModestWindow *window)
 	return MODEST_WINDOW_GET_CLASS (window)->zoom_minus_func (window);
 }
 
-static void 
-modest_window_create_toolbar (ModestWindow *window)
-{
-	MODEST_WINDOW_GET_CLASS (window)->create_toolbar_func (window);
-}
-
-static void 
+void 
 modest_window_show_toolbar (ModestWindow *window,
 			    gboolean show_toolbar)
 {
 	MODEST_WINDOW_GET_CLASS (window)->show_toolbar_func (window,
 							     show_toolbar);
-}
-
-void 
-modest_window_view_toolbar (ModestWindow *window,
-			    gboolean show_toolbar)
-{
-	ModestWindowPrivate *priv;	
-
-	priv = MODEST_WINDOW_GET_PRIVATE(window);
-
-	/* Lazy strategy, we create the toolbar just when there is no
-	   toolbar and we want to show it */
-	if (!priv->toolbar && show_toolbar)
-		modest_window_create_toolbar (window);
-
-	if (priv->toolbar)
-		modest_window_show_toolbar (window, show_toolbar);
 }
 
 
@@ -249,12 +224,6 @@ modest_window_zoom_minus_default (ModestWindow *window)
 {
 	g_warning ("modest: You should implement %s", __FUNCTION__);
 	return FALSE;
-}
-
-static void 
-modest_window_create_toolbar_default (ModestWindow *window)
-{
-	g_warning ("modest: You should implement %s", __FUNCTION__);
 }
 
 static void 

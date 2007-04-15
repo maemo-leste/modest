@@ -53,11 +53,12 @@ typedef GtkWindowClass ModestWindowParentClass;
 #include <hildon-widgets/hildon-window.h>
 typedef HildonWindow      ModestWindowParent;
 typedef HildonWindowClass ModestWindowParentClass;
-#endif /*MODEST_PLATFORM_MAEMO */
 
 #ifndef GTK_STOCK_FULLSCREEN
 #define GTK_STOCK_FULLSCREEN ""
 #endif /*GTK_STOCK_FULLSCREEN*/
+
+#endif /*MODEST_PLATFORM_MAEMO */
 
 /* convenience macros */
 #define MODEST_TYPE_WINDOW             (modest_window_get_type())
@@ -82,8 +83,6 @@ struct _ModestWindowClass {
 	gdouble (*get_zoom_func) (ModestWindow *self);
 	gboolean (*zoom_plus_func) (ModestWindow *self);
 	gboolean (*zoom_minus_func) (ModestWindow *self);
-	/* Used by view_toolbar, with no public interface */
-	void (*create_toolbar_func) (ModestWindow *self);
 	void (*show_toolbar_func) (ModestWindow *self, gboolean show_toolbar);
 };
 
@@ -161,14 +160,14 @@ gboolean modest_window_zoom_minus (ModestWindow *window);
 
 
 /**
- * modest_window_view_toolbar:
+ * modest_window_show_toolbar:
  * @window: 
  * @view_toolbar: whether or not the toolbar should be shown
  * 
  * shows/hides the window toolbar
  **/
-void     modest_window_view_toolbar (ModestWindow *window, 
-				     gboolean view_toolbar);
+void     modest_window_show_toolbar (ModestWindow *window, 
+				     gboolean show_toolbar);
 
 G_END_DECLS
 

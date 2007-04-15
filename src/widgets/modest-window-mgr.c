@@ -189,7 +189,7 @@ modest_window_mgr_register_window (ModestWindowMgr *self,
 		show = priv->show_toolbars_fullscreen;
 	else
 		show = priv->show_toolbars;
-	modest_window_view_toolbar (window, show);
+	modest_window_show_toolbar (window, show);
 }
 
 static void
@@ -329,11 +329,11 @@ modest_window_mgr_set_fullscreen_mode (ModestWindowMgr *self,
 	while (win) {
 		if (on) {
 			gtk_window_fullscreen (GTK_WINDOW (win->data));
-			modest_window_view_toolbar (MODEST_WINDOW (win->data), 
+			modest_window_show_toolbar (MODEST_WINDOW (win->data), 
 						    priv->show_toolbars_fullscreen);
 		} else {
 			gtk_window_unfullscreen (GTK_WINDOW (win->data));
-			modest_window_view_toolbar (MODEST_WINDOW (win->data), 
+			modest_window_show_toolbar (MODEST_WINDOW (win->data), 
 						    priv->show_toolbars);
 		}
 		win = g_list_next (win);
@@ -386,7 +386,7 @@ modest_window_mgr_show_toolbars (ModestWindowMgr *self,
 		GList *win = priv->window_list;
 
 		while (win) {
-			modest_window_view_toolbar (MODEST_WINDOW (win->data),
+			modest_window_show_toolbar (MODEST_WINDOW (win->data),
 						    show_toolbars);
 			win = g_list_next (win);
 		}

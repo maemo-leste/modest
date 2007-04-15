@@ -74,7 +74,6 @@ static TnyFolderType modest_msg_view_window_get_folder_type (ModestMsgViewWindow
 static void modest_msg_view_window_update_dimmed (ModestMsgViewWindow *window);
 static void modest_msg_view_window_update_priority (ModestMsgViewWindow *window);
 
-static void modest_msg_view_window_create_toolbar (ModestWindow *window);
 static void modest_msg_view_window_show_toolbar   (ModestWindow *window,
 						   gboolean show_toolbar);
 
@@ -159,7 +158,6 @@ modest_msg_view_window_class_init (ModestMsgViewWindowClass *klass)
 	modest_window_class->get_zoom_func = modest_msg_view_window_get_zoom;
 	modest_window_class->zoom_minus_func = modest_msg_view_window_zoom_minus;
 	modest_window_class->zoom_plus_func = modest_msg_view_window_zoom_plus;
-	modest_window_class->create_toolbar_func = modest_msg_view_window_create_toolbar;
 	modest_window_class->show_toolbar_func = modest_msg_view_window_show_toolbar;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestMsgViewWindowPrivate));
@@ -936,43 +934,39 @@ set_homogeneous (GtkWidget *widget,
 	}
 }
 
-static void 
-modest_msg_view_window_create_toolbar (ModestWindow *self)
-{
-	GtkWidget *reply_button, *menu;
-	ModestWindowPrivate *parent_priv;
-
-	parent_priv = MODEST_WINDOW_GET_PRIVATE (self);
-
-	/* Toolbar */
-	parent_priv->toolbar = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar");
-
-	/* Set homogeneous */
-	gtk_container_foreach (GTK_CONTAINER (parent_priv->toolbar), 
-			       set_homogeneous, NULL);
-
-	/* Set reply button tap and hold menu */	
-	reply_button = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/ToolbarMessageReply");
-	menu = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolbarReplyCSM");
-	gtk_widget_tap_and_hold_setup (GTK_WIDGET (reply_button), menu, NULL, 0);
-}
-
 static void
 modest_msg_view_window_show_toolbar (ModestWindow *self,
 				     gboolean show_toolbar)
 {
 	ModestWindowPrivate *parent_priv;
+	GtkWidget *reply_button = NULL, *menu = NULL;
 	
 	parent_priv = MODEST_WINDOW_GET_PRIVATE(self);
 
-	if (!parent_priv->toolbar)
-		return;
+	if (!parent_priv->toolbar && show_toolbar) {
+		parent_priv->toolbar = gtk_ui_manager_get_widget (parent_priv->ui_manager, 
+								  "/ToolBar");
 
-	if (show_toolbar) {
+		/* Set homogeneous toolbar */
+		gtk_container_foreach (GTK_CONTAINER (parent_priv->toolbar), 
+				       set_homogeneous, NULL);
+
+		/* Add to window */
 		hildon_window_add_toolbar (HILDON_WINDOW (self), 
 					   GTK_TOOLBAR (parent_priv->toolbar));
-		gtk_widget_show_all (GTK_WIDGET (self));
-	} else
-		hildon_window_remove_toolbar (HILDON_WINDOW (self), 
-					      GTK_TOOLBAR (parent_priv->toolbar));
+
+
+		/* Set reply button tap and hold menu */	
+		reply_button = gtk_ui_manager_get_widget (parent_priv->ui_manager, 
+							  "/ToolBar/ToolbarMessageReply");
+		menu = gtk_ui_manager_get_widget (parent_priv->ui_manager, 
+						  "/ToolbarReplyCSM");
+		gtk_widget_tap_and_hold_setup (GTK_WIDGET (reply_button), menu, NULL, 0);
+	}
+
+
+	if (show_toolbar)
+		gtk_widget_show (GTK_WIDGET (parent_priv->toolbar));
+	else
+		gtk_widget_hide (GTK_WIDGET (parent_priv->toolbar));
 }
