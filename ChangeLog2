@@ -1,5 +1,11 @@
 2007-04-16  Murray Cumming  <murrayc@murrayc.com>
 
+	* po/en_GB.po: Added needed logical ID and translation.
+	* src/widgets/modest-account-view.c: (on_account_default_toggled),
+	(init_view): Made the is-default column clicking work.
+
+2007-04-16  Murray Cumming  <murrayc@murrayc.com>
+
 	* configure.ac:
 	* src/maemo/easysetup/Makefile.am:
 	* src/maemo/easysetup/modest-easysetup-wizard.c:

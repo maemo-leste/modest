@@ -265,9 +265,7 @@ static void
 on_account_default_toggled (GtkCellRendererToggle *cell_renderer, gchar *path,
 			   ModestAccountView *self)
 {
-	printf ("debug: on_account_default_toggled\n");
 	gboolean is_default = gtk_cell_renderer_toggle_get_active (cell_renderer);
-	printf ("debug: is_default: %d\n", is_default);
 	if (is_default) {
 		/* Do not allow an account to be marked non-default.
 		 * Only allow this to be changed by setting another account to default: */
@@ -288,16 +286,8 @@ on_account_default_toggled (GtkCellRendererToggle *cell_renderer, gchar *path,
 	gtk_tree_model_get (model, &iter, MODEST_ACCOUNT_VIEW_NAME_COLUMN, &account_name,
 			    -1);
 	
-	/* toggle:  */
-	if (is_default) {
-		printf ("debug2: is_default: %d\n", is_default);
-		/* TODO: Will the model will be updated  */
-		modest_account_mgr_set_default_account (priv->account_mgr, account_name);
-	}
-	
-	/* toggle:  */
-	if (is_default)
-		modest_account_mgr_set_default_account (priv->account_mgr, account_name);
+	/* Set this previously-non-default account as the default: */
+	modest_account_mgr_set_default_account (priv->account_mgr, account_name);
 
 	g_free (account_name);
 }
@@ -340,20 +330,16 @@ init_view (ModestAccountView *self)
 	text_renderer = gtk_cell_renderer_text_new ();
 
 	/* the is_default column */
-	g_object_set (G_OBJECT(toggle_renderer), "activatable", TRUE, "radio", FALSE, NULL);
-	printf("debug: connecting to toggled signal.\n");
+	g_object_set (G_OBJECT(toggle_renderer), "activatable", TRUE, "radio", TRUE, NULL);
 	gtk_tree_view_append_column (GTK_TREE_VIEW(self),
 				     gtk_tree_view_column_new_with_attributes (
-					     _(" mcen_ti_default"), toggle_renderer,
+					     _("mcen_ti_default"), toggle_renderer,
 					     "active", MODEST_ACCOUNT_VIEW_IS_DEFAULT_COLUMN, NULL));
 					
 	/* Disable the Maemo GtkTreeView::allow-checkbox-mode Maemo modification, 
 	 * which causes the model column to be updated automatically when the row is clicked.
 	 * Making this the default in Maemo's GTK+ is obviously a bug:
 	 * https://maemo.org/bugzilla/show_bug.cgi?id=146
-	 * 
-	 *  This also stops the application's own signal handler from being called,
-	 *  though unsetting the Maemo properties does not seem to fix that:
 	 */     
 	g_object_set(G_OBJECT(self), "allow-checkbox-mode", FALSE, NULL);
 	g_object_set(G_OBJECT(toggle_renderer), "checkbox-mode", FALSE, NULL);

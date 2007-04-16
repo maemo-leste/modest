@@ -4188,6 +4188,10 @@ msgstr "Default"
 msgid "mcen_ti_account"
 msgstr "Account"
 
+# column title
+msgid "mcen_ti_lastupdated"
+msgstr "Last Updated"
+
 # Dialog title. First %s is "POP" or "IMAP" and second %s is the value of user defined 'Description' -field of the account.
 msgid "mcen_ti_account_settings"
 msgstr "%s account settings for %s"
