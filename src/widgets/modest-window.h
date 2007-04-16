@@ -39,6 +39,8 @@ G_BEGIN_DECLS
 #include <config.h>
 #endif /*HAVE_CONFIG_H*/
 
+#include <gtk/gtk.h>
+
 /* 
  * admittedly, the ifdefs for gtk and maemo are rather ugly; still
  * this way is probably the easiest to maintain
