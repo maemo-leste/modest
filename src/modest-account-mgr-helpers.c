@@ -107,6 +107,8 @@ modest_account_mgr_free_server_account_data (ModestAccountMgr *self,
 	g_slice_free (ModestServerAccountData, data);
 }
 
+/** You must use modest_account_mgr_free_account_data() on the result.
+ */
 ModestAccountData*
 modest_account_mgr_get_account_data     (ModestAccountMgr *self, const gchar* name)
 {

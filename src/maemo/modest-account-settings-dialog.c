@@ -51,7 +51,7 @@ struct _ModestAccountSettingsDialogPrivate
 static void
 enable_buttons (ModestAccountSettingsDialog *self);
 
-static void
+static gboolean
 save_configuration (ModestAccountSettingsDialog *dialog);
 
 static void
@@ -95,10 +95,11 @@ modest_account_settings_dialog_finalize (GObject *object)
 	G_OBJECT_CLASS (modest_account_settings_dialog_parent_class)->finalize (object);
 }
 
-#if 0
 static void
 show_error (GtkWindow *parent_window, const gchar* text);
-#endif
+
+static void
+show_ok (GtkWindow *parent_window, const gchar* text);
 
 
 static void
@@ -378,6 +379,7 @@ static GtkWidget* create_page_incoming (ModestAccountSettingsDialog *self)
 	gtk_widget_show (caption);
 	
 	/* The port widgets: */
+	/* TODO: There are various rules about this in the UI spec. */
 	if (!self->entry_incoming_port)
 		self->entry_incoming_port = GTK_WIDGET (gtk_entry_new ());
 	caption = hildon_caption_new (sizegroup, _("mcen_fi_emailsetup_port"), 
@@ -567,6 +569,46 @@ static GtkWidget* create_page_outgoing (ModestAccountSettingsDialog *self)
 	return GTK_WIDGET (box);
 }
 
+static gboolean
+check_data (ModestAccountSettingsDialog *self)
+{
+	/* Check that the title is not already in use: */
+	const gchar* account_name = gtk_entry_get_text (GTK_ENTRY (self->entry_account_title));
+	if ((!account_name) || (strlen(account_name) == 0))
+		return FALSE; /* Should be prevented already anyway. */
+		
+	if (strcmp(account_name, self->original_account_name) != 0) {
+		/* Check the changed title: */
+		const gboolean name_in_use  = modest_account_mgr_account_with_display_name_exists (self->account_manager,
+			account_name);
+	
+		if (name_in_use) {
+			/* Warn the user via a dialog: */
+			show_error (GTK_WINDOW (self), _("mail_ib_account_name_already_existing"));
+	        
+			return FALSE;
+		}
+	}
+
+	/* Check that the email address is valud: */
+	const gchar* email_address = gtk_entry_get_text (GTK_ENTRY (self->entry_user_email));
+	if ((!email_address) || (strlen(email_address) == 0))
+		return FALSE;
+			
+	if (!modest_text_utils_validate_email_address (email_address)) {
+		/* Warn the user via a dialog: */
+		show_error (GTK_WINDOW (self), _("mcen_ib_invalid_email"));
+                                         
+        /* Return focus to the email address entry: */
+        gtk_widget_grab_focus (self->entry_user_email);
+        
+		return FALSE;
+	}
+	
+	/* TODO: The UI Spec wants us to check that the servernames are valid, 
+	 * but does not specify how.
+	 */
+}
 /*
  */
 static void 
@@ -579,8 +621,44 @@ on_response (GtkDialog *wizard_dialog,
 	
 	/* TODO: Prevent the OK response if the data is invalid. */
 	
-	if (response_id == GTK_RESPONSE_OK)
-	  save_configuration (self);
+	gboolean prevent_response = FALSE;
+	
+	/* Warn about unsaved changes: */
+	/* TODO: Actually detect whether changes were made. */
+	if (response_id == GTK_RESPONSE_CANCEL) {
+		GtkDialog *dialog = GTK_DIALOG (gtk_message_dialog_new (GTK_WINDOW (self),
+		(GtkDialogFlags)0,
+		 GTK_MESSAGE_INFO,
+		 GTK_BUTTONS_OK_CANCEL, /* TODO: These button names are ambiguous, and not specified in the UI specification. */
+		 _("imum_nc_wizard_confirm_lose_changes") ));
+		 
+		 const gint dialog_response = gtk_dialog_run (dialog);
+		 gtk_widget_destroy (GTK_WIDGET (dialog));
+		 
+		if (dialog_response != GTK_RESPONSE_OK)
+			prevent_response = TRUE;
+	}
+	/* Check for invalid input: */
+	else if (!check_data (self)) {
+		prevent_response = TRUE;
+	}
+		
+	if (prevent_response) {
+		/* This is a nasty hack. murrayc. */
+		/* Don't let the dialog close */
+    	g_signal_stop_emission_by_name (wizard_dialog, "response");
+		return;	
+	}
+		
+		
+	if (response_id == GTK_RESPONSE_OK) {
+		/* Try to save the changes: */	
+		const gboolean saved = save_configuration (self);
+		if (saved)
+			show_ok (GTK_WINDOW (self), _("mcen_ib_advsetup_settings_saved"));
+		else
+			show_error (GTK_WINDOW (self), _("mail_ib_setting_failed"));
+	}
 }
 
 static void
@@ -626,7 +704,11 @@ modest_account_settings_dialog_init (ModestAccountSettingsDialog *self)
     gtk_dialog_add_button (GTK_DIALOG(self), GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL);
     
     /* Connect to the dialog's response signal: */
-    g_signal_connect_after (G_OBJECT (self), "response",
+    /* We use connect-before 
+     * so we can stop the signal emission, 
+     * to stop the default signal handler from closing the dialog.
+     */
+    g_signal_connect (G_OBJECT (self), "response",
             G_CALLBACK (on_response), self);       
 }
 
@@ -663,8 +745,12 @@ void modest_account_settings_dialog_set_account_name (ModestAccountSettingsDialo
 	}
 		
 	/* Show the account data in the widgets: */
+	
+	/* Note that we never show the non-display name in the UI.
+	 * (Though the display name defaults to the non-display name at the start.) */
 	gtk_entry_set_text( GTK_ENTRY (dialog->entry_account_title),
-		account_name ? account_name : "");
+		account_data->display_name ? account_data->display_name : "");
+		
 	gtk_entry_set_text( GTK_ENTRY (dialog->entry_user_name), 
 		account_data->fullname ? account_data->fullname : "");
 	gtk_entry_set_text( GTK_ENTRY (dialog->entry_user_email), 
@@ -735,7 +821,7 @@ void modest_account_settings_dialog_set_account_name (ModestAccountSettingsDialo
 	modest_account_mgr_free_account_data (dialog->account_manager, account_data);
 }
 
-static void
+static gboolean
 save_configuration (ModestAccountSettingsDialog *dialog)
 {
 	g_assert (dialog->original_account_name);
@@ -744,39 +830,51 @@ save_configuration (ModestAccountSettingsDialog *dialog)
 		
 	/* Set the account data from the widgets: */
 	const gchar* user_name = gtk_entry_get_text (GTK_ENTRY (dialog->entry_user_name));
-	modest_account_mgr_set_string (dialog->account_manager, account_name,
+	gboolean test = modest_account_mgr_set_string (dialog->account_manager, account_name,
 		MODEST_ACCOUNT_FULLNAME, user_name, FALSE /* not server account */);
+	if (!test)
+		return FALSE;
 		
 	const gchar* emailaddress = gtk_entry_get_text (GTK_ENTRY (dialog->entry_user_email));
-	modest_account_mgr_set_string (dialog->account_manager, account_name,
+	test = modest_account_mgr_set_string (dialog->account_manager, account_name,
 		MODEST_ACCOUNT_EMAIL, emailaddress, FALSE /* not server account */);
-		
+	if (!test)
+		return FALSE;
+				
 	/* TODO: Change name: */
 	/* Possibly the account name may never change, but that should be hidden, 
 	 * and the display name may change, defaulting to the account name.
 	 */
 	
 	const gboolean leave_on_server = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (dialog->checkbox_leave_messages));
-	modest_account_mgr_set_bool (dialog->account_manager, account_name,
+	test = modest_account_mgr_set_bool (dialog->account_manager, account_name,
 		MODEST_ACCOUNT_LEAVE_ON_SERVER, leave_on_server, FALSE /* not server account */);
-	
+	if (!test)
+		return FALSE;
+			
 	/* Incoming: */
 	gchar* incoming_account_name = modest_account_mgr_get_string (dialog->account_manager, account_name,
 		MODEST_ACCOUNT_STORE_ACCOUNT, FALSE /* not server account */);
 	g_assert (incoming_account_name);
 	
 	const gchar* hostname = gtk_entry_get_text (GTK_ENTRY (dialog->entry_incomingserver));
-	modest_account_mgr_set_string (dialog->account_manager, incoming_account_name,
+	test = modest_account_mgr_set_string (dialog->account_manager, incoming_account_name,
 		MODEST_ACCOUNT_HOSTNAME, hostname, TRUE /* server account */);
-		
+	if (!test)
+		return FALSE;
+				
 	const gchar* username = gtk_entry_get_text (GTK_ENTRY (dialog->entry_user_username));
-	modest_account_mgr_set_string (dialog->account_manager, incoming_account_name,
+	test = modest_account_mgr_set_string (dialog->account_manager, incoming_account_name,
 		MODEST_ACCOUNT_USERNAME, username, TRUE /* server account */);
-		
+	if (!test)
+		return FALSE;
+				
 	const gchar* password = gtk_entry_get_text (GTK_ENTRY (dialog->entry_user_password));
-	modest_account_mgr_set_string (dialog->account_manager, incoming_account_name,
+	test = modest_account_mgr_set_string (dialog->account_manager, incoming_account_name,
 		MODEST_ACCOUNT_PASSWORD, password, TRUE /*  server account */);
-	
+	if (!test)
+		return FALSE;
+			
 	/* TODO: How can we set these in the server account?:	
 	ModestProtocol protocol_authentication_incoming = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->checkbox_incoming_auth)) 
 			? MODEST_PROTOCOL_AUTH_PASSWORD
@@ -795,20 +893,22 @@ save_configuration (ModestAccountSettingsDialog *dialog)
 	g_assert (outgoing_account_name);
 	
 	hostname = gtk_entry_get_text (GTK_ENTRY (dialog->entry_outgoingserver));
-	modest_account_mgr_set_string (dialog->account_manager, outgoing_account_name,
+	test = modest_account_mgr_set_string (dialog->account_manager, outgoing_account_name,
 		MODEST_ACCOUNT_HOSTNAME, hostname, TRUE /* server account */);
+	if (!test)
+		return FALSE;
 		
 	username = gtk_entry_get_text (GTK_ENTRY (dialog->entry_outgoing_username));
-	modest_account_mgr_set_string (dialog->account_manager, outgoing_account_name,
+	test = modest_account_mgr_set_string (dialog->account_manager, outgoing_account_name,
 		MODEST_ACCOUNT_USERNAME, username, TRUE /* server account */);
+	if (!test)
+		return FALSE;
 		
 	password = gtk_entry_get_text (GTK_ENTRY (dialog->entry_outgoing_password));
-	modest_account_mgr_set_string (dialog->account_manager, outgoing_account_name,
+	test = modest_account_mgr_set_string (dialog->account_manager, outgoing_account_name,
 		MODEST_ACCOUNT_PASSWORD, password, TRUE /*  server account */);
-			
-	password = gtk_entry_get_text (GTK_ENTRY (dialog->entry_outgoing_password));
-	modest_account_mgr_set_string (dialog->account_manager, outgoing_account_name,
-		MODEST_ACCOUNT_PASSWORD, password, TRUE /*  server account */);
+	if (!test)
+		return FALSE;
 	
 	/* TODO: How do we set these in the account data?:
 	ModestProtocol protocol_security_outgoing = easysetup_serversecurity_combo_box_get_active_serversecurity (
@@ -820,79 +920,22 @@ save_configuration (ModestAccountSettingsDialog *dialog)
 		
 	g_free (outgoing_account_name);
 	
-}
-
 	
-#if 0
-static gboolean
-on_before_next (GtkDialog *dialog, GtkWidget *current_page, GtkWidget *next_page)
-{
-	ModestAccountSettingsDialog *self = MODEST_ACCOUNT_SETTINGS_DIALOG (dialog);
-	
-	/* Do extra validation that couldn't be done for every key press,
-	 * either because it was too slow,
-	 * or because it requires interaction:
-	 */
-	if (current_page == self->page_account_details) {	
-		/* Check that the title is not already in use: */
-		const gchar* account_name = gtk_entry_get_text (GTK_ENTRY (self->entry_account_title));
-		if ((!account_name) || (strlen(account_name) == 0))
-			return FALSE;
-			
-		gboolean name_in_use = FALSE;
-		name_in_use = modest_account_mgr_account_exists (self->account_manager,
-			account_name, FALSE /*  server_account */);
+	/* Set the changed account title last, to simplify the previous code: */
+	const gchar* account_title = gtk_entry_get_text (GTK_ENTRY (dialog->entry_account_title));
+	if ((!account_title) || (strlen(account_title) == 0))
+		return FALSE; /* Should be prevented already anyway. */
 		
-		if (name_in_use) {
-			/* Warn the user via a dialog: */
-			show_error (GTK_WINDOW (self), _("mail_ib_account_name_already_existing."));
-            
+	if (strcmp(account_title, account_name) != 0) {
+		/* Change the title: */
+		gboolean test = modest_account_mgr_set_string (dialog->account_manager, account_name,
+		MODEST_ACCOUNT_DISPLAY_NAME, account_title, FALSE /* not server account */);
+		if (!test)
 			return FALSE;
-		}
 	}
-	else if (current_page == self->page_user_details) {
-		/* Check that the email address is valud: */
-		const gchar* email_address = gtk_entry_get_text (GTK_ENTRY (self->entry_user_email));
-		if ((!email_address) || (strlen(email_address) == 0))
-			return FALSE;
-			
-		if (!modest_text_utils_validate_email_address (email_address)) {
-			/* Warn the user via a dialog: */
-			show_error (GTK_WINDOW (self), _("mcen_ib_invalid_email"));
-                                             
-            /* Return focus to the email address entry: */
-            gtk_widget_grab_focus (self->entry_user_email);
-            
-			return FALSE;
-		}
-		
-		/* Make sure that the subsequent pages are appropriate for the provider choice. */
-		create_subsequent_pages (self);
-	}
-	
-	/* TODO: The UI Spec wants us to check that the servernames are valid, 
-	 * but does not specify how.
-	 */
-	  
-	if(next_page == self->page_incoming) {
-		set_default_custom_servernames (self);
-	}
-	else if (next_page == self->page_outgoing) {
-		set_default_custom_servernames (self);
-	}
-	
-	/* If this is the last page, and this is a click on Finish, 
-	 * then attempt to create the dialog.
-	 */
-	if(!next_page) /* This is NULL when this is a click on Finish. */
-	{
-		create_account (self);
-	}
-	
 	
 	return TRUE;
 }
-#endif
 
 static gboolean entry_is_empty (GtkWidget *entry)
 {
@@ -949,7 +992,6 @@ modest_account_settings_dialog_class_init (ModestAccountSettingsDialogClass *kla
 	object_class->finalize = modest_account_settings_dialog_finalize;
 }
  
-#if 0
 static void
 show_error (GtkWindow *parent_window, const gchar* text)
 {
@@ -962,7 +1004,19 @@ show_error (GtkWindow *parent_window, const gchar* text)
 		 gtk_dialog_run (dialog);
 		 gtk_widget_destroy (GTK_WIDGET (dialog));
 }
-#endif
+
+static void
+show_ok (GtkWindow *parent_window, const gchar* text)
+{
+	GtkDialog *dialog = GTK_DIALOG (gtk_message_dialog_new (parent_window,
+		(GtkDialogFlags)0,
+		 GTK_MESSAGE_INFO,
+		 GTK_BUTTONS_OK,
+		 text ));
+		 
+		 gtk_dialog_run (dialog);
+		 gtk_widget_destroy (GTK_WIDGET (dialog));
+}
 
 
 

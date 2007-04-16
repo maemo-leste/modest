@@ -935,6 +935,40 @@ modest_account_mgr_account_exists (ModestAccountMgr * self, const gchar * name,
 	return retval;
 }
 
+gboolean	modest_account_mgr_account_with_display_name_exists	  (ModestAccountMgr *self,
+							   const gchar *display_name)
+{
+	GSList *account_names = NULL;
+	GSList *cursor = NULL;
+	
+	cursor = account_names = modest_account_mgr_account_names (self);
+
+	gboolean found = FALSE;
+	
+	/* Look at each non-server account to check their display names; */
+	while (cursor) {
+		const gchar * account_name = (gchar*)cursor->data;
+		
+		ModestAccountData *account_data = modest_account_mgr_get_account_data (self, account_name);
+		if (!account_data) {
+			g_printerr ("modest: failed to get account data for %s\n", account_name);
+			continue;
+		}
+
+		if(account_data->display_name && (strcmp (account_data->display_name, display_name) == 0)) {
+			found = TRUE;
+			break;
+		}
+
+		modest_account_mgr_free_account_data (self, account_data);
+		cursor = cursor->next;
+	}
+	g_slist_free (account_names);
+	
+	return found;
+}
+
+
 
 
 gboolean 

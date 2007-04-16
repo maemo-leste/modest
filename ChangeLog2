@@ -1,5 +1,25 @@
 2007-04-16  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-account-mgr-helpers.c: Clarified the documentation to say that the initial 
+	display name is based on the supplied account name.
+	* src/modest-account-mgr.c:
+	* src/modest-account-mgr.h: Added modest_account_mgr_account_with_display_name_exists(), 
+	with an inefficient, but good-enough, implementation.
+	
+	* src/maemo/easysetup/modest-easysetup-wizard.c:
+	(create_page_account_details), (on_before_next), (create_account): 
+	Check for existing display names rather than (non-user-visible) account names, and just 
+	create and set a unique account name at the end.
+	
+	* src/maemo/modest-account-settings-dialog.c:
+	(modest_account_settings_dialog_init),
+	(modest_account_settings_dialog_set_account_name),
+	(create_page_incoming): Show the display name, instead of the account name.
+	(on_response): Do some (not all) extra checks, as in the UI spec.
+	(save_configuration): Save the display name if it was changed.
+
+2007-04-16  Murray Cumming  <murrayc@murrayc.com>
+
 	* po/en_GB.po: Added needed logical ID and translation.
 	* src/widgets/modest-account-view.c: (on_account_default_toggled),
 	(init_view): Made the is-default column clicking work.

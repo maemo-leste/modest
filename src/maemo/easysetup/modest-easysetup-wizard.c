@@ -317,9 +317,10 @@ create_page_account_details (ModestEasysetupWizardDialog *self)
 	self->entry_account_title = GTK_WIDGET (easysetup_validating_entry_new ());
 	
 	/* Set a default account title, choosing one that does not already exist: */
+	/* Note that this is irrelevant to the non-user visible name, which we will create later. */
 	gchar* default_acount_name = g_strdup (_("mcen_ia_emailsetup_defaultname"));
-	while (modest_account_mgr_account_exists (self->account_manager, 
-		default_acount_name, FALSE /*  server_account */)) {
+	while (modest_account_mgr_account_with_display_name_exists (self->account_manager, 
+		default_acount_name)) {
 			
 		gchar * default_account_name2 = util_increment_name (default_acount_name);
 		g_free (default_acount_name);
@@ -1007,13 +1008,13 @@ on_before_next (ModestWizardDialog *dialog, GtkWidget *current_page, GtkWidget *
 		if ((!account_name) || (strlen(account_name) == 0))
 			return FALSE;
 			
-		gboolean name_in_use = FALSE;
-		name_in_use = modest_account_mgr_account_exists (account_wizard->account_manager,
-			account_name, FALSE /*  server_account */);
-		
+		/* Aavoid a clash with an existing display name: */
+		const gboolean name_in_use = modest_account_mgr_account_with_display_name_exists (
+			account_wizard->account_manager, account_name);
+
 		if (name_in_use) {
 			/* Warn the user via a dialog: */
-			show_error (GTK_WINDOW (account_wizard), _("mail_ib_account_name_already_existing."));
+			show_error (GTK_WINDOW (account_wizard), _("mail_ib_account_name_already_existing"));
             
 			return FALSE;
 		}
@@ -1167,18 +1168,29 @@ create_account (ModestEasysetupWizardDialog *self)
 {
 	ModestEasysetupWizardDialogPrivate *priv = WIZARD_DIALOG_GET_PRIVATE (self);
 	
-	const gchar* account_name = gtk_entry_get_text (GTK_ENTRY (self->entry_account_title));
+	const gchar* display_name = gtk_entry_get_text (GTK_ENTRY (self->entry_account_title));
 
 	/* Some checks: */
-	if (!account_name)
+	if (!display_name)
 		return FALSE;
 		
 	/* We should have checked for this already, 
 	 * and changed that name accordingly, 
 	 * but let's check again just in case:
 	 */
-	if (modest_account_mgr_account_exists (self->account_manager, account_name, FALSE)) 
-		return FALSE;	
+	if (modest_account_mgr_account_with_display_name_exists (self->account_manager, display_name)) 
+		return FALSE;
+
+	/* Increment the non-user visible name if necessary, 
+	 * based on the display name: */
+	gchar *account_name = g_strdup_printf ("%sID", display_name);
+	while (modest_account_mgr_account_exists (self->account_manager, 
+		account_name, FALSE /*  server_account */)) {
+			
+		gchar * account_name2 = util_increment_name (account_name);
+		g_free (account_name);
+		account_name = account_name2;
+	}
 		
 	/* username and password (for both incoming and outgoing): */
 	const gchar* username = gtk_entry_get_text (GTK_ENTRY (self->entry_user_username));
@@ -1353,13 +1365,17 @@ create_account (ModestEasysetupWizardDialog *self)
 	const gchar* user_name = gtk_entry_get_text (GTK_ENTRY (self->entry_user_name));
 	modest_account_mgr_set_string (self->account_manager, account_name,
 		MODEST_ACCOUNT_FULLNAME, user_name, FALSE /* not server account */);
-		
+
 	const gchar* emailaddress = gtk_entry_get_text (GTK_ENTRY (self->entry_user_email));
 	modest_account_mgr_set_string (self->account_manager, account_name,
 		MODEST_ACCOUNT_EMAIL, emailaddress, FALSE /* not server account */);
-		
-	/* TODO: Should we set MODEST_ACCOUNT_DISPLAY_NAME? It's not clear what it is. */
-	
+
+	/* Set the display name: */
+	modest_account_mgr_set_string (self->account_manager, account_name,
+		MODEST_ACCOUNT_DISPLAY_NAME, display_name, FALSE /* not server account */);
+
+	g_free (account_name);
+
 	return FALSE;
 }
 

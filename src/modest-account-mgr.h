@@ -92,7 +92,8 @@ ModestAccountMgr*        modest_account_mgr_new            (ModestConf *modest_c
  * @transport_name: the transport account (ie. sendmail/SMTP)
  * @err: a GError ptr, or NULL to ignore.
  * 
- * create a new account. the account with @name should not already exist
+ * Create a new account. The account with @name should not already exist. The @name will 
+ * be used as the initial display name of the new account.
  *
  * Returns: TRUE if the creation succeeded, FALSE otherwise,
  * @err gives details in case of error
@@ -202,13 +203,25 @@ GSList*  modest_account_mgr_search_server_accounts  (ModestAccountMgr *self,
  * @name: the account name to check
  * @server_account: if TRUE, this is a server account
  * 
- * check whether account @name exists
+ * check whether account @name exists. Note that this does not check the display name.
  *
  * Returns: TRUE if the account with name @name exists, FALSE otherwise (or in case of error)
  */
 gboolean	modest_account_mgr_account_exists	  (ModestAccountMgr *self,
 							   const gchar *name,
 							   gboolean server_account);
+
+/**
+ * modest_account_mgr_account_exists:
+ * @self: a ModestAccountMgr instance
+ * @name: the account name to check
+ * 
+ * check whether a non-server account with the @display_name exists.
+ *
+ * Returns: TRUE if the account with name @name exists, FALSE otherwise (or in case of error)
+ */
+gboolean	modest_account_mgr_account_with_display_name_exists	  (ModestAccountMgr *self,
+							   const gchar *display_name);
 
 
 /**

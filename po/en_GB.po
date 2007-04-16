@@ -1176,7 +1176,7 @@ msgstr "Complete"
 #.
 #: ../src/maemo/easysetup/modest-easysetup-wizard.c:907
 #, fuzzy
-msgid "mail_ib_account_name_already_existing."
+msgid "mail_ib_account_name_already_existing"
 msgstr "E-mail account name already in use"
 
 # MSG-INF028: If user tries to enter invalid e-mail address during mail account setup.
