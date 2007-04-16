@@ -60,10 +60,10 @@ LDADD = \
 	$(MODEST_GSTUFF_LIBS) \
 	$(MODEST_LIBTINYMAIL_MAEMO_LIBS)
 
-# mcc_mapping will provided by other packages later
-PROVIDER_DATA_FILE=provider-data.keyfile mcc_mapping
-providerdatadir=$(datadir)/modest/provider-data
-providerdata_DATA = $(PROVIDER_DATA_FILE)
+# mcc_mapping will in future be provided by the operator-wizard-settings package:
+MMC_MAPPING_FILE=mcc_mapping
+mmccmappingdir=$(datadir)/modest/provider-data
+mmccmapping_DATA = $(MMC_MAPPING_FILE)
 
 EXTRA_DIST=\
-	$(PROVIDER_DATA_FILE)
+	$(MMC_MAPPING_FILE)

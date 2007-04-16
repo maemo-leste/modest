@@ -1,5 +1,15 @@
 2007-04-16  Murray Cumming  <murrayc@murrayc.com>
 
+	* configure.ac:
+	* src/maemo/easysetup/Makefile.am:
+	* src/maemo/easysetup/modest-easysetup-wizard.c:
+	(modest_easysetup_wizard_dialog_init):
+	* src/maemo/easysetup/provider-data-test.keyfile:
+	* src/maemo/easysetup/provider-data.keyfile: 
+	Moved the provider data file to the new modest-providers-data package and used it from there.
+
+2007-04-16  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/modest-local-folder-info.c:
 	(modest_local_folder_info_get_type_display_name): Use _() to actually get the translated string. 
 	N_() was already used on the static strings, but this just marks it for translation without 

@@ -723,14 +723,10 @@ modest_easysetup_wizard_dialog_init (ModestEasysetupWizardDialog *self)
 	/* Read in the information about known service providers: */
 	ModestEasysetupWizardDialogPrivate *priv = WIZARD_DIALOG_GET_PRIVATE (self);
 	
-	const gchar* filepath = PROVIDER_DATA_DIR "/provider-data.keyfile"; 
-	priv->presets = modest_presets_new (filepath); /* TODO: the actual filepath. */
-	if (!(priv->presets))
-	{
-		const gchar* filepath_hack = HACK_TOP_SRCDIR "src/maemo/easysetup/provider-data.keyfile";
-		g_warning ("Could not locate the official provider data keyfile from %s, "
-			"so attempting to load it instead from %s", filepath, filepath_hack);
-		priv->presets = modest_presets_new (filepath_hack); /* TODO: the actual filepath. */
+	const gchar* filepath = MODEST_PROVIDERS_DATA_PATH; /* Defined in config.h */
+	priv->presets = modest_presets_new (filepath);
+	if (!(priv->presets)) {
+		g_warning ("Could not locate the official provider data keyfile from %s", filepath);
 	}
 	
 	g_assert(priv->presets);

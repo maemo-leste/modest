@@ -145,6 +145,12 @@ have_easysetup=false
 if test -d src/${with_platform}/easysetup; then	
       	have_easysetup=true
 	AC_DEFINE_UNQUOTED(MODEST_HAVE_EASYSETUP, 1, ["Whether the easysetup feature is available."])
+
+	# Just check that the dependency exists:
+    PKG_CHECK_MODULES(MODEST_PROVIDERS_DATA, modest-providers-data)	
+    
+	# Get the location of the ISO-Codes (currencies, languages) files:
+	AC_DEFINE_UNQUOTED([MODEST_PROVIDERS_DATA_PATH],["`$PKG_CONFIG --variable=path modest-providers-data`"],[modest-providers-data file path])
 fi
 AM_CONDITIONAL(MODEST_HAVE_EASYSETUP,test x$have_easysetup = xtrue) 
 
