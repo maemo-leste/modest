@@ -89,9 +89,13 @@ modest_local_folder_info_get_type_display_name (TnyFolderType type)
 	g_return_val_if_fail (type >= TNY_FOLDER_TYPE_UNKNOWN &&
 			      type <  TNY_FOLDER_TYPE_NUM, NULL);
 	
+	/* Note that we call _() to get the localized name.
+	 * This works because we used N_() on the static string when we initialized the array,
+	 * to mark the string for translation.
+	 */
 	for (i = 0; i != G_N_ELEMENTS(ModestLocalFolderMap); ++i) {
 		if (ModestLocalFolderMap[i].type == type)
-			return ModestLocalFolderMap[i].display_name;
+			return _(ModestLocalFolderMap[i].display_name);
 	}
 	return NULL;	
 }
