@@ -407,19 +407,20 @@ modest_account_mgr_add_server_account (ModestAccountMgr * self,
 		   supported */
 		key = _modest_account_mgr_get_account_keyname (name, MODEST_ACCOUNT_OPTIONS, TRUE);
 		/* Enable subscriptions and check the mails in all folders */
-		option_list = g_slist_append (option_list, "use_lsub");
-		option_list = g_slist_append (option_list, "check_all");
+		option_list = g_slist_append (option_list, MODEST_ACCOUNT_OPTION_USE_LSUB);
+		option_list = g_slist_append (option_list, MODEST_ACCOUNT_OPTION_CHECK_ALL);
+
 		/* Security options */
 		switch (security) {
 		case MODEST_PROTOCOL_SECURITY_NONE:
-			option_list = g_slist_append (option_list, "use_ssl=never");
+			option_list = g_slist_append (option_list, MODEST_ACCOUNT_OPTION_SSL "= " MODEST_ACCOUNT_OPTION_SSL_NEVER);
 			break;
 		case MODEST_PROTOCOL_SECURITY_SSL:
 		case MODEST_PROTOCOL_SECURITY_TLS:
-			option_list = g_slist_append (option_list, "use_ssl=always");
+			option_list = g_slist_append (option_list, MODEST_ACCOUNT_OPTION_SSL "= " MODEST_ACCOUNT_OPTION_SSL_ALWAYS);
 			break;
 		case MODEST_PROTOCOL_SECURITY_TLS_OP:
-			option_list = g_slist_append (option_list, "use_ssl=when-possible");
+			option_list = g_slist_append (option_list, MODEST_ACCOUNT_OPTION_SSL "= " MODEST_ACCOUNT_OPTION_SSL_WHEN_POSSIBLE);
 			break;
 		default:
 			g_warning ("Invalid security option");

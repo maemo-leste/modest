@@ -807,6 +807,14 @@ void modest_account_settings_dialog_set_account_name (ModestAccountSettingsDialo
 		easysetup_serversecurity_combo_box_fill (
 		EASYSETUP_SERVERSECURITY_COMBO_BOX (dialog->combo_outgoing_security), outgoing_account->proto);
 		
+		printf("debug: incoming options list=%p\n", incoming_account->options);
+		printf("debug: outgoing options list=%p\n", outgoing_account->options);
+		
+		gchar* debug = modest_server_account_data_get_option_value (incoming_account->options, MODEST_ACCOUNT_OPTION_SSL);
+		printf("debug: ssl option=X%sX\n", debug);
+		
+		gboolean bdebug = modest_server_account_data_get_option_bool (incoming_account->options, MODEST_ACCOUNT_OPTION_USE_LSUB);
+		printf("debug: ssl option=X%dX\n", bdebug);
 		
 		
 		/* TODO: set port. */

@@ -1,3 +1,20 @@
+2007-04-17  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/modest-defs.h: 
+	* src/modest-account-mgr.c:
+	(modest_account_mgr_add_server_account):
+	Added and used defines for the options key and value pair strings, 
+	that are used so far, though they do not seem to correspond to anything in our 
+	UI specs or ModestProtocol enum.
+	
+	* src/modest-account-mgr-helpers.h:
+	* src/modest-account-mgr-helpers.c:
+	(compare_option_strings_for_name),
+	(modest_server_account_data_get_option_value),
+	(modest_server_account_data_get_option_bool),
+	(modest_account_mgr_get_server_account_option):
+	Added helper functions for parsing the options GSList.
+
 2007-04-16  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/modest-account-mgr-helpers.c: Clarified the documentation to say that the initial 

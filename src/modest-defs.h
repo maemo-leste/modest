@@ -109,4 +109,14 @@
 #define MODEST_ACCOUNT_OPTIONS		 "options"	     /* list */
 #define MODEST_ACCOUNT_AUTH_MECH	 "auth_mech"	     /* string */
 
+/* Keys and values used in the text items in the options GSList: */
+#define MODEST_ACCOUNT_OPTION_SSL "use_ssl"
+#define MODEST_ACCOUNT_OPTION_SSL_NEVER "never"
+#define MODEST_ACCOUNT_OPTION_SSL_ALWAYS "always"
+#define MODEST_ACCOUNT_OPTION_SSL_WHEN_POSSIBLE "when-possible"
+
+#define MODEST_ACCOUNT_OPTION_USE_LSUB "use_lsub"
+#define MODEST_ACCOUNT_OPTION_CHECK_ALL "check_all"
+
+
 #endif /*__MODEST_DEFS_H__*/

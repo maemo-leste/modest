@@ -47,6 +47,94 @@ modest_account_mgr_get_enabled (ModestAccountMgr *self, const gchar* name)
 	return modest_account_mgr_get_bool (self, name, MODEST_ACCOUNT_ENABLED, FALSE);
 }
 
+static gint
+compare_option_strings_for_name (const gchar* a, const gchar* b)
+{
+	printf("  debug: compare_option_strings_for_name():a=%s, b=%s\n", a, b);
+	const gchar* sep = strchr(a, '=');
+	if (!sep)
+		return -1;
+		
+	gint len = sep - a;
+	if(len <= 0)
+		return -1;
+		
+	/* Get the part of the string before the =.
+	 * Note that this allocation is inefficient just so we can do a strcmp. */
+	gchar* name = g_malloc (len+1);
+	memcpy(name, a, len);
+	name[len] = 0; /* Null-termination. */
+	
+	printf("    debug: name=%s\n", name);
+
+	gint result = strcmp (name, b);
+	
+	g_free (name);
+	
+	return result;
+}
+           
+gchar*
+modest_server_account_data_get_option_value (GSList* options_list, const gchar* option_name)
+{
+	if (!options_list)
+		return NULL;
+	
+	gchar *result = NULL;
+	GSList* option = g_slist_find_custom(options_list, option_name, (GCompareFunc)compare_option_strings_for_name);
+	if(option) {
+		/* Get the value part of the key=value pair: */
+		const gchar* pair = (const gchar*)option->data;
+		
+		const gchar* sep = strchr(pair, '=');
+		if (sep) {
+			gint len = sep - pair;
+			if(len > 0) {
+				result = g_strdup(sep+1);
+				
+				/* Avoid returning an empty string instead of NULL. */
+				if(result && strlen(result) == 0) {
+					g_free(result);
+					result = NULL;
+				}
+			}
+		}
+	}
+		
+	return result;
+}
+
+gboolean
+modest_server_account_data_get_option_bool (GSList* options_list, const gchar* option_name)
+{
+	if (!options_list)
+		return FALSE;
+	
+	gboolean result = FALSE;
+	GSList* option = g_slist_find_custom(options_list, option_name, (GCompareFunc)strcmp);
+	if(option) {
+		return TRUE;
+	}
+		
+	return result;
+}
+	                                  
+gchar*
+modest_account_mgr_get_server_account_option (ModestAccountMgr *self, 
+	const gchar* account_name, const gchar* option_name)
+{
+	GSList *option_list = modest_account_mgr_get_list (self, account_name, MODEST_ACCOUNT_OPTIONS,
+						     MODEST_CONF_VALUE_STRING, TRUE);
+	if (!option_list)
+		return NULL;
+		
+	gchar *result = modest_server_account_data_get_option_value (option_list, option_name);
+	
+	/* TODO: Should we free the items too, or just the list? */
+	g_slist_free (option_list);
+		
+	return result;
+}
 
 static ModestServerAccountData*
 modest_account_mgr_get_server_account_data (ModestAccountMgr *self, const gchar* name)
