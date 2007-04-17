@@ -410,6 +410,10 @@ modest_account_mgr_add_server_account (ModestAccountMgr * self,
 		option_list = g_slist_append (option_list, MODEST_ACCOUNT_OPTION_USE_LSUB);
 		option_list = g_slist_append (option_list, MODEST_ACCOUNT_OPTION_CHECK_ALL);
 
+		/* TODO: Remove this hack. These are hard-coded camel options to make the connection work.
+		 * The regular connection options (set later here) should be interpreted instead 
+		 * because in future these camel options will not be in gconf. murrayc.
+		 */
 		/* Security options */
 		switch (security) {
 		case MODEST_PROTOCOL_SECURITY_NONE:
@@ -434,6 +438,11 @@ modest_account_mgr_add_server_account (ModestAccountMgr * self,
 		}
 		g_slist_free (option_list);
 		g_free (key);
+		
+		
+		/* Add the security and secure-auth settings: */
+		modest_server_account_set_option_security (self, name, security);
+		modest_server_account_set_option_secure_auth (self, name, auth);
 	}
 
 cleanup:

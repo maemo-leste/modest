@@ -1273,7 +1273,7 @@ create_account (ModestEasysetupWizardDialog *self)
 	/* Sanity check: */
 	/* There must be at least one account now: */
 	GSList *account_names = modest_account_mgr_account_names (self->account_manager);
-	if(account_names != NULL)
+	if(!account_names)
 	{
 		g_warning ("modest_account_mgr_account_names() returned NULL after adding an account.");
 	}

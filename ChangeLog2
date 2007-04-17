@@ -1,5 +1,12 @@
 2007-04-17  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-account-mgr.c:
+	(modest_account_mgr_add_server_account): Set the security and secure-auth 
+	options, and add a comment saying that the other camel-specific options should be 
+	removed in future.
+
+2007-04-17  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/maemo/modest-account-settings-dialog.c: (check_data): Always return something, 
 	found by valgrind.
 	* src/modest-tny-account-store.c: (account_list_free),
