@@ -40,7 +40,7 @@
 #include <hildon-uri.h>
 #endif /*MODEST_HILDON_VERSION_0*/
 
-#include <tny-maemo-device.h>
+#include <tny-maemo-conic-device.h>
 #include <gtk/gtkicontheme.h>
 #include <hildon-widgets/hildon-banner.h>
 #include <gtk/gtkmenuitem.h>
@@ -63,7 +63,7 @@ modest_platform_init (void)
 TnyDevice*
 modest_platform_get_new_device (void)
 {
-	return TNY_DEVICE (tny_maemo_device_new ());
+	return TNY_DEVICE (tny_maemo_conic_device_new ());
 }
 
 
