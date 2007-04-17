@@ -46,19 +46,21 @@ static void modest_header_view_class_init  (ModestHeaderViewClass *klass);
 static void modest_header_view_init        (ModestHeaderView *obj);
 static void modest_header_view_finalize    (GObject *obj);
 
-static gboolean     on_header_clicked      (GtkWidget *widget, 
+static gboolean      on_header_clicked      (GtkWidget *widget, 
 					    GdkEventButton *event, 
 					    gpointer user_data);
 
-static gint         cmp_rows               (GtkTreeModel *tree_model, 
-					    GtkTreeIter *iter1, 
-					    GtkTreeIter *iter2,
-					    gpointer user_data);
+static gint          cmp_rows               (GtkTreeModel *tree_model, 
+					     GtkTreeIter *iter1, 
+					     GtkTreeIter *iter2,
+					     gpointer user_data);
 
-static void         on_selection_changed   (GtkTreeSelection *sel, 
-					    gpointer user_data);
+static void          on_selection_changed   (GtkTreeSelection *sel, 
+					     gpointer user_data);
 
-static void         setup_drag_and_drop    (GtkTreeView *self);
+static void          setup_drag_and_drop    (GtkTreeView *self);
+
+static GtkTreePath * get_selected_row       (GtkTreeView *self, GtkTreeModel **model);
 
 
 typedef struct _ModestHeaderViewPrivate ModestHeaderViewPrivate;
@@ -215,8 +217,10 @@ modest_header_view_set_columns (ModestHeaderView *self, const GList *columns)
 {
 	GtkTreeModel *sortable;
 	GtkTreeViewColumn *column=NULL;
+	GtkTreeSelection *selection = NULL;
 	GtkCellRenderer *renderer_msgtype,*renderer_header,
-		*renderer_attach;
+		*renderer_attach,  *renderer_comptact_flag, 
+		*renderer_compact_date;
 	ModestHeaderViewPrivate *priv;
 	const GList *cursor;
 	
@@ -226,9 +230,17 @@ modest_header_view_set_columns (ModestHeaderView *self, const GList *columns)
 	renderer_msgtype = gtk_cell_renderer_pixbuf_new ();
 	renderer_attach  = gtk_cell_renderer_pixbuf_new ();
 	renderer_header  = gtk_cell_renderer_text_new ();
+	renderer_comptact_flag  = gtk_cell_renderer_pixbuf_new ();
+	renderer_compact_date  = gtk_cell_renderer_text_new ();
+
+	g_object_set(G_OBJECT(renderer_compact_date),
+		     "xalign", 1.0,
+		     NULL);
 	
 	remove_all_columns (self);
 
+	selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(self));
+	gtk_tree_selection_set_mode(selection, GTK_SELECTION_MULTIPLE);
 	sortable = gtk_tree_view_get_model (GTK_TREE_VIEW (self));
 
 	/* Add new columns */
@@ -278,6 +290,15 @@ modest_header_view_set_columns (ModestHeaderView *self, const GList *columns)
 						 GINT_TO_POINTER(FALSE));
 			break;
 			
+		case MODEST_HEADER_VIEW_COLUMN_COMPACT_FLAG:
+			column = get_new_column (_("F"), renderer_comptact_flag, FALSE,
+						 TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN,
+						 FALSE,
+						 (GtkTreeCellDataFunc)_modest_header_view_compact_flag_cell_data,
+						 NULL);
+			gtk_tree_view_column_set_fixed_width (column, 45);
+			break;
+
 		case MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER_IN:
 			column = get_new_column (_("Header"), renderer_header, TRUE,
 						 TNY_GTK_HEADER_LIST_MODEL_FROM_COLUMN,
@@ -304,15 +325,15 @@ modest_header_view_set_columns (ModestHeaderView *self, const GList *columns)
 			break;
 			
 		case MODEST_HEADER_VIEW_COLUMN_RECEIVED_DATE:
-			column = get_new_column (_("Received"), renderer_header, TRUE,
+			column = get_new_column (_("Received"), renderer_compact_date, TRUE,
 						 TNY_GTK_HEADER_LIST_MODEL_DATE_RECEIVED_TIME_T_COLUMN,
 						 TRUE,
 						 (GtkTreeCellDataFunc)_modest_header_view_date_cell_data,
 						 GINT_TO_POINTER(TRUE));
 			break;
 			
-		case MODEST_HEADER_VIEW_COLUMN_SENT_DATE:
-			column = get_new_column (_("Sent"), renderer_header, TRUE,
+		case MODEST_HEADER_VIEW_COLUMN_SENT_DATE:					      
+			column = get_new_column (_("Sent"), renderer_compact_date, TRUE,
 						 TNY_GTK_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN,
 						 TRUE,
 						 (GtkTreeCellDataFunc)_modest_header_view_date_cell_data,
@@ -324,6 +345,13 @@ modest_header_view_set_columns (ModestHeaderView *self, const GList *columns)
 						 TNY_GTK_HEADER_LIST_MODEL_MESSAGE_SIZE_COLUMN,
 						 FALSE,
 						 (GtkTreeCellDataFunc)_modest_header_view_size_cell_data,
+						 NULL); 
+			break;
+		case MODEST_HEADER_VIEW_COLUMN_STATUS:
+			column = get_new_column (_("Status"), renderer_compact_date, TRUE,
+						 TNY_GTK_HEADER_LIST_MODEL_MESSAGE_SIZE_COLUMN,
+						 FALSE,
+						 (GtkTreeCellDataFunc)_modest_header_view_status_cell_data,
 						 NULL); 
 			break;
 
@@ -510,14 +538,22 @@ modest_header_view_select_next (ModestHeaderView *self)
 	GtkTreeSelection *sel;
 	GtkTreeIter iter;
 	GtkTreeModel *model;
+	GtkTreePath *path;
 
 	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (self));
-	if (gtk_tree_selection_get_selected (sel, &model, &iter)) {
+	path = get_selected_row (GTK_TREE_VIEW(self), &model);
+	if ((path != NULL) && (gtk_tree_model_get_iter(model, &iter, path))) {
+		/* Unselect previous path */
+		gtk_tree_selection_unselect_path (sel, path);
+		
+		/* Move path down and selects new one  */
 		if (gtk_tree_model_iter_next (model, &iter)) {
 			gtk_tree_selection_select_iter (sel, &iter);
 			scroll_to_selected (self, &iter, FALSE);	
 		}
+		gtk_tree_path_free(path);
 	}
+	
 }
 
 void 
@@ -529,8 +565,10 @@ modest_header_view_select_prev (ModestHeaderView *self)
 	GtkTreePath *path;
 
 	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (self));
-	if (gtk_tree_selection_get_selected (sel, &model, &iter)) {		
-		path = gtk_tree_model_get_path (model, &iter);
+	path = get_selected_row (GTK_TREE_VIEW(self), &model);
+	if ((path != NULL) && (gtk_tree_model_get_iter(model, &iter, path))) {
+		/* Unselect previous path */
+		gtk_tree_selection_unselect_path (sel, path);
 
 		/* Move path up */
 		if (gtk_tree_path_prev (path)) {
@@ -795,13 +833,12 @@ modest_header_view_set_folder (ModestHeaderView *self, TnyFolder *folder)
 static gboolean
 on_header_clicked (GtkWidget *widget, GdkEventButton *event, gpointer user_data)
 {
-	ModestHeaderView *self;
-	ModestHeaderViewPrivate *priv;
+	ModestHeaderView *self = NULL;
+	ModestHeaderViewPrivate *priv = NULL;
+	GtkTreePath *path = NULL;
 	GtkTreeIter iter;
-	GtkTreeSelection *sel;
-	GtkTreeModel *model;
+	GtkTreeModel *model = NULL;
 	TnyHeader *header;
-
 	/* ignore everything but doubleclick */
 	if (event->type != GDK_2BUTTON_PRESS)
 		return FALSE;
@@ -809,12 +846,10 @@ on_header_clicked (GtkWidget *widget, GdkEventButton *event, gpointer user_data)
 	self = MODEST_HEADER_VIEW (widget);
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
 	
-	sel   = gtk_tree_view_get_selection(GTK_TREE_VIEW(self));
-	model = gtk_tree_view_get_model (GTK_TREE_VIEW(self));
-	
-	if (!gtk_tree_selection_get_selected (sel, &model, &iter)) 
-		return FALSE; /* msg was _un_selected */
-
+	path = get_selected_row (GTK_TREE_VIEW(self), &model);
+	if ((path == NULL) || (!gtk_tree_model_get_iter(model, &iter, path))) 
+		return FALSE;
+			
 	/* get the first selected item */
 	gtk_tree_model_get (model, &iter,
 			    TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN,
@@ -826,6 +861,7 @@ on_header_clicked (GtkWidget *widget, GdkEventButton *event, gpointer user_data)
 
 	/* Free */
 	g_object_unref (G_OBJECT (header));
+	gtk_tree_path_free(path);
 
 	return TRUE;
 }
@@ -836,6 +872,7 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 {
 	GtkTreeModel *model;
 	TnyHeader *header;
+	GtkTreePath *path = NULL;	
 	GtkTreeIter iter;
 	ModestHeaderView *self;
 	ModestHeaderViewPrivate *priv;
@@ -845,8 +882,9 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 	
 	self = MODEST_HEADER_VIEW (user_data);
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);	
-	
-	if (!gtk_tree_selection_get_selected (sel, &model, &iter)) 
+
+	path = get_selected_row (GTK_TREE_VIEW(self), &model);
+	if ((path == NULL) || (!gtk_tree_model_get_iter(model, &iter, path)))
 		return; /* msg was _un_selected */
 
 	gtk_tree_model_get (model, &iter,
@@ -859,6 +897,7 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 		       0, header);
 
 	g_object_unref (G_OBJECT (header));
+	gtk_tree_path_free(path);
 }
 
 
@@ -1009,14 +1048,12 @@ drag_data_get_cb (GtkWidget *widget, GdkDragContext *context,
 		  GtkSelectionData *selection_data, 
 		  guint info,  guint time, gpointer data)
 {
-	GtkTreeSelection *selection;
 	GtkTreeModel *model;
 	GtkTreeIter iter;
 	GtkTreePath *source_row;
-
-	selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (widget));
-	gtk_tree_selection_get_selected (selection, &model, &iter);
-	source_row = gtk_tree_model_get_path (model, &iter);
+	
+	source_row = get_selected_row (GTK_TREE_VIEW(widget), &model);
+	if ((source_row == NULL) || (!gtk_tree_model_get_iter(model, &iter, source_row))) return;
 
 	switch (info) {
 	case MODEST_HEADER_ROW:
@@ -1057,4 +1094,28 @@ setup_drag_and_drop (GtkTreeView *self)
 
 	g_signal_connect(G_OBJECT (self), "drag_data_get",
 			 G_CALLBACK(drag_data_get_cb), NULL);
+}
+
+static GtkTreePath *
+get_selected_row (GtkTreeView *self, GtkTreeModel **model) 
+{
+	GtkTreePath *path = NULL;
+	GtkTreeSelection *sel = NULL;	
+	GList *rows = NULL;
+
+	sel   = gtk_tree_view_get_selection(self);
+	rows = gtk_tree_selection_get_selected_rows (sel, model);
+	
+	if ((rows == NULL) || (g_list_length(rows) != 1))
+		goto frees;
+
+	path = gtk_tree_path_copy(g_list_nth_data (rows, 0));
+	
+
+	/* Free */
+ frees:
+	g_list_foreach(rows,(GFunc) gtk_tree_path_free, NULL);
+	g_list_free(rows);
+
+	return path;
 }

@@ -48,6 +48,13 @@
 #define MODEST_HEADER_ICON_DELETED		PIXMAP_PREFIX "qgn_list_messagin_mail_deleted.png"
 #define MODEST_HEADER_ICON_ATTACH		PIXMAP_PREFIX "qgn_list_gene_attacpap.png"
 
+#define MODEST_HEADER_ICON_ATTACH_HIGH_PRIORITY PIXMAP_PREFIX "qgn_list_gene_high_attacpap.png"
+#define MODEST_HEADER_ICON_ATTACH_LOW_PRIORITY  PIXMAP_PREFIX "qgn_list_gene_low_attacpap.png"
+#define MODEST_HEADER_ICON_ATTACH_NORM_PRIORITY PIXMAP_PREFIX "qgn_list_gene_norm_attacpap.png"
+
+#define MODEST_HEADER_ICON_HIGH_PRIORITY        PIXMAP_PREFIX "qgn_list_messaging_high_noatt.png"
+#define MODEST_HEADER_ICON_LOW_PRIORITY         PIXMAP_PREFIX "qgn_list_messaging_low_noatt.png"
+
 #define MODEST_FOLDER_ICON_OPEN			PIXMAP_PREFIX "qgn_list_gene_fldr_opn.png"
 #define MODEST_FOLDER_ICON_CLOSED		PIXMAP_PREFIX "qgn_list_gene_fldr_cls.png"
 

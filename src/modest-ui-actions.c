@@ -34,6 +34,7 @@
 #include <glib/gi18n.h>
 #include <string.h>
 #include <modest-runtime.h>
+#include <modest-tny-folder.h>
 #include <modest-tny-msg.h>
 #include <modest-tny-account.h>
 #include <modest-address-book.h>
@@ -189,7 +190,7 @@ modest_ui_actions_on_delete (GtkAction *action, ModestWindow *win)
 
 	if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
 		gtk_widget_destroy (GTK_WIDGET(win));
-	}
+	} 
 }
 
 

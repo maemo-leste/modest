@@ -40,10 +40,10 @@ static GdkPixbuf*
 get_pixbuf_for_flag (TnyHeaderFlags flag)
 {
 	/* optimization */
-	static GdkPixbuf *deleted_pixbuf       = NULL;
-	static GdkPixbuf *seen_pixbuf          = NULL;
-	static GdkPixbuf *unread_pixbuf        = NULL;
-	static GdkPixbuf *attachments_pixbuf   = NULL;
+	static GdkPixbuf *deleted_pixbuf          = NULL;
+	static GdkPixbuf *seen_pixbuf             = NULL;
+	static GdkPixbuf *unread_pixbuf           = NULL;
+	static GdkPixbuf *attachments_pixbuf      = NULL;
 	
 	switch (flag) {
 	case TNY_HEADER_FLAG_DELETED:
@@ -63,6 +63,48 @@ get_pixbuf_for_flag (TnyHeaderFlags flag)
 			unread_pixbuf = modest_platform_get_icon (MODEST_HEADER_ICON_UNREAD);
 		return unread_pixbuf;
 	}
+}
+
+static GdkPixbuf*
+get_pixbuf_for_compact_flag (TnyHeaderFlags flag)
+{
+	/* optimization */
+	static GdkPixbuf *high_attachments_pixbuf   = NULL;
+	static GdkPixbuf *normal_attachments_pixbuf = NULL;
+	static GdkPixbuf *low_attachments_pixbuf    = NULL;
+	static GdkPixbuf *high_pixbuf               = NULL;
+	static GdkPixbuf *low_pixbuf                = NULL;
+	
+	if (flag & TNY_HEADER_FLAG_ATTACHMENTS) {
+		if (flag & TNY_HEADER_FLAG_HIGH_PRIORITY) {
+			if (G_UNLIKELY(!high_attachments_pixbuf))
+				high_attachments_pixbuf = modest_platform_get_icon (MODEST_HEADER_ICON_ATTACH_HIGH_PRIORITY);
+			return high_attachments_pixbuf;
+		}
+		else if (flag & TNY_HEADER_FLAG_LOW_PRIORITY) {
+			if (G_UNLIKELY(!low_attachments_pixbuf))
+				low_attachments_pixbuf = modest_platform_get_icon (MODEST_HEADER_ICON_ATTACH_LOW_PRIORITY);
+			return low_attachments_pixbuf;
+		}
+		else {
+			if (G_UNLIKELY(!normal_attachments_pixbuf))
+				normal_attachments_pixbuf = modest_platform_get_icon (MODEST_HEADER_ICON_ATTACH_NORM_PRIORITY);
+			return normal_attachments_pixbuf;
+		}
+	}
+	else if (flag & TNY_HEADER_FLAG_HIGH_PRIORITY) {
+		if (G_UNLIKELY(!high_pixbuf))
+			high_pixbuf = modest_platform_get_icon (MODEST_HEADER_ICON_HIGH_PRIORITY);
+		return high_pixbuf;
+	}
+	else if (flag & TNY_HEADER_FLAG_LOW_PRIORITY) {
+		if (G_UNLIKELY(!low_pixbuf))
+			low_pixbuf = modest_platform_get_icon (MODEST_HEADER_ICON_LOW_PRIORITY);
+		return low_pixbuf;
+	}
+
+	
+	return NULL;
 }
 
 static void
@@ -111,6 +153,42 @@ _modest_header_view_attach_cell_data (GtkTreeViewColumn *column, GtkCellRenderer
 }
 
 void
+_modest_header_view_compact_flag_cell_data (GtkTreeViewColumn *column, GtkCellRenderer *renderer,
+					    GtkTreeModel *tree_model, GtkTreeIter *iter, gpointer user_data)
+{
+	TnyHeaderFlags flags;
+
+	gtk_tree_model_get (tree_model, iter, TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN,
+			    &flags, -1);
+
+	flags = TNY_HEADER_FLAG_ATTACHMENTS;
+	if (flags & TNY_HEADER_FLAG_ATTACHMENTS) {
+		if (flags & TNY_HEADER_FLAG_HIGH_PRIORITY) 
+			g_object_set (G_OBJECT (renderer), "pixbuf",
+				      get_pixbuf_for_compact_flag (flags),
+				      NULL);
+		else if (flags & TNY_HEADER_FLAG_LOW_PRIORITY) 
+			g_object_set (G_OBJECT (renderer), "pixbuf",
+				      get_pixbuf_for_compact_flag (flags),				      
+				      NULL);
+		else  
+			g_object_set (G_OBJECT (renderer), "pixbuf",
+				      get_pixbuf_for_compact_flag (flags),    
+				      NULL);
+	}
+	else {
+		if (flags & TNY_HEADER_FLAG_HIGH_PRIORITY) 
+			g_object_set (G_OBJECT (renderer), "pixbuf",
+				      get_pixbuf_for_compact_flag (flags),
+				      NULL);
+		else if (flags & TNY_HEADER_FLAG_LOW_PRIORITY) 
+			g_object_set (G_OBJECT (renderer), "pixbuf",
+				      get_pixbuf_for_compact_flag (flags),
+				      NULL);
+	}
+}
+
+void
 _modest_header_view_header_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 		  GtkTreeModel *tree_model,  GtkTreeIter *iter,  gpointer user_data)
 {
@@ -129,7 +207,7 @@ _modest_header_view_date_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer
 {
 	TnyHeaderFlags flags;
 	guint date, date_col;
-	gchar *display_date;
+	gchar *display_date = NULL, *tmp_date = NULL;
 	gboolean received = GPOINTER_TO_INT(user_data);
 
 	if (received)
@@ -142,12 +220,12 @@ _modest_header_view_date_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer
 			    date_col, &date,
 			    -1);
 
-	display_date = modest_text_utils_get_display_date (date);
-	g_object_set (G_OBJECT(renderer),
-		      "text",    display_date,
-		      NULL);
+	tmp_date = modest_text_utils_get_display_date (date);
+	display_date = g_strdup_printf ("\n<small>%s</small>", tmp_date);
+	g_object_set (G_OBJECT(renderer), "markup", display_date, NULL);	
 
 	set_common_flags (renderer, flags);
+	g_free (tmp_date);
 	g_free (display_date);
 }
 
@@ -188,7 +266,7 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 {
 	GObject *rendobj;
 	TnyHeaderFlags flags;
-	gchar *address, *subject, *header, *display_date;
+	gchar *address, *subject, *header;
 	time_t date;
 	gboolean is_incoming;
 
@@ -211,16 +289,19 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 				    -1);
 	
 	rendobj = G_OBJECT(renderer);
-	display_date = modest_text_utils_get_display_date (date);
-	header = g_strdup_printf ("%s %s\n%s",
-				  modest_text_utils_get_display_address (address),
-				  display_date, subject);
+	if (flags & TNY_HEADER_FLAG_SEEN)
+		header = g_strdup_printf ("<b>%s</b>\n<small>%s</small>",
+					  subject,
+					  modest_text_utils_get_display_address (address));
+	else
+		header = g_strdup_printf ("<i>%s</i>\n<small>%s</small>",
+					  subject,
+					  modest_text_utils_get_display_address (address));
 	g_free (address);
 	g_free (subject);
-	g_free (display_date);
 	
-	g_object_set (G_OBJECT(renderer), "text", header, NULL);	
-	set_common_flags (renderer, flags);
+	g_object_set (G_OBJECT(renderer), "markup", header, NULL);	
+/* 	set_common_flags (renderer, flags); */
 	
 	g_free (header);
 }
@@ -246,4 +327,27 @@ _modest_header_view_size_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer
 	set_common_flags (renderer, flags);
 
 	g_free (size_str);
+ }
+
+void
+_modest_header_view_status_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
+				     GtkTreeModel *tree_model,  GtkTreeIter *iter,
+				     gpointer user_data)
+{
+        TnyHeaderFlags flags;
+	guint status;
+	gchar *status_str;
+	
+	gtk_tree_model_get (tree_model, iter,
+			   TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN, &flags,
+			   TNY_GTK_HEADER_LIST_MODEL_MESSAGE_SIZE_COLUMN, &status,
+			    -1);
+	
+/* 	size_str = modest_text_utils_get_display_size (size); */
+	status_str = g_strdup(_("Wating ..."));
+	
+	g_object_set (G_OBJECT(renderer), "text", status_str, NULL);
+	set_common_flags (renderer, flags);
+
+	g_free (status_str);
  }

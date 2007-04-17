@@ -46,12 +46,17 @@ void _modest_header_view_msgtype_cell_data (GtkTreeViewColumn *column, GtkCellRe
 					    GtkTreeModel *tree_model, GtkTreeIter *iter, gpointer user_data);
 void _modest_header_view_attach_cell_data (GtkTreeViewColumn *column, GtkCellRenderer *renderer,
 					   GtkTreeModel *tree_model, GtkTreeIter *iter, gpointer user_data);
+void _modest_header_view_compact_flag_cell_data (GtkTreeViewColumn *column, GtkCellRenderer *renderer,
+						 GtkTreeModel *tree_model, GtkTreeIter *iter, gpointer user_data);
 void _modest_header_view_header_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 					    GtkTreeModel *tree_model,  GtkTreeIter *iter,  gpointer user_data);
 void _modest_header_view_date_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 					  GtkTreeModel *tree_model,  GtkTreeIter *iter,  gpointer user_data);
 void _modest_header_view_size_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 					  GtkTreeModel *tree_model,  GtkTreeIter *iter,  gpointer user_data);
+void _modest_header_view_status_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
+					    GtkTreeModel *tree_model,  GtkTreeIter *iter,
+					    gpointer user_data);
 void _modest_header_view_sender_receiver_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 						     GtkTreeModel *tree_model,  GtkTreeIter *iter,  gboolean is_sender);
 void _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,

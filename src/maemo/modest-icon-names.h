@@ -49,6 +49,13 @@
 #define MODEST_HEADER_ICON_DELETED		"qgn_list_messagin_mail_deleted"
 #define MODEST_HEADER_ICON_ATTACH		"qgn_list_gene_attacpap"
 
+#define MODEST_HEADER_ICON_ATTACH_HIGH_PRIORITY "qgn_list_gene_high_attacpap"
+#define MODEST_HEADER_ICON_ATTACH_LOW_PRIORITY  "qgn_list_gene_low_attacpap"
+#define MODEST_HEADER_ICON_ATTACH_NORM_PRIORITY "qgn_list_gene_norm_attacpap"
+
+#define MODEST_HEADER_ICON_HIGH_PRIORITY        "qgn_list_messaging_high_noatt"
+#define MODEST_HEADER_ICON_LOW_PRIORITY         "qgn_list_messaging_low_noatt"
+
 #define MODEST_FOLDER_ICON_OPEN			"qgn_list_gene_fldr_opn"
 #define MODEST_FOLDER_ICON_CLOSED		"qgn_list_gene_fldr_cls"
 
