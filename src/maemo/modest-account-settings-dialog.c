@@ -611,6 +611,8 @@ check_data (ModestAccountSettingsDialog *self)
 	/* TODO: The UI Spec wants us to check that the servernames are valid, 
 	 * but does not specify how.
 	 */
+	 
+	return TRUE;
 }
 /*
  */

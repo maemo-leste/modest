@@ -1,5 +1,14 @@
 2007-04-17  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/maemo/modest-account-settings-dialog.c: (check_data): Always return something, 
+	found by valgrind.
+	* src/modest-tny-account-store.c: (account_list_free),
+	(on_account_changed): Add a TODO comment about a valgrind error, caused by using 
+	cursor->data after unreffing it. But there is some strange stuff there so it might not be 
+	easy to fix.
+
+2007-04-17  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/modest-protocol-info.c:
 	* src/modest-protocol-info.h: Added a MODEST_PROTOCOL_AUTH_CRAMMD5 enum value, because it 
 	is required by our UI spec. Maybe something in our implementation will use this eventually.

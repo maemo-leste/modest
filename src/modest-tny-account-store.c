@@ -181,6 +181,9 @@ account_list_free (GSList *accounts)
 	GSList *cursor = accounts;
 
 	while (cursor) {
+		/* TODO: This uses cursor->data after causing it to be freed,
+		 * as valgrind shows.
+		 * It's not clear what is being attempted here. murrayc */
 		g_object_unref (G_OBJECT(cursor->data));
 		if (G_IS_OBJECT(cursor->data)) { /* check twice... */
 			const gchar *id = tny_account_get_id(TNY_ACCOUNT(cursor->data));
@@ -225,11 +228,15 @@ on_account_changed (ModestAccountMgr *acc_mgr, const gchar *account, gboolean se
 	/* FIXME: make this more finegrained; changes do not really affect _all_
 	 * accounts, and some do not affect tny accounts at all (such as 'last_update')
 	 */
-	account_list_free (priv->store_accounts);
-	priv->store_accounts = NULL;
+	if (priv->store_accounts) {
+		account_list_free (priv->store_accounts);
+		priv->store_accounts = NULL;
+	}
 	
-	account_list_free (priv->transport_accounts);
-	priv->transport_accounts = NULL;
+	if (priv->transport_accounts) {
+		account_list_free (priv->transport_accounts);
+		priv->transport_accounts = NULL;
+	}
 
 	g_signal_emit (G_OBJECT(self), signals[ACCOUNT_UPDATE_SIGNAL], 0,
 		       account);
