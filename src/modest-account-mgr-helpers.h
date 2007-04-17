@@ -137,6 +137,50 @@ gboolean modest_account_mgr_set_enabled (ModestAccountMgr *self, const gchar* na
 gboolean modest_account_mgr_get_enabled (ModestAccountMgr *self, const gchar* name);
 
 /**
+ * modest_server_account_data_get_option_secure_auth:
+ * @account_data: a ModestAccountData instance.
+ *
+ * Gets the secure authentication method for this server account.
+ *
+ * Returns: The secure authentication enum value.
+ */
+ModestProtocol
+modest_server_account_data_get_option_secure_auth (ModestServerAccountData *account_data);
+
+/**
+ * modest_server_account_data_get_option_secure_auth:
+ * @self: a ModestAccountMgr instance
+ * @secure_auth: The secure authentication enum value.
+ *
+ * Gets the secure authentication method for this server account.
+ */
+void
+modest_server_account_set_option_secure_auth (ModestAccountMgr *self, const gchar* account_name, 
+	ModestProtocol secure_auth);
+	
+/**
+ * modest_server_account_data_get_option_security:
+ * @account_data: a ModestAccountData instance.
+ *
+ * Gets the security method for this server account.
+ *
+ * Returns: The security enum value.
+ */
+ModestProtocol
+modest_server_account_data_get_option_security (ModestServerAccountData *account_data);
+
+/**
+ * modest_server_account_set_option_security:
+ * @self: a ModestAccountMgr instance
+ * @secure_auth: The security enum value.
+ *
+ * Gets the security method for this server account.
+ */
+void
+modest_server_account_set_option_security (ModestAccountMgr *self, const gchar* account_name, 
+	ModestProtocol security);
+
+/**
  * modest_account_mgr_get_account_option:
  * @self: a ModestAccountMgr instance
  * @account_name: the account name to check
@@ -144,12 +188,13 @@ gboolean modest_account_mgr_get_enabled (ModestAccountMgr *self, const gchar* na
  *
  * Returns: The account option value. This must be freed with g_free().
  */
-gchar* modest_account_mgr_get_server_account_option (ModestAccountMgr *self,  const gchar* account_name, const gchar* option_name);
+gchar* modest_account_mgr_get_server_account_option (ModestAccountMgr *self, 
+	const gchar* account_name, const gchar* option_name);
 
 /**
  * modest_server_account_data_get_option_value:
- * @self: a ModestServerAccountData instance
- * @account_name: the option name to check
+ * @options_list: a ModestServerAccountData::options list.
+ * @option_name: the option name to check
  *
  * Returns: The account option value. This must be freed with g_free().
  */
@@ -157,8 +202,8 @@ gchar* modest_server_account_data_get_option_value (GSList* options_list, const 
 
 /**
  * modest_server_account_data_get_option_bool:
- * @self: a ModestServerAccountData instance
- * @account_name: the option name to check
+ * @options_list: a ModestServerAccountData::options list.
+ * @option_name: the option name to check
  *
  * Returns: Whether the account option is present.
  */

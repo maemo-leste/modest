@@ -32,6 +32,7 @@
 #include <glib/gi18n.h>
 #include "modest-conf.h"
 #include "modest-marshal.h"
+#include <stdio.h>
 
 static void   modest_conf_class_init     (ModestConfClass *klass);
 static void   modest_conf_init           (ModestConf *obj);
@@ -319,7 +320,27 @@ modest_conf_set_list (ModestConf* self, const gchar* key,
        if (*err)
 	       return FALSE;
 
-       return gconf_client_set_list (priv->gconf_client, key, gconf_type, val, err);
+
+       gboolean result = gconf_client_set_list (priv->gconf_client, key, gconf_type, val, err);
+       if(*err) {
+       	   g_warning("gconf_client_set_list() failed with key=%s. error=%s", key, (*err)->message);
+           result = FALSE;
+       }
+       
+       /* TODO: Remove this, when we fix the problem: */
+       /* This shows that sometimes set_list fails, while saying that it succeeded: */
+       if (result) {
+         const gint debug_list_length_start = g_slist_length(val);
+         GSList* debug_list = gconf_client_get_list(priv->gconf_client, key, gconf_type, err);
+         const gint debug_list_length_after = g_slist_length(debug_list);
+         
+         if(debug_list_length_start != debug_list_length_after)
+         	g_warning("modest_conf_set_list(): The list length after setting is not the same as the specified list. key=%s", key);
+         	
+         g_slist_free(debug_list);
+       }
+
+	return result;
 }
 
 

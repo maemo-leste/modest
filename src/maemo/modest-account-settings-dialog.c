@@ -86,8 +86,11 @@ modest_account_settings_dialog_finalize (GObject *object)
 {
 	ModestAccountSettingsDialog *self = MODEST_ACCOUNT_SETTINGS_DIALOG (object);
 	
-	if (self->original_account_name)
-		g_free (self->original_account_name);
+	if (self->account_name)
+		g_free (self->account_name);
+		
+	if (self->original_account_title)
+		g_free (self->original_account_title);
 		
 	if (self->account_manager)
 		g_object_unref (G_OBJECT (self->account_manager));
@@ -573,14 +576,14 @@ static gboolean
 check_data (ModestAccountSettingsDialog *self)
 {
 	/* Check that the title is not already in use: */
-	const gchar* account_name = gtk_entry_get_text (GTK_ENTRY (self->entry_account_title));
-	if ((!account_name) || (strlen(account_name) == 0))
+	const gchar* account_title = gtk_entry_get_text (GTK_ENTRY (self->entry_account_title));
+	if ((!account_title) || (strlen(account_title) == 0))
 		return FALSE; /* Should be prevented already anyway. */
 		
-	if (strcmp(account_name, self->original_account_name) != 0) {
+	if (strcmp(account_title, self->original_account_title) != 0) {
 		/* Check the changed title: */
 		const gboolean name_in_use  = modest_account_mgr_account_with_display_name_exists (self->account_manager,
-			account_name);
+			account_title);
 	
 		if (name_in_use) {
 			/* Warn the user via a dialog: */
@@ -618,8 +621,6 @@ on_response (GtkDialog *wizard_dialog,
 {
 	ModestAccountSettingsDialog *self = MODEST_ACCOUNT_SETTINGS_DIALOG (wizard_dialog);
 	enable_buttons (self);
-	
-	/* TODO: Prevent the OK response if the data is invalid. */
 	
 	gboolean prevent_response = FALSE;
 	
@@ -726,11 +727,12 @@ void modest_account_settings_dialog_set_account_name (ModestAccountSettingsDialo
 	if (!account_name)
 		return;
 		
-	/* Save the account name so we can refer to it if the user changes it: */
-	if (dialog->original_account_name)
-		g_free (dialog->original_account_name);
-	dialog->original_account_name = g_strdup (account_name);
+	/* Save the account name so we can refer to it later: */
+	if (dialog->account_name)
+		g_free (dialog->account_name);
+	dialog->account_name = g_strdup (account_name);
 	
+		
 	/* Get the account data for this account name: */
 	ModestAccountData *account_data = modest_account_mgr_get_account_data (dialog->account_manager, 
 		account_name);
@@ -738,6 +740,12 @@ void modest_account_settings_dialog_set_account_name (ModestAccountSettingsDialo
 		g_printerr ("modest: failed to get account data for %s\n", account_name);
 		return;
 	}
+	
+	/* Save the account title so we can refer to it if the user changes it: */
+	if (dialog->original_account_title)
+		g_free (dialog->original_account_title);
+	dialog->original_account_title = g_strdup (account_data->display_name);
+	
 
 	if (!(account_data->store_account)) {
 		g_printerr ("modest: account has no stores: %s\n", account_name);
@@ -771,10 +779,16 @@ void modest_account_settings_dialog_set_account_name (ModestAccountSettingsDialo
 		gtk_entry_set_text( GTK_ENTRY (dialog->entry_incomingserver), 
 			incoming_account->hostname ? incoming_account->hostname : "");
 			
-		easysetup_serversecurity_combo_box_set_active_serversecurity (
-			EASYSETUP_SERVERSECURITY_COMBO_BOX (dialog->combo_incoming_security), incoming_account->proto);
+		const ModestProtocol secure_auth = modest_server_account_data_get_option_secure_auth(incoming_account);
+		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (dialog->checkbox_incoming_auth), 
+			secure_auth == MODEST_PROTOCOL_AUTH_PASSWORD);
+			
 		update_incoming_server_title (dialog, incoming_account->proto);
 		update_incoming_server_security_choices (dialog, incoming_account->proto);
+		
+		const ModestProtocol security = modest_server_account_data_get_option_security (incoming_account);
+		easysetup_serversecurity_combo_box_set_active_serversecurity (
+			EASYSETUP_SERVERSECURITY_COMBO_BOX (dialog->combo_incoming_security), security);
 		
 		/* TODO:
 	gchar	         *uri;
@@ -791,36 +805,28 @@ void modest_account_settings_dialog_set_account_name (ModestAccountSettingsDialo
 		gtk_entry_set_text( GTK_ENTRY (dialog->entry_outgoingserver), 
 			outgoing_account->hostname ? outgoing_account->hostname : "");
 		
-		/* TODO: Dim these if secure authentication is None, as per the UI spec: */
 		gtk_entry_set_text( GTK_ENTRY (dialog->entry_outgoing_username), 
 			outgoing_account->username ? outgoing_account->username : "");
 		gtk_entry_set_text( GTK_ENTRY (dialog->entry_outgoing_password), 
 			outgoing_account->password ? outgoing_account->password : "");
 		
-		/* TODO: How do we get the auth setting from the server account struct?: */
-		/* This seems to be in ->options, with hard-coded option names.
-		 * This will need new API in ModestAccountMgr. */
+		/* Get the secure-auth setting: */
+		const ModestProtocol secure_auth = modest_server_account_data_get_option_secure_auth(outgoing_account);
 		easysetup_secureauth_combo_box_set_active_secureauth (
-			EASYSETUP_SECUREAUTH_COMBO_BOX (dialog->combo_outgoing_auth), MODEST_PROTOCOL_AUTH_NONE);
+			EASYSETUP_SECUREAUTH_COMBO_BOX (dialog->combo_outgoing_auth), secure_auth);
 		on_combo_outgoing_auth_changed (GTK_COMBO_BOX (dialog->combo_outgoing_auth), dialog);
 		
 		easysetup_serversecurity_combo_box_fill (
-		EASYSETUP_SERVERSECURITY_COMBO_BOX (dialog->combo_outgoing_security), outgoing_account->proto);
+			EASYSETUP_SERVERSECURITY_COMBO_BOX (dialog->combo_outgoing_security), outgoing_account->proto);
 		
-		printf("debug: incoming options list=%p\n", incoming_account->options);
-		printf("debug: outgoing options list=%p\n", outgoing_account->options);
-		
-		gchar* debug = modest_server_account_data_get_option_value (incoming_account->options, MODEST_ACCOUNT_OPTION_SSL);
-		printf("debug: ssl option=X%sX\n", debug);
-		
-		gboolean bdebug = modest_server_account_data_get_option_bool (incoming_account->options, MODEST_ACCOUNT_OPTION_USE_LSUB);
-		printf("debug: ssl option=X%dX\n", bdebug);
-		
+		/* Get the security setting: */
+		const ModestProtocol security = modest_server_account_data_get_option_security (outgoing_account);
+		easysetup_serversecurity_combo_box_set_active_serversecurity (
+			EASYSETUP_SERVERSECURITY_COMBO_BOX (dialog->combo_outgoing_security), security);
 		
 		/* TODO: set port. */
 	}
 	
-	/* TODO: account_data->display_name */
 	/* account_data->is_enabled,  */
 	/*account_data->is_default,  */
 
@@ -832,9 +838,9 @@ void modest_account_settings_dialog_set_account_name (ModestAccountSettingsDialo
 static gboolean
 save_configuration (ModestAccountSettingsDialog *dialog)
 {
-	g_assert (dialog->original_account_name);
+	g_assert (dialog->account_name);
 	
-	const gchar* account_name = dialog->original_account_name;
+	const gchar* account_name = dialog->account_name;
 		
 	/* Set the account data from the widgets: */
 	const gchar* user_name = gtk_entry_get_text (GTK_ENTRY (dialog->entry_user_name));
@@ -848,11 +854,6 @@ save_configuration (ModestAccountSettingsDialog *dialog)
 		MODEST_ACCOUNT_EMAIL, emailaddress, FALSE /* not server account */);
 	if (!test)
 		return FALSE;
-				
-	/* TODO: Change name: */
-	/* Possibly the account name may never change, but that should be hidden, 
-	 * and the display name may change, defaulting to the account name.
-	 */
 	
 	const gboolean leave_on_server = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (dialog->checkbox_leave_messages));
 	test = modest_account_mgr_set_bool (dialog->account_manager, account_name,
@@ -883,15 +884,15 @@ save_configuration (ModestAccountSettingsDialog *dialog)
 	if (!test)
 		return FALSE;
 			
-	/* TODO: How can we set these in the server account?:	
-	ModestProtocol protocol_authentication_incoming = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->checkbox_incoming_auth)) 
+	const ModestProtocol protocol_authentication_incoming = gtk_toggle_button_get_active 
+		(GTK_TOGGLE_BUTTON (dialog->checkbox_incoming_auth)) 
 			? MODEST_PROTOCOL_AUTH_PASSWORD
 			: MODEST_PROTOCOL_AUTH_NONE;
+	modest_server_account_set_option_secure_auth (dialog->account_manager, incoming_account_name, protocol_authentication_incoming);
 			
-	ModestProtocol protocol_security_incoming = easysetup_serversecurity_combo_box_get_active_serversecurity (
-		EASYSETUP_SERVERSECURITY_COMBO_BOX (self->combo_incoming_security));
-	
-	*/
+	const ModestProtocol protocol_security_incoming = easysetup_serversecurity_combo_box_get_active_serversecurity (
+		EASYSETUP_SERVERSECURITY_COMBO_BOX (dialog->combo_incoming_security));
+	modest_server_account_set_option_security (dialog->account_manager, incoming_account_name, protocol_security_incoming);
 	
 	g_free (incoming_account_name);
 	
@@ -918,13 +919,13 @@ save_configuration (ModestAccountSettingsDialog *dialog)
 	if (!test)
 		return FALSE;
 	
-	/* TODO: How do we set these in the account data?:
-	ModestProtocol protocol_security_outgoing = easysetup_serversecurity_combo_box_get_active_serversecurity (
-		EASYSETUP_SERVERSECURITY_COMBO_BOX (self->combo_outgoing_security));
+	const ModestProtocol protocol_security_outgoing = easysetup_serversecurity_combo_box_get_active_serversecurity (
+		EASYSETUP_SERVERSECURITY_COMBO_BOX (dialog->combo_outgoing_security));
+	modest_server_account_set_option_security (dialog->account_manager, outgoing_account_name, protocol_security_outgoing);
 	
-	ModestProtocol protocol_authentication_outgoing = easysetup_secureauth_combo_box_get_active_secureauth (
-		EASYSETUP_SECUREAUTH_COMBO_BOX (self->combo_outgoing_auth));
-	 */
+	const ModestProtocol protocol_authentication_outgoing = easysetup_secureauth_combo_box_get_active_secureauth (
+		EASYSETUP_SECUREAUTH_COMBO_BOX (dialog->combo_outgoing_auth));
+	modest_server_account_set_option_secure_auth (dialog->account_manager, outgoing_account_name, protocol_authentication_outgoing);	
 		
 	g_free (outgoing_account_name);
 	

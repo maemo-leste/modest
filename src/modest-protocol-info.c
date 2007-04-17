@@ -54,7 +54,8 @@ static const ProtocolInfo ProtocolMap[] = {
 	{ MODEST_PROTOCOL_SECURITY_TLS_OP,    "tls-op",   N_("TLS when possible") }, /* op stands for optional */
 
 	{ MODEST_PROTOCOL_AUTH_NONE,          "none",     N_("None") },
-	{ MODEST_PROTOCOL_AUTH_PASSWORD,      "password", N_("Password") }
+	{ MODEST_PROTOCOL_AUTH_PASSWORD,      "password", N_("Password") },
+	{ MODEST_PROTOCOL_AUTH_CRAMMD5,       "cram-md5", N_("Cram MD5") }
 };
 const guint PROTOCOL_MAP_SIZE = sizeof(ProtocolMap)/sizeof(ProtocolInfo);
 

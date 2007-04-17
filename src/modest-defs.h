@@ -110,6 +110,20 @@
 #define MODEST_ACCOUNT_AUTH_MECH	 "auth_mech"	     /* string */
 
 /* Keys and values used in the text items in the options GSList: */
+#define MODEST_ACCOUNT_OPTION_SECURE_AUTH "secure_auth"
+#define MODEST_ACCOUNT_OPTION_SECURE_AUTH_VALUE_NONE "none"
+#define MODEST_ACCOUNT_OPTION_SECURE_AUTH_VALUE_PASSWORD "password"
+#define MODEST_ACCOUNT_OPTION_SECURE_AUTH_VALUE_CRAMMD5 "cram-md5"
+
+#define MODEST_ACCOUNT_OPTION_SECURITY "security"
+#define MODEST_ACCOUNT_OPTION_SECURITY_VALUE_NONE "none"
+#define MODEST_ACCOUNT_OPTION_SECURITY_VALUE_NORMAL "normal"
+#define MODEST_ACCOUNT_OPTION_SECURITY_VALUE_SSL "ssl"
+
+
+/* Options keys that correspond directly to camel options.
+ * These probably should not be written to user configuration, 
+ * because they are specific API implementation details. */
 #define MODEST_ACCOUNT_OPTION_SSL "use_ssl"
 #define MODEST_ACCOUNT_OPTION_SSL_NEVER "never"
 #define MODEST_ACCOUNT_OPTION_SSL_ALWAYS "always"

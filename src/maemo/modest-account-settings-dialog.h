@@ -41,7 +41,8 @@ typedef struct {
 	 * and to create new accounts: */
 	ModestAccountMgr *account_manager;
 	
-	gchar * original_account_name;
+	gchar * account_name; /* This may not change. It is not user visible. */
+	gchar * original_account_title;
 	
 	GtkWidget *page_account_details;
 	GtkWidget *entry_account_title;

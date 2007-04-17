@@ -1,5 +1,35 @@
 2007-04-17  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-protocol-info.c:
+	* src/modest-protocol-info.h: Added a MODEST_PROTOCOL_AUTH_CRAMMD5 enum value, because it 
+	is required by our UI spec. Maybe something in our implementation will use this eventually.
+	* src/maemo/easysetup/modest-easysetup-secureauth-combo-box.c: 
+	(easysetup_secureauth_combo_box_fill): Use the CRAM MD5 enum value 
+	instead of the previous 0 placeholder.
+	
+	* src/modest-defs.h: Added gconf list pair key names and value strings for the security and 
+	secure-auth settings.
+	* src/modest-account-mgr-helpers.h:
+	* src/modest-account-mgr-helpers.c:
+	(modest_server_account_data_get_option_secure_auth),
+	(modest_server_account_set_option_secure_auth),
+	(modest_server_account_data_get_option_security),
+	(modest_server_account_set_option_security): Added this API for getting and setting the security 
+	and secure-auth settings.
+	
+	* src/maemo/modest-account-settings-dialog.h:
+	* src/maemo/modest-account-settings-dialog.c:
+	(modest_account_settings_dialog_finalize), (check_data),
+	(on_response): Store the original title as well as the name, to avoid unnececessary warnings 
+	about changing titles.
+	(modest_account_settings_dialog_set_account_name): Load the security and secure-auth settings.
+	(save_configuration): Save the security and secure-auth settings.
+
+	* src/modest-conf.c: (modest_conf_set_list): Get the list after setting it, to show that this 
+	is failing sometimes (though reporting success). I fear I may need to debug gconf to fix this.
+
+2007-04-17  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/modest-defs.h: 
 	* src/modest-account-mgr.c:
 	(modest_account_mgr_add_server_account):

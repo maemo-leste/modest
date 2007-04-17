@@ -139,9 +139,8 @@ void easysetup_secureauth_combo_box_fill (EasysetupSecureauthComboBox *combobox)
 	gtk_list_store_append (liststore, &iter);
 	gtk_list_store_set (liststore, &iter, MODEL_COL_ID, (gint)MODEST_PROTOCOL_AUTH_PASSWORD, MODEL_COL_NAME, _("mcen_fi_advsetup_smtp_login"), -1);
 	
-	/* TODO: I can't find a ModestProtocol enum flag for this: */
 	gtk_list_store_append (liststore, &iter);
-	gtk_list_store_set (liststore, &iter, MODEL_COL_ID, (gint)0, MODEL_COL_NAME, _("mcen_fi_advsetup_smtp_cram_md5"), -1);
+	gtk_list_store_set (liststore, &iter, MODEL_COL_ID, (gint)MODEST_PROTOCOL_AUTH_CRAMMD5, MODEL_COL_NAME, _("mcen_fi_advsetup_smtp_cram_md5"), -1);
 }
 
 /**
