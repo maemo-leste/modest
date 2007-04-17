@@ -56,6 +56,7 @@ objects=\
         ${top_srcdir}/src/modest-marshal.o \
         ${top_srcdir}/src/modest-pair.o \
         ${top_srcdir}/src/modest-protocol-info.o \
+        ${top_srcdir}/src/modest-ui-actions.o \
         ${top_srcdir}/src/modest-text-utils.o \
         ${top_srcdir}/src/modest-tny-account-store.o \
         ${top_srcdir}/src/modest-tny-folder.o \
