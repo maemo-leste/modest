@@ -90,7 +90,7 @@
     <toolitem action="ToolbarDeleteMessage"/>
     <toolitem action="FindInMessage"/>
     <toolitem action="ToolbarMessageBack"/>
-    <toolitem action="ToolbarMessageForward"/>
+    <toolitem action="ToolbarMessageNext"/>
     <placeholder name="ToolbarProgressbar"/>
   </toolbar>
 

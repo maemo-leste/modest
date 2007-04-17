@@ -848,7 +848,7 @@ modest_msg_view_window_update_dimmed (ModestMsgViewWindow *window)
 	widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/ViewMenu/ViewPreviousMessageMenu");
 	gtk_action_set_sensitive (widget, !is_first);
 		
-	widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ToolbarMessageForward");
+	widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ToolbarMessageNext");
 	gtk_action_set_sensitive (widget, !is_last);
 	widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/ViewMenu/ViewNextMessageMenu");
 	gtk_action_set_sensitive (widget, !is_last);

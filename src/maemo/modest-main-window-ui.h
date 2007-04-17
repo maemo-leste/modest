@@ -113,7 +113,7 @@ static const GtkActionEntry modest_action_entries [] = {
 	{ "ToolbarSort",     MODEST_STOCK_SORT,     N_("qgn_list_sort"),             NULL, NULL, NULL },
 	{ "ToolbarFindInMessage",     GTK_STOCK_FIND,       N_("qgn_toolb_gene_find"),         NULL, NULL, NULL },
 	{ "ToolbarMessageBack",       GTK_STOCK_GO_BACK,    N_("qgn_toolb_gene_back"),         NULL, NULL, G_CALLBACK (modest_ui_actions_on_prev) },
-	{ "ToolbarMessageForward",    GTK_STOCK_GO_FORWARD, N_("qgn_toolb_gene_forward"),      NULL, NULL, G_CALLBACK (modest_ui_actions_on_next) },
+	{ "ToolbarMessageNext",    GTK_STOCK_GO_FORWARD, N_("qgn_toolb_gene_forward"),      NULL, NULL, G_CALLBACK (modest_ui_actions_on_next) },
 	{ "ToolbarMessageMoveTo",     MODEST_TOOLBAR_ICON_MOVE_TO_FOLDER, N_("qgn_toolb_gene_movetofldr"),   NULL, NULL, NULL },
 };
 
