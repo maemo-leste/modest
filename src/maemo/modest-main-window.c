@@ -73,6 +73,10 @@ static void on_account_update                 (TnyAccountStore *account_store,
 					       gchar *account_name,
 					       gpointer user_data);
 
+static gboolean on_inner_widgets_key_pressed  (GtkWidget *widget,
+					       GdkEventKey *event,
+					       gpointer user_data);
+
 /* list my signals */
 enum {
 	/* MY_SIGNAL_1, */
@@ -311,6 +315,8 @@ connect_signals (ModestMainWindow *self)
 	parent_priv = MODEST_WINDOW_GET_PRIVATE(self);
 	
 	/* folder view */
+	g_signal_connect (G_OBJECT(priv->folder_view), "key-press-event",
+			  G_CALLBACK(on_inner_widgets_key_pressed), self);
 	g_signal_connect (G_OBJECT(priv->folder_view), "folder_selection_changed",
 			  G_CALLBACK(modest_ui_actions_on_folder_selection_changed), self);
 
@@ -326,6 +332,8 @@ connect_signals (ModestMainWindow *self)
 			  G_CALLBACK(modest_ui_actions_on_header_activated), self);
 	g_signal_connect (G_OBJECT(priv->header_view), "item_not_found",
 			  G_CALLBACK(modest_ui_actions_on_item_not_found), self);
+	g_signal_connect (G_OBJECT(priv->header_view), "key-press-event",
+			  G_CALLBACK(on_inner_widgets_key_pressed), self);
 
 	/* window */
 	g_signal_connect (G_OBJECT(self), "delete-event", G_CALLBACK(on_delete_event), self);
@@ -523,6 +531,7 @@ modest_main_window_set_style (ModestMainWindow *self,
 
 		/* Reparent header view with scrolled window */
 		gtk_widget_reparent (scrolled_win, priv->main_vbox);
+
 		break;
 	case MODEST_MAIN_WINDOW_STYLE_SPLIT:
 		/* Remove header view */
@@ -536,6 +545,9 @@ modest_main_window_set_style (ModestMainWindow *self,
 	default:
 		g_return_if_reached ();
 	}
+
+	/* Let header view grab the focus */
+	gtk_widget_grab_focus (GTK_WIDGET (priv->header_view));
 
 	/* Show changes */
 	gtk_widget_show_all (GTK_WIDGET (priv->main_vbox));
@@ -714,4 +726,37 @@ on_account_update (TnyAccountStore *account_store,
 
 	/* Free */
 	g_object_unref (account_list);
+}
+
+/* 
+ * This function manages the key events used to navigate between
+ * header and folder views (when the window is in split view)
+ *
+ * FROM         KEY        ACTION
+ * -------------------------------------------------
+ * HeaderView   GDK_Left   Move focus to folder view
+ * FolderView   GDK_Right  Move focus to header view
+ *
+ * There is no need to scroll to selected row, the widgets will be the
+ * responsibles of doing that (probably managing the focus-in event
+ */
+static gboolean 
+on_inner_widgets_key_pressed (GtkWidget *widget,
+			      GdkEventKey *event,
+			      gpointer user_data)
+{
+	ModestMainWindowPrivate *priv;
+
+	priv = MODEST_MAIN_WINDOW_GET_PRIVATE (user_data);
+
+	/* Do nothing if we're in SIMPLE style */
+	if (priv->style == MODEST_MAIN_WINDOW_STYLE_SIMPLE)
+		return FALSE;
+
+	if (MODEST_IS_HEADER_VIEW (widget) && event->keyval == GDK_Left)
+		gtk_widget_grab_focus (GTK_WIDGET (priv->folder_view));
+	else if (MODEST_IS_FOLDER_VIEW (widget) && event->keyval == GDK_Right)
+		gtk_widget_grab_focus (GTK_WIDGET (priv->header_view));
+
+	return FALSE;
 }

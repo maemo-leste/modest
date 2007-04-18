@@ -62,6 +62,9 @@ static void          setup_drag_and_drop    (GtkTreeView *self);
 
 static GtkTreePath * get_selected_row       (GtkTreeView *self, GtkTreeModel **model);
 
+static gboolean      on_focus_in            (GtkWidget     *sef,
+					     GdkEventFocus *event,
+					     gpointer       user_data);
 
 typedef struct _ModestHeaderViewPrivate ModestHeaderViewPrivate;
 struct _ModestHeaderViewPrivate {
@@ -450,6 +453,9 @@ modest_header_view_new (TnyFolder *folder, ModestHeaderViewStyle style)
 	
 	g_signal_connect (self, "button-press-event",
 			  G_CALLBACK(on_header_clicked), NULL);
+
+	g_signal_connect (self, "focus-in-event",
+			  G_CALLBACK(on_focus_in), NULL);
 	
 	return GTK_WIDGET(self);
 }
@@ -1118,4 +1124,51 @@ get_selected_row (GtkTreeView *self, GtkTreeModel **model)
 	g_list_free(rows);
 
 	return path;
+}
+
+/*
+ * This function moves the tree view scroll to the current selected
+ * row when the widget grabs the focus 
+ */
+static gboolean 
+on_focus_in (GtkWidget     *self,
+	     GdkEventFocus *event,
+	     gpointer       user_data)
+{
+	GtkTreeSelection *selection;
+	GtkTreeModel *model;
+	GList *selected;
+
+	model = gtk_tree_view_get_model (GTK_TREE_VIEW (self));
+	if (!model)
+		return FALSE;
+
+	selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (self));
+	/* If none selected yet, pick the first one */
+	if (gtk_tree_selection_count_selected_rows (selection) == 0) {
+		GtkTreeIter iter;
+		GtkTreePath *path;
+
+		gtk_tree_model_get_iter_first (model, &iter);
+		path = gtk_tree_model_get_path (model, &iter);
+		gtk_tree_selection_select_path (selection, path);
+		gtk_tree_path_free (path);
+	}
+
+	/* Need to get the all the rows because is selection multiple */
+	selected = gtk_tree_selection_get_selected_rows (selection, &model);
+
+	/* Scroll to first path */
+	gtk_tree_view_scroll_to_cell (GTK_TREE_VIEW (self),
+				      (GtkTreePath *) selected->data,
+				      NULL,
+				      TRUE,
+				      0.5,
+				      0.0);
+
+	/* Frees */	
+	g_list_foreach (selected, (GFunc) gtk_tree_path_free, NULL);
+	g_list_free (selected);
+
+	return FALSE;
 }

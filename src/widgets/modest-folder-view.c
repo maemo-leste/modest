@@ -106,6 +106,10 @@ static gint         expand_row_timeout     (gpointer data);
 
 static void         setup_drag_and_drop    (GtkTreeView *self);
 
+static gboolean     on_key_pressed         (GtkWidget *self,
+					    GdkEventKey *event,
+					    gpointer user_data);
+
 enum {
 	FOLDER_SELECTION_CHANGED_SIGNAL,
 	LAST_SIGNAL
@@ -338,6 +342,10 @@ modest_folder_view_init (ModestFolderView *obj)
 	gtk_tree_view_append_column (GTK_TREE_VIEW(obj),column);
 
 	setup_drag_and_drop (GTK_TREE_VIEW(obj));
+
+	g_signal_connect (G_OBJECT (obj), 
+			  "key-press-event", 
+			  G_CALLBACK (on_key_pressed), NULL);
 }
 
 static void
@@ -1135,4 +1143,40 @@ setup_drag_and_drop (GtkTreeView *self)
 			  "drag_drop",
 			  G_CALLBACK (drag_drop_cb),
 			  NULL);
+}
+
+/*
+ * This function manages the navigation through the folders using the
+ * keyboard or the hardware keys in the device
+ */
+static gboolean
+on_key_pressed (GtkWidget *self,
+		GdkEventKey *event,
+		gpointer user_data)
+{
+	GtkTreeSelection *selection;
+	GtkTreeIter iter;
+	GtkTreeModel *model;
+	gboolean retval = FALSE;
+
+	/* Up and Down are automatically managed by the treeview */
+	if (event->keyval == GDK_Return) {
+		/* Expand/Collapse the selected row */
+		selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (self));
+		if (gtk_tree_selection_get_selected (selection, &model, &iter)) {
+			GtkTreePath *path;
+
+			path = gtk_tree_model_get_path (model, &iter);
+
+			if (gtk_tree_view_row_expanded (GTK_TREE_VIEW (self), path))
+				gtk_tree_view_collapse_row (GTK_TREE_VIEW (self), path);
+			else
+				gtk_tree_view_expand_row (GTK_TREE_VIEW (self), path, FALSE);
+			gtk_tree_path_free (path);
+		}
+		/* No further processing */
+		retval = TRUE;
+	}
+
+	return retval;
 }
