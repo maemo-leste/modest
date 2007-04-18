@@ -1,4 +1,15 @@
-﻿# Copyright (C) 2006 Nokia Corporation# This is an intermediat localisation file generated from UI specification document "OSSO 1.1 E-mail UI Specification v1.1.doc" version "1.1"# This file will be used in creating the pot files for the following package(s): osso-email# mpoBuilder macro version: v.7.2# For further information, please contact: rami.abbad@nokia.com# # UI specification document name: OSSO 1.1 E-mail UI Specification v1.1.doc# UI specification version: 1.1# UI specification author: mox soini# Application package(s): osso-email# Date created: 13.4.2007 11:42:27msgid ""msgstr """Project-Id-Version: PACKAGE VERSION\n""Report-Msgid-Bugs-To: rami.abbad@nokia.com\n""POT-Creation-Date: YEAR.MO.DA HO:MI+ZONE\n""PO-Revision-Date: YEAR.MO.DA HO:MI+ZONE\n""Last-Translator:\n""Language-Team: Engineering English\n""MIME-Version: 1.0\n""Content-Type: text/plain; charset=UTF-8\n""Content-Transfer-Encoding: 8bit\n""Plural-Forms: nplurals=2; plural=n == 1 ? 0 : 1;\n"# Email application title
+# Copyright (C) 2006 Nokia Corporation
+# This is an intermediat localisation file generated from UI specification document "OSSO 1.1 E-mail UI Specification v1.1.doc" version "1.1"
+# This file will be used in creating the pot files for the following package(s): osso-email
+# mpoBuilder macro version: v.7.2
+# For further information, please contact: rami.abbad@nokia.com
+# 
+# UI specification document name: OSSO 1.1 E-mail UI Specification v1.1.doc
+# UI specification version: 1.1
+# UI specification author: mox soini
+# Application package(s): osso-email
+# Date created: 13.4.2007 11:42:27msgid ""msgstr """Project-Id-Version: PACKAGE VERSION\n""Report-Msgid-Bugs-To: rami.abbad@nokia.com\n""POT-Creation-Date: YEAR.MO.DA HO:MI+ZONE\n""PO-Revision-Date: YEAR.MO.DA HO:MI+ZONE\n""Last-Translator:\n""Language-Team: Engineering English\n""MIME-Version: 1.0\n""Content-Type: text/plain; charset=UTF-8\n""Content-Transfer-Encoding: 8bit\n""Plural-Forms: nplurals=2; plural=n == 1 ? 0 : 1;\n"
+# Email application title
 msgid "mcen_ap_name"
 msgstr "Email"
 
@@ -394,7 +405,7 @@ msgstr "Country"
 msgid "mcen_fi_serviceprovider"
 msgstr "Service provider"
 
-# field title# Mandatory field
+# field title# Mandatory field
 msgid "mcen_fi_account_title"
 msgstr "Account title"
 
@@ -410,7 +421,7 @@ msgstr "User details"
 msgid "mcen_li_emailsetup_name"
 msgstr "Name"
 
-# field title# Mandatory field
+# field title# Mandatory field
 msgid "mcen_li_emailsetup_email_address"
 msgstr "Email address"
 
@@ -434,7 +445,7 @@ msgstr "Incoming details"
 msgid "mcen_ia_emailsetup_account_type"
 msgstr "Note: Unable to edit account type once setup is complete"
 
-# Label1 where %s is the type of the mail server. # Mandatory field
+# Label1 where %s is the type of the mail server. # Mandatory field
 msgid "mcen_li_emailsetup_servertype"
 msgstr "Incoming server (%s)"
 
@@ -714,7 +725,7 @@ msgstr "Not available while retrieving message"
 msgid "mcen_ib_item_unavailable_plaintext"
 msgstr "Not available in plain text mode"
 
-# [MSG-NOT400]  "Unable to move message"# Dialog button in unable to move message information note (MSG-NOT267)
+# [MSG-NOT400]  "Unable to move message"# Dialog button in unable to move message information note (MSG-NOT267)
 msgid "emev_bd_unabletomove_items"
 msgstr "Unable to move %d items. Already in use."
 
@@ -758,7 +769,7 @@ msgstr "Get all"
 msgid "mcen_bd_newest_only"
 msgstr "Newest only"
 
-# "Lose formatting" confirmation note [MSG-NOT192]# follow the same confirmation note in Gagarin/OSSO Notes UI Specification, except use this logical string
+# "Lose formatting" confirmation note [MSG-NOT192]# follow the same confirmation note in Gagarin/OSSO Notes UI Specification, except use this logical string
 msgid "emev_nc_formatting_lost"
 msgstr "All current formatting will be removed.\nContinue anyway?"
 
@@ -770,15 +781,15 @@ msgstr "All changes made to the e-mail account settings will be lost. Continue a
 msgid "mail_nc_msg_count_limit_exceeded"
 msgstr "There are %d new messages on the server, but the limit is set to %d messages. Do you want to get all messages or just the newest mails up to the limit?"
 
-# MSG-NOT300: displayed if the user attempts to tap on the attachment icon for an IMAP e-mail that has retrieved the body text but not the attachments.# Merges previously plural confirmation note.
+# MSG-NOT300: displayed if the user attempts to tap on the attachment icon for an IMAP e-mail that has retrieved the body text but not the attachments.# Merges previously plural confirmation note.
 msgid "mail_nc_attachments_must_be_retrived"
 msgstr "Attachment(s) must be retrieved first. Retrieve now?"
 
-# MSG-NOT308 : "There are open windows. Close all email windows?" # If YES: Application and all open windows will be closed. If there is a open Editor view it will be closed too and the draft message will be saved to the Drafts folder.# If NO: Only the main Main view will be closed and all the possible email windows such as editors and viewers will stay open.
+# MSG-NOT308 : "There are open windows. Close all email windows?" # If YES: Application and all open windows will be closed. If there is a open Editor view it will be closed too and the draft message will be saved to the Drafts folder.# If NO: Only the main Main view will be closed and all the possible email windows such as editors and viewers will stay open.
 msgid "emev_nc_close_windows"
 msgstr "Several windows currently open. Close all e-mail windows?\nTap 'No' to close current view only."
 
-# MSG-NOT407: "No recipient has been added" # OK: Opens  "Select contacts" dialog [MSG-DIA001].
+# MSG-NOT407: "No recipient has been added" # OK: Opens  "Select contacts" dialog [MSG-DIA001].
 msgid "mcen_nc_recipient_missing"
 msgstr "No recipient has been added. Select one from Contacts?"
 
@@ -786,11 +797,11 @@ msgstr "No recipient has been added. Select one from Contacts?"
 msgid "emev_nc_delete_mailboximap"
 msgstr "Deleting this email account will remove all local copies of messages retrieved to this account's Inbox and IMAP folders. Delete anyway?"
 
-# MSG-NOT287 : "Delete account". Confirmation note, where %s is the <btdevicename># 
+# MSG-NOT287 : "Delete account". Confirmation note, where %s is the <btdevicename># 
 msgid "emev_nc_delete_mailbox"
 msgstr "Deleting this email account will remove all copies of messages retrieved to the %s Inbox. Delete anyway?"
 
-#  Confirmation note label when one message has been selected for deletion (WID-NOT107). # MSG-NOT408: "Delete message"# %s is the message subject/details. 
+#  Confirmation note label when one message has been selected for deletion (WID-NOT107). # MSG-NOT408: "Delete message"# %s is the message subject/details. 
 msgid "emev_nc_delete_message"
 msgid_plural "emev_nc_delete_messages"
 msgstr[0] "Delete message?\n%s"
@@ -799,7 +810,7 @@ msgstr[2] "Delete messages?"
 msgstr[3] "Delete messages?"
 msgstr[4] "Delete messages?"
 
-#  Label: Confirmation note label where %s is the filename of the selected attachment to be purged# MSG-NOT313: "Remove attachments"
+#  Label: Confirmation note label where %s is the filename of the selected attachment to be purged# MSG-NOT313: "Remove attachments"
 msgid "mcen_nc_purge_file_text"
 msgid_plural "mcen_nc_purge_files_text"
 msgstr[0] "This will remove attachment %s from message. Continue anyway?"
@@ -808,11 +819,11 @@ msgstr[2] "This will remove %d attachments from message. Continue anyway?"
 msgstr[3] "This will remove %d attachments from message. Continue anyway?"
 msgstr[4] "This will remove %d attachments from message. Continue anyway?"
 
-# Label: Confirmation note label is used when the number of messages is not yet known as in a case when message is not opened# MSG-NOT313: "Remove attachments"
+# Label: Confirmation note label is used when the number of messages is not yet known as in a case when message is not opened# MSG-NOT313: "Remove attachments"
 msgid "mcen_nc_purge_file_text_inbox"
 msgstr "This removes attachments from this message. Continue anyway?"
 
-#  Confirmation note label where %s is the filename of the selected attachment to be deleted# MSG-NOT203: "Remove attachment"
+#  Confirmation note label where %s is the filename of the selected attachment to be deleted# MSG-NOT203: "Remove attachment"
 msgid "emev_nc_delete_attachment"
 msgid_plural "emev_nc_delete_attachments"
 msgstr[0] "Remove attachment from message?\n%s"
@@ -825,19 +836,19 @@ msgstr[4] "Remove selected attachments from message?"
 msgid "emev_nc_disconnect_account"
 msgstr "Online editing of e-mail account will cause it to disconnect and will cancel any current operations. Continue anyway?"
 
-# MSG-NOT608: "Message modified. Save changes?"# 
+# MSG-NOT608: "Message modified. Save changes?"# 
 msgid "mcen_nc_no_email_message_modified_save_changes"
 msgstr "Message modified. Save changes?"
 
-# MSG-NOT405: "Message not local" when user attempts to  1) manipulate message that has not been fully downloaded (e.g. when the message is a header only) and the device is not connected to the appropriate mail server, or 2) move a message from Inbox to a folder that can store messages, which results attachments to be downloaded from server, or  3) forward a message that is not local.# This merges previously plural confirmation note.
+# MSG-NOT405: "Message not local" when user attempts to  1) manipulate message that has not been fully downloaded (e.g. when the message is a header only) and the device is not connected to the appropriate mail server, or 2) move a message from Inbox to a folder that can store messages, which results attachments to be downloaded from server, or  3) forward a message that is not local.# This merges previously plural confirmation note.
 msgid "mcen_nc_get_multi_msg_txt"
 msgstr "Content of message(s) must be retrieved first. Retrieve now?"
 
-# MSG-NOT701: "Email address not defined"# Label where %s is the name of the contact. If the name does not exist shows the nickname, or if that one does not exist either, shows the username (can be actually email address).
+# MSG-NOT701: "Email address not defined"# Label where %s is the name of the contact. If the name does not exist shows the nickname, or if that one does not exist either, shows the username (can be actually email address).
 msgid "mcen_nc_email_address_not_defined"
 msgstr "No e-mail address defined for contact %s.\nDefine one now?"
 
-# MSG-NOT191: "Delete folder"# when user attempts to delete a user-created folder. Label where %s is the name of the folder selected for deletion.
+# MSG-NOT191: "Delete folder"# when user attempts to delete a user-created folder. Label where %s is the name of the folder selected for deletion.
 msgid "mcen_nc_delete_folder_text"
 msgstr "Delete folder and its contents?\n%s"
 
@@ -907,55 +918,55 @@ msgstr "Nothing to find"
 msgid "mail_ib_file_operation_failed"
 msgstr "File error"
 
-# Information note: SMTP username not given (empty field) in the advanced settings in the SMTP server authentication page. The <mailboxname> is the email account name and <SMTP server> is the SMTP server address either the default SMTP server or the connection-specific server depending which one was used to send the message(s).  This error note has to appear only in the following scenarios:# Username has not been defined, but Password has been defined. - # Username and password has not been defined.# # This error note has to appear only for CRAM-MD5 only# # User can enter the username by tapping "OK" which opens: # 1) the Account settings with the SMTP page open in case the default SMTP server was used to send the message# 2) the "Connection specific SMTP server: %s" dialog [MSG-DIA407] in case the message was sent using the connection-specific SMTP server.
+# Information note: SMTP username not given (empty field) in the advanced settings in the SMTP server authentication page. The <mailboxname> is the email account name and <SMTP server> is the SMTP server address either the default SMTP server or the connection-specific server depending which one was used to send the message(s).  This error note has to appear only in the following scenarios:# Username has not been defined, but Password has been defined. - # Username and password has not been defined.# # This error note has to appear only for CRAM-MD5 only# # User can enter the username by tapping "OK" which opens: # 1) the Account settings with the SMTP page open in case the default SMTP server was used to send the message# 2) the "Connection specific SMTP server: %s" dialog [MSG-DIA407] in case the message was sent using the connection-specific SMTP server.
 msgid "emev_ni_ui_smtp_userid_invalid"
 msgstr "SMTP user name not defined. Edit e-mail account options for account %s and enter password for server %s."
 
-# Information note: SMTP password not given (empty field) in the advanced settings in the SMTP server authentication page or in the Connection-specific SMTP server dialog. The <mailboxname> is the email account name and <SMTP server> is the SMTP server address.# # User can enter the password by tapping "OK" which opens:# 1) the Account settings  with the SMTP page open in case the default SMTP server was used to send the message.# 2) the "Connection specific SMTP server: %s" dialog [MSG-DIA407] in case the message was sent using the connection-specific SMTP server.
+# Information note: SMTP password not given (empty field) in the advanced settings in the SMTP server authentication page or in the Connection-specific SMTP server dialog. The <mailboxname> is the email account name and <SMTP server> is the SMTP server address.# # User can enter the password by tapping "OK" which opens:# 1) the Account settings  with the SMTP page open in case the default SMTP server was used to send the message.# 2) the "Connection specific SMTP server: %s" dialog [MSG-DIA407] in case the message was sent using the connection-specific SMTP server.
 msgid "emev_ni_ui_smtp_passwd_invalid"
 msgstr "SMTP password not defined. Please edit mailbox options for mailbox %s and enter password for server %s."
 
-# Information banner: If wrong servername given in the Account setup wizard is wrong or cannot be contacted. This note can also be displayed if the current internet connection cannot access the SMTP server. The <SMTP server> is the SMTP server address. # # Email will not be sent and the messages will be sent on next connection.
+# Information banner: If wrong servername given in the Account setup wizard is wrong or cannot be contacted. This note can also be displayed if the current internet connection cannot access the SMTP server. The <SMTP server> is the SMTP server address. # # Email will not be sent and the messages will be sent on next connection.
 msgid "emev_ib_ui_smtp_server_invalid"
 msgstr "Unable to connect to SMTP server %s or it does not exist. Server may currently be unavailable. Check your network has access to server."
 
-# Information banner: Messages cannot be sent due to a Network/Server error. This is a general message for unspecified errors occuring during send operation.# # Email will not be sent and the messages will be sent on next connection. User has to retry to send messages.
+# Information banner: Messages cannot be sent due to a Network/Server error. This is a general message for unspecified errors occuring during send operation.# # Email will not be sent and the messages will be sent on next connection. User has to retry to send messages.
 msgid "emev_ib_ui_smtp_send_error"
 msgstr "SMTP send operation failed. Please try again later."
 
-# Information note: In the send and receive operation the authentication fails for some of these reasons: username or password not correct, user has no permission to access the server or the server does not support authentication. The <SMTP server> is the SMTP server address.# # Email will not be sent and the messages will be sent on next connection. User has to retry to send messages.
+# Information note: In the send and receive operation the authentication fails for some of these reasons: username or password not correct, user has no permission to access the server or the server does not support authentication. The <SMTP server> is the SMTP server address.# # Email will not be sent and the messages will be sent on next connection. User has to retry to send messages.
 msgid "emev_ni_ui_smtp_authentication_fail_error"
 msgstr "SMTP authentication failed. Check user name and password or that you have access to %s."
 
-# Information note: General connection error in Send & receive operation.# If the application cannot connect to the POP3 server this Note is displayed. The <POP3servername> is the name of the POP server. # # Messages will not be received from the server. The view where the send&receive operation was executed is displayed after user taps "OK".
+# Information note: General connection error in Send & receive operation.# If the application cannot connect to the POP3 server this Note is displayed. The <POP3servername> is the name of the POP server. # # Messages will not be received from the server. The view where the send&receive operation was executed is displayed after user taps "OK".
 msgid "emev_ni_ui_pop3_msg_connect_error"
 msgstr "Unable to establish connection to %s"
 
-# Information note: This error may occur when getting messages from the server in Send & receive operation. If the user has given wrong username or password this Note is displayed. Where the first %s is the email account name and second %s is the name of the POP server.# # User can enter the email settings page by tapping "OK" which opens the account settings dialog with server password and username page open.
+# Information note: This error may occur when getting messages from the server in Send & receive operation. If the user has given wrong username or password this Note is displayed. Where the first %s is the email account name and second %s is the name of the POP server.# # User can enter the email settings page by tapping "OK" which opens the account settings dialog with server password and username page open.
 msgid "emev_ib_ui_pop3_msg_auth_error"
 msgstr "Authentication to %s failed. Check e-mail account server settings for %s."
 
-# Information banner: This error may occur when getting messages from the server in Send & receive operation. User might be accessing the mail account from two applications. # # Receiving of messages is cancelled. User is required to close the other application and try accessing the account again after that.
+# Information banner: This error may occur when getting messages from the server in Send & receive operation. User might be accessing the mail account from two applications. # # Receiving of messages is cancelled. User is required to close the other application and try accessing the account again after that.
 msgid "emev_ib_ui_pop3_msg_lock_error"
 msgstr "Unable to access e-mail account. Another application may be using it."
 
-# Information note: This error may occur when trying to retrieve message body from the server. Two possible causes for this error are: message may not exist on the server or an error occurs when processing email messages. # # Receiving of messages is cancelled.
+# Information note: This error may occur when trying to retrieve message body from the server. Two possible causes for this error are: message may not exist on the server or an error occurs when processing email messages. # # Receiving of messages is cancelled.
 msgid "emev_ni_ui_pop3_msg_recv_error"
 msgstr "Error occurred while processing message.\nMessage may not exist on server."
 
-# Information banner: If the user canceled the connection process this Note is displayed. # # Sending & receiving of messages is cancelled. Messages will not be received or sent.
+# Information banner: If the user canceled the connection process this Note is displayed. # # Sending & receiving of messages is cancelled. Messages will not be received or sent.
 msgid "emev_ib_ui_pop3_msg_recv_cancel"
 msgstr "Session was cancelled by user"
 
-# Information banner: When retrieving messages and there are some lost packets in the transmission. # # User is advised to disable the SSL encryption and try retrieving messages again.  
+# Information banner: When retrieving messages and there are some lost packets in the transmission. # # User is advised to disable the SSL encryption and try retrieving messages again.  
 msgid "emev_ui_pop3_msg_socket_error"
 msgstr "Error in socket operation. If using SSL encrypted e-mail, disable SSL and try again."
 
-# Information note: If the POP server closes the connection this Note is displayed. # # If a connection was attempted it is canceled. Messages will not be received but this has no effect on the sending of the messages.
+# Information note: If the POP server closes the connection this Note is displayed. # # If a connection was attempted it is canceled. Messages will not be received but this has no effect on the sending of the messages.
 msgid "emev_ni_ui_pop3_msg_eof"
 msgstr "Connection terminated by e-mail server.\nMessage retrieval cancelled. Try connecting again."
 
-# Information note: While retrieving message that was too big. Email application has reached the message size limit. User should configure a bigger size limit to download the message. # # Retrieving of the messages is attempted and if the limit is reached email headers only are fetched. User has to re-configure the message size limit to retrieve the message.
+# Information note: While retrieving message that was too big. Email application has reached the message size limit. User should configure a bigger size limit to download the message. # # Retrieving of the messages is attempted and if the limit is reached email headers only are fetched. User has to re-configure the message size limit to retrieve the message.
 msgid "emev_ni_ui_pop3_msg_sizelimit_error"
 msgstr "Some messages exceed the size limit. Unable to retrieve those messages. Change message size limit."
 
@@ -971,11 +982,11 @@ msgstr "Unable to connect to %s. User name, password, server name or port number
 msgid "emev_ib_ui_imap_uid_fetch_error"
 msgstr "Unable to fetch message body"
 
-# Information banner: This can happen when retrieving messages. The Server is unable to retrieve messages from inbox. Restarting appl is the only possible way to recover# # Retrieval process is cancelled and the user is advised to restart the application and try again.
+# Information banner: This can happen when retrieving messages. The Server is unable to retrieve messages from inbox. Restarting appl is the only possible way to recover# # Retrieval process is cancelled and the user is advised to restart the application and try again.
 msgid "emev_ui_imap_inbox_select_error"
 msgstr "Unable to select server Inbox. Restart application and try again."
 
-# Information banner: If the message is deleted locally and it is attempted to be deleted also from the server. # # Message is not deleted from the server, but it will remain indicated with deletion icon on the message list. Message deletion will be attempted at next connection.
+# Information banner: If the message is deleted locally and it is attempted to be deleted also from the server. # # Message is not deleted from the server, but it will remain indicated with deletion icon on the message list. Message deletion will be attempted at next connection.
 msgid "emev_ib_ui_imap_flag_set_error"
 msgstr "Unable to delete some messages on server. Try again later."
 
@@ -983,7 +994,7 @@ msgstr "Unable to delete some messages on server. Try again later."
 msgid "emev_ni_ui_imap_msg_size_exceed_error"
 msgstr "Some messages exceed the size limit. Unable to retrieve those messages. Change message size limit."
 
-# MSG-INF501: Information note: If the user attempts to download a message that was deleted from the server. The <messagesubject> is the message subject. # # After user taps "OK" the application tries to download messages that can be downloaded. If the message is deleted in server, it will be removed from Main view.
+# MSG-INF501: Information note: If the user attempts to download a message that was deleted from the server. The <messagesubject> is the message subject. # # After user taps "OK" the application tries to download messages that can be downloaded. If the message is deleted in server, it will be removed from Main view.
 msgid "emev_ni_ui_imap_message_not_available_in_server"
 msgstr "Message %s not available on server."
 
