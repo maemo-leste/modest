@@ -236,6 +236,9 @@ modest_header_view_set_columns (ModestHeaderView *self, const GList *columns)
 	renderer_comptact_flag  = gtk_cell_renderer_pixbuf_new ();
 	renderer_compact_date  = gtk_cell_renderer_text_new ();
 
+	g_object_set(G_OBJECT(renderer_header),
+		     "ellipsize", PANGO_ELLIPSIZE_END,
+		     NULL);
 	g_object_set(G_OBJECT(renderer_compact_date),
 		     "xalign", 1.0,
 		     NULL);
@@ -328,19 +331,21 @@ modest_header_view_set_columns (ModestHeaderView *self, const GList *columns)
 			break;
 			
 		case MODEST_HEADER_VIEW_COLUMN_RECEIVED_DATE:
-			column = get_new_column (_("Received"), renderer_compact_date, TRUE,
+			column = get_new_column (_("Received"), renderer_compact_date, FALSE,
 						 TNY_GTK_HEADER_LIST_MODEL_DATE_RECEIVED_TIME_T_COLUMN,
 						 TRUE,
 						 (GtkTreeCellDataFunc)_modest_header_view_date_cell_data,
 						 GINT_TO_POINTER(TRUE));
+			gtk_tree_view_column_set_fixed_width (column, 130);
 			break;
 			
 		case MODEST_HEADER_VIEW_COLUMN_SENT_DATE:					      
-			column = get_new_column (_("Sent"), renderer_compact_date, TRUE,
+			column = get_new_column (_("Sent"), renderer_compact_date, FALSE,
 						 TNY_GTK_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN,
 						 TRUE,
 						 (GtkTreeCellDataFunc)_modest_header_view_date_cell_data,
 						 GINT_TO_POINTER(FALSE));
+			gtk_tree_view_column_set_fixed_width (column, 130);
 			break;
 			
 		case MODEST_HEADER_VIEW_COLUMN_SIZE:

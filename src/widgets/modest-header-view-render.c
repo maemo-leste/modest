@@ -36,6 +36,25 @@
 #include <modest-platform.h>
 
 
+static gchar *
+_pango_parse_string (const gchar *string) {
+	gchar **tmp = NULL;	
+	gchar *parsed_string = NULL;
+	gchar *tmp_string = NULL;
+	guint i = 0;
+
+	tmp = g_strsplit(string, "&", 0);
+	parsed_string = g_strdup(tmp[i]);
+	for (i = 1; tmp[i] != NULL; i++) {
+		tmp_string = g_strconcat (parsed_string, "&amp;", tmp[i], NULL);
+		g_free(parsed_string);
+		parsed_string = g_strdup(tmp_string);
+	} 
+
+	return parsed_string;
+}
+
+
 static GdkPixbuf*
 get_pixbuf_for_flag (TnyHeaderFlags flag)
 {
@@ -66,7 +85,7 @@ get_pixbuf_for_flag (TnyHeaderFlags flag)
 }
 
 static GdkPixbuf*
-get_pixbuf_for_compact_flag (TnyHeaderFlags flag)
+get_pixbuf_for_compact_flag (TnyHeaderFlags flags)
 {
 	/* optimization */
 	static GdkPixbuf *high_attachments_pixbuf   = NULL;
@@ -75,13 +94,13 @@ get_pixbuf_for_compact_flag (TnyHeaderFlags flag)
 	static GdkPixbuf *high_pixbuf               = NULL;
 	static GdkPixbuf *low_pixbuf                = NULL;
 	
-	if (flag & TNY_HEADER_FLAG_ATTACHMENTS) {
-		if (flag & TNY_HEADER_FLAG_HIGH_PRIORITY) {
+	if (flags & TNY_HEADER_FLAG_ATTACHMENTS) {
+		if (flags & TNY_HEADER_FLAG_HIGH_PRIORITY) {
 			if (G_UNLIKELY(!high_attachments_pixbuf))
 				high_attachments_pixbuf = modest_platform_get_icon (MODEST_HEADER_ICON_ATTACH_HIGH_PRIORITY);
 			return high_attachments_pixbuf;
 		}
-		else if (flag & TNY_HEADER_FLAG_LOW_PRIORITY) {
+		else if (flags & TNY_HEADER_FLAG_LOW_PRIORITY) {
 			if (G_UNLIKELY(!low_attachments_pixbuf))
 				low_attachments_pixbuf = modest_platform_get_icon (MODEST_HEADER_ICON_ATTACH_LOW_PRIORITY);
 			return low_attachments_pixbuf;
@@ -92,12 +111,12 @@ get_pixbuf_for_compact_flag (TnyHeaderFlags flag)
 			return normal_attachments_pixbuf;
 		}
 	}
-	else if (flag & TNY_HEADER_FLAG_HIGH_PRIORITY) {
+	else if (flags & TNY_HEADER_FLAG_HIGH_PRIORITY) {
 		if (G_UNLIKELY(!high_pixbuf))
 			high_pixbuf = modest_platform_get_icon (MODEST_HEADER_ICON_HIGH_PRIORITY);
 		return high_pixbuf;
 	}
-	else if (flag & TNY_HEADER_FLAG_LOW_PRIORITY) {
+	else if (flags & TNY_HEADER_FLAG_LOW_PRIORITY) {
 		if (G_UNLIKELY(!low_pixbuf))
 			low_pixbuf = modest_platform_get_icon (MODEST_HEADER_ICON_LOW_PRIORITY);
 		return low_pixbuf;
@@ -161,7 +180,6 @@ _modest_header_view_compact_flag_cell_data (GtkTreeViewColumn *column, GtkCellRe
 	gtk_tree_model_get (tree_model, iter, TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN,
 			    &flags, -1);
 
-	flags = TNY_HEADER_FLAG_ATTACHMENTS;
 	if (flags & TNY_HEADER_FLAG_ATTACHMENTS) {
 		if (flags & TNY_HEADER_FLAG_HIGH_PRIORITY) 
 			g_object_set (G_OBJECT (renderer), "pixbuf",
@@ -266,7 +284,8 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 {
 	GObject *rendobj;
 	TnyHeaderFlags flags;
-	gchar *address, *subject, *header;
+	gchar *address, *subject, *header, *display_address;
+	gchar *parsed_address, *parsed_subject;
 	time_t date;
 	gboolean is_incoming;
 
@@ -289,19 +308,22 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 				    -1);
 	
 	rendobj = G_OBJECT(renderer);
-	if (flags & TNY_HEADER_FLAG_SEEN)
-		header = g_strdup_printf ("<b>%s</b>\n<small>%s</small>",
-					  subject,
-					  modest_text_utils_get_display_address (address));
-	else
-		header = g_strdup_printf ("<i>%s</i>\n<small>%s</small>",
-					  subject,
-					  modest_text_utils_get_display_address (address));
+	
+	/* Escape special characteres to allow pango makup`*/
+	display_address = modest_text_utils_get_display_address (address);
+	parsed_address = _pango_parse_string (display_address);
+	parsed_subject = _pango_parse_string (subject);
+
+	header = g_strdup_printf ("%s\n<small>%s</small>",
+				  parsed_subject,
+				  parsed_address);
 	g_free (address);
 	g_free (subject);
-	
-	g_object_set (G_OBJECT(renderer), "markup", header, NULL);	
-/* 	set_common_flags (renderer, flags); */
+	g_free(parsed_subject);
+	g_free(parsed_address);
+
+	g_object_set (rendobj, "markup", header, NULL);	
+	set_common_flags (renderer, flags);
 	
 	g_free (header);
 }
@@ -351,3 +373,4 @@ _modest_header_view_status_cell_data  (GtkTreeViewColumn *column,  GtkCellRender
 
 	g_free (status_str);
  }
+
