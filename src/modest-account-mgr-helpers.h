@@ -138,7 +138,7 @@ gboolean modest_account_mgr_set_enabled (ModestAccountMgr *self, const gchar* na
 gboolean modest_account_mgr_get_enabled (ModestAccountMgr *self, const gchar* name);
 
 /**
- * modest_server_account_get_option_secure_auth:
+ * modest_server_account_get_secure_auth:
  * @self: a ModestAccountMgr instance
  * @account_name: The name of a server account.
  *
@@ -147,10 +147,10 @@ gboolean modest_account_mgr_get_enabled (ModestAccountMgr *self, const gchar* na
  * Returns: The secure authentication enum value.
  */
 ModestProtocol
-modest_server_account_get_option_secure_auth (ModestAccountMgr *self, const gchar* account_name);
+modest_server_account_get_secure_auth (ModestAccountMgr *self, const gchar* account_name);
 
 /**
- * modest_server_account_data_get_option_secure_auth:
+ * modest_server_account_data_get_secure_auth:
  * @self: a ModestAccountMgr instance
  * @account_name: The name of a server account.
  * @secure_auth: The secure authentication enum value.
@@ -158,31 +158,33 @@ modest_server_account_get_option_secure_auth (ModestAccountMgr *self, const gcha
  * Gets the secure authentication method for this server account.
  */
 void
-modest_server_account_set_option_secure_auth (ModestAccountMgr *self, const gchar* account_name, 
+modest_server_account_set_secure_auth (ModestAccountMgr *self, const gchar* account_name, 
 	ModestProtocol secure_auth);
 	
 /**
- * modest_server_account_data_get_option_security:
- * @account_data: a ModestAccountData instance.
+ * modest_server_account_data_get_security:
+ * @self: a ModestAccountMgr instance
+ * @account_name: The name of a server account.
  *
  * Gets the security method for this server account.
  *
  * Returns: The security enum value.
  */
 ModestProtocol
-modest_server_account_data_get_option_security (ModestServerAccountData *account_data);
+modest_server_account_get_security (ModestAccountMgr *self, const gchar* account_name);
 
 /**
- * modest_server_account_set_option_security:
+ * modest_server_account_set_security:
  * @self: a ModestAccountMgr instance
  * @secure_auth: The security enum value.
  *
  * Gets the security method for this server account.
  */
 void
-modest_server_account_set_option_security (ModestAccountMgr *self, const gchar* account_name, 
+modest_server_account_set_security (ModestAccountMgr *self, const gchar* account_name, 
 	ModestProtocol security);
 
+#if 0
 /**
  * modest_account_mgr_get_account_option:
  * @self: a ModestAccountMgr instance
@@ -201,7 +203,7 @@ gchar* modest_account_mgr_get_server_account_option (ModestAccountMgr *self,
  *
  * Returns: The account option value. This must be freed with g_free().
  */
-gchar* modest_server_account_data_get_option_value (GSList* options_list, const gchar* option_name);
+gchar* modest_server_account_data_get_option_string (GSList* options_list, const gchar* option_name);
 
 /**
  * modest_server_account_data_get_option_bool:
@@ -211,7 +213,7 @@ gchar* modest_server_account_data_get_option_value (GSList* options_list, const 
  * Returns: Whether the account option is present.
  */
 gboolean modest_server_account_data_get_option_bool (GSList* options_list, const gchar* option_name);
-
+#endif
 
 /**
  * modest_account_mgr_get_from_string

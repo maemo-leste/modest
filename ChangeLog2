@@ -1,5 +1,22 @@
 2007-04-18  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-defs.h:
+
+	* src/modest-account-mgr-helpers.h:
+	* src/modest-account-mgr-helpers.c:
+	Store the security account setting in a single conf key instead of using 
+	the options list, so that the list is left for just the to-be-removed camel hack, 
+	and because gconf_client_set_list() is failing for some reason.
+
+	* src/modest-account-mgr.c:
+	(modest_account_mgr_add_server_account):
+	* src/maemo/modest-account-settings-dialog.c:
+	(modest_account_settings_dialog_set_account_name),
+	(save_configuration): Use the renamed functions.
+
+
+2007-04-18  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/widgets/Makefile.am:
 	* src/widgets/modest-limit-retrieve-combo-box.c:
 	* src/widgets/modest-limit-retrieve-combo-box.h:

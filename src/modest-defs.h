@@ -121,16 +121,16 @@
 
 #define MODEST_ACCOUNT_LIMIT_RETRIEVE	 "limit-retrieve"	     /* int */
 
-/* Keys and values used in the text items in the options GSList: */
-#define MODEST_ACCOUNT_OPTION_SECURITY "security"
-#define MODEST_ACCOUNT_OPTION_SECURITY_VALUE_NONE "none"
-#define MODEST_ACCOUNT_OPTION_SECURITY_VALUE_NORMAL "normal"
-#define MODEST_ACCOUNT_OPTION_SECURITY_VALUE_SSL "ssl"
+#define MODEST_ACCOUNT_SECURITY "security"
+#define MODEST_ACCOUNT_SECURITY_VALUE_NONE "none"
+#define MODEST_ACCOUNT_SECURITY_VALUE_NORMAL "normal"
+#define MODEST_ACCOUNT_SECURITY_VALUE_SSL "ssl"
 
 
 /* Options keys that correspond directly to camel options.
  * These probably should not be written to user configuration, 
  * because they are specific API implementation details. */
+/* Keys and values used in the text items in the options GSList: */
 #define MODEST_ACCOUNT_OPTION_SSL "use_ssl"
 #define MODEST_ACCOUNT_OPTION_SSL_NEVER "never"
 #define MODEST_ACCOUNT_OPTION_SSL_ALWAYS "always"

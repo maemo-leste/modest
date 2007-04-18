@@ -867,7 +867,7 @@ void modest_account_settings_dialog_set_account_name (ModestAccountSettingsDialo
 		gtk_entry_set_text( GTK_ENTRY (dialog->entry_incomingserver), 
 			incoming_account->hostname ? incoming_account->hostname : "");
 			
-		const ModestProtocol secure_auth = modest_server_account_get_option_secure_auth(
+		const ModestProtocol secure_auth = modest_server_account_get_secure_auth(
 			dialog->account_manager, incoming_account->account_name);
 		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (dialog->checkbox_incoming_auth), 
 			secure_auth == MODEST_PROTOCOL_AUTH_PASSWORD);
@@ -875,7 +875,8 @@ void modest_account_settings_dialog_set_account_name (ModestAccountSettingsDialo
 		update_incoming_server_title (dialog, incoming_account->proto);
 		update_incoming_server_security_choices (dialog, incoming_account->proto);
 		
-		const ModestProtocol security = modest_server_account_data_get_option_security (incoming_account);
+		const ModestProtocol security = modest_server_account_get_security (
+			dialog->account_manager, incoming_account->account_name);
 		easysetup_serversecurity_combo_box_set_active_serversecurity (
 			EASYSETUP_SERVERSECURITY_COMBO_BOX (dialog->combo_incoming_security), security);
 		
@@ -906,7 +907,7 @@ void modest_account_settings_dialog_set_account_name (ModestAccountSettingsDialo
 			outgoing_account->password ? outgoing_account->password : "");
 		
 		/* Get the secure-auth setting: */
-		const ModestProtocol secure_auth = modest_server_account_get_option_secure_auth(
+		const ModestProtocol secure_auth = modest_server_account_get_secure_auth(
 			dialog->account_manager, outgoing_account->account_name);
 		easysetup_secureauth_combo_box_set_active_secureauth (
 			EASYSETUP_SECUREAUTH_COMBO_BOX (dialog->combo_outgoing_auth), secure_auth);
@@ -916,7 +917,8 @@ void modest_account_settings_dialog_set_account_name (ModestAccountSettingsDialo
 			EASYSETUP_SERVERSECURITY_COMBO_BOX (dialog->combo_outgoing_security), outgoing_account->proto);
 		
 		/* Get the security setting: */
-		const ModestProtocol security = modest_server_account_data_get_option_security (outgoing_account);
+		const ModestProtocol security = modest_server_account_get_security (
+			dialog->account_manager, outgoing_account->account_name);
 		easysetup_serversecurity_combo_box_set_active_serversecurity (
 			EASYSETUP_SERVERSECURITY_COMBO_BOX (dialog->combo_outgoing_security), security);
 		
@@ -999,11 +1001,11 @@ save_configuration (ModestAccountSettingsDialog *dialog)
 		(GTK_TOGGLE_BUTTON (dialog->checkbox_incoming_auth)) 
 			? MODEST_PROTOCOL_AUTH_PASSWORD
 			: MODEST_PROTOCOL_AUTH_NONE;
-	modest_server_account_set_option_secure_auth (dialog->account_manager, incoming_account_name, protocol_authentication_incoming);
+	modest_server_account_set_secure_auth (dialog->account_manager, incoming_account_name, protocol_authentication_incoming);
 			
 	const ModestProtocol protocol_security_incoming = easysetup_serversecurity_combo_box_get_active_serversecurity (
 		EASYSETUP_SERVERSECURITY_COMBO_BOX (dialog->combo_incoming_security));
-	modest_server_account_set_option_security (dialog->account_manager, incoming_account_name, protocol_security_incoming);
+	modest_server_account_set_security (dialog->account_manager, incoming_account_name, protocol_security_incoming);
 	
 	/* port: */
 	const gchar* port_str = gtk_entry_get_text (GTK_ENTRY (dialog->entry_incoming_port));
@@ -1040,11 +1042,11 @@ save_configuration (ModestAccountSettingsDialog *dialog)
 	
 	const ModestProtocol protocol_security_outgoing = easysetup_serversecurity_combo_box_get_active_serversecurity (
 		EASYSETUP_SERVERSECURITY_COMBO_BOX (dialog->combo_outgoing_security));
-	modest_server_account_set_option_security (dialog->account_manager, outgoing_account_name, protocol_security_outgoing);
+	modest_server_account_set_security (dialog->account_manager, outgoing_account_name, protocol_security_outgoing);
 	
 	const ModestProtocol protocol_authentication_outgoing = easysetup_secureauth_combo_box_get_active_secureauth (
 		EASYSETUP_SECUREAUTH_COMBO_BOX (dialog->combo_outgoing_auth));
-	modest_server_account_set_option_secure_auth (dialog->account_manager, outgoing_account_name, protocol_authentication_outgoing);	
+	modest_server_account_set_secure_auth (dialog->account_manager, outgoing_account_name, protocol_authentication_outgoing);	
 		
 	/* port: */
 	port_str = gtk_entry_get_text (GTK_ENTRY (dialog->entry_outgoing_port));

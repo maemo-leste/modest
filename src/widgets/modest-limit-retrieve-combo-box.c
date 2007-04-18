@@ -84,7 +84,7 @@ enum MODEL_COLS {
 	MODEL_COL_NUM = 1 /* an int */
 };
 
-void modest_limit_retrieve_combo_box_fill (ModestLimitRetrieveComboBox *combobox);
+static void modest_limit_retrieve_combo_box_fill (ModestLimitRetrieveComboBox *combobox);
 
 static void
 modest_limit_retrieve_combo_box_init (ModestLimitRetrieveComboBox *self)
@@ -121,7 +121,7 @@ modest_limit_retrieve_combo_box_new (void)
  * #combobox: The combo box.
  * @protocol: IMAP or POP.
  */
-void modest_limit_retrieve_combo_box_fill (ModestLimitRetrieveComboBox *combobox)
+static void modest_limit_retrieve_combo_box_fill (ModestLimitRetrieveComboBox *combobox)
 {	
 	ModestLimitRetrieveComboBoxPrivate *priv = LIMIT_RETRIEVE_COMBO_BOX_GET_PRIVATE (combobox);
 	

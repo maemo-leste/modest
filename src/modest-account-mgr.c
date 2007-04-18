@@ -441,7 +441,7 @@ modest_account_mgr_add_server_account (ModestAccountMgr * self,
 		
 		
 		/* Add the security settings: */
-		modest_server_account_set_option_security (self, name, security);
+		modest_server_account_set_security (self, name, security);
 	}
 
 cleanup:
