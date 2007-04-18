@@ -22,6 +22,8 @@
 #include "maemo/easysetup/modest-easysetup-serversecurity-combo-box.h"
 #include "maemo/easysetup/modest-easysetup-secureauth-combo-box.h"
 #include "maemo/easysetup/modest-validating-entry.h"
+#include "widgets/modest-retrieve-combo-box.h"
+#include "widgets/modest-limit-retrieve-combo-box.h"
 #include "modest-text-utils.h"
 #include "modest-account-mgr.h"
 #include "modest-account-mgr-helpers.h" /* For modest_account_mgr_get_account_data(). */
@@ -213,8 +215,22 @@ create_page_account_details (ModestAccountSettingsDialog *self)
 	 * TODO: The UI spec seems to want us to show a dialog if we hit the maximum. */
 	gtk_entry_set_max_length (GTK_ENTRY (self->entry_account_title), 64);
 	
-	/* TODO: The Retrieve and Limit Retrieve combo boxes. */
+	/* The retrieve combobox: */
+	self->combo_retrieve = GTK_WIDGET (modest_retrieve_combo_box_new ());
+	caption = create_caption_new_with_asterix (self, sizegroup, _("mcen_fi_advsetup_retrievetype"), 
+		self->combo_retrieve, NULL, HILDON_CAPTION_MANDATORY);
+	gtk_widget_show (self->combo_retrieve);
+	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, 2);
+	gtk_widget_show (caption);
 	
+	/* The limit-retrieve combobox: */
+	self->combo_limit_retrieve = GTK_WIDGET (modest_limit_retrieve_combo_box_new ());
+	caption = create_caption_new_with_asterix (self, sizegroup, _("mcen_fi_advsetup_limit_retrieve"), 
+		self->combo_limit_retrieve, NULL, HILDON_CAPTION_MANDATORY);
+	gtk_widget_show (self->combo_limit_retrieve);
+	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, 2);
+	gtk_widget_show (caption);
+
 	/* The leave-messages widgets: */
 	if(!self->checkbox_leave_messages)
 		self->checkbox_leave_messages = 
@@ -812,11 +828,36 @@ void modest_account_settings_dialog_set_account_name (ModestAccountSettingsDialo
 	gtk_entry_set_text( GTK_ENTRY (dialog->entry_user_email), 
 		account_data->email ? account_data->email : "");
 		
+	ModestServerAccountData *incoming_account = account_data->store_account;
+		
+	if (incoming_account)
+		modest_retrieve_combo_box_fill (MODEST_RETRIEVE_COMBO_BOX (dialog->combo_retrieve), incoming_account->proto);
+	gchar *retrieve = modest_account_mgr_get_string (dialog->account_manager, account_name,
+		MODEST_ACCOUNT_RETRIEVE, FALSE /* not server account */);
+	if (!retrieve) {
+		/* Default to something, though no default is specified in the UI spec: */
+		retrieve = g_strdup (MODEST_ACCOUNT_RETRIEVE_VALUE_HEADERS_ONLY);
+	}
+	modest_retrieve_combo_box_set_active_retrieve_conf (MODEST_RETRIEVE_COMBO_BOX (dialog->combo_retrieve), retrieve);
+	g_free (retrieve);
+	
+	const gint limit_retrieve = modest_account_mgr_get_int (dialog->account_manager, account_name,
+		MODEST_ACCOUNT_LIMIT_RETRIEVE, FALSE /* not server account */);
+	modest_limit_retrieve_combo_box_set_active_limit_retrieve (MODEST_LIMIT_RETRIEVE_COMBO_BOX (dialog->combo_limit_retrieve), limit_retrieve);
+	
+	
 	const gboolean leave_on_server = modest_account_mgr_get_bool (dialog->account_manager, account_name,
 		MODEST_ACCOUNT_LEAVE_ON_SERVER, FALSE /* not server account */);
 	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (dialog->checkbox_leave_messages), leave_on_server);	
+	
+	/* Only show the leave-on-server checkbox for POP, 
+	 * as per the UI spec: */
+	if (incoming_account->proto != MODEST_PROTOCOL_STORE_POP) {
+		gtk_widget_hide (dialog->checkbox_leave_messages);
+	} else {
+		gtk_widget_show (dialog->checkbox_leave_messages);
+	}
 		
-	ModestServerAccountData *incoming_account = account_data->store_account;
 	if (incoming_account) {
 		gtk_entry_set_text( GTK_ENTRY (dialog->entry_user_username),
 			incoming_account->username ? incoming_account->username : "");
@@ -826,7 +867,8 @@ void modest_account_settings_dialog_set_account_name (ModestAccountSettingsDialo
 		gtk_entry_set_text( GTK_ENTRY (dialog->entry_incomingserver), 
 			incoming_account->hostname ? incoming_account->hostname : "");
 			
-		const ModestProtocol secure_auth = modest_server_account_data_get_option_secure_auth(incoming_account);
+		const ModestProtocol secure_auth = modest_server_account_get_option_secure_auth(
+			dialog->account_manager, incoming_account->account_name);
 		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (dialog->checkbox_incoming_auth), 
 			secure_auth == MODEST_PROTOCOL_AUTH_PASSWORD);
 			
@@ -864,7 +906,8 @@ void modest_account_settings_dialog_set_account_name (ModestAccountSettingsDialo
 			outgoing_account->password ? outgoing_account->password : "");
 		
 		/* Get the secure-auth setting: */
-		const ModestProtocol secure_auth = modest_server_account_data_get_option_secure_auth(outgoing_account);
+		const ModestProtocol secure_auth = modest_server_account_get_option_secure_auth(
+			dialog->account_manager, outgoing_account->account_name);
 		easysetup_secureauth_combo_box_set_active_secureauth (
 			EASYSETUP_SECUREAUTH_COMBO_BOX (dialog->combo_outgoing_auth), secure_auth);
 		on_combo_outgoing_auth_changed (GTK_COMBO_BOX (dialog->combo_outgoing_auth), dialog);
@@ -911,6 +954,17 @@ save_configuration (ModestAccountSettingsDialog *dialog)
 		MODEST_ACCOUNT_EMAIL, emailaddress, FALSE /* not server account */);
 	if (!test)
 		return FALSE;
+	
+	gchar *retrieve = modest_retrieve_combo_box_get_active_retrieve_conf (
+		MODEST_RETRIEVE_COMBO_BOX (dialog->combo_retrieve));
+	modest_account_mgr_set_string (dialog->account_manager, account_name,
+		MODEST_ACCOUNT_RETRIEVE, retrieve, FALSE /* not server account */);
+	g_free (retrieve);
+	
+	const gint limit_retrieve = modest_limit_retrieve_combo_box_get_active_limit_retrieve (
+		MODEST_LIMIT_RETRIEVE_COMBO_BOX (dialog->combo_limit_retrieve));
+	modest_account_mgr_set_int (dialog->account_manager, account_name,
+		MODEST_ACCOUNT_LIMIT_RETRIEVE, limit_retrieve, FALSE /* not server account */);
 	
 	const gboolean leave_on_server = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (dialog->checkbox_leave_messages));
 	test = modest_account_mgr_set_bool (dialog->account_manager, account_name,

@@ -440,9 +440,8 @@ modest_account_mgr_add_server_account (ModestAccountMgr * self,
 		g_free (key);
 		
 		
-		/* Add the security and secure-auth settings: */
+		/* Add the security settings: */
 		modest_server_account_set_option_security (self, name, security);
-		modest_server_account_set_option_secure_auth (self, name, auth);
 	}
 
 cleanup:

@@ -108,14 +108,20 @@
 #define MODEST_ACCOUNT_PREFERRED_CNX     "preferred_cnx"     /* string */
 #define MODEST_ACCOUNT_PORT		         "port"	             /* int */
 #define MODEST_ACCOUNT_OPTIONS		 "options"	     /* list */
+
 #define MODEST_ACCOUNT_AUTH_MECH	 "auth_mech"	     /* string */
+#define MODEST_ACCOUNT_AUTH_MECH_VALUE_NONE "none"
+#define MODEST_ACCOUNT_AUTH_MECH_VALUE_PASSWORD "password"
+#define MODEST_ACCOUNT_AUTH_MECH_VALUE_CRAMMD5 "cram-md5"
+
+#define MODEST_ACCOUNT_RETRIEVE	 "retrieve"	     /* string */
+#define MODEST_ACCOUNT_RETRIEVE_VALUE_HEADERS_ONLY "headers-only"
+#define MODEST_ACCOUNT_RETRIEVE_VALUE_MESSAGES "messages"
+#define MODEST_ACCOUNT_RETRIEVE_VALUE_MESSAGES_AND_ATTACHMENTS "messages-and-attachments"
+
+#define MODEST_ACCOUNT_LIMIT_RETRIEVE	 "limit-retrieve"	     /* int */
 
 /* Keys and values used in the text items in the options GSList: */
-#define MODEST_ACCOUNT_OPTION_SECURE_AUTH "secure_auth"
-#define MODEST_ACCOUNT_OPTION_SECURE_AUTH_VALUE_NONE "none"
-#define MODEST_ACCOUNT_OPTION_SECURE_AUTH_VALUE_PASSWORD "password"
-#define MODEST_ACCOUNT_OPTION_SECURE_AUTH_VALUE_CRAMMD5 "cram-md5"
-
 #define MODEST_ACCOUNT_OPTION_SECURITY "security"
 #define MODEST_ACCOUNT_OPTION_SECURITY_VALUE_NONE "none"
 #define MODEST_ACCOUNT_OPTION_SECURITY_VALUE_NORMAL "normal"

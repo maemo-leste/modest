@@ -120,17 +120,18 @@ modest_server_account_data_get_option_bool (GSList* options_list, const gchar* o
 }
 
 ModestProtocol
-modest_server_account_data_get_option_secure_auth (ModestServerAccountData *account_data)
+modest_server_account_get_option_secure_auth (ModestAccountMgr *self, 
+	const gchar* account_name)
 {
 	ModestProtocol result = MODEST_PROTOCOL_AUTH_NONE;
-	gchar* value = modest_server_account_data_get_option_value (account_data->options, 
-		MODEST_ACCOUNT_OPTION_SECURE_AUTH);
+	gchar* value =modest_account_mgr_get_string (self, account_name, MODEST_ACCOUNT_AUTH_MECH, 
+		TRUE /* server account */);
 	if (value) {
-		if (strcmp(value, MODEST_ACCOUNT_OPTION_SECURE_AUTH_VALUE_NONE) == 0)
+		if (strcmp(value, MODEST_ACCOUNT_AUTH_MECH_VALUE_NONE) == 0)
 			result = MODEST_PROTOCOL_AUTH_NONE;
-		else if (strcmp(value, MODEST_ACCOUNT_OPTION_SECURE_AUTH_VALUE_PASSWORD) == 0)
+		else if (strcmp(value, MODEST_ACCOUNT_AUTH_MECH_VALUE_PASSWORD) == 0)
 			result = MODEST_PROTOCOL_AUTH_PASSWORD;
-		else if (strcmp(value, MODEST_ACCOUNT_OPTION_SECURE_AUTH_VALUE_CRAMMD5) == 0)
+		else if (strcmp(value, MODEST_ACCOUNT_AUTH_MECH_VALUE_CRAMMD5) == 0)
 			result = MODEST_PROTOCOL_AUTH_CRAMMD5;
 			
 		g_free (value);
@@ -143,38 +144,17 @@ void
 modest_server_account_set_option_secure_auth (ModestAccountMgr *self, 
 	const gchar* account_name, ModestProtocol secure_auth)
 {
-	GSList *options_list = modest_account_mgr_get_list (self, account_name, MODEST_ACCOUNT_OPTIONS,
-						     MODEST_CONF_VALUE_STRING, TRUE);
-	if(options_list) {
-		/* Remove the item if it exists already: */
-		GSList* option = NULL;
-		do {
-			option = g_slist_find_custom(options_list, MODEST_ACCOUNT_OPTION_SECURE_AUTH, (GCompareFunc)compare_option_strings_for_name);
-			if(option)
-				options_list = g_slist_remove (options_list, option->data);
-		} while (option);
-	}					     
-	
-	/* Add the new item to the list: */
+	/* Get the conf string for the enum value: */
 	const gchar* str_value = NULL;
 	if (secure_auth == MODEST_PROTOCOL_AUTH_NONE)
-		str_value = MODEST_ACCOUNT_OPTION_SECURE_AUTH_VALUE_NONE;
+		str_value = MODEST_ACCOUNT_AUTH_MECH_VALUE_NONE;
 	else if (secure_auth == MODEST_PROTOCOL_AUTH_PASSWORD)
-		str_value = MODEST_ACCOUNT_OPTION_SECURE_AUTH_VALUE_PASSWORD;
+		str_value = MODEST_ACCOUNT_AUTH_MECH_VALUE_PASSWORD;
 	else if (secure_auth == MODEST_PROTOCOL_AUTH_CRAMMD5)
-		str_value = MODEST_ACCOUNT_OPTION_SECURE_AUTH_VALUE_CRAMMD5;
-	
-	if (str_value) {
-		gchar* pair = g_strdup_printf(MODEST_ACCOUNT_OPTION_SECURE_AUTH "=%s", str_value);
-		options_list = g_slist_append(options_list, pair);
-	}
+		str_value = MODEST_ACCOUNT_AUTH_MECH_VALUE_CRAMMD5;
 	
 	/* Set it in the configuration: */
-	modest_account_mgr_set_list (self, account_name, MODEST_ACCOUNT_OPTIONS, options_list,
-						     MODEST_CONF_VALUE_STRING, TRUE);
-	
-	/* TODO: Should we free the items too, or just the list? */
-	g_slist_free (options_list);
+	modest_account_mgr_set_string (self, account_name, MODEST_ACCOUNT_AUTH_MECH, str_value, TRUE);
 }
 
 ModestProtocol

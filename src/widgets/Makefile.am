@@ -31,6 +31,8 @@ libmodest_widgets_la_SOURCES=          \
 	modest-header-view-render.c    \
 	modest-header-view.c           \
 	modest-header-view.h           \
+	modest-limit-retrieve-combo-box.h \
+	modest-limit-retrieve-combo-box.c \
 	modest-mail-header-view.c      \
 	modest-mail-header-view.h      \
 	modest-main-window.h	       \
@@ -45,6 +47,8 @@ libmodest_widgets_la_SOURCES=          \
 	modest-recpt-editor.h          \
 	modest-recpt-view.c            \
 	modest-recpt-view.h            \
+	modest-retrieve-combo-box.h \
+	modest-retrieve-combo-box.c \
 	modest-scroll-text.c           \
 	modest-scroll-text.h           \
 	modest-tny-stream-gtkhtml.c    \
