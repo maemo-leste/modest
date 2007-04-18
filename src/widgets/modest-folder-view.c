@@ -583,7 +583,7 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 			    TNY_GTK_FOLDER_STORE_TREE_MODEL_INSTANCE_COLUMN, &folder,
 			    -1);
 
-	/* If the folder is the same or is a root folder do not notify */
+	/* If the folder is the same do not notify */
 	if ((type == TNY_FOLDER_TYPE_ROOT) || (priv->cur_folder == folder)) {
 		g_object_unref (folder);
 		return;

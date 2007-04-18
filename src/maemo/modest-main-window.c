@@ -33,13 +33,15 @@
 #include <glib/gi18n.h>
 #include <gtk/gtktreeviewcolumn.h>
 #include <tny-account-store-view.h>
-#include <modest-runtime.h>
+#include <tny-simple-list.h>
+
 #include <string.h>
 
-#include <widgets/modest-main-window.h>
-#include <widgets/modest-msg-edit-window.h>
-#include <widgets/modest-account-view-window.h>
-
+#include "widgets/modest-main-window.h"
+#include "widgets/modest-msg-edit-window.h"
+#include "widgets/modest-account-view-window.h"
+#include "modest-runtime.h"
+#include "modest-account-mgr-helpers.h"
 #include "modest-platform.h"
 #include "modest-widget-memory.h"
 #include "modest-window-priv.h"
@@ -66,6 +68,10 @@ static void save_sizes (ModestMainWindow *self);
 
 static void modest_main_window_show_toolbar   (ModestWindow *window,
 					       gboolean show_toolbar);
+
+static void on_account_update                 (TnyAccountStore *account_store, 
+					       gchar *account_name,
+					       gpointer user_data);
 
 /* list my signals */
 enum {
@@ -337,6 +343,12 @@ connect_signals (ModestMainWindow *self)
 			  G_CALLBACK(on_key_changed), self);
 	
 	g_signal_connect (G_OBJECT(self), "delete-event", G_CALLBACK(on_delete_event), self);
+
+	/* Track account changes. We need to refresh the toolbar */
+	g_signal_connect (G_OBJECT (modest_runtime_get_account_store ()),
+			  "account_update",
+			  G_CALLBACK (on_account_update),
+			  self);
 }
 
 
@@ -599,9 +611,13 @@ modest_main_window_show_toolbar (ModestWindow *self,
 		/* Set reply button tap and hold menu */
 		reply_button = gtk_ui_manager_get_widget (parent_priv->ui_manager, 
 							  "/ToolBar/ToolbarMessageReply");
-		menu = gtk_ui_manager_get_widget (parent_priv->ui_manager, 
+		menu = gtk_ui_manager_get_widget (parent_priv->ui_manager,
 						  "/ToolbarReplyContextMenu");
 		gtk_widget_tap_and_hold_setup (GTK_WIDGET (reply_button), menu, NULL, 0);
+
+		/* Set send & receive button tap and hold menu */
+		on_account_update (TNY_ACCOUNT_STORE (modest_runtime_get_account_store ()),
+				   NULL, self);
 	}
 
 
@@ -609,4 +625,93 @@ modest_main_window_show_toolbar (ModestWindow *self,
 		gtk_widget_show (GTK_WIDGET (parent_priv->toolbar));
 	else
 		gtk_widget_hide (GTK_WIDGET (parent_priv->toolbar));
+}
+
+/*
+ * TODO: modify the menu dinamically. Add handlers to each item of the
+ * menu when created
+ */
+static void 
+on_account_update (TnyAccountStore *account_store, 
+		   gchar *accout_name,
+		   gpointer user_data)
+{
+	ModestMainWindow *self;
+	ModestWindowPrivate *parent_priv;
+	TnyList *account_list;
+	GtkWidget *popup = NULL, *item, *send_receive_button;
+	TnyIterator *iter;
+	ModestAccountMgr *mgr;
+	gchar *default_account;
+
+	self = MODEST_MAIN_WINDOW (user_data);
+	parent_priv = MODEST_WINDOW_GET_PRIVATE(self);
+
+	/* If there is no toolbar then exit */
+	if (!parent_priv->toolbar)
+		return;
+
+	/* Get accounts */
+	account_list = tny_simple_list_new ();
+	tny_account_store_get_accounts (account_store, 
+					account_list, 
+					TNY_ACCOUNT_STORE_STORE_ACCOUNTS);
+
+	/* If there is only one account do not show any menu */
+	if (tny_list_get_length (account_list) <= 1)
+		goto free;
+	
+	/* Get send receive button */
+	send_receive_button = gtk_ui_manager_get_widget (parent_priv->ui_manager, 
+							  "/ToolBar/ToolbarSendReceive");
+
+	/* Create the menu */
+	popup = gtk_menu_new ();
+	item = gtk_menu_item_new_with_label (_("FIXME All"));
+	gtk_menu_shell_append (GTK_MENU_SHELL (popup), GTK_WIDGET (item));
+	item = gtk_separator_menu_item_new ();
+	gtk_menu_shell_append (GTK_MENU_SHELL (popup), GTK_WIDGET (item));
+
+	iter = tny_list_create_iterator (account_list);
+	mgr = modest_runtime_get_account_mgr ();
+	default_account = modest_account_mgr_get_default_account (mgr);
+
+	do {
+		TnyAccount *acc;
+		const gchar *acc_name;
+
+		/* Create tool item */
+		acc = TNY_ACCOUNT (tny_iterator_get_current (iter));
+		acc_name = tny_account_get_name (acc);
+
+		if (!strcmp (default_account, acc_name)) {
+			gchar *bold_name;
+			bold_name = g_strdup_printf ("<b>%s</b>", acc_name);
+			item = gtk_menu_item_new_with_label (bold_name);
+			g_free (bold_name);
+		} else {
+			item = gtk_menu_item_new_with_label (acc_name);
+		}
+		g_object_unref (acc);
+
+		/* Append item */
+		gtk_menu_shell_append (GTK_MENU_SHELL (popup), GTK_WIDGET (item));
+
+		/* Go to next */
+		tny_iterator_next (iter);
+
+	} while (!tny_iterator_is_done (iter));
+
+	g_object_unref (iter);
+
+	/* Mandatory in order to view the menu contents */
+	gtk_widget_show_all (popup);
+
+	/* Setup tap_and_hold */
+	gtk_widget_tap_and_hold_setup (send_receive_button, popup, NULL, 0);
+
+ free:
+
+	/* Free */
+	g_object_unref (account_list);
 }
