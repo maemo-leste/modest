@@ -1,3 +1,17 @@
+2007-04-18  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/maemo/easysetup/modest-easysetup-serversecurity-combo-box.h:
+	* src/maemo/easysetup/modest-easysetup-serversecurity-combo-box.c:
+	Added easysetup_serversecurity_combo_box_get_active_serversecurity_port()
+
+	* src/modest-defs.h:
+	* src/maemo/modest-account-settings-dialog.c:
+	(create_page_incoming), (on_combo_outgoing_security_changed),
+	(on_combo_incoming_security_changed), (create_page_outgoing),
+	(modest_account_settings_dialog_set_account_name),
+	(save_configuration): Load/Save the port number, and change it when the 
+	security combo changes, to suitable defaults.
+
 2007-04-17  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/modest-account-mgr.c:

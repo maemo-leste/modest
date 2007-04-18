@@ -104,6 +104,12 @@ show_error (GtkWindow *parent_window, const gchar* text);
 static void
 show_ok (GtkWindow *parent_window, const gchar* text);
 
+static void
+on_combo_incoming_security_changed (GtkComboBox *widget, gpointer user_data);
+
+static void
+on_combo_outgoing_security_changed (GtkComboBox *widget, gpointer user_data);
+
 
 static void
 on_caption_entry_changed (GtkEditable *editable, gpointer user_data)
@@ -381,6 +387,10 @@ static GtkWidget* create_page_incoming (ModestAccountSettingsDialog *self)
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, 2);
 	gtk_widget_show (caption);
 	
+	/* Show a default port number when the security method changes, as per the UI spec: */
+	g_signal_connect (G_OBJECT (self->combo_incoming_security), "changed", (GCallback)on_combo_incoming_security_changed, self);
+	
+	
 	/* The port widgets: */
 	/* TODO: There are various rules about this in the UI spec. */
 	if (!self->entry_incoming_port)
@@ -463,6 +473,39 @@ on_combo_outgoing_auth_changed (GtkComboBox *widget, gpointer user_data)
 	gtk_widget_set_sensitive (self->caption_outgoing_password, secureauth_used);
 }
 
+static void
+on_combo_outgoing_security_changed (GtkComboBox *widget, gpointer user_data)
+{
+	ModestAccountSettingsDialog *self = MODEST_ACCOUNT_SETTINGS_DIALOG (user_data);
+	
+	const gint port_number = 
+		easysetup_serversecurity_combo_box_get_active_serversecurity_port (
+			EASYSETUP_SERVERSECURITY_COMBO_BOX (self->combo_outgoing_security));
+
+	if(port_number != 0) {
+		gchar* str = g_strdup_printf ("%d", port_number);
+		gtk_entry_set_text (GTK_ENTRY (self->entry_outgoing_port), str);
+		g_free (str);	
+	}		
+}
+
+static void
+on_combo_incoming_security_changed (GtkComboBox *widget, gpointer user_data)
+{
+	ModestAccountSettingsDialog *self = MODEST_ACCOUNT_SETTINGS_DIALOG (user_data);
+	
+	const gint port_number = 
+		easysetup_serversecurity_combo_box_get_active_serversecurity_port (
+			EASYSETUP_SERVERSECURITY_COMBO_BOX (self->combo_incoming_security));
+
+	if(port_number != 0) {
+		gchar* str = g_strdup_printf ("%d", port_number);
+		gtk_entry_set_text (GTK_ENTRY (self->entry_incoming_port), str);
+		g_free (str);	
+	}		
+}
+
+
 static GtkWidget* create_page_outgoing (ModestAccountSettingsDialog *self)
 {
 	GtkWidget *box = gtk_vbox_new (FALSE, 2);
@@ -530,7 +573,10 @@ static GtkWidget* create_page_outgoing (ModestAccountSettingsDialog *self)
 		self->combo_outgoing_security, NULL, HILDON_CAPTION_OPTIONAL);
 	gtk_widget_show (self->combo_outgoing_security);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, 2);
-	gtk_widget_show (caption);	
+	gtk_widget_show (caption);
+	
+	/* Show a default port number when the security method changes, as per the UI spec: */
+	g_signal_connect (G_OBJECT (self->combo_outgoing_security), "changed", (GCallback)on_combo_outgoing_security_changed, self);
 	
 	/* The port widgets: */
 	if (!self->entry_outgoing_port)
@@ -768,8 +814,7 @@ void modest_account_settings_dialog_set_account_name (ModestAccountSettingsDialo
 		
 	const gboolean leave_on_server = modest_account_mgr_get_bool (dialog->account_manager, account_name,
 		MODEST_ACCOUNT_LEAVE_ON_SERVER, FALSE /* not server account */);
-	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (dialog->checkbox_leave_messages), leave_on_server);
-		
+	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (dialog->checkbox_leave_messages), leave_on_server);	
 		
 	ModestServerAccountData *incoming_account = account_data->store_account;
 	if (incoming_account) {
@@ -792,6 +837,12 @@ void modest_account_settings_dialog_set_account_name (ModestAccountSettingsDialo
 		easysetup_serversecurity_combo_box_set_active_serversecurity (
 			EASYSETUP_SERVERSECURITY_COMBO_BOX (dialog->combo_incoming_security), security);
 		
+		const gint port_num = modest_account_mgr_get_int (dialog->account_manager, incoming_account->account_name,
+			MODEST_ACCOUNT_PORT, TRUE /* server account */);
+		gchar *port_str = g_strdup_printf ("%d", port_num);
+		gtk_entry_set_text (GTK_ENTRY (dialog->entry_incoming_port), port_str);
+		g_free (port_str);
+	
 		/* TODO:
 	gchar	         *uri;
 	ModestProtocol    proto;
@@ -826,7 +877,11 @@ void modest_account_settings_dialog_set_account_name (ModestAccountSettingsDialo
 		easysetup_serversecurity_combo_box_set_active_serversecurity (
 			EASYSETUP_SERVERSECURITY_COMBO_BOX (dialog->combo_outgoing_security), security);
 		
-		/* TODO: set port. */
+		const gint port_num = modest_account_mgr_get_int (dialog->account_manager, outgoing_account->account_name,
+			MODEST_ACCOUNT_PORT, TRUE /* server account */);
+		gchar *port_str = g_strdup_printf ("%d", port_num);
+		gtk_entry_set_text (GTK_ENTRY (dialog->entry_outgoing_port), port_str);
+		g_free (port_str);
 	}
 	
 	/* account_data->is_enabled,  */
@@ -896,6 +951,14 @@ save_configuration (ModestAccountSettingsDialog *dialog)
 		EASYSETUP_SERVERSECURITY_COMBO_BOX (dialog->combo_incoming_security));
 	modest_server_account_set_option_security (dialog->account_manager, incoming_account_name, protocol_security_incoming);
 	
+	/* port: */
+	const gchar* port_str = gtk_entry_get_text (GTK_ENTRY (dialog->entry_incoming_port));
+	gint port_num = 0;
+	if (port_str)
+		port_num = atoi (port_str);
+	modest_account_mgr_set_int (dialog->account_manager, incoming_account_name,
+			MODEST_ACCOUNT_PORT, port_num, TRUE /* server account */);
+		
 	g_free (incoming_account_name);
 	
 	/* Outgoing: */
@@ -929,6 +992,14 @@ save_configuration (ModestAccountSettingsDialog *dialog)
 		EASYSETUP_SECUREAUTH_COMBO_BOX (dialog->combo_outgoing_auth));
 	modest_server_account_set_option_secure_auth (dialog->account_manager, outgoing_account_name, protocol_authentication_outgoing);	
 		
+	/* port: */
+	port_str = gtk_entry_get_text (GTK_ENTRY (dialog->entry_outgoing_port));
+	port_num = 0;
+	if (port_str)
+		port_num = atoi (port_str);
+	modest_account_mgr_set_int (dialog->account_manager, outgoing_account_name,
+			MODEST_ACCOUNT_PORT, port_num, TRUE /* server account */);
+			
 	g_free (outgoing_account_name);
 	
 	

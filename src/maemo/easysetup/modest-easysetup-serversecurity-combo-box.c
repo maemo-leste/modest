@@ -27,6 +27,7 @@ typedef struct _EasysetupServersecurityComboBoxPrivate EasysetupServersecurityCo
 struct _EasysetupServersecurityComboBoxPrivate
 {
 	GtkTreeModel *model;
+	ModestProtocol protocol;
 };
 
 static void
@@ -123,6 +124,7 @@ easysetup_serversecurity_combo_box_new (void)
 void easysetup_serversecurity_combo_box_fill (EasysetupServersecurityComboBox *combobox, ModestProtocol protocol)
 {	
 	EasysetupServersecurityComboBoxPrivate *priv = SERVERSECURITY_COMBO_BOX_GET_PRIVATE (combobox);
+	priv->protocol = protocol; /* Remembered for later. */
 	
 	/* Remove any existing rows: */
 	GtkListStore *liststore = GTK_LIST_STORE (priv->model);
@@ -152,6 +154,32 @@ void easysetup_serversecurity_combo_box_fill (EasysetupServersecurityComboBox *c
 	}
 }
 
+static gint get_port_for_security (ModestProtocol protocol, ModestProtocol security)
+{
+	/* See the UI spec, section Email Wizards, Incoming Details [MSG-WIZ001]: */
+	gint result = 0;
+
+	/* Get the default port number for this protocol with this security: */
+	if(protocol == MODEST_PROTOCOL_STORE_POP) {
+		if ((security ==  MODEST_PROTOCOL_SECURITY_NONE) || (security ==  MODEST_PROTOCOL_SECURITY_TLS))
+			result = 110;
+		else if (security ==  MODEST_PROTOCOL_SECURITY_SSL)
+			result = 995;
+	} else if (protocol == MODEST_PROTOCOL_STORE_IMAP) {
+		if ((security ==  MODEST_PROTOCOL_SECURITY_NONE) || (security ==  MODEST_PROTOCOL_SECURITY_TLS))
+			result = 143;
+		else if (security ==  MODEST_PROTOCOL_SECURITY_SSL)
+			result = 993;
+	} else if (protocol == MODEST_PROTOCOL_TRANSPORT_SMTP) {
+		if ((security ==  MODEST_PROTOCOL_SECURITY_NONE) || (security ==  MODEST_PROTOCOL_SECURITY_TLS))
+			result = 25;
+		else if (security ==  MODEST_PROTOCOL_SECURITY_SSL)
+			result = 465;
+	}
+
+	return result;
+}
+
 /**
  * Returns the selected serversecurity, 
  * or MODEST_PROTOCOL_UNKNOWN if no serversecurity was selected.
@@ -172,6 +200,20 @@ easysetup_serversecurity_combo_box_get_active_serversecurity (EasysetupServersec
 	return MODEST_PROTOCOL_UNKNOWN; /* Failed. */
 }
 
+/**
+ * Returns the default port to be used for the selected serversecurity, 
+ * or 0 if no serversecurity was selected.
+ */
+gint
+easysetup_serversecurity_combo_box_get_active_serversecurity_port (EasysetupServersecurityComboBox *combobox)
+{
+	EasysetupServersecurityComboBoxPrivate *priv = SERVERSECURITY_COMBO_BOX_GET_PRIVATE (combobox);
+	
+	const ModestProtocol security = easysetup_serversecurity_combo_box_get_active_serversecurity 
+		(combobox);
+	return get_port_for_security (priv->protocol, security);
+}
+	
 /* This allows us to pass more than one piece of data to the signal handler,
  * and get a result: */
 typedef struct 

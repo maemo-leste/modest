@@ -51,6 +51,8 @@ ModestProtocol easysetup_serversecurity_combo_box_get_active_serversecurity (Eas
 
 gboolean easysetup_serversecurity_combo_box_set_active_serversecurity (EasysetupServersecurityComboBox *combobox, ModestProtocol serversecurity);
 
+gint easysetup_serversecurity_combo_box_get_active_serversecurity_port (EasysetupServersecurityComboBox *combobox);
+
 
 G_END_DECLS
 
