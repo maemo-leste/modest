@@ -214,7 +214,7 @@ text_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 	gchar *fname = NULL;
 	gint unread;
 	TnyFolderType type;
-	TnyFolder *folder = NULL;
+	GObject *instance = NULL;
 	
 	g_return_if_fail (column);
 	g_return_if_fail (tree_model);
@@ -223,22 +223,22 @@ text_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 			    TNY_GTK_FOLDER_STORE_TREE_MODEL_NAME_COLUMN, &fname,
 			    TNY_GTK_FOLDER_STORE_TREE_MODEL_UNREAD_COLUMN, &unread,
 			    TNY_GTK_FOLDER_STORE_TREE_MODEL_TYPE_COLUMN, &type,
-			    TNY_GTK_FOLDER_STORE_TREE_MODEL_INSTANCE_COLUMN, &folder,
+			    TNY_GTK_FOLDER_STORE_TREE_MODEL_INSTANCE_COLUMN, &instance,
 			    -1);
 	rendobj = G_OBJECT(renderer);
  
 	if (!fname)
 		return;
 
-	if (!folder) {
+	if (!instance) {
 		g_free (fname);
 		return;
 	}
 	
 	if (type != TNY_FOLDER_TYPE_ROOT) {
-		if (modest_tny_folder_is_local_folder (folder)) {
+		if (modest_tny_folder_is_local_folder (TNY_FOLDER (instance))) {
 			TnyFolderType type;
-			type = modest_tny_folder_get_local_folder_type (folder);
+			type = modest_tny_folder_get_local_folder_type (TNY_FOLDER (instance));
 			if (type != TNY_FOLDER_TYPE_UNKNOWN) {
 				g_free (fname);
 				fname = g_strdup(modest_local_folder_info_get_type_display_name (type));
@@ -255,22 +255,27 @@ text_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 
 	} else {
 		ModestFolderViewPrivate *priv;
-		const gchar *account_name;
+		const gchar *account_name, *account_id;
 	
 		priv =	MODEST_FOLDER_VIEW_GET_PRIVATE (data);
 
+		/* If it's a server account */
+		account_id = tny_account_get_id (TNY_ACCOUNT (instance));
+		if (!strcmp (account_id, MODEST_LOCAL_FOLDERS_ACCOUNT_ID)) {
+			account_name = priv->local_account_name;
+		} else {
+			if (!strcmp (account_id, MODEST_MMC_ACCOUNT_ID)) {
+				/* TODO: get MMC card name */
+			} else {
+				account_name = fname;
+			}
+		}
+
 		/* Use bold font style */
-		account_name = priv->local_account_name;
 		g_object_set (rendobj,"text", account_name, "weight", 800, NULL);
-/* 		if (modest_tny_folder_is_local_folder (folder)) { */
-/* 		} else { */
-/* 			if () { */
-/* 			} else { */
-/* 			} */
-/* 		} */
 	}
 	
-	g_object_unref (G_OBJECT (folder));
+	g_object_unref (G_OBJECT (instance));
 	g_free (fname);
 }
 
@@ -280,10 +285,11 @@ static void
 icon_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 		 GtkTreeModel *tree_model,  GtkTreeIter *iter, gpointer data)
 {
-	GObject *rendobj;
+	GObject *rendobj, *instance;
 	GdkPixbuf *pixbuf;
 	TnyFolderType type;
 	gchar *fname = NULL;
+	const gchar *account_id = NULL;
 	gint unread;
 	
 	rendobj = G_OBJECT(renderer);
@@ -291,17 +297,32 @@ icon_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 			    TNY_GTK_FOLDER_STORE_TREE_MODEL_TYPE_COLUMN, &type,
 			    TNY_GTK_FOLDER_STORE_TREE_MODEL_NAME_COLUMN, &fname,
 			    TNY_GTK_FOLDER_STORE_TREE_MODEL_UNREAD_COLUMN, &unread, 
+			    TNY_GTK_FOLDER_STORE_TREE_MODEL_INSTANCE_COLUMN, &instance,
 			    -1);
-	rendobj = G_OBJECT(renderer);
+
+	if (!fname)
+		return;
+
+	if (!instance) {
+		g_free (fname);
+		return;
+	}
 	
 	if (type == TNY_FOLDER_TYPE_NORMAL || type == TNY_FOLDER_TYPE_UNKNOWN) {
 		type = modest_tny_folder_guess_folder_type_from_name (fname);
 	}
-	g_free (fname);
 
 	switch (type) {
 	case TNY_FOLDER_TYPE_ROOT:
-		pixbuf = modest_platform_get_icon (MODEST_FOLDER_ICON_ACCOUNT);
+		account_id = tny_account_get_id (TNY_ACCOUNT (instance));
+		if (!strcmp (account_id, MODEST_LOCAL_FOLDERS_ACCOUNT_ID)) {
+			pixbuf = modest_platform_get_icon (MODEST_FOLDER_ICON_LOCAL_FOLDERS);
+		} else {
+			if (!strcmp (account_id, MODEST_MMC_ACCOUNT_ID))
+				pixbuf = modest_platform_get_icon (MODEST_FOLDER_ICON_MMC);
+			else
+				pixbuf = modest_platform_get_icon (MODEST_FOLDER_ICON_ACCOUNT);
+		}
                 break;
 	case TNY_FOLDER_TYPE_INBOX:
                 pixbuf = modest_platform_get_icon (MODEST_FOLDER_ICON_INBOX);
@@ -326,6 +347,10 @@ icon_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
                 pixbuf = modest_platform_get_icon (MODEST_FOLDER_ICON_NORMAL);
 		break;
         }
+	g_object_unref (G_OBJECT (instance));
+	g_free (fname);
+
+	/* Set pixbuf */
 	g_object_set (rendobj, "pixbuf", pixbuf, NULL);
 }
 

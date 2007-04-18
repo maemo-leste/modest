@@ -68,6 +68,7 @@
 #define MODEST_FOLDER_ICON_DRAFTS		"qgn_list_messagin_drafts"
 #define MODEST_FOLDER_ICON_NORMAL		"qgn_list_gene_fldr_cls"
 #define MODEST_FOLDER_ICON_LOCAL_FOLDERS	"qgn_list_shell_mydevice"
+#define MODEST_FOLDER_ICON_MMC                  "qgn_list_gene_mmc"
 
 
 /* toolbar */

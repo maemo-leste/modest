@@ -118,6 +118,21 @@ TnyFolder*    modest_folder_view_get_selected    (ModestFolderView *self);
 gboolean      modest_folder_view_update_model    (ModestFolderView *self,
 						  TnyAccountStore *account_store);
 
+/**
+ * modest_folder_view_get_selected_display_name:
+ * @self: a #ModestFolderView
+ * 
+ * returns a the display name of the currently selected
+ * #TnyFolder. Note that it could be different to the name returned by
+ * the #TnyFolder that could be get using
+ * modest_folder_view_get_selected, because it for example could
+ * contain the unread messages between brackets
+ * 
+ * Returns: the display name of the currently selected #TnyFolder or
+ * NULL if none is selected
+ **/
+const gchar* modest_folder_view_get_selected_display_name (ModestFolderView *self);
+
 G_END_DECLS
 
 #endif /* __MODEST_FOLDER_VIEW_H__ */

@@ -877,7 +877,6 @@ modest_ui_actions_on_folder_selection_changed (ModestFolderView *folder_view,
 					       gboolean selected,
 					       ModestMainWindow *main_window)
 {
-	gchar *txt;
 	ModestConf *conf;
 	GtkWidget *header_view;
 	
@@ -896,19 +895,21 @@ modest_ui_actions_on_folder_selection_changed (ModestFolderView *folder_view,
 		modest_header_view_set_folder (MODEST_HEADER_VIEW(header_view), NULL);
 	} else {  /* the folder was selected */
 		if (folder) { /* folder may be NULL */
-			guint num, unread;
-
-			num    = tny_folder_get_all_count    (folder);
-			unread = tny_folder_get_unread_count (folder);
+			guint unread;
 
 			/* Change main window title */			
-			gtk_window_set_title (GTK_WINDOW(main_window), 
-					      tny_folder_get_name (folder));
-			
-			txt = g_strdup_printf (_("%d %s, %d unread"),
-					       num, num==1 ? _("item") : _("items"), unread);		
-			//gtk_label_set_label (GTK_LABEL(folder_info_label), txt);
-			g_free (txt);
+			unread = tny_folder_get_unread_count (folder);
+
+			if (unread == 0) {
+				gtk_window_set_title (GTK_WINDOW(main_window), 
+						      tny_folder_get_name (folder));
+			} else {
+				gchar *txt = g_strdup_printf (_("%s (%d)"),
+							      tny_folder_get_name (folder),
+							      unread);
+				gtk_window_set_title (GTK_WINDOW(main_window), txt);
+				g_free (txt);
+			}
 		} else {
 			gtk_window_set_title (GTK_WINDOW(main_window), NULL);
 		}

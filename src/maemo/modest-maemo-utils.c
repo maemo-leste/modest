@@ -100,8 +100,7 @@ update_device_name_from_msg (DBusMessage *message)
 		modest_conf_set_string (modest_runtime_get_conf(),
 					MODEST_CONF_DEVICE_NAME,
 					MODEST_LOCAL_FOLDERS_DEFAULT_DISPLAY_NAME,
-					NULL);
-					
+					NULL);					
 	} else {
 		const gchar *device_name;
 		if (!dbus_message_iter_init (message, &iter)) {
