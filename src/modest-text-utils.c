@@ -858,12 +858,12 @@ modest_text_utils_get_display_date (time_t date)
 	
 	now = time (NULL);
 
-	modest_text_utils_strftime (date_buf, BUF_SIZE, "%x", date);
-	modest_text_utils_strftime (now_buf,  BUF_SIZE, "%x",  now); /* today */
+	modest_text_utils_strftime (date_buf, BUF_SIZE, "%d/%m/%Y", date);
+	modest_text_utils_strftime (now_buf,  BUF_SIZE, "%d/%m/%Y",  now); /* today */
 	
 	/* if this is today, get the time instead of the date */
 	if (strcmp (date_buf, now_buf) == 0)
-		modest_text_utils_strftime (date_buf, BUF_SIZE, _("%X"), date);
+		modest_text_utils_strftime (date_buf, BUF_SIZE, "%H:%M:%P", date);
 	
 	return g_strdup(date_buf);
 }
