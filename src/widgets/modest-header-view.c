@@ -1149,7 +1149,10 @@ on_focus_in (GtkWidget     *self,
 		GtkTreeIter iter;
 		GtkTreePath *path;
 
-		gtk_tree_model_get_iter_first (model, &iter);
+		/* Return if the model is empty */
+		if (!gtk_tree_model_get_iter_first (model, &iter))
+			return FALSE;
+
 		path = gtk_tree_model_get_path (model, &iter);
 		gtk_tree_selection_select_path (selection, path);
 		gtk_tree_path_free (path);
