@@ -49,6 +49,8 @@ typedef struct {
 	gchar            *password;
 	time_t		  last_updated;
 	gint             port; /* Or 0, if the default should be used. */
+	ModestProtocol   secure_auth;
+	ModestProtocol   security;
 	GSList           *options;
 } ModestServerAccountData;
 

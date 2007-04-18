@@ -41,6 +41,7 @@ typedef struct {
 	 * and to create new accounts: */
 	ModestAccountMgr *account_manager;
 	
+	gboolean modified;
 	gchar * account_name; /* This may not change. It is not user visible. */
 	gchar * original_account_title;
 	

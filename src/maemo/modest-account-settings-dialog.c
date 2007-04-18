@@ -112,6 +112,44 @@ on_combo_incoming_security_changed (GtkComboBox *widget, gpointer user_data);
 static void
 on_combo_outgoing_security_changed (GtkComboBox *widget, gpointer user_data);
 
+static void
+on_modified_combobox_changed (GtkComboBox *widget, gpointer user_data)
+{
+	ModestAccountSettingsDialog *self = MODEST_ACCOUNT_SETTINGS_DIALOG (user_data);
+	self->modified = TRUE;
+}
+
+static void
+on_modified_entry_changed (GtkEditable *editable, gpointer user_data)
+{
+	ModestAccountSettingsDialog *self = MODEST_ACCOUNT_SETTINGS_DIALOG (user_data);
+	self->modified = TRUE;
+}
+
+static void
+on_modified_checkbox_toggled (GtkToggleButton *togglebutton, gpointer user_data)
+{
+	ModestAccountSettingsDialog *self = MODEST_ACCOUNT_SETTINGS_DIALOG (user_data);
+	self->modified = TRUE;
+}
+
+/* Set a modified boolean whenever the widget is changed, 
+ * so we can check for it later.
+ */
+static void
+connect_for_modified (ModestAccountSettingsDialog *self, GtkWidget *widget)
+{
+	if (GTK_IS_ENTRY (widget)) {
+	  g_signal_connect (G_OBJECT (widget), "changed",
+        	G_CALLBACK (on_modified_entry_changed), self);	
+	} else if (GTK_IS_COMBO_BOX (widget)) {
+		g_signal_connect (G_OBJECT (widget), "changed",
+        	G_CALLBACK (on_modified_combobox_changed), self);	
+	} else if (GTK_IS_TOGGLE_BUTTON (widget)) {
+		g_signal_connect (G_OBJECT (widget), "toggled",
+        	G_CALLBACK (on_modified_checkbox_toggled), self);
+	}
+}
 
 static void
 on_caption_entry_changed (GtkEditable *editable, gpointer user_data)
@@ -190,6 +228,7 @@ create_page_account_details (ModestAccountSettingsDialog *self)
 	GtkWidget *caption = create_caption_new_with_asterix (self, sizegroup, _("mcen_fi_account_title"), 
 		self->entry_account_title, NULL, HILDON_CAPTION_MANDATORY);
 	gtk_widget_show (self->entry_account_title);
+	connect_for_modified (self, self->entry_account_title);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, 2);
 	gtk_widget_show (caption);
 	
@@ -220,6 +259,7 @@ create_page_account_details (ModestAccountSettingsDialog *self)
 	caption = create_caption_new_with_asterix (self, sizegroup, _("mcen_fi_advsetup_retrievetype"), 
 		self->combo_retrieve, NULL, HILDON_CAPTION_MANDATORY);
 	gtk_widget_show (self->combo_retrieve);
+	connect_for_modified (self, self->combo_retrieve);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, 2);
 	gtk_widget_show (caption);
 	
@@ -228,6 +268,7 @@ create_page_account_details (ModestAccountSettingsDialog *self)
 	caption = create_caption_new_with_asterix (self, sizegroup, _("mcen_fi_advsetup_limit_retrieve"), 
 		self->combo_limit_retrieve, NULL, HILDON_CAPTION_MANDATORY);
 	gtk_widget_show (self->combo_limit_retrieve);
+	connect_for_modified (self, self->combo_limit_retrieve);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, 2);
 	gtk_widget_show (caption);
 
@@ -237,7 +278,7 @@ create_page_account_details (ModestAccountSettingsDialog *self)
 			gtk_check_button_new_with_label (_("mcen_fi_advsetup_leave_on_server"));
 	gtk_box_pack_start (GTK_BOX (box), self->checkbox_leave_messages, FALSE, FALSE, 2);
 	gtk_widget_show (self->checkbox_leave_messages);
-	
+	connect_for_modified (self, self->checkbox_leave_messages);
 	
 	gtk_widget_show (GTK_WIDGET (box));
 	
@@ -268,6 +309,7 @@ create_page_user_details (ModestAccountSettingsDialog *self)
 	GtkWidget *caption = create_caption_new_with_asterix (self, sizegroup, 
 		_("mcen_li_emailsetup_name"), self->entry_user_name, NULL, HILDON_CAPTION_OPTIONAL);
 	gtk_widget_show (self->entry_user_name);
+	connect_for_modified (self, self->entry_user_name);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, 2);
 	gtk_widget_show (caption);
 	
@@ -285,6 +327,7 @@ create_page_user_details (ModestAccountSettingsDialog *self)
 	caption = create_caption_new_with_asterix (self, sizegroup, _("mail_fi_username"), 
 		self->entry_user_username, NULL, HILDON_CAPTION_MANDATORY);
 	gtk_widget_show (self->entry_user_username);
+	connect_for_modified (self, self->entry_user_username);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, 2);
 	gtk_widget_show (caption);
 	
@@ -304,6 +347,7 @@ create_page_user_details (ModestAccountSettingsDialog *self)
 	caption = create_caption_new_with_asterix (self, sizegroup, 
 		_("mail_fi_password"), self->entry_user_password, NULL, HILDON_CAPTION_OPTIONAL);
 	gtk_widget_show (self->entry_user_password);
+	connect_for_modified (self, self->entry_user_password);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, 2);
 	gtk_widget_show (caption);
 	
@@ -313,6 +357,7 @@ create_page_user_details (ModestAccountSettingsDialog *self)
 		_("mcen_li_emailsetup_email_address"), self->entry_user_email, NULL, HILDON_CAPTION_MANDATORY);
 	gtk_entry_set_text (GTK_ENTRY (self->entry_user_email), EXAMPLE_EMAIL_ADDRESS); /* Default text. */
 	gtk_widget_show (self->entry_user_email);
+	connect_for_modified (self, self->entry_user_email);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, 2);
 	gtk_widget_show (caption);
 	
@@ -390,6 +435,7 @@ static GtkWidget* create_page_incoming (ModestAccountSettingsDialog *self)
 	self->caption_incoming = create_caption_new_with_asterix (self, sizegroup, 
 		"Incoming Server", self->entry_incomingserver, NULL, HILDON_CAPTION_MANDATORY);
 	gtk_widget_show (self->entry_incomingserver);
+	connect_for_modified (self, self->entry_incomingserver);
 	gtk_box_pack_start (GTK_BOX (box), self->caption_incoming, FALSE, FALSE, 2);
 	gtk_widget_show (self->caption_incoming);
 	
@@ -400,6 +446,7 @@ static GtkWidget* create_page_incoming (ModestAccountSettingsDialog *self)
 	GtkWidget *caption = hildon_caption_new (sizegroup, _("mcen_li_emailsetup_secure_connection"), 
 		self->combo_incoming_security, NULL, HILDON_CAPTION_OPTIONAL);
 	gtk_widget_show (self->combo_incoming_security);
+	connect_for_modified (self, self->combo_incoming_security);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, 2);
 	gtk_widget_show (caption);
 	
@@ -414,6 +461,7 @@ static GtkWidget* create_page_incoming (ModestAccountSettingsDialog *self)
 	caption = hildon_caption_new (sizegroup, _("mcen_fi_emailsetup_port"), 
 		self->entry_incoming_port, NULL, HILDON_CAPTION_OPTIONAL);
 	gtk_widget_show (self->entry_incoming_port);
+	connect_for_modified (self, self->entry_incoming_port);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, 2);
 	gtk_widget_show (caption);
 	
@@ -423,6 +471,7 @@ static GtkWidget* create_page_incoming (ModestAccountSettingsDialog *self)
 			gtk_check_button_new_with_label (_("mcen_li_emailsetup_secure_authentication"));
 	gtk_box_pack_start (GTK_BOX (box), self->checkbox_incoming_auth, FALSE, FALSE, 2);
 	gtk_widget_show (self->checkbox_incoming_auth);
+	connect_for_modified (self, self->checkbox_incoming_auth);
 	
 	gtk_widget_show (GTK_WIDGET (box));
 	
@@ -537,6 +586,7 @@ static GtkWidget* create_page_outgoing (ModestAccountSettingsDialog *self)
 	GtkWidget *caption = create_caption_new_with_asterix (self, sizegroup, 
 		_("mcen_li_emailsetup_smtp"), self->entry_outgoingserver, NULL, HILDON_CAPTION_OPTIONAL);
 	gtk_widget_show (self->entry_outgoingserver);
+	connect_for_modified (self, self->entry_outgoingserver);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, 2);
 	gtk_widget_show (caption);
 	
@@ -546,6 +596,7 @@ static GtkWidget* create_page_outgoing (ModestAccountSettingsDialog *self)
 	caption = hildon_caption_new (sizegroup, _("mcen_li_emailsetup_secure_authentication"), 
 		self->combo_outgoing_auth, NULL, HILDON_CAPTION_OPTIONAL);
 	gtk_widget_show (self->combo_outgoing_auth);
+	connect_for_modified (self, self->combo_outgoing_auth);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, 2);
 	gtk_widget_show (caption);
 	
@@ -557,6 +608,7 @@ static GtkWidget* create_page_outgoing (ModestAccountSettingsDialog *self)
 	self->caption_outgoing_username = create_caption_new_with_asterix (self, sizegroup, _("mail_fi_username"), 
 		self->entry_outgoing_username, NULL, HILDON_CAPTION_MANDATORY);
 	gtk_widget_show (self->entry_outgoing_username);
+	connect_for_modified (self, self->entry_outgoing_username);
 	gtk_box_pack_start (GTK_BOX (box), self->caption_outgoing_username, FALSE, FALSE, 2);
 	gtk_widget_show (self->caption_outgoing_username);
 	
@@ -576,6 +628,7 @@ static GtkWidget* create_page_outgoing (ModestAccountSettingsDialog *self)
 	self->caption_outgoing_password = create_caption_new_with_asterix (self, sizegroup, 
 		_("mail_fi_password"), self->entry_outgoing_password, NULL, HILDON_CAPTION_OPTIONAL);
 	gtk_widget_show (self->entry_outgoing_password);
+	connect_for_modified (self, self->entry_outgoing_password);
 	gtk_box_pack_start (GTK_BOX (box), self->caption_outgoing_password, FALSE, FALSE, 2);
 	gtk_widget_show (self->caption_outgoing_password);
 	
@@ -588,6 +641,7 @@ static GtkWidget* create_page_outgoing (ModestAccountSettingsDialog *self)
 	caption = hildon_caption_new (sizegroup, _("mcen_li_emailsetup_secure_connection"), 
 		self->combo_outgoing_security, NULL, HILDON_CAPTION_OPTIONAL);
 	gtk_widget_show (self->combo_outgoing_security);
+	connect_for_modified (self, self->combo_outgoing_security);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, 2);
 	gtk_widget_show (caption);
 	
@@ -600,6 +654,7 @@ static GtkWidget* create_page_outgoing (ModestAccountSettingsDialog *self)
 	caption = hildon_caption_new (sizegroup, _("mcen_fi_emailsetup_port"), 
 		self->entry_outgoing_port, NULL, HILDON_CAPTION_OPTIONAL);
 	gtk_widget_show (self->entry_outgoing_port);
+	connect_for_modified (self, self->entry_outgoing_port);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, 2);
 	gtk_widget_show (caption);
 	
@@ -611,6 +666,7 @@ static GtkWidget* create_page_outgoing (ModestAccountSettingsDialog *self)
 	}
 	gtk_box_pack_start (GTK_BOX (box), self->checkbox_outgoing_smtp_specific, FALSE, FALSE, 2);
 	gtk_widget_show (self->checkbox_outgoing_smtp_specific);
+	connect_for_modified (self, self->checkbox_outgoing_smtp_specific);
 	
 	/* Connection-specific SMTP-Severs Edit button: */
 	if (!self->button_outgoing_smtp_servers)
@@ -689,8 +745,7 @@ on_response (GtkDialog *wizard_dialog,
 	gboolean prevent_response = FALSE;
 	
 	/* Warn about unsaved changes: */
-	/* TODO: Actually detect whether changes were made. */
-	if (response_id == GTK_RESPONSE_CANCEL) {
+	if (response_id == GTK_RESPONSE_CANCEL && self->modified) {
 		GtkDialog *dialog = GTK_DIALOG (gtk_message_dialog_new (GTK_WINDOW (self),
 		(GtkDialogFlags)0,
 		 GTK_MESSAGE_INFO,
@@ -774,7 +829,9 @@ modest_account_settings_dialog_init (ModestAccountSettingsDialog *self)
      * to stop the default signal handler from closing the dialog.
      */
     g_signal_connect (G_OBJECT (self), "response",
-            G_CALLBACK (on_response), self);       
+            G_CALLBACK (on_response), self); 
+            
+    self->modified = FALSE;      
 }
 
 ModestAccountSettingsDialog*
@@ -935,6 +992,9 @@ void modest_account_settings_dialog_set_account_name (ModestAccountSettingsDialo
 	/* account_data->store_account->proto */
 
 	modest_account_mgr_free_account_data (dialog->account_manager, account_data);
+	
+	/* Unset the modified flag so we can detect changes later: */
+	dialog->modified = FALSE;
 }
 
 static gboolean

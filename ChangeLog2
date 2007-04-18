@@ -1,5 +1,22 @@
 2007-04-18  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/maemo/modest-account-settings-dialog.h:
+	* src/maemo/modest-account-settings-dialog.c:
+	Added connect_for_modified() utility function to mark the new modified boolean.
+	
+	(create_page_account_details), (create_page_user_details),
+	(create_page_incoming), (create_page_outgoing), (on_response),
+	(modest_account_settings_dialog_init),
+	(modest_account_settings_dialog_set_account_name):
+	Only warn about unsaved changes when there are actually unsaved changes.
+	
+	* src/modest-account-mgr-helpers.c:
+	* src/modest-account-mgr-helpers.h: Put the port, secure-auth, and security information 
+	into the ModestServerAccountData struct. I do not use it yet, but someone might expect 
+	to get the data from there in future.
+
+2007-04-18  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/modest-defs.h:
 
 	* src/modest-account-mgr-helpers.h:

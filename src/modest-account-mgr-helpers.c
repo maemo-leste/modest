@@ -121,6 +121,22 @@ modest_server_account_data_get_option_bool (GSList* options_list, const gchar* o
 }
 #endif
 
+static ModestProtocol
+get_secure_auth_for_conf_string(const gchar* value)
+{
+	ModestProtocol result = MODEST_PROTOCOL_AUTH_NONE;
+	if (value) {
+		if (strcmp(value, MODEST_ACCOUNT_AUTH_MECH_VALUE_NONE) == 0)
+			result = MODEST_PROTOCOL_AUTH_NONE;
+		else if (strcmp(value, MODEST_ACCOUNT_AUTH_MECH_VALUE_PASSWORD) == 0)
+			result = MODEST_PROTOCOL_AUTH_PASSWORD;
+		else if (strcmp(value, MODEST_ACCOUNT_AUTH_MECH_VALUE_CRAMMD5) == 0)
+			result = MODEST_PROTOCOL_AUTH_CRAMMD5;
+	}
+	
+	return result;
+}
+
 ModestProtocol
 modest_server_account_get_secure_auth (ModestAccountMgr *self, 
 	const gchar* account_name)
@@ -129,18 +145,14 @@ modest_server_account_get_secure_auth (ModestAccountMgr *self,
 	gchar* value = modest_account_mgr_get_string (self, account_name, MODEST_ACCOUNT_AUTH_MECH, 
 		TRUE /* server account */);
 	if (value) {
-		if (strcmp(value, MODEST_ACCOUNT_AUTH_MECH_VALUE_NONE) == 0)
-			result = MODEST_PROTOCOL_AUTH_NONE;
-		else if (strcmp(value, MODEST_ACCOUNT_AUTH_MECH_VALUE_PASSWORD) == 0)
-			result = MODEST_PROTOCOL_AUTH_PASSWORD;
-		else if (strcmp(value, MODEST_ACCOUNT_AUTH_MECH_VALUE_CRAMMD5) == 0)
-			result = MODEST_PROTOCOL_AUTH_CRAMMD5;
+		result = get_secure_auth_for_conf_string (value);
 			
 		g_free (value);
 	}
 	
 	return result;
 }
+
 
 void
 modest_server_account_set_secure_auth (ModestAccountMgr *self, 
@@ -159,6 +171,22 @@ modest_server_account_set_secure_auth (ModestAccountMgr *self,
 	modest_account_mgr_set_string (self, account_name, MODEST_ACCOUNT_AUTH_MECH, str_value, TRUE);
 }
 
+static ModestProtocol
+get_security_for_conf_string(const gchar* value)
+{
+	ModestProtocol result = MODEST_PROTOCOL_SECURITY_NONE;
+	if (value) {
+		if (strcmp(value, MODEST_ACCOUNT_SECURITY_VALUE_NONE) == 0)
+			result = MODEST_PROTOCOL_SECURITY_NONE;
+		else if (strcmp(value, MODEST_ACCOUNT_SECURITY_VALUE_NORMAL) == 0)
+			result = MODEST_PROTOCOL_SECURITY_TLS;
+		else if (strcmp(value, MODEST_ACCOUNT_SECURITY_VALUE_SSL) == 0)
+			result = MODEST_PROTOCOL_SECURITY_SSL;
+	}
+	
+	return result;
+}
+
 ModestProtocol
 modest_server_account_get_security (ModestAccountMgr *self, 
 	const gchar* account_name)
@@ -167,12 +195,7 @@ modest_server_account_get_security (ModestAccountMgr *self,
 	gchar* value = modest_account_mgr_get_string (self, account_name, MODEST_ACCOUNT_SECURITY, 
 		TRUE /* server account */);
 	if (value) {
-		if (strcmp(value, MODEST_ACCOUNT_SECURITY_VALUE_NONE) == 0)
-			result = MODEST_PROTOCOL_SECURITY_NONE;
-		else if (strcmp(value, MODEST_ACCOUNT_SECURITY_VALUE_NORMAL) == 0)
-			result = MODEST_PROTOCOL_SECURITY_TLS;
-		else if (strcmp(value, MODEST_ACCOUNT_SECURITY_VALUE_SSL) == 0)
-			result = MODEST_PROTOCOL_SECURITY_SSL;
+		result = get_security_for_conf_string (value);
 			
 		g_free (value);
 	}
@@ -232,12 +255,24 @@ modest_account_mgr_get_server_account_data (ModestAccountMgr *self, const gchar*
 	data->proto        = modest_protocol_info_get_protocol (proto);
 	g_free (proto);
 
+	data->port         = modest_account_mgr_get_int (self, name, MODEST_ACCOUNT_PORT, TRUE);
+	
+	gchar *secure_auth_str = modest_account_mgr_get_string (self, name, MODEST_ACCOUNT_AUTH_MECH, TRUE);
+	data->secure_auth  = get_secure_auth_for_conf_string(secure_auth_str);
+	g_free (secure_auth_str);
+		
+	gchar *security_str = modest_account_mgr_get_string (self, name, MODEST_ACCOUNT_SECURITY, TRUE);
+	data->security     = get_security_for_conf_string(security_str);
+	g_free (security_str);
+	
 	data->last_updated = modest_account_mgr_get_int    (self, name, MODEST_ACCOUNT_LAST_UPDATED,TRUE);
 	
 	data->password     = modest_account_mgr_get_string (self, name, MODEST_ACCOUNT_PASSWORD, TRUE);
 	data->uri          = modest_account_mgr_get_string (self, name, MODEST_ACCOUNT_URI,TRUE);
 	data->options = modest_account_mgr_get_list (self, name, MODEST_ACCOUNT_OPTIONS,
 						     MODEST_CONF_VALUE_STRING, TRUE);
+						   
+	
 	return data;
 }
 
