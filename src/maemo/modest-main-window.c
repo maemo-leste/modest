@@ -157,37 +157,6 @@ modest_main_window_class_init (ModestMainWindowClass *klass)
 	g_type_class_add_private (gobject_class, sizeof(ModestMainWindowPrivate));
 }
 
-
-static void
-on_key_changed (ModestConf* conf, const gchar *key, ModestConfEvent event, ModestMainWindow *win)
-{
-	TnyAccount *account;
-	
-	if (!key || strcmp (key, MODEST_CONF_DEVICE_NAME) != 0)
-		return; /* wrong key */
-	
-	/* ok, the device name changed; thus, we have to update the
-	 * local folder account name*/
-	account =
-		modest_tny_account_store_get_tny_account_by_account (modest_runtime_get_account_store(),
-								     MODEST_LOCAL_FOLDERS_ACCOUNT_ID,
-								     TNY_ACCOUNT_TYPE_STORE);
-	if (!account) {
-		g_printerr ("modest: could not get account\n");
-		return;
-	}
-
-	if (event == MODEST_CONF_EVENT_KEY_UNSET) 
-		tny_account_set_name (account, MODEST_LOCAL_FOLDERS_DEFAULT_DISPLAY_NAME);
-	else {
-		gchar *device_name = modest_conf_get_string (modest_runtime_get_conf(),
-							     MODEST_CONF_DEVICE_NAME, NULL);
-		tny_account_set_name (account, device_name);
-		g_free (device_name);
-	}
-	g_object_unref (G_OBJECT(account));	
-}
-
 static void
 modest_main_window_init (ModestMainWindow *obj)
 {
@@ -340,16 +309,6 @@ connect_signals (ModestMainWindow *self)
 	g_signal_connect (G_OBJECT (self), "window-state-event",
 			  G_CALLBACK (modest_main_window_window_state_event),
 			  NULL);
-
-
-	
-	/* modest_maemo_utils_get_device_name will probably change
-	 * MODEST_CONF_DEVICE_NAME. If that happens, we update the local folders
-	 * account name in the callback
-	 */
-	g_signal_connect (G_OBJECT(modest_runtime_get_conf()), "key_changed",
-			  G_CALLBACK(on_key_changed), self);
-	
 	g_signal_connect (G_OBJECT(self), "delete-event", G_CALLBACK(on_delete_event), self);
 
 	/* Track account changes. We need to refresh the toolbar */

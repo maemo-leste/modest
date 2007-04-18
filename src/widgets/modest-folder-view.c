@@ -110,6 +110,11 @@ static gboolean     on_key_pressed         (GtkWidget *self,
 					    GdkEventKey *event,
 					    gpointer user_data);
 
+static void         on_configuration_key_changed         (ModestConf* conf, 
+							  const gchar *key, 
+							  ModestConfEvent event, 
+							  ModestFolderView *self);
+
 enum {
 	FOLDER_SELECTION_CHANGED_SIGNAL,
 	LAST_SIGNAL
@@ -128,6 +133,8 @@ struct _ModestFolderViewPrivate {
 	GtkTreeSelection    *cur_selection;
 	TnyFolderStoreQuery *query;
 	guint                timer_expander;
+
+	gchar               *local_account_name;
 };
 #define MODEST_FOLDER_VIEW_GET_PRIVATE(o)			\
 	(G_TYPE_INSTANCE_GET_PRIVATE((o),			\
@@ -222,8 +229,13 @@ text_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
  
 	if (!fname)
 		return;
+
+	if (!folder) {
+		g_free (fname);
+		return;
+	}
 	
-	if (folder && type != TNY_FOLDER_TYPE_ROOT) { /* FIXME: tnymail bug? crashes with root folders */
+	if (type != TNY_FOLDER_TYPE_ROOT) {
 		if (modest_tny_folder_is_local_folder (folder)) {
 			TnyFolderType type;
 			type = modest_tny_folder_get_local_folder_type (folder);
@@ -232,19 +244,34 @@ text_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 				fname = g_strdup(modest_local_folder_info_get_type_display_name (type));
 			}
 		}
-	} else if (folder && type == TNY_FOLDER_TYPE_ROOT) {
-		/* FIXME: todo */
+
+		/* Use bold font style if there are unread messages */			
+		if (unread > 0) {
+			gchar *folder_title = g_strdup_printf ("%s (%d)", fname, unread);
+			g_object_set (rendobj,"text", folder_title,  "weight", 800, NULL);
+			g_free (folder_title);
+		} else 
+			g_object_set (rendobj,"text", fname, "weight", 400, NULL);
+
+	} else {
+		ModestFolderViewPrivate *priv;
+		const gchar *account_name;
+	
+		priv =	MODEST_FOLDER_VIEW_GET_PRIVATE (data);
+
+		/* Use bold font style */
+		account_name = priv->local_account_name;
+		g_object_set (rendobj,"text", account_name, "weight", 800, NULL);
+/* 		if (modest_tny_folder_is_local_folder (folder)) { */
+/* 		} else { */
+/* 			if () { */
+/* 			} else { */
+/* 			} */
+/* 		} */
 	}
-			
-	if (unread > 0) {
-		gchar *folder_title = g_strdup_printf ("%s (%d)", fname, unread);
-		g_object_set (rendobj,"text", folder_title,  "weight", 800, NULL);
-		g_free (folder_title);
-	} else 
-		g_object_set (rendobj,"text", fname, "weight", 400, NULL);
-		
+	
+	g_object_unref (G_OBJECT (folder));
 	g_free (fname);
-	if (folder) g_object_unref (G_OBJECT (folder));
 }
 
 
@@ -309,6 +336,7 @@ modest_folder_view_init (ModestFolderView *obj)
 	GtkTreeViewColumn *column;
 	GtkCellRenderer *renderer;
 	GtkTreeSelection *sel;
+	ModestConf *conf;
 	
 	priv =	MODEST_FOLDER_VIEW_GET_PRIVATE(obj);
 	
@@ -318,17 +346,22 @@ modest_folder_view_init (ModestFolderView *obj)
 	priv->cur_row        = NULL;
 	priv->query          = NULL;
 
+	/* Initialize the local account name */
+	conf = modest_runtime_get_conf();
+	priv->local_account_name = modest_conf_get_string (conf, MODEST_CONF_DEVICE_NAME, NULL);
+
+	/* Build treeview */
 	column = gtk_tree_view_column_new ();	
 	
 	renderer = gtk_cell_renderer_pixbuf_new();
 	gtk_tree_view_column_pack_start (column, renderer, FALSE);
 	gtk_tree_view_column_set_cell_data_func(column, renderer,
-						icon_cell_data, NULL, NULL);
+						icon_cell_data, obj, NULL);
 	
 	renderer = gtk_cell_renderer_text_new();
 	gtk_tree_view_column_pack_start (column, renderer, FALSE);
 	gtk_tree_view_column_set_cell_data_func(column, renderer,
-						text_cell_data, NULL, NULL);
+						text_cell_data, obj, NULL);
 	
 	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW(obj));
 	gtk_tree_selection_set_mode (sel, GTK_SELECTION_SINGLE);
@@ -341,11 +374,22 @@ modest_folder_view_init (ModestFolderView *obj)
 
 	gtk_tree_view_append_column (GTK_TREE_VIEW(obj),column);
 
+	/* Setup drag and drop */
 	setup_drag_and_drop (GTK_TREE_VIEW(obj));
 
+	/* Connect signals */
 	g_signal_connect (G_OBJECT (obj), 
 			  "key-press-event", 
 			  G_CALLBACK (on_key_pressed), NULL);
+
+	/*
+	 * Track changes in the local account name (in the device it
+	 * will be the device name)
+	 */
+	g_signal_connect (G_OBJECT(conf), 
+			  "key_changed",
+			  G_CALLBACK(on_configuration_key_changed), obj);
+
 }
 
 static void
@@ -390,6 +434,8 @@ modest_folder_view_finalize (GObject *obj)
 	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW(obj));
 	if (sel)
 		g_signal_handler_disconnect (G_OBJECT(sel), priv->changed_signal);
+
+	g_free (priv->local_account_name);
 	
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
@@ -1179,4 +1225,40 @@ on_key_pressed (GtkWidget *self,
 	}
 
 	return retval;
+}
+
+/*
+ * We listen to the changes in the local folder account name key,
+ * because we want to show the right name in the view. The local
+ * folder account name corresponds to the device name in the Maemo
+ * version. We do this because we do not want to query gconf on each
+ * tree view refresh. It's better to cache it and change whenever
+ * necessary.
+ */
+static void 
+on_configuration_key_changed (ModestConf* conf, 
+			      const gchar *key, 
+			      ModestConfEvent event, 
+			      ModestFolderView *self)
+{
+	ModestFolderViewPrivate *priv;
+	GtkTreeViewColumn *tree_column;
+
+	if (!key || strcmp (key, MODEST_CONF_DEVICE_NAME))
+		return;
+
+	priv = MODEST_FOLDER_VIEW_GET_PRIVATE(self);
+
+	g_free (priv->local_account_name);
+
+	if (event == MODEST_CONF_EVENT_KEY_UNSET)
+		priv->local_account_name = g_strdup (MODEST_LOCAL_FOLDERS_DEFAULT_DISPLAY_NAME);
+	else
+		priv->local_account_name = modest_conf_get_string (modest_runtime_get_conf(),
+								   MODEST_CONF_DEVICE_NAME, NULL);
+
+	/* Force a redraw */
+	tree_column = gtk_tree_view_get_column (GTK_TREE_VIEW (self), 
+						TNY_GTK_FOLDER_STORE_TREE_MODEL_NAME_COLUMN);
+	gtk_tree_view_column_queue_resize (tree_column);
 }
