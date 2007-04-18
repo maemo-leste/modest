@@ -30,7 +30,7 @@
 #ifndef __MODEST_MAEMO_CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW
 #define __MODEST_MAEMO_CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW
 
-#include <gtk/gtkwindow.h>
+#include <gtk/gtkdialog.h>
 #include <gtk/gtktreeview.h>
 
 G_BEGIN_DECLS
@@ -58,18 +58,21 @@ G_BEGIN_DECLS
 	MODEST_TYPE_CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW, ModestConnectionSpecificSmtpEditWindowClass))
 
 typedef struct {
-	GtkWindow parent;
+	GtkDialog parent;
 	
 } ModestConnectionSpecificSmtpEditWindow;
 
 typedef struct {
-	GtkWindowClass parent_class;
+	GtkDialogClass parent_class;
 } ModestConnectionSpecificSmtpEditWindowClass;
 
 GType modest_connection_specific_smtp_edit_window_get_type (void);
 
 ModestConnectionSpecificSmtpEditWindow* modest_connection_specific_smtp_edit_window_new (void);
 
+void modest_connection_specific_smtp_edit_window_set_connection (
+	ModestConnectionSpecificSmtpEditWindow *window, const gchar* iap_id, const gchar* iap_name);
+	
 G_END_DECLS
 
 #endif /* __MODEST_MAEMO_CONNECTION_SPECIFIC_SMTP_WINDOW */

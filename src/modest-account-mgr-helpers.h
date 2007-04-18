@@ -140,6 +140,46 @@ gboolean modest_account_mgr_set_enabled (ModestAccountMgr *self, const gchar* na
 gboolean modest_account_mgr_get_enabled (ModestAccountMgr *self, const gchar* name);
 
 /**
+ * modest_account_mgr_set_connection_specific_smtp
+ * @self: a ModestAccountMgr instance
+ * @name: the account name
+ * @connection_name: A libconic IAP connection name
+ * @server_account_name: a server account name to use for this connection.
+ * 
+ * Specify a server account to use with the specific connection for this account.
+ *
+ * Returns: TRUE if it worked, FALSE otherwise
+ */
+gboolean modest_account_mgr_set_connection_specific_smtp (ModestAccountMgr *self, const gchar* name,
+					 const gchar* connection_name, const gchar* server_account_name);
+
+/**
+ * modest_account_mgr_remove_connection_specific_smtp
+ * @self: a ModestAccountMgr instance
+ * @name: the account name
+ * @connection_name: A libconic IAP connection name
+ * 
+ * Disassacoiate a server account to use with the specific connection for this account.
+ *
+ * Returns: TRUE if it worked, FALSE otherwise
+ */				 
+gboolean modest_account_mgr_remove_connection_specific_smtp (ModestAccountMgr *self, const gchar* name,
+					 const gchar* connection_name);
+
+/**
+ * modest_account_mgr_get_connection_specific_smtp
+ * @self: a ModestAccountMgr instance
+ * @name: the account name
+ * @connection_name: A libconic IAP connection name
+ * 
+ * Retrieve a server account to use with this specific connection for this account.
+ *
+ * Returns: a server account name to use for this connection, or NULL if none is specified.
+ */			 
+gchar* modest_account_mgr_get_connection_specific_smtp (ModestAccountMgr *self, const gchar* name,
+					 const gchar* connection_name);
+					 
+/**
  * modest_server_account_get_secure_auth:
  * @self: a ModestAccountMgr instance
  * @account_name: The name of a server account.
@@ -185,7 +225,7 @@ modest_server_account_get_security (ModestAccountMgr *self, const gchar* account
 void
 modest_server_account_set_security (ModestAccountMgr *self, const gchar* account_name, 
 	ModestProtocol security);
-
+	
 #if 0
 /**
  * modest_account_mgr_get_account_option:

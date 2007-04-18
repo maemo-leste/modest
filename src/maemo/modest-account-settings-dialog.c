@@ -510,7 +510,6 @@ on_smtp_servers_window_hide (GtkWindow *window, gpointer user_data)
 static void
 on_button_outgoing_smtp_servers (GtkButton *button, gpointer user_data)
 {
-
 	ModestAccountSettingsDialog * self = MODEST_ACCOUNT_SETTINGS_DIALOG (user_data);
 	
 	/* Show the window: */
@@ -518,10 +517,12 @@ on_button_outgoing_smtp_servers (GtkButton *button, gpointer user_data)
 	 * so we can supply them when creating the connection somehow.
 	 */
 	GtkWidget *window = GTK_WIDGET (modest_connection_specific_smtp_window_new ());
-	gtk_window_set_transient_for (GTK_WINDOW (self), GTK_WINDOW (window));
-	g_signal_connect (G_OBJECT (window), "hide",
-        	G_CALLBACK (on_smtp_servers_window_hide), self);
+	gtk_window_set_transient_for (GTK_WINDOW (window), GTK_WINDOW (self));
+	gtk_window_set_modal (GTK_WINDOW (window), TRUE);
     gtk_widget_show (window);
+    
+    g_signal_connect (G_OBJECT (window), "hide",
+        G_CALLBACK (on_smtp_servers_window_hide), self);
 }
 
 static void

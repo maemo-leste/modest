@@ -1,5 +1,35 @@
 2007-04-18  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/maemo/modest-connection-specific-smtp-edit-window.c:
+	(on_combo_security_changed): 
+	(modest_connection_specific_smtp_edit_window_init):
+	Auto-fill the port number as in the account settings.
+	
+	(modest_connection_specific_smtp_edit_window_set_connection):
+	* src/maemo/modest-connection-specific-smtp-edit-window.h:
+	* src/maemo/modest-connection-specific-smtp-window.c:
+	(fill_with_connections), (on_button_edit),
+	(modest_connection_specific_smtp_window_init): 
+	Turn the edit window into a dialog to simplify the code, and 
+	set a WM hint as in a GtkDialog, because only a popup can be on top of 
+	another window in Maemo, and popups usually have no WM decoration.
+	
+	* src/modest-defs.h:
+	* src/modest-account-mgr-helpers.c:
+	(modest_account_mgr_set_connection_specific_smtp),
+	(modest_account_mgr_remove_connection_specific_smtp),
+	(modest_account_mgr_get_connection_specific_smtp):
+	* src/modest-account-mgr-helpers.h: Some functions to write the 
+	connection-specific SMTP server information. Not yet used.
+
+	
+	* src/widgets/modest-folder-view.c: (text_cell_data):
+	Fix a warning about an uninitialized variable.
+	(on_configuration_key_changed): Put an #ifdef around the use 
+	of gtk_tree_view_column_queue_resize() because it is new in GTK+ 2.10.
+
+2007-04-18  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/maemo/modest-account-settings-dialog.h:
 	* src/maemo/modest-account-settings-dialog.c:
 	Added connect_for_modified() utility function to mark the new modified boolean.

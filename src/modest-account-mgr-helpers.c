@@ -121,6 +121,107 @@ modest_server_account_data_get_option_bool (GSList* options_list, const gchar* o
 }
 #endif
 
+
+gboolean modest_account_mgr_set_connection_specific_smtp (ModestAccountMgr *self, 
+	const gchar* account_name,
+	const gchar* connection_name, const gchar* server_account_name)
+{
+	modest_account_mgr_remove_connection_specific_smtp (self, account_name, connection_name);
+	
+	GSList *list = modest_account_mgr_get_list (self, account_name, 
+							MODEST_ACCOUNT_CONNECTION_SPECIFIC_SMTP_LIST,
+						    MODEST_CONF_VALUE_STRING, TRUE);
+		
+	/* The server account is in the item after the connection name: */
+	GSList *list_connection = g_slist_append (list, (gpointer)connection_name);
+	g_slist_append (list_connection, (gpointer)server_account_name);
+	
+	/* Reset the changed list: */
+	modest_account_mgr_set_list (self, account_name, 
+							MODEST_ACCOUNT_CONNECTION_SPECIFIC_SMTP_LIST, list,
+						    MODEST_CONF_VALUE_STRING, TRUE);
+				
+	/* TODO: Should we free the items too, or just the list? */
+	g_slist_free (list);
+	
+	return TRUE;
+}
+
+/**
+ * modest_account_mgr_remove_connection_specific_smtp
+ * @self: a ModestAccountMgr instance
+ * @name: the account name
+ * @connection_name: A libconic IAP connection name
+ * 
+ * Disassacoiate a server account to use with the specific connection for this account.
+ *
+ * Returns: TRUE if it worked, FALSE otherwise
+ */				 
+gboolean modest_account_mgr_remove_connection_specific_smtp (ModestAccountMgr *self, 
+	const gchar* account_name, const gchar* connection_name)
+{
+	GSList *list = modest_account_mgr_get_list (self, account_name, 
+							MODEST_ACCOUNT_CONNECTION_SPECIFIC_SMTP_LIST,
+						    MODEST_CONF_VALUE_STRING, TRUE);
+	if (!list)
+		return FALSE;
+		
+	/* The server account is in the item after the connection name: */
+	GSList *list_connection = g_slist_find_custom (list, connection_name, (GCompareFunc)strcmp);
+	if (list_connection) {
+		/* remove both items: */
+		GSList *temp = g_slist_delete_link(list_connection, list_connection);
+		g_slist_delete_link(temp, g_slist_next(temp));
+	}
+	
+	/* Reset the changed list: */
+	modest_account_mgr_set_list (self, account_name, 
+							MODEST_ACCOUNT_CONNECTION_SPECIFIC_SMTP_LIST, list,
+						    MODEST_CONF_VALUE_STRING, TRUE);
+				
+	/* TODO: Should we free the items too, or just the list? */
+	g_slist_free (list);
+	
+	return TRUE;
+}
+
+/**
+ * modest_account_mgr_get_connection_specific_smtp
+ * @self: a ModestAccountMgr instance
+ * @name: the account name
+ * @connection_name: A libconic IAP connection name
+ * 
+ * Retrieve a server account to use with this specific connection for this account.
+ *
+ * Returns: a server account name to use for this connection, or NULL if none is specified.
+ */			 
+gchar* modest_account_mgr_get_connection_specific_smtp (ModestAccountMgr *self, const gchar* account_name,
+					 const gchar* connection_name)
+{
+	gchar *result = NULL;
+	
+	GSList *list = modest_account_mgr_get_list (self, account_name, 
+							MODEST_ACCOUNT_CONNECTION_SPECIFIC_SMTP_LIST,
+						    MODEST_CONF_VALUE_STRING, TRUE);
+	if (!list)
+		return NULL;
+		
+	/* The server account is in the item after the connection name: */
+	GSList *list_connection = g_slist_find_custom (list, connection_name, (GCompareFunc)strcmp);
+	if (list_connection) {
+		GSList * list_server_account = g_slist_next(list_connection);
+		if (list_server_account)
+			result = g_strdup ((gchar*)(list_server_account->data));
+	}
+				
+	/* TODO: Should we free the items too, or just the list? */
+	g_slist_free (list);
+	
+	return result;
+}
+					 
+					 
+
 static ModestProtocol
 get_secure_auth_for_conf_string(const gchar* value)
 {

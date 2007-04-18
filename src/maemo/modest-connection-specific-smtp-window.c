@@ -2,6 +2,10 @@
 
 #include "modest-connection-specific-smtp-window.h"
 #include "modest-connection-specific-smtp-edit-window.h"
+
+#include <modest-runtime.h>
+#include <tny-maemo-conic-device.h>
+
 #include <gtk/gtktreeview.h>
 #include <gtk/gtkcellrenderertext.h>
 #include <gtk/gtkliststore.h>
@@ -77,24 +81,47 @@ modest_connection_specific_smtp_window_class_init (ModestConnectionSpecificSmtpW
 }
 
 enum MODEL_COLS {
-	MODEL_COL_NAME = 0,
-	MODEL_COL_SERVER_NAME = 1,
-	MODEL_COL_ID = 2
+	MODEL_COL_NAME = 0, /* libconic IAP Name: a string */
+	MODEL_COL_SERVER_NAME = 1, /* a string */
+	MODEL_COL_ID = 2 /* libconic IAP ID: a string */
 };
 
 static void
 fill_with_connections (ModestConnectionSpecificSmtpWindow *self)
 {
-	/* TODO: 
-	* When TnyMaemoDevice provides enough of the libconic API to implement this. */
-}
-
+	printf("debug: fill_with_connections()\n");
+	ModestConnectionSpecificSmtpWindowPrivate *priv = 
+		CONNECTION_SPECIFIC_SMTP_WINDOW_GET_PRIVATE (self);
+	GtkListStore *liststore = GTK_LIST_STORE (priv->model);
 	
-static void
-on_edit_window_hide (GtkWindow *window, gpointer user_data)
-{
-	/* Destroy the window when it is closed: */
-	gtk_widget_destroy (GTK_WIDGET (window));
+	TnyDevice *device = modest_runtime_get_device ();
+	g_assert (TNY_IS_MAEMO_CONIC_DEVICE (device));
+	
+	TnyMaemoConicDevice *maemo_device = TNY_MAEMO_CONIC_DEVICE (device);
+	
+	/* Get the list of Internet Access Points: */
+	GSList* list_iaps = tny_maemo_conic_device_get_iap_list (maemo_device);
+	printf("debug: list_iaps=%p, list_iaps size = %d\n", list_iaps, g_slist_length(list_iaps));
+	
+	GSList* iter = list_iaps;
+	while (iter) {
+		ConIcIap *iap = (ConIcIap*)iter->data;
+		if (iap) {
+			const gchar *name = con_ic_iap_get_name (iap);
+			const gchar *id = con_ic_iap_get_id (iap);
+			printf ("debug: iac name=%s, id=%s\n", name, id);
+			
+			/* Add the row to the model: */
+			GtkTreeIter iter;
+			gtk_list_store_append (liststore, &iter);
+			gtk_list_store_set(liststore, &iter, MODEL_COL_ID, id, MODEL_COL_NAME, name, -1);
+		}
+		
+		iter = g_slist_next (iter);	
+	}
+		
+	if (list_iaps)
+		tny_maemo_conic_device_free_iap_list (maemo_device, list_iaps);
 }
 
  	
@@ -102,13 +129,33 @@ static void
 on_button_edit (GtkButton *button, gpointer user_data)
 {
 	ModestConnectionSpecificSmtpWindow *self = MODEST_CONNECTION_SPECIFIC_SMTP_WINDOW (user_data);
+	ModestConnectionSpecificSmtpWindowPrivate *priv = CONNECTION_SPECIFIC_SMTP_WINDOW_GET_PRIVATE (self);
 	
-	/* TODO: Specify the chosen connection to edit: */
-	GtkWidget * window = GTK_WIDGET (modest_connection_specific_smtp_edit_window_new ());
-	gtk_window_set_transient_for (GTK_WINDOW (self), GTK_WINDOW (window));
-	g_signal_connect (G_OBJECT (window), "hide",
-        	G_CALLBACK (on_edit_window_hide), self);
-	gtk_widget_show (window);
+	gchar *id = NULL;
+	gchar *name = NULL;
+	GtkTreeSelection *sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (self));
+	GtkTreeIter iter;
+	GtkTreeModel *model = 0;
+	if (gtk_tree_selection_get_selected (sel, &model, &iter)) {
+		gtk_tree_model_get (priv->model, &iter, 
+				    MODEL_COL_ID, &id, 
+				    MODEL_COL_NAME, &name, 
+				    -1);
+	
+		/* TODO: Is 0 an allowed libconic IAP ID? 
+		 * If not then we should check for it. */
+		
+		GtkWidget * window = GTK_WIDGET (modest_connection_specific_smtp_edit_window_new ());
+		modest_connection_specific_smtp_edit_window_set_connection (
+			MODEST_CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW (window), id, name);
+			
+		gtk_window_set_transient_for (GTK_WINDOW (self), GTK_WINDOW (window));
+		gint response = gtk_dialog_run (GTK_DIALOG (window));
+		gtk_widget_hide (window);
+		if (response == GTK_RESPONSE_OK) {
+
+		}		
+	}
 }
 
 static void
@@ -124,13 +171,19 @@ on_button_cancel (GtkButton *button, gpointer user_data)
 static void
 modest_connection_specific_smtp_window_init (ModestConnectionSpecificSmtpWindow *self)
 {
+	/* This seems to be necessary to make the window show at the front with decoration.
+	 * If we use property type=GTK_WINDOW_TOPLEVEL instead of the default GTK_WINDOW_POPUP+decoration, 
+	 * then the window will be below the others. */
+	gtk_window_set_type_hint (GTK_WINDOW (self),
+			    GDK_WINDOW_TYPE_HINT_DIALOG);
+			    
 	ModestConnectionSpecificSmtpWindowPrivate *priv = CONNECTION_SPECIFIC_SMTP_WINDOW_GET_PRIVATE (self);
 
 	/* Create a tree model for the tree view:
 	 * with a string for the name, a string for the server name, and an int for the ID.
 	 * This must match our MODEL_COLS enum constants.
 	 */
-	priv->model = GTK_TREE_MODEL (gtk_list_store_new (3, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT));
+	priv->model = GTK_TREE_MODEL (gtk_list_store_new (3, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING));
 
 	/* Setup the tree view: */
 	priv->treeview = GTK_TREE_VIEW (gtk_tree_view_new_with_model (priv->model));
@@ -169,7 +222,7 @@ modest_connection_specific_smtp_window_init (ModestConnectionSpecificSmtpWindow 
 	
 	/* Add the buttons: */
 	GtkWidget *hbox = gtk_hbox_new (FALSE, 2);
-	gtk_box_pack_start (GTK_BOX (vbox), hbox, TRUE, TRUE, 2);
+	gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 2);
 	gtk_widget_show (hbox);
 	
 	GtkWidget *button_edit = gtk_button_new_from_stock (GTK_STOCK_EDIT);
@@ -181,9 +234,10 @@ modest_connection_specific_smtp_window_init (ModestConnectionSpecificSmtpWindow 
 	GtkWidget *button_cancel = gtk_button_new_from_stock (GTK_STOCK_CLOSE);
 	gtk_box_pack_start (GTK_BOX (hbox), button_cancel, TRUE, FALSE, 2);
 	gtk_widget_show (button_cancel);
-	g_signal_connect (G_OBJECT (button_edit), "clicked",
+	g_signal_connect (G_OBJECT (button_cancel), "clicked",
         	G_CALLBACK (on_button_cancel), self);
 	
+	gtk_container_add (GTK_CONTAINER (self), GTK_WIDGET (vbox));
 	gtk_widget_show (vbox);
 }
 

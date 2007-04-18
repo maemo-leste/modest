@@ -15,7 +15,7 @@
 
 #include <glib/gi18n.h>
 
-G_DEFINE_TYPE (ModestConnectionSpecificSmtpEditWindow, modest_connection_specific_smtp_edit_window, GTK_TYPE_WINDOW);
+G_DEFINE_TYPE (ModestConnectionSpecificSmtpEditWindow, modest_connection_specific_smtp_edit_window, GTK_TYPE_DIALOG);
 
 #define CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW_GET_PRIVATE(o) \
 	(G_TYPE_INSTANCE_GET_PRIVATE ((o), MODEST_TYPE_CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW, ModestConnectionSpecificSmtpEditWindowPrivate))
@@ -88,19 +88,22 @@ enum MODEL_COLS {
 };
 
 static void
-on_button_edit (GtkButton *button, gpointer user_data)
+on_combo_security_changed (GtkComboBox *widget, gpointer user_data)
 {
+	ModestConnectionSpecificSmtpEditWindow *self = 
+		MODEST_CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW (user_data);
+	ModestConnectionSpecificSmtpEditWindowPrivate *priv = CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW_GET_PRIVATE (self);
 	
-}
+	
+	const gint port_number = 
+		easysetup_serversecurity_combo_box_get_active_serversecurity_port (
+			EASYSETUP_SERVERSECURITY_COMBO_BOX (priv->combo_outgoing_security));
 
-static void
-on_button_cancel (GtkButton *button, gpointer user_data)
-{
-	ModestConnectionSpecificSmtpEditWindow *self = MODEST_CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW (user_data);
-
-	/* Hide the window.
-	 * The code that showed it will respond to the hide signal. */	
-	gtk_widget_hide (GTK_WIDGET (self));
+	if(port_number != 0) {
+		gchar* str = g_strdup_printf ("%d", port_number);
+		gtk_entry_set_text (GTK_ENTRY (priv->entry_port), str);
+		g_free (str);	
+	}		
 }
 
 static void
@@ -108,7 +111,7 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 {
 	ModestConnectionSpecificSmtpEditWindowPrivate *priv = CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW_GET_PRIVATE (self);
 	
-	GtkWidget *box = gtk_vbox_new (FALSE, 2);
+	GtkWidget *box = GTK_DIALOG(self)->vbox; /* gtk_vbox_new (FALSE, 2); */
 	
 	/* Create a size group to be used by all captions.
 	 * Note that HildonCaption does not create a default size group if we do not specify one.
@@ -123,6 +126,10 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	gtk_widget_show (priv->entry_outgoingserver);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, 2);
 	gtk_widget_show (caption);
+	
+	/* Show a default port number when the security method changes, as per the UI spec: */
+	g_signal_connect (G_OBJECT (priv->combo_outgoing_security), "changed", (GCallback)on_combo_security_changed, self);
+	
 	
 	/* The secure authentication widgets: */
 	if (!priv->combo_outgoing_auth)
@@ -183,21 +190,9 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	gtk_widget_show (caption);
 	
 	/* Add the buttons: */
-	GtkWidget *hbox = gtk_hbox_new (FALSE, 2);
-	gtk_box_pack_start (GTK_BOX (box), hbox, TRUE, TRUE, 2);
-	gtk_widget_show (hbox);
+	gtk_dialog_add_button (GTK_DIALOG (self), GTK_STOCK_OK, GTK_RESPONSE_OK);
+	gtk_dialog_add_button (GTK_DIALOG (self), GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL);
 	
-	GtkWidget *button_edit = gtk_button_new_from_stock (GTK_STOCK_EDIT);
-	gtk_box_pack_start (GTK_BOX (hbox), button_edit, TRUE, FALSE, 2);
-	gtk_widget_show (button_edit);
-	g_signal_connect (G_OBJECT (button_edit), "clicked",
-        	G_CALLBACK (on_button_edit), self);
-	
-	GtkWidget *button_cancel = gtk_button_new_from_stock (GTK_STOCK_CLOSE);
-	gtk_box_pack_start (GTK_BOX (hbox), button_cancel, TRUE, FALSE, 2);
-	gtk_widget_show (button_cancel);
-	g_signal_connect (G_OBJECT (button_edit), "clicked",
-        	G_CALLBACK (on_button_cancel), self);
 	
 	gtk_widget_show (box);
 }
@@ -206,5 +201,16 @@ ModestConnectionSpecificSmtpEditWindow*
 modest_connection_specific_smtp_edit_window_new (void)
 {
 	return g_object_new (MODEST_TYPE_CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW, NULL);
+}
+
+void
+modest_connection_specific_smtp_edit_window_set_connection (
+	ModestConnectionSpecificSmtpEditWindow *window, const gchar* iap_id, const gchar* iap_name)
+{
+	/* This causes a warning because of the %s in the translation, but not in the original string: */
+	gchar* title = g_strdup_printf (_("mcen_ti_connection_connection_name"), iap_name);
+	
+	gtk_window_set_title (GTK_WINDOW (window), title);
+	g_free (title);
 }
 

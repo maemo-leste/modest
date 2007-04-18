@@ -92,6 +92,12 @@
 #define MODEST_ACCOUNT_FULLNAME		 "fullname"
 #define MODEST_ACCOUNT_EMAIL             "email"
 
+/* This is a list of strings, with each strings, 
+ * alernating between a connection name, followed by a corresponding server account name.
+ * That's not pretty, but it's nicer than dealing with escaping of a = separator if 
+ * putting them both in one string. */
+#define MODEST_ACCOUNT_CONNECTION_SPECIFIC_SMTP_LIST "specific_smtp"
+
 /* server account keys */
 #define MODEST_ACCOUNT_PASSWORD          "password"          /* string */
 #define MODEST_ACCOUNT_REMEMBER_PWD	 "remember_pwd"      /* boolean */

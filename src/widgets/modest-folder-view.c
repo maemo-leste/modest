@@ -255,7 +255,8 @@ text_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 
 	} else {
 		ModestFolderViewPrivate *priv;
-		const gchar *account_name, *account_id;
+		const gchar *account_name = NULL;
+		const gchar *account_id = NULL;
 	
 		priv =	MODEST_FOLDER_VIEW_GET_PRIVATE (data);
 
@@ -1267,7 +1268,6 @@ on_configuration_key_changed (ModestConf* conf,
 			      ModestFolderView *self)
 {
 	ModestFolderViewPrivate *priv;
-	GtkTreeViewColumn *tree_column;
 
 	if (!key || strcmp (key, MODEST_CONF_DEVICE_NAME))
 		return;
@@ -1283,7 +1283,9 @@ on_configuration_key_changed (ModestConf* conf,
 								   MODEST_CONF_DEVICE_NAME, NULL);
 
 	/* Force a redraw */
-	tree_column = gtk_tree_view_get_column (GTK_TREE_VIEW (self), 
+#if GTK_CHECK_VERSION(2, 8, 0) /* gtk_tree_view_column_queue_resize is only available in GTK+ 2.8 */
+	GtkTreeViewColumn * tree_column = gtk_tree_view_get_column (GTK_TREE_VIEW (self), 
 						TNY_GTK_FOLDER_STORE_TREE_MODEL_NAME_COLUMN);
 	gtk_tree_view_column_queue_resize (tree_column);
+#endif
 }
