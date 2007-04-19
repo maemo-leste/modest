@@ -203,14 +203,17 @@ modest_text_utils_inline (const gchar *text,
 gsize
 modest_text_utils_strftime(char *s, gsize max, const char *fmt, time_t timet)
 {
-	static GDate date;
+        struct tm tm;
+/* 	static GDate date; */
 
 	/* does not work on old maemo glib: 
 	 *   g_date_set_time_t (&date, timet);
 	 */
-	g_date_set_time (&date, (GTime) timet);	
+/* 	g_date_set_time (&date, (GTime) timet);	 */
+	localtime_r (&timet, &tm);
 
-	return g_date_strftime (s, max, fmt, (const GDate*) &date);
+/* 	return g_date_strftime (s, max, fmt, (const GDate*) &date); */
+	return strftime(s, max, fmt, &tm);
 }
 
 gchar *
@@ -863,7 +866,7 @@ modest_text_utils_get_display_date (time_t date)
 	
 	/* if this is today, get the time instead of the date */
 	if (strcmp (date_buf, now_buf) == 0)
-		modest_text_utils_strftime (date_buf, BUF_SIZE, "%H:%M:%P", date);
+		modest_text_utils_strftime (date_buf, BUF_SIZE, "%H:%M %P", date);
 	
 	return g_strdup(date_buf);
 }

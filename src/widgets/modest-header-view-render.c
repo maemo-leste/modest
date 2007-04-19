@@ -130,7 +130,7 @@ static void
 set_common_flags (GtkCellRenderer *renderer, TnyHeaderFlags flags)
 {
 	g_object_set (G_OBJECT(renderer),
-		      "weight", (flags & TNY_HEADER_FLAG_SEEN) ? 400: 800,
+		      "weight", (flags & TNY_HEADER_FLAG_SEEN) ? PANGO_WEIGHT_NORMAL: PANGO_WEIGHT_ULTRABOLD,
 		      "strikethrough",  (flags & TNY_HEADER_FLAG_DELETED) ?  TRUE:FALSE,
 		      NULL);	
 }
