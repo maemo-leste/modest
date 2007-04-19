@@ -286,7 +286,7 @@ send_mail (const gchar* account_name,
 	modest_mail_operation_send_new_mail (mail_operation, account,
 					     from_string, mailto,
 					     cc, bcc, subject, body, NULL,
-					     NULL);
+					     NULL, 0);
 	if (modest_mail_operation_get_status (mail_operation) == 
 	    MODEST_MAIL_OPERATION_STATUS_FAILED) {
 		retval = MODEST_ERR_SEND;

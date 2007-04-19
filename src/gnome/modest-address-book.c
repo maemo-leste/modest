@@ -37,9 +37,8 @@ modest_address_book_add_address (const gchar *address)
 	g_message (__FUNCTION__);
 }
 
-gchar *
-modest_address_book_select_addresses (void)
+void
+modest_address_book_select_addresses (ModestRecptEditor *editor)
 {
 	g_message (__FUNCTION__);
-	return NULL;
 }

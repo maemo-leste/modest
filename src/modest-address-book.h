@@ -33,6 +33,7 @@
 #define __MODEST_ADDRESS_BOOK_H__
 
 #include <glib.h>
+#include <widgets/modest-recpt-editor.h>
 
 /**
  * modest_address_book_add_address:
@@ -47,12 +48,11 @@ modest_address_book_add_address (const gchar *address);
  * modest_address_book_select_addresses:
  * 
  * Shows a dialog to select some addresses from the 
- * address book.
+ * address book. It adds them to the recipient editor
  *
- * Returns: a string with the addresses
  */
-gchar *
-modest_address_book_select_addresses (void);
+void
+modest_address_book_select_addresses (ModestRecptEditor *editor);
 
 
 #endif /* __MODEST_ADDRESS_BOOK_H__ */

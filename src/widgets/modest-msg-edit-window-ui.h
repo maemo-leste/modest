@@ -47,6 +47,8 @@ static const GtkActionEntry modest_msg_edit_action_entries [] = {
 	{ "Alignment", NULL, N_("_Alignment") },
 	{ "Attachments", NULL, N_("Attachments") },
 	{ "Zoom", NULL, N_("Zoom") },
+	{ "MessagePriority", NULL, N_("Message priority") },
+	{ "Tools", NULL, N_("Tools") },
 
 	/* ACTIONS */
 	{ "ActionsSend", MODEST_STOCK_MAIL_SEND, N_("Send"),  NULL, N_("Send a message"),  G_CALLBACK (modest_ui_actions_on_send) },
@@ -93,7 +95,11 @@ static const GtkRadioActionEntry modest_msg_edit_zoom_action_entries [] = {
 	{ "Zoom200", NULL, N_("mcen_me_viewer_200"), NULL, NULL, 200 }
 };
 
-
+static const GtkRadioActionEntry modest_msg_edit_priority_action_entries [] = {
+	{ "MessagePriorityHigh", NULL, N_("High"), NULL, NULL, TNY_HEADER_FLAG_HIGH_PRIORITY },
+	{ "MessagePriorityNormal", NULL, N_("Normal"), NULL, NULL, TNY_HEADER_FLAG_NORMAL_PRIORITY },
+	{ "MessagePriorityLow", NULL, N_("Low"), NULL, NULL, TNY_HEADER_FLAG_LOW_PRIORITY },
+};
 
 G_END_DECLS
 #endif /* __MODEST_MSG_EDIT_WINDOW_UI_H__ */

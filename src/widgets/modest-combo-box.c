@@ -168,8 +168,9 @@ modest_combo_box_new (const ModestPairList *pairs, GEqualFunc id_equal_func)
 		gtk_cell_layout_clear (GTK_CELL_LAYOUT(obj));
 		
 		renderer = gtk_cell_renderer_text_new ();
+		g_object_set (G_OBJECT (renderer), "ellipsize", PANGO_ELLIPSIZE_END, NULL);
 		gtk_cell_layout_pack_start (GTK_CELL_LAYOUT(obj),
-					    renderer, FALSE);  
+					    renderer, TRUE);  
 		gtk_cell_layout_set_attributes (GTK_CELL_LAYOUT(obj),
 						renderer, "text",
 						COLUMN_DISPLAY_NAME, NULL); 

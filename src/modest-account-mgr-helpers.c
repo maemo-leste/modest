@@ -134,7 +134,7 @@ gboolean modest_account_mgr_set_connection_specific_smtp (ModestAccountMgr *self
 		
 	/* The server account is in the item after the connection name: */
 	GSList *list_connection = g_slist_append (list, (gpointer)connection_name);
-	g_slist_append (list_connection, (gpointer)server_account_name);
+	list_connection = g_slist_append (list_connection, (gpointer)server_account_name);
 	
 	/* Reset the changed list: */
 	modest_account_mgr_set_list (self, account_name, 
@@ -171,7 +171,7 @@ gboolean modest_account_mgr_remove_connection_specific_smtp (ModestAccountMgr *s
 	if (list_connection) {
 		/* remove both items: */
 		GSList *temp = g_slist_delete_link(list_connection, list_connection);
-		g_slist_delete_link(temp, g_slist_next(temp));
+		temp = g_slist_delete_link(temp, g_slist_next(temp));
 	}
 	
 	/* Reset the changed list: */

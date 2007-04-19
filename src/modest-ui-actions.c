@@ -1058,7 +1058,8 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 					     data->subject, 
 					     data->plain_body, 
 					     data->html_body,
-					     data->attachments);
+					     data->attachments,
+					     data->priority_flags);
 	/* Frees */
 	g_free (from);
 	g_free (account_name);
@@ -1506,6 +1507,18 @@ modest_ui_actions_on_change_zoom (GtkRadioAction *action,
 		modest_window_set_zoom (MODEST_WINDOW (window), ((gdouble)value)/100);
 	}
 }
+
+void     modest_ui_actions_msg_edit_on_change_priority (GtkRadioAction *action,
+							GtkRadioAction *selected,
+							ModestWindow *window)
+{
+	TnyHeaderFlags flags;
+	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
+
+	flags = gtk_radio_action_get_current_value (selected);
+	modest_msg_edit_window_set_priority_flags (MODEST_MSG_EDIT_WINDOW (window), flags);
+}
+
 
 void     
 modest_ui_actions_on_zoom_plus (GtkAction *action,

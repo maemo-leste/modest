@@ -229,7 +229,8 @@ modest_mail_operation_send_new_mail (ModestMailOperation *self,
 				     const gchar *cc,  const gchar *bcc,
 				     const gchar *subject, const gchar *plain_body,
 				     const gchar *html_body,
-				     const GList *attachments_list)
+				     const GList *attachments_list,
+				     TnyHeaderFlags priority_flags)
 {
 	TnyMsg *new_msg;
 	ModestMailOperationPrivate *priv = NULL;
@@ -257,6 +258,9 @@ modest_mail_operation_send_new_mail (ModestMailOperation *self,
 		g_printerr ("modest: failed to create a new msg\n");
 		return;
 	}
+
+	/* TODO: add priority handling. It's received in the priority_flags operator, and
+	   it should have effect in the sending operation */
 
 	/* Call mail operation */
 	modest_mail_operation_send_mail (self, transport_account, new_msg);

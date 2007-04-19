@@ -208,6 +208,10 @@ void     modest_ui_actions_on_change_zoom              (GtkRadioAction *action,
 							GtkRadioAction *selected,
 							ModestWindow *window);
 
+void     modest_ui_actions_msg_edit_on_change_priority (GtkRadioAction *action,
+							GtkRadioAction *selected,
+							ModestWindow *window);
+
 /**
  * modest_ui_actions_on_toggle_toolbar:
  * @toggle: 

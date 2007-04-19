@@ -43,6 +43,7 @@
 #include <widgets/modest-msg-edit-window.h>
 #include <widgets/modest-combo-box.h>
 #include <widgets/modest-recpt-editor.h>
+#include <widgets/modest-attachments-view.h>
 
 #include <modest-runtime.h>
 
@@ -53,6 +54,7 @@
 #include "modest-mail-operation.h"
 #include "modest-tny-platform-factory.h"
 #include "modest-tny-msg.h"
+#include "modest-address-book.h"
 #include <tny-simple-list.h>
 #include <wptextview.h>
 #include <wptextbuffer.h>
@@ -60,6 +62,7 @@
 #include <hildon-widgets/hildon-color-button.h>
 #include <hildon-widgets/hildon-banner.h>
 #include <hildon-widgets/hildon-caption.h>
+#include <hildon-widgets/hildon-scroll-area.h>
 #include "widgets/modest-msg-edit-window-ui.h"
 
 #ifdef MODEST_HILDON_VERSION_0
@@ -94,6 +97,8 @@ static void  modest_msg_edit_window_setup_toolbar (ModestMsgEditWindow *window);
 static gboolean modest_msg_edit_window_window_state_event (GtkWidget *widget, 
 							   GdkEventWindowState *event, 
 							   gpointer userdata);
+static void modest_msg_edit_window_open_addressbook (ModestMsgEditWindow *window,
+						     ModestRecptEditor *editor);
 
 /* ModestWindow methods implementation */
 static void  modest_msg_edit_window_set_zoom (ModestWindow *window, gdouble zoom);
@@ -120,9 +125,13 @@ struct _ModestMsgEditWindowPrivate {
 	GtkWidget   *cc_field;
 	GtkWidget   *bcc_field;
 	GtkWidget   *subject_field;
+	GtkWidget   *attachments_view;
+	GtkWidget   *priority_icon;
+	GtkWidget   *add_attachment_button;
 
 	GtkWidget   *cc_caption;
 	GtkWidget   *bcc_caption;
+	GtkWidget   *attachments_caption;
 
 	GtkTextBuffer *text_buffer;
 
@@ -136,6 +145,8 @@ struct _ModestMsgEditWindowPrivate {
 
 	gint last_cid;
 	GList *attachments;
+
+	TnyHeaderFlags priority_flags;
 
 	gdouble zoom_level;
 };
@@ -213,6 +224,8 @@ modest_msg_edit_window_init (ModestMsgEditWindow *obj)
 
 	priv->cc_caption    = NULL;
 	priv->bcc_caption    = NULL;
+
+	priv->priority_flags = 0;
 }
 
 
@@ -309,6 +322,10 @@ init_window (ModestMsgEditWindow *obj)
 	ModestMsgEditWindowPrivate *priv;
 	ModestPairList *protos;
 	GtkSizeGroup *size_group;
+	GtkWidget *frame;
+	GtkWidget *scroll_area;
+	GtkWidget *subject_box;
+	GtkWidget *attachment_icon;
 
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE(obj);
 
@@ -321,7 +338,20 @@ init_window (ModestMsgEditWindow *obj)
 	priv->to_field      = modest_recpt_editor_new ();
 	priv->cc_field      = modest_recpt_editor_new ();
 	priv->bcc_field     = modest_recpt_editor_new ();
+	subject_box = gtk_hbox_new (FALSE, 0);
+	priv->priority_icon = gtk_image_new ();
+	gtk_box_pack_start (GTK_BOX (subject_box), priv->priority_icon, FALSE, FALSE, 0);
 	priv->subject_field = gtk_entry_new_with_max_length (SUBJECT_MAX_LENGTH);
+	g_object_set (G_OBJECT (priv->subject_field), "hildon-input-mode", HILDON_GTK_INPUT_MODE_FULL, NULL);
+	gtk_box_pack_start (GTK_BOX (subject_box), priv->subject_field, TRUE, TRUE, 0);
+	priv->add_attachment_button = gtk_button_new ();
+	gtk_button_set_relief (GTK_BUTTON (priv->add_attachment_button), GTK_RELIEF_NONE);
+	gtk_button_set_focus_on_click (GTK_BUTTON (priv->add_attachment_button), FALSE);
+	gtk_button_set_alignment (GTK_BUTTON (priv->add_attachment_button), 1.0, 1.0);
+	attachment_icon = gtk_image_new_from_icon_name ("qgn_list_gene_attacpap", GTK_ICON_SIZE_BUTTON);
+	gtk_container_add (GTK_CONTAINER (priv->add_attachment_button), attachment_icon);
+	gtk_box_pack_start (GTK_BOX (subject_box), priv->add_attachment_button, FALSE, FALSE, 0);
+	priv->attachments_view = modest_attachments_view_new (NULL);
 	
 	priv->header_box = gtk_vbox_new (FALSE, 0);
 	
@@ -329,7 +359,8 @@ init_window (ModestMsgEditWindow *obj)
 	to_caption = hildon_caption_new (size_group, _("To:"), priv->to_field, NULL, 0);
 	priv->cc_caption = hildon_caption_new (size_group, _("Cc:"), priv->cc_field, NULL, 0);
 	priv->bcc_caption = hildon_caption_new (size_group, _("Bcc:"), priv->bcc_field, NULL, 0);
-	subject_caption = hildon_caption_new (size_group, _("Subject:"), priv->subject_field, NULL, 0);
+	subject_caption = hildon_caption_new (size_group, _("Subject:"), subject_box, NULL, 0);
+	priv->attachments_caption = hildon_caption_new (size_group, _("Attachments:"), priv->attachments_view, NULL, 0);
 	g_object_unref (size_group);
 
 	size_group = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);
@@ -337,6 +368,7 @@ init_window (ModestMsgEditWindow *obj)
 	modest_recpt_editor_set_field_size_group (MODEST_RECPT_EDITOR (priv->cc_field), size_group);
 	modest_recpt_editor_set_field_size_group (MODEST_RECPT_EDITOR (priv->bcc_field), size_group);
 	gtk_size_group_add_widget (size_group, priv->subject_field);
+	gtk_size_group_add_widget (size_group, priv->attachments_view);
 	g_object_unref (size_group);
 
 	gtk_box_pack_start (GTK_BOX (priv->header_box), from_caption, FALSE, FALSE, 0);
@@ -344,6 +376,8 @@ init_window (ModestMsgEditWindow *obj)
 	gtk_box_pack_start (GTK_BOX (priv->header_box), priv->cc_caption, FALSE, FALSE, 0);
 	gtk_box_pack_start (GTK_BOX (priv->header_box), priv->bcc_caption, FALSE, FALSE, 0);
 	gtk_box_pack_start (GTK_BOX (priv->header_box), subject_caption, FALSE, FALSE, 0);
+	gtk_box_pack_start (GTK_BOX (priv->header_box), priv->attachments_caption, FALSE, FALSE, 0);
+	gtk_widget_set_no_show_all (priv->attachments_caption, TRUE);
 
 
 	priv->msg_body = wp_text_view_new ();
@@ -353,6 +387,7 @@ init_window (ModestMsgEditWindow *obj)
 	wp_text_buffer_enable_rich_text (WP_TEXT_BUFFER (priv->text_buffer), TRUE);
 /* 	gtk_text_buffer_set_can_paste_rich_text (priv->text_buffer, TRUE); */
 	wp_text_buffer_reset_buffer (WP_TEXT_BUFFER (priv->text_buffer), TRUE);
+
 	g_signal_connect (G_OBJECT (priv->text_buffer), "refresh_attributes",
 			  G_CALLBACK (text_buffer_refresh_attributes), obj);
 	g_signal_connect (G_OBJECT (priv->text_buffer), "mark-set",
@@ -360,6 +395,8 @@ init_window (ModestMsgEditWindow *obj)
 	g_signal_connect (G_OBJECT (obj), "window-state-event",
 			  G_CALLBACK (modest_msg_edit_window_window_state_event),
 			  NULL);
+	g_signal_connect_swapped (G_OBJECT (priv->to_field), "open-addressbook", 
+				  G_CALLBACK (modest_msg_edit_window_open_addressbook), obj);
 
 	priv->scroll = gtk_scrolled_window_new (NULL, NULL);
 	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (priv->scroll), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
@@ -368,7 +405,8 @@ init_window (ModestMsgEditWindow *obj)
 	main_vbox = gtk_vbox_new  (FALSE, DEFAULT_MAIN_VBOX_SPACING);
 
 	gtk_box_pack_start (GTK_BOX(main_vbox), priv->header_box, FALSE, FALSE, 0);
-	gtk_box_pack_start (GTK_BOX(main_vbox), priv->msg_body, TRUE, TRUE, 0);
+	frame = gtk_frame_new (NULL);
+	gtk_box_pack_start (GTK_BOX(main_vbox), frame, TRUE, TRUE, 0);
 
 	gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (priv->scroll), main_vbox);
 	gtk_container_set_focus_vadjustment (GTK_CONTAINER (main_vbox), gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (priv->scroll)));
@@ -380,6 +418,10 @@ init_window (ModestMsgEditWindow *obj)
 		gtk_widget_hide (priv->bcc_field);
 
 	gtk_container_add (GTK_CONTAINER(obj), priv->scroll);
+	scroll_area = hildon_scroll_area_new (priv->scroll, priv->msg_body);
+	gtk_container_add (GTK_CONTAINER (frame), scroll_area);
+	gtk_container_set_focus_vadjustment (GTK_CONTAINER (scroll_area), 
+					     gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (priv->scroll)));
 }
 	
 
@@ -476,7 +518,8 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg)
 		wp_text_buffer_set_format (WP_TEXT_BUFFER (priv->text_buffer), &fmt);
 	}
 
-	if (!to) {
+	/* Set the default focus depending on having already a To: field or not */
+	if ((!to)||(*to == '\0')) {
 		gtk_widget_grab_focus (priv->to_field);
 	} else {
 		gtk_widget_grab_focus (priv->msg_body);
@@ -486,7 +529,10 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg)
 	   value that comes from msg <- not sure, should it be
 	   allowed? */
 	
-	/* TODO: set attachments */
+	/* Add attachments to the view */
+	modest_attachments_view_set_message (MODEST_ATTACHMENTS_VIEW (priv->attachments_view), msg);
+	if (priv->attachments == NULL)
+		gtk_widget_hide_all (priv->attachments_caption);
 }
 
 static void
@@ -700,6 +746,12 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name)
 					    100,
 					    G_CALLBACK (modest_ui_actions_on_change_zoom),
 					    obj);
+	gtk_action_group_add_radio_actions (action_group,
+					    modest_msg_edit_priority_action_entries,
+					    G_N_ELEMENTS (modest_msg_edit_priority_action_entries),
+					    0,
+					    G_CALLBACK (modest_ui_actions_msg_edit_on_change_priority),
+					    obj);
 	gtk_ui_manager_insert_action_group (parent_priv->ui_manager, action_group, 0);
 	g_object_unref (action_group);
 
@@ -799,6 +851,7 @@ modest_msg_edit_window_get_msg_data (ModestMsgEditWindow *edit_window)
 	data->plain_body =  (gchar *) gtk_text_buffer_get_text (priv->text_buffer, &b, &e, FALSE);
 	data->html_body  =  get_formatted_data (edit_window);
 	data->attachments = priv->attachments;
+	data->priority_flags = priv->priority_flags;
 
 	return data;
 }
@@ -1177,6 +1230,10 @@ modest_msg_edit_window_insert_image (ModestMsgEditWindow *window)
 				gtk_text_buffer_get_iter_at_mark (GTK_TEXT_BUFFER (priv->text_buffer), &position, insert_mark);
 				wp_text_buffer_insert_image (WP_TEXT_BUFFER (priv->text_buffer), &position, g_strdup (tny_mime_part_get_content_id (image_part)), pixbuf);
 				priv->attachments = g_list_prepend (priv->attachments, image_part);
+				modest_attachments_view_add_attachment (MODEST_ATTACHMENTS_VIEW (priv->attachments_view),
+									image_part);
+				gtk_widget_set_no_show_all (priv->attachments_caption, FALSE);
+				gtk_widget_show_all (priv->attachments_caption);
 			} else if (image_file_id == -1) {
 				close (image_file_id);
 			}
@@ -1408,6 +1465,31 @@ modest_msg_edit_window_show_bcc (ModestMsgEditWindow *window,
 }
 
 static void
+modest_msg_edit_window_open_addressbook (ModestMsgEditWindow *window,
+					 ModestRecptEditor *editor)
+{
+	ModestMsgEditWindowPrivate *priv;
+
+	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
+	g_return_if_fail ((editor == NULL) || (MODEST_IS_RECPT_EDITOR (editor)));
+	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
+
+	if (editor == NULL) {
+		GtkWidget *view_focus;
+		view_focus = gtk_window_get_focus (GTK_WINDOW (window));
+
+		if (gtk_widget_get_parent (view_focus) && 
+		    MODEST_IS_RECPT_EDITOR (gtk_widget_get_parent (view_focus))) {
+			editor = MODEST_RECPT_EDITOR (gtk_widget_get_parent (view_focus));
+		} else {
+			editor = MODEST_RECPT_EDITOR (priv->to_field);
+		}
+	}
+
+	modest_address_book_select_addresses (editor);
+
+}
+static void
 modest_msg_edit_window_show_toolbar (ModestWindow *self,
 				     gboolean show_toolbar)
 {
@@ -1423,4 +1505,35 @@ modest_msg_edit_window_show_toolbar (ModestWindow *self,
 		gtk_widget_show (GTK_WIDGET (parent_priv->toolbar));
 	else
 		gtk_widget_hide (GTK_WIDGET (parent_priv->toolbar));
+}
+
+void
+modest_msg_edit_window_set_priority_flags (ModestMsgEditWindow *window,
+					   TnyHeaderFlags priority_flags)
+{
+	ModestMsgEditWindowPrivate *priv;
+
+	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
+
+	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
+	priority_flags = priority_flags & (TNY_HEADER_FLAG_HIGH_PRIORITY);
+
+	if (priv->priority_flags != priority_flags) {
+
+		priv->priority_flags = priority_flags;
+
+		switch (priority_flags) {
+		case TNY_HEADER_FLAG_HIGH_PRIORITY:
+			gtk_image_set_from_icon_name (GTK_IMAGE (priv->priority_icon), "qgn_list_messaging_high", GTK_ICON_SIZE_MENU);
+			gtk_widget_show (priv->priority_icon);
+			break;
+		case TNY_HEADER_FLAG_LOW_PRIORITY:
+			gtk_image_set_from_icon_name (GTK_IMAGE (priv->priority_icon), "qgn_list_messaging_low", GTK_ICON_SIZE_MENU);
+			gtk_widget_show (priv->priority_icon);
+			break;
+		default:
+			gtk_widget_hide (priv->priority_icon);
+			break;
+		}
+	}
 }

@@ -123,7 +123,8 @@ void    modest_mail_operation_send_new_mail   (ModestMailOperation *self,
 					       const gchar *subject,
 					       const gchar *plain_body,
 					       const gchar *html_body,
-					       const GList *attachments_list);
+					       const GList *attachments_list,
+					       TnyHeaderFlags priority_flags);
 
 /**
  * modest_mail_operation_update_account:

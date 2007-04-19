@@ -101,7 +101,6 @@ modest_attachments_view_set_message (ModestAttachmentsView *attachments_view, Tn
 	ModestAttachmentsViewPriv *priv = MODEST_ATTACHMENTS_VIEW_GET_PRIVATE (attachments_view);
 	TnyList *parts;
 	TnyIterator *iter;
-	gboolean has_first = FALSE;
 
 	if (priv->msg) 
 		g_object_unref (priv->msg);
@@ -125,12 +124,7 @@ modest_attachments_view_set_message (ModestAttachmentsView *attachments_view, Tn
 
 		part = TNY_MIME_PART (tny_iterator_get_current (iter));
 		if (tny_mime_part_is_attachment (part)) {
-			GtkWidget *att_view = NULL;
-			att_view = modest_attachment_view_new (part);
-			gtk_box_pack_end (GTK_BOX (attachments_view), att_view, FALSE, FALSE, 0);
-			gtk_widget_show_all (att_view);
-			g_signal_connect (G_OBJECT (att_view), "activate", G_CALLBACK (activate_attachment), (gpointer) attachments_view);
-			has_first = TRUE;
+			modest_attachments_view_add_attachment (attachments_view, part);
 		}
 		g_object_unref (part);
 		tny_iterator_next (iter);
@@ -138,6 +132,21 @@ modest_attachments_view_set_message (ModestAttachmentsView *attachments_view, Tn
 
 	gtk_widget_queue_draw (GTK_WIDGET (attachments_view));
 
+}
+
+void
+modest_attachments_view_add_attachment (ModestAttachmentsView *attachments_view, TnyMimePart *part)
+{
+	GtkWidget *att_view = NULL;
+
+	g_return_if_fail (MODEST_IS_ATTACHMENTS_VIEW (attachments_view));
+	g_return_if_fail (TNY_IS_MIME_PART (part));
+	g_return_if_fail (tny_mime_part_is_attachment (part));
+
+	att_view = modest_attachment_view_new (part);
+	gtk_box_pack_end (GTK_BOX (attachments_view), att_view, FALSE, FALSE, 0);
+	gtk_widget_show_all (att_view);
+	g_signal_connect (G_OBJECT (att_view), "activate", G_CALLBACK (activate_attachment), (gpointer) attachments_view);
 }
 
 static void

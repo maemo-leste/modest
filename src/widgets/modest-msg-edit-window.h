@@ -73,6 +73,7 @@ typedef enum {
 typedef struct  {
 	gchar *from, *to, *cc, *bcc, *subject, *plain_body, *html_body;
 	GList *attachments;
+	TnyHeaderFlags priority_flags;
 } MsgData;
 
 typedef struct {
@@ -222,6 +223,15 @@ void                    modest_msg_edit_window_show_bcc               (ModestMsg
  */
 void            modest_msg_edit_window_toggle_fullscreen (ModestMsgEditWindow *window);
 
+/**
+ * modest_msg_edit_window_set_priority_flags:
+ * @window: a #ModestMsgEditWindow
+ * @priority_flags: a #TnyHeaderFlags with priority information
+ *
+ * Updates the icon and priority flag to send.
+ */
+void            modest_msg_edit_window_set_priority_flags (ModestMsgEditWindow *window,
+							   TnyHeaderFlags priority_flags);
 
 G_END_DECLS
 

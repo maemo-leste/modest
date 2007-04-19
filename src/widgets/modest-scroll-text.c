@@ -80,11 +80,16 @@ size_request (GtkWidget *widget,
 	guint line_limit;
 	GdkRectangle iter_rectangle;
 	GtkAdjustment *adj = NULL;
+	GtkTextMark *insert_mark;
+	GtkTextIter insert_iter;
 
 	text_view = modest_scroll_text_get_text_view (MODEST_SCROLL_TEXT (widget));
 	line_limit = priv->line_limit;
 
 	buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (text_view));
+
+	insert_mark = gtk_text_buffer_get_insert (buffer);
+	gtk_text_buffer_get_iter_at_mark (buffer, &insert_iter, insert_mark);
 
 	/* get the first line and the height of the line */
 	gtk_text_buffer_get_start_iter (buffer, &iter);
@@ -97,24 +102,27 @@ size_request (GtkWidget *widget,
 	}
 
 	/* Put again the cursor in the first character. Also scroll to first line */
-	gtk_text_buffer_get_start_iter (buffer, &iter);
-	gtk_text_buffer_place_cursor (buffer, &iter);
+	gtk_text_buffer_place_cursor (buffer, &insert_iter);
 	gtk_text_view_place_cursor_onscreen (GTK_TEXT_VIEW (text_view));
 
 	/* Change the adjustment properties for one line per step behavior */
 	adj = gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (widget));
 	if (adj != NULL) {
-		g_object_set (G_OBJECT (adj), "page-increment", (gdouble) iter_rectangle.height, "step-increment", (gdouble) iter_rectangle.height, NULL);
+		g_object_set (G_OBJECT (adj), "page-increment", (gdouble) iter_rectangle.height + 1, "step-increment", (gdouble) iter_rectangle.height + 1, NULL);
 		gtk_adjustment_changed (adj);
 	}
 
 	/* Set the requisition height to the get the limit of lines or less */
 	if (line > 0) {
-		requisition->height = iter_rectangle.height * MAX (line, line_limit);
+		requisition->height = iter_rectangle.height * MIN (line + 1, line_limit);
 	} else {
 		requisition->height = iter_rectangle.height;
 	}
 
+	if (gtk_scrolled_window_get_shadow_type (GTK_SCROLLED_WINDOW (widget)) != GTK_SHADOW_NONE) {
+		requisition->height += GTK_WIDGET (widget)->style->ythickness * 2;
+	}
+		
 	priv->line_height = iter_rectangle.height;
 
 }

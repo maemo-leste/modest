@@ -54,6 +54,10 @@ struct _ModestRecptEditor
 struct _ModestRecptEditorClass
 {
 	GtkHBoxClass parent_class;
+
+	/* signals */
+
+	void (*open_addressbook) (ModestRecptEditor *editor);
 };
 
 GType modest_recpt_editor_get_type (void);
@@ -62,6 +66,8 @@ GtkWidget* modest_recpt_editor_new (void);
 
 void modest_recpt_editor_set_recipients (ModestRecptEditor *recpt_editor, const gchar *recipients);
 const gchar *modest_recpt_editor_get_recipients (ModestRecptEditor *repct_editor);
+void modest_recpt_editor_add_recipients (ModestRecptEditor *recpt_editor, const gchar *recipients);
+void modest_recpt_editor_add_resolved_recipient (ModestRecptEditor *recpt_editor, GSList *email_list, const gchar * recipient_id);
 
 void modest_recpt_editor_set_field_size_group (ModestRecptEditor *recpt_editor, GtkSizeGroup *size_group);
 

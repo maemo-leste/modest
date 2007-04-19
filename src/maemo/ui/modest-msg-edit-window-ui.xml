@@ -68,6 +68,14 @@
       <menuitem name="BulletedListMenu" action="ActionsBulletedList"/>
     </menu>
 
+    <menu name="ToolsMenu" action="Tools">
+      <menu name="MessagePriorityMenu" action="MessagePriority">
+	<menuitem name="MessagePriorityHighMenu" action="MessagePriorityHigh"/>
+	<menuitem name="MessagePriorityNormalMenu" action="MessagePriorityNormal"/>
+	<menuitem name="MessagePriorityLowMenu" action="MessagePriorityLow"/>
+      </menu>
+    </menu>
+
   </menubar>
 
   <toolbar name="ToolBar">
