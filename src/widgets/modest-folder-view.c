@@ -29,7 +29,7 @@
 
 #include <glib/gi18n.h>
 #include <string.h>
-
+#include <gdk/gdkkeysyms.h>
 #include <tny-account-store-view.h>
 #include <tny-gtk-account-list-model.h>
 #include <tny-gtk-folder-store-tree-model.h>
