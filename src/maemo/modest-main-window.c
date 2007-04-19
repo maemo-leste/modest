@@ -89,7 +89,7 @@ struct _ModestMainWindowPrivate {
 	GtkWidget *msg_paned;
 	GtkWidget *main_paned;
 	GtkWidget *main_vbox;
-	GtkWidget *progress_bar;
+	GtkWidget *accounts_popup;
 
 	ModestHeaderView *header_view;
 	ModestFolderView *folder_view;
@@ -169,13 +169,8 @@ modest_main_window_init (ModestMainWindow *obj)
 	priv->main_vbox    = NULL;
 	priv->header_view  = NULL;
 	priv->folder_view  = NULL;
+	priv->accounts_popup  = NULL;
 	priv->style  = MODEST_MAIN_WINDOW_STYLE_SPLIT;
-
-	/* progress bar */
-	priv->progress_bar = gtk_progress_bar_new ();
-	gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR(priv->progress_bar), 1.0);
-	gtk_progress_bar_set_ellipsize (GTK_PROGRESS_BAR(priv->progress_bar),
-					PANGO_ELLIPSIZE_END);
 }
 
 static void
@@ -288,6 +283,8 @@ connect_signals (ModestMainWindow *self)
 			  G_CALLBACK(on_inner_widgets_key_pressed), self);
 	g_signal_connect (G_OBJECT(priv->folder_view), "folder_selection_changed",
 			  G_CALLBACK(modest_ui_actions_on_folder_selection_changed), self);
+	g_signal_connect (G_OBJECT(priv->folder_view), "folder-display-name-changed",
+			  G_CALLBACK(modest_ui_actions_on_folder_display_name_changed), self);
 
 	menu = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/FolderViewContextMenu");
 	gtk_widget_tap_and_hold_setup (GTK_WIDGET (priv->folder_view), menu, NULL, 0);
@@ -608,19 +605,24 @@ on_account_update (TnyAccountStore *account_store,
 		   gpointer user_data)
 {
 	ModestMainWindow *self;
+	ModestMainWindowPrivate *priv;
 	ModestWindowPrivate *parent_priv;
 	TnyList *account_list;
-	GtkWidget *popup = NULL, *item, *send_receive_button;
+	GtkWidget *item, *send_receive_button;
 	TnyIterator *iter;
 	ModestAccountMgr *mgr;
 	gchar *default_account;
 
 	self = MODEST_MAIN_WINDOW (user_data);
-	parent_priv = MODEST_WINDOW_GET_PRIVATE(self);
+	priv = MODEST_MAIN_WINDOW_GET_PRIVATE (self);
+	parent_priv = MODEST_WINDOW_GET_PRIVATE (self);
 
 	/* If there is no toolbar then exit */
 	if (!parent_priv->toolbar)
 		return;
+
+	if (priv->accounts_popup)
+		gtk_menu_detach (GTK_MENU (priv->accounts_popup));
 
 	/* Get accounts */
 	account_list = tny_simple_list_new ();
@@ -637,11 +639,11 @@ on_account_update (TnyAccountStore *account_store,
 							  "/ToolBar/ToolbarSendReceive");
 
 	/* Create the menu */
-	popup = gtk_menu_new ();
-	item = gtk_menu_item_new_with_label (_("FIXME All"));
-	gtk_menu_shell_append (GTK_MENU_SHELL (popup), GTK_WIDGET (item));
+	priv->accounts_popup = gtk_menu_new ();
+	item = gtk_menu_item_new_with_label (_("mcen_me_toolbar_sendreceive_all"));
+	gtk_menu_shell_append (GTK_MENU_SHELL (priv->accounts_popup), GTK_WIDGET (item));
 	item = gtk_separator_menu_item_new ();
-	gtk_menu_shell_append (GTK_MENU_SHELL (popup), GTK_WIDGET (item));
+	gtk_menu_shell_append (GTK_MENU_SHELL (priv->accounts_popup), GTK_WIDGET (item));
 
 	iter = tny_list_create_iterator (account_list);
 	mgr = modest_runtime_get_account_mgr ();
@@ -650,23 +652,26 @@ on_account_update (TnyAccountStore *account_store,
 	do {
 		TnyAccount *acc;
 		const gchar *acc_name;
+		gchar *display_name;
 
 		/* Create tool item */
 		acc = TNY_ACCOUNT (tny_iterator_get_current (iter));
 		acc_name = tny_account_get_name (acc);
 
-		if (!strcmp (default_account, acc_name)) {
-			gchar *bold_name;
-			bold_name = g_strdup_printf ("<b>%s</b>", acc_name);
-			item = gtk_menu_item_new_with_label (bold_name);
-			g_free (bold_name);
-		} else {
-			item = gtk_menu_item_new_with_label (acc_name);
-		}
+		/* Create display name */
+		if (!strcmp (default_account, acc_name))
+			display_name = g_strdup_printf (_("mcen_me_toolbar_sendreceive_default"), acc_name);
+		else
+			display_name = g_strdup_printf (_("mcen_me_toolbar_sendreceive_mailbox_n"), acc_name);
+
+		item = gtk_menu_item_new_with_label (display_name);
+
+		/* Free */
+		g_free (display_name);
 		g_object_unref (acc);
 
 		/* Append item */
-		gtk_menu_shell_append (GTK_MENU_SHELL (popup), GTK_WIDGET (item));
+		gtk_menu_shell_append (GTK_MENU_SHELL (priv->accounts_popup), GTK_WIDGET (item));
 
 		/* Go to next */
 		tny_iterator_next (iter);
@@ -676,10 +681,10 @@ on_account_update (TnyAccountStore *account_store,
 	g_object_unref (iter);
 
 	/* Mandatory in order to view the menu contents */
-	gtk_widget_show_all (popup);
+	gtk_widget_show_all (priv->accounts_popup);
 
 	/* Setup tap_and_hold */
-	gtk_widget_tap_and_hold_setup (send_receive_button, popup, NULL, 0);
+	gtk_widget_tap_and_hold_setup (send_receive_button, priv->accounts_popup, NULL, 0);
 
  free:
 

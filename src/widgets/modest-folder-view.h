@@ -61,6 +61,10 @@ struct _ModestFolderViewClass {
 					      TnyFolder *folder,
 					      gboolean selected,
 					      gpointer user_data);
+
+	void     (*folder_display_name_changed) (ModestFolderView* self,
+						 const gchar *display_name,
+						 gpointer user_data);
 };
 
 /**
@@ -100,11 +104,11 @@ void          modest_folder_view_set_title       (ModestFolderView *self,
  * modest_folder_view_get_selected:
  * @self: a #ModestFolderView
  * 
- * returns a new reference to the #TnyFolder that is already selected
+ * returns a new reference to the #TnyFolderStore that is already selected
  * 
- * Returns: the selected folder or NULL if none is selected
+ * Returns: the selected #TnyFolderStore or NULL if none is selected
  **/
-TnyFolder*    modest_folder_view_get_selected    (ModestFolderView *self);
+TnyFolderStore*    modest_folder_view_get_selected    (ModestFolderView *self);
 
 
 /**

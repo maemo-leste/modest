@@ -773,29 +773,37 @@ get_msg_cb (TnyFolder *folder, TnyMsg *msg, GError **err, gpointer user_data)
 }
 
 void 
-modest_ui_actions_on_header_selected (ModestHeaderView *folder_view, 
+modest_ui_actions_on_header_selected (ModestHeaderView *header_view, 
 				      TnyHeader *header,
 				      ModestMainWindow *main_window)
 {
-	GtkWidget *msg_preview;
 	TnyFolder *folder;
 	GetMsgAsyncHelper *helper;
 	TnyList *list;
 
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW(main_window));
-	
-	msg_preview = modest_main_window_get_child_widget(main_window,
-							  MODEST_WIDGET_TYPE_MSG_PREVIEW);
-	if (!msg_preview)
-		return;
-	
+
 	/* when there's no header, clear the msgview */
 	if (!header) {
-		modest_msg_view_set_message (MODEST_MSG_VIEW(msg_preview), NULL);
+		GtkWidget *msg_preview;
+
+		/* Clear msg preview if exists */
+		msg_preview = modest_main_window_get_child_widget(main_window,
+								  MODEST_WIDGET_TYPE_MSG_PREVIEW);
+	
+		if (msg_preview)
+			modest_msg_view_set_message (MODEST_MSG_VIEW(msg_preview), NULL);
 		return;
 	}
 
-	folder = tny_header_get_folder (TNY_HEADER(header));
+	/* Update Main window title */
+	if (GTK_WIDGET_HAS_FOCUS (header_view)) {
+		const gchar *subject = tny_header_get_subject (header);
+		if (subject && strcmp (subject, ""))
+			gtk_window_set_title (GTK_WINDOW (main_window), subject);
+		else
+			gtk_window_set_title (GTK_WINDOW (main_window), _("mail_va_no_subject"));
+	}
 
 	/* Create list */
 	list = tny_simple_list_new ();
@@ -806,6 +814,8 @@ modest_ui_actions_on_header_selected (ModestHeaderView *folder_view,
 	helper->window = MODEST_WINDOW (main_window);
 	helper->iter = tny_list_create_iterator (list);
 	helper->func = read_msg_func;
+
+	folder = tny_header_get_folder (TNY_HEADER(header));
 
 	tny_folder_get_msg_async (TNY_FOLDER(folder),
 				  header, get_msg_cb,
@@ -889,34 +899,15 @@ modest_ui_actions_on_folder_selection_changed (ModestFolderView *folder_view,
 	
 	conf = modest_runtime_get_conf ();
 
-	if (!selected) { /* the folder was unselected; save it's settings  */
-		modest_widget_memory_save (conf, G_OBJECT (header_view), "header-view");
-		gtk_window_set_title (GTK_WINDOW(main_window), NULL);
-		modest_header_view_set_folder (MODEST_HEADER_VIEW(header_view), NULL);
-	} else {  /* the folder was selected */
-		if (folder) { /* folder may be NULL */
-			guint unread;
-
-			/* Change main window title */			
-			unread = tny_folder_get_unread_count (folder);
-
-			if (unread == 0) {
-				gtk_window_set_title (GTK_WINDOW(main_window), 
-						      tny_folder_get_name (folder));
-			} else {
-				gchar *txt = g_strdup_printf (_("%s (%d)"),
-							      tny_folder_get_name (folder),
-							      unread);
-				gtk_window_set_title (GTK_WINDOW(main_window), txt);
-				g_free (txt);
-			}
+	if (TNY_IS_FOLDER (folder)) {
+		if (!selected) { /* the folder was unselected; save it's settings  */
+			modest_widget_memory_save (conf, G_OBJECT (header_view), "header-view");
+			modest_header_view_set_folder (MODEST_HEADER_VIEW(header_view), NULL);
 		} else {
-			gtk_window_set_title (GTK_WINDOW(main_window), NULL);
+			modest_header_view_set_folder (MODEST_HEADER_VIEW(header_view), folder);
+			modest_widget_memory_restore (conf, G_OBJECT(header_view),
+						      "header-view");
 		}
-
-		modest_header_view_set_folder (MODEST_HEADER_VIEW(header_view), folder);
-		modest_widget_memory_restore (conf, G_OBJECT(header_view),
-					      "header-view");
 	}
 }
 
@@ -1240,7 +1231,7 @@ ask_for_folder_name (GtkWindow *parent_window,
 void 
 modest_ui_actions_on_new_folder (GtkAction *action, ModestMainWindow *main_window)
 {
-	TnyFolder *parent_folder;
+	TnyFolderStore *parent_folder;
 	GtkWidget *folder_view;
 	
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW(main_window));
@@ -1267,7 +1258,7 @@ modest_ui_actions_on_new_folder (GtkAction *action, ModestMainWindow *main_windo
 							 mail_op);
 
 			new_folder = modest_mail_operation_create_folder (mail_op,
-									  TNY_FOLDER_STORE (parent_folder),
+									  parent_folder,
 									  (const gchar *) folder_name);
 			if (new_folder) 
 				g_object_unref (new_folder);
@@ -1282,7 +1273,7 @@ void
 modest_ui_actions_on_rename_folder (GtkAction *action,
 				     ModestMainWindow *main_window)
 {
-	TnyFolder *folder;
+	TnyFolderStore *folder;
 	GtkWidget *folder_view;
 	
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW(main_window));
@@ -1294,7 +1285,7 @@ modest_ui_actions_on_rename_folder (GtkAction *action,
 	
 	folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW(folder_view));
 	
-	if (folder) {
+	if (folder && TNY_IS_FOLDER (folder)) {
 		gchar *folder_name;
 		folder_name = ask_for_folder_name (GTK_WINDOW (main_window),
 						   _("Please enter a new name for the folder"));
@@ -1307,7 +1298,7 @@ modest_ui_actions_on_rename_folder (GtkAction *action,
 							 mail_op);
 
 			modest_mail_operation_rename_folder (mail_op,
-							     folder,
+							     TNY_FOLDER (folder),
 							     (const gchar *) folder_name);
 
 			g_object_unref (mail_op);
@@ -1320,7 +1311,7 @@ modest_ui_actions_on_rename_folder (GtkAction *action,
 static void
 delete_folder (ModestMainWindow *main_window, gboolean move_to_trash) 
 {
-	TnyFolder *folder;
+	TnyFolderStore *folder;
 	ModestMailOperation *mail_op;
 	GtkWidget *folder_view;
 	
@@ -1336,7 +1327,7 @@ delete_folder (ModestMainWindow *main_window, gboolean move_to_trash)
 	mail_op = modest_mail_operation_new ();
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
 					 mail_op);
-	modest_mail_operation_remove_folder (mail_op, folder, move_to_trash);
+	modest_mail_operation_remove_folder (mail_op, TNY_FOLDER (folder), move_to_trash);
 
 	g_object_unref (G_OBJECT (mail_op));
 	g_object_unref (G_OBJECT (folder));
@@ -1679,4 +1670,21 @@ modest_ui_actions_on_toggle_toolbar (GtkToggleAction *toggle,
 	/* Toggle toolbar */
 	mgr = modest_runtime_get_window_mgr ();
 	modest_window_mgr_show_toolbars (mgr, active, fullscreen);
+}
+
+void
+modest_ui_actions_on_folder_display_name_changed (ModestFolderView *folder_view,
+						  const gchar *display_name,
+						  GtkWindow *window)
+{
+	/* Do not change the application name if the widget has not
+	   the focus. This callback could be called even if the folder
+	   view has not the focus, because the handled signal could be
+	   emitted when the folder view is redrawn */
+	if (GTK_WIDGET_HAS_FOCUS (folder_view)) {
+		if (display_name)
+			gtk_window_set_title (window, display_name);
+		else
+			gtk_window_set_title (window, " ");
+	}
 }

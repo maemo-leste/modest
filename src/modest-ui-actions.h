@@ -222,5 +222,19 @@ void     modest_ui_actions_msg_edit_on_change_priority (GtkRadioAction *action,
 void     modest_ui_actions_on_toggle_toolbar           (GtkToggleAction *toggle, 
 							ModestWindow *window);
 
+/**
+ * modest_ui_actions_on_folder_display_name_changed:
+ * @folder_view: a #ModestFolderView
+ * @display_name: the new window title
+ * @window: a #GtkWindow
+ * 
+ * Sets the title of the window to the value specified by
+ * display_name. This function is used typically as a callback to the
+ * "folder-display-name-changed" signal from the #ModestFolderView
+ **/
+void     modest_ui_actions_on_folder_display_name_changed (ModestFolderView *folder_view,
+							   const gchar *display_name,
+							   GtkWindow *window);
+
 G_END_DECLS
 #endif /* __MODEST_UI_ACTIONS_H__ */
