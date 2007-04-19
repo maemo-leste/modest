@@ -8,7 +8,20 @@
 # UI specification version: 1.1
 # UI specification author: mox soini
 # Application package(s): osso-email
-# Date created: 13.4.2007 11:42:27msgid ""msgstr """Project-Id-Version: PACKAGE VERSION\n""Report-Msgid-Bugs-To: rami.abbad@nokia.com\n""POT-Creation-Date: YEAR.MO.DA HO:MI+ZONE\n""PO-Revision-Date: YEAR.MO.DA HO:MI+ZONE\n""Last-Translator:\n""Language-Team: Engineering English\n""MIME-Version: 1.0\n""Content-Type: text/plain; charset=UTF-8\n""Content-Transfer-Encoding: 8bit\n""Plural-Forms: nplurals=2; plural=n == 1 ? 0 : 1;\n"
+# Date created: 13.4.2007 11:42:27
+msgid ""
+msgstr ""
+"Project-Id-Version: modest-0.0.1\n"
+"Report-Msgid-Bugs-To: rami.abbad@nokia.com\n"
+"POT-Creation-Date: 2007.04.19 21:28+0200\n"
+"PO-Revision-Date: 2007.04.19 21:28+0200\n"
+"Last-Translator:\n"
+"Language-Team: Engineering English\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n == 1 ? 0 : 1;\n"
+
 # Email application title
 msgid "mcen_ap_name"
 msgstr "Email"
