@@ -67,7 +67,7 @@
 #define MODEST_FOLDER_ICON_DRAFTS		PIXMAP_PREFIX "qgn_list_messagin_drafts.png"
 #define MODEST_FOLDER_ICON_NORMAL		PIXMAP_PREFIX "qgn_list_gene_fldr_cls.png"
 #define MODEST_FOLDER_ICON_LOCAL_FOLDERS	PIXMAP_PREFIX "qgn_list_gene_fldr_cls.png"
-
+#define MODEST_FOLDER_ICON_MMC                  PIXMAP_PREFIX "qgn_list_gene_mmc.png"
 
 
 /* toolbar */
