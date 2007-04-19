@@ -96,6 +96,9 @@ modest_account_settings_dialog_finalize (GObject *object)
 		
 	if (self->account_manager)
 		g_object_unref (G_OBJECT (self->account_manager));
+		
+	if (self->specific_window)
+		gtk_widget_destroy (self->specific_window);
 	
 	G_OBJECT_CLASS (modest_account_settings_dialog_parent_class)->finalize (object);
 }
@@ -499,30 +502,24 @@ enable_widget_for_togglebutton (GtkWidget *widget, GtkToggleButton* button)
 	/* Set the starting sensitivity: */
 	on_toggle_button_changed (button, widget);
 }
-	
-static void
-on_smtp_servers_window_hide (GtkWindow *window, gpointer user_data)
-{
-	/* Destroy the window when it is closed: */
-	gtk_widget_destroy (GTK_WIDGET (window));
-}
 
 static void
 on_button_outgoing_smtp_servers (GtkButton *button, gpointer user_data)
 {
 	ModestAccountSettingsDialog * self = MODEST_ACCOUNT_SETTINGS_DIALOG (user_data);
 	
-	/* Show the window: */
-	/* TODO: Retrieve the chosen settings,
-	 * so we can supply them when creating the connection somehow.
-	 */
-	GtkWidget *window = GTK_WIDGET (modest_connection_specific_smtp_window_new ());
-	gtk_window_set_transient_for (GTK_WINDOW (window), GTK_WINDOW (self));
-	gtk_window_set_modal (GTK_WINDOW (window), TRUE);
-    gtk_widget_show (window);
-    
-    g_signal_connect (G_OBJECT (window), "hide",
-        G_CALLBACK (on_smtp_servers_window_hide), self);
+	/* Create the window if necessary: */
+	if (!(self->specific_window)) {
+		self->specific_window = GTK_WIDGET (modest_connection_specific_smtp_window_new ());
+		modest_connection_specific_smtp_window_fill_with_connections (
+			MODEST_CONNECTION_SPECIFIC_SMTP_WINDOW (self->specific_window), self->account_manager, 
+			self->account_name);
+	}
+
+	/* Show the window: */	
+	gtk_window_set_transient_for (GTK_WINDOW (self->specific_window), GTK_WINDOW (self));
+	gtk_window_set_modal (GTK_WINDOW (self->specific_window), TRUE);
+    gtk_widget_show (self->specific_window);
 }
 
 static void
@@ -1133,7 +1130,12 @@ save_configuration (ModestAccountSettingsDialog *dialog)
 			return FALSE;
 	}
 	
-	return TRUE;
+	/* Save connection-specific SMTP server accounts: */
+	if (dialog->specific_window)
+		return modest_connection_specific_smtp_window_save_server_accounts (
+			MODEST_CONNECTION_SPECIFIC_SMTP_WINDOW (dialog->specific_window), account_name);
+	else
+		return TRUE;
 }
 
 static gboolean entry_is_empty (GtkWidget *entry)

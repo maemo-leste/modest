@@ -31,6 +31,7 @@
 #define __MODEST_MAEMO_CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW
 
 #include <modest-account-mgr.h>
+#include <modest-account-mgr-helpers.h> /* For ModestServerAccountData */
 #include <gtk/gtkdialog.h>
 #include <gtk/gtktreeview.h>
 
@@ -72,9 +73,10 @@ GType modest_connection_specific_smtp_edit_window_get_type (void);
 ModestConnectionSpecificSmtpEditWindow* modest_connection_specific_smtp_edit_window_new (void);
 
 void modest_connection_specific_smtp_edit_window_set_connection (
-	ModestConnectionSpecificSmtpEditWindow *window, const gchar* iap_id, const gchar* iap_name);
+	ModestConnectionSpecificSmtpEditWindow *window, const gchar* iap_id, const gchar* iap_name, 
+	const ModestServerAccountData *data);
 	
-gboolean modest_connection_specific_smtp_edit_window_save_settings (
+ModestServerAccountData* modest_connection_specific_smtp_edit_window_get_settings (
 	ModestConnectionSpecificSmtpEditWindow *window, 
 	ModestAccountMgr *account_manager, const gchar* server_account_name);
 	

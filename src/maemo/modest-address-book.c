@@ -45,6 +45,7 @@
 #include <gtk/gtklabel.h>
 #include <gtk/gtkcellrenderertext.h>
 #include <gtk/gtktreeselection.h>
+#include <gtk/gtkentry.h>
 
 static OssoABookContactModel *contact_model =  NULL;
 static EBook *book = NULL;

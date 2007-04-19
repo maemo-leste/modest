@@ -75,6 +75,10 @@ void
 modest_connection_specific_smtp_window_fill_with_connections (ModestConnectionSpecificSmtpWindow *self, 
 	ModestAccountMgr *account_manager, const gchar* account_name);
 
+gboolean
+modest_connection_specific_smtp_window_save_server_accounts (ModestConnectionSpecificSmtpWindow *self, 
+	const gchar* account_name);
+
 G_END_DECLS
 
 #endif /* __MODEST_MAEMO_CONNECTION_SPECIFIC_SMTP_WINDOW */

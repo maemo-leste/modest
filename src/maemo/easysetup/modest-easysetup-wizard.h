@@ -75,6 +75,8 @@ typedef struct {
 	GtkWidget *page_complete_customsetup;
 	GtkWidget *button_edit;
 	
+	GtkWidget *specific_window;
+	
 } ModestEasysetupWizardDialog;
 
 typedef struct {

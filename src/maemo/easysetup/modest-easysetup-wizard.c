@@ -86,6 +86,9 @@ modest_easysetup_wizard_dialog_finalize (GObject *object)
 		
 	if (priv->presets)
 		modest_presets_destroy (priv->presets);
+		
+	if (self->specific_window)
+	 	gtk_widget_destroy (self->specific_window);
 	
 	G_OBJECT_CLASS (modest_easysetup_wizard_dialog_parent_class)->finalize (object);
 }
@@ -573,29 +576,23 @@ enable_widget_for_togglebutton (GtkWidget *widget, GtkToggleButton* button)
 	/* Set the starting sensitivity: */
 	on_toggle_button_changed (button, widget);
 }
-	
-static void
-on_smtp_servers_window_hide (GtkWindow *window, gpointer user_data)
-{
-	/* Destroy the window when it is closed: */
-	gtk_widget_destroy (GTK_WIDGET (window));
-}
 
 static void
 on_button_outgoing_smtp_servers (GtkButton *button, gpointer user_data)
 {
 	ModestEasysetupWizardDialog * self = MODEST_EASYSETUP_WIZARD_DIALOG (user_data);
 	
-	/* Show the window: */
-	/* TODO: Retrieve the chosen settings,
-	 * so we can supply them when creating the connection somehow.
-	 */
-	GtkWidget *window = GTK_WIDGET (modest_connection_specific_smtp_window_new ());
+	/* Create the window, if necessary: */
+	if (!(self->specific_window)) {
+		self->specific_window = GTK_WIDGET (modest_connection_specific_smtp_window_new ());
+		modest_connection_specific_smtp_window_fill_with_connections (
+			MODEST_CONNECTION_SPECIFIC_SMTP_WINDOW (self->specific_window), self->account_manager, 
+			NULL /* account_name, not known yet. */);
+	}
 
-	gtk_window_set_transient_for (GTK_WINDOW (window), GTK_WINDOW (self));
-	g_signal_connect (G_OBJECT (window), "hide",
-        	G_CALLBACK (on_smtp_servers_window_hide), self);
-	gtk_widget_show (window);
+	/* Show the window: */
+	gtk_window_set_transient_for (GTK_WINDOW (self->specific_window), GTK_WINDOW (self));
+	gtk_widget_show (self->specific_window);
 }
 
 static GtkWidget* create_page_custom_outgoing (ModestEasysetupWizardDialog *self)
@@ -943,13 +940,13 @@ on_before_next (ModestWizardDialog *dialog, GtkWidget *current_page, GtkWidget *
 	 */
 	if (current_page == account_wizard->page_account_details) {	
 		/* Check that the title is not already in use: */
-		const gchar* account_name = gtk_entry_get_text (GTK_ENTRY (account_wizard->entry_account_title));
-		if ((!account_name) || (strlen(account_name) == 0))
+		const gchar* account_title = gtk_entry_get_text (GTK_ENTRY (account_wizard->entry_account_title));
+		if ((!account_title) || (strlen(account_title) == 0))
 			return FALSE;
 			
 		/* Aavoid a clash with an existing display name: */
 		const gboolean name_in_use = modest_account_mgr_account_with_display_name_exists (
-			account_wizard->account_manager, account_name);
+			account_wizard->account_manager, account_title);
 
 		if (name_in_use) {
 			/* Warn the user via a dialog: */
@@ -1315,6 +1312,11 @@ create_account (ModestEasysetupWizardDialog *self)
 	modest_account_mgr_set_string (self->account_manager, account_name,
 		MODEST_ACCOUNT_DISPLAY_NAME, display_name, FALSE /* not server account */);
 
+	/* Save the connection-specific SMTP server accounts. */
+	if (self->specific_window)
+		return modest_connection_specific_smtp_window_save_server_accounts (
+			MODEST_CONNECTION_SPECIFIC_SMTP_WINDOW (self->specific_window), account_name);
+			
 	g_free (account_name);
 
 	return FALSE;

@@ -340,7 +340,7 @@ modest_account_mgr_get_server_account_option (ModestAccountMgr *self,
 }
 #endif
 
-static ModestServerAccountData*
+ModestServerAccountData*
 modest_account_mgr_get_server_account_data (ModestAccountMgr *self, const gchar* name)
 {
 	ModestServerAccountData *data;
@@ -378,7 +378,7 @@ modest_account_mgr_get_server_account_data (ModestAccountMgr *self, const gchar*
 }
 
 
-static void
+void
 modest_account_mgr_free_server_account_data (ModestAccountMgr *self,
 					     ModestServerAccountData* data)
 {

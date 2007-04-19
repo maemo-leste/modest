@@ -1506,3 +1506,7 @@ msgstr "Edit"
 msgid "mcen_bd_emailsetup_delete"
 msgstr "Delete"
 
+# Button label
+msgid "mcen_bd_emailsetup_close"
+msgstr "Close"
+

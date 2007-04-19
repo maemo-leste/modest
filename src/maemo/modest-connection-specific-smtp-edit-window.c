@@ -207,17 +207,40 @@ modest_connection_specific_smtp_edit_window_new (void)
 
 void
 modest_connection_specific_smtp_edit_window_set_connection (
-	ModestConnectionSpecificSmtpEditWindow *window, const gchar* iap_id, const gchar* iap_name)
+	ModestConnectionSpecificSmtpEditWindow *window, const gchar* iap_id, const gchar* iap_name,
+	const ModestServerAccountData *data)
 {
+	ModestConnectionSpecificSmtpEditWindowPrivate *priv = 
+		CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW_GET_PRIVATE (window);
+
 	/* This causes a warning because of the %s in the translation, but not in the original string: */
 	gchar* title = g_strdup_printf (_("mcen_ti_connection_connection_name"), iap_name);
-	
 	gtk_window_set_title (GTK_WINDOW (window), title);
 	g_free (title);
+	
+	if (data) 
+	{
+		gtk_entry_set_text (GTK_ENTRY (priv->entry_outgoingserver), data->hostname);
+		gtk_entry_set_text (GTK_ENTRY (priv->entry_user_username), data->username);	
+		gtk_entry_set_text (GTK_ENTRY (priv->entry_user_password), data->password);
+	
+		easysetup_serversecurity_combo_box_set_active_serversecurity (
+		EASYSETUP_SERVERSECURITY_COMBO_BOX (priv->combo_outgoing_security), data->security);
+	
+		easysetup_secureauth_combo_box_set_active_secureauth (
+		EASYSETUP_SECUREAUTH_COMBO_BOX (priv->combo_outgoing_auth), data->secure_auth);
+		
+		/* port: */
+		gchar * port_str = g_strdup_printf ("%d", data->port);
+		gtk_entry_set_text (GTK_ENTRY (priv->entry_port), port_str);
+		g_free (port_str);
+	}
 }
 
-gboolean
-modest_connection_specific_smtp_edit_window_save_settings (
+/*
+ * The result must be freed with modest_account_mgr_free_server_account_data(). */
+ModestServerAccountData*
+modest_connection_specific_smtp_edit_window_get_settings (
 	ModestConnectionSpecificSmtpEditWindow *window, 
 	ModestAccountMgr *account_manager, const gchar* server_account_name)
 {
@@ -226,39 +249,24 @@ modest_connection_specific_smtp_edit_window_save_settings (
 	
 	g_assert (server_account_name);
 	
-	const gchar* hostname = gtk_entry_get_text (GTK_ENTRY (priv->entry_outgoingserver));
-	gboolean test = modest_account_mgr_set_string (account_manager, server_account_name,
-		MODEST_ACCOUNT_HOSTNAME, hostname, TRUE /* server account */);
-	if (!test)
-		return FALSE;
-		
-	const gchar* username = gtk_entry_get_text (GTK_ENTRY (priv->entry_user_username));
-	test = modest_account_mgr_set_string (account_manager, server_account_name,
-		MODEST_ACCOUNT_USERNAME, username, TRUE /* server account */);
-	if (!test)
-		return FALSE;
-		
-	const gchar* password = gtk_entry_get_text (GTK_ENTRY (priv->entry_user_password));
-	test = modest_account_mgr_set_string (account_manager, server_account_name,
-		MODEST_ACCOUNT_PASSWORD, password, TRUE /*  server account */);
-	if (!test)
-		return FALSE;
+	/* Use g_slice_new0(), because that's what modest_account_mgr_free_server_account_data() 
+	 * expects us to use. */
+	ModestServerAccountData *result = g_slice_new0 (ModestServerAccountData);
 	
-	const ModestProtocol protocol_security_outgoing = easysetup_serversecurity_combo_box_get_active_serversecurity (
+	result->hostname = g_strdup (gtk_entry_get_text (GTK_ENTRY (priv->entry_outgoingserver)));
+	result->username = g_strdup (gtk_entry_get_text (GTK_ENTRY (priv->entry_user_username)));	
+	result->password = g_strdup (gtk_entry_get_text (GTK_ENTRY (priv->entry_user_password)));
+	
+	result->security = easysetup_serversecurity_combo_box_get_active_serversecurity (
 		EASYSETUP_SERVERSECURITY_COMBO_BOX (priv->combo_outgoing_security));
-	modest_server_account_set_security (account_manager, server_account_name, protocol_security_outgoing);
 	
-	const ModestProtocol protocol_authentication_outgoing = easysetup_secureauth_combo_box_get_active_secureauth (
+	result->secure_auth = easysetup_secureauth_combo_box_get_active_secureauth (
 		EASYSETUP_SECUREAUTH_COMBO_BOX (priv->combo_outgoing_auth));
-	modest_server_account_set_secure_auth (account_manager, server_account_name, protocol_authentication_outgoing);	
 		
 	/* port: */
 	const gchar * port_str = gtk_entry_get_text (GTK_ENTRY (priv->entry_port));
-	gint port_num = 0;
 	if (port_str)
-		port_num = atoi (port_str);
-	modest_account_mgr_set_int (account_manager, server_account_name,
-			MODEST_ACCOUNT_PORT, port_num, TRUE /* server account */);
+		result->port = atoi (port_str);
 			
-	return TRUE;
+	return result;
 }

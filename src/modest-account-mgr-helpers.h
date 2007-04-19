@@ -225,6 +225,13 @@ modest_server_account_get_security (ModestAccountMgr *self, const gchar* account
 void
 modest_server_account_set_security (ModestAccountMgr *self, const gchar* account_name, 
 	ModestProtocol security);
+
+ModestServerAccountData*
+modest_account_mgr_get_server_account_data (ModestAccountMgr *self, const gchar* name);
+
+void
+modest_account_mgr_free_server_account_data (ModestAccountMgr *self,
+					     ModestServerAccountData* data);
 	
 #if 0
 /**
@@ -281,7 +288,7 @@ gchar * modest_account_mgr_get_from_string (ModestAccountMgr *self, const gchar*
 gchar*
 modest_account_mgr_get_unused_account_name (ModestAccountMgr *self, const gchar* starting_name,
 	gboolean server_account);
-	
+
 /**
  * modest_account_mgr_get_unused_account_display name
  * @self: a #ModestAccountMgr instance

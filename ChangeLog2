@@ -1,5 +1,42 @@
 2007-04-19  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/maemo/modest-address-book.c: Added include to avoid a warning.
+
+	* po/en_GB.po: Added missing mcen_bd_emailsetup_close string, 
+	specified for EmailAccountsDialog in UI spec.
+	
+	* src/maemo/easysetup/modest-easysetup-wizard.c:
+	* src/maemo/easysetup/modest-easysetup-wizard.h:
+	* src/maemo/modest-account-settings-dialog.c:
+	* src/maemo/modest-account-settings-dialog.h:
+	Reuse a member window widget for the connection-specific SMTP server accounts, 
+	so we can tell it to create/save the accounts only if we actually save changes.
+
+	* src/maemo/modest-connection-specific-smtp-edit-window.h:	
+	* src/maemo/modest-connection-specific-smtp-edit-window.c:
+	(modest_connection_specific_smtp_edit_window_get_settings): 
+	Return a struct instance for temporarily remembering the entered data.
+
+	* src/maemo/modest-connection-specific-smtp-window.h:
+	* src/maemo/modest-connection-specific-smtp-window.c:
+	(modest_connection_specific_smtp_window_finalize),
+	(modest_connection_specific_smtp_window_fill_with_connections),
+	(on_button_edit),
+	(modest_connection_specific_smtp_window_save_server_accounts),
+	(update_model_server_names): Do not actually save data until asked, 
+	when the caller calls modest_connection_specific_smtp_window_save_server_accounts().
+	
+	(on_selection_changed),
+	(modest_connection_specific_smtp_window_init): Disable the edit 
+	button when nothing is selected.
+	
+	* src/modest-account-mgr-helpers.c:
+	* src/modest-account-mgr-helpers.h: 
+	Put modest_account_mgr_free_server_account_data() in the header now that I use the struct 
+	elsewhere.
+
+2007-04-19  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/modest-account-mgr-helpers.h:
 	* src/modest-account-mgr-helpers.c:
 	(modest_account_mgr_get_unused_account_name),
