@@ -2,6 +2,7 @@
 
 #include "modest-connection-specific-smtp-window.h"
 #include "modest-connection-specific-smtp-edit-window.h"
+#include <modest-account-mgr-helpers.h>
 
 #include <modest-runtime.h>
 #include <tny-maemo-conic-device.h>
@@ -28,6 +29,9 @@ struct _ModestConnectionSpecificSmtpWindowPrivate
 {
 	GtkTreeView *treeview;
 	GtkTreeModel *model;
+	
+	ModestAccountMgr *account_manager;
+	gchar* account_name;
 };
 
 static void
@@ -63,6 +67,7 @@ modest_connection_specific_smtp_window_finalize (GObject *object)
 	ModestConnectionSpecificSmtpWindowPrivate *priv = CONNECTION_SPECIFIC_SMTP_WINDOW_GET_PRIVATE (object);
 
 	g_object_unref (G_OBJECT (priv->model));
+	g_free (priv->account_name);
 	
 	G_OBJECT_CLASS (modest_connection_specific_smtp_window_parent_class)->finalize (object);
 }
@@ -82,16 +87,20 @@ modest_connection_specific_smtp_window_class_init (ModestConnectionSpecificSmtpW
 
 enum MODEL_COLS {
 	MODEL_COL_NAME = 0, /* libconic IAP Name: a string */
-	MODEL_COL_SERVER_NAME = 1, /* a string */
-	MODEL_COL_ID = 2 /* libconic IAP ID: a string */
+	MODEL_COL_ID = 1, /* libconic IAP ID: a string */
+	MODEL_COL_SERVER_ACCOUNT_NAME = 2, /* a string */
+	MODEL_COL_SERVER_NAME = 3 /* a string */
 };
 
-static void
-fill_with_connections (ModestConnectionSpecificSmtpWindow *self)
+void
+modest_connection_specific_smtp_window_fill_with_connections (ModestConnectionSpecificSmtpWindow *self, ModestAccountMgr *account_manager,
+	const gchar* account_name)
 {
-	printf("debug: fill_with_connections()\n");
 	ModestConnectionSpecificSmtpWindowPrivate *priv = 
 		CONNECTION_SPECIFIC_SMTP_WINDOW_GET_PRIVATE (self);
+	priv->account_manager = account_manager;
+	priv->account_name = g_strdup (account_name);
+	
 	GtkListStore *liststore = GTK_LIST_STORE (priv->model);
 	
 	TnyDevice *device = modest_runtime_get_device ();
@@ -132,14 +141,16 @@ on_button_edit (GtkButton *button, gpointer user_data)
 	ModestConnectionSpecificSmtpWindowPrivate *priv = CONNECTION_SPECIFIC_SMTP_WINDOW_GET_PRIVATE (self);
 	
 	gchar *id = NULL;
-	gchar *name = NULL;
+	gchar *connection_name = NULL;
+	gchar *server_account_name = NULL;
 	GtkTreeSelection *sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (self));
 	GtkTreeIter iter;
 	GtkTreeModel *model = 0;
 	if (gtk_tree_selection_get_selected (sel, &model, &iter)) {
 		gtk_tree_model_get (priv->model, &iter, 
 				    MODEL_COL_ID, &id, 
-				    MODEL_COL_NAME, &name, 
+				    MODEL_COL_NAME, &connection_name, 
+				    MODEL_COL_SERVER_ACCOUNT_NAME, &server_account_name,
 				    -1);
 	
 		/* TODO: Is 0 an allowed libconic IAP ID? 
@@ -147,15 +158,41 @@ on_button_edit (GtkButton *button, gpointer user_data)
 		
 		GtkWidget * window = GTK_WIDGET (modest_connection_specific_smtp_edit_window_new ());
 		modest_connection_specific_smtp_edit_window_set_connection (
-			MODEST_CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW (window), id, name);
+			MODEST_CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW (window), id, connection_name);
 			
 		gtk_window_set_transient_for (GTK_WINDOW (self), GTK_WINDOW (window));
 		gint response = gtk_dialog_run (GTK_DIALOG (window));
 		gtk_widget_hide (window);
+		
 		if (response == GTK_RESPONSE_OK) {
-
+			if (server_account_name) {
+				/* Change the existing server account. */
+				modest_connection_specific_smtp_edit_window_save_settings (
+					MODEST_CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW (window), 
+					priv->account_manager, server_account_name);	
+			} else {
+				/* Add a new server account, building a (non-human-visible) name: */
+				gchar *name_start = g_strdup_printf("%s_specific_%s", 
+					priv->account_name, connection_name);
+				server_account_name = modest_account_mgr_get_unused_account_name (
+					priv->account_manager, name_start, TRUE /* server account. */);
+				g_free (name_start);
+				
+				modest_connection_specific_smtp_edit_window_save_settings (
+					MODEST_CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW (window), 
+					priv->account_manager, server_account_name);
+					
+				/* Store it in the model so it can be edited again: */
+				gtk_list_store_set (GTK_LIST_STORE (priv->model), &iter, 
+				    MODEL_COL_SERVER_ACCOUNT_NAME, server_account_name,
+				    -1);
+			}
 		}		
 	}
+	
+	g_free (connection_name);
+	g_free (id);
+	g_free (server_account_name);
 }
 
 static void
@@ -183,7 +220,7 @@ modest_connection_specific_smtp_window_init (ModestConnectionSpecificSmtpWindow 
 	 * with a string for the name, a string for the server name, and an int for the ID.
 	 * This must match our MODEL_COLS enum constants.
 	 */
-	priv->model = GTK_TREE_MODEL (gtk_list_store_new (3, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING));
+	priv->model = GTK_TREE_MODEL (gtk_list_store_new (4, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING));
 
 	/* Setup the tree view: */
 	priv->treeview = GTK_TREE_VIEW (gtk_tree_view_new_with_model (priv->model));
@@ -208,8 +245,7 @@ modest_connection_specific_smtp_window_init (ModestConnectionSpecificSmtpWindow 
 	gtk_tree_view_column_set_title (view_column, _("mcen_ia_optionalsmtp_servername"));
 	gtk_tree_view_append_column (priv->treeview, view_column);
 	
-	/* Fill the model with rows: */
-	fill_with_connections (self);
+	/* The application must call modest_connection_specific_smtp_window_fill_with_connections(). */
 	
 	GtkWidget *vbox = gtk_vbox_new (FALSE, 2);
 	

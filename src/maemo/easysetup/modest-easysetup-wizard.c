@@ -23,6 +23,7 @@
 #include "maemo/easysetup/modest-validating-entry.h"
 #include "modest-text-utils.h"
 #include "modest-account-mgr.h"
+#include "modest-account-mgr-helpers.h"
 #include "modest-runtime.h" /* For modest_runtime_get_account_mgr(). */
 #include "maemo/modest-connection-specific-smtp-window.h"
 #include <gconf/gconf-client.h>
@@ -102,9 +103,6 @@ static void
 set_default_custom_servernames(ModestEasysetupWizardDialog *dialog);
 
 static void on_combo_servertype_changed(GtkComboBox *combobox, gpointer user_data);
-
-static gchar*
-util_increment_name (const gchar* text);
 
 static void
 invoke_enable_buttons_vfunc (ModestEasysetupWizardDialog *wizard_dialog)
@@ -318,18 +316,15 @@ create_page_account_details (ModestEasysetupWizardDialog *self)
 	
 	/* Set a default account title, choosing one that does not already exist: */
 	/* Note that this is irrelevant to the non-user visible name, which we will create later. */
-	gchar* default_acount_name = g_strdup (_("mcen_ia_emailsetup_defaultname"));
-	while (modest_account_mgr_account_with_display_name_exists (self->account_manager, 
-		default_acount_name)) {
-			
-		gchar * default_account_name2 = util_increment_name (default_acount_name);
-		g_free (default_acount_name);
-		default_acount_name = default_account_name2;
-	}
+	gchar* default_account_name_start = g_strdup (_("mcen_ia_emailsetup_defaultname"));
+	gchar* default_account_name = modest_account_mgr_get_unused_account_display_name (
+		self->account_manager, default_account_name_start);
+	g_free (default_account_name_start);
+	default_account_name_start = NULL;
 	
-	gtk_entry_set_text( GTK_ENTRY (self->entry_account_title), default_acount_name);
-	g_free (default_acount_name);
-	default_acount_name = NULL;
+	gtk_entry_set_text( GTK_ENTRY (self->entry_account_title), default_account_name);
+	g_free (default_account_name);
+	default_account_name = NULL;
 
 	caption = create_caption_new_with_asterix (self, sizegroup, _("mcen_fi_account_title"), 
 		self->entry_account_title, NULL, HILDON_CAPTION_MANDATORY);
@@ -874,6 +869,7 @@ static void create_subsequent_pages (ModestEasysetupWizardDialog *self)
 	}
 }
 
+
 static gchar*
 util_get_default_servername_from_email_address (const gchar* email_address, ModestProtocol servertype)
 {
@@ -902,62 +898,6 @@ util_get_default_servername_from_email_address (const gchar* email_address, Mode
 	return g_strdup_printf ("%s.%s", hostname, domain);
 }
 
-/* Add a number to the end of the text, or increment a number that is already there.
- */
-static gchar*
-util_increment_name (const gchar* text)
-{
-	/* Get the end character,
-	 * also doing a UTF-8 validation which is required for using g_utf8_prev_char().
-	 */
-	const gchar* end = NULL;
-	if (!g_utf8_validate (text, -1, &end))
-		return NULL;
-  
-  	if (!end)
-  		return NULL;
-  		
-  	--end; /* Go to before the null-termination. */
-  		
-  	/* Look at each UTF-8 characer, starting at the end: */
-  	const gchar* p = end;
-  	const gchar* alpha_end = NULL;
-  	while (p)
-  	{	
-  		/* Stop when we reach the first character that is not a numeric digit: */
-  		const gunichar ch = g_utf8_get_char (p);
-  		if (!g_unichar_isdigit (ch)) {
-  			alpha_end = p;
-  			break;
-  		}
-  		
-  		p = g_utf8_prev_char (p);	
-  	}
-  	
-  	if(!alpha_end) {
-  		/* The text must consist completely of numeric digits. */
-  		alpha_end = text;
-  	}
-  	else
-  		++alpha_end;
-  	
-  	/* Intepret and increment the number, if any: */
-  	gint num = atol (alpha_end);
-  	++num;
-  	
-	/* Get the name part: */
-  	gint name_len = alpha_end - text;
-  	gchar *name_without_number = g_malloc(name_len + 1);
-  	memcpy (name_without_number, text, name_len);
-  	name_without_number[name_len] = 0;\
-  	
-    /* Concatenate the text part and the new number: */	
-  	gchar *result = g_strdup_printf("%s%d", name_without_number, num);
-  	g_free (name_without_number);
-  	
-  	return result; 	
-}
-	
 static void set_default_custom_servernames (ModestEasysetupWizardDialog *account_wizard)
 {
 	if (!account_wizard->entry_incomingserver)
@@ -1182,14 +1122,10 @@ create_account (ModestEasysetupWizardDialog *self)
 
 	/* Increment the non-user visible name if necessary, 
 	 * based on the display name: */
-	gchar *account_name = g_strdup_printf ("%sID", display_name);
-	while (modest_account_mgr_account_exists (self->account_manager, 
-		account_name, FALSE /*  server_account */)) {
-			
-		gchar * account_name2 = util_increment_name (account_name);
-		g_free (account_name);
-		account_name = account_name2;
-	}
+	gchar *account_name_start = g_strdup_printf ("%sID", display_name);
+	gchar* account_name = modest_account_mgr_get_unused_account_name (self->account_manager,
+		account_name_start, FALSE /* not a server account */);
+	g_free (account_name_start);
 		
 	/* username and password (for both incoming and outgoing): */
 	const gchar* username = gtk_entry_get_text (GTK_ENTRY (self->entry_user_username));
@@ -1252,7 +1188,10 @@ create_account (ModestEasysetupWizardDialog *self)
 	 * If we don't do it in this order then we will experience a crash. */
 	 
 	/* Add a (incoming) server account, to be used by the account: */
-	gchar *store_name = g_strconcat (account_name, "_store", NULL);
+	gchar *store_name_start = g_strconcat (account_name, "_store", NULL);
+	gchar *store_name = modest_account_mgr_get_unused_account_name (self->account_manager, 
+		store_name_start, TRUE /* server account */);
+	g_free (store_name_start);
 	gboolean created = modest_account_mgr_add_server_account (self->account_manager,
 		store_name,
 		servername_incoming,
@@ -1329,7 +1268,10 @@ create_account (ModestEasysetupWizardDialog *self)
 	}
 	    
 	/* Add a (outgoing) server account to be used by the account: */
-	gchar *transport_name = g_strconcat (account_name, "_transport", NULL); /* What is this good for? */
+	gchar *transport_name_start = g_strconcat (account_name, "_transport", NULL);
+	gchar *transport_name = modest_account_mgr_get_unused_account_name (self->account_manager, 
+		transport_name_start, TRUE /* server account */);
+	g_free (transport_name_start);
 	created = modest_account_mgr_add_server_account (self->account_manager,
 		transport_name,
 		servername_outgoing,

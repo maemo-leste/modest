@@ -8,6 +8,7 @@
 #include "maemo/easysetup/modest-easysetup-serversecurity-combo-box.h"
 #include "maemo/easysetup/modest-easysetup-secureauth-combo-box.h"
 #include "maemo/easysetup/modest-validating-entry.h"
+#include <modest-account-mgr-helpers.h>
 #include <gtk/gtkbutton.h>
 #include <gtk/gtkhbox.h>
 #include <gtk/gtkvbox.h>
@@ -92,8 +93,8 @@ on_combo_security_changed (GtkComboBox *widget, gpointer user_data)
 {
 	ModestConnectionSpecificSmtpEditWindow *self = 
 		MODEST_CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW (user_data);
-	ModestConnectionSpecificSmtpEditWindowPrivate *priv = CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW_GET_PRIVATE (self);
-	
+	ModestConnectionSpecificSmtpEditWindowPrivate *priv = 
+		CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW_GET_PRIVATE (self);
 	
 	const gint port_number = 
 		easysetup_serversecurity_combo_box_get_active_serversecurity_port (
@@ -109,7 +110,8 @@ on_combo_security_changed (GtkComboBox *widget, gpointer user_data)
 static void
 modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEditWindow *self)
 {
-	ModestConnectionSpecificSmtpEditWindowPrivate *priv = CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW_GET_PRIVATE (self);
+	ModestConnectionSpecificSmtpEditWindowPrivate *priv = 
+		CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW_GET_PRIVATE (self);
 	
 	GtkWidget *box = GTK_DIALOG(self)->vbox; /* gtk_vbox_new (FALSE, 2); */
 	
@@ -214,3 +216,49 @@ modest_connection_specific_smtp_edit_window_set_connection (
 	g_free (title);
 }
 
+gboolean
+modest_connection_specific_smtp_edit_window_save_settings (
+	ModestConnectionSpecificSmtpEditWindow *window, 
+	ModestAccountMgr *account_manager, const gchar* server_account_name)
+{
+	ModestConnectionSpecificSmtpEditWindowPrivate *priv = 
+		CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW_GET_PRIVATE (window);
+	
+	g_assert (server_account_name);
+	
+	const gchar* hostname = gtk_entry_get_text (GTK_ENTRY (priv->entry_outgoingserver));
+	gboolean test = modest_account_mgr_set_string (account_manager, server_account_name,
+		MODEST_ACCOUNT_HOSTNAME, hostname, TRUE /* server account */);
+	if (!test)
+		return FALSE;
+		
+	const gchar* username = gtk_entry_get_text (GTK_ENTRY (priv->entry_user_username));
+	test = modest_account_mgr_set_string (account_manager, server_account_name,
+		MODEST_ACCOUNT_USERNAME, username, TRUE /* server account */);
+	if (!test)
+		return FALSE;
+		
+	const gchar* password = gtk_entry_get_text (GTK_ENTRY (priv->entry_user_password));
+	test = modest_account_mgr_set_string (account_manager, server_account_name,
+		MODEST_ACCOUNT_PASSWORD, password, TRUE /*  server account */);
+	if (!test)
+		return FALSE;
+	
+	const ModestProtocol protocol_security_outgoing = easysetup_serversecurity_combo_box_get_active_serversecurity (
+		EASYSETUP_SERVERSECURITY_COMBO_BOX (priv->combo_outgoing_security));
+	modest_server_account_set_security (account_manager, server_account_name, protocol_security_outgoing);
+	
+	const ModestProtocol protocol_authentication_outgoing = easysetup_secureauth_combo_box_get_active_secureauth (
+		EASYSETUP_SECUREAUTH_COMBO_BOX (priv->combo_outgoing_auth));
+	modest_server_account_set_secure_auth (account_manager, server_account_name, protocol_authentication_outgoing);	
+		
+	/* port: */
+	const gchar * port_str = gtk_entry_get_text (GTK_ENTRY (priv->entry_port));
+	gint port_num = 0;
+	if (port_str)
+		port_num = atoi (port_str);
+	modest_account_mgr_set_int (account_manager, server_account_name,
+			MODEST_ACCOUNT_PORT, port_num, TRUE /* server account */);
+			
+	return TRUE;
+}

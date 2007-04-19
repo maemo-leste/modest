@@ -1,3 +1,30 @@
+2007-04-19  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/modest-account-mgr-helpers.h:
+	* src/modest-account-mgr-helpers.c:
+	(modest_account_mgr_get_unused_account_name),
+	(modest_account_mgr_get_unused_account_display_name): Added these 
+	utility functions, to avoid code duplication.
+
+	* src/maemo/easysetup/modest-easysetup-wizard.c:
+	(create_page_account_details), (create_account):
+	* src/maemo/modest-connection-specific-smtp-edit-window.c:
+	(on_combo_security_changed),
+	(modest_connection_specific_smtp_edit_window_init),
+	(modest_connection_specific_smtp_edit_window_save_settings):
+	* src/maemo/modest-connection-specific-smtp-edit-window.h:
+	* src/maemo/modest-connection-specific-smtp-window.c:
+	(modest_connection_specific_smtp_window_finalize),
+	(modest_connection_specific_smtp_window_fill_with_connections),
+	(on_button_edit), (modest_connection_specific_smtp_window_init):
+	* src/maemo/modest-connection-specific-smtp-window.h:
+	Implementing saving of connection-specific server accounts.
+	
+	But I need to refactor this so we can save the data for each 
+	possible connection-specific account and only actually create the server accounts 
+	when the easysetup finished, or the OK button is pressed on the account settings 
+	dialog.
+
 2007-04-18  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/maemo/modest-connection-specific-smtp-edit-window.c:

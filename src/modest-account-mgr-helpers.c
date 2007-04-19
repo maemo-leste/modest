@@ -558,3 +558,91 @@ modest_account_mgr_get_from_string (ModestAccountMgr *self, const gchar* name)
 
 	return from;
 }
+
+/* Add a number to the end of the text, or increment a number that is already there.
+ */
+static gchar*
+util_increment_name (const gchar* text)
+{
+	/* Get the end character,
+	 * also doing a UTF-8 validation which is required for using g_utf8_prev_char().
+	 */
+	const gchar* end = NULL;
+	if (!g_utf8_validate (text, -1, &end))
+		return NULL;
+  
+  	if (!end)
+  		return NULL;
+  		
+  	--end; /* Go to before the null-termination. */
+  		
+  	/* Look at each UTF-8 characer, starting at the end: */
+  	const gchar* p = end;
+  	const gchar* alpha_end = NULL;
+  	while (p)
+  	{	
+  		/* Stop when we reach the first character that is not a numeric digit: */
+  		const gunichar ch = g_utf8_get_char (p);
+  		if (!g_unichar_isdigit (ch)) {
+  			alpha_end = p;
+  			break;
+  		}
+  		
+  		p = g_utf8_prev_char (p);	
+  	}
+  	
+  	if(!alpha_end) {
+  		/* The text must consist completely of numeric digits. */
+  		alpha_end = text;
+  	}
+  	else
+  		++alpha_end;
+  	
+  	/* Intepret and increment the number, if any: */
+  	gint num = atol (alpha_end);
+  	++num;
+  	
+	/* Get the name part: */
+  	gint name_len = alpha_end - text;
+  	gchar *name_without_number = g_malloc(name_len + 1);
+  	memcpy (name_without_number, text, name_len);
+  	name_without_number[name_len] = 0;\
+  	
+    /* Concatenate the text part and the new number: */	
+  	gchar *result = g_strdup_printf("%s%d", name_without_number, num);
+  	g_free (name_without_number);
+  	
+  	return result; 	
+}
+
+gchar*
+modest_account_mgr_get_unused_account_name (ModestAccountMgr *self, const gchar* starting_name,
+	gboolean server_account)
+{
+	gchar *account_name = g_strdup (starting_name);
+
+	while (modest_account_mgr_account_exists (self, 
+		account_name, server_account /*  server_account */)) {
+			
+		gchar * account_name2 = util_increment_name (account_name);
+		g_free (account_name);
+		account_name = account_name2;
+	}
+	
+	return account_name;
+}
+
+gchar*
+modest_account_mgr_get_unused_account_display_name (ModestAccountMgr *self, const gchar* starting_name)
+{
+	gchar *account_name = g_strdup (starting_name);
+
+	while (modest_account_mgr_account_with_display_name_exists (self, account_name)) {
+			
+		gchar * account_name2 = util_increment_name (account_name);
+		g_free (account_name);
+		account_name = account_name2;
+	}
+	
+	return account_name;
+}

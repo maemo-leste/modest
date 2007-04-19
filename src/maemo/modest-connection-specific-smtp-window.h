@@ -30,6 +30,7 @@
 #ifndef __MODEST_MAEMO_CONNECTION_SPECIFIC_SMTP_WINDOW
 #define __MODEST_MAEMO_CONNECTION_SPECIFIC_SMTP_WINDOW
 
+#include <modest-account-mgr.h>
 #include <gtk/gtkwindow.h>
 #include <gtk/gtktreeview.h>
 
@@ -69,6 +70,10 @@ typedef struct {
 GType modest_connection_specific_smtp_window_get_type (void);
 
 ModestConnectionSpecificSmtpWindow* modest_connection_specific_smtp_window_new (void);
+
+void
+modest_connection_specific_smtp_window_fill_with_connections (ModestConnectionSpecificSmtpWindow *self, 
+	ModestAccountMgr *account_manager, const gchar* account_name);
 
 G_END_DECLS
 

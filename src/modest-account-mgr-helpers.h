@@ -269,6 +269,31 @@ gboolean modest_server_account_data_get_option_bool (GSList* options_list, const
 gchar * modest_account_mgr_get_from_string (ModestAccountMgr *self, const gchar* name);
 
 
+/**
+ * modest_account_mgr_get_unused_account_name
+ * @self: a #ModestAccountMgr instance
+ * @name: The initial account name
+ *
+ * get an unused account name, based on a starting string.
+ *
+ * Returns: the newly allocated name.
+ */
+gchar*
+modest_account_mgr_get_unused_account_name (ModestAccountMgr *self, const gchar* starting_name,
+	gboolean server_account);
+	
+/**
+ * modest_account_mgr_get_unused_account_display name
+ * @self: a #ModestAccountMgr instance
+ * @name: The initial account display name
+ *
+ * get an unused account display name, based on a starting string.
+ *
+ * Returns: the newly allocated name.
+ */
+gchar*
+modest_account_mgr_get_unused_account_display_name (ModestAccountMgr *self, const gchar* starting_name);
+
 G_END_DECLS
 
 #endif /* __MODEST_ACCOUNT_MGR_H__ */
