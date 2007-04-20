@@ -1142,8 +1142,8 @@ on_focus_in (GtkWidget     *self,
 {
 	GtkTreeSelection *selection;
 	GtkTreeModel *model;
-	GList *selected;
-	GtkTreePath *start_path, *end_path, *selected_path;
+	GList *selected = NULL;
+	GtkTreePath *selected_path = NULL;
 
 	model = gtk_tree_view_get_model (GTK_TREE_VIEW (self));
 	if (!model)
@@ -1169,6 +1169,9 @@ on_focus_in (GtkWidget     *self,
 	selected_path = (GtkTreePath *) selected->data;
 
 	/* Check if we need to scroll */
+	#if GTK_CHECK_VERSION(2, 8, 0) /* TODO: gtk_tree_view_get_visible_range() is only available in GTK+ 2.8 */
+	GtkTreePath *start_path = NULL;
+	GtkTreePath *end_path = NULL;
 	if (gtk_tree_view_get_visible_range (GTK_TREE_VIEW (self),
 					     &start_path,
 					     &end_path)) {
@@ -1185,6 +1188,7 @@ on_focus_in (GtkWidget     *self,
 						      0.0);
 		}
 	}
+	#endif /* GTK_CHECK_VERSION */
 
 	/* Frees */	
 	g_list_foreach (selected, (GFunc) gtk_tree_path_free, NULL);

@@ -1,3 +1,9 @@
+2007-04-20  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/widgets/modest-header-view.c: (on_focus_in): Use GTK_CHECK_VERSION to #ifdef around the 
+	use of gtk_tree_view_get_visible_range(), to fix the build on Mameo. This code probably needs 
+	some alternative for GTK+ 2.6.
+
 2007-04-19  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/maemo/modest-address-book.c: Added include to avoid a warning.
