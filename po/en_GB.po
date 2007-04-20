@@ -1519,7 +1519,4 @@ msgstr "Edit"
 msgid "mcen_bd_delete"
 msgstr "Delete"
 
-# Button label
-msgid "mcen_bd_close"
-msgstr "Close"
 
