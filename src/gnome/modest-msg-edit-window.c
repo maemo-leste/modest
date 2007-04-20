@@ -554,3 +554,12 @@ modest_msg_edit_window_select_contacts (ModestMsgEditWindow *window)
 
 	g_message ("not implemented yet %s", __FUNCTION__);
 }
+
+void
+modest_msg_edit_window_set_file_format (ModestMsgEditWindow *window,
+					gint file_format)
+{
+	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
+
+	g_message ("not implemented yet %s", __FUNCTION__);
+}
