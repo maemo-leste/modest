@@ -1143,6 +1143,7 @@ on_focus_in (GtkWidget     *self,
 	GtkTreeSelection *selection;
 	GtkTreeModel *model;
 	GList *selected;
+	GtkTreePath *start_path, *end_path, *selected_path;
 
 	model = gtk_tree_view_get_model (GTK_TREE_VIEW (self));
 	if (!model)
@@ -1165,14 +1166,25 @@ on_focus_in (GtkWidget     *self,
 
 	/* Need to get the all the rows because is selection multiple */
 	selected = gtk_tree_selection_get_selected_rows (selection, &model);
+	selected_path = (GtkTreePath *) selected->data;
 
-	/* Scroll to first path */
-	gtk_tree_view_scroll_to_cell (GTK_TREE_VIEW (self),
-				      (GtkTreePath *) selected->data,
-				      NULL,
-				      TRUE,
-				      0.5,
-				      0.0);
+	/* Check if we need to scroll */
+	if (gtk_tree_view_get_visible_range (GTK_TREE_VIEW (self),
+					     &start_path,
+					     &end_path)) {
+
+		if ((gtk_tree_path_compare (start_path, selected_path) != -1) ||
+		    (gtk_tree_path_compare (end_path, selected_path) != 1)) {
+
+			/* Scroll to first path */
+			gtk_tree_view_scroll_to_cell (GTK_TREE_VIEW (self),
+						      selected_path,
+						      NULL,
+						      TRUE,
+						      0.5,
+						      0.0);
+		}
+	}
 
 	/* Frees */	
 	g_list_foreach (selected, (GFunc) gtk_tree_path_free, NULL);
