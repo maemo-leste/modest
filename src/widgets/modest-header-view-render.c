@@ -308,6 +308,10 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 				    -1);
 	
 	rendobj = G_OBJECT(renderer);
+
+	/* deal with empty subjects */
+	if (!subject)
+		subject = g_strdup (_("mail_va_no_subject"));
 	
 	/* Escape special characteres to allow pango makup`*/
 	display_address = modest_text_utils_get_display_address (address);
@@ -366,7 +370,7 @@ _modest_header_view_status_cell_data  (GtkTreeViewColumn *column,  GtkCellRender
 			    -1);
 	
 /* 	size_str = modest_text_utils_get_display_size (size); */
-	status_str = g_strdup(_("Wating ..."));
+	status_str = g_strdup(_("mcen_li_outbox_waiting"));
 	
 	g_object_set (G_OBJECT(renderer), "text", status_str, NULL);
 	set_common_flags (renderer, flags);
