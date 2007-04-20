@@ -272,8 +272,9 @@ modest_text_utils_remove_address (const gchar *address_list, const gchar *addres
 	return result;
 }
 
-gchar*
-modest_text_utils_convert_to_html (const gchar *data)
+
+static gchar*
+modest_text_utils_convert_to_html_or_pango (const gchar *data, gboolean pango)
 {
 	guint		 i;
 	gboolean	 first_space = TRUE;
@@ -284,15 +285,16 @@ modest_text_utils_convert_to_html (const gchar *data)
 		return NULL;
 
 	len = strlen (data);
-	html = g_string_sized_new (len + 100);	/* just a  guess... */
-	
-	g_string_append_printf (html,
-				"<html>"
-				"<head>"
-				"<meta http-equiv=\"content-type\""
-				" content=\"text/html; charset=utf8\">"
-				"</head>"
-				"<body><tt>");
+	html = g_string_sized_new (1.5 * len);	/* just a  guess... */
+
+	if (!pango)
+		g_string_append_printf (html,
+					"<html>"
+					"<head>"
+					"<meta http-equiv=\"content-type\""
+					" content=\"text/html; charset=utf8\">"
+					"</head>"
+					"<body><tt>");
 	
 	/* replace with special html chars where needed*/
 	for (i = 0; i != len; ++i)  {
@@ -300,17 +302,19 @@ modest_text_utils_convert_to_html (const gchar *data)
 		switch (kar) {
 			
 		case 0:  break; /* ignore embedded \0s */	
-		case '<' : g_string_append   (html, "&lt;"); break;
-		case '>' : g_string_append   (html, "&gt;"); break;
-		case '&' : g_string_append   (html, "&quot;"); break;
-		case '\n': g_string_append   (html, "<br>\n"); break;
+		case '<'  : g_string_append   (html, "&lt;");   break;
+		case '>'  : g_string_append   (html, "&gt;");   break;
+		case '&'  : g_string_append   (html, "&amp;");  break;
+		case '\'' : g_string_append   (html, "&apos;"); break;
+		case '\n' : g_string_append   (html, "<br>\n");  break;
 		default:
-			if (kar == ' ') {
-				g_string_append (html, first_space ? " " : "&nbsp;");
-				first_space = FALSE;
-			} else	if (kar == '\t')
-				g_string_append (html, "&nbsp; &nbsp;&nbsp;");
-			else {
+			if (!pango && (kar==' '||kar=='\t')) {
+				if (kar == ' ') {
+					g_string_append (html, first_space ? " " : "&nbsp;");
+					first_space = FALSE;
+				} else /* kart == '\t' */
+					g_string_append (html, "&nbsp; &nbsp;&nbsp;");
+			} else {
 				int charnum = 0;
 				first_space = TRUE;
 				/* optimization trick: accumulate 'normal' chars, then copy */
@@ -326,13 +330,40 @@ modest_text_utils_convert_to_html (const gchar *data)
 			}
 		}
 	}
-	
-	g_string_append (html, "</tt></body></html>");
-	hyperlinkify_plain_text (html);
+
+	if (!pango) {
+		g_string_append (html, "</tt></body></html>");
+		hyperlinkify_plain_text (html);
+	}
 
 	return g_string_free (html, FALSE);
 }
 
+
+gchar*
+modest_text_utils_convert_to_html (const gchar *data)
+{
+	return modest_text_utils_convert_to_html_or_pango (data, FALSE);
+}
+
+
+gchar*
+modest_text_utils_convert_to_pango (const gchar *data)
+{
+	/* FIXME:
+	 * in many cases, it might not be needed to do anything, so
+	 * we can simply scan the str for the special characters and
+	 * if there are none, just return g_strdup (data).
+	 *
+	 * we could even get rid of the strdup there, and notify
+	 * the caller that the string did not change -- however,
+	 * that would complicate matters a bit on the caller side
+	 */
+	return modest_text_utils_convert_to_html_or_pango (data, TRUE);
+}
+
+
+	
 GSList *
 modest_text_utils_split_addresses_list (const gchar *addresses)
 {

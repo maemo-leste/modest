@@ -35,7 +35,7 @@
 #include <glib/gi18n.h>
 #include <modest-platform.h>
 
-
+#if 0
 static gchar *
 _pango_replace_string (const gchar *string, 
 		       const gchar *in,
@@ -102,6 +102,7 @@ _pango_parse_string (const gchar *string)
 	return parsed_string;
 }
 
+#endif
 
 static GdkPixbuf*
 get_pixbuf_for_flag (TnyHeaderFlags flag)
@@ -374,8 +375,10 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 	
 	/* Escape special characteres to allow pango makup`*/
 	display_address = modest_text_utils_get_display_address (address);
-	parsed_address = _pango_parse_string (display_address);
-	parsed_subject = _pango_parse_string (subject);
+	parsed_address = modest_text_utils_convert_to_pango (display_address);
+	//_pango_parse_string (display_address);
+	parsed_subject = modest_text_utils_convert_to_pango (subject);
+	//_pango_parse_string (subject);
 
 	header = g_strdup_printf ("%s\n<small>%s</small>",
 				  parsed_subject,
