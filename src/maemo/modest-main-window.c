@@ -47,6 +47,7 @@
 #include "modest-window-priv.h"
 #include "modest-main-window-ui.h"
 #include "modest-account-mgr.h"
+#include "modest-tny-account.h"
 #include "modest-conf.h"
 #include <modest-maemo-utils.h>
 #include "modest-tny-platform-factory.h"
@@ -77,6 +78,11 @@ static gboolean on_inner_widgets_key_pressed  (GtkWidget *widget,
 					       GdkEventKey *event,
 					       gpointer user_data);
 
+static void on_configuration_key_changed      (ModestConf* conf, 
+					       const gchar *key, 
+					       ModestConfEvent event, 
+					       ModestMainWindow *self);
+
 /* list my signals */
 enum {
 	/* MY_SIGNAL_1, */
@@ -89,12 +95,17 @@ struct _ModestMainWindowPrivate {
 	GtkWidget *msg_paned;
 	GtkWidget *main_paned;
 	GtkWidget *main_vbox;
+	GtkWidget *contents_widget;
+
+	/* On-demand widgets */
 	GtkWidget *accounts_popup;
+	GtkWidget *details_widget;
 
 	ModestHeaderView *header_view;
 	ModestFolderView *folder_view;
 
 	ModestMainWindowStyle style;
+	ModestMainWindowContentsStyle contents_style;
 };
 #define MODEST_MAIN_WINDOW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                 MODEST_TYPE_MAIN_WINDOW, \
@@ -169,8 +180,12 @@ modest_main_window_init (ModestMainWindow *obj)
 	priv->main_vbox    = NULL;
 	priv->header_view  = NULL;
 	priv->folder_view  = NULL;
+	priv->contents_widget  = NULL;
 	priv->accounts_popup  = NULL;
+	priv->details_widget  = NULL;
+
 	priv->style  = MODEST_MAIN_WINDOW_STYLE_SPLIT;
+	priv->contents_style  = MODEST_MAIN_WINDOW_CONTENTS_STYLE_HEADERS;
 }
 
 static void
@@ -240,24 +255,15 @@ save_sizes (ModestMainWindow *self)
 	modest_widget_memory_save (conf, G_OBJECT(priv->header_view), "header-view");
 }
 
-static GtkWidget*
-wrapped_in_scrolled_window (GtkWidget *widget, gboolean needs_viewport)
+static void
+wrap_in_scrolled_window (GtkWidget *win, GtkWidget *widget)
 {
-	GtkWidget *win;
-
-	win = gtk_scrolled_window_new (NULL, NULL);
-	gtk_scrolled_window_set_policy
-		(GTK_SCROLLED_WINDOW (win),GTK_POLICY_NEVER,
-		 GTK_POLICY_AUTOMATIC);
-	
-	if (needs_viewport)
+	if (!gtk_widget_set_scroll_adjustments (widget, NULL, NULL))
 		gtk_scrolled_window_add_with_viewport
 			(GTK_SCROLLED_WINDOW(win), widget);
 	else
 		gtk_container_add (GTK_CONTAINER(win),
 				   widget);
-
-	return win;
 }
 
 
@@ -308,6 +314,12 @@ connect_signals (ModestMainWindow *self)
 			  NULL);
 	g_signal_connect (G_OBJECT(self), "delete-event", G_CALLBACK(on_delete_event), self);
 
+	/* Track changes in the device name */
+	g_signal_connect (G_OBJECT(modest_runtime_get_conf ()),
+			  "key_changed",
+			  G_CALLBACK (on_configuration_key_changed), 
+			  self);
+
 	/* Track account changes. We need to refresh the toolbar */
 	g_signal_connect (G_OBJECT (modest_runtime_get_account_store ()),
 			  "account_update",
@@ -330,7 +342,7 @@ modest_main_window_new (void)
 	ModestMainWindow *self;	
 	ModestMainWindowPrivate *priv;
 	ModestWindowPrivate *parent_priv;
-	GtkWidget *header_win, *folder_win;
+	GtkWidget *folder_win;
 	GtkActionGroup *action_group;
 	GError *error = NULL;
 	TnyFolderStoreQuery *query;
@@ -403,13 +415,23 @@ modest_main_window_new (void)
 		g_printerr ("modest: cannot instantiate header view\n");
 	modest_header_view_set_style (priv->header_view, MODEST_HEADER_VIEW_STYLE_TWOLINES);
 	
-	folder_win = wrapped_in_scrolled_window (GTK_WIDGET(priv->folder_view), FALSE);
-	header_win = wrapped_in_scrolled_window (GTK_WIDGET(priv->header_view), FALSE);
+	/* Create scrolled windows */
+	folder_win = gtk_scrolled_window_new (NULL, NULL);
+	priv->contents_widget = gtk_scrolled_window_new (NULL, NULL);
+	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (folder_win),
+					GTK_POLICY_NEVER,
+					GTK_POLICY_AUTOMATIC);
+	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (priv->contents_widget),
+					GTK_POLICY_NEVER,
+					GTK_POLICY_AUTOMATIC);
+
+	wrap_in_scrolled_window (folder_win, GTK_WIDGET(priv->folder_view));
+	wrap_in_scrolled_window (priv->contents_widget, GTK_WIDGET(priv->header_view));
 
 	/* paned */
 	priv->main_paned = gtk_hpaned_new ();
 	gtk_paned_add1 (GTK_PANED(priv->main_paned), folder_win);
-	gtk_paned_add2 (GTK_PANED(priv->main_paned), header_win);
+	gtk_paned_add2 (GTK_PANED(priv->main_paned), priv->contents_widget);
 	gtk_widget_show (GTK_WIDGET(priv->header_view));
 	gtk_tree_view_columns_autosize (GTK_TREE_VIEW(priv->header_view));
 
@@ -466,7 +488,6 @@ modest_main_window_set_style (ModestMainWindow *self,
 			      ModestMainWindowStyle style)
 {
 	ModestMainWindowPrivate *priv;
-	GtkWidget *scrolled_win;
 
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW (self));
 
@@ -477,7 +498,6 @@ modest_main_window_set_style (ModestMainWindow *self,
 		return;
 
 	priv->style = style;
-	scrolled_win = gtk_widget_get_parent (GTK_WIDGET (priv->header_view));
 
 	switch (style) {
 	case MODEST_MAIN_WINDOW_STYLE_SIMPLE:
@@ -485,25 +505,28 @@ modest_main_window_set_style (ModestMainWindow *self,
 		g_object_ref (priv->main_paned);
 		gtk_container_remove (GTK_CONTAINER (priv->main_vbox), priv->main_paned);
 
-		/* Reparent header view with scrolled window */
-		gtk_widget_reparent (scrolled_win, priv->main_vbox);
+		/* Reparent the contents widget to the main vbox */
+		gtk_widget_reparent (priv->contents_widget, priv->main_vbox);
 
 		break;
 	case MODEST_MAIN_WINDOW_STYLE_SPLIT:
 		/* Remove header view */
-		g_object_ref (scrolled_win);
-		gtk_container_remove (GTK_CONTAINER (priv->main_vbox), scrolled_win);
+		g_object_ref (priv->contents_widget);
+		gtk_container_remove (GTK_CONTAINER (priv->main_vbox), priv->contents_widget);
 
 		/* Reparent the main paned */
-		gtk_paned_add2 (GTK_PANED (priv->main_paned), scrolled_win);
+		gtk_paned_add2 (GTK_PANED (priv->main_paned), priv->contents_widget);
 		gtk_container_add (GTK_CONTAINER (priv->main_vbox), priv->main_paned);
 		break;
 	default:
 		g_return_if_reached ();
 	}
 
-	/* Let header view grab the focus */
-	gtk_widget_grab_focus (GTK_WIDGET (priv->header_view));
+	/* Let header view grab the focus if it's being shown */
+	if (priv->contents_style == MODEST_MAIN_WINDOW_CONTENTS_STYLE_HEADERS)
+		gtk_widget_grab_focus (GTK_WIDGET (priv->header_view));
+	else 
+		gtk_widget_grab_focus (GTK_WIDGET (priv->contents_widget));
 
 	/* Show changes */
 	gtk_widget_show_all (GTK_WIDGET (priv->main_vbox));
@@ -723,4 +746,156 @@ on_inner_widgets_key_pressed (GtkWidget *widget,
 		gtk_widget_grab_focus (GTK_WIDGET (priv->header_view));
 
 	return FALSE;
+}
+
+static void
+set_alignment (GtkWidget *widget,
+	       gpointer data)
+{
+	gtk_misc_set_alignment (GTK_MISC (widget), 0.0, 0.0);
+	gtk_misc_set_padding (GTK_MISC (widget), 0, 0);
+}
+
+static GtkWidget *
+create_details_widget (TnyAccount *account)
+{
+	GtkWidget *vbox;
+	gchar *label;
+
+	vbox = gtk_vbox_new (FALSE, 0);
+
+	/* Account description */
+	if (!strcmp (tny_account_get_id (account), MODEST_LOCAL_FOLDERS_ACCOUNT_ID)) {
+		gchar *device_name;
+
+		/* Get device name */
+		device_name = modest_conf_get_string (modest_runtime_get_conf(),
+						      MODEST_CONF_DEVICE_NAME, NULL);
+   
+		label = g_strdup_printf ("%s: %s",
+					 _("mcen_fi_localroot_description"),
+					 device_name);
+		gtk_box_pack_start (GTK_BOX (vbox), gtk_label_new (label), FALSE, FALSE, 0);
+		g_free (device_name);
+		g_free (label);
+	} else if (!strcmp (tny_account_get_id (account), MODEST_MMC_ACCOUNT_ID)) {
+		/* TODO: MMC ? */
+		gtk_box_pack_start (GTK_BOX (vbox), gtk_label_new ("FIXME: MMC ?"), FALSE, FALSE, 0);
+	} else {
+		GString *proto;
+
+		/* Put proto in uppercase */
+		proto = g_string_new (tny_account_get_proto (account));
+		proto = g_string_ascii_up (proto);
+
+		label = g_strdup_printf ("%s %s: %s", 
+					 proto->str,
+					 _("mcen_fi_remoteroot_account"),
+					 tny_account_get_name (account));
+		gtk_box_pack_start (GTK_BOX (vbox), gtk_label_new (label), FALSE, FALSE, 0);
+		g_string_free (proto, TRUE);
+		g_free (label);
+	}
+
+	/* Message count */
+	label = g_strdup_printf ("%s: %d", _("mcen_fi_rootfolder_messages"), 
+				 modest_tny_account_get_message_count (account));
+	gtk_box_pack_start (GTK_BOX (vbox), gtk_label_new (label), FALSE, FALSE, 0);
+	g_free (label);
+
+	/* Folder count */
+	label = g_strdup_printf ("%s: %d", _("mcen_fi_rootfolder_folders"), 
+				 modest_tny_account_get_folder_count (account));
+	gtk_box_pack_start (GTK_BOX (vbox), gtk_label_new (label), FALSE, FALSE, 0);
+	g_free (label);
+
+	/* Size / Date */
+	if (!strcmp (tny_account_get_id (account), MODEST_LOCAL_FOLDERS_ACCOUNT_ID)) {
+		label = g_strdup_printf ("%s: %d", _("mcen_fi_rootfolder_size"), 
+					 modest_tny_account_get_local_size (account));
+		gtk_box_pack_start (GTK_BOX (vbox), gtk_label_new (label), FALSE, FALSE, 0);
+		g_free (label);
+	} else if (!strcmp (tny_account_get_id (account), MODEST_MMC_ACCOUNT_ID)) {
+		gtk_box_pack_start (GTK_BOX (vbox), gtk_label_new ("FIXME: MMC ?"), FALSE, FALSE, 0);
+	} else {
+		label = g_strdup_printf ("%s: %s", _("mcen_ti_lastupdated"), "08/08/08");
+		gtk_box_pack_start (GTK_BOX (vbox), gtk_label_new (label), FALSE, FALSE, 0);
+		g_free (label);
+	}
+
+	/* Set alignment */
+	gtk_container_foreach (GTK_CONTAINER (vbox), (GtkCallback) set_alignment, NULL);
+
+	return vbox;
+}
+
+void 
+modest_main_window_set_contents_style (ModestMainWindow *self, 
+				       ModestMainWindowContentsStyle style)
+{
+	ModestMainWindowPrivate *priv;
+	GtkWidget *content;
+	TnyAccount *account;
+
+	g_return_if_fail (MODEST_IS_MAIN_WINDOW (self));
+
+	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
+
+	/* We allow to set the same content style than the previously
+	   set if there are details, because it could happen when we're
+	   selecting different accounts consecutively */
+	if ((priv->contents_style == style) &&
+	    (priv->contents_style == MODEST_MAIN_WINDOW_CONTENTS_STYLE_HEADERS))
+		return;
+
+	/* Remove previous child. Delete it if it was an account
+	   details widget */
+	content = gtk_bin_get_child (GTK_BIN (priv->contents_widget));
+	if (priv->contents_style != MODEST_MAIN_WINDOW_CONTENTS_STYLE_DETAILS)
+		g_object_ref (content);
+	gtk_container_remove (GTK_CONTAINER (priv->contents_widget), content);
+
+	priv->contents_style = style;
+
+	switch (priv->contents_style) {
+	case MODEST_MAIN_WINDOW_CONTENTS_STYLE_HEADERS:
+		wrap_in_scrolled_window (priv->contents_widget, GTK_WIDGET (priv->header_view));
+		break;
+	case MODEST_MAIN_WINDOW_CONTENTS_STYLE_DETAILS:
+		/* TODO: show here account details */
+		account = TNY_ACCOUNT (modest_folder_view_get_selected (priv->folder_view));
+		priv->details_widget = create_details_widget (account);
+
+		wrap_in_scrolled_window (priv->contents_widget, 
+					 priv->details_widget);
+		break;
+	default:
+		g_return_if_reached ();
+	}
+
+	/* Show */
+	gtk_widget_show_all (priv->contents_widget);
+}
+
+static void 
+on_configuration_key_changed (ModestConf* conf, 
+			      const gchar *key, 
+			      ModestConfEvent event, 
+			      ModestMainWindow *self)
+{
+	ModestMainWindowPrivate *priv;
+	TnyAccount *account;
+
+	if (!key || strcmp (key, MODEST_CONF_DEVICE_NAME))
+		return;
+
+	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
+
+	if (priv->contents_style != MODEST_MAIN_WINDOW_CONTENTS_STYLE_DETAILS)
+		return;
+
+	account = TNY_ACCOUNT (modest_folder_view_get_selected (priv->folder_view));
+	if (!strcmp (tny_account_get_id (account), MODEST_LOCAL_FOLDERS_ACCOUNT_ID)) {
+		/* TODO: change device name */
+	}
 }

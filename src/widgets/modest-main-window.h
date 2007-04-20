@@ -60,10 +60,24 @@ struct _ModestMainWindowClass {
 	ModestWindowClass parent_class;
 };
 
+/*
+ * MODEST_MAIN_WINDOW_STYLE_SIMPLE: shows only the header list
+ * MODEST_MAIN_WINDOW_STYLE_SPLIT: shows a right pane with the folder
+ * tree and a left pane with the header list
+ */
 typedef enum _ModestMainWindowStyle {
 	MODEST_MAIN_WINDOW_STYLE_SIMPLE,
 	MODEST_MAIN_WINDOW_STYLE_SPLIT
 } ModestMainWindowStyle;
+
+/*
+ * MODEST_MAIN_WINDOW_FOLDER_CONTENTS_STYLE_HEADERS
+ * MODEST_MAIN_WINDOW_FOLDER_CONTENTS_STYLE_HEADERS
+ */
+typedef enum _ModestMainWindowContentsStyle {
+	MODEST_MAIN_WINDOW_CONTENTS_STYLE_HEADERS,
+	MODEST_MAIN_WINDOW_CONTENTS_STYLE_DETAILS,
+} ModestMainWindowContentsStyle;
 
 /**
  * modest_main_window_get_type:
@@ -141,6 +155,18 @@ void       modest_main_window_set_style        (ModestMainWindow *self,
  * Return value: the current #ModestWindowStyle
  **/
 ModestMainWindowStyle       modest_main_window_get_style        (ModestMainWindow *self);
+
+/**
+ * modest_main_window_set_contents_style:
+ * @self: the #ModestMainWindow
+ * @style: a #ModestMainWindowContentsStyle that will be set
+ * 
+ * Shows either the folder details, or the header list of the current
+ * selected folder
+ **/
+void       modest_main_window_set_contents_style       (ModestMainWindow *self, 
+							ModestMainWindowContentsStyle style);
+
 
 G_END_DECLS
 

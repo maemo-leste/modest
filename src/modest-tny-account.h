@@ -92,6 +92,38 @@ TnyAccount* modest_tny_account_new_for_local_folders (ModestAccountMgr *account_
 TnyFolder*    modest_tny_account_get_special_folder   (TnyAccount *self,
 						       TnyFolderType special_type);
 
+
+/**
+ * modest_tny_account_get_folder_count:
+ * @self: a #TnyAccount
+ * 
+ * gets the number of folders of the account
+ * 
+ * Returns: the number of folder, or -1 in case of error
+ **/
+gint          modest_tny_account_get_folder_count  (TnyAccount *self);
+
+/**
+ * modest_tny_account_get_message_count:
+ * @self: 
+ * 
+ * gets the number of messages in the account
+ * 
+ * Returns: the number of messages, or -1 in case of error
+ **/
+gint          modest_tny_account_get_message_count (TnyAccount *self);
+
+/**
+ * modest_tny_account_get_local_size:
+ * @self: 
+ * 
+ * gets the total size occupied by the account in the local storage
+ * device
+ * 
+ * Returns: the total size in bytes, or -1 in case of error
+ **/
+gint          modest_tny_account_get_local_size    (TnyAccount *self);
+
 G_END_DECLS
 
 #endif /* __MODEST_TNY_ACCOUNT_H__*/

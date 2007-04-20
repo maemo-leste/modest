@@ -103,7 +103,7 @@ void     modest_ui_actions_on_header_activated         (ModestHeaderView *folder
 						         ModestMainWindow *main_window);
 
 void     modest_ui_actions_on_folder_selection_changed (ModestFolderView *folder_view,
-							 TnyFolder *folder, 
+							 TnyFolderStore *folder_store, 
 							 gboolean selected,
 							 ModestMainWindow *main_window);
 

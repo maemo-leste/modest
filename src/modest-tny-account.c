@@ -37,6 +37,7 @@
 #include <tny-camel-transport-account.h>
 #include <tny-camel-imap-store-account.h>
 #include <tny-camel-pop-store-account.h>
+#include <tny-folder-stats.h>
 
 /* for now, ignore the account ===> the special folders are the same,
  * local folders for all accounts
@@ -269,3 +270,92 @@ modest_tny_account_new_for_local_folders (ModestAccountMgr *account_mgr, TnySess
 	return TNY_ACCOUNT(tny_account);
 }
 
+typedef gint (*TnyStatsFunc) (TnyFolderStats *stats);
+
+typedef struct _RecurseFoldersHelper {
+	TnyStatsFunc function;
+	guint sum;
+} RecurseFoldersHelper;
+
+static void
+recurse_folders (TnyFolderStore *store, 
+		 TnyFolderStoreQuery *query, 
+		 RecurseFoldersHelper *helper)
+{
+	TnyIterator *iter;
+	TnyList *folders = tny_simple_list_new ();
+
+	tny_folder_store_get_folders (store, folders, query, NULL);
+	iter = tny_list_create_iterator (folders);
+
+	while (!tny_iterator_is_done (iter))
+	{
+		TnyFolderStats *stats;
+		TnyFolder *folder;
+
+		folder = TNY_FOLDER (tny_iterator_get_current (iter));
+		stats = tny_folder_get_stats (folder);
+
+		helper->sum += helper->function (stats);
+
+		recurse_folders (TNY_FOLDER_STORE (folder), query, helper);
+	    
+ 		g_object_unref (folder);
+ 		g_object_unref (stats);
+		tny_iterator_next (iter);
+	}
+	 g_object_unref (G_OBJECT (iter));
+	 g_object_unref (G_OBJECT (folders));
+}
+
+gint 
+modest_tny_account_get_folder_count (TnyAccount *self)
+{
+	g_return_val_if_fail (TNY_IS_ACCOUNT (self), -1);
+
+	return 8;
+}
+
+gint
+modest_tny_account_get_message_count (TnyAccount *self)
+{
+	RecurseFoldersHelper *helper;
+	gint retval;
+
+	g_return_val_if_fail (TNY_IS_ACCOUNT (self), -1);
+
+	/* Create helper */
+	helper = g_malloc0 (sizeof (RecurseFoldersHelper));
+	helper->function = (TnyStatsFunc) tny_folder_stats_get_all_count;
+	helper->sum = 0;
+
+	recurse_folders (TNY_FOLDER_STORE (self), NULL, helper);
+
+	retval = helper->sum;
+
+	g_free (helper);
+
+	return retval;
+}
+
+gint 
+modest_tny_account_get_local_size (TnyAccount *self)
+{
+	RecurseFoldersHelper *helper;
+	gint retval;
+
+	g_return_val_if_fail (TNY_IS_ACCOUNT (self), -1);
+
+	/* Create helper */
+	helper = g_malloc0 (sizeof (RecurseFoldersHelper));
+	helper->function = (TnyStatsFunc) tny_folder_stats_get_local_size;
+	helper->sum = 0;
+
+	recurse_folders (TNY_FOLDER_STORE (self), NULL, helper);
+
+	retval = helper->sum;
+
+	g_free (helper);
+
+	return retval;
+}

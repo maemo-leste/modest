@@ -704,3 +704,10 @@ modest_main_window_get_style (ModestMainWindow *self)
 	/* TODO */
 	return MODEST_MAIN_WINDOW_STYLE_SPLIT;
 }
+
+void 
+modest_main_window_set_contents_style (ModestMainWindow *self, 
+				       ModestMainWindowContentsStyle style)
+{
+	/* TODO */
+}

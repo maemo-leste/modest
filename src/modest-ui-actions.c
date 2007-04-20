@@ -62,7 +62,6 @@
 #include <tny-msg-view.h>
 #include <tny-device.h>
 
-
 typedef struct _GetMsgAsyncHelper {
 	ModestWindow *window;
 	TnyIterator *iter;
@@ -891,7 +890,7 @@ cleanup:
 
 void 
 modest_ui_actions_on_folder_selection_changed (ModestFolderView *folder_view,
-					       TnyFolder *folder, 
+					       TnyFolderStore *folder_store, 
 					       gboolean selected,
 					       ModestMainWindow *main_window)
 {
@@ -907,15 +906,28 @@ modest_ui_actions_on_folder_selection_changed (ModestFolderView *folder_view,
 	
 	conf = modest_runtime_get_conf ();
 
-	if (TNY_IS_FOLDER (folder)) {
-		if (!selected) { /* the folder was unselected; save it's settings  */
-			modest_widget_memory_save (conf, G_OBJECT (header_view), "header-view");
-			modest_header_view_set_folder (MODEST_HEADER_VIEW(header_view), NULL);
-		} else {
-			modest_header_view_set_folder (MODEST_HEADER_VIEW(header_view), folder);
+	if (TNY_IS_FOLDER (folder_store)) {
+
+		modest_main_window_set_contents_style (main_window, MODEST_MAIN_WINDOW_CONTENTS_STYLE_HEADERS);
+
+		if (selected) {
+			modest_header_view_set_folder (MODEST_HEADER_VIEW(header_view), 
+						       TNY_FOLDER (folder_store));
 			modest_widget_memory_restore (conf, G_OBJECT(header_view),
 						      "header-view");
+		} else {
+			modest_widget_memory_save (conf, G_OBJECT (header_view), "header-view");
+			modest_header_view_set_folder (MODEST_HEADER_VIEW(header_view), NULL);
 		}
+	} else if (TNY_IS_ACCOUNT (folder_store)) {
+
+		modest_main_window_set_contents_style (main_window, MODEST_MAIN_WINDOW_CONTENTS_STYLE_DETAILS);
+
+/* 		if (selected) { */
+			
+/* 		} else { */
+/* 			/\* TODO *\/ */
+/* 		}        */
 	}
 }
 
