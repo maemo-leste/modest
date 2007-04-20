@@ -1,3 +1,17 @@
+2007-04-20  2007-04-20  Murray Cumming  <murrayc@murrayc.com>
+
+	* configure.ac:
+	* src/Makefile.am:
+	* src/dbus_api/Makefile.am:
+	* src/dbus_api/modest-dbus-callbacks.c:
+	* src/dbus_api/modest-dbus-callbacks.h:
+	* src/maemo/modest-platform.c: (modest_platform_init):
+	Added the beginnings of a D-Bus API. At the moment it just has a HelloWorld 
+	method.
+	* tests/Makefile.am:
+	* tests/dbus_api/Makefile.am:
+	* tests/dbus_api/test_hello.c: (main): Very simple test of the D-Bus API.
+
 2007-04-20  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/maemo/modest-account-settings-dialog.c:

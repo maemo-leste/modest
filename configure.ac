@@ -201,6 +201,7 @@ po/Makefile.in
 Makefile
 man/Makefile
 src/Makefile
+src/dbus_api/Makefile
 src/gnome/Makefile
 src/maemo/Makefile
 src/maemo/easysetup/Makefile
@@ -208,6 +209,7 @@ src/widgets/Makefile
 docs/Makefile
 docs/reference/Makefile
 tests/Makefile
+tests/dbus_api/Makefile
 src/maemo/modest.desktop
 src/maemo/modest.service
 ])

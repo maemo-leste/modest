@@ -2,6 +2,9 @@
 # Makefile.am
 #
 
+SUBDIRS = dbus_api
+
+# TODO: Why is this line here?
 MAINTAINERCLEANFILES    = Makefile.in
 
 TESTS_ENVIRONMENT       = top_builddir=$(top_builddir)  \
@@ -38,6 +41,7 @@ objects=\
         $(MODEST_LIBTINYMAIL_MAEMO_LIBS) \
         ${top_srcdir}/src/$(MODEST_PLATFORM)/libmodest-ui.la \
         ${top_srcdir}/src/widgets/libmodest-widgets.la \
+        ${top_srcdir}/src/dbus_api/libmodest-dbus-api.la \
 	${top_srcdir}/src/modest-runtime.o \
 	${top_srcdir}/src/modest-singletons.o \
 	${top_srcdir}/src/modest-tny-account.o \

@@ -30,6 +30,7 @@
 #include <config.h>
 #include <glib/gi18n.h>
 #include <modest-platform.h>
+#include <dbus_api/modest-dbus-callbacks.h>
 #include <libosso.h>
 
 #ifdef MODEST_HILDON_VERSION_0
@@ -57,6 +58,29 @@ modest_platform_init (void)
 		g_printerr ("modest: failed to acquire osso context\n");
 		return FALSE;
 	}
+
+	/* Register our D-Bus callbacks, via the osso API: */
+	osso_return_t result = osso_rpc_set_cb_f(osso_context, 
+                               MODEST_DBUS_EXAMPLE_SERVICE, 
+                               MODEST_DBUS_EXAMPLE_OBJECT, 
+                               MODEST_DBUS_EXAMPLE_IFACE,
+                               modest_dbus_req_handler, NULL /* user_data */);
+    	if (result != OSSO_OK) {
+       		g_print("Error setting D-BUS callback (%d)\n", result);
+       		return OSSO_ERROR;
+   	}
+
+	/* Add handler for Exit D-BUS messages.
+	 * Not used because osso_application_set_exit_cb() is deprecated and obsolete:
+	result = osso_application_set_exit_cb(osso_context,
+                                          modest_dbus_exit_event_handler,
+                                          (gpointer) NULL);
+	if (result != OSSO_OK) {
+		g_print("Error setting exit callback (%d)\n", result);
+		return OSSO_ERROR;
+	}
+	*/
+
 	return TRUE;
 }
 
