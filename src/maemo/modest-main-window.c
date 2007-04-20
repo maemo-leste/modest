@@ -448,8 +448,8 @@ modest_main_window_close_all (ModestMainWindow *self)
 	/* Create the confirmation dialog MSG-NOT308 */
 	note = hildon_note_new_confirmation_add_buttons (GTK_WINDOW (self),
 							 _("emev_nc_close_windows"),
-							 _("mcen_db_yes"), GTK_RESPONSE_YES,
-							 _("mcen_db_no"), GTK_RESPONSE_NO,
+							 _("mcen_bd_yes"), GTK_RESPONSE_YES,
+							 _("mcen_bd_no"), GTK_RESPONSE_NO,
 							 NULL);
 
 	response = gtk_dialog_run (GTK_DIALOG (note));

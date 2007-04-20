@@ -71,7 +71,7 @@ static const GtkActionEntry modest_action_entries [] = {
 	{ "EditCut",         NULL,      N_("mcen_me_inbox_cut"),          "<CTRL>X",    NULL, G_CALLBACK (modest_ui_actions_on_cut) },
 	{ "EditCopy",        NULL,      N_("mcen_me_inbox_copy"),         "<CTRL>C",    NULL, G_CALLBACK (modest_ui_actions_on_copy) },
 	{ "EditPaste",       NULL,      N_("mcen_me_inbox_paste"),        "<CTRL>V",    NULL, G_CALLBACK (modest_ui_actions_on_paste) },
-	{ "EditSelectAll",   NULL,      N_("mcen_me_inbox_selectall"),    NULL,        NULL, G_CALLBACK (modest_ui_actions_on_select_all) },
+	{ "EditSelectAll",   NULL,      N_("mcen_me_viewer_selectall"),    NULL,        NULL, G_CALLBACK (modest_ui_actions_on_select_all) },
 	{ "EditMarkAsRead", NULL,      N_("mcen_me_inbox_mark_as_read"),       NULL,	  NULL, NULL },
 	{ "EditMarkAsUnread", NULL,      N_("mcen_me_inbox_mark_as_unread"),       NULL,	  NULL, NULL },
 	{ "EditMoveTo",      NULL, 	N_("mcen_me_inbox_moveto"),    NULL,	  NULL, NULL },
@@ -88,7 +88,7 @@ static const GtkActionEntry modest_action_entries [] = {
 	{ "ToolsSMTPServers",     NULL,      N_("mcen_me_inbox_globalsmtpservers"),                NULL, NULL,  NULL },
 	{ "ToolsSendReceive", NULL, N_("mcen_me_inbox_sendandreceive") }, /* submenu */
 	{ "ToolsSendReceiveAll",    NULL,      N_("mcen_me_inbox_sendandreceive_all"),          NULL, NULL,  NULL },
-	{ "ToolsSendReceiveCancelSending",  NULL,      N_("mcen_me_inbox_cancelsend"),        NULL, NULL,  NULL },
+	{ "ToolsSendReceiveCancelSending",  NULL,      N_("mcen_me_outbox_cancelsend"),        NULL, NULL,  NULL },
 	{ "ToolsContacts",            NULL,      N_("mcen_me_inbox_open_addressbook"),                      NULL, NULL,  NULL },
 	{ "ToolsAddToContacts",            NULL,      N_("mcen_me_viewer_addtocontacts"),                      NULL, NULL,  G_CALLBACK (modest_ui_actions_on_add_to_contacts) },
 	{ "ToolsSearchMessages",            NULL,      N_("mcen_me_inbox_search"),                      NULL, NULL,  NULL },

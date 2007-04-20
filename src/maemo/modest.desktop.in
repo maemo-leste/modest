@@ -6,7 +6,8 @@ Name=modest
 Comment=modest e-mail client
 Exec=@prefix@/bin/modest
 
-X-Osso-Service=org.maemo.modest
+#don't kill our app
+#X-Osso-Service=org.maemo.modest
 X-Osso-Type=application/x-executable
 
 Icon=qgn_list_messagin
