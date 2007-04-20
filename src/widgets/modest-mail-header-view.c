@@ -87,7 +87,7 @@ add_date_time_header (ModestMailHeaderView *mail_header, const gchar *name, time
 
 	label = gtk_label_new (NULL);
 	gtk_label_set_markup (GTK_LABEL (label), name);
-	gtk_misc_set_alignment (GTK_MISC (label), 0.0, 0.0);
+	gtk_misc_set_alignment (GTK_MISC (label), 1.0, 0.0);
 	gtk_box_pack_start (GTK_BOX (date_hbox), label, FALSE, FALSE, 0);
 	gtk_size_group_add_widget (priv->labels_size_group, label);
 
@@ -133,7 +133,7 @@ add_header (ModestMailHeaderView *widget, const gchar *field, const gchar *value
 	hbox = gtk_hbox_new (FALSE, 12);
 	label_field = gtk_label_new (NULL);
 	gtk_label_set_markup (GTK_LABEL (label_field), field);
-	gtk_misc_set_alignment (GTK_MISC (label_field), 0.0, 0.0);
+	gtk_misc_set_alignment (GTK_MISC (label_field), 1.0, 0.0);
 	scroll_text = modest_scroll_text_new (NULL, 2);
 	label_value = (GtkWidget *) modest_scroll_text_get_text_view (MODEST_SCROLL_TEXT (scroll_text));
 	text_buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (label_value));
@@ -160,7 +160,7 @@ add_recpt_header (ModestMailHeaderView *widget, const gchar *field, const gchar 
 	hbox = gtk_hbox_new (FALSE, 12);
 	label_field = gtk_label_new (NULL);
 	gtk_label_set_markup (GTK_LABEL (label_field), field);
-	gtk_misc_set_alignment (GTK_MISC (label_field), 0.0, 0.0);
+	gtk_misc_set_alignment (GTK_MISC (label_field), 1.0, 0.0);
 	label_value = modest_recpt_view_new ();
 	modest_recpt_view_set_recipients (MODEST_RECPT_VIEW(label_value), value);
 	g_signal_connect (G_OBJECT (label_value), "activate", G_CALLBACK (activate_recpt), widget);
@@ -377,7 +377,7 @@ modest_mail_header_view_add_custom_header (ModestMailHeaderView *header_view,
 	hbox = gtk_hbox_new (FALSE, 12);
 	label_field = gtk_label_new (NULL);
 	gtk_label_set_markup (GTK_LABEL (label_field), label);
-	gtk_misc_set_alignment (GTK_MISC (label_field), 0.0, 0.0);
+	gtk_misc_set_alignment (GTK_MISC (label_field), 1.0, 0.0);
 	gtk_box_pack_start (GTK_BOX (hbox), label_field, FALSE, FALSE, 0);
 	gtk_box_pack_start (GTK_BOX (hbox), custom_widget, TRUE, TRUE, 0);
 	gtk_size_group_add_widget (priv->labels_size_group, label_field);
@@ -433,7 +433,7 @@ modest_mail_header_view_instance_init (GTypeInstance *instance, gpointer g_class
 
 	fromto_hbox = gtk_hbox_new (FALSE, 12);
 	priv->fromto_label = gtk_label_new (NULL);
-	gtk_misc_set_alignment (GTK_MISC (priv->fromto_label), 0.0, 0.0);
+	gtk_misc_set_alignment (GTK_MISC (priv->fromto_label), 1.0, 0.0);
 	priv->fromto_contents = modest_recpt_view_new ();
 	g_signal_connect (G_OBJECT (priv->fromto_contents), "activate", G_CALLBACK (activate_recpt), instance);
 

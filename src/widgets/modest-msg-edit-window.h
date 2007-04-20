@@ -260,6 +260,15 @@ void            modest_msg_edit_window_select_font        (ModestMsgEditWindow *
  */
 void            modest_msg_edit_window_undo               (ModestMsgEditWindow *window);
 
+/**
+ * modest_msg_edit_window_select_contacts:
+ * @window: a #ModestMsgEditWindow
+ *
+ * Shows the dialog to add contacts to the currently focused recipient list,
+ * or to To: recipient if no recipient list is focused.
+ */
+void            modest_msg_edit_window_select_contacts    (ModestMsgEditWindow *window);
+
 G_END_DECLS
 
 #endif /* __MODEST_MSG_EDIT_WINDOW_H__ */

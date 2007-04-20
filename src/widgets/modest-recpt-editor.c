@@ -228,6 +228,7 @@ modest_recpt_editor_instance_init (GTypeInstance *instance, gpointer g_class)
 	priv->abook_button = gtk_button_new ();
 	gtk_button_set_relief (GTK_BUTTON (priv->abook_button), GTK_RELIEF_NONE);
 	gtk_button_set_focus_on_click (GTK_BUTTON (priv->abook_button), FALSE);
+	GTK_WIDGET_UNSET_FLAGS (priv->abook_button, GTK_CAN_FOCUS);
 	gtk_button_set_alignment (GTK_BUTTON (priv->abook_button), 1.0, 1.0);
 	abook_icon = gtk_image_new_from_icon_name ("qgn_list_gene_contacts", GTK_ICON_SIZE_BUTTON);
 	gtk_container_add (GTK_CONTAINER (priv->abook_button), abook_icon);
@@ -252,6 +253,9 @@ modest_recpt_editor_instance_init (GTypeInstance *instance, gpointer g_class)
 	gtk_widget_set_size_request (priv->text_view, 75, -1);
 
 	g_signal_connect (G_OBJECT (priv->abook_button), "clicked", G_CALLBACK (modest_recpt_editor_on_abook_clicked), instance);
+
+	GTK_WIDGET_SET_FLAGS (GTK_WIDGET (instance), GTK_CAN_FOCUS);
+	gtk_container_set_focus_child (GTK_CONTAINER (instance), priv->text_view);
 
 	return;
 }

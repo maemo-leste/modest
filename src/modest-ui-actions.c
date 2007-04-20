@@ -1726,3 +1726,10 @@ modest_ui_actions_on_folder_display_name_changed (ModestFolderView *folder_view,
 			gtk_window_set_title (window, " ");
 	}
 }
+
+void
+modest_ui_actions_on_select_contacts (GtkAction *action, ModestMsgEditWindow *window)
+{
+	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
+	modest_msg_edit_window_select_contacts (window);
+}

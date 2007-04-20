@@ -32,6 +32,10 @@
 
   <menubar name="MenuBar">
 
+    <menu name="EmailMenu" action="Email">
+      <menuitem name="SelectContactsMenu" action="SelectContacts"/>
+    </menu>
+
     <menu name="EditMenu" action="Edit">
       <menuitem name="UndoMenu" action="Undo"/>
       <separator/>

@@ -40,6 +40,7 @@ G_BEGIN_DECLS
 static const GtkActionEntry modest_msg_edit_action_entries [] = {
 
 	/* Toplevel menus */
+	{ "Email", NULL, N_("mcen_me_inbox_email") },
 	{ "View", NULL, N_("mcen_me_inbox_view") },
 	{ "Edit", NULL, N_("mcen_me_inbox_edit") },
 	{ "Format", NULL, N_("mcen_me_editor_format") },
@@ -62,6 +63,7 @@ static const GtkActionEntry modest_msg_edit_action_entries [] = {
 	{ "Paste", NULL, N_("mcen_me_inbox_paste"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_paste)},
 	{ "SelectAll", NULL, N_("mcen_me_viewer_selectall"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_select_all)},
 	{ "SelectFont", NULL, N_("mcen_me_editor_font"), NULL, NULL, G_CALLBACK (modest_ui_actions_msg_edit_on_select_font)},
+	{ "SelectContacts", NULL, N_("mcen_me_editor_selectrecipients"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_select_contacts)},
 
 	/* KEY ACCELERATOR ACTIONS */
 	{ "ZoomPlus", NULL, N_("Zoom +"), "F7", NULL, G_CALLBACK (modest_ui_actions_on_zoom_plus) },

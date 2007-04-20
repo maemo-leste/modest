@@ -89,6 +89,7 @@ static void  modest_msg_edit_window_finalize     (GObject *obj);
 
 static void  text_buffer_refresh_attributes (WPTextBuffer *buffer, ModestMsgEditWindow *window);
 static void  text_buffer_mark_set (GtkTextBuffer *buffer, GtkTextIter *location, GtkTextMark *mark, gpointer userdata);
+static void  text_buffer_can_undo (GtkTextBuffer *buffer, gboolean can_undo, ModestMsgEditWindow *window);
 static void  modest_msg_edit_window_color_button_change (ModestMsgEditWindow *window,
 							 gpointer userdata);
 static void  modest_msg_edit_window_size_change (GtkCheckMenuItem *menu_item,
@@ -109,6 +110,7 @@ static gboolean modest_msg_edit_window_zoom_minus (ModestWindow *window);
 static gboolean modest_msg_edit_window_zoom_plus (ModestWindow *window);
 static void modest_msg_edit_window_show_toolbar   (ModestWindow *window,
 						   gboolean show_toolbar);
+static void update_dimmed (ModestMsgEditWindow *window);
 
 
 /* list my signals */
@@ -137,6 +139,8 @@ struct _ModestMsgEditWindowPrivate {
 
 	GtkTextBuffer *text_buffer;
 
+	GtkWidget   *font_size_toolitem;
+	GtkWidget   *font_face_toolitem;
 	GtkWidget   *font_color_button;
 	GSList      *font_items_group;
 	GtkWidget   *font_tool_button_label;
@@ -347,6 +351,7 @@ init_window (ModestMsgEditWindow *obj)
 	g_object_set (G_OBJECT (priv->subject_field), "hildon-input-mode", HILDON_GTK_INPUT_MODE_FULL, NULL);
 	gtk_box_pack_start (GTK_BOX (subject_box), priv->subject_field, TRUE, TRUE, 0);
 	priv->add_attachment_button = gtk_button_new ();
+	GTK_WIDGET_UNSET_FLAGS (GTK_WIDGET (priv->add_attachment_button), GTK_CAN_FOCUS);
 	gtk_button_set_relief (GTK_BUTTON (priv->add_attachment_button), GTK_RELIEF_NONE);
 	gtk_button_set_focus_on_click (GTK_BUTTON (priv->add_attachment_button), FALSE);
 	gtk_button_set_alignment (GTK_BUTTON (priv->add_attachment_button), 1.0, 1.0);
@@ -394,10 +399,16 @@ init_window (ModestMsgEditWindow *obj)
 			  G_CALLBACK (text_buffer_refresh_attributes), obj);
 	g_signal_connect (G_OBJECT (priv->text_buffer), "mark-set",
 			  G_CALLBACK (text_buffer_mark_set), obj);
+	g_signal_connect (G_OBJECT (priv->text_buffer), "can-undo",
+			  G_CALLBACK (text_buffer_can_undo), obj);
 	g_signal_connect (G_OBJECT (obj), "window-state-event",
 			  G_CALLBACK (modest_msg_edit_window_window_state_event),
 			  NULL);
 	g_signal_connect_swapped (G_OBJECT (priv->to_field), "open-addressbook", 
+				  G_CALLBACK (modest_msg_edit_window_open_addressbook), obj);
+	g_signal_connect_swapped (G_OBJECT (priv->cc_field), "open-addressbook", 
+				  G_CALLBACK (modest_msg_edit_window_open_addressbook), obj);
+	g_signal_connect_swapped (G_OBJECT (priv->bcc_field), "open-addressbook", 
 				  G_CALLBACK (modest_msg_edit_window_open_addressbook), obj);
 
 	priv->scroll = gtk_scrolled_window_new (NULL, NULL);
@@ -535,6 +546,9 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg)
 	modest_attachments_view_set_message (MODEST_ATTACHMENTS_VIEW (priv->attachments_view), msg);
 	if (priv->attachments == NULL)
 		gtk_widget_hide_all (priv->attachments_caption);
+
+	update_dimmed (self);
+	text_buffer_can_undo (priv->text_buffer, FALSE, self);
 }
 
 static void
@@ -651,6 +665,7 @@ modest_msg_edit_window_setup_toolbar (ModestMsgEditWindow *window)
 	gtk_tool_item_set_expand (GTK_TOOL_ITEM (tool_item), TRUE);
 	gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (tool_item), TRUE);
 	menu_tool_button_dont_expand (GTK_MENU_TOOL_BUTTON (tool_item));
+	priv->font_size_toolitem = tool_item;
 
 	/* font face */
 	tool_item = GTK_WIDGET (gtk_menu_tool_button_new (NULL, NULL));
@@ -690,9 +705,10 @@ modest_msg_edit_window_setup_toolbar (ModestMsgEditWindow *window)
 	gtk_tool_item_set_expand (GTK_TOOL_ITEM (tool_item), TRUE);
 	gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (tool_item), TRUE);
 	menu_tool_button_dont_expand (GTK_MENU_TOOL_BUTTON (tool_item));
+	priv->font_face_toolitem = tool_item;
 
 	/* Set expand and homogeneous for remaining items */
-	tool_item = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/ActionsSend");
+	tool_item = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/ToolbarSend");
 	gtk_tool_item_set_expand (GTK_TOOL_ITEM (tool_item), TRUE);
 	gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (tool_item), TRUE);
 	tool_item = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/ActionsBold");
@@ -1048,6 +1064,16 @@ text_buffer_refresh_attributes (WPTextBuffer *buffer, ModestMsgEditWindow *windo
 	
 	parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
+
+	if (wp_text_buffer_is_rich_text (WP_TEXT_BUFFER (priv->text_buffer))) {
+		action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/FormatMenu/FileFormatMenu/FileFormatFormattedTextMenu");
+		if (!gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (action)))
+			toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action), TRUE);
+	} else {
+		action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/FormatMenu/FileFormatMenu/FileFormatPlainTextMenu");
+		if (!gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (action)))
+			toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action), TRUE);
+	}
 
 	wp_text_buffer_get_attributes (WP_TEXT_BUFFER (priv->text_buffer), buffer_format, FALSE);
 	
@@ -1501,6 +1527,24 @@ modest_msg_edit_window_open_addressbook (ModestMsgEditWindow *window,
 	modest_address_book_select_addresses (editor);
 
 }
+
+void
+modest_msg_edit_window_select_contacts (ModestMsgEditWindow *window)
+{
+	GtkWidget *focused;
+	ModestMsgEditWindowPrivate *priv;
+
+	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
+	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
+	focused = gtk_window_get_focus (GTK_WINDOW (window));
+
+	if (MODEST_IS_RECPT_EDITOR (focused)) {
+		modest_msg_edit_window_open_addressbook (window, MODEST_RECPT_EDITOR (focused));
+	} else {
+		modest_msg_edit_window_open_addressbook (window, MODEST_RECPT_EDITOR (priv->to_field));
+	}
+	
+}
 static void
 modest_msg_edit_window_show_toolbar (ModestWindow *self,
 				     gboolean show_toolbar)
@@ -1581,6 +1625,7 @@ modest_msg_edit_window_set_file_format (ModestMsgEditWindow *window,
 		}
 			break;
 		}
+		update_dimmed (window);
 	}
 }
 
@@ -1719,7 +1764,7 @@ modest_msg_edit_window_select_font (ModestMsgEditWindow *window)
 }
 
 void
-modest_msg_edit_window_undo               (ModestMsgEditWindow *window)
+modest_msg_edit_window_undo (ModestMsgEditWindow *window)
 {
 	ModestMsgEditWindowPrivate *priv;
 
@@ -1728,4 +1773,53 @@ modest_msg_edit_window_undo               (ModestMsgEditWindow *window)
 	
 	wp_text_buffer_undo (WP_TEXT_BUFFER (priv->text_buffer));
 
+	update_dimmed (window);
+
+}
+
+static void
+update_dimmed (ModestMsgEditWindow *window)
+{
+	ModestMsgEditWindowPrivate *priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
+	ModestWindowPrivate *parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
+	GtkAction *action;
+	GtkWidget *widget;
+	gboolean rich_text;
+
+	rich_text = wp_text_buffer_is_rich_text (WP_TEXT_BUFFER (priv->text_buffer));
+
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/FormatMenu/SelectFontMenu");
+	gtk_action_set_sensitive (action, rich_text);
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/FormatMenu/BulletedListMenu");
+	gtk_action_set_sensitive (action, rich_text);
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/FormatMenu/AlignmentMenu");
+	gtk_action_set_sensitive (action, rich_text);
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/FormatMenu/AlignmentMenu/AlignmentLeftMenu");
+	gtk_action_set_sensitive (action, rich_text);
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/FormatMenu/AlignmentMenu/AlignmentCenterMenu");
+	gtk_action_set_sensitive (action, rich_text);
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/FormatMenu/AlignmentMenu/AlignmentRightMenu");
+	gtk_action_set_sensitive (action, rich_text);
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/AttachmentsMenu/InsertImageMenu");
+	gtk_action_set_sensitive (action, rich_text);
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ActionsBold");
+	gtk_action_set_sensitive (action, rich_text);
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ActionsItalics");
+	gtk_action_set_sensitive (action, rich_text);
+	widget = priv->font_color_button;
+	gtk_widget_set_sensitive (widget, rich_text);
+	widget = priv->font_size_toolitem;
+	gtk_widget_set_sensitive (widget, rich_text);
+	widget = priv->font_face_toolitem;
+	gtk_widget_set_sensitive (widget, rich_text);
+}
+
+static void  
+text_buffer_can_undo (GtkTextBuffer *buffer, gboolean can_undo, ModestMsgEditWindow *window)
+{
+	ModestWindowPrivate *parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
+	GtkAction *action;
+
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/EditMenu/UndoMenu");
+	gtk_action_set_sensitive (action, can_undo);
 }
