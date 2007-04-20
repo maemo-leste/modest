@@ -647,7 +647,7 @@ static GtkWidget* create_page_custom_outgoing (ModestEasysetupWizardDialog *self
 	
 	/* Connection-specific SMTP-Severs Edit button: */
 	if (!self->button_outgoing_smtp_servers)
-		self->button_outgoing_smtp_servers = gtk_button_new_with_label (_("mcen_bd_emailsetup_edit"));
+		self->button_outgoing_smtp_servers = gtk_button_new_with_label (_("mcen_bd_edit"));
 	caption = hildon_caption_new (sizegroup, _("mcen_fi_advsetup_optional_smtp"), 
 		self->button_outgoing_smtp_servers, NULL, HILDON_CAPTION_OPTIONAL);
 	gtk_widget_show (self->button_outgoing_smtp_servers);
@@ -675,7 +675,7 @@ static GtkWidget* create_page_complete_custom (ModestEasysetupWizardDialog *self
 	gtk_widget_show (label);
 	
 	if (!self->button_edit)
-		self->button_edit = gtk_button_new_with_label (_("mcen_bd_emailsetup_edit"));
+		self->button_edit = gtk_button_new_with_label (_("mcen_bd_edit"));
 	GtkWidget *caption = hildon_caption_new (NULL, _("mcen_fi_advanced_settings"), 
 		self->button_edit, NULL, HILDON_CAPTION_OPTIONAL);
 	gtk_widget_show (self->button_edit);

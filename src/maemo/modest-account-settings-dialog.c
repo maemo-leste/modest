@@ -368,7 +368,7 @@ create_page_user_details (ModestAccountSettingsDialog *self)
 	
 	/* Signature button: */
 	if (!self->button_signature)
-		self->button_signature = gtk_button_new_with_label (_("mcen_bd_emailsetup_edit"));
+		self->button_signature = gtk_button_new_with_label (_("mcen_bd_edit"));
 	caption = hildon_caption_new (sizegroup, _("mcen_fi_email_signature"), 
 		self->button_signature, NULL, HILDON_CAPTION_OPTIONAL);
 	gtk_widget_show (self->button_signature);
@@ -665,7 +665,7 @@ static GtkWidget* create_page_outgoing (ModestAccountSettingsDialog *self)
 	
 	/* Connection-specific SMTP-Severs Edit button: */
 	if (!self->button_outgoing_smtp_servers)
-		self->button_outgoing_smtp_servers = gtk_button_new_with_label (_("mcen_bd_emailsetup_edit"));
+		self->button_outgoing_smtp_servers = gtk_button_new_with_label (_("mcen_bd_edit"));
 	caption = hildon_caption_new (sizegroup, _("mcen_fi_advsetup_optional_smtp"), 
 		self->button_outgoing_smtp_servers, NULL, HILDON_CAPTION_OPTIONAL);
 	gtk_widget_show (self->button_outgoing_smtp_servers);

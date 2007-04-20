@@ -1,3 +1,16 @@
+2007-04-20  Murray Cumming  <murrayc@murrayc.com>
+
+	* po/en_GB.po:
+	* src/maemo/easysetup/modest-easysetup-wizard.c:
+	(create_page_custom_outgoing), (create_page_complete_custom):
+	* src/maemo/modest-account-settings-dialog.c:
+	(create_page_user_details), (create_page_outgoing):
+	* src/maemo/modest-account-view-window.c: (button_box_new):
+	Use changed logical IDs as per the most recent UI spec:
+	mcen_bd_emailsetup_edit -> mcen_bd_edit
+	mcen_bd_emailsetup_delete -> mcen_bd_delete
+	mcen_bd_emailsetup_close -> mcen_bd_close
+
 2007-04-20  2007-04-20  Murray Cumming  <murrayc@murrayc.com>
 
 	* configure.ac:

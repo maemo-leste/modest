@@ -1512,14 +1512,14 @@ msgid "mcen_bd_new"
 msgstr "New"
 
 # Button label
-msgid "mcen_bd_emailsetup_edit"
+msgid "mcen_bd_edit"
 msgstr "Edit"
 
 # Button label
-msgid "mcen_bd_emailsetup_delete"
+msgid "mcen_bd_delete"
 msgstr "Delete"
 
 # Button label
-msgid "mcen_bd_emailsetup_close"
+msgid "mcen_bd_close"
 msgstr "Close"
 

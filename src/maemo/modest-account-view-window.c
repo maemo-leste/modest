@@ -245,9 +245,9 @@ button_box_new (ModestAccountViewWindow *self)
 				   GTK_BUTTONBOX_START);
 	
 	priv->new_button     = gtk_button_new_from_stock(_("mcen_bd_new"));
-	priv->edit_button = gtk_button_new_with_label(_("mcen_bd_emailsetup_edit"));
-	priv->delete_button  = gtk_button_new_from_stock(_("mcen_bd_emailsetup_delete"));
-	priv->close_button    = gtk_button_new_from_stock(_("mcen_bd_emailsetup_close"));
+	priv->edit_button = gtk_button_new_with_label(_("mcen_bd_edit"));
+	priv->delete_button  = gtk_button_new_from_stock(_("mcen_bd_delete"));
+	priv->close_button    = gtk_button_new_from_stock(_("mcen_bd_close"));
 	
 	g_signal_connect (G_OBJECT(priv->new_button), "clicked",
 			  G_CALLBACK(on_new_button_clicked),
