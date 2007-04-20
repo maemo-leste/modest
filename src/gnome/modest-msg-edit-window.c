@@ -507,6 +507,7 @@ modest_msg_edit_window_show_bcc (ModestMsgEditWindow *window,
 	g_message ("not implemented yet %s", __FUNCTION__);
 }
 
+#if 0 /* Not used. */
 static void
 modest_msg_edit_window_set_zoom (ModestWindow *window,
 				 gdouble zoom)
@@ -574,3 +575,12 @@ modest_msg_edit_window_zoom_minus (GtkAction *action, ModestWindow *window)
 		}
 	}
 }
+#endif
+
+void
+modest_msg_edit_window_set_priority_flags (ModestMsgEditWindow *window,
+					   TnyHeaderFlags priority_flags)
+{
+	/* TODO */
+}
+
