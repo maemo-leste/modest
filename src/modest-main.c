@@ -121,7 +121,7 @@ main (int argc, char *argv[])
 		return MODEST_ERR_INIT;
 		
 	}
-
+	
 	account_or_default = check_account (account);
 	g_free (account);
 	

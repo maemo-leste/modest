@@ -307,8 +307,12 @@ modest_ui_actions_on_new_msg (GtkAction *action, ModestWindow *win)
 	}
 
 	from_str = modest_account_mgr_get_from_string (modest_runtime_get_account_mgr(), account_name);
+	if (!from_str) {
+		g_printerr ("modest: failed get from string for '%s'\n", account_name);
+		goto cleanup;
+	}
 
-	msg    = modest_tny_msg_new ("", from_str, "", "", "", "", NULL);
+	msg = modest_tny_msg_new ("", from_str, "", "", "", "", NULL);
 	if (!msg) {
 		g_printerr ("modest: failed to create new msg\n");
 		goto cleanup;
@@ -647,7 +651,11 @@ void
 modest_ui_actions_on_send_receive (GtkAction *action,  ModestWindow *win)
 {
 	gchar *account_name;
+
 	
+	g_message ("online? %s", 
+		tny_device_is_online(modest_runtime_get_device()) ? "yes":"no");
+								
 	account_name =
 		g_strdup(modest_window_get_active_account(MODEST_WINDOW(win)));
 	if (!account_name)
