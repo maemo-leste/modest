@@ -16,9 +16,6 @@
 #include <gtk/gtkmessagedialog.h>
 #include <gtk/gtkstock.h>
 #include <hildon-widgets/hildon-caption.h>
-#include "maemo/easysetup/modest-easysetup-country-combo-box.h"
-#include "maemo/easysetup/modest-easysetup-provider-combo-box.h"
-#include "maemo/easysetup/modest-easysetup-servertype-combo-box.h"
 #include "widgets/modest-serversecurity-combo-box.h"
 #include "widgets/modest-secureauth-combo-box.h"
 #include "widgets/modest-validating-entry.h"

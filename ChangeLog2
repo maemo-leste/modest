@@ -1,5 +1,11 @@
 2007-04-20  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/maemo/modest-account-settings-dialog.c:
+	* src/maemo/modest-connection-specific-smtp-edit-window.c:
+	Removed unnecessary includes.
+
+2007-04-20  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/maemo/easysetup/modest-easysetup-wizard.c:
 	* src/maemo/modest-account-settings-dialog.c:
 	* src/maemo/modest-connection-specific-smtp-edit-window.c:
