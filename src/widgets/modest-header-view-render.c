@@ -141,35 +141,39 @@ get_pixbuf_for_compact_flag (TnyHeaderFlags flags)
 	static GdkPixbuf *low_attachments_pixbuf    = NULL;
 	static GdkPixbuf *high_pixbuf               = NULL;
 	static GdkPixbuf *low_pixbuf                = NULL;
-	
-	if (flags & TNY_HEADER_FLAG_ATTACHMENTS) {
-		if (flags & TNY_HEADER_FLAG_HIGH_PRIORITY) {
+	TnyHeaderFlags prior;
+
+	prior = flags & TNY_HEADER_FLAG_HIGH_PRIORITY;
+	switch (prior) {
+	case TNY_HEADER_FLAG_HIGH_PRIORITY:
+		if (flags & TNY_HEADER_FLAG_ATTACHMENTS) {
 			if (G_UNLIKELY(!high_attachments_pixbuf))
 				high_attachments_pixbuf = modest_platform_get_icon (MODEST_HEADER_ICON_ATTACH_HIGH_PRIORITY);
 			return high_attachments_pixbuf;
+		} else {
+			if (G_UNLIKELY(!high_pixbuf))
+				high_pixbuf = modest_platform_get_icon (MODEST_HEADER_ICON_HIGH_PRIORITY);
+			return high_pixbuf;
 		}
-		else if (flags & TNY_HEADER_FLAG_LOW_PRIORITY) {
+		break;
+	case TNY_HEADER_FLAG_LOW_PRIORITY:
+		if (flags & TNY_HEADER_FLAG_ATTACHMENTS) {
 			if (G_UNLIKELY(!low_attachments_pixbuf))
 				low_attachments_pixbuf = modest_platform_get_icon (MODEST_HEADER_ICON_ATTACH_LOW_PRIORITY);
 			return low_attachments_pixbuf;
+		} else {		
+			if (G_UNLIKELY(!low_pixbuf))
+				low_pixbuf = modest_platform_get_icon (MODEST_HEADER_ICON_LOW_PRIORITY);
+			return low_pixbuf;
 		}
-		else {
+		break;
+	default:
+		if (flags & TNY_HEADER_FLAG_ATTACHMENTS) {
 			if (G_UNLIKELY(!normal_attachments_pixbuf))
 				normal_attachments_pixbuf = modest_platform_get_icon (MODEST_HEADER_ICON_ATTACH_NORM_PRIORITY);
 			return normal_attachments_pixbuf;
-		}
+		}		
 	}
-	else if (flags & TNY_HEADER_FLAG_HIGH_PRIORITY) {
-		if (G_UNLIKELY(!high_pixbuf))
-			high_pixbuf = modest_platform_get_icon (MODEST_HEADER_ICON_HIGH_PRIORITY);
-		return high_pixbuf;
-	}
-	else if (flags & TNY_HEADER_FLAG_LOW_PRIORITY) {
-		if (G_UNLIKELY(!low_pixbuf))
-			low_pixbuf = modest_platform_get_icon (MODEST_HEADER_ICON_LOW_PRIORITY);
-		return low_pixbuf;
-	}
-
 	
 	return NULL;
 }
