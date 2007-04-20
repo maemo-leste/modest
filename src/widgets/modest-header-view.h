@@ -66,6 +66,7 @@ typedef enum _ModestHeaderViewColumn {
 	MODEST_HEADER_VIEW_COLUMN_ATTACH,
 	MODEST_HEADER_VIEW_COLUMN_SIZE,
 	MODEST_HEADER_VIEW_COLUMN_STATUS,
+
 	/*
 	 * these two are for compact display on small devices,
 	 * with two line display with all relevant headers
@@ -73,6 +74,8 @@ typedef enum _ModestHeaderViewColumn {
 	MODEST_HEADER_VIEW_COLUMN_COMPACT_FLAG,       /* priority and attachments */
 	MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER_IN,  /* incoming mail */
 	MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER_OUT, /* outgoing mail */
+	MODEST_HEADER_VIEW_COLUMN_COMPACT_SENT_DATE,
+	MODEST_HEADER_VIEW_COLUMN_COMPACT_RECEIVED_DATE,
 
 	MODEST_HEADER_VIEW_COLUMN_NUM
 

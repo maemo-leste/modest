@@ -37,19 +37,67 @@
 
 
 static gchar *
-_pango_parse_string (const gchar *string) {
+_pango_replace_string (const gchar *string, 
+		       const gchar *in,
+		       const gchar *out) 
+{
 	gchar **tmp = NULL;	
-	gchar *parsed_string = NULL;
+	gchar *new_string = NULL;
 	gchar *tmp_string = NULL;
 	guint i = 0;
 
-	tmp = g_strsplit(string, "&", 0);
-	parsed_string = g_strdup(tmp[i]);
+	/* Split data */
+	if (string == NULL) return g_strdup("");
+	tmp = g_strsplit(string, in, 0);	
+	if (tmp[0] == NULL) return g_strdup(string);
+
+	/* Replace and concat data*/
+	new_string = g_strdup(tmp[0]);
 	for (i = 1; tmp[i] != NULL; i++) {
-		tmp_string = g_strconcat (parsed_string, "&amp;", tmp[i], NULL);
-		g_free(parsed_string);
-		parsed_string = g_strdup(tmp_string);
+		tmp_string = g_strconcat (new_string, out, tmp[i], NULL);
+		g_free(new_string);
+		new_string = g_strdup(tmp_string);
+		g_free(tmp_string);
 	} 
+	
+	/* Free */
+	g_strfreev(tmp);
+
+	return new_string;
+}
+
+static gchar *
+_pango_parse_string (const gchar *string) 
+{
+	gchar *parsed_string = NULL;
+	gchar *tmp = NULL;
+	
+	if (string == NULL) return g_strdup("");
+	parsed_string = g_strdup(string);
+
+	/* Check for '&' special character */	
+	tmp = g_strdup(parsed_string);
+	g_free(parsed_string);
+	parsed_string = _pango_replace_string (tmp, "&", "&amp;");
+	g_free(tmp);
+
+	/* Check for '<' special character */
+	tmp = g_strdup(parsed_string);
+	g_free(parsed_string);
+	parsed_string = _pango_replace_string (tmp, "<", "&lt;");
+	g_free(tmp);
+
+	/* Check for '>' special character */
+	tmp = g_strdup(parsed_string);
+	g_free(parsed_string);
+	parsed_string = _pango_replace_string (tmp, ">", "&gt;");
+	g_free(tmp);
+
+	/* Check for ''' special character */
+	tmp = g_strdup(parsed_string);
+	g_free(parsed_string);
+	parsed_string = _pango_replace_string (tmp, "'", "&apos;");
+	g_free(tmp);
 
 	return parsed_string;
 }
@@ -176,34 +224,15 @@ _modest_header_view_compact_flag_cell_data (GtkTreeViewColumn *column, GtkCellRe
 					    GtkTreeModel *tree_model, GtkTreeIter *iter, gpointer user_data)
 {
 	TnyHeaderFlags flags;
+	GdkPixbuf* pixbuf = NULL;
 
 	gtk_tree_model_get (tree_model, iter, TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN,
 			    &flags, -1);
-
-	if (flags & TNY_HEADER_FLAG_ATTACHMENTS) {
-		if (flags & TNY_HEADER_FLAG_HIGH_PRIORITY) 
-			g_object_set (G_OBJECT (renderer), "pixbuf",
-				      get_pixbuf_for_compact_flag (flags),
-				      NULL);
-		else if (flags & TNY_HEADER_FLAG_LOW_PRIORITY) 
-			g_object_set (G_OBJECT (renderer), "pixbuf",
-				      get_pixbuf_for_compact_flag (flags),				      
-				      NULL);
-		else  
-			g_object_set (G_OBJECT (renderer), "pixbuf",
-				      get_pixbuf_for_compact_flag (flags),    
-				      NULL);
-	}
-	else {
-		if (flags & TNY_HEADER_FLAG_HIGH_PRIORITY) 
-			g_object_set (G_OBJECT (renderer), "pixbuf",
-				      get_pixbuf_for_compact_flag (flags),
-				      NULL);
-		else if (flags & TNY_HEADER_FLAG_LOW_PRIORITY) 
-			g_object_set (G_OBJECT (renderer), "pixbuf",
-				      get_pixbuf_for_compact_flag (flags),
-				      NULL);
-	}
+	
+	pixbuf = get_pixbuf_for_compact_flag (flags);
+	if (pixbuf != NULL)	
+		g_object_set (G_OBJECT (renderer), "pixbuf", pixbuf, NULL);
+	
 }
 
 void
@@ -222,6 +251,33 @@ void
 _modest_header_view_date_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 				     GtkTreeModel *tree_model,  GtkTreeIter *iter,
 				     gpointer user_data)
+{
+	TnyHeaderFlags flags;
+	guint date, date_col;
+	gchar *display_date = NULL;
+	gboolean received = GPOINTER_TO_INT(user_data);
+
+	if (received)
+		date_col = TNY_GTK_HEADER_LIST_MODEL_DATE_RECEIVED_TIME_T_COLUMN;
+	else
+		date_col = TNY_GTK_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN;
+
+	gtk_tree_model_get (tree_model, iter,
+			    TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN, &flags,
+			    date_col, &date,
+			    -1);
+
+	display_date = modest_text_utils_get_display_date (date);
+	g_object_set (G_OBJECT(renderer), "text", display_date, NULL);	
+
+	set_common_flags (renderer, flags);
+	g_free (display_date);
+}
+
+void
+_modest_header_view_compact_date_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
+					     GtkTreeModel *tree_model,  GtkTreeIter *iter,
+					     gpointer user_data)
 {
 	TnyHeaderFlags flags;
 	guint date, date_col;
@@ -246,7 +302,6 @@ _modest_header_view_date_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer
 	g_free (tmp_date);
 	g_free (display_date);
 }
-
 
 void
 _modest_header_view_sender_receiver_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,

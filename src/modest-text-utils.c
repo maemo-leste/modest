@@ -204,15 +204,12 @@ gsize
 modest_text_utils_strftime(char *s, gsize max, const char *fmt, time_t timet)
 {
         struct tm tm;
-/* 	static GDate date; */
 
 	/* does not work on old maemo glib: 
 	 *   g_date_set_time_t (&date, timet);
 	 */
-/* 	g_date_set_time (&date, (GTime) timet);	 */
 	localtime_r (&timet, &tm);
 
-/* 	return g_date_strftime (s, max, fmt, (const GDate*) &date); */
 	return strftime(s, max, fmt, &tm);
 }
 

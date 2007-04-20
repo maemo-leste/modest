@@ -52,6 +52,9 @@ void _modest_header_view_header_cell_data  (GtkTreeViewColumn *column,  GtkCellR
 					    GtkTreeModel *tree_model,  GtkTreeIter *iter,  gpointer user_data);
 void _modest_header_view_date_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 					  GtkTreeModel *tree_model,  GtkTreeIter *iter,  gpointer user_data);
+void _modest_header_view_compact_date_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
+						  GtkTreeModel *tree_model,  GtkTreeIter *iter,
+						  gpointer user_data);
 void _modest_header_view_size_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 					  GtkTreeModel *tree_model,  GtkTreeIter *iter,  gpointer user_data);
 void _modest_header_view_status_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
