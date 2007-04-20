@@ -5,9 +5,9 @@
 #include "maemo/easysetup/modest-easysetup-country-combo-box.h"
 #include "maemo/easysetup/modest-easysetup-provider-combo-box.h"
 #include "maemo/easysetup/modest-easysetup-servertype-combo-box.h"
-#include "maemo/easysetup/modest-easysetup-serversecurity-combo-box.h"
-#include "maemo/easysetup/modest-easysetup-secureauth-combo-box.h"
-#include "maemo/easysetup/modest-validating-entry.h"
+#include "widgets/modest-easysetup-serversecurity-combo-box.h"
+#include "widgets/modest-easysetup-secureauth-combo-box.h"
+#include "widgets/modest-validating-entry.h"
 #include <modest-account-mgr-helpers.h>
 #include <gtk/gtkbutton.h>
 #include <gtk/gtkhbox.h>

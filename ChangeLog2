@@ -1,5 +1,21 @@
 2007-04-20  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/maemo/easysetup/Makefile.am:
+	* src/maemo/easysetup/modest-easysetup-secureauth-combo-box.c:
+	* src/maemo/easysetup/modest-easysetup-secureauth-combo-box.h:
+	* src/maemo/easysetup/modest-easysetup-serversecurity-combo-box.c:
+	* src/maemo/easysetup/modest-easysetup-serversecurity-combo-box.h:
+	* src/maemo/easysetup/modest-easysetup-wizard.c:
+	* src/maemo/easysetup/modest-validating-entry.c:
+	* src/maemo/easysetup/modest-validating-entry.h:
+	* src/maemo/modest-account-settings-dialog.c:
+	* src/maemo/modest-connection-specific-smtp-edit-window.c:
+	* src/widgets/Makefile.am: Moved these widgets from maemo/easysetup into 
+	widgets/ because they are used outside of easysetup too. After checking in, 
+	svn will allow me to rename them too.
+
+2007-04-20  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/gnome/modest-msg-edit-window.c:
 	(modest_msg_edit_window_set_priority_flags): Added an empty implementation to fix a 
 	linker error, to fix the build on the GNOME platform.
