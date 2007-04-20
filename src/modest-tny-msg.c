@@ -111,8 +111,8 @@ modest_tny_msg_new_html_plain (const gchar* mailto, const gchar* from, const gch
 	content_type = get_content_type(plain_body);
 		
 	/* Add the body of the new mail */	
-	add_html_body_part (new_msg, html_body);
 	add_body_part (new_msg, plain_body, content_type, TRUE);
+	add_html_body_part (new_msg, html_body);
 	g_free (content_type);
 		       
 	/* Add attachments */

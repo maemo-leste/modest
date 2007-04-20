@@ -475,6 +475,23 @@ modest_msg_edit_window_select_color (ModestMsgEditWindow *window)
 }
 
 void
+modest_msg_edit_window_select_file_format (ModestMsgEditWindow *window,
+					   gint file_format)
+{
+	g_return_if_fail (MODEST_MSG_EDIT_WINDOW (window));
+
+	g_message ("Select file format operation is not supported");
+}
+
+void
+modest_msg_edit_window_select_font (ModestMsgEditWindow *window)
+{
+	g_return_if_fail (MODEST_MSG_EDIT_WINDOW (window));
+
+	g_message ("Select font operation is not supported");
+}
+
+void
 modest_msg_edit_window_select_background_color (ModestMsgEditWindow *window)
 {
 	g_return_if_fail (MODEST_MSG_EDIT_WINDOW (window));
@@ -504,6 +521,28 @@ modest_msg_edit_window_show_bcc (ModestMsgEditWindow *window,
 {
 	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
 
+	g_message ("not implemented yet %s", __FUNCTION__);
+}
+void
+modest_msg_edit_window_undo (ModestMsgEditWindow *window)
+{
+	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
+      
+	g_message ("not implemented yet %s", __FUNCTION__);
+}
+void
+modest_msg_edit_window_toggle_fullscreen (ModestMsgEditWindow *window)
+{
+	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
+      
+	g_message ("not implemented yet %s", __FUNCTION__);
+}
+void
+modest_msg_edit_window_set_priority_flags (ModestMsgEditWindow *window,
+					   TnyHeaderFlags priority_flags)
+{
+	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
+      
 	g_message ("not implemented yet %s", __FUNCTION__);
 }
 

@@ -174,6 +174,9 @@ void     modest_ui_actions_on_password_requested (TnyAccountStore *account_store
 						  gchar **password,  gboolean *cancel, 
 						  gboolean *remember, ModestMainWindow *main_window);
 
+void     modest_ui_actions_on_undo                     (GtkAction *action,
+							ModestWindow *window);
+
 void     modest_ui_actions_on_cut                      (GtkAction *action,
 							ModestWindow *window);
 
@@ -211,6 +214,13 @@ void     modest_ui_actions_on_change_zoom              (GtkRadioAction *action,
 void     modest_ui_actions_msg_edit_on_change_priority (GtkRadioAction *action,
 							GtkRadioAction *selected,
 							ModestWindow *window);
+
+void     modest_ui_actions_msg_edit_on_change_file_format (GtkRadioAction *action,
+							   GtkRadioAction *selected,
+							   ModestWindow *window);
+
+void     modest_ui_actions_msg_edit_on_select_font (GtkAction *action,
+						    ModestMsgEditWindow *window);
 
 /**
  * modest_ui_actions_on_toggle_toolbar:

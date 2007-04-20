@@ -1454,6 +1454,17 @@ modest_ui_actions_on_copy (GtkAction *action,
 }
 
 void
+modest_ui_actions_on_undo (GtkAction *action,
+			   ModestWindow *window)
+{
+	if (MODEST_IS_MSG_EDIT_WINDOW (window)) {
+		modest_msg_edit_window_undo (MODEST_MSG_EDIT_WINDOW (window));
+	} else {
+		g_return_if_reached ();
+	}
+}
+
+void
 modest_ui_actions_on_paste (GtkAction *action,
 			    ModestWindow *window)
 {
@@ -1516,6 +1527,18 @@ void     modest_ui_actions_msg_edit_on_change_priority (GtkRadioAction *action,
 
 	flags = gtk_radio_action_get_current_value (selected);
 	modest_msg_edit_window_set_priority_flags (MODEST_MSG_EDIT_WINDOW (window), flags);
+}
+
+void     modest_ui_actions_msg_edit_on_change_file_format (GtkRadioAction *action,
+							   GtkRadioAction *selected,
+							   ModestWindow *window)
+{
+	gint file_format;
+
+	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
+
+	file_format = gtk_radio_action_get_current_value (selected);
+	modest_msg_edit_window_set_file_format (MODEST_MSG_EDIT_WINDOW (window), file_format);
 }
 
 
@@ -1678,6 +1701,13 @@ modest_ui_actions_on_toggle_toolbar (GtkToggleAction *toggle,
 	/* Toggle toolbar */
 	mgr = modest_runtime_get_window_mgr ();
 	modest_window_mgr_show_toolbars (mgr, active, fullscreen);
+}
+
+void     
+modest_ui_actions_msg_edit_on_select_font (GtkAction *action,
+					   ModestMsgEditWindow *window)
+{
+	modest_msg_edit_window_select_font (window);
 }
 
 void

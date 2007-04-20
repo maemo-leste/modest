@@ -33,6 +33,8 @@
   <menubar name="MenuBar">
 
     <menu name="EditMenu" action="Edit">
+      <menuitem name="UndoMenu" action="Undo"/>
+      <separator/>
       <menuitem name="CutMenu" action="Cut"/>
       <menuitem name="CopyMenu" action="Copy"/>
       <menuitem name="PasteMenu" action="Paste"/>
@@ -50,22 +52,32 @@
       <separator/>
       <menuitem name="ViewToggleFullscreenMenu" action="ViewToggleFullscreen"/>
       <separator/>
+      <menu name="ShowToolbarMenu" action="ShowToolbar">
+	<menuitem name="ViewShowToolbarNormalScreenMenu" action="ViewShowToolbarNormalScreen"/>
+	<menuitem name="ViewShowToolbarFullScreenMenu" action="ViewShowToolbarFullScreen"/>
+      </menu>
+      <separator/>
       <menuitem name="ViewCcFieldMenu" action="ViewCcField"/>
       <menuitem name="ViewBccFieldMenu" action="ViewBccField"/>
     </menu>
 
-    <menu name="AttachmentsMenu" action="Attachments">
-      <menuitem name="InsertImageMenu" action="InsertImage"/>
-    </menu>
-
     <menu name="FormatMenu" action="Format">
-      <menuitem name="BackgroundColorMenu" action="BackgroundColor"/>
+      <menuitem name="SelectFontMenu" action="SelectFont"/>
+      <menuitem name="BulletedListMenu" action="ActionsBulletedList"/>
       <menu name="AlignmentMenu" action="Alignment">
          <menuitem name="AlignmentLeftMenu" action="AlignmentLeft"/>
          <menuitem name="AlignmentCenterMenu" action="AlignmentCenter"/>
          <menuitem name="AlignmentRightMenu" action="AlignmentRight"/>
       </menu>
-      <menuitem name="BulletedListMenu" action="ActionsBulletedList"/>
+      <separator/>
+      <menu name="FileFormatMenu" action="FileFormat">
+	<menuitem name="FileFormatPlainTextMenu" action="FileFormatPlainText"/>
+	<menuitem name="FileFormatFormattedTextMenu" action="FileFormatFormattedText"/>
+      </menu>
+    </menu>
+
+    <menu name="AttachmentsMenu" action="Attachments">
+      <menuitem name="InsertImageMenu" action="InsertImage"/>
     </menu>
 
     <menu name="ToolsMenu" action="Tools">
@@ -79,7 +91,7 @@
   </menubar>
 
   <toolbar name="ToolBar">
-    <toolitem action="ActionsSend"/>
+    <toolitem action="ToolbarSend"/>
     <!--<toolitem action="ActionFontFace"/>-->
     <!--<toolitem action="ActionFontSize"/>-->
     <separator/>

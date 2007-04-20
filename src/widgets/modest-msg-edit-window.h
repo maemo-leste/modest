@@ -233,6 +233,33 @@ void            modest_msg_edit_window_toggle_fullscreen (ModestMsgEditWindow *w
 void            modest_msg_edit_window_set_priority_flags (ModestMsgEditWindow *window,
 							   TnyHeaderFlags priority_flags);
 
+/**
+ * modest_msg_edit_window_set_file_format:
+ * @window: a #ModestMsgEditWindow
+ * @file_format: %MODEST_FILE_FORMAT_PLAIN_TEXT or %MODEST_FILE_FORMAT_FORMATTED_TEXT
+ *
+ * Changes the current file format.
+ */
+void            modest_msg_edit_window_set_file_format (ModestMsgEditWindow *window,
+							gint file_format);
+
+/**
+ * modest_msg_edit_window_select_font:
+ * @window: a #ModestMsgEditWindow
+ *
+ * Show the dialog to select the editor font and update the
+ * used font in the editor.
+ */
+void            modest_msg_edit_window_select_font        (ModestMsgEditWindow *window);
+
+/**
+ * modest_msg_edit_window_undo:
+ * @window: a #ModestMsgEditWindow
+ *
+ * Undoes the last operation.
+ */
+void            modest_msg_edit_window_undo               (ModestMsgEditWindow *window);
+
 G_END_DECLS
 
 #endif /* __MODEST_MSG_EDIT_WINDOW_H__ */

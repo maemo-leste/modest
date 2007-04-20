@@ -145,5 +145,8 @@
 #define MODEST_ACCOUNT_OPTION_USE_LSUB "use_lsub"
 #define MODEST_ACCOUNT_OPTION_CHECK_ALL "check_all"
 
+/* Macros for different text formats in mail editor */
+#define MODEST_FILE_FORMAT_PLAIN_TEXT 0
+#define MODEST_FILE_FORMAT_FORMATTED_TEXT 1
 
 #endif /*__MODEST_DEFS_H__*/

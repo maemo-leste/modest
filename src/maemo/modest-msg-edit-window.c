@@ -62,7 +62,9 @@
 #include <hildon-widgets/hildon-color-button.h>
 #include <hildon-widgets/hildon-banner.h>
 #include <hildon-widgets/hildon-caption.h>
+#include <hildon-widgets/hildon-note.h>
 #include <hildon-widgets/hildon-scroll-area.h>
+#include <hildon-widgets/hildon-font-selection-dialog.h>
 #include "widgets/modest-msg-edit-window-ui.h"
 
 #ifdef MODEST_HILDON_VERSION_0
@@ -348,19 +350,19 @@ init_window (ModestMsgEditWindow *obj)
 	gtk_button_set_relief (GTK_BUTTON (priv->add_attachment_button), GTK_RELIEF_NONE);
 	gtk_button_set_focus_on_click (GTK_BUTTON (priv->add_attachment_button), FALSE);
 	gtk_button_set_alignment (GTK_BUTTON (priv->add_attachment_button), 1.0, 1.0);
-	attachment_icon = gtk_image_new_from_icon_name ("qgn_list_gene_attacpap", GTK_ICON_SIZE_BUTTON);
+	attachment_icon = gtk_image_new_from_icon_name (MODEST_HEADER_ICON_ATTACH, GTK_ICON_SIZE_BUTTON);
 	gtk_container_add (GTK_CONTAINER (priv->add_attachment_button), attachment_icon);
 	gtk_box_pack_start (GTK_BOX (subject_box), priv->add_attachment_button, FALSE, FALSE, 0);
 	priv->attachments_view = modest_attachments_view_new (NULL);
 	
 	priv->header_box = gtk_vbox_new (FALSE, 0);
 	
-	from_caption = hildon_caption_new (size_group, _("From:"), priv->from_field, NULL, 0);
-	to_caption = hildon_caption_new (size_group, _("To:"), priv->to_field, NULL, 0);
-	priv->cc_caption = hildon_caption_new (size_group, _("Cc:"), priv->cc_field, NULL, 0);
-	priv->bcc_caption = hildon_caption_new (size_group, _("Bcc:"), priv->bcc_field, NULL, 0);
-	subject_caption = hildon_caption_new (size_group, _("Subject:"), subject_box, NULL, 0);
-	priv->attachments_caption = hildon_caption_new (size_group, _("Attachments:"), priv->attachments_view, NULL, 0);
+	from_caption = hildon_caption_new (size_group, _("mail_va_from"), priv->from_field, NULL, 0);
+	to_caption = hildon_caption_new (size_group, _("mail_va_to"), priv->to_field, NULL, 0);
+	priv->cc_caption = hildon_caption_new (size_group, _("mail_va_cc"), priv->cc_field, NULL, 0);
+	priv->bcc_caption = hildon_caption_new (size_group, _("mail_va_hotfix1"), priv->bcc_field, NULL, 0);
+	subject_caption = hildon_caption_new (size_group, _("mail_va_subject"), subject_box, NULL, 0);
+	priv->attachments_caption = hildon_caption_new (size_group, _("mail_va_attachment"), priv->attachments_view, NULL, 0);
 	g_object_unref (size_group);
 
 	size_group = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);
@@ -724,6 +726,7 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name)
 
 	parent_priv->ui_manager = gtk_ui_manager_new();
 	action_group = gtk_action_group_new ("ModestMsgEditWindowActions");
+	gtk_action_group_set_translation_domain (action_group, GETTEXT_PACKAGE);
 
 	/* Add common actions */
 	gtk_action_group_add_actions (action_group,
@@ -751,6 +754,12 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name)
 					    G_N_ELEMENTS (modest_msg_edit_priority_action_entries),
 					    0,
 					    G_CALLBACK (modest_ui_actions_msg_edit_on_change_priority),
+					    obj);
+	gtk_action_group_add_radio_actions (action_group,
+					    modest_msg_edit_file_format_action_entries,
+					    G_N_ELEMENTS (modest_msg_edit_file_format_action_entries),
+					    MODEST_FILE_FORMAT_FORMATTED_TEXT,
+					    G_CALLBACK (modest_ui_actions_msg_edit_on_change_file_format),
 					    obj);
 	gtk_ui_manager_insert_action_group (parent_priv->ui_manager, action_group, 0);
 	g_object_unref (action_group);
@@ -849,7 +858,10 @@ modest_msg_edit_window_get_msg_data (ModestMsgEditWindow *edit_window)
 	data->bcc     =  (gchar*) modest_recpt_editor_get_recipients (MODEST_RECPT_EDITOR(priv->bcc_field));
 	data->subject =  (gchar*) gtk_entry_get_text (GTK_ENTRY(priv->subject_field));	
 	data->plain_body =  (gchar *) gtk_text_buffer_get_text (priv->text_buffer, &b, &e, FALSE);
-	data->html_body  =  get_formatted_data (edit_window);
+	if (wp_text_buffer_is_rich_text (WP_TEXT_BUFFER (priv->text_buffer)))
+		data->html_body = get_formatted_data (edit_window);
+	else
+		data->html_body = NULL;
 	data->attachments = priv->attachments;
 	data->priority_flags = priv->priority_flags;
 
@@ -1536,4 +1548,184 @@ modest_msg_edit_window_set_priority_flags (ModestMsgEditWindow *window,
 			break;
 		}
 	}
+}
+
+void
+modest_msg_edit_window_set_file_format (ModestMsgEditWindow *window,
+					gint file_format)
+{
+	ModestMsgEditWindowPrivate *priv;
+	gint current_format;
+
+	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
+
+	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
+
+	current_format = wp_text_buffer_is_rich_text (WP_TEXT_BUFFER (priv->text_buffer))
+		? MODEST_FILE_FORMAT_FORMATTED_TEXT : MODEST_FILE_FORMAT_PLAIN_TEXT;
+
+	if (current_format != file_format) {
+		switch (file_format) {
+		case MODEST_FILE_FORMAT_FORMATTED_TEXT:
+			wp_text_buffer_enable_rich_text (WP_TEXT_BUFFER (priv->text_buffer), TRUE);
+			break;
+		case MODEST_FILE_FORMAT_PLAIN_TEXT:
+		{
+			GtkWidget *dialog;
+			gint response;
+			dialog = hildon_note_new_confirmation (NULL, _("emev_nc_formatting_lost"));
+			response = gtk_dialog_run (GTK_DIALOG (dialog));
+			gtk_widget_destroy (dialog);
+			if (response == GTK_RESPONSE_OK)
+				wp_text_buffer_enable_rich_text (WP_TEXT_BUFFER (priv->text_buffer), FALSE);
+		}
+			break;
+		}
+	}
+}
+
+void
+modest_msg_edit_window_select_font (ModestMsgEditWindow *window)
+{
+	GtkWidget *dialog;
+	ModestMsgEditWindowPrivate *priv;
+	WPTextBufferFormat oldfmt, fmt;
+	gint old_position = 0;
+	gint response = 0;
+	gint position = 0;
+	gint font_size;
+	GdkColor *color = NULL;
+	gboolean bold, bold_set, italic, italic_set;
+	gboolean underline, underline_set;
+	gboolean strikethrough, strikethrough_set;
+	gboolean position_set;
+	gboolean font_size_set, font_set, color_set;
+	gchar *font_name;
+
+	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
+	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
+	
+	dialog = hildon_font_selection_dialog_new (NULL, NULL);
+
+	/* First we get the currently selected font information */
+	wp_text_buffer_get_attributes (WP_TEXT_BUFFER (priv->text_buffer), &oldfmt, TRUE);
+	g_object_set (G_OBJECT (dialog), "font-scaling", priv->zoom_level, NULL);
+
+	switch (oldfmt.text_position) {
+	case TEXT_POSITION_NORMAL:
+		old_position = 0;
+		break;
+	case TEXT_POSITION_SUPERSCRIPT:
+		old_position = 1;
+		break;
+	default:
+		old_position = -1;
+		break;
+	}
+
+	g_object_set (G_OBJECT (dialog),
+		      "bold", oldfmt.bold != FALSE,
+		      "bold-set", !oldfmt.cs.bold,
+		      "underline", oldfmt.underline != FALSE,
+		      "underline-set", !oldfmt.cs.underline,
+		      "italic", oldfmt.italic != FALSE,
+		      "italic-set", !oldfmt.cs.italic,
+		      "strikethrough", oldfmt.strikethrough != FALSE,
+		      "strikethrough-set", !oldfmt.cs.strikethrough,
+		      "color", &oldfmt.color,
+		      "color-set", !oldfmt.cs.color,
+		      "size", wp_font_size[oldfmt.font_size],
+		      "size-set", !oldfmt.cs.font_size,
+		      "position", old_position,
+		      "position-set", !oldfmt.cs.text_position,
+		      "family", wp_get_font_name (oldfmt.font),
+		      "family-set", !oldfmt.cs.font,
+		      NULL);
+
+	gtk_widget_show_all (dialog);
+	response = gtk_dialog_run (GTK_DIALOG (dialog));
+	if (response == GTK_RESPONSE_OK) {
+
+		g_object_get( dialog,
+			      "bold", &bold,
+			      "bold-set", &bold_set,
+			      "underline", &underline,
+			      "underline-set", &underline_set,
+			      "italic", &italic,
+			      "italic-set", &italic_set,
+			      "strikethrough", &strikethrough,
+			      "strikethrough-set", &strikethrough_set,
+			      "color", &color,
+			      "color-set", &color_set,
+			      "size", &font_size,
+			      "size-set", &font_size_set,
+			      "family", &font_name,
+			      "family-set", &font_set,
+			      "position", &position,
+			      "position-set", &position_set,
+			      NULL );
+		
+	}	
+
+	gtk_widget_destroy (dialog);
+	
+	if (response == GTK_RESPONSE_OK) {
+		memset(&fmt, 0, sizeof(fmt));
+		if (bold_set) {
+			fmt.bold = bold;
+			fmt.cs.bold = TRUE;
+		}
+		if (italic_set) {
+			fmt.italic = italic;
+			fmt.cs.italic = TRUE;
+		}
+		if (underline_set) {
+			fmt.underline = underline;
+			fmt.cs.underline = TRUE;
+		}
+		if (strikethrough_set) {
+			fmt.strikethrough = strikethrough;
+			fmt.cs.strikethrough = TRUE;
+		}
+		if (position_set) {
+			fmt.text_position =
+				( position == 0 )
+				? TEXT_POSITION_NORMAL
+				: ( ( position == 1 )
+				    ? TEXT_POSITION_SUPERSCRIPT
+				    : TEXT_POSITION_SUBSCRIPT );
+			fmt.cs.text_position = TRUE;
+		}
+		if (color_set) {
+			fmt.color = *color;
+			fmt.cs.color = TRUE;
+		}
+		gdk_color_free(color);
+		if (font_set) {
+			fmt.font = wp_get_font_index(font_name,
+						     DEFAULT_FONT);
+			fmt.cs.font = TRUE;
+		}
+		g_free(font_name);
+		if (font_size_set) {
+			fmt.font_size = wp_get_font_size_index(
+				font_size, DEFAULT_FONT_SIZE);
+			fmt.cs.font_size = TRUE;
+		}
+		gtk_widget_grab_focus(GTK_WIDGET(priv->msg_body));
+		wp_text_buffer_set_format(WP_TEXT_BUFFER(priv->text_buffer), &fmt);
+	}
+
+}
+
+void
+modest_msg_edit_window_undo               (ModestMsgEditWindow *window)
+{
+	ModestMsgEditWindowPrivate *priv;
+
+	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
+	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
+	
+	wp_text_buffer_undo (WP_TEXT_BUFFER (priv->text_buffer));
+
 }

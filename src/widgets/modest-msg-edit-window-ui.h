@@ -40,52 +40,64 @@ G_BEGIN_DECLS
 static const GtkActionEntry modest_msg_edit_action_entries [] = {
 
 	/* Toplevel menus */
-	{ "View", NULL, N_("_View") },
-	{ "Edit", NULL, N_("_Edit") },
-	{ "Insert", NULL, N_("_Insert") },
-	{ "Format", NULL, N_("For_mat") },
-	{ "Alignment", NULL, N_("_Alignment") },
-	{ "Attachments", NULL, N_("Attachments") },
-	{ "Zoom", NULL, N_("Zoom") },
-	{ "MessagePriority", NULL, N_("Message priority") },
-	{ "Tools", NULL, N_("Tools") },
+	{ "View", NULL, N_("mcen_me_inbox_view") },
+	{ "Edit", NULL, N_("mcen_me_inbox_edit") },
+	{ "Format", NULL, N_("mcen_me_editor_format") },
+	{ "Alignment", NULL, N_("mcen_me_editor_align") },
+	{ "Attachments", NULL, N_("mcen_me_viewer_attachments") },
+	{ "Zoom", NULL, N_("mcen_me_viewer_zoom") },
+	{ "MessagePriority", NULL, N_("mcen_me_editor_message_priority") },
+	{ "FileFormat", NULL, N_("mcen_me_editor_file_format") },
+	{ "Tools", NULL, N_("mcen_me_inbox_tools") },
+	{ "ShowToolbar", NULL, N_("mcen_me_inbox_toolbar") },
 
 	/* ACTIONS */
-	{ "ActionsSend", MODEST_STOCK_MAIL_SEND, N_("Send"),  NULL, N_("Send a message"),  G_CALLBACK (modest_ui_actions_on_send) },
-	{ "ActionsFontColor", GTK_STOCK_SELECT_COLOR, N_("Color"), NULL, N_("Change text color"), G_CALLBACK (modest_ui_actions_on_select_editor_color)},
-	{ "BackgroundColor", GTK_STOCK_SELECT_COLOR, N_("Background color"), NULL, N_("Change background color"), G_CALLBACK (modest_ui_actions_on_select_editor_background_color)},
-	{ "InsertImage", NULL, N_("Insert image..."), NULL, N_("Insert image"), G_CALLBACK (modest_ui_actions_on_insert_image)},
-	{ "Cut", GTK_STOCK_CUT, N_("Cut"), NULL, N_("Cut selection"), G_CALLBACK (modest_ui_actions_on_cut)},
-	{ "Copy", GTK_STOCK_COPY, N_("Copy"), NULL, N_("Copy selection"), G_CALLBACK (modest_ui_actions_on_copy)},
-	{ "Paste", GTK_STOCK_PASTE, N_("Paste"), NULL, N_("Paste selection"), G_CALLBACK (modest_ui_actions_on_paste)},
-	{ "SelectAll", NULL, N_("Select all"), NULL, N_("Select all"), G_CALLBACK (modest_ui_actions_on_select_all)},
+	{ "ActionsSend", NULL, N_("mcen_me_editor_send"),  NULL, NULL,  G_CALLBACK (modest_ui_actions_on_send) },
+/* 	{ "ActionsFontColor", GTK_STOCK_SELECT_COLOR, N_("Color"), NULL, N_("Change text color"), G_CALLBACK (modest_ui_actions_on_select_editor_color)}, */
+/* 	{ "BackgroundColor", GTK_STOCK_SELECT_COLOR, N_("Background color"), NULL, N_("Change background color"), G_CALLBACK (modest_ui_actions_on_select_editor_background_color)}, */
+	{ "InsertImage", NULL, N_("mcen_me_editor_attach_inlineimage"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_insert_image)},
+	{ "Undo", NULL, N_("mcen_me_inbox_undo"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_undo)},
+	{ "Cut", NULL, N_("mcen_me_inbox_cut"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_cut)},
+	{ "Copy", NULL, N_("mcen_me_inbox_copy"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_copy)},
+	{ "Paste", NULL, N_("mcen_me_inbox_paste"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_paste)},
+	{ "SelectAll", NULL, N_("mcen_me_viewer_selectall"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_select_all)},
+	{ "SelectFont", NULL, N_("mcen_me_editor_font"), NULL, NULL, G_CALLBACK (modest_ui_actions_msg_edit_on_select_font)},
 
 	/* KEY ACCELERATOR ACTIONS */
 	{ "ZoomPlus", NULL, N_("Zoom +"), "F7", NULL, G_CALLBACK (modest_ui_actions_on_zoom_plus) },
 	{ "ZoomMinus", NULL, N_("Zoom -"), "F8", NULL, G_CALLBACK (modest_ui_actions_on_zoom_minus) },
  	{ "ToggleFullscreen", NULL, N_("Toggle fullscreen"), "F6", NULL, G_CALLBACK (modest_ui_actions_on_change_fullscreen) },
 
+	/* TOOLBAR ACTIONS */
+	{ "ToolbarSend", MODEST_STOCK_MAIL_SEND, N_("qgn_toolb_messagin_send"),  NULL, NULL,  G_CALLBACK (modest_ui_actions_on_send) },
+
 };
 
 static const GtkToggleActionEntry modest_msg_edit_toggle_action_entries [] = {
 
 	/* VIEW */
-	{ "ViewCcField",   NULL,    N_("Cc: field"),  NULL, N_("Shows the Cc: field"),  G_CALLBACK (modest_ui_actions_on_toggle_show_cc), TRUE  },
-	{ "ViewBccField",  NULL,    N_("Bcc: filed"), NULL, N_("Shows the Bcc: field"), G_CALLBACK (modest_ui_actions_on_toggle_show_bcc), TRUE },
+	{ "ViewCcField",   NULL,    N_("mcen_me_editor_showcc"),  NULL, NULL,  G_CALLBACK (modest_ui_actions_on_toggle_show_cc), TRUE  },
+	{ "ViewBccField",  NULL,    N_("mcen_me_editor_showbcc"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_toggle_show_bcc), TRUE },
 
 	/* Fullscreen toggle */
-	{ "ViewToggleFullscreen", NULL, N_("Show fullscreen"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_toggle_fullscreen), FALSE},
+	{ "ViewToggleFullscreen", NULL, N_("mcen_me_inbox_fullscreen"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_toggle_fullscreen), FALSE},
+	/* Toolbar visibility */
+	{ "ViewShowToolbarNormalScreen", NULL, N_("mcen_me_inbox_normalview"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_toggle_toolbar), TRUE },
+	{ "ViewShowToolbarFullScreen", NULL, N_("mcen_me_inbox_optimizedview"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_toggle_toolbar), TRUE },
 
 	/* Rich text editor functions */
-	{ "ActionsBold", GTK_STOCK_BOLD, N_("Bold"), NULL, N_("Use bold"), G_CALLBACK (modest_ui_actions_on_toggle_bold), FALSE },
-	{ "ActionsItalics", GTK_STOCK_ITALIC, N_("Italics"), NULL, N_("Use italics"), G_CALLBACK (modest_ui_actions_on_toggle_italics), FALSE },
-	{ "ActionsBulletedList", MODEST_TOOLBAR_ICON_FORMAT_BULLETS, N_("Bullet list"), NULL, N_("Add a bullet list"), G_CALLBACK (modest_ui_actions_on_toggle_bullets), FALSE },
+	{ "ActionsBulletedList", NULL, N_("mcen_me_editor_bullets"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_toggle_bullets), FALSE },
+
+	/* Toolbar buttons */
+	{ "ActionsBold", GTK_STOCK_BOLD, NULL, NULL, NULL, G_CALLBACK (modest_ui_actions_on_toggle_bold), FALSE },
+	{ "ActionsItalics", GTK_STOCK_ITALIC, NULL, NULL, NULL, G_CALLBACK (modest_ui_actions_on_toggle_italics), FALSE },
+
 };
 
 static const GtkRadioActionEntry modest_msg_edit_alignment_radio_action_entries [] = {
-	{ "AlignmentLeft", NULL, N_("Left"), NULL, N_("Align to the left"), GTK_JUSTIFY_LEFT },
-	{ "AlignmentCenter", NULL, N_("Center"), NULL, N_("Align to the center"), GTK_JUSTIFY_CENTER },
-	{ "AlignmentRight", NULL, N_("Right"), NULL, N_("Align to the right"), GTK_JUSTIFY_RIGHT },
+	{ "AlignmentLeft", NULL, N_("mcen_me_editor_align_left"), NULL, NULL, GTK_JUSTIFY_LEFT },
+	{ "AlignmentCenter", NULL, N_("mcen_me_editor_align_centred"), NULL, NULL, GTK_JUSTIFY_CENTER },
+	{ "AlignmentRight", NULL, N_("mcen_me_editor_align_right"), NULL, NULL, GTK_JUSTIFY_RIGHT },
 };
 
 static const GtkRadioActionEntry modest_msg_edit_zoom_action_entries [] = {
@@ -96,9 +108,14 @@ static const GtkRadioActionEntry modest_msg_edit_zoom_action_entries [] = {
 };
 
 static const GtkRadioActionEntry modest_msg_edit_priority_action_entries [] = {
-	{ "MessagePriorityHigh", NULL, N_("High"), NULL, NULL, TNY_HEADER_FLAG_HIGH_PRIORITY },
-	{ "MessagePriorityNormal", NULL, N_("Normal"), NULL, NULL, TNY_HEADER_FLAG_NORMAL_PRIORITY },
-	{ "MessagePriorityLow", NULL, N_("Low"), NULL, NULL, TNY_HEADER_FLAG_LOW_PRIORITY },
+	{ "MessagePriorityHigh", NULL, N_("mcen_me_editor_priority_high"), NULL, NULL, TNY_HEADER_FLAG_HIGH_PRIORITY },
+	{ "MessagePriorityNormal", NULL, N_("mcen_me_editor_priority_normal"), NULL, NULL, TNY_HEADER_FLAG_NORMAL_PRIORITY },
+	{ "MessagePriorityLow", NULL, N_("mcen_me_editor_priority_low"), NULL, NULL, TNY_HEADER_FLAG_LOW_PRIORITY },
+};
+
+static const GtkRadioActionEntry modest_msg_edit_file_format_action_entries [] = {
+	{ "FileFormatPlainText", NULL, N_("mcen_me_editor_plain_text"), NULL, NULL, MODEST_FILE_FORMAT_PLAIN_TEXT },
+	{ "FileFormatFormattedText", NULL, N_("mcen_me_editor_formatted_text"), NULL, NULL, MODEST_FILE_FORMAT_FORMATTED_TEXT },
 };
 
 G_END_DECLS
