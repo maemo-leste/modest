@@ -1,5 +1,21 @@
 2007-04-20  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/maemo/easysetup/modest-easysetup-wizard.c:
+	* src/maemo/modest-account-settings-dialog.c:
+	* src/maemo/modest-connection-specific-smtp-edit-window.c:
+	* src/widgets/Makefile.am:
+	* src/widgets/modest-easysetup-secureauth-combo-box.c:
+	* src/widgets/modest-easysetup-secureauth-combo-box.h:
+	* src/widgets/modest-easysetup-serversecurity-combo-box.c:
+	* src/widgets/modest-easysetup-serversecurity-combo-box.h:
+	* src/widgets/modest-secureauth-combo-box.c:
+	* src/widgets/modest-secureauth-combo-box.h:
+	* src/widgets/modest-serversecurity-combo-box.c:
+	* src/widgets/modest-serversecurity-combo-box.h: Renamed the files and 
+	made the GObject names more consistent with the rest of the Modest code.
+
+2007-04-20  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/maemo/easysetup/Makefile.am:
 	* src/maemo/easysetup/modest-easysetup-secureauth-combo-box.c:
 	* src/maemo/easysetup/modest-easysetup-secureauth-combo-box.h:

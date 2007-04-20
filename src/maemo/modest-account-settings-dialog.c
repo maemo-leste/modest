@@ -19,8 +19,8 @@
 #include "maemo/easysetup/modest-easysetup-country-combo-box.h"
 #include "maemo/easysetup/modest-easysetup-provider-combo-box.h"
 #include "maemo/easysetup/modest-easysetup-servertype-combo-box.h"
-#include "widgets/modest-easysetup-serversecurity-combo-box.h"
-#include "widgets/modest-easysetup-secureauth-combo-box.h"
+#include "widgets/modest-serversecurity-combo-box.h"
+#include "widgets/modest-secureauth-combo-box.h"
 #include "widgets/modest-validating-entry.h"
 #include "widgets/modest-retrieve-combo-box.h"
 #include "widgets/modest-limit-retrieve-combo-box.h"
@@ -412,8 +412,8 @@ static void update_incoming_server_security_choices (ModestAccountSettingsDialog
 {
 	/* Fill the combo with appropriately titled choices for POP or IMAP. */
 	/* The choices are the same, but the titles are different, as in the UI spec. */
-	easysetup_serversecurity_combo_box_fill (
-		EASYSETUP_SERVERSECURITY_COMBO_BOX (self->combo_incoming_security), protocol);
+	modest_serversecurity_combo_box_fill (
+		MODEST_SERVERSECURITY_COMBO_BOX (self->combo_incoming_security), protocol);
 }
            
 static GtkWidget* create_page_incoming (ModestAccountSettingsDialog *self)
@@ -445,7 +445,7 @@ static GtkWidget* create_page_incoming (ModestAccountSettingsDialog *self)
 	/* The secure connection widgets: */
 	/* This will be filled by update_incoming_server_security_choices(). */
 	if (!self->combo_incoming_security)
-		self->combo_incoming_security = GTK_WIDGET (easysetup_serversecurity_combo_box_new ());
+		self->combo_incoming_security = GTK_WIDGET (modest_serversecurity_combo_box_new ());
 	GtkWidget *caption = hildon_caption_new (sizegroup, _("mcen_li_emailsetup_secure_connection"), 
 		self->combo_incoming_security, NULL, HILDON_CAPTION_OPTIONAL);
 	gtk_widget_show (self->combo_incoming_security);
@@ -528,8 +528,8 @@ on_combo_outgoing_auth_changed (GtkComboBox *widget, gpointer user_data)
 	ModestAccountSettingsDialog *self = MODEST_ACCOUNT_SETTINGS_DIALOG (user_data);
 	
 	ModestProtocol protocol_security = 
-		easysetup_secureauth_combo_box_get_active_secureauth (
-			EASYSETUP_SECUREAUTH_COMBO_BOX (self->combo_outgoing_auth));
+		modest_secureauth_combo_box_get_active_secureauth (
+			MODEST_SECUREAUTH_COMBO_BOX (self->combo_outgoing_auth));
 	const gboolean secureauth_used = protocol_security != MODEST_PROTOCOL_AUTH_NONE;
 	
 	gtk_widget_set_sensitive (self->caption_outgoing_username, secureauth_used);
@@ -542,8 +542,8 @@ on_combo_outgoing_security_changed (GtkComboBox *widget, gpointer user_data)
 	ModestAccountSettingsDialog *self = MODEST_ACCOUNT_SETTINGS_DIALOG (user_data);
 	
 	const gint port_number = 
-		easysetup_serversecurity_combo_box_get_active_serversecurity_port (
-			EASYSETUP_SERVERSECURITY_COMBO_BOX (self->combo_outgoing_security));
+		modest_serversecurity_combo_box_get_active_serversecurity_port (
+			MODEST_SERVERSECURITY_COMBO_BOX (self->combo_outgoing_security));
 
 	if(port_number != 0) {
 		gchar* str = g_strdup_printf ("%d", port_number);
@@ -558,8 +558,8 @@ on_combo_incoming_security_changed (GtkComboBox *widget, gpointer user_data)
 	ModestAccountSettingsDialog *self = MODEST_ACCOUNT_SETTINGS_DIALOG (user_data);
 	
 	const gint port_number = 
-		easysetup_serversecurity_combo_box_get_active_serversecurity_port (
-			EASYSETUP_SERVERSECURITY_COMBO_BOX (self->combo_incoming_security));
+		modest_serversecurity_combo_box_get_active_serversecurity_port (
+			MODEST_SERVERSECURITY_COMBO_BOX (self->combo_incoming_security));
 
 	if(port_number != 0) {
 		gchar* str = g_strdup_printf ("%d", port_number);
@@ -590,7 +590,7 @@ static GtkWidget* create_page_outgoing (ModestAccountSettingsDialog *self)
 	
 	/* The secure authentication widgets: */
 	if (!self->combo_outgoing_auth)
-		self->combo_outgoing_auth = GTK_WIDGET (easysetup_secureauth_combo_box_new ());
+		self->combo_outgoing_auth = GTK_WIDGET (modest_secureauth_combo_box_new ());
 	caption = hildon_caption_new (sizegroup, _("mcen_li_emailsetup_secure_authentication"), 
 		self->combo_outgoing_auth, NULL, HILDON_CAPTION_OPTIONAL);
 	gtk_widget_show (self->combo_outgoing_auth);
@@ -631,11 +631,11 @@ static GtkWidget* create_page_outgoing (ModestAccountSettingsDialog *self)
 	gtk_widget_show (self->caption_outgoing_password);
 	
 	/* The secure connection widgets: */
-	/* This will be filled and set with easysetup_serversecurity_combo_box_fill() 
-	 * and easysetup_serversecurity_combo_box_set_active_serversecurity().
+	/* This will be filled and set with modest_serversecurity_combo_box_fill() 
+	 * and modest_serversecurity_combo_box_set_active_serversecurity().
 	 */
 	if (!self->combo_outgoing_security)
-		self->combo_outgoing_security = GTK_WIDGET (easysetup_serversecurity_combo_box_new ());
+		self->combo_outgoing_security = GTK_WIDGET (modest_serversecurity_combo_box_new ());
 	caption = hildon_caption_new (sizegroup, _("mcen_li_emailsetup_secure_connection"), 
 		self->combo_outgoing_security, NULL, HILDON_CAPTION_OPTIONAL);
 	gtk_widget_show (self->combo_outgoing_security);
@@ -932,8 +932,8 @@ void modest_account_settings_dialog_set_account_name (ModestAccountSettingsDialo
 		
 		const ModestProtocol security = modest_server_account_get_security (
 			dialog->account_manager, incoming_account->account_name);
-		easysetup_serversecurity_combo_box_set_active_serversecurity (
-			EASYSETUP_SERVERSECURITY_COMBO_BOX (dialog->combo_incoming_security), security);
+		modest_serversecurity_combo_box_set_active_serversecurity (
+			MODEST_SERVERSECURITY_COMBO_BOX (dialog->combo_incoming_security), security);
 		
 		const gint port_num = modest_account_mgr_get_int (dialog->account_manager, incoming_account->account_name,
 			MODEST_ACCOUNT_PORT, TRUE /* server account */);
@@ -964,18 +964,18 @@ void modest_account_settings_dialog_set_account_name (ModestAccountSettingsDialo
 		/* Get the secure-auth setting: */
 		const ModestProtocol secure_auth = modest_server_account_get_secure_auth(
 			dialog->account_manager, outgoing_account->account_name);
-		easysetup_secureauth_combo_box_set_active_secureauth (
-			EASYSETUP_SECUREAUTH_COMBO_BOX (dialog->combo_outgoing_auth), secure_auth);
+		modest_secureauth_combo_box_set_active_secureauth (
+			MODEST_SECUREAUTH_COMBO_BOX (dialog->combo_outgoing_auth), secure_auth);
 		on_combo_outgoing_auth_changed (GTK_COMBO_BOX (dialog->combo_outgoing_auth), dialog);
 		
-		easysetup_serversecurity_combo_box_fill (
-			EASYSETUP_SERVERSECURITY_COMBO_BOX (dialog->combo_outgoing_security), outgoing_account->proto);
+		modest_serversecurity_combo_box_fill (
+			MODEST_SERVERSECURITY_COMBO_BOX (dialog->combo_outgoing_security), outgoing_account->proto);
 		
 		/* Get the security setting: */
 		const ModestProtocol security = modest_server_account_get_security (
 			dialog->account_manager, outgoing_account->account_name);
-		easysetup_serversecurity_combo_box_set_active_serversecurity (
-			EASYSETUP_SERVERSECURITY_COMBO_BOX (dialog->combo_outgoing_security), security);
+		modest_serversecurity_combo_box_set_active_serversecurity (
+			MODEST_SERVERSECURITY_COMBO_BOX (dialog->combo_outgoing_security), security);
 		
 		const gint port_num = modest_account_mgr_get_int (dialog->account_manager, outgoing_account->account_name,
 			MODEST_ACCOUNT_PORT, TRUE /* server account */);
@@ -1061,8 +1061,8 @@ save_configuration (ModestAccountSettingsDialog *dialog)
 			: MODEST_PROTOCOL_AUTH_NONE;
 	modest_server_account_set_secure_auth (dialog->account_manager, incoming_account_name, protocol_authentication_incoming);
 			
-	const ModestProtocol protocol_security_incoming = easysetup_serversecurity_combo_box_get_active_serversecurity (
-		EASYSETUP_SERVERSECURITY_COMBO_BOX (dialog->combo_incoming_security));
+	const ModestProtocol protocol_security_incoming = modest_serversecurity_combo_box_get_active_serversecurity (
+		MODEST_SERVERSECURITY_COMBO_BOX (dialog->combo_incoming_security));
 	modest_server_account_set_security (dialog->account_manager, incoming_account_name, protocol_security_incoming);
 	
 	/* port: */
@@ -1098,12 +1098,12 @@ save_configuration (ModestAccountSettingsDialog *dialog)
 	if (!test)
 		return FALSE;
 	
-	const ModestProtocol protocol_security_outgoing = easysetup_serversecurity_combo_box_get_active_serversecurity (
-		EASYSETUP_SERVERSECURITY_COMBO_BOX (dialog->combo_outgoing_security));
+	const ModestProtocol protocol_security_outgoing = modest_serversecurity_combo_box_get_active_serversecurity (
+		MODEST_SERVERSECURITY_COMBO_BOX (dialog->combo_outgoing_security));
 	modest_server_account_set_security (dialog->account_manager, outgoing_account_name, protocol_security_outgoing);
 	
-	const ModestProtocol protocol_authentication_outgoing = easysetup_secureauth_combo_box_get_active_secureauth (
-		EASYSETUP_SECUREAUTH_COMBO_BOX (dialog->combo_outgoing_auth));
+	const ModestProtocol protocol_authentication_outgoing = modest_secureauth_combo_box_get_active_secureauth (
+		MODEST_SECUREAUTH_COMBO_BOX (dialog->combo_outgoing_auth));
 	modest_server_account_set_secure_auth (dialog->account_manager, outgoing_account_name, protocol_authentication_outgoing);	
 		
 	/* port: */

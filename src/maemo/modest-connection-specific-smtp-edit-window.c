@@ -5,8 +5,8 @@
 #include "maemo/easysetup/modest-easysetup-country-combo-box.h"
 #include "maemo/easysetup/modest-easysetup-provider-combo-box.h"
 #include "maemo/easysetup/modest-easysetup-servertype-combo-box.h"
-#include "widgets/modest-easysetup-serversecurity-combo-box.h"
-#include "widgets/modest-easysetup-secureauth-combo-box.h"
+#include "widgets/modest-serversecurity-combo-box.h"
+#include "widgets/modest-secureauth-combo-box.h"
 #include "widgets/modest-validating-entry.h"
 #include <modest-account-mgr-helpers.h>
 #include <gtk/gtkbutton.h>
@@ -97,8 +97,8 @@ on_combo_security_changed (GtkComboBox *widget, gpointer user_data)
 		CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW_GET_PRIVATE (self);
 	
 	const gint port_number = 
-		easysetup_serversecurity_combo_box_get_active_serversecurity_port (
-			EASYSETUP_SERVERSECURITY_COMBO_BOX (priv->combo_outgoing_security));
+		modest_serversecurity_combo_box_get_active_serversecurity_port (
+			MODEST_SERVERSECURITY_COMBO_BOX (priv->combo_outgoing_security));
 
 	if(port_number != 0) {
 		gchar* str = g_strdup_printf ("%d", port_number);
@@ -135,7 +135,7 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	
 	/* The secure authentication widgets: */
 	if (!priv->combo_outgoing_auth)
-		priv->combo_outgoing_auth = GTK_WIDGET (easysetup_secureauth_combo_box_new ());
+		priv->combo_outgoing_auth = GTK_WIDGET (modest_secureauth_combo_box_new ());
 	caption = hildon_caption_new (sizegroup, _("mcen_li_emailsetup_secure_authentication"), 
 		priv->combo_outgoing_auth, NULL, HILDON_CAPTION_OPTIONAL);
 	gtk_widget_show (priv->combo_outgoing_auth);
@@ -171,11 +171,11 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	
 	/* The secure connection widgets: */	
 	if (!priv->combo_outgoing_security)
-		priv->combo_outgoing_security = GTK_WIDGET (easysetup_serversecurity_combo_box_new ());
-	easysetup_serversecurity_combo_box_fill (
-		EASYSETUP_SERVERSECURITY_COMBO_BOX (priv->combo_outgoing_security), MODEST_PROTOCOL_TRANSPORT_SMTP);
-	easysetup_serversecurity_combo_box_set_active_serversecurity (
-		EASYSETUP_SERVERSECURITY_COMBO_BOX (priv->combo_outgoing_security), MODEST_PROTOCOL_SECURITY_NONE);
+		priv->combo_outgoing_security = GTK_WIDGET (modest_serversecurity_combo_box_new ());
+	modest_serversecurity_combo_box_fill (
+		MODEST_SERVERSECURITY_COMBO_BOX (priv->combo_outgoing_security), MODEST_PROTOCOL_TRANSPORT_SMTP);
+	modest_serversecurity_combo_box_set_active_serversecurity (
+		MODEST_SERVERSECURITY_COMBO_BOX (priv->combo_outgoing_security), MODEST_PROTOCOL_SECURITY_NONE);
 	caption = hildon_caption_new (sizegroup, _("mcen_li_emailsetup_secure_connection"), 
 		priv->combo_outgoing_security, NULL, HILDON_CAPTION_OPTIONAL);
 	gtk_widget_show (priv->combo_outgoing_security);
@@ -224,11 +224,11 @@ modest_connection_specific_smtp_edit_window_set_connection (
 		gtk_entry_set_text (GTK_ENTRY (priv->entry_user_username), data->username);	
 		gtk_entry_set_text (GTK_ENTRY (priv->entry_user_password), data->password);
 	
-		easysetup_serversecurity_combo_box_set_active_serversecurity (
-		EASYSETUP_SERVERSECURITY_COMBO_BOX (priv->combo_outgoing_security), data->security);
+		modest_serversecurity_combo_box_set_active_serversecurity (
+		MODEST_SERVERSECURITY_COMBO_BOX (priv->combo_outgoing_security), data->security);
 	
-		easysetup_secureauth_combo_box_set_active_secureauth (
-		EASYSETUP_SECUREAUTH_COMBO_BOX (priv->combo_outgoing_auth), data->secure_auth);
+		modest_secureauth_combo_box_set_active_secureauth (
+		MODEST_SECUREAUTH_COMBO_BOX (priv->combo_outgoing_auth), data->secure_auth);
 		
 		/* port: */
 		gchar * port_str = g_strdup_printf ("%d", data->port);
@@ -257,11 +257,11 @@ modest_connection_specific_smtp_edit_window_get_settings (
 	result->username = g_strdup (gtk_entry_get_text (GTK_ENTRY (priv->entry_user_username)));	
 	result->password = g_strdup (gtk_entry_get_text (GTK_ENTRY (priv->entry_user_password)));
 	
-	result->security = easysetup_serversecurity_combo_box_get_active_serversecurity (
-		EASYSETUP_SERVERSECURITY_COMBO_BOX (priv->combo_outgoing_security));
+	result->security = modest_serversecurity_combo_box_get_active_serversecurity (
+		MODEST_SERVERSECURITY_COMBO_BOX (priv->combo_outgoing_security));
 	
-	result->secure_auth = easysetup_secureauth_combo_box_get_active_secureauth (
-		EASYSETUP_SECUREAUTH_COMBO_BOX (priv->combo_outgoing_auth));
+	result->secure_auth = modest_secureauth_combo_box_get_active_secureauth (
+		MODEST_SECUREAUTH_COMBO_BOX (priv->combo_outgoing_auth));
 		
 	/* port: */
 	const gchar * port_str = gtk_entry_get_text (GTK_ENTRY (priv->entry_port));

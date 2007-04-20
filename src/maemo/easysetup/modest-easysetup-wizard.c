@@ -18,8 +18,8 @@
 #include "maemo/easysetup/modest-easysetup-country-combo-box.h"
 #include "maemo/easysetup/modest-easysetup-provider-combo-box.h"
 #include "maemo/easysetup/modest-easysetup-servertype-combo-box.h"
-#include "widgets/modest-easysetup-serversecurity-combo-box.h"
-#include "widgets/modest-easysetup-secureauth-combo-box.h"
+#include "widgets/modest-serversecurity-combo-box.h"
+#include "widgets/modest-secureauth-combo-box.h"
 #include "widgets/modest-validating-entry.h"
 #include "modest-text-utils.h"
 #include "modest-account-mgr.h"
@@ -479,8 +479,8 @@ static void update_incoming_server_security_choices (ModestEasysetupWizardDialog
 	
 	/* Fill the combo with appropriately titled choices for POP or IMAP. */
 	/* The choices are the same, but the titles are different, as in the UI spec. */
-	easysetup_serversecurity_combo_box_fill (
-		EASYSETUP_SERVERSECURITY_COMBO_BOX (self->combo_incoming_security), protocol);
+	modest_serversecurity_combo_box_fill (
+		MODEST_SERVERSECURITY_COMBO_BOX (self->combo_incoming_security), protocol);
 }
 
 static void on_combo_servertype_changed(GtkComboBox *combobox, gpointer user_data)
@@ -534,10 +534,10 @@ static GtkWidget* create_page_custom_incoming (ModestEasysetupWizardDialog *self
 	
 	/* The secure connection widgets: */	
 	if (!self->combo_incoming_security)
-		self->combo_incoming_security = GTK_WIDGET (easysetup_serversecurity_combo_box_new ());
+		self->combo_incoming_security = GTK_WIDGET (modest_serversecurity_combo_box_new ());
 	update_incoming_server_security_choices (self);
-	easysetup_serversecurity_combo_box_set_active_serversecurity (
-		EASYSETUP_SERVERSECURITY_COMBO_BOX (self->combo_incoming_security), MODEST_PROTOCOL_SECURITY_NONE);
+	modest_serversecurity_combo_box_set_active_serversecurity (
+		MODEST_SERVERSECURITY_COMBO_BOX (self->combo_incoming_security), MODEST_PROTOCOL_SECURITY_NONE);
 	caption = hildon_caption_new (sizegroup, _("mcen_li_emailsetup_secure_connection"), 
 		self->combo_incoming_security, NULL, HILDON_CAPTION_OPTIONAL);
 	gtk_widget_show (self->combo_incoming_security);
@@ -616,11 +616,11 @@ static GtkWidget* create_page_custom_outgoing (ModestEasysetupWizardDialog *self
 	
 	/* The secure connection widgets: */	
 	if (!self->combo_outgoing_security)
-		self->combo_outgoing_security = GTK_WIDGET (easysetup_serversecurity_combo_box_new ());
-	easysetup_serversecurity_combo_box_fill (
-		EASYSETUP_SERVERSECURITY_COMBO_BOX (self->combo_outgoing_security), MODEST_PROTOCOL_TRANSPORT_SMTP);
-	easysetup_serversecurity_combo_box_set_active_serversecurity (
-		EASYSETUP_SERVERSECURITY_COMBO_BOX (self->combo_outgoing_security), MODEST_PROTOCOL_SECURITY_NONE);
+		self->combo_outgoing_security = GTK_WIDGET (modest_serversecurity_combo_box_new ());
+	modest_serversecurity_combo_box_fill (
+		MODEST_SERVERSECURITY_COMBO_BOX (self->combo_outgoing_security), MODEST_PROTOCOL_TRANSPORT_SMTP);
+	modest_serversecurity_combo_box_set_active_serversecurity (
+		MODEST_SERVERSECURITY_COMBO_BOX (self->combo_outgoing_security), MODEST_PROTOCOL_SECURITY_NONE);
 	caption = hildon_caption_new (sizegroup, _("mcen_li_emailsetup_secure_connection"), 
 		self->combo_outgoing_security, NULL, HILDON_CAPTION_OPTIONAL);
 	gtk_widget_show (self->combo_outgoing_security);
@@ -629,7 +629,7 @@ static GtkWidget* create_page_custom_outgoing (ModestEasysetupWizardDialog *self
 	
 	/* The secure authentication widgets: */
 	if (!self->combo_outgoing_auth)
-		self->combo_outgoing_auth = GTK_WIDGET (easysetup_secureauth_combo_box_new ());
+		self->combo_outgoing_auth = GTK_WIDGET (modest_secureauth_combo_box_new ());
 	caption = hildon_caption_new (sizegroup, _("mcen_li_emailsetup_secure_authentication"), 
 		self->combo_outgoing_auth, NULL, HILDON_CAPTION_OPTIONAL);
 	gtk_widget_show (self->combo_outgoing_auth);
@@ -1172,8 +1172,8 @@ create_account (ModestEasysetupWizardDialog *self)
 		protocol_incoming = easysetup_servertype_combo_box_get_active_servertype (
 		EASYSETUP_SERVERTYPE_COMBO_BOX (self->combo_incoming_servertype));
 		
-		protocol_security_incoming = easysetup_serversecurity_combo_box_get_active_serversecurity (
-		EASYSETUP_SERVERSECURITY_COMBO_BOX (self->combo_incoming_security));
+		protocol_security_incoming = modest_serversecurity_combo_box_get_active_serversecurity (
+		MODEST_SERVERSECURITY_COMBO_BOX (self->combo_incoming_security));
 		
 		protocol_authentication_incoming = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->checkbox_incoming_auth)) 
 			? MODEST_PROTOCOL_AUTH_PASSWORD
@@ -1251,11 +1251,11 @@ create_account (ModestEasysetupWizardDialog *self)
 		
 		protocol_outgoing = MODEST_PROTOCOL_TRANSPORT_SMTP; /* It's always SMTP for outgoing. */
 
-		protocol_security_outgoing = easysetup_serversecurity_combo_box_get_active_serversecurity (
-			EASYSETUP_SERVERSECURITY_COMBO_BOX (self->combo_outgoing_security));
+		protocol_security_outgoing = modest_serversecurity_combo_box_get_active_serversecurity (
+			MODEST_SERVERSECURITY_COMBO_BOX (self->combo_outgoing_security));
 		
-		protocol_authentication_outgoing = easysetup_secureauth_combo_box_get_active_secureauth (
-			EASYSETUP_SECUREAUTH_COMBO_BOX (self->combo_outgoing_auth));
+		protocol_authentication_outgoing = modest_secureauth_combo_box_get_active_secureauth (
+			MODEST_SECUREAUTH_COMBO_BOX (self->combo_outgoing_auth));
 		
 		/* TODO: 
 		gboolean specific = gtk_toggle_button_get_active (

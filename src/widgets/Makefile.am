@@ -51,8 +51,8 @@ libmodest_widgets_la_SOURCES=          \
 	modest-retrieve-combo-box.c \
 	modest-scroll-text.c           \
 	modest-scroll-text.h           \
-	modest-easysetup-serversecurity-combo-box.h modest-easysetup-serversecurity-combo-box.c \
-	modest-easysetup-secureauth-combo-box.h modest-easysetup-secureauth-combo-box.c \
+	modest-serversecurity-combo-box.h modest-serversecurity-combo-box.c \
+	modest-secureauth-combo-box.h modest-secureauth-combo-box.c \
 	modest-tny-stream-gtkhtml.c    \
 	modest-tny-stream-gtkhtml.h    \
 	modest-validating-entry.h modest-validating-entry.c \

@@ -3,7 +3,7 @@
  *
  */
 
-#include "modest-easysetup-serversecurity-combo-box.h"
+#include "modest-serversecurity-combo-box.h"
 #include <gtk/gtkliststore.h>
 #include <gtk/gtkcelllayout.h>
 #include <gtk/gtkcellrenderertext.h>
@@ -17,21 +17,21 @@
 #include <config.h>
 #endif
 
-G_DEFINE_TYPE (EasysetupServersecurityComboBox, easysetup_serversecurity_combo_box, GTK_TYPE_COMBO_BOX);
+G_DEFINE_TYPE (ModestServersecurityComboBox, modest_serversecurity_combo_box, GTK_TYPE_COMBO_BOX);
 
 #define SERVERSECURITY_COMBO_BOX_GET_PRIVATE(o) \
-	(G_TYPE_INSTANCE_GET_PRIVATE ((o), EASYSETUP_TYPE_SERVERSECURITY_COMBO_BOX, EasysetupServersecurityComboBoxPrivate))
+	(G_TYPE_INSTANCE_GET_PRIVATE ((o), MODEST_TYPE_SERVERSECURITY_COMBO_BOX, ModestServersecurityComboBoxPrivate))
 
-typedef struct _EasysetupServersecurityComboBoxPrivate EasysetupServersecurityComboBoxPrivate;
+typedef struct _ModestServersecurityComboBoxPrivate ModestServersecurityComboBoxPrivate;
 
-struct _EasysetupServersecurityComboBoxPrivate
+struct _ModestServersecurityComboBoxPrivate
 {
 	GtkTreeModel *model;
 	ModestProtocol protocol;
 };
 
 static void
-easysetup_serversecurity_combo_box_get_property (GObject *object, guint property_id,
+modest_serversecurity_combo_box_get_property (GObject *object, guint property_id,
 															GValue *value, GParamSpec *pspec)
 {
 	switch (property_id) {
@@ -41,7 +41,7 @@ easysetup_serversecurity_combo_box_get_property (GObject *object, guint property
 }
 
 static void
-easysetup_serversecurity_combo_box_set_property (GObject *object, guint property_id,
+modest_serversecurity_combo_box_set_property (GObject *object, guint property_id,
 															const GValue *value, GParamSpec *pspec)
 {
 	switch (property_id) {
@@ -51,33 +51,33 @@ easysetup_serversecurity_combo_box_set_property (GObject *object, guint property
 }
 
 static void
-easysetup_serversecurity_combo_box_dispose (GObject *object)
+modest_serversecurity_combo_box_dispose (GObject *object)
 {
-	if (G_OBJECT_CLASS (easysetup_serversecurity_combo_box_parent_class)->dispose)
-		G_OBJECT_CLASS (easysetup_serversecurity_combo_box_parent_class)->dispose (object);
+	if (G_OBJECT_CLASS (modest_serversecurity_combo_box_parent_class)->dispose)
+		G_OBJECT_CLASS (modest_serversecurity_combo_box_parent_class)->dispose (object);
 }
 
 static void
-easysetup_serversecurity_combo_box_finalize (GObject *object)
+modest_serversecurity_combo_box_finalize (GObject *object)
 {
-	EasysetupServersecurityComboBoxPrivate *priv = SERVERSECURITY_COMBO_BOX_GET_PRIVATE (object);
+	ModestServersecurityComboBoxPrivate *priv = SERVERSECURITY_COMBO_BOX_GET_PRIVATE (object);
 
 	g_object_unref (G_OBJECT (priv->model));
 
-	G_OBJECT_CLASS (easysetup_serversecurity_combo_box_parent_class)->finalize (object);
+	G_OBJECT_CLASS (modest_serversecurity_combo_box_parent_class)->finalize (object);
 }
 
 static void
-easysetup_serversecurity_combo_box_class_init (EasysetupServersecurityComboBoxClass *klass)
+modest_serversecurity_combo_box_class_init (ModestServersecurityComboBoxClass *klass)
 {
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
-	g_type_class_add_private (klass, sizeof (EasysetupServersecurityComboBoxPrivate));
+	g_type_class_add_private (klass, sizeof (ModestServersecurityComboBoxPrivate));
 
-	object_class->get_property = easysetup_serversecurity_combo_box_get_property;
-	object_class->set_property = easysetup_serversecurity_combo_box_set_property;
-	object_class->dispose = easysetup_serversecurity_combo_box_dispose;
-	object_class->finalize = easysetup_serversecurity_combo_box_finalize;
+	object_class->get_property = modest_serversecurity_combo_box_get_property;
+	object_class->set_property = modest_serversecurity_combo_box_set_property;
+	object_class->dispose = modest_serversecurity_combo_box_dispose;
+	object_class->finalize = modest_serversecurity_combo_box_finalize;
 }
 
 enum MODEL_COLS {
@@ -86,9 +86,9 @@ enum MODEL_COLS {
 };
 
 static void
-easysetup_serversecurity_combo_box_init (EasysetupServersecurityComboBox *self)
+modest_serversecurity_combo_box_init (ModestServersecurityComboBox *self)
 {
-	EasysetupServersecurityComboBoxPrivate *priv = SERVERSECURITY_COMBO_BOX_GET_PRIVATE (self);
+	ModestServersecurityComboBoxPrivate *priv = SERVERSECURITY_COMBO_BOX_GET_PRIVATE (self);
 
 	/* Create a tree model for the combo box,
 	 * with a string for the name, and an ID for the serversecurity.
@@ -107,23 +107,23 @@ easysetup_serversecurity_combo_box_init (EasysetupServersecurityComboBox *self)
 	gtk_cell_layout_set_attributes (GTK_CELL_LAYOUT (combobox), renderer, 
 	"text", MODEL_COL_NAME, NULL);
 	
-	/* The application must call easysetup_serversecurity_combo_box_fill().
+	/* The application must call modest_serversecurity_combo_box_fill().
 	 */
 }
 
-EasysetupServersecurityComboBox*
-easysetup_serversecurity_combo_box_new (void)
+ModestServersecurityComboBox*
+modest_serversecurity_combo_box_new (void)
 {
-	return g_object_new (EASYSETUP_TYPE_SERVERSECURITY_COMBO_BOX, NULL);
+	return g_object_new (MODEST_TYPE_SERVERSECURITY_COMBO_BOX, NULL);
 }
 
 /* Fill the combo box with appropriate choices.
  * #combobox: The combo box.
  * @protocol: IMAP or POP.
  */
-void easysetup_serversecurity_combo_box_fill (EasysetupServersecurityComboBox *combobox, ModestProtocol protocol)
+void modest_serversecurity_combo_box_fill (ModestServersecurityComboBox *combobox, ModestProtocol protocol)
 {	
-	EasysetupServersecurityComboBoxPrivate *priv = SERVERSECURITY_COMBO_BOX_GET_PRIVATE (combobox);
+	ModestServersecurityComboBoxPrivate *priv = SERVERSECURITY_COMBO_BOX_GET_PRIVATE (combobox);
 	priv->protocol = protocol; /* Remembered for later. */
 	
 	/* Remove any existing rows: */
@@ -185,12 +185,12 @@ static gint get_port_for_security (ModestProtocol protocol, ModestProtocol secur
  * or MODEST_PROTOCOL_UNKNOWN if no serversecurity was selected.
  */
 ModestProtocol
-easysetup_serversecurity_combo_box_get_active_serversecurity (EasysetupServersecurityComboBox *combobox)
+modest_serversecurity_combo_box_get_active_serversecurity (ModestServersecurityComboBox *combobox)
 {
 	GtkTreeIter active;
 	const gboolean found = gtk_combo_box_get_active_iter (GTK_COMBO_BOX (combobox), &active);
 	if (found) {
-		EasysetupServersecurityComboBoxPrivate *priv = SERVERSECURITY_COMBO_BOX_GET_PRIVATE (combobox);
+		ModestServersecurityComboBoxPrivate *priv = SERVERSECURITY_COMBO_BOX_GET_PRIVATE (combobox);
 
 		ModestProtocol serversecurity = MODEST_PROTOCOL_UNKNOWN;
 		gtk_tree_model_get (priv->model, &active, MODEL_COL_ID, &serversecurity, -1);
@@ -205,11 +205,11 @@ easysetup_serversecurity_combo_box_get_active_serversecurity (EasysetupServersec
  * or 0 if no serversecurity was selected.
  */
 gint
-easysetup_serversecurity_combo_box_get_active_serversecurity_port (EasysetupServersecurityComboBox *combobox)
+modest_serversecurity_combo_box_get_active_serversecurity_port (ModestServersecurityComboBox *combobox)
 {
-	EasysetupServersecurityComboBoxPrivate *priv = SERVERSECURITY_COMBO_BOX_GET_PRIVATE (combobox);
+	ModestServersecurityComboBoxPrivate *priv = SERVERSECURITY_COMBO_BOX_GET_PRIVATE (combobox);
 	
-	const ModestProtocol security = easysetup_serversecurity_combo_box_get_active_serversecurity 
+	const ModestProtocol security = modest_serversecurity_combo_box_get_active_serversecurity 
 		(combobox);
 	return get_port_for_security (priv->protocol, security);
 }
@@ -218,7 +218,7 @@ easysetup_serversecurity_combo_box_get_active_serversecurity_port (EasysetupServ
  * and get a result: */
 typedef struct 
 {
-		EasysetupServersecurityComboBox* self;
+		ModestServersecurityComboBox* self;
 		gint id;
 		gboolean found;
 } ForEachData;
@@ -247,9 +247,9 @@ on_model_foreach_select_id(GtkTreeModel *model,
  * or MODEST_PROTOCOL_UNKNOWN if no serversecurity was selected.
  */
 gboolean
-easysetup_serversecurity_combo_box_set_active_serversecurity (EasysetupServersecurityComboBox *combobox, ModestProtocol serversecurity)
+modest_serversecurity_combo_box_set_active_serversecurity (ModestServersecurityComboBox *combobox, ModestProtocol serversecurity)
 {
-	EasysetupServersecurityComboBoxPrivate *priv = SERVERSECURITY_COMBO_BOX_GET_PRIVATE (combobox);
+	ModestServersecurityComboBoxPrivate *priv = SERVERSECURITY_COMBO_BOX_GET_PRIVATE (combobox);
 	
 	/* Create a state instance so we can send two items of data to the signal handler: */
 	ForEachData *state = g_new0 (ForEachData, 1);
