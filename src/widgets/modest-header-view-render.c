@@ -106,7 +106,7 @@ get_pixbuf_for_compact_flag (TnyHeaderFlags flags)
 			return normal_attachments_pixbuf;
 		}		
 	}
-	
+
 	return NULL;
 }
 
@@ -166,9 +166,8 @@ _modest_header_view_compact_flag_cell_data (GtkTreeViewColumn *column, GtkCellRe
 			    &flags, -1);
 	
 	pixbuf = get_pixbuf_for_compact_flag (flags);
-	if (pixbuf != NULL)	
+	//if (pixbuf != NULL)
 		g_object_set (G_OBJECT (renderer), "pixbuf", pixbuf, NULL);
-	
 }
 
 void
@@ -232,7 +231,9 @@ _modest_header_view_compact_date_cell_data  (GtkTreeViewColumn *column,  GtkCell
 
 	tmp_date = modest_text_utils_get_display_date (date);
 	display_date = g_strdup_printf ("\n<small>%s</small>", tmp_date);
-	g_object_set (G_OBJECT(renderer), "markup", display_date, NULL);	
+	g_object_set (G_OBJECT(renderer),
+		      "markup", display_date,
+		      NULL);	
 
 	set_common_flags (renderer, flags);
 	g_free (tmp_date);
@@ -275,8 +276,7 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 {
 	GObject *rendobj;
 	TnyHeaderFlags flags;
-	gchar *address, *subject, *header, *display_address;
-	gchar *parsed_address, *parsed_subject;
+	gchar *address, *subject, *header;
 	time_t date;
 	gboolean is_incoming;
 
@@ -297,27 +297,12 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 				    TNY_GTK_HEADER_LIST_MODEL_SUBJECT_COLUMN, &subject,
 				    TNY_GTK_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN, &date,   
 				    -1);
-	
 	rendobj = G_OBJECT(renderer);
-
-	/* deal with empty subjects */
-	if (!subject)
-		subject = g_strdup (_("mail_va_no_subject"));
-	
-	/* Escape special characteres to allow pango makup`*/
-	display_address = modest_text_utils_get_display_address (address);
-	parsed_address = modest_text_utils_convert_to_pango (display_address);
-	//_pango_parse_string (display_address);
-	parsed_subject = modest_text_utils_convert_to_pango (subject);
-	//_pango_parse_string (subject);
-
-	header = g_strdup_printf ("%s\n<small>%s</small>",
-				  parsed_subject,
-				  parsed_address);
+	header = g_markup_printf_escaped ("%s\n<small>%s</small>",
+					  subject ? subject : _("mail_va_no_subject"),
+					  address);
 	g_free (address);
 	g_free (subject);
-	g_free(parsed_subject);
-	g_free(parsed_address);
 
 	g_object_set (rendobj, "markup", header, NULL);	
 	set_common_flags (renderer, flags);
@@ -354,15 +339,14 @@ _modest_header_view_status_cell_data  (GtkTreeViewColumn *column,  GtkCellRender
 				     gpointer user_data)
 {
         TnyHeaderFlags flags;
-	guint status;
+	//guint status;
 	gchar *status_str;
 	
 	gtk_tree_model_get (tree_model, iter,
-			   TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN, &flags,
-			   TNY_GTK_HEADER_LIST_MODEL_MESSAGE_SIZE_COLUMN, &status,
+			    TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN, &flags,
+	//		    TNY_GTK_HEADER_LIST_MODEL_MESSAGE_SIZE_COLUMN, &status,
 			    -1);
 	
-/* 	size_str = modest_text_utils_get_display_size (size); */
 	status_str = g_strdup(_("mcen_li_outbox_waiting"));
 	
 	g_object_set (G_OBJECT(renderer), "text", status_str, NULL);
