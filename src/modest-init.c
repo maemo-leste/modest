@@ -55,6 +55,7 @@ static void     init_stock_icons (void);
 static void     init_debug_g_type (void);
 static void     init_debug_logging (void);
 static void     init_default_settings (ModestConf *conf);
+static void     init_device_name (ModestConf *conf);
 
 /*
  * defaults for the column headers
@@ -142,6 +143,10 @@ modest_init_init_core (void)
 		g_printerr ("modest: failed to initialize the modest runtime\n");
 		return FALSE;
 	}
+
+
+	/* do an initial guess for the device name */
+	init_device_name (modest_runtime_get_conf());
 
 	if (!modest_platform_init()) {
 		modest_init_uninit ();
@@ -545,4 +550,33 @@ init_default_settings (ModestConf *conf)
 	if (!modest_conf_key_exists (conf, MODEST_CONF_CONNECT_AT_STARTUP, NULL))
 		modest_conf_set_bool (conf, MODEST_CONF_CONNECT_AT_STARTUP, TRUE, NULL);
 
+}
+
+
+/* set the device name -- note this is an initial guess from /etc/hostname
+ * on maemo-device it will most probably be replaced with the Bluetooth device
+ * name later during starting (see maemo/modest-maemo-utils.[ch])
+ */
+static void
+init_device_name (ModestConf *conf)
+{
+	int len = 255; /* max len */
+	gchar *devname = NULL;
+	
+	if (!g_file_get_contents("/etc/hostname", &devname, &len, NULL) || len < 2 || len > 254) {
+		g_printerr ("modest: failed to read hostname\n");
+		modest_conf_set_string (conf, MODEST_CONF_DEVICE_NAME,
+					MODEST_LOCAL_FOLDERS_DEFAULT_DISPLAY_NAME,
+					NULL);
+	} else {
+		/* remove the \n at the end */
+		if (devname[len-1] == '\n')
+			devname[len-1] = '\0';
+		else
+			devname[len] = '\0';
+
+		modest_conf_set_string (conf, MODEST_CONF_DEVICE_NAME,devname, NULL);
+	}
+
+	g_free (devname);
 }

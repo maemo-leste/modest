@@ -82,10 +82,6 @@ modest_maemo_utils_menubar_to_menu (GtkUIManager *ui_manager)
 }
 
 
-
-
-
-
 static void
 update_device_name_from_msg (DBusMessage *message)
 {
@@ -95,19 +91,14 @@ update_device_name_from_msg (DBusMessage *message)
 	dbus_error_init (&error);
 
 	if (dbus_set_error_from_message (&error, message)) {
-		g_printerr ("modest: failed to get bt name: %s\n", error.message);
+		g_printerr ("modest: failed to get bluetooth name: %s\n", error.message);
 		dbus_error_free (&error);
-		modest_conf_set_string (modest_runtime_get_conf(),
-					MODEST_CONF_DEVICE_NAME,
-					MODEST_LOCAL_FOLDERS_DEFAULT_DISPLAY_NAME,
-					NULL);					
 	} else {
 		const gchar *device_name;
 		if (!dbus_message_iter_init (message, &iter)) {
 			g_printerr ("modest: message did not have argument\n");
 			return;
 		}
-
 		dbus_message_iter_get_basic (&iter, &device_name);
 		g_warning ("update device name: %s", device_name);
 		modest_conf_set_string (modest_runtime_get_conf(),

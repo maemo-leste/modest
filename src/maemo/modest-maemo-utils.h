@@ -49,7 +49,7 @@ GtkWidget*    modest_maemo_utils_menubar_to_menu (GtkUIManager *ui_manager);
  *
  * get the name for this device. Note: this queries the bluetooth
  * name over DBUS, and may block. The result will be available in
- * MODEST_DEVICE_NAME in ModestConf; it will be updated when it
+ * MODEST_CONF_DEVICE_NAME in ModestConf; it will be updated when it
  * changes
  * 
  */
