@@ -147,18 +147,6 @@ void     modest_text_utils_address_range_at_position (const gchar *recipients_li
  */
 gchar*  modest_text_utils_convert_to_html (const gchar *txt);
 
-/**
- * modest_text_utils_convert_to_pango:
- * @txt: a string
- *
- * convert plain text (utf8) into pango-escaped text
- * 
- * Returns: a newly allocated string containing the html
- */
-gchar*  modest_text_utils_convert_to_pango (const gchar *txt);
-
-
-
 
 /**
  * modest_text_utils_strftime:
