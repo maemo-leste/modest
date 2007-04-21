@@ -300,16 +300,26 @@ modest_platform_get_icon (const gchar *name)
 
 	g_return_val_if_fail (name, NULL);
 
+	if (g_str_has_suffix (name, ".png")) { /*FIXME: hack*/
+		pixbuf = gdk_pixbuf_new_from_file (name, &err);
+		if (!pixbuf) {
+			g_printerr ("modest: error loading icon '%s': %s\n",
+				    name, err->message);
+			g_error_free (err);
+			return NULL;
+		}
+		return pixbuf;
+	}
+
 	current_theme = gtk_icon_theme_get_default ();
 	pixbuf = gtk_icon_theme_load_icon (current_theme, name, 26,
 					   GTK_ICON_LOOKUP_NO_SVG,
 					   &err);
 	if (!pixbuf) {
-		g_printerr ("modest: error while loading icon '%s': %s\n",
+		g_printerr ("modest: error loading theme icon '%s': %s\n",
 			    name, err->message);
 		g_error_free (err);
-	}
-	
+	} 
 	return pixbuf;
 }
 
