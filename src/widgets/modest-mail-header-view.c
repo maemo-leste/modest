@@ -288,11 +288,14 @@ modest_mail_header_view_set_header_default (TnyHeaderView *self, TnyHeader *head
 				add_recpt_header (MODEST_MAIL_HEADER_VIEW (self), _("mail_va_hotfix1"), bcc);
 			if (priv->is_draft&& from)
 				add_recpt_header (MODEST_MAIL_HEADER_VIEW (self), _("mail_va_from"), from);
-			modest_mail_header_view_add_custom_header (MODEST_MAIL_HEADER_VIEW (self), _("mail_va_subject"), priv->subject_box, TRUE, TRUE);
+			modest_mail_header_view_add_custom_header (MODEST_MAIL_HEADER_VIEW (self), _("mail_va_subject"),
+								   priv->subject_box, TRUE, TRUE);
 			if (priv->is_draft)
-				add_date_time_header (MODEST_MAIL_HEADER_VIEW (self), _("fixme_Last saved:"), tny_header_get_date_sent (header));
+				add_date_time_header (MODEST_MAIL_HEADER_VIEW (self), _("mcen_fi_message_properties_created"),
+						      tny_header_get_date_sent (header));
 			else
-				add_date_time_header (MODEST_MAIL_HEADER_VIEW (self), _("fixme_Sent:"), tny_header_get_date_sent (header));
+				add_date_time_header (MODEST_MAIL_HEADER_VIEW (self), _("mcen_fi_message_properties_sent"),
+						      tny_header_get_date_sent (header));
 		} else {
 			gtk_label_set_markup (GTK_LABEL (priv->fromto_label), _("mail_va_from"));
 			if (from)
@@ -303,8 +306,10 @@ modest_mail_header_view_set_header_default (TnyHeaderView *self, TnyHeader *head
 				add_recpt_header (MODEST_MAIL_HEADER_VIEW (self), _("mail_va_hotfix1"), bcc);
 			if (to)
 				add_recpt_header (MODEST_MAIL_HEADER_VIEW (self), _("mail_va_to"), to);
-			modest_mail_header_view_add_custom_header (MODEST_MAIL_HEADER_VIEW (self), _("mail_va_subject"), priv->subject_box, TRUE, TRUE);
-			add_date_time_header (MODEST_MAIL_HEADER_VIEW (self), _("fixme_Received:"), tny_header_get_date_received (header));
+			modest_mail_header_view_add_custom_header (MODEST_MAIL_HEADER_VIEW (self), _("mail_va_subject"),
+								   priv->subject_box, TRUE, TRUE);
+			add_date_time_header (MODEST_MAIL_HEADER_VIEW (self), _("mcen_fi_message_properties_received"),
+					      tny_header_get_date_received (header));
 		}
 	}
 
