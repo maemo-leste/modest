@@ -1,6 +1,6 @@
 #
 # Makefile.am
-# Time-stamp: <2007-04-10 10:58:05 (djcb)>
+# Time-stamp: <2007-04-21 11:15:36 (djcb)>
 SUBDIRS=$(MODEST_PLATFORM) widgets dbus_api
 DIST_SUBDIRS = widgets gnome maemo
 
@@ -43,6 +43,8 @@ modest_SOURCES=\
 	modest-error.h \
 	modest-formatter.c \
 	modest-formatter.h \
+	modest-init.c \
+	modest-init.h \
 	modest-local-folder-info.c \
 	modest-local-folder-info.h \
 	modest-mail-operation-queue.c \
@@ -61,6 +63,7 @@ modest_SOURCES=\
 	modest-protocol-info.h\
 	modest-runtime.c\
 	modest-runtime.h\
+	modest-runtime-priv.h\
 	modest-singletons.c\
 	modest-singletons.h\
 	modest-text-utils.c\

@@ -50,8 +50,7 @@ typedef enum {
 	MODEST_RUNTIME_DEBUG_LOG_ACTIONS           = 1 << 1, /* not in use atm */
 	MODEST_RUNTIME_DEBUG_DEBUG_OBJECTS         = 1 << 2, /* for g_type_init */
 	MODEST_RUNTIME_DEBUG_DEBUG_SIGNALS         = 1 << 3, /* for g_type_init */
-	MODEST_RUNTIME_DEBUG_FACTORY_SETTINGS      = 1 << 4, /* reset to factory defaults */
-	MODEST_RUNTIME_DEBUG_TINY_TEST_ACCOUNTS    = 1 << 5
+	MODEST_RUNTIME_DEBUG_FACTORY_SETTINGS      = 1 << 4  /* reset to factory defaults */
 } ModestRuntimeDebugFlags;
 
 /**

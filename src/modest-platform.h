@@ -34,6 +34,8 @@
 #include <gtk/gtk.h>
 #include <tny-device.h>
 
+G_BEGIN_DECLS
+
 /**
  * modest_platform_platform_init:
  *
@@ -100,5 +102,15 @@ gboolean modest_platform_show_uri_popup (const gchar *uri);
  * this function returns an icon, or NULL in case of error 
  */
 GdkPixbuf* modest_platform_get_icon (const gchar *name);
+
+
+/**
+ * modest_platform_get_application_name:
+ *
+ * this function returns the name of the application. Do not modify.
+ */
+const gchar* modest_platform_get_app_name (void);
+
+G_END_DECLS
 
 #endif /* __MODEST_PLATFORM_UTILS_H__ */

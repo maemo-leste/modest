@@ -445,7 +445,7 @@ modest_main_window_new (void)
 	/* Set window icon */
 	window_icon = modest_platform_get_icon (MODEST_APP_ICON);
 	gtk_window_set_icon (GTK_WINDOW (self), window_icon);
-
+	
 	/* Connect signals */
 	connect_signals (self);
 
@@ -455,9 +455,8 @@ modest_main_window_new (void)
 	g_idle_add ((GSourceFunc)sync_accounts_cb, self);
 	/* do send & receive when we are idle */	
 
-	g_message ("online? %s",
-		   tny_device_is_online (modest_runtime_get_device()) ? "yes" : "no");
-		
+	
+	
 	return MODEST_WINDOW(self);
 }
 

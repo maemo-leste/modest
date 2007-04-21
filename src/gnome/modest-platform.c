@@ -111,3 +111,10 @@ modest_platform_get_icon (const gchar *name)
 	
 	return pixbuf;
 }
+
+
+const gchar*
+modest_platform_get_app_name (void)
+{
+	return ("modest");
+}

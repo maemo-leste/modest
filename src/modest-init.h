@@ -1,0 +1,85 @@
+/* Copyright (c) 2006, 2007 Nokia Corporation
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ * * Redistributions of source code must retain the above copyright
+ *   notice, this list of conditions and the following disclaimer.
+ * * Redistributions in binary form must reproduce the above copyright
+ *   notice, this list of conditions and the following disclaimer in the
+ *   documentation and/or other materials provided with the distribution.
+ * * Neither the name of the Nokia Corporation nor the names of its
+ *   contributors may be used to endorse or promote products derived from
+ *   this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+ * IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+ * PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+ * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+#ifndef __MODEST_INIT_H__
+#define __MODEST_INIT_H__
+
+#include <glib.h>
+#include <glib-object.h>
+
+G_BEGIN_DECLS
+
+#define MODEST_DEBUG "MODEST_DEBUG"
+
+typedef enum {
+	MODEST_INIT_DEBUG_ABORT_ON_WARNING      = 1 << 0,
+	MODEST_INIT_DEBUG_LOG_ACTIONS           = 1 << 1, /* not in use atm */
+	MODEST_INIT_DEBUG_DEBUG_OBJECTS         = 1 << 2, /* for g_type_init */
+	MODEST_INIT_DEBUG_DEBUG_SIGNALS         = 1 << 3, /* for g_type_init */
+	MODEST_INIT_DEBUG_FACTORY_SETTINGS      = 1 << 4  /* reset to factory defaults */
+} ModestInitDebugFlags;
+
+/**
+ * modest_init_init_core:
+ *
+ * initialize the modest runtime system (which sets up the
+ * environment, instantiates singletons and so on)
+ * modest_runtime_init should only be called once, and
+ * when done with it, modest_runtime_uninit should be called
+ *  
+ * TRUE if this succeeded, FALSE otherwise.
+ */
+gboolean modest_init_init_core (void);
+
+
+/**
+ * modest_init_init_ui:
+ * @argc: the #argc argument to the main function
+ * @argv: the #argv argument to the main function
+ * 
+ * initialize the modest UI; this replaces the call to
+ * gtk_init
+ *  
+ * TRUE if this succeeded, FALSE otherwise.
+ */
+gboolean modest_init_init_ui (gint argc, gchar** argv);
+
+/**
+ * modest_init_uninit:
+ *
+ * uninitialize the modest runtime system; free all the
+ * resources and so on.
+ *
+ * TRUE if this succeeded, FALSE otherwise
+ */
+gboolean modest_init_uninit (void);
+
+G_END_DECLS
+
+#endif /*__MODEST_INIT_H__*/

@@ -40,6 +40,8 @@
 #include <tny-simple-list.h>
 
 #include <modest-runtime.h>
+#include <modest-init.h>
+
 #include <modest-defs.h>
 #include <modest-tny-account-store.h>
 #include <modest-tny-platform-factory.h>
@@ -116,8 +118,8 @@ main (int argc, char *argv[])
 	}
 	g_option_context_free (context);
 	
-	if (!modest_runtime_init ()) {
-		g_printerr ("modest: cannot init runtime\n");
+	if (!modest_init_init_core ()) {
+		g_printerr ("modest: cannot init modest core\n");
 		return MODEST_ERR_INIT;
 		
 	}
@@ -126,8 +128,8 @@ main (int argc, char *argv[])
 	g_free (account);
 	
 	if (!batch) {
-		if (!modest_runtime_init_ui (argc, argv)) {
-			g_printerr ("modest: cannot start ui\n");
+		if (!modest_init_init_ui (argc, argv)) {
+			g_printerr ("modest: cannot init modest ui\n");
 			retval = MODEST_ERR_UI;
 			goto cleanup;
 		} else {
@@ -155,9 +157,9 @@ cleanup:
 	g_free (cc);
 	g_free (body);
 	g_free (account);
-
-	if (!modest_runtime_uninit ()) 
-		g_printerr ("modest: modest_runtime_uninit failed\n");
+	
+	if (!modest_init_uninit ()) 
+		g_printerr ("modest: modest_init_uninit failed\n");
 
 	return retval;
 }

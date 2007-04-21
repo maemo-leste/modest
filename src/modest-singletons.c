@@ -215,18 +215,26 @@ modest_singletons_new (void)
 {
 	ModestSingletonsPrivate *priv;
 	ModestSingletons *self;
+	static gboolean invoked = FALSE;
+
+	if (invoked) {
+		g_printerr ("modest: modest_singletons_new may only be called once\n");
+		g_assert (!invoked); /* abort */
+		return NULL; /* g_assert may be NOP */
+	}
 	
 	self = MODEST_SINGLETONS(g_object_new(MODEST_TYPE_SINGLETONS, NULL));
 	priv = MODEST_SINGLETONS_GET_PRIVATE(self);
-
+	
 	/* widget_factory will still be NULL, as it is initialized lazily */
 	if (!(priv->conf && priv->account_mgr && priv->account_store &&
 	      priv->cache_mgr && priv->mail_op_queue && priv->device && priv->platform_fact)) {
-		g_printerr ("modest: failed to create singletons instance\n");
+		g_printerr ("modest: failed to create singletons object\n");
 		g_object_unref (G_OBJECT(self));
 		self = NULL;
 	}
-	
+
+	invoked = TRUE;
 	return self;
 }
 
