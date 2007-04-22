@@ -894,7 +894,10 @@ on_configuration_key_changed (ModestConf* conf,
 		return;
 
 	account = TNY_ACCOUNT (modest_folder_view_get_selected (priv->folder_view));
-	if (!strcmp (tny_account_get_id (account), MODEST_LOCAL_FOLDERS_ACCOUNT_ID)) {
-		/* TODO: change device name */
-	}
+	if (account) 
+		if (account &&
+		    strcmp (tny_account_get_id (account), MODEST_LOCAL_FOLDERS_ACCOUNT_ID) == 0) {
+			/* TODO: change device name */
+		}
+	
 }
