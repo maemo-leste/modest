@@ -372,6 +372,7 @@ create_page_user_details (ModestAccountSettingsDialog *self)
 		self->button_signature = gtk_button_new_with_label (_("mcen_bd_edit"));
 	caption = hildon_caption_new (sizegroup, _("mcen_fi_email_signature"), 
 		self->button_signature, NULL, HILDON_CAPTION_OPTIONAL);
+	hildon_caption_set_child_expand (HILDON_CAPTION (caption), FALSE);
 	gtk_widget_show (self->button_signature);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, 2);
 	gtk_widget_show (caption);
@@ -458,7 +459,7 @@ static GtkWidget* create_page_incoming (ModestAccountSettingsDialog *self)
 	/* The port widgets: */
 	/* TODO: There are various rules about this in the UI spec. */
 	if (!self->entry_incoming_port)
-		self->entry_incoming_port = GTK_WIDGET (hildon_number_editor_new (0, 10000 /* arbitrary min and max */));
+		self->entry_incoming_port = GTK_WIDGET (hildon_number_editor_new (0, 65535));
 	caption = hildon_caption_new (sizegroup, _("mcen_fi_emailsetup_port"), 
 		self->entry_incoming_port, NULL, HILDON_CAPTION_OPTIONAL);
 	gtk_widget_show (self->entry_incoming_port);
@@ -644,13 +645,17 @@ static GtkWidget* create_page_outgoing (ModestAccountSettingsDialog *self)
 	
 	/* The port widgets: */
 	if (!self->entry_outgoing_port)
-		self->entry_outgoing_port = GTK_WIDGET (hildon_number_editor_new (0, 10000 /* arbitrary min and max */));
+		self->entry_outgoing_port = GTK_WIDGET (hildon_number_editor_new (0, 65535));
 	caption = hildon_caption_new (sizegroup, _("mcen_fi_emailsetup_port"), 
 		self->entry_outgoing_port, NULL, HILDON_CAPTION_OPTIONAL);
 	gtk_widget_show (self->entry_outgoing_port);
 	connect_for_modified (self, self->entry_outgoing_port);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, 2);
 	gtk_widget_show (caption);
+	
+	GtkWidget *separator = gtk_hseparator_new ();
+	gtk_box_pack_start (GTK_BOX (box), separator, FALSE, FALSE, 2);
+	gtk_widget_show (separator);
 	
 	/* connection-specific checkbox: */
 	if (!self->checkbox_outgoing_smtp_specific) {
@@ -667,6 +672,7 @@ static GtkWidget* create_page_outgoing (ModestAccountSettingsDialog *self)
 		self->button_outgoing_smtp_servers = gtk_button_new_with_label (_("mcen_bd_edit"));
 	caption = hildon_caption_new (sizegroup, _("mcen_fi_advsetup_optional_smtp"), 
 		self->button_outgoing_smtp_servers, NULL, HILDON_CAPTION_OPTIONAL);
+	hildon_caption_set_child_expand (HILDON_CAPTION (caption), FALSE);
 	gtk_widget_show (self->button_outgoing_smtp_servers);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, 2);
 	gtk_widget_show (caption);

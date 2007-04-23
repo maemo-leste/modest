@@ -14,6 +14,7 @@
 #include <gtk/gtkbutton.h>
 #include <gtk/gtkcheckbutton.h>
 #include <gtk/gtkmessagedialog.h>
+#include <gtk/gtkseparator.h>
 #include <hildon-widgets/hildon-caption.h>
 #include "maemo/easysetup/modest-easysetup-country-combo-box.h"
 #include "maemo/easysetup/modest-easysetup-provider-combo-box.h"
@@ -262,7 +263,10 @@ create_page_account_details (ModestEasysetupWizardDialog *self)
     g_signal_connect (G_OBJECT (self->combo_account_country), "changed",
             G_CALLBACK (on_combo_account_country), self);
             
-	
+	GtkWidget *separator = gtk_hseparator_new ();
+	gtk_box_pack_start (GTK_BOX (box), separator, FALSE, FALSE, 2);
+	gtk_widget_show (separator);
+            
 	/* The service provider widgets: */	
 	self->combo_account_serviceprovider = GTK_WIDGET (easysetup_provider_combo_box_new ());
 	
@@ -645,11 +649,16 @@ static GtkWidget* create_page_custom_outgoing (ModestEasysetupWizardDialog *self
 	gtk_box_pack_start (GTK_BOX (box), self->checkbox_outgoing_smtp_specific, FALSE, FALSE, 2);
 	gtk_widget_show (self->checkbox_outgoing_smtp_specific);
 	
+	GtkWidget *separator = gtk_hseparator_new ();
+	gtk_box_pack_start (GTK_BOX (box), separator, FALSE, FALSE, 2);
+	gtk_widget_show (separator);
+	
 	/* Connection-specific SMTP-Severs Edit button: */
 	if (!self->button_outgoing_smtp_servers)
 		self->button_outgoing_smtp_servers = gtk_button_new_with_label (_("mcen_bd_edit"));
 	caption = hildon_caption_new (sizegroup, _("mcen_fi_advsetup_optional_smtp"), 
 		self->button_outgoing_smtp_servers, NULL, HILDON_CAPTION_OPTIONAL);
+	hildon_caption_set_child_expand (HILDON_CAPTION (caption), FALSE);
 	gtk_widget_show (self->button_outgoing_smtp_servers);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, 2);
 	gtk_widget_show (caption);
@@ -678,6 +687,7 @@ static GtkWidget* create_page_complete_custom (ModestEasysetupWizardDialog *self
 		self->button_edit = gtk_button_new_with_label (_("mcen_bd_edit"));
 	GtkWidget *caption = hildon_caption_new (NULL, _("mcen_fi_advanced_settings"), 
 		self->button_edit, NULL, HILDON_CAPTION_OPTIONAL);
+	hildon_caption_set_child_expand (HILDON_CAPTION (caption), FALSE);
 	gtk_widget_show (self->button_edit);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, 2);
 	gtk_widget_show (caption);

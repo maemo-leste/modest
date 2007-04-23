@@ -181,7 +181,7 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	
 	/* The port number widgets: */
 	if (!priv->entry_port)
-		priv->entry_port = GTK_WIDGET (hildon_number_editor_new (0, 10000 /* arbitrary min and max */));
+		priv->entry_port = GTK_WIDGET (hildon_number_editor_new (0, 65535));
 	caption = hildon_caption_new (sizegroup, 
 		_("mcen_li_emailsetup_smtp"), priv->entry_port, NULL, HILDON_CAPTION_OPTIONAL);
 	gtk_widget_show (priv->entry_port);

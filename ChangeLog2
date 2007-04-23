@@ -1,6 +1,19 @@
 2007-04-23  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/maemo/easysetup/modest-easysetup-wizard.c:
+	(create_page_account_details), (create_page_custom_outgoing),
+	(create_page_complete_custom):
+	* src/maemo/modest-account-settings-dialog.c:
+	(create_page_user_details), (create_page_incoming),
+	(create_page_outgoing):
+	* src/maemo/modest-connection-specific-smtp-edit-window.c:
+	(modest_connection_specific_smtp_edit_window_init): 
+	Use the correct (UI spec) port min/max, and use horizontal separators, 
+	as per the UI spec.
+
+2007-04-23  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/maemo/easysetup/modest-easysetup-wizard.c:
 	(set_default_custom_servernames):
 	* src/maemo/modest-account-settings-dialog.c:
 	(create_page_incoming), (on_combo_outgoing_security_changed),
