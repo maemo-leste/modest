@@ -124,8 +124,20 @@ typedef struct _GetMsgAsyncHelper {
 /* globals */
 static GtkWindowClass *parent_class = NULL;
 
-/* uncomment the following if you have defined any signals */
-/* static guint signals[LAST_SIGNAL] = {0}; */
+
+/* Private actions */
+static const GtkActionEntry modest_folder_view_action_entries [] = {
+
+	/* Folder View CSM actions */
+	{ "FolderViewCSMNewFolder", NULL, N_("FIXME: New Folder"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_new_folder) },
+	{ "FolderViewCSMRenameFolder", NULL, N_("mcen_me_user_renamefolder"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_rename_folder) },
+	{ "FolderViewCSMPasteMsgs", NULL, N_("FIXME: Paste"), NULL, NULL, NULL },
+	{ "FolderViewCSMDeleteFolder", NULL, N_("FIXME: Delete"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_delete_folder) },
+	{ "FolderViewCSMSearchMessages", NULL, N_("mcen_me_inbox_search"), NULL, NULL, NULL },
+	{ "FolderViewCSMHelp", NULL, N_("mcen_me_inbox_help"), NULL, NULL, NULL },
+};
+
+/************************************************************************/
 
 GType
 modest_main_window_get_type (void)
@@ -292,7 +304,7 @@ connect_signals (ModestMainWindow *self)
 	g_signal_connect (G_OBJECT(priv->folder_view), "folder-display-name-changed",
 			  G_CALLBACK(modest_ui_actions_on_folder_display_name_changed), self);
 
-	menu = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/FolderViewContextMenu");
+	menu = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/FolderViewCSM");
 	gtk_widget_tap_and_hold_setup (GTK_WIDGET (priv->folder_view), menu, NULL, 0);
 
 	/* header view */
@@ -362,6 +374,11 @@ modest_main_window_new (void)
 	gtk_action_group_add_actions (action_group,
 				      modest_action_entries,
 				      G_N_ELEMENTS (modest_action_entries),
+				      self);
+
+	gtk_action_group_add_actions (action_group,
+				      modest_folder_view_action_entries,
+				      G_N_ELEMENTS (modest_folder_view_action_entries),
 				      self);
 
 	gtk_action_group_add_toggle_actions (action_group,
@@ -602,7 +619,7 @@ modest_main_window_show_toolbar (ModestWindow *self,
 		reply_button = gtk_ui_manager_get_widget (parent_priv->ui_manager, 
 							  "/ToolBar/ToolbarMessageReply");
 		menu = gtk_ui_manager_get_widget (parent_priv->ui_manager,
-						  "/ToolbarReplyContextMenu");
+						  "/ToolbarReplyCSM");
 		gtk_widget_tap_and_hold_setup (GTK_WIDGET (reply_button), menu, NULL, 0);
 
 		/* Set send & receive button tap and hold menu */
@@ -893,11 +910,29 @@ on_configuration_key_changed (ModestConf* conf,
 	if (priv->contents_style != MODEST_MAIN_WINDOW_CONTENTS_STYLE_DETAILS)
 		return;
 
-	account = TNY_ACCOUNT (modest_folder_view_get_selected (priv->folder_view));
-	if (account) 
-		if (account &&
-		    strcmp (tny_account_get_id (account), MODEST_LOCAL_FOLDERS_ACCOUNT_ID) == 0) {
-			/* TODO: change device name */
-		}
-	
+	account = (TnyAccount *) modest_folder_view_get_selected (priv->folder_view);
+	if (TNY_IS_ACCOUNT (account) &&
+	    !strcmp (tny_account_get_id (account), MODEST_LOCAL_FOLDERS_ACCOUNT_ID)) {
+		GList *children;
+		GtkLabel *label;
+		const gchar *device_name;
+		gchar *new_text;
+		
+		/* Get label */
+		children = gtk_container_get_children (GTK_CONTAINER (priv->details_widget));
+		label = GTK_LABEL (children->data);
+		
+		device_name = modest_conf_get_string (modest_runtime_get_conf(),
+						      MODEST_CONF_DEVICE_NAME, NULL);
+		
+		new_text = g_strdup_printf ("%s: %s",
+					    _("mcen_fi_localroot_description"),
+					    device_name);
+		
+		gtk_label_set_text (label, new_text);
+		gtk_widget_show (GTK_WIDGET (label));
+		
+		g_free (new_text);
+		g_list_free (children);
+	}
 }

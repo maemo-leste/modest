@@ -69,7 +69,7 @@ void     modest_ui_actions_on_next          (GtkAction *action, ModestWindow *ma
 
 void     modest_ui_actions_on_prev          (GtkAction *action, ModestWindow *main_window);
 
-void     modest_ui_actions_on_message_details (GtkAction *action, ModestWindow *win);
+void     modest_ui_actions_on_details       (GtkAction *action, ModestWindow *win);
 
 
 /**

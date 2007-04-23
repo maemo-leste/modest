@@ -561,7 +561,7 @@ on_header_view_button_press_event (ModestHeaderView *header_view,
 		ModestWindowPrivate *parent_priv;
 	
 		parent_priv = MODEST_WINDOW_GET_PRIVATE (self);
-		menu = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/HeaderViewContextMenu");
+		menu = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/HeaderViewCSM");
 
 		return show_context_popup_menu (self,
 						GTK_TREE_VIEW (header_view), 
@@ -582,7 +582,7 @@ on_folder_view_button_press_event (ModestFolderView *folder_view,
 		ModestWindowPrivate *parent_priv;
 	
 		parent_priv = MODEST_WINDOW_GET_PRIVATE (self);
-		menu = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/FolderViewContextMenu");
+		menu = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/FolderViewCSM");
 
 		return show_context_popup_menu (self,
 						GTK_TREE_VIEW (folder_view), 

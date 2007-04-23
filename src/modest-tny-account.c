@@ -275,6 +275,7 @@ typedef gint (*TnyStatsFunc) (TnyFolderStats *stats);
 typedef struct _RecurseFoldersHelper {
 	TnyStatsFunc function;
 	guint sum;
+	guint folders;
 } RecurseFoldersHelper;
 
 static void
@@ -288,6 +289,8 @@ recurse_folders (TnyFolderStore *store,
 	tny_folder_store_get_folders (store, folders, query, NULL);
 	iter = tny_list_create_iterator (folders);
 
+	helper->folders += tny_list_get_length (folders);
+
 	while (!tny_iterator_is_done (iter))
 	{
 		TnyFolderStats *stats;
@@ -296,7 +299,8 @@ recurse_folders (TnyFolderStore *store,
 		folder = TNY_FOLDER (tny_iterator_get_current (iter));
 		stats = tny_folder_get_stats (folder);
 
-		helper->sum += helper->function (stats);
+		if (helper->function)
+			helper->sum += helper->function (stats);
 
 		recurse_folders (TNY_FOLDER_STORE (folder), query, helper);
 	    
@@ -311,9 +315,24 @@ recurse_folders (TnyFolderStore *store,
 gint 
 modest_tny_account_get_folder_count (TnyAccount *self)
 {
+	RecurseFoldersHelper *helper;
+	gint retval;
+
 	g_return_val_if_fail (TNY_IS_ACCOUNT (self), -1);
 
-	return 8;
+	/* Create helper */
+	helper = g_malloc0 (sizeof (RecurseFoldersHelper));
+	helper->function = NULL;
+	helper->sum = 0;
+	helper->folders = 0;
+
+	recurse_folders (TNY_FOLDER_STORE (self), NULL, helper);
+
+	retval = helper->folders;
+
+	g_free (helper);
+
+	return retval;
 }
 
 gint

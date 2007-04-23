@@ -87,8 +87,7 @@ static void     read_msg_func          (gpointer data, gpointer user_data);
 static void     get_msg_cb             (TnyFolder *folder, TnyMsg *msg,	GError **err, 
 					gpointer user_data);
 static void     reply_forward          (ReplyForwardAction action, ModestWindow *win);
-static void     modest_ui_actions_message_details_cb (gpointer msg_data, 
-						      gpointer helper_data);
+
 static gchar*   ask_for_folder_name    (GtkWindow *parent_window, const gchar *title);
 
 
@@ -930,12 +929,6 @@ modest_ui_actions_on_folder_selection_changed (ModestFolderView *folder_view,
 	} else if (TNY_IS_ACCOUNT (folder_store)) {
 
 		modest_main_window_set_contents_style (main_window, MODEST_MAIN_WINDOW_CONTENTS_STYLE_DETAILS);
-
-/* 		if (selected) { */
-			
-/* 		} else { */
-/* 			/\* TODO *\/ */
-/* 		}        */
 	}
 }
 
@@ -1616,17 +1609,12 @@ modest_ui_actions_on_change_fullscreen (GtkAction *action,
 }
 
 static void
-modest_ui_actions_message_details_cb (gpointer msg_data, 
-				      gpointer helper_data)
+show_header_details (TnyHeader *header, 
+		     GtkWindow *window)
 {
 	GtkWidget *dialog;
- 	TnyMsg *msg = (TnyMsg *) msg_data;
-	TnyHeader *header;
-	GetMsgAsyncHelper *helper = (GetMsgAsyncHelper *) helper_data;
 	
-	header = tny_msg_get_header (msg);
-	
-	dialog = modest_msg_view_details_dialog_new (GTK_WINDOW (helper->window), header);
+	dialog = modest_msg_view_details_dialog_new (window, header);
 	g_object_unref (header);
 	gtk_widget_show_all (dialog);
 
@@ -1636,35 +1624,69 @@ modest_ui_actions_message_details_cb (gpointer msg_data,
 }
 
 void     
-modest_ui_actions_on_message_details (GtkAction *action, 
-				      ModestWindow *win)
+modest_ui_actions_on_details (GtkAction *action, 
+			      ModestWindow *win)
 {
 	TnyList * headers_list;
-	GetMsgAsyncHelper *helper;
-
-	headers_list = get_selected_headers (win);
-	if (!headers_list)
-		return;
-
-	helper = g_slice_new0 (GetMsgAsyncHelper);
-	helper->window = win;
-	helper->func = modest_ui_actions_message_details_cb;
-	helper->iter = tny_list_create_iterator (headers_list);
-	helper->user_data = NULL;
+	TnyIterator *iter;
+	TnyHeader *header;		
 
 	if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
 		TnyMsg *msg;
 
 		msg = modest_msg_view_window_get_message (MODEST_MSG_VIEW_WINDOW (win));
-		if (!msg)
+		if (!msg) {
 			return;
-		else {
-			modest_ui_actions_message_details_cb (msg, helper);
+		} else {
+			headers_list = get_selected_headers (win);
+			if (!headers_list)
+				return;
+
+			iter = tny_list_create_iterator (headers_list);
+
+			header = TNY_HEADER (tny_iterator_get_current (iter));
+			show_header_details (header, GTK_WINDOW (win));
+			g_object_unref (header);
+
+			g_object_unref (iter);
 		}
-	} else {
-		/* here we should add an implementation to run the message details dialog
-		   from the main window */
-		g_return_if_reached ();
+	} else if (MODEST_IS_MAIN_WINDOW (win)) {
+		GtkWidget *folder_view, *header_view;
+
+		/* Check which widget has the focus */
+		folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win),
+								    MODEST_WIDGET_TYPE_FOLDER_VIEW);
+		if (gtk_widget_is_focus (folder_view)) {
+			TnyFolder *folder;
+
+			folder = modest_folder_view_get_selected (folder_view);
+
+			/* Show only when it's a folder */
+			if (!folder || !TNY_IS_FOLDER (folder))
+				return;
+
+			/* TODO */
+		} else {
+			header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win),
+									   MODEST_WIDGET_TYPE_HEADER_VIEW);
+			if (!gtk_widget_is_focus (header_view))
+				return;
+
+			headers_list = get_selected_headers (win);
+			if (!headers_list)
+				return;
+
+			iter = tny_list_create_iterator (headers_list);
+			while (!tny_iterator_is_done (iter)) {
+
+				header = TNY_HEADER (tny_iterator_get_current (iter));
+				show_header_details (header, GTK_WINDOW (win));
+				g_object_unref (header);
+
+				tny_iterator_next (iter);
+			}
+			g_object_unref (iter);
+		}
 	}
 }
 
@@ -1739,7 +1761,7 @@ modest_ui_actions_on_folder_display_name_changed (ModestFolderView *folder_view,
 	   the focus. This callback could be called even if the folder
 	   view has not the focus, because the handled signal could be
 	   emitted when the folder view is redrawn */
-	if (GTK_WIDGET_HAS_FOCUS (folder_view)) {
+	if (gtk_widget_is_focus (GTK_WIDGET (folder_view))) {
 		if (display_name)
 			gtk_window_set_title (window, display_name);
 		else

@@ -110,19 +110,24 @@
     <toolitem action="ToolbarSendReceive"/>
   </toolbar>
 
-  <popup name="HeaderViewContextMenu">
+  <popup name="HeaderViewCSM">
     <menuitem action="EmailReply"/>
     <menuitem action="EmailForward"/>
   </popup>
   
-  <popup name="FolderViewContextMenu">
-    <menuitem action="EmailNewFolder"/>
-    <menuitem action="FoldersDelete"/>
-    <menuitem action="FoldersRename"/>
-    <menuitem action="FoldersMoveToTrash"/>
+  <popup name="FolderViewCSM">
+    <menuitem action="FolderViewCSMNewFolder"/>
+    <menuitem action="FolderViewCSMRenameFolder"/>
+    <separator/>
+    <menuitem action="FolderViewCSMPasteMsgs"/>
+    <separator/>
+    <menuitem action="FolderViewCSMDeleteFolder"/>
+    <separator/>
+    <menuitem action="FolderViewCSMSearchMessages"/>
+    <menuitem action="FolderViewCSMHelp"/>
   </popup>
 
-  <popup name="ToolbarReplyContextMenu">
+  <popup name="ToolbarReplyCSM">
     <menuitem action="ToolbarMessageForward"/>
     <menuitem action="ToolbarMessageReplyAll"/>
     <menuitem action="ToolbarMessageReply"/>
