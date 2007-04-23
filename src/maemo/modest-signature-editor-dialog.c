@@ -13,6 +13,7 @@
 #include <gtk/gtkvbox.h>
 #include <gtk/gtktextview.h>
 #include <gtk/gtklabel.h>
+#include <gtk/gtkscrolledwindow.h>
 #include <gtk/gtkstock.h>
 
 #include <glib/gi18n.h>
@@ -28,6 +29,7 @@ struct _ModestSignatureEditorDialogPrivate
 {
 	GtkWidget *checkbox_use;
 	GtkWidget *label;
+	GtkWidget *scrolledwindow;
 	GtkWidget *textview;
 };
 
@@ -78,6 +80,25 @@ modest_signature_editor_dialog_class_init (ModestSignatureEditorDialogClass *kla
 }
 
 static void
+enable_widgets (ModestSignatureEditorDialog *self)
+{
+	ModestSignatureEditorDialogPrivate *priv = 
+		SIGNATURE_EDITOR_DIALOG_GET_PRIVATE (self);
+		
+	const gboolean enable = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (priv->checkbox_use));
+	gtk_widget_set_sensitive (priv->label, enable);
+	gtk_widget_set_sensitive (priv->scrolledwindow, enable);
+	gtk_text_view_set_editable (GTK_TEXT_VIEW (priv->textview), enable);
+}
+
+static void
+on_toggle_button_changed (GtkToggleButton *togglebutton, gpointer user_data)
+{
+	ModestSignatureEditorDialog *self = MODEST_SIGNATURE_EDITOR_DIALOG (user_data);
+	enable_widgets (self);
+}
+
+static void
 modest_signature_editor_dialog_init (ModestSignatureEditorDialog *self)
 {
 	ModestSignatureEditorDialogPrivate *priv = 
@@ -86,19 +107,33 @@ modest_signature_editor_dialog_init (ModestSignatureEditorDialog *self)
 	gtk_window_set_title (GTK_WINDOW (self), _("mcen_ti_email_signatures_edit_title"));
 		
 	GtkWidget *box = GTK_DIALOG(self)->vbox; /* gtk_vbox_new (FALSE, MODEST_MARGIN_HALF); */
+	gtk_container_set_border_width (GTK_CONTAINER (box), MODEST_MARGIN_HALF);
 	
 	priv->checkbox_use = gtk_check_button_new_with_label (
 		_("mcen_fi_email_signatures_use_signature"));
 	gtk_box_pack_start (GTK_BOX (box), priv->checkbox_use, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (priv->checkbox_use);
 	
+	g_signal_connect (G_OBJECT (priv->checkbox_use), "toggled",
+		G_CALLBACK (on_toggle_button_changed), self);
+		
+	
 	priv->label = gtk_label_new (""); /* Set in modest_signature_editor_dialog_set_settings(). */
 	gtk_box_pack_start (GTK_BOX (box), priv->label, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (priv->label);
 	
+	priv->scrolledwindow = gtk_scrolled_window_new (NULL, NULL);
+	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (priv->scrolledwindow), 
+		GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+	gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (priv->scrolledwindow), GTK_SHADOW_IN);
+	gtk_box_pack_start (GTK_BOX (box), priv->scrolledwindow, FALSE, FALSE, MODEST_MARGIN_HALF);
+	gtk_widget_show (priv->scrolledwindow);
+		
 	priv->textview = gtk_text_view_new ();
-	gtk_box_pack_start (GTK_BOX (box), priv->textview, FALSE, FALSE, MODEST_MARGIN_HALF);
+	gtk_container_add (GTK_CONTAINER (priv->scrolledwindow), priv->textview);
 	gtk_widget_show (priv->textview);
+	GtkTextBuffer *buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (priv->textview));
+	gtk_text_buffer_set_text (buffer, "--\n", -1); /* Default, as per the UI spec. */
 	
 	/* Add the buttons: */
 	gtk_dialog_add_button (GTK_DIALOG (self), GTK_STOCK_OK, GTK_RESPONSE_OK);
@@ -134,7 +169,9 @@ modest_signature_editor_dialog_set_settings (
 	if (signature)
 		gtk_text_buffer_set_text (buffer, signature, -1);
 	else
-		gtk_text_buffer_set_text (buffer, "", -1);
+		gtk_text_buffer_set_text (buffer, "--\n", -1); /* Default, as per the UI spec. */
+		
+	enable_widgets (window);
 }
 
 /*

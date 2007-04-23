@@ -1,5 +1,13 @@
 2007-04-23  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/maemo/modest-signature-editor-dialog.c: (enable_widgets),
+	(on_toggle_button_changed), (modest_signature_editor_dialog_init),
+	(modest_signature_editor_dialog_set_settings): 
+	Disable the label and textview when the checkbox is disabled, and use the 
+	specified (UI spec) default signature text.
+
+2007-04-23  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/maemo/modest-connection-specific-smtp-edit-window.c:
 	(modest_connection_specific_smtp_edit_window_init): Use spacing constants.
 	
