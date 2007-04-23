@@ -966,6 +966,7 @@ cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 
 		/* first one, we decide based on the time */
 	case MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER_IN:
+	case MODEST_HEADER_VIEW_COLUMN_COMPACT_RECEIVED_DATE:
 	case MODEST_HEADER_VIEW_COLUMN_RECEIVED_DATE:
 
 		gtk_tree_model_get (tree_model, iter1,
@@ -977,6 +978,7 @@ cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 		return t1 - t2;
 
 	case MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER_OUT:
+	case MODEST_HEADER_VIEW_COLUMN_COMPACT_SENT_DATE:
 	case MODEST_HEADER_VIEW_COLUMN_SENT_DATE:
 		gtk_tree_model_get (tree_model, iter1,
 				    TNY_GTK_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN,
