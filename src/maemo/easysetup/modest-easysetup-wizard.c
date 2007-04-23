@@ -918,6 +918,9 @@ static void set_default_custom_servernames (ModestEasysetupWizardDialog *account
 	/* Set a default domain for the server, based on the email address,
 	 * if no server name was already specified.
 	 */
+	if (!account_wizard->entry_outgoingserver)
+		return;
+		
 	const gchar* outgoing_existing = gtk_entry_get_text (GTK_ENTRY (account_wizard->entry_outgoingserver));
 	if ((!outgoing_existing || (strlen(outgoing_existing) == 0)) 
 		&& account_wizard->entry_user_email) {

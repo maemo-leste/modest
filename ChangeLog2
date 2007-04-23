@@ -1,3 +1,20 @@
+2007-04-23  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/maemo/easysetup/modest-easysetup-wizard.c:
+	(set_default_custom_servernames):
+	* src/maemo/modest-account-settings-dialog.c:
+	(create_page_incoming), (on_combo_outgoing_security_changed),
+	(on_combo_incoming_security_changed), (create_page_outgoing),
+	(modest_account_settings_dialog_set_account_name),
+	(save_configuration):
+	* src/maemo/modest-connection-specific-smtp-edit-window.c:
+	(on_combo_security_changed),
+	(modest_connection_specific_smtp_edit_window_init),
+	(modest_connection_specific_smtp_edit_window_set_connection),
+	(modest_connection_specific_smtp_edit_window_get_settings): 
+	Use HildonNumberEditor instead of GtkEntry for the port numbers so it has the - and + buttons,
+	as per the UI spec.
+
 2007-04-20  Murray Cumming  <murrayc@murrayc.com>
 
 	* po/en_GB.po:

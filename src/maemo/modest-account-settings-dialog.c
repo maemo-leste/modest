@@ -16,6 +16,7 @@
 #include <gtk/gtkmessagedialog.h>
 #include <gtk/gtkstock.h>
 #include <hildon-widgets/hildon-caption.h>
+#include <hildon-widgets/hildon-number-editor.h>
 #include "widgets/modest-serversecurity-combo-box.h"
 #include "widgets/modest-secureauth-combo-box.h"
 #include "widgets/modest-validating-entry.h"
@@ -457,7 +458,7 @@ static GtkWidget* create_page_incoming (ModestAccountSettingsDialog *self)
 	/* The port widgets: */
 	/* TODO: There are various rules about this in the UI spec. */
 	if (!self->entry_incoming_port)
-		self->entry_incoming_port = GTK_WIDGET (gtk_entry_new ());
+		self->entry_incoming_port = GTK_WIDGET (hildon_number_editor_new (0, 10000 /* arbitrary min and max */));
 	caption = hildon_caption_new (sizegroup, _("mcen_fi_emailsetup_port"), 
 		self->entry_incoming_port, NULL, HILDON_CAPTION_OPTIONAL);
 	gtk_widget_show (self->entry_incoming_port);
@@ -543,9 +544,8 @@ on_combo_outgoing_security_changed (GtkComboBox *widget, gpointer user_data)
 			MODEST_SERVERSECURITY_COMBO_BOX (self->combo_outgoing_security));
 
 	if(port_number != 0) {
-		gchar* str = g_strdup_printf ("%d", port_number);
-		gtk_entry_set_text (GTK_ENTRY (self->entry_outgoing_port), str);
-		g_free (str);	
+		hildon_number_editor_set_value (
+			HILDON_NUMBER_EDITOR (self->entry_outgoing_port), port_number);
 	}		
 }
 
@@ -559,9 +559,8 @@ on_combo_incoming_security_changed (GtkComboBox *widget, gpointer user_data)
 			MODEST_SERVERSECURITY_COMBO_BOX (self->combo_incoming_security));
 
 	if(port_number != 0) {
-		gchar* str = g_strdup_printf ("%d", port_number);
-		gtk_entry_set_text (GTK_ENTRY (self->entry_incoming_port), str);
-		g_free (str);	
+		hildon_number_editor_set_value (
+			HILDON_NUMBER_EDITOR (self->entry_incoming_port), port_number);
 	}		
 }
 
@@ -645,7 +644,7 @@ static GtkWidget* create_page_outgoing (ModestAccountSettingsDialog *self)
 	
 	/* The port widgets: */
 	if (!self->entry_outgoing_port)
-		self->entry_outgoing_port = GTK_WIDGET (gtk_entry_new ());
+		self->entry_outgoing_port = GTK_WIDGET (hildon_number_editor_new (0, 10000 /* arbitrary min and max */));
 	caption = hildon_caption_new (sizegroup, _("mcen_fi_emailsetup_port"), 
 		self->entry_outgoing_port, NULL, HILDON_CAPTION_OPTIONAL);
 	gtk_widget_show (self->entry_outgoing_port);
@@ -934,17 +933,8 @@ void modest_account_settings_dialog_set_account_name (ModestAccountSettingsDialo
 		
 		const gint port_num = modest_account_mgr_get_int (dialog->account_manager, incoming_account->account_name,
 			MODEST_ACCOUNT_PORT, TRUE /* server account */);
-		gchar *port_str = g_strdup_printf ("%d", port_num);
-		gtk_entry_set_text (GTK_ENTRY (dialog->entry_incoming_port), port_str);
-		g_free (port_str);
-	
-		/* TODO:
-	gchar	         *uri;
-	ModestProtocol    proto;
-	gchar            *password;
-	time_t		  last_updated;
-	GSList           *options;
-	*/
+		hildon_number_editor_set_value (
+			HILDON_NUMBER_EDITOR (dialog->entry_incoming_port), port_num);
 	
 	}
 	
@@ -976,9 +966,8 @@ void modest_account_settings_dialog_set_account_name (ModestAccountSettingsDialo
 		
 		const gint port_num = modest_account_mgr_get_int (dialog->account_manager, outgoing_account->account_name,
 			MODEST_ACCOUNT_PORT, TRUE /* server account */);
-		gchar *port_str = g_strdup_printf ("%d", port_num);
-		gtk_entry_set_text (GTK_ENTRY (dialog->entry_outgoing_port), port_str);
-		g_free (port_str);
+		hildon_number_editor_set_value (
+			HILDON_NUMBER_EDITOR (dialog->entry_outgoing_port), port_num);
 	}
 	
 	/* account_data->is_enabled,  */
@@ -1063,10 +1052,8 @@ save_configuration (ModestAccountSettingsDialog *dialog)
 	modest_server_account_set_security (dialog->account_manager, incoming_account_name, protocol_security_incoming);
 	
 	/* port: */
-	const gchar* port_str = gtk_entry_get_text (GTK_ENTRY (dialog->entry_incoming_port));
-	gint port_num = 0;
-	if (port_str)
-		port_num = atoi (port_str);
+	gint port_num = hildon_number_editor_get_value (
+			HILDON_NUMBER_EDITOR (dialog->entry_incoming_port));
 	modest_account_mgr_set_int (dialog->account_manager, incoming_account_name,
 			MODEST_ACCOUNT_PORT, port_num, TRUE /* server account */);
 		
@@ -1104,10 +1091,8 @@ save_configuration (ModestAccountSettingsDialog *dialog)
 	modest_server_account_set_secure_auth (dialog->account_manager, outgoing_account_name, protocol_authentication_outgoing);	
 		
 	/* port: */
-	port_str = gtk_entry_get_text (GTK_ENTRY (dialog->entry_outgoing_port));
-	port_num = 0;
-	if (port_str)
-		port_num = atoi (port_str);
+	port_num = hildon_number_editor_get_value (
+			HILDON_NUMBER_EDITOR (dialog->entry_outgoing_port));
 	modest_account_mgr_set_int (dialog->account_manager, outgoing_account_name,
 			MODEST_ACCOUNT_PORT, port_num, TRUE /* server account */);
 			

@@ -2,6 +2,7 @@
 
 #include "modest-connection-specific-smtp-edit-window.h"
 #include <hildon-widgets/hildon-caption.h>
+#include <hildon-widgets/hildon-number-editor.h>
 #include "widgets/modest-serversecurity-combo-box.h"
 #include "widgets/modest-secureauth-combo-box.h"
 #include "widgets/modest-validating-entry.h"
@@ -98,9 +99,8 @@ on_combo_security_changed (GtkComboBox *widget, gpointer user_data)
 			MODEST_SERVERSECURITY_COMBO_BOX (priv->combo_outgoing_security));
 
 	if(port_number != 0) {
-		gchar* str = g_strdup_printf ("%d", port_number);
-		gtk_entry_set_text (GTK_ENTRY (priv->entry_port), str);
-		g_free (str);	
+		hildon_number_editor_set_value (
+			HILDON_NUMBER_EDITOR (priv->entry_port), port_number);
 	}		
 }
 
@@ -181,7 +181,7 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	
 	/* The port number widgets: */
 	if (!priv->entry_port)
-		priv->entry_port = gtk_entry_new ();
+		priv->entry_port = GTK_WIDGET (hildon_number_editor_new (0, 10000 /* arbitrary min and max */));
 	caption = hildon_caption_new (sizegroup, 
 		_("mcen_li_emailsetup_smtp"), priv->entry_port, NULL, HILDON_CAPTION_OPTIONAL);
 	gtk_widget_show (priv->entry_port);
@@ -228,9 +228,8 @@ modest_connection_specific_smtp_edit_window_set_connection (
 		MODEST_SECUREAUTH_COMBO_BOX (priv->combo_outgoing_auth), data->secure_auth);
 		
 		/* port: */
-		gchar * port_str = g_strdup_printf ("%d", data->port);
-		gtk_entry_set_text (GTK_ENTRY (priv->entry_port), port_str);
-		g_free (port_str);
+		hildon_number_editor_set_value (
+			HILDON_NUMBER_EDITOR (priv->entry_port), data->port);
 	}
 }
 
@@ -261,9 +260,8 @@ modest_connection_specific_smtp_edit_window_get_settings (
 		MODEST_SECUREAUTH_COMBO_BOX (priv->combo_outgoing_auth));
 		
 	/* port: */
-	const gchar * port_str = gtk_entry_get_text (GTK_ENTRY (priv->entry_port));
-	if (port_str)
-		result->port = atoi (port_str);
+	result->port = hildon_number_editor_get_value (
+			HILDON_NUMBER_EDITOR (priv->entry_port));
 			
 	return result;
 }
