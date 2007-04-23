@@ -3,6 +3,7 @@
 #include "modest-connection-specific-smtp-window.h"
 #include "modest-connection-specific-smtp-edit-window.h"
 #include <modest-account-mgr-helpers.h>
+#include <maemo/modest-maemo-ui-constants.h>
 
 #include <modest-runtime.h>
 #include <tny-maemo-conic-device.h>
@@ -304,28 +305,28 @@ modest_connection_specific_smtp_window_init (ModestConnectionSpecificSmtpWindow 
 	
 	/* The application must call modest_connection_specific_smtp_window_fill_with_connections(). */
 	
-	GtkWidget *vbox = gtk_vbox_new (FALSE, 2);
+	GtkWidget *vbox = gtk_vbox_new (FALSE, MODEST_MARGIN_HALF);
 	
 	/* Put the treeview in a scrolled window and add it to the box: */
 	GtkWidget *scrolled_window = gtk_scrolled_window_new (NULL, NULL);
 	gtk_widget_show (scrolled_window);
 	gtk_container_add (GTK_CONTAINER (scrolled_window), GTK_WIDGET (priv->treeview));
-	gtk_box_pack_start (GTK_BOX (vbox), GTK_WIDGET (scrolled_window), TRUE, TRUE, 2);
+	gtk_box_pack_start (GTK_BOX (vbox), GTK_WIDGET (scrolled_window), TRUE, TRUE, MODEST_MARGIN_HALF);
 	gtk_widget_show (GTK_WIDGET (priv->treeview));
 	
 	/* Add the buttons: */
-	GtkWidget *hbox = gtk_hbox_new (FALSE, 2);
-	gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 2);
+	GtkWidget *hbox = gtk_hbox_new (FALSE, MODEST_MARGIN_HALF);
+	gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (hbox);
 	
 	priv->button_edit = gtk_button_new_from_stock (GTK_STOCK_EDIT);
-	gtk_box_pack_start (GTK_BOX (hbox), priv->button_edit, TRUE, FALSE, 2);
+	gtk_box_pack_start (GTK_BOX (hbox), priv->button_edit, TRUE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (priv->button_edit);
 	g_signal_connect (G_OBJECT (priv->button_edit), "clicked",
         	G_CALLBACK (on_button_edit), self);
 	
 	GtkWidget *button_cancel = gtk_button_new_from_stock (GTK_STOCK_CLOSE);
-	gtk_box_pack_start (GTK_BOX (hbox), button_cancel, TRUE, FALSE, 2);
+	gtk_box_pack_start (GTK_BOX (hbox), button_cancel, TRUE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (button_cancel);
 	g_signal_connect (G_OBJECT (button_cancel), "clicked",
         	G_CALLBACK (on_button_cancel), self);

@@ -1,5 +1,24 @@
 2007-04-23  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/maemo/Makefile.am:
+	* src/maemo/modest-maemo-ui-constants.h: New header with some defines for widget spacing, 
+	based on maemo-develoers email from Dirk.
+	
+	* src/maemo/easysetup/modest-easysetup-wizard.c:
+	(create_page_welcome), (create_page_account_details),
+	(create_page_user_details), (create_page_complete_easysetup),
+	(create_page_custom_incoming), (create_page_custom_outgoing),
+	(create_page_complete_custom),
+	(modest_easysetup_wizard_dialog_init):
+	* src/maemo/modest-account-settings-dialog.c:
+	(create_page_account_details), (create_page_user_details),
+	(create_page_incoming), (create_page_outgoing),
+	(modest_account_settings_dialog_init):
+	* src/maemo/modest-connection-specific-smtp-window.c:
+	(modest_connection_specific_smtp_window_init): Used the smallest of the spacing constants.
+
+2007-04-23  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/maemo/easysetup/modest-easysetup-wizard.c:
 	(create_page_account_details), (create_page_custom_outgoing),
 	(create_page_complete_custom):
