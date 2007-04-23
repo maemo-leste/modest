@@ -339,6 +339,8 @@ create_page_user_details (ModestAccountSettingsDialog *self)
 	 
 	/* The name widgets: */
 	self->entry_user_name = GTK_WIDGET (easysetup_validating_entry_new ());
+	/* Auto-capitalization is the default, so let's turn it off: */
+	hildon_gtk_entry_set_input_mode (GTK_ENTRY (self->entry_user_name), HILDON_GTK_INPUT_MODE_FULL);
 	/* Set max length as in the UI spec:
 	 * TODO: The UI spec seems to want us to show a dialog if we hit the maximum. */
 	gtk_entry_set_max_length (GTK_ENTRY (self->entry_user_name), 64);
@@ -360,6 +362,8 @@ create_page_user_details (ModestAccountSettingsDialog *self)
 	
 	/* The username widgets: */	
 	self->entry_user_username = GTK_WIDGET (easysetup_validating_entry_new ());
+	/* Auto-capitalization is the default, so let's turn it off: */
+	hildon_gtk_entry_set_input_mode (GTK_ENTRY (self->entry_user_username), HILDON_GTK_INPUT_MODE_FULL);
 	caption = create_caption_new_with_asterix (self, sizegroup, _("mail_fi_username"), 
 		self->entry_user_username, NULL, HILDON_CAPTION_MANDATORY);
 	gtk_widget_show (self->entry_user_username);
@@ -378,6 +382,8 @@ create_page_user_details (ModestAccountSettingsDialog *self)
 	
 	/* The password widgets: */	
 	self->entry_user_password = gtk_entry_new ();
+	/* Auto-capitalization is the default, so let's turn it off: */
+	hildon_gtk_entry_set_input_mode (GTK_ENTRY (self->entry_user_password), HILDON_GTK_INPUT_MODE_FULL);
 	gtk_entry_set_visibility (GTK_ENTRY (self->entry_user_password), FALSE);
 	/* gtk_entry_set_invisible_char (GTK_ENTRY (self->entry_user_password), '*'); */
 	caption = create_caption_new_with_asterix (self, sizegroup, 
@@ -389,6 +395,8 @@ create_page_user_details (ModestAccountSettingsDialog *self)
 	
 	/* The email address widgets: */	
 	self->entry_user_email = GTK_WIDGET (easysetup_validating_entry_new ());
+	/* Auto-capitalization is the default, so let's turn it off: */
+	hildon_gtk_entry_set_input_mode (GTK_ENTRY (self->entry_user_email), HILDON_GTK_INPUT_MODE_FULL);
 	caption = create_caption_new_with_asterix (self, sizegroup, 
 		_("mcen_li_emailsetup_email_address"), self->entry_user_email, NULL, HILDON_CAPTION_MANDATORY);
 	gtk_entry_set_text (GTK_ENTRY (self->entry_user_email), EXAMPLE_EMAIL_ADDRESS); /* Default text. */
@@ -462,6 +470,8 @@ static GtkWidget* create_page_incoming (ModestAccountSettingsDialog *self)
 	/* The incoming server widgets: */
 	if(!self->entry_incomingserver)
 		self->entry_incomingserver = gtk_entry_new ();
+	/* Auto-capitalization is the default, so let's turn it off: */
+	hildon_gtk_entry_set_input_mode (GTK_ENTRY (self->entry_incomingserver), HILDON_GTK_INPUT_MODE_FULL);
 
 	if (self->caption_incoming)
 	  gtk_widget_destroy (self->caption_incoming);
@@ -613,6 +623,8 @@ static GtkWidget* create_page_outgoing (ModestAccountSettingsDialog *self)
 	/* The outgoing server widgets: */
 	if (!self->entry_outgoingserver)
 		self->entry_outgoingserver = gtk_entry_new ();
+	/* Auto-capitalization is the default, so let's turn it off: */
+	hildon_gtk_entry_set_input_mode (GTK_ENTRY (self->entry_outgoingserver), HILDON_GTK_INPUT_MODE_FULL);
 	GtkWidget *caption = create_caption_new_with_asterix (self, sizegroup, 
 		_("mcen_li_emailsetup_smtp"), self->entry_outgoingserver, NULL, HILDON_CAPTION_OPTIONAL);
 	gtk_widget_show (self->entry_outgoingserver);
@@ -635,6 +647,8 @@ static GtkWidget* create_page_outgoing (ModestAccountSettingsDialog *self)
 	
 	/* The username widgets: */	
 	self->entry_outgoing_username = GTK_WIDGET (easysetup_validating_entry_new ());
+	/* Auto-capitalization is the default, so let's turn it off: */
+	hildon_gtk_entry_set_input_mode (GTK_ENTRY (self->entry_outgoing_username), HILDON_GTK_INPUT_MODE_FULL);
 	self->caption_outgoing_username = create_caption_new_with_asterix (self, sizegroup, _("mail_fi_username"), 
 		self->entry_outgoing_username, NULL, HILDON_CAPTION_MANDATORY);
 	gtk_widget_show (self->entry_outgoing_username);
@@ -653,6 +667,8 @@ static GtkWidget* create_page_outgoing (ModestAccountSettingsDialog *self)
 	
 	/* The password widgets: */	
 	self->entry_outgoing_password = gtk_entry_new ();
+	/* Auto-capitalization is the default, so let's turn it off: */
+	hildon_gtk_entry_set_input_mode (GTK_ENTRY (self->entry_outgoing_password), HILDON_GTK_INPUT_MODE_FULL);
 	gtk_entry_set_visibility (GTK_ENTRY (self->entry_outgoing_password), FALSE);
 	/* gtk_entry_set_invisible_char (GTK_ENTRY (self->entry_outgoing_password), '*'); */
 	self->caption_outgoing_password = create_caption_new_with_asterix (self, sizegroup, 

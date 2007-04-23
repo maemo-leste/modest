@@ -122,6 +122,8 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	/* The outgoing server widgets: */
 	if (!priv->entry_outgoingserver)
 		priv->entry_outgoingserver = gtk_entry_new ();
+	/* Auto-capitalization is the default, so let's turn it off: */
+	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_outgoingserver), HILDON_GTK_INPUT_MODE_FULL);
 	GtkWidget *caption = hildon_caption_new (sizegroup, 
 		_("mcen_li_emailsetup_smtp"), priv->entry_outgoingserver, NULL, HILDON_CAPTION_OPTIONAL);
 	gtk_widget_show (priv->entry_outgoingserver);
@@ -143,6 +145,8 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	
 	/* The username widgets: */	
 	priv->entry_user_username = GTK_WIDGET (easysetup_validating_entry_new ());
+	/* Auto-capitalization is the default, so let's turn it off: */
+	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_user_username), HILDON_GTK_INPUT_MODE_FULL);
 	caption = hildon_caption_new (sizegroup, _("mail_fi_username"), 
 		priv->entry_user_username, NULL, HILDON_CAPTION_MANDATORY);
 	gtk_widget_show (priv->entry_user_username);
@@ -160,6 +164,8 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	
 	/* The password widgets: */	
 	priv->entry_user_password = gtk_entry_new ();
+	/* Auto-capitalization is the default, so let's turn it off: */
+	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_user_password), HILDON_GTK_INPUT_MODE_FULL);
 	gtk_entry_set_visibility (GTK_ENTRY (priv->entry_user_password), FALSE);
 	/* gtk_entry_set_invisible_char (GTK_ENTRY (priv->entry_user_password), '*'); */
 	caption = hildon_caption_new (sizegroup, 

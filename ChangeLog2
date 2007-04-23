@@ -1,5 +1,18 @@
 2007-04-23  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/maemo/easysetup/modest-easysetup-wizard.c:
+	(create_page_user_details), (create_page_custom_incoming),
+	(create_page_custom_outgoing):
+	* src/maemo/modest-account-settings-dialog.c:
+	(create_page_user_details), (create_page_incoming),
+	(create_page_outgoing):
+	* src/maemo/modest-connection-specific-smtp-edit-window.c:
+	(modest_connection_specific_smtp_edit_window_init):
+	Use hildon_gtk_entry_set_input_mode() to turn off auto-capitalization where it is 
+	not appropriate. Bad Maemo-specific defaults!.
+
+2007-04-23  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/maemo/modest-signature-editor-dialog.c: (enable_widgets),
 	(on_toggle_button_changed), (modest_signature_editor_dialog_init),
 	(modest_signature_editor_dialog_set_settings): 
