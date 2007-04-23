@@ -1,5 +1,26 @@
 2007-04-23  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/maemo/modest-connection-specific-smtp-edit-window.c:
+	(modest_connection_specific_smtp_edit_window_init): Use spacing constants.
+	
+	* src/modest-defs.h:
+	* src/modest-account-mgr-helpers.h:
+	* src/modest-account-mgr-helpers.c:
+	Added modest_account_mgr_get/set_signature(), using new gconf keys.
+	
+	* src/maemo/Makefile.am:
+	* src/maemo/modest-signature-editor-dialog.c:
+	* src/maemo/modest-signature-editor-dialog.h: New dialog for editing signatures, 
+	as per the UI spec.
+	
+	* src/maemo/modest-account-settings-dialog.h:
+	* src/maemo/modest-account-settings-dialog.c:
+	(modest_account_settings_dialog_finalize), (on_button_signature),
+	(save_configuration): Use the new dialog when the Edit button is pressed, and 
+	save the changes if necessary, as per the UI spec.
+
+2007-04-23  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/maemo/Makefile.am:
 	* src/maemo/modest-maemo-ui-constants.h: New header with some defines for widget spacing, 
 	based on maemo-develoers email from Dirk.

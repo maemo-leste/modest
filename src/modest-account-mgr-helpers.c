@@ -47,6 +47,30 @@ modest_account_mgr_get_enabled (ModestAccountMgr *self, const gchar* name)
 	return modest_account_mgr_get_bool (self, name, MODEST_ACCOUNT_ENABLED, FALSE);
 }
 
+gboolean modest_account_mgr_set_signature (ModestAccountMgr *self, const gchar* name, 
+	const gchar* signature, gboolean use_signature)
+{
+	gboolean result = modest_account_mgr_set_bool (self, name, MODEST_ACCOUNT_USE_SIGNATURE, 
+		use_signature, FALSE);
+	result = result && modest_account_mgr_set_string (self, name, MODEST_ACCOUNT_SIGNATURE, 
+		signature, FALSE);
+	return result;
+}
+
+
+gchar* modest_account_mgr_get_signature (ModestAccountMgr *self, const gchar* name, 
+	gboolean* use_signature)
+{
+	if (use_signature) {
+		*use_signature = 
+			modest_account_mgr_get_bool (self, name, MODEST_ACCOUNT_USE_SIGNATURE, FALSE);
+	}
+	
+	return modest_account_mgr_get_string (self, name, MODEST_ACCOUNT_SIGNATURE, FALSE);
+}
+	
+	
+
 #if 0 /* Not needed, but works. */
 static gint
 compare_option_strings_for_name (const gchar* a, const gchar* b)

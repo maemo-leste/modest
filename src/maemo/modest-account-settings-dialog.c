@@ -27,6 +27,7 @@
 #include "modest-account-mgr-helpers.h" /* For modest_account_mgr_get_account_data(). */
 #include "modest-runtime.h" /* For modest_runtime_get_account_mgr(). */
 #include "maemo/modest-connection-specific-smtp-window.h"
+#include "maemo/modest-signature-editor-dialog.h"
 #include <maemo/modest-maemo-ui-constants.h>
 #include <gconf/gconf-client.h>
 #include <string.h> /* For strlen(). */
@@ -98,6 +99,9 @@ modest_account_settings_dialog_finalize (GObject *object)
 		
 	if (self->specific_window)
 		gtk_widget_destroy (self->specific_window);
+		
+	if (self->signature_dialog)
+		gtk_widget_destroy (self->signature_dialog);
 	
 	G_OBJECT_CLASS (modest_account_settings_dialog_parent_class)->finalize (object);
 }
@@ -290,7 +294,37 @@ create_page_account_details (ModestAccountSettingsDialog *self)
 static void
 on_button_signature (GtkButton *button, gpointer user_data)
 {
+	ModestAccountSettingsDialog * self = MODEST_ACCOUNT_SETTINGS_DIALOG (user_data);
 	
+	/* Create the window, if necessary: */
+	if (!(self->signature_dialog)) {
+		self->signature_dialog = GTK_WIDGET (modest_signature_editor_dialog_new ());
+	
+		gboolean use_signature = FALSE;
+		gchar *signature = modest_account_mgr_get_signature(self->account_manager, self->account_name, 
+			&use_signature);
+		const gchar* account_title = gtk_entry_get_text (GTK_ENTRY (self->entry_account_title));
+		modest_signature_editor_dialog_set_settings (
+			MODEST_SIGNATURE_EDITOR_DIALOG (self->signature_dialog), 
+			use_signature, signature, account_title);
+		g_free (signature);
+		signature = NULL;
+	}
+
+	/* Show the window: */	
+	gtk_window_set_transient_for (GTK_WINDOW (self->signature_dialog), GTK_WINDOW (self));
+	gtk_window_set_modal (GTK_WINDOW (self->signature_dialog), TRUE);
+    const gint response = gtk_dialog_run (GTK_DIALOG (self->signature_dialog));
+    gtk_widget_hide (self->signature_dialog);
+    if (response != GTK_RESPONSE_OK) {
+    	/* Destroy the widget now, and its data: */
+    	gtk_widget_destroy (self->signature_dialog);
+    	self->signature_dialog = NULL;
+    }
+    else {
+    	/* Mark modified, so we use the dialog's data later: */
+    	self->modified = TRUE;	
+    }
 }
 
 static GtkWidget*
@@ -1008,6 +1042,18 @@ save_configuration (ModestAccountSettingsDialog *dialog)
 		MODEST_ACCOUNT_EMAIL, emailaddress, FALSE /* not server account */);
 	if (!test)
 		return FALSE;
+		
+	/* Signature: */
+	if (dialog->signature_dialog) {
+		gboolean use_signature = FALSE;
+    	gchar *signature = modest_signature_editor_dialog_get_settings (
+    		MODEST_SIGNATURE_EDITOR_DIALOG (dialog->signature_dialog),
+    		&use_signature);
+    	
+    	modest_account_mgr_set_signature(dialog->account_manager, account_name, 
+    		signature, use_signature);
+    	g_free (signature);
+    }
 	
 	gchar *retrieve = modest_retrieve_combo_box_get_active_retrieve_conf (
 		MODEST_RETRIEVE_COMBO_BOX (dialog->combo_retrieve));

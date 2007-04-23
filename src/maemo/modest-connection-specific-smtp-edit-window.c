@@ -1,6 +1,7 @@
 /* connection-specific-smtp-window.c */
 
 #include "modest-connection-specific-smtp-edit-window.h"
+#include "maemo/modest-maemo-ui-constants.h"
 #include <hildon-widgets/hildon-caption.h>
 #include <hildon-widgets/hildon-number-editor.h>
 #include "widgets/modest-serversecurity-combo-box.h"
@@ -110,7 +111,7 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	ModestConnectionSpecificSmtpEditWindowPrivate *priv = 
 		CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW_GET_PRIVATE (self);
 	
-	GtkWidget *box = GTK_DIALOG(self)->vbox; /* gtk_vbox_new (FALSE, 2); */
+	GtkWidget *box = GTK_DIALOG(self)->vbox; /* gtk_vbox_new (FALSE, MODEST_MARGIN_HALF); */
 	
 	/* Create a size group to be used by all captions.
 	 * Note that HildonCaption does not create a default size group if we do not specify one.
@@ -123,7 +124,7 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	GtkWidget *caption = hildon_caption_new (sizegroup, 
 		_("mcen_li_emailsetup_smtp"), priv->entry_outgoingserver, NULL, HILDON_CAPTION_OPTIONAL);
 	gtk_widget_show (priv->entry_outgoingserver);
-	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, 2);
+	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (caption);
 	
 	/* Show a default port number when the security method changes, as per the UI spec: */
@@ -136,7 +137,7 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	caption = hildon_caption_new (sizegroup, _("mcen_li_emailsetup_secure_authentication"), 
 		priv->combo_outgoing_auth, NULL, HILDON_CAPTION_OPTIONAL);
 	gtk_widget_show (priv->combo_outgoing_auth);
-	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, 2);
+	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (caption);
 	
 	/* The username widgets: */	
@@ -144,7 +145,7 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	caption = hildon_caption_new (sizegroup, _("mail_fi_username"), 
 		priv->entry_user_username, NULL, HILDON_CAPTION_MANDATORY);
 	gtk_widget_show (priv->entry_user_username);
-	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, 2);
+	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (caption);
 	
 	/* Prevent the use of some characters in the username, 
@@ -163,7 +164,7 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	caption = hildon_caption_new (sizegroup, 
 		_("mail_fi_password"), priv->entry_user_password, NULL, HILDON_CAPTION_OPTIONAL);
 	gtk_widget_show (priv->entry_user_password);
-	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, 2);
+	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (caption);
 	
 	/* The secure connection widgets: */	
@@ -176,7 +177,7 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	caption = hildon_caption_new (sizegroup, _("mcen_li_emailsetup_secure_connection"), 
 		priv->combo_outgoing_security, NULL, HILDON_CAPTION_OPTIONAL);
 	gtk_widget_show (priv->combo_outgoing_security);
-	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, 2);
+	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (caption);
 	
 	/* The port number widgets: */
@@ -185,7 +186,7 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	caption = hildon_caption_new (sizegroup, 
 		_("mcen_li_emailsetup_smtp"), priv->entry_port, NULL, HILDON_CAPTION_OPTIONAL);
 	gtk_widget_show (priv->entry_port);
-	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, 2);
+	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (caption);
 	
 	/* Add the buttons: */

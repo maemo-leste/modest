@@ -140,6 +140,33 @@ gboolean modest_account_mgr_set_enabled (ModestAccountMgr *self, const gchar* na
 gboolean modest_account_mgr_get_enabled (ModestAccountMgr *self, const gchar* name);
 
 /**
+ * modest_account_mgr_set_signature
+ * @self: a ModestAccountMgr instance
+ * @name: the account name to check
+ * @signature: the signature text 
+ * @use_signature: Whether the signature should be used.
+ * 
+ * Sets the signature text for the account.
+ *
+ * Returns: TRUE if it worked, FALSE otherwise
+ */
+gboolean modest_account_mgr_set_signature (ModestAccountMgr *self, const gchar* name, 
+	const gchar* signature, gboolean use_signature);
+
+/**
+ * modest_account_mgr_get_signature:
+ * @self: a ModestAccountMgr instance
+ * @name: the account name
+ * @use_signature: Pointer to a gboolean taht will be set to TRUE if the signature should be used.
+ *
+ * Gets the signature text for this account.
+ *
+ * Returns: The signature text, which should be freed with g_free().
+ */
+gchar* modest_account_mgr_get_signature (ModestAccountMgr *self, const gchar* name, 
+	gboolean* use_signature);
+
+/**
  * modest_account_mgr_set_connection_specific_smtp
  * @self: a ModestAccountMgr instance
  * @name: the account name

@@ -80,6 +80,7 @@ typedef struct {
 	GtkWidget *button_outgoing_smtp_servers;
 	
 	GtkWidget *specific_window;
+	GtkWidget *signature_dialog;
 	
 } ModestAccountSettingsDialog;
 
