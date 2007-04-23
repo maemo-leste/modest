@@ -216,6 +216,14 @@ static GtkWidget* create_caption_new_with_asterix(ModestAccountSettingsDialog *s
 	return caption;
 }
 
+
+static void
+on_entry_max (EasysetupValidatingEntry *self, gpointer user_data)
+{
+	ModestAccountSettingsDialog *dialog = MODEST_ACCOUNT_SETTINGS_DIALOG (user_data);
+	show_error (GTK_WINDOW (dialog), _("ckdg_ib_maximum_characters_reached"));
+}
+
 static GtkWidget*
 create_page_account_details (ModestAccountSettingsDialog *self)
 {
@@ -257,8 +265,10 @@ create_page_account_details (ModestAccountSettingsDialog *self)
 	g_list_free (list_prevent);
 	
 	/* Set max length as in the UI spec:
-	 * TODO: The UI spec seems to want us to show a dialog if we hit the maximum. */
+	 * The UI spec seems to want us to show a dialog if we hit the maximum. */
 	gtk_entry_set_max_length (GTK_ENTRY (self->entry_account_title), 64);
+	easysetup_validating_entry_set_max_func (EASYSETUP_VALIDATING_ENTRY (self->entry_account_title), 
+		on_entry_max, self);
 	
 	/* The retrieve combobox: */
 	self->combo_retrieve = GTK_WIDGET (modest_retrieve_combo_box_new ());
@@ -342,8 +352,10 @@ create_page_user_details (ModestAccountSettingsDialog *self)
 	/* Auto-capitalization is the default, so let's turn it off: */
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (self->entry_user_name), HILDON_GTK_INPUT_MODE_FULL);
 	/* Set max length as in the UI spec:
-	 * TODO: The UI spec seems to want us to show a dialog if we hit the maximum. */
+	 * The UI spec seems to want us to show a dialog if we hit the maximum. */
 	gtk_entry_set_max_length (GTK_ENTRY (self->entry_user_name), 64);
+	easysetup_validating_entry_set_max_func (EASYSETUP_VALIDATING_ENTRY (self->entry_user_name), 
+		on_entry_max, self);
 	GtkWidget *caption = create_caption_new_with_asterix (self, sizegroup, 
 		_("mcen_li_emailsetup_name"), self->entry_user_name, NULL, HILDON_CAPTION_OPTIONAL);
 	gtk_widget_show (self->entry_user_name);
@@ -377,8 +389,10 @@ create_page_user_details (ModestAccountSettingsDialog *self)
 	 	EASYSETUP_VALIDATING_ENTRY (self->entry_user_username));
 	
 	/* Set max length as in the UI spec:
-	 * TODO: The UI spec seems to want us to show a dialog if we hit the maximum. */
+	 * The UI spec seems to want us to show a dialog if we hit the maximum. */
 	gtk_entry_set_max_length (GTK_ENTRY (self->entry_user_username), 64);
+	easysetup_validating_entry_set_max_func (EASYSETUP_VALIDATING_ENTRY (self->entry_user_username), 
+		on_entry_max, self);
 	
 	/* The password widgets: */	
 	self->entry_user_password = gtk_entry_new ();
@@ -406,9 +420,10 @@ create_page_user_details (ModestAccountSettingsDialog *self)
 	gtk_widget_show (caption);
 	
 	/* Set max length as in the UI spec:
-	 * TODO: The UI spec seems to want us to show a dialog if we hit the maximum. */
+	 * The UI spec seems to want us to show a dialog if we hit the maximum. */
 	gtk_entry_set_max_length (GTK_ENTRY (self->entry_user_email), 64);
-	
+	easysetup_validating_entry_set_max_func (EASYSETUP_VALIDATING_ENTRY (self->entry_user_email), 
+		on_entry_max, self);
 	
 	/* Signature button: */
 	if (!self->button_signature)
@@ -662,9 +677,11 @@ static GtkWidget* create_page_outgoing (ModestAccountSettingsDialog *self)
 	 	EASYSETUP_VALIDATING_ENTRY (self->entry_outgoing_username));
 	
 	/* Set max length as in the UI spec:
-	 * TODO: The UI spec seems to want us to show a dialog if we hit the maximum. */
+	 * The UI spec seems to want us to show a dialog if we hit the maximum. */
 	gtk_entry_set_max_length (GTK_ENTRY (self->entry_outgoing_username), 64);
-	
+	easysetup_validating_entry_set_max_func (EASYSETUP_VALIDATING_ENTRY (self->entry_outgoing_username), 
+		on_entry_max, self);
+		
 	/* The password widgets: */	
 	self->entry_outgoing_password = gtk_entry_new ();
 	/* Auto-capitalization is the default, so let's turn it off: */

@@ -1,5 +1,23 @@
 2007-04-23  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/widgets/modest-validating-entry.h:
+	* src/widgets/modest-validating-entry.c: (on_insert_text),
+	Added easysetup_validating_entry_set_max_func(), used to set a callback 
+	to call when the max number of characters is reached. GtkEntry has a max-length 
+	already but is silent about it.
+
+	* src/maemo/easysetup/modest-easysetup-wizard.c: (on_entry_max),
+	(create_page_account_details), (create_page_user_details),
+	(create_account):
+	* src/maemo/modest-account-settings-dialog.c: (on_entry_max),
+	(create_page_account_details), (create_page_user_details),
+	(create_page_outgoing):
+	* src/modest-ui-actions.c: (modest_ui_actions_on_details): 
+	Use easysetup_validating_entry_set_max_func() to show the warning dialog, as per 
+	the UI spec, when the user tries to enter more than the max number of characters.
+
+2007-04-23  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/maemo/easysetup/modest-easysetup-wizard.c:
 	(create_page_user_details), (create_page_custom_incoming),
 	(create_page_custom_outgoing):

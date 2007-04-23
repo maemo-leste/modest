@@ -47,6 +47,9 @@ EasysetupValidatingEntry* easysetup_validating_entry_new (void);
 void easysetup_validating_entry_set_unallowed_characters (EasysetupValidatingEntry *self, GList *list);
 void easysetup_validating_entry_set_unallowed_characters_whitespace (EasysetupValidatingEntry *self);
 
+typedef void (* EasySetupValidatingEntryMaxFunc) (EasysetupValidatingEntry *self, gpointer user_data);
+void easysetup_validating_entry_set_max_func (EasysetupValidatingEntry *self, EasySetupValidatingEntryMaxFunc func, gpointer user_data);
+
 G_END_DECLS
 
 #endif /* _EASYSETUP_VALIDATING_ENTRY */

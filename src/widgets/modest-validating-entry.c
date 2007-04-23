@@ -28,6 +28,9 @@ struct _EasysetupValidatingEntryPrivate
 	GList *list_prevent;
 	
 	gboolean prevent_whitespace;
+	
+	EasySetupValidatingEntryMaxFunc max_func;
+	gpointer max_func_user_data;
 };
 
 static void
@@ -146,6 +149,25 @@ on_insert_text(GtkEditable *editable,
 		iter = g_utf8_find_next_char (iter, new_text + new_text_length);
 	}
 	
+	/* Prevent more than the max characters.
+	 * The regular GtkEntry does this already, but we also want to call a specified callback,
+	 * so that the application can show a warning dialog. */
+	if(priv->max_func) {
+	 	const gint max_num = gtk_entry_get_max_length (GTK_ENTRY (self));
+	 	if (max_num > 0) {
+	 		const gchar *existing_text = gtk_entry_get_text (GTK_ENTRY(self));
+	 		const gint existing_length = existing_text ? g_utf8_strlen (existing_text, -1) : 0;
+	 		const gint new_length_chars = g_utf8_strlen (new_text, new_text_length);
+	 		
+	 		if ((existing_length + new_length_chars) > max_num) {
+	 			priv->max_func (self, priv->max_func_user_data);
+	 			/* We shouldn't need to stop the signal because the underlying code will check too.
+	 		 	* Well, that would maybe be a performance optimization, 
+	 			 * but it's generally safer not to interfere too much. */	
+	 		}
+	 	}
+	}
+	
 	if(!allow) {
 		/* The signal documentation says 
 		 * "by connecting to this signal and then stopping the signal with 
@@ -154,6 +176,7 @@ on_insert_text(GtkEditable *editable,
 		 */
 		 gtk_signal_emit_stop_by_name (GTK_OBJECT (self), "insert-text");
 	}
+
 } 
                                             
 static void
@@ -208,3 +231,14 @@ void easysetup_validating_entry_set_unallowed_characters_whitespace (EasysetupVa
 	EasysetupValidatingEntryPrivate *priv = VALIDATING_ENTRY_GET_PRIVATE (self);
 	priv->prevent_whitespace = TRUE;
 }
+
+/** Set a callback to be called when the maximum number of characters have been entered.
+ * This may be used to show an informative dialog.
+ */
+void easysetup_validating_entry_set_max_func (EasysetupValidatingEntry *self, EasySetupValidatingEntryMaxFunc func, gpointer user_data)
+{
+	EasysetupValidatingEntryPrivate *priv = VALIDATING_ENTRY_GET_PRIVATE (self);
+	priv->max_func = func;
+	priv->max_func_user_data = user_data;
+}
+

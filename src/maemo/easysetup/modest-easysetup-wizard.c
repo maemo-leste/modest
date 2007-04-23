@@ -238,6 +238,12 @@ on_combo_account_serviceprovider (GtkComboBox *widget, gpointer user_data)
 	g_free (provider_id);
 }
 
+static void
+on_entry_max (EasysetupValidatingEntry *self, gpointer user_data)
+{
+	ModestEasysetupWizardDialog *dialog = MODEST_EASYSETUP_WIZARD_DIALOG (user_data);
+	show_error (GTK_WINDOW (dialog), _("ckdg_ib_maximum_characters_reached"));
+}
 
 static GtkWidget*
 create_page_account_details (ModestEasysetupWizardDialog *self)
@@ -359,8 +365,10 @@ create_page_account_details (ModestEasysetupWizardDialog *self)
 	g_list_free (list_prevent);
 	
 	/* Set max length as in the UI spec:
-	 * TODO: The UI spec seems to want us to show a dialog if we hit the maximum. */
+	 * The UI spec seems to want us to show a dialog if we hit the maximum. */
 	gtk_entry_set_max_length (GTK_ENTRY (self->entry_account_title), 64);
+	easysetup_validating_entry_set_max_func (EASYSETUP_VALIDATING_ENTRY (self->entry_account_title), 
+		on_entry_max, self);
 	
 	gtk_widget_show (GTK_WIDGET (box));
 	
@@ -382,8 +390,10 @@ create_page_user_details (ModestEasysetupWizardDialog *self)
 	/* Auto-capitalization is the default, so let's turn it off: */
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (self->entry_user_name), HILDON_GTK_INPUT_MODE_FULL);
 	/* Set max length as in the UI spec:
-	 * TODO: The UI spec seems to want us to show a dialog if we hit the maximum. */
+	 * The UI spec seems to want us to show a dialog if we hit the maximum. */
 	gtk_entry_set_max_length (GTK_ENTRY (self->entry_user_name), 64);
+	easysetup_validating_entry_set_max_func (EASYSETUP_VALIDATING_ENTRY (self->entry_user_name), 
+		on_entry_max, self);
 	GtkWidget *caption = create_caption_new_with_asterix (self, sizegroup, 
 		_("mcen_li_emailsetup_name"), self->entry_user_name, NULL, HILDON_CAPTION_OPTIONAL);
 	gtk_widget_show (self->entry_user_name);
@@ -415,8 +425,10 @@ create_page_user_details (ModestEasysetupWizardDialog *self)
 	 	EASYSETUP_VALIDATING_ENTRY (self->entry_user_username));
 	
 	/* Set max length as in the UI spec:
-	 * TODO: The UI spec seems to want us to show a dialog if we hit the maximum. */
+	 * The UI spec seems to want us to show a dialog if we hit the maximum. */
 	gtk_entry_set_max_length (GTK_ENTRY (self->entry_user_username), 64);
+	easysetup_validating_entry_set_max_func (EASYSETUP_VALIDATING_ENTRY (self->entry_user_username), 
+		on_entry_max, self);
 	
 	/* The password widgets: */	
 	self->entry_user_password = gtk_entry_new ();
@@ -442,8 +454,10 @@ create_page_user_details (ModestEasysetupWizardDialog *self)
 	gtk_widget_show (caption);
 	
 	/* Set max length as in the UI spec:
-	 * TODO: The UI spec seems to want us to show a dialog if we hit the maximum. */
+	 * The UI spec seems to want us to show a dialog if we hit the maximum. */
 	gtk_entry_set_max_length (GTK_ENTRY (self->entry_user_email), 64);
+	easysetup_validating_entry_set_max_func (EASYSETUP_VALIDATING_ENTRY (self->entry_user_email), 
+		on_entry_max, self);
 	
 	
 	gtk_widget_show (GTK_WIDGET (box));
@@ -1260,7 +1274,7 @@ create_account (ModestEasysetupWizardDialog *self)
 		/* Note: We need something as default, or modest_account_mgr_add_server_account will fail. */
 		protocol_outgoing = MODEST_PROTOCOL_TRANSPORT_SENDMAIL; 
 		if (servertype_outgoing == MODEST_PRESETS_SERVER_TYPE_SMTP)
-			protocol_outgoing = MODEST_PROTOCOL_TRANSPORT_SMTP; /* TODO: Is this what we want? */
+			protocol_outgoing = MODEST_PROTOCOL_TRANSPORT_SMTP;
 		
 		ModestPresetsSecurity security_outgoing = 
 			modest_presets_get_info_server_security (priv->presets, provider_id, 
@@ -1284,12 +1298,6 @@ create_account (ModestEasysetupWizardDialog *self)
 		
 		protocol_authentication_outgoing = modest_secureauth_combo_box_get_active_secureauth (
 			MODEST_SECUREAUTH_COMBO_BOX (self->combo_outgoing_auth));
-		
-		/* TODO: 
-		gboolean specific = gtk_toggle_button_get_active (
-			GTK_TOGGLE_BUTTON (self->checkbox_outgoing_smtp_specific));
-		*/
-		
 	}
 	    
 	/* Add a (outgoing) server account to be used by the account: */

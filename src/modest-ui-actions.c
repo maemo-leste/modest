@@ -1659,7 +1659,7 @@ modest_ui_actions_on_details (GtkAction *action,
 		if (gtk_widget_is_focus (folder_view)) {
 			TnyFolder *folder;
 
-			folder = modest_folder_view_get_selected (folder_view);
+			folder = TNY_FOLDER (modest_folder_view_get_selected (MODEST_FOLDER_VIEW (folder_view)));
 
 			/* Show only when it's a folder */
 			if (!folder || !TNY_IS_FOLDER (folder))
