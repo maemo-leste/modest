@@ -507,7 +507,7 @@ reply_forward (ReplyForwardAction action, ModestWindow *win)
 		folder = tny_header_get_folder (header);
 		if (folder) {
 			/* The callback will call it per each header */
-			tny_folder_get_msg_async (folder, header, get_msg_cb, helper);
+			tny_folder_get_msg_async (folder, header, get_msg_cb, NULL, helper);
 			g_object_unref (G_OBJECT (folder));
 		} else 
 			g_printerr ("modest: no folder for header\n");
@@ -774,7 +774,7 @@ get_msg_cb (TnyFolder *folder, TnyMsg *msg, GError **err, gpointer user_data)
 		TnyHeader *header;
 		header = TNY_HEADER (tny_iterator_get_current (helper->iter)); 
 		tny_folder_get_msg_async (folder, header,			  
-					  get_msg_cb, helper);
+					  get_msg_cb, NULL, helper);
 		g_object_unref (G_OBJECT(header));
 	}
 }
@@ -826,7 +826,7 @@ modest_ui_actions_on_header_selected (ModestHeaderView *header_view,
 
 	tny_folder_get_msg_async (TNY_FOLDER(folder),
 				  header, get_msg_cb,
-				  helper);
+				  NULL, helper);
 
 	/* Frees */
 	g_object_unref (G_OBJECT (folder));
