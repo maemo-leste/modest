@@ -353,6 +353,11 @@ modest_header_view_set_columns (ModestHeaderView *self, const GList *columns)
 						 (GtkTreeCellDataFunc)_modest_header_view_compact_date_cell_data,
 						 GINT_TO_POINTER(TRUE));
 			gtk_tree_view_column_set_fixed_width (column, 130);
+			/* FIXME: this value must be stored in configuration */
+			gtk_tree_sortable_set_sort_column_id (GTK_TREE_SORTABLE(sortable), 
+							      TNY_GTK_HEADER_LIST_MODEL_DATE_RECEIVED_TIME_T_COLUMN,
+							      GTK_SORT_DESCENDING);
+							      
 			break;
 			
 		case MODEST_HEADER_VIEW_COLUMN_COMPACT_SENT_DATE:					      
@@ -362,6 +367,10 @@ modest_header_view_set_columns (ModestHeaderView *self, const GList *columns)
 						 (GtkTreeCellDataFunc)_modest_header_view_compact_date_cell_data,
 						 GINT_TO_POINTER(FALSE));
 			gtk_tree_view_column_set_fixed_width (column, 130);
+			/* FIXME: this value must be stored in configuration */
+			gtk_tree_sortable_set_sort_column_id (GTK_TREE_SORTABLE(sortable), 
+							      TNY_GTK_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN,
+							      GTK_SORT_DESCENDING);
 			break;
 		case MODEST_HEADER_VIEW_COLUMN_SIZE:
 			column = get_new_column (_("Size"), renderer_header, TRUE,

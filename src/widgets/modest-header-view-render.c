@@ -166,8 +166,7 @@ _modest_header_view_compact_flag_cell_data (GtkTreeViewColumn *column, GtkCellRe
 			    &flags, -1);
 	
 	pixbuf = get_pixbuf_for_compact_flag (flags);
-	//if (pixbuf != NULL)
-		g_object_set (G_OBJECT (renderer), "pixbuf", pixbuf, NULL);
+	g_object_set (G_OBJECT (renderer), "pixbuf", pixbuf, NULL);
 }
 
 void
