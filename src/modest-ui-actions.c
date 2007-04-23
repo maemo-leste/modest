@@ -583,6 +583,14 @@ modest_ui_actions_on_prev (GtkAction *action,
 	}
 }
 
+void 
+modest_ui_actions_on_sort (GtkAction *action, 
+			   ModestWindow *window)
+{
+	g_return_if_fail (MODEST_IS_WINDOW(window));
+	/* FIXME: unimplemented */
+}
+
 
 static gboolean
 action_send (const gchar* account_name)

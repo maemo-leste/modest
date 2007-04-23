@@ -61,6 +61,8 @@ void     modest_ui_actions_on_reply         (GtkAction *action, ModestWindow *wi
 
 void     modest_ui_actions_on_forward       (GtkAction *action, ModestWindow *win);
 
+void     modest_ui_actions_on_sort          (GtkAction *action, ModestWindow *window);
+
 void     modest_ui_actions_on_reply_all     (GtkAction *action, ModestWindow *win);
 
 void     modest_ui_actions_on_next          (GtkAction *action, ModestWindow *main_window);
