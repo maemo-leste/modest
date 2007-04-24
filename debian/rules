@@ -3,9 +3,6 @@
 include /usr/share/cdbs/1/rules/debhelper.mk
 include /usr/share/cdbs/1/class/autotools.mk
 
-CFLAGS="$CFLAGS -g"
-
-
 make-orig-source: TMPNAME:=$(shell mktemp -d)
 make-orig-source: DATE:=$(shell date --iso)
 make-orig-source: UPSTREAMVER:=0~svn-$(DATE)
