@@ -35,6 +35,10 @@
 
 G_BEGIN_DECLS
 
+typedef enum _ModestConfirmationDialogType {
+	MODEST_CONFIRMATION_DELETE_FOLDER,
+} ModestConfirmationDialogType;
+
 /**
  * modest_platform_platform_init:
  *
@@ -111,8 +115,28 @@ GdkPixbuf* modest_platform_get_icon (const gchar *name);
 const gchar* modest_platform_get_app_name (void);
 
 
-gboolean modest_platform_run_new_folder_dialog (ModestWindow *parent_window,
-						TnyFolderStore *parent);
+/**
+ * modest_platform_run_new_folder_dialog:
+ * @parent_window: a #GtkWindow
+ * @parent: the parent of the new folder
+ * @suggested_name: the suggested name for the new folder
+ * @folder_name: the folder name selected by the user for the new folder
+ * 
+ * runs a "new folder" confirmation dialog. The dialog will suggest a
+ * folder name which depends of the platform if the #suggested_name
+ * parametter is NULL. If the user input a valid folder name it's
+ * returned in the #folder_name attribute.
+ * 
+ * Returns: the #GtkResponseType returned by the dialog
+ **/
+gint      modest_platform_run_new_folder_dialog        (GtkWindow *parent_window,
+							TnyFolderStore *parent,
+							gchar *suggested_name,
+							gchar **folder_name);
+
+gint      modest_platform_run_confirmation_dialog      (GtkWindow *parent_window,
+							ModestConfirmationDialogType type,
+							gpointer user_data);
 
 G_END_DECLS
 

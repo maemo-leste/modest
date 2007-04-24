@@ -42,14 +42,13 @@
 #endif /*MODEST_HILDON_VERSION_0*/
 
 #include <tny-maemo-conic-device.h>
+#include <tny-folder.h>
 #include <gtk/gtkicontheme.h>
 #include <hildon-widgets/hildon-banner.h>
+#include <hildon-widgets/hildon-note.h>
 #include <gtk/gtkmenuitem.h>
 #include <gtk/gtkmain.h>
 #include <string.h>
-
-#include "modest-mail-operation-queue.h"
-#include "modest-runtime.h"
 
 gboolean
 modest_platform_init (void)
@@ -351,14 +350,17 @@ entry_insert_text (GtkEditable *editable,
 						 _("mcen_ib_maxchar_reached"));
 	} else {
 		if (chars_length == 0) {
-			GtkWidget *ok_button;
-			GList *buttons;
+			/* A blank space is not valid as first character */
+			if (strcmp (text, " ")) {
+				GtkWidget *ok_button;
+				GList *buttons;
 
-			/* Show OK button */
-			buttons = gtk_container_get_children (GTK_CONTAINER (GTK_DIALOG (data)->action_area));
-			ok_button = GTK_WIDGET (buttons->next->data);
-			gtk_widget_set_sensitive (ok_button, TRUE);
-			g_list_free (buttons);
+				/* Show OK button */
+				buttons = gtk_container_get_children (GTK_CONTAINER (GTK_DIALOG (data)->action_area));
+				ok_button = GTK_WIDGET (buttons->next->data);
+				gtk_widget_set_sensitive (ok_button, TRUE);
+				g_list_free (buttons);
+			}
 		}
 
 		/* Write the text in the entry */
@@ -394,19 +396,18 @@ entry_changed (GtkEditable *editable,
 	g_free (chars);
 }
 
-gboolean 
-modest_platform_run_new_folder_dialog (ModestWindow *parent_window,
-				       TnyFolderStore *parent_folder)
+gint
+modest_platform_run_new_folder_dialog (GtkWindow *parent_window,
+				       TnyFolderStore *parent_folder,
+				       gchar *suggested_name,
+				       gchar **folder_name)
 {
 	GtkWidget *dialog, *entry, *label, *hbox;
-	gchar *folder_name;
-	gboolean finished = FALSE;
-	TnyFolder *new_folder;
-	ModestMailOperation *mail_op;
+	gint result;
 
 	/* Ask the user for the folder name */
 	dialog = gtk_dialog_new_with_buttons (_("mcen_ti_new_folder"),
-					      GTK_WINDOW (parent_window),
+					      parent_window,
 					      GTK_DIALOG_MODAL | GTK_DIALOG_NO_SEPARATOR | GTK_DIALOG_DESTROY_WITH_PARENT,
 					      GTK_STOCK_OK,
 					      GTK_RESPONSE_ACCEPT,
@@ -415,9 +416,15 @@ modest_platform_run_new_folder_dialog (ModestWindow *parent_window,
 					      NULL);
 
 	/* Create label and entry */
-	label = gtk_label_new (_("mcen_fi_new_folder_name")),	
+	label = gtk_label_new (_("mcen_fi_new_folder_name"));
+	/* TODO: check that the suggested name does not exist */
+	/* We set 21 as maximum because we want to show WID-INF036
+	   when the user inputs more that 20 */
 	entry = gtk_entry_new_with_max_length (21);
-	gtk_entry_set_text (GTK_ENTRY (entry), _("mcen_ia_default_folder_name"));
+	if (suggested_name)
+		gtk_entry_set_text (GTK_ENTRY (entry), suggested_name);
+	else
+		gtk_entry_set_text (GTK_ENTRY (entry), _("mcen_ia_default_folder_name"));
 	gtk_entry_select_region (GTK_ENTRY (entry), 0, -1);
 
 	/* Track entry changes */
@@ -441,29 +448,39 @@ modest_platform_run_new_folder_dialog (ModestWindow *parent_window,
 	
 	gtk_widget_show_all (GTK_WIDGET(GTK_DIALOG(dialog)->vbox));
 	
-	if (gtk_dialog_run (GTK_DIALOG(dialog)) == GTK_RESPONSE_REJECT) {
-		gtk_widget_destroy (dialog);
-		return TRUE;
-	}
+	result = gtk_dialog_run (GTK_DIALOG(dialog));
+	if (result == GTK_RESPONSE_ACCEPT)
+		*folder_name = g_strdup (gtk_entry_get_text (GTK_ENTRY (entry)));
 
-	folder_name = g_strdup (gtk_entry_get_text (GTK_ENTRY (entry)));
 	gtk_widget_destroy (dialog);
 
-	mail_op = modest_mail_operation_new ();
-	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), 
-					 mail_op);
-		
-	new_folder = modest_mail_operation_create_folder (mail_op,
-							  parent_folder,
-							  (const gchar *) folder_name);
-	if (new_folder) {
-		g_object_unref (new_folder);
-		finished = TRUE;
-	}
+	return result;
+}
 
-	/* Frees */		
-	g_object_unref (mail_op);
-	g_free (folder_name);
+gint
+modest_platform_run_confirmation_dialog (GtkWindow *parent_window,
+					 ModestConfirmationDialogType type,
+					 gpointer user_data)
+{
+	GtkWidget *dialog;
+	gint response;
+	gchar *message = NULL;
+	TnyFolder *folder;
 
-	return finished;
+	switch (type) {
+	case MODEST_CONFIRMATION_DELETE_FOLDER:
+		folder = TNY_FOLDER (user_data);
+		message = g_strdup_printf (_("mcen_nc_delete_folder_text"), 
+					   tny_folder_get_name (folder));
+		break;
+	};
+
+	dialog = hildon_note_new_confirmation (parent_window, message);
+
+	response = gtk_dialog_run (GTK_DIALOG (dialog));
+
+	gtk_widget_destroy (GTK_WIDGET (dialog));
+	g_free (message);
+
+	return response;
 }

@@ -1266,9 +1266,44 @@ modest_ui_actions_on_new_folder (GtkAction *action, ModestMainWindow *main_windo
 	parent_folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW(folder_view));
 	
 	if (parent_folder) {
+		gboolean finished = FALSE;
+		gint result;
+		gchar *folder_name = NULL, *suggested_name = NULL;
+
 		/* Run the new folder dialog */
-		while (!modest_platform_run_new_folder_dialog (MODEST_WINDOW (main_window),
-							       parent_folder));
+		while (!finished) {
+			result = modest_platform_run_new_folder_dialog (GTK_WINDOW (main_window),
+									parent_folder,
+									suggested_name,
+									&folder_name);
+
+			if (result == GTK_RESPONSE_REJECT) {
+				finished = TRUE;
+			} else {
+				ModestMailOperation *mail_op = modest_mail_operation_new ();
+				TnyFolder *new_folder;
+
+				modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), 
+								 mail_op);
+		
+				new_folder = modest_mail_operation_create_folder (mail_op,
+										  parent_folder,
+										  (const gchar *) folder_name);
+				if (new_folder) {
+					g_object_unref (new_folder);
+					finished = TRUE;
+				} else {
+					const GError *error;
+					error = modest_mail_operation_get_error (mail_op);
+					g_printerr ("%s", error->message);
+					/* TODO: check error and follow proper actions */
+/* 					suggested_name = X; */
+				}
+				g_object_unref (mail_op);
+			}
+			g_free (folder_name);
+			folder_name = NULL;
+		}
 
 		g_object_unref (parent_folder);
 	}
@@ -1317,8 +1352,8 @@ static void
 delete_folder (ModestMainWindow *main_window, gboolean move_to_trash) 
 {
 	TnyFolderStore *folder;
-	ModestMailOperation *mail_op;
 	GtkWidget *folder_view;
+	gint response;
 	
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW(main_window));
 
@@ -1328,13 +1363,21 @@ delete_folder (ModestMainWindow *main_window, gboolean move_to_trash)
 		return;
 
 	folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW (folder_view));
-	
-	mail_op = modest_mail_operation_new ();
-	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
-					 mail_op);
-	modest_mail_operation_remove_folder (mail_op, TNY_FOLDER (folder), move_to_trash);
 
-	g_object_unref (G_OBJECT (mail_op));
+	/* Ask the user */	
+	response = modest_platform_run_confirmation_dialog (GTK_WINDOW (main_window), 
+							    MODEST_CONFIRMATION_DELETE_FOLDER,
+							    folder);
+
+	if (response == GTK_RESPONSE_OK) {
+		ModestMailOperation *mail_op = modest_mail_operation_new ();
+
+		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
+						 mail_op);
+		modest_mail_operation_remove_folder (mail_op, TNY_FOLDER (folder), move_to_trash);
+		g_object_unref (G_OBJECT (mail_op));
+	}
+
 	g_object_unref (G_OBJECT (folder));
 }
 

@@ -121,19 +121,21 @@ modest_platform_get_app_name (void)
 	return ("Modest");
 }
 
-gboolean 
-modest_platform_run_new_folder_dialog (ModestWindow *parent_window,
-				       TnyFolderStore *parent_folder)
+gint 
+modest_platform_run_new_folder_dialog (GtkWindow *parent_window,
+				       TnyFolderStore *parent_folder,
+				       gchar *suggested_name,
+				       gchar **folder_name)
 {
 	GtkWidget *dialog, *entry;
-	gchar *folder_name;
 	gboolean finished = FALSE;
+	gint result;
 	TnyFolder *new_folder;
 	ModestMailOperation *mail_op;
 
 	/* Ask the user for the folder name */
 	dialog = gtk_dialog_new_with_buttons (_("New Folder Name"),
-					      GTK_WINDOW (parent_window),
+					      parent_window,
 					      GTK_DIALOG_MODAL,
 					      GTK_STOCK_CANCEL,
 					      GTK_RESPONSE_REJECT,
@@ -150,30 +152,26 @@ modest_platform_run_new_folder_dialog (ModestWindow *parent_window,
 			    TRUE, FALSE, 0);
 	
 	gtk_widget_show_all (GTK_WIDGET(GTK_DIALOG(dialog)->vbox));
-	
-	if (gtk_dialog_run (GTK_DIALOG(dialog)) == GTK_RESPONSE_REJECT) {
-		gtk_widget_destroy (dialog);
-		return TRUE;
-	}
 
-	folder_name = g_strdup (gtk_entry_get_text (GTK_ENTRY (entry)));
+	result = gtk_dialog_run (GTK_DIALOG(dialog));
+	if (result == GTK_RESPONSE_ACCEPT)
+		*folder_name = g_strdup (gtk_entry_get_text (GTK_ENTRY (entry)));
+
 	gtk_widget_destroy (dialog);
 
-	mail_op = modest_mail_operation_new ();
-	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), 
-					 mail_op);
-		
-	new_folder = modest_mail_operation_create_folder (mail_op,
-							  parent_folder,
-							  (const gchar *) folder_name);
-	if (new_folder) {
-		g_object_unref (new_folder);
-		finished = TRUE;
-	}
+	return result;
+}
 
-	/* Frees */		
-	g_object_unref (mail_op);
-	g_free (folder_name);
+gint
+modest_platform_run_confirmation_dialog (GtkWindow *parent_window,
+					 ModestConfirmationDialogType type,
+					 gpointer user_data)
+{
+	switch (type) {
+	case MODEST_CONFIRMATION_DELETE_FOLDER:
+		break;
+	};
 
-	return finished;
+	/* TODO implement confirmation dialog */
+	return GTK_RESPONSE_CANCEL;
 }
