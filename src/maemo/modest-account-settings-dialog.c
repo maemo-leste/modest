@@ -239,6 +239,9 @@ create_page_account_details (ModestAccountSettingsDialog *self)
            
 	/* The description widgets: */	
 	self->entry_account_title = GTK_WIDGET (modest_validating_entry_new ());
+	/* Do use auto-capitalization: */
+	hildon_gtk_entry_set_input_mode (GTK_ENTRY (self->entry_account_title), 
+		HILDON_GTK_INPUT_MODE_FULL | HILDON_GTK_INPUT_MODE_AUTOCAP);
 	GtkWidget *caption = create_caption_new_with_asterix (self, sizegroup, _("mcen_fi_account_title"), 
 		self->entry_account_title, NULL, HILDON_CAPTION_MANDATORY);
 	gtk_widget_show (self->entry_account_title);

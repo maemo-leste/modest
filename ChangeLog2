@@ -1,6 +1,15 @@
 2007-04-24  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/maemo/easysetup/modest-easysetup-wizard.c:
+	(create_page_account_details):
+	* src/maemo/modest-account-settings-dialog.c:
+	(create_page_account_details): Explicitly set auto-capitalization mode for the title 
+	widgets, because this might not be the default in future versions of the Maemo GTK+. 
+	However, I can not not get capitalization to work even in a simple test case.
+
+2007-04-24  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/maemo/easysetup/modest-easysetup-wizard.c:
 	(create_page_custom_incoming), (create_page_custom_outgoing):
 	* src/maemo/modest-account-settings-dialog.c:
 	(create_page_account_details), (create_page_incoming),

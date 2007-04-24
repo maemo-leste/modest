@@ -327,6 +327,9 @@ create_page_account_details (ModestEasysetupWizardDialog *self)
 	
 	/* The description widgets: */	
 	self->entry_account_title = GTK_WIDGET (modest_validating_entry_new ());
+	/* Do use auto-capitalization: */
+	hildon_gtk_entry_set_input_mode (GTK_ENTRY (self->entry_account_title), 
+		HILDON_GTK_INPUT_MODE_FULL | HILDON_GTK_INPUT_MODE_AUTOCAP);
 	
 	/* Set a default account title, choosing one that does not already exist: */
 	/* Note that this is irrelevant to the non-user visible name, which we will create later. */
