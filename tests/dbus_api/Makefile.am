@@ -16,8 +16,12 @@ objects=\
         $(MODEST_LIBTINYMAIL_MAEMO_LIBS) \
         ${top_srcdir}/libmodest-dbus-client/libmodest-dbus-client-1.0.la
         
-noinst_PROGRAMS = test_hello
+noinst_PROGRAMS = test_hello test_send_mail
 
 test_hello_SOURCES = test_hello.c
 test_hello_LDADD = $(objects)
+
+test_send_mail_SOURCES = test_send_mail.c
+test_send_mail_LDADD = $(objects)
+
 

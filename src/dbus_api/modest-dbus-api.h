@@ -27,24 +27,32 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __LIBMODEST_DBUS_CLIENT_H__
-#define __LIBMODEST_DBUS_CLIENT_H__
 
-#include <libosso.h>
-#include <glib.h>
-#include <stdio.h>
+#ifndef __MODEST_DBUS_API__
+#define __MODEST_DBUS_API__
 
-gboolean
-libmodest_dbus_client_call_helloworld (osso_context_t *osso_context);
 
-gboolean
-libmodfest_dbus_client_send_mail (osso_context_t *osso_context, const gchar *to, const gchar *cc, 
-	const gchar *bcc, const gchar* subject, const gchar* body, GSList *attachments);
-	
-gboolean 
-libmodfest_dbus_client_mailto (osso_context_t *osso_context, const gchar *mailto_uri);
+/* Note that the com.nokia service name and /com/nokia object name 
+ * are what is assumed by the, bizarrely named, osso_rpc_run_with_defaults() function, 
+ * so they are probably a good choice. */
+#define MODEST_DBUS_NAME    "modestemail"
+#define MODEST_DBUS_EXAMPLE_SERVICE "com.nokia."MODEST_DBUS_NAME
+#define MODEST_DBUS_EXAMPLE_OBJECT  "/com/nokia/"MODEST_DBUS_NAME
+#define MODEST_DBUS_EXAMPLE_IFACE   "com.nokia."MODEST_DBUS_NAME
 
-gboolean 
-libmodfest_dbus_client_open_message (osso_context_t *osso_context, const gchar *mail_uri);
+#define MODEST_DBUS_EXAMPLE_MESSAGE "HelloWorld"
 
-#endif /* __LIBMODEST_DBUS_CLIENT_H__ */
+#define MODEST_DBUS_METHOD_SEND_MAIL "SendMail"
+enum ModestDbusSendMailArguments
+{
+	MODEST_DEBUS_SEND_MAIL_ARG_TO,
+	MODEST_DEBUS_SEND_MAIL_ARG_CC,
+	MODEST_DEBUS_SEND_MAIL_ARG_BCC,
+	MODEST_DEBUS_SEND_MAIL_ARG_SUBJECT,
+	MODEST_DEBUS_SEND_MAIL_ARG_BODY,
+	/* TODO: MODEST_DEBUS_SEND_MAIL_ARG_ATTACHMENTS, */
+	MODEST_DEBUS_SEND_MAIL_ARGS_COUNT
+};
+
+#endif /* __MODEST_DBUS_API__ */
+

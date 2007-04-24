@@ -44,7 +44,8 @@ noinst_LTLIBRARIES=\
 	libmodest-dbus-api.la
 
 libmodest_dbus_api_la_SOURCES=              \
-	modest-dbus-callbacks.h modest-dbus-callbacks.c
+	modest-dbus-callbacks.h modest-dbus-callbacks.c \
+	modest-dbus-api.h
 
 LDADD = \
 	$(MODEST_GSTUFF_LIBS) \

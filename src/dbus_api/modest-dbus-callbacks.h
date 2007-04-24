@@ -33,15 +33,7 @@
 
 #include <glib.h>
 #include <libosso.h>
-
-/* Note that the com.nokia service name and /com/nokia object name 
- * are what is assumed by the, bizarrely named, osso_rpc_run_with_defaults() function, 
- * so they are probably a good choice. */
-#define MODEST_DBUS_NAME    "modestemail"
-#define MODEST_DBUS_EXAMPLE_SERVICE "com.nokia."MODEST_DBUS_NAME
-#define MODEST_DBUS_EXAMPLE_OBJECT  "/com/nokia/"MODEST_DBUS_NAME
-#define MODEST_DBUS_EXAMPLE_IFACE   "com.nokia."MODEST_DBUS_NAME
-#define MODEST_DBUS_EXAMPLE_MESSAGE "HelloWorld"
+#include <dbus_api/modest-dbus-api.h>
 
 gint modest_dbus_req_handler(const gchar * interface, const gchar * method,
                       GArray * arguments, gpointer data,

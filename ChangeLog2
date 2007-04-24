@@ -1,5 +1,31 @@
 2007-04-24  Murray Cumming  <murrayc@murrayc.com>
 
+	* libmodest-dbus-client/libmodest-dbus-client-1.0.pc.in:
+	Added file to fix the build. Sorry.
+	
+	* src/dbus_api/Makefile.am:
+	* src/dbus_api/modest-dbus-api.h:
+	* src/dbus_api/modest-dbus-callbacks.h:
+	* src/dbus_api/modest-dbus-callbacks.c: (on_send_mail),
+	(modest_dbus_req_handler):
+	Put constants in a separate header so it can be reused by the 
+	client library, without duplication
+	
+	* libmodest-dbus-client/Makefile.am:
+	* libmodest-dbus-client/libmodest-dbus-client.c:
+	(libmodest_dbus_client_call_helloworld),
+	(libmodfest_dbus_client_send_mail),
+	(libmodfest_dbus_client_mailto),
+	(libmodfest_dbus_client_open_message):
+	* libmodest-dbus-client/libmodest-dbus-client.h:
+	(Partly) Implement a send_mail D-Bus method.
+	
+	* tests/dbus_api/Makefile.am:
+	* tests/dbus_api/test_send_mail.c: (main): Added a test for 
+	the send_email D-Bus method.
+
+2007-04-24  Murray Cumming  <murrayc@murrayc.com>
+
 	* Makefile.am:
 	* configure.ac:
 	* libmodest-dbus-client/Makefile.am:
