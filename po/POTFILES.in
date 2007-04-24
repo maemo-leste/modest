@@ -50,8 +50,6 @@ src/maemo/modest-store-widget.c
 src/maemo/easysetup/modest-wizard-dialog.h
 src/maemo/easysetup/modest-presets.h
 src/maemo/easysetup/modest-presets.c
-src/maemo/easysetup/modest-easysetup-secureauth-combo-box.h
-src/maemo/easysetup/modest-easysetup-secureauth-combo-box.c
 src/maemo/easysetup/modest-easysetup-provider-combo-box.h
 src/maemo/easysetup/modest-easysetup-serversecurity-combo-box.c
 src/maemo/easysetup/modest-easysetup-servertype-combo-box.h
@@ -127,6 +125,8 @@ src/widgets/modest-msg-edit-window.h
 src/widgets/modest-header-view-render.c
 src/widgets/modest-window.c
 src/widgets/modest-mail-header-view.h
+src/widgets/modest-details-dialog.c
+src/widgets/modest-details-dialog.h
 src/modest-ui-actions.h
 src/modest-marshal.h
 src/modest-tny-platform-factory.c
