@@ -484,3 +484,27 @@ modest_platform_run_confirmation_dialog (GtkWindow *parent_window,
 
 	return response;
 }
+
+void
+modest_platform_run_information_dialog (GtkWindow *parent_window,
+					ModestInformationDialogType type)
+{
+	GtkWidget *dialog;
+	gchar *message = NULL;
+
+	switch (type) {
+	case MODEST_INFORMATION_CREATE_FOLDER:
+		message = _("mail_in_ui_folder_create_error");
+		break;
+	case MODEST_INFORMATION_DELETE_FOLDER:
+		message = _("mail_in_ui_folder_delete_error");
+		break;
+	};
+
+	dialog = hildon_note_new_information (parent_window, message);
+
+	gtk_dialog_run (GTK_DIALOG (dialog));
+
+	gtk_widget_destroy (GTK_WIDGET (dialog));
+	g_free (message);
+}

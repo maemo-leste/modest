@@ -39,6 +39,11 @@ typedef enum _ModestConfirmationDialogType {
 	MODEST_CONFIRMATION_DELETE_FOLDER,
 } ModestConfirmationDialogType;
 
+typedef enum _ModestInformationDialogType {
+	MODEST_INFORMATION_CREATE_FOLDER,
+	MODEST_INFORMATION_DELETE_FOLDER,
+} ModestInformationDialogType;
+
 /**
  * modest_platform_platform_init:
  *
@@ -137,6 +142,9 @@ gint      modest_platform_run_new_folder_dialog        (GtkWindow *parent_window
 gint      modest_platform_run_confirmation_dialog      (GtkWindow *parent_window,
 							ModestConfirmationDialogType type,
 							gpointer user_data);
+
+void      modest_platform_run_information_dialog       (GtkWindow *parent_window,
+							ModestInformationDialogType type);
 
 G_END_DECLS
 

@@ -1281,7 +1281,7 @@ modest_ui_actions_on_new_folder (GtkAction *action, ModestMainWindow *main_windo
 				finished = TRUE;
 			} else {
 				ModestMailOperation *mail_op = modest_mail_operation_new ();
-				TnyFolder *new_folder;
+				TnyFolder *new_folder = NULL;
 
 				modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), 
 								 mail_op);
@@ -1298,6 +1298,9 @@ modest_ui_actions_on_new_folder (GtkAction *action, ModestMainWindow *main_windo
 					g_printerr ("%s", error->message);
 					/* TODO: check error and follow proper actions */
 /* 					suggested_name = X; */
+					/* Show error to the user */
+					modest_platform_run_information_dialog (GTK_WINDOW (main_window),
+										MODEST_INFORMATION_CREATE_FOLDER);
 				}
 				g_object_unref (mail_op);
 			}
@@ -1375,6 +1378,12 @@ delete_folder (ModestMainWindow *main_window, gboolean move_to_trash)
 		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
 						 mail_op);
 		modest_mail_operation_remove_folder (mail_op, TNY_FOLDER (folder), move_to_trash);
+
+		/* Show error if happened */
+		if (modest_mail_operation_get_error (mail_op))
+			modest_platform_run_information_dialog (GTK_WINDOW (main_window),
+								MODEST_INFORMATION_DELETE_FOLDER);
+
 		g_object_unref (G_OBJECT (mail_op));
 	}
 

@@ -175,3 +175,17 @@ modest_platform_run_confirmation_dialog (GtkWindow *parent_window,
 	/* TODO implement confirmation dialog */
 	return GTK_RESPONSE_CANCEL;
 }
+
+void
+modest_platform_run_information_dialog (GtkWindow *parent_window,
+					ModestInformationDialogType type)
+{
+	switch (type) {
+	case MODEST_INFORMATION_CREATE_FOLDER:
+		break;
+	case MODEST_INFORMATION_DELETE_FOLDER:
+		break;
+	};
+
+	/* TODO: implement a information dialog */
+}
