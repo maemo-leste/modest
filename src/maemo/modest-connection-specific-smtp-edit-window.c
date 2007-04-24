@@ -144,7 +144,7 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	gtk_widget_show (caption);
 	
 	/* The username widgets: */	
-	priv->entry_user_username = GTK_WIDGET (easysetup_validating_entry_new ());
+	priv->entry_user_username = GTK_WIDGET (modest_validating_entry_new ());
 	/* Auto-capitalization is the default, so let's turn it off: */
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_user_username), HILDON_GTK_INPUT_MODE_FULL);
 	caption = hildon_caption_new (sizegroup, _("mail_fi_username"), 
@@ -155,8 +155,8 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	
 	/* Prevent the use of some characters in the username, 
 	 * as required by our UI specification: */
-	easysetup_validating_entry_set_unallowed_characters_whitespace (
-	 	EASYSETUP_VALIDATING_ENTRY (priv->entry_user_username));
+	modest_validating_entry_set_unallowed_characters_whitespace (
+	 	MODEST_VALIDATING_ENTRY (priv->entry_user_username));
 	
 	/* Set max length as in the UI spec:
 	 * TODO: The UI spec seems to want us to show a dialog if we hit the maximum. */

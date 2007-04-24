@@ -1,3 +1,11 @@
+2007-04-24  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/maemo/easysetup/modest-easysetup-wizard.c:
+	* src/maemo/modest-connection-specific-smtp-edit-window.c:
+	* src/widgets/modest-validating-entry.c:
+	* src/widgets/modest-validating-entry.h: Rename the validating widget so it has a 
+	Modest prefix instead of an EasySetup prefix.
+
 2007-04-23  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/widgets/modest-validating-entry.h:

@@ -12,14 +12,14 @@
 #include <config.h>
 #endif
 
-G_DEFINE_TYPE (EasysetupValidatingEntry, easysetup_validating_entry, GTK_TYPE_ENTRY);
+G_DEFINE_TYPE (ModestValidatingEntry, modest_validating_entry, GTK_TYPE_ENTRY);
 
 #define VALIDATING_ENTRY_GET_PRIVATE(o) \
-	(G_TYPE_INSTANCE_GET_PRIVATE ((o), EASYSETUP_TYPE_VALIDATING_ENTRY, EasysetupValidatingEntryPrivate))
+	(G_TYPE_INSTANCE_GET_PRIVATE ((o), MODEST_TYPE_VALIDATING_ENTRY, ModestValidatingEntryPrivate))
 
-typedef struct _EasysetupValidatingEntryPrivate EasysetupValidatingEntryPrivate;
+typedef struct _ModestValidatingEntryPrivate ModestValidatingEntryPrivate;
 
-struct _EasysetupValidatingEntryPrivate
+struct _ModestValidatingEntryPrivate
 {
 	/* A list of gunichar, rather than char*,
 	 * because gunichar is easier to deal with internally,
@@ -34,7 +34,7 @@ struct _EasysetupValidatingEntryPrivate
 };
 
 static void
-easysetup_validating_entry_get_property (GObject *object, guint property_id,
+modest_validating_entry_get_property (GObject *object, guint property_id,
 															GValue *value, GParamSpec *pspec)
 {
 	switch (property_id) {
@@ -44,7 +44,7 @@ easysetup_validating_entry_get_property (GObject *object, guint property_id,
 }
 
 static void
-easysetup_validating_entry_set_property (GObject *object, guint property_id,
+modest_validating_entry_set_property (GObject *object, guint property_id,
 															const GValue *value, GParamSpec *pspec)
 {
 	switch (property_id) {
@@ -54,16 +54,16 @@ easysetup_validating_entry_set_property (GObject *object, guint property_id,
 }
 
 static void
-easysetup_validating_entry_dispose (GObject *object)
+modest_validating_entry_dispose (GObject *object)
 {
-	if (G_OBJECT_CLASS (easysetup_validating_entry_parent_class)->dispose)
-		G_OBJECT_CLASS (easysetup_validating_entry_parent_class)->dispose (object);
+	if (G_OBJECT_CLASS (modest_validating_entry_parent_class)->dispose)
+		G_OBJECT_CLASS (modest_validating_entry_parent_class)->dispose (object);
 }
 
 static void
-easysetup_validating_entry_finalize (GObject *object)
+modest_validating_entry_finalize (GObject *object)
 {
-	EasysetupValidatingEntryPrivate *priv = VALIDATING_ENTRY_GET_PRIVATE (object);
+	ModestValidatingEntryPrivate *priv = VALIDATING_ENTRY_GET_PRIVATE (object);
 	
 	/* Free the list and its items: */
 	if (priv->list_prevent) {
@@ -71,20 +71,20 @@ easysetup_validating_entry_finalize (GObject *object)
 		g_list_free (priv->list_prevent);
 	}
 	
-	G_OBJECT_CLASS (easysetup_validating_entry_parent_class)->finalize (object);
+	G_OBJECT_CLASS (modest_validating_entry_parent_class)->finalize (object);
 }
 
 static void
-easysetup_validating_entry_class_init (EasysetupValidatingEntryClass *klass)
+modest_validating_entry_class_init (ModestValidatingEntryClass *klass)
 {
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
-	g_type_class_add_private (klass, sizeof (EasysetupValidatingEntryPrivate));
+	g_type_class_add_private (klass, sizeof (ModestValidatingEntryPrivate));
 
-	object_class->get_property = easysetup_validating_entry_get_property;
-	object_class->set_property = easysetup_validating_entry_set_property;
-	object_class->dispose = easysetup_validating_entry_dispose;
-	object_class->finalize = easysetup_validating_entry_finalize;
+	object_class->get_property = modest_validating_entry_get_property;
+	object_class->set_property = modest_validating_entry_set_property;
+	object_class->dispose = modest_validating_entry_dispose;
+	object_class->finalize = modest_validating_entry_finalize;
 }
 
 static gint
@@ -104,8 +104,8 @@ on_insert_text(GtkEditable *editable,
 	gint *position,
     gpointer user_data)
 {
-	EasysetupValidatingEntry *self = EASYSETUP_VALIDATING_ENTRY (user_data);
-	EasysetupValidatingEntryPrivate *priv = VALIDATING_ENTRY_GET_PRIVATE (self);
+	ModestValidatingEntry *self = MODEST_VALIDATING_ENTRY (user_data);
+	ModestValidatingEntryPrivate *priv = VALIDATING_ENTRY_GET_PRIVATE (self);
 	
 	if(!new_text_length)
 		return;
@@ -180,7 +180,7 @@ on_insert_text(GtkEditable *editable,
 } 
                                             
 static void
-easysetup_validating_entry_init (EasysetupValidatingEntry *self)
+modest_validating_entry_init (ModestValidatingEntry *self)
 {
 	/* Connect to the GtkEditable::insert-text signal 
 	 * so we can filter out some characters:
@@ -189,19 +189,19 @@ easysetup_validating_entry_init (EasysetupValidatingEntry *self)
 	g_signal_connect (G_OBJECT (self), "insert-text", (GCallback)&on_insert_text, self);
 }
 
-EasysetupValidatingEntry*
-easysetup_validating_entry_new (void)
+ModestValidatingEntry*
+modest_validating_entry_new (void)
 {
-	return g_object_new (EASYSETUP_TYPE_VALIDATING_ENTRY, NULL);
+	return g_object_new (MODEST_TYPE_VALIDATING_ENTRY, NULL);
 }
 
 /** Specify characters that may not be entered into this GtkEntry.
  *  
  * list: A list of gchar* strings. Each one identifies a UTF-8 character.
  */
-void easysetup_validating_entry_set_unallowed_characters (EasysetupValidatingEntry *self, GList *list)
+void modest_validating_entry_set_unallowed_characters (ModestValidatingEntry *self, GList *list)
 {
-	EasysetupValidatingEntryPrivate *priv = VALIDATING_ENTRY_GET_PRIVATE (self);
+	ModestValidatingEntryPrivate *priv = VALIDATING_ENTRY_GET_PRIVATE (self);
 	    
 	/* Free the list and its items: */	
 	if (priv->list_prevent) {
@@ -226,18 +226,18 @@ void easysetup_validating_entry_set_unallowed_characters (EasysetupValidatingEnt
 /** Specify that no whitespace characters may be entered into this GtkEntry.
  *  
  */
-void easysetup_validating_entry_set_unallowed_characters_whitespace (EasysetupValidatingEntry *self)
+void modest_validating_entry_set_unallowed_characters_whitespace (ModestValidatingEntry *self)
 {
-	EasysetupValidatingEntryPrivate *priv = VALIDATING_ENTRY_GET_PRIVATE (self);
+	ModestValidatingEntryPrivate *priv = VALIDATING_ENTRY_GET_PRIVATE (self);
 	priv->prevent_whitespace = TRUE;
 }
 
 /** Set a callback to be called when the maximum number of characters have been entered.
  * This may be used to show an informative dialog.
  */
-void easysetup_validating_entry_set_max_func (EasysetupValidatingEntry *self, EasySetupValidatingEntryMaxFunc func, gpointer user_data)
+void modest_validating_entry_set_max_func (ModestValidatingEntry *self, EasySetupValidatingEntryMaxFunc func, gpointer user_data)
 {
-	EasysetupValidatingEntryPrivate *priv = VALIDATING_ENTRY_GET_PRIVATE (self);
+	ModestValidatingEntryPrivate *priv = VALIDATING_ENTRY_GET_PRIVATE (self);
 	priv->max_func = func;
 	priv->max_func_user_data = user_data;
 }

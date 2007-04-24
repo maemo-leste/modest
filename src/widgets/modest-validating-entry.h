@@ -3,53 +3,53 @@
  *
  */
 
-#ifndef _EASYSETUP_VALIDATING_ENTRY
-#define _EASYSETUP_VALIDATING_ENTRY
+#ifndef _MODEST_VALIDATING_ENTRY
+#define _MODEST_VALIDATING_ENTRY
 
 #include <gtk/gtkentry.h>
 
 G_BEGIN_DECLS
 
-#define EASYSETUP_TYPE_VALIDATING_ENTRY easysetup_validating_entry_get_type()
+#define MODEST_TYPE_VALIDATING_ENTRY modest_validating_entry_get_type()
 
-#define EASYSETUP_VALIDATING_ENTRY(obj) \
+#define MODEST_VALIDATING_ENTRY(obj) \
 	(G_TYPE_CHECK_INSTANCE_CAST ((obj), \
-	EASYSETUP_TYPE_VALIDATING_ENTRY, EasysetupValidatingEntry))
+	MODEST_TYPE_VALIDATING_ENTRY, ModestValidatingEntry))
 
-#define EASYSETUP_VALIDATING_ENTRY_CLASS(klass) \
+#define MODEST_VALIDATING_ENTRY_CLASS(klass) \
 	(G_TYPE_CHECK_CLASS_CAST ((klass), \
-	EASYSETUP_TYPE_VALIDATING_ENTRY, EasysetupValidatingEntryClass))
+	MODEST_TYPE_VALIDATING_ENTRY, ModestValidatingEntryClass))
 
 #define EASYSETUP_IS_VALIDATING_ENTRY(obj) \
 	(G_TYPE_CHECK_INSTANCE_TYPE ((obj), \
-	EASYSETUP_TYPE_VALIDATING_ENTRY))
+	MODEST_TYPE_VALIDATING_ENTRY))
 
 #define EASYSETUP_IS_VALIDATING_ENTRY_CLASS(klass) \
 	(G_TYPE_CHECK_CLASS_TYPE ((klass), \
-	EASYSETUP_TYPE_VALIDATING_ENTRY))
+	MODEST_TYPE_VALIDATING_ENTRY))
 
-#define EASYSETUP_VALIDATING_ENTRY_GET_CLASS(obj) \
+#define MODEST_VALIDATING_ENTRY_GET_CLASS(obj) \
 	(G_TYPE_INSTANCE_GET_CLASS ((obj), \
-	EASYSETUP_TYPE_VALIDATING_ENTRY, EasysetupValidatingEntryClass))
+	MODEST_TYPE_VALIDATING_ENTRY, ModestValidatingEntryClass))
 
 typedef struct {
 	GtkEntry parent;
-} EasysetupValidatingEntry;
+} ModestValidatingEntry;
 
 typedef struct {
 	GtkEntryClass parent_class;
-} EasysetupValidatingEntryClass;
+} ModestValidatingEntryClass;
 
-GType easysetup_validating_entry_get_type (void);
+GType modest_validating_entry_get_type (void);
 
-EasysetupValidatingEntry* easysetup_validating_entry_new (void);
+ModestValidatingEntry* modest_validating_entry_new (void);
 
-void easysetup_validating_entry_set_unallowed_characters (EasysetupValidatingEntry *self, GList *list);
-void easysetup_validating_entry_set_unallowed_characters_whitespace (EasysetupValidatingEntry *self);
+void modest_validating_entry_set_unallowed_characters (ModestValidatingEntry *self, GList *list);
+void modest_validating_entry_set_unallowed_characters_whitespace (ModestValidatingEntry *self);
 
-typedef void (* EasySetupValidatingEntryMaxFunc) (EasysetupValidatingEntry *self, gpointer user_data);
-void easysetup_validating_entry_set_max_func (EasysetupValidatingEntry *self, EasySetupValidatingEntryMaxFunc func, gpointer user_data);
+typedef void (* EasySetupValidatingEntryMaxFunc) (ModestValidatingEntry *self, gpointer user_data);
+void modest_validating_entry_set_max_func (ModestValidatingEntry *self, EasySetupValidatingEntryMaxFunc func, gpointer user_data);
 
 G_END_DECLS
 
-#endif /* _EASYSETUP_VALIDATING_ENTRY */
+#endif /* _MODEST_VALIDATING_ENTRY */
