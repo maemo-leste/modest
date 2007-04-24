@@ -71,16 +71,20 @@ modest_tny_msg_new (const gchar* mailto, const gchar* from, const gchar *cc,
 	tny_header_set_to (TNY_HEADER (header), mailto);
 	tny_header_set_cc (TNY_HEADER (header), cc);
 	tny_header_set_bcc (TNY_HEADER (header), bcc);
-	tny_header_set_subject (TNY_HEADER (header), subject);
+
+	if (subject)
+		tny_header_set_subject (TNY_HEADER (header), subject);
 
 	content_type = get_content_type(body);
 		
-	/* Add the body of the new mail */	
+	/* Add the body of the new mail */
+	/* This is needed even if body is NULL or empty. */
 	add_body_part (new_msg, body, content_type, (attachments ? TRUE: FALSE));
 	g_free (content_type);
 		       
 	/* Add attachments */
-	add_attachments (new_msg, (GList*) attachments);
+	if (attachments)
+		add_attachments (new_msg, (GList*) attachments);
 
 	return new_msg;
 }
@@ -135,7 +139,7 @@ add_body_part (TnyMsg *msg,
 	/* Create the stream */
 	text_body_stream = TNY_STREAM (tny_camel_stream_new
 				       (camel_stream_mem_new_with_buffer
-					(body, strlen(body))));
+					(body, (body ? strlen(body) : 0))));
 
 	/* Create body part if needed */
 	if (has_attachments)

@@ -15,12 +15,14 @@ int main(int argc, char *argv[])
 	}
 	
 	/* Call the function in libmodest-dbus-client: */
-	const gboolean ret = libmodest_dbus_client_call_helloworld (osso_context);
+	/* TODO: The Message URI system is not yet implemented. */
+	const gboolean ret = libmodest_dbus_client_open_message (osso_context,
+		"http://todo_some_message_uri");
 	if (!ret) {
-			printf("libmodest_dbus_client_call_helloworld() failed.\n");
+			printf("libmodest_dbus_client_open_message() failed.\n");
 		return OSSO_ERROR;
 	} else {
-		printf("libmodest_dbus_client_call_helloworld() succeeded.\n");
+		printf("libmodest_dbus_client_open_message() succeeded.\n");
 	}
 		
     /* Exit */

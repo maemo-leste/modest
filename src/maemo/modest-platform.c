@@ -64,9 +64,9 @@ modest_platform_init (void)
 
 	/* Register our D-Bus callbacks, via the osso API: */
 	osso_return_t result = osso_rpc_set_cb_f(osso_context, 
-                               MODEST_DBUS_EXAMPLE_SERVICE, 
-                               MODEST_DBUS_EXAMPLE_OBJECT, 
-                               MODEST_DBUS_EXAMPLE_IFACE,
+                               MODEST_DBUS_SERVICE, 
+                               MODEST_DBUS_OBJECT, 
+                               MODEST_DBUS_IFACE,
                                modest_dbus_req_handler, NULL /* user_data */);
     	if (result != OSSO_OK) {
        		g_print("Error setting D-BUS callback (%d)\n", result);

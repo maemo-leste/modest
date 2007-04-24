@@ -36,11 +36,9 @@
  * are what is assumed by the, bizarrely named, osso_rpc_run_with_defaults() function, 
  * so they are probably a good choice. */
 #define MODEST_DBUS_NAME    "modestemail"
-#define MODEST_DBUS_EXAMPLE_SERVICE "com.nokia."MODEST_DBUS_NAME
-#define MODEST_DBUS_EXAMPLE_OBJECT  "/com/nokia/"MODEST_DBUS_NAME
-#define MODEST_DBUS_EXAMPLE_IFACE   "com.nokia."MODEST_DBUS_NAME
-
-#define MODEST_DBUS_EXAMPLE_MESSAGE "HelloWorld"
+#define MODEST_DBUS_SERVICE "com.nokia."MODEST_DBUS_NAME
+#define MODEST_DBUS_OBJECT  "/com/nokia/"MODEST_DBUS_NAME
+#define MODEST_DBUS_IFACE   "com.nokia."MODEST_DBUS_NAME
 
 #define MODEST_DBUS_METHOD_SEND_MAIL "SendMail"
 enum ModestDbusSendMailArguments
@@ -52,6 +50,20 @@ enum ModestDbusSendMailArguments
 	MODEST_DEBUS_SEND_MAIL_ARG_BODY,
 	/* TODO: MODEST_DEBUS_SEND_MAIL_ARG_ATTACHMENTS, */
 	MODEST_DEBUS_SEND_MAIL_ARGS_COUNT
+};
+
+#define MODEST_DBUS_METHOD_MAIL_TO "MailTo"
+enum ModestDbusMailToArguments
+{
+	MODEST_DEBUS_MAIL_TO_ARG_URI,
+	MODEST_DEBUS_MAIL_TO_ARGS_COUNT
+};
+
+#define MODEST_DBUS_METHOD_OPEN_MESSAGE "OpenMessage"
+enum ModestDbusOpenMessageArguments
+{
+	MODEST_DEBUS_OPEN_MESSAGE_ARG_URI,
+	MODEST_DEBUS_OPEN_MESSAGE_ARGS_COUNT
 };
 
 #endif /* __MODEST_DBUS_API__ */

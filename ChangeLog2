@@ -1,5 +1,26 @@
 2007-04-24  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/dbus_api/modest-dbus-api.h:
+	* src/dbus_api/modest-dbus-callbacks.c:
+	Use an idle callback to execute the modest code in the application's own thread.
+	Remove the helloworld example method.
+	Handle mail-to and open-message D-Bus methods, though the mail-to format needs to be 
+	parsed, and the open-message method is not implemented because this is not yet implemented in 
+	modest itself.
+	* libmodest-dbus-client/libmodest-dbus-client.c:
+	(libmodest_dbus_client_send_mail), (libmodest_dbus_client_mail_to),
+	(libmodest_dbus_client_open_message):
+	* libmodest-dbus-client/libmodest-dbus-client.h: New functions for the new methods.
+	
+	* src/modest-tny-msg.c: (modest_tny_msg_new), (add_body_part): Handle NULLs for subject and 
+	body without crashing.
+	
+	* tests/dbus_api/Makefile.am:
+	* tests/dbus_api/test_mail_to.c:
+	* tests/dbus_api/test_open_message.c: New tests for the new methods.
+
+2007-04-24  Murray Cumming  <murrayc@murrayc.com>
+
 	* libmodest-dbus-client/libmodest-dbus-client-1.0.pc.in:
 	Added file to fix the build. Sorry.
 	
