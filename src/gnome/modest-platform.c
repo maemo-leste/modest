@@ -27,11 +27,13 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modest-platform.h>
 #include <libgnomevfs/gnome-vfs-mime.h>
 #include <libgnomeui/gnome-icon-lookup.h>
 #include <tny-gnome-device.h>
-#include <modest-runtime.h>
+
+#include "modest-platform.h"
+#include "modest-mail-operation-queue.h"
+#include "modest-runtime.h"
 
 gboolean
 modest_platform_init (void)
@@ -116,5 +118,62 @@ modest_platform_get_icon (const gchar *name)
 const gchar*
 modest_platform_get_app_name (void)
 {
-	return ("modest");
+	return ("Modest");
+}
+
+gboolean 
+modest_platform_run_new_folder_dialog (ModestWindow *parent_window,
+				       TnyFolderStore *parent_folder)
+{
+	GtkWidget *dialog, *entry;
+	gchar *folder_name;
+	gboolean finished = FALSE;
+	TnyFolder *new_folder;
+	ModestMailOperation *mail_op;
+
+	/* Ask the user for the folder name */
+	dialog = gtk_dialog_new_with_buttons (_("New Folder Name"),
+					      GTK_WINDOW (parent_window),
+					      GTK_DIALOG_MODAL,
+					      GTK_STOCK_CANCEL,
+					      GTK_RESPONSE_REJECT,
+					      GTK_STOCK_OK,
+					      GTK_RESPONSE_ACCEPT,
+					      NULL);
+	gtk_box_pack_start (GTK_BOX(GTK_DIALOG(dialog)->vbox), 
+			    gtk_label_new (_("Please enter a name for the new folder")),
+			    FALSE, FALSE, 0);
+		
+	entry = gtk_entry_new_with_max_length (40);
+	gtk_box_pack_start (GTK_BOX(GTK_DIALOG(dialog)->vbox), 
+			    entry,
+			    TRUE, FALSE, 0);
+	
+	gtk_widget_show_all (GTK_WIDGET(GTK_DIALOG(dialog)->vbox));
+	
+	if (gtk_dialog_run (GTK_DIALOG(dialog)) == GTK_RESPONSE_REJECT) {
+		gtk_widget_destroy (dialog);
+		return TRUE;
+	}
+
+	folder_name = g_strdup (gtk_entry_get_text (GTK_ENTRY (entry)));
+	gtk_widget_destroy (dialog);
+
+	mail_op = modest_mail_operation_new ();
+	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), 
+					 mail_op);
+		
+	new_folder = modest_mail_operation_create_folder (mail_op,
+							  parent_folder,
+							  (const gchar *) folder_name);
+	if (new_folder) {
+		g_object_unref (new_folder);
+		finished = TRUE;
+	}
+
+	/* Frees */		
+	g_object_unref (mail_op);
+	g_free (folder_name);
+
+	return finished;
 }

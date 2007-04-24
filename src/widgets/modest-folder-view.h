@@ -104,7 +104,8 @@ void          modest_folder_view_set_title       (ModestFolderView *self,
  * modest_folder_view_get_selected:
  * @self: a #ModestFolderView
  * 
- * returns a new reference to the #TnyFolderStore that is already selected
+ * gets a new reference to the #TnyFolderStore that is already
+ * selected. The caller must free this reference
  * 
  * Returns: the selected #TnyFolderStore or NULL if none is selected
  **/

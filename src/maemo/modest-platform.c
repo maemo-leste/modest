@@ -48,6 +48,9 @@
 #include <gtk/gtkmain.h>
 #include <string.h>
 
+#include "modest-mail-operation-queue.h"
+#include "modest-runtime.h"
+
 gboolean
 modest_platform_init (void)
 {	
@@ -327,4 +330,140 @@ const gchar*
 modest_platform_get_app_name (void)
 {
 	return _("mcen_ap_name");
+}
+
+static void 
+entry_insert_text (GtkEditable *editable,
+		   const gchar *text,
+		   gint         length,
+		   gint        *position,
+		   gpointer     data)
+{
+	gchar *chars;
+	gint chars_length;
+
+	chars = gtk_editable_get_chars (editable, 0, -1);
+	chars_length = strlen (chars);
+
+	/* Show WID-INF036 */
+	if (chars_length == 20) {
+		hildon_banner_show_information  (gtk_widget_get_parent (GTK_WIDGET (data)), NULL,
+						 _("mcen_ib_maxchar_reached"));
+	} else {
+		if (chars_length == 0) {
+			GtkWidget *ok_button;
+			GList *buttons;
+
+			/* Show OK button */
+			buttons = gtk_container_get_children (GTK_CONTAINER (GTK_DIALOG (data)->action_area));
+			ok_button = GTK_WIDGET (buttons->next->data);
+			gtk_widget_set_sensitive (ok_button, TRUE);
+			g_list_free (buttons);
+		}
+
+		/* Write the text in the entry */
+		g_signal_handlers_block_by_func (editable,
+						 (gpointer) entry_insert_text, data);
+		gtk_editable_insert_text (editable, text, length, position);
+		g_signal_handlers_unblock_by_func (editable,
+						   (gpointer) entry_insert_text, data);
+	}
+	/* Do not allow further processing */
+	g_signal_stop_emission_by_name (editable, "insert_text");
+}
+
+static void
+entry_changed (GtkEditable *editable,
+	       gpointer     user_data)
+{
+	gchar *chars;
+
+	chars = gtk_editable_get_chars (editable, 0, -1);
+
+	/* Dimm OK button */
+	if (strlen (chars) == 0) {
+		GtkWidget *ok_button;
+		GList *buttons;
+
+		buttons = gtk_container_get_children (GTK_CONTAINER (GTK_DIALOG (user_data)->action_area));
+		ok_button = GTK_WIDGET (buttons->next->data);
+		gtk_widget_set_sensitive (ok_button, FALSE);
+
+		g_list_free (buttons);
+	}
+	g_free (chars);
+}
+
+gboolean 
+modest_platform_run_new_folder_dialog (ModestWindow *parent_window,
+				       TnyFolderStore *parent_folder)
+{
+	GtkWidget *dialog, *entry, *label, *hbox;
+	gchar *folder_name;
+	gboolean finished = FALSE;
+	TnyFolder *new_folder;
+	ModestMailOperation *mail_op;
+
+	/* Ask the user for the folder name */
+	dialog = gtk_dialog_new_with_buttons (_("mcen_ti_new_folder"),
+					      GTK_WINDOW (parent_window),
+					      GTK_DIALOG_MODAL | GTK_DIALOG_NO_SEPARATOR | GTK_DIALOG_DESTROY_WITH_PARENT,
+					      GTK_STOCK_OK,
+					      GTK_RESPONSE_ACCEPT,
+					      GTK_STOCK_CANCEL,
+					      GTK_RESPONSE_REJECT,
+					      NULL);
+
+	/* Create label and entry */
+	label = gtk_label_new (_("mcen_fi_new_folder_name")),	
+	entry = gtk_entry_new_with_max_length (21);
+	gtk_entry_set_text (GTK_ENTRY (entry), _("mcen_ia_default_folder_name"));
+	gtk_entry_select_region (GTK_ENTRY (entry), 0, -1);
+
+	/* Track entry changes */
+	g_signal_connect (entry,
+			  "insert-text",
+			  G_CALLBACK (entry_insert_text),
+			  dialog);
+	g_signal_connect (entry,
+			  "changed",
+			  G_CALLBACK (entry_changed),
+			  dialog);
+
+	/* Create the hbox */
+	hbox = gtk_hbox_new (FALSE, 12);
+	gtk_box_pack_start (GTK_BOX (hbox), label, TRUE, FALSE, 0);
+	gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, FALSE, 0);
+
+	/* Add hbox to dialog */
+	gtk_box_pack_start (GTK_BOX(GTK_DIALOG(dialog)->vbox), 
+			    hbox, FALSE, FALSE, 0);
+	
+	gtk_widget_show_all (GTK_WIDGET(GTK_DIALOG(dialog)->vbox));
+	
+	if (gtk_dialog_run (GTK_DIALOG(dialog)) == GTK_RESPONSE_REJECT) {
+		gtk_widget_destroy (dialog);
+		return TRUE;
+	}
+
+	folder_name = g_strdup (gtk_entry_get_text (GTK_ENTRY (entry)));
+	gtk_widget_destroy (dialog);
+
+	mail_op = modest_mail_operation_new ();
+	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), 
+					 mail_op);
+		
+	new_folder = modest_mail_operation_create_folder (mail_op,
+							  parent_folder,
+							  (const gchar *) folder_name);
+	if (new_folder) {
+		g_object_unref (new_folder);
+		finished = TRUE;
+	}
+
+	/* Frees */		
+	g_object_unref (mail_op);
+	g_free (folder_name);
+
+	return finished;
 }

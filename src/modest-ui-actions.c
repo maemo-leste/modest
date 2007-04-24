@@ -1266,27 +1266,10 @@ modest_ui_actions_on_new_folder (GtkAction *action, ModestMainWindow *main_windo
 	parent_folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW(folder_view));
 	
 	if (parent_folder) {
-		gchar *folder_name;
+		/* Run the new folder dialog */
+		while (!modest_platform_run_new_folder_dialog (MODEST_WINDOW (main_window),
+							       parent_folder));
 
-		folder_name = ask_for_folder_name (GTK_WINDOW (main_window),
-						   _("Please enter a name for the new folder"));
-
-		if (folder_name != NULL && strlen (folder_name) > 0) {
-			TnyFolder *new_folder;
-			ModestMailOperation *mail_op;
-
-			mail_op = modest_mail_operation_new ();
-			modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), 
-							 mail_op);
-
-			new_folder = modest_mail_operation_create_folder (mail_op,
-									  parent_folder,
-									  (const gchar *) folder_name);
-			if (new_folder) 
-				g_object_unref (new_folder);
-			g_object_unref (mail_op);
-			g_free (folder_name);
-		}
 		g_object_unref (parent_folder);
 	}
 }

@@ -30,9 +30,8 @@
 #ifndef __MODEST_PLATFORM_H__
 #define __MODEST_PLATFORM_H__
 
-#include <glib.h>
-#include <gtk/gtk.h>
 #include <tny-device.h>
+#include "widgets/modest-window.h"
 
 G_BEGIN_DECLS
 
@@ -110,6 +109,10 @@ GdkPixbuf* modest_platform_get_icon (const gchar *name);
  * this function returns the name of the application. Do not modify.
  */
 const gchar* modest_platform_get_app_name (void);
+
+
+gboolean modest_platform_run_new_folder_dialog (ModestWindow *parent_window,
+						TnyFolderStore *parent);
 
 G_END_DECLS
 
