@@ -188,8 +188,14 @@ restore_settings_window (ModestConf *conf, GtkWindow *win, const gchar *name)
 
 	g_free (key);
 
+	/* Added this ugly ifdef, because in Maemo the
+	   gtk_window_set_default_size() makes "drag-motion" signal
+	   report bad coordinates, so drag-and-drop do not work
+	   properly */
+#ifdef MODEST_PLATFORM_GNOME
 	if (height && width)
 		gtk_window_set_default_size (win, width, height);
+#endif
 
 	/* Restore also the main window style */
 	if (MODEST_IS_MAIN_WINDOW (win)) {
