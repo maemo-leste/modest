@@ -1,6 +1,16 @@
 2007-04-24  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/maemo/easysetup/modest-easysetup-wizard.c:
+	(create_page_custom_incoming), (create_page_custom_outgoing):
+	* src/maemo/modest-account-settings-dialog.c:
+	(create_page_account_details), (create_page_incoming),
+	(create_page_outgoing): Use a separate label in a caption for GtkCheckButtons, 
+	instead of using gtk_check_button_with_label(), so they are aligned like the other 
+	widgets, as per the UI spec.
+
+2007-04-24  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/maemo/easysetup/modest-easysetup-wizard.c:
 	* src/maemo/modest-connection-specific-smtp-edit-window.c:
 	* src/widgets/modest-validating-entry.c:
 	* src/widgets/modest-validating-entry.h: Rename the validating widget so it has a 

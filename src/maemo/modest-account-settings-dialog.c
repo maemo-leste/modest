@@ -290,11 +290,13 @@ create_page_account_details (ModestAccountSettingsDialog *self)
 
 	/* The leave-messages widgets: */
 	if(!self->checkbox_leave_messages)
-		self->checkbox_leave_messages = 
-			gtk_check_button_new_with_label (_("mcen_fi_advsetup_leave_on_server"));
-	gtk_box_pack_start (GTK_BOX (box), self->checkbox_leave_messages, FALSE, FALSE, MODEST_MARGIN_HALF);
+		self->checkbox_leave_messages = gtk_check_button_new ();
+	caption = create_caption_new_with_asterix (self, sizegroup, _("mcen_fi_advsetup_leave_on_server"), 
+		self->checkbox_leave_messages, NULL, HILDON_CAPTION_MANDATORY);
 	gtk_widget_show (self->checkbox_leave_messages);
 	connect_for_modified (self, self->checkbox_leave_messages);
+	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
+	gtk_widget_show (caption);
 	
 	gtk_widget_show (GTK_WIDGET (box));
 	
@@ -529,11 +531,13 @@ static GtkWidget* create_page_incoming (ModestAccountSettingsDialog *self)
 	
 	/* The secure authentication widgets: */
 	if(!self->checkbox_incoming_auth)
-		self->checkbox_incoming_auth = 
-			gtk_check_button_new_with_label (_("mcen_li_emailsetup_secure_authentication"));
-	gtk_box_pack_start (GTK_BOX (box), self->checkbox_incoming_auth, FALSE, FALSE, MODEST_MARGIN_HALF);
+		self->checkbox_incoming_auth = gtk_check_button_new ();
+	caption = hildon_caption_new (sizegroup, _("mcen_li_emailsetup_secure_authentication"), 
+		self->checkbox_incoming_auth, NULL, HILDON_CAPTION_OPTIONAL);
 	gtk_widget_show (self->checkbox_incoming_auth);
 	connect_for_modified (self, self->checkbox_incoming_auth);
+	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
+	gtk_widget_show (caption);
 	
 	gtk_widget_show (GTK_WIDGET (box));
 	
@@ -727,12 +731,15 @@ static GtkWidget* create_page_outgoing (ModestAccountSettingsDialog *self)
 	
 	/* connection-specific checkbox: */
 	if (!self->checkbox_outgoing_smtp_specific) {
-		self->checkbox_outgoing_smtp_specific = gtk_check_button_new_with_label (_("mcen_fi_advsetup_connection_smtp"));
+		self->checkbox_outgoing_smtp_specific = gtk_check_button_new ();
 		gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->checkbox_outgoing_smtp_specific), 
 			FALSE);
 	}
-	gtk_box_pack_start (GTK_BOX (box), self->checkbox_outgoing_smtp_specific, FALSE, FALSE, MODEST_MARGIN_HALF);
+	caption = hildon_caption_new (sizegroup, _("mcen_fi_advsetup_connection_smtp"), 
+		self->checkbox_outgoing_smtp_specific, NULL, HILDON_CAPTION_OPTIONAL);
 	gtk_widget_show (self->checkbox_outgoing_smtp_specific);
+	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
+	gtk_widget_show (caption);
 	connect_for_modified (self, self->checkbox_outgoing_smtp_specific);
 	
 	/* Connection-specific SMTP-Severs Edit button: */
