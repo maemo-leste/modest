@@ -827,6 +827,7 @@ create_details_widget (TnyAccount *account)
 
 	/* Size / Date */
 	if (!strcmp (tny_account_get_id (account), MODEST_LOCAL_FOLDERS_ACCOUNT_ID)) {
+		/* FIXME: format size */
 		label = g_strdup_printf ("%s: %d", _("mcen_fi_rootfolder_size"), 
 					 modest_tny_account_get_local_size (account));
 		gtk_box_pack_start (GTK_BOX (vbox), gtk_label_new (label), FALSE, FALSE, 0);

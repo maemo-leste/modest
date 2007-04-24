@@ -41,14 +41,14 @@ libmodest_widgets_la_SOURCES=          \
 	modest-msg-view-window.h       \
 	modest-msg-view.c              \
 	modest-msg-view.h	       \
-	modest-msg-view-details-dialog.c \
-	modest-msg-view-details-dialog.h \
+	modest-details-dialog.c        \
+	modest-details-dialog.h        \
 	modest-recpt-editor.c          \
 	modest-recpt-editor.h          \
 	modest-recpt-view.c            \
 	modest-recpt-view.h            \
-	modest-retrieve-combo-box.h \
-	modest-retrieve-combo-box.c \
+	modest-retrieve-combo-box.h    \
+	modest-retrieve-combo-box.c    \
 	modest-scroll-text.c           \
 	modest-scroll-text.h           \
 	modest-serversecurity-combo-box.h modest-serversecurity-combo-box.c \

@@ -27,8 +27,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __MODEST_MSG_VIEW_DETAILS_DIALOG
-#define __MODEST_MSG_VIEW_DETAILS_DIALOG
+#ifndef __MODEST_DETAILS_DIALOG
+#define __MODEST_DETAILS_DIALOG
 
 #include <glib.h>
 #include <gtk/gtkdialog.h>
@@ -37,41 +37,56 @@
 
 G_BEGIN_DECLS
 
-#define MODEST_TYPE_MSG_VIEW_DETAILS_DIALOG modest_msg_view_details_dialog_get_type()
+#define MODEST_TYPE_DETAILS_DIALOG modest_details_dialog_get_type()
 
-#define MODEST_MSG_VIEW_DETAILS_DIALOG(obj) \
+#define MODEST_DETAILS_DIALOG(obj) \
 	(G_TYPE_CHECK_INSTANCE_CAST ((obj), \
-	MODEST_TYPE_MSG_VIEW_DETAILS_DIALOG, ModestMsgViewDetailsDialog))
+	MODEST_TYPE_DETAILS_DIALOG, ModestDetailsDialog))
 
-#define MODEST_MSG_VIEW_DETAILS_DIALOG_CLASS(klass) \
+#define MODEST_DETAILS_DIALOG_CLASS(klass) \
 	(G_TYPE_CHECK_CLASS_CAST ((klass), \
-	MODEST_TYPE_MSG_VIEW_DETAILS_DIALOG, ModestMsgViewDetailsDialogClass))
+	MODEST_TYPE_DETAILS_DIALOG, ModestDetailsDialogClass))
 
-#define MODEST_IS_MSG_VIEW_DETAILS_DIALOG(obj) \
+#define MODEST_IS_DETAILS_DIALOG(obj) \
 	(G_TYPE_CHECK_INSTANCE_TYPE ((obj), \
-	MODEST_TYPE_MSG_VIEW_DETAILS_DIALOG))
+	MODEST_TYPE_DETAILS_DIALOG))
 
-#define MODEST_IS_MSG_VIEW_DETAILS_DIALOG_CLASS(klass) \
+#define MODEST_IS_DETAILS_DIALOG_CLASS(klass) \
 	(G_TYPE_CHECK_CLASS_TYPE ((klass), \
-	MODEST_TYPE_MSG_VIEW_DETAILS_DIALOG))
+	MODEST_TYPE_DETAILS_DIALOG))
 
-#define MODEST_MSG_VIEW_DETAILS_DIALOG_GET_CLASS(obj) \
+#define MODEST_DETAILS_DIALOG_GET_CLASS(obj) \
 	(G_TYPE_INSTANCE_GET_CLASS ((obj), \
-	MODEST_TYPE_MSG_VIEW_DETAILS_DIALOG, ModestMsgViewDetailsDialogClass))
+	MODEST_TYPE_DETAILS_DIALOG, ModestDetailsDialogClass))
 
 typedef struct {
 	GtkDialog parent;
 	
-} ModestMsgViewDetailsDialog;
+} ModestDetailsDialog;
 
 typedef struct {
 	GtkDialogClass parent_class;
-} ModestMsgViewDetailsDialogClass;
 
-GType modest_msg_view_details_dialog_get_type (void);
+	/* virtual methods */
+	void (*create_container_func) (ModestDetailsDialog *self);
+	void (*add_data_func) (ModestDetailsDialog *self, const gchar *label, const gchar *value);
+	void (*set_header_func) (ModestDetailsDialog *self, TnyHeader *header);
+	void (*set_folder_func) (ModestDetailsDialog *self, TnyFolder *folder);
 
-GtkWidget* modest_msg_view_details_dialog_new (GtkWindow *parent, TnyHeader *header);
+} ModestDetailsDialogClass;
+
+GType modest_details_dialog_get_type (void);
+
+GtkWidget* modest_details_dialog_new_with_header  (GtkWindow *parent, 
+						   TnyHeader *header);
+
+GtkWidget* modest_details_dialog_new_with_folder  (GtkWindow *parent, 
+						   TnyFolder *folder);
+
+void       modest_details_dialog_add_data         (ModestDetailsDialog *self, 
+						   const gchar *label, 
+						   const gchar *value);
 
 G_END_DECLS
 
-#endif /* __MODEST_MSG_VIEW_DETAILS_DIALOG */
+#endif /* __MODEST_DETAILS_DIALOG */

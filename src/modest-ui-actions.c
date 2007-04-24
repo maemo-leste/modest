@@ -47,10 +47,11 @@
 #include <widgets/modest-main-window.h>
 #include <widgets/modest-msg-view-window.h>
 #include <widgets/modest-account-view-window.h>
-#include <widgets/modest-msg-view-details-dialog.h>
+#include <widgets/modest-details-dialog.h>
 
 #include "modest-account-mgr-helpers.h"
 #include "modest-mail-operation.h"
+#include "modest-text-utils.h"
 
 #ifdef MODEST_HAVE_EASYSETUP
 #include "easysetup/modest-easysetup-wizard.h"
@@ -1608,20 +1609,44 @@ modest_ui_actions_on_change_fullscreen (GtkAction *action,
 	gtk_window_present (GTK_WINDOW (window));
 }
 
+/*
+ * Show the header details in a ModestDetailsDialog widget
+ */
 static void
 show_header_details (TnyHeader *header, 
 		     GtkWindow *window)
 {
 	GtkWidget *dialog;
 	
-	dialog = modest_msg_view_details_dialog_new (window, header);
-	g_object_unref (header);
-	gtk_widget_show_all (dialog);
+	/* Create dialog */
+	dialog = modest_details_dialog_new_with_header (window, header);
 
+	/* Run dialog */
+	gtk_widget_show_all (dialog);
 	gtk_dialog_run (GTK_DIALOG (dialog));
 
 	gtk_widget_destroy (dialog);
 }
+
+/*
+ * Show the folder details in a ModestDetailsDialog widget
+ */
+static void
+show_folder_details (TnyFolder *folder, 
+		     GtkWindow *window)
+{
+	GtkWidget *dialog;
+	
+	/* Create dialog */
+	dialog = modest_details_dialog_new_with_folder (window, folder);
+
+	/* Run dialog */
+	gtk_widget_show_all (dialog);
+	gtk_dialog_run (GTK_DIALOG (dialog));
+
+	gtk_widget_destroy (dialog);
+}
+
 
 void     
 modest_ui_actions_on_details (GtkAction *action, 
@@ -1659,13 +1684,14 @@ modest_ui_actions_on_details (GtkAction *action,
 		if (gtk_widget_is_focus (folder_view)) {
 			TnyFolder *folder;
 
-			folder = TNY_FOLDER (modest_folder_view_get_selected (MODEST_FOLDER_VIEW (folder_view)));
+			folder = (TnyFolder *) modest_folder_view_get_selected (MODEST_FOLDER_VIEW (folder_view));
 
 			/* Show only when it's a folder */
 			if (!folder || !TNY_IS_FOLDER (folder))
 				return;
 
-			/* TODO */
+			show_folder_details (folder, GTK_WINDOW (win));
+
 		} else {
 			header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win),
 									   MODEST_WIDGET_TYPE_HEADER_VIEW);
