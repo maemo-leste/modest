@@ -1,10 +1,5 @@
-#include <libosso.h>
+#include <libmodest-dbus-client/libmodest-dbus-client.h>
 #include <stdio.h>
-
-#define MODEST_DBUS_NAME    "modestemail"
-#define MODEST_DBUS_EXAMPLE_MESSAGE "HelloWorld"
-
-
 
 int main(int argc, char *argv[])
 {
@@ -19,18 +14,14 @@ int main(int argc, char *argv[])
 	    return OSSO_ERROR;
 	}
 	
-	osso_rpc_t retval;
-	osso_return_t ret = osso_rpc_run_with_defaults(osso_context, 
-		   MODEST_DBUS_NAME, 
-		   MODEST_DBUS_EXAMPLE_MESSAGE, &retval, DBUS_TYPE_INVALID);
-	if (ret != OSSO_OK) {
-			printf("osso_rpc_run() failed.\n");
+	/* Call the function in libmodest-dbus-client: */
+	const gboolean ret = libmodest_dbus_client_call_helloworld (osso_context);
+	if (!ret) {
+			printf("libmodest_dbus_client_call_helloworld() failed.\n");
 		return OSSO_ERROR;
 	} else {
-		printf("osso_rpc_run() succeeded.\n");
+		printf("libmodest_dbus_client_call_helloworld() succeeded.\n");
 	}
-		
-	osso_rpc_free_val(&retval);
 		
     /* Exit */
     return 0;

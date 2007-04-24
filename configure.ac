@@ -212,6 +212,8 @@ tests/Makefile
 tests/dbus_api/Makefile
 src/maemo/modest.desktop
 src/maemo/modest.service
+libmodest-dbus-client/Makefile
+libmodest-dbus-client/libmodest-dbus-client-1.0.pc
 ])
 
 

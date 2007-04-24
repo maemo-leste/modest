@@ -1,5 +1,16 @@
 2007-04-24  Murray Cumming  <murrayc@murrayc.com>
 
+	* Makefile.am:
+	* configure.ac:
+	* libmodest-dbus-client/Makefile.am:
+	* libmodest-dbus-client/libmodest-dbus-client.c:
+	* libmodest-dbus-client/libmodest-dbus-client.h:
+	* tests/dbus_api/Makefile.am:
+	* tests/dbus_api/test_hello.c: (main): Added directory structure for a C convenience library 
+	for using the modest D-Bus API, and used that from the test. It is still just a helloworld.
+
+2007-04-24  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/maemo/easysetup/modest-easysetup-wizard.c:
 	(create_page_account_details):
 	* src/maemo/modest-account-settings-dialog.c:

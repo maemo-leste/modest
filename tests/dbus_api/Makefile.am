@@ -5,6 +5,7 @@ INCLUDES=\
 	$(MODEST_LIBTINYMAIL_MAEMO_CFLAGS) \
 	-I$(MODEST_PLATFORM) \
 	-I${top_srcdir}/src \
+	-I$(top_srcdir) \
 	-DPREFIX=\"@prefix@\" \
 	-DMODESTLOCALEDIR=\""$(modestlocaledir)"\"
 	
@@ -12,7 +13,8 @@ objects=\
 	@CHECK_LIBS@ \
 	$(MODEST_GSTUFF_LIBS) \
         $(MODEST_LIBTINYMAIL_GNOME_DESKTOP_LIBS) \
-        $(MODEST_LIBTINYMAIL_MAEMO_LIBS)
+        $(MODEST_LIBTINYMAIL_MAEMO_LIBS) \
+        ${top_srcdir}/libmodest-dbus-client/libmodest-dbus-client-1.0.la
         
 noinst_PROGRAMS = test_hello
 

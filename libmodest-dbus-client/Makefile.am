@@ -26,29 +26,25 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-SUBDIRS= src libmodest-dbus-client man po
+INCLUDES=\
+	$(MODEST_GSTUFF_CFLAGS)\
+	$(MODEST_LIBTINYMAIL_GNOME_DESKTOP_CFLAGS) \
+	$(MODEST_LIBTINYMAIL_MAEMO_CFLAGS) \
+	-I$(MODEST_PLATFORM) \
+	-DPREFIX=\"@prefix@\" \
+	-DMODEST_LOCALEDIR=\"$(MODEST_LOCALEDIR)\" \
+	-DMODEST_PLATFORM=\"$(MODEST_PLATFORM)\" \
+	-DMODEST_PLATFORM_ID=$(MODEST_PLATFORM_ID) \
+	-DPIXMAP_PREFIX=\"${datadir}/pixmaps/modest/\" \
+	-DMODEST_UIDIR=\"$(datadir)/modest/ui/\"
 
-if BUILD_TESTS
-SUBDIRS += tests
-endif
+lib_LTLIBRARIES = libmodest-dbus-client-1.0.la
+libmodest_dbus_client_1_0_la_SOURCES = libmodest-dbus-client.h libmodest-dbus-client.c
 
-if BUILD_DOCS
-SUBDIRS += docs
-endif
+library_includedir=$(includedir)/libmodest-dbus-client-1.0/libmodest-dbus-client
+library_include_HEADERS = libmodest-dbus-client.h
 
-EXTRA_DIST=                 \
-	mkinstalldirs       \
-	autogen.sh          \
-	COPYING             \
-	intltool-extract.in \
-	intltool-merge.in   \
-	intltool-update.in  \
-	debian/changelog    \
-	debian/copyright    \
-	debian/rules        \
-	debian/modest.links
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = libmodest-dbus-client-1.0.pc
 
-DISTCLEANFILES =            \
-	intltool-extract.in \
-	intltool-merge.in   \
-	intltool-update.in
+
