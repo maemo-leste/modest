@@ -2,8 +2,8 @@
 Encoding=UTF-8
 Version=1.0
 Type=Application
-Name=modest
-Comment=modest e-mail client
+Name=mcen_ap_name
+Comment=mcen_ap_name_thumb
 Exec=@prefix@/bin/modest
 
 #don't kill our app
@@ -17,3 +17,12 @@ X-Window-Icon-Dimmed=qgn_list_messagin
 StartupWMClass=modest
 
 MimeType=application/x-executable;
+
+#
+# below to be activated when dbus/send to functionality works
+#
+#X-Osso-URI-Actions=mailto
+#[X-Osso-URI-Action Handler mailto]
+#Methods=send_mailto
+#Name=uri_link_compose_email
+#TranslationDomain=osso-uri

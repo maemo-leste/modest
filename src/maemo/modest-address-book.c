@@ -307,7 +307,11 @@ commit_contact(EContact * contact)
 	if (!contact || !book)
 		return;
 
+#ifdef MODEST_HILDON_VERSION_0	
 	osso_abook_contact_commit(contact, FALSE, book);
+#else
+	osso_abook_contact_commit(contact, FALSE, book, NULL);
+#endif /* MODEST_HILDON_VERSION_0 */
 }
 
 /**
