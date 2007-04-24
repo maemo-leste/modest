@@ -1293,9 +1293,6 @@ modest_ui_actions_on_new_folder (GtkAction *action, ModestMainWindow *main_windo
 					g_object_unref (new_folder);
 					finished = TRUE;
 				} else {
-					const GError *error;
-					error = modest_mail_operation_get_error (mail_op);
-					g_printerr ("%s", error->message);
 					/* TODO: check error and follow proper actions */
 /* 					suggested_name = X; */
 					/* Show error to the user */
