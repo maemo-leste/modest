@@ -1,3 +1,11 @@
+2007-04-25  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/dbus_api/modest-dbus-callbacks.c: Added uri_unescape(),
+	and uri_parse_mailto() utility functions.
+	(on_idle_mail_to): Parse, unescape, and use the subject, cc, bcc, and body items in 
+	the mailto URI.
+	* tests/dbus_api/test_mail_to.c: (main): Add escaped spaces in the URI to test this.
+
 2007-04-24  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/dbus_api/modest-dbus-api.h:
