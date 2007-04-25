@@ -1,5 +1,5 @@
 #!/bin/sh
-#Time-stamp: <2007-04-25 11:11:00 (djcb)>
+#Time-stamp: <2007-04-25 11:19:38 (djcb)>
 
 # Copyright (c) 2007, Nokia Corporation
 # All rights reserved.
@@ -181,7 +181,7 @@ EOF
 fi    
 
 echo "*** built packages, now building Packages.gz"
-$SCRATCHBOX -d "${PACKAGE_PATH}" "dpkg-scanpackages . /dev/null | gzip -9c > Packages.gz"
+$SCRATCHBOX -d "${PACKAGE_PATH}" "dpkg-scanpackages . /dev/null | gzip -9c > ${PACKAGE_PATH}/Packages.gz"
 
 
 #
