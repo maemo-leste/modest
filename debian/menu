@@ -1,2 +1,2 @@
-?package(modest):needs=X11|text|vc|wm section=Apps/see-menu-manual\
+?package(modest):needs="X11" section="Apps/Net" \
   title="modest" command="/usr/bin/modest"
