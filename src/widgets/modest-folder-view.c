@@ -781,7 +781,6 @@ cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 					cmp = modest_text_utils_utf8_strcmp (name1, name2, TRUE);
 			}
 		}
-		g_print ("%s,%s - %d\n",account_id, account_id2,cmp);
 	} else 
 		cmp = modest_text_utils_utf8_strcmp (name1, name2, TRUE);
 	
