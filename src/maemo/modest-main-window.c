@@ -421,8 +421,12 @@ modest_main_window_new (void)
 					 TNY_FOLDER_STORE_QUERY_OPTION_SUBSCRIBED);
 	priv->folder_view = MODEST_FOLDER_VIEW(modest_folder_view_new (query));
 	if (!priv->folder_view)
-		g_printerr ("modest: cannot instantiate folder view\n");	
-	g_object_unref (G_OBJECT (query));	
+		g_printerr ("modest: cannot instantiate folder view\n");
+	g_object_unref (G_OBJECT (query));
+	modest_folder_view_set_style (priv->folder_view, 
+				      MODEST_FOLDER_VIEW_STYLE_SHOW_ONE);
+
+	/* Get device name */
 	modest_maemo_utils_get_device_name ();
 
 	/* header view */

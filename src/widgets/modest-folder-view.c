@@ -78,6 +78,19 @@ static gint         cmp_rows               (GtkTreeModel *tree_model,
 					    GtkTreeIter *iter2,
 					    gpointer user_data);
 
+static gboolean     filter_row             (GtkTreeModel *model,
+					    GtkTreeIter *iter,
+					    gpointer data);
+
+static gboolean     on_key_pressed         (GtkWidget *self,
+					    GdkEventKey *event,
+					    gpointer user_data);
+
+static void         on_configuration_key_changed         (ModestConf* conf, 
+							  const gchar *key, 
+							  ModestConfEvent event, 
+							  ModestFolderView *self);
+
 /* DnD functions */
 static void         on_drag_data_get       (GtkWidget *widget, 
 					    GdkDragContext *context, 
@@ -106,15 +119,6 @@ static gint         expand_row_timeout     (gpointer data);
 
 static void         setup_drag_and_drop    (GtkTreeView *self);
 
-static gboolean     on_key_pressed         (GtkWidget *self,
-					    GdkEventKey *event,
-					    gpointer user_data);
-
-static void         on_configuration_key_changed         (ModestConf* conf, 
-							  const gchar *key, 
-							  ModestConfEvent event, 
-							  ModestFolderView *self);
-
 enum {
 	FOLDER_SELECTION_CHANGED_SIGNAL,
 	FOLDER_DISPLAY_NAME_CHANGED_SIGNAL,
@@ -123,18 +127,19 @@ enum {
 
 typedef struct _ModestFolderViewPrivate ModestFolderViewPrivate;
 struct _ModestFolderViewPrivate {
-	TnyAccountStore     *account_store;
-	TnyFolderStore      *cur_folder_store;
+	TnyAccountStore      *account_store;
+	TnyFolderStore       *cur_folder_store;
 
-	gulong               account_update_signal;
-	gulong               changed_signal;
-	gulong               accounts_reloaded_signal;
+	gulong                account_update_signal;
+	gulong                changed_signal;
+	gulong                accounts_reloaded_signal;
 	
-	GtkTreeSelection    *cur_selection;
-	TnyFolderStoreQuery *query;
-	guint                timer_expander;
+	GtkTreeSelection     *cur_selection;
+	TnyFolderStoreQuery  *query;
+	guint                 timer_expander;
 
-	gchar               *local_account_name;
+	gchar                *local_account_name;
+	ModestFolderViewStyle style;
 };
 #define MODEST_FOLDER_VIEW_GET_PRIVATE(o)			\
 	(G_TYPE_INSTANCE_GET_PRIVATE((o),			\
@@ -412,6 +417,7 @@ modest_folder_view_init (ModestFolderView *obj)
 	priv->account_store  = NULL;
 	priv->cur_folder_store     = NULL;
 	priv->query          = NULL;
+	priv->style          = MODEST_FOLDER_VIEW_STYLE_SHOW_ALL;
 
 	/* Initialize the local account name */
 	conf = modest_runtime_get_conf();
@@ -602,6 +608,7 @@ modest_folder_view_new (TnyFolderStoreQuery *query)
 	sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(self));
 	priv->changed_signal = g_signal_connect (sel, "changed",
 						 G_CALLBACK (on_selection_changed), self);
+
 	return GTK_WIDGET(self);
 }
 
@@ -619,13 +626,60 @@ expand_root_items (ModestFolderView *self)
 	gtk_tree_path_free (path);
 }
 
+/*
+ * HACK: we use this function to implement the
+ * MODEST_FOLDER_VIEW_STYLE_SHOW_ONE style. This implementation
+ * assumes that the model has the following order (which is currently
+ * true) Remote folders->Local folders->MMC folders, so the rows of
+ * the first level (that represent the accounts) are received in the
+ * same order. So basically it uses a static variable to register that
+ * a remote account has already being shown to hide the others
+ * (returning NULL). When the function evaluates the local or the MMC
+ * accounts is time to reset the static variable in order to get it
+ * ready for the next time the tree model needs to be shown.
+ */
+static gboolean 
+filter_row (GtkTreeModel *model,
+	    GtkTreeIter *iter,
+	    gpointer data)
+{
+	static gboolean found = FALSE;
+	gboolean retval;
+	gint type;
+	GObject *instance;
+
+	gtk_tree_model_get (model, iter,
+			    TNY_GTK_FOLDER_STORE_TREE_MODEL_TYPE_COLUMN, &type,
+			    TNY_GTK_FOLDER_STORE_TREE_MODEL_INSTANCE_COLUMN, &instance,
+			    -1);
+
+	if (type == TNY_FOLDER_TYPE_ROOT) {
+		const gchar *account_id = tny_account_get_id (TNY_ACCOUNT (instance));
+
+		if (strcmp (account_id, MODEST_LOCAL_FOLDERS_ACCOUNT_ID) &&
+		    strcmp (account_id, MODEST_MMC_ACCOUNT_ID)) {
+
+			if (!found) {
+				found = TRUE;
+				retval = TRUE;
+			} else
+				retval = FALSE;
+		} else {
+			found = FALSE;
+			retval = TRUE;
+		}
+	} else
+		retval = TRUE;
+
+	return retval;
+}
+
 static gboolean
 update_model (ModestFolderView *self, ModestTnyAccountStore *account_store)
 {
 	ModestFolderViewPrivate *priv;
-
 	TnyList          *account_list;
-	GtkTreeModel     *model, *sortable;
+	GtkTreeModel     *model;
 
 	g_return_val_if_fail (account_store, FALSE);
 
@@ -646,6 +700,8 @@ update_model (ModestFolderView *self, ModestTnyAccountStore *account_store)
 					account_list,
 					TNY_ACCOUNT_STORE_STORE_ACCOUNTS);	
 	if (account_list) {
+		GtkTreeModel *filter_model = NULL, *sortable = NULL;
+
 		sortable = gtk_tree_model_sort_new_with_model (model);
 		gtk_tree_sortable_set_sort_column_id (GTK_TREE_SORTABLE(sortable),
 						      TNY_GTK_FOLDER_STORE_TREE_MODEL_NAME_COLUMN, 
@@ -654,8 +710,18 @@ update_model (ModestFolderView *self, ModestTnyAccountStore *account_store)
 						 TNY_GTK_FOLDER_STORE_TREE_MODEL_NAME_COLUMN,
 						 cmp_rows, NULL, NULL);
 
+		/* Create filter model */
+		if (priv->style == MODEST_FOLDER_VIEW_STYLE_SHOW_ONE) {
+			filter_model = gtk_tree_model_filter_new (sortable, NULL);
+			gtk_tree_model_filter_set_visible_func (GTK_TREE_MODEL_FILTER (filter_model),
+								filter_row,
+								NULL,
+								NULL);
+		}
+
 		/* Set new model */
-		gtk_tree_view_set_model (GTK_TREE_VIEW(self), sortable);
+		gtk_tree_view_set_model (GTK_TREE_VIEW(self), 
+					 (filter_model) ? filter_model : sortable);
 		expand_root_items (self); /* expand all account folders */
 		g_object_unref (account_list);
 	}
@@ -667,9 +733,9 @@ update_model (ModestFolderView *self, ModestTnyAccountStore *account_store)
 static void
 on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 {
-	GtkTreeModel            *model_sort, *model;
+	GtkTreeModel            *model;
 	TnyFolderStore          *folder = NULL;
-	GtkTreeIter             iter, iter_sort;
+	GtkTreeIter             iter;
 	ModestFolderView        *tree_view;
 	ModestFolderViewPrivate *priv;
 	gint                    type;
@@ -681,7 +747,7 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 	priv->cur_selection = sel;
 	
 	/* folder was _un_selected if true */
-	if (!gtk_tree_selection_get_selected (sel, &model_sort, &iter_sort)) {
+	if (!gtk_tree_selection_get_selected (sel, &model, &iter)) {
 		if (priv->cur_folder_store)
 			g_object_unref (priv->cur_folder_store);
 		priv->cur_folder_store = NULL;
@@ -692,11 +758,6 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 			       NULL);
 		return; 
 	}
-
-	model = gtk_tree_model_sort_get_model (GTK_TREE_MODEL_SORT (model_sort));
-	gtk_tree_model_sort_convert_iter_to_child_iter (GTK_TREE_MODEL_SORT (model_sort),
-							&iter,
-							&iter_sort);
 
 	tree_view = MODEST_FOLDER_VIEW (user_data);
 
@@ -741,6 +802,12 @@ modest_folder_view_get_selected (ModestFolderView *self)
 	return priv->cur_folder_store;
 }
 
+/*
+ * This function orders the mail accounts following the next rules
+ * 1st - remote accounts
+ * 2nd - local account
+ * 3rd - MMC account
+ */
 static gint
 cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 	  gpointer user_data)
@@ -749,7 +816,7 @@ cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 	gchar         *name1, *name2;
 	TnyFolderType type;
 	TnyFolder     *folder1, *folder2;
-	
+
 	gtk_tree_model_get (tree_model, iter1,
 			    TNY_GTK_FOLDER_STORE_TREE_MODEL_NAME_COLUMN, &name1,
 			    TNY_GTK_FOLDER_STORE_TREE_MODEL_TYPE_COLUMN, &type,
@@ -1332,4 +1399,17 @@ on_configuration_key_changed (ModestConf* conf,
 						TNY_GTK_FOLDER_STORE_TREE_MODEL_NAME_COLUMN);
 	gtk_tree_view_column_queue_resize (tree_column);
 #endif
+}
+
+void 
+modest_folder_view_set_style (ModestFolderView *self,
+			      ModestFolderViewStyle style)
+{
+	ModestFolderViewPrivate *priv;
+
+	g_return_if_fail (self);
+	
+	priv = MODEST_FOLDER_VIEW_GET_PRIVATE(self);
+
+	priv->style = style;
 }

@@ -45,6 +45,11 @@ G_BEGIN_DECLS
 #define MODEST_IS_FOLDER_VIEW_CLASS(klass)  (G_TYPE_CHECK_CLASS_TYPE((klass),MODEST_TYPE_FOLDER_VIEW))
 #define MODEST_FOLDER_VIEW_GET_CLASS(obj)   (G_TYPE_INSTANCE_GET_CLASS((obj),MODEST_TYPE_FOLDER_VIEW,ModestFolderViewClass))
 
+typedef enum _ModestFolderViewStyle {
+	MODEST_FOLDER_VIEW_STYLE_SHOW_ALL,
+	MODEST_FOLDER_VIEW_STYLE_SHOW_ONE
+} ModestFolderViewStyle;
+
 typedef struct _ModestFolderView      ModestFolderView;
 typedef struct _ModestFolderViewClass ModestFolderViewClass;
 
@@ -137,6 +142,9 @@ gboolean      modest_folder_view_update_model    (ModestFolderView *self,
  * NULL if none is selected
  **/
 const gchar* modest_folder_view_get_selected_display_name (ModestFolderView *self);
+
+void         modest_folder_view_set_style         (ModestFolderView *self,
+						   ModestFolderViewStyle style);
 
 G_END_DECLS
 
