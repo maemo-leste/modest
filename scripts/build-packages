@@ -1,0 +1,192 @@
+#!/bin/sh
+#Time-stamp: <2007-04-25 11:01:37 (djcb)>
+
+# Copyright (c) 2007, Nokia Corporation
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#
+# * Redistributions of source code must retain the above copyright
+#   notice, this list of conditions and the following disclaimer.
+# * Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in the
+#   documentation and/or other materials provided with the distribution.
+# * Neither the name of the Nokia Corporation nor the names of its
+#   contributors may be used to endorse or promote products derived from
+#   this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+# IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+# TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+# PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+# OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+# EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+# PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+
+#
+# hackish script to build tinymail/modest packages
+# run *outside* scratchbox; you need to make sure that
+# the paths below are valid both inside/outside scratchbox;
+# you can use symlinks to do so
+#
+
+#
+# config
+#
+
+# change these to the actual paths to these packages
+TINYMAIL_PATH="$HOME/src/tinymail"
+MODEST_PATH="$HOME/src/modest/"
+MODEST_PROVIDERS_DATA_PATH="$HOME/src/modest-providers-data/"
+
+# the packager
+PACKAGER="Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>"
+
+# path to the scratchbox executable
+SCRATCHBOX="/chroot/usr/bin/scratchbox"
+
+# path where the package files end up
+PACKAGE_PATH="$HOME/src/packages"
+###################################################
+
+NOW=`date -R`
+
+echo "*** Building Tinymail/Modest packages"
+echo "*** Packager: $PACKAGER"
+echo "*** Time    : ${NOW}"
+echo
+
+# where is scratchbox
+if test -x $SCRATCHBOX; then
+    echo "+ found scratchbox ($SCRATCHBOX)"
+else
+    echo "- cannot find find scratchbox"
+    exit 1
+fi
+
+# checking paths
+echo 
+echo "*** checking paths"
+for p in "$TINYMAIL_PATH" "$MODEST_PATH" "$MODEST_PROVIDERS_DATA_PATH" "$PACKAGE_PATH"; do
+    if test -d $p; then
+	echo "+ found '$p'"
+    else
+	echo "- cannot find '$p'"
+	exit 1
+    fi
+    
+    if $SCRATCHBOX "test -d $p"; then
+	echo "+ found $p inside scratchbox environment"
+    else
+	echo "- cannot find $p inside scratchbox"
+	exit 1
+    fi
+done
+echo
+
+# check svn version; this needs to happen outside scratchbox, because
+# the scratcbox svn is too old
+cd $TINYMAIL_PATH
+TINYMAIL_REVISION=`svn info | grep '^Revision:' | sed 's/Revision: //'`
+echo "* tinymail revision: $TINYMAIL_REVISION"
+
+cd $MODEST_PROVIDERS_DATA_PATH
+MODEST_PROVIDERS_DATA_REVISION=`svn info | grep '^Revision:' | sed 's/Revision: //'`
+echo "* modest-providers-data revision: $MODEST_PROVIDERS_DATA_REVISION"
+
+cd $MODEST_PATH
+MODEST_REVISION=`svn info | grep '^Revision:' | sed 's/Revision: //'`
+echo "* modest revision: $MODEST_REVISION"
+
+echo 
+
+# build tinymail
+if test -n "`ls $PACKAGE_PATH/*${TINYMAIL_REVISION}*.deb`"; then
+    echo "* tinymail seems already built, skipping (but still installing pkgs)"
+    $SCRATCHBOX "fakeroot dpkg -i ${PACKAGE_PATH}/*${TINYMAIL_REVISION}*.deb"
+else
+    cd $TINYMAIL_PATH
+    test -e debian/rules   || ln -s debian/rules.maemo debian/rules
+    test -e debian/control || ln -s debian/control.maemo debian/control
+    mv -f debian/changelog debian/changelog.bak
+    cat > debian/changelog <<EOF
+tinymail (svn${TINYMAIL_REVISION}) unstable; urgency=low
+
+  * Package subversion revision svn${TINYMAIL_REVISION}
+
+ -- ${PACKAGER}  ${NOW}
+EOF
+    echo "*** building tinymail"
+    $SCRATCHBOX -d "$TINYMAIL_PATH" "dpkg-buildpackage -rfakeroot -b -d"
+    mv -f debian/changelog.bak debian/changelog
+    cd ..
+    $SCRATCHBOX "mv ${TINYMAIL_PATH}/../*${TINYMAIL_REVISION}* $PACKAGE_PATH"
+    $SCRATCHBOX "fakeroot dpkg -i ${PACKAGE_PATH}/*${TINYMAIL_REVISION}*.deb"
+fi
+
+
+
+
+# build modest-providers-data
+if test -n "`ls $PACKAGE_PATH/*${MODEST_PROVIDERS_DATA_REVISION}*.deb`"; then
+    echo "* modest-providers-data seems already built, skipping (but still installing pkgs)"
+    $SCRATCHBOX "fakeroot dpkg -i ${PACKAGE_PATH}/*${MODEST_PROVIDERS_DATA_REVISION}*.deb"
+else
+    cd $MODEST_PROVIDERS_DATA_PATH
+    mv -f debian/changelog debian/changelog.bak
+    cat > debian/changelog <<EOF
+modest-providers-data (svn${MODEST_PROVIDERS_DATA_REVISION}) unstable; urgency=low
+
+  * Package subversion revision svn${MODEST_PROVIDERS_DATA_REVISION}
+
+ -- ${PACKAGER}  ${NOW}
+EOF
+    echo "*** building modest-providers-data"
+    $SCRATCHBOX -d "$MODEST_PROVIDERS_DATA_PATH" "dpkg-buildpackage -rfakeroot -b -d"
+    mv -f debian/changelog.bak debian/changelog
+    $SCRATCHBOX "mv ${MODEST_PROVIDERS_DATA_PATH}/../*${MODEST_PROVIDERS_DATA_REVISION}* $PACKAGE_PATH"
+    $SCRATCHBOX "fakeroot dpkg -i ${PACKAGE_PATH}/*${MODEST_PROVIDERS_DATA_REVISION}*.deb"
+fi
+ 
+
+
+   
+# build modest
+if test -n "`ls $PACKAGE_PATH/*${MODEST_REVISION}*.deb`"; then
+    echo "* modest seems already built, skipping (but still installing pkgs)"
+    $SCRATCHBOX "fakeroot dpkg -i ${PACKAGE_PATH}/*${MODEST_REVISION}*.deb"
+else
+    cd $MODEST_PATH
+    mv -f debian/changelog debian/changelog.bak
+    cat > debian/changelog <<EOF
+modest (svn${MODEST_REVISION}) unstable; urgency=low
+
+  * Package subversion revision svn${MODEST_REVISION}
+
+ -- ${PACKAGER}  ${NOW}
+EOF
+    echo "*** building modest"
+    $SCRATCHBOX -d "$MODEST_PATH" "dpkg-buildpackage -rfakeroot -b -d"
+    mv -f debian/changelog.bak debian/changelog
+    cd ..
+    $SCRATCHBOX "mv ${MODEST_PATH}/../*${MODEST_REVISION}* $PACKAGE_PATH"
+    $SCRATCHBOX "fakeroot dpkg -i ${PACKAGE_PATH}/*${MODEST_REVISION}*.deb"
+fi    
+
+echo "*** built packages, now building Packages.gz"
+$SCRATCHBOX -d "${PACKAGE_PATH}" "dpkg-scanpackages . /dev/null | gzip -9c > Packages.gz"
+
+
+#
+# echo... and ftp them...
+#
+
+echo "*** done! now, check $PACKAGE_PATH to find your packages"
+cd $PACKAGE_PATH
