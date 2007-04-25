@@ -1,5 +1,5 @@
 #!/bin/sh
-#Time-stamp: <2007-04-25 11:01:37 (djcb)>
+#Time-stamp: <2007-04-25 11:11:00 (djcb)>
 
 # Copyright (c) 2007, Nokia Corporation
 # All rights reserved.
@@ -108,7 +108,7 @@ echo "* modest revision: $MODEST_REVISION"
 echo 
 
 # build tinymail
-if test -n "`ls $PACKAGE_PATH/*${TINYMAIL_REVISION}*.deb`"; then
+if test -n "`ls $PACKAGE_PATH/*tinymail*${TINYMAIL_REVISION}*.deb`"; then
     echo "* tinymail seems already built, skipping (but still installing pkgs)"
     $SCRATCHBOX "fakeroot dpkg -i ${PACKAGE_PATH}/*${TINYMAIL_REVISION}*.deb"
 else
@@ -135,7 +135,7 @@ fi
 
 
 # build modest-providers-data
-if test -n "`ls $PACKAGE_PATH/*${MODEST_PROVIDERS_DATA_REVISION}*.deb`"; then
+if test -n "`ls $PACKAGE_PATH/*providers*${MODEST_PROVIDERS_DATA_REVISION}*.deb`"; then
     echo "* modest-providers-data seems already built, skipping (but still installing pkgs)"
     $SCRATCHBOX "fakeroot dpkg -i ${PACKAGE_PATH}/*${MODEST_PROVIDERS_DATA_REVISION}*.deb"
 else
@@ -159,7 +159,7 @@ fi
 
    
 # build modest
-if test -n "`ls $PACKAGE_PATH/*${MODEST_REVISION}*.deb`"; then
+if test -n "`ls $PACKAGE_PATH/*modest_*${MODEST_REVISION}*.deb`"; then
     echo "* modest seems already built, skipping (but still installing pkgs)"
     $SCRATCHBOX "fakeroot dpkg -i ${PACKAGE_PATH}/*${MODEST_REVISION}*.deb"
 else
