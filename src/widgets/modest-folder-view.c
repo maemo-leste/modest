@@ -760,25 +760,36 @@ cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 			    TNY_GTK_FOLDER_STORE_TREE_MODEL_INSTANCE_COLUMN, &folder2,
 			    -1);
 
-	/* local_folders should be the last one */
+	/* Order must be: Remote accounts -> Local account -> MMC account */
 	if (type == TNY_FOLDER_TYPE_ROOT) {
-		/* the account name is also the name of the root folder
-		 * in case of local folders */
-		if (name1 && strcmp (name1, MODEST_LOCAL_FOLDERS_ACCOUNT_NAME) == 0)
+		const gchar *account_id = tny_account_get_id (TNY_ACCOUNT (folder1));
+		const gchar *account_id2 = tny_account_get_id (TNY_ACCOUNT (folder2));
+
+		if (!strcmp (account_id, MODEST_MMC_ACCOUNT_ID))
 			cmp = +1;
-		else if (name2 && strcmp (name2, MODEST_LOCAL_FOLDERS_ACCOUNT_NAME) == 0)
-			cmp = -1;
-		else 
-			cmp = modest_text_utils_utf8_strcmp (name1, name2, TRUE);
+		else {
+			if (!strcmp (account_id, MODEST_LOCAL_FOLDERS_ACCOUNT_ID)) {
+				if (!strcmp (account_id2, MODEST_MMC_ACCOUNT_ID))
+					cmp = -1;
+				else
+					cmp = +1;
+			} else {
+				if (!strcmp (account_id2, MODEST_LOCAL_FOLDERS_ACCOUNT_ID) ||
+				    !strcmp (account_id2, MODEST_MMC_ACCOUNT_ID))
+					cmp = -1;
+				else
+					cmp = modest_text_utils_utf8_strcmp (name1, name2, TRUE);
+			}
+		}
+		g_print ("%s,%s - %d\n",account_id, account_id2,cmp);
 	} else 
 		cmp = modest_text_utils_utf8_strcmp (name1, name2, TRUE);
-
 	
 	if (folder1)
 		g_object_unref(G_OBJECT(folder1));
 	if (folder2)
 		g_object_unref(G_OBJECT(folder2));
-	
+
 	g_free (name1);
 	g_free (name2);
 
