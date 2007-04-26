@@ -286,7 +286,8 @@ save_settings_header_view (ModestConf *conf, ModestHeaderView *header_view,
 							    MODEST_HEADER_VIEW_COLUMN));
 		width = gtk_tree_view_column_get_width (col);
 		sort = 0;
-		if (sort_colid == gtk_tree_view_column_get_sort_column_id(col))
+/* 		if (sort_colid == gtk_tree_view_column_get_sort_column_id(col)) */
+		if (sort_colid == col_id)
 			sort = 1;
 			
 		g_string_append_printf (str, "%d:%d:%d ", col_id, width, sort);
@@ -342,31 +343,33 @@ restore_settings_header_view (ModestConf *conf, ModestHeaderView *header_view,
 		g_free (data);	
 		
 		if (cols) {
-			GList *viewcolumns, *colcursor, *widthcursor, *sortablecursor, *colidcursor;
-			gint sort_colid = -1;
+			GList *viewcolumns, *colcursor, *widthcursor, *sortablecursor;
+/* 			gint sort_colid = -1; */
 			modest_header_view_set_columns (header_view, cols, type);
 			sortable = gtk_tree_view_get_model (GTK_TREE_VIEW (header_view));
 
-			colidcursor = cols;
 			widthcursor = colwidths;
 			sortablecursor = colsortables;
 			colcursor = viewcolumns = gtk_tree_view_get_columns (GTK_TREE_VIEW(header_view));
-			while (colcursor && widthcursor && sortablecursor && colidcursor) {
+			while (colcursor && widthcursor && sortablecursor) {
 				int width = GPOINTER_TO_INT(widthcursor->data);
 				int sort = GPOINTER_TO_INT(sortablecursor->data);
-				int colid = GPOINTER_TO_INT(colidcursor->data);
 				if (width > 0)
 					gtk_tree_view_column_set_max_width(GTK_TREE_VIEW_COLUMN(colcursor->data),
 									   width);
 				if (sort > 0) {
-					sort_colid = gtk_tree_view_column_get_sort_column_id (GTK_TREE_VIEW_COLUMN(colcursor->data));
-					modest_header_view_set_sort_column_id (header_view, sort_colid, type);
+					int colid = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(colcursor->data), MODEST_HEADER_VIEW_COLUMN));
+					modest_header_view_set_sort_column_id (header_view, colid, type);
+/* 					sort_colid = gtk_tree_view_column_get_sort_column_id (GTK_TREE_VIEW_COLUMN(colcursor->data)); */
+/* 					modest_header_view_set_sort_column_id (header_view, sort_colid, type); */
+/* 					gtk_tree_sortable_set_sort_column_id (GTK_TREE_SORTABLE(sortable), */
+/* 									      sort_colid, */
+/* 									      GTK_SORT_DESCENDING); */
 					gtk_tree_sortable_set_sort_column_id (GTK_TREE_SORTABLE(sortable),
 									      colid,
 									      GTK_SORT_DESCENDING);
 					gtk_tree_sortable_sort_column_changed (GTK_TREE_SORTABLE(sortable));
 				}
-				colidcursor = g_list_next (colidcursor);
 				colcursor = g_list_next (colcursor);
 				widthcursor = g_list_next (widthcursor);
 				sortablecursor = g_list_next (sortablecursor);
