@@ -1,5 +1,11 @@
 2007-04-26  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-mail-operation.c:
+	(modest_mail_operation_remove_folder): Intialize the parent variable, to fix the build, 
+	though I guess it should be something other than NULL.
+
+2007-04-26  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/maemo/easysetup/modest-easysetup-wizard.c:
 	(create_page_custom_incoming): Add the checkbox to the caption instead of adding the 
 	combo twice, to avoid an g_warning and to make it visible again.

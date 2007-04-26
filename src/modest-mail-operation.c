@@ -525,7 +525,7 @@ modest_mail_operation_remove_folder (ModestMailOperation *self,
 				     TnyFolder           *folder,
 				     gboolean             remove_to_trash)
 {
-	TnyFolderStore *parent;
+	TnyFolderStore *parent = NULL; /* TODO: Should this be set? */
 	TnyAccount *account;
 	ModestMailOperationPrivate *priv;
 	ModestTnyFolderRules rules;
