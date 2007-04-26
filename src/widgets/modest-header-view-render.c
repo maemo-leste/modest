@@ -73,9 +73,9 @@ get_pixbuf_for_compact_flag (TnyHeaderFlags flags)
 	static GdkPixbuf *low_attachments_pixbuf    = NULL;
 	static GdkPixbuf *high_pixbuf               = NULL;
 	static GdkPixbuf *low_pixbuf                = NULL;
-	TnyHeaderFlags prior;
+	TnyHeaderPriorityFlags prior;
 
-	prior = flags & TNY_HEADER_FLAG_HIGH_PRIORITY;
+	prior = flags & TNY_HEADER_FLAG_PRIORITY;
 	switch (prior) {
 	case TNY_HEADER_FLAG_HIGH_PRIORITY:
 		if (flags & TNY_HEADER_FLAG_ATTACHMENTS) {

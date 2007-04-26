@@ -857,6 +857,8 @@ modest_text_utils_get_display_date (time_t date)
 
 	modest_text_utils_strftime (date_buf, BUF_SIZE, "%d/%m/%Y", date);
 	modest_text_utils_strftime (now_buf,  BUF_SIZE, "%d/%m/%Y",  now); /* today */
+/* 	modest_text_utils_strftime (date_buf, BUF_SIZE, "%x", date); */
+/* 	modest_text_utils_strftime (now_buf,  BUF_SIZE, "%x",  now); /\* today *\/ */
 	
 	/* if this is today, get the time instead of the date */
 	if (strcmp (date_buf, now_buf) == 0)

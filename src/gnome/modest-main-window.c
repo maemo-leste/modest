@@ -698,6 +698,13 @@ modest_main_window_set_style (ModestMainWindow *self,
 	/* TODO */
 }
 
+void 
+modest_main_window_set_toolbar_mode (ModestMainWindow *self, 
+				      ModestToolBarModes mode)
+{
+	/* TODO */
+}
+
 ModestMainWindowStyle
 modest_main_window_get_style (ModestMainWindow *self)
 {

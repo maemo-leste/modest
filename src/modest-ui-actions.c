@@ -587,8 +587,13 @@ void
 modest_ui_actions_on_sort (GtkAction *action, 
 			   ModestWindow *window)
 {
+	ModestWindowMgr *mgr;
+
 	g_return_if_fail (MODEST_IS_WINDOW(window));
-	/* FIXME: unimplemented */
+
+	/* Show sorting dialog */
+	mgr = modest_runtime_get_window_mgr ();
+	
 }
 
 

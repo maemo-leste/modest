@@ -170,13 +170,15 @@ TnyFolder *modest_header_view_get_folder (ModestHeaderView *self);
  * modest_header_view_set_columns:
  * @self: a ModestHeaderView instance
  * @columns: a list of ModestHeaderViewColumn
+ * @type: #TnyFolderType type
  * 
  * set the columns for this ModestHeaderView.
  *  
  * Returns: TRUE if it succeeded, FALSE otherwise
  */
 gboolean modest_header_view_set_columns (ModestHeaderView *self,
-					 const GList *columns);
+					 const GList *columns,
+					 TnyFolderType type);
 /**
  * modest_header_view_get_columns:
  * @self: a ModestHeaderView instance
@@ -265,7 +267,31 @@ void
 _modest_header_view_change_selection (GtkTreeSelection *selection,
 				      gpointer user_data);
 
+/**
+ * modest_header_view_get_sort_column_id:
+ * @self: a #ModestHeaderView
+ * @type: #TnyFolderType type
+ * 
+ * Gets the selected logical columnd id for sorting.
+ **/
+gint
+modest_header_view_get_sort_column_id (ModestHeaderView *self, TnyFolderType type);
+
+/**
+ * modest_header_view_get_sort_column_id:
+ * @self: a #ModestHeaderView
+ * @sort_colid: logical column id to sort
+ * @type: #TnyFolderType type
+ * 
+ * Sets the logical columnd id for sorting.
+ **/
+void
+modest_header_view_set_sort_column_id (ModestHeaderView *self, guint sort_colid, TnyFolderType type);
+
+
+
 G_END_DECLS
+
 
 
 #endif /* __MODEST_HEADER_VIEW_H__ */

@@ -588,7 +588,7 @@ modest_mail_header_view_set_priority (ModestMailHeaderView *headers_view,
 	g_return_if_fail (MODEST_IS_MAIL_HEADER_VIEW (headers_view));
 	priv = MODEST_MAIL_HEADER_VIEW_GET_PRIVATE (headers_view);
 
-	priv->priority_flags = flags & (TNY_HEADER_FLAG_HIGH_PRIORITY);
+	priv->priority_flags = flags & (TNY_HEADER_FLAG_PRIORITY);
 
 	if (priv->priority_flags == 0) {
 		if (priv->priority_icon != NULL) {
