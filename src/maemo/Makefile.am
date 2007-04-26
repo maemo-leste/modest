@@ -65,7 +65,10 @@ libmodest_ui_la_SOURCES=              \
 	modest-connection-specific-smtp-window.h \
 	modest-connection-specific-smtp-window.c \
 	modest-connection-specific-smtp-edit-window.h \
-	modest-connection-specific-smtp-edit-window.c
+	modest-connection-specific-smtp-edit-window.c \
+	modest-progress-bar-widget.c      \
+	modest-progress-bar-widget.h      
+
 
 libmodest_ui_la_LIBADD = \
 	$(MODEST_GSTUFF_LIBS) \

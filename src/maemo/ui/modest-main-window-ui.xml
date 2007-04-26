@@ -108,6 +108,9 @@
     <toolitem action="ToolbarToggleView"/>
     <toolitem action="ToolbarSort"/>
     <toolitem action="ToolbarSendReceive"/>
+    <placeholder name="ProgressBarView">
+    </placeholder>
+    <toolitem action="ToolbarCancel"/>
   </toolbar>
 
   <popup name="HeaderViewCSM">

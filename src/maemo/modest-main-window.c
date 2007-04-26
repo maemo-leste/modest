@@ -54,6 +54,7 @@
 #include "modest-tny-msg.h"
 #include "modest-mail-operation.h"
 #include "modest-icon-names.h"
+#include "modest-progress-bar-widget.h"
 
 /* 'private'/'protected' functions */
 static void modest_main_window_class_init    (ModestMainWindowClass *klass);
@@ -90,12 +91,16 @@ enum {
 	LAST_SIGNAL
 };
 
+
 typedef struct _ModestMainWindowPrivate ModestMainWindowPrivate;
 struct _ModestMainWindowPrivate {
 	GtkWidget *msg_paned;
 	GtkWidget *main_paned;
 	GtkWidget *main_vbox;
 	GtkWidget *contents_widget;
+
+	/* Progress observers */
+	GtkWidget *progress_widget;
 
 	/* On-demand widgets */
 	GtkWidget *accounts_popup;
@@ -504,6 +509,53 @@ modest_main_window_close_all (ModestMainWindow *self)
 }
 
 void 
+modest_main_window_set_toolbar_mode (ModestMainWindow *self, 
+				      ModestToolBarModes mode)
+{
+	ModestMainWindowPrivate *priv;
+	ModestWindowPrivate *parent_priv;
+	GtkAction *action;
+	gboolean transfer_mode= FALSE;
+	gboolean normal_mode= FALSE;
+
+
+	g_return_if_fail (MODEST_IS_MAIN_WINDOW (self));
+
+	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
+	parent_priv = MODEST_WINDOW_GET_PRIVATE (self);
+			
+	switch (mode) {
+	case TOOLBAR_MODE_NORMAL:
+		normal_mode = TRUE;
+		transfer_mode = FALSE;
+		gtk_widget_hide (priv->progress_widget);
+		break;
+	case TOOLBAR_MODE_TRANSFER:
+		normal_mode = FALSE;
+		transfer_mode = TRUE;
+		gtk_widget_show (priv->progress_widget);
+		break;
+	default:
+		normal_mode = TRUE;
+		transfer_mode = FALSE;		
+		gtk_widget_hide (priv->progress_widget);
+	}
+
+	/* Transfer mode toolitems */
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ToolbarCancel");
+	if (action != NULL) 
+		gtk_action_set_visible (action, transfer_mode);
+	
+	/* Normal mode toolitems */
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ToolbarSort");
+	if (action != NULL) 
+		gtk_action_set_visible (action, normal_mode);
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ToolbarSendReceive");
+	if (action != NULL) 
+		gtk_action_set_visible (action, normal_mode);
+}
+
+void 
 modest_main_window_set_style (ModestMainWindow *self, 
 			      ModestMainWindowStyle style)
 {
@@ -602,10 +654,15 @@ static void
 modest_main_window_show_toolbar (ModestWindow *self,
 				 gboolean show_toolbar)
 {
-	ModestWindowPrivate *parent_priv;
+	ModestMainWindowPrivate *priv = NULL;
+	ModestWindowPrivate *parent_priv = NULL;	
 	GtkWidget *reply_button = NULL, *menu = NULL;
-	
+	GtkWidget *placeholder = NULL;
+	GtkWidget *tool_item = NULL;
+	gint insert_index;
+
 	parent_priv = MODEST_WINDOW_GET_PRIVATE(self);
+	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
 
 	if (!parent_priv->toolbar && show_toolbar) {
 		parent_priv->toolbar = gtk_ui_manager_get_widget (parent_priv->ui_manager, 
@@ -614,6 +671,18 @@ modest_main_window_show_toolbar (ModestWindow *self,
 		/* Set homogeneous toolbar */
 		gtk_container_foreach (GTK_CONTAINER (parent_priv->toolbar), 
 				       set_homogeneous, NULL);
+
+		/* Add ProgressBar (Transfer toolbar) */ 
+		priv->progress_widget = modest_progress_bar_widget_new ();
+		gtk_widget_set_no_show_all (priv->progress_widget, TRUE);
+		modest_progress_bar_widget_set_status (MODEST_PROGRESS_BAR_WIDGET(priv->progress_widget), 0);
+		placeholder = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/ProgressBarView");
+		insert_index = gtk_toolbar_get_item_index(GTK_TOOLBAR (parent_priv->toolbar), GTK_TOOL_ITEM(placeholder));
+		tool_item = GTK_WIDGET (gtk_tool_item_new ());
+		gtk_container_add (GTK_CONTAINER (tool_item), priv->progress_widget);
+/* 		gtk_tool_item_set_expand (GTK_TOOL_ITEM (tool_item), TRUE); */
+/* 		gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (tool_item), TRUE); */
+		gtk_toolbar_insert(GTK_TOOLBAR(parent_priv->toolbar), GTK_TOOL_ITEM (tool_item), insert_index);
 
 		/* Add to window */
 		hildon_window_add_toolbar (HILDON_WINDOW (self), 
@@ -632,9 +701,10 @@ modest_main_window_show_toolbar (ModestWindow *self,
 	}
 
 
-	if (show_toolbar)
+	if (show_toolbar) {
 		gtk_widget_show (GTK_WIDGET (parent_priv->toolbar));
-	else
+		modest_main_window_set_toolbar_mode (MODEST_MAIN_WINDOW(self), TOOLBAR_MODE_NORMAL);
+	} else
 		gtk_widget_hide (GTK_WIDGET (parent_priv->toolbar));
 }
 
