@@ -47,10 +47,12 @@ modest_tny_folder_guess_folder_type_from_name (const gchar* name)
 	folder = g_utf8_strdown (name, strlen(name));
 
 	if (strcmp (folder, "inbox") == 0 ||
-	    strcmp (folder, _("inbox")) == 0)
+	    strcmp (folder, _("inbox")) == 0 ||
+	    strcmp (folder, _("mcen_me_folder_inbox")) == 0)
 		type = TNY_FOLDER_TYPE_INBOX;
 	else if (strcmp (folder, "outbox") == 0 ||
-		 strcmp (folder, _("outbox")) == 0)
+		 strcmp (folder, _("outbox")) == 0 ||
+		 strcmp (folder, _("mcen_me_folder_outbox")) == 0)
 		type = TNY_FOLDER_TYPE_OUTBOX;
 	else if (g_str_has_prefix(folder, "junk") ||
 		 g_str_has_prefix(folder, _("junk")))
@@ -59,10 +61,12 @@ modest_tny_folder_guess_folder_type_from_name (const gchar* name)
 		 g_str_has_prefix(folder, _("trash")))
 		type = TNY_FOLDER_TYPE_TRASH;
 	else if (g_str_has_prefix(folder, "sent") ||
-		 g_str_has_prefix(folder, _("sent")))
+		 g_str_has_prefix(folder, _("sent")) ||
+		 strcmp (folder, _("mcen_me_folder_sent")) == 0)
 		type = TNY_FOLDER_TYPE_SENT;
 	else if (g_str_has_prefix(folder, "draft") ||
-		 g_str_has_prefix(folder, _("draft")))
+		 g_str_has_prefix(folder, _("draft")) ||
+		 strcmp (folder, _("mcen_me_folder_drafts")) == 0)
 		type = TNY_FOLDER_TYPE_DRAFTS;
 	else if (g_str_has_prefix(folder, "notes") ||
 		 g_str_has_prefix(folder, _("notes")))
@@ -116,11 +120,11 @@ modest_tny_folder_get_folder_rules   (const TnyFolder *folder)
 		switch (type) {
 		case TNY_FOLDER_TYPE_DRAFTS:
 		case TNY_FOLDER_TYPE_OUTBOX:
+		case TNY_FOLDER_TYPE_SENT:
 			rules |= MODEST_FOLDER_RULES_FOLDER_NON_WRITEABLE;
 		case TNY_FOLDER_TYPE_INBOX:
 		case TNY_FOLDER_TYPE_JUNK:
 		case TNY_FOLDER_TYPE_TRASH:
-		case TNY_FOLDER_TYPE_SENT:
 		default:
 			rules |= MODEST_FOLDER_RULES_FOLDER_NON_DELETABLE;
 			rules |= MODEST_FOLDER_RULES_FOLDER_NON_MOVEABLE;
@@ -157,7 +161,7 @@ gboolean
 modest_tny_folder_is_local_folder   (const TnyFolder *folder)
 {
 	TnyAccount*  account;
-	const gchar* account_name;
+	const gchar* account_id;
 	
 	g_return_val_if_fail (folder, FALSE);
 	
@@ -165,13 +169,13 @@ modest_tny_folder_is_local_folder   (const TnyFolder *folder)
 	if (!account)
 		return FALSE;
 
-	account_name = tny_account_get_id (account);
-	if (!account_name)
+	account_id = tny_account_get_id (account);
+	if (!account_id)
 		return FALSE;
 
 	g_object_unref (G_OBJECT(account));
 	
-	return (strcmp (account_name, MODEST_LOCAL_FOLDERS_ACCOUNT_NAME) == 0);
+	return (strcmp (account_id, MODEST_LOCAL_FOLDERS_ACCOUNT_ID) == 0);
 }	
 
 
