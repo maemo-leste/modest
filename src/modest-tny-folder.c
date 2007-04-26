@@ -106,7 +106,7 @@ modest_tny_folder_guess_folder_type (const TnyFolder *folder)
 
 /* FIXME: encode all folder rules here */
 ModestTnyFolderRules
-modest_tny_folder_get_folder_rules   (const TnyFolder *folder)
+modest_tny_folder_get_rules   (const TnyFolder *folder)
 {
 	ModestTnyFolderRules rules = 0;
 	TnyFolderType type;

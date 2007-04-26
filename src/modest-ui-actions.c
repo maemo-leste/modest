@@ -1297,13 +1297,14 @@ modest_ui_actions_on_new_folder (GtkAction *action, ModestMainWindow *main_windo
 				if (new_folder) {
 					g_object_unref (new_folder);
 					finished = TRUE;
-				} else {
-					/* TODO: check error and follow proper actions */
-/* 					suggested_name = X; */
-					/* Show error to the user */
-					modest_platform_run_information_dialog (GTK_WINDOW (main_window),
-										MODEST_INFORMATION_CREATE_FOLDER);
-				}
+				} 
+/* 				else { */
+/* 					/\* TODO: check error and follow proper actions *\/ */
+/* /\* 					suggested_name = X; *\/ */
+/* 					/\* Show error to the user *\/ */
+/* 					modest_platform_run_information_dialog (GTK_WINDOW (main_window), */
+/* 										MODEST_INFORMATION_CREATE_FOLDER); */
+/* 				} */
 				g_object_unref (mail_op);
 			}
 			g_free (folder_name);

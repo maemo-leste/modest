@@ -506,5 +506,4 @@ modest_platform_run_information_dialog (GtkWindow *parent_window,
 	gtk_dialog_run (GTK_DIALOG (dialog));
 
 	gtk_widget_destroy (GTK_WIDGET (dialog));
-	g_free (message);
 }

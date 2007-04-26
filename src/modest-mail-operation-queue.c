@@ -202,13 +202,6 @@ modest_mail_operation_queue_remove (ModestMailOperationQueue *self,
 	g_signal_emit (self, signals[QUEUE_CHANGED_SIGNAL], 0,
 		       mail_op, MODEST_MAIL_OPERATION_QUEUE_OPERATION_REMOVED);
 
-	/* TODO: errors? */
-	{
-		const GError *err = modest_mail_operation_get_error (mail_op);
-		if (err)
-			g_warning (err->message);
-	}
-
 	/* Free object */
 	g_object_unref (G_OBJECT (mail_op));
 	modest_runtime_verify_object_death (mail_op, "");
