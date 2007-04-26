@@ -734,8 +734,13 @@ on_account_update (TnyAccountStore *account_store,
 	if (!parent_priv->toolbar)
 		return;
 
-	if (priv->accounts_popup)
+	if (priv->accounts_popup && gtk_menu_get_attach_widget (GTK_MENU (priv->accounts_popup)) ) {
+		/* gtk_menu_detach will also unreference the popup, 
+		 * so we can forget about this instance, and create a new one later:
+		 */
 		gtk_menu_detach (GTK_MENU (priv->accounts_popup));
+		priv->accounts_popup = NULL;
+	}
 
 	/* Get accounts */
 	account_list = tny_simple_list_new ();

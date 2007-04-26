@@ -579,7 +579,7 @@ static GtkWidget* create_page_custom_incoming (ModestEasysetupWizardDialog *self
 	if(!self->checkbox_incoming_auth)
 		self->checkbox_incoming_auth = gtk_check_button_new ();
 	caption = hildon_caption_new (sizegroup, _("mcen_li_emailsetup_secure_authentication"), 
-		self->combo_incoming_security, NULL, HILDON_CAPTION_OPTIONAL);
+		self->checkbox_incoming_auth, NULL, HILDON_CAPTION_OPTIONAL);
 	gtk_widget_show (self->checkbox_incoming_auth);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (caption);

@@ -1,3 +1,14 @@
+2007-04-26  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/maemo/easysetup/modest-easysetup-wizard.c:
+	(create_page_custom_incoming): Add the checkbox to the caption instead of adding the 
+	combo twice, to avoid an g_warning and to make it visible again.
+	* src/maemo/modest-main-window.c: (on_account_update): Check whether the popup_menu is 
+	attached before detaching it, to avoid a g_warning, and add comment about the implicit 
+	(already intended) dereference when detaching, because we then recreate the menu.
+	But I am not sure why the warning was happening, and it is possible that this is a memory 
+	leak.
+
 2007-04-25  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/dbus_api/modest-dbus-callbacks.c: Added uri_unescape(),
