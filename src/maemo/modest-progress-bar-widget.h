@@ -31,7 +31,7 @@
 #define __MODEST_PROGRESS_BAR_WIDGET_H__
 
 #include <gtk/gtkvbox.h>
-#include <modest-protocol-info.h>
+#include "modest-progress-object.h"
 
 G_BEGIN_DECLS
 
@@ -69,7 +69,7 @@ GType        modest_progress_bar_widget_get_type    (void) G_GNUC_CONST;
 
 GtkWidget*   modest_progress_bar_widget_new         ();
 
-void modest_progress_bar_widget_set_status (ModestProgressBarWidget *self, guint id);
+void modest_progress_bar_widget_set_progress (ModestProgressBarWidget *self, const gchar *msg, gint done, gint total);
 
 
 

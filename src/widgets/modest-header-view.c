@@ -831,7 +831,6 @@ modest_header_view_set_folder_intern (ModestHeaderView *self, TnyFolder *folder)
 	/* Set new model */
 	modest_header_view_set_model (GTK_TREE_VIEW (self), sortable);
 	g_object_unref (G_OBJECT (sortable));
-	g_object_unref (G_OBJECT (folder));
 }
 
 void
