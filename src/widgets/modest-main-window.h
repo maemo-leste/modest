@@ -173,18 +173,6 @@ ModestMainWindowStyle       modest_main_window_get_style        (ModestMainWindo
 void       modest_main_window_set_contents_style       (ModestMainWindow *self, 
 							ModestMainWindowContentsStyle style);
 
-/**
- * modest_main_window_set_contents_style:
- * @self: the #ModestMainWindow
- * @mode: a #ModestTollbarMode that will be set
- * 
- * Shows toolitems associated with toolbar mode (Normal/Transfer), 
- * defined by @mode argument.
- * 
- **/
-void 
-modest_main_window_set_toolbar_mode (ModestMainWindow *self, 
-				      ModestToolBarModes mode);
 
 G_END_DECLS
 

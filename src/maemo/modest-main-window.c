@@ -84,6 +84,10 @@ static void on_configuration_key_changed      (ModestConf* conf,
 					       ModestConfEvent event, 
 					       ModestMainWindow *self);
 
+static void 
+set_toolbar_mode (ModestMainWindow *self, 
+		  ModestToolBarModes mode);
+
 /* list my signals */
 enum {
 	/* MY_SIGNAL_1, */
@@ -100,7 +104,8 @@ struct _ModestMainWindowPrivate {
 	GtkWidget *contents_widget;
 
 	/* Progress observers */
-	GtkWidget *progress_widget;
+	GtkWidget        *progress_bar;
+	GSList           *progress_widgets;
 
 	/* On-demand widgets */
 	GtkWidget *accounts_popup;
@@ -201,6 +206,9 @@ modest_main_window_init (ModestMainWindow *obj)
 	priv->accounts_popup  = NULL;
 	priv->details_widget  = NULL;
 
+	priv->progress_widgets  = NULL;
+	priv->progress_bar = NULL;
+
 	priv->style  = MODEST_MAIN_WINDOW_STYLE_SPLIT;
 	priv->contents_style  = MODEST_MAIN_WINDOW_CONTENTS_STYLE_HEADERS;
 }
@@ -208,6 +216,12 @@ modest_main_window_init (ModestMainWindow *obj)
 static void
 modest_main_window_finalize (GObject *obj)
 {
+	ModestMainWindowPrivate *priv;
+
+	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(obj);
+
+	g_slist_free (priv->progress_widgets);
+
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
@@ -508,52 +522,6 @@ modest_main_window_close_all (ModestMainWindow *self)
 		return FALSE;
 }
 
-void 
-modest_main_window_set_toolbar_mode (ModestMainWindow *self, 
-				      ModestToolBarModes mode)
-{
-	ModestMainWindowPrivate *priv;
-	ModestWindowPrivate *parent_priv;
-	GtkAction *action;
-	gboolean transfer_mode= FALSE;
-	gboolean normal_mode= FALSE;
-
-
-	g_return_if_fail (MODEST_IS_MAIN_WINDOW (self));
-
-	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
-	parent_priv = MODEST_WINDOW_GET_PRIVATE (self);
-			
-	switch (mode) {
-	case TOOLBAR_MODE_NORMAL:
-		normal_mode = TRUE;
-		transfer_mode = FALSE;
-		gtk_widget_hide (priv->progress_widget);
-		break;
-	case TOOLBAR_MODE_TRANSFER:
-		normal_mode = FALSE;
-		transfer_mode = TRUE;
-		gtk_widget_show (priv->progress_widget);
-		break;
-	default:
-		normal_mode = TRUE;
-		transfer_mode = FALSE;		
-		gtk_widget_hide (priv->progress_widget);
-	}
-
-	/* Transfer mode toolitems */
-	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ToolbarCancel");
-	if (action != NULL) 
-		gtk_action_set_visible (action, transfer_mode);
-	
-	/* Normal mode toolitems */
-	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ToolbarSort");
-	if (action != NULL) 
-		gtk_action_set_visible (action, normal_mode);
-	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ToolbarSendReceive");
-	if (action != NULL) 
-		gtk_action_set_visible (action, normal_mode);
-}
 
 void 
 modest_main_window_set_style (ModestMainWindow *self, 
@@ -673,16 +641,19 @@ modest_main_window_show_toolbar (ModestWindow *self,
 				       set_homogeneous, NULL);
 
 		/* Add ProgressBar (Transfer toolbar) */ 
-		priv->progress_widget = modest_progress_bar_widget_new ();
-		gtk_widget_set_no_show_all (priv->progress_widget, TRUE);
-		modest_progress_bar_widget_set_status (MODEST_PROGRESS_BAR_WIDGET(priv->progress_widget), 0);
+		priv->progress_bar = modest_progress_bar_widget_new ();
+		gtk_widget_set_no_show_all (priv->progress_bar, TRUE);
+		modest_progress_bar_widget_set_status (MODEST_PROGRESS_BAR_WIDGET(priv->progress_bar), 0);
 		placeholder = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/ProgressBarView");
 		insert_index = gtk_toolbar_get_item_index(GTK_TOOLBAR (parent_priv->toolbar), GTK_TOOL_ITEM(placeholder));
 		tool_item = GTK_WIDGET (gtk_tool_item_new ());
-		gtk_container_add (GTK_CONTAINER (tool_item), priv->progress_widget);
+		gtk_container_add (GTK_CONTAINER (tool_item), priv->progress_bar);
 /* 		gtk_tool_item_set_expand (GTK_TOOL_ITEM (tool_item), TRUE); */
 /* 		gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (tool_item), TRUE); */
 		gtk_toolbar_insert(GTK_TOOLBAR(parent_priv->toolbar), GTK_TOOL_ITEM (tool_item), insert_index);
+
+		/* Add it to the observers list */
+		priv->progress_widgets = g_slist_prepend(priv->progress_widgets, priv->progress_bar);
 
 		/* Add to window */
 		hildon_window_add_toolbar (HILDON_WINDOW (self), 
@@ -703,7 +674,7 @@ modest_main_window_show_toolbar (ModestWindow *self,
 
 	if (show_toolbar) {
 		gtk_widget_show (GTK_WIDGET (parent_priv->toolbar));
-		modest_main_window_set_toolbar_mode (MODEST_MAIN_WINDOW(self), TOOLBAR_MODE_NORMAL);
+		set_toolbar_mode (MODEST_MAIN_WINDOW(self), TOOLBAR_MODE_NORMAL);
 	} else
 		gtk_widget_hide (GTK_WIDGET (parent_priv->toolbar));
 }
@@ -1015,4 +986,51 @@ on_configuration_key_changed (ModestConf* conf,
 		g_free (new_text);
 		g_list_free (children);
 	}
+}
+
+static void 
+set_toolbar_mode (ModestMainWindow *self, 
+		  ModestToolBarModes mode)
+{
+	ModestMainWindowPrivate *priv;
+	ModestWindowPrivate *parent_priv;
+	GtkAction *action;
+	gboolean transfer_mode= FALSE;
+	gboolean normal_mode= FALSE;
+
+
+	g_return_if_fail (MODEST_IS_MAIN_WINDOW (self));
+
+	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
+	parent_priv = MODEST_WINDOW_GET_PRIVATE (self);
+			
+	switch (mode) {
+	case TOOLBAR_MODE_NORMAL:
+		normal_mode = TRUE;
+		transfer_mode = FALSE;
+		gtk_widget_hide (priv->progress_bar);
+		break;
+	case TOOLBAR_MODE_TRANSFER:
+		normal_mode = FALSE;
+		transfer_mode = TRUE;
+		gtk_widget_show (priv->progress_bar);
+		break;
+	default:
+		normal_mode = TRUE;
+		transfer_mode = FALSE;		
+		gtk_widget_hide (priv->progress_bar);
+	}
+
+	/* Transfer mode toolitems */
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ToolbarCancel");
+	if (action != NULL) 
+		gtk_action_set_visible (action, transfer_mode);
+	
+	/* Normal mode toolitems */
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ToolbarSort");
+	if (action != NULL) 
+		gtk_action_set_visible (action, normal_mode);
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ToolbarSendReceive");
+	if (action != NULL) 
+		gtk_action_set_visible (action, normal_mode);
 }
