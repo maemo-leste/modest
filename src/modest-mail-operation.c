@@ -668,7 +668,16 @@ modest_mail_operation_remove_msg (ModestMailOperation *self,
 		trash_folder = modest_tny_account_get_special_folder (TNY_ACCOUNT(store_account),
 								      TNY_FOLDER_TYPE_TRASH);
 		if (trash_folder) {
-			modest_mail_operation_xfer_msg (self, header, trash_folder, TRUE);
+			TnyList *headers;
+
+			/* Create list */
+			headers = tny_simple_list_new ();
+			tny_list_append (headers, G_OBJECT (header));
+			g_object_unref (header);
+
+			/* Move to trash */
+			modest_mail_operation_xfer_msgs (self, headers, trash_folder, TRUE);
+			g_object_unref (headers);
 /* 			g_object_unref (trash_folder); */
 		} else {
 			ModestMailOperationPrivate *priv;
@@ -732,25 +741,23 @@ transfer_msgs_cb (TnyFolder *folder, GError **err, gpointer user_data)
 }
 
 void
-modest_mail_operation_xfer_msg (ModestMailOperation *self,
-				TnyHeader *header, 
-				TnyFolder *folder, 
-				gboolean delete_original)
+modest_mail_operation_xfer_msgs (ModestMailOperation *self,
+				 TnyList *headers, 
+				 TnyFolder *folder, 
+				 gboolean delete_original)
 {
 	ModestMailOperationPrivate *priv;
+	TnyIterator *iter;
 	TnyFolder *src_folder;
-	TnyList *headers;
 	XFerMsgAsyncHelper *helper;
+	TnyHeader *header;
 
 	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
-	g_return_if_fail (TNY_IS_HEADER (header));
+	g_return_if_fail (TNY_IS_LIST (headers));
 	g_return_if_fail (TNY_IS_FOLDER (folder));
 
 	/* Pick references for async calls */
 	g_object_ref (folder);
-
-	headers = tny_simple_list_new ();
-	tny_list_prepend (headers, G_OBJECT (header));
 
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
 	priv->total = 1;
@@ -763,7 +770,14 @@ modest_mail_operation_xfer_msg (ModestMailOperation *self,
 	helper->dest_folder = folder;
 	helper->headers = headers;
 
+	/* Get source folder */
+	iter = tny_list_create_iterator (headers);
+	header = TNY_HEADER (tny_iterator_get_current (iter));
 	src_folder = tny_header_get_folder (header);
+	g_object_unref (header);
+	g_object_unref (iter);
+
+	/* Transfer messages */
 	tny_folder_transfer_msgs_async (src_folder, 
 					headers, 
 					folder, 

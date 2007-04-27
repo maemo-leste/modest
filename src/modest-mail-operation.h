@@ -231,19 +231,19 @@ TnyFolder*    modest_mail_operation_xfer_folder    (ModestMailOperation *self,
 /* Functions that performs msg operations */
 
 /**
- * modest_mail_operation_xfer_msg:
+ * modest_mail_operation_xfer_msgs:
  * @self: a #ModestMailOperation
- * @header: the #TnyHeader of the message to move
- * @folder: the #TnyFolder where the message will be moved
- * @delete_original: whether or not delete the source message
+ * @header_list: a #TnyList of #TnyHeader to transfer
+ * @folder: the #TnyFolder where the messages will be transferred
+ * @delete_original: whether or not delete the source messages
  * 
- * Asynchronously transfers a message from its current folder to
+ * Asynchronously transfers messages from their current folder to
  * another one. The caller should add the #ModestMailOperation to a
  * #ModestMailOperationQueue and then free it. The caller will be
  * notified by the "progress_changed" when the operation is completed.
  *
  * If the @delete_original paramter is TRUE then this function moves
- * the message between folders, otherwise it copies it.
+ * the messages between folders, otherwise it copies them.
  * 
  * Example
  * <informalexample><programlisting>
@@ -252,14 +252,14 @@ TnyFolder*    modest_mail_operation_xfer_folder    (ModestMailOperation *self,
  * modest_mail_operation_queue_add (queue, mail_op);
  * g_signal_connect (G_OBJECT (mail_op), "progress_changed", G_CALLBACK(on_progress_changed), queue);
  *
- * modest_mail_operation_xfer_msg (mail_op, header, folder, TRUE);
+ * modest_mail_operation_xfer_msg (mail_op, headers, folder, TRUE);
  * 
  * g_object_unref (G_OBJECT (mail_op));
  * </programlisting></informalexample>
  *
  **/
-void          modest_mail_operation_xfer_msg       (ModestMailOperation *self,
-						    TnyHeader *header, 
+void          modest_mail_operation_xfer_msgs      (ModestMailOperation *self,
+						    TnyList *header_list, 
 						    TnyFolder *folder,
 						    gboolean delete_original);
 

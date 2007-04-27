@@ -460,28 +460,16 @@ modest_platform_run_new_folder_dialog (GtkWindow *parent_window,
 
 gint
 modest_platform_run_confirmation_dialog (GtkWindow *parent_window,
-					 ModestConfirmationDialogType type,
-					 gpointer user_data)
+					 const gchar *message)
 {
 	GtkWidget *dialog;
 	gint response;
-	gchar *message = NULL;
-	TnyFolder *folder;
-
-	switch (type) {
-	case MODEST_CONFIRMATION_DELETE_FOLDER:
-		folder = TNY_FOLDER (user_data);
-		message = g_strdup_printf (_("mcen_nc_delete_folder_text"), 
-					   tny_folder_get_name (folder));
-		break;
-	};
 
 	dialog = hildon_note_new_confirmation (parent_window, message);
 
 	response = gtk_dialog_run (GTK_DIALOG (dialog));
 
 	gtk_widget_destroy (GTK_WIDGET (dialog));
-	g_free (message);
 
 	return response;
 }

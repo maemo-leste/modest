@@ -1396,6 +1396,7 @@ delete_folder (ModestMainWindow *main_window, gboolean move_to_trash)
 	TnyFolderStore *folder;
 	GtkWidget *folder_view;
 	gint response;
+	gchar *message;
 	
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW(main_window));
 
@@ -1407,9 +1408,11 @@ delete_folder (ModestMainWindow *main_window, gboolean move_to_trash)
 	folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW (folder_view));
 
 	/* Ask the user */	
+	message =  g_strdup_printf (_("mcen_nc_delete_folder_text"), 
+				    tny_folder_get_name (TNY_FOLDER (folder)));
 	response = modest_platform_run_confirmation_dialog (GTK_WINDOW (main_window), 
-							    MODEST_CONFIRMATION_DELETE_FOLDER,
-							    folder);
+							    (const gchar *) message);
+	g_free (message);
 
 	if (response == GTK_RESPONSE_OK) {
 		ModestMailOperation *mail_op = modest_mail_operation_new ();
@@ -1883,8 +1886,12 @@ modest_ui_actions_on_move_to (GtkAction *action,
 {
 	GtkWidget *dialog, *scroll, *folder_view, *tree_view;
 	gint result;
+	TnyFolderStore *folder_store;
+	ModestMailOperation *mail_op;
+	ModestMainWindow *main_window;
 
-	g_return_if_fail (MODEST_IS_MAIN_WINDOW (win));
+	g_return_if_fail (MODEST_IS_MAIN_WINDOW (win) ||
+			  MODEST_IS_MSG_VIEW_WINDOW (win));
 
 	dialog = gtk_dialog_new_with_buttons (_("mcen_ti_moveto_folders_title"),
 					      GTK_WINDOW (win),
@@ -1902,7 +1909,9 @@ modest_ui_actions_on_move_to (GtkAction *action,
 					 GTK_POLICY_AUTOMATIC);
 
 	/* Create folder view */
-	folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win),
+	main_window = MODEST_MAIN_WINDOW (modest_window_mgr_get_main_window (modest_runtime_get_window_mgr ()));
+
+	folder_view = modest_main_window_get_child_widget (main_window,
 							   MODEST_WIDGET_TYPE_FOLDER_VIEW);
 	tree_view = modest_folder_view_new (NULL);
 	gtk_tree_view_set_model (GTK_TREE_VIEW (tree_view),
@@ -1917,37 +1926,76 @@ modest_ui_actions_on_move_to (GtkAction *action,
 	gtk_widget_show_all (GTK_WIDGET(GTK_DIALOG(dialog)->vbox));
 	
 	result = gtk_dialog_run (GTK_DIALOG(dialog));
-	if (result == GTK_RESPONSE_ACCEPT) {
-		TnyFolderStore *folder_store;
-		folder_store = modest_folder_view_get_selected (MODEST_FOLDER_VIEW (tree_view));
-		if (TNY_IS_ACCOUNT (folder_store)) {
-		} else {
-			ModestMailOperation *mail_op;
 
-			/* Create mail operation */
-			mail_op = modest_mail_operation_new ();
-			modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), 
-							 mail_op);
+	/* We do this to save an indentation level ;-) */
+	if (result != GTK_RESPONSE_ACCEPT)
+		goto end;
 
-			/* Get folder or messages to transfer */
-			if (gtk_widget_is_focus (folder_view)) {
-				TnyFolderStore *src_folder;
-				src_folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW (folder_view));
+	folder_store = modest_folder_view_get_selected (MODEST_FOLDER_VIEW (tree_view));
 
-				if (TNY_IS_FOLDER (src_folder)) 
-					modest_mail_operation_xfer_folder (mail_op, 
-									   TNY_FOLDER (src_folder), 
-									   folder_store,
-									   TRUE);
+	/* We use the goto to save an indentation level ;-) */
+	if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
+		TnyMsg *msg;
+		TnyHeader *header;
+		TnyList *headers;
 
-				/* Frees */
-				g_object_unref (G_OBJECT (src_folder));
-			} else {
-			}
-			g_object_unref (G_OBJECT (mail_op));
-		}
-		g_object_unref (folder_store);
+		/* Create header list */
+		msg = modest_msg_view_window_get_message (MODEST_MSG_VIEW_WINDOW (win));
+		header = tny_msg_get_header (msg);
+		headers = tny_simple_list_new ();
+		tny_list_prepend (headers, G_OBJECT (header));
+		g_object_unref (header);
+		g_object_unref (msg);
+
+		/* Transfer current msg */
+		modest_mail_operation_xfer_msgs (mail_op, 
+						 headers,
+						 TNY_FOLDER (folder_store),
+						 TRUE);
+		goto end;
 	}
 
+	if (TNY_IS_ACCOUNT (folder_store))
+		goto end;
+
+	/* Create mail operation */
+	mail_op = modest_mail_operation_new ();
+	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), 
+					 mail_op);
+
+	/* Get folder or messages to transfer */
+	if (gtk_widget_is_focus (folder_view)) {
+		TnyFolderStore *src_folder;
+		src_folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW (folder_view));
+
+		if (TNY_IS_FOLDER (src_folder))
+			modest_mail_operation_xfer_folder (mail_op, 
+							   TNY_FOLDER (src_folder),
+							   folder_store,
+							   TRUE);
+
+		/* Frees */
+		g_object_unref (G_OBJECT (src_folder));
+	} else {
+		GtkWidget *header_view;
+		header_view = modest_main_window_get_child_widget (main_window,
+								   MODEST_WIDGET_TYPE_HEADER_VIEW);
+		if (gtk_widget_is_focus (header_view)) {
+			TnyList *headers;
+
+			headers = modest_header_view_get_selected_headers (MODEST_HEADER_VIEW (header_view));
+
+			/* Transfer messages */
+			modest_mail_operation_xfer_msgs (mail_op, 
+							 headers,
+							 TNY_FOLDER (folder_store),
+							 TRUE);
+		}
+	}
+	g_object_unref (G_OBJECT (mail_op));
+	
+	g_object_unref (folder_store);
+
+ end:
 	gtk_widget_destroy (dialog);
 }

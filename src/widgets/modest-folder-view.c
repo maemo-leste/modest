@@ -927,7 +927,7 @@ typedef struct _DndHelper {
 
 /*
  * This function is the callback of the
- * modest_mail_operation_xfer_msg() and
+ * modest_mail_operation_xfer_msgs () and
  * modest_mail_operation_xfer_folder() calls. We check here if the
  * message/folder was correctly asynchronously transferred. The reason
  * to use the same callback is that the code is the same, it only has
@@ -972,6 +972,7 @@ drag_and_drop_from_header_view (GtkTreeModel *source_model,
 				GtkTreePath  *dest_row,
 				DndHelper    *helper)
 {
+	TnyList *headers;
 	TnyHeader *header;
 	TnyFolder *folder;
 	ModestMailOperation *mail_op;
@@ -991,12 +992,18 @@ drag_and_drop_from_header_view (GtkTreeModel *source_model,
 
 	/* Transfer message */
 	mail_op = modest_mail_operation_new ();
-	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), 
+
+	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
 					 mail_op);
 	g_signal_connect (G_OBJECT (mail_op), "progress-changed",
 			  G_CALLBACK (on_progress_changed), helper);
 
-	modest_mail_operation_xfer_msg (mail_op, header, folder, helper->delete_source);
+	/* FIXME: I replaced this because the API changed, but D&D
+	   should be reviewed in order to allow multiple drags*/
+	headers = tny_simple_list_new ();
+	tny_list_append (headers, G_OBJECT (header));
+	g_object_unref (header);
+	modest_mail_operation_xfer_msgs (mail_op, headers, folder, helper->delete_source);
 
 	/* Frees */
 	g_object_unref (G_OBJECT (mail_op));

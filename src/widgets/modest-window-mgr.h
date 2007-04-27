@@ -137,6 +137,9 @@ gboolean       modest_window_mgr_get_fullscreen_mode   (ModestWindowMgr *self);
 void           modest_window_mgr_show_toolbars         (ModestWindowMgr *self,
 							gboolean show_toolbars,
 							gboolean fullscreen);
+
+ModestWindow*  modest_window_mgr_get_main_window       (ModestWindowMgr *self);
+
 G_END_DECLS
 
 #endif /* __MODEST_WINDOW_MGR_H__ */

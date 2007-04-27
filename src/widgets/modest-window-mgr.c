@@ -53,6 +53,7 @@ enum {
 typedef struct _ModestWindowMgrPrivate ModestWindowMgrPrivate;
 struct _ModestWindowMgrPrivate {
 	GList *window_list;
+	ModestWindow *main_window;
 	gboolean fullscreen_mode;
 	gboolean show_toolbars;
 	gboolean show_toolbars_fullscreen;
@@ -109,6 +110,7 @@ modest_window_mgr_init (ModestWindowMgr *obj)
 
 	priv = MODEST_WINDOW_MGR_GET_PRIVATE(obj);
 	priv->window_list = NULL;
+	priv->main_window = NULL;
 	priv->fullscreen_mode = FALSE;
 
 	/* Could not initialize it from gconf, singletons are not
@@ -133,6 +135,9 @@ modest_window_mgr_finalize (GObject *obj)
 		g_list_free (priv->window_list);
 		priv->window_list = NULL;
 	}
+
+	/* Do not unref priv->main_window because it does not hold a
+	   new reference */
 
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
@@ -161,6 +166,16 @@ modest_window_mgr_register_window (ModestWindowMgr *self,
 	if (win) {
 		g_warning ("Trying to register an already registered window");
 		return;
+	}
+
+	/* Check that it's not a second main window */
+	if (MODEST_IS_MAIN_WINDOW (window)) {
+		if (priv->main_window) {
+			g_warning ("Trying to register a second main window");
+			return;
+		} else {
+			priv->main_window = window;
+		}
 	}
 
 	/* Add to list. Keep a reference to the window */
@@ -391,4 +406,16 @@ modest_window_mgr_show_toolbars (ModestWindowMgr *self,
 			win = g_list_next (win);
 		}
 	}
+}
+
+ModestWindow*  
+modest_window_mgr_get_main_window (ModestWindowMgr *self)
+{
+	ModestWindowMgrPrivate *priv;
+
+	g_return_val_if_fail (MODEST_IS_WINDOW_MGR (self), NULL);
+
+	priv = MODEST_WINDOW_MGR_GET_PRIVATE (self);
+
+	return priv->main_window;
 }
