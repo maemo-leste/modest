@@ -10,6 +10,10 @@
 #include "modest-wizard-dialog.h" /* We use a copied-and-improved HildonWizardDialog. */
 #include "modest-account-mgr.h"
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #ifdef MODEST_HILDON_VERSION_0
 #include <hildon-widgets/hildon-caption.h>
 #else

@@ -1917,6 +1917,86 @@ create_move_to_dialog (ModestWindow *win,
 	return dialog;
 }
 
+/*
+ * Returns TRUE if at least one of the headers of the list belongs to
+ * a message that has been fully retrieved.
+ */
+static gboolean
+has_retrieved_msgs (TnyList *list)
+{
+	TnyIterator *iter;
+	gboolean found = FALSE;
+
+	iter = tny_list_create_iterator (list);
+	while (tny_iterator_is_done (iter) && !found) {
+		TnyHeader *header;
+		TnyHeaderFlags flags;
+
+		header = TNY_HEADER (tny_iterator_get_current (iter));
+		flags = tny_header_get_flags (header);
+		if (!(flags & TNY_HEADER_FLAG_PARTIAL))
+			found = TRUE;
+
+		if (!found)
+			tny_iterator_next (iter);
+	}
+	g_object_unref (iter);
+
+	return found;
+}
+
+/*
+ * Shows a confirmation dialog to the user when we're moving messages
+ * from a remote server to the local storage. Returns the dialog
+ * response. If it's other kind of movement the it always returns
+ * GTK_RESPONSE_OK
+ */
+static gint
+msgs_move_to_confirmation (GtkWindow *win,
+			   TnyFolder *dest_folder,
+			   TnyList *headers)
+{
+	gint response = GTK_RESPONSE_OK;
+
+	/* If the destination is a local folder */
+	if (modest_tny_folder_is_local_folder (dest_folder)) {
+		TnyFolder *src_folder;
+		TnyIterator *iter;
+		TnyHeader *header;
+
+		/* Get source folder */
+		iter = tny_list_create_iterator (headers);
+		header = TNY_HEADER (tny_iterator_get_current (iter));
+		src_folder = tny_header_get_folder (header);
+		g_object_unref (header);
+		g_object_unref (iter);
+
+		/* If the source is a remote folder */
+		if (!modest_tny_folder_is_local_folder (src_folder)) {
+			const gchar *message;
+			
+			if (tny_list_get_length (headers) == 1)
+				if (has_retrieved_msgs (headers))
+					message = _("mcen_nc_move_retrieve");
+				else
+					message = _("mcen_nc_move_header");
+			else
+				if (has_retrieved_msgs (headers))
+					message = _("mcen_nc_move_retrieves");
+				else
+					message = _("mcen_nc_move_headers");
+			
+			response = modest_platform_run_confirmation_dialog (GTK_WINDOW (win),
+									    (const gchar *) message);
+		}
+	}
+	return response;
+}
+
+/*
+ * UI handler for the "Move to" action when invoked from the
+ * ModestMainWindow
+ */
 static void 
 modest_ui_actions_on_main_window_move_to (GtkAction *action, 
 					  ModestMainWindow *win)
@@ -1945,21 +2025,22 @@ modest_ui_actions_on_main_window_move_to (GtkAction *action,
 	if (TNY_IS_ACCOUNT (folder_store))
 		goto end;
 
-	/* Create mail operation */
-	mail_op = modest_mail_operation_new ();
-	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), 
-					 mail_op);
-
 	/* Get folder or messages to transfer */
 	if (gtk_widget_is_focus (folder_view)) {
 		TnyFolderStore *src_folder;
 		src_folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW (folder_view));
 
-		if (TNY_IS_FOLDER (src_folder))
+		if (TNY_IS_FOLDER (src_folder)) {
+			mail_op = modest_mail_operation_new ();
+			modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), 
+							 mail_op);
+
 			modest_mail_operation_xfer_folder (mail_op, 
 							   TNY_FOLDER (src_folder),
 							   folder_store,
 							   TRUE);
+			g_object_unref (G_OBJECT (mail_op));
+		}
 
 		/* Frees */
 		g_object_unref (G_OBJECT (src_folder));
@@ -1969,37 +2050,50 @@ modest_ui_actions_on_main_window_move_to (GtkAction *action,
 								   MODEST_WIDGET_TYPE_HEADER_VIEW);
 		if (gtk_widget_is_focus (header_view)) {
 			TnyList *headers;
+			gint response;
 
 			headers = modest_header_view_get_selected_headers (MODEST_HEADER_VIEW (header_view));
 
+			/* Ask for user confirmation */
+			response = msgs_move_to_confirmation (GTK_WINDOW (win), 
+							      TNY_FOLDER (folder_store), 
+							      headers);
+
 			/* Transfer messages */
-			modest_mail_operation_xfer_msgs (mail_op, 
-							 headers,
-							 TNY_FOLDER (folder_store),
-							 TRUE);
+			if (response == GTK_RESPONSE_OK) {
+				mail_op = modest_mail_operation_new ();
+				modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), 
+								 mail_op);
+
+				modest_mail_operation_xfer_msgs (mail_op, 
+								 headers,
+								 TNY_FOLDER (folder_store),
+								 TRUE);
+				g_object_unref (G_OBJECT (mail_op));
+			}
 		}
 	}
-	g_object_unref (G_OBJECT (mail_op));	
 	g_object_unref (folder_store);
 
  end:
 	gtk_widget_destroy (dialog);
 }
 
+
+/*
+ * UI handler for the "Move to" action when invoked from the
+ * ModestMsgViewWindow
+ */
 static void 
 modest_ui_actions_on_msg_view_window_move_to (GtkAction *action, 
 					      ModestMsgViewWindow *win)
 {
 	GtkWidget *dialog, *folder_view, *tree_view = NULL;
 	gint result;
-	ModestMailOperation *mail_op = NULL;
 	ModestMainWindow *main_window;
 	TnyMsg *msg;
 	TnyHeader *header;
 	TnyList *headers;
-
-	g_return_if_fail (MODEST_IS_MAIN_WINDOW (win) ||
-			  MODEST_IS_MSG_VIEW_WINDOW (win));
 
 	/* Get the folder view */
 	main_window = MODEST_MAIN_WINDOW (modest_window_mgr_get_main_window (modest_runtime_get_window_mgr ()));
@@ -2010,14 +2104,9 @@ modest_ui_actions_on_msg_view_window_move_to (GtkAction *action,
 	dialog = create_move_to_dialog (MODEST_WINDOW (win), folder_view, &tree_view);	
 	result = gtk_dialog_run (GTK_DIALOG(dialog));
 
-	/* We do this to save an indentation level ;-) */
 	if (result == GTK_RESPONSE_ACCEPT) {
 		TnyFolderStore *folder_store;
-
-		/* Create mail operation */
-		mail_op = modest_mail_operation_new ();
-		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), 
-						 mail_op);
+		gint response;
 
 		folder_store = modest_folder_view_get_selected (MODEST_FOLDER_VIEW (tree_view));
 
@@ -2029,12 +2118,29 @@ modest_ui_actions_on_msg_view_window_move_to (GtkAction *action,
 		g_object_unref (header);
 		g_object_unref (msg);
 
+		/* Ask user for confirmation. MSG-NOT404 */
+		response = msgs_move_to_confirmation (GTK_WINDOW (win), 
+						      TNY_FOLDER (folder_store), 
+						      headers);
+
 		/* Transfer current msg */
-		modest_mail_operation_xfer_msgs (mail_op, 
-						 headers,
-						 TNY_FOLDER (folder_store),
-						 TRUE);
-		g_object_unref (G_OBJECT (mail_op));
+		if (response == GTK_RESPONSE_OK) {
+			ModestMailOperation *mail_op;
+
+			/* Create mail op */
+			mail_op = modest_mail_operation_new ();
+			modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), 
+							 mail_op);
+			
+			/* Transfer messages */
+			modest_mail_operation_xfer_msgs (mail_op, 
+							 headers,
+							 TNY_FOLDER (folder_store),
+							 TRUE);
+			g_object_unref (G_OBJECT (mail_op));
+		} else {
+			g_object_unref (headers);
+		}
 		g_object_unref (folder_store);
 	}
 	gtk_widget_destroy (dialog);

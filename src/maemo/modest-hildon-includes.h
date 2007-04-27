@@ -29,6 +29,9 @@ k * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
 #ifndef __MODEST_HILDON_INCLUDES__
 #define __MODEST_HILDON_INCLUDES__
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
 #ifdef MODEST_HILDON_VERSION_0
 #include <osso-mime.h>

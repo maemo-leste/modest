@@ -29,6 +29,10 @@
 #include <gtk/gtkvbox.h>
 #include <gtk/gtkbutton.h>
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #ifdef MODEST_HILDON_VERSION_0
 #include <hildon-widgets/hildon-defines.h>
 #else
@@ -38,10 +42,6 @@
 #include "modest-wizard-dialog.h"
 
 #include <libintl.h>
-
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
 
 /* Specify the hildon-libs translation domain,
  * so we can reuse its translations 
@@ -235,7 +235,7 @@ init (ModestWizardDialog *wizard_dialog)
     wizard_dialog->priv = priv;
     priv->box = GTK_BOX (gtk_hbox_new (FALSE, 0));
 #ifdef MODEST_HILDON_VERSION_0    
-    priv->image = gtk_image_new_from_icon_name ("qgn_widg_wizard"
+    priv->image = gtk_image_new_from_icon_name ("qgn_widg_wizard",
             HILDON_ICON_SIZE_WIDG_WIZARD);
 #else
     priv->image = gtk_image_new_from_icon_name ("qgn_widg_wizard",
