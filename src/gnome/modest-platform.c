@@ -162,16 +162,11 @@ modest_platform_run_new_folder_dialog (GtkWindow *parent_window,
 	return result;
 }
 
+
 gint
 modest_platform_run_confirmation_dialog (GtkWindow *parent_window,
-					 ModestConfirmationDialogType type,
-					 gpointer user_data)
+					 const gchar *msg)
 {
-	switch (type) {
-	case MODEST_CONFIRMATION_DELETE_FOLDER:
-		break;
-	};
-
 	/* TODO implement confirmation dialog */
 	return GTK_RESPONSE_CANCEL;
 }
