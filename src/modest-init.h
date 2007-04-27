@@ -32,18 +32,9 @@
 
 #include <glib.h>
 #include <glib-object.h>
+#include <modest-runtime.h>
 
 G_BEGIN_DECLS
-
-#define MODEST_DEBUG "MODEST_DEBUG"
-
-typedef enum {
-	MODEST_INIT_DEBUG_ABORT_ON_WARNING      = 1 << 0,
-	MODEST_INIT_DEBUG_LOG_ACTIONS           = 1 << 1, /* not in use atm */
-	MODEST_INIT_DEBUG_DEBUG_OBJECTS         = 1 << 2, /* for g_type_init */
-	MODEST_INIT_DEBUG_DEBUG_SIGNALS         = 1 << 3, /* for g_type_init */
-	MODEST_INIT_DEBUG_FACTORY_SETTINGS      = 1 << 4  /* reset to factory defaults */
-} ModestInitDebugFlags;
 
 /**
  * modest_init_init_core:

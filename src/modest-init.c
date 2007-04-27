@@ -400,14 +400,14 @@ static void
 init_debug_g_type (void)
 {
 	GTypeDebugFlags gflags;
-	ModestInitDebugFlags mflags;
+	ModestRuntimeDebugFlags mflags;
 	
 	gflags = 0;
 	mflags = modest_runtime_get_debug_flags ();
 
-	if (mflags & MODEST_INIT_DEBUG_DEBUG_OBJECTS)
+	if (mflags & MODEST_RUNTIME_DEBUG_DEBUG_OBJECTS)
 		gflags |= G_TYPE_DEBUG_OBJECTS;
-	if (mflags & MODEST_INIT_DEBUG_DEBUG_SIGNALS)
+	if (mflags & MODEST_RUNTIME_DEBUG_DEBUG_SIGNALS)
 		gflags |= G_TYPE_DEBUG_SIGNALS;
 
 	g_type_init_with_debug_flags (gflags);
@@ -416,10 +416,10 @@ init_debug_g_type (void)
 static void
 init_debug_logging (void)
 {
-	ModestInitDebugFlags mflags;
+	ModestRuntimeDebugFlags mflags;
 	mflags = modest_runtime_get_debug_flags ();
 	
-	if (mflags & MODEST_INIT_DEBUG_ABORT_ON_WARNING)
+	if (mflags & MODEST_RUNTIME_DEBUG_ABORT_ON_WARNING)
 		g_log_set_always_fatal (G_LOG_LEVEL_ERROR |
 					G_LOG_LEVEL_CRITICAL |
 					G_LOG_LEVEL_WARNING);
