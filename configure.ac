@@ -37,7 +37,7 @@ GETTEXT_PACKAGE=modest
 AC_SUBST(GETTEXT_PACKAGE)
 AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE, "$GETTEXT_PACKAGE", ["Description"])
 
-ALL_LINGUAS="en_GB gl nl"
+ALL_LINGUAS="en_GB"
 
 MODEST_LOCALE_DIR='$prefix/${DATADIRNAME}/locale'
 AM_GLIB_DEFINE_LOCALEDIR([MODEST_LOCALE_DIR])
@@ -92,10 +92,10 @@ if test "x$with_platform" = "xmaemo"; then
    
    PKG_CHECK_MODULES(HILDON, hildon-1 >= 0.9.9, hildon1=yes, hildon1=no)	
    if test "$hildon1" == "yes"; then   # the 'new' hildon      			
-      PKG_CHECK_MODULES(MODEST_LIBTINYMAIL_MAEMO, conic libtinymail-maemo-1.0 hildon-libs libosso libhildonmime osso-addressbook-1.0 wpeditor hildon-help libebook-1.2)     	
+      PKG_CHECK_MODULES(MODEST_LIBTINYMAIL_MAEMO, conic libtinymail-maemo-1.0 hildon-libs libosso libhildonmime libedataserver-1.2 wpeditor hildon-help libebook-1.2 osso-addressbook-1.0)     	
    
     else     # the old hildon
-     PKG_CHECK_MODULES(MODEST_LIBTINYMAIL_MAEMO, conic libtinymail-maemo-1.0 hildon-libs >= 0.12.0 libosso libossomime libossohelp osso-addressbook-1.0 wpeditor libebook-1.2)     	 
+     PKG_CHECK_MODULES(MODEST_LIBTINYMAIL_MAEMO, conic libtinymail-maemo-1.0 hildon-libs >= 0.12.0 libosso libossomime libossohelp osso-addressbook-1.0 wpeditor libebook-1.2 libosso-abook)     	 
         AC_DEFINE_UNQUOTED(MODEST_HILDON_VERSION_0, 1, ["The Hildon version we support."])   
     fi 	
    
@@ -192,7 +192,7 @@ dnl ## gtk-doc
 GTK_DOC_CHECK([1.0])
 
 dnl Intltool utility programs
-AC_PROG_INTLTOOL([0.33.0],[no-xml])
+#AC_PROG_INTLTOOL([0.33.0],[no-xml])
 
 
 
