@@ -109,7 +109,7 @@ modest_ui_actions_on_about (GtkAction *action, ModestWindow *win)
 	gtk_about_dialog_set_comments (GTK_ABOUT_DIALOG(about),
 				       _("a modest e-mail client\n\n"
 					 "design and implementation: Dirk-Jan C. Binnema\n"
-					 "contributions from the fine people at KernelConcepts and Igalia\n"
+					 "contributions from the fine people at KC and Ig\n"
 					 "uses the tinymail email framework written by Philip van Hoof"));
 	gtk_about_dialog_set_authors (GTK_ABOUT_DIALOG(about), authors);
 	gtk_about_dialog_set_website (GTK_ABOUT_DIALOG(about), "http://modest.garage.maemo.org");
