@@ -52,7 +52,11 @@ typedef GtkWindowClass ModestWindowParentClass;
 #endif /* MODEST_PLATFORM_GNOME */
 
 #ifdef MODEST_PLATFORM_MAEMO
+#ifdef MODEST_HILDON_VERSION_0
 #include <hildon-widgets/hildon-window.h>
+#else
+#include <hildon/hildon-window.h>
+#endif /*MODEST_HILDON_VERSION_0*/
 typedef HildonWindow      ModestWindowParent;
 typedef HildonWindowClass ModestWindowParentClass;
 
