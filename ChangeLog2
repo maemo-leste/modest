@@ -1,5 +1,13 @@
 2007-04-27  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/maemo/modest-main-window.c:
+	(modest_main_window_show_toolbar): Check that a toolbar item is not NULL before 
+	showing/hiding it. Added TODO because it probably should not be NULL.
+	* src/modest-init.c: (modest_init_init_ui): Use a g_message() instead of a g_warning() 
+	because unnecessary g_warnings() make degugging difficult.
+
+2007-04-27  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/maemo/modest-msg-edit-window.c:
 	(modest_msg_edit_window_select_color),
 	(modest_msg_edit_window_select_background_color): 2 const corrections and 
