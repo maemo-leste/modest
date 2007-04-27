@@ -58,19 +58,32 @@
 #include <tny-simple-list.h>
 #include <wptextview.h>
 #include <wptextbuffer.h>
+#include "modest-scroll-area.h"
+
+#ifdef MODEST_HILDON_VERSION_0
 #include <hildon-widgets/hildon-color-selector.h>
 #include <hildon-widgets/hildon-color-button.h>
 #include <hildon-widgets/hildon-banner.h>
 #include <hildon-widgets/hildon-caption.h>
 #include <hildon-widgets/hildon-note.h>
-#include <hildon-widgets/hildon-scroll-area.h>
+#include <hildon-widgets/hildon-file-chooser-dialog.h>
 #include <hildon-widgets/hildon-font-selection-dialog.h>
+#else
+#include <hildon/hildon-file-chooser-dialog.h>
+#include <hildon/hildon-color-chooser.h>
+#include <hildon/hildon-banner.h>
+#include <hildon/hildon-color-button.h>
+#include <hildon/hildon-note.h>
+#include <hildon/hildon-color-button.h>
+#include <hildon/hildon-font-selection-dialog.h>
+#include <hildon/hildon-caption.h>
+#endif /* MODEST_HILDON_VERSION_0*/
+
+
 #include "widgets/modest-msg-edit-window-ui.h"
 
 #ifdef MODEST_HILDON_VERSION_0
-#include <hildon-widgets/hildon-file-chooser-dialog.h>
 #else
-#include <hildon/hildon-file-chooser-dialog.h>
 
 #endif /*MODEST_HILDON_VERSION_0 */
 
@@ -431,7 +444,7 @@ init_window (ModestMsgEditWindow *obj)
 		gtk_widget_hide (priv->bcc_field);
 
 	gtk_container_add (GTK_CONTAINER(obj), priv->scroll);
-	scroll_area = hildon_scroll_area_new (priv->scroll, priv->msg_body);
+	scroll_area = modest_scroll_area_new (priv->scroll, priv->msg_body);
 	gtk_container_add (GTK_CONTAINER (frame), scroll_area);
 	gtk_container_set_focus_vadjustment (GTK_CONTAINER (scroll_area), 
 					     gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (priv->scroll)));
@@ -1136,6 +1149,7 @@ text_buffer_refresh_attributes (WPTextBuffer *buffer, ModestMsgEditWindow *windo
 
 }
 
+
 void
 modest_msg_edit_window_select_color (ModestMsgEditWindow *window)
 {
@@ -1144,20 +1158,32 @@ modest_msg_edit_window_select_color (ModestMsgEditWindow *window)
 	ModestMsgEditWindowPrivate *priv;
 	GtkWidget *dialog = NULL;
 	gint response;
-	const GdkColor *new_color = NULL;
+	GdkColor *new_color = NULL;
 	
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
 	wp_text_buffer_get_attributes (WP_TEXT_BUFFER (priv->text_buffer), buffer_format, FALSE);
 	
+#ifdef MODEST_HILDON_VERSION_0	
 	dialog = hildon_color_selector_new (GTK_WINDOW (window));
-	hildon_color_selector_set_color (HILDON_COLOR_SELECTOR (dialog), & (buffer_format->color));
+	hildon_color_selector_set_color (HILDON_COLOR_SELECTOR (dialog), &(buffer_format->color));
+#else
+	dialog = hildon_color_chooser_new ();
+	hildon_color_chooser_set_color (HILDON_COLOR_CHOOSER (dialog), &(buffer_format->color));
+#endif /*MODEST_HILDON_VERSION_9*/		
 	g_free (buffer_format);
 
 	response = gtk_dialog_run (GTK_DIALOG (dialog));
 	switch (response) {
-	case GTK_RESPONSE_OK:
+	case GTK_RESPONSE_OK: {
+#ifdef MODEST_HILDON_VERSION_0
 		new_color = hildon_color_selector_get_color (HILDON_COLOR_SELECTOR (dialog));
-		break;
+#else
+		GdkColor col;
+		hildon_color_chooser_get_color (HILDON_COLOR_CHOOSER(dialog), &col);
+		new_color = &col;
+	}
+#endif /*MODEST_HILDON_VERSION_0*/
+	break;
 	default:
 		break;
 	}
@@ -1175,19 +1201,31 @@ modest_msg_edit_window_select_background_color (ModestMsgEditWindow *window)
 	ModestMsgEditWindowPrivate *priv;
 	GtkWidget *dialog = NULL;
 	gint response;
-	const GdkColor *old_color = NULL;
-	const GdkColor *new_color = NULL;
+	GdkColor *old_color = NULL;
+	GdkColor *new_color = NULL;
 	
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
-	old_color = wp_text_buffer_get_background_color (WP_TEXT_BUFFER (priv->text_buffer));
+	old_color = (GdkColor*)wp_text_buffer_get_background_color (WP_TEXT_BUFFER (priv->text_buffer));
 	
+#ifdef MODEST_HILDON_VERSION_0	
 	dialog = hildon_color_selector_new (GTK_WINDOW (window));
-	hildon_color_selector_set_color (HILDON_COLOR_SELECTOR (dialog), (GdkColor *) old_color);
+	hildon_color_selector_set_color (HILDON_COLOR_SELECTOR (dialog),(GdkColor*)old_color);
+#else
+	dialog = hildon_color_chooser_new ();
+	hildon_color_chooser_set_color (HILDON_COLOR_CHOOSER (dialog),(GdkColor*)old_color);
+#endif /*MODEST_HILDON_VERSION_9*/		
 
 	response = gtk_dialog_run (GTK_DIALOG (dialog));
 	switch (response) {
-	case GTK_RESPONSE_OK:
+	case GTK_RESPONSE_OK: {
+#ifdef MODEST_HILDON_VERSION_0
 		new_color = hildon_color_selector_get_color (HILDON_COLOR_SELECTOR (dialog));
+#else
+		GdkColor col;
+		hildon_color_chooser_get_color (HILDON_COLOR_CHOOSER(dialog), &col);
+		new_color = &col;
+          }
+#endif /*MODEST_HILDON_VERSION_0*/
 		break;
 	default:
 		break;
@@ -1287,11 +1325,18 @@ modest_msg_edit_window_color_button_change (ModestMsgEditWindow *window,
 {
 	ModestMsgEditWindowPrivate *priv;
 	GdkColor *new_color;
-
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
+	
+#ifdef MODEST_HILDON_VERSION_0	
 	new_color = hildon_color_button_get_color (HILDON_COLOR_BUTTON (priv->font_color_button));
+#else 
+	GdkColor col;
+	hildon_color_button_get_color (HILDON_COLOR_BUTTON(priv->font_color_button), &col);
+	new_color = &col;
+#endif /*MODEST_HILDON_VERSION_0*/
 
 	wp_text_buffer_set_attribute (WP_TEXT_BUFFER (priv->text_buffer), WPT_FORECOLOR, (gpointer) new_color);
+	
 	gtk_window_set_focus (GTK_WINDOW (window), priv->msg_body);
 
 }
