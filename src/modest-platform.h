@@ -163,6 +163,17 @@ gint      modest_platform_run_confirmation_dialog      (GtkWindow *parent_window
  **/
 void      modest_platform_run_information_dialog       (GtkWindow *parent_window,
 							ModestInformationDialogType type);
+		
+/*
+ * modest_platform_connect_and_wait:
+ * @parent_window: the parent #GtkWindow for any interactive or progress feedback UI.
+ * @return value: Whether a connection was make.
+ * 
+ * Attempts to make a connection, possibly showing interactive UI to achieve this.
+ * This will return TRUE immediately if a connection is already open.
+ * Otherwise, this function blocks until the connection attempt has either succeded or failed.
+ */		
+gboolean modest_platform_connect_and_wait (GtkWindow *parent_window);
 
 G_END_DECLS
 

@@ -1,5 +1,21 @@
 2007-04-27  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-platform.h:
+	* src/gnome/modest-platform.c: (modest_platform_connect_and_wait):
+	* src/maemo/modest-platform.c: (modest_platform_connect_and_wait):
+	* src/modest-main.c: Implement this function so we can avoid using 
+	maemo-specific API from cross-platform code.
+	(main):
+	* src/modest-tny-account-store.c:
+	(get_smtp_specific_transport_account_for_open_connection):
+	* src/modest-ui-actions.c: (check_for_connection),
+	(modest_ui_actions_on_item_not_found):
+	Use modest_platform_connect_and_wait() and put #idefs around other 
+	maemo-specific code, because only maemo currently has a way to 
+	identify connection names.
+
+2007-04-27  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/modest-tny-account-store.h:
 	* src/modest-tny-account-store.c:
 	Added modest_tny_account_store_get_transport_account_for_open_connection(), which respects 
@@ -21,7 +37,7 @@
 	
 	(modest_ui_actions_on_send_receive): 
 	Check that a connection is open before proceeding.
-	Receive and then send, instead of vice-versa, as per the specification
+	Receive and then send, instead of vice-versa, as per the specification.
 
 2007-04-26  Murray Cumming  <murrayc@murrayc.com>
 

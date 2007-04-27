@@ -52,7 +52,6 @@
 #include "modest-account-mgr-helpers.h"
 #include "modest-mail-operation.h"
 #include "modest-text-utils.h"
-#include <tny-maemo-conic-device.h> /* For ConIcIap */
 
 #ifdef MODEST_HAVE_EASYSETUP
 #include "easysetup/modest-easysetup-wizard.h"
@@ -677,7 +676,7 @@ gboolean check_for_connection (const gchar *account_name)
 	if (tny_device_is_online (device))
 		return TRUE;
 	else {
-		tny_maemo_conic_device_connect (TNY_MAEMO_CONIC_DEVICE (device), NULL);
+		modest_platform_connect_and_wait (NULL);
 		
 		/* TODO: Wait until a result. */
 		return TRUE;
@@ -1017,7 +1016,7 @@ modest_ui_actions_on_item_not_found (ModestHeaderView *header_view,ModestItemTyp
 
 		gtk_window_set_default_size (GTK_WINDOW(dialog), 300, 300);
 		if (gtk_dialog_run (GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
-//			tny_maemo_conic_device_connect (TNY_MAEMO_CONIC_DEVICE (modest_runtime_get_device());
+//			modest_platform_connect_and_wait ();;
 		}
 	}
 	gtk_widget_destroy (dialog);

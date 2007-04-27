@@ -38,9 +38,9 @@
 #include <tny-account-store.h>
 #include <tny-list.h>
 #include <tny-simple-list.h>
-#include <tny-maemo-conic-device.h> /* For tny_maemo_conic_device_connect() */
 
 #include <modest-runtime.h>
+#include <modest-platform.h>
 #include <modest-init.h>
 
 #include <modest-defs.h>
@@ -136,7 +136,7 @@ main (int argc, char *argv[])
 		} else {
 			if (modest_conf_get_bool (modest_runtime_get_conf(),
 						  MODEST_CONF_CONNECT_AT_STARTUP, NULL))
-				tny_maemo_conic_device_connect (TNY_MAEMO_CONIC_DEVICE (modest_runtime_get_device()), NULL);
+				modest_platform_connect_and_wait(NULL);
 			
 			retval = start_ui (account_or_default,
 					   mailto, cc, bcc, subject, body);

@@ -30,6 +30,7 @@
 #include <config.h>
 #include <glib/gi18n.h>
 #include <modest-platform.h>
+#include <modest-runtime.h>
 #include <dbus_api/modest-dbus-callbacks.h>
 #include <libosso.h>
 
@@ -507,3 +508,19 @@ modest_platform_run_information_dialog (GtkWindow *parent_window,
 
 	gtk_widget_destroy (GTK_WIDGET (dialog));
 }
+
+gboolean modest_platform_connect_and_wait (GtkWindow *parent_window)
+{
+	TnyDevice *device = modest_runtime_get_device();
+	
+	if (tny_device_is_online (device))
+		return TRUE;
+		
+	/* TODO: Block on the result: */
+	gboolean request_sent = tny_maemo_conic_device_connect (TNY_MAEMO_CONIC_DEVICE (device), NULL);
+	if (!request_sent)
+		return FALSE;
+
+	return TRUE;
+}
+

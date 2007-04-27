@@ -36,10 +36,10 @@
 #include <tny-transport-account.h>
 #include <tny-simple-list.h>
 #include <tny-account-store.h>
-#include <tny-maemo-conic-device.h> /* For ConIcIap */
 #include <tny-camel-transport-account.h>
 #include <tny-camel-imap-store-account.h>
 #include <tny-camel-pop-store-account.h>
+
 #include <modest-runtime.h>
 #include <modest-marshal.h>
 #include <modest-protocol-info.h>
@@ -52,6 +52,10 @@
 #include "modest-tny-platform-factory.h"
 #include <tny-gtk-lockable.h>
 #include <camel/camel.h>
+
+#ifdef MODEST_PLATFORM_MAEMO
+#include <tny-maemo-conic-device.h>
+#endif
 
 /* 'private'/'protected' functions */
 static void modest_tny_account_store_class_init   (ModestTnyAccountStoreClass *klass);
@@ -780,6 +784,7 @@ static TnyAccount* get_smtp_specific_transport_account_for_open_connection (Mode
 	if (!tny_device_is_online (device))
 		return NULL;
 
+#ifdef MODEST_PLATFORM_MAEMO
 	g_assert (TNY_IS_MAEMO_CONIC_DEVICE (device));
 	TnyMaemoConicDevice *maemo_device = TNY_MAEMO_CONIC_DEVICE (device);	
 	const gchar* iap_id = tny_maemo_conic_device_get_current_iap_id (maemo_device);
@@ -809,6 +814,9 @@ static TnyAccount* get_smtp_specific_transport_account_for_open_connection (Mode
 	g_object_unref (connection);
 	
 	return account;
+#else
+	return NULL; /* TODO: Implement this for GNOME, instead of just Maemo? */
+#endif /* MODEST_PLATFORM_MAEMO */
 }
 
 								 
