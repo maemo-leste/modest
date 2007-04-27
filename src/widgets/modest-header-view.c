@@ -384,15 +384,6 @@ modest_header_view_set_columns (ModestHeaderView *self, const GList *columns, Tn
 			g_return_val_if_reached(FALSE);
 		}
 
-		if (sortable) {
-/* 			guint sort_colid = gtk_tree_view_column_get_sort_column_id (column); */
-/* 			gtk_tree_sortable_set_sort_func (GTK_TREE_SORTABLE(sortable), */
-/* 							 sort_colid, (GtkTreeIterCompareFunc)cmp_rows, */
-/* 							 column, NULL); */
-			gtk_tree_sortable_set_sort_func (GTK_TREE_SORTABLE(sortable),
-							 col, (GtkTreeIterCompareFunc)cmp_rows,
-							 column, NULL);
-		}
 		/* we keep the column id around */
 		g_object_set_data (G_OBJECT(column), MODEST_HEADER_VIEW_COLUMN,
 				   GINT_TO_POINTER(col));
@@ -746,7 +737,7 @@ on_progress_changed (ModestMailOperation *mail_op,
 	sort_colid = modest_header_view_get_sort_column_id (self, type); 
 	gtk_tree_sortable_set_sort_column_id (GTK_TREE_SORTABLE(sortable),
 					      sort_colid,
-					      GTK_SORT_DESCENDING);
+					      GTK_SORT_ASCENDING);
 
 	/* Set new model */
 	modest_header_view_set_model (GTK_TREE_VIEW (self), sortable);
@@ -823,7 +814,7 @@ modest_header_view_set_folder_intern (ModestHeaderView *self, TnyFolder *folder)
 	sort_colid = modest_header_view_get_sort_column_id (self, type); 
 	gtk_tree_sortable_set_sort_column_id (GTK_TREE_SORTABLE(sortable),
 					      sort_colid,
-					      GTK_SORT_DESCENDING);
+					      GTK_SORT_ASCENDING);
 
 	/* Set new model */
 	modest_header_view_set_model (GTK_TREE_VIEW (self), sortable);

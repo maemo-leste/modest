@@ -286,7 +286,6 @@ save_settings_header_view (ModestConf *conf, ModestHeaderView *header_view,
 							    MODEST_HEADER_VIEW_COLUMN));
 		width = gtk_tree_view_column_get_width (col);
 		sort = 0;
-/* 		if (sort_colid == gtk_tree_view_column_get_sort_column_id(col)) */
 		if (sort_colid == col_id)
 			sort = 1;
 			
@@ -344,7 +343,6 @@ restore_settings_header_view (ModestConf *conf, ModestHeaderView *header_view,
 		
 		if (cols) {
 			GList *viewcolumns, *colcursor, *widthcursor, *sortablecursor;
-/* 			gint sort_colid = -1; */
 			modest_header_view_set_columns (header_view, cols, type);
 			sortable = gtk_tree_view_get_model (GTK_TREE_VIEW (header_view));
 
@@ -360,11 +358,6 @@ restore_settings_header_view (ModestConf *conf, ModestHeaderView *header_view,
 				if (sort > 0) {
 					int colid = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(colcursor->data), MODEST_HEADER_VIEW_COLUMN));
 					modest_header_view_set_sort_column_id (header_view, colid, type);
-/* 					sort_colid = gtk_tree_view_column_get_sort_column_id (GTK_TREE_VIEW_COLUMN(colcursor->data)); */
-/* 					modest_header_view_set_sort_column_id (header_view, sort_colid, type); */
-/* 					gtk_tree_sortable_set_sort_column_id (GTK_TREE_SORTABLE(sortable), */
-/* 									      sort_colid, */
-/* 									      GTK_SORT_DESCENDING); */
 					gtk_tree_sortable_set_sort_column_id (GTK_TREE_SORTABLE(sortable),
 									      colid,
 									      GTK_SORT_DESCENDING);
