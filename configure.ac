@@ -95,7 +95,7 @@ if test "x$with_platform" = "xmaemo"; then
       PKG_CHECK_MODULES(MODEST_LIBTINYMAIL_MAEMO, conic libtinymail-maemo-1.0 hildon-libs libosso libhildonmime libedataserver-1.2 wpeditor hildon-help libebook-1.2 osso-addressbook-1.0)     	
    
     else     # the old hildon
-     PKG_CHECK_MODULES(MODEST_LIBTINYMAIL_MAEMO, conic libtinymail-maemo-1.0 hildon-libs >= 0.12.0 libosso libossomime libossohelp osso-addressbook-1.0 wpeditor libebook-1.2 libosso-abook)     	 
+     PKG_CHECK_MODULES(MODEST_LIBTINYMAIL_MAEMO, conic libtinymail-maemo-1.0 hildon-libs >= 0.12.0 libossomime libossohelp osso-addressbook-1.0 wpeditor libebook-1.2 )     	 
         AC_DEFINE_UNQUOTED(MODEST_HILDON_VERSION_0, 1, ["The Hildon version we support."])   
     fi 	
    
@@ -192,8 +192,7 @@ dnl ## gtk-doc
 GTK_DOC_CHECK([1.0])
 
 dnl Intltool utility programs
-#AC_PROG_INTLTOOL([0.33.0],[no-xml])
-
+dnl AC_PROG_INTLTOOL([0.33.0],[no-xml])
 
 
 AC_OUTPUT([
