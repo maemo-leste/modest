@@ -1880,18 +1880,12 @@ modest_ui_actions_on_select_contacts (GtkAction *action, ModestMsgEditWindow *wi
 }
 
 
-void 
-modest_ui_actions_on_move_to (GtkAction *action, 
-			      ModestWindow *win)
+static GtkWidget*
+create_move_to_dialog (ModestWindow *win,
+		       GtkWidget *folder_view,
+		       GtkWidget **tree_view)
 {
-	GtkWidget *dialog, *scroll, *folder_view, *tree_view;
-	gint result;
-	TnyFolderStore *folder_store;
-	ModestMailOperation *mail_op = NULL;
-	ModestMainWindow *main_window;
-
-	g_return_if_fail (MODEST_IS_MAIN_WINDOW (win) ||
-			  MODEST_IS_MSG_VIEW_WINDOW (win));
+	GtkWidget *dialog, *scroll;
 
 	dialog = gtk_dialog_new_with_buttons (_("mcen_ti_moveto_folders_title"),
 					      GTK_WINDOW (win),
@@ -1909,22 +1903,37 @@ modest_ui_actions_on_move_to (GtkAction *action,
 					 GTK_POLICY_AUTOMATIC);
 
 	/* Create folder view */
-	main_window = MODEST_MAIN_WINDOW (modest_window_mgr_get_main_window (modest_runtime_get_window_mgr ()));
-
-	folder_view = modest_main_window_get_child_widget (main_window,
-							   MODEST_WIDGET_TYPE_FOLDER_VIEW);
-	tree_view = modest_folder_view_new (NULL);
-	gtk_tree_view_set_model (GTK_TREE_VIEW (tree_view),
+	*tree_view = modest_folder_view_new (NULL);
+	gtk_tree_view_set_model (GTK_TREE_VIEW (*tree_view),
 				 gtk_tree_view_get_model (GTK_TREE_VIEW (folder_view)));
-
-	gtk_container_add (GTK_CONTAINER (scroll), tree_view);
+	gtk_container_add (GTK_CONTAINER (scroll), *tree_view);
 
 	/* Add scroll to dialog */
 	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox), 
 			    scroll, FALSE, FALSE, 0);
 
 	gtk_widget_show_all (GTK_WIDGET(GTK_DIALOG(dialog)->vbox));
-	
+
+	return dialog;
+}
+
+static void 
+modest_ui_actions_on_main_window_move_to (GtkAction *action, 
+					  ModestMainWindow *win)
+{
+	GtkWidget *dialog, *folder_view, *tree_view = NULL;
+	gint result;
+	TnyFolderStore *folder_store;
+	ModestMailOperation *mail_op = NULL;
+
+	g_return_if_fail (MODEST_IS_MAIN_WINDOW (win));
+
+	/* Get the folder view */
+	folder_view = modest_main_window_get_child_widget (win,
+							   MODEST_WIDGET_TYPE_FOLDER_VIEW);
+
+	/* Create and run the dialog */
+	dialog = create_move_to_dialog (MODEST_WINDOW (win), folder_view, &tree_view);
 	result = gtk_dialog_run (GTK_DIALOG(dialog));
 
 	/* We do this to save an indentation level ;-) */
@@ -1932,29 +1941,6 @@ modest_ui_actions_on_move_to (GtkAction *action,
 		goto end;
 
 	folder_store = modest_folder_view_get_selected (MODEST_FOLDER_VIEW (tree_view));
-
-	/* We use the goto to save an indentation level ;-) */
-	if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
-		TnyMsg *msg;
-		TnyHeader *header;
-		TnyList *headers;
-
-		/* Create header list */
-		msg = modest_msg_view_window_get_message (MODEST_MSG_VIEW_WINDOW (win));
-		header = tny_msg_get_header (msg);
-		headers = tny_simple_list_new ();
-		tny_list_prepend (headers, G_OBJECT (header));
-		g_object_unref (header);
-		g_object_unref (msg);
-
-		/* Transfer current msg */
-		/* TODO: mail_op is never set. murrayc */
-		modest_mail_operation_xfer_msgs (mail_op, 
-						 headers,
-						 TNY_FOLDER (folder_store),
-						 TRUE);
-		goto end;
-	}
 
 	if (TNY_IS_ACCOUNT (folder_store))
 		goto end;
@@ -1979,7 +1965,7 @@ modest_ui_actions_on_move_to (GtkAction *action,
 		g_object_unref (G_OBJECT (src_folder));
 	} else {
 		GtkWidget *header_view;
-		header_view = modest_main_window_get_child_widget (main_window,
+		header_view = modest_main_window_get_child_widget (win,
 								   MODEST_WIDGET_TYPE_HEADER_VIEW);
 		if (gtk_widget_is_focus (header_view)) {
 			TnyList *headers;
@@ -1993,10 +1979,78 @@ modest_ui_actions_on_move_to (GtkAction *action,
 							 TRUE);
 		}
 	}
-	g_object_unref (G_OBJECT (mail_op));
-	
+	g_object_unref (G_OBJECT (mail_op));	
 	g_object_unref (folder_store);
 
  end:
 	gtk_widget_destroy (dialog);
+}
+
+static void 
+modest_ui_actions_on_msg_view_window_move_to (GtkAction *action, 
+					      ModestMsgViewWindow *win)
+{
+	GtkWidget *dialog, *folder_view, *tree_view = NULL;
+	gint result;
+	ModestMailOperation *mail_op = NULL;
+	ModestMainWindow *main_window;
+	TnyMsg *msg;
+	TnyHeader *header;
+	TnyList *headers;
+
+	g_return_if_fail (MODEST_IS_MAIN_WINDOW (win) ||
+			  MODEST_IS_MSG_VIEW_WINDOW (win));
+
+	/* Get the folder view */
+	main_window = MODEST_MAIN_WINDOW (modest_window_mgr_get_main_window (modest_runtime_get_window_mgr ()));
+	folder_view = modest_main_window_get_child_widget (main_window,
+							   MODEST_WIDGET_TYPE_FOLDER_VIEW);
+
+	/* Create and run the dialog */
+	dialog = create_move_to_dialog (MODEST_WINDOW (win), folder_view, &tree_view);	
+	result = gtk_dialog_run (GTK_DIALOG(dialog));
+
+	/* We do this to save an indentation level ;-) */
+	if (result == GTK_RESPONSE_ACCEPT) {
+		TnyFolderStore *folder_store;
+
+		/* Create mail operation */
+		mail_op = modest_mail_operation_new ();
+		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), 
+						 mail_op);
+
+		folder_store = modest_folder_view_get_selected (MODEST_FOLDER_VIEW (tree_view));
+
+		/* Create header list */
+		msg = modest_msg_view_window_get_message (MODEST_MSG_VIEW_WINDOW (win));
+		header = tny_msg_get_header (msg);
+		headers = tny_simple_list_new ();
+		tny_list_prepend (headers, G_OBJECT (header));
+		g_object_unref (header);
+		g_object_unref (msg);
+
+		/* Transfer current msg */
+		modest_mail_operation_xfer_msgs (mail_op, 
+						 headers,
+						 TNY_FOLDER (folder_store),
+						 TRUE);
+		g_object_unref (G_OBJECT (mail_op));
+		g_object_unref (folder_store);
+	}
+	gtk_widget_destroy (dialog);
+}
+
+void 
+modest_ui_actions_on_move_to (GtkAction *action, 
+			      ModestWindow *win)
+{
+	g_return_if_fail (MODEST_IS_MAIN_WINDOW (win) ||
+			  MODEST_IS_MSG_VIEW_WINDOW (win));
+
+	if (MODEST_IS_MAIN_WINDOW (win)) 
+		modest_ui_actions_on_main_window_move_to (action, 
+							  MODEST_MAIN_WINDOW (win));
+	else
+		modest_ui_actions_on_msg_view_window_move_to (action, 
+							      MODEST_MSG_VIEW_WINDOW (win));
 }
