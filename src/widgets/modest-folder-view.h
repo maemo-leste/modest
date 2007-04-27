@@ -143,6 +143,19 @@ gboolean      modest_folder_view_update_model    (ModestFolderView *self,
  **/
 const gchar* modest_folder_view_get_selected_display_name (ModestFolderView *self);
 
+
+/**
+ * modest_folder_view_set_style:
+ * @self: a #ModestFolderView
+ * @style: a #ModestFolderViewStyle
+ * 
+ * Sets the folder view style. There are currently two available,
+ * MODEST_FOLDER_VIEW_STYLE_SHOW_ALL shows all the active accounts,
+ * and MODEST_FOLDER_VIEW_STYLE_SHOW_ONE (Maemo style) shows the local
+ * account the mmc and only one of the available active server
+ * accounts
+
+ **/
 void         modest_folder_view_set_style         (ModestFolderView *self,
 						   ModestFolderViewStyle style);
 

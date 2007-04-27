@@ -500,7 +500,7 @@ modest_mail_operation_create_folder (ModestMailOperation *self,
 	} else {
 		/* Check folder rules */
 		rules = modest_tny_folder_get_rules (TNY_FOLDER (parent));
-		if (rules | MODEST_FOLDER_RULES_FOLDER_NON_WRITEABLE)
+		if (rules & MODEST_FOLDER_RULES_FOLDER_NON_WRITEABLE)
 			g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 				     MODEST_MAIL_OPERATION_ERROR_FOLDER_RULES,
 				     _("mail_in_ui_folder_create_error"));
@@ -525,7 +525,6 @@ modest_mail_operation_remove_folder (ModestMailOperation *self,
 				     TnyFolder           *folder,
 				     gboolean             remove_to_trash)
 {
-	TnyFolderStore *parent = NULL; /* TODO: Should this be set? */
 	TnyAccount *account;
 	ModestMailOperationPrivate *priv;
 	ModestTnyFolderRules rules;
@@ -536,8 +535,8 @@ modest_mail_operation_remove_folder (ModestMailOperation *self,
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
 
 	/* Check folder rules */
-	rules = modest_tny_folder_get_rules (TNY_FOLDER (parent));
-	if (rules | MODEST_FOLDER_RULES_FOLDER_NON_DELETABLE) {
+	rules = modest_tny_folder_get_rules (TNY_FOLDER (folder));
+	if (rules & MODEST_FOLDER_RULES_FOLDER_NON_DELETABLE) {
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 			     MODEST_MAIL_OPERATION_ERROR_FOLDER_RULES,
 			     _("mail_in_ui_folder_delete_error"));
@@ -557,7 +556,7 @@ modest_mail_operation_remove_folder (ModestMailOperation *self,
 								TNY_FOLDER_STORE (trash_folder), TRUE);
 		g_object_unref (G_OBJECT (new_folder));
 	} else {
-		parent = tny_folder_get_folder_store (folder);
+		TnyFolderStore *parent = tny_folder_get_folder_store (folder);
 
 		tny_folder_store_remove_folder (parent, folder, &(priv->error));
 		CHECK_EXCEPTION (priv, MODEST_MAIL_OPERATION_STATUS_FAILED);
@@ -588,7 +587,7 @@ modest_mail_operation_rename_folder (ModestMailOperation *self,
 
 	/* Check folder rules */
 	rules = modest_tny_folder_get_rules (TNY_FOLDER (folder));
-	if (rules | MODEST_FOLDER_RULES_FOLDER_NON_RENAMEABLE) {
+	if (rules & MODEST_FOLDER_RULES_FOLDER_NON_RENAMEABLE) {
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 			     MODEST_MAIL_OPERATION_ERROR_FOLDER_RULES,
 			     _("FIXME: unable to rename"));
@@ -620,7 +619,7 @@ modest_mail_operation_xfer_folder (ModestMailOperation *self,
 
 	/* The moveable restriction is applied also to copy operation */
 	rules = modest_tny_folder_get_rules (TNY_FOLDER (parent));
-	if (rules | MODEST_FOLDER_RULES_FOLDER_NON_MOVEABLE) {
+	if (rules & MODEST_FOLDER_RULES_FOLDER_NON_MOVEABLE) {
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 			     MODEST_MAIL_OPERATION_ERROR_FOLDER_RULES,
 			     _("FIXME: unable to rename"));

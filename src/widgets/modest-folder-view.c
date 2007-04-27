@@ -280,19 +280,19 @@ text_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 		else
 			number = unread;
 
-		/* Use bold font style if there are unread messages */			
+		/* Use bold font style if there are unread messages */
 		if (unread > 0) {
 			gchar *folder_title = g_strdup_printf ("%s (%d)", fname, unread);
 			g_object_set (rendobj,"text", folder_title,  "weight", 800, NULL);
 			if (G_OBJECT (priv->cur_folder_store) == instance)
-				g_signal_emit (G_OBJECT(data), 
+				g_signal_emit (G_OBJECT(data),
 					       signals[FOLDER_DISPLAY_NAME_CHANGED_SIGNAL], 0,
 					       folder_title);
 			g_free (folder_title);
 		} else {
 			g_object_set (rendobj,"text", fname, "weight", 400, NULL);
 			if (G_OBJECT (priv->cur_folder_store) == instance)
-				g_signal_emit (G_OBJECT(data), 
+				g_signal_emit (G_OBJECT(data),
 					       signals[FOLDER_DISPLAY_NAME_CHANGED_SIGNAL], 0,
 					       fname);
 		}
@@ -344,7 +344,7 @@ icon_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 	gtk_tree_model_get (tree_model, iter,
 			    TNY_GTK_FOLDER_STORE_TREE_MODEL_TYPE_COLUMN, &type,
 			    TNY_GTK_FOLDER_STORE_TREE_MODEL_NAME_COLUMN, &fname,
-			    TNY_GTK_FOLDER_STORE_TREE_MODEL_UNREAD_COLUMN, &unread, 
+			    TNY_GTK_FOLDER_STORE_TREE_MODEL_UNREAD_COLUMN, &unread,
 			    TNY_GTK_FOLDER_STORE_TREE_MODEL_INSTANCE_COLUMN, &instance,
 			    -1);
 
@@ -403,12 +403,45 @@ icon_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 }
 
 static void
-modest_folder_view_init (ModestFolderView *obj)
+add_columns (GtkWidget *treeview)
 {
-	ModestFolderViewPrivate *priv;
 	GtkTreeViewColumn *column;
 	GtkCellRenderer *renderer;
 	GtkTreeSelection *sel;
+
+	/* Create column */
+	column = gtk_tree_view_column_new ();	
+	
+	/* Set icon and text render function */
+	renderer = gtk_cell_renderer_pixbuf_new();
+	gtk_tree_view_column_pack_start (column, renderer, FALSE);
+	gtk_tree_view_column_set_cell_data_func(column, renderer,
+						icon_cell_data, treeview, NULL);
+	
+	renderer = gtk_cell_renderer_text_new();
+	gtk_tree_view_column_pack_start (column, renderer, FALSE);
+	gtk_tree_view_column_set_cell_data_func(column, renderer,
+						text_cell_data, treeview, NULL);
+	
+	/* Set selection mode */
+	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW(treeview));
+	gtk_tree_selection_set_mode (sel, GTK_SELECTION_SINGLE);
+
+	/* Set treeview appearance */
+	gtk_tree_view_column_set_spacing (column, 2);
+	gtk_tree_view_column_set_resizable (column, TRUE);
+	gtk_tree_view_column_set_fixed_width (column, TRUE);		
+	gtk_tree_view_set_headers_clickable (GTK_TREE_VIEW(treeview), FALSE);
+	gtk_tree_view_set_enable_search (GTK_TREE_VIEW(treeview), FALSE);
+
+	/* Add column */
+	gtk_tree_view_append_column (GTK_TREE_VIEW(treeview),column);
+}
+
+static void
+modest_folder_view_init (ModestFolderView *obj)
+{
+	ModestFolderViewPrivate *priv;
 	ModestConf *conf;
 	
 	priv =	MODEST_FOLDER_VIEW_GET_PRIVATE(obj);
@@ -424,28 +457,7 @@ modest_folder_view_init (ModestFolderView *obj)
 	priv->local_account_name = modest_conf_get_string (conf, MODEST_CONF_DEVICE_NAME, NULL);
 
 	/* Build treeview */
-	column = gtk_tree_view_column_new ();	
-	
-	renderer = gtk_cell_renderer_pixbuf_new();
-	gtk_tree_view_column_pack_start (column, renderer, FALSE);
-	gtk_tree_view_column_set_cell_data_func(column, renderer,
-						icon_cell_data, obj, NULL);
-	
-	renderer = gtk_cell_renderer_text_new();
-	gtk_tree_view_column_pack_start (column, renderer, FALSE);
-	gtk_tree_view_column_set_cell_data_func(column, renderer,
-						text_cell_data, obj, NULL);
-	
-	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW(obj));
-	gtk_tree_selection_set_mode (sel, GTK_SELECTION_SINGLE);
-
-	gtk_tree_view_column_set_spacing (column, 2);
-	gtk_tree_view_column_set_resizable (column, TRUE);
-	gtk_tree_view_column_set_fixed_width (column, TRUE);		
-	gtk_tree_view_set_headers_clickable (GTK_TREE_VIEW(obj), FALSE);
-	gtk_tree_view_set_enable_search     (GTK_TREE_VIEW(obj), FALSE);
-
-	gtk_tree_view_append_column (GTK_TREE_VIEW(obj),column);
+	add_columns (GTK_WIDGET (obj));
 
 	/* Setup drag and drop */
 	setup_drag_and_drop (GTK_TREE_VIEW(obj));
@@ -603,7 +615,8 @@ modest_folder_view_new (TnyFolderStoreQuery *query)
 	self = G_OBJECT (g_object_new (MODEST_TYPE_FOLDER_VIEW, NULL));
 	priv = MODEST_FOLDER_VIEW_GET_PRIVATE (self);
 
-	priv->query = g_object_ref (query);
+	if (query)
+		priv->query = g_object_ref (query);
 	
 	sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(self));
 	priv->changed_signal = g_signal_connect (sel, "changed",
@@ -646,7 +659,7 @@ filter_row (GtkTreeModel *model,
 	static gboolean found = FALSE;
 	gboolean retval;
 	gint type;
-	GObject *instance;
+	GObject *instance = NULL;
 
 	gtk_tree_model_get (model, iter,
 			    TNY_GTK_FOLDER_STORE_TREE_MODEL_TYPE_COLUMN, &type,
@@ -670,6 +683,8 @@ filter_row (GtkTreeModel *model,
 		}
 	} else
 		retval = TRUE;
+
+	g_object_unref (instance);
 
 	return retval;
 }
@@ -753,10 +768,10 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 		priv->cur_folder_store = NULL;
 
 		/* Notify the display name observers */
-		g_signal_emit (G_OBJECT(user_data), 
+		g_signal_emit (G_OBJECT(user_data),
 			       signals[FOLDER_DISPLAY_NAME_CHANGED_SIGNAL], 0,
 			       NULL);
-		return; 
+		return;
 	}
 
 	tree_view = MODEST_FOLDER_VIEW (user_data);
@@ -783,9 +798,9 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 	priv->cur_folder_store = folder;
 
 	/* New folder has been selected */
-	g_signal_emit (G_OBJECT(tree_view), 
-		       signals[FOLDER_SELECTION_CHANGED_SIGNAL], 
-		       0, folder, TRUE); 
+	g_signal_emit (G_OBJECT(tree_view),
+		       signals[FOLDER_SELECTION_CHANGED_SIGNAL],
+		       0, folder, TRUE);
 }
 
 TnyFolderStore *

@@ -460,7 +460,7 @@ modest_main_window_new (void)
 	if (!priv->folder_view)
 		g_printerr ("modest: cannot instantiate folder view\n");
 	g_object_unref (G_OBJECT (query));
-	modest_folder_view_set_style (priv->folder_view, 
+	modest_folder_view_set_style (priv->folder_view,
 				      MODEST_FOLDER_VIEW_STYLE_SHOW_ONE);
 
 	/* Get device name */

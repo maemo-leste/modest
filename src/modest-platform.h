@@ -139,10 +139,28 @@ gint      modest_platform_run_new_folder_dialog        (GtkWindow *parent_window
 							gchar *suggested_name,
 							gchar **folder_name);
 
+/**
+ * modest_platform_run_confirmation_dialog:
+ * @parent_window: the parent #GtkWindow of the dialog
+ * @type: the type of confirmation dialog
+ * @user_data: user data
+ * 
+ * runs a confirmation dialog of type #type.
+ * 
+ * Returns: GTK_RESPONSE_OK or GTK_RESPONSE_CANCEL
+ **/
 gint      modest_platform_run_confirmation_dialog      (GtkWindow *parent_window,
 							ModestConfirmationDialogType type,
 							gpointer user_data);
 
+
+/**
+ * modest_platform_run_information_dialog:
+ * @parent_window: the parent #GtkWindow of the dialog
+ * @type: the type of information dialog
+ * 
+ * shows an information dialog
+ **/
 void      modest_platform_run_information_dialog       (GtkWindow *parent_window,
 							ModestInformationDialogType type);
 

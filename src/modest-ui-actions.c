@@ -924,7 +924,7 @@ modest_ui_actions_on_folder_selection_changed (ModestFolderView *folder_view,
 		modest_main_window_set_contents_style (main_window, MODEST_MAIN_WINDOW_CONTENTS_STYLE_HEADERS);
 
 		if (selected) {
-			modest_header_view_set_folder (MODEST_HEADER_VIEW(header_view), 
+			modest_header_view_set_folder (MODEST_HEADER_VIEW(header_view),
 						       TNY_FOLDER (folder_store));
 			modest_widget_memory_restore (conf, G_OBJECT(header_view),
 						      "header-view");
@@ -1838,4 +1838,80 @@ modest_ui_actions_on_select_contacts (GtkAction *action, ModestMsgEditWindow *wi
 {
 	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
 	modest_msg_edit_window_select_contacts (window);
+}
+
+
+void 
+modest_ui_actions_on_move_to (GtkAction *action, 
+			      ModestWindow *win)
+{
+	GtkWidget *dialog, *scroll, *folder_view, *tree_view;
+	gint result;
+
+	g_return_if_fail (MODEST_IS_MAIN_WINDOW (win));
+
+	dialog = gtk_dialog_new_with_buttons (_("mcen_ti_moveto_folders_title"),
+					      GTK_WINDOW (win),
+					      GTK_DIALOG_MODAL | GTK_DIALOG_NO_SEPARATOR | GTK_DIALOG_DESTROY_WITH_PARENT,
+					      GTK_STOCK_OK,
+					      GTK_RESPONSE_ACCEPT,
+					      GTK_STOCK_CANCEL,
+					      GTK_RESPONSE_REJECT,
+					      NULL);
+
+	/* Create scrolled window */
+	scroll = gtk_scrolled_window_new (NULL, NULL);
+	gtk_scrolled_window_set_policy  (GTK_SCROLLED_WINDOW (scroll),
+					 GTK_POLICY_AUTOMATIC,
+					 GTK_POLICY_AUTOMATIC);
+
+	/* Create folder view */
+	folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win),
+							   MODEST_WIDGET_TYPE_FOLDER_VIEW);
+	tree_view = modest_folder_view_new (NULL);
+	gtk_tree_view_set_model (GTK_TREE_VIEW (tree_view),
+				 gtk_tree_view_get_model (GTK_TREE_VIEW (folder_view)));
+
+	gtk_container_add (GTK_CONTAINER (scroll), tree_view);
+
+	/* Add scroll to dialog */
+	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox), 
+			    scroll, FALSE, FALSE, 0);
+
+	gtk_widget_show_all (GTK_WIDGET(GTK_DIALOG(dialog)->vbox));
+	
+	result = gtk_dialog_run (GTK_DIALOG(dialog));
+	if (result == GTK_RESPONSE_ACCEPT) {
+		TnyFolderStore *folder_store;
+		folder_store = modest_folder_view_get_selected (MODEST_FOLDER_VIEW (tree_view));
+		if (TNY_IS_ACCOUNT (folder_store)) {
+		} else {
+			ModestMailOperation *mail_op;
+
+			/* Create mail operation */
+			mail_op = modest_mail_operation_new ();
+			modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), 
+							 mail_op);
+
+			/* Get folder or messages to transfer */
+			if (gtk_widget_is_focus (folder_view)) {
+				TnyFolderStore *src_folder;
+				src_folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW (folder_view));
+
+				if (TNY_IS_FOLDER (src_folder)) 
+					modest_mail_operation_xfer_folder (mail_op, 
+									   TNY_FOLDER (src_folder), 
+									   folder_store,
+									   TRUE);
+
+				/* Frees */
+				g_object_unref (G_OBJECT (src_folder));
+			} else {
+			}
+			g_object_unref (G_OBJECT (mail_op));
+		}
+		g_object_unref (folder_store);
+	}
+
+	gtk_widget_destroy (dialog);
 }
