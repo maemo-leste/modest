@@ -782,7 +782,7 @@ msgstr "Get all"
 msgid "mcen_bd_newest_only"
 msgstr "Newest only"
 
-# "Lose formatting" confirmation note [MSG-NOT192]# follow the same confirmation note in Gagarin/OSSO Notes UI Specification, except use this logical string
+# "Lose formatting" confirmation note [MSG-NOT192]# follow the same confirmation note in OSSO Notes UI Specification, except use this logical string
 msgid "emev_nc_formatting_lost"
 msgstr "All current formatting will be removed.\nContinue anyway?"
 
