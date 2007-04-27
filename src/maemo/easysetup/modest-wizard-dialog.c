@@ -28,7 +28,12 @@
 #include <gtk/gtkhbox.h>
 #include <gtk/gtkvbox.h>
 #include <gtk/gtkbutton.h>
+
+#ifdef MODEST_HILDON_VERSION_0
 #include <hildon-widgets/hildon-defines.h>
+#else
+#include <hildon/hildon-defines.h>
+#endif /*MODEST_HILDON_VERSION_0*/
 
 #include "modest-wizard-dialog.h"
 
@@ -229,9 +234,13 @@ init (ModestWizardDialog *wizard_dialog)
     gtk_dialog_set_has_separator (dialog, FALSE);
     wizard_dialog->priv = priv;
     priv->box = GTK_BOX (gtk_hbox_new (FALSE, 0));
-    priv->image = gtk_image_new_from_icon_name ("qgn_widg_wizard",
+#ifdef MODEST_HILDON_VERSION_0    
+    priv->image = gtk_image_new_from_icon_name ("qgn_widg_wizard"
             HILDON_ICON_SIZE_WIDG_WIZARD);
-
+#else
+    priv->image = gtk_image_new_from_icon_name ("qgn_widg_wizard",
+            HILDON_ICON_SIZE_WIZARD);
+#endif /*MODEST_HILDON_VERSION_0*/
     /* Default values for user provided properties */
     priv->notebook = NULL;
     priv->wizard_name = NULL;

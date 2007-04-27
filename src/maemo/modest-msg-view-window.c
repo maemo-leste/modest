@@ -39,9 +39,7 @@
 #include <modest-runtime.h>
 #include <modest-window-priv.h>
 #include <modest-tny-folder.h>
-#include <hildon-widgets/hildon-find-toolbar.h>
-#include <hildon-widgets/hildon-defines.h>
-#include <hildon-widgets/hildon-banner.h>
+#include "modest-hildon-includes.h"
 #include <gtkhtml/gtkhtml-search.h>
 #include <gdk/gdkkeysyms.h>
 

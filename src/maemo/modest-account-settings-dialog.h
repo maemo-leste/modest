@@ -8,7 +8,7 @@
 
 #include <gtk/gtkdialog.h> 
 #include "modest-account-mgr.h"
-#include <hildon-widgets/hildon-caption.h>
+#include "modest-hildon-includes.h"
 
 G_BEGIN_DECLS
 

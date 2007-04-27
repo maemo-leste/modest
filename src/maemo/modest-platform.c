@@ -33,20 +33,10 @@
 #include <modest-runtime.h>
 #include <dbus_api/modest-dbus-callbacks.h>
 #include <libosso.h>
-
-#ifdef MODEST_HILDON_VERSION_0
-#include <osso-mime.h>
-#include <osso-uri.h>
-#else
-#include <hildon-mime.h>
-#include <hildon-uri.h>
-#endif /*MODEST_HILDON_VERSION_0*/
-
+#include <modest-hildon-includes.h>
 #include <tny-maemo-conic-device.h>
 #include <tny-folder.h>
 #include <gtk/gtkicontheme.h>
-#include <hildon-widgets/hildon-banner.h>
-#include <hildon-widgets/hildon-note.h>
 #include <gtk/gtkmenuitem.h>
 #include <gtk/gtkmain.h>
 #include <string.h>

@@ -36,9 +36,7 @@
 #include <libebook/e-book.h>
 #include <libebook/e-book-view.h>
 #include <libosso-abook/osso-abook.h>
-#include <hildon-widgets/hildon-note.h>
-#include <hildon-widgets/hildon-caption.h>
-#include <hildon-widgets/hildon-banner.h>
+#include "modest-hildon-includes.h"
 #include <string.h>
 #include <gtk/gtksizegroup.h>
 #include <gtk/gtkbox.h>

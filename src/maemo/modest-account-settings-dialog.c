@@ -15,8 +15,8 @@
 #include <gtk/gtkcheckbutton.h>
 #include <gtk/gtkmessagedialog.h>
 #include <gtk/gtkstock.h>
-#include <hildon-widgets/hildon-caption.h>
-#include <hildon-widgets/hildon-number-editor.h>
+#include "modest-hildon-includes.h"
+
 #include "widgets/modest-serversecurity-combo-box.h"
 #include "widgets/modest-secureauth-combo-box.h"
 #include "widgets/modest-validating-entry.h"

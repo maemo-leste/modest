@@ -2,8 +2,7 @@
 
 #include "modest-connection-specific-smtp-edit-window.h"
 #include "maemo/modest-maemo-ui-constants.h"
-#include <hildon-widgets/hildon-caption.h>
-#include <hildon-widgets/hildon-number-editor.h>
+#include "modest-hildon-includes.h"
 #include "widgets/modest-serversecurity-combo-box.h"
 #include "widgets/modest-secureauth-combo-box.h"
 #include "widgets/modest-validating-entry.h"

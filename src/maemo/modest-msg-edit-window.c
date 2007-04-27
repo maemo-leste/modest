@@ -60,33 +60,8 @@
 #include <wptextbuffer.h>
 #include "modest-scroll-area.h"
 
-#ifdef MODEST_HILDON_VERSION_0
-#include <hildon-widgets/hildon-color-selector.h>
-#include <hildon-widgets/hildon-color-button.h>
-#include <hildon-widgets/hildon-banner.h>
-#include <hildon-widgets/hildon-caption.h>
-#include <hildon-widgets/hildon-note.h>
-#include <hildon-widgets/hildon-file-chooser-dialog.h>
-#include <hildon-widgets/hildon-font-selection-dialog.h>
-#else
-#include <hildon/hildon-file-chooser-dialog.h>
-#include <hildon/hildon-color-chooser.h>
-#include <hildon/hildon-banner.h>
-#include <hildon/hildon-color-button.h>
-#include <hildon/hildon-note.h>
-#include <hildon/hildon-color-button.h>
-#include <hildon/hildon-font-selection-dialog.h>
-#include <hildon/hildon-caption.h>
-#endif /* MODEST_HILDON_VERSION_0*/
-
-
+#include "modest-hildon-includes.h"
 #include "widgets/modest-msg-edit-window-ui.h"
-
-#ifdef MODEST_HILDON_VERSION_0
-#else
-
-#endif /*MODEST_HILDON_VERSION_0 */
-
 
 
 #define DEFAULT_FONT_SIZE 3
@@ -1169,7 +1144,7 @@ modest_msg_edit_window_select_color (ModestMsgEditWindow *window)
 #else
 	dialog = hildon_color_chooser_new ();
 	hildon_color_chooser_set_color (HILDON_COLOR_CHOOSER (dialog), &(buffer_format->color));
-#endif /*MODEST_HILDON_VERSION_9*/		
+#endif /*MODEST_HILDON_VERSION_0*/		
 	g_free (buffer_format);
 
 	response = gtk_dialog_run (GTK_DIALOG (dialog));

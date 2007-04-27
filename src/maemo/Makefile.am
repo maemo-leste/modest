@@ -50,6 +50,7 @@ libmodest_ui_la_SOURCES=              \
 	modest-maemo-ui-constants.h \
 	modest-main-window.c          \
 	modest-main-window-ui.h       \
+	modest-hildon-includes.h      \
 	modest-platform.c	      \
 	modest-signature-editor-dialog.c         \
 	modest-signature-editor-dialog.h         \

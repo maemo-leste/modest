@@ -15,7 +15,6 @@
 #include <gtk/gtkcheckbutton.h>
 #include <gtk/gtkmessagedialog.h>
 #include <gtk/gtkseparator.h>
-#include <hildon-widgets/hildon-caption.h>
 #include "maemo/easysetup/modest-easysetup-country-combo-box.h"
 #include "maemo/easysetup/modest-easysetup-provider-combo-box.h"
 #include "maemo/easysetup/modest-easysetup-servertype-combo-box.h"

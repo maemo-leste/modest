@@ -9,7 +9,12 @@
 /* #include <hildon-widgets/hildon-wizard-dialog.h> */
 #include "modest-wizard-dialog.h" /* We use a copied-and-improved HildonWizardDialog. */
 #include "modest-account-mgr.h"
+
+#ifdef MODEST_HILDON_VERSION_0
 #include <hildon-widgets/hildon-caption.h>
+#else
+#include <hildon/hildon-caption.h>
+#endif /*MODEST_HILDON_VERSION_0*/
 
 G_BEGIN_DECLS
 

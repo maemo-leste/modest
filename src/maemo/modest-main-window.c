@@ -27,13 +27,11 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <hildon-widgets/hildon-window.h>
-#include <hildon-widgets/hildon-note.h>
-
 #include <glib/gi18n.h>
 #include <gtk/gtktreeviewcolumn.h>
 #include <tny-account-store-view.h>
 #include <tny-simple-list.h>
+#include "modest-hildon-includes.h"
 
 #include <string.h>
 
