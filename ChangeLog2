@@ -1,5 +1,11 @@
 2007-04-27  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/maemo/modest-msg-view-window.c:
+	(modest_msg_view_window_show_toolbar): Prevent hide/show of a NULL toolbar widget, 
+	when opening a message window.
+
+2007-04-27  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/maemo/easysetup/modest-easysetup-wizard.c:
 	(create_page_custom_outgoing): Correct the position of the horizontal separator to 
 	match the UI spec.

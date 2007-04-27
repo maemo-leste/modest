@@ -964,9 +964,11 @@ modest_msg_view_window_show_toolbar (ModestWindow *self,
 		gtk_widget_tap_and_hold_setup (GTK_WIDGET (reply_button), menu, NULL, 0);
 	}
 
-
-	if (show_toolbar)
-		gtk_widget_show (GTK_WIDGET (parent_priv->toolbar));
-	else
-		gtk_widget_hide (GTK_WIDGET (parent_priv->toolbar));
+	/* TODO: Why is this sometimes NULL? murrayc */
+	if (parent_priv->toolbar) {
+		if (show_toolbar)
+			gtk_widget_show (GTK_WIDGET (parent_priv->toolbar));
+		else
+			gtk_widget_hide (GTK_WIDGET (parent_priv->toolbar));
+	}
 }
