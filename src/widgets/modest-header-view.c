@@ -695,9 +695,6 @@ modest_header_view_set_model (GtkTreeView *header_view, GtkTreeModel *model)
 
 		/* Set new model */
 		gtk_tree_view_set_model (header_view, model);
-
-		modest_runtime_verify_object_death (old_model, "");
-		modest_runtime_verify_object_death (old_model_sort, "");
 	} else
 		gtk_tree_view_set_model (header_view, model);
 

@@ -186,14 +186,11 @@ account_list_free (GSList *accounts)
 	GSList *cursor = accounts;
 
 	while (cursor) {
-		/* TODO: This uses cursor->data after causing it to be freed,
-		 * as valgrind shows.
-		 * It's not clear what is being attempted here. murrayc */
-		g_object_unref (G_OBJECT(cursor->data));
 		if (G_IS_OBJECT(cursor->data)) { /* check twice... */
 			const gchar *id = tny_account_get_id(TNY_ACCOUNT(cursor->data));
-			modest_runtime_verify_object_death(cursor->data,id);
+			modest_runtime_verify_object_last_ref(cursor->data,id);
 		}			
+		g_object_unref (G_OBJECT(cursor->data));
 		cursor = cursor->next;
 	}
 	g_slist_free (accounts);
@@ -383,7 +380,6 @@ modest_tny_account_store_finalize (GObject *obj)
 
 	if (priv->session) {
 		camel_object_unref (CAMEL_OBJECT(priv->session));
-		modest_runtime_verify_object_death(priv->session, "");
 		priv->session = NULL;
 	}
 	

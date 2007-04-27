@@ -203,8 +203,8 @@ modest_mail_operation_queue_remove (ModestMailOperationQueue *self,
 		       mail_op, MODEST_MAIL_OPERATION_QUEUE_OPERATION_REMOVED);
 
 	/* Free object */
+	modest_runtime_verify_object_last_ref (mail_op, "");
 	g_object_unref (G_OBJECT (mail_op));
-	modest_runtime_verify_object_death (mail_op, "");
 }
 
 

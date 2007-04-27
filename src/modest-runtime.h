@@ -206,22 +206,24 @@ ModestTnySendQueue* modest_runtime_get_send_queue        (TnyTransportAccount *a
 ModestWindowMgr* modest_runtime_get_window_mgr (void);
 
 /**
- * modest_runtime_verify_object_death
+ * modest_runtime_verify_object_last_ref
  * @OBJ: some (GObject) ptr
  * @NAME: name of @OBJ
  * 
- * macro to check whether @obj is 'dead', ie, it is no longer a valid GObject. If
+ * macro to check whether @obj holds only one more ref (ie. after the
+ * next unref it will die)
+ * 
  * not, a g_warning will be issued on stderr. NOTE: this is only active
  * when MODEST_DEBUG contains "debug-objects".
  *
  ***/
-#define modest_runtime_verify_object_death(OBJ,name)			\
-	do {								\
-		if (modest_runtime_get_debug_flags() & MODEST_RUNTIME_DEBUG_DEBUG_OBJECTS) \
-			if (G_IS_OBJECT(OBJ))				\
-				g_warning ("%s:%d: %s ("	\
-					   #OBJ ") still holds a ref count of %d", \
-					   __FILE__,__LINE__,name, G_OBJECT(OBJ)->ref_count); \
+#define modest_runtime_verify_object_last_ref(OBJ,name)			                               \
+	do {								                               \
+		if (modest_runtime_get_debug_flags() & MODEST_RUNTIME_DEBUG_DEBUG_OBJECTS)             \
+			if (G_IS_OBJECT(OBJ) && G_OBJECT(OBJ)->ref_count != 1)			       \
+				g_warning ("%s:%d: %s ("	                                       \
+					   #OBJ ") still holds a ref count of %d",                     \
+					   __FILE__,__LINE__,name, G_OBJECT(OBJ)->ref_count);          \
 	} while (0)
 
 

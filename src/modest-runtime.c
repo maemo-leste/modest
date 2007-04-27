@@ -77,8 +77,8 @@ modest_runtime_uninit (void)
 		return TRUE; 	/* uninit maybe called if runtime_init failed */
 	
 	g_return_val_if_fail (MODEST_IS_SINGLETONS(_singletons), FALSE);
+	modest_runtime_verify_object_last_ref(_singletons,"");
 	g_object_unref(G_OBJECT(_singletons));
-	modest_runtime_verify_object_death(_singletons,"");
 	_singletons = NULL;
 		
 	return TRUE;
