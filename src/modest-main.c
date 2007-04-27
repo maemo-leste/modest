@@ -38,6 +38,7 @@
 #include <tny-account-store.h>
 #include <tny-list.h>
 #include <tny-simple-list.h>
+#include <tny-maemo-conic-device.h> /* For tny_maemo_conic_device_connect() */
 
 #include <modest-runtime.h>
 #include <modest-init.h>
@@ -135,7 +136,7 @@ main (int argc, char *argv[])
 		} else {
 			if (modest_conf_get_bool (modest_runtime_get_conf(),
 						  MODEST_CONF_CONNECT_AT_STARTUP, NULL))
-				tny_device_force_online (modest_runtime_get_device());
+				tny_maemo_conic_device_connect (TNY_MAEMO_CONIC_DEVICE (modest_runtime_get_device()), NULL);
 			
 			retval = start_ui (account_or_default,
 					   mailto, cc, bcc, subject, body);
@@ -191,9 +192,8 @@ start_ui (const gchar *account_name, const gchar* mailto, const gchar *cc, const
 			return MODEST_ERR_SEND;
 		}
 
-		account = modest_tny_account_store_get_tny_account_by_account (
-			modest_runtime_get_account_store(), account_name,
-			TNY_ACCOUNT_TYPE_TRANSPORT);
+		account = modest_tny_account_store_get_transport_account_for_open_connection (
+			modest_runtime_get_account_store(), account_name);
 		if (!account) {
 			g_printerr ("modest: failed to get tny account folder\n");
 			g_free (from);
@@ -273,9 +273,8 @@ send_mail (const gchar* account_name,
 	return MODEST_ERR_NONE;
 	//////////////////////////////////////
 	
-	account = TNY_TRANSPORT_ACCOUNT (modest_tny_account_store_get_tny_account_by_account
-					 (modest_runtime_get_account_store(), account_name,
-					  TNY_ACCOUNT_TYPE_TRANSPORT));
+	account = TNY_TRANSPORT_ACCOUNT (modest_tny_account_store_get_transport_account_for_open_connection
+					 (modest_runtime_get_account_store(), account_name));
 	if (!account) {
 		g_printerr ("modest: no transport defined account for %s\n",
 			    account_name);

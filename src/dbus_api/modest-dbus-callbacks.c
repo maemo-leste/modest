@@ -61,10 +61,9 @@ on_idle_send_mail(gpointer user_data)
 	
 	TnyTransportAccount *transport_account = NULL;
 	if (account_mgr) {
-		transport_account = TNY_TRANSPORT_ACCOUNT(modest_tny_account_store_get_tny_account_by_account
+		transport_account = TNY_TRANSPORT_ACCOUNT(modest_tny_account_store_get_transport_account_for_open_connection
 				      (modest_runtime_get_account_store(),
-				       account_name,
-				       TNY_ACCOUNT_TYPE_TRANSPORT));
+				       account_name));
 	}
 	
 	if (!transport_account) {
@@ -270,9 +269,8 @@ on_idle_mail_to(gpointer user_data)
 	
 	TnyAccount *account = NULL;
 	if (account_mgr) {
-		account = modest_tny_account_store_get_tny_account_by_account (
-			modest_runtime_get_account_store(), account_name,
-			TNY_ACCOUNT_TYPE_TRANSPORT);
+		account = modest_tny_account_store_get_transport_account_for_open_connection (
+			modest_runtime_get_account_store(), account_name);
 	}
 	
 	if (!account) {

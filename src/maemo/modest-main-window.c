@@ -317,6 +317,19 @@ on_delete_event (GtkWidget *widget, GdkEvent  *event, ModestMainWindow *self)
 	return FALSE;
 }
 
+
+static void
+on_connection_changed (TnyDevice *device, gboolean online, ModestMainWindow *self)
+{
+	/* When going online, do the equivalent of pressing the send/receive button, 
+	 * as per the specification: */
+	if (online) {
+		modest_ui_actions_on_send_receive (NULL /* action */, MODEST_WINDOW (self));
+	}
+}
+
+
+
 static void
 connect_signals (ModestMainWindow *self)
 {	
@@ -374,12 +387,17 @@ connect_signals (ModestMainWindow *self)
 			  "account_update",
 			  G_CALLBACK (on_account_update),
 			  self);
+
+	/* Device */
+	g_signal_connect (G_OBJECT(modest_runtime_get_device()), "connection_changed",
+			  G_CALLBACK(on_connection_changed), self);
 }
 
 
 gboolean
 sync_accounts_cb (ModestMainWindow *win)
 {
+	/* TODO: Only for auto-update accounts. */
 	modest_ui_actions_on_send_receive (NULL, MODEST_WINDOW(win));
 	return FALSE;
 }
@@ -703,7 +721,7 @@ modest_main_window_show_toolbar (ModestWindow *self,
 }
 
 /*
- * TODO: modify the menu dinamically. Add handlers to each item of the
+ * TODO: modify the menu dynamically. Add handlers to each item of the
  * menu when created
  */
 static void 

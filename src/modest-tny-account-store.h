@@ -107,21 +107,35 @@ ModestTnyAccountStore*    modest_tny_account_store_new (ModestAccountMgr *accoun
 TnyAccount* modest_tny_account_store_get_tny_account_by_id  (ModestTnyAccountStore *self,
 							     const gchar *id);
 
-
 /**
  * modest_tny_account_store_get_tny_account_by_account
  * @self: a ModestTnyAccountStore instance
  * @account_name: an account name
  * @type: the tny account type
  * 
- * get the tny account corresponding to one of the  server_accounts for account with @account_name
+ * Get the tny account corresponding to one of the server_accounts for account with @account_name
  * 
- * Returns: the tnyaccount or NULL in case it's not found or error,
+ * Returns: the tnyaccount for the server account or NULL in case it's not found or error,
  * g_object_unref when it's no longer needed
  */
 TnyAccount* modest_tny_account_store_get_tny_account_by_account (ModestTnyAccountStore *self,
 								 const gchar *account_name,
 								 TnyAccountType type);
+		
+/**
+ * modest_tny_account_store_get_transport_account_for_open_connection
+ * @self: a ModestTnyAccountStore instance
+ * @account_name: an account name
+ * 
+ * Get the tny account corresponding to the transport server account for the account with @account_name,
+ * returning the connection-specific SMTP-server transport server account if one is specified,
+ * otherwise just returning the regular transport server account.
+ * 
+ * Returns: the tnyaccount for the server account or NULL in case it's not found or error,
+ * g_object_unref when it's no longer needed
+ */						 
+TnyAccount* modest_tny_account_store_get_transport_account_for_open_connection (ModestTnyAccountStore *self,
+								 const gchar *account_name);
 
 /**
  * tny_account_store_get_session

@@ -36,6 +36,7 @@
 #include <tny-transport-account.h>
 #include <tny-simple-list.h>
 #include <tny-account-store.h>
+#include <tny-maemo-conic-device.h> /* For ConIcIap */
 #include <tny-camel-transport-account.h>
 #include <tny-camel-imap-store-account.h>
 #include <tny-camel-pop-store-account.h>
@@ -728,7 +729,6 @@ modest_tny_account_store_get_tny_account_by_id  (ModestTnyAccountStore *self, co
 	return account;
 }
 
-
 TnyAccount*
 modest_tny_account_store_get_tny_account_by_account (ModestTnyAccountStore *self,
 						     const gchar *account_name,
@@ -761,7 +761,7 @@ modest_tny_account_store_get_tny_account_by_account (ModestTnyAccountStore *self
 		g_printerr ("modest: could not get an id for account %s\n",
 			    account_name);
 	else 	
-		account =  modest_tny_account_store_get_tny_account_by_id  (self, id);
+		account = modest_tny_account_store_get_tny_account_by_id (self, id);
 
 	if (!account)
 		g_printerr ("modest: could not get tny %s account for %s (id=%s)\n",
@@ -770,4 +770,60 @@ modest_tny_account_store_get_tny_account_by_account (ModestTnyAccountStore *self
 
 	modest_account_mgr_free_account_data (priv->account_mgr, account_data);
 	return account;	
+}
+
+static TnyAccount* get_smtp_specific_transport_account_for_open_connection (ModestTnyAccountStore *self, const gchar *account_name)
+{
+	/* Get the current connection: */
+	TnyDevice *device = modest_runtime_get_device ();
+	
+	if (!tny_device_is_online (device))
+		return NULL;
+
+	g_assert (TNY_IS_MAEMO_CONIC_DEVICE (device));
+	TnyMaemoConicDevice *maemo_device = TNY_MAEMO_CONIC_DEVICE (device);	
+	const gchar* iap_id = tny_maemo_conic_device_get_current_iap_id (maemo_device);
+	if (!iap_id)
+		return NULL;
+		
+	ConIcIap* connection = tny_maemo_conic_device_get_iap (maemo_device, iap_id);
+	if (!connection)
+		return NULL;
+		
+	const gchar *connection_name = con_ic_iap_get_name (connection);
+	if (!connection_name)
+		return NULL;
+	
+	/*  Get the connection-specific transport acccount, if any: */
+	ModestAccountMgr *account_manager = modest_runtime_get_account_mgr ();
+	gchar* server_account_name = modest_account_mgr_get_connection_specific_smtp (account_manager, 
+		account_name, connection_name);
+		
+	if (!server_account_name)
+		return NULL; /* No connection-specific SMTP server was specified for this connection. */
+		
+	TnyAccount* account = modest_tny_account_store_get_tny_account_by_id (self, server_account_name);
+	g_free (server_account_name);	
+
+	/* Unref the get()ed object, as required by the tny_maemo_conic_device_get_iap() documentation. */
+	g_object_unref (connection);
+	
+	return account;
+}
+
+								 
+TnyAccount* modest_tny_account_store_get_transport_account_for_open_connection (ModestTnyAccountStore *self,
+								 const gchar *account_name)
+{
+	/*  Get the connection-specific transport acccount, if any: */
+	TnyAccount *account = get_smtp_specific_transport_account_for_open_connection (self, account_name);
+			
+	/* If there is no connection-specific transport account (the common case), 
+	 * just get the regular transport account: */
+	if (!account) {		
+		account = modest_tny_account_store_get_tny_account_by_account (self, account_name, 
+						     TNY_ACCOUNT_TYPE_TRANSPORT);
+	}
+			     
+	return account;
 }

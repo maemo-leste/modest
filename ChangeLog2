@@ -1,3 +1,28 @@
+2007-04-27  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/modest-tny-account-store.h:
+	* src/modest-tny-account-store.c:
+	Added modest_tny_account_store_get_transport_account_for_open_connection(), which respects 
+	the connection-specific SMTP server settings in the configuration.
+	
+	* src/dbus_api/modest-dbus-callbacks.c: (on_idle_send_mail),
+	(on_idle_mail_to):
+	* src/maemo/modest-main-window.c: (on_connection_changed),
+	(connect_signals):
+	* src/modest-main.c: (main), (start_ui), (send_mail):
+	Use tny_maemo_conic_device_connect() instead of tny_maemo_conic_force_online(), when 
+	that is what is intended.
+	
+	* src/modest-ui-actions.c: (action_send), (action_receive),
+	(modest_ui_actions_on_item_not_found), (modest_ui_actions_on_send):
+	Use modest_tny_account_store_get_transport_account_for_open_connection() instead of 
+	modest_tny_account_store_get_tny_account_by_account() so that the connection-specific 
+	SMTP server is used when it is specified.
+	
+	(modest_ui_actions_on_send_receive): 
+	Check that a connection is open before proceeding.
+	Receive and then send, instead of vice-versa, as per the specification
+
 2007-04-26  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/modest-mail-operation.c:

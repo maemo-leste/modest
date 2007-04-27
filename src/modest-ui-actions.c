@@ -52,6 +52,7 @@
 #include "modest-account-mgr-helpers.h"
 #include "modest-mail-operation.h"
 #include "modest-text-utils.h"
+#include <tny-maemo-conic-device.h> /* For ConIcIap */
 
 #ifdef MODEST_HAVE_EASYSETUP
 #include "easysetup/modest-easysetup-wizard.h"
@@ -605,14 +606,17 @@ action_send (const gchar* account_name)
 
 	g_return_val_if_fail (account_name, FALSE);
 
+	/* Get the transport account according to the open connection, 
+	 * because the account might specify connection-specific SMTP servers.
+	 */
 	tny_account = 
-		modest_tny_account_store_get_tny_account_by_account (modest_runtime_get_account_store(),
-								     account_name,
-								     TNY_ACCOUNT_TYPE_TRANSPORT);
+		modest_tny_account_store_get_transport_account_for_open_connection (modest_runtime_get_account_store(),
+								     account_name);
 	if (!tny_account) {
 		g_printerr ("modest: cannot get tny transport account for %s\n", account_name);
 		return FALSE;
 	}
+	
 	send_queue = modest_tny_send_queue_new (TNY_CAMEL_TRANSPORT_ACCOUNT(tny_account));
 	if (!send_queue) {
 		g_object_unref (G_OBJECT(tny_account));
@@ -647,6 +651,7 @@ action_receive (const gchar* account_name)
 	}
 
 	/* Create the mail operation */
+	/* TODO: The spec wants us to first do any pending deletions, before receiving. */
 	mail_op = modest_mail_operation_new ();
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
 	modest_mail_operation_update_account (mail_op, TNY_STORE_ACCOUNT(tny_account));
@@ -657,7 +662,27 @@ action_receive (const gchar* account_name)
 	return TRUE;
 }
 
+/** Check that an appropriate connection is open.
+ */
+gboolean check_for_connection (const gchar *account_name)
+{
+	TnyDevice *device = modest_runtime_get_device ();
 
+/*
+	g_assert (TNY_IS_MAEMO_CONIC_DEVICE (device));
+	
+	TnyMaemoConicDevice *maemo_device = TNY_MAEMO_CONIC_DEVICE (device);
+*/
+	
+	if (tny_device_is_online (device))
+		return TRUE;
+	else {
+		tny_maemo_conic_device_connect (TNY_MAEMO_CONIC_DEVICE (device), NULL);
+		
+		/* TODO: Wait until a result. */
+		return TRUE;
+	}
+}
 
 void
 modest_ui_actions_on_send_receive (GtkAction *action,  ModestWindow *win)
@@ -665,22 +690,35 @@ modest_ui_actions_on_send_receive (GtkAction *action,  ModestWindow *win)
 	gchar *account_name;
 
 	
-	g_message ("online? %s", 
+	g_message ("%s: online? %s", __FUNCTION__,  
 		tny_device_is_online(modest_runtime_get_device()) ? "yes":"no");
-								
+				
+	/* As per the UI spec, only the active account should be affected, 
+	 * else the default folder if there is no active account: */				
 	account_name =
 		g_strdup(modest_window_get_active_account(MODEST_WINDOW(win)));
 	if (!account_name)
 		account_name  = modest_account_mgr_get_default_account (modest_runtime_get_account_mgr());
 	if (!account_name) {
-		g_printerr ("modest: cannot get account\n");
+		g_printerr ("modest: cannot get default account\n");
 		return;
 	}
+	
+	/* Do not continue if no suitable connection is open: */
+	if (!check_for_connection (account_name))
+		return;
 
-	if (!action_send(account_name))
-		g_printerr ("modest: failed to send\n");
+	/* As per the UI spec,
+	 * for POP accounts, we should receive,
+	 * for IMAP we should synchronize everything, including receiving,
+	 * for SMTP we should send,
+	 * first receiving, then sending:
+	 */
 	if (!action_receive(account_name))
 		g_printerr ("modest: failed to receive\n");
+	if (!action_send(account_name))
+		g_printerr ("modest: failed to send\n");
+	
 }
 
 
@@ -979,7 +1017,7 @@ modest_ui_actions_on_item_not_found (ModestHeaderView *header_view,ModestItemTyp
 
 		gtk_window_set_default_size (GTK_WINDOW(dialog), 300, 300);
 		if (gtk_dialog_run (GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
-//			tny_device_force_online (modest_runtime_get_device());
+//			tny_maemo_conic_device_connect (TNY_MAEMO_CONIC_DEVICE (modest_runtime_get_device());
 		}
 	}
 	gtk_widget_destroy (dialog);
@@ -1051,10 +1089,9 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 		return;
 	}
 	transport_account =
-		TNY_TRANSPORT_ACCOUNT(modest_tny_account_store_get_tny_account_by_account
+		TNY_TRANSPORT_ACCOUNT(modest_tny_account_store_get_transport_account_for_open_connection
 				      (modest_runtime_get_account_store(),
-				       account_name,
-				       TNY_ACCOUNT_TYPE_TRANSPORT));
+				       account_name));
 	if (!transport_account) {
 		g_printerr ("modest: no transport account found for '%s'\n", account_name);
 		g_free (account_name);
