@@ -672,6 +672,10 @@ static GtkWidget* create_page_custom_outgoing (ModestEasysetupWizardDialog *self
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (caption);
 	
+	GtkWidget *separator = gtk_hseparator_new ();
+	gtk_box_pack_start (GTK_BOX (box), separator, FALSE, FALSE, MODEST_MARGIN_HALF);
+	gtk_widget_show (separator);
+	
 	/* connection-specific checkbox: */
 	if (!self->checkbox_outgoing_smtp_specific) {
 		self->checkbox_outgoing_smtp_specific = gtk_check_button_new ();
@@ -683,10 +687,6 @@ static GtkWidget* create_page_custom_outgoing (ModestEasysetupWizardDialog *self
 	gtk_widget_show (self->checkbox_outgoing_smtp_specific);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (caption);
-	
-	GtkWidget *separator = gtk_hseparator_new ();
-	gtk_box_pack_start (GTK_BOX (box), separator, FALSE, FALSE, MODEST_MARGIN_HALF);
-	gtk_widget_show (separator);
 	
 	/* Connection-specific SMTP-Severs Edit button: */
 	if (!self->button_outgoing_smtp_servers)

@@ -1053,10 +1053,18 @@ set_toolbar_mode (ModestMainWindow *self,
 /* 		gtk_action_set_visible (cancel_action, FALSE); */
 /* 		gtk_widget_hide (priv->progress_toolitem); */
 /* 		gtk_widget_hide (priv->progress_bar); */
+
+		if (priv->sort_toolitem)
 		gtk_widget_show (priv->sort_toolitem);
-		gtk_widget_show (priv->refresh_toolitem);
-		gtk_widget_hide (priv->progress_bar);
-		gtk_widget_hide (priv->cancel_toolitem);
+		
+		if (priv->refresh_toolitem)
+			gtk_widget_show (priv->refresh_toolitem);
+			
+		if (priv->progress_bar)
+			gtk_widget_hide (priv->progress_bar);
+			
+		if (priv->cancel_toolitem)
+			gtk_widget_hide (priv->cancel_toolitem);
 		break;
 	case TOOLBAR_MODE_TRANSFER:
 /* 		gtk_action_set_visible (sort_action, FALSE); */
@@ -1064,10 +1072,18 @@ set_toolbar_mode (ModestMainWindow *self,
 /* 		gtk_action_set_visible (cancel_action, TRUE); */
 /* 		gtk_widget_show (priv->progress_toolitem); */
 /* 		gtk_widget_show (priv->progress_bar); */
-		gtk_widget_hide (priv->sort_toolitem);
-		gtk_widget_hide (priv->refresh_toolitem);
-		gtk_widget_show (priv->progress_bar);
-		gtk_widget_show (priv->cancel_toolitem);
+
+		if (priv->sort_toolitem)
+			gtk_widget_hide (priv->sort_toolitem);
+		
+		if (priv->refresh_toolitem)
+			gtk_widget_hide (priv->refresh_toolitem);
+		
+		if (priv->progress_bar)
+			gtk_widget_show (priv->progress_bar);
+			
+		if (priv->cancel_toolitem)
+			gtk_widget_show (priv->cancel_toolitem);
 		break;
 	default:
 /* 		gtk_action_set_visible (sort_action, TRUE); */
@@ -1075,10 +1091,18 @@ set_toolbar_mode (ModestMainWindow *self,
 /* 		gtk_action_set_visible (cancel_action, FALSE); */
 /* 		gtk_widget_hide (priv->progress_toolitem); */
 /* 		gtk_widget_hide (priv->progress_bar); */
-		gtk_widget_show (priv->sort_toolitem);
-		gtk_widget_show (priv->refresh_toolitem);
-		gtk_widget_hide (priv->progress_bar);
-		gtk_widget_hide (priv->cancel_toolitem);
+
+		if (priv->cancel_toolitem)
+			gtk_widget_show (priv->sort_toolitem);
+			
+		if (priv->refresh_toolitem)
+			gtk_widget_show (priv->refresh_toolitem);
+			
+		if (priv->progress_bar)
+			gtk_widget_hide (priv->progress_bar);
+			
+		if (priv->cancel_toolitem)
+			gtk_widget_hide (priv->cancel_toolitem);
 	}
 }
 

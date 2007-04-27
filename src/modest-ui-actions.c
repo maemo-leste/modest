@@ -1887,7 +1887,7 @@ modest_ui_actions_on_move_to (GtkAction *action,
 	GtkWidget *dialog, *scroll, *folder_view, *tree_view;
 	gint result;
 	TnyFolderStore *folder_store;
-	ModestMailOperation *mail_op;
+	ModestMailOperation *mail_op = NULL;
 	ModestMainWindow *main_window;
 
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW (win) ||
@@ -1948,6 +1948,7 @@ modest_ui_actions_on_move_to (GtkAction *action,
 		g_object_unref (msg);
 
 		/* Transfer current msg */
+		/* TODO: mail_op is never set. murrayc */
 		modest_mail_operation_xfer_msgs (mail_op, 
 						 headers,
 						 TNY_FOLDER (folder_store),

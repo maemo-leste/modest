@@ -1,5 +1,18 @@
 2007-04-27  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/maemo/easysetup/modest-easysetup-wizard.c:
+	(create_page_custom_outgoing): Correct the position of the horizontal separator to 
+	match the UI spec.
+	
+	* src/maemo/modest-main-window.c: (set_toolbar_mode): Check that widgets are not NULL 
+	before showing/hiding them, to avoid a crash when clicking on folders when there are no 
+	gconf settings. I probably added more checks than necessary, but that is safer.
+	
+	* src/modest-ui-actions.c: (modest_ui_actions_on_move_to): Initialize the mail_op 
+	variable to fix the build, but this seems to be used when it is still NULL.
+
+2007-04-27  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/modest-platform.h:
 	* src/gnome/modest-platform.c: (modest_platform_connect_and_wait):
 	* src/maemo/modest-platform.c: (modest_platform_connect_and_wait):
