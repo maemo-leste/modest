@@ -1,5 +1,12 @@
 2007-04-27  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/maemo/modest-msg-edit-window.c:
+	(modest_msg_edit_window_select_color),
+	(modest_msg_edit_window_select_background_color): 2 const corrections and 
+	moving 2 #endifs before closing brackets, to fix the build.
+
+2007-04-27  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/maemo/easysetup/modest-easysetup-wizard.h:
 	* src/maemo/easysetup/modest-easysetup-wizard.c:
 	(modest_easysetup_wizard_dialog_finalize),
