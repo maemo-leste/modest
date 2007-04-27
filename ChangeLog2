@@ -1,5 +1,17 @@
 2007-04-27  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/maemo/easysetup/modest-easysetup-wizard.h:
+	* src/maemo/easysetup/modest-easysetup-wizard.c:
+	(modest_easysetup_wizard_dialog_finalize),
+	(on_button_edit_advanced_settings), (create_page_complete_custom),
+	(on_response), (create_account):
+	Implement the Advanced Settings edit button, by saving the account information, 
+	for the Advanded Settings dialog to use directly from gconf, and removing it 
+	if Finish is never clicked. There is still some UI strangeness, so this is not finished.
+	Bug #5533 in the projects.maemo.org bugzilla.
+
+2007-04-27  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/maemo/modest-msg-view-window.c:
 	(modest_msg_view_window_show_toolbar): Prevent hide/show of a NULL toolbar widget, 
 	when opening a message window.

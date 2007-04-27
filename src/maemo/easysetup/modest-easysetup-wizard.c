@@ -28,6 +28,7 @@
 #include "modest-runtime.h" /* For modest_runtime_get_account_mgr(). */
 #include "maemo/modest-connection-specific-smtp-window.h"
 #include "maemo/modest-maemo-ui-constants.h"
+#include "maemo/modest-account-settings-dialog.h"
 #include <gconf/gconf-client.h>
 #include <string.h> /* For strlen(). */
 
@@ -91,6 +92,8 @@ modest_easysetup_wizard_dialog_finalize (GObject *object)
 		
 	if (self->specific_window)
 	 	gtk_widget_destroy (self->specific_window);
+	 	
+	g_free (self->saved_account_name);
 	
 	G_OBJECT_CLASS (modest_easysetup_wizard_dialog_parent_class)->finalize (object);
 }
@@ -711,6 +714,33 @@ static GtkWidget* create_page_custom_outgoing (ModestEasysetupWizardDialog *self
 	return GTK_WIDGET (box);
 }
 
+
+static void
+on_button_edit_advanced_settings (GtkButton *button, gpointer user_data)
+{
+	ModestEasysetupWizardDialog * self = MODEST_EASYSETUP_WIZARD_DIALOG (user_data);
+	
+	/* Save the new account, so we can edit it with ModestAccountSettingsDialog, 
+	 * without recoding it to use non-gconf information.
+	 * This account will be deleted if Finish is never actually clicked. */
+
+	const gboolean saved = create_account (self);
+	if (!saved)
+		return;
+		
+	if (!(self->saved_account_name))
+		return;
+	
+	/* Show the Account Settings window: */
+	ModestAccountSettingsDialog *dialog = modest_account_settings_dialog_new ();
+	modest_account_settings_dialog_set_account_name (dialog, self->saved_account_name);
+	
+	gtk_window_set_transient_for (GTK_WINDOW (dialog), GTK_WINDOW (self));
+	printf ("debug: before run\n");
+	gtk_dialog_run (GTK_DIALOG (dialog));
+	printf ("debug: after run\n");
+	gtk_widget_destroy (GTK_WIDGET (dialog));
+}
 static GtkWidget* create_page_complete_custom (ModestEasysetupWizardDialog *self)
 {
 	GtkWidget *box = gtk_vbox_new (FALSE, MODEST_MARGIN_HALF);
@@ -727,6 +757,9 @@ static GtkWidget* create_page_complete_custom (ModestEasysetupWizardDialog *self
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (caption);
 	
+	g_signal_connect (G_OBJECT (self->button_edit), "clicked", 
+		G_CALLBACK (on_button_edit_advanced_settings), self);
+	
 	gtk_widget_show (GTK_WIDGET (box));
 	return GTK_WIDGET (box);
 }
@@ -740,6 +773,15 @@ on_response (ModestWizardDialog *wizard_dialog,
 	gpointer user_data)
 {
 	ModestEasysetupWizardDialog *self = MODEST_EASYSETUP_WIZARD_DIALOG (wizard_dialog);
+	
+	if (response_id == GTK_RESPONSE_CANCEL) {
+		/* Remove any temporarily-saved account that will not actually be needed: */
+		if (self->saved_account_name) {
+			modest_account_mgr_remove_account (self->account_manager,
+								     self->saved_account_name, FALSE);
+		}	
+	}
+	
 	invoke_enable_buttons_vfunc (self);
 }
 
@@ -1357,13 +1399,17 @@ create_account (ModestEasysetupWizardDialog *self)
 		MODEST_ACCOUNT_DISPLAY_NAME, display_name, FALSE /* not server account */);
 
 	/* Save the connection-specific SMTP server accounts. */
+	gboolean result = TRUE;
 	if (self->specific_window)
-		return modest_connection_specific_smtp_window_save_server_accounts (
+		result = modest_connection_specific_smtp_window_save_server_accounts (
 			MODEST_CONNECTION_SPECIFIC_SMTP_WINDOW (self->specific_window), account_name);
 			
+	g_free (self->saved_account_name);
+	self->saved_account_name = g_strdup (account_name);
+	
 	g_free (account_name);
 
-	return FALSE;
+	return result;
 }
 
 

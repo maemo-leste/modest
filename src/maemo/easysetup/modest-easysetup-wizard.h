@@ -41,6 +41,11 @@ typedef struct {
 	/* Used by derived widgets to query existing accounts,
 	 * and to create new accounts: */
 	ModestAccountMgr *account_manager;
+	
+	/* Whether we saved the account before we were finished, 
+	 * to allow editing via the Advanced Settings dialog.
+	 * We might need to delete the account if Finish is never clicked. */
+	gchar* saved_account_name;
 		
 	/* notebook pages: */
 	GtkWidget *page_welcome;
