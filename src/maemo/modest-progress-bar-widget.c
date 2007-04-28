@@ -49,6 +49,14 @@ static void on_progress_changed                    (ModestMailOperation  *mail_o
 
 static gboolean     progressbar_clean        (GtkProgressBar *bar);
 
+#define XALIGN 1
+#define YALIGN 0.5
+#define XSPACE 1
+#define YSPACE 0
+
+#define LOWER 0
+#define UPPER 150
+
 /* list my signals  */
 /* enum { */
 /* 	LAST_SIGNAL */
@@ -66,11 +74,11 @@ struct _ModestProgressBarWidgetPrivate {
         ModestMailOperation *current;
 
 	GtkWidget *progress_bar;
-
 };
 #define MODEST_PROGRESS_BAR_WIDGET_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                  MODEST_TYPE_PROGRESS_BAR_WIDGET, \
                                                  ModestProgressBarWidgetPrivate))
+
 /* globals */
 static GtkContainerClass *parent_class = NULL;
 
@@ -145,12 +153,31 @@ modest_progress_bar_widget_class_init (ModestProgressBarWidgetClass *klass)
 }
 
 static void
-modest_progress_bar_widget_init (ModestProgressBarWidget *obj)
+modest_progress_bar_widget_init (ModestProgressBarWidget *self)
 {
- 	ModestProgressBarWidgetPrivate *priv;
 	
-	priv = MODEST_PROGRESS_BAR_WIDGET_GET_PRIVATE(obj); 
-	priv->progress_bar = NULL;
+	ModestProgressBarWidgetPrivate *priv;
+	GtkWidget *align = NULL;
+	GtkRequisition req;
+	GtkAdjustment *adj;
+
+	priv = MODEST_PROGRESS_BAR_WIDGET_GET_PRIVATE(self);
+	
+	/* Build GtkProgressBar */
+	align = gtk_alignment_new(XALIGN, YALIGN, XSPACE, YSPACE);	
+	adj = (GtkAdjustment *) gtk_adjustment_new (0, LOWER, UPPER, 0, 0, 0);
+	priv->progress_bar = gtk_progress_bar_new_with_adjustment (adj);		
+	req.width = 50;
+	req.height = 64;
+	gtk_progress_set_text_alignment (GTK_PROGRESS (priv->progress_bar), 0, 0.5);
+	gtk_progress_bar_set_ellipsize (GTK_PROGRESS_BAR (priv->progress_bar), PANGO_ELLIPSIZE_END);
+	gtk_widget_size_request (priv->progress_bar, &req);
+	gtk_container_add (GTK_CONTAINER (align), priv->progress_bar);
+
+	/* Add progress bar widget */
+	gtk_box_pack_start (GTK_BOX(self), align, TRUE, TRUE, 0);
+	gtk_container_add(GTK_CONTAINER(align), priv->progress_bar);
+	gtk_widget_show_all (GTK_WIDGET(self));       
 }
 
 static void
@@ -163,6 +190,20 @@ destroy_observable_data (ObservableData *data)
 static void
 modest_progress_bar_widget_finalize (GObject *obj)
 {
+	ModestProgressBarWidgetPrivate *priv;
+
+	priv = MODEST_PROGRESS_BAR_WIDGET_GET_PRIVATE(obj);
+	if (priv->observables) {
+		GSList *tmp;
+
+		for (tmp = priv->observables; tmp; tmp = g_slist_next (tmp)) {
+			destroy_observable_data ((ObservableData *) tmp->data);
+			g_free (tmp->data);
+		}
+		g_slist_free (priv->observables);
+		priv->observables = NULL;
+	}
+
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
@@ -189,6 +230,9 @@ modest_progress_bar_add_operation (ModestProgressObject *self,
 		priv->current = mail_op;
 	}
 	priv->observables = g_slist_append (priv->observables, data);
+
+	/* Call progress_change handler to initialize progress message */
+/* 	on_progress_changed (mail_op, me); */
 }
 
 static gint
@@ -207,12 +251,16 @@ modest_progress_bar_remove_operation (ModestProgressObject *self,
 	ModestProgressBarWidget *me;
 	ModestProgressBarWidgetPrivate *priv;
 	GSList *link;
+	ObservableData *tmp_data = NULL;
 
 	me = MODEST_PROGRESS_BAR_WIDGET (self);
 	priv = MODEST_PROGRESS_BAR_WIDGET_GET_PRIVATE (me);
 
+	/* Find item */
+	tmp_data = g_malloc0 (sizeof (ObservableData));
+        tmp_data->mail_op = g_object_ref (mail_op);  
 	link = g_slist_find_custom (priv->observables,
-				    mail_op,
+				    tmp_data,
 				    (GCompareFunc) compare_observable_data);
 	
 	/* Remove the item */
@@ -231,6 +279,9 @@ modest_progress_bar_remove_operation (ModestProgressObject *self,
 		/* Refresh the view */
 		progressbar_clean (GTK_PROGRESS_BAR (priv->progress_bar));
 	}
+	
+	/* free */
+	g_free(tmp_data);
 }
 
 static void 
@@ -239,7 +290,7 @@ on_progress_changed (ModestMailOperation  *mail_op,
 {
 	ModestProgressBarWidgetPrivate *priv;
 	gboolean determined = FALSE;
-	guint id = 0;
+	ModestMailOperationId id;
 
 	priv = MODEST_PROGRESS_BAR_WIDGET_GET_PRIVATE (self);
 
@@ -249,25 +300,28 @@ on_progress_changed (ModestMailOperation  *mail_op,
 		gint done = modest_mail_operation_get_task_done (mail_op);
 		gint total = modest_mail_operation_get_task_total (mail_op);
 
+		determined = (done > 0 && total > 0);
+		id = modest_mail_operation_get_id (mail_op);
+
 		switch (id) {
-		case STATUS_RECEIVING:		
+		case MODEST_MAIL_OPERATION_ID_RECEIVE:		
 			if (determined)
 				msg = g_strdup_printf(_("mcen_me_receiving"), done, total);
 			else 
 				msg = g_strdup(_("mail_me_receiving"));
 			break;
-		case STATUS_SENDING:		
+		case MODEST_MAIL_OPERATION_ID_SEND:		
 			if (determined)
 				msg = g_strdup_printf(_("mcen_me_sending"), done, total);
 			else 
 				msg = g_strdup(_("mail_me_sending"));
 			break;
 			
-		case STATUS_OPENING:		
+		case MODEST_MAIL_OPERATION_ID_OPEN:		
 			msg = g_strdup(_("mail_me_opening"));
 			break;
 		default:
-			g_return_if_reached();
+			msg = g_strdup("");
 		}
 		
 		modest_progress_bar_widget_set_progress (self, msg, done, total);
@@ -287,29 +341,7 @@ progressbar_clean (GtkProgressBar *bar)
 GtkWidget*
 modest_progress_bar_widget_new ()
 {
-	GObject *obj;
-	ModestProgressBarWidget *self;
-	ModestProgressBarWidgetPrivate *priv;
-	GtkRequisition req;
-	
-
-	obj = g_object_new(MODEST_TYPE_PROGRESS_BAR_WIDGET, NULL);
-	self = MODEST_PROGRESS_BAR_WIDGET(obj);
-	priv = MODEST_PROGRESS_BAR_WIDGET_GET_PRIVATE(self);
-	
-	/* Build GtkProgressBar */
-	priv->progress_bar = gtk_progress_bar_new ();		
-	req.width = 50;
-	req.height = 64;
-	gtk_progress_set_text_alignment (GTK_PROGRESS (priv->progress_bar), 0.0, 0.5);
-	gtk_progress_bar_set_ellipsize (GTK_PROGRESS_BAR (priv->progress_bar), PANGO_ELLIPSIZE_END);
-	gtk_widget_size_request (priv->progress_bar, &req);
-	
-	/* Add progress bar widget */
-	gtk_box_pack_start (GTK_BOX(self), priv->progress_bar, TRUE, TRUE, 2);
-	gtk_widget_show_all (GTK_WIDGET(self));
-
-	return GTK_WIDGET(self);
+	return GTK_WIDGET (g_object_new (MODEST_TYPE_PROGRESS_BAR_WIDGET, NULL));
 }
 
 

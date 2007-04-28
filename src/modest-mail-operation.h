@@ -60,6 +60,19 @@ typedef enum _ModestMailOperationStatus {
 	MODEST_MAIL_OPERATION_STATUS_CANCELED
 } ModestMailOperationStatus;
 
+/**
+ * ModestMailOperationId:
+ *
+ * The id for identifying the type of mail operation
+ */
+typedef enum _ModestMailOperationId {
+	MODEST_MAIL_OPERATION_ID_SEND,
+	MODEST_MAIL_OPERATION_ID_RECEIVE,
+	MODEST_MAIL_OPERATION_ID_OPEN,
+	MODEST_MAIL_OPERATION_ID_DELETE,
+	MODEST_MAIL_OPERATION_ID_UNKNOWN,
+} ModestMailOperationId;
+
 struct _ModestMailOperation {
 	 GObject parent;
 	/* insert public members, if any */
@@ -76,7 +89,18 @@ struct _ModestMailOperationClass {
 GType        modest_mail_operation_get_type    (void) G_GNUC_CONST;
 
 /* typical parameter-less _new function */
-ModestMailOperation*    modest_mail_operation_new         (void);
+ModestMailOperation*    modest_mail_operation_new_with_id     (ModestMailOperationId id);
+ModestMailOperation*    modest_mail_operation_new             (void);
+
+/**
+ * modest_mail_operation_get_id
+ * @self: a #ModestMailOperation
+ * 
+ * Gets the private id field of mail operation. This id identifies
+ * the class/type of mail operation.  
+  **/
+ModestMailOperationId
+modest_mail_operation_get_id (ModestMailOperation *self);
 
 /* fill in other public functions, eg.: */
 
