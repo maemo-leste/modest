@@ -1,6 +1,5 @@
-modest (0.0.1-svn-1532) unstable; urgency=low
+modest (svn1707) unstable; urgency=low
 
-  * Package subversion revision 
+  * Package subversion revision svn1707
 
- -- Dirk-Jan Binnema <djcb@djcbsoftware.nl>  Tue, 10 Apr 2007 17:24:13 +0000
-
+ -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Sat, 28 Apr 2007 11:40:28 +0300
