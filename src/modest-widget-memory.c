@@ -258,7 +258,8 @@ save_settings_header_view (ModestConf *conf, ModestHeaderView *header_view,
 	TnyFolderType type;
 	ModestHeaderViewStyle style;
 	gint sort_colid;
-
+	GtkSortType sort_type;
+	
 	folder = modest_header_view_get_folder (header_view);
 	if (!folder || modest_header_view_is_empty (header_view))
 		return TRUE; /* no non-empty folder: no settings */
@@ -276,6 +277,7 @@ save_settings_header_view (ModestConf *conf, ModestHeaderView *header_view,
 	 * are also used in modest-init.
 	 */
 	sort_colid = modest_header_view_get_sort_column_id (header_view, type); 
+	sort_type = modest_header_view_get_sort_type (header_view, type); 
 	while (cursor) {
 
 		int col_id, width, sort;
@@ -287,7 +289,7 @@ save_settings_header_view (ModestConf *conf, ModestHeaderView *header_view,
 		width = gtk_tree_view_column_get_width (col);
 		sort = 0;
 		if (sort_colid == col_id)
-			sort = 1;
+			sort = (sort_type == GTK_SORT_ASCENDING) ? 1:-1;
 			
 		g_string_append_printf (str, "%d:%d:%d ", col_id, width, sort);
 		cursor = g_list_next (cursor);
@@ -333,7 +335,7 @@ restore_settings_header_view (ModestConf *conf, ModestHeaderView *header_view,
 		GtkTreeModel *sortable;
 
 		cursor = data = modest_conf_get_string (conf, key, NULL);
-		while (cursor && sscanf (cursor, "%u:%u:%u ", &col, &width, &sort) == 3) {
+		while (cursor && sscanf (cursor, "%d:%d:%d ", &col, &width, &sort) == 3) {
 			cols      = g_list_append (cols, GINT_TO_POINTER(col));
 			colwidths = g_list_append (colwidths, GINT_TO_POINTER(width));
 			colsortables = g_list_append (colsortables, GINT_TO_POINTER(sort));
@@ -355,12 +357,13 @@ restore_settings_header_view (ModestConf *conf, ModestHeaderView *header_view,
 				if (width > 0)
 					gtk_tree_view_column_set_max_width(GTK_TREE_VIEW_COLUMN(colcursor->data),
 									   width);
-				if (sort > 0) {
+				if (sort != 0) {
 					int colid = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(colcursor->data), MODEST_HEADER_VIEW_COLUMN));
-					modest_header_view_set_sort_column_id (header_view, colid, type);
+					GtkSortType sort_type = (sort == 1) ? GTK_SORT_ASCENDING : GTK_SORT_DESCENDING; 
+					modest_header_view_set_sort_params (header_view, colid, sort_type, type);
 					gtk_tree_sortable_set_sort_column_id (GTK_TREE_SORTABLE(sortable),
 									      colid,
-									      GTK_SORT_DESCENDING);
+									      sort_type);
 					gtk_tree_sortable_sort_column_changed (GTK_TREE_SORTABLE(sortable));
 				}
 				colcursor = g_list_next (colcursor);

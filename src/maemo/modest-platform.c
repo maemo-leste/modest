@@ -31,9 +31,13 @@
 #include <glib/gi18n.h>
 #include <modest-platform.h>
 #include <modest-runtime.h>
+#include <modest-main-window.h>
+#include <modest-header-view.h>
+
+#include <modest-hildon-includes.h>
+
 #include <dbus_api/modest-dbus-callbacks.h>
 #include <libosso.h>
-#include <modest-hildon-includes.h>
 #include <tny-maemo-conic-device.h>
 #include <tny-folder.h>
 #include <gtk/gtkicontheme.h>
@@ -387,6 +391,106 @@ entry_changed (GtkEditable *editable,
 	g_free (chars);
 }
 
+static void
+launch_sort_headers_dialog (GtkWindow *parent_window,
+			    HildonSortDialog *dialog)
+{
+	ModestHeaderView *header_view = NULL;
+	GList *cols = NULL;
+	GList *tmp = NULL;
+	GtkSortType sort_type;
+	gint sort_key;
+	gint result;
+	
+	/* Get header window */
+	if (MODEST_IS_MAIN_WINDOW (parent_window)) {
+		header_view = MODEST_HEADER_VIEW(modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(parent_window),
+										      MODEST_WIDGET_TYPE_HEADER_VIEW));
+	}
+	if (!header_view) return;
+
+	/* Add sorting keys */
+	cols = modest_header_view_get_columns (header_view);	
+	if (cols == NULL) return;
+	int num_cols = g_list_length(cols);
+	int sort_ids[num_cols];
+	int sort_model_ids[num_cols];
+	GtkTreeViewColumn *sort_cols[num_cols];
+	for (tmp=cols; tmp; tmp=tmp->next) {
+		gint col_id = GPOINTER_TO_INT (g_object_get_data(G_OBJECT(tmp->data), MODEST_HEADER_VIEW_COLUMN));
+		switch (col_id) {
+		case MODEST_HEADER_VIEW_COLUMN_COMPACT_FLAG:
+			sort_key = hildon_sort_dialog_add_sort_key (dialog, _("mcen_li_sort_attachment"));
+			sort_ids[sort_key] = col_id;
+			sort_model_ids[sort_key] = TNY_HEADER_FLAG_ATTACHMENTS;
+			sort_cols[sort_key] = tmp->data;
+
+			sort_key = hildon_sort_dialog_add_sort_key (dialog, _("mcen_li_sort_priority"));
+			sort_ids[sort_key] = col_id;
+			sort_model_ids[sort_key] = TNY_HEADER_FLAG_PRIORITY;
+			sort_cols[sort_key] = tmp->data;
+			break;
+		case MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER_OUT:
+			sort_key = hildon_sort_dialog_add_sort_key (dialog, _("mcen_li_sort_sender_recipient"));
+			sort_ids[sort_key] = col_id;
+			sort_model_ids[sort_key] = TNY_GTK_HEADER_LIST_MODEL_TO_COLUMN;
+			sort_cols[sort_key] = tmp->data;
+
+			sort_key = hildon_sort_dialog_add_sort_key (dialog, _("mcen_li_sort_subject"));
+			sort_ids[sort_key] = col_id;
+			sort_model_ids[sort_key] = TNY_GTK_HEADER_LIST_MODEL_SUBJECT_COLUMN;
+			sort_cols[sort_key] = tmp->data;
+			break;
+		case MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER_IN:
+			sort_key = hildon_sort_dialog_add_sort_key (dialog, _("mcen_li_sort_sender_recipient"));
+			sort_ids[sort_key] = col_id;
+			sort_model_ids[sort_key] = TNY_GTK_HEADER_LIST_MODEL_FROM_COLUMN;
+			sort_cols[sort_key] = tmp->data;
+
+			sort_key = hildon_sort_dialog_add_sort_key (dialog, _("mcen_li_sort_subject"));
+			sort_ids[sort_key] = col_id;
+			sort_model_ids[sort_key] = TNY_GTK_HEADER_LIST_MODEL_SUBJECT_COLUMN;
+			sort_cols[sort_key] = tmp->data;
+			break;
+		case MODEST_HEADER_VIEW_COLUMN_COMPACT_RECEIVED_DATE:
+			sort_key = hildon_sort_dialog_add_sort_key (dialog, _("mcen_li_sort_date"));
+			sort_ids[sort_key] = col_id;
+			sort_model_ids[sort_key] = TNY_GTK_HEADER_LIST_MODEL_DATE_RECEIVED_TIME_T_COLUMN,
+			sort_cols[sort_key] = tmp->data;
+			break;
+		case MODEST_HEADER_VIEW_COLUMN_COMPACT_SENT_DATE:
+			sort_key = hildon_sort_dialog_add_sort_key (dialog, _("mcen_li_sort_date"));
+			sort_ids[sort_key] = col_id;
+			sort_model_ids[sort_key] = TNY_GTK_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN,
+			sort_cols[sort_key] = tmp->data;
+			break;
+		default:
+			return;
+		}
+	}
+	
+	/* Launch dialogs */
+	result = gtk_dialog_run (GTK_DIALOG (dialog));
+	if (result == GTK_RESPONSE_OK) {
+		sort_key = hildon_sort_dialog_get_sort_key (dialog);
+		sort_type = hildon_sort_dialog_get_sort_order (dialog);
+		if (sort_ids[sort_key] == MODEST_HEADER_VIEW_COLUMN_COMPACT_FLAG)
+			g_object_set_data(G_OBJECT(sort_cols[sort_key]), 
+					  MODEST_HEADER_VIEW_FLAG_SORT, 
+					  GINT_TO_POINTER(sort_model_ids[sort_key]));
+		
+		else
+			gtk_tree_view_column_set_sort_column_id (sort_cols[sort_key], sort_model_ids[sort_key]);
+		
+		modest_header_view_sort_by_column_id (header_view, sort_ids[sort_key], sort_type);
+	}
+	
+	/* free */
+	g_list_free(cols);	
+}
+
+
+
 gint
 modest_platform_run_new_folder_dialog (GtkWindow *parent_window,
 				       TnyFolderStore *parent_folder,
@@ -502,3 +606,24 @@ gboolean modest_platform_connect_and_wait (GtkWindow *parent_window)
 	return TRUE;
 }
 
+void
+modest_platform_run_sort_dialog (GtkWindow *parent_window,
+				 ModestSortDialogType type)
+{
+	GtkWidget *dialog = NULL;
+
+	/* Build dialog */
+	dialog = hildon_sort_dialog_new (parent_window);
+	gtk_window_set_modal (GTK_WINDOW(dialog), TRUE);
+	
+	/* Fill sort keys */
+	switch (type) {
+	case MODEST_SORT_HEADERS:
+		launch_sort_headers_dialog (parent_window, 
+					    HILDON_SORT_DIALOG(dialog));
+		break;
+	}
+	
+	/* Free */
+	gtk_widget_destroy (GTK_WIDGET (dialog));
+}

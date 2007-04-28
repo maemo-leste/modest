@@ -75,6 +75,7 @@ struct _ModestHeaderViewPrivate {
 	TnyFolderMonitor     *monitor;
 	GMutex               *monitor_lock;
 	gint sort_colid[2][TNY_FOLDER_TYPE_NUM];
+	gint sort_type[2][TNY_FOLDER_TYPE_NUM];
 };
 
 #define MODEST_HEADER_VIEW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -410,9 +411,14 @@ modest_header_view_init (ModestHeaderView *obj)
 
 	priv->monitor	     = NULL;
 	priv->monitor_lock   = g_mutex_new ();
-	for (j=0; j < 2; j++)
-		for (i=0; i < TNY_FOLDER_TYPE_NUM; i++) 
+
+	/* Sort parameters */
+	for (j=0; j < 2; j++) {
+		for (i=0; i < TNY_FOLDER_TYPE_NUM; i++) {
 			priv->sort_colid[j][i] = -1;
+			priv->sort_type[j][i] = GTK_SORT_DESCENDING;
+		}			
+	}
 
 	setup_drag_and_drop (GTK_TREE_VIEW (obj));
 }
@@ -617,6 +623,7 @@ modest_header_view_get_columns (ModestHeaderView *self)
 	return gtk_tree_view_get_columns (GTK_TREE_VIEW(self)); 
 }
 
+
 gboolean
 modest_header_view_is_empty (ModestHeaderView *self)
 {
@@ -702,6 +709,7 @@ on_progress_changed (ModestMailOperation *mail_op,
 	GList *cols, *cursor;
 	TnyList *headers;
 	guint sort_colid;
+	GtkSortType sort_type;
 
 	if (!modest_mail_operation_is_finished (mail_op))
 		return;
@@ -735,9 +743,10 @@ on_progress_changed (ModestMailOperation *mail_op,
 	/* Restore sort column id */
 	type  = modest_tny_folder_guess_folder_type (priv->folder);
 	sort_colid = modest_header_view_get_sort_column_id (self, type); 
+	sort_type = modest_header_view_get_sort_type (self, type); 
 	gtk_tree_sortable_set_sort_column_id (GTK_TREE_SORTABLE(sortable),
 					      sort_colid,
-					      GTK_SORT_ASCENDING);
+					      sort_type);
 
 	/* Set new model */
 	modest_header_view_set_model (GTK_TREE_VIEW (self), sortable);
@@ -773,6 +782,7 @@ modest_header_view_set_folder_intern (ModestHeaderView *self, TnyFolder *folder)
 	GList *cols, *cursor;
 	GtkTreeModel *sortable; 
 	guint sort_colid;
+	GtkSortType sort_type;
 
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
 
@@ -812,9 +822,10 @@ modest_header_view_set_folder_intern (ModestHeaderView *self, TnyFolder *folder)
 	/* Restore sort column id */
 	type  = modest_tny_folder_guess_folder_type (folder);
 	sort_colid = modest_header_view_get_sort_column_id (self, type); 
+	sort_type = modest_header_view_get_sort_type (self, type); 
 	gtk_tree_sortable_set_sort_column_id (GTK_TREE_SORTABLE(sortable),
 					      sort_colid,
-					      GTK_SORT_ASCENDING);
+					      sort_type);
 
 	/* Set new model */
 	modest_header_view_set_model (GTK_TREE_VIEW (self), sortable);
@@ -822,7 +833,37 @@ modest_header_view_set_folder_intern (ModestHeaderView *self, TnyFolder *folder)
 }
 
 void
-modest_header_view_set_sort_column_id (ModestHeaderView *self, guint sort_colid, TnyFolderType type)
+modest_header_view_sort_by_column_id (ModestHeaderView *self, 
+				      guint sort_colid,
+				      GtkSortType sort_type)
+{
+	ModestHeaderViewPrivate *priv = NULL;
+	GtkTreeModel *sortable = NULL; 
+	TnyFolderType type;
+
+	/* Get model and private data */
+	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);		
+	sortable = gtk_tree_view_get_model (GTK_TREE_VIEW (self));
+	
+	/* Sort tree model */
+	type  = modest_tny_folder_guess_folder_type (priv->folder);
+	gtk_tree_sortable_set_sort_column_id (GTK_TREE_SORTABLE(sortable),
+					      sort_colid,
+					      sort_type);
+	/* Store new sort parameters */
+	modest_header_view_set_sort_params (self, sort_colid, sort_type, type);
+
+	/* Save GConf parameters */
+/* 	modest_widget_memory_save (modest_runtime_get_conf(), */
+/* 				   G_OBJECT(self), "header-view"); */
+	
+}
+
+void
+modest_header_view_set_sort_params (ModestHeaderView *self, 
+				    guint sort_colid, 
+				    GtkSortType sort_type,
+				    TnyFolderType type)
 {
 	ModestHeaderViewPrivate *priv;
 	ModestHeaderViewStyle style;
@@ -831,10 +872,12 @@ modest_header_view_set_sort_column_id (ModestHeaderView *self, guint sort_colid,
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
 
 	priv->sort_colid[style][type] = sort_colid;
+	priv->sort_type[style][type] = sort_type;
 }
 
 gint
-modest_header_view_get_sort_column_id (ModestHeaderView *self, TnyFolderType type)
+modest_header_view_get_sort_column_id (ModestHeaderView *self, 
+				       TnyFolderType type)
 {
 	ModestHeaderViewPrivate *priv;
 	ModestHeaderViewStyle style;
@@ -843,6 +886,19 @@ modest_header_view_get_sort_column_id (ModestHeaderView *self, TnyFolderType typ
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
 
 	return priv->sort_colid[style][type];
+}
+
+GtkSortType
+modest_header_view_get_sort_type (ModestHeaderView *self, 
+				  TnyFolderType type)
+{
+	ModestHeaderViewPrivate *priv;
+	ModestHeaderViewStyle style;
+
+	style = modest_header_view_get_style   (self);
+	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
+
+	return priv->sort_type[style][type];
 }
 
 void
@@ -869,7 +925,7 @@ modest_header_view_set_folder (ModestHeaderView *self, TnyFolder *folder)
 		g_signal_emit (G_OBJECT(self), signals[HEADER_SELECTED_SIGNAL], 0, NULL);
 
 		/* Create the mail operation */
-		mail_op = modest_mail_operation_new ();
+		mail_op = modest_mail_operation_new_with_id (MODEST_MAIL_OPERATION_ID_RECEIVE);
 		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
 						 mail_op);
 
@@ -991,6 +1047,7 @@ cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 	gint val1, val2;
 	gchar *s1, *s2;
 	gint cmp;	
+	gint sort_colid;
 	static int counter = 0;
 
 	g_return_val_if_fail (G_IS_OBJECT(user_data), 0);
@@ -1003,10 +1060,26 @@ cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 			       signals[STATUS_UPDATE_SIGNAL],
 			       0, _("Sorting..."), 0, 0);
 	}	
-	switch (col_id) {
-
-		/* first one, we decide based on the time */
+	switch (col_id) {		
 	case MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER_IN:
+	case MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER_OUT:
+		sort_colid = gtk_tree_view_column_get_sort_column_id (GTK_TREE_VIEW_COLUMN(user_data));
+		gtk_tree_model_get (tree_model, iter1,
+				    sort_colid, &s1,
+				    TNY_GTK_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN, &t1,
+				    -1);
+		gtk_tree_model_get (tree_model, iter2,
+				    sort_colid, &s2,
+				    TNY_GTK_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN, &t2,
+				    -1);
+		cmp = modest_text_utils_utf8_strcmp (s1, s2, TRUE);
+		g_free (s1);
+		g_free (s2);
+		
+		return cmp ? cmp : t1 - t2;
+		
+		break;
+
 	case MODEST_HEADER_VIEW_COLUMN_COMPACT_RECEIVED_DATE:
 	case MODEST_HEADER_VIEW_COLUMN_RECEIVED_DATE:
 
@@ -1018,7 +1091,6 @@ cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 				    &t2,-1);
 		return t1 - t2;
 
-	case MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER_OUT:
 	case MODEST_HEADER_VIEW_COLUMN_COMPACT_SENT_DATE:
 	case MODEST_HEADER_VIEW_COLUMN_SENT_DATE:
 		gtk_tree_model_get (tree_model, iter1,
@@ -1106,6 +1178,28 @@ cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 
 		return cmp ? cmp : t1 - t2;
 
+	case MODEST_HEADER_VIEW_COLUMN_COMPACT_FLAG:
+		gtk_tree_model_get (tree_model, iter1, TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN, &val1,
+				    TNY_GTK_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN, &t1, -1);
+		gtk_tree_model_get (tree_model, iter2, TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN, &val2,
+				    TNY_GTK_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN, &t2, -1);
+
+		int flag_sort = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(user_data), MODEST_HEADER_VIEW_FLAG_SORT));
+		switch (flag_sort) {
+		case TNY_HEADER_FLAG_ATTACHMENTS:
+			cmp = (val1 & TNY_HEADER_FLAG_ATTACHMENTS) -
+				(val2 & TNY_HEADER_FLAG_ATTACHMENTS);
+			break;
+		case TNY_HEADER_FLAG_PRIORITY:
+			cmp = (val1 & TNY_HEADER_FLAG_PRIORITY) -
+				(val2 & TNY_HEADER_FLAG_PRIORITY);
+			break;
+		default:
+			cmp = (val1 & TNY_HEADER_FLAG_PRIORITY) -
+				(val2 & TNY_HEADER_FLAG_PRIORITY);
+		}
+		
+		return cmp ? cmp : t1 - t2;
 	default:
 		return &iter1 - &iter2; /* oughhhh  */
 	}

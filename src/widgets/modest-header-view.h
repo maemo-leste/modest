@@ -55,6 +55,7 @@ struct _ModestHeaderView {
 };
 
 #define MODEST_HEADER_VIEW_COLUMN    "header-view-column"
+#define MODEST_HEADER_VIEW_FLAG_SORT "header-view-flags-sort"
 
 typedef enum _ModestHeaderViewColumn {
 	MODEST_HEADER_VIEW_COLUMN_FROM            = 0,
@@ -188,7 +189,7 @@ gboolean modest_header_view_set_columns (ModestHeaderView *self,
  * with g_object_get_data MODEST_HEADER_VIEW_COLUMN (#define),
  * and which contains the corresponding ModestHeaderViewColumn
  *  
- * Returns: newly allocated list of column ids, or NULL in case of no columns or error
+ * Returns: newly allocated list of #GtkTreeViewColumns objects, or NULL in case of no columns or error
  * You must free the list with g_list_free
  */
 GList*  modest_header_view_get_columns (ModestHeaderView *self);
@@ -278,16 +279,41 @@ gint
 modest_header_view_get_sort_column_id (ModestHeaderView *self, TnyFolderType type);
 
 /**
- * modest_header_view_get_sort_column_id:
+ * modest_header_view_get_sort_type:
  * @self: a #ModestHeaderView
- * @sort_colid: logical column id to sort
  * @type: #TnyFolderType type
  * 
- * Sets the logical columnd id for sorting.
+ * Gets the selected sort type.
+ **/
+GtkSortType
+modest_header_view_get_sort_type (ModestHeaderView *self, TnyFolderType type);
+
+/**
+ * modest_header_view_set_sort_params:
+ * @self: a #ModestHeaderView
+ * @sort_colid: logical column id to sort
+ * @sort_type: #GtkSortType sort type
+ * @type: #TnyFolderType type
+ * 
+ * Sets the logical columnd id and sort type for sorting operations.
  **/
 void
-modest_header_view_set_sort_column_id (ModestHeaderView *self, guint sort_colid, TnyFolderType type);
+modest_header_view_set_sort_params (ModestHeaderView *self, guint sort_colid, GtkSortType sort_type, TnyFolderType type);
 
+/**
+ * modest_header_view_set_sort_params:
+ * @self: a #ModestHeaderView
+ * @sort_colid: logical column id to sort
+ * @sort_type: #GtkSortType sort type
+ * 
+ * Sorts headers treeview by logical column id, @sort_colid, using a 
+ * @sort_type sorting method. In addition, new headder settings will be 
+ * stored in @self object. 
+ **/
+void
+modest_header_view_sort_by_column_id (ModestHeaderView *self, 
+				      guint sort_colid,
+				      GtkSortType sort_type);
 
 
 G_END_DECLS

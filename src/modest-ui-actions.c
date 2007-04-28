@@ -168,7 +168,7 @@ modest_ui_actions_on_delete (GtkAction *action, ModestWindow *win)
 			/* TODO: thick grain mail operation involving
 			   a list of objects. Composite pattern ??? */
 			/* TODO: add confirmation dialog */
-			mail_op = modest_mail_operation_new ();
+			mail_op = modest_mail_operation_new_with_id (MODEST_MAIL_OPERATION_ID_DELETE);
 			modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
 							 mail_op);
 
@@ -587,13 +587,18 @@ void
 modest_ui_actions_on_sort (GtkAction *action, 
 			   ModestWindow *window)
 {
-	ModestWindowMgr *mgr;
-
 	g_return_if_fail (MODEST_IS_WINDOW(window));
 
-	/* Show sorting dialog */
-	mgr = modest_runtime_get_window_mgr ();
-	
+	if (MODEST_IS_MAIN_WINDOW (window)) {
+		GtkWidget *header_view;
+		header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(window),
+								   MODEST_WIDGET_TYPE_HEADER_VIEW);
+		if (!header_view)
+			return;
+
+		/* Show sorting dialog */
+		modest_platform_run_sort_dialog (GTK_WINDOW (window), MODEST_SORT_HEADERS);	
+	}
 }
 
 
@@ -1100,7 +1105,7 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 	from = modest_account_mgr_get_from_string (account_mgr, account_name);
 
 	/* Create the mail operation */		
-	mail_operation = modest_mail_operation_new ();
+	mail_operation = modest_mail_operation_new_with_id (MODEST_MAIL_OPERATION_ID_SEND);
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_operation);
 
 	modest_mail_operation_send_new_mail (mail_operation,
@@ -1415,7 +1420,7 @@ delete_folder (ModestMainWindow *main_window, gboolean move_to_trash)
 	g_free (message);
 
 	if (response == GTK_RESPONSE_OK) {
-		ModestMailOperation *mail_op = modest_mail_operation_new ();
+		ModestMailOperation *mail_op = modest_mail_operation_new_with_id (MODEST_MAIL_OPERATION_ID_DELETE);
 
 		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
 						 mail_op);
@@ -2031,7 +2036,7 @@ modest_ui_actions_on_main_window_move_to (GtkAction *action,
 		src_folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW (folder_view));
 
 		if (TNY_IS_FOLDER (src_folder)) {
-			mail_op = modest_mail_operation_new ();
+			mail_op = modest_mail_operation_new_with_id (MODEST_MAIL_OPERATION_ID_RECEIVE);
 			modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), 
 							 mail_op);
 
@@ -2128,7 +2133,7 @@ modest_ui_actions_on_msg_view_window_move_to (GtkAction *action,
 			ModestMailOperation *mail_op;
 
 			/* Create mail op */
-			mail_op = modest_mail_operation_new ();
+			mail_op = modest_mail_operation_new_with_id (MODEST_MAIL_OPERATION_ID_RECEIVE);
 			modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), 
 							 mail_op);
 			
