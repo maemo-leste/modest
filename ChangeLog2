@@ -1,4 +1,14 @@
-2007-04-29  rray Cumming  <murrayc@murrayc.com>
+2007-04-29  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/maemo/easysetup/modest-easysetup-wizard.c: (show_error):
+	* src/maemo/modest-account-settings-dialog.c: (show_error),
+	(show_ok):
+	Use hildon_note_new_information() for informative and error messages, 
+	which seems to be expected for Maemo applications (no documentation that I know of 
+	says this). I am surprised that there is no distinction between info and error 
+	dialogs.
+
+2007-04-29  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/maemo/modest-maemo-ui-constants.h: Add a MODEST_MARGIN_NONE constant, so 
 	it is easy to find where this is used.

@@ -1275,27 +1275,33 @@ modest_account_settings_dialog_class_init (ModestAccountSettingsDialogClass *kla
 static void
 show_error (GtkWindow *parent_window, const gchar* text)
 {
+	GtkDialog *dialog = GTK_DIALOG (hildon_note_new_information (parent_window, text));
+	/*
 	GtkDialog *dialog = GTK_DIALOG (gtk_message_dialog_new (parent_window,
 		(GtkDialogFlags)0,
 		 GTK_MESSAGE_ERROR,
 		 GTK_BUTTONS_OK,
 		 text ));
-		 
-		 gtk_dialog_run (dialog);
-		 gtk_widget_destroy (GTK_WIDGET (dialog));
+	*/	 
+	
+	gtk_dialog_run (dialog);
+	gtk_widget_destroy (GTK_WIDGET (dialog));
 }
 
 static void
 show_ok (GtkWindow *parent_window, const gchar* text)
 {
+	GtkDialog *dialog = GTK_DIALOG (hildon_note_new_information (parent_window, text));
+	/*
 	GtkDialog *dialog = GTK_DIALOG (gtk_message_dialog_new (parent_window,
 		(GtkDialogFlags)0,
 		 GTK_MESSAGE_INFO,
 		 GTK_BUTTONS_OK,
 		 text ));
+	*/
 		 
-		 gtk_dialog_run (dialog);
-		 gtk_widget_destroy (GTK_WIDGET (dialog));
+	gtk_dialog_run (dialog);
+	gtk_widget_destroy (GTK_WIDGET (dialog));
 }
 
 
