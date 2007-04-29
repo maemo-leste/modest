@@ -39,6 +39,7 @@
 #include "modest-tny-platform-factory.h"
 #include "maemo/easysetup/modest-easysetup-wizard.h"
 #include "maemo/modest-account-settings-dialog.h"
+#include "maemo/modest-maemo-ui-constants.h"
 
 /* 'private'/'protected' functions */
 static void                            modest_account_view_window_class_init   (ModestAccountViewWindowClass *klass);
@@ -292,6 +293,9 @@ window_vbox_new (ModestAccountViewWindow *self)
 			  self);
 			  
 	GtkWidget *scrolled_window = gtk_scrolled_window_new (NULL, NULL);
+	gtk_container_set_border_width (GTK_CONTAINER (scrolled_window), MODEST_MARGIN_DEFAULT);
+	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolled_window), GTK_POLICY_NEVER, 
+		GTK_POLICY_AUTOMATIC);
 	gtk_container_add (GTK_CONTAINER (scrolled_window), GTK_WIDGET (priv->account_view));
 	gtk_widget_show (GTK_WIDGET (scrolled_window));
 	

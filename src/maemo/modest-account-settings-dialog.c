@@ -227,7 +227,7 @@ on_entry_max (ModestValidatingEntry *self, gpointer user_data)
 static GtkWidget*
 create_page_account_details (ModestAccountSettingsDialog *self)
 {
-	GtkWidget *box = gtk_vbox_new (FALSE, MODEST_MARGIN_HALF);
+	GtkWidget *box = gtk_vbox_new (FALSE, MODEST_MARGIN_NONE);
 	GtkWidget *label = gtk_label_new(_("mcen_ia_accountdetails"));
 	gtk_box_pack_start (GTK_BOX (box), label, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (label);
@@ -345,7 +345,7 @@ on_button_signature (GtkButton *button, gpointer user_data)
 static GtkWidget*
 create_page_user_details (ModestAccountSettingsDialog *self)
 {
-	GtkWidget *box = gtk_vbox_new (FALSE, MODEST_MARGIN_HALF);
+	GtkWidget *box = gtk_vbox_new (FALSE, MODEST_MARGIN_NONE);
 	
 	/* Create a size group to be used by all captions.
 	 * Note that HildonCaption does not create a default size group if we do not specify one.
@@ -480,7 +480,7 @@ static void update_incoming_server_security_choices (ModestAccountSettingsDialog
            
 static GtkWidget* create_page_incoming (ModestAccountSettingsDialog *self)
 {
-	GtkWidget *box = gtk_vbox_new (FALSE, MODEST_MARGIN_HALF);
+	GtkWidget *box = gtk_vbox_new (FALSE, MODEST_MARGIN_NONE);
 	
 	/* Create a size group to be used by all captions.
 	 * Note that HildonCaption does not create a default size group if we do not specify one.
@@ -635,7 +635,7 @@ on_combo_incoming_security_changed (GtkComboBox *widget, gpointer user_data)
 
 static GtkWidget* create_page_outgoing (ModestAccountSettingsDialog *self)
 {
-	GtkWidget *box = gtk_vbox_new (FALSE, MODEST_MARGIN_HALF);
+	GtkWidget *box = gtk_vbox_new (FALSE, MODEST_MARGIN_NONE);
 	
 	/* Create a size group to be used by all captions.
 	 * Note that HildonCaption does not create a default size group if we do not specify one.

@@ -305,10 +305,13 @@ modest_connection_specific_smtp_window_init (ModestConnectionSpecificSmtpWindow 
 	
 	/* The application must call modest_connection_specific_smtp_window_fill_with_connections(). */
 	
-	GtkWidget *vbox = gtk_vbox_new (FALSE, MODEST_MARGIN_HALF);
+	GtkWidget *vbox = gtk_vbox_new (FALSE, MODEST_MARGIN_DEFAULT);
 	
 	/* Put the treeview in a scrolled window and add it to the box: */
 	GtkWidget *scrolled_window = gtk_scrolled_window_new (NULL, NULL);
+	gtk_container_set_border_width (GTK_CONTAINER (scrolled_window), MODEST_MARGIN_DEFAULT);
+	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolled_window), GTK_POLICY_NEVER, 
+		GTK_POLICY_AUTOMATIC);
 	gtk_widget_show (scrolled_window);
 	gtk_container_add (GTK_CONTAINER (scrolled_window), GTK_WIDGET (priv->treeview));
 	gtk_box_pack_start (GTK_BOX (vbox), GTK_WIDGET (scrolled_window), TRUE, TRUE, MODEST_MARGIN_HALF);

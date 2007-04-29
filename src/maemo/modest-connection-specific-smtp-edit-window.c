@@ -111,6 +111,7 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 		CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW_GET_PRIVATE (self);
 	
 	GtkWidget *box = GTK_DIALOG(self)->vbox; /* gtk_vbox_new (FALSE, MODEST_MARGIN_HALF); */
+	gtk_box_set_spacing (GTK_BOX (box), MODEST_MARGIN_NONE);
 	gtk_container_set_border_width (GTK_CONTAINER (box), MODEST_MARGIN_HALF);
 	
 	/* Create a size group to be used by all captions.

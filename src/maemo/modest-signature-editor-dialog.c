@@ -122,8 +122,9 @@ modest_signature_editor_dialog_init (ModestSignatureEditorDialog *self)
 	gtk_widget_show (priv->label);
 	
 	priv->scrolledwindow = gtk_scrolled_window_new (NULL, NULL);
+	gtk_container_set_border_width (GTK_CONTAINER (priv->scrolledwindow), MODEST_MARGIN_DEFAULT);
 	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (priv->scrolledwindow), 
-		GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+		GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
 	gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (priv->scrolledwindow), GTK_SHADOW_IN);
 	gtk_box_pack_start (GTK_BOX (box), priv->scrolledwindow, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (priv->scrolledwindow);

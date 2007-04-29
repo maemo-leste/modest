@@ -192,7 +192,7 @@ static GtkWidget* create_caption_new_with_asterix(ModestEasysetupWizardDialog *s
 static GtkWidget*
 create_page_welcome (ModestEasysetupWizardDialog *self)
 {
-	GtkWidget *box = gtk_vbox_new (FALSE, MODEST_MARGIN_HALF);
+	GtkWidget *box = gtk_vbox_new (FALSE, MODEST_MARGIN_NONE);
 	GtkWidget *label = gtk_label_new(_("mcen_ia_emailsetup_intro"));
 	gtk_box_pack_start (GTK_BOX (box), label, FALSE, FALSE, 0);
 	gtk_widget_show (label);
@@ -250,7 +250,7 @@ on_entry_max (ModestValidatingEntry *self, gpointer user_data)
 static GtkWidget*
 create_page_account_details (ModestEasysetupWizardDialog *self)
 {
-	GtkWidget *box = gtk_vbox_new (FALSE, MODEST_MARGIN_HALF);
+	GtkWidget *box = gtk_vbox_new (FALSE, MODEST_MARGIN_NONE);
 	GtkWidget *label = gtk_label_new(_("mcen_ia_accountdetails"));
 	gtk_box_pack_start (GTK_BOX (box), label, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (label);
@@ -383,7 +383,7 @@ create_page_account_details (ModestEasysetupWizardDialog *self)
 static GtkWidget*
 create_page_user_details (ModestEasysetupWizardDialog *self)
 {
-	GtkWidget *box = gtk_vbox_new (FALSE, MODEST_MARGIN_HALF);
+	GtkWidget *box = gtk_vbox_new (FALSE, MODEST_MARGIN_NONE);
 	
 	/* Create a size group to be used by all captions.
 	 * Note that HildonCaption does not create a default size group if we do not specify one.
@@ -472,7 +472,7 @@ create_page_user_details (ModestEasysetupWizardDialog *self)
 
 static GtkWidget* create_page_complete_easysetup (ModestEasysetupWizardDialog *self)
 {
-	GtkWidget *box = gtk_vbox_new (FALSE, MODEST_MARGIN_HALF);
+	GtkWidget *box = gtk_vbox_new (FALSE, MODEST_MARGIN_NONE);
 	GtkWidget *label = gtk_label_new(_("mcen_ia_emailsetup_setup_complete"));
 	gtk_box_pack_start (GTK_BOX (box), label, FALSE, FALSE, 0);
 	gtk_widget_show (label);
@@ -524,7 +524,7 @@ static void on_combo_servertype_changed(GtkComboBox *combobox, gpointer user_dat
            
 static GtkWidget* create_page_custom_incoming (ModestEasysetupWizardDialog *self)
 {
-	GtkWidget *box = gtk_vbox_new (FALSE, MODEST_MARGIN_HALF);
+	GtkWidget *box = gtk_vbox_new (FALSE, MODEST_MARGIN_NONE);
 	
 	/* Create a size group to be used by all captions.
 	 * Note that HildonCaption does not create a default size group if we do not specify one.
@@ -633,7 +633,7 @@ on_button_outgoing_smtp_servers (GtkButton *button, gpointer user_data)
 
 static GtkWidget* create_page_custom_outgoing (ModestEasysetupWizardDialog *self)
 {
-	GtkWidget *box = gtk_vbox_new (FALSE, MODEST_MARGIN_HALF);
+	GtkWidget *box = gtk_vbox_new (FALSE, MODEST_MARGIN_NONE);
 	
 	/* Create a size group to be used by all captions.
 	 * Note that HildonCaption does not create a default size group if we do not specify one.
@@ -742,7 +742,7 @@ on_button_edit_advanced_settings (GtkButton *button, gpointer user_data)
 }
 static GtkWidget* create_page_complete_custom (ModestEasysetupWizardDialog *self)
 {
-	GtkWidget *box = gtk_vbox_new (FALSE, MODEST_MARGIN_HALF);
+	GtkWidget *box = gtk_vbox_new (FALSE, MODEST_MARGIN_NONE);
 	GtkWidget *label = gtk_label_new(_("mcen_ia_emailsetup_setup_complete"));
 	gtk_box_pack_start (GTK_BOX (box), label, FALSE, FALSE, 0);
 	gtk_widget_show (label);

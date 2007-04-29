@@ -1,3 +1,26 @@
+2007-04-29  rray Cumming  <murrayc@murrayc.com>
+
+	* src/maemo/modest-maemo-ui-constants.h: Add a MODEST_MARGIN_NONE constant, so 
+	it is easy to find where this is used.
+	
+	* src/maemo/easysetup/modest-easysetup-wizard.c:
+	(create_page_welcome), (create_page_account_details),
+	(create_page_user_details), (create_page_complete_easysetup),
+	(create_page_custom_incoming), (create_page_custom_outgoing),
+	(create_page_complete_custom):
+	* src/maemo/modest-account-settings-dialog.c:
+	(create_page_account_details), (create_page_user_details),
+	(create_page_incoming), (create_page_outgoing):
+	* src/maemo/modest-account-view-window.c: (window_vbox_new):
+	* src/maemo/modest-connection-specific-smtp-edit-window.c:
+	(modest_connection_specific_smtp_edit_window_init):
+	* src/maemo/modest-connection-specific-smtp-window.c:
+	(modest_connection_specific_smtp_window_init):
+	* src/maemo/modest-signature-editor-dialog.c:
+	(modest_signature_editor_dialog_init): Use the correct padding/spacing/borders 
+	and scrolling policy as per the Email Application Layout Guide, if I have 
+	understood it.
+
 2007-04-27  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/modest-tny-account-store.c: (modest_tny_account_store_init): 
