@@ -1,5 +1,5 @@
 Source: modest
-Section: user/unknown
+Section: mail
 Priority: optional
 Maintainer: Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com> 
 Build-Depends: debhelper (>= 4.0.0), cdbs, gtkhtml-dev, libconic0-dev, hildon-libs-dev, libdbus-1-dev, libdbus-glib-1-dev, libebook-dev, libedataserver-dev, libgconf2-dev, libglib2.0-dev, libosso-abook-dev, libosso-gnomevfs2-dev, libhildonmime-dev,libtinymail-1.0-0-dev, libtinymail-camel-1.0-0-dev, libtinymail-maemo-1.0-0-dev,libtinymailui-1.0-0-dev,libtinymailui-gtk-1.0-0-dev,wpeditor-dev,libosso-help-dev, modest-providers-data
@@ -9,4 +9,11 @@ Package: modest
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: an e-mail client for platforms with modest resources
+
+Package: modest-dbg
+Section: devel
+Architecture: all
+Depends: modest (=${Source-Version})
+Description: debug package for modest
+
 

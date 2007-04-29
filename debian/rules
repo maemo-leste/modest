@@ -27,6 +27,14 @@ ifneq (,$(findstring thumb,$(DEB_BUILD_OPTIONS)))
         CFLAGS += -mthumb
 endif
 
+
+# option 2, assuming the library is created as src/.libs/libfoo.so.2.0.5 or so
+version=`ls libmodest-dbus-client/.libs/lib*.so.* | \
+ awk '{if (match($$0,/[0-9]+\.[0-9]+\.[0-9]+$$/)) print substr($$0,RSTART)}'`
+major=`ls libmodest-dbus-client/.libs/lib*.so.* | \
+ awk '{if (match($$0,/\.so\.[0-9]+$$/)) print substr($$0,RSTART+4)}'`
+   
+
 config.status:
 	if [ ! -x configure ]; then ./autogen.sh; fi
 	dh_testdir
@@ -77,13 +85,13 @@ binary-indep: build install
 
 # Build architecture-dependent files here.
 binary-arch: build install
-	dh_testdir
-	dh_testroot
-#	dh_installchangelogs ChangeLog
-#	dh_installdocs
+	dh_testdir -a
+	dh_testroot -a 
+	dh_installchangelogs ChangeLog
+	dh_installdocs
 #	dh_installexamples
-#	dh_install
-#	dh_installmenu
+	dh_install --sourcedir=debian/modest 
+	dh_installmenu
 #	dh_installdebconf	
 #	dh_installlogrotate
 #	dh_installemacsen
@@ -92,16 +100,16 @@ binary-arch: build install
 #	dh_installinit
 #	dh_installcron
 #	dh_installinfo
-#	dh_installman
-	dh_link
-	dh_strip
-	dh_compress
-	dh_fixperms
+	dh_installman
+	dh_link -a
+	dh_strip -a --dbg-package="modest" 
+	dh_compress -a
+	dh_fixperms -a
 #	dh_perl
 #	dh_python
-#	dh_makeshlibs
+	dh_makeshlibs -a -V 
 	dh_installdeb
-	dh_shlibdeps
+	dh_shlibdeps -V
 	dh_gencontrol
 	dh_md5sums
 	dh_builddeb
