@@ -633,26 +633,6 @@ modest_tny_account_store_alert (TnyAccountStore *self, TnyAlertType type,
 }
 
 
-
-static void
-modest_tny_account_store_add_store_account  (TnyAccountStore *self,
-					     TnyStoreAccount *account)
-{
-	/* we should not need this...*/
-	g_printerr ("modest: add_store_account_func not implemented\n");
-}
-
-
-static void
-modest_tny_account_store_add_transport_account  (TnyAccountStore *self,
-						 TnyTransportAccount *account)
-{	
-	/* we should not need this...*/
-	g_printerr ("modest: add_transport_account_func not implemented\n");
-}
-
-
-
 static void
 modest_tny_account_store_init (gpointer g, gpointer iface_data)
 {
@@ -664,10 +644,6 @@ modest_tny_account_store_init (gpointer g, gpointer iface_data)
 
 	klass->get_accounts_func =
 		modest_tny_account_store_get_accounts;
-	klass->add_transport_account_func =
-		modest_tny_account_store_add_transport_account;
-	klass->add_store_account_func =
-		modest_tny_account_store_add_store_account;
 	klass->get_cache_dir_func =
 		modest_tny_account_store_get_cache_dir;
 	klass->get_device_func =

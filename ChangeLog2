@@ -1,5 +1,12 @@
 2007-04-27  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-tny-account-store.c: (modest_tny_account_store_init): 
+	Remove the add_transport_account_func and add_store_account_func vfunc implementations, 
+	which were empty, because these vfuncs have been removed from TnyAccountStore.
+	This fixes the build.
+
+2007-04-27  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/maemo/modest-main-window.c:
 	(modest_main_window_show_toolbar): Check that a toolbar item is not NULL before 
 	showing/hiding it. Added TODO because it probably should not be NULL.
