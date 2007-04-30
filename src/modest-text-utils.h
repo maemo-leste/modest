@@ -254,6 +254,19 @@ gchar * modest_text_utils_get_display_size (guint size);
 gboolean     modest_text_utils_validate_email_address (const gchar *email_address);
 
 /**
+ * modest_text_utils_validate_recipient:
+ * @recipient: a string
+ *
+ * validates @recipient as a valid recipient field for header.
+ * It's different from modest_text_utils_validate_email_address()
+ * as it validates a whole recipient, and not only the part between
+ * the &lt; and &gt; symbols.
+ *
+ * Returns: %TRUE if the recipient is valid, FALSE otherwise
+ **/
+gboolean     modest_text_utils_validate_recipient (const gchar *recipient);
+
+/**
  * modest_text_utils_split_addresses_list:
  * @addresses: a string
  *

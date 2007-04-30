@@ -39,6 +39,7 @@
 #include <modest-runtime.h>
 #include <modest-window-priv.h>
 #include <modest-tny-folder.h>
+#include <modest-text-utils.h>
 #include "modest-hildon-includes.h"
 #include <gtkhtml/gtkhtml-search.h>
 #include <gdk/gdkkeysyms.h>
@@ -75,6 +76,10 @@ static void modest_msg_view_window_update_priority (ModestMsgViewWindow *window)
 static void modest_msg_view_window_show_toolbar   (ModestWindow *window,
 						   gboolean show_toolbar);
 
+static void modest_msg_view_window_clipboard_owner_change (GtkClipboard *clipboard,
+							   GdkEvent *event,
+							   ModestMsgViewWindow *window);
+
 
 /* list my signals */
 enum {
@@ -106,6 +111,8 @@ struct _ModestMsgViewWindowPrivate {
 
 	GtkTreeModel *header_model;
 	GtkTreeIter   iter;
+
+	guint clipboard_change_handler;
 };
 
 #define MODEST_MSG_VIEW_WINDOW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -169,6 +176,7 @@ modest_msg_view_window_init (ModestMsgViewWindow *obj)
 
 	priv->msg_view      = NULL;
 	priv->header_model  = NULL;
+	priv->clipboard_change_handler = 0;
 }
 
 static void
@@ -245,6 +253,8 @@ init_window (ModestMsgViewWindow *obj, TnyMsg *msg)
 	g_signal_connect (G_OBJECT (priv->find_toolbar), "close", G_CALLBACK (modest_msg_view_window_find_toolbar_close), obj);
 	g_signal_connect (G_OBJECT (priv->find_toolbar), "search", G_CALLBACK (modest_msg_view_window_find_toolbar_search), obj);
 	
+	priv->clipboard_change_handler = g_signal_connect (G_OBJECT (gtk_clipboard_get (GDK_SELECTION_PRIMARY)), "owner-change", G_CALLBACK (modest_msg_view_window_clipboard_owner_change), obj);
+	modest_msg_view_window_clipboard_owner_change (gtk_clipboard_get (GDK_SELECTION_PRIMARY), NULL, obj);
 	gtk_widget_show_all (GTK_WIDGET(main_vbox));
 	gtk_box_pack_end (GTK_BOX (main_vbox), priv->find_toolbar, FALSE, FALSE, 0);
 }	
@@ -259,6 +269,10 @@ modest_msg_view_window_finalize (GObject *obj)
 	if (priv->header_model != NULL) {
 		g_object_unref (priv->header_model);
 		priv->header_model = NULL;
+	}
+	if (priv->clipboard_change_handler > 0) {
+		g_signal_handler_disconnect (gtk_clipboard_get (GDK_SELECTION_PRIMARY), priv->clipboard_change_handler);
+		priv->clipboard_change_handler = 0;
 	}
 
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
@@ -969,4 +983,26 @@ modest_msg_view_window_show_toolbar (ModestWindow *self,
 		else
 			gtk_widget_hide (GTK_WIDGET (parent_priv->toolbar));
 	}
+}
+
+static void 
+modest_msg_view_window_clipboard_owner_change (GtkClipboard *clipboard,
+					       GdkEvent *event,
+					       ModestMsgViewWindow *window)
+{
+	ModestWindowPrivate *parent_priv;
+	GtkAction *action;
+	gboolean is_address;
+	gchar *selection;
+
+	parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
+	selection = gtk_clipboard_wait_for_text (clipboard);
+
+	g_message ("SELECTION %s", selection);
+	is_address = ((selection != NULL) && (modest_text_utils_validate_recipient (selection)));
+	g_free (selection);
+	
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/ToolsMenu/ToolsAddToContactsMenu");
+	gtk_action_set_sensitive (action, is_address);
+	
 }

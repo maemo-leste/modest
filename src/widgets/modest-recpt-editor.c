@@ -636,7 +636,10 @@ modest_recpt_editor_on_key_press_event (GtkTextView *text_view,
 			return TRUE;
 		}
 		#else
-		/* TODO: Alternative code. */
+		if (gtk_text_buffer_get_selection_bounds (buffer, NULL, NULL)) {
+			gtk_text_buffer_delete_selection (buffer, TRUE, TRUE);
+			return TRUE;
+		}
 		#endif
 
 		tag = prev_iter_has_recipient (&location);

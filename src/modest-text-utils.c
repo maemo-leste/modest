@@ -976,7 +976,74 @@ modest_text_utils_validate_email_address (const gchar *email_address)
 	return (count >= 1) ? TRUE : FALSE;
 }
 
+gboolean 
+modest_text_utils_validate_recipient (const gchar *recipient)
+{
+	gchar *stripped;
+	gchar *right_part;
+	gint i = 0;
+	gboolean has_error = FALSE;
 
+	if (modest_text_utils_validate_email_address (recipient))
+		return TRUE;
+	stripped = g_strdup (recipient);
+	stripped = g_strstrip (stripped);
+
+	if (stripped[0] == '\0') {
+		g_free (stripped);
+		return FALSE;
+	}
+
+	/* quoted string */
+	if (stripped[0] == '\"') {
+		i = 1;
+		has_error = TRUE;
+		for (i = 1; stripped[i] != '\0'; i++) {
+			if (stripped[i] == '\\') {
+				if (stripped[i+1] >=0) {
+					i++;
+				} else {
+					has_error = TRUE;
+					break;
+				}
+			} else if (stripped[i] == '\"') {
+				has_error = FALSE;
+				break;
+			}
+		}
+	} else {
+		has_error = TRUE;
+		for (i = 0; stripped[i] != '\0'; i++) {
+			if (stripped[i] == ' ') {
+				has_error = FALSE;
+				break;
+			}
+		}
+	}
+		
+	if (has_error) {
+		g_free (stripped);
+		return FALSE;
+	}
+
+	right_part = g_strdup (stripped + i);
+	g_free (stripped);
+	right_part = g_strstrip (right_part);
+	if (g_str_has_prefix (right_part, "<") &&
+	    g_str_has_suffix (right_part, ">")) {
+		gchar *address;
+		gboolean valid;
+
+		address = g_strndup (right_part+1, strlen (right_part) - 2);
+		g_free (right_part);
+		valid = modest_text_utils_validate_email_address (address);
+		g_free (address);
+		return valid;
+	} else {
+		g_free (right_part);
+		return FALSE;
+	}
+}
 
 
 gchar *
