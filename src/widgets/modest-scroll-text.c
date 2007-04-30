@@ -97,13 +97,11 @@ size_request (GtkWidget *widget,
 
 	/* Count lines in text view */
 	for (line = 0; line < line_limit; line++) {
-		if (!gtk_text_view_forward_display_line (GTK_TEXT_VIEW (text_view), &iter))
+		if (!gtk_text_view_forward_display_line_end (GTK_TEXT_VIEW (text_view), &iter))
 			break;
+		else 
+			gtk_text_view_forward_display_line (GTK_TEXT_VIEW (text_view), &iter);
 	}
-
-	/* Put again the cursor in the first character. Also scroll to first line */
-	gtk_text_buffer_place_cursor (buffer, &insert_iter);
-	gtk_text_view_place_cursor_onscreen (GTK_TEXT_VIEW (text_view));
 
 	/* Change the adjustment properties for one line per step behavior */
 	adj = gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (widget));
@@ -124,6 +122,10 @@ size_request (GtkWidget *widget,
 	}
 		
 	priv->line_height = iter_rectangle.height;
+
+	/* Put again the cursor in the first character. Also scroll to first line */
+	gtk_text_buffer_place_cursor (buffer, &insert_iter);
+	gtk_text_view_scroll_mark_onscreen (GTK_TEXT_VIEW (text_view), insert_mark);
 
 }
 

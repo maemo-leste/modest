@@ -37,7 +37,7 @@
       <menuitem name="MessageReplyAllMenu" action="EmailReplyAll"/>
       <menuitem name="MessageForwardMenu" action="EmailForward"/>
       <separator/>
-      <menuitem name="MessageNewMenu"  action="EmailNew"/>
+      <menuitem name="MessageNewMenu"  action="EmailNewDefault"/>
       <separator/>
       <menuitem name="MessageDeleteMenu" action="EmailDelete"/>
       <separator/>

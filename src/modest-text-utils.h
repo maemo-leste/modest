@@ -56,6 +56,7 @@ gchar* modest_text_utils_derived_subject (const gchar *subject,
  * @text: a non-NULL string which contains the message to quote
  * @from: a non-NULL  sender of the original message
  * @content_type: the non-NULL content type for the quoting, e.g. "text/html"
+ * @signature: NULL or the signature to add
  * @sent_date: sent date/time of the original message
  * @limit: specifies the maximum characters per line in the quoted text
  * 
@@ -65,6 +66,7 @@ gchar* modest_text_utils_derived_subject (const gchar *subject,
  */
 gchar* modest_text_utils_quote (const gchar *text, 
 				const gchar *content_type,
+				const gchar *signature,
 			        const gchar *from,
 			        const time_t sent_date, 
 				int limit);
@@ -82,6 +84,7 @@ gchar* modest_text_utils_quote (const gchar *text,
  */
 gchar* modest_text_utils_cite (const gchar *text,
 			       const gchar *content_type,
+			       const gchar *signature,
 			       const gchar *from,
 			       time_t sent_date);
 
@@ -100,6 +103,7 @@ gchar* modest_text_utils_cite (const gchar *text,
  */
 gchar*   modest_text_utils_inline (const gchar *text,
 				   const gchar *content_type,
+				   const gchar *signature,
 				   const gchar *from,
 				   time_t sent_date,
 				   const gchar *to,
@@ -146,6 +150,16 @@ void     modest_text_utils_address_range_at_position (const gchar *recipients_li
  * Returns: a newly allocated string containing the html
  */
 gchar*  modest_text_utils_convert_to_html (const gchar *txt);
+
+/**
+ * modest_text_utils_convert_to_html_body:
+ * @txt: a string
+ *
+ * convert plain text (utf8) into html without adding html headers.
+ * 
+ * Returns: a newly allocated string containing the html
+ */
+gchar*  modest_text_utils_convert_to_html_body (const gchar *data);
 
 
 /**

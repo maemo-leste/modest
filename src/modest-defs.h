@@ -60,6 +60,8 @@
 #define MODEST_CONF_REPLY_TYPE           MODEST_CONF_NAMESPACE "/reply_type"        /*  int  */
 #define MODEST_CONF_FORWARD_TYPE         MODEST_CONF_NAMESPACE "/forward_type"      /*  int  */
 
+#define MODEST_CONF_PREFER_FORMATTED_TEXT MODEST_CONF_NAMESPACE "/prefer_formatted_text"
+
 #define MODEST_CONF_CONNECT_AT_STARTUP   MODEST_CONF_NAMESPACE "/connect_at_startup"      
 
 #define MODEST_CONF_SHOW_CC              MODEST_CONF_NAMESPACE "/show_cc"           
@@ -89,8 +91,8 @@
 #define MODEST_ACCOUNT_DISPLAY_NAME      "display_name"      /* string */
 #define MODEST_ACCOUNT_STORE_ACCOUNT     "store_account"     /* string */
 #define MODEST_ACCOUNT_TRANSPORT_ACCOUNT "transport_account" /* string */
-#define MODEST_ACCOUNT_FULLNAME		 "fullname"
-#define MODEST_ACCOUNT_EMAIL             "email"
+#define MODEST_ACCOUNT_FULLNAME		 "fullname"          /* string */
+#define MODEST_ACCOUNT_EMAIL             "email"             /* string */
 
 /* This is a list of strings, with each strings, 
  * alernating between a connection name, followed by a corresponding server account name.

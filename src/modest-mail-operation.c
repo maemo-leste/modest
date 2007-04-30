@@ -292,6 +292,62 @@ modest_mail_operation_send_new_mail (ModestMailOperation *self,
 	g_object_unref (G_OBJECT (new_msg));
 }
 
+void
+modest_mail_operation_save_to_drafts (ModestMailOperation *self,
+				      TnyTransportAccount *transport_account,
+				      const gchar *from,  const gchar *to,
+				      const gchar *cc,  const gchar *bcc,
+				      const gchar *subject, const gchar *plain_body,
+				      const gchar *html_body,
+				      const GList *attachments_list,
+				      TnyHeaderFlags priority_flags)
+{
+	TnyMsg *msg = NULL;
+	TnyFolder *folder = NULL;
+	ModestMailOperationPrivate *priv = NULL;
+	GError *err = NULL;
+
+	/* GList *node = NULL; */
+
+	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
+	g_return_if_fail (TNY_IS_TRANSPORT_ACCOUNT (transport_account));
+
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
+
+	if (html_body == NULL) {
+		msg = modest_tny_msg_new (to, from, cc, bcc, subject, plain_body, (GSList *) attachments_list); /* FIXME: attachments */
+	} else {
+		msg = modest_tny_msg_new_html_plain (to, from, cc, bcc, subject, html_body, plain_body, (GSList *) attachments_list);
+	}
+	if (!msg) {
+		g_printerr ("modest: failed to create a new msg\n");
+		goto cleanup;
+	}
+
+	folder = modest_tny_account_get_special_folder (TNY_ACCOUNT (transport_account), TNY_FOLDER_TYPE_DRAFTS);
+	if (!folder) {
+		g_printerr ("modest: failed to find Drafts folder\n");
+		goto cleanup;
+	}
+	
+	tny_folder_add_msg (folder, msg, &err);
+	if (err) {
+		g_printerr ("modest: error adding msg to Drafts folder: %s",
+			    err->message);
+		g_error_free (err);
+		goto cleanup;
+	}
+
+	modest_mail_operation_queue_remove (modest_runtime_get_mail_operation_queue (), self);
+
+	/* Free */
+cleanup:
+	if (msg)
+		g_object_unref (G_OBJECT(msg));
+	if (folder)
+		g_object_unref (G_OBJECT(folder));
+}
+
 static void
 recurse_folders (TnyFolderStore *store, TnyFolderStoreQuery *query, TnyList *all_folders)
 {

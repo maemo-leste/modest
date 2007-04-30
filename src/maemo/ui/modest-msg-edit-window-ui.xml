@@ -33,7 +33,14 @@
   <menubar name="MenuBar">
 
     <menu name="EmailMenu" action="Email">
+      <menuitem name="SendMenu" action="ActionsSend"/>
+      <menuitem name="SaveToDraftsMenu" action="ActionsSaveToDrafts"/>
+      <separator/>
       <menuitem name="SelectContactsMenu" action="SelectContacts"/>
+      <separator/>
+      <menuitem name="NewMessageMenu" action="ActionsNewMessage"/>
+      <separator/>
+      <menuitem name="DeleteMenu" action="ActionsDelete"/>
     </menu>
 
     <menu name="EditMenu" action="Edit">
@@ -90,6 +97,11 @@
 	<menuitem name="MessagePriorityNormalMenu" action="MessagePriorityNormal"/>
 	<menuitem name="MessagePriorityLowMenu" action="MessagePriorityLow"/>
       </menu>
+    </menu>
+
+    <menu name="CloseMenu" action="Close">
+      <menuitem name="CloseWindowMenu" action="CloseWindow"/>
+      <menuitem name="CloseAllWindowsMenu" action="CloseAllWindows"/>
     </menu>
 
   </menubar>

@@ -114,6 +114,7 @@ static gchar*   modest_text_utils_quote_html       (const gchar *text,
 gchar *
 modest_text_utils_quote (const gchar *text, 
 			 const gchar *content_type,
+			 const gchar *signature,
 			 const gchar *from,
 			 const time_t sent_date, 
 			 int limit)
@@ -141,16 +142,27 @@ modest_text_utils_quote (const gchar *text,
 gchar *
 modest_text_utils_cite (const gchar *text,
 			const gchar *content_type,
+			const gchar *signature,
 			const gchar *from,
 			time_t sent_date)
 {
 	gchar *tmp, *retval;
+	gchar *tmp_sig;
 
 	g_return_val_if_fail (text, NULL);
 	g_return_val_if_fail (content_type, NULL);
 
+	if (!signature)
+		tmp_sig = g_strdup ("");
+	else if (!strcmp(content_type, "text/html")) {
+		tmp_sig = modest_text_utils_convert_to_html_body(signature);
+	} else {
+		tmp_sig = g_strdup (signature);
+	}
+
 	tmp = cite (sent_date, from);
-	retval = g_strdup_printf ("%s%s\n", tmp, text);
+	retval = g_strdup_printf ("%s%s%s\n", tmp_sig, tmp, text);
+	g_free (tmp_sig);
 	g_free (tmp);
 
 	return retval;
@@ -159,15 +171,17 @@ modest_text_utils_cite (const gchar *text,
 gchar * 
 modest_text_utils_inline (const gchar *text,
 			  const gchar *content_type,
+			  const gchar *signature,
 			  const gchar *from,
 			  time_t sent_date,
 			  const gchar *to,
 			  const gchar *subject)
 {
 	gchar sent_str[101];
-	const gchar *plain_format = "%s\n%s %s\n%s %s\n%s %s\n%s %s\n\n%s";
+	gchar *formatted_signature;
+	const gchar *plain_format = "%s%s\n%s %s\n%s %s\n%s %s\n%s %s\n\n%s";
 	const gchar *html_format = \
-		"%s<br>\n<table width=\"100%\" border=\"0\" cellspacing=\"2\" cellpadding=\"2\">\n" \
+		"%s%s<br>\n<table width=\"100%\" border=\"0\" cellspacing=\"2\" cellpadding=\"2\">\n" \
 		"<tr><td>%s</td><td>%s</td></tr>\n" \
 		"<tr><td>%s</td><td>%s</td></tr>\n" \
 		"<tr><td>%s</td><td>%s</td></tr>\n" \
@@ -188,7 +202,17 @@ modest_text_utils_inline (const gchar *text,
 	else
 		format = plain_format;
 
-	return g_strdup_printf (format, 
+	if (signature != NULL) {
+		if (!strcmp (content_type, "text/html")) {
+			formatted_signature = g_strconcat (signature, "<br/>", NULL);
+		} else {
+			formatted_signature = g_strconcat (signature, "\n");
+		}
+	} else {
+		formatted_signature = "";
+	}
+
+	return g_strdup_printf (format, formatted_signature, 
 				FORWARD_STRING,
 				FROM_STRING, (from) ? from : EMPTY_STRING,
 				SENT_STRING, sent_str,
@@ -272,27 +296,15 @@ modest_text_utils_remove_address (const gchar *address_list, const gchar *addres
 	return result;
 }
 
-
-gchar*
-modest_text_utils_convert_to_html (const gchar *data)
+static void
+modest_text_utils_convert_buffer_to_html (GString *html, const gchar *data)
 {
 	guint		 i;
 	gboolean	space_seen = FALSE;
-	GString		*html;	    
 	gsize           len;
-	
-	if (!data)
-		return NULL;
 
 	len = strlen (data);
-	html = g_string_sized_new (1.5 * len);	/* just a  guess... */
 
-	g_string_append_printf (html,
-				"<html><head>"
-				"<meta http-equiv=\"content-type\" content=\"text/html; charset=utf8\">"
-				"</head>"
-				"<body><tt>");
-	
 	/* replace with special html chars where needed*/
 	for (i = 0; i != len; ++i)  {
 		char kar = data[i];
@@ -322,8 +334,48 @@ modest_text_utils_convert_to_html (const gchar *data)
 			g_string_append_c (html, kar);
 		}
 	}
+}
+
+gchar*
+modest_text_utils_convert_to_html (const gchar *data)
+{
+	GString		*html;	    
+	gsize           len;
 	
-	g_string_append (html, "</tt></body></html>");
+	if (!data)
+		return NULL;
+
+	len = strlen (data);
+	html = g_string_sized_new (1.5 * len);	/* just a  guess... */
+
+	g_string_append_printf (html,
+				"<html><head>"
+				"<meta http-equiv=\"content-type\" content=\"text/html; charset=utf8\">"
+				"</head>"
+				"<body>");
+
+	modest_text_utils_convert_buffer_to_html (html, data);
+	
+	g_string_append (html, "</body></html>");
+	hyperlinkify_plain_text (html);
+
+	return g_string_free (html, FALSE);
+}
+
+gchar *
+modest_text_utils_convert_to_html_body (const gchar *data)
+{
+	GString		*html;	    
+	gsize           len;
+	
+	if (!data)
+		return NULL;
+
+	len = strlen (data);
+	html = g_string_sized_new (1.5 * len);	/* just a  guess... */
+
+	modest_text_utils_convert_buffer_to_html (html, data);
+
 	hyperlinkify_plain_text (html);
 
 	return g_string_free (html, FALSE);

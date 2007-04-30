@@ -51,8 +51,12 @@ static const GtkActionEntry modest_msg_edit_action_entries [] = {
 	{ "FileFormat", NULL, N_("mcen_me_editor_file_format") },
 	{ "Tools", NULL, N_("mcen_me_inbox_tools") },
 	{ "ShowToolbar", NULL, N_("mcen_me_inbox_toolbar") },
+	{ "Close", NULL, N_("mcen_me_inbox_close") },
 
 	/* ACTIONS */
+	{ "ActionsNewMessage", NULL, N_("mcen_me_viewer_newemail"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_new_msg) },
+	{ "ActionsSaveToDrafts", NULL, N_("mcen_me_editor_save_as_draft"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_save_to_drafts) },
+	{ "ActionsDelete", NULL, N_("mcen_me_inbox_delete"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_delete) },
 	{ "ActionsSend", NULL, N_("mcen_me_editor_send"),  NULL, NULL,  G_CALLBACK (modest_ui_actions_on_send) },
 /* 	{ "ActionsFontColor", GTK_STOCK_SELECT_COLOR, N_("Color"), NULL, N_("Change text color"), G_CALLBACK (modest_ui_actions_on_select_editor_color)}, */
 /* 	{ "BackgroundColor", GTK_STOCK_SELECT_COLOR, N_("Background color"), NULL, N_("Change background color"), G_CALLBACK (modest_ui_actions_on_select_editor_background_color)}, */
@@ -64,6 +68,8 @@ static const GtkActionEntry modest_msg_edit_action_entries [] = {
 	{ "SelectAll", NULL, N_("mcen_me_viewer_selectall"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_select_all)},
 	{ "SelectFont", NULL, N_("mcen_me_editor_font"), NULL, NULL, G_CALLBACK (modest_ui_actions_msg_edit_on_select_font)},
 	{ "SelectContacts", NULL, N_("mcen_me_editor_selectrecipients"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_select_contacts)},
+	{ "CloseWindow", NULL, N_("mcen_me_inbox_close_window"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_close_window)},
+	{ "CloseAllWindows", NULL, N_("mcen_me_inbox_close_windows"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_quit) },
 
 	/* KEY ACCELERATOR ACTIONS */
 	{ "ZoomPlus", NULL, N_("Zoom +"), "F7", NULL, G_CALLBACK (modest_ui_actions_on_zoom_plus) },

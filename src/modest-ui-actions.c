@@ -155,6 +155,12 @@ modest_ui_actions_on_delete (GtkAction *action, ModestWindow *win)
 	TnyIterator *iter;
 
 	g_return_if_fail (MODEST_IS_WINDOW(win));
+
+	if (MODEST_IS_MSG_EDIT_WINDOW (win)) {
+		gboolean ret_value;
+		g_signal_emit_by_name (G_OBJECT (win), "delete-event", NULL, &ret_value);
+		return;
+	}
 		
 	header_list = get_selected_headers (win);
 	
@@ -204,6 +210,9 @@ modest_ui_actions_on_close_window (GtkAction *action, ModestWindow *win)
 {
 	if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
 		gtk_widget_destroy (GTK_WIDGET (win));
+	} else if (MODEST_IS_MSG_EDIT_WINDOW (win)) {
+		gboolean ret_value;
+		g_signal_emit_by_name (G_OBJECT (win), "delete-event", NULL, &ret_value);
 	} else if (MODEST_IS_WINDOW (win)) {
 		gtk_widget_destroy (GTK_WIDGET (win));
 	} else {
@@ -285,9 +294,10 @@ modest_ui_actions_on_new_msg (GtkAction *action, ModestWindow *win)
 	TnyFolder *folder = NULL;
 	gchar *account_name = NULL;
 	gchar *from_str = NULL;
-	GError *err = NULL;
+/* 	GError *err = NULL; */
 	TnyAccount *account = NULL;
 	ModestWindowMgr *mgr;
+	gchar *signature = NULL;
 	
 	account_name = g_strdup(modest_window_get_active_account (win));
 	if (!account_name)
@@ -311,7 +321,15 @@ modest_ui_actions_on_new_msg (GtkAction *action, ModestWindow *win)
 		goto cleanup;
 	}
 
-	msg = modest_tny_msg_new ("", from_str, "", "", "", "", NULL);
+	if (modest_account_mgr_get_bool (modest_runtime_get_account_mgr (), account_name,
+					 MODEST_ACCOUNT_USE_SIGNATURE, FALSE)) {
+		signature = modest_account_mgr_get_string (modest_runtime_get_account_mgr (), account_name,
+							   MODEST_ACCOUNT_SIGNATURE, FALSE);
+	} else {
+		signature = g_strdup ("");
+	}
+
+	msg = modest_tny_msg_new ("", from_str, "", "", "", signature, NULL);
 	if (!msg) {
 		g_printerr ("modest: failed to create new msg\n");
 		goto cleanup;
@@ -323,13 +341,13 @@ modest_ui_actions_on_new_msg (GtkAction *action, ModestWindow *win)
 		goto cleanup;
 	}
 	
-	tny_folder_add_msg (folder, msg, &err);
-	if (err) {
-		g_printerr ("modest: error adding msg to Drafts folder: %s",
-			    err->message);
-		g_error_free (err);
-		goto cleanup;
-	}
+/* 	tny_folder_add_msg (folder, msg, &err); */
+/* 	if (err) { */
+/* 		g_printerr ("modest: error adding msg to Drafts folder: %s", */
+/* 			    err->message); */
+/* 		g_error_free (err); */
+/* 		goto cleanup; */
+/* 	} */
 
 	/* Create and register edit window */
 	msg_win = modest_msg_edit_window_new (msg, account_name);
@@ -344,6 +362,7 @@ modest_ui_actions_on_new_msg (GtkAction *action, ModestWindow *win)
 cleanup:
 	g_free (account_name);
 	g_free (from_str);
+	g_free (signature);
 	if (account)
 		g_object_unref (G_OBJECT(account));
 	if (msg)
@@ -374,6 +393,7 @@ reply_forward_func (gpointer data, gpointer user_data)
 	TnyFolder *folder = NULL;
 	TnyAccount *account = NULL;
 	ModestWindowMgr *mgr;
+	gchar *signature = NULL;
 	
 	msg = TNY_MSG (data);
 	helper = (GetMsgAsyncHelper *) user_data;
@@ -381,29 +401,38 @@ reply_forward_func (gpointer data, gpointer user_data)
 
 	from = modest_account_mgr_get_from_string (modest_runtime_get_account_mgr(),
 						   rf_helper->account_name);
+	if (modest_account_mgr_get_bool (modest_runtime_get_account_mgr(),
+					 rf_helper->account_name,
+					 MODEST_ACCOUNT_USE_SIGNATURE, FALSE)) {
+		signature = modest_account_mgr_get_string (modest_runtime_get_account_mgr (),
+							   rf_helper->account_name,
+							   MODEST_ACCOUNT_SIGNATURE, FALSE);
+	}
 	/* Create reply mail */
 	switch (rf_helper->action) {
 	case ACTION_REPLY:
 		new_msg = 
-			modest_tny_msg_create_reply_msg (msg,  from, 
+			modest_tny_msg_create_reply_msg (msg,  from, signature,
 							 rf_helper->reply_forward_type,
 							 MODEST_TNY_MSG_REPLY_MODE_SENDER);
 		break;
 	case ACTION_REPLY_TO_ALL:
 		new_msg = 
-			modest_tny_msg_create_reply_msg (msg, from, rf_helper->reply_forward_type,
+			modest_tny_msg_create_reply_msg (msg, from, signature, rf_helper->reply_forward_type,
 							 MODEST_TNY_MSG_REPLY_MODE_ALL);
 		edit_type = MODEST_EDIT_TYPE_REPLY;
 		break;
 	case ACTION_FORWARD:
 		new_msg = 
-			modest_tny_msg_create_forward_msg (msg, from, rf_helper->reply_forward_type);
+			modest_tny_msg_create_forward_msg (msg, from, signature, rf_helper->reply_forward_type);
 		edit_type = MODEST_EDIT_TYPE_FORWARD;
 		break;
 	default:
 		g_return_if_reached ();
 		return;
 	}
+
+	g_free (signature);
 
 	if (!new_msg) {
 		g_printerr ("modest: failed to create message\n");
@@ -1067,6 +1096,67 @@ modest_ui_actions_on_msg_recpt_activated (ModestMsgView *msgview,
 	g_message ("%s %s", __FUNCTION__, address);
 }
 
+void
+modest_ui_actions_on_save_to_drafts (GtkWidget *widget, ModestMsgEditWindow *edit_window)
+{
+	TnyTransportAccount *transport_account;
+	ModestMailOperation *mail_operation;
+	MsgData *data;
+	gchar *account_name, *from;
+	ModestAccountMgr *account_mgr;
+
+	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW(edit_window));
+	
+	data = modest_msg_edit_window_get_msg_data (edit_window);
+
+	account_mgr = modest_runtime_get_account_mgr();
+	account_name = g_strdup(modest_window_get_active_account (MODEST_WINDOW(edit_window)));
+	if (!account_name) 
+		account_name = modest_account_mgr_get_default_account (account_mgr);
+	if (!account_name) {
+		g_printerr ("modest: no account found\n");
+		modest_msg_edit_window_free_msg_data (edit_window, data);
+		return;
+	}
+	transport_account =
+		TNY_TRANSPORT_ACCOUNT(modest_tny_account_store_get_tny_account_by_account
+				      (modest_runtime_get_account_store(),
+				       account_name,
+				       TNY_ACCOUNT_TYPE_TRANSPORT));
+	if (!transport_account) {
+		g_printerr ("modest: no transport account found for '%s'\n", account_name);
+		g_free (account_name);
+		modest_msg_edit_window_free_msg_data (edit_window, data);
+		return;
+	}
+	from = modest_account_mgr_get_from_string (account_mgr, account_name);
+
+	/* Create the mail operation */		
+	mail_operation = modest_mail_operation_new (MODEST_MAIL_OPERATION_ID_INFO);
+	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_operation);
+
+	modest_mail_operation_save_to_drafts (mail_operation,
+					      transport_account,
+					      from,
+					      data->to, 
+					      data->cc, 
+					      data->bcc,
+					      data->subject, 
+					      data->plain_body, 
+					      data->html_body,
+					      data->attachments,
+					      data->priority_flags);
+	/* Frees */
+	g_free (from);
+	g_free (account_name);
+	g_object_unref (G_OBJECT (transport_account));
+	g_object_unref (G_OBJECT (mail_operation));
+
+	modest_msg_edit_window_free_msg_data (edit_window, data);
+
+	/* Save settings and close the window */
+	gtk_widget_destroy (GTK_WIDGET (edit_window));
+}
 void
 modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 {

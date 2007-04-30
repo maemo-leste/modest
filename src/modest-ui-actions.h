@@ -134,6 +134,9 @@ void     modest_ui_actions_on_msg_recpt_activated   (ModestMsgView *msgview, con
 
 void     modest_ui_actions_on_send                     (GtkWidget *widget,
 							ModestMsgEditWindow *edit_window);
+void     modest_ui_actions_on_save_to_drafts           (GtkWidget *widget, 
+							ModestMsgEditWindow *edit_window);
+
 
 void     modest_ui_actions_on_toggle_bold              (GtkToggleAction *action,
 							ModestMsgEditWindow *window);

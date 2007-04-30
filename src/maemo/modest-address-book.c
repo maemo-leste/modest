@@ -139,8 +139,12 @@ modest_address_book_select_addresses (ModestRecptEditor *recpt_editor)
 	GtkWidget *contact_dialog;
 	GSList *email_addrs_per_contact = NULL;
 	gchar *econtact_id;
+	gboolean focus_recpt_editor = FALSE;
+	GtkWidget *toplevel;
 
 	g_return_if_fail (MODEST_IS_RECPT_EDITOR (recpt_editor));
+
+	toplevel = gtk_widget_get_toplevel (GTK_WIDGET (recpt_editor));
 
 	contact_model = osso_abook_contact_model_new ();
 	if (!open_addressbook ()) {
@@ -179,6 +183,7 @@ modest_address_book_select_addresses (ModestRecptEditor *recpt_editor)
 				g_slist_foreach (email_addrs_per_contact, (GFunc) g_free, NULL);
 				g_slist_free (email_addrs_per_contact);
 				email_addrs_per_contact = NULL;
+				focus_recpt_editor = TRUE;
 			}
 		}
 		g_list_free (contacts_list);
@@ -195,6 +200,9 @@ modest_address_book_select_addresses (ModestRecptEditor *recpt_editor)
 	}
 
 	gtk_widget_destroy (contact_dialog);
+
+	if (focus_recpt_editor)
+		modest_recpt_editor_grab_focus (MODEST_RECPT_EDITOR (recpt_editor));
 
 }
 
@@ -512,6 +520,8 @@ select_email_addrs_for_contact(GList * email_addr_list)
 		gtk_list_store_set(list_store, &iter, 0, email_addr, -1);
 		g_free(email_addr);
 	}
+	gtk_tree_model_get_iter_first (GTK_TREE_MODEL (list_store), &iter);
+	gtk_tree_selection_select_iter (selection, &iter);
 
 	gtk_widget_show_all(select_email_addr_dlg);
 	result = gtk_dialog_run(GTK_DIALOG(select_email_addr_dlg));

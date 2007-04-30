@@ -58,7 +58,7 @@ struct _ModestFormatterClass
 
 GType modest_formatter_get_type (void);
 
-ModestFormatter* modest_formatter_new (const gchar *content_type);
+ModestFormatter* modest_formatter_new (const gchar *content_type, const gchar *signature);
 
 /**
  * modest_formatter_cite:

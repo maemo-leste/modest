@@ -9,6 +9,7 @@
 /* #include <hildon-widgets/hildon-wizard-dialog.h> */
 #include "modest-wizard-dialog.h" /* We use a copied-and-improved HildonWizardDialog. */
 #include "modest-account-mgr.h"
+#include <config.h>
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>

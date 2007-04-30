@@ -21,6 +21,7 @@
  * widget provided by users contains the actual wizard pages.
  */
 
+#include <config.h>
 #include <gtk/gtkdialog.h>
 #include <gtk/gtknotebook.h>
 #include <gtk/gtkimage.h>
@@ -234,12 +235,12 @@ init (ModestWizardDialog *wizard_dialog)
     gtk_dialog_set_has_separator (dialog, FALSE);
     wizard_dialog->priv = priv;
     priv->box = GTK_BOX (gtk_hbox_new (FALSE, 0));
-#ifdef MODEST_HILDON_VERSION_0    
+#ifdef MODEST_HILDON_VERSION_0
     priv->image = gtk_image_new_from_icon_name ("qgn_widg_wizard",
-            HILDON_ICON_SIZE_WIDG_WIZARD);
+						HILDON_ICON_SIZE_WIDG_WIZARD);
 #else
     priv->image = gtk_image_new_from_icon_name ("qgn_widg_wizard",
-            HILDON_ICON_SIZE_WIZARD);
+						HILDON_ICON_SIZE_WIZARD);
 #endif /*MODEST_HILDON_VERSION_0*/
     /* Default values for user provided properties */
     priv->notebook = NULL;

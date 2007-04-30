@@ -32,6 +32,7 @@
 #include <glib-object.h>
 #include <gtk/gtkhbox.h>
 #include <gtk/gtksizegroup.h>
+#include <gtk/gtktextbuffer.h>
 
 G_BEGIN_DECLS
 
@@ -70,6 +71,8 @@ void modest_recpt_editor_add_recipients (ModestRecptEditor *recpt_editor, const 
 void modest_recpt_editor_add_resolved_recipient (ModestRecptEditor *recpt_editor, GSList *email_list, const gchar * recipient_id);
 
 void modest_recpt_editor_set_field_size_group (ModestRecptEditor *recpt_editor, GtkSizeGroup *size_group);
+GtkTextBuffer *modest_recpt_editor_get_buffer (ModestRecptEditor *recpt_editor);
+void modest_recpt_editor_grab_focus (ModestRecptEditor *recpt_editor);
 
 G_END_DECLS
 

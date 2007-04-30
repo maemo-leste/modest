@@ -130,6 +130,7 @@ gchar*        modest_tny_msg_get_body        (TnyMsg *self, gboolean want_html);
  * modest_tny_msg_create_forward_msg:
  * @msg: a valid #TnyMsg instance
  * @from: the sender of the forwarded mail
+ * @signature: signature to attach to the reply
  * @forward_type: the type of formatting used to create the forwarded message
  * 
  * Creates a forwarded message from an existing one
@@ -138,12 +139,14 @@ gchar*        modest_tny_msg_get_body        (TnyMsg *self, gboolean want_html);
  **/
 TnyMsg*       modest_tny_msg_create_forward_msg   (TnyMsg *msg, 
 						   const gchar *from,
+						   const gchar *signature,
 						   ModestTnyMsgForwardType forward_type);
 
 /**
  * modest_tny_msg_create_reply_msg:
  * @msg: a valid #TnyMsg instance
  * @from: the sender of the forwarded mail
+ * @signature: signature to add to the reply message
  * @reply_type: the type of formatting used to create the reply message
  * @reply_mode: the mode of reply: to the sender only, to a mail list or to all
  * 
@@ -153,6 +156,7 @@ TnyMsg*       modest_tny_msg_create_forward_msg   (TnyMsg *msg,
  **/
 TnyMsg*       modest_tny_msg_create_reply_msg     (TnyMsg *msg, 
 						   const gchar *from,
+						   const gchar *signature,
 						   ModestTnyMsgReplyType reply_type,
 						   ModestTnyMsgReplyMode reply_mode);
 

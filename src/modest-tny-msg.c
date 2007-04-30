@@ -259,6 +259,11 @@ modest_tny_msg_get_body (TnyMsg *msg, gboolean want_html)
 	
 	gtk_text_buffer_get_bounds (buf, &start, &end);
 	to_quote = gtk_text_buffer_get_text (buf, &start, &end, FALSE);
+	if (tny_mime_part_content_type_is (body, "text/plain")) {
+		gchar *to_quote_converted = modest_text_utils_convert_to_html (to_quote);
+		g_free (to_quote);
+		to_quote = to_quote_converted;
+	}
 	g_object_unref (buf);
 
 	return to_quote;
@@ -341,13 +346,14 @@ modest_tny_msg_find_body_part (TnyMsg *msg, gboolean want_html)
 
 
 static TnyMsg *
-create_reply_forward_mail (TnyMsg *msg, const gchar *from, gboolean is_reply, guint type)
+create_reply_forward_mail (TnyMsg *msg, const gchar *from, const gchar *signature, gboolean is_reply, guint type)
 {
 	TnyMsg *new_msg;
 	TnyHeader *new_header, *header;
 	gchar *new_subject;
 	TnyMimePart *body;
 	ModestFormatter *formatter;
+	gchar *subject_prefix;
 
 	/* Get body from original msg. Always look for the text/plain
 	   part of the message to create the reply/forwarded mail */
@@ -355,7 +361,10 @@ create_reply_forward_mail (TnyMsg *msg, const gchar *from, gboolean is_reply, gu
 	body   = modest_tny_msg_find_body_part (msg, FALSE);
 
 	/* TODO: select the formatter from account prefs */
-	formatter = modest_formatter_new ("text/plain");
+	if (modest_conf_get_bool (modest_runtime_get_conf (), MODEST_CONF_PREFER_FORMATTED_TEXT, NULL))
+		formatter = modest_formatter_new ("text/html", signature);
+	else
+		formatter = modest_formatter_new ("text/plain", signature);
 
 	/* Format message body */
 	if (is_reply) {
@@ -388,9 +397,14 @@ create_reply_forward_mail (TnyMsg *msg, const gchar *from, gboolean is_reply, gu
 	tny_header_set_replyto (new_header, from);
 
 	/* Change the subject */
+	if (is_reply)
+		subject_prefix = g_strconcat (_("mail_va_re"), ":", NULL);
+	else
+		subject_prefix = g_strconcat (_("mail_va_fw"), ":", NULL);
 	new_subject =
 		(gchar *) modest_text_utils_derived_subject (tny_header_get_subject(header),
-							     (is_reply) ? _("Re:") : _("Fwd:"));
+							     subject_prefix);
+	g_free (subject_prefix);
 	tny_header_set_subject (new_header, (const gchar *) new_subject);
 	g_free (new_subject);
 
@@ -417,13 +431,14 @@ add_if_attachment (gpointer data, gpointer user_data)
 TnyMsg* 
 modest_tny_msg_create_forward_msg (TnyMsg *msg, 
 				   const gchar *from,
+				   const gchar *signature,
 				   ModestTnyMsgForwardType forward_type)
 {
 	TnyMsg *new_msg;
 	TnyList *parts = NULL;
 	GList *attachments_list = NULL;
 
-	new_msg = create_reply_forward_mail (msg, from, FALSE, forward_type);
+	new_msg = create_reply_forward_mail (msg, from, signature, FALSE, forward_type);
 
 	/* Add attachments */
 	parts = TNY_LIST (tny_simple_list_new());
@@ -442,6 +457,7 @@ modest_tny_msg_create_forward_msg (TnyMsg *msg,
 TnyMsg* 
 modest_tny_msg_create_reply_msg (TnyMsg *msg, 
 				 const gchar *from,
+				 const gchar *signature,
 				 ModestTnyMsgReplyType reply_type,
 				 ModestTnyMsgReplyMode reply_mode)
 {
@@ -452,7 +468,7 @@ modest_tny_msg_create_reply_msg (TnyMsg *msg,
 	const gchar *cc = NULL, *bcc = NULL;
 	GString *tmp = NULL;
 
-	new_msg = create_reply_forward_mail (msg, from, TRUE, reply_type);
+	new_msg = create_reply_forward_mail (msg, from, signature, TRUE, reply_type);
 
 	/* Fill the header */
 	header = tny_msg_get_header (msg);

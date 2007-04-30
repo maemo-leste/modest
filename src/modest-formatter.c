@@ -41,6 +41,7 @@
 typedef struct _ModestFormatterPrivate ModestFormatterPrivate;
 struct _ModestFormatterPrivate {
 	gchar *content_type;
+	gchar *signature;
 };
 #define MODEST_FORMATTER_GET_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                           MODEST_TYPE_FORMATTER, \
@@ -197,7 +198,7 @@ modest_formatter_attach (ModestFormatter *self, TnyMimePart *body, TnyHeader *he
 }
 
 ModestFormatter*
-modest_formatter_new (const gchar *content_type)
+modest_formatter_new (const gchar *content_type, const gchar *signature)
 {
 	ModestFormatter *formatter;
 	ModestFormatterPrivate *priv;
@@ -205,6 +206,7 @@ modest_formatter_new (const gchar *content_type)
 	formatter = g_object_new (MODEST_TYPE_FORMATTER, NULL);
 	priv = MODEST_FORMATTER_GET_PRIVATE (formatter);
 	priv->content_type = g_strdup (content_type);
+	priv->signature = g_strdup (signature);
 
 	return formatter;
 }
@@ -226,6 +228,9 @@ modest_formatter_finalize (GObject *object)
 
 	if (priv->content_type)
 		g_free (priv->content_type);
+
+	if (priv->signature)
+		g_free (priv->signature);
 
 	(*parent_class->finalize) (object);
 }
@@ -278,6 +283,7 @@ modest_formatter_wrapper_cite (ModestFormatter *self, const gchar *text, TnyHead
 
 	return modest_text_utils_cite (text, 
 				       priv->content_type, 
+				       priv->signature,
 				       tny_header_get_from (header), 
 				       tny_header_get_date_sent (header));
 }
@@ -289,6 +295,7 @@ modest_formatter_wrapper_inline (ModestFormatter *self, const gchar *text, TnyHe
 
 	return modest_text_utils_inline (text, 
 					 priv->content_type, 
+					 priv->signature,
 					 tny_header_get_from (header), 
 					 tny_header_get_date_sent (header),
 					 tny_header_get_to (header),
@@ -303,6 +310,7 @@ modest_formatter_wrapper_quote (ModestFormatter *self, const gchar *text, TnyHea
 	/* TODO: get 80 from the configuration */
 	return modest_text_utils_quote (text, 
 					priv->content_type, 
+					priv->signature,
 					tny_header_get_from (header), 
 					tny_header_get_date_sent (header),
 					80);

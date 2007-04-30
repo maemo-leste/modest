@@ -41,6 +41,7 @@
 #include <modest-scroll-text.h>
 #include <pango/pango-attributes.h>
 #include <string.h>
+#include <gdk/gdkkeysyms.h>
 
 static GObjectClass *parent_class = NULL;
 
@@ -60,6 +61,7 @@ struct _ModestRecptEditorPrivate
 	GtkWidget *abook_button;
 	GtkWidget *scrolled_window;
 	gchar *recipients;
+
 };
 
 #define MODEST_RECPT_EDITOR_GET_PRIVATE(o)	\
@@ -75,6 +77,28 @@ static void modest_recpt_editor_class_init (ModestRecptEditorClass *klass);
 /* widget events */
 static void modest_recpt_editor_on_abook_clicked (GtkButton *button,
 						  ModestRecptEditor *editor);
+static gboolean modest_recpt_editor_on_button_release_event (GtkWidget *widget,
+							     GdkEventButton *event,
+							     ModestRecptEditor *editor);
+static void modest_recpt_editor_move_cursor_to_end (ModestRecptEditor *editor);
+static void modest_recpt_editor_on_focus_in (GtkTextView *text_view,
+					     GdkEventFocus *event,
+					     ModestRecptEditor *editor);
+static void modest_recpt_editor_on_insert_text (GtkTextBuffer *buffer,
+						GtkTextIter *location,
+						gchar *text,
+						gint len,
+						ModestRecptEditor *editor);
+static gboolean modest_recpt_editor_on_key_press_event (GtkTextView *text_view,
+							  GdkEventKey *key,
+							  ModestRecptEditor *editor);
+static GtkTextTag *iter_has_recipient (GtkTextIter *iter);
+static gunichar iter_previous_char (GtkTextIter *iter);
+/* static gunichar iter_next_char (GtkTextIter *iter); */
+static GtkTextTag *prev_iter_has_recipient (GtkTextIter *iter);
+/* static GtkTextTag *next_iter_has_recipient (GtkTextIter *iter); */
+static void select_tag_of_iter (GtkTextIter *iter, GtkTextTag *tag);
+
 
 /**
  * modest_recpt_editor_new:
@@ -103,9 +127,11 @@ modest_recpt_editor_set_recipients (ModestRecptEditor *recpt_editor, const gchar
 
 	buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (priv->text_view));
 
+	g_signal_handlers_block_by_func (buffer, modest_recpt_editor_on_insert_text, recpt_editor);
 	gtk_text_buffer_set_text (buffer, recipients, -1);
 	if (GTK_WIDGET_REALIZED (recpt_editor))
 		gtk_widget_queue_resize (GTK_WIDGET (recpt_editor));
+	g_signal_handlers_unblock_by_func (buffer, modest_recpt_editor_on_insert_text, recpt_editor);
 
 }
 
@@ -133,7 +159,12 @@ modest_recpt_editor_add_recipients (ModestRecptEditor *recpt_editor, const gchar
 
 	gtk_text_buffer_get_end_iter (buffer, &iter);
 
+	g_signal_handlers_block_by_func (buffer, modest_recpt_editor_on_insert_text, recpt_editor);
+
 	gtk_text_buffer_insert (buffer, &iter, recipients, -1);
+	
+	g_signal_handlers_unblock_by_func (buffer, modest_recpt_editor_on_insert_text, recpt_editor);
+
 	if (GTK_WIDGET_REALIZED (recpt_editor))
 		gtk_widget_queue_resize (GTK_WIDGET (recpt_editor));
 
@@ -146,17 +177,29 @@ modest_recpt_editor_add_resolved_recipient (ModestRecptEditor *recpt_editor, GSL
 	GtkTextBuffer *buffer = NULL;
 	GtkTextIter start, end, iter;
 	GtkTextTag *tag = NULL;
-	gboolean is_first_recipient = TRUE;
 	GSList *node;
+	gboolean is_first_recipient = TRUE;
       
 	g_return_if_fail (MODEST_IS_RECPT_EDITOR (recpt_editor));
 	priv = MODEST_RECPT_EDITOR_GET_PRIVATE (recpt_editor);
 
 	buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (priv->text_view));
 
+	g_signal_handlers_block_by_func (buffer, modest_recpt_editor_on_insert_text, recpt_editor);
 	gtk_text_buffer_get_bounds (buffer, &start, &end);
-	if (!gtk_text_iter_equal (&start, &end))
-		gtk_text_buffer_insert (buffer, &end, ";\n", -1);
+	if (gtk_text_buffer_get_char_count (buffer) > 0) {
+		gchar * buffer_contents;
+
+		gtk_text_buffer_get_bounds (buffer, &start, &end);
+		buffer_contents = gtk_text_buffer_get_text (buffer, &start, &end, FALSE);
+		if (!g_str_has_suffix (buffer_contents, "\n")) {
+			if (g_str_has_suffix (buffer_contents, ";")||(g_str_has_suffix (buffer_contents, ",")))
+				gtk_text_buffer_insert (buffer, &end, "\n", -1);
+			else 
+				gtk_text_buffer_insert (buffer, &end, ";\n", -1);
+		}
+		g_free (buffer_contents);
+	}
 
 	gtk_text_buffer_get_end_iter (buffer, &iter);
 
@@ -169,19 +212,21 @@ modest_recpt_editor_add_resolved_recipient (ModestRecptEditor *recpt_editor, GSL
 	g_object_set_data_full (G_OBJECT (tag), "recipient-id", g_strdup (recipient_id), (GDestroyNotify) g_free);
 
 	for (node = email_list; node != NULL; node = g_slist_next (node)) {
-		gchar *recipient = (gchar *) email_list->data;
+		gchar *recipient = (gchar *) node->data;
 
 		if ((recipient) && (strlen (recipient) != 0)) {
 
-			if (!is_first_recipient) {
-				gtk_text_buffer_insert (buffer, &iter, ";\n", -1);
-			} else {
-				is_first_recipient = FALSE;
-			}
+			if (!is_first_recipient)
+			gtk_text_buffer_insert (buffer, &iter, "\n", -1);
 
 			gtk_text_buffer_insert_with_tags (buffer, &iter, recipient, -1, tag, NULL);
+			gtk_text_buffer_insert (buffer, &iter, ";", -1);
+			is_first_recipient = FALSE;
 		}
 	}
+	g_signal_handlers_unblock_by_func (buffer, modest_recpt_editor_on_insert_text, recpt_editor);
+
+	modest_recpt_editor_move_cursor_to_end (recpt_editor);
 
 }
 
@@ -222,6 +267,7 @@ modest_recpt_editor_instance_init (GTypeInstance *instance, gpointer g_class)
 {
 	ModestRecptEditorPrivate *priv;
 	GtkWidget *abook_icon;
+	GtkTextBuffer *buffer;
 
 	priv = MODEST_RECPT_EDITOR_GET_PRIVATE (instance);
 
@@ -252,10 +298,14 @@ modest_recpt_editor_instance_init (GTypeInstance *instance, gpointer g_class)
 
 	gtk_widget_set_size_request (priv->text_view, 75, -1);
 
+	buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (priv->text_view));
 	g_signal_connect (G_OBJECT (priv->abook_button), "clicked", G_CALLBACK (modest_recpt_editor_on_abook_clicked), instance);
+	g_signal_connect (G_OBJECT (priv->text_view), "button-release-event", G_CALLBACK (modest_recpt_editor_on_button_release_event), instance);
+	g_signal_connect (G_OBJECT (priv->text_view), "key-press-event", G_CALLBACK (modest_recpt_editor_on_key_press_event), instance);
+	g_signal_connect (G_OBJECT (priv->text_view), "focus-in-event", G_CALLBACK (modest_recpt_editor_on_focus_in), instance);
+	g_signal_connect (G_OBJECT (buffer), "insert-text", G_CALLBACK (modest_recpt_editor_on_insert_text), instance);
 
-	GTK_WIDGET_SET_FLAGS (GTK_WIDGET (instance), GTK_CAN_FOCUS);
-	gtk_container_set_focus_child (GTK_CONTAINER (instance), priv->text_view);
+/* 	gtk_container_set_focus_child (GTK_CONTAINER (instance), priv->text_view); */
 
 	return;
 }
@@ -272,12 +322,358 @@ modest_recpt_editor_set_field_size_group (ModestRecptEditor *recpt_editor, GtkSi
 	gtk_size_group_add_widget (size_group, priv->scrolled_window);
 }
 
+GtkTextBuffer *
+modest_recpt_editor_get_buffer (ModestRecptEditor *recpt_editor)
+{
+	ModestRecptEditorPrivate *priv;
+
+	g_return_val_if_fail (MODEST_IS_RECPT_EDITOR (recpt_editor), NULL);
+	priv = MODEST_RECPT_EDITOR_GET_PRIVATE (recpt_editor);
+
+	return gtk_text_view_get_buffer (GTK_TEXT_VIEW (priv->text_view));
+}
+
 static void
 modest_recpt_editor_on_abook_clicked (GtkButton *button, ModestRecptEditor *editor)
 {
 	g_return_if_fail (MODEST_IS_RECPT_EDITOR (editor));
 
 	g_signal_emit_by_name (G_OBJECT (editor), "open-addressbook");
+}
+
+static gboolean
+modest_recpt_editor_on_button_release_event (GtkWidget *widget,
+					     GdkEventButton *event,
+					     ModestRecptEditor *recpt_editor)
+{
+	ModestRecptEditorPrivate *priv;
+	GtkTextIter location, start, end;
+	GtkTextMark *mark;
+	GtkTextBuffer *buffer;
+	GtkTextTag *tag;
+	gboolean selection_changed = FALSE;
+	
+	priv = MODEST_RECPT_EDITOR_GET_PRIVATE (recpt_editor);
+
+	buffer = modest_recpt_editor_get_buffer (recpt_editor);
+	mark = gtk_text_buffer_get_insert (buffer);
+	gtk_text_buffer_get_iter_at_mark (buffer, &location, mark);
+	g_message ("RELEASE OFFSET %d", gtk_text_iter_get_offset (&location));
+
+	gtk_text_buffer_get_selection_bounds (buffer, &start, &end);
+
+	tag = iter_has_recipient (&start);
+	if (tag != NULL)
+		if (!gtk_text_iter_begins_tag (&start, tag)) {
+			gtk_text_iter_backward_to_tag_toggle (&start, tag);
+			selection_changed = TRUE;
+		} 
+
+	tag = iter_has_recipient (&end);
+	if (tag != NULL) 
+		if (!gtk_text_iter_ends_tag (&end, tag)) {
+			gtk_text_iter_forward_to_tag_toggle (&end, tag);
+			selection_changed = TRUE;
+		}
+
+	gtk_text_buffer_select_range (buffer, &start, &end);
+
+	return FALSE;
+}
+
+static void 
+modest_recpt_editor_on_focus_in (GtkTextView *text_view,
+				 GdkEventFocus *event,
+				 ModestRecptEditor *editor)
+{
+	ModestRecptEditorPrivate *priv = MODEST_RECPT_EDITOR_GET_PRIVATE (editor);
+	modest_recpt_editor_move_cursor_to_end (editor);
+	gtk_text_view_place_cursor_onscreen (GTK_TEXT_VIEW (priv->text_view));
+}
+
+static void 
+modest_recpt_editor_on_insert_text (GtkTextBuffer *buffer,
+				    GtkTextIter *location,
+				    gchar *text,
+				    gint len,
+				    ModestRecptEditor *editor)
+{
+	GtkTextIter prev;
+	gunichar prev_char;
+	ModestRecptEditorPrivate *priv = MODEST_RECPT_EDITOR_GET_PRIVATE (editor);
+
+	if (iter_has_recipient (location)) {
+		gtk_text_buffer_get_end_iter (buffer, location);
+		gtk_text_buffer_place_cursor (buffer, location);
+	}
+
+	if (gtk_text_iter_is_start (location))
+		return;
+
+	if (gtk_text_iter_is_end (location)) {
+		prev = *location;
+		if (!gtk_text_iter_backward_char (&prev))
+			return;
+		prev_char = gtk_text_iter_get_char (&prev);
+		g_signal_handlers_block_by_func (buffer, modest_recpt_editor_on_insert_text, editor);
+		if (prev_char == ';'||prev_char == ',') {
+			GtkTextMark *insert;
+			gtk_text_buffer_insert (buffer, location, "\n",-1);
+			insert = gtk_text_buffer_get_insert (buffer);
+			gtk_text_view_scroll_to_iter (GTK_TEXT_VIEW (priv->text_view), location, 0.0,TRUE, 0.0, 1.0);
+		}
+		g_signal_handlers_unblock_by_func (buffer, modest_recpt_editor_on_insert_text, editor);
+		
+	}
+
+}
+
+static GtkTextTag *
+iter_has_recipient (GtkTextIter *iter)
+{
+	GSList *tags, *node;
+	GtkTextTag *result = NULL;
+
+	tags = gtk_text_iter_get_tags (iter);
+
+	for (node = tags; node != NULL; node = g_slist_next (node)) {
+		GtkTextTag *tag = GTK_TEXT_TAG (node->data);
+
+		if (g_object_get_data (G_OBJECT (tag), "recipient-tag-id")) {
+			result = tag;
+			break;
+		}
+	}
+	g_slist_free (tags);
+	return result;
+}
+
+static GtkTextTag *
+prev_iter_has_recipient (GtkTextIter *iter)
+{
+	GtkTextIter prev;
+
+	prev = *iter;
+	gtk_text_iter_backward_char (&prev);
+	return iter_has_recipient (&prev);
+}
+
+/* static GtkTextTag * */
+/* next_iter_has_recipient (GtkTextIter *iter) */
+/* { */
+/* 	GtkTextIter next; */
+
+/* 	next = *iter; */
+/* 	return iter_has_recipient (&next); */
+/* } */
+
+static gunichar 
+iter_previous_char (GtkTextIter *iter)
+{
+	GtkTextIter prev;
+
+	prev = *iter;
+	gtk_text_iter_backward_char (&prev);
+	return gtk_text_iter_get_char (&prev);
+}
+
+/* static gunichar  */
+/* iter_next_char (GtkTextIter *iter) */
+/* { */
+/* 	GtkTextIter next; */
+
+/* 	next = *iter; */
+/* 	gtk_text_iter_forward_char (&next); */
+/* 	return gtk_text_iter_get_char (&next); */
+/* } */
+
+static void
+select_tag_of_iter (GtkTextIter *iter, GtkTextTag *tag)
+{
+	GtkTextIter start, end;
+
+	start = *iter;
+	if (!gtk_text_iter_begins_tag (&start, tag))
+		gtk_text_iter_backward_to_tag_toggle (&start, tag);
+	end = *iter;
+	if (!gtk_text_iter_ends_tag (&end, tag))
+		gtk_text_iter_forward_to_tag_toggle (&end, tag);
+	gtk_text_buffer_select_range (gtk_text_iter_get_buffer (iter), &start, &end);
+}
+
+static gboolean
+modest_recpt_editor_on_key_press_event (GtkTextView *text_view,
+					  GdkEventKey *key,
+					  ModestRecptEditor *editor)
+{
+	GtkTextMark *insert;
+	GtkTextBuffer * buffer;
+	GtkTextIter location;
+	GtkTextTag *tag;
+     
+	buffer = gtk_text_view_get_buffer (text_view);
+	insert = gtk_text_buffer_get_insert (buffer);
+
+	/* cases to cover:
+	 *    * cursor is on resolved recipient:
+	 *        - right should go to first character after the recipient (usually ; or ,)
+	 *        - left should fo to the first character before the recipient
+	 *        - return should run check names on the recipient.
+	 *    * cursor is just after a recipient:
+	 *        - right should go to the next character. If it's a recipient, should select
+	 *          it
+	 *        - left should go to the previous character. If it's a recipient, should go
+	 *          to the first character of the recipient, and select it.
+	 *    * cursor is on arbitrary text:
+	 *        - return should add a ; and go to the next line
+	 *        - left or right standard ones.
+	 *    * cursor is after a \n:
+	 *        - left should go to the character before the \n (as if \n was not a character)
+	 *    * cursor is before a \n:
+	 *        - right should go to the character after the \n
+	 */
+
+	gtk_text_buffer_get_iter_at_mark (buffer, &location, insert);
+
+	switch (key->keyval) {
+	case GDK_Left:
+	case GDK_KP_Left: 
+	{
+		gboolean cursor_ready = FALSE;
+		while (!cursor_ready) {
+			if (iter_previous_char (&location) == '\n') {
+				g_message ("INTRO FOUND");
+				gtk_text_iter_backward_char (&location);
+			} else {
+				cursor_ready = TRUE;
+			}
+		}
+		tag = iter_has_recipient (&location);
+		if ((tag != NULL)&& (gtk_text_iter_is_start (&location) || !(gtk_text_iter_begins_tag (&location, tag)))) {
+			select_tag_of_iter (&location, tag);
+			gtk_text_view_scroll_to_mark (GTK_TEXT_VIEW (text_view), insert, 0.0, FALSE, 0.0, 1.0);
+			return TRUE;
+		}
+		gtk_text_iter_backward_char (&location);
+		tag = iter_has_recipient (&location);
+		if (tag != NULL)
+			select_tag_of_iter (&location, tag);
+		else {
+			gtk_text_buffer_place_cursor (buffer, &location);
+		}
+		gtk_text_view_scroll_to_mark (GTK_TEXT_VIEW (text_view), insert, 0.0, FALSE, 0.0, 1.0);
+
+		return TRUE;
+	}
+	break;
+	case GDK_Right:
+	case GDK_KP_Right:
+	{
+		gboolean cursor_moved = FALSE;
+
+		tag = iter_has_recipient (&location);
+		if ((tag != NULL)&&(!gtk_text_iter_ends_tag (&location, tag))) {
+			gtk_text_iter_forward_to_tag_toggle (&location, tag);
+			while (gtk_text_iter_get_char (&location) == '\n')
+				gtk_text_iter_forward_char (&location);
+			gtk_text_buffer_place_cursor (buffer, &location);
+			gtk_text_view_scroll_to_mark (GTK_TEXT_VIEW (text_view), insert, 0.0, FALSE, 0.0, 1.0);
+			return TRUE;
+		}
+
+		while (gtk_text_iter_get_char (&location) == '\n') {
+			gtk_text_iter_forward_char (&location);
+			cursor_moved = TRUE;
+		}
+		if (!cursor_moved)
+			gtk_text_iter_forward_char (&location);
+		while (gtk_text_iter_get_char (&location) == '\n') {
+			gtk_text_iter_forward_char (&location);
+			cursor_moved = TRUE;
+		}
+
+		tag = iter_has_recipient (&location);
+		if (tag != NULL)
+			select_tag_of_iter (&location, tag);
+		else
+			gtk_text_buffer_place_cursor (buffer, &location);
+		gtk_text_view_scroll_to_mark (GTK_TEXT_VIEW (text_view), insert, 0.0, FALSE, 0.0, 1.0);
+		return TRUE;
+	}
+	break;
+	case GDK_Return:
+	case GDK_KP_Enter:
+	{
+		g_signal_handlers_block_by_func (buffer, modest_recpt_editor_on_insert_text, editor);
+		tag = iter_has_recipient (&location);
+		if (tag != NULL) {
+			gtk_text_buffer_get_end_iter (buffer, &location);
+			gtk_text_buffer_place_cursor (buffer, &location);
+			if ((iter_previous_char (&location) != ';')&&(iter_previous_char (&location) != ','))
+				gtk_text_buffer_insert_at_cursor (buffer, ";", -1);
+			gtk_text_buffer_insert_at_cursor (buffer, "\n", -1);
+		} else {
+			gunichar prev_char = iter_previous_char (&location);
+			if ((gtk_text_iter_is_start (&location))||(prev_char == '\n')
+			    ||(prev_char == ';')||(prev_char == ',')) 
+				g_signal_emit_by_name (G_OBJECT (editor), "open-addressbook");
+			else {
+				if ((prev_char != ';') && (prev_char != ','))
+					gtk_text_buffer_insert_at_cursor (buffer, ";", -1);
+				gtk_text_buffer_insert_at_cursor (buffer, "\n", -1);
+			}
+		}
+		g_signal_handlers_unblock_by_func (buffer, modest_recpt_editor_on_insert_text, editor);
+		return TRUE;
+	}
+	break;
+	case GDK_BackSpace:
+	{
+		if (gtk_text_buffer_get_has_selection (buffer)) {
+			gtk_text_buffer_delete_selection (buffer, TRUE, TRUE);
+			return TRUE;
+		}
+		tag = prev_iter_has_recipient (&location);
+		if (tag != NULL) {
+			GtkTextIter iter_in_tag;
+			iter_in_tag = location;
+			g_message ("DELETE PREV SELECTION");
+			gtk_text_iter_backward_char (&iter_in_tag);
+			select_tag_of_iter (&iter_in_tag, tag);
+			gtk_text_buffer_delete_selection (buffer, TRUE, TRUE);
+			return TRUE;
+		}
+		return FALSE;
+	}
+	break;
+	default:
+		return FALSE;
+	}
+}
+
+static void 
+modest_recpt_editor_move_cursor_to_end (ModestRecptEditor *editor)
+{
+	ModestRecptEditorPrivate *priv = MODEST_RECPT_EDITOR_GET_PRIVATE (editor);
+	GtkTextBuffer *buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (priv->text_view));
+	GtkTextIter start, end;
+
+	gtk_text_buffer_get_end_iter (buffer, &start);
+	end = start;
+	gtk_text_buffer_select_range (buffer, &start, &end);
+
+
+}
+
+void
+modest_recpt_editor_grab_focus (ModestRecptEditor *recpt_editor)
+{
+	ModestRecptEditorPrivate *priv;
+	
+	g_return_if_fail (MODEST_IS_RECPT_EDITOR (recpt_editor));
+	priv = MODEST_RECPT_EDITOR_GET_PRIVATE (recpt_editor);
+
+	gtk_widget_grab_focus (priv->text_view);
 }
 
 static void
