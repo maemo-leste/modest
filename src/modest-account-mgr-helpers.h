@@ -94,7 +94,7 @@ ModestAccountData *modest_account_mgr_get_account_data     (ModestAccountMgr *se
 gchar* modest_account_mgr_get_default_account  (ModestAccountMgr *self);
 
 /**
- * modest_account_mgr_get_default_account:
+ * modest_account_mgr_set_default_account:
  * @self: a ModestAccountMgr instance
  * @account: the name of an existing account
  * 
@@ -104,6 +104,30 @@ gchar* modest_account_mgr_get_default_account  (ModestAccountMgr *self);
  */
 gboolean modest_account_mgr_set_default_account  (ModestAccountMgr *self,
 						  const gchar* account);
+
+/**
+ * modest_account_mgr_unset_default_account:
+ * @self: a ModestAccountMgr instance
+ * @account: the name of an account
+ * 
+ * Unset the default account name, so that no account is the default.
+ *
+ * Returns: TRUE if succeeded, FALSE otherwise
+ */
+gboolean modest_account_mgr_unset_default_account  (ModestAccountMgr *self);
+
+/**
+ * modest_account_mgr_set_first_account_as_default:
+ * @self: a ModestAccountMgr instance
+ * 
+ * Guarantees that at least one account, if there are any accounts, is the default,
+ * so that modest_account_mgr_get_default_account() will return non-NULL if there 
+ * are any accounts.
+ *
+ * Returns: TRUE if succeeded, FALSE otherwise
+ */
+gboolean
+modest_account_mgr_set_first_account_as_default  (ModestAccountMgr *self);
 
 /**
  * modest_account_mgr_free_account_data:

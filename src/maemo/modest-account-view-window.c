@@ -180,9 +180,23 @@ on_delete_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 		if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT) {
 			/* Remove account. If succeeded it removes also 
 			   the account from the ModestAccountView */
+			  
+			gboolean is_default = FALSE;
+			gchar *default_account_name = modest_account_mgr_get_default_account (account_mgr);
+			if (default_account_name && (strcmp (default_account_name, account_name) == 0))
+				is_default = TRUE;
+			g_free (default_account_name);
+				
 			removed = modest_account_mgr_remove_account (account_mgr,
-								     account_name,
-								     FALSE);						 
+									     account_name,
+									     FALSE);
+									     
+			if (removed && is_default) {
+				/* Set a different account as the default, so there is always at least one default:
+				 * This is not specified, and might be the wrong behaviour. murrayc. */
+				modest_account_mgr_set_first_account_as_default (account_mgr);
+			}
+									 
 			if (removed) {
 				/* Show confirmation dialog ??? */
 			} else {

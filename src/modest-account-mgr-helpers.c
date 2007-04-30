@@ -568,6 +568,37 @@ modest_account_mgr_set_default_account  (ModestAccountMgr *self, const gchar* ac
 
 }
 
+gboolean
+modest_account_mgr_unset_default_account  (ModestAccountMgr *self)
+{
+	ModestConf *conf;
+	
+	g_return_val_if_fail (self,    FALSE);
+
+	conf = MODEST_ACCOUNT_MGR_GET_PRIVATE (self)->modest_conf;
+		
+	return modest_conf_remove_key (conf, MODEST_CONF_DEFAULT_ACCOUNT, NULL /* err */);
+
+}
+
+gboolean
+modest_account_mgr_set_first_account_as_default  (ModestAccountMgr *self)
+{
+	gboolean result = FALSE;
+	GSList *account_names = modest_account_mgr_account_names (self);
+	if(account_names)
+	{
+		const gchar* account_name = (const gchar*)account_names->data;
+		if (account_name)
+			result = modest_account_mgr_set_default_account (self, account_name);
+	}
+	
+	/* TODO: Free the strings too? */
+	g_slist_free (account_names);
+	
+	return result;
+}
+
 gchar*
 modest_account_mgr_get_from_string (ModestAccountMgr *self, const gchar* name)
 {

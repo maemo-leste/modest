@@ -1,5 +1,24 @@
 2007-04-30  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-account-mgr-helpers.h:
+	* src/modest-account-mgr-helpers.c:
+	Added modest_account_mgr_unset_default_account(),
+	Added modest_account_mgr_set_first_account_as_default().
+
+	* src/modest-account-mgr.c: (modest_account_mgr_remove_account): 
+	If it was the default account, unset the default account name.
+	
+	* src/maemo/modest-account-view-window.c:
+	(on_delete_button_clicked): If it was the default account, 
+	set the first remaining account as the default instead.
+	
+	* src/maemo/modest-main-window.c: (on_account_update): Do not try to use 
+	a NULL account or a NULL default account, to prevent a crash. This should 
+	not happen now anyway. Bug #55343 in projects.maemo.org/bugzilla.
+	
+
+2007-04-30  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/widgets/modest-recpt-editor.c:
 	(modest_recpt_editor_on_key_press_event): Put an #ifdef around the 
 	use of gtk_text_buffer_get_has_selection() (from GTK+ 2.10), and add a 

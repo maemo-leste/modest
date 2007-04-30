@@ -548,6 +548,14 @@ modest_account_mgr_remove_account (ModestAccountMgr * self,
 		g_printerr ("modest: error removing key: %s\n", err->message);
 		g_error_free (err);
 	}
+
+	/* If this was the default, then remove that setting: */
+	if (!server_account) {
+		gchar *default_account_name = modest_account_mgr_get_default_account (self);
+		if (default_account_name && (strcmp (default_account_name, name) == 0))
+			modest_account_mgr_unset_default_account (self);
+		g_free (default_account_name);
+	}
 	
 	return retval;
 }

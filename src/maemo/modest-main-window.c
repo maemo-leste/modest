@@ -778,19 +778,28 @@ on_account_update (TnyAccountStore *account_store,
 	default_account = modest_account_mgr_get_default_account (mgr);
 
 	do {
-		TnyAccount *acc;
-		const gchar *acc_name;
-		gchar *display_name;
+		TnyAccount *acc = NULL;
+		const gchar *acc_name = NULL;
 
 		/* Create tool item */
 		acc = TNY_ACCOUNT (tny_iterator_get_current (iter));
-		acc_name = tny_account_get_name (acc);
+		if (acc)
+			acc_name = tny_account_get_name (acc);
 
 		/* Create display name */
-		if (!strcmp (default_account, acc_name))
-			display_name = g_strdup_printf (_("mcen_me_toolbar_sendreceive_default"), acc_name);
+		gchar *display_name = NULL;
+		if (acc_name) {
+			if (default_account && !(strcmp (default_account, acc_name) == 0))
+				display_name = g_strdup_printf (_("mcen_me_toolbar_sendreceive_default"), acc_name);
+			else
+				display_name = g_strdup_printf (_("mcen_me_toolbar_sendreceive_mailbox_n"), acc_name);
+		}
 		else
-			display_name = g_strdup_printf (_("mcen_me_toolbar_sendreceive_mailbox_n"), acc_name);
+		{
+			/* TODO: This probably should never happen: */
+			display_name = g_strdup_printf (_("mcen_me_toolbar_sendreceive_default"), "");
+		}
+		
 
 		item = gtk_menu_item_new_with_label (display_name);
 
