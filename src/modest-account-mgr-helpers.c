@@ -446,7 +446,13 @@ modest_account_mgr_get_account_data     (ModestAccountMgr *self, const gchar* na
 	
 	g_return_val_if_fail (self, NULL);
 	g_return_val_if_fail (name, NULL);
-	g_return_val_if_fail (modest_account_mgr_account_exists (self, name,FALSE), NULL);	
+	
+	if (!modest_account_mgr_account_exists (self, name, FALSE)) {
+		/* For instance, maybe you are mistakenly checking for a server account name? */
+		g_warning ("%s: Account %s does not exist.", __FUNCTION__, name);
+		return NULL;
+	}
+	
 	data = g_slice_new0 (ModestAccountData);
 	
 	data->account_name = g_strdup (name);

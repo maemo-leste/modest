@@ -1,3 +1,15 @@
+2007-04-30  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/modest-account-mgr-helpers.c:
+	(modest_account_mgr_get_account_data): Add a more helpful error message, and comment, 
+	for the case that the account does not exist.
+	
+	* src/widgets/modest-folder-view.c: (filter_row): Use the tinymail account ID 
+	(equivalent to the modest account name) rather than the tinymail account name 
+	(equivalent to the modest account title - human readable) to get the account data.
+	Check for null account data to prevent the crash, and add a TODO comment saying that 
+	this needs fixing because it is using the server account name instead of the account name.
+
 2007-04-29  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/maemo/easysetup/modest-easysetup-wizard.c: (show_error):

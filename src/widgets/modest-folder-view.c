@@ -666,17 +666,23 @@ filter_row (GtkTreeModel *model,
 		ModestAccountMgr *mgr;
 
 		acc = TNY_ACCOUNT (instance);
-		account_id = tny_account_get_id (acc);
+		account_id = tny_account_get_id (acc); /* Non human-readable name, not the title */
 		mgr = modest_runtime_get_account_mgr ();
-		acc_data = modest_account_mgr_get_account_data (mgr, tny_account_get_name (acc));
-
-		if (strcmp (account_id, MODEST_LOCAL_FOLDERS_ACCOUNT_ID) &&
-		    strcmp (account_id, MODEST_MMC_ACCOUNT_ID)) {
-			/* Show only the default account */
-			if (!acc_data->is_default)
-				retval = FALSE;
+		
+		/* TODO: This does not work because acc is the _server_account, 
+		 * and this code assumes that it is the normal account, which uses a server account.
+		 * Maybe we need some way to get the parent account from the server account.
+		 */
+		acc_data = modest_account_mgr_get_account_data (mgr, account_id);
+		if (acc_data) {
+			if (strcmp (account_id, MODEST_LOCAL_FOLDERS_ACCOUNT_ID) &&
+			    strcmp (account_id, MODEST_MMC_ACCOUNT_ID)) {
+				/* Show only the default account */
+				if (!acc_data->is_default)
+					retval = FALSE;
+			}
+			modest_account_mgr_free_account_data (mgr, acc_data);
 		}
-		modest_account_mgr_free_account_data (mgr, acc_data);
 	}
 
 	g_object_unref (instance);
