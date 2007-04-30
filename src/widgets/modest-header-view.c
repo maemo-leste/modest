@@ -925,7 +925,7 @@ modest_header_view_set_folder (ModestHeaderView *self, TnyFolder *folder)
 		g_signal_emit (G_OBJECT(self), signals[HEADER_SELECTED_SIGNAL], 0, NULL);
 
 		/* Create the mail operation */
-		mail_op = modest_mail_operation_new_with_id (MODEST_MAIL_OPERATION_ID_RECEIVE);
+		mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_ID_RECEIVE);
 		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
 						 mail_op);
 

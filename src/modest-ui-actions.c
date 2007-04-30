@@ -168,7 +168,7 @@ modest_ui_actions_on_delete (GtkAction *action, ModestWindow *win)
 			/* TODO: thick grain mail operation involving
 			   a list of objects. Composite pattern ??? */
 			/* TODO: add confirmation dialog */
-			mail_op = modest_mail_operation_new_with_id (MODEST_MAIL_OPERATION_ID_DELETE);
+			mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_ID_DELETE);
 			modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
 							 mail_op);
 
@@ -656,7 +656,7 @@ action_receive (const gchar* account_name)
 
 	/* Create the mail operation */
 	/* TODO: The spec wants us to first do any pending deletions, before receiving. */
-	mail_op = modest_mail_operation_new ();
+	mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_ID_INFO);
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
 	modest_mail_operation_update_account (mail_op, TNY_STORE_ACCOUNT(tny_account));
 
@@ -1105,7 +1105,7 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 	from = modest_account_mgr_get_from_string (account_mgr, account_name);
 
 	/* Create the mail operation */		
-	mail_operation = modest_mail_operation_new_with_id (MODEST_MAIL_OPERATION_ID_SEND);
+	mail_operation = modest_mail_operation_new (MODEST_MAIL_OPERATION_ID_SEND);
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_operation);
 
 	modest_mail_operation_send_new_mail (mail_operation,
@@ -1326,7 +1326,7 @@ modest_ui_actions_on_new_folder (GtkAction *action, ModestMainWindow *main_windo
 			if (result == GTK_RESPONSE_REJECT) {
 				finished = TRUE;
 			} else {
-				ModestMailOperation *mail_op = modest_mail_operation_new ();
+				ModestMailOperation *mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_ID_INFO);
 				TnyFolder *new_folder = NULL;
 
 				modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), 
@@ -1380,7 +1380,7 @@ modest_ui_actions_on_rename_folder (GtkAction *action,
 		if (folder_name != NULL && strlen (folder_name) > 0) {
 			ModestMailOperation *mail_op;
 
-			mail_op = modest_mail_operation_new ();
+			mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_ID_INFO);
 			modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
 							 mail_op);
 
@@ -1420,7 +1420,7 @@ delete_folder (ModestMainWindow *main_window, gboolean move_to_trash)
 	g_free (message);
 
 	if (response == GTK_RESPONSE_OK) {
-		ModestMailOperation *mail_op = modest_mail_operation_new_with_id (MODEST_MAIL_OPERATION_ID_DELETE);
+		ModestMailOperation *mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_ID_DELETE);
 
 		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
 						 mail_op);
@@ -2036,7 +2036,7 @@ modest_ui_actions_on_main_window_move_to (GtkAction *action,
 		src_folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW (folder_view));
 
 		if (TNY_IS_FOLDER (src_folder)) {
-			mail_op = modest_mail_operation_new_with_id (MODEST_MAIL_OPERATION_ID_RECEIVE);
+			mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_ID_RECEIVE);
 			modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), 
 							 mail_op);
 
@@ -2066,7 +2066,7 @@ modest_ui_actions_on_main_window_move_to (GtkAction *action,
 
 			/* Transfer messages */
 			if (response == GTK_RESPONSE_OK) {
-				mail_op = modest_mail_operation_new ();
+				mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_ID_RECEIVE);
 				modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), 
 								 mail_op);
 
@@ -2133,7 +2133,7 @@ modest_ui_actions_on_msg_view_window_move_to (GtkAction *action,
 			ModestMailOperation *mail_op;
 
 			/* Create mail op */
-			mail_op = modest_mail_operation_new_with_id (MODEST_MAIL_OPERATION_ID_RECEIVE);
+			mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_ID_RECEIVE);
 			modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), 
 							 mail_op);
 			

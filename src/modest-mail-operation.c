@@ -190,7 +190,7 @@ modest_mail_operation_finalize (GObject *obj)
 }
 
 ModestMailOperation*
-modest_mail_operation_new_with_id (ModestMailOperationId id)
+modest_mail_operation_new (ModestMailOperationId id)
 {
 	ModestMailOperation *obj;
 	ModestMailOperationPrivate *priv;
@@ -204,11 +204,6 @@ modest_mail_operation_new_with_id (ModestMailOperationId id)
 	return obj;
 }
 
-ModestMailOperation*
-modest_mail_operation_new ()
-{
-	return MODEST_MAIL_OPERATION(g_object_new(MODEST_TYPE_MAIL_OPERATION, NULL));
-}
 
 
 ModestMailOperationId

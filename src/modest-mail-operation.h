@@ -70,6 +70,7 @@ typedef enum _ModestMailOperationId {
 	MODEST_MAIL_OPERATION_ID_RECEIVE,
 	MODEST_MAIL_OPERATION_ID_OPEN,
 	MODEST_MAIL_OPERATION_ID_DELETE,
+	MODEST_MAIL_OPERATION_ID_INFO,
 	MODEST_MAIL_OPERATION_ID_UNKNOWN,
 } ModestMailOperationId;
 
@@ -89,8 +90,7 @@ struct _ModestMailOperationClass {
 GType        modest_mail_operation_get_type    (void) G_GNUC_CONST;
 
 /* typical parameter-less _new function */
-ModestMailOperation*    modest_mail_operation_new_with_id     (ModestMailOperationId id);
-ModestMailOperation*    modest_mail_operation_new             (void);
+ModestMailOperation*    modest_mail_operation_new     (ModestMailOperationId id);
 
 /**
  * modest_mail_operation_get_id
