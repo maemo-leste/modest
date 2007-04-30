@@ -716,13 +716,12 @@ gboolean check_for_connection (const gchar *account_name)
 		return TRUE;
 	}
 }
-
-void
-modest_ui_actions_on_send_receive (GtkAction *action,  ModestWindow *win)
+	
+static void
+do_send_receive_current_or_default (ModestWindow *win)
 {
 	gchar *account_name;
 
-	
 	g_message ("%s: online? %s", __FUNCTION__,  
 		tny_device_is_online(modest_runtime_get_device()) ? "yes":"no");
 				
@@ -738,21 +737,80 @@ modest_ui_actions_on_send_receive (GtkAction *action,  ModestWindow *win)
 	}
 	
 	/* Do not continue if no suitable connection is open: */
-	if (!check_for_connection (account_name))
-		return;
-
-	/* As per the UI spec,
-	 * for POP accounts, we should receive,
-	 * for IMAP we should synchronize everything, including receiving,
-	 * for SMTP we should send,
-	 * first receiving, then sending:
-	 */
-	if (!action_receive(account_name))
-		g_printerr ("modest: failed to receive\n");
-	if (!action_send(account_name))
-		g_printerr ("modest: failed to send\n");
-	
+	if (check_for_connection (account_name)) {
+		/* As per the UI spec,
+		 * for POP accounts, we should receive,
+		 * for IMAP we should synchronize everything, including receiving,
+		 * for SMTP we should send,
+		 * first receiving, then sending:
+		 */
+		if (!action_receive(account_name))
+			g_printerr ("modest: failed to receive\n");
+		if (!action_send(account_name))
+			g_printerr ("modest: failed to send\n");
+		
+		g_free (account_name);
+	}
 }
+
+
+static void
+do_send_receive_auto (ModestWindow *win)
+{
+	g_message ("%s: online? %s", __FUNCTION__,  
+		tny_device_is_online(modest_runtime_get_device()) ? "yes":"no");
+
+	/* TODO: Delete the item->data strings as well as the list? */
+	GSList *account_names = modest_account_mgr_account_names (modest_runtime_get_account_mgr());
+	GSList *iter = account_names;
+	while (iter) {			
+		const gchar * account_name = (const char*) iter->data;
+		
+		/* Do not continue if no suitable connection is open: */
+		if (account_name && check_for_connection (account_name)) {
+			/* As per the UI spec,
+			 * for POP accounts, we should receive,
+			 * for IMAP we should synchronize everything, including receiving,
+			 * for SMTP we should send,
+			 * first receiving, then sending:
+			 */
+			if (!action_receive(account_name))
+				g_printerr ("modest: failed to receive for account %s\n", account_name);
+			if (!action_send(account_name))
+				g_printerr ("modest: failed to send for account %s\n", account_name);
+		}
+	}
+	
+	
+	g_slist_free (account_names);
+}
+
+void
+do_send_receive (ModestWindow *win)
+{
+	const gboolean auto_update = TRUE; /* TODO: Get gconf setting. */
+	if (auto_update)
+		do_send_receive_current_or_default (win);
+	else
+		do_send_receive_auto (win);
+}
+
+void
+modest_ui_actions_on_send_receive (GtkAction *action,  ModestWindow *win)
+{
+	/* Check that at least one account exists: */
+	GSList *account_names = modest_account_mgr_account_names (modest_runtime_get_account_mgr());
+	gboolean accounts_exist = account_names != NULL;
+	g_slist_free (account_names);
+	
+	/* If not, allow the user to create an account before trying to send/receive. */
+	if (!accounts_exist) {
+		modest_ui_actions_on_accounts (NULL, win);
+	}
+		
+	do_send_receive (win);
+}
+
 
 
 

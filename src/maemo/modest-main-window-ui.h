@@ -88,7 +88,7 @@ static const GtkActionEntry modest_action_entries [] = {
 	{ "ToolsAccounts",        NULL,      N_("mcen_me_inbox_accounts"),                NULL, NULL,  G_CALLBACK(modest_ui_actions_on_accounts) },
 	{ "ToolsSMTPServers",     NULL,      N_("mcen_me_inbox_globalsmtpservers"),                NULL, NULL,  NULL },
 	{ "ToolsSendReceive", NULL, N_("mcen_me_inbox_sendandreceive") }, /* submenu */
-	{ "ToolsSendReceiveAll",    NULL,      N_("mcen_me_inbox_sendandreceive_all"),          NULL, NULL,  NULL },
+	{ "ToolsSendReceiveAll",    NULL,      N_("mcen_me_inbox_sendandreceive_all"),          NULL, NULL, G_CALLBACK (modest_ui_actions_on_send_receive) },
 	{ "ToolsSendReceiveCancelSending",  NULL,      N_("mcen_me_outbox_cancelsend"),        NULL, NULL,  NULL },
 	{ "ToolsContacts",            NULL,      N_("mcen_me_inbox_open_addressbook"),                      NULL, NULL,  NULL },
 	{ "ToolsAddToContacts",            NULL,      N_("mcen_me_viewer_addtocontacts"),                      NULL, NULL,  G_CALLBACK (modest_ui_actions_on_add_to_contacts) },

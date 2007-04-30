@@ -42,6 +42,7 @@
 #include <pango/pango-attributes.h>
 #include <string.h>
 #include <gdk/gdkkeysyms.h>
+#include <gtk/gtk.h>
 
 static GObjectClass *parent_class = NULL;
 
@@ -629,10 +630,15 @@ modest_recpt_editor_on_key_press_event (GtkTextView *text_view,
 	break;
 	case GDK_BackSpace:
 	{
+		#if GTK_CHECK_VERSION(2, 10, 0) /* gtk_text_buffer_get_has_selection is only available in GTK+ 2.10 */
 		if (gtk_text_buffer_get_has_selection (buffer)) {
 			gtk_text_buffer_delete_selection (buffer, TRUE, TRUE);
 			return TRUE;
 		}
+		#else
+		/* TODO: Alternative code. */
+		#endif
+
 		tag = prev_iter_has_recipient (&location);
 		if (tag != NULL) {
 			GtkTextIter iter_in_tag;

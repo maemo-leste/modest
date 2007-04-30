@@ -320,9 +320,10 @@ static void
 on_connection_changed (TnyDevice *device, gboolean online, ModestMainWindow *self)
 {
 	/* When going online, do the equivalent of pressing the send/receive button, 
-	 * as per the specification: */
+	 * as per the specification:
+	 * (without the check for >0 accounts, though that is not specified): */
 	if (online) {
-		modest_ui_actions_on_send_receive (NULL /* action */, MODEST_WINDOW (self));
+		do_send_receive (MODEST_WINDOW (self));
 	}
 }
 
@@ -391,13 +392,12 @@ connect_signals (ModestMainWindow *self)
 			  G_CALLBACK(on_connection_changed), self);
 }
 
-
+/** Idle handler, to send/receive at startup .*/
 gboolean
 sync_accounts_cb (ModestMainWindow *win)
 {
-	/* TODO: Only for auto-update accounts. */
-	modest_ui_actions_on_send_receive (NULL, MODEST_WINDOW(win));
-	return FALSE;
+	do_send_receive (MODEST_WINDOW(win));
+	return FALSE; /* Do not call this idle handler again. */
 }
 
 
@@ -526,10 +526,9 @@ modest_main_window_new (void)
 	/* Set account store */
 	tny_account_store_view_set_account_store (TNY_ACCOUNT_STORE_VIEW (priv->folder_view),
 						  TNY_ACCOUNT_STORE (modest_runtime_get_account_store ()));
-	g_idle_add ((GSourceFunc)sync_accounts_cb, self);
-	/* do send & receive when we are idle */	
 
-	
+	/* do send & receive when we are idle */
+	g_idle_add ((GSourceFunc)sync_accounts_cb, self);
 	
 	return MODEST_WINDOW(self);
 }

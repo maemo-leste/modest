@@ -160,6 +160,9 @@ void     modest_ui_actions_on_select_editor_background_color      (GtkAction *ac
 void     modest_ui_actions_on_insert_image             (GtkAction *action,
 							ModestMsgEditWindow *window);
 
+/* TODO: Is there a better place for this? */
+void do_send_receive (ModestWindow *win);
+
 void    modest_ui_actions_on_send_receive              (GtkAction *action, ModestWindow *win);
 
 void     modest_ui_actions_on_new_folder               (GtkAction *action,

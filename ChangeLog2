@@ -1,5 +1,25 @@
 2007-04-30  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/widgets/modest-recpt-editor.c:
+	(modest_recpt_editor_on_key_press_event): Put an #ifdef around the 
+	use of gtk_text_buffer_get_has_selection() (from GTK+ 2.10), and add a 
+	TODO comment for this. This fixes the build.
+	
+	* src/modest-ui-actions.c: Add do_send_receive(), though it might not 
+	be the best place for it. This will in future update all auto-update accounts, 
+	rather than just the current/default account, when that gconf key exists.
+	(modest_ui_actions_on_send_receive): Offer the settings dialog (or wizard) 
+	if there are no accounts, before calling do_send_receive().
+	* src/modest-ui-actions.h: Specify the callback for the Send/Recieve menu item.
+	
+	* src/gnome/modest-main-window.c: (on_online_toggle_toggled):
+	* src/maemo/modest-main-window-ui.h:
+	* src/maemo/modest-main-window.c: (on_connection_changed),
+	(sync_accounts_cb): Use do_send_receive() instead of calling the signal handler 
+	directly, becaue the signal handler does more.
+
+2007-04-30  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/modest-account-mgr-helpers.c:
 	(modest_account_mgr_get_account_data): Add a more helpful error message, and comment, 
 	for the case that the account does not exist.

@@ -354,8 +354,10 @@ on_online_toggle_toggled (GtkToggleButton *toggle, ModestMainWindow *self)
 	device = modest_runtime_get_device ();
 	online  = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (priv->online_toggle));
 
-	if (online)
+	if (online) {
+		/* TODO: Just attempt to go online, instead of forcing the online status: */
 		tny_device_force_online (device);
+	}
 	else
 		tny_device_force_offline (device);
 }
