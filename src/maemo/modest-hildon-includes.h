@@ -58,6 +58,7 @@ k * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
 #include <hildon/hildon-font-selection-dialog.h>
 #include <hildon/hildon-caption.h>
 #include <hildon/hildon-find-toolbar.h>
+#include <hildon/hildon-sort-dialog.h>
 #include <hildon/hildon-number-editor.h>
 #endif /* MODEST_HILDON_VERSION_0*/
 
