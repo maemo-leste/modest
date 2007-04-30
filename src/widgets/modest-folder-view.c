@@ -49,6 +49,7 @@
 #include "modest-folder-view.h"
 #include <modest-dnd.h>
 #include <modest-platform.h>
+#include <modest-account-mgr-helpers.h>
 
 /* 'private'/'protected' functions */
 static void modest_folder_view_class_init  (ModestFolderViewClass *klass);
@@ -640,24 +641,16 @@ expand_root_items (ModestFolderView *self)
 }
 
 /*
- * HACK: we use this function to implement the
- * MODEST_FOLDER_VIEW_STYLE_SHOW_ONE style. This implementation
- * assumes that the model has the following order (which is currently
- * true) Remote folders->Local folders->MMC folders, so the rows of
- * the first level (that represent the accounts) are received in the
- * same order. So basically it uses a static variable to register that
- * a remote account has already being shown to hide the others
- * (returning NULL). When the function evaluates the local or the MMC
- * accounts is time to reset the static variable in order to get it
- * ready for the next time the tree model needs to be shown.
+ * We use this function to implement the
+ * MODEST_FOLDER_VIEW_STYLE_SHOW_ONE style. We only show the default
+ * account in this case
  */
 static gboolean 
 filter_row (GtkTreeModel *model,
 	    GtkTreeIter *iter,
 	    gpointer data)
 {
-	static gboolean found = FALSE;
-	gboolean retval;
+	gboolean retval = TRUE;
 	gint type;
 	GObject *instance = NULL;
 
@@ -667,22 +660,24 @@ filter_row (GtkTreeModel *model,
 			    -1);
 
 	if (type == TNY_FOLDER_TYPE_ROOT) {
-		const gchar *account_id = tny_account_get_id (TNY_ACCOUNT (instance));
+		ModestAccountData *acc_data;
+		TnyAccount *acc;
+		const gchar *account_id;
+		ModestAccountMgr *mgr;
+
+		acc = TNY_ACCOUNT (instance);
+		account_id = tny_account_get_id (acc);
+		mgr = modest_runtime_get_account_mgr ();
+		acc_data = modest_account_mgr_get_account_data (mgr, tny_account_get_name (acc));
 
 		if (strcmp (account_id, MODEST_LOCAL_FOLDERS_ACCOUNT_ID) &&
 		    strcmp (account_id, MODEST_MMC_ACCOUNT_ID)) {
-
-			if (!found) {
-				found = TRUE;
-				retval = TRUE;
-			} else
+			/* Show only the default account */
+			if (!acc_data->is_default)
 				retval = FALSE;
-		} else {
-			found = FALSE;
-			retval = TRUE;
 		}
-	} else
-		retval = TRUE;
+		modest_account_mgr_free_account_data (mgr, acc_data);
+	}
 
 	g_object_unref (instance);
 
