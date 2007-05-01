@@ -10,10 +10,10 @@ Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: an e-mail client for platforms with modest resources
 
-Package: modest-dbg
-Section: devel
-Architecture: all
-Depends: modest (=${Source-Version})
-Description: debug package for modest
+#Package: modest-dbg
+#Section: devel
+#Architecture: all
+#Depends: modest (=${Source-Version})
+#Description: debug package for modest
 
 
