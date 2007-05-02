@@ -159,7 +159,15 @@ update_account_view (ModestAccountMgr *account_mgr, ModestAccountView *view)
 	model = GTK_LIST_STORE(gtk_tree_view_get_model (GTK_TREE_VIEW(view)));	
 	gtk_list_store_clear (model);
 
-	cursor = account_names = modest_account_mgr_account_names (account_mgr);
+	/* Note: We do not show disabled accounts.
+	 * Of course, this means that there is no UI to enable or disable 
+	 * accounts. That is OK for maemo where no such feature or UI is 
+	 * specified, so the "enabled" property is used internally to avoid 
+	 * showing unfinished accounts. If a user-visible "enabled" is 
+	 * needed in the future, we must use a second property for the 
+	 * current use instead */
+	cursor = account_names = modest_account_mgr_account_names (account_mgr,
+		TRUE /* only enabled accounts. */);
 	
 	if(account_names == NULL)
 	{
@@ -192,19 +200,21 @@ update_account_view (ModestAccountMgr *account_mgr, ModestAccountView *view)
 			else
 				last_updated_string = g_strdup (_("Never"));
 			
-			gtk_list_store_insert_with_values (
-				model, &iter, 0,
-				MODEST_ACCOUNT_VIEW_NAME_COLUMN,          account_name,
-				MODEST_ACCOUNT_VIEW_DISPLAY_NAME_COLUMN,  account_data->display_name,
-				MODEST_ACCOUNT_VIEW_IS_ENABLED_COLUMN,    account_data->is_enabled,
-				MODEST_ACCOUNT_VIEW_IS_DEFAULT_COLUMN,    account_data->is_default,
-
-				MODEST_ACCOUNT_VIEW_PROTO_COLUMN,
-				modest_protocol_info_get_protocol_name  (account_data->store_account->proto),
-
-				MODEST_ACCOUNT_VIEW_LAST_UPDATED_COLUMN,  last_updated_string,
-				-1);
-			g_free (last_updated_string);
+			if (account_data->is_enabled) {
+				gtk_list_store_insert_with_values (
+					model, &iter, 0,
+					MODEST_ACCOUNT_VIEW_NAME_COLUMN,          account_name,
+					MODEST_ACCOUNT_VIEW_DISPLAY_NAME_COLUMN,  account_data->display_name,
+					MODEST_ACCOUNT_VIEW_IS_ENABLED_COLUMN,    account_data->is_enabled,
+					MODEST_ACCOUNT_VIEW_IS_DEFAULT_COLUMN,    account_data->is_default,
+	
+					MODEST_ACCOUNT_VIEW_PROTO_COLUMN,
+					modest_protocol_info_get_protocol_name  (account_data->store_account->proto),
+	
+					MODEST_ACCOUNT_VIEW_LAST_UPDATED_COLUMN,  last_updated_string,
+					-1);
+				g_free (last_updated_string);
+			}
 		}
 
 		modest_account_mgr_free_account_data (account_mgr, account_data);

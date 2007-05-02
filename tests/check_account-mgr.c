@@ -114,11 +114,11 @@ START_TEST (test_add_exists_remove_account_regular)
 	result = modest_account_mgr_add_account (account_mgr,
 						 name,
 						 store_account,
-						 transport_account);
+						 transport_account, TRUE);
 	fail_unless (result,
 		     "modest_account_mgr_add_account failed:\n" \
 		     "name: %s\nstore: %s\ntransport: %s\n",
-		     name, store_account, transport_account);
+		     name, store_account, transport_account, TRUE);
 	
 	g_free (store_account);
 	g_free (transport_account);
@@ -227,7 +227,7 @@ START_TEST (test_add_exists_remove_account_invalid)
 	result = modest_account_mgr_add_account (NULL,
 						 TEST_MODEST_ACCOUNT_NAME,
 						 "store_account",
-						 "transport_account");
+						 "transport_account", TRUE);
 	fail_unless (!result,
 		     "modest_account_mgr_add_account does not return FALSE when" \
 		     "passing a NULL ModestAccountMgr");
@@ -236,7 +236,7 @@ START_TEST (test_add_exists_remove_account_invalid)
 	result = modest_account_mgr_add_account (account_mgr,
 						 NULL,
 						 "store_account",
-						 "transport_account");
+						 "transport_account", TRUE);
 	fail_unless (!result,
 		     "modest_account_mgr_add_account does not return FALSE when" \
 		     "passing a NULL account name");
@@ -245,7 +245,7 @@ START_TEST (test_add_exists_remove_account_invalid)
 	result = modest_account_mgr_add_account (account_mgr,
 						 "ïnválid//accountñ//nÄméç",
 						 "store_account",
-						 "transport_account");
+						 "transport_account", TRUE);
 	fail_unless (!result,
 		     "modest_account_mgr_add_account does not return FALSE when" \
 		     "passing an invalid account name");

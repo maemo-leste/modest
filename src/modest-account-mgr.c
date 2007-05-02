@@ -222,7 +222,8 @@ gboolean
 modest_account_mgr_add_account (ModestAccountMgr *self,
 				const gchar *name,
 				const gchar *store_account,
-				const gchar *transport_account)
+				const gchar *transport_account,
+				gboolean enabled)
 {
 	ModestAccountMgrPrivate *priv;
 	gchar *key;
@@ -289,7 +290,7 @@ modest_account_mgr_add_account (ModestAccountMgr *self,
 			return FALSE;
 		}
 	}
-	modest_account_mgr_set_enabled (self, name, TRUE);
+	modest_account_mgr_set_enabled (self, name, enabled);
 
 	/* if no default account has been defined yet, do so now */
 	default_account = modest_account_mgr_get_default_account (self);
@@ -640,7 +641,7 @@ modest_account_mgr_search_server_accounts (ModestAccountMgr * self,
 
 
 GSList*
-modest_account_mgr_account_names (ModestAccountMgr * self)
+modest_account_mgr_account_names (ModestAccountMgr * self, gboolean only_enabled)
 {
 	GSList *accounts;
 	ModestAccountMgrPrivate *priv;
@@ -662,7 +663,32 @@ modest_account_mgr_account_names (ModestAccountMgr * self)
 	}
 	
 	strip_prefix_from_elements (accounts, prefix_len);
-	return accounts;
+		
+	GSList *result = NULL;
+	
+	/* Filter-out the disabled accounts if requested: */
+	if (only_enabled) {
+		GSList *iter = accounts;
+		while (iter) {
+			if (!(iter->data))
+				continue;
+				
+			const gchar* account_name = (const gchar*)iter->data;
+			if (account_name && modest_account_mgr_get_enabled (self, account_name))
+				result = g_slist_append (result, g_strdup (account_name));
+				
+			iter = g_slist_next (iter);	
+		}
+		
+		/* TODO: Free the strings too? */
+		g_slist_free (accounts);
+		accounts = NULL;
+	}
+	else
+		result = accounts;
+	
+
+	return result;
 }
 
 
@@ -958,7 +984,8 @@ gboolean	modest_account_mgr_account_with_display_name_exists	  (ModestAccountMgr
 	GSList *account_names = NULL;
 	GSList *cursor = NULL;
 	
-	cursor = account_names = modest_account_mgr_account_names (self);
+	cursor = account_names = modest_account_mgr_account_names (self, 
+		TRUE /* enabled accounts, because disabled accounts are not user visible. */);
 
 	gboolean found = FALSE;
 	

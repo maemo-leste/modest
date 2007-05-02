@@ -354,7 +354,7 @@ free_element (gpointer data, gpointer user_data)
 }
 
 
-
+/* TODO: This is a duplicate of modest_account_mgr_set_first_account_as_default(). */
 /**
  * init_default_account_maybe:
  *
@@ -372,7 +372,7 @@ init_default_account_maybe  (ModestAccountMgr *acc_mgr)
 	gchar *default_account;
 	gboolean retval = TRUE;
 	
-	all_accounts = modest_account_mgr_account_names (acc_mgr);
+	all_accounts = modest_account_mgr_account_names (acc_mgr, TRUE /* enabled accounts only */);
 	if (all_accounts) { /* if there are any accounts, there should be a default one */
 		default_account = 
 			modest_account_mgr_get_default_account (acc_mgr);

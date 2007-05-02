@@ -90,18 +90,18 @@ ModestAccountMgr*        modest_account_mgr_new            (ModestConf *modest_c
  * @name: name (id) of the account, which is a valid UTF8 string that does not contain '/'
  * @store_name: the store account (ie. POP/IMAP)
  * @transport_name: the transport account (ie. sendmail/SMTP)
- * @err: a GError ptr, or NULL to ignore.
+ * @enabled: Whether the account should be enabled initially.
  * 
  * Create a new account. The account with @name should not already exist. The @name will 
  * be used as the initial display name of the new account.
  *
  * Returns: TRUE if the creation succeeded, FALSE otherwise,
- * @err gives details in case of error
  */
 gboolean        modest_account_mgr_add_account    (ModestAccountMgr *self,
 						   const gchar* name,
 						   const gchar* store_name,
-						   const gchar* transport_name);
+						   const gchar* transport_name,
+						   gboolean enabled);
 
 /**
  * modest_account_mgr_add_server_account:
@@ -167,6 +167,7 @@ gboolean        modest_account_mgr_remove_account         (ModestAccountMgr *sel
 /**
  * modest_account_mgr_account_names:
  * @self: a ModestAccountMgr instance
+ * @only_enabled: Whether only enabled accounts should be returned.
  * 
  * list all account names
  *
@@ -177,7 +178,8 @@ gboolean        modest_account_mgr_remove_account         (ModestAccountMgr *sel
  * because this is implemented via gconf_client_all_dirs() which also requires a deep free, 
  * though that's not documented. murrayc.
  */
-GSList*	        modest_account_mgr_account_names    (ModestAccountMgr *self);
+GSList*	        modest_account_mgr_account_names    (ModestAccountMgr *self,
+						     gboolean only_enabled);
 
 
 /**

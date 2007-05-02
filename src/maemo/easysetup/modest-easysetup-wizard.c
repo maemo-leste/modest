@@ -101,7 +101,7 @@ static void
 show_error (GtkWindow *parent_window, const gchar* text);
 
 static gboolean
-create_account (ModestEasysetupWizardDialog *self);
+create_account (ModestEasysetupWizardDialog *self, gboolean enabled);
 
 static void
 create_subsequent_easysetup_pages (ModestEasysetupWizardDialog *self);
@@ -713,6 +713,37 @@ static GtkWidget* create_page_custom_outgoing (ModestEasysetupWizardDialog *self
 	return GTK_WIDGET (box);
 }
 
+static gboolean
+on_timeout_show_advanced_edit(gpointer user_data)
+{
+	ModestEasysetupWizardDialog * self = MODEST_EASYSETUP_WIZARD_DIALOG (user_data);
+	
+	if (!(self->saved_account_name))
+		return FALSE;
+	
+	/* Show the Account Settings window: */
+	ModestAccountSettingsDialog *dialog = modest_account_settings_dialog_new ();
+	modest_account_settings_dialog_set_account_name (dialog, self->saved_account_name);
+	
+	gtk_window_set_transient_for (GTK_WINDOW (dialog), GTK_WINDOW (self));
+	
+	gtk_dialog_run (GTK_DIALOG (dialog));
+
+	/* TODO: The hide() is not necessary.
+	 * It is just here to show that it doesn't work,
+	 * just as destroy doesn't work.
+	 */
+	gtk_widget_hide (GTK_WIDGET(dialog));
+
+	/* TODO: The dialog remains on screen, not allowing any interaction.
+	 * But gtk_widget_destroy() should always destroy.
+	 */
+	printf("debug: destroying settings dialog\n");
+	gtk_widget_destroy (GTK_WIDGET (dialog));
+	printf("debug: after destroying settings dialog (doesn't seem to work).\n");
+	
+	return FALSE; /* Do not call this timeout callback again. */
+}
 
 static void
 on_button_edit_advanced_settings (GtkButton *button, gpointer user_data)
@@ -723,7 +754,13 @@ on_button_edit_advanced_settings (GtkButton *button, gpointer user_data)
 	 * without recoding it to use non-gconf information.
 	 * This account will be deleted if Finish is never actually clicked. */
 
-	const gboolean saved = create_account (self);
+	gboolean saved = TRUE;
+	gboolean was_already_saved = TRUE;
+	if (!(self->saved_account_name)) {
+		saved = create_account (self, FALSE);
+		was_already_saved = FALSE;
+	}
+		
 	if (!saved)
 		return;
 		
@@ -731,14 +768,17 @@ on_button_edit_advanced_settings (GtkButton *button, gpointer user_data)
 		return;
 	
 	/* Show the Account Settings window: */
-	ModestAccountSettingsDialog *dialog = modest_account_settings_dialog_new ();
-	modest_account_settings_dialog_set_account_name (dialog, self->saved_account_name);
-	
-	gtk_window_set_transient_for (GTK_WINDOW (dialog), GTK_WINDOW (self));
-	printf ("debug: before run\n");
-	gtk_dialog_run (GTK_DIALOG (dialog));
-	printf ("debug: after run\n");
-	gtk_widget_destroy (GTK_WIDGET (dialog));
+	if (was_already_saved) {
+		/* Just show the dialog immediately: */
+		on_timeout_show_advanced_edit(self);
+	}
+	else
+	{
+		printf ("debug: waiting for gconf to update its local cache. "
+	        "This is a hack to work around a maemo gconf bug in maemo bora.\n");
+       
+	    g_timeout_add (5000, on_timeout_show_advanced_edit, self);
+	}
 }
 static GtkWidget* create_page_complete_custom (ModestEasysetupWizardDialog *self)
 {
@@ -1082,7 +1122,14 @@ on_before_next (ModestWizardDialog *dialog, GtkWidget *current_page, GtkWidget *
 	 */
 	if(!next_page) /* This is NULL when this is a click on Finish. */
 	{
-		create_account (account_wizard);
+		if (account_wizard->saved_account_name) {
+			/* Just enable the already-saved account (temporarily created when 
+			 * editing advanced settings): */
+			modest_account_mgr_set_enabled (account_wizard->account_manager, 
+				account_wizard->saved_account_name, TRUE);
+		} else {
+			create_account (account_wizard, TRUE /* enabled */);
+		}
 	}
 	
 	
@@ -1130,28 +1177,32 @@ on_enable_buttons (ModestWizardDialog *dialog, GtkWidget *current_page)
 			enable_next = FALSE;
 	}
 			
-	/* Enable the buttons, 
-	 * identifying them via their associated response codes:
-	 */
-	GtkDialog *dialog_base = GTK_DIALOG (dialog);
-    gtk_dialog_set_response_sensitive (dialog_base,
-                                       MODEST_WIZARD_DIALOG_NEXT,
-                                       enable_next);
-                                       
+    /* Enable the buttons, 
+	 * identifying them via their associated response codes: */
+	                           
     /* Disable the Finish button until we are on the last page,
      * because HildonWizardDialog enables this for all but the first page: */
     GtkNotebook *notebook = NULL;
+    GtkDialog *dialog_base = GTK_DIALOG (dialog);
 	g_object_get (dialog_base, "wizard-notebook", &notebook, NULL);
 	
     gint current = gtk_notebook_get_current_page (notebook);
     gint last = gtk_notebook_get_n_pages (notebook) - 1;
-    gboolean is_last = (current == last);
+    const gboolean is_last = (current == last);
     
     if(!is_last) {
     	gtk_dialog_set_response_sensitive (dialog_base,
                                        MODEST_WIZARD_DIALOG_FINISH,
                                        FALSE);
+    } else
+    {
+    	/* Disable Next on the last page: */
+    	enable_next = FALSE;
     }
+    	
+    gtk_dialog_set_response_sensitive (dialog_base,
+                                       MODEST_WIZARD_DIALOG_NEXT,
+                                       enable_next);
 }
 
 static void
@@ -1194,7 +1245,7 @@ show_error (GtkWindow *parent_window, const gchar* text)
  * @result: TRUE if the account was successfully created.
  */
 gboolean
-create_account (ModestEasysetupWizardDialog *self)
+create_account (ModestEasysetupWizardDialog *self, gboolean enabled)
 {
 	ModestEasysetupWizardDialogPrivate *priv = WIZARD_DIALOG_GET_PRIVATE (self);
 	
@@ -1301,7 +1352,9 @@ create_account (ModestEasysetupWizardDialog *self)
 	
 	/* Sanity check: */
 	/* There must be at least one account now: */
-	GSList *account_names = modest_account_mgr_account_names (self->account_manager);
+	/* Note, when this fails is is caused by a Maemo gconf bug that has been 
+	 * fixed in versions after 3.1. */
+	GSList *account_names = modest_account_mgr_account_names (self->account_manager, FALSE);
 	if(!account_names)
 	{
 		g_warning ("modest_account_mgr_account_names() returned NULL after adding an account.");
@@ -1377,7 +1430,8 @@ create_account (ModestEasysetupWizardDialog *self)
 	/* Create the account, which will contain the two "server accounts": */
  	created = modest_account_mgr_add_account (self->account_manager, account_name, 
  		store_name, /* The name of our POP/IMAP server account. */
-		transport_name /* The name of our SMTP server account. */);
+		transport_name, /* The name of our SMTP server account. */
+		enabled);
 	g_free (store_name);
 	g_free (transport_name);
 	

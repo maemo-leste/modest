@@ -241,11 +241,11 @@ modest_ui_actions_on_accounts (GtkAction *action, ModestWindow *win)
 	 * because it requires a providers preset file which is not publically available.
 	 */
 #ifdef MODEST_PLATFORM_MAEMO /* Defined in config.h */
-	GSList *account_names = modest_account_mgr_account_names (modest_runtime_get_account_mgr());
+	GSList *account_names = modest_account_mgr_account_names (modest_runtime_get_account_mgr(), 
+				TRUE /* enabled accounts only */);
 	gboolean accounts_exist = account_names != NULL;
 	g_slist_free (account_names);
 	
-/* To test, while modest_account_mgr_account_names() is broken: accounts_exist = TRUE; */
 	if (!accounts_exist) {
 		/* If there are no accounts yet, just show the easy-setup wizard, as per the UI spec: */
 		ModestEasysetupWizardDialog *wizard = modest_easysetup_wizard_dialog_new ();
@@ -761,7 +761,8 @@ do_send_receive_auto (ModestWindow *win)
 		tny_device_is_online(modest_runtime_get_device()) ? "yes":"no");
 
 	/* TODO: Delete the item->data strings as well as the list? */
-	GSList *account_names = modest_account_mgr_account_names (modest_runtime_get_account_mgr());
+	GSList *account_names = modest_account_mgr_account_names (modest_runtime_get_account_mgr(), 
+				TRUE /* enabled accounts only */);
 	GSList *iter = account_names;
 	while (iter) {			
 		const gchar * account_name = (const char*) iter->data;
@@ -799,7 +800,8 @@ void
 modest_ui_actions_on_send_receive (GtkAction *action,  ModestWindow *win)
 {
 	/* Check that at least one account exists: */
-	GSList *account_names = modest_account_mgr_account_names (modest_runtime_get_account_mgr());
+	GSList *account_names = modest_account_mgr_account_names (modest_runtime_get_account_mgr(),
+				TRUE /* enabled accounts only */);
 	gboolean accounts_exist = account_names != NULL;
 	g_slist_free (account_names);
 	

@@ -455,7 +455,8 @@ get_accounts  (TnyAccountStore *self, TnyList *list, TnyAccountType type)
 	
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
  
-	account_names = modest_account_mgr_account_names (priv->account_mgr);
+	account_names = modest_account_mgr_account_names (priv->account_mgr, 
+		TRUE /* including disabled accounts */);
 	
 	for (cursor = account_names; cursor; cursor = cursor->next) {
 		

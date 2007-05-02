@@ -585,7 +585,7 @@ gboolean
 modest_account_mgr_set_first_account_as_default  (ModestAccountMgr *self)
 {
 	gboolean result = FALSE;
-	GSList *account_names = modest_account_mgr_account_names (self);
+	GSList *account_names = modest_account_mgr_account_names (self, TRUE /* only enabled */);
 	if(account_names)
 	{
 		const gchar* account_name = (const gchar*)account_names->data;

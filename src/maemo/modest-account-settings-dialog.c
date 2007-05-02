@@ -824,11 +824,9 @@ on_response (GtkDialog *wizard_dialog,
 	
 	/* Warn about unsaved changes: */
 	if (response_id == GTK_RESPONSE_CANCEL && self->modified) {
-		GtkDialog *dialog = GTK_DIALOG (gtk_message_dialog_new (GTK_WINDOW (self),
-		(GtkDialogFlags)0,
-		 GTK_MESSAGE_INFO,
-		 GTK_BUTTONS_OK_CANCEL, /* TODO: These button names are ambiguous, and not specified in the UI specification. */
-		 _("imum_nc_wizard_confirm_lose_changes") ));
+		GtkDialog *dialog = GTK_DIALOG (hildon_note_new_confirmation (GTK_WINDOW (self), 
+			_("imum_nc_wizard_confirm_lose_changes")));
+		/* TODO: These button names will be ambiguous, and not specified in the UI specification. */
 		 
 		 const gint dialog_response = gtk_dialog_run (dialog);
 		 gtk_widget_destroy (GTK_WIDGET (dialog));
@@ -837,7 +835,7 @@ on_response (GtkDialog *wizard_dialog,
 			prevent_response = TRUE;
 	}
 	/* Check for invalid input: */
-	else if (!check_data (self)) {
+	else if (response_id != GTK_RESPONSE_CANCEL && !check_data (self)) {
 		prevent_response = TRUE;
 	}
 		
@@ -848,12 +846,19 @@ on_response (GtkDialog *wizard_dialog,
 		return;	
 	}
 		
-		
 	if (response_id == GTK_RESPONSE_OK) {
 		/* Try to save the changes: */	
 		const gboolean saved = save_configuration (self);
-		if (saved)
-			show_ok (GTK_WINDOW (self), _("mcen_ib_advsetup_settings_saved"));
+		if (saved) {
+			/* Do not show the account-saved dialog if we are just saving this 
+			 * temporarily, because from the user's point of view it will not 
+			 * really be saved (saved + enabled) until later.
+			 */
+			const gboolean enabled = 
+				modest_account_mgr_get_enabled (self->account_manager, self->account_name);
+			if (enabled)
+				show_ok (GTK_WINDOW (self), _("mcen_ib_advsetup_settings_saved"));
+		}
 		else
 			show_error (GTK_WINDOW (self), _("mail_ib_setting_failed"));
 	}
@@ -1275,6 +1280,7 @@ modest_account_settings_dialog_class_init (ModestAccountSettingsDialogClass *kla
 static void
 show_error (GtkWindow *parent_window, const gchar* text)
 {
+		printf("debug: show_error\n");
 	GtkDialog *dialog = GTK_DIALOG (hildon_note_new_information (parent_window, text));
 	/*
 	GtkDialog *dialog = GTK_DIALOG (gtk_message_dialog_new (parent_window,
@@ -1291,6 +1297,7 @@ show_error (GtkWindow *parent_window, const gchar* text)
 static void
 show_ok (GtkWindow *parent_window, const gchar* text)
 {
+	printf("debug: show_ok\n");
 	GtkDialog *dialog = GTK_DIALOG (hildon_note_new_information (parent_window, text));
 	/*
 	GtkDialog *dialog = GTK_DIALOG (gtk_message_dialog_new (parent_window,

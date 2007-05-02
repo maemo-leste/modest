@@ -1,3 +1,45 @@
+2007-05-02  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/modest-account-mgr.h:
+	* src/modest-account-mgr.c: 
+	(modest_account_mgr_account_names): Add a gboolean enabled_only 
+	parameter, so we can get lists of onlt the enabled accounts.
+	
+	(modest_account_mgr_add_account),,
+	(modest_account_mgr_account_with_display_name_exists):
+	* src/maemo/modest-msg-edit-window.c: (get_transports):
+	* src/modest-account-mgr-helpers.c:
+	(modest_account_mgr_set_first_account_as_default):
+	* src/modest-init.c: (init_default_account_maybe):
+	* src/modest-tny-account-store.c: (get_accounts):
+	* src/modest-ui-actions.c: (modest_ui_actions_on_accounts),
+	(do_send_receive_auto), (modest_ui_actions_on_send_receive):
+	* tests/check_account-mgr.c: (START_TEST):
+	Provide the extra parameter, as appropriate.
+	
+	* src/widgets/modest-account-view.c: (update_account_view):
+	Do not show disabled accounts (meaning that there is no way to 
+	enable/disable accounts in the UI (the feature is not in our UI 
+	specification), so we can use this internally only to mark unfinished 
+	or temporary account data.
+	
+	* src/maemo/easysetup/modest-easysetup-wizard.c:
+	(create_account): Add boolean enable parameter, so we can specify FALSE 
+	to create the temporary account.
+	(on_button_edit_advanced_settings): Create the temporary account as disabled.
+	(on_before_next): When finishing, when there is a temporary account, just 
+	set it as enabled.
+	Also, use a timeout to delay the showing of the dialog until gconf is likely 
+	to return correct information, due to a maemo gconf bug that is fixed in 
+	osso 1.1, but not yet in Bora.
+	However, the dialog stays on screen after it is destroyed.
+	
+	* src/maemo/modest-account-settings-dialog.c: on_response(): Do not check 
+	for invalid data when cancelling. Use a hildon note instead of a dialog 
+	to complain about invalid data. Do not show the account-saved note if the 
+	account is disabled (a temporary account that will not really be saved for use 
+	until later.)
+
 2007-04-30  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/modest-account-mgr-helpers.h:
