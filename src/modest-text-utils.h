@@ -36,6 +36,8 @@
 #include <time.h>
 #include <glib.h>
 
+#define _FM(str) dgettext("hildon-fm",str)
+
 /**
  * modest_text_utils_derived_subject:
  * @subject: a string which contains the original subject

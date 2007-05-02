@@ -1052,16 +1052,19 @@ modest_text_utils_get_display_size (guint size)
 	const guint KB=1024;
 	const guint MB=1024 * KB;
 	const guint GB=1024 * MB;
-	const guint TB=1024 * GB;
 
-	if (size < KB)
-		return g_strdup_printf (_("%0.1f Kb"), (double)size / KB);
-	else if (size < MB)
-		return g_strdup_printf (_("%d Kb"), size / KB);
-	else if (size < GB)
-		return g_strdup_printf (_("%d Mb"), size / MB);
-	else if (size < TB)
-		return g_strdup_printf (_("%d Gb"), size/ GB);
+	g_message ("SIZE: %d",size);
+
+	if (0 < size && size < KB)
+		return g_strdup_printf (_FM("sfil_li_size_kb"), 1);
+	else if (KB <= size && size < 100 * KB)
+		return g_strdup_printf (_FM("sfil_li_size_1kb_99kb"), size / KB);
+	else if (100*KB <= size && size < MB)
+		return g_strdup_printf (_FM("sfil_li_size_100kb_1mb"), size / MB);
+	else if (MB <= size && size < 10*MB)
+		return g_strdup_printf (_FM("sfil_li_size_1mb_10mb"), size / MB);
+	else if (10*MB <= size && size < GB)
+		return g_strdup_printf (_FM("sfil_li_size_10mb_1gb"), size / MB);
 	else
-		return g_strdup_printf (_("Very big"));
+		return g_strdup_printf (_FM("sfil_li_size_1gb_or_greater"), size / GB);	
 }
