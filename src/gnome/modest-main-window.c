@@ -273,13 +273,15 @@ restore_sizes (ModestMainWindow *self)
 	conf = modest_runtime_get_conf ();
 	
 	modest_widget_memory_restore (conf, G_OBJECT(priv->folder_paned),
-				      "modest-folder-paned");
+				      MODEST_CONF_FOLDER_PANED_KEY);
 	modest_widget_memory_restore (conf, G_OBJECT(priv->msg_paned),
-				      "modest-msg-paned");
+				      MODEST_CONF_MSG_PANED_KEY);
 	modest_widget_memory_restore (conf, G_OBJECT(priv->main_paned),
-				      "modest-main-paned");
-	modest_widget_memory_restore (conf, G_OBJECT(priv->header_view),"header-view");
-	modest_widget_memory_restore (conf,G_OBJECT(self), "modest-main-window");
+				      MODEST_CONF_MAIN_PANED_KEY);
+	modest_widget_memory_restore (conf, G_OBJECT(priv->header_view),
+				      MODEST_CONF_HEADER_VIEW_KEY);
+	modest_widget_memory_restore (conf, G_OBJECT(self), 
+				      MODEST_CONF_MAIN_WINDOW_KEY);
 }
 
 
@@ -295,14 +297,16 @@ save_sizes (ModestMainWindow *self)
 
 	conf = modest_runtime_get_conf ();
 	
-	modest_widget_memory_save (conf,G_OBJECT(self), "modest-main-window");
 	modest_widget_memory_save (conf, G_OBJECT(priv->folder_paned),
-				   "modest-folder-paned");
+				   MODEST_CONF_FOLDER_PANED_KEY);
 	modest_widget_memory_save (conf, G_OBJECT(priv->msg_paned),
-				   "modest-msg-paned");
+				   MODEST_CONF_MSG_PANED_KEY);
 	modest_widget_memory_save (conf, G_OBJECT(priv->main_paned),
-				   "modest-main-paned");
-	modest_widget_memory_save (conf, G_OBJECT(priv->header_view), "header-view");
+				   MODEST_CONF_MAIN_PANED_KEY);
+	modest_widget_memory_save (conf, G_OBJECT(priv->header_view),
+				   MODEST_CONF_HEADER_VIEW_KEY);
+	modest_widget_memory_save (conf, G_OBJECT(self), 
+				   MODEST_CONF_MAIN_WINDOW_KEY);
 }
 
 

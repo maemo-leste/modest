@@ -397,7 +397,7 @@ save_settings_folder_view (ModestConf *conf, ModestFolderView *folder_view,
 	/* Restore the visible account */
 	key = _modest_widget_memory_get_keyname (name, "visible_server_account_id");
 
-	account_id = modest_folder_view_get_visible_server_account_id (folder_view);
+	account_id = modest_folder_view_get_account_id_of_visible_server_account (folder_view);
 	if (account_id)
 		modest_conf_set_string (conf, key, account_id, NULL);
 
@@ -418,8 +418,8 @@ restore_settings_folder_view (ModestConf *conf,
 
 	if (modest_conf_key_exists (conf, key, NULL)) {
 		account_id = modest_conf_get_string (conf, key, NULL);
-		modest_folder_view_set_visible_server_account_id (folder_view, 
-								  (const gchar *) account_id);
+		modest_folder_view_set_account_id_of_visible_server_account (folder_view, 
+									     (const gchar *) account_id);
 		g_free (account_id);
 	} else {
 		ModestAccountMgr *mgr;
@@ -438,7 +438,7 @@ restore_settings_folder_view (ModestConf *conf,
 			server_acc_id = (const gchar *) acc_data->store_account->account_name;
 
 			modest_conf_set_string (conf, key, server_acc_id, NULL);
-			modest_folder_view_set_visible_server_account_id (folder_view, server_acc_id);
+			modest_folder_view_set_account_id_of_visible_server_account (folder_view, server_acc_id);
 
 			g_free (default_acc);
 		}

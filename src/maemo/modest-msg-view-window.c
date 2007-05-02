@@ -40,6 +40,7 @@
 #include <modest-window-priv.h>
 #include <modest-tny-folder.h>
 #include <modest-text-utils.h>
+#include "modest-defs.h"
 #include "modest-hildon-includes.h"
 #include <gtkhtml/gtkhtml-search.h>
 #include <gdk/gdkkeysyms.h>
@@ -183,7 +184,8 @@ static void
 save_settings (ModestMsgViewWindow *self)
 {
 	modest_widget_memory_save (modest_runtime_get_conf (),
-				    G_OBJECT(self), "modest-msg-view-window");
+				   G_OBJECT(self), 
+				   MODEST_CONF_MSG_VIEW_WINDOW_KEY);
 }
 
 
@@ -191,7 +193,8 @@ static void
 restore_settings (ModestMsgViewWindow *self)
 {
 	modest_widget_memory_restore (modest_runtime_get_conf (),
-				      G_OBJECT(self), "modest-msg-view-window");
+				      G_OBJECT(self), 
+				      MODEST_CONF_MSG_VIEW_WINDOW_KEY);
 }
 
 

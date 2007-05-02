@@ -160,7 +160,7 @@ void         modest_folder_view_set_style         (ModestFolderView *self,
 						   ModestFolderViewStyle style);
 
 /**
- * modest_folder_view_set_visible_server_account_id:
+ * modest_folder_view_set_account_id_of_visible_server_account:
  * @self: a #ModestFolderView
  * @account_id: the remote server account id
  * 
@@ -169,18 +169,18 @@ void         modest_folder_view_set_style         (ModestFolderView *self,
  * specified id will be the unique visible account if the folder view
  * is configured in MODEST_FOLDER_VIEW_STYLE_SHOW_ONE
  **/
-void         modest_folder_view_set_visible_server_account_id (ModestFolderView *self,
-							       const gchar *account_id);
+void         modest_folder_view_set_account_id_of_visible_server_account (ModestFolderView *self,
+									  const gchar *account_id);
 
 /**
- * modest_folder_view_get_visible_server_account_id:
+ * modest_folder_view_get_account_id_of_visible_server_account:
  * @self: a #ModestFolderView
  * 
  * gets the account id of the currently visible server account id
  * 
  * Return value: the visible server account id or NULL if none set
  **/
-const gchar* modest_folder_view_get_visible_server_account_id (ModestFolderView *self);
+const gchar* modest_folder_view_get_account_id_of_visible_server_account (ModestFolderView *self);
 
 G_END_DECLS
 

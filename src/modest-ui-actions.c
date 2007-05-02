@@ -834,7 +834,7 @@ modest_ui_actions_toggle_header_list_view (GtkAction *action, ModestMainWindow *
 	/* what is saved/restored is depending on the style; thus; we save with
 	 * old style, then update the style, and restore for this new style
 	 */
-	modest_widget_memory_save (conf, G_OBJECT(header_view), "header-view");
+	modest_widget_memory_save (conf, G_OBJECT(header_view), MODEST_CONF_HEADER_VIEW_KEY);
 	
 	if (modest_header_view_get_style
 	    (MODEST_HEADER_VIEW(header_view)) == MODEST_HEADER_VIEW_STYLE_DETAILS)
@@ -845,7 +845,7 @@ modest_ui_actions_toggle_header_list_view (GtkAction *action, ModestMainWindow *
 					      MODEST_HEADER_VIEW_STYLE_DETAILS);
 
 	modest_widget_memory_restore (conf, G_OBJECT(header_view),
-				      "header-view");
+				      MODEST_CONF_HEADER_VIEW_KEY);
 }
 
 
@@ -1058,9 +1058,9 @@ modest_ui_actions_on_folder_selection_changed (ModestFolderView *folder_view,
 			modest_header_view_set_folder (MODEST_HEADER_VIEW(header_view),
 						       TNY_FOLDER (folder_store));
 			modest_widget_memory_restore (conf, G_OBJECT(header_view),
-						      "header-view");
+						      MODEST_CONF_HEADER_VIEW_KEY);
 		} else {
-			modest_widget_memory_save (conf, G_OBJECT (header_view), "header-view");
+			modest_widget_memory_save (conf, G_OBJECT (header_view), MODEST_CONF_HEADER_VIEW_KEY);
 			modest_header_view_set_folder (MODEST_HEADER_VIEW(header_view), NULL);
 		}
 	} else if (TNY_IS_ACCOUNT (folder_store)) {

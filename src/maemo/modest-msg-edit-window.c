@@ -241,7 +241,7 @@ static void
 save_settings (ModestMsgEditWindow *self)
 {
 	modest_widget_memory_save (modest_runtime_get_conf(),
-				   G_OBJECT(self), "modest-edit-msg-window");
+				   G_OBJECT(self), MODEST_CONF_EDIT_WINDOW_KEY);
 }
 
 
@@ -249,7 +249,7 @@ static void
 restore_settings (ModestMsgEditWindow *self)
 {
 	modest_widget_memory_restore (modest_runtime_get_conf(),
-				      G_OBJECT(self), "modest-edit-msg-window");
+				      G_OBJECT(self), MODEST_CONF_EDIT_WINDOW_KEY);
 }
 
 

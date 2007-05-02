@@ -83,6 +83,14 @@
 
 /* place for widget settings */
 #define MODEST_CONF_WIDGET_NAMESPACE     MODEST_CONF_NAMESPACE "/widgets"
+#define MODEST_CONF_FOLDER_VIEW_KEY      "folder-view"
+#define MODEST_CONF_HEADER_VIEW_KEY      "header-view"
+#define MODEST_CONF_MAIN_PANED_KEY       "modest-main-paned"
+#define MODEST_CONF_MSG_PANED_KEY        "modest-msg-paned"
+#define MODEST_CONF_FOLDER_PANED_KEY     "modest-folder-paned"
+#define MODEST_CONF_MAIN_WINDOW_KEY      "modest-main-window"
+#define MODEST_CONF_EDIT_WINDOW_KEY      "modest-edit-msg-window"
+#define MODEST_CONF_MSG_VIEW_WINDOW_KEY  "modest-msg-view-window"
 
 #define MODEST_SERVER_ACCOUNT_NAMESPACE  MODEST_CONF_NAMESPACE "/" "server_accounts"
 

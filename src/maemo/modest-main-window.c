@@ -32,7 +32,7 @@
 #include <tny-account-store-view.h>
 #include <tny-simple-list.h>
 #include "modest-hildon-includes.h"
-
+#include "modest-defs.h"
 #include <string.h>
 
 #include "widgets/modest-main-window.h"
@@ -273,11 +273,11 @@ restore_sizes (ModestMainWindow *self)
 	conf = modest_runtime_get_conf ();
 	
 	modest_widget_memory_restore (conf, G_OBJECT(priv->main_paned),
-				      "modest-main-paned");
+				      MODEST_CONF_MAIN_PANED_KEY);
 	modest_widget_memory_restore (conf, G_OBJECT(priv->header_view),
-				      "header-view");
+				      MODEST_CONF_HEADER_VIEW_KEY);
 	modest_widget_memory_restore (conf, G_OBJECT(self), 
-				      "modest-main-window");
+				      MODEST_CONF_MAIN_WINDOW_KEY);
 }
 
 
@@ -290,10 +290,12 @@ save_sizes (ModestMainWindow *self)
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
 	conf = modest_runtime_get_conf ();
 	
-	modest_widget_memory_save (conf,G_OBJECT(self), "modest-main-window");
-	modest_widget_memory_save (conf, G_OBJECT(priv->main_paned),
-				   "modest-main-paned");
-	modest_widget_memory_save (conf, G_OBJECT(priv->header_view), "header-view");
+	modest_widget_memory_save (conf,G_OBJECT(self), 
+				   MODEST_CONF_MAIN_WINDOW_KEY);
+	modest_widget_memory_save (conf, G_OBJECT(priv->main_paned), 
+				   MODEST_CONF_MAIN_PANED_KEY);
+	modest_widget_memory_save (conf, G_OBJECT(priv->header_view), 
+				   MODEST_CONF_HEADER_VIEW_KEY);
 }
 
 static void

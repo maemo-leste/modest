@@ -467,7 +467,7 @@ modest_folder_view_init (ModestFolderView *obj)
 	setup_drag_and_drop (GTK_TREE_VIEW(obj));
 
 	/* Restore conf */
-	modest_widget_memory_restore (conf, G_OBJECT (obj), "folder-view");
+	modest_widget_memory_restore (conf, G_OBJECT (obj), MODEST_CONF_FOLDER_VIEW_KEY);
 
 	/* Connect signals */
 	g_signal_connect (G_OBJECT (obj), 
@@ -1439,8 +1439,8 @@ modest_folder_view_set_style (ModestFolderView *self,
 }
 
 void
-modest_folder_view_set_visible_server_account_id (ModestFolderView *self,
-						  const gchar *account_id)
+modest_folder_view_set_account_id_of_visible_server_account (ModestFolderView *self,
+							     const gchar *account_id)
 {
 	ModestFolderViewPrivate *priv;
 	ModestConf *conf;
@@ -1455,11 +1455,11 @@ modest_folder_view_set_visible_server_account_id (ModestFolderView *self,
 
 	/* Save preferences */
 	conf = modest_runtime_get_conf ();
-	modest_widget_memory_save (conf, G_OBJECT (self), "folder-view");
+	modest_widget_memory_save (conf, G_OBJECT (self), MODEST_CONF_FOLDER_VIEW_KEY);
 }
 
 const gchar *
-modest_folder_view_get_visible_server_account_id (ModestFolderView *self)
+modest_folder_view_get_account_id_of_visible_server_account (ModestFolderView *self)
 {
 	ModestFolderViewPrivate *priv;
 
