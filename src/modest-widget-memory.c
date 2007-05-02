@@ -29,7 +29,8 @@
 
 #include <modest-widget-memory.h>
 #include <modest-widget-memory-priv.h>
-
+#include <modest-runtime.h>
+#include <modest-account-mgr-helpers.h>
 #include <modest-tny-platform-factory.h>
 #include <modest-tny-folder.h>
 #include <widgets/modest-header-view.h>
@@ -390,20 +391,69 @@ static gboolean
 save_settings_folder_view (ModestConf *conf, ModestFolderView *folder_view,
 			   const gchar *name)
 {
-	return TRUE; /* FIXME: implement this */
+	gchar *key;
+	const gchar* account_id;
+
+	/* Restore the visible account */
+	key = _modest_widget_memory_get_keyname (name, "visible_server_account_id");
+
+	account_id = modest_folder_view_get_visible_server_account_id (folder_view);
+	if (account_id)
+		modest_conf_set_string (conf, key, account_id, NULL);
+
+	g_free (key);
+
+	return TRUE;
 }
 
 static gboolean
-restore_settings_folder_view (ModestConf *conf, ModestFolderView *folder_view,
+restore_settings_folder_view (ModestConf *conf, 
+			      ModestFolderView *folder_view,
 			      const gchar *name)
 {
-	return TRUE; /* FIXME: implement this */
+	gchar *key, *account_id;
+
+	/* Restore the visible account */
+	key = _modest_widget_memory_get_keyname (name, "visible_server_account_id");
+
+	if (modest_conf_key_exists (conf, key, NULL)) {
+		account_id = modest_conf_get_string (conf, key, NULL);
+		modest_folder_view_set_visible_server_account_id (folder_view, 
+								  (const gchar *) account_id);
+		g_free (account_id);
+	} else {
+		ModestAccountMgr *mgr;
+		gchar *default_acc;
+
+		/* If there is no visible account id in the
+		   configuration then pick the default account as
+		   visible account */
+		mgr = modest_runtime_get_account_mgr ();
+		default_acc = modest_account_mgr_get_default_account (mgr);
+		if (default_acc) {
+			ModestAccountData *acc_data;
+			const gchar *server_acc_id;
+
+			acc_data = modest_account_mgr_get_account_data (mgr, (const gchar*) default_acc);
+			server_acc_id = (const gchar *) acc_data->store_account->account_name;
+
+			modest_conf_set_string (conf, key, server_acc_id, NULL);
+			modest_folder_view_set_visible_server_account_id (folder_view, server_acc_id);
+
+			g_free (default_acc);
+		}
+	}
+
+	g_free (key);
+
+	return TRUE;
 }
 
 
 static gboolean
-save_settings_msg_view (ModestConf *conf, ModestMsgView *msg_view,
-			   const gchar *name)
+save_settings_msg_view (ModestConf *conf, 
+			ModestMsgView *msg_view,
+			const gchar *name)
 {
 	return TRUE; /* FIXME: implement this */
 }

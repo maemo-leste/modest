@@ -50,6 +50,7 @@
 #include <modest-dnd.h>
 #include <modest-platform.h>
 #include <modest-account-mgr-helpers.h>
+#include <modest-widget-memory.h>
 
 /* 'private'/'protected' functions */
 static void modest_folder_view_class_init  (ModestFolderViewClass *klass);
@@ -140,6 +141,7 @@ struct _ModestFolderViewPrivate {
 	guint                 timer_expander;
 
 	gchar                *local_account_name;
+	gchar                *visible_account_id;
 	ModestFolderViewStyle style;
 };
 #define MODEST_FOLDER_VIEW_GET_PRIVATE(o)			\
@@ -449,9 +451,10 @@ modest_folder_view_init (ModestFolderView *obj)
 	
 	priv->timer_expander = 0;
 	priv->account_store  = NULL;
-	priv->cur_folder_store     = NULL;
 	priv->query          = NULL;
 	priv->style          = MODEST_FOLDER_VIEW_STYLE_SHOW_ALL;
+	priv->cur_folder_store   = NULL;
+	priv->visible_account_id = NULL;
 
 	/* Initialize the local account name */
 	conf = modest_runtime_get_conf();
@@ -462,6 +465,9 @@ modest_folder_view_init (ModestFolderView *obj)
 
 	/* Setup drag and drop */
 	setup_drag_and_drop (GTK_TREE_VIEW(obj));
+
+	/* Restore conf */
+	modest_widget_memory_restore (conf, G_OBJECT (obj), "folder-view");
 
 	/* Connect signals */
 	g_signal_connect (G_OBJECT (obj), 
@@ -522,6 +528,7 @@ modest_folder_view_finalize (GObject *obj)
 		g_signal_handler_disconnect (G_OBJECT(sel), priv->changed_signal);
 
 	g_free (priv->local_account_name);
+	g_free (priv->visible_account_id);
 	
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
@@ -660,28 +667,20 @@ filter_row (GtkTreeModel *model,
 			    -1);
 
 	if (type == TNY_FOLDER_TYPE_ROOT) {
-		ModestAccountData *acc_data;
 		TnyAccount *acc;
 		const gchar *account_id;
-		ModestAccountMgr *mgr;
 
 		acc = TNY_ACCOUNT (instance);
-		account_id = tny_account_get_id (acc); /* Non human-readable name, not the title */
-		mgr = modest_runtime_get_account_mgr ();
-		
-		/* TODO: This does not work because acc is the _server_account, 
-		 * and this code assumes that it is the normal account, which uses a server account.
-		 * Maybe we need some way to get the parent account from the server account.
-		 */
-		acc_data = modest_account_mgr_get_account_data (mgr, account_id);
-		if (acc_data) {
-			if (strcmp (account_id, MODEST_LOCAL_FOLDERS_ACCOUNT_ID) &&
-			    strcmp (account_id, MODEST_MMC_ACCOUNT_ID)) {
-				/* Show only the default account */
-				if (!acc_data->is_default)
-					retval = FALSE;
-			}
-			modest_account_mgr_free_account_data (mgr, acc_data);
+		account_id = tny_account_get_id (acc);
+
+		if (strcmp (account_id, MODEST_LOCAL_FOLDERS_ACCOUNT_ID) &&
+		    strcmp (account_id, MODEST_MMC_ACCOUNT_ID)) { 
+			ModestFolderViewPrivate *priv;
+			
+			/* Show only the visible account id */
+			priv = MODEST_FOLDER_VIEW_GET_PRIVATE (data);
+			if (priv->visible_account_id && strcmp (account_id, priv->visible_account_id))
+				retval = FALSE;
 		}
 	}
 
@@ -731,7 +730,7 @@ update_model (ModestFolderView *self, ModestTnyAccountStore *account_store)
 			filter_model = gtk_tree_model_filter_new (sortable, NULL);
 			gtk_tree_model_filter_set_visible_func (GTK_TREE_MODEL_FILTER (filter_model),
 								filter_row,
-								NULL,
+								self,
 								NULL);
 		}
 
@@ -1403,25 +1402,27 @@ on_configuration_key_changed (ModestConf* conf,
 {
 	ModestFolderViewPrivate *priv;
 
-	if (!key || strcmp (key, MODEST_CONF_DEVICE_NAME))
+	if (!key)
 		return;
 
 	priv = MODEST_FOLDER_VIEW_GET_PRIVATE(self);
 
-	g_free (priv->local_account_name);
+	if (!strcmp (key, MODEST_CONF_DEVICE_NAME)) {
+		g_free (priv->local_account_name);
 
-	if (event == MODEST_CONF_EVENT_KEY_UNSET)
-		priv->local_account_name = g_strdup (MODEST_LOCAL_FOLDERS_DEFAULT_DISPLAY_NAME);
-	else
-		priv->local_account_name = modest_conf_get_string (modest_runtime_get_conf(),
-								   MODEST_CONF_DEVICE_NAME, NULL);
+		if (event == MODEST_CONF_EVENT_KEY_UNSET)
+			priv->local_account_name = g_strdup (MODEST_LOCAL_FOLDERS_DEFAULT_DISPLAY_NAME);
+		else
+			priv->local_account_name = modest_conf_get_string (modest_runtime_get_conf(),
+									   MODEST_CONF_DEVICE_NAME, NULL);
 
-	/* Force a redraw */
+		/* Force a redraw */
 #if GTK_CHECK_VERSION(2, 8, 0) /* gtk_tree_view_column_queue_resize is only available in GTK+ 2.8 */
-	GtkTreeViewColumn * tree_column = gtk_tree_view_get_column (GTK_TREE_VIEW (self), 
-						TNY_GTK_FOLDER_STORE_TREE_MODEL_NAME_COLUMN);
-	gtk_tree_view_column_queue_resize (tree_column);
+		GtkTreeViewColumn * tree_column = gtk_tree_view_get_column (GTK_TREE_VIEW (self), 
+									    TNY_GTK_FOLDER_STORE_TREE_MODEL_NAME_COLUMN);
+		gtk_tree_view_column_queue_resize (tree_column);
 #endif
+	}
 }
 
 void 
@@ -1435,4 +1436,36 @@ modest_folder_view_set_style (ModestFolderView *self,
 	priv = MODEST_FOLDER_VIEW_GET_PRIVATE(self);
 
 	priv->style = style;
+}
+
+void
+modest_folder_view_set_visible_server_account_id (ModestFolderView *self,
+						  const gchar *account_id)
+{
+	ModestFolderViewPrivate *priv;
+	ModestConf *conf;
+
+	g_return_if_fail (self);
+	
+	priv = MODEST_FOLDER_VIEW_GET_PRIVATE(self);
+
+	if (priv->visible_account_id)
+		g_free (priv->visible_account_id);
+	priv->visible_account_id = g_strdup (account_id);
+
+	/* Save preferences */
+	conf = modest_runtime_get_conf ();
+	modest_widget_memory_save (conf, G_OBJECT (self), "folder-view");
+}
+
+const gchar *
+modest_folder_view_get_visible_server_account_id (ModestFolderView *self)
+{
+	ModestFolderViewPrivate *priv;
+
+	g_return_val_if_fail (self, NULL);
+	
+	priv = MODEST_FOLDER_VIEW_GET_PRIVATE(self);
+
+	return (const gchar *) priv->visible_account_id;
 }
