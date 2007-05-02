@@ -1,5 +1,11 @@
 2007-05-02  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-text-utils.c: (modest_text_utils_validate_recipient):
+	Comment out an if() that checks a gchar for < 0, causing a build-breaking 
+	warning. It is probably a logic error, but I need to fix the build.
+
+2007-05-02  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/modest-account-mgr.h:
 	* src/modest-account-mgr.c: 
 	(modest_account_mgr_account_names): Add a gboolean enabled_only 

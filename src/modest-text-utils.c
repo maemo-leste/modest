@@ -1057,10 +1057,14 @@ modest_text_utils_validate_recipient (const gchar *recipient)
 		has_error = TRUE;
 		for (; *current != '\0'; current = g_utf8_next_char (current)) {
 			if (*current == '\\') {
+				/* TODO: This causes a warning, which breaks the build, 
+				 * because a gchar cannot be < 0.
+				 * murrayc. 
 				if (current[1] <0) {
 					has_error = TRUE;
 					break;
 				}
+				*/
 			} else if (*current == '\"') {
 				has_error = FALSE;
 				current = g_utf8_next_char (current);
