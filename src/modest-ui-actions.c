@@ -986,6 +986,10 @@ modest_ui_actions_on_header_activated (ModestHeaderView *folder_view, TnyHeader 
 	TnyFolder *folder = NULL;
 	TnyMsg    *msg    = NULL;
 	ModestWindowMgr *mgr;
+	GtkTreeModel *model;
+	GtkTreeIter iter;
+	GtkTreeSelection *sel = NULL;
+	GList *sel_list = NULL;
 	
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW(main_window));
 	
@@ -1017,7 +1021,17 @@ modest_ui_actions_on_header_activated (ModestHeaderView *folder_view, TnyHeader 
 		if (!account)
 			account = modest_account_mgr_get_default_account (modest_runtime_get_account_mgr());
 
-		win = modest_msg_view_window_new (msg, account);
+		sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (folder_view));
+		sel_list = gtk_tree_selection_get_selected_rows (sel, &model);
+		if (sel_list != NULL) {
+			gtk_tree_model_get_iter (model, &iter, (GtkTreePath *) sel_list->data);
+			
+			win = modest_msg_view_window_new_with_header_model (msg, account, model, iter);
+			g_list_foreach (sel_list, (GFunc) gtk_tree_path_free, NULL);
+			g_list_free (sel_list);
+		} else {
+			win = modest_msg_view_window_new (msg, account);
+		}
 		modest_window_mgr_register_window (mgr, win);
 
 		gtk_window_set_transient_for (GTK_WINDOW (win),
