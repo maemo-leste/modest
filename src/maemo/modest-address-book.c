@@ -56,6 +56,8 @@ static gchar *ui_get_formatted_email_id(gchar * current_given_name,
 					gchar * current_sur_name, gchar * current_email_id);
 static gchar *run_add_email_addr_to_contact_dlg(const gchar * contact_name);
 static GSList *select_email_addrs_for_contact(GList * email_addr_list);
+static gboolean resolve_address (const gchar *address, GSList **resolved_addresses, gchar **contact_id);
+static gchar *unquote_string (const gchar *str);
 
 
 static void
@@ -100,6 +102,18 @@ open_addressbook ()
 	e_book_async_open (book, FALSE, book_open_cb, NULL);
 
 	return TRUE; /* FIXME */	
+}
+
+static gboolean
+open_addressbook_sync ()
+{
+	book = e_book_new_system_addressbook (NULL);
+	if (!book)
+		return FALSE;
+
+	e_book_open (book, FALSE, NULL);
+
+	return TRUE;
 }
 
 void
@@ -160,6 +174,7 @@ modest_address_book_select_addresses (ModestRecptEditor *recpt_editor)
 
 	contact_dialog = osso_abook_select_dialog_new (OSSO_ABOOK_TREE_VIEW (contact_view));
 	osso_abook_select_dialog_set_new_contact (OSSO_ABOOK_SELECT_DIALOG (contact_dialog), TRUE);
+	gtk_window_set_title (GTK_WINDOW (contact_dialog), _("mcen_ti_select_recipients"));
 
 	gtk_widget_show (contact_dialog);
 
@@ -365,27 +380,23 @@ ui_get_formatted_email_id(gchar * current_given_name,
 			  gchar * current_sur_name, gchar * current_email_id)
 {
 	GString *email_id_str = NULL;
-	gchar *email_id = NULL;
 
 	email_id_str = g_string_new(NULL);
 
 	if ((current_given_name != NULL) && ((strlen(current_given_name) != 0))
 	    && (current_sur_name != NULL) && ((strlen(current_sur_name) != 0))) {
-		g_string_printf(email_id_str, "%s %s %c%s%c", current_given_name,
-				current_sur_name, '<', current_email_id, '>');
-		email_id = g_strdup(email_id_str->str);
+		g_string_append_printf(email_id_str, "%s %s", current_given_name, current_sur_name);
 	} else if ((current_given_name != NULL) && (strlen(current_given_name) != 0)) {
-		g_string_printf(email_id_str, "%s %c%s%c", current_given_name, '<',
-				current_email_id, '>');
-		email_id = g_strdup(email_id_str->str);
+		g_string_append_printf(email_id_str, "%s", current_given_name);
 	} else if ((current_sur_name != NULL) && (strlen(current_sur_name) != 0)) {
-		g_string_printf(email_id_str, "%s %c%s%c", current_sur_name, '<',
-				current_email_id, '>');
-		email_id = g_strdup(email_id_str->str);
+		g_string_append_printf(email_id_str, "%s", current_sur_name);
 	}
-	g_string_free(email_id_str, TRUE);
-	email_id_str = NULL;
-	return (email_id);
+	if (g_utf8_strchr (email_id_str->str, -1, ' ')) {
+		g_string_prepend_c (email_id_str, '\"');
+		g_string_append_c (email_id_str, '\"');
+	}
+	g_string_append_printf (email_id_str, " %c%s%c", '<', current_email_id, '>');
+	return g_string_free (email_id_str, FALSE);
 }
 
 /**
@@ -541,4 +552,246 @@ select_email_addrs_for_contact(GList * email_addr_list)
 	gtk_list_store_clear(list_store);
 	gtk_widget_destroy(select_email_addr_dlg);
 	return selected_email_addr_list;
+}
+
+gboolean
+modest_address_book_check_names (ModestRecptEditor *recpt_editor)
+{
+	const gchar *recipients = NULL;
+	GSList *start_indexes = NULL, *end_indexes = NULL;
+	GSList *current_start, *current_end;
+	gboolean result = TRUE;
+	GtkTextBuffer *buffer;
+	gint offset_delta = 0;
+	gint last_length;
+	GtkTextIter start_iter, end_iter;
+	GtkWidget *banner;
+
+	g_return_val_if_fail (MODEST_IS_RECPT_EDITOR (recpt_editor), FALSE);
+
+	banner = hildon_banner_show_animation (NULL, NULL, _("mail_ib_checking_names"));
+	g_object_ref (G_OBJECT (banner));
+
+	recipients = modest_recpt_editor_get_recipients (recpt_editor);
+	last_length = g_utf8_strlen (recipients, -1);
+	g_message ("LENGTH %d", last_length);
+	modest_text_utils_get_addresses_indexes (recipients, &start_indexes, &end_indexes);
+
+	if (start_indexes == NULL) {
+		gtk_widget_destroy (banner);
+		g_object_unref (G_OBJECT(banner));
+		return TRUE;
+	}
+
+	current_start = start_indexes;
+	current_end = end_indexes;
+	buffer = modest_recpt_editor_get_buffer (recpt_editor);
+
+	while (current_start != NULL) {
+		gchar *address;
+		gchar *start_ptr, *end_ptr;
+		gint start_pos, end_pos;
+
+		start_pos = (*((gint*) current_start->data)) + offset_delta;
+		end_pos = (*((gint*) current_end->data)) + offset_delta;
+	       
+		start_ptr = g_utf8_offset_to_pointer (recipients, start_pos);
+		end_ptr = g_utf8_offset_to_pointer (recipients, end_pos);
+
+		address = g_strndup (start_ptr, end_ptr - start_ptr);
+		gtk_text_buffer_get_iter_at_offset (buffer, &start_iter, start_pos);
+		gtk_text_buffer_get_iter_at_offset (buffer, &end_iter, end_pos);
+		gtk_text_buffer_select_range (buffer, &start_iter, &end_iter);
+
+		g_message ("RANGE %d - %d", start_pos, end_pos);
+
+		g_message ("ADDRESS %s", address);
+		if (!modest_text_utils_validate_recipient (address)) {
+			if (strstr (address, "@") == NULL) {
+				/* here goes searching in addressbook */
+				gchar *contact_id = NULL;;
+				GSList *resolved_addresses = NULL;
+				result = resolve_address (address, &resolved_addresses, &contact_id);
+
+				if (result) {
+					gint new_length;
+					/* replace string */
+					modest_recpt_editor_replace_with_resolved_recipient (recpt_editor,
+											     &start_iter, &end_iter,
+											     resolved_addresses, 
+											     contact_id);
+					g_free (contact_id);
+					g_slist_foreach (resolved_addresses, (GFunc) g_free, NULL);
+					g_slist_free (resolved_addresses);
+
+					/* update offset delta */
+					recipients = modest_recpt_editor_get_recipients (recpt_editor);
+					new_length = g_utf8_strlen (recipients, -1);
+					offset_delta = offset_delta + new_length - last_length;
+					last_length = new_length;
+					g_message ("LENGTH %d", last_length);
+				}
+			} else {
+				/* this address is not valid, select it and return control to user showing banner */
+
+				hildon_banner_show_information (NULL, NULL, _("mcen_ib_invalid_mail"));
+				result = FALSE;
+			}
+		}
+		g_free (address);
+		if (result == FALSE)
+			break;
+
+		current_start = g_slist_next (current_start);
+		current_end = g_slist_next (current_end);
+	}
+
+	if (current_start == NULL) {
+		gtk_text_buffer_get_end_iter (buffer, &end_iter);
+		gtk_text_buffer_place_cursor (buffer, &end_iter);
+	}
+
+	gtk_widget_destroy (banner);
+	g_object_unref (G_OBJECT (banner));
+	modest_recpt_editor_grab_focus (recpt_editor);
+
+	g_slist_foreach (start_indexes, (GFunc) g_free, NULL);
+	g_slist_foreach (end_indexes, (GFunc) g_free, NULL);
+	g_slist_free (start_indexes);
+	g_slist_free (end_indexes);
+
+	return result;
+
+}
+
+static GList *
+get_contacts_for_name (const gchar *name)
+{
+	EBookQuery *full_name_book_query = NULL;
+	GList *result;
+	gchar *unquoted;
+
+	if (name == NULL)
+		return NULL;
+
+	unquoted = unquote_string (name);
+	full_name_book_query = e_book_query_field_test (E_CONTACT_FULL_NAME, E_BOOK_QUERY_CONTAINS, unquoted);
+	g_free (unquoted);
+
+	e_book_get_contacts (book, full_name_book_query, &result, NULL);
+	e_book_query_unref (full_name_book_query);
+
+	return result;
+}
+
+static GList *
+select_contacts_for_name_dialog (const gchar *name)
+{
+	EBookQuery *full_name_book_query = NULL;
+	EBookView *book_view = NULL;
+	GList *result = NULL;
+	gchar *unquoted;
+
+	unquoted = unquote_string (name);
+	full_name_book_query = e_book_query_field_test (E_CONTACT_FULL_NAME, E_BOOK_QUERY_CONTAINS, unquoted);
+	g_free (unquoted);
+	e_book_get_book_view (book, full_name_book_query, NULL, -1, &book_view, NULL);
+	e_book_query_unref (full_name_book_query);
+
+	if (book_view) {
+		GtkWidget *contact_view = NULL;
+		GtkWidget *contact_dialog = NULL;
+		osso_abook_tree_model_set_book_view (OSSO_ABOOK_TREE_MODEL (contact_model), book_view);
+		e_book_view_start (book_view);
+		
+		contact_view = osso_abook_contact_view_new_basic (contact_model);
+		contact_dialog = osso_abook_select_dialog_new (OSSO_ABOOK_TREE_VIEW (contact_view));
+
+		if (gtk_dialog_run (GTK_DIALOG (contact_dialog)) == GTK_RESPONSE_OK) {
+			result = osso_abook_contact_view_get_selection (OSSO_ABOOK_CONTACT_VIEW (contact_view));
+		}
+		e_book_view_stop (book_view);
+		g_object_unref (book_view);
+		gtk_widget_destroy (contact_dialog);
+	}
+
+	return result;
+}
+
+static gboolean
+resolve_address (const gchar *address, GSList **resolved_addresses, gchar **contact_id)
+{
+	GList *resolved_contacts;
+
+	contact_model = osso_abook_contact_model_new ();
+	if (!open_addressbook_sync ()) {
+		if (contact_model) {
+			g_object_unref (contact_model);
+			contact_model = NULL;
+		}
+		return FALSE;
+	}
+
+	resolved_contacts = get_contacts_for_name (address);
+
+	if (resolved_contacts == NULL) {
+		/* no matching contacts for the search string */
+		hildon_banner_show_information (NULL, NULL, _("mcen_nc_no_matching_contacts"));
+		return FALSE;
+	}
+
+	if (g_list_length (resolved_contacts) > 1) {
+		/* show a dialog to select the contact from the resolved ones */
+		g_list_free (resolved_contacts);
+
+		resolved_contacts = select_contacts_for_name_dialog (address);
+	}
+	
+	/* get the resolved contacts (can be no contact) */
+	if (resolved_contacts) {
+		EContact *contact = (EContact *) resolved_contacts->data;
+
+		*resolved_addresses = get_recipients_for_given_contact (contact);
+		if (*resolved_addresses) {
+			*contact_id = g_strdup (e_contact_get_const (contact, E_CONTACT_UID));
+		}
+		/* TODO: free the resolved_contacts list */
+		return TRUE;
+	} else {
+		/* cancelled dialog to select more than one contact or
+		 * selected no contact */
+		return FALSE;
+	}
+
+}
+
+static gchar *
+unquote_string (const gchar *str)
+{
+	GString *buffer;
+	gchar *p;
+
+	if (str == NULL)
+		return NULL;
+
+	buffer = g_string_new_len (NULL, strlen (str));
+	for (p = (gchar *) str; *p != '\0'; p = g_utf8_next_char (p)) {
+		if (*p == '"') {
+			p = g_utf8_next_char (p);
+			while ((*p != '\0')&&(*p != '"')) {
+				if (*p == '\\') {
+					g_string_append_unichar (buffer, g_utf8_get_char (p));
+					p = g_utf8_next_char (p);
+					
+				}
+				g_string_append_unichar (buffer, g_utf8_get_char (p));
+				p = g_utf8_next_char (p);
+			}
+		} else {
+			g_string_append_unichar (buffer, g_utf8_get_char (p));
+		}
+	}
+
+	return g_string_free (buffer, FALSE);
+
 }

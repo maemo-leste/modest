@@ -381,6 +381,63 @@ modest_text_utils_convert_to_html_body (const gchar *data)
 	return g_string_free (html, FALSE);
 }
 
+void
+modest_text_utils_get_addresses_indexes (const gchar *addresses, GSList **start_indexes, GSList **end_indexes)
+{
+	gchar *current, *start, *last_blank;
+	gint start_offset = 0, current_offset = 0;
+
+	g_return_if_fail (start_indexes != NULL);
+	g_return_if_fail (end_indexes != NULL);
+
+	start = (gchar *) addresses;
+	current = start;
+	last_blank = start;
+
+	while (*current != '\0') {
+		if ((start == current)&&((*current == ' ')||(*current == ',')||(*current == ';'))) {
+			start = g_utf8_next_char (start);
+			start_offset++;
+			last_blank = current;
+		} else if ((*current == ',')||(*current == ';')) {
+			gint *start_index, *end_index;
+			start_index = g_new0(gint, 1);
+			end_index = g_new0(gint, 1);
+			*start_index = start_offset;
+			*end_index = current_offset;
+			*start_indexes = g_slist_prepend (*start_indexes, start_index);
+			*end_indexes = g_slist_prepend (*end_indexes, end_index);
+			start = g_utf8_next_char (current);
+			start_offset = current_offset + 1;
+			last_blank = start;
+		} else if (*current == '"') {
+			current = g_utf8_next_char (current);
+			current_offset ++;
+			while ((*current != '"')&&(*current != '\0')) {
+				current = g_utf8_next_char (current);
+				current_offset ++;
+			}
+		}
+				
+		current = g_utf8_next_char (current);
+		current_offset ++;
+	}
+
+	if (start != current) {
+			gint *start_index, *end_index;
+			start_index = g_new0(gint, 1);
+			end_index = g_new0(gint, 1);
+			*start_index = start_offset;
+			*end_index = current_offset;
+			*start_indexes = g_slist_prepend (*start_indexes, start_index);
+			*end_indexes = g_slist_prepend (*end_indexes, end_index);
+	}
+	
+	*start_indexes = g_slist_reverse (*start_indexes);
+	*end_indexes = g_slist_reverse (*end_indexes);
+
+	return;
+}
 
 GSList *
 modest_text_utils_split_addresses_list (const gchar *addresses)
@@ -393,25 +450,25 @@ modest_text_utils_split_addresses_list (const gchar *addresses)
 	last_blank = start;
 
 	while (*current != '\0') {
-		if ((start == current)&&((*current == ' ')||(*current == ','))) {
-			start++;
+		if ((start == current)&&((*current == ' ')||(*current == ',')||(*current == ';'))) {
+			start = g_utf8_next_char (start);
 			last_blank = current;
-		} else if (*current == ',') {
+		} else if ((*current == ',')||(*current == ';')) {
 			gchar *new_address = NULL;
 			new_address = g_strndup (start, current - last_blank);
 			result = g_slist_prepend (result, new_address);
-			start = current + 1;
+			start = g_utf8_next_char (current);
 			last_blank = start;
 		} else if (*current == '\"') {
 			if (current == start) {
-				current++;
-				start++;
+				current = g_utf8_next_char (current);
+				start = g_utf8_next_char (start);
 			}
 			while ((*current != '\"')&&(*current != '\0'))
-				current++;
+				current = g_utf8_next_char (current);
 		}
 				
-		current++;
+		current = g_utf8_next_char (current);
 	}
 
 	if (start != current) {
@@ -979,42 +1036,41 @@ modest_text_utils_validate_email_address (const gchar *email_address)
 gboolean 
 modest_text_utils_validate_recipient (const gchar *recipient)
 {
-	gchar *stripped;
+	gchar *stripped, *current;
 	gchar *right_part;
-	gint i = 0;
 	gboolean has_error = FALSE;
 
 	if (modest_text_utils_validate_email_address (recipient))
 		return TRUE;
 	stripped = g_strdup (recipient);
 	stripped = g_strstrip (stripped);
+	current = stripped;
 
-	if (stripped[0] == '\0') {
+	if (*current == '\0') {
 		g_free (stripped);
 		return FALSE;
 	}
 
 	/* quoted string */
-	if (stripped[0] == '\"') {
-		i = 1;
+	if (*current == '\"') {
+		current = g_utf8_next_char (current);
 		has_error = TRUE;
-		for (i = 1; stripped[i] != '\0'; i++) {
-			if (stripped[i] == '\\') {
-				if (stripped[i+1] >=0) {
-					i++;
-				} else {
+		for (; *current != '\0'; current = g_utf8_next_char (current)) {
+			if (*current == '\\') {
+				if (current[1] <0) {
 					has_error = TRUE;
 					break;
 				}
-			} else if (stripped[i] == '\"') {
+			} else if (*current == '\"') {
 				has_error = FALSE;
+				current = g_utf8_next_char (current);
 				break;
 			}
 		}
 	} else {
 		has_error = TRUE;
-		for (i = 0; stripped[i] != '\0'; i++) {
-			if (stripped[i] == ' ') {
+		for (current = stripped ; *current != '\0'; current = g_utf8_next_char (current)) {
+			if (*current == '<') {
 				has_error = FALSE;
 				break;
 			}
@@ -1026,9 +1082,10 @@ modest_text_utils_validate_recipient (const gchar *recipient)
 		return FALSE;
 	}
 
-	right_part = g_strdup (stripped + i);
+	right_part = g_strdup (current);
 	g_free (stripped);
 	right_part = g_strstrip (right_part);
+
 	if (g_str_has_prefix (right_part, "<") &&
 	    g_str_has_suffix (right_part, ">")) {
 		gchar *address;
@@ -1052,8 +1109,6 @@ modest_text_utils_get_display_size (guint size)
 	const guint KB=1024;
 	const guint MB=1024 * KB;
 	const guint GB=1024 * MB;
-
-	g_message ("SIZE: %d",size);
 
 	if (0 < size && size < KB)
 		return g_strdup_printf (_FM("sfil_li_size_kb"), 1);

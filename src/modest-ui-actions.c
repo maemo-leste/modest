@@ -1227,6 +1227,9 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 	ModestAccountMgr *account_mgr;
 
 	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW(edit_window));
+
+	if (!modest_msg_edit_window_check_names (edit_window))
+		return;
 	
 	data = modest_msg_edit_window_get_msg_data (edit_window);
 
@@ -2032,6 +2035,13 @@ modest_ui_actions_on_select_contacts (GtkAction *action, ModestMsgEditWindow *wi
 {
 	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
 	modest_msg_edit_window_select_contacts (window);
+}
+
+void
+modest_ui_actions_on_check_names (GtkAction *action, ModestMsgEditWindow *window)
+{
+	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
+	modest_msg_edit_window_check_names (window);
 }
 
 

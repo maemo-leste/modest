@@ -54,5 +54,18 @@ modest_address_book_add_address (const gchar *address);
 void
 modest_address_book_select_addresses (ModestRecptEditor *editor);
 
+/**
+ * modest_address_book_check_names:
+ * @editor: a #ModestRecptEditor
+ *
+ * Performs verification of addresses in a recipient editor.
+ *
+ * Returns: %TRUE if all recipients are valid or there are
+ * no recipients, %FALSE otherwise.
+ */
+gboolean
+modest_address_book_check_names (ModestRecptEditor *editor);
+
+
 
 #endif /* __MODEST_ADDRESS_BOOK_H__ */

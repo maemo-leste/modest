@@ -37,6 +37,7 @@
       <menuitem name="SaveToDraftsMenu" action="ActionsSaveToDrafts"/>
       <separator/>
       <menuitem name="SelectContactsMenu" action="SelectContacts"/>
+      <menuitem name="CheckNamesMenu" action="CheckNames"/>
       <separator/>
       <menuitem name="NewMessageMenu" action="ActionsNewMessage"/>
       <separator/>

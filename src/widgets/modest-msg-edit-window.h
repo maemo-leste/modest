@@ -269,6 +269,17 @@ void            modest_msg_edit_window_undo               (ModestMsgEditWindow *
  */
 void            modest_msg_edit_window_select_contacts    (ModestMsgEditWindow *window);
 
+/**
+ * modest_msg_edit_window_check_names:
+ * @window: a #ModestMsgEditWindow
+ *
+ * Validates all the recipients, and shows (if required) dialogs for adding contacts
+ * or fixing problems in specific fields.
+ *
+ * Returns: %TRUE if all fields were validated, %FALSE otherwise
+ */
+gboolean        modest_msg_edit_window_check_names    (ModestMsgEditWindow *window);
+
 G_END_DECLS
 
 #endif /* __MODEST_MSG_EDIT_WINDOW_H__ */

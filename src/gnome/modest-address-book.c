@@ -42,3 +42,10 @@ modest_address_book_select_addresses (ModestRecptEditor *editor)
 {
 	g_message (__FUNCTION__);
 }
+
+gboolean
+modest_address_book_check_names (ModestRecptEditor *editor)
+{
+	g_message (__FUNCTION__);
+	return TRUE;
+}

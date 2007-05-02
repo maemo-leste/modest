@@ -53,6 +53,8 @@ void     modest_ui_actions_on_add_to_contacts   (GtkAction *action, ModestWindow
 
 void     modest_ui_actions_on_select_contacts (GtkAction *action, ModestMsgEditWindow *win);
 
+void     modest_ui_actions_on_check_names (GtkAction *action, ModestMsgEditWindow *win);
+
 void     modest_ui_actions_on_new_msg       (GtkAction *action, ModestWindow *win);
 
 void     modest_ui_actions_on_open           (GtkAction *action, ModestWindow *win);

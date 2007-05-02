@@ -279,4 +279,17 @@ gboolean     modest_text_utils_validate_recipient (const gchar *recipient);
  **/
 GSList      *modest_text_utils_split_addresses_list (const gchar *addresses);
 
+/**
+ * modest_text_utils_get_addresses_indexes:
+ * @addresses: a string
+ * @start_indexes: a #GSList pointer
+ * @end_indexes: a #GSList pointer
+ *
+ * obtains two #GSList of @addresses with the range offsets of the addresses in
+ * the string
+ *
+ * Returns: a GSList of strings
+ **/
+void         modest_text_utils_get_addresses_indexes (const gchar *addresses, GSList **start_indexes, GSList **end_indexes);
+
 #endif /* __MODEST_TEXT_UTILS_H__ */

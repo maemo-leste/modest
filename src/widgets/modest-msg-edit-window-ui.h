@@ -68,6 +68,7 @@ static const GtkActionEntry modest_msg_edit_action_entries [] = {
 	{ "SelectAll", NULL, N_("mcen_me_viewer_selectall"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_select_all)},
 	{ "SelectFont", NULL, N_("mcen_me_editor_font"), NULL, NULL, G_CALLBACK (modest_ui_actions_msg_edit_on_select_font)},
 	{ "SelectContacts", NULL, N_("mcen_me_editor_selectrecipients"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_select_contacts)},
+	{ "CheckNames", NULL, N_("mcen_me_editor_checknames"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_check_names)},
 	{ "CloseWindow", NULL, N_("mcen_me_inbox_close_window"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_close_window)},
 	{ "CloseAllWindows", NULL, N_("mcen_me_inbox_close_windows"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_quit) },
 

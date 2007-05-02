@@ -99,7 +99,7 @@ static gunichar iter_previous_char (GtkTextIter *iter);
 static GtkTextTag *prev_iter_has_recipient (GtkTextIter *iter);
 /* static GtkTextTag *next_iter_has_recipient (GtkTextIter *iter); */
 static void select_tag_of_iter (GtkTextIter *iter, GtkTextTag *tag);
-
+static gboolean quote_opened (GtkTextIter *iter);
 
 /**
  * modest_recpt_editor_new:
@@ -231,6 +231,52 @@ modest_recpt_editor_add_resolved_recipient (ModestRecptEditor *recpt_editor, GSL
 
 }
 
+void 
+modest_recpt_editor_replace_with_resolved_recipient (ModestRecptEditor *recpt_editor, 
+						     GtkTextIter *start, GtkTextIter *end,
+						     GSList *email_list, const gchar * recipient_id)
+{
+	ModestRecptEditorPrivate *priv;
+	GtkTextBuffer *buffer;
+	GtkTextTag *tag;
+	GSList *node;
+	gboolean is_first_recipient = TRUE;
+
+	g_return_if_fail (MODEST_IS_RECPT_EDITOR (recpt_editor));
+	priv = MODEST_RECPT_EDITOR_GET_PRIVATE (recpt_editor);
+
+	buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (priv->text_view));
+	g_signal_handlers_block_by_func (buffer, modest_recpt_editor_on_insert_text, recpt_editor);
+
+	gtk_text_buffer_delete (buffer, start, end);
+
+	tag = gtk_text_buffer_create_tag (buffer, NULL, 
+					  "underline", PANGO_UNDERLINE_SINGLE,
+					  "wrap-mode", GTK_WRAP_NONE,
+					  "editable", TRUE, NULL);
+
+	g_object_set_data (G_OBJECT (tag), "recipient-tag-id", GINT_TO_POINTER (RECIPIENT_TAG_ID));
+	g_object_set_data_full (G_OBJECT (tag), "recipient-id", g_strdup (recipient_id), (GDestroyNotify) g_free);
+
+	for (node = email_list; node != NULL; node = g_slist_next (node)) {
+		gchar *recipient = (gchar *) node->data;
+
+		if ((recipient) && (strlen (recipient) != 0)) {
+
+			if (!is_first_recipient)
+			gtk_text_buffer_insert (buffer, start, "\n", -1);
+
+			gtk_text_buffer_insert_with_tags (buffer, start, recipient, -1, tag, NULL);
+
+			if (node->next != NULL)
+				gtk_text_buffer_insert (buffer, start, ";", -1);
+			is_first_recipient = FALSE;
+		}
+	}
+	g_signal_handlers_unblock_by_func (buffer, modest_recpt_editor_on_insert_text, recpt_editor);
+
+}
+
 
 const gchar *
 modest_recpt_editor_get_recipients (ModestRecptEditor *recpt_editor)
@@ -254,9 +300,10 @@ modest_recpt_editor_get_recipients (ModestRecptEditor *recpt_editor)
 	gtk_text_buffer_get_end_iter (buffer, &end);
 
 	priv->recipients = gtk_text_buffer_get_text (buffer, &start, &end, FALSE);
-	for (c = priv->recipients; *c == '\0'; c++) {
-		if (*c == '\n')
+	for (c = priv->recipients; *c != '\0'; c = g_utf8_next_char (c)) {
+		if (*c == '\n') {
 			*c = ' ';
+		}
 	}
 
 	return priv->recipients;
@@ -388,7 +435,6 @@ modest_recpt_editor_on_focus_in (GtkTextView *text_view,
 				 ModestRecptEditor *editor)
 {
 	ModestRecptEditorPrivate *priv = MODEST_RECPT_EDITOR_GET_PRIVATE (editor);
-	modest_recpt_editor_move_cursor_to_end (editor);
 	gtk_text_view_place_cursor_onscreen (GTK_TEXT_VIEW (priv->text_view));
 }
 
@@ -417,7 +463,7 @@ modest_recpt_editor_on_insert_text (GtkTextBuffer *buffer,
 			return;
 		prev_char = gtk_text_iter_get_char (&prev);
 		g_signal_handlers_block_by_func (buffer, modest_recpt_editor_on_insert_text, editor);
-		if (prev_char == ';'||prev_char == ',') {
+		if ((prev_char == ';'||prev_char == ',')&&(!quote_opened(location))) {
 			GtkTextMark *insert;
 			gtk_text_buffer_insert (buffer, location, "\n",-1);
 			insert = gtk_text_buffer_get_insert (buffer);
@@ -501,6 +547,31 @@ select_tag_of_iter (GtkTextIter *iter, GtkTextTag *tag)
 		gtk_text_iter_forward_to_tag_toggle (&end, tag);
 	gtk_text_buffer_select_range (gtk_text_iter_get_buffer (iter), &start, &end);
 }
+
+static gboolean 
+quote_opened (GtkTextIter *iter)
+{
+	GtkTextIter start;
+	GtkTextBuffer *buffer;
+	gboolean opened = FALSE;
+
+	buffer = gtk_text_iter_get_buffer (iter);
+	gtk_text_buffer_get_start_iter (buffer, &start);
+
+	while (!gtk_text_iter_equal (&start, iter)) {
+		gunichar current_char = gtk_text_iter_get_char (&start);
+		if (current_char == '"')
+			opened = !opened;
+		else if (current_char == '\\')
+			gtk_text_iter_forward_char (&start);
+		if (!gtk_text_iter_equal (&start, iter))
+			gtk_text_iter_forward_char (&start);
+			
+	}
+	return opened;
+
+}
+
 
 static gboolean
 modest_recpt_editor_on_key_press_event (GtkTextView *text_view,

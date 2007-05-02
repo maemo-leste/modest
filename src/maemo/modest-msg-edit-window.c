@@ -2030,3 +2030,32 @@ is_modified (ModestMsgEditWindow *editor)
 	return FALSE;
 }
 
+gboolean
+modest_msg_edit_window_check_names (ModestMsgEditWindow *window)
+{
+	ModestMsgEditWindowPrivate *priv = NULL;
+
+	g_return_val_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window), FALSE);
+	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
+
+	/* check if there's no recipient added */
+	if ((gtk_text_buffer_get_char_count (modest_recpt_editor_get_buffer (MODEST_RECPT_EDITOR (priv->to_field))) == 0) &&
+	    (gtk_text_buffer_get_char_count (modest_recpt_editor_get_buffer (MODEST_RECPT_EDITOR (priv->cc_field))) == 0) &&
+	    (gtk_text_buffer_get_char_count (modest_recpt_editor_get_buffer (MODEST_RECPT_EDITOR (priv->bcc_field))) == 0)) {
+		/* no recipient contents, then select contacts */
+		modest_msg_edit_window_open_addressbook (window, NULL);
+		return FALSE;
+	}
+
+	if (!modest_address_book_check_names (MODEST_RECPT_EDITOR (priv->to_field)))
+		return FALSE;
+	if (!modest_address_book_check_names (MODEST_RECPT_EDITOR (priv->cc_field)))
+		return FALSE;
+	if (!modest_address_book_check_names (MODEST_RECPT_EDITOR (priv->bcc_field)))
+		return FALSE;
+
+	modest_recpt_editor_grab_focus (MODEST_RECPT_EDITOR (priv->to_field));
+
+	return TRUE;
+
+}
