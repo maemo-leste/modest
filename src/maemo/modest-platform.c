@@ -67,6 +67,9 @@ modest_platform_init (void)
        		return OSSO_ERROR;
    	}
 
+	/* Register hardware event dbus callback: */
+    	osso_hw_set_event_cb(osso_context, NULL, modest_osso_cb_hw_state_handler, NULL);
+
 	/* Add handler for Exit D-BUS messages.
 	 * Not used because osso_application_set_exit_cb() is deprecated and obsolete:
 	result = osso_application_set_exit_cb(osso_context,

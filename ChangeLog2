@@ -1,5 +1,15 @@
 2007-05-02  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/dbus_api/modest-dbus-callbacks.c:
+	(modest_osso_cb_hw_state_handler):
+	* src/dbus_api/modest-dbus-callbacks.h:
+	* src/maemo/modest-platform.c: (modest_platform_init):
+	Registered (empty) callbacks for the osso hardware state D-Bus signals, 
+	in case this has some effect on the ability for Maemo to ping the 
+	application.
+
+2007-05-02  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/modest-text-utils.c: (modest_text_utils_validate_recipient):
 	Comment out an if() that checks a gchar for < 0, causing a build-breaking 
 	warning. It is probably a logic error, but I need to fix the build.

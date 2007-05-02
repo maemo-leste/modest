@@ -424,3 +424,22 @@ gint modest_dbus_req_handler(const gchar * interface, const gchar * method,
 	else
 		return OSSO_ERROR;
 }
+
+void
+modest_osso_cb_hw_state_handler(osso_hw_state_t *state, gpointer data)
+{
+    printf("%s()\n", __PRETTY_FUNCTION__);
+
+    if(state->system_inactivity_ind)
+    {
+    }
+    else if(state->save_unsaved_data_ind)
+    {
+    }
+    else
+    {
+    
+    }
+
+    printf("debug: %s(): return\n", __PRETTY_FUNCTION__);
+}
