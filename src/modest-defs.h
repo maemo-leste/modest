@@ -69,6 +69,12 @@
 #define MODEST_CONF_SHOW_TOOLBAR         MODEST_CONF_NAMESPACE "/show_toolbar"
 #define MODEST_CONF_SHOW_TOOLBAR_FULLSCREEN         MODEST_CONF_NAMESPACE "/show_toolbar_fullscreen"
 
+/* This is the alarmd cookie, obtained from alarm_event_add(), 
+ * which apparently remains valid between application instances.
+ * We store it so that we can remove it later.
+ */
+#define MODEST_CONF_ALARM_ID MODEST_CONF_NAMESPACE "/alarm_id"
+
 /*
  * in the maemo case, we try to replace this
  * with the device name

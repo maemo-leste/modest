@@ -1,5 +1,14 @@
 2007-05-03  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/maemo/modest-platform.c:
+	(modest_platform_set_update_interval):
+	* src/modest-defs.h: Store the alarmd cookie ID in gconf, because it 
+	aparently stays valid between application instances, so we can use this 
+	to remove and reset it later. According to a maemo-developers email from 
+	David Weinehall.
+
+2007-05-03  Murray Cumming  <murrayc@murrayc.com>
+
 	* configure.ac: Depend on libalarm for Maemo.
 
 	* src/dbus_api/modest-dbus-api.h:

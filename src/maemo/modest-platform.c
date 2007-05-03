@@ -45,9 +45,7 @@
 #include <gtk/gtkmenuitem.h>
 #include <gtk/gtkmain.h>
 #include <string.h>
-
-static cookie_t alarm_cookie = 0;
-
+	
 gboolean
 modest_platform_init (void)
 {	
@@ -643,12 +641,19 @@ modest_platform_run_sort_dialog (GtkWindow *parent_window,
 
 gboolean modest_platform_set_update_interval (guint minutes)
 {
+	ModestConf *conf = modest_runtime_get_conf ();
+	if (!conf)
+		return FALSE;
+		
+	cookie_t alarm_cookie = modest_conf_get_int (conf, MODEST_CONF_ALARM_ID, NULL);
+
 	/* Delete any existing alarm,
 	 * because we will replace it: */
 	if (alarm_cookie) {
 		/* TODO: What does the alarm_event_del() return value mean? */
 		alarm_event_del(alarm_cookie);
 		alarm_cookie = 0;
+		modest_conf_set_int (conf, MODEST_CONF_ALARM_ID, 0, NULL);
 	}
 	
 	/* 0 means no updates: */
@@ -684,9 +689,29 @@ gboolean modest_platform_set_update_interval (guint minutes)
 	
 	alarm_cookie = alarm_event_add (&event);
 	
+	/* Store the alarm ID in GConf, so we can remove it later:
+	 * This is apparently valid between application instances. */
+	modest_conf_set_int (conf, MODEST_CONF_ALARM_ID, alarm_cookie, NULL);
+	
 	if (!alarm_cookie) {
 	    /* Error */
-	    printf ("Error setting alarm event. Error code: '%d'\n", alarmd_get_error ());
+	    const alarm_error_t alarm_error = alarmd_get_error ();
+	    printf ("Error setting alarm event. Error code: '%d'\n", alarm_error);
+	    
+	    /* Give people some clue: */
+	    /* The alarm API should have a function for this: */
+	    if (alarm_error == ALARMD_ERROR_DBUS) {
+	    	printf ("  ALARMD_ERROR_DBUS: An error with D-Bus occurred, probably coudn't get a D-Bus connection.\n");
+	    } else if (alarm_error == ALARMD_ERROR_CONNECTION) {
+	    	printf ("  ALARMD_ERROR_CONNECTION: Could not contact alarmd via D-Bus.\n");
+	    } else if (alarm_error == ALARMD_ERROR_INTERNAL) {
+	    	printf ("  ALARMD_ERROR_INTERNAL: Some alarmd or libalarm internal error, possibly a version mismatch.\n");
+	    } else if (alarm_error == ALARMD_ERROR_MEMORY) {
+	    	printf ("  ALARMD_ERROR_MEMORY: A memory allocation failed.\n");
+	    } else if (alarm_error == ALARMD_ERROR_ARGUMENT) {
+	    	printf ("  ALARMD_ERROR_ARGUMENT: An argument given by caller was invalid.\n");
+	    }
+	    
 	    return FALSE;
 	}
 	
