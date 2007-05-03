@@ -178,13 +178,22 @@ void      modest_platform_run_sort_dialog       (GtkWindow *parent_window,
 /*
  * modest_platform_connect_and_wait:
  * @parent_window: the parent #GtkWindow for any interactive or progress feedback UI.
- * @return value: Whether a connection was make.
+ * @return value: Whether a connection was made.
  * 
  * Attempts to make a connection, possibly showing interactive UI to achieve this.
  * This will return TRUE immediately if a connection is already open.
  * Otherwise, this function blocks until the connection attempt has either succeded or failed.
  */		
 gboolean modest_platform_connect_and_wait (GtkWindow *parent_window);
+
+/**
+ * modest_platform_set_update_interval:
+ * @minutes: The number of minutes between updates, or 0 for no updates.
+ * 
+ * Set the number of minutes between automatic updates of email accounts.
+ * The platform will cause the send/receive action to happen repeatedly.
+ **/
+gboolean modest_platform_set_update_interval (guint minutes);
 
 G_END_DECLS
 

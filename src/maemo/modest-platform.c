@@ -38,12 +38,15 @@
 
 #include <dbus_api/modest-dbus-callbacks.h>
 #include <libosso.h>
+#include <alarmd/alarm_event.h> /* For alarm_event_add(), etc. */
 #include <tny-maemo-conic-device.h>
 #include <tny-folder.h>
 #include <gtk/gtkicontheme.h>
 #include <gtk/gtkmenuitem.h>
 #include <gtk/gtkmain.h>
 #include <string.h>
+
+static cookie_t alarm_cookie = 0;
 
 gboolean
 modest_platform_init (void)
@@ -67,9 +70,6 @@ modest_platform_init (void)
        		return OSSO_ERROR;
    	}
 
-	/* Register hardware event dbus callback: */
-    	osso_hw_set_event_cb(osso_context, NULL, modest_osso_cb_hw_state_handler, NULL);
-
 	/* Add handler for Exit D-BUS messages.
 	 * Not used because osso_application_set_exit_cb() is deprecated and obsolete:
 	result = osso_application_set_exit_cb(osso_context,
@@ -81,6 +81,15 @@ modest_platform_init (void)
 	}
 	*/
 
+	/* Register hardware event dbus callback: */
+    osso_hw_set_event_cb(osso_context, NULL, modest_osso_cb_hw_state_handler, NULL);
+
+	/* TODO: Get the actual update interval from gconf, 
+	 * when that preferences dialog has been implemented.
+	 * And make sure that this is called again whenever that is changed. */
+	const guint update_interval_minutes = 15;
+	modest_platform_set_update_interval (update_interval_minutes);
+	
 	return TRUE;
 }
 
@@ -630,3 +639,57 @@ modest_platform_run_sort_dialog (GtkWindow *parent_window,
 	/* Free */
 	gtk_widget_destroy (GTK_WIDGET (dialog));
 }
+
+
+gboolean modest_platform_set_update_interval (guint minutes)
+{
+	/* Delete any existing alarm,
+	 * because we will replace it: */
+	if (alarm_cookie) {
+		/* TODO: What does the alarm_event_del() return value mean? */
+		alarm_event_del(alarm_cookie);
+		alarm_cookie = 0;
+	}
+	
+	/* 0 means no updates: */
+	if (minutes == 0)
+		return TRUE;
+		
+     
+	/* Register alarm: */
+	
+	/* Get current time: */
+	time_t time_now;
+	time (&time_now);
+	struct tm *st_time = localtime (&time_now);
+	
+	/* Add minutes to tm_min field: */
+	st_time->tm_min += minutes;
+	
+	/* Set the time in alarm_event_t structure: */
+	alarm_event_t event;
+	memset (&event, 0, sizeof (alarm_event_t));
+	event.alarm_time = mktime (st_time);
+
+	/* Specify what should happen when the alarm happens:
+	 * It should call this D-Bus method: */
+	 
+	/* Note: I am surpised that alarmd can't just use the modest.service file
+	 * for this. murrayc. */
+	event.dbus_path = g_strdup(PREFIX "/bin/modest");
+	
+	event.dbus_interface = g_strdup (MODEST_DBUS_IFACE);
+	event.dbus_service = g_strdup (MODEST_DBUS_SERVICE);
+	event.dbus_name = g_strdup (MODEST_DBUS_METHOD_SEND_RECEIVE);
+	
+	alarm_cookie = alarm_event_add (&event);
+	
+	if (!alarm_cookie) {
+	    /* Error */
+	    printf ("Error setting alarm event. Error code: '%d'\n", alarmd_get_error ());
+	    return FALSE;
+	}
+	
+	return TRUE;
+}
+

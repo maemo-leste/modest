@@ -66,5 +66,7 @@ enum ModestDbusOpenMessageArguments
 	MODEST_DEBUS_OPEN_MESSAGE_ARGS_COUNT
 };
 
+#define MODEST_DBUS_METHOD_SEND_RECEIVE "SendReceive"
+
 #endif /* __MODEST_DBUS_API__ */
 

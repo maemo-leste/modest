@@ -32,6 +32,7 @@
 #include "modest-account-mgr.h"
 #include "modest-account-mgr-helpers.h"
 #include "modest-tny-account.h"
+#include "modest-ui-actions.h"
 #include "widgets/modest-msg-edit-window.h"
 #include "modest-tny-msg.h"
 #include <libgnomevfs/gnome-vfs-utils.h>
@@ -404,6 +405,30 @@ static gint on_open_message(GArray * arguments, gpointer data, osso_rpc_t * retv
  	 * because that would be asynchronous. */
  	return OSSO_OK;
 }
+
+static gboolean
+on_idle_send_receive(gpointer user_data)
+{
+	ModestWindow* main_window = modest_window_mgr_get_main_window(
+		modest_runtime_get_window_mgr ());
+	do_send_receive(main_window);
+	
+	return FALSE; /* Do not call this callback again. */
+}
+
+static gint on_send_receive(GArray * arguments, gpointer data, osso_rpc_t * retval)
+{ 	
+    /* Use g_idle to context-switch into the application's thread: */
+
+    /* This method has no arguments. */
+ 	
+ 	/* printf("  debug: to=%s\n", idle_data->to); */
+ 	g_idle_add(on_idle_send_receive, NULL);
+ 	
+ 	/* Note that we cannot report failures during send/receive, 
+ 	 * because that would be asynchronous. */
+ 	return OSSO_OK;
+}
                       
 /* Callback for normal D-BUS messages */
 gint modest_dbus_req_handler(const gchar * interface, const gchar * method,
@@ -420,6 +445,8 @@ gint modest_dbus_req_handler(const gchar * interface, const gchar * method,
 		return on_mail_to (arguments, data, retval);
 	} else if (g_ascii_strcasecmp(method, MODEST_DBUS_METHOD_OPEN_MESSAGE) == 0) {
 		return on_open_message (arguments, data, retval);
+	} else if (g_ascii_strcasecmp(method, MODEST_DBUS_METHOD_SEND_RECEIVE) == 0) {
+		return on_send_receive (arguments, data, retval);
 	}
 	else
 		return OSSO_ERROR;

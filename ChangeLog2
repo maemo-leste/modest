@@ -1,3 +1,27 @@
+2007-05-03  Murray Cumming  <murrayc@murrayc.com>
+
+	* configure.ac: Depend on libalarm for Maemo.
+
+	* src/dbus_api/modest-dbus-api.h:
+	* src/dbus_api/modest-dbus-callbacks.c: (on_idle_send_receive),
+	(on_send_receive), (modest_dbus_req_handler):
+	Handle a SEND_RECEIVE D-Bus method.
+	
+	* libmodest-dbus-client/libmodest-dbus-client.c:
+	(libmodest_dbus_client_send_and_receive):
+	* libmodest-dbus-client/libmodest-dbus-client.h:
+	Add C convenience functions for calling the new D-Bus method.
+	
+	* src/modest-platform.h:
+	* src/gnome/modest-platform.c:
+	* src/maemo/modest-platform.c: 
+	Added modest_platform_set_update_interval(), which uses the 
+	alarmd API on Maemo.
+	(modest_platform_init),
+	Call modest_platform_set_update_interval(), using a hard-coded 
+	interval for now (until the global settings dialog is implemented), 
+	though I am not sure that this makes sense yet.
+
 2007-05-02  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/dbus_api/modest-dbus-callbacks.c:
