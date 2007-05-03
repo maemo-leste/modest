@@ -205,5 +205,5 @@ modest_tny_send_queue_new (TnyCamelTransportAccount *account)
 void
 modest_tny_send_queue_flush (ModestTnySendQueue* self)
 {
-	tny_camel_send_queue_flush (TNY_CAMEL_SEND_QUEUE(self));
+/* 	tny_camel_send_queue_flush (TNY_CAMEL_SEND_QUEUE(self)); */
 }

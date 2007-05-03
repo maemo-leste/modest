@@ -1130,15 +1130,14 @@ observers_empty (ModestMainWindow *self)
 {
 	GSList *tmp = NULL;
 	ModestMainWindowPrivate *priv;
-	gboolean is_empty = FALSE;
+	gboolean is_empty = TRUE;
 	guint pending_ops = 0;
  
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
 	tmp = priv->progress_widgets;
-	if (tmp == NULL) return TRUE;
 
 	/* Check all observers */
-	while (tmp && !is_empty)  {
+	while (tmp && is_empty)  {
 		pending_ops = modest_progress_object_num_pending_operations (MODEST_PROGRESS_OBJECT(tmp->data));
 		is_empty = pending_ops == 0;
 		

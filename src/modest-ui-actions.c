@@ -665,7 +665,7 @@ action_send (const gchar* account_name)
 		return FALSE;
 	}
 	
-	//modest_tny_send_queue_flush (send_queue);
+	modest_tny_send_queue_flush (send_queue);
 
 	g_object_unref (G_OBJECT(send_queue));
 	g_object_unref (G_OBJECT(tny_account));

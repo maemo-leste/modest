@@ -136,6 +136,7 @@ struct _ModestMsgViewWindowPrivate {
 	GtkTreeIter   iter;
 
 	guint clipboard_change_handler;
+	guint queue_change_handler;
 };
 
 #define MODEST_MSG_VIEW_WINDOW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -395,6 +396,12 @@ modest_msg_view_window_finalize (GObject *obj)
 		priv->clipboard_change_handler = 0;
 	}
 
+	/* disconnet operations queue observer */
+	if (priv->queue_change_handler > 0) {
+		g_signal_handler_disconnect (G_OBJECT (modest_runtime_get_mail_operation_queue ()), priv->queue_change_handler);
+		priv->queue_change_handler = 0;
+	}
+	
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
@@ -514,10 +521,10 @@ modest_msg_view_window_new (TnyMsg *msg, const gchar *account_name)
 			  NULL);
 
 	/* Mail Operation Queue */
-	g_signal_connect (G_OBJECT (modest_runtime_get_mail_operation_queue ()),
-			  "queue-changed",
-			  G_CALLBACK (on_queue_changed),
-			  obj);
+	priv->queue_change_handler = g_signal_connect (G_OBJECT (modest_runtime_get_mail_operation_queue ()),
+						       "queue-changed",
+						       G_CALLBACK (on_queue_changed),
+						       obj);
 
 	modest_window_set_active_account (MODEST_WINDOW(obj), account_name);
 

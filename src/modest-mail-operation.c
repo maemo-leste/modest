@@ -1057,7 +1057,6 @@ modest_mail_operation_refresh_folder  (ModestMailOperation *self,
 	tny_folder_refresh_async (folder,
 				  on_refresh_folder,
 				  on_refresh_folder_status_update,
-/* 				  NULL, */
 				  self);
 }
 
