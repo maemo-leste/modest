@@ -102,7 +102,7 @@ binary-indep: build install
 binary-arch: build install
 	dh_testdir
 	dh_testroot
-	dh_installchangelogs ChangeLog
+	dh_installchangelogs 
 	dh_installdocs
 	dh_installexamples
 	dh_install --sourcedir=debian/tmp -v
@@ -122,7 +122,7 @@ binary-arch: build install
 	dh_fixperms
 #	dh_perl
 #	dh_python
-	dh_makeshlibs
+#	dh_makeshlibs
 	dh_installdeb
 	dh_shlibdeps
 	dh_gencontrol -- $(LAUNCHER_DEPENDS)

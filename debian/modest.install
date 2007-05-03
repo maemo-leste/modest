@@ -1,5 +1,10 @@
 usr/bin/modest*
+usr/include/libmodest-dbus-client-1.0/libmodest-dbus-client/*
+usr/lib/pkgconfig/*
+usr/lib/*
 usr/share/dbus-1/services/*
 usr/share/applications/hildon/*
 usr/share/doc/modest/*
 usr/share/mime/packages/*
+usr/locale/en_GB/LC_MESSAGES/*
+usr/share/modest/ui/*
