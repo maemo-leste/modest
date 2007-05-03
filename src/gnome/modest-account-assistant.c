@@ -654,7 +654,7 @@ on_apply (ModestAccountAssistant *self, gpointer user_data)
 	modest_account_mgr_add_account (priv->account_mgr,
 					account_name,
 					store_name,
-					transport_name);
+					transport_name, TRUE);
 	modest_account_mgr_set_string (priv->account_mgr,
 				       account_name,
 				       MODEST_ACCOUNT_FULLNAME,
