@@ -51,8 +51,6 @@ src/maemo/easysetup/modest-wizard-dialog.h
 src/maemo/easysetup/modest-presets.h
 src/maemo/easysetup/modest-presets.c
 src/maemo/easysetup/modest-easysetup-provider-combo-box.h
-src/maemo/easysetup/modest-easysetup-serversecurity-combo-box.c
-src/maemo/easysetup/modest-easysetup-servertype-combo-box.h
 src/maemo/easysetup/modest-wizard-dialog.c
 src/maemo/easysetup/modest-easysetup-wizard.h
 src/maemo/easysetup/modest-easysetup-servertype-combo-box.c
