@@ -50,7 +50,7 @@ static const GtkActionEntry modest_action_entries [] = {
 
 	/* FILE */
 	{ "FileNew",    MODEST_STOCK_NEW_MAIL,     N_("_New"),	   "<CTRL>N", N_("Compose new message"),  G_CALLBACK (modest_ui_actions_on_new_msg) },
-	{ "FileOpen",   GTK_STOCK_OPEN,    N_("_Open"),	   "<CTRL>O", N_("Open a message"),       NULL },
+	{ "FileOpen",   GTK_STOCK_OPEN,    N_("_Open"),	   "<CTRL>O", N_("Open a message"), G_CALLBACK (modest_ui_actions_on_open) },
 	{ "FileSave",   GTK_STOCK_SAVE,    N_("_Save"),	   "<CTRL>S", N_("Save a message"),       NULL },
 	{ "FileSaveAs", GTK_STOCK_SAVE_AS, N_("Save _As"), NULL,      N_("Save a message as"),    NULL },
 	{ "FileQuit",   GTK_STOCK_QUIT,    N_("_Quit"),	   "<CTRL>Q", N_("Exit the application"), G_CALLBACK (modest_ui_actions_on_quit) },
