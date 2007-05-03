@@ -1,0 +1,5 @@
+usr/bin/modest*
+usr/share/dbus-1/services/*
+usr/share/applications/hildon/*
+usr/share/doc/modest/*
+usr/share/mime/packages/*
