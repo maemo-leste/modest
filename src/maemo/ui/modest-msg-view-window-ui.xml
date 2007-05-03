@@ -91,7 +91,9 @@
     <toolitem action="FindInMessage"/>
     <toolitem action="ToolbarMessageBack"/>
     <toolitem action="ToolbarMessageNext"/>
-    <placeholder name="ToolbarProgressbar"/>
+    <placeholder name="ProgressbarView">
+    </placeholder>
+    <toolitem action="ToolbarCancel"/>
   </toolbar>
 
   <popup name="ToolbarReplyCSM">

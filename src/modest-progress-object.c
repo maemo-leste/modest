@@ -45,6 +45,12 @@ modest_progress_object_remove_operation (ModestProgressObject *self,
 	return MODEST_PROGRESS_OBJECT_GET_IFACE (self)->remove_operation_func (self, mail_op);
 }
 
+void
+modest_progress_object_cancel_current_operation (ModestProgressObject *self) 
+{
+	return MODEST_PROGRESS_OBJECT_GET_IFACE (self)->cancel_current_operation_func (self);
+}
+
 static void
 modest_progress_object_base_init (gpointer g_class)
 {
@@ -77,4 +83,5 @@ modest_progress_object_get_type (void)
 	}
 	return my_type;
 }
+
 

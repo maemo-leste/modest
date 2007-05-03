@@ -69,6 +69,9 @@ static void save_sizes (ModestMainWindow *self);
 static void modest_main_window_show_toolbar   (ModestWindow *window,
 					       gboolean show_toolbar);
 
+static void cancel_progressbar (GtkToolButton *toolbutton,
+				ModestMainWindow *self);
+
 static void         on_queue_changed                     (ModestMailOperationQueue *queue,
 							  ModestMailOperation *mail_op,
 							  ModestMailOperationQueueNotification type,
@@ -115,6 +118,7 @@ struct _ModestMainWindowPrivate {
 	GtkWidget   *cancel_toolitem;
 	GtkWidget   *sort_toolitem;
 	GtkWidget   *refresh_toolitem;
+	ModestToolBarModes current_toolbar_mode;
 
 	/* On-demand widgets */
 	GtkWidget *accounts_popup;
@@ -218,6 +222,7 @@ modest_main_window_init (ModestMainWindow *obj)
 
 	priv->progress_widgets  = NULL;
 	priv->progress_bar = NULL;
+	priv->current_toolbar_mode = TOOLBAR_MODE_NORMAL;
 
 	priv->style  = MODEST_MAIN_WINDOW_STYLE_SPLIT;
 	priv->contents_style  = MODEST_MAIN_WINDOW_CONTENTS_STYLE_HEADERS;
@@ -618,6 +623,8 @@ modest_main_window_get_style (ModestMainWindow *self)
 	return priv->style;
 }
 
+
+
 static gboolean
 modest_main_window_window_state_event (GtkWidget *widget, GdkEventWindowState *event, gpointer userdata)
 {
@@ -678,8 +685,8 @@ modest_main_window_show_toolbar (ModestWindow *self,
 		priv->cancel_toolitem = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/ToolbarCancel");
 		priv->refresh_toolitem = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/ToolbarSendReceive");
 		priv->sort_toolitem = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/ToolbarSort");
-		gtk_tool_item_set_expand (GTK_TOOL_ITEM (priv->progress_toolitem), FALSE);
  		gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (priv->progress_toolitem), FALSE);
+		gtk_tool_item_set_expand (GTK_TOOL_ITEM (priv->progress_toolitem), FALSE);
 		gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (priv->cancel_toolitem), FALSE);
 		gtk_tool_item_set_expand (GTK_TOOL_ITEM (priv->cancel_toolitem), FALSE);
 
@@ -690,6 +697,11 @@ modest_main_window_show_toolbar (ModestWindow *self,
 		insert_index = gtk_toolbar_get_item_index(GTK_TOOLBAR (parent_priv->toolbar), GTK_TOOL_ITEM(placeholder));
 		gtk_container_add (GTK_CONTAINER (priv->progress_toolitem), priv->progress_bar);
 		gtk_toolbar_insert(GTK_TOOLBAR(parent_priv->toolbar), GTK_TOOL_ITEM (priv->progress_toolitem), insert_index);
+		
+		/* Connect cancel 'clicked' signal to abort progress mode */
+		g_signal_connect(priv->cancel_toolitem, "clicked",
+				 G_CALLBACK(cancel_progressbar),
+				 self);
 		
 		/* Add it to the observers list */
 		priv->progress_widgets = g_slist_prepend(priv->progress_widgets, priv->progress_bar);
@@ -1042,55 +1054,74 @@ static void
 set_toolbar_mode (ModestMainWindow *self, 
 		  ModestToolBarModes mode)
 {
+	ModestWindowPrivate *parent_priv;
 	ModestMainWindowPrivate *priv;
+	GtkAction *sort_action, *refresh_action, *cancel_action;
 
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW (self));
 
+	parent_priv = MODEST_WINDOW_GET_PRIVATE(self);
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
-			
+	
+	sort_action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ToolbarSort");
+	refresh_action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ToolbarSendReceive");
+	cancel_action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ToolbarCancel");
+
+	/* Sets current toolbar mode */
+	priv->current_toolbar_mode = mode;
+
+	/* Show and hide toolbar items */
 	switch (mode) {
 	case TOOLBAR_MODE_NORMAL:
-		if (priv->sort_toolitem)
-		gtk_widget_show (priv->sort_toolitem);
-		
-		if (priv->refresh_toolitem)
-			gtk_widget_show (priv->refresh_toolitem);
-			
-		if (priv->progress_toolitem)
+		if (sort_action) 
+			gtk_action_set_visible (sort_action, TRUE);
+		if (refresh_action) 
+			gtk_action_set_visible (refresh_action, TRUE);
+		if (priv->progress_toolitem) {
 			gtk_tool_item_set_expand (GTK_TOOL_ITEM (priv->progress_toolitem), FALSE);
+			gtk_widget_hide (priv->progress_toolitem);
+		}
 		if (priv->progress_bar)
-			gtk_widget_hide (priv->progress_bar);
-			
-		if (priv->cancel_toolitem)
-			gtk_widget_hide (priv->cancel_toolitem);
+			gtk_widget_hide (priv->progress_bar);			
+		
+		if (cancel_action)
+			gtk_action_set_visible (cancel_action, FALSE);
 		break;
 	case TOOLBAR_MODE_TRANSFER:
-		if (priv->sort_toolitem)
-			gtk_widget_hide (priv->sort_toolitem);
-		
-		if (priv->refresh_toolitem)
-			gtk_widget_hide (priv->refresh_toolitem);
-		
-		if (priv->progress_toolitem)
+		if (sort_action)
+			gtk_action_set_visible (sort_action, FALSE);
+		if (refresh_action)
+			gtk_action_set_visible (refresh_action, FALSE);
+		if (cancel_action)
+			gtk_action_set_visible (cancel_action, TRUE);
+		if (priv->progress_toolitem) {
 			gtk_tool_item_set_expand (GTK_TOOL_ITEM (priv->progress_toolitem), TRUE);
+			gtk_widget_show (priv->progress_toolitem);
+		}
 		if (priv->progress_bar)
-			gtk_widget_show (priv->progress_bar);
-			
-		if (priv->cancel_toolitem)
-			gtk_widget_show (priv->cancel_toolitem);
+			gtk_widget_show (priv->progress_bar);			
 		break;
 	default:
-		if (priv->cancel_toolitem)
-			gtk_widget_show (priv->sort_toolitem);
-			
-		if (priv->refresh_toolitem)
-			gtk_widget_show (priv->refresh_toolitem);
-			
-		if (priv->progress_bar)
-			gtk_widget_hide (priv->progress_bar);
-			
-		if (priv->cancel_toolitem)
-			gtk_widget_hide (priv->cancel_toolitem);
+		g_return_if_reached ();
+	}
+
+	gtk_widget_show_all (GTK_WIDGET (self));
+}
+
+static void
+cancel_progressbar (GtkToolButton *toolbutton,
+		    ModestMainWindow *self)
+{
+	GSList *tmp;
+	ModestMainWindowPrivate *priv;
+	
+	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
+
+	/* Get operation observers and cancel its current operation */
+	tmp = priv->progress_widgets;
+	while (tmp) {
+		modest_progress_object_cancel_current_operation (MODEST_PROGRESS_OBJECT(tmp->data));
+		tmp=g_slist_next(tmp);
 	}
 }
 
@@ -1100,45 +1131,54 @@ on_queue_changed (ModestMailOperationQueue *queue,
 		  ModestMailOperationQueueNotification type,
 		  ModestMainWindow *self)
 {
-	GSList *tmp;
 	ModestMainWindowPrivate *priv;
 	ModestMailOperationId op_id;
 	ModestToolBarModes mode;
-	
-	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
+	GSList *tmp;
+	gboolean mode_changed = FALSE;
 
+	g_return_if_fail (MODEST_IS_MAIN_WINDOW (self));
+	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
+	       
 	/* Get toolbar mode from operation id*/
 	op_id = modest_mail_operation_get_id (mail_op);
 	switch (op_id) {
 	case MODEST_MAIL_OPERATION_ID_SEND:
 	case MODEST_MAIL_OPERATION_ID_RECEIVE:
 		mode = TOOLBAR_MODE_TRANSFER;
+		if (priv->current_toolbar_mode == TOOLBAR_MODE_NORMAL)
+			mode_changed = TRUE;
 		break;
 	default:
 		mode = TOOLBAR_MODE_NORMAL;
 		
 	}
 		
+		       
 	/* Add operation observers and change toolbar if neccessary*/
 	tmp = priv->progress_widgets;
 	switch (type) {
 	case MODEST_MAIL_OPERATION_QUEUE_OPERATION_ADDED:
-		if (mode != TOOLBAR_MODE_NORMAL) 
+		if (mode_changed)
 			set_toolbar_mode (MODEST_MAIN_WINDOW(self), mode);
-		while (tmp) {
-			modest_progress_object_add_operation (MODEST_PROGRESS_OBJECT (tmp->data),
-							      mail_op);
-			tmp = g_slist_next (tmp);
+		if (mode == TOOLBAR_MODE_TRANSFER) {
+			while (tmp) {
+				modest_progress_object_add_operation (MODEST_PROGRESS_OBJECT (tmp->data),
+								      mail_op);
+				tmp = g_slist_next (tmp);
+			}
 		}
 		break;
 	case MODEST_MAIL_OPERATION_QUEUE_OPERATION_REMOVED:
-		if (mode != TOOLBAR_MODE_NORMAL) 
+		if (modest_mail_operation_queue_num_elements (queue) == 0)
 			set_toolbar_mode (MODEST_MAIN_WINDOW(self), TOOLBAR_MODE_NORMAL);
-		while (tmp) {
-			modest_progress_object_remove_operation (MODEST_PROGRESS_OBJECT (tmp->data),
-								 mail_op);
-			tmp = g_slist_next (tmp);
+		if (mode == TOOLBAR_MODE_TRANSFER) {
+			while (tmp) {
+				modest_progress_object_remove_operation (MODEST_PROGRESS_OBJECT (tmp->data),
+									 mail_op);
+				tmp = g_slist_next (tmp);
+			}
 		}
 		break;
-	}
+	}	
 }

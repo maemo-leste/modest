@@ -207,6 +207,23 @@ modest_mail_operation_queue_remove (ModestMailOperationQueue *self,
 	g_object_unref (G_OBJECT (mail_op));
 }
 
+guint 
+modest_mail_operation_queue_num_elements (ModestMailOperationQueue *self)
+{
+	ModestMailOperationQueuePrivate *priv;
+	guint length = 0;
+
+	g_return_val_if_fail (MODEST_IS_MAIL_OPERATION_QUEUE (self), 0);
+	
+	priv = MODEST_MAIL_OPERATION_QUEUE_GET_PRIVATE(self);
+
+	g_mutex_lock (priv->queue_lock);
+	length = g_queue_get_length (priv->op_queue);
+	g_mutex_unlock (priv->queue_lock);
+
+	return length;
+}
+
 
 /* Utility function intended to be used with g_queue_foreach */
 static void

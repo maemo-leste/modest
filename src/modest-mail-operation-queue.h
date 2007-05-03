@@ -93,6 +93,15 @@ void    modest_mail_operation_queue_add        (ModestMailOperationQueue *op_que
 void    modest_mail_operation_queue_remove     (ModestMailOperationQueue *op_queue, 
 						ModestMailOperation *mail_op);
 /**
+ * modest_mail_operation_queue_num_elements:
+ * @op_queue:  a #ModestMailOperationQueue
+ * 
+ * Gets the numeber of elements stored in #ModestMailOperationQueue.
+ **/
+guint 
+modest_mail_operation_queue_num_elements (ModestMailOperationQueue *self);
+
+/**
  * modest_mail_operation_queue_cancel:
  * @op_queue:  a #ModestMailOperationQueue
  * @mail_op:  the #ModestMailOperation that will be canceled

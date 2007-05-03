@@ -14,7 +14,7 @@ msgstr ""
 "Project-Id-Version: modest-0.0.1\n"
 "Report-Msgid-Bugs-To: rami.abbad@nokia.com\n"
 "POT-Creation-Date: 2007.04.19 21:28+0200\n"
-"PO-Revision-Date: 2007.04.19 21:28+0200\n"
+"PO-Revision-Date: 2007-04-28 00:31+0200\n"
 "Last-Translator:\n"
 "Language-Team: Engineering English\n"
 "MIME-Version: 1.0\n"
@@ -1145,11 +1145,11 @@ msgstr "Sent"
 
 # %d is number of messages / headers downloaded so far for this account and %d1 is number of messages / headers to be downloaded this session
 msgid "mcen_me_receiving"
-msgstr "Receiving %d/%d1"
+msgstr "Receiving %d/%d"
 
 # %d is number of messages sent so far for this account and %d1 is number of messages to be sent this session
 msgid "mcen_me_sending"
-msgstr "Sending %d/%d1"
+msgstr "Sending %d/%d"
 
 # Indetermined sending 
 msgid "mail_me_sending"

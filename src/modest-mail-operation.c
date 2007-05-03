@@ -60,6 +60,10 @@ static void     update_folders_cb    (TnyFolderStore *self,
 				      TnyList *list, 
 				      GError **err, 
 				      gpointer user_data);
+static void     update_folders_status_cb (GObject *obj,
+					  TnyStatus *status,  
+					  gpointer user_data);
+
 
 enum _ModestMailOperationSignals 
 {
@@ -374,6 +378,13 @@ recurse_folders (TnyFolderStore *store, TnyFolderStoreQuery *query, TnyList *all
 }
 
 static void
+update_folders_status_cb (GObject *obj,
+			  TnyStatus *status,  
+			  gpointer user_data)
+{
+}
+
+static void
 update_folders_cb (TnyFolderStore *folder_store, TnyList *list, GError **err, gpointer user_data)
 {
 	ModestMailOperation *self;
@@ -467,7 +478,7 @@ modest_mail_operation_update_account (ModestMailOperation *self,
 
 	g_message ("tny_folder_store_get_folders_async");
 	tny_folder_store_get_folders_async (TNY_FOLDER_STORE (store_account),
-					    folders, update_folders_cb, NULL, NULL, self);
+					    folders, update_folders_cb, NULL, update_folders_status_cb, self);
 	
 	return TRUE;
 }
@@ -500,7 +511,23 @@ modest_mail_operation_get_error (ModestMailOperation *self)
 gboolean 
 modest_mail_operation_cancel (ModestMailOperation *self)
 {
-	/* TODO */
+	ModestMailOperationPrivate *priv;
+
+	if (!MODEST_IS_MAIL_OPERATION (self)) {
+		g_warning ("%s: invalid parametter", G_GNUC_FUNCTION);
+		return FALSE;
+	}
+
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
+
+	/* TODO: Tinymail does not support cancel operation  */
+	
+	/* Set new status */
+	priv->status = MODEST_MAIL_OPERATION_STATUS_CANCELED;
+
+	/* Notify the queue */
+	modest_mail_operation_queue_remove (modest_runtime_get_mail_operation_queue (), self);
+
 	return TRUE;
 }
 
@@ -568,7 +595,7 @@ modest_mail_operation_create_folder (ModestMailOperation *self,
 
 	g_return_val_if_fail (TNY_IS_FOLDER_STORE (parent), NULL);
 	g_return_val_if_fail (name, NULL);
-
+	
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
 
 	/* Check parent */
@@ -661,7 +688,7 @@ modest_mail_operation_rename_folder (ModestMailOperation *self,
 	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
 	g_return_if_fail (TNY_IS_FOLDER_STORE (folder));
 	g_return_if_fail (name);
-
+	
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
 
 	/* Check folder rules */
@@ -721,6 +748,38 @@ modest_mail_operation_xfer_folder (ModestMailOperation *self,
 /* ******************************************************************* */
 /* **************************  MSG  ACTIONS  ************************* */
 /* ******************************************************************* */
+
+void          modest_mail_operation_process_msg     (ModestMailOperation *self,
+						     TnyHeader *header, 
+						     TnyGetMsgCallback user_callback,
+						     gpointer user_data)
+{
+	TnyFolder *folder;
+	ModestMailOperationPrivate *priv;
+	
+	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
+	g_return_if_fail (TNY_IS_HEADER (header));
+	
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
+	folder = tny_header_get_folder (header);
+
+	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
+
+	/* Get message from folder */
+	if (folder) {
+		/* The callback will call it per each header */
+		tny_folder_get_msg_async (folder, header, user_callback, NULL, user_data);
+		g_object_unref (G_OBJECT (folder));
+	} else {
+		/* Set status failed and set an error */
+		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
+		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
+			     MODEST_MAIL_OPERATION_ERROR_ITEM_NOT_FOUND,
+			     _("Error trying to get a message. No folder found for header"));
+	}
+}
+
+
 
 void 
 modest_mail_operation_remove_msg (ModestMailOperation *self,
@@ -790,6 +849,14 @@ modest_mail_operation_remove_msg (ModestMailOperation *self,
 }
 
 static void
+transfer_msgs_status_cb (GObject *obj,
+			 TnyStatus *status,  
+			 gpointer user_data)
+{
+}
+
+
+static void
 transfer_msgs_cb (TnyFolder *folder, GError **err, gpointer user_data)
 {
 	XFerMsgAsyncHelper *helper;
@@ -798,6 +865,7 @@ transfer_msgs_cb (TnyFolder *folder, GError **err, gpointer user_data)
 
 	helper = (XFerMsgAsyncHelper *) user_data;
 	self = helper->mail_op;
+
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
 
 	if (*err) {
@@ -862,9 +930,10 @@ modest_mail_operation_xfer_msgs (ModestMailOperation *self,
 					folder, 
 					delete_original, 
 					transfer_msgs_cb, 
-					NULL,
+					transfer_msgs_status_cb, 
 					helper);
 }
+
 
 static void
 on_refresh_folder (TnyFolder   *folder, 

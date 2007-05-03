@@ -44,12 +44,15 @@ static void modest_progress_bar_add_operation    (ModestProgressObject *self,
 static void modest_progress_bar_remove_operation (ModestProgressObject *self,
 						    ModestMailOperation  *mail_op);
 
+static void 
+modest_progress_bar_cancel_current_operation (ModestProgressObject *self);
+
 static void on_progress_changed                    (ModestMailOperation  *mail_op, 
 						    ModestProgressBarWidget *self);
 
 static gboolean     progressbar_clean        (GtkProgressBar *bar);
 
-#define XALIGN 1
+#define XALIGN 0.5
 #define YALIGN 0.5
 #define XSPACE 1
 #define YSPACE 0
@@ -92,6 +95,7 @@ modest_progress_object_init (gpointer g, gpointer iface_data)
 
 	klass->add_operation_func = modest_progress_bar_add_operation;
 	klass->remove_operation_func = modest_progress_bar_remove_operation;
+	klass->cancel_current_operation_func = modest_progress_bar_cancel_current_operation;
 }
 
 
@@ -163,20 +167,21 @@ modest_progress_bar_widget_init (ModestProgressBarWidget *self)
 
 	priv = MODEST_PROGRESS_BAR_WIDGET_GET_PRIVATE(self);
 	
+	/* Alignment */
+	align = gtk_alignment_new(XALIGN, YALIGN, XSPACE, YSPACE);
+
 	/* Build GtkProgressBar */
-	align = gtk_alignment_new(XALIGN, YALIGN, XSPACE, YSPACE);	
 	adj = (GtkAdjustment *) gtk_adjustment_new (0, LOWER, UPPER, 0, 0, 0);
 	priv->progress_bar = gtk_progress_bar_new_with_adjustment (adj);		
-	req.width = 50;
+	req.width = 228;
 	req.height = 64;
 	gtk_progress_set_text_alignment (GTK_PROGRESS (priv->progress_bar), 0, 0.5);
 	gtk_progress_bar_set_ellipsize (GTK_PROGRESS_BAR (priv->progress_bar), PANGO_ELLIPSIZE_END);
 	gtk_widget_size_request (priv->progress_bar, &req);
 	gtk_container_add (GTK_CONTAINER (align), priv->progress_bar);
-
-	/* Add progress bar widget */
+	
+	/* Add progress bar widget */	
 	gtk_box_pack_start (GTK_BOX(self), align, TRUE, TRUE, 0);
-	gtk_container_add(GTK_CONTAINER(align), priv->progress_bar);
 	gtk_widget_show_all (GTK_WIDGET(self));       
 }
 
@@ -284,6 +289,19 @@ modest_progress_bar_remove_operation (ModestProgressObject *self,
 	g_free(tmp_data);
 }
 
+static void 
+modest_progress_bar_cancel_current_operation (ModestProgressObject *self)
+{
+	ModestProgressBarWidget *me;
+	ModestProgressBarWidgetPrivate *priv;
+
+	me = MODEST_PROGRESS_BAR_WIDGET (self);
+	priv = MODEST_PROGRESS_BAR_WIDGET_GET_PRIVATE (me);
+
+	if (priv->current == NULL) return;
+	modest_mail_operation_cancel (priv->current);
+
+}
 static void 
 on_progress_changed (ModestMailOperation  *mail_op, 
 		     ModestProgressBarWidget *self)

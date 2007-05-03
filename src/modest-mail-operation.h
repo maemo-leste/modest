@@ -74,6 +74,7 @@ typedef enum _ModestMailOperationId {
 	MODEST_MAIL_OPERATION_ID_UNKNOWN,
 } ModestMailOperationId;
 
+
 struct _ModestMailOperation {
 	 GObject parent;
 	/* insert public members, if any */
@@ -332,6 +333,22 @@ void          modest_mail_operation_xfer_msgs      (ModestMailOperation *self,
 void          modest_mail_operation_remove_msg     (ModestMailOperation *self,
 						    TnyHeader *header,
 						    gboolean remove_to_trash);
+
+/**
+ * modest_mail_operation_process_msg:
+ * @self: a #ModestMailOperation
+ * @header: the #TnyHeader of the message to get
+ * permanently
+ * 
+ * Gets a message and process it using @callback function
+ * pased as argument. This operation is assynchronous, so the
+ * #ModestMailOperation should be added to
+ * #ModestMailOperationQueue
+ **/
+void          modest_mail_operation_process_msg     (ModestMailOperation *self,
+						     TnyHeader *header,
+						     TnyGetMsgCallback user_callback,
+						     gpointer user_data);
 
 /* Functions to control mail operations */
 /**
