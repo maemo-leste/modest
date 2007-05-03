@@ -750,8 +750,6 @@ on_header_selected (ModestHeaderView *header_view,
 
 	folder = tny_header_get_folder (header);
 
-	g_print ("SI");
-
 	/* FIXME: do not use this directly. Use a mail operation
 	   instead in order to get progress info */
 	tny_folder_get_msg_async (folder, 
