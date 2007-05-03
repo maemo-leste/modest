@@ -1125,6 +1125,29 @@ cancel_progressbar (GtkToolButton *toolbutton,
 	}
 }
 
+static gboolean
+observers_empty (ModestMainWindow *self)
+{
+	GSList *tmp = NULL;
+	ModestMainWindowPrivate *priv;
+	gboolean is_empty = FALSE;
+	guint pending_ops = 0;
+ 
+	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
+	tmp = priv->progress_widgets;
+	if (tmp == NULL) return TRUE;
+
+	/* Check all observers */
+	while (tmp && !is_empty)  {
+		pending_ops = modest_progress_object_num_pending_operations (MODEST_PROGRESS_OBJECT(tmp->data));
+		is_empty = pending_ops == 0;
+		
+		tmp = g_slist_next(tmp);
+	}
+	
+	return is_empty;
+}
+
 static void
 on_queue_changed (ModestMailOperationQueue *queue,
 		  ModestMailOperation *mail_op,
@@ -1170,14 +1193,16 @@ on_queue_changed (ModestMailOperationQueue *queue,
 		}
 		break;
 	case MODEST_MAIL_OPERATION_QUEUE_OPERATION_REMOVED:
-		if (modest_mail_operation_queue_num_elements (queue) == 0)
-			set_toolbar_mode (MODEST_MAIN_WINDOW(self), TOOLBAR_MODE_NORMAL);
 		if (mode == TOOLBAR_MODE_TRANSFER) {
 			while (tmp) {
 				modest_progress_object_remove_operation (MODEST_PROGRESS_OBJECT (tmp->data),
 									 mail_op);
 				tmp = g_slist_next (tmp);
 			}
+			
+			/* If no more operations are being observed, NORMAL mode is enabled again */
+			if (observers_empty (MODEST_MAIN_WINDOW(self)))
+				set_toolbar_mode (MODEST_MAIN_WINDOW(self), TOOLBAR_MODE_NORMAL);
 		}
 		break;
 	}	

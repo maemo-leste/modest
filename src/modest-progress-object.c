@@ -51,6 +51,13 @@ modest_progress_object_cancel_current_operation (ModestProgressObject *self)
 	return MODEST_PROGRESS_OBJECT_GET_IFACE (self)->cancel_current_operation_func (self);
 }
 
+guint
+modest_progress_object_num_pending_operations (ModestProgressObject *self) 
+{
+	return MODEST_PROGRESS_OBJECT_GET_IFACE (self)->num_pending_operations_func (self);
+}
+
+
 static void
 modest_progress_object_base_init (gpointer g_class)
 {

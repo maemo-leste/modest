@@ -67,6 +67,7 @@ typedef struct _GetMsgAsyncHelper {
 	ModestWindow *window;
 	ModestMailOperation *mail_op;
 	TnyIterator *iter;
+	guint num_ops;
 	GFunc func;	
 	gpointer user_data;
 } GetMsgAsyncHelper;
@@ -478,8 +479,8 @@ cleanup:
 	if (account)
 		g_object_unref (G_OBJECT (account));
 	
-	g_free (rf_helper->account_name);
-	g_slice_free (ReplyForwardHelper, rf_helper);
+/* 	g_free (rf_helper->account_name); */
+/* 	g_slice_free (ReplyForwardHelper, rf_helper); */
 }
 /*
  * Common code for the reply and forward actions
@@ -523,6 +524,7 @@ reply_forward (ReplyForwardAction action, ModestWindow *win)
 	helper->func = reply_forward_func;
 	helper->iter = tny_list_create_iterator (header_list);
 	helper->user_data = rf_helper;
+	helper->num_ops = tny_list_get_length (header_list);
 
 	if (MODEST_IS_MSG_VIEW_WINDOW(win)) {
 		TnyMsg *msg;
@@ -545,7 +547,7 @@ reply_forward (ReplyForwardAction action, ModestWindow *win)
 		
 		helper->mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_ID_RECEIVE);
 		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), helper->mail_op);
-		modest_mail_operation_process_msg (helper->mail_op, header, get_msg_cb, helper);
+		modest_mail_operation_process_msg (helper->mail_op, header, helper->num_ops, get_msg_cb, helper);
 
 		/* Clean */
 		g_object_unref (G_OBJECT (header));
@@ -909,10 +911,6 @@ get_msg_cb (TnyFolder *folder, TnyMsg *msg, GError **err, gpointer user_data)
 		return;
 	}
 
-	/* Notify the queue (if neccesary) */
-	if (helper->mail_op != NULL)
-		modest_mail_operation_queue_remove (modest_runtime_get_mail_operation_queue (), helper->mail_op);
-
 	/* Call user function */
 	if (helper->func)
 		helper->func (msg, user_data);
@@ -920,20 +918,27 @@ get_msg_cb (TnyFolder *folder, TnyMsg *msg, GError **err, gpointer user_data)
 	/* Process next element (if exists) */
 	tny_iterator_next (helper->iter);
 	if (tny_iterator_is_done (helper->iter)) {
-		TnyList *headers;
-		headers = tny_iterator_get_list (helper->iter);
+		/* Notify the queue */
+		if (helper->mail_op != NULL)
+			modest_mail_operation_queue_remove (modest_runtime_get_mail_operation_queue (), helper->mail_op);
+
 		/* Free resources */
+		TnyList *headers;
+		ReplyForwardHelper *rf_helper = (ReplyForwardHelper *) helper->user_data;
+		headers = tny_iterator_get_list (helper->iter);
 		g_object_unref (G_OBJECT (headers));
 		g_object_unref (G_OBJECT (helper->iter));
+		if (rf_helper != NULL) {
+			g_free (rf_helper->account_name);
+			g_slice_free (ReplyForwardHelper, rf_helper);		
+		}
 		g_slice_free (GetMsgAsyncHelper, helper);
 	} else {
 		TnyHeader *header;
 		header = TNY_HEADER (tny_iterator_get_current (helper->iter));
 /* 		tny_folder_get_msg_async (folder, header, */
 /* 					  get_msg_cb, NULL, helper); */
-		helper->mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_ID_RECEIVE);
-		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), helper->mail_op);
-		modest_mail_operation_process_msg (helper->mail_op, header, get_msg_cb, helper);
+		modest_mail_operation_process_msg (helper->mail_op, header, helper->num_ops, get_msg_cb, helper);
 
 		g_object_unref (G_OBJECT(header));
 	}
@@ -981,6 +986,7 @@ modest_ui_actions_on_header_selected (ModestHeaderView *header_view,
 	helper->window = MODEST_WINDOW (main_window);
 	helper->iter = tny_list_create_iterator (list);
 	helper->func = read_msg_func;
+	helper->num_ops = tny_list_get_length (list);
 
 /* 	folder = tny_header_get_folder (TNY_HEADER(header)); */
 
@@ -990,7 +996,7 @@ modest_ui_actions_on_header_selected (ModestHeaderView *header_view,
 
 	helper->mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_ID_RECEIVE);
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), helper->mail_op);
-	modest_mail_operation_process_msg (helper->mail_op, header, get_msg_cb, helper);
+	modest_mail_operation_process_msg (helper->mail_op, header, helper->num_ops, get_msg_cb, helper);
 
 	/* Frees */
 /* 	g_object_unref (G_OBJECT (folder)); */
@@ -1226,7 +1232,7 @@ modest_ui_actions_on_save_to_drafts (GtkWidget *widget, ModestMsgEditWindow *edi
 	from = modest_account_mgr_get_from_string (account_mgr, account_name);
 
 	/* Create the mail operation */		
-	mail_operation = modest_mail_operation_new (MODEST_MAIL_OPERATION_ID_RECEIVE);
+	mail_operation = modest_mail_operation_new (MODEST_MAIL_OPERATION_ID_INFO);
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_operation);
 
 	modest_mail_operation_save_to_drafts (mail_operation,
@@ -1513,7 +1519,7 @@ modest_ui_actions_on_new_folder (GtkAction *action, ModestMainWindow *main_windo
 			if (result == GTK_RESPONSE_REJECT) {
 				finished = TRUE;
 			} else {
-				ModestMailOperation *mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_ID_RECEIVE);
+				ModestMailOperation *mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_ID_INFO);
 				TnyFolder *new_folder = NULL;
 
 				modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), 
@@ -1567,7 +1573,7 @@ modest_ui_actions_on_rename_folder (GtkAction *action,
 		if (folder_name != NULL && strlen (folder_name) > 0) {
 			ModestMailOperation *mail_op;
 
-			mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_ID_RECEIVE);
+			mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_ID_INFO);
 			modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
 							 mail_op);
 

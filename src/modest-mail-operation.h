@@ -338,7 +338,9 @@ void          modest_mail_operation_remove_msg     (ModestMailOperation *self,
  * modest_mail_operation_process_msg:
  * @self: a #ModestMailOperation
  * @header: the #TnyHeader of the message to get
- * permanently
+ * @num_ops: number of times to repeat operation with next header. 
+ * @user_callback: a #TnyGetMsgCallback function to call after tinymail operation execution.
+ * @user_data: user data passed to both, user_callback and update_status_callback.
  * 
  * Gets a message and process it using @callback function
  * pased as argument. This operation is assynchronous, so the
@@ -347,6 +349,7 @@ void          modest_mail_operation_remove_msg     (ModestMailOperation *self,
  **/
 void          modest_mail_operation_process_msg     (ModestMailOperation *self,
 						     TnyHeader *header,
+						     guint num_ops,
 						     TnyGetMsgCallback user_callback,
 						     gpointer user_data);
 

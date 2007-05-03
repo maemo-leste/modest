@@ -47,6 +47,9 @@ static void modest_progress_bar_remove_operation (ModestProgressObject *self,
 static void 
 modest_progress_bar_cancel_current_operation (ModestProgressObject *self);
 
+static guint
+modest_progress_bar_num_pending_operations (ModestProgressObject *self);
+
 static void on_progress_changed                    (ModestMailOperation  *mail_op, 
 						    ModestProgressBarWidget *self);
 
@@ -96,6 +99,7 @@ modest_progress_object_init (gpointer g, gpointer iface_data)
 	klass->add_operation_func = modest_progress_bar_add_operation;
 	klass->remove_operation_func = modest_progress_bar_remove_operation;
 	klass->cancel_current_operation_func = modest_progress_bar_cancel_current_operation;
+	klass->num_pending_operations_func = modest_progress_bar_num_pending_operations;
 }
 
 
@@ -287,6 +291,18 @@ modest_progress_bar_remove_operation (ModestProgressObject *self,
 	
 	/* free */
 	g_free(tmp_data);
+}
+
+static guint
+modest_progress_bar_num_pending_operations (ModestProgressObject *self)
+{
+	ModestProgressBarWidget *me;
+	ModestProgressBarWidgetPrivate *priv;
+	
+	me = MODEST_PROGRESS_BAR_WIDGET (self);
+	priv = MODEST_PROGRESS_BAR_WIDGET_GET_PRIVATE (me);
+	
+	return g_slist_length(priv->observables);
 }
 
 static void 

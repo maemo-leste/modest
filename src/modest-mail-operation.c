@@ -64,6 +64,9 @@ static void     update_folders_status_cb (GObject *obj,
 					  TnyStatus *status,  
 					  gpointer user_data);
 
+static void     update_process_msg_status_cb (GObject *obj,
+					      TnyStatus *status,  
+					  gpointer user_data);
 
 enum _ModestMailOperationSignals 
 {
@@ -382,6 +385,22 @@ update_folders_status_cb (GObject *obj,
 			  TnyStatus *status,  
 			  gpointer user_data)
 {
+	ModestMailOperation *self;
+	ModestMailOperationPrivate *priv;
+
+	g_return_if_fail (status != NULL);
+	g_return_if_fail (status->code == TNY_FOLDER_STATUS_CODE_REFRESH);
+
+	self = MODEST_MAIL_OPERATION (user_data);
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
+
+	priv->done = status->position;
+	priv->total = status->of_total;
+
+	if (priv->done == 1 && priv->total == 100)
+		return;
+
+	g_signal_emit (G_OBJECT (self), signals[PROGRESS_CHANGED_SIGNAL], 0, NULL);
 }
 
 static void
@@ -751,6 +770,7 @@ modest_mail_operation_xfer_folder (ModestMailOperation *self,
 
 void          modest_mail_operation_process_msg     (ModestMailOperation *self,
 						     TnyHeader *header, 
+						     guint num_ops,
 						     TnyGetMsgCallback user_callback,
 						     gpointer user_data)
 {
@@ -764,11 +784,12 @@ void          modest_mail_operation_process_msg     (ModestMailOperation *self,
 	folder = tny_header_get_folder (header);
 
 	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
+	priv->total = num_ops;
 
 	/* Get message from folder */
 	if (folder) {
 		/* The callback will call it per each header */
-		tny_folder_get_msg_async (folder, header, user_callback, NULL, user_data);
+		tny_folder_get_msg_async (folder, header, user_callback, update_process_msg_status_cb, user_data);
 		g_object_unref (G_OBJECT (folder));
 	} else {
 		/* Set status failed and set an error */
@@ -777,6 +798,28 @@ void          modest_mail_operation_process_msg     (ModestMailOperation *self,
 			     MODEST_MAIL_OPERATION_ERROR_ITEM_NOT_FOUND,
 			     _("Error trying to get a message. No folder found for header"));
 	}
+}
+
+static void     
+update_process_msg_status_cb (GObject *obj,
+			      TnyStatus *status,  
+			      gpointer user_data)
+{
+	ModestMailOperation *self;
+	ModestMailOperationPrivate *priv;
+
+	g_return_if_fail (status != NULL);
+	g_return_if_fail (status->code == TNY_FOLDER_STATUS_CODE_REFRESH);
+
+	self = MODEST_MAIL_OPERATION (user_data);
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
+
+	priv->done += status->position;
+
+	if (priv->done == 1 && priv->total == 100)
+		return;
+
+	g_signal_emit (G_OBJECT (self), signals[PROGRESS_CHANGED_SIGNAL], 0, NULL);
 }
 
 

@@ -51,6 +51,7 @@ struct _ModestProgressObjectIface {
 	void (*add_operation_func) (ModestProgressObject *self, ModestMailOperation *mail_op);
 	void (*remove_operation_func) (ModestProgressObject *self, ModestMailOperation *mail_op);
 	void (*cancel_current_operation_func) (ModestProgressObject *self);
+	guint (*num_pending_operations_func) (ModestProgressObject *self);
 };
 
 GType     modest_progress_object_get_type            (void) G_GNUC_CONST;
@@ -61,6 +62,8 @@ void      modest_progress_object_add_operation       (ModestProgressObject *self
 void      modest_progress_object_remove_operation    (ModestProgressObject *self,
 						      ModestMailOperation  *mail_op);
 void      modest_progress_object_cancel_current_operation (ModestProgressObject *self);
+
+guint      modest_progress_object_num_pending_operations (ModestProgressObject *self);
 
 G_END_DECLS
 
