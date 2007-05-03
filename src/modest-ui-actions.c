@@ -97,7 +97,7 @@ do_headers_action (ModestWindow *win,
 
 
 static void     reply_forward_func     (gpointer data, gpointer user_data);
-static void     read_msg_func          (gpointer data, gpointer user_data);
+
 static void     get_msg_cb             (TnyFolder *folder, TnyMsg *msg,	GError **err,
 					gpointer user_data);
 static void     reply_forward          (ReplyForwardAction action, ModestWindow *win);
@@ -867,37 +867,6 @@ modest_ui_actions_toggle_header_list_view (GtkAction *action, ModestMainWindow *
 				      MODEST_CONF_HEADER_VIEW_KEY);
 }
 
-
-
-/*
- * Marks a message as read and passes it to the msg preview widget
- */
-static void
-read_msg_func (gpointer data, gpointer user_data)
-{
-	TnyMsg *msg;
-	TnyHeader *header;
-	GetMsgAsyncHelper *helper;
-	TnyHeaderFlags header_flags;
-	GtkWidget *msg_preview;
-	
-	msg = TNY_MSG (data);
-	helper = (GetMsgAsyncHelper *) user_data;
-
-	msg_preview = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (helper->window),
-							   MODEST_WIDGET_TYPE_MSG_PREVIEW);
-	if (!msg_preview)
-		return;
-	
-	header = TNY_HEADER (tny_iterator_get_current (helper->iter));
-	header_flags = tny_header_get_flags (header);
-	tny_header_set_flags (header, header_flags | TNY_HEADER_FLAG_SEEN);
-	g_object_unref (G_OBJECT (header));
-
-	/* Set message on msg view */
-	modest_msg_view_set_message (MODEST_MSG_VIEW(msg_preview), msg);
-}
-
 /*
  * This function is a generic handler for the tny_folder_get_msg_async
  * call. It expects as user_data a #GetMsgAsyncHelper. This helper
@@ -960,24 +929,7 @@ modest_ui_actions_on_header_selected (ModestHeaderView *header_view,
 				      TnyHeader *header,
 				      ModestMainWindow *main_window)
 {
-/* 	TnyFolder *folder; */
-	GetMsgAsyncHelper *helper;
-	TnyList *list;
-
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW(main_window));
-
-	/* when there's no header, clear the msgview */
-	if (!header) {
-		GtkWidget *msg_preview;
-
-		/* Clear msg preview if exists */
-		msg_preview = modest_main_window_get_child_widget(main_window,
-								  MODEST_WIDGET_TYPE_MSG_PREVIEW);
-	
-		if (msg_preview)
-			modest_msg_view_set_message (MODEST_MSG_VIEW(msg_preview), NULL);
-		return;
-	}
 
 	/* Update Main window title */
 	if (GTK_WIDGET_HAS_FOCUS (header_view)) {
@@ -987,30 +939,6 @@ modest_ui_actions_on_header_selected (ModestHeaderView *header_view,
 		else
 			gtk_window_set_title (GTK_WINDOW (main_window), _("mail_va_no_subject"));
 	}
-
-	/* Create list */
-	list = tny_simple_list_new ();
-	tny_list_prepend (list, G_OBJECT (header));
-
-	/* Fill helper data */
-	helper = g_slice_new0 (GetMsgAsyncHelper);
-	helper->window = MODEST_WINDOW (main_window);
-	helper->iter = tny_list_create_iterator (list);
-	helper->func = read_msg_func;
-	helper->num_ops = tny_list_get_length (list);
-
-/* 	folder = tny_header_get_folder (TNY_HEADER(header)); */
-
-/* 	tny_folder_get_msg_async (TNY_FOLDER(folder), */
-/* 				  header, get_msg_cb, */
-/* 				  NULL, helper); */
-
-	helper->mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_ID_RECEIVE);
-	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), helper->mail_op);
-	modest_mail_operation_process_msg (helper->mail_op, header, helper->num_ops, get_msg_cb, helper);
-
-	/* Frees */
-/* 	g_object_unref (G_OBJECT (folder)); */
 }
 
 

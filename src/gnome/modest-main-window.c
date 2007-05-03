@@ -30,6 +30,8 @@
 #include <glib/gi18n.h>
 #include <gtk/gtktreeviewcolumn.h>
 #include <tny-account-store-view.h>
+#include <tny-simple-list.h>
+#include <tny-error.h>
 
 #include <widgets/modest-main-window.h>
 #include <widgets/modest-window-priv.h>
@@ -81,6 +83,10 @@ static void         on_header_status_update              (ModestHeaderView *head
 							  gint total,  
 							  ModestMainWindow *main_window);
 
+static void         on_header_selected                   (ModestHeaderView *header_view, 
+							  TnyHeader *header,
+							  ModestMainWindow *main_window);
+
 /* list my signals */
 enum {
 	/* MY_SIGNAL_1, */
@@ -113,15 +119,6 @@ struct _ModestMainWindowPrivate {
 #define MODEST_MAIN_WINDOW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                 MODEST_TYPE_MAIN_WINDOW, \
                                                 ModestMainWindowPrivate))
-
-typedef struct _GetMsgAsyncHelper {
-	ModestMainWindowPrivate *main_window_private;
-	guint action;
-	ModestTnyMsgReplyType reply_type;
-	ModestTnyMsgForwardType forward_type;
-	gchar *from;
-	TnyIterator *iter;
-} GetMsgAsyncHelper;
 
 /* globals */
 static GtkWindowClass *parent_class = NULL;
@@ -398,6 +395,8 @@ connect_signals (ModestMainWindow *self)
 			  G_CALLBACK(on_header_status_update), self);
 	g_signal_connect (G_OBJECT(priv->header_view), "header_selected",
 			  G_CALLBACK(modest_ui_actions_on_header_selected), self);
+	g_signal_connect (G_OBJECT(priv->header_view), "header_selected",
+			  G_CALLBACK(on_header_selected), self);
 	g_signal_connect (G_OBJECT(priv->header_view), "header_activated",
 			  G_CALLBACK(modest_ui_actions_on_header_activated), self);
 	g_signal_connect (G_OBJECT(priv->header_view), "item_not_found",
@@ -717,4 +716,47 @@ modest_main_window_set_contents_style (ModestMainWindow *self,
 				       ModestMainWindowContentsStyle style)
 {
 	/* TODO */
+}
+
+static void
+get_msg_callback (TnyFolder *folder, 
+		  TnyMsg *msg, 
+		  GError **err, 
+		  gpointer user_data)
+{
+	if (!(*err)) {
+		ModestMsgView *msg_preview;
+
+		msg_preview = MODEST_MSG_VIEW (user_data);
+		modest_msg_view_set_message (msg_preview, msg);
+	}
+
+	/* Frees */
+	g_object_unref (folder);
+}
+
+static void 
+on_header_selected (ModestHeaderView *header_view, 
+		    TnyHeader *header,
+		    ModestMainWindow *main_window)
+{
+	TnyFolder *folder;
+	ModestMainWindowPrivate *priv;
+
+	priv = MODEST_MAIN_WINDOW_GET_PRIVATE (main_window);
+
+	if (!header)
+		return;
+
+	folder = tny_header_get_folder (header);
+
+	g_print ("SI");
+
+	/* FIXME: do not use this directly. Use a mail operation
+	   instead in order to get progress info */
+	tny_folder_get_msg_async (folder, 
+				  header, 
+				  get_msg_callback, 
+				  NULL, 
+				  priv->msg_preview);
 }

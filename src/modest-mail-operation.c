@@ -1017,7 +1017,7 @@ on_refresh_folder (TnyFolder   *folder,
 
 static void
 on_refresh_folder_status_update (GObject *obj,
-				 TnyStatus *status,  
+				 TnyStatus *status,
 				 gpointer user_data)
 {
 	ModestMailOperation *self;
@@ -1025,6 +1025,11 @@ on_refresh_folder_status_update (GObject *obj,
 
 	g_return_if_fail (status != NULL);
 	g_return_if_fail (status->code == TNY_FOLDER_STATUS_CODE_REFRESH);
+
+	/* Temporary FIX: useful when tinymail send us status
+	   information *after* calling the function callback */
+	if (!user_data)
+		return;
 
 	self = MODEST_MAIL_OPERATION (user_data);
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);

@@ -197,3 +197,9 @@ gboolean modest_platform_set_update_interval (guint minutes)
 	/* TODO. */
 }
 
+void
+modest_platform_run_sort_dialog (GtkWindow *parent_window,
+				 ModestSortDialogType type)
+{
+	/* TODO */
+}
