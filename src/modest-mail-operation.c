@@ -467,7 +467,7 @@ modest_mail_operation_update_account (ModestMailOperation *self,
 
 	g_message ("tny_folder_store_get_folders_async");
 	tny_folder_store_get_folders_async (TNY_FOLDER_STORE (store_account),
-					    folders, update_folders_cb, NULL, self);
+					    folders, update_folders_cb, NULL, NULL, self);
 	
 	return TRUE;
 }
@@ -862,6 +862,7 @@ modest_mail_operation_xfer_msgs (ModestMailOperation *self,
 					folder, 
 					delete_original, 
 					transfer_msgs_cb, 
+					NULL,
 					helper);
 }
 
