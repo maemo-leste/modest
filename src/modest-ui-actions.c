@@ -84,6 +84,17 @@ guint reply_forward_type;
 	gchar *account_name;
 } ReplyForwardHelper;
 
+/*
+ * The do_headers_action uses this kind of functions to perform some
+ * action to each member of a list of headers
+ */
+typedef void (*HeadersFunc) (TnyHeader *header, ModestWindow *win, gpointer user_data);
+
+static void
+do_headers_action (ModestWindow *win, 
+		   HeadersFunc func,
+		   gpointer user_data);
+
 
 static void     reply_forward_func     (gpointer data, gpointer user_data);
 static void     read_msg_func          (gpointer data, gpointer user_data);
@@ -92,7 +103,6 @@ static void     get_msg_cb             (TnyFolder *folder, TnyMsg *msg,	GError *
 static void     reply_forward          (ReplyForwardAction action, ModestWindow *win);
 
 static gchar*   ask_for_folder_name    (GtkWindow *parent_window, const gchar *title);
-
 
 void   
 modest_ui_actions_on_about (GtkAction *action, ModestWindow *win)
@@ -150,12 +160,26 @@ get_selected_headers (ModestWindow *win)
 		return NULL;
 }
 
+static void
+headers_action_delete (TnyHeader *header,
+		       ModestWindow *win,
+		       gpointer user_data)
+{
+	ModestMailOperation *mail_op;
+
+	/* TODO: add confirmation dialog */
+	mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_ID_DELETE);
+	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
+					 mail_op);
+
+	/* Always delete. TODO: Move to trash still not supported */
+	modest_mail_operation_remove_msg (mail_op, header, FALSE);
+	g_object_unref (G_OBJECT (mail_op));
+}
+
 void
 modest_ui_actions_on_delete (GtkAction *action, ModestWindow *win)
 {
-	TnyList *header_list;
-	TnyIterator *iter;
-
 	g_return_if_fail (MODEST_IS_WINDOW(win));
 
 	if (MODEST_IS_MSG_EDIT_WINDOW (win)) {
@@ -164,36 +188,8 @@ modest_ui_actions_on_delete (GtkAction *action, ModestWindow *win)
 		return;
 	}
 		
-	header_list = get_selected_headers (win);
-	
-	if (header_list) {
-		iter = tny_list_create_iterator (header_list);
-		do {
-			TnyHeader *header;
-			ModestMailOperation *mail_op;
-
-			header = TNY_HEADER (tny_iterator_get_current (iter));
-			/* TODO: thick grain mail operation involving
-			   a list of objects. Composite pattern ??? */
-			/* TODO: add confirmation dialog */
-			mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_ID_DELETE);
-			modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
-							 mail_op);
-
-			/* Always delete. TODO: Move to trash still not supported */
-			modest_mail_operation_remove_msg (mail_op, header, FALSE);
-
-			/* Frees */
-			g_object_unref (G_OBJECT (mail_op));
-			g_object_unref (G_OBJECT (header));
-
-			tny_iterator_next (iter);
-
-		} while (!tny_iterator_is_done (iter));
-
-		/* Free iter */
-		g_object_unref (G_OBJECT (iter));
-	}
+	/* Remove each header */
+	do_headers_action (win, headers_action_delete, NULL);
 
 	if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
 		gtk_widget_destroy (GTK_WIDGET(win));
@@ -373,13 +369,28 @@ cleanup:
 		g_object_unref (G_OBJECT(folder));
 }
 
+static void
+headers_action_open (TnyHeader *header, 
+		     ModestWindow *win, 
+		     gpointer user_data)
+{
+	modest_ui_actions_on_header_activated (MODEST_HEADER_VIEW (user_data), 
+					       header,
+					       MODEST_MAIN_WINDOW (win));
+}
 
 void
 modest_ui_actions_on_open (GtkAction *action, ModestWindow *win)
 {
-	modest_runtime_not_implemented (GTK_WINDOW(win)); /* FIXME */
-}
+	GtkWidget *header_view;
 
+	/* Get header view */
+	header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win),
+							   MODEST_WIDGET_TYPE_HEADER_VIEW);
+
+	/* Open each message */
+	do_headers_action (win, headers_action_open, header_view);
+}
 
 
 static void
@@ -1005,7 +1016,7 @@ modest_ui_actions_on_header_selected (ModestHeaderView *header_view,
 
 
 void 
-modest_ui_actions_on_header_activated (ModestHeaderView *folder_view, TnyHeader *header,
+modest_ui_actions_on_header_activated (ModestHeaderView *header_view, TnyHeader *header,
 				       ModestMainWindow *main_window)
 {
 	ModestWindow *win = NULL;
@@ -1047,7 +1058,7 @@ modest_ui_actions_on_header_activated (ModestHeaderView *folder_view, TnyHeader 
 		if (!account)
 			account = modest_account_mgr_get_default_account (modest_runtime_get_account_mgr());
 
-		sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (folder_view));
+		sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (header_view));
 		sel_list = gtk_tree_selection_get_selected_rows (sel, &model);
 		if (sel_list != NULL) {
 			gtk_tree_model_get_iter (model, &iter, (GtkTreePath *) sel_list->data);
@@ -1884,17 +1895,19 @@ modest_ui_actions_on_change_fullscreen (GtkAction *action,
 	gtk_window_present (GTK_WINDOW (window));
 }
 
-/*
- * Show the header details in a ModestDetailsDialog widget
+/* 
+ * Used by modest_ui_actions_on_details to call do_headers_action 
  */
 static void
-show_header_details (TnyHeader *header, 
-		     GtkWindow *window)
+headers_action_show_details (TnyHeader *header, 
+			     ModestWindow *window,
+			     gpointer user_data)
+
 {
 	GtkWidget *dialog;
 	
 	/* Create dialog */
-	dialog = modest_details_dialog_new_with_header (window, header);
+	dialog = modest_details_dialog_new_with_header (GTK_WINDOW (window), header);
 
 	/* Run dialog */
 	gtk_widget_show_all (dialog);
@@ -1922,7 +1935,9 @@ show_folder_details (TnyFolder *folder,
 	gtk_widget_destroy (dialog);
 }
 
-
+/*
+ * Show the header details in a ModestDetailsDialog widget
+ */
 void     
 modest_ui_actions_on_details (GtkAction *action, 
 			      ModestWindow *win)
@@ -1945,7 +1960,7 @@ modest_ui_actions_on_details (GtkAction *action,
 			iter = tny_list_create_iterator (headers_list);
 
 			header = TNY_HEADER (tny_iterator_get_current (iter));
-			show_header_details (header, GTK_WINDOW (win));
+			headers_action_show_details (header, win, NULL);
 			g_object_unref (header);
 
 			g_object_unref (iter);
@@ -1970,23 +1985,8 @@ modest_ui_actions_on_details (GtkAction *action,
 		} else {
 			header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win),
 									   MODEST_WIDGET_TYPE_HEADER_VIEW);
-			if (!gtk_widget_is_focus (header_view))
-				return;
-
-			headers_list = get_selected_headers (win);
-			if (!headers_list)
-				return;
-
-			iter = tny_list_create_iterator (headers_list);
-			while (!tny_iterator_is_done (iter)) {
-
-				header = TNY_HEADER (tny_iterator_get_current (iter));
-				show_header_details (header, GTK_WINDOW (win));
-				g_object_unref (header);
-
-				tny_iterator_next (iter);
-			}
-			g_object_unref (iter);
+			/* Show details of each header */
+			do_headers_action (win, headers_action_show_details, header_view);
 		}
 	}
 }
@@ -2366,3 +2366,32 @@ modest_ui_actions_on_move_to (GtkAction *action,
 							      MODEST_MSG_VIEW_WINDOW (win));
 }
 
+/*
+ * Calls #HeadersFunc for each header already selected in the main
+ * window or the message currently being shown in the msg view window
+ */
+static void
+do_headers_action (ModestWindow *win, 
+		   HeadersFunc func,
+		   gpointer user_data)
+{
+	TnyList *headers_list;
+	TnyIterator *iter;
+
+	/* Get headers */
+	headers_list = get_selected_headers (win);
+	if (!headers_list)
+		return;
+
+	/* Call the function for each header */
+	iter = tny_list_create_iterator (headers_list);
+	while (!tny_iterator_is_done (iter)) {
+		TnyHeader *header;
+
+		header = TNY_HEADER (tny_iterator_get_current (iter));
+		func (header, win, user_data);
+		g_object_unref (header);
+		tny_iterator_next (iter);
+	}
+	g_object_unref (iter);
+}
