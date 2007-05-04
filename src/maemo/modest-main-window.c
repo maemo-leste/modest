@@ -751,6 +751,10 @@ modest_main_window_show_toolbar (ModestWindow *self,
 	/* TODO: Why is this sometimes NULL? murrayc */
 	if (parent_priv->toolbar) {
 		if (show_toolbar) {
+			/* Quick hack: this prevents toolbar icons "dance" when progress bar show status is changed */
+			/* TODO: resize mode migth be GTK_RESIZE_QUEUE, in order to avoid unneccesary shows */
+			gtk_container_set_resize_mode (GTK_CONTAINER(parent_priv->toolbar), GTK_RESIZE_IMMEDIATE);
+
 			gtk_widget_show (GTK_WIDGET (parent_priv->toolbar));
 			set_toolbar_mode (MODEST_MAIN_WINDOW(self), TOOLBAR_MODE_NORMAL);
 		} else
