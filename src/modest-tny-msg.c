@@ -253,9 +253,6 @@ modest_tny_msg_get_body (TnyMsg *msg, gboolean want_html)
 	tny_stream_reset (stream);
 	tny_mime_part_decode_to_stream (body, stream);
 	tny_stream_reset (stream);
-
-	g_object_unref (G_OBJECT(stream));
-	g_object_unref (G_OBJECT(body));
 	
 	gtk_text_buffer_get_bounds (buf, &start, &end);
 	to_quote = gtk_text_buffer_get_text (buf, &start, &end, FALSE);
@@ -264,7 +261,10 @@ modest_tny_msg_get_body (TnyMsg *msg, gboolean want_html)
 		g_free (to_quote);
 		to_quote = to_quote_converted;
 	}
+
 	g_object_unref (buf);
+	g_object_unref (G_OBJECT(stream));
+	g_object_unref (G_OBJECT(body));
 
 	return to_quote;
 }

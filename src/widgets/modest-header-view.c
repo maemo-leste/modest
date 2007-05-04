@@ -856,8 +856,11 @@ void
 modest_header_view_set_folder (ModestHeaderView *self, TnyFolder *folder)
 {
 	ModestHeaderViewPrivate *priv;
+	ModestWindow *win = NULL;
 
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
+	win = MODEST_WINDOW(gtk_widget_get_toplevel (GTK_WIDGET(self)));
+	g_return_if_fail (MODEST_IS_WINDOW (win));
 
 	if (priv->folder) {
 		g_object_unref (priv->folder);
@@ -877,7 +880,7 @@ modest_header_view_set_folder (ModestHeaderView *self, TnyFolder *folder)
 		g_signal_emit (G_OBJECT(self), signals[HEADER_SELECTED_SIGNAL], 0, NULL);
 
 		/* Create the mail operation */
-		mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_ID_RECEIVE);
+		mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_ID_RECEIVE, G_OBJECT(win));
 		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
 						 mail_op);
 

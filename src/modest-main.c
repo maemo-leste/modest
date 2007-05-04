@@ -283,7 +283,7 @@ send_mail (const gchar* account_name,
 	from_string = modest_account_mgr_get_from_string (modest_runtime_get_account_mgr(),
 							  account_name);
 
-	mail_operation = modest_mail_operation_new (MODEST_MAIL_OPERATION_ID_SEND);
+	mail_operation = modest_mail_operation_new (MODEST_MAIL_OPERATION_ID_SEND, NULL);
 	modest_mail_operation_send_new_mail (mail_operation, account,
 					     from_string, mailto,
 					     cc, bcc, subject, body, NULL,

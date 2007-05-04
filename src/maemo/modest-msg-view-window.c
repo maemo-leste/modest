@@ -1186,6 +1186,28 @@ cancel_progressbar (GtkToolButton *toolbutton,
 		tmp=g_slist_next(tmp);
 	}
 }
+static gboolean
+observers_empty (ModestMsgViewWindow *self)
+{
+	GSList *tmp = NULL;
+	ModestMsgViewWindowPrivate *priv;
+	gboolean is_empty = TRUE;
+	guint pending_ops = 0;
+ 
+	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE(self);
+	tmp = priv->progress_widgets;
+
+	/* Check all observers */
+	while (tmp && is_empty)  {
+		pending_ops = modest_progress_object_num_pending_operations (MODEST_PROGRESS_OBJECT(tmp->data));
+		is_empty = pending_ops == 0;
+		
+		tmp = g_slist_next(tmp);
+	}
+	
+	return is_empty;
+}
+
 
 static void
 on_queue_changed (ModestMailOperationQueue *queue,
@@ -1200,6 +1222,10 @@ on_queue_changed (ModestMailOperationQueue *queue,
 	
 	g_return_if_fail (MODEST_IS_MSG_VIEW_WINDOW (self));
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE(self);
+
+	/* If this operations was created by another window, do nothing */
+	if (!modest_mail_operation_is_mine (mail_op, G_OBJECT(self))) 
+	    return;
 
 	/* Get toolbar mode from operation id*/
 	op_id = modest_mail_operation_get_id (mail_op);
@@ -1217,21 +1243,30 @@ on_queue_changed (ModestMailOperationQueue *queue,
 	tmp = priv->progress_widgets;
 	switch (type) {
 	case MODEST_MAIL_OPERATION_QUEUE_OPERATION_ADDED:
-		if (mode != TOOLBAR_MODE_NORMAL) 
+		if (mode == TOOLBAR_MODE_TRANSFER) {
+			while (tmp) {
+				modest_progress_object_add_operation (MODEST_PROGRESS_OBJECT (tmp->data),
+								      mail_op);
+				tmp = g_slist_next (tmp);
+			}
+			
+			/* Enable transfer toolbar mode */
 			set_toolbar_mode (MODEST_MSG_VIEW_WINDOW(self), mode);
-		while (tmp) {
-			modest_progress_object_add_operation (MODEST_PROGRESS_OBJECT (tmp->data),
-							      mail_op);
-			tmp = g_slist_next (tmp);
 		}
 		break;
 	case MODEST_MAIL_OPERATION_QUEUE_OPERATION_REMOVED:
-		if (mode != TOOLBAR_MODE_NORMAL) 
+		if (mode == TOOLBAR_MODE_TRANSFER) {
 			set_toolbar_mode (MODEST_MSG_VIEW_WINDOW(self), TOOLBAR_MODE_NORMAL);
-		while (tmp) {
-			modest_progress_object_remove_operation (MODEST_PROGRESS_OBJECT (tmp->data),
+			while (tmp) {
+				modest_progress_object_remove_operation (MODEST_PROGRESS_OBJECT (tmp->data),
 								 mail_op);
-			tmp = g_slist_next (tmp);
+				tmp = g_slist_next (tmp);
+				
+			}
+
+			/* If no more operations are being observed, NORMAL mode is enabled again */
+			if (observers_empty (self))
+				set_toolbar_mode (self, TOOLBAR_MODE_NORMAL);
 		}
 		break;
 	}

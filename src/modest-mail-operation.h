@@ -90,8 +90,16 @@ struct _ModestMailOperationClass {
 /* member functions */
 GType        modest_mail_operation_get_type    (void) G_GNUC_CONST;
 
-/* typical parameter-less _new function */
-ModestMailOperation*    modest_mail_operation_new     (ModestMailOperationId id);
+/**
+ * modest_mail_operation_new:
+ * @id: a #ModestMailOperationId identification of operation type.
+ * @source: a #GObject which creates this new operation.
+ * 
+ * Creates a new instance of class #ModestMailOperation, using parameters
+ * to initialize its private structure. @source parameter may be NULL.
+ **/
+ModestMailOperation*    modest_mail_operation_new     (ModestMailOperationId id,
+						       GObject *source);
 
 /**
  * modest_mail_operation_get_id
@@ -99,9 +107,22 @@ ModestMailOperation*    modest_mail_operation_new     (ModestMailOperationId id)
  * 
  * Gets the private id field of mail operation. This id identifies
  * the class/type of mail operation.  
-  **/
+ **/
 ModestMailOperationId
 modest_mail_operation_get_id (ModestMailOperation *self);
+
+/**
+ * modest_mail_operation_get_id
+ * @self: a #ModestMailOperation
+ * @source: a #GObject to check if it have created @self operation.
+ * 
+ * Check if @source object its owner of @self mail operation.
+ *
+ * returns: TRUE if source its owner, FALSE otherwise.
+ **/
+gboolean 
+modest_mail_operation_is_mine (ModestMailOperation *self, 
+			       GObject *me);
 
 /* fill in other public functions, eg.: */
 

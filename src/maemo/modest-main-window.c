@@ -1208,7 +1208,7 @@ on_queue_changed (ModestMailOperationQueue *queue,
 	switch (type) {
 	case MODEST_MAIL_OPERATION_QUEUE_OPERATION_ADDED:
 		if (mode_changed)
-			set_toolbar_mode (MODEST_MAIN_WINDOW(self), mode);
+			set_toolbar_mode (self, mode);
 		if (mode == TOOLBAR_MODE_TRANSFER) {
 			while (tmp) {
 				modest_progress_object_add_operation (MODEST_PROGRESS_OBJECT (tmp->data),
@@ -1226,8 +1226,8 @@ on_queue_changed (ModestMailOperationQueue *queue,
 			}
 			
 			/* If no more operations are being observed, NORMAL mode is enabled again */
-			if (observers_empty (MODEST_MAIN_WINDOW(self)))
-				set_toolbar_mode (MODEST_MAIN_WINDOW(self), TOOLBAR_MODE_NORMAL);
+			if (observers_empty (self))
+				set_toolbar_mode (self, TOOLBAR_MODE_NORMAL);
 		}
 		break;
 	}	

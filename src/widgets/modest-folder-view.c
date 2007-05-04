@@ -991,7 +991,7 @@ drag_and_drop_from_header_view (GtkTreeModel *source_model,
 			    &folder, -1);
 
 	/* Transfer message */
-	mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_ID_RECEIVE);
+	mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_ID_RECEIVE, NULL);
 
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
 					 mail_op);
@@ -1051,7 +1051,7 @@ drag_and_drop_from_folder_view (GtkTreeModel     *source_model,
 			    &folder, -1);
 
 	/* Do the mail operation */
-	mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_ID_RECEIVE);
+	mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_ID_RECEIVE, NULL);
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), 
 					 mail_op);
 	g_signal_connect (G_OBJECT (mail_op), "progress-changed",

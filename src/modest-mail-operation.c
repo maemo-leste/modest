@@ -81,6 +81,7 @@ struct _ModestMailOperationPrivate {
 	guint                      total;
 	ModestMailOperationStatus  status;	
 	ModestMailOperationId      id;		
+	GObject                   *source;
 	GError                    *error;
 };
 
@@ -179,6 +180,7 @@ modest_mail_operation_init (ModestMailOperation *obj)
 	priv->error    = NULL;
 	priv->done     = 0;
 	priv->total    = 0;
+	priv->source = NULL;
 }
 
 static void
@@ -192,25 +194,30 @@ modest_mail_operation_finalize (GObject *obj)
 		g_error_free (priv->error);
 		priv->error = NULL;
 	}
+	if (priv->source) {
+		g_object_unref (priv->source);
+		priv->source = NULL;
+	}
 
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
 ModestMailOperation*
-modest_mail_operation_new (ModestMailOperationId id)
+modest_mail_operation_new (ModestMailOperationId id, 
+			   GObject *source)
 {
 	ModestMailOperation *obj;
 	ModestMailOperationPrivate *priv;
-
-
+		
 	obj = MODEST_MAIL_OPERATION(g_object_new(MODEST_TYPE_MAIL_OPERATION, NULL));
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(obj);
 
 	priv->id = id;
+	if (source != NULL)
+		priv->source = g_object_ref(source);
 
 	return obj;
 }
-
 
 
 ModestMailOperationId
@@ -222,6 +229,19 @@ modest_mail_operation_get_id (ModestMailOperation *self)
 	
 	return priv->id;
 }
+
+gboolean 
+modest_mail_operation_is_mine (ModestMailOperation *self, 
+			       GObject *me)
+{
+	ModestMailOperationPrivate *priv;
+
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
+	if (priv->source == NULL) return FALSE;
+
+	return priv->source == me;
+}
+
 
 void
 modest_mail_operation_send_mail (ModestMailOperation *self,
