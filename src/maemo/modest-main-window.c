@@ -53,6 +53,8 @@
 #include "modest-mail-operation.h"
 #include "modest-icon-names.h"
 #include "modest-progress-bar-widget.h"
+#include <hildon-widgets/hildon-program.h>
+#include "maemo/modest-osso-state-saving.h"
 
 /* 'private'/'protected' functions */
 static void modest_main_window_class_init    (ModestMainWindowClass *klass);
@@ -413,6 +415,44 @@ sync_accounts_cb (ModestMainWindow *win)
 	return FALSE; /* Do not call this idle handler again. */
 }
 
+static void on_hildon_program_is_topmost_notify(GObject *self,
+	GParamSpec *propert_param, gpointer user_data)
+{
+	HildonProgram *app = HILDON_PROGRAM (self);
+	
+	/*
+	ModestWindow* self = MODEST_WINDOW(user_data);
+	*/
+	
+	/* Note that use of hildon_program_set_can_hibernate() 
+	 * is generally referred to as "setting the killable flag", 
+	 * though hibernation does not seem equal to death.
+	 * murrayc */
+		 
+	if (hildon_program_get_is_topmost (app)) {
+		/* Prevent hibernation when the progam comes to the foreground,
+		 * because hibernation should only happen when the application 
+		 * is in the background: */
+		hildon_program_set_can_hibernate (app, FALSE);
+	} else {
+		/* Allow hibernation if the program has gone to the background: */
+		
+		/* However, prevent hibernation while the settings are being changed: */
+		gboolean settings_dialog_is_open = FALSE;
+		
+		if (settings_dialog_is_open)
+			hildon_program_set_can_hibernate (app, FALSE);
+		else {
+			
+			/* Allow hibernation, after saving the state: */
+			modest_osso_save_state();
+			hildon_program_set_can_hibernate (app, TRUE);
+		}
+	}
+	
+}
+
+
 
 ModestWindow*
 modest_main_window_new (void)
@@ -548,6 +588,27 @@ modest_main_window_new (void)
 	/* do send & receive when we are idle */
 	g_idle_add ((GSourceFunc)sync_accounts_cb, self);
 	
+
+	HildonProgram *app = hildon_program_get_instance ();
+	hildon_program_add_window (app, HILDON_WINDOW (self));
+	
+	/* Register HildonProgram  signal handlers: */
+	/* These are apparently deprecated, according to the 
+	 * "HildonApp/HildonAppView to HildonProgram/HildonWindow migration guide",
+	 * though the API reference does not mention that:
+	 *
+	g_signal_connect (G_OBJECT(app), "topmost_status_lose",
+		G_CALLBACK (on_hildon_program_save_state), self);
+	g_signal_connect (G_OBJECT(app), "topmost_status_acquire",
+		G_CALLBACK (on_hildon_program_status_acquire), self);
+    */
+	g_signal_connect (G_OBJECT(app), "notify::is-topmost",
+		G_CALLBACK (on_hildon_program_is_topmost_notify), self);
+		
+	/* Load previous osso state, for instance if we are being restored from 
+	 * hibernation:  */
+	modest_osso_load_state();
+
 	return MODEST_WINDOW(self);
 }
 

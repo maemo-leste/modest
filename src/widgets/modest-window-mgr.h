@@ -80,7 +80,7 @@ void           modest_window_mgr_register_window       (ModestWindowMgr *self,
  * @self: the #ModestWindowMgr
  * @window: a #ModestWindow
  * 
- * Unegisters a given window from the window manager. The window
+ * Unregisters a given window from the window manager. The window
  * manager will free its reference to it.
  **/
 void           modest_window_mgr_unregister_window     (ModestWindowMgr *self, 

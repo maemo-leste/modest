@@ -1,3 +1,32 @@
+2007-05-04  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/maemo/Makefile.am:
+	* src/maemo/modest-osso-state-saving.c: 
+	* src/maemo/modest-osso-state-saving.h: Added 
+	modest_osso_load_state() and modest_osso_save_state() though they do 
+	nothing now. They should iterate through all the open windows and load/save 
+	their state.
+	* src/modest-ui-actions.c: (modest_ui_actions_on_quit): For Mameo, 
+	save state when closing.
+	
+	* src/maemo/modest-main-window.c:
+	(on_hildon_program_is_topmost_notify), (modest_main_window_new):
+	Add a notification handler for the HildonProgram::is-topmost property, 
+	so we can allow hibernation when the application goes into the background.
+	But we still need to detect when the accounts setup windows are open so 
+	we can stop hibernation when they are open.
+	To do this, I also added the main window the HildonProgram. This might have 
+	other side-effects/benefits, and should maybe be done for other windows.
+
+	* src/maemo/modest-osso-autosave-callbacks.h:
+	* src/maemo/modest-osso-autosave-callbacks.c:
+	(modest_on_osso_application_autosave): Add a libosso auto-save callback, 
+	though it does not do anything yet, and we might never need this to do 
+	anything. For instance, we already save drafts.
+	
+	* src/maemo/modest-platform.c: (modest_platform_init):
+	Specify the libosso auto-save callback.
+
 2007-05-03  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/maemo/modest-platform.c:

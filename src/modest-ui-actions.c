@@ -44,6 +44,11 @@
 #include "modest-tny-platform-factory.h"
 #include "modest-platform.h"
 
+#ifdef MODEST_PLATFORM_MAEMO
+#include "maemo/modest-osso-state-saving.h"
+#endif /* MODEST_PLATFORM_MAEMO */
+
+
 #include <widgets/modest-main-window.h>
 #include <widgets/modest-msg-view-window.h>
 #include <widgets/modest-account-view-window.h>
@@ -55,7 +60,7 @@
 
 #ifdef MODEST_HAVE_EASYSETUP
 #include "easysetup/modest-easysetup-wizard.h"
-#endif /*MODEST_HAVE_EASYSETUP*/
+#endif /* MODEST_HAVE_EASYSETUP */
 
 #include <modest-widget-memory.h>
 #include <tny-error.h>
@@ -200,6 +205,10 @@ modest_ui_actions_on_delete (GtkAction *action, ModestWindow *win)
 void
 modest_ui_actions_on_quit (GtkAction *action, ModestWindow *win)
 {
+	#ifdef MODEST_PLATFORM_MAEMO
+	modest_osso_save_state();
+	#endif /* MODEST_PLATFORM_MAEMO */
+	
 	gtk_main_quit ();
 }
 

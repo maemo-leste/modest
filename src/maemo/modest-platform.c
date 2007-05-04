@@ -37,6 +37,7 @@
 #include <modest-hildon-includes.h>
 
 #include <dbus_api/modest-dbus-callbacks.h>
+#include <maemo/modest-osso-autosave-callbacks.h>
 #include <libosso.h>
 #include <alarmd/alarm_event.h> /* For alarm_event_add(), etc. */
 #include <tny-maemo-conic-device.h>
@@ -82,6 +83,14 @@ modest_platform_init (void)
 	/* Register hardware event dbus callback: */
     osso_hw_set_event_cb(osso_context, NULL, modest_osso_cb_hw_state_handler, NULL);
 
+	/* Register osso auto-save callbacks: */
+	result = osso_application_set_autosave_cb (osso_context, 
+		modest_on_osso_application_autosave, NULL /* user_data */);
+	if (result != OSSO_OK) {
+		g_warning ("osso_application_set_autosave_cb() failed.");	
+	}
+	
+	
 	/* TODO: Get the actual update interval from gconf, 
 	 * when that preferences dialog has been implemented.
 	 * And make sure that this is called again whenever that is changed. */
