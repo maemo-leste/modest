@@ -1028,7 +1028,7 @@ on_refresh_folder_status_update (GObject *obj,
 
 	/* Temporary FIX: useful when tinymail send us status
 	   information *after* calling the function callback */
-	if (!user_data)
+	if (!MODEST_IS_MAIL_OPERATION (user_data))
 		return;
 
 	self = MODEST_MAIL_OPERATION (user_data);
