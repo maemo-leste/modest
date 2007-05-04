@@ -109,7 +109,7 @@ static const GtkActionEntry modest_action_entries [] = {
 	{ "ToolbarMessageReplyAll",   MODEST_STOCK_REPLY_ALL,     N_("qgn_toolb_messagin_replyall"),         NULL, NULL,  G_CALLBACK (modest_ui_actions_on_reply_all) },
 	{ "ToolbarMessageForward",    MODEST_STOCK_FORWARD,     N_("qgn_toolb_messagin_forward"),      NULL, NULL,  G_CALLBACK (modest_ui_actions_on_forward) },
 	{ "ToolbarSendReceive",       MODEST_STOCK_REFRESH,   N_("qgn_toolb_gene_refresh"),      NULL, NULL,  G_CALLBACK (modest_ui_actions_on_send_receive) },
-	{ "ToolbarToggleView",        MODEST_STOCK_SPLIT_VIEW,      N_("gqn_toolb_rss_fldonoff"),                "<CTRL>t", NULL,  G_CALLBACK (modest_ui_actions_toggle_folders_view) },
+/* 	{ "ToolbarToggleView",        MODEST_STOCK_SPLIT_VIEW,      N_("gqn_toolb_rss_fldonoff"),                "<CTRL>t", NULL,  G_CALLBACK (modest_ui_actions_toggle_folders_view) }, */
 	{ "ToolbarDeleteMessage",     MODEST_STOCK_DELETE,     N_("qgn_toolb_gene_deletebutton"),             NULL, NULL,  G_CALLBACK (modest_ui_actions_on_delete) },
 	{ "ToolbarSort",     MODEST_STOCK_SORT,     N_("qgn_list_sort"),             NULL, NULL,  G_CALLBACK (modest_ui_actions_on_sort) },
 	{ "ToolbarFindInMessage",     GTK_STOCK_FIND,       N_("qgn_toolb_gene_find"),         NULL, NULL, NULL },

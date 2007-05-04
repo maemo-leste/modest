@@ -161,6 +161,12 @@ static const GtkActionEntry modest_folder_view_action_entries [] = {
 	{ "FolderViewCSMHelp", NULL, N_("mcen_me_inbox_help"), NULL, NULL, NULL },
 };
 
+
+static const GtkToggleActionEntry modest_main_window_toggle_action_entries [] = {
+	{ "ToolbarToggleView", MODEST_STOCK_SPLIT_VIEW, N_("gqn_toolb_rss_fldonoff"), "<CTRL>t", NULL, G_CALLBACK (modest_ui_actions_toggle_folders_view), FALSE },
+};
+
+
 /************************************************************************/
 
 GType
@@ -446,6 +452,11 @@ modest_main_window_new (void)
 					     G_N_ELEMENTS (modest_toggle_action_entries),
 					     self);
 
+	gtk_action_group_add_toggle_actions (action_group,
+					     modest_main_window_toggle_action_entries,
+					     G_N_ELEMENTS (modest_main_window_toggle_action_entries),
+					     self);
+
 	gtk_ui_manager_insert_action_group (parent_priv->ui_manager, action_group, 0);
 	g_object_unref (action_group);
 
@@ -568,14 +579,20 @@ modest_main_window_set_style (ModestMainWindow *self,
 			      ModestMainWindowStyle style)
 {
 	ModestMainWindowPrivate *priv;
+	ModestWindowPrivate *parent_priv;
+	GtkAction *action;
 
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW (self));
 
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
+	parent_priv = MODEST_WINDOW_GET_PRIVATE(self);
 
 	/* no change -> nothing to do */
 	if (priv->style == style)
 		return;
+
+	/* Get toggle button */
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ToolbarToggleView");
 
 	priv->style = style;
 
@@ -588,6 +605,10 @@ modest_main_window_set_style (ModestMainWindow *self,
 		/* Reparent the contents widget to the main vbox */
 		gtk_widget_reparent (priv->contents_widget, priv->main_vbox);
 
+		g_signal_handlers_block_by_func (action, modest_ui_actions_toggle_folders_view, self);
+		gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (action), TRUE);
+		g_signal_handlers_unblock_by_func (action, modest_ui_actions_toggle_folders_view, self);
+
 		break;
 	case MODEST_MAIN_WINDOW_STYLE_SPLIT:
 		/* Remove header view */
@@ -597,6 +618,11 @@ modest_main_window_set_style (ModestMainWindow *self,
 		/* Reparent the main paned */
 		gtk_paned_add2 (GTK_PANED (priv->main_paned), priv->contents_widget);
 		gtk_container_add (GTK_CONTAINER (priv->main_vbox), priv->main_paned);
+
+		g_signal_handlers_block_by_func (action, modest_ui_actions_toggle_folders_view, self);
+		gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (action), FALSE);
+		g_signal_handlers_unblock_by_func (action, modest_ui_actions_toggle_folders_view, self);
+
 		break;
 	default:
 		g_return_if_reached ();

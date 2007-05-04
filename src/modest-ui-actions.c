@@ -931,6 +931,10 @@ modest_ui_actions_on_header_selected (ModestHeaderView *header_view,
 {
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW(main_window));
 
+	/* If no header has been selected then exit */
+	if (!header)
+		return;
+
 	/* Update Main window title */
 	if (GTK_WIDGET_HAS_FOCUS (header_view)) {
 		const gchar *subject = tny_header_get_subject (header);
