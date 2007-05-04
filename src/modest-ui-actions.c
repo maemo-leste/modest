@@ -98,7 +98,7 @@ do_headers_action (ModestWindow *win,
 
 static void     reply_forward_func     (gpointer data, gpointer user_data);
 
-static void     get_msg_cb             (TnyFolder *folder, TnyMsg *msg,	GError **err,
+static void     get_msg_cb             (TnyFolder *folder, gboolean canceled, TnyMsg *msg, GError **err,
 					gpointer user_data);
 static void     reply_forward          (ReplyForwardAction action, ModestWindow *win);
 
@@ -869,7 +869,7 @@ modest_ui_actions_toggle_header_list_view (GtkAction *action, ModestMainWindow *
  * function
  */
 static void
-get_msg_cb (TnyFolder *folder, TnyMsg *msg, GError **err, gpointer user_data)
+get_msg_cb (TnyFolder *folder, gboolean canceled, TnyMsg *msg, GError **err, gpointer user_data)
 {
 	GetMsgAsyncHelper *helper;
 

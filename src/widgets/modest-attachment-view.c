@@ -34,6 +34,7 @@
 #include <string.h>
 #include <modest-attachment-view.h>
 #include <modest-platform.h>
+#include <modest-text-utils.h>
 
 static GObjectClass *parent_class = NULL;
 
@@ -151,7 +152,11 @@ get_size_idle_func (gpointer data)
 	priv->size += readed_size;
 
 	if (tny_stream_is_eos (priv->get_size_stream)) {
-		size_string = g_strdup_printf (" (%d kb)", priv->size / 1024);
+		gchar *display_size;
+
+		display_size = modest_text_utils_get_display_size (priv->size);
+		size_string = g_strdup_printf (" (%s)", display_size);
+		g_free (display_size);
 		gtk_label_set_text (GTK_LABEL (priv->size_view), size_string);
 		g_free (size_string);
 
