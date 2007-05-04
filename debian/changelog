@@ -1,3 +1,11 @@
+modest (1.0-svn1759) unstable; urgency=low
+
+  * Week 19 prelease
+  * Fixes: NB#55338, NB#55341, NB#55343, NB#55370, NB#55377, NB#55390,
+    NB#55391, NB#55441, NB#55446, NB#55514, NB#55934
+
+ -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Fri,  4 May 2007 18:33:33 +0300
+
 modest (1.0-svn1729) unstable; urgency=low
  
   * First release to integration

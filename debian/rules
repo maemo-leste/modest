@@ -26,16 +26,6 @@ ifeq (,$(findstring nostrip,$(DEB_BUILD_OPTIONS)))
 	INSTALL_PROGRAM += -s
 endif
 
-ifneq (,$(findstring maemo-launcher,$(DEB_BUILD_OPTIONS)))
-	LAUNCHER = yes
-endif
-
-ifeq "$(strip $(LAUNCHER))" "yes"
-	LAUNCHER_DEPENDS = -Vlauncher:Depends="maemo-launcher"
-	LAUNCHER_CFLAGS = -shared
-	LAUNCHER_LDFLAGS = -shared -export-dynamic
-endif
-
 config.status: configure
 	dh_testdir
 	# commands to configure the package.
@@ -53,11 +43,7 @@ build-stamp:  config.status
 	dh_testdir
 
 	# commands to compile the package.
-	$(MAKE) \
-	  MAEMO_LAUNCHER_CFLAGS="$(LAUNCHER_CFLAGS)" \
-	  MAEMO_LAUNCHER_LDFLAGS="$(LAUNCHER_LDFLAGS)"
-	#/usr/bin/docbook-to-man debian/osso-sketch.sgml > osso-sketch.1
-
+	$(MAKE) 
 	touch build-stamp
 
 clean:
@@ -87,13 +73,6 @@ install: build
 	#
 	$(MAKE) install DESTDIR=$(CURDIR)/debian/tmp
 
-ifeq "$(strip $(LAUNCHER))" "yes"
-	mv $(CURDIR)/debian/tmp/usr/bin/modest \
-	   $(CURDIR)/debian/tmp/usr/bin/modest.launch
-	ln -s /usr/bin/maemo-invoker \
-	      $(CURDIR)/debian/tmp/usr/bin/modest
-endif
-
 # Build architecture-independent files here.
 binary-indep: build install
 # We have nothing to do by default.
@@ -106,7 +85,7 @@ binary-arch: build install
 	dh_installdocs
 	dh_installexamples
 	dh_install --sourcedir=debian/tmp -v
-#	dh_installmenu
+	dh_installmenu
 #	dh_installdebconf	
 #	dh_installlogrotate
 #	dh_installemacsen
@@ -115,9 +94,9 @@ binary-arch: build install
 #	dh_installinit
 #	dh_installcron
 #	dh_installinfo
-#	dh_installman
+	dh_installman
 	dh_link
-	dh_strip --dbg-package=modest
+	dh_strip 
 	dh_compress
 	dh_fixperms
 #	dh_perl
@@ -125,7 +104,7 @@ binary-arch: build install
 #	dh_makeshlibs
 	dh_installdeb
 	dh_shlibdeps
-	dh_gencontrol -- $(LAUNCHER_DEPENDS)
+	dh_gencontrol 
 	dh_md5sums
 	dh_builddeb
 
