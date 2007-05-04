@@ -112,12 +112,10 @@
     <!--<toolitem action="ActionFontFace"/>-->
     <!--<toolitem action="ActionFontSize"/>-->
     <separator/>
-    <placeholder name="FontAttributes">
-    </placeholder>
+    <placeholder name="FontAttributes" />
     <toolitem action="ActionsBold"/>
     <toolitem action="ActionsItalics"/>
-    <placeholder name="FontColor">
-    </placeholder>
+    <placeholder name="FontColor" />
   </toolbar>
 
   <accelerator name="AccelZoomMinus" action="ZoomMinus"/>

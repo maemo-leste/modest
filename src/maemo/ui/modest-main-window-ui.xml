@@ -76,6 +76,7 @@
         <menuitem name="ViewShowToolbarFullScreenMenu" action="ViewShowToolbarFullScreen"/>
       </menu>
       <separator/>
+      <placeholder name="ViewMenuAdditions" />
    </menu>
     
     <menu name="ToolsMenu" action="Tools">
@@ -108,8 +109,7 @@
     <toolitem action="ToolbarToggleView"/>
     <toolitem action="ToolbarSort"/>
     <toolitem action="ToolbarSendReceive"/>
-    <placeholder name="ProgressBarView">
-    </placeholder>
+    <placeholder name="ProgressBarView" />
     <toolitem action="ToolbarCancel"/>
   </toolbar>
 

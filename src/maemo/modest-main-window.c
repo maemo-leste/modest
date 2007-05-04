@@ -53,8 +53,14 @@
 #include "modest-mail-operation.h"
 #include "modest-icon-names.h"
 #include "modest-progress-bar-widget.h"
-#include <hildon-widgets/hildon-program.h>
 #include "maemo/modest-osso-state-saving.h"
+
+#ifdef MODEST_HILDON_VERSION_0
+#include <hildon-widgets/hildon-program.h>
+#else
+#include <hildon/hildon-program.h>
+#endif /*MODEST_HILDON_VERSION_0*/
+
 
 /* 'private'/'protected' functions */
 static void modest_main_window_class_init    (ModestMainWindowClass *klass);
