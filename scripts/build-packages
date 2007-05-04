@@ -1,5 +1,5 @@
 #!/bin/sh
-#Time-stamp: <2007-04-25 11:19:38 (djcb)>
+#Time-stamp: <2007-05-04 08:07:31 (djcb)>
 
 # Copyright (c) 2007, Nokia Corporation
 # All rights reserved.
@@ -43,8 +43,8 @@
 
 # change these to the actual paths to these packages
 TINYMAIL_PATH="$HOME/src/tinymail"
-MODEST_PATH="$HOME/src/modest/"
-MODEST_PROVIDERS_DATA_PATH="$HOME/src/modest-providers-data/"
+MODEST_PATH="$HOME/src/modest-email/modest/trunk"
+MODEST_PROVIDERS_DATA_PATH="$HOME/src/modest-email/modest-providers-data/"
 
 # the packager
 PACKAGER="Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>"
@@ -94,15 +94,15 @@ echo
 # check svn version; this needs to happen outside scratchbox, because
 # the scratcbox svn is too old
 cd $TINYMAIL_PATH
-TINYMAIL_REVISION=`svn info | grep '^Revision:' | sed 's/Revision: //'`
+TINYMAIL_REVISION="`svn info | grep '^Revision:' | sed 's/Revision: //'`"
 echo "* tinymail revision: $TINYMAIL_REVISION"
 
 cd $MODEST_PROVIDERS_DATA_PATH
-MODEST_PROVIDERS_DATA_REVISION=`svn info | grep '^Revision:' | sed 's/Revision: //'`
+MODEST_PROVIDERS_DATA_REVISION="`svn info | grep '^Revision:' | sed 's/Revision: //'`"
 echo "* modest-providers-data revision: $MODEST_PROVIDERS_DATA_REVISION"
 
 cd $MODEST_PATH
-MODEST_REVISION=`svn info | grep '^Revision:' | sed 's/Revision: //'`
+MODEST_REVISION="`svn info | grep '^Revision:' | sed 's/Revision: //'`"
 echo "* modest revision: $MODEST_REVISION"
 
 echo 
@@ -117,14 +117,17 @@ else
     test -e debian/control || ln -s debian/control.maemo debian/control
     mv -f debian/changelog debian/changelog.bak
     cat > debian/changelog <<EOF
-tinymail (svn${TINYMAIL_REVISION}) unstable; urgency=low
+tinymail (1.0-svn${TINYMAIL_REVISION}) unstable; urgency=low
 
   * Package subversion revision svn${TINYMAIL_REVISION}
 
  -- ${PACKAGER}  ${NOW}
 EOF
     echo "*** building tinymail"
-    $SCRATCHBOX -d "$TINYMAIL_PATH" "dpkg-buildpackage -rfakeroot -b -d"
+    $SCRATCHBOX -d "$TINYMAIL_PATH" "dpkg-buildpackage -rfakeroot -uc -us -sa -D" || {
+	echo "error building tinymail"
+	exit 1
+    }
     mv -f debian/changelog.bak debian/changelog
     cd ..
     $SCRATCHBOX "mv ${TINYMAIL_PATH}/../*${TINYMAIL_REVISION}* $PACKAGE_PATH"
@@ -142,14 +145,17 @@ else
     cd $MODEST_PROVIDERS_DATA_PATH
     mv -f debian/changelog debian/changelog.bak
     cat > debian/changelog <<EOF
-modest-providers-data (svn${MODEST_PROVIDERS_DATA_REVISION}) unstable; urgency=low
+modest-providers-data (1.0-svn${MODEST_PROVIDERS_DATA_REVISION}) unstable; urgency=low
 
   * Package subversion revision svn${MODEST_PROVIDERS_DATA_REVISION}
 
  -- ${PACKAGER}  ${NOW}
 EOF
     echo "*** building modest-providers-data"
-    $SCRATCHBOX -d "$MODEST_PROVIDERS_DATA_PATH" "dpkg-buildpackage -rfakeroot -b -d"
+    $SCRATCHBOX -d "$MODEST_PROVIDERS_DATA_PATH" "dpkg-buildpackage -rfakeroot -uc -us -sa -D" || {
+	echo "failed to build modest-providers-data"
+	exit 1
+    }
     mv -f debian/changelog.bak debian/changelog
     $SCRATCHBOX "mv ${MODEST_PROVIDERS_DATA_PATH}/../*${MODEST_PROVIDERS_DATA_REVISION}* $PACKAGE_PATH"
     $SCRATCHBOX "fakeroot dpkg -i ${PACKAGE_PATH}/*${MODEST_PROVIDERS_DATA_REVISION}*.deb"
@@ -164,16 +170,20 @@ if test -n "`ls $PACKAGE_PATH/*modest_*${MODEST_REVISION}*.deb`"; then
     $SCRATCHBOX "fakeroot dpkg -i ${PACKAGE_PATH}/*${MODEST_REVISION}*.deb"
 else
     cd $MODEST_PATH
+    test -e debian/control || ln -s debian/control.maemo0 debian/control
     mv -f debian/changelog debian/changelog.bak
     cat > debian/changelog <<EOF
-modest (svn${MODEST_REVISION}) unstable; urgency=low
+modest (1.0-svn${MODEST_REVISION}) unstable; urgency=low
 
   * Package subversion revision svn${MODEST_REVISION}
 
  -- ${PACKAGER}  ${NOW}
 EOF
     echo "*** building modest"
-    $SCRATCHBOX -d "$MODEST_PATH" "dpkg-buildpackage -rfakeroot -b -d"
+    $SCRATCHBOX -d "$MODEST_PATH" "dpkg-buildpackage -rfakeroot -uc -us -sa -D" || {
+	echo "failed to build modest"
+	exit 1
+    }
     mv -f debian/changelog.bak debian/changelog
     cd ..
     $SCRATCHBOX "mv ${MODEST_PATH}/../*${MODEST_REVISION}* $PACKAGE_PATH"
