@@ -116,6 +116,9 @@ if test "x$with_platform" = "xmaemo"; then
   pluginlibdir=`$PKG_CONFIG hildon-control-panel --variable=plugindir`
   plugindesktopentrydir=`$PKG_CONFIG hildon-control-panel --variable=plugindesktopentrydir`
 
+  dbus_api="dbus_api"
+  AC_SUBST(dbus_api)
+
   # Define as variables in Makefiles
   AC_SUBST(desktopentrydir)
   AC_SUBST(serviceentrydir)
@@ -138,6 +141,11 @@ else
    AC_SUBST(MODEST_LIBTINYMAIL_GNOME_DESKTOP_CFLAGS)
    AC_SUBST(MODEST_LIBTINYMAIL_GNOME_DESKTOP_LIBS)  
    AC_DEFINE_UNQUOTED(MODEST_PLATFORM_GNOME, 1, ["Whether modest is being built for the GNOME platform."])
+
+  # no dbus api for gnome
+  dbus_api=""
+  AC_SUBST(dbus_api)
+
 fi
 
 dnl do we have the easy setup stuff?

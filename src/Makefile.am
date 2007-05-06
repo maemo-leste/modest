@@ -1,8 +1,8 @@
 #
 # Makefile.am
 # Time-stamp: <2007-04-21 11:15:36 (djcb)>
-SUBDIRS=$(MODEST_PLATFORM) widgets dbus_api
-DIST_SUBDIRS = widgets gnome maemo
+SUBDIRS=$(MODEST_PLATFORM) widgets $(dbus_api)
+DIST_SUBDIRS = widgets gnome maemo dbus_api
 
 INCLUDES=\
 	$(MODEST_GSTUFF_CFLAGS)\
@@ -12,7 +12,6 @@ INCLUDES=\
 	-DPREFIX=\"@prefix@\" \
 	-DMODEST_LOCALEDIR=\"$(MODEST_LOCALEDIR)\" \
 	-DMODEST_PLATFORM=\"$(MODEST_PLATFORM)\" \
-	-DMODEST_PLATFORM_ID=$(MODEST_PLATFORM_ID) \
 	-DPIXMAP_PREFIX=\"${datadir}/pixmaps/modest/\" \
 	-DMODEST_UIDIR=\"$(datadir)/modest/ui/\"
 

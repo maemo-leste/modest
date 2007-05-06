@@ -5,5 +5,6 @@ usr/share/doc/modest/*
 usr/share/mime/packages/*
 usr/locale/en_GB/LC_MESSAGES/*
 usr/share/modest/ui/*
+usr/share/modest/provider-data/mcc_mapping
 usr/share/pixmaps/modest/*
 usr/share/man/man1/*

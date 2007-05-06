@@ -113,8 +113,8 @@ if test -n "`ls $PACKAGE_PATH/*tinymail*${TINYMAIL_REVISION}*.deb`"; then
     $SCRATCHBOX "fakeroot dpkg -i ${PACKAGE_PATH}/*${TINYMAIL_REVISION}*.deb"
 else
     cd $TINYMAIL_PATH
-    test -e debian/rules   || ln -s debian/rules.maemo debian/rules
-    test -e debian/control || ln -s debian/control.maemo debian/control
+    test -e debian/rules   || cp debian/rules.maemo debian/rules
+    test -e debian/control || cp debian/control.maemo debian/control
     mv -f debian/changelog debian/changelog.bak
     cat > debian/changelog <<EOF
 tinymail (1.0-svn${TINYMAIL_REVISION}) unstable; urgency=low
@@ -170,7 +170,7 @@ if test -n "`ls $PACKAGE_PATH/*modest_*${MODEST_REVISION}*.deb`"; then
     $SCRATCHBOX "fakeroot dpkg -i ${PACKAGE_PATH}/*${MODEST_REVISION}*.deb"
 else
     cd $MODEST_PATH
-    test -e debian/control || ( cd debian; ln -s control-maemo0 control; cd .. )
+    test -e debian/control || ( cd debian; cp control-maemo0 control; cd .. )
     mv -f debian/changelog debian/changelog.bak
     cat > debian/changelog <<EOF
 modest (1.0-svn${MODEST_REVISION}) unstable; urgency=low
