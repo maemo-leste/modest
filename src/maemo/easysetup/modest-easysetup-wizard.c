@@ -938,6 +938,9 @@ static void create_subsequent_customsetup_pages (ModestEasysetupWizardDialog *se
 	if (!gtk_widget_get_parent (GTK_WIDGET (self->page_complete_customsetup)))
 		gtk_notebook_append_page (notebook, self->page_complete_customsetup,
 			gtk_label_new (_("mcen_ti_emailsetup_complete")));
+			
+	/* This is unnecessary with GTK+ 2.10: */
+	modest_wizard_dialog_force_title_update (MODEST_WIZARD_DIALOG(self));
 }
 	
 static void create_subsequent_easysetup_pages (ModestEasysetupWizardDialog *self)
@@ -954,6 +957,8 @@ static void create_subsequent_easysetup_pages (ModestEasysetupWizardDialog *self
 		gtk_notebook_append_page (notebook, self->page_complete_easysetup, 
 			gtk_label_new (_("mcen_ti_emailsetup_complete")));
 			
+	/* This is unnecessary with GTK+ 2.10: */
+	modest_wizard_dialog_force_title_update (MODEST_WIZARD_DIALOG(self));
 }
 /* After the user details page,
  * the following pages depend on whether "Other" was chosen 

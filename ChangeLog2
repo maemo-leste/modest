@@ -1,4 +1,22 @@
 2007-05-07  Murray Cumming  <murrayc@murrayc.com>
+	
+	(modest_wizard_dialog_force_title_update):
+	* src/maemo/easysetup/modest-wizard-dialog.h:
+	* src/maemo/easysetup/modest-wizard-dialog.c: (set_property):
+	For GTK+ 2.10, when present, connect to the GtkNotebook signals so we 
+	can update the title when appropriate. Otherwise the title is wrong if the 
+	pages are added after adding the notebook to the dialog.
+	This must be a problem in HildonWizardDialog too.
+	Added modest_wizard_dialog_force_title_update() for GTK+ 2.6.
+	
+	* src/maemo/easysetup/modest-easysetup-wizard.c:
+	(create_subsequent_customsetup_pages),
+	(create_subsequent_easysetup_pages): 
+	Call modest_wizard_dialog_force_title_update() so that the title is 
+	correct even with GTK+ < 2.10.
+	This fixes projects.maemo.org bug NB#56145 .
+	
+2007-05-07  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/maemo/modest-platform.c:
 	(modest_platform_set_update_interval): Use the ALARM_EVENT_NO_DIALOG 

@@ -79,6 +79,8 @@ GType modest_wizard_dialog_get_type   (void) G_GNUC_CONST;
 GtkWidget* modest_wizard_dialog_new   (GtkWindow        *parent,
                                        const char       *wizard_name,
                                        GtkNotebook      *notebook);
+                                       
+void modest_wizard_dialog_force_title_update (ModestWizardDialog* wizard_dialog);
 
 G_END_DECLS
 

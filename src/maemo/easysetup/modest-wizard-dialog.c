@@ -29,6 +29,7 @@
 #include <gtk/gtkhbox.h>
 #include <gtk/gtkvbox.h>
 #include <gtk/gtkbutton.h>
+#include <gtk/gtk.h>
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -269,6 +270,43 @@ init (ModestWizardDialog *wizard_dialog)
             G_CALLBACK (response), NULL);
 }
 
+#if GTK_CHECK_VERSION(2, 10, 0) /* These signals were added in GTK+ 2.10: */
+static void on_notebook_page_added(ModestWizardDialog* dialog, 
+	GtkWidget   *child,
+	guint        page_num,
+	gpointer     user_data)
+{
+	/* The title should show the total number of pages: */
+	create_title (dialog);
+}
+
+static void on_notebook_page_removed(ModestWizardDialog* dialog, 
+	GtkWidget   *child,
+	guint        page_num,
+	gpointer     user_data)
+{
+	/* The title should show the total number of pages: */
+	create_title (dialog);
+}
+#endif /* GTK_CHECK_VERSION */
+
+static void
+connect_to_notebook_signals(ModestWizardDialog* dialog)
+{
+#if GTK_CHECK_VERSION(2, 10, 0) /* These signals were added in GTK+ 2.10: */
+	ModestWizardDialogPrivate *priv = MODEST_WIZARD_DIALOG(dialog)->priv;
+	g_return_if_fail (priv->notebook);
+	
+	/* Connect to the notebook signals,
+	 * so we can update the title when necessary: */
+    g_signal_connect (G_OBJECT (priv->notebook), "page-added",
+            G_CALLBACK (on_notebook_page_added), NULL);
+    g_signal_connect (G_OBJECT (priv->notebook), "page-removed",
+            G_CALLBACK (on_notebook_page_removed), NULL);
+#endif /* GTK_CHECK_VERSION */
+}
+
+
 static void
 set_property (GObject      *object, 
               guint        property_id,
@@ -328,11 +366,14 @@ set_property (GObject      *object,
              * all that is required to display the dialog correctly */
             gtk_widget_show ( GTK_WIDGET (priv->notebook));
 
-            /* Update dialog title to reflect current page stats etc */        
+            /* Update dialog title to reflect current page stats etc */ 
+            ModestWizardDialog *wizard_dialog = MODEST_WIZARD_DIALOG (object);      
             if (priv->wizard_name && priv->autotitle)
-                create_title (MODEST_WIZARD_DIALOG (object));
+                create_title (wizard_dialog);
+                
+            connect_to_notebook_signals (wizard_dialog);
             
-            } break;
+            }break;
 
         default:
             G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
@@ -500,6 +541,21 @@ modest_wizard_dialog_new (GtkWindow   *parent,
         gtk_window_set_transient_for (GTK_WINDOW (widget), parent);
 
     return widget;
+}
+
+/**
+ * modest_wizard_dialog_force_title_update:
+ * @wizard_dialog: The wizard dialog
+ *
+ * Force the title to be rebuilt, for instance when you have added or 
+ * removed notebook pages. This function is not necessary when using GTK+ 2.10, 
+ * because that has GtkNotebook signals that will be used to update the title 
+ * automatically.
+ */
+void
+modest_wizard_dialog_force_title_update (ModestWizardDialog   *wizard_dialog)
+{
+	create_title (wizard_dialog);
 }
 
 static gboolean
