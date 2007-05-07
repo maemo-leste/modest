@@ -894,7 +894,12 @@ modest_easysetup_wizard_dialog_init (ModestEasysetupWizardDialog *self)
      * then gtk_notebook_get_current_page() would return an incorrect value.)
      */
     g_signal_connect_after (G_OBJECT (self), "response",
-            G_CALLBACK (on_response), self);       
+            G_CALLBACK (on_response), self);
+            
+	/* When this window is shown, hibernation should not be possible, 
+	 * because there is no sensible way to save the state: */
+    modest_window_mgr_prevent_hibernation_while_window_is_shown (
+    	modest_runtime_get_window_mgr (), GTK_WINDOW (self)); 
 }
 
 ModestEasysetupWizardDialog*

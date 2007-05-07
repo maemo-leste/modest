@@ -140,6 +140,35 @@ void           modest_window_mgr_show_toolbars         (ModestWindowMgr *self,
 
 ModestWindow*  modest_window_mgr_get_main_window       (ModestWindowMgr *self);
 
+/**
+ * modest_window_mgr_prevent_hibernation_while_window_is_shown:
+ * @self: a #ModestWindowMgr
+ * @window: The window that should prevent hibernation while it is shown.
+ * 
+ * Call this if hibernation should not be allowed because 
+ * windows are open whose state cannot sensible be saved, such as Account 
+ * Settings dialogs.
+ * This causes modest_window_mgr_get_hibernation_is_prevented() to return TRUE 
+ * until all such windows have been closed. That means, until the windows have 
+ * been hidden - window destruction or other memory management is not relevant.
+ **/
+ 
+void modest_window_mgr_prevent_hibernation_while_window_is_shown (ModestWindowMgr *self, 
+	GtkWindow *window);
+
+/**
+ * modest_window_mgr_get_hibernation_is_prevented:
+ * @self: a #ModestWindowMgr
+ * @result: Whether any windows are currently preventing hibernation.
+ * 
+ * Use this to discover whether hibernation should not be allowed because 
+ * windows are open whose state cannot sensible be saved, such as Account 
+ * Settings dialogs. This function will return true after someone has called 
+ * modest_window_mgr_prevent_hibernation_while_window_is_shown() and before 
+ * that window has been closed.
+ **/
+gboolean modest_window_mgr_get_hibernation_is_prevented (ModestWindowMgr *self);
+
 G_END_DECLS
 
 #endif /* __MODEST_WINDOW_MGR_H__ */

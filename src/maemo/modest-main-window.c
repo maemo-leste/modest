@@ -448,12 +448,13 @@ static void on_hildon_program_is_topmost_notify(GObject *self,
 		/* Allow hibernation if the program has gone to the background: */
 		
 		/* However, prevent hibernation while the settings are being changed: */
-		gboolean settings_dialog_is_open = FALSE;
-		
-		if (settings_dialog_is_open)
+		const gboolean hibernation_prevented = 
+			modest_window_mgr_get_hibernation_is_prevented (
+    	modest_runtime_get_window_mgr ()); 
+    	
+		if (hibernation_prevented)
 			hildon_program_set_can_hibernate (app, FALSE);
 		else {
-			
 			/* Allow hibernation, after saving the state: */
 			modest_osso_save_state();
 			hildon_program_set_can_hibernate (app, TRUE);

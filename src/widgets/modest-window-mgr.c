@@ -57,6 +57,8 @@ struct _ModestWindowMgrPrivate {
 	gboolean fullscreen_mode;
 	gboolean show_toolbars;
 	gboolean show_toolbars_fullscreen;
+	
+	GSList* windows_that_prevent_hibernation;
 };
 #define MODEST_WINDOW_MGR_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                MODEST_TYPE_WINDOW_MGR, \
@@ -419,3 +421,57 @@ modest_window_mgr_get_main_window (ModestWindowMgr *self)
 
 	return priv->main_window;
 }
+
+static void
+on_nonhibernating_window_hide(GtkWidget *widget, gpointer user_data)
+{
+	ModestWindowMgr *self = MODEST_WINDOW_MGR (user_data);
+	ModestWindowMgrPrivate *priv = MODEST_WINDOW_MGR_GET_PRIVATE (self);
+	
+	/* Forget this window,
+	 * so hibernation will be allowed again if no windows are remembered: */
+	g_slist_remove (priv->windows_that_prevent_hibernation, GTK_WINDOW(widget));
+}
+
+static void
+on_nonhibernating_window_show(GtkWidget *widget, gpointer user_data)
+{
+	ModestWindowMgr *self = MODEST_WINDOW_MGR (user_data);
+	ModestWindowMgrPrivate *priv = MODEST_WINDOW_MGR_GET_PRIVATE (self);
+	
+	GtkWindow *window = GTK_WINDOW (widget);
+	
+	priv->windows_that_prevent_hibernation = 
+			g_slist_append (priv->windows_that_prevent_hibernation, window);
+	
+	/* Allow hibernation again when the window has been hidden: */
+	g_signal_connect (window, "hide", 
+		G_CALLBACK (on_nonhibernating_window_hide), self);
+}
+
+void modest_window_mgr_prevent_hibernation_while_window_is_shown (ModestWindowMgr *self, GtkWindow *window)
+{
+	g_return_if_fail (MODEST_IS_WINDOW_MGR (self));
+	
+	if (GTK_WIDGET_VISIBLE(window)) {
+		on_nonhibernating_window_show (GTK_WIDGET (window), self);
+	}
+	else
+	{
+		/* Wait for it to be shown: */
+		g_signal_connect (window, "show", 
+			G_CALLBACK (on_nonhibernating_window_show), self);	
+	}
+}
+
+gboolean modest_window_mgr_get_hibernation_is_prevented (ModestWindowMgr *self)
+{
+	g_return_val_if_fail (MODEST_IS_WINDOW_MGR (self), FALSE);
+	
+	ModestWindowMgrPrivate *priv = MODEST_WINDOW_MGR_GET_PRIVATE (self);
+	
+	/* Prevent hibernation if any open windows are currently 
+	 * preventing hibernation: */
+	return (g_slist_length (priv->windows_that_prevent_hibernation) > 0);
+}
+

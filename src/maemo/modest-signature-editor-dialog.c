@@ -6,6 +6,7 @@
 #include "widgets/modest-serversecurity-combo-box.h"
 #include "widgets/modest-secureauth-combo-box.h"
 #include "widgets/modest-validating-entry.h"
+#include "modest-runtime.h"
 #include <modest-account-mgr-helpers.h>
 #include <gtk/gtkcheckbutton.h>
 #include <gtk/gtkhbox.h>
@@ -141,6 +142,11 @@ modest_signature_editor_dialog_init (ModestSignatureEditorDialog *self)
 	
 	
 	gtk_widget_show (box);
+	
+	/* When this window is shown, hibernation should not be possible, 
+	 * because there is no sensible way to save the state: */
+    modest_window_mgr_prevent_hibernation_while_window_is_shown (
+    	modest_runtime_get_window_mgr (), GTK_WINDOW (self)); 
 }
 
 ModestSignatureEditorDialog*
