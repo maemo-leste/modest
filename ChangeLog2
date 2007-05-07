@@ -1,5 +1,31 @@
 2007-05-07  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/widgets/modest-window.h:	
+	* src/widgets/modest-window.c: Added a save_state_func vfunc, 
+	and modest_window_save_state(), which invokes it.
+
+	* src/widgets/modest-window-mgr.h:
+	* src/widgets/modest-window-mgr.c:
+	Added modest_window_mgr_save_state_for_all_windows(), which calls 
+	the save_state vfunc on all registered windows, if implemented.
+	
+	* src/gnome/modest-msg-edit-window.c:
+	* src/gnome/modest-msg-view-window.c:
+	* src/maemo/modest-msg-edit-window.c:
+	* src/maemo/modest-msg-view-window.c:
+	* src/maemo/modest-main-window.c: 
+	Specify the existing save_settings functions as implementations of 
+	ModestWindow::save_state_func().
+
+	* src/maemo/modest-osso-state-saving.c: modest_osso_save_state():
+	Call modest_window_mgr_save_state_for_all_windows(). This happens before 
+	enabling hibernation, for instance.
+	
+	We may need to do the same thing for restoring settings.
+
+
+2007-05-07  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/widgets/modest-window-mgr.c: 
 	* src/widgets/modest-window-mgr.h:
 	Added modest_window_mgr_prevent_hibernation_while_window_is_shown() and

@@ -90,6 +90,8 @@ struct _ModestWindowClass {
 	gboolean (*zoom_plus_func) (ModestWindow *self);
 	gboolean (*zoom_minus_func) (ModestWindow *self);
 	void (*show_toolbar_func) (ModestWindow *self, gboolean show_toolbar);
+	
+	void (*save_state_func) (ModestWindow *self);
 };
 
 /**
@@ -174,6 +176,16 @@ gboolean modest_window_zoom_minus (ModestWindow *window);
  **/
 void     modest_window_show_toolbar (ModestWindow *window, 
 				     gboolean show_toolbar);
+				     
+/**
+ * modest_window_save_state:
+ * @window: 
+ * 
+ * Ask the window to save its settings for loading again later.
+ * This actually invokes the save_setting_func vfunc, which 
+ * derived windows should implement.
+ **/
+void     modest_window_save_state (ModestWindow *window);
 
 G_END_DECLS
 

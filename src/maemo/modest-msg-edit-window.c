@@ -192,6 +192,22 @@ modest_msg_edit_window_get_type (void)
 }
 
 static void
+save_state (ModestWindow *self)
+{
+	modest_widget_memory_save (modest_runtime_get_conf(),
+				   G_OBJECT(self), MODEST_CONF_EDIT_WINDOW_KEY);
+}
+
+
+static void
+restore_settings (ModestMsgEditWindow *self)
+{
+	modest_widget_memory_restore (modest_runtime_get_conf(),
+				      G_OBJECT(self), MODEST_CONF_EDIT_WINDOW_KEY);
+}
+
+
+static void
 modest_msg_edit_window_class_init (ModestMsgEditWindowClass *klass)
 {
 	GObjectClass *gobject_class;
@@ -209,6 +225,8 @@ modest_msg_edit_window_class_init (ModestMsgEditWindowClass *klass)
 	modest_window_class->show_toolbar_func = modest_msg_edit_window_show_toolbar;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestMsgEditWindowPrivate));
+
+	modest_window_class->save_state_func = save_state;
 }
 
 static void
@@ -233,23 +251,6 @@ modest_msg_edit_window_init (ModestMsgEditWindow *obj)
 	priv->priority_flags = 0;
 
 	priv->draft_msg = NULL;
-}
-
-
-
-static void
-save_settings (ModestMsgEditWindow *self)
-{
-	modest_widget_memory_save (modest_runtime_get_conf(),
-				   G_OBJECT(self), MODEST_CONF_EDIT_WINDOW_KEY);
-}
-
-
-static void
-restore_settings (ModestMsgEditWindow *self)
-{
-	modest_widget_memory_restore (modest_runtime_get_conf(),
-				      G_OBJECT(self), MODEST_CONF_EDIT_WINDOW_KEY);
 }
 
 
@@ -455,8 +456,6 @@ modest_msg_edit_window_finalize (GObject *obj)
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
-
-
 static gboolean
 on_delete_event (GtkWidget *widget, GdkEvent *event, ModestMsgEditWindow *self)
 {
@@ -465,7 +464,7 @@ on_delete_event (GtkWidget *widget, GdkEvent *event, ModestMsgEditWindow *self)
 	gint response;
 
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (self);
-	save_settings (self);
+	modest_window_save_state (MODEST_WINDOW (self));
 	if (is_modified (self)) {
 		close_dialog = hildon_note_new_confirmation (GTK_WINDOW (self), _("mcen_nc_no_email_message_modified_save_changes"));
 		response = gtk_dialog_run (GTK_DIALOG (close_dialog));

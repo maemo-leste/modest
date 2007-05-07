@@ -100,6 +100,22 @@ modest_msg_edit_window_get_type (void)
 	return my_type;
 }
 
+
+static void
+save_state (ModestWindow *self)
+{
+	modest_widget_memory_save (modest_runtime_get_conf (),
+				    G_OBJECT(self), "modest-edit-msg-window");
+}
+
+
+static void
+restore_settings (ModestMsgEditWindow *self)
+{
+	modest_widget_memory_restore (modest_runtime_get_conf (),
+				      G_OBJECT(self), "modest-edit-msg-window");
+}
+
 static void
 modest_msg_edit_window_class_init (ModestMsgEditWindowClass *klass)
 {
@@ -110,6 +126,8 @@ modest_msg_edit_window_class_init (ModestMsgEditWindowClass *klass)
 	gobject_class->finalize = modest_msg_edit_window_finalize;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestMsgEditWindowPrivate));
+
+	modest_window_class->save_state_func = save_state;
 }
 
 static void
@@ -127,22 +145,6 @@ modest_msg_edit_window_init (ModestMsgEditWindow *obj)
 	priv->bcc_field     = NULL;
 	priv->subject_field = NULL;
 }
-
-static void
-save_settings (ModestMsgEditWindow *self)
-{
-	modest_widget_memory_save (modest_runtime_get_conf (),
-				    G_OBJECT(self), "modest-edit-msg-window");
-}
-
-
-static void
-restore_settings (ModestMsgEditWindow *self)
-{
-	modest_widget_memory_restore (modest_runtime_get_conf (),
-				      G_OBJECT(self), "modest-edit-msg-window");
-}
-
 
 
 static ModestPairList*
@@ -258,7 +260,7 @@ modest_msg_edit_window_finalize (GObject *obj)
 static gboolean
 on_delete_event (GtkWidget *widget, GdkEvent *event, ModestMsgEditWindow *self)
 {
-	save_settings (self);
+	modest_window_save_state (MODEST_WINDOW(self));
 	return FALSE;
 }
 

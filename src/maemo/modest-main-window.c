@@ -71,8 +71,9 @@ static gboolean modest_main_window_window_state_event (GtkWidget *widget,
 							   gpointer userdata);
 
 static void connect_signals (ModestMainWindow *self);
-static void restore_sizes (ModestMainWindow *self);
-static void save_sizes (ModestMainWindow *self);
+
+static void restore_settings (ModestMainWindow *self);
+static void save_state (ModestWindow *self);
 
 static void modest_main_window_show_toolbar   (ModestWindow *window,
 					       gboolean show_toolbar);
@@ -208,16 +209,15 @@ modest_main_window_class_init (ModestMainWindowClass *klass)
 {
 	GObjectClass *gobject_class;
 	gobject_class = (GObjectClass*) klass;
-	ModestWindowClass *modest_window_class;
-
-	modest_window_class = (ModestWindowClass *) klass;
+	ModestWindowClass *modest_window_class = (ModestWindowClass *) klass;
 
 	parent_class            = g_type_class_peek_parent (klass);
 	gobject_class->finalize = modest_main_window_finalize;
 
-	modest_window_class->show_toolbar_func = modest_main_window_show_toolbar;
-
 	g_type_class_add_private (gobject_class, sizeof(ModestMainWindowPrivate));
+	
+	modest_window_class->show_toolbar_func = modest_main_window_show_toolbar;
+	modest_window_class->save_state_func = save_state;
 }
 
 static void
@@ -286,7 +286,7 @@ modest_main_window_get_child_widget (ModestMainWindow *self,
 
 
 static void
-restore_sizes (ModestMainWindow *self)
+restore_settings (ModestMainWindow *self)
 {
 	ModestConf *conf;
 	ModestMainWindowPrivate *priv;
@@ -305,9 +305,10 @@ restore_sizes (ModestMainWindow *self)
 
 
 static void
-save_sizes (ModestMainWindow *self)
+save_state (ModestWindow *window)
 {
 	ModestConf *conf;
+	ModestMainWindow* self = MODEST_MAIN_WINDOW(window);
 	ModestMainWindowPrivate *priv;
 		
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
@@ -336,7 +337,7 @@ wrap_in_scrolled_window (GtkWidget *win, GtkWidget *widget)
 static gboolean
 on_delete_event (GtkWidget *widget, GdkEvent  *event, ModestMainWindow *self)
 {
-	save_sizes (self);
+	modest_window_save_state (MODEST_WINDOW(self));
 	return FALSE;
 }
 
@@ -583,7 +584,7 @@ modest_main_window_new (void)
 	gtk_box_pack_start (GTK_BOX(priv->main_vbox), priv->main_paned, TRUE, TRUE,0);
 
 	gtk_container_add (GTK_CONTAINER(self), priv->main_vbox);
-	restore_sizes (MODEST_MAIN_WINDOW(self));
+	restore_settings (MODEST_MAIN_WINDOW(self));
 
 	/* Set window icon */
 	window_icon = modest_platform_get_icon (MODEST_APP_ICON);

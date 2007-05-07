@@ -178,6 +178,23 @@ modest_msg_view_window_get_type (void)
 }
 
 static void
+save_state (ModestWindow *self)
+{
+	modest_widget_memory_save (modest_runtime_get_conf (),
+				   G_OBJECT(self), 
+				   MODEST_CONF_MSG_VIEW_WINDOW_KEY);
+}
+
+
+static void
+restore_settings (ModestMsgViewWindow *self)
+{
+	modest_widget_memory_restore (modest_runtime_get_conf (),
+				      G_OBJECT(self), 
+				      MODEST_CONF_MSG_VIEW_WINDOW_KEY);
+}
+
+static void
 modest_msg_view_window_class_init (ModestMsgViewWindowClass *klass)
 {
 	GObjectClass *gobject_class;
@@ -195,6 +212,8 @@ modest_msg_view_window_class_init (ModestMsgViewWindowClass *klass)
 	modest_window_class->show_toolbar_func = modest_msg_view_window_show_toolbar;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestMsgViewWindowPrivate));
+
+	modest_window_class->save_state_func = save_state;
 }
 
 static void
@@ -209,23 +228,6 @@ modest_msg_view_window_init (ModestMsgViewWindow *obj)
 
 	priv->optimized_view  = FALSE;
 
-}
-
-static void
-save_settings (ModestMsgViewWindow *self)
-{
-	modest_widget_memory_save (modest_runtime_get_conf (),
-				   G_OBJECT(self), 
-				   MODEST_CONF_MSG_VIEW_WINDOW_KEY);
-}
-
-
-static void
-restore_settings (ModestMsgViewWindow *self)
-{
-	modest_widget_memory_restore (modest_runtime_get_conf (),
-				      G_OBJECT(self), 
-				      MODEST_CONF_MSG_VIEW_WINDOW_KEY);
 }
 
 
@@ -413,7 +415,7 @@ modest_msg_view_window_finalize (GObject *obj)
 static gboolean
 on_delete_event (GtkWidget *widget, GdkEvent *event, ModestMsgViewWindow *self)
 {
-	save_settings (self);
+	modest_window_save_state (MODEST_WINDOW (self));
 	return FALSE;
 }
 

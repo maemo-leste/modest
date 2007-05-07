@@ -29,6 +29,7 @@
 
 
 #include <maemo/modest-osso-state-saving.h>
+#include "modest-runtime.h"
 #include <libosso.h>
 
 void modest_osso_load_state()
@@ -40,7 +41,9 @@ void modest_osso_load_state()
 void modest_osso_save_state()
 {
 	/* We don't need to call osso_state_write() 
-	 * - we use our general widget-state-saving technique instead. */
+	 * - we use our general widget-state-saving technique instead: */
+	modest_window_mgr_save_state_for_all_windows(
+		modest_runtime_get_window_mgr ());
 }
 
 

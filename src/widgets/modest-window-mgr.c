@@ -475,3 +475,25 @@ gboolean modest_window_mgr_get_hibernation_is_prevented (ModestWindowMgr *self)
 	return (g_slist_length (priv->windows_that_prevent_hibernation) > 0);
 }
 
+
+void modest_window_mgr_save_state_for_all_windows (ModestWindowMgr *self)
+{
+	g_return_if_fail (MODEST_IS_WINDOW_MGR (self));
+	
+	ModestWindowMgrPrivate *priv = MODEST_WINDOW_MGR_GET_PRIVATE (self);
+
+	/* Iterate over all windows */
+	GList *win = priv->window_list;
+	while (win) {
+		ModestWindow *window = MODEST_WINDOW (win->data);
+		if (window) {
+			/* This calls the vfunc, 
+			 * so each window can do its own thing: */
+			modest_window_save_state (window);
+		}	
+		
+		win = g_list_next (win);
+	}
+}
+
+

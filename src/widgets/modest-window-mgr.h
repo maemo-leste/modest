@@ -152,7 +152,6 @@ ModestWindow*  modest_window_mgr_get_main_window       (ModestWindowMgr *self);
  * until all such windows have been closed. That means, until the windows have 
  * been hidden - window destruction or other memory management is not relevant.
  **/
- 
 void modest_window_mgr_prevent_hibernation_while_window_is_shown (ModestWindowMgr *self, 
 	GtkWindow *window);
 
@@ -169,6 +168,15 @@ void modest_window_mgr_prevent_hibernation_while_window_is_shown (ModestWindowMg
  **/
 gboolean modest_window_mgr_get_hibernation_is_prevented (ModestWindowMgr *self);
 
+/**
+ * modest_window_mgr_save_state_for_all_windows:
+ * @self: a #ModestWindowMgr
+ * 
+ * Save any state for all windows. For instance, call this before allowing 
+ * application hibernation.
+ **/
+void modest_window_mgr_save_state_for_all_windows (ModestWindowMgr *self);
+	
 G_END_DECLS
 
 #endif /* __MODEST_WINDOW_MGR_H__ */
