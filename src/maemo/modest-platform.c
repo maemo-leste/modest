@@ -419,6 +419,7 @@ launch_sort_headers_dialog (GtkWindow *parent_window,
 	GList *tmp = NULL;
 	GtkSortType sort_type;
 	gint sort_key;
+	gint default_key = 0;
 	gint result;
 	
 	/* Get header window */
@@ -476,19 +477,24 @@ launch_sort_headers_dialog (GtkWindow *parent_window,
 			sort_ids[sort_key] = col_id;
 			sort_model_ids[sort_key] = TNY_GTK_HEADER_LIST_MODEL_DATE_RECEIVED_TIME_T_COLUMN,
 			sort_cols[sort_key] = tmp->data;
+			default_key = sort_key;
 			break;
 		case MODEST_HEADER_VIEW_COLUMN_COMPACT_SENT_DATE:
 			sort_key = hildon_sort_dialog_add_sort_key (dialog, _("mcen_li_sort_date"));
 			sort_ids[sort_key] = col_id;
 			sort_model_ids[sort_key] = TNY_GTK_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN,
 			sort_cols[sort_key] = tmp->data;
+			default_key = sort_key;
 			break;
 		default:
-			return;
+			g_printerr ("modest: column (id: %i) not valid", col_id);
+			goto frees;
 		}
 	}
 	
 	/* Launch dialogs */
+	hildon_sort_dialog_set_sort_key (dialog, default_key);
+	hildon_sort_dialog_set_sort_order (dialog, GTK_SORT_DESCENDING);
 	result = gtk_dialog_run (GTK_DIALOG (dialog));
 	if (result == GTK_RESPONSE_OK) {
 		sort_key = hildon_sort_dialog_get_sort_key (dialog);
@@ -505,6 +511,7 @@ launch_sort_headers_dialog (GtkWindow *parent_window,
 	}
 	
 	/* free */
+ frees:
 	g_list_free(cols);	
 }
 
