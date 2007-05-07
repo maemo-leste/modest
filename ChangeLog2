@@ -1,5 +1,12 @@
 2007-05-07  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/maemo/modest-platform.c:
+	(modest_platform_set_update_interval): Use the ALARM_EVENT_NO_DIALOG 
+	flag (awful lack of namespacing in this API) to prevent a useless %s dialog 
+	from being shown.
+
+2007-05-07  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/widgets/modest-window.h:	
 	* src/widgets/modest-window.c: Added a save_state_func vfunc, 
 	and modest_window_save_state(), which invokes it.

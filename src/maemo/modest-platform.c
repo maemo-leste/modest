@@ -695,6 +695,10 @@ gboolean modest_platform_set_update_interval (guint minutes)
 	event.dbus_interface = g_strdup (MODEST_DBUS_IFACE);
 	event.dbus_service = g_strdup (MODEST_DBUS_SERVICE);
 	event.dbus_name = g_strdup (MODEST_DBUS_METHOD_SEND_RECEIVE);
+
+	/* Otherwise, a dialog will be shown if exect_name or dbus_path is NULL,
+	even though we have specified no dialog text: */
+	event.flags = ALARM_EVENT_NO_DIALOG;
 	
 	alarm_cookie = alarm_event_add (&event);
 	
