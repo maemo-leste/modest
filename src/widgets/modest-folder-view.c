@@ -1444,6 +1444,7 @@ modest_folder_view_set_account_id_of_visible_server_account (ModestFolderView *s
 {
 	ModestFolderViewPrivate *priv;
 	ModestConf *conf;
+	GtkTreeModel *model;
 
 	g_return_if_fail (self);
 	
@@ -1456,6 +1457,11 @@ modest_folder_view_set_account_id_of_visible_server_account (ModestFolderView *s
 	/* Save preferences */
 	conf = modest_runtime_get_conf ();
 	modest_widget_memory_save (conf, G_OBJECT (self), MODEST_CONF_FOLDER_VIEW_KEY);
+
+	/* Refilter */
+	model = gtk_tree_view_get_model (GTK_TREE_VIEW (self));
+	if (GTK_IS_TREE_MODEL_FILTER (model))
+		gtk_tree_model_filter_refilter (GTK_TREE_MODEL_FILTER (model));
 }
 
 const gchar *

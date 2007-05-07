@@ -430,7 +430,8 @@ on_nonhibernating_window_hide(GtkWidget *widget, gpointer user_data)
 	
 	/* Forget this window,
 	 * so hibernation will be allowed again if no windows are remembered: */
-	g_slist_remove (priv->windows_that_prevent_hibernation, GTK_WINDOW(widget));
+	priv->windows_that_prevent_hibernation =
+		g_slist_remove (priv->windows_that_prevent_hibernation, GTK_WINDOW(widget));
 }
 
 static void

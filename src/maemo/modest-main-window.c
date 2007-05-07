@@ -61,6 +61,7 @@
 #include <hildon/hildon-program.h>
 #endif /*MODEST_HILDON_VERSION_0*/
 
+#define MODEST_MAIN_WINDOW_ACTION_GROUP_ADDITIONS "ModestMainWindowActionAdditions"
 
 /* 'private'/'protected' functions */
 static void modest_main_window_class_init    (ModestMainWindowClass *klass);
@@ -99,9 +100,11 @@ static void on_configuration_key_changed      (ModestConf* conf,
 					       ModestConfEvent event, 
 					       ModestMainWindow *self);
 
-static void 
-set_toolbar_mode (ModestMainWindow *self, 
-		  ModestToolBarModes mode);
+static void set_toolbar_mode                  (ModestMainWindow *self, 
+					       ModestToolBarModes mode);
+
+static void on_show_account_action_activated  (GtkAction *action,
+					       gpointer user_data);
 
 /* list my signals */
 enum {
@@ -128,6 +131,9 @@ struct _ModestMainWindowPrivate {
 	GtkWidget   *sort_toolitem;
 	GtkWidget   *refresh_toolitem;
 	ModestToolBarModes current_toolbar_mode;
+
+	/* Merge ids used to add/remove accounts to the ViewMenu*/
+	GByteArray *merge_ids;
 
 	/* On-demand widgets */
 	GtkWidget *accounts_popup;
@@ -176,7 +182,6 @@ static const GtkActionEntry modest_folder_view_action_entries [] = {
 static const GtkToggleActionEntry modest_main_window_toggle_action_entries [] = {
 	{ "ToolbarToggleView", MODEST_STOCK_SPLIT_VIEW, N_("gqn_toolb_rss_fldonoff"), "<CTRL>t", NULL, G_CALLBACK (modest_ui_actions_toggle_folders_view), FALSE },
 };
-
 
 /************************************************************************/
 
@@ -244,6 +249,8 @@ modest_main_window_init (ModestMainWindow *obj)
 
 	priv->style  = MODEST_MAIN_WINDOW_STYLE_SPLIT;
 	priv->contents_style  = MODEST_MAIN_WINDOW_CONTENTS_STYLE_HEADERS;
+
+	priv->merge_ids = NULL;
 }
 
 static void
@@ -254,6 +261,8 @@ modest_main_window_finalize (GObject *obj)
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(obj);
 
 	g_slist_free (priv->progress_widgets);
+
+	g_byte_array_free (priv->merge_ids, TRUE);
 
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
@@ -837,6 +846,13 @@ modest_main_window_show_toolbar (ModestWindow *self,
 
 }
 
+static gint
+compare_display_names (ModestAccountData *a,
+		       ModestAccountData *b)
+{
+	return strcmp (a->display_name, b->display_name);
+}
+
 /*
  * TODO: modify the menu dynamically. Add handlers to each item of the
  * menu when created
@@ -846,106 +862,152 @@ on_account_update (TnyAccountStore *account_store,
 		   gchar *accout_name,
 		   gpointer user_data)
 {
+	GSList *account_names, *iter, *accounts;
 	ModestMainWindow *self;
 	ModestMainWindowPrivate *priv;
 	ModestWindowPrivate *parent_priv;
-	TnyList *account_list;
-	GtkWidget *item, *send_receive_button;
-	TnyIterator *iter;
 	ModestAccountMgr *mgr;
+	gint i, num_accounts;
+	ModestAccountData *account_data;					
+	GtkActionGroup *action_group;
+	GList *groups;
 	gchar *default_account;
-
+	GtkWidget *send_receive_button, *item;
+		
 	self = MODEST_MAIN_WINDOW (user_data);
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE (self);
 	parent_priv = MODEST_WINDOW_GET_PRIVATE (self);
 
-	/* If there is no toolbar then exit */
-	if (!parent_priv->toolbar)
-		return;
+	/* Get enabled account IDs */
+	mgr = modest_runtime_get_account_mgr ();
+	account_names = modest_account_mgr_account_names (mgr, TRUE);
+	iter = account_names;
+	accounts = NULL;
 
-	if (priv->accounts_popup && gtk_menu_get_attach_widget (GTK_MENU (priv->accounts_popup)) ) {
-		/* gtk_menu_detach will also unreference the popup, 
-		 * so we can forget about this instance, and create a new one later:
-		 */
-		gtk_menu_detach (GTK_MENU (priv->accounts_popup));
-		priv->accounts_popup = NULL;
+	while (iter) {
+		account_data = modest_account_mgr_get_account_data (mgr, (gchar*) iter->data);
+		accounts = g_slist_prepend (accounts, account_data);
+
+		iter = iter->next;
 	}
+	g_slist_free (account_names);
 
-	/* Get accounts */
-	account_list = tny_simple_list_new ();
-	tny_account_store_get_accounts (account_store, 
-					account_list, 
-					TNY_ACCOUNT_STORE_STORE_ACCOUNTS);
+	/* Order the list of accounts by its display name */
+	accounts = g_slist_sort (accounts, (GCompareFunc) compare_display_names);
+	num_accounts = g_slist_length (accounts);
 
-	/* If there is only one account do not show any menu */
-	if (tny_list_get_length (account_list) <= 1)
-		goto free;
-	
+	/* Delete old send&receive popup items. We can not just do a
+	   menu_detach because it does not work well with
+	   tap_and_hold */
+	if (priv->accounts_popup)
+		gtk_container_foreach (GTK_CONTAINER (priv->accounts_popup), (GtkCallback) gtk_widget_destroy, NULL);
+
+	/* Delete old entries in the View menu. Do not free groups, it
+	   belongs to Gtk+ */
+	groups = gtk_ui_manager_get_action_groups (parent_priv->ui_manager);
+	while (groups) {
+		if (!strcmp (MODEST_MAIN_WINDOW_ACTION_GROUP_ADDITIONS,
+			     gtk_action_group_get_name (GTK_ACTION_GROUP (groups->data)))) {
+			gtk_ui_manager_remove_action_group (parent_priv->ui_manager, 
+							    GTK_ACTION_GROUP (groups->data));
+			groups = NULL;
+			/* Remove uis */
+			if (priv->merge_ids) {
+				for (i = 0; i < priv->merge_ids->len; i++)
+					gtk_ui_manager_remove_ui (parent_priv->ui_manager, priv->merge_ids->data[i]);
+				g_byte_array_free (priv->merge_ids, TRUE);
+			}
+			/* We need to call this in order to ensure
+			   that the new actions are added in the right
+			   order (alphabetical */
+			gtk_ui_manager_ensure_update (parent_priv->ui_manager);
+		} else 
+			groups = g_list_next (groups);
+	}
+	priv->merge_ids = g_byte_array_sized_new (num_accounts);
+
 	/* Get send receive button */
-	send_receive_button = gtk_ui_manager_get_widget (parent_priv->ui_manager, 
+	send_receive_button = gtk_ui_manager_get_widget (parent_priv->ui_manager,
 							  "/ToolBar/ToolbarSendReceive");
 
 	/* Create the menu */
-	priv->accounts_popup = gtk_menu_new ();
-	item = gtk_menu_item_new_with_label (_("mcen_me_toolbar_sendreceive_all"));
-	gtk_menu_shell_append (GTK_MENU_SHELL (priv->accounts_popup), GTK_WIDGET (item));
-	item = gtk_separator_menu_item_new ();
-	gtk_menu_shell_append (GTK_MENU_SHELL (priv->accounts_popup), GTK_WIDGET (item));
+	if (num_accounts > 1) {
+		if (!priv->accounts_popup)
+			priv->accounts_popup = gtk_menu_new ();
+		item = gtk_menu_item_new_with_label (_("mcen_me_toolbar_sendreceive_all"));
+		gtk_menu_shell_append (GTK_MENU_SHELL (priv->accounts_popup), GTK_WIDGET (item));
+		item = gtk_separator_menu_item_new ();
+		gtk_menu_shell_append (GTK_MENU_SHELL (priv->accounts_popup), GTK_WIDGET (item));
+	}
 
-	iter = tny_list_create_iterator (account_list);
-	mgr = modest_runtime_get_account_mgr ();
+	/* Create a new action group */
 	default_account = modest_account_mgr_get_default_account (mgr);
+	action_group = gtk_action_group_new (MODEST_MAIN_WINDOW_ACTION_GROUP_ADDITIONS);
+	for (i = 0; i < num_accounts; i++) {
+		GtkAction *new_action;
+		gchar* item_name, *display_name;
+		guint8 merge_id;
 
-	do {
-		TnyAccount *acc = NULL;
-		const gchar *acc_name = NULL;
+		account_data = (ModestAccountData *) g_slist_nth_data (accounts, i);
 
-		/* Create tool item */
-		acc = TNY_ACCOUNT (tny_iterator_get_current (iter));
-		if (acc)
-			acc_name = tny_account_get_name (acc);
-
-		/* Create display name */
-		gchar *display_name = NULL;
-		if (acc_name) {
-			if (default_account && !(strcmp (default_account, acc_name) == 0))
-				display_name = g_strdup_printf (_("mcen_me_toolbar_sendreceive_default"), acc_name);
-			else
-				display_name = g_strdup_printf (_("mcen_me_toolbar_sendreceive_mailbox_n"), acc_name);
-		}
+		/* Create display name. The default account is shown differently */
+		if (default_account && !(strcmp (default_account, account_data->account_name) == 0))
+			display_name = g_strdup_printf (_("mcen_me_toolbar_sendreceive_default"), 
+							account_data->display_name);
 		else
-		{
-			/* TODO: This probably should never happen: */
-			display_name = g_strdup_printf (_("mcen_me_toolbar_sendreceive_default"), "");
-		}
-		
+			display_name = g_strdup_printf (_("mcen_me_toolbar_sendreceive_mailbox_n"), 
+							account_data->display_name);
 
+		/* Create action and add it to the action group. The
+		   action name must be the account name, this way we
+		   could know in the handlers the account to show */
+		new_action = gtk_action_new (account_data->account_name, display_name, NULL, NULL);
+		gtk_action_group_add_action (action_group, new_action);
+
+		/* Add ui from account data. We allow 2^9-1 account
+		   changes in a single execution because we're
+		   downcasting the guint to a guint8 in order to use a
+		   GByteArray, it should be enough */
+		item_name = g_strconcat (account_data->account_name, "Menu");
+		merge_id = (guint8) gtk_ui_manager_new_merge_id (parent_priv->ui_manager);
+		priv->merge_ids = g_byte_array_append (priv->merge_ids, &merge_id, 1);
+		gtk_ui_manager_add_ui (parent_priv->ui_manager, 
+				       merge_id,
+				       "/MenuBar/ViewMenu/ViewMenuAdditions",
+				       item_name,
+				       account_data->account_name,
+				       GTK_UI_MANAGER_MENUITEM,
+				       FALSE);
+
+		/* Connect the action signal "activate" */
+		g_signal_connect (G_OBJECT (new_action), 
+				  "activate", 
+				  G_CALLBACK (on_show_account_action_activated), 
+				  self);
+
+		/* Create item and add it to the send&receive CSM */
 		item = gtk_menu_item_new_with_label (display_name);
-
-		/* Free */
-		g_free (display_name);
-		g_object_unref (acc);
-
-		/* Append item */
 		gtk_menu_shell_append (GTK_MENU_SHELL (priv->accounts_popup), GTK_WIDGET (item));
 
-		/* Go to next */
-		tny_iterator_next (iter);
+		/* Frees */
+		g_free (display_name);
+		g_free (item_name);
+		modest_account_mgr_free_account_data (mgr, account_data);
+	}
+	gtk_ui_manager_insert_action_group (parent_priv->ui_manager, action_group, 1);
 
-	} while (!tny_iterator_is_done (iter));
+	if (priv->accounts_popup) {
+		/* Mandatory in order to view the menu contents */
+		gtk_widget_show_all (priv->accounts_popup);
 
-	g_object_unref (iter);
+		/* Setup tap_and_hold just if was not done before*/
+		if (!gtk_menu_get_attach_widget (GTK_MENU (priv->accounts_popup)))
+			gtk_widget_tap_and_hold_setup (send_receive_button, priv->accounts_popup, NULL, 0);
+	}
 
-	/* Mandatory in order to view the menu contents */
-	gtk_widget_show_all (priv->accounts_popup);
-
-	/* Setup tap_and_hold */
-	gtk_widget_tap_and_hold_setup (send_receive_button, priv->accounts_popup, NULL, 0);
-
- free:
-
-	/* Free */
-	g_object_unref (account_list);
+	/* Frees */
+	g_slist_free (accounts);
+	g_free (default_account);
 }
 
 /* 
@@ -1318,4 +1380,29 @@ on_queue_changed (ModestMailOperationQueue *queue,
 		}
 		break;
 	}	
+}
+
+static void 
+on_show_account_action_activated  (GtkAction *action,
+				   gpointer user_data)
+{
+	ModestAccountData *acc_data;
+	ModestMainWindow *self;
+	ModestMainWindowPrivate *priv;
+	ModestAccountMgr *mgr;
+
+	self = MODEST_MAIN_WINDOW (user_data);
+	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
+
+	/* Get account data */
+	mgr = modest_runtime_get_account_mgr ();
+	acc_data = modest_account_mgr_get_account_data (mgr, gtk_action_get_name (action));
+
+	/* Set the new visible account */
+	if (acc_data->store_account) 
+		modest_folder_view_set_account_id_of_visible_server_account (priv->folder_view,
+									     acc_data->store_account->account_name);
+
+	/* Free */
+	modest_account_mgr_free_account_data (mgr, acc_data);
 }
