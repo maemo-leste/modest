@@ -311,8 +311,8 @@ GdkPixbuf*
 modest_platform_get_icon (const gchar *name)
 {
 	GError *err = NULL;
-	GdkPixbuf* pixbuf;
-	GtkIconTheme *current_theme;
+	GdkPixbuf* pixbuf = NULL;
+	GtkIconTheme *current_theme = NULL;
 
 	g_return_val_if_fail (name, NULL);
 

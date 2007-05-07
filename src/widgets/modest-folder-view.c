@@ -336,8 +336,8 @@ static void
 icon_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 		 GtkTreeModel *tree_model,  GtkTreeIter *iter, gpointer data)
 {
-	GObject *rendobj, *instance;
-	GdkPixbuf *pixbuf;
+	GObject *rendobj = NULL, *instance = NULL;
+	GdkPixbuf *pixbuf = NULL;
 	TnyFolderType type;
 	gchar *fname = NULL;
 	const gchar *account_id = NULL;

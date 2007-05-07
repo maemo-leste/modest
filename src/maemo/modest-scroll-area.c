@@ -161,27 +161,27 @@ static void modest_scroll_area_fixed_allocate (GtkWidget *widget,
 
 static int calculate_size (GtkWidget *widget)
 {
-  int size = 0;
-
-  if (GTK_IS_TEXT_VIEW (widget))
-    return 0;
-
-  if (GTK_IS_CONTAINER (widget)) {
-    GList *children = gtk_container_get_children (GTK_CONTAINER (widget));
-    while (children != NULL) {
-      GtkWidget *wid = GTK_WIDGET (children->data);
-      gint sz = calculate_size (wid);
-      if ((GTK_WIDGET_VISIBLE (wid))) {
-        size += sz;
-      }
-
-      children = g_list_next (children);
-    }
-  } else { 
-    size = widget->allocation.height;
-  }
-
-  return size;
+	int size = 0;
+	
+	if (GTK_IS_TEXT_VIEW (widget))
+		return 0;
+	
+	if (GTK_IS_CONTAINER (widget)) {
+		GList *tmp = NULL;
+		GList *children = gtk_container_get_children (GTK_CONTAINER (widget));
+		for (tmp = children; tmp != NULL; tmp = g_list_next (tmp)) {
+			GtkWidget *wid = GTK_WIDGET (tmp->data);
+			gint sz = calculate_size (wid);
+			if ((GTK_WIDGET_VISIBLE (wid))) {
+				size += sz;
+			}
+		}
+		g_list_free (children);
+	} else { 
+		size = widget->allocation.height;
+	}
+	
+	return size;
 }
 
 static void modest_scroll_area_child_requisition (GtkWidget *widget,

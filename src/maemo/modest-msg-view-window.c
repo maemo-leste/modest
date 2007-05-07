@@ -90,6 +90,8 @@ static void         on_queue_changed                     (ModestMailOperationQue
 							  ModestMailOperationQueueNotification type,
 							  ModestMsgViewWindow *self);
 
+static void view_msg_cb (const GObject *obj, const TnyMsg *msg, gpointer user_data);
+
 static void set_toolbar_mode (ModestMsgViewWindow *self, 
 			      ModestToolBarModes mode);
 
@@ -131,6 +133,9 @@ struct _ModestMsgViewWindowPrivate {
 	GtkWidget   *cancel_toolitem;
 	GtkWidget   *prev_toolitem;
 	GtkWidget   *next_toolitem;
+
+	/* Optimized view enabled */
+	gboolean optimized_view;
 
 	GtkTreeModel *header_model;
 	GtkTreeIter   iter;
@@ -201,6 +206,9 @@ modest_msg_view_window_init (ModestMsgViewWindow *obj)
 	priv->msg_view      = NULL;
 	priv->header_model  = NULL;
 	priv->clipboard_change_handler = 0;
+
+	priv->optimized_view  = FALSE;
+
 }
 
 static void
@@ -260,6 +268,13 @@ set_toolbar_mode (ModestMsgViewWindow *self,
 			
 		if (priv->cancel_toolitem)
 			gtk_widget_hide (priv->cancel_toolitem);
+
+		/* Hide toolbar if optimized view is enabled */
+		if (priv->optimized_view) {
+			gtk_widget_set_no_show_all (parent_priv->toolbar, TRUE);
+			gtk_widget_hide (GTK_WIDGET(parent_priv->toolbar));
+		}
+
 		break;
 	case TOOLBAR_MODE_TRANSFER:
 		widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ToolbarMessageNew");
@@ -286,32 +301,16 @@ set_toolbar_mode (ModestMsgViewWindow *self,
 			
 		if (priv->cancel_toolitem)
 			gtk_widget_show (priv->cancel_toolitem);
+
+		/* Show toolbar if it's hiden (optimized view ) */
+		if (priv->optimized_view) {
+			gtk_widget_set_no_show_all (parent_priv->toolbar, FALSE);
+			gtk_widget_show (GTK_WIDGET (parent_priv->toolbar));
+		}
+
 		break;
 	default:
-		widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ToolbarMessageNew");
-		gtk_action_set_sensitive (widget, TRUE);
-		widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ToolbarMessageReply");
-		gtk_action_set_sensitive (widget, TRUE);
-		widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ToolbarDeleteMessage");
-		gtk_action_set_sensitive (widget, TRUE);
-		widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ToolbarMessageMoveTo");
-		gtk_action_set_sensitive (widget, TRUE);
-		widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/FindInMessage");
-		gtk_action_set_sensitive (widget, TRUE);
-
-		if (priv->cancel_toolitem)
-			gtk_widget_show (priv->prev_toolitem);
-			
-		if (priv->next_toolitem)
-			gtk_widget_show (priv->next_toolitem);
-			
-		if (priv->progress_bar)
-			gtk_widget_hide (priv->progress_bar);
-		if (priv->progress_bar)
-			gtk_widget_hide (priv->progress_bar);
-			
-		if (priv->cancel_toolitem)
-			gtk_widget_hide (priv->cancel_toolitem);
+		g_return_if_reached ();
 	}
 
 }
@@ -374,8 +373,12 @@ init_window (ModestMsgViewWindow *obj, TnyMsg *msg)
 	g_signal_connect (G_OBJECT (priv->find_toolbar), "close", G_CALLBACK (modest_msg_view_window_find_toolbar_close), obj);
 	g_signal_connect (G_OBJECT (priv->find_toolbar), "search", G_CALLBACK (modest_msg_view_window_find_toolbar_search), obj);
 	
-	priv->clipboard_change_handler = g_signal_connect (G_OBJECT (gtk_clipboard_get (GDK_SELECTION_PRIMARY)), "owner-change", G_CALLBACK (modest_msg_view_window_clipboard_owner_change), obj);
-	modest_msg_view_window_clipboard_owner_change (gtk_clipboard_get (GDK_SELECTION_PRIMARY), NULL, obj);
+	/* TODO: I dont knonw why, but when get_msg_async is used, */
+	/* this code makes application doest not work (jfernandez) */
+	if (FALSE) {
+		priv->clipboard_change_handler = g_signal_connect (G_OBJECT (gtk_clipboard_get (GDK_SELECTION_PRIMARY)), "owner-change", G_CALLBACK (modest_msg_view_window_clipboard_owner_change), obj);
+		modest_msg_view_window_clipboard_owner_change (gtk_clipboard_get (GDK_SELECTION_PRIMARY), NULL, obj);
+	}
 	gtk_widget_show_all (GTK_WIDGET(main_vbox));
 	gtk_box_pack_end (GTK_BOX (main_vbox), priv->find_toolbar, FALSE, FALSE, 0);
 }	
@@ -847,9 +850,9 @@ modest_msg_view_window_is_first_message (ModestMsgViewWindow *window)
 gboolean        
 modest_msg_view_window_select_next_message (ModestMsgViewWindow *window)
 {
+	ModestMailOperation *mail_op = NULL;
 	ModestMsgViewWindowPrivate *priv;
 	GtkTreeIter tmp_iter;
-	gboolean has_next = FALSE;
 
 	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (window), FALSE);
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
@@ -858,8 +861,7 @@ modest_msg_view_window_select_next_message (ModestMsgViewWindow *window)
 		tmp_iter = priv->iter;
 		while (gtk_tree_model_iter_next (priv->header_model, &tmp_iter)) {
 			TnyHeader *header;
-			TnyFolder *folder;
-			TnyMsg *msg;
+			guint op_status;
 
 			priv->iter = tmp_iter;
 			gtk_tree_model_get (priv->header_model, &(priv->iter), TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN,
@@ -869,25 +871,21 @@ modest_msg_view_window_select_next_message (ModestMsgViewWindow *window)
 			if (tny_header_get_flags (header) & TNY_HEADER_FLAG_DELETED)
 				continue;
 
-			folder = tny_header_get_folder (header);
-			if (!folder)
-				break;
-			msg = tny_folder_get_msg (folder, header, NULL);
-			if (!msg) {
-				g_object_unref (folder);
-				break;
-			}
-			has_next = TRUE;
-			modest_msg_view_set_message (MODEST_MSG_VIEW (priv->msg_view), msg);
-			modest_msg_view_window_update_dimmed (window);
-			modest_msg_view_window_update_priority (window);
-			gtk_widget_grab_focus (priv->msg_view);
+			/* New mail operation */
+			mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_ID_RECEIVE, G_OBJECT(window));
+			modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
+			modest_mail_operation_get_msg (mail_op, header, view_msg_cb, NULL);
+			op_status = modest_mail_operation_get_status (mail_op);
 
-			g_object_unref (msg);
-			break;
+			g_object_unref (mail_op);
+
+			if (op_status == MODEST_MAIL_OPERATION_STATUS_FAILED) 
+				return FALSE;
+			else 
+				return TRUE;
 		}
 
-		return has_next;
+		return FALSE;
 	} else {
 		return FALSE;
 	}
@@ -896,20 +894,19 @@ modest_msg_view_window_select_next_message (ModestMsgViewWindow *window)
 gboolean        
 modest_msg_view_window_select_previous_message (ModestMsgViewWindow *window)
 {
-	ModestMsgViewWindowPrivate *priv;
+	ModestMsgViewWindowPrivate *priv = NULL;
+	ModestMailOperation *mail_op = NULL;
 
 	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (window), FALSE);
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
 
 	if (priv->header_model) {
 		GtkTreePath *path;
-		gboolean has_prev = FALSE;
 
 		path = gtk_tree_model_get_path (priv->header_model, &(priv->iter));
 		while (gtk_tree_path_prev (path)) {
 			TnyHeader *header;
-			TnyFolder *folder;
-			TnyMsg *msg;
+			guint op_status;
 
 			gtk_tree_model_get_iter (priv->header_model, &(priv->iter), path);
 			gtk_tree_model_get (priv->header_model, &(priv->iter), TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN,
@@ -918,28 +915,45 @@ modest_msg_view_window_select_previous_message (ModestMsgViewWindow *window)
 				break;
 			if (tny_header_get_flags (header) & TNY_HEADER_FLAG_DELETED)
 				continue;
-			folder = tny_header_get_folder (header);
-			if (!folder)
-				break;
-			msg = tny_folder_get_msg (folder, header, NULL);
-			if (!msg) {
-				g_object_unref (folder);
-				break;
-			}
-			has_prev = TRUE;
-			modest_msg_view_set_message (MODEST_MSG_VIEW (priv->msg_view), msg);
-			modest_msg_view_window_update_dimmed (window);
-			modest_msg_view_window_update_priority (window);
-			gtk_widget_grab_focus (priv->msg_view);
+			
+			/* New mail operation */
+			mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_ID_RECEIVE, G_OBJECT(window));
+			modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
+			modest_mail_operation_get_msg (mail_op, header, view_msg_cb, NULL);
+			
+			gtk_tree_path_free (path);
 
-			g_object_unref (msg);
-			break;
+			op_status = modest_mail_operation_get_status (mail_op);
+			if (op_status == MODEST_MAIL_OPERATION_STATUS_FAILED) 
+				return FALSE;
+			else 
+				return TRUE;
 		}
-		gtk_tree_path_free (path);
-		return has_prev;
 	} else {
 		return FALSE;
 	}
+
+	return FALSE;
+}
+
+static void
+view_msg_cb(const GObject *obj, const TnyMsg *msg, gpointer user_data)
+{
+	ModestMsgViewWindow *self = NULL;
+	ModestMsgViewWindowPrivate *priv = NULL;
+	TnyMsg *new_msg = NULL;
+ 
+	g_return_if_fail (MODEST_IS_MSG_VIEW_WINDOW (obj));
+	g_return_if_fail (TNY_IS_MSG (msg));
+	self = MODEST_MSG_VIEW_WINDOW (obj);
+	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (self);
+
+	/* Set new message */
+	new_msg = g_object_ref (G_OBJECT(msg));
+	modest_msg_view_set_message (MODEST_MSG_VIEW (priv->msg_view), new_msg);
+	modest_msg_view_window_update_dimmed (self);
+	modest_msg_view_window_update_priority (self);
+	gtk_widget_grab_focus (priv->msg_view);
 }
 
 static TnyFolderType
@@ -1092,7 +1106,10 @@ modest_msg_view_window_show_toolbar (ModestWindow *self,
 	parent_priv = MODEST_WINDOW_GET_PRIVATE(self);
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE(self);
 
-	if (!parent_priv->toolbar && show_toolbar) {
+	/* Set optimized view status */
+	priv->optimized_view = !show_toolbar;
+
+	if (!parent_priv->toolbar) {
 		parent_priv->toolbar = gtk_ui_manager_get_widget (parent_priv->ui_manager, 
 								  "/ToolBar");
 
@@ -1138,13 +1155,16 @@ modest_msg_view_window_show_toolbar (ModestWindow *self,
 		gtk_widget_tap_and_hold_setup (GTK_WIDGET (reply_button), menu, NULL, 0);
 	}
 
-	/* TODO: Why is this sometimes NULL? murrayc */
-	if (parent_priv->toolbar) {
-		if (show_toolbar) {
-			gtk_widget_show (GTK_WIDGET (parent_priv->toolbar));
-			set_toolbar_mode (MODEST_MSG_VIEW_WINDOW(self), TOOLBAR_MODE_NORMAL);			
-		} else
-			gtk_widget_hide (GTK_WIDGET (parent_priv->toolbar));
+	if (show_toolbar) {
+		/* Quick hack: this prevents toolbar icons "dance" when progress bar show status is changed */ 
+		/* TODO: resize mode migth be GTK_RESIZE_QUEUE, in order to avoid unneccesary shows */
+		gtk_container_set_resize_mode (GTK_CONTAINER(parent_priv->toolbar), GTK_RESIZE_IMMEDIATE);
+		
+		gtk_widget_show (GTK_WIDGET (parent_priv->toolbar));
+		set_toolbar_mode (MODEST_MSG_VIEW_WINDOW(self), TOOLBAR_MODE_NORMAL);			
+	} else {
+		gtk_widget_set_no_show_all (parent_priv->toolbar, TRUE);
+		gtk_widget_hide (GTK_WIDGET (parent_priv->toolbar));
 	}
 }
 
@@ -1256,7 +1276,6 @@ on_queue_changed (ModestMailOperationQueue *queue,
 		break;
 	case MODEST_MAIL_OPERATION_QUEUE_OPERATION_REMOVED:
 		if (mode == TOOLBAR_MODE_TRANSFER) {
-			set_toolbar_mode (MODEST_MSG_VIEW_WINDOW(self), TOOLBAR_MODE_NORMAL);
 			while (tmp) {
 				modest_progress_object_remove_operation (MODEST_PROGRESS_OBJECT (tmp->data),
 								 mail_op);

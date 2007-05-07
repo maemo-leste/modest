@@ -66,7 +66,17 @@ static void     update_folders_status_cb (GObject *obj,
 
 static void     update_process_msg_status_cb (GObject *obj,
 					      TnyStatus *status,  
-					  gpointer user_data);
+					      gpointer user_data);
+static void     get_msg_cb (TnyFolder *folder, 
+			    gboolean cancelled, 
+			    TnyMsg *msg, 
+			    GError **err, 
+			    gpointer user_data);
+
+static void     get_msg_status_cb (GObject *obj,
+				   TnyStatus *status,  
+				   gpointer user_data);
+
 
 enum _ModestMailOperationSignals 
 {
@@ -92,6 +102,13 @@ struct _ModestMailOperationPrivate {
 #define CHECK_EXCEPTION(priv, new_status)  if (priv->error) {\
                                                    priv->status = new_status;\
                                                }
+
+typedef struct _GetMsgAsyncHelper {	
+	ModestMailOperation *mail_op;
+	GetMsgAsynUserCallback user_callback;	
+	guint pending_ops;
+	gpointer user_data;
+} GetMsgAsyncHelper;
 
 typedef struct _RefreshFolderAsyncHelper
 {
@@ -410,6 +427,11 @@ update_folders_status_cb (GObject *obj,
 
 	g_return_if_fail (status != NULL);
 	g_return_if_fail (status->code == TNY_FOLDER_STATUS_CODE_REFRESH);
+
+	/* Temporary FIX: useful when tinymail send us status
+	   information *after* calling the function callback */
+	if (!MODEST_IS_MAIL_OPERATION (user_data))
+		return;
 
 	self = MODEST_MAIL_OPERATION (user_data);
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
@@ -788,12 +810,12 @@ modest_mail_operation_xfer_folder (ModestMailOperation *self,
 /* **************************  MSG  ACTIONS  ************************* */
 /* ******************************************************************* */
 
-void          modest_mail_operation_process_msg     (ModestMailOperation *self,
-						     TnyHeader *header, 
-						     guint num_ops,
-						     TnyGetMsgCallback user_callback,
-						     gpointer user_data)
+void          modest_mail_operation_get_msg     (ModestMailOperation *self,
+						 TnyHeader *header,
+						 GetMsgAsynUserCallback user_callback,
+						 gpointer user_data)
 {
+	GetMsgAsyncHelper *helper = NULL;
 	TnyFolder *folder;
 	ModestMailOperationPrivate *priv;
 	
@@ -804,19 +826,163 @@ void          modest_mail_operation_process_msg     (ModestMailOperation *self,
 	folder = tny_header_get_folder (header);
 
 	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
-	priv->total = num_ops;
 
 	/* Get message from folder */
 	if (folder) {
-		/* The callback will call it per each header */
-		tny_folder_get_msg_async (folder, header, user_callback, update_process_msg_status_cb, user_data);
+		helper = g_slice_new0 (GetMsgAsyncHelper);
+		helper->mail_op = self;
+		helper->user_callback = user_callback;
+		helper->pending_ops = 1;
+		helper->user_data = user_data;
+
+		tny_folder_get_msg_async (folder, header, get_msg_cb, get_msg_status_cb, helper);
+
 		g_object_unref (G_OBJECT (folder));
 	} else {
-		/* Set status failed and set an error */
+ 		/* Set status failed and set an error */
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 			     MODEST_MAIL_OPERATION_ERROR_ITEM_NOT_FOUND,
 			     _("Error trying to get a message. No folder found for header"));
+	}
+}
+
+static void
+get_msg_cb (TnyFolder *folder, 
+	    gboolean cancelled, 
+	    TnyMsg *msg, 
+	    GError **error, 
+	    gpointer user_data)
+{
+	GetMsgAsyncHelper *helper = NULL;
+	ModestMailOperation *self = NULL;
+	ModestMailOperationPrivate *priv = NULL;
+
+	helper = (GetMsgAsyncHelper *) user_data;
+	g_return_if_fail (helper != NULL);       
+	self = helper->mail_op;
+	g_return_if_fail (MODEST_IS_MAIL_OPERATION(self));
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
+	
+	helper->pending_ops--;
+
+	/* Check errors and cancel */
+	if (*error) {
+		priv->error = g_error_copy (*error);
+		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
+		goto out;
+	}
+	if (cancelled) {
+		priv->status = MODEST_MAIL_OPERATION_STATUS_CANCELED;
+		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
+			     MODEST_MAIL_OPERATION_ERROR_ITEM_NOT_FOUND,
+			     _("Error trying to refresh the contents of %s"),
+			     tny_folder_get_name (folder));
+		goto out;
+	}
+
+	priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
+
+	/* If user defined callback function was defined, call it */
+	if (helper->user_callback) {
+		helper->user_callback (priv->source, msg, helper->user_data);
+	}
+
+	/* Free */
+ out:
+	if (helper->pending_ops == 0) {
+		g_slice_free (GetMsgAsyncHelper, helper);
+		
+		/* Notify the queue */
+		modest_mail_operation_queue_remove (modest_runtime_get_mail_operation_queue (), self);	
+	}
+}
+
+static void     
+get_msg_status_cb (GObject *obj,
+		   TnyStatus *status,  
+		   gpointer user_data)
+{
+	GetMsgAsyncHelper *helper = NULL;
+	ModestMailOperation *self;
+	ModestMailOperationPrivate *priv;
+
+	g_return_if_fail (status != NULL);
+	g_return_if_fail (status->code == TNY_FOLDER_STATUS_CODE_GET_MSG);
+
+	helper = (GetMsgAsyncHelper *) user_data;
+	g_return_if_fail (helper != NULL);       
+
+	/* Temporary FIX: useful when tinymail send us status
+	   information *after* calling the function callback */
+	if (!MODEST_IS_MAIL_OPERATION (helper->mail_op))
+		return;
+
+	self = helper->mail_op;
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
+
+	priv->done += status->position;
+	priv->total = status->of_total;
+
+	if (priv->done == 1 && priv->total == 100)
+		return;
+
+	g_signal_emit (G_OBJECT (self), signals[PROGRESS_CHANGED_SIGNAL], 0, NULL);
+}
+
+
+void          modest_mail_operation_process_msg     (ModestMailOperation *self,
+						     TnyList *header_list, 
+						     GetMsgAsynUserCallback user_callback,
+						     gpointer user_data)
+{
+	ModestMailOperationPrivate *priv = NULL;
+	GetMsgAsyncHelper *helper = NULL;
+	TnyHeader *header = NULL;
+	TnyFolder *folder = NULL;
+	TnyIterator *iter = NULL;
+	
+	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
+	
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
+	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
+
+	iter = tny_list_create_iterator (header_list); 
+	priv->total = tny_list_get_length(header_list);
+
+	helper = g_slice_new0 (GetMsgAsyncHelper);
+	helper->mail_op = self;
+	helper->user_callback = user_callback;
+	helper->pending_ops = priv->total;
+	helper->user_data = user_data;
+
+	while (!tny_iterator_is_done (iter)) { 
+		
+		header = TNY_HEADER (tny_iterator_get_current (iter));		
+		folder = tny_header_get_folder (header);
+				
+		/* Get message from folder */
+		if (folder) {
+			/* The callback will call it per each header */
+			tny_folder_get_msg_async (folder, header, get_msg_cb, update_process_msg_status_cb, helper);
+			g_object_unref (G_OBJECT (folder));
+		} else {			
+			/* Set status failed and set an error */
+			priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
+			g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
+				     MODEST_MAIL_OPERATION_ERROR_ITEM_NOT_FOUND,
+				     _("Error trying to get a message. No folder found for header"));
+
+			/* Notify the queue */
+			modest_mail_operation_queue_remove (modest_runtime_get_mail_operation_queue (), self);
+
+			/* free */
+			g_slice_free (GetMsgAsyncHelper, helper);
+			break;
+		}
+
+		g_object_unref (header);		
+		tny_iterator_next (iter);
 	}
 }
 
@@ -825,16 +991,28 @@ update_process_msg_status_cb (GObject *obj,
 			      TnyStatus *status,  
 			      gpointer user_data)
 {
+	GetMsgAsyncHelper *helper = NULL;
 	ModestMailOperation *self;
 	ModestMailOperationPrivate *priv;
 
 	g_return_if_fail (status != NULL);
-	g_return_if_fail (status->code == TNY_FOLDER_STATUS_CODE_REFRESH);
+	g_return_if_fail (status->code == TNY_FOLDER_STATUS_CODE_GET_MSG);
 
-	self = MODEST_MAIL_OPERATION (user_data);
+	helper = (GetMsgAsyncHelper *) user_data;
+	g_return_if_fail (helper != NULL);       
+
+	/* Temporary FIX: useful when tinymail send us status
+	   information *after* calling the function callback */
+	if (!MODEST_IS_MAIL_OPERATION (helper->mail_op))
+		return;
+
+	self = helper->mail_op;
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
 
-	priv->done += status->position;
+	if (status->of_total > 0)
+		priv->done += status->position/status->of_total;
+
+	g_print("TEST: %d/%d", priv->done, priv->total); 
 
 	if (priv->done == 1 && priv->total == 100)
 		return;

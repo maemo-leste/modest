@@ -87,6 +87,20 @@ struct _ModestMailOperationClass {
 	void (*progress_changed) (ModestMailOperation *self, gpointer user_data);
 };
 
+/**
+ * GetMsgAsynUserCallback:
+ *
+ * @obj: a #GObject generic object which has created current mail operation.
+ * @msg: a #TnyMsg message retrieved by async operation.
+ * @user_data: generic data passed to user defined function.
+ *
+ * This function will be called after get_msg_cb private function, which is
+ * used as tinymail operation callback. The private function fills private 
+ * fields of mail operation and calls user defined callback if it exists.
+ */
+typedef void (*GetMsgAsynUserCallback) (const GObject *obj, const TnyMsg *msg, gpointer user_data);
+
+
 /* member functions */
 GType        modest_mail_operation_get_type    (void) G_GNUC_CONST;
 
@@ -112,7 +126,7 @@ ModestMailOperationId
 modest_mail_operation_get_id (ModestMailOperation *self);
 
 /**
- * modest_mail_operation_get_id
+ * modest_mail_operation_is_mine
  * @self: a #ModestMailOperation
  * @source: a #GObject to check if it have created @self operation.
  * 
@@ -356,22 +370,34 @@ void          modest_mail_operation_remove_msg     (ModestMailOperation *self,
 						    gboolean remove_to_trash);
 
 /**
+ * modest_mail_operation_get_msg:
+ * @self: a #ModestMailOperation
+ * @header_list: the #TnyHeader of the message to get
+ * @user_callback: a #GetMsgAsynUserCallback function to call after tinymail callback execution.
+ * @user_data: generic user data which will be passed to @user_callback function.
+ * 
+ * Gets a message from header using an user defined @callback function
+ * pased as argument. This operation is asynchronous, so the
+ * #ModestMailOperation should be added to #ModestMailOperationQueue
+ **/
+void          modest_mail_operation_get_msg     (ModestMailOperation *self,
+						 TnyHeader *header, 
+						 GetMsgAsynUserCallback user_callback,
+						 gpointer user_data);
+/**
  * modest_mail_operation_process_msg:
  * @self: a #ModestMailOperation
- * @header: the #TnyHeader of the message to get
- * @num_ops: number of times to repeat operation with next header. 
+ * @header_list: a #TnyList of #TnyHeader objects to get and process
  * @user_callback: a #TnyGetMsgCallback function to call after tinymail operation execution.
  * @user_data: user data passed to both, user_callback and update_status_callback.
  * 
- * Gets a message and process it using @callback function
- * pased as argument. This operation is assynchronous, so the
- * #ModestMailOperation should be added to
- * #ModestMailOperationQueue
+ * Gets messages from headers list and process hem using @callback function
+ * pased as argument. This operation is asynchronous, so the
+ * #ModestMailOperation should be added to #ModestMailOperationQueue
  **/
 void          modest_mail_operation_process_msg     (ModestMailOperation *self,
-						     TnyHeader *header,
-						     guint num_ops,
-						     TnyGetMsgCallback user_callback,
+						     TnyList *headers_list,
+						     GetMsgAsynUserCallback user_callback,
 						     gpointer user_data);
 
 /* Functions to control mail operations */

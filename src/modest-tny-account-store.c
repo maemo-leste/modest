@@ -449,8 +449,8 @@ get_cached_accounts (TnyAccountStore *self, TnyList *list, TnyAccountType type)
 static GSList*
 get_accounts  (TnyAccountStore *self, TnyList *list, TnyAccountType type)
 {
-	ModestTnyAccountStorePrivate *priv;
-	GSList                       *account_names, *cursor;
+	ModestTnyAccountStorePrivate *priv = NULL;
+	GSList                       *account_names = NULL, *cursor = NULL;
 	GSList                       *accounts = NULL;
 	
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);

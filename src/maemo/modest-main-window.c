@@ -132,6 +132,8 @@ struct _ModestMainWindowPrivate {
 	GtkWidget *accounts_popup;
 	GtkWidget *details_widget;
 
+	/* Optimized view enabled */
+	gboolean optimized_view;
 
 	ModestHeaderView *header_view;
 	ModestFolderView *folder_view;
@@ -233,6 +235,8 @@ modest_main_window_init (ModestMainWindow *obj)
 	priv->contents_widget  = NULL;
 	priv->accounts_popup  = NULL;
 	priv->details_widget  = NULL;
+
+	priv->optimized_view  = FALSE;
 
 	priv->progress_widgets  = NULL;
 	priv->progress_bar = NULL;
@@ -763,10 +767,14 @@ modest_main_window_show_toolbar (ModestWindow *self,
 	GtkWidget *placeholder = NULL;
 	gint insert_index;
 
-	parent_priv = MODEST_WINDOW_GET_PRIVATE(self);
+	g_return_if_fail (MODEST_IS_MAIN_WINDOW (self));
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
+	parent_priv = MODEST_WINDOW_GET_PRIVATE(self);
 
-	if (!parent_priv->toolbar && show_toolbar) {
+	/* Set optimized view status */
+	priv->optimized_view = !show_toolbar;
+
+	if (!parent_priv->toolbar) {
 		parent_priv->toolbar = gtk_ui_manager_get_widget (parent_priv->ui_manager, 
 								  "/ToolBar");
 
@@ -815,18 +823,16 @@ modest_main_window_show_toolbar (ModestWindow *self,
 				   NULL, self);
 	}
 
-	/* TODO: Why is this sometimes NULL? murrayc */
-	if (parent_priv->toolbar) {
-		if (show_toolbar) {
-			/* Quick hack: this prevents toolbar icons "dance" when progress bar show status is changed */
-			/* TODO: resize mode migth be GTK_RESIZE_QUEUE, in order to avoid unneccesary shows */
-			gtk_container_set_resize_mode (GTK_CONTAINER(parent_priv->toolbar), GTK_RESIZE_IMMEDIATE);
+	if (show_toolbar) {
+		/* Quick hack: this prevents toolbar icons "dance" when progress bar show status is changed */
+		/* TODO: resize mode migth be GTK_RESIZE_QUEUE, in order to avoid unneccesary shows */
+		gtk_container_set_resize_mode (GTK_CONTAINER(parent_priv->toolbar), GTK_RESIZE_IMMEDIATE);
+		
+		gtk_widget_show (GTK_WIDGET (parent_priv->toolbar));
+		set_toolbar_mode (MODEST_MAIN_WINDOW(self), TOOLBAR_MODE_NORMAL);
+	} else
+		gtk_widget_hide (GTK_WIDGET (parent_priv->toolbar));
 
-			gtk_widget_show (GTK_WIDGET (parent_priv->toolbar));
-			set_toolbar_mode (MODEST_MAIN_WINDOW(self), TOOLBAR_MODE_NORMAL);
-		} else
-			gtk_widget_hide (GTK_WIDGET (parent_priv->toolbar));
-	}
 }
 
 /*
@@ -1151,14 +1157,16 @@ static void
 set_toolbar_mode (ModestMainWindow *self, 
 		  ModestToolBarModes mode)
 {
-	ModestWindowPrivate *parent_priv;
-	ModestMainWindowPrivate *priv;
-	GtkAction *sort_action, *refresh_action, *cancel_action;
-
+	ModestWindowPrivate *parent_priv = NULL;
+	ModestMainWindowPrivate *priv = NULL;
+	GtkAction *sort_action = NULL, *refresh_action = NULL, *cancel_action = NULL;
+	
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW (self));
 
 	parent_priv = MODEST_WINDOW_GET_PRIVATE(self);
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
+
+	g_return_if_fail (GTK_IS_TOOLBAR(parent_priv->toolbar)); 
 	
 	sort_action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ToolbarSort");
 	refresh_action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ToolbarSendReceive");
@@ -1183,6 +1191,10 @@ set_toolbar_mode (ModestMainWindow *self,
 		
 		if (cancel_action)
 			gtk_action_set_visible (cancel_action, FALSE);
+
+		/* Hide toolbar if optimized view is enabled */
+		if (priv->optimized_view)
+			gtk_widget_hide (GTK_WIDGET(parent_priv->toolbar));
 		break;
 	case TOOLBAR_MODE_TRANSFER:
 		if (sort_action)
@@ -1197,12 +1209,14 @@ set_toolbar_mode (ModestMainWindow *self,
 		}
 		if (priv->progress_bar)
 			gtk_widget_show (priv->progress_bar);			
+
+		/* Show toolbar if it's hiden (optimized view ) */
+		if (priv->optimized_view)
+			gtk_widget_show (GTK_WIDGET (parent_priv->toolbar));
 		break;
 	default:
 		g_return_if_reached ();
 	}
-
-	gtk_widget_show_all (GTK_WIDGET (self));
 }
 
 static void

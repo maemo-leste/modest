@@ -101,6 +101,8 @@ modest_attachments_view_set_message (ModestAttachmentsView *attachments_view, Tn
 	ModestAttachmentsViewPriv *priv = MODEST_ATTACHMENTS_VIEW_GET_PRIVATE (attachments_view);
 	TnyList *parts;
 	TnyIterator *iter;
+	
+	if (msg == priv->msg) return;
 
 	if (priv->msg) 
 		g_object_unref (priv->msg);

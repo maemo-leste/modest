@@ -87,7 +87,14 @@ typedef struct _ReplyForwardHelper {
 guint reply_forward_type;
 	ReplyForwardAction action;
 	gchar *account_name;
+	guint pending_ops;
 } ReplyForwardHelper;
+
+typedef struct _HeaderActivatedHelper {
+	GtkTreeModel *model;
+	GtkTreeIter iter;
+	TnyFolder *folder;
+} HeaderActivatedHelper;
 
 /*
  * The do_headers_action uses this kind of functions to perform some
@@ -101,10 +108,10 @@ do_headers_action (ModestWindow *win,
 		   gpointer user_data);
 
 
-static void     reply_forward_func     (gpointer data, gpointer user_data);
+static void     open_msg_func          (const GObject *obj, const TnyMsg *msg, gpointer user_data);
 
-static void     get_msg_cb             (TnyFolder *folder, gboolean canceled, TnyMsg *msg, GError **err,
-					gpointer user_data);
+static void     reply_forward_func     (const GObject *obj, const TnyMsg *msg, gpointer user_data);
+
 static void     reply_forward          (ReplyForwardAction action, ModestWindow *win);
 
 static gchar*   ask_for_folder_name    (GtkWindow *parent_window, const gchar *title);
@@ -403,10 +410,60 @@ modest_ui_actions_on_open (GtkAction *action, ModestWindow *win)
 
 
 static void
-reply_forward_func (gpointer data, gpointer user_data)
+open_msg_func (const GObject *obj, const TnyMsg *msg, gpointer user_data)
 {
-	TnyMsg *msg, *new_msg;
-	GetMsgAsyncHelper *helper;
+	ModestWindowMgr *mgr = NULL;
+	ModestWindow *parent_win = NULL;
+	ModestWindow *win = NULL;
+	HeaderActivatedHelper *helper = NULL;
+	TnyFolderType folder_type = TNY_FOLDER_TYPE_UNKNOWN;
+	gchar *account = NULL;
+	
+	g_return_if_fail (MODEST_IS_WINDOW(obj));
+	g_return_if_fail (user_data != NULL);
+	parent_win = MODEST_WINDOW(obj);
+	helper = (HeaderActivatedHelper *) user_data;
+
+	/* Get account */
+	account =  g_strdup(modest_window_get_active_account(MODEST_WINDOW(parent_win)));
+	if (!account)
+		account = modest_account_mgr_get_default_account (modest_runtime_get_account_mgr());
+	
+	/* Gets foldert type (OUTBOX headers will be opened in edit window */
+/* 	folder_type = modest_tny_folder_guess_folder_type (helper->folder); */
+	if (modest_tny_folder_is_local_folder (helper->folder))
+		folder_type = modest_tny_folder_get_local_folder_type (helper->folder);
+
+	switch (folder_type) {
+	case TNY_FOLDER_TYPE_DRAFTS:
+		win = modest_msg_edit_window_new ((TnyMsg *) msg, account);
+		break;
+	default:
+		if (helper->model != NULL)
+			win = modest_msg_view_window_new_with_header_model ((TnyMsg *) msg, account, helper->model, helper->iter);
+		else
+			win = modest_msg_view_window_new ((TnyMsg *) msg, account);
+	}
+		
+	/* Register and show new window */
+	if (win != NULL) {
+		mgr = modest_runtime_get_window_mgr ();
+		modest_window_mgr_register_window (mgr, win);
+		gtk_window_set_transient_for (GTK_WINDOW (win), GTK_WINDOW (parent_win));
+		gtk_widget_show_all (GTK_WIDGET(win));
+	}
+
+	/* Free */
+	g_free(account);
+/* 	g_object_unref (G_OBJECT(msg)); */
+	g_object_unref (G_OBJECT(helper->folder));
+	g_slice_free (HeaderActivatedHelper, helper);
+}
+
+static void
+reply_forward_func (const GObject *obj, const TnyMsg *msg, gpointer user_data)
+{
+	TnyMsg *new_msg;
 	ReplyForwardHelper *rf_helper;
 	ModestWindow *msg_win;
 	ModestEditType edit_type;
@@ -416,10 +473,11 @@ reply_forward_func (gpointer data, gpointer user_data)
 	TnyAccount *account = NULL;
 	ModestWindowMgr *mgr;
 	gchar *signature = NULL;
-	
-	msg = TNY_MSG (data);
-	helper = (GetMsgAsyncHelper *) user_data;
-	rf_helper = (ReplyForwardHelper *) helper->user_data;
+			
+	g_return_if_fail (user_data != NULL);
+	rf_helper = (ReplyForwardHelper *) user_data;
+
+	rf_helper->pending_ops--;
 
 	from = modest_account_mgr_get_from_string (modest_runtime_get_account_mgr(),
 						   rf_helper->account_name);
@@ -430,23 +488,24 @@ reply_forward_func (gpointer data, gpointer user_data)
 							   rf_helper->account_name,
 							   MODEST_ACCOUNT_SIGNATURE, FALSE);
 	}
+
 	/* Create reply mail */
 	switch (rf_helper->action) {
 	case ACTION_REPLY:
 		new_msg = 
-			modest_tny_msg_create_reply_msg (msg,  from, signature,
+			modest_tny_msg_create_reply_msg ((TnyMsg *) msg,  from, signature,
 							 rf_helper->reply_forward_type,
 							 MODEST_TNY_MSG_REPLY_MODE_SENDER);
 		break;
 	case ACTION_REPLY_TO_ALL:
 		new_msg = 
-			modest_tny_msg_create_reply_msg (msg, from, signature, rf_helper->reply_forward_type,
+			modest_tny_msg_create_reply_msg ((TnyMsg *) msg, from, signature, rf_helper->reply_forward_type,
 							 MODEST_TNY_MSG_REPLY_MODE_ALL);
 		edit_type = MODEST_EDIT_TYPE_REPLY;
 		break;
 	case ACTION_FORWARD:
 		new_msg = 
-			modest_tny_msg_create_forward_msg (msg, from, signature, rf_helper->reply_forward_type);
+			modest_tny_msg_create_forward_msg ((TnyMsg *) msg, from, signature, rf_helper->reply_forward_type);
 		edit_type = MODEST_EDIT_TYPE_FORWARD;
 		break;
 	default:
@@ -475,7 +534,7 @@ reply_forward_func (gpointer data, gpointer user_data)
 		goto cleanup;
 	}
 	
-	tny_folder_add_msg (folder, msg, &err);
+	tny_folder_add_msg (folder, (TnyMsg *) msg, &err);
 	if (err) {
 		g_printerr ("modest: error adding msg to Drafts folder: %s",
 			    err->message);
@@ -499,8 +558,10 @@ cleanup:
 	if (account)
 		g_object_unref (G_OBJECT (account));
 	
-/* 	g_free (rf_helper->account_name); */
-/* 	g_slice_free (ReplyForwardHelper, rf_helper); */
+	if (rf_helper->pending_ops == 0) {
+		g_free (rf_helper->account_name);
+		g_slice_free (ReplyForwardHelper, rf_helper);
+	}
 }
 /*
  * Common code for the reply and forward actions
@@ -508,11 +569,10 @@ cleanup:
 static void
 reply_forward (ReplyForwardAction action, ModestWindow *win)
 {
-	TnyList *header_list;
+	ModestMailOperation *mail_op = NULL;
+	TnyList *header_list = NULL;
+	ReplyForwardHelper *rf_helper = NULL;
 	guint reply_forward_type;
-	TnyHeader *header;
-	GetMsgAsyncHelper *helper;
-	ReplyForwardHelper *rf_helper;
 	
 	g_return_if_fail (MODEST_IS_WINDOW(win));
 
@@ -532,18 +592,11 @@ reply_forward (ReplyForwardAction action, ModestWindow *win)
 	rf_helper = g_slice_new0 (ReplyForwardHelper);
 	rf_helper->reply_forward_type = reply_forward_type;
 	rf_helper->action = action;
-
+	rf_helper->pending_ops = tny_list_get_length (header_list);
 	rf_helper->account_name = g_strdup (modest_window_get_active_account (win));
 	if (!rf_helper->account_name)
 		rf_helper->account_name =
 			modest_account_mgr_get_default_account (modest_runtime_get_account_mgr());
-
-	helper = g_slice_new0 (GetMsgAsyncHelper);
-	helper->window = win;
-	helper->func = reply_forward_func;
-	helper->iter = tny_list_create_iterator (header_list);
-	helper->user_data = rf_helper;
-	helper->num_ops = tny_list_get_length (header_list);
 
 	if (MODEST_IS_MSG_VIEW_WINDOW(win)) {
 		TnyMsg *msg;
@@ -552,19 +605,17 @@ reply_forward (ReplyForwardAction action, ModestWindow *win)
 			g_printerr ("modest: no message found\n");
 			return;
 		} else
-			reply_forward_func (msg, helper);
+			reply_forward_func (G_OBJECT(win), msg, rf_helper);
 	} else {
-		header = TNY_HEADER (tny_iterator_get_current (helper->iter));
-		
-		helper->mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_ID_RECEIVE, G_OBJECT(win));
-		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), helper->mail_op);
-		modest_mail_operation_process_msg (helper->mail_op, header, helper->num_ops, get_msg_cb, helper);
+				
+		mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_ID_RECEIVE, G_OBJECT(win));
+		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
+		modest_mail_operation_process_msg (mail_op, header_list, reply_forward_func, rf_helper);
 
 		/* Clean */
-		g_object_unref (G_OBJECT (header));
+		g_object_unref(mail_op);
 	}
 }
-
 
 void
 modest_ui_actions_on_reply (GtkAction *action, ModestWindow *win)
@@ -868,61 +919,6 @@ modest_ui_actions_toggle_header_list_view (GtkAction *action, ModestMainWindow *
 				      MODEST_CONF_HEADER_VIEW_KEY);
 }
 
-/*
- * This function is a generic handler for the tny_folder_get_msg_async
- * call. It expects as user_data a #GetMsgAsyncHelper. This helper
- * contains a user provided function that is called inside this
- * method. This will allow us to use this callback in many different
- * places. This callback performs the common actions for the
- * get_msg_async call, more specific actions will be done by the user
- * function
- */
-static void
-get_msg_cb (TnyFolder *folder, gboolean canceled, TnyMsg *msg, GError **err, gpointer user_data)
-{
-	GetMsgAsyncHelper *helper;
-
-	helper = (GetMsgAsyncHelper *) user_data;
-
-	/* Check errors */
-	if ((*err && ((*err)->code == TNY_FOLDER_ERROR_GET_MSG)) || !msg) {
-		modest_ui_actions_on_item_not_found (NULL,
-						     MODEST_ITEM_TYPE_MESSAGE,
-						     helper->window);
-		return;
-	}
-
-	/* Call user function */
-	if (helper->func)
-		helper->func (msg, user_data);
-
-	/* Process next element (if exists) */
-	tny_iterator_next (helper->iter);
-	if (tny_iterator_is_done (helper->iter)) {
-		/* Notify the queue */
-		if (helper->mail_op != NULL)
-			modest_mail_operation_queue_remove (modest_runtime_get_mail_operation_queue (), helper->mail_op);
-
-		/* Free resources */
-		TnyList *headers;
-		ReplyForwardHelper *rf_helper = (ReplyForwardHelper *) helper->user_data;
-		headers = tny_iterator_get_list (helper->iter);
-		g_object_unref (G_OBJECT (headers));
-		g_object_unref (G_OBJECT (helper->iter));
-		g_object_unref (G_OBJECT (helper->mail_op));
-		if (rf_helper != NULL) {
-			g_free (rf_helper->account_name);
-			g_slice_free (ReplyForwardHelper, rf_helper);		
-		}
-		g_slice_free (GetMsgAsyncHelper, helper);
-	} else {
-		TnyHeader *header;
-		header = TNY_HEADER (tny_iterator_get_current (helper->iter));
-		modest_mail_operation_process_msg (helper->mail_op, header, helper->num_ops, get_msg_cb, helper);
-
-		g_object_unref (G_OBJECT(header));
-	}
-}
 
 void 
 modest_ui_actions_on_header_selected (ModestHeaderView *header_view, 
@@ -947,16 +943,94 @@ modest_ui_actions_on_header_selected (ModestHeaderView *header_view,
 
 
 
-void 
-modest_ui_actions_on_header_activated (ModestHeaderView *header_view, TnyHeader *header,
+/* void */
+/* modest_ui_actions_on_header_activated (ModestHeaderView *header_view, TnyHeader *header, */
+/* 				       ModestMainWindow *main_window) */
+/* { */
+/* 	ModestWindow *win = NULL; */
+/* 	TnyFolder *folder = NULL; */
+/* 	TnyMsg    *msg    = NULL; */
+/* 	TnyFolderType folder_type = TNY_FOLDER_TYPE_UNKNOWN; */
+/* 	ModestWindowMgr *mgr; */
+/* 	GtkTreeModel *model; */
+/* 	GtkTreeIter iter; */
+/* 	GtkTreeSelection *sel = NULL; */
+/* 	GList *sel_list = NULL; */
+	
+/* 	g_return_if_fail (MODEST_IS_MAIN_WINDOW(main_window)); */
+	
+/* 	if (!header) */
+/* 		return; */
+
+/* 	folder = tny_header_get_folder (header); */
+/* 	if (!folder) { */
+/* 		g_printerr ("modest: cannot get folder for header\n"); */
+/* 		return; */
+/* 	} */
+/* 	if (modest_tny_folder_is_local_folder (folder)) */
+/* 		folder_type = modest_tny_folder_get_local_folder_type (folder); */
+
+/* 	/\* FIXME: make async?; check error  *\/ */
+/* 	msg = tny_folder_get_msg (folder, header, NULL); */
+/* 	if (!msg) { */
+/* 		g_printerr ("modest: cannot get msg for header\n"); */
+/* 		goto cleanup; */
+/* 	} */
+
+/* 	/\* Look if we already have a message view for that header *\/ */
+/* 	mgr = modest_runtime_get_window_mgr (); */
+/* 	win = modest_window_mgr_find_window_by_msguid (mgr, tny_header_get_uid (header)); */
+
+/* 	/\* If not, create a new window *\/ */
+/* 	if (!win) { */
+/* 		gchar *account; */
+
+/* 		account =  g_strdup(modest_window_get_active_account(MODEST_WINDOW(main_window))); */
+/* 		if (!account) */
+/* 			account = modest_account_mgr_get_default_account (modest_runtime_get_account_mgr()); */
+
+/* 		sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (header_view)); */
+/* 		sel_list = gtk_tree_selection_get_selected_rows (sel, &model); */
+/* 		if (sel_list != NULL) { */
+/* 			gtk_tree_model_get_iter (model, &iter, (GtkTreePath *) sel_list->data); */
+			
+/* 			switch (folder_type) { */
+/* 			case TNY_FOLDER_TYPE_DRAFTS: */
+/* 				win = modest_msg_edit_window_new (msg, account); */
+/* 				break; */
+/* 			default: */
+/* 				win = modest_msg_view_window_new_with_header_model (msg, account, model, iter); */
+/* 			} */
+
+/* 			g_list_foreach (sel_list, (GFunc) gtk_tree_path_free, NULL); */
+/* 			g_list_free (sel_list); */
+/* 		} else { */
+/* 			win = modest_msg_view_window_new (msg, account); */
+/* 		} */
+/* 		modest_window_mgr_register_window (mgr, win); */
+
+/* 		gtk_window_set_transient_for (GTK_WINDOW (win), */
+/* 					      GTK_WINDOW (main_window)); */
+/* 	} */
+
+/* 	gtk_widget_show_all (GTK_WIDGET(win)); */
+
+/* 	g_object_unref (G_OBJECT (msg)); */
+	
+/* cleanup: */
+/* 	g_object_unref (G_OBJECT (folder)); */
+/* } */
+
+void
+modest_ui_actions_on_header_activated (ModestHeaderView *header_view,
+				       TnyHeader *header,
 				       ModestMainWindow *main_window)
 {
+	ModestMailOperation *mail_op = NULL;
+	HeaderActivatedHelper *helper = NULL;
+	ModestWindowMgr *mgr = NULL;
 	ModestWindow *win = NULL;
-	TnyFolder *folder = NULL;
-	TnyMsg    *msg    = NULL;
-	TnyFolderType folder_type = TNY_FOLDER_TYPE_UNKNOWN;
-	ModestWindowMgr *mgr;
-	GtkTreeModel *model;
+	GtkTreeModel *model = NULL;
 	GtkTreeIter iter;
 	GtkTreeSelection *sel = NULL;
 	GList *sel_list = NULL;
@@ -966,63 +1040,37 @@ modest_ui_actions_on_header_activated (ModestHeaderView *header_view, TnyHeader 
 	if (!header)
 		return;
 
-	folder = tny_header_get_folder (header);
-	if (!folder) {
-		g_printerr ("modest: cannot get folder for header\n");
-		return;
-	}
-	if (modest_tny_folder_is_local_folder (folder))
-		folder_type = modest_tny_folder_get_local_folder_type (folder);
-
-	/* FIXME: make async?; check error  */
-	msg = tny_folder_get_msg (folder, header, NULL);
-	if (!msg) {
-		g_printerr ("modest: cannot get msg for header\n");
-		goto cleanup;
-	}
-
-	/* Look if we already have a message view for that header */	
+	/* Look if we already have a message view for that header */
 	mgr = modest_runtime_get_window_mgr ();
 	win = modest_window_mgr_find_window_by_msguid (mgr, tny_header_get_uid (header));
+	if (win) return;
 
-	/* If not, create a new window */
-	if (!win) {
-		gchar *account;
+	/* Build helper */
+	helper = g_slice_new0 (HeaderActivatedHelper);
+	helper->folder = tny_header_get_folder (header);
+	helper->model = NULL;
 
-		account =  g_strdup(modest_window_get_active_account(MODEST_WINDOW(main_window)));
-		if (!account)
-			account = modest_account_mgr_get_default_account (modest_runtime_get_account_mgr());
+	/* Get headers tree model and selected iter to build message view */
+	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (header_view));
+	sel_list = gtk_tree_selection_get_selected_rows (sel, &model);
+	if (sel_list != NULL) {
+		gtk_tree_model_get_iter (model, &iter, (GtkTreePath *) sel_list->data);
+		
+		/* Fill helpers */
+ 		helper->model = model;
+		helper->iter = iter;
 
-		sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (header_view));
-		sel_list = gtk_tree_selection_get_selected_rows (sel, &model);
-		if (sel_list != NULL) {
-			gtk_tree_model_get_iter (model, &iter, (GtkTreePath *) sel_list->data);
-			
-			switch (folder_type) {
-			case TNY_FOLDER_TYPE_DRAFTS:
-				win = modest_msg_edit_window_new (msg, account);
-				break;
-			default:
-				win = modest_msg_view_window_new_with_header_model (msg, account, model, iter);
-			}
-
-			g_list_foreach (sel_list, (GFunc) gtk_tree_path_free, NULL);
-			g_list_free (sel_list);
-		} else {
-			win = modest_msg_view_window_new (msg, account);
-		}
-		modest_window_mgr_register_window (mgr, win);
-
-		gtk_window_set_transient_for (GTK_WINDOW (win),
-					      GTK_WINDOW (main_window));
+		g_list_foreach (sel_list, (GFunc) gtk_tree_path_free, NULL);
+		g_list_free (sel_list);
 	}
 
-	gtk_widget_show_all (GTK_WIDGET(win));
+	/* New mail operation */
+	mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_ID_RECEIVE, G_OBJECT(main_window));
+	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
+	modest_mail_operation_get_msg (mail_op, header, open_msg_func, helper);
 
-	g_object_unref (G_OBJECT (msg));
-	
-cleanup:
-	g_object_unref (G_OBJECT (folder));
+	/* Free */
+	g_object_unref (mail_op);
 }
 
 void 
