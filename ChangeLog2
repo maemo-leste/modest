@@ -1,3 +1,24 @@
+2007-05-08  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/maemo/modest-address-book.c:
+	(modest_address_book_check_names):
+	* src/maemo/modest-msg-view-window.c:
+	(modest_msg_view_window_clipboard_owner_change):
+	* src/modest-init.c: (modest_init_init_ui):
+	* src/modest-mail-operation.c: (modest_mail_operation_send_mail),
+	(update_folders_cb), (modest_mail_operation_update_account):
+	* src/modest-ui-actions.c: (modest_ui_actions_on_msg_link_hover),
+	(modest_ui_actions_on_msg_attachment_clicked),
+	(modest_ui_actions_on_msg_recpt_activated):
+	* src/widgets/modest-header-view.c: (drag_data_get_cb):
+	* src/widgets/modest-msg-view.c: (modest_msg_view_search),
+	(modest_msg_view_search_next):
+	* src/widgets/modest-recpt-editor.c:
+	(modest_recpt_editor_on_button_release_event),
+	(modest_recpt_editor_on_key_press_event): Commented-out unnecessary calls to 
+	g_message(). At this point we should only be seeing interesting errors on 
+	stdout. Debugging messages could be #ifdefed-out if they are still useful.
+
 2007-05-07  Murray Cumming  <murrayc@murrayc.com>
 	
 	(modest_wizard_dialog_force_title_update):

@@ -1183,7 +1183,7 @@ modest_msg_view_window_clipboard_owner_change (GtkClipboard *clipboard,
 	parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
 	selection = gtk_clipboard_wait_for_text (clipboard);
 
-	g_message ("SELECTION %s", selection);
+	/* g_message ("SELECTION %s", selection); */
 	is_address = ((selection != NULL) && (modest_text_utils_validate_recipient (selection)));
 	g_free (selection);
 	

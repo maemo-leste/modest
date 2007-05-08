@@ -191,7 +191,7 @@ modest_init_init_ui (gint argc, gchar** argv)
 
 	/* Set application name */
 	g_set_application_name (modest_platform_get_app_name());
-	g_message (modest_platform_get_app_name());
+	/* g_message (modest_platform_get_app_name()); */
 
 	init_stock_icons ();
 	return TRUE;

@@ -1163,7 +1163,7 @@ void
 modest_ui_actions_on_msg_link_hover (ModestMsgView *msgview, const gchar* link,
 				     ModestWindow *win)
 {
-	g_message ("%s %s", __FUNCTION__, link);
+	/* g_message ("%s %s", __FUNCTION__, link); */
 }	
 
 
@@ -1185,7 +1185,7 @@ void
 modest_ui_actions_on_msg_attachment_clicked (ModestMsgView *msgview, TnyMimePart *mime_part,
 					     ModestWindow *win)
 {
-	g_message (__FUNCTION__);
+	/* g_message (__FUNCTION__); */
 	
 }
 
@@ -1194,7 +1194,7 @@ modest_ui_actions_on_msg_recpt_activated (ModestMsgView *msgview,
 					  const gchar *address,
 					  ModestWindow *win)
 {
-	g_message ("%s %s", __FUNCTION__, address);
+	/* g_message ("%s %s", __FUNCTION__, address); */
 }
 
 void

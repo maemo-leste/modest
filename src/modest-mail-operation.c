@@ -281,8 +281,9 @@ modest_mail_operation_send_mail (ModestMailOperation *self,
 			g_printerr ("modest: error adding msg to send queue: %s\n",
 				    err->message);
 			g_error_free (err);
-		} else
-			g_message ("modest: message added to send queue");
+		} else {
+			/* g_message ("modest: message added to send queue"); */
+		}
 	}
 
 	/* Notify the queue */
@@ -456,7 +457,7 @@ update_folders_cb (TnyFolderStore *folder_store, TnyList *list, GError **err, gp
 	self  = MODEST_MAIL_OPERATION (user_data);
 	priv  = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
 
-	g_message (__FUNCTION__);
+	/* g_message (__FUNCTION__); */
 	
 	if (*err) {
 		priv->error = g_error_copy (*err);
@@ -537,7 +538,7 @@ modest_mail_operation_update_account (ModestMailOperation *self,
 	/* Get subscribed folders & refresh them */
     	folders = TNY_LIST (tny_simple_list_new ());
 
-	g_message ("tny_folder_store_get_folders_async");
+	/* g_message ("tny_folder_store_get_folders_async"); */
 	tny_folder_store_get_folders_async (TNY_FOLDER_STORE (store_account),
 					    folders, update_folders_cb, NULL, update_folders_status_cb, self);
 	

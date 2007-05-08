@@ -574,7 +574,7 @@ modest_address_book_check_names (ModestRecptEditor *recpt_editor)
 
 	recipients = modest_recpt_editor_get_recipients (recpt_editor);
 	last_length = g_utf8_strlen (recipients, -1);
-	g_message ("LENGTH %d", last_length);
+	/* g_message ("LENGTH %d", last_length); */
 	modest_text_utils_get_addresses_indexes (recipients, &start_indexes, &end_indexes);
 
 	if (start_indexes == NULL) {
@@ -603,9 +603,11 @@ modest_address_book_check_names (ModestRecptEditor *recpt_editor)
 		gtk_text_buffer_get_iter_at_offset (buffer, &end_iter, end_pos);
 		gtk_text_buffer_select_range (buffer, &start_iter, &end_iter);
 
+/*
 		g_message ("RANGE %d - %d", start_pos, end_pos);
 
 		g_message ("ADDRESS %s", address);
+*/
 		if (!modest_text_utils_validate_recipient (address)) {
 			if (strstr (address, "@") == NULL) {
 				/* here goes searching in addressbook */
@@ -629,7 +631,7 @@ modest_address_book_check_names (ModestRecptEditor *recpt_editor)
 					new_length = g_utf8_strlen (recipients, -1);
 					offset_delta = offset_delta + new_length - last_length;
 					last_length = new_length;
-					g_message ("LENGTH %d", last_length);
+					/* g_message ("LENGTH %d", last_length); */
 				}
 			} else {
 				/* this address is not valid, select it and return control to user showing banner */

@@ -1181,7 +1181,7 @@ drag_data_get_cb (GtkWidget *widget, GdkDragContext *context,
 		break;
 	}
 	default:
-		g_message ("default");
+		g_message ("%s: default switch case.", __FUNCTION__);
 	}
 
 	gtk_tree_path_free (source_row);

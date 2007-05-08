@@ -1431,7 +1431,7 @@ modest_msg_view_search (ModestMsgView *self, const gchar *search)
 					 search,
 					 FALSE, TRUE, TRUE);
 	y_offset = tmp_vadj->value;
-	g_message ("VALUE %f", y_offset);
+	/* g_message ("VALUE %f", y_offset); */
 	gtk_layout_set_vadjustment (GTK_LAYOUT (priv->gtkhtml), vadj);
 	g_object_unref (vadj);
 
@@ -1449,12 +1449,14 @@ modest_msg_view_search_next (ModestMsgView *self)
 	priv = MODEST_MSG_VIEW_GET_PRIVATE (self);
 	result = gtk_html_engine_search_next (GTK_HTML (priv->gtkhtml));
 
+/*
 	{
 		GtkAdjustment *adj;
 
 		adj = gtk_container_get_focus_vadjustment (GTK_CONTAINER (priv->gtkhtml));
 		g_message ("ADJ value %f", adj->value);
 	}
+*/
 
 	return result;
 }
