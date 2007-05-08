@@ -1705,9 +1705,12 @@ modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 	GtkWidget *entry_username = gtk_entry_new ();
 	if (initial_username)
 		gtk_entry_set_text (GTK_ENTRY (entry_username), initial_username);
-	/* TODO: Dim this if a connection has ever succeeded with this username,
+	/* Dim this if a connection has ever succeeded with this username,
 	 * as per the UI spec: */
-	/* gtk_widget_set_sensitive (entry_username, FALSE); */
+	const gboolean username_known = 
+		modest_server_account_get_username_has_succeeded(
+			modest_runtime_get_account_mgr(), server_account_name);
+	gtk_widget_set_sensitive (entry_username, !username_known);
 	
 #ifdef MODEST_PLATFORM_MAEMO
 	/* Auto-capitalization is the default, so let's turn it off: */

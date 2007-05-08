@@ -1,5 +1,26 @@
 2007-05-08  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-defs.h:
+	* src/modest-account-mgr-helpers.h:
+	* src/modest-account-mgr-helpers.c:
+	Added modest_server_account_get_username_has_succeeded(),
+	modest_server_account_set_username_has_succeeded().
+	(modest_server_account_set_username),
+	Reset the has-succeeded flag if the username changes.
+	
+	* src/maemo/modest-account-settings-dialog.c: (save_configuration):
+	* src/maemo/modest-connection-specific-smtp-window.c:
+	(modest_connection_specific_smtp_window_save_server_accounts):
+	Use modest_server_account_set_username() instead of using 
+	modest_conf_set_string() directly, so that the has-succeeded flag is always 
+	reset.
+	
+	* src/modest-ui-actions.c:
+	(modest_ui_actions_on_password_requested): Dim the username entry if 
+	the username has ever worked, as per the UI spec.
+
+2007-05-08  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/modest-tny-account-store.c: (get_password):
 	* src/modest-ui-actions.c:
 	(modest_ui_actions_on_password_requested):

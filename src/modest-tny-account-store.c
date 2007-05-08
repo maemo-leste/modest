@@ -622,7 +622,7 @@ modest_tny_account_store_alert (TnyAccountStore *self, TnyAlertType type,
 	g_return_val_if_fail (error, FALSE);
 	g_return_val_if_fail (error->domain == TNY_ACCOUNT_ERROR, FALSE);
 	
-	printf("DEBUG: %s: error->message=%s\n", __FUNCTION__, error->message);
+	/* printf("DEBUG: %s: error->message=%s\n", __FUNCTION__, error->message); */
 	
 	GtkMessageType gtktype;
 	gboolean retval = FALSE;

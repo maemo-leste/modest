@@ -262,8 +262,35 @@ void
 modest_server_account_set_username (ModestAccountMgr *self, const gchar* account_name, 
 	const gchar* username)
 {
+	/* Note that this won't work properly as long as the gconf cache is broken 
+	 * in Maemo Bora: */
+	gchar *existing_username = modest_server_account_get_username(self, 
+		account_name);
+	
 	modest_account_mgr_set_string (self, account_name, MODEST_ACCOUNT_USERNAME, 
 		username, TRUE /* server account */);
+		
+	/* We don't know anything about new usernames: */
+	if (strcmp (existing_username, username) != 0)
+		modest_server_account_set_username_has_succeeded (self, 
+		account_name, FALSE);
+		
+	g_free (existing_username);
+}
+
+gboolean
+modest_server_account_get_username_has_succeeded (ModestAccountMgr *self, const gchar* account_name)
+{
+	return modest_account_mgr_get_bool (self, account_name, MODEST_ACCOUNT_USERNAME_HAS_SUCCEEDED, 
+		TRUE /* server account */);
+}
+
+void
+modest_server_account_set_username_has_succeeded (ModestAccountMgr *self, const gchar* account_name, 
+	gboolean succeeded)
+{
+	modest_account_mgr_set_bool (self, account_name, MODEST_ACCOUNT_USERNAME_HAS_SUCCEEDED, 
+		succeeded, TRUE /* server account */);
 }
 
 void

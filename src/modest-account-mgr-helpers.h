@@ -267,6 +267,32 @@ modest_server_account_set_username (ModestAccountMgr *self, const gchar* account
 	const gchar* username);
 
 /**
+ * modest_server_account_get_username_has_succeeded:
+ * @self: a ModestAccountMgr instance
+ * @account_name: The name of a server account.
+ *
+ * Whether a connection has ever been successfully made to this account with 
+ * the current username. This can be used to avoid asking again for the username 
+ * when asking a second time for a non-stored password.
+ *
+ * Returns: TRUE if the username is known to be correct.
+ */
+gboolean
+modest_server_account_get_username_has_succeeded (ModestAccountMgr *self, const gchar* account_name);
+
+/**
+ * modest_server_account_set_username_has_succeeded:
+ * @self: a ModestAccountMgr instance
+ * @account_name: The name of a server account.
+ * @succeeded: Whether the username has succeeded
+ *
+ * Sets whether the username is known to be correct.
+ */
+void
+modest_server_account_set_username_has_succeeded (ModestAccountMgr *self, const gchar* account_name, 
+	gboolean succeeded);
+	
+/**
  * modest_server_account_set_password:
  * @self: a ModestAccountMgr instance
  * @account_name: The name of a server account.

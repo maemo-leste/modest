@@ -119,6 +119,7 @@
 #define MODEST_ACCOUNT_REMEMBER_PWD	 "remember_pwd"      /* boolean */
 #define MODEST_ACCOUNT_HOSTNAME          "hostname"          /* string */
 #define MODEST_ACCOUNT_USERNAME          "username"          /* string */
+#define MODEST_ACCOUNT_USERNAME_HAS_SUCCEEDED          "username_succeeded"          /* string */
 #define MODEST_ACCOUNT_USE_SIGNATURE         "use_signature"         /* boolean */
 #define MODEST_ACCOUNT_SIGNATURE         "signature"         /* string */
 #define MODEST_ACCOUNT_URI		 "uri"	             /* string */

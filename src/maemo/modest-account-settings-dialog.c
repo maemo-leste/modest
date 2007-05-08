@@ -1137,16 +1137,10 @@ save_configuration (ModestAccountSettingsDialog *dialog)
 		return FALSE;
 				
 	const gchar* username = gtk_entry_get_text (GTK_ENTRY (dialog->entry_user_username));
-	test = modest_account_mgr_set_string (dialog->account_manager, incoming_account_name,
-		MODEST_ACCOUNT_USERNAME, username, TRUE /* server account */);
-	if (!test)
-		return FALSE;
-				
+	modest_server_account_set_username (dialog->account_manager, incoming_account_name, username);
+	
 	const gchar* password = gtk_entry_get_text (GTK_ENTRY (dialog->entry_user_password));
-	test = modest_account_mgr_set_string (dialog->account_manager, incoming_account_name,
-		MODEST_ACCOUNT_PASSWORD, password, TRUE /*  server account */);
-	if (!test)
-		return FALSE;
+	modest_server_account_set_password (dialog->account_manager, incoming_account_name, password);
 			
 	const ModestProtocol protocol_authentication_incoming = gtk_toggle_button_get_active 
 		(GTK_TOGGLE_BUTTON (dialog->checkbox_incoming_auth)) 
@@ -1178,16 +1172,12 @@ save_configuration (ModestAccountSettingsDialog *dialog)
 		return FALSE;
 		
 	username = gtk_entry_get_text (GTK_ENTRY (dialog->entry_outgoing_username));
-	test = modest_account_mgr_set_string (dialog->account_manager, outgoing_account_name,
-		MODEST_ACCOUNT_USERNAME, username, TRUE /* server account */);
-	if (!test)
-		return FALSE;
+	modest_server_account_set_username (dialog->account_manager, outgoing_account_name,
+		username);
 		
 	password = gtk_entry_get_text (GTK_ENTRY (dialog->entry_outgoing_password));
-	test = modest_account_mgr_set_string (dialog->account_manager, outgoing_account_name,
-		MODEST_ACCOUNT_PASSWORD, password, TRUE /*  server account */);
-	if (!test)
-		return FALSE;
+	modest_server_account_set_password (dialog->account_manager, outgoing_account_name,
+		password);
 	
 	const ModestProtocol protocol_security_outgoing = modest_serversecurity_combo_box_get_active_serversecurity (
 		MODEST_SERVERSECURITY_COMBO_BOX (dialog->combo_outgoing_security));
