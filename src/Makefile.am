@@ -1,7 +1,12 @@
 #
 # Makefile.am
 # Time-stamp: <2007-04-21 11:15:36 (djcb)>
-SUBDIRS=$(MODEST_PLATFORM) widgets $(dbus_api)
+SUBDIRS=$(MODEST_PLATFORM) widgets
+
+if BUILD_DBUSAPI
+SUBDIRS += dbus_api
+endif
+
 DIST_SUBDIRS = widgets gnome maemo dbus_api
 
 INCLUDES=\
@@ -92,7 +97,10 @@ modest_LDADD = 						\
 	$(MODEST_LIBTINYMAIL_MAEMO_LIBS) 		\
 	${easysetupmaybe}				\
 	$(MODEST_PLATFORM)/libmodest-ui.la		\
-	widgets/libmodest-widgets.la \
-	dbus_api/libmodest-dbus-api.la		
+	widgets/libmodest-widgets.la
+
+if BUILD_DBUSAPI
+	modest_LDADD += dbus_api/libmodest-dbus-api.la		
+endif
 
 EXTRA_DIST=modest-marshal.list
