@@ -1783,12 +1783,13 @@ modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 		if (password) {
 			*password = g_strdup (gtk_entry_get_text (GTK_ENTRY(entry_password)));
 			
-			/* TODO: It is strange that we must return this as well as set it in gconf.
-			 * That would only be useful if there was a remember-password preference, 
-			 * but there is no such preference at this time. */
+			/* We do not save the password in the configuration, 
+			 * because this function is only called for passwords that should 
+			 * not be remembered:
 			modest_server_account_set_password (
 				 modest_runtime_get_account_mgr(), server_account_name, 
 				 *password);
+			*/
 		}
 		
 		if (cancel)

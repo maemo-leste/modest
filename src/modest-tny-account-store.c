@@ -175,6 +175,10 @@ modest_tny_account_store_instance_init (ModestTnyAccountStore *obj)
 	priv->session                = NULL;
 	priv->device                 = NULL;
 	
+	/* An in-memory store of passwords, 
+	 * for passwords that are not remembered in the configuration,
+         * so they need to be asked for from the user once in each session:
+         */
 	priv->password_hash          = g_hash_table_new_full (g_str_hash, g_str_equal,
 							      g_free, g_free);
 }
@@ -253,7 +257,8 @@ get_account_store_for_account (TnyAccount *account)
 							   "account_store"));
 }
 
-/* This callback will be called by Tinymail when it needs the password.
+/* This callback will be called by Tinymail when it needs the password
+ * from the user, for instance if the password was not remembered.
  * Note that TnyAccount here will be the server account. */
 static gchar*
 get_password (TnyAccount *account, const gchar *prompt, gboolean *cancel)
@@ -273,7 +278,7 @@ get_password (TnyAccount *account, const gchar *prompt, gboolean *cancel)
 	self = MODEST_TNY_ACCOUNT_STORE (account_store);
         priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
 	
-	/* TODO: What is this hash for? */
+	/* This hash map stores passwords, including passwords that are not stored in gconf. */
 	/* is it in the hash? if it's already there, it must be wrong... */
 	pwd_ptr = (gpointer)&pwd; /* pwd_ptr so the compiler does not complained about
 				   * type-punned ptrs...*/
@@ -315,14 +320,13 @@ get_password (TnyAccount *account, const gchar *prompt, gboolean *cancel)
 			g_hash_table_insert (priv->password_hash, g_strdup (key), g_strdup(pwd));
 		} else {
 			g_hash_table_remove (priv->password_hash, key);
+			
+			g_free (pwd);
+			pwd = NULL;
 		}
 
 		g_free (username);
 		username = NULL;
-		
-		g_free (pwd);
-		pwd = NULL;
-			
 	} else
 		*cancel = FALSE;
  

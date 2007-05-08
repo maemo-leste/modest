@@ -1,5 +1,17 @@
 2007-05-08  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-tny-account-store.c:
+	(modest_tny_account_store_instance_init), (get_password):
+	* src/modest-ui-actions.c:
+	(modest_ui_actions_on_password_requested):
+	Do not store the password in gconf, because this function is called 
+	for non-remembered passwords. Actually use the cached (in the hash map) 
+	password instead of releasing it.
+	The password will now not be remembered if it is asked via the protected 
+	password dialog, as per the UI spec.
+
+2007-05-08  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/modest-defs.h:
 	* src/modest-account-mgr-helpers.h:
 	* src/modest-account-mgr-helpers.c:
