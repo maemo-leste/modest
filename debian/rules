@@ -96,12 +96,12 @@ binary-arch: build install
 #	dh_installinfo
 	dh_installman
 	dh_link
-	dh_strip --dbg-package="modest-dbg"
+	dh_strip --keep-debug --dbg-package=modest --dbg-package=libmodest-dbus-client
 	dh_compress
 	dh_fixperms
 #	dh_perl
 #	dh_python
-#	dh_makeshlibs
+	dh_makeshlibs
 	dh_installdeb
 	dh_shlibdeps
 	dh_gencontrol 
