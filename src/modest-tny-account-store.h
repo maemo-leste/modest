@@ -68,7 +68,8 @@ struct _ModestTnyAccountStoreClass {
 				      const gchar *account_name,
 				      gpointer user_data);
 	void (*password_requested)    (ModestTnyAccountStore *self,
-				       const gchar *account_name,
+				       const gchar *server_account_name,
+				       gchar **username,
 				       gchar **password,
 				       gboolean *remember,
 				       gboolean *cancel,

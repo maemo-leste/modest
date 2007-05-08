@@ -183,8 +183,8 @@ void     modest_ui_actions_on_connection_changed    (TnyDevice *device, gboolean
 						     ModestMainWindow *main_window);
 
 void     modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
-						  const gchar* account_name,
-						  gchar **password,  gboolean *cancel, 
+						  const gchar* server_account_name,
+						  gchar **username, gchar **password, gboolean *cancel, 
 						  gboolean *remember, ModestMainWindow *main_window);
 
 void     modest_ui_actions_on_undo                     (GtkAction *action,

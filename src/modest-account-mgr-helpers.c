@@ -57,6 +57,13 @@ gboolean modest_account_mgr_set_signature (ModestAccountMgr *self, const gchar* 
 	return result;
 }
 
+gchar* modest_account_mgr_get_display_name (ModestAccountMgr *self, 
+	const gchar* name)
+{
+	return modest_account_mgr_get_string (self, name, MODEST_ACCOUNT_DISPLAY_NAME, FALSE);
+}
+
+
 
 gchar* modest_account_mgr_get_signature (ModestAccountMgr *self, const gchar* name, 
 	gboolean* use_signature)
@@ -244,7 +251,36 @@ gchar* modest_account_mgr_get_connection_specific_smtp (ModestAccountMgr *self, 
 	return result;
 }
 					 
-					 
+gchar*
+modest_server_account_get_username (ModestAccountMgr *self, const gchar* account_name)
+{
+	return modest_account_mgr_get_string (self, account_name, MODEST_ACCOUNT_USERNAME, 
+		TRUE /* server account */);
+}
+
+void
+modest_server_account_set_username (ModestAccountMgr *self, const gchar* account_name, 
+	const gchar* username)
+{
+	modest_account_mgr_set_string (self, account_name, MODEST_ACCOUNT_USERNAME, 
+		username, TRUE /* server account */);
+}
+
+void
+modest_server_account_set_password (ModestAccountMgr *self, const gchar* account_name, 
+	const gchar* password)
+{
+	modest_account_mgr_set_string (self, account_name, MODEST_ACCOUNT_PASSWORD, 
+		password, TRUE /* server account */);
+}
+	
+gchar*
+modest_server_account_get_hostname (ModestAccountMgr *self, const gchar* account_name)
+{
+	return modest_account_mgr_get_string (self, account_name, MODEST_ACCOUNT_HOSTNAME, 
+		TRUE /* server account */);
+}
+ 
 
 static ModestProtocol
 get_secure_auth_for_conf_string(const gchar* value)

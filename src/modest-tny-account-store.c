@@ -158,8 +158,8 @@ modest_tny_account_store_class_init (ModestTnyAccountStoreClass *klass)
 			       G_SIGNAL_RUN_FIRST,
 			       G_STRUCT_OFFSET(ModestTnyAccountStoreClass, password_requested),
 			       NULL, NULL,
-			       modest_marshal_VOID__STRING_POINTER_POINTER_POINTER,
-			       G_TYPE_NONE, 4, G_TYPE_STRING, G_TYPE_POINTER, G_TYPE_POINTER,
+			       modest_marshal_VOID__STRING_POINTER_POINTER_POINTER_POINTER,
+			       G_TYPE_NONE, 5, G_TYPE_STRING, G_TYPE_POINTER, G_TYPE_POINTER, G_TYPE_POINTER,
 			       G_TYPE_POINTER);
 }
 
@@ -253,15 +253,16 @@ get_account_store_for_account (TnyAccount *account)
 							   "account_store"));
 }
 
+/* This callback will be called by Tinymail when it needs the password.
+ * Note that TnyAccount here will be the server account. */
 static gchar*
 get_password (TnyAccount *account, const gchar *prompt, gboolean *cancel)
 {
-	/* printf("DEBUG: %s\n", __FUNCTION__); */
-	
 	const gchar *key;
 	const TnyAccountStore *account_store;
 	ModestTnyAccountStore *self;
 	ModestTnyAccountStorePrivate *priv;
+	gchar *username = NULL;
 	gchar *pwd = NULL;
 	gpointer pwd_ptr;
 	gboolean already_asked;
@@ -283,20 +284,20 @@ get_password (TnyAccount *account, const gchar *prompt, gboolean *cancel)
 	/* if the password is not already there, try ModestConf */
 	if (!already_asked) {
 		pwd  = modest_account_mgr_get_string (priv->account_mgr,
-						      key, MODEST_ACCOUNT_PASSWORD,TRUE);
+						      key, MODEST_ACCOUNT_PASSWORD, TRUE);
 		g_hash_table_insert (priv->password_hash, g_strdup (key), g_strdup (pwd));
 	}
 
 	/* if it was already asked, it must have been wrong, so ask again */
 	if (already_asked || !pwd || strlen(pwd) == 0) {
-
 		/* we don't have it yet. Get the password from the user */
-		const gchar* name = tny_account_get_name (account);
+		const gchar* account_id = tny_account_get_id (account);
 		gboolean remember = FALSE;
 		pwd = NULL;
 		
 		g_signal_emit (G_OBJECT(self), signals[PASSWORD_REQUESTED_SIGNAL], 0,
-			       name, &pwd, cancel, &remember);
+			       account_id, /* server_account_name */
+			       &username, &pwd, cancel, &remember);
 		
 		if (!*cancel) {
 			if (remember)
@@ -310,9 +311,14 @@ get_password (TnyAccount *account, const gchar *prompt, gboolean *cancel)
 			g_hash_table_insert (priv->password_hash, g_strdup (key), g_strdup(pwd));
 		} else {
 			g_hash_table_remove (priv->password_hash, key);
-			g_free (pwd);
-			pwd = NULL;
 		}
+
+		g_free (username);
+		username = NULL;
+		
+		g_free (pwd);
+		pwd = NULL;
+			
 	} else
 		*cancel = FALSE;
  
@@ -610,6 +616,7 @@ modest_tny_account_store_alert (TnyAccountStore *self, TnyAlertType type,
 				const GError *error)
 {
 	g_return_val_if_fail (error, FALSE);
+	g_return_val_if_fail (error->domain == TNY_ACCOUNT_ERROR, FALSE);
 	
 	printf("DEBUG: %s: error->message=%s\n", __FUNCTION__, error->message);
 	
@@ -635,7 +642,6 @@ modest_tny_account_store_alert (TnyAccountStore *self, TnyAlertType type,
 	switch (error->code)
 	{
 		case TNY_ACCOUNT_ERROR_TRY_CONNECT:
-			/* Use a Logical ID: */
 			prompt = _("Modest account not yet fully configured");
 			break;
 		default:

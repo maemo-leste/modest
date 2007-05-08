@@ -164,6 +164,17 @@ gboolean modest_account_mgr_set_enabled (ModestAccountMgr *self, const gchar* na
 gboolean modest_account_mgr_get_enabled (ModestAccountMgr *self, const gchar* name);
 
 /**
+ * modest_account_mgr_get_display_name:
+ * @self: a ModestAccountMgr instance
+ * @name: the account name to check
+ *
+ * Return the human-readable account title for this account, or NULL.
+ */
+gchar* modest_account_mgr_get_display_name (ModestAccountMgr *self, 
+	const gchar* name);
+
+
+/**
  * modest_account_mgr_set_signature
  * @self: a ModestAccountMgr instance
  * @name: the account name to check
@@ -229,7 +240,58 @@ gboolean modest_account_mgr_remove_connection_specific_smtp (ModestAccountMgr *s
  */			 
 gchar* modest_account_mgr_get_connection_specific_smtp (ModestAccountMgr *self, const gchar* name,
 					 const gchar* connection_name);
-					 
+
+
+/**
+ * modest_server_account_get_username:
+ * @self: a ModestAccountMgr instance
+ * @account_name: The name of a server account.
+ *
+ * Gets the username this server account.
+ *
+ * Returns: The username.
+ */
+gchar*
+modest_server_account_get_username (ModestAccountMgr *self, const gchar* account_name);
+
+/**
+ * modest_server_account_set_username:
+ * @self: a ModestAccountMgr instance
+ * @account_name: The name of a server account.
+ * @username: The new username.
+ *
+ * Sets the username this server account.
+ */
+void
+modest_server_account_set_username (ModestAccountMgr *self, const gchar* account_name, 
+	const gchar* username);
+
+/**
+ * modest_server_account_set_password:
+ * @self: a ModestAccountMgr instance
+ * @account_name: The name of a server account.
+ * @password: The new password.
+ *
+ * Sets the password this server account.
+ */
+void
+modest_server_account_set_password (ModestAccountMgr *self, const gchar* account_name, 
+	const gchar* password);
+			 
+
+/**
+ * modest_server_account_modest_server_account_get_hostnameget_username:
+ * @self: a ModestAccountMgr instance
+ * @account_name: The name of a server account.
+ *
+ * Gets the hostname this server account.
+ *
+ * Returns: The hostname.
+ */
+gchar*
+modest_server_account_get_hostname (ModestAccountMgr *self, const gchar* account_name);
+
+
 /**
  * modest_server_account_get_secure_auth:
  * @self: a ModestAccountMgr instance

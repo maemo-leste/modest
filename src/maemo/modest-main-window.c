@@ -422,6 +422,10 @@ connect_signals (ModestMainWindow *self)
 			  G_CALLBACK (on_account_update),
 			  self);
 
+	/* Account store */
+	g_signal_connect (G_OBJECT (modest_runtime_get_account_store()), "password_requested",
+			  G_CALLBACK (modest_ui_actions_on_password_requested), self);
+			  
 	/* Device */
 	g_signal_connect (G_OBJECT(modest_runtime_get_device()), "connection_changed",
 			  G_CALLBACK(on_connection_changed), self);

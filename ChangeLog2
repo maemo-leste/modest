@@ -1,5 +1,39 @@
 2007-05-08  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-account-mgr-helpers.h:
+	* src/modest-account-mgr-helpers.c:
+	Added modest_account_mgr_get_display_name(),
+	modest_server_account_get_username(),
+	modest_server_account_set_username(),
+	modest_server_account_set_password(),
+	modest_server_account_get_hostname() functions so we do not need to 
+	use the conf API directly.
+	
+	* src/maemo/modest-main-window.c: (connect_signals):
+	Actually connect ot the ModestAccountStore::request-password signal, 
+	so that we show the dialog when the password is requested by Tinymail, 
+	for isntance if it is empty.
+
+	* src/modest-marshal.list:
+	* src/modest-tny-account-store.c:
+	(modest_tny_account_store_class_init), (get_password),
+	(modest_tny_account_store_alert):
+	* src/modest-tny-account-store.h:
+	* src/modest-ui-actions.h:
+	* src/modest-ui-actions.c:
+	(modest_ui_actions_on_password_requested):
+	Change the signal parameters, so it is obvious that we are providing 
+	the non human-readable server name, and receiving both the username 
+	and password, though changing of the username is not yet implemented.
+	Change the dialog UI to match the Maemo UI specifications, with #idfefing 
+	for the GNOME version.
+	
+	This should fix the projects.maemo.org bug NB#56209, though it does not 
+	work on Bora, because the gconf_client_get() for the password fails 
+	immediately after we save it with gconf_client_set().
+
+2007-05-08  Murray Cumming  <murrayc@murrayc.com>
+
 	* configure.ac:
 	* src/Makefile.am: Reverted the use of AM_CONDITIONAL(), because it 
 	caused an undefined symbol error:

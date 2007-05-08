@@ -46,6 +46,7 @@
 
 #ifdef MODEST_PLATFORM_MAEMO
 #include "maemo/modest-osso-state-saving.h"
+#include "maemo/modest-maemo-ui-constants.h"
 #endif /* MODEST_PLATFORM_MAEMO */
 
 
@@ -1650,17 +1651,30 @@ modest_ui_actions_on_move_folder_to_trash_folder (GtkAction *action, ModestMainW
 
 void
 modest_ui_actions_on_password_requested (TnyAccountStore *account_store, 
-					 const gchar* account_name,
+					 const gchar* server_account_name,
+					 gchar **username,
 					 gchar **password, 
 					 gboolean *cancel, 
 					 gboolean *remember,
 					 ModestMainWindow *main_window)
 {
-	/* printf("DEBUG: %s\n", __FUNCTION__); */
-	gchar *txt;
-	GtkWidget *dialog, *entry, *remember_pass_check;
-
-	dialog = gtk_dialog_new_with_buttons (_("Password requested"),
+	g_return_if_fail(server_account_name);
+	/* printf("DEBUG: %s: server_account_name=%s\n", __FUNCTION__, server_account_name); */
+	
+#ifdef MODEST_PLATFORM_MAEMO
+	/* Maemo uses a different (awkward) button order,
+	 * It should probably just use gtk_alternative_dialog_button_order ().
+	 */
+	GtkWidget *dialog = gtk_dialog_new_with_buttons (_("mail_ti_password_protected"),
+					      NULL,
+					      GTK_DIALOG_MODAL,
+					      GTK_STOCK_OK,
+					      GTK_RESPONSE_ACCEPT,
+					      GTK_STOCK_CANCEL,
+					      GTK_RESPONSE_REJECT,
+					      NULL);
+#else
+	GtkWidget *dialog = gtk_dialog_new_with_buttons (_("mail_ti_password_protected"),
 					      NULL,
 					      GTK_DIALOG_MODAL,
 					      GTK_STOCK_CANCEL,
@@ -1668,38 +1682,114 @@ modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 					      GTK_STOCK_OK,
 					      GTK_RESPONSE_ACCEPT,
 					      NULL);
+#endif /* MODEST_PLATFORM_MAEMO */
+
 	gtk_window_set_transient_for (GTK_WINDOW(dialog), GTK_WINDOW(main_window));
 	
-	txt = g_strdup_printf (_("Please enter your password for %s"), account_name);
+	gchar *server_name = modest_server_account_get_hostname (
+		modest_runtime_get_account_mgr(), server_account_name);
+	
+	/* This causes a warning because the logical ID has no %s in it, 
+	 * though the translation does, but there is not much we can do about that: */
+	gchar *txt = g_strdup_printf (_("mail_ia_password_info"), server_name);
 	gtk_box_pack_start (GTK_BOX(GTK_DIALOG(dialog)->vbox), gtk_label_new(txt),
 			    FALSE, FALSE, 0);
 	g_free (txt);
+	g_free (server_name);
+	server_name = NULL;
 
-	entry = gtk_entry_new_with_max_length (40);
-	gtk_entry_set_visibility (GTK_ENTRY(entry), FALSE);
-	gtk_entry_set_invisible_char (GTK_ENTRY(entry), 0x2022); /* bullet unichar */
+	/* username: */
+	gchar *initial_username = modest_server_account_get_username (
+		modest_runtime_get_account_mgr(), server_account_name);
 	
-	gtk_box_pack_start (GTK_BOX(GTK_DIALOG(dialog)->vbox), entry,
-			    TRUE, FALSE, 0);	
-
+	GtkWidget *entry_username = gtk_entry_new ();
+	if (initial_username)
+		gtk_entry_set_text (GTK_ENTRY (entry_username), initial_username);
+	 /* TODO: Allow the username to be changed here. */
+	gtk_widget_set_sensitive (entry_username, FALSE);
+	
+#ifdef MODEST_PLATFORM_MAEMO
+	/* Auto-capitalization is the default, so let's turn it off: */
+	hildon_gtk_entry_set_input_mode (GTK_ENTRY (entry_username), HILDON_GTK_INPUT_MODE_FULL);
+	
+	/* Create a size group to be used by all captions.
+	 * Note that HildonCaption does not create a default size group if we do not specify one.
+	 * We use GTK_SIZE_GROUP_HORIZONTAL, so that the widths are the same. */
+	GtkSizeGroup *sizegroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
+	
+	GtkWidget *caption = hildon_caption_new (sizegroup, 
+		_("mail_fi_username"), entry_username, NULL, HILDON_CAPTION_MANDATORY);
+	gtk_widget_show (entry_username);
+	gtk_box_pack_start (GTK_BOX(GTK_DIALOG(dialog)->vbox), caption, 
+		FALSE, FALSE, MODEST_MARGIN_HALF);
+	gtk_widget_show (caption);
+#else 
+	gtk_box_pack_start (GTK_BOX(GTK_DIALOG(dialog)->vbox), entry_username,
+			    TRUE, FALSE, 0);
+#endif /* MODEST_PLATFORM_MAEMO */	
+			    
+	/* password: */
+	GtkWidget *entry_password = gtk_entry_new ();
+	gtk_entry_set_visibility (GTK_ENTRY(entry_password), FALSE);
+	gtk_entry_set_invisible_char (GTK_ENTRY(entry_password), 0x2022); /* bullet unichar */
+	
+#ifdef MODEST_PLATFORM_MAEMO
+	/* Auto-capitalization is the default, so let's turn it off: */
+	hildon_gtk_entry_set_input_mode (GTK_ENTRY (entry_password), HILDON_GTK_INPUT_MODE_FULL);
+	
+	caption = hildon_caption_new (sizegroup, 
+		_("mail_fi_password"), entry_password, NULL, HILDON_CAPTION_MANDATORY);
+	gtk_widget_show (entry_password);
+	gtk_box_pack_start (GTK_BOX(GTK_DIALOG(dialog)->vbox), caption, 
+		FALSE, FALSE, MODEST_MARGIN_HALF);
+	gtk_widget_show (caption);
+#else 
+	gtk_box_pack_start (GTK_BOX(GTK_DIALOG(dialog)->vbox), entry_password,
+			    TRUE, FALSE, 0);
+#endif /* MODEST_PLATFORM_MAEMO */	
+			    	
+/* This is not in the Maemo UI spec:
 	remember_pass_check = gtk_check_button_new_with_label (_("Remember password"));
 	gtk_box_pack_start (GTK_BOX(GTK_DIALOG(dialog)->vbox), remember_pass_check,
 			    TRUE, FALSE, 0);
+*/
 
 	gtk_widget_show_all (GTK_WIDGET(GTK_DIALOG(dialog)->vbox));
 	
 	if (gtk_dialog_run (GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
-		*password = g_strdup (gtk_entry_get_text (GTK_ENTRY(entry)));
-		*cancel   = FALSE;
+		if (username)
+			*username = g_strdup (gtk_entry_get_text (GTK_ENTRY(entry_username)));
+			
+		if (password) {
+			*password = g_strdup (gtk_entry_get_text (GTK_ENTRY(entry_password)));
+			
+			/* TODO: It is strange that we must return this as well as set it in gconf.
+			 * That would only be useful if there was a remember-password preference, 
+			 * but there is no such preference at this time. */
+			modest_server_account_set_password (
+				 modest_runtime_get_account_mgr(), server_account_name, 
+				 *password);
+		}
+		
+		if (cancel)
+			*cancel   = FALSE;
 	} else {
-		*password = NULL;
-		*cancel   = TRUE;
+		if (username)
+			*username = NULL;
+			
+		if (password)
+			*password = NULL;
+			
+		if (cancel)
+			*cancel   = TRUE;
 	}
 
+/* This is not in the Maemo UI spec:
 	if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (remember_pass_check)))
 		*remember = TRUE;
 	else
 		*remember = FALSE;
+*/
 
 	gtk_widget_destroy (dialog);
 }
