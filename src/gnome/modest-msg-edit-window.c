@@ -120,7 +120,10 @@ static void
 modest_msg_edit_window_class_init (ModestMsgEditWindowClass *klass)
 {
 	GObjectClass *gobject_class;
+	ModestWindowClass *modest_window_class;
+	
 	gobject_class = (GObjectClass*) klass;
+        modest_window_class = (ModestWindowClass*) klass;
 
 	parent_class            = g_type_class_peek_parent (klass);
 	gobject_class->finalize = modest_msg_edit_window_finalize;
