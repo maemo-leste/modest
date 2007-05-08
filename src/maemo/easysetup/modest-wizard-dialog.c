@@ -427,7 +427,6 @@ create_title (ModestWizardDialog *wizard_dialog)
     ModestWizardDialogPrivate *priv = NULL;
     GtkNotebook *notebook = NULL;
 
-    /* FIXME (jfernandez): Sometines, priv is NULL */
     g_return_if_fail (MODEST_IS_WIZARD_DIALOG(wizard_dialog));
     g_return_if_fail (wizard_dialog->priv != NULL);
 
