@@ -271,20 +271,30 @@ init (ModestWizardDialog *wizard_dialog)
 }
 
 #if GTK_CHECK_VERSION(2, 10, 0) /* These signals were added in GTK+ 2.10: */
-static void on_notebook_page_added(ModestWizardDialog* dialog, 
-	GtkWidget   *child,
-	guint        page_num,
-	gpointer     user_data)
+static void on_notebook_page_added(GtkNotebook *notebook, 
+				   GtkWidget   *child,
+				   guint        page_num,
+				   gpointer     user_data)
 {
+	ModestWizardDialog* dialog = NULL;
+
+	g_return_if_fail (MODEST_IS_WIZARD_DIALOG(user_data));
+	dialog = MODEST_WIZARD_DIALOG(user_data);
+
 	/* The title should show the total number of pages: */
 	create_title (dialog);
 }
 
-static void on_notebook_page_removed(ModestWizardDialog* dialog, 
-	GtkWidget   *child,
-	guint        page_num,
-	gpointer     user_data)
+static void on_notebook_page_removed(GtkNotebook *notebook, 
+				     GtkWidget   *child,
+				     guint        page_num,
+				     gpointer     user_data)
 {
+	ModestWizardDialog* dialog = NULL;
+
+	g_return_if_fail (MODEST_IS_WIZARD_DIALOG(user_data));
+	dialog = MODEST_WIZARD_DIALOG(user_data);
+
 	/* The title should show the total number of pages: */
 	create_title (dialog);
 }
@@ -299,10 +309,10 @@ connect_to_notebook_signals(ModestWizardDialog* dialog)
 	
 	/* Connect to the notebook signals,
 	 * so we can update the title when necessary: */
-    g_signal_connect (G_OBJECT (priv->notebook), "page-added",
-            G_CALLBACK (on_notebook_page_added), NULL);
-    g_signal_connect (G_OBJECT (priv->notebook), "page-removed",
-            G_CALLBACK (on_notebook_page_removed), NULL);
+	g_signal_connect (G_OBJECT (priv->notebook), "page-added",
+		      G_CALLBACK (on_notebook_page_added), dialog);
+	g_signal_connect (G_OBJECT (priv->notebook), "page-removed",
+		      G_CALLBACK (on_notebook_page_removed), dialog);
 #endif /* GTK_CHECK_VERSION */
 }
 
@@ -414,8 +424,15 @@ create_title (ModestWizardDialog *wizard_dialog)
 {
     gint pages, current;
     gchar *str = NULL;
-    ModestWizardDialogPrivate *priv = wizard_dialog->priv;
-    GtkNotebook *notebook = priv->notebook;
+    ModestWizardDialogPrivate *priv = NULL;
+    GtkNotebook *notebook = NULL;
+
+    /* FIXME (jfernandez): Sometines, priv is NULL */
+    g_return_if_fail (MODEST_IS_WIZARD_DIALOG(wizard_dialog));
+    g_return_if_fail (wizard_dialog->priv != NULL);
+
+    priv = wizard_dialog->priv;    
+    notebook = priv->notebook;
 
     if (!notebook)
         return;
