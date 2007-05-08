@@ -33,6 +33,7 @@
 #include <tny-account.h>
 #include <tny-account-store.h>
 #include <tny-store-account.h>
+#include <tny-error.h>
 #include <tny-transport-account.h>
 #include <tny-simple-list.h>
 #include <tny-account-store.h>
@@ -255,6 +256,8 @@ get_account_store_for_account (TnyAccount *account)
 static gchar*
 get_password (TnyAccount *account, const gchar *prompt, gboolean *cancel)
 {
+	/* printf("DEBUG: %s\n", __FUNCTION__); */
+	
 	const gchar *key;
 	const TnyAccountStore *account_store;
 	ModestTnyAccountStore *self;
@@ -313,6 +316,8 @@ get_password (TnyAccount *account, const gchar *prompt, gboolean *cancel)
 	} else
 		*cancel = FALSE;
  
+    /* printf("  DEBUG: %s: returning %s\n", __FUNCTION__, pwd); */
+	
 	return pwd;
 }
 
@@ -602,8 +607,12 @@ modest_tny_account_store_find_account_by_url (TnyAccountStore *self, const gchar
 
 static gboolean
 modest_tny_account_store_alert (TnyAccountStore *self, TnyAlertType type,
-				const gchar *prompt)
+				const GError *error)
 {
+	g_return_val_if_fail (error, FALSE);
+	
+	printf("DEBUG: %s: error->message=%s\n", __FUNCTION__, error->message);
+	
 	GtkMessageType gtktype;
 	gboolean retval = FALSE;
 	GtkWidget *dialog;
@@ -621,6 +630,22 @@ modest_tny_account_store_alert (TnyAccountStore *self, TnyAlertType type,
 		gtktype = GTK_MESSAGE_ERROR;
 		break;
 	}
+	
+	const gchar *prompt = NULL;
+	switch (error->code)
+	{
+		case TNY_ACCOUNT_ERROR_TRY_CONNECT:
+			/* Use a Logical ID: */
+			prompt = _("Modest account not yet fully configured");
+			break;
+		default:
+			g_warning ("%s: Unhandled GError code.", __FUNCTION__);
+			prompt = NULL;
+		break;
+	}
+	
+	if (!prompt)
+		return FALSE;
 
 	dialog = gtk_message_dialog_new (NULL, GTK_DIALOG_MODAL,
 		gtktype, GTK_BUTTONS_YES_NO, prompt);

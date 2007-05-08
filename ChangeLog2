@@ -1,5 +1,13 @@
 2007-05-08  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-tny-account-store.c:
+	(modest_tny_account_store_alert): Adapt to the changed tinymail API, 
+	using a GError instead of a string message, so we can translate it in 
+	Modest.
+
+
+2007-05-08  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/maemo/modest-address-book.c:
 	(modest_address_book_check_names):
 	* src/maemo/modest-msg-view-window.c:

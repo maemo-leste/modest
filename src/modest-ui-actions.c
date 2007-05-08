@@ -1656,6 +1656,7 @@ modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 					 gboolean *remember,
 					 ModestMainWindow *main_window)
 {
+	/* printf("DEBUG: %s\n", __FUNCTION__); */
 	gchar *txt;
 	GtkWidget *dialog, *entry, *remember_pass_check;
 
