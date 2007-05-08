@@ -1,10 +1,16 @@
 2007-05-08  Murray Cumming  <murrayc@murrayc.com>
 
+	* configure.ac:
+	* src/Makefile.am: Reverted the use of AM_CONDITIONAL(), because it 
+	caused an undefined symbol error:
+	modest-platform.c:84: undefined reference to `modest_osso_cb_hw_state_handler
+
+2007-05-08  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/modest-tny-account-store.c:
 	(modest_tny_account_store_alert): Adapt to the changed tinymail API, 
 	using a GError instead of a string message, so we can translate it in 
 	Modest.
-
 
 2007-05-08  Murray Cumming  <murrayc@murrayc.com>
 

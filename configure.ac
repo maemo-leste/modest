@@ -148,8 +148,6 @@ else
 
 fi
 
-AM_CONDITIONAL(BUILD_DBUSAPI, test x$dbus_api = xdbus_api)
-
 dnl do we have the easy setup stuff?
 have_easysetup=false
 if test -d src/${with_platform}/easysetup; then	
