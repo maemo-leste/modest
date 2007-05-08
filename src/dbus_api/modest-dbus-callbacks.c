@@ -409,9 +409,14 @@ static gint on_open_message(GArray * arguments, gpointer data, osso_rpc_t * retv
 static gboolean
 on_idle_send_receive(gpointer user_data)
 {
-	ModestWindow* main_window = modest_window_mgr_get_main_window(
-		modest_runtime_get_window_mgr ());
-	do_send_receive(main_window);
+	ModestWindow *win;
+
+	/* Pick the main window if it exists */
+	win = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr ());
+
+	/* Send & receive all if "Update automatically" is set */
+	/* TODO: check the auto-update parametter in the configuration */
+	modest_ui_actions_do_send_receive_all (win);
 	
 	return FALSE; /* Do not call this callback again. */
 }

@@ -106,6 +106,8 @@ static void set_toolbar_mode                  (ModestMainWindow *self,
 static void on_show_account_action_activated  (GtkAction *action,
 					       gpointer user_data);
 
+static void on_send_receive_csm_activated     (GtkMenuItem *item,
+					       gpointer user_data);
 /* list my signals */
 enum {
 	/* MY_SIGNAL_1, */
@@ -358,7 +360,7 @@ on_connection_changed (TnyDevice *device, gboolean online, ModestMainWindow *sel
 	 * as per the specification:
 	 * (without the check for >0 accounts, though that is not specified): */
 	if (online) {
-		do_send_receive (MODEST_WINDOW (self));
+		modest_ui_actions_do_send_receive (NULL, MODEST_WINDOW (self));
 	}
 }
 
@@ -435,7 +437,7 @@ connect_signals (ModestMainWindow *self)
 gboolean
 sync_accounts_cb (ModestMainWindow *win)
 {
-	do_send_receive (MODEST_WINDOW(win));
+	modest_ui_actions_do_send_receive (NULL, MODEST_WINDOW (win));
 	return FALSE; /* Do not call this idle handler again. */
 }
 
@@ -551,6 +553,9 @@ modest_main_window_new (void)
 				      modest_conf_get_bool (conf, MODEST_CONF_SHOW_TOOLBAR_FULLSCREEN, NULL));
 	hildon_window_set_menu (HILDON_WINDOW (self), GTK_MENU (parent_priv->menubar));
 
+	/* Get device name */
+	modest_maemo_utils_get_device_name ();
+
 	/* folder view */
 	query = tny_folder_store_query_new ();
 	tny_folder_store_query_add_item (query, NULL,
@@ -561,9 +566,6 @@ modest_main_window_new (void)
 	g_object_unref (G_OBJECT (query));
 	modest_folder_view_set_style (priv->folder_view,
 				      MODEST_FOLDER_VIEW_STYLE_SHOW_ONE);
-
-	/* Get device name */
-	modest_maemo_utils_get_device_name ();
 
 	/* header view */
 	priv->header_view  =
@@ -613,7 +615,6 @@ modest_main_window_new (void)
 	/* do send & receive when we are idle */
 	g_idle_add ((GSourceFunc)sync_accounts_cb, self);
 	
-
 	HildonProgram *app = hildon_program_get_instance ();
 	hildon_program_add_window (app, HILDON_WINDOW (self));
 	
@@ -857,10 +858,6 @@ compare_display_names (ModestAccountData *a,
 	return strcmp (a->display_name, b->display_name);
 }
 
-/*
- * TODO: modify the menu dynamically. Add handlers to each item of the
- * menu when created
- */
 static void 
 on_account_update (TnyAccountStore *account_store, 
 		   gchar *accout_name,
@@ -940,6 +937,10 @@ on_account_update (TnyAccountStore *account_store,
 			priv->accounts_popup = gtk_menu_new ();
 		item = gtk_menu_item_new_with_label (_("mcen_me_toolbar_sendreceive_all"));
 		gtk_menu_shell_append (GTK_MENU_SHELL (priv->accounts_popup), GTK_WIDGET (item));
+		g_signal_connect (G_OBJECT (item), 
+				  "activate", 
+				  G_CALLBACK (on_send_receive_csm_activated),
+				  NULL);
 		item = gtk_separator_menu_item_new ();
 		gtk_menu_shell_append (GTK_MENU_SHELL (priv->accounts_popup), GTK_WIDGET (item));
 	}
@@ -992,6 +993,12 @@ on_account_update (TnyAccountStore *account_store,
 		/* Create item and add it to the send&receive CSM */
 		item = gtk_menu_item_new_with_label (display_name);
 		gtk_menu_shell_append (GTK_MENU_SHELL (priv->accounts_popup), GTK_WIDGET (item));
+		g_signal_connect_data (G_OBJECT (item), 
+				       "activate", 
+				       G_CALLBACK (on_send_receive_csm_activated),
+				       g_strdup (account_data->account_name),
+				       (GClosureNotify) g_free,
+				       0);
 
 		/* Frees */
 		g_free (display_name);
@@ -1372,12 +1379,13 @@ on_queue_changed (ModestMailOperationQueue *queue,
 		break;
 	case MODEST_MAIL_OPERATION_QUEUE_OPERATION_REMOVED:
 		if (mode == TOOLBAR_MODE_TRANSFER) {
+
 			while (tmp) {
 				modest_progress_object_remove_operation (MODEST_PROGRESS_OBJECT (tmp->data),
 									 mail_op);
 				tmp = g_slist_next (tmp);
 			}
-			
+
 			/* If no more operations are being observed, NORMAL mode is enabled again */
 			if (observers_empty (self))
 				set_toolbar_mode (self, TOOLBAR_MODE_NORMAL);
@@ -1394,19 +1402,38 @@ on_show_account_action_activated  (GtkAction *action,
 	ModestMainWindow *self;
 	ModestMainWindowPrivate *priv;
 	ModestAccountMgr *mgr;
+	const gchar *acc_name;
 
 	self = MODEST_MAIN_WINDOW (user_data);
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
 
 	/* Get account data */
+	acc_name = gtk_action_get_name (action);
 	mgr = modest_runtime_get_account_mgr ();
-	acc_data = modest_account_mgr_get_account_data (mgr, gtk_action_get_name (action));
+	acc_data = modest_account_mgr_get_account_data (mgr, acc_name);
 
-	/* Set the new visible account */
-	if (acc_data->store_account) 
+	/* Set the new visible & active account */
+	if (acc_data->store_account) { 
 		modest_folder_view_set_account_id_of_visible_server_account (priv->folder_view,
 									     acc_data->store_account->account_name);
+	}
 
 	/* Free */
 	modest_account_mgr_free_account_data (mgr, acc_data);
+}
+
+static void
+on_send_receive_csm_activated (GtkMenuItem *item,
+			       gpointer user_data)
+{
+	ModestWindow *win;
+
+	win = MODEST_WINDOW (modest_window_mgr_get_main_window (modest_runtime_get_window_mgr ()));
+
+	/* If user_data == NULL, we must update all (CSM option All) */
+	if (!user_data) {
+		modest_ui_actions_do_send_receive_all (win);
+	} else {
+		modest_ui_actions_do_send_receive ((const gchar *)user_data, win);
+	}
 }

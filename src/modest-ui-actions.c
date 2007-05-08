@@ -788,86 +788,75 @@ gboolean check_for_connection (const gchar *account_name)
 		return TRUE;
 	}
 }
-	
-static void
-do_send_receive_current_or_default (ModestWindow *win)
-{
-	gchar *account_name;
 
-	g_message ("%s: online? %s", __FUNCTION__,  
-		tny_device_is_online(modest_runtime_get_device()) ? "yes":"no");
-				
-	/* As per the UI spec, only the active account should be affected, 
-	 * else the default folder if there is no active account: */				
-	account_name =
-		g_strdup(modest_window_get_active_account(MODEST_WINDOW(win)));
-	if (!account_name)
-		account_name  = modest_account_mgr_get_default_account (modest_runtime_get_account_mgr());
+/*
+ * This function performs the send & receive required actions. The
+ * window it's used to create the mail operation. Tipically it should
+ * be allways the main window, but we pass it as argument in order to
+ * be more flexible.
+ */
+void
+modest_ui_actions_do_send_receive (const gchar *account_name, ModestWindow *win)
+{
+	gchar *acc_name = NULL;
+
+	/* If no account name was provided get the current account, if
+	   there is none either then pick the default one */
 	if (!account_name) {
-		g_printerr ("modest: cannot get default account\n");
-		return;
+		acc_name = g_strdup (modest_window_get_active_account(win));
+		if (!acc_name)
+			acc_name  = modest_account_mgr_get_default_account (modest_runtime_get_account_mgr());
+		if (!acc_name) {
+			g_printerr ("modest: cannot get default account\n");
+			return;
+		}
+	} else {
+		acc_name = g_strdup (account_name);
 	}
-	
-	/* Do not continue if no suitable connection is open: */
-	if (check_for_connection (account_name)) {
+
+	/* Send & receive. Do not continue if no suitable connection
+	   is open */
+	if (check_for_connection (acc_name)) {
 		/* As per the UI spec,
 		 * for POP accounts, we should receive,
 		 * for IMAP we should synchronize everything, including receiving,
 		 * for SMTP we should send,
 		 * first receiving, then sending:
 		 */
-		if (!action_receive(account_name, win))
+		if (!action_receive(acc_name, win))
 			g_printerr ("modest: failed to receive\n");
-		if (!action_send(account_name))
+		if (!action_send(acc_name))
 			g_printerr ("modest: failed to send\n");
-		
-		g_free (account_name);
 	}
+	/* Free */
+	g_free (acc_name);
 }
 
-
-static void
-do_send_receive_auto (ModestWindow *win)
+/*
+ * Refreshes all accounts. This function will be used by automatic
+ * updates
+ */
+void
+modest_ui_actions_do_send_receive_all (ModestWindow *win)
 {
-	g_message ("%s: online? %s", __FUNCTION__,  
-		tny_device_is_online(modest_runtime_get_device()) ? "yes":"no");
+	GSList *account_names, *iter;
 
-	/* TODO: Delete the item->data strings as well as the list? */
-	GSList *account_names = modest_account_mgr_account_names (modest_runtime_get_account_mgr(), 
-				TRUE /* enabled accounts only */);
-	GSList *iter = account_names;
+	account_names = modest_account_mgr_account_names (modest_runtime_get_account_mgr(), 
+							  TRUE);
+
+	iter = account_names;
 	while (iter) {			
-		const gchar * account_name = (const char*) iter->data;
-		
-		/* Do not continue if no suitable connection is open: */
-		if (account_name && check_for_connection (account_name)) {
-			/* As per the UI spec,
-			 * for POP accounts, we should receive,
-			 * for IMAP we should synchronize everything, including receiving,
-			 * for SMTP we should send,
-			 * first receiving, then sending:
-			 */
-			if (!action_receive(account_name, win))
-				g_printerr ("modest: failed to receive for account %s\n", account_name);
-			if (!action_send(account_name))
-				g_printerr ("modest: failed to send for account %s\n", account_name);
-		}
+		modest_ui_actions_do_send_receive ((const char*) iter->data, win);
+		iter = g_slist_next (iter);
 	}
 	
-	
+	g_slist_foreach (account_names, (GFunc) g_free, NULL);
 	g_slist_free (account_names);
 }
 
-void
-do_send_receive (ModestWindow *win)
-{
-	const gboolean auto_update = TRUE; /* TODO: Get gconf setting. */
-	if (auto_update)
-		do_send_receive_current_or_default (win);
-	else
-		do_send_receive_auto (win);
-}
-
+/*
+ * Handler of the click on Send&Receive button in the main toolbar
+ */
 void
 modest_ui_actions_on_send_receive (GtkAction *action,  ModestWindow *win)
 {
@@ -878,14 +867,12 @@ modest_ui_actions_on_send_receive (GtkAction *action,  ModestWindow *win)
 	g_slist_free (account_names);
 	
 	/* If not, allow the user to create an account before trying to send/receive. */
-	if (!accounts_exist) {
+	if (!accounts_exist)
 		modest_ui_actions_on_accounts (NULL, win);
-	}
-		
-	do_send_receive (win);
+	
+	/* Refresh the active account */
+	modest_ui_actions_do_send_receive (NULL, win);
 }
-
-
 
 
 void
@@ -1094,9 +1081,9 @@ modest_ui_actions_on_folder_selection_changed (ModestFolderView *folder_view,
 
 	if (TNY_IS_FOLDER (folder_store)) {
 
-		modest_main_window_set_contents_style (main_window, MODEST_MAIN_WINDOW_CONTENTS_STYLE_HEADERS);
-
 		if (selected) {
+			modest_main_window_set_contents_style (main_window, 
+							       MODEST_MAIN_WINDOW_CONTENTS_STYLE_HEADERS);
 			modest_header_view_set_folder (MODEST_HEADER_VIEW(header_view),
 						       TNY_FOLDER (folder_store));
 			modest_widget_memory_restore (conf, G_OBJECT(header_view),

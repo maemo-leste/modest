@@ -162,10 +162,37 @@ void     modest_ui_actions_on_select_editor_background_color      (GtkAction *ac
 void     modest_ui_actions_on_insert_image             (GtkAction *action,
 							ModestMsgEditWindow *window);
 
-/* TODO: Is there a better place for this? */
-void do_send_receive (ModestWindow *win);
+/**
+ * modest_ui_actions_do_send_receive_all:
+ * @win: the window that will be used as source of the refresh mail operation
+ * 
+ * Refreshes all the accounts
+ **/
+void    modest_ui_actions_do_send_receive_all          (ModestWindow *win);
 
-void    modest_ui_actions_on_send_receive              (GtkAction *action, ModestWindow *win);
+/**
+ * modest_ui_actions_do_send_receive:
+ * @account_name: the name of the Modest account or NULL
+ * @win: the window that will be used as source of the refresh mail operation
+ * 
+ * Refreshes the Modest account whose name is passed as argument. If
+ * NULL is passed as #account_name then this function refreses the
+ * active account, if no active account is defined then it picks the
+ * default account
+ **/
+void    modest_ui_actions_do_send_receive              (const gchar *account_name,
+							ModestWindow *win);
+
+/**
+ * modest_ui_actions_on_send_receive:
+ * @action: a #GtkAction
+ * @win: the Window that contains the action
+ * 
+ * Handles the activation of the send receive action, for example
+ * clicks on Send&Receive button in the main toolbar
+ **/
+void    modest_ui_actions_on_send_receive              (GtkAction *action, 
+							ModestWindow *win);
 
 void     modest_ui_actions_on_new_folder               (GtkAction *action,
 							ModestMainWindow *main_window);
