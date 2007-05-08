@@ -1636,7 +1636,7 @@ modest_msg_edit_window_show_toolbar (ModestWindow *self,
 {
 	ModestWindowPrivate *parent_priv;
 	
-	g_return_if_fail (MODEST_IS_MSG_VIEW_WINDOW (self));
+	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (self));
 	parent_priv = MODEST_WINDOW_GET_PRIVATE(self);
 
 	/* FIXME: we can not just use the code of
