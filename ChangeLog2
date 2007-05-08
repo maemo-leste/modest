@@ -1,5 +1,13 @@
 2007-05-08  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-tny-account-store.c: (get_password):
+	* src/modest-ui-actions.c:
+	(modest_ui_actions_on_password_requested):
+	Allow the username to be changed too, though there is more work to 
+	be done on exactly how this behaves.
+
+2007-05-08  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/modest-account-mgr-helpers.h:
 	* src/modest-account-mgr-helpers.c:
 	Added modest_account_mgr_get_display_name(),

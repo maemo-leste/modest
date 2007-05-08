@@ -1705,8 +1705,9 @@ modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 	GtkWidget *entry_username = gtk_entry_new ();
 	if (initial_username)
 		gtk_entry_set_text (GTK_ENTRY (entry_username), initial_username);
-	 /* TODO: Allow the username to be changed here. */
-	gtk_widget_set_sensitive (entry_username, FALSE);
+	/* TODO: Dim this if a connection has ever succeeded with this username,
+	 * as per the UI spec: */
+	/* gtk_widget_set_sensitive (entry_username, FALSE); */
 	
 #ifdef MODEST_PLATFORM_MAEMO
 	/* Auto-capitalization is the default, so let's turn it off: */
@@ -1757,8 +1758,24 @@ modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 	gtk_widget_show_all (GTK_WIDGET(GTK_DIALOG(dialog)->vbox));
 	
 	if (gtk_dialog_run (GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
-		if (username)
+		if (username) {
 			*username = g_strdup (gtk_entry_get_text (GTK_ENTRY(entry_username)));
+			
+			modest_server_account_set_username (
+				 modest_runtime_get_account_mgr(), server_account_name, 
+				 *username);
+				 
+			const gboolean username_was_changed = 
+				(strcmp (*username, initial_username) != 0);
+			if (username_was_changed) {
+				/* To actually use a changed username, 
+				 * we must reset the connection, according to pvanhoof.
+				 * This _might_ be a sensible way to do that: */
+				 TnyDevice *device = modest_runtime_get_device();
+				 tny_device_force_offline (device);
+				 tny_device_force_online (device);
+			}
+		}
 			
 		if (password) {
 			*password = g_strdup (gtk_entry_get_text (GTK_ENTRY(entry_password)));
@@ -1773,6 +1790,7 @@ modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 		
 		if (cancel)
 			*cancel   = FALSE;
+			
 	} else {
 		if (username)
 			*username = NULL;

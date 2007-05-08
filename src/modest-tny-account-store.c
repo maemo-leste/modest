@@ -273,6 +273,7 @@ get_password (TnyAccount *account, const gchar *prompt, gboolean *cancel)
 	self = MODEST_TNY_ACCOUNT_STORE (account_store);
         priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
 	
+	/* TODO: What is this hash for? */
 	/* is it in the hash? if it's already there, it must be wrong... */
 	pwd_ptr = (gpointer)&pwd; /* pwd_ptr so the compiler does not complained about
 				   * type-punned ptrs...*/
@@ -295,6 +296,9 @@ get_password (TnyAccount *account, const gchar *prompt, gboolean *cancel)
 		gboolean remember = FALSE;
 		pwd = NULL;
 		
+		/* Note that we ignore the returned username here,
+		 * because it is enough that it will be stored in gconf 
+		 * by the signal handler. */
 		g_signal_emit (G_OBJECT(self), signals[PASSWORD_REQUESTED_SIGNAL], 0,
 			       account_id, /* server_account_name */
 			       &username, &pwd, cancel, &remember);
