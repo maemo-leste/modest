@@ -431,7 +431,6 @@ open_msg_func (const GObject *obj, const TnyMsg *msg, gpointer user_data)
 		account = modest_account_mgr_get_default_account (modest_runtime_get_account_mgr());
 	
 	/* Gets foldert type (OUTBOX headers will be opened in edit window */
-/* 	folder_type = modest_tny_folder_guess_folder_type (helper->folder); */
 	if (modest_tny_folder_is_local_folder (helper->folder))
 		folder_type = modest_tny_folder_get_local_folder_type (helper->folder);
 
@@ -928,86 +927,6 @@ modest_ui_actions_on_header_selected (ModestHeaderView *header_view,
 			gtk_window_set_title (GTK_WINDOW (main_window), _("mail_va_no_subject"));
 	}
 }
-
-
-
-/* void */
-/* modest_ui_actions_on_header_activated (ModestHeaderView *header_view, TnyHeader *header, */
-/* 				       ModestMainWindow *main_window) */
-/* { */
-/* 	ModestWindow *win = NULL; */
-/* 	TnyFolder *folder = NULL; */
-/* 	TnyMsg    *msg    = NULL; */
-/* 	TnyFolderType folder_type = TNY_FOLDER_TYPE_UNKNOWN; */
-/* 	ModestWindowMgr *mgr; */
-/* 	GtkTreeModel *model; */
-/* 	GtkTreeIter iter; */
-/* 	GtkTreeSelection *sel = NULL; */
-/* 	GList *sel_list = NULL; */
-	
-/* 	g_return_if_fail (MODEST_IS_MAIN_WINDOW(main_window)); */
-	
-/* 	if (!header) */
-/* 		return; */
-
-/* 	folder = tny_header_get_folder (header); */
-/* 	if (!folder) { */
-/* 		g_printerr ("modest: cannot get folder for header\n"); */
-/* 		return; */
-/* 	} */
-/* 	if (modest_tny_folder_is_local_folder (folder)) */
-/* 		folder_type = modest_tny_folder_get_local_folder_type (folder); */
-
-/* 	/\* FIXME: make async?; check error  *\/ */
-/* 	msg = tny_folder_get_msg (folder, header, NULL); */
-/* 	if (!msg) { */
-/* 		g_printerr ("modest: cannot get msg for header\n"); */
-/* 		goto cleanup; */
-/* 	} */
-
-/* 	/\* Look if we already have a message view for that header *\/ */
-/* 	mgr = modest_runtime_get_window_mgr (); */
-/* 	win = modest_window_mgr_find_window_by_msguid (mgr, tny_header_get_uid (header)); */
-
-/* 	/\* If not, create a new window *\/ */
-/* 	if (!win) { */
-/* 		gchar *account; */
-
-/* 		account =  g_strdup(modest_window_get_active_account(MODEST_WINDOW(main_window))); */
-/* 		if (!account) */
-/* 			account = modest_account_mgr_get_default_account (modest_runtime_get_account_mgr()); */
-
-/* 		sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (header_view)); */
-/* 		sel_list = gtk_tree_selection_get_selected_rows (sel, &model); */
-/* 		if (sel_list != NULL) { */
-/* 			gtk_tree_model_get_iter (model, &iter, (GtkTreePath *) sel_list->data); */
-			
-/* 			switch (folder_type) { */
-/* 			case TNY_FOLDER_TYPE_DRAFTS: */
-/* 				win = modest_msg_edit_window_new (msg, account); */
-/* 				break; */
-/* 			default: */
-/* 				win = modest_msg_view_window_new_with_header_model (msg, account, model, iter); */
-/* 			} */
-
-/* 			g_list_foreach (sel_list, (GFunc) gtk_tree_path_free, NULL); */
-/* 			g_list_free (sel_list); */
-/* 		} else { */
-/* 			win = modest_msg_view_window_new (msg, account); */
-/* 		} */
-/* 		modest_window_mgr_register_window (mgr, win); */
-
-/* 		gtk_window_set_transient_for (GTK_WINDOW (win), */
-/* 					      GTK_WINDOW (main_window)); */
-/* 	} */
-
-/* 	gtk_widget_show_all (GTK_WIDGET(win)); */
-
-/* 	g_object_unref (G_OBJECT (msg)); */
-	
-/* cleanup: */
-/* 	g_object_unref (G_OBJECT (folder)); */
-/* } */
 
 void
 modest_ui_actions_on_header_activated (ModestHeaderView *header_view,

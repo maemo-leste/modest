@@ -1096,11 +1096,36 @@ transfer_msgs_status_cb (GObject *obj,
 			 TnyStatus *status,  
 			 gpointer user_data)
 {
+	XFerMsgAsyncHelper *helper = NULL;
+	ModestMailOperation *self;
+	ModestMailOperationPrivate *priv;
+
+	g_return_if_fail (status != NULL);
+	g_return_if_fail (status->code == TNY_FOLDER_STATUS_CODE_XFER_MSGS);
+
+	helper = (XFerMsgAsyncHelper *) user_data;
+	g_return_if_fail (helper != NULL);       
+
+	/* Temporary FIX: useful when tinymail send us status
+	   information *after* calling the function callback */
+	if (!MODEST_IS_MAIL_OPERATION (helper->mail_op))
+		return;
+
+	self = helper->mail_op;
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
+
+	priv->done = status->position;
+	priv->total = status->of_total;
+
+	if (priv->done == 1 && priv->total == 100)
+		return;
+
+	g_signal_emit (G_OBJECT (self), signals[PROGRESS_CHANGED_SIGNAL], 0, NULL);
 }
 
 
 static void
-transfer_msgs_cb (TnyFolder *folder, GError **err, gpointer user_data)
+transfer_msgs_cb (TnyFolder *folder, gboolean cancelled, GError **err, gpointer user_data)
 {
 	XFerMsgAsyncHelper *helper;
 	ModestMailOperation *self;
@@ -1114,7 +1139,13 @@ transfer_msgs_cb (TnyFolder *folder, GError **err, gpointer user_data)
 	if (*err) {
 		priv->error = g_error_copy (*err);
 		priv->done = 0;
-		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
+		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;	
+	} else if (cancelled) {
+		priv->status = MODEST_MAIL_OPERATION_STATUS_CANCELED;
+		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
+			     MODEST_MAIL_OPERATION_ERROR_ITEM_NOT_FOUND,
+			     _("Error trying to refresh the contents of %s"),
+			     tny_folder_get_name (folder));
 	} else {
 		priv->done = 1;
 		priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
@@ -1123,8 +1154,10 @@ transfer_msgs_cb (TnyFolder *folder, GError **err, gpointer user_data)
 	/* Free */
 	g_object_unref (helper->headers);
 	g_object_unref (helper->dest_folder);
+	g_object_unref (helper->mail_op);
 	g_object_unref (folder);
-	g_free (helper);
+	g_slice_free   (XFerMsgAsyncHelper, helper);
+	helper = NULL;
 
 	/* Notify the queue */
 	modest_mail_operation_queue_remove (modest_runtime_get_mail_operation_queue (), self);
@@ -1155,8 +1188,8 @@ modest_mail_operation_xfer_msgs (ModestMailOperation *self,
 	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
 
 	/* Create the helper */
-	helper = g_malloc0 (sizeof (XFerMsgAsyncHelper));
-	helper->mail_op = self;
+	helper = g_slice_new0 (XFerMsgAsyncHelper);
+	helper->mail_op = g_object_ref(self);
 	helper->dest_folder = folder;
 	helper->headers = headers;
 
