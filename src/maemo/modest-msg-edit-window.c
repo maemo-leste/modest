@@ -660,6 +660,7 @@ modest_msg_edit_window_setup_toolbar (ModestMsgEditWindow *window)
 	GtkWidget *sizes_menu;
 	GtkWidget *fonts_menu;
 	GSList *radio_group = NULL;
+	GSList *node = NULL;
 	gchar *markup;
 
 	/* Toolbar */
@@ -710,9 +711,14 @@ modest_msg_edit_window_setup_toolbar (ModestMsgEditWindow *window)
 
 		priv->size_items_group = g_slist_prepend (priv->size_items_group, size_menu_item);
 			
-		g_signal_connect (G_OBJECT (size_menu_item), "toggled", G_CALLBACK (modest_msg_edit_window_size_change),
+	}
+
+	for (node = radio_group; node != NULL; node = g_slist_next (node)) {
+		GtkWidget *item = (GtkWidget *) node->data;
+		g_signal_connect (G_OBJECT (item), "toggled", G_CALLBACK (modest_msg_edit_window_size_change),
 				  window);
 	}
+
 	priv->size_items_group = g_slist_reverse (priv->size_items_group);
 	gtk_menu_tool_button_set_menu (GTK_MENU_TOOL_BUTTON (tool_item), sizes_menu);
 	g_signal_connect (G_OBJECT (tool_item), "clicked", G_CALLBACK (menu_tool_button_clicked_popup), NULL);
@@ -750,7 +756,10 @@ modest_msg_edit_window_setup_toolbar (ModestMsgEditWindow *window)
 
 		priv->font_items_group = g_slist_prepend (priv->font_items_group, font_menu_item);
 			
-		g_signal_connect (G_OBJECT (font_menu_item), "toggled", G_CALLBACK (modest_msg_edit_window_font_change),
+	}
+	for (node = radio_group; node != NULL; node = g_slist_next (node)) {
+		GtkWidget *item = (GtkWidget *) node->data;
+		g_signal_connect (G_OBJECT (item), "toggled", G_CALLBACK (modest_msg_edit_window_font_change),
 				  window);
 	}
 	priv->font_items_group = g_slist_reverse (priv->font_items_group);
@@ -2095,7 +2104,7 @@ text_buffer_delete_images_by_id (GtkTextBuffer *buffer, const gchar * image_id)
 				gchar *cur_image_id = g_object_get_data (G_OBJECT (tag), "image-index");
 				if ((cur_image_id != NULL) && (strcmp (image_id, cur_image_id)==0)) {
 					gint offset;
-					gtk_text_iter_get_offset (&match_start);
+					offset = gtk_text_iter_get_offset (&match_start);
 					gtk_text_buffer_delete (buffer, &match_start, &match_end);
 					gtk_text_buffer_get_iter_at_offset (buffer, &iter, offset);
 				}

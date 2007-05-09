@@ -406,7 +406,6 @@ modest_recpt_editor_on_button_release_event (GtkWidget *widget,
 	buffer = modest_recpt_editor_get_buffer (recpt_editor);
 	mark = gtk_text_buffer_get_insert (buffer);
 	gtk_text_buffer_get_iter_at_mark (buffer, &location, mark);
-	/* g_message ("RELEASE OFFSET %d", gtk_text_iter_get_offset (&location)); */
 
 	gtk_text_buffer_get_selection_bounds (buffer, &start, &end);
 
@@ -614,7 +613,6 @@ modest_recpt_editor_on_key_press_event (GtkTextView *text_view,
 		gboolean cursor_ready = FALSE;
 		while (!cursor_ready) {
 			if (iter_previous_char (&location) == '\n') {
-				/* g_message ("INTRO FOUND"); */
 				gtk_text_iter_backward_char (&location);
 			} else {
 				cursor_ready = TRUE;
@@ -717,7 +715,6 @@ modest_recpt_editor_on_key_press_event (GtkTextView *text_view,
 		if (tag != NULL) {
 			GtkTextIter iter_in_tag;
 			iter_in_tag = location;
-			/* g_message ("DELETE PREV SELECTION"); */
 			gtk_text_iter_backward_char (&iter_in_tag);
 			select_tag_of_iter (&iter_in_tag, tag);
 			gtk_text_buffer_delete_selection (buffer, TRUE, TRUE);
