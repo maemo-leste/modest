@@ -381,8 +381,67 @@ on_idle_open_message(gpointer user_data)
 {
 	gchar *uri = (gchar*)user_data;
 	
-	g_message ("not implemented yet %s", __FUNCTION__);
 	
+	/* Get the TnyTransportAccount so we can instantiate a mail operation: */
+ 	ModestAccountMgr *account_mgr = modest_runtime_get_account_mgr();
+	gchar *account_name = modest_account_mgr_get_default_account (account_mgr);
+	if (!account_name) {
+		g_printerr ("modest: no account found\n");
+	}
+	
+	TnyAccount *account = NULL;
+	if (account_mgr) {
+		account = modest_tny_account_store_get_transport_account_for_open_connection (
+			modest_runtime_get_account_store(), account_name);
+	}
+	
+	if (!account) {
+		g_printerr ("modest: failed to get tny account folder'\n", account_name);
+	} else {
+		gchar * from = modest_account_mgr_get_from_string (account_mgr,
+								  account_name);
+		if (!from) {
+			g_printerr ("modest: no from address for account '%s'\n", account_name);
+		} else {
+			const gchar *subject = NULL;
+			const gchar *body = NULL;
+			
+			subject = uri;
+			body = uri;
+			
+			
+			/* Create the message: */
+			TnyMsg *msg  = modest_tny_msg_new (NULL, from, 
+				NULL, NULL, subject, body, 
+				NULL /* attachments */);
+				
+			if (!msg) {
+				g_printerr ("modest: failed to create message\n");
+			} else
+			{
+				/* Add the message to a folder and show its UI for editing: */
+				TnyFolder *folder = modest_tny_account_get_special_folder (account,
+									TNY_FOLDER_TYPE_DRAFTS);
+				if (!folder) {
+					g_printerr ("modest: failed to find Drafts folder\n");
+				} else {
+			
+					tny_folder_add_msg (folder, msg, NULL); /* TODO: check err */
+		
+					ModestWindow *win = modest_msg_edit_window_new (msg, account_name);
+					gtk_widget_show_all (GTK_WIDGET (win));
+				
+					g_object_unref (G_OBJECT(folder));
+				}
+			
+				g_object_unref (G_OBJECT(msg));
+			}
+			
+			g_object_unref (G_OBJECT(account));
+		}
+ 	}
+ 	
+ 	g_free (account_name);
 	g_free(uri);
 	return FALSE; /* Do not call this callback again. */
 }
