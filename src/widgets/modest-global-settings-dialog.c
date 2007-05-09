@@ -113,13 +113,6 @@ modest_global_settings_dialog_class_init (ModestGlobalSettingsDialogClass *klass
 	gobject_class->finalize = modest_global_settings_dialog_finalize;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestGlobalSettingsDialogPrivate));
-
-	/* signal definitions go here, e.g.: */
-/* 	signals[MY_SIGNAL_1] = */
-/* 		g_signal_new ("my_signal_1",....); */
-/* 	signals[MY_SIGNAL_2] = */
-/* 		g_signal_new ("my_signal_2",....); */
-/* 	etc. */
 }
 
 static void
@@ -188,6 +181,9 @@ modest_global_settings_dialog_new (void)
 	return GTK_WIDGET(g_object_new(MODEST_TYPE_GLOBAL_SETTINGS_DIALOG, NULL));
 }
 
+/* 
+ * Adds the two widgets to a new row in the table
+ */
 static void
 add_to_table (GtkTable *table,
 	      GtkWidget *left,
@@ -218,7 +214,9 @@ add_to_table (GtkTable *table,
 			  0, 0);
 }
 
-
+/*
+ * Creates a pair list (number,string) and adds it to the given list
+ */
 static void
 add_to_modest_pair_list (const gint num, const gchar *str, GSList **list)
 {
@@ -231,6 +229,9 @@ add_to_modest_pair_list (const gint num, const gchar *str, GSList **list)
 	*list = g_slist_prepend (*list, pair);
 }
 
+/*
+ * Gets a list of pairs 
+ */
 static ModestPairList *
 get_connected_via (void)
 {
@@ -246,6 +247,9 @@ get_connected_via (void)
 	return (ModestPairList *) g_slist_reverse (list);
 }
 
+/*
+ * Gets a list of pairs of update intervals
+ */
 static ModestPairList *
 get_update_interval (void)
 {
@@ -273,7 +277,9 @@ get_update_interval (void)
 	return (ModestPairList *) g_slist_reverse (list);
 }
 
-/* We need this because the translations are comming without ":" */
+/* 
+ * We need this because the translations are comming without ":" 
+ */
 static GtkWidget *
 create_label (const gchar *text)
 {
@@ -287,18 +293,24 @@ create_label (const gchar *text)
 	return label;
 }
 
+/*
+ * Creates the updating page
+ */
 static GtkWidget*
 create_updating_page (void)
 {
-	GtkWidget *vbox, *table_update;
-	GtkWidget *label, *check, *combo;
+	GtkWidget *vbox, *table_update, *table_limit;
+	GtkWidget *label, *check, *combo, *spin;
 	ModestPairList *list;
 
 	vbox = gtk_vbox_new (FALSE, MODEST_MARGIN_DEFAULT);
 	table_update = gtk_table_new (3, 2, FALSE);
+	table_limit = gtk_table_new (2, 2, FALSE);
 	/* FIXME: set proper values */
 	gtk_table_set_row_spacings (GTK_TABLE (table_update), 6);
 	gtk_table_set_col_spacings (GTK_TABLE (table_update), 12);
+	gtk_table_set_row_spacings (GTK_TABLE (table_limit), 6);
+	gtk_table_set_col_spacings (GTK_TABLE (table_limit), 12);
 
 	/* Autoupdate */
 	label = create_label (_("mcen_fi_options_autoupdate"));
@@ -325,15 +337,70 @@ create_updating_page (void)
 	/* Separator */
 	gtk_box_pack_start (GTK_BOX (vbox), gtk_hseparator_new (), FALSE, FALSE, MODEST_MARGIN_HALF);
 
+	/* Limits */
+	label = create_label (_("mcen_fi_advsetup_sizelimit"));
+	spin = gtk_spin_button_new (GTK_ADJUSTMENT (gtk_adjustment_new (1000, 1, 5000, 1, 1, 16)), 
+				    1, 0);
+	add_to_table (GTK_TABLE (table_limit), label, spin);
+
+	label = create_label (_("mcen_fi_options_playsound"));
+	check = gtk_check_button_new ();
+	add_to_table (GTK_TABLE (table_limit), label, check);
+
+	/* Add to vbox */
+	gtk_box_pack_start (GTK_BOX (vbox), table_limit, FALSE, FALSE, MODEST_MARGIN_HALF);
+
 	return vbox;
 }
 
+/*
+ * Gets a list of pairs 
+ */
+static ModestPairList *
+get_msg_formats (void)
+{
+	GSList *list = NULL;
+
+	add_to_modest_pair_list (MODEST_FILE_FORMAT_FORMATTED_TEXT, 
+				 _("mcen_va_options_messageformat_html"), 
+				 &list);
+	add_to_modest_pair_list (MODEST_FILE_FORMAT_PLAIN_TEXT, 
+				 _("mcen_va_options_messageformat_plain"), 
+				 &list);
+
+	return (ModestPairList *) g_slist_reverse (list);
+}
+
+
+/*
+ * Creates the composing page
+ */
 static GtkWidget* 
 create_composing_page (void)
 {
-	GtkWidget *box = gtk_vbox_new (FALSE, MODEST_MARGIN_NONE);
+	GtkWidget *vbox, *table;
+	GtkWidget *label, *check, *combo;
+	ModestPairList *list;
 
-	box = gtk_vbox_new (FALSE, MODEST_MARGIN_NONE);
+	vbox = gtk_vbox_new (FALSE, MODEST_MARGIN_DEFAULT);
+	table = gtk_table_new (2, 2, FALSE);
+	/* FIXME: set proper values */
+	gtk_table_set_row_spacings (GTK_TABLE (table), 6);
+	gtk_table_set_col_spacings (GTK_TABLE (table), 12);
 
-	return box;
+	/* Update interval */
+	label = create_label (_("mcen_fi_options_messageformat"));
+	list = get_msg_formats ();
+	combo = modest_combo_box_new (list, g_int_equal);
+	modest_pair_list_free (list);
+	add_to_table (GTK_TABLE (table), label, combo);
+
+	label = create_label (_("mcen_va_options_include_original_inreply"));
+	check = gtk_check_button_new ();
+	add_to_table (GTK_TABLE (table), label, check);
+
+	/* Add to vbox */
+	gtk_box_pack_start (GTK_BOX (vbox), table, FALSE, FALSE, MODEST_MARGIN_HALF);
+
+	return vbox;
 }

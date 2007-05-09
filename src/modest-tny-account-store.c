@@ -56,7 +56,11 @@
 
 #ifdef MODEST_PLATFORM_MAEMO
 #include <tny-maemo-conic-device.h>
+#ifdef MODEST_HILDON_VERSION_0
 #include <hildon-widgets/hildon-note.h>
+#else
+#include <hildon/hildon-note.h>
+#endif
 #endif
 
 /* 'private'/'protected' functions */
