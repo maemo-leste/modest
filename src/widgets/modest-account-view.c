@@ -33,6 +33,7 @@
 #include <modest-account-mgr.h>
 #include <modest-account-mgr-helpers.h>
 #include <modest-text-utils.h>
+#include <modest-runtime.h>
 
 #include <gtk/gtkcellrenderertoggle.h>
 #include <gtk/gtkcellrenderertext.h>
@@ -68,6 +69,10 @@ typedef struct _ModestAccountViewPrivate ModestAccountViewPrivate;
 struct _ModestAccountViewPrivate {
 	ModestAccountMgr *account_mgr;
 	gulong sig1, sig2;
+	
+	/* When this is TRUE, we ignore configuration key changes.
+	 * This is useful when making many changes. */
+	gboolean block_conf_updates;
 	
 };
 #define MODEST_ACCOUNT_VIEW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -229,7 +234,21 @@ on_account_changed (ModestAccountMgr *account_mgr,
 		    const gchar* account, const gchar* key,
 		    gboolean server_account, ModestAccountView *self)
 {	
-	update_account_view (account_mgr, self);
+	/* Never update the view in response to gconf changes.
+	 * Always do it explicitly instead.
+	 * This is because we have no way to avoid 10 updates when changing 
+	 * 10 items, and this blocks the UI.
+	 *
+	 * But this block/unblock API might be useful on platforms where the 
+	 * notification does not happen so long after the key was set.
+	 * (We have no way to know when the last key was set, to do a final update)..
+	 */
+	 return;
+	 
+	ModestAccountViewPrivate* priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE(self);
+	
+	if (!priv->block_conf_updates)
+		update_account_view (account_mgr, self);
 }
 
 
@@ -238,7 +257,9 @@ on_account_removed (ModestAccountMgr *account_mgr,
 		    const gchar* account, gboolean server_account,
 		    ModestAccountView *self)
 {
-	on_account_changed (account_mgr, account, NULL, server_account, self);
+	ModestAccountViewPrivate* priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE(self);
+	if (!priv->block_conf_updates)
+		on_account_changed (account_mgr, account, NULL, server_account, self);
 }
 
 
@@ -429,4 +450,19 @@ modest_account_view_get_selected_account (ModestAccountView *self)
 	}
 
 	return account_name;
+}
+
+
+void modest_account_view_block_conf_updates (ModestAccountView *account_view)
+{
+	ModestAccountViewPrivate* priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE(account_view);
+	priv->block_conf_updates = TRUE;
+}
+
+void modest_account_view_unblock_conf_updates (ModestAccountView *account_view)
+{
+	ModestAccountViewPrivate* priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE(account_view);
+	priv->block_conf_updates = FALSE;
+	
+	update_account_view (modest_runtime_get_account_mgr(), account_view);
 }

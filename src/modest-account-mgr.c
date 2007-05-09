@@ -53,6 +53,8 @@ static guint signals[LAST_SIGNAL] = {0};
 static void
 on_key_change (ModestConf *conf, const gchar *key, ModestConfEvent event, gpointer user_data)
 {
+	/* printf("DEBUG: %s: key=%s\n", __FUNCTION__, key); */
+	
 	ModestAccountMgr *self = MODEST_ACCOUNT_MGR (user_data);
 	/* ModestAccountMgrPrivate *priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self); */
 
@@ -90,8 +92,8 @@ on_key_change (ModestConf *conf, const gchar *key, ModestConfEvent event, gpoint
 	else 
 		enabled = modest_account_mgr_get_enabled (self, account);
 
-	/* server account was changed, default account was changed
-	 * and always notify when enabled/disabled changes
+	/* Notify is server account was changed, default account was changed
+	 * or when enabled/disabled changes:
 	 */
 	if (enabled ||
 	    g_str_has_suffix (key, MODEST_ACCOUNT_ENABLED) ||
