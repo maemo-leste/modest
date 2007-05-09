@@ -73,7 +73,7 @@ GType        modest_combo_box_get_type    (void) G_GNUC_CONST;
  * 
  * Returns: a new GtkComboBox instance, or NULL in case of failure
  */
-GtkWidget*   modest_combo_box_new         (const ModestPairList* pairs,
+GtkWidget*   modest_combo_box_new         (ModestPairList* pairs,
 					   GEqualFunc id_equal_func);
 
 /**

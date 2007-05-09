@@ -125,11 +125,11 @@ modest_combo_box_finalize (GObject *obj)
 }
 
 static GtkTreeModel*
-get_model (const ModestPairList *pairs)
+get_model (ModestPairList *pairs)
 {
 	GtkTreeIter iter;
 	GtkListStore *store;
-	const GSList *cursor;
+	GSList *cursor;
 	
 	store = gtk_list_store_new (2,
 				    G_TYPE_POINTER, /* the id */
@@ -149,7 +149,7 @@ get_model (const ModestPairList *pairs)
 
 
 GtkWidget*
-modest_combo_box_new (const ModestPairList *pairs, GEqualFunc id_equal_func)
+modest_combo_box_new (ModestPairList *pairs, GEqualFunc id_equal_func)
 {
 	GtkTreeModel *model;
 	GtkCellRenderer *renderer;
