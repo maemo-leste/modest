@@ -300,7 +300,7 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 	rendobj = G_OBJECT(renderer);
 	header = g_markup_printf_escaped ("%s\n<small>%s</small>",
 					  subject ? subject : _("mail_va_no_subject"),
-					  address);
+					  modest_text_utils_get_display_address(address));
 	g_free (address);
 	g_free (subject);
 
@@ -335,8 +335,8 @@ _modest_header_view_size_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer
 
 void
 _modest_header_view_status_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
-				     GtkTreeModel *tree_model,  GtkTreeIter *iter,
-				     gpointer user_data)
+				       GtkTreeModel *tree_model,  GtkTreeIter *iter,
+				       gpointer user_data)
 {
         TnyHeaderFlags flags;
 	//guint status;

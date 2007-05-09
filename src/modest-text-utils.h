@@ -189,8 +189,11 @@ size_t modest_text_utils_strftime(char *s, size_t max, const char  *fmt, time_t 
  * ie. removes "<...>" and "(...)" parts
  * the change is in-place; removes leading/trailing whitespace
  * 
- * Returns: the new address. The string is *not* newly allocated.
- * NULL in case of error
+ * Returns: the new address of the string; this new string
+ * is _NOT_ newly allocated, so should not be freed. (remember
+ * the old address of the parameter if that one needs to be freed)
+ * 
+ * NULL in case of error or if address == NULL
  */
 gchar* modest_text_utils_get_display_address (gchar *address);
 

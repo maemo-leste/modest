@@ -876,9 +876,9 @@ modest_text_utils_get_display_address (gchar *address)
 	
 	if (!address)
 		return NULL;
-
+	
 	g_return_val_if_fail (g_utf8_validate (address, -1, NULL), NULL);
-
+	
 	g_strchug (address); /* remove leading whitespace */
 
 	/*  <email@address> from display name */
