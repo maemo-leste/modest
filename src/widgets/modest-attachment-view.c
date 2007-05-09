@@ -173,8 +173,8 @@ static void
 modest_attachment_view_set_part_default (TnyMimePartView *self, TnyMimePart *mime_part)
 {
 	ModestAttachmentViewPriv *priv = NULL;
-	const gchar *filename;
-	gchar *file_icon_name;
+	const gchar *filename = NULL;
+	gchar *file_icon_name = NULL;
 	
 	g_return_if_fail (TNY_IS_MIME_PART_VIEW (self));
 	g_return_if_fail (TNY_IS_MIME_PART (mime_part));

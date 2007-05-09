@@ -1,9 +1,17 @@
+2007-05-09  Murray Cumming  <murrayc@murrayc.com>
+
+	* configure.ac: When using the older hildon version, probably on Bora, 
+	require gnome-vfs-module-2.0, which is the old provider of gnome-vfs-mime.h,
+	to fix the build.
+	* src/widgets/modest-attachment-view.c:
+	(modest_attachment_view_set_part_default): Initialize variables, to fix the 
+	build.
+
 2007-05-09  Marcus Bauer  <marcusb@openismus.com>
 
 	* src/dbus_api/modest-dbus-callbacks.c: (on_idle_open_message):
 	Implemented the prototype. Can be tested with
 	tests/dbus_api/test_open_message: 
-
 
 2007-05-08  Murray Cumming  <murrayc@murrayc.com>
 
