@@ -1,3 +1,10 @@
+2007-05-09  Marcus Bauer  <marcusb@openismus.com>
+
+	* src/dbus_api/modest-dbus-callbacks.c: (on_idle_open_message):
+	Implemented the prototype. Can be tested with
+	tests/dbus_api/test_open_message: 
+
+
 2007-05-08  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/modest-tny-account-store.c:
