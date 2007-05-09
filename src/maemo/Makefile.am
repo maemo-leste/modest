@@ -31,7 +31,6 @@ SUBDIRS=easysetup
 INCLUDES=\
 	$(MODEST_GSTUFF_CFLAGS) \
 	$(MODEST_LIBTINYMAIL_MAEMO_CFLAGS) \
-	-DMODEST_PLATFORM_ID=$(MODEST_PLATFORM_ID) \
 	-I ${top_srcdir}/src/widgets  \
 	-I ${top_srcdir}/src  \
 	-DPREFIX=\"@prefix@\" \
