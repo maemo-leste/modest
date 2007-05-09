@@ -559,6 +559,9 @@ init_default_settings (ModestConf *conf)
 	if (!modest_conf_key_exists (conf, MODEST_CONF_CONNECT_AT_STARTUP, NULL))
 		modest_conf_set_bool (conf, MODEST_CONF_CONNECT_AT_STARTUP, TRUE, NULL);
 
+	if (!modest_conf_key_exists (conf, MODEST_CONF_PREFER_FORMATTED_TEXT, NULL))
+		modest_conf_set_bool (conf, MODEST_CONF_PREFER_FORMATTED_TEXT, TRUE, NULL);
+
 }
 
 
