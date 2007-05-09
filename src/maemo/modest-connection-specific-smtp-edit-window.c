@@ -1,7 +1,7 @@
 /* connection-specific-smtp-window.c */
 
 #include "modest-connection-specific-smtp-edit-window.h"
-#include "maemo/modest-maemo-ui-constants.h"
+#include "widgets/modest-ui-constants.h"
 #include "modest-hildon-includes.h"
 #include "modest-runtime.h"
 

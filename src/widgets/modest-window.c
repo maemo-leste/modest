@@ -156,7 +156,9 @@ modest_window_set_active_account (ModestWindow *self, const gchar *active_accoun
 		return;
 	else {
 		g_free (priv->active_account);
-		priv->active_account = g_strdup (active_account);
+		priv->active_account = NULL;
+		if (active_account)
+			priv->active_account = g_strdup (active_account);
 	}
 }
 

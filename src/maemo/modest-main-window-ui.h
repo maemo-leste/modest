@@ -90,7 +90,7 @@ static const GtkActionEntry modest_action_entries [] = {
 	{ "RemoveAttachment", NULL, N_("mcen_me_viewer_remove_attachments"), NULL, NULL, G_CALLBACK (modest_ui_actions_remove_attachments) },
 	
 	/* Tools */
-	{ "ToolsSettings",        NULL,      N_("mcen_me_inbox_options"),	              NULL, NULL,  NULL },
+	{ "ToolsSettings",        NULL,      N_("mcen_me_inbox_options"),	              NULL, NULL, G_CALLBACK (modest_ui_actions_on_settings) },
 	{ "ToolsAccounts",        NULL,      N_("mcen_me_inbox_accounts"),                NULL, NULL,  G_CALLBACK(modest_ui_actions_on_accounts) },
 	{ "ToolsSMTPServers",     NULL,      N_("mcen_me_inbox_globalsmtpservers"),                NULL, NULL,  NULL },
 	{ "ToolsSendReceive", NULL, N_("mcen_me_inbox_sendandreceive") }, /* submenu */

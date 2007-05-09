@@ -39,7 +39,7 @@
 #include "modest-tny-platform-factory.h"
 #include "maemo/easysetup/modest-easysetup-wizard.h"
 #include "maemo/modest-account-settings-dialog.h"
-#include "maemo/modest-maemo-ui-constants.h"
+#include "widgets/modest-ui-constants.h"
 
 /* 'private'/'protected' functions */
 static void                            modest_account_view_window_class_init   (ModestAccountViewWindowClass *klass);

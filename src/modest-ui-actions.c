@@ -46,16 +46,15 @@
 
 #ifdef MODEST_PLATFORM_MAEMO
 #include "maemo/modest-osso-state-saving.h"
-#include "maemo/modest-maemo-ui-constants.h"
 #endif /* MODEST_PLATFORM_MAEMO */
 
-
+#include "widgets/modest-ui-constants.h"
 #include <widgets/modest-main-window.h>
 #include <widgets/modest-msg-view-window.h>
 #include <widgets/modest-account-view-window.h>
 #include <widgets/modest-details-dialog.h>
 #include <widgets/modest-attachments-view.h>
-
+#include "widgets/modest-global-settings-dialog.h"
 #include "modest-account-mgr-helpers.h"
 #include "modest-mail-operation.h"
 #include "modest-text-utils.h"
@@ -445,7 +444,7 @@ open_msg_func (const GObject *obj, const TnyMsg *msg, gpointer user_data)
 		else
 			win = modest_msg_view_window_new ((TnyMsg *) msg, account);
 	}
-		
+	
 	/* Register and show new window */
 	if (win != NULL) {
 		mgr = modest_runtime_get_window_mgr ();
@@ -2463,3 +2462,14 @@ modest_ui_actions_remove_attachments (GtkAction *action,
 	}
 }
 
+void 
+modest_ui_actions_on_settings (GtkAction *action, 
+			       ModestWindow *win)
+{
+	GtkWidget *dialog;
+
+	dialog = modest_global_settings_dialog_new ();
+	gtk_widget_show (dialog);
+	gtk_dialog_run (GTK_DIALOG (dialog));
+	gtk_widget_destroy (dialog);
+}

@@ -34,11 +34,20 @@
 /* These are based on an email on the maemo-developers mailing list from Dirk-Jan Binnema, 
  * title "RE: Standard widget spacing and padding?":
  */
- 
+
+#ifdef MODEST_PLATFORM_MAEMO 
 #define MODEST_MARGIN_DEFAULT 6
 #define MODEST_MARGIN_DOUBLE 12
 #define MODEST_MARGIN_TRIPLE 18
 #define MODEST_MARGIN_HALF 3
 #define MODEST_MARGIN_NONE 0
+/* TODO: review this values with GNOME HIG */
+#else
+#define MODEST_MARGIN_DEFAULT 6
+#define MODEST_MARGIN_DOUBLE 12
+#define MODEST_MARGIN_TRIPLE 18
+#define MODEST_MARGIN_HALF 3
+#define MODEST_MARGIN_NONE 0
+#endif
 
 #endif /*__MODEST_MAEMO_UI_CONSTANTS_H__*/

@@ -75,6 +75,8 @@ void     modest_ui_actions_on_details       (GtkAction *action, ModestWindow *wi
 
 void     modest_ui_actions_on_move_to       (GtkAction *action, ModestWindow *win);
 
+void     modest_ui_actions_on_settings      (GtkAction *action, ModestWindow *win);
+
 /**
  * modest_ui_actions_toggle_folders_view:
  * @action: the #GtkAction

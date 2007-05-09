@@ -3,7 +3,7 @@
 #include "modest-connection-specific-smtp-window.h"
 #include "modest-connection-specific-smtp-edit-window.h"
 #include <modest-account-mgr-helpers.h>
-#include <maemo/modest-maemo-ui-constants.h>
+#include "widgets/modest-ui-constants.h"
 
 #include <modest-runtime.h>
 #include <tny-maemo-conic-device.h>

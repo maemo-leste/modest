@@ -71,6 +71,8 @@
       <menuitem name="OptionsAccountsMenu" action="OptionsAccounts"/>
       <separator/>
       <menuitem name="OptionsContactsMenu" action="OptionsContacts"/>
+      <separator/>
+      <menuitem name="OptionsSettingsMenu" action="OptionsSettings"/>
     </menu>
 
     <menu name="HelpMenu" action="Help">

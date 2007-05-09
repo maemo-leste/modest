@@ -28,6 +28,8 @@ libmodest_widgets_la_SOURCES=          \
 	modest-combo-box.h             \
 	modest-folder-view.c           \
 	modest-folder-view.h           \
+	modest-global-settings-dialog.c \
+	modest-global-settings-dialog.h \
 	modest-header-view-render.c    \
 	modest-header-view.c           \
 	modest-header-view.h           \

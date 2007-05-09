@@ -26,7 +26,7 @@
 #include "modest-account-mgr-helpers.h"
 #include "modest-runtime.h" /* For modest_runtime_get_account_mgr(). */
 #include "maemo/modest-connection-specific-smtp-window.h"
-#include "maemo/modest-maemo-ui-constants.h"
+#include "widgets/modest-ui-constants.h"
 #include "maemo/modest-account-settings-dialog.h"
 #include <gconf/gconf-client.h>
 #include <string.h> /* For strlen(). */

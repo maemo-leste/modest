@@ -1,7 +1,7 @@
 /* connection-specific-smtp-window.c */
 
 #include "modest-signature-editor-dialog.h"
-#include "maemo/modest-maemo-ui-constants.h"
+#include "widgets/modest-ui-constants.h"
 #include "modest-hildon-includes.h"
 #include "widgets/modest-serversecurity-combo-box.h"
 #include "widgets/modest-secureauth-combo-box.h"
