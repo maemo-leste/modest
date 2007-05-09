@@ -33,6 +33,10 @@
 #include <glib-object.h>
 #include <tny-msg.h>
 
+#define MODEST_ATTACHMENTS_VIEW_SELECTION_PREFIX "modest-attachment:"
+#define MODEST_ATTACHMENTS_VIEW_CLIPBOARD_TYPE "MODEST_ATTACHMENT"
+#define MODEST_ATTACHMENTS_VIEW_CLIPBOARD_TYPE_INDEX 4
+
 G_BEGIN_DECLS
 
 #define MODEST_TYPE_ATTACHMENTS_VIEW             (modest_attachments_view_get_type ())
@@ -47,13 +51,13 @@ typedef struct _ModestAttachmentsViewClass ModestAttachmentsViewClass;
 
 struct _ModestAttachmentsView
 {
-	GtkVBox parent;
+	GtkEventBox parent;
 
 };
 
 struct _ModestAttachmentsViewClass
 {
-	GtkVBoxClass parent_class;
+	GtkEventBoxClass parent_class;
 
 	void (*activate)           (ModestAttachmentsView *attachments_view, TnyMimePart *mime_part);
 };
@@ -64,6 +68,10 @@ GtkWidget* modest_attachments_view_new (TnyMsg *msg);
 
 void modest_attachments_view_set_message (ModestAttachmentsView *attachments_view, TnyMsg *msg);
 void modest_attachments_view_add_attachment (ModestAttachmentsView *attachments_view, TnyMimePart *part);
+void modest_attachments_view_remove_attachment (ModestAttachmentsView *attachments_view, TnyMimePart *part);
+void modest_attachments_view_remove_attachment_by_id (ModestAttachmentsView *attachments_view, const gchar *att_id);
+GList *modest_attachments_view_get_selection (ModestAttachmentsView *attachments_view);
+void modest_attachments_view_select_all (ModestAttachmentsView *attachments_view);
 
 
 G_END_DECLS

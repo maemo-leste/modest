@@ -513,6 +513,22 @@ modest_msg_edit_window_insert_image (ModestMsgEditWindow *window)
 }
 
 void
+modest_msg_edit_window_attach_file (ModestMsgEditWindow *window)
+{
+	g_return_if_fail (MODEST_MSG_EDIT_WINDOW (window));
+
+	g_message ("Attach file operation is not supported");
+}
+
+void
+modest_msg_edit_window_remove_attachments (ModestMsgEditWindow *window)
+{
+	g_return_if_fail (MODEST_MSG_EDIT_WINDOW (window));
+
+	g_message ("Remove attachments operation is not supported");
+}
+
+void
 modest_msg_edit_window_show_cc (ModestMsgEditWindow *window, 
 				gboolean show)
 {

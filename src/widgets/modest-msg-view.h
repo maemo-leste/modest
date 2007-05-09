@@ -132,6 +132,7 @@ void modest_msg_view_set_zoom (ModestMsgView *self, gdouble zoom);
 gdouble modest_msg_view_get_zoom (ModestMsgView *self);
 TnyHeaderFlags modest_msg_view_get_priority (ModestMsgView *self);
 void modest_msg_view_set_priority (ModestMsgView *self, TnyHeaderFlags flags);
+GList *modest_msg_view_get_selected_attachments (ModestMsgView *self);
 
 
 G_END_DECLS

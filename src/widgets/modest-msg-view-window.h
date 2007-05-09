@@ -144,6 +144,41 @@ gboolean        modest_msg_view_window_select_previous_message (ModestMsgViewWin
  * toggles the current fullscreen status
  */
 void            modest_msg_view_window_toggle_fullscreen (ModestMsgViewWindow *window);
+
+/**
+ * modest_msg_view_window_view_attachment:
+ * @window: a #ModestMsgViewWindow
+ * @mime_part: a #TnyMimePart
+ *
+ * Opens @mime_part, or the currently selected attachment if @mime_part is %NULL. 
+ * If it's a message, it opens it  for viewing. Otherwise it opens a temporary file 
+ * with the contents of the attachment.
+ */
+void            modest_msg_view_window_view_attachment (ModestMsgViewWindow *window,
+							TnyMimePart *mime_part);
+
+/**
+ * modest_msg_view_window_save_attachments:
+ * @window: a #ModestMsgViewWindow
+ * @mime_parts: a #GList of #TnyMimePart
+ *
+ * Save the #TnyMimePart attachments in @mime_parts, or currently selected attachments
+ * if @mime_parts is %NULL, offering a dialog to the user to choose the location.
+ */
+void            modest_msg_view_window_save_attachments (ModestMsgViewWindow *window,
+							 GList *mime_parts);
+
+/**
+ * modest_msg_view_window_remove_attachments:
+ * @window: a #ModestMsgViewWindow
+ * @mime_parts: a #GList of #TnyMimePart
+ *
+ * Removes the attachments in @mime_parts, or currently selected attachments
+ * if @mime_parts is %NULL, from local storage.
+ */
+void            modest_msg_view_window_remove_attachments (ModestMsgViewWindow *window,
+							   GList *mime_parts);
+
 G_END_DECLS
 
 #endif /* __MODEST_MSG_VIEW_WINDOW_H__ */

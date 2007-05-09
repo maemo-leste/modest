@@ -89,6 +89,13 @@ modest_platform_activate_uri (const gchar *uri)
 }
 
 gboolean 
+modest_platform_activate_file (const gchar *path)
+{
+	modest_runtime_not_implemented (NULL);
+	return FALSE;
+}
+
+gboolean 
 modest_platform_show_uri_popup (const gchar *uri)
 {
 	modest_runtime_not_implemented (NULL);

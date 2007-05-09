@@ -31,7 +31,9 @@
 #include <tny-account-store.h>
 #include <tny-simple-list.h>
 #include <tny-header.h>
+#include <tny-vfs-stream.h>
 #include "modest-platform.h"
+#include <modest-maemo-utils.h>
 #include <modest-tny-msg.h>
 #include <modest-msg-view-window.h>
 #include <modest-main-window-ui.h>
@@ -40,11 +42,14 @@
 #include <modest-window-priv.h>
 #include <modest-tny-folder.h>
 #include <modest-text-utils.h>
+#include <modest-account-mgr-helpers.h>
 #include "modest-progress-bar-widget.h"
 #include "modest-defs.h"
 #include "modest-hildon-includes.h"
 #include <gtkhtml/gtkhtml-search.h>
 #include <gdk/gdkkeysyms.h>
+
+#define DEFAULT_FOLDER "MyDocs/.documents"
 
 static void  modest_msg_view_window_class_init   (ModestMsgViewWindowClass *klass);
 static void  modest_msg_view_window_init         (ModestMsgViewWindow *obj);
@@ -994,12 +999,17 @@ static void
 modest_msg_view_window_update_dimmed (ModestMsgViewWindow *window)
 {
 	ModestWindowPrivate *parent_priv;
+	ModestMsgViewWindowPrivate *priv;
 	GtkAction *widget;
 	gboolean is_first, is_last;
 	TnyFolderType folder_type;
 	gboolean is_not_sent;
+	GList *attachments, *node;
+	gint n_selected;
+	gboolean selected_messages = FALSE;
 
 	parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
+	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
 
 	is_first = modest_msg_view_window_is_first_message (window);
 	is_last = modest_msg_view_window_is_last_message (window);
@@ -1024,6 +1034,21 @@ modest_msg_view_window_update_dimmed (ModestMsgViewWindow *window)
 	gtk_action_set_sensitive (widget, !is_not_sent);
 	widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/MessageMenu/MessageForwardMenu");
 	gtk_action_set_sensitive (widget, !is_not_sent);
+
+	attachments = modest_msg_view_get_selected_attachments (MODEST_MSG_VIEW (priv->msg_view));
+	n_selected = g_list_length (attachments);
+	for (node = attachments; node != NULL; node = g_list_next (node)) {
+		if (!tny_mime_part_is_attachment (TNY_MIME_PART (node->data))) {
+			selected_messages = TRUE;
+			break;
+		}
+	}
+	g_list_free (attachments);
+
+	widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/AttachmentsMenu/ViewAttachmentMenu");
+	gtk_action_set_sensitive (widget, n_selected == 1);
+	widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/AttachmentsMenu/SaveAttachmentMenu");
+	gtk_action_set_sensitive (widget, (n_selected > 0) && (!selected_messages));
 		
 }
 
@@ -1183,12 +1208,13 @@ modest_msg_view_window_clipboard_owner_change (GtkClipboard *clipboard,
 	parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
 	selection = gtk_clipboard_wait_for_text (clipboard);
 
-	/* g_message ("SELECTION %s", selection); */
 	is_address = ((selection != NULL) && (modest_text_utils_validate_recipient (selection)));
 	g_free (selection);
 	
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/ToolsMenu/ToolsAddToContactsMenu");
 	gtk_action_set_sensitive (action, is_address);
+
+	modest_msg_view_window_update_dimmed (window);
 	
 }
 
@@ -1291,4 +1317,206 @@ on_queue_changed (ModestMailOperationQueue *queue,
 		}
 		break;
 	}
+}
+
+void
+modest_msg_view_window_view_attachment (ModestMsgViewWindow *window, TnyMimePart *mime_part)
+{
+	ModestMsgViewWindowPrivate *priv;
+	g_return_if_fail (MODEST_IS_MSG_VIEW_WINDOW (window));
+	g_return_if_fail (TNY_IS_MIME_PART (mime_part) || (mime_part == NULL));
+
+	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
+
+	if (mime_part == NULL) {
+		gboolean error = FALSE;
+		GList *selected_attachments = modest_msg_view_get_selected_attachments (MODEST_MSG_VIEW (priv->msg_view));
+		if (selected_attachments == NULL) {
+			error = TRUE;
+		} else if (g_list_length (selected_attachments) > 1) {
+			hildon_banner_show_information (NULL, NULL, _("TODO: more than one attachment is selected"));
+			error = TRUE;
+		} else {
+			mime_part = (TnyMimePart *) selected_attachments->data;
+			g_object_ref (mime_part);
+		}
+		g_list_foreach (selected_attachments, (GFunc) g_object_unref, NULL);
+		g_list_free (selected_attachments);
+
+		if (error)
+			return;
+	} else {
+		g_object_ref (mime_part);
+	}
+
+	if (!TNY_IS_MSG (mime_part)) {
+		gchar *filepath = NULL;
+		TnyFsStream *temp_stream = modest_maemo_utils_create_temp_stream (&filepath);
+
+		if (temp_stream) {
+			tny_mime_part_decode_to_stream (mime_part, TNY_STREAM (temp_stream));
+			modest_platform_activate_file (filepath);
+			g_object_unref (temp_stream);
+			g_free (filepath);
+			/* TODO: delete temporary file */
+		}
+	} else {
+		/* message attachment */
+		TnyHeader *header = NULL;
+		ModestWindowMgr *mgr;
+		ModestWindow *msg_win;
+
+		header = tny_msg_get_header (TNY_MSG (mime_part));
+		mgr = modest_runtime_get_window_mgr ();
+		/* TODO: this is not getting any uid */
+		msg_win = modest_window_mgr_find_window_by_msguid (mgr, tny_header_get_uid (header));
+
+		if (!msg_win) {
+			gchar *account = g_strdup (modest_window_get_active_account (MODEST_WINDOW (window)));
+			if (!account)
+				account = modest_account_mgr_get_default_account (modest_runtime_get_account_mgr ());
+			msg_win = modest_msg_view_window_new (TNY_MSG (mime_part), account);
+			modest_window_mgr_register_window (mgr, msg_win);
+			gtk_window_set_transient_for (GTK_WINDOW (msg_win), GTK_WINDOW (window));
+		}
+
+		gtk_widget_show_all (GTK_WIDGET (msg_win));
+	}
+	g_object_unref (mime_part);
+}
+
+static gboolean
+save_mime_part_to_file (const gchar *filename, TnyMimePart *mime_part)
+{
+	GnomeVFSResult result;
+	GnomeVFSHandle *handle;
+	TnyStream *stream;
+	
+	result = gnome_vfs_create (&handle, filename, GNOME_VFS_OPEN_WRITE, FALSE, 0777);
+	if (result != GNOME_VFS_OK) {
+		hildon_banner_show_information (NULL, NULL, _("mail_ib_file_operation_failed"));
+		return FALSE;
+	}
+	stream = tny_vfs_stream_new (handle);
+	tny_mime_part_decode_to_stream (mime_part, stream);
+	g_object_unref (G_OBJECT (stream));
+	return TRUE;
+}
+
+static gboolean
+save_mime_part_to_file_with_checks (GtkWindow *parent, const gchar *filename, TnyMimePart *mime_part)
+{
+	if (modest_maemo_utils_file_exists (filename)) {
+		GtkWidget *confirm_overwrite_dialog;
+		confirm_overwrite_dialog = hildon_note_new_confirmation (GTK_WINDOW (parent),
+									 _("TODO: confirm overwrite"));
+		if (gtk_dialog_run (GTK_DIALOG (confirm_overwrite_dialog)) != GTK_RESPONSE_OK) {
+			gtk_widget_destroy (confirm_overwrite_dialog);
+			return FALSE;
+		}
+		gtk_widget_destroy (confirm_overwrite_dialog);
+	}
+
+	return save_mime_part_to_file (filename, mime_part);
+}
+
+void
+modest_msg_view_window_save_attachments (ModestMsgViewWindow *window, GList *mime_parts)
+{
+	gboolean clean_list = FALSE;
+	ModestMsgViewWindowPrivate *priv;
+	g_return_if_fail (MODEST_IS_MSG_VIEW_WINDOW (window));
+
+	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
+
+	if (mime_parts == NULL) {
+		mime_parts = modest_msg_view_get_selected_attachments (MODEST_MSG_VIEW (priv->msg_view));
+		if (mime_parts == NULL)
+			return;
+		clean_list = TRUE;
+	}
+
+	if (mime_parts->next == NULL) {
+		/* only one attachment selected */
+		GtkWidget *save_dialog = NULL;
+		TnyMimePart *mime_part = (TnyMimePart *) mime_parts->data;
+		if (!TNY_IS_MSG (mime_part) && tny_mime_part_is_attachment (mime_part)) {
+			const gchar *filename;
+			gchar *folder;
+			save_dialog = hildon_file_chooser_dialog_new (GTK_WINDOW (window), GTK_FILE_CHOOSER_ACTION_SAVE);
+			folder = g_build_filename (g_get_home_dir (), DEFAULT_FOLDER, NULL);
+			gtk_file_chooser_set_current_folder (GTK_FILE_CHOOSER (save_dialog), folder);
+			g_free (folder);
+			filename = tny_mime_part_get_filename (mime_part);
+			if (filename != NULL)
+				gtk_file_chooser_set_current_name (GTK_FILE_CHOOSER (save_dialog), filename);
+			while (gtk_dialog_run (GTK_DIALOG (save_dialog)) == GTK_RESPONSE_OK) {
+				gchar *filename_tmp = gtk_file_chooser_get_uri (GTK_FILE_CHOOSER (save_dialog));
+				gboolean save_result;
+				if (!modest_maemo_utils_folder_writable (filename_tmp)) {
+					g_free (filename_tmp);
+					hildon_banner_show_information (NULL, NULL, _("TODO: read only location"));
+					continue;
+				}
+				save_result = save_mime_part_to_file_with_checks (GTK_WINDOW (save_dialog), 
+										  filename_tmp, mime_part);
+				g_free (filename_tmp);
+				if (save_result)
+					break;
+				else
+					continue;
+			}
+			gtk_widget_destroy (save_dialog);
+		} else {
+			g_warning ("Tried to save a non-file attachment");
+		}
+	} else {
+		GtkWidget *save_dialog = NULL;
+		gchar *folder;
+		save_dialog = hildon_file_chooser_dialog_new (GTK_WINDOW (window), GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER);
+		folder = g_build_filename (g_get_home_dir (), DEFAULT_FOLDER, NULL);
+		gtk_file_chooser_set_current_folder (GTK_FILE_CHOOSER (save_dialog), folder);
+		g_free (folder);
+		if (gtk_dialog_run (GTK_DIALOG (save_dialog)) == GTK_RESPONSE_OK) {
+			gchar *foldername = gtk_file_chooser_get_uri (GTK_FILE_CHOOSER (save_dialog));
+			GList *node = NULL;
+			gboolean attachment_found = FALSE;
+			if (!modest_maemo_utils_folder_writable (foldername)) {
+				g_free (foldername);
+				hildon_banner_show_information (NULL, NULL, _("TODO: read only location"));
+			}
+			for (node = mime_parts; node != NULL; node = g_list_next (node)) {
+				TnyMimePart *mime_part = (TnyMimePart *) node->data;
+				if (tny_mime_part_is_attachment (mime_part)) {
+					const gchar *att_filename = tny_mime_part_get_filename (mime_part);
+					if (att_filename != NULL) {
+						gchar *full_filename;
+						gboolean save_result;
+						full_filename = g_build_filename (foldername, att_filename, NULL);
+						attachment_found = TRUE;
+						
+						save_result = save_mime_part_to_file_with_checks (GTK_WINDOW (save_dialog), 
+												  full_filename, mime_part);
+						g_free (full_filename);
+						if (!save_result)
+							break;
+					}
+				}
+			}
+			gtk_widget_destroy (save_dialog);
+		} else {
+			g_warning ("Tried to save a non-file attachment");
+		}
+		/* more than one attachment selected */
+	}
+	if (clean_list) {
+		g_list_foreach (mime_parts, (GFunc) g_object_unref, NULL);
+		g_list_free (mime_parts);
+	}
+}
+
+void
+modest_msg_view_window_remove_attachments (ModestMsgViewWindow *window, GList *mime_parts)
+{
+/* 	g_message ("not implemented %s", __FUNCTION__); */
 }

@@ -162,6 +162,12 @@ void     modest_ui_actions_on_select_editor_background_color      (GtkAction *ac
 void     modest_ui_actions_on_insert_image             (GtkAction *action,
 							ModestMsgEditWindow *window);
 
+void     modest_ui_actions_on_attach_file             (GtkAction *action,
+						       ModestMsgEditWindow *window);
+
+void     modest_ui_actions_on_remove_attachments      (GtkAction *action,
+						       ModestMsgEditWindow *window);
+
 /**
  * modest_ui_actions_do_send_receive_all:
  * @win: the window that will be used as source of the refresh mail operation
@@ -285,6 +291,17 @@ void     modest_ui_actions_on_toggle_toolbar           (GtkToggleAction *toggle,
 void     modest_ui_actions_on_folder_display_name_changed (ModestFolderView *folder_view,
 							   const gchar *display_name,
 							   GtkWindow *window);
+
+void modest_ui_actions_view_attachment (GtkAction *action,
+					ModestWindow *window);
+
+void modest_ui_actions_save_attachments (GtkAction *action,
+					 ModestWindow *window);
+
+void modest_ui_actions_remove_attachments (GtkAction *action,
+					   ModestWindow *window);
+
+					
 
 G_END_DECLS
 #endif /* __MODEST_UI_ACTIONS_H__ */

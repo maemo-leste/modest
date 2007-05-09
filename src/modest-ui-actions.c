@@ -54,6 +54,7 @@
 #include <widgets/modest-msg-view-window.h>
 #include <widgets/modest-account-view-window.h>
 #include <widgets/modest-details-dialog.h>
+#include <widgets/modest-attachments-view.h>
 
 #include "modest-account-mgr-helpers.h"
 #include "modest-mail-operation.h"
@@ -1092,8 +1093,7 @@ void
 modest_ui_actions_on_msg_attachment_clicked (ModestMsgView *msgview, TnyMimePart *mime_part,
 					     ModestWindow *win)
 {
-	/* g_message (__FUNCTION__); */
-	
+	modest_msg_view_window_view_attachment (MODEST_MSG_VIEW_WINDOW (win), mime_part);
 }
 
 void
@@ -1355,6 +1355,26 @@ modest_ui_actions_on_insert_image (GtkAction *action,
 		return;
 
 	modest_msg_edit_window_insert_image (window);
+}
+
+void 
+modest_ui_actions_on_attach_file (GtkAction *action,
+				  ModestMsgEditWindow *window)
+{
+	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
+	g_return_if_fail (GTK_IS_ACTION (action));
+
+	modest_msg_edit_window_attach_file (window);
+}
+
+void 
+modest_ui_actions_on_remove_attachments (GtkAction *action,
+					 ModestMsgEditWindow *window)
+{
+	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
+	g_return_if_fail (GTK_IS_ACTION (action));
+
+	modest_msg_edit_window_remove_attachments (window, NULL);
 }
 
 /*
@@ -1799,7 +1819,9 @@ modest_ui_actions_on_select_all (GtkAction *action,
 	GtkWidget *focused_widget;
 
 	focused_widget = gtk_window_get_focus (GTK_WINDOW (window));
-	if (GTK_IS_LABEL (focused_widget)) {
+	if (MODEST_IS_ATTACHMENTS_VIEW (focused_widget)) {
+		modest_attachments_view_select_all (MODEST_ATTACHMENTS_VIEW (focused_widget));
+	} else if (GTK_IS_LABEL (focused_widget)) {
 		gtk_label_select_region (GTK_LABEL (focused_widget), 0, -1);
 	} else if (GTK_IS_EDITABLE (focused_widget)) {
 		gtk_editable_select_region (GTK_EDITABLE(focused_widget), 0, -1);
@@ -2404,3 +2426,40 @@ do_headers_action (ModestWindow *win,
 	}
 	g_object_unref (iter);
 }
+
+void 
+modest_ui_actions_view_attachment (GtkAction *action,
+				   ModestWindow *window)
+{
+	if (MODEST_IS_MSG_VIEW_WINDOW (window)) {
+		modest_msg_view_window_view_attachment (MODEST_MSG_VIEW_WINDOW (window), NULL);
+	} else {
+		/* not supported window for this action */
+		g_return_if_reached ();
+	}
+}
+
+void
+modest_ui_actions_save_attachments (GtkAction *action,
+				    ModestWindow *window)
+{
+	if (MODEST_IS_MSG_VIEW_WINDOW (window)) {
+		modest_msg_view_window_save_attachments (MODEST_MSG_VIEW_WINDOW (window), NULL);
+	} else {
+		/* not supported window for this action */
+		g_return_if_reached ();
+	}
+}
+
+void
+modest_ui_actions_remove_attachments (GtkAction *action,
+				      ModestWindow *window)
+{
+	if (MODEST_IS_MSG_VIEW_WINDOW (window)) {
+		modest_msg_view_window_remove_attachments (MODEST_MSG_VIEW_WINDOW (window), NULL);
+	} else {
+		/* not supported window for this action */
+		g_return_if_reached ();
+	}
+}
+

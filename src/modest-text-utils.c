@@ -1108,12 +1108,14 @@ modest_text_utils_validate_recipient (const gchar *recipient)
 
 
 gchar *
-modest_text_utils_get_display_size (guint size)
+modest_text_utils_get_display_size (guint64 size)
 {
 	const guint KB=1024;
 	const guint MB=1024 * KB;
 	const guint GB=1024 * MB;
 
+	if (size == 0)
+		return g_strdup_printf(_FM("sfil_li_size_kb"), 0);
 	if (0 < size && size < KB)
 		return g_strdup_printf (_FM("sfil_li_size_kb"), 1);
 	else if (KB <= size && size < 100 * KB)

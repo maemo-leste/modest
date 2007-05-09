@@ -27,22 +27,24 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef HAVE_CONFIG_H
 #include <config.h>
+#endif /*HAVE_CONFIG_H*/
 
-//#include <glib/gi18n-lib.h>
+#include <glib/gi18n.h>
 
 #include <string.h>
 #include <modest-attachment-view.h>
 #include <modest-platform.h>
 #include <modest-text-utils.h>
+#include <tny-msg.h>
 
 static GObjectClass *parent_class = NULL;
 
-/* signals */
-enum {
-	ACTIVATE_SIGNAL,
-	LAST_SIGNAL
-};
+/* /\* signals *\/ */
+/* enum { */
+/* 	LAST_SIGNAL */
+/* }; */
 
 typedef struct _ModestAttachmentViewPriv ModestAttachmentViewPriv;
 
@@ -56,12 +58,10 @@ struct _ModestAttachmentViewPriv
 
 	guint get_size_idle_id;
 	TnyStream *get_size_stream;
-	guint size;
+	guint64 size;
 
 	PangoLayout *layout_full_filename;
 
-	gboolean button_pressed;
-	gdouble pressed_x, pressed_y;
 };
 
 #define UNKNOWN_FILE_ICON "qgn_list_gene_unknown_file"
@@ -70,7 +70,7 @@ struct _ModestAttachmentViewPriv
 #define MODEST_ATTACHMENT_VIEW_GET_PRIVATE(o)	\
 	(G_TYPE_INSTANCE_GET_PRIVATE ((o), MODEST_TYPE_ATTACHMENT_VIEW, ModestAttachmentViewPriv))
 
-static guint signals[LAST_SIGNAL] = {0};
+/* static guint signals[LAST_SIGNAL] = {0}; */
 
 /* TnyMimePartView functions */
 static TnyMimePart *modest_attachment_view_get_part (TnyMimePartView *self);
@@ -81,8 +81,6 @@ static void modest_attachment_view_clear (TnyMimePartView *self);
 static void modest_attachment_view_clear_default (TnyMimePartView *self);
 
 /* Gtk events */
-static gint button_press_event (GtkWidget *widget, GdkEventButton *event, gpointer user_data);
-static gint button_release_event (GtkWidget *widget, GdkEventButton *event, gpointer user_data);
 static void size_allocate (GtkWidget *widget, GtkAllocation *allocation);
 
 /* GObject and GInterface management */
@@ -200,10 +198,21 @@ modest_attachment_view_set_part_default (TnyMimePartView *self, TnyMimePart *mim
 
 	priv->size = 0;
 
-	filename = tny_mime_part_get_filename (mime_part);
-	file_icon_name = modest_platform_get_file_icon_name (filename, 
-							     tny_mime_part_get_content_type (mime_part), 
-							     NULL);
+	if (TNY_IS_MSG (mime_part)) {
+		TnyHeader *header = tny_msg_get_header (TNY_MSG (mime_part));
+		if (TNY_IS_HEADER (header)) {
+			filename = tny_header_get_subject (header);
+			if (filename == NULL)
+				filename = _("mail_va_no_subject");
+			file_icon_name = modest_platform_get_file_icon_name (NULL, tny_mime_part_get_content_type (mime_part), NULL);
+			g_object_unref (header);
+		}
+	} else {
+		filename = tny_mime_part_get_filename (mime_part);
+		file_icon_name = modest_platform_get_file_icon_name (filename, 
+								     tny_mime_part_get_content_type (mime_part), 
+								     NULL);
+	}
 
 	if (file_icon_name) {
 		gtk_image_set_from_icon_name (GTK_IMAGE (priv->icon), file_icon_name, GTK_ICON_SIZE_MENU);
@@ -261,46 +270,6 @@ modest_attachment_view_clear_default (TnyMimePartView *self)
 	gtk_widget_queue_draw (GTK_WIDGET (self));
 }
 
-static gint
-button_press_event (GtkWidget *widget,
-		    GdkEventButton *event,
-		    gpointer user_data)
-{
-	ModestAttachmentViewPriv *priv = MODEST_ATTACHMENT_VIEW_GET_PRIVATE (MODEST_ATTACHMENT_VIEW (user_data));
-
-	if (event->type == GDK_BUTTON_PRESS && event->button == 1) {
-		priv->button_pressed = TRUE;
-		priv->pressed_x = event->x;
-		priv->pressed_y = event->y;
-	}
-	return TRUE;
-}
-
-static gint
-button_release_event (GtkWidget *widget,
-		      GdkEventButton *event,
-		      gpointer user_data)
-{
-	ModestAttachmentViewPriv *priv = MODEST_ATTACHMENT_VIEW_GET_PRIVATE (MODEST_ATTACHMENT_VIEW (user_data));
-
-	if (event->type != GDK_BUTTON_RELEASE)
-		return TRUE;
-
-	if ((priv->button_pressed) &&
-	    (event->type == GDK_BUTTON_RELEASE) &&
-	    (priv->pressed_x == event->x) &&
-	    (priv->pressed_y == event->y)) {
-		priv->button_pressed = FALSE;
-		if (event->button == 1) {
-			g_signal_emit (G_OBJECT (user_data), signals[ACTIVATE_SIGNAL], 0);
-			return TRUE;
-		}
-	}
-	priv->button_pressed = FALSE;
-	return TRUE;
-}
-
-
 
 /**
  * modest_attachment_view_new:
@@ -328,7 +297,7 @@ modest_attachment_view_instance_init (GTypeInstance *instance, gpointer g_class)
 {
 	ModestAttachmentViewPriv *priv = MODEST_ATTACHMENT_VIEW_GET_PRIVATE (instance);
 	PangoContext *context;
-	GtkWidget *icon_eventbox;
+	GtkWidget *box = NULL;
 
 	priv->mime_part = NULL;
 	priv->icon = gtk_image_new ();
@@ -336,10 +305,10 @@ modest_attachment_view_instance_init (GTypeInstance *instance, gpointer g_class)
 	gtk_label_set_line_wrap (GTK_LABEL (priv->filename_view), FALSE);
 	gtk_label_set_ellipsize (GTK_LABEL (priv->filename_view), PANGO_ELLIPSIZE_END);
 	gtk_label_set_single_line_mode (GTK_LABEL (priv->filename_view), TRUE);
-	gtk_label_set_selectable (GTK_LABEL (priv->filename_view), TRUE);
+	gtk_label_set_selectable (GTK_LABEL (priv->filename_view), FALSE);
 	priv->size_view = gtk_label_new (" ");
 	gtk_label_set_line_wrap (GTK_LABEL (priv->size_view), FALSE);
-	gtk_label_set_selectable (GTK_LABEL (priv->size_view), TRUE);
+	gtk_label_set_selectable (GTK_LABEL (priv->size_view), FALSE);
 	gtk_misc_set_alignment (GTK_MISC (priv->size_view), 0.0, 0.5);
 	gtk_misc_set_alignment (GTK_MISC (priv->filename_view), 0.0, 0.5);
 
@@ -347,24 +316,23 @@ modest_attachment_view_instance_init (GTypeInstance *instance, gpointer g_class)
 	priv->get_size_stream = NULL;
 	priv->size = 0;
 
-	icon_eventbox = gtk_event_box_new ();
+	box = gtk_hbox_new (FALSE, 0);
+	gtk_box_pack_start (GTK_BOX (box), priv->icon, FALSE, FALSE, 0);
+	gtk_box_pack_start (GTK_BOX (box), priv->filename_view, TRUE, TRUE, 0);
+	gtk_box_pack_start (GTK_BOX (box), priv->size_view, FALSE, FALSE, 0);
+	gtk_container_add (GTK_CONTAINER (instance), box);
 
-	gtk_container_add (GTK_CONTAINER (icon_eventbox), priv->icon);
-	gtk_box_pack_start (GTK_BOX (instance), icon_eventbox, FALSE, FALSE, 0);
-	gtk_box_pack_start (GTK_BOX (instance), priv->filename_view, TRUE, TRUE, 0);
-	gtk_box_pack_start (GTK_BOX (instance), priv->size_view, FALSE, FALSE, 0);
+/* 	gtk_widget_get_style */
+/* 	gtk_widget_modify_bg (instance, GTK_STATE_SELECTED, selection_color); */
 
 	context = gtk_widget_get_pango_context (priv->filename_view);
 	priv->layout_full_filename = pango_layout_new (context);
 	
 	pango_layout_set_ellipsize (priv->layout_full_filename, PANGO_ELLIPSIZE_NONE);
 
-	g_signal_connect (G_OBJECT (priv->filename_view), "button-press-event", G_CALLBACK (button_press_event), instance);
-	g_signal_connect (G_OBJECT (priv->filename_view), "button-release-event", G_CALLBACK (button_release_event), instance);
-       	g_signal_connect (G_OBJECT (priv->size_view), "button-press-event", G_CALLBACK (button_press_event), instance);
-	g_signal_connect (G_OBJECT (priv->size_view), "button-release-event", G_CALLBACK (button_release_event), instance);
-	g_signal_connect (G_OBJECT (icon_eventbox), "button-press-event", G_CALLBACK (button_press_event), instance);
-	g_signal_connect (G_OBJECT (icon_eventbox), "button-release-event", G_CALLBACK (button_release_event), instance);
+	gtk_event_box_set_above_child (GTK_EVENT_BOX (instance), TRUE);
+
+	GTK_WIDGET_UNSET_FLAGS (GTK_WIDGET (instance), GTK_CAN_FOCUS);
 
 	return;
 }
@@ -440,15 +408,6 @@ modest_attachment_view_class_init (ModestAttachmentViewClass *klass)
 
 	g_type_class_add_private (object_class, sizeof (ModestAttachmentViewPriv));
 
- 	signals[ACTIVATE_SIGNAL] =
- 		g_signal_new ("activate",
-			      G_TYPE_FROM_CLASS (object_class),
-			      G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION,
-			      G_STRUCT_OFFSET(ModestAttachmentViewClass, activate),
-			      NULL, NULL,
-			      g_cclosure_marshal_VOID__VOID,
-			      G_TYPE_NONE, 0);
-	
 	return;
 }
 
@@ -491,7 +450,7 @@ modest_attachment_view_get_type (void)
 			NULL         /* interface_data */
 		};
 
-		type = g_type_register_static (GTK_TYPE_HBOX,
+		type = g_type_register_static (GTK_TYPE_EVENT_BOX,
 			"ModestAttachmentView",
 			&info, 0);
 

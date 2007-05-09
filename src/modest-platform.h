@@ -98,6 +98,16 @@ gchar*  modest_platform_get_file_icon_name (const gchar* name, const gchar* mime
 gboolean modest_platform_activate_uri (const gchar *uri);
 
 /**
+ * modest_platform_activate_file:
+ * @path: the path to activate
+ *
+ * This function activates a file
+ *
+ * Returns: %TRUE if successful, %FALSE if not.
+ **/
+gboolean modest_platform_activate_file (const gchar *path);
+
+/**
  * modest_platform_show_uri_popup:
  * @uri: an URI with the string
  *

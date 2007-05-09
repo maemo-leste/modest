@@ -89,7 +89,9 @@
     </menu>
 
     <menu name="AttachmentsMenu" action="Attachments">
+      <menuitem name="AttachFileMenu" action="AttachFile"/>
       <menuitem name="InsertImageMenu" action="InsertImage"/>
+      <menuitem name="RemoveAttachmentsMenu" action="RemoveAttachments"/>
     </menu>
 
     <menu name="ToolsMenu" action="Tools">

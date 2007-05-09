@@ -344,3 +344,20 @@ modest_msg_view_window_select_previous_message (ModestMsgViewWindow *window)
 	g_message ("not implemented %s", __FUNCTION__);
 	return FALSE;
 }
+
+void
+modest_msg_view_window_view_attachment (ModestMsgViewWindow *window, TnyMimePart *mime_part)
+{
+	g_message ("not implemented %s", __FUNCTION__);
+}
+
+void
+modest_msg_view_window_save_attachments (ModestMsgViewWindow *window, GList *mime_parts)
+{
+	g_message ("not implemented %s", __FUNCTION__);
+}
+void
+modest_msg_view_window_remove_attachments (ModestMsgViewWindow *window, GList *mime_parts)
+{
+	g_message ("not implemented %s", __FUNCTION__);
+}

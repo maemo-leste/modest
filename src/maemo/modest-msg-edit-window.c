@@ -63,6 +63,7 @@
 
 #include "modest-hildon-includes.h"
 #include "widgets/modest-msg-edit-window-ui.h"
+#include <libgnomevfs/gnome-vfs-mime.h>
 
 
 #define DEFAULT_FONT_SIZE 3
@@ -85,8 +86,10 @@ static void  reset_modified (ModestMsgEditWindow *editor);
 static gboolean is_modified (ModestMsgEditWindow *editor);
 
 static void  text_buffer_refresh_attributes (WPTextBuffer *buffer, ModestMsgEditWindow *window);
+static void  text_buffer_delete_range (GtkTextBuffer *buffer, GtkTextIter *start, GtkTextIter *end, gpointer userdata);
 static void  text_buffer_mark_set (GtkTextBuffer *buffer, GtkTextIter *location, GtkTextMark *mark, gpointer userdata);
 static void  text_buffer_can_undo (GtkTextBuffer *buffer, gboolean can_undo, ModestMsgEditWindow *window);
+static void  text_buffer_delete_images_by_id (GtkTextBuffer *buffer, const gchar * image_id);
 static void  modest_msg_edit_window_color_button_change (ModestMsgEditWindow *window,
 							 gpointer userdata);
 static void  modest_msg_edit_window_size_change (GtkCheckMenuItem *menu_item,
@@ -99,6 +102,8 @@ static gboolean modest_msg_edit_window_window_state_event (GtkWidget *widget,
 							   gpointer userdata);
 static void modest_msg_edit_window_open_addressbook (ModestMsgEditWindow *window,
 						     ModestRecptEditor *editor);
+static void modest_msg_edit_window_add_attachment_clicked (GtkButton *button,
+							   ModestMsgEditWindow *window);
 
 /* ModestWindow methods implementation */
 static void  modest_msg_edit_window_set_zoom (ModestWindow *window, gdouble zoom);
@@ -402,6 +407,8 @@ init_window (ModestMsgEditWindow *obj)
 			  G_CALLBACK (text_buffer_refresh_attributes), obj);
 	g_signal_connect (G_OBJECT (priv->text_buffer), "mark-set",
 			  G_CALLBACK (text_buffer_mark_set), obj);
+	g_signal_connect (G_OBJECT (priv->text_buffer), "delete-range",
+			  G_CALLBACK (text_buffer_delete_range), obj);
 	g_signal_connect (G_OBJECT (priv->text_buffer), "can-undo",
 			  G_CALLBACK (text_buffer_can_undo), obj);
 	g_signal_connect (G_OBJECT (obj), "window-state-event",
@@ -413,6 +420,9 @@ init_window (ModestMsgEditWindow *obj)
 				  G_CALLBACK (modest_msg_edit_window_open_addressbook), obj);
 	g_signal_connect_swapped (G_OBJECT (priv->bcc_field), "open-addressbook", 
 				  G_CALLBACK (modest_msg_edit_window_open_addressbook), obj);
+
+	g_signal_connect (G_OBJECT (priv->add_attachment_button), "clicked",
+			  G_CALLBACK (modest_msg_edit_window_add_attachment_clicked), obj);
 
 	g_signal_connect (G_OBJECT (priv->msg_body), "focus-in-event",
 			  G_CALLBACK (msg_body_focus), obj);
@@ -1354,6 +1364,120 @@ modest_msg_edit_window_insert_image (ModestMsgEditWindow *window)
 
 }
 
+void
+modest_msg_edit_window_attach_file (ModestMsgEditWindow *window)
+{
+	
+	ModestMsgEditWindowPrivate *priv;
+	GtkWidget *dialog = NULL;
+	gint response = 0;
+	gchar *filename = NULL;
+	
+	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
+	
+	dialog = hildon_file_chooser_dialog_new (GTK_WINDOW (window), GTK_FILE_CHOOSER_ACTION_OPEN);
+
+	response = gtk_dialog_run (GTK_DIALOG (dialog));
+	switch (response) {
+	case GTK_RESPONSE_OK:
+		filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog));
+		break;
+	default:
+		break;
+	}
+	gtk_widget_destroy (dialog);
+
+	if (filename) {
+		gint file_id;
+		
+		file_id = g_open (filename, O_RDONLY, 0);
+		if (file_id != -1) {
+			TnyMimePart *mime_part;
+			TnyStream *stream;
+			const gchar *mime_type;
+			gchar *basename;
+			gchar *content_id;
+			
+			/* TODO: get mime type */
+			mime_type = gnome_vfs_get_file_mime_type_fast (filename, NULL);
+			mime_part = tny_platform_factory_new_mime_part
+				(modest_runtime_get_platform_factory ());
+			stream = TNY_STREAM (tny_fs_stream_new (file_id));
+			
+			tny_mime_part_construct_from_stream (mime_part, stream, mime_type);
+			
+			content_id = g_strdup_printf ("%d", priv->last_cid);
+			tny_mime_part_set_content_id (mime_part, content_id);
+			g_free (content_id);
+			priv->last_cid++;
+			
+			basename = g_path_get_basename (filename);
+			tny_mime_part_set_filename (mime_part, basename);
+			g_free (basename);
+			
+			priv->attachments = g_list_prepend (priv->attachments, mime_part);
+			modest_attachments_view_add_attachment (MODEST_ATTACHMENTS_VIEW (priv->attachments_view),
+								mime_part);
+			gtk_widget_set_no_show_all (priv->attachments_caption, FALSE);
+			gtk_widget_show_all (priv->attachments_caption);
+		} else if (file_id == -1) {
+			close (file_id);
+		}
+	}
+}
+
+void
+modest_msg_edit_window_remove_attachments (ModestMsgEditWindow *window,
+					  GList *att_list)
+{
+	ModestMsgEditWindowPrivate *priv;
+	gboolean clean_list = FALSE;
+
+	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
+	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
+
+	if (att_list == NULL) {
+		att_list = modest_attachments_view_get_selection (MODEST_ATTACHMENTS_VIEW (priv->attachments_view));
+		clean_list = TRUE;
+	}
+
+	if (att_list == NULL) {
+		hildon_banner_show_information (NULL, NULL, _("TODO: no attachments selected to remove"));
+	} else {
+		GtkWidget *confirmation_dialog = NULL;
+		gboolean dialog_response;
+		GList *node;
+		if (att_list->next == NULL) {
+			gchar *message = g_strdup_printf (_("emev_nc_delete_attachment"), 
+							  tny_mime_part_get_filename (TNY_MIME_PART (att_list->data)));
+			confirmation_dialog = hildon_note_new_confirmation (GTK_WINDOW (window), message);
+			g_free (message);
+		} else {
+			confirmation_dialog = hildon_note_new_confirmation (GTK_WINDOW (window), _("emev_nc_delete_attachments"));
+		}
+		dialog_response = (gtk_dialog_run (GTK_DIALOG (confirmation_dialog))==GTK_RESPONSE_OK);
+		gtk_widget_destroy (confirmation_dialog);
+		hildon_banner_show_information (NULL, NULL, _("mcen_ib_removing_attachment"));
+
+		for (node = att_list; node != NULL; node = g_list_next (node)) {
+			TnyMimePart *mime_part = (TnyMimePart *) node->data;
+			const gchar *att_id;
+			priv->attachments = g_list_remove (priv->attachments, mime_part);
+
+			modest_attachments_view_remove_attachment (MODEST_ATTACHMENTS_VIEW (priv->attachments_view),
+								   mime_part);
+			att_id = tny_mime_part_get_content_id (mime_part);
+			if (att_id != NULL)
+				text_buffer_delete_images_by_id (gtk_text_view_get_buffer (GTK_TEXT_VIEW (priv->msg_body)),
+								 att_id);
+			g_object_unref (mime_part);
+		}
+	}
+
+	if (clean_list)
+		g_list_free (att_list);
+}
+
 static void
 modest_msg_edit_window_color_button_change (ModestMsgEditWindow *window,
 					    gpointer userdata)
@@ -1951,6 +2075,66 @@ text_buffer_can_undo (GtkTextBuffer *buffer, gboolean can_undo, ModestMsgEditWin
 	gtk_action_set_sensitive (action, can_undo);
 }
 
+static void
+text_buffer_delete_images_by_id (GtkTextBuffer *buffer, const gchar * image_id)
+{
+	GtkTextIter iter;
+	GtkTextIter match_start, match_end;
+
+	if (image_id == NULL)
+		return;
+
+	gtk_text_buffer_get_start_iter (buffer, &iter);
+
+	while (gtk_text_iter_forward_search (&iter, "\xef\xbf\xbc", 0, &match_start, &match_end, NULL)) {
+		GSList *tags = gtk_text_iter_get_tags (&match_start);
+		GSList *node;
+		for (node = tags; node != NULL; node = g_slist_next (node)) {
+			GtkTextTag *tag = (GtkTextTag *) node->data;
+			if (g_object_get_data (G_OBJECT (tag), "image-set") != NULL) {
+				gchar *cur_image_id = g_object_get_data (G_OBJECT (tag), "image-index");
+				if ((cur_image_id != NULL) && (strcmp (image_id, cur_image_id)==0)) {
+					gint offset;
+					gtk_text_iter_get_offset (&match_start);
+					gtk_text_buffer_delete (buffer, &match_start, &match_end);
+					gtk_text_buffer_get_iter_at_offset (buffer, &iter, offset);
+				}
+			}
+		}
+	}
+}
+
+static void
+text_buffer_delete_range (GtkTextBuffer *buffer, GtkTextIter *start, GtkTextIter *end, gpointer userdata)
+{
+	ModestMsgEditWindow *window = (ModestMsgEditWindow *) userdata;
+	GtkTextIter real_start, real_end;
+	ModestMsgEditWindowPrivate *priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
+
+	if (gtk_text_iter_compare (start, end) > 0) {
+		real_start = *end;
+		real_end = *start;
+	} else {
+		real_start = *start;
+		real_end = *end;
+	}
+	do {
+		GSList *tags = gtk_text_iter_get_tags (&real_start);
+		GSList *node;
+		for (node = tags; node != NULL; node = g_slist_next (node)) {
+			GtkTextTag *tag = (GtkTextTag *) node->data;
+			if (g_object_get_data (G_OBJECT (tag), "image-set") != NULL) {
+				gchar *image_id = g_object_get_data (G_OBJECT (tag), "image-index");
+
+				modest_attachments_view_remove_attachment_by_id (MODEST_ATTACHMENTS_VIEW (priv->attachments_view),
+										 image_id);
+				gtk_text_buffer_remove_tag (buffer, tag, start, end);
+			}
+		}
+	} while (gtk_text_iter_forward_char (&real_start)&&
+		 (gtk_text_iter_compare (&real_start, &real_end)<=0));
+}
+
 static gboolean
 msg_body_focus (GtkWidget *focus,
 		GdkEventFocus *event,
@@ -2058,4 +2242,11 @@ modest_msg_edit_window_check_names (ModestMsgEditWindow *window)
 
 	return TRUE;
 
+}
+
+static void
+modest_msg_edit_window_add_attachment_clicked (GtkButton *button,
+					       ModestMsgEditWindow *window)
+{
+	modest_msg_edit_window_attach_file (window);
 }

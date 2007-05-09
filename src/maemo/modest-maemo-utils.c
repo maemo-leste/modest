@@ -35,6 +35,8 @@
 #include <dbus/dbus-glib-lowlevel.h>
 #include <glib.h>
 #include <modest-runtime.h>
+#include <libgnomevfs/gnome-vfs.h>
+#include <tny-fs-stream.h>
 
 #include "modest-maemo-utils.h"
 
@@ -188,5 +190,53 @@ modest_maemo_utils_get_device_name (void)
 	get_device_name_from_dbus ();
 }
 
+gboolean 
+modest_maemo_utils_folder_writable (const gchar *filename)
+{
+	if (g_strncasecmp (filename, "obex", 4) != 0) {
+		GnomeVFSFileInfo folder_info;
+		gchar *folder;
+		folder = g_path_get_dirname (filename);
+		gnome_vfs_get_file_info (folder, &folder_info,
+					 GNOME_VFS_FILE_INFO_GET_ACCESS_RIGHTS);
+		g_free (folder);
+		if (!((folder_info.permissions & GNOME_VFS_PERM_ACCESS_WRITABLE) ||
+		      (folder_info.permissions & GNOME_VFS_PERM_USER_WRITE))) {
+			return FALSE;
+		}
+	}
+	return TRUE;
+}
 
+gboolean 
+modest_maemo_utils_file_exists (const gchar *filename)
+{
+	GnomeVFSURI *uri = NULL;
+	gboolean result = FALSE;
 
+	uri = gnome_vfs_uri_new (filename);
+	if (uri) {
+		result = gnome_vfs_uri_exists (uri);
+		gnome_vfs_uri_unref (uri);
+	}
+	return result;
+}
+
+TnyFsStream *
+modest_maemo_utils_create_temp_stream (gchar **path)
+{
+	TnyStream *tmp_fs_stream;
+	gint fd;
+	gchar *filepath;
+
+	fd = g_file_open_tmp (NULL, &filepath, NULL);
+	if (path != NULL)
+		*path = filepath;
+	if (fd == -1) {
+		g_message ("TODO BANNER: Error saving stream");
+		return NULL;
+	}
+	tmp_fs_stream = tny_fs_stream_new (fd);
+	
+	return TNY_FS_STREAM (tmp_fs_stream);
+}

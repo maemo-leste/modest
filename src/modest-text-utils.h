@@ -242,7 +242,7 @@ gchar* modest_text_utils_get_display_date (time_t date);
  * Returns: the newly allocated display string for the
  * size in bytes. must be freed.
  */
-gchar * modest_text_utils_get_display_size (guint size);
+gchar * modest_text_utils_get_display_size (guint64 size);
 
 
 /**

@@ -61,6 +61,8 @@ static const GtkActionEntry modest_msg_edit_action_entries [] = {
 /* 	{ "ActionsFontColor", GTK_STOCK_SELECT_COLOR, N_("Color"), NULL, N_("Change text color"), G_CALLBACK (modest_ui_actions_on_select_editor_color)}, */
 /* 	{ "BackgroundColor", GTK_STOCK_SELECT_COLOR, N_("Background color"), NULL, N_("Change background color"), G_CALLBACK (modest_ui_actions_on_select_editor_background_color)}, */
 	{ "InsertImage", NULL, N_("mcen_me_editor_attach_inlineimage"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_insert_image)},
+	{ "AttachFile", NULL, N_("mcen_me_editor_attachfile"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_attach_file)},
+	{ "RemoveAttachments", NULL, N_("mcen_me_inbox_remove_attachments"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_remove_attachments) },
 	{ "Undo", NULL, N_("mcen_me_inbox_undo"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_undo)},
 	{ "Cut", NULL, N_("mcen_me_inbox_cut"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_cut)},
 	{ "Copy", NULL, N_("mcen_me_inbox_copy"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_copy)},

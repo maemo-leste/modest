@@ -47,13 +47,13 @@ typedef struct _ModestAttachmentViewClass ModestAttachmentViewClass;
 
 struct _ModestAttachmentView
 {
-	GtkHBox parent;
+	GtkEventBox parent;
 
 };
 
 struct _ModestAttachmentViewClass
 {
-	GtkHBoxClass parent_class;
+	GtkEventBoxClass parent_class;
 
 	/* virtual methods */
 	TnyMimePart* (*get_part_func) (TnyMimePartView *self);

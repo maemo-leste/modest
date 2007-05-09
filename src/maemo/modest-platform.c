@@ -46,11 +46,13 @@
 #include <gtk/gtkmenuitem.h>
 #include <gtk/gtkmain.h>
 #include <string.h>
+
+static osso_context_t *osso_context = NULL;
 	
 gboolean
 modest_platform_init (void)
 {	
-	osso_context_t *osso_context =
+	osso_context =
 		osso_initialize(PACKAGE, PACKAGE_VERSION,
 				TRUE, NULL);	
 	if (!osso_context) {
@@ -191,6 +193,32 @@ modest_platform_activate_uri (const gchar *uri)
 	if (!result)
 		hildon_banner_show_information (NULL, NULL, _("mcen_ib_unsupported_link"));
 	return result;
+}
+
+gboolean 
+modest_platform_activate_file (const gchar *path)
+{
+	gint result;
+	DBusConnection *con;
+	gchar *uri_path = NULL;
+
+	uri_path = g_strconcat ("file://", path, NULL);
+	
+	con = osso_get_dbus_connection (osso_context);
+#ifdef MODEST_HILDON_VERSION_0
+	result = osso_mime_open_file (con, uri_path);
+
+	if (result != 1)
+		hildon_banner_show_information (NULL, NULL, _("mcen_ni_noregistered_viewer"));
+	return result != 1;
+#else
+	result = hildon_mime_open_file (con, uri_path);
+
+	if (result != 1)
+		hildon_banner_show_information (NULL, NULL, _("mcen_ni_noregistered_viewer"));
+	return result != 1;
+#endif
+
 }
 
 typedef struct  {

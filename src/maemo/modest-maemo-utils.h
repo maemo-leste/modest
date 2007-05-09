@@ -55,5 +55,34 @@ GtkWidget*    modest_maemo_utils_menubar_to_menu (GtkUIManager *ui_manager);
  */
 void modest_maemo_utils_get_device_name (void);
 
+/**
+ * modest_maemo_utils_folder_writable:
+ * @filename: a string
+ *
+ * Checks if @filename is in a writable folder
+ *
+ * Returns: %TRUE if @filename is writable, %FALSE otherwise
+ */
+gboolean modest_maemo_utils_folder_writable (const gchar *filename);
+
+/**
+ * modest_maemo_utils_file_exists:
+ * @filename: a string
+ *
+ * Checks if @filename exists
+ *
+ * Returns: %TRUE if @filename currently exists, %FALSE otherwise
+ */
+gboolean modest_maemo_utils_file_exists (const gchar *filename);
+
+/**
+ * modest_maemo_utils_create_temp_stream:
+ * @path: a string with the created file path
+ *
+ * Creates a temporary fs stream 
+ *
+ * Returns: a #TnyFsStream, or %NULL if operation failed.
+ */
+TnyFsStream *modest_maemo_utils_create_temp_stream (gchar **path);
 
 #endif /*__MODEST_MAEMO_UTILS_H__*/

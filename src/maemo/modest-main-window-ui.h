@@ -44,6 +44,7 @@ static const GtkActionEntry modest_action_entries [] = {
 	{ "Edit",    NULL, N_("mcen_me_inbox_edit") },
 	{ "View",    NULL, N_("mcen_me_inbox_view") },
 	{ "Tools",   NULL, N_("mcen_me_inbox_tools") },
+	{ "Attachments", NULL, N_("mcen_me_viewer_attachments") },
 	{ "Close",   NULL, N_("mcen_me_inbox_close") },
 	{ "Zoom",   NULL, N_("Zoom") },
 
@@ -82,6 +83,11 @@ static const GtkActionEntry modest_action_entries [] = {
 	{ "ViewShowToolbar", NULL, N_("mcen_me_inbox_toolbar") }, /* submenu */
 	{ "ViewPreviousMessage", NULL,    N_("qgn_toolb_gene_back"),         NULL, NULL, G_CALLBACK (modest_ui_actions_on_prev) },
 	{ "ViewNextMessage", NULL, N_("qgn_toolb_gene_forward"),      NULL, NULL, G_CALLBACK (modest_ui_actions_on_next) },
+
+	/* Attachments */
+	{ "ViewAttachment", NULL, N_("mcen_me_viewer_view_attachment"), NULL, NULL, G_CALLBACK (modest_ui_actions_view_attachment) },
+	{ "SaveAttachment", NULL, N_("mcen_me_viewer_save_attachments"), NULL, NULL, G_CALLBACK (modest_ui_actions_save_attachments) },
+	{ "RemoveAttachment", NULL, N_("mcen_me_viewer_remove_attachments"), NULL, NULL, G_CALLBACK (modest_ui_actions_remove_attachments) },
 	
 	/* Tools */
 	{ "ToolsSettings",        NULL,      N_("mcen_me_inbox_options"),	              NULL, NULL,  NULL },

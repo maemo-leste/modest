@@ -1431,7 +1431,6 @@ modest_msg_view_search (ModestMsgView *self, const gchar *search)
 					 search,
 					 FALSE, TRUE, TRUE);
 	y_offset = tmp_vadj->value;
-	/* g_message ("VALUE %f", y_offset); */
 	gtk_layout_set_vadjustment (GTK_LAYOUT (priv->gtkhtml), vadj);
 	g_object_unref (vadj);
 
@@ -1454,7 +1453,6 @@ modest_msg_view_search_next (ModestMsgView *self)
 		GtkAdjustment *adj;
 
 		adj = gtk_container_get_focus_vadjustment (GTK_CONTAINER (priv->gtkhtml));
-		g_message ("ADJ value %f", adj->value);
 	}
 */
 
@@ -1511,4 +1509,16 @@ modest_msg_view_set_priority (ModestMsgView *self, TnyHeaderFlags flags)
 	priv->priority_flags = flags & (TNY_HEADER_FLAG_HIGH_PRIORITY);
 
 	modest_mail_header_view_set_priority (MODEST_MAIL_HEADER_VIEW (priv->mail_header_view), flags);
+}
+
+GList *
+modest_msg_view_get_selected_attachments (ModestMsgView *self)
+{
+	ModestMsgViewPrivate *priv;
+
+	g_return_val_if_fail (MODEST_IS_MSG_VIEW (self), NULL);
+	priv = MODEST_MSG_VIEW_GET_PRIVATE (self);
+
+	return modest_attachments_view_get_selection (MODEST_ATTACHMENTS_VIEW (priv->attachments_view));
+	
 }

@@ -70,6 +70,12 @@
       <menuitem name="ViewNextMessageMenu" action="ViewNextMessage"/>
     </menu>
 
+    <menu name="AttachmentsMenu" action="Attachments">
+      <menuitem name="ViewAttachmentMenu" action="ViewAttachment"/>
+      <menuitem name="SaveAttachmentMenu" action="SaveAttachment"/>
+      <menuitem name="RemoveAttachmentMenu" action="RemoveAttachment"/>
+    </menu>
+
    <menu name="ToolsMenu" action="Tools">
       <menuitem name="ToolsAddToContactsMenu" action="ToolsAddToContacts"/>
       <separator/>
