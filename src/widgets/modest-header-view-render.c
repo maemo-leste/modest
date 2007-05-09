@@ -34,6 +34,7 @@
 #include <modest-runtime.h>
 #include <glib/gi18n.h>
 #include <modest-platform.h>
+#include <string.h>
 
 static GdkPixbuf*
 get_pixbuf_for_flag (TnyHeaderFlags flag)
@@ -299,7 +300,7 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 
 	rendobj = G_OBJECT(renderer);
 	header = g_markup_printf_escaped ("%s\n<small>%s</small>",
-					  subject ? subject : _("mail_va_no_subject"),
+					  (subject && strlen(subject)) ? subject : _("mail_va_no_subject"),
 					  modest_text_utils_get_display_address(address));
 	g_free (address);
 	g_free (subject);
