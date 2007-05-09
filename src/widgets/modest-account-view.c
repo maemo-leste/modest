@@ -354,9 +354,13 @@ init_view (ModestAccountView *self)
 	 * which causes the model column to be updated automatically when the row is clicked.
 	 * Making this the default in Maemo's GTK+ is obviously a bug:
 	 * https://maemo.org/bugzilla/show_bug.cgi?id=146
-	 */     
+	 *
+	 * djcb: indeed, they have been removed for post-bora, i added the ifdefs...
+       	 */
+#ifdef MODEST_HILDON_VERSION_0	
 	g_object_set(G_OBJECT(self), "allow-checkbox-mode", FALSE, NULL);
 	g_object_set(G_OBJECT(toggle_renderer), "checkbox-mode", FALSE, NULL);
+#endif /*MODEST_HILDON_VERSION_0 */
 	g_signal_connect (G_OBJECT(toggle_renderer), "toggled", G_CALLBACK(on_account_default_toggled),
 			  self);
 	
