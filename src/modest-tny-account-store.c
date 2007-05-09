@@ -659,6 +659,8 @@ modest_tny_account_store_alert (TnyAccountStore *self, TnyAlertType type,
 			prompt = _("Modest account not yet fully configured");
 			break;
 		case TNY_ACCOUNT_STORE_ERROR_UNKNOWN_ALERT:
+			g_warning("%s: TNY_ACCOUNT_STORE_ERROR_UNKNOWN_ALERT: message=%s", 
+				__FUNCTION__, error->message); 
 			prompt = _("Unknown Tinymail error (TNY_ACCOUNT_STORE_ERROR_UNKNOWN_ALERT)");
 			break;
 		default:
