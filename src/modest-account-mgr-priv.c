@@ -36,6 +36,13 @@
 gchar*
 _modest_account_mgr_account_from_key (const gchar *key, gboolean *is_account_key, gboolean *is_server_account)
 {
+	/* Initialize input parameters: */
+	if (is_account_key)
+		*is_account_key = FALSE;
+
+	if (is_server_account)
+		*is_server_account = FALSE;
+
 	const gchar* account_ns        = MODEST_ACCOUNT_NAMESPACE "/";
 	const gchar* server_account_ns = MODEST_SERVER_ACCOUNT_NAMESPACE "/";
 	gchar *cursor;

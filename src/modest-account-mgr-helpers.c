@@ -644,14 +644,23 @@ modest_account_mgr_unset_default_account  (ModestAccountMgr *self)
 
 }
 
+gint on_accounts_list_sort_by_title(gconstpointer a, gconstpointer b)
+{
+ 	return g_utf8_collate((const gchar*)a, (const gchar*)b);
+}
+
 gboolean
 modest_account_mgr_set_first_account_as_default  (ModestAccountMgr *self)
 {
 	gboolean result = FALSE;
 	GSList *account_names = modest_account_mgr_account_names (self, TRUE /* only enabled */);
-	if(account_names)
+	
+	/* Get the first one, alphabetically, by title: */
+	GSList* list_sorted = g_slist_sort (account_names, 
+		on_accounts_list_sort_by_title);
+	if(list_sorted)
 	{
-		const gchar* account_name = (const gchar*)account_names->data;
+		const gchar* account_name = (const gchar*)list_sorted->data;
 		if (account_name)
 			result = modest_account_mgr_set_default_account (self, account_name);
 	}

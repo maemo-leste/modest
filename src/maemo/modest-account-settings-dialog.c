@@ -1275,7 +1275,6 @@ modest_account_settings_dialog_class_init (ModestAccountSettingsDialogClass *kla
 static void
 show_error (GtkWindow *parent_window, const gchar* text)
 {
-		printf("debug: show_error\n");
 	GtkDialog *dialog = GTK_DIALOG (hildon_note_new_information (parent_window, text));
 	/*
 	GtkDialog *dialog = GTK_DIALOG (gtk_message_dialog_new (parent_window,
@@ -1292,7 +1291,6 @@ show_error (GtkWindow *parent_window, const gchar* text)
 static void
 show_ok (GtkWindow *parent_window, const gchar* text)
 {
-	printf("debug: show_ok\n");
 	GtkDialog *dialog = GTK_DIALOG (hildon_note_new_information (parent_window, text));
 	/*
 	GtkDialog *dialog = GTK_DIALOG (gtk_message_dialog_new (parent_window,

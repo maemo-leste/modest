@@ -151,12 +151,16 @@ on_delete_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 {
 	ModestAccountViewWindowPrivate *priv;
 	ModestAccountMgr *account_mgr;
-	gchar *account_name;
+	
 	
 	priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE(self);
 
 	account_mgr = modest_runtime_get_account_mgr();	
-	account_name = modest_account_view_get_selected_account (priv->account_view);
+	gchar *account_name = modest_account_view_get_selected_account (priv->account_view);
+	if(!account_name)
+		return;
+		
+	gchar *account_title = modest_account_mgr_get_display_name(account_mgr, account_name);
 
 	if (account_name) {
 		gboolean removed;
@@ -171,7 +175,10 @@ on_delete_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 						      GTK_STOCK_OK,
 						      GTK_RESPONSE_ACCEPT,
 						      NULL);
-		txt = g_strdup_printf (_("Do you really want to delete the account %s?"), account_name);
+		/* TODO: This confirmation dialog is not specified in the Maemo UI spec, 
+		 * but we really need one: */
+		txt = g_strdup_printf (_("Do you really want to delete the account %s?"), 
+			account_title);
 		gtk_box_pack_start (GTK_BOX(GTK_DIALOG(dialog)->vbox), 
 				    gtk_label_new (txt), FALSE, FALSE, 0);
 		gtk_widget_show_all (GTK_WIDGET(GTK_DIALOG(dialog)->vbox));
@@ -204,6 +211,7 @@ on_delete_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 			}
 		}
 		gtk_widget_destroy (dialog);
+		g_free (account_title);
 		g_free (account_name);
 	}
 }

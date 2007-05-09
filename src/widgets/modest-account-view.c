@@ -332,6 +332,10 @@ init_view (ModestAccountView *self)
 				    G_TYPE_STRING,  /* account proto (pop, imap,...) */
 				    G_TYPE_STRING   /* last updated (time_t) */
 		); 
+		
+	gtk_tree_sortable_set_sort_column_id (
+		GTK_TREE_SORTABLE (model), MODEST_ACCOUNT_VIEW_DISPLAY_NAME_COLUMN, 
+		GTK_SORT_ASCENDING);
 
 	gtk_tree_view_set_model (GTK_TREE_VIEW(self), GTK_TREE_MODEL(model));
 	g_object_unref (G_OBJECT (model));

@@ -1,5 +1,21 @@
 2007-05-09  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-account-mgr-helpers.c:
+	(modest_account_mgr_set_first_account_as_default):
+	Sort the list of names alphabetically-by-title, so we choose the first one 
+	based on that.
+	* src/widgets/modest-account-view.c: (init_view): Sort the TreeModel 
+	alphabetically by the title.
+	
+	This fixes projects.maemo.org bug NB#56418 .
+	
+	* src/modest-account-mgr-priv.c:
+	(_modest_account_mgr_account_from_key):
+	* src/modest-account-mgr.c: (on_key_change): Initialize variables to 
+	avoid a valgrind error, and possible random behaviour.
+
+2007-05-09  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/modest-tny-account-store.c: (modest_tny_account_store_alert):
 	Handle the new TNY_ACCOUNT_STORE_ERROR error domain. I will update the 
 	tinymail documentation to say that this can be expected.

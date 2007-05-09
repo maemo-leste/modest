@@ -53,15 +53,8 @@ static guint signals[LAST_SIGNAL] = {0};
 static void
 on_key_change (ModestConf *conf, const gchar *key, ModestConfEvent event, gpointer user_data)
 {
-	ModestAccountMgr *self;
-	ModestAccountMgrPrivate *priv;
-
-	gchar *account;
-	gboolean is_account_key, is_server_account;
-	gboolean enabled;
-
-	self = MODEST_ACCOUNT_MGR (user_data);
-	priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
+	ModestAccountMgr *self = MODEST_ACCOUNT_MGR (user_data);
+	/* ModestAccountMgrPrivate *priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self); */
 
 	/* there is only one not-really-account key which will still emit
 	 * a signal: a change in MODEST_CONF_DEFAULT_ACCOUNT */
@@ -74,7 +67,9 @@ on_key_change (ModestConf *conf, const gchar *key, ModestConfEvent event, gpoint
 		return;
 	}
 	
-	account = _modest_account_mgr_account_from_key (key, &is_account_key, &is_server_account);
+	gboolean is_account_key = FALSE;
+	gboolean is_server_account = FALSE;
+	gchar* account = _modest_account_mgr_account_from_key (key, &is_account_key, &is_server_account);
 	
 	/* if this is not an account-related key change, ignore */
 	if (!account)
@@ -89,6 +84,7 @@ on_key_change (ModestConf *conf, const gchar *key, ModestConfEvent event, gpoint
 	}
 
 	/* is this account enabled? */
+	gboolean enabled = FALSE;
 	if (is_server_account)
 		enabled = TRUE;
 	else 
