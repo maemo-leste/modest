@@ -624,7 +624,13 @@ modest_tny_account_store_alert (TnyAccountStore *self, TnyAlertType type,
 				const GError *error)
 {
 	g_return_val_if_fail (error, FALSE);
-	g_return_val_if_fail (error->domain == TNY_ACCOUNT_ERROR, FALSE);
+
+	if ((error->domain != TNY_ACCOUNT_ERROR) 
+		&& (error->domain != TNY_ACCOUNT_STORE_ERROR)) {
+		g_warning("%s: Unexpected error domain: != TNY_ACCOUNT_ERROR: %d, message=%s", 
+			__FUNCTION__, error->domain, error->message); 
+		return FALSE;
+	}
 	
 	/* printf("DEBUG: %s: error->message=%s\n", __FUNCTION__, error->message); */
 	
@@ -652,8 +658,12 @@ modest_tny_account_store_alert (TnyAccountStore *self, TnyAlertType type,
 		case TNY_ACCOUNT_ERROR_TRY_CONNECT:
 			prompt = _("Modest account not yet fully configured");
 			break;
+		case TNY_ACCOUNT_STORE_ERROR_UNKNOWN_ALERT:
+			prompt = _("Unknown Tinymail error (TNY_ACCOUNT_STORE_ERROR_UNKNOWN_ALERT)");
+			break;
 		default:
-			g_warning ("%s: Unhandled GError code.", __FUNCTION__);
+			g_warning ("%s: Unhandled GError code: %d, message=%s", 
+				__FUNCTION__, error->code, error->message);
 			prompt = NULL;
 		break;
 	}

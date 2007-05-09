@@ -1,5 +1,13 @@
 2007-05-09  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-tny-account-store.c: (modest_tny_account_store_alert):
+	Handle the new TNY_ACCOUNT_STORE_ERROR error domain. I will update the 
+	tinymail documentation to say that this can be expected.
+	Handle the new TNY_ACCOUNT_STORE_ERROR_UNKNOWN_ALERT error code. It is not 
+	pretty, and should not happen, but I would prefer to know when it does.
+
+2007-05-09  Murray Cumming  <murrayc@murrayc.com>
+
 	* configure.ac: When using the older hildon version, probably on Bora, 
 	require gnome-vfs-module-2.0, which is the old provider of gnome-vfs-mime.h,
 	to fix the build.
