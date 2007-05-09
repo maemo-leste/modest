@@ -56,6 +56,7 @@
 
 #ifdef MODEST_PLATFORM_MAEMO
 #include <tny-maemo-conic-device.h>
+#include <hildon-widgets/hildon-note.h>
 #endif
 
 /* 'private'/'protected' functions */
@@ -634,23 +635,7 @@ modest_tny_account_store_alert (TnyAccountStore *self, TnyAlertType type,
 	
 	/* printf("DEBUG: %s: error->message=%s\n", __FUNCTION__, error->message); */
 	
-	GtkMessageType gtktype;
-	gboolean retval = FALSE;
-	GtkWidget *dialog;
 
-	switch (type)
-	{
-		case TNY_ALERT_TYPE_INFO:
-		gtktype = GTK_MESSAGE_INFO;
-		break;
-		case TNY_ALERT_TYPE_WARNING:
-		gtktype = GTK_MESSAGE_WARNING;
-		break;
-		case TNY_ALERT_TYPE_ERROR:
-		default:
-		gtktype = GTK_MESSAGE_ERROR;
-		break;
-	}
 	
 	const gchar *prompt = NULL;
 	switch (error->code)
@@ -673,8 +658,31 @@ modest_tny_account_store_alert (TnyAccountStore *self, TnyAlertType type,
 	if (!prompt)
 		return FALSE;
 
-	dialog = gtk_message_dialog_new (NULL, GTK_DIALOG_MODAL,
+	gboolean retval = FALSE;
+#ifdef MODEST_PLATFORM_MAEMO
+	/* The Tinymail documentation says that we should show Yes and No buttons, 
+	 * but these never seem to be questions: */
+	 GtkWidget *dialog = GTK_WIDGET (hildon_note_new_information (NULL, prompt));
+#else
+
+	GtkMessageType gtktype = GTK_MESSAGE_ERROR;
+	switch (type)
+	{
+		case TNY_ALERT_TYPE_INFO:
+		gtktype = GTK_MESSAGE_INFO;
+		break;
+		case TNY_ALERT_TYPE_WARNING:
+		gtktype = GTK_MESSAGE_WARNING;
+		break;
+		case TNY_ALERT_TYPE_ERROR:
+		default:
+		gtktype = GTK_MESSAGE_ERROR;
+		break;
+	}
+	
+	GtkWidget *dialog = gtk_message_dialog_new (NULL, GTK_DIALOG_MODAL,
 		gtktype, GTK_BUTTONS_YES_NO, prompt);
+#endif /* #ifdef MODEST_PLATFORM_MAEMO */
 
 	if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_YES)
 		retval = TRUE;

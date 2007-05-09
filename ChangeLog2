@@ -1,5 +1,10 @@
 2007-05-09  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-tny-account-store.c: (modest_tny_account_store_alert):
+	Show a HildonNote instead of a GtkDialog for Maemo.
+
+2007-05-09  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/widgets/modest-account-view.h:
 	* src/widgets/modest-account-view.c: (on_account_changed),
 	(on_account_removed). Added a boolean flag, set/unset by 
