@@ -96,7 +96,7 @@ UI_FILES=\
 uidir = $(datadir)/modest/ui
 ui_DATA = $(UI_FILES)
 
-serviceentry_DATA = modest.service
+serviceentry_DATA = com.nokia.modest.service
 desktopentry_DATA = modest.desktop
 
 icon_26x26_DATA    = pixmaps/modest-icon.png

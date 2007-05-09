@@ -1,13 +1,12 @@
 [Desktop Entry]
 Encoding=UTF-8
-Version=1.0
+Version=@PACKAGE_VERSION@
 Type=Application
 Name=mcen_ap_name
 Comment=mcen_ap_name_thumb
 Exec=@prefix@/bin/modest
 
-#don't kill our app
-#X-Osso-Service=org.maemo.modest
+X-Osso-Service=com.nokia.modest
 X-Osso-Type=application/x-executable
 
 Icon=qgn_list_messagin

@@ -51,10 +51,11 @@ static osso_context_t *osso_context = NULL;
 	
 gboolean
 modest_platform_init (void)
-{	
+{
+	osso_hw_state_t hw_state = { 0 };	
 	osso_context =
-		osso_initialize(PACKAGE, PACKAGE_VERSION,
-				TRUE, NULL);	
+		osso_initialize(PACKAGE,PACKAGE_VERSION,
+				FALSE, NULL);	
 	if (!osso_context) {
 		g_printerr ("modest: failed to acquire osso context\n");
 		return FALSE;
@@ -83,7 +84,8 @@ modest_platform_init (void)
 	*/
 
 	/* Register hardware event dbus callback: */
-    osso_hw_set_event_cb(osso_context, NULL, modest_osso_cb_hw_state_handler, NULL);
+    	hw_state.shutdown_ind = TRUE;
+	osso_hw_set_event_cb(osso_context, NULL,/*&hw_state*/ modest_osso_cb_hw_state_handler, NULL);
 
 	/* Register osso auto-save callbacks: */
 	result = osso_application_set_autosave_cb (osso_context, 

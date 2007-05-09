@@ -26,7 +26,7 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-AC_INIT([modest],[0.0.1],[http://maemo.org])
+AC_INIT([modest],[1.0],[http://maemo.org])
 AC_CONFIG_HEADERS([config.h])
 
 AC_CONFIG_SRCDIR(src/modest-main.c)
@@ -219,7 +219,7 @@ docs/reference/Makefile
 tests/Makefile
 tests/dbus_api/Makefile
 src/maemo/modest.desktop
-src/maemo/modest.service
+src/maemo/com.nokia.modest.service
 libmodest-dbus-client/Makefile
 libmodest-dbus-client/libmodest-dbus-client-1.0.pc
 ])
