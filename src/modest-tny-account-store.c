@@ -231,8 +231,9 @@ on_account_removed (ModestAccountMgr *acc_mgr, const gchar *account, gboolean se
 
 
 static void
-on_account_changed (ModestAccountMgr *acc_mgr, const gchar *account, gboolean server_account,
-		    const gchar *key, gpointer user_data)
+on_account_changed (ModestAccountMgr *acc_mgr, const gchar *account,
+			       const gchar *key, gboolean server_account, gpointer user_data)
+
 {
 	ModestTnyAccountStore *self = MODEST_TNY_ACCOUNT_STORE(user_data);
 	ModestTnyAccountStorePrivate *priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
