@@ -283,8 +283,6 @@ GtkWidget*
 modest_attachment_view_new (TnyMimePart *mime_part)
 {
 	ModestAttachmentView *self = g_object_new (MODEST_TYPE_ATTACHMENT_VIEW, 
-						   "homogeneous", FALSE,
-						   "spacing", 0,
 						   NULL);
 
 	modest_attachment_view_set_part (TNY_MIME_PART_VIEW (self), mime_part);

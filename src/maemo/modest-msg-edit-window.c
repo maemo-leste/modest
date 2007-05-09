@@ -678,6 +678,7 @@ modest_msg_edit_window_setup_toolbar (ModestMsgEditWindow *window)
 	/* font color */
 	tool_item = GTK_WIDGET (gtk_tool_item_new ());
 	priv->font_color_button = hildon_color_button_new ();
+	GTK_WIDGET_UNSET_FLAGS (tool_item, GTK_CAN_FOCUS);
 	gtk_container_add (GTK_CONTAINER (tool_item), priv->font_color_button);
 	gtk_tool_item_set_expand (GTK_TOOL_ITEM (tool_item), TRUE);
 	gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (tool_item), TRUE);
@@ -1407,7 +1408,6 @@ modest_msg_edit_window_attach_file (ModestMsgEditWindow *window)
 			gchar *basename;
 			gchar *content_id;
 			
-			/* TODO: get mime type */
 			mime_type = gnome_vfs_get_file_mime_type_fast (filename, NULL);
 			mime_part = tny_platform_factory_new_mime_part
 				(modest_runtime_get_platform_factory ());

@@ -36,6 +36,7 @@
 #include <modest-maemo-utils.h>
 #include <modest-tny-msg.h>
 #include <modest-msg-view-window.h>
+#include <modest-attachments-view.h>
 #include <modest-main-window-ui.h>
 #include <modest-widget-memory.h>
 #include <modest-runtime.h>
@@ -382,10 +383,10 @@ init_window (ModestMsgViewWindow *obj, TnyMsg *msg)
 	
 	/* TODO: I dont knonw why, but when get_msg_async is used, */
 	/* this code makes application doest not work (jfernandez) */
-	if (FALSE) {
+/* 	if (FALSE) { */
 		priv->clipboard_change_handler = g_signal_connect (G_OBJECT (gtk_clipboard_get (GDK_SELECTION_PRIMARY)), "owner-change", G_CALLBACK (modest_msg_view_window_clipboard_owner_change), obj);
-		modest_msg_view_window_clipboard_owner_change (gtk_clipboard_get (GDK_SELECTION_PRIMARY), NULL, obj);
-	}
+/* 		modest_msg_view_window_clipboard_owner_change (gtk_clipboard_get (GDK_SELECTION_PRIMARY), NULL, obj); */
+/* 	} */
 	gtk_widget_show_all (GTK_WIDGET(main_vbox));
 	gtk_box_pack_end (GTK_BOX (main_vbox), priv->find_toolbar, FALSE, FALSE, 0);
 }	
@@ -1007,6 +1008,7 @@ modest_msg_view_window_update_dimmed (ModestMsgViewWindow *window)
 	GList *attachments, *node;
 	gint n_selected;
 	gboolean selected_messages = FALSE;
+	gboolean nested_attachments = FALSE;
 
 	parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
@@ -1035,21 +1037,35 @@ modest_msg_view_window_update_dimmed (ModestMsgViewWindow *window)
 	widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/MessageMenu/MessageForwardMenu");
 	gtk_action_set_sensitive (widget, !is_not_sent);
 
+	/* Attachment actions dimming */
 	attachments = modest_msg_view_get_selected_attachments (MODEST_MSG_VIEW (priv->msg_view));
 	n_selected = g_list_length (attachments);
 	for (node = attachments; node != NULL; node = g_list_next (node)) {
-		if (!tny_mime_part_is_attachment (TNY_MIME_PART (node->data))) {
+		TnyMimePart *mime_part = TNY_MIME_PART (node->data);
+		TnyList *nested_list = tny_simple_list_new ();
+		if (!tny_mime_part_is_attachment (mime_part)) {
 			selected_messages = TRUE;
 			break;
 		}
+		tny_mime_part_get_parts (mime_part, nested_list);
+		if (tny_list_get_length (nested_list) > 0)
+			nested_attachments = TRUE;
+		g_object_unref (nested_list);
 	}
 	g_list_free (attachments);
 
 	widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/AttachmentsMenu/ViewAttachmentMenu");
 	gtk_action_set_sensitive (widget, n_selected == 1);
 	widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/AttachmentsMenu/SaveAttachmentMenu");
-	gtk_action_set_sensitive (widget, (n_selected > 0) && (!selected_messages));
-		
+	gtk_action_set_sensitive (widget, (n_selected > 0) && (!selected_messages) &&  (!nested_attachments));
+
+	/* Dimming depending of message being an attachment or not. It's not an attachment if
+	 * we opened it outside a folder view */
+	widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/MessageMenu/MessageDeleteMenu");
+	gtk_action_set_sensitive (widget, priv->header_model != NULL);
+	widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/EditMenu/EditMoveToMenu");
+	gtk_action_set_sensitive (widget, priv->header_model != NULL);
+
 }
 
 static void
@@ -1204,6 +1220,7 @@ modest_msg_view_window_clipboard_owner_change (GtkClipboard *clipboard,
 	GtkAction *action;
 	gboolean is_address;
 	gchar *selection;
+	GtkWidget *focused;
 
 	parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
 	selection = gtk_clipboard_wait_for_text (clipboard);
@@ -1213,6 +1230,14 @@ modest_msg_view_window_clipboard_owner_change (GtkClipboard *clipboard,
 	
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/ToolsMenu/ToolsAddToContactsMenu");
 	gtk_action_set_sensitive (action, is_address);
+
+	focused = gtk_window_get_focus (GTK_WINDOW (window));
+
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/EditMenu/EditCopyMenu");
+	gtk_action_set_sensitive (action, (selection != NULL) && (!MODEST_IS_ATTACHMENTS_VIEW (focused)));
+
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/EditMenu/EditCutMenu");
+	gtk_action_set_sensitive (action, (selection != NULL) && (!MODEST_IS_ATTACHMENTS_VIEW (focused)));
 
 	modest_msg_view_window_update_dimmed (window);
 	
