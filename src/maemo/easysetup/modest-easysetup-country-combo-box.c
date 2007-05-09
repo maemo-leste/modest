@@ -151,7 +151,12 @@ static void load_from_file (EasysetupCountryComboBox *self)
 	EasysetupCountryComboBoxPrivate *priv = COUNTRY_COMBO_BOX_GET_PRIVATE (self);
 	
 	/* Load the file one line at a time: */
+#ifndef MODEST_HILDON_VERSION_0
 	const gchar* filepath = PROVIDER_DATA_DIR "/mcc_mapping";
+#else
+	/* this is the official version, in the 'operator-wizard-settings' package */
+	const gchar* filepath = "/usr/share/operator-wizard/mcc_mapping";
+#endif /*MODEST_HILDON_VERSION_0*/
 	FILE *file = fopen(filepath, "r");
 	if (!file)
 	{
@@ -174,14 +179,13 @@ static void load_from_file (EasysetupCountryComboBox *self)
 	 */
 	int len = 0;
 	char *line = NULL;
-	while (getline (&line, &len, file) > 0) /* getline will realloc line if necessary. */
-	{
+	while (getline (&line, &len, file) > 0) { /* getline will realloc line if necessary. */
 		/* printf ("DBEUG: len=%d, line: %s\n", len, line); */
 		
 		char *id_str = NULL;
 		char *country = NULL;
 		parse_mcc_mapping_line (line, &id_str, &country);
-		/* printf("DEBUG: parsed: id=%s, country=%s\n", id_str, country); */
+		//printf("DEBUG: parsed: id=%s, country=%s\n", id_str, country); 
 		
 		if(id_str && country) {
 			guint id = (guint)g_ascii_strtod(id_str, NULL); /* Note that this parses locale-independent text. */
@@ -189,7 +193,8 @@ static void load_from_file (EasysetupCountryComboBox *self)
 			/* Get the translation for the country name:
 			 * Note that the osso_countries_1.0 translation domain files are installed 
 			 * by the operator-wizard-settings package. */
-			const gchar *name_translated = dgettext ("osso_countries_1.0", country);
+			/* For post-Bora, there is a separate (meta)package osso-countries-l10n-mr0 */
+			const gchar *name_translated = dgettext ("osso-countries", country);
 			if(!name_translated)
 			  name_translated = country;
 			

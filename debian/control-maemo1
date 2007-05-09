@@ -7,7 +7,7 @@ Standards-Version: 3.6.0
 
 Package: modest
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, modest-providers-data, osso-email-l10n-mr0 | osso-email-l10n-mr,osso-icons-theme 
+Depends: ${shlibs:Depends}, ${misc:Depends}, modest-providers-data, osso-email-l10n-mr0,osso-icons-theme,operator-wizard-settings,osso-countries-l10n-mr0
 Description: an e-mail client for platforms with modest resources
 
 Package: modest-dbg
