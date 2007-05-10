@@ -76,82 +76,6 @@ gchar* modest_account_mgr_get_signature (ModestAccountMgr *self, const gchar* na
 	return modest_account_mgr_get_string (self, name, MODEST_ACCOUNT_SIGNATURE, FALSE);
 }
 	
-	
-
-#if 0 /* Not needed, but works. */
-static gint
-compare_option_strings_for_name (const gchar* a, const gchar* b)
-{
-	/* printf("  debug: compare_option_strings_for_name():a=%s, b=%s\n", a, b); */
-	const gchar* sep = strchr(a, '=');
-	if (!sep)
-		return -1;
-		
-	gint len = sep - a;
-	if(len <= 0)
-		return -1;
-		
-	/* Get the part of the string before the =.
-	 * Note that this allocation is inefficient just so we can do a strcmp. */
-	gchar* name = g_malloc (len+1);
-	memcpy(name, a, len);
-	name[len] = 0; /* Null-termination. */
-	
-	/* printf("    debug: name=%s\n", name); */
-
-	gint result = strcmp (name, b);
-	
-	g_free (name);
-	
-	return result;
-}
-           
-gchar*
-modest_server_account_data_get_option_string (GSList* options_list, const gchar* option_name)
-{
-	if (!options_list)
-		return NULL;
-	
-	gchar *result = NULL;
-	GSList* option = g_slist_find_custom(options_list, option_name, (GCompareFunc)compare_option_strings_for_name);
-	if(option) {
-		/* Get the value part of the key=value pair: */
-		const gchar* pair = (const gchar*)option->data;
-		
-		const gchar* sep = strchr(pair, '=');
-		if (sep) {
-			gint len = sep - pair;
-			if(len > 0) {
-				result = g_strdup(sep+1);
-				
-				/* Avoid returning an empty string instead of NULL. */
-				if(result && strlen(result) == 0) {
-					g_free(result);
-					result = NULL;
-				}
-			}
-		}
-	}
-		
-	return result;
-}
-
-gboolean
-modest_server_account_data_get_option_bool (GSList* options_list, const gchar* option_name)
-{
-	if (!options_list)
-		return FALSE;
-	
-	gboolean result = FALSE;
-	GSList* option = g_slist_find_custom(options_list, option_name, (GCompareFunc)strcmp);
-	if(option) {
-		return TRUE;
-	}
-		
-	return result;
-}
-#endif
-
 
 gboolean modest_account_mgr_set_connection_specific_smtp (ModestAccountMgr *self, 
 	const gchar* account_name,
@@ -407,25 +331,6 @@ modest_server_account_set_security (ModestAccountMgr *self,
 	/* Set it in the configuration: */
 	modest_account_mgr_set_string (self, account_name, MODEST_ACCOUNT_SECURITY, str_value, TRUE);
 }
-	             
-#if 0                     
-gchar*
-modest_account_mgr_get_server_account_option (ModestAccountMgr *self, 
-	const gchar* account_name, const gchar* option_name)
-{
-	GSList *option_list = modest_account_mgr_get_list (self, account_name, MODEST_ACCOUNT_OPTIONS,
-						     MODEST_CONF_VALUE_STRING, TRUE);
-	if (!option_list)
-		return NULL;
-		
-	gchar *result = modest_server_account_data_get_option_value (option_list, option_name);
-	
-	/* TODO: Should we free the items too, or just the list? */
-	g_slist_free (option_list);
-		
-	return result;
-}
-#endif
 
 ModestServerAccountData*
 modest_account_mgr_get_server_account_data (ModestAccountMgr *self, const gchar* name)
@@ -456,10 +361,7 @@ modest_account_mgr_get_server_account_data (ModestAccountMgr *self, const gchar*
 	data->last_updated = modest_account_mgr_get_int    (self, name, MODEST_ACCOUNT_LAST_UPDATED,TRUE);
 	
 	data->password     = modest_account_mgr_get_string (self, name, MODEST_ACCOUNT_PASSWORD, TRUE);
-	data->uri          = modest_account_mgr_get_string (self, name, MODEST_ACCOUNT_URI,TRUE);
-	data->options = modest_account_mgr_get_list (self, name, MODEST_ACCOUNT_OPTIONS,
-						     MODEST_CONF_VALUE_STRING, TRUE);
-						   
+	data->uri          = modest_account_mgr_get_string (self, name, MODEST_ACCOUNT_URI,TRUE);			   
 	
 	return data;
 }
@@ -485,15 +387,6 @@ modest_account_mgr_free_server_account_data (ModestAccountMgr *self,
 
 	g_free (data->password);
 	data->password = NULL;
-	
-	if (data->options) {
-		GSList *tmp = data->options;
-		while (tmp) {
-			g_free (tmp->data);
-			tmp = g_slist_next (tmp);
-		}
-		g_slist_free (data->options);
-	}
 
 	g_slice_free (ModestServerAccountData, data);
 }

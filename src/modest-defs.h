@@ -127,7 +127,6 @@
 #define MODEST_ACCOUNT_LEAVE_ON_SERVER   "leave_on_server"   /* boolean */
 #define MODEST_ACCOUNT_PREFERRED_CNX     "preferred_cnx"     /* string */
 #define MODEST_ACCOUNT_PORT		         "port"	             /* int */
-#define MODEST_ACCOUNT_OPTIONS		 "options"	     /* list */
 
 #define MODEST_ACCOUNT_AUTH_MECH	 "auth_mech"	     /* string */
 #define MODEST_ACCOUNT_AUTH_MECH_VALUE_NONE "none"
@@ -145,19 +144,6 @@
 #define MODEST_ACCOUNT_SECURITY_VALUE_NONE "none"
 #define MODEST_ACCOUNT_SECURITY_VALUE_NORMAL "normal"
 #define MODEST_ACCOUNT_SECURITY_VALUE_SSL "ssl"
-
-
-/* Options keys that correspond directly to camel options.
- * These probably should not be written to user configuration, 
- * because they are specific API implementation details. */
-/* Keys and values used in the text items in the options GSList: */
-#define MODEST_ACCOUNT_OPTION_SSL "use_ssl"
-#define MODEST_ACCOUNT_OPTION_SSL_NEVER "never"
-#define MODEST_ACCOUNT_OPTION_SSL_ALWAYS "always"
-#define MODEST_ACCOUNT_OPTION_SSL_WHEN_POSSIBLE "when-possible"
-
-#define MODEST_ACCOUNT_OPTION_USE_LSUB "use_lsub"
-#define MODEST_ACCOUNT_OPTION_CHECK_ALL "check_all"
 
 /* Macros for different text formats in mail editor */
 #define MODEST_FILE_FORMAT_PLAIN_TEXT 0

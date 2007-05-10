@@ -398,47 +398,6 @@ modest_account_mgr_add_server_account (ModestAccountMgr * self,
 		goto cleanup;
 
 	if (proto_type == MODEST_PROTOCOL_TYPE_STORE) {
-
-		GSList *option_list = NULL;
-
-		/* Connection options. Some options are only valid for IMAP
-		   accounts but it's OK for just now since POP is still not
-		   supported */
-		key = _modest_account_mgr_get_account_keyname (name, MODEST_ACCOUNT_OPTIONS, TRUE);
-		/* Enable subscriptions and check the mails in all folders */
-		option_list = g_slist_append (option_list, MODEST_ACCOUNT_OPTION_USE_LSUB);
-		option_list = g_slist_append (option_list, MODEST_ACCOUNT_OPTION_CHECK_ALL);
-
-		/* TODO: Remove this hack. These are hard-coded camel options to make the connection work.
-		 * The regular connection options (set later here) should be interpreted instead 
-		 * because in future these camel options will not be in gconf. murrayc.
-		 */
-		/* Security options */
-		switch (security) {
-		case MODEST_PROTOCOL_SECURITY_NONE:
-			option_list = g_slist_append (option_list, MODEST_ACCOUNT_OPTION_SSL "= " MODEST_ACCOUNT_OPTION_SSL_NEVER);
-			break;
-		case MODEST_PROTOCOL_SECURITY_SSL:
-		case MODEST_PROTOCOL_SECURITY_TLS:
-			option_list = g_slist_append (option_list, MODEST_ACCOUNT_OPTION_SSL "= " MODEST_ACCOUNT_OPTION_SSL_ALWAYS);
-			break;
-		case MODEST_PROTOCOL_SECURITY_TLS_OP:
-			option_list = g_slist_append (option_list, MODEST_ACCOUNT_OPTION_SSL "= " MODEST_ACCOUNT_OPTION_SSL_WHEN_POSSIBLE);
-			break;
-		default:
-			g_warning ("Invalid security option");
-		}
-		ok = modest_conf_set_list (priv->modest_conf, key, 
-					   option_list, MODEST_CONF_VALUE_STRING, &err);
-		if (err) {
-			g_printerr ("modest: failed to set %s: %s\n", key, err->message);
-			g_error_free (err);
-			ok = FALSE;
-		}
-		g_slist_free (option_list);
-		g_free (key);
-		
-		
 		/* Add the security settings: */
 		modest_server_account_set_security (self, name, security);
 	}

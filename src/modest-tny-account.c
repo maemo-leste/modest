@@ -87,6 +87,13 @@ modest_tny_account_get_special_folder (TnyAccount *account,
 	return special_folder;
 }
 
+/* Camel options: */
+#define MODEST_ACCOUNT_OPTION_SSL "use_ssl"
+#define MODEST_ACCOUNT_OPTION_SSL_NEVER "never"
+#define MODEST_ACCOUNT_OPTION_SSL_ALWAYS "always"
+#define MODEST_ACCOUNT_OPTION_SSL_WHEN_POSSIBLE "when-possible"
+#define MODEST_ACCOUNT_OPTION_USE_LSUB "use_lsub"
+#define MODEST_ACCOUNT_OPTION_CHECK_ALL "check_all"
 
 /**
  * modest_tny_account_new_from_server_account:
@@ -142,14 +149,37 @@ modest_tny_account_new_from_server_account (ModestAccountMgr *account_mgr,
 	if (account_data->uri) 
 		tny_account_set_url_string (TNY_ACCOUNT(tny_account), account_data->uri);
 	else {
-		if (account_data->options) {
-			GSList *options = account_data->options;
-			while (options) {
-				tny_camel_account_add_option (TNY_CAMEL_ACCOUNT (tny_account),
-							      options->data);
-				options = g_slist_next (options);
-			}
+		const gchar* option_security = NULL;
+		switch (account_data->security) {
+		case MODEST_PROTOCOL_SECURITY_NONE:
+			option_security = MODEST_ACCOUNT_OPTION_SSL "= " MODEST_ACCOUNT_OPTION_SSL_NEVER;
+			break;
+		case MODEST_PROTOCOL_SECURITY_SSL:
+		case MODEST_PROTOCOL_SECURITY_TLS:
+			option_security = MODEST_ACCOUNT_OPTION_SSL "= " MODEST_ACCOUNT_OPTION_SSL_ALWAYS;;
+			break;
+		case MODEST_PROTOCOL_SECURITY_TLS_OP:
+			option_security = MODEST_ACCOUNT_OPTION_SSL "= " MODEST_ACCOUNT_OPTION_SSL_WHEN_POSSIBLE;
+			break;
+		default:
+			break;
 		}
+		
+		if(option_security) {
+			tny_camel_account_add_option (TNY_CAMEL_ACCOUNT (tny_account),
+						      option_security);
+		}
+		
+		if (account_data->proto == MODEST_PROTOCOL_TYPE_STORE) {
+			/* Connection options. Some options are only valid for IMAP
+			   accounts but it's OK for just now since POP is still not
+			   supported */
+			tny_camel_account_add_option (TNY_CAMEL_ACCOUNT (tny_account),
+								      MODEST_ACCOUNT_OPTION_USE_LSUB);
+			tny_camel_account_add_option (TNY_CAMEL_ACCOUNT (tny_account),
+								      MODEST_ACCOUNT_OPTION_CHECK_ALL);
+		}
+		
 		if (account_data->username) 
 			tny_account_set_user (tny_account, account_data->username);
 		if (account_data->hostname)

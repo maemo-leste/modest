@@ -51,7 +51,6 @@ typedef struct {
 	gint             port; /* Or 0, if the default should be used. */
 	ModestProtocol   secure_auth;
 	ModestProtocol   security;
-	GSList           *options;
 } ModestServerAccountData;
 
 typedef struct {
@@ -371,37 +370,6 @@ modest_account_mgr_get_server_account_data (ModestAccountMgr *self, const gchar*
 void
 modest_account_mgr_free_server_account_data (ModestAccountMgr *self,
 					     ModestServerAccountData* data);
-	
-#if 0
-/**
- * modest_account_mgr_get_account_option:
- * @self: a ModestAccountMgr instance
- * @account_name: the account name to check
- * @account_name: the option name to check
- *
- * Returns: The account option value. This must be freed with g_free().
- */
-gchar* modest_account_mgr_get_server_account_option (ModestAccountMgr *self, 
-	const gchar* account_name, const gchar* option_name);
-
-/**
- * modest_server_account_data_get_option_value:
- * @options_list: a ModestServerAccountData::options list.
- * @option_name: the option name to check
- *
- * Returns: The account option value. This must be freed with g_free().
- */
-gchar* modest_server_account_data_get_option_string (GSList* options_list, const gchar* option_name);
-
-/**
- * modest_server_account_data_get_option_bool:
- * @options_list: a ModestServerAccountData::options list.
- * @option_name: the option name to check
- *
- * Returns: Whether the account option is present.
- */
-gboolean modest_server_account_data_get_option_bool (GSList* options_list, const gchar* option_name);
-#endif
 
 /**
  * modest_account_mgr_get_from_string

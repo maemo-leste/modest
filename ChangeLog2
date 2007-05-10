@@ -1,5 +1,19 @@
 2007-05-10  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-account-mgr-helpers.c:
+	(modest_account_mgr_get_server_account_data),
+	(modest_account_mgr_free_server_account_data):
+	* src/modest-account-mgr-helpers.h:
+	* src/modest-account-mgr.c:
+	(modest_account_mgr_add_server_account):
+	* src/modest-defs.h:
+	* src/modest-tny-account.c:
+	(modest_tny_account_new_from_server_account):
+	Determine the options for tny_camel_account_add_option() here, 
+	based on the settings, rather than storing them directly in gconf.
+
+2007-05-10  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/modest-tny-account-store.c: (modest_tny_account_store_alert):
 	Show a more friendly error dialog now that we expect (from the tinymail 
 	documentation) to get the UNKNOWN_ALERT error. Add explanatory comments.
