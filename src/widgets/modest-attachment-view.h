@@ -60,8 +60,6 @@ struct _ModestAttachmentViewClass
 	void (*set_part_func) (TnyMimePartView *self, TnyMimePart *part);
 	void (*clear_func) (TnyMimePartView *self);
 
-	/* signals */
-	void (*activate)           (ModestAttachmentView *attachment_view);
 };
 
 GType modest_attachment_view_get_type (void);

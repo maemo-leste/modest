@@ -79,17 +79,6 @@ static void own_clipboard (ModestAttachmentsView *atts_view);
 
 static guint signals[LAST_SIGNAL] = {0};
 
-static void
-activate_attachment (ModestAttachmentView *attachment_view,
-		     gpointer userdata)
-{
-	TnyMimePart *mime_part;
-      
-	mime_part = tny_mime_part_view_get_part (TNY_MIME_PART_VIEW (attachment_view));
-	g_signal_emit (G_OBJECT (userdata), signals[ACTIVATE_SIGNAL], 0, mime_part);
-	g_object_unref (mime_part);
-}
-
 /**
  * modest_attachments_view_new:
  * @msg: a #TnyMsg
@@ -165,7 +154,6 @@ modest_attachments_view_add_attachment (ModestAttachmentsView *attachments_view,
 	att_view = modest_attachment_view_new (part);
 	gtk_box_pack_end (GTK_BOX (priv->box), att_view, FALSE, FALSE, 0);
 	gtk_widget_show_all (att_view);
-	g_signal_connect (G_OBJECT (att_view), "activate", G_CALLBACK (activate_attachment), (gpointer) attachments_view);
 }
 
 void

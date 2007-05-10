@@ -112,6 +112,9 @@ static gboolean modest_msg_edit_window_zoom_minus (ModestWindow *window);
 static gboolean modest_msg_edit_window_zoom_plus (ModestWindow *window);
 static void modest_msg_edit_window_show_toolbar   (ModestWindow *window,
 						   gboolean show_toolbar);
+static void modest_msg_edit_window_clipboard_owner_change (GtkClipboard *clipboard,
+							   GdkEvent *event,
+							   ModestMsgEditWindow *window);
 static void update_dimmed (ModestMsgEditWindow *window);
 
 
@@ -157,6 +160,8 @@ struct _ModestMsgEditWindowPrivate {
 	TnyHeaderFlags priority_flags;
 
 	gdouble zoom_level;
+	
+	gulong      clipboard_change_handler_id;
 
 	TnyMsg      *draft_msg;
 };
@@ -256,6 +261,7 @@ modest_msg_edit_window_init (ModestMsgEditWindow *obj)
 	priv->priority_flags = 0;
 
 	priv->draft_msg = NULL;
+	priv->clipboard_change_handler_id = 0;
 }
 
 
@@ -456,6 +462,9 @@ init_window (ModestMsgEditWindow *obj)
 	gtk_container_add (GTK_CONTAINER (frame), scroll_area);
 	gtk_container_set_focus_vadjustment (GTK_CONTAINER (scroll_area), 
 					     gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (priv->scroll)));
+
+	priv->clipboard_change_handler_id = g_signal_connect (G_OBJECT (gtk_clipboard_get (GDK_SELECTION_PRIMARY)), "owner-change",
+							      G_CALLBACK (modest_msg_edit_window_clipboard_owner_change), obj);
 }
 	
 
@@ -463,6 +472,12 @@ init_window (ModestMsgEditWindow *obj)
 static void
 modest_msg_edit_window_finalize (GObject *obj)
 {
+	ModestMsgEditWindowPrivate *priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (obj);
+
+	if (priv->clipboard_change_handler_id > 0) {
+		g_signal_handler_disconnect (gtk_clipboard_get (GDK_SELECTION_PRIMARY), priv->clipboard_change_handler_id);
+		priv->clipboard_change_handler_id = 0;
+	}
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
@@ -2257,4 +2272,24 @@ modest_msg_edit_window_add_attachment_clicked (GtkButton *button,
 					       ModestMsgEditWindow *window)
 {
 	modest_msg_edit_window_attach_file (window);
+}
+
+static void
+modest_msg_edit_window_clipboard_owner_change (GtkClipboard *clipboard,
+					       GdkEvent *event,
+					       ModestMsgEditWindow *window)
+{
+	ModestWindowPrivate *parent_priv;
+	GtkAction *action;
+	gchar *selection;
+	GtkWidget *focused;
+
+	parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
+	selection = gtk_clipboard_wait_for_text (clipboard);
+	focused = gtk_window_get_focus (GTK_WINDOW (window));
+
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/EditMenu/CutMenu");
+	gtk_action_set_sensitive (action, (selection != NULL) && (!MODEST_IS_ATTACHMENTS_VIEW (focused)));
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/EditMenu/CopyMenu");
+	gtk_action_set_sensitive (action, (selection != NULL) && (!MODEST_IS_ATTACHMENTS_VIEW (focused)));
 }

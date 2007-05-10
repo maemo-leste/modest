@@ -41,11 +41,6 @@
 
 static GObjectClass *parent_class = NULL;
 
-/* /\* signals *\/ */
-/* enum { */
-/* 	LAST_SIGNAL */
-/* }; */
-
 typedef struct _ModestAttachmentViewPriv ModestAttachmentViewPriv;
 
 struct _ModestAttachmentViewPriv
@@ -69,8 +64,6 @@ struct _ModestAttachmentViewPriv
 
 #define MODEST_ATTACHMENT_VIEW_GET_PRIVATE(o)	\
 	(G_TYPE_INSTANCE_GET_PRIVATE ((o), MODEST_TYPE_ATTACHMENT_VIEW, ModestAttachmentViewPriv))
-
-/* static guint signals[LAST_SIGNAL] = {0}; */
 
 /* TnyMimePartView functions */
 static TnyMimePart *modest_attachment_view_get_part (TnyMimePartView *self);
@@ -400,7 +393,6 @@ modest_attachment_view_class_init (ModestAttachmentViewClass *klass)
 	klass->get_part_func = modest_attachment_view_get_part_default;
 	klass->set_part_func = modest_attachment_view_set_part_default;
 	klass->clear_func = modest_attachment_view_clear_default;
-	klass->activate = NULL;
 
 	widget_class->size_allocate = size_allocate;
 
