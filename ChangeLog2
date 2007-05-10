@@ -1,5 +1,11 @@
 2007-05-10  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-tny-account-store.c: (modest_tny_account_store_alert):
+	Show a more friendly error dialog now that we expect (from the tinymail 
+	documentation) to get the UNKNOWN_ALERT error. Add explanatory comments.
+
+2007-05-10  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/maemo/modest-main-window.c: (on_account_update): Check that 
 	account_name is not NULL, to prevent a crash at startup that I am 
 	seeing on the N800. I do wonder why it is NULL.

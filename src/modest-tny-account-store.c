@@ -646,12 +646,14 @@ modest_tny_account_store_alert (TnyAccountStore *self, TnyAlertType type,
 	switch (error->code)
 	{
 		case TNY_ACCOUNT_ERROR_TRY_CONNECT:
-			prompt = _("Modest account not yet fully configured");
-			break;
-		case TNY_ACCOUNT_STORE_ERROR_UNKNOWN_ALERT:
-			g_warning("%s: TNY_ACCOUNT_STORE_ERROR_UNKNOWN_ALERT: message=%s", 
-				__FUNCTION__, error->message); 
-			prompt = _("Unknown Tinymail error (TNY_ACCOUNT_STORE_ERROR_UNKNOWN_ALERT)");
+		/* The tinymail camel implementation just sends us this for almost 
+		 * everything, so we have to guess at the cause.
+		 * It could be a wrong password, or inability to resolve a hostname, 
+		 * or lack of network, or something entirely different: */
+		case TNY_ACCOUNT_STORE_ERROR_UNKNOWN_ALERT: 
+		    g_debug ("%s: Handling GError domain=%d, code=%d, message=%s", 
+				__FUNCTION__, error->domain, error->code, error->message);
+			prompt = _("Modest account not yet fully configured.");
 			break;
 		default:
 			g_warning ("%s: Unhandled GError code: %d, message=%s", 
