@@ -1660,11 +1660,12 @@ modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 	/* password: */
 	GtkWidget *entry_password = gtk_entry_new ();
 	gtk_entry_set_visibility (GTK_ENTRY(entry_password), FALSE);
-	gtk_entry_set_invisible_char (GTK_ENTRY(entry_password), 0x2022); /* bullet unichar */
+	/* gtk_entry_set_invisible_char (GTK_ENTRY(entry_password), "*"); */
 	
 #ifdef MODEST_PLATFORM_MAEMO
 	/* Auto-capitalization is the default, so let's turn it off: */
-	hildon_gtk_entry_set_input_mode (GTK_ENTRY (entry_password), HILDON_GTK_INPUT_MODE_FULL);
+	hildon_gtk_entry_set_input_mode (GTK_ENTRY (entry_password), 
+		HILDON_GTK_INPUT_MODE_FULL | HILDON_GTK_INPUT_MODE_INVISIBLE);
 	
 	caption = hildon_caption_new (sizegroup, 
 		_("mail_fi_password"), entry_password, NULL, HILDON_CAPTION_MANDATORY);

@@ -167,7 +167,8 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	/* The password widgets: */	
 	priv->entry_user_password = gtk_entry_new ();
 	/* Auto-capitalization is the default, so let's turn it off: */
-	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_user_password), HILDON_GTK_INPUT_MODE_FULL);
+	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_user_password), 
+		HILDON_GTK_INPUT_MODE_FULL | HILDON_GTK_INPUT_MODE_INVISIBLE);
 	gtk_entry_set_visibility (GTK_ENTRY (priv->entry_user_password), FALSE);
 	/* gtk_entry_set_invisible_char (GTK_ENTRY (priv->entry_user_password), '*'); */
 	caption = hildon_caption_new (sizegroup, 

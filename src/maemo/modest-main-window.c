@@ -949,63 +949,68 @@ on_account_update (TnyAccountStore *account_store,
 	default_account = modest_account_mgr_get_default_account (mgr);
 	action_group = gtk_action_group_new (MODEST_MAIN_WINDOW_ACTION_GROUP_ADDITIONS);
 	for (i = 0; i < num_accounts; i++) {
-		GtkAction *new_action;
-		gchar* item_name, *display_name;
-		guint8 merge_id;
-
+		GtkAction *new_action = NULL;
+		gchar *display_name = NULL;
+		
 		account_data = (ModestAccountData *) g_slist_nth_data (accounts, i);
 
 		/* Create display name. The default account is shown differently */
-		if (default_account && !(strcmp (default_account, account_data->account_name) == 0))
+		if (default_account && account_data->account_name && 
+			!(strcmp (default_account, account_data->account_name) == 0)) {
 			display_name = g_strdup_printf (_("mcen_me_toolbar_sendreceive_default"), 
 							account_data->display_name);
-		else
+		}
+		else {
 			display_name = g_strdup_printf (_("mcen_me_toolbar_sendreceive_mailbox_n"), 
 							account_data->display_name);
+		}
 
 		/* Create action and add it to the action group. The
 		   action name must be the account name, this way we
 		   could know in the handlers the account to show */
-		new_action = gtk_action_new (account_data->account_name, display_name, NULL, NULL);
-		gtk_action_group_add_action (action_group, new_action);
+		if(account_data->account_name) {
+			new_action = gtk_action_new (account_data->account_name, display_name, NULL, NULL);
+			gtk_action_group_add_action (action_group, new_action);
 
-		/* Add ui from account data. We allow 2^9-1 account
-		   changes in a single execution because we're
-		   downcasting the guint to a guint8 in order to use a
-		   GByteArray, it should be enough */
-		item_name = g_strconcat (account_data->account_name, "Menu");
-		merge_id = (guint8) gtk_ui_manager_new_merge_id (parent_priv->ui_manager);
-		priv->merge_ids = g_byte_array_append (priv->merge_ids, &merge_id, 1);
-		gtk_ui_manager_add_ui (parent_priv->ui_manager, 
-				       merge_id,
-				       "/MenuBar/ViewMenu/ViewMenuAdditions",
-				       item_name,
-				       account_data->account_name,
-				       GTK_UI_MANAGER_MENUITEM,
-				       FALSE);
+			/* Add ui from account data. We allow 2^9-1 account
+			   changes in a single execution because we're
+			   downcasting the guint to a guint8 in order to use a
+			   GByteArray, it should be enough */
+			gchar* item_name = g_strconcat (account_data->account_name, "Menu");
+			guint8 merge_id = (guint8) gtk_ui_manager_new_merge_id (parent_priv->ui_manager);
+			priv->merge_ids = g_byte_array_append (priv->merge_ids, &merge_id, 1);
+			gtk_ui_manager_add_ui (parent_priv->ui_manager, 
+					       merge_id,
+					       "/MenuBar/ViewMenu/ViewMenuAdditions",
+					       item_name,
+					       account_data->account_name,
+					       GTK_UI_MANAGER_MENUITEM,
+					       FALSE);
+	
+			/* Connect the action signal "activate" */
+			g_signal_connect (G_OBJECT (new_action), 
+					  "activate", 
+					  G_CALLBACK (on_show_account_action_activated), 
+					  self);
 
-		/* Connect the action signal "activate" */
-		g_signal_connect (G_OBJECT (new_action), 
-				  "activate", 
-				  G_CALLBACK (on_show_account_action_activated), 
-				  self);
-
-		/* Create item and add it to the send&receive CSM */
-		/* TODO: Why is this sometimes NULL? murrayc */
-		if (priv->accounts_popup) {
-			item = gtk_menu_item_new_with_label (display_name);
-			gtk_menu_shell_append (GTK_MENU_SHELL (priv->accounts_popup), GTK_WIDGET (item));
-			g_signal_connect_data (G_OBJECT (item), 
-					       "activate", 
-					       G_CALLBACK (on_send_receive_csm_activated),
-					       g_strdup (account_data->account_name),
-					       (GClosureNotify) g_free,
-					       0);
+			/* Create item and add it to the send&receive CSM */
+			/* TODO: Why is this sometimes NULL? murrayc */
+			if (priv->accounts_popup) {
+				item = gtk_menu_item_new_with_label (display_name);
+				gtk_menu_shell_append (GTK_MENU_SHELL (priv->accounts_popup), GTK_WIDGET (item));
+				g_signal_connect_data (G_OBJECT (item), 
+						       "activate", 
+						       G_CALLBACK (on_send_receive_csm_activated),
+						       g_strdup (account_data->account_name),
+						       (GClosureNotify) g_free,
+						       0);
+			}
+			
+			g_free (item_name);
 		}
 
 		/* Frees */
 		g_free (display_name);
-		g_free (item_name);
 		modest_account_mgr_free_account_data (mgr, account_data);
 	}
 	gtk_ui_manager_insert_action_group (parent_priv->ui_manager, action_group, 1);

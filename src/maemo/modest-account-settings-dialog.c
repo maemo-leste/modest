@@ -402,7 +402,8 @@ create_page_user_details (ModestAccountSettingsDialog *self)
 	/* The password widgets: */	
 	self->entry_user_password = gtk_entry_new ();
 	/* Auto-capitalization is the default, so let's turn it off: */
-	hildon_gtk_entry_set_input_mode (GTK_ENTRY (self->entry_user_password), HILDON_GTK_INPUT_MODE_FULL);
+	hildon_gtk_entry_set_input_mode (GTK_ENTRY (self->entry_user_password), 
+		HILDON_GTK_INPUT_MODE_FULL | HILDON_GTK_INPUT_MODE_INVISIBLE);
 	gtk_entry_set_visibility (GTK_ENTRY (self->entry_user_password), FALSE);
 	/* gtk_entry_set_invisible_char (GTK_ENTRY (self->entry_user_password), '*'); */
 	caption = create_caption_new_with_asterix (self, sizegroup, 
@@ -692,7 +693,8 @@ static GtkWidget* create_page_outgoing (ModestAccountSettingsDialog *self)
 	/* The password widgets: */	
 	self->entry_outgoing_password = gtk_entry_new ();
 	/* Auto-capitalization is the default, so let's turn it off: */
-	hildon_gtk_entry_set_input_mode (GTK_ENTRY (self->entry_outgoing_password), HILDON_GTK_INPUT_MODE_FULL);
+	hildon_gtk_entry_set_input_mode (GTK_ENTRY (self->entry_outgoing_password), 
+		HILDON_GTK_INPUT_MODE_FULL | HILDON_GTK_INPUT_MODE_INVISIBLE);
 	gtk_entry_set_visibility (GTK_ENTRY (self->entry_outgoing_password), FALSE);
 	/* gtk_entry_set_invisible_char (GTK_ENTRY (self->entry_outgoing_password), '*'); */
 	self->caption_outgoing_password = create_caption_new_with_asterix (self, sizegroup, 

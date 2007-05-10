@@ -1,5 +1,22 @@
 2007-05-10  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/maemo/modest-main-window.c: (on_account_update): Check that 
+	account_name is not NULL, to prevent a crash at startup that I am 
+	seeing on the N800. I do wonder why it is NULL.
+	
+	* src/maemo/easysetup/modest-easysetup-wizard.c:
+	(create_page_user_details):
+	* src/maemo/modest-account-settings-dialog.c:
+	(create_page_user_details), (create_page_outgoing):
+	* src/maemo/modest-connection-specific-smtp-edit-window.c:
+	(modest_connection_specific_smtp_edit_window_init):
+	* src/modest-ui-actions.c:
+	(modest_ui_actions_on_password_requested):
+	Use HILDON_GTK_INPUT_MODE_INVISIBLE with password entries, which 
+	might do something useful with the on-screen keyboard.
+
+2007-05-10  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/maemo/modest-main-window.c: (on_account_update):
 	Avoid adding a menu item to priv->accounts_popup if accounts_popup is 
 	NULL, to avoid lots of warnings. However, it probably should not be NULL.
