@@ -101,6 +101,7 @@ static void view_msg_cb (const GObject *obj, const TnyMsg *msg, gpointer user_da
 static void set_toolbar_mode (ModestMsgViewWindow *self, 
 			      ModestToolBarModes mode);
 
+static gboolean set_toolbar_transfer_mode     (ModestMsgViewWindow *self); 
 
 /* list my signals */
 enum {
@@ -148,6 +149,8 @@ struct _ModestMsgViewWindowPrivate {
 
 	guint clipboard_change_handler;
 	guint queue_change_handler;
+
+	guint progress_bar_timeout;
 };
 
 #define MODEST_MSG_VIEW_WINDOW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -233,9 +236,17 @@ modest_msg_view_window_init (ModestMsgViewWindow *obj)
 	priv->clipboard_change_handler = 0;
 
 	priv->optimized_view  = FALSE;
-
+	priv->progress_bar_timeout = 0;
 }
 
+
+static gboolean
+set_toolbar_transfer_mode (ModestMsgViewWindow *self)
+{
+	set_toolbar_mode (self, TOOLBAR_MODE_TRANSFER);
+	
+	return FALSE;
+}
 
 static void 
 set_toolbar_mode (ModestMsgViewWindow *self, 
@@ -409,6 +420,11 @@ modest_msg_view_window_finalize (GObject *obj)
 		priv->queue_change_handler = 0;
 	}
 	
+	if (priv->progress_bar_timeout > 0) {
+		g_source_remove (priv->progress_bar_timeout);
+		priv->progress_bar_timeout = 0;
+	}
+
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
@@ -1180,8 +1196,8 @@ modest_msg_view_window_show_toolbar (ModestWindow *self,
 		priv->cancel_toolitem = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/ToolbarCancel");
 		priv->next_toolitem = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/ToolbarMessageNext");
 		priv->prev_toolitem = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/ToolbarMessageBack");
-		gtk_tool_item_set_expand (GTK_TOOL_ITEM (priv->progress_toolitem), FALSE);
- 		gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (priv->progress_toolitem), FALSE);
+		gtk_tool_item_set_expand (GTK_TOOL_ITEM (priv->progress_toolitem), TRUE);
+ 		gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (priv->progress_toolitem), TRUE);
 		gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (priv->cancel_toolitem), FALSE);
 		gtk_tool_item_set_expand (GTK_TOOL_ITEM (priv->cancel_toolitem), FALSE);
 
@@ -1340,7 +1356,9 @@ on_queue_changed (ModestMailOperationQueue *queue,
 			}
 			
 			/* Enable transfer toolbar mode */
-			set_toolbar_mode (MODEST_MSG_VIEW_WINDOW(self), mode);
+			priv->progress_bar_timeout = g_timeout_add (1000, 
+								    (GSourceFunc) set_toolbar_transfer_mode, 
+								    self);
 		}
 		break;
 	case MODEST_MAIL_OPERATION_QUEUE_OPERATION_REMOVED:
@@ -1353,8 +1371,14 @@ on_queue_changed (ModestMailOperationQueue *queue,
 			}
 
 			/* If no more operations are being observed, NORMAL mode is enabled again */
-			if (observers_empty (self))
+			if (observers_empty (self)) {
+				if (priv->progress_bar_timeout > 0) {
+					g_source_remove (priv->progress_bar_timeout);
+					priv->progress_bar_timeout = 0;
+				}
+
 				set_toolbar_mode (self, TOOLBAR_MODE_NORMAL);
+			}
 		}
 		break;
 	}

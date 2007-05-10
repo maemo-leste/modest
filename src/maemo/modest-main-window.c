@@ -103,6 +103,8 @@ static void on_configuration_key_changed      (ModestConf* conf,
 static void set_toolbar_mode                  (ModestMainWindow *self, 
 					       ModestToolBarModes mode);
 
+static gboolean set_toolbar_transfer_mode     (ModestMainWindow *self); 
+
 static void on_show_account_action_activated  (GtkAction *action,
 					       gpointer user_data);
 
@@ -149,6 +151,9 @@ struct _ModestMainWindowPrivate {
 
 	ModestMainWindowStyle style;
 	ModestMainWindowContentsStyle contents_style;
+
+	guint progress_bar_timeout;
+
 };
 #define MODEST_MAIN_WINDOW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                 MODEST_TYPE_MAIN_WINDOW, \
@@ -243,8 +248,6 @@ modest_main_window_init (ModestMainWindow *obj)
 	priv->accounts_popup  = NULL;
 	priv->details_widget  = NULL;
 
-	priv->optimized_view  = FALSE;
-
 	priv->progress_widgets  = NULL;
 	priv->progress_bar = NULL;
 	priv->current_toolbar_mode = TOOLBAR_MODE_NORMAL;
@@ -253,6 +256,9 @@ modest_main_window_init (ModestMainWindow *obj)
 	priv->contents_style  = MODEST_MAIN_WINDOW_CONTENTS_STYLE_HEADERS;
 
 	priv->merge_ids = NULL;
+
+	priv->optimized_view  = FALSE;
+	priv->progress_bar_timeout = 0;
 }
 
 static void
@@ -265,6 +271,11 @@ modest_main_window_finalize (GObject *obj)
 	g_slist_free (priv->progress_widgets);
 
 	g_byte_array_free (priv->merge_ids, TRUE);
+
+	if (priv->progress_bar_timeout > 0) {
+		g_source_remove (priv->progress_bar_timeout);
+		priv->progress_bar_timeout = 0;
+	}
 
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
@@ -840,10 +851,10 @@ modest_main_window_show_toolbar (ModestWindow *self,
 	}
 
 	if (show_toolbar) {
-		/* Quick hack: this prevents toolbar icons "dance" when progress bar show status is changed */
+		/* Quick hack: this prevents toolbar icons "dance" when progress bar show status is changed */ 
 		/* TODO: resize mode migth be GTK_RESIZE_QUEUE, in order to avoid unneccesary shows */
 		gtk_container_set_resize_mode (GTK_CONTAINER(parent_priv->toolbar), GTK_RESIZE_IMMEDIATE);
-		
+
 		gtk_widget_show (GTK_WIDGET (parent_priv->toolbar));
 		set_toolbar_mode (MODEST_MAIN_WINDOW(self), TOOLBAR_MODE_NORMAL);
 	} else
@@ -1236,6 +1247,14 @@ on_configuration_key_changed (ModestConf* conf,
 	}
 }
 
+static gboolean
+set_toolbar_transfer_mode (ModestMainWindow *self)
+{
+	set_toolbar_mode (self, TOOLBAR_MODE_TRANSFER);
+	
+	return FALSE;
+}
+
 static void 
 set_toolbar_mode (ModestMainWindow *self, 
 		  ModestToolBarModes mode)
@@ -1376,7 +1395,9 @@ on_queue_changed (ModestMailOperationQueue *queue,
 	switch (type) {
 	case MODEST_MAIL_OPERATION_QUEUE_OPERATION_ADDED:
 		if (mode_changed)
-			set_toolbar_mode (self, mode);
+			priv->progress_bar_timeout = g_timeout_add (1000, 
+								    (GSourceFunc) set_toolbar_transfer_mode, 
+								    self);
 		if (mode == TOOLBAR_MODE_TRANSFER) {
 			while (tmp) {
 				modest_progress_object_add_operation (MODEST_PROGRESS_OBJECT (tmp->data),
@@ -1386,8 +1407,7 @@ on_queue_changed (ModestMailOperationQueue *queue,
 		}
 		break;
 	case MODEST_MAIL_OPERATION_QUEUE_OPERATION_REMOVED:
-		if (mode == TOOLBAR_MODE_TRANSFER) {
-
+		if (mode == TOOLBAR_MODE_TRANSFER) {			
 			while (tmp) {
 				modest_progress_object_remove_operation (MODEST_PROGRESS_OBJECT (tmp->data),
 									 mail_op);
@@ -1395,8 +1415,14 @@ on_queue_changed (ModestMailOperationQueue *queue,
 			}
 
 			/* If no more operations are being observed, NORMAL mode is enabled again */
-			if (observers_empty (self))
+			if (observers_empty (self)) {
+				if (priv->progress_bar_timeout > 0) {
+					g_source_remove (priv->progress_bar_timeout);
+					priv->progress_bar_timeout = 0;
+				}
+				
 				set_toolbar_mode (self, TOOLBAR_MODE_NORMAL);
+			}
 		}
 		break;
 	}	
