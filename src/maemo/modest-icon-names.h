@@ -49,11 +49,12 @@
  * until we have the custom cell renderer, we use the hacked icons below;
  * don't remove!!!
  */ 
-#define MODEST_HEADER_ICON_ATTACH_HIGH_PRIORITY PIXMAP_PREFIX"qgn_list_gene_high_attacpap.png"
-#define MODEST_HEADER_ICON_ATTACH_LOW_PRIORITY  PIXMAP_PREFIX"qgn_list_gene_low_attacpap.png"
-#define MODEST_HEADER_ICON_ATTACH_NORM_PRIORITY PIXMAP_PREFIX"qgn_list_gene_norm_attacpap.png"
-#define MODEST_HEADER_ICON_HIGH_PRIORITY        PIXMAP_PREFIX"qgn_list_messaging_high_noatt.png"
-#define MODEST_HEADER_ICON_LOW_PRIORITY         PIXMAP_PREFIX"qgn_list_messaging_low_noatt.png"
+#define MODEST_HEADER_ICON_ATTACH_HIGH_PRIORITY PIXMAP_PREFIX"modest_high_attachment.png"
+#define MODEST_HEADER_ICON_ATTACH_LOW_PRIORITY  PIXMAP_PREFIX"modest_low_attachment.png"
+#define MODEST_HEADER_ICON_ATTACH_NORM_PRIORITY PIXMAP_PREFIX"modest_normal_attachment.png"
+#define MODEST_HEADER_ICON_HIGH_PRIORITY        PIXMAP_PREFIX"modest_high_no_attachment.png"
+#define MODEST_HEADER_ICON_LOW_PRIORITY         PIXMAP_PREFIX"modest_low_no_attachment.png"
+#define MODEST_HEADER_ICON_NORM_PRIORITY        PIXMAP_PREFIX"modest_normal_no_attachment.png"
 /*
  *
  */

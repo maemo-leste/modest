@@ -74,6 +74,8 @@ get_pixbuf_for_compact_flag (TnyHeaderFlags flags)
 	static GdkPixbuf *low_attachments_pixbuf    = NULL;
 	static GdkPixbuf *high_pixbuf               = NULL;
 	static GdkPixbuf *low_pixbuf                = NULL;
+	static GdkPixbuf *normal_pixbuf             = NULL;
+
 	TnyHeaderPriorityFlags prior;
 
 	prior = flags & TNY_HEADER_FLAG_PRIORITY;
@@ -105,9 +107,12 @@ get_pixbuf_for_compact_flag (TnyHeaderFlags flags)
 			if (G_UNLIKELY(!normal_attachments_pixbuf))
 				normal_attachments_pixbuf = modest_platform_get_icon (MODEST_HEADER_ICON_ATTACH_NORM_PRIORITY);
 			return normal_attachments_pixbuf;
-		}		
+		} else {		
+			if (G_UNLIKELY(!normal_pixbuf))
+				normal_pixbuf = modest_platform_get_icon (MODEST_HEADER_ICON_NORM_PRIORITY);
+			return normal_pixbuf;
+		}
 	}
-
 	return NULL;
 }
 

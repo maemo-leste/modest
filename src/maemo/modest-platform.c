@@ -345,7 +345,7 @@ modest_platform_get_icon (const gchar *name)
 	GtkIconTheme *current_theme = NULL;
 
 	g_return_val_if_fail (name, NULL);
-
+	
 	if (g_str_has_suffix (name, ".png")) { /*FIXME: hack*/
 		pixbuf = gdk_pixbuf_new_from_file (name, &err);
 		if (!pixbuf) {
