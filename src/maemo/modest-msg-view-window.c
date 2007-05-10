@@ -858,6 +858,7 @@ modest_msg_view_window_is_first_message (ModestMsgViewWindow *window)
 gboolean        
 modest_msg_view_window_select_next_message (ModestMsgViewWindow *window)
 {
+	TnyHeaderFlags flags;
 	ModestMailOperation *mail_op = NULL;
 	ModestMsgViewWindowPrivate *priv;
 	GtkTreeIter tmp_iter;
@@ -878,6 +879,11 @@ modest_msg_view_window_select_next_message (ModestMsgViewWindow *window)
 				break;
 			if (tny_header_get_flags (header) & TNY_HEADER_FLAG_DELETED)
 				continue;
+
+			/* Mark as read */
+			flags = tny_header_get_flags (header);
+			if (!(flags & TNY_HEADER_FLAG_SEEN))
+				tny_header_set_flags (header, flags | TNY_HEADER_FLAG_SEEN);
 
 			/* New mail operation */
 			mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_ID_RECEIVE, G_OBJECT(window));
@@ -902,6 +908,7 @@ modest_msg_view_window_select_next_message (ModestMsgViewWindow *window)
 gboolean        
 modest_msg_view_window_select_previous_message (ModestMsgViewWindow *window)
 {
+	TnyHeaderFlags flags;
 	ModestMsgViewWindowPrivate *priv = NULL;
 	ModestMailOperation *mail_op = NULL;
 
@@ -924,6 +931,11 @@ modest_msg_view_window_select_previous_message (ModestMsgViewWindow *window)
 			if (tny_header_get_flags (header) & TNY_HEADER_FLAG_DELETED)
 				continue;
 			
+			/* Mark as read */
+			flags = tny_header_get_flags (header);
+			if (!(flags & TNY_HEADER_FLAG_SEEN))
+				tny_header_set_flags (header, flags | TNY_HEADER_FLAG_SEEN);
+
 			/* New mail operation */
 			mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_ID_RECEIVE, G_OBJECT(window));
 			modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);

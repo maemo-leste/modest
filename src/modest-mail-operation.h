@@ -314,11 +314,16 @@ void          modest_mail_operation_rename_folder  (ModestMailOperation *self,
  * Returns: the newly transfered folder
  **/
 TnyFolder*    modest_mail_operation_xfer_folder    (ModestMailOperation *self,
-						    TnyFolder *folder, 
+						    TnyFolder *folder,
 						    TnyFolderStore *parent,
 						    gboolean delete_original);
 
 
+
+void    modest_mail_operation_xfer_folder_async    (ModestMailOperation *self,
+						    TnyFolder *folder, 
+						    TnyFolderStore *parent,
+						    gboolean delete_original);
 /* Functions that performs msg operations */
 
 /**

@@ -74,8 +74,8 @@ static const GtkActionEntry modest_action_entries [] = {
 	{ "EditCopy",        NULL,      N_("mcen_me_inbox_copy"),         "<CTRL>C",    NULL, G_CALLBACK (modest_ui_actions_on_copy) },
 	{ "EditPaste",       NULL,      N_("mcen_me_inbox_paste"),        "<CTRL>V",    NULL, G_CALLBACK (modest_ui_actions_on_paste) },
 	{ "EditSelectAll",   NULL,      N_("mcen_me_viewer_selectall"),    NULL,        NULL, G_CALLBACK (modest_ui_actions_on_select_all) },
-	{ "EditMarkAsRead", NULL,      N_("mcen_me_inbox_mark_as_read"),       NULL,	  NULL, NULL },
-	{ "EditMarkAsUnread", NULL,      N_("mcen_me_inbox_mark_as_unread"),       NULL,	  NULL, NULL },
+	{ "EditMarkAsRead", NULL,      N_("mcen_me_inbox_mark_as_read"),       NULL,	  NULL, G_CALLBACK (modest_ui_actions_on_mark_as_read) },
+	{ "EditMarkAsUnread", NULL,      N_("mcen_me_inbox_mark_as_unread"),       NULL,	  NULL, G_CALLBACK (modest_ui_actions_on_mark_as_unread) },
 	{ "EditMoveTo",      NULL, 	N_("mcen_me_inbox_moveto"),    NULL,	  NULL, G_CALLBACK (modest_ui_actions_on_move_to) },
 	
 	/* View */

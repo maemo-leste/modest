@@ -127,6 +127,12 @@ typedef struct _XFerMsgAsyncHelper
 
 } XFerMsgAsyncHelper;
 
+typedef struct _XFerFolderAsyncHelper
+{
+	ModestMailOperation *mail_op;
+
+} XFerFolderAsyncHelper;
+
 
 /* globals */
 static GObjectClass *parent_class = NULL;
@@ -437,11 +443,11 @@ update_folders_status_cb (GObject *obj,
 	self = MODEST_MAIL_OPERATION (user_data);
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
 
+	if ((status->position == 1) && (status->of_total == 100))
+		return;
+
 	priv->done = status->position;
 	priv->total = status->of_total;
-
-	if (priv->done == 1 && priv->total == 100)
-		return;
 
 	g_signal_emit (G_OBJECT (self), signals[PROGRESS_CHANGED_SIGNAL], 0, NULL);
 }
@@ -700,9 +706,9 @@ modest_mail_operation_remove_folder (ModestMailOperation *self,
 
 	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
 	g_return_if_fail (TNY_IS_FOLDER (folder));
-
+	
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
-
+	
 	/* Check folder rules */
 	rules = modest_tny_folder_get_rules (TNY_FOLDER (folder));
 	if (rules & MODEST_FOLDER_RULES_FOLDER_NON_DELETABLE) {
@@ -717,13 +723,16 @@ modest_mail_operation_remove_folder (ModestMailOperation *self,
 
 	/* Delete folder or move to trash */
 	if (remove_to_trash) {
-		TnyFolder *trash_folder, *new_folder;
+		TnyFolder *trash_folder = NULL;
+/* 		TnyFolder *trash_folder, *new_folder; */
 		trash_folder = modest_tny_account_get_special_folder (account,
 								      TNY_FOLDER_TYPE_TRASH);
 		/* TODO: error_handling */
-		new_folder = modest_mail_operation_xfer_folder (self, folder, 
-								TNY_FOLDER_STORE (trash_folder), TRUE);
-		g_object_unref (G_OBJECT (new_folder));
+		 modest_mail_operation_xfer_folder (self, folder,
+						    TNY_FOLDER_STORE (trash_folder), TRUE);
+/* 		new_folder = modest_mail_operation_xfer_folder (self, folder,  */
+/* 								TNY_FOLDER_STORE (trash_folder), TRUE); */
+/* 		g_object_unref (G_OBJECT (new_folder)); */
 	} else {
 		TnyFolderStore *parent = tny_folder_get_folder_store (folder);
 
@@ -770,6 +779,76 @@ modest_mail_operation_rename_folder (ModestMailOperation *self,
 	modest_mail_operation_queue_remove (modest_runtime_get_mail_operation_queue (), self);
  }
 
+static void
+transfer_folder_status_cb (GObject *obj,
+			   TnyStatus *status,  
+			   gpointer user_data)
+{
+	XFerMsgAsyncHelper *helper = NULL;
+	ModestMailOperation *self;
+	ModestMailOperationPrivate *priv;
+
+	g_return_if_fail (status != NULL);
+	g_return_if_fail (status->code == TNY_FOLDER_STATUS_CODE_COPY_FOLDER);
+
+	helper = (XFerMsgAsyncHelper *) user_data;
+	g_return_if_fail (helper != NULL);       
+
+	/* Temporary FIX: useful when tinymail send us status
+	   information *after* calling the function callback */
+	if (!MODEST_IS_MAIL_OPERATION (helper->mail_op))
+		return;
+
+	self = helper->mail_op;
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
+
+	if ((status->position == 1) && (status->of_total == 100))
+		return;
+
+	priv->done = status->position;
+	priv->total = status->of_total;
+
+
+	g_signal_emit (G_OBJECT (self), signals[PROGRESS_CHANGED_SIGNAL], 0, NULL);
+}
+
+
+static void
+transfer_folder_cb (TnyFolder *folder, TnyFolderStore *into, const gchar *new_name, gboolean cancelled, GError **err, gpointer user_data)
+{
+ 	XFerFolderAsyncHelper *helper = NULL;
+	ModestMailOperation *self = NULL;
+	ModestMailOperationPrivate *priv = NULL;
+
+	helper = (XFerFolderAsyncHelper *) user_data;
+	self = helper->mail_op;
+
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
+
+	if (*err) {
+		priv->error = g_error_copy (*err);
+		priv->done = 0;
+		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;	
+	} else if (cancelled) {
+		priv->status = MODEST_MAIL_OPERATION_STATUS_CANCELED;
+		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
+			     MODEST_MAIL_OPERATION_ERROR_ITEM_NOT_FOUND,
+			     _("Error trying to refresh the contents of %s"),
+			     tny_folder_get_name (folder));
+	} else {
+		priv->done = 1;
+		priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
+	}
+
+	/* Free */
+	g_slice_free   (XFerFolderAsyncHelper, helper);
+	g_object_unref (folder);
+	g_object_unref (into);
+
+	/* Notify the queue */
+	modest_mail_operation_queue_remove (modest_runtime_get_mail_operation_queue (), self);
+}
+
 TnyFolder *
 modest_mail_operation_xfer_folder (ModestMailOperation *self,
 				   TnyFolder *folder,
@@ -797,7 +876,7 @@ modest_mail_operation_xfer_folder (ModestMailOperation *self,
 		new_folder = tny_folder_copy (folder,
 					      parent,
 					      tny_folder_get_name (folder),
-					      delete_original, 
+					      delete_original,
 					      &(priv->error));
 	}
 
@@ -805,6 +884,43 @@ modest_mail_operation_xfer_folder (ModestMailOperation *self,
 	modest_mail_operation_queue_remove (modest_runtime_get_mail_operation_queue (), self);
 
 	return new_folder;
+}
+
+void
+modest_mail_operation_xfer_folder_async (ModestMailOperation *self,
+					 TnyFolder *folder,
+					 TnyFolderStore *parent,
+					 gboolean delete_original)
+{
+ 	XFerFolderAsyncHelper *helper = NULL;
+	ModestMailOperationPrivate *priv = NULL;
+	ModestTnyFolderRules rules;
+
+	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
+	g_return_if_fail (TNY_IS_FOLDER_STORE (parent));
+	g_return_if_fail (TNY_IS_FOLDER (folder));
+
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
+
+	/* The moveable restriction is applied also to copy operation */
+	rules = modest_tny_folder_get_rules (TNY_FOLDER (parent));
+	if (rules & MODEST_FOLDER_RULES_FOLDER_NON_MOVEABLE) {
+		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
+			     MODEST_MAIL_OPERATION_ERROR_FOLDER_RULES,
+			     _("FIXME: unable to rename"));
+	} else {
+		helper = g_slice_new0 (XFerFolderAsyncHelper);
+		helper->mail_op = self;
+
+		/* Move/Copy folder */		
+		tny_folder_copy_async (folder,
+				       parent,
+				       tny_folder_get_name (folder),
+				       delete_original,
+				       transfer_folder_cb,
+				       transfer_folder_status_cb,
+				       helper);
+	}
 }
 
 
@@ -923,11 +1039,11 @@ get_msg_status_cb (GObject *obj,
 	self = helper->mail_op;
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
 
-	priv->done += status->position;
-	priv->total = status->of_total;
-
-	if (priv->done == 1 && priv->total == 100)
+	if ((status->position == 1) && (status->of_total == 100))
 		return;
+
+	priv->done = 1;
+	priv->total = 1;
 
 	g_signal_emit (G_OBJECT (self), signals[PROGRESS_CHANGED_SIGNAL], 0, NULL);
 }
@@ -950,6 +1066,7 @@ void          modest_mail_operation_process_msg     (ModestMailOperation *self,
 	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
 
 	iter = tny_list_create_iterator (header_list); 
+	priv->done = 1;
 	priv->total = tny_list_get_length(header_list);
 
 	helper = g_slice_new0 (GetMsgAsyncHelper);
@@ -1011,13 +1128,11 @@ update_process_msg_status_cb (GObject *obj,
 	self = helper->mail_op;
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
 
+	if ((status->position == 1) && (status->of_total == 100))
+		return;
+
 	if (status->of_total > 0)
 		priv->done += status->position/status->of_total;
-
-	g_print("TEST: %d/%d", priv->done, priv->total); 
-
-	if (priv->done == 1 && priv->total == 100)
-		return;
 
 	g_signal_emit (G_OBJECT (self), signals[PROGRESS_CHANGED_SIGNAL], 0, NULL);
 }
@@ -1114,11 +1229,11 @@ transfer_msgs_status_cb (GObject *obj,
 	self = helper->mail_op;
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
 
+	if ((status->position == 1) && (status->of_total == 100))
+		return;
+
 	priv->done = status->position;
 	priv->total = status->of_total;
-
-	if (priv->done == 1 && priv->total == 100)
-		return;
 
 	g_signal_emit (G_OBJECT (self), signals[PROGRESS_CHANGED_SIGNAL], 0, NULL);
 }
@@ -1155,9 +1270,8 @@ transfer_msgs_cb (TnyFolder *folder, gboolean cancelled, GError **err, gpointer 
 	g_object_unref (helper->headers);
 	g_object_unref (helper->dest_folder);
 	g_object_unref (helper->mail_op);
-	g_object_unref (folder);
 	g_slice_free   (XFerMsgAsyncHelper, helper);
-	helper = NULL;
+	g_object_unref (folder);
 
 	/* Notify the queue */
 	modest_mail_operation_queue_remove (modest_runtime_get_mail_operation_queue (), self);

@@ -174,6 +174,36 @@ get_selected_headers (ModestWindow *win)
 }
 
 static void
+headers_action_mark_as_read (TnyHeader *header,
+			     ModestWindow *win,
+			     gpointer user_data)
+{
+	TnyHeaderFlags flags;
+
+	g_return_if_fail (TNY_IS_HEADER(header));
+
+	flags = tny_header_get_flags (header);
+	if (flags & TNY_HEADER_FLAG_SEEN) return;
+	tny_header_set_flags (header, TNY_HEADER_FLAG_SEEN);
+}
+
+static void
+headers_action_mark_as_unread (TnyHeader *header,
+			       ModestWindow *win,
+			       gpointer user_data)
+{
+	TnyHeaderFlags flags;
+
+	g_return_if_fail (TNY_IS_HEADER(header));
+
+	flags = tny_header_get_flags (header);
+	if (flags & TNY_HEADER_FLAG_SEEN)  {
+		tny_header_unset_flags (header, TNY_HEADER_FLAG_SEEN);
+	}
+}
+
+
+static void
 headers_action_delete (TnyHeader *header,
 		       ModestWindow *win,
 		       gpointer user_data)
@@ -941,6 +971,7 @@ modest_ui_actions_on_header_activated (ModestHeaderView *header_view,
 	GtkTreeIter iter;
 	GtkTreeSelection *sel = NULL;
 	GList *sel_list = NULL;
+	GList *tmp = NULL;
 	
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW(main_window));
 	
@@ -967,6 +998,17 @@ modest_ui_actions_on_header_activated (ModestHeaderView *header_view,
  		helper->model = model;
 		helper->iter = iter;
 
+		/* Mark as read */
+		for (tmp=sel_list; tmp; tmp=g_list_next(tmp)) {
+			gtk_tree_model_get_iter (model, &iter, (GtkTreePath *) tmp->data);
+			gtk_tree_model_get (model, &iter, TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN,
+					    &header, -1);
+
+			headers_action_mark_as_read (header, MODEST_WINDOW(main_window), NULL);
+
+			g_object_unref(header);
+		}
+			
 		g_list_foreach (sel_list, (GFunc) gtk_tree_path_free, NULL);
 		g_list_free (sel_list);
 	}
@@ -1835,6 +1877,26 @@ modest_ui_actions_on_select_all (GtkAction *action,
 		gtk_text_buffer_get_end_iter (buffer, &end);
 		gtk_text_buffer_select_range (buffer, &start, &end);
 	}
+}
+
+void
+modest_ui_actions_on_mark_as_read (GtkAction *action,
+				   ModestWindow *window)
+{	
+	g_return_if_fail (MODEST_IS_WINDOW(window));
+		
+	/* Mark each header as read */
+	do_headers_action (window, headers_action_mark_as_read, NULL);
+}
+
+void
+modest_ui_actions_on_mark_as_unread (GtkAction *action,
+				     ModestWindow *window)
+{	
+	g_return_if_fail (MODEST_IS_WINDOW(window));
+		
+	/* Mark each header as read */
+	do_headers_action (window, headers_action_mark_as_unread, NULL);
 }
 
 void

@@ -169,6 +169,11 @@ void     modest_ui_actions_on_attach_file             (GtkAction *action,
 
 void     modest_ui_actions_on_remove_attachments      (GtkAction *action,
 						       ModestMsgEditWindow *window);
+void     modest_ui_actions_on_mark_as_read            (GtkAction *action,
+						       ModestWindow *window);
+
+void     modest_ui_actions_on_mark_as_unread            (GtkAction *action,
+							 ModestWindow *window);
 
 /**
  * modest_ui_actions_do_send_receive_all:
