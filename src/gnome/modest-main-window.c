@@ -720,6 +720,7 @@ modest_main_window_set_contents_style (ModestMainWindow *self,
 
 static void
 get_msg_callback (TnyFolder *folder, 
+		  gboolean cancelled,
 		  TnyMsg *msg, 
 		  GError **err, 
 		  gpointer user_data)

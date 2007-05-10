@@ -34,6 +34,7 @@
 #include "modest-platform.h"
 #include "modest-mail-operation-queue.h"
 #include "modest-runtime.h"
+#include "gnome/modest-gnome-global-settings-dialog.h"
 
 gboolean
 modest_platform_init (void)
@@ -135,10 +136,7 @@ modest_platform_run_new_folder_dialog (GtkWindow *parent_window,
 				       gchar **folder_name)
 {
 	GtkWidget *dialog, *entry;
-	gboolean finished = FALSE;
 	gint result;
-	TnyFolder *new_folder;
-	ModestMailOperation *mail_op;
 
 	/* Ask the user for the folder name */
 	dialog = gtk_dialog_new_with_buttons (_("New Folder Name"),
@@ -202,6 +200,7 @@ gboolean modest_platform_connect_and_wait (GtkWindow *parent_window)
 gboolean modest_platform_set_update_interval (guint minutes)
 {
 	/* TODO. */
+	return FALSE;
 }
 
 void
@@ -211,8 +210,8 @@ modest_platform_run_sort_dialog (GtkWindow *parent_window,
 	/* TODO */
 }
 
-GtkWidget
+GtkWidget *
 modest_platform_get_global_settings_dialog ()
 {
-	/* TODO */
+	return modest_gnome_global_settings_dialog_new ();
 }

@@ -521,7 +521,8 @@ modest_msg_edit_window_attach_file (ModestMsgEditWindow *window)
 }
 
 void
-modest_msg_edit_window_remove_attachments (ModestMsgEditWindow *window)
+modest_msg_edit_window_remove_attachments (ModestMsgEditWindow *window,
+					   GList *att_list)
 {
 	g_return_if_fail (MODEST_MSG_EDIT_WINDOW (window));
 

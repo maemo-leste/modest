@@ -38,10 +38,12 @@
 #include <gtk/gtklabel.h>
 #include <gtk/gtkcheckbutton.h>
 #include <gtk/gtkhseparator.h>
+#include <gtk/gtktable.h>
+#include <gtk/gtkspinbutton.h>
 #include "widgets/modest-global-settings-dialog-priv.h"
 #include "widgets/modest-combo-box.h"
 #include "gnome/modest-gnome-global-settings-dialog.h"
-#include "modest-ui-constants.h"
+#include "widgets/modest-ui-constants.h"
 
 
 /* include other impl specific header files */
@@ -214,14 +216,14 @@ create_updating_page (ModestGnomeGlobalSettingsDialog *self)
 
 	/* Connected via */
 	label = create_label (_("mcen_fi_options_connectiontype"));
-	list = get_connected_via ();
+	list = _modest_global_settings_dialog_get_connected_via ();
 	combo = modest_combo_box_new (list, g_int_equal);
 	modest_pair_list_free (list);
 	add_to_table (GTK_TABLE (table_update), label, combo);
 
 	/* Update interval */
 	label = create_label (_("mcen_fi_options_updateinterval"));
-	list = get_update_interval ();
+	list = _modest_global_settings_dialog_get_update_interval ();
 	combo = modest_combo_box_new (list, g_int_equal);
 	modest_pair_list_free (list);
 	add_to_table (GTK_TABLE (table_update), label, combo);
@@ -266,7 +268,7 @@ create_composing_page (ModestGnomeGlobalSettingsDialog *self)
 
 	/* Update interval */
 	label = create_label (_("mcen_fi_options_messageformat"));
-	list = get_msg_formats ();
+	list = _modest_global_settings_dialog_get_msg_formats ();
 	combo = modest_combo_box_new (list, g_int_equal);
 	modest_pair_list_free (list);
 	add_to_table (GTK_TABLE (table), label, combo);
