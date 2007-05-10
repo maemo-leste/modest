@@ -28,6 +28,9 @@
  */
 
 #include <glib/gi18n.h>
+#include <gtk/gtknotebook.h>
+#include <gtk/gtkstock.h>
+#include <gtk/gtklabel.h>
 #include "modest-global-settings-dialog.h"
 #include "modest-defs.h"
 #include "modest-ui-constants.h"
@@ -39,20 +42,6 @@ static void modest_global_settings_dialog_class_init (ModestGlobalSettingsDialog
 static void modest_global_settings_dialog_init       (ModestGlobalSettingsDialog *obj);
 static void modest_global_settings_dialog_finalize   (GObject *obj);
 
-enum {
-	MODEST_CONNECTED_VIA_WLAN,
-	MODEST_CONNECTED_VIA_ANY
-};
-
-enum {
-	MODEST_UPDATE_INTERVAL_5_MIN,
-	MODEST_UPDATE_INTERVAL_10_MIN,
-	MODEST_UPDATE_INTERVAL_15_MIN,
-	MODEST_UPDATE_INTERVAL_30_MIN,
-	MODEST_UPDATE_INTERVAL_1_HOUR,
-	MODEST_UPDATE_INTERVAL_2_HOUR
-};
-
 /* list my signals  */
 enum {
 	/* MY_SIGNAL_1, */
@@ -60,19 +49,6 @@ enum {
 	LAST_SIGNAL
 };
 
-static GtkWidget* create_updating_page  (void);
-static GtkWidget* create_composing_page (void);
-
-typedef struct _ModestGlobalSettingsDialogPrivate ModestGlobalSettingsDialogPrivate;
-struct _ModestGlobalSettingsDialogPrivate {
-	GtkWidget *notebook;
-	GtkWidget *updating_page;
-	GtkWidget *composing_page;
-	gboolean   modified;
-};
-#define MODEST_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
-                                                           MODEST_TYPE_GLOBAL_SETTINGS_DIALOG, \
-                                                           ModestGlobalSettingsDialogPrivate))
 /* globals */
 static GtkDialogClass *parent_class = NULL;
 
@@ -123,21 +99,8 @@ modest_global_settings_dialog_init (ModestGlobalSettingsDialog *self)
 
 	priv = MODEST_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE (self);
 
-	priv->modified = FALSE;
 	priv->notebook = gtk_notebook_new ();
-	priv->updating_page = create_updating_page ();
-	priv->composing_page = create_composing_page ();
-    
-	/* Add the notebook pages: */
-	gtk_notebook_append_page (GTK_NOTEBOOK (priv->notebook), priv->updating_page, 
-		gtk_label_new (_("mcen_ti_options_updating")));
-	gtk_notebook_append_page (GTK_NOTEBOOK (priv->notebook), priv->composing_page, 
-		gtk_label_new (_("mcen_ti_options_composing")));
-		
-	gtk_container_add (GTK_CONTAINER (GTK_DIALOG (self)->vbox), priv->notebook);
-	gtk_container_set_border_width (GTK_CONTAINER (GTK_DIALOG (self)->vbox), MODEST_MARGIN_HALF);
-	gtk_widget_show_all (priv->notebook);
-        
+           
 	/* Add the buttons: */
 	gtk_dialog_add_button (GTK_DIALOG (self), GTK_STOCK_OK, GTK_RESPONSE_OK);
 	gtk_dialog_add_button (GTK_DIALOG (self), GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL);
@@ -175,45 +138,6 @@ modest_global_settings_dialog_finalize (GObject *obj)
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
-GtkWidget*
-modest_global_settings_dialog_new (void)
-{
-	return GTK_WIDGET(g_object_new(MODEST_TYPE_GLOBAL_SETTINGS_DIALOG, NULL));
-}
-
-/* 
- * Adds the two widgets to a new row in the table
- */
-static void
-add_to_table (GtkTable *table,
-	      GtkWidget *left,
-	      GtkWidget *right)
-{
-	guint n_rows = 0;
-
-	g_object_get (G_OBJECT (table), "n-rows", &n_rows,NULL);
-
-	/* Create label */
-	gtk_misc_set_alignment (GTK_MISC (left), 1.0, 0.0);
-
-	/* Create value */
-/* 	gtk_misc_set_alignment (GTK_MISC (right), 0.0, 0.0); */
-
-	/* Attach label and value */
-	gtk_table_attach (table, 
-			  left, 0, 1, 
-			  n_rows, n_rows + 1, 
-			  GTK_SHRINK|GTK_FILL, 
-			  GTK_SHRINK|GTK_FILL, 
-			  0, 0);
-	gtk_table_attach (table, 
-			  right, 1, 2, 
-			  n_rows, n_rows + 1, 
-			  GTK_EXPAND|GTK_FILL, 
-			  GTK_SHRINK|GTK_FILL, 
-			  0, 0);
-}
-
 /*
  * Creates a pair list (number,string) and adds it to the given list
  */
@@ -232,8 +156,8 @@ add_to_modest_pair_list (const gint num, const gchar *str, GSList **list)
 /*
  * Gets a list of pairs 
  */
-static ModestPairList *
-get_connected_via (void)
+ModestPairList *
+_modest_global_settings_dialog_get_connected_via (void)
 {
 	GSList *list = NULL;
 
@@ -250,8 +174,8 @@ get_connected_via (void)
 /*
  * Gets a list of pairs of update intervals
  */
-static ModestPairList *
-get_update_interval (void)
+ModestPairList *
+_modest_global_settings_dialog_get_update_interval (void)
 {
 	GSList *list = NULL;
 
@@ -277,87 +201,11 @@ get_update_interval (void)
 	return (ModestPairList *) g_slist_reverse (list);
 }
 
-/* 
- * We need this because the translations are comming without ":" 
- */
-static GtkWidget *
-create_label (const gchar *text)
-{
-	gchar *label_name;
-	GtkWidget *label;
-
-	label_name = g_strdup_printf ("%s:", text);
-	label = gtk_label_new (label_name);
-	g_free (label_name);
-
-	return label;
-}
-
-/*
- * Creates the updating page
- */
-static GtkWidget*
-create_updating_page (void)
-{
-	GtkWidget *vbox, *table_update, *table_limit;
-	GtkWidget *label, *check, *combo, *spin;
-	ModestPairList *list;
-
-	vbox = gtk_vbox_new (FALSE, MODEST_MARGIN_DEFAULT);
-	table_update = gtk_table_new (3, 2, FALSE);
-	table_limit = gtk_table_new (2, 2, FALSE);
-	/* FIXME: set proper values */
-	gtk_table_set_row_spacings (GTK_TABLE (table_update), 6);
-	gtk_table_set_col_spacings (GTK_TABLE (table_update), 12);
-	gtk_table_set_row_spacings (GTK_TABLE (table_limit), 6);
-	gtk_table_set_col_spacings (GTK_TABLE (table_limit), 12);
-
-	/* Autoupdate */
-	label = create_label (_("mcen_fi_options_autoupdate"));
-	check = gtk_check_button_new ();
-	add_to_table (GTK_TABLE (table_update), label, check);
-
-	/* Connected via */
-	label = create_label (_("mcen_fi_options_connectiontype"));
-	list = get_connected_via ();
-	combo = modest_combo_box_new (list, g_int_equal);
-	modest_pair_list_free (list);
-	add_to_table (GTK_TABLE (table_update), label, combo);
-
-	/* Update interval */
-	label = create_label (_("mcen_fi_options_updateinterval"));
-	list = get_update_interval ();
-	combo = modest_combo_box_new (list, g_int_equal);
-	modest_pair_list_free (list);
-	add_to_table (GTK_TABLE (table_update), label, combo);
-
-	/* Add to vbox */
-	gtk_box_pack_start (GTK_BOX (vbox), table_update, FALSE, FALSE, MODEST_MARGIN_HALF);
-
-	/* Separator */
-	gtk_box_pack_start (GTK_BOX (vbox), gtk_hseparator_new (), FALSE, FALSE, MODEST_MARGIN_HALF);
-
-	/* Limits */
-	label = create_label (_("mcen_fi_advsetup_sizelimit"));
-	spin = gtk_spin_button_new (GTK_ADJUSTMENT (gtk_adjustment_new (1000, 1, 5000, 1, 1, 16)), 
-				    1, 0);
-	add_to_table (GTK_TABLE (table_limit), label, spin);
-
-	label = create_label (_("mcen_fi_options_playsound"));
-	check = gtk_check_button_new ();
-	add_to_table (GTK_TABLE (table_limit), label, check);
-
-	/* Add to vbox */
-	gtk_box_pack_start (GTK_BOX (vbox), table_limit, FALSE, FALSE, MODEST_MARGIN_HALF);
-
-	return vbox;
-}
-
 /*
  * Gets a list of pairs 
  */
-static ModestPairList *
-get_msg_formats (void)
+ModestPairList *
+_modest_global_settings_dialog_get_msg_formats (void)
 {
 	GSList *list = NULL;
 
@@ -369,38 +217,4 @@ get_msg_formats (void)
 				 &list);
 
 	return (ModestPairList *) g_slist_reverse (list);
-}
-
-
-/*
- * Creates the composing page
- */
-static GtkWidget* 
-create_composing_page (void)
-{
-	GtkWidget *vbox, *table;
-	GtkWidget *label, *check, *combo;
-	ModestPairList *list;
-
-	vbox = gtk_vbox_new (FALSE, MODEST_MARGIN_DEFAULT);
-	table = gtk_table_new (2, 2, FALSE);
-	/* FIXME: set proper values */
-	gtk_table_set_row_spacings (GTK_TABLE (table), 6);
-	gtk_table_set_col_spacings (GTK_TABLE (table), 12);
-
-	/* Update interval */
-	label = create_label (_("mcen_fi_options_messageformat"));
-	list = get_msg_formats ();
-	combo = modest_combo_box_new (list, g_int_equal);
-	modest_pair_list_free (list);
-	add_to_table (GTK_TABLE (table), label, combo);
-
-	label = create_label (_("mcen_va_options_include_original_inreply"));
-	check = gtk_check_button_new ();
-	add_to_table (GTK_TABLE (table), label, check);
-
-	/* Add to vbox */
-	gtk_box_pack_start (GTK_BOX (vbox), table, FALSE, FALSE, MODEST_MARGIN_HALF);
-
-	return vbox;
 }

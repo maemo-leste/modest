@@ -205,6 +205,8 @@ gboolean modest_platform_connect_and_wait (GtkWindow *parent_window);
  **/
 gboolean modest_platform_set_update_interval (guint minutes);
 
+GtkWidget* modest_platform_get_global_settings_dialog ();
+
 G_END_DECLS
 
 #endif /* __MODEST_PLATFORM_UTILS_H__ */

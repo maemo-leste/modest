@@ -30,7 +30,8 @@
 #ifndef __MODEST_GLOBAL_SETTINGS_DIALOG_H__
 #define __MODEST_GLOBAL_SETTINGS_DIALOG_H__
 
-#include <gtk/gtk.h>
+#include <gtk/gtkdialog.h>
+#include "widgets/modest-global-settings-dialog-priv.h"
 /* other include files */
 
 G_BEGIN_DECLS
@@ -38,7 +39,7 @@ G_BEGIN_DECLS
 /* convenience macros */
 #define MODEST_TYPE_GLOBAL_SETTINGS_DIALOG             (modest_global_settings_dialog_get_type())
 #define MODEST_GLOBAL_SETTINGS_DIALOG(obj)             (G_TYPE_CHECK_INSTANCE_CAST((obj),MODEST_TYPE_GLOBAL_SETTINGS_DIALOG,ModestGlobalSettingsDialog))
-#define MODEST_GLOBAL_SETTINGS_DIALOG_CLASS(klass)     (G_TYPE_CHECK_CLASS_CAST((klass),MODEST_TYPE_GLOBAL_SETTINGS_DIALOG,GtkDialog))
+#define MODEST_GLOBAL_SETTINGS_DIALOG_CLASS(klass)     (G_TYPE_CHECK_CLASS_CAST((klass),MODEST_TYPE_GLOBAL_SETTINGS_DIALOG,ModestGlobalSettingsDialogClass))
 #define MODEST_IS_GLOBAL_SETTINGS_DIALOG(obj)          (G_TYPE_CHECK_INSTANCE_TYPE((obj),MODEST_TYPE_GLOBAL_SETTINGS_DIALOG))
 #define MODEST_IS_GLOBAL_SETTINGS_DIALOG_CLASS(klass)  (G_TYPE_CHECK_CLASS_TYPE((klass),MODEST_TYPE_GLOBAL_SETTINGS_DIALOG))
 #define MODEST_GLOBAL_SETTINGS_DIALOG_GET_CLASS(obj)   (G_TYPE_INSTANCE_GET_CLASS((obj),MODEST_TYPE_GLOBAL_SETTINGS_DIALOG,ModestGlobalSettingsDialogClass))
@@ -48,26 +49,29 @@ typedef struct _ModestGlobalSettingsDialogClass ModestGlobalSettingsDialogClass;
 
 struct _ModestGlobalSettingsDialog {
 	 GtkDialog parent;
-	/* insert public members, if any */
 };
 
 struct _ModestGlobalSettingsDialogClass {
 	GtkDialogClass parent_class;
-	/* insert signal callback declarations, eg. */
-	/* void (* my_event) (ModestGlobalSettingsDialog* obj); */
 };
+
+/* Global settings */
+typedef enum _ModestConnectedVia {
+	MODEST_CONNECTED_VIA_WLAN,
+	MODEST_CONNECTED_VIA_ANY
+} ModestConnectedVia;
+
+typedef enum _ModestUpdateInterval {
+	MODEST_UPDATE_INTERVAL_5_MIN,
+	MODEST_UPDATE_INTERVAL_10_MIN,
+	MODEST_UPDATE_INTERVAL_15_MIN,
+	MODEST_UPDATE_INTERVAL_30_MIN,
+	MODEST_UPDATE_INTERVAL_1_HOUR,
+	MODEST_UPDATE_INTERVAL_2_HOUR
+} ModestUpdateInterval;
 
 /* member functions */
 GType        modest_global_settings_dialog_get_type    (void) G_GNUC_CONST;
-
-/* typical parameter-less _new function */
-/* if this is a kind of GtkWidget, it should probably return at GtkWidget* */
-GtkWidget*   modest_global_settings_dialog_new         (void);
-
-/* fill in other public functions, eg.: */
-/* 	void       modest_global_settings_dialog_do_something (ModestGlobalSettingsDialog *self, const gchar* param); */
-/* 	gboolean   modest_global_settings_dialog_has_foo      (ModestGlobalSettingsDialog *self, gint value); */
-
 
 G_END_DECLS
 

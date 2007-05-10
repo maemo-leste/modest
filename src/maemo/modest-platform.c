@@ -33,6 +33,7 @@
 #include <modest-runtime.h>
 #include <modest-main-window.h>
 #include <modest-header-view.h>
+#include "maemo/modest-maemo-global-settings-dialog.h"
 
 #include <modest-hildon-includes.h>
 
@@ -768,3 +769,8 @@ gboolean modest_platform_set_update_interval (guint minutes)
 	return TRUE;
 }
 
+GtkWidget * 
+modest_platform_get_global_settings_dialog ()
+{
+	return modest_maemo_global_settings_dialog_new ();
+}

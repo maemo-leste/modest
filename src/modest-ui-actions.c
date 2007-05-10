@@ -2468,9 +2468,17 @@ modest_ui_actions_on_settings (GtkAction *action,
 			       ModestWindow *win)
 {
 	GtkWidget *dialog;
+	gint response;
 
-	dialog = modest_global_settings_dialog_new ();
+	dialog = modest_platform_get_global_settings_dialog ();
+	gtk_window_set_transient_for (GTK_WINDOW (dialog), GTK_WINDOW (win));
 	gtk_widget_show (dialog);
-	gtk_dialog_run (GTK_DIALOG (dialog));
+
+	response = gtk_dialog_run (GTK_DIALOG (dialog));
+
+	if (response == GTK_RESPONSE_ACCEPT) {
+		g_message ("YES");
+	}
+
 	gtk_widget_destroy (dialog);
 }

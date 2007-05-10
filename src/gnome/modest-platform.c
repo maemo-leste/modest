@@ -210,3 +210,9 @@ modest_platform_run_sort_dialog (GtkWindow *parent_window,
 {
 	/* TODO */
 }
+
+GtkWidget
+modest_platform_get_global_settings_dialog ()
+{
+	/* TODO */
+}

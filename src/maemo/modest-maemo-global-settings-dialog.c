@@ -1,0 +1,277 @@
+/* Copyright (c) 2006, Nokia Corporation
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ * * Redistributions of source code must retain the above copyright
+ *   notice, this list of conditions and the following disclaimer.
+ * * Redistributions in binary form must reproduce the above copyright
+ *   notice, this list of conditions and the following disclaimer in the
+ *   documentation and/or other materials provided with the distribution.
+ * * Neither the name of the Nokia Corporation nor the names of its
+ *   contributors may be used to endorse or promote products derived from
+ *   this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+ * IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+ * PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+ * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif /*HAVE_CONFIG_H*/
+
+#ifdef MODEST_HILDON_VERSION_0
+#include <hildon-widgets/hildon-caption.h>
+#include <hildon-widgets/hildon-number-editor.h>
+#else
+#include <hildon/hildon-caption.h>
+#include <hildon/hildon-number-editor.h>
+#endif /*MODEST_HILDON_VERSION_0*/
+
+#include <glib/gi18n.h>
+#include <gtk/gtkbox.h>
+#include <gtk/gtkvbox.h>
+#include <gtk/gtknotebook.h>
+#include <gtk/gtklabel.h>
+#include <gtk/gtkcheckbutton.h>
+#include <gtk/gtkhseparator.h>
+#include "widgets/modest-global-settings-dialog-priv.h"
+#include "widgets/modest-combo-box.h"
+#include "maemo/modest-maemo-global-settings-dialog.h"
+#include "widgets/modest-ui-constants.h"
+
+
+/* include other impl specific header files */
+
+/* 'private'/'protected' functions */
+static void modest_maemo_global_settings_dialog_class_init (ModestMaemoGlobalSettingsDialogClass *klass);
+static void modest_maemo_global_settings_dialog_init       (ModestMaemoGlobalSettingsDialog *obj);
+static void modest_maemo_global_settings_dialog_finalize   (GObject *obj);
+
+/* list my signals  */
+enum {
+	/* MY_SIGNAL_1, */
+	/* MY_SIGNAL_2, */
+	LAST_SIGNAL
+};
+
+static GtkWidget* create_updating_page  (ModestMaemoGlobalSettingsDialog *self);
+static GtkWidget* create_composing_page (ModestMaemoGlobalSettingsDialog *self);
+
+typedef struct _ModestMaemoGlobalSettingsDialogPrivate ModestMaemoGlobalSettingsDialogPrivate;
+struct _ModestMaemoGlobalSettingsDialogPrivate {
+};
+#define MODEST_MAEMO_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
+                                                           MODEST_TYPE_MAEMO_GLOBAL_SETTINGS_DIALOG, \
+                                                           ModestMaemoGlobalSettingsDialogPrivate))
+/* globals */
+static GtkDialogClass *parent_class = NULL;
+
+/* uncomment the following if you have defined any signals */
+/* static guint signals[LAST_SIGNAL] = {0}; */
+
+GType
+modest_maemo_global_settings_dialog_get_type (void)
+{
+	static GType my_type = 0;
+	if (!my_type) {
+		static const GTypeInfo my_info = {
+			sizeof(ModestMaemoGlobalSettingsDialogClass),
+			NULL,		/* base init */
+			NULL,		/* base finalize */
+			(GClassInitFunc) modest_maemo_global_settings_dialog_class_init,
+			NULL,		/* class finalize */
+			NULL,		/* class data */
+			sizeof(ModestMaemoGlobalSettingsDialog),
+			1,		/* n_preallocs */
+			(GInstanceInitFunc) modest_maemo_global_settings_dialog_init,
+			NULL
+		};
+		my_type = g_type_register_static (MODEST_TYPE_GLOBAL_SETTINGS_DIALOG,
+		                                  "ModestMaemoGlobalSettingsDialog",
+		                                  &my_info, 0);
+	}
+	return my_type;
+}
+
+static void
+modest_maemo_global_settings_dialog_class_init (ModestMaemoGlobalSettingsDialogClass *klass)
+{
+	GObjectClass *gobject_class;
+	gobject_class = (GObjectClass*) klass;
+
+	parent_class            = g_type_class_peek_parent (klass);
+	gobject_class->finalize = modest_maemo_global_settings_dialog_finalize;
+
+	g_type_class_add_private (gobject_class, sizeof(ModestMaemoGlobalSettingsDialogPrivate));
+}
+
+static void
+modest_maemo_global_settings_dialog_init (ModestMaemoGlobalSettingsDialog *self)
+{
+	ModestGlobalSettingsDialogPrivate *ppriv;
+/* 	GdkGeometry *geometry; */
+
+	ppriv = MODEST_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE (self);
+
+	ppriv->updating_page = create_updating_page (self);
+	ppriv->composing_page = create_composing_page (self);
+    
+	/* Add the notebook pages: */
+	gtk_notebook_append_page (GTK_NOTEBOOK (ppriv->notebook), ppriv->updating_page, 
+		gtk_label_new (_("mcen_ti_options_updating")));
+	gtk_notebook_append_page (GTK_NOTEBOOK (ppriv->notebook), ppriv->composing_page, 
+		gtk_label_new (_("mcen_ti_options_composing")));
+		
+	gtk_container_add (GTK_CONTAINER (GTK_DIALOG (self)->vbox), ppriv->notebook);
+	gtk_container_set_border_width (GTK_CONTAINER (GTK_DIALOG (self)->vbox), MODEST_MARGIN_HALF);
+	gtk_widget_show_all (ppriv->notebook);
+}
+
+static void
+modest_maemo_global_settings_dialog_finalize (GObject *obj)
+{
+/* 	free/unref instance resources here */
+	G_OBJECT_CLASS(parent_class)->finalize (obj);
+}
+
+GtkWidget*
+modest_maemo_global_settings_dialog_new (void)
+{
+	return GTK_WIDGET(g_object_new(MODEST_TYPE_MAEMO_GLOBAL_SETTINGS_DIALOG, NULL));
+}
+
+
+/*
+ * Creates the updating page
+ */
+static GtkWidget*
+create_updating_page (ModestMaemoGlobalSettingsDialog *self)
+{
+	GtkWidget *vbox, *vbox_update, *vbox_limit, *caption;
+	GtkSizeGroup *size_group;
+	ModestPairList *list;
+	ModestGlobalSettingsDialogPrivate *ppriv;
+
+	ppriv = MODEST_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE (self);
+
+	vbox = gtk_vbox_new (FALSE, MODEST_MARGIN_DEFAULT);
+
+	vbox_update = gtk_vbox_new (FALSE, MODEST_MARGIN_DEFAULT);
+	size_group = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);
+
+	/* Auto update */
+	ppriv->auto_update = gtk_check_button_new ();
+	caption = hildon_caption_new (size_group, 
+				      _("mcen_fi_options_autoupdate"), 
+				      ppriv->auto_update, 
+				      NULL, 
+				      HILDON_CAPTION_MANDATORY);
+	gtk_box_pack_start (GTK_BOX (vbox_update), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
+
+	/* Connected via */
+	list = _modest_global_settings_dialog_get_connected_via ();
+	ppriv->connect_via = modest_combo_box_new (list, g_int_equal);
+	modest_pair_list_free (list);
+	caption = hildon_caption_new (size_group, 
+				      _("mcen_fi_options_connectiontype"),
+				      ppriv->connect_via, 
+				      NULL, 
+				      HILDON_CAPTION_MANDATORY);
+	gtk_box_pack_start (GTK_BOX (vbox_update), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
+
+	/* Update interval */
+	list = _modest_global_settings_dialog_get_update_interval ();
+	ppriv->update_interval = modest_combo_box_new (list, g_int_equal);
+	modest_pair_list_free (list);
+	caption = hildon_caption_new (size_group, 
+				      _("mcen_fi_options_updateinterval"),
+				      ppriv->update_interval, 
+				      NULL, 
+				      HILDON_CAPTION_MANDATORY);
+	gtk_box_pack_start (GTK_BOX (vbox_update), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
+
+	/* Add to vbox */
+	gtk_box_pack_start (GTK_BOX (vbox), vbox_update, FALSE, FALSE, MODEST_MARGIN_HALF);
+
+	/* Separator */
+	gtk_box_pack_start (GTK_BOX (vbox), gtk_hseparator_new (), FALSE, FALSE, MODEST_MARGIN_HALF);
+
+	/* Limits */
+	vbox_limit = gtk_vbox_new (FALSE, MODEST_MARGIN_DEFAULT);
+	size_group = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);
+
+	/* Size limit */
+	ppriv->size_limit = hildon_number_editor_new (1, 5000);;
+	hildon_number_editor_set_value (HILDON_NUMBER_EDITOR (ppriv->size_limit), 1000);;
+	caption = hildon_caption_new (size_group, 
+				      _("mcen_fi_advsetup_sizelimit"), 
+				      ppriv->size_limit, 
+				      NULL, 
+				      HILDON_CAPTION_MANDATORY);
+	gtk_box_pack_start (GTK_BOX (vbox_limit), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
+
+	/* Play sound */
+	ppriv->play_sound = gtk_check_button_new ();
+	caption = hildon_caption_new (size_group, 
+				      _("mcen_fi_options_playsound"), 
+				      ppriv->play_sound, 
+				      NULL, 
+				      HILDON_CAPTION_MANDATORY);
+	gtk_box_pack_start (GTK_BOX (vbox_limit), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
+
+	/* Add to vbox */
+	gtk_box_pack_start (GTK_BOX (vbox), vbox_limit, FALSE, FALSE, MODEST_MARGIN_HALF);
+
+	return vbox;
+}
+
+/*
+ * Creates the composing page
+ */
+static GtkWidget* 
+create_composing_page (ModestMaemoGlobalSettingsDialog *self)
+{
+	GtkWidget *vbox;
+	GtkSizeGroup *size_group;
+	ModestGlobalSettingsDialogPrivate *ppriv;
+	ModestPairList *list;
+	GtkWidget *caption;
+
+	ppriv = MODEST_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE (self);
+	size_group = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);
+	vbox = gtk_vbox_new (FALSE, MODEST_MARGIN_DEFAULT);
+
+	/* Update interval */
+	list = _modest_global_settings_dialog_get_msg_formats ();
+	ppriv->msg_format = modest_combo_box_new (list, g_int_equal);
+	modest_pair_list_free (list);
+	caption = hildon_caption_new (size_group, 
+				      _("mcen_fi_options_messageformat"),
+				      ppriv->msg_format, 
+				      NULL, 
+				      HILDON_CAPTION_MANDATORY);
+	gtk_box_pack_start (GTK_BOX (vbox), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
+
+	/* Reply */
+	ppriv->include_reply = gtk_check_button_new ();
+	caption = hildon_caption_new (size_group, 
+				      _("mcen_fi_options_playsound"), 
+				      ppriv->include_reply, 
+				      NULL, 
+				      HILDON_CAPTION_MANDATORY);
+	gtk_box_pack_start (GTK_BOX (vbox), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
+
+	return vbox;
+}
