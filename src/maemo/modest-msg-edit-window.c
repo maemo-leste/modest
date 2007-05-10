@@ -1869,7 +1869,7 @@ modest_msg_edit_window_select_font (ModestMsgEditWindow *window)
 	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
 	
-	dialog = hildon_font_selection_dialog_new (NULL, NULL);
+	dialog = hildon_font_selection_dialog_new (GTK_WINDOW (window), NULL);
 
 	/* First we get the currently selected font information */
 	wp_text_buffer_get_attributes (WP_TEXT_BUFFER (priv->text_buffer), &oldfmt, TRUE);
@@ -1931,8 +1931,6 @@ modest_msg_edit_window_select_font (ModestMsgEditWindow *window)
 		
 	}	
 
-	gtk_widget_destroy (dialog);
-	
 	if (response == GTK_RESPONSE_OK) {
 		memset(&fmt, 0, sizeof(fmt));
 		if (bold_set) {
@@ -1964,7 +1962,6 @@ modest_msg_edit_window_select_font (ModestMsgEditWindow *window)
 			fmt.color = *color;
 			fmt.cs.color = TRUE;
 		}
-		gdk_color_free(color);
 		if (font_set) {
 			fmt.font = wp_get_font_index(font_name,
 						     DEFAULT_FONT);
@@ -1976,6 +1973,8 @@ modest_msg_edit_window_select_font (ModestMsgEditWindow *window)
 				font_size, DEFAULT_FONT_SIZE);
 			fmt.cs.font_size = TRUE;
 		}
+		gtk_widget_destroy (dialog);
+	
 		gtk_widget_grab_focus(GTK_WIDGET(priv->msg_body));
 		wp_text_buffer_set_format(WP_TEXT_BUFFER(priv->text_buffer), &fmt);
 	}

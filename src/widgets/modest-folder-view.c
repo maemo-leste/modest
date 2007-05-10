@@ -403,6 +403,9 @@ icon_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 
 	/* Set pixbuf */
 	g_object_set (rendobj, "pixbuf", pixbuf, NULL);
+
+	if (pixbuf != NULL)
+		g_object_unref (pixbuf);
 }
 
 static void

@@ -1672,6 +1672,7 @@ modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 	gtk_box_pack_start (GTK_BOX(GTK_DIALOG(dialog)->vbox), caption, 
 		FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (caption);
+	g_object_unref (sizegroup);
 #else 
 	gtk_box_pack_start (GTK_BOX(GTK_DIALOG(dialog)->vbox), entry_password,
 			    TRUE, FALSE, 0);
