@@ -57,11 +57,6 @@
 #define MODEST_ACCOUNT_NAMESPACE         MODEST_CONF_NAMESPACE "/accounts"
 #define MODEST_CONF_DEFAULT_ACCOUNT      MODEST_CONF_NAMESPACE "/default_account"
 
-#define MODEST_CONF_REPLY_TYPE           MODEST_CONF_NAMESPACE "/reply_type"        /*  int  */
-#define MODEST_CONF_FORWARD_TYPE         MODEST_CONF_NAMESPACE "/forward_type"      /*  int  */
-
-#define MODEST_CONF_PREFER_FORMATTED_TEXT MODEST_CONF_NAMESPACE "/prefer_formatted_text"
-
 #define MODEST_CONF_CONNECT_AT_STARTUP   MODEST_CONF_NAMESPACE "/connect_at_startup"      
 
 #define MODEST_CONF_SHOW_CC              MODEST_CONF_NAMESPACE "/show_cc"           
@@ -167,5 +162,15 @@
 /* Macros for different text formats in mail editor */
 #define MODEST_FILE_FORMAT_PLAIN_TEXT 0
 #define MODEST_FILE_FORMAT_FORMATTED_TEXT 1
+
+/* Global settings */
+#define MODEST_CONF_AUTO_UPDATE MODEST_CONF_NAMESPACE "/auto_update" /* bool */
+#define MODEST_CONF_UPDATE_WHEN_CONNECTED_BY MODEST_CONF_NAMESPACE "/update_when_connected_by" /* int */
+#define MODEST_CONF_UPDATE_INTERVAL MODEST_CONF_NAMESPACE "/update_interval" /* int */
+#define MODEST_CONF_MSG_SIZE_LIMIT MODEST_CONF_NAMESPACE "/msg_size_limit" /* int */
+#define MODEST_CONF_PLAY_SOUND_MSG_ARRIVE MODEST_CONF_NAMESPACE "/play_sound_msg_arrive" /* bool */
+#define MODEST_CONF_PREFER_FORMATTED_TEXT MODEST_CONF_NAMESPACE "/prefer_formatted_text" /* bool */
+#define MODEST_CONF_REPLY_TYPE           MODEST_CONF_NAMESPACE "/reply_type"        /*  int  */
+#define MODEST_CONF_FORWARD_TYPE         MODEST_CONF_NAMESPACE "/forward_type"      /*  int  */
 
 #endif /*__MODEST_DEFS_H__*/
