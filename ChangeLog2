@@ -1,3 +1,9 @@
+2007-05-10  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/maemo/modest-main-window.c: (on_account_update):
+	Avoid adding a menu item to priv->accounts_popup if accounts_popup is 
+	NULL, to avoid lots of warnings. However, it probably should not be NULL.
+
 2007-05-09  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/modest-tny-account-store.c: (on_account_changed): 

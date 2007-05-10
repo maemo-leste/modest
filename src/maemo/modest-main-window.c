@@ -991,14 +991,17 @@ on_account_update (TnyAccountStore *account_store,
 				  self);
 
 		/* Create item and add it to the send&receive CSM */
-		item = gtk_menu_item_new_with_label (display_name);
-		gtk_menu_shell_append (GTK_MENU_SHELL (priv->accounts_popup), GTK_WIDGET (item));
-		g_signal_connect_data (G_OBJECT (item), 
-				       "activate", 
-				       G_CALLBACK (on_send_receive_csm_activated),
-				       g_strdup (account_data->account_name),
-				       (GClosureNotify) g_free,
-				       0);
+		/* TODO: Why is this sometimes NULL? murrayc */
+		if (priv->accounts_popup) {
+			item = gtk_menu_item_new_with_label (display_name);
+			gtk_menu_shell_append (GTK_MENU_SHELL (priv->accounts_popup), GTK_WIDGET (item));
+			g_signal_connect_data (G_OBJECT (item), 
+					       "activate", 
+					       G_CALLBACK (on_send_receive_csm_activated),
+					       g_strdup (account_data->account_name),
+					       (GClosureNotify) g_free,
+					       0);
+		}
 
 		/* Frees */
 		g_free (display_name);
