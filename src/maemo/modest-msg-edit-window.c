@@ -812,6 +812,7 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name)
 	GtkActionGroup *action_group;
 	GError *error = NULL;
 	GdkPixbuf *window_icon = NULL;
+	GtkAction *action;
 
 	g_return_val_if_fail (msg, NULL);
 	
@@ -900,6 +901,12 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name)
 	/* Set window icon */
 	window_icon = modest_platform_get_icon (MODEST_APP_MSG_EDIT_ICON);
 	gtk_window_set_icon (GTK_WINDOW (obj), window_icon);
+
+	/* Dim at start clipboard actions */
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/EditMenu/CutMenu");
+	gtk_action_set_sensitive (action, FALSE);
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/EditMenu/CopyMenu");
+	gtk_action_set_sensitive (action, FALSE);
 	
 	return (ModestWindow*)obj;
 }

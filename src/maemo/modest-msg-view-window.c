@@ -381,14 +381,10 @@ init_window (ModestMsgViewWindow *obj, TnyMsg *msg)
 	g_signal_connect (G_OBJECT (priv->find_toolbar), "close", G_CALLBACK (modest_msg_view_window_find_toolbar_close), obj);
 	g_signal_connect (G_OBJECT (priv->find_toolbar), "search", G_CALLBACK (modest_msg_view_window_find_toolbar_search), obj);
 	
-	/* TODO: I dont knonw why, but when get_msg_async is used, */
-	/* this code makes application doest not work (jfernandez) */
-/* 	if (FALSE) { */
-		priv->clipboard_change_handler = g_signal_connect (G_OBJECT (gtk_clipboard_get (GDK_SELECTION_PRIMARY)), "owner-change", G_CALLBACK (modest_msg_view_window_clipboard_owner_change), obj);
-/* 		modest_msg_view_window_clipboard_owner_change (gtk_clipboard_get (GDK_SELECTION_PRIMARY), NULL, obj); */
-/* 	} */
+	priv->clipboard_change_handler = g_signal_connect (G_OBJECT (gtk_clipboard_get (GDK_SELECTION_PRIMARY)), "owner-change", G_CALLBACK (modest_msg_view_window_clipboard_owner_change), obj);
 	gtk_widget_show_all (GTK_WIDGET(main_vbox));
 	gtk_box_pack_end (GTK_BOX (main_vbox), priv->find_toolbar, FALSE, FALSE, 0);
+
 }	
 
 
@@ -458,6 +454,7 @@ modest_msg_view_window_new (TnyMsg *msg, const gchar *account_name)
 	GtkActionGroup *action_group;
 	GError *error = NULL;
 	GdkPixbuf *window_icon = NULL;
+	GtkAction *action;
 
 	g_return_val_if_fail (msg, NULL);
 	
@@ -546,6 +543,13 @@ modest_msg_view_window_new (TnyMsg *msg, const gchar *account_name)
 	/* Set window icon */
 	window_icon = modest_platform_get_icon (MODEST_APP_MSG_VIEW_ICON);
 	gtk_window_set_icon (GTK_WINDOW (obj), window_icon);
+
+	/* Init the clipboard actions dim status */
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/EditMenu/EditCopyMenu");
+	gtk_action_set_sensitive (action, FALSE);
+
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/EditMenu/EditCutMenu");
+	gtk_action_set_sensitive (action, FALSE);
 
 	gtk_widget_grab_focus (priv->msg_view);
 
@@ -1238,7 +1242,6 @@ modest_msg_view_window_clipboard_owner_change (GtkClipboard *clipboard,
 	selection = gtk_clipboard_wait_for_text (clipboard);
 
 	is_address = ((selection != NULL) && (modest_text_utils_validate_recipient (selection)));
-	g_free (selection);
 	
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/ToolsMenu/ToolsAddToContactsMenu");
 	gtk_action_set_sensitive (action, is_address);
@@ -1251,6 +1254,7 @@ modest_msg_view_window_clipboard_owner_change (GtkClipboard *clipboard,
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/EditMenu/EditCutMenu");
 	gtk_action_set_sensitive (action, (selection != NULL) && (!MODEST_IS_ATTACHMENTS_VIEW (focused)));
 
+	g_free (selection);
 	modest_msg_view_window_update_dimmed (window);
 	
 }
