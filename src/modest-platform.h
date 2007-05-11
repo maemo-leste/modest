@@ -201,7 +201,15 @@ gboolean modest_platform_connect_and_wait (GtkWindow *parent_window);
  **/
 gboolean modest_platform_set_update_interval (guint minutes);
 
-GtkWidget* modest_platform_get_global_settings_dialog ();
+/**
+ * modest_platform_get_global_settings_dialog:
+ * @void: 
+ * 
+ * returns the global settings dialog
+ * 
+ * Return value: a new #ModestGlobalSettingsDialog dialog
+ **/
+GtkWidget* modest_platform_get_global_settings_dialog (void);
 
 G_END_DECLS
 

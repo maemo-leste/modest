@@ -71,9 +71,6 @@ ModestPairList*   _modest_global_settings_dialog_get_connected_via   (void);
 ModestPairList*   _modest_global_settings_dialog_get_update_interval (void);
 ModestPairList*   _modest_global_settings_dialog_get_msg_formats     (void);
 
-void     _modest_global_settings_dialog_load_conf (ModestGlobalSettingsDialogPrivate *priv);
-gboolean _modest_global_settings_dialog_save_conf (ModestGlobalSettingsDialogPrivate *priv);
-
 G_END_DECLS
 
 #endif /* __MODEST_GLOBAL_SETTINGS_DIALOG_PRIV_H__ */

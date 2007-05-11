@@ -62,6 +62,7 @@ enum {
 
 static GtkWidget* create_updating_page  (ModestGnomeGlobalSettingsDialog *self);
 static GtkWidget* create_composing_page (ModestGnomeGlobalSettingsDialog *self);
+static ModestConnectedVia current_connection (void);
 
 typedef struct _ModestGnomeGlobalSettingsDialogPrivate ModestGnomeGlobalSettingsDialogPrivate;
 struct _ModestGnomeGlobalSettingsDialogPrivate {
@@ -109,6 +110,8 @@ modest_gnome_global_settings_dialog_class_init (ModestGnomeGlobalSettingsDialogC
 	gobject_class->finalize = modest_gnome_global_settings_dialog_finalize;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestGnomeGlobalSettingsDialogPrivate));
+
+	MODEST_GLOBAL_SETTINGS_DIALOG_CLASS (klass)->current_connection_func = current_connection;
 }
 
 static void
@@ -281,4 +284,10 @@ create_composing_page (ModestGnomeGlobalSettingsDialog *self)
 	gtk_box_pack_start (GTK_BOX (vbox), table, FALSE, FALSE, MODEST_MARGIN_HALF);
 
 	return vbox;
+}
+
+static ModestConnectedVia 
+current_connection (void)
+{
+	return MODEST_CONNECTED_VIA_ANY;
 }

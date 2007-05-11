@@ -63,6 +63,8 @@ static void on_response (GtkDialog *dialog,
 static void get_current_settings (ModestGlobalSettingsDialogPrivate *priv, 
 				  ModestGlobalSettingsState *state);
 
+static ModestConnectedVia current_connection_default (void);
+
 /* list my signals  */
 enum {
 	/* MY_SIGNAL_1, */
@@ -110,6 +112,8 @@ modest_global_settings_dialog_class_init (ModestGlobalSettingsDialogClass *klass
 	gobject_class->finalize = modest_global_settings_dialog_finalize;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestGlobalSettingsDialogPrivate));
+
+	klass->current_connection_func = current_connection_default;
 }
 
 static void
@@ -237,13 +241,15 @@ _modest_global_settings_dialog_get_msg_formats (void)
 }
 
 void   
-_modest_global_settings_dialog_load_conf (ModestGlobalSettingsDialogPrivate *priv)
+_modest_global_settings_dialog_load_conf (ModestGlobalSettingsDialog *self)
 {
 	ModestConf *conf;
 	gboolean checked;
 	gint combo_id, value;
 	GError *error = NULL;
+	ModestGlobalSettingsDialogPrivate *priv;
 
+	priv = MODEST_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE (self);
 	conf = modest_runtime_get_conf ();
 
 	/* Autoupdate */
@@ -357,11 +363,14 @@ get_current_settings (ModestGlobalSettingsDialogPrivate *priv,
 }
 
 gboolean
-_modest_global_settings_dialog_save_conf (ModestGlobalSettingsDialogPrivate *priv)
+_modest_global_settings_dialog_save_conf (ModestGlobalSettingsDialog *self)
 {
 	ModestConf *conf;
 	ModestGlobalSettingsState current_state;
 	GError *error = NULL;
+	ModestGlobalSettingsDialogPrivate *priv;
+
+	priv = MODEST_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE (self);
 
 	conf = modest_runtime_get_conf ();
 
@@ -385,6 +394,48 @@ _modest_global_settings_dialog_save_conf (ModestGlobalSettingsDialogPrivate *pri
 			     MODEST_TNY_MSG_REPLY_TYPE_CITE, NULL);
 	RETURN_FALSE_ON_ERROR(error);
 
+	/* Apply changes */
+	if (priv->initial_state.auto_update != current_state.auto_update || 
+	    priv->initial_state.connect_via != current_state.connect_via ||
+	    priv->initial_state.update_interval != current_state.update_interval) {
+
+		TnyAccountStore *account_store;
+		TnyDevice *device;
+
+		if (!current_state.auto_update) {
+			modest_platform_set_update_interval (0);
+			/* To avoid a new indentation level */
+			goto exit;
+		}
+
+		account_store = TNY_ACCOUNT_STORE (modest_runtime_get_account_store ());
+		device = tny_account_store_get_device (account_store);
+
+		if (tny_device_is_online (device)) {
+			/* If connected via any then set update interval */
+			if (current_state.connect_via == MODEST_CONNECTED_VIA_ANY) {
+				modest_platform_set_update_interval (current_state.update_interval);
+			} else {
+				/* Set update interval only if we
+				   selected the same connect_via
+				   method than the one already used by
+				   the device */
+				ModestConnectedVia connect_via = 
+					MODEST_GLOBAL_SETTINGS_DIALOG_GET_CLASS(self)->current_connection_func ();
+				
+				if (current_state.connect_via == connect_via)
+					modest_platform_set_update_interval (current_state.update_interval);
+				else
+					modest_platform_set_update_interval (0);
+			}
+		} else {
+			/* Disable autoupdate in offline mode */
+			modest_platform_set_update_interval (0);
+		}
+		g_object_unref (device);		
+	}
+
+exit:
 	return TRUE;
 }
 
@@ -422,13 +473,14 @@ on_response (GtkDialog *dialog,
 		if (changed) {
 			gboolean saved;
 
-			saved = _modest_global_settings_dialog_save_conf (priv);
-			if (saved)
+			saved = _modest_global_settings_dialog_save_conf (MODEST_GLOBAL_SETTINGS_DIALOG (dialog));
+			if (saved) {
 				modest_platform_run_information_dialog (GTK_WINDOW (user_data),
 									_("mcen_ib_advsetup_settings_saved"));
-			else
+			} else {
 				modest_platform_run_information_dialog (GTK_WINDOW (user_data),
 									_("mail_ib_setting_failed"));
+			}
 		}
 	} else {
 		if (changed) {
@@ -440,4 +492,11 @@ on_response (GtkDialog *dialog,
 				g_signal_stop_emission_by_name (dialog, "response");
 		}
 	}
+}
+
+static ModestConnectedVia 
+current_connection_default (void)
+{
+	g_warning ("You must implement %s", __FUNCTION__);
+	g_return_val_if_reached (-1);
 }

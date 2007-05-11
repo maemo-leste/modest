@@ -42,16 +42,20 @@
 #endif /*MODEST_HILDON_VERSION_0*/
 
 #include <glib/gi18n.h>
+#include <string.h>
 #include <gtk/gtkbox.h>
 #include <gtk/gtkvbox.h>
 #include <gtk/gtknotebook.h>
 #include <gtk/gtklabel.h>
 #include <gtk/gtkcheckbutton.h>
 #include <gtk/gtkhseparator.h>
+#include "modest-runtime.h"
 #include "widgets/modest-global-settings-dialog-priv.h"
 #include "widgets/modest-combo-box.h"
 #include "maemo/modest-maemo-global-settings-dialog.h"
 #include "widgets/modest-ui-constants.h"
+#include <tny-account-store.h>
+#include <tny-maemo-conic-device.h>
 
 #define MSG_SIZE_MAX_VAL 5000
 #define MSG_SIZE_DEF_VAL 1000
@@ -61,6 +65,8 @@
 static void modest_maemo_global_settings_dialog_class_init (ModestMaemoGlobalSettingsDialogClass *klass);
 static void modest_maemo_global_settings_dialog_init       (ModestMaemoGlobalSettingsDialog *obj);
 static void modest_maemo_global_settings_dialog_finalize   (GObject *obj);
+
+static ModestConnectedVia current_connection (void);
 
 /* list my signals  */
 enum {
@@ -125,6 +131,8 @@ modest_maemo_global_settings_dialog_class_init (ModestMaemoGlobalSettingsDialogC
 	gobject_class->finalize = modest_maemo_global_settings_dialog_finalize;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestMaemoGlobalSettingsDialogPrivate));
+
+	MODEST_GLOBAL_SETTINGS_DIALOG_CLASS (klass)->current_connection_func = current_connection;
 }
 
 static void
@@ -147,7 +155,7 @@ modest_maemo_global_settings_dialog_init (ModestMaemoGlobalSettingsDialog *self)
 	gtk_container_set_border_width (GTK_CONTAINER (GTK_DIALOG (self)->vbox), MODEST_MARGIN_HALF);
 
 	/* Load current config */
-	_modest_global_settings_dialog_load_conf (ppriv);
+	_modest_global_settings_dialog_load_conf (MODEST_GLOBAL_SETTINGS_DIALOG (self));
 	gtk_widget_show_all (ppriv->notebook);
 }
 
@@ -295,15 +303,19 @@ on_auto_update_toggled (GtkToggleButton *togglebutton,
 			gpointer user_data)
 {
 	ModestGlobalSettingsDialogPrivate *ppriv;
-	GtkWidget *caption;
+	GtkWidget *caption1, *caption2;
 
 	ppriv = MODEST_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE (user_data);
-	caption = gtk_widget_get_ancestor (ppriv->connect_via, HILDON_TYPE_CAPTION);
+	caption1 = gtk_widget_get_ancestor (ppriv->connect_via, HILDON_TYPE_CAPTION);
+	caption2 = gtk_widget_get_ancestor (ppriv->update_interval, HILDON_TYPE_CAPTION);
 
-	if (gtk_toggle_button_get_active (togglebutton))
-		gtk_widget_set_sensitive (caption, TRUE);
-	else
-		gtk_widget_set_sensitive (caption, FALSE);
+	if (gtk_toggle_button_get_active (togglebutton)) {
+		gtk_widget_set_sensitive (caption1, TRUE);
+		gtk_widget_set_sensitive (caption2, TRUE);
+	} else {
+		gtk_widget_set_sensitive (caption1, FALSE);
+		gtk_widget_set_sensitive (caption2, FALSE);
+	}
 }
 
 static gboolean
@@ -315,15 +327,27 @@ on_range_error (HildonNumberEditor *editor,
 	gint new_val;
 
 	switch (type) {
+#ifdef MODEST_HILDON_VERSION_0
 	case MAXIMUM_VALUE_EXCEED:
+#else
+	case HILDON_NUMBER_EDITOR_ERROR_MAXIMUM_VALUE_EXCEED:
+#endif
 		msg = g_strdup_printf (_("ckct_ib_maximum_value"), MSG_SIZE_MAX_VAL);
 		new_val = MSG_SIZE_MAX_VAL;
 		break;
+#ifdef MODEST_HILDON_VERSION_0
 	case MINIMUM_VALUE_EXCEED:
+#else
+	case HILDON_NUMBER_EDITOR_ERROR_MINIMUM_VALUE_EXCEED:
+#endif
 		msg = g_strdup_printf (_("ckct_ib_minimum_value"), MSG_SIZE_MIN_VAL);
 		new_val = MSG_SIZE_MIN_VAL;
 		break;
+#ifdef MODEST_HILDON_VERSION_0
 	case ERRONEOUS_VALUE:
+#else
+	case HILDON_NUMBER_EDITOR_ERROR_ERRONEOUS_VALUE:
+#endif
 		msg = g_strdup_printf (_("ckct_ib_set_a_value_within_range"), 
 				       MSG_SIZE_MIN_VAL, 
 				       MSG_SIZE_MAX_VAL);
@@ -344,4 +368,33 @@ on_range_error (HildonNumberEditor *editor,
 	g_free (msg);
 
 	return TRUE;
+}
+
+static ModestConnectedVia
+current_connection (void)
+{
+	TnyAccountStore *account_store;
+	TnyDevice *device;
+	gboolean retval;
+	const gchar *bearer_type, *iap_id;
+	ConIcIap *iap;
+	
+	account_store = TNY_ACCOUNT_STORE (modest_runtime_get_account_store ());
+	device = tny_account_store_get_device (account_store);
+
+	/* Get iap id */
+	iap_id = tny_maemo_conic_device_get_current_iap_id (TNY_MAEMO_CONIC_DEVICE (device));
+	iap = tny_maemo_conic_device_get_iap (TNY_MAEMO_CONIC_DEVICE (device), iap_id);
+	bearer_type = con_ic_iap_get_bearer_type (iap);
+		
+	if (!strcmp (bearer_type, CON_IC_BEARER_WLAN_INFRA) ||
+	    !strcmp (bearer_type, CON_IC_BEARER_WLAN_ADHOC))
+		retval = MODEST_CONNECTED_VIA_WLAN;
+	else
+		retval = MODEST_CONNECTED_VIA_ANY;
+
+	g_object_unref (iap);
+	g_object_unref (device);
+
+	return retval;
 }

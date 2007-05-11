@@ -317,12 +317,12 @@ restore_settings (ModestMainWindow *self)
 
 	conf = modest_runtime_get_conf ();
 	
+	modest_widget_memory_restore (conf, G_OBJECT(self), 
+				      MODEST_CONF_MAIN_WINDOW_KEY);
 	modest_widget_memory_restore (conf, G_OBJECT(priv->main_paned),
 				      MODEST_CONF_MAIN_PANED_KEY);
 	modest_widget_memory_restore (conf, G_OBJECT(priv->header_view),
 				      MODEST_CONF_HEADER_VIEW_KEY);
-	modest_widget_memory_restore (conf, G_OBJECT(self), 
-				      MODEST_CONF_MAIN_WINDOW_KEY);
 }
 
 

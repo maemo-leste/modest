@@ -44,6 +44,21 @@ G_BEGIN_DECLS
 #define MODEST_IS_GLOBAL_SETTINGS_DIALOG_CLASS(klass)  (G_TYPE_CHECK_CLASS_TYPE((klass),MODEST_TYPE_GLOBAL_SETTINGS_DIALOG))
 #define MODEST_GLOBAL_SETTINGS_DIALOG_GET_CLASS(obj)   (G_TYPE_INSTANCE_GET_CLASS((obj),MODEST_TYPE_GLOBAL_SETTINGS_DIALOG,ModestGlobalSettingsDialogClass))
 
+/* Global settings */
+typedef enum _ModestConnectedVia {
+	MODEST_CONNECTED_VIA_WLAN = 1,
+	MODEST_CONNECTED_VIA_ANY,
+} ModestConnectedVia;
+
+typedef enum _ModestUpdateInterval {
+	MODEST_UPDATE_INTERVAL_5_MIN = 5,
+	MODEST_UPDATE_INTERVAL_10_MIN = 10,
+	MODEST_UPDATE_INTERVAL_15_MIN = 15,
+	MODEST_UPDATE_INTERVAL_30_MIN = 30,
+	MODEST_UPDATE_INTERVAL_1_HOUR = 60,
+	MODEST_UPDATE_INTERVAL_2_HOUR = 120
+} ModestUpdateInterval;
+
 typedef struct _ModestGlobalSettingsDialog      ModestGlobalSettingsDialog;
 typedef struct _ModestGlobalSettingsDialogClass ModestGlobalSettingsDialogClass;
 
@@ -53,25 +68,20 @@ struct _ModestGlobalSettingsDialog {
 
 struct _ModestGlobalSettingsDialogClass {
 	GtkDialogClass parent_class;
+
+	/* Returns the current connection method. Assumes that the device is online */
+	ModestConnectedVia (*current_connection_func) (void);
 };
-
-/* Global settings */
-typedef enum _ModestConnectedVia {
-	MODEST_CONNECTED_VIA_WLAN,
-	MODEST_CONNECTED_VIA_ANY
-} ModestConnectedVia;
-
-typedef enum _ModestUpdateInterval {
-	MODEST_UPDATE_INTERVAL_5_MIN,
-	MODEST_UPDATE_INTERVAL_10_MIN,
-	MODEST_UPDATE_INTERVAL_15_MIN,
-	MODEST_UPDATE_INTERVAL_30_MIN,
-	MODEST_UPDATE_INTERVAL_1_HOUR,
-	MODEST_UPDATE_INTERVAL_2_HOUR
-} ModestUpdateInterval;
 
 /* member functions */
 GType        modest_global_settings_dialog_get_type    (void) G_GNUC_CONST;
+
+/* Do *NOT* use this functions directly. They must be only used by
+   subclasses. We put them here and not in the -priv header file
+   because recursive dependencies */
+void     _modest_global_settings_dialog_load_conf (ModestGlobalSettingsDialog *self);
+gboolean _modest_global_settings_dialog_save_conf (ModestGlobalSettingsDialog *self);
+
 
 G_END_DECLS
 
