@@ -34,9 +34,11 @@
 #ifdef MODEST_HILDON_VERSION_0
 #include <hildon-widgets/hildon-caption.h>
 #include <hildon-widgets/hildon-number-editor.h>
+#include <hildon-widgets/hildon-banner.h>
 #else
 #include <hildon/hildon-caption.h>
 #include <hildon/hildon-number-editor.h>
+#include <hildon/hildon-banner.h>
 #endif /*MODEST_HILDON_VERSION_0*/
 
 #include <glib/gi18n.h>
@@ -51,8 +53,9 @@
 #include "maemo/modest-maemo-global-settings-dialog.h"
 #include "widgets/modest-ui-constants.h"
 
-
-/* include other impl specific header files */
+#define MSG_SIZE_MAX_VAL 5000
+#define MSG_SIZE_DEF_VAL 1000
+#define MSG_SIZE_MIN_VAL 1
 
 /* 'private'/'protected' functions */
 static void modest_maemo_global_settings_dialog_class_init (ModestMaemoGlobalSettingsDialogClass *klass);
@@ -68,6 +71,10 @@ enum {
 
 static GtkWidget* create_updating_page  (ModestMaemoGlobalSettingsDialog *self);
 static GtkWidget* create_composing_page (ModestMaemoGlobalSettingsDialog *self);
+
+static gboolean   on_range_error        (HildonNumberEditor *editor, 
+					 HildonNumberEditorErrorType type,
+					 gpointer user_data);
 
 typedef struct _ModestMaemoGlobalSettingsDialogPrivate ModestMaemoGlobalSettingsDialogPrivate;
 struct _ModestMaemoGlobalSettingsDialogPrivate {
@@ -136,6 +143,9 @@ modest_maemo_global_settings_dialog_init (ModestMaemoGlobalSettingsDialog *self)
 		
 	gtk_container_add (GTK_CONTAINER (GTK_DIALOG (self)->vbox), ppriv->notebook);
 	gtk_container_set_border_width (GTK_CONTAINER (GTK_DIALOG (self)->vbox), MODEST_MARGIN_HALF);
+
+	/* Load current config */
+	_modest_global_settings_dialog_load_conf (ppriv);
 	gtk_widget_show_all (ppriv->notebook);
 }
 
@@ -213,8 +223,9 @@ create_updating_page (ModestMaemoGlobalSettingsDialog *self)
 	size_group = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);
 
 	/* Size limit */
-	ppriv->size_limit = hildon_number_editor_new (1, 5000);;
-	hildon_number_editor_set_value (HILDON_NUMBER_EDITOR (ppriv->size_limit), 1000);;
+	ppriv->size_limit = hildon_number_editor_new (MSG_SIZE_MIN_VAL, MSG_SIZE_MAX_VAL);;
+	hildon_number_editor_set_value (HILDON_NUMBER_EDITOR (ppriv->size_limit), MSG_SIZE_DEF_VAL);;
+	g_signal_connect (ppriv->size_limit, "range_error", G_CALLBACK (on_range_error), self);
 	caption = hildon_caption_new (size_group, 
 				      _("mcen_fi_advsetup_sizelimit"), 
 				      ppriv->size_limit, 
@@ -267,11 +278,51 @@ create_composing_page (ModestMaemoGlobalSettingsDialog *self)
 	/* Reply */
 	ppriv->include_reply = gtk_check_button_new ();
 	caption = hildon_caption_new (size_group, 
-				      _("mcen_fi_options_playsound"), 
+				      _("mcen_va_options_include_original_inreply"), 
 				      ppriv->include_reply, 
 				      NULL, 
 				      HILDON_CAPTION_MANDATORY);
 	gtk_box_pack_start (GTK_BOX (vbox), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
 
 	return vbox;
+}
+
+static gboolean
+on_range_error (HildonNumberEditor *editor, 
+		HildonNumberEditorErrorType type,
+		gpointer user_data)
+{
+	gchar *msg;
+	gint new_val;
+
+	switch (type) {
+	case MAXIMUM_VALUE_EXCEED:
+		msg = g_strdup_printf (_("ckct_ib_maximum_value"), MSG_SIZE_MAX_VAL);
+		new_val = MSG_SIZE_MAX_VAL;
+		break;
+	case MINIMUM_VALUE_EXCEED:
+		msg = g_strdup_printf (_("ckct_ib_minimum_value"), MSG_SIZE_MIN_VAL);
+		new_val = MSG_SIZE_MIN_VAL;
+		break;
+	case ERRONEOUS_VALUE:
+		msg = g_strdup_printf (_("ckct_ib_set_a_value_within_range"), 
+				       MSG_SIZE_MIN_VAL, 
+				       MSG_SIZE_MAX_VAL);
+		/* FIXME: use the previous */
+		new_val = MSG_SIZE_DEF_VAL;
+		break;
+	default:
+		g_return_val_if_reached (FALSE);
+	}
+
+	/* Restore value */
+	hildon_number_editor_set_value (editor, new_val);
+
+	/* Show error */
+	hildon_banner_show_information (GTK_WIDGET (user_data), NULL, msg);
+
+	/* Free */
+	g_free (msg);
+
+	return TRUE;
 }

@@ -32,7 +32,6 @@
 
 #include <gtk/gtkwidget.h>
 #include "modest-pair.h"
-/* other include files */
 
 G_BEGIN_DECLS
 
@@ -57,6 +56,9 @@ struct _ModestGlobalSettingsDialogPrivate {
 ModestPairList*   _modest_global_settings_dialog_get_connected_via   (void);
 ModestPairList*   _modest_global_settings_dialog_get_update_interval (void);
 ModestPairList*   _modest_global_settings_dialog_get_msg_formats     (void);
+
+void _modest_global_settings_dialog_load_conf (ModestGlobalSettingsDialogPrivate *priv);
+void _modest_global_settings_dialog_save_conf (ModestGlobalSettingsDialogPrivate *priv);
 
 G_END_DECLS
 

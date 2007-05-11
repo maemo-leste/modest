@@ -31,16 +31,32 @@
 #include <gtk/gtknotebook.h>
 #include <gtk/gtkstock.h>
 #include <gtk/gtklabel.h>
-#include "modest-global-settings-dialog.h"
+#include <gtk/gtktogglebutton.h>
+#include "widgets/modest-global-settings-dialog.h"
+#include "widgets/modest-global-settings-dialog-priv.h"
 #include "modest-defs.h"
+#include "modest-conf.h"
+#include "modest-runtime.h"
 #include "modest-ui-constants.h"
+#include "modest-tny-msg.h"
 #include "widgets/modest-combo-box.h"
+#ifdef MODEST_PLATFORM_MAEMO
+#ifdef MODEST_HILDON_VERSION_0
+#include <hildon-widgets/hildon-number-editor.h>
+#else
+#include <hildon/hildon-number-editor.h>
+#endif /*MODEST_HILDON_VERSION_0*/
+#endif
 /* include other impl specific header files */
 
 /* 'private'/'protected' functions */
 static void modest_global_settings_dialog_class_init (ModestGlobalSettingsDialogClass *klass);
 static void modest_global_settings_dialog_init       (ModestGlobalSettingsDialog *obj);
 static void modest_global_settings_dialog_finalize   (GObject *obj);
+
+static void on_response (GtkDialog *dialog,
+			 gint arg1,
+			 gpointer user_data);
 
 /* list my signals  */
 enum {
@@ -105,13 +121,9 @@ modest_global_settings_dialog_init (ModestGlobalSettingsDialog *self)
 	gtk_dialog_add_button (GTK_DIALOG (self), GTK_STOCK_OK, GTK_RESPONSE_OK);
 	gtk_dialog_add_button (GTK_DIALOG (self), GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL);
     
-/* 	/\* Connect to the dialog's response signal: *\/ */
-/* 	/\* We use connect-before  */
-/* 	 * so we can stop the signal emission,  */
-/* 	 * to stop the default signal handler from closing the dialog. */
-/* 	 *\/ */
-/* 	g_signal_connect (G_OBJECT (self), "response", */
-/* 			  G_CALLBACK (on_response), self);  */
+	/* Connect to the dialog's response signal: */
+	g_signal_connect (G_OBJECT (self), "response",
+			  G_CALLBACK (on_response), self);
 
 	/* Set title */
 	gtk_window_set_title (GTK_WINDOW (self), _("mcen_ti_options"));
@@ -144,12 +156,12 @@ modest_global_settings_dialog_finalize (GObject *obj)
 static void
 add_to_modest_pair_list (const gint num, const gchar *str, GSList **list)
 {
-	guint *number;
+	gint *number;
 	ModestPair *pair;
 
-	number = g_malloc0 (sizeof (guint));
+	number = g_malloc0 (sizeof (gint));
 	*number = num;
-	pair = modest_pair_new (number, g_strdup (str), TRUE);
+	pair = modest_pair_new (number, g_strdup (str), FALSE);
 	*list = g_slist_prepend (*list, pair);
 }
 
@@ -217,4 +229,152 @@ _modest_global_settings_dialog_get_msg_formats (void)
 				 &list);
 
 	return (ModestPairList *) g_slist_reverse (list);
+}
+
+void   
+_modest_global_settings_dialog_load_conf (ModestGlobalSettingsDialogPrivate *priv)
+{
+	ModestConf *conf;
+	gboolean checked;
+	gint combo_id, value;
+	GError *error = NULL;
+
+	conf = modest_runtime_get_conf ();
+
+	/* Autoupdate */
+	checked = modest_conf_get_bool (conf, MODEST_CONF_AUTO_UPDATE, &error);
+	if (error) {
+		g_clear_error (&error);
+		error = NULL;
+		checked = FALSE;
+	}
+	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (priv->auto_update), checked);
+
+	/* Connected by */
+	combo_id = modest_conf_get_int (conf, MODEST_CONF_UPDATE_WHEN_CONNECTED_BY, &error);
+	if (error) {
+		g_error_free (error);
+		error = NULL;
+		combo_id = MODEST_CONNECTED_VIA_WLAN;
+	}
+	modest_combo_box_set_active_id (MODEST_COMBO_BOX (priv->connect_via), 
+					(gpointer) &combo_id);
+
+	/* Update interval */
+	combo_id = modest_conf_get_int (conf, MODEST_CONF_UPDATE_INTERVAL, &error);
+	if (error) {
+		g_error_free (error);
+		error = NULL;
+		combo_id = MODEST_UPDATE_INTERVAL_15_MIN;
+	}
+	modest_combo_box_set_active_id (MODEST_COMBO_BOX (priv->update_interval), 
+					(gpointer) &combo_id);
+
+	/* Size limit */
+	value  = modest_conf_get_int (conf, MODEST_CONF_MSG_SIZE_LIMIT, &error);
+	if (error) {
+		g_error_free (error);
+		error = NULL;
+		value = 1000;
+	}
+	/* It's better to do this in the subclasses, but it's just one
+	   line, so we'll leave it here for the moment */
+#ifdef MODEST_PLATFORM_MAEMO
+	hildon_number_editor_set_value (HILDON_NUMBER_EDITOR (priv->size_limit), value);
+#else
+	gtk_spin_button_set_value (GTK_SPIN_BUTTON (priv->size_limit, value);
+#endif
+
+	/* TODO Fix with the value */
+
+	/* Play sound */
+	checked = modest_conf_get_bool (conf, MODEST_CONF_PLAY_SOUND_MSG_ARRIVE, &error);
+	if (error) {
+		g_error_free (error);
+		error = NULL;
+		checked = FALSE;
+	}
+	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (priv->play_sound), checked);
+
+	/* Msg format */
+	combo_id = modest_conf_get_int (conf, MODEST_CONF_PREFER_FORMATTED_TEXT, &error);
+	if (error) {
+		g_error_free (error);
+		error = NULL;
+		combo_id = MODEST_FILE_FORMAT_FORMATTED_TEXT;
+	}
+	modest_combo_box_set_active_id (MODEST_COMBO_BOX (priv->msg_format), 
+					(gpointer) &combo_id);
+
+	/* Include reply */
+	value = modest_conf_get_int (conf, MODEST_CONF_REPLY_TYPE, &error);
+	if (error) {
+		g_error_free (error);
+		error = NULL;
+		value = MODEST_TNY_MSG_REPLY_TYPE_QUOTE;
+	}
+	if (value == MODEST_TNY_MSG_REPLY_TYPE_QUOTE)
+		checked = TRUE;
+	else
+		checked = FALSE;
+	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (priv->include_reply), checked);
+}
+
+void
+_modest_global_settings_dialog_save_conf (ModestGlobalSettingsDialogPrivate *priv)
+{
+	ModestConf *conf;
+	gboolean checked;
+	gint *combo_id, value;
+
+	conf = modest_runtime_get_conf ();
+
+	/* Autoupdate */
+	checked = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (priv->auto_update));
+	modest_conf_set_bool (conf, MODEST_CONF_AUTO_UPDATE, checked, NULL);
+
+	/* Connected by */
+	combo_id = modest_combo_box_get_active_id (MODEST_COMBO_BOX (priv->connect_via));
+	modest_conf_set_int (conf, MODEST_CONF_UPDATE_WHEN_CONNECTED_BY, *combo_id, NULL);
+
+	/* Update interval */
+	combo_id = modest_combo_box_get_active_id (MODEST_COMBO_BOX (priv->update_interval));
+	modest_conf_set_int (conf, MODEST_CONF_UPDATE_INTERVAL, *combo_id, NULL);
+
+	/* Size limit */	
+	/* It's better to do this in the subclasses, but it's just one
+	   line, so we'll leave it here for the moment */
+#ifdef MODEST_PLATFORM_MAEMO
+	value = hildon_number_editor_get_value (HILDON_NUMBER_EDITOR (priv->size_limit));
+#else
+	value = gtk_spin_button_set_value (GTK_SPIN_BUTTON (priv->size_limit);
+#endif
+	modest_conf_set_int (conf, MODEST_CONF_MSG_SIZE_LIMIT, value, NULL);
+
+	/* Play sound */
+	checked = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (priv->play_sound));
+	modest_conf_set_bool (conf, MODEST_CONF_PLAY_SOUND_MSG_ARRIVE, checked, NULL);
+
+	/* Msg format */
+	combo_id = modest_combo_box_get_active_id (MODEST_COMBO_BOX (priv->msg_format));
+	modest_conf_set_int (conf, MODEST_CONF_PREFER_FORMATTED_TEXT, *combo_id, NULL);
+
+	/* Include reply */
+	checked = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (priv->include_reply));
+	modest_conf_set_int (conf, MODEST_CONF_REPLY_TYPE, 
+			     (checked) ? MODEST_TNY_MSG_REPLY_TYPE_QUOTE : 
+			     MODEST_TNY_MSG_REPLY_TYPE_CITE, NULL);
+}
+
+static void
+on_response (GtkDialog *dialog,
+	     gint arg1,
+	     gpointer user_data)
+{
+	ModestGlobalSettingsDialogPrivate *priv;
+
+	priv = MODEST_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE (user_data);
+
+	if (arg1 == GTK_RESPONSE_OK)
+		_modest_global_settings_dialog_save_conf (priv);
 }

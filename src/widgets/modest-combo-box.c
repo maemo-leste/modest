@@ -206,15 +206,13 @@ gpointer
 modest_combo_box_get_active_id (ModestComboBox *self)
 {
 	GValue val = {0,};
-	gpointer retval;
 
 	g_return_val_if_fail (self, NULL);
 	
 	/* Do not unset the GValue */
 	get_active (self, &val, COLUMN_ID);
-	retval = g_value_peek_pointer (&val);
 
-	return retval;
+	return g_value_get_pointer (&val);
 }
 
 
@@ -237,7 +235,7 @@ modest_combo_box_set_active_id (ModestComboBox *self, gpointer id)
 	do {
 		gpointer row_id;
 		gtk_tree_model_get (model, &iter, COLUMN_ID, &row_id, -1);
-		if ((priv->id_equal_func)(id, row_id) == 0) {
+		if ((priv->id_equal_func)(id, row_id)) {
 			gtk_combo_box_set_active_iter (GTK_COMBO_BOX(self), &iter);
 			found = TRUE;
 		}
@@ -252,14 +250,14 @@ modest_combo_box_set_active_id (ModestComboBox *self, gpointer id)
 const gchar*
 modest_combo_box_get_active_display_name (ModestComboBox *self)
 {
-	GValue val = {0,};
-	gpointer retval;
+	const GValue val = {0,};
+	const gchar *retval;
 
 	g_return_val_if_fail (self, NULL);
 
 	/* Do not unset the GValue */
-	get_active (self, &val, COLUMN_DISPLAY_NAME);
-	retval = g_value_peek_pointer (&val);
+	get_active (self, (GValue *)&val, COLUMN_DISPLAY_NAME);
+	retval = g_value_get_string (&val);
 
-	return (gchar*) retval;
+	return retval;
 }
