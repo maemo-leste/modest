@@ -69,12 +69,15 @@ enum {
 	LAST_SIGNAL
 };
 
-static GtkWidget* create_updating_page  (ModestMaemoGlobalSettingsDialog *self);
-static GtkWidget* create_composing_page (ModestMaemoGlobalSettingsDialog *self);
+static GtkWidget* create_updating_page   (ModestMaemoGlobalSettingsDialog *self);
+static GtkWidget* create_composing_page  (ModestMaemoGlobalSettingsDialog *self);
 
-static gboolean   on_range_error        (HildonNumberEditor *editor, 
-					 HildonNumberEditorErrorType type,
-					 gpointer user_data);
+static gboolean   on_range_error         (HildonNumberEditor *editor, 
+					  HildonNumberEditorErrorType type,
+					  gpointer user_data);
+
+static void       on_auto_update_toggled (GtkToggleButton *togglebutton,
+					  gpointer user_data);
 
 typedef struct _ModestMaemoGlobalSettingsDialogPrivate ModestMaemoGlobalSettingsDialogPrivate;
 struct _ModestMaemoGlobalSettingsDialogPrivate {
@@ -128,7 +131,6 @@ static void
 modest_maemo_global_settings_dialog_init (ModestMaemoGlobalSettingsDialog *self)
 {
 	ModestGlobalSettingsDialogPrivate *ppriv;
-/* 	GdkGeometry *geometry; */
 
 	ppriv = MODEST_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE (self);
 
@@ -189,6 +191,7 @@ create_updating_page (ModestMaemoGlobalSettingsDialog *self)
 				      NULL, 
 				      HILDON_CAPTION_MANDATORY);
 	gtk_box_pack_start (GTK_BOX (vbox_update), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
+	g_signal_connect (ppriv->auto_update, "toggled", G_CALLBACK (on_auto_update_toggled), self);
 
 	/* Connected via */
 	list = _modest_global_settings_dialog_get_connected_via ();
@@ -285,6 +288,22 @@ create_composing_page (ModestMaemoGlobalSettingsDialog *self)
 	gtk_box_pack_start (GTK_BOX (vbox), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
 
 	return vbox;
+}
+
+static void
+on_auto_update_toggled (GtkToggleButton *togglebutton,
+			gpointer user_data)
+{
+	ModestGlobalSettingsDialogPrivate *ppriv;
+	GtkWidget *caption;
+
+	ppriv = MODEST_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE (user_data);
+	caption = gtk_widget_get_ancestor (ppriv->connect_via, HILDON_TYPE_CAPTION);
+
+	if (gtk_toggle_button_get_active (togglebutton))
+		gtk_widget_set_sensitive (caption, TRUE);
+	else
+		gtk_widget_set_sensitive (caption, FALSE);
 }
 
 static gboolean

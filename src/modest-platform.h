@@ -39,11 +39,6 @@ typedef enum _ModestConfirmationDialogType {
 	MODEST_CONFIRMATION_DELETE_FOLDER,
 } ModestConfirmationDialogType;
 
-typedef enum _ModestInformationDialogType {
-	MODEST_INFORMATION_CREATE_FOLDER,
-	MODEST_INFORMATION_DELETE_FOLDER,
-} ModestInformationDialogType;
-
 typedef enum _ModestSortDialogType {
 	MODEST_SORT_HEADERS,
 } ModestSortDialogType;
@@ -169,12 +164,13 @@ gint      modest_platform_run_confirmation_dialog      (GtkWindow *parent_window
 /**
  * modest_platform_run_information_dialog:
  * @parent_window: the parent #GtkWindow of the dialog
- * @type: the type of information dialog
+ * @message: the message to show
  * 
  * shows an information dialog
  **/
 void      modest_platform_run_information_dialog       (GtkWindow *parent_window,
-							ModestInformationDialogType type);
+							const gchar *message);
+
 /**
  * modest_platform_run_sort_dialog:
  * @parent_window: the parent #GtkWindow of the dialog

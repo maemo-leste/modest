@@ -178,15 +178,8 @@ modest_platform_run_confirmation_dialog (GtkWindow *parent_window,
 
 void
 modest_platform_run_information_dialog (GtkWindow *parent_window,
-					ModestInformationDialogType type)
+					const gchar *message)
 {
-	switch (type) {
-	case MODEST_INFORMATION_CREATE_FOLDER:
-		break;
-	case MODEST_INFORMATION_DELETE_FOLDER:
-		break;
-	};
-
 	/* TODO: implement a information dialog */
 }
 

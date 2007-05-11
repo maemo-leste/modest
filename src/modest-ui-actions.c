@@ -1506,7 +1506,7 @@ modest_ui_actions_on_new_folder (GtkAction *action, ModestMainWindow *main_windo
 /* /\* 					suggested_name = X; *\/ */
 /* 					/\* Show error to the user *\/ */
 /* 					modest_platform_run_information_dialog (GTK_WINDOW (main_window), */
-/* 										MODEST_INFORMATION_CREATE_FOLDER); */
+/* 										_("mail_in_ui_folder_create_error")); */
 /* 				} */
 				g_object_unref (mail_op);
 			}
@@ -1591,7 +1591,7 @@ delete_folder (ModestMainWindow *main_window, gboolean move_to_trash)
 		/* Show error if happened */
 		if (modest_mail_operation_get_error (mail_op))
 			modest_platform_run_information_dialog (GTK_WINDOW (main_window),
-								MODEST_INFORMATION_DELETE_FOLDER);
+								_("mail_in_ui_folder_delete_error"));
 
 		g_object_unref (G_OBJECT (mail_op));
 	}

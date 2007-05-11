@@ -35,6 +35,16 @@
 
 G_BEGIN_DECLS
 
+typedef struct _ModestGlobalSettingsState {
+	gboolean auto_update;
+	gint     connect_via;
+	gint     update_interval;
+	gint     size_limit;
+	gboolean play_sound;
+	gint     msg_format;
+	gboolean include_reply;
+} ModestGlobalSettingsState;
+
 typedef struct _ModestGlobalSettingsDialogPrivate ModestGlobalSettingsDialogPrivate;
 struct _ModestGlobalSettingsDialogPrivate {
 	GtkWidget *notebook;
@@ -48,7 +58,11 @@ struct _ModestGlobalSettingsDialogPrivate {
 	GtkWidget *play_sound;
 	GtkWidget *msg_format;
 	GtkWidget *include_reply;
+
+	gboolean   changed;
+	ModestGlobalSettingsState initial_state;
 };
+
 #define MODEST_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                            MODEST_TYPE_GLOBAL_SETTINGS_DIALOG, \
                                                            ModestGlobalSettingsDialogPrivate))
@@ -57,8 +71,8 @@ ModestPairList*   _modest_global_settings_dialog_get_connected_via   (void);
 ModestPairList*   _modest_global_settings_dialog_get_update_interval (void);
 ModestPairList*   _modest_global_settings_dialog_get_msg_formats     (void);
 
-void _modest_global_settings_dialog_load_conf (ModestGlobalSettingsDialogPrivate *priv);
-void _modest_global_settings_dialog_save_conf (ModestGlobalSettingsDialogPrivate *priv);
+void     _modest_global_settings_dialog_load_conf (ModestGlobalSettingsDialogPrivate *priv);
+gboolean _modest_global_settings_dialog_save_conf (ModestGlobalSettingsDialogPrivate *priv);
 
 G_END_DECLS
 
