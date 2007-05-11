@@ -31,17 +31,37 @@
 #
 
 #
-# hackish script to build tinymail/modest packages
-# run *outside* scratchbox; you need to make sure that
-# the paths below are valid both inside/outside scratchbox;
-# you can use symlinks to do so
+# This is a ackish script to build tinymail/modest packages.
+#
+# It must be run *outside* scratchbox. You need to make sure that
+# the paths below are valid both inside and outside scratchbox.
+# You can use symlinks to do so.
+# You must also create the packages/ directory inside the src/ directory.
+# You will probably also need to correct the SCRATCHBOX variable.
 #
 
 #
 # config
 #
 
-# change these to the actual paths to these packages
+# Change these to the actual paths to source code of these packages,
+# in scratchbox.
+# Use a symlink to create the same path outside of scratchbox. For instance:
+#  ln -s /scratchbox/users/murrayc/home/murrayc/src /home/murrayc/src
+#
+# You probably don't have your modest and tinymail packages at the same level, 
+# as required by this script, so you may want to create some symlinks inside 
+# src/, such as:
+#  ln -s /scratchbox/users/murrayc/home/murrayc/svn/modest-private/modest-email /home/murrayc/src/modest-email
+#  ln -s /scratchbox/users/murrayc/home/murrayc/svn/ /home/murrayc/src/tinymail
+#
+# On Maemo, you will also need to make some changes to tinymail's debian files:
+# In tinymail/debian
+# you should:
+#  cp control.maemo control
+#  cp rules.maemo rules
+# (I think the script should instead just do this on every run. murrayc)
+
 TINYMAIL_PATH="$HOME/src/tinymail"
 MODEST_PATH="$HOME/src/modest-email/modest/trunk"
 MODEST_PROVIDERS_DATA_PATH="$HOME/src/modest-email/modest-providers-data/"
@@ -50,6 +70,8 @@ MODEST_PROVIDERS_DATA_PATH="$HOME/src/modest-email/modest-providers-data/"
 PACKAGER="Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>"
 
 # path to the scratchbox executable
+# On most systems this will actually be 
+# SCRATCHBOX="/usr/bin/scratchbox"
 SCRATCHBOX="/chroot/usr/bin/scratchbox"
 
 # path where the package files end up

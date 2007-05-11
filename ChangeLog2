@@ -1,5 +1,12 @@
 2007-05-11  Murray Cumming  <murrayc@murrayc.com>
 
+	* scripts/build-packages: Added more precise comments about how to use 
+	this script, though I still get this error:
+	dpkg-genchanges: error: cannot open .dsc file ../tinymail_1.0-svn1938.dsc: No such file or directory
+	error building tinymail
+	
+2007-05-11  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/maemo/modest-main-window.c: (on_account_update):
 	Very slight cleanup, hoping to make it simpler to discover what causes 
 	a crash here sometimes.
