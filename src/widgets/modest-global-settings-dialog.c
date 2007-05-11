@@ -284,7 +284,7 @@ _modest_global_settings_dialog_load_conf (ModestGlobalSettingsDialog *self)
 #ifdef MODEST_PLATFORM_MAEMO
 	hildon_number_editor_set_value (HILDON_NUMBER_EDITOR (priv->size_limit), value);
 #else
-	gtk_spin_button_set_value (GTK_SPIN_BUTTON (priv->size_limit, value));
+	gtk_spin_button_set_value (GTK_SPIN_BUTTON (priv->size_limit), value);
 #endif
 	priv->initial_state.size_limit = value;
 
@@ -338,7 +338,7 @@ get_current_settings (ModestGlobalSettingsDialogPrivate *priv,
 #ifdef MODEST_PLATFORM_MAEMO
 	state->size_limit = hildon_number_editor_get_value (HILDON_NUMBER_EDITOR (priv->size_limit));
 #else
-	state->size_limit = gtk_spin_button_set_value (GTK_SPIN_BUTTON (priv->size_limit));
+	state->size_limit = gtk_spin_button_get_value (GTK_SPIN_BUTTON (priv->size_limit));
 #endif
 	id = modest_combo_box_get_active_id (MODEST_COMBO_BOX (priv->update_interval));
 	state->update_interval = *id;

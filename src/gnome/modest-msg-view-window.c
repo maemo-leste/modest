@@ -263,7 +263,7 @@ modest_msg_view_window_new (TnyMsg *msg, const gchar *account)
 
 	/* Init window */
 	init_window (MODEST_MSG_VIEW_WINDOW(obj), msg);
-	restore_settings (MODEST_MSG_VIEW_WINDOW(obj));
+	restore_settings (MODEST_WINDOW(obj));
 
 	header = tny_msg_get_header (msg);
 	if (header)
