@@ -1,5 +1,14 @@
 2007-05-11  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/maemo/modest-main-window.c: (on_account_update): Make the gchar* 
+	parameter const, just to be neat.
+	* src/modest-text-utils.c: (modest_text_utils_inline):
+	End g_strconcat() with NULL, as its documentation says. This is almost 
+	certainly the cause of my crash at startup on the device. Interestingly, 
+	valgrind doesn't tell us about these errors.
+
+2007-05-11  Murray Cumming  <murrayc@murrayc.com>
+
 	* scripts/build-packages: Added more precise comments about how to use 
 	this script, though I still get this error:
 	dpkg-genchanges: error: cannot open .dsc file ../tinymail_1.0-svn1938.dsc: No such file or directory

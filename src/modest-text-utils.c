@@ -206,7 +206,7 @@ modest_text_utils_inline (const gchar *text,
 		if (!strcmp (content_type, "text/html")) {
 			formatted_signature = g_strconcat (signature, "<br/>", NULL);
 		} else {
-			formatted_signature = g_strconcat (signature, "\n");
+			formatted_signature = g_strconcat (signature, "\n", NULL);
 		}
 	} else {
 		formatted_signature = "";

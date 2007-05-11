@@ -88,7 +88,7 @@ static void         on_queue_changed                     (ModestMailOperationQue
 							  ModestMainWindow *self);
 
 static void on_account_update                 (TnyAccountStore *account_store, 
-					       gchar *account_name,
+					       const gchar *account_name,
 					       gpointer user_data);
 
 static gboolean on_inner_widgets_key_pressed  (GtkWidget *widget,
@@ -871,7 +871,7 @@ compare_display_names (ModestAccountData *a,
 
 static void 
 on_account_update (TnyAccountStore *account_store, 
-		   gchar *account_name,
+		   const gchar *account_name,
 		   gpointer user_data)
 {
 	GSList *account_names, *iter, *accounts;
@@ -987,7 +987,7 @@ on_account_update (TnyAccountStore *account_store,
 			   changes in a single execution because we're
 			   downcasting the guint to a guint8 in order to use a
 			   GByteArray, it should be enough */
-			gchar* item_name = g_strconcat (account_data->account_name, "Menu");
+			gchar* item_name = g_strconcat (account_data->account_name, "Menu", NULL);
 			guint8 merge_id = (guint8) gtk_ui_manager_new_merge_id (parent_priv->ui_manager);
 			priv->merge_ids = g_byte_array_append (priv->merge_ids, &merge_id, 1);
 			gtk_ui_manager_add_ui (parent_priv->ui_manager, 
