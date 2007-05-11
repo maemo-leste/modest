@@ -1384,9 +1384,6 @@ on_refresh_folder_status_update (GObject *obj,
 	priv->done = status->position;
 	priv->total = status->of_total;
 
-	if (priv->done == 1 && priv->total == 100)
-		return;
-
 	g_signal_emit (G_OBJECT (self), signals[PROGRESS_CHANGED_SIGNAL], 0, NULL);
 }
 

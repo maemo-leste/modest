@@ -120,7 +120,6 @@ static void
 modest_global_settings_dialog_init (ModestGlobalSettingsDialog *self)
 {
 	ModestGlobalSettingsDialogPrivate *priv;
-/* 	GdkGeometry *geometry; */
 
 	priv = MODEST_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE (self);
 
@@ -136,20 +135,6 @@ modest_global_settings_dialog_init (ModestGlobalSettingsDialog *self)
 
 	/* Set title */
 	gtk_window_set_title (GTK_WINDOW (self), _("mcen_ti_options"));
-
-	/* Set geometry */
-/* 	geometry = g_malloc0(sizeof (GdkGeometry)); */
-/* 	geometry->max_width = MODEST_DIALOG_WINDOW_MAX_WIDTH; */
-/* 	geometry->min_width = MODEST_DIALOG_WINDOW_MIN_WIDTH; */
-/* 	geometry->max_height = MODEST_DIALOG_WINDOW_MAX_HEIGHT; */
-/* 	geometry->min_height = MODEST_DIALOG_WINDOW_MIN_HEIGHT; */
-/* 	gtk_window_set_geometry_hints (GTK_WINDOW (self), */
-/* 				       GTK_WIDGET (self), */
-/* 				       geometry, */
-/* 				       GDK_HINT_MIN_SIZE | GDK_HINT_MAX_SIZE); */
-	gtk_widget_set_size_request (GTK_WIDGET (self), 
-				     MODEST_DIALOG_WINDOW_MAX_WIDTH, 
-				     MODEST_DIALOG_WINDOW_MAX_HEIGHT);
 }
 
 static void
@@ -314,15 +299,16 @@ _modest_global_settings_dialog_load_conf (ModestGlobalSettingsDialog *self)
 	priv->initial_state.play_sound = checked;
 
 	/* Msg format */
-	combo_id = modest_conf_get_int (conf, MODEST_CONF_PREFER_FORMATTED_TEXT, &error);
+	checked = modest_conf_get_bool (conf, MODEST_CONF_PREFER_FORMATTED_TEXT, &error);
 	if (error) {
 		g_error_free (error);
 		error = NULL;
 		combo_id = MODEST_FILE_FORMAT_FORMATTED_TEXT;
-	}
+	}	
+	combo_id = (checked) ? MODEST_FILE_FORMAT_FORMATTED_TEXT : MODEST_FILE_FORMAT_PLAIN_TEXT;
 	modest_combo_box_set_active_id (MODEST_COMBO_BOX (priv->msg_format), 
 					(gpointer) &combo_id);
-	priv->initial_state.msg_format = combo_id;
+	priv->initial_state.prefer_formatted_text = checked;
 
 	/* Include reply */
 	value = modest_conf_get_int (conf, MODEST_CONF_REPLY_TYPE, &error);
@@ -358,7 +344,7 @@ get_current_settings (ModestGlobalSettingsDialogPrivate *priv,
 	state->update_interval = *id;
 	state->play_sound = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (priv->play_sound));
 	id = modest_combo_box_get_active_id (MODEST_COMBO_BOX (priv->msg_format));
-	state->msg_format = *id;
+	state->prefer_formatted_text = (*id == MODEST_FILE_FORMAT_FORMATTED_TEXT) ? TRUE : FALSE;
 	state->include_reply = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (priv->include_reply));
 }
 
@@ -387,7 +373,7 @@ _modest_global_settings_dialog_save_conf (ModestGlobalSettingsDialog *self)
 	RETURN_FALSE_ON_ERROR(error);
 	modest_conf_set_bool (conf, MODEST_CONF_PLAY_SOUND_MSG_ARRIVE, current_state.play_sound, NULL);
 	RETURN_FALSE_ON_ERROR(error);
-	modest_conf_set_int (conf, MODEST_CONF_PREFER_FORMATTED_TEXT, current_state.msg_format, NULL);
+	modest_conf_set_bool (conf, MODEST_CONF_PREFER_FORMATTED_TEXT, current_state.prefer_formatted_text, NULL);
 	RETURN_FALSE_ON_ERROR(error);
 	modest_conf_set_int (conf, MODEST_CONF_REPLY_TYPE,
 			     (current_state.include_reply) ? MODEST_TNY_MSG_REPLY_TYPE_QUOTE : 
@@ -448,7 +434,7 @@ settings_changed (ModestGlobalSettingsState initial_state,
 	    initial_state.update_interval != current_state.update_interval ||
 	    initial_state.size_limit != current_state.size_limit ||
 	    initial_state.play_sound != current_state.play_sound ||
-	    initial_state.msg_format != current_state.msg_format ||
+	    initial_state.prefer_formatted_text != current_state.prefer_formatted_text ||
 	    initial_state.include_reply != current_state.include_reply)
 		return TRUE;
 	else

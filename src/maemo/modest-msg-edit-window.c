@@ -813,6 +813,9 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name)
 	GError *error = NULL;
 	GdkPixbuf *window_icon = NULL;
 	GtkAction *action;
+	ModestConf *conf;
+	gboolean prefer_formatted;
+	gint file_format;
 
 	g_return_val_if_fail (msg, NULL);
 	
@@ -865,8 +868,7 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name)
 	gtk_ui_manager_add_ui_from_file (parent_priv->ui_manager, MODEST_UIDIR "modest-msg-edit-window-ui.xml", &error);
 	if (error != NULL) {
 		g_warning ("Could not merge modest-msg-edit-window-ui.xml: %s", error->message);
-		g_error_free (error);
-		error = NULL;
+		g_clear_error (&error);
 	}
 
 	/* Add accelerators */
@@ -907,8 +909,20 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name)
 	gtk_action_set_sensitive (action, FALSE);
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/EditMenu/CopyMenu");
 	gtk_action_set_sensitive (action, FALSE);
+
+	/* Setup the file format */
+	conf = modest_runtime_get_conf ();
+	prefer_formatted = modest_conf_get_bool (conf, MODEST_CONF_PREFER_FORMATTED_TEXT, &error);
+	if (error) {
+		g_clear_error (&error);
+		file_format = MODEST_FILE_FORMAT_FORMATTED_TEXT;
+	} else
+		file_format = (prefer_formatted) ? 
+			MODEST_FILE_FORMAT_FORMATTED_TEXT : 
+			MODEST_FILE_FORMAT_PLAIN_TEXT;
+	modest_msg_edit_window_set_file_format (MODEST_MSG_EDIT_WINDOW (obj), file_format);
 	
-	return (ModestWindow*)obj;
+	return (ModestWindow*) obj;
 }
 
 static gint

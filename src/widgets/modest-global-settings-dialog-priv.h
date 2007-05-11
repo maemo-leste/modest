@@ -41,7 +41,7 @@ typedef struct _ModestGlobalSettingsState {
 	gint     update_interval;
 	gint     size_limit;
 	gboolean play_sound;
-	gint     msg_format;
+	gboolean prefer_formatted_text;
 	gboolean include_reply;
 } ModestGlobalSettingsState;
 

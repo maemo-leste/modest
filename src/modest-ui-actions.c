@@ -1574,6 +1574,13 @@ delete_folder (ModestMainWindow *main_window, gboolean move_to_trash)
 
 	folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW (folder_view));
 
+	/* Show an error if it's an account */
+	if (!TNY_IS_FOLDER (folder)) {
+		modest_platform_run_information_dialog (GTK_WINDOW (main_window),
+							_("mail_in_ui_folder_delete_error"));
+		return ;
+	}
+
 	/* Ask the user */	
 	message =  g_strdup_printf (_("mcen_nc_delete_folder_text"), 
 				    tny_folder_get_name (TNY_FOLDER (folder)));
