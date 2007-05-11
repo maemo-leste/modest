@@ -88,12 +88,28 @@ modest_tny_account_get_special_folder (TnyAccount *account,
 }
 
 /* Camel options: */
+
+/* These seem to be listed in 
+ * libtinymail-camel/camel-lite/camel/providers/imap/camel-imap-store.c 
+ */
 #define MODEST_ACCOUNT_OPTION_SSL "use_ssl"
 #define MODEST_ACCOUNT_OPTION_SSL_NEVER "never"
 #define MODEST_ACCOUNT_OPTION_SSL_ALWAYS "always"
 #define MODEST_ACCOUNT_OPTION_SSL_WHEN_POSSIBLE "when-possible"
-#define MODEST_ACCOUNT_OPTION_USE_LSUB "use_lsub"
-#define MODEST_ACCOUNT_OPTION_CHECK_ALL "check_all"
+
+/* These seem to be listed in 
+ * libtinymail-camel/camel-lite/camel/providers/imap/camel-imap-provider.c 
+ */
+#define MODEST_ACCOUNT_OPTION_USE_LSUB "use_lsub" /* Show only subscribed folders */
+#define MODEST_ACCOUNT_OPTION_CHECK_ALL "check_all" /* Check for new messages in all folders */
+
+/* TODO: Find how to specify the authentication method with camel.
+ * This is just made up stuff - I have no idea if its even possible via options:
+#define MODEST_ACCOUNT_OPTION_AUTH "auth"
+#define MODEST_ACCOUNT_OPTION_AUTH_PLAIN "PLAIN"
+#define MODEST_ACCOUNT_OPTION_AUTH_PASSWORD "PASSWORD"
+#define MODEST_ACCOUNT_OPTION_AUTH_CRAMMD5 "CRAMMD5"
+*/
 
 /**
  * modest_tny_account_new_from_server_account:
@@ -146,9 +162,13 @@ modest_tny_account_new_from_server_account (ModestAccountMgr *account_mgr,
 	/* Proto */
 	tny_account_set_proto (tny_account,
 			       modest_protocol_info_get_protocol_name(account_data->proto));
+			       
 	if (account_data->uri) 
 		tny_account_set_url_string (TNY_ACCOUNT(tny_account), account_data->uri);
 	else {
+		/* Set camel-specific options: */
+		
+		/* To enable security settings: */
 		const gchar* option_security = NULL;
 		switch (account_data->security) {
 		case MODEST_PROTOCOL_SECURITY_NONE:
@@ -170,8 +190,35 @@ modest_tny_account_new_from_server_account (ModestAccountMgr *account_mgr,
 						      option_security);
 		}
 		
+		/* To enable secure-auth settings: */
+		/* The UI spec says:
+		 *  # If secure authentication is unchecked, allow sending username and password also as plain text.
+		 *  # If secure authentication is checked, require one of the secure methods during connection: SSL, TLS, CRAM-MD5 etc
+		 */
+		/* TODO: Find how to specify the authentication method with camel.
+ 		 * This is just made up stuff - I have no idea if its even possible via options:
+		const gchar* option_secure_auth = NULL;
+		switch (account_data->secure_auth) {
+		case MODEST_PROTOCOL_AUTH_NONE:
+			option_secure_auth = MODEST_ACCOUNT_OPTION_AUTH "= " MODEST_ACCOUNT_OPTION_AUTH_PLAIN;
+			break;
+		case MODEST_PROTOCOL_AUTH_PASSWORD:
+			option_secure_auth = MODEST_ACCOUNT_OPTION_AUTH "= " MODEST_ACCOUNT_OPTION_AUTH_PASSWORD;
+			break;
+		case MODEST_PROTOCOL_AUTH_CRAMMD5:
+			option_secure_auth = MODEST_ACCOUNT_OPTION_AUTH "= " MODEST_ACCOUNT_OPTION_AUTH_CRAMMD5;
+		default:
+			break;
+		}
+		
+		if(option_secure_auth) {
+			tny_camel_account_add_option (TNY_CAMEL_ACCOUNT (tny_account),
+						      option_secure_auth);
+		}
+		*/
+		
 		if (account_data->proto == MODEST_PROTOCOL_TYPE_STORE) {
-			/* Connection options. Some options are only valid for IMAP
+			/* Other connection options. Some options are only valid for IMAP
 			   accounts but it's OK for just now since POP is still not
 			   supported */
 			tny_camel_account_add_option (TNY_CAMEL_ACCOUNT (tny_account),
@@ -184,7 +231,13 @@ modest_tny_account_new_from_server_account (ModestAccountMgr *account_mgr,
 			tny_account_set_user (tny_account, account_data->username);
 		if (account_data->hostname)
 			tny_account_set_hostname (tny_account, account_data->hostname);
+		 
+		/* Set the port: */
+		if (account_data->port)
+			tny_account_set_port (tny_account, account_data->port);
 	}
+	
+	
 	return tny_account;
 }
 

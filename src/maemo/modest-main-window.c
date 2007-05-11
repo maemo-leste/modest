@@ -871,7 +871,7 @@ compare_display_names (ModestAccountData *a,
 
 static void 
 on_account_update (TnyAccountStore *account_store, 
-		   gchar *accout_name,
+		   gchar *account_name,
 		   gpointer user_data)
 {
 	GSList *account_names, *iter, *accounts;
@@ -879,8 +879,7 @@ on_account_update (TnyAccountStore *account_store,
 	ModestMainWindowPrivate *priv;
 	ModestWindowPrivate *parent_priv;
 	ModestAccountMgr *mgr;
-	gint i, num_accounts;
-	ModestAccountData *account_data;					
+	gint i, num_accounts;					
 	GtkActionGroup *action_group;
 	GList *groups;
 	gchar *default_account;
@@ -897,7 +896,8 @@ on_account_update (TnyAccountStore *account_store,
 	accounts = NULL;
 
 	while (iter) {
-		account_data = modest_account_mgr_get_account_data (mgr, (gchar*) iter->data);
+		ModestAccountData *account_data = 
+			modest_account_mgr_get_account_data (mgr, (gchar*) iter->data);
 		accounts = g_slist_prepend (accounts, account_data);
 
 		iter = iter->next;
@@ -963,7 +963,7 @@ on_account_update (TnyAccountStore *account_store,
 		GtkAction *new_action = NULL;
 		gchar *display_name = NULL;
 		
-		account_data = (ModestAccountData *) g_slist_nth_data (accounts, i);
+		ModestAccountData *account_data = (ModestAccountData *) g_slist_nth_data (accounts, i);
 
 		/* Create display name. The default account is shown differently */
 		if (default_account && account_data->account_name && 

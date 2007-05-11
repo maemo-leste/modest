@@ -1,3 +1,14 @@
+2007-05-11  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/maemo/modest-main-window.c: (on_account_update):
+	Very slight cleanup, hoping to make it simpler to discover what causes 
+	a crash here sometimes.
+	
+	* src/modest-tny-account.c:
+	(modest_tny_account_new_from_server_account): Set the port. Added 
+	comments about the options and a TODO comment because I need to find out 
+	how to specify the secure authentication method.
+
 2007-05-11  Marcus Bauer  <marcusb@openismus.com>
 
 	* libmodest-dbus-client/libmodest-dbus-client-1.0.pc.in:
