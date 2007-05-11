@@ -1,3 +1,8 @@
+2007-05-11  Marcus Bauer  <marcusb@openismus.com>
+
+	* libmodest-dbus-client/libmodest-dbus-client-1.0.pc.in:
+	changed CFlags paths form modest to libmodest
+
 2007-05-10  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/modest-account-mgr-helpers.c:
