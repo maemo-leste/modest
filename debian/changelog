@@ -1,8 +1,18 @@
+modest (1.0-svn1845) unstable; urgency=low
+
+  * Week 20 prelease (2)
+  * Fixes: NB#56180, NB#56182, NB#56212, NB#56634, NB#56713, NB#56303
+  * Changes:
+	- many fixes all over, incl. 3 major bugs fixed
+	- added global settings
+
+ -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Mon, 14 May 2007 12:28:39 +0300
+
 modest (1.0-svn1823) unstable; urgency=low
 
   * Week 20 prelease
-  * Fixes: NB#5514, NB#55446, NB#55934, NB#55333, NB#55355, NB#55375,
-    NB#56145, NB#56183, NB#56209, NB#56341, NB#56418, NB#56130, NB#56180,
+  * Fixes: NB#55446, NB#55934, NB#55333, NB#55355, NB#55375,
+    NB#56145, NB#56183, NB#56209, NB#56314, NB#56418, NB#56130, NB#56180,
     NB#56212, NB#56477, NB#55397  
 
  -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Thu, 10 May 2007 17:15:00 +0300
