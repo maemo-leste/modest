@@ -1,6 +1,7 @@
-modest (1.0-svn1847) unstable; urgency=low
+modest (1.0-svn1851) unstable; urgency=low
 
   * update for the tny account security settings update
+  * temporary change to give testers more info when connections don't work
 
  -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Mon, 14 May 2007 14:39:08 +0300
 
