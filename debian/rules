@@ -27,16 +27,16 @@ ifeq (,$(findstring nostrip,$(DEB_BUILD_OPTIONS)))
 endif
 
 
-LAUNCHER = no 
-ifneq (,$(findstring maemo-launcher,$(DEB_BUILD_OPTIONS)))
-	LAUNCHER = yes
-endif
-
-ifeq "$(strip $(LAUNCHER))" "yes"
-	LAUNCHER_DEPENDS = -Vlauncher:Depends="maemo-launcher"
-	LAUNCHER_CFLAGS = -shared
-	LAUNCHER_LDFLAGS = -pie -shared -export-dynamic
-endif
+#LAUNCHER = no 
+#ifneq (,$(findstring maemo-launcher,$(DEB_BUILD_OPTIONS)))
+#	LAUNCHER = yes
+#endif
+#
+#ifeq "$(strip $(LAUNCHER))" "yes"
+#	LAUNCHER_DEPENDS = -Vlauncher:Depends="maemo-launcher"
+#	LAUNCHER_CFLAGS = -shared
+#	LAUNCHER_LDFLAGS = -pie -shared -export-dynamic
+#endif
 
 
 
@@ -89,12 +89,12 @@ install: build
 	#
 	$(MAKE) install DESTDIR=$(CURDIR)/debian/tmp
 
-ifeq "$(strip $(LAUNCHER))" "yes"
-	mv $(CURDIR)/debian/modest/usr/bin/modest \
-	$(CURDIR)/debian/modest/usr/bin/modest.launch
-	ln -s /usr/bin/maemo-invoker \
-      	$(CURDIR)/debian/modest/usr/bin/modest
-endif
+#ifeq "$(strip $(LAUNCHER))" "yes"
+#	mv $(CURDIR)/debian/modest/usr/bin/modest \
+#	$(CURDIR)/debian/modest/usr/bin/modest.launch
+#	ln -s /usr/bin/maemo-invoker \
+#      	$(CURDIR)/debian/modest/usr/bin/modest
+#endif
 
 # Build architecture-independent files here.
 binary-indep: build install

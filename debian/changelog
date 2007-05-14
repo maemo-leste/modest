@@ -1,4 +1,4 @@
-modest (1.0-svn1851) unstable; urgency=low
+modest (1.0-svn1860) unstable; urgency=low
 
   * update for the tny account security settings update
   * temporary change to give testers more info when connections don't work
