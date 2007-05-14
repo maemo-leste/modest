@@ -1267,9 +1267,9 @@ transfer_msgs_cb (TnyFolder *folder, gboolean cancelled, GError **err, gpointer 
 	}
 
 	/* Free */
-	g_object_unref (helper->headers);
-	g_object_unref (helper->dest_folder);
-	g_object_unref (helper->mail_op);
+/* 	g_object_unref (helper->headers); */
+/* 	g_object_unref (helper->dest_folder); */
+/* 	g_object_unref (helper->mail_op); */
 	g_slice_free   (XFerMsgAsyncHelper, helper);
 	g_object_unref (folder);
 
@@ -1303,15 +1303,15 @@ modest_mail_operation_xfer_msgs (ModestMailOperation *self,
 
 	/* Create the helper */
 	helper = g_slice_new0 (XFerMsgAsyncHelper);
-	helper->mail_op = g_object_ref(self);
-	helper->dest_folder = folder;
-	helper->headers = headers;
+	helper->mail_op = self;
+	helper->dest_folder = g_object_ref(folder);
+	helper->headers = g_object_ref(headers);
 
 	/* Get source folder */
 	iter = tny_list_create_iterator (headers);
 	header = TNY_HEADER (tny_iterator_get_current (iter));
 	src_folder = tny_header_get_folder (header);
-/* 	g_object_unref (header); */
+	g_object_unref (header);
 	g_object_unref (iter);
 
 	/* Transfer messages */
@@ -1320,7 +1320,7 @@ modest_mail_operation_xfer_msgs (ModestMailOperation *self,
 					folder, 
 					delete_original, 
 					transfer_msgs_cb, 
-					transfer_msgs_status_cb, 
+					transfer_msgs_status_cb,
 					helper);
 }
 
