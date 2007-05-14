@@ -1,10 +1,17 @@
+modest (1.0-svn1847) unstable; urgency=low
+
+  * update for the tny account security settings update
+
+ -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Mon, 14 May 2007 14:39:08 +0300
+
 modest (1.0-svn1845) unstable; urgency=low
 
   * Week 20 prelease (2)
   * Fixes: NB#56180, NB#56182, NB#56212, NB#56634, NB#56713, NB#56303
+
   * Changes:
-	- many fixes all over, incl. 3 major bugs fixed
-	- added global settings
+  * many fixes all over, incl. 3 major bugs fixed
+  * added global settings
 
  -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Mon, 14 May 2007 12:28:39 +0300
 
