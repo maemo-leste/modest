@@ -1,5 +1,11 @@
 2007-05-14  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-tny-account.c:
+	(modest_tny_account_new_from_server_account): Adapt to changed tinymail API: 
+	change tny_account_set_mech() to tny_account_set_secure_auth_mech().
+
+2007-05-14  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/maemo/easysetup/modest-easysetup-wizard.c: (create_account):
 	* src/maemo/modest-account-settings-dialog.c:
 	(modest_account_settings_dialog_set_account_name),

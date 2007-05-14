@@ -104,7 +104,7 @@ modest_tny_account_get_special_folder (TnyAccount *account,
 #define MODEST_ACCOUNT_OPTION_CHECK_ALL "check_all" /* Check for new messages in all folders */
 
 
-/* Posssible values for tny_account_set_mech().
+/* Posssible values for tny_account_set_secure_auth_mech().
  * These might be camel-specific.
  * Really, tinymail should use an enum.
  * camel_sasl_authtype() seems to list some possible values.
@@ -232,7 +232,7 @@ modest_tny_account_new_from_server_account (ModestAccountMgr *account_mgr,
 		}
 		
 		if(auth_mech_name) {
-			tny_account_set_mech (tny_account, auth_mech_name);
+			tny_account_set_secure_auth_mech (tny_account, auth_mech_name);
 		}
 		
 		if (account_data->proto == MODEST_PROTOCOL_TYPE_STORE) {
