@@ -154,7 +154,7 @@ void modest_serversecurity_combo_box_fill (ModestServersecurityComboBox *combobo
 	}
 }
 
-static gint get_port_for_security (ModestProtocol protocol, ModestProtocol security)
+static gint get_port_for_security (ModestProtocol protocol, ModestSecureConnection security)
 {
 	/* See the UI spec, section Email Wizards, Incoming Details [MSG-WIZ001]: */
 	gint result = 0;
@@ -182,9 +182,9 @@ static gint get_port_for_security (ModestProtocol protocol, ModestProtocol secur
 
 /**
  * Returns the selected serversecurity, 
- * or MODEST_PROTOCOL_UNKNOWN if no serversecurity was selected.
+ * or MODEST_PROTOCOL_SECURITY_NONE if no serversecurity was selected.
  */
-ModestProtocol
+ModestSecureConnection
 modest_serversecurity_combo_box_get_active_serversecurity (ModestServersecurityComboBox *combobox)
 {
 	GtkTreeIter active;
@@ -192,12 +192,12 @@ modest_serversecurity_combo_box_get_active_serversecurity (ModestServersecurityC
 	if (found) {
 		ModestServersecurityComboBoxPrivate *priv = SERVERSECURITY_COMBO_BOX_GET_PRIVATE (combobox);
 
-		ModestProtocol serversecurity = MODEST_PROTOCOL_UNKNOWN;
+		ModestSecureConnection serversecurity = MODEST_PROTOCOL_SECURITY_NONE;
 		gtk_tree_model_get (priv->model, &active, MODEL_COL_ID, &serversecurity, -1);
 		return serversecurity;	
 	}
 
-	return MODEST_PROTOCOL_UNKNOWN; /* Failed. */
+	return MODEST_PROTOCOL_SECURITY_NONE; /* Failed. */
 }
 
 /**
@@ -209,7 +209,7 @@ modest_serversecurity_combo_box_get_active_serversecurity_port (ModestServersecu
 {
 	ModestServersecurityComboBoxPrivate *priv = SERVERSECURITY_COMBO_BOX_GET_PRIVATE (combobox);
 	
-	const ModestProtocol security = modest_serversecurity_combo_box_get_active_serversecurity 
+	const ModestSecureConnection security = modest_serversecurity_combo_box_get_active_serversecurity 
 		(combobox);
 	return get_port_for_security (priv->protocol, security);
 }
@@ -247,7 +247,7 @@ on_model_foreach_select_id(GtkTreeModel *model,
  * or MODEST_PROTOCOL_UNKNOWN if no serversecurity was selected.
  */
 gboolean
-modest_serversecurity_combo_box_set_active_serversecurity (ModestServersecurityComboBox *combobox, ModestProtocol serversecurity)
+modest_serversecurity_combo_box_set_active_serversecurity (ModestServersecurityComboBox *combobox, ModestSecureConnection serversecurity)
 {
 	ModestServersecurityComboBoxPrivate *priv = SERVERSECURITY_COMBO_BOX_GET_PRIVATE (combobox);
 	

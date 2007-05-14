@@ -185,7 +185,7 @@ smtp_configuration (ModestTransportWidget *self)
 	gtk_label_set_text (GTK_LABEL(label),_("Connection type:"));
 	gtk_box_pack_start (GTK_BOX(hbox), label, FALSE, FALSE, 0);
 
-	protos = modest_protocol_info_get_protocol_pair_list (MODEST_PROTOCOL_TYPE_AUTH);
+	protos = modest_protocol_info_get_protocol_security_pair_list ();
 	combo  = modest_combo_box_new (protos, g_str_equal);
 	modest_pair_list_free (protos);
 	
@@ -198,7 +198,7 @@ smtp_configuration (ModestTransportWidget *self)
 	gtk_label_set_text (GTK_LABEL(label),_("Authentication:"));
 	gtk_box_pack_start (GTK_BOX(hbox), label, FALSE, FALSE, 6);
 
-	protos = modest_protocol_info_get_protocol_pair_list (MODEST_PROTOCOL_TYPE_AUTH);
+	protos = modest_protocol_info_get_protocol_auth_pair_list ();
 	combo  = modest_combo_box_new (protos, g_str_equal);
 	modest_pair_list_free (protos);
 	

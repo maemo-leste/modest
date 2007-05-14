@@ -233,10 +233,10 @@ modest_server_account_get_hostname (ModestAccountMgr *self, const gchar* account
 }
  
 
-static ModestProtocol
+static ModestSecureAuthentication
 get_secure_auth_for_conf_string(const gchar* value)
 {
-	ModestProtocol result = MODEST_PROTOCOL_AUTH_NONE;
+	ModestSecureAuthentication result = MODEST_PROTOCOL_AUTH_NONE;
 	if (value) {
 		if (strcmp(value, MODEST_ACCOUNT_AUTH_MECH_VALUE_NONE) == 0)
 			result = MODEST_PROTOCOL_AUTH_NONE;
@@ -249,11 +249,11 @@ get_secure_auth_for_conf_string(const gchar* value)
 	return result;
 }
 
-ModestProtocol
+ModestSecureAuthentication
 modest_server_account_get_secure_auth (ModestAccountMgr *self, 
 	const gchar* account_name)
 {
-	ModestProtocol result = MODEST_PROTOCOL_AUTH_NONE;
+	ModestSecureAuthentication result = MODEST_PROTOCOL_AUTH_NONE;
 	gchar* value = modest_account_mgr_get_string (self, account_name, MODEST_ACCOUNT_AUTH_MECH, 
 		TRUE /* server account */);
 	if (value) {
@@ -268,7 +268,7 @@ modest_server_account_get_secure_auth (ModestAccountMgr *self,
 
 void
 modest_server_account_set_secure_auth (ModestAccountMgr *self, 
-	const gchar* account_name, ModestProtocol secure_auth)
+	const gchar* account_name, ModestSecureAuthentication secure_auth)
 {
 	/* Get the conf string for the enum value: */
 	const gchar* str_value = NULL;
@@ -283,10 +283,10 @@ modest_server_account_set_secure_auth (ModestAccountMgr *self,
 	modest_account_mgr_set_string (self, account_name, MODEST_ACCOUNT_AUTH_MECH, str_value, TRUE);
 }
 
-static ModestProtocol
+static ModestSecureConnection
 get_security_for_conf_string(const gchar* value)
 {
-	ModestProtocol result = MODEST_PROTOCOL_SECURITY_NONE;
+	ModestSecureConnection result = MODEST_PROTOCOL_SECURITY_NONE;
 	if (value) {
 		if (strcmp(value, MODEST_ACCOUNT_SECURITY_VALUE_NONE) == 0)
 			result = MODEST_PROTOCOL_SECURITY_NONE;
@@ -299,11 +299,11 @@ get_security_for_conf_string(const gchar* value)
 	return result;
 }
 
-ModestProtocol
+ModestSecureConnection
 modest_server_account_get_security (ModestAccountMgr *self, 
 	const gchar* account_name)
 {
-	ModestProtocol result = MODEST_PROTOCOL_SECURITY_NONE;
+	ModestSecureConnection result = MODEST_PROTOCOL_SECURITY_NONE;
 	gchar* value = modest_account_mgr_get_string (self, account_name, MODEST_ACCOUNT_SECURITY, 
 		TRUE /* server account */);
 	if (value) {
@@ -317,7 +317,7 @@ modest_server_account_get_security (ModestAccountMgr *self,
 
 void
 modest_server_account_set_security (ModestAccountMgr *self, 
-	const gchar* account_name, ModestProtocol security)
+	const gchar* account_name, ModestSecureConnection security)
 {
 	/* Get the conf string for the enum value: */
 	const gchar* str_value = NULL;

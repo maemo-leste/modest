@@ -307,8 +307,8 @@ modest_account_mgr_add_server_account (ModestAccountMgr * self,
 				       const gchar * name, const gchar *hostname,
 				       const gchar * username, const gchar * password,
 				       ModestProtocol proto,
-				       ModestProtocol security,
-				       ModestProtocol auth)
+				       ModestSecureConnection security,
+				       ModestSecureAuthentication auth)
 {
 	ModestAccountMgrPrivate *priv;
 	gchar *key;

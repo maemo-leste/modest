@@ -1,5 +1,14 @@
 2007-05-14  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-protocol-info.h: Split the ModestProtocol enum 
+	into ModestProtocol, ModestSecureConnection, and ModestSecureAuthentication.
+	There was no need to have these unrelated values in one enum.
+	
+	* src/: many files: Adapted to changed enum. This makes the code a bit
+	clearer, and the compiler could catch some errors.
+
+2007-05-14  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/modest-tny-account-store.c: (modest_tny_account_store_alert):
 	Show the detailed internal camel error message when an error happens 
 	during the configuration, so that our testers can give us more clues.

@@ -125,8 +125,8 @@ gboolean modest_account_mgr_add_server_account    (ModestAccountMgr *self,
 						   const gchar *username,
 						   const gchar *password,
 						   ModestProtocol proto,
-						   ModestProtocol security,
-						   ModestProtocol auth);
+						   ModestSecureConnection security,
+						   ModestSecureAuthentication auth);
 
 
 /**

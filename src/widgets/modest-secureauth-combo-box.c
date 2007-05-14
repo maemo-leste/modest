@@ -145,9 +145,9 @@ void modest_secureauth_combo_box_fill (ModestSecureauthComboBox *combobox)
 
 /**
  * Returns the selected secureauth, 
- * or MODEST_PROTOCOL_UNKNOWN if no secureauth was selected.
+ * or MODEST_PROTOCOL_AUTH_NONE if no secureauth was selected.
  */
-ModestProtocol
+ModestSecureAuthentication
 modest_secureauth_combo_box_get_active_secureauth (ModestSecureauthComboBox *combobox)
 {
 	GtkTreeIter active;
@@ -155,12 +155,12 @@ modest_secureauth_combo_box_get_active_secureauth (ModestSecureauthComboBox *com
 	if (found) {
 		ModestSecureauthComboBoxPrivate *priv = SECUREAUTH_COMBO_BOX_GET_PRIVATE (combobox);
 
-		ModestProtocol secureauth = MODEST_PROTOCOL_UNKNOWN;
+		ModestProtocol secureauth = MODEST_PROTOCOL_AUTH_NONE;
 		gtk_tree_model_get (priv->model, &active, MODEL_COL_ID, &secureauth, -1);
 		return secureauth;	
 	}
 
-	return MODEST_PROTOCOL_UNKNOWN; /* Failed. */
+	return MODEST_PROTOCOL_AUTH_NONE; /* Failed. */
 }
 
 /* This allows us to pass more than one piece of data to the signal handler,
@@ -196,7 +196,7 @@ on_model_foreach_select_id(GtkTreeModel *model,
  * or MODEST_PROTOCOL_UNKNOWN if no secureauth was selected.
  */
 gboolean
-modest_secureauth_combo_box_set_active_secureauth (ModestSecureauthComboBox *combobox, ModestProtocol secureauth)
+modest_secureauth_combo_box_set_active_secureauth (ModestSecureauthComboBox *combobox, ModestSecureAuthentication secureauth)
 {
 	ModestSecureauthComboBoxPrivate *priv = SECUREAUTH_COMBO_BOX_GET_PRIVATE (combobox);
 	

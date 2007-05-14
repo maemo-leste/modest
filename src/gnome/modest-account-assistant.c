@@ -605,7 +605,9 @@ static void
 on_apply (ModestAccountAssistant *self, gpointer user_data)
 {
 	ModestAccountAssistantPrivate *priv;
-	ModestProtocol proto, security, auth;
+	ModestProtocol proto = MODEST_PROTOCOL_UNKNOWN;
+	ModestSecureConnection security = MODEST_PROTOCOL_SECURITY_NONE;
+	ModestSecureAuthentication auth = MODEST_PROCOTOL_AUTH_NONE;
 	gchar *store_name, *transport_name;
 	const gchar *account_name, *username, *servername, *path;
 	ModestStoreWidget *store;

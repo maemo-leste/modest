@@ -594,7 +594,7 @@ on_combo_outgoing_auth_changed (GtkComboBox *widget, gpointer user_data)
 {
 	ModestAccountSettingsDialog *self = MODEST_ACCOUNT_SETTINGS_DIALOG (user_data);
 	
-	ModestProtocol protocol_security = 
+	ModestSecureAuthentication protocol_security = 
 		modest_secureauth_combo_box_get_active_secureauth (
 			MODEST_SECUREAUTH_COMBO_BOX (self->combo_outgoing_auth));
 	const gboolean secureauth_used = protocol_security != MODEST_PROTOCOL_AUTH_NONE;
@@ -1020,7 +1020,7 @@ void modest_account_settings_dialog_set_account_name (ModestAccountSettingsDialo
     	 * If secure authentication is checked, require one of the secure methods during connection: SSL, TLS, CRAM-MD5 etc. 
 	  	 * TODO: Do we need to discover which of these (SSL, TLS, CRAM-MD5) is supported?
          */
-		const ModestProtocol secure_auth = modest_server_account_get_secure_auth(
+		const ModestSecureAuthentication secure_auth = modest_server_account_get_secure_auth(
 			dialog->account_manager, incoming_account->account_name);
 		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (dialog->checkbox_incoming_auth), 
 			secure_auth != MODEST_PROTOCOL_AUTH_PASSWORD);
@@ -1029,7 +1029,7 @@ void modest_account_settings_dialog_set_account_name (ModestAccountSettingsDialo
 		update_incoming_server_title (dialog, incoming_account->proto);
 		update_incoming_server_security_choices (dialog, incoming_account->proto);
 		
-		const ModestProtocol security = modest_server_account_get_security (
+		const ModestSecureConnection security = modest_server_account_get_security (
 			dialog->account_manager, incoming_account->account_name);
 		modest_serversecurity_combo_box_set_active_serversecurity (
 			MODEST_SERVERSECURITY_COMBO_BOX (dialog->combo_incoming_security), security);
@@ -1052,7 +1052,7 @@ void modest_account_settings_dialog_set_account_name (ModestAccountSettingsDialo
 			outgoing_account->password ? outgoing_account->password : "");
 		
 		/* Get the secure-auth setting: */
-		const ModestProtocol secure_auth = modest_server_account_get_secure_auth(
+		const ModestSecureAuthentication secure_auth = modest_server_account_get_secure_auth(
 			dialog->account_manager, outgoing_account->account_name);
 		modest_secureauth_combo_box_set_active_secureauth (
 			MODEST_SECUREAUTH_COMBO_BOX (dialog->combo_outgoing_auth), secure_auth);
@@ -1062,7 +1062,7 @@ void modest_account_settings_dialog_set_account_name (ModestAccountSettingsDialo
 			MODEST_SERVERSECURITY_COMBO_BOX (dialog->combo_outgoing_security), outgoing_account->proto);
 		
 		/* Get the security setting: */
-		const ModestProtocol security = modest_server_account_get_security (
+		const ModestSecureConnection security = modest_server_account_get_security (
 			dialog->account_manager, outgoing_account->account_name);
 		modest_serversecurity_combo_box_set_active_serversecurity (
 			MODEST_SERVERSECURITY_COMBO_BOX (dialog->combo_outgoing_security), security);
@@ -1155,13 +1155,13 @@ save_configuration (ModestAccountSettingsDialog *dialog)
 	 * If secure authentication is checked, require one of the secure methods during connection: SSL, TLS, CRAM-MD5 etc. 
   	 * TODO: Do we need to discover which of these (SSL, TLS, CRAM-MD5) is supported?
      */
-	const ModestProtocol protocol_authentication_incoming = gtk_toggle_button_get_active 
+	const ModestSecureAuthentication protocol_authentication_incoming = gtk_toggle_button_get_active 
 		(GTK_TOGGLE_BUTTON (dialog->checkbox_incoming_auth)) 
 			? MODEST_PROTOCOL_AUTH_CRAMMD5
 			: MODEST_PROTOCOL_AUTH_PASSWORD;
 	modest_server_account_set_secure_auth (dialog->account_manager, incoming_account_name, protocol_authentication_incoming);
 			
-	const ModestProtocol protocol_security_incoming = modest_serversecurity_combo_box_get_active_serversecurity (
+	const ModestSecureConnection protocol_security_incoming = modest_serversecurity_combo_box_get_active_serversecurity (
 		MODEST_SERVERSECURITY_COMBO_BOX (dialog->combo_incoming_security));
 	modest_server_account_set_security (dialog->account_manager, incoming_account_name, protocol_security_incoming);
 	
@@ -1192,11 +1192,11 @@ save_configuration (ModestAccountSettingsDialog *dialog)
 	modest_server_account_set_password (dialog->account_manager, outgoing_account_name,
 		password);
 	
-	const ModestProtocol protocol_security_outgoing = modest_serversecurity_combo_box_get_active_serversecurity (
+	const ModestSecureConnection protocol_security_outgoing = modest_serversecurity_combo_box_get_active_serversecurity (
 		MODEST_SERVERSECURITY_COMBO_BOX (dialog->combo_outgoing_security));
 	modest_server_account_set_security (dialog->account_manager, outgoing_account_name, protocol_security_outgoing);
 	
-	const ModestProtocol protocol_authentication_outgoing = modest_secureauth_combo_box_get_active_secureauth (
+	const ModestSecureAuthentication protocol_authentication_outgoing = modest_secureauth_combo_box_get_active_secureauth (
 		MODEST_SECUREAUTH_COMBO_BOX (dialog->combo_outgoing_auth));
 	modest_server_account_set_secure_auth (dialog->account_manager, outgoing_account_name, protocol_authentication_outgoing);	
 		

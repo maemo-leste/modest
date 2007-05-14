@@ -39,38 +39,37 @@ G_BEGIN_DECLS
 typedef enum {
 	MODEST_PROTOCOL_UNKNOWN,
 	
-	MODEST_PROTOCOL_TRANSPORT_SENDMAIL, 
+	MODEST_PROTOCOL_TRANSPORT_SENDMAIL,
 	MODEST_PROTOCOL_TRANSPORT_SMTP,
 	
 	MODEST_PROTOCOL_STORE_POP,
 	MODEST_PROTOCOL_STORE_IMAP,
 	MODEST_PROTOCOL_STORE_MAILDIR,
-	MODEST_PROTOCOL_STORE_MBOX,     
-
-	MODEST_PROTOCOL_SECURITY_NONE,
-	MODEST_PROTOCOL_SECURITY_SSL,   
-	MODEST_PROTOCOL_SECURITY_TLS,
-	MODEST_PROTOCOL_SECURITY_TLS_OP,
-
-	MODEST_PROTOCOL_AUTH_NONE,
-	MODEST_PROTOCOL_AUTH_PASSWORD,
-	MODEST_PROTOCOL_AUTH_CRAMMD5,
-
-	MODEST_PROTOCOL_NUM
+	MODEST_PROTOCOL_STORE_MBOX
 } ModestProtocol;
 
 
 typedef enum {
 	MODEST_PROTOCOL_TYPE_UNKNOWN,
 	MODEST_PROTOCOL_TYPE_TRANSPORT,
-	MODEST_PROTOCOL_TYPE_STORE,
-	MODEST_PROTOCOL_TYPE_SECURITY,
-	MODEST_PROTOCOL_TYPE_AUTH,
-
-	MODEST_PROTOCOL_TYPE_NUM
+	MODEST_PROTOCOL_TYPE_STORE
 } ModestProtocolType;
 
- 
+typedef enum {    
+	MODEST_PROTOCOL_SECURITY_NONE,
+	MODEST_PROTOCOL_SECURITY_SSL,   
+	MODEST_PROTOCOL_SECURITY_TLS,
+	MODEST_PROTOCOL_SECURITY_TLS_OP
+} ModestSecureConnection;
+
+typedef enum {    
+	MODEST_PROTOCOL_AUTH_NONE,
+	MODEST_PROTOCOL_AUTH_PASSWORD,
+	MODEST_PROTOCOL_AUTH_CRAMMD5
+} ModestSecureAuthentication;
+
+
+#if 0 
 /**
  * modest_protocol_info_get_list:
  * @type: the type of list you want, it should NOT be MODEST_PROTOCOL_TYPE_UNKNOWN
@@ -83,20 +82,44 @@ typedef enum {
  * for them.
  */
 GSList*   modest_protocol_info_get_protocol_list (ModestProtocolType type);
+#endif
 
 
 /**
- * modest_protocol_info_get_list:
- * @type: the type of list you want, it should NOT be MODEST_PROTOCOL_TYPE_UNKNOWN
+ * modest_protocol_info_get_protocol_pair_list:
  *
- * return the list of <protocol,display-name>-tupels of the given @type.
- * the elements of the returned list are ModestPairs
- * this is a convenience function for use with ModestComboBox
+ * return the list of <protocol,display-name>-tupels of protocols.
+ * The elements of the returned list are ModestPairs
+ * This is a convenience function for use with ModestComboBox
  *  
- * Returns: a list of protocols of the given @type; after use, it should be freed
+ * Returns: a list of protocols. After use, it should be freed
  * with modest_pair_list_free
  */
-ModestPairList*   modest_protocol_info_get_protocol_pair_list (ModestProtocolType type);
+ModestPairList*   modest_protocol_info_get_protocol_pair_list ();
+
+/**
+ * modest_protocol_info_get_protocol_security_pair_list:
+ *
+ * return the list of <protocol,display-name>-tupels of protocol secure connection methods.
+ * The elements of the returned list are ModestPairs
+ * This is a convenience function for use with ModestComboBox
+ *  
+ * Returns: a list of secure connection methods. After use, it should be freed
+ * with modest_pair_list_free
+ */
+ModestPairList*   modest_protocol_info_get_protocol_security_pair_list ();
+
+/**
+ * modest_protocol_info_get_protocol_auth_pair_list:
+ *
+ * return the list of <protocol,display-name>-tupels of protocol secure authentication methods.
+ * The elements of the returned list are ModestPairs
+ * This is a convenience function for use with ModestComboBox
+ *  
+ * Returns: a list of secure authentication methods. After use, it should be freed
+ * with modest_pair_list_free
+ */
+ModestPairList*   modest_protocol_info_get_protocol_auth_pair_list ();
 
 
 /**

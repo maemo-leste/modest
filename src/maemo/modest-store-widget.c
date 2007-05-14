@@ -228,7 +228,7 @@ imap_pop_configuration (ModestStoreWidget *self)
 	gtk_label_set_markup (GTK_LABEL(label),_("<b>Security</b>"));
 	gtk_box_pack_start (GTK_BOX(box), label, FALSE, FALSE, 0);
 
-	protos = modest_protocol_info_get_protocol_pair_list (MODEST_PROTOCOL_TYPE_SECURITY);
+	protos = modest_protocol_info_get_protocol_security_pair_list ();
 	priv->security = modest_combo_box_new (protos, g_str_equal);
 	modest_pair_list_free (protos);
 	
@@ -245,7 +245,7 @@ imap_pop_configuration (ModestStoreWidget *self)
 	gtk_label_set_text (GTK_LABEL(label),_("Authentication:"));
 	gtk_box_pack_start (GTK_BOX(hbox), label, FALSE, FALSE, 6);
 	
-	protos = modest_protocol_info_get_protocol_pair_list (MODEST_PROTOCOL_TYPE_AUTH);
+	protos = modest_protocol_info_get_protocol_auth_pair_list ();
 	combo =  modest_combo_box_new (protos, g_str_equal);
 	modest_pair_list_free (protos);
 

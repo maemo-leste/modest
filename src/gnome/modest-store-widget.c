@@ -353,8 +353,8 @@ modest_store_widget_get_path (ModestStoreWidget *self)
 		return NULL;
 }
 
-static ModestProtocol
-get_protocol_from_combo (GtkWidget *combo)
+static gint
+get_value_from_combo (GtkWidget *combo)
 {
 	gchar *chosen;
 
@@ -367,7 +367,7 @@ get_protocol_from_combo (GtkWidget *combo)
 
 }
 
-ModestProtocol
+ModestSecureAuthentication
 modest_store_widget_get_auth (ModestStoreWidget *self)
 {
 	ModestStoreWidgetPrivate *priv;	
@@ -375,10 +375,10 @@ modest_store_widget_get_auth (ModestStoreWidget *self)
 	g_return_val_if_fail (self, MODEST_PROTOCOL_UNKNOWN);
 	priv = MODEST_STORE_WIDGET_GET_PRIVATE(self);
 
-	return get_protocol_from_combo (priv->auth);
+	return get_value_from_combo (priv->auth);
 }
 
-ModestProtocol
+ModestSecureConnection
 modest_store_widget_get_security (ModestStoreWidget *self)
 {
 	ModestStoreWidgetPrivate *priv;	
@@ -386,5 +386,5 @@ modest_store_widget_get_security (ModestStoreWidget *self)
 	g_return_val_if_fail (self, MODEST_PROTOCOL_UNKNOWN);
 	priv = MODEST_STORE_WIDGET_GET_PRIVATE(self);
 
-	return get_protocol_from_combo (priv->security);
+	return get_value_from_combo (priv->security);
 }

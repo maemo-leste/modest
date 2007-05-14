@@ -486,7 +486,7 @@ static GtkWidget* create_page_complete_easysetup (ModestEasysetupWizardDialog *s
  */
 static void update_incoming_server_title (ModestEasysetupWizardDialog *self)
 {
-	ModestProtocol protocol = easysetup_servertype_combo_box_get_active_servertype (
+	const ModestProtocol protocol = easysetup_servertype_combo_box_get_active_servertype (
 		EASYSETUP_SERVERTYPE_COMBO_BOX (self->combo_incoming_servertype));
 	const gchar* type = 
 		(protocol == MODEST_PROTOCOL_STORE_POP ? 
@@ -507,7 +507,7 @@ static void update_incoming_server_title (ModestEasysetupWizardDialog *self)
  */
 static void update_incoming_server_security_choices (ModestEasysetupWizardDialog *self)
 {
-	ModestProtocol protocol = easysetup_servertype_combo_box_get_active_servertype (
+	const ModestProtocol protocol = easysetup_servertype_combo_box_get_active_servertype (
 		EASYSETUP_SERVERTYPE_COMBO_BOX (self->combo_incoming_servertype));
 	
 	/* Fill the combo with appropriately titled choices for POP or IMAP. */
@@ -1285,12 +1285,12 @@ create_account (ModestEasysetupWizardDialog *self, gboolean enabled)
 	const gchar* password = gtk_entry_get_text (GTK_ENTRY (self->entry_user_password));
 	
 	/* Incoming server: */
-	/* Note: We need something as default for the ModestProtocol values, 
+	/* Note: We need something as default for the ModestProtocol* values, 
 	 * or modest_account_mgr_add_server_account will fail. */
 	gchar* servername_incoming = NULL;
 	ModestProtocol protocol_incoming = MODEST_PROTOCOL_STORE_POP;
-	ModestProtocol protocol_security_incoming = MODEST_PROTOCOL_SECURITY_NONE;
-	ModestProtocol protocol_authentication_incoming = MODEST_PROTOCOL_AUTH_NONE;
+	ModestSecureConnection protocol_security_incoming = MODEST_PROTOCOL_SECURITY_NONE;
+	ModestSecureAuthentication protocol_authentication_incoming = MODEST_PROTOCOL_AUTH_NONE;
 	
 	/* Get details from the specified presets: */
 	gchar* provider_id = easysetup_provider_combo_box_get_active_provider_id (
@@ -1381,8 +1381,8 @@ create_account (ModestEasysetupWizardDialog *self, gboolean enabled)
 	/* Outgoing server: */
 	gchar* servername_outgoing = NULL;
 	ModestProtocol protocol_outgoing = MODEST_PROTOCOL_STORE_POP;
-	ModestProtocol protocol_security_outgoing = MODEST_PROTOCOL_SECURITY_NONE;
-	ModestProtocol protocol_authentication_outgoing = MODEST_PROTOCOL_AUTH_NONE;
+	ModestSecureConnection protocol_security_outgoing = MODEST_PROTOCOL_SECURITY_NONE;
+	ModestSecureAuthentication protocol_authentication_outgoing = MODEST_PROTOCOL_AUTH_NONE;
 	
 	if(provider_id) {
 		/* Use presets: */

@@ -47,9 +47,9 @@ ModestServersecurityComboBox* modest_serversecurity_combo_box_new (void);
 
 void modest_serversecurity_combo_box_fill (ModestServersecurityComboBox *combobox, ModestProtocol protocol);
 
-ModestProtocol modest_serversecurity_combo_box_get_active_serversecurity (ModestServersecurityComboBox *combobox);
+ModestSecureConnection modest_serversecurity_combo_box_get_active_serversecurity (ModestServersecurityComboBox *combobox);
 
-gboolean modest_serversecurity_combo_box_set_active_serversecurity (ModestServersecurityComboBox *combobox, ModestProtocol serversecurity);
+gboolean modest_serversecurity_combo_box_set_active_serversecurity (ModestServersecurityComboBox *combobox, ModestSecureConnection serversecurity);
 
 gint modest_serversecurity_combo_box_get_active_serversecurity_port (ModestServersecurityComboBox *combobox);
 

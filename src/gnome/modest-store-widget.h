@@ -40,8 +40,8 @@ const gchar*    modest_store_widget_get_username          (ModestStoreWidget *se
 const gchar*    modest_store_widget_get_servername        (ModestStoreWidget *self);
 ModestProtocol  modest_store_widget_get_proto             (ModestStoreWidget *self);
 gchar *         modest_store_widget_get_path              (ModestStoreWidget *self);
-ModestProtocol  modest_store_widget_get_auth              (ModestStoreWidget *self);
-ModestProtocol  modest_store_widget_get_security          (ModestStoreWidget *self);
+ModestSecureAuthentication  modest_store_widget_get_auth              (ModestStoreWidget *self);
+ModestSecureConnection  modest_store_widget_get_security          (ModestStoreWidget *self);
 
 G_END_DECLS
 
