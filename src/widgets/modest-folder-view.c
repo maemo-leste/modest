@@ -898,25 +898,19 @@ on_drag_data_get (GtkWidget *widget,
 		  gpointer data)
 {
 	GtkTreeSelection *selection;
-	GtkTreeModel *model_sort, *model;
+	GtkTreeModel *model;
 	GtkTreeIter iter;
-	GtkTreePath *source_row_sort;
 	GtkTreePath *source_row;
 
 	selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (widget));
-	gtk_tree_selection_get_selected (selection, &model_sort, &iter);
-	source_row_sort = gtk_tree_model_get_path (model_sort, &iter);
+	gtk_tree_selection_get_selected (selection, &model, &iter);
+	source_row = gtk_tree_model_get_path (model, &iter);
 
-	/* Get the unsorted path and model */
-	model = gtk_tree_model_sort_get_model (GTK_TREE_MODEL_SORT (model_sort));
-	source_row = gtk_tree_model_sort_convert_path_to_child_path (GTK_TREE_MODEL_SORT (model_sort),
-								     source_row_sort);
 
 	gtk_tree_set_row_drag_data (selection_data,
 				    model,
 				    source_row);
 
-	gtk_tree_path_free (source_row_sort);
 	gtk_tree_path_free (source_row);
 }
 
@@ -1088,8 +1082,8 @@ on_drag_data_received (GtkWidget *widget,
 		       gpointer data)
 {
 	GtkWidget *source_widget;
-	GtkTreeModel *model_sort, *dest_model, *source_model;
- 	GtkTreePath *source_row, *dest_row, *child_dest_row;
+	GtkTreeModel *dest_model, *source_model;
+ 	GtkTreePath *source_row, *dest_row;
 	GtkTreeViewDropPosition pos;
 	gboolean success = FALSE, delete_source = FALSE;
 	DndHelper *helper;
@@ -1111,12 +1105,11 @@ on_drag_data_received (GtkWidget *widget,
 				    &source_model,
 				    &source_row);
 
-	model_sort = gtk_tree_view_get_model (GTK_TREE_VIEW (widget));
 	/* Select the destination model */
 	if (source_widget == widget) {
 		dest_model = source_model;
 	} else {
-		dest_model = gtk_tree_model_sort_get_model (GTK_TREE_MODEL_SORT (model_sort));
+		dest_model = gtk_tree_view_get_model (GTK_TREE_VIEW (widget));
 	}
 
 	/* Get the path to the destination row. Can not call
@@ -1136,32 +1129,26 @@ on_drag_data_received (GtkWidget *widget,
 	helper->context = context;
 	helper->time = time;
 
-	/* Get path from the unsorted model */
-	child_dest_row = 
-		gtk_tree_model_sort_convert_path_to_child_path (GTK_TREE_MODEL_SORT (model_sort),
-								dest_row);
-	gtk_tree_path_free (dest_row);
-
 	/* Drags from the header view */
 	if (source_widget != widget) {
 
 		drag_and_drop_from_header_view (source_model,
 						dest_model,
-						child_dest_row,
+						dest_row,
 						helper);
 	} else {
 
 
 		drag_and_drop_from_folder_view (source_model,
 						dest_model,
-						child_dest_row,
+						dest_row,
 						selection_data, 
 						helper);
 	}
 
 	/* Frees */
 	gtk_tree_path_free (source_row);
-	gtk_tree_path_free (child_dest_row);
+	gtk_tree_path_free (dest_row);
 }
 
 /*
