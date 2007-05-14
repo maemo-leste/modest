@@ -243,7 +243,18 @@ modest_msg_view_window_init (ModestMsgViewWindow *obj)
 static gboolean
 set_toolbar_transfer_mode (ModestMsgViewWindow *self)
 {
+	ModestMsgViewWindowPrivate *priv = NULL;
+	
+	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (self), FALSE);
+
+	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE(self);
+
 	set_toolbar_mode (self, TOOLBAR_MODE_TRANSFER);
+	
+	if (priv->progress_bar_timeout > 0) {
+		g_source_remove (priv->progress_bar_timeout);
+		priv->progress_bar_timeout = 0;
+	}
 	
 	return FALSE;
 }
@@ -1349,16 +1360,16 @@ on_queue_changed (ModestMailOperationQueue *queue,
 	switch (type) {
 	case MODEST_MAIL_OPERATION_QUEUE_OPERATION_ADDED:
 		if (mode == TOOLBAR_MODE_TRANSFER) {
+			/* Enable transfer toolbar mode */
+			priv->progress_bar_timeout = g_timeout_add (2000, 
+								    (GSourceFunc) set_toolbar_transfer_mode, 
+								    self);
 			while (tmp) {
 				modest_progress_object_add_operation (MODEST_PROGRESS_OBJECT (tmp->data),
 								      mail_op);
 				tmp = g_slist_next (tmp);
 			}
 			
-			/* Enable transfer toolbar mode */
-			priv->progress_bar_timeout = g_timeout_add (1000, 
-								    (GSourceFunc) set_toolbar_transfer_mode, 
-								    self);
 		}
 		break;
 	case MODEST_MAIL_OPERATION_QUEUE_OPERATION_REMOVED:
@@ -1376,8 +1387,8 @@ on_queue_changed (ModestMailOperationQueue *queue,
 					g_source_remove (priv->progress_bar_timeout);
 					priv->progress_bar_timeout = 0;
 				}
-
-				set_toolbar_mode (self, TOOLBAR_MODE_NORMAL);
+				else 
+					set_toolbar_mode (self, TOOLBAR_MODE_NORMAL);
 			}
 		}
 		break;

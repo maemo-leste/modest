@@ -1250,8 +1250,19 @@ on_configuration_key_changed (ModestConf* conf,
 static gboolean
 set_toolbar_transfer_mode (ModestMainWindow *self)
 {
+	ModestMainWindowPrivate *priv = NULL;
+	
+	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW (self), FALSE);
+
+	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
+
 	set_toolbar_mode (self, TOOLBAR_MODE_TRANSFER);
 	
+	if (priv->progress_bar_timeout > 0) {
+		g_source_remove (priv->progress_bar_timeout);
+		priv->progress_bar_timeout = 0;
+	}
+
 	return FALSE;
 }
 
@@ -1394,11 +1405,11 @@ on_queue_changed (ModestMailOperationQueue *queue,
 	tmp = priv->progress_widgets;
 	switch (type) {
 	case MODEST_MAIL_OPERATION_QUEUE_OPERATION_ADDED:
-		if (mode_changed)
-			priv->progress_bar_timeout = g_timeout_add (1000, 
-								    (GSourceFunc) set_toolbar_transfer_mode, 
-								    self);
 		if (mode == TOOLBAR_MODE_TRANSFER) {
+			if (mode_changed)
+				priv->progress_bar_timeout = g_timeout_add (2000, 
+									    (GSourceFunc) set_toolbar_transfer_mode, 
+									    self);		    
 			while (tmp) {
 				modest_progress_object_add_operation (MODEST_PROGRESS_OBJECT (tmp->data),
 								      mail_op);
@@ -1413,15 +1424,16 @@ on_queue_changed (ModestMailOperationQueue *queue,
 									 mail_op);
 				tmp = g_slist_next (tmp);
 			}
-
+			
 			/* If no more operations are being observed, NORMAL mode is enabled again */
 			if (observers_empty (self)) {
 				if (priv->progress_bar_timeout > 0) {
 					g_source_remove (priv->progress_bar_timeout);
 					priv->progress_bar_timeout = 0;
 				}
-				
-				set_toolbar_mode (self, TOOLBAR_MODE_NORMAL);
+				else 
+					set_toolbar_mode (self, TOOLBAR_MODE_NORMAL);
+
 			}
 		}
 		break;
