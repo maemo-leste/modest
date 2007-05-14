@@ -360,8 +360,7 @@ modest_account_mgr_get_server_account_data (ModestAccountMgr *self, const gchar*
 	
 	data->last_updated = modest_account_mgr_get_int    (self, name, MODEST_ACCOUNT_LAST_UPDATED,TRUE);
 	
-	data->password     = modest_account_mgr_get_string (self, name, MODEST_ACCOUNT_PASSWORD, TRUE);
-	data->uri          = modest_account_mgr_get_string (self, name, MODEST_ACCOUNT_URI,TRUE);			   
+	data->password     = modest_account_mgr_get_string (self, name, MODEST_ACCOUNT_PASSWORD, TRUE);		   
 	
 	return data;
 }

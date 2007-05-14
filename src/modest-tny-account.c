@@ -103,13 +103,21 @@ modest_tny_account_get_special_folder (TnyAccount *account,
 #define MODEST_ACCOUNT_OPTION_USE_LSUB "use_lsub" /* Show only subscribed folders */
 #define MODEST_ACCOUNT_OPTION_CHECK_ALL "check_all" /* Check for new messages in all folders */
 
-/* TODO: Find how to specify the authentication method with camel.
- * This is just made up stuff - I have no idea if its even possible via options:
-#define MODEST_ACCOUNT_OPTION_AUTH "auth"
-#define MODEST_ACCOUNT_OPTION_AUTH_PLAIN "PLAIN"
-#define MODEST_ACCOUNT_OPTION_AUTH_PASSWORD "PASSWORD"
-#define MODEST_ACCOUNT_OPTION_AUTH_CRAMMD5 "CRAMMD5"
-*/
+
+/* Posssible values for tny_account_set_mech().
+ * These might be camel-specific.
+ * Really, tinymail should use an enum.
+ * camel_sasl_authtype() seems to list some possible values.
+ */
+ 
+ /* Note that evolution does not offer this for IMAP: */
+#define MODEST_ACCOUNT_AUTH_PLAIN "PLAIN"
+
+/* IMAP uses NULL instead.
+ * Also, not that Evolution offers "Password" for IMAP, but "Login" for SMTP.*/
+#define MODEST_ACCOUNT_AUTH_PASSWORD "LOGIN" 
+#define MODEST_ACCOUNT_AUTH_CRAMMD5 "CRAM-MD5"
+
 
 /**
  * modest_tny_account_new_from_server_account:
@@ -125,9 +133,7 @@ modest_tny_account_get_special_folder (TnyAccount *account,
 static TnyAccount*
 modest_tny_account_new_from_server_account (ModestAccountMgr *account_mgr,
 					    ModestServerAccountData *account_data)
-{
-	TnyAccount *tny_account;
-		
+{	
 	g_return_val_if_fail (account_mgr, NULL);
 	g_return_val_if_fail (account_data, NULL);
 
@@ -138,6 +144,8 @@ modest_tny_account_new_from_server_account (ModestAccountMgr *account_mgr,
 		return NULL;
 	}
 
+	TnyAccount *tny_account = NULL;
+	
 	switch (account_data->proto) {
 	case MODEST_PROTOCOL_TRANSPORT_SENDMAIL:
 	case MODEST_PROTOCOL_TRANSPORT_SMTP:
@@ -162,13 +170,15 @@ modest_tny_account_new_from_server_account (ModestAccountMgr *account_mgr,
 	/* Proto */
 	tny_account_set_proto (tny_account,
 			       modest_protocol_info_get_protocol_name(account_data->proto));
-			       
+
+	       
+	/* mbox and maildir accounts use a URI instead of the rest: */
 	if (account_data->uri) 
 		tny_account_set_url_string (TNY_ACCOUNT(tny_account), account_data->uri);
 	else {
 		/* Set camel-specific options: */
 		
-		/* To enable security settings: */
+		/* Enable secure connection settings: */
 		const gchar* option_security = NULL;
 		switch (account_data->security) {
 		case MODEST_PROTOCOL_SECURITY_NONE:
@@ -190,32 +200,40 @@ modest_tny_account_new_from_server_account (ModestAccountMgr *account_mgr,
 						      option_security);
 		}
 		
-		/* To enable secure-auth settings: */
-		/* The UI spec says:
-		 *  # If secure authentication is unchecked, allow sending username and password also as plain text.
-		 *  # If secure authentication is checked, require one of the secure methods during connection: SSL, TLS, CRAM-MD5 etc
-		 */
-		/* TODO: Find how to specify the authentication method with camel.
- 		 * This is just made up stuff - I have no idea if its even possible via options:
-		const gchar* option_secure_auth = NULL;
+
+		const gchar* auth_mech_name = NULL;
 		switch (account_data->secure_auth) {
 		case MODEST_PROTOCOL_AUTH_NONE:
-			option_secure_auth = MODEST_ACCOUNT_OPTION_AUTH "= " MODEST_ACCOUNT_OPTION_AUTH_PLAIN;
+			/* IMAP needs at least a password,
+			 * which camel uses if we specify NULL.
+			 * This setting should never happen anyway. */
+			if (account_data->proto == MODEST_PROTOCOL_STORE_IMAP)
+				auth_mech_name = NULL;
+			else
+				auth_mech_name = MODEST_ACCOUNT_AUTH_PLAIN;
 			break;
+			
 		case MODEST_PROTOCOL_AUTH_PASSWORD:
-			option_secure_auth = MODEST_ACCOUNT_OPTION_AUTH "= " MODEST_ACCOUNT_OPTION_AUTH_PASSWORD;
+			/* Camel use a password for IMAP if we specify NULL,
+			 * but will report an error if we use "Password", "Login" or "Plain". */
+			if (account_data->proto == MODEST_PROTOCOL_STORE_IMAP)
+				auth_mech_name = NULL;
+			else
+				auth_mech_name = MODEST_ACCOUNT_AUTH_PASSWORD;
 			break;
+			
 		case MODEST_PROTOCOL_AUTH_CRAMMD5:
-			option_secure_auth = MODEST_ACCOUNT_OPTION_AUTH "= " MODEST_ACCOUNT_OPTION_AUTH_CRAMMD5;
+			auth_mech_name = MODEST_ACCOUNT_AUTH_CRAMMD5;
+			
 		default:
+			g_warning ("%s: Unhandled secure authentication setting for "
+				"account=%s", __FUNCTION__, account_data->account_name);
 			break;
 		}
 		
-		if(option_secure_auth) {
-			tny_camel_account_add_option (TNY_CAMEL_ACCOUNT (tny_account),
-						      option_secure_auth);
+		if(auth_mech_name) {
+			tny_account_set_mech (tny_account, auth_mech_name);
 		}
-		*/
 		
 		if (account_data->proto == MODEST_PROTOCOL_TYPE_STORE) {
 			/* Other connection options. Some options are only valid for IMAP

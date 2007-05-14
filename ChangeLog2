@@ -1,3 +1,27 @@
+2007-05-14  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/maemo/easysetup/modest-easysetup-wizard.c: (create_account):
+	* src/maemo/modest-account-settings-dialog.c:
+	(modest_account_settings_dialog_set_account_name),
+	(save_configuration): For the incoming secure authentication checkbox, 
+	use PASSWORD for unchecked, and CRAM-MD5 for checked, after I reread 
+	the UI specification. PLAIN does not seem to be supported for most IMAP 
+	servers anyway, and I am not sure what it would mean.
+	However, we probably need to discover which of the secure-authentication 
+	mechanisms are supported by the server, instead of hard-coding CRAM-MD5.
+	* src/modest-account-mgr-helpers.c:
+	(modest_account_mgr_get_server_account_data):
+
+	* src/modest-tny-account.c:
+	(modest_tny_account_new_from_server_account):
+	Use tny_account_set_mech() to set secure-authentication methods, 
+	with some special-casing for IMAP, based on my observations of how 
+	evolution behaves.
+	
+	* src/modest-account-mgr-helpers.h:
+	* src/modest-account-mgr.c:
+	* src/modest-defs.h: Comment that the URI is only used for local folders.
+
 2007-05-11  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/maemo/modest-main-window.c: (on_account_update): Make the gchar* 

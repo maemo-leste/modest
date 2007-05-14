@@ -117,6 +117,8 @@
 #define MODEST_ACCOUNT_USERNAME_HAS_SUCCEEDED          "username_succeeded"          /* string */
 #define MODEST_ACCOUNT_USE_SIGNATURE         "use_signature"         /* boolean */
 #define MODEST_ACCOUNT_SIGNATURE         "signature"         /* string */
+
+/* Only used for mbox and maildir accounts: */
 #define MODEST_ACCOUNT_URI		 "uri"	             /* string */
 
 #define MODEST_ACCOUNT_PROTO             "proto"             /* string */

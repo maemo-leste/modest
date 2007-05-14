@@ -1015,10 +1015,16 @@ void modest_account_settings_dialog_set_account_name (ModestAccountSettingsDialo
 		gtk_entry_set_text( GTK_ENTRY (dialog->entry_incomingserver), 
 			incoming_account->hostname ? incoming_account->hostname : "");
 			
+		/* The UI spec says:
+		 * If secure authentication is unchecked, allow sending username and password also as plain text.
+    	 * If secure authentication is checked, require one of the secure methods during connection: SSL, TLS, CRAM-MD5 etc. 
+	  	 * TODO: Do we need to discover which of these (SSL, TLS, CRAM-MD5) is supported?
+         */
 		const ModestProtocol secure_auth = modest_server_account_get_secure_auth(
 			dialog->account_manager, incoming_account->account_name);
 		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (dialog->checkbox_incoming_auth), 
-			secure_auth == MODEST_PROTOCOL_AUTH_PASSWORD);
+			secure_auth != MODEST_PROTOCOL_AUTH_PASSWORD);
+		/* Note that MODEST_PROTOCOL_AUTH_PLAIN should probably never be used. */
 			
 		update_incoming_server_title (dialog, incoming_account->proto);
 		update_incoming_server_security_choices (dialog, incoming_account->proto);
@@ -1144,10 +1150,15 @@ save_configuration (ModestAccountSettingsDialog *dialog)
 	const gchar* password = gtk_entry_get_text (GTK_ENTRY (dialog->entry_user_password));
 	modest_server_account_set_password (dialog->account_manager, incoming_account_name, password);
 			
+	/* The UI spec says:
+	 * If secure authentication is unchecked, allow sending username and password also as plain text.
+	 * If secure authentication is checked, require one of the secure methods during connection: SSL, TLS, CRAM-MD5 etc. 
+  	 * TODO: Do we need to discover which of these (SSL, TLS, CRAM-MD5) is supported?
+     */
 	const ModestProtocol protocol_authentication_incoming = gtk_toggle_button_get_active 
 		(GTK_TOGGLE_BUTTON (dialog->checkbox_incoming_auth)) 
-			? MODEST_PROTOCOL_AUTH_PASSWORD
-			: MODEST_PROTOCOL_AUTH_NONE;
+			? MODEST_PROTOCOL_AUTH_CRAMMD5
+			: MODEST_PROTOCOL_AUTH_PASSWORD;
 	modest_server_account_set_secure_auth (dialog->account_manager, incoming_account_name, protocol_authentication_incoming);
 			
 	const ModestProtocol protocol_security_incoming = modest_serversecurity_combo_box_get_active_serversecurity (

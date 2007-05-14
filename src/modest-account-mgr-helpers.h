@@ -44,7 +44,7 @@ typedef struct {
 	gchar            *account_name;
 	gchar            *hostname;
 	gchar            *username;
-	gchar	         *uri;
+	gchar	         *uri; /*< Only for mbox and maildir accounts. */
 	ModestProtocol    proto; /*< The store or transport. Not ORed. */
 	gchar            *password;
 	time_t		  last_updated;

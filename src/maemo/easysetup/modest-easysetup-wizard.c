@@ -1331,9 +1331,14 @@ create_account (ModestEasysetupWizardDialog *self, gboolean enabled)
 		protocol_security_incoming = modest_serversecurity_combo_box_get_active_serversecurity (
 		MODEST_SERVERSECURITY_COMBO_BOX (self->combo_incoming_security));
 		
+		/* The UI spec says:
+		 * If secure authentication is unchecked, allow sending username and password also as plain text.
+    	 * If secure authentication is checked, require one of the secure methods during connection: SSL, TLS, CRAM-MD5 etc. 
+	  	 * TODO: Do we need to discover which of these (SSL, TLS, CRAM-MD5) is supported?
+         */
 		protocol_authentication_incoming = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->checkbox_incoming_auth)) 
-			? MODEST_PROTOCOL_AUTH_PASSWORD
-			: MODEST_PROTOCOL_AUTH_NONE;
+			? MODEST_PROTOCOL_AUTH_CRAMMD5
+			: MODEST_PROTOCOL_AUTH_PASSWORD;
 		
 	}
 	

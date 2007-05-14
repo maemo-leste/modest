@@ -411,7 +411,9 @@ cleanup:
 	return TRUE;
 }
 
-
+/** modest_account_mgr_add_server_account_uri:
+ * Only used for mbox and maildir accounts.
+ */
 gboolean
 modest_account_mgr_add_server_account_uri (ModestAccountMgr * self,
 					   const gchar *name, ModestProtocol proto,
