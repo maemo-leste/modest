@@ -1311,7 +1311,7 @@ modest_mail_operation_xfer_msgs (ModestMailOperation *self,
 	iter = tny_list_create_iterator (headers);
 	header = TNY_HEADER (tny_iterator_get_current (iter));
 	src_folder = tny_header_get_folder (header);
-	g_object_unref (header);
+/* 	g_object_unref (header); */
 	g_object_unref (iter);
 
 	/* Transfer messages */
