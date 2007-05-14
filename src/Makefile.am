@@ -88,8 +88,8 @@ modest_SOURCES=\
 	modest-widget-memory.c\
 	modest-widget-memory.h 
 
-modest_CFLAGS  = "$(modest_CFLAGS)  $(MAEMO_LAUNCHER_CFLAGS)"
-modest_LDFLAGS = "$(modest_LDFLAGS) $(MAEMO_LAUNCHER_LDFLAGS)"
+#modest_CFLAGS  = "$(modest_CFLAGS)  $(MAEMO_LAUNCHER_CFLAGS)"
+#modest_LDFLAGS = "$(modest_LDFLAGS) $(MAEMO_LAUNCHER_LDFLAGS)"
 
 modest_LDADD = 						\
 	$(MODEST_GSTUFF_LIBS) 				\
