@@ -93,7 +93,7 @@ guint reply_forward_type;
 
 typedef struct _HeaderActivatedHelper {
 	GtkTreeModel *model;
-	GtkTreeIter iter;
+	GtkTreeRowReference *row_reference;
 	TnyFolder *folder;
 } HeaderActivatedHelper;
 
@@ -470,7 +470,7 @@ open_msg_func (const GObject *obj, const TnyMsg *msg, gpointer user_data)
 		break;
 	default:
 		if (helper->model != NULL)
-			win = modest_msg_view_window_new_with_header_model ((TnyMsg *) msg, account, helper->model, helper->iter);
+			win = modest_msg_view_window_new_with_header_model ((TnyMsg *) msg, account, helper->model, helper->row_reference);
 		else
 			win = modest_msg_view_window_new ((TnyMsg *) msg, account);
 	}
@@ -487,6 +487,7 @@ open_msg_func (const GObject *obj, const TnyMsg *msg, gpointer user_data)
 	g_free(account);
 /* 	g_object_unref (G_OBJECT(msg)); */
 	g_object_unref (G_OBJECT(helper->folder));
+	gtk_tree_row_reference_free (helper->row_reference);
 	g_slice_free (HeaderActivatedHelper, helper);
 }
 
@@ -992,11 +993,10 @@ modest_ui_actions_on_header_activated (ModestHeaderView *header_view,
 	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (header_view));
 	sel_list = gtk_tree_selection_get_selected_rows (sel, &model);
 	if (sel_list != NULL) {
-		gtk_tree_model_get_iter (model, &iter, (GtkTreePath *) sel_list->data);
 		
 		/* Fill helpers */
  		helper->model = model;
-		helper->iter = iter;
+		helper->row_reference = gtk_tree_row_reference_new (model, (GtkTreePath *) sel_list->data);
 
 		/* Mark as read */
 		for (tmp=sel_list; tmp; tmp=g_list_next(tmp)) {

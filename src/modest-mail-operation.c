@@ -56,14 +56,6 @@ static void modest_mail_operation_class_init (ModestMailOperationClass *klass);
 static void modest_mail_operation_init       (ModestMailOperation *obj);
 static void modest_mail_operation_finalize   (GObject *obj);
 
-static void     update_folders_cb    (TnyFolderStore *self, 
-				      TnyList *list, 
-				      GError **err, 
-				      gpointer user_data);
-static void     update_folders_status_cb (GObject *obj,
-					  TnyStatus *status,  
-					  gpointer user_data);
-
 static void     update_process_msg_status_cb (GObject *obj,
 					      TnyStatus *status,  
 					      gpointer user_data);
@@ -399,6 +391,13 @@ cleanup:
 		g_object_unref (G_OBJECT(folder));
 }
 
+typedef struct 
+{
+	ModestMailOperation *mail_op;
+	TnyStoreAccount *account;
+	gpointer user_data;
+} UpdateAccountInfo;
+
 static void
 recurse_folders (TnyFolderStore *store, TnyFolderStoreQuery *query, TnyList *all_folders)
 {
@@ -413,9 +412,7 @@ recurse_folders (TnyFolderStore *store, TnyFolderStoreQuery *query, TnyList *all
 		TnyFolderStore *folder = (TnyFolderStore*) tny_iterator_get_current (iter);
 
 		tny_list_prepend (all_folders, G_OBJECT (folder));
-
-		recurse_folders (folder, query, all_folders);
-	    
+		recurse_folders (folder, query, all_folders);    
  		g_object_unref (G_OBJECT (folder));
 
 		tny_iterator_next (iter);
@@ -424,131 +421,144 @@ recurse_folders (TnyFolderStore *store, TnyFolderStoreQuery *query, TnyList *all
 	 g_object_unref (G_OBJECT (folders));
 }
 
-static void
-update_folders_status_cb (GObject *obj,
-			  TnyStatus *status,  
-			  gpointer user_data)
+/* 
+ * Used by update_account_thread to emit the signal from the main
+ * loop. We call it inside an idle call to achieve that 
+ */
+static gboolean
+notify_update_account_observers (gpointer data)
 {
-	ModestMailOperation *self;
-	ModestMailOperationPrivate *priv;
+	ModestMailOperation *mail_op = MODEST_MAIL_OPERATION (data);
 
-	g_return_if_fail (status != NULL);
-	g_return_if_fail (status->code == TNY_FOLDER_STATUS_CODE_REFRESH);
+	g_signal_emit (G_OBJECT (mail_op), signals[PROGRESS_CHANGED_SIGNAL], 0, NULL);
+	g_object_unref (mail_op);
 
-	/* Temporary FIX: useful when tinymail send us status
-	   information *after* calling the function callback */
-	if (!MODEST_IS_MAIL_OPERATION (user_data))
-		return;
-
-	self = MODEST_MAIL_OPERATION (user_data);
-	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
-
-	if ((status->position == 1) && (status->of_total == 100))
-		return;
-
-	priv->done = status->position;
-	priv->total = status->of_total;
-
-	g_signal_emit (G_OBJECT (self), signals[PROGRESS_CHANGED_SIGNAL], 0, NULL);
+	return FALSE;
 }
 
-static void
-update_folders_cb (TnyFolderStore *folder_store, TnyList *list, GError **err, gpointer user_data)
+/* 
+ * Used by update_account_thread to notify the queue from the main
+ * loop. We call it inside an idle call to achieve that
+ */
+static gboolean
+notify_update_account_queue (gpointer data)
 {
-	ModestMailOperation *self;
-	ModestMailOperationPrivate *priv;
-	TnyIterator *iter;
-	TnyList *all_folders;
-	
-	self  = MODEST_MAIL_OPERATION (user_data);
-	priv  = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
+	ModestMailOperation *mail_op = MODEST_MAIL_OPERATION (data);
 
-	/* g_message (__FUNCTION__); */
-	
-	if (*err) {
-		priv->error = g_error_copy (*err);
+	modest_mail_operation_queue_remove (modest_runtime_get_mail_operation_queue (), 
+					    mail_op);
+	g_object_unref (mail_op);
+
+	return FALSE;
+}
+
+static gpointer
+update_account_thread (gpointer thr_user_data)
+{
+	UpdateAccountInfo *info;
+	TnyList *all_folders = NULL;
+	TnyIterator *iter = NULL;
+	TnyFolderStoreQuery *query = NULL;
+	ModestMailOperationPrivate *priv;
+
+	info = (UpdateAccountInfo *) thr_user_data;
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(info->mail_op);
+
+	/* Get all the folders We can do it synchronously because
+	   we're already running in a different thread than the UI */
+	all_folders = tny_simple_list_new ();
+	query = tny_folder_store_query_new ();
+	tny_folder_store_query_add_item (query, NULL, TNY_FOLDER_STORE_QUERY_OPTION_SUBSCRIBED);
+	tny_folder_store_get_folders (TNY_FOLDER_STORE (info->account),
+				      all_folders,
+				      query,
+				      &(priv->error));
+	if (priv->error) {
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 		goto out;
 	}
 
-	/* Get all the folders We can do it synchronously because
-	   we're already running in a different thread than the UI */
-	all_folders = tny_list_copy (list);
 	iter = tny_list_create_iterator (all_folders);
 	while (!tny_iterator_is_done (iter)) {
 		TnyFolderStore *folder = TNY_FOLDER_STORE (tny_iterator_get_current (iter));
 
-		recurse_folders (folder, NULL, all_folders);
+		recurse_folders (folder, query, all_folders);
 		tny_iterator_next (iter);
 	}
 	g_object_unref (G_OBJECT (iter));
 
+	priv->total = tny_list_get_length (all_folders);
+	priv->done = 0;
+
 	/* Refresh folders */
 	iter = tny_list_create_iterator (all_folders);
-	priv->total = tny_list_get_length (all_folders);
-
 	while (!tny_iterator_is_done (iter) && !priv->error) {
 
 		TnyFolderStore *folder = TNY_FOLDER_STORE (tny_iterator_get_current (iter));
 
 		/* Refresh the folder */
 		tny_folder_refresh (TNY_FOLDER (folder), &(priv->error));
+		priv->done++;
 
 		if (priv->error) {
 			priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
-		} else {	
-			/* Update status and notify */
+		} else {
+			/* Update status and notify. We need to call
+			   the notification with an idle in order to
+			   call it from the main loop. We need that in
+			   order not to get into trouble with Gtk+ */
 			priv->done++;
-			g_signal_emit (G_OBJECT (self), signals[PROGRESS_CHANGED_SIGNAL], 0, NULL);
+			g_idle_add (notify_update_account_observers, g_object_ref (info->mail_op));
 		}
-    
+
 		g_object_unref (G_OBJECT (folder));
-	    
 		tny_iterator_next (iter);
 	}
-
 	g_object_unref (G_OBJECT (iter));
- out:
-	g_object_unref (G_OBJECT (list));
 
 	/* Check if the operation was a success */
 	if (priv->done == priv->total && !priv->error)
 		priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
 
-	/* Free */
-	g_object_unref (G_OBJECT (folder_store));
-
+ out:
 	/* Notify the queue */
-	modest_mail_operation_queue_remove (modest_runtime_get_mail_operation_queue (), self);
+	g_idle_add (notify_update_account_queue, g_object_ref (info->mail_op));
+
+	/* Frees */
+	g_object_unref (query);
+	g_object_unref (all_folders);
+	g_object_unref (info->mail_op);
+	g_object_unref (info->account);
+	g_slice_free (UpdateAccountInfo, info);
+
+	return NULL;
 }
 
 gboolean
 modest_mail_operation_update_account (ModestMailOperation *self,
 				      TnyStoreAccount *store_account)
 {
+	GThread *thread;
+	UpdateAccountInfo *info;
 	ModestMailOperationPrivate *priv;
-	TnyList *folders;
 
 	g_return_val_if_fail (MODEST_IS_MAIL_OPERATION (self), FALSE);
 	g_return_val_if_fail (TNY_IS_STORE_ACCOUNT(store_account), FALSE);
 
-	/* Pick async call reference */
-	g_object_ref (store_account);
-
+	/* Init mail operation */
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
-
 	priv->total = 0;
 	priv->done  = 0;
 	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
 	
-	/* Get subscribed folders & refresh them */
-    	folders = TNY_LIST (tny_simple_list_new ());
+	/* Create the helper object */
+	info = g_slice_new (UpdateAccountInfo);
+	info->mail_op = g_object_ref (self);
+	info->account = g_object_ref (store_account);
+	info->user_data = NULL;
 
-	/* g_message ("tny_folder_store_get_folders_async"); */
-	tny_folder_store_get_folders_async (TNY_FOLDER_STORE (store_account),
-					    folders, update_folders_cb, NULL, 
-					    update_folders_status_cb, self);
-	
+	thread = g_thread_create (update_account_thread, info, FALSE, NULL);
+
 	return TRUE;
 }
 

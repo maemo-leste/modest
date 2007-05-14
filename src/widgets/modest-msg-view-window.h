@@ -91,7 +91,10 @@ ModestWindow*   modest_msg_view_window_new         (TnyMsg *msg, const gchar *ac
  *
  * Returns: a new #ModestMsgViewWindow, or NULL in case of error
  */
-ModestWindow*   modest_msg_view_window_new_with_header_model (TnyMsg *msg, const gchar *account, GtkTreeModel *model, GtkTreeIter iter);
+ModestWindow*   modest_msg_view_window_new_with_header_model (TnyMsg *msg, 
+							      const gchar *account, 
+							      GtkTreeModel *model, 
+							      GtkTreeRowReference *row_reference);
 
 
 /**

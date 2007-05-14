@@ -320,7 +320,7 @@ ModestWindow*
 modest_msg_view_window_new_with_header_model (TnyMsg *msg, 
 					      const gchar *account, 
 					      GtkTreeModel *model, 
-					      GtkTreeIter iter)
+					      GtkTreeRowReference *row_reference)
 {
 	/* Currently we simply redirect to new constructor. It should store a
 	   reference to the header list model, to enable next/prev message
