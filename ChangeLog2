@@ -1,5 +1,12 @@
 2007-05-14  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-tny-account-store.c: (modest_tny_account_store_alert):
+	Show the detailed internal camel error message when an error happens 
+	during the configuration, so that our testers can give us more clues.
+	For instance, in projects.maemo.org bug NB#56910 .
+
+2007-05-14  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/modest-tny-account.c:
 	(modest_tny_account_new_from_server_account): Adapt to changed tinymail API: 
 	change tny_account_set_mech() to tny_account_set_secure_auth_mech().

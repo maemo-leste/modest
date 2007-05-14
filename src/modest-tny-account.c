@@ -226,8 +226,8 @@ modest_tny_account_new_from_server_account (ModestAccountMgr *account_mgr,
 			auth_mech_name = MODEST_ACCOUNT_AUTH_CRAMMD5;
 			
 		default:
-			g_warning ("%s: Unhandled secure authentication setting for "
-				"account=%s", __FUNCTION__, account_data->account_name);
+			g_warning ("%s: Unhandled secure authentication setting %d for "
+				"account=%s", __FUNCTION__, account_data->secure_auth, account_data->account_name);
 			break;
 		}
 		

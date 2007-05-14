@@ -641,8 +641,8 @@ modest_tny_account_store_alert (TnyAccountStore *self, TnyAlertType type,
 	/* printf("DEBUG: %s: error->message=%s\n", __FUNCTION__, error->message); */
 	
 
-	
-	const gchar *prompt = NULL;
+	/* const gchar *prompt = NULL; */
+	gchar *prompt = NULL;
 	switch (error->code)
 	{
 		case TNY_ACCOUNT_ERROR_TRY_CONNECT:
@@ -653,7 +653,12 @@ modest_tny_account_store_alert (TnyAccountStore *self, TnyAlertType type,
 		case TNY_ACCOUNT_STORE_ERROR_UNKNOWN_ALERT: 
 		    g_debug ("%s: Handling GError domain=%d, code=%d, message=%s", 
 				__FUNCTION__, error->domain, error->code, error->message);
-			prompt = _("Modest account not yet fully configured.");
+			
+			/* TODO: Remove the internal error message for the real release.
+			 * This is just so the testers can give us more information: */
+			/* prompt = _("Modest account not yet fully configured."); */
+			prompt = g_strdup_printf(_("Modest account not yet fully configured. Error=%s"), 
+				error->message);
 			break;
 		default:
 			g_warning ("%s: Unhandled GError code: %d, message=%s", 
@@ -695,6 +700,9 @@ modest_tny_account_store_alert (TnyAccountStore *self, TnyAlertType type,
 		retval = TRUE;
 
 	gtk_widget_destroy (dialog);
+	
+	/* TODO: Don't free this when we no longer strdup the message for testers. */
+	g_free (prompt);
 
 	return retval;
 }
