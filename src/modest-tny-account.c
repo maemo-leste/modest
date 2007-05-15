@@ -319,8 +319,8 @@ modest_tny_account_new_from_account (ModestAccountMgr *account_mgr, const gchar 
 	tny_account_set_pass_func (tny_account,
 				   get_pass_func ? get_pass_func: get_pass_dummy);
 
-	/* this name is what shows up in the folder view -- so for some POP/IMAP/... server
-	 * account, we set its name to the acount of which it is part */
+	/* This name is what shows up in the folder view -- so for some POP/IMAP/... server
+	 * account, we set its name to the account of which it is part. */
 	if (account_data->display_name)
 		tny_account_set_name (tny_account, account_data->display_name); 
 

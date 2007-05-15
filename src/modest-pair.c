@@ -28,6 +28,7 @@
  */
 
 #include "modest-pair.h"
+#include <string.h> /* For strcmp() */
 
 ModestPair*
 modest_pair_new     (gpointer first, gpointer second, gboolean own)
@@ -69,4 +70,23 @@ modest_pair_list_free (ModestPairList *pairs)
 		cursor = cursor->next;
 	}
 	g_slist_free (pairs);
+}
+
+static gint on_pair_compare_as_string(gconstpointer a, gconstpointer b)
+{
+	const ModestPair* pair_a = (const ModestPair*)a;
+	const ModestPair* pair_b = (const ModestPair*)b;
+	
+	return strcmp ((const gchar*)pair_a->first, (const gchar*)pair_b->first);
+}
+
+ModestPair* modest_pair_list_find_by_first_as_string  (ModestPairList *pairs, 
+	const gchar* first)
+{
+	GSList *matching = g_slist_find_custom (pairs, (gconstpointer)first, 
+		on_pair_compare_as_string);
+	if (matching)
+		return (ModestPair*)matching->data;
+	else
+		return NULL;
 }

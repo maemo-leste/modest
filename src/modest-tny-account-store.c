@@ -738,7 +738,7 @@ modest_tny_account_store_set_get_pass_func (ModestTnyAccountStore *self,
 }
 
 TnySessionCamel*
-tny_account_store_get_session  (TnyAccountStore *self)
+modest_tny_account_store_get_session  (TnyAccountStore *self)
 {
 	g_return_val_if_fail (self, NULL);
 	return MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE (self)->session;

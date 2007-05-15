@@ -1,3 +1,22 @@
+2007-05-15  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/modest-pair.h: 
+	* src/modest-pair.c: Added modest_pair_list_find_by_first_as_string(),
+	so we can get the second based on the first.
+
+	* src/maemo/modest-account-settings-dialog.h: 
+	* src/maemo/modest-account-settings-dialog.c:
+	Added get_supported_secure_authentication_methods(), though it is mostly 
+	commented-out for now until the necessary API is committed to tinymail.
+	(modest_account_settings_dialog_set_account_name),
+	(save_configuration): Request the supported authentication methods from the 
+	server, so we can choose a working method.
+	
+	* src/modest-tny-account-store.h:
+	* src/modest-tny-account-store.c:
+	(modest_tny_account_store_get_session): Rename from 
+	tny_account_store_get_session().
+
 2007-05-14  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/modest-protocol-info.h: Split the ModestProtocol enum 

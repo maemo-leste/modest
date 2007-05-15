@@ -147,7 +147,7 @@ TnyAccount* modest_tny_account_store_get_transport_account_for_open_connection (
  *
  * Returns: a tny-camel-session
  */
-TnySessionCamel*    tny_account_store_get_session    (TnyAccountStore *self);
+TnySessionCamel*    modest_tny_account_store_get_session    (TnyAccountStore *self);
 
 
 G_END_DECLS

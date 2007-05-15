@@ -53,6 +53,11 @@
 #include "maemo/modest-connection-specific-smtp-window.h"
 #include "maemo/modest-signature-editor-dialog.h"
 #include "widgets/modest-ui-constants.h"
+
+#include <tny-camel-transport-account.h>
+#include <tny-camel-imap-store-account.h>
+#include <tny-camel-pop-store-account.h>
+
 #include <gconf/gconf-client.h>
 #include <string.h> /* For strlen(). */
 
@@ -1031,6 +1036,9 @@ void modest_account_settings_dialog_set_account_name (ModestAccountSettingsDialo
 	}
 		
 	if (incoming_account) {
+		/* Remember this for later: */
+		dialog->incoming_protocol = incoming_account->proto;
+		
 		gtk_entry_set_text( GTK_ENTRY (dialog->entry_user_username),
 			incoming_account->username ? incoming_account->username : "");
 		gtk_entry_set_text( GTK_ENTRY (dialog->entry_user_password), 
@@ -1067,6 +1075,9 @@ void modest_account_settings_dialog_set_account_name (ModestAccountSettingsDialo
 	
 	ModestServerAccountData *outgoing_account = account_data->transport_account;
 	if (outgoing_account) {
+		/* Remember this for later: */
+		dialog->outgoing_protocol = outgoing_account->proto;
+		
 		gtk_entry_set_text( GTK_ENTRY (dialog->entry_outgoingserver), 
 			outgoing_account->hostname ? outgoing_account->hostname : "");
 		
@@ -1107,6 +1118,9 @@ void modest_account_settings_dialog_set_account_name (ModestAccountSettingsDialo
 	/* Unset the modified flag so we can detect changes later: */
 	dialog->modified = FALSE;
 }
+
+static GList* get_supported_secure_authentication_methods (ModestProtocol proto, 
+	const gchar* hostname, gint port, GtkWindow *parent_window);
 
 static gboolean
 save_configuration (ModestAccountSettingsDialog *dialog)
@@ -1174,26 +1188,43 @@ save_configuration (ModestAccountSettingsDialog *dialog)
 	const gchar* password = gtk_entry_get_text (GTK_ENTRY (dialog->entry_user_password));
 	modest_server_account_set_password (dialog->account_manager, incoming_account_name, password);
 			
-	/* The UI spec says:
-	 * If secure authentication is unchecked, allow sending username and password also as plain text.
-	 * If secure authentication is checked, require one of the secure methods during connection: SSL, TLS, CRAM-MD5 etc. 
-  	 * TODO: Do we need to discover which of these (SSL, TLS, CRAM-MD5) is supported?
-     */
-	const ModestAuthProtocol protocol_authentication_incoming = gtk_toggle_button_get_active 
-		(GTK_TOGGLE_BUTTON (dialog->checkbox_incoming_auth)) 
-			? MODEST_PROTOCOL_AUTH_CRAMMD5
-			: MODEST_PROTOCOL_AUTH_PASSWORD;
-	modest_server_account_set_secure_auth (dialog->account_manager, incoming_account_name, protocol_authentication_incoming);
-			
-	const ModestConnectionProtocol protocol_security_incoming = modest_serversecurity_combo_box_get_active_serversecurity (
-		MODEST_SERVERSECURITY_COMBO_BOX (dialog->combo_incoming_security));
-	modest_server_account_set_security (dialog->account_manager, incoming_account_name, protocol_security_incoming);
-	
 	/* port: */
 	gint port_num = hildon_number_editor_get_value (
 			HILDON_NUMBER_EDITOR (dialog->entry_incoming_port));
 	modest_account_mgr_set_int (dialog->account_manager, incoming_account_name,
 			MODEST_ACCOUNT_PORT, port_num, TRUE /* server account */);
+			
+	/* The UI spec says:
+	 * If secure authentication is unchecked, allow sending username and password also as plain text.
+	 * If secure authentication is checked, require one of the secure methods during connection: SSL, TLS, CRAM-MD5 etc. 
+	 */
+	ModestAuthProtocol protocol_authentication_incoming = 
+		MODEST_PROTOCOL_AUTH_PASSWORD;
+	if (gtk_toggle_button_get_active (
+			GTK_TOGGLE_BUTTON (dialog->checkbox_incoming_auth))) {
+		GList *list_auth_methods = 
+			get_supported_secure_authentication_methods (dialog->incoming_protocol, 
+				hostname, port_num, GTK_WINDOW (dialog));	
+		if (list_auth_methods) {
+			/* Use the first supported method.
+			 * TODO: Should we prioritize them, to prefer a particular one? */
+			protocol_authentication_incoming = 
+				(ModestAuthProtocol)(GPOINTER_TO_INT(list_auth_methods->data));
+			g_list_free (list_auth_methods);
+		}
+		else
+			g_warning ("%s: get_supported_secure_authentication_methods() returned NULL.\n", __FUNCTION__);
+		
+	}
+	
+	modest_server_account_set_secure_auth (dialog->account_manager, incoming_account_name, protocol_authentication_incoming);
+	
+	
+	const ModestConnectionProtocol protocol_security_incoming = modest_serversecurity_combo_box_get_active_serversecurity (
+		MODEST_SERVERSECURITY_COMBO_BOX (dialog->combo_incoming_security));
+	modest_server_account_set_security (dialog->account_manager, incoming_account_name, protocol_security_incoming);
+	
+	
 		
 	g_free (incoming_account_name);
 	
@@ -1223,7 +1254,7 @@ save_configuration (ModestAccountSettingsDialog *dialog)
 	const ModestAuthProtocol protocol_authentication_outgoing = modest_secureauth_combo_box_get_active_secureauth (
 		MODEST_SECUREAUTH_COMBO_BOX (dialog->combo_outgoing_auth));
 	modest_server_account_set_secure_auth (dialog->account_manager, outgoing_account_name, protocol_authentication_outgoing);	
-		
+	
 	/* port: */
 	port_num = hildon_number_editor_get_value (
 			HILDON_NUMBER_EDITOR (dialog->entry_outgoing_port));
@@ -1340,6 +1371,161 @@ show_ok (GtkWindow *parent_window, const gchar* text)
 	gtk_dialog_run (dialog);
 	gtk_widget_destroy (GTK_WIDGET (dialog));
 }
+
+/* TODO: Enable this when tinymail has the API: */
+#if 0
+typedef struct 
+{
+	gboolean finished;
+	GList *result;
+} ModestGetSupportedAuthInfo;
+
+static void on_camel_account_get_supported_secure_authentication_status (
+	GObject *self, TnyStatus *status, gpointer user_data)
+{
+	printf ("DEBUG: %s.\n", __FUNCTION__);
+}
+
+static void
+on_camel_account_get_supported_secure_authentication (
+  TnyCamelAccount *self, gboolean cancelled,
+  GList *auth_types, GError **err, 
+  gpointer user_data)
+{
+	printf ("DEBUG: %s.\n", __FUNCTION__);
+		
+	ModestGetSupportedAuthInfo *info = (ModestGetSupportedAuthInfo*)user_data;
+	g_return_if_fail (info);
+	
+	if (!auth_types) {
+		printf ("DEBUG: %s: auth_types is NULL.\n", __FUNCTION__);
+		info->finished = TRUE; /* We are blocking, waiting for this. */
+		return;
+	}
+		
+	ModestPairList* pairs = modest_protocol_info_get_protocol_auth_pair_list ();
+
+	/* Get the enum value for the strings: */
+	GList *result = NULL;
+	GList* iter = auth_types;
+	while (iter) {
+		const gchar *auth_name = (const gchar*)iter->data;
+		printf("DEBUG: %s: auth_name=%s\n", __FUNCTION__, auth_name);
+		ModestPair *matching = modest_pair_list_find_by_first_as_string (pairs, 
+			auth_name);
+		if (matching)
+			g_list_append (result, GINT_TO_POINTER((ModestSecureAuthentication)matching->second));
+				
+		iter = g_list_next (iter);	
+	}
+	
+	g_list_free (auth_types);
+	
+	modest_pair_list_free (pairs);
+	
+	info->result = result;
+	info->finished = TRUE; /* We are blocking, waiting for this. */
+}
+#endif
+
+
+static GList* get_supported_secure_authentication_methods (ModestProtocol proto, 
+	const gchar* hostname, gint port, GtkWindow *parent_window)
+{
+	return NULL;
+	
+/* TODO: Enable this when tinymail has the API: */
+#if 0
+	g_return_val_if_fail (proto != MODEST_PROTOCOL_UNKNOWN, NULL);
+	
+	/*
+	result = g_list_append (result, GINT_TO_POINTER (MODEST_PROTOCOL_AUTH_CRAMMD5));
+	*/
+	
+	/* Create a TnyCamelAccount so we can use 
+	 * tny_camel_account_get_supported_secure_authentication(): */
+	TnyAccount * tny_account = NULL;
+	switch (proto) {
+	case MODEST_PROTOCOL_TRANSPORT_SENDMAIL:
+	case MODEST_PROTOCOL_TRANSPORT_SMTP:
+		tny_account = TNY_ACCOUNT(tny_camel_transport_account_new ()); break;
+	case MODEST_PROTOCOL_STORE_POP:
+		tny_account = TNY_ACCOUNT(tny_camel_pop_store_account_new ()); break;
+	case MODEST_PROTOCOL_STORE_IMAP:
+		tny_account = TNY_ACCOUNT(tny_camel_imap_store_account_new ()); break;
+	case MODEST_PROTOCOL_STORE_MAILDIR:
+	case MODEST_PROTOCOL_STORE_MBOX:
+		tny_account = TNY_ACCOUNT(tny_camel_store_account_new()); break;
+	default:
+		tny_account = NULL;
+	}
+	
+	if (!tny_account) {
+		g_printerr ("%s could not create tny account.", __FUNCTION__);
+		return NULL;
+	}
+	
+	/* Set proto, so that the prepare_func() vfunc will work when we call 
+	 * set_session(): */
+	 /* TODO: Why isn't this done in account_new()? */
+	tny_account_set_proto (tny_account,
+			       modest_protocol_info_get_protocol_name(proto));
+			       
+	/* Set the session for the account, so we can use it: */
+	ModestTnyAccountStore *account_store = modest_runtime_get_account_store ();
+	TnySessionCamel *session = 
+		modest_tny_account_store_get_session (TNY_ACCOUNT_STORE (account_store));
+	g_return_val_if_fail (session, NULL);
+	tny_camel_account_set_session (TNY_CAMEL_ACCOUNT(tny_account), session);
+	
+	tny_account_set_hostname (tny_account, hostname);
+	
+	if(port > 0)
+		tny_account_set_port (tny_account, port);
+		
+
+	/* Ask camel to ask the server, asynchronously: */
+	ModestGetSupportedAuthInfo *info = g_slice_new (ModestGetSupportedAuthInfo);
+	info->finished = FALSE;
+	info->result = NULL;
+	
+	GtkDialog *dialog = GTK_DIALOG (hildon_note_new_information (parent_window, 
+		_("Asking the server for supported secure authentication mechanisms.")));
+	gtk_dialog_run (dialog);
+	
+	printf ("DEBUG: %s: STARTING.\n", __FUNCTION__);
+	tny_camel_account_get_supported_secure_authentication (
+		TNY_CAMEL_ACCOUNT (tny_account),
+		on_camel_account_get_supported_secure_authentication,
+		on_camel_account_get_supported_secure_authentication_status,
+		info);
+		
+	printf ("DEBUG: %s: AFTER STARTING.\n", __FUNCTION__);
+		
+	/* Block until the callback has been called,
+	 * driving the main context, so that the (idle handler) callback can be 
+	 * called, and so that our dialog is clickable: */
+	while (!(info->finished)) {
+		printf ("DEBUG: %s: finished is FALSE.\n", __FUNCTION__);
+		if (g_main_context_pending (NULL)) {
+			printf ("DEBUG: iterating\n");
+			g_main_context_iteration (NULL, FALSE);
+			printf ("DEBUG: after iterating\n");
+		}
+	}
+	
+	printf ("DEBUG: %s: FINISHED.\n", __FUNCTION__);
+	
+	gtk_widget_destroy (GTK_WIDGET (dialog));
+		
+	GList *result = info->result;
+	g_slice_free (ModestGetSupportedAuthInfo, info);
+	info = NULL;
+	
+	return result;
+#endif
+}
+
 
 
 

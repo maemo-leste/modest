@@ -76,6 +76,19 @@ void        modest_pair_free       (ModestPair *self);
  */
 void  modest_pair_list_free (ModestPairList *pairs);
 
+/**
+ * modest_pair_list_find_by_first
+ * @pairs: A valid ModestPairList
+ * @first: The first element of the pair to be found.
+ * @func: The function to call for each element. It should return 0 when the desired element is found.
+ *
+ * Find an element with a matching first entry.
+ *
+ * Returns: a previously allocated ModestPair instance, or NULL if none was found.
+ */
+ModestPair* modest_pair_list_find_by_first_as_string  (ModestPairList *pairs, 
+	const gchar* first);
+
 G_END_DECLS
 
 #endif /* __MODEST_PAIR_H__ */
