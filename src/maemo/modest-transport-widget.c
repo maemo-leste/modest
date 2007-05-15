@@ -49,7 +49,7 @@ enum {
 
 typedef struct _ModestTransportWidgetPrivate ModestTransportWidgetPrivate;
 struct _ModestTransportWidgetPrivate {
-	ModestProtocol proto;
+	ModestTransportStoreProtocol proto;
 	GtkWidget *servername;
 	GtkWidget *username;
 	GtkWidget *auth;
@@ -113,7 +113,7 @@ modest_transport_widget_init (ModestTransportWidget *obj)
 	ModestTransportWidgetPrivate *priv;
 	priv = MODEST_TRANSPORT_WIDGET_GET_PRIVATE(obj); 
 	
-	priv->proto = MODEST_PROTOCOL_UNKNOWN;
+	priv->proto = MODEST_PROTOCOL_TRANSPORT_STORE_UNKNOWN;
 }
 
 static void
@@ -185,7 +185,7 @@ smtp_configuration (ModestTransportWidget *self)
 	gtk_label_set_text (GTK_LABEL(label),_("Connection type:"));
 	gtk_box_pack_start (GTK_BOX(hbox), label, FALSE, FALSE, 0);
 
-	protos = modest_protocol_info_get_protocol_pair_list (MODEST_CONNECTION_PROTOCOL);
+	protos = modest_protocol_info_get_transport_store_protocol_pair_list ();
 	combo  = modest_combo_box_new (protos, g_str_equal);
 	modest_pair_list_free (protos);
 	
@@ -198,7 +198,7 @@ smtp_configuration (ModestTransportWidget *self)
 	gtk_label_set_text (GTK_LABEL(label),_("Authentication:"));
 	gtk_box_pack_start (GTK_BOX(hbox), label, FALSE, FALSE, 6);
 
-	protos = modest_protocol_info_get_protocol_pair_list (MODEST_AUTH_PROTOCOL);
+	protos = modest_protocol_info_get_auth_protocol_pair_list ();
 	combo  = modest_combo_box_new (protos, g_str_equal);
 	modest_pair_list_free (protos);
 	
@@ -212,7 +212,7 @@ smtp_configuration (ModestTransportWidget *self)
 
 
 GtkWidget*
-modest_transport_widget_new (ModestProtocol proto)
+modest_transport_widget_new (ModestTransportStoreProtocol proto)
 {
 	GObject *obj;
 	GtkWidget *w;
@@ -284,12 +284,12 @@ modest_transport_widget_get_servername (ModestTransportWidget *self)
 }
 
 
-ModestProtocol
+ModestTransportStoreProtocol
 modest_transport_widget_get_proto (ModestTransportWidget *self)
 {
 	ModestTransportWidgetPrivate *priv;
 
-	g_return_val_if_fail (self, MODEST_PROTOCOL_UNKNOWN);
+	g_return_val_if_fail (self, MODEST_PROTOCOL_TRANSPORT_STORE_UNKNOWN);
 	priv = MODEST_TRANSPORT_WIDGET_GET_PRIVATE(self);
 
 	return priv->proto;

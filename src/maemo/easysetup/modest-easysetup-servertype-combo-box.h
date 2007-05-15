@@ -45,9 +45,9 @@ GType easysetup_servertype_combo_box_get_type (void);
 
 EasysetupServertypeComboBox* easysetup_servertype_combo_box_new (void);
 
-ModestProtocol easysetup_servertype_combo_box_get_active_servertype (EasysetupServertypeComboBox *combobox);
+ModestTransportStoreProtocol easysetup_servertype_combo_box_get_active_servertype (EasysetupServertypeComboBox *combobox);
 
-gboolean easysetup_servertype_combo_box_set_active_servertype (EasysetupServertypeComboBox *combobox, ModestProtocol servertype);
+gboolean easysetup_servertype_combo_box_set_active_servertype (EasysetupServertypeComboBox *combobox, ModestTransportStoreProtocol servertype);
 
 
 G_END_DECLS

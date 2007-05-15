@@ -158,7 +158,7 @@ modest_secureauth_combo_box_get_active_secureauth (ModestSecureauthComboBox *com
 	if (found) {
 		ModestSecureauthComboBoxPrivate *priv = SECUREAUTH_COMBO_BOX_GET_PRIVATE (combobox);
 
-		ModestProtocol secureauth = MODEST_PROTOCOL_AUTH_NONE;
+		ModestAuthProtocol secureauth = MODEST_PROTOCOL_AUTH_NONE;
 		gtk_tree_model_get (priv->model, &active, MODEL_COL_ID, &secureauth, -1);
 		return secureauth;	
 	}
@@ -196,7 +196,7 @@ on_model_foreach_select_id(GtkTreeModel *model,
 
 /**
  * Selects the specified secureauth, 
- * or MODEST_PROTOCOL_UNKNOWN if no secureauth was selected.
+ * or MODEST_PROTOCOL_AUTH_NONE if no secureauth was selected.
  */
 gboolean
 modest_secureauth_combo_box_set_active_secureauth (ModestSecureauthComboBox *combobox, ModestAuthProtocol secureauth)

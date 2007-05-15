@@ -138,7 +138,7 @@ modest_tny_account_new_from_server_account (ModestAccountMgr *account_mgr,
 	g_return_val_if_fail (account_data, NULL);
 
 	/* sanity checks */
-	if (account_data->proto == MODEST_PROTOCOL_UNKNOWN) {
+	if (account_data->proto == MODEST_PROTOCOL_TRANSPORT_STORE_UNKNOWN) {
 		g_printerr ("modest: '%s' does not provide a protocol\n",
 			    account_data->account_name);
 		return NULL;
@@ -168,9 +168,8 @@ modest_tny_account_new_from_server_account (ModestAccountMgr *account_mgr,
 	tny_account_set_id (tny_account, account_data->account_name);
 
 	/* Proto */
-	tny_account_set_proto (tny_account,
-			       modest_protocol_info_get_protocol_name(account_data->proto,
-								      MODEST_TRANSPORT_STORE_PROTOCOL));
+	const gchar* proto_name = modest_protocol_info_get_transport_store_protocol_name(account_data->proto);
+	tny_account_set_proto (tny_account, proto_name);
 
 	       
 	/* mbox and maildir accounts use a URI instead of the rest: */

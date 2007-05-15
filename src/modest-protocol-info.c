@@ -34,7 +34,7 @@
 
 
 typedef struct {
-	ModestProtocol   proto;
+	gint   proto;
 	const gchar*     name;
 	const gchar*     display_name;
 } ProtocolInfo;
@@ -63,43 +63,13 @@ static const ProtocolInfo AuthProtocolMap[] = {
 };
 
 
-
-static const ProtocolInfo*
-get_map (ModestProtocolType proto_type, guint *size)
+static ModestPairList*
+get_protocol_pair_list (const ProtocolInfo* map, guint size)
 {
-	const ProtocolInfo *map = NULL;
-	
-	switch (proto_type) {
-	case MODEST_TRANSPORT_STORE_PROTOCOL:
-		map   = TransportStoreProtocolMap;
-		*size = G_N_ELEMENTS(TransportStoreProtocolMap);
-		break;
-	case MODEST_CONNECTION_PROTOCOL:
-		map   = ConnectionProtocolMap;
-		*size = G_N_ELEMENTS(ConnectionProtocolMap);
-		break;
-	case MODEST_AUTH_PROTOCOL:
-		map   = AuthProtocolMap;
-		*size = G_N_ELEMENTS(AuthProtocolMap);
-		break;
-	default:
-		g_printerr ("modest: invalide protocol type %d", proto_type);
-	}
-	return map;
-}
-
-
-ModestPairList*
-modest_protocol_info_get_protocol_pair_list (ModestProtocolType proto_type)
-{
-	const ProtocolInfo *map;
-	ModestPairList *proto_list = NULL;
-	guint size;
-	int i;
-
-	map = get_map (proto_type, &size);
 	g_return_val_if_fail (map, NULL);
-	
+
+	ModestPairList *proto_list = NULL;	
+	int i;
 	for (i = 0; i != size; ++i) {
 		const ProtocolInfo info = map[i];
 		proto_list = g_slist_append (proto_list,
@@ -112,17 +82,38 @@ modest_protocol_info_get_protocol_pair_list (ModestProtocolType proto_type)
 }
 
 
-ModestProtocol
-modest_protocol_info_get_protocol (const gchar* name, ModestProtocolType proto_type)
+ModestPairList*
+modest_protocol_info_get_transport_store_protocol_pair_list ()
 {
-	const ProtocolInfo *map;
-	guint size;
+	return get_protocol_pair_list (TransportStoreProtocolMap,
+		G_N_ELEMENTS(TransportStoreProtocolMap));
+}
+
+ModestPairList*
+modest_protocol_info_get_auth_protocol_pair_list ()
+{
+	return get_protocol_pair_list (AuthProtocolMap,
+		G_N_ELEMENTS(AuthProtocolMap));
+}
+
+ModestPairList*
+modest_protocol_info_get_connection_protocol_pair_list ()
+{
+	return get_protocol_pair_list (ConnectionProtocolMap,
+		G_N_ELEMENTS(ConnectionProtocolMap));
+}
+	
+
+ModestTransportStoreProtocol
+modest_protocol_info_get_transport_store_protocol (const gchar* name)
+{
+	const ProtocolInfo *map = TransportStoreProtocolMap;
+	const guint size = G_N_ELEMENTS(TransportStoreProtocolMap);
 	int i;
 	
-	g_return_val_if_fail (name, MODEST_PROTOCOL_UNKNOWN);
+	g_return_val_if_fail (name, MODEST_PROTOCOL_TRANSPORT_STORE_UNKNOWN);
 	
-	map = get_map (proto_type, &size);
-	g_return_val_if_fail (map, MODEST_PROTOCOL_UNKNOWN);
+	g_return_val_if_fail (map, MODEST_PROTOCOL_TRANSPORT_STORE_UNKNOWN);
 
 	for (i = 0; i != size; ++i) {
 		const ProtocolInfo info = map[i];
@@ -130,22 +121,18 @@ modest_protocol_info_get_protocol (const gchar* name, ModestProtocolType proto_t
 			return info.proto;
 	}
 	
-	return MODEST_PROTOCOL_UNKNOWN;
+	return MODEST_PROTOCOL_TRANSPORT_STORE_UNKNOWN;
 }
 
 
 
 /* get either the name or the display_name for the protocol */
 static const gchar*
-get_protocol_string (ModestProtocol proto, gboolean get_name, ModestProtocolType proto_type)
+get_protocol_string (gint proto, const ProtocolInfo* map, guint size, gboolean get_name)
 {
-	const ProtocolInfo *map;
-	guint size;
-	int i;
-		
-	map = get_map (proto_type, &size);
 	g_return_val_if_fail (map, NULL);
 	
+	int i;
 	for (i = 0; i != size; ++i) {
 		ProtocolInfo info = map[i];
 		if (info.proto == proto)
@@ -155,16 +142,24 @@ get_protocol_string (ModestProtocol proto, gboolean get_name, ModestProtocolType
 }
 
 const gchar*
-modest_protocol_info_get_protocol_name (ModestProtocol proto, ModestProtocolType proto_type)
+modest_protocol_info_get_transport_store_protocol_name (ModestTransportStoreProtocol proto)
 {
-	return get_protocol_string (proto, TRUE, proto_type);
+	return get_protocol_string (proto, TransportStoreProtocolMap,
+		G_N_ELEMENTS(TransportStoreProtocolMap), TRUE);
 }
 
+const gchar*
+modest_protocol_info_get_auth_protocol_name (ModestAuthProtocol proto)
+{
+	return get_protocol_string (proto, AuthProtocolMap,
+		G_N_ELEMENTS(AuthProtocolMap), TRUE);
+}
 
 const gchar*
-modest_protocol_info_get_protocol_display_name (ModestProtocol proto, ModestProtocolType proto_type)
+modest_protocol_info_get_connection_protocol_name (ModestAuthProtocol proto)
 {
-	return get_protocol_string (proto, FALSE, proto_type);
+	return get_protocol_string (proto, ConnectionProtocolMap,
+		G_N_ELEMENTS(ConnectionProtocolMap), TRUE);
 }
 
 

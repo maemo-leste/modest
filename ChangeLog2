@@ -1,5 +1,40 @@
 2007-05-15  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-protocol-info.c:
+	* src/modest-protocol-info.h: Adde enum-specific get functions, 
+	instead of using a ModestProtocolType enum parameter.
+	
+	* src/gnome/modest-account-assistant.c:
+	* src/gnome/modest-store-widget.c:
+	* src/gnome/modest-store-widget.h:
+	* src/gnome/modest-transport-widget.c:
+	* src/gnome/modest-transport-widget.h:
+	* src/maemo/easysetup/modest-easysetup-servertype-combo-box.c:
+	* src/maemo/easysetup/modest-easysetup-servertype-combo-box.h:
+	* src/maemo/easysetup/modest-easysetup-wizard.c:
+	* src/maemo/modest-account-settings-dialog.c:
+	* src/maemo/modest-account-settings-dialog.h:
+	* src/maemo/modest-store-widget.c:
+	* src/maemo/modest-store-widget.h:
+	* src/maemo/modest-transport-widget.c:
+	* src/maemo/modest-transport-widget.h:
+	* src/modest-account-mgr-helpers.c:
+	* src/modest-account-mgr-helpers.h:
+	* src/modest-account-mgr.c:
+	* src/modest-account-mgr.h:
+	* src/modest-tny-account.c:
+	* src/modest-tny-folder.c: 
+	* src/widgets/modest-account-view.c:
+	* src/widgets/modest-retrieve-combo-box.c:
+	* src/widgets/modest-retrieve-combo-box.h:
+	* src/widgets/modest-secureauth-combo-box.c:
+	* src/widgets/modest-serversecurity-combo-box.c:
+	* src/widgets/modest-serversecurity-combo-box.h:
+	* tests/check_account-mgr.c: 
+	Use the specific functions, and use the re-renamed enum values for GNOME too.
+
+2007-05-15  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/modest-pair.h: 
 	* src/modest-pair.c: Added modest_pair_list_find_by_first_as_string(),
 	so we can get the second based on the first.

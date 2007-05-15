@@ -43,8 +43,8 @@ typedef struct {
 	
 	gboolean modified;
 	gchar * account_name; /* This may not change. It is not user visible. */
-	ModestProtocol incoming_protocol; /* This may not change. */
-	ModestProtocol outgoing_protocol; /* This may not change. */
+	ModestTransportStoreProtocol incoming_protocol; /* This may not change. */
+	ModestTransportStoreProtocol outgoing_protocol; /* This may not change. */
 	gchar * original_account_title;
 	
 	GtkWidget *page_account_details;

@@ -481,7 +481,7 @@ create_page_user_details (ModestAccountSettingsDialog *self)
 /** Change the caption title for the incoming server, 
  * as specified in the UI spec:
  */
-static void update_incoming_server_title (ModestAccountSettingsDialog *self, ModestProtocol protocol)
+static void update_incoming_server_title (ModestAccountSettingsDialog *self, ModestTransportStoreProtocol protocol)
 {
 	const gchar* type = 
 		(protocol == MODEST_PROTOCOL_STORE_POP ? 
@@ -500,7 +500,7 @@ static void update_incoming_server_title (ModestAccountSettingsDialog *self, Mod
 /** Change the caption title for the incoming server, 
  * as specified in the UI spec:
  */
-static void update_incoming_server_security_choices (ModestAccountSettingsDialog *self, ModestProtocol protocol)
+static void update_incoming_server_security_choices (ModestAccountSettingsDialog *self, ModestTransportStoreProtocol protocol)
 {
 	/* Fill the combo with appropriately titled choices for POP or IMAP. */
 	/* The choices are the same, but the titles are different, as in the UI spec. */
@@ -1119,7 +1119,7 @@ void modest_account_settings_dialog_set_account_name (ModestAccountSettingsDialo
 	dialog->modified = FALSE;
 }
 
-static GList* get_supported_secure_authentication_methods (ModestProtocol proto, 
+static GList* get_supported_secure_authentication_methods (ModestTransportStoreProtocol proto, 
 	const gchar* hostname, gint port, GtkWindow *parent_window);
 
 static gboolean
@@ -1414,7 +1414,7 @@ on_camel_account_get_supported_secure_authentication (
 		ModestPair *matching = modest_pair_list_find_by_first_as_string (pairs, 
 			auth_name);
 		if (matching)
-			g_list_append (result, GINT_TO_POINTER((ModestSecureAuthentication)matching->second));
+			g_list_append (result, GINT_TO_POINTER((ModestConnectionProtocol)matching->second));
 				
 		iter = g_list_next (iter);	
 	}
@@ -1429,14 +1429,14 @@ on_camel_account_get_supported_secure_authentication (
 #endif
 
 
-static GList* get_supported_secure_authentication_methods (ModestProtocol proto, 
+static GList* get_supported_secure_authentication_methods (ModestTransportStoreProtocol proto, 
 	const gchar* hostname, gint port, GtkWindow *parent_window)
 {
 	return NULL;
 	
 /* TODO: Enable this when tinymail has the API: */
 #if 0
-	g_return_val_if_fail (proto != MODEST_PROTOCOL_UNKNOWN, NULL);
+	g_return_val_if_fail (proto != MODEST_PROTOCOL_TRANSPORT_STORE_UNKNOWN, NULL);
 	
 	/*
 	result = g_list_append (result, GINT_TO_POINTER (MODEST_PROTOCOL_AUTH_CRAMMD5));
@@ -1469,7 +1469,7 @@ static GList* get_supported_secure_authentication_methods (ModestProtocol proto,
 	 * set_session(): */
 	 /* TODO: Why isn't this done in account_new()? */
 	tny_account_set_proto (tny_account,
-			       modest_protocol_info_get_protocol_name(proto));
+			       modest_protocol_info_get_transport_store_protocol_name(proto));
 			       
 	/* Set the session for the account, so we can use it: */
 	ModestTnyAccountStore *account_store = modest_runtime_get_account_store ();

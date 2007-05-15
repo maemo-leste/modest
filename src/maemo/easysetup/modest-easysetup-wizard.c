@@ -510,7 +510,7 @@ static GtkWidget* create_page_complete_easysetup (ModestEasysetupWizardDialog *s
  */
 static void update_incoming_server_title (ModestEasysetupWizardDialog *self)
 {
-	const ModestProtocol protocol = easysetup_servertype_combo_box_get_active_servertype (
+	const ModestTransportStoreProtocol protocol = easysetup_servertype_combo_box_get_active_servertype (
 		EASYSETUP_SERVERTYPE_COMBO_BOX (self->combo_incoming_servertype));
 	const gchar* type = 
 		(protocol == MODEST_PROTOCOL_STORE_POP ? 
@@ -531,7 +531,7 @@ static void update_incoming_server_title (ModestEasysetupWizardDialog *self)
  */
 static void update_incoming_server_security_choices (ModestEasysetupWizardDialog *self)
 {
-	const ModestProtocol protocol = easysetup_servertype_combo_box_get_active_servertype (
+	const ModestTransportStoreProtocol protocol = easysetup_servertype_combo_box_get_active_servertype (
 		EASYSETUP_SERVERTYPE_COMBO_BOX (self->combo_incoming_servertype));
 	
 	/* Fill the combo with appropriately titled choices for POP or IMAP. */
@@ -1031,7 +1031,7 @@ static void create_subsequent_pages (ModestEasysetupWizardDialog *self)
 
 
 static gchar*
-util_get_default_servername_from_email_address (const gchar* email_address, ModestProtocol servertype)
+util_get_default_servername_from_email_address (const gchar* email_address, ModestTransportStoreProtocol servertype)
 {
 	if (!email_address)
 		return NULL;
@@ -1069,7 +1069,7 @@ static void set_default_custom_servernames (ModestEasysetupWizardDialog *account
 	const gchar* incoming_existing = gtk_entry_get_text (GTK_ENTRY (account_wizard->entry_incomingserver));
 	if ((!incoming_existing || (strlen(incoming_existing) == 0)) 
 	    && account_wizard->entry_user_email) {
-		const ModestProtocol protocol = easysetup_servertype_combo_box_get_active_servertype (
+		const ModestTransportStoreProtocol protocol = easysetup_servertype_combo_box_get_active_servertype (
 			EASYSETUP_SERVERTYPE_COMBO_BOX (account_wizard->combo_incoming_servertype));
 		const gchar* email_address = gtk_entry_get_text (GTK_ENTRY(account_wizard->entry_user_email));
 		
@@ -1309,10 +1309,10 @@ create_account (ModestEasysetupWizardDialog *self, gboolean enabled)
 	const gchar* password = gtk_entry_get_text (GTK_ENTRY (self->entry_user_password));
 	
 	/* Incoming server: */
-	/* Note: We need something as default for the ModestProtocol* values, 
+	/* Note: We need something as default for the ModestTransportStoreProtocol* values, 
 	 * or modest_account_mgr_add_server_account will fail. */
 	gchar* servername_incoming = NULL;
-	ModestProtocol protocol_incoming = MODEST_PROTOCOL_STORE_POP;
+	ModestTransportStoreProtocol protocol_incoming = MODEST_PROTOCOL_STORE_POP;
 	ModestConnectionProtocol protocol_security_incoming = MODEST_PROTOCOL_CONNECTION_NORMAL;
 	ModestAuthProtocol protocol_authentication_incoming = MODEST_PROTOCOL_AUTH_NONE;
 	
@@ -1404,7 +1404,7 @@ create_account (ModestEasysetupWizardDialog *self, gboolean enabled)
 	
 	/* Outgoing server: */
 	gchar* servername_outgoing = NULL;
-	ModestProtocol protocol_outgoing = MODEST_PROTOCOL_STORE_POP;
+	ModestTransportStoreProtocol protocol_outgoing = MODEST_PROTOCOL_STORE_POP;
 	ModestConnectionProtocol protocol_security_outgoing = MODEST_PROTOCOL_CONNECTION_NORMAL;
 	ModestAuthProtocol protocol_authentication_outgoing = MODEST_PROTOCOL_AUTH_NONE;
 	

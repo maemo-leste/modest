@@ -139,9 +139,9 @@ void easysetup_servertype_combo_box_fill (EasysetupServertypeComboBox *combobox)
 
 /**
  * Returns the selected servertype, 
- * or MODEST_PROTOCOL_UNKNOWN if no servertype was selected.
+ * or MODEST_PROTOCOL_TRANSPORT_STORE_UNKNOWN if no servertype was selected.
  */
-ModestProtocol
+ModestTransportStoreProtocol
 easysetup_servertype_combo_box_get_active_servertype (EasysetupServertypeComboBox *combobox)
 {
 	GtkTreeIter active;
@@ -149,12 +149,12 @@ easysetup_servertype_combo_box_get_active_servertype (EasysetupServertypeComboBo
 	if (found) {
 		EasysetupServertypeComboBoxPrivate *priv = SERVERTYPE_COMBO_BOX_GET_PRIVATE (combobox);
 
-		ModestProtocol servertype = MODEST_PROTOCOL_UNKNOWN;
+		ModestTransportStoreProtocol servertype = MODEST_PROTOCOL_TRANSPORT_STORE_UNKNOWN;
 		gtk_tree_model_get (priv->model, &active, MODEL_COL_ID, &servertype, -1);
 		return servertype;	
 	}
 
-	return MODEST_PROTOCOL_UNKNOWN; /* Failed. */
+	return MODEST_PROTOCOL_TRANSPORT_STORE_UNKNOWN; /* Failed. */
 }
 
 /* This allows us to pass more than one piece of data to the signal handler,
@@ -187,10 +187,10 @@ on_model_foreach_select_id(GtkTreeModel *model,
 
 /**
  * Selects the specified servertype, 
- * or MODEST_PROTOCOL_UNKNOWN if no servertype was selected.
+ * or MODEST_PROTOCOL_TRANSPORT_STORE_UNKNOWN if no servertype was selected.
  */
 gboolean
-easysetup_servertype_combo_box_set_active_servertype (EasysetupServertypeComboBox *combobox, ModestProtocol servertype)
+easysetup_servertype_combo_box_set_active_servertype (EasysetupServertypeComboBox *combobox, ModestTransportStoreProtocol servertype)
 {
 	EasysetupServertypeComboBoxPrivate *priv = SERVERTYPE_COMBO_BOX_GET_PRIVATE (combobox);
 	

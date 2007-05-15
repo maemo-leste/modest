@@ -104,7 +104,7 @@ START_TEST (test_add_exists_remove_account_regular)
 	gchar *hostname = NULL;
 	gchar *username = NULL;
 	gchar *password = NULL;
-	ModestProtocol proto;
+	ModestTransportStoreProtocol proto;
 	gboolean result;
 	
 	name = g_strdup (TEST_MODEST_ACCOUNT_NAME);

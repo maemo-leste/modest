@@ -34,14 +34,14 @@ struct _ModestStoreWidgetClass {
 /* member functions */
 GType           modest_store_widget_get_type    (void) G_GNUC_CONST;
 
-GtkWidget*      modest_store_widget_new         (ModestProtocol proto);
+GtkWidget*      modest_store_widget_new         (ModestTransportStoreProtocol proto);
 
 const gchar*    modest_store_widget_get_username          (ModestStoreWidget *self);
 const gchar*    modest_store_widget_get_servername        (ModestStoreWidget *self);
-ModestProtocol  modest_store_widget_get_proto             (ModestStoreWidget *self);
+ModestTransportStoreProtocol  modest_store_widget_get_proto             (ModestStoreWidget *self);
 gchar *         modest_store_widget_get_path              (ModestStoreWidget *self);
-ModestSecureAuthentication  modest_store_widget_get_auth              (ModestStoreWidget *self);
-ModestSecureConnection  modest_store_widget_get_security          (ModestStoreWidget *self);
+ModestConnectionProtocol  modest_store_widget_get_auth              (ModestStoreWidget *self);
+ModestAuthProtocol  modest_store_widget_get_security          (ModestStoreWidget *self);
 
 G_END_DECLS
 

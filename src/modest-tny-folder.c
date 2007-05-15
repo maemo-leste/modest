@@ -131,14 +131,13 @@ modest_tny_folder_get_rules   (const TnyFolder *folder)
 			rules |= MODEST_FOLDER_RULES_FOLDER_NON_RENAMEABLE;
 		}
 	} else {
-		ModestProtocol proto;
+		ModestTransportStoreProtocol proto;
 		TnyAccount *account =
 			tny_folder_get_account ((TnyFolder*)folder);
 		if (!account)
 			return -1; /* no account: nothing is allowed */
 		
-		proto = modest_protocol_info_get_protocol (tny_account_get_proto (account),
-							   MODEST_TRANSPORT_STORE_PROTOCOL);
+		proto = modest_protocol_info_get_transport_store_protocol (tny_account_get_proto (account));
 
 		if (proto == MODEST_PROTOCOL_STORE_IMAP) {
 			rules = 0;

@@ -52,7 +52,7 @@ typedef struct _ModestServersecurityComboBoxPrivate ModestServersecurityComboBox
 struct _ModestServersecurityComboBoxPrivate
 {
 	GtkTreeModel *model;
-	ModestProtocol protocol;
+	ModestConnectionProtocol protocol;
 };
 
 static void
@@ -146,8 +146,8 @@ modest_serversecurity_combo_box_new (void)
  * #combobox: The combo box.
  * @protocol: IMAP or POP.
  */
-void modest_serversecurity_combo_box_fill (ModestServersecurityComboBox *combobox, ModestProtocol protocol)
-{	
+void modest_serversecurity_combo_box_fill (ModestServersecurityComboBox *combobox, ModestTransportStoreProtocol protocol)
+{
 	ModestServersecurityComboBoxPrivate *priv = SERVERSECURITY_COMBO_BOX_GET_PRIVATE (combobox);
 	priv->protocol = protocol; /* Remembered for later. */
 	
@@ -179,7 +179,7 @@ void modest_serversecurity_combo_box_fill (ModestServersecurityComboBox *combobo
 	}
 }
 
-static gint get_port_for_security (ModestProtocol protocol, ModestConnectionProtocol security)
+static gint get_port_for_security (ModestTransportStoreProtocol protocol, ModestConnectionProtocol security)
 {
 	/* See the UI spec, section Email Wizards, Incoming Details [MSG-WIZ001]: */
 	gint result = 0;
@@ -269,7 +269,7 @@ on_model_foreach_select_id(GtkTreeModel *model,
 
 /**
  * Selects the specified serversecurity, 
- * or MODEST_PROTOCOL_UNKNOWN if no serversecurity was selected.
+ * or MODEST_PROTOCOL_CONNECTION_NORMAL if no serversecurity was selected.
  */
 gboolean
 modest_serversecurity_combo_box_set_active_serversecurity (ModestServersecurityComboBox *combobox,

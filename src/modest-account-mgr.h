@@ -123,7 +123,7 @@ gboolean modest_account_mgr_add_server_account    (ModestAccountMgr *self,
 						   const gchar *hostname,
 						   const gchar *username,
 						   const gchar *password,
-						   ModestProtocol proto,
+						   ModestTransportStoreProtocol proto,
 						   ModestConnectionProtocol security,
 						   ModestAuthProtocol auth);
 
@@ -141,7 +141,7 @@ gboolean modest_account_mgr_add_server_account    (ModestAccountMgr *self,
  */
 gboolean modest_account_mgr_add_server_account_uri    (ModestAccountMgr *self,
 						       const gchar *name,
-						       ModestProtocol proto,
+						       ModestTransportStoreProtocol proto,
 						       const gchar* uri);
 
 /**
@@ -180,13 +180,14 @@ gboolean        modest_account_mgr_remove_account         (ModestAccountMgr *sel
 GSList*	        modest_account_mgr_account_names    (ModestAccountMgr *self,
 						     gboolean only_enabled);
 
-
+#if 0
+/* Not used. */
 /**
  * modest_account_mgr_search_server_account:
  * @self: a ModestAccountMgr instance
  * @account_name: get only server accounts for @account_name, or NULL for any
  * @type: get only server accounts from protocol type @type, or MODEST_PROTOCOL_TYPE_UNKNOWN
- * @proto: get only server account with protocol @proto, or MODEST_PROTOCOL_UNKNOWN for any
+ * @proto: get only server account with protocol @proto, or MODEST_PROTOCOL_TRANSPORT_STORE_UNKNOWN for any
  * 
  * List all the server account names, optionally narrowing the result down to one account.
  *
@@ -196,7 +197,8 @@ GSList*	        modest_account_mgr_account_names    (ModestAccountMgr *self,
 GSList*  modest_account_mgr_search_server_accounts  (ModestAccountMgr *self,
 						     const gchar*       account_name,
 						     ModestProtocolType type,
-						     ModestProtocol     proto);
+						     ModestTransportStoreProtocol     proto);
+#endif
 
 /**
  * modest_account_mgr_account_exists:

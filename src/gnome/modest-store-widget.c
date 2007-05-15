@@ -52,7 +52,7 @@ struct _ModestStoreWidgetPrivate {
 	GtkWidget *auth;
 	GtkWidget *chooser;
 
-	ModestProtocol proto;
+	ModestTransportStoreProtocol proto;
 };
 #define MODEST_STORE_WIDGET_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                  MODEST_TYPE_STORE_WIDGET, \
@@ -115,7 +115,7 @@ modest_store_widget_init (ModestStoreWidget *obj)
  	ModestStoreWidgetPrivate *priv;
 	
 	priv = MODEST_STORE_WIDGET_GET_PRIVATE(obj); 
-	priv->proto = MODEST_PROTOCOL_UNKNOWN;
+	priv->proto = MODEST_PROTOCOL_TRANSPORT_STORE_UNKNOWN;
 }
 
 
@@ -226,7 +226,7 @@ imap_pop_configuration (ModestStoreWidget *self)
 	gtk_label_set_markup (GTK_LABEL(label),_("<b>Security</b>"));
 	gtk_box_pack_start (GTK_BOX(box), label, FALSE, FALSE, 0);
 
-	protos = modest_protocol_info_get_protocol_pair_list (MODEST_PROTOCOL_TYPE_SECURITY);
+	protos = modest_protocol_info_get_connection_protocol_pair_list ();
 	priv->security = modest_combo_box_new (protos, g_str_equal);
 	modest_pair_list_free (protos);
 	
@@ -243,7 +243,7 @@ imap_pop_configuration (ModestStoreWidget *self)
 	gtk_label_set_text (GTK_LABEL(label),_("Authentication:"));
 	gtk_box_pack_start (GTK_BOX(hbox), label, FALSE, FALSE, 6);
 	
-	protos = modest_protocol_info_get_protocol_pair_list (MODEST_PROTOCOL_TYPE_AUTH);
+	protos = modest_protocol_info_get_auth_protocol_pair_list (;
 	priv->auth =  modest_combo_box_new (protos, g_str_equal);
 	modest_pair_list_free (protos);
 
@@ -268,7 +268,7 @@ modest_store_widget_finalize (GObject *obj)
 
 
 GtkWidget*
-modest_store_widget_new (ModestProtocol proto)
+modest_store_widget_new (ModestTransportStoreProtocol proto)
 {
 	GObject *obj;
 	GtkWidget *w;
@@ -327,12 +327,12 @@ modest_store_widget_get_servername (ModestStoreWidget *self)
 }
 
 
-ModestProtocol
+ModestTransportStoreProtocol
 modest_store_widget_get_proto (ModestStoreWidget *self)
 {
 	ModestStoreWidgetPrivate *priv;
 
-	g_return_val_if_fail (self, MODEST_PROTOCOL_UNKNOWN);
+	g_return_val_if_fail (self, MODEST_PROTOCOL_TRANSPORT_STORE_UNKNOWN);
 	priv = MODEST_STORE_WIDGET_GET_PRIVATE(self);
 
 	return priv->proto;
@@ -344,7 +344,7 @@ modest_store_widget_get_path (ModestStoreWidget *self)
 {
 	ModestStoreWidgetPrivate *priv;
 	
-	g_return_val_if_fail (self, MODEST_PROTOCOL_UNKNOWN);
+	g_return_val_if_fail (self, NULL);
 	priv = MODEST_STORE_WIDGET_GET_PRIVATE(self);
 
 	if (GTK_IS_FILE_CHOOSER(priv->chooser))
@@ -359,31 +359,31 @@ get_value_from_combo (GtkWidget *combo)
 	gchar *chosen;
 
 	if (!combo)
-		return MODEST_PROTOCOL_UNKNOWN;
+		return -1;
 
 	chosen = gtk_combo_box_get_active_text (GTK_COMBO_BOX (combo));
 
-	return modest_protocol_info_get_protocol (chosen);
+	return modest_protocol_info_get_transport_store_protocol (chosen);
 
 }
 
-ModestSecureAuthentication
+ModestAuthProtocol
 modest_store_widget_get_auth (ModestStoreWidget *self)
 {
 	ModestStoreWidgetPrivate *priv;	
 
-	g_return_val_if_fail (self, MODEST_PROTOCOL_UNKNOWN);
+	g_return_val_if_fail (self, MODEST_PROTOCOL_AUTH_NONE);
 	priv = MODEST_STORE_WIDGET_GET_PRIVATE(self);
 
 	return get_value_from_combo (priv->auth);
 }
 
-ModestSecureConnection
+ModestConnectionProtocol
 modest_store_widget_get_security (ModestStoreWidget *self)
 {
 	ModestStoreWidgetPrivate *priv;	
 
-	g_return_val_if_fail (self, MODEST_PROTOCOL_UNKNOWN);
+	g_return_val_if_fail (self, MODEST_PROTOCOL_CONNECTION_NORMAL);
 	priv = MODEST_STORE_WIDGET_GET_PRIVATE(self);
 
 	return get_value_from_combo (priv->security);

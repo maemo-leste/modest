@@ -345,7 +345,7 @@ modest_account_mgr_get_server_account_data (ModestAccountMgr *self, const gchar*
 	data->hostname     = modest_account_mgr_get_string (self, name, MODEST_ACCOUNT_HOSTNAME,TRUE);
 	data->username     = modest_account_mgr_get_string (self, name, MODEST_ACCOUNT_USERNAME,TRUE);	
 	proto              = modest_account_mgr_get_string (self, name, MODEST_ACCOUNT_PROTO, TRUE);
-	data->proto        = modest_protocol_info_get_protocol (proto, MODEST_TRANSPORT_STORE_PROTOCOL);
+	data->proto        = modest_protocol_info_get_transport_store_protocol (proto);
 	g_free (proto);
 
 	data->port         = modest_account_mgr_get_int (self, name, MODEST_ACCOUNT_PORT, TRUE);

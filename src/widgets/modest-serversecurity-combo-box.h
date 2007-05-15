@@ -45,7 +45,7 @@ GType modest_serversecurity_combo_box_get_type (void);
 
 ModestServersecurityComboBox* modest_serversecurity_combo_box_new (void);
 
-void modest_serversecurity_combo_box_fill (ModestServersecurityComboBox *combobox, ModestProtocol protocol);
+void modest_serversecurity_combo_box_fill (ModestServersecurityComboBox *combobox, ModestTransportStoreProtocol protocol);
 
 ModestConnectionProtocol modest_serversecurity_combo_box_get_active_serversecurity (ModestServersecurityComboBox *combobox);
 

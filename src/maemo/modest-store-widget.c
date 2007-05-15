@@ -53,7 +53,7 @@ struct _ModestStoreWidgetPrivate {
 	GtkWidget *chooser;
 	GtkWidget *remember_pwd;
 
-	ModestProtocol proto;
+	ModestTransportStoreProtocol proto;
 };
 #define MODEST_STORE_WIDGET_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                  MODEST_TYPE_STORE_WIDGET, \
@@ -116,7 +116,7 @@ modest_store_widget_init (ModestStoreWidget *obj)
  	ModestStoreWidgetPrivate *priv;
 	
 	priv = MODEST_STORE_WIDGET_GET_PRIVATE(obj); 
-	priv->proto = MODEST_PROTOCOL_UNKNOWN;
+	priv->proto = MODEST_PROTOCOL_TRANSPORT_STORE_UNKNOWN;
 }
 
 
@@ -228,7 +228,7 @@ imap_pop_configuration (ModestStoreWidget *self)
 	gtk_label_set_markup (GTK_LABEL(label),_("<b>Security</b>"));
 	gtk_box_pack_start (GTK_BOX(box), label, FALSE, FALSE, 0);
 
-	protos = modest_protocol_info_get_protocol_pair_list (MODEST_CONNECTION_PROTOCOL);
+	protos = modest_protocol_info_get_connection_protocol_pair_list ();
 	priv->security = modest_combo_box_new (protos, g_str_equal);
 	modest_pair_list_free (protos);
 	
@@ -245,7 +245,7 @@ imap_pop_configuration (ModestStoreWidget *self)
 	gtk_label_set_text (GTK_LABEL(label),_("Authentication:"));
 	gtk_box_pack_start (GTK_BOX(hbox), label, FALSE, FALSE, 6);
 	
-	protos = modest_protocol_info_get_protocol_pair_list (MODEST_AUTH_PROTOCOL);
+	protos = modest_protocol_info_get_transport_store_protocol_pair_list ();
 	combo =  modest_combo_box_new (protos, g_str_equal);
 	modest_pair_list_free (protos);
 
@@ -274,7 +274,7 @@ modest_store_widget_finalize (GObject *obj)
 
 
 GtkWidget*
-modest_store_widget_new (ModestProtocol proto)
+modest_store_widget_new (ModestTransportStoreProtocol proto)
 {
 	GObject *obj;
 	GtkWidget *w;
@@ -347,12 +347,12 @@ modest_store_widget_get_servername (ModestStoreWidget *self)
 }
 
 
-ModestProtocol
+ModestTransportStoreProtocol
 modest_store_widget_get_proto (ModestStoreWidget *self)
 {
 	ModestStoreWidgetPrivate *priv;
 
-	g_return_val_if_fail (self, MODEST_PROTOCOL_UNKNOWN);
+	g_return_val_if_fail (self, MODEST_PROTOCOL_TRANSPORT_STORE_UNKNOWN);
 	priv = MODEST_STORE_WIDGET_GET_PRIVATE(self);
 
 	return priv->proto;

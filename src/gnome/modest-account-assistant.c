@@ -260,7 +260,7 @@ on_receiving_combo_box_changed (GtkComboBox *combo, ModestAccountAssistant *self
 {
 	ModestAccountAssistantPrivate *priv;
 	gchar *chosen;
-	ModestProtocol proto;
+	ModestTransportStoreProtocol proto;
 	
 	priv = MODEST_ACCOUNT_ASSISTANT_GET_PRIVATE(self);
 	chosen = gtk_combo_box_get_active_text (GTK_COMBO_BOX(combo));
@@ -268,7 +268,7 @@ on_receiving_combo_box_changed (GtkComboBox *combo, ModestAccountAssistant *self
 		gtk_container_remove (GTK_CONTAINER(priv->store_holder),
 				      priv->store_widget);
 
-	proto = modest_protocol_info_get_protocol (chosen);
+	proto = modest_protocol_info_get_transport_store_protocol (chosen);
 	
 	/* FIXME: we could have these widgets cached instead of
 	   creating them every time */
@@ -308,7 +308,7 @@ add_receiving_page (ModestAccountAssistant *self)
 			    gtk_label_new(_("Server type")),
 			    FALSE,FALSE,6);
 
-	protos = modest_protocol_info_get_protocol_pair_list (MODEST_PROTOCOL_TYPE_STORE);
+	protos = modest_protocol_info_get_transport_store_protocol_pair_list (MODEST_PROTOCOL_TYPE_STORE);
 	combo = modest_combo_box_new (protos, g_str_equal);
 	modest_pair_list_free (protos);
 	
@@ -355,7 +355,7 @@ on_sending_combo_box_changed (GtkComboBox *combo, ModestAccountAssistant *self)
 		gtk_container_remove (GTK_CONTAINER(priv->transport_holder),
 				      priv->transport_widget);
 	priv->transport_widget =
-		modest_transport_widget_new (modest_protocol_info_get_protocol(chosen));
+		modest_transport_widget_new (modest_protocol_info_get_transport_store_protocol(chosen));
 
 	gtk_container_add (GTK_CONTAINER(priv->transport_holder),
 			   priv->transport_widget);
@@ -384,7 +384,7 @@ add_sending_page (ModestAccountAssistant *self)
 			    gtk_label_new(_("Server type")),
 			    FALSE,FALSE,0);
 	
-	protos = modest_protocol_info_get_protocol_pair_list (MODEST_PROTOCOL_TYPE_TRANSPORT);
+	protos = modest_protocol_info_get_transport_store_protocol_pair_list (MODEST_PROTOCOL_TYPE_TRANSPORT);
 	combo = modest_combo_box_new (protos, g_str_equal);
 	modest_pair_list_free (protos);
 
@@ -562,7 +562,7 @@ on_close (ModestAccountAssistant *self, gpointer user_data)
  * somewhere else
  */
 static gchar*
-get_account_uri (ModestProtocol proto, const gchar* path)
+get_account_uri (ModestTransportStoreProtocol proto, const gchar* path)
 {
 	CamelURL *url;
 	gchar *uri;
@@ -583,7 +583,7 @@ get_account_uri (ModestProtocol proto, const gchar* path)
 }
 
 static gchar*
-get_new_server_account_name (ModestAccountMgr* acc_mgr, ModestProtocol proto,
+get_new_server_account_name (ModestAccountMgr* acc_mgr, ModestTransportStoreProtocol proto,
 			     const gchar* username, const gchar *servername)
 {
 	gchar *name;
@@ -591,7 +591,7 @@ get_new_server_account_name (ModestAccountMgr* acc_mgr, ModestProtocol proto,
 	
 	while (TRUE) {
 		name = g_strdup_printf ("%s:%d",
-					modest_protocol_info_get_protocol_name(proto), i++);
+					modest_protocol_info_get_transport_store_protocol_name(proto), i++);
 		if (modest_account_mgr_account_exists (acc_mgr, name, TRUE))
 			g_free (name);
 		else
@@ -605,9 +605,9 @@ static void
 on_apply (ModestAccountAssistant *self, gpointer user_data)
 {
 	ModestAccountAssistantPrivate *priv;
-	ModestProtocol proto = MODEST_PROTOCOL_UNKNOWN;
-	ModestSecureConnection security = MODEST_PROTOCOL_SECURITY_NONE;
-	ModestSecureAuthentication auth = MODEST_PROTOCOL_AUTH_NONE;
+	ModestTransportStoreProtocol proto = MODEST_PROTOCOL_TRANSPORT_STORE_UNKNOWN;
+	ModestAuthProtocol security = MODEST_PROTOCOL_SECURITY_NONE;
+	ModestConnectionProtocol auth = MODEST_PROTOCOL_AUTH_NONE;
 	gchar *store_name, *transport_name;
 	const gchar *account_name, *username, *servername, *path;
 	ModestStoreWidget *store;

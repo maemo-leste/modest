@@ -306,7 +306,7 @@ gboolean
 modest_account_mgr_add_server_account (ModestAccountMgr * self,
 				       const gchar * name, const gchar *hostname,
 				       const gchar * username, const gchar * password,
-				       ModestProtocol proto,
+				       ModestTransportStoreProtocol proto,
 				       ModestConnectionProtocol security,
 				       ModestAuthProtocol auth)
 {
@@ -369,8 +369,7 @@ modest_account_mgr_add_server_account (ModestAccountMgr * self,
 	/* proto */
 	key = _modest_account_mgr_get_account_keyname (name, MODEST_ACCOUNT_PROTO, TRUE);
 	ok = modest_conf_set_string (priv->modest_conf, key,
-				     modest_protocol_info_get_protocol_name(proto,
-									    MODEST_TRANSPORT_STORE_PROTOCOL),
+				     modest_protocol_info_get_transport_store_protocol_name(proto),
 				     &err);
 	if (err) {
 		g_printerr ("modest: failed to set %s: %s\n", key, err->message);
@@ -384,8 +383,7 @@ modest_account_mgr_add_server_account (ModestAccountMgr * self,
 	/* auth mechanism */
 	key = _modest_account_mgr_get_account_keyname (name, MODEST_ACCOUNT_AUTH_MECH, TRUE);
 	ok = modest_conf_set_string (priv->modest_conf, key,
-				     modest_protocol_info_get_protocol_name (auth,
-									     MODEST_AUTH_PROTOCOL),
+				     modest_protocol_info_get_auth_protocol_name (auth),
 				     &err);
 	if (err) {
 		g_printerr ("modest: failed to set %s: %s\n", key, err->message);
@@ -415,7 +413,7 @@ cleanup:
  */
 gboolean
 modest_account_mgr_add_server_account_uri (ModestAccountMgr * self,
-					   const gchar *name, ModestProtocol proto,
+					   const gchar *name, ModestTransportStoreProtocol proto,
 					   const gchar *uri)
 {
 	ModestAccountMgrPrivate *priv;
@@ -433,7 +431,7 @@ modest_account_mgr_add_server_account_uri (ModestAccountMgr * self,
 	/* proto */
 	key = _modest_account_mgr_get_account_keyname (name, MODEST_ACCOUNT_PROTO, TRUE);
 	ok = modest_conf_set_string (priv->modest_conf, key,
-				     modest_protocol_info_get_protocol_name(proto, MODEST_TRANSPORT_STORE_PROTOCOL),
+				     modest_protocol_info_get_transport_store_protocol_name(proto),
 				     NULL);
 	g_free (key);
 
@@ -537,12 +535,12 @@ strip_prefix_from_elements (GSList * lst, guint n)
 	}
 }
 
-
+#if 0
+/* Not used. */
 GSList*
 modest_account_mgr_search_server_accounts (ModestAccountMgr * self,
 					   const gchar * account_name,
-					   ModestProtocolType type,
-					   ModestProtocol proto)
+					   ModestTransportStoreProtocol proto)
 {
 	GSList *accounts;
 	GSList *cursor;
@@ -571,9 +569,9 @@ modest_account_mgr_search_server_accounts (ModestAccountMgr * self,
 	while (cursor) { 
 		gchar *account   = _modest_account_mgr_account_from_key ((gchar*)cursor->data, NULL, NULL);
 		gchar *acc_proto = modest_account_mgr_get_string (self, account, MODEST_ACCOUNT_PROTO,TRUE);
-		ModestProtocol     this_proto = modest_protocol_info_get_protocol (acc_proto,
-										   MODEST_TRANSPORT_STORE_PROTOCOL);
-		if (this_proto != MODEST_PROTOCOL_UNKNOWN && this_proto != proto) {
+		ModestTransportStoreProtocol this_proto = 
+			modest_protocol_info_get_transport_store_protocol (acc_proto);
+		if (this_proto != MODEST_PROTOCOL_TRANSPORT_STORE_UNKNOWN && this_proto != proto) {
 			GSList *nxt = cursor->next;
 			accounts = g_slist_delete_link (accounts, cursor);
 			cursor = nxt;
@@ -588,7 +586,7 @@ modest_account_mgr_search_server_accounts (ModestAccountMgr * self,
 	strip_prefix_from_elements (accounts, strlen(key)+1);
 	return accounts;	
 }
-
+#endif
 
 GSList*
 modest_account_mgr_account_names (ModestAccountMgr * self, gboolean only_enabled)

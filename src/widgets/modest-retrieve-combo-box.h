@@ -45,7 +45,7 @@ GType modest_retrieve_combo_box_get_type (void);
 
 ModestRetrieveComboBox* modest_retrieve_combo_box_new (void);
 
-void modest_retrieve_combo_box_fill (ModestRetrieveComboBox *combobox, ModestProtocol protocol);
+void modest_retrieve_combo_box_fill (ModestRetrieveComboBox *combobox, ModestTransportStoreProtocol protocol);
 
 gchar* modest_retrieve_combo_box_get_active_retrieve_conf (ModestRetrieveComboBox *combobox);
 
