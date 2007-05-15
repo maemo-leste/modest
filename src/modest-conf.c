@@ -54,8 +54,8 @@ struct _ModestConfPrivate {
 	GConfClient *gconf_client;
 };
 #define MODEST_CONF_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
-                                         MODEST_TYPE_CONF, \
-                                         ModestConfPrivate))
+								     MODEST_TYPE_CONF, \
+								     ModestConfPrivate))
 /* globals */
 static GObjectClass *parent_class = NULL;
 
@@ -227,17 +227,17 @@ GSList *
 modest_conf_get_list (ModestConf* self, const gchar* key, ModestConfValueType list_type,
 		      GError **err)
 {
-       ModestConfPrivate *priv;
-       GConfValueType gconf_type;
+	ModestConfPrivate *priv;
+	GConfValueType gconf_type;
        
-       g_return_val_if_fail (self, NULL);
-       g_return_val_if_fail (key,  NULL);
+	g_return_val_if_fail (self, NULL);
+	g_return_val_if_fail (key,  NULL);
 
-       priv = MODEST_CONF_GET_PRIVATE(self);
+	priv = MODEST_CONF_GET_PRIVATE(self);
 
-       gconf_type = modest_conf_type_to_gconf_type (list_type, err);
+	gconf_type = modest_conf_type_to_gconf_type (list_type, err);
 
-       return gconf_client_get_list (priv->gconf_client, key, gconf_type, err);
+	return gconf_client_get_list (priv->gconf_client, key, gconf_type, err);
 }
 
 
@@ -308,38 +308,39 @@ modest_conf_set_list (ModestConf* self, const gchar* key,
 		      GSList *val, ModestConfValueType list_type, 
 		      GError **err)
 {
-       ModestConfPrivate *priv;
-       GConfValueType gconf_type;
+	ModestConfPrivate *priv;
+	GConfValueType gconf_type;
+	gboolean result;
        
-       g_return_val_if_fail (self, FALSE);
-       g_return_val_if_fail (key, FALSE);
+	g_return_val_if_fail (self, FALSE);
+	g_return_val_if_fail (key, FALSE);
 
-       priv = MODEST_CONF_GET_PRIVATE(self);
+	priv = MODEST_CONF_GET_PRIVATE(self);
 
-       gconf_type = modest_conf_type_to_gconf_type (list_type, err);
-       if (*err)
-	       return FALSE;
+	gconf_type = modest_conf_type_to_gconf_type (list_type, err);
+	if (*err)
+		return FALSE;
 
-
-       gboolean result = gconf_client_set_list (priv->gconf_client, key, gconf_type, val, err);
-       if(*err) {
-       	   g_warning("gconf_client_set_list() failed with key=%s. error=%s", key, (*err)->message);
-           result = FALSE;
-       }
+	result = gconf_client_set_list (priv->gconf_client, key, gconf_type, val, err);
+	if(*err) {
+		g_warning("gconf_client_set_list() failed with key=%s. error=%s", key,
+			  (*err)->message);
+		result = FALSE;
+	}
        
-       /* TODO: Remove this, when we fix the problem: */
-       /* This shows that sometimes set_list fails, while saying that it succeeded: */
-       if (result) {
-         const gint debug_list_length_start = g_slist_length(val);
-         GSList* debug_list = gconf_client_get_list(priv->gconf_client, key, gconf_type, err);
-         const gint debug_list_length_after = g_slist_length(debug_list);
-         
-         if(debug_list_length_start != debug_list_length_after)
-         	g_warning("modest_conf_set_list(): The list length after setting is not the same as the specified list. key=%s", key);
-         	
-         g_slist_free(debug_list);
-       }
-
+	/* TODO: Remove this, when we fix the problem: */
+	/* This shows that sometimes set_list fails, while saying that it succeeded: */
+	if (result) {
+		const gint debug_list_length_start = g_slist_length(val);
+		GSList* debug_list = gconf_client_get_list(priv->gconf_client, key, gconf_type, err);
+		const gint debug_list_length_after = g_slist_length(debug_list);
+	       
+		if(debug_list_length_start != debug_list_length_after)
+			g_warning("modest_conf_set_list(): The list length after setting is "
+				  "not the same as the specified list. key=%s", key);
+		g_slist_free(debug_list);
+	}
+       
 	return result;
 }
 
@@ -445,7 +446,7 @@ modest_conf_on_change (GConfClient *client, guint conn_id, GConfEntry *entry,
 static GConfValueType
 modest_conf_type_to_gconf_type (ModestConfValueType value_type, GError **err)
 {
-	GConfValueType gconf_type = 0;
+	GConfValueType gconf_type;
 
 	switch (value_type) {
 	case MODEST_CONF_VALUE_INT:
@@ -462,7 +463,9 @@ modest_conf_type_to_gconf_type (ModestConfValueType value_type, GError **err)
 		break;
 	default:
 		/* FIXME: use MODEST_ERROR, and error code */
-		*err = g_error_new_literal (0, 0, _("Invalid list value type"));
-	}
+		gconf_type = GCONF_VALUE_INVALID;
+		g_printerr ("modest: invalid list value type %d\n", value_type);
+		*err = g_error_new_literal (0, 0, "invalid list value type");
+	}	
 	return gconf_type;
 }
