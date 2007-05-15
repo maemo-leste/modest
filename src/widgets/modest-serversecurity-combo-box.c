@@ -1,7 +1,32 @@
-/* Copyright (c) 2007, Nokia Corporation
+/* Copyright (c) 2006, Nokia Corporation
  * All rights reserved.
  *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ * * Redistributions of source code must retain the above copyright
+ *   notice, this list of conditions and the following disclaimer.
+ * * Redistributions in binary form must reproduce the above copyright
+ *   notice, this list of conditions and the following disclaimer in the
+ *   documentation and/or other materials provided with the distribution.
+ * * Neither the name of the Nokia Corporation nor the names of its
+ *   contributors may be used to endorse or promote products derived from
+ *   this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+ * IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+ * PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+ * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 
 #include "modest-serversecurity-combo-box.h"
 #include <gtk/gtkliststore.h>
@@ -132,48 +157,48 @@ void modest_serversecurity_combo_box_fill (ModestServersecurityComboBox *combobo
 	
 	GtkTreeIter iter;
 	gtk_list_store_append (liststore, &iter);
-	gtk_list_store_set (liststore, &iter, MODEL_COL_ID, (gint)MODEST_PROTOCOL_SECURITY_NONE, MODEL_COL_NAME, _("mcen_fi_advsetup_other_security_none"), -1);
+	gtk_list_store_set (liststore, &iter, MODEL_COL_ID, (gint)MODEST_PROTOCOL_CONNECTION_NORMAL, MODEL_COL_NAME, _("mcen_fi_advsetup_other_security_none"), -1);
 	
 	/* Select the None item: */
 	gtk_combo_box_set_active_iter (GTK_COMBO_BOX (combobox), &iter);
 	
 	gtk_list_store_append (liststore, &iter);
-	gtk_list_store_set (liststore, &iter, MODEL_COL_ID, (gint)MODEST_PROTOCOL_SECURITY_TLS, MODEL_COL_NAME, _("mcen_fi_advsetup_other_security_normal"), -1);
+	gtk_list_store_set (liststore, &iter, MODEL_COL_ID, (gint)MODEST_PROTOCOL_CONNECTION_TLS, MODEL_COL_NAME, _("mcen_fi_advsetup_other_security_normal"), -1);
 	
 	/* Add security choices with protocol-specific names, as in the UI spec:
 	 * (Note: Changing the title seems pointless. murrayc) */
 	if(protocol == MODEST_PROTOCOL_STORE_POP) {
 		gtk_list_store_append (liststore, &iter);
-		gtk_list_store_set (liststore, &iter, MODEL_COL_ID, (gint)MODEST_PROTOCOL_SECURITY_SSL, MODEL_COL_NAME, _("mcen_fi_advsetup_other_security_securepop3s"), -1);
+		gtk_list_store_set (liststore, &iter, MODEL_COL_ID, (gint)MODEST_PROTOCOL_CONNECTION_SSL, MODEL_COL_NAME, _("mcen_fi_advsetup_other_security_securepop3s"), -1);
 	} else if(protocol == MODEST_PROTOCOL_STORE_IMAP) {
 		gtk_list_store_append (liststore, &iter);
-		gtk_list_store_set (liststore, &iter, MODEL_COL_ID, (gint)MODEST_PROTOCOL_SECURITY_SSL, MODEL_COL_NAME, _("mcen_fi_advsetup_other_security_secureimap4"), -1);
+		gtk_list_store_set (liststore, &iter, MODEL_COL_ID, (gint)MODEST_PROTOCOL_CONNECTION_SSL, MODEL_COL_NAME, _("mcen_fi_advsetup_other_security_secureimap4"), -1);
 	} else if(protocol == MODEST_PROTOCOL_TRANSPORT_SMTP) {
 		gtk_list_store_append (liststore, &iter);
-		gtk_list_store_set (liststore, &iter, MODEL_COL_ID, (gint)MODEST_PROTOCOL_SECURITY_SSL, MODEL_COL_NAME, _("mcen_fi_advsetup_other_security_ssl"), -1);
+		gtk_list_store_set (liststore, &iter, MODEL_COL_ID, (gint)MODEST_PROTOCOL_CONNECTION_SSL, MODEL_COL_NAME, _("mcen_fi_advsetup_other_security_ssl"), -1);
 	}
 }
 
-static gint get_port_for_security (ModestProtocol protocol, ModestSecureConnection security)
+static gint get_port_for_security (ModestProtocol protocol, ModestConnectionProtocol security)
 {
 	/* See the UI spec, section Email Wizards, Incoming Details [MSG-WIZ001]: */
 	gint result = 0;
 
 	/* Get the default port number for this protocol with this security: */
 	if(protocol == MODEST_PROTOCOL_STORE_POP) {
-		if ((security ==  MODEST_PROTOCOL_SECURITY_NONE) || (security ==  MODEST_PROTOCOL_SECURITY_TLS))
+		if ((security ==  MODEST_PROTOCOL_CONNECTION_NORMAL) || (security ==  MODEST_PROTOCOL_CONNECTION_TLS))
 			result = 110;
-		else if (security ==  MODEST_PROTOCOL_SECURITY_SSL)
+		else if (security ==  MODEST_PROTOCOL_CONNECTION_SSL)
 			result = 995;
 	} else if (protocol == MODEST_PROTOCOL_STORE_IMAP) {
-		if ((security ==  MODEST_PROTOCOL_SECURITY_NONE) || (security ==  MODEST_PROTOCOL_SECURITY_TLS))
+		if ((security ==  MODEST_PROTOCOL_CONNECTION_NORMAL) || (security ==  MODEST_PROTOCOL_CONNECTION_TLS))
 			result = 143;
-		else if (security ==  MODEST_PROTOCOL_SECURITY_SSL)
+		else if (security ==  MODEST_PROTOCOL_CONNECTION_SSL)
 			result = 993;
 	} else if (protocol == MODEST_PROTOCOL_TRANSPORT_SMTP) {
-		if ((security ==  MODEST_PROTOCOL_SECURITY_NONE) || (security ==  MODEST_PROTOCOL_SECURITY_TLS))
+		if ((security ==  MODEST_PROTOCOL_CONNECTION_NORMAL) || (security ==  MODEST_PROTOCOL_CONNECTION_TLS))
 			result = 25;
-		else if (security ==  MODEST_PROTOCOL_SECURITY_SSL)
+		else if (security ==  MODEST_PROTOCOL_CONNECTION_SSL)
 			result = 465;
 	}
 
@@ -182,9 +207,9 @@ static gint get_port_for_security (ModestProtocol protocol, ModestSecureConnecti
 
 /**
  * Returns the selected serversecurity, 
- * or MODEST_PROTOCOL_SECURITY_NONE if no serversecurity was selected.
+ * or MODEST_PROTOCOL_CONNECTION_NORMAL if no serversecurity was selected.
  */
-ModestSecureConnection
+ModestConnectionProtocol
 modest_serversecurity_combo_box_get_active_serversecurity (ModestServersecurityComboBox *combobox)
 {
 	GtkTreeIter active;
@@ -192,12 +217,12 @@ modest_serversecurity_combo_box_get_active_serversecurity (ModestServersecurityC
 	if (found) {
 		ModestServersecurityComboBoxPrivate *priv = SERVERSECURITY_COMBO_BOX_GET_PRIVATE (combobox);
 
-		ModestSecureConnection serversecurity = MODEST_PROTOCOL_SECURITY_NONE;
+		ModestConnectionProtocol serversecurity = MODEST_PROTOCOL_CONNECTION_NORMAL;
 		gtk_tree_model_get (priv->model, &active, MODEL_COL_ID, &serversecurity, -1);
 		return serversecurity;	
 	}
 
-	return MODEST_PROTOCOL_SECURITY_NONE; /* Failed. */
+	return MODEST_PROTOCOL_CONNECTION_NORMAL; /* Failed. */
 }
 
 /**
@@ -209,7 +234,7 @@ modest_serversecurity_combo_box_get_active_serversecurity_port (ModestServersecu
 {
 	ModestServersecurityComboBoxPrivate *priv = SERVERSECURITY_COMBO_BOX_GET_PRIVATE (combobox);
 	
-	const ModestSecureConnection security = modest_serversecurity_combo_box_get_active_serversecurity 
+	const ModestConnectionProtocol security = modest_serversecurity_combo_box_get_active_serversecurity 
 		(combobox);
 	return get_port_for_security (priv->protocol, security);
 }
@@ -247,7 +272,8 @@ on_model_foreach_select_id(GtkTreeModel *model,
  * or MODEST_PROTOCOL_UNKNOWN if no serversecurity was selected.
  */
 gboolean
-modest_serversecurity_combo_box_set_active_serversecurity (ModestServersecurityComboBox *combobox, ModestSecureConnection serversecurity)
+modest_serversecurity_combo_box_set_active_serversecurity (ModestServersecurityComboBox *combobox,
+							   ModestConnectionProtocol serversecurity)
 {
 	ModestServersecurityComboBoxPrivate *priv = SERVERSECURITY_COMBO_BOX_GET_PRIVATE (combobox);
 	

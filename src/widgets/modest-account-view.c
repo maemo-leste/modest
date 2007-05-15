@@ -214,7 +214,8 @@ update_account_view (ModestAccountMgr *account_mgr, ModestAccountView *view)
 					MODEST_ACCOUNT_VIEW_IS_DEFAULT_COLUMN,    account_data->is_default,
 	
 					MODEST_ACCOUNT_VIEW_PROTO_COLUMN,
-					modest_protocol_info_get_protocol_name  (account_data->store_account->proto),
+					modest_protocol_info_get_protocol_name  (account_data->store_account->proto,
+										 MODEST_TRANSPORT_STORE_PROTOCOL),
 	
 					MODEST_ACCOUNT_VIEW_LAST_UPDATED_COLUMN,  last_updated_string,
 					-1);

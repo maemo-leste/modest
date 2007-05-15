@@ -45,9 +45,10 @@ GType modest_secureauth_combo_box_get_type (void);
 
 ModestSecureauthComboBox* modest_secureauth_combo_box_new (void);
 
-ModestSecureAuthentication modest_secureauth_combo_box_get_active_secureauth (ModestSecureauthComboBox *combobox);
+ModestAuthProtocol modest_secureauth_combo_box_get_active_secureauth (ModestSecureauthComboBox *combobox);
 
-gboolean modest_secureauth_combo_box_set_active_secureauth (ModestSecureauthComboBox *combobox, ModestSecureAuthentication secureauth);
+gboolean modest_secureauth_combo_box_set_active_secureauth (ModestSecureauthComboBox *combobox,
+							    ModestAuthProtocol secureauth);
 
 
 G_END_DECLS

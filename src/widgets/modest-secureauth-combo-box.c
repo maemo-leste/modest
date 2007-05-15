@@ -31,7 +31,7 @@ struct _ModestSecureauthComboBoxPrivate
 
 static void
 modest_secureauth_combo_box_get_property (GObject *object, guint property_id,
-															GValue *value, GParamSpec *pspec)
+					  GValue *value, GParamSpec *pspec)
 {
 	switch (property_id) {
 	default:
@@ -41,7 +41,7 @@ modest_secureauth_combo_box_get_property (GObject *object, guint property_id,
 
 static void
 modest_secureauth_combo_box_set_property (GObject *object, guint property_id,
-															const GValue *value, GParamSpec *pspec)
+					  const GValue *value, GParamSpec *pspec)
 {
 	switch (property_id) {
 	default:
@@ -131,23 +131,26 @@ void modest_secureauth_combo_box_fill (ModestSecureauthComboBox *combobox)
 	
 	GtkTreeIter iter;
 	gtk_list_store_append (liststore, &iter);
-	gtk_list_store_set (liststore, &iter, MODEL_COL_ID, (gint)MODEST_PROTOCOL_AUTH_NONE, MODEL_COL_NAME, _("mcen_fi_advsetup_smtp_none"), -1);
+	gtk_list_store_set (liststore, &iter, MODEL_COL_ID, (gint)MODEST_PROTOCOL_AUTH_NONE, MODEL_COL_NAME,
+			    _("mcen_fi_advsetup_smtp_none"), -1);
 	
 	/* Select the None item: */
 	gtk_combo_box_set_active_iter (GTK_COMBO_BOX (combobox), &iter);
 	
 	gtk_list_store_append (liststore, &iter);
-	gtk_list_store_set (liststore, &iter, MODEL_COL_ID, (gint)MODEST_PROTOCOL_AUTH_PASSWORD, MODEL_COL_NAME, _("mcen_fi_advsetup_smtp_login"), -1);
+	gtk_list_store_set (liststore, &iter, MODEL_COL_ID, (gint)MODEST_PROTOCOL_AUTH_PASSWORD, MODEL_COL_NAME,
+			    _("mcen_fi_advsetup_smtp_login"), -1);
 	
 	gtk_list_store_append (liststore, &iter);
-	gtk_list_store_set (liststore, &iter, MODEL_COL_ID, (gint)MODEST_PROTOCOL_AUTH_CRAMMD5, MODEL_COL_NAME, _("mcen_fi_advsetup_smtp_cram_md5"), -1);
+	gtk_list_store_set (liststore, &iter, MODEL_COL_ID, (gint)MODEST_PROTOCOL_AUTH_CRAMMD5, MODEL_COL_NAME,
+			    _("mcen_fi_advsetup_smtp_cram_md5"), -1);
 }
 
 /**
  * Returns the selected secureauth, 
  * or MODEST_PROTOCOL_AUTH_NONE if no secureauth was selected.
  */
-ModestSecureAuthentication
+ModestAuthProtocol
 modest_secureauth_combo_box_get_active_secureauth (ModestSecureauthComboBox *combobox)
 {
 	GtkTreeIter active;
@@ -196,7 +199,7 @@ on_model_foreach_select_id(GtkTreeModel *model,
  * or MODEST_PROTOCOL_UNKNOWN if no secureauth was selected.
  */
 gboolean
-modest_secureauth_combo_box_set_active_secureauth (ModestSecureauthComboBox *combobox, ModestSecureAuthentication secureauth)
+modest_secureauth_combo_box_set_active_secureauth (ModestSecureauthComboBox *combobox, ModestAuthProtocol secureauth)
 {
 	ModestSecureauthComboBoxPrivate *priv = SECUREAUTH_COMBO_BOX_GET_PRIVATE (combobox);
 	
