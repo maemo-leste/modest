@@ -39,7 +39,7 @@ typedef struct {
 	const gchar*     display_name;
 } ProtocolInfo;
 
-static const ProtocolInfo ProtocolMap[] = {
+static const ProtocolInfo TransportStoreProtocolMap[] = {
 	{ MODEST_PROTOCOL_TRANSPORT_SENDMAIL, "sendmail", N_("Sendmail") },
 	{ MODEST_PROTOCOL_TRANSPORT_SMTP,     "smtp",     N_("SMTP Server") },
 	
@@ -48,111 +48,84 @@ static const ProtocolInfo ProtocolMap[] = {
 	{ MODEST_PROTOCOL_STORE_MAILDIR,      "maildir",  N_("Maildir") },
 	{ MODEST_PROTOCOL_STORE_MBOX,         "mbox",     N_("MBox") }
 };
-const guint PROTOCOL_SECURITY_MAP_SIZE = sizeof(ProtocolMap)/sizeof(ProtocolInfo);
 
-static const ProtocolInfo ProtocolSecurityMap[] = {
-	{ MODEST_PROTOCOL_SECURITY_NONE,      "none",     N_("None") },   
-	{ MODEST_PROTOCOL_SECURITY_SSL,       "ssl",      N_("SSL") },   
-	{ MODEST_PROTOCOL_SECURITY_TLS,       "tls",      N_("TLS") },
-	{ MODEST_PROTOCOL_SECURITY_TLS_OP,    "tls-op",   N_("TLS when possible") } /* op stands for optional */
+static const ProtocolInfo ConnectionProtocolMap[] = {
+	{ MODEST_PROTOCOL_CONNECTION_NORMAL,    "none",     N_("None") },   
+	{ MODEST_PROTOCOL_CONNECTION_SSL,       "ssl",      N_("SSL") },   
+	{ MODEST_PROTOCOL_CONNECTION_TLS,       "tls",      N_("TLS") },
+	{ MODEST_PROTOCOL_CONNECTION_TLS_OP,    "tls-op",   N_("TLS when possible") }
+	/* op stands for optional */
 };
-const guint PROTOCOL_MAP_SIZE = sizeof(ProtocolSecurityMap)/sizeof(ProtocolInfo);
-
-static const ProtocolInfo ProtocolAuthMap[] = {
+static const ProtocolInfo AuthProtocolMap[] = {
 	{ MODEST_PROTOCOL_AUTH_NONE,          "none",     N_("None") },
 	{ MODEST_PROTOCOL_AUTH_PASSWORD,      "password", N_("Password") },
 	{ MODEST_PROTOCOL_AUTH_CRAMMD5,       "cram-md5", N_("Cram MD5") }
 };
-const guint PROTOCOL_AUTH_MAP_SIZE = sizeof(ProtocolAuthMap)/sizeof(ProtocolInfo);
 
 
 
-#if 0
-GSList*
-modest_protocol_info_get_protocol_list (ModestProtocolType type)
+static const ProtocolInfo*
+get_map (ModestProtocolType proto_type, guint *size)
 {
-	GSList *proto_list = NULL;
-	int i;
+	const ProtocolInfo *map = NULL;
 	
-	g_return_val_if_fail (type > MODEST_PROTOCOL_TYPE_UNKNOWN &&
-			      type < MODEST_PROTOCOL_TYPE_NUM,
-			      NULL);
- 		
-	for (i = 0; i != PROTOCOL_MAP_SIZE; ++i) {
-		ProtocolInfo info = (ProtocolInfo)ProtocolMap[i];
-		if (modest_protocol_info_get_protocol_type(info.proto) == type)
-			proto_list = g_slist_append (proto_list, GINT_TO_POINTER(info.proto));
+	switch (proto_type) {
+	case MODEST_TRANSPORT_STORE_PROTOCOL:
+		map   = TransportStoreProtocolMap;
+		*size = G_N_ELEMENTS(TransportStoreProtocolMap);
+		break;
+	case MODEST_CONNECTION_PROTOCOL:
+		map   = ConnectionProtocolMap;
+		*size = G_N_ELEMENTS(ConnectionProtocolMap);
+		break;
+	case MODEST_AUTH_PROTOCOL:
+		map   = AuthProtocolMap;
+		*size = G_N_ELEMENTS(AuthProtocolMap);
+		break;
+	default:
+		g_printerr ("modest: invalide protocol type %d", proto_type);
 	}
-	return proto_list;
+	return map;
 }
-#endif
 
-static ModestPairList*
-modest_protocol_info_get_pair_list (const ProtocolInfo* map, guint size)
+
+ModestPairList*
+modest_protocol_info_get_protocol_pair_list (ModestProtocolType proto_type)
 {
+	const ProtocolInfo *map;
 	ModestPairList *proto_list = NULL;
+	guint size;
 	int i;
 
+	map = get_map (proto_type, &size);
+	g_return_val_if_fail (map, NULL);
+	
 	for (i = 0; i != size; ++i) {
 		const ProtocolInfo info = map[i];
 		proto_list = g_slist_append (proto_list,
-						     (gpointer)modest_pair_new(
-							     (gpointer)info.name,
-							     (gpointer)info.display_name,
-							     FALSE));			
+					     (gpointer)modest_pair_new(
+						     (gpointer)info.name,
+						     (gpointer)info.display_name,
+						     FALSE));			
 	}
 	return proto_list;
-}
-
-ModestPairList*
-modest_protocol_info_get_protocol_pair_list ()
-{
-	return modest_protocol_info_get_pair_list (ProtocolMap, PROTOCOL_MAP_SIZE);
-}
-
-ModestPairList*
-modest_protocol_info_get_protocol_security_pair_list ()
-{
-	return modest_protocol_info_get_pair_list (ProtocolSecurityMap, PROTOCOL_SECURITY_MAP_SIZE);
-}
-
-
-ModestPairList*
-modest_protocol_info_get_protocol_auth_pair_list ()
-{
-	return modest_protocol_info_get_pair_list (ProtocolAuthMap, PROTOCOL_AUTH_MAP_SIZE);
-}
-
-
-
-ModestProtocolType
-modest_protocol_info_get_protocol_type (ModestProtocol proto)
-{
-	switch (proto) {
-	case MODEST_PROTOCOL_TRANSPORT_SENDMAIL:
-	case MODEST_PROTOCOL_TRANSPORT_SMTP:
-		return MODEST_PROTOCOL_TYPE_TRANSPORT;
-		
-	case MODEST_PROTOCOL_STORE_POP:
-	case MODEST_PROTOCOL_STORE_IMAP:
-	case MODEST_PROTOCOL_STORE_MAILDIR:
-	case MODEST_PROTOCOL_STORE_MBOX:
-		return MODEST_PROTOCOL_TYPE_STORE;
-
-	default:
-		return MODEST_PROTOCOL_TYPE_UNKNOWN;
-	}
 }
 
 
 ModestProtocol
-modest_protocol_info_get_protocol (const gchar* name)
+modest_protocol_info_get_protocol (const gchar* name, ModestProtocolType proto_type)
 {
+	const ProtocolInfo *map;
+	guint size;
 	int i;
+	
 	g_return_val_if_fail (name, MODEST_PROTOCOL_UNKNOWN);
+	
+	map = get_map (proto_type, &size);
+	g_return_val_if_fail (map, MODEST_PROTOCOL_UNKNOWN);
 
-	for (i = 0; i != PROTOCOL_MAP_SIZE; ++i) {
-		ProtocolInfo info = (ProtocolInfo)ProtocolMap[i];
+	for (i = 0; i != size; ++i) {
+		const ProtocolInfo info = map[i];
 		if (strcmp(name, info.name) == 0)
 			return info.proto;
 	}
@@ -162,17 +135,19 @@ modest_protocol_info_get_protocol (const gchar* name)
 
 
 
-
 /* get either the name or the display_name for the protocol */
 static const gchar*
-get_protocol_string (ModestProtocol proto, gboolean get_name)
+get_protocol_string (ModestProtocol proto, gboolean get_name, ModestProtocolType proto_type)
 {
+	const ProtocolInfo *map;
+	guint size;
 	int i;
-	g_return_val_if_fail (modest_protocol_info_get_protocol_type(proto) !=
-			      MODEST_PROTOCOL_TYPE_UNKNOWN, NULL);
+		
+	map = get_map (proto_type, &size);
+	g_return_val_if_fail (map, NULL);
 	
-	for (i = 0; i != PROTOCOL_MAP_SIZE; ++i) {
-		ProtocolInfo info = (ProtocolInfo)ProtocolMap[i];
+	for (i = 0; i != size; ++i) {
+		ProtocolInfo info = map[i];
 		if (info.proto == proto)
 			return get_name ? info.name : info.display_name;	
 	}
@@ -180,27 +155,32 @@ get_protocol_string (ModestProtocol proto, gboolean get_name)
 }
 
 const gchar*
-modest_protocol_info_get_protocol_name (ModestProtocol proto)
+modest_protocol_info_get_protocol_name (ModestProtocol proto, ModestProtocolType proto_type)
 {
-	return get_protocol_string (proto, TRUE);
+	return get_protocol_string (proto, TRUE, proto_type);
 }
 
 
 const gchar*
-modest_protocol_info_get_protocol_display_name (ModestProtocol proto)
+modest_protocol_info_get_protocol_display_name (ModestProtocol proto, ModestProtocolType proto_type)
 {
-	return get_protocol_string (proto, FALSE);
+	return get_protocol_string (proto, FALSE, proto_type);
 }
 
 
 gboolean
-modest_protocol_info_protocol_is_local_store (ModestProtocol proto)
+modest_protocol_info_protocol_is_local_store (ModestTransportStoreProtocol proto)
 {
-	g_return_val_if_fail (modest_protocol_info_get_protocol_type (proto) !=
-			      MODEST_PROTOCOL_TYPE_UNKNOWN, FALSE);
-
-	/* may add MH later */
 	return proto == MODEST_PROTOCOL_STORE_MBOX || proto == MODEST_PROTOCOL_STORE_MAILDIR;
+}
+
+
+
+gboolean
+modest_protocol_info_protocol_is_store (ModestTransportStoreProtocol proto)
+{
+	return proto == MODEST_PROTOCOL_STORE_MBOX || proto == MODEST_PROTOCOL_STORE_MAILDIR ||
+		proto == MODEST_PROTOCOL_STORE_POP || proto == MODEST_PROTOCOL_STORE_IMAP;
 }
 
 

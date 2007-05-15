@@ -17,7 +17,7 @@
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
  * IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
- * PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+\ * PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
  * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
  * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
  * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
@@ -31,63 +31,48 @@
 #define __MODEST_PROTOCOL_INFO_H__
 
 #include <modest-pair.h>
+#include <glib.h>
 
 G_BEGIN_DECLS
 
-/* NOTE: be careful to check modest-protocol-info.c
- * if you make any changes here */
 typedef enum {
-	MODEST_PROTOCOL_UNKNOWN,
-	
 	MODEST_PROTOCOL_TRANSPORT_SENDMAIL,
 	MODEST_PROTOCOL_TRANSPORT_SMTP,
-	
+
 	MODEST_PROTOCOL_STORE_POP,
 	MODEST_PROTOCOL_STORE_IMAP,
 	MODEST_PROTOCOL_STORE_MAILDIR,
 	MODEST_PROTOCOL_STORE_MBOX
-} ModestProtocol;
-
-
-typedef enum {
-	MODEST_PROTOCOL_TYPE_UNKNOWN,
-	MODEST_PROTOCOL_TYPE_TRANSPORT,
-	MODEST_PROTOCOL_TYPE_STORE
-} ModestProtocolType;
-
+} ModestTransportStoreProtocol;
+	
 typedef enum {    
-	MODEST_PROTOCOL_SECURITY_NONE,
-	MODEST_PROTOCOL_SECURITY_SSL,   
-	MODEST_PROTOCOL_SECURITY_TLS,
-	MODEST_PROTOCOL_SECURITY_TLS_OP
-} ModestSecureConnection;
+	MODEST_PROTOCOL_CONNECTION_NORMAL,
+	MODEST_PROTOCOL_CONNECTION_SSL,   
+	MODEST_PROTOCOL_CONNECTION_TLS,
+	MODEST_PROTOCOL_CONNECTION_TLS_OP
+} ModestConnectionProtocol;
 
 typedef enum {    
 	MODEST_PROTOCOL_AUTH_NONE,
 	MODEST_PROTOCOL_AUTH_PASSWORD,
 	MODEST_PROTOCOL_AUTH_CRAMMD5
-} ModestSecureAuthentication;
+} ModestAuthProtocol;
+
+typedef enum {
+	MODEST_TRANSPORT_STORE_PROTOCOL,
+	MODEST_CONNECTION_PROTOCOL,
+	MODEST_AUTH_PROTOCOL
+} ModestProtocolType;
 
 
-#if 0 
-/**
- * modest_protocol_info_get_list:
- * @type: the type of list you want, it should NOT be MODEST_PROTOCOL_TYPE_UNKNOWN
- *
- * return the list of protocols of the given @type.
- * the elements of the returned list are ModestProtocols (use GPOINTER_TO_INT to get it)
- *  
- * Returns: a list of protocols of the given @type; after use, it should be freed
- * with g_slist_free. The elements should not be freed, as there is no memory allocated
- * for them.
- */
-GSList*   modest_protocol_info_get_protocol_list (ModestProtocolType type);
-#endif
+typedef guint ModestProtocol;
 
+#define MODEST_PROTOCOL_UNKNOWN 666
 
 /**
  * modest_protocol_info_get_protocol_pair_list:
- *
+ * @proto_type: the type of protocol you want to have
+ * 
  * return the list of <protocol,display-name>-tupels of protocols.
  * The elements of the returned list are ModestPairs
  * This is a convenience function for use with ModestComboBox
@@ -95,76 +80,56 @@ GSList*   modest_protocol_info_get_protocol_list (ModestProtocolType type);
  * Returns: a list of protocols. After use, it should be freed
  * with modest_pair_list_free
  */
-ModestPairList*   modest_protocol_info_get_protocol_pair_list ();
-
-/**
- * modest_protocol_info_get_protocol_security_pair_list:
- *
- * return the list of <protocol,display-name>-tupels of protocol secure connection methods.
- * The elements of the returned list are ModestPairs
- * This is a convenience function for use with ModestComboBox
- *  
- * Returns: a list of secure connection methods. After use, it should be freed
- * with modest_pair_list_free
- */
-ModestPairList*   modest_protocol_info_get_protocol_security_pair_list ();
-
-/**
- * modest_protocol_info_get_protocol_auth_pair_list:
- *
- * return the list of <protocol,display-name>-tupels of protocol secure authentication methods.
- * The elements of the returned list are ModestPairs
- * This is a convenience function for use with ModestComboBox
- *  
- * Returns: a list of secure authentication methods. After use, it should be freed
- * with modest_pair_list_free
- */
-ModestPairList*   modest_protocol_info_get_protocol_auth_pair_list ();
-
-
-/**
- * modest_protocol_info_get_protocol_type:
- * @proto: the ModestProtocol you'd like to query for its type
- *
- * return ModestProtocolType for the protocol
- *  
- * Returns: the protocol type or MODEST_PROTOCOL_TYPE_UNKNOWN
- */
-ModestProtocolType modest_protocol_info_get_protocol_type (ModestProtocol proto);
-
+ModestPairList*   modest_protocol_info_get_protocol_pair_list (ModestProtocolType proto_type);
 
 /**
  * modest_protocol_info_get_protocol_type:
  * @name: the name of the  ModestProtocol
+ * @proto_type: the type of protocol you want to have
  *
  * return the id of the protocol with the given name
  *  
  * Returns: the id of the protocol or MODEST_PROTOCOL_UNKNOWN
  */
-ModestProtocol modest_protocol_info_get_protocol (const gchar* name);
-
+ModestProtocol modest_protocol_info_get_protocol (const gchar* name, ModestProtocolType proto_type);
 
 /**
  * modest_protocol_info_get_protocol_name:
  * @proto: the protocol you are looking for
- *
+ * @proto_type: the type of protocol you want to have
+ * 
  * return the string id of the proto (such as "imap", or "tls")
  *  
  * Returns: string id of the proto as a constant string, that should NOT be modified or freed
  */
-const gchar* modest_protocol_info_get_protocol_name (ModestProtocol proto);
+const gchar* modest_protocol_info_get_protocol_name (ModestProtocol proto,
+						     ModestProtocolType proto_type);
 
 /**
  * modest_protocol_info_get_protocol_display_name:
  * @proto: the protocol you are looking for
+ * @proto_type: the type of protocol you want to have
  *
  * return the string id of the proto (such as "imap", or "tls")
  *  
  * Returns: string id of the proto as a constant string, that should NOT be modified or freed
  *
  */
-const gchar* modest_protocol_info_get_protocol_display_name (ModestProtocol proto);
+const gchar* modest_protocol_info_get_protocol_display_name (ModestProtocol proto,
+							     ModestProtocolType proto_type);
 
+
+
+/**
+ * modest_protocol_info_protocol_is_local_store:
+ * @proto: the protocol
+ *
+ * is this protocol a store protocol?
+ *  
+ * Returns: TRUE if it is a local store, FALSE otherwise
+ *
+ */
+gboolean modest_protocol_info_protocol_is_store (ModestTransportStoreProtocol proto);
 
 
 /**
@@ -176,9 +141,7 @@ const gchar* modest_protocol_info_get_protocol_display_name (ModestProtocol prot
  * Returns: TRUE if it is a local store, FALSE otherwise
  *
  */
-gboolean modest_protocol_info_protocol_is_local_store (ModestProtocol proto);
-
-
+gboolean modest_protocol_info_protocol_is_local_store (ModestTransportStoreProtocol proto);
 
 
 G_END_DECLS
