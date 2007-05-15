@@ -33,11 +33,11 @@
 
 #include <glib/gi18n.h>
 
-/* some interesting dirs. NOTE, they should be prefixed
- * with $HOME; also, except MODEST_DIR itself, they
+/* Some interesting directories. NOTE, they should be prefixed
+ * with $HOME; Also, except for MODEST_DIR itself, they
  * need to be prefixed with MODEST_DIR;
- * why these seperate things? well, this is for crossplatform
- * building of dirs from their components..
+ * The parts of the path are separate for crossplatform
+ * building of dirs from their components.
  * g_build_dir is your friend
  */
 #define MODEST_DIR	                  ".modest"
