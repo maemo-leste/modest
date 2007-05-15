@@ -58,28 +58,28 @@ struct _ModestHeaderView {
 #define MODEST_HEADER_VIEW_FLAG_SORT "header-view-flags-sort"
 
 typedef enum _ModestHeaderViewColumn {
-	MODEST_HEADER_VIEW_COLUMN_FROM            = 0,
-	MODEST_HEADER_VIEW_COLUMN_TO,
-	MODEST_HEADER_VIEW_COLUMN_SUBJECT,
-	MODEST_HEADER_VIEW_COLUMN_SENT_DATE,
-	MODEST_HEADER_VIEW_COLUMN_RECEIVED_DATE,
-	MODEST_HEADER_VIEW_COLUMN_MSGTYPE,
-	MODEST_HEADER_VIEW_COLUMN_ATTACH,
-	MODEST_HEADER_VIEW_COLUMN_SIZE,
-	MODEST_HEADER_VIEW_COLUMN_STATUS,
+	MODEST_HEADER_VIEW_COLUMN_FROM                  = 0,
+	MODEST_HEADER_VIEW_COLUMN_TO                    = 1,
+	MODEST_HEADER_VIEW_COLUMN_SUBJECT               = 2,
+	MODEST_HEADER_VIEW_COLUMN_SENT_DATE             = 3,
+	MODEST_HEADER_VIEW_COLUMN_RECEIVED_DATE         = 4,
+	MODEST_HEADER_VIEW_COLUMN_MSGTYPE               = 5,
+	MODEST_HEADER_VIEW_COLUMN_ATTACH                = 6,
+	MODEST_HEADER_VIEW_COLUMN_SIZE                  = 7,
+	MODEST_HEADER_VIEW_COLUMN_STATUS                = 8,
 
 	/*
 	 * these two are for compact display on small devices,
 	 * with two line display with all relevant headers
 	 */
-	MODEST_HEADER_VIEW_COLUMN_COMPACT_FLAG,       /* priority and attachments */
-	MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER_IN,  /* incoming mail */
-	MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER_OUT, /* outgoing mail */
-	MODEST_HEADER_VIEW_COLUMN_COMPACT_SENT_DATE,
-	MODEST_HEADER_VIEW_COLUMN_COMPACT_RECEIVED_DATE,
+	MODEST_HEADER_VIEW_COLUMN_COMPACT_FLAG          = 9, /* priority and attachments */
+	MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER_IN     = 10, /* incoming mail */
+	MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER_OUT    = 11,/* outgoing mail */
+	MODEST_HEADER_VIEW_COLUMN_COMPACT_SENT_DATE     = 12,
+	MODEST_HEADER_VIEW_COLUMN_COMPACT_RECEIVED_DATE = 13,
 
 	MODEST_HEADER_VIEW_COLUMN_NUM
-
+	
 } ModestHeaderViewColumn;
 
 /*
@@ -87,9 +87,9 @@ typedef enum _ModestHeaderViewColumn {
  * to make a small-device specific display
  */
 typedef enum _ModestHeaderViewStyle {
-	MODEST_HEADER_VIEW_STYLE_DETAILS, /* many columns, single line, col headers visible */
-	MODEST_HEADER_VIEW_STYLE_TWOLINES, /* two-line headers, col headers invisible */
-
+	MODEST_HEADER_VIEW_STYLE_DETAILS   = 0, /* many columns, single line, col headers visible */
+	MODEST_HEADER_VIEW_STYLE_TWOLINES  = 1, /* two-line headers, col headers invisible */
+	
 	MODEST_HEADER_VIEW_STYLE_NUM	
 } ModestHeaderViewStyle;
 
