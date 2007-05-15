@@ -1364,9 +1364,7 @@ on_queue_changed (ModestMailOperationQueue *queue,
 	case MODEST_MAIL_OPERATION_QUEUE_OPERATION_ADDED:
 		if (mode == TOOLBAR_MODE_TRANSFER) {
 			/* Enable transfer toolbar mode */
-			priv->progress_bar_timeout = g_timeout_add (2000, 
-								    (GSourceFunc) set_toolbar_transfer_mode, 
-								    self);
+			set_toolbar_transfer_mode(self);
 			while (tmp) {
 				modest_progress_object_add_operation (MODEST_PROGRESS_OBJECT (tmp->data),
 								      mail_op);
@@ -1386,12 +1384,7 @@ on_queue_changed (ModestMailOperationQueue *queue,
 
 			/* If no more operations are being observed, NORMAL mode is enabled again */
 			if (observers_empty (self)) {
-				if (priv->progress_bar_timeout > 0) {
-					g_source_remove (priv->progress_bar_timeout);
-					priv->progress_bar_timeout = 0;
-				}
-				else 
-					set_toolbar_mode (self, TOOLBAR_MODE_NORMAL);
+				set_toolbar_mode (self, TOOLBAR_MODE_NORMAL);
 			}
 		}
 		break;
