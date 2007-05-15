@@ -49,7 +49,6 @@ G_BEGIN_DECLS
 typedef struct _ModestAccountMgr      ModestAccountMgr;
 typedef struct _ModestAccountMgrClass ModestAccountMgrClass;
 
-
 struct _ModestAccountMgr {
 	 GObject parent;
 };
@@ -125,8 +124,8 @@ gboolean modest_account_mgr_add_server_account    (ModestAccountMgr *self,
 						   const gchar *username,
 						   const gchar *password,
 						   ModestProtocol proto,
-						   ModestSecureConnection security,
-						   ModestSecureAuthentication auth);
+						   ModestConnectionProtocol security,
+						   ModestAuthProtocol auth);
 
 
 /**

@@ -233,10 +233,10 @@ modest_server_account_get_hostname (ModestAccountMgr *self, const gchar* account
 }
  
 
-static ModestSecureAuthentication
+static ModestAuthProtocol
 get_secure_auth_for_conf_string(const gchar* value)
 {
-	ModestSecureAuthentication result = MODEST_PROTOCOL_AUTH_NONE;
+	ModestAuthProtocol result = MODEST_PROTOCOL_AUTH_NONE;
 	if (value) {
 		if (strcmp(value, MODEST_ACCOUNT_AUTH_MECH_VALUE_NONE) == 0)
 			result = MODEST_PROTOCOL_AUTH_NONE;
@@ -249,11 +249,11 @@ get_secure_auth_for_conf_string(const gchar* value)
 	return result;
 }
 
-ModestSecureAuthentication
+ModestAuthProtocol
 modest_server_account_get_secure_auth (ModestAccountMgr *self, 
 	const gchar* account_name)
 {
-	ModestSecureAuthentication result = MODEST_PROTOCOL_AUTH_NONE;
+	ModestAuthProtocol result = MODEST_PROTOCOL_AUTH_NONE;
 	gchar* value = modest_account_mgr_get_string (self, account_name, MODEST_ACCOUNT_AUTH_MECH, 
 		TRUE /* server account */);
 	if (value) {
@@ -268,7 +268,7 @@ modest_server_account_get_secure_auth (ModestAccountMgr *self,
 
 void
 modest_server_account_set_secure_auth (ModestAccountMgr *self, 
-	const gchar* account_name, ModestSecureAuthentication secure_auth)
+	const gchar* account_name, ModestAuthProtocol secure_auth)
 {
 	/* Get the conf string for the enum value: */
 	const gchar* str_value = NULL;
@@ -283,27 +283,27 @@ modest_server_account_set_secure_auth (ModestAccountMgr *self,
 	modest_account_mgr_set_string (self, account_name, MODEST_ACCOUNT_AUTH_MECH, str_value, TRUE);
 }
 
-static ModestSecureConnection
+static ModestConnectionProtocol
 get_security_for_conf_string(const gchar* value)
 {
-	ModestSecureConnection result = MODEST_PROTOCOL_SECURITY_NONE;
+	ModestConnectionProtocol result = MODEST_PROTOCOL_CONNECTION_NORMAL;
 	if (value) {
 		if (strcmp(value, MODEST_ACCOUNT_SECURITY_VALUE_NONE) == 0)
-			result = MODEST_PROTOCOL_SECURITY_NONE;
+			result = MODEST_PROTOCOL_CONNECTION_NORMAL;
 		else if (strcmp(value, MODEST_ACCOUNT_SECURITY_VALUE_NORMAL) == 0)
-			result = MODEST_PROTOCOL_SECURITY_TLS;
+			result = MODEST_PROTOCOL_CONNECTION_TLS;
 		else if (strcmp(value, MODEST_ACCOUNT_SECURITY_VALUE_SSL) == 0)
-			result = MODEST_PROTOCOL_SECURITY_SSL;
+			result = MODEST_PROTOCOL_CONNECTION_SSL;
 	}
 	
 	return result;
 }
 
-ModestSecureConnection
+ModestConnectionProtocol
 modest_server_account_get_security (ModestAccountMgr *self, 
 	const gchar* account_name)
 {
-	ModestSecureConnection result = MODEST_PROTOCOL_SECURITY_NONE;
+	ModestConnectionProtocol result = MODEST_PROTOCOL_CONNECTION_NORMAL;
 	gchar* value = modest_account_mgr_get_string (self, account_name, MODEST_ACCOUNT_SECURITY, 
 		TRUE /* server account */);
 	if (value) {
@@ -317,15 +317,15 @@ modest_server_account_get_security (ModestAccountMgr *self,
 
 void
 modest_server_account_set_security (ModestAccountMgr *self, 
-	const gchar* account_name, ModestSecureConnection security)
+	const gchar* account_name, ModestConnectionProtocol security)
 {
 	/* Get the conf string for the enum value: */
 	const gchar* str_value = NULL;
-	if (security == MODEST_PROTOCOL_SECURITY_NONE)
+	if (security == MODEST_PROTOCOL_CONNECTION_NORMAL)
 		str_value = MODEST_ACCOUNT_SECURITY_VALUE_NONE;
-	else if (security == MODEST_PROTOCOL_SECURITY_TLS)
+	else if (security == MODEST_PROTOCOL_CONNECTION_TLS)
 		str_value = MODEST_ACCOUNT_SECURITY_VALUE_NORMAL;
-	else if (security == MODEST_PROTOCOL_SECURITY_SSL)
+	else if (security == MODEST_PROTOCOL_CONNECTION_SSL)
 		str_value = MODEST_ACCOUNT_SECURITY_VALUE_SSL;
 	
 	/* Set it in the configuration: */
@@ -345,7 +345,7 @@ modest_account_mgr_get_server_account_data (ModestAccountMgr *self, const gchar*
 	data->hostname     = modest_account_mgr_get_string (self, name, MODEST_ACCOUNT_HOSTNAME,TRUE);
 	data->username     = modest_account_mgr_get_string (self, name, MODEST_ACCOUNT_USERNAME,TRUE);	
 	proto              = modest_account_mgr_get_string (self, name, MODEST_ACCOUNT_PROTO, TRUE);
-	data->proto        = modest_protocol_info_get_protocol (proto);
+	data->proto        = modest_protocol_info_get_protocol (proto, MODEST_TRANSPORT_STORE_PROTOCOL);
 	g_free (proto);
 
 	data->port         = modest_account_mgr_get_int (self, name, MODEST_ACCOUNT_PORT, TRUE);

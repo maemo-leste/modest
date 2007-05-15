@@ -137,8 +137,8 @@ modest_tny_folder_get_rules   (const TnyFolder *folder)
 		if (!account)
 			return -1; /* no account: nothing is allowed */
 		
-		proto = modest_protocol_info_get_protocol (
-			tny_account_get_proto (account));
+		proto = modest_protocol_info_get_protocol (tny_account_get_proto (account),
+							   MODEST_TRANSPORT_STORE_PROTOCOL);
 
 		if (proto == MODEST_PROTOCOL_STORE_IMAP) {
 			rules = 0;

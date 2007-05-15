@@ -169,7 +169,8 @@ modest_tny_account_new_from_server_account (ModestAccountMgr *account_mgr,
 
 	/* Proto */
 	tny_account_set_proto (tny_account,
-			       modest_protocol_info_get_protocol_name(account_data->proto));
+			       modest_protocol_info_get_protocol_name(account_data->proto,
+								      MODEST_TRANSPORT_STORE_PROTOCOL));
 
 	       
 	/* mbox and maildir accounts use a URI instead of the rest: */
@@ -181,14 +182,14 @@ modest_tny_account_new_from_server_account (ModestAccountMgr *account_mgr,
 		/* Enable secure connection settings: */
 		const gchar* option_security = NULL;
 		switch (account_data->security) {
-		case MODEST_PROTOCOL_SECURITY_NONE:
+		case MODEST_PROTOCOL_CONNECTION_NORMAL:
 			option_security = MODEST_ACCOUNT_OPTION_SSL "= " MODEST_ACCOUNT_OPTION_SSL_NEVER;
 			break;
-		case MODEST_PROTOCOL_SECURITY_SSL:
-		case MODEST_PROTOCOL_SECURITY_TLS:
+		case MODEST_PROTOCOL_CONNECTION_SSL:
+		case MODEST_PROTOCOL_CONNECTION_TLS:
 			option_security = MODEST_ACCOUNT_OPTION_SSL "= " MODEST_ACCOUNT_OPTION_SSL_ALWAYS;;
 			break;
-		case MODEST_PROTOCOL_SECURITY_TLS_OP:
+		case MODEST_PROTOCOL_CONNECTION_TLS_OP:
 			option_security = MODEST_ACCOUNT_OPTION_SSL "= " MODEST_ACCOUNT_OPTION_SSL_WHEN_POSSIBLE;
 			break;
 		default:
@@ -235,7 +236,7 @@ modest_tny_account_new_from_server_account (ModestAccountMgr *account_mgr,
 			tny_account_set_secure_auth_mech (tny_account, auth_mech_name);
 		}
 		
-		if (account_data->proto == MODEST_PROTOCOL_TYPE_STORE) {
+		if (modest_protocol_info_protocol_is_store(account_data->proto)) {
 			/* Other connection options. Some options are only valid for IMAP
 			   accounts but it's OK for just now since POP is still not
 			   supported */

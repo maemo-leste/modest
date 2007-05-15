@@ -49,8 +49,8 @@ typedef struct {
 	gchar            *password;
 	time_t		  last_updated;
 	gint             port; /* Or 0, if the default should be used. */
-	ModestSecureAuthentication   secure_auth;
-	ModestSecureConnection   security;
+	ModestAuthProtocol   secure_auth;
+	ModestConnectionProtocol   security;
 } ModestServerAccountData;
 
 typedef struct {
@@ -326,7 +326,7 @@ modest_server_account_get_hostname (ModestAccountMgr *self, const gchar* account
  *
  * Returns: The secure authentication enum value.
  */
-ModestSecureAuthentication
+ModestAuthProtocol
 modest_server_account_get_secure_auth (ModestAccountMgr *self, const gchar* account_name);
 
 /**
@@ -339,7 +339,7 @@ modest_server_account_get_secure_auth (ModestAccountMgr *self, const gchar* acco
  */
 void
 modest_server_account_set_secure_auth (ModestAccountMgr *self, const gchar* account_name, 
-	ModestSecureAuthentication secure_auth);
+				       ModestAuthProtocol secure_auth);
 	
 /**
  * modest_server_account_data_get_security:
@@ -350,7 +350,7 @@ modest_server_account_set_secure_auth (ModestAccountMgr *self, const gchar* acco
  *
  * Returns: The security enum value.
  */
-ModestSecureConnection
+ModestConnectionProtocol
 modest_server_account_get_security (ModestAccountMgr *self, const gchar* account_name);
 
 /**
@@ -362,7 +362,7 @@ modest_server_account_get_security (ModestAccountMgr *self, const gchar* account
  */
 void
 modest_server_account_set_security (ModestAccountMgr *self, const gchar* account_name, 
-	ModestSecureConnection security);
+				    ModestConnectionProtocol security);
 
 ModestServerAccountData*
 modest_account_mgr_get_server_account_data (ModestAccountMgr *self, const gchar* name);
