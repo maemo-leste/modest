@@ -1,5 +1,12 @@
 2007-05-15  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/maemo/modest-platform.c:
+	(on_modest_conf_update_interval_changed), (modest_platform_init):
+	Only respond to this particular key change. All these strcmp()s cannot be 
+	efficient.
+
+2007-05-15  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/maemo/modest-maemo-global-settings-dialog.c:
 	(current_connection): Prevent a crash in scratchbox when 
 	ny_maemo_conic_device_get_current_iap_id() returns NULL.

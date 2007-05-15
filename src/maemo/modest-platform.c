@@ -54,9 +54,11 @@ static void
 on_modest_conf_update_interval_changed (ModestConf* self, const gchar *key, 
 	ModestConfEvent event, gpointer user_data)
 {
-	const guint update_interval_minutes = 
-		modest_conf_get_int (self, MODEST_CONF_UPDATE_INTERVAL, NULL);
-	modest_platform_set_update_interval (update_interval_minutes);
+	if (strcmp (key, MODEST_CONF_UPDATE_INTERVAL) == 0) {
+		const guint update_interval_minutes = 
+			modest_conf_get_int (self, MODEST_CONF_UPDATE_INTERVAL, NULL);
+		modest_platform_set_update_interval (update_interval_minutes);
+	}
 }
 
 gboolean
@@ -114,7 +116,7 @@ modest_platform_init (void)
 			  NULL);
 			  
 	/* Get the initial update interval from gconf: */
-	on_modest_conf_update_interval_changed(conf, NULL, 
+	on_modest_conf_update_interval_changed(conf, MODEST_CONF_UPDATE_INTERVAL,
 		MODEST_CONF_EVENT_KEY_CHANGED, NULL);
 	
 	return TRUE;
