@@ -50,6 +50,15 @@
 
 static osso_context_t *osso_context = NULL;
 	
+static void	
+on_modest_conf_update_interval_changed (ModestConf* self, const gchar *key, 
+	ModestConfEvent event, gpointer user_data)
+{
+	const guint update_interval_minutes = 
+		modest_conf_get_int (self, MODEST_CONF_UPDATE_INTERVAL, NULL);
+	modest_platform_set_update_interval (update_interval_minutes);
+}
+
 gboolean
 modest_platform_init (void)
 {
@@ -95,12 +104,18 @@ modest_platform_init (void)
 		g_warning ("osso_application_set_autosave_cb() failed.");	
 	}
 	
-	
-	/* TODO: Get the actual update interval from gconf, 
-	 * when that preferences dialog has been implemented.
-	 * And make sure that this is called again whenever that is changed. */
-	const guint update_interval_minutes = 15;
-	modest_platform_set_update_interval (update_interval_minutes);
+
+	/* Make sure that the update interval is changed whenever its gconf key 
+	 * is changed: */
+	ModestConf *conf = modest_runtime_get_conf ();
+	g_signal_connect (G_OBJECT(conf),
+			  "key_changed",
+			  G_CALLBACK (on_modest_conf_update_interval_changed), 
+			  NULL);
+			  
+	/* Get the initial update interval from gconf: */
+	on_modest_conf_update_interval_changed(conf, NULL, 
+		MODEST_CONF_EVENT_KEY_CHANGED, NULL);
 	
 	return TRUE;
 }

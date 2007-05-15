@@ -375,25 +375,26 @@ current_connection (void)
 {
 	TnyAccountStore *account_store;
 	TnyDevice *device;
-	gboolean retval;
-	const gchar *bearer_type, *iap_id;
-	ConIcIap *iap;
+	gboolean retval = FALSE;
 	
 	account_store = TNY_ACCOUNT_STORE (modest_runtime_get_account_store ());
 	device = tny_account_store_get_device (account_store);
 
 	/* Get iap id */
-	iap_id = tny_maemo_conic_device_get_current_iap_id (TNY_MAEMO_CONIC_DEVICE (device));
-	iap = tny_maemo_conic_device_get_iap (TNY_MAEMO_CONIC_DEVICE (device), iap_id);
-	bearer_type = con_ic_iap_get_bearer_type (iap);
-		
-	if (!strcmp (bearer_type, CON_IC_BEARER_WLAN_INFRA) ||
-	    !strcmp (bearer_type, CON_IC_BEARER_WLAN_ADHOC))
-		retval = MODEST_CONNECTED_VIA_WLAN;
-	else
-		retval = MODEST_CONNECTED_VIA_ANY;
-
-	g_object_unref (iap);
+	const gchar *iap_id = tny_maemo_conic_device_get_current_iap_id (TNY_MAEMO_CONIC_DEVICE (device));
+	if (iap_id) {
+		ConIcIap *iap = tny_maemo_conic_device_get_iap (
+			TNY_MAEMO_CONIC_DEVICE (device), iap_id);
+		const gchar *bearer_type = con_ic_iap_get_bearer_type (iap);
+			
+		if (!strcmp (bearer_type, CON_IC_BEARER_WLAN_INFRA) ||
+		    !strcmp (bearer_type, CON_IC_BEARER_WLAN_ADHOC))
+			retval = MODEST_CONNECTED_VIA_WLAN;
+		else
+			retval = MODEST_CONNECTED_VIA_ANY;
+	
+		g_object_unref (iap);
+	}
 	g_object_unref (device);
 
 	return retval;

@@ -474,7 +474,7 @@ on_idle_send_receive(gpointer user_data)
 	win = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr ());
 
 	/* Send & receive all if "Update automatically" is set */
-	/* TODO: check the auto-update parametter in the configuration */
+	/* TODO: check the auto-update parameter in the configuration */
 	modest_ui_actions_do_send_receive_all (win);
 	
 	return FALSE; /* Do not call this callback again. */

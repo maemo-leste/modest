@@ -1,5 +1,14 @@
 2007-05-15  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/maemo/modest-maemo-global-settings-dialog.c:
+	(current_connection): Prevent a crash in scratchbox when 
+	ny_maemo_conic_device_get_current_iap_id() returns NULL.
+	* src/maemo/modest-platform.c:
+	(on_modest_conf_update_interval_changed), (modest_platform_init):
+	Get the update interval from gconf and reset it when the gconf key changes.
+
+2007-05-15  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/modest-protocol-info.c:
 	* src/modest-protocol-info.h: Adde enum-specific get functions, 
 	instead of using a ModestProtocolType enum parameter.
