@@ -95,6 +95,7 @@ typedef struct _HeaderActivatedHelper {
 	GtkTreeModel *model;
 	GtkTreeRowReference *row_reference;
 	TnyFolder *folder;
+	TnyHeader *header;
 } HeaderActivatedHelper;
 
 /*
@@ -455,6 +456,9 @@ open_msg_func (const GObject *obj, const TnyMsg *msg, gpointer user_data)
 	parent_win = MODEST_WINDOW(obj);
 	helper = (HeaderActivatedHelper *) user_data;
 
+	/* Mark header as read */
+	headers_action_mark_as_read (helper->header, MODEST_WINDOW(parent_win), NULL);
+
 	/* Get account */
 	account =  g_strdup(modest_window_get_active_account(MODEST_WINDOW(parent_win)));
 	if (!account)
@@ -487,6 +491,7 @@ open_msg_func (const GObject *obj, const TnyMsg *msg, gpointer user_data)
 	g_free(account);
 /* 	g_object_unref (G_OBJECT(msg)); */
 	g_object_unref (G_OBJECT(helper->folder));
+	g_object_unref (G_OBJECT(helper->header));
 	gtk_tree_row_reference_free (helper->row_reference);
 	g_slice_free (HeaderActivatedHelper, helper);
 }
@@ -969,10 +974,8 @@ modest_ui_actions_on_header_activated (ModestHeaderView *header_view,
 	ModestWindowMgr *mgr = NULL;
 	ModestWindow *win = NULL;
 	GtkTreeModel *model = NULL;
-	GtkTreeIter iter;
 	GtkTreeSelection *sel = NULL;
 	GList *sel_list = NULL;
-	GList *tmp = NULL;
 	
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW(main_window));
 	
@@ -987,9 +990,10 @@ modest_ui_actions_on_header_activated (ModestHeaderView *header_view,
 	/* Build helper */
 	helper = g_slice_new0 (HeaderActivatedHelper);
 	helper->folder = tny_header_get_folder (header);
+	helper->header = g_object_ref(header);
 	helper->model = NULL;
 
-	/* Get headers tree model and selected iter to build message view */
+	/* Get headers tree model and selected row reference to build message view */
 	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (header_view));
 	sel_list = gtk_tree_selection_get_selected_rows (sel, &model);
 	if (sel_list != NULL) {
@@ -998,17 +1002,6 @@ modest_ui_actions_on_header_activated (ModestHeaderView *header_view,
  		helper->model = model;
 		helper->row_reference = gtk_tree_row_reference_new (model, (GtkTreePath *) sel_list->data);
 
-		/* Mark as read */
-		for (tmp=sel_list; tmp; tmp=g_list_next(tmp)) {
-			gtk_tree_model_get_iter (model, &iter, (GtkTreePath *) tmp->data);
-			gtk_tree_model_get (model, &iter, TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN,
-					    &header, -1);
-
-			headers_action_mark_as_read (header, MODEST_WINDOW(main_window), NULL);
-
-			g_object_unref(header);
-		}
-			
 		g_list_foreach (sel_list, (GFunc) gtk_tree_path_free, NULL);
 		g_list_free (sel_list);
 	}
