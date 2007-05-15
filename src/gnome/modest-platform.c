@@ -208,3 +208,10 @@ modest_platform_get_global_settings_dialog ()
 {
 	return modest_gnome_global_settings_dialog_new ();
 }
+
+void 
+modest_platform_on_new_msg (void)
+{
+	/* TODO: implement this */
+	g_print ("--------------- NEW MESSAGE ARRIVED ---------------\n");
+}

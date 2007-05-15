@@ -211,6 +211,8 @@ gboolean modest_platform_set_update_interval (guint minutes);
  **/
 GtkWidget* modest_platform_get_global_settings_dialog (void);
 
+void modest_platform_on_new_msg (void);
+
 G_END_DECLS
 
 #endif /* __MODEST_PLATFORM_UTILS_H__ */

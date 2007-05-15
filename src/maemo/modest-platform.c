@@ -764,3 +764,12 @@ modest_platform_get_global_settings_dialog ()
 {
 	return modest_maemo_global_settings_dialog_new ();
 }
+
+void 
+modest_platform_on_new_msg (void)
+{
+	/* TODO: play sound SR-SND-18 */
+	/* TODO: LED lightning pattern */
+	/* TODO: update the application icon in the task navigator */ 
+	g_print ("--------------- NEW MESSAGE ARRIVED ---------------\n");
+}

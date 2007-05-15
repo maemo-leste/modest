@@ -42,6 +42,7 @@
 #include <modest-text-utils.h>
 #include <modest-icon-names.h>
 #include <modest-runtime.h>
+#include "modest-platform.h"
 
 static void modest_header_view_class_init  (ModestHeaderViewClass *klass);
 static void modest_header_view_init        (ModestHeaderView *obj);
@@ -67,13 +68,18 @@ static gboolean      on_focus_in            (GtkWidget     *sef,
 					     GdkEventFocus *event,
 					     gpointer       user_data);
 
+static void          folder_monitor_update  (TnyFolderObserver *self, 
+					     TnyFolderChange *change);
+
+static void          tny_folder_observer_init (TnyFolderObserverIface *klass);
+
 typedef struct _ModestHeaderViewPrivate ModestHeaderViewPrivate;
 struct _ModestHeaderViewPrivate {
 	TnyFolder            *folder;
 	ModestHeaderViewStyle style;
 
 	TnyFolderMonitor     *monitor;
-	GMutex               *monitor_lock;
+	GMutex               *observers_lock;
 
 	gint                  sort_colid[2][TNY_FOLDER_TYPE_NUM];
 	gint                  sort_type[2][TNY_FOLDER_TYPE_NUM];
@@ -120,9 +126,21 @@ modest_header_view_get_type (void)
 			(GInstanceInitFunc) modest_header_view_init,
 			NULL
 		};
+
+		static const GInterfaceInfo tny_folder_observer_info = 
+		{
+			(GInterfaceInitFunc) tny_folder_observer_init, /* interface_init */
+			NULL,         /* interface_finalize */
+			NULL          /* interface_data */
+		};
 		my_type = g_type_register_static (GTK_TYPE_TREE_VIEW,
 		                                  "ModestHeaderView",
 		                                  &my_info, 0);
+
+		g_type_add_interface_static (my_type, TNY_TYPE_FOLDER_OBSERVER,
+					     &tny_folder_observer_info);
+
+
 	}
 	return my_type;
 }
@@ -174,6 +192,12 @@ modest_header_view_class_init (ModestHeaderViewClass *klass)
 			      NULL, NULL,
 			      modest_marshal_VOID__STRING_INT_INT,
 			      G_TYPE_NONE, 3, G_TYPE_STRING, G_TYPE_INT, G_TYPE_INT);
+}
+
+static void
+tny_folder_observer_init (TnyFolderObserverIface *klass)
+{
+	klass->update_func = folder_monitor_update;
 }
 
 static GtkTreeViewColumn*
@@ -419,7 +443,7 @@ modest_header_view_init (ModestHeaderView *obj)
 	priv->folder  = NULL;
 
 	priv->monitor	     = NULL;
-	priv->monitor_lock   = g_mutex_new ();
+	priv->observers_lock = g_mutex_new ();
 
 	/* Sort parameters */
 	for (j=0; j < 2; j++) {
@@ -441,15 +465,16 @@ modest_header_view_finalize (GObject *obj)
 	self = MODEST_HEADER_VIEW(obj);
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
 
-	g_mutex_lock (priv->monitor_lock);
+	g_mutex_lock (priv->observers_lock);
 	if (priv->monitor) {
 		tny_folder_monitor_stop (priv->monitor);
 		g_object_unref (G_OBJECT (priv->monitor));
 	}
-	g_mutex_unlock (priv->monitor_lock);
-	g_mutex_free (priv->monitor_lock);
+	g_mutex_unlock (priv->observers_lock);
+	g_mutex_free (priv->observers_lock);
 
 	if (priv->folder) {
+		tny_folder_remove_observer (priv->folder, TNY_FOLDER_OBSERVER (obj));
 		g_object_unref (G_OBJECT (priv->folder));
 		priv->folder   = NULL;
 	}
@@ -738,8 +763,9 @@ modest_header_view_set_folder_intern (ModestHeaderView *self, TnyFolder *folder)
 	tny_gtk_header_list_model_set_folder (TNY_GTK_HEADER_LIST_MODEL(headers),
 					      folder, FALSE);
 
-	/* Add a folder observer */
-	g_mutex_lock (priv->monitor_lock);
+	/* Add IDLE observer (monitor) and another folder observer for
+	   new messages (self) */
+	g_mutex_lock (priv->observers_lock);
 	if (priv->monitor) {
 		tny_folder_monitor_stop (priv->monitor);
 		g_object_unref (G_OBJECT (priv->monitor));
@@ -747,8 +773,8 @@ modest_header_view_set_folder_intern (ModestHeaderView *self, TnyFolder *folder)
 	priv->monitor = TNY_FOLDER_MONITOR (tny_folder_monitor_new (folder));
 	tny_folder_monitor_add_list (priv->monitor, TNY_LIST (headers));
 	tny_folder_monitor_start (priv->monitor);
-	g_mutex_unlock (priv->monitor_lock);
-
+	tny_folder_add_observer (folder, TNY_FOLDER_OBSERVER (self));
+	g_mutex_unlock (priv->observers_lock);
 
 	sortable = gtk_tree_model_sort_new_with_model (GTK_TREE_MODEL(headers));
 	g_object_unref (G_OBJECT (headers));
@@ -860,8 +886,11 @@ modest_header_view_set_folder (ModestHeaderView *self, TnyFolder *folder)
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
 
 	if (priv->folder) {
+		g_mutex_lock (priv->observers_lock);
+		tny_folder_remove_observer (priv->folder, TNY_FOLDER_OBSERVER (self));
 		g_object_unref (priv->folder);
 		priv->folder = NULL;
+		g_mutex_unlock (priv->observers_lock);
 	}
 
 	if (folder) {
@@ -888,15 +917,16 @@ modest_header_view_set_folder (ModestHeaderView *self, TnyFolder *folder)
 		g_object_unref (mail_op);
 
 	} else {
-		g_mutex_lock (priv->monitor_lock);
-		modest_header_view_set_model (GTK_TREE_VIEW (self), NULL); 
+		g_mutex_lock (priv->observers_lock);
 
+		modest_header_view_set_model (GTK_TREE_VIEW (self), NULL); 
 		if (priv->monitor) {
 			tny_folder_monitor_stop (priv->monitor);
 			g_object_unref (G_OBJECT (priv->monitor));
 			priv->monitor = NULL;
 		}
-		g_mutex_unlock (priv->monitor_lock);
+
+		g_mutex_unlock (priv->observers_lock);
 	}
 }
 
@@ -1295,4 +1325,39 @@ on_focus_in (GtkWidget     *self,
 	g_list_free (selected);
 
 	return FALSE;
+}
+
+/*
+ *
+ */
+static void
+folder_monitor_update (TnyFolderObserver *self, 
+		       TnyFolderChange *change)
+{
+	ModestHeaderViewPrivate *priv = MODEST_HEADER_VIEW_GET_PRIVATE (self);
+	TnyFolderChangeChanged changed;
+
+	g_mutex_lock (priv->observers_lock);
+
+	changed = tny_folder_change_get_changed (change);
+
+	if (changed & TNY_FOLDER_CHANGE_CHANGED_ADDED_HEADERS) {
+/* 	TnyIterator *iter; */
+/* 	TnyList *list; */
+/* 		/\* The added headers *\/ */
+/* 		list = tny_simple_list_new (); */
+/* 		tny_folder_change_get_added_headers (change, list); */
+/* 		iter = tny_list_create_iterator (list); */
+/* 		while (!tny_iterator_is_done (iter)) */
+/* 		{ */
+/* 			TnyHeader *header = TNY_HEADER (tny_iterator_get_current (iter)); */
+/* 			g_object_unref (G_OBJECT (header)); */
+/* 			tny_iterator_next (iter); */
+/* 		} */
+/* 		g_object_unref (G_OBJECT (iter)); */
+/* 		g_object_unref (G_OBJECT (list)); */
+		modest_platform_on_new_msg ();
+	}
+
+	g_mutex_unlock (priv->observers_lock);
 }
