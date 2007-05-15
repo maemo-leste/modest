@@ -136,7 +136,9 @@ modest_init_init_core (void)
 	init_debug_g_type();
 	init_debug_logging();
 
-	g_thread_init(NULL);
+	if (!g_thread_supported())
+		g_thread_init(NULL);
+	
 	gdk_threads_init ();
 	
 	if (!modest_runtime_init()) {

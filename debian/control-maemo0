@@ -7,7 +7,7 @@ Standards-Version: 3.6.0
 
 Package: modest
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, modest-providers-data
+Depends: ${shlibs:Depends}, ${misc:Depends},${launcher:Depends},modest-providers-data,maemo-launcher
 Description: an e-mail client for platforms with modest resources
 
 Package: modest-dbg

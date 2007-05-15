@@ -1,6 +1,7 @@
 #
 # Makefile.am
-# Time-stamp: <2007-04-21 11:15:36 (djcb)>
+# Time-stamp: <2007-05-15 08:46:05 (djcb)>
+
 SUBDIRS=$(MODEST_PLATFORM) widgets $(dbus_api)
 
 DIST_SUBDIRS = widgets gnome maemo dbus_api
@@ -88,8 +89,8 @@ modest_SOURCES=\
 	modest-widget-memory.c\
 	modest-widget-memory.h 
 
-#modest_CFLAGS  = "$(modest_CFLAGS)  $(MAEMO_LAUNCHER_CFLAGS)"
-#modest_LDFLAGS = "$(modest_LDFLAGS) $(MAEMO_LAUNCHER_LDFLAGS)"
+modest_CFLAGS  = $(MAEMO_LAUNCHER_CFLAGS)
+modest_LDFLAGS = $(MAEMO_LAUNCHER_LDFLAGS)
 
 modest_LDADD = 						\
 	$(MODEST_GSTUFF_LIBS) 				\
