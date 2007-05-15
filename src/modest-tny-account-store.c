@@ -472,7 +472,7 @@ get_cached_accounts (TnyAccountStore *self, TnyList *list, TnyAccountType type)
  * for caching purposes
  */
 static GSList*
-get_accounts  (TnyAccountStore *self, TnyList *list, TnyAccountType type)
+get_server_accounts  (TnyAccountStore *self, TnyList *list, TnyAccountType type)
 {
 	ModestTnyAccountStorePrivate *priv = NULL;
 	GSList                       *account_names = NULL, *cursor = NULL;
@@ -488,7 +488,9 @@ get_accounts  (TnyAccountStore *self, TnyList *list, TnyAccountType type)
 		gchar *account_name = (gchar*)cursor->data;
 		
 		/* only return enabled accounts */
-		if (modest_account_mgr_get_enabled(priv->account_mgr, account_name)) {
+		/* BUT server accounts can't be disabled. */
+		if (TRUE) 
+			/* modest_account_mgr_get_enabled(priv->account_mgr, account_name)) */ {
 			TnyAccount *tny_account = 
 				modest_tny_account_new_from_account (priv->account_mgr,
 								     account_name,
@@ -498,7 +500,8 @@ get_accounts  (TnyAccountStore *self, TnyList *list, TnyAccountType type)
 			if (tny_account) {
 				g_object_set_data (G_OBJECT(tny_account), "account_store",
 						   (gpointer)self);
-				tny_list_prepend (list, G_OBJECT(tny_account));
+				if (list)
+					tny_list_prepend (list, G_OBJECT(tny_account));
 				accounts = g_slist_append (accounts, tny_account); /* cache it */
 			} else
 				g_printerr ("modest: failed to create account for %s\n",
@@ -512,7 +515,8 @@ get_accounts  (TnyAccountStore *self, TnyList *list, TnyAccountType type)
 	if (type == TNY_ACCOUNT_TYPE_STORE) {
 		TnyAccount *tny_account =
 			modest_tny_account_new_for_local_folders (priv->account_mgr, priv->session);
-		tny_list_prepend (list, G_OBJECT(tny_account));
+		if (list)
+			tny_list_prepend (list, G_OBJECT(tny_account));
 		accounts = g_slist_append (accounts, tny_account); /* cache it */
 	}	
 	return accounts;
@@ -541,15 +545,14 @@ modest_tny_account_store_get_accounts  (TnyAccountStore *self, TnyList *list,
 	if (request_type == TNY_ACCOUNT_STORE_STORE_ACCOUNTS)  {
 		
 		if (!priv->store_accounts)
-			priv->store_accounts = get_accounts (self, list, TNY_ACCOUNT_TYPE_STORE);
+			priv->store_accounts = get_server_accounts (self, list, TNY_ACCOUNT_TYPE_STORE);
 		else
 			get_cached_accounts (self, list, TNY_ACCOUNT_TYPE_STORE);
 
 	} else if (request_type == TNY_ACCOUNT_STORE_TRANSPORT_ACCOUNTS) {
-
 		if (!priv->transport_accounts)
 			priv->transport_accounts =
-				get_accounts (self, list, TNY_ACCOUNT_TYPE_TRANSPORT);
+				get_server_accounts (self, list, TNY_ACCOUNT_TYPE_TRANSPORT);
 		else
 			get_cached_accounts (self, list, TNY_ACCOUNT_TYPE_TRANSPORT);
 	} else
@@ -764,7 +767,7 @@ modest_tny_account_store_get_tny_account_by_id  (ModestTnyAccountStore *self, co
 			break;
 		}
 	}
-
+		
 	/* if we already found something, no need to search the transport accounts */
 	for (cursor = priv->transport_accounts; !account && cursor ; cursor = cursor->next) {
 		const gchar *acc_id = tny_account_get_id (TNY_ACCOUNT(cursor->data));

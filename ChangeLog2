@@ -1,5 +1,12 @@
 2007-05-15  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-tny-account-store.c: (get_server_accounts): Renamed from 
+	get_accounts(), to make this clearer. Do not check for the enabled gconf
+	key, because we do not use this for server accounts (at least, not yet).
+	This allows us to send email again.
+
+2007-05-15  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/maemo/modest-platform.c:
 	(on_modest_conf_update_interval_changed), (modest_platform_init):
 	Only respond to this particular key change. All these strcmp()s cannot be 
