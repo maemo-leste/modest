@@ -1,3 +1,9 @@
+modest (1.0-svn1880) unstable;; urgency=low
+
+  * Fixes NB#56697, NB#55364
+
+ --  <dirk-jan.binnema@nokia.com>  Tue, 15 May 2007 20:56:12 +0300
+
 modest (1.0-svn1860) unstable; urgency=low
 
   * update for the tny account security settings update
