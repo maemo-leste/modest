@@ -331,9 +331,9 @@ on_progress_changed (ModestMailOperation  *mail_op,
 	/* If the mail operation is the currently shown one */
 	if (priv->current == mail_op) {
 		gchar *msg = NULL;
-		gint done = modest_mail_operation_get_task_done (mail_op);
-		gint total = modest_mail_operation_get_task_total (mail_op);
-
+		guint done  = modest_mail_operation_get_task_done (mail_op);
+		guint total = modest_mail_operation_get_task_total (mail_op);
+		
 		determined = (done > 0 && total > 0);
 		id = modest_mail_operation_get_id (mail_op);
 
@@ -382,10 +382,13 @@ modest_progress_bar_widget_new ()
 void 
 modest_progress_bar_widget_set_progress   (ModestProgressBarWidget *self,
 					   const gchar *message,
-					   gint done,
-					   gint total)
+					   guint done,
+					   guint total)
 {
 	ModestProgressBarWidgetPrivate *priv;
+	
+	g_return_if_fail (MODEST_IS_PROGRESS_BAR_WIDGET(self));
+	g_return_if_fail (done <= total);
 	
 	priv = MODEST_PROGRESS_BAR_WIDGET_GET_PRIVATE (self);
 	

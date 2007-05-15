@@ -67,9 +67,10 @@ typedef enum {
 /* member functions */
 GType        modest_progress_bar_widget_get_type    (void) G_GNUC_CONST;
 
-GtkWidget*   modest_progress_bar_widget_new         ();
+GtkWidget*   modest_progress_bar_widget_new         (void);
 
-void modest_progress_bar_widget_set_progress (ModestProgressBarWidget *self, const gchar *msg, gint done, gint total);
+void modest_progress_bar_widget_set_progress (ModestProgressBarWidget *self,
+					      const gchar *msg, guint done, guint total);
 
 
 
