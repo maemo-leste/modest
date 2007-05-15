@@ -8,3 +8,4 @@ usr/share/modest/ui/*
 usr/share/modest/provider-data/mcc_mapping
 usr/share/pixmaps/modest/*
 usr/share/man/man1/*
+etc/osso-backup/applications/modest.conf

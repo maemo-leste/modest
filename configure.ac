@@ -107,6 +107,7 @@ if test "x$with_platform" = "xmaemo"; then
   desktopentrydir=`$PKG_CONFIG osso-af-settings --variable=desktopentrydir`
   serviceentrydir=`$PKG_CONFIG dbus-glib-1 --variable=prefix`/share/dbus-1/services
   localedir=`$PKG_CONFIG osso-af-settings --variable=localedir`
+  backupsettingsdir=/etc/osso-backup/applications
   pixmapdir=`$PKG_CONFIG osso-af-settings --variable=hildonpixmapdir`
   icon_26x26dir=$datadir/icons/hicolor/26x26/hildon
   icon_34x34dir=$datadir/icons/hicolor/34x34/hildon
@@ -122,6 +123,7 @@ if test "x$with_platform" = "xmaemo"; then
   # Define as variables in Makefiles
   AC_SUBST(desktopentrydir)
   AC_SUBST(serviceentrydir)
+  AC_SUBST(backupsettingsdir)
   AC_SUBST(localedir)
   AC_SUBST(pixmapdir)
   AC_SUBST(icon_26x26dir)

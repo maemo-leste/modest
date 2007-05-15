@@ -89,6 +89,8 @@ PIXMAP_FILES=\
 pixmapdir = $(datadir)/pixmaps/modest
 pixmap_DATA = $(PIXMAP_FILES)
 
+
+
 UI_FILES=\
 	ui/modest-main-window-ui.xml \
 	ui/modest-msg-edit-window-ui.xml \
@@ -97,8 +99,9 @@ UI_FILES=\
 uidir = $(datadir)/modest/ui
 ui_DATA = $(UI_FILES)
 
-serviceentry_DATA = com.nokia.modest.service
-desktopentry_DATA = modest.desktop
+serviceentry_DATA   = com.nokia.modest.service
+desktopentry_DATA   = modest.desktop
+backupsettings_DATA = modest.conf
 
 icon_26x26_DATA    = pixmaps/modest-icon.png
 
@@ -107,4 +110,5 @@ EXTRA_DIST=\
 	$(PIXMAP_FILES) \
 	$(serviceentry_DATA) \
 	$(desktopentry_DATA) \
+	$(backupsettings_DATA) \
 	$(icon_26x26_DATA)	
