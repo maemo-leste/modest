@@ -251,6 +251,7 @@ modest_conf_set_string (ModestConf* self, const gchar* key, const gchar* val,
 		
 	g_return_val_if_fail (self,FALSE);
 	g_return_val_if_fail (key, FALSE);
+	g_return_val_if_fail (val, FALSE);
 	
 	priv = MODEST_CONF_GET_PRIVATE(self);
 
