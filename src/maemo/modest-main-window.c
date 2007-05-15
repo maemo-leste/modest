@@ -53,6 +53,7 @@
 #include "modest-mail-operation.h"
 #include "modest-icon-names.h"
 #include "modest-progress-bar-widget.h"
+#include "modest-text-utils.h"
 #include "maemo/modest-osso-state-saving.h"
 
 #ifdef MODEST_HILDON_VERSION_0
@@ -1144,8 +1145,21 @@ create_details_widget (TnyAccount *account)
 	} else if (!strcmp (tny_account_get_id (account), MODEST_MMC_ACCOUNT_ID)) {
 		gtk_box_pack_start (GTK_BOX (vbox), gtk_label_new ("FIXME: MMC ?"), FALSE, FALSE, 0);
 	} else {
-		label = g_strdup_printf ("%s: %s", _("mcen_ti_lastupdated"), "08/08/08");
+		time_t last_updated;
+		gchar *last_updated_string;
+		/* Get last updated from configuration */
+		last_updated = modest_account_mgr_get_int (modest_runtime_get_account_mgr (), 
+							  tny_account_get_id (account), 
+							  MODEST_ACCOUNT_LAST_UPDATED, 
+							  TRUE);
+		if (last_updated > 0) 
+			last_updated_string = modest_text_utils_get_display_date(last_updated);
+		else
+			last_updated_string = g_strdup (_("FIXME: Never"));
+
+		label = g_strdup_printf ("%s: %s", _("mcen_ti_lastupdated"), last_updated_string);
 		gtk_box_pack_start (GTK_BOX (vbox), gtk_label_new (label), FALSE, FALSE, 0);
+		g_free (last_updated_string);
 		g_free (label);
 	}
 
@@ -1455,6 +1469,7 @@ on_show_account_action_activated  (GtkAction *action,
 	if (acc_data->store_account) { 
 		modest_folder_view_set_account_id_of_visible_server_account (priv->folder_view,
 									     acc_data->store_account->account_name);
+		modest_window_set_active_account (MODEST_WINDOW (self), acc_data->account_name);
 	}
 
 	/* Free */

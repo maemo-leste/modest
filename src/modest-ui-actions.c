@@ -776,27 +776,16 @@ static gboolean
 action_receive (const gchar* account_name, 
 		ModestWindow *win)
 {
-	TnyAccount *tny_account;
 	ModestMailOperation *mail_op;
 
 	g_return_val_if_fail (account_name, FALSE);
-
-	tny_account = 
-		modest_tny_account_store_get_tny_account_by_account (modest_runtime_get_account_store(),
-								     account_name,
-								     TNY_ACCOUNT_TYPE_STORE);
-	if (!tny_account) {
-		g_printerr ("modest: cannot get tny store account for %s\n", account_name);
-		return FALSE;
-	}
 
 	/* Create the mail operation */
 	/* TODO: The spec wants us to first do any pending deletions, before receiving. */
 	mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_ID_RECEIVE, G_OBJECT(win));
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
-	modest_mail_operation_update_account (mail_op, TNY_STORE_ACCOUNT(tny_account));
+	modest_mail_operation_update_account (mail_op, account_name);
 
-	g_object_unref (G_OBJECT(tny_account));
 	g_object_unref (G_OBJECT (mail_op));
 		
 	return TRUE;
@@ -1015,6 +1004,26 @@ modest_ui_actions_on_header_activated (ModestHeaderView *header_view,
 	g_object_unref (mail_op);
 }
 
+static void
+set_active_account_from_tny_account (TnyAccount *account,
+				     ModestWindow *window)
+{
+	TnyAccount *modest_server_account;
+	const gchar *server_acc_name;
+	gchar *modest_acc_name;
+
+	server_acc_name = tny_account_get_id (account);
+	/* We need the TnyAccount provided by the
+	   account store because that is the one that
+	   knows the name of the Modest account */
+	modest_server_account = 
+		modest_tny_account_store_get_tny_account_by_id  (modest_runtime_get_account_store (), 
+								 server_acc_name);
+	modest_acc_name = (gchar *) g_object_get_data (G_OBJECT (modest_server_account), "modest_account");
+	modest_window_set_active_account (window, modest_acc_name);
+	g_object_unref (modest_server_account);
+}
+
 void 
 modest_ui_actions_on_folder_selection_changed (ModestFolderView *folder_view,
 					       TnyFolderStore *folder_store, 
@@ -1023,6 +1032,7 @@ modest_ui_actions_on_folder_selection_changed (ModestFolderView *folder_view,
 {
 	ModestConf *conf;
 	GtkWidget *header_view;
+	TnyAccount *account;
 	
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW(main_window));
 
@@ -1036,6 +1046,12 @@ modest_ui_actions_on_folder_selection_changed (ModestFolderView *folder_view,
 	if (TNY_IS_FOLDER (folder_store)) {
 
 		if (selected) {
+			/* Update the active account */
+			account = tny_folder_get_account (TNY_FOLDER (folder_store));
+			set_active_account_from_tny_account (account, MODEST_WINDOW (main_window));
+			g_object_unref (account);
+
+			/* Set folder on header view */
 			modest_main_window_set_contents_style (main_window, 
 							       MODEST_MAIN_WINDOW_CONTENTS_STYLE_HEADERS);
 			modest_header_view_set_folder (MODEST_HEADER_VIEW(header_view),
@@ -1043,11 +1059,16 @@ modest_ui_actions_on_folder_selection_changed (ModestFolderView *folder_view,
 			modest_widget_memory_restore (conf, G_OBJECT(header_view),
 						      MODEST_CONF_HEADER_VIEW_KEY);
 		} else {
+			/* Update the active account */
+			modest_window_set_active_account (MODEST_WINDOW (main_window), NULL);
+			/* Do not show folder */
 			modest_widget_memory_save (conf, G_OBJECT (header_view), MODEST_CONF_HEADER_VIEW_KEY);
 			modest_header_view_set_folder (MODEST_HEADER_VIEW(header_view), NULL);
 		}
 	} else if (TNY_IS_ACCOUNT (folder_store)) {
-
+		/* Update active account */
+		set_active_account_from_tny_account (TNY_ACCOUNT (folder_store), MODEST_WINDOW (main_window));
+		/* Show account details */
 		modest_main_window_set_contents_style (main_window, MODEST_MAIN_WINDOW_CONTENTS_STYLE_DETAILS);
 	}
 }

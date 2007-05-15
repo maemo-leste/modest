@@ -203,7 +203,7 @@ update_account_view (ModestAccountMgr *account_mgr, ModestAccountView *view)
 			if (last_updated > 0) 
 				last_updated_string = modest_text_utils_get_display_date(last_updated);
 			else
-				last_updated_string = g_strdup (_("Never"));
+				last_updated_string = g_strdup (_("FIXME: Never"));
 			
 			if (account_data->is_enabled) {
 				gtk_list_store_insert_with_values (

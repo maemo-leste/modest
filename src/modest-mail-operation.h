@@ -220,7 +220,7 @@ void    modest_mail_operation_save_to_drafts   (ModestMailOperation *self,
 /**
  * modest_mail_operation_update_account:
  * @self: a #ModestMailOperation
- * @store_account: a #TnyStoreAccount
+ * @account_name: the id of a Modest account
  * 
  * Asynchronously refreshes the root folders of the given store
  * account. The caller should add the #ModestMailOperation to a
@@ -228,23 +228,23 @@ void    modest_mail_operation_save_to_drafts   (ModestMailOperation *self,
  * notified by the "progress_changed" signal each time the progress of
  * the operation changes.
  *
- * Note that the store account passed as parametter will be freed by
- * the mail operation so you must pass a new reference
- *
  * Example
  * <informalexample><programlisting>
  * queue = modest_tny_platform_factory_get_modest_mail_operation_queue_instance (fact)
  * mail_op = modest_mail_operation_new ();
  * g_signal_connect (G_OBJECT (mail_op), "progress_changed", G_CALLBACK(on_progress_changed), NULL);
  * modest_mail_operation_queue_add (queue, mail_op);
- * modest_mail_operation_update_account (mail_op, account)
+ * modest_mail_operation_update_account (mail_op, account_name)
  * g_object_unref (G_OBJECT (mail_op));
  * </programlisting></informalexample>
+ *
+ * Note that the account_name *MUST* be a modest account name, not a
+ * tinymail store account name
  * 
  * Returns: TRUE if the mail operation could be started, or FALSE otherwise
  **/
 gboolean      modest_mail_operation_update_account (ModestMailOperation *self,
-						    TnyStoreAccount *store_account);
+						    const gchar *account_name);
 
 /* Functions that perform store operations */
 

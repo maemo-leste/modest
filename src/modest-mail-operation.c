@@ -487,9 +487,6 @@ update_account_thread (gpointer thr_user_data)
 	}
 	g_object_unref (G_OBJECT (iter));
 
-	priv->total = tny_list_get_length (all_folders);
-	priv->done = 0;
-
 	/* Refresh folders */
 	iter = tny_list_create_iterator (all_folders);
 	while (!tny_iterator_is_done (iter) && !priv->error) {
@@ -498,7 +495,6 @@ update_account_thread (gpointer thr_user_data)
 
 		/* Refresh the folder */
 		tny_folder_refresh (TNY_FOLDER (folder), &(priv->error));
-		priv->done++;
 
 		if (priv->error) {
 			priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
@@ -507,7 +503,6 @@ update_account_thread (gpointer thr_user_data)
 			   the notification with an idle in order to
 			   call it from the main loop. We need that in
 			   order not to get into trouble with Gtk+ */
-			priv->done++;
 			g_idle_add (notify_update_account_observers, g_object_ref (info->mail_op));
 		}
 
@@ -517,8 +512,16 @@ update_account_thread (gpointer thr_user_data)
 	g_object_unref (G_OBJECT (iter));
 
 	/* Check if the operation was a success */
-	if (priv->done == priv->total && !priv->error)
+	if (!priv->error) {
 		priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
+
+		/* Update the last updated key */
+		modest_account_mgr_set_int (modest_runtime_get_account_mgr (), 
+					    tny_account_get_id (TNY_ACCOUNT (info->account)), 
+					    MODEST_ACCOUNT_LAST_UPDATED, 
+					    time(NULL), 
+					    TRUE);
+	}
 
  out:
 	/* Notify the queue */
@@ -536,25 +539,41 @@ update_account_thread (gpointer thr_user_data)
 
 gboolean
 modest_mail_operation_update_account (ModestMailOperation *self,
-				      TnyStoreAccount *store_account)
+				      const gchar *account_name)
 {
 	GThread *thread;
 	UpdateAccountInfo *info;
 	ModestMailOperationPrivate *priv;
+	TnyStoreAccount *modest_account;
 
 	g_return_val_if_fail (MODEST_IS_MAIL_OPERATION (self), FALSE);
-	g_return_val_if_fail (TNY_IS_STORE_ACCOUNT(store_account), FALSE);
+	g_return_val_if_fail (account_name, FALSE);
 
-	/* Init mail operation */
+	/* Init mail operation. Set total and done to 0, and do not
+	   update them, this way the progress objects will know that
+	   we have no clue about the number of the objects */
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
 	priv->total = 0;
 	priv->done  = 0;
 	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
 	
+	/* Get the Modest account */
+	modest_account = (TnyStoreAccount *)
+		modest_tny_account_store_get_tny_account_by_account (modest_runtime_get_account_store (),
+								     account_name,
+								     TNY_ACCOUNT_TYPE_STORE);
+
+	if (!modest_account) {
+		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
+		modest_mail_operation_queue_remove (modest_runtime_get_mail_operation_queue (), 
+						    self);
+		return FALSE;
+	}
+
 	/* Create the helper object */
 	info = g_slice_new (UpdateAccountInfo);
 	info->mail_op = g_object_ref (self);
-	info->account = g_object_ref (store_account);
+	info->account = modest_account;
 	info->user_data = NULL;
 
 	thread = g_thread_create (update_account_thread, info, FALSE, NULL);
