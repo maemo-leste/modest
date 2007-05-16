@@ -334,15 +334,17 @@ on_progress_changed (ModestMailOperation  *mail_op,
 		guint done  = modest_mail_operation_get_task_done (mail_op);
 		guint total = modest_mail_operation_get_task_total (mail_op);
 		
-		determined = (done > 0 && total > 0);
+		determined = (done > 0 && total > 0) & !(done == 1 && total == 100);
 		id = modest_mail_operation_get_id (mail_op);
 
 		switch (id) {
 		case MODEST_MAIL_OPERATION_ID_RECEIVE:		
 			if (determined)
-				msg = g_strdup_printf(_("mcen_me_receiving"), done, total);
+/* 				msg = g_strdup_printf(_("mcen_me_receiving"), done, total); */
+				msg = g_strdup_printf("Receiving %d/%d", done, total);
 			else 
-				msg = g_strdup(_("mail_me_receiving"));
+/* 				msg = g_strdup(_("mail_me_receiving")); */
+				msg = g_strdup("Receiving ...");
 			break;
 		case MODEST_MAIL_OPERATION_ID_SEND:		
 			if (determined)

@@ -100,6 +100,18 @@ struct _ModestMailOperationClass {
  */
 typedef void (*GetMsgAsynUserCallback) (const GObject *obj, const TnyMsg *msg, gpointer user_data);
 
+/**
+ * XferMsgAsynUserCallback:
+ *
+ * @obj: a #GObject generic object which has created current mail operation.
+ * @user_data: generic data passed to user defined function.
+ *
+ * This function will be called after transfer_msgs_cb private function, which is
+ * used as tinymail operation callback. The private function fills private 
+ * fields of mail operation and calls user defined callback if it exists.
+ */
+typedef void (*XferMsgsAsynUserCallback) (const GObject *obj, gpointer user_data);
+
 
 /* member functions */
 GType        modest_mail_operation_get_type    (void) G_GNUC_CONST;
@@ -332,6 +344,8 @@ void    modest_mail_operation_xfer_folder_async    (ModestMailOperation *self,
  * @header_list: a #TnyList of #TnyHeader to transfer
  * @folder: the #TnyFolder where the messages will be transferred
  * @delete_original: whether or not delete the source messages
+ * @user_callback: a #XferMsgsAsynUserCallback function to call after tinymail callback execution.
+ * @user_data: generic user data which will be passed to @user_callback function.
  * 
  * Asynchronously transfers messages from their current folder to
  * another one. The caller should add the #ModestMailOperation to a
@@ -357,7 +371,9 @@ void    modest_mail_operation_xfer_folder_async    (ModestMailOperation *self,
 void          modest_mail_operation_xfer_msgs      (ModestMailOperation *self,
 						    TnyList *header_list, 
 						    TnyFolder *folder,
-						    gboolean delete_original);
+						    gboolean delete_original,
+						    XferMsgsAsynUserCallback user_callback,
+						    gpointer user_data);
 
 /**
  * modest_mail_operation_remove_msg:

@@ -209,13 +209,12 @@ headers_action_delete (TnyHeader *header,
 		       ModestWindow *win,
 		       gpointer user_data)
 {
-	ModestMailOperation *mail_op;
+	ModestMailOperation *mail_op = NULL;
 
-	/* TODO: add confirmation dialog */
 	mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_ID_DELETE, G_OBJECT(win));
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
 					 mail_op);
-
+	
 	/* Always delete. TODO: Move to trash still not supported */
 	modest_mail_operation_remove_msg (mail_op, header, FALSE);
 	g_object_unref (G_OBJECT (mail_op));
@@ -224,20 +223,53 @@ headers_action_delete (TnyHeader *header,
 void
 modest_ui_actions_on_delete (GtkAction *action, ModestWindow *win)
 {
+	TnyList *header_list = NULL;
+	TnyIterator *iter = NULL;
+	TnyHeader *header = NULL;
+	gchar *message = NULL;
+	gchar *desc = NULL;
+	gint response;
+
 	g_return_if_fail (MODEST_IS_WINDOW(win));
 
-	if (MODEST_IS_MSG_EDIT_WINDOW (win)) {
-		gboolean ret_value;
-		g_signal_emit_by_name (G_OBJECT (win), "delete-event", NULL, &ret_value);
-		return;
-	}
-		
-	/* Remove each header */
-	do_headers_action (win, headers_action_delete, NULL);
+	header_list = get_selected_headers (win);
+	if (!header_list) return;
 
-	if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
-		gtk_widget_destroy (GTK_WIDGET(win));
-	} 
+	/* Select message */
+	if (tny_list_get_length(header_list) > 1)
+		message = g_strdup(_("emev_nc_delete_messages"));
+	else {
+		iter = tny_list_create_iterator (header_list);
+		header = TNY_HEADER (tny_iterator_get_current (iter));
+		desc = g_strdup_printf ("%s", tny_header_get_subject (header)); 
+		message = g_strdup_printf(_("emev_nc_delete_message"), desc);
+	}
+
+	/* Confirmation dialog */		
+	response = modest_platform_run_confirmation_dialog (GTK_WINDOW (win),
+							    message);
+	
+
+	if (response == GTK_RESPONSE_OK) {
+		if (MODEST_IS_MSG_EDIT_WINDOW (win)) {
+			gboolean ret_value;
+			g_signal_emit_by_name (G_OBJECT (win), "delete-event", NULL, &ret_value);
+			return;
+		}
+		
+		/* Remove each header */
+		do_headers_action (win, headers_action_delete, NULL);
+
+		if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
+			gtk_widget_destroy (GTK_WIDGET(win));
+		} 
+	}
+
+	/* free */
+	g_free(message);
+	g_free(desc);
+	g_object_unref (header_list);
+	g_object_unref (iter);
 }
 
 
@@ -2266,6 +2298,20 @@ msgs_move_to_confirmation (GtkWindow *win,
 	return response;
 }
 
+
+static void
+tranasfer_msgs_from_viewer_cb (const GObject *object, gpointer user_data)
+{
+	ModestMsgViewWindow *self = NULL;
+	gboolean found = FALSE;
+
+	g_return_if_fail (MODEST_IS_MSG_VIEW_WINDOW (object));
+	self = MODEST_MSG_VIEW_WINDOW (object);
+
+	found = modest_msg_view_window_select_first_message (self);
+	g_return_if_fail (found);
+}
+
 /*
  * UI handler for the "Move to" action when invoked from the
  * ModestMainWindow
@@ -2288,6 +2334,7 @@ modest_ui_actions_on_main_window_move_to (GtkAction *action,
 	/* Create and run the dialog */
 	dialog = create_move_to_dialog (MODEST_WINDOW (win), folder_view, &tree_view);
 	result = gtk_dialog_run (GTK_DIALOG(dialog));
+	g_object_ref (tree_view);
 
 	/* We do this to save an indentation level ;-) */
 	if (result != GTK_RESPONSE_ACCEPT)
@@ -2308,10 +2355,10 @@ modest_ui_actions_on_main_window_move_to (GtkAction *action,
 			modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), 
 							 mail_op);
 
-			modest_mail_operation_xfer_folder (mail_op, 
-							   TNY_FOLDER (src_folder),
-							   folder_store,
-							   TRUE);
+			modest_mail_operation_xfer_folder_async (mail_op, 
+								 TNY_FOLDER (src_folder),
+								 folder_store,
+								 TRUE);
 			g_object_unref (G_OBJECT (mail_op));
 		}
 
@@ -2341,9 +2388,12 @@ modest_ui_actions_on_main_window_move_to (GtkAction *action,
 				modest_mail_operation_xfer_msgs (mail_op, 
 								 headers,
 								 TNY_FOLDER (folder_store),
-								 TRUE);
+								 TRUE,
+								 NULL,
+								 NULL);
 				g_object_unref (G_OBJECT (mail_op));
 			}
+			g_object_unref (headers);
 		}
 	}
 	g_object_unref (folder_store);
@@ -2364,7 +2414,6 @@ modest_ui_actions_on_msg_view_window_move_to (GtkAction *action,
 	GtkWidget *dialog, *folder_view, *tree_view = NULL;
 	gint result;
 	ModestMainWindow *main_window;
-	TnyMsg *msg;
 	TnyHeader *header;
 	TnyList *headers;
 
@@ -2376,6 +2425,7 @@ modest_ui_actions_on_msg_view_window_move_to (GtkAction *action,
 	/* Create and run the dialog */
 	dialog = create_move_to_dialog (MODEST_WINDOW (win), folder_view, &tree_view);	
 	result = gtk_dialog_run (GTK_DIALOG(dialog));
+	g_object_ref (tree_view);
 
 	if (result == GTK_RESPONSE_ACCEPT) {
 		TnyFolderStore *folder_store;
@@ -2384,12 +2434,10 @@ modest_ui_actions_on_msg_view_window_move_to (GtkAction *action,
 		folder_store = modest_folder_view_get_selected (MODEST_FOLDER_VIEW (tree_view));
 
 		/* Create header list */
-		msg = modest_msg_view_window_get_message (MODEST_MSG_VIEW_WINDOW (win));
-		header = tny_msg_get_header (msg);
+		header = modest_msg_view_window_get_header (MODEST_MSG_VIEW_WINDOW (win));		
 		headers = tny_simple_list_new ();
 		tny_list_prepend (headers, G_OBJECT (header));
 		g_object_unref (header);
-		g_object_unref (msg);
 
 		/* Ask user for confirmation. MSG-NOT404 */
 		response = msgs_move_to_confirmation (GTK_WINDOW (win), 
@@ -2409,11 +2457,12 @@ modest_ui_actions_on_msg_view_window_move_to (GtkAction *action,
 			modest_mail_operation_xfer_msgs (mail_op, 
 							 headers,
 							 TNY_FOLDER (folder_store),
-							 TRUE);
+							 TRUE,
+							 tranasfer_msgs_from_viewer_cb,
+							 NULL);
 			g_object_unref (G_OBJECT (mail_op));
-		} else {
-			g_object_unref (headers);
-		}
+		} 
+		g_object_unref (headers);
 		g_object_unref (folder_store);
 	}
 	gtk_widget_destroy (dialog);

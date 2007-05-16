@@ -98,6 +98,18 @@ ModestWindow*   modest_msg_view_window_new_with_header_model (TnyMsg *msg,
 
 
 /**
+ * modest_msg_view_window_get_header:
+ * @window: an #ModestMsgViewWindow instance
+ * 
+ * get the message header in this msg view. Header instance is get
+ * from tree_model of headers list. 
+ * 
+ * Returns: a new #TnyHeader instance, or NULL in case of error
+ */
+TnyHeader*
+modest_msg_view_window_get_header (ModestMsgViewWindow *self);
+
+/**
  * modest_msg_view_window_get_message:
  * @window: an #ModestMsgViewWindow instance
  * 
@@ -117,6 +129,17 @@ TnyMsg*         modest_msg_view_window_get_message     (ModestMsgViewWindow *win
  * Returns: the id of the #TnyMsg being shown, or NULL in case of error
  */
 const gchar*    modest_msg_view_window_get_message_uid (ModestMsgViewWindow *window);
+
+/**
+ * modest_msg_view_window_select_first_message:
+ * @window: a #ModestMsgViewWindow instance
+ *
+ * select the first message obtained from the header view this view 
+ * was called from
+ *
+ * Returns: %TRUE if a new message is shown.
+ */
+gboolean        modest_msg_view_window_select_first_message (ModestMsgViewWindow *window);
 
 /**
  * modest_msg_view_window_select_next_message:

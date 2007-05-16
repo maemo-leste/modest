@@ -590,6 +590,29 @@ modest_msg_view_window_new (TnyMsg *msg, const gchar *account_name)
 
 
 
+TnyHeader*
+modest_msg_view_window_get_header (ModestMsgViewWindow *self)
+{
+	ModestMsgViewWindowPrivate *priv= NULL; 
+	TnyHeader *header = NULL;
+ 	GtkTreeIter iter;
+
+	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (self), NULL);
+	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (self);
+
+	/* Get current message iter */
+	gtk_tree_model_get_iter (priv->header_model, 
+				 &iter, 
+				 gtk_tree_row_reference_get_path (priv->row_reference));
+
+	/* Get current message header */
+	gtk_tree_model_get (priv->header_model, &iter, 
+			    TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN, 
+			    &header, -1);
+
+	return header;
+}
+
 TnyMsg*
 modest_msg_view_window_get_message (ModestMsgViewWindow *self)
 {
@@ -938,6 +961,53 @@ modest_msg_view_window_select_next_message (ModestMsgViewWindow *window)
 	return FALSE;       	
 }
 
+gboolean 
+modest_msg_view_window_select_first_message (ModestMsgViewWindow *self)
+{
+	ModestMsgViewWindowPrivate *priv = NULL;
+	ModestMailOperation *mail_op = NULL;
+	TnyHeader *header = NULL;
+	TnyHeaderFlags flags;
+	GtkTreePath *path = NULL;
+	GtkTreeIter iter;
+
+	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (self), FALSE);
+	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (self);
+
+	path = gtk_tree_path_new_from_string ("0");
+
+	/* Update the row reference */
+	/* Get first message */
+	gtk_tree_model_get_iter (priv->header_model, &iter, path);
+	gtk_tree_model_get (priv->header_model, &iter, TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN,
+			    &header, -1);
+	
+	g_return_val_if_fail (TNY_IS_HEADER (header), FALSE);
+	if (tny_header_get_flags (header) & TNY_HEADER_FLAG_DELETED)
+		return modest_msg_view_window_select_next_message (self);
+	
+	/* Update the row reference */
+	gtk_tree_row_reference_free (priv->row_reference);
+	priv->row_reference = gtk_tree_row_reference_new (priv->header_model, path);
+	gtk_tree_path_free (path);
+
+	/* Mark as read */
+	flags = tny_header_get_flags (header);
+	if (!(flags & TNY_HEADER_FLAG_SEEN))
+		tny_header_set_flags (header, flags | TNY_HEADER_FLAG_SEEN);
+	
+	/* New mail operation */
+	mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_ID_RECEIVE, G_OBJECT(self));
+	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
+	modest_mail_operation_get_msg (mail_op, header, view_msg_cb, NULL);
+	g_object_unref (mail_op);
+	
+	/* Free */
+/* 	g_object_unref (header); */
+
+	return TRUE;
+}
+ 
 gboolean        
 modest_msg_view_window_select_previous_message (ModestMsgViewWindow *window)
 {

@@ -999,13 +999,13 @@ drag_and_drop_from_header_view (GtkTreeModel *source_model,
 	   should be reviewed in order to allow multiple drags*/
 	headers = tny_simple_list_new ();
 	tny_list_append (headers, G_OBJECT (header));
-	g_object_unref (header);
-	modest_mail_operation_xfer_msgs (mail_op, headers, folder, helper->delete_source);
+	modest_mail_operation_xfer_msgs (mail_op, headers, folder, helper->delete_source, NULL, NULL);
 
 	/* Frees */
 	g_object_unref (G_OBJECT (mail_op));
 	g_object_unref (G_OBJECT (header));
 	g_object_unref (G_OBJECT (folder));
+	g_object_unref (headers);
 }
 
 /*
@@ -1395,6 +1395,7 @@ on_configuration_key_changed (ModestConf* conf,
 	if (!key)
 		return;
 
+	g_return_if_fail (MODEST_IS_FOLDER_VIEW (self));
 	priv = MODEST_FOLDER_VIEW_GET_PRIVATE(self);
 
 	if (!strcmp (key, MODEST_CONF_DEVICE_NAME)) {

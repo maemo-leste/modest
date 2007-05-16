@@ -116,7 +116,8 @@ typedef struct _XFerMsgAsyncHelper
 	ModestMailOperation *mail_op;
 	TnyList *headers;
 	TnyFolder *dest_folder;
-
+	XferMsgsAsynUserCallback user_callback;	
+	gpointer user_data;
 } XFerMsgAsyncHelper;
 
 typedef struct _XFerFolderAsyncHelper
@@ -967,6 +968,10 @@ modest_mail_operation_xfer_folder_async (ModestMailOperation *self,
 
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
 
+	/* Pick references for async calls */
+	g_object_ref (folder);
+	g_object_ref (parent);
+
 	/* The moveable restriction is applied also to copy operation */
 	rules = modest_tny_folder_get_rules (TNY_FOLDER (parent));
 	if (rules & MODEST_FOLDER_RULES_FOLDER_NON_MOVEABLE) {
@@ -1237,7 +1242,7 @@ modest_mail_operation_remove_msg (ModestMailOperation *self,
 			g_object_unref (header);
 
 			/* Move to trash */
-			modest_mail_operation_xfer_msgs (self, headers, trash_folder, TRUE);
+			modest_mail_operation_xfer_msgs (self, headers, trash_folder, TRUE, NULL, NULL);
 			g_object_unref (headers);
 /* 			g_object_unref (trash_folder); */
 		} else {
@@ -1331,10 +1336,15 @@ transfer_msgs_cb (TnyFolder *folder, gboolean cancelled, GError **err, gpointer 
 		priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
 	}
 
+	/* If user defined callback function was defined, call it */
+	if (helper->user_callback) {
+		helper->user_callback (priv->source, helper->user_data);
+	}
+
 	/* Free */
-/* 	g_object_unref (helper->headers); */
-/* 	g_object_unref (helper->dest_folder); */
-/* 	g_object_unref (helper->mail_op); */
+	g_object_unref (helper->headers);
+	g_object_unref (helper->dest_folder);
+	g_object_unref (helper->mail_op);
 	g_slice_free   (XFerMsgAsyncHelper, helper);
 	g_object_unref (folder);
 
@@ -1346,7 +1356,9 @@ void
 modest_mail_operation_xfer_msgs (ModestMailOperation *self,
 				 TnyList *headers, 
 				 TnyFolder *folder, 
-				 gboolean delete_original)
+				 gboolean delete_original,
+				 XferMsgsAsynUserCallback user_callback,
+				 gpointer user_data)
 {
 	ModestMailOperationPrivate *priv;
 	TnyIterator *iter;
@@ -1358,9 +1370,6 @@ modest_mail_operation_xfer_msgs (ModestMailOperation *self,
 	g_return_if_fail (TNY_IS_LIST (headers));
 	g_return_if_fail (TNY_IS_FOLDER (folder));
 
-	/* Pick references for async calls */
-	g_object_ref (folder);
-
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
 	priv->total = 1;
 	priv->done = 0;
@@ -1368,9 +1377,11 @@ modest_mail_operation_xfer_msgs (ModestMailOperation *self,
 
 	/* Create the helper */
 	helper = g_slice_new0 (XFerMsgAsyncHelper);
-	helper->mail_op = self;
+	helper->mail_op = g_object_ref(self);
 	helper->dest_folder = g_object_ref(folder);
 	helper->headers = g_object_ref(headers);
+	helper->user_callback = user_callback;
+	helper->user_data = user_data;
 
 	/* Get source folder */
 	iter = tny_list_create_iterator (headers);
