@@ -843,7 +843,7 @@ transfer_folder_status_cb (GObject *obj,
 
 
 static void
-transfer_folder_cb (TnyFolder *folder, TnyFolderStore *into, const gchar *new_name, gboolean cancelled, GError **err, gpointer user_data)
+transfer_folder_cb (TnyFolder *folder, TnyFolderStore *into, gboolean cancelled, TnyFolder *new_folder, GError **err, gpointer user_data)
 {
  	XFerFolderAsyncHelper *helper = NULL;
 	ModestMailOperation *self = NULL;
@@ -873,6 +873,7 @@ transfer_folder_cb (TnyFolder *folder, TnyFolderStore *into, const gchar *new_na
 	g_slice_free   (XFerFolderAsyncHelper, helper);
 	g_object_unref (folder);
 	g_object_unref (into);
+	g_object_unref (new_folder);
 
 	/* Notify the queue */
 	modest_mail_operation_queue_remove (modest_runtime_get_mail_operation_queue (), self);
