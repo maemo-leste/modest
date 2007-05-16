@@ -1,3 +1,37 @@
+2007-05-16  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/modest-pair.h: Improve the documentation for modest_combo_box_new() 
+	to explain the memory management issue with the ID in the ModestPair.
+	
+	* src/gnome/modest-account-assistant.c: (add_receiving_page),
+	(add_sending_page), (modest_account_assistant_finalize):
+	* src/gnome/modest-gnome-global-settings-dialog.c:
+	(create_updating_page), (create_composing_page):
+	* src/gnome/modest-msg-edit-window.c: (get_transports),
+	(init_window), (modest_msg_edit_window_finalize),
+	(modest_msg_edit_window_get_msg_data):
+	* src/gnome/modest-store-widget.c: (imap_pop_configuration):
+	* src/gnome/modest-transport-widget.c:
+	(modest_transport_widget_finalize), (smtp_configuration):
+	* src/maemo/modest-maemo-global-settings-dialog.c:
+	(create_updating_page), (create_composing_page):
+	* src/maemo/modest-msg-edit-window.c: (get_transports),
+	(init_window), (modest_msg_edit_window_finalize),
+	(modest_msg_edit_window_get_msg_data),
+	(modest_msg_edit_window_free_msg_data):
+	* src/maemo/modest-store-widget.c: (imap_pop_configuration),
+	(modest_store_widget_finalize):
+	* src/maemo/modest-transport-widget.c:
+	(modest_transport_widget_finalize), (smtp_configuration):
+	* src/modest-main.c: (send_mail):
+	* src/widgets/modest-combo-box.h:
+	* src/widgets/modest-global-settings-dialog-priv.h:
+	* src/widgets/modest-global-settings-dialog.c:
+	(modest_global_settings_dialog_finalize):
+	* src/widgets/modest-msg-edit-window.h:
+	Whenever using modest_combo_box_new(), keep the ModestPairList alive
+	as long as the combo box, to prevent use of freed memory for the ID.
+
 2007-05-15  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/modest-tny-account-store.c: (get_server_accounts): Renamed from 

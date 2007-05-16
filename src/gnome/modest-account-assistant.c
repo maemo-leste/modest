@@ -64,7 +64,10 @@ struct _ModestAccountAssistantPrivate {
 	GtkWidget *transport_widget;
 
 	GtkWidget *transport_holder;
-	GtkWidget *store_holder;	
+	GtkWidget *store_holder;
+
+	ModestPairList *receiving_transport_store_protos;
+	ModestPairList *sending_transport_store_protos;
 };
 
 #define MODEST_ACCOUNT_ASSISTANT_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -293,7 +296,6 @@ static void
 add_receiving_page (ModestAccountAssistant *self)
 {
 	GtkWidget *page, *box, *combo;
-	ModestPairList *protos;
 	ModestAccountAssistantPrivate *priv;
 
 	priv = MODEST_ACCOUNT_ASSISTANT_GET_PRIVATE(self);	
@@ -308,9 +310,11 @@ add_receiving_page (ModestAccountAssistant *self)
 			    gtk_label_new(_("Server type")),
 			    FALSE,FALSE,6);
 
-	protos = modest_protocol_info_get_transport_store_protocol_pair_list (MODEST_PROTOCOL_TYPE_STORE);
-	combo = modest_combo_box_new (protos, g_str_equal);
-	modest_pair_list_free (protos);
+	/* Note: This ModestPairList* must exist for as long as the combo
+	 * that uses it, because the ModestComboBox uses the ID opaquely, 
+	 * so it can't know how to manage its memory. */
+	priv->receiving_transport_store_protos = modest_protocol_info_get_transport_store_protocol_pair_list (MODEST_PROTOCOL_TYPE_STORE);
+	combo = modest_combo_box_new (priv->receiving_transport_store_protos, g_str_equal);
 	
 	g_signal_connect (G_OBJECT(combo), "changed",
 			  G_CALLBACK(on_receiving_combo_box_changed), self);
@@ -369,7 +373,6 @@ static void
 add_sending_page (ModestAccountAssistant *self)
 {
 	GtkWidget *page, *box, *combo;
-	ModestPairList *protos;
 	ModestAccountAssistantPrivate *priv;
 
 	priv = MODEST_ACCOUNT_ASSISTANT_GET_PRIVATE(self);
@@ -384,9 +387,11 @@ add_sending_page (ModestAccountAssistant *self)
 			    gtk_label_new(_("Server type")),
 			    FALSE,FALSE,0);
 	
-	protos = modest_protocol_info_get_transport_store_protocol_pair_list (MODEST_PROTOCOL_TYPE_TRANSPORT);
-	combo = modest_combo_box_new (protos, g_str_equal);
-	modest_pair_list_free (protos);
+	/* Note: This ModestPairList* must exist for as long as the combo
+	 * that uses it, because the ModestComboBox uses the ID opaquely, 
+	 * so it can't know how to manage its memory. */
+	priv->sending_transport_store_protos = modest_protocol_info_get_transport_store_protocol_pair_list (MODEST_PROTOCOL_TYPE_TRANSPORT);
+	combo = modest_combo_box_new (priv->sending_transport_store_protos, g_str_equal);
 
 	g_signal_connect (G_OBJECT(combo), "changed",
 			  G_CALLBACK(on_sending_combo_box_changed), self);
@@ -476,6 +481,10 @@ modest_account_assistant_finalize (GObject *obj)
 		g_object_unref (G_OBJECT(priv->account_mgr));
 		priv->account_mgr = NULL;
 	}
+	
+	/* These had to stay alive for as long as the comboboxes that used them: */
+	modest_pair_list_free (priv->receiving_transport_store_protos);
+	modest_pair_list_free (priv->sending_transport_store_protos);
 
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }

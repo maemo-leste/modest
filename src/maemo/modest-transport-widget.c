@@ -54,6 +54,9 @@ struct _ModestTransportWidgetPrivate {
 	GtkWidget *username;
 	GtkWidget *auth;
 	GtkWidget *remember_pwd;
+	
+	ModestPairList *transport_store_protos;
+	ModestPairList *auth_protos;
 };
 #define MODEST_TRANSPORT_WIDGET_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                      MODEST_TYPE_TRANSPORT_WIDGET, \
@@ -119,6 +122,12 @@ modest_transport_widget_init (ModestTransportWidget *obj)
 static void
 modest_transport_widget_finalize (GObject *obj)
 {
+	ModestTransportWidgetPrivate *priv = MODEST_TRANSPORT_WIDGET_GET_PRIVATE(obj);
+	
+	/* These had to stay alive for as long as the comboboxes that used them: */
+	modest_pair_list_free (priv->transport_store_protos);
+	modest_pair_list_free (priv->auth_protos);
+	
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
@@ -141,7 +150,6 @@ smtp_configuration (ModestTransportWidget *self)
 {
 	ModestTransportWidgetPrivate *priv;
 	GtkWidget *label, *box, *hbox, *combo;
-	ModestPairList *protos;
 	
 	priv = MODEST_TRANSPORT_WIDGET_GET_PRIVATE(self);
 	box = gtk_vbox_new (FALSE, 6);
@@ -185,9 +193,11 @@ smtp_configuration (ModestTransportWidget *self)
 	gtk_label_set_text (GTK_LABEL(label),_("Connection type:"));
 	gtk_box_pack_start (GTK_BOX(hbox), label, FALSE, FALSE, 0);
 
-	protos = modest_protocol_info_get_transport_store_protocol_pair_list ();
-	combo  = modest_combo_box_new (protos, g_str_equal);
-	modest_pair_list_free (protos);
+	/* Note: This ModestPairList* must exist for as long as the combo
+	 * that uses it, because the ModestComboBox uses the ID opaquely, 
+	 * so it can't know how to manage its memory. */
+	priv->transport_store_protos = modest_protocol_info_get_transport_store_protocol_pair_list ();
+	combo = modest_combo_box_new (priv->transport_store_protos, g_str_equal);
 	
 	gtk_box_pack_start (GTK_BOX(hbox), combo, FALSE, FALSE,0);
 	gtk_box_pack_start (GTK_BOX(box), hbox, FALSE, FALSE, 0);
@@ -198,9 +208,11 @@ smtp_configuration (ModestTransportWidget *self)
 	gtk_label_set_text (GTK_LABEL(label),_("Authentication:"));
 	gtk_box_pack_start (GTK_BOX(hbox), label, FALSE, FALSE, 6);
 
-	protos = modest_protocol_info_get_auth_protocol_pair_list ();
-	combo  = modest_combo_box_new (protos, g_str_equal);
-	modest_pair_list_free (protos);
+	/* Note: This ModestPairList* must exist for as long as the combo
+	 * that uses it, because the ModestComboBox uses the ID opaquely, 
+	 * so it can't know how to manage its memory. */
+	priv->auth_protos = modest_protocol_info_get_auth_protocol_pair_list ();
+	combo  = modest_combo_box_new (priv->auth_protos, g_str_equal);
 	
 	gtk_box_pack_start (GTK_BOX(hbox), combo, FALSE, FALSE, 0);
 	priv->remember_pwd =

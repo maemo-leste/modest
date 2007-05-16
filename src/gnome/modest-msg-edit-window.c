@@ -60,7 +60,10 @@ struct _ModestMsgEditWindowPrivate {
 	GtkWidget   *menubar;
 
 	GtkWidget   *msg_body;
+	
+	ModestProtoList *from_field_protos;
 	GtkWidget   *from_field;
+	
 	GtkWidget   *to_field;
 	GtkWidget   *cc_field;
 	GtkWidget   *bcc_field;
@@ -149,7 +152,9 @@ modest_msg_edit_window_init (ModestMsgEditWindow *obj)
 	priv->subject_field = NULL;
 }
 
-
+/** 
+ * @result: A ModestPairList, which must be freed with modest_pair_list_free().
+ */
 static ModestPairList*
 get_transports (void)
 {
@@ -160,7 +165,7 @@ get_transports (void)
 	account_mgr = modest_runtime_get_account_mgr();
 	cursor = accounts = modest_account_mgr_account_names (account_mgr, TRUE);
 	while (cursor) {
-		gchar *account_name = (gchar*)cursor->data;
+		gchar *account_name = cursor->data ? g_strdup((gchar*)cursor->data) : NULL;
 		gchar *from_string  = modest_account_mgr_get_from_string (account_mgr,
 									  account_name);
 		if (!from_string)  {
@@ -197,7 +202,6 @@ init_window (ModestMsgEditWindow *obj, const gchar* account)
 	GtkWidget *main_vbox;
 	ModestMsgEditWindowPrivate *priv;
 	ModestWindowPrivate *parent_priv;
-	ModestPairList *protos;
 	
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE(obj);
 	parent_priv = MODEST_WINDOW_GET_PRIVATE(obj);
@@ -206,9 +210,12 @@ init_window (ModestMsgEditWindow *obj, const gchar* account)
 	cc_button     = gtk_button_new_with_label (_("Cc..."));
 	bcc_button    = gtk_button_new_with_label (_("Bcc..."));
 	
-	protos = get_transports ();
- 	priv->from_field    = modest_combo_box_new (protos, g_str_equal);
-	modest_pair_list_free (protos);
+	/* Note: This ModestPairList* must exist for as long as the combo
+	 * that uses it, because the ModestComboBox uses the ID opaquely, 
+	 * so it can't know how to manage its memory. */ 
+	priv->from_field_protos = get_transports ();
+ 	priv->from_field    = modest_combo_box_new (priv->from_field_protos, g_str_equal);
+	
 	if (account) {
 		modest_combo_box_set_active_id (MODEST_COMBO_BOX(priv->from_field),
 						(gpointer)account);
@@ -255,6 +262,11 @@ init_window (ModestMsgEditWindow *obj, const gchar* account)
 static void
 modest_msg_edit_window_finalize (GObject *obj)
 {
+	ModestMsgEditWindowPrivate *priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE(obj);
+	
+	/* These had to stay alive for as long as the comboboxes that used them: */
+	modest_pair_list_free (priv->from_field_protos);
+	
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
@@ -378,8 +390,7 @@ MsgData *
 modest_msg_edit_window_get_msg_data (ModestMsgEditWindow *edit_window)
 {
 	MsgData *data;
-	GtkTextBuffer *buf;
-	GtkTextIter b, e;
+	
 	const gchar *account_name;
 	gchar *from_string = NULL;
 	ModestMsgEditWindowPrivate *priv;
@@ -397,17 +408,20 @@ modest_msg_edit_window_get_msg_data (ModestMsgEditWindow *edit_window)
 		return NULL;
 	}
 	
-	buf = gtk_text_view_get_buffer (GTK_TEXT_VIEW (priv->msg_body));
-	gtk_text_buffer_get_bounds (buf, &b, &e);
+	
 
-	/* don't free these (except from) */
 	data = g_slice_new0 (MsgData);
 	data->from    =  from_string, /* will be freed when data is freed */
-	data->to      =  (gchar*) gtk_entry_get_text (GTK_ENTRY(priv->to_field));
-	data->cc      =  (gchar*) gtk_entry_get_text (GTK_ENTRY(priv->cc_field));
-	data->bcc     =  (gchar*) gtk_entry_get_text (GTK_ENTRY(priv->bcc_field));
-	data->subject =  (gchar*) gtk_entry_get_text (GTK_ENTRY(priv->subject_field));
-	data->plain_body    =  gtk_text_buffer_get_text (buf, &b, &e, FALSE);
+	data->to      =  g_strdup (gtk_entry_get_text (GTK_ENTRY(priv->to_field))));
+	data->cc      =  g_strdup ( gtk_entry_get_text (GTK_ENTRY(priv->cc_field)));
+	data->bcc     =  g_strdup ( gtk_entry_get_text (GTK_ENTRY(priv->bcc_field)));
+	data->subject =  g_strdup ( gtk_entry_get_text (GTK_ENTRY(priv->subject_field)));
+
+	GtkTextBuffer *buf = gtk_text_view_get_buffer (GTK_TEXT_VIEW (priv->msg_body));
+	GtkTextIter b, e;
+	gtk_text_buffer_get_bounds (buf, &b, &e);
+	data->plain_body =  gtk_text_buffer_get_text (buf, &b, &e, FALSE); /* Returns a copy. */
+
 	/* No rich supported yet, then html body is NULL */
 	data->html_body = NULL;
 
@@ -420,9 +434,18 @@ modest_msg_edit_window_free_msg_data (ModestMsgEditWindow *edit_window,
 {
 	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (edit_window));
 
-	g_free (data->from);
+	if (!data)
+		return;
+
+	g_free (data->to);
+	g_free (data->cc);
+	g_free (data->bcc);
+	g_free (data->subject);
 	g_free (data->plain_body);
 	g_free (data->html_body);
+
+	/* TODO: Free data->attachments? */
+
 	g_slice_free (MsgData, data);
 }
 

@@ -87,6 +87,7 @@ static void       on_auto_update_toggled (GtkToggleButton *togglebutton,
 
 typedef struct _ModestMaemoGlobalSettingsDialogPrivate ModestMaemoGlobalSettingsDialogPrivate;
 struct _ModestMaemoGlobalSettingsDialogPrivate {
+	ModestPairList *connect_via_list;
 };
 #define MODEST_MAEMO_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                            MODEST_TYPE_MAEMO_GLOBAL_SETTINGS_DIALOG, \
@@ -181,7 +182,6 @@ create_updating_page (ModestMaemoGlobalSettingsDialog *self)
 {
 	GtkWidget *vbox, *vbox_update, *vbox_limit, *caption;
 	GtkSizeGroup *size_group;
-	ModestPairList *list;
 	ModestGlobalSettingsDialogPrivate *ppriv;
 
 	ppriv = MODEST_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE (self);
@@ -202,9 +202,13 @@ create_updating_page (ModestMaemoGlobalSettingsDialog *self)
 	g_signal_connect (ppriv->auto_update, "toggled", G_CALLBACK (on_auto_update_toggled), self);
 
 	/* Connected via */
-	list = _modest_global_settings_dialog_get_connected_via ();
-	ppriv->connect_via = modest_combo_box_new (list, g_int_equal);
-	modest_pair_list_free (list);
+
+	/* Note: This ModestPairList* must exist for as long as the combo
+	 * that uses it, because the ModestComboBox uses the ID opaquely, 
+	 * so it can't know how to manage its memory. */ 
+	ppriv->connect_via_list = _modest_global_settings_dialog_get_connected_via ();
+	ppriv->connect_via = modest_combo_box_new (ppriv->connect_via_list, g_int_equal);
+
 	caption = hildon_caption_new (size_group, 
 				      _("mcen_fi_options_connectiontype"),
 				      ppriv->connect_via, 
@@ -213,9 +217,13 @@ create_updating_page (ModestMaemoGlobalSettingsDialog *self)
 	gtk_box_pack_start (GTK_BOX (vbox_update), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
 
 	/* Update interval */
-	list = _modest_global_settings_dialog_get_update_interval ();
-	ppriv->update_interval = modest_combo_box_new (list, g_int_equal);
-	modest_pair_list_free (list);
+
+	/* Note: This ModestPairList* must exist for as long as the combo
+	 * that uses it, because the ModestComboBox uses the ID opaquely, 
+	 * so it can't know how to manage its memory. */ 
+	ppriv->update_interval_list = _modest_global_settings_dialog_get_update_interval ();
+	ppriv->update_interval = modest_combo_box_new (ppriv->update_interval_list, g_int_equal);
+
 	caption = hildon_caption_new (size_group, 
 				      _("mcen_fi_options_updateinterval"),
 				      ppriv->update_interval, 
@@ -268,7 +276,6 @@ create_composing_page (ModestMaemoGlobalSettingsDialog *self)
 	GtkWidget *vbox;
 	GtkSizeGroup *size_group;
 	ModestGlobalSettingsDialogPrivate *ppriv;
-	ModestPairList *list;
 	GtkWidget *caption;
 
 	ppriv = MODEST_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE (self);
@@ -276,9 +283,13 @@ create_composing_page (ModestMaemoGlobalSettingsDialog *self)
 	vbox = gtk_vbox_new (FALSE, MODEST_MARGIN_DEFAULT);
 
 	/* Update interval */
-	list = _modest_global_settings_dialog_get_msg_formats ();
-	ppriv->msg_format = modest_combo_box_new (list, g_int_equal);
-	modest_pair_list_free (list);
+
+	/* Note: This ModestPairList* must exist for as long as the combo
+	 * that uses it, because the ModestComboBox uses the ID opaquely, 
+	 * so it can't know how to manage its memory. */ 
+	ppriv->msg_format_list = _modest_global_settings_dialog_get_msg_formats ();
+	ppriv->msg_format = modest_combo_box_new (ppriv->msg_format_list, g_int_equal);
+
 	caption = hildon_caption_new (size_group, 
 				      _("mcen_fi_options_messageformat"),
 				      ppriv->msg_format, 

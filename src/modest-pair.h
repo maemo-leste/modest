@@ -71,7 +71,7 @@ void        modest_pair_free       (ModestPair *self);
  * modest_pair_list_free:
  * @pairs: a valid ModestPairList
  *
- * convenience function to destroy all pairs in a list 
+ * Convenience function to destroy all pairs in a list and the list itself.
  *
  */
 void  modest_pair_list_free (ModestPairList *pairs);

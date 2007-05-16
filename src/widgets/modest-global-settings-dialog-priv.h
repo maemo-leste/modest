@@ -52,11 +52,19 @@ struct _ModestGlobalSettingsDialogPrivate {
 	GtkWidget *composing_page;
 
 	GtkWidget *auto_update;
+	
+	ModestPairList *connect_via_list;
 	GtkWidget *connect_via;
+	
+	ModestPairList *update_interval_list;
 	GtkWidget *update_interval;
+	
 	GtkWidget *size_limit;
 	GtkWidget *play_sound;
+	
+	ModestPairList *msg_format_list;
 	GtkWidget *msg_format;
+	
 	GtkWidget *include_reply;
 
 	gboolean   changed;

@@ -48,8 +48,13 @@ struct _ModestStoreWidgetPrivate {
 	
 	GtkWidget *servername;
 	GtkWidget *username;
+	
+	ModestProtoList *security_protos;
 	GtkWidget *security;
+	
+	ModestProtoList *auth_protos;
 	GtkWidget *auth;
+	
 	GtkWidget *chooser;
 
 	ModestTransportStoreProtocol proto;
@@ -195,7 +200,6 @@ on_entry_changed (GtkEntry *entry, gpointer user_data)
 static GtkWidget*
 imap_pop_configuration (ModestStoreWidget *self)
 {
-	ModestPairList *protos;
 	ModestStoreWidgetPrivate *priv;
 	GtkWidget *label, *box, *hbox;
 	
@@ -226,9 +230,12 @@ imap_pop_configuration (ModestStoreWidget *self)
 	gtk_label_set_markup (GTK_LABEL(label),_("<b>Security</b>"));
 	gtk_box_pack_start (GTK_BOX(box), label, FALSE, FALSE, 0);
 
-	protos = modest_protocol_info_get_connection_protocol_pair_list ();
-	priv->security = modest_combo_box_new (protos, g_str_equal);
-	modest_pair_list_free (protos);
+	/* Note: This ModestPairList* must exist for as long as the combo
+	 * that uses it, because the ModestComboBox uses the ID opaquely, 
+	 * so it can't know how to manage its memory. */ 
+	priv->security_protos = modest_protocol_info_get_connection_protocol_pair_list ();
+
+	priv->security = modest_combo_box_new (priv->security_protos, g_str_equal);
 	
 	hbox = gtk_hbox_new (FALSE, 6);
 	label = gtk_label_new(NULL);
@@ -243,9 +250,11 @@ imap_pop_configuration (ModestStoreWidget *self)
 	gtk_label_set_text (GTK_LABEL(label),_("Authentication:"));
 	gtk_box_pack_start (GTK_BOX(hbox), label, FALSE, FALSE, 6);
 	
-	protos = modest_protocol_info_get_auth_protocol_pair_list (;
-	priv->auth =  modest_combo_box_new (protos, g_str_equal);
-	modest_pair_list_free (protos);
+	/* Note: This ModestPairList* must exist for as long as the combo
+	 * that uses it, because the ModestComboBox uses the ID opaquely, 
+	 * so it can't know how to manage its memory. */ 
+	priv->auth_protos = modest_protocol_info_get_auth_protocol_pair_list (;
+	priv->auth =  modest_combo_box_new (priv->auth_protos, g_str_equal);
 
 	gtk_box_pack_start (GTK_BOX(hbox), priv->auth, FALSE, FALSE, 0);
 	
@@ -262,6 +271,12 @@ imap_pop_configuration (ModestStoreWidget *self)
 static void
 modest_store_widget_finalize (GObject *obj)
 {
+	ModestStoreWidgetPrivate *priv = MODEST_STORE_WIDGET_GET_PRIVATE(obj);
+	
+	/* These had to stay alive for as long as the comboboxes that used them: */
+	modest_pair_list_free (priv->security_protos);
+	modest_pair_list_free (priv->auth_protos);
+	
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 

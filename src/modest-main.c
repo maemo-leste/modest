@@ -284,10 +284,11 @@ send_mail (const gchar* account_name,
 							  account_name);
 
 	mail_operation = modest_mail_operation_new (MODEST_MAIL_OPERATION_ID_SEND, NULL);
+
 	modest_mail_operation_send_new_mail (mail_operation, account,
 					     from_string, mailto,
-					     cc, bcc, subject, body, NULL,
-					     NULL, 0);
+					     cc, bcc, subject, body, NULL /* html_body */,
+					     NULL /* attachments */, 0 /* priority */);
 	if (modest_mail_operation_get_status (mail_operation) == 
 	    MODEST_MAIL_OPERATION_STATUS_FAILED) {
 		retval = MODEST_ERR_SEND;

@@ -140,7 +140,14 @@ modest_global_settings_dialog_init (ModestGlobalSettingsDialog *self)
 static void
 modest_global_settings_dialog_finalize (GObject *obj)
 {
-/* 	free/unref instance resources here */
+	ModestGlobalSettingsDialogPrivate *priv = 
+		MODEST_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE (obj);
+
+	/* These had to stay alive as long as the comboboxes that used them: */
+	modest_pair_list_free (priv->connect_via_list);
+	modest_pair_list_free (priv->update_interval_list);
+	modest_pair_list_free (priv->msg_format_list);
+	
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 

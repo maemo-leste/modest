@@ -63,7 +63,13 @@ GType        modest_combo_box_get_type    (void) G_GNUC_CONST;
 
 /**
  * modest_combo_box_new
- * @pairs: a #ModestPairList; each element should be a ptr to a #ModestPair 
+ * @pairs: a #ModestPairList; each element should be a ptr to a #ModestPair,
+ * with the first item in the pair being an opaque ID, and the second item being 
+ * a gchar* string for display. 
+ * If the ID is a string or other non fundamental type, you must make sure that 
+ * the instance remains allocated for the lifetime of this combo box.
+ * The simplest way to achieve this is to ensure that the ModestPairList exists 
+ * for as long as the combo box.
  * @cmp_id_func: a GEqualFunc to compare the ids (= the first elements of the pairs)
  * For example, if the ids are strings, you can use g_str_equal.
  *

@@ -70,6 +70,9 @@ typedef enum {
 	MODEST_MSG_EDIT_FORMAT_HTML
 } ModestMsgEditFormat;
 
+/** Get these with modest_msg_edit_window_get_msg_data() 
+ * and free them with modest_msg_edit_window_free_msg_data().
+ */
 typedef struct  {
 	gchar *from, *to, *cc, *bcc, *subject, *plain_body, *html_body;
 	GList *attachments;

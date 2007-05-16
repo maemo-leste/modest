@@ -201,7 +201,6 @@ create_updating_page (ModestGnomeGlobalSettingsDialog *self)
 {
 	GtkWidget *vbox, *table_update, *table_limit;
 	GtkWidget *label, *check, *combo, *spin;
-	ModestPairList *list;
 
 	vbox = gtk_vbox_new (FALSE, MODEST_MARGIN_DEFAULT);
 	table_update = gtk_table_new (3, 2, FALSE);
@@ -219,16 +218,27 @@ create_updating_page (ModestGnomeGlobalSettingsDialog *self)
 
 	/* Connected via */
 	label = create_label (_("mcen_fi_options_connectiontype"));
-	list = _modest_global_settings_dialog_get_connected_via ();
-	combo = modest_combo_box_new (list, g_int_equal);
-	modest_pair_list_free (list);
+
+	ModestGlobalSettingsDialogPrivate *ppriv = 
+		MODEST_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE (self);
+
+	/* Note: This ModestPairList* must exist for as long as the combo
+	 * that uses it, because the ModestComboBox uses the ID opaquely, 
+	 * so it can't know how to manage its memory. */
+	ppriv->connected_via_list = _modest_global_settings_dialog_get_connected_via ();
+	combo = modest_combo_box_new (ppriv->connected_via_list, g_int_equal);
+
 	add_to_table (GTK_TABLE (table_update), label, combo);
 
 	/* Update interval */
 	label = create_label (_("mcen_fi_options_updateinterval"));
-	list = _modest_global_settings_dialog_get_update_interval ();
-	combo = modest_combo_box_new (list, g_int_equal);
-	modest_pair_list_free (list);
+
+	/* Note: This ModestPairList* must exist for as long as the combo
+	 * that uses it, because the ModestComboBox uses the ID opaquely, 
+	 * so it can't know how to manage its memory. */
+	ppriv->update_interval_list = _modest_global_settings_dialog_get_update_interval ();
+	combo = modest_combo_box_new (ppriv->update_interval_list, g_int_equal);
+
 	add_to_table (GTK_TABLE (table_update), label, combo);
 
 	/* Add to vbox */
@@ -261,7 +271,6 @@ create_composing_page (ModestGnomeGlobalSettingsDialog *self)
 {
 	GtkWidget *vbox, *table;
 	GtkWidget *label, *check, *combo;
-	ModestPairList *list;
 
 	vbox = gtk_vbox_new (FALSE, MODEST_MARGIN_DEFAULT);
 	table = gtk_table_new (2, 2, FALSE);
@@ -271,9 +280,16 @@ create_composing_page (ModestGnomeGlobalSettingsDialog *self)
 
 	/* Update interval */
 	label = create_label (_("mcen_fi_options_messageformat"));
-	list = _modest_global_settings_dialog_get_msg_formats ();
-	combo = modest_combo_box_new (list, g_int_equal);
-	modest_pair_list_free (list);
+
+	ModestGlobalSettingsDialogPrivate *ppriv = 
+		MODEST_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE (self);
+
+	/* Note: This ModestPairList* must exist for as long as the combo
+	 * that uses it, because the ModestComboBox uses the ID opaquely, 
+	 * so it can't know how to manage its memory. */
+	ppriv->combo_msg_formats_list = _modest_global_settings_dialog_get_msg_formats ();
+	combo = modest_combo_box_new (ppriv->cmsg_formats_list, g_int_equal);
+
 	add_to_table (GTK_TABLE (table), label, combo);
 
 	label = create_label (_("mcen_va_options_include_original_inreply"));
