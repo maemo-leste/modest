@@ -741,61 +741,6 @@ modest_ui_actions_on_sort (GtkAction *action,
 	}
 }
 
-
-static gboolean
-action_send (const gchar* account_name)
-{
-	TnyAccount *tny_account;
-	ModestTnySendQueue *send_queue;
-
-	g_return_val_if_fail (account_name, FALSE);
-
-	/* Get the transport account according to the open connection, 
-	 * because the account might specify connection-specific SMTP servers.
-	 */
-	tny_account = 
-		modest_tny_account_store_get_transport_account_for_open_connection (modest_runtime_get_account_store(),
-								     account_name);
-	if (!tny_account) {
-		g_printerr ("modest: cannot get tny transport account for %s\n", account_name);
-		return FALSE;
-	}
-	
-	send_queue = modest_tny_send_queue_new (TNY_CAMEL_TRANSPORT_ACCOUNT(tny_account));
-	if (!send_queue) {
-		g_object_unref (G_OBJECT(tny_account));
-		g_printerr ("modest: cannot get send queue for %s\n", account_name);
-		return FALSE;
-	}
-	
-	modest_tny_send_queue_flush (send_queue);
-
-	g_object_unref (G_OBJECT(send_queue));
-	g_object_unref (G_OBJECT(tny_account));
-
-	return TRUE;
-}
-
-
-static gboolean
-action_receive (const gchar* account_name, 
-		ModestWindow *win)
-{
-	ModestMailOperation *mail_op;
-
-	g_return_val_if_fail (account_name, FALSE);
-
-	/* Create the mail operation */
-	/* TODO: The spec wants us to first do any pending deletions, before receiving. */
-	mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_ID_RECEIVE, G_OBJECT(win));
-	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
-	modest_mail_operation_update_account (mail_op, account_name);
-
-	g_object_unref (G_OBJECT (mail_op));
-		
-	return TRUE;
-}
-
 /** Check that an appropriate connection is open.
  */
 gboolean check_for_connection (const gchar *account_name)
@@ -852,10 +797,13 @@ modest_ui_actions_do_send_receive (const gchar *account_name, ModestWindow *win)
 		 * for SMTP we should send,
 		 * first receiving, then sending:
 		 */
-		if (!action_receive(acc_name, win))
-			g_printerr ("modest: failed to receive\n");
-		if (!action_send(acc_name))
-			g_printerr ("modest: failed to send\n");
+		/* Create the mail operation */
+		/* TODO: The spec wants us to first do any pending deletions, before receiving. */
+		ModestMailOperation *mail_op;
+		mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_ID_RECEIVE, G_OBJECT(win));
+		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
+		modest_mail_operation_update_account (mail_op, acc_name);
+		g_object_unref (G_OBJECT (mail_op));
 	}
 	/* Free */
 	g_free (acc_name);
