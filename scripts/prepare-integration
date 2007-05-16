@@ -1,0 +1,132 @@
+#!/bin/sh
+
+#Time-stamp: <2007-05-16 11:56:16 (djcb)>
+
+# Copyright (c) 2007, Nokia Corporation
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#
+# * Redistributions of source code must retain the above copyright
+#   notice, this list of conditions and the following disclaimer.
+# * Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in the
+#   documentation and/or other materials provided with the distribution.
+# * Neither the name of the Nokia Corporation nor the names of its
+#   contributors may be used to endorse or promote products derived from
+#   this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+# IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+# TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+# PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+# OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+# EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+# PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+
+# this script is only useful for pre-integrators
+#
+# this is a little script to make the integration of packages a bit easier
+# so far, it automates downloading, cleaning, building the packages
+# the whole dput/sending requests business might be added later
+
+
+
+#######################################################
+SCRATCHBOX="/usr/bin/scratchbox"
+TINYMAIL_TRUNK="https://svn.tinymail.org/svn/tinymail/trunk"
+MODEST_TRUNK="https://projects.maemo.org/svn/email/modest-email/modest/trunk"
+MODEST_PROVIDERS_DATA_TRUNK="https://projects.maemo.org/svn/email/modest-email/modest-providers-data"
+
+#######################################################
+test -z "$1" && {
+	echo "usage: prepare-integration-release <dir>"
+	echo "where name is e.g. '/home/foo/src/w18-pre'"
+	exit 1
+}
+targetdir="$1"
+
+echo "*** preparing for integration"
+
+echo "* getting svn versions for our packages"
+TINYMAIL_REVISION="`svn info $TINYMAIL_TRUNK | grep '^Revision:' | sed 's/Revision: //'`"
+MODEST_PROVIDERS_DATA_REVISION="`svn info $MODEST_PROVIDERS_DATA_TRUNK| grep '^Revision:' | sed 's/Revision: //'`"
+MODEST_REVISION="`svn info $MODEST_TRUNK | grep '^Revision:' | sed 's/Revision: //'`"
+
+echo "- tinymail revision: $TINYMAIL_REVISION"
+echo "- modest-providers-data revision: $MODEST_PROVIDERS_DATA_REVISION"
+echo "- modest revision: $MODEST_REVISION"
+
+echo "* export the source code"
+mkdir -p $targetdir
+cd $targetdir
+svn export $TINYMAIL_TRUNK tinymail
+svn export $MODEST_TRUNK modest
+svn export $MODEST_PROVIDERS_DATA_TRUNK modest-providers-data
+
+echo "* make the integration subcontractor test not fail"
+for x in `find -type f`; do sed -i 's/[Ii]galia/iga1ia/g' $x; done
+
+echo "* setup the right debian files"
+cp tinymail/debian/control.maemo tinymail/debian/control
+cp tinymail/debian/rules.maemo tinymail/debian/rules
+
+# build tinymail
+if test -n "`ls *tinymail*${TINYMAIL_REVISION}*.deb`"; then
+    echo "* tinymail seems already built, skipping (but still installing pkgs)"
+else    
+    echo "*** building tinymail"
+    NOW=`date -R`
+    mv -f tinymail/debian/changelog tinymail/debian/changelog.bak
+    cat > tinymail/debian/changelog <<EOF
+tinymail (1.0.0-svn${TINYMAIL_REVISION}) unstable; urgency=low
+
+  * Package subversion revision svn${TINYMAIL_REVISION}
+
+ -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  ${NOW}
+EOF
+
+    $SCRATCHBOX -d "$targetdir/tinymail" "dpkg-buildpackage -rfakeroot -uc -us -sa -D" || {
+        echo "error building tinymail"
+        exit 1
+    }
+fi
+$SCRATCHBOX -d "$targetdir" "fakeroot dpkg -i *${TINYMAIL_REVISION}*.deb"
+
+
+
+# build modest-providers-data
+if test -n "`ls modest-providers-data*.deb`"; then
+    echo "* modest-providers-data seems already built, skipping (but still installing pkgs)"
+else
+    echo "*** building modest-providers-data"
+    $SCRATCHBOX -d "$targetdir/modest-providers-data" "dpkg-buildpackage -rfakeroot -uc -us -sa -D" || {
+        echo "failed to build modest-providers-data"
+        exit 1
+    }
+fi
+$SCRATCHBOX -d "$targetdir" "fakeroot dpkg -i modest-providers-data*.deb"
+
+
+# build modest
+if test -n "`ls modest_*.deb`"; then
+    echo "* modest seems already built, skipping (but still installing pkgs)"
+else
+    echo "*** building modest"
+    cp modest/debian/control-maemo1 modest/debian/control
+
+    $SCRATCHBOX -d "$targetdir/modest" "dpkg-buildpackage -rfakeroot -uc -us -sa -D" || {
+        echo "failed to build modest"
+        exit 1
+    }
+fi
+$SCRATCHBOX -d "$targetdir" "fakeroot dpkg -i modest_*.deb"
+
+

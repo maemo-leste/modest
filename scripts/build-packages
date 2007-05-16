@@ -1,5 +1,5 @@
 #!/bin/sh
-#Time-stamp: <2007-05-04 08:07:31 (djcb)>
+#Time-stamp: <2007-05-16 11:54:34 (djcb)>
 
 # Copyright (c) 2007, Nokia Corporation
 # All rights reserved.
@@ -31,7 +31,7 @@
 #
 
 #
-# This is a ackish script to build tinymail/modest packages.
+# This is a hackish script to build tinymail/modest packages.
 #
 # It must be run *outside* scratchbox. You need to make sure that
 # the paths below are valid both inside and outside scratchbox.
