@@ -585,7 +585,7 @@ modest_mail_operation_update_account (ModestMailOperation *self,
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 			     MODEST_MAIL_OPERATION_ERROR_ITEM_NOT_FOUND,
-			     "cannot get tny store account for %s\n", modest_acc_name);
+			     "cannot get tny store account for %s\n", account_name);
 		modest_mail_operation_queue_remove (modest_runtime_get_mail_operation_queue (), 
 						    self);
 		return FALSE;
