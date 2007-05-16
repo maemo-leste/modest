@@ -562,7 +562,6 @@ modest_mail_operation_update_account (ModestMailOperation *self,
 	ModestMailOperationPrivate *priv;
 	TnyStoreAccount *modest_account;
 	TnyTransportAccount *transport_account;
-	gchar *modest_acc_name;
 
 	g_return_val_if_fail (MODEST_IS_MAIL_OPERATION (self), FALSE);
 	g_return_val_if_fail (account_name, FALSE);
@@ -593,15 +592,14 @@ modest_mail_operation_update_account (ModestMailOperation *self,
 
 	/* Get the transport account, we can not do it in the thread
 	   due to some problems with dbus */
-	modest_acc_name = (gchar *) g_object_get_data (G_OBJECT (modest_account), "modest_account");
 	transport_account = (TnyTransportAccount *)
 		modest_tny_account_store_get_transport_account_for_open_connection (modest_runtime_get_account_store(),
-										    modest_acc_name);
+										    account_name);
 	if (!transport_account) {
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 			     MODEST_MAIL_OPERATION_ERROR_ITEM_NOT_FOUND,
-			     "cannot get tny transport account for %s\n", modest_acc_name);
+			     "cannot get tny transport account for %s\n", account_name);
 		modest_mail_operation_queue_remove (modest_runtime_get_mail_operation_queue (), 
 						    self);
 		return FALSE;
