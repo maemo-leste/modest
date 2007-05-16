@@ -453,6 +453,11 @@ open_msg_func (const GObject *obj, const TnyMsg *msg, gpointer user_data)
 	
 	g_return_if_fail (MODEST_IS_WINDOW(obj));
 	g_return_if_fail (user_data != NULL);
+
+	/* TODO: Show an error? (review the specs) */
+	if (!msg)
+		return;
+
 	parent_win = MODEST_WINDOW(obj);
 	helper = (HeaderActivatedHelper *) user_data;
 

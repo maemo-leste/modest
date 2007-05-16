@@ -431,9 +431,8 @@ notify_update_account_observers (gpointer data)
 	ModestMailOperation *mail_op = MODEST_MAIL_OPERATION (data);
 
 	g_signal_emit (G_OBJECT (mail_op), signals[PROGRESS_CHANGED_SIGNAL], 0, NULL);
-	g_object_unref (mail_op);
 
-	return FALSE;
+	return TRUE;
 }
 
 /* 
@@ -460,6 +459,7 @@ update_account_thread (gpointer thr_user_data)
 	TnyIterator *iter = NULL;
 	TnyFolderStoreQuery *query = NULL;
 	ModestMailOperationPrivate *priv;
+	gint timeout;
 
 	info = (UpdateAccountInfo *) thr_user_data;
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(info->mail_op);
@@ -487,6 +487,14 @@ update_account_thread (gpointer thr_user_data)
 	}
 	g_object_unref (G_OBJECT (iter));
 
+	/* Update status and notify. We need to call the notification
+	   with a source functopm in order to call it from the main
+	   loop. We need that in order not to get into trouble with
+	   Gtk+. We use a timeout in order to provide more status
+	   information, because the sync tinymail call does not
+	   provide it for the moment */
+	timeout = g_timeout_add (250, notify_update_account_observers, info->mail_op);
+
 	/* Refresh folders */
 	iter = tny_list_create_iterator (all_folders);
 	while (!tny_iterator_is_done (iter) && !priv->error) {
@@ -498,18 +506,13 @@ update_account_thread (gpointer thr_user_data)
 
 		if (priv->error) {
 			priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
-		} else {
-			/* Update status and notify. We need to call
-			   the notification with an idle in order to
-			   call it from the main loop. We need that in
-			   order not to get into trouble with Gtk+ */
-			g_idle_add (notify_update_account_observers, g_object_ref (info->mail_op));
 		}
 
 		g_object_unref (G_OBJECT (folder));
 		tny_iterator_next (iter);
 	}
 	g_object_unref (G_OBJECT (iter));
+	g_source_remove (timeout);
 
 	/* Check if the operation was a success */
 	if (!priv->error) {
