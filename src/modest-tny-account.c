@@ -110,10 +110,11 @@ modest_tny_account_get_special_folder (TnyAccount *account,
  * camel_sasl_authtype() seems to list some possible values.
  */
  
- /* Note that evolution does not offer this for IMAP: */
+/* Note that evolution does not offer these for IMAP: */
 #define MODEST_ACCOUNT_AUTH_PLAIN "PLAIN"
+#define MODEST_ACCOUNT_AUTH_ANONYMOUS "ANONYMOUS"
 
-/* IMAP uses NULL instead.
+/* Caeml's IMAP uses NULL instead for "Password".
  * Also, not that Evolution offers "Password" for IMAP, but "Login" for SMTP.*/
 #define MODEST_ACCOUNT_AUTH_PASSWORD "LOGIN" 
 #define MODEST_ACCOUNT_AUTH_CRAMMD5 "CRAM-MD5"
@@ -209,6 +210,8 @@ modest_tny_account_new_from_server_account (ModestAccountMgr *account_mgr,
 			 * This setting should never happen anyway. */
 			if (account_data->proto == MODEST_PROTOCOL_STORE_IMAP)
 				auth_mech_name = NULL;
+			else if (account_data->proto == MODEST_PROTOCOL_TRANSPORT_SMTP)
+				auth_mech_name = MODEST_ACCOUNT_AUTH_ANONYMOUS;
 			else
 				auth_mech_name = MODEST_ACCOUNT_AUTH_PLAIN;
 			break;

@@ -175,6 +175,7 @@ static GtkWindowClass *parent_class = NULL;
 
 
 /* Private actions */
+/* This is the context sensitive menu: */
 static const GtkActionEntry modest_folder_view_action_entries [] = {
 
 	/* Folder View CSM actions */

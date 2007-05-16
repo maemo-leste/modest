@@ -1,5 +1,14 @@
 2007-05-16  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-tny-account.c:
+	(modest_tny_account_new_from_server_account):
+	Excplicitly use ANONYMOUS secure authentication, instead of "PLAIN" for 
+	SMTP when "None" was chosen by the user. However, with my SMTP server that 
+	does not support ANONYMOUS, the emails do not leave the Outbox and I see 
+	no error dialog.
+
+2007-05-16  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/modest-pair.h: Improve the documentation for modest_combo_box_new() 
 	to explain the memory management issue with the ID in the ModestPair.
 	
