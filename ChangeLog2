@@ -1,5 +1,12 @@
 2007-05-17  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/widgets/modest-account-view.c:
+	* src/widgets/modest-account-view.h:
+	Added modest_account_view_select_account() which will be useful later 
+	to asynchronously re-select the edited account.
+
+2007-05-17  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/maemo/modest-account-settings-dialog.c:
 	(modest_account_settings_dialog_set_account_name): 
 	Automatically choose the port numbers based on the secure authentication 

@@ -87,6 +87,16 @@ ModestAccountView*   modest_account_view_new         (ModestAccountMgr *account_
  **/
 gchar*   modest_account_view_get_selected_account    (ModestAccountView *account_view);
 
+/**
+ * modest_account_view_set_selected_account:
+ * @account_view: a #ModestAccountView
+ * @account_name: The name of the account to select.
+ * 
+ * Sets the currently selected account.
+ **/
+void modest_account_view_select_account (ModestAccountView *account_view, 
+	const gchar* account_name);
+
 /** 
  * modest_account_view_block_conf_updates
  * @account_view: a #ModestAccountView

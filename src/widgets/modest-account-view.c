@@ -39,6 +39,7 @@
 #include <gtk/gtkcellrenderertext.h>
 #include <gtk/gtktreeselection.h>
 #include <gtk/gtkliststore.h>
+#include <string.h> /* For strcmp(). */
 
 /* 'private'/'protected' functions */
 static void modest_account_view_class_init    (ModestAccountViewClass *klass);
@@ -451,6 +452,55 @@ modest_account_view_get_selected_account (ModestAccountView *self)
 
 	return account_name;
 }
+
+/* This allows us to pass more than one piece of data to the signal handler,
+ * and get a result: */
+typedef struct 
+{
+		ModestAccountView* self;
+		const gchar *account_name;
+} ForEachData;
+
+static gboolean
+on_model_foreach_select_account(GtkTreeModel *model, 
+	GtkTreePath *path, GtkTreeIter *iter, gpointer user_data)
+{
+	ForEachData *state = (ForEachData*)(user_data);
+	
+	/* Select the item if it has the matching account name: */
+	gchar *this_account_name = NULL;
+	gtk_tree_model_get (model, iter, 
+		MODEST_ACCOUNT_VIEW_NAME_COLUMN, &this_account_name, 
+		-1); 
+	if(this_account_name && state->account_name 
+		&& (strcmp (this_account_name, state->account_name) == 0)) {
+		
+		GtkTreeSelection *selection = 
+			gtk_tree_view_get_selection (GTK_TREE_VIEW (state->self));
+		gtk_tree_selection_select_iter (selection, iter);
+		
+		return TRUE; /* Stop walking the tree. */
+	}
+	
+	return FALSE; /* Keep walking the tree. */
+}
+
+void modest_account_view_select_account (ModestAccountView *account_view, 
+	const gchar* account_name)
+{	
+	/* Create a state instance so we can send two items of data to the signal handler: */
+	ForEachData *state = g_new0 (ForEachData, 1);
+	state->self = account_view;
+	state->account_name = account_name;
+	
+	GtkTreeModel *model = gtk_tree_view_get_model (
+		GTK_TREE_VIEW (account_view));
+	gtk_tree_model_foreach (model, 
+		on_model_foreach_select_account, state);
+		
+	g_free (state);
+}
+
 
 
 void modest_account_view_block_conf_updates (ModestAccountView *account_view)

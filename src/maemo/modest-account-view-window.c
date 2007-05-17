@@ -247,7 +247,10 @@ on_edit_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 	g_free (account_name);
 	
 	/* Update the view: */
-	modest_account_view_unblock_conf_updates (priv->account_view);	
+	modest_account_view_unblock_conf_updates (priv->account_view);
+	
+	/* TODO: Call modest_account_view_select_account() when 
+	 * the view has actually been update. */
 }
 
 static void
