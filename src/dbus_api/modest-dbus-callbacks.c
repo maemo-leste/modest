@@ -519,7 +519,8 @@ gint modest_dbus_req_handler(const gchar * interface, const gchar * method,
 void
 modest_osso_cb_hw_state_handler(osso_hw_state_t *state, gpointer data)
 {
-    printf("%s()\n", __PRETTY_FUNCTION__);
+	/* TODO? */
+    /* printf("%s()\n", __PRETTY_FUNCTION__); */
 
     if(state->system_inactivity_ind)
     {
@@ -532,5 +533,5 @@ modest_osso_cb_hw_state_handler(osso_hw_state_t *state, gpointer data)
     
     }
 
-    printf("debug: %s(): return\n", __PRETTY_FUNCTION__);
+    /* printf("debug: %s(): return\n", __PRETTY_FUNCTION__); */
 }

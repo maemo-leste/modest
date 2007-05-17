@@ -1,5 +1,12 @@
 2007-05-17  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/maemo/modest-connection-specific-smtp-window.c:
+	(modest_connection_specific_smtp_window_init):
+	Use gtk_window_set_default_size() to make this window big enough, so 
+	we see more of the GtkTreeView. This fixes projects.maemo.org bug NB#55497 .
+
+2007-05-17  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/maemo/modest-connection-specific-smtp-edit-window.h:
 	* src/maemo/modest-connection-specific-smtp-edit-window.c:
 	(modest_connection_specific_smtp_edit_window_init),

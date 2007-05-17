@@ -142,7 +142,7 @@ modest_connection_specific_smtp_window_fill_with_connections (ModestConnectionSp
 	GSList *list_iaps = tny_maemo_conic_device_get_iap_list (maemo_device);
 	#endif
 	
-	printf("debug: list_iaps=%p, list_iaps size = %d\n", list_iaps, g_slist_length(list_iaps));
+	/* printf("debug: list_iaps=%p, list_iaps size = %d\n", list_iaps, g_slist_length(list_iaps)); */
 	
 	GSList* iter = list_iaps;
 	while (iter) {
@@ -285,6 +285,10 @@ on_selection_changed (GtkTreeSelection *sel, ModestConnectionSpecificSmtpWindow 
 static void
 modest_connection_specific_smtp_window_init (ModestConnectionSpecificSmtpWindow *self)
 {
+	/* Specify a default size, because the GtkTreeView's default requested size  
+	 * is not big enough: */
+	gtk_window_set_default_size (GTK_WINDOW (self), 500, 200);
+	
 	/* This seems to be necessary to make the window show at the front with decoration.
 	 * If we use property type=GTK_WINDOW_TOPLEVEL instead of the default GTK_WINDOW_POPUP+decoration, 
 	 * then the window will be below the others. */
