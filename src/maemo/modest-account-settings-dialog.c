@@ -792,8 +792,7 @@ static GtkWidget* create_page_outgoing (ModestAccountSettingsDialog *self)
 		
 	g_signal_connect (G_OBJECT (self->button_outgoing_smtp_servers), "clicked",
         	G_CALLBACK (on_button_outgoing_smtp_servers), self);
-	
-	
+		
 	gtk_widget_show (GTK_WIDGET (box));
 	
 	return GTK_WIDGET (box);
@@ -1068,9 +1067,17 @@ void modest_account_settings_dialog_set_account_name (ModestAccountSettingsDialo
 		
 		const gint port_num = modest_account_mgr_get_int (dialog->account_manager, incoming_account->account_name,
 			MODEST_ACCOUNT_PORT, TRUE /* server account */);
-		hildon_number_editor_set_value (
-			HILDON_NUMBER_EDITOR (dialog->entry_incoming_port), port_num);
-	
+			
+		if (port_num == 0) {
+			/* Show the appropriate port number: */
+			on_combo_incoming_security_changed (
+				GTK_COMBO_BOX (dialog->combo_incoming_security), dialog);
+		} else {
+			/* Keep the user-entered port-number,
+			 * or the already-appropriate automatic port number: */
+			hildon_number_editor_set_value (
+				HILDON_NUMBER_EDITOR (dialog->entry_incoming_port), port_num);
+		}
 	}
 	
 	ModestServerAccountData *outgoing_account = account_data->transport_account;
@@ -1104,8 +1111,17 @@ void modest_account_settings_dialog_set_account_name (ModestAccountSettingsDialo
 		
 		const gint port_num = modest_account_mgr_get_int (dialog->account_manager, outgoing_account->account_name,
 			MODEST_ACCOUNT_PORT, TRUE /* server account */);
-		hildon_number_editor_set_value (
-			HILDON_NUMBER_EDITOR (dialog->entry_outgoing_port), port_num);
+		if (port_num == 0) {
+			/* Show the appropriate port number: */
+			on_combo_outgoing_security_changed (
+				GTK_COMBO_BOX (dialog->combo_outgoing_security), dialog);
+		}
+		else {
+			/* Keep the user-entered port-number,
+			 * or the already-appropriate automatic port number: */
+			hildon_number_editor_set_value (
+				HILDON_NUMBER_EDITOR (dialog->entry_outgoing_port), port_num);
+		}
 	}
 	
 	/* account_data->is_enabled,  */

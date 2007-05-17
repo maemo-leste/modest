@@ -1,5 +1,13 @@
 2007-05-17  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/maemo/modest-account-settings-dialog.c:
+	(modest_account_settings_dialog_set_account_name): 
+	Automatically choose the port numbers based on the secure authentication 
+	methods, if they have not been chosen before.
+	This fixes projects.maemo.org bug NB#56273 .
+
+2007-05-17  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/maemo/modest-main-window-ui.h:
 	* src/modest-ui-actions.c:
 	* src/modest-ui-actions.h:
