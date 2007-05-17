@@ -78,7 +78,7 @@ void modest_connection_specific_smtp_edit_window_set_connection (
 	
 ModestServerAccountData* modest_connection_specific_smtp_edit_window_get_settings (
 	ModestConnectionSpecificSmtpEditWindow *window, 
-	ModestAccountMgr *account_manager, const gchar* server_account_name);
+	ModestAccountMgr *account_manager);
 	
 	
 G_END_DECLS

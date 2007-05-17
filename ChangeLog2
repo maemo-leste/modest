@@ -1,3 +1,21 @@
+2007-05-17  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/maemo/modest-connection-specific-smtp-edit-window.h:
+	* src/maemo/modest-connection-specific-smtp-edit-window.c:
+	(modest_connection_specific_smtp_edit_window_init),
+	Do not try to connect to a combobox signal before the combobox exists.
+	This fixes the cras in projects.maemo.org bug NB#56288 .
+	(modest_connection_specific_smtp_edit_window_get_settings):
+	Remove the server_account_name parameter which was being checked for NULL 
+	though it was not used.
+
+	* src/maemo/modest-connection-specific-smtp-window.c:
+	(modest_connection_specific_smtp_window_fill_with_connections),
+	(on_button_edit), (modest_connection_specific_smtp_window_init):
+	Correct the number of treemodel columns to prevent a warning.
+	Added DEBUG_WITHOUT_LIBCONIC #define, for debugging on scratchbox, where 
+	libconic does not work.
+
 2007-05-16  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/modest-tny-account.c:

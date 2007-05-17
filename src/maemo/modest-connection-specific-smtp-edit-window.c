@@ -159,10 +159,6 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (caption);
 	
-	/* Show a default port number when the security method changes, as per the UI spec: */
-	g_signal_connect (G_OBJECT (priv->combo_outgoing_security), "changed", (GCallback)on_combo_security_changed, self);
-	
-	
 	/* The secure authentication widgets: */
 	if (!priv->combo_outgoing_auth)
 		priv->combo_outgoing_auth = GTK_WIDGET (modest_secureauth_combo_box_new ());
@@ -226,6 +222,9 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (caption);
 	
+	/* Show a default port number when the security method changes, as per the UI spec: */
+	g_signal_connect (G_OBJECT (priv->combo_outgoing_security), "changed", (GCallback)on_combo_security_changed, self);
+	
 	/* Add the buttons: */
 	gtk_dialog_add_button (GTK_DIALOG (self), GTK_STOCK_OK, GTK_RESPONSE_OK);
 	gtk_dialog_add_button (GTK_DIALOG (self), GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL);
@@ -282,12 +281,10 @@ modest_connection_specific_smtp_edit_window_set_connection (
 ModestServerAccountData*
 modest_connection_specific_smtp_edit_window_get_settings (
 	ModestConnectionSpecificSmtpEditWindow *window, 
-	ModestAccountMgr *account_manager, const gchar* server_account_name)
+	ModestAccountMgr *account_manager)
 {
 	ModestConnectionSpecificSmtpEditWindowPrivate *priv = 
 		CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW_GET_PRIVATE (window);
-	
-	g_assert (server_account_name);
 	
 	/* Use g_slice_new0(), because that's what modest_account_mgr_free_server_account_data() 
 	 * expects us to use. */

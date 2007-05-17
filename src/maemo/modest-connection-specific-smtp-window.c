@@ -115,6 +115,11 @@ modest_connection_specific_smtp_window_class_init (ModestConnectionSpecificSmtpW
 	object_class->finalize = modest_connection_specific_smtp_window_finalize;
 }
 
+/* libconic does not return a list of connections in scratchbox,
+ * so enable this to put a fake row in the list,
+ * so we can test other parts of the code. */
+/* #define DEBUG_WITHOUT_LIBCONIC 1 */
+
 void
 modest_connection_specific_smtp_window_fill_with_connections (ModestConnectionSpecificSmtpWindow *self, ModestAccountMgr *account_manager,
 	const gchar* account_name)
@@ -129,18 +134,28 @@ modest_connection_specific_smtp_window_fill_with_connections (ModestConnectionSp
 	TnyDevice *device = modest_runtime_get_device ();
 	g_assert (TNY_IS_MAEMO_CONIC_DEVICE (device));
 	
-	TnyMaemoConicDevice *maemo_device = TNY_MAEMO_CONIC_DEVICE (device);
-	
 	/* Get the list of Internet Access Points: */
-	GSList* list_iaps = tny_maemo_conic_device_get_iap_list (maemo_device);
+	#ifdef DEBUG_WITHOUT_LIBCONIC
+	GSList *list_iaps = g_slist_append(NULL, (gpointer)1);
+	#else
+	TnyMaemoConicDevice *maemo_device = TNY_MAEMO_CONIC_DEVICE (device);
+	GSList *list_iaps = tny_maemo_conic_device_get_iap_list (maemo_device);
+	#endif
+	
 	printf("debug: list_iaps=%p, list_iaps size = %d\n", list_iaps, g_slist_length(list_iaps));
 	
 	GSList* iter = list_iaps;
 	while (iter) {
 		ConIcIap *iap = (ConIcIap*)iter->data;
 		if (iap) {
+			#ifdef DEBUG_WITHOUT_LIBCONIC
+			const gchar *name = "debug name";
+			const gchar *id = "debug id";
+			#else
 			const gchar *name = con_ic_iap_get_name (iap);
 			const gchar *id = con_ic_iap_get_id (iap);
+			#endif
+			
 			printf ("debug: iac name=%s, id=%s\n", name, id);
 			
 			/* Get any already-associated connection-specific server account: */
@@ -164,8 +179,10 @@ modest_connection_specific_smtp_window_fill_with_connections (ModestConnectionSp
 		iter = g_slist_next (iter);	
 	}
 		
+	#ifndef DEBUG_WITHOUT_LIBCONIC
 	if (list_iaps)
 		tny_maemo_conic_device_free_iap_list (maemo_device, list_iaps);
+	#endif
 		
 	update_model_server_names (self);
 }
@@ -191,6 +208,7 @@ on_button_edit (GtkButton *button, gpointer user_data)
 				    MODEL_COL_SERVER_ACCOUNT_DATA, &data,
 				    -1);
 	
+		printf("DEBUG: %s: BEFORE: connection-specific server_account_name=%s\n", __FUNCTION__, server_account_name);
 		/* TODO: Is 0 an allowed libconic IAP ID? 
 		 * If not then we should check for it. */
 		
@@ -222,13 +240,16 @@ on_button_edit (GtkButton *button, gpointer user_data)
 			}
 			
 			/* Get the new account data and save it in the row for later:
-			 * We free this in finalize(). */
+			 * We free this in finalize(),
+			 * and save it to our configuration in 
+			 * modest_connection_specific_smtp_window_save_server_accounts(). */
 			data = modest_connection_specific_smtp_edit_window_get_settings (
 						MODEST_CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW (window), 
-						priv->account_manager, server_account_name);	
+						priv->account_manager);
+			
 			gtk_list_store_set (GTK_LIST_STORE (priv->model), &iter, 
-					    MODEL_COL_SERVER_ACCOUNT_DATA, data,
-					    -1);
+					MODEL_COL_SERVER_ACCOUNT_DATA, data,
+					-1);
 		}
 	}
 	
@@ -277,7 +298,7 @@ modest_connection_specific_smtp_window_init (ModestConnectionSpecificSmtpWindow 
 	 * with a string for the name, a string for the server name, and an int for the ID.
 	 * This must match our MODEL_COLS enum constants.
 	 */
-	priv->model = GTK_TREE_MODEL (gtk_list_store_new (4, 
+	priv->model = GTK_TREE_MODEL (gtk_list_store_new (5, 
 		G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_POINTER));
 
 	/* Setup the tree view: */
