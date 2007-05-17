@@ -1562,14 +1562,21 @@ modest_ui_actions_on_rename_folder (GtkAction *action,
 {
 	TnyFolderStore *folder;
 	GtkWidget *folder_view;
-	
+	GtkWidget *header_view;	
+
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW(main_window));
 
 	folder_view = modest_main_window_get_child_widget (main_window,
 							   MODEST_WIDGET_TYPE_FOLDER_VIEW);
 	if (!folder_view)
 		return;
+
+	header_view = modest_main_window_get_child_widget (main_window,
+							   MODEST_WIDGET_TYPE_HEADER_VIEW);
 	
+	if (!header_view)
+		return;
+
 	folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW(folder_view));
 	
 	if (folder && TNY_IS_FOLDER (folder)) {
@@ -1583,6 +1590,8 @@ modest_ui_actions_on_rename_folder (GtkAction *action,
 			mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_ID_INFO, G_OBJECT(main_window));
 			modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
 							 mail_op);
+
+			modest_header_view_set_folder (MODEST_HEADER_VIEW (header_view), NULL);
 
 			modest_mail_operation_rename_folder (mail_op,
 							     TNY_FOLDER (folder),

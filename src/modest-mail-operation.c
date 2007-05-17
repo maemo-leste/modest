@@ -836,7 +836,17 @@ modest_mail_operation_rename_folder (ModestMailOperation *self,
 			     _("FIXME: unable to rename"));
 	} else {
 		/* Rename. Camel handles folder subscription/unsubscription */
-		tny_folder_set_name (folder, name, &(priv->error));
+
+		TnyFolderStore *into;
+		TnyFolder *nfol;
+
+		into = tny_folder_get_folder_store (folder);
+		nfol = tny_folder_copy (folder, into, name, TRUE, &(priv->error));
+		if (into)
+			g_object_unref (into);
+		if (nfol)
+			g_object_unref (nfol);
+
 		CHECK_EXCEPTION (priv, MODEST_MAIL_OPERATION_STATUS_FAILED);
 	}
 
