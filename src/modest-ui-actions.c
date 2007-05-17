@@ -55,6 +55,7 @@
 #include <widgets/modest-details-dialog.h>
 #include <widgets/modest-attachments-view.h>
 #include "widgets/modest-global-settings-dialog.h"
+#include "modest-connection-specific-smtp-window.h"
 #include "modest-account-mgr-helpers.h"
 #include "modest-mail-operation.h"
 #include "modest-text-utils.h"
@@ -314,7 +315,6 @@ modest_ui_actions_on_add_to_contacts (GtkAction *action, ModestWindow *win)
 void
 modest_ui_actions_on_accounts (GtkAction *action, ModestWindow *win)
 {
-	
 	/* This is currently only implemented for Maemo,
 	 * because it requires a providers preset file which is not publically available.
 	 */
@@ -361,6 +361,45 @@ modest_ui_actions_on_accounts (GtkAction *action, ModestWindow *win)
 	gtk_container_add (GTK_CONTAINER (GTK_DIALOG(dialog)->vbox),
 			   label);
 	gtk_widget_show_all (dialog);
+#endif /* MODEST_PLATFORM_MAEMO */
+}
+
+static void
+on_smtp_servers_window_hide (GtkWindow* window, gpointer user_data)
+{
+	ModestWindow *main_window = MODEST_WINDOW (user_data);
+	
+	/* Save any changes. */
+	modest_connection_specific_smtp_window_save_server_accounts (
+			MODEST_CONNECTION_SPECIFIC_SMTP_WINDOW (window), 
+			modest_window_get_active_account (main_window));
+	gtk_widget_destroy (GTK_WIDGET (window));
+}
+
+void
+modest_ui_actions_on_smtp_servers (GtkAction *action, ModestWindow *win)
+{
+	/* This is currently only implemented for Maemo,
+	 * because it requires an API (libconic) to detect different connection 
+	 * possiblities.
+	 */
+#ifdef MODEST_PLATFORM_MAEMO /* Defined in config.h */
+	
+	/* Create the window if necessary: */
+	GtkWidget *specific_window = GTK_WIDGET (modest_connection_specific_smtp_window_new ());
+	modest_connection_specific_smtp_window_fill_with_connections (
+		MODEST_CONNECTION_SPECIFIC_SMTP_WINDOW (specific_window), 
+		modest_runtime_get_account_mgr(), 
+		modest_window_get_active_account (win));
+
+	/* Show the window: */	
+	gtk_window_set_transient_for (GTK_WINDOW (specific_window), GTK_WINDOW (win));
+	gtk_window_set_modal (GTK_WINDOW (specific_window), TRUE);
+    gtk_widget_show (specific_window);
+    
+    /* Save changes when the window is hidden: */
+	g_signal_connect (specific_window, "hide", 
+		G_CALLBACK (on_smtp_servers_window_hide), win);
 #endif /* MODEST_PLATFORM_MAEMO */
 }
 

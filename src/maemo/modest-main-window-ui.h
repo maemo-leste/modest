@@ -92,7 +92,7 @@ static const GtkActionEntry modest_action_entries [] = {
 	/* Tools */
 	{ "ToolsSettings",        NULL,      N_("mcen_me_inbox_options"),	              NULL, NULL, G_CALLBACK (modest_ui_actions_on_settings) },
 	{ "ToolsAccounts",        NULL,      N_("mcen_me_inbox_accounts"),                NULL, NULL,  G_CALLBACK(modest_ui_actions_on_accounts) },
-	{ "ToolsSMTPServers",     NULL,      N_("mcen_me_inbox_globalsmtpservers"),                NULL, NULL,  NULL },
+	{ "ToolsSMTPServers",     NULL,      N_("mcen_me_inbox_globalsmtpservers"),                NULL, NULL,  G_CALLBACK(modest_ui_actions_on_smtp_servers) },
 	{ "ToolsSendReceive", NULL, N_("mcen_me_inbox_sendandreceive") }, /* submenu */
 	{ "ToolsSendReceiveAll",    NULL,      N_("mcen_me_inbox_sendandreceive_all"),          NULL, NULL, G_CALLBACK (modest_ui_actions_on_send_receive) },
 	{ "ToolsSendReceiveCancelSending",  NULL,      N_("mcen_me_outbox_cancelsend"),        NULL, NULL,  NULL },

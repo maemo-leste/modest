@@ -247,8 +247,10 @@ on_button_edit (GtkButton *button, gpointer user_data)
 						MODEST_CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW (window), 
 						priv->account_manager);
 			
+			const gchar* server_name = data ? data->hostname : NULL;
 			gtk_list_store_set (GTK_LIST_STORE (priv->model), &iter, 
 					MODEL_COL_SERVER_ACCOUNT_DATA, data,
+					MODEL_COL_SERVER_NAME, server_name,
 					-1);
 		}
 	}
@@ -308,6 +310,11 @@ modest_connection_specific_smtp_window_init (ModestConnectionSpecificSmtpWindow 
 	/* Setup the tree view: */
 	priv->treeview = GTK_TREE_VIEW (gtk_tree_view_new_with_model (priv->model));
 
+	/* Show the column headers,
+	 * which does not seem to be the default on Maemo.
+	 */			
+	gtk_tree_view_set_headers_visible (GTK_TREE_VIEW(priv->treeview), TRUE);
+	
 	/* name column:
 	 * The ID model column in not shown in the view. */
 	GtkTreeViewColumn *view_column = gtk_tree_view_column_new ();
