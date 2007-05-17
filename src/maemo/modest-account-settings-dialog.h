@@ -51,6 +51,7 @@ typedef struct {
 	GtkWidget *entry_account_title;
 	GtkWidget *combo_retrieve;
 	GtkWidget *combo_limit_retrieve;
+	GtkWidget *caption_leave_messages;
 	GtkWidget *checkbox_leave_messages;
 	
 	GtkWidget *page_user_details;

@@ -1,5 +1,14 @@
 2007-05-17  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/maemo/modest-account-settings-dialog.c:
+	(create_page_account_details),
+	(modest_account_settings_dialog_set_account_name):
+	* src/maemo/modest-account-settings-dialog.h: Hide the whole caption 
+	for the leave-on-server checkbox, rathr than just the checkbox, when 
+	the protocol is not POP.
+
+2007-05-17  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/widgets/modest-account-view.c:
 	* src/widgets/modest-account-view.h:
 	Added modest_account_view_select_account() which will be useful later 

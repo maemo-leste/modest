@@ -323,12 +323,15 @@ create_page_account_details (ModestAccountSettingsDialog *self)
 	/* The leave-messages widgets: */
 	if(!self->checkbox_leave_messages)
 		self->checkbox_leave_messages = gtk_check_button_new ();
-	caption = create_caption_new_with_asterix (self, sizegroup, _("mcen_fi_advsetup_leave_on_server"), 
-		self->checkbox_leave_messages, NULL, HILDON_CAPTION_MANDATORY);
+	if (!self->caption_leave_messages) {
+		self->caption_leave_messages = create_caption_new_with_asterix (self, sizegroup, _("mcen_fi_advsetup_leave_on_server"), 
+			self->checkbox_leave_messages, NULL, HILDON_CAPTION_MANDATORY);
+	}
+			
 	gtk_widget_show (self->checkbox_leave_messages);
 	connect_for_modified (self, self->checkbox_leave_messages);
-	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
-	gtk_widget_show (caption);
+	gtk_box_pack_start (GTK_BOX (box), self->caption_leave_messages, FALSE, FALSE, MODEST_MARGIN_HALF);
+	gtk_widget_show (self->caption_leave_messages);
 	
 	gtk_widget_show (GTK_WIDGET (box));
 	
@@ -1029,9 +1032,9 @@ void modest_account_settings_dialog_set_account_name (ModestAccountSettingsDialo
 	/* Only show the leave-on-server checkbox for POP, 
 	 * as per the UI spec: */
 	if (incoming_account->proto != MODEST_PROTOCOL_STORE_POP) {
-		gtk_widget_hide (dialog->checkbox_leave_messages);
+		gtk_widget_hide (dialog->caption_leave_messages);
 	} else {
-		gtk_widget_show (dialog->checkbox_leave_messages);
+		gtk_widget_show (dialog->caption_leave_messages);
 	}
 		
 	if (incoming_account) {
