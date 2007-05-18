@@ -21,7 +21,7 @@ ifeq (,$(findstring nostrip,$(DEB_BUILD_OPTIONS)))
 	INSTALL_PROGRAM += -s
 endif
 
-LAUNCHER = yes
+LAUNCHER = no
 ifneq (,$(findstring maemo-launcher,$(DEB_BUILD_OPTIONS)))
 	LAUNCHER = yes
 endif
