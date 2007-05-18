@@ -1,3 +1,9 @@
+modest (1.0-svn1903osso0ubuntu1) gutsy; urgency=low
+
+  * 
+
+ -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Fri, 18 May 2007 14:15:01 +0300
+
 modest (1.0-svn1903osso0) unstable; urgency=low
 
   * Week 21 (pre)release
@@ -68,9 +74,8 @@ modest (1.0-svn1845) unstable; urgency=low
 modest (1.0-svn1823) unstable; urgency=low
 
   * Week 20 prelease
-  * Fixes: NB#55446, NB#55934, NB#55333, NB#55355, NB#55375,
-    NB#56145, NB#56183, NB#56209, NB#56314, NB#56418, NB#56130, NB#56180,
-    NB#56212, NB#56477, NB#55397  
+  * Fixes: NB#55333, NB#55355, NB#55375, NB#56145, NB#56183, NB#56209, NB#56314, NB#56418, 
+    NB#56130, NB#56180,NB#56212, NB#56477, NB#55397  
 
  -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Thu, 10 May 2007 17:15:00 +0300
 
