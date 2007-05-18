@@ -1099,8 +1099,7 @@ create_details_widget (TnyAccount *account)
 		device_name = modest_conf_get_string (modest_runtime_get_conf(),
 						      MODEST_CONF_DEVICE_NAME, NULL);
    
-		label = g_strdup_printf ("%s: %s",
-					 _("mcen_fi_localroot_description"),
+		label = g_strdup_printf (_("mcen_fi_localroot_description"),
 					 device_name);
 		gtk_box_pack_start (GTK_BOX (vbox), gtk_label_new (label), FALSE, FALSE, 0);
 		g_free (device_name);
