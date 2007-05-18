@@ -41,6 +41,7 @@
 #include <tny-status.h>
 #include <camel/camel-stream-mem.h>
 #include <glib/gi18n.h>
+#include "modest-platform.h"
 #include <modest-tny-account.h>
 #include <modest-tny-send-queue.h>
 #include <modest-runtime.h>
@@ -84,6 +85,7 @@ struct _ModestMailOperationPrivate {
 	ModestMailOperationStatus  status;	
 	ModestMailOperationId      id;		
 	GObject                   *source;
+	ErrorCheckingUserCallback  error_checking;
 	GError                    *error;
 };
 
@@ -223,6 +225,35 @@ modest_mail_operation_new (ModestMailOperationId id,
 		priv->source = g_object_ref(source);
 
 	return obj;
+}
+
+ModestMailOperation*
+modest_mail_operation_new_with_error_handling (ModestMailOperationId id,
+					       GObject *source,
+					       ErrorCheckingUserCallback error_handler)
+{
+	ModestMailOperation *obj;
+	ModestMailOperationPrivate *priv;
+		
+	obj = modest_mail_operation_new (id, source);
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(obj);
+	
+	g_return_val_if_fail (error_handler != NULL, obj);
+	priv->error_checking = error_handler;
+
+	return obj;
+}
+
+void
+modest_mail_operation_execute_error_handler (ModestMailOperation *self)
+{
+	ModestMailOperationPrivate *priv;
+	
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
+	g_return_if_fail(priv->status != MODEST_MAIL_OPERATION_STATUS_SUCCESS);	    
+
+	if (priv->error_checking == NULL) return;	
+	priv->error_checking (priv->source, self);
 }
 
 
@@ -833,7 +864,6 @@ modest_mail_operation_rename_folder (ModestMailOperation *self,
 			     _("FIXME: unable to rename"));
 	} else {
 		/* Rename. Camel handles folder subscription/unsubscription */
-
 		TnyFolderStore *into;
 		TnyFolder *nfol;
 
@@ -845,6 +875,7 @@ modest_mail_operation_rename_folder (ModestMailOperation *self,
 			g_object_unref (nfol);
 
 		CHECK_EXCEPTION (priv, MODEST_MAIL_OPERATION_STATUS_FAILED);
+		
 	}
 
 	/* Notify the queue */
@@ -904,19 +935,20 @@ transfer_folder_cb (TnyFolder *folder, TnyFolderStore *into, gboolean cancelled,
 	} else if (cancelled) {
 		priv->status = MODEST_MAIL_OPERATION_STATUS_CANCELED;
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
-			     MODEST_MAIL_OPERATION_ERROR_ITEM_NOT_FOUND,
-			     _("Error trying to refresh the contents of %s"),
+			     MODEST_MAIL_OPERATION_ERROR_OPERATION_CANCELED,
+			     _("Transference of %s was cancelled."),
 			     tny_folder_get_name (folder));
 	} else {
 		priv->done = 1;
 		priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
 	}
-
+		
 	/* Free */
 	g_slice_free   (XFerFolderAsyncHelper, helper);
 	g_object_unref (folder);
 	g_object_unref (into);
-	g_object_unref (new_folder);
+	if (new_folder != NULL) 
+		g_object_unref (new_folder);
 
 	/* Notify the queue */
 	modest_mail_operation_queue_remove (modest_runtime_get_mail_operation_queue (), self);

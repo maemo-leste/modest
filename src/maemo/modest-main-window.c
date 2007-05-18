@@ -1397,6 +1397,7 @@ on_queue_changed (ModestMailOperationQueue *queue,
 	ModestToolBarModes mode;
 	GSList *tmp;
 	gboolean mode_changed = FALSE;
+	ModestMailOperationStatus status;
 
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW (self));
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
@@ -1431,6 +1432,12 @@ on_queue_changed (ModestMailOperationQueue *queue,
 		}
 		break;
 	case MODEST_MAIL_OPERATION_QUEUE_OPERATION_REMOVED:
+		/* If mail_op is mine, check errors */
+		status = modest_mail_operation_get_status (mail_op);
+		if (status != MODEST_MAIL_OPERATION_STATUS_SUCCESS)
+			modest_mail_operation_execute_error_handler (mail_op);
+
+		/* Change toolbar mode */
 		if (mode == TOOLBAR_MODE_TRANSFER) {			
 			while (tmp) {
 				modest_progress_object_remove_operation (MODEST_PROGRESS_OBJECT (tmp->data),
@@ -1444,8 +1451,10 @@ on_queue_changed (ModestMailOperationQueue *queue,
 				
 			}
 		}
+
 		break;
 	}	
+
 }
 
 static void 

@@ -88,6 +88,17 @@ struct _ModestMailOperationClass {
 };
 
 /**
+ * ErroCheckingAsyncUserCallback:
+ *
+ * @obj: a #GObject generic object which has created current mail operation.
+ * @user_data: generic data passed to user defined function.
+ *
+ * This function implements required actions to performs under error
+ * states.  
+ */
+typedef void (*ErrorCheckingUserCallback) (const GObject *obj, gpointer user_data);
+
+/**
  * GetMsgAsynUserCallback:
  *
  * @obj: a #GObject generic object which has created current mail operation.
@@ -126,6 +137,31 @@ GType        modest_mail_operation_get_type    (void) G_GNUC_CONST;
  **/
 ModestMailOperation*    modest_mail_operation_new     (ModestMailOperationId id,
 						       GObject *source);
+
+/**
+ * modest_mail_operation_new_with_error_handling:
+ * @id: a #ModestMailOperationId identification of operation type.
+ * @source: a #GObject which creates this new operation.
+ * @error_handler: a #ErrorCheckingUserCallback function to performs operations when 
+ * an error occurs.
+ * 
+ * Creates a new instance of class #ModestMailOperation, using parameters
+ * to initialize its private structure. @source parameter may be NULL. 
+ * @error_handler can not be NULL, but it will be returned an mail operation
+ * object without error handling capability.
+ **/
+ModestMailOperation*    modest_mail_operation_new_with_error_handling     (ModestMailOperationId id,
+									   GObject *source,
+									   ErrorCheckingUserCallback error_handler);
+/**
+ * modest_mail_operation_get_id
+ * @self: a #ModestMailOperation
+ * 
+ * Executes error handler, if it exists, passing @self objsect as
+ * user_data argument of error handling function. 
+ **/
+void
+modest_mail_operation_execute_error_handler (ModestMailOperation *self);
 
 /**
  * modest_mail_operation_get_id
@@ -332,6 +368,23 @@ TnyFolder*    modest_mail_operation_xfer_folder    (ModestMailOperation *self,
 
 
 
+/**
+ * modest_mail_operation_xfer_folder:
+ * @self: a #ModestMailOperation
+ * @folder: a #TnyFolder
+ * @parent: the new parent of the folder as #TnyFolderStore
+ * @delete_original: wheter or not delete the original folder
+ * 
+ * Sets the given @folder as child of a provided #TnyFolderStore. This
+ * operation also transfers all the messages contained in the folder
+ * and all of his children folders with their messages as well. This
+ * operation is synchronous, so the #ModestMailOperation should not be
+ * added to any #ModestMailOperationQueue.
+ *
+ * If @delete_original is TRUE this function moves the original
+ * folder, if it is FALSE the it just copies it
+ *
+ **/
 void    modest_mail_operation_xfer_folder_async    (ModestMailOperation *self,
 						    TnyFolder *folder, 
 						    TnyFolderStore *parent,

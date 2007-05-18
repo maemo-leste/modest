@@ -1054,11 +1054,11 @@ drag_and_drop_from_folder_view (GtkTreeModel     *source_model,
 	g_signal_connect (G_OBJECT (mail_op), "progress-changed",
 			  G_CALLBACK (on_progress_changed), helper);
 
-	modest_mail_operation_xfer_folder (mail_op, 
-					   folder, 
-					   parent_folder,
-					   helper->delete_source);
-
+	modest_mail_operation_xfer_folder_async (mail_op, 
+						 folder, 
+						 parent_folder,
+						 helper->delete_source);
+	
 	/* Frees */
 	g_object_unref (G_OBJECT (parent_folder));
 	g_object_unref (G_OBJECT (folder));
@@ -1091,9 +1091,9 @@ on_drag_data_received (GtkWidget *widget,
 	/* Do not allow further process */
 	g_signal_stop_emission_by_name (widget, "drag-data-received");
 
-	/* Get the action */
-	if (context->action == GDK_ACTION_MOVE)
-		delete_source = TRUE;
+	/* Get the action (FIXME: only copy is currently implemented */
+/* 	if (context->action == GDK_ACTION_MOVE) */
+/* 		delete_source = TRUE; */
 
 	/* Check if the get_data failed */
 	if (selection_data == NULL || selection_data->length < 0)
