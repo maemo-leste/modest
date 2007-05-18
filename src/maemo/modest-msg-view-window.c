@@ -96,7 +96,7 @@ static void         on_queue_changed                     (ModestMailOperationQue
 							  ModestMailOperationQueueNotification type,
 							  ModestMsgViewWindow *self);
 
-static void view_msg_cb (const GObject *obj, const TnyMsg *msg, gpointer user_data);
+static void view_msg_cb (const GObject *obj, TnyMsg *msg, gpointer user_data);
 
 static void set_toolbar_mode (ModestMsgViewWindow *self, 
 			      ModestToolBarModes mode);
@@ -1056,7 +1056,7 @@ modest_msg_view_window_select_previous_message (ModestMsgViewWindow *window)
 }
 
 static void
-view_msg_cb(const GObject *obj, const TnyMsg *msg, gpointer user_data)
+view_msg_cb(const GObject *obj, TnyMsg *msg, gpointer user_data)
 {
 	ModestMsgViewWindow *self = NULL;
 	ModestMsgViewWindowPrivate *priv = NULL;

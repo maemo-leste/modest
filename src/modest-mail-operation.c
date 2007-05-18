@@ -56,9 +56,9 @@ static void modest_mail_operation_class_init (ModestMailOperationClass *klass);
 static void modest_mail_operation_init       (ModestMailOperation *obj);
 static void modest_mail_operation_finalize   (GObject *obj);
 
-static void     update_process_msg_status_cb (GObject *obj,
-					      TnyStatus *status,  
-					      gpointer user_data);
+/* static void     update_process_msg_status_cb (GObject *obj, */
+/* 					      TnyStatus *status,   */
+/* 					      gpointer user_data); */
 static void     get_msg_cb (TnyFolder *folder, 
 			    gboolean cancelled, 
 			    TnyMsg *msg, 
@@ -102,15 +102,6 @@ typedef struct _GetMsgAsyncHelper {
 	gpointer user_data;
 } GetMsgAsyncHelper;
 
-typedef struct _RefreshFolderAsyncHelper
-{
-	ModestMailOperation *mail_op;
-	TnyIterator *iter;
-	guint failed;
-	guint canceled;
-
-} RefreshFolderAsyncHelper;
-
 typedef struct _XFerMsgAsyncHelper
 {
 	ModestMailOperation *mail_op;
@@ -125,7 +116,6 @@ typedef struct _XFerFolderAsyncHelper
 	ModestMailOperation *mail_op;
 
 } XFerFolderAsyncHelper;
-
 
 /* globals */
 static GObjectClass *parent_class = NULL;
@@ -423,8 +413,8 @@ recurse_folders (TnyFolderStore *store, TnyFolderStoreQuery *query, TnyList *all
 }
 
 /* 
- * Used by update_account_thread to emit the signal from the main
- * loop. We call it inside an idle call to achieve that 
+ * Used by update_account_thread to emit the "progress-changed" signal
+ * from the main loop. We call it inside an idle call to achieve that
  */
 static gboolean
 notify_update_account_observers (gpointer data)
@@ -540,13 +530,14 @@ update_account_thread (gpointer thr_user_data)
 	}
 
  out:
-	/* Notify the queue */
-	g_idle_add (notify_update_account_queue, g_object_ref (info->mail_op));
+	/* Notify the queue. Note that the info could be freed before
+	   this idle happens, but the mail operation will be still
+	   alive */
+	g_idle_add (notify_update_account_queue, info->mail_op);
 
 	/* Frees */
 	g_object_unref (query);
 	g_object_unref (all_folders);
-	g_object_unref (info->mail_op);
 	g_object_unref (info->account);
 	g_object_unref (info->transport_account);
 	g_slice_free (UpdateAccountInfo, info);
@@ -608,7 +599,7 @@ modest_mail_operation_update_account (ModestMailOperation *self,
 
 	/* Create the helper object */
 	info = g_slice_new (UpdateAccountInfo);
-	info->mail_op = g_object_ref (self);
+	info->mail_op = self;
 	info->account = modest_account;
 	info->transport_account = transport_account;
 
@@ -1008,10 +999,10 @@ modest_mail_operation_xfer_folder_async (ModestMailOperation *self,
 /* **************************  MSG  ACTIONS  ************************* */
 /* ******************************************************************* */
 
-void          modest_mail_operation_get_msg     (ModestMailOperation *self,
-						 TnyHeader *header,
-						 GetMsgAsynUserCallback user_callback,
-						 gpointer user_data)
+void modest_mail_operation_get_msg (ModestMailOperation *self,
+				    TnyHeader *header,
+				    GetMsgAsynUserCallback user_callback,
+				    gpointer user_data)
 {
 	GetMsgAsyncHelper *helper = NULL;
 	TnyFolder *folder;
@@ -1128,95 +1119,169 @@ get_msg_status_cb (GObject *obj,
 	g_signal_emit (G_OBJECT (self), signals[PROGRESS_CHANGED_SIGNAL], 0, NULL);
 }
 
+/****************************************************/
+typedef struct {
+	ModestMailOperation *mail_op;
+	TnyList *headers;
+	GetMsgAsynUserCallback user_callback;
+	gpointer user_data;
+	GDestroyNotify notify;
+} GetFullMsgsInfo;
 
-void          modest_mail_operation_process_msg     (ModestMailOperation *self,
-						     TnyList *header_list, 
-						     GetMsgAsynUserCallback user_callback,
-						     gpointer user_data)
+/* 
+ * Used by get_msgs_full_thread to emit the "progress-changed" signal
+ * from the main loop. We call it inside an idle call to achieve that
+ */
+static gboolean
+notify_get_msgs_full_observers (gpointer data)
 {
+	ModestMailOperation *mail_op = MODEST_MAIL_OPERATION (data);
+
+	g_signal_emit (G_OBJECT (mail_op), signals[PROGRESS_CHANGED_SIGNAL], 0, NULL);
+
+	g_object_unref (mail_op);
+
+	return FALSE;
+}
+
+typedef struct {
+	GetMsgAsynUserCallback user_callback;
+	TnyMsg *msg;
+	gpointer user_data;
+	GObject *source;
+} NotifyGetMsgsInfo;
+
+static gboolean
+notify_get_msgs_full (gpointer data)
+{
+	NotifyGetMsgsInfo *info;
+
+	info = (NotifyGetMsgsInfo *) data;	
+
+	/* Call the user callback */
+	info->user_callback (info->source, info->msg, info->user_data);
+
+	g_slice_free (NotifyGetMsgsInfo, info);
+
+	return FALSE;
+}
+
+static gboolean
+get_msgs_full_destroyer (gpointer data)
+{
+	GetFullMsgsInfo *info;
+
+	info = (GetFullMsgsInfo *) data;
+
+	if (info->notify)
+		info->notify (info->user_data);
+
+	/* free */
+	g_object_unref (info->headers);
+	g_slice_free (GetFullMsgsInfo, info);
+
+	return FALSE;
+}
+
+static gpointer
+get_msgs_full_thread (gpointer thr_user_data)
+{
+	GetFullMsgsInfo *info;
 	ModestMailOperationPrivate *priv = NULL;
-	GetMsgAsyncHelper *helper = NULL;
-	TnyHeader *header = NULL;
-	TnyFolder *folder = NULL;
 	TnyIterator *iter = NULL;
 	
-	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
-	
-	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
-	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
+	info = (GetFullMsgsInfo *) thr_user_data;	
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (info->mail_op);
 
-	iter = tny_list_create_iterator (header_list); 
-	priv->done = 1;
-	priv->total = tny_list_get_length(header_list);
-
-	helper = g_slice_new0 (GetMsgAsyncHelper);
-	helper->mail_op = self;
-	helper->user_callback = user_callback;
-	helper->pending_ops = priv->total;
-	helper->user_data = user_data;
-
-	while (!tny_iterator_is_done (iter)) { 
+	iter = tny_list_create_iterator (info->headers);
+	while (!tny_iterator_is_done (iter) && !priv->error) { 
+		TnyHeader *header;
+		TnyFolder *folder;
 		
-		header = TNY_HEADER (tny_iterator_get_current (iter));		
+		header = TNY_HEADER (tny_iterator_get_current (iter));
 		folder = tny_header_get_folder (header);
 				
 		/* Get message from folder */
 		if (folder) {
+			TnyMsg *msg;
 			/* The callback will call it per each header */
-			tny_folder_get_msg_async (folder, header, get_msg_cb, update_process_msg_status_cb, helper);
-			g_object_unref (G_OBJECT (folder));
-		} else {			
+			msg = tny_folder_get_msg (folder, header, &(priv->error));
+
+			if (msg) {
+				priv->done++;
+
+				/* notify progress */
+				g_idle_add_full (G_PRIORITY_HIGH_IDLE,
+						 notify_get_msgs_full_observers, 
+						 g_object_ref (info->mail_op), NULL);
+
+				/* The callback is the responsible for
+				   freeing the message */
+				if (info->user_callback) {
+					NotifyGetMsgsInfo *info_notify;
+					info_notify = g_slice_new0 (NotifyGetMsgsInfo);
+					info_notify->user_callback = info->user_callback;
+					info_notify->source = priv->source;
+					info_notify->msg = msg;
+					info_notify->user_data = info->user_data;
+					g_idle_add_full (G_PRIORITY_HIGH_IDLE,
+							 notify_get_msgs_full, 
+							 info_notify, NULL);
+				} else {
+					g_object_unref (msg);
+				}
+			}
+		} else {
 			/* Set status failed and set an error */
 			priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 			g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 				     MODEST_MAIL_OPERATION_ERROR_ITEM_NOT_FOUND,
-				     _("Error trying to get a message. No folder found for header"));
-
-			/* Notify the queue */
-			modest_mail_operation_queue_remove (modest_runtime_get_mail_operation_queue (), self);
-
-			/* free */
-			g_slice_free (GetMsgAsyncHelper, helper);
-			break;
+				     "Error trying to get a message. No folder found for header");
 		}
 
 		g_object_unref (header);		
 		tny_iterator_next (iter);
 	}
+
+	/* Notify the queue */
+	g_idle_add (notify_update_account_queue, info->mail_op);
+
+	/* Free thread resources. Will be called after all previous idles */
+	g_idle_add_full (G_PRIORITY_DEFAULT_IDLE + 1, get_msgs_full_destroyer, info, NULL);
+
+	return NULL;
 }
 
-static void     
-update_process_msg_status_cb (GObject *obj,
-			      TnyStatus *status,  
-			      gpointer user_data)
+void 
+modest_mail_operation_get_msgs_full (ModestMailOperation *self,
+				     TnyList *header_list, 
+				     GetMsgAsynUserCallback user_callback,
+				     gpointer user_data,
+				     GDestroyNotify notify)
 {
-	GetMsgAsyncHelper *helper = NULL;
-	ModestMailOperation *self;
-	ModestMailOperationPrivate *priv;
+	GThread *thread;
+	ModestMailOperationPrivate *priv = NULL;
+	GetFullMsgsInfo *info = NULL;
+	
+	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
+	
+	/* Init mail operation */
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
+	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
+	priv->done = 0;
+	priv->total = tny_list_get_length(header_list);
 
-	g_return_if_fail (status != NULL);
-	g_return_if_fail (status->code == TNY_FOLDER_STATUS_CODE_GET_MSG);
+	/* Create the info */
+	info = g_slice_new0 (GetFullMsgsInfo);
+	info->mail_op = self;
+	info->user_callback = user_callback;
+	info->user_data = user_data;
+	info->headers = g_object_ref (header_list);
+	info->notify = notify;
 
-	helper = (GetMsgAsyncHelper *) user_data;
-	g_return_if_fail (helper != NULL);       
-
-	/* Temporary FIX: useful when tinymail send us status
-	   information *after* calling the function callback */
-	if (!MODEST_IS_MAIL_OPERATION (helper->mail_op))
-		return;
-
-	self = helper->mail_op;
-	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
-
-	if ((status->position == 1) && (status->of_total == 100))
-		return;
-
-	if (status->of_total > 0)
-		priv->done += status->position/status->of_total;
-
-	g_signal_emit (G_OBJECT (self), signals[PROGRESS_CHANGED_SIGNAL], 0, NULL);
+	/* Call the thread */
+	thread = g_thread_create (get_msgs_full_thread, info, FALSE, NULL);
 }
-
 
 
 void 

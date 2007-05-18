@@ -98,7 +98,7 @@ struct _ModestMailOperationClass {
  * used as tinymail operation callback. The private function fills private 
  * fields of mail operation and calls user defined callback if it exists.
  */
-typedef void (*GetMsgAsynUserCallback) (const GObject *obj, const TnyMsg *msg, gpointer user_data);
+typedef void (*GetMsgAsynUserCallback) (const GObject *obj, TnyMsg *msg, gpointer user_data);
 
 /**
  * XferMsgAsynUserCallback:
@@ -406,7 +406,7 @@ void          modest_mail_operation_get_msg     (ModestMailOperation *self,
 						 GetMsgAsynUserCallback user_callback,
 						 gpointer user_data);
 /**
- * modest_mail_operation_process_msg:
+ * modest_mail_operation_get_msgs_full:
  * @self: a #ModestMailOperation
  * @header_list: a #TnyList of #TnyHeader objects to get and process
  * @user_callback: a #TnyGetMsgCallback function to call after tinymail operation execution.
@@ -416,10 +416,11 @@ void          modest_mail_operation_get_msg     (ModestMailOperation *self,
  * pased as argument. This operation is asynchronous, so the
  * #ModestMailOperation should be added to #ModestMailOperationQueue
  **/
-void          modest_mail_operation_process_msg     (ModestMailOperation *self,
+void          modest_mail_operation_get_msgs_full   (ModestMailOperation *self,
 						     TnyList *headers_list,
 						     GetMsgAsynUserCallback user_callback,
-						     gpointer user_data);
+						     gpointer user_data,
+						     GDestroyNotify notify);
 
 /* Functions to control mail operations */
 /**

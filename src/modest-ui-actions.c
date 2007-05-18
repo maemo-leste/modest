@@ -86,10 +86,9 @@ typedef enum _ReplyForwardAction {
 } ReplyForwardAction;
 
 typedef struct _ReplyForwardHelper {
-guint reply_forward_type;
+	guint reply_forward_type;
 	ReplyForwardAction action;
 	gchar *account_name;
-	guint pending_ops;
 } ReplyForwardHelper;
 
 typedef struct _HeaderActivatedHelper {
@@ -111,9 +110,9 @@ do_headers_action (ModestWindow *win,
 		   gpointer user_data);
 
 
-static void     open_msg_func          (const GObject *obj, const TnyMsg *msg, gpointer user_data);
+static void     open_msg_func          (const GObject *obj, TnyMsg *msg, gpointer user_data);
 
-static void     reply_forward_func     (const GObject *obj, const TnyMsg *msg, gpointer user_data);
+static void     reply_forward_func     (const GObject *obj, TnyMsg *msg, gpointer user_data);
 
 static void     reply_forward          (ReplyForwardAction action, ModestWindow *win);
 
@@ -513,7 +512,7 @@ modest_ui_actions_on_open (GtkAction *action, ModestWindow *win)
 
 
 static void
-open_msg_func (const GObject *obj, const TnyMsg *msg, gpointer user_data)
+open_msg_func (const GObject *obj, TnyMsg *msg, gpointer user_data)
 {
 	ModestWindowMgr *mgr = NULL;
 	ModestWindow *parent_win = NULL;
@@ -573,7 +572,17 @@ open_msg_func (const GObject *obj, const TnyMsg *msg, gpointer user_data)
 }
 
 static void
-reply_forward_func (const GObject *obj, const TnyMsg *msg, gpointer user_data)
+free_reply_forward_helper (gpointer data)
+{
+	ReplyForwardHelper *helper;
+
+	helper = (ReplyForwardHelper *) data;
+	g_free (helper->account_name);
+	g_slice_free (ReplyForwardHelper, helper);
+}
+
+static void
+reply_forward_func (const GObject *obj, TnyMsg *msg, gpointer user_data)
 {
 	TnyMsg *new_msg;
 	ReplyForwardHelper *rf_helper;
@@ -588,8 +597,6 @@ reply_forward_func (const GObject *obj, const TnyMsg *msg, gpointer user_data)
 			
 	g_return_if_fail (user_data != NULL);
 	rf_helper = (ReplyForwardHelper *) user_data;
-
-	rf_helper->pending_ops--;
 
 	from = modest_account_mgr_get_from_string (modest_runtime_get_account_mgr(),
 						   rf_helper->account_name);
@@ -647,6 +654,7 @@ reply_forward_func (const GObject *obj, const TnyMsg *msg, gpointer user_data)
 	}
 	
 	tny_folder_add_msg (folder, (TnyMsg *) msg, &err);
+	g_object_unref (msg);
 	if (err) {
 		g_printerr ("modest: error adding msg to Drafts folder: %s",
 			    err->message);
@@ -668,13 +676,9 @@ cleanup:
 	if (folder)
 		g_object_unref (G_OBJECT (folder));
 	if (account)
-		g_object_unref (G_OBJECT (account));
-	
-	if (rf_helper->pending_ops == 0) {
-		g_free (rf_helper->account_name);
-		g_slice_free (ReplyForwardHelper, rf_helper);
-	}
+		g_object_unref (G_OBJECT (account));	
 }
+
 /*
  * Common code for the reply and forward actions
  */
@@ -704,7 +708,6 @@ reply_forward (ReplyForwardAction action, ModestWindow *win)
 	rf_helper = g_slice_new0 (ReplyForwardHelper);
 	rf_helper->reply_forward_type = reply_forward_type;
 	rf_helper->action = action;
-	rf_helper->pending_ops = tny_list_get_length (header_list);
 	rf_helper->account_name = g_strdup (modest_window_get_active_account (win));
 	if (!rf_helper->account_name)
 		rf_helper->account_name =
@@ -717,12 +720,16 @@ reply_forward (ReplyForwardAction action, ModestWindow *win)
 			g_printerr ("modest: no message found\n");
 			return;
 		} else
-			reply_forward_func (G_OBJECT(win), msg, rf_helper);
+			reply_forward_func (G_OBJECT(win), g_object_ref (msg), rf_helper);
 	} else {
 				
 		mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_ID_RECEIVE, G_OBJECT(win));
 		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
-		modest_mail_operation_process_msg (mail_op, header_list, reply_forward_func, rf_helper);
+		modest_mail_operation_get_msgs_full (mail_op, 
+						     header_list, 
+						     reply_forward_func, 
+						     rf_helper, 
+						     free_reply_forward_helper);
 
 		/* Clean */
 		g_object_unref(mail_op);
