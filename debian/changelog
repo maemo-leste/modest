@@ -1,3 +1,46 @@
+modest (1.0-svn1903osso0) unstable; urgency=low
+
+  * Week 21 (pre)release
+  * Fixes: NB#56142 (account title name goes missing)
+  * Fixes: NB#56273 (port value not automatically updated)
+  * Fixes: NB#56305 (connection specific smtp)
+  * Fixes: NB#55497 (connection specific smtp)
+  * Fixes: NB#56288 (connection specific smtp)
+  * Fixes: NB#56130 (crash in sorting dialog)
+  * Fixes: NB#57045 (unable to create account)
+  
+  * Feature implementations according to the implementation plan
+    (https://projects.maemo.org/trac/email/wiki/EmailWorkItems)
+  * Exceptions: receiving has limitations, searching not yet working,
+    send-as-email not yet working, memcard not yet working, sending has
+    limitations
+
+ -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Fri, 18 May 2007 11:47:14 +0300
+
+modest (1.0-svn1889ubuntu4) gutsy; urgency=low
+
+  * debian/changelog
+
+ -- Dirk/Jan C. Binnema <djcb@localhost.localdomain>  Fri, 18 May 2007 11:29:43 +0300
+
+modest (1.0-svn1889ubuntu3) gutsy; urgency=low
+
+  * debian/changelog
+
+ -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Fri, 18 May 2007 11:19:17 +0300
+
+modest (1.0-svn1889ubuntu2) gutsy; urgency=low
+
+  * debian/changelog
+
+ -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Fri, 18 May 2007 11:18:32 +0300
+
+modest (1.0-svn1889ubuntu1) gutsy; urgency=low
+
+  * debian/changelog
+
+ -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Fri, 18 May 2007 11:16:50 +0300
+
 modest (1.0-svn1889) unstable; urgency=low
 
   * Fixes: NB#56697, NB#55364
