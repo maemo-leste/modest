@@ -215,3 +215,11 @@ modest_platform_on_new_msg (void)
 	/* TODO: implement this */
 	g_print ("--------------- NEW MESSAGE ARRIVED ---------------\n");
 }
+
+
+
+gboolean
+modest_platform_show_help (GtkWidget *widget, const gchar *help_id)
+{
+	return TRUE; /* TODO */
+}

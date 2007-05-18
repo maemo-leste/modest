@@ -36,7 +36,7 @@
 #include "maemo/modest-maemo-global-settings-dialog.h"
 
 #include <modest-hildon-includes.h>
-
+#include <osso-helplib.h>
 #include <dbus_api/modest-dbus-callbacks.h>
 #include <maemo/modest-osso-autosave-callbacks.h>
 #include <libosso.h>
@@ -47,6 +47,7 @@
 #include <gtk/gtkmenuitem.h>
 #include <gtk/gtkmain.h>
 #include <string.h>
+
 
 static osso_context_t *osso_context = NULL;
 	
@@ -789,4 +790,15 @@ modest_platform_on_new_msg (void)
 	/* TODO: LED lightning pattern */
 	/* TODO: update the application icon in the task navigator */ 
 	g_print ("--------------- NEW MESSAGE ARRIVED ---------------\n");
+}
+
+
+
+gboolean
+modest_platform_show_help (GtkWidget *widget, const gchar *help_id)
+{
+	g_return_val_if_fail (help_id, FALSE);
+	g_return_val_if_fail (osso_context, FALSE);
+
+	return ossohelp_show (osso_context, help_id, OSSO_HELP_SHOW_DIALOG);
 }
