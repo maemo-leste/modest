@@ -722,7 +722,7 @@ reply_forward (ReplyForwardAction action, ModestWindow *win)
 		} else
 			reply_forward_func (G_OBJECT(win), g_object_ref (msg), rf_helper);
 	} else {
-				
+		/* Retrieve messages */
 		mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_ID_RECEIVE, G_OBJECT(win));
 		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
 		modest_mail_operation_get_msgs_full (mail_op, 

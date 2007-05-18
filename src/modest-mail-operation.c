@@ -496,6 +496,12 @@ update_account_thread (gpointer thr_user_data)
 		/* Refresh the folder */
 		tny_folder_refresh (TNY_FOLDER (folder), &(priv->error));
 
+		/* TODO: Apply retrieval types */
+
+		/* TODO: apply per-message size limits */
+
+		/* TODO: apply message count limit */
+
 		if (priv->error) {
 			priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 		}
@@ -1151,6 +1157,11 @@ typedef struct {
 	GObject *source;
 } NotifyGetMsgsInfo;
 
+
+/* 
+ * Used by get_msgs_full_thread to call the user_callback for each
+ * message that has been read
+ */
 static gboolean
 notify_get_msgs_full (gpointer data)
 {
@@ -1166,6 +1177,10 @@ notify_get_msgs_full (gpointer data)
 	return FALSE;
 }
 
+/* 
+ * Used by get_msgs_full_thread to free al the thread resources and to
+ * call the destroy function for the passed user_data
+ */
 static gboolean
 get_msgs_full_destroyer (gpointer data)
 {
@@ -1194,7 +1209,7 @@ get_msgs_full_thread (gpointer thr_user_data)
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (info->mail_op);
 
 	iter = tny_list_create_iterator (info->headers);
-	while (!tny_iterator_is_done (iter) && !priv->error) { 
+	while (!tny_iterator_is_done (iter)) { 
 		TnyHeader *header;
 		TnyFolder *folder;
 		
@@ -1238,7 +1253,6 @@ get_msgs_full_thread (gpointer thr_user_data)
 				     MODEST_MAIL_OPERATION_ERROR_ITEM_NOT_FOUND,
 				     "Error trying to get a message. No folder found for header");
 		}
-
 		g_object_unref (header);		
 		tny_iterator_next (iter);
 	}
@@ -1262,6 +1276,10 @@ modest_mail_operation_get_msgs_full (ModestMailOperation *self,
 	GThread *thread;
 	ModestMailOperationPrivate *priv = NULL;
 	GetFullMsgsInfo *info = NULL;
+	gboolean size_ok = TRUE;
+	gint max_size;
+	GError *error = NULL;
+	const gint KB = 1024;
 	
 	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
 	
@@ -1271,16 +1289,53 @@ modest_mail_operation_get_msgs_full (ModestMailOperation *self,
 	priv->done = 0;
 	priv->total = tny_list_get_length(header_list);
 
-	/* Create the info */
-	info = g_slice_new0 (GetFullMsgsInfo);
-	info->mail_op = self;
-	info->user_callback = user_callback;
-	info->user_data = user_data;
-	info->headers = g_object_ref (header_list);
-	info->notify = notify;
+	/* Get msg size limit */
+	max_size  = modest_conf_get_int (modest_runtime_get_conf (), 
+					 MODEST_CONF_MSG_SIZE_LIMIT, 
+					 &error);
+	if (error) {
+		g_clear_error (&error);
+		max_size = G_MAXINT;
+	} else {
+		max_size = max_size * KB;
+	}
 
-	/* Call the thread */
-	thread = g_thread_create (get_msgs_full_thread, info, FALSE, NULL);
+	/* Check message size limits. If there is only one message
+	   always retrieve it */
+	if (tny_list_get_length (header_list) > 1) {
+		TnyIterator *iter;
+
+		iter = tny_list_create_iterator (header_list);
+		while (!tny_iterator_is_done (iter) && size_ok) {
+			TnyHeader *header = TNY_HEADER (tny_iterator_get_current (iter));
+			if (tny_header_get_message_size (header) >= max_size)
+				size_ok = FALSE;
+			g_object_unref (header);
+			tny_iterator_next (iter);
+		}
+		g_object_unref (iter);
+	}
+
+	if (size_ok) {
+		/* Create the info */
+		info = g_slice_new0 (GetFullMsgsInfo);
+		info->mail_op = self;
+		info->user_callback = user_callback;
+		info->user_data = user_data;
+		info->headers = g_object_ref (header_list);
+		info->notify = notify;
+
+		thread = g_thread_create (get_msgs_full_thread, info, FALSE, NULL);
+	} else {
+		/* FIXME: the error msg is different for pop */
+		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
+			     MODEST_MAIL_OPERATION_ERROR_BAD_PARAMETER,
+			     _("emev_ni_ui_imap_msg_sizelimit_error"));
+		/* Remove from queue and free resources */
+		modest_mail_operation_queue_remove (modest_runtime_get_mail_operation_queue (), self);
+		if (notify)
+			notify (user_data);
+	}
 }
 
 
