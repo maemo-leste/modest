@@ -87,7 +87,11 @@ modest_SOURCES=\
 	modest-ui-actions.h\
 	modest-widget-memory-priv.h \
 	modest-widget-memory.c\
-	modest-widget-memory.h 
+	modest-widget-memory.h\
+	modest-search.c\
+	modest-search.h\
+	modest-mime-part-search-stream.c\
+	modest-mime-part-search-stream.h
 
 modest_CFLAGS  = $(MAEMO_LAUNCHER_CFLAGS)
 modest_LDFLAGS = $(MAEMO_LAUNCHER_LDFLAGS)
