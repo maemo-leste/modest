@@ -169,7 +169,8 @@ modest_tny_account_new_from_server_account (ModestAccountMgr *account_mgr,
 	tny_account_set_id (tny_account, account_data->account_name);
 
 	/* Proto */
-	const gchar* proto_name = modest_protocol_info_get_transport_store_protocol_name(account_data->proto);
+	const gchar* proto_name =
+		modest_protocol_info_get_transport_store_protocol_name(account_data->proto);
 	tny_account_set_proto (tny_account, proto_name);
 
 	       
@@ -201,7 +202,6 @@ modest_tny_account_new_from_server_account (ModestAccountMgr *account_mgr,
 						      option_security);
 		}
 		
-
 		const gchar* auth_mech_name = NULL;
 		switch (account_data->secure_auth) {
 		case MODEST_PROTOCOL_AUTH_NONE:
@@ -227,10 +227,12 @@ modest_tny_account_new_from_server_account (ModestAccountMgr *account_mgr,
 			
 		case MODEST_PROTOCOL_AUTH_CRAMMD5:
 			auth_mech_name = MODEST_ACCOUNT_AUTH_CRAMMD5;
+			break;
 			
 		default:
 			g_warning ("%s: Unhandled secure authentication setting %d for "
-				"account=%s", __FUNCTION__, account_data->secure_auth, account_data->account_name);
+				"account=%s (%s)", __FUNCTION__, account_data->secure_auth,
+				   account_data->account_name, account_data->hostname);
 			break;
 		}
 		
@@ -395,15 +397,15 @@ recurse_folders (TnyFolderStore *store,
 
 	helper->folders += tny_list_get_length (folders);
 
-	while (!tny_iterator_is_done (iter))
-	{
+	while (!tny_iterator_is_done (iter)) {
 		TnyFolderStats *stats;
 		TnyFolder *folder;
 
 		folder = TNY_FOLDER (tny_iterator_get_current (iter));
 		stats = tny_folder_get_stats (folder);
 
-		if (helper->function)
+		/* initially, we sometimes get -1 from tinymail; ignore that */
+		if (helper->function && helper->function (stats) > 0)
 			helper->sum += helper->function (stats);
 
 		recurse_folders (TNY_FOLDER_STORE (folder), query, helper);
@@ -446,7 +448,7 @@ modest_tny_account_get_message_count (TnyAccount *self)
 	gint retval;
 
 	g_return_val_if_fail (TNY_IS_ACCOUNT (self), -1);
-
+	
 	/* Create helper */
 	helper = g_malloc0 (sizeof (RecurseFoldersHelper));
 	helper->function = (TnyStatsFunc) tny_folder_stats_get_all_count;
