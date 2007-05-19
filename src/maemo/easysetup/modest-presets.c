@@ -35,46 +35,15 @@
 #include <config.h>
 #endif
 
-#define MODEST_PRESETS_KEY_NAME              "Name"
-#define MODEST_PRESETS_KEY_DOMAIN            "Domain"
-#define MODEST_PRESETS_KEY_MCC               "MCC"
-#define MODEST_PRESETS_KEY_INCOMING          "IncomingMailServer"
-#define MODEST_PRESETS_KEY_OUTGOING          "OutgoingMailServer"
-#define MODEST_PRESETS_KEY_MAILBOX_TYPE      "MailboxType"
-#define MODEST_PRESETS_KEY_MAILBOX_TYPE_POP  "pop"
-#define MODEST_PRESETS_KEY_MAILBOX_TYPE_IMAP "imap"
-#define MODEST_PRESETS_KEY_APOP              "APOPSecureLogin"
-#define MODEST_PRESETS_KEY_SECURE_SMTP       "SecureSMTP"
-#define MODEST_PRESETS_KEY_TRUE		     "true"
-
-/** An efficient way to store the info for each provider.
- */
-typedef enum _ModestPresetsInfo {
-	/* two bits for the server type */
-	MODEST_PRESETS_INFO_NONE             = 0x0000,
-	MODEST_PRESETS_INFO_IMAP             = 0x0001,
-	MODEST_PRESETS_INFO_POP              = 0x0002,
-	MODEST_PRESETS_INFO_SMTP             = 0x0003,
-
-	/* one bit for each of these */
-	MODEST_PRESETS_INFO_APOP             = 0x0004,
-	MODEST_PRESETS_INFO_SECURE_SMTP      = 0x0008,
-	MODEST_PRESETS_INFO_SECURE_INCOMING  = 0x000f	
-} ModestPresetsInfo;
-
-/**
- * modest_presets_get_info:
- * @self: a valid ModestPresets instance
- * @provider_id: ID of the provider 
- * @incoming_server: get the incoming mailserver if TRUE, get the
- * outgoing server otherwise
- *
- * get information about some incoming or outgoing mailserver
- *
- * Returns: a ModestPresetsInfo with the required information
- */
-static ModestPresetsInfo
-modest_presets_get_info (ModestPresets *self, const gchar *provider_id, gboolean incoming_server);
+#define MODEST_PRESETS_KEY_NAME                "Name"
+#define MODEST_PRESETS_KEY_DOMAIN              "Domain"
+#define MODEST_PRESETS_KEY_MCC                 "MCC"
+#define MODEST_PRESETS_KEY_INCOMING            "IncomingMailServer"
+#define MODEST_PRESETS_KEY_INCOMING_SECURITY   "IncomingSecurity"
+#define MODEST_PRESETS_KEY_OUTGOING            "OutgoingMailServer"
+#define MODEST_PRESETS_KEY_MAILBOX_TYPE        "MailboxType"
+#define MODEST_PRESETS_KEY_APOP                "APOPSecureLogin"
+#define MODEST_PRESETS_KEY_SECURE_SMTP         "SecureSMTP"
 						    
 
 ModestPresets*
@@ -207,8 +176,9 @@ modest_presets_get_server (ModestPresets *self, const gchar *provider_id,
 				      NULL);
 }
 
-gchar *                   modest_presets_get_domain      (ModestPresets *self,
-							  const gchar *provider_id)
+gchar *
+modest_presets_get_domain      (ModestPresets *self,
+				const gchar *provider_id)
 {	
 	g_return_val_if_fail (self && self->keyfile, NULL);
 	g_return_val_if_fail (provider_id, NULL);
@@ -219,99 +189,105 @@ gchar *                   modest_presets_get_domain      (ModestPresets *self,
 }		
 
 
-ModestPresetsInfo
-modest_presets_get_info (ModestPresets *self, const gchar *provider_id, gboolean incoming_server)
+
+
+ModestPresetsServerType
+modest_presets_get_info_server_type (ModestPresets *self,
+				     const gchar *provider_id,
+				     gboolean incoming_server)
 {
-	ModestPresetsInfo info = 0;
+	ModestPresetsServerType info = MODEST_PRESETS_SERVER_TYPE_NONE;
 	gchar *val = NULL;
 	
 	g_return_val_if_fail (self && self->keyfile, 0);
 
-	if(incoming_server) {
+	if (incoming_server) {
 		val = g_key_file_get_string (self->keyfile, provider_id,
-						MODEST_PRESETS_KEY_INCOMING, NULL);
-		if (val) {
-			g_free (val);
-			val = g_key_file_get_string (self->keyfile, provider_id,
-						     MODEST_PRESETS_KEY_MAILBOX_TYPE, NULL);
-			if (strcmp (val, MODEST_PRESETS_KEY_MAILBOX_TYPE_POP) == 0)
-				info |= MODEST_PRESETS_INFO_POP;
-			if (strcmp (val, MODEST_PRESETS_KEY_MAILBOX_TYPE_IMAP) == 0)
-				info |= MODEST_PRESETS_INFO_IMAP;
-			g_free (val);
+					     MODEST_PRESETS_KEY_INCOMING, NULL);
+		if (!val)
+			return info;
+		
+		g_free (val);
+		val = g_key_file_get_string (self->keyfile, provider_id,
+					     MODEST_PRESETS_KEY_MAILBOX_TYPE,NULL);
+		if (val && strcmp (val, "pop") == 0)
+			info = MODEST_PRESETS_SERVER_TYPE_POP;
+		if (val && strcmp (val, "imap") == 0)
+			info = MODEST_PRESETS_SERVER_TYPE_IMAP;
+	} else {
+		val = g_key_file_get_string (self->keyfile, provider_id,
+					     MODEST_PRESETS_KEY_OUTGOING, NULL);
+		if (!val)
+			return info;
+		info = MODEST_PRESETS_SERVER_TYPE_SMTP;
+	}
+	g_free (val);
+
+	/* debug: */
+/* 	g_message ("provider id: %s, server type: %d", provider_id, info); */
+	return info;
+}
+
+
+
+ModestPresetsSecurity
+modest_presets_get_info_server_security (ModestPresets *self, const gchar *provider_id,
+					 gboolean incoming_server)
+{
+	ModestPresetsSecurity info = MODEST_PRESETS_SECURITY_NONE;
+	gchar *val = NULL;
 	
+	g_return_val_if_fail (self && self->keyfile, MODEST_PRESETS_SECURITY_NONE);
+
+	if (incoming_server) {
+		val = g_key_file_get_string (self->keyfile, provider_id,
+					     MODEST_PRESETS_KEY_INCOMING, NULL);
+		if (val) {
+			g_free (val);	
 			val = g_key_file_get_string (self->keyfile, provider_id,
 						     MODEST_PRESETS_KEY_APOP, NULL);
-			if (val && strcmp(val, MODEST_PRESETS_KEY_TRUE) == 0)
-				info |= MODEST_PRESETS_INFO_APOP;
+			if (val && strcmp(val, "true") == 0)
+				info |= MODEST_PRESETS_SECURITY_APOP;
 			g_free(val);
+			
+			val = g_key_file_get_string (self->keyfile, provider_id,
+						     MODEST_PRESETS_KEY_INCOMING_SECURITY, NULL);
+			if (val && strcmp (val, "1") == 0) 
+				info |= MODEST_PRESETS_SECURITY_SECURE_INCOMING;
+			if (val && strcmp (val, "2") == 0) {
+				info |= MODEST_PRESETS_SECURITY_SECURE_INCOMING;
+				info |= MODEST_PRESETS_SECURITY_SECURE_INCOMING_ALTERNATE_PORT;
+			}
+			g_free (val);
 		}
-	}
-	else /* outgoing: */ {
+	} else /* outgoing: */ {
 		val = g_key_file_get_string (self->keyfile, provider_id,
 					     MODEST_PRESETS_KEY_OUTGOING, NULL);
 		if (val) {
 			g_free (val);
-			info |= MODEST_PRESETS_INFO_SMTP;
+			info |= MODEST_PRESETS_SECURITY_SECURE_SMTP;
 			
 			val = g_key_file_get_string (self->keyfile, provider_id,
 						     MODEST_PRESETS_KEY_SECURE_SMTP, NULL);
-			if (val && strcmp(val,MODEST_PRESETS_KEY_TRUE) == 0)
-				info |= MODEST_PRESETS_INFO_SECURE_SMTP;
+			if (val && strcmp(val,"true") == 0)
+				info |= MODEST_PRESETS_SECURITY_SECURE_SMTP;
 			g_free(val);
 		}
 	}
 
+	/* debug */
+/* 	g_message ("provider id: %s, apop:%s, secure-incoming:%s, altport: %s, secure-smtp: %s", */
+/* 		   provider_id, */
+/* 		   info & MODEST_PRESETS_SECURITY_APOP ? "yes" : "no", */
+/* 		   info & MODEST_PRESETS_SECURITY_SECURE_INCOMING ? "yes" : "no", */
+/* 		   info & MODEST_PRESETS_SECURITY_SECURE_INCOMING_ALTERNATE_PORT ? "yes" : "no", */
+/* 		   info & MODEST_PRESETS_SECURITY_SECURE_SMTP ? "yes" : "no"); */
+
 	return info;
 }
 
-ModestPresetsServerType
-modest_presets_get_info_server_type (ModestPresets *self,
-						    const gchar *provider_id,
-						    gboolean incoming_server)
-{
-	ModestPresetsInfo info = modest_presets_get_info (self, provider_id, incoming_server);
-
-	/* The server type is stored in the first 2 bits: */
-	info = info & 0x03;
-	
-	/* Convert from the internal enum to the public enum: */
-	if(info == MODEST_PRESETS_INFO_IMAP)
-		return MODEST_PRESETS_SERVER_TYPE_IMAP;
-	else if(info == MODEST_PRESETS_INFO_POP)
-		return MODEST_PRESETS_SERVER_TYPE_POP;
-	else if(info == MODEST_PRESETS_INFO_SMTP)
-		return MODEST_PRESETS_SERVER_TYPE_SMTP;
-	else
-		return MODEST_PRESETS_SERVER_TYPE_NONE;
-}
-
-ModestPresetsSecurity
-modest_presets_get_info_server_security (ModestPresets *self,
-						    const gchar *provider_id,
-						    gboolean incoming_server)
-{
-	ModestPresetsInfo info = modest_presets_get_info (self, provider_id, incoming_server);
-
-	/* The security flags are stored in all except the first 4 bits: */
-	info = info && !0x04;
-	
-	/* Convert from the internal flags to the public flags: */
-	ModestPresetsSecurity security = MODEST_PRESETS_SECURITY_NONE;
-	if(info && MODEST_PRESETS_INFO_APOP)
-		security = security | MODEST_PRESETS_SECURITY_APOP;
-		
-	if(info && MODEST_PRESETS_INFO_SECURE_SMTP)
-		security = security | MODEST_PRESETS_SECURITY_SECURE_SMTP;
-		
-	if(info && MODEST_PRESETS_INFO_SECURE_INCOMING)
-		security = security | MODEST_PRESETS_SECURITY_SECURE_INCOMING;
-
-	return security;
-}
-
 						    	
-	
+
 	
 void
 modest_presets_destroy (ModestPresets *self)

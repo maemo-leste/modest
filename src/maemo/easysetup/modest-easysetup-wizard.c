@@ -1312,6 +1312,7 @@ create_account (ModestEasysetupWizardDialog *self, gboolean enabled)
 	/* Note: We need something as default for the ModestTransportStoreProtocol* values, 
 	 * or modest_account_mgr_add_server_account will fail. */
 	gchar* servername_incoming = NULL;
+	guint serverport_incoming = 0;
 	ModestTransportStoreProtocol protocol_incoming = MODEST_PROTOCOL_STORE_POP;
 	ModestConnectionProtocol protocol_security_incoming = MODEST_PROTOCOL_CONNECTION_NORMAL;
 	ModestAuthProtocol protocol_authentication_incoming = MODEST_PROTOCOL_AUTH_NONE;
@@ -1319,26 +1320,31 @@ create_account (ModestEasysetupWizardDialog *self, gboolean enabled)
 	/* Get details from the specified presets: */
 	gchar* provider_id = easysetup_provider_combo_box_get_active_provider_id (
 		EASYSETUP_PROVIDER_COMBO_BOX (self->combo_account_serviceprovider));
-	if(provider_id) {
+	if (provider_id) {
 		/* Use presets: */
-		
 		servername_incoming = modest_presets_get_server (priv->presets, provider_id, 
 								 TRUE /* incoming */);
 		
-		ModestPresetsServerType servertype_incoming = modest_presets_get_info_server_type (priv->presets, provider_id, 
+		ModestPresetsServerType servertype_incoming = modest_presets_get_info_server_type (priv->presets,
+												   provider_id, 
 												   TRUE /* incoming */);
+		ModestPresetsSecurity security_incoming = modest_presets_get_info_server_security (priv->presets,
+												   provider_id, 
+												   TRUE /* incoming */);
+
+		g_warning ("security incoming: %x", security_incoming);
 		
-	
 		/* We don't check for SMTP here as that is impossible for an incoming server. */
-		if (servertype_incoming == MODEST_PRESETS_SERVER_TYPE_IMAP)
+		if (servertype_incoming == MODEST_PRESETS_SERVER_TYPE_IMAP) {
 			protocol_incoming = MODEST_PROTOCOL_STORE_IMAP;
-		else if (servertype_incoming == MODEST_PRESETS_SERVER_TYPE_POP)
+			serverport_incoming =
+				(security_incoming & MODEST_PRESETS_SECURITY_SECURE_INCOMING_ALTERNATE_PORT) ? 993 : 143; 
+		} else if (servertype_incoming == MODEST_PRESETS_SERVER_TYPE_POP) {
 			protocol_incoming = MODEST_PROTOCOL_STORE_POP;
+			serverport_incoming =
+				(security_incoming & MODEST_PRESETS_SECURITY_SECURE_INCOMING_ALTERNATE_PORT) ? 995 : 110; 
+		}
 				
-		ModestPresetsSecurity security_incoming = modest_presets_get_info_server_security (priv->presets, provider_id, 
-												   TRUE /* incoming */);
-			
-		
 		if (security_incoming & MODEST_PRESETS_SECURITY_SECURE_INCOMING)
 			protocol_security_incoming = MODEST_PROTOCOL_CONNECTION_SSL; /* TODO: Is this what we want? */
 		
@@ -1363,7 +1369,6 @@ create_account (ModestEasysetupWizardDialog *self, gboolean enabled)
 		protocol_authentication_incoming = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->checkbox_incoming_auth)) 
 			? MODEST_PROTOCOL_AUTH_CRAMMD5
 			: MODEST_PROTOCOL_AUTH_PASSWORD;
-		
 	}
 	
 	/* First we add the 2 server accounts, and then we add the account that uses them.
@@ -1377,6 +1382,7 @@ create_account (ModestEasysetupWizardDialog *self, gboolean enabled)
 	gboolean created = modest_account_mgr_add_server_account (self->account_manager,
 								  store_name,
 								  servername_incoming,
+								  serverport_incoming,
 								  username, password,
 								  protocol_incoming,
 								  protocol_security_incoming,
@@ -1407,13 +1413,15 @@ create_account (ModestEasysetupWizardDialog *self, gboolean enabled)
 	ModestTransportStoreProtocol protocol_outgoing = MODEST_PROTOCOL_STORE_POP;
 	ModestConnectionProtocol protocol_security_outgoing = MODEST_PROTOCOL_CONNECTION_NORMAL;
 	ModestAuthProtocol protocol_authentication_outgoing = MODEST_PROTOCOL_AUTH_NONE;
+	guint serverport_outgoing = 0;
 	
-	if(provider_id) {
+	if (provider_id) {
 		/* Use presets: */
 		servername_outgoing = modest_presets_get_server (priv->presets, provider_id, 
 								 FALSE /* incoming */);
 			
-		ModestPresetsServerType servertype_outgoing = modest_presets_get_info_server_type (priv->presets, provider_id, 
+		ModestPresetsServerType servertype_outgoing = modest_presets_get_info_server_type (priv->presets,
+												   provider_id, 
 												   FALSE /* incoming */);
 		
 		/* Note: We need something as default, or modest_account_mgr_add_server_account will fail. */
@@ -1426,10 +1434,12 @@ create_account (ModestEasysetupWizardDialog *self, gboolean enabled)
 								 FALSE /* incoming */);
 			
 		protocol_security_outgoing = MODEST_PROTOCOL_CONNECTION_NORMAL;
-		if (security_outgoing & MODEST_PRESETS_SECURITY_SECURE_SMTP)
+		if (security_outgoing & MODEST_PRESETS_SECURITY_SECURE_SMTP) {
 			protocol_security_outgoing = MODEST_PROTOCOL_CONNECTION_SSL; /* TODO: Is this what we want? */
-		
-		protocol_authentication_outgoing = MODEST_PROTOCOL_AUTH_NONE;
+			serverport_outgoing = 465;
+			protocol_authentication_outgoing = MODEST_PROTOCOL_AUTH_PASSWORD;
+		} else
+			protocol_authentication_outgoing = MODEST_PROTOCOL_AUTH_NONE;
 		/* TODO: There is no SMTP authentication enum for presets. */
 	}
 	else {
@@ -1453,6 +1463,7 @@ create_account (ModestEasysetupWizardDialog *self, gboolean enabled)
 	created = modest_account_mgr_add_server_account (self->account_manager,
 							 transport_name,
 							 servername_outgoing,
+							 serverport_outgoing,
 							 username, password,
 							 protocol_outgoing,
 							 protocol_security_outgoing,
@@ -1507,5 +1518,3 @@ create_account (ModestEasysetupWizardDialog *self, gboolean enabled)
 
 	return result;
 }
-
-

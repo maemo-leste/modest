@@ -427,12 +427,12 @@ modest_connection_specific_smtp_window_save_server_accounts (ModestConnectionSpe
 				g_free (name_start);
 				
 				success = modest_account_mgr_add_server_account (priv->account_manager,
-					server_account_name,
-					data->hostname,
-					data->username, data->password,
-					MODEST_PROTOCOL_TRANSPORT_SMTP,
-					data->security,
-					data->secure_auth);
+										 server_account_name,
+										 data->hostname, 0,
+										 data->username, data->password,
+										 MODEST_PROTOCOL_TRANSPORT_SMTP,
+										 data->security,
+										 data->secure_auth);
 					
 				/* associate the specific server account with this connection for this account: */
 				success = success && modest_account_mgr_set_connection_specific_smtp (

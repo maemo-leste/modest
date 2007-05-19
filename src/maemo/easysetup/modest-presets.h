@@ -39,7 +39,7 @@ struct _ModestPresets {
 typedef struct _ModestPresets ModestPresets;
 
 typedef enum _ModestPresetsServerType {
-	MODEST_PRESETS_SERVER_TYPE_NONE,
+	MODEST_PRESETS_SERVER_TYPE_NONE,                      
 	MODEST_PRESETS_SERVER_TYPE_IMAP,
 	MODEST_PRESETS_SERVER_TYPE_POP,
 	MODEST_PRESETS_SERVER_TYPE_SMTP
@@ -48,10 +48,12 @@ typedef enum _ModestPresetsServerType {
 /** These are flags, which should be ORed.
  */
 typedef enum _ModestPresetsSecurity {
-	MODEST_PRESETS_SECURITY_NONE = 0,
-	MODEST_PRESETS_SECURITY_APOP = 1 << 0,
-	MODEST_PRESETS_SECURITY_SECURE_SMTP = 1 << 1,
-	MODEST_PRESETS_SECURITY_SECURE_INCOMING = 1 << 2
+	MODEST_PRESETS_SECURITY_NONE                           = 0,                           
+	MODEST_PRESETS_SECURITY_APOP                           = 1 << 0,
+	MODEST_PRESETS_SECURITY_SECURE_SMTP                    = 1 << 1, /* if set, port will be 465
+									  * instead of 25 */
+	MODEST_PRESETS_SECURITY_SECURE_INCOMING                = 1 << 2,
+	MODEST_PRESETS_SECURITY_SECURE_INCOMING_ALTERNATE_PORT = 1 << 3, /* POP3S=>995, IMAPS=>993 */
 } ModestPresetsSecurity;
 
 /* typedef enum _ModestPresetsInfo ModestPresetsInfo; */
@@ -114,7 +116,7 @@ gchar *                   modest_presets_get_server      (ModestPresets *self,
  */
 gchar *                   modest_presets_get_domain      (ModestPresets *self,
 							  const gchar *provider_id);
-							  
+
 /**
  * modest_presets_get_info_server_type:
  * @self: a valid ModestPresets instance

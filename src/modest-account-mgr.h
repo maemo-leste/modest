@@ -107,6 +107,7 @@ gboolean        modest_account_mgr_add_account    (ModestAccountMgr *self,
  * @self: a ModestAccountMgr instance
  * @name: name (id) of the account, which is a valid UTF8 string that does not contain '/'
  * @hostname: the hostname
+ * @portnumber: the portnumber, or 0 for default
  * @username: the username
  * @password: the password
  * @proto:    the protocol (imap, smtp, ...) used for this account
@@ -121,6 +122,7 @@ gboolean        modest_account_mgr_add_account    (ModestAccountMgr *self,
 gboolean modest_account_mgr_add_server_account    (ModestAccountMgr *self,
 						   const gchar *name,
 						   const gchar *hostname,
+						   const guint portnumber,
 						   const gchar *username,
 						   const gchar *password,
 						   ModestTransportStoreProtocol proto,

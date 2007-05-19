@@ -305,6 +305,7 @@ modest_account_mgr_add_account (ModestAccountMgr *self,
 gboolean
 modest_account_mgr_add_server_account (ModestAccountMgr * self,
 				       const gchar * name, const gchar *hostname,
+				       guint portnumber,
 				       const gchar * username, const gchar * password,
 				       ModestTransportStoreProtocol proto,
 				       ModestConnectionProtocol security,
@@ -380,6 +381,20 @@ modest_account_mgr_add_server_account (ModestAccountMgr * self,
 	if (!ok)
 		goto cleanup;
 
+
+	/* portnumber */
+	key = _modest_account_mgr_get_account_keyname (name, MODEST_ACCOUNT_PORT, TRUE);
+	ok = modest_conf_set_int (priv->modest_conf, key, portnumber, &err);
+	if (err) {
+		g_printerr ("modest: failed to set %s: %s\n", key, err->message);
+		g_error_free (err);
+		ok = FALSE;
+	}
+	g_free (key);
+	if (!ok)
+		goto cleanup;
+
+	
 	/* auth mechanism */
 	key = _modest_account_mgr_get_account_keyname (name, MODEST_ACCOUNT_AUTH_MECH, TRUE);
 	ok = modest_conf_set_string (priv->modest_conf, key,

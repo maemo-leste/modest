@@ -48,7 +48,7 @@ typedef struct {
 	ModestTransportStoreProtocol    proto; /*< The store or transport. Not ORed. */
 	gchar            *password;
 	time_t		  last_updated;
-	gint             port; /* Or 0, if the default should be used. */
+	gint              port; /* Or 0, if the default should be used. */
 	ModestAuthProtocol   secure_auth;
 	ModestConnectionProtocol   security;
 } ModestServerAccountData;
