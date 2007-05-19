@@ -73,6 +73,10 @@ static void    modest_tny_account_store_instance_init (ModestTnyAccountStore *ob
 static void    modest_tny_account_store_init          (gpointer g, gpointer iface_data);
 
 
+static GSList*
+get_server_accounts  (TnyAccountStore *self, TnyList *list, TnyAccountType type);
+
+
 /* list my signals */
 enum {
 	ACCOUNT_UPDATE_SIGNAL,
@@ -218,13 +222,13 @@ on_account_removed (ModestAccountMgr *acc_mgr, const gchar *account, gboolean se
 	 * accounts, and some do not affect tny accounts at all (such as 'last_update')
 	 */
 	
-	
 	account_list_free (priv->store_accounts);
-	priv->store_accounts = NULL;
+	priv->store_accounts = get_server_accounts (TNY_ACCOUNT_STORE(self), NULL, TNY_ACCOUNT_TYPE_STORE);
 	
 	account_list_free (priv->transport_accounts);
-	priv->transport_accounts = NULL;
-	
+	priv->transport_accounts = get_server_accounts (TNY_ACCOUNT_STORE(self), NULL,
+							TNY_ACCOUNT_TYPE_TRANSPORT);
+		
 	g_signal_emit (G_OBJECT(self), signals[ACCOUNT_UPDATE_SIGNAL], 0,
 		       account);
 }
@@ -232,7 +236,7 @@ on_account_removed (ModestAccountMgr *acc_mgr, const gchar *account, gboolean se
 
 static void
 on_account_changed (ModestAccountMgr *acc_mgr, const gchar *account,
-			       const gchar *key, gboolean server_account, gpointer user_data)
+		    const gchar *key, gboolean server_account, gpointer user_data)
 
 {
 	ModestTnyAccountStore *self = MODEST_TNY_ACCOUNT_STORE(user_data);
@@ -241,14 +245,20 @@ on_account_changed (ModestAccountMgr *acc_mgr, const gchar *account,
 	/* FIXME: make this more finegrained; changes do not really affect _all_
 	 * accounts, and some do not affect tny accounts at all (such as 'last_update')
 	 */
-	if (priv->store_accounts) {
-		account_list_free (priv->store_accounts);
-		priv->store_accounts = NULL;
-	}
-	
-	if (priv->transport_accounts) {
-		account_list_free (priv->transport_accounts);
-		priv->transport_accounts = NULL;
+	if (server_account) {
+		if (priv->store_accounts) {
+			account_list_free (priv->store_accounts);
+			priv->store_accounts =
+				get_server_accounts (TNY_ACCOUNT_STORE(self),
+						     NULL, TNY_ACCOUNT_TYPE_STORE);
+		}
+		
+		if (priv->transport_accounts) {
+			account_list_free (priv->transport_accounts);
+			priv->transport_accounts =
+				get_server_accounts (TNY_ACCOUNT_STORE(self), NULL,
+						     TNY_ACCOUNT_TYPE_TRANSPORT);
+		}
 	}
 
 	g_signal_emit (G_OBJECT(self), signals[ACCOUNT_UPDATE_SIGNAL], 0,
@@ -479,18 +489,16 @@ get_server_accounts  (TnyAccountStore *self, TnyList *list, TnyAccountType type)
 	GSList                       *accounts = NULL;
 	
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
- 
-	account_names = modest_account_mgr_account_names (priv->account_mgr, 
-		TRUE /* including disabled accounts */);
-	
+
+	/* these account names, not server_account names */
+	account_names = modest_account_mgr_account_names (priv->account_mgr,FALSE);
+		
 	for (cursor = account_names; cursor; cursor = cursor->next) {
 		
 		gchar *account_name = (gchar*)cursor->data;
 		
-		/* only return enabled accounts */
-		/* BUT server accounts can't be disabled. */
-		if (TRUE) 
-			/* modest_account_mgr_get_enabled(priv->account_mgr, account_name)) */ {
+		/* we get the server_accounts for enabled accounts */
+		if (modest_account_mgr_get_enabled(priv->account_mgr, account_name)) {
 			TnyAccount *tny_account = 
 				modest_tny_account_new_from_account (priv->account_mgr,
 								     account_name,
@@ -502,6 +510,7 @@ get_server_accounts  (TnyAccountStore *self, TnyList *list, TnyAccountType type)
 						   (gpointer)self);
 				if (list)
 					tny_list_prepend (list, G_OBJECT(tny_account));
+				
 				accounts = g_slist_append (accounts, tny_account); /* cache it */
 			} else
 				g_printerr ("modest: failed to create account for %s\n",
@@ -543,12 +552,12 @@ modest_tny_account_store_get_accounts  (TnyAccountStore *self, TnyList *list,
 	}
 	
 	if (request_type == TNY_ACCOUNT_STORE_STORE_ACCOUNTS)  {
-		
 		if (!priv->store_accounts)
-			priv->store_accounts = get_server_accounts (self, list, TNY_ACCOUNT_TYPE_STORE);
+			priv->store_accounts =
+				get_server_accounts (self, list, TNY_ACCOUNT_TYPE_STORE);
 		else
 			get_cached_accounts (self, list, TNY_ACCOUNT_TYPE_STORE);
-
+		
 	} else if (request_type == TNY_ACCOUNT_STORE_TRANSPORT_ACCOUNTS) {
 		if (!priv->transport_accounts)
 			priv->transport_accounts =
@@ -646,8 +655,7 @@ modest_tny_account_store_alert (TnyAccountStore *self, TnyAlertType type,
 
 	/* const gchar *prompt = NULL; */
 	gchar *prompt = NULL;
-	switch (error->code)
-	{
+	switch (error->code) {
 		case TNY_ACCOUNT_ERROR_TRY_CONNECT:
 		/* The tinymail camel implementation just sends us this for almost 
 		 * everything, so we have to guess at the cause.
@@ -760,9 +768,10 @@ modest_tny_account_store_get_tny_account_by_id  (ModestTnyAccountStore *self, co
 	
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
 
+
 	for (cursor = priv->store_accounts; cursor ; cursor = cursor->next) {
 		const gchar *acc_id = tny_account_get_id (TNY_ACCOUNT(cursor->data));
-		if (acc_id && strcmp (acc_id, id) == 0) { 
+		if (acc_id && strcmp (acc_id, id) == 0) {
 			account = TNY_ACCOUNT(cursor->data);
 			break;
 		}
@@ -826,7 +835,9 @@ modest_tny_account_store_get_tny_account_by_account (ModestTnyAccountStore *self
 	return account;	
 }
 
-static TnyAccount* get_smtp_specific_transport_account_for_open_connection (ModestTnyAccountStore *self, const gchar *account_name)
+static TnyAccount*
+get_smtp_specific_transport_account_for_open_connection (ModestTnyAccountStore *self,
+							 const gchar *account_name)
 {
 	/* Get the current connection: */
 	TnyDevice *device = modest_runtime_get_device ();
@@ -870,8 +881,9 @@ static TnyAccount* get_smtp_specific_transport_account_for_open_connection (Mode
 }
 
 								 
-TnyAccount* modest_tny_account_store_get_transport_account_for_open_connection (ModestTnyAccountStore *self,
-								 const gchar *account_name)
+TnyAccount*
+modest_tny_account_store_get_transport_account_for_open_connection (ModestTnyAccountStore *self,
+								    const gchar *account_name)
 {
 	/*  Get the connection-specific transport acccount, if any: */
 	TnyAccount *account = get_smtp_specific_transport_account_for_open_connection (self, account_name);
