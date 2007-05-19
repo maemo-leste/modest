@@ -95,7 +95,7 @@ if test "x$with_platform" = "xmaemo"; then
       PKG_CHECK_MODULES(MODEST_LIBTINYMAIL_MAEMO, conic libtinymail-maemo-1.0 hildon-1 libosso libhildonmime osso-addressbook-1.0 wpeditor libossohelp libebook-1.2 libalarm)     	
    
     else     # the old hildon
-     PKG_CHECK_MODULES(MODEST_LIBTINYMAIL_MAEMO, conic libtinymail-maemo-1.0 hildon-libs >= 0.12.0 libosso libossomime libossohelp osso-addressbook-1.0 wpeditor libebook-1.2 libalarm gnome-vfs-module-2.0)     	 
+     PKG_CHECK_MODULES(MODEST_LIBTINYMAIL_MAEMO, conic libtinymail-maemo-1.0 hildon-libs >= 0.12.0 libosso libossomime libossohelp osso-addressbook-1.0 libwpeditor-plus libebook-1.2 libalarm gnome-vfs-module-2.0)     	 
         AC_DEFINE_UNQUOTED(MODEST_HILDON_VERSION_0, 1, ["The Hildon version we support."])   
     fi 	
    
@@ -135,10 +135,12 @@ if test "x$with_platform" = "xmaemo"; then
   AC_SUBST(plugindesktopentrydir)
 
   # warnings are errors, but don't check format errors, because
-  # it breaks with logical id's
+  # it breaks with logical ids
   CFLAGS="$CFLAGS -Wno-format-extra-args -Werror"
 else
    # gnome frontend 
+   AC_MSG_ERROR([Sorry, the GNOME Frontend is currently not working])
+
    PKG_CHECK_MODULES(MODEST_LIBTINYMAIL_GNOME_DESKTOP,libtinymail-gnome-desktop-1.0 libnm_glib glib-2.0 >= 2.8 gtk+-2.0 >= 2.10)
    AC_SUBST(MODEST_LIBTINYMAIL_GNOME_DESKTOP_CFLAGS)
    AC_SUBST(MODEST_LIBTINYMAIL_GNOME_DESKTOP_LIBS)  
@@ -156,11 +158,14 @@ if test -d src/${with_platform}/easysetup; then
       	have_easysetup=true
 	AC_DEFINE_UNQUOTED(MODEST_HAVE_EASYSETUP, 1, ["Whether the easysetup feature is available."])
 
+   if test "$hildon1" == "yes"; then   # the 'new' hildon      			
 	# Just check that the dependency exists:
-    PKG_CHECK_MODULES(MODEST_PROVIDERS_DATA, modest-providers-data)	
-    
-	# Get the location of the ISO-Codes (currencies, languages) files:
+	PKG_CHECK_MODULES(MODEST_PROVIDERS_DATA, modest-providers-data)
 	AC_DEFINE_UNQUOTED([MODEST_PROVIDERS_DATA_PATH],["`$PKG_CONFIG --variable=path modest-providers-data`"],[modest-providers-data file path])
+   else
+	PKG_CHECK_MODULES(MODEST_PROVIDERS_DATA, maemo-providers-data)
+	AC_DEFINE_UNQUOTED([MODEST_PROVIDERS_DATA_PATH],["`$PKG_CONFIG --variable=path maemo-providers-data`"],[maemo-providers-data file path])
+   fi
 fi
 AM_CONDITIONAL(MODEST_HAVE_EASYSETUP,test x$have_easysetup = xtrue) 
 
@@ -203,7 +208,6 @@ GTK_DOC_CHECK([1.0])
 
 dnl Intltool utility programs
 #AC_PROG_INTLTOOL([0.33.0],[no-xml])
-
 
 
 AC_OUTPUT([
