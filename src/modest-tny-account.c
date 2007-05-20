@@ -135,6 +135,8 @@ static TnyAccount*
 modest_tny_account_new_from_server_account (ModestAccountMgr *account_mgr,
 					    ModestServerAccountData *account_data)
 {	
+	gchar *url;
+
 	g_return_val_if_fail (account_mgr, NULL);
 	g_return_val_if_fail (account_data, NULL);
 
@@ -184,23 +186,22 @@ modest_tny_account_new_from_server_account (ModestAccountMgr *account_mgr,
 		const gchar* option_security = NULL;
 		switch (account_data->security) {
 		case MODEST_PROTOCOL_CONNECTION_NORMAL:
-			option_security = MODEST_ACCOUNT_OPTION_SSL "= " MODEST_ACCOUNT_OPTION_SSL_NEVER;
+			option_security = MODEST_ACCOUNT_OPTION_SSL "=" MODEST_ACCOUNT_OPTION_SSL_NEVER;
 			break;
 		case MODEST_PROTOCOL_CONNECTION_SSL:
 		case MODEST_PROTOCOL_CONNECTION_TLS:
-			option_security = MODEST_ACCOUNT_OPTION_SSL "= " MODEST_ACCOUNT_OPTION_SSL_ALWAYS;;
+			option_security = MODEST_ACCOUNT_OPTION_SSL "=" MODEST_ACCOUNT_OPTION_SSL_ALWAYS;;
 			break;
 		case MODEST_PROTOCOL_CONNECTION_TLS_OP:
-			option_security = MODEST_ACCOUNT_OPTION_SSL "= " MODEST_ACCOUNT_OPTION_SSL_WHEN_POSSIBLE;
+			option_security = MODEST_ACCOUNT_OPTION_SSL "=" MODEST_ACCOUNT_OPTION_SSL_WHEN_POSSIBLE;
 			break;
 		default:
 			break;
 		}
 		
-		if(option_security) {
+		if(option_security)
 			tny_camel_account_add_option (TNY_CAMEL_ACCOUNT (tny_account),
 						      option_security);
-		}
 		
 		const gchar* auth_mech_name = NULL;
 		switch (account_data->secure_auth) {
@@ -236,18 +237,17 @@ modest_tny_account_new_from_server_account (ModestAccountMgr *account_mgr,
 			break;
 		}
 		
-		if(auth_mech_name) {
+		if(auth_mech_name) 
 			tny_account_set_secure_auth_mech (tny_account, auth_mech_name);
-		}
 		
 		if (modest_protocol_info_protocol_is_store(account_data->proto)) {
 			/* Other connection options. Some options are only valid for IMAP
 			   accounts but it's OK for just now since POP is still not
 			   supported */
 			tny_camel_account_add_option (TNY_CAMEL_ACCOUNT (tny_account),
-								      MODEST_ACCOUNT_OPTION_USE_LSUB);
+						      MODEST_ACCOUNT_OPTION_USE_LSUB);
 			tny_camel_account_add_option (TNY_CAMEL_ACCOUNT (tny_account),
-								      MODEST_ACCOUNT_OPTION_CHECK_ALL);
+						      MODEST_ACCOUNT_OPTION_CHECK_ALL);
 		}
 		
 		if (account_data->username) 
@@ -259,7 +259,12 @@ modest_tny_account_new_from_server_account (ModestAccountMgr *account_mgr,
 		if (account_data->port)
 			tny_account_set_port (tny_account, account_data->port);
 	}
-	
+
+	/* FIXME: for debugging */
+	url = tny_account_get_url_string (TNY_ACCOUNT(tny_account));
+	g_message ("modest: account-url: %s", url);
+	g_free (url);
+	/***********************/
 	
 	return tny_account;
 }
@@ -332,6 +337,7 @@ modest_tny_account_new_from_account (ModestAccountMgr *account_mgr, const gchar 
 				(gpointer*) g_strdup (account_name), g_free);
 	
 	modest_account_mgr_free_account_data (account_mgr, account_data);
+
 	return tny_account;
 }
 
