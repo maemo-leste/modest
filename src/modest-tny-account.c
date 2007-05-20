@@ -209,7 +209,8 @@ modest_tny_account_new_from_server_account (ModestAccountMgr *account_mgr,
 			/* IMAP needs at least a password,
 			 * which camel uses if we specify NULL.
 			 * This setting should never happen anyway. */
-			if (account_data->proto == MODEST_PROTOCOL_STORE_IMAP)
+			if (account_data->proto == MODEST_PROTOCOL_STORE_IMAP ||
+			    account_data->proto == MODEST_PROTOCOL_STORE_POP)
 				auth_mech_name = NULL;
 			else if (account_data->proto == MODEST_PROTOCOL_TRANSPORT_SMTP)
 				auth_mech_name = MODEST_ACCOUNT_AUTH_ANONYMOUS;
