@@ -28,6 +28,7 @@
  */
 
 #include <gconf/gconf-client.h>
+#include <config.h>
 #include <string.h>
 #include <glib/gi18n.h>
 #include "modest-conf.h"
@@ -41,6 +42,11 @@ static void   modest_conf_on_change	 (GConfClient *client, guint conn_id,
 					  GConfEntry *entry, gpointer data);
 static GConfValueType modest_conf_type_to_gconf_type (ModestConfValueType value_type, 
 						      GError **err);
+
+
+static void
+modest_conf_maemo_fake_on_change (ModestConf *conf, const gchar* key, ModestConfEvent event);
+
 /* list my signals */
 enum {
 	KEY_CHANGED_SIGNAL,
@@ -110,6 +116,7 @@ modest_conf_init (ModestConf *obj)
 	GConfClient *conf = NULL;
 	ModestConfPrivate *priv = MODEST_CONF_GET_PRIVATE(obj);
 	GError *err      = NULL;
+
 	
 	priv->gconf_client = NULL;
 	
@@ -118,7 +125,6 @@ modest_conf_init (ModestConf *obj)
 		g_printerr ("modest: could not get gconf client\n");
 		return;
 	}
-
 	gconf_client_add_dir (conf,MODEST_CONF_NAMESPACE,
 			      GCONF_CLIENT_PRELOAD_NONE,
 			      &err);
@@ -140,7 +146,6 @@ modest_conf_init (ModestConf *obj)
 		g_error_free (err);
 		return;
 	}
-	
 	priv->gconf_client = conf; 	/* all went well! */
 }
 
@@ -260,7 +265,11 @@ modest_conf_set_string (ModestConf* self, const gchar* key, const gchar* val,
 		return FALSE;
 	}
 			
-	return gconf_client_set_string (priv->gconf_client, key, val, err);	
+	if (gconf_client_set_string (priv->gconf_client, key, val, err)) {
+		modest_conf_maemo_fake_on_change (self, key, MODEST_CONF_EVENT_KEY_CHANGED);
+		return TRUE;
+	} else
+		return FALSE;
 }
 
 
@@ -280,7 +289,11 @@ modest_conf_set_int  (ModestConf* self, const gchar* key, gint val,
 		return FALSE;
 	}
 			
-	return gconf_client_set_int (priv->gconf_client, key, val, err);	
+	if (gconf_client_set_int (priv->gconf_client, key, val, err)) {
+		modest_conf_maemo_fake_on_change (self, key, MODEST_CONF_EVENT_KEY_CHANGED);
+		return TRUE;
+	} else
+		return FALSE;
 }
 
 
@@ -299,8 +312,12 @@ modest_conf_set_bool (ModestConf* self, const gchar* key, gboolean val,
 		g_warning ("modest: '%s' is not writable\n", key);
 		return FALSE;
 	}
-			
-	return gconf_client_set_bool (priv->gconf_client,key,val, err);
+
+	if (gconf_client_set_bool (priv->gconf_client, key, val, err)) {
+		modest_conf_maemo_fake_on_change (self, key, MODEST_CONF_EVENT_KEY_CHANGED);
+		return TRUE;
+	} else
+		return FALSE;
 }
 
 
@@ -341,7 +358,10 @@ modest_conf_set_list (ModestConf* self, const gchar* key,
 				  "not the same as the specified list. key=%s", key);
 		g_slist_free(debug_list);
 	}
-       
+
+	if (result)
+		modest_conf_maemo_fake_on_change (self, key, MODEST_CONF_EVENT_KEY_CHANGED);
+	
 	return result;
 }
 
@@ -374,7 +394,11 @@ modest_conf_remove_key (ModestConf* self, const gchar* key, GError **err)
 	retval = gconf_client_recursive_unset (priv->gconf_client,key,0,err);
 	gconf_client_suggest_sync (priv->gconf_client, NULL);
 
-	return retval;
+	if (retval) {
+		modest_conf_maemo_fake_on_change (self, key, MODEST_CONF_EVENT_KEY_UNSET);
+		return TRUE;
+	} else
+		return FALSE;
 }
 
 
@@ -427,12 +451,20 @@ modest_conf_key_is_valid (const gchar* key)
 	return gconf_valid_key (key, NULL);
 }
 
-
 /* hmmm... might need to make specific callback for specific keys */
 static void
 modest_conf_on_change (GConfClient *client, guint conn_id, GConfEntry *entry,
 		       gpointer data)
 {
+	/*
+	 * on maemo, there's a nasty bug in gconf, which makes it really
+	 * slow, for updates and notifications. as an ugly hack, we turn off all
+	 * gconf-based notifications, and send them ourselves, a short time
+	 * after we do a change. this does not work for non-modest-conf
+	 * changes of course...
+	 */
+#ifndef MODEST_PLATFORM_MAEMO
+
 	ModestConfEvent event;
 	const gchar* key;
 
@@ -442,7 +474,9 @@ modest_conf_on_change (GConfClient *client, guint conn_id, GConfEntry *entry,
 	g_signal_emit (G_OBJECT(data),
 		       signals[KEY_CHANGED_SIGNAL], 0,
 		       key, event);
+#endif /*!MODEST_PLATFORM_MAEMO*/
 }
+
 
 static GConfValueType
 modest_conf_type_to_gconf_type (ModestConfValueType value_type, GError **err)
@@ -470,3 +504,73 @@ modest_conf_type_to_gconf_type (ModestConfValueType value_type, GError **err)
 	}	
 	return gconf_type;
 }
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+/* workaround for the b0rked dbus-gconf on maemo */
+/* fires a fake change notification after 0.3 secs */
+#ifdef MODEST_PLATFORM_MAEMO
+typedef struct {
+	GObject *obj;
+	gchar   *key;
+} ChangeHelper;
+
+
+ChangeHelper*
+change_helper_new (ModestConf *conf, const gchar *key)
+{
+	ChangeHelper *helper = g_slice_alloc  (sizeof(ChangeHelper));
+	helper->obj  = g_object_ref(G_OBJECT(conf));
+	helper->key  = g_strdup (key);
+	return helper;
+}
+
+static void
+change_helper_free (ChangeHelper *helper)
+{
+	g_object_unref (helper->obj);
+	g_free (helper->key);
+	helper->key = NULL;
+	helper->obj = NULL;
+	g_slice_free (ChangeHelper,helper);
+}
+
+static gboolean
+emit_change_cb (ChangeHelper *helper)
+{
+	if (!helper)
+		return FALSE;	
+	g_signal_emit (G_OBJECT(helper->obj),signals[KEY_CHANGED_SIGNAL], 0,
+		       helper->key, MODEST_CONF_EVENT_KEY_CHANGED);
+	change_helper_free (helper);
+	
+	return FALSE;
+}
+
+static gboolean
+emit_remove_cb (ChangeHelper *helper)
+{
+	if (!helper)
+		return FALSE;
+	g_signal_emit (G_OBJECT(helper->obj),signals[KEY_CHANGED_SIGNAL], 0,
+		       helper->key, MODEST_CONF_EVENT_KEY_UNSET);
+	change_helper_free (helper);
+	
+	return FALSE;
+}
+#endif /* MODEST_PLATFORM_MAEMO */
+	
+static void
+modest_conf_maemo_fake_on_change (ModestConf *conf, const gchar* key, ModestConfEvent event)
+{
+#ifdef MODEST_PLATFORM_MAEMO
+
+	ChangeHelper *helper = change_helper_new (conf,key); 
+	g_timeout_add (100, /* after 100 ms */
+		       (event == MODEST_CONF_EVENT_KEY_CHANGED)
+		       ? (GSourceFunc)emit_change_cb : (GSourceFunc)emit_remove_cb,
+		       (gpointer)helper);
+#endif /*MODEST_PLATFORM_MAEMO*/
+}
+//////////////////////////////////////////////////////////////////////////////////
