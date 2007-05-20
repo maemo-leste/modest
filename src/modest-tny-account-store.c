@@ -639,7 +639,7 @@ modest_tny_account_store_find_account_by_url (TnyAccountStore *self, const gchar
 
 static gboolean
 modest_tny_account_store_alert (TnyAccountStore *self, TnyAlertType type,
-				const GError *error)
+				gboolean question, const GError *error)
 {
 	g_return_val_if_fail (error, FALSE);
 
@@ -710,11 +710,21 @@ modest_tny_account_store_alert (TnyAccountStore *self, TnyAlertType type,
 	if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_YES)
 		retval = TRUE;
 
+#ifdef MODEST_PLATFORM_MAEMO
+	/* FIXME: for mameo, assume it's ok; thus, we can get passed
+	 * SSL cert notes etc.
+	 */
+	retval = TRUE;
+#endif /*MODEST_PLATFORM_MAEMO*/
+
+	
 	gtk_widget_destroy (dialog);
 	
 	/* TODO: Don't free this when we no longer strdup the message for testers. */
 	g_free (prompt);
 
+
+	
 	return retval;
 }
 
