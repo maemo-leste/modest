@@ -1014,6 +1014,7 @@ modest_mail_operation_xfer_folder_async (ModestMailOperation *self,
 	/* The moveable restriction is applied also to copy operation */
 	rules = modest_tny_folder_get_rules (TNY_FOLDER (parent));
 	if (rules & MODEST_FOLDER_RULES_FOLDER_NON_MOVEABLE) {
+		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;	
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 			     MODEST_MAIL_OPERATION_ERROR_FOLDER_RULES,
 			     _("FIXME: unable to rename"));
