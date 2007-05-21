@@ -681,11 +681,19 @@ modest_tny_account_store_alert (TnyAccountStore *self, TnyAlertType type,
 	if (!prompt)
 		return FALSE;
 
-	gboolean retval = FALSE;
 #ifdef MODEST_PLATFORM_MAEMO
 	/* The Tinymail documentation says that we should show Yes and No buttons, 
-	 * but these never seem to be questions: */
-	 GtkWidget *dialog = GTK_WIDGET (hildon_note_new_information (NULL, prompt));
+	 * when it is a question.
+	 * Obviously, we need tinymail to use more specific error codes instead,
+	 * so we know what buttons to show. */
+	 GtkWidget *dialog = NULL;
+	 if (question) {
+	 	dialog = GTK_WIDGET (hildon_note_new_confirmation (NULL, 
+	 		prompt));
+	 } else {
+	 	dialog = GTK_WIDGET (hildon_note_new_information (NULL, 
+	 		prompt));
+	 }
 #else
 
 	GtkMessageType gtktype = GTK_MESSAGE_ERROR;
@@ -707,24 +715,20 @@ modest_tny_account_store_alert (TnyAccountStore *self, TnyAlertType type,
 		gtktype, GTK_BUTTONS_YES_NO, prompt);
 #endif /* #ifdef MODEST_PLATFORM_MAEMO */
 
-	if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_YES)
-		retval = TRUE;
+	gboolean retval = TRUE;
+	const int response = gtk_dialog_run (GTK_DIALOG (dialog));
+	if (question) {
+		retval = (response == GTK_RESPONSE_YES) ||
+				 (response == GTK_RESPONSE_OK);	
+	}
 
-#ifdef MODEST_PLATFORM_MAEMO
-	/* FIXME: for mameo, assume it's ok; thus, we can get passed
-	 * SSL cert notes etc.
-	 */
-	retval = TRUE;
-#endif /*MODEST_PLATFORM_MAEMO*/
-
-	
 	gtk_widget_destroy (dialog);
 	
 	/* TODO: Don't free this when we no longer strdup the message for testers. */
 	g_free (prompt);
 
 
-	
+	printf("DEBUG: %s: returning %d\n", __FUNCTION__, retval);
 	return retval;
 }
 

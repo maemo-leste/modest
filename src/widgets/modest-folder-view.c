@@ -1086,7 +1086,7 @@ on_drag_data_received (GtkWidget *widget,
  	GtkTreePath *source_row, *dest_row;
 	GtkTreeViewDropPosition pos;
 	gboolean success = FALSE, delete_source = FALSE;
-	DndHelper *helper;
+	DndHelper *helper = NULL; 
 
 	/* Do not allow further process */
 	g_signal_stop_emission_by_name (widget, "drag-data-received");
@@ -1102,7 +1102,8 @@ on_drag_data_received (GtkWidget *widget,
 		   won't longer exist. We can not wait for the end of
 		   the operation, because the operation won't start if
 		   the folder is in use */
-		if (helper->delete_source && source_widget == widget)
+		/* TODO: helper was not instantiated before here: */
+		if (helper && helper->delete_source && source_widget == widget)
 			g_signal_emit (G_OBJECT (widget), 
 				       signals[FOLDER_SELECTION_CHANGED_SIGNAL], 0, NULL, TRUE);
 	}

@@ -1,3 +1,11 @@
+2007-05-21  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/modest-tny-account-store.c: (modest_tny_account_store_alert):
+	Show a OK/Cancel dialog if the error is a question, though we still do not 
+	know anything more about what we are asking the user.
+	* src/widgets/modest-folder-view.c: (on_drag_data_received):
+	Fix an uninitialized variable (helper). This is a logic error, however.
+
 2007-05-21  Christian Kellner  <ckellner@openismus.com>
 	
 	* src/modest-search.h:
