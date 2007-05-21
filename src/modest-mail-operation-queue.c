@@ -194,9 +194,12 @@ modest_mail_operation_queue_remove (ModestMailOperationQueue *self,
 	g_queue_remove (priv->op_queue, mail_op);
 	g_mutex_unlock (priv->queue_lock);
 
-/* 	/\* HACK see the documentation of the function. Remove this */
-/* 	   call when tinymail provides accurate progress values *\/ */
-/* 	_modest_mail_operation_notify_end (mail_op); */
+	{
+		const GError *err;
+		err = modest_mail_operation_get_error (mail_op);
+		if (err)
+			g_printerr (err->message);
+	}
 
 	/* Notify observers */
 	g_signal_emit (self, signals[QUEUE_CHANGED_SIGNAL], 0,

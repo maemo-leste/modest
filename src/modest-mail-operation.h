@@ -555,18 +555,6 @@ gboolean  modest_mail_operation_cancel          (ModestMailOperation *self);
 void      modest_mail_operation_refresh_folder  (ModestMailOperation *self,
 						 TnyFolder *folder);
 
-/**
- *
- * This function is a workarround. It emits the progress-changed
- * signal. It's used by the mail operation queue to notify the
- * observers attached to that signal that the operation finished. We
- * need to use that for the moment because tinymail does not give us
- * the progress of a given operation very well. So we must delete it
- * when tinymail has that functionality and remove the call to it in
- * the queue as well.
- */
-void _modest_mail_operation_notify_end (ModestMailOperation *self);
-
 G_END_DECLS
 
 #endif /* __MODEST_MAIL_OPERATION_H__ */

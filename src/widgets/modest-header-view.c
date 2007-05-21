@@ -919,12 +919,12 @@ modest_header_view_set_folder (ModestHeaderView *self, TnyFolder *folder)
 	} else {
 		g_mutex_lock (priv->observers_lock);
 
-		modest_header_view_set_model (GTK_TREE_VIEW (self), NULL); 
 		if (priv->monitor) {
 			tny_folder_monitor_stop (priv->monitor);
 			g_object_unref (G_OBJECT (priv->monitor));
 			priv->monitor = NULL;
 		}
+		modest_header_view_set_model (GTK_TREE_VIEW (self), NULL); 
 
 		g_mutex_unlock (priv->observers_lock);
 	}
@@ -1189,11 +1189,11 @@ drag_data_get_cb (GtkWidget *widget, GdkDragContext *context,
 		  GtkSelectionData *selection_data, 
 		  guint info,  guint time, gpointer data)
 {
-	GtkTreeModel *model;
+	GtkTreeModel *model = NULL;
 	GtkTreeIter iter;
-	GtkTreePath *source_row;
+	GtkTreePath *source_row = NULL;
 	
-	source_row = get_selected_row (GTK_TREE_VIEW(widget), &model);
+	source_row = get_selected_row (GTK_TREE_VIEW (widget), &model);
 	if ((source_row == NULL) || (!gtk_tree_model_get_iter(model, &iter, source_row))) return;
 
 	switch (info) {
@@ -1220,8 +1220,7 @@ drag_data_get_cb (GtkWidget *widget, GdkDragContext *context,
 /* Header view drag types */
 const GtkTargetEntry header_view_drag_types[] = {
 	{ "GTK_TREE_MODEL_ROW", GTK_TARGET_SAME_APP, MODEST_HEADER_ROW },
-	{ "text/uri-list",      0,                   MODEST_MSG },
- 
+	{ "text/uri-list",      0,                   MODEST_MSG }, 
 };
 
 static void

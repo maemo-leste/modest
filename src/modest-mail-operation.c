@@ -70,6 +70,7 @@ static void     get_msg_status_cb (GObject *obj,
 				   TnyStatus *status,  
 				   gpointer user_data);
 
+static void     modest_mail_operation_notify_end (ModestMailOperation *self);
 
 enum _ModestMailOperationSignals 
 {
@@ -306,8 +307,8 @@ modest_mail_operation_send_mail (ModestMailOperation *self,
 		}
 	}
 
-	/* Notify the queue */
-	modest_mail_operation_queue_remove (modest_runtime_get_mail_operation_queue (), self);
+	/* Notify about operation end */
+	modest_mail_operation_notify_end (self);
 }
 
 void
@@ -403,7 +404,7 @@ modest_mail_operation_save_to_drafts (ModestMailOperation *self,
 		goto cleanup;
 	}
 
-	modest_mail_operation_queue_remove (modest_runtime_get_mail_operation_queue (), self);
+	modest_mail_operation_notify_end (self);
 
 	/* Free */
 cleanup:
@@ -466,8 +467,7 @@ notify_update_account_queue (gpointer data)
 {
 	ModestMailOperation *mail_op = MODEST_MAIL_OPERATION (data);
 
-	modest_mail_operation_queue_remove (modest_runtime_get_mail_operation_queue (), 
-					    mail_op);
+	modest_mail_operation_notify_end (mail_op);
 	g_object_unref (mail_op);
 
 	return FALSE;
@@ -567,9 +567,9 @@ update_account_thread (gpointer thr_user_data)
 	}
 
  out:
-	/* Notify the queue. Note that the info could be freed before
-	   this idle happens, but the mail operation will be still
-	   alive */
+	/* Notify about operation end. Note that the info could be
+	   freed before this idle happens, but the mail operation will
+	   be still alive */
 	g_idle_add (notify_update_account_queue, info->mail_op);
 
 	/* Frees */
@@ -614,8 +614,7 @@ modest_mail_operation_update_account (ModestMailOperation *self,
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 			     MODEST_MAIL_OPERATION_ERROR_ITEM_NOT_FOUND,
 			     "cannot get tny store account for %s\n", account_name);
-		modest_mail_operation_queue_remove (modest_runtime_get_mail_operation_queue (), 
-						    self);
+		modest_mail_operation_notify_end (self);
 		return FALSE;
 	}
 
@@ -629,8 +628,7 @@ modest_mail_operation_update_account (ModestMailOperation *self,
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 			     MODEST_MAIL_OPERATION_ERROR_ITEM_NOT_FOUND,
 			     "cannot get tny transport account for %s\n", account_name);
-		modest_mail_operation_queue_remove (modest_runtime_get_mail_operation_queue (), 
-						    self);
+		modest_mail_operation_notify_end (self);
 		return FALSE;
 	}
 
@@ -688,8 +686,8 @@ modest_mail_operation_cancel (ModestMailOperation *self)
 	/* Set new status */
 	priv->status = MODEST_MAIL_OPERATION_STATUS_CANCELED;
 
-	/* Notify the queue */
-	modest_mail_operation_queue_remove (modest_runtime_get_mail_operation_queue (), self);
+	/* Notify about operation end */
+	modest_mail_operation_notify_end (self);
 
 	return TRUE;
 }
@@ -783,8 +781,8 @@ modest_mail_operation_create_folder (ModestMailOperation *self,
 		CHECK_EXCEPTION (priv, MODEST_MAIL_OPERATION_STATUS_FAILED);
 	}
 
-	/* Notify the queue */
-	modest_mail_operation_queue_remove (modest_runtime_get_mail_operation_queue (), self);
+	/* Notify about operation end */
+	modest_mail_operation_notify_end (self);
 
 	return new_folder;
 }
@@ -839,8 +837,8 @@ modest_mail_operation_remove_folder (ModestMailOperation *self,
 	g_object_unref (G_OBJECT (account));
 
  end:
-	/* Notify the queue */
-	modest_mail_operation_queue_remove (modest_runtime_get_mail_operation_queue (), self);
+	/* Notify about operation end */
+	modest_mail_operation_notify_end (self);
 }
 
 void
@@ -879,13 +877,13 @@ modest_mail_operation_rename_folder (ModestMailOperation *self,
 		
 	}
 
-	/* Notify the queue */
-	modest_mail_operation_queue_remove (modest_runtime_get_mail_operation_queue (), self);
+	/* Notify about operation end */
+	modest_mail_operation_notify_end (self);
  }
 
 static void
 transfer_folder_status_cb (GObject *obj,
-			   TnyStatus *status,  
+			   TnyStatus *status,
 			   gpointer user_data)
 {
 	XFerMsgAsyncHelper *helper = NULL;
@@ -896,12 +894,7 @@ transfer_folder_status_cb (GObject *obj,
 	g_return_if_fail (status->code == TNY_FOLDER_STATUS_CODE_COPY_FOLDER);
 
 	helper = (XFerMsgAsyncHelper *) user_data;
-	g_return_if_fail (helper != NULL);       
-
-	/* Temporary FIX: useful when tinymail send us status
-	   information *after* calling the function callback */
-	if (!MODEST_IS_MAIL_OPERATION (helper->mail_op))
-		return;
+	g_return_if_fail (helper != NULL);
 
 	self = helper->mail_op;
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
@@ -911,7 +904,6 @@ transfer_folder_status_cb (GObject *obj,
 
 	priv->done = status->position;
 	priv->total = status->of_total;
-
 
 	g_signal_emit (G_OBJECT (self), signals[PROGRESS_CHANGED_SIGNAL], 0, NULL);
 }
@@ -932,7 +924,7 @@ transfer_folder_cb (TnyFolder *folder, TnyFolderStore *into, gboolean cancelled,
 	if (*err) {
 		priv->error = g_error_copy (*err);
 		priv->done = 0;
-		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;	
+		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 	} else if (cancelled) {
 		priv->status = MODEST_MAIL_OPERATION_STATUS_CANCELED;
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
@@ -948,11 +940,11 @@ transfer_folder_cb (TnyFolder *folder, TnyFolderStore *into, gboolean cancelled,
 	g_slice_free   (XFerFolderAsyncHelper, helper);
 	g_object_unref (folder);
 	g_object_unref (into);
-	if (new_folder != NULL) 
+	if (new_folder != NULL)
 		g_object_unref (new_folder);
 
-	/* Notify the queue */
-	modest_mail_operation_queue_remove (modest_runtime_get_mail_operation_queue (), self);
+	/* Notify about operation end */
+	modest_mail_operation_notify_end (self);
 }
 
 TnyFolder *
@@ -986,8 +978,8 @@ modest_mail_operation_xfer_folder (ModestMailOperation *self,
 					      &(priv->error));
 	}
 
-	/* Notify the queue */
-	modest_mail_operation_queue_remove (modest_runtime_get_mail_operation_queue (), self);
+	/* Notify about operation end */
+	modest_mail_operation_notify_end (self);
 
 	return new_folder;
 }
@@ -1015,13 +1007,12 @@ modest_mail_operation_xfer_folder_async (ModestMailOperation *self,
 	/* The moveable restriction is applied also to copy operation */
 	rules = modest_tny_folder_get_rules (TNY_FOLDER (parent));
 	if (rules & MODEST_FOLDER_RULES_FOLDER_NON_MOVEABLE) {
-		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;	
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 			     MODEST_MAIL_OPERATION_ERROR_FOLDER_RULES,
 			     _("FIXME: unable to rename"));
 
 		/* Notify the queue */
-		modest_mail_operation_queue_remove (modest_runtime_get_mail_operation_queue (), self);
+		modest_mail_operation_notify_end (self);
 	} else {
 		helper = g_slice_new0 (XFerFolderAsyncHelper);
 		helper->mail_op = self;
@@ -1125,8 +1116,8 @@ get_msg_cb (TnyFolder *folder,
 	if (helper->pending_ops == 0) {
 		g_slice_free (GetMsgAsyncHelper, helper);
 		
-		/* Notify the queue */
-		modest_mail_operation_queue_remove (modest_runtime_get_mail_operation_queue (), self);	
+		/* Notify about operation end */
+		modest_mail_operation_notify_end (self);	
 	}
 }
 
@@ -1294,7 +1285,7 @@ get_msgs_full_thread (gpointer thr_user_data)
 		tny_iterator_next (iter);
 	}
 
-	/* Notify the queue */
+	/* Notify about operation end */
 	g_idle_add (notify_update_account_queue, info->mail_op);
 
 	/* Free thread resources. Will be called after all previous idles */
@@ -1369,7 +1360,7 @@ modest_mail_operation_get_msgs_full (ModestMailOperation *self,
 			     MODEST_MAIL_OPERATION_ERROR_BAD_PARAMETER,
 			     _("emev_ni_ui_imap_msg_sizelimit_error"));
 		/* Remove from queue and free resources */
-		modest_mail_operation_queue_remove (modest_runtime_get_mail_operation_queue (), self);
+		modest_mail_operation_notify_end (self);
 		if (notify)
 			notify (user_data);
 	}
@@ -1439,8 +1430,8 @@ modest_mail_operation_remove_msg (ModestMailOperation *self,
 	/* Free */
 	g_object_unref (G_OBJECT (folder));
 
-	/* Notify the queue */
-	modest_mail_operation_queue_remove (modest_runtime_get_mail_operation_queue (), self);
+	/* Notify about operation end */
+	modest_mail_operation_notify_end (self);
 }
 
 static void
@@ -1457,11 +1448,6 @@ transfer_msgs_status_cb (GObject *obj,
 
 	helper = (XFerMsgAsyncHelper *) user_data;
 	g_return_if_fail (helper != NULL);       
-
-	/* Temporary FIX: useful when tinymail send us status
-	   information *after* calling the function callback */
-	if (!MODEST_IS_MAIL_OPERATION (helper->mail_op))
-		return;
 
 	self = helper->mail_op;
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
@@ -1515,8 +1501,8 @@ transfer_msgs_cb (TnyFolder *folder, gboolean cancelled, GError **err, gpointer 
 	g_slice_free   (XFerMsgAsyncHelper, helper);
 	g_object_unref (folder);
 
-	/* Notify the queue */
-	modest_mail_operation_queue_remove (modest_runtime_get_mail_operation_queue (), self);
+	/* Notify about operation end */
+	modest_mail_operation_notify_end (self);
 }
 
 void
@@ -1601,8 +1587,8 @@ on_refresh_folder (TnyFolder   *folder,
 	/* Free */
 	g_object_unref (folder);
 
-	/* Notify the queue */
-	modest_mail_operation_queue_remove (modest_runtime_get_mail_operation_queue (), self);
+	/* Notify about operation end */
+	modest_mail_operation_notify_end (self);
 }
 
 static void
@@ -1652,8 +1638,20 @@ modest_mail_operation_refresh_folder  (ModestMailOperation *self,
 				  self);
 }
 
-void
-_modest_mail_operation_notify_end (ModestMailOperation *self)
+/**
+ *
+ * It's used by the mail operation queue to notify the observers
+ * attached to that signal that the operation finished. We need to use
+ * that because tinymail does not give us the progress of a given
+ * operation when it finishes (it directly calls the operation
+ * callback).
+ */
+static void
+modest_mail_operation_notify_end (ModestMailOperation *self)
 {
+	/* Notify the observers about the mail opertation end */
 	g_signal_emit (G_OBJECT (self), signals[PROGRESS_CHANGED_SIGNAL], 0, NULL);
+
+	/* Notify the queue */
+	modest_mail_operation_queue_remove (modest_runtime_get_mail_operation_queue (), self);
 }

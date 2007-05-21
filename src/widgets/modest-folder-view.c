@@ -906,7 +906,6 @@ on_drag_data_get (GtkWidget *widget,
 	gtk_tree_selection_get_selected (selection, &model, &iter);
 	source_row = gtk_tree_model_get_path (model, &iter);
 
-
 	gtk_tree_set_row_drag_data (selection_data,
 				    model,
 				    source_row);
@@ -1026,10 +1025,11 @@ drag_and_drop_from_folder_view (GtkTreeModel     *source_model,
 	TnyFolder *folder;
 
 	/* Check if the drag is possible */
-	if (!gtk_tree_path_compare (helper->source_row, dest_row) ||
-	    !gtk_tree_drag_dest_row_drop_possible (GTK_TREE_DRAG_DEST (dest_model),
-						   dest_row,
-						   selection_data)) {
+/* 	if (!gtk_tree_path_compare (helper->source_row, dest_row) || */
+/* 	    !gtk_tree_drag_dest_row_drop_possible (GTK_TREE_DRAG_DEST (dest_model), */
+/* 						   dest_row, */
+/* 						   selection_data)) { */
+	if (!gtk_tree_path_compare (helper->source_row, dest_row)) {
 
 		gtk_drag_finish (helper->context, FALSE, FALSE, helper->time);
 		gtk_tree_path_free (helper->source_row);	
@@ -1090,17 +1090,28 @@ on_drag_data_received (GtkWidget *widget,
 
 	/* Do not allow further process */
 	g_signal_stop_emission_by_name (widget, "drag-data-received");
+	source_widget = gtk_drag_get_source_widget (context);
 
-	/* Get the action (FIXME: only copy is currently implemented */
-/* 	if (context->action == GDK_ACTION_MOVE) */
-/* 		delete_source = TRUE; */
+	/* Get the action */
+	if (context->action == GDK_ACTION_MOVE) {
+		delete_source = TRUE;
+
+		/* Notify that there is no folder selected. We need to
+		   do this in order to update the headers view (and
+		   its monitors, because when moving, the old folder
+		   won't longer exist. We can not wait for the end of
+		   the operation, because the operation won't start if
+		   the folder is in use */
+		if (helper->delete_source && source_widget == widget)
+			g_signal_emit (G_OBJECT (widget), 
+				       signals[FOLDER_SELECTION_CHANGED_SIGNAL], 0, NULL, TRUE);
+	}
 
 	/* Check if the get_data failed */
 	if (selection_data == NULL || selection_data->length < 0)
 		gtk_drag_finish (context, success, FALSE, time);
 
 	/* Get the models */
-	source_widget = gtk_drag_get_source_widget (context);
 	gtk_tree_get_row_drag_data (selection_data,
 				    &source_model,
 				    &source_row);
@@ -1253,7 +1264,7 @@ on_drag_motion (GtkWidget      *widget,
 
 	/* Do not allow drops between folders */
 	if (!dest_row ||
-	    pos == GTK_TREE_VIEW_DROP_BEFORE || 
+	    pos == GTK_TREE_VIEW_DROP_BEFORE ||
 	    pos == GTK_TREE_VIEW_DROP_AFTER) {
 		gtk_tree_view_set_drag_dest_row(GTK_TREE_VIEW (widget), NULL, 0);
 		gdk_drag_status(context, 0, time);
@@ -1268,7 +1279,6 @@ on_drag_motion (GtkWidget      *widget,
 		gtk_tree_view_set_drag_dest_row (GTK_TREE_VIEW (widget), dest_row, pos);
 		priv->timer_expander = g_timeout_add (500, expand_row_timeout, widget);
 	}
-	gtk_tree_path_free (dest_row);
 
 	/* Select the desired action. By default we pick MOVE */
 	suggested_action = GDK_ACTION_MOVE;
@@ -1283,6 +1293,8 @@ on_drag_motion (GtkWidget      *widget,
             gdk_drag_status(context, GDK_ACTION_DEFAULT, time);
 
  out:
+	if (dest_row)
+		gtk_tree_path_free (dest_row);
 	g_signal_stop_emission_by_name (widget, "drag-motion");
 	return valid_location;
 }
