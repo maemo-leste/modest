@@ -1,5 +1,11 @@
 2007-05-21  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-ui-actions.c:
+	(modest_ui_actions_on_password_requested): Make sure that the remember 
+	output parameter is always TRUE.
+
+2007-05-21  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/modest-tny-account-store.c: (modest_tny_account_store_alert):
 	Show a OK/Cancel dialog if the error is a question, though we still do not 
 	know anything more about what we are asking the user.

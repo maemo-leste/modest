@@ -178,14 +178,14 @@ modest_tny_account_new_from_server_account (ModestAccountMgr *account_mgr,
 	       
 	/* mbox and maildir accounts use a URI instead of the rest: */
 	if (account_data->uri)  {
-		printf("DEBUG: %s: Using URI=%s\n", __FUNCTION__, account_data->uri);
+		/* printf("DEBUG: %s: Using URI=%s\n", __FUNCTION__, account_data->uri); */
 		tny_account_set_url_string (TNY_ACCOUNT(tny_account), account_data->uri);
 	}
 	else {
 		/* Set camel-specific options: */
 		
 		/* Enable secure connection settings: */
-		printf("DEBUG: %s: security=%d\n", __FUNCTION__, account_data->security);
+		/* printf("DEBUG: %s: security=%d\n", __FUNCTION__, account_data->security); */
 		const gchar* option_security = NULL;
 		switch (account_data->security) {
 		case MODEST_PROTOCOL_CONNECTION_NORMAL:
@@ -207,7 +207,7 @@ modest_tny_account_new_from_server_account (ModestAccountMgr *account_mgr,
 						      option_security);
 		
 		/* Secure authentication: */
-		printf("DEBUG: %s: secure-auth=%d\n", __FUNCTION__, account_data->secure_auth);
+		/* printf("DEBUG: %s: secure-auth=%d\n", __FUNCTION__, account_data->secure_auth); */
 		const gchar* auth_mech_name = NULL;
 		switch (account_data->secure_auth) {
 		case MODEST_PROTOCOL_AUTH_NONE:

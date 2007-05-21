@@ -1687,6 +1687,13 @@ modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 	g_return_if_fail(server_account_name);
 	/* printf("DEBUG: %s: server_account_name=%s\n", __FUNCTION__, server_account_name); */
 	
+	/* Initalize output parameters: */
+	if (cancel)
+		*cancel = FALSE;
+		
+	if (remember)
+		*remember = TRUE;
+		
 #ifdef MODEST_PLATFORM_MAEMO
 	/* Maemo uses a different (awkward) button order,
 	 * It should probably just use gtk_alternative_dialog_button_order ().
@@ -1842,6 +1849,8 @@ modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 */
 
 	gtk_widget_destroy (dialog);
+	
+	printf ("DEBUG: %s: cancel=%d\n", __FUNCTION__, *cancel);
 }
 
 void

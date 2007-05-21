@@ -279,6 +279,10 @@ get_account_store_for_account (TnyAccount *account)
 static gchar*
 get_password (TnyAccount *account, const gchar *prompt, gboolean *cancel)
 {
+	/* Initialize the output parameter: */
+	if (cancel)
+	  *cancel = FALSE;
+	  
 	const gchar *key;
 	const TnyAccountStore *account_store;
 	ModestTnyAccountStore *self;
@@ -355,6 +359,7 @@ get_password (TnyAccount *account, const gchar *prompt, gboolean *cancel)
 static void
 forget_password (TnyAccount *account)
 {
+	printf ("DEBUG: %s\n", __FUNCTION__);
 	ModestTnyAccountStore *self;
 	ModestTnyAccountStorePrivate *priv;
 	const TnyAccountStore *account_store;
