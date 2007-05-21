@@ -355,7 +355,8 @@ get_password (TnyAccount *account, const gchar *prompt, gboolean *cancel)
 	return pwd;
 }
 
-
+/* tinymail calls this if the connection failed due to an incorrect password.
+ * And it seems to call this for any general connection failure. */
 static void
 forget_password (TnyAccount *account)
 {

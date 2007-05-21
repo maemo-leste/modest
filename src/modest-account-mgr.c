@@ -251,7 +251,7 @@ modest_account_mgr_add_account (ModestAccountMgr *self,
 	if (!ok) {
 		g_printerr ("modest: cannot set display name\n");
 		if (err) {
-			g_printerr ("modest: %s\n", err->message);
+			g_printerr ("modest: Error adding account conf: %s\n", err->message);
 			g_error_free (err);
 		}
 		return FALSE;
@@ -265,7 +265,7 @@ modest_account_mgr_add_account (ModestAccountMgr *self,
 			g_printerr ("modest: failed to set store account '%s'\n",
 				store_account);
 			if (err) {
-				g_printerr ("modest: %s\n", err->message);
+				g_printerr ("modest: Error adding store account conf: %s\n", err->message);
 				g_error_free (err);
 			}
 			
@@ -282,7 +282,7 @@ modest_account_mgr_add_account (ModestAccountMgr *self,
 			g_printerr ("modest: failed to set transport account '%s'\n",
 				    transport_account);
 			if (err) {
-				g_printerr ("modest: %s\n", err->message);
+				g_printerr ("modest: Error adding transport account conf: %s\n", err->message);
 				g_error_free (err);
 			}	
 			return FALSE;

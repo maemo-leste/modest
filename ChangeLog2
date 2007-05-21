@@ -1,5 +1,13 @@
 2007-05-21  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-account-mgr.c: (modest_account_mgr_add_account):
+	* src/modest-mail-operation-queue.c:
+	(modest_mail_operation_queue_remove):
+	* src/modest-tny-account-store.c: When GErrors happen, give more clues 
+	about where they happened.
+
+2007-05-21  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/modest-ui-actions.c:
 	(modest_ui_actions_on_password_requested): Make sure that the remember 
 	output parameter is always TRUE.

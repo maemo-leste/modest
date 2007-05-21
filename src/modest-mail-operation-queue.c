@@ -198,7 +198,7 @@ modest_mail_operation_queue_remove (ModestMailOperationQueue *self,
 		const GError *err;
 		err = modest_mail_operation_get_error (mail_op);
 		if (err)
-			g_printerr (err->message);
+			g_printerr ("Error in %s: %s", __FUNCTION__, err->message);
 	}
 
 	/* Notify observers */
