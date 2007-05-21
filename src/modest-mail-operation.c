@@ -816,15 +816,11 @@ modest_mail_operation_remove_folder (ModestMailOperation *self,
 	/* Delete folder or move to trash */
 	if (remove_to_trash) {
 		TnyFolder *trash_folder = NULL;
-/* 		TnyFolder *trash_folder, *new_folder; */
 		trash_folder = modest_tny_account_get_special_folder (account,
 								      TNY_FOLDER_TYPE_TRASH);
 		/* TODO: error_handling */
 		 modest_mail_operation_xfer_folder (self, folder,
 						    TNY_FOLDER_STORE (trash_folder), TRUE);
-/* 		new_folder = modest_mail_operation_xfer_folder (self, folder,  */
-/* 								TNY_FOLDER_STORE (trash_folder), TRUE); */
-/* 		g_object_unref (G_OBJECT (new_folder)); */
 	} else {
 		TnyFolderStore *parent = tny_folder_get_folder_store (folder);
 
@@ -947,48 +943,11 @@ transfer_folder_cb (TnyFolder *folder, TnyFolderStore *into, gboolean cancelled,
 	modest_mail_operation_notify_end (self);
 }
 
-TnyFolder *
+void
 modest_mail_operation_xfer_folder (ModestMailOperation *self,
 				   TnyFolder *folder,
 				   TnyFolderStore *parent,
 				   gboolean delete_original)
-{
-	ModestMailOperationPrivate *priv;
-	TnyFolder *new_folder = NULL;
-	ModestTnyFolderRules rules;
-
-	g_return_val_if_fail (MODEST_IS_MAIL_OPERATION (self), NULL);
-	g_return_val_if_fail (TNY_IS_FOLDER_STORE (parent), NULL);
-	g_return_val_if_fail (TNY_IS_FOLDER (folder), NULL);
-
-	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
-
-	/* The moveable restriction is applied also to copy operation */
-	rules = modest_tny_folder_get_rules (TNY_FOLDER (parent));
-	if (rules & MODEST_FOLDER_RULES_FOLDER_NON_MOVEABLE) {
-		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
-			     MODEST_MAIL_OPERATION_ERROR_FOLDER_RULES,
-			     _("FIXME: unable to rename"));
-	} else {
-		/* Move/Copy folder */
-		new_folder = tny_folder_copy (folder,
-					      parent,
-					      tny_folder_get_name (folder),
-					      delete_original,
-					      &(priv->error));
-	}
-
-	/* Notify about operation end */
-	modest_mail_operation_notify_end (self);
-
-	return new_folder;
-}
-
-void
-modest_mail_operation_xfer_folder_async (ModestMailOperation *self,
-					 TnyFolder *folder,
-					 TnyFolderStore *parent,
-					 gboolean delete_original)
 {
  	XFerFolderAsyncHelper *helper = NULL;
 	ModestMailOperationPrivate *priv = NULL;

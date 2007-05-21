@@ -2440,10 +2440,10 @@ modest_ui_actions_on_main_window_move_to (GtkAction *action,
 			modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), 
 							 mail_op);
 
-			modest_mail_operation_xfer_folder_async (mail_op, 
-								 TNY_FOLDER (src_folder),
-								 folder_store,
-								 TRUE);
+			modest_mail_operation_xfer_folder (mail_op, 
+							   TNY_FOLDER (src_folder),
+							   folder_store,
+							   TRUE);
 			g_object_unref (G_OBJECT (mail_op));
 			
 		}

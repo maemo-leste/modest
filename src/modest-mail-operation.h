@@ -359,36 +359,12 @@ void          modest_mail_operation_rename_folder  (ModestMailOperation *self,
  * If @delete_original is TRUE this function moves the original
  * folder, if it is FALSE the it just copies it
  *
- * Returns: the newly transfered folder
  **/
-TnyFolder*    modest_mail_operation_xfer_folder    (ModestMailOperation *self,
+void          modest_mail_operation_xfer_folder    (ModestMailOperation *self,
 						    TnyFolder *folder,
 						    TnyFolderStore *parent,
 						    gboolean delete_original);
 
-
-
-/**
- * modest_mail_operation_xfer_folder:
- * @self: a #ModestMailOperation
- * @folder: a #TnyFolder
- * @parent: the new parent of the folder as #TnyFolderStore
- * @delete_original: wheter or not delete the original folder
- * 
- * Sets the given @folder as child of a provided #TnyFolderStore. This
- * operation also transfers all the messages contained in the folder
- * and all of his children folders with their messages as well. This
- * operation is synchronous, so the #ModestMailOperation should not be
- * added to any #ModestMailOperationQueue.
- *
- * If @delete_original is TRUE this function moves the original
- * folder, if it is FALSE the it just copies it
- *
- **/
-void    modest_mail_operation_xfer_folder_async    (ModestMailOperation *self,
-						    TnyFolder *folder, 
-						    TnyFolderStore *parent,
-						    gboolean delete_original);
 /* Functions that performs msg operations */
 
 /**

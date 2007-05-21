@@ -1054,10 +1054,10 @@ drag_and_drop_from_folder_view (GtkTreeModel     *source_model,
 	g_signal_connect (G_OBJECT (mail_op), "progress-changed",
 			  G_CALLBACK (on_progress_changed), helper);
 
-	modest_mail_operation_xfer_folder_async (mail_op, 
-						 folder, 
-						 parent_folder,
-						 helper->delete_source);
+	modest_mail_operation_xfer_folder (mail_op, 
+					   folder, 
+					   parent_folder,
+					   helper->delete_source);
 	
 	/* Frees */
 	g_object_unref (G_OBJECT (parent_folder));
@@ -1102,8 +1102,7 @@ on_drag_data_received (GtkWidget *widget,
 		   won't longer exist. We can not wait for the end of
 		   the operation, because the operation won't start if
 		   the folder is in use */
-		/* TODO: helper was not instantiated before here: */
-		if (helper && helper->delete_source && source_widget == widget)
+		if (source_widget == widget)
 			g_signal_emit (G_OBJECT (widget), 
 				       signals[FOLDER_SELECTION_CHANGED_SIGNAL], 0, NULL, TRUE);
 	}
