@@ -249,10 +249,9 @@ modest_tny_account_new_from_server_account (ModestAccountMgr *account_mgr,
 		if(auth_mech_name) 
 			tny_account_set_secure_auth_mech (tny_account, auth_mech_name);
 		
-		if (modest_protocol_info_protocol_is_store(account_data->proto)) {
-			/* Other connection options. Some options are only valid for IMAP
-			   accounts but it's OK for just now since POP is still not
-			   supported */
+		if (modest_protocol_info_protocol_is_store(account_data->proto) && 
+			(account_data->proto == MODEST_PROTOCOL_STORE_IMAP) ) {
+			/* Other connection options, needed for IMAP. */
 			tny_camel_account_add_option (TNY_CAMEL_ACCOUNT (tny_account),
 						      MODEST_ACCOUNT_OPTION_USE_LSUB);
 			tny_camel_account_add_option (TNY_CAMEL_ACCOUNT (tny_account),

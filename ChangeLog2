@@ -1,6 +1,12 @@
 2007-05-21  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/modest-tny-account.c:
+	(modest_tny_account_new_from_server_account): Do not use the lsub and 
+	check-all hard-coded IMAP options when using POP.
+
+2007-05-21  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/modest-tny-account.c:
 	(modest_tny_account_new_from_server_account): 
 	Use NULL for the secure-auth method for POP when Password auth has been 
 	specified by the user, as we already do for IMAP. "auth=Login" causes 
