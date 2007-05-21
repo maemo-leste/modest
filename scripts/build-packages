@@ -1,5 +1,5 @@
 #!/bin/sh
-#Time-stamp: <2007-05-16 11:54:34 (djcb)>
+#Time-stamp: <2007-05-19 20:12:52 (djcb)>
 
 # Copyright (c) 2007, Nokia Corporation
 # All rights reserved.
@@ -64,7 +64,7 @@
 
 TINYMAIL_PATH="$HOME/src/tinymail"
 MODEST_PATH="$HOME/src/modest-email/modest/trunk"
-MODEST_PROVIDERS_DATA_PATH="$HOME/src/modest-email/modest-providers-data/"
+MAEMO_PROVIDERS_DATA_PATH="$HOME/src/modest-email/maemo-providers-data/"
 
 # the packager
 PACKAGER="Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>"
@@ -96,7 +96,7 @@ fi
 # checking paths
 echo 
 echo "*** checking paths"
-for p in "$TINYMAIL_PATH" "$MODEST_PATH" "$MODEST_PROVIDERS_DATA_PATH" "$PACKAGE_PATH"; do
+for p in "$TINYMAIL_PATH" "$MODEST_PATH" "$MAEMO_PROVIDERS_DATA_PATH" "$PACKAGE_PATH"; do
     if test -d $p; then
 	echo "+ found '$p'"
     else
@@ -119,9 +119,9 @@ cd $TINYMAIL_PATH
 TINYMAIL_REVISION="`svn info | grep '^Revision:' | sed 's/Revision: //'`"
 echo "* tinymail revision: $TINYMAIL_REVISION"
 
-cd $MODEST_PROVIDERS_DATA_PATH
-MODEST_PROVIDERS_DATA_REVISION="`svn info | grep '^Revision:' | sed 's/Revision: //'`"
-echo "* modest-providers-data revision: $MODEST_PROVIDERS_DATA_REVISION"
+cd $MAEMO_PROVIDERS_DATA_PATH
+MAEMO_PROVIDERS_DATA_REVISION="`svn info | grep '^Revision:' | sed 's/Revision: //'`"
+echo "* maemo-providers-data revision: $MAEMO_PROVIDERS_DATA_REVISION"
 
 cd $MODEST_PATH
 MODEST_REVISION="`svn info | grep '^Revision:' | sed 's/Revision: //'`"
@@ -159,28 +159,28 @@ fi
 
 
 
-# build modest-providers-data
-if test -n "`ls $PACKAGE_PATH/*providers*${MODEST_PROVIDERS_DATA_REVISION}*.deb`"; then
-    echo "* modest-providers-data seems already built, skipping (but still installing pkgs)"
-    $SCRATCHBOX "fakeroot dpkg -i ${PACKAGE_PATH}/*${MODEST_PROVIDERS_DATA_REVISION}*.deb"
+# build maemo-providers-data
+if test -n "`ls $PACKAGE_PATH/*providers*${MAEMO_PROVIDERS_DATA_REVISION}*.deb`"; then
+    echo "* maemo-providers-data seems already built, skipping (but still installing pkgs)"
+    $SCRATCHBOX "fakeroot dpkg -i ${PACKAGE_PATH}/*${MAEMO_PROVIDERS_DATA_REVISION}*.deb"
 else
-    cd $MODEST_PROVIDERS_DATA_PATH
+    cd $MAEMO_PROVIDERS_DATA_PATH
     mv -f debian/changelog debian/changelog.bak
     cat > debian/changelog <<EOF
-modest-providers-data (1.0-svn${MODEST_PROVIDERS_DATA_REVISION}) unstable; urgency=low
+maemo-providers-data (1.0-svn${MAEMO_PROVIDERS_DATA_REVISION}) unstable; urgency=low
 
-  * Package subversion revision svn${MODEST_PROVIDERS_DATA_REVISION}
+  * Package subversion revision svn${MAEMO_PROVIDERS_DATA_REVISION}
 
  -- ${PACKAGER}  ${NOW}
 EOF
-    echo "*** building modest-providers-data"
-    $SCRATCHBOX -d "$MODEST_PROVIDERS_DATA_PATH" "dpkg-buildpackage -rfakeroot -uc -us -sa -D" || {
-	echo "failed to build modest-providers-data"
+    echo "*** building maemo-providers-data"
+    $SCRATCHBOX -d "$MAEMO_PROVIDERS_DATA_PATH" "dpkg-buildpackage -rfakeroot -uc -us -sa -D" || {
+	echo "failed to build maemo-providers-data"
 	exit 1
     }
     mv -f debian/changelog.bak debian/changelog
-    $SCRATCHBOX "mv ${MODEST_PROVIDERS_DATA_PATH}/../*${MODEST_PROVIDERS_DATA_REVISION}* $PACKAGE_PATH"
-    $SCRATCHBOX "fakeroot dpkg -i ${PACKAGE_PATH}/*${MODEST_PROVIDERS_DATA_REVISION}*.deb"
+    $SCRATCHBOX "mv ${MAEMO_PROVIDERS_DATA_PATH}/../*${MAEMO_PROVIDERS_DATA_REVISION}* $PACKAGE_PATH"
+    $SCRATCHBOX "fakeroot dpkg -i ${PACKAGE_PATH}/*${MAEMO_PROVIDERS_DATA_REVISION}*.deb"
 fi
  
 
