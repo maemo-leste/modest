@@ -2472,11 +2472,6 @@ modest_ui_actions_on_main_window_move_to (GtkAction *action,
 		}
 	}
 	g_object_unref (folder_store);
-
-	/* Check errors */
-	if (modest_mail_operation_get_status (mail_op) == MODEST_MAIL_OPERATION_STATUS_FAILED)
-		/* Notify the queue */
-		modest_mail_operation_queue_remove (modest_runtime_get_mail_operation_queue (), mail_op);
 	
  end:
 	gtk_widget_destroy (dialog);

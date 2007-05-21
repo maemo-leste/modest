@@ -683,7 +683,8 @@ modest_mail_operation_cancel (ModestMailOperation *self)
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
 
 	/* TODO: Tinymail does not support cancel operation  */
-	
+/* 	tny_account_cancel (); */
+
 	/* Set new status */
 	priv->status = MODEST_MAIL_OPERATION_STATUS_CANCELED;
 
@@ -1018,6 +1019,9 @@ modest_mail_operation_xfer_folder_async (ModestMailOperation *self,
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 			     MODEST_MAIL_OPERATION_ERROR_FOLDER_RULES,
 			     _("FIXME: unable to rename"));
+
+		/* Notify the queue */
+		modest_mail_operation_queue_remove (modest_runtime_get_mail_operation_queue (), self);
 	} else {
 		helper = g_slice_new0 (XFerFolderAsyncHelper);
 		helper->mail_op = self;
