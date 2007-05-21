@@ -1,3 +1,11 @@
+2007-05-21  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/modest-tny-account.c:
+	(modest_tny_account_new_from_server_account): 
+	Use NULL for the secure-auth method for POP when Password auth has been 
+	specified by the user, as we already do for IMAP. "auth=Login" causes 
+	an error from camel or the server.
+
 2007-05-17  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/maemo/modest-account-settings-dialog.c:

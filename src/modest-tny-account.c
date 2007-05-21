@@ -177,12 +177,15 @@ modest_tny_account_new_from_server_account (ModestAccountMgr *account_mgr,
 
 	       
 	/* mbox and maildir accounts use a URI instead of the rest: */
-	if (account_data->uri) 
+	if (account_data->uri)  {
+		printf("DEBUG: %s: Using URI=%s\n", __FUNCTION__, account_data->uri);
 		tny_account_set_url_string (TNY_ACCOUNT(tny_account), account_data->uri);
+	}
 	else {
 		/* Set camel-specific options: */
 		
 		/* Enable secure connection settings: */
+		printf("DEBUG: %s: security=%d\n", __FUNCTION__, account_data->security);
 		const gchar* option_security = NULL;
 		switch (account_data->security) {
 		case MODEST_PROTOCOL_CONNECTION_NORMAL:
@@ -203,10 +206,12 @@ modest_tny_account_new_from_server_account (ModestAccountMgr *account_mgr,
 			tny_camel_account_add_option (TNY_CAMEL_ACCOUNT (tny_account),
 						      option_security);
 		
+		/* Secure authentication: */
+		printf("DEBUG: %s: secure-auth=%d\n", __FUNCTION__, account_data->secure_auth);
 		const gchar* auth_mech_name = NULL;
 		switch (account_data->secure_auth) {
 		case MODEST_PROTOCOL_AUTH_NONE:
-			/* IMAP needs at least a password,
+			/* IMAP and POP need at least a password,
 			 * which camel uses if we specify NULL.
 			 * This setting should never happen anyway. */
 			if (account_data->proto == MODEST_PROTOCOL_STORE_IMAP ||
@@ -219,9 +224,12 @@ modest_tny_account_new_from_server_account (ModestAccountMgr *account_mgr,
 			break;
 			
 		case MODEST_PROTOCOL_AUTH_PASSWORD:
-			/* Camel use a password for IMAP if we specify NULL,
-			 * but will report an error if we use "Password", "Login" or "Plain". */
+			/* Camel use a password for IMAP or POP if we specify NULL,
+			 * For IMAP, at least it will report an error if we use "Password", "Login" or "Plain".
+			 * (POP is know to report an error for Login too. Probably Password and Plain too.) */
 			if (account_data->proto == MODEST_PROTOCOL_STORE_IMAP)
+				auth_mech_name = NULL;
+			else if (account_data->proto == MODEST_PROTOCOL_STORE_POP)
 				auth_mech_name = NULL;
 			else
 				auth_mech_name = MODEST_ACCOUNT_AUTH_PASSWORD;
