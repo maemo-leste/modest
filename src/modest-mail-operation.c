@@ -957,7 +957,7 @@ modest_mail_operation_xfer_folder (ModestMailOperation *self,
 {
  	XFerFolderAsyncHelper *helper = NULL;
 	ModestMailOperationPrivate *priv = NULL;
-	ModestTnyFolderRules rules;
+	ModestTnyFolderRules parent_rules, rules;
 
 	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
 	g_return_if_fail (TNY_IS_FOLDER_STORE (parent));
@@ -969,12 +969,22 @@ modest_mail_operation_xfer_folder (ModestMailOperation *self,
 	g_object_ref (folder);
 	g_object_ref (parent);
 
+	/* Get folder rules */
+	rules = modest_tny_folder_get_rules (TNY_FOLDER (folder));
+	parent_rules = modest_tny_folder_get_rules (TNY_FOLDER (parent));
+
 	/* The moveable restriction is applied also to copy operation */
-	rules = modest_tny_folder_get_rules (TNY_FOLDER (parent));
 	if (rules & MODEST_FOLDER_RULES_FOLDER_NON_MOVEABLE) {
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 			     MODEST_MAIL_OPERATION_ERROR_FOLDER_RULES,
-			     _("FIXME: unable to rename"));
+			     _("FIXME: unable to transfer folder"));
+
+		/* Notify the queue */
+		modest_mail_operation_notify_end (self);
+	} else if (parent_rules & MODEST_FOLDER_RULES_FOLDER_DONT_ACCEPT_FOLDERS) {
+		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
+			     MODEST_MAIL_OPERATION_ERROR_FOLDER_RULES,
+			     _("FIXME: parent folder does not accept new folders"));
 
 		/* Notify the queue */
 		modest_mail_operation_notify_end (self);
@@ -1236,7 +1246,7 @@ get_msgs_full_thread (gpointer thr_user_data)
 							 notify_get_msgs_full, 
 							 info_notify, NULL);
 				}
-				g_object_unref (msg);				
+				g_object_unref (msg);
 			}
 		} else {
 			/* Set status failed and set an error */
@@ -1482,10 +1492,27 @@ modest_mail_operation_xfer_msgs (ModestMailOperation *self,
 	TnyFolder *src_folder;
 	XFerMsgAsyncHelper *helper;
 	TnyHeader *header;
+	ModestTnyFolderRules rules;
 
 	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
 	g_return_if_fail (TNY_IS_LIST (headers));
 	g_return_if_fail (TNY_IS_FOLDER (folder));
+
+	/* Get folder rules */
+	rules = modest_tny_folder_get_rules (TNY_FOLDER (folder));
+
+	/* Apply folder rules */
+	if (rules & MODEST_FOLDER_RULES_FOLDER_DONT_ACCEPT_MSGS) {
+		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
+			     MODEST_MAIL_OPERATION_ERROR_FOLDER_RULES,
+			     _("FIXME: folder does not accept msgs"));
+		/* Notify the queue */
+		modest_mail_operation_notify_end (self);
+
+		g_object_unref (headers);
+		g_object_unref (folder);
+		return;
+	}
 
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
 	priv->total = 1;

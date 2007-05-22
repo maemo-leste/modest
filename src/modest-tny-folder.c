@@ -120,6 +120,8 @@ modest_tny_folder_get_rules   (const TnyFolder *folder)
 		switch (type) {
 		case TNY_FOLDER_TYPE_DRAFTS:
 		case TNY_FOLDER_TYPE_OUTBOX:
+			rules |= MODEST_FOLDER_RULES_FOLDER_DONT_ACCEPT_FOLDERS;
+			rules |= MODEST_FOLDER_RULES_FOLDER_DONT_ACCEPT_MSGS;
 		case TNY_FOLDER_TYPE_SENT:
 			rules |= MODEST_FOLDER_RULES_FOLDER_NON_WRITEABLE;
 		case TNY_FOLDER_TYPE_INBOX:
