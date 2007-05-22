@@ -31,7 +31,7 @@ cd modest
 
 echo "+ removing internal stuff"
 rm -rf scripts
-rm Changelog2
+rm ChangeLog2
 rm debian/changelog
 
 echo "+ defaulting to maemo0"
