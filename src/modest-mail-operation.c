@@ -977,11 +977,11 @@ modest_mail_operation_xfer_folder (ModestMailOperation *self,
 	if (rules & MODEST_FOLDER_RULES_FOLDER_NON_MOVEABLE) {
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 			     MODEST_MAIL_OPERATION_ERROR_FOLDER_RULES,
-			     _("FIXME: unable to transfer folder"));
+			     _("mail_in_ui_folder_move_target_error"));
 
 		/* Notify the queue */
 		modest_mail_operation_notify_end (self);
-	} else if (parent_rules & MODEST_FOLDER_RULES_FOLDER_DONT_ACCEPT_FOLDERS) {
+	} else if (parent_rules & MODEST_FOLDER_RULES_FOLDER_NON_WRITEABLE) {
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 			     MODEST_MAIL_OPERATION_ERROR_FOLDER_RULES,
 			     _("FIXME: parent folder does not accept new folders"));
@@ -1502,7 +1502,7 @@ modest_mail_operation_xfer_msgs (ModestMailOperation *self,
 	rules = modest_tny_folder_get_rules (TNY_FOLDER (folder));
 
 	/* Apply folder rules */
-	if (rules & MODEST_FOLDER_RULES_FOLDER_DONT_ACCEPT_MSGS) {
+	if (rules & MODEST_FOLDER_RULES_FOLDER_NON_WRITEABLE) {
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 			     MODEST_MAIL_OPERATION_ERROR_FOLDER_RULES,
 			     _("FIXME: folder does not accept msgs"));
