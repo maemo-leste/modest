@@ -221,8 +221,10 @@ void     modest_ui_actions_on_delete_folder            (GtkAction *action,
 void     modest_ui_actions_on_move_folder_to_trash_folder     (GtkAction *action,
 							       ModestMainWindow *main_window);
 
+/*
 void     modest_ui_actions_on_connection_changed    (TnyDevice *device, gboolean online,
 						     ModestMainWindow *main_window);
+*/
 
 void     modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 						  const gchar* server_account_name,

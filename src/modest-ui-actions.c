@@ -865,23 +865,36 @@ modest_ui_actions_do_send_receive (const gchar *account_name, ModestWindow *win)
 		acc_name = g_strdup (account_name);
 	}
 
-	/* Send & receive. Do not continue if no suitable connection
+	/* Send & receive. */
+	
+	/* Do not continue if no suitable connection
 	   is open */
-	if (check_for_connection (acc_name)) {
-		/* As per the UI spec,
-		 * for POP accounts, we should receive,
-		 * for IMAP we should synchronize everything, including receiving,
-		 * for SMTP we should send,
-		 * first receiving, then sending:
-		 */
-		/* Create the mail operation */
-		/* TODO: The spec wants us to first do any pending deletions, before receiving. */
-		ModestMailOperation *mail_op;
-		mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_ID_RECEIVE, G_OBJECT(win));
-		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
-		modest_mail_operation_update_account (mail_op, acc_name);
-		g_object_unref (G_OBJECT (mail_op));
+	if (!check_for_connection (acc_name)) {
+		g_free (acc_name);
+		return;
 	}
+	
+	/* TODO: Do not continue if an operation is already in progress:
+	 * Maybe there are some operations that tinymail allows to 
+	 * happen simulatenously.
+	 * TODO: Maybe a simple global gboolean is_updating is enough?
+	 * murrayc.
+	 */
+	
+	/* As per the UI spec,
+	 * for POP accounts, we should receive,
+	 * for IMAP we should synchronize everything, including receiving,
+	 * for SMTP we should send,
+	 * first receiving, then sending:
+	 */
+	/* Create the mail operation */
+	/* TODO: The spec wants us to first do any pending deletions, before receiving. */
+	ModestMailOperation *mail_op;
+	mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_ID_RECEIVE, G_OBJECT(win));
+	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
+	modest_mail_operation_update_account (mail_op, acc_name);
+	g_object_unref (G_OBJECT (mail_op));
+	
 	/* Free */
 	g_free (acc_name);
 }

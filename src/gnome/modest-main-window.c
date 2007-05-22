@@ -308,8 +308,10 @@ save_sizes (ModestMainWindow *self)
 
 
 static void
-on_connection_changed (TnyDevice *device, gboolean online, ModestMainWindow *self)
+on_account_store_connecting_finished (TnyAccountStore *store, ModestMainWindow *self)
 {
+	const gboolean online = TRUE;
+
 	GtkWidget *icon;
 	const gchar *icon_name;
 	ModestMainWindowPrivate *priv;
@@ -332,7 +334,7 @@ on_connection_changed (TnyDevice *device, gboolean online, ModestMainWindow *sel
 	
 	/* If Modest has became online and the header view has a
 	   header selected then show it */
-	/* FIXME: there is a race condition if some account needs to
+	/* TODO: FIXME: there is a race condition if some account needs to
 	   ask the user for a password */
 
 /* 	if (online) { */
@@ -421,8 +423,8 @@ connect_signals (ModestMainWindow *self)
 			  G_CALLBACK (modest_ui_actions_on_password_requested), self);
 	
 	/* Device */
-	g_signal_connect (G_OBJECT(modest_runtime_get_device()), "connection_changed",
-			  G_CALLBACK(on_connection_changed), self);
+	g_signal_connect (G_OBJECT(modest_runtime_get_account_store()), "connecting-finished",
+			  G_CALLBACK(on_account_store_connecting_finished), self);
 	g_signal_connect (G_OBJECT(priv->online_toggle), "toggled",
 			  G_CALLBACK(on_online_toggle_toggled), self);
 
