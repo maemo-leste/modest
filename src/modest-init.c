@@ -46,6 +46,8 @@
 #include <modest-account-mgr.h>
 #include <modest-account-mgr-helpers.h>
 #include <modest-icon-names.h>
+#include "widgets/modest-global-settings-dialog.h"
+#include "modest-tny-msg.h"
 
 static gboolean init_header_columns (ModestConf *conf, gboolean overwrite);
 static gboolean init_local_folders  (void);
@@ -561,9 +563,27 @@ init_default_settings (ModestConf *conf)
 	if (!modest_conf_key_exists (conf, MODEST_CONF_CONNECT_AT_STARTUP, NULL))
 		modest_conf_set_bool (conf, MODEST_CONF_CONNECT_AT_STARTUP, TRUE, NULL);
 
+	/* Global settings */
+	if (!modest_conf_key_exists (conf, MODEST_CONF_AUTO_UPDATE, NULL))
+		modest_conf_set_bool (conf, MODEST_CONF_AUTO_UPDATE, TRUE, NULL);
+
+	if (!modest_conf_key_exists (conf, MODEST_CONF_UPDATE_WHEN_CONNECTED_BY, NULL))
+		modest_conf_set_int (conf, MODEST_CONF_UPDATE_WHEN_CONNECTED_BY, MODEST_CONNECTED_VIA_WLAN, NULL);
+
+	if (!modest_conf_key_exists (conf, MODEST_CONF_UPDATE_INTERVAL, NULL))
+		modest_conf_set_int (conf, MODEST_CONF_UPDATE_INTERVAL, MODEST_UPDATE_INTERVAL_15_MIN, NULL);
+
+	if (!modest_conf_key_exists (conf, MODEST_CONF_MSG_SIZE_LIMIT, NULL))
+		modest_conf_set_int (conf, MODEST_CONF_MSG_SIZE_LIMIT, 1000, NULL);
+
+	if (!modest_conf_key_exists (conf, MODEST_CONF_PLAY_SOUND_MSG_ARRIVE, NULL))
+		modest_conf_set_bool (conf, MODEST_CONF_PLAY_SOUND_MSG_ARRIVE, FALSE, NULL);
+
 	if (!modest_conf_key_exists (conf, MODEST_CONF_PREFER_FORMATTED_TEXT, NULL))
 		modest_conf_set_bool (conf, MODEST_CONF_PREFER_FORMATTED_TEXT, TRUE, NULL);
 
+	if (!modest_conf_key_exists (conf, MODEST_CONF_REPLY_TYPE, NULL))
+		modest_conf_set_int (conf, MODEST_CONF_REPLY_TYPE, MODEST_TNY_MSG_REPLY_TYPE_QUOTE, NULL);
 }
 
 

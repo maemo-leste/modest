@@ -113,7 +113,8 @@ void         modest_msg_view_set_message  (ModestMsgView *self, TnyMsg *tny_msg)
  * modest_msg_view_set_message
  * @self: a ModestMsgView instance
  *
- * get the @tny_msg e-mail message.
+ * gets a new reference the #TnyMsg of the message view. The caller
+ * must free the new reference
  *
  * Returns: the message or NULL
  */

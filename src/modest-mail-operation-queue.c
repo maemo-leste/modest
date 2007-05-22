@@ -194,11 +194,12 @@ modest_mail_operation_queue_remove (ModestMailOperationQueue *self,
 	g_queue_remove (priv->op_queue, mail_op);
 	g_mutex_unlock (priv->queue_lock);
 
+	/* Debug code */
 	{
 		const GError *err;
 		err = modest_mail_operation_get_error (mail_op);
 		if (err)
-			g_printerr ("Error in %s: %s", __FUNCTION__, err->message);
+			g_printerr ("Error in %s: %s\n", __FUNCTION__, err->message);
 	}
 
 	/* Notify observers */

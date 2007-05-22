@@ -57,9 +57,6 @@ static void modest_mail_operation_class_init (ModestMailOperationClass *klass);
 static void modest_mail_operation_init       (ModestMailOperation *obj);
 static void modest_mail_operation_finalize   (GObject *obj);
 
-/* static void     update_process_msg_status_cb (GObject *obj, */
-/* 					      TnyStatus *status,   */
-/* 					      gpointer user_data); */
 static void     get_msg_cb (TnyFolder *folder, 
 			    gboolean cancelled, 
 			    TnyMsg *msg, 
@@ -100,7 +97,7 @@ struct _ModestMailOperationPrivate {
 
 typedef struct _GetMsgAsyncHelper {	
 	ModestMailOperation *mail_op;
-	GetMsgAsynUserCallback user_callback;	
+	GetMsgAsyncUserCallback user_callback;	
 	guint pending_ops;
 	gpointer user_data;
 } GetMsgAsyncHelper;
@@ -280,6 +277,15 @@ modest_mail_operation_is_mine (ModestMailOperation *self,
 	return priv->source == me;
 }
 
+GObject *
+modest_mail_operation_get_source (ModestMailOperation *self)
+{
+	ModestMailOperationPrivate *priv;
+
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
+
+	return g_object_ref (priv->source);
+}
 
 void
 modest_mail_operation_send_mail (ModestMailOperation *self,
@@ -994,7 +1000,7 @@ modest_mail_operation_xfer_folder (ModestMailOperation *self,
 
 void modest_mail_operation_get_msg (ModestMailOperation *self,
 				    TnyHeader *header,
-				    GetMsgAsynUserCallback user_callback,
+				    GetMsgAsyncUserCallback user_callback,
 				    gpointer user_data)
 {
 	GetMsgAsyncHelper *helper = NULL;
@@ -1067,7 +1073,7 @@ get_msg_cb (TnyFolder *folder,
 
 	/* If user defined callback function was defined, call it */
 	if (helper->user_callback) {
-		helper->user_callback (priv->source, msg, helper->user_data);
+		helper->user_callback (self, NULL, msg, helper->user_data);
 	}
 
 	/* Free */
@@ -1116,7 +1122,7 @@ get_msg_status_cb (GObject *obj,
 typedef struct {
 	ModestMailOperation *mail_op;
 	TnyList *headers;
-	GetMsgAsynUserCallback user_callback;
+	GetMsgAsyncUserCallback user_callback;
 	gpointer user_data;
 	GDestroyNotify notify;
 } GetFullMsgsInfo;
@@ -1132,16 +1138,15 @@ notify_get_msgs_full_observers (gpointer data)
 
 	g_signal_emit (G_OBJECT (mail_op), signals[PROGRESS_CHANGED_SIGNAL], 0, NULL);
 
-	g_object_unref (mail_op);
-
 	return FALSE;
 }
 
 typedef struct {
-	GetMsgAsynUserCallback user_callback;
+	GetMsgAsyncUserCallback user_callback;
+	TnyHeader *header;
 	TnyMsg *msg;
 	gpointer user_data;
-	GObject *source;
+	ModestMailOperation *mail_op;
 } NotifyGetMsgsInfo;
 
 
@@ -1157,7 +1162,7 @@ notify_get_msgs_full (gpointer data)
 	info = (NotifyGetMsgsInfo *) data;	
 
 	/* Call the user callback */
-	info->user_callback (info->source, info->msg, info->user_data);
+	info->user_callback (info->mail_op, info->header, info->msg, info->user_data);
 
 	g_slice_free (NotifyGetMsgsInfo, info);
 
@@ -1215,7 +1220,7 @@ get_msgs_full_thread (gpointer thr_user_data)
 				/* notify progress */
 				g_idle_add_full (G_PRIORITY_HIGH_IDLE,
 						 notify_get_msgs_full_observers, 
-						 g_object_ref (info->mail_op), NULL);
+						 info->mail_op, NULL);
 
 				/* The callback is the responsible for
 				   freeing the message */
@@ -1223,15 +1228,15 @@ get_msgs_full_thread (gpointer thr_user_data)
 					NotifyGetMsgsInfo *info_notify;
 					info_notify = g_slice_new0 (NotifyGetMsgsInfo);
 					info_notify->user_callback = info->user_callback;
-					info_notify->source = priv->source;
-					info_notify->msg = msg;
+					info_notify->mail_op = info->mail_op;
+					info_notify->header = g_object_ref (header);
+					info_notify->msg = g_object_ref (msg);
 					info_notify->user_data = info->user_data;
 					g_idle_add_full (G_PRIORITY_HIGH_IDLE,
 							 notify_get_msgs_full, 
 							 info_notify, NULL);
-				} else {
-					g_object_unref (msg);
 				}
+				g_object_unref (msg);				
 			}
 		} else {
 			/* Set status failed and set an error */
@@ -1256,7 +1261,7 @@ get_msgs_full_thread (gpointer thr_user_data)
 void 
 modest_mail_operation_get_msgs_full (ModestMailOperation *self,
 				     TnyList *header_list, 
-				     GetMsgAsynUserCallback user_callback,
+				     GetMsgAsyncUserCallback user_callback,
 				     gpointer user_data,
 				     GDestroyNotify notify)
 {

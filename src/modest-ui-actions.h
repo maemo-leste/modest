@@ -303,16 +303,24 @@ void     modest_ui_actions_on_folder_display_name_changed (ModestFolderView *fol
 							   const gchar *display_name,
 							   GtkWindow *window);
 
-void modest_ui_actions_view_attachment (GtkAction *action,
-					ModestWindow *window);
+void     modest_ui_actions_view_attachment                (GtkAction *action,
+							   ModestWindow *window);
 
-void modest_ui_actions_save_attachments (GtkAction *action,
-					 ModestWindow *window);
+void     modest_ui_actions_save_attachments               (GtkAction *action,
+							   ModestWindow *window);
 
-void modest_ui_actions_remove_attachments (GtkAction *action,
-					   ModestWindow *window);
+void     modest_ui_actions_remove_attachments             (GtkAction *action,
+							   ModestWindow *window);
 
-					
+/**
+ * modest_ui_actions_on_retrieve_msg_contents:
+ * @action: the #GtkAction
+ * @window: the #ModestWindow that issues the action
+ * 
+ * Retrieve the contents of the selected messages in the header view
+ **/
+void     modest_ui_actions_on_retrieve_msg_contents       (GtkAction *action,
+							   ModestWindow *window);
 
 G_END_DECLS
 #endif /* __MODEST_UI_ACTIONS_H__ */

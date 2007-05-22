@@ -313,6 +313,8 @@ modest_msg_view_window_get_message_uid (ModestMsgViewWindow *self)
 		retval = tny_header_get_uid (header);
 		g_object_unref (header);
 	}
+	g_object_unref (msg);
+
 	return retval;
 }
 

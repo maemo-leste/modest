@@ -96,7 +96,7 @@ static void         on_queue_changed                     (ModestMailOperationQue
 							  ModestMailOperationQueueNotification type,
 							  ModestMsgViewWindow *self);
 
-static void view_msg_cb (const GObject *obj, TnyMsg *msg, gpointer user_data);
+static void view_msg_cb (ModestMailOperation *mail_op, TnyHeader *header, TnyMsg *msg, gpointer user_data);
 
 static void set_toolbar_mode (ModestMsgViewWindow *self, 
 			      ModestToolBarModes mode);
@@ -645,6 +645,8 @@ modest_msg_view_window_get_message_uid (ModestMsgViewWindow *self)
 		retval = tny_header_get_uid (header);
 		g_object_unref (header);
 	}
+	g_object_unref (msg);
+
 	return retval;
 }
 
@@ -1056,20 +1058,24 @@ modest_msg_view_window_select_previous_message (ModestMsgViewWindow *window)
 }
 
 static void
-view_msg_cb(const GObject *obj, TnyMsg *msg, gpointer user_data)
+view_msg_cb (ModestMailOperation *mail_op, 
+	     TnyHeader *header, 
+	     TnyMsg *msg, 
+	     gpointer user_data)
 {
 	ModestMsgViewWindow *self = NULL;
 	ModestMsgViewWindowPrivate *priv = NULL;
-	TnyMsg *new_msg = NULL;
- 
-	g_return_if_fail (MODEST_IS_MSG_VIEW_WINDOW (obj));
+
 	g_return_if_fail (TNY_IS_MSG (msg));
-	self = MODEST_MSG_VIEW_WINDOW (obj);
+
+	/* Get the window */ 
+	self = (ModestMsgViewWindow *) modest_mail_operation_get_source (mail_op);
+	g_return_if_fail (MODEST_IS_MSG_VIEW_WINDOW (self));
+
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (self);
 
 	/* Set new message */
-	new_msg = g_object_ref (G_OBJECT(msg));
-	modest_msg_view_set_message (MODEST_MSG_VIEW (priv->msg_view), new_msg);
+	modest_msg_view_set_message (MODEST_MSG_VIEW (priv->msg_view), msg);
 	modest_msg_view_window_update_dimmed (self);
 	modest_msg_view_window_update_priority (self);
 	gtk_widget_grab_focus (priv->msg_view);
@@ -1102,6 +1108,7 @@ modest_msg_view_window_get_folder_type (ModestMsgViewWindow *window)
 
 			g_object_unref (folder);
 		}
+		g_object_unref (msg);
 	}
 
 	return folder_type;

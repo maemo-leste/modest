@@ -818,8 +818,7 @@ modest_tny_account_store_get_tny_account_by_account (ModestTnyAccountStore *self
 						     TnyAccountType type)
 {
 	TnyAccount *account = NULL;
-	ModestAccountData *account_data;
-	const gchar *id = NULL;
+	gchar *id = NULL;
 	ModestTnyAccountStorePrivate *priv;	
 
 	g_return_val_if_fail (self, NULL);
@@ -828,17 +827,26 @@ modest_tny_account_store_get_tny_account_by_account (ModestTnyAccountStore *self
 			      NULL);
 	
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
-	
-	account_data = modest_account_mgr_get_account_data (priv->account_mgr, account_name);
-	if (!account_data) {
-		g_printerr ("modest: cannot get account data for account '%s'\n", account_name);
-		return NULL;
-	}
 
-	if (type == TNY_ACCOUNT_TYPE_STORE && account_data->store_account)
-		id = account_data->store_account->account_name;
-	else if (account_data->transport_account)
-		id = account_data->transport_account->account_name;
+	/* Special case for the local account */
+	if (!strcmp (account_name, MODEST_LOCAL_FOLDERS_ACCOUNT_ID)) {
+		id = g_strdup (MODEST_LOCAL_FOLDERS_ACCOUNT_ID);
+	} else {
+		ModestAccountData *account_data;
+
+		account_data = modest_account_mgr_get_account_data (priv->account_mgr, account_name);
+		if (!account_data) {
+			g_printerr ("modest: cannot get account data for account '%s'\n", account_name);
+			return NULL;
+		}
+
+		if (type == TNY_ACCOUNT_TYPE_STORE && account_data->store_account)
+			id = g_strdup (account_data->store_account->account_name);
+		else if (account_data->transport_account)
+			id = g_strdup (account_data->transport_account->account_name);
+
+		modest_account_mgr_free_account_data (priv->account_mgr, account_data);
+	}
 
 	if (!id)
 		g_printerr ("modest: could not get an id for account %s\n",
@@ -851,7 +859,6 @@ modest_tny_account_store_get_tny_account_by_account (ModestTnyAccountStore *self
 			    type == TNY_ACCOUNT_TYPE_STORE? "store" : "transport",
 			    account_name, id ? id : "<none>");
 
-	modest_account_mgr_free_account_data (priv->account_mgr, account_data);
 	return account;	
 }
 

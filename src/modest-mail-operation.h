@@ -99,7 +99,7 @@ struct _ModestMailOperationClass {
 typedef void (*ErrorCheckingUserCallback) (const GObject *obj, gpointer user_data);
 
 /**
- * GetMsgAsynUserCallback:
+ * GetMsgAsyncUserCallback:
  *
  * @obj: a #GObject generic object which has created current mail operation.
  * @msg: a #TnyMsg message retrieved by async operation.
@@ -109,7 +109,10 @@ typedef void (*ErrorCheckingUserCallback) (const GObject *obj, gpointer user_dat
  * used as tinymail operation callback. The private function fills private 
  * fields of mail operation and calls user defined callback if it exists.
  */
-typedef void (*GetMsgAsynUserCallback) (const GObject *obj, TnyMsg *msg, gpointer user_data);
+typedef void (*GetMsgAsyncUserCallback) (ModestMailOperation *mail_op, 
+					 TnyHeader *header, 
+					 TnyMsg *msg, 
+					 gpointer user_data);
 
 /**
  * XferMsgAsynUserCallback:
@@ -185,6 +188,17 @@ modest_mail_operation_get_id (ModestMailOperation *self);
 gboolean 
 modest_mail_operation_is_mine (ModestMailOperation *self, 
 			       GObject *me);
+
+/**
+ * modest_mail_operation_get_source
+ * @self: a #ModestMailOperation
+ *
+ * returns a new reference to the object that created the mail
+ * operation passed to the constructor, or NULL if none. The caller
+ * must free the new reference
+ **/
+GObject *
+modest_mail_operation_get_source (ModestMailOperation *self);
 
 /* fill in other public functions, eg.: */
 
@@ -423,7 +437,7 @@ void          modest_mail_operation_remove_msg     (ModestMailOperation *self,
  * modest_mail_operation_get_msg:
  * @self: a #ModestMailOperation
  * @header_list: the #TnyHeader of the message to get
- * @user_callback: a #GetMsgAsynUserCallback function to call after tinymail callback execution.
+ * @user_callback: a #GetMsgAsyncUserCallback function to call after tinymail callback execution.
  * @user_data: generic user data which will be passed to @user_callback function.
  * 
  * Gets a message from header using an user defined @callback function
@@ -432,7 +446,7 @@ void          modest_mail_operation_remove_msg     (ModestMailOperation *self,
  **/
 void          modest_mail_operation_get_msg     (ModestMailOperation *self,
 						 TnyHeader *header, 
-						 GetMsgAsynUserCallback user_callback,
+						 GetMsgAsyncUserCallback user_callback,
 						 gpointer user_data);
 /**
  * modest_mail_operation_get_msgs_full:
@@ -447,7 +461,7 @@ void          modest_mail_operation_get_msg     (ModestMailOperation *self,
  **/
 void          modest_mail_operation_get_msgs_full   (ModestMailOperation *self,
 						     TnyList *headers_list,
-						     GetMsgAsynUserCallback user_callback,
+						     GetMsgAsyncUserCallback user_callback,
 						     gpointer user_data,
 						     GDestroyNotify notify);
 

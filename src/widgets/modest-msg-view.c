@@ -1407,9 +1407,16 @@ modest_msg_view_set_message (ModestMsgView *self, TnyMsg *msg)
 TnyMsg*
 modest_msg_view_get_message (ModestMsgView *self)
 {
+	TnyMsg *msg;
+
 	g_return_val_if_fail (self, NULL);
+
+	msg = MODEST_MSG_VIEW_GET_PRIVATE(self)->msg;
+
+	if (msg)
+		g_object_ref (msg);
 	
-	return MODEST_MSG_VIEW_GET_PRIVATE(self)->msg;
+	return msg;
 }
 
 gboolean 

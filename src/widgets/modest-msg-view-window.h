@@ -113,7 +113,8 @@ modest_msg_view_window_get_header (ModestMsgViewWindow *self);
  * modest_msg_view_window_get_message:
  * @window: an #ModestMsgViewWindow instance
  * 
- * get the message in this msg view
+ * get a new reference to the message in this msg view. The caller
+ * must free this new reference
  * 
  * Returns: a new #TnyMsg instance, or NULL in case of error
  */

@@ -221,7 +221,8 @@ ModestHeaderViewStyle   modest_header_view_get_style (ModestHeaderView *self);
  * modest_header_view_get_selected_headers:
  * @self: a ModestHeaderView instance
  * 
- * get the list of the currently selected TnyHeader's
+ * get the list of the currently selected TnyHeader's. The list and
+ * the headers should be freed by the caller
  *  
  * Returns: the list with the currently selected headers
  */
