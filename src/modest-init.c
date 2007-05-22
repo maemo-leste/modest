@@ -609,8 +609,13 @@ init_device_name (ModestConf *conf)
 		else
 			devname[len] = '\0';
 
-		modest_conf_set_string (conf, MODEST_CONF_DEVICE_NAME,devname, NULL);
+		GError *err = NULL;
+		if (!modest_conf_set_string (conf, MODEST_CONF_DEVICE_NAME,devname, &err)) {
+			g_printerr ("modest: error setting device name '%s': %s",
+				    devname, err ? err->message: "?");
+			g_error_free (err);
+		}
 	}
-
+	
 	g_free (devname);
 }
