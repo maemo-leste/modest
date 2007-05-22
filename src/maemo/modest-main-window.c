@@ -106,11 +106,14 @@ static void set_toolbar_mode                  (ModestMainWindow *self,
 
 static gboolean set_toolbar_transfer_mode     (ModestMainWindow *self); 
 
-static void on_show_account_action_activated  (GtkAction *action,
-					       gpointer user_data);
+static void on_show_account_action_activated      (GtkAction *action,
+						   gpointer user_data);
 
-static void on_send_receive_csm_activated     (GtkMenuItem *item,
-					       gpointer user_data);
+static void on_refresh_account_action_activated   (GtkAction *action,
+						   gpointer user_data);
+
+static void on_send_receive_csm_activated         (GtkMenuItem *item,
+						   gpointer user_data);
 /* list my signals */
 enum {
 	/* MY_SIGNAL_1, */
@@ -920,7 +923,8 @@ on_account_update (TnyAccountStore *account_store,
 	   menu_detach because it does not work well with
 	   tap_and_hold */
 	if (priv->accounts_popup)
-		gtk_container_foreach (GTK_CONTAINER (priv->accounts_popup), (GtkCallback) gtk_widget_destroy, NULL);
+		gtk_container_foreach (GTK_CONTAINER (priv->accounts_popup), 
+				       (GtkCallback) gtk_widget_destroy, NULL);
 
 	/* Delete old entries in the View menu. Do not free groups, it
 	   belongs to Gtk+ */
@@ -968,7 +972,6 @@ on_account_update (TnyAccountStore *account_store,
 	default_account = modest_account_mgr_get_default_account (mgr);
 	action_group = gtk_action_group_new (MODEST_MAIN_WINDOW_ACTION_GROUP_ADDITIONS);
 	for (i = 0; i < num_accounts; i++) {
-		GtkAction *new_action = NULL;
 		gchar *display_name = NULL;
 		
 		ModestAccountData *account_data = (ModestAccountData *) g_slist_nth_data (accounts, i);
@@ -988,17 +991,22 @@ on_account_update (TnyAccountStore *account_store,
 		   action name must be the account name, this way we
 		   could know in the handlers the account to show */
 		if(account_data->account_name) {
-			new_action = gtk_action_new (account_data->account_name, display_name, NULL, NULL);
-			gtk_action_group_add_action (action_group, new_action);
+			gchar* item_name, *refresh_action_name;
+			guint8 merge_id;
+			GtkAction *view_account_action, *refresh_account_action;
+
+			view_account_action = gtk_action_new (account_data->account_name,
+							      display_name, NULL, NULL);
+			gtk_action_group_add_action (action_group, view_account_action);
 
 			/* Add ui from account data. We allow 2^9-1 account
 			   changes in a single execution because we're
 			   downcasting the guint to a guint8 in order to use a
 			   GByteArray, it should be enough */
-			gchar* item_name = g_strconcat (account_data->account_name, "Menu", NULL);
-			guint8 merge_id = (guint8) gtk_ui_manager_new_merge_id (parent_priv->ui_manager);
+			item_name = g_strconcat (account_data->account_name, "Menu", NULL);
+			merge_id = (guint8) gtk_ui_manager_new_merge_id (parent_priv->ui_manager);
 			priv->merge_ids = g_byte_array_append (priv->merge_ids, &merge_id, 1);
-			gtk_ui_manager_add_ui (parent_priv->ui_manager, 
+			gtk_ui_manager_add_ui (parent_priv->ui_manager,
 					       merge_id,
 					       "/MenuBar/ViewMenu/ViewMenuAdditions",
 					       item_name,
@@ -1007,13 +1015,38 @@ on_account_update (TnyAccountStore *account_store,
 					       FALSE);
 	
 			/* Connect the action signal "activate" */
-			g_signal_connect (G_OBJECT (new_action), 
-					  "activate", 
-					  G_CALLBACK (on_show_account_action_activated), 
+			g_signal_connect (G_OBJECT (view_account_action),
+					  "activate",
+					  G_CALLBACK (on_show_account_action_activated),
 					  self);
 
-			/* Create item and add it to the send&receive CSM */
-			/* TODO: Why is this sometimes NULL? murrayc */
+			/* Create the items for the Tools->Send&Receive submenu */
+			refresh_action_name = g_strconcat ("SendReceive", account_data->account_name, NULL);
+			refresh_account_action = gtk_action_new ((const gchar*) refresh_action_name, 
+								 display_name, NULL, NULL);
+			gtk_action_group_add_action (action_group, refresh_account_action);
+
+			merge_id = (guint8) gtk_ui_manager_new_merge_id (parent_priv->ui_manager);
+			priv->merge_ids = g_byte_array_append (priv->merge_ids, &merge_id, 1);
+			gtk_ui_manager_add_ui (parent_priv->ui_manager, 
+					       merge_id,
+					       "/MenuBar/ToolsMenu/ToolsSendReceiveMainMenu/ToolsMenuAdditions",
+					       item_name,
+					       refresh_action_name,
+					       GTK_UI_MANAGER_MENUITEM,
+					       FALSE);
+			g_free (refresh_action_name);
+
+			g_signal_connect_data (G_OBJECT (refresh_account_action), 
+					       "activate", 
+					       G_CALLBACK (on_refresh_account_action_activated), 
+					       g_strdup (account_data->account_name),
+					       (GClosureNotify) g_free,
+					       0);
+
+			/* Create item and add it to the send&receive
+			   CSM. If there is only one account then
+			   it'll be no menu */
 			if (priv->accounts_popup) {
 				item = gtk_menu_item_new_with_label (display_name);
 				gtk_menu_shell_append (GTK_MENU_SHELL (priv->accounts_popup), GTK_WIDGET (item));
@@ -1024,7 +1057,6 @@ on_account_update (TnyAccountStore *account_store,
 						       (GClosureNotify) g_free,
 						       0);
 			}
-			
 			g_free (item_name);
 		}
 
@@ -1105,7 +1137,8 @@ create_details_widget (TnyAccount *account)
 		device_name = modest_conf_get_string (modest_runtime_get_conf(),
 						      MODEST_CONF_DEVICE_NAME, NULL);
    
-		label = g_strdup_printf (_("mcen_fi_localroot_description"),
+		label = g_strdup_printf ("%s: %s",
+					 _("mcen_fi_localroot_description"),
 					 device_name);
 		gtk_box_pack_start (GTK_BOX (vbox), gtk_label_new (label), FALSE, FALSE, 0);
 		g_free (device_name);
@@ -1492,17 +1525,29 @@ on_show_account_action_activated  (GtkAction *action,
 }
 
 static void
-on_send_receive_csm_activated (GtkMenuItem *item,
-			       gpointer user_data)
+refresh_account (const gchar *account_name)
 {
 	ModestWindow *win;
 
 	win = MODEST_WINDOW (modest_window_mgr_get_main_window (modest_runtime_get_window_mgr ()));
 
-	/* If user_data == NULL, we must update all (CSM option All) */
-	if (!user_data) {
+	/* If account_name == NULL, we must update all (option All) */
+	if (!account_name)
 		modest_ui_actions_do_send_receive_all (win);
-	} else {
-		modest_ui_actions_do_send_receive ((const gchar *)user_data, win);
-	}
+	else
+		modest_ui_actions_do_send_receive (account_name, win);
+}
+
+static void 
+on_refresh_account_action_activated  (GtkAction *action,
+				      gpointer user_data)
+{
+	refresh_account ((const gchar*) user_data);
+}
+
+static void
+on_send_receive_csm_activated (GtkMenuItem *item,
+			       gpointer user_data)
+{
+	refresh_account ((const gchar*) user_data);
 }

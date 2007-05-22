@@ -88,6 +88,7 @@
         <menuitem name="ToolsSendReceiveAllMenu"  action="ToolsSendReceiveAll"/>
         <menuitem name="ToolsSendReceiveCancelSendingMenu"  action="ToolsSendReceiveCancelSending"/>
         <separator/>
+        <placeholder name="ToolsMenuAdditions" />
       </menu>
       <separator/>
       <menuitem name="ToolsContactsMenu" action="ToolsContacts"/>
