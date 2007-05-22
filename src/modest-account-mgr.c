@@ -409,10 +409,8 @@ modest_account_mgr_add_server_account (ModestAccountMgr * self,
 	if (!ok)
 		goto cleanup;
 	
-	if (modest_protocol_info_protocol_is_store(proto)) {
-		/* Add the security settings: */
-		modest_server_account_set_security (self, name, security);
-	}
+	/* Add the security settings: */
+	modest_server_account_set_security (self, name, security);
 	
 cleanup:
 	if (!ok) {
