@@ -68,5 +68,7 @@ enum ModestDbusOpenMessageArguments
 
 #define MODEST_DBUS_METHOD_SEND_RECEIVE "SendReceive"
 
-#endif /* __MODEST_DBUS_API__ */
+#define MODEST_DBUS_METHOD_COMPOSE_MAIL "ComposeMail"
 
+
+#endif /* __MODEST_DBUS_API__ */

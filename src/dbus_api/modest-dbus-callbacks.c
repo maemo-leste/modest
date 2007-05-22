@@ -377,7 +377,7 @@ static gint on_mail_to(GArray * arguments, gpointer data, osso_rpc_t * retval)
 
 
 static gboolean
-on_idle_open_message(gpointer user_data)
+on_idle_compose_mail(gpointer user_data)
 {
 	gchar *uri = (gchar*)user_data;
 	
@@ -446,6 +446,37 @@ on_idle_open_message(gpointer user_data)
 	return FALSE; /* Do not call this callback again. */
 }
 
+static gint on_compose_mail(GArray * arguments, gpointer data, osso_rpc_t * retval)
+{
+	if (arguments->len != MODEST_DEBUS_OPEN_MESSAGE_ARGS_COUNT)
+     	return OSSO_ERROR;
+     	
+    /* Use g_idle to context-switch into the application's thread: */
+
+    /* Get the arguments: */
+ 	osso_rpc_t val = g_array_index(arguments, osso_rpc_t, MODEST_DEBUS_OPEN_MESSAGE_ARG_URI);
+ 	gchar *uri = g_strdup (val.value.s);
+ 	
+ 	/* printf("  debug: to=%s\n", idle_data->to); */
+ 	g_idle_add(on_idle_compose_mail, (gpointer)uri);
+ 	
+ 	/* Note that we cannot report failures during sending, 
+ 	 * because that would be asynchronous. */
+ 	return OSSO_OK;
+}
+
+
+static gboolean
+on_idle_open_message(gpointer user_data)
+{
+	gchar *uri = (gchar*)user_data;
+	
+	g_message ("not implemented yet %s", __FUNCTION__);
+	
+	g_free(uri);
+	return FALSE; /* Do not call this callback again. */
+}
+
 static gint on_open_message(GArray * arguments, gpointer data, osso_rpc_t * retval)
 {
 	if (arguments->len != MODEST_DEBUS_OPEN_MESSAGE_ARGS_COUNT)
@@ -464,6 +495,7 @@ static gint on_open_message(GArray * arguments, gpointer data, osso_rpc_t * retv
  	 * because that would be asynchronous. */
  	return OSSO_OK;
 }
+
 
 static gboolean
 on_idle_send_receive(gpointer user_data)
@@ -511,6 +543,8 @@ gint modest_dbus_req_handler(const gchar * interface, const gchar * method,
 		return on_open_message (arguments, data, retval);
 	} else if (g_ascii_strcasecmp(method, MODEST_DBUS_METHOD_SEND_RECEIVE) == 0) {
 		return on_send_receive (arguments, data, retval);
+	} else if (g_ascii_strcasecmp(method, MODEST_DBUS_METHOD_COMPOSE_MAIL) == 0) {
+		return on_compose_mail (arguments, data, retval);
 	}
 	else
 		return OSSO_ERROR;
