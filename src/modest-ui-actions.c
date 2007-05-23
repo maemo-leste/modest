@@ -2421,6 +2421,7 @@ msgs_move_to_confirmation (GtkWindow *win,
 			response = modest_platform_run_confirmation_dialog (GTK_WINDOW (win),
 									    (const gchar *) message);
 		}
+		g_object_unref (src_folder);
 	}
 	return response;
 }

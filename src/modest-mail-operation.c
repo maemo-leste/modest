@@ -1498,26 +1498,22 @@ modest_mail_operation_xfer_msgs (ModestMailOperation *self,
 	g_return_if_fail (TNY_IS_LIST (headers));
 	g_return_if_fail (TNY_IS_FOLDER (folder));
 
-	/* Get folder rules */
-	rules = modest_tny_folder_get_rules (TNY_FOLDER (folder));
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
+	priv->total = 1;
+	priv->done = 0;
+	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
 
 	/* Apply folder rules */
+	rules = modest_tny_folder_get_rules (TNY_FOLDER (folder));
+
 	if (rules & MODEST_FOLDER_RULES_FOLDER_NON_WRITEABLE) {
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 			     MODEST_MAIL_OPERATION_ERROR_FOLDER_RULES,
 			     _("FIXME: folder does not accept msgs"));
 		/* Notify the queue */
 		modest_mail_operation_notify_end (self);
-
-		g_object_unref (headers);
-		g_object_unref (folder);
 		return;
 	}
-
-	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
-	priv->total = 1;
-	priv->done = 0;
-	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
 
 	/* Create the helper */
 	helper = g_slice_new0 (XFerMsgAsyncHelper);
