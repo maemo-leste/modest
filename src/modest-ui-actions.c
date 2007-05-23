@@ -1112,11 +1112,9 @@ set_active_account_from_tny_account (TnyAccount *account,
 	TnyAccount *modest_server_account = modest_server_account = 
 		modest_tny_account_store_get_tny_account_by_id  (modest_runtime_get_account_store (), 
 								 server_acc_name);
-	printf("%s: modest_server_account name=%s\n", __FUNCTION__, tny_account_get_id (modest_server_account));
-
-	const gchar *modest_acc_name = modest_tny_account_get_parent_modest_account_name_for_server_account (modest_server_account);
-	printf("%s: modest_acc_name=%s\n", __FUNCTION__, modest_acc_name);
-
+	
+	const gchar *modest_acc_name = 
+		modest_tny_account_get_parent_modest_account_name_for_server_account (modest_server_account);
 	modest_window_set_active_account (window, modest_acc_name);
 	g_object_unref (modest_server_account);
 }

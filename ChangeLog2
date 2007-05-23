@@ -1,5 +1,10 @@
 2007-05-23  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-ui-actions.c: (set_active_account_from_tny_account):
+	Removed some debug printfs.
+
+2007-05-23  Murray Cumming  <murrayc@murrayc.com>
+
 	Modest on-disk outbox directories are now here, for instance:
 	$HOME/.modest/outboxes/<account-id-1>/outbox
 	$HOME/.modest/outboxes/<account-id-2>/outbox
