@@ -1,3 +1,11 @@
+2007-05-23  Marcus Bauer  <marcusb@openismus.com>
+
+	* libmodest-dbus-client/libmodest-dbus-client.c:
+	(libmodest_dbus_client_compose_mail): function added
+	* src/dbus_api/modest-dbus-api.h:
+	* src/dbus_api/modest-dbus-callbacks.c: (on_idle_compose_mail),
+	(on_compose_mail): Implementation of the SendAsMail functionality
+
 2007-05-22 Murray Cumming  <murrayc@murrayc.com>
 
 	* src/modest-account-mgr.c:

@@ -48,6 +48,16 @@ typedef struct
  	gchar *body;
 } SendMailIdleData;
 
+typedef struct 
+{
+	gchar *to;
+ 	gchar *cc;
+ 	gchar *bcc;
+ 	gchar *subject;
+ 	gchar *body;
+	GSList *attachments;
+} ComposeMailIdleData;
+
 static gboolean
 on_idle_send_mail(gpointer user_data)
 {
@@ -379,9 +389,8 @@ static gint on_mail_to(GArray * arguments, gpointer data, osso_rpc_t * retval)
 static gboolean
 on_idle_compose_mail(gpointer user_data)
 {
-	gchar *uri = (gchar*)user_data;
-	
-	
+	ComposeMailIdleData *idle_data = (ComposeMailIdleData*)user_data;
+
 	/* Get the TnyTransportAccount so we can instantiate a mail operation: */
  	ModestAccountMgr *account_mgr = modest_runtime_get_account_mgr();
 	gchar *account_name = modest_account_mgr_get_default_account (account_mgr);
@@ -403,17 +412,11 @@ on_idle_compose_mail(gpointer user_data)
 		if (!from) {
 			g_printerr ("modest: no from address for account '%s'\n", account_name);
 		} else {
-			const gchar *subject = NULL;
-			const gchar *body = NULL;
-			
-			subject = uri;
-			body = uri;
-			
 			
 			/* Create the message: */
-			TnyMsg *msg  = modest_tny_msg_new (NULL, from, 
-				NULL, NULL, subject, body, 
-				NULL /* attachments */);
+			TnyMsg *msg  = modest_tny_msg_new (idle_data->to, from, 
+				idle_data->cc, idle_data->bcc, idle_data->subject, idle_data->body, 
+				idle_data->attachments);
 				
 			if (!msg) {
 				g_printerr ("modest: failed to create message\n");
@@ -440,25 +443,59 @@ on_idle_compose_mail(gpointer user_data)
 			g_object_unref (G_OBJECT(account));
 		}
  	}
- 	
+
+ 	/* Free the idle data: */
+	g_free (idle_data->to);
+	g_free (idle_data->cc);
+	g_free (idle_data->bcc);
+	g_free (idle_data->subject);
+	g_free (idle_data->body);
+	g_free (idle_data->attachments);
+	g_free (idle_data);
+	
  	g_free (account_name);
-	g_free(uri);
 	return FALSE; /* Do not call this callback again. */
 }
 
 static gint on_compose_mail(GArray * arguments, gpointer data, osso_rpc_t * retval)
 {
-	if (arguments->len != MODEST_DEBUS_OPEN_MESSAGE_ARGS_COUNT)
+	gchar **list = NULL;
+	gint i = 0;
+	
+	if (arguments->len != MODEST_DEBUS_COMPOSE_MAIL_ARGS_COUNT)
      	return OSSO_ERROR;
      	
-    /* Use g_idle to context-switch into the application's thread: */
+	/* Use g_idle to context-switch into the application's thread: */
+ 	ComposeMailIdleData *idle_data = g_new0(ComposeMailIdleData, 1); /* Freed in the idle callback. */
+ 	
+	/* Get the arguments: */
+ 	osso_rpc_t val = g_array_index(arguments, osso_rpc_t, MODEST_DEBUS_COMPOSE_MAIL_ARG_TO);
+ 	idle_data->to = g_strdup (val.value.s);
+ 	
+ 	val = g_array_index(arguments, osso_rpc_t, MODEST_DEBUS_COMPOSE_MAIL_ARG_CC);
+ 	idle_data->cc = g_strdup (val.value.s);
+ 	
+ 	val = g_array_index(arguments, osso_rpc_t, MODEST_DEBUS_COMPOSE_MAIL_ARG_BCC);
+ 	idle_data->bcc = g_strdup (val.value.s);
+ 	
+ 	val = g_array_index(arguments, osso_rpc_t, MODEST_DEBUS_COMPOSE_MAIL_ARG_SUBJECT);
+ 	idle_data->subject = g_strdup (val.value.s);
+ 	
+ 	val = g_array_index(arguments, osso_rpc_t, MODEST_DEBUS_COMPOSE_MAIL_ARG_BODY);
+ 	idle_data->body = g_strdup (val.value.s);
+ 	
+ 	val = g_array_index(arguments, osso_rpc_t, MODEST_DEBUS_COMPOSE_MAIL_ARG_ATTACHMENTS);
+ 	gchar *attachments_str = g_strdup (val.value.s);
 
-    /* Get the arguments: */
- 	osso_rpc_t val = g_array_index(arguments, osso_rpc_t, MODEST_DEBUS_OPEN_MESSAGE_ARG_URI);
- 	gchar *uri = g_strdup (val.value.s);
+	list = g_strsplit(attachments_str, ",", 0);
+	for (i=0; list[i] != NULL; i++) {
+		idle_data->attachments = g_slist_append(idle_data->attachments, g_strdup(list[i]));
+	}
+	g_strfreev(list);
+
  	
  	/* printf("  debug: to=%s\n", idle_data->to); */
- 	g_idle_add(on_idle_compose_mail, (gpointer)uri);
+ 	g_idle_add(on_idle_compose_mail, (gpointer)idle_data);
  	
  	/* Note that we cannot report failures during sending, 
  	 * because that would be asynchronous. */
