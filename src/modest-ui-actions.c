@@ -1105,7 +1105,6 @@ set_active_account_from_tny_account (TnyAccount *account,
 {
 	const gchar *server_acc_name = tny_account_get_id (account);
 	
-	printf("%s: server_acc_name=%s\n", __FUNCTION__, server_acc_name);
 	/* We need the TnyAccount provided by the
 	   account store because that is the one that
 	   knows the name of the Modest account */
