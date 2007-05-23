@@ -26,7 +26,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
+ 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif /*HAVE_CONFIG_H*/
@@ -69,6 +69,7 @@
 #include <tny-simple-list.h>
 #include <tny-msg-view.h>
 #include <tny-device.h>
+#include <tny-merge-folder.h>
 
 typedef struct _GetMsgAsyncHelper {	
 	ModestWindow *window;
@@ -471,6 +472,7 @@ modest_ui_actions_on_new_msg (GtkAction *action, ModestWindow *win)
 /* 	} */
 
 	/* Create and register edit window */
+	/* This is destroyed by TOOD. */
 	msg_win = modest_msg_edit_window_new (msg, account_name);
 	mgr = modest_runtime_get_window_mgr ();
 	modest_window_mgr_register_window (mgr, msg_win);
@@ -520,7 +522,7 @@ open_msg_cb (ModestMailOperation *mail_op,
 	if (!account)
 		account = modest_account_mgr_get_default_account (modest_runtime_get_account_mgr());
 	
-	/* Get folder type */
+	/* Gets folder type (OUTBOX headers will be opened in edit window */
 	if (modest_tny_folder_is_local_folder (folder))
 		folder_type = modest_tny_folder_get_local_folder_type (folder);
 
@@ -1101,18 +1103,20 @@ static void
 set_active_account_from_tny_account (TnyAccount *account,
 				     ModestWindow *window)
 {
-	TnyAccount *modest_server_account;
-	const gchar *server_acc_name;
-	gchar *modest_acc_name;
-
-	server_acc_name = tny_account_get_id (account);
+	const gchar *server_acc_name = tny_account_get_id (account);
+	
+	printf("%s: server_acc_name=%s\n", __FUNCTION__, server_acc_name);
 	/* We need the TnyAccount provided by the
 	   account store because that is the one that
 	   knows the name of the Modest account */
-	modest_server_account = 
+	TnyAccount *modest_server_account = modest_server_account = 
 		modest_tny_account_store_get_tny_account_by_id  (modest_runtime_get_account_store (), 
 								 server_acc_name);
-	modest_acc_name = (gchar *) g_object_get_data (G_OBJECT (modest_server_account), "modest_account");
+	printf("%s: modest_server_account name=%s\n", __FUNCTION__, tny_account_get_id (modest_server_account));
+
+	const gchar *modest_acc_name = modest_tny_account_get_parent_modest_account_name_for_server_account (modest_server_account);
+	printf("%s: modest_acc_name=%s\n", __FUNCTION__, modest_acc_name);
+
 	modest_window_set_active_account (window, modest_acc_name);
 	g_object_unref (modest_server_account);
 }
@@ -1125,7 +1129,6 @@ modest_ui_actions_on_folder_selection_changed (ModestFolderView *folder_view,
 {
 	ModestConf *conf;
 	GtkWidget *header_view;
-	TnyAccount *account;
 	
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW(main_window));
 
@@ -1141,12 +1144,19 @@ modest_ui_actions_on_folder_selection_changed (ModestFolderView *folder_view,
 		set_active_account_from_tny_account (TNY_ACCOUNT (folder_store), MODEST_WINDOW (main_window));
 		/* Show account details */
 		modest_main_window_set_contents_style (main_window, MODEST_MAIN_WINDOW_CONTENTS_STYLE_DETAILS);
+	} else if (modest_tny_folder_store_is_virtual_local_folders  (folder_store )) {
+		printf ("DEBUG: %s: folder store.\n", __FUNCTION__);
+		//TODO: Set the virtual folder store as the "active account" somehow:
+		modest_main_window_set_contents_style (main_window, MODEST_MAIN_WINDOW_CONTENTS_STYLE_DETAILS);
 	} else {
 		if (TNY_IS_FOLDER (folder_store) && selected) {
-			/* Update the active account */
-			account = tny_folder_get_account (TNY_FOLDER (folder_store));
-			set_active_account_from_tny_account (account, MODEST_WINDOW (main_window));
-			g_object_unref (account);
+			
+			if (!TNY_IS_MERGE_FOLDER (folder_store)) { /* TnyMergeFolder can have no get_account() implementation. */
+				/* Update the active account */
+				TnyAccount *account = tny_folder_get_account (TNY_FOLDER (folder_store));
+				set_active_account_from_tny_account (account, MODEST_WINDOW (main_window));
+				g_object_unref (account);
+			}
 			
 			/* Set folder on header view */
 			modest_main_window_set_contents_style (main_window, 
@@ -1312,6 +1322,8 @@ modest_ui_actions_on_save_to_drafts (GtkWidget *widget, ModestMsgEditWindow *edi
 	/* Save settings and close the window */
 	gtk_widget_destroy (GTK_WIDGET (edit_window));
 }
+
+/* For instance, when clicking the Send toolbar button when editing a message: */
 void
 modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 {

@@ -40,10 +40,13 @@
 #include <tny-folder.h>
 #include <tny-camel-folder.h>
 #include <tny-simple-list.h>
+#include <tny-merge-folder.h>
 #include <modest-tny-folder.h>
+#include <modest-tny-simple-folder-store.h>
 #include <modest-marshal.h>
 #include <modest-icon-names.h>
 #include <modest-tny-account-store.h>
+#include <modest-tny-outbox-account.h>
 #include <modest-text-utils.h>
 #include <modest-runtime.h>
 #include "modest-folder-view.h"
@@ -51,6 +54,7 @@
 #include <modest-platform.h>
 #include <modest-account-mgr-helpers.h>
 #include <modest-widget-memory.h>
+
 
 /* 'private'/'protected' functions */
 static void modest_folder_view_class_init  (ModestFolderViewClass *klass);
@@ -229,8 +233,6 @@ modest_folder_view_class_init (ModestFolderViewClass *klass)
 			      G_TYPE_NONE, 1, G_TYPE_STRING);
 }
 
-
-
 static void
 text_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 		 GtkTreeModel *tree_model,  GtkTreeIter *iter,  gpointer data)
@@ -265,9 +267,12 @@ text_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 	
 	priv =	MODEST_FOLDER_VIEW_GET_PRIVATE (data);
 	
+	gchar *item_name = NULL;
+	gint item_weight = 400;
+	
 	if (type != TNY_FOLDER_TYPE_ROOT) {
-		gint number;
-
+		gint number = 0;
+		
 		if (modest_tny_folder_is_local_folder (TNY_FOLDER (instance))) {
 			TnyFolderType type;
 			type = modest_tny_folder_get_local_folder_type (TNY_FOLDER (instance));
@@ -285,45 +290,53 @@ text_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 
 		/* Use bold font style if there are unread messages */
 		if (unread > 0) {
-			gchar *folder_title = g_strdup_printf ("%s (%d)", fname, unread);
-			g_object_set (rendobj,"text", folder_title,  "weight", 800, NULL);
-			if (G_OBJECT (priv->cur_folder_store) == instance)
-				g_signal_emit (G_OBJECT(data),
-					       signals[FOLDER_DISPLAY_NAME_CHANGED_SIGNAL], 0,
-					       folder_title);
-			g_free (folder_title);
+			item_name = g_strdup_printf ("%s (%d)", fname, unread);
+			item_weight = 800;
 		} else {
-			g_object_set (rendobj,"text", fname, "weight", 400, NULL);
-			if (G_OBJECT (priv->cur_folder_store) == instance)
-				g_signal_emit (G_OBJECT(data),
-					       signals[FOLDER_DISPLAY_NAME_CHANGED_SIGNAL], 0,
-					       fname);
+			item_name = g_strdup (fname);
+			item_weight = 400;
 		}
 
-	} else {
-		const gchar *account_name = NULL;
-		const gchar *account_id = NULL;
-
+	} else if (TNY_IS_ACCOUNT (instance)) {
 		/* If it's a server account */
-		account_id = tny_account_get_id (TNY_ACCOUNT (instance));
-		if (!strcmp (account_id, MODEST_LOCAL_FOLDERS_ACCOUNT_ID)) {
-			account_name = priv->local_account_name;
+		const gchar * account_id = tny_account_get_id (TNY_ACCOUNT (instance));
+		if (!strcmp (account_id, MODEST_ACTUAL_LOCAL_FOLDERS_ACCOUNT_ID)) {
+			item_name = g_strdup (priv->local_account_name);
 		} else {
 			if (!strcmp (account_id, MODEST_MMC_ACCOUNT_ID)) {
 				/* TODO: get MMC card name */
+				item_name = g_strdup (_("MMC"));
 			} else {
-				account_name = fname;
+				item_name = g_strdup (fname);
 			}
 		}
 
+		item_weight = 800;
+	} else if (modest_tny_folder_store_is_virtual_local_folders (
+		TNY_FOLDER_STORE(instance)))
+	{
+		/* We use ModestTnySimpleFolder store to group the outboxes and 
+		 * the other local folders together: */
+		item_name = g_strdup (_("Local Folders"));
+		item_weight = 400;
+	}
+	
+	if (!item_name)
+		item_name = g_strdup ("unknown");
+			
+	if (item_name && item_weight) {
+		/* Set the name in the treeview cell: */
+		g_object_set (rendobj,"text", item_name, "weight", item_weight, NULL);
+		
 		/* Notify display name observers */
-		if (G_OBJECT (priv->cur_folder_store) == instance)
+		if (G_OBJECT (priv->cur_folder_store) == instance) {
 			g_signal_emit (G_OBJECT(data),
-				       signals[FOLDER_DISPLAY_NAME_CHANGED_SIGNAL], 0,
-				       account_name);
-
-		/* Use bold font style */
-		g_object_set (rendobj,"text", account_name, "weight", 800, NULL);
+					       signals[FOLDER_DISPLAY_NAME_CHANGED_SIGNAL], 0,
+					       item_name);
+		}
+		
+		g_free (item_name);
+		
 	}
 	
 	g_object_unref (G_OBJECT (instance));
@@ -365,39 +378,50 @@ icon_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 
 	switch (type) {
 	case TNY_FOLDER_TYPE_ROOT:
-		account_id = tny_account_get_id (TNY_ACCOUNT (instance));
-		if (!strcmp (account_id, MODEST_LOCAL_FOLDERS_ACCOUNT_ID)) {
-			pixbuf = modest_platform_get_icon (MODEST_FOLDER_ICON_LOCAL_FOLDERS);
-		} else {
-			if (!strcmp (account_id, MODEST_MMC_ACCOUNT_ID))
-				pixbuf = modest_platform_get_icon (MODEST_FOLDER_ICON_MMC);
-			else
-				pixbuf = modest_platform_get_icon (MODEST_FOLDER_ICON_ACCOUNT);
+		if (TNY_IS_ACCOUNT (instance)) {
+			account_id = tny_account_get_id (TNY_ACCOUNT (instance));
+			/*
+			if (!strcmp (account_id, MODEST_ACTUAL_LOCAL_FOLDERS_ACCOUNT_ID)) {
+				pixbuf = modest_platform_get_icon (MODEST_FOLDER_ICON_LOCAL_FOLDERS);
+			} else {
+			*/
+				if (!strcmp (account_id, MODEST_MMC_ACCOUNT_ID))
+					pixbuf = modest_platform_get_icon (MODEST_FOLDER_ICON_MMC);
+				else
+					pixbuf = modest_platform_get_icon (MODEST_FOLDER_ICON_ACCOUNT);
+			/*
+			}
+			*/
 		}
-                break;
+		else if (modest_tny_folder_store_is_virtual_local_folders (
+			TNY_FOLDER_STORE (instance))) {
+			pixbuf = modest_platform_get_icon (MODEST_FOLDER_ICON_LOCAL_FOLDERS);
+		}
+		break;
 	case TNY_FOLDER_TYPE_INBOX:
-                pixbuf = modest_platform_get_icon (MODEST_FOLDER_ICON_INBOX);
-                break;
-        case TNY_FOLDER_TYPE_OUTBOX:
-                pixbuf = modest_platform_get_icon (MODEST_FOLDER_ICON_OUTBOX);
-                break;
-        case TNY_FOLDER_TYPE_JUNK:
-                pixbuf = modest_platform_get_icon (MODEST_FOLDER_ICON_JUNK);
-                break;
-        case TNY_FOLDER_TYPE_SENT:
-                pixbuf = modest_platform_get_icon (MODEST_FOLDER_ICON_SENT);
-                break;
+	    pixbuf = modest_platform_get_icon (MODEST_FOLDER_ICON_INBOX);
+	    break;
+	case TNY_FOLDER_TYPE_OUTBOX:
+		pixbuf = modest_platform_get_icon (MODEST_FOLDER_ICON_OUTBOX);
+		break;
+	case TNY_FOLDER_TYPE_JUNK:
+		pixbuf = modest_platform_get_icon (MODEST_FOLDER_ICON_JUNK);
+		break;
+	case TNY_FOLDER_TYPE_SENT:
+		pixbuf = modest_platform_get_icon (MODEST_FOLDER_ICON_SENT);
+		break;
 	case TNY_FOLDER_TYPE_TRASH:
 		pixbuf = modest_platform_get_icon (MODEST_FOLDER_ICON_TRASH);
-                break;
+		break;
 	case TNY_FOLDER_TYPE_DRAFTS:
 		pixbuf = modest_platform_get_icon (MODEST_FOLDER_ICON_DRAFTS);
-                break;
-	case TNY_FOLDER_TYPE_NORMAL:
-        default:
-                pixbuf = modest_platform_get_icon (MODEST_FOLDER_ICON_NORMAL);
 		break;
-        }
+	case TNY_FOLDER_TYPE_NORMAL:
+	default:
+		pixbuf = modest_platform_get_icon (MODEST_FOLDER_ICON_NORMAL);
+		break;
+	}
+	
 	g_object_unref (G_OBJECT (instance));
 	g_free (fname);
 
@@ -653,7 +677,7 @@ expand_root_items (ModestFolderView *self)
 /*
  * We use this function to implement the
  * MODEST_FOLDER_VIEW_STYLE_SHOW_ONE style. We only show the default
- * account in this case
+ * account in this case, and the local folders.
  */
 static gboolean 
 filter_row (GtkTreeModel *model,
@@ -661,7 +685,7 @@ filter_row (GtkTreeModel *model,
 	    gpointer data)
 {
 	gboolean retval = TRUE;
-	gint type;
+	gint type = 0;
 	GObject *instance = NULL;
 
 	gtk_tree_model_get (model, iter,
@@ -670,20 +694,26 @@ filter_row (GtkTreeModel *model,
 			    -1);
 
 	if (type == TNY_FOLDER_TYPE_ROOT) {
-		TnyAccount *acc;
-		const gchar *account_id;
-
-		acc = TNY_ACCOUNT (instance);
-		account_id = tny_account_get_id (acc);
-
-		if (strcmp (account_id, MODEST_LOCAL_FOLDERS_ACCOUNT_ID) &&
-		    strcmp (account_id, MODEST_MMC_ACCOUNT_ID)) { 
-			ModestFolderViewPrivate *priv;
+		/* TNY_FOLDER_TYPE_ROOT means that the instance is an account instead of a folder. */
+		if (TNY_IS_ACCOUNT (instance)) {
+			TnyAccount *acc = TNY_ACCOUNT (instance);
+			const gchar *account_id = tny_account_get_id (acc);
 			
-			/* Show only the visible account id */
-			priv = MODEST_FOLDER_VIEW_GET_PRIVATE (data);
-			if (priv->visible_account_id && strcmp (account_id, priv->visible_account_id))
-				retval = FALSE;
+			/* If it isn't a special folder, 
+			 * don't show it unless it is the visible account: */
+			if (strcmp (account_id, MODEST_ACTUAL_LOCAL_FOLDERS_ACCOUNT_ID) &&
+			    strcmp (account_id, MODEST_MMC_ACCOUNT_ID)) { 
+				
+				/* TODO: Merge the folders before we get to this point? */
+				
+				/* Show only the visible account id */
+				/*
+				ModestFolderViewPrivate *priv = 
+					MODEST_FOLDER_VIEW_GET_PRIVATE (data);
+				if (priv->visible_account_id && strcmp (account_id, priv->visible_account_id))
+					retval = FALSE;
+				*/
+			}
 		}
 	}
 
@@ -692,11 +722,109 @@ filter_row (GtkTreeModel *model,
 	return retval;
 }
 
+/*
+static void on_tnylist_accounts_debug_print(gpointer data,  gpointer user_data)
+{
+	TnyAccount* account = TNY_ACCOUNT(data);
+	const gchar *prefix = (const gchar*)(user_data);
+	
+	printf("%s account id=%s\n", prefix, tny_account_get_id (account));
+}
+*/
+
+static void
+add_account_folders_to_merged_folder (TnyAccount *account, TnyMergeFolder* merge_folder)
+{
+	const gchar* account_id = tny_account_get_id (account);
+	const gboolean is_actual_local_folders_account = account_id && 
+		(strcmp (account_id, MODEST_ACTUAL_LOCAL_FOLDERS_ACCOUNT_ID) == 0);
+		
+	TnyList *list_outbox_folders = tny_simple_list_new ();
+	tny_folder_store_get_folders (TNY_FOLDER_STORE (account), 
+		list_outbox_folders, NULL, NULL);
+		
+	TnyIterator*  iter =  tny_list_create_iterator (list_outbox_folders);
+	while (!tny_iterator_is_done (iter))
+	{
+		TnyFolder *folder = TNY_FOLDER (tny_iterator_get_current (iter));
+		
+		if (folder) {
+			gboolean add = TRUE;
+			/* TODO: Do not add outboxes that are inside local-folders/, 
+			 * because these are just left-over from earlier Modest versions 
+			 * that put the outbox there: */
+			if (is_actual_local_folders_account) {
+				const TnyFolderType type = modest_tny_folder_get_local_folder_type (folder);
+				if (type == TNY_FOLDER_TYPE_OUTBOX) {
+					add = FALSE;
+				}
+			}
+			
+			if (add)
+				tny_merge_folder_add_folder (merge_folder, folder);
+				
+			g_object_unref (folder);	
+		}
+		
+		tny_iterator_next (iter);
+	}
+	
+	g_object_unref (list_outbox_folders);
+}
+
+
+static void
+add_account_folders_to_simple_folder_store (TnyAccount *account, ModestTnySimpleFolderStore* store)
+{
+	g_return_if_fail (account);
+	g_return_if_fail (store);
+		
+	TnyList *list_outbox_folders = tny_simple_list_new ();
+	tny_folder_store_get_folders (TNY_FOLDER_STORE (account), 
+		list_outbox_folders, NULL, NULL);
+	
+	/* Special handling for the .modest/local-folders account,
+	 * to avoid adding unwanted folders.
+	 * We cannot prevent them from being in the TnyAccount without 
+	 * changing the libtinymail-camel. */
+	const gchar* account_id = tny_account_get_id (account);
+	const gboolean is_actual_local_folders_account = account_id && 
+		(strcmp (account_id, MODEST_ACTUAL_LOCAL_FOLDERS_ACCOUNT_ID) == 0);
+	
+	TnyIterator*  iter =  tny_list_create_iterator (list_outbox_folders);
+	while (!tny_iterator_is_done (iter))
+	{
+		TnyFolder *folder = TNY_FOLDER (tny_iterator_get_current (iter));
+		
+		if (folder) {
+			gboolean add = TRUE;
+			/* TODO: Do not add outboxes that are inside local-folders/, 
+			 * because these are just left-over from earlier Modest versions 
+			 * that put the outbox there: */
+			if (is_actual_local_folders_account) {
+				const TnyFolderType type = modest_tny_folder_get_local_folder_type (folder);
+				if (type == TNY_FOLDER_TYPE_OUTBOX) {
+					add = FALSE;
+				}
+			}
+			
+			if (add)
+				modest_tny_simple_folder_store_add_folder (store, folder);
+				
+			g_object_unref (folder);	
+		}
+		
+		tny_iterator_next (iter);
+	}
+	
+	g_object_unref (list_outbox_folders);
+}
+
 static gboolean
 update_model (ModestFolderView *self, ModestTnyAccountStore *account_store)
 {
 	ModestFolderViewPrivate *priv;
-	TnyList          *account_list;
+
 	GtkTreeModel     *model;
 
 	g_return_val_if_fail (account_store, FALSE);
@@ -712,37 +840,97 @@ update_model (ModestFolderView *self, ModestTnyAccountStore *account_store)
 	   selects only the subscribed folders. */
 /* 	model        = tny_gtk_folder_store_tree_model_new (TRUE, priv->query); */
 	model        = tny_gtk_folder_store_tree_model_new (TRUE, NULL);
-	account_list = TNY_LIST(model);
+	
+	/* Deal with the model via its TnyList Interface,
+	 * filling the TnyList via a get_accounts() call: */
+	TnyList *model_as_list = TNY_LIST(model);
 
+	/* Create a virtual local-folders folder store, 
+	 * containing the real local folders and the (merged) various per-account 
+	 * outbox folders:
+	 */
+	ModestTnySimpleFolderStore *store = modest_tny_simple_folder_store_new ();
+
+	/* Get the accounts: */
+	TnyList *account_list = tny_simple_list_new ();
 	tny_account_store_get_accounts (TNY_ACCOUNT_STORE(account_store),
 					account_list,
-					TNY_ACCOUNT_STORE_STORE_ACCOUNTS);	
-	if (account_list) {
-		GtkTreeModel *filter_model = NULL, *sortable = NULL;
-
-		sortable = gtk_tree_model_sort_new_with_model (model);
-		gtk_tree_sortable_set_sort_column_id (GTK_TREE_SORTABLE(sortable),
-						      TNY_GTK_FOLDER_STORE_TREE_MODEL_NAME_COLUMN, 
-						      GTK_SORT_ASCENDING);
-		gtk_tree_sortable_set_sort_func (GTK_TREE_SORTABLE (sortable),
-						 TNY_GTK_FOLDER_STORE_TREE_MODEL_NAME_COLUMN,
-						 cmp_rows, NULL, NULL);
-
-		/* Create filter model */
-		if (priv->style == MODEST_FOLDER_VIEW_STYLE_SHOW_ONE) {
-			filter_model = gtk_tree_model_filter_new (sortable, NULL);
-			gtk_tree_model_filter_set_visible_func (GTK_TREE_MODEL_FILTER (filter_model),
-								filter_row,
-								self,
-								NULL);
+					TNY_ACCOUNT_STORE_STORE_ACCOUNTS);
+	TnyIterator* iter =  tny_list_create_iterator (account_list);
+	
+	/* All per-account outbox folders are merged into one folders
+	 * so that they appear as one outbox to the user: */
+	TnyMergeFolder *merged_outbox = TNY_MERGE_FOLDER (tny_merge_folder_new());
+	
+	while (!tny_iterator_is_done (iter))
+	{
+		GObject *cur = tny_iterator_get_current (iter);
+		TnyAccount *account = TNY_ACCOUNT (cur);
+		if (account) {
+			/* Add both outbox account and local-folders account folders
+			 * to our one combined account:
+			 */
+			if (MODEST_IS_TNY_OUTBOX_ACCOUNT (account)) {
+				/* Add the folder to the merged folder.
+				 * We will add it later to the virtual local-folders store: */
+				add_account_folders_to_merged_folder (account, merged_outbox);
+			} else {
+				const gchar *account_id = tny_account_get_id (account);
+				if (account_id && !strcmp (account_id, MODEST_ACTUAL_LOCAL_FOLDERS_ACCOUNT_ID)) {
+					/* Add the folders to the virtual local-folders store: */
+					add_account_folders_to_simple_folder_store (account, store);
+				}
+				else {
+					/* Just add the account: */
+					tny_list_append (model_as_list, G_OBJECT (account));
+				}
+			}
 		}
-
-		/* Set new model */
-		gtk_tree_view_set_model (GTK_TREE_VIEW(self), 
-					 (filter_model) ? filter_model : sortable);
-		expand_root_items (self); /* expand all account folders */
-		g_object_unref (account_list);
+	   
+		g_object_unref (cur);
+		tny_iterator_next (iter);
 	}
+	
+	/* Add the merged outbox folder to the virtual local-folders store: */
+	modest_tny_simple_folder_store_add_folder (store, TNY_FOLDER(merged_outbox));
+	g_object_unref (merged_outbox);
+	merged_outbox = NULL;
+	
+	/* Add the virtual local-folders store to the model: */
+	tny_list_append (model_as_list, G_OBJECT (store));
+	
+	
+	g_object_unref (account_list);
+	account_list = NULL;
+	
+	g_object_unref (model_as_list);
+	model_as_list = NULL;	
+		
+	/* tny_list_foreach (account_list, on_tnylist_accounts_debug_print, "update_model: "); */
+                                                     
+	GtkTreeModel *filter_model = NULL, *sortable = NULL;
+
+	sortable = gtk_tree_model_sort_new_with_model (model);
+	gtk_tree_sortable_set_sort_column_id (GTK_TREE_SORTABLE(sortable),
+					      TNY_GTK_FOLDER_STORE_TREE_MODEL_NAME_COLUMN, 
+					      GTK_SORT_ASCENDING);
+	gtk_tree_sortable_set_sort_func (GTK_TREE_SORTABLE (sortable),
+					 TNY_GTK_FOLDER_STORE_TREE_MODEL_NAME_COLUMN,
+					 cmp_rows, NULL, NULL);
+
+	/* Create filter model */
+	if (priv->style == MODEST_FOLDER_VIEW_STYLE_SHOW_ONE) {
+		filter_model = gtk_tree_model_filter_new (sortable, NULL);
+		gtk_tree_model_filter_set_visible_func (GTK_TREE_MODEL_FILTER (filter_model),
+							filter_row,
+							self,
+							NULL);
+	}
+
+	/* Set new model */
+	gtk_tree_view_set_model (GTK_TREE_VIEW(self), 
+				 (filter_model) ? filter_model : sortable);
+	expand_root_items (self); /* expand all account folders */
 	
 	return TRUE;
 }
@@ -820,8 +1008,32 @@ modest_folder_view_get_selected (ModestFolderView *self)
 	return priv->cur_folder_store;
 }
 
+static gint
+get_cmp_rows_type_pos (GObject *folder)
+{
+	/* Remote accounts -> Local account -> MMC account .*/
+	/* 0, 1, 2 */
+	
+	if (TNY_IS_FOLDER_STORE (folder) && 
+		modest_tny_folder_store_is_virtual_local_folders (
+			TNY_FOLDER_STORE (folder))) {
+		return 1;
+	} else if (TNY_IS_ACCOUNT (folder)) {
+		TnyAccount *account = TNY_ACCOUNT (folder);
+		const gchar *account_id = tny_account_get_id (account);
+		if (!strcmp (account_id, MODEST_MMC_ACCOUNT_ID))
+			return 2;
+		else
+			return 0;
+	}
+	else {
+		printf ("DEBUG: %s: unexpected type.\n", __FUNCTION__);
+		return -1; /* Should never happen */
+	}
+}
+
 /*
- * This function orders the mail accounts following the next rules
+ * This function orders the mail accounts according to these rules:
  * 1st - remote accounts
  * 2nd - local account
  * 3rd - MMC account
@@ -833,7 +1045,8 @@ cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 	gint cmp;
 	gchar         *name1, *name2;
 	TnyFolderType type;
-	TnyFolder     *folder1, *folder2;
+	GObject *folder1 = NULL;
+	GObject *folder2 = NULL;
 
 	gtk_tree_model_get (tree_model, iter1,
 			    TNY_GTK_FOLDER_STORE_TREE_MODEL_NAME_COLUMN, &name1,
@@ -845,29 +1058,45 @@ cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 			    TNY_GTK_FOLDER_STORE_TREE_MODEL_INSTANCE_COLUMN, &folder2,
 			    -1);
 
-	/* Order must be: Remote accounts -> Local account -> MMC account */
 	if (type == TNY_FOLDER_TYPE_ROOT) {
-		const gchar *account_id = tny_account_get_id (TNY_ACCOUNT (folder1));
-		const gchar *account_id2 = tny_account_get_id (TNY_ACCOUNT (folder2));
-
-		if (!strcmp (account_id, MODEST_MMC_ACCOUNT_ID))
-			cmp = +1;
+		/* Compare the types, so that 
+		 * Remote accounts -> Local account -> MMC account .*/
+		const gint pos1 = get_cmp_rows_type_pos (folder1);
+		const gint pos2 = get_cmp_rows_type_pos (folder2);
+		/* printf ("DEBUG: %s:\n  type1=%s, pos1=%d\n  type2=%s, pos2=%d\n", 
+			__FUNCTION__, G_OBJECT_TYPE_NAME(folder1), pos1, G_OBJECT_TYPE_NAME(folder2), pos2); */
+		if (pos1 <  pos2)
+			cmp = -1;
+		else if (pos1 > pos2)
+			cmp = 1;
 		else {
-			if (!strcmp (account_id, MODEST_LOCAL_FOLDERS_ACCOUNT_ID)) {
-				if (!strcmp (account_id2, MODEST_MMC_ACCOUNT_ID))
-					cmp = -1;
-				else
-					cmp = +1;
-			} else {
-				if (!strcmp (account_id2, MODEST_LOCAL_FOLDERS_ACCOUNT_ID) ||
-				    !strcmp (account_id2, MODEST_MMC_ACCOUNT_ID))
-					cmp = -1;
-				else
-					cmp = modest_text_utils_utf8_strcmp (name1, name2, TRUE);
-			}
+			/* Compare items of the same type: */
+			
+			TnyAccount *account1 = NULL;
+			if (TNY_IS_ACCOUNT (folder1))
+				account1 = TNY_ACCOUNT (folder1);
+				
+			TnyAccount *account2 = NULL;
+			if (TNY_IS_ACCOUNT (folder2))
+				account2 = TNY_ACCOUNT (folder2);
+				
+			const gchar *account_id = account1 ? tny_account_get_id (account1) : NULL;
+			const gchar *account_id2 = account2 ? tny_account_get_id (account2) : NULL;
+	
+			if (!account_id && !account_id2)
+				return 0;
+			else if (!account_id)
+				return -1;
+			else if (!account_id2)
+				return +1;
+			else if (!strcmp (account_id, MODEST_MMC_ACCOUNT_ID))
+				cmp = +1;
+			else
+				cmp = modest_text_utils_utf8_strcmp (name1, name2, TRUE);
 		}
-	} else 
+	} else {
 		cmp = modest_text_utils_utf8_strcmp (name1, name2, TRUE);
+	}
 	
 	if (folder1)
 		g_object_unref(G_OBJECT(folder1));
@@ -1453,6 +1682,8 @@ modest_folder_view_set_account_id_of_visible_server_account (ModestFolderView *s
 	
 	priv = MODEST_FOLDER_VIEW_GET_PRIVATE(self);
 
+	/* This will be used by the filter_row callback,
+	 * to decided which rows to show: */
 	if (priv->visible_account_id)
 		g_free (priv->visible_account_id);
 	priv->visible_account_id = g_strdup (account_id);

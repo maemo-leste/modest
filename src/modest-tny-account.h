@@ -77,6 +77,20 @@ TnyAccount* modest_tny_account_new_for_local_folders (ModestAccountMgr *account_
 						      TnySessionCamel *session);
 
 /**
+ * modest_tny_account_new_for_per_account_local_outbox_folder:
+ * @account_mgr: a valid account mgr instance
+ * @account: a valid account instance
+ * @session: a tny camel session
+ * 
+ * get the per-account local outbox folder (pseudo) account.
+ * 
+ * Returns: a new per-account local outbox folder TnyAccount or NULL in case of error.
+ */
+TnyAccount* modest_tny_account_new_for_per_account_local_outbox_folder (
+	ModestAccountMgr *account_mgr, TnyAccount *account,
+	TnySessionCamel *session);
+	
+/**
  * modest_tny_account_get_special_folder:
  * @self: a TnyAccount
  * @special_type: the special folder to get
@@ -94,27 +108,27 @@ TnyFolder*    modest_tny_account_get_special_folder   (TnyAccount *self,
 
 
 /**
- * modest_tny_account_get_folder_count:
- * @self: a #TnyAccount
+ * modest_tny_folder_store_get_folder_count:
+ * @self: a #TnyFolderStore
  * 
  * gets the number of folders of the account
  * 
  * Returns: the number of folder, or -1 in case of error
  **/
-gint          modest_tny_account_get_folder_count  (TnyAccount *self);
+gint          modest_tny_folder_store_get_folder_count  (TnyFolderStore *self);
 
 /**
- * modest_tny_account_get_message_count:
+ * modest_tny_folder_store_get_message_count:
  * @self: 
  * 
  * gets the number of messages in the account
  * 
  * Returns: the number of messages, or -1 in case of error
  **/
-gint          modest_tny_account_get_message_count (TnyAccount *self);
+gint          modest_tny_folder_store_get_message_count (TnyFolderStore *self);
 
 /**
- * modest_tny_account_get_local_size:
+ * modest_tny_folder_store_get_local_size:
  * @self: 
  * 
  * gets the total size occupied by the account in the local storage
@@ -122,7 +136,19 @@ gint          modest_tny_account_get_message_count (TnyAccount *self);
  * 
  * Returns: the total size in bytes, or -1 in case of error
  **/
-gint          modest_tny_account_get_local_size    (TnyAccount *self);
+gint          modest_tny_folder_store_get_local_size    (TnyFolderStore *self);
+
+/** modest_tny_account_get_parent_modest_account_name_for_server_account:
+ * Get the name of the parent modest account of which the server account is a part.
+ */
+const gchar* modest_tny_account_get_parent_modest_account_name_for_server_account (TnyAccount *self);
+
+/** modest_tny_account_set_parent_modest_account_name_for_server_account:
+ * Set the name of the parent modest account of which the server account is a part,
+ * so it can be retrieved later with 
+ * modest_tny_account_get_parent_modest_account_name_for_server_account().
+ */
+void modest_tny_account_set_parent_modest_account_name_for_server_account (TnyAccount *self, const gchar* parent_modest_acount_name);
 
 G_END_DECLS
 

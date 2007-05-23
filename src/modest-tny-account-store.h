@@ -39,6 +39,7 @@
 #include <tny-session-camel.h>
 #include <tny-shared.h>
 #include <tny-folder.h>
+#include <modest-tny-simple-folder-store.h>
 #include <modest-account-mgr.h>
 
 /* other include files */
@@ -149,6 +150,15 @@ TnyAccount* modest_tny_account_store_get_transport_account_for_open_connection (
  */
 TnySessionCamel*    modest_tny_account_store_get_session    (TnyAccountStore *self);
 
+
+/** modest_tny_folder_store_is_virtual_local_folders:
+ * @self A TnyFolderStore.
+ * 
+ * A convenience function to identify whether TnyAccount or other TnyFolderStore 
+ * is the virtual local folders store, containing the folders from local_folders/
+ * and the outboxes from outboxes/<account-name>/.
+ **/
+gboolean modest_tny_folder_store_is_virtual_local_folders (TnyFolderStore *self);
 
 G_END_DECLS
 

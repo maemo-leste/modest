@@ -31,7 +31,9 @@
 #include <glib/gi18n.h>
 #include <string.h>
 #include <modest-tny-folder.h>
+#include <modest-tny-outbox-account.h>
 #include <tny-camel-folder.h>
+#include <tny-merge-folder.h>
 #include <camel/camel-folder.h>
 #include <modest-protocol-info.h>
 
@@ -106,7 +108,7 @@ modest_tny_folder_guess_folder_type (const TnyFolder *folder)
 
 /* FIXME: encode all folder rules here */
 ModestTnyFolderRules
-modest_tny_folder_get_rules   (const TnyFolder *folder)
+modest_tny_folder_get_rules   (TnyFolder *folder)
 {
 	ModestTnyFolderRules rules = 0;
 	TnyFolderType type;
@@ -165,46 +167,79 @@ modest_tny_folder_get_rules   (const TnyFolder *folder)
 
 
 gboolean
-modest_tny_folder_is_local_folder   (const TnyFolder *folder)
+modest_tny_folder_is_local_folder   (TnyFolder *folder)
 {
-	TnyAccount*  account;
-	const gchar* account_id;
-	
 	g_return_val_if_fail (folder, FALSE);
 	
-	account = tny_folder_get_account ((TnyFolder*)folder);
+	/* The merge folder is a special case, 
+	 * used to merge the per-account local outbox folders. 
+	 * and can have no get_account() implementation.
+	 * We should do something more sophisticated if we 
+	 * ever use TnyMergeFolder for anything else.
+	 */
+	if (TNY_IS_MERGE_FOLDER (folder))
+		return TRUE;
+
+	TnyAccount* account = tny_folder_get_account ((TnyFolder*)folder);
 	if (!account)
 		return FALSE;
 
-	account_id = tny_account_get_id (account);
+	/* Outbox is a special case, using a derived TnyAccount: */
+	if (MODEST_IS_TNY_OUTBOX_ACCOUNT (account)) {
+		g_object_unref (account);
+		return TRUE;  
+	}
+
+	const gchar* account_id = tny_account_get_id (account);
 	if (!account_id)
 		return FALSE;
 
 	g_object_unref (G_OBJECT(account));
 	
-	return (strcmp (account_id, MODEST_LOCAL_FOLDERS_ACCOUNT_ID) == 0);
+	return (strcmp (account_id, MODEST_ACTUAL_LOCAL_FOLDERS_ACCOUNT_ID) == 0);
 }	
 
 
 TnyFolderType
-modest_tny_folder_get_local_folder_type  (const TnyFolder *folder)
+modest_tny_folder_get_local_folder_type  (TnyFolder *folder)
 {
-	CamelFolder *camel_folder;
-	const gchar *full_name;
-	
 	g_return_val_if_fail (folder, TNY_FOLDER_TYPE_UNKNOWN);
+
+	/* The merge folder is a special case, 
+	 * used to merge the per-account local outbox folders. 
+	 * and can have no get_account() implementation.
+	 * We should do something more sophisticated if we 
+	 * ever use TnyMergeFolder for anything else.
+	 */
+	if (TNY_IS_MERGE_FOLDER (folder))
+		return TNY_FOLDER_TYPE_OUTBOX;
+		
+	/* Outbox is a special case, using a derived TnyAccount: */
+	TnyAccount* parent_account = tny_folder_get_account (folder);
+	if (parent_account && MODEST_IS_TNY_OUTBOX_ACCOUNT (parent_account)) {
+		g_object_unref (parent_account);
+		return TNY_FOLDER_TYPE_OUTBOX;  
+	}
+
+	if (parent_account) {
+		g_object_unref (parent_account);
+		parent_account = NULL;
+	}
+
+
 	g_return_val_if_fail (modest_tny_folder_is_local_folder(folder),
 			      TNY_FOLDER_TYPE_UNKNOWN);
 
 	/* we need to use the camel functions, because we want the
 	 * _full name_, that is, the full path name of the folder,
-	 * to distinguis between 'Outbox' and 'myfunkyfolder/Outbox'
+	 * to distinguish between 'Outbox' and 'myfunkyfolder/Outbox'
 	 */
-	camel_folder = tny_camel_folder_get_folder (TNY_CAMEL_FOLDER(folder));
+	CamelFolder *camel_folder = tny_camel_folder_get_folder (TNY_CAMEL_FOLDER(folder));
 	if (!camel_folder)
 		return TNY_FOLDER_TYPE_UNKNOWN;
 
-	full_name = camel_folder_get_full_name (camel_folder);
+	const gchar *full_name = camel_folder_get_full_name (camel_folder);
+	/* printf ("DEBUG: %s: full_name=%s\n", __FUNCTION__, full_name); */
 	camel_object_unref (CAMEL_OBJECT(camel_folder));
 	
 	if (!full_name) 
@@ -212,3 +247,35 @@ modest_tny_folder_get_local_folder_type  (const TnyFolder *folder)
 	else 
 		return modest_local_folder_info_get_type (full_name);
 }
+
+gboolean
+modest_tny_folder_is_outbox_for_account (TnyFolder *folder, TnyAccount *account)
+{
+	g_return_val_if_fail(folder, FALSE);
+	g_return_val_if_fail(account, FALSE);
+	
+	if (modest_tny_folder_get_local_folder_type (folder) != TNY_FOLDER_TYPE_OUTBOX)
+		return FALSE;
+		
+	return TRUE;
+#if 0	
+	/* we need to use the camel functions, because we want the
+	 * _full name_, that is, the full path name of the folder,
+	 * to distinguis between 'Outbox' and 'myfunkyfolder/Outbox'
+	 */
+	CamelFolder *camel_folder = tny_camel_folder_get_folder (TNY_CAMEL_FOLDER(folder));
+	if (!camel_folder)
+		return FALSE;
+
+	const gchar *full_name = camel_folder_get_full_name (camel_folder);
+	camel_object_unref (CAMEL_OBJECT(camel_folder));
+	
+	if (!full_name) 
+		return TNY_FOLDER_TYPE_UNKNOWN;
+	else 
+		return modest_local_folder_info_get_type (full_name);
+		
+	return FALSE;
+#endif
+}
+

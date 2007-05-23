@@ -106,13 +106,13 @@ static const FolderCols SENT_COLUMNS_TWOLINES[] = {
 
 #ifdef MODEST_PLATFORM_MAEMO
 static const TnyFolderType LOCAL_FOLDERS[] = {
-	TNY_FOLDER_TYPE_OUTBOX,
+/*	TNY_FOLDER_TYPE_OUTBOX, */
 	TNY_FOLDER_TYPE_DRAFTS,
 	TNY_FOLDER_TYPE_SENT
 };
 #else
 static const TnyFolderType LOCAL_FOLDERS[] = {
-	TNY_FOLDER_TYPE_OUTBOX,
+/*	TNY_FOLDER_TYPE_OUTBOX, */
 	TNY_FOLDER_TYPE_DRAFTS,
 	TNY_FOLDER_TYPE_SENT,
 	TNY_FOLDER_TYPE_TRASH,
@@ -307,6 +307,29 @@ init_header_columns (ModestConf *conf, gboolean overwrite)
 	return TRUE;
 }
 
+gboolean modest_init_one_local_folder (gchar *maildir_path)
+{
+	static const gchar* maildirs[] = {
+		"cur", "new", "tmp"
+	};
+	
+	int j;
+	for (j = 0; j != G_N_ELEMENTS(maildirs); ++j) {
+		gchar *dir = g_build_filename (maildir_path,
+					maildirs[j],
+					NULL);
+		if (g_mkdir_with_parents (dir, 0755) < 0) {
+			g_printerr ("modest: failed to create %s\n", dir);
+			g_free (dir);
+			return FALSE;
+		}
+		
+		g_free (dir);
+	}
+
+	return TRUE;
+}
+
 /**
  * init_local_folders:
  * 
@@ -318,30 +341,22 @@ init_header_columns (ModestConf *conf, gboolean overwrite)
  */
 static gboolean
 init_local_folders  (void)
-{
-	int i;
-	gchar *maildir_path;
-	static const gchar* maildirs[] = {
-		"cur", "new", "tmp"
-	};
-	
-	maildir_path = modest_local_folder_info_get_maildir_path ();
+{	
+	gchar *maildir_path = modest_local_folder_info_get_maildir_path ();
 
+	/* Create each of the standard on-disk folders.
+	 * Per-account outbox folders will be created when first needed. */
+	int i;
 	for (i = 0; i != G_N_ELEMENTS(LOCAL_FOLDERS); ++i) {
-		int j;
-		for (j = 0; j != G_N_ELEMENTS(maildirs); ++j) {
-			gchar *dir;
-			dir = g_build_filename (maildir_path,
+		gchar *dir = g_build_filename (maildir_path,
 						modest_local_folder_info_get_type_name(LOCAL_FOLDERS[i]),
-						maildirs[j],
-						NULL);
-			if (g_mkdir_with_parents (dir, 0755) < 0) {
-				g_printerr ("modest: failed to create %s\n", dir);
-				g_free (dir);
-				g_free (maildir_path);
-				return FALSE;
-			}
-			g_free(dir);
+						NULL);			
+		const gboolean created = modest_init_one_local_folder (dir);
+		g_free(dir);
+		
+		if (!created) {
+			g_free (maildir_path);
+			return FALSE;
 		}
 	}
 	

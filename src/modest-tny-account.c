@@ -33,16 +33,15 @@
 #include <modest-runtime.h>
 #include <tny-simple-list.h>
 #include <modest-tny-folder.h>
+#include <modest-tny-outbox-account.h>
 #include <modest-account-mgr-helpers.h>
+#include <modest-init.h>
 #include <tny-camel-transport-account.h>
 #include <tny-camel-imap-store-account.h>
 #include <tny-camel-pop-store-account.h>
 #include <tny-folder-stats.h>
 
-/* for now, ignore the account ===> the special folders are the same,
- * local folders for all accounts
- * this might change, ie, IMAP might have server-side sent-items
- */
+
 TnyFolder *
 modest_tny_account_get_special_folder (TnyAccount *account,
 				       TnyFolderType special_type)
@@ -50,14 +49,35 @@ modest_tny_account_get_special_folder (TnyAccount *account,
 	TnyList *folders;
 	TnyIterator *iter;
 	TnyFolder *special_folder = NULL;
-	TnyAccount *local_account;
+
 	
 	g_return_val_if_fail (account, NULL);
 	g_return_val_if_fail (0 <= special_type && special_type < TNY_FOLDER_TYPE_NUM,
 			      NULL);
 	
-	local_account = modest_tny_account_store_get_tny_account_by_id (modest_runtime_get_account_store(),
-									MODEST_LOCAL_FOLDERS_ACCOUNT_ID);
+	TnyAccount *local_account  = NULL;
+		
+	/* The accounts have already been instantiated by 
+	 * modest_tny_account_store_get_accounts(), which is the 
+	 * TnyAccountStore::get_accounts_func() implementation,
+	 * so we just get them here.
+	 */
+	 
+	/* Per-account outbox folders are each in their own on-disk directory: */
+	if (special_type == TNY_FOLDER_TYPE_OUTBOX) {
+		gchar *account_id = g_strdup_printf (
+			MODEST_PER_ACCOUNT_LOCAL_OUTBOX_FOLDER_ACCOUNT_ID_PREFIX "%s", 
+			tny_account_get_id (account));
+		
+			local_account = modest_tny_account_store_get_tny_account_by_id (modest_runtime_get_account_store(),
+									account_id);
+			g_free (account_id);
+	} else {
+		/* Other local folders are all in one on-disk directory: */
+		local_account = modest_tny_account_store_get_tny_account_by_id (modest_runtime_get_account_store(),
+										MODEST_ACTUAL_LOCAL_FOLDERS_ACCOUNT_ID);
+	}
+	
 	if (!local_account) {
 		g_printerr ("modest: cannot get local account\n");
 		return NULL;
@@ -77,9 +97,11 @@ modest_tny_account_get_special_folder (TnyAccount *account,
 			special_folder = folder;
 			break;
 		}
+		
 		g_object_unref (G_OBJECT(folder));
 		tny_iterator_next (iter);
 	}
+	
 	g_object_unref (G_OBJECT (folders));
 	g_object_unref (G_OBJECT (iter));
 	g_object_unref (G_OBJECT (local_account));
@@ -135,7 +157,7 @@ static TnyAccount*
 modest_tny_account_new_from_server_account (ModestAccountMgr *account_mgr,
 					    ModestServerAccountData *account_data)
 {	
-	gchar *url;
+	gchar *url = NULL;
 
 	g_return_val_if_fail (account_mgr, NULL);
 	g_return_val_if_fail (account_data, NULL);
@@ -159,6 +181,9 @@ modest_tny_account_new_from_server_account (ModestAccountMgr *account_mgr,
 		tny_account = TNY_ACCOUNT(tny_camel_imap_store_account_new ()); break;
 	case MODEST_PROTOCOL_STORE_MAILDIR:
 	case MODEST_PROTOCOL_STORE_MBOX:
+		/* Note that this is not where we create the special local folders account.
+		 * That happens in modest_tny_account_new_for_local_folders() instead.
+		 */
 		tny_account = TNY_ACCOUNT(tny_camel_store_account_new()); break;
 	default:
 		g_return_val_if_reached (NULL);
@@ -176,10 +201,13 @@ modest_tny_account_new_from_server_account (ModestAccountMgr *account_mgr,
 	tny_account_set_proto (tny_account, proto_name);
 
 	       
-	/* mbox and maildir accounts use a URI instead of the rest: */
+	/* mbox and maildir accounts use a URI instead of the rest:
+	 * Note that this is not where we create the special local folders account.
+	 * We do that in modest_tny_account_new_for_local_folders() instead. */
 	if (account_data->uri)  {
 		/* printf("DEBUG: %s: Using URI=%s\n", __FUNCTION__, account_data->uri); */
 		tny_account_set_url_string (TNY_ACCOUNT(tny_account), account_data->uri);
+		g_message ("%s: local account-url: %s", __FUNCTION__, account_data->uri);
 	}
 	else {
 		/* Set camel-specific options: */
@@ -335,14 +363,13 @@ modest_tny_account_new_from_account (ModestAccountMgr *account_mgr, const gchar 
 					  forget_pass_func ? forget_pass_func : forget_pass_dummy);
 	tny_account_set_pass_func (tny_account,
 				   get_pass_func ? get_pass_func: get_pass_dummy);
-
+	
 	/* This name is what shows up in the folder view -- so for some POP/IMAP/... server
 	 * account, we set its name to the account of which it is part. */
 	if (account_data->display_name)
 		tny_account_set_name (tny_account, account_data->display_name); 
 
-	g_object_set_data_full (G_OBJECT(tny_account), "modest_account",
-				(gpointer*) g_strdup (account_name), g_free);
+	modest_tny_account_set_parent_modest_account_name_for_server_account (tny_account, account_name);
 	
 	modest_account_mgr_free_account_data (account_mgr, account_data);
 
@@ -366,6 +393,9 @@ modest_tny_account_new_for_local_folders (ModestAccountMgr *account_mgr, TnySess
 	}
 	tny_camel_account_set_session (TNY_CAMEL_ACCOUNT(tny_account), session);
 	
+	/* This path contains directories for each local folder.
+	 * We have created them so that TnyCamelStoreAccount can find them 
+	 * and report a folder for each directory: */
 	maildir = modest_local_folder_info_get_maildir_path ();
 	url = camel_url_new ("maildir:", NULL);
 	camel_url_set_path (url, maildir);
@@ -374,14 +404,15 @@ modest_tny_account_new_for_local_folders (ModestAccountMgr *account_mgr, TnySess
 	url_string = camel_url_to_string (url, 0);
 	
 	tny_account_set_url_string (TNY_ACCOUNT(tny_account), url_string);
+	printf("DEBUG: %s: local folders url=%s\n", __FUNCTION__, url_string);
 
 	tny_account_set_name (TNY_ACCOUNT(tny_account), MODEST_LOCAL_FOLDERS_DEFAULT_DISPLAY_NAME); 
-	tny_account_set_id (TNY_ACCOUNT(tny_account), MODEST_LOCAL_FOLDERS_ACCOUNT_ID); 
+	tny_account_set_id (TNY_ACCOUNT(tny_account), MODEST_ACTUAL_LOCAL_FOLDERS_ACCOUNT_ID); 
         tny_account_set_forget_pass_func (TNY_ACCOUNT(tny_account), forget_pass_dummy);
 	tny_account_set_pass_func (TNY_ACCOUNT(tny_account), get_pass_dummy);
 	
-	g_object_set_data (G_OBJECT(tny_account), "modest_account",
-			   (gpointer*)MODEST_LOCAL_FOLDERS_ACCOUNT_ID);
+	modest_tny_account_set_parent_modest_account_name_for_server_account (
+		TNY_ACCOUNT (tny_account), MODEST_ACTUAL_LOCAL_FOLDERS_ACCOUNT_ID);
 	
 	camel_url_free (url);
 	g_free (maildir);
@@ -389,6 +420,73 @@ modest_tny_account_new_for_local_folders (ModestAccountMgr *account_mgr, TnySess
 
 	return TNY_ACCOUNT(tny_account);
 }
+
+
+TnyAccount*
+modest_tny_account_new_for_per_account_local_outbox_folder (ModestAccountMgr *account_mgr, TnyAccount *account, TnySessionCamel *session)
+{
+	g_return_val_if_fail (account_mgr, NULL);
+	g_return_val_if_fail (account, NULL);
+	g_return_val_if_fail (tny_account_get_account_type (account) == TNY_ACCOUNT_TYPE_TRANSPORT, NULL);
+	
+	/* Notice that we create a ModestTnyOutboxAccount here, 
+	 * instead of just a TnyCamelStoreAccount,
+	 * so that we can later identify this as a special account for internal use only.
+	 */
+	TnyStoreAccount *tny_account = TNY_STORE_ACCOUNT (modest_tny_outbox_account_new ());
+	if (!tny_account) {
+		g_printerr ("modest: cannot create account for per-account local outbox folder.");
+		return NULL;
+	}
+	
+	tny_camel_account_set_session (TNY_CAMEL_ACCOUNT(tny_account), session);
+	
+	/* Make sure that the paths exists on-disk so that TnyCamelStoreAccount can 
+	 * find it to create a TnyFolder for it: */
+	gchar *folder_dir = modest_per_account_local_outbox_folder_info_get_maildir_path_to_outbox_folder (account); 
+	modest_init_one_local_folder(folder_dir);
+	g_free (folder_dir);
+	folder_dir = NULL;
+
+	/* This path should contain just one directory - "outbox": */
+	gchar *maildir = 
+		modest_per_account_local_outbox_folder_info_get_maildir_path (account);
+			
+	CamelURL *url = camel_url_new ("maildir:", NULL);
+	camel_url_set_path (url, maildir);
+	g_free (maildir);
+	
+	/* Needed by tinymail's DBC assertions */
+ 	camel_url_set_host (url, "localhost");
+	gchar *url_string = camel_url_to_string (url, 0);
+	camel_url_free (url);
+	
+	tny_account_set_url_string (TNY_ACCOUNT(tny_account), url_string);
+	printf("DEBUG: %s: local outbox folder account url=%s\n", __FUNCTION__, url_string);
+	g_free (url_string);
+
+	/* This text should never been seen,
+	 * because the per-account outbox accounts are not seen directly by the user.
+	 * Their folders are merged and shown as one folder. */ 
+	tny_account_set_name (TNY_ACCOUNT(tny_account), "Per-Account Outbox"); 
+	
+	gchar *account_id = g_strdup_printf (
+		MODEST_PER_ACCOUNT_LOCAL_OUTBOX_FOLDER_ACCOUNT_ID_PREFIX "%s", 
+		tny_account_get_id (account));
+	tny_account_set_id (TNY_ACCOUNT(tny_account), account_id);
+	g_free (account_id);
+	
+	tny_account_set_forget_pass_func (TNY_ACCOUNT(tny_account), forget_pass_dummy);
+	tny_account_set_pass_func (TNY_ACCOUNT(tny_account), get_pass_dummy);
+	
+	/* Make this think that it belongs to the modest local-folders parent account: */
+	modest_tny_account_set_parent_modest_account_name_for_server_account (
+		TNY_ACCOUNT (tny_account), MODEST_ACTUAL_LOCAL_FOLDERS_ACCOUNT_ID);
+
+	return TNY_ACCOUNT(tny_account);
+}
+
+
 
 typedef gint (*TnyStatsFunc) (TnyFolderStats *stats);
 
@@ -422,7 +520,9 @@ recurse_folders (TnyFolderStore *store,
 		if (helper->function && helper->function (stats) > 0)
 			helper->sum += helper->function (stats);
 
-		recurse_folders (TNY_FOLDER_STORE (folder), query, helper);
+		if (TNY_IS_FOLDER_STORE (folder)) {
+			recurse_folders (TNY_FOLDER_STORE (folder), query, helper);
+		}
 	    
  		g_object_unref (folder);
  		g_object_unref (stats);
@@ -433,12 +533,12 @@ recurse_folders (TnyFolderStore *store,
 }
 
 gint 
-modest_tny_account_get_folder_count (TnyAccount *self)
+modest_tny_folder_store_get_folder_count (TnyFolderStore *self)
 {
 	RecurseFoldersHelper *helper;
 	gint retval;
 
-	g_return_val_if_fail (TNY_IS_ACCOUNT (self), -1);
+	g_return_val_if_fail (TNY_IS_FOLDER_STORE (self), -1);
 
 	/* Create helper */
 	helper = g_malloc0 (sizeof (RecurseFoldersHelper));
@@ -446,7 +546,7 @@ modest_tny_account_get_folder_count (TnyAccount *self)
 	helper->sum = 0;
 	helper->folders = 0;
 
-	recurse_folders (TNY_FOLDER_STORE (self), NULL, helper);
+	recurse_folders (self, NULL, helper);
 
 	retval = helper->folders;
 
@@ -456,19 +556,19 @@ modest_tny_account_get_folder_count (TnyAccount *self)
 }
 
 gint
-modest_tny_account_get_message_count (TnyAccount *self)
+modest_tny_folder_store_get_message_count (TnyFolderStore *self)
 {
 	RecurseFoldersHelper *helper;
 	gint retval;
 
-	g_return_val_if_fail (TNY_IS_ACCOUNT (self), -1);
+	g_return_val_if_fail (TNY_IS_FOLDER_STORE (self), -1);
 	
 	/* Create helper */
 	helper = g_malloc0 (sizeof (RecurseFoldersHelper));
 	helper->function = (TnyStatsFunc) tny_folder_stats_get_all_count;
 	helper->sum = 0;
 
-	recurse_folders (TNY_FOLDER_STORE (self), NULL, helper);
+	recurse_folders (self, NULL, helper);
 
 	retval = helper->sum;
 
@@ -478,7 +578,7 @@ modest_tny_account_get_message_count (TnyAccount *self)
 }
 
 gint 
-modest_tny_account_get_local_size (TnyAccount *self)
+modest_tny_folder_store_get_local_size (TnyFolderStore *self)
 {
 	RecurseFoldersHelper *helper;
 	gint retval;
@@ -490,7 +590,7 @@ modest_tny_account_get_local_size (TnyAccount *self)
 	helper->function = (TnyStatsFunc) tny_folder_stats_get_local_size;
 	helper->sum = 0;
 
-	recurse_folders (TNY_FOLDER_STORE (self), NULL, helper);
+	recurse_folders (self, NULL, helper);
 
 	retval = helper->sum;
 
@@ -498,3 +598,16 @@ modest_tny_account_get_local_size (TnyAccount *self)
 
 	return retval;
 }
+
+const gchar* modest_tny_account_get_parent_modest_account_name_for_server_account (TnyAccount *self)
+{
+	return (const gchar *)g_object_get_data (G_OBJECT (self), "modest_account");
+}
+
+void modest_tny_account_set_parent_modest_account_name_for_server_account (TnyAccount *self, const gchar* parent_modest_acount_name)
+{
+	g_object_set_data_full (G_OBJECT(self), "modest_account",
+				(gpointer*) g_strdup (parent_modest_acount_name), g_free);
+}
+
+

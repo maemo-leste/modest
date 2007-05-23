@@ -1122,19 +1122,20 @@ set_alignment (GtkWidget *widget,
 }
 
 static GtkWidget *
-create_details_widget (TnyAccount *account)
+create_details_widget (TnyFolderStore *folder_store)
 {
 	GtkWidget *vbox;
 	gchar *label;
 
 	vbox = gtk_vbox_new (FALSE, 0);
 
-	/* Account description */
-	if (!strcmp (tny_account_get_id (account), MODEST_LOCAL_FOLDERS_ACCOUNT_ID)) {
-		gchar *device_name;
-
+	/* Account description: */
+	
+	if (modest_tny_folder_store_is_virtual_local_folders (folder_store)) {
+		/* Local folders: */
+	
 		/* Get device name */
-		device_name = modest_conf_get_string (modest_runtime_get_conf(),
+		gchar *device_name = modest_conf_get_string (modest_runtime_get_conf(),
 						      MODEST_CONF_DEVICE_NAME, NULL);
    
 		label = g_strdup_printf ("%s: %s",
@@ -1143,63 +1144,74 @@ create_details_widget (TnyAccount *account)
 		gtk_box_pack_start (GTK_BOX (vbox), gtk_label_new (label), FALSE, FALSE, 0);
 		g_free (device_name);
 		g_free (label);
-	} else if (!strcmp (tny_account_get_id (account), MODEST_MMC_ACCOUNT_ID)) {
-		/* TODO: MMC ? */
-		gtk_box_pack_start (GTK_BOX (vbox), gtk_label_new ("FIXME: MMC ?"), FALSE, FALSE, 0);
-	} else {
-		GString *proto;
-
-		/* Put proto in uppercase */
-		proto = g_string_new (tny_account_get_proto (account));
-		proto = g_string_ascii_up (proto);
-
-		label = g_strdup_printf ("%s %s: %s", 
-					 proto->str,
-					 _("mcen_fi_remoteroot_account"),
-					 tny_account_get_name (account));
-		gtk_box_pack_start (GTK_BOX (vbox), gtk_label_new (label), FALSE, FALSE, 0);
-		g_string_free (proto, TRUE);
-		g_free (label);
+	} else if (TNY_IS_ACCOUNT (folder_store)) {
+		TnyAccount *account = TNY_ACCOUNT(folder_store);
+		
+		if(!strcmp (tny_account_get_id (account), MODEST_MMC_ACCOUNT_ID)) {
+			/* TODO: MMC ? */
+			gtk_box_pack_start (GTK_BOX (vbox), gtk_label_new ("FIXME: MMC ?"), FALSE, FALSE, 0);
+		} else {
+			/* Other accounts, such as IMAP and POP: */
+			
+			GString *proto;
+	
+			/* Put proto in uppercase */
+			proto = g_string_new (tny_account_get_proto (account));
+			proto = g_string_ascii_up (proto);
+	
+			label = g_strdup_printf ("%s %s: %s", 
+						 proto->str,
+						 _("mcen_fi_remoteroot_account"),
+						 tny_account_get_name (account));
+			gtk_box_pack_start (GTK_BOX (vbox), gtk_label_new (label), FALSE, FALSE, 0);
+			g_string_free (proto, TRUE);
+			g_free (label);
+		}
 	}
 
 	/* Message count */
+	
 	label = g_strdup_printf ("%s: %d", _("mcen_fi_rootfolder_messages"), 
-				 modest_tny_account_get_message_count (account));
+				 modest_tny_folder_store_get_message_count (folder_store));
 	gtk_box_pack_start (GTK_BOX (vbox), gtk_label_new (label), FALSE, FALSE, 0);
 	g_free (label);
 
 	/* Folder count */
 	label = g_strdup_printf ("%s: %d", _("mcen_fi_rootfolder_folders"), 
-				 modest_tny_account_get_folder_count (account));
+				 modest_tny_folder_store_get_folder_count (folder_store));
 	gtk_box_pack_start (GTK_BOX (vbox), gtk_label_new (label), FALSE, FALSE, 0);
 	g_free (label);
 
 	/* Size / Date */
-	if (!strcmp (tny_account_get_id (account), MODEST_LOCAL_FOLDERS_ACCOUNT_ID)) {
+	if (modest_tny_folder_store_is_virtual_local_folders (folder_store)) {
 		/* FIXME: format size */
 		label = g_strdup_printf ("%s: %d", _("mcen_fi_rootfolder_size"), 
-					 modest_tny_account_get_local_size (account));
+					 modest_tny_folder_store_get_local_size (folder_store));
 		gtk_box_pack_start (GTK_BOX (vbox), gtk_label_new (label), FALSE, FALSE, 0);
 		g_free (label);
-	} else if (!strcmp (tny_account_get_id (account), MODEST_MMC_ACCOUNT_ID)) {
-		gtk_box_pack_start (GTK_BOX (vbox), gtk_label_new ("FIXME: MMC ?"), FALSE, FALSE, 0);
-	} else {
-		time_t last_updated;
-		gchar *last_updated_string;
-		/* Get last updated from configuration */
-		last_updated = modest_account_mgr_get_int (modest_runtime_get_account_mgr (), 
-							  tny_account_get_id (account), 
-							  MODEST_ACCOUNT_LAST_UPDATED, 
-							  TRUE);
-		if (last_updated > 0) 
-			last_updated_string = modest_text_utils_get_display_date(last_updated);
-		else
-			last_updated_string = g_strdup (_("FIXME: Never"));
-
-		label = g_strdup_printf ("%s: %s", _("mcen_ti_lastupdated"), last_updated_string);
-		gtk_box_pack_start (GTK_BOX (vbox), gtk_label_new (label), FALSE, FALSE, 0);
-		g_free (last_updated_string);
-		g_free (label);
+	} else if (TNY_IS_ACCOUNT(folder_store)) {
+		TnyAccount *account = TNY_ACCOUNT(folder_store);
+		
+		if (!strcmp (tny_account_get_id (account), MODEST_MMC_ACCOUNT_ID)) {
+			gtk_box_pack_start (GTK_BOX (vbox), gtk_label_new ("FIXME: MMC ?"), FALSE, FALSE, 0);
+		} else {
+			time_t last_updated;
+			gchar *last_updated_string;
+			/* Get last updated from configuration */
+			last_updated = modest_account_mgr_get_int (modest_runtime_get_account_mgr (), 
+								  tny_account_get_id (account), 
+								  MODEST_ACCOUNT_LAST_UPDATED, 
+								  TRUE);
+			if (last_updated > 0) 
+				last_updated_string = modest_text_utils_get_display_date(last_updated);
+			else
+				last_updated_string = g_strdup (_("FIXME: Never"));
+	
+			label = g_strdup_printf ("%s: %s", _("mcen_ti_lastupdated"), last_updated_string);
+			gtk_box_pack_start (GTK_BOX (vbox), gtk_label_new (label), FALSE, FALSE, 0);
+			g_free (last_updated_string);
+			g_free (label);
+		}
 	}
 
 	/* Set alignment */
@@ -1213,8 +1225,6 @@ modest_main_window_set_contents_style (ModestMainWindow *self,
 				       ModestMainWindowContentsStyle style)
 {
 	ModestMainWindowPrivate *priv;
-	GtkWidget *content;
-	TnyAccount *account;
 
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW (self));
 
@@ -1229,10 +1239,12 @@ modest_main_window_set_contents_style (ModestMainWindow *self,
 
 	/* Remove previous child. Delete it if it was an account
 	   details widget */
-	content = gtk_bin_get_child (GTK_BIN (priv->contents_widget));
-	if (priv->contents_style != MODEST_MAIN_WINDOW_CONTENTS_STYLE_DETAILS)
-		g_object_ref (content);
-	gtk_container_remove (GTK_CONTAINER (priv->contents_widget), content);
+	GtkWidget *content = gtk_bin_get_child (GTK_BIN (priv->contents_widget));
+	if (content) {
+		if (priv->contents_style != MODEST_MAIN_WINDOW_CONTENTS_STYLE_DETAILS)
+			g_object_ref (content);
+		gtk_container_remove (GTK_CONTAINER (priv->contents_widget), content);
+	}
 
 	priv->contents_style = style;
 
@@ -1241,13 +1253,17 @@ modest_main_window_set_contents_style (ModestMainWindow *self,
 		wrap_in_scrolled_window (priv->contents_widget, GTK_WIDGET (priv->header_view));
 		break;
 	case MODEST_MAIN_WINDOW_CONTENTS_STYLE_DETAILS:
+	{
 		/* TODO: show here account details */
-		account = TNY_ACCOUNT (modest_folder_view_get_selected (priv->folder_view));
-		priv->details_widget = create_details_widget (account);
+		TnyFolderStore *selected_folderstore = 
+			modest_folder_view_get_selected (priv->folder_view);
+			
+		priv->details_widget = create_details_widget (selected_folderstore);
 
 		wrap_in_scrolled_window (priv->contents_widget, 
-					 priv->details_widget);
+				 priv->details_widget);
 		break;
+	}
 	default:
 		g_return_if_reached ();
 	}
@@ -1275,7 +1291,7 @@ on_configuration_key_changed (ModestConf* conf,
 
 	account = (TnyAccount *) modest_folder_view_get_selected (priv->folder_view);
 	if (TNY_IS_ACCOUNT (account) &&
-	    !strcmp (tny_account_get_id (account), MODEST_LOCAL_FOLDERS_ACCOUNT_ID)) {
+	    !strcmp (tny_account_get_id (account), MODEST_ACTUAL_LOCAL_FOLDERS_ACCOUNT_ID)) {
 		GList *children;
 		GtkLabel *label;
 		const gchar *device_name;

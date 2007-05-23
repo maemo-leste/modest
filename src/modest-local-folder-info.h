@@ -76,9 +76,8 @@ const gchar* modest_local_folder_info_get_type_display_name (TnyFolderType type)
 
 /**
  * modest_local_folder_info_get_maildir_path
- * @type: the type of the local folder
  * 
- * get the path to the Maildir where the local folders are stored
+ * Get the path to the Maildir where the local folders are stored.
  *  
  * Returns: the local_folders Maildir path as a newly allocated
  * string, which must be freed by the caller.
@@ -86,6 +85,27 @@ const gchar* modest_local_folder_info_get_type_display_name (TnyFolderType type)
  */
 gchar *modest_local_folder_info_get_maildir_path (void);
 
+/**
+ * modest_per_account_local_outbox_folder_info_get_maildir_path
+ * 
+ * Get the path to the Maildir where the per-account local outbox folder is stored.
+ *  
+ * Returns: the local outbox account Maildir path as a newly allocated
+ * string, which must be freed by the caller.
+ *
+ */
+gchar *modest_per_account_local_outbox_folder_info_get_maildir_path (TnyAccount *account);
+
+/**
+ * modest_per_account_local_outbox_folder_info_get_maildir_path_to_outbox_folder
+ * 
+ * Get the path to the "outbox" folder directory under the local outbox account MailDir directory.
+ *  
+ * Returns: the local outbox folder Maildir path as a newly allocated
+ * string, which must be freed by the caller.
+ *
+ */
+gchar *modest_per_account_local_outbox_folder_info_get_maildir_path_to_outbox_folder (TnyAccount *account);
 
 G_END_DECLS
 #endif /* __MODEST_LOCAL_FOLDER_INFO_H__ */

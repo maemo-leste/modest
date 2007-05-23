@@ -30,6 +30,7 @@
 #include <glib/gi18n.h>
 #include <string.h> /* strcmp */
 #include <modest-local-folder-info.h>
+#include <stdio.h>
 
 typedef struct {
 	TnyFolderType   type;
@@ -48,8 +49,10 @@ const ModestLocalFolder ModestLocalFolderMap[] = {
 	{ TNY_FOLDER_TYPE_ROOT,     "<root>",     N_("<root>")},
 	{ TNY_FOLDER_TYPE_NOTES,    "notes",      N_("Notes")},
 	{ TNY_FOLDER_TYPE_DRAFTS,   "drafts",     N_("mcen_me_folder_drafts")},
-	{ TNY_FOLDER_TYPE_OUTBOX,   "contacts",   N_("Contacts")},
+/* TODO: Do we want these? If so, they need a type ID: 
+ * 	{ TNY_FOLDER_TYPE_OUTBOX,   "contacts",   N_("Contacts")},
 	{ TNY_FOLDER_TYPE_OUTBOX,   "calendar",   N_("Calendar")},
+*/
 	{ TNY_FOLDER_TYPE_ARCHIVE,  "archive",    N_("Archive")}
 };
 
@@ -109,4 +112,30 @@ modest_local_folder_info_get_maildir_path (void)
 				 MODEST_LOCAL_FOLDERS_MAILDIR, 
 				 NULL);
 }
+
+gchar *modest_per_account_local_outbox_folder_info_get_maildir_path (TnyAccount *account)
+{
+	/* This directory should contain an "outbox" child directory: */
+	return g_build_filename (g_get_home_dir(),
+				 MODEST_DIR,
+				 MODEST_PER_ACCOUNT_LOCAL_OUTBOX_FOLDERS_MAILDIR, 
+				 tny_account_get_id (account),
+				 NULL);
+}
+
+gchar *modest_per_account_local_outbox_folder_info_get_maildir_path_to_outbox_folder (TnyAccount *account)
+{
+	gchar *path_to_account_folder = 
+		modest_per_account_local_outbox_folder_info_get_maildir_path(account);
+	if (!path_to_account_folder)
+		return NULL;
+
+	gchar *path = g_build_filename (path_to_account_folder, "outbox", NULL);
+
+	g_free (path_to_account_folder);
+
+	return path;
+}
+
+
 

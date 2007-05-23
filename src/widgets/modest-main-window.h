@@ -165,10 +165,10 @@ ModestMainWindowStyle       modest_main_window_get_style        (ModestMainWindo
 /**
  * modest_main_window_set_contents_style:
  * @self: the #ModestMainWindow
- * @style: a #ModestMainWindowContentsStyle that will be set
+ * @style: a #ModestMainWindowContentsStyle that will be set. Either headers or details.
  * 
  * Shows either the folder details, or the header list of the current
- * selected folder
+ * selected folder.
  **/
 void       modest_main_window_set_contents_style       (ModestMainWindow *self, 
 							ModestMainWindowContentsStyle style);

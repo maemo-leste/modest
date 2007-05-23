@@ -1,3 +1,96 @@
+2007-05-23  Murray Cumming  <murrayc@murrayc.com>
+
+	Modest on-disk outbox directories are now here, for instance:
+	$HOME/.modest/outboxes/<account-id-1>/outbox
+	$HOME/.modest/outboxes/<account-id-2>/outbox
+	instead of here:
+	$HOME/.modest/local-folders/outbox
+	so we can have a separate outbox for each account.
+	But they are shown as one outbox in the GtkTreeView, by using a 
+	TnyMergeFolder in a ModestTnySimpleFolderStore.
+	
+	* src/Makefile.am:
+	* src/modest-tny-simple-folder-store.c:
+	* src/modest-tny-simple-folder-store.h:
+	Added ModestTnySimpleFolderStore, used to contain folders from 
+	other folder stores, such as other accounts.
+	
+	* src/modest-tny-outbox-account.h:
+	* src/modest-tny-outbox-account.c:
+	Added ModestTnyOutboxAccount, derived from TnyCamelStoreAccount, 
+	used for the per-account local outbox folders.
+	
+	* src/modest-defs.h: Rename MODEST_LOCAL_FOLDERS_ACCOUNT_ID to 
+	MODEST_ACTUAL_LOCAL_FOLDERS_ACCOUNT_ID, to make it clearer that we 
+	only use this (internally) now for the non-outbox local folders.
+
+	* src/modest-init.h:
+	* src/modest-init.c: Added modest_init_one_local_folder(), for 
+	setting up the directory structure for each local folder.
+
+	* src/modest-local-folder-info.c:
+	(modest_per_account_local_outbox_folder_info_get_maildir_path),
+	(modest_per_account_local_outbox_folder_info_get_maildir_path_to_ou
+	tbox_folder):
+	* src/modest-local-folder-info.h:
+	* src/modest-tny-account-store.c: (on_account_removed),
+	(on_account_changed), (create_per_account_local_outbox_folders),
+	(get_server_accounts), (modest_tny_account_store_get_accounts),
+	(modest_tny_account_store_get_tny_account_by_account),
+	(modest_tny_folder_store_is_virtual_local_folders):
+
+	* src/modest-tny-account.h:
+	* src/modest-tny-account.c:
+	Added modest_tny_account_new_for_per_account_local_outbox_folder(), 
+	to create an on-disk per-account local outbox folder for each 
+	transport account.
+	(create_per_account_local_outbox_folders): Create a local outbox folder 
+	for each transport account.
+	(modest_tny_account_new_for_local_folders): Do not create an outbox folder 
+	for all local folders.
+	
+	Added modest_tny_account_get/set_parent_modest_account_name_for_server_account() 
+	instead of using g_object_get/set() directly. It is clearer.
+	
+	(modest_tny_folder_store_get_message_count),
+	(modest_tny_folder_store_get_local_size
+	(modest_tny_folder_store_get_folder_count): Renamed from modest_tny_account*, 
+	because we now use these with non-acount folder stores.
+	
+	(modest_tny_account_get_special_folder),
+	(modest_tny_account_new_from_server_account),
+	(modest_tny_account_new_from_account):
+	(recurse_folders): Adjust to the new outbox system.
+	
+	* src/modest-tny-folder.h:
+	* src/modest-tny-folder.c: 
+	(modest_tny_folder_is_local_folder),
+	(modest_tny_folder_get_local_folder_type),
+	(modest_tny_folder_is_outbox_for_account): Adjust for the new outbox system.
+	
+	* src/widgets/modest-main-window.h:
+	* src/maemo/modest-main-window.c: (create_details_widget),
+	(modest_main_window_set_contents_style): Show details for any folder store, 
+	not just accounts.
+	
+	(modest_tny_folder_get_rules): 
+	Remove the const. C does not support constness enough for this.
+	
+	* src/modest-ui-actions.c:
+	update_model(): Use a ModestTnySimpleListStore and a TnyMergeFolder to 
+	make all outboxes appear as one, in the usual local-folders tree node.
+	
+	(set_active_account_from_tny_account),
+	(modest_ui_actions_on_folder_selection_changed):
+	* src/widgets/modest-folder-view.c: (text_cell_data),
+	(icon_cell_data), (filter_row),
+	(add_account_folders_to_merged_folder),
+	(add_account_folders_to_simple_folder_store), (),
+	(get_cmp_rows_type_pos), (cmp_rows),
+	(modest_folder_view_set_account_id_of_visible_server_account):
+	Adjust to the new outbox system, using generic folder stores and folders 
+	in the GtkTreeModel.
+
 2007-05-23  Christian Kellner  <ckellner@openismus.com>
 
 	* src/modest-mail-operation.c:
@@ -144,7 +237,7 @@
 
 	* src/modest-tny-account.c:
 	(modest_tny_account_new_from_server_account):
-	Excplicitly use ANONYMOUS secure authentication, instead of "PLAIN" for 
+	Explicitly use ANONYMOUS secure authentication, instead of "PLAIN" for 
 	SMTP when "None" was chosen by the user. However, with my SMTP server that 
 	does not support ANONYMOUS, the emails do not leave the Outbox and I see 
 	no error dialog.

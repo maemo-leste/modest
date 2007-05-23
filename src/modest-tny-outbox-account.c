@@ -1,4 +1,4 @@
-/* Copyright (c) 2006, 2007 Nokia Corporation
+/* Copyright (c) 2006, Nokia Corporation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,59 +27,52 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __MODEST_INIT_H__
-#define __MODEST_INIT_H__
+#include <modest-tny-outbox-account.h>
 
-#include <glib.h>
-#include <glib-object.h>
-#include <modest-runtime.h>
+G_DEFINE_TYPE (ModestTnyOutboxAccount, modest_tny_outbox_account, TNY_TYPE_CAMEL_STORE_ACCOUNT);
 
-G_BEGIN_DECLS
+#define TNY_OUTBOX_ACCOUNT_PRIVATE(o) \
+  (G_TYPE_INSTANCE_GET_PRIVATE ((o), MODEST_TYPE_TNY_OUTBOX_ACCOUNT, ModestTnyOutboxAccountPrivate))
 
-/**
- * modest_init_init_core:
- *
- * initialize the modest runtime system (which sets up the
- * environment, instantiates singletons and so on)
- * modest_runtime_init should only be called once, and
- * when done with it, modest_runtime_uninit should be called
- *  
- * TRUE if this succeeded, FALSE otherwise.
- */
-gboolean modest_init_init_core (void);
+typedef struct _ModestTnyOutboxAccountPrivate ModestTnyOutboxAccountPrivate;
 
+struct _ModestTnyOutboxAccountPrivate
+{
+	/* This it the outbox account for this store account: */
+	gchar *parent_account_id;
+};
 
-/**
- * modest_init_init_ui:
- * @argc: the #argc argument to the main function
- * @argv: the #argv argument to the main function
- * 
- * initialize the modest UI; this replaces the call to
- * gtk_init
- *  
- * TRUE if this succeeded, FALSE otherwise.
- */
-gboolean modest_init_init_ui (gint argc, gchar** argv);
+static void
+modest_tny_outbox_account_dispose (GObject *object)
+{
+  if (G_OBJECT_CLASS (modest_tny_outbox_account_parent_class)->dispose)
+    G_OBJECT_CLASS (modest_tny_outbox_account_parent_class)->dispose (object);
+}
 
-/**
- * modest_init_uninit:
- *
- * uninitialize the modest runtime system; free all the
- * resources and so on.
- *
- * TRUE if this succeeded, FALSE otherwise
- */
-gboolean modest_init_uninit (void);
+static void
+modest_tny_outbox_account_finalize (GObject *object)
+{
+  G_OBJECT_CLASS (modest_tny_outbox_account_parent_class)->finalize (object);
+}
 
-/**
- * modest_init_one_local_folder:
- *
- * Create the directory structure for a maildir folder,
- * so that camel can use it as a maildir folder in a 
- * local maildir store account.
- */
-gboolean modest_init_one_local_folder (gchar *maildir_path);
+static void
+modest_tny_outbox_account_class_init (ModestTnyOutboxAccountClass *klass)
+{
+  GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
-G_END_DECLS
+  g_type_class_add_private (klass, sizeof (ModestTnyOutboxAccountPrivate));
 
-#endif /*__MODEST_INIT_H__*/
+  object_class->dispose = modest_tny_outbox_account_dispose;
+  object_class->finalize = modest_tny_outbox_account_finalize;
+}
+
+static void
+modest_tny_outbox_account_init (ModestTnyOutboxAccount *self)
+{
+}
+
+ModestTnyOutboxAccount*
+modest_tny_outbox_account_new (void)
+{
+  return g_object_new (MODEST_TYPE_TNY_OUTBOX_ACCOUNT, NULL);
+}

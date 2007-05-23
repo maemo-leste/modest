@@ -46,6 +46,17 @@ typedef enum {
 	MODEST_FOLDER_RULES_FOLDER_NON_RENAMEABLE = 1 << 4,
 } ModestTnyFolderRules;
 
+/** Note: This is not a derived TnyFolder type. These are just convenience 
+ * functions for working with a TnyFolder. tinymail does not seem to offer any 
+ * easy way to cause derived TnyFolders to be instantiated.
+ */
+ 
+/* TODO: These "const TnyFolder*" arguments will eventually need to 
+ * be "TnyFolder*". C cannot support constness for complex objects like C++ 
+ * can, because it lacks the mutable keyword and doesn't allow both const 
+ * and non-const get function overloads.
+ */
+ 
 /**
  * modest_tny_folder_guess_type:
  * @folder: a valid tnymail folder
@@ -82,7 +93,7 @@ TnyFolderType  modest_tny_folder_guess_folder_type_from_name   (const gchar *fol
  *  
  * Returns: TRUE if it's a local folder, FALSE otherwise
  */
-gboolean modest_tny_folder_is_local_folder   (const TnyFolder *folder);
+gboolean modest_tny_folder_is_local_folder   (TnyFolder *folder);
 
 
 /**
@@ -93,7 +104,7 @@ gboolean modest_tny_folder_is_local_folder   (const TnyFolder *folder);
  *  
  * Returns: TRUE if it's a local folder, FALSE otherwise
  */
-TnyFolderType modest_tny_folder_get_local_folder_type  (const TnyFolder *folder);
+TnyFolderType modest_tny_folder_get_local_folder_type  (TnyFolder *folder);
 
 
 /**
@@ -106,7 +117,19 @@ TnyFolderType modest_tny_folder_get_local_folder_type  (const TnyFolder *folder)
  * Returns: the ModestTnyFolderRules rules (bitwise-OR) for this
  * folder
  */
-ModestTnyFolderRules  modest_tny_folder_get_rules   (const TnyFolder *folder);
+ModestTnyFolderRules  modest_tny_folder_get_rules   (TnyFolder *folder);
+
+/**
+ * modest_tny_folder_is_outbox_for_account:
+ * @folder: a valid tnymail folder
+ * 
+ * Discover whether this folder is the per-account outbox for the specified 
+ * account.
+ *  
+ * Returns: TRUE if this folder is the per-account outbox for the account.
+ */
+gboolean modest_tny_folder_is_outbox_for_account (TnyFolder *folder, 
+	TnyAccount *account);
 
 G_END_DECLS
 
