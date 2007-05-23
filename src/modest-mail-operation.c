@@ -604,7 +604,6 @@ modest_mail_operation_update_account (ModestMailOperation *self,
 	ModestAccountMgr *mgr;
 	TnyStoreAccount *modest_account;
 	TnyTransportAccount *transport_account;
-	gint max_size;
 
 	g_return_val_if_fail (MODEST_IS_MAIL_OPERATION (self), FALSE);
 	g_return_val_if_fail (account_name, FALSE);
@@ -657,7 +656,7 @@ modest_mail_operation_update_account (ModestMailOperation *self,
 	if (info->max_size == 0)
 		info->max_size = G_MAXINT;
 	else
-		info->max_size = max_size * KB;
+		info->max_size = info->max_size * KB; /* TODO: review this fix */
 
 	mgr = modest_runtime_get_account_mgr ();
 	info->retrieve_type = modest_account_mgr_get_string (mgr, account_name, MODEST_ACCOUNT_RETRIEVE, FALSE);

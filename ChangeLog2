@@ -1,3 +1,11 @@
+2007-05-23  Christian Kellner  <ckellner@openismus.com>
+
+	* src/modest-mail-operation.c:
+	(modest_mail_operation_update_account):
+	Use info->max_size instead of unintialized local var [small
+	build fix]. (Added TODO to review that change since I don't
+	know the code)
+
 2007-05-23  Marcus Bauer  <marcusb@openismus.com>
 
 	* libmodest-dbus-client/libmodest-dbus-client.c:
