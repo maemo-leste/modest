@@ -52,6 +52,8 @@
 #include "modest-marshal.h"
 #include "modest-error.h"
 
+#define KB 1024
+
 /* 'private'/'protected' functions */
 static void modest_mail_operation_class_init (ModestMailOperationClass *klass);
 static void modest_mail_operation_init       (ModestMailOperation *obj);
@@ -425,6 +427,9 @@ typedef struct
 	ModestMailOperation *mail_op;
 	TnyStoreAccount *account;
 	TnyTransportAccount *transport_account;
+	gint max_size;
+	gint retrieve_limit;
+	gchar *retrieve_type;
 } UpdateAccountInfo;
 
 static void
@@ -583,6 +588,7 @@ update_account_thread (gpointer thr_user_data)
 	g_object_unref (all_folders);
 	g_object_unref (info->account);
 	g_object_unref (info->transport_account);
+	g_free (info->retrieve_type);
 	g_slice_free (UpdateAccountInfo, info);
 
 	return NULL;
@@ -595,8 +601,10 @@ modest_mail_operation_update_account (ModestMailOperation *self,
 	GThread *thread;
 	UpdateAccountInfo *info;
 	ModestMailOperationPrivate *priv;
+	ModestAccountMgr *mgr;
 	TnyStoreAccount *modest_account;
 	TnyTransportAccount *transport_account;
+	gint max_size;
 
 	g_return_val_if_fail (MODEST_IS_MAIL_OPERATION (self), FALSE);
 	g_return_val_if_fail (account_name, FALSE);
@@ -643,6 +651,17 @@ modest_mail_operation_update_account (ModestMailOperation *self,
 	info->mail_op = self;
 	info->account = modest_account;
 	info->transport_account = transport_account;
+
+	/* Get the message retrieval global and per-account settings */
+	info->max_size  = modest_conf_get_int (modest_runtime_get_conf (), MODEST_CONF_MSG_SIZE_LIMIT, NULL);
+	if (info->max_size == 0)
+		info->max_size = G_MAXINT;
+	else
+		info->max_size = max_size * KB;
+
+	mgr = modest_runtime_get_account_mgr ();
+	info->retrieve_type = modest_account_mgr_get_string (mgr, account_name, MODEST_ACCOUNT_RETRIEVE, FALSE);
+	info->retrieve_limit = modest_account_mgr_get_int (mgr, account_name, MODEST_ACCOUNT_LIMIT_RETRIEVE, FALSE);
 
 	thread = g_thread_create (update_account_thread, info, FALSE, NULL);
 
@@ -1281,7 +1300,6 @@ modest_mail_operation_get_msgs_full (ModestMailOperation *self,
 	gboolean size_ok = TRUE;
 	gint max_size;
 	GError *error = NULL;
-	const gint KB = 1024;
 	
 	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
 	
