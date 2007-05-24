@@ -1156,18 +1156,19 @@ typedef struct _DndHelper {
  * and drop action
  */
 static void
-on_progress_changed (ModestMailOperation *mail_op, gpointer user_data)
+on_progress_changed (ModestMailOperation *mail_op, 
+		     ModestMailOperationState *state,
+		     gpointer user_data)
 {
 	gboolean success;
 	DndHelper *helper;
 
 	helper = (DndHelper *) user_data;
 
-	if (!modest_mail_operation_is_finished (mail_op))
+	if (!state->finished)
 		return;
 
-	if (modest_mail_operation_get_status (mail_op) == 
-	    MODEST_MAIL_OPERATION_STATUS_SUCCESS) {
+	if (state->status == MODEST_MAIL_OPERATION_STATUS_SUCCESS) {
 		success = TRUE;
 	} else {
 		success = FALSE;
@@ -1212,7 +1213,7 @@ drag_and_drop_from_header_view (GtkTreeModel *source_model,
 			    &folder, -1);
 
 	/* Transfer message */
-	mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_ID_RECEIVE, NULL);
+	mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_RECEIVE, NULL);
 
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
 					 mail_op);
@@ -1273,7 +1274,7 @@ drag_and_drop_from_folder_view (GtkTreeModel     *source_model,
 			    &folder, -1);
 
 	/* Do the mail operation */
-	mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_ID_RECEIVE, NULL);
+	mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_RECEIVE, NULL);
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), 
 					 mail_op);
 	g_signal_connect (G_OBJECT (mail_op), "progress-changed",

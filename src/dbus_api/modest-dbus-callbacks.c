@@ -89,7 +89,7 @@ on_idle_send_mail(gpointer user_data)
 		if (!from) {
 			g_printerr ("modest: no from address for account '%s'\n", account_name);
 		} else {
-			ModestMailOperation *mail_operation = modest_mail_operation_new (MODEST_MAIL_OPERATION_ID_SEND, NULL);
+			ModestMailOperation *mail_operation = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_SEND, NULL);
 			modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_operation);
 			
 	 		modest_mail_operation_send_new_mail (mail_operation,

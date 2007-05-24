@@ -952,7 +952,7 @@ modest_msg_view_window_select_next_message (ModestMsgViewWindow *window)
 				tny_header_set_flags (header, flags | TNY_HEADER_FLAG_SEEN);
 
 			/* New mail operation */
-			mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_ID_RECEIVE, G_OBJECT(window));
+			mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_RECEIVE, G_OBJECT(window));
 			modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
 			modest_mail_operation_get_msg (mail_op, header, view_msg_cb, NULL);
 			g_object_unref (mail_op);
@@ -999,7 +999,7 @@ modest_msg_view_window_select_first_message (ModestMsgViewWindow *self)
 		tny_header_set_flags (header, flags | TNY_HEADER_FLAG_SEEN);
 	
 	/* New mail operation */
-	mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_ID_RECEIVE, G_OBJECT(self));
+	mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_RECEIVE, G_OBJECT(self));
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
 	modest_mail_operation_get_msg (mail_op, header, view_msg_cb, NULL);
 	g_object_unref (mail_op);
@@ -1046,7 +1046,7 @@ modest_msg_view_window_select_previous_message (ModestMsgViewWindow *window)
 				tny_header_set_flags (header, flags | TNY_HEADER_FLAG_SEEN);
 
 			/* New mail operation */
-			mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_ID_RECEIVE, G_OBJECT(window));
+			mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_RECEIVE, G_OBJECT(window));
 			modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
 			modest_mail_operation_get_msg (mail_op, header, view_msg_cb, NULL);		
 
@@ -1413,7 +1413,7 @@ on_queue_changed (ModestMailOperationQueue *queue,
 {
 	GSList *tmp;
 	ModestMsgViewWindowPrivate *priv;
-	ModestMailOperationId op_id;
+	ModestMailOperationTypeOperation op_type;
 	ModestToolBarModes mode;
 	
 	g_return_if_fail (MODEST_IS_MSG_VIEW_WINDOW (self));
@@ -1424,10 +1424,10 @@ on_queue_changed (ModestMailOperationQueue *queue,
 	    return;
 
 	/* Get toolbar mode from operation id*/
-	op_id = modest_mail_operation_get_id (mail_op);
-	switch (op_id) {
-	case MODEST_MAIL_OPERATION_ID_SEND:
-	case MODEST_MAIL_OPERATION_ID_RECEIVE:
+	op_type = modest_mail_operation_get_type_operation (mail_op);
+	switch (op_type) {
+	case MODEST_MAIL_OPERATION_TYPE_SEND:
+	case MODEST_MAIL_OPERATION_TYPE_RECEIVE:
 		mode = TOOLBAR_MODE_TRANSFER;
 		break;
 	default:

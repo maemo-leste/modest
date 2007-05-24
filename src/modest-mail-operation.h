@@ -65,27 +65,14 @@ typedef enum _ModestMailOperationStatus {
  *
  * The id for identifying the type of mail operation
  */
-typedef enum _ModestMailOperationId {
-	MODEST_MAIL_OPERATION_ID_SEND,
-	MODEST_MAIL_OPERATION_ID_RECEIVE,
-	MODEST_MAIL_OPERATION_ID_OPEN,
-	MODEST_MAIL_OPERATION_ID_DELETE,
-	MODEST_MAIL_OPERATION_ID_INFO,
-	MODEST_MAIL_OPERATION_ID_UNKNOWN,
-} ModestMailOperationId;
-
-
-struct _ModestMailOperation {
-	 GObject parent;
-	/* insert public members, if any */
-};
-
-struct _ModestMailOperationClass {
-	GObjectClass parent_class;
-
-	/* Signals */
-	void (*progress_changed) (ModestMailOperation *self, gpointer user_data);
-};
+typedef enum {
+	MODEST_MAIL_OPERATION_TYPE_SEND,
+	MODEST_MAIL_OPERATION_TYPE_RECEIVE,
+	MODEST_MAIL_OPERATION_TYPE_OPEN,
+	MODEST_MAIL_OPERATION_TYPE_DELETE,
+	MODEST_MAIL_OPERATION_TYPE_INFO,
+	MODEST_MAIL_OPERATION_TYPE_UNKNOWN,
+} ModestMailOperationTypeOperation;
 
 /**
  * ErroCheckingAsyncUserCallback:
@@ -127,6 +114,29 @@ typedef void (*GetMsgAsyncUserCallback) (ModestMailOperation *mail_op,
 typedef void (*XferMsgsAsynUserCallback) (const GObject *obj, gpointer user_data);
 
 
+/* This struct represents the internal state of a mail operation in a
+   given time */
+typedef struct {
+	guint      done;
+	guint      total;
+	gboolean   finished;
+	ModestMailOperationStatus        status;
+	ModestMailOperationTypeOperation op_type;		
+} ModestMailOperationState;
+
+
+struct _ModestMailOperation {
+	 GObject parent;
+	/* insert public members, if any */
+};
+
+struct _ModestMailOperationClass {
+	GObjectClass parent_class;
+
+	/* Signals */
+	void (*progress_changed) (ModestMailOperation *self, ModestMailOperationState *state, gpointer user_data);
+};
+
 /* member functions */
 GType        modest_mail_operation_get_type    (void) G_GNUC_CONST;
 
@@ -138,7 +148,7 @@ GType        modest_mail_operation_get_type    (void) G_GNUC_CONST;
  * Creates a new instance of class #ModestMailOperation, using parameters
  * to initialize its private structure. @source parameter may be NULL.
  **/
-ModestMailOperation*    modest_mail_operation_new     (ModestMailOperationId id,
+ModestMailOperation*    modest_mail_operation_new     (ModestMailOperationTypeOperation type,
 						       GObject *source);
 
 /**
@@ -153,11 +163,11 @@ ModestMailOperation*    modest_mail_operation_new     (ModestMailOperationId id,
  * @error_handler can not be NULL, but it will be returned an mail operation
  * object without error handling capability.
  **/
-ModestMailOperation*    modest_mail_operation_new_with_error_handling     (ModestMailOperationId id,
+ModestMailOperation*    modest_mail_operation_new_with_error_handling     (ModestMailOperationTypeOperation op_type,
 									   GObject *source,
 									   ErrorCheckingUserCallback error_handler);
 /**
- * modest_mail_operation_get_id
+ * modest_mail_operation_execute_error_handler
  * @self: a #ModestMailOperation
  * 
  * Executes error handler, if it exists, passing @self objsect as
@@ -167,14 +177,14 @@ void
 modest_mail_operation_execute_error_handler (ModestMailOperation *self);
 
 /**
- * modest_mail_operation_get_id
+ * modest_mail_operation_get_type_operation
  * @self: a #ModestMailOperation
  * 
- * Gets the private id field of mail operation. This id identifies
- * the class/type of mail operation.  
+ * Gets the private op_type field of mail operation. This op_type
+ * identifies the class/type of mail operation.
  **/
-ModestMailOperationId
-modest_mail_operation_get_id (ModestMailOperation *self);
+ModestMailOperationTypeOperation
+modest_mail_operation_get_type_operation (ModestMailOperation *self);
 
 /**
  * modest_mail_operation_is_mine
@@ -544,6 +554,11 @@ gboolean  modest_mail_operation_cancel          (ModestMailOperation *self);
  */
 void      modest_mail_operation_refresh_folder  (ModestMailOperation *self,
 						 TnyFolder *folder);
+
+guint     modest_mail_operation_get_id          (ModestMailOperation *self);
+
+guint     modest_mail_operation_set_id          (ModestMailOperation *self,
+						 guint id);
 
 G_END_DECLS
 

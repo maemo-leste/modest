@@ -53,6 +53,7 @@ typedef struct _ModestMailOperationQueuePrivate ModestMailOperationQueuePrivate;
 struct _ModestMailOperationQueuePrivate {
 	GQueue *op_queue;
 	GMutex *queue_lock;
+	guint   op_id;
 };
 #define MODEST_MAIL_OPERATION_QUEUE_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                          MODEST_TYPE_MAIL_OPERATION_QUEUE, \
@@ -127,6 +128,7 @@ modest_mail_operation_queue_init (ModestMailOperationQueue *obj)
 
 	priv->op_queue   = g_queue_new ();
 	priv->queue_lock = g_mutex_new ();
+	priv->op_id = 0;
 }
 
 static void
@@ -172,6 +174,7 @@ modest_mail_operation_queue_add (ModestMailOperationQueue *self,
 
 	g_mutex_lock (priv->queue_lock);
 	g_queue_push_tail (priv->op_queue, g_object_ref (mail_op));
+	modest_mail_operation_set_id (mail_op, priv->op_id++);
 	g_mutex_unlock (priv->queue_lock);
 
 	/* Notify observers */

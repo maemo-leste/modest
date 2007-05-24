@@ -1447,7 +1447,7 @@ on_queue_changed (ModestMailOperationQueue *queue,
 		  ModestMainWindow *self)
 {
 	ModestMainWindowPrivate *priv;
-	ModestMailOperationId op_id;
+	ModestMailOperationTypeOperation op_type;
 	ModestToolBarModes mode;
 	GSList *tmp;
 	gboolean mode_changed = FALSE;
@@ -1457,10 +1457,10 @@ on_queue_changed (ModestMailOperationQueue *queue,
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
 	       
 	/* Get toolbar mode from operation id*/
-	op_id = modest_mail_operation_get_id (mail_op);
-	switch (op_id) {
-	case MODEST_MAIL_OPERATION_ID_SEND:
-	case MODEST_MAIL_OPERATION_ID_RECEIVE:
+	op_type = modest_mail_operation_get_type_operation (mail_op);
+	switch (op_type) {
+	case MODEST_MAIL_OPERATION_TYPE_SEND:
+	case MODEST_MAIL_OPERATION_TYPE_RECEIVE:
 		mode = TOOLBAR_MODE_TRANSFER;
 		if (priv->current_toolbar_mode == TOOLBAR_MODE_NORMAL)
 			mode_changed = TRUE;

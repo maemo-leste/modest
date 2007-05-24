@@ -51,6 +51,7 @@ static guint
 modest_progress_bar_num_pending_operations (ModestProgressObject *self);
 
 static void on_progress_changed                    (ModestMailOperation  *mail_op, 
+						    ModestMailOperationState *state,
 						    ModestProgressBarWidget *self);
 
 static gboolean     progressbar_clean        (GtkProgressBar *bar);
@@ -320,47 +321,45 @@ modest_progress_bar_cancel_current_operation (ModestProgressObject *self)
 }
 static void 
 on_progress_changed (ModestMailOperation  *mail_op, 
+		     ModestMailOperationState *state,
 		     ModestProgressBarWidget *self)
 {
 	ModestProgressBarWidgetPrivate *priv;
 	gboolean determined = FALSE;
-	ModestMailOperationId id;
 
 	priv = MODEST_PROGRESS_BAR_WIDGET_GET_PRIVATE (self);
 
 	/* If the mail operation is the currently shown one */
 	if (priv->current == mail_op) {
 		gchar *msg = NULL;
-		guint done  = modest_mail_operation_get_task_done (mail_op);
-		guint total = modest_mail_operation_get_task_total (mail_op);
 		
-		determined = (done > 0 && total > 0) & !(done == 1 && total == 100);
-		id = modest_mail_operation_get_id (mail_op);
+		determined = (state->done > 0 && state->total > 0) & 
+			!(state->done == 1 && state->total == 100);
 
-		switch (id) {
-		case MODEST_MAIL_OPERATION_ID_RECEIVE:		
+		switch (state->op_type) {
+		case MODEST_MAIL_OPERATION_TYPE_RECEIVE:		
 			if (determined)
 /* 				msg = g_strdup_printf(_("mcen_me_receiving"), done, total); */
-				msg = g_strdup_printf("Receiving %d/%d", done, total);
+				msg = g_strdup_printf("Receiving %d/%d", state->done, state->total);
 			else 
 /* 				msg = g_strdup(_("mail_me_receiving")); */
 				msg = g_strdup("Receiving ...");
 			break;
-		case MODEST_MAIL_OPERATION_ID_SEND:		
+		case MODEST_MAIL_OPERATION_TYPE_SEND:		
 			if (determined)
-				msg = g_strdup_printf(_("mcen_me_sending"), done, total);
+				msg = g_strdup_printf(_("mcen_me_sending"), state->done, state->total);
 			else 
 				msg = g_strdup(_("mail_me_sending"));
 			break;
 			
-		case MODEST_MAIL_OPERATION_ID_OPEN:		
+		case MODEST_MAIL_OPERATION_TYPE_OPEN:		
 			msg = g_strdup(_("mail_me_opening"));
 			break;
 		default:
 			msg = g_strdup("");
 		}
 		
-		modest_progress_bar_widget_set_progress (self, msg, done, total);
+		modest_progress_bar_widget_set_progress (self, msg, state->done, state->total);
 		g_free (msg);
 	}
 }
