@@ -58,10 +58,7 @@ src/maemo/easysetup/main.c
 src/maemo/easysetup/modest-easysetup-provider-combo-box.c
 src/maemo/easysetup/modest-easysetup-country-combo-box.h
 src/maemo/easysetup/modest-easysetup-wizard.c
-src/maemo/easysetup/modest-validating-entry.h
-src/maemo/easysetup/modest-easysetup-serversecurity-combo-box.h
 src/maemo/easysetup/modest-easysetup-country-combo-box.c
-src/maemo/easysetup/modest-validating-entry.c
 src/maemo/modest-maemo-utils.h
 src/maemo/modest-maemo-utils.c
 src/maemo/modest-msg-view-window.c
@@ -125,6 +122,8 @@ src/widgets/modest-window.c
 src/widgets/modest-mail-header-view.h
 src/widgets/modest-details-dialog.c
 src/widgets/modest-details-dialog.h
+src/widgets/modest-serversecurity-combo-box.h
+src/widgets/modest-validating-entry.c
 src/modest-ui-actions.h
 src/modest-marshal.h
 src/modest-tny-platform-factory.c

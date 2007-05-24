@@ -1,5 +1,12 @@
 2007-05-24  Murray Cumming  <murrayc@murrayc.com>
 
+	* Makefile.am:
+	* po/POTFILES.in:
+	* src/maemo/Makefile.am:
+	* src/widgets/Makefile.am: Some dist fixes.
+
+2007-05-24  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/maemo/modest-connection-specific-smtp-window.c:
 	(on_button_edit): Make the code clearer, to prevent a double free.
 

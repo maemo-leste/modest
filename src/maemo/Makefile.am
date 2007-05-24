@@ -48,7 +48,6 @@ libmodest_ui_la_SOURCES=              \
 	modest-icon-names.h           \
 	modest-maemo-global-settings-dialog.c \
 	modest-maemo-global-settings-dialog.h \
-	modest-maemo-ui-constants.h \
 	modest-main-window.c          \
 	modest-main-window-ui.h       \
 	modest-hildon-includes.h      \

@@ -57,6 +57,7 @@ libmodest_widgets_la_SOURCES=          \
 	modest-secureauth-combo-box.h modest-secureauth-combo-box.c \
 	modest-tny-stream-gtkhtml.c    \
 	modest-tny-stream-gtkhtml.h    \
+	modest-ui-constants.h \
 	modest-validating-entry.h modest-validating-entry.c \
 	modest-window.c                \
 	modest-window.h	               \

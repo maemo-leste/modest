@@ -45,8 +45,7 @@ EXTRA_DIST=                 \
 	intltool-update.in  \
 	debian/changelog    \
 	debian/copyright    \
-	debian/rules        \
-	debian/modest.links
+	debian/rules
 
 DISTCLEANFILES =            \
 	intltool-extract.in \
