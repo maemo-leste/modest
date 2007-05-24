@@ -751,6 +751,49 @@ cleanup:
 }
 
 /*
+ * Checks a list of headers. If any of them are not currently
+ * downloaded (CACHED) then it asks the user for permission to
+ * download them.
+ *
+ * Returns FALSE if the user does not want to download the
+ * messages. Returns TRUE if the user allowed the download or if all
+ * of them are currently downloaded
+ */
+static gboolean
+download_uncached_messages (TnyList *header_list, GtkWindow *win)
+{
+	TnyIterator *iter;
+	gboolean found, retval;
+
+	iter = tny_list_create_iterator (header_list);
+	found = FALSE;
+	while (!tny_iterator_is_done (iter) && !found) {
+		TnyHeader *header;
+		TnyHeaderFlags flags;
+
+		header = TNY_HEADER (tny_iterator_get_current (iter));
+		flags = tny_header_get_flags (header);
+		found = !(flags & TNY_HEADER_FLAG_CACHED);
+		g_object_unref (header);
+		tny_iterator_next (iter);
+	}
+	g_object_unref (iter);
+
+	/* Ask for user permission to download the messages */
+	retval = TRUE;
+	if (found) {
+		GtkResponseType response;
+		response = 
+			modest_platform_run_confirmation_dialog (GTK_WINDOW (win),
+								 _("mcen_nc_get_multi_msg_txt"));
+		if (response == GTK_RESPONSE_CANCEL)
+			retval = FALSE;
+	}
+	return retval;
+}
+
+
+/*
  * Common code for the reply and forward actions
  */
 static void
@@ -760,16 +803,25 @@ reply_forward (ReplyForwardAction action, ModestWindow *win)
 	TnyList *header_list = NULL;
 	ReplyForwardHelper *rf_helper = NULL;
 	guint reply_forward_type;
+	gboolean continue_download;
 	
 	g_return_if_fail (MODEST_IS_WINDOW(win));
 
 	header_list = get_selected_headers (win);
 	if (!header_list)
 		return;
+
+	/* Check that the messages have been previously downloaded */
+	continue_download = download_uncached_messages (header_list, GTK_WINDOW (win));
+	if (!continue_download) {
+		g_object_unref (header_list);
+		return;
+	}
 	
-	reply_forward_type = modest_conf_get_int (modest_runtime_get_conf (),
-						  (action == ACTION_FORWARD) ? MODEST_CONF_FORWARD_TYPE : MODEST_CONF_REPLY_TYPE,
-						  NULL);
+	reply_forward_type = 
+		modest_conf_get_int (modest_runtime_get_conf (),
+				     (action == ACTION_FORWARD) ? MODEST_CONF_FORWARD_TYPE : MODEST_CONF_REPLY_TYPE,
+				     NULL);
 	/* We assume that we can only select messages of the
 	   same folder and that we reply all of them from the
 	   same account. In fact the interface currently only
