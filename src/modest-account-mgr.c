@@ -627,27 +627,40 @@ modest_account_mgr_account_names (ModestAccountMgr * self, gboolean only_enabled
 		
 	GSList *result = NULL;
 	
-	/* Filter-out the disabled accounts if requested: */
-	if (only_enabled) {
-		GSList *iter = accounts;
-		while (iter) {
-			if (!(iter->data))
-				continue;
-				
-			const gchar* account_name = (const gchar*)iter->data;
-			if (account_name && modest_account_mgr_get_enabled (self, account_name))
-				result = g_slist_append (result, g_strdup (account_name));
-				
-			iter = g_slist_next (iter);	
+	/* Unescape the keys to get the account names: */
+	GSList *iter = accounts;
+	while (iter) {
+		if (!(iter->data))
+			continue;
+			
+		const gchar* account_name_key = (const gchar*)iter->data;
+		/* printf ("DEBUG: %s: account_name_key=%s\n", __FUNCTION__, account_name_key); */
+		gchar* unescaped_name = account_name_key ? 
+			modest_conf_key_unescape (account_name_key) 
+			: NULL;
+		/* printf ("  DEBUG: %s: unescaped name=%s\n", __FUNCTION__, unescaped_name); */
+		
+		gboolean add = TRUE;
+		if (only_enabled) {
+			if (unescaped_name && 
+				!modest_account_mgr_get_enabled (self, unescaped_name)) {
+				add = FALSE;
+			}
 		}
 		
-		/* TODO: Free the strings too? */
-		g_slist_free (accounts);
-		accounts = NULL;
+		if (add) {	
+			result = g_slist_append (result, unescaped_name);
+		}
+		else {
+			g_free (unescaped_name);
+		}
+			
+		iter = g_slist_next (iter);	
 	}
-	else
-		result = accounts;
 	
+	/* TODO: Free the strings too? */
+	g_slist_free (accounts);
+	accounts = NULL;
 
 	return result;
 }

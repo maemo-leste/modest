@@ -491,9 +491,12 @@ modest_account_mgr_get_default_account  (ModestAccountMgr *self)
 		return  NULL;
 	}
 	
-	/* it's not really an error if there is no default account */
-	if (!account) 
-		return NULL;
+	/* Make sure that at least one account is always the default, if possible:
+	 * (It would be meaningless to have enabled accounts but no default account. */
+	if (!account) {
+		modest_account_mgr_set_first_account_as_default (self);
+		account = modest_conf_get_string (conf, MODEST_CONF_DEFAULT_ACCOUNT, &err);
+	}
 
 	/* sanity check */
 	if (!modest_account_mgr_account_exists (self, account, FALSE)) {
@@ -553,7 +556,7 @@ modest_account_mgr_set_first_account_as_default  (ModestAccountMgr *self)
 	if(list_sorted)
 	{
 		const gchar* account_name = (const gchar*)list_sorted->data;
-		if (account_name)
+		if (account_name) 
 			result = modest_account_mgr_set_default_account (self, account_name);
 	}
 	

@@ -32,6 +32,7 @@
 #include <modest-defs.h>
 #include <string.h>
 #include <modest-conf.h>
+#include <stdio.h>
 
 gchar*
 _modest_account_mgr_account_from_key (const gchar *key, gboolean *is_account_key, gboolean *is_server_account)
@@ -78,7 +79,13 @@ _modest_account_mgr_account_from_key (const gchar *key, gboolean *is_account_key
 	if (cursor)
 		*cursor = '\0';
 
-	return account;
+	if (account) {
+		/* The key is an escaped string, so unescape it to get the actual account name: */
+		gchar *unescaped_name = modest_conf_key_unescape (account);
+		g_free (account);
+		return unescaped_name;
+	} else
+		return NULL;
 }
 
 
@@ -87,32 +94,31 @@ _modest_account_mgr_account_from_key (const gchar *key, gboolean *is_account_key
 gchar *
 _modest_account_mgr_get_account_keyname (const gchar *account_name, const gchar * name, gboolean server_account)
 {
-	gchar *namespace;
-	gchar *retval;
+	gchar *retval = NULL;
 	
-	namespace = server_account ? MODEST_SERVER_ACCOUNT_NAMESPACE : MODEST_ACCOUNT_NAMESPACE;
+	gchar *namespace = server_account ? MODEST_SERVER_ACCOUNT_NAMESPACE : MODEST_ACCOUNT_NAMESPACE;
 	
 	if (!account_name)
 		return g_strdup (namespace);
 	
-	if (name)
-		retval = g_strconcat (namespace, "/", account_name, "/", name, NULL);
-	else
-		retval = g_strconcat (namespace, "/", account_name, NULL);
+	/* Always escape the conf keys, so that it is acceptable to gconf: */
+	gchar *escaped_account_name = account_name ? modest_conf_key_escape (account_name) : NULL;
+	gchar *escaped_name =  name ? modest_conf_key_escape (name) : NULL;
 
-	/* special case: the key has some weird characters */
+	if (escaped_account_name && escaped_name)
+		retval = g_strconcat (namespace, "/", escaped_account_name, "/", escaped_name, NULL);
+	else if (escaped_account_name)
+		retval = g_strconcat (namespace, "/", escaped_account_name, NULL);
+
+	/* Sanity check: */
 	if (!modest_conf_key_is_valid (retval)) {
-
-		gchar *account_name_esc, *name_esc;
+		g_warning ("%s: Generated conf key was invalid: %s", __FUNCTION__, retval);
 		g_free (retval);
-		
-		account_name_esc = account_name ? modest_conf_key_escape (account_name) : NULL;
-		name_esc         = name ? modest_conf_key_escape (name) : NULL;
-		
-		retval =  _modest_account_mgr_get_account_keyname (account_name_esc, name_esc, server_account);
-
-		g_free (account_name_esc);
-		g_free (name_esc);
+		retval = NULL;
 	}
+
+	g_free (escaped_name);
+	g_free (escaped_account_name);
+
 	return retval;
 }

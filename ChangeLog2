@@ -1,3 +1,24 @@
+2007-05-24  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/modest-account-mgr-helpers.c:
+	(modest_account_mgr_get_default_account): Make sure that at least 
+	one account is always the default, if there are any enabled accounts. 
+	This is just a sanity check that shouldn't be necessary.
+	
+	* src/modest-account-mgr-priv.c:
+	(_modest_account_mgr_account_from_key): Unescape the conf key to 
+	get the real account name. For instance, this is an issue if a space 
+	was in the account name, which can happen because the account name 
+	is generated from the display name.
+	(_modest_account_mgr_get_account_keyname): Always escape the 
+	account name.
+	* src/modest-account-mgr.c: (modest_account_mgr_account_names): 
+	Unescape the conf keys to get the real account names.
+	
+	For instance, previously the is-default radio button in the accounts 
+	list was not checked for any accounts at first. This fixes that,
+	and might fix several similar bugs.
+
 2007-05-23  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/modest-ui-actions.c: (set_active_account_from_tny_account):
