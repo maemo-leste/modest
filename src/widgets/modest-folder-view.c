@@ -707,12 +707,10 @@ filter_row (GtkTreeModel *model,
 				/* TODO: Merge the folders before we get to this point? */
 				
 				/* Show only the visible account id */
-				/*
 				ModestFolderViewPrivate *priv = 
 					MODEST_FOLDER_VIEW_GET_PRIVATE (data);
 				if (priv->visible_account_id && strcmp (account_id, priv->visible_account_id))
 					retval = FALSE;
-				*/
 			}
 		}
 	}
