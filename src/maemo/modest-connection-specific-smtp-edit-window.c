@@ -224,6 +224,7 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	
 	/* Show a default port number when the security method changes, as per the UI spec: */
 	g_signal_connect (G_OBJECT (priv->combo_outgoing_security), "changed", (GCallback)on_combo_security_changed, self);
+	on_combo_security_changed (GTK_COMBO_BOX (priv->combo_outgoing_security), self);
 	
 	/* Add the buttons: */
 	gtk_dialog_add_button (GTK_DIALOG (self), GTK_STOCK_OK, GTK_RESPONSE_OK);

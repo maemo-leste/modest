@@ -1,3 +1,31 @@
+2007-05-24   Murray Cumming  <murrayc@murrayc.com>
+
+	* src/maemo/modest-account-settings-dialog.c:
+	(modest_account_settings_dialog_set_account_name),
+	Check the connection-specific smtp servers checkbox if there are any.
+	
+	* src/maemo/modest-connection-specific-smtp-edit-window.c:
+	(modest_connection_specific_smtp_edit_window_init): 
+	Start with a suitable port number.
+	
+	* src/modest-account-mgr-helpers.h:
+	* src/modest-account-mgr-helpers.c: Added 
+	modest_account_mgr_get_has_connection_specific_smtp().
+	
+	(modest_account_mgr_set_connection_specific_smtp),
+	(modest_account_mgr_remove_connection_specific_smtp),
+	(modest_account_mgr_get_has_connection_specific_smtp),
+	(modest_account_mgr_get_connection_specific_smtp): Set/Get the list of 
+	connection-specific smtp server accounts in the account, rather than 
+	the server account conf dir.
+	
+	This fixes bug projects.maemo.org bug NB#58263 .
+
+	* src/modest-tny-account-store.c:
+	(create_per_account_local_outbox_folders): Do not call get_server_accounts() 
+	if there are no server accounts yet, to prevent an infinite loop when there 
+	are no accounts. Document that one must be called before the other.
+
 2007-05-24  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/modest-account-mgr-helpers.c:

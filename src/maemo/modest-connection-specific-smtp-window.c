@@ -208,7 +208,7 @@ on_button_edit (GtkButton *button, gpointer user_data)
 				    MODEL_COL_SERVER_ACCOUNT_DATA, &data,
 				    -1);
 	
-		printf("DEBUG: %s: BEFORE: connection-specific server_account_name=%s\n", __FUNCTION__, server_account_name);
+		/* printf("DEBUG: %s: BEFORE: connection-specific server_account_name=%s\n", __FUNCTION__, server_account_name); */
 		/* TODO: Is 0 an allowed libconic IAP ID? 
 		 * If not then we should check for it. */
 		
@@ -424,6 +424,7 @@ modest_connection_specific_smtp_window_save_server_accounts (ModestConnectionSpe
 					priv->account_name, connection_name);
 				server_account_name = modest_account_mgr_get_unused_account_name (
 					priv->account_manager, name_start, TRUE /* server account. */);
+				g_assert (server_account_name);
 				g_free (name_start);
 				
 				success = modest_account_mgr_add_server_account (priv->account_manager,

@@ -508,11 +508,17 @@ create_per_account_local_outbox_folders (TnyAccountStore *self)
 			return;
 	}
 	
+	/* This transport accounts must be created before calling this function.
+	 * Otherwise, we have an infinite loop when there are no accounts. */
+	 if (!(priv->transport_accounts))
+	 	return;
+#if 0
 	/* Create the transport accounts, if necessary: */
 	if (!(priv->transport_accounts)) {
 		get_server_accounts (self, NULL /* TnyList */, 
 			TNY_ACCOUNT_TYPE_TRANSPORT);
 	}
+#endif
 	
 	GSList *accounts = NULL;
 	
@@ -603,7 +609,7 @@ get_server_accounts  (TnyAccountStore *self, TnyList *list, TnyAccountType type)
 		accounts = g_slist_append (accounts, tny_account); /* cache it */
 	}
 	
-	/* Do this here, in case create_per_account_local_outbox_folders() needs it. */
+	/* Do this here, because create_per_account_local_outbox_folders() needs it. */
 	if (type == TNY_ACCOUNT_TYPE_TRANSPORT) {
 			/* Store the cache: */
 			priv->transport_accounts = accounts;

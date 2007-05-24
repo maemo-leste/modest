@@ -85,7 +85,7 @@ gboolean modest_account_mgr_set_connection_specific_smtp (ModestAccountMgr *self
 	
 	GSList *list = modest_account_mgr_get_list (self, account_name, 
 							MODEST_ACCOUNT_CONNECTION_SPECIFIC_SMTP_LIST,
-						    MODEST_CONF_VALUE_STRING, TRUE);
+						    MODEST_CONF_VALUE_STRING, FALSE);
 		
 	/* The server account is in the item after the connection name: */
 	GSList *list_connection = g_slist_append (list, (gpointer)connection_name);
@@ -93,8 +93,8 @@ gboolean modest_account_mgr_set_connection_specific_smtp (ModestAccountMgr *self
 	
 	/* Reset the changed list: */
 	modest_account_mgr_set_list (self, account_name, 
-							MODEST_ACCOUNT_CONNECTION_SPECIFIC_SMTP_LIST, list,
-						    MODEST_CONF_VALUE_STRING, TRUE);
+							MODEST_ACCOUNT_CONNECTION_SPECIFIC_SMTP_LIST, list_connection,
+						    MODEST_CONF_VALUE_STRING, FALSE);
 				
 	/* TODO: Should we free the items too, or just the list? */
 	g_slist_free (list);
@@ -117,7 +117,7 @@ gboolean modest_account_mgr_remove_connection_specific_smtp (ModestAccountMgr *s
 {
 	GSList *list = modest_account_mgr_get_list (self, account_name, 
 							MODEST_ACCOUNT_CONNECTION_SPECIFIC_SMTP_LIST,
-						    MODEST_CONF_VALUE_STRING, TRUE);
+						    MODEST_CONF_VALUE_STRING, FALSE);
 	if (!list)
 		return FALSE;
 		
@@ -132,8 +132,22 @@ gboolean modest_account_mgr_remove_connection_specific_smtp (ModestAccountMgr *s
 	/* Reset the changed list: */
 	modest_account_mgr_set_list (self, account_name, 
 							MODEST_ACCOUNT_CONNECTION_SPECIFIC_SMTP_LIST, list,
-						    MODEST_CONF_VALUE_STRING, TRUE);
+						    MODEST_CONF_VALUE_STRING, FALSE);
 				
+	/* TODO: Should we free the items too, or just the list? */
+	g_slist_free (list);
+	
+	return TRUE;
+}
+
+gboolean modest_account_mgr_get_has_connection_specific_smtp (ModestAccountMgr *self, const gchar* account_name)
+{
+	GSList *list = modest_account_mgr_get_list (self, account_name, 
+							MODEST_ACCOUNT_CONNECTION_SPECIFIC_SMTP_LIST,
+						    MODEST_CONF_VALUE_STRING, FALSE);
+	if (!list)
+		return FALSE;
+	
 	/* TODO: Should we free the items too, or just the list? */
 	g_slist_free (list);
 	
@@ -157,7 +171,7 @@ gchar* modest_account_mgr_get_connection_specific_smtp (ModestAccountMgr *self, 
 	
 	GSList *list = modest_account_mgr_get_list (self, account_name, 
 							MODEST_ACCOUNT_CONNECTION_SPECIFIC_SMTP_LIST,
-						    MODEST_CONF_VALUE_STRING, TRUE);
+						    MODEST_CONF_VALUE_STRING, FALSE);
 	if (!list)
 		return NULL;
 		

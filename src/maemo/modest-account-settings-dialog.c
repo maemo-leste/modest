@@ -1125,6 +1125,14 @@ void modest_account_settings_dialog_set_account_name (ModestAccountSettingsDialo
 			hildon_number_editor_set_value (
 				HILDON_NUMBER_EDITOR (dialog->entry_outgoing_port), port_num);
 		}
+		
+		const gboolean has_specific = 
+			modest_account_mgr_get_has_connection_specific_smtp (
+				dialog->account_manager, 
+				account_name);
+		gtk_toggle_button_set_active (
+			GTK_TOGGLE_BUTTON (dialog->checkbox_outgoing_smtp_specific), 
+			has_specific);
 	}
 	
 	/* account_data->is_enabled,  */
@@ -1297,9 +1305,10 @@ save_configuration (ModestAccountSettingsDialog *dialog)
 	}
 	
 	/* Save connection-specific SMTP server accounts: */
-	if (dialog->specific_window)
+	if (dialog->specific_window) {
 		return modest_connection_specific_smtp_window_save_server_accounts (
 			MODEST_CONNECTION_SPECIFIC_SMTP_WINDOW (dialog->specific_window), account_name);
+	}
 	else
 		return TRUE;
 }
