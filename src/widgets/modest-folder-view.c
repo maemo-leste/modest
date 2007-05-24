@@ -701,11 +701,7 @@ filter_row (GtkTreeModel *model,
 			
 			/* If it isn't a special folder, 
 			 * don't show it unless it is the visible account: */
-			if (strcmp (account_id, MODEST_ACTUAL_LOCAL_FOLDERS_ACCOUNT_ID) &&
-			    strcmp (account_id, MODEST_MMC_ACCOUNT_ID)) { 
-				
-				/* TODO: Merge the folders before we get to this point? */
-				
+			if (strcmp (account_id, MODEST_MMC_ACCOUNT_ID)) { 
 				/* Show only the visible account id */
 				ModestFolderViewPrivate *priv = 
 					MODEST_FOLDER_VIEW_GET_PRIVATE (data);
@@ -714,6 +710,8 @@ filter_row (GtkTreeModel *model,
 			}
 		}
 	}
+	
+	/* The virtual local-folders folder store is also shown by default. */
 
 	g_object_unref (instance);
 
