@@ -213,19 +213,23 @@ on_button_edit (GtkButton *button, gpointer user_data)
 		 * If not then we should check for it. */
 		
 		/* Get existing server account data if a server account is already specified: */
-		ModestServerAccountData *data_retrieved = NULL;
+		gboolean data_was_retrieved = FALSE;
 		if (server_account_name && !data) {
-			data_retrieved = modest_account_mgr_get_server_account_data (priv->account_manager, 
+			data = modest_account_mgr_get_server_account_data (priv->account_manager, 
 				server_account_name);
-			data = 	data_retrieved;
+			if (data)
+				data_was_retrieved = TRUE;
 		}
 		
 		GtkWidget * window = GTK_WIDGET (modest_connection_specific_smtp_edit_window_new ());
 		modest_connection_specific_smtp_edit_window_set_connection (
 			MODEST_CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW (window), id, connection_name, data);
 			
-		if (data_retrieved)
-			modest_account_mgr_free_server_account_data (priv->account_manager, data_retrieved);
+		/* Delete data, unless it was data from the rowmodel: */
+		if (data_was_retrieved) {
+			modest_account_mgr_free_server_account_data (priv->account_manager, data);
+			data = NULL;
+		}
 			
 		gtk_window_set_transient_for (GTK_WINDOW (self), GTK_WINDOW (window));
 		gint response = gtk_dialog_run (GTK_DIALOG (window));
