@@ -82,13 +82,15 @@ ModestTnySendQueue*    modest_tny_send_queue_new        (TnyCamelTransportAccoun
 
 
 /**
- * modest_tny_send_queue_flush:
+ * modest_tny_send_queue_try_to_send:
  * @self: a valid #ModestTnySendQueue instance
  * 
- * (try to) send the messages in the outbox folder 
- * 
+ * Try to send the messages that are in the queue's outbox folder.
+ * This is not always necessary because the queue tries to send 
+ * messages as soon as a message is added, and as soon as the queue 
+ * is instantiated.
  */
-void modest_tny_send_queue_flush (ModestTnySendQueue* self);
+void modest_tny_send_queue_try_to_send (ModestTnySendQueue* self);
 
 
 G_END_DECLS

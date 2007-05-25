@@ -303,6 +303,15 @@ modest_tny_account_new_from_server_account (ModestAccountMgr *account_mgr,
 	g_free (url);
 	/***********************/
 	
+	/* For transport accounts, now is a good time to create the send queues, 
+	 * so that the send queues start trying as soon as possible to send any 
+	 * messages that are already in their outboxes: */
+	if ( (account_data->proto == MODEST_PROTOCOL_TRANSPORT_SENDMAIL) ||
+	     (account_data->proto == MODEST_PROTOCOL_TRANSPORT_SMTP) ) {
+		/* modest_runtime_get_send_queue() instantiates and stores the send queue: */
+		modest_runtime_get_send_queue( TNY_TRANSPORT_ACCOUNT (tny_account));
+	}
+	
 	return tny_account;
 }
 

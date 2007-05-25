@@ -1,6 +1,22 @@
 2007-05-25  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/modest-tny-account.c:
+	(modest_tny_account_new_from_server_account): 
+	Call modest_runtime_get_send_queue() immediately after creating transport 
+	accounts, so that they start trying to send email from the outbox as soon 
+	as possible at startup. This is probably what we want.
+	
+	* src/modest-mail-operation.c: (update_account_thread):
+	* src/modest-runtime.c: (modest_runtime_get_send_queue):
+	* src/modest-tny-send-queue.c: (modest_tny_send_queue_try_to_send):
+	* src/modest-tny-send-queue.h:
+	* src/modest-ui-actions.c: (modest_ui_actions_do_send_receive),
+	(modest_ui_actions_on_send):
+	Added comments about how sending works, though it needs some more work.
+
+2007-05-25  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/modest-tny-account.c:
 	(modest_tny_account_get_special_folder): Add TODO because this fails when 
 	the network is busy.
 	(modest_tny_folder_store_get_local_size):  Fix an incorrect type check.

@@ -203,7 +203,9 @@ modest_tny_send_queue_new (TnyCamelTransportAccount *account)
 
 
 void
-modest_tny_send_queue_flush (ModestTnySendQueue* self)
+modest_tny_send_queue_try_to_send (ModestTnySendQueue* self)
 {
+	/* TODO: Rename this to tny_camel_send_queue_try_to_send() in tinymail 
+	and check that it works, without creating a second worker. */
 /* 	tny_camel_send_queue_flush (TNY_CAMEL_SEND_QUEUE(self)); */
 }

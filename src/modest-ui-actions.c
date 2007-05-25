@@ -988,8 +988,8 @@ gboolean check_for_connection (const gchar *account_name)
 
 /*
  * This function performs the send & receive required actions. The
- * window it's used to create the mail operation. Tipically it should
- * be allways the main window, but we pass it as argument in order to
+ * window is used to create the mail operation. Typically it should
+ * always be the main window, but we pass it as argument in order to
  * be more flexible.
  */
 void
@@ -997,8 +997,8 @@ modest_ui_actions_do_send_receive (const gchar *account_name, ModestWindow *win)
 {
 	gchar *acc_name = NULL;
 
-	/* If no account name was provided get the current account, if
-	   there is none either then pick the default one */
+	/* If no account name was provided then get the current account, and if
+	   there is no current account then pick the default one: */
 	if (!account_name) {
 		acc_name = g_strdup (modest_window_get_active_account(win));
 		if (!acc_name)
@@ -1028,13 +1028,16 @@ modest_ui_actions_do_send_receive (const gchar *account_name, ModestWindow *win)
 	 */
 	
 	/* As per the UI spec,
-	 * for POP accounts, we should receive,
-	 * for IMAP we should synchronize everything, including receiving,
-	 * for SMTP we should send,
-	 * first receiving, then sending:
+	 * Store:
+	 * - for POP accounts, we should receive,
+	 * - for IMAP we should synchronize everything, including receiving,
+	 * Transport:
+	 * - for SMTP we should send.
+	 * First receiving (store), then sending (transport):
 	 */
-	/* Create the mail operation */
 	/* TODO: The spec wants us to first do any pending deletions, before receiving. */
+
+	/* Receive, by creating the mail operation */
 	ModestMailOperation *mail_op;
 	mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_RECEIVE, G_OBJECT(win));
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
@@ -1387,47 +1390,42 @@ modest_ui_actions_on_save_to_drafts (GtkWidget *widget, ModestMsgEditWindow *edi
 void
 modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 {
-	TnyTransportAccount *transport_account;
-	ModestMailOperation *mail_operation;
-	MsgData *data;
-	gchar *account_name, *from;
-	ModestAccountMgr *account_mgr;
-
 	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW(edit_window));
 
 	if (!modest_msg_edit_window_check_names (edit_window))
 		return;
 	
-	data = modest_msg_edit_window_get_msg_data (edit_window);
-
 	/* FIXME: Code added just for testing. The final version will
 	   use the send queue provided by tinymail and some
 	   classifier */
-	account_mgr = modest_runtime_get_account_mgr();
-	account_name = g_strdup(modest_window_get_active_account (MODEST_WINDOW(edit_window)));
+	ModestAccountMgr *account_mgr = modest_runtime_get_account_mgr();
+	gchar *account_name = g_strdup(modest_window_get_active_account (MODEST_WINDOW(edit_window)));
 	if (!account_name) 
 		account_name = modest_account_mgr_get_default_account (account_mgr);
+		
 	if (!account_name) {
 		g_printerr ("modest: no account found\n");
-		modest_msg_edit_window_free_msg_data (edit_window, data);
 		return;
 	}
-	transport_account =
+	
+	/* Get the currently-active transport account for this modest account: */
+	TnyTransportAccount *transport_account =
 		TNY_TRANSPORT_ACCOUNT(modest_tny_account_store_get_transport_account_for_open_connection
 				      (modest_runtime_get_account_store(),
 				       account_name));
 	if (!transport_account) {
 		g_printerr ("modest: no transport account found for '%s'\n", account_name);
 		g_free (account_name);
-		modest_msg_edit_window_free_msg_data (edit_window, data);
 		return;
 	}
-	from = modest_account_mgr_get_from_string (account_mgr, account_name);
+	
+	gchar *from = modest_account_mgr_get_from_string (account_mgr, account_name);
 
-	/* Create the mail operation */		
-	mail_operation = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_SEND, G_OBJECT(edit_window));
+	/* Create the mail operation */
+	ModestMailOperation *mail_operation = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_SEND, G_OBJECT(edit_window));
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_operation);
 
+	MsgData *data = modest_msg_edit_window_get_msg_data (edit_window);
 	modest_mail_operation_send_new_mail (mail_operation,
 					     transport_account,
 					     from,
@@ -1439,7 +1437,8 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 					     data->html_body,
 					     data->attachments,
 					     data->priority_flags);
-	/* Frees */
+					     
+	/* Free data: */
 	g_free (from);
 	g_free (account_name);
 	g_object_unref (G_OBJECT (transport_account));
@@ -1447,7 +1446,7 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 
 	modest_msg_edit_window_free_msg_data (edit_window, data);
 
-	/* Save settings and close the window */
+	/* Save settings and close the window: */
 	gtk_widget_destroy (GTK_WIDGET (edit_window));
 }
 

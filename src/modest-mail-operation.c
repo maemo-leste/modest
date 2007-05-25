@@ -749,8 +749,6 @@ update_account_thread (gpointer thr_user_data)
 	TnyIterator *iter = NULL;
 	TnyFolderStoreQuery *query = NULL;
 	ModestMailOperationPrivate *priv;
-	ModestTnySendQueue *send_queue;
-	gint timeout, msg_num;
 
 	info = (UpdateAccountInfo *) thr_user_data;
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(info->mail_op);
@@ -784,7 +782,7 @@ update_account_thread (gpointer thr_user_data)
 	   Gtk+. We use a timeout in order to provide more status
 	   information, because the sync tinymail call does not
 	   provide it for the moment */
-	timeout = g_timeout_add (250, idle_notify_progress, info->mail_op);
+	gint timeout = g_timeout_add (250, idle_notify_progress, info->mail_op);
 
 	/* Refresh folders */
 	new_headers = tny_simple_list_new ();
@@ -832,7 +830,7 @@ update_account_thread (gpointer thr_user_data)
 	/* Apply message count limit */
 	/* TODO if the number of messages exceeds the maximum, ask the
 	   user to download them all */
-	msg_num = 0;
+	gint msg_num = 0;
 	priv->total = MIN (tny_list_get_length (new_headers), info->retrieve_limit);
 	iter = tny_list_create_iterator (new_headers);
 	while ((msg_num < info->retrieve_limit) && !tny_iterator_is_done (iter)) {
@@ -862,15 +860,18 @@ update_account_thread (gpointer thr_user_data)
 	g_object_unref (iter);
 	g_object_unref (new_headers);
 
+
 	/* Perform send */
 	priv->op_type = MODEST_MAIL_OPERATION_TYPE_SEND;
 	priv->done = 0;
 	priv->total = 0;
 
-	send_queue = modest_tny_send_queue_new (TNY_CAMEL_TRANSPORT_ACCOUNT(info->transport_account));
+	ModestTnySendQueue *send_queue = modest_runtime_get_send_queue
+		(info->transport_account);
 
 	timeout = g_timeout_add (250, idle_notify_progress, info->mail_op);
-	modest_tny_send_queue_flush (send_queue);
+	/* TODO: Is this meant to block? */
+	modest_tny_send_queue_try_to_send (send_queue);
 	g_source_remove (timeout);
 
 	g_object_unref (G_OBJECT(send_queue));

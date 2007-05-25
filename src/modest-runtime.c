@@ -144,6 +144,7 @@ modest_runtime_get_platform_factory  (void)
 ModestTnySendQueue*
 modest_runtime_get_send_queue  (TnyTransportAccount *account)
 {
+	/* printf ("DEBUG: %s: transport account id=%s\n", __FUNCTION__, tny_account_get_id (TNY_ACCOUNT(account))); */
 	ModestCacheMgr *cache_mgr;
 	GHashTable     *send_queue_cache;
 	gpointer       orig_key, send_queue;
@@ -155,8 +156,15 @@ modest_runtime_get_send_queue  (TnyTransportAccount *account)
 	send_queue_cache = modest_cache_mgr_get_cache (cache_mgr,
 						       MODEST_CACHE_MGR_CACHE_TYPE_SEND_QUEUE);
 
+	/* Each transport account has its own send queue.
+	 * Note that each transport account will have its own outbox folder, 
+	 * returned by TnySendQueue::get_outbox_func().
+	 */
 	if (!g_hash_table_lookup_extended (send_queue_cache, account, &orig_key, &send_queue)) {
+		/* Note that this send queue will start sending messages from its outbox 
+		 * as soon as it is instantiated: */
 		send_queue = (gpointer)modest_tny_send_queue_new (TNY_CAMEL_TRANSPORT_ACCOUNT(account));
+
 		g_hash_table_insert (send_queue_cache, account, send_queue);
 	}
 
