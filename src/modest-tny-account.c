@@ -85,7 +85,9 @@ modest_tny_account_get_special_folder (TnyAccount *account,
 
 	folders = TNY_LIST (tny_simple_list_new ());
 
-	/* no need to do this _async, as these are local folders */
+	/* There is no need to do this _async, as these are local folders. */
+	/* TODO: However, this seems to fail sometimes when the network is busy, 
+	 * returning an empty list. murrayc. */
 	tny_folder_store_get_folders (TNY_FOLDER_STORE (local_account),
 				      folders, NULL, NULL);
 	iter = tny_list_create_iterator (folders);
@@ -583,7 +585,7 @@ modest_tny_folder_store_get_local_size (TnyFolderStore *self)
 	RecurseFoldersHelper *helper;
 	gint retval;
 
-	g_return_val_if_fail (TNY_IS_ACCOUNT (self), -1);
+	g_return_val_if_fail (TNY_IS_FOLDER_STORE (self), -1);
 
 	/* Create helper */
 	helper = g_malloc0 (sizeof (RecurseFoldersHelper));

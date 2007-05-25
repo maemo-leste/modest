@@ -1,3 +1,13 @@
+2007-05-25  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/modest-tny-account.c:
+	(modest_tny_account_get_special_folder): Add TODO because this fails when 
+	the network is busy.
+	(modest_tny_folder_store_get_local_size):  Fix an incorrect type check.
+	* src/modest-ui-actions.c: (modest_ui_actions_on_smtp_servers): 
+	Do not try to show this window when there is no active account. The UI 
+	specs does not tell us what to do in this case.
+
 2007-05-24  Murray Cumming  <murrayc@murrayc.com>
 
 	* Makefile.am:
