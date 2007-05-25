@@ -207,9 +207,8 @@ modest_tny_account_new_from_server_account (ModestAccountMgr *account_mgr,
 	 * Note that this is not where we create the special local folders account.
 	 * We do that in modest_tny_account_new_for_local_folders() instead. */
 	if (account_data->uri)  {
-		/* printf("DEBUG: %s: Using URI=%s\n", __FUNCTION__, account_data->uri); */
 		tny_account_set_url_string (TNY_ACCOUNT(tny_account), account_data->uri);
-		g_message ("%s: local account-url: %s", __FUNCTION__, account_data->uri);
+		g_message ("DEBUG: %s: local account-url:\n  %s", __FUNCTION__, account_data->uri);
 	}
 	else {
 		/* Set camel-specific options: */
@@ -300,7 +299,7 @@ modest_tny_account_new_from_server_account (ModestAccountMgr *account_mgr,
 
 	/* FIXME: for debugging */
 	url = tny_account_get_url_string (TNY_ACCOUNT(tny_account));
-	g_message ("modest: account-url: %s", url);
+	g_message ("modest: %s:\n  account-url: %s", __FUNCTION__, url);
 	g_free (url);
 	/***********************/
 	
@@ -406,7 +405,7 @@ modest_tny_account_new_for_local_folders (ModestAccountMgr *account_mgr, TnySess
 	url_string = camel_url_to_string (url, 0);
 	
 	tny_account_set_url_string (TNY_ACCOUNT(tny_account), url_string);
-	printf("DEBUG: %s: local folders url=%s\n", __FUNCTION__, url_string);
+	printf("DEBUG: %s:\n  url=%s\n", __FUNCTION__, url_string);
 
 	tny_account_set_name (TNY_ACCOUNT(tny_account), MODEST_LOCAL_FOLDERS_DEFAULT_DISPLAY_NAME); 
 	tny_account_set_id (TNY_ACCOUNT(tny_account), MODEST_ACTUAL_LOCAL_FOLDERS_ACCOUNT_ID); 
@@ -464,7 +463,7 @@ modest_tny_account_new_for_per_account_local_outbox_folder (ModestAccountMgr *ac
 	camel_url_free (url);
 	
 	tny_account_set_url_string (TNY_ACCOUNT(tny_account), url_string);
-	printf("DEBUG: %s: local outbox folder account url=%s\n", __FUNCTION__, url_string);
+	printf("DEBUG: %s:\n  url=%s\n", __FUNCTION__, url_string);
 	g_free (url_string);
 
 	/* This text should never been seen,
