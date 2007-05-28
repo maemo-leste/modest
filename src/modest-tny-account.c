@@ -65,13 +65,17 @@ modest_tny_account_get_special_folder (TnyAccount *account,
 	 
 	/* Per-account outbox folders are each in their own on-disk directory: */
 	if (special_type == TNY_FOLDER_TYPE_OUTBOX) {
+		const gchar *modest_account_name = 
+			modest_tny_account_get_parent_modest_account_name_for_server_account (account);
+		g_assert (modest_account_name);
+
 		gchar *account_id = g_strdup_printf (
 			MODEST_PER_ACCOUNT_LOCAL_OUTBOX_FOLDER_ACCOUNT_ID_PREFIX "%s", 
-			tny_account_get_id (account));
+			modest_account_name);
 		
-			local_account = modest_tny_account_store_get_tny_account_by_id (modest_runtime_get_account_store(),
+		local_account = modest_tny_account_store_get_tny_account_by_id (modest_runtime_get_account_store(),
 									account_id);
-			g_free (account_id);
+		g_free (account_id);
 	} else {
 		/* Other local folders are all in one on-disk directory: */
 		local_account = modest_tny_account_store_get_tny_account_by_id (modest_runtime_get_account_store(),
@@ -433,11 +437,10 @@ modest_tny_account_new_for_local_folders (ModestAccountMgr *account_mgr, TnySess
 
 
 TnyAccount*
-modest_tny_account_new_for_per_account_local_outbox_folder (ModestAccountMgr *account_mgr, TnyAccount *account, TnySessionCamel *session)
+modest_tny_account_new_for_per_account_local_outbox_folder (ModestAccountMgr *account_mgr, const gchar* account_name, TnySessionCamel *session)
 {
 	g_return_val_if_fail (account_mgr, NULL);
-	g_return_val_if_fail (account, NULL);
-	g_return_val_if_fail (tny_account_get_account_type (account) == TNY_ACCOUNT_TYPE_TRANSPORT, NULL);
+	g_return_val_if_fail (account_name, NULL);
 	
 	/* Notice that we create a ModestTnyOutboxAccount here, 
 	 * instead of just a TnyCamelStoreAccount,
@@ -453,14 +456,14 @@ modest_tny_account_new_for_per_account_local_outbox_folder (ModestAccountMgr *ac
 	
 	/* Make sure that the paths exists on-disk so that TnyCamelStoreAccount can 
 	 * find it to create a TnyFolder for it: */
-	gchar *folder_dir = modest_per_account_local_outbox_folder_info_get_maildir_path_to_outbox_folder (account); 
+	gchar *folder_dir = modest_per_account_local_outbox_folder_info_get_maildir_path_to_outbox_folder (account_name); 
 	modest_init_one_local_folder(folder_dir);
 	g_free (folder_dir);
 	folder_dir = NULL;
 
 	/* This path should contain just one directory - "outbox": */
 	gchar *maildir = 
-		modest_per_account_local_outbox_folder_info_get_maildir_path (account);
+		modest_per_account_local_outbox_folder_info_get_maildir_path (account_name);
 			
 	CamelURL *url = camel_url_new ("maildir:", NULL);
 	camel_url_set_path (url, maildir);
@@ -482,7 +485,7 @@ modest_tny_account_new_for_per_account_local_outbox_folder (ModestAccountMgr *ac
 	
 	gchar *account_id = g_strdup_printf (
 		MODEST_PER_ACCOUNT_LOCAL_OUTBOX_FOLDER_ACCOUNT_ID_PREFIX "%s", 
-		tny_account_get_id (account));
+		account_name);
 	tny_account_set_id (TNY_ACCOUNT(tny_account), account_id);
 	g_free (account_id);
 	

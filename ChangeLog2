@@ -1,3 +1,26 @@
+2007-05-28  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/modest-local-folder-info.h:
+	* src/modest-local-folder-info.c:
+	(modest_per_account_local_outbox_folder_info_get_maildir_path),
+	(modest_per_account_local_outbox_folder_info_get_maildir_path_to_ou
+	tbox_folder): Take a modest account name instead of a server TnyAccount,
+	so we can have per-modest-account rather than per-transport-account 
+	outboxes.
+	We must make sure that we change or recreate the exisitng send queues 
+	when the connection changes for connection-specific transport accounts.
+	
+	* src/modest-tny-account-store.c:
+	(create_per_account_local_outbox_folders): Create outboxed per modest 
+	account, not per transport account.
+	
+	* src/modest-tny-account.h:
+	* src/modest-tny-account.c:
+	(modest_tny_account_get_special_folder): For outboxes, get the 
+	parent modest account name. The account is ignored for other folders.
+	(modest_tny_account_new_for_per_account_local_outbox_folder): Take a 
+	modest account name rather than a server TnyAccount.
+
 2007-05-25  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/modest-tny-account.c:

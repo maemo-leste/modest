@@ -79,7 +79,7 @@ TnyAccount* modest_tny_account_new_for_local_folders (ModestAccountMgr *account_
 /**
  * modest_tny_account_new_for_per_account_local_outbox_folder:
  * @account_mgr: a valid account mgr instance
- * @account: a valid account instance
+ * @account_name: a modest account name.
  * @session: a tny camel session
  * 
  * get the per-account local outbox folder (pseudo) account.
@@ -87,7 +87,7 @@ TnyAccount* modest_tny_account_new_for_local_folders (ModestAccountMgr *account_
  * Returns: a new per-account local outbox folder TnyAccount or NULL in case of error.
  */
 TnyAccount* modest_tny_account_new_for_per_account_local_outbox_folder (
-	ModestAccountMgr *account_mgr, TnyAccount *account,
+	ModestAccountMgr *account_mgr, const gchar* account_name,
 	TnySessionCamel *session);
 	
 /**
@@ -95,7 +95,7 @@ TnyAccount* modest_tny_account_new_for_per_account_local_outbox_folder (
  * @self: a TnyAccount
  * @special_type: the special folder to get
  * 
- * get the special (Inbox,Outbox,Sent,Draft etc.) folder for this account
+ * get the special (Inbox,Outbox,Sent,Draft etc.) folder for this server account's parent modest account.
  * Note: currently, the implementation will always return a local folder for this.
  * This can be changed later to return really account-specific special folders,
  * such as (for example) server-side Sent/Junk mail for IMAP accounts 

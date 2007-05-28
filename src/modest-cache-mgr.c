@@ -29,6 +29,7 @@
 
 #include <config.h>
 #include <modest-cache-mgr.h>
+#include <stdio.h>
 
 /* 'private'/'protected' functions */
 static void modest_cache_mgr_class_init (ModestCacheMgrClass *klass);
@@ -183,6 +184,11 @@ modest_cache_mgr_get_cache   (ModestCacheMgr* self, ModestCacheMgrCacheType type
 	GHashTable *cache;
 	
 	g_return_val_if_fail (self, NULL);
+	
+	if (!(type >= 0 && type <= MODEST_CACHE_MGR_CACHE_TYPE_NUM)) {
+		printf ("DEBUG: %s: incorrect type = %d\n", __FUNCTION__, type);	
+	}
+	
 	g_return_val_if_fail (type >= 0 && type <= MODEST_CACHE_MGR_CACHE_TYPE_NUM, NULL);
 
 	priv  = MODEST_CACHE_MGR_GET_PRIVATE(self);

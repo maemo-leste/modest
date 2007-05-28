@@ -113,20 +113,20 @@ modest_local_folder_info_get_maildir_path (void)
 				 NULL);
 }
 
-gchar *modest_per_account_local_outbox_folder_info_get_maildir_path (TnyAccount *account)
+gchar *modest_per_account_local_outbox_folder_info_get_maildir_path (const gchar* account_name)
 {
 	/* This directory should contain an "outbox" child directory: */
 	return g_build_filename (g_get_home_dir(),
 				 MODEST_DIR,
 				 MODEST_PER_ACCOUNT_LOCAL_OUTBOX_FOLDERS_MAILDIR, 
-				 tny_account_get_id (account),
+				 account_name,
 				 NULL);
 }
 
-gchar *modest_per_account_local_outbox_folder_info_get_maildir_path_to_outbox_folder (TnyAccount *account)
+gchar *modest_per_account_local_outbox_folder_info_get_maildir_path_to_outbox_folder (const gchar* account_name)
 {
 	gchar *path_to_account_folder = 
-		modest_per_account_local_outbox_folder_info_get_maildir_path(account);
+		modest_per_account_local_outbox_folder_info_get_maildir_path(account_name);
 	if (!path_to_account_folder)
 		return NULL;
 

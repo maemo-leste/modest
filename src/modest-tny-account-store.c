@@ -503,41 +503,27 @@ create_per_account_local_outbox_folders (TnyAccountStore *self)
 		MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
 	
 	/* printf("DEBUG: %s: priv->store_accounts_outboxes = %p\n", __FUNCTION__, priv->store_accounts_outboxes); */
-		
-	if (priv->store_accounts_outboxes) {
-			return;
-	}
-	
-	/* This transport accounts must be created before calling this function.
-	 * Otherwise, we have an infinite loop when there are no accounts. */
-	 if (!(priv->transport_accounts))
-	 	return;
-#if 0
-	/* Create the transport accounts, if necessary: */
-	if (!(priv->transport_accounts)) {
-		get_server_accounts (self, NULL /* TnyList */, 
-			TNY_ACCOUNT_TYPE_TRANSPORT);
-	}
-#endif
 	
 	GSList *accounts = NULL;
 	
 	GSList *account_names  = modest_account_mgr_account_names (priv->account_mgr, 
 		TRUE /* including disabled accounts */);
 	
-	GSList *iter = account_names;
-	for (iter = priv->transport_accounts; iter; iter = g_slist_next (iter)) {
+	GSList *iter = NULL;
+	for (iter = account_names; iter; iter = g_slist_next (iter)) {
 		
-		TnyAccount *transport_account = (TnyAccount*)iter->data;
+		const gchar* account_name = (const gchar*)iter->data;
 		
 		/* Create a per-account local outbox folder (a _store_ account) 
 		 * for each _transport_ account: */
 		TnyAccount *tny_account_outbox =
 			modest_tny_account_new_for_per_account_local_outbox_folder (
-				priv->account_mgr, transport_account, priv->session);
+				priv->account_mgr, account_name, priv->session);
 				
 		accounts = g_slist_append (accounts, tny_account_outbox); /* cache it */
 	};
+	
+	g_slist_free (account_names);
 	
 	priv->store_accounts_outboxes = accounts;
 }
@@ -849,7 +835,7 @@ modest_tny_account_store_alert (TnyAccountStore *self, TnyAlertType type,
 	g_free (prompt);
 
 
-	printf("DEBUG: %s: returning %d\n", __FUNCTION__, retval);
+	/* printf("DEBUG: %s: returning %d\n", __FUNCTION__, retval); */
 	return retval;
 }
 

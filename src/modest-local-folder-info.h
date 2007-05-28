@@ -94,7 +94,7 @@ gchar *modest_local_folder_info_get_maildir_path (void);
  * string, which must be freed by the caller.
  *
  */
-gchar *modest_per_account_local_outbox_folder_info_get_maildir_path (TnyAccount *account);
+gchar *modest_per_account_local_outbox_folder_info_get_maildir_path (const gchar* account_name);
 
 /**
  * modest_per_account_local_outbox_folder_info_get_maildir_path_to_outbox_folder
@@ -105,7 +105,7 @@ gchar *modest_per_account_local_outbox_folder_info_get_maildir_path (TnyAccount 
  * string, which must be freed by the caller.
  *
  */
-gchar *modest_per_account_local_outbox_folder_info_get_maildir_path_to_outbox_folder (TnyAccount *account);
+gchar *modest_per_account_local_outbox_folder_info_get_maildir_path_to_outbox_folder (const gchar* account_name);
 
 G_END_DECLS
 #endif /* __MODEST_LOCAL_FOLDER_INFO_H__ */
