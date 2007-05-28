@@ -693,6 +693,13 @@ filter_row (GtkTreeModel *model,
 			    TNY_GTK_FOLDER_STORE_TREE_MODEL_INSTANCE_COLUMN, &instance,
 			    -1);
 
+	/* Do not show if there is no instance, this could indeed
+	   happen when the model is being modified while it's being
+	   drawn. This could occur for example when moving folders
+	   using drag&drop */
+	if (!instance)
+		return FALSE;
+
 	if (type == TNY_FOLDER_TYPE_ROOT) {
 		/* TNY_FOLDER_TYPE_ROOT means that the instance is an account instead of a folder. */
 		if (TNY_IS_ACCOUNT (instance)) {

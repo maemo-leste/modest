@@ -964,28 +964,6 @@ modest_ui_actions_on_sort (GtkAction *action,
 	}
 }
 
-/** Check that an appropriate connection is open.
- */
-gboolean check_for_connection (const gchar *account_name)
-{
-	TnyDevice *device = modest_runtime_get_device ();
-
-/*
-	g_assert (TNY_IS_MAEMO_CONIC_DEVICE (device));
-	
-	TnyMaemoConicDevice *maemo_device = TNY_MAEMO_CONIC_DEVICE (device);
-*/
-	
-	if (tny_device_is_online (device))
-		return TRUE;
-	else {
-		modest_platform_connect_and_wait (NULL);
-		
-		/* TODO: Wait until a result. */
-		return TRUE;
-	}
-}
-
 /*
  * This function performs the send & receive required actions. The
  * window is used to create the mail operation. Typically it should
@@ -996,6 +974,7 @@ void
 modest_ui_actions_do_send_receive (const gchar *account_name, ModestWindow *win)
 {
 	gchar *acc_name = NULL;
+	ModestMailOperation *mail_op;
 
 	/* If no account name was provided then get the current account, and if
 	   there is no current account then pick the default one: */
@@ -1012,38 +991,12 @@ modest_ui_actions_do_send_receive (const gchar *account_name, ModestWindow *win)
 	}
 
 	/* Send & receive. */
-	
-	/* Do not continue if no suitable connection
-	   is open */
-	if (!check_for_connection (acc_name)) {
-		g_free (acc_name);
-		return;
-	}
-	
-	/* TODO: Do not continue if an operation is already in progress:
-	 * Maybe there are some operations that tinymail allows to 
-	 * happen simulatenously.
-	 * TODO: Maybe a simple global gboolean is_updating is enough?
-	 * murrayc.
-	 */
-	
-	/* As per the UI spec,
-	 * Store:
-	 * - for POP accounts, we should receive,
-	 * - for IMAP we should synchronize everything, including receiving,
-	 * Transport:
-	 * - for SMTP we should send.
-	 * First receiving (store), then sending (transport):
-	 */
 	/* TODO: The spec wants us to first do any pending deletions, before receiving. */
-
-	/* Receive and then send:
-	 * TODO: This API is strange: We create a receive operation, which is then converted to 
-	 * a send operation. But we don't even seem to monitor the operation, so we maybe don't 
-	 * even need to create it here.
-	 * Also, do we use the window parameter at all?
-	 */
-	ModestMailOperation *mail_op;
+	/* Receive and then send. The operation is tagged initially as
+	   a receive operation because the account update performs a
+	   receive and then a send. The operation changes its type
+	   internally, so the progress objects will receive the proper
+	   progress information */
 	mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_RECEIVE, G_OBJECT(win));
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
 	modest_mail_operation_update_account (mail_op, acc_name);
