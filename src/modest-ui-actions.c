@@ -1037,7 +1037,12 @@ modest_ui_actions_do_send_receive (const gchar *account_name, ModestWindow *win)
 	 */
 	/* TODO: The spec wants us to first do any pending deletions, before receiving. */
 
-	/* Receive, by creating the mail operation */
+	/* Receive and then send:
+	 * TODO: This API is strange: We create a receive operation, which is then converted to 
+	 * a send operation. But we don't even seem to monitor the operation, so we maybe don't 
+	 * even need to create it here.
+	 * Also, do we use the window parameter at all?
+	 */
 	ModestMailOperation *mail_op;
 	mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_RECEIVE, G_OBJECT(win));
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
