@@ -741,11 +741,33 @@ notify_update_account_queue (gpointer data)
 	return FALSE;
 }
 
+static int
+compare_headers_by_date (gconstpointer a, 
+			 gconstpointer b)
+{
+	TnyHeader **header1, **header2;
+	time_t sent1, sent2;
+
+	header1 = (TnyHeader **) a;
+	header2 = (TnyHeader **) b;
+
+	sent1 = tny_header_get_date_sent (*header1);
+	sent2 = tny_header_get_date_sent (*header2);
+
+	/* We want the most recent ones (greater time_t) at the
+	   beginning */
+	if (sent1 < sent2)
+		return 1;
+	else
+		return -1;
+}
+
 static gpointer
 update_account_thread (gpointer thr_user_data)
 {
 	UpdateAccountInfo *info;
-	TnyList *all_folders = NULL, *new_headers;
+	TnyList *all_folders = NULL;
+	GPtrArray *new_headers;
 	TnyIterator *iter = NULL;
 	TnyFolderStoreQuery *query = NULL;
 	ModestMailOperationPrivate *priv;
@@ -785,7 +807,7 @@ update_account_thread (gpointer thr_user_data)
 	gint timeout = g_timeout_add (250, idle_notify_progress, info->mail_op);
 
 	/* Refresh folders */
-	new_headers = tny_simple_list_new ();
+	new_headers = g_ptr_array_new ();
 	iter = tny_list_create_iterator (all_folders);
 	while (!tny_iterator_is_done (iter) && !priv->error) {
 
@@ -807,7 +829,7 @@ update_account_thread (gpointer thr_user_data)
 				TnyHeader *header = TNY_HEADER (tny_iterator_get_current (iter));
 				/* Apply per-message size limits */
 				if (tny_header_get_message_size (header) < info->max_size)
-					tny_list_prepend (new_headers, G_OBJECT (header));
+					g_ptr_array_add (new_headers, g_object_ref (header));
 
 				g_object_unref (header);
 				tny_iterator_next (iter);
@@ -826,40 +848,42 @@ update_account_thread (gpointer thr_user_data)
 	g_object_unref (G_OBJECT (iter));
 	g_source_remove (timeout);
 
+	if (new_headers->len > 0) {
+		gint msg_num = 0;
 
-	/* Apply message count limit */
-	/* TODO if the number of messages exceeds the maximum, ask the
-	   user to download them all */
-	gint msg_num = 0;
-	priv->total = MIN (tny_list_get_length (new_headers), info->retrieve_limit);
-	iter = tny_list_create_iterator (new_headers);
-	while ((msg_num < info->retrieve_limit) && !tny_iterator_is_done (iter)) {
+		/* Order by date */
+		g_ptr_array_sort (new_headers, (GCompareFunc) compare_headers_by_date);
 
-		TnyHeader *header = TNY_HEADER (tny_iterator_get_current (iter));
-		TnyFolder *folder = tny_header_get_folder (header);
-		TnyMsg *msg       = tny_folder_get_msg (folder, header, NULL);
-		ModestMailOperationState *state;
-		ModestPair* pair;
+		/* Apply message count limit */
+		/* TODO if the number of messages exceeds the maximum, ask the
+		   user to download them all */
+		priv->done = 0;
+		priv->total = MIN (new_headers->len, info->retrieve_limit);
+		while ((msg_num < info->retrieve_limit)) {
 
-		priv->done++;
-		/* We can not just use the mail operation because the
-		   values of done and total could change before the
-		   idle is called */
-		state = modest_mail_operation_clone_state (info->mail_op);
-		pair = modest_pair_new (g_object_ref (info->mail_op), state, FALSE);
-		g_idle_add_full (G_PRIORITY_HIGH_IDLE, idle_notify_progress_once,
-				 pair, (GDestroyNotify) modest_pair_free);
+			TnyHeader *header = TNY_HEADER (g_ptr_array_index (new_headers, msg_num));
+			TnyFolder *folder = tny_header_get_folder (header);
+			TnyMsg *msg       = tny_folder_get_msg (folder, header, NULL);
+			ModestMailOperationState *state;
+			ModestPair* pair;
 
-		g_object_unref (msg);
-		g_object_unref (folder);
-		g_object_unref (header);
+			priv->done++;
+			/* We can not just use the mail operation because the
+			   values of done and total could change before the
+			   idle is called */
+			state = modest_mail_operation_clone_state (info->mail_op);
+			pair = modest_pair_new (g_object_ref (info->mail_op), state, FALSE);
+			g_idle_add_full (G_PRIORITY_HIGH_IDLE, idle_notify_progress_once,
+					 pair, (GDestroyNotify) modest_pair_free);
 
-		msg_num++;
-		tny_iterator_next (iter);
+			g_object_unref (msg);
+			g_object_unref (folder);
+
+			msg_num++;
+		}
+		g_ptr_array_foreach (new_headers, (GFunc) g_object_unref, NULL);
+		g_ptr_array_free (new_headers, FALSE);
 	}
-	g_object_unref (iter);
-	g_object_unref (new_headers);
-
 
 	/* Perform send */
 	priv->op_type = MODEST_MAIL_OPERATION_TYPE_SEND;
