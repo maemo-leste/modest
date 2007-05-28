@@ -148,6 +148,7 @@ modest_tny_account_get_special_folder (TnyAccount *account,
 #define MODEST_ACCOUNT_AUTH_CRAMMD5 "CRAM-MD5"
 
 
+		
 /**
  * modest_tny_account_new_from_server_account:
  * @account_mgr: a valid account mgr instance
@@ -162,7 +163,7 @@ modest_tny_account_get_special_folder (TnyAccount *account,
 static TnyAccount*
 modest_tny_account_new_from_server_account (ModestAccountMgr *account_mgr,
 					    ModestServerAccountData *account_data)
-{	
+{
 	gchar *url = NULL;
 
 	g_return_val_if_fail (account_mgr, NULL);
@@ -307,16 +308,25 @@ modest_tny_account_new_from_server_account (ModestAccountMgr *account_mgr,
 	g_free (url);
 	/***********************/
 	
-	/* For transport accounts, now is a good time to create the send queues, 
-	 * so that the send queues start trying as soon as possible to send any 
-	 * messages that are already in their outboxes: */
-	if ( (account_data->proto == MODEST_PROTOCOL_TRANSPORT_SENDMAIL) ||
-	     (account_data->proto == MODEST_PROTOCOL_TRANSPORT_SMTP) ) {
-		/* modest_runtime_get_send_queue() instantiates and stores the send queue: */
-		modest_runtime_get_send_queue( TNY_TRANSPORT_ACCOUNT (tny_account));
-	}
-	
 	return tny_account;
+}
+
+TnyAccount*
+modest_tny_account_new_from_server_account_name (ModestAccountMgr *account_mgr,
+					    const gchar *server_account_name)
+{
+	ModestServerAccountData *account_data = 
+		modest_account_mgr_get_server_account_data (account_mgr, 
+			server_account_name);
+	if (!account_data)
+		return NULL;
+
+	TnyAccount *result = modest_tny_account_new_from_server_account (
+		account_mgr, account_data);
+		
+	modest_account_mgr_free_server_account_data (account_mgr, account_data);
+	
+	return result;
 }
 
 
@@ -348,7 +358,7 @@ modest_tny_account_new_from_account (ModestAccountMgr *account_mgr, const gchar 
 
 	account_data = modest_account_mgr_get_account_data (account_mgr, account_name);
 	if (!account_data) {
-		g_printerr ("modest: cannot get account data for account %s\n", account_name);
+		g_printerr ("modest: %s: cannot get account data for account %s\n", __FUNCTION__, account_name);
 		return NULL;
 	}
 

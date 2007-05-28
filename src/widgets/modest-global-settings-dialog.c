@@ -491,5 +491,5 @@ static ModestConnectedVia
 current_connection_default (void)
 {
 	g_warning ("You must implement %s", __FUNCTION__);
-	g_return_val_if_reached (-1);
+	g_return_val_if_reached (MODEST_CONNECTED_VIA_ANY);
 }

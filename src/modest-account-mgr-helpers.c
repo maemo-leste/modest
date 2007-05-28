@@ -174,14 +174,34 @@ gchar* modest_account_mgr_get_connection_specific_smtp (ModestAccountMgr *self, 
 						    MODEST_CONF_VALUE_STRING, FALSE);
 	if (!list)
 		return NULL;
-		
+
 	/* The server account is in the item after the connection name: */
-	GSList *list_connection = g_slist_find_custom (list, connection_name, (GCompareFunc)strcmp);
-	if (list_connection) {
-		GSList * list_server_account = g_slist_next(list_connection);
-		if (list_server_account)
-			result = g_strdup ((gchar*)(list_server_account->data));
+	GSList *iter = list;
+	while (iter) {
+		const gchar* this_connection_name = (const gchar*)(iter->data);
+		if (strcmp (this_connection_name, connection_name) == 0) {
+			iter = g_slist_next (iter);
+			
+			if (iter) {
+				const gchar* account_name = (const gchar*)(iter->data);
+				if (account_name) {
+					result = g_strdup (account_name);
+					break;
+				}
+			}
+		}
+		
+		/* Skip 2 to go to the next connection in the list: */
+		iter = g_slist_next (iter);
+		if (iter)
+			iter = g_slist_next (iter);
 	}
+		
+	/*
+	if (!result) {
+		printf ("  debug: no server found for connection_name=%s.\n", connection_name);	
+	}
+	*/
 				
 	/* TODO: Should we free the items too, or just the list? */
 	g_slist_free (list);

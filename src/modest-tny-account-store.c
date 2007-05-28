@@ -544,17 +544,17 @@ get_server_accounts  (TnyAccountStore *self, TnyList *list, TnyAccountType type)
 		
 	/* Do nothing if the accounts are already cached: */
 	if (type == TNY_ACCOUNT_TYPE_STORE) {
-			if (priv->store_accounts)
-				return;
+		if (priv->store_accounts)
+			return;
 	} else if (type == TNY_ACCOUNT_TYPE_TRANSPORT) {
-			if (priv->transport_accounts)
-				return;
+		if (priv->transport_accounts)
+			return;
 	}
 	
 	GSList                       *account_names = NULL, *cursor = NULL;
 	GSList                       *accounts = NULL;
 
-	/* these account names, not server_account names */
+	/* These are account names, not server_account names */
 	account_names = modest_account_mgr_account_names (priv->account_mgr,FALSE);
 		
 	for (cursor = account_names; cursor; cursor = cursor->next) {
@@ -582,9 +582,7 @@ get_server_accounts  (TnyAccountStore *self, TnyList *list, TnyAccountType type)
 				g_printerr ("modest: failed to create account for %s\n",
 					    account_name);
 			}
-		g_free (account_name);
 	}
-	g_slist_free (account_names);
 	
 	if (type == TNY_ACCOUNT_TYPE_STORE) {
 		/* Also add the local folder pseudo-account: */
@@ -594,12 +592,58 @@ get_server_accounts  (TnyAccountStore *self, TnyList *list, TnyAccountType type)
 			tny_list_prepend (list, G_OBJECT(tny_account));
 		accounts = g_slist_append (accounts, tny_account); /* cache it */
 	}
-	
-	/* Do this here, because create_per_account_local_outbox_folders() needs it. */
+
+	/* And add the connection-specific transport accounts, if any.
+	 * Note that these server account instances might never be used 
+	 * if their connections are never active: */
+	/* Look at each modest account: */
 	if (type == TNY_ACCOUNT_TYPE_TRANSPORT) {
-			/* Store the cache: */
-			priv->transport_accounts = accounts;
+		GSList *iter_account_names = account_names;
+		while (iter_account_names) {
+			const gchar* account_name = (const gchar*)(iter_account_names->data);
+			GSList *list_specifics = modest_account_mgr_get_list (priv->account_mgr,
+				account_name, 
+				MODEST_ACCOUNT_CONNECTION_SPECIFIC_SMTP_LIST,
+				MODEST_CONF_VALUE_STRING, FALSE);
+				
+			/* Look at each connection-specific transport account for the 
+			 * modest account: */
+			GSList *iter = list_specifics;
+			while (iter) {
+				/* const gchar* this_connection_name = (const gchar*)(iter->data); */
+				iter = g_slist_next (iter);
+				if (iter) {
+					const gchar* transport_account_name = (const gchar*)(iter->data);
+					if (transport_account_name) {
+						TnyAccount * tny_account = NULL;
+						/* Add the account: */
+						tny_account = modest_tny_account_new_from_server_account_name (
+							priv->account_mgr, transport_account_name);
+						if (tny_account) {
+							g_object_set_data (G_OBJECT(tny_account), "account_store",
+									   (gpointer)self);
+							if (list)
+								tny_list_prepend (list, G_OBJECT(tny_account));
+							
+							accounts = g_slist_append (accounts, tny_account); /* cache it */		
+						} else
+							g_printerr ("modest: failed to create smtp-specific account for %s\n",
+								    transport_account_name);
+					}
+				}
+				
+				iter = g_slist_next (iter);
+			}
+			
+			iter_account_names = g_slist_next (iter_account_names);
+		}		
 	}
+	
+	g_slist_free (account_names);
+	account_names = NULL;
+	
+	/* TODO: Delete the strings in the GSList */
+	
 	
 	/* We also create a per-account local outbox folder (a _store_ account) 
 	 * for each _transport_ account. */
@@ -637,6 +681,9 @@ get_server_accounts  (TnyAccountStore *self, TnyList *list, TnyAccountType type)
 	if (type == TNY_ACCOUNT_TYPE_STORE) {
 			/* Store the cache: */
 			priv->store_accounts = accounts;
+	} else if (type == TNY_ACCOUNT_TYPE_TRANSPORT) {
+			/* Store the cache: */
+			priv->transport_accounts = accounts;
 	}
 }	
 
@@ -938,7 +985,7 @@ modest_tny_account_store_get_tny_account_by_account (ModestTnyAccountStore *self
 
 		account_data = modest_account_mgr_get_account_data (priv->account_mgr, account_name);
 		if (!account_data) {
-			g_printerr ("modest: cannot get account data for account '%s'\n", account_name);
+			g_printerr ("modest: %s: cannot get account data for account '%s'\n", __FUNCTION__, account_name);
 			return NULL;
 		}
 
@@ -978,6 +1025,7 @@ get_smtp_specific_transport_account_for_open_connection (ModestTnyAccountStore *
 	g_assert (TNY_IS_MAEMO_CONIC_DEVICE (device));
 	TnyMaemoConicDevice *maemo_device = TNY_MAEMO_CONIC_DEVICE (device);	
 	const gchar* iap_id = tny_maemo_conic_device_get_current_iap_id (maemo_device);
+	/* printf ("DEBUG: %s: iap_id=%s\n", __FUNCTION__, iap_id); */
 	if (!iap_id)
 		return NULL;
 		
@@ -986,6 +1034,7 @@ get_smtp_specific_transport_account_for_open_connection (ModestTnyAccountStore *
 		return NULL;
 		
 	const gchar *connection_name = con_ic_iap_get_name (connection);
+	/* printf ("DEBUG: %s: connection_name=%s\n", __FUNCTION__, connection_name); */
 	if (!connection_name)
 		return NULL;
 	
@@ -993,11 +1042,15 @@ get_smtp_specific_transport_account_for_open_connection (ModestTnyAccountStore *
 	ModestAccountMgr *account_manager = modest_runtime_get_account_mgr ();
 	gchar* server_account_name = modest_account_mgr_get_connection_specific_smtp (account_manager, 
 		account_name, connection_name);
-		
-	if (!server_account_name)
+
+	/* printf ("DEBUG: %s: server_account_name=%s\n", __FUNCTION__, server_account_name); */
+	if (!server_account_name) {
 		return NULL; /* No connection-specific SMTP server was specified for this connection. */
+	}
 		
 	TnyAccount* account = modest_tny_account_store_get_tny_account_by_id (self, server_account_name);
+
+	/* printf ("DEBUG: %s: account=%p\n", __FUNCTION__, account); */
 	g_free (server_account_name);	
 
 	/* Unref the get()ed object, as required by the tny_maemo_conic_device_get_iap() documentation. */
@@ -1019,7 +1072,8 @@ modest_tny_account_store_get_transport_account_for_open_connection (ModestTnyAcc
 			
 	/* If there is no connection-specific transport account (the common case), 
 	 * just get the regular transport account: */
-	if (!account) {		
+	if (!account) {
+		/* printf("DEBUG: %s: using regular transport account for account %s.\n", __FUNCTION__, account_name); */
 		account = modest_tny_account_store_get_tny_account_by_account (self, account_name, 
 						     TNY_ACCOUNT_TYPE_TRANSPORT);
 	}

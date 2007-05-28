@@ -45,7 +45,7 @@ G_BEGIN_DECLS
 /**
  * modest_tny_account_new_from_account:
  * @account_mgr: a valid account mgr instance
- * @account_name: the account name for which to create a corresponding tny account
+ * @account_name: the modest account name for which to create a corresponding tny account of the given type.
  * @type: the type of account to create (TNY_ACCOUNT_TYPE_STORE or TNY_ACCOUNT_TYPE_TRANSPORT)
  * @session: a tny camel session
  * @get_pass_func: the get-password function
@@ -89,6 +89,17 @@ TnyAccount* modest_tny_account_new_for_local_folders (ModestAccountMgr *account_
 TnyAccount* modest_tny_account_new_for_per_account_local_outbox_folder (
 	ModestAccountMgr *account_mgr, const gchar* account_name,
 	TnySessionCamel *session);
+
+/**
+ * modest_tny_account_new_from_server_account_name:
+ * @account_mgr: a valid account mgr instance
+ * @server_account_name: the name of a server account in the configuration system.
+ *
+ * Returns: a new TnyAccount or NULL in case of error.
+ */
+TnyAccount*
+modest_tny_account_new_from_server_account_name (ModestAccountMgr *account_mgr, 
+	const gchar* server_account_name);
 	
 /**
  * modest_tny_account_get_special_folder:

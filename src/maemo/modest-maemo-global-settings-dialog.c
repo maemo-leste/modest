@@ -386,7 +386,7 @@ current_connection (void)
 {
 	TnyAccountStore *account_store;
 	TnyDevice *device;
-	gboolean retval = FALSE;
+	ModestConnectedVia retval = MODEST_CONNECTED_VIA_ANY;
 	
 	account_store = TNY_ACCOUNT_STORE (modest_runtime_get_account_store ());
 	device = tny_account_store_get_device (account_store);

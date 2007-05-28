@@ -31,6 +31,7 @@
 #include <gtk/gtktreeviewcolumn.h>
 #include <tny-account-store-view.h>
 #include <tny-simple-list.h>
+#include <tny-maemo-conic-device.h>
 #include "modest-hildon-includes.h"
 #include "modest-defs.h"
 #include <string.h>
@@ -375,6 +376,44 @@ on_account_store_connecting_finished (TnyAccountStore *store, ModestMainWindow *
 	/* When going online, do the equivalent of pressing the send/receive button, 
 	 * as per the specification:
 	 * (without the check for >0 accounts, though that is not specified): */
+
+	TnyDevice *device = tny_account_store_get_device (store);
+	const gchar *iap_id = tny_maemo_conic_device_get_current_iap_id (TNY_MAEMO_CONIC_DEVICE (device));
+	printf ("DEBUG: %s: connection id=%s\n", __FUNCTION__, iap_id);
+	
+	/* Stop the existing send queues: */
+	modest_runtime_remove_all_send_queues ();
+	
+	/* Create the send queues again, using the appropriate transport accounts 
+	 * for this new connection.
+	 * This could be the first time that they are created if this is the first 
+	 * connection. */
+	/* TODO: Does this really destroy the TnySendQueues and their threads
+	 * We do not want 2 TnySendQueues to exist with the same underlying 
+	 * outbox directory. */
+	GSList *account_names = modest_account_mgr_account_names (
+		modest_runtime_get_account_mgr(), 
+		TRUE /* enabled accounts only */);
+	GSList *iter = account_names;
+	while (iter) {
+		const gchar *account_name = (const gchar*)(iter->data);
+			if (account_name) {
+			TnyTransportAccount *account = TNY_TRANSPORT_ACCOUNT (
+				modest_tny_account_store_get_transport_account_for_open_connection
+						 (modest_runtime_get_account_store(), account_name));
+			if (account) {
+				printf ("debug: %s:\n  Transport account for %s: %s\n", __FUNCTION__, account_name, 
+					tny_account_get_id(TNY_ACCOUNT(account)));
+				modest_runtime_get_send_queue (account);
+			}
+		}
+		
+		iter = g_slist_next (iter);
+	}
+	
+	g_slist_free (account_names);
+	
+	
 	modest_ui_actions_do_send_receive (NULL, MODEST_WINDOW (self));
 }
 

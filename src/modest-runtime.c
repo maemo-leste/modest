@@ -156,8 +156,8 @@ modest_runtime_get_send_queue  (TnyTransportAccount *account)
 	send_queue_cache = modest_cache_mgr_get_cache (cache_mgr,
 						       MODEST_CACHE_MGR_CACHE_TYPE_SEND_QUEUE);
 
-	/* Each transport account has its own send queue.
-	 * Note that each transport account will have its own outbox folder, 
+	/* Each modest account has its own send queue.
+	 * Note that each modest account will have its own outbox folder, 
 	 * returned by TnySendQueue::get_outbox_func().
 	 */
 	if (!g_hash_table_lookup_extended (send_queue_cache, account, &orig_key, &send_queue)) {
@@ -166,9 +166,17 @@ modest_runtime_get_send_queue  (TnyTransportAccount *account)
 		send_queue = (gpointer)modest_tny_send_queue_new (TNY_CAMEL_TRANSPORT_ACCOUNT(account));
 
 		g_hash_table_insert (send_queue_cache, account, send_queue);
+		g_object_ref (send_queue);
 	}
 
 	return MODEST_TNY_SEND_QUEUE(send_queue);
+}
+
+void modest_runtime_remove_all_send_queues ()
+{
+	ModestCacheMgr *cache_mgr = modest_singletons_get_cache_mgr (_singletons);
+	
+	modest_cache_mgr_flush (cache_mgr, MODEST_CACHE_MGR_CACHE_TYPE_SEND_QUEUE);
 }
 
 ModestWindowMgr *

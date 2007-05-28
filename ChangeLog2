@@ -1,5 +1,38 @@
 2007-05-28  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/maemo/modest-maemo-global-settings-dialog.c:
+	(current_connection):
+	* src/widgets/modest-global-settings-dialog.c:
+	(current_connection_default):
+	Use the enum values instead of 0, 1 and -1,
+	to make the code clearer.
+	
+	* src/modest-account-mgr-helpers.c:
+	(modest_account_mgr_get_connection_specific_smtp): Make this code 
+	more robust.
+	
+	* src/modest-runtime.h:
+	* src/modest-runtime.c:
+	Added modest_runtime_remove_all_send_queues().
+	* src/maemo/modest-main-window.c:
+	(on_account_store_connecting_finished): Recreate the send queues, 
+	using the appropriate transport accounts for this new connection.
+	Some futher adapting might be needed if the old send queues are not 
+	automatically stopped at this point.
+
+	* src/modest-tny-account-store.c: (get_server_accounts):
+	Create the connection-specific transport accounts, so that they can 
+	be found later by their ID.
+	
+	* src/modest-tny-account.h:
+	* src/modest-tny-account.c:
+	Added modest_tny_account_new_from_server_account_name().
+	modest_tny_account_new_from_server_account(): Do not create the 
+	send queues here, because they will be 
+	recreated anyway when the connection changes for the first time.
+
+2007-05-28  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/modest-local-folder-info.h:
 	* src/modest-local-folder-info.c:
 	(modest_per_account_local_outbox_folder_info_get_maildir_path),

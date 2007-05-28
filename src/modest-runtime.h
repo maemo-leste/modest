@@ -195,6 +195,13 @@ ModestMailOperationQueue* modest_runtime_get_mail_operation_queue (void);
  **/
 ModestTnySendQueue* modest_runtime_get_send_queue        (TnyTransportAccount *account);
 
+/**
+ * modest_runtime_remove_all_send_queues:
+ * 
+ * Removes all send queues, ready for them to be recreated, for instance 
+ * with a new connection.
+ **/
+void modest_runtime_remove_all_send_queues ();
 
 /**
  * modest_runtime_get_window_mgr:
