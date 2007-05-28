@@ -944,7 +944,8 @@ modest_tny_account_store_get_tny_account_by_account (ModestTnyAccountStore *self
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
 
 	/* Special case for the local account */
-	if (!strcmp (account_name, MODEST_ACTUAL_LOCAL_FOLDERS_ACCOUNT_ID)) {
+	if (!strcmp (account_name, MODEST_ACTUAL_LOCAL_FOLDERS_ACCOUNT_ID) && 
+	    type == TNY_ACCOUNT_TYPE_STORE) {
 		id = g_strdup (MODEST_ACTUAL_LOCAL_FOLDERS_ACCOUNT_ID);
 	} else {
 		ModestAccountData *account_data;
