@@ -87,6 +87,7 @@ struct _ModestMailOperationPrivate {
 	GObject                   *source;
 	GError                    *error;
 	ErrorCheckingUserCallback  error_checking;
+	gpointer                   error_checking_user_data;
 	ModestMailOperationStatus  status;	
 	ModestMailOperationTypeOperation op_type;
 };
@@ -183,10 +184,11 @@ modest_mail_operation_init (ModestMailOperation *obj)
 	priv->status         = MODEST_MAIL_OPERATION_STATUS_INVALID;
 	priv->op_type        = MODEST_MAIL_OPERATION_TYPE_UNKNOWN;
 	priv->error          = NULL;
-	priv->error_checking = NULL;
 	priv->done           = 0;
 	priv->total          = 0;
 	priv->source         = NULL;
+	priv->error_checking = NULL;
+	priv->error_checking_user_data = NULL;
 }
 
 static void
@@ -233,7 +235,8 @@ modest_mail_operation_new (ModestMailOperationTypeOperation op_type,
 ModestMailOperation*
 modest_mail_operation_new_with_error_handling (ModestMailOperationTypeOperation op_type,
 					       GObject *source,
-					       ErrorCheckingUserCallback error_handler)
+					       ErrorCheckingUserCallback error_handler,
+					       gpointer user_data)
 {
 	ModestMailOperation *obj;
 	ModestMailOperationPrivate *priv;
@@ -255,9 +258,8 @@ modest_mail_operation_execute_error_handler (ModestMailOperation *self)
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
 	g_return_if_fail(priv->status != MODEST_MAIL_OPERATION_STATUS_SUCCESS);	    
 
-	if (priv->error_checking == NULL) 
-		return;	
-	priv->error_checking (priv->source, self);
+	if (priv->error_checking != NULL)
+		priv->error_checking (self, priv->error_checking_user_data);
 }
 
 
@@ -1637,8 +1639,8 @@ modest_mail_operation_get_msgs_full (ModestMailOperation *self,
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 		/* FIXME: the error msg is different for pop */
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
-			     MODEST_MAIL_OPERATION_ERROR_BAD_PARAMETER,
-			     _("emev_ni_ui_imap_msg_sizelimit_error"));
+			     MODEST_MAIL_OPERATION_ERROR_SIZE_LIMIT,
+			     _("emev_ni_ui_imap_msg_size_exceed_error"));
 		/* Remove from queue and free resources */
 		modest_mail_operation_notify_end (self);
 		if (notify)

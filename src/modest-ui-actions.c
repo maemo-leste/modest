@@ -38,7 +38,7 @@
 #include <modest-tny-msg.h>
 #include <modest-tny-account.h>
 #include <modest-address-book.h>
-
+#include "modest-error.h"
 #include "modest-ui-actions.h"
 
 #include "modest-tny-platform-factory.h"
@@ -590,6 +590,23 @@ open_msg_cb (ModestMailOperation *mail_op,
 }
 
 /*
+ * This function is the error handler of the
+ * modest_mail_operation_get_msgs_full operation
+ */
+static void
+modest_ui_actions_get_msgs_full_error_handler (ModestMailOperation *mail_op,
+					       gpointer user_data)
+{
+	const GError *error;
+
+	error = modest_mail_operation_get_error (mail_op);
+	if (error->code == MODEST_MAIL_OPERATION_ERROR_SIZE_LIMIT) {
+		modest_platform_run_information_dialog (GTK_WINDOW (modest_mail_operation_get_source (mail_op)),
+							error->message);
+	}
+}
+
+/*
  * This function is used by both modest_ui_actions_on_open and
  * modest_ui_actions_on_header_activated. This way we always do the
  * same when trying to open messages.
@@ -620,7 +637,10 @@ _modest_ui_actions_open (TnyList *headers, ModestWindow *win)
 	}
 
 	/* Open each message */
-	mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_RECEIVE, G_OBJECT (win));
+	mail_op = modest_mail_operation_new_with_error_handling (MODEST_MAIL_OPERATION_TYPE_RECEIVE, 
+								 G_OBJECT (win), 
+								 modest_ui_actions_get_msgs_full_error_handler, 
+								 NULL);
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
 	modest_mail_operation_get_msgs_full (mail_op, 
 					     headers, 
@@ -868,7 +888,10 @@ reply_forward (ReplyForwardAction action, ModestWindow *win)
 			reply_forward_cb (NULL, header, msg, rf_helper);
 	} else {
 		/* Retrieve messages */
-		mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_RECEIVE, G_OBJECT(win));
+		mail_op = modest_mail_operation_new_with_error_handling (MODEST_MAIL_OPERATION_TYPE_RECEIVE, 
+									 G_OBJECT(win),
+									 modest_ui_actions_get_msgs_full_error_handler, 
+									 NULL);
 		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
 		modest_mail_operation_get_msgs_full (mail_op, 
 						     header_list, 
@@ -2765,7 +2788,10 @@ modest_ui_actions_on_retrieve_msg_contents (GtkAction *action,
 		return;
 
 	/* Create mail operation */
-	mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_RECEIVE, G_OBJECT (window));
+	mail_op = modest_mail_operation_new_with_error_handling (MODEST_MAIL_OPERATION_TYPE_RECEIVE, 
+								 G_OBJECT (window),
+								 modest_ui_actions_get_msgs_full_error_handler, 
+								 NULL);
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
 	modest_mail_operation_get_msgs_full (mail_op, headers, NULL, NULL, NULL);
 

@@ -187,6 +187,7 @@ modest_mail_operation_queue_remove (ModestMailOperationQueue *self,
 				    ModestMailOperation *mail_op)
 {
 	ModestMailOperationQueuePrivate *priv;
+	ModestMailOperationStatus status;
 
 	g_return_if_fail (MODEST_IS_MAIL_OPERATION_QUEUE (self));
 	g_return_if_fail (MODEST_IS_MAIL_OPERATION (mail_op));
@@ -197,17 +198,14 @@ modest_mail_operation_queue_remove (ModestMailOperationQueue *self,
 	g_queue_remove (priv->op_queue, mail_op);
 	g_mutex_unlock (priv->queue_lock);
 
-	/* Debug code */
-	{
-		const GError *err;
-		err = modest_mail_operation_get_error (mail_op);
-		if (err)
-			g_printerr ("Error in %s: %s\n", __FUNCTION__, err->message);
-	}
-
 	/* Notify observers */
 	g_signal_emit (self, signals[QUEUE_CHANGED_SIGNAL], 0,
 		       mail_op, MODEST_MAIL_OPERATION_QUEUE_OPERATION_REMOVED);
+
+	/* Check errors */
+	status = modest_mail_operation_get_status (mail_op);
+	if (status != MODEST_MAIL_OPERATION_STATUS_SUCCESS)
+		modest_mail_operation_execute_error_handler (mail_op);
 
 	/* Free object */
 	modest_runtime_verify_object_last_ref (mail_op, "");

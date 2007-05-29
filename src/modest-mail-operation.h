@@ -75,15 +75,15 @@ typedef enum {
 } ModestMailOperationTypeOperation;
 
 /**
- * ErroCheckingAsyncUserCallback:
+ * ErrorCheckingAsyncUserCallback:
  *
- * @obj: a #GObject generic object which has created current mail operation.
+ * @mail_op: the current mail operation.
  * @user_data: generic data passed to user defined function.
  *
  * This function implements required actions to performs under error
  * states.  
  */
-typedef void (*ErrorCheckingUserCallback) (const GObject *obj, gpointer user_data);
+typedef void (*ErrorCheckingUserCallback) (ModestMailOperation *mail_op, gpointer user_data);
 
 /**
  * GetMsgAsyncUserCallback:
@@ -165,13 +165,15 @@ ModestMailOperation*    modest_mail_operation_new     (ModestMailOperationTypeOp
  **/
 ModestMailOperation*    modest_mail_operation_new_with_error_handling     (ModestMailOperationTypeOperation op_type,
 									   GObject *source,
-									   ErrorCheckingUserCallback error_handler);
+									   ErrorCheckingUserCallback error_handler,
+									   gpointer user_data);
 /**
  * modest_mail_operation_execute_error_handler
  * @self: a #ModestMailOperation
  * 
- * Executes error handler, if it exists, passing @self objsect as
- * user_data argument of error handling function. 
+ * Executes error handler if exists. The error handler is the one that
+ * MUST free the user data passed to the
+ * modest_mail_operation_new_with_error_handling constructor
  **/
 void
 modest_mail_operation_execute_error_handler (ModestMailOperation *self);
