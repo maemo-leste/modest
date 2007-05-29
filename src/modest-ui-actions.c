@@ -1169,7 +1169,6 @@ modest_ui_actions_on_folder_selection_changed (ModestFolderView *folder_view,
 		/* Show account details */
 		modest_main_window_set_contents_style (main_window, MODEST_MAIN_WINDOW_CONTENTS_STYLE_DETAILS);
 	} else if (modest_tny_folder_store_is_virtual_local_folders  (folder_store )) {
-		printf ("DEBUG: %s: folder store.\n", __FUNCTION__);
 		//TODO: Set the virtual folder store as the "active account" somehow:
 		modest_main_window_set_contents_style (main_window, MODEST_MAIN_WINDOW_CONTENTS_STYLE_DETAILS);
 	} else {

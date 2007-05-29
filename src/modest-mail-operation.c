@@ -853,7 +853,7 @@ update_account_thread (gpointer thr_user_data)
 		   user to download them all */
 		priv->done = 0;
 		priv->total = MIN (new_headers->len, info->retrieve_limit);
-		while ((msg_num < info->retrieve_limit)) {
+		while ((msg_num < priv->total)) {
 
 			TnyHeader *header = TNY_HEADER (g_ptr_array_index (new_headers, msg_num));
 			TnyFolder *folder = tny_header_get_folder (header);
@@ -888,7 +888,6 @@ update_account_thread (gpointer thr_user_data)
 		(info->transport_account);
 
 	timeout = g_timeout_add (250, idle_notify_progress, info->mail_op);
-	/* TODO: Is this meant to block? */
 	modest_tny_send_queue_try_to_send (send_queue);
 	g_source_remove (timeout);
 
