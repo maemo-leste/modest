@@ -784,6 +784,9 @@ download_uncached_messages (TnyList *header_list, GtkWindow *win)
 
 		header = TNY_HEADER (tny_iterator_get_current (iter));
 		flags = tny_header_get_flags (header);
+		/* TODO: is this the right flag?, it seems that some
+		   headers that have been previously downloaded do not
+		   come with it */
 		found = !(flags & TNY_HEADER_FLAG_CACHED);
 		g_object_unref (header);
 		tny_iterator_next (iter);

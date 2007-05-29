@@ -115,12 +115,6 @@ typedef struct _XFerMsgAsyncHelper
 	gpointer user_data;
 } XFerMsgAsyncHelper;
 
-typedef struct _XFerFolderAsyncHelper
-{
-	ModestMailOperation *mail_op;
-
-} XFerFolderAsyncHelper;
-
 /* globals */
 static GObjectClass *parent_class = NULL;
 
@@ -1153,7 +1147,6 @@ transfer_folder_status_cb (GObject *obj,
 			   TnyStatus *status,
 			   gpointer user_data)
 {
-	XFerMsgAsyncHelper *helper = NULL;
 	ModestMailOperation *self;
 	ModestMailOperationPrivate *priv;
 	ModestMailOperationState *state;
@@ -1161,10 +1154,7 @@ transfer_folder_status_cb (GObject *obj,
 	g_return_if_fail (status != NULL);
 	g_return_if_fail (status->code == TNY_FOLDER_STATUS_CODE_COPY_FOLDER);
 
-	helper = (XFerMsgAsyncHelper *) user_data;
-	g_return_if_fail (helper != NULL);
-
-	self = helper->mail_op;
+	self = MODEST_MAIL_OPERATION (user_data);
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
 
 	if ((status->position == 1) && (status->of_total == 100))
@@ -1180,14 +1170,16 @@ transfer_folder_status_cb (GObject *obj,
 
 
 static void
-transfer_folder_cb (TnyFolder *folder, TnyFolderStore *into, gboolean cancelled, TnyFolder *new_folder, GError **err, gpointer user_data)
+transfer_folder_cb (TnyFolder *folder, 
+		    TnyFolderStore *into, 
+		    gboolean cancelled, 
+		    TnyFolder *new_folder, GError **err, 
+		    gpointer user_data)
 {
- 	XFerFolderAsyncHelper *helper = NULL;
 	ModestMailOperation *self = NULL;
 	ModestMailOperationPrivate *priv = NULL;
 
-	helper = (XFerFolderAsyncHelper *) user_data;
-	self = helper->mail_op;
+	self = MODEST_MAIL_OPERATION (user_data);
 
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
 
@@ -1207,7 +1199,6 @@ transfer_folder_cb (TnyFolder *folder, TnyFolderStore *into, gboolean cancelled,
 	}
 		
 	/* Free */
-	g_slice_free   (XFerFolderAsyncHelper, helper);
 	g_object_unref (folder);
 	g_object_unref (into);
 	if (new_folder != NULL)
@@ -1223,7 +1214,6 @@ modest_mail_operation_xfer_folder (ModestMailOperation *self,
 				   TnyFolderStore *parent,
 				   gboolean delete_original)
 {
- 	XFerFolderAsyncHelper *helper = NULL;
 	ModestMailOperationPrivate *priv = NULL;
 	ModestTnyFolderRules parent_rules, rules;
 
@@ -1232,10 +1222,6 @@ modest_mail_operation_xfer_folder (ModestMailOperation *self,
 	g_return_if_fail (TNY_IS_FOLDER (folder));
 
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
-
-	/* Pick references for async calls */
-	g_object_ref (folder);
-	g_object_ref (parent);
 
 	/* Get folder rules */
 	rules = modest_tny_folder_get_rules (TNY_FOLDER (folder));
@@ -1257,8 +1243,9 @@ modest_mail_operation_xfer_folder (ModestMailOperation *self,
 		/* Notify the queue */
 		modest_mail_operation_notify_end (self);
 	} else {
-		helper = g_slice_new0 (XFerFolderAsyncHelper);
-		helper->mail_op = self;
+		/* Pick references for async calls */
+		g_object_ref (folder);
+		g_object_ref (parent);
 
 		/* Move/Copy folder */		
 		tny_folder_copy_async (folder,
@@ -1267,7 +1254,7 @@ modest_mail_operation_xfer_folder (ModestMailOperation *self,
 				       delete_original,
 				       transfer_folder_cb,
 				       transfer_folder_status_cb,
-				       helper);
+				       self);
 	}
 }
 
