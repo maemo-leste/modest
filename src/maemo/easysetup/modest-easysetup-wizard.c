@@ -1505,6 +1505,11 @@ create_account (ModestEasysetupWizardDialog *self, gboolean enabled)
 	modest_account_mgr_set_string (self->account_manager, account_name,
 				       MODEST_ACCOUNT_DISPLAY_NAME, display_name, FALSE /* not server account */);
 
+	/* Set retrieve type */ 
+	const gchar *retrieve = MODEST_ACCOUNT_RETRIEVE_VALUE_HEADERS_ONLY;
+	modest_account_mgr_set_string (self->account_manager, account_name,
+		MODEST_ACCOUNT_RETRIEVE, retrieve, FALSE /* not server account */);
+
 	/* Save the connection-specific SMTP server accounts. */
 	gboolean result = TRUE;
 	if (self->specific_window)
