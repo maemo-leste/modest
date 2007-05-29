@@ -114,12 +114,12 @@
     <toolitem action="ToolbarCancel"/>
   </toolbar>
 
-  <popup name="HeaderViewCSM">
+  <popup name="HeaderViewCSM" action="HeaderViewCSM">
     <menuitem action="EmailReply"/>
     <menuitem action="EmailForward"/>
   </popup>
   
-  <popup name="FolderViewCSM">
+  <popup name="FolderViewCSM" action="FolderViewCSM">
     <menuitem action="FolderViewCSMNewFolder"/>
     <menuitem action="FolderViewCSMRenameFolder"/>
     <separator/>
@@ -131,7 +131,7 @@
     <menuitem action="FolderViewCSMHelp"/>
   </popup>
 
-  <popup name="ToolbarReplyCSM">
+  <popup name="ToolbarReplyCSM" action="ToolbarCSM">
     <menuitem action="ToolbarMessageForward"/>
     <menuitem action="ToolbarMessageReplyAll"/>
     <menuitem action="ToolbarMessageReply"/>

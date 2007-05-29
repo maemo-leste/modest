@@ -17,22 +17,22 @@ static const ModestDimmingEntry modest_dimming_entries [] = {
 	{ "/MenuBar/EmailMenu/EmailOpenMenu", G_CALLBACK(modest_ui_dimming_rules_on_open_msg) },
 	{ "/MenuBar/EmailMenu/EmailReplyMenu", G_CALLBACK(modest_ui_dimming_rules_on_reply_msg) },
 	{ "/MenuBar/EmailMenu/EmailReplyAllMenu", G_CALLBACK(modest_ui_dimming_rules_on_reply_msg) },
-	{ "/MenuBar/EmailMenu/EmailForwardMenu",  G_CALLBACK(modest_ui_dimming_rules_on_reply_msg)},
+	{ "/MenuBar/EmailMenu/EmailForwardMenu",  G_CALLBACK(modest_ui_dimming_rules_on_reply_msg) },
 	{ "/MenuBar/EmailMenu/EmailContentsMenu", G_CALLBACK(modest_ui_dimming_rules_on_contents_msg) },
-	{ "/MenuBar/EmailMenu/EmailPurgeAttachmentsMenu", NULL },
-	{ "/MenuBar/EmailMenu/EmailDeleteMenu", NULL },
-	{ "/MenuBar/EmailMenu/EmailDetailsMenu", NULL },
+	{ "/MenuBar/EmailMenu/EmailPurgeAttachmentsMenu", G_CALLBACK(modest_ui_dimming_rules_always_dimmed) },
+	{ "/MenuBar/EmailMenu/EmailDeleteMenu",  G_CALLBACK(modest_ui_dimming_rules_on_delete_msg) },
+	{ "/MenuBar/EmailMenu/EmailDetailsMenu", G_CALLBACK(modest_ui_dimming_rules_on_details_msg) },
 
 	/* Edit Menu */
 	{ "/MenuBar/EditMenu", NULL },
-	{ "/MenuBar/EditMenu/EditUndoMenu", NULL },
+	{ "/MenuBar/EditMenu/EditUndoMenu",  },
 	{ "/MenuBar/EditMenu/EditCutMenu", NULL },
 	{ "/MenuBar/EditMenu/EditCopyMenu", NULL },
-	{ "/MenuBar/EditMenu/EditPasteMenu", NULL },
+	{ "/MenuBar/EditMenu/EditPasteMenu", G_CALLBACK(modest_ui_dimming_rules_on_paste_msgs) },
 	{ "/MenuBar/EditMenu/EditSelectAllMenu", NULL },
-	{ "/MenuBar/EditMenu/EditMarkAsReadMenu", NULL },
-	{ "/MenuBar/EditMenu/EditMarkAsUnreadMenu", NULL },
-	{ "/MenuBar/EditMenu/EditMoveToMenu", NULL },
+	{ "/MenuBar/EditMenu/EditMarkAsReadMenu", G_CALLBACK(modest_ui_dimming_rules_on_mark_as_read_msg) },
+	{ "/MenuBar/EditMenu/EditMarkAsUnreadMenu", G_CALLBACK(modest_ui_dimming_rules_on_mark_as_unread_msg) },
+	{ "/MenuBar/EditMenu/EditMoveToMenu", G_CALLBACK(modest_ui_dimming_rules_on_move_to) },
 
 	/* View Menu */
 	{ "/MenuBar/ViewMenu", NULL },
@@ -75,9 +75,9 @@ static const ModestDimmingEntry modest_dimming_entries [] = {
 
 	/* Contextual Menus (Folder View) */
 	{ "/FolderViewCSM/FolderViewCSMNewFolder", G_CALLBACK(modest_ui_dimming_rules_on_new_folder) },
-	{ "/FolderViewCSM/FolderViewCSMRenameFolder", NULL },
-	{ "/FolderViewCSM/FolderViewCSMPasteMsgs", NULL },
-	{ "/FolderViewCSM/FolderViewCSMDeleteFolder", NULL },
+	{ "/FolderViewCSM/FolderViewCSMRenameFolder", G_CALLBACK(modest_ui_dimming_rules_on_rename_folder) },
+	{ "/FolderViewCSM/FolderViewCSMPasteMsgs", G_CALLBACK(modest_ui_dimming_rules_on_paste_msgs) },
+	{ "/FolderViewCSM/FolderViewCSMDeleteFolder", G_CALLBACK(modest_ui_dimming_rules_on_paste_msgs) },
 	{ "/FolderViewCSM/FolderViewCSMSearchMessages", NULL },
 	{ "/FolderViewCSM/FolderViewCSMHelp", NULL },
 

@@ -38,9 +38,20 @@ G_BEGIN_DECLS
 
 /* Menu & toolbar dimming rules */
 gboolean modest_ui_dimming_rules_on_new_folder (ModestWindow *win, gpointer user_data);
+gboolean modest_ui_dimming_rules_on_rename_folder (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_open_msg (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_reply_msg (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_contents_msg (ModestWindow *win, gpointer user_data);
+gboolean modest_ui_dimming_rules_always_dimmed (ModestWindow *win, gpointer user_data);
+gboolean modest_ui_dimming_rules_on_delete_msg (ModestWindow *win, gpointer user_data);
+gboolean modest_ui_dimming_rules_on_details_msg (ModestWindow *win, gpointer user_data);
+gboolean modest_ui_dimming_rules_on_mark_as_read_msg (ModestWindow *win, gpointer user_data);
+gboolean modest_ui_dimming_rules_on_mark_as_unread_msg (ModestWindow *win, gpointer user_data);
+gboolean modest_ui_dimming_rules_on_move_to (ModestWindow *win, gpointer user_data);
+gboolean modest_ui_dimming_rules_on_main_window_move_to (ModestWindow *win, gpointer user_data);
+gboolean modest_ui_dimming_rules_on_view_window_move_to (ModestWindow *win, gpointer user_data);
+gboolean modest_ui_dimming_rules_on_paste_msgs (ModestWindow *win, gpointer user_data);
+gboolean modest_ui_dimming_rules_on_delete_msgs (ModestWindow *win, gpointer user_data);
 
 G_END_DECLS
 #endif 

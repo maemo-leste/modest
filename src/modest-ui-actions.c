@@ -2803,8 +2803,48 @@ modest_ui_actions_on_retrieve_msg_contents (GtkAction *action,
 }
 
 void
+modest_ui_actions_on_email_menu_activated (GtkAction *action,
+					  ModestWindow *window)
+{
+	g_return_if_fail (MODEST_IS_WINDOW (window));
+
+	/* Update dimmed */	
+	modest_window_check_dimming_rules (window);	
+}
+
+void
 modest_ui_actions_on_edit_menu_activated (GtkAction *action,
 					  ModestWindow *window)
+{
+	g_return_if_fail (MODEST_IS_WINDOW (window));
+
+	/* Update dimmed */	
+	modest_window_check_dimming_rules (window);	
+}
+
+void
+modest_ui_actions_on_toolbar_csm_menu_activated (GtkAction *action,
+						 ModestWindow *window)
+{
+	g_return_if_fail (MODEST_IS_WINDOW (window));
+
+	/* Update dimmed */	
+	modest_window_check_dimming_rules (window);	
+}
+
+void
+modest_ui_actions_on_folder_view_csm_menu_activated (GtkAction *action,
+						     ModestWindow *window)
+{
+	g_return_if_fail (MODEST_IS_WINDOW (window));
+
+	/* Update dimmed */	
+	modest_window_check_dimming_rules (window);	
+}
+
+void
+modest_ui_actions_on_header_view_csm_menu_activated (GtkAction *action,
+						     ModestWindow *window)
 {
 	g_return_if_fail (MODEST_IS_WINDOW (window));
 

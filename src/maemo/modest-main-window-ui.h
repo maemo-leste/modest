@@ -40,8 +40,8 @@ G_BEGIN_DECLS
 static const GtkActionEntry modest_action_entries [] = {
 
 	/* Toplevel menus */
-	{ "Email", NULL, N_("mcen_me_inbox_email"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_edit_menu_activated) },
-	{ "Edit",    NULL, N_("mcen_me_inbox_edit") },
+	{ "Email", NULL, N_("mcen_me_inbox_email"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_email_menu_activated) },
+	{ "Edit",    NULL, N_("mcen_me_inbox_edit"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_edit_menu_activated) },
 	{ "View",    NULL, N_("mcen_me_inbox_view") },
 	{ "Tools",   NULL, N_("mcen_me_inbox_tools") },
 	{ "Attachments", NULL, N_("mcen_me_viewer_attachments") },

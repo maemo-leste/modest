@@ -423,6 +423,14 @@ on_account_store_connecting_finished (TnyAccountStore *store, ModestMainWindow *
 	modest_ui_actions_do_send_receive (NULL, MODEST_WINDOW (self));
 }
 
+static void
+_folder_view_csm_menu_activated (GtkWidget *widget, gpointer user_data)
+{
+	g_return_if_fail (MODEST_IS_MAIN_WINDOW (user_data));
+
+	/* Update dimmed */	
+	modest_window_check_dimming_rules (MODEST_WINDOW (user_data));	
+}
 
 
 static void
@@ -445,7 +453,9 @@ connect_signals (ModestMainWindow *self)
 
 	menu = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/FolderViewCSM");
 	gtk_widget_tap_and_hold_setup (GTK_WIDGET (priv->folder_view), menu, NULL, 0);
-
+	g_signal_connect (G_OBJECT(priv->folder_view), "tap-and-hold",
+			  G_CALLBACK(_folder_view_csm_menu_activated),
+			  self);
 	/* header view */
 /* 	g_signal_connect (G_OBJECT(priv->header_view), "status_update", */
 /* 			  G_CALLBACK(modest_ui_actions_on_header_status_update), self); */
