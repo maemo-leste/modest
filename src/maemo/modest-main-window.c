@@ -323,12 +323,14 @@ restore_settings (ModestMainWindow *self)
 
 	conf = modest_runtime_get_conf ();
 	
-	modest_widget_memory_restore (conf, G_OBJECT(self), 
+	modest_widget_memory_restore (conf, G_OBJECT(self),
 				      MODEST_CONF_MAIN_WINDOW_KEY);
-	modest_widget_memory_restore (conf, G_OBJECT(priv->main_paned),
-				      MODEST_CONF_MAIN_PANED_KEY);
 	modest_widget_memory_restore (conf, G_OBJECT(priv->header_view),
 				      MODEST_CONF_HEADER_VIEW_KEY);
+	modest_widget_memory_restore (conf, G_OBJECT(priv->main_paned),
+				      MODEST_CONF_MAIN_PANED_KEY);
+	modest_widget_memory_restore (conf, G_OBJECT(priv->folder_view),
+				      MODEST_CONF_FOLDER_VIEW_KEY);
 }
 
 
@@ -348,6 +350,8 @@ save_state (ModestWindow *window)
 				   MODEST_CONF_MAIN_PANED_KEY);
 	modest_widget_memory_save (conf, G_OBJECT(priv->header_view), 
 				   MODEST_CONF_HEADER_VIEW_KEY);
+	modest_widget_memory_save (conf, G_OBJECT(priv->folder_view), 
+				   MODEST_CONF_FOLDER_VIEW_KEY);
 }
 
 static void
@@ -743,7 +747,6 @@ modest_main_window_set_style (ModestMainWindow *self,
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ToolbarToggleView");
 
 	priv->style = style;
-
 	switch (style) {
 	case MODEST_MAIN_WINDOW_STYLE_SIMPLE:
 		/* Remove main paned */

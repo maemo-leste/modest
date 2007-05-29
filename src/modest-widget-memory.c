@@ -393,15 +393,31 @@ save_settings_folder_view (ModestConf *conf, ModestFolderView *folder_view,
 {
 	gchar *key;
 	const gchar* account_id;
+	GtkTreeSelection *selection;
+	GtkTreeModel *model;
+	GtkTreeIter iter;
 
-	/* Restore the visible account */
+	/* Save the visible account */
 	key = _modest_widget_memory_get_keyname (name, "visible_server_account_id");
 
 	account_id = modest_folder_view_get_account_id_of_visible_server_account (folder_view);
 	if (account_id)
 		modest_conf_set_string (conf, key, account_id, NULL);
-
 	g_free (key);
+
+	/* Save the last selected folder */
+	key = _modest_widget_memory_get_keyname (name, "last_selected_path");
+	selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (folder_view));
+	if (gtk_tree_selection_get_selected (selection, &model, &iter)) {
+		gchar *str;
+		GtkTreePath *path = gtk_tree_model_get_path (model, &iter);
+		str = gtk_tree_path_to_string (path);
+		modest_conf_set_string (conf, key, str, NULL);
+		g_free (str);
+		gtk_tree_path_free (path);
+	}
+	g_free (key);
+
 
 	return TRUE;
 }
@@ -411,7 +427,7 @@ restore_settings_folder_view (ModestConf *conf,
 			      ModestFolderView *folder_view,
 			      const gchar *name)
 {
-	gchar *key, *account_id;
+	gchar *key, *account_id, *str;
 
 	/* Restore the visible account */
 	key = _modest_widget_memory_get_keyname (name, "visible_server_account_id");
@@ -445,6 +461,24 @@ restore_settings_folder_view (ModestConf *conf,
 	}
 
 	g_free (key);
+
+	/* Restore the last selected folder. Check first that the model is not NULL */
+	if (gtk_tree_view_get_model (GTK_TREE_VIEW (folder_view))) {
+		key = _modest_widget_memory_get_keyname (name, "last_selected_path");
+		if (modest_conf_key_exists (conf, key, NULL)) {
+			GtkTreePath *path;
+			GtkTreeSelection *selection;
+
+			selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (folder_view));
+			str = modest_conf_get_string (conf, key, NULL);
+			path = gtk_tree_path_new_from_string ((const gchar *) str);
+			gtk_tree_view_expand_to_path (GTK_TREE_VIEW (folder_view), path);
+			gtk_tree_selection_select_path (selection, path);
+			g_free (str);
+			gtk_tree_path_free (path);
+		}
+		g_free (key);
+	}
 
 	return TRUE;
 }

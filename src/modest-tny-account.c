@@ -213,7 +213,7 @@ modest_tny_account_new_from_server_account (ModestAccountMgr *account_mgr,
 	 * We do that in modest_tny_account_new_for_local_folders() instead. */
 	if (account_data->uri)  {
 		tny_account_set_url_string (TNY_ACCOUNT(tny_account), account_data->uri);
-		g_message ("DEBUG: %s: local account-url:\n  %s", __FUNCTION__, account_data->uri);
+/* 		g_message ("DEBUG: %s: local account-url:\n  %s", __FUNCTION__, account_data->uri); */
 	}
 	else {
 		/* Set camel-specific options: */
@@ -304,7 +304,7 @@ modest_tny_account_new_from_server_account (ModestAccountMgr *account_mgr,
 
 	/* FIXME: for debugging */
 	url = tny_account_get_url_string (TNY_ACCOUNT(tny_account));
-	g_message ("modest: %s:\n  account-url: %s", __FUNCTION__, url);
+/* 	g_message ("modest: %s:\n  account-url: %s", __FUNCTION__, url); */
 	g_free (url);
 	/***********************/
 	

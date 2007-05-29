@@ -140,7 +140,6 @@ struct _ModestFolderViewPrivate {
 	gulong                changed_signal;
 	gulong                accounts_reloaded_signal;
 	
-	GtkTreeSelection     *cur_selection;
 	TnyFolderStoreQuery  *query;
 	guint                 timer_expander;
 
@@ -493,9 +492,6 @@ modest_folder_view_init (ModestFolderView *obj)
 	/* Setup drag and drop */
 	setup_drag_and_drop (GTK_TREE_VIEW(obj));
 
-	/* Restore conf */
-	modest_widget_memory_restore (conf, G_OBJECT (obj), MODEST_CONF_FOLDER_VIEW_KEY);
-
 	/* Connect signals */
 	g_signal_connect (G_OBJECT (obj), 
 			  "key-press-event", 
@@ -597,10 +593,6 @@ modest_folder_view_set_account_store (TnyAccountStoreView *self, TnyAccountStore
 		g_signal_connect (G_OBJECT(account_store), "accounts_reloaded",
 				  G_CALLBACK (on_accounts_reloaded), self);
 	
-	if (!update_model (MODEST_FOLDER_VIEW (self),
-			   MODEST_TNY_ACCOUNT_STORE (priv->account_store)))
-		g_printerr ("modest: failed to update model\n");
-
 	g_object_unref (G_OBJECT (device));
 }
 
@@ -618,8 +610,12 @@ static void
 on_accounts_reloaded   (TnyAccountStore *account_store, 
 			gpointer user_data)
 {
+	ModestConf *conf = modest_runtime_get_conf ();
+
+	modest_widget_memory_save (conf, G_OBJECT (user_data), MODEST_CONF_FOLDER_VIEW_KEY);
 	update_model (MODEST_FOLDER_VIEW (user_data), 
 		      MODEST_TNY_ACCOUNT_STORE(account_store));
+	modest_widget_memory_restore (conf, G_OBJECT (user_data), MODEST_CONF_FOLDER_VIEW_KEY);
 }
 
 void
@@ -827,7 +823,6 @@ static gboolean
 update_model (ModestFolderView *self, ModestTnyAccountStore *account_store)
 {
 	ModestFolderViewPrivate *priv;
-
 	GtkTreeModel     *model;
 
 	g_return_val_if_fail (account_store, FALSE);
@@ -953,8 +948,7 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 	g_return_if_fail (user_data);
 	
 	priv = MODEST_FOLDER_VIEW_GET_PRIVATE(user_data);
-	priv->cur_selection = sel;
-	
+
 	/* folder was _un_selected if true */
 	if (!gtk_tree_selection_get_selected (sel, &model, &iter)) {
 		if (priv->cur_folder_store)
@@ -1679,7 +1673,6 @@ modest_folder_view_set_account_id_of_visible_server_account (ModestFolderView *s
 							     const gchar *account_id)
 {
 	ModestFolderViewPrivate *priv;
-	ModestConf *conf;
 	GtkTreeModel *model;
 
 	g_return_if_fail (self);
@@ -1691,10 +1684,6 @@ modest_folder_view_set_account_id_of_visible_server_account (ModestFolderView *s
 	if (priv->visible_account_id)
 		g_free (priv->visible_account_id);
 	priv->visible_account_id = g_strdup (account_id);
-
-	/* Save preferences */
-	conf = modest_runtime_get_conf ();
-	modest_widget_memory_save (conf, G_OBJECT (self), MODEST_CONF_FOLDER_VIEW_KEY);
 
 	/* Refilter */
 	model = gtk_tree_view_get_model (GTK_TREE_VIEW (self));
