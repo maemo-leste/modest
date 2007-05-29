@@ -254,6 +254,10 @@ on_account_changed (ModestAccountMgr *acc_mgr, const gchar *account,
 	ModestTnyAccountStore *self = MODEST_TNY_ACCOUNT_STORE(user_data);
 	ModestTnyAccountStorePrivate *priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
 	
+	/* Ignore the change if it's a change in the last_updated value */
+	if (g_str_has_suffix (key, MODEST_ACCOUNT_LAST_UPDATED))
+		return;
+
 	/* FIXME: make this more finegrained; changes do not really affect _all_
 	 * accounts, and some do not affect tny accounts at all (such as 'last_update')
 	 */
