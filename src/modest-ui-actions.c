@@ -601,7 +601,9 @@ modest_ui_actions_get_msgs_full_error_handler (ModestMailOperation *mail_op,
 
 	error = modest_mail_operation_get_error (mail_op);
 	if (error->code == MODEST_MAIL_OPERATION_ERROR_SIZE_LIMIT) {
-		modest_platform_run_information_dialog (GTK_WINDOW (modest_mail_operation_get_source (mail_op)),
+		GObject *win = modest_mail_operation_get_source (mail_op);
+
+		modest_platform_run_information_dialog ((win) ? GTK_WINDOW (win) : NULL,
 							error->message);
 	}
 }
@@ -1727,6 +1729,16 @@ modest_ui_actions_on_rename_folder (GtkAction *action,
 }
 
 static void
+modest_ui_actions_delete_folder_error_handler (ModestMailOperation *mail_op,
+					       gpointer user_data)
+{
+	GObject *win = modest_mail_operation_get_source (mail_op);
+
+	modest_platform_run_information_dialog ((win) ? GTK_WINDOW (win) : NULL,
+						_("mail_in_ui_folder_delete_error"));
+}
+
+static void
 delete_folder (ModestMainWindow *main_window, gboolean move_to_trash) 
 {
 	TnyFolderStore *folder;
@@ -1758,17 +1770,15 @@ delete_folder (ModestMainWindow *main_window, gboolean move_to_trash)
 	g_free (message);
 
 	if (response == GTK_RESPONSE_OK) {
-		ModestMailOperation *mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_DELETE, G_OBJECT(main_window));
+		ModestMailOperation *mail_op = 
+			modest_mail_operation_new_with_error_handling (MODEST_MAIL_OPERATION_TYPE_DELETE, 
+								       G_OBJECT(main_window),
+								       modest_ui_actions_delete_folder_error_handler,
+								       NULL);
 
 		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
 						 mail_op);
 		modest_mail_operation_remove_folder (mail_op, TNY_FOLDER (folder), move_to_trash);
-
-		/* Show error if happened */
-		if (modest_mail_operation_get_error (mail_op))
-			modest_platform_run_information_dialog (GTK_WINDOW (main_window),
-								_("mail_in_ui_folder_delete_error"));
-
 		g_object_unref (G_OBJECT (mail_op));
 	}
 
@@ -2494,16 +2504,14 @@ tranasfer_msgs_from_viewer_cb (const GObject *object, gpointer user_data)
 	g_return_if_fail (found);
 }
 
-static void
-move_to_error_checking (const GObject *obj, gpointer user_data)
+void
+modest_ui_actions_move_folder_error_handler (ModestMailOperation *mail_op, 
+					     gpointer user_data)
 {
-	ModestWindow *win = NULL;
-	
-	g_return_if_fail (MODEST_IS_WINDOW (obj));
-	win = MODEST_WINDOW (obj);
+	GObject *win = modest_mail_operation_get_source (mail_op);
 
 	/* TODO: show error message */
-	modest_platform_run_information_dialog (GTK_WINDOW (win),
+	modest_platform_run_information_dialog ((win) ? GTK_WINDOW (win) : NULL,
 						_("mail_in_ui_folder_move_target_error"));
 }
 
@@ -2520,7 +2528,6 @@ modest_ui_actions_on_main_window_move_to (GtkAction *action,
 	gint result;
 	TnyFolderStore *folder_store = NULL;
 	ModestMailOperation *mail_op = NULL;
-	ModestMailOperationStatus status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
 
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW (win));
 
@@ -2555,17 +2562,18 @@ modest_ui_actions_on_main_window_move_to (GtkAction *action,
 		modest_header_view_set_folder (MODEST_HEADER_VIEW (header_view), NULL); 
 
 		if (TNY_IS_FOLDER (src_folder)) {
-			mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_RECEIVE, 
-							     G_OBJECT(win));
-			modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), 
-							 mail_op);
+			mail_op = 
+				modest_mail_operation_new_with_error_handling (MODEST_MAIL_OPERATION_TYPE_RECEIVE, 
+									       G_OBJECT(win),
+									       modest_ui_actions_move_folder_error_handler,
+									       NULL);
+			modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
 
 			modest_mail_operation_xfer_folder (mail_op, 
 							   TNY_FOLDER (src_folder),
 							   folder_store,
-							   TRUE);			
-			/* Get status and unref mail operation */
-			status = modest_mail_operation_get_status (mail_op);						
+							   TRUE);
+			/* Unref mail operation */
 			g_object_unref (G_OBJECT (mail_op));
 		}
 
@@ -2596,18 +2604,12 @@ modest_ui_actions_on_main_window_move_to (GtkAction *action,
 								 NULL,
 								 NULL);
 
-				/* Get status and unref mail operation */
-				status = modest_mail_operation_get_status (mail_op);						
 				g_object_unref (G_OBJECT (mail_op));
 			}
 			g_object_unref (headers);
 		}
 	}
 	g_object_unref (folder_store);
-	
-	/* Check errors */			
-	if (status != MODEST_MAIL_OPERATION_STATUS_SUCCESS) 
-		move_to_error_checking (G_OBJECT(win), NULL);
  end:
 	gtk_widget_destroy (dialog);
 }

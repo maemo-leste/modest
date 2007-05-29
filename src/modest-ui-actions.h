@@ -33,6 +33,7 @@
 #include <widgets/modest-main-window.h>
 #include <widgets/modest-msg-edit-window.h>
 #include <widgets/modest-recpt-view.h>
+#include "modest-mail-operation.h"
 
 G_BEGIN_DECLS
 
@@ -322,9 +323,18 @@ void     modest_ui_actions_remove_attachments             (GtkAction *action,
 void     modest_ui_actions_on_retrieve_msg_contents       (GtkAction *action,
 							   ModestWindow *window);
 
-void
-modest_ui_actions_on_edit_menu_activated (GtkAction *action,
-					  ModestWindow *window);
+void     modest_ui_actions_on_edit_menu_activated         (GtkAction *action,
+							   ModestWindow *window);
+
+/**
+ * modest_ui_actions_move_folder_error_handler:
+ * @mail_op: a #ModestMailOperation
+ * @user_data: user data
+ * 
+ * manages an error in a mail operation that tries to move a folder
+ **/
+void     modest_ui_actions_move_folder_error_handler      (ModestMailOperation *mail_op, 
+							   gpointer user_data);
 
 G_END_DECLS
 #endif /* __MODEST_UI_ACTIONS_H__ */
