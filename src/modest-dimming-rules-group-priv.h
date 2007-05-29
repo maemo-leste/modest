@@ -27,29 +27,16 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __MODEST_WINDOW_PRIV_H__
-#define __MODEST_WINDOW_PRIV_H__
-
-#include <gtk/gtkuimanager.h>
-#include <tny-account-store.h>
-#include "modest-tny-platform-factory.h"
-#include "modest-ui-dimming-manager.h"
+#ifndef __MODEST_DIMMING_RULES_GROUP_PRIV_H__
+#define __MODEST_DIMMING_RULES_GROUP_PRIV_H__
 
 G_BEGIN_DECLS
 
-typedef struct _ModestWindowPrivate ModestWindowPrivate;
-struct _ModestWindowPrivate {
-	GtkUIManager         *ui_manager;
-	ModestUIDimmingManager  *ui_dimming_manager;
-	GtkWidget            *toolbar;
-	GtkWidget            *menubar;
-
-	gchar                *active_account;
-};
-
-#define MODEST_WINDOW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
-                                           MODEST_TYPE_WINDOW, \
-                                           ModestWindowPrivate))
+/* PROTECTED method. It's useful to execute all dimming rules of 
+ * a specific rules group. The UI Dimming Manager calls internally
+ * this method to execute all registered dimming rules. */
+void modest_dimming_rules_group_execute (ModestDimmingRulesGroup *self);
 
 G_END_DECLS
-#endif /* __MODEST_WINDOW_PRIV_H__ */
+
+#endif

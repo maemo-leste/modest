@@ -1226,7 +1226,7 @@ drag_and_drop_from_header_view (GtkTreeModel *source_model,
 	headers = tny_simple_list_new ();
 	tny_list_append (headers, G_OBJECT (header));
 	modest_mail_operation_xfer_msgs (mail_op, headers, folder, helper->delete_source, NULL, NULL);
-
+	
 	/* Frees */
 	g_object_unref (G_OBJECT (mail_op));
 	g_object_unref (G_OBJECT (header));

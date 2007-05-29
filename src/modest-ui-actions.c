@@ -2480,8 +2480,8 @@ move_to_error_checking (const GObject *obj, gpointer user_data)
 	win = MODEST_WINDOW (obj);
 
 	/* TODO: show error message */
-/* 	modest_platform_run_information_dialog (GTK_WINDOW (win), */
-/* 						_("mail_in_ui_folder_move_target_error")); */
+	modest_platform_run_information_dialog (GTK_WINDOW (win),
+						_("mail_in_ui_folder_move_target_error"));
 }
 
 /*
@@ -2497,6 +2497,7 @@ modest_ui_actions_on_main_window_move_to (GtkAction *action,
 	gint result;
 	TnyFolderStore *folder_store = NULL;
 	ModestMailOperation *mail_op = NULL;
+	ModestMailOperationStatus status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
 
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW (win));
 
@@ -2531,18 +2532,18 @@ modest_ui_actions_on_main_window_move_to (GtkAction *action,
 		modest_header_view_set_folder (MODEST_HEADER_VIEW (header_view), NULL); 
 
 		if (TNY_IS_FOLDER (src_folder)) {
-			mail_op = modest_mail_operation_new_with_error_handling (MODEST_MAIL_OPERATION_TYPE_RECEIVE, 
-										 G_OBJECT(win),
-										 move_to_error_checking);
+			mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_RECEIVE, 
+							     G_OBJECT(win));
 			modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), 
 							 mail_op);
 
 			modest_mail_operation_xfer_folder (mail_op, 
 							   TNY_FOLDER (src_folder),
 							   folder_store,
-							   TRUE);
+							   TRUE);			
+			/* Get status and unref mail operation */
+			status = modest_mail_operation_get_status (mail_op);						
 			g_object_unref (G_OBJECT (mail_op));
-			
 		}
 
 		/* Frees */
@@ -2571,6 +2572,9 @@ modest_ui_actions_on_main_window_move_to (GtkAction *action,
 								 TRUE,
 								 NULL,
 								 NULL);
+
+				/* Get status and unref mail operation */
+				status = modest_mail_operation_get_status (mail_op);						
 				g_object_unref (G_OBJECT (mail_op));
 			}
 			g_object_unref (headers);
@@ -2578,6 +2582,9 @@ modest_ui_actions_on_main_window_move_to (GtkAction *action,
 	}
 	g_object_unref (folder_store);
 	
+	/* Check errors */			
+	if (status != MODEST_MAIL_OPERATION_STATUS_SUCCESS) 
+		move_to_error_checking (G_OBJECT(win), NULL);
  end:
 	gtk_widget_destroy (dialog);
 }
@@ -2765,4 +2772,14 @@ modest_ui_actions_on_retrieve_msg_contents (GtkAction *action,
 	/* Frees */
 	g_object_unref (headers);
 	g_object_unref (mail_op);
+}
+
+void
+modest_ui_actions_on_edit_menu_activated (GtkAction *action,
+					  ModestWindow *window)
+{
+	g_return_if_fail (MODEST_IS_WINDOW (window));
+
+	/* Update dimmed */	
+	modest_window_check_dimming_rules (window);	
 }

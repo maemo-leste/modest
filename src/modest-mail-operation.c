@@ -81,7 +81,7 @@ enum _ModestMailOperationSignals
 
 typedef struct _ModestMailOperationPrivate ModestMailOperationPrivate;
 struct _ModestMailOperationPrivate {
-	guint                      id;
+	TnyAccount                 *account;
 	guint                      done;
 	guint                      total;
 	GObject                   *source;
@@ -179,11 +179,11 @@ modest_mail_operation_init (ModestMailOperation *obj)
 
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(obj);
 
+	priv->account  = NULL;
 	priv->status         = MODEST_MAIL_OPERATION_STATUS_INVALID;
 	priv->op_type        = MODEST_MAIL_OPERATION_TYPE_UNKNOWN;
 	priv->error          = NULL;
 	priv->error_checking = NULL;
-	priv->id             = 0;
 	priv->done           = 0;
 	priv->total          = 0;
 	priv->source         = NULL;
@@ -204,6 +204,11 @@ modest_mail_operation_finalize (GObject *obj)
 		g_object_unref (priv->source);
 		priv->source = NULL;
 	}
+	if (priv->account) {
+		g_object_unref (priv->account);
+		priv->account = NULL;
+	}
+
 
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
@@ -439,12 +444,18 @@ modest_mail_operation_send_mail (ModestMailOperation *self,
 				 TnyTransportAccount *transport_account,
 				 TnyMsg* msg)
 {
-	TnySendQueue *send_queue;
+	TnySendQueue *send_queue = NULL;
+	ModestMailOperationPrivate *priv;
 	
 	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
 	g_return_if_fail (TNY_IS_TRANSPORT_ACCOUNT (transport_account));
 	g_return_if_fail (TNY_IS_MSG (msg));
 	
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
+
+	/* Get account and set it into mail_operation */
+	priv->account = g_object_ref (transport_account);
+
 	send_queue = TNY_SEND_QUEUE (modest_runtime_get_send_queue (transport_account));
 	if (!TNY_IS_SEND_QUEUE(send_queue))
 		g_printerr ("modest: could not find send queue for account\n");
@@ -474,17 +485,21 @@ modest_mail_operation_send_new_mail (ModestMailOperation *self,
 				     const GList *attachments_list,
 				     TnyHeaderFlags priority_flags)
 {
-	TnyMsg *new_msg;
+	TnyMsg *new_msg = NULL;
 	ModestMailOperationPrivate *priv = NULL;
-	/* GList *node = NULL; */
 
 	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
 	g_return_if_fail (TNY_IS_TRANSPORT_ACCOUNT (transport_account));
 
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
 
+	/* Get account and set it into mail_operation */
+	priv->account = g_object_ref (transport_account);
+
 	/* Check parametters */
 	if (to == NULL) {
+ 		/* Set status failed and set an error */
+		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 			     MODEST_MAIL_OPERATION_ERROR_BAD_PARAMETER,
 			     _("Error trying to send a mail. You need to set at least one recipient"));
@@ -526,12 +541,13 @@ modest_mail_operation_save_to_drafts (ModestMailOperation *self,
 	ModestMailOperationPrivate *priv = NULL;
 	GError *err = NULL;
 
-	/* GList *node = NULL; */
-
 	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
 	g_return_if_fail (TNY_IS_TRANSPORT_ACCOUNT (transport_account));
 
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
+
+	/* Get account and set it into mail_operation */
+	priv->account = g_object_ref (transport_account);
 
 	if (html_body == NULL) {
 		msg = modest_tny_msg_new (to, from, cc, bcc, subject, plain_body, (GSList *) attachments_list); /* FIXME: attachments */
@@ -557,7 +573,7 @@ modest_mail_operation_save_to_drafts (ModestMailOperation *self,
 		goto cleanup;
 	}
 
-	modest_mail_operation_notify_end (self);
+ 	modest_mail_operation_notify_end (self);
 
 	/* Free */
 cleanup:
@@ -769,6 +785,9 @@ update_account_thread (gpointer thr_user_data)
 	info = (UpdateAccountInfo *) thr_user_data;
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(info->mail_op);
 
+	/* Get account and set it into mail_operation */
+	priv->account = g_object_ref (info->account);
+
 	/* Get all the folders We can do it synchronously because
 	   we're already running in a different thread than the UI */
 	all_folders = tny_simple_list_new ();
@@ -814,8 +833,8 @@ update_account_thread (gpointer thr_user_data)
 		tny_folder_refresh (TNY_FOLDER (folder), &(priv->error));
 
 		/* If the retrieve type is headers only do nothing more */
-		if (!strcmp (info->retrieve_type, MODEST_ACCOUNT_RETRIEVE_VALUE_MESSAGES) || 
-		    !strcmp (info->retrieve_type, MODEST_ACCOUNT_RETRIEVE_VALUE_MESSAGES_AND_ATTACHMENTS)) {
+		if (!g_ascii_strcasecmp (info->retrieve_type, MODEST_ACCOUNT_RETRIEVE_VALUE_MESSAGES) || 
+		    !g_ascii_strcasecmp (info->retrieve_type, MODEST_ACCOUNT_RETRIEVE_VALUE_MESSAGES_AND_ATTACHMENTS)) {
 			TnyIterator *iter;
 
 			iter = tny_list_create_iterator (observer->new_headers);
@@ -883,7 +902,10 @@ update_account_thread (gpointer thr_user_data)
 	priv->op_type = MODEST_MAIL_OPERATION_TYPE_SEND;
 	priv->done = 0;
 	priv->total = 0;
-
+	if (priv->account != NULL) 
+		g_object_unref (priv->account);
+	priv->account = g_object_ref (info->transport_account);
+	
 	ModestTnySendQueue *send_queue = modest_runtime_get_send_queue
 		(info->transport_account);
 
@@ -1023,18 +1045,26 @@ modest_mail_operation_create_folder (ModestMailOperation *self,
 	
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
 
+	/* Get account and set it into mail_operation */
+	priv->account = tny_folder_get_account (TNY_FOLDER(parent));
+
 	/* Check parent */
 	if (!TNY_IS_FOLDER (parent)) {
+ 		/* Set status failed and set an error */
+		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 			     MODEST_MAIL_OPERATION_ERROR_BAD_PARAMETER,
 			     _("mail_in_ui_folder_create_error"));
 	} else {
 		/* Check folder rules */
 		rules = modest_tny_folder_get_rules (TNY_FOLDER (parent));
-		if (rules & MODEST_FOLDER_RULES_FOLDER_NON_WRITEABLE)
+		if (rules & MODEST_FOLDER_RULES_FOLDER_NON_WRITEABLE) {
+			/* Set status failed and set an error */
+			priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 			g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 				     MODEST_MAIL_OPERATION_ERROR_FOLDER_RULES,
 				     _("mail_in_ui_folder_create_error"));
+		} 
 		else
 			can_create = TRUE;		
 	}
@@ -1068,6 +1098,8 @@ modest_mail_operation_remove_folder (ModestMailOperation *self,
 	/* Check folder rules */
 	rules = modest_tny_folder_get_rules (TNY_FOLDER (folder));
 	if (rules & MODEST_FOLDER_RULES_FOLDER_NON_DELETABLE) {
+ 		/* Set status failed and set an error */
+		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 			     MODEST_MAIL_OPERATION_ERROR_FOLDER_RULES,
 			     _("mail_in_ui_folder_delete_error"));
@@ -1076,6 +1108,7 @@ modest_mail_operation_remove_folder (ModestMailOperation *self,
 
 	/* Get the account */
 	account = tny_folder_get_account (folder);
+	priv->account = g_object_ref(account);
 
 	/* Delete folder or move to trash */
 	if (remove_to_trash) {
@@ -1100,46 +1133,6 @@ modest_mail_operation_remove_folder (ModestMailOperation *self,
 	/* Notify about operation end */
 	modest_mail_operation_notify_end (self);
 }
-
-void
-modest_mail_operation_rename_folder (ModestMailOperation *self,
-				     TnyFolder *folder,
-				     const gchar *name)
-{
-	ModestMailOperationPrivate *priv;
-	ModestTnyFolderRules rules;
-
-	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
-	g_return_if_fail (TNY_IS_FOLDER_STORE (folder));
-	g_return_if_fail (name);
-	
-	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
-
-	/* Check folder rules */
-	rules = modest_tny_folder_get_rules (TNY_FOLDER (folder));
-	if (rules & MODEST_FOLDER_RULES_FOLDER_NON_RENAMEABLE) {
-		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
-			     MODEST_MAIL_OPERATION_ERROR_FOLDER_RULES,
-			     _("FIXME: unable to rename"));
-	} else {
-		/* Rename. Camel handles folder subscription/unsubscription */
-		TnyFolderStore *into;
-		TnyFolder *nfol;
-
-		into = tny_folder_get_folder_store (folder);
-		nfol = tny_folder_copy (folder, into, name, TRUE, &(priv->error));
-		if (into)
-			g_object_unref (into);
-		if (nfol)
-			g_object_unref (nfol);
-
-		CHECK_EXCEPTION (priv, MODEST_MAIL_OPERATION_STATUS_FAILED);
-		
-	}
-
-	/* Notify about operation end */
-	modest_mail_operation_notify_end (self);
- }
 
 static void
 transfer_folder_status_cb (GObject *obj,
@@ -1217,17 +1210,27 @@ modest_mail_operation_xfer_folder (ModestMailOperation *self,
 	ModestTnyFolderRules parent_rules, rules;
 
 	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
-	g_return_if_fail (TNY_IS_FOLDER_STORE (parent));
 	g_return_if_fail (TNY_IS_FOLDER (folder));
+	g_return_if_fail (TNY_IS_FOLDER (parent));
 
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
+
+	/* Get account and set it into mail_operation */
+	priv->account = tny_folder_get_account (TNY_FOLDER(folder));
+	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
 
 	/* Get folder rules */
 	rules = modest_tny_folder_get_rules (TNY_FOLDER (folder));
 	parent_rules = modest_tny_folder_get_rules (TNY_FOLDER (parent));
 
+	if (!TNY_IS_FOLDER_STORE (parent)) {
+		
+	}
+	
 	/* The moveable restriction is applied also to copy operation */
-	if (rules & MODEST_FOLDER_RULES_FOLDER_NON_MOVEABLE) {
+	if ((!TNY_IS_FOLDER_STORE (parent)) || (rules & MODEST_FOLDER_RULES_FOLDER_NON_MOVEABLE)) {
+ 		/* Set status failed and set an error */
+		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 			     MODEST_MAIL_OPERATION_ERROR_FOLDER_RULES,
 			     _("mail_in_ui_folder_move_target_error"));
@@ -1235,6 +1238,8 @@ modest_mail_operation_xfer_folder (ModestMailOperation *self,
 		/* Notify the queue */
 		modest_mail_operation_notify_end (self);
 	} else if (parent_rules & MODEST_FOLDER_RULES_FOLDER_NON_WRITEABLE) {
+ 		/* Set status failed and set an error */
+		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 			     MODEST_MAIL_OPERATION_ERROR_FOLDER_RULES,
 			     _("FIXME: parent folder does not accept new folders"));
@@ -1257,6 +1262,48 @@ modest_mail_operation_xfer_folder (ModestMailOperation *self,
 	}
 }
 
+void
+modest_mail_operation_rename_folder (ModestMailOperation *self,
+				     TnyFolder *folder,
+				     const gchar *name)
+{
+	ModestMailOperationPrivate *priv;
+	ModestTnyFolderRules rules;
+
+	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
+	g_return_if_fail (TNY_IS_FOLDER_STORE (folder));
+	g_return_if_fail (name);
+	
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
+
+	/* Get account and set it into mail_operation */
+	priv->account = tny_folder_get_account (TNY_FOLDER(folder));
+
+	/* Check folder rules */
+	rules = modest_tny_folder_get_rules (TNY_FOLDER (folder));
+	if (rules & MODEST_FOLDER_RULES_FOLDER_NON_RENAMEABLE) {
+ 		/* Set status failed and set an error */
+		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
+		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
+			     MODEST_MAIL_OPERATION_ERROR_FOLDER_RULES,
+			     _("FIXME: unable to rename"));
+
+		/* Notify about operation end */
+		modest_mail_operation_notify_end (self);
+	} else {
+		/* Rename. Camel handles folder subscription/unsubscription */
+		TnyFolderStore *into;
+
+		into = tny_folder_get_folder_store (folder);
+		tny_folder_copy_async (folder, into, name, TRUE,
+				 transfer_folder_cb,
+				 transfer_folder_status_cb,
+				 self);
+		if (into)
+			g_object_unref (into);
+		
+	}
+ }
 
 /* ******************************************************************* */
 /* **************************  MSG  ACTIONS  ************************* */
@@ -1281,6 +1328,9 @@ void modest_mail_operation_get_msg (ModestMailOperation *self,
 
 	/* Get message from folder */
 	if (folder) {
+		/* Get account and set it into mail_operation */
+		priv->account = tny_folder_get_account (TNY_FOLDER(folder));		
+
 		helper = g_slice_new0 (GetMsgAsyncHelper);
 		helper->mail_op = self;
 		helper->user_callback = user_callback;
@@ -1296,6 +1346,9 @@ void modest_mail_operation_get_msg (ModestMailOperation *self,
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 			     MODEST_MAIL_OPERATION_ERROR_ITEM_NOT_FOUND,
 			     _("Error trying to get a message. No folder found for header"));
+
+		/* Notify the queue */
+		modest_mail_operation_notify_end (self);
 	}
 }
 
@@ -1517,12 +1570,15 @@ modest_mail_operation_get_msgs_full (ModestMailOperation *self,
 				     gpointer user_data,
 				     GDestroyNotify notify)
 {
+	TnyHeader *header = NULL;
+	TnyFolder *folder = NULL;
 	GThread *thread;
 	ModestMailOperationPrivate *priv = NULL;
 	GetFullMsgsInfo *info = NULL;
 	gboolean size_ok = TRUE;
 	gint max_size;
 	GError *error = NULL;
+	TnyIterator *iter = NULL;
 	
 	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
 	
@@ -1531,6 +1587,16 @@ modest_mail_operation_get_msgs_full (ModestMailOperation *self,
 	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
 	priv->done = 0;
 	priv->total = tny_list_get_length(header_list);
+
+	/* Get account and set it into mail_operation */
+	if (tny_list_get_length (header_list) > 1) {
+		iter = tny_list_create_iterator (header_list);		
+		header = TNY_HEADER (tny_iterator_get_current (iter));
+		folder = tny_header_get_folder (header);		
+		priv->account = tny_folder_get_account (TNY_FOLDER(folder));
+		g_object_unref (header);
+		g_object_unref (folder);
+	}
 
 	/* Get msg size limit */
 	max_size  = modest_conf_get_int (modest_runtime_get_conf (), 
@@ -1545,12 +1611,9 @@ modest_mail_operation_get_msgs_full (ModestMailOperation *self,
 
 	/* Check message size limits. If there is only one message
 	   always retrieve it */
-	if (tny_list_get_length (header_list) > 1) {
-		TnyIterator *iter;
-
-		iter = tny_list_create_iterator (header_list);
+	if (iter != NULL) {
 		while (!tny_iterator_is_done (iter) && size_ok) {
-			TnyHeader *header = TNY_HEADER (tny_iterator_get_current (iter));
+			header = TNY_HEADER (tny_iterator_get_current (iter));
 			if (tny_header_get_message_size (header) >= max_size)
 				size_ok = FALSE;
 			g_object_unref (header);
@@ -1570,6 +1633,8 @@ modest_mail_operation_get_msgs_full (ModestMailOperation *self,
 
 		thread = g_thread_create (get_msgs_full_thread, info, FALSE, NULL);
 	} else {
+ 		/* Set status failed and set an error */
+		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 		/* FIXME: the error msg is different for pop */
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 			     MODEST_MAIL_OPERATION_ERROR_BAD_PARAMETER,
@@ -1595,6 +1660,9 @@ modest_mail_operation_remove_msg (ModestMailOperation *self,
 
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
 	folder = tny_header_get_folder (header);
+
+	/* Get account and set it into mail_operation */
+	priv->account = tny_folder_get_account (TNY_FOLDER(folder));
 
 	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
 
@@ -1752,6 +1820,8 @@ modest_mail_operation_xfer_msgs (ModestMailOperation *self,
 	rules = modest_tny_folder_get_rules (TNY_FOLDER (folder));
 
 	if (rules & MODEST_FOLDER_RULES_FOLDER_NON_WRITEABLE) {
+ 		/* Set status failed and set an error */
+		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 			     MODEST_MAIL_OPERATION_ERROR_FOLDER_RULES,
 			     _("FIXME: folder does not accept msgs"));
@@ -1774,6 +1844,9 @@ modest_mail_operation_xfer_msgs (ModestMailOperation *self,
 	src_folder = tny_header_get_folder (header);
 	g_object_unref (header);
 	g_object_unref (iter);
+
+	/* Get account and set it into mail_operation */
+	priv->account = tny_folder_get_account (src_folder);
 
 	/* Transfer messages */
 	tny_folder_transfer_msgs_async (src_folder, 
@@ -1858,6 +1931,9 @@ modest_mail_operation_refresh_folder  (ModestMailOperation *self,
 	g_object_ref (folder);
 
 	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
+
+	/* Get account and set it into mail_operation */
+	priv->account = tny_folder_get_account (folder);
 
 	/* Refresh the folder. TODO: tinymail could issue a status
 	   updates before the callback call then this could happen. We

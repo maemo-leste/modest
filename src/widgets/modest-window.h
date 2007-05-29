@@ -187,6 +187,27 @@ void     modest_window_show_toolbar (ModestWindow *window,
  **/
 void     modest_window_save_state (ModestWindow *window);
 
+
+/**
+ * modest_window_get_action:
+ * @window: a #ModestWindow instance object
+ * @action_path: the full path of required action.
+ * 
+ * Get an action from ui manager, using @action_path parameter,
+ * which represent the full path to the required action into UIManager 
+ * xml definition.
+ **/
+GtkAction * modest_window_get_action (ModestWindow *window, const gchar *action_path); 
+
+/**
+ * modest_window_check_dimming_rules:
+ * @self: a #ModestWindow instance object
+ * 
+ * Calls UI Dimming Manager of @self window to check all dimming rules.
+ * 
+ **/
+void modest_window_check_dimming_rules (ModestWindow *self);
+
 G_END_DECLS
 
 #endif /* __MODEST_WINDOW_H__ */

@@ -322,5 +322,9 @@ void     modest_ui_actions_remove_attachments             (GtkAction *action,
 void     modest_ui_actions_on_retrieve_msg_contents       (GtkAction *action,
 							   ModestWindow *window);
 
+void
+modest_ui_actions_on_edit_menu_activated (GtkAction *action,
+					  ModestWindow *window);
+
 G_END_DECLS
 #endif /* __MODEST_UI_ACTIONS_H__ */

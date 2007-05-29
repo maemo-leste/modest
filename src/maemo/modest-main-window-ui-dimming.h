@@ -1,0 +1,92 @@
+#ifndef __MODEST_MAIN_WINDOW_UI_DIMMING_PRIV_H__
+#define __MODEST_MAIN_WINDOW_UI_DIMMING_PRIV_H__
+
+#include "modest-dimming-rules-group.h"
+#include "modest-ui-dimming-rules.h"
+
+G_BEGIN_DECLS
+
+
+/* Dimming rules entries */
+static const ModestDimmingEntry modest_dimming_entries [] = {
+
+	/* Email Menu */
+	{ "/MenuBar/EmailMenu/EmailNewMainMenu", NULL },
+	{ "/MenuBar/EmailMenu/EmailNewMainMenu/EmailNewMessageMenu", NULL },
+	{ "/MenuBar/EmailMenu/EmailNewMainMenu/EmailNewFolderMenu", G_CALLBACK(modest_ui_dimming_rules_on_new_folder) },
+	{ "/MenuBar/EmailMenu/EmailOpenMenu", G_CALLBACK(modest_ui_dimming_rules_on_open_msg) },
+	{ "/MenuBar/EmailMenu/EmailReplyMenu", G_CALLBACK(modest_ui_dimming_rules_on_reply_msg) },
+	{ "/MenuBar/EmailMenu/EmailReplyAllMenu", G_CALLBACK(modest_ui_dimming_rules_on_reply_msg) },
+	{ "/MenuBar/EmailMenu/EmailForwardMenu",  G_CALLBACK(modest_ui_dimming_rules_on_reply_msg)},
+	{ "/MenuBar/EmailMenu/EmailContentsMenu", G_CALLBACK(modest_ui_dimming_rules_on_contents_msg) },
+	{ "/MenuBar/EmailMenu/EmailPurgeAttachmentsMenu", NULL },
+	{ "/MenuBar/EmailMenu/EmailDeleteMenu", NULL },
+	{ "/MenuBar/EmailMenu/EmailDetailsMenu", NULL },
+
+	/* Edit Menu */
+	{ "/MenuBar/EditMenu", NULL },
+	{ "/MenuBar/EditMenu/EditUndoMenu", NULL },
+	{ "/MenuBar/EditMenu/EditCutMenu", NULL },
+	{ "/MenuBar/EditMenu/EditCopyMenu", NULL },
+	{ "/MenuBar/EditMenu/EditPasteMenu", NULL },
+	{ "/MenuBar/EditMenu/EditSelectAllMenu", NULL },
+	{ "/MenuBar/EditMenu/EditMarkAsReadMenu", NULL },
+	{ "/MenuBar/EditMenu/EditMarkAsUnreadMenu", NULL },
+	{ "/MenuBar/EditMenu/EditMoveToMenu", NULL },
+
+	/* View Menu */
+	{ "/MenuBar/ViewMenu", NULL },
+	{ "/MenuBar/ViewMenu/ViewSortMenu", NULL },
+	{ "/MenuBar/ViewMenu/ViewToggleFoldersMenu", NULL },
+	{ "/MenuBar/ViewMenu/ViewToggleFullscreenMenu", NULL },
+	{ "/MenuBar/ViewMenu/ViewShowToolbarMainMenu", NULL },
+	{ "/MenuBar/ViewMenu/ViewShowToolbarMainMenu/ViewShowToolbarNormalScreenMenu", NULL },
+	{ "/MenuBar/ViewMenu/ViewShowToolbarMainMenu/ViewShowToolbarFullScreenMenu", NULL },
+	
+	/* Tools Menu */
+	{ "/MenuBar/ToolsMenu", NULL },
+	{ "/MenuBar/ToolsMenu/ToolsSettingsMenu", NULL },
+	{ "/MenuBar/ToolsMenu/ToolsAccountsMenu", NULL },
+	{ "/MenuBar/ToolsMenu/ToolsSMTPServersMenu", NULL },
+	{ "/MenuBar/ToolsMenu/ToolsSendReceiveMainMenu", NULL },
+	{ "/MenuBar/ToolsMenu/ToolsSendReceiveMainMenu/ToolsSendReceiveAllMenu", NULL },
+	{ "/MenuBar/ToolsMenu/ToolsSendReceiveCancelSendingMenu", NULL },
+	{ "/MenuBar/ToolsMenu/ToolsContactsMenu", NULL },
+	{ "/MenuBar/ToolsMenu/ToolsSearchMessagesMenu", NULL },
+	{ "/MenuBar/ToolsMenu/ToolsHelpMenu", NULL },
+
+	/* Close Menu */
+	{ "/MenuBar/CloseMenu", NULL },
+	{ "/MenuBar/ToolsMenu/CloseWindowMenu", NULL },
+	{ "/MenuBar/ToolsMenu/CloseAllWindowsMenu", NULL },
+
+	/* Toolbar */
+	{ "/Toolbar/ToolbarMessageNew", NULL },
+	{ "/Toolbar/ToolbarMessageReply", NULL },
+	{ "/Toolbar/ToolbarDeleteMessage", NULL },
+	{ "/Toolbar/ToolbarToggleView", NULL },
+	{ "/Toolbar/ToolbarSort", NULL },
+	{ "/Toolbar/ToolbarSendReceive", NULL },
+	{ "/Toolbar/ToolbarCancel", NULL },
+
+	/* Contextual Menus (Header View) */
+	{ "/HeaderViewCSM/EmailReply", NULL },
+	{ "/HeaderViewCSM/EmailForward", NULL },
+
+	/* Contextual Menus (Folder View) */
+	{ "/FolderViewCSM/FolderViewCSMNewFolder", G_CALLBACK(modest_ui_dimming_rules_on_new_folder) },
+	{ "/FolderViewCSM/FolderViewCSMRenameFolder", NULL },
+	{ "/FolderViewCSM/FolderViewCSMPasteMsgs", NULL },
+	{ "/FolderViewCSM/FolderViewCSMDeleteFolder", NULL },
+	{ "/FolderViewCSM/FolderViewCSMSearchMessages", NULL },
+	{ "/FolderViewCSM/FolderViewCSMHelp", NULL },
+
+	/* Contextual Menus (Toolbar) */
+	{ "/ToolbarReplyCSM/ToolbarMessageForward", NULL },
+	{ "/ToolbarReplyCSM/ToolbarMessageReplyAll", NULL },
+	{ "/ToolbarReplyCSM/ToolbarMessageReply", NULL },
+	
+};
+
+G_END_DECLS
+#endif /* __MODEST_MAIN_WINDOW_UI_PRIV_H__ */

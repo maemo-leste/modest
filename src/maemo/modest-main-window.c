@@ -45,6 +45,7 @@
 #include "modest-widget-memory.h"
 #include "modest-window-priv.h"
 #include "modest-main-window-ui.h"
+#include "modest-main-window-ui-dimming.h"
 #include "modest-account-mgr.h"
 #include "modest-tny-account.h"
 #include "modest-conf.h"
@@ -55,6 +56,7 @@
 #include "modest-icon-names.h"
 #include "modest-progress-bar-widget.h"
 #include "modest-text-utils.h"
+#include "modest-ui-dimming-manager.h"
 #include "maemo/modest-osso-state-saving.h"
 
 #ifdef MODEST_HILDON_VERSION_0
@@ -547,6 +549,7 @@ modest_main_window_new (void)
 	ModestMainWindowPrivate *priv;
 	ModestWindowPrivate *parent_priv;
 	GtkWidget *folder_win;
+	ModestDimmingRulesGroup *rules_group;
 	GtkActionGroup *action_group;
 	GError *error = NULL;
 	TnyFolderStoreQuery *query;
@@ -559,8 +562,12 @@ modest_main_window_new (void)
 	parent_priv = MODEST_WINDOW_GET_PRIVATE(self);
 
 	parent_priv->ui_manager = gtk_ui_manager_new();
+	parent_priv->ui_dimming_manager = modest_ui_dimming_manager_new();
+
 	action_group = gtk_action_group_new ("ModestMainWindowActions");
 	gtk_action_group_set_translation_domain (action_group, GETTEXT_PACKAGE);
+
+	rules_group = modest_dimming_rules_group_new ("ModestCommonDimmingRules");
 
 	/* Add common actions */
 	gtk_action_group_add_actions (action_group,
@@ -595,6 +602,16 @@ modest_main_window_new (void)
 		error = NULL;
 	}
 
+	/* Add common dimming rules */
+	modest_dimming_rules_group_add_rules (rules_group, 
+					      modest_dimming_entries,
+					      G_N_ELEMENTS (modest_dimming_entries),
+					      self);
+
+	/* Insert dimming rules group for this window */
+	modest_ui_dimming_manager_insert_rules_group (parent_priv->ui_dimming_manager, rules_group);							 
+	g_object_unref (rules_group);
+	
 	/* Add accelerators */
 	gtk_window_add_accel_group (GTK_WINDOW (self), 
 				    gtk_ui_manager_get_accel_group (parent_priv->ui_manager));
@@ -1493,7 +1510,7 @@ on_queue_changed (ModestMailOperationQueue *queue,
 	ModestToolBarModes mode;
 	GSList *tmp;
 	gboolean mode_changed = FALSE;
-	ModestMailOperationStatus status;
+/* 	ModestMailOperationStatus status; */
 
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW (self));
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
@@ -1529,9 +1546,9 @@ on_queue_changed (ModestMailOperationQueue *queue,
 		break;
 	case MODEST_MAIL_OPERATION_QUEUE_OPERATION_REMOVED:
 		/* If mail_op is mine, check errors */
-		status = modest_mail_operation_get_status (mail_op);
-		if (status != MODEST_MAIL_OPERATION_STATUS_SUCCESS)
-			modest_mail_operation_execute_error_handler (mail_op);
+/* 		status = modest_mail_operation_get_status (mail_op); */
+/* 		if (status != MODEST_MAIL_OPERATION_STATUS_SUCCESS) */
+/* 			modest_mail_operation_execute_error_handler (mail_op); */
 
 		/* Change toolbar mode */
 		if (mode == TOOLBAR_MODE_TRANSFER) {			

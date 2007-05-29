@@ -112,6 +112,7 @@ modest_window_init (ModestWindow *obj)
 	priv = MODEST_WINDOW_GET_PRIVATE(obj);
 
 	priv->ui_manager     = NULL;
+	priv->ui_dimming_manager     = NULL;
 	priv->toolbar        = NULL;
 	priv->menubar        = NULL;
 
@@ -128,6 +129,10 @@ modest_window_finalize (GObject *obj)
 	if (priv->ui_manager) {
 		g_object_unref (G_OBJECT(priv->ui_manager));
 		priv->ui_manager = NULL;
+	}
+	if (priv->ui_dimming_manager) {
+		g_object_unref (G_OBJECT(priv->ui_dimming_manager));
+		priv->ui_dimming_manager = NULL;
 	}
 
 	g_free (priv->active_account);
@@ -160,6 +165,29 @@ modest_window_set_active_account (ModestWindow *self, const gchar *active_accoun
 		if (active_account)
 			priv->active_account = g_strdup (active_account);
 	}
+}
+
+void
+modest_window_check_dimming_rules (ModestWindow *self)
+{
+	ModestWindowPrivate *priv;	
+
+	priv = MODEST_WINDOW_GET_PRIVATE(self);
+	modest_ui_dimming_manager_process_dimming_rules (priv->ui_dimming_manager);
+}
+
+GtkAction *
+modest_window_get_action (ModestWindow *window, 
+			  const gchar *action_path) 
+{
+	GtkAction *action = NULL;
+	ModestWindowPrivate *priv;	
+
+	priv = MODEST_WINDOW_GET_PRIVATE(window);
+
+        action = gtk_ui_manager_get_action (priv->ui_manager, action_path);	
+
+	return action;
 }
 
 void

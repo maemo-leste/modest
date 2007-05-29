@@ -27,29 +27,20 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __MODEST_WINDOW_PRIV_H__
-#define __MODEST_WINDOW_PRIV_H__
+#ifndef __MODEST_UI_DIMMING_RULES_H__
+#define __MODEST_UI_DIMMING_RULES_H__
 
-#include <gtk/gtkuimanager.h>
-#include <tny-account-store.h>
-#include "modest-tny-platform-factory.h"
-#include "modest-ui-dimming-manager.h"
+#include <widgets/modest-main-window.h>
+#include <widgets/modest-msg-edit-window.h>
+#include <widgets/modest-recpt-view.h>
 
 G_BEGIN_DECLS
 
-typedef struct _ModestWindowPrivate ModestWindowPrivate;
-struct _ModestWindowPrivate {
-	GtkUIManager         *ui_manager;
-	ModestUIDimmingManager  *ui_dimming_manager;
-	GtkWidget            *toolbar;
-	GtkWidget            *menubar;
-
-	gchar                *active_account;
-};
-
-#define MODEST_WINDOW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
-                                           MODEST_TYPE_WINDOW, \
-                                           ModestWindowPrivate))
+/* Menu & toolbar dimming rules */
+gboolean modest_ui_dimming_rules_on_new_folder (ModestWindow *win, gpointer user_data);
+gboolean modest_ui_dimming_rules_on_open_msg (ModestWindow *win, gpointer user_data);
+gboolean modest_ui_dimming_rules_on_reply_msg (ModestWindow *win, gpointer user_data);
+gboolean modest_ui_dimming_rules_on_contents_msg (ModestWindow *win, gpointer user_data);
 
 G_END_DECLS
-#endif /* __MODEST_WINDOW_PRIV_H__ */
+#endif 

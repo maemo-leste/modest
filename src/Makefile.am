@@ -53,6 +53,12 @@ modest_SOURCES=\
 	modest-mail-operation-queue.h \
 	modest-mail-operation.c \
 	modest-mail-operation.h \
+	modest-ui-dimming-manager.c \
+	modest-ui-dimming-manager.h \
+	modest-dimming-rules-group.c \
+	modest-dimming-rules-group.h \
+	modest-dimming-rule.c \
+	modest-dimming-rule.h \
 	modest-main.c\
 	modest-marshal.c \
 	modest-marshal.h \
@@ -89,6 +95,8 @@ modest_SOURCES=\
 	modest-tny-send-queue.h\
 	modest-ui-actions.c\
 	modest-ui-actions.h\
+	modest-ui-dimming-rules.c\
+	modest-ui-dimming-rules.h\
 	modest-widget-memory-priv.h \
 	modest-widget-memory.c\
 	modest-widget-memory.h\
