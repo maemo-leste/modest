@@ -481,7 +481,7 @@ create_title (ModestWizardDialog *wizard_dialog)
 /*
  * Response signal handler. This function is needed because GtkDialog's 
  * handler for this signal closes the dialog and we don't want that, we 
- * want to change pages and, dimm certain response buttons. Overriding the 
+ * want to change pages and, dim certain response buttons. Overriding the 
  * virtual function would not work because that would be called after the 
  * signal handler implemented by GtkDialog.
  * FIXME: There is a much saner way to do that [MDK]

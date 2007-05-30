@@ -78,16 +78,16 @@ modest_ui_dimming_rules_on_new_folder (ModestWindow *win, gpointer user_data)
 	if (!parent_folder)
 		return TRUE;
 	
-	/* If it's the local account do not dimm */
+	/* If it's the local account do not dim */
 	if (modest_tny_folder_store_is_virtual_local_folders (parent_folder)) {
 		return FALSE;
 	} else if (TNY_IS_ACCOUNT (parent_folder)) {
-		/* If it's the MMC root folder then dimm it */
+		/* If it's the MMC root folder then dim it */
 		if (!strcmp (tny_account_get_id (TNY_ACCOUNT (parent_folder)), MODEST_MMC_ACCOUNT_ID)) {
 			dimmed = TRUE;
 		} else {
 			const gchar *proto_str = tny_account_get_proto (TNY_ACCOUNT (parent_folder));
-			/* If it's POP then dimm */
+			/* If it's POP then dim */
 			dimmed = (modest_protocol_info_get_transport_store_protocol (proto_str) == 
 				  MODEST_PROTOCOL_STORE_POP) ? TRUE : FALSE;
 		}

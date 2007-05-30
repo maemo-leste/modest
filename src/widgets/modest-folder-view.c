@@ -302,12 +302,7 @@ text_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 		if (!strcmp (account_id, MODEST_ACTUAL_LOCAL_FOLDERS_ACCOUNT_ID)) {
 			item_name = g_strdup (priv->local_account_name);
 		} else {
-			if (!strcmp (account_id, MODEST_MMC_ACCOUNT_ID)) {
-				/* TODO: get MMC card name */
-				item_name = g_strdup (_("FIXME: MMC"));
-			} else {
-				item_name = g_strdup (fname);
-			}
+			item_name = g_strdup (fname);
 		}
 
 		item_weight = 800;

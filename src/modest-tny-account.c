@@ -40,6 +40,7 @@
 #include <tny-camel-imap-store-account.h>
 #include <tny-camel-pop-store-account.h>
 #include <tny-folder-stats.h>
+#include <hildon-widgets/hildon-file-system-info.h>
 #include <string.h>
 
 
@@ -401,25 +402,30 @@ modest_tny_account_new_from_account (ModestAccountMgr *account_mgr, const gchar 
 	return tny_account;
 }
 
-#if 0
+/* TODO: Notify the treemodel somehow that the display name 
+ * is now available. We should probably request this from the cell_data_func 
+ * so we can provide a treerowreference. */
 static void 
 on_modest_file_system_info(HildonFileSystemInfoHandle *handle,
                            HildonFileSystemInfo *info,
                            const GError *error, gpointer data)
 {
-	if (info) {
-		printf("DEBUG: %s: display name=%s\n", __FUNCTION__, 
-			hildon_file_system_info_get_display_name(info));
-	}
-	else {
-		printf("DEBUG: %s: info is NULL.\n", __FUNCTION__);
-	}
+	TnyAccount *account = TNY_ACCOUNT (data);
 	
 	if (error) {
-		printf ("  DEBUG: error=%s\n", error->message);
+		printf ("  DEBUG: %s: error=%s\n", __FUNCTION__, error->message);
+	}
+	
+	const gchar *display_name = NULL;
+	if (!error && info) {
+		display_name = hildon_file_system_info_get_display_name(info);
+	}
+	
+	if (display_name) {
+		/* printf ("DEBUG: %s: display name=%s\n", __FUNCTION__,  display_name); */
+		tny_account_set_name (account, display_name);
 	}
 }
-#endif
 
 
 TnyAccount*
@@ -461,21 +467,38 @@ modest_tny_account_new_for_local_folders (ModestAccountMgr *account_mgr, TnySess
 		location_filepath && 
 		(strcmp (location_filepath, MODEST_MCC1_VOLUMEPATH) == 0);
 		
-	/* TODO: Use hildon_file_system_info_async_new() to get the display name? */
-#if 0
-	const gchar *uri = "file:///media/mmc1";
- 	/* HildonFileSystemInfoHandle *async_handle = */
- 	hildon_file_system_info_async_new(uri, 
- 		on_modest_file_system_info, NULL /* user_data */);
-#endif
-
+	/* The name of memory card locations will be updated asynchronously.
+	 * This is just a default: */
 	const gchar *name = is_mmc ? _("Memory Card") : 
 		MODEST_LOCAL_FOLDERS_DEFAULT_DISPLAY_NAME;
 	tny_account_set_name (TNY_ACCOUNT(tny_account), name); 
 	
+ 	/* Get the correct display name for memory cards, asynchronously: */
+ 	if (location_filepath) {
+ 		GError *error = NULL;
+ 		gchar *uri = g_filename_to_uri(location_filepath, NULL, &error);
+ 		if (error) {
+ 			g_warning ("%s: g_filename_to_uri(%s) failed: %s", __FUNCTION__, 
+ 				location_filepath, error->message);
+ 			g_error_free (error);
+ 			error = NULL;	
+ 		} else if (uri) {
+ 			/* TODO: gnome_vfs_volume_get_display_name() does not return 
+ 			 * the same string. But why not? Why does hildon needs its own 
+ 			 * function for this?
+ 			 */
+ 			hildon_file_system_info_async_new(uri, 
+ 				on_modest_file_system_info, tny_account /* user_data */);
+ 				
+ 			g_free (uri);
+ 			uri = NULL;
+ 		}
+ 	}
+ 	
+	
 	const gchar* id = is_mmc ? MODEST_MMC_ACCOUNT_ID :
 		MODEST_ACTUAL_LOCAL_FOLDERS_ACCOUNT_ID;
-	tny_account_set_id (TNY_ACCOUNT(tny_account), id); 
+	tny_account_set_id (TNY_ACCOUNT(tny_account), id);
 	
 	tny_account_set_forget_pass_func (TNY_ACCOUNT(tny_account), forget_pass_dummy);
 	tny_account_set_pass_func (TNY_ACCOUNT(tny_account), get_pass_dummy);

@@ -1217,8 +1217,9 @@ create_details_widget (TnyFolderStore *folder_store)
 		TnyAccount *account = TNY_ACCOUNT(folder_store);
 		
 		if(!strcmp (tny_account_get_id (account), MODEST_MMC_ACCOUNT_ID)) {
-			/* TODO: MMC ? */
-			gtk_box_pack_start (GTK_BOX (vbox), gtk_label_new ("FIXME: MMC ?"), FALSE, FALSE, 0);
+			gtk_box_pack_start (GTK_BOX (vbox), 
+				gtk_label_new (tny_account_get_name (account)), 
+				FALSE, FALSE, 0);
 		} else {
 			/* Other accounts, such as IMAP and POP: */
 			
@@ -1262,7 +1263,9 @@ create_details_widget (TnyFolderStore *folder_store)
 		TnyAccount *account = TNY_ACCOUNT(folder_store);
 		
 		if (!strcmp (tny_account_get_id (account), MODEST_MMC_ACCOUNT_ID)) {
-			gtk_box_pack_start (GTK_BOX (vbox), gtk_label_new ("FIXME: MMC ?"), FALSE, FALSE, 0);
+			gtk_box_pack_start (GTK_BOX (vbox), 
+				gtk_label_new (tny_account_get_name (account)),
+				FALSE, FALSE, 0);
 		} else {
 			time_t last_updated;
 			gchar *last_updated_string;
