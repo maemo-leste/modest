@@ -68,13 +68,15 @@ modest_tny_account_new_from_account (ModestAccountMgr *account_mgr, const gchar 
  * modest_tny_account_new_for_local_folders:
  * @account_mgr: a valid account mgr instance
  * @session: a tny camel session
+ * @location_filepath: The location at which the local-folders directory exists, or NULL to specify $HOME.
  * 
  * get the local folders (pseudo) account; you should only need one such account.
  * 
  * Returns: a new local folders TnyAccount or NULL in case of error.
  */
 TnyAccount* modest_tny_account_new_for_local_folders (ModestAccountMgr *account_mgr,
-						      TnySessionCamel *session);
+						      TnySessionCamel *session,
+						      const gchar* location_filepath);
 
 /**
  * modest_tny_account_new_for_per_account_local_outbox_folder:

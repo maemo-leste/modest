@@ -1,3 +1,27 @@
+2007-05-30  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/modest-defs.h: Define MODEST_MCC1_VOLUMEPATH and MODEST_MCC1_VOLUMEPATH_URI.
+	
+	* src/modest-init.h:
+	* src/modest-init.c: Made modest_init_local_folders() take a
+	path and be public so we can iniitialize maildir folders on 
+	arbitrary volumes.
+
+	* src/modest-local-folder-info.h:
+	* src/modest-local-folder-info.c:
+	(modest_local_folder_info_get_maildir_path): Add a path parameter.
+
+	* src/modest-tny-account.c:
+	(modest_tny_account_new_for_local_folders): Take a path parameter, though NULL 
+	still means the standard local-folders path on the local volume.
+	
+	* src/modest-tny-account-store.c:
+	(modest_tny_account_store_instance_init): Connect to GnomeVfsVolumeMonitor 
+	signal so we can detect mount/unmount of the MMC1 card, and do an update of 
+	all accounts when that happens.
+	(get_server_accounts): If the MMC1 card is mounted, create a store account for 
+	this too, so it shows up in the treeview.
+
 2007-05-28  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/maemo/modest-maemo-global-settings-dialog.c:

@@ -58,7 +58,11 @@
 #define MODEST_PER_ACCOUNT_LOCAL_OUTBOX_FOLDERS_MAILDIR MODEST_PER_ACCOUNT_LOCAL_OUTBOX_FOLDER_ACCOUNT_ID_PREFIX
 
 #define MODEST_MMC_ACCOUNT_ID             "mcc"
-#define MODEST_MCC_ACCOUNT_MAILDIR	  "/media/mmc1/.Maildir"
+
+/* Without the trailing / because gnome-vfs reports mounted 
+ * volume URIs without the trailing, and we want to match them: */
+#define MODEST_MCC1_VOLUMEPATH	  "/media/mmc1" 
+#define MODEST_MCC1_VOLUMEPATH_URI "file://" MODEST_MCC1_VOLUMEPATH
 
 /* configuration key definitions for modest */
 #define MODEST_CONF_NAMESPACE		"/apps/modest"

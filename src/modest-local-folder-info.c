@@ -105,9 +105,9 @@ modest_local_folder_info_get_type_display_name (TnyFolderType type)
 
 
 gchar *
-modest_local_folder_info_get_maildir_path (void)
+modest_local_folder_info_get_maildir_path (const gchar* location_filepath)
 {
-	return g_build_filename (g_get_home_dir(),
+	return g_build_filename (location_filepath ? location_filepath : g_get_home_dir(),
 				 MODEST_DIR,
 				 MODEST_LOCAL_FOLDERS_MAILDIR, 
 				 NULL);

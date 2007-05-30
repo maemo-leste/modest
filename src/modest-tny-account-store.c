@@ -63,6 +63,8 @@
 #endif
 #endif
 
+#include <libgnomevfs/gnome-vfs-volume-monitor.h>
+
 /* 'private'/'protected' functions */
 static void modest_tny_account_store_class_init   (ModestTnyAccountStoreClass *klass);
 //static void modest_tny_account_store_init         (ModestTnyAccountStore *obj);
@@ -181,6 +183,15 @@ modest_tny_account_store_class_init (ModestTnyAccountStoreClass *klass)
 }
 
 
+     
+static void
+on_vfs_volume_mounted(GnomeVFSVolumeMonitor *volume_monitor, 
+	GnomeVFSVolume *volume, gpointer user_data);
+
+static void
+on_vfs_volume_unmounted(GnomeVFSVolumeMonitor *volume_monitor, 
+	GnomeVFSVolume *volume, gpointer user_data);
+
 static void
 modest_tny_account_store_instance_init (ModestTnyAccountStore *obj)
 {
@@ -198,9 +209,18 @@ modest_tny_account_store_instance_init (ModestTnyAccountStore *obj)
          */
 	priv->password_hash          = g_hash_table_new_full (g_str_hash, g_str_equal,
 							      g_free, g_free);
+							      
+	/* Respond to volume mounts and unmounts, such 
+	 * as the insertion/removal of the memory card: */
+	GnomeVFSVolumeMonitor* monitor = 
+		gnome_vfs_get_volume_monitor();
+	g_signal_connect (G_OBJECT(monitor), "volume-mounted",
+			  G_CALLBACK(on_vfs_volume_mounted),
+			  obj);
+	g_signal_connect (G_OBJECT(monitor), "volume-unmounted",
+			  G_CALLBACK(on_vfs_volume_unmounted),
+			  obj);
 }
-
-
 
 static void
 account_list_free (GSList *accounts)
@@ -218,33 +238,88 @@ account_list_free (GSList *accounts)
 	g_slist_free (accounts);
 }
 
+static void
+recreate_all_accounts (ModestTnyAccountStore *self)
+{
+	ModestTnyAccountStorePrivate *priv = 
+		MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
+	
+	if (priv->store_accounts) {
+		account_list_free (priv->store_accounts);
+		priv->store_accounts = NULL;
+		get_server_accounts (TNY_ACCOUNT_STORE(self),
+					     NULL, TNY_ACCOUNT_TYPE_STORE);
+	}
+	
+	if (priv->transport_accounts) {
+		account_list_free (priv->transport_accounts);
+		priv->transport_accounts = NULL;
+		get_server_accounts (TNY_ACCOUNT_STORE(self), NULL,
+					     TNY_ACCOUNT_TYPE_TRANSPORT);
+	}
+}
+
+static void
+on_vfs_volume_mounted(GnomeVFSVolumeMonitor *volume_monitor, 
+	GnomeVFSVolume *volume, gpointer user_data)
+{
+	ModestTnyAccountStore *self = MODEST_TNY_ACCOUNT_STORE(user_data);
+	
+	/* Check whether this was the external MMC1 card: */
+	gchar *uri = gnome_vfs_volume_get_activation_uri (volume);	
+	if (uri && (strcmp (uri, MODEST_MCC1_VOLUMEPATH_URI) == 0)) {
+		printf ("DEBUG: %s: MMC1 card mounted.\n", __FUNCTION__);
+		
+		/* TODO: Just add an account and emit (and respond to) 
+		 * TnyAccountStore::accountinserted signal?
+		 */
+		recreate_all_accounts (self);
+		
+		g_signal_emit (G_OBJECT(self), signals[ACCOUNT_UPDATE_SIGNAL], 0,
+			       NULL);
+	}
+	
+	g_free (uri);
+}
+
+static void
+on_vfs_volume_unmounted(GnomeVFSVolumeMonitor *volume_monitor, 
+	GnomeVFSVolume *volume, gpointer user_data)
+{
+	ModestTnyAccountStore *self = MODEST_TNY_ACCOUNT_STORE(user_data);
+	
+	/* Check whether this was the external MMC1 card: */
+	gchar *uri = gnome_vfs_volume_get_activation_uri (volume);
+	if (uri && (strcmp (uri, MODEST_MCC1_VOLUMEPATH_URI) == 0)) {
+		printf ("DEBUG: %s: MMC1 card unmounted.\n", __FUNCTION__);
+		
+		/* TODO: Just add an account and emit (and respond to) 
+		 * TnyAccountStore::accountinserted signal?
+		 */
+		recreate_all_accounts (self);
+		
+		g_signal_emit (G_OBJECT(self), signals[ACCOUNT_UPDATE_SIGNAL], 0,
+			       NULL);
+	}
+	
+	g_free (uri);
+}
 
 static void
 on_account_removed (ModestAccountMgr *acc_mgr, const gchar *account, gboolean server_account,
 		    gpointer user_data)
 {
-	ModestTnyAccountStore *self        = MODEST_TNY_ACCOUNT_STORE(user_data);
-	ModestTnyAccountStorePrivate *priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
-
+	ModestTnyAccountStore *self = MODEST_TNY_ACCOUNT_STORE(user_data);
+	
 	/* FIXME: make this more finegrained; changes do not really affect _all_
 	 * accounts, and some do not affect tny accounts at all (such as 'last_update')
 	 */
-	
-	account_list_free (priv->store_accounts);
-	get_server_accounts (TNY_ACCOUNT_STORE(self), NULL, TNY_ACCOUNT_TYPE_STORE);
-	
-	account_list_free (priv->transport_accounts);
-	get_server_accounts (TNY_ACCOUNT_STORE(self), NULL,
-							TNY_ACCOUNT_TYPE_TRANSPORT);
-		
-	/* TODO: Ref these when we add them? */
-	g_slist_free (priv->store_accounts_outboxes);
-	priv->store_accounts_outboxes = NULL;
+	if (server_account)
+		recreate_all_accounts (self);
 	
 	g_signal_emit (G_OBJECT(self), signals[ACCOUNT_UPDATE_SIGNAL], 0,
 		       account);
 }
-
 
 static void
 on_account_changed (ModestAccountMgr *acc_mgr, const gchar *account,
@@ -252,7 +327,6 @@ on_account_changed (ModestAccountMgr *acc_mgr, const gchar *account,
 
 {
 	ModestTnyAccountStore *self = MODEST_TNY_ACCOUNT_STORE(user_data);
-	ModestTnyAccountStorePrivate *priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
 	
 	/* Ignore the change if it's a change in the last_updated value */
 	if (g_str_has_suffix (key, MODEST_ACCOUNT_LAST_UPDATED))
@@ -261,21 +335,8 @@ on_account_changed (ModestAccountMgr *acc_mgr, const gchar *account,
 	/* FIXME: make this more finegrained; changes do not really affect _all_
 	 * accounts, and some do not affect tny accounts at all (such as 'last_update')
 	 */
-	if (server_account) {
-		if (priv->store_accounts) {
-			account_list_free (priv->store_accounts);
-			priv->store_accounts = NULL;
-			get_server_accounts (TNY_ACCOUNT_STORE(self),
-						     NULL, TNY_ACCOUNT_TYPE_STORE);
-		}
-		
-		if (priv->transport_accounts) {
-			account_list_free (priv->transport_accounts);
-			priv->transport_accounts = NULL;
-			get_server_accounts (TNY_ACCOUNT_STORE(self), NULL,
-						     TNY_ACCOUNT_TYPE_TRANSPORT);
-		}
-	}
+	if (server_account)
+		recreate_all_accounts (self);
 
 	g_signal_emit (G_OBJECT(self), signals[ACCOUNT_UPDATE_SIGNAL], 0,
 		       account);
@@ -591,10 +652,45 @@ get_server_accounts  (TnyAccountStore *self, TnyList *list, TnyAccountType type)
 	if (type == TNY_ACCOUNT_TYPE_STORE) {
 		/* Also add the local folder pseudo-account: */
 		TnyAccount *tny_account =
-			modest_tny_account_new_for_local_folders (priv->account_mgr, priv->session);
+			modest_tny_account_new_for_local_folders (priv->account_mgr, 
+				priv->session, NULL);
 		if (list)
 			tny_list_prepend (list, G_OBJECT(tny_account));
 		accounts = g_slist_append (accounts, tny_account); /* cache it */
+		
+		
+		/* Also add the Memory card account if it is mounted: */
+		gboolean mmc_is_mounted = FALSE;
+		GnomeVFSVolumeMonitor* monitor = 
+			gnome_vfs_get_volume_monitor();
+		GList* list_volumes = gnome_vfs_volume_monitor_get_mounted_volumes (monitor);
+		GList *iter = list_volumes;
+		while (iter) {
+			GnomeVFSVolume *volume = (GnomeVFSVolume*)iter->data;
+			if (volume) {
+				if (!mmc_is_mounted) {
+					gchar *uri = gnome_vfs_volume_get_activation_uri (volume);
+					if (uri && (strcmp (uri, MODEST_MCC1_VOLUMEPATH_URI) == 0)) {
+						mmc_is_mounted = TRUE;
+					}
+					g_free (uri);
+				}
+				
+				gnome_vfs_volume_unref(volume);
+			}
+			
+			iter = g_list_next (iter);
+		}
+		g_list_free (list_volumes);
+		
+		if (mmc_is_mounted) {
+			TnyAccount *tny_account =
+				modest_tny_account_new_for_local_folders (priv->account_mgr, 
+					priv->session, MODEST_MCC1_VOLUMEPATH);
+			if (list)
+				tny_list_prepend (list, G_OBJECT(tny_account));
+			accounts = g_slist_append (accounts, tny_account); /* cache it */
+		}
 	}
 
 	/* And add the connection-specific transport accounts, if any.
@@ -1009,7 +1105,7 @@ modest_tny_account_store_get_tny_account_by_account (ModestTnyAccountStore *self
 
 	if (!account)
 		g_printerr ("modest: could not get tny %s account for %s (id=%s)\n",
-			    type == TNY_ACCOUNT_TYPE_STORE? "store" : "transport",
+			    type == TNY_ACCOUNT_TYPE_STORE ? "store" : "transport",
 			    account_name, id ? id : "<none>");
 
 	return account;	

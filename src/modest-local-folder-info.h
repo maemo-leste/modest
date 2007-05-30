@@ -76,6 +76,8 @@ const gchar* modest_local_folder_info_get_type_display_name (TnyFolderType type)
 
 /**
  * modest_local_folder_info_get_maildir_path
+ * @location_filepath: The path at which the local-folders directory exists, 
+ * or NULL to specify $HOME
  * 
  * Get the path to the Maildir where the local folders are stored.
  *  
@@ -83,7 +85,7 @@ const gchar* modest_local_folder_info_get_type_display_name (TnyFolderType type)
  * string, which must be freed by the caller.
  *
  */
-gchar *modest_local_folder_info_get_maildir_path (void);
+gchar *modest_local_folder_info_get_maildir_path (const gchar* location_filepath);
 
 /**
  * modest_per_account_local_outbox_folder_info_get_maildir_path

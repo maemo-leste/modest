@@ -72,6 +72,19 @@ gboolean modest_init_init_ui (gint argc, gchar** argv);
 gboolean modest_init_uninit (void);
 
 /**
+ * modest_init_local_folders:
+ * @location_filepath: The location at which the local-folders directory should be created, 
+ * or NULL to specify $HOME.
+ * 
+ * create the Local Folders folder under cache, if they
+ * do not exist yet.
+ * 
+ * Returns: TRUE if the folder were already there, or
+ * they were created, FALSE otherwise
+ */
+gboolean modest_init_local_folders  (const gchar* location_filepath);
+
+/**
  * modest_init_one_local_folder:
  *
  * Create the directory structure for a maildir folder,
@@ -79,6 +92,7 @@ gboolean modest_init_uninit (void);
  * local maildir store account.
  */
 gboolean modest_init_one_local_folder (gchar *maildir_path);
+
 
 G_END_DECLS
 

@@ -40,6 +40,7 @@
 #include <tny-camel-imap-store-account.h>
 #include <tny-camel-pop-store-account.h>
 #include <tny-folder-stats.h>
+#include <string.h>
 
 
 TnyFolder *
@@ -400,10 +401,33 @@ modest_tny_account_new_from_account (ModestAccountMgr *account_mgr, const gchar 
 	return tny_account;
 }
 
+#if 0
+static void 
+on_modest_file_system_info(HildonFileSystemInfoHandle *handle,
+                           HildonFileSystemInfo *info,
+                           const GError *error, gpointer data)
+{
+	if (info) {
+		printf("DEBUG: %s: display name=%s\n", __FUNCTION__, 
+			hildon_file_system_info_get_display_name(info));
+	}
+	else {
+		printf("DEBUG: %s: info is NULL.\n", __FUNCTION__);
+	}
+	
+	if (error) {
+		printf ("  DEBUG: error=%s\n", error->message);
+	}
+}
+#endif
+
 
 TnyAccount*
-modest_tny_account_new_for_local_folders (ModestAccountMgr *account_mgr, TnySessionCamel *session)
+modest_tny_account_new_for_local_folders (ModestAccountMgr *account_mgr, TnySessionCamel *session, const gchar* location_filepath)
 {
+	/* Make sure that the directories exist: */
+	modest_init_local_folders (location_filepath);
+
 	TnyStoreAccount *tny_account;
 	CamelURL *url;
 	gchar *maildir, *url_string;
@@ -420,7 +444,7 @@ modest_tny_account_new_for_local_folders (ModestAccountMgr *account_mgr, TnySess
 	/* This path contains directories for each local folder.
 	 * We have created them so that TnyCamelStoreAccount can find them 
 	 * and report a folder for each directory: */
-	maildir = modest_local_folder_info_get_maildir_path ();
+	maildir = modest_local_folder_info_get_maildir_path (location_filepath);
 	url = camel_url_new ("maildir:", NULL);
 	camel_url_set_path (url, maildir);
 	/* Needed by tinymail's DBC assertions */
@@ -430,9 +454,30 @@ modest_tny_account_new_for_local_folders (ModestAccountMgr *account_mgr, TnySess
 	tny_account_set_url_string (TNY_ACCOUNT(tny_account), url_string);
 	printf("DEBUG: %s:\n  url=%s\n", __FUNCTION__, url_string);
 
-	tny_account_set_name (TNY_ACCOUNT(tny_account), MODEST_LOCAL_FOLDERS_DEFAULT_DISPLAY_NAME); 
-	tny_account_set_id (TNY_ACCOUNT(tny_account), MODEST_ACTUAL_LOCAL_FOLDERS_ACCOUNT_ID); 
-        tny_account_set_forget_pass_func (TNY_ACCOUNT(tny_account), forget_pass_dummy);
+	/* TODO: Use a more generic way of identifying memory card paths, 
+	 * and of marking accounts as memory card accounts, maybe
+	 * via a derived TnyCamelStoreAccount ? */
+	const gboolean is_mmc = 
+		location_filepath && 
+		(strcmp (location_filepath, MODEST_MCC1_VOLUMEPATH) == 0);
+		
+	/* TODO: Use hildon_file_system_info_async_new() to get the display name? */
+#if 0
+	const gchar *uri = "file:///media/mmc1";
+ 	/* HildonFileSystemInfoHandle *async_handle = */
+ 	hildon_file_system_info_async_new(uri, 
+ 		on_modest_file_system_info, NULL /* user_data */);
+#endif
+
+	const gchar *name = is_mmc ? _("Memory Card") : 
+		MODEST_LOCAL_FOLDERS_DEFAULT_DISPLAY_NAME;
+	tny_account_set_name (TNY_ACCOUNT(tny_account), name); 
+	
+	const gchar* id = is_mmc ? MODEST_MMC_ACCOUNT_ID :
+		MODEST_ACTUAL_LOCAL_FOLDERS_ACCOUNT_ID;
+	tny_account_set_id (TNY_ACCOUNT(tny_account), id); 
+	
+	tny_account_set_forget_pass_func (TNY_ACCOUNT(tny_account), forget_pass_dummy);
 	tny_account_set_pass_func (TNY_ACCOUNT(tny_account), get_pass_dummy);
 	
 	modest_tny_account_set_parent_modest_account_name_for_server_account (

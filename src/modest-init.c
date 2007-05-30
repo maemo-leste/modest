@@ -50,7 +50,6 @@
 #include "modest-tny-msg.h"
 
 static gboolean init_header_columns (ModestConf *conf, gboolean overwrite);
-static gboolean init_local_folders  (void);
 static gboolean init_default_account_maybe  (ModestAccountMgr *acc_mgr);
 static void     init_i18n (void);
 static void     init_stock_icons (void);
@@ -169,7 +168,7 @@ modest_init_init_core (void)
 
 	init_default_settings (modest_runtime_get_conf ());
 	
-	if (!init_local_folders()) {
+	if (!modest_init_local_folders(NULL /* means $HOME */)) {
 		modest_init_uninit ();
 		g_printerr ("modest: failed to init local folders\n");
 		return FALSE;
@@ -331,7 +330,9 @@ gboolean modest_init_one_local_folder (gchar *maildir_path)
 }
 
 /**
- * init_local_folders:
+ * modest_init_local_folders:
+ * @location_filepath: The location at which the local-folders directory should be created, 
+ * or NULL to specify $HOME.
  * 
  * create the Local Folders folder under cache, if they
  * do not exist yet.
@@ -339,10 +340,10 @@ gboolean modest_init_one_local_folder (gchar *maildir_path)
  * Returns: TRUE if the folder were already there, or
  * they were created, FALSE otherwise
  */
-static gboolean
-init_local_folders  (void)
+gboolean
+modest_init_local_folders  (const gchar* location_filepath)
 {	
-	gchar *maildir_path = modest_local_folder_info_get_maildir_path ();
+	gchar *maildir_path = modest_local_folder_info_get_maildir_path (location_filepath);
 
 	/* Create each of the standard on-disk folders.
 	 * Per-account outbox folders will be created when first needed. */
