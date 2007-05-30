@@ -27,8 +27,6 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "modest-mail-operation.h"
-/* include other impl specific header files */
 #include <string.h>
 #include <stdarg.h>
 #include <tny-mime-part.h>
@@ -52,6 +50,7 @@
 #include "modest-tny-platform-factory.h"
 #include "modest-marshal.h"
 #include "modest-error.h"
+#include "modest-mail-operation.h"
 
 #define KB 1024
 
