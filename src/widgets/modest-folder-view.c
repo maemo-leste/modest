@@ -304,7 +304,7 @@ text_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 		} else {
 			if (!strcmp (account_id, MODEST_MMC_ACCOUNT_ID)) {
 				/* TODO: get MMC card name */
-				item_name = g_strdup (_("MMC"));
+				item_name = g_strdup (_("FIXME: MMC"));
 			} else {
 				item_name = g_strdup (fname);
 			}
@@ -316,7 +316,7 @@ text_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 	{
 		/* We use ModestTnySimpleFolder store to group the outboxes and 
 		 * the other local folders together: */
-		item_name = g_strdup (_("Local Folders"));
+		item_name = g_strdup (priv->local_account_name);
 		item_weight = 400;
 	}
 	
