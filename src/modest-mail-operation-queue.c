@@ -216,7 +216,7 @@ modest_mail_operation_queue_remove (ModestMailOperationQueue *self,
 				g_warning ("%s: operation canceled \n", __FUNCTION__);
 			else
 				g_warning ("%s: possible error in a mail operation " \
-					   "implementation. The status is not succesful" \
+					   "implementation. The status is not successful " \
 					   "but the mail operation does not have any " \
 					   "error set\n", __FUNCTION__);
 		}

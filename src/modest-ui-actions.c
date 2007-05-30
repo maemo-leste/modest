@@ -1650,26 +1650,20 @@ modest_ui_actions_on_new_folder (GtkAction *action, ModestMainWindow *main_windo
 			if (result == GTK_RESPONSE_REJECT) {
 				finished = TRUE;
 			} else {
-				ModestMailOperation *mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_INFO, G_OBJECT(main_window));
+				ModestMailOperation *mail_op;
 				TnyFolder *new_folder = NULL;
 
+				mail_op  = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_INFO, 
+								      G_OBJECT(main_window));
 				modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), 
 								 mail_op);
-		
 				new_folder = modest_mail_operation_create_folder (mail_op,
 										  parent_folder,
 										  (const gchar *) folder_name);
 				if (new_folder) {
 					g_object_unref (new_folder);
 					finished = TRUE;
-				} 
-/* 				else { */
-/* 					/\* TODO: check error and follow proper actions *\/ */
-/* /\* 					suggested_name = X; *\/ */
-/* 					/\* Show error to the user *\/ */
-/* 					modest_platform_run_information_dialog (GTK_WINDOW (main_window), */
-/* 										_("mail_in_ui_folder_create_error")); */
-/* 				} */
+				}
 				g_object_unref (mail_op);
 			}
 			g_free (folder_name);

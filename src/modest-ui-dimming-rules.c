@@ -31,6 +31,7 @@
 #include <config.h>
 #endif /*HAVE_CONFIG_H*/
 
+#include <string.h>
 #include "modest-ui-dimming-rules.h"
 #include "modest-tny-folder.h"
 #include <modest-runtime.h>
@@ -64,12 +65,38 @@ gboolean
 modest_ui_dimming_rules_on_new_folder (ModestWindow *win, gpointer user_data)
 {
 	gboolean dimmed = FALSE;
+	GtkWidget *folder_view = NULL;
+	TnyFolderStore *parent_folder = NULL;
 
 	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW(win), FALSE);
-		
-	/* Check dimmed rule */	
-	if (!dimmed)
+
+
+	folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(win),
+							   MODEST_WIDGET_TYPE_FOLDER_VIEW);
+	/* Get selected folder as parent of new folder to create */
+	parent_folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW(folder_view));
+	if (!parent_folder)
+		return TRUE;
+	
+	/* If it's the local account do not dimm */
+	if (modest_tny_folder_store_is_virtual_local_folders (parent_folder)) {
+		return FALSE;
+	} else if (TNY_IS_ACCOUNT (parent_folder)) {
+		/* If it's the MMC root folder then dimm it */
+		if (!strcmp (tny_account_get_id (TNY_ACCOUNT (parent_folder)), MODEST_MMC_ACCOUNT_ID)) {
+			dimmed = TRUE;
+		} else {
+			const gchar *proto_str = tny_account_get_proto (TNY_ACCOUNT (parent_folder));
+			/* If it's POP then dimm */
+			dimmed = (modest_protocol_info_get_transport_store_protocol (proto_str) == 
+				  MODEST_PROTOCOL_STORE_POP) ? TRUE : FALSE;
+		}
+	} else {
+		/* TODO: the specs say that only one level of subfolder is allowed, is this true ? */
+
+		/* Apply folder rules */	
 		dimmed = _selected_folder_not_writeable (MODEST_MAIN_WINDOW(win));
+	}
 
 	return dimmed;
 }

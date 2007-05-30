@@ -179,7 +179,7 @@ modest_mail_operation_init (ModestMailOperation *obj)
 
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(obj);
 
-	priv->account  = NULL;
+	priv->account        = NULL;
 	priv->status         = MODEST_MAIL_OPERATION_STATUS_INVALID;
 	priv->op_type        = MODEST_MAIL_OPERATION_TYPE_UNKNOWN;
 	priv->error          = NULL;
@@ -774,6 +774,7 @@ update_account_thread (gpointer thr_user_data)
 	TnyIterator *iter = NULL;
 	TnyFolderStoreQuery *query = NULL;
 	ModestMailOperationPrivate *priv;
+	ModestTnySendQueue *send_queue;
 
 	info = (UpdateAccountInfo *) thr_user_data;
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(info->mail_op);
@@ -899,14 +900,18 @@ update_account_thread (gpointer thr_user_data)
 		g_object_unref (priv->account);
 	priv->account = g_object_ref (info->transport_account);
 	
-	ModestTnySendQueue *send_queue = modest_runtime_get_send_queue
-		(info->transport_account);
-
-	timeout = g_timeout_add (250, idle_notify_progress, info->mail_op);
-	modest_tny_send_queue_try_to_send (send_queue);
-	g_source_remove (timeout);
-
-	g_object_unref (G_OBJECT(send_queue));
+	send_queue = modest_runtime_get_send_queue (info->transport_account);
+	if (send_queue) {
+		timeout = g_timeout_add (250, idle_notify_progress, info->mail_op);
+		modest_tny_send_queue_try_to_send (send_queue);
+		g_source_remove (timeout);
+	} else {
+		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
+			     MODEST_MAIL_OPERATION_ERROR_INSTANCE_CREATION_FAILED,
+			     "cannot create a send queue for %s\n", 
+			     tny_account_get_name (TNY_ACCOUNT (info->transport_account)));
+		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
+	}
 	
 	/* Check if the operation was a success */
 	if (!priv->error) {
@@ -1028,44 +1033,33 @@ modest_mail_operation_create_folder (ModestMailOperation *self,
 				     TnyFolderStore *parent,
 				     const gchar *name)
 {
-	ModestTnyFolderRules rules;
 	ModestMailOperationPrivate *priv;
 	TnyFolder *new_folder = NULL;
-	gboolean can_create = FALSE;
 
 	g_return_val_if_fail (TNY_IS_FOLDER_STORE (parent), NULL);
 	g_return_val_if_fail (name, NULL);
 	
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
 
-	/* Get account and set it into mail_operation */
-	priv->account = tny_folder_get_account (TNY_FOLDER(parent));
-
 	/* Check parent */
-	if (!TNY_IS_FOLDER (parent)) {
- 		/* Set status failed and set an error */
-		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
-		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
-			     MODEST_MAIL_OPERATION_ERROR_BAD_PARAMETER,
-			     _("mail_in_ui_folder_create_error"));
-	} else {
+	if (TNY_IS_FOLDER (parent)) {
 		/* Check folder rules */
-		rules = modest_tny_folder_get_rules (TNY_FOLDER (parent));
+		ModestTnyFolderRules rules = modest_tny_folder_get_rules (TNY_FOLDER (parent));
 		if (rules & MODEST_FOLDER_RULES_FOLDER_NON_WRITEABLE) {
 			/* Set status failed and set an error */
 			priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 			g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 				     MODEST_MAIL_OPERATION_ERROR_FOLDER_RULES,
 				     _("mail_in_ui_folder_create_error"));
-		} 
-		else
-			can_create = TRUE;		
+		}
 	}
 
-	if (can_create) {
+	if (!priv->error) {
 		/* Create the folder */
 		new_folder = tny_folder_store_create_folder (parent, name, &(priv->error));
 		CHECK_EXCEPTION (priv, MODEST_MAIL_OPERATION_STATUS_FAILED);
+		if (!priv->error)
+			priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
 	}
 
 	/* Notify about operation end */

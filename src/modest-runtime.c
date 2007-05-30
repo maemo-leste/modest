@@ -144,7 +144,6 @@ modest_runtime_get_platform_factory  (void)
 ModestTnySendQueue*
 modest_runtime_get_send_queue  (TnyTransportAccount *account)
 {
-	/* printf ("DEBUG: %s: transport account id=%s\n", __FUNCTION__, tny_account_get_id (TNY_ACCOUNT(account))); */
 	ModestCacheMgr *cache_mgr;
 	GHashTable     *send_queue_cache;
 	gpointer       orig_key, send_queue;
