@@ -1,5 +1,11 @@
 2007-05-30  Christian Kellner  <ckellner@openismus.com>
 
+	* src/modest-search.c: (modest_search):
+	Correctly set part_search_func even if we have already parsed
+	the query and thus a valid OgsTextSearcher object.
+
+2007-05-30  Christian Kellner  <ckellner@openismus.com>
+
 	* configure.ac:
 	Search and check for libogs.
 

@@ -226,13 +226,15 @@ modest_search (TnyFolder *folder, ModestSearch *search)
 	part_search_func = search_mime_part_strcmp;
 
 #ifdef MODEST_HAVE_OGS
-	if (search->flags & MODEST_SEARCH_USE_OGS &&
-	    search->text_searcher == NULL && search->query != NULL) {
-		OgsTextSearcher *text_searcher;	
+	if (search->flags & MODEST_SEARCH_USE_OGS) {
+	
+		if (search->text_searcher == NULL && search->query != NULL) {
+			OgsTextSearcher *text_searcher;	
 
-		text_searcher = ogs_text_searcher_new (FALSE);
-		ogs_text_searcher_parse_query (text_searcher, search->query);
-		search->text_searcher = text_searcher;
+			text_searcher = ogs_text_searcher_new (FALSE);
+			ogs_text_searcher_parse_query (text_searcher, search->query);
+			search->text_searcher = text_searcher;
+		}
 
 		part_search_func = search_mime_part_ogs;
 	}
