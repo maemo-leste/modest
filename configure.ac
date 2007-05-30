@@ -209,6 +209,28 @@ GTK_DOC_CHECK([1.0])
 dnl Intltool utility programs
 #AC_PROG_INTLTOOL([0.33.0],[no-xml])
 
+#dnl wether we can and should build the 
+#dnl search plugin
+PKG_CHECK_MODULES(OGS, libosso >= 0.8.5 libogs-1.2, have_ogs=true, have_ogs=false)
+
+have_ogs_support=false
+AC_ARG_ENABLE(ogs_support,
+AC_HELP_STRING([--enable-ogs-support],
+	[Build with osso global search support (yes, no)]),
+[case "${enableval}" in
+      yes)
+	if test x$have_ogs = xfalse; then
+		AC_MSG_ERROR([building of ogs support requested and libogs-1.2 not found])
+	fi
+	;;
+      *) 
+	have_ogs_support=false
+	;;
+esac],[have_ogs_support=$have_ogs])
+
+if test x$have_ogs_support = xtrue; then
+	AC_DEFINE_UNQUOTED(MODEST_HAVE_OGS, 1, ["Whether ogs is available."])
+fi
 
 AC_OUTPUT([
 po/Makefile.in
@@ -238,6 +260,7 @@ echo "Platform         : $with_platform"
 echo "Build easy setup : $have_easysetup"
 echo "Build tests      : $build_tests"
 echo "Build docs       : $build_docs"
+echo "libogs support   : $have_ogs_support"
 echo "Debug version    : $with_debug"
 echo ""
 echo "NOTE: you should do a 'make clean' after changing architecture or platform (--with-platform=)"

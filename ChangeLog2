@@ -1,3 +1,24 @@
+2007-05-30  Christian Kellner  <ckellner@openismus.com>
+
+	* configure.ac:
+	Search and check for libogs.
+
+	* src/Makefile.am:
+	Incooparte the ogs build env.
+
+	* src/modest-mime-part-search-stream.c:
+	* src/modest-mime-part-search-stream.h:
+	Removed since we do the real searching now in modest-search.c.
+
+	* src/modest-search.c:
+	* src/modest-search.h:
+	Implement support for ogs. We use that if available and requested
+	and fall back to modest_text_utils_utf8_strcmp (). The search logic
+	should now handle the corner case when the search term is spread
+	across multiple reads.
+	Also the logic in modest_search () was corrected to search all
+	requested fields until one is found.
+
 2007-05-30  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/modest-defs.h: Define MODEST_MCC1_VOLUMEPATH and MODEST_MCC1_VOLUMEPATH_URI.

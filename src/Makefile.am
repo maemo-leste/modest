@@ -10,6 +10,7 @@ INCLUDES=\
 	$(MODEST_GSTUFF_CFLAGS)\
 	$(MODEST_LIBTINYMAIL_GNOME_DESKTOP_CFLAGS) \
 	$(MODEST_LIBTINYMAIL_MAEMO_CFLAGS) \
+	$(OGS_CFLAGS) \
 	-I$(MODEST_PLATFORM) \
 	-DPREFIX=\"@prefix@\" \
 	-DMAEMO_CHANGES \
@@ -101,9 +102,7 @@ modest_SOURCES=\
 	modest-widget-memory.c\
 	modest-widget-memory.h\
 	modest-search.c\
-	modest-search.h\
-	modest-mime-part-search-stream.c\
-	modest-mime-part-search-stream.h
+	modest-search.h
 
 modest_CFLAGS  = $(MAEMO_LAUNCHER_CFLAGS)
 modest_LDFLAGS = $(MAEMO_LAUNCHER_LDFLAGS)
@@ -112,10 +111,10 @@ modest_LDADD = 						\
 	$(MODEST_GSTUFF_LIBS) 				\
 	$(MODEST_LIBTINYMAIL_GNOME_DESKTOP_LIBS)	\
 	$(MODEST_LIBTINYMAIL_MAEMO_LIBS) 		\
+	$(OGS_LIBS)					\
 	${easysetupmaybe}				\
 	$(MODEST_PLATFORM)/libmodest-ui.la		\
 	widgets/libmodest-widgets.la \
 	dbus_api/libmodest-dbus-api.la
-
 
 EXTRA_DIST=modest-marshal.list
