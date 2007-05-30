@@ -459,18 +459,12 @@ modest_mail_operation_send_mail (ModestMailOperation *self,
 	priv->account = g_object_ref (transport_account);
 
 	send_queue = TNY_SEND_QUEUE (modest_runtime_get_send_queue (transport_account));
-	if (!TNY_IS_SEND_QUEUE(send_queue))
-		g_printerr ("modest: could not find send queue for account\n");
-	else {
-		GError *err = NULL;
-		tny_send_queue_add (send_queue, msg, &err);
-		if (err) {
-			g_printerr ("modest: error adding msg to send queue: %s\n",
-				    err->message);
-			g_error_free (err);
-		} else {
-			/* g_message ("modest: message added to send queue"); */
-		}
+	if (!TNY_IS_SEND_QUEUE(send_queue)) {
+		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
+			     MODEST_MAIL_OPERATION_ERROR_ITEM_NOT_FOUND,
+			     "modest: could not find send queue for account\n");
+	} else {
+		tny_send_queue_add (send_queue, msg, &(priv->error));
 	}
 
 	/* Notify about operation end */
@@ -541,7 +535,6 @@ modest_mail_operation_save_to_drafts (ModestMailOperation *self,
 	TnyMsg *msg = NULL;
 	TnyFolder *folder = NULL;
 	ModestMailOperationPrivate *priv = NULL;
-	GError *err = NULL;
 
 	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
 	g_return_if_fail (TNY_IS_TRANSPORT_ACCOUNT (transport_account));
@@ -557,32 +550,31 @@ modest_mail_operation_save_to_drafts (ModestMailOperation *self,
 		msg = modest_tny_msg_new_html_plain (to, from, cc, bcc, subject, html_body, plain_body, (GSList *) attachments_list);
 	}
 	if (!msg) {
-		g_printerr ("modest: failed to create a new msg\n");
-		goto cleanup;
+		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
+			     MODEST_MAIL_OPERATION_ERROR_INSTANCE_CREATION_FAILED,
+			     "modest: failed to create a new msg\n");
+		goto end;
 	}
 
 	folder = modest_tny_account_get_special_folder (TNY_ACCOUNT (transport_account), TNY_FOLDER_TYPE_DRAFTS);
 	if (!folder) {
-		g_printerr ("modest: failed to find Drafts folder\n");
-		goto cleanup;
+		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
+			     MODEST_MAIL_OPERATION_ERROR_ITEM_NOT_FOUND,
+			     "modest: failed to create a new msg\n");
+		goto end;
 	}
 	
-	tny_folder_add_msg (folder, msg, &err);
-	if (err) {
-		g_printerr ("modest: error adding msg to Drafts folder: %s",
-			    err->message);
-		g_error_free (err);
-		goto cleanup;
-	}
+	tny_folder_add_msg (folder, msg, &(priv->error));
+	if (priv->error)
+		goto end;
 
- 	modest_mail_operation_notify_end (self);
-
-	/* Free */
-cleanup:
+end:
 	if (msg)
 		g_object_unref (G_OBJECT(msg));
 	if (folder)
 		g_object_unref (G_OBJECT(folder));
+
+ 	modest_mail_operation_notify_end (self);
 }
 
 typedef struct 
@@ -1556,6 +1548,10 @@ get_msgs_full_thread (gpointer thr_user_data)
 		tny_iterator_next (iter);
 	}
 
+	/* Set operation status */
+	if (priv->status == MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS)
+		priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
+
 	/* Notify about operation end */
 	g_idle_add (notify_update_account_queue, info->mail_op);
 
@@ -1579,7 +1575,6 @@ modest_mail_operation_get_msgs_full (ModestMailOperation *self,
 	GetFullMsgsInfo *info = NULL;
 	gboolean size_ok = TRUE;
 	gint max_size;
-	GError *error = NULL;
 	TnyIterator *iter = NULL;
 	
 	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
@@ -1603,9 +1598,9 @@ modest_mail_operation_get_msgs_full (ModestMailOperation *self,
 	/* Get msg size limit */
 	max_size  = modest_conf_get_int (modest_runtime_get_conf (), 
 					 MODEST_CONF_MSG_SIZE_LIMIT, 
-					 &error);
-	if (error) {
-		g_clear_error (&error);
+					 &(priv->error));
+	if (priv->error) {
+		g_clear_error (&(priv->error));
 		max_size = G_MAXINT;
 	} else {
 		max_size = max_size * KB;
