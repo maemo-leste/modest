@@ -43,6 +43,8 @@
 #include <modest-icon-names.h>
 #include <modest-runtime.h>
 #include "modest-platform.h"
+#include <modest-hbox-cell-renderer.h>
+#include <modest-vbox-cell-renderer.h>
 
 static void modest_header_view_class_init  (ModestHeaderViewClass *klass);
 static void modest_header_view_init        (ModestHeaderView *obj);
@@ -52,8 +54,8 @@ static gboolean      on_header_clicked      (GtkWidget *widget,
 					    GdkEventButton *event, 
 					    gpointer user_data);
 
-static gint          cmp_rows               (GtkTreeModel *tree_model, 
-					     GtkTreeIter *iter1, 
+static gint          cmp_rows               (GtkTreeModel *tree_model,
+					     GtkTreeIter *iter1,
 					     GtkTreeIter *iter2,
 					     gpointer user_data);
 
@@ -230,8 +232,6 @@ get_new_column (const gchar *name, GtkCellRenderer *renderer,
 }
 
 
-
-
 static void
 remove_all_columns (ModestHeaderView *obj)
 {
@@ -252,9 +252,12 @@ modest_header_view_set_columns (ModestHeaderView *self, const GList *columns, Tn
 	GtkTreeViewColumn *column=NULL;
 	GtkTreeSelection *selection = NULL;
 	GtkCellRenderer *renderer_msgtype,*renderer_header,
-		*renderer_attach,  *renderer_comptact_flag, 
-		*renderer_compact_date;
+		*renderer_attach, *renderer_compact_date;
+	GtkCellRenderer *renderer_compact_header, *renderer_recpt_box, 
+		*renderer_subject, *renderer_subject_box, *renderer_recpt,
+		*renderer_priority;
 	ModestHeaderViewPrivate *priv;
+	GtkTreeViewColumn *compact_column = NULL;
 	const GList *cursor;
 	
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self); 
@@ -262,16 +265,46 @@ modest_header_view_set_columns (ModestHeaderView *self, const GList *columns, Tn
 	/* FIXME: check whether these renderers need to be freed */
 	renderer_msgtype = gtk_cell_renderer_pixbuf_new ();
 	renderer_attach  = gtk_cell_renderer_pixbuf_new ();
+	renderer_priority  = gtk_cell_renderer_pixbuf_new ();
 	renderer_header  = gtk_cell_renderer_text_new ();
-	renderer_comptact_flag  = gtk_cell_renderer_pixbuf_new ();
+
+	renderer_compact_header = modest_vbox_cell_renderer_new ();
+	renderer_recpt_box = modest_hbox_cell_renderer_new ();
+	renderer_subject_box = modest_hbox_cell_renderer_new ();
+	renderer_recpt = gtk_cell_renderer_text_new ();
+	renderer_subject = gtk_cell_renderer_text_new ();
 	renderer_compact_date  = gtk_cell_renderer_text_new ();
+
+	modest_vbox_cell_renderer_append (MODEST_VBOX_CELL_RENDERER (renderer_compact_header), renderer_subject_box, FALSE);
+	g_object_set_data (G_OBJECT (renderer_compact_header), "subject-box-renderer", renderer_subject_box);
+	modest_vbox_cell_renderer_append (MODEST_VBOX_CELL_RENDERER (renderer_compact_header), renderer_recpt_box, FALSE);
+	g_object_set_data (G_OBJECT (renderer_compact_header), "recpt-box-renderer", renderer_recpt_box);
+	modest_hbox_cell_renderer_append (MODEST_HBOX_CELL_RENDERER (renderer_subject_box), renderer_priority, FALSE);
+	g_object_set_data (G_OBJECT (renderer_subject_box), "priority-renderer", renderer_priority);
+	modest_hbox_cell_renderer_append (MODEST_HBOX_CELL_RENDERER (renderer_subject_box), renderer_subject, TRUE);
+	g_object_set_data (G_OBJECT (renderer_subject_box), "subject-renderer", renderer_subject);
+	modest_hbox_cell_renderer_append (MODEST_HBOX_CELL_RENDERER (renderer_recpt_box), renderer_attach, FALSE);
+	g_object_set_data (G_OBJECT (renderer_recpt_box), "attach-renderer", renderer_attach);
+	modest_hbox_cell_renderer_append (MODEST_HBOX_CELL_RENDERER (renderer_recpt_box), renderer_recpt, TRUE);
+	g_object_set_data (G_OBJECT (renderer_recpt_box), "recipient-renderer", renderer_recpt);
+	modest_hbox_cell_renderer_append (MODEST_HBOX_CELL_RENDERER (renderer_recpt_box), renderer_compact_date, FALSE);
+	g_object_set_data (G_OBJECT (renderer_recpt_box), "date-renderer", renderer_compact_date);
 
 	g_object_set(G_OBJECT(renderer_header),
 		     "ellipsize", PANGO_ELLIPSIZE_END,
 		     NULL);
+	g_object_set (G_OBJECT (renderer_subject),
+		      "ellipsize", PANGO_ELLIPSIZE_END,
+		      NULL);
+	g_object_set (G_OBJECT (renderer_recpt),
+		      "ellipsize", PANGO_ELLIPSIZE_END,
+		      NULL);
 	g_object_set(G_OBJECT(renderer_compact_date),
 		     "xalign", 1.0,
 		     NULL);
+
+	gtk_cell_renderer_set_fixed_size (renderer_attach, 32, 32);
+	gtk_cell_renderer_set_fixed_size (renderer_priority, 32, 32);
 	
 	remove_all_columns (self);
 
@@ -326,29 +359,22 @@ modest_header_view_set_columns (ModestHeaderView *self, const GList *columns, Tn
 						 GINT_TO_POINTER(FALSE));
 			break;
 			
-		case MODEST_HEADER_VIEW_COLUMN_COMPACT_FLAG:
-			column = get_new_column (_("F"), renderer_comptact_flag, FALSE,
-						 TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN,
-						 FALSE,
-						 (GtkTreeCellDataFunc)_modest_header_view_compact_flag_cell_data,
-						 NULL);
-			gtk_tree_view_column_set_fixed_width (column, 45);
-			break;
-
 		case MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER_IN:
-			column = get_new_column (_("Header"), renderer_header, TRUE,
-						 TNY_GTK_HEADER_LIST_MODEL_FROM_COLUMN,
-						 TRUE,
-						 (GtkTreeCellDataFunc)_modest_header_view_compact_header_cell_data,
-						 GINT_TO_POINTER(TRUE));
+			column = get_new_column (_("Header"), renderer_compact_header, TRUE,
+						     TNY_GTK_HEADER_LIST_MODEL_FROM_COLUMN,
+						     FALSE,
+						     (GtkTreeCellDataFunc)_modest_header_view_compact_header_cell_data,
+						     GINT_TO_POINTER(TRUE));
+			compact_column = column;
 			break;
 
 		case MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER_OUT:
-			column = get_new_column (_("Header"), renderer_header, TRUE,
-						 TNY_GTK_HEADER_LIST_MODEL_FROM_COLUMN,
-						 TRUE,
-						 (GtkTreeCellDataFunc)_modest_header_view_compact_header_cell_data,
-						 GINT_TO_POINTER(FALSE));
+			column = get_new_column (_("Header"), renderer_compact_header, TRUE,
+						     TNY_GTK_HEADER_LIST_MODEL_FROM_COLUMN,
+						     FALSE,
+						     (GtkTreeCellDataFunc)_modest_header_view_compact_header_cell_data,
+						     GINT_TO_POINTER(FALSE));
+			compact_column = column;
 			break;
 
 			
@@ -376,23 +402,6 @@ modest_header_view_set_columns (ModestHeaderView *self, const GList *columns, Tn
 						 GINT_TO_POINTER(FALSE));
 			break;
 			
-		case MODEST_HEADER_VIEW_COLUMN_COMPACT_RECEIVED_DATE:
-			column = get_new_column (_("Received"), renderer_compact_date, FALSE,
-						 TNY_GTK_HEADER_LIST_MODEL_DATE_RECEIVED_TIME_T_COLUMN,
-						 TRUE,
-						 (GtkTreeCellDataFunc)_modest_header_view_compact_date_cell_data,
-						 GINT_TO_POINTER(TRUE));
-			gtk_tree_view_column_set_fixed_width (column, 130);
-			break;
-			
-		case MODEST_HEADER_VIEW_COLUMN_COMPACT_SENT_DATE:					      
-			column = get_new_column (_("Sent"), renderer_compact_date, FALSE,
-						 TNY_GTK_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN,
-						 TRUE,
-						 (GtkTreeCellDataFunc)_modest_header_view_compact_date_cell_data,
-						 GINT_TO_POINTER(FALSE));
-			gtk_tree_view_column_set_fixed_width (column, 130);
-			break;
 		case MODEST_HEADER_VIEW_COLUMN_SIZE:
 			column = get_new_column (_("Size"), renderer_header, TRUE,
 						 TNY_GTK_HEADER_LIST_MODEL_MESSAGE_SIZE_COLUMN,
@@ -412,13 +421,6 @@ modest_header_view_set_columns (ModestHeaderView *self, const GList *columns, Tn
 			g_return_val_if_reached(FALSE);
 		}
 
-		if (sortable) {
-			gtk_tree_sortable_set_sort_func (GTK_TREE_SORTABLE(sortable),
-							 col,
-							 (GtkTreeIterCompareFunc) cmp_rows,
-							 column, NULL);
-		}
-
 		/* we keep the column id around */
 		g_object_set_data (G_OBJECT(column), MODEST_HEADER_VIEW_COLUMN,
 				   GINT_TO_POINTER(col));
@@ -428,6 +430,14 @@ modest_header_view_set_columns (ModestHeaderView *self, const GList *columns, Tn
 				   self);
 		gtk_tree_view_append_column (GTK_TREE_VIEW(self), column);		
 	}		
+
+	if (sortable) {
+		gtk_tree_sortable_set_sort_func (GTK_TREE_SORTABLE(sortable),
+						 TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN,
+						 (GtkTreeIterCompareFunc) cmp_rows,
+						 compact_column, NULL);
+	}
+
 
 	return TRUE;
 }
@@ -781,15 +791,6 @@ modest_header_view_set_folder_intern (ModestHeaderView *self, TnyFolder *folder)
 
 	/* install our special sorting functions */
 	cursor = cols = gtk_tree_view_get_columns (GTK_TREE_VIEW(self));
-	while (cursor) {
-		gint col_id = GPOINTER_TO_INT (g_object_get_data(G_OBJECT(cursor->data),
-								 MODEST_HEADER_VIEW_COLUMN));
-		gtk_tree_sortable_set_sort_func (GTK_TREE_SORTABLE(sortable),
-						 col_id,
-						 (GtkTreeIterCompareFunc) cmp_rows,
-						 cursor->data, NULL);
-		cursor = g_list_next(cursor);
-	}
 
 	/* Restore sort column id */
 	if (cols) {
@@ -799,6 +800,10 @@ modest_header_view_set_folder_intern (ModestHeaderView *self, TnyFolder *folder)
 		gtk_tree_sortable_set_sort_column_id (GTK_TREE_SORTABLE(sortable),
 						      sort_colid,
 						      sort_type);
+		gtk_tree_sortable_set_sort_func (GTK_TREE_SORTABLE(sortable),
+						 TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN,
+						 (GtkTreeIterCompareFunc) cmp_rows,
+						 cols->data, NULL);
 	}
 
 	/* Set new model */
@@ -806,7 +811,7 @@ modest_header_view_set_folder_intern (ModestHeaderView *self, TnyFolder *folder)
 	g_object_unref (G_OBJECT (sortable));
 
 	/* Free */
-	g_list_free (cols);	
+	g_list_free (cols);
 }
 
 void
@@ -1023,13 +1028,12 @@ cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 	gint col_id;
 	gint t1, t2;
 	gint val1, val2;
-	gchar *s1, *s2;
-	gint cmp;	
-	gint sort_colid;
+	gint cmp;
 	static int counter = 0;
 
 	g_return_val_if_fail (GTK_IS_TREE_VIEW_COLUMN(user_data), 0);
-	col_id = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(user_data), MODEST_HEADER_VIEW_COLUMN));
+/* 	col_id = gtk_tree_sortable_get_sort_column_id (GTK_TREE_SORTABLE (tree_model)); */
+	col_id = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(user_data), MODEST_HEADER_VIEW_FLAG_SORT));
 	
 	if (!(++counter % 100)) {
 		GObject *header_view = g_object_get_data(G_OBJECT(user_data),
@@ -1037,147 +1041,35 @@ cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 		g_signal_emit (header_view,
 			       signals[STATUS_UPDATE_SIGNAL],
 			       0, _("Sorting..."), 0, 0);
-	}	
-	switch (col_id) {		
-	case MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER_IN:
-	case MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER_OUT:
-		sort_colid = gtk_tree_view_column_get_sort_column_id (GTK_TREE_VIEW_COLUMN(user_data));
-		gtk_tree_model_get (tree_model, iter1,
-				    sort_colid, &s1,
-				    TNY_GTK_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN, &t1,
-				    -1);
-		gtk_tree_model_get (tree_model, iter2,
-				    sort_colid, &s2,
-				    TNY_GTK_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN, &t2,
-				    -1);
-		cmp = modest_text_utils_utf8_strcmp (s1, s2, TRUE);
-		g_free (s1);
-		g_free (s2);
-		
-		return cmp ? cmp : t1 - t2;
-		
-		break;
-
-	case MODEST_HEADER_VIEW_COLUMN_COMPACT_RECEIVED_DATE:
-	case MODEST_HEADER_VIEW_COLUMN_RECEIVED_DATE:
-
-		gtk_tree_model_get (tree_model, iter1,
-				    TNY_GTK_HEADER_LIST_MODEL_DATE_RECEIVED_TIME_T_COLUMN,
-				    &t1,-1);
-		gtk_tree_model_get (tree_model, iter2,
-				    TNY_GTK_HEADER_LIST_MODEL_DATE_RECEIVED_TIME_T_COLUMN,
-				    &t2,-1);
-		return t1 - t2;
-
-	case MODEST_HEADER_VIEW_COLUMN_COMPACT_SENT_DATE:
-	case MODEST_HEADER_VIEW_COLUMN_SENT_DATE:
-		gtk_tree_model_get (tree_model, iter1,
-				    TNY_GTK_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN,
-				    &t1,-1);
-		gtk_tree_model_get (tree_model, iter2,
-				    TNY_GTK_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN,
-				    &t2,-1);
-		return t1 - t2;
-
-		
-		/* next ones, we try the search criteria first, if they're the same, then we use 'sent date' */
-		/* FIXME: what about received-date? */
-	case MODEST_HEADER_VIEW_COLUMN_SUBJECT: {
-
-		gtk_tree_model_get (tree_model, iter1,
-				    TNY_GTK_HEADER_LIST_MODEL_SUBJECT_COLUMN, &s1,
-				    TNY_GTK_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN, &t1,
-				    -1);
-		gtk_tree_model_get (tree_model, iter2,
-				    TNY_GTK_HEADER_LIST_MODEL_SUBJECT_COLUMN, &s2,
-				    TNY_GTK_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN, &t2,
-				    -1);
-
-		/* the prefix ('Re:', 'Fwd:' etc.) we ignore */ 
-		cmp = modest_text_utils_utf8_strcmp (s1 + modest_text_utils_get_subject_prefix_len(s1),
-						     s2 + modest_text_utils_get_subject_prefix_len(s2),
-						     TRUE);
-		g_free (s1);
-		g_free (s2);
-		
-		return cmp ? cmp : t1 - t2;
 	}
-		
-	case MODEST_HEADER_VIEW_COLUMN_FROM:
-		
-		gtk_tree_model_get (tree_model, iter1,
-				    TNY_GTK_HEADER_LIST_MODEL_FROM_COLUMN, &s1,
-				    TNY_GTK_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN, &t1,
-				    -1);
-		gtk_tree_model_get (tree_model, iter2,
-				    TNY_GTK_HEADER_LIST_MODEL_FROM_COLUMN, &s2,
-				    TNY_GTK_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN, &t2,
-				    -1);
-		cmp = modest_text_utils_utf8_strcmp (s1, s2, TRUE);
-		g_free (s1);
-		g_free (s2);
-		
-		return cmp ? cmp : t1 - t2;
-		
-	case MODEST_HEADER_VIEW_COLUMN_TO: 
-		
-		gtk_tree_model_get (tree_model, iter1,
-				    TNY_GTK_HEADER_LIST_MODEL_TO_COLUMN, &s1,
-				    TNY_GTK_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN, &t1,
-				    -1);
-		gtk_tree_model_get (tree_model, iter2,
-				    TNY_GTK_HEADER_LIST_MODEL_TO_COLUMN, &s2,
-				    TNY_GTK_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN, &t2,
-				    -1);
-		cmp = modest_text_utils_utf8_strcmp (s1, s2, TRUE);
-		g_free (s1);
-		g_free (s2);
-		
-		return cmp ? cmp : t1 - t2;
-
-	case MODEST_HEADER_VIEW_COLUMN_ATTACH:
+	switch (col_id) {
+	case TNY_HEADER_FLAG_ATTACHMENTS:
 
 		gtk_tree_model_get (tree_model, iter1, TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN, &val1,
 				    TNY_GTK_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN, &t1, -1);
 		gtk_tree_model_get (tree_model, iter2, TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN, &val2,
 				    TNY_GTK_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN, &t2, -1);
-		
+
 		cmp = (val1 & TNY_HEADER_FLAG_ATTACHMENTS) -
 			(val2 & TNY_HEADER_FLAG_ATTACHMENTS);
 
 		return cmp ? cmp : t1 - t2;
 		
-	case MODEST_HEADER_VIEW_COLUMN_MSGTYPE:
+	case TNY_HEADER_FLAG_PRIORITY:
 		gtk_tree_model_get (tree_model, iter1, TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN, &val1,
 				    TNY_GTK_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN, &t1,-1);
 		gtk_tree_model_get (tree_model, iter2, TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN, &val2,
 				    TNY_GTK_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN, &t2,-1);
-		cmp =  (val1 & TNY_HEADER_FLAG_SEEN) - (val2 & TNY_HEADER_FLAG_SEEN);
+
+		/* This is for making priority values respect the intuitive sort relationship 
+		 * as HIGH is 11, LOW is 01, and we put NORMAL AS 10 (2) */
+		if (val1 == 0) val1 = 2;
+		if (val2 == 0) val2 = 2;
+
+		cmp =  (val1 & TNY_HEADER_FLAG_PRIORITY) - (val2 & TNY_HEADER_FLAG_PRIORITY);
 
 		return cmp ? cmp : t1 - t2;
 
-	case MODEST_HEADER_VIEW_COLUMN_COMPACT_FLAG:
-		gtk_tree_model_get (tree_model, iter1, TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN, &val1,
-				    TNY_GTK_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN, &t1, -1);
-		gtk_tree_model_get (tree_model, iter2, TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN, &val2,
-				    TNY_GTK_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN, &t2, -1);
-
-		int flag_sort = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(user_data), MODEST_HEADER_VIEW_FLAG_SORT));
-		switch (flag_sort) {
-		case TNY_HEADER_FLAG_ATTACHMENTS:
-			cmp = (val1 & TNY_HEADER_FLAG_ATTACHMENTS) -
-				(val2 & TNY_HEADER_FLAG_ATTACHMENTS);
-			break;
-		case TNY_HEADER_FLAG_PRIORITY:
-			cmp = (val1 & TNY_HEADER_FLAG_PRIORITY) -
-				(val2 & TNY_HEADER_FLAG_PRIORITY);
-			break;
-		default:
-			cmp = (val1 & TNY_HEADER_FLAG_PRIORITY) -
-				(val2 & TNY_HEADER_FLAG_PRIORITY);
-		}
-		
-		return cmp ? cmp : t1 - t2;
 	default:
 		return &iter1 - &iter2; /* oughhhh  */
 	}
@@ -1326,9 +1218,6 @@ on_focus_in (GtkWidget     *self,
 	return FALSE;
 }
 
-/*
- *
- */
 static void
 folder_monitor_update (TnyFolderObserver *self, 
 		       TnyFolderChange *change)

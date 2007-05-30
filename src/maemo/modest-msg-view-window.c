@@ -418,20 +418,20 @@ modest_msg_view_window_finalize (GObject *obj)
 	ModestMsgViewWindowPrivate *priv;
 
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (obj);
-	if (priv->header_model != NULL) {
-		g_object_unref (priv->header_model);
-		priv->header_model = NULL;
-	}
 	if (priv->clipboard_change_handler > 0) {
 		g_signal_handler_disconnect (gtk_clipboard_get (GDK_SELECTION_PRIMARY), priv->clipboard_change_handler);
 		priv->clipboard_change_handler = 0;
 	}
-
-	/* disconnet operations queue observer */
 	if (priv->queue_change_handler > 0) {
 		g_signal_handler_disconnect (G_OBJECT (modest_runtime_get_mail_operation_queue ()), priv->queue_change_handler);
 		priv->queue_change_handler = 0;
 	}
+	if (priv->header_model != NULL) {
+		g_object_unref (priv->header_model);
+		priv->header_model = NULL;
+	}
+
+	/* disconnet operations queue observer */
 	
 	if (priv->progress_bar_timeout > 0) {
 		g_source_remove (priv->progress_bar_timeout);

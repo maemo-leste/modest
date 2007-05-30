@@ -44,6 +44,8 @@ get_pixbuf_for_flag (TnyHeaderFlags flag)
 	static GdkPixbuf *seen_pixbuf             = NULL;
 	static GdkPixbuf *unread_pixbuf           = NULL;
 	static GdkPixbuf *attachments_pixbuf      = NULL;
+	static GdkPixbuf *high_pixbuf             = NULL;
+	static GdkPixbuf *low_pixbuf             = NULL;
 	
 	switch (flag) {
 	case TNY_HEADER_FLAG_DELETED:
@@ -58,62 +60,19 @@ get_pixbuf_for_flag (TnyHeaderFlags flag)
 		if (G_UNLIKELY(!attachments_pixbuf))
 			attachments_pixbuf = modest_platform_get_icon (MODEST_HEADER_ICON_ATTACH);
 		return attachments_pixbuf;
+	case TNY_HEADER_FLAG_HIGH_PRIORITY:
+		if (G_UNLIKELY(!high_pixbuf))
+			high_pixbuf = modest_platform_get_icon (MODEST_HEADER_ICON_HIGH_PRIORITY);
+		return high_pixbuf;
+	case TNY_HEADER_FLAG_LOW_PRIORITY:
+		if (G_UNLIKELY(!low_pixbuf))
+			low_pixbuf = modest_platform_get_icon (MODEST_HEADER_ICON_LOW_PRIORITY);
+		return low_pixbuf;
 	default:
 		if (G_UNLIKELY(!unread_pixbuf))
 			unread_pixbuf = modest_platform_get_icon (MODEST_HEADER_ICON_UNREAD);
 		return unread_pixbuf;
 	}
-}
-
-static GdkPixbuf*
-get_pixbuf_for_compact_flag (TnyHeaderFlags flags)
-{
-	/* optimization */
-	static GdkPixbuf *high_attachments_pixbuf   = NULL;
-	static GdkPixbuf *normal_attachments_pixbuf = NULL;
-	static GdkPixbuf *low_attachments_pixbuf    = NULL;
-	static GdkPixbuf *high_pixbuf               = NULL;
-	static GdkPixbuf *low_pixbuf                = NULL;
-	static GdkPixbuf *normal_pixbuf             = NULL;
-
-	TnyHeaderPriorityFlags prior;
-
-	prior = flags & TNY_HEADER_FLAG_PRIORITY;
-	switch (prior) {
-	case TNY_HEADER_FLAG_HIGH_PRIORITY:
-		if (flags & TNY_HEADER_FLAG_ATTACHMENTS) {
-			if (G_UNLIKELY(!high_attachments_pixbuf))
-				high_attachments_pixbuf = modest_platform_get_icon (MODEST_HEADER_ICON_ATTACH_HIGH_PRIORITY);
-			return high_attachments_pixbuf;
-		} else {
-			if (G_UNLIKELY(!high_pixbuf))
-				high_pixbuf = modest_platform_get_icon (MODEST_HEADER_ICON_HIGH_PRIORITY);
-			return high_pixbuf;
-		}
-		break;
-	case TNY_HEADER_FLAG_LOW_PRIORITY:
-		if (flags & TNY_HEADER_FLAG_ATTACHMENTS) {
-			if (G_UNLIKELY(!low_attachments_pixbuf))
-				low_attachments_pixbuf = modest_platform_get_icon (MODEST_HEADER_ICON_ATTACH_LOW_PRIORITY);
-			return low_attachments_pixbuf;
-		} else {		
-			if (G_UNLIKELY(!low_pixbuf))
-				low_pixbuf = modest_platform_get_icon (MODEST_HEADER_ICON_LOW_PRIORITY);
-			return low_pixbuf;
-		}
-		break;
-	default:
-		if (flags & TNY_HEADER_FLAG_ATTACHMENTS) {
-			if (G_UNLIKELY(!normal_attachments_pixbuf))
-				normal_attachments_pixbuf = modest_platform_get_icon (MODEST_HEADER_ICON_ATTACH_NORM_PRIORITY);
-			return normal_attachments_pixbuf;
-		} else {		
-			if (G_UNLIKELY(!normal_pixbuf))
-				normal_pixbuf = modest_platform_get_icon (MODEST_HEADER_ICON_NORM_PRIORITY);
-			return normal_pixbuf;
-		}
-	}
-	return NULL;
 }
 
 static void
@@ -162,20 +121,6 @@ _modest_header_view_attach_cell_data (GtkTreeViewColumn *column, GtkCellRenderer
 }
 
 void
-_modest_header_view_compact_flag_cell_data (GtkTreeViewColumn *column, GtkCellRenderer *renderer,
-					    GtkTreeModel *tree_model, GtkTreeIter *iter, gpointer user_data)
-{
-	TnyHeaderFlags flags;
-	GdkPixbuf* pixbuf = NULL;
-
-	gtk_tree_model_get (tree_model, iter, TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN,
-			    &flags, -1);
-	
-	pixbuf = get_pixbuf_for_compact_flag (flags);
-	g_object_set (G_OBJECT (renderer), "pixbuf", pixbuf, NULL);
-}
-
-void
 _modest_header_view_header_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 		  GtkTreeModel *tree_model,  GtkTreeIter *iter,  gpointer user_data)
 {
@@ -215,37 +160,6 @@ _modest_header_view_date_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer
 }
 
 void
-_modest_header_view_compact_date_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
-					     GtkTreeModel *tree_model,  GtkTreeIter *iter,
-					     gpointer user_data)
-{
-	TnyHeaderFlags flags;
-	guint date, date_col;
-	gchar *display_date = NULL, *tmp_date = NULL;
-	gboolean received = GPOINTER_TO_INT(user_data);
-
-	if (received)
-		date_col = TNY_GTK_HEADER_LIST_MODEL_DATE_RECEIVED_TIME_T_COLUMN;
-	else
-		date_col = TNY_GTK_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN;
-
-	gtk_tree_model_get (tree_model, iter,
-			    TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN, &flags,
-			    date_col, &date,
-			    -1);
-
-	tmp_date = modest_text_utils_get_display_date (date);
-	display_date = g_strdup_printf ("\n<small>%s</small>", tmp_date);
-	g_object_set (G_OBJECT(renderer),
-		      "markup", display_date,
-		      NULL);	
-
-	set_common_flags (renderer, flags);
-	g_free (tmp_date);
-	g_free (display_date);
-}
-
-void
 _modest_header_view_sender_receiver_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 			    GtkTreeModel *tree_model,  GtkTreeIter *iter,  gboolean is_sender)
 {
@@ -279,11 +193,22 @@ void
 _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 					       GtkTreeModel *tree_model,  GtkTreeIter *iter,  gpointer user_data)
 {
-	GObject *rendobj;
 	TnyHeaderFlags flags;
 	gchar *address, *subject, *header;
 	time_t date;
 	gboolean is_incoming;
+	GtkCellRenderer *recipient_cell, *date_cell, *subject_cell,
+		*attach_cell, *priority_cell,
+		*recipient_box, *subject_box;
+	gchar *display_date = NULL, *tmp_date = NULL;
+
+	recipient_box = GTK_CELL_RENDERER (g_object_get_data (G_OBJECT (renderer), "recpt-box-renderer"));
+	subject_box = GTK_CELL_RENDERER (g_object_get_data (G_OBJECT (renderer), "subject-box-renderer"));
+	priority_cell = GTK_CELL_RENDERER (g_object_get_data (G_OBJECT (subject_box), "priority-renderer"));
+	subject_cell = GTK_CELL_RENDERER (g_object_get_data (G_OBJECT (subject_box), "subject-renderer"));
+	attach_cell = GTK_CELL_RENDERER (g_object_get_data (G_OBJECT (recipient_box), "attach-renderer"));
+	recipient_cell = GTK_CELL_RENDERER (g_object_get_data (G_OBJECT (recipient_box), "recipient-renderer"));
+	date_cell = GTK_CELL_RENDERER (g_object_get_data (G_OBJECT (recipient_box), "date-renderer"));
 
 	is_incoming = GPOINTER_TO_INT(user_data); /* GPOINTER_TO_BOOLEAN is not available
 						   * in older versions of glib...*/
@@ -303,15 +228,39 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 				    TNY_GTK_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN, &date,   
 				    -1);
 
-	rendobj = G_OBJECT(renderer);
-	header = g_markup_printf_escaped ("%s\n<small>%s</small>",
-					  (subject && strlen(subject)) ? subject : _("mail_va_no_subject"),
-					  modest_text_utils_get_display_address(address));
-	g_free (address);
+	/* flags */
+	if (flags & TNY_HEADER_FLAG_ATTACHMENTS)
+		g_object_set (G_OBJECT (attach_cell), "pixbuf",
+			      get_pixbuf_for_flag (TNY_HEADER_FLAG_ATTACHMENTS),
+			      NULL);
+	else
+		g_object_set (G_OBJECT (attach_cell), "pixbuf",
+			      get_pixbuf_for_flag (0), NULL);
+	if (flags & TNY_HEADER_FLAG_PRIORITY)
+		g_object_set (G_OBJECT (priority_cell), "pixbuf",
+			      get_pixbuf_for_flag (flags & TNY_HEADER_FLAG_PRIORITY),
+			      NULL);
+	else
+		g_object_set (G_OBJECT (priority_cell), "pixbuf",
+			      get_pixbuf_for_flag (0), NULL);
+	header = g_markup_printf_escaped ("%s", (subject && strlen (subject)) ? subject : _("mail_va_no_subject"));
 	g_free (subject);
+	g_object_set (G_OBJECT (subject_cell), "markup", header, NULL);
+	set_common_flags (subject_cell, flags);
 
-	g_object_set (rendobj, "markup", header, NULL);	
-	set_common_flags (renderer, flags);
+	header = g_markup_printf_escaped ("<small>%s</small>", modest_text_utils_get_display_address (address));
+	g_free (address);
+	g_object_set (G_OBJECT (recipient_cell), "markup", header, NULL);
+
+	g_object_set (G_OBJECT (recipient_cell), "markup", header, NULL);	
+	set_common_flags (recipient_cell, flags);
+
+	tmp_date = modest_text_utils_get_display_date (date);
+	display_date = g_strdup_printf ("<small>%s</small>", tmp_date);
+	g_object_set (G_OBJECT (date_cell), "markup", display_date, NULL);
+	g_free (tmp_date);
+	g_free (display_date);
+	set_common_flags (date_cell, flags);
 	
 	g_free (header);
 }

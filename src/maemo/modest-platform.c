@@ -465,11 +465,11 @@ launch_sort_headers_dialog (GtkWindow *parent_window,
 {
 	ModestHeaderView *header_view = NULL;
 	GList *cols = NULL;
-	GList *tmp = NULL;
 	GtkSortType sort_type;
 	gint sort_key;
 	gint default_key = 0;
 	gint result;
+	gboolean outgoing = FALSE;
 	
 	/* Get header window */
 	if (MODEST_IS_MAIN_WINDOW (parent_window)) {
@@ -481,66 +481,50 @@ launch_sort_headers_dialog (GtkWindow *parent_window,
 	/* Add sorting keys */
 	cols = modest_header_view_get_columns (header_view);	
 	if (cols == NULL) return;
-	int num_cols = g_list_length(cols);
-	int sort_ids[num_cols];
-	int sort_model_ids[num_cols];
-	GtkTreeViewColumn *sort_cols[num_cols];
-	for (tmp=cols; tmp; tmp=tmp->next) {
-		gint col_id = GPOINTER_TO_INT (g_object_get_data(G_OBJECT(tmp->data), MODEST_HEADER_VIEW_COLUMN));
-		switch (col_id) {
-		case MODEST_HEADER_VIEW_COLUMN_COMPACT_FLAG:
-			sort_key = hildon_sort_dialog_add_sort_key (dialog, _("mcen_li_sort_attachment"));
-			sort_ids[sort_key] = col_id;
-			sort_model_ids[sort_key] = TNY_HEADER_FLAG_ATTACHMENTS;
-			sort_cols[sort_key] = tmp->data;
+	int sort_model_ids[6];
+	int sort_ids[6];
 
-			sort_key = hildon_sort_dialog_add_sort_key (dialog, _("mcen_li_sort_priority"));
-			sort_ids[sort_key] = col_id;
-			sort_model_ids[sort_key] = TNY_HEADER_FLAG_PRIORITY;
-			sort_cols[sort_key] = tmp->data;
-			break;
-		case MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER_OUT:
-			sort_key = hildon_sort_dialog_add_sort_key (dialog, _("mcen_li_sort_sender_recipient"));
-			sort_ids[sort_key] = col_id;
-			sort_model_ids[sort_key] = TNY_GTK_HEADER_LIST_MODEL_TO_COLUMN;
-			sort_cols[sort_key] = tmp->data;
+	outgoing = (GPOINTER_TO_INT (g_object_get_data(G_OBJECT(cols->data), MODEST_HEADER_VIEW_COLUMN))==
+		    MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER_OUT);
 
-			sort_key = hildon_sort_dialog_add_sort_key (dialog, _("mcen_li_sort_subject"));
-			sort_ids[sort_key] = col_id;
-			sort_model_ids[sort_key] = TNY_GTK_HEADER_LIST_MODEL_SUBJECT_COLUMN;
-			sort_cols[sort_key] = tmp->data;
-			break;
-		case MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER_IN:
-			sort_key = hildon_sort_dialog_add_sort_key (dialog, _("mcen_li_sort_sender_recipient"));
-			sort_ids[sort_key] = col_id;
-			sort_model_ids[sort_key] = TNY_GTK_HEADER_LIST_MODEL_FROM_COLUMN;
-			sort_cols[sort_key] = tmp->data;
-
-			sort_key = hildon_sort_dialog_add_sort_key (dialog, _("mcen_li_sort_subject"));
-			sort_ids[sort_key] = col_id;
-			sort_model_ids[sort_key] = TNY_GTK_HEADER_LIST_MODEL_SUBJECT_COLUMN;
-			sort_cols[sort_key] = tmp->data;
-			break;
-		case MODEST_HEADER_VIEW_COLUMN_COMPACT_RECEIVED_DATE:
-			sort_key = hildon_sort_dialog_add_sort_key (dialog, _("mcen_li_sort_date"));
-			sort_ids[sort_key] = col_id;
-			sort_model_ids[sort_key] = TNY_GTK_HEADER_LIST_MODEL_DATE_RECEIVED_TIME_T_COLUMN,
-			sort_cols[sort_key] = tmp->data;
-			default_key = sort_key;
-			break;
-		case MODEST_HEADER_VIEW_COLUMN_COMPACT_SENT_DATE:
-			sort_key = hildon_sort_dialog_add_sort_key (dialog, _("mcen_li_sort_date"));
-			sort_ids[sort_key] = col_id;
-			sort_model_ids[sort_key] = TNY_GTK_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN,
-			sort_cols[sort_key] = tmp->data;
-			default_key = sort_key;
-			break;
-		default:
-			g_printerr ("modest: column (id: %i) not valid", col_id);
-			goto frees;
-		}
+	sort_key = hildon_sort_dialog_add_sort_key (dialog, _("mcen_li_sort_sender_recipient"));
+	if (outgoing) {
+		sort_model_ids[sort_key] = TNY_GTK_HEADER_LIST_MODEL_TO_COLUMN;
+		sort_ids[sort_key] = MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER_OUT;
+	} else {
+		sort_model_ids[sort_key] = TNY_GTK_HEADER_LIST_MODEL_FROM_COLUMN;
+		sort_ids[sort_key] = MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER_IN;
 	}
-	
+
+	sort_key = hildon_sort_dialog_add_sort_key (dialog, _("mcen_li_sort_date"));
+	if (outgoing) {
+		sort_model_ids[sort_key] = TNY_GTK_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN;
+		sort_ids[sort_key] = MODEST_HEADER_VIEW_COLUMN_COMPACT_SENT_DATE;
+	} else {
+		sort_model_ids[sort_key] = TNY_GTK_HEADER_LIST_MODEL_DATE_RECEIVED_TIME_T_COLUMN;
+		sort_ids[sort_key] = MODEST_HEADER_VIEW_COLUMN_COMPACT_RECEIVED_DATE;
+	}
+	default_key = sort_key;
+
+	sort_key = hildon_sort_dialog_add_sort_key (dialog, _("mcen_li_sort_subject"));
+	sort_model_ids[sort_key] = TNY_GTK_HEADER_LIST_MODEL_SUBJECT_COLUMN;
+	if (outgoing)
+		sort_ids[sort_key] = MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER_OUT;
+	else
+		sort_ids[sort_key] = MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER_IN;
+
+	sort_key = hildon_sort_dialog_add_sort_key (dialog, _("mcen_li_sort_attachment"));
+	sort_model_ids[sort_key] = TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN;
+	sort_ids[sort_key] = TNY_HEADER_FLAG_ATTACHMENTS;
+
+	sort_key = hildon_sort_dialog_add_sort_key (dialog, _("mcen_li_sort_size"));
+	sort_model_ids[sort_key] = TNY_GTK_HEADER_LIST_MODEL_MESSAGE_SIZE_COLUMN;
+	sort_ids[sort_key] = 0;
+
+	sort_key = hildon_sort_dialog_add_sort_key (dialog, _("mcen_li_sort_priority"));
+	sort_model_ids[sort_key] = TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN;
+	sort_ids[sort_key] = TNY_HEADER_FLAG_PRIORITY;
+
 	/* Launch dialogs */
 	hildon_sort_dialog_set_sort_key (dialog, default_key);
 	hildon_sort_dialog_set_sort_order (dialog, GTK_SORT_DESCENDING);
@@ -548,19 +532,23 @@ launch_sort_headers_dialog (GtkWindow *parent_window,
 	if (result == GTK_RESPONSE_OK) {
 		sort_key = hildon_sort_dialog_get_sort_key (dialog);
 		sort_type = hildon_sort_dialog_get_sort_order (dialog);
-		if (sort_ids[sort_key] == MODEST_HEADER_VIEW_COLUMN_COMPACT_FLAG)
-			g_object_set_data(G_OBJECT(sort_cols[sort_key]), 
-					  MODEST_HEADER_VIEW_FLAG_SORT, 
-					  GINT_TO_POINTER(sort_model_ids[sort_key]));
-		
-		else
-			gtk_tree_view_column_set_sort_column_id (sort_cols[sort_key], sort_model_ids[sort_key]);
-		
-		modest_header_view_sort_by_column_id (header_view, sort_ids[sort_key], sort_type);
+		if (sort_model_ids[sort_key] == TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN) {
+			g_object_set_data (G_OBJECT(cols->data), MODEST_HEADER_VIEW_FLAG_SORT,
+					   GINT_TO_POINTER (sort_ids[sort_key]));
+			/* This is a hack to make it resort rows always when flag fields are
+			 * selected. If we do not do this, changing sort field from priority to
+			 * attachments does not work */
+			modest_header_view_sort_by_column_id (header_view, 0, sort_type);
+		} else {
+			gtk_tree_view_column_set_sort_column_id (GTK_TREE_VIEW_COLUMN (cols->data), 
+								 sort_model_ids[sort_key]);
+		}
+
+		modest_header_view_sort_by_column_id (header_view, sort_model_ids[sort_key], sort_type);
+		gtk_tree_sortable_sort_column_changed (GTK_TREE_SORTABLE (gtk_tree_view_get_model (GTK_TREE_VIEW (header_view))));
 	}
 	
 	/* free */
- frees:
 	g_list_free(cols);	
 }
 
