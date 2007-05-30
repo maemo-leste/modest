@@ -43,6 +43,22 @@ static gboolean _selected_msg_marked_as (ModestWindow *win, TnyHeaderFlags mask,
 static gboolean _selected_folder_not_writeable (ModestMainWindow *win);
 static gboolean _selected_folder_is_any_of_type (ModestMainWindow *win, TnyFolderType types[], guint ntypes);
 static gboolean _selected_folder_is_root (ModestMainWindow *win);
+static gboolean _msg_download_in_progress (ModestMsgViewWindow *win);
+
+
+gboolean 
+modest_ui_dimming_rules_on_new_msg (ModestWindow *win, gpointer user_data)
+{
+	gboolean dimmed = FALSE;
+
+	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW(win), FALSE);
+		
+	/* Check dimmed rule */	
+	if (!dimmed)
+		dimmed = _msg_download_in_progress (MODEST_MSG_VIEW_WINDOW(win));
+
+	return dimmed;
+}
 
 gboolean 
 modest_ui_dimming_rules_on_new_folder (ModestWindow *win, gpointer user_data)
@@ -94,19 +110,28 @@ modest_ui_dimming_rules_on_reply_msg (ModestWindow *win, gpointer user_data)
 	gboolean dimmed = FALSE;
 	TnyFolderType types[3];
 
-	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW(win), FALSE);
+	/* main window dimming rules */
+	if (MODEST_IS_MAIN_WINDOW(win)) {
+		
+		types[0] = TNY_FOLDER_TYPE_DRAFTS; 
+		types[1] = TNY_FOLDER_TYPE_OUTBOX;
+		types[2] = TNY_FOLDER_TYPE_ROOT;
+		
+		/* Check dimmed rule */	
+		if (!dimmed)
+			dimmed = _selected_folder_is_any_of_type (MODEST_MAIN_WINDOW(win), types, 3);
+		
+		if (!dimmed)
+			dimmed = _invalid_msg_selected (MODEST_MAIN_WINDOW(win), FALSE);
 
-	types[0] = TNY_FOLDER_TYPE_DRAFTS; 
-	types[1] = TNY_FOLDER_TYPE_OUTBOX;
-	types[2] = TNY_FOLDER_TYPE_ROOT;
-
-	/* Check dimmed rule */	
-	if (!dimmed)
-		dimmed = _selected_folder_is_any_of_type (MODEST_MAIN_WINDOW(win), types, 3);
+	/* msg view window dimming rules */
+	} else if (MODEST_IS_MSG_VIEW_WINDOW(win)) {
+		
+		/* Check dimmed rule */	
+		if (!dimmed)
+			dimmed = _msg_download_in_progress (MODEST_MSG_VIEW_WINDOW(win));
+	}
 	
-	if (!dimmed)
-		dimmed = _invalid_msg_selected (MODEST_MAIN_WINDOW(win), FALSE);
-
 	return dimmed;
 }
 
@@ -159,12 +184,21 @@ modest_ui_dimming_rules_on_details_msg (ModestWindow *win, gpointer user_data)
 {
 	gboolean dimmed = FALSE;
 	
-	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW(win), FALSE);
-	
-	/* Check dimmed rule */	
-	if (!dimmed)
-		dimmed = _invalid_msg_selected (MODEST_MAIN_WINDOW(win), TRUE);
-	
+	/* main window dimming rules */
+	if (MODEST_IS_MAIN_WINDOW(win)) {
+		
+		/* Check dimmed rule */	
+		if (!dimmed)
+			dimmed = _invalid_msg_selected (MODEST_MAIN_WINDOW(win), TRUE);
+
+	/* msg view window dimming rules */
+	} else {
+
+		/* Check dimmed rule */	
+		if (!dimmed)
+			dimmed = _msg_download_in_progress (MODEST_MSG_VIEW_WINDOW(win));
+	}
+
 	return dimmed;
 }
 
@@ -532,6 +566,16 @@ _selected_msg_marked_as (ModestWindow *win,
 		g_object_unref (selected_headers);
 	if (iter != NULL)
 		g_object_unref (iter);
+
+	return result;
+}
+
+static gboolean
+_msg_download_in_progress (ModestMsgViewWindow *win)
+{
+	gboolean result = FALSE;
+
+	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (win), FALSE);
 
 	return result;
 }

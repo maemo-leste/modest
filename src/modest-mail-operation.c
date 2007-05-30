@@ -331,8 +331,8 @@ modest_mail_operation_cancel (ModestMailOperation *self)
 
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
 
-	/* TODO: Tinymail does not support cancel operation  */
-/* 	tny_account_cancel (); */
+	/* cancel current operation in account */
+	tny_account_cancel (priv->account);
 
 	/* Set new status */
 	priv->status = MODEST_MAIL_OPERATION_STATUS_CANCELED;

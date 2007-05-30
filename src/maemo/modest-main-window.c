@@ -555,17 +555,17 @@ static void on_hildon_program_is_topmost_notify(GObject *self,
 ModestWindow*
 modest_main_window_new (void)
 {
-	ModestMainWindow *self;	
-	ModestMainWindowPrivate *priv;
-	ModestWindowPrivate *parent_priv;
-	GtkWidget *folder_win;
-	ModestDimmingRulesGroup *rules_group;
-	GtkActionGroup *action_group;
+	ModestMainWindow *self = NULL;	
+	ModestMainWindowPrivate *priv = NULL;
+	ModestWindowPrivate *parent_priv = NULL;
+	GtkWidget *folder_win = NULL;
+	ModestDimmingRulesGroup *rules_group = NULL;
+	GtkActionGroup *action_group = NULL;
 	GError *error = NULL;
-	TnyFolderStoreQuery *query;
-	GdkPixbuf *window_icon;
-	ModestConf *conf;
-	GtkAction *action;
+	TnyFolderStoreQuery *query = NULL;
+	GdkPixbuf *window_icon = NULL; 
+	ModestConf *conf = NULL;
+	GtkAction *action = NULL;
 
 	self  = MODEST_MAIN_WINDOW(g_object_new(MODEST_TYPE_MAIN_WINDOW, NULL));
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);

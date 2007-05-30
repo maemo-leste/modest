@@ -37,6 +37,7 @@
 G_BEGIN_DECLS
 
 /* Menu & toolbar dimming rules */
+gboolean modest_ui_dimming_rules_on_new_msg (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_new_folder (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_rename_folder (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_open_msg (ModestWindow *win, gpointer user_data);

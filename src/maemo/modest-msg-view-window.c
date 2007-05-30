@@ -38,6 +38,7 @@
 #include <modest-msg-view-window.h>
 #include <modest-attachments-view.h>
 #include <modest-main-window-ui.h>
+#include "modest-msg-view-window-ui-dimming.h"
 #include <modest-widget-memory.h>
 #include <modest-runtime.h>
 #include <modest-window-priv.h>
@@ -48,6 +49,7 @@
 #include "modest-defs.h"
 #include "modest-hildon-includes.h"
 #include <gtkhtml/gtkhtml-search.h>
+#include "modest-ui-dimming-manager.h"
 #include <gdk/gdkkeysyms.h>
 
 #define DEFAULT_FOLDER "MyDocs/.documents"
@@ -480,23 +482,30 @@ modest_msg_view_window_new_with_header_model (TnyMsg *msg, const gchar *account_
 ModestWindow *
 modest_msg_view_window_new (TnyMsg *msg, const gchar *account_name)
 {
-	GObject *obj;
-	ModestMsgViewWindowPrivate *priv;
-	ModestWindowPrivate *parent_priv;
-	GtkActionGroup *action_group;
+	ModestMsgViewWindow *self = NULL;
+	GObject *obj = NULL;
+	ModestMsgViewWindowPrivate *priv = NULL;
+	ModestWindowPrivate *parent_priv = NULL;
+	ModestDimmingRulesGroup *rules_group = NULL;
+	GtkActionGroup *action_group = NULL;
 	GError *error = NULL;
 	GdkPixbuf *window_icon = NULL;
-	GtkAction *action;
+	GtkAction *action = NULL;
 
 	g_return_val_if_fail (msg, NULL);
 	
 	obj = g_object_new(MODEST_TYPE_MSG_VIEW_WINDOW, NULL);
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE(obj);
 	parent_priv = MODEST_WINDOW_GET_PRIVATE(obj);
-	
+	self = MODEST_MSG_VIEW_WINDOW (obj);
+
 	parent_priv->ui_manager = gtk_ui_manager_new();
+	parent_priv->ui_dimming_manager = modest_ui_dimming_manager_new();
+
 	action_group = gtk_action_group_new ("ModestMsgViewWindowActions");
 	gtk_action_group_set_translation_domain (action_group, GETTEXT_PACKAGE);
+
+	rules_group = modest_dimming_rules_group_new ("ModestCommonDimmingRules");
 
 	/* Add common actions */
 	gtk_action_group_add_actions (action_group,
@@ -530,6 +539,16 @@ modest_msg_view_window_new (TnyMsg *msg, const gchar *account_name)
 		error = NULL;
 	}
 	/* ****** */
+
+	/* Add common dimming rules */
+	modest_dimming_rules_group_add_rules (rules_group, 
+					      modest_msg_view_dimming_entries,
+					      G_N_ELEMENTS (modest_msg_view_dimming_entries),
+					      self);
+
+	/* Insert dimming rules group for this window */
+	modest_ui_dimming_manager_insert_rules_group (parent_priv->ui_dimming_manager, rules_group);
+	g_object_unref (rules_group);
 
 	/* Add accelerators */
 	gtk_window_add_accel_group (GTK_WINDOW (obj), 
