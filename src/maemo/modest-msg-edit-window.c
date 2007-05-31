@@ -87,7 +87,6 @@ static gboolean is_modified (ModestMsgEditWindow *editor);
 
 static void  text_buffer_refresh_attributes (WPTextBuffer *buffer, ModestMsgEditWindow *window);
 static void  text_buffer_delete_range (GtkTextBuffer *buffer, GtkTextIter *start, GtkTextIter *end, gpointer userdata);
-static void  text_buffer_mark_set (GtkTextBuffer *buffer, GtkTextIter *location, GtkTextMark *mark, gpointer userdata);
 static void  text_buffer_can_undo (GtkTextBuffer *buffer, gboolean can_undo, ModestMsgEditWindow *window);
 static void  text_buffer_delete_images_by_id (GtkTextBuffer *buffer, const gchar * image_id);
 static void  modest_msg_edit_window_color_button_change (ModestMsgEditWindow *window,
@@ -306,43 +305,6 @@ get_transports (void)
 
 
 static void
-text_buffer_mark_set (GtkTextBuffer *buffer, GtkTextIter *iter, GtkTextMark *mark, gpointer userdata)
-{
-	ModestMsgEditWindow *window;
-	ModestMsgEditWindowPrivate *priv;
-	GdkRectangle location;
-	gint v_scroll_min_value = 0;
-	gint v_scroll_max_value = 0;
-	gint v_scroll_visible;
-	GtkAdjustment *vadj;
-	GtkTextMark *insert_mark;
-	GtkTextIter insert_iter;
-	
-	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (userdata));
-	g_return_if_fail (GTK_IS_TEXT_MARK (mark));
-	window = MODEST_MSG_EDIT_WINDOW (userdata);
-	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
-		
-	insert_mark = gtk_text_buffer_get_insert (GTK_TEXT_BUFFER (priv->text_buffer));
-	gtk_text_buffer_get_iter_at_mark (GTK_TEXT_BUFFER (priv->text_buffer), &insert_iter, insert_mark);
-	gtk_text_view_get_iter_location (GTK_TEXT_VIEW (priv->msg_body), &insert_iter, &location);
-	
-	if (priv->header_box)
-		v_scroll_min_value += priv->header_box->allocation.height + DEFAULT_MAIN_VBOX_SPACING;
-	v_scroll_min_value += location.y;
-	v_scroll_max_value = v_scroll_min_value + location.height;
-	
-	v_scroll_visible = GTK_WIDGET (window)->allocation.height;
-	
-	vadj = gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (priv->scroll));
-	
-	if (((gdouble) v_scroll_min_value) < vadj->value)
-		gtk_adjustment_set_value (vadj, v_scroll_min_value);
-	else if (((gdouble) v_scroll_max_value) > (vadj->value + vadj->page_size))
-		gtk_adjustment_set_value (vadj, ((gdouble)v_scroll_max_value) - vadj->page_size);
-}
-
-static void
 init_window (ModestMsgEditWindow *obj)
 {
 	GtkWidget *from_caption, *to_caption, *subject_caption;
@@ -422,8 +384,6 @@ init_window (ModestMsgEditWindow *obj)
 
 	g_signal_connect (G_OBJECT (priv->text_buffer), "refresh_attributes",
 			  G_CALLBACK (text_buffer_refresh_attributes), obj);
-	g_signal_connect (G_OBJECT (priv->text_buffer), "mark-set",
-			  G_CALLBACK (text_buffer_mark_set), obj);
 	g_signal_connect (G_OBJECT (priv->text_buffer), "delete-range",
 			  G_CALLBACK (text_buffer_delete_range), obj);
 	g_signal_connect (G_OBJECT (priv->text_buffer), "can-undo",
