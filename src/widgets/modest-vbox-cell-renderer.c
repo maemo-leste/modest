@@ -183,7 +183,12 @@ modest_vbox_cell_renderer_append (ModestVBoxCellRenderer *vbox_renderer,
 	
 	priv->renderers_list = g_list_append (priv->renderers_list, cell);
 	g_object_set_data (G_OBJECT (cell), RENDERER_EXPAND_ATTRIBUTE, GINT_TO_POINTER (expand));
+
+#if GLIB_CHECK_VERSION(2, 10, 0) /* g_object_ref_sink() was added in glib 2.10: */
 	g_object_ref_sink (G_OBJECT (cell));
+#else
+	gtk_object_sink (GTK_OBJECT (cell));
+#endif
 }
 
 static void 
