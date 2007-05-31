@@ -1,5 +1,10 @@
 2007-05-31  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-ui-actions.c: (modest_ui_actions_on_help):
+	Initialize help_id to fix the build. Warnings are good.
+
+2007-05-31  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/widgets/modest-hbox-cell-renderer.c:
 	(modest_hbox_cell_renderer_append):
 	* src/widgets/modest-vbox-cell-renderer.c:

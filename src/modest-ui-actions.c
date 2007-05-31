@@ -2781,7 +2781,7 @@ void
 modest_ui_actions_on_help (GtkAction *action, 
 			   ModestWindow *win)
 {
-	const gchar *help_id;
+	const gchar *help_id = NULL;
 
 	if (MODEST_IS_MAIN_WINDOW (win)) {
 		const gchar *action_name;
