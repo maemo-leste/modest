@@ -324,15 +324,19 @@ restore_settings (ModestMainWindow *self)
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
 
 	conf = modest_runtime_get_conf ();
-	
+
 	modest_widget_memory_restore (conf, G_OBJECT(self),
 				      MODEST_CONF_MAIN_WINDOW_KEY);
 	modest_widget_memory_restore (conf, G_OBJECT(priv->header_view),
 				      MODEST_CONF_HEADER_VIEW_KEY);
-	modest_widget_memory_restore (conf, G_OBJECT(priv->main_paned),
-				      MODEST_CONF_MAIN_PANED_KEY);
 	modest_widget_memory_restore (conf, G_OBJECT(priv->folder_view),
 				      MODEST_CONF_FOLDER_VIEW_KEY);
+	modest_widget_memory_restore (conf, G_OBJECT(priv->main_paned),
+				      MODEST_CONF_MAIN_PANED_KEY);
+
+	/* We need to force a redraw here in order to get the right
+	   position of the horizontal paned separator */
+	gtk_widget_show (GTK_WIDGET (self));
 }
 
 
@@ -675,9 +679,8 @@ modest_main_window_new (void)
 
 	/* paned */
 	priv->main_paned = gtk_hpaned_new ();
-	gtk_paned_add1 (GTK_PANED(priv->main_paned), folder_win);
-	gtk_paned_add2 (GTK_PANED(priv->main_paned), priv->contents_widget);
-	gtk_widget_show (GTK_WIDGET(priv->header_view));
+	gtk_paned_pack1 (GTK_PANED(priv->main_paned), folder_win, TRUE, TRUE);
+	gtk_paned_pack2 (GTK_PANED(priv->main_paned), priv->contents_widget, TRUE, TRUE);
 	gtk_tree_view_columns_autosize (GTK_TREE_VIEW(priv->header_view));
 
 	/* putting it all together... */
@@ -685,7 +688,6 @@ modest_main_window_new (void)
 	gtk_box_pack_start (GTK_BOX(priv->main_vbox), priv->main_paned, TRUE, TRUE,0);
 
 	gtk_container_add (GTK_CONTAINER(self), priv->main_vbox);
-	restore_settings (MODEST_MAIN_WINDOW(self));
 
 	/* Set window icon */
 	window_icon = modest_platform_get_icon (MODEST_APP_ICON);
@@ -726,6 +728,9 @@ modest_main_window_new (void)
 	/* Load previous osso state, for instance if we are being restored from 
 	 * hibernation:  */
 	modest_osso_load_state();
+
+	/* Restore window & widget settings */
+	restore_settings (MODEST_MAIN_WINDOW(self));
 
 	return MODEST_WINDOW(self);
 }
