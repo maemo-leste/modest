@@ -207,16 +207,26 @@ modest_ui_dimming_rules_on_delete_msg (ModestWindow *win, gpointer user_data)
 }
 
 gboolean 
-modest_ui_dimming_rules_on_details_msg (ModestWindow *win, gpointer user_data)
+modest_ui_dimming_rules_on_details (ModestWindow *win, gpointer user_data)
 {
 	gboolean dimmed = FALSE;
 	
 	/* main window dimming rules */
 	if (MODEST_IS_MAIN_WINDOW(win)) {
-		
-		/* Check dimmed rule */	
-		if (!dimmed)
-			dimmed = _invalid_msg_selected (MODEST_MAIN_WINDOW(win), TRUE);
+		GtkWidget *header_view;
+
+		/* Check dimmed rule */
+		header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win),
+								   MODEST_WIDGET_TYPE_HEADER_VIEW);
+
+		/* If the header view does not have the focus then do
+		   not apply msg dimming rules because the action will
+		   show the folder details that have no dimming
+		   rule */
+		if (gtk_widget_is_focus (header_view)) {
+			if (!dimmed)
+				dimmed = _invalid_msg_selected (MODEST_MAIN_WINDOW(win), TRUE);
+		}
 
 	/* msg view window dimming rules */
 	} else {

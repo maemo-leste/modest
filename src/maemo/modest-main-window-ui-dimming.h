@@ -21,7 +21,7 @@ static const ModestDimmingEntry modest_dimming_entries [] = {
 	{ "/MenuBar/EmailMenu/EmailContentsMenu", G_CALLBACK(modest_ui_dimming_rules_on_contents_msg) },
 	{ "/MenuBar/EmailMenu/EmailPurgeAttachmentsMenu", G_CALLBACK(modest_ui_dimming_rules_always_dimmed) },
 	{ "/MenuBar/EmailMenu/EmailDeleteMenu",  G_CALLBACK(modest_ui_dimming_rules_on_delete_msg) },
-	{ "/MenuBar/EmailMenu/EmailDetailsMenu", G_CALLBACK(modest_ui_dimming_rules_on_details_msg) },
+	{ "/MenuBar/EmailMenu/EmailDetailsMenu", G_CALLBACK(modest_ui_dimming_rules_on_details) },
 
 	/* Edit Menu */
 	{ "/MenuBar/EditMenu", NULL },
