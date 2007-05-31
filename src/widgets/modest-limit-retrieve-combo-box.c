@@ -143,7 +143,7 @@ static void modest_limit_retrieve_combo_box_fill (ModestLimitRetrieveComboBox *c
 	gtk_list_store_set (liststore, &iter, MODEL_COL_NUM, 50, MODEL_COL_NAME, _("mcen_fi_advsetup_retrieve_50"), -1);
 
 	gtk_list_store_append (liststore, &iter);
-	gtk_list_store_set (liststore, &iter, MODEL_COL_NUM, 10, MODEL_COL_NAME, _("mcen_fi_advsetup_retrieve_10"), -1);
+	gtk_list_store_set (liststore, &iter, MODEL_COL_NUM, 20, MODEL_COL_NAME, _("mcen_fi_advsetup_retrieve_20"), -1);
 }
 
 /**
