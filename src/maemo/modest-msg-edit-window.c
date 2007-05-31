@@ -2000,12 +2000,11 @@ modest_msg_edit_window_select_font (ModestMsgEditWindow *window)
 				font_size, DEFAULT_FONT_SIZE);
 			fmt.cs.font_size = TRUE;
 		}
-		gtk_widget_destroy (dialog);
-	
-		gtk_widget_grab_focus(GTK_WIDGET(priv->msg_body));
 		wp_text_buffer_set_format(WP_TEXT_BUFFER(priv->text_buffer), &fmt);
 	}
-
+	gtk_widget_destroy (dialog);
+	
+	gtk_widget_grab_focus(GTK_WIDGET(priv->msg_body));
 }
 
 void
