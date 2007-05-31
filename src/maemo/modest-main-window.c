@@ -190,7 +190,7 @@ static const GtkActionEntry modest_folder_view_action_entries [] = {
 	{ "FolderViewCSMPasteMsgs", NULL, N_("mcen_me_inbox_paste"), NULL, NULL, NULL },
 	{ "FolderViewCSMDeleteFolder", NULL, N_("mcen_me_inbox_delete"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_delete_folder) },
 	{ "FolderViewCSMSearchMessages", NULL, N_("mcen_me_inbox_search"), NULL, NULL, NULL },
-	{ "FolderViewCSMHelp", NULL, N_("mcen_me_inbox_help"), NULL, NULL, NULL },
+	{ "FolderViewCSMHelp", NULL, N_("mcen_me_inbox_help"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_help) },
 };
 
 

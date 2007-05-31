@@ -213,6 +213,17 @@ GtkWidget* modest_platform_get_global_settings_dialog (void);
 
 void modest_platform_on_new_msg (void);
 
+
+/**
+ * modest_platform_show_help:
+ * @parent_window: 
+ * @help_id: the help topic id to be shown in the help dialog
+ * 
+ * shows the application help dialog
+ **/
+void modest_platform_show_help (GtkWindow *parent_window, 
+				const gchar *help_id);
+
 G_END_DECLS
 
 #endif /* __MODEST_PLATFORM_UTILS_H__ */

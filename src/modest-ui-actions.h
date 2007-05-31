@@ -81,6 +81,15 @@ void     modest_ui_actions_on_move_to       (GtkAction *action, ModestWindow *wi
 void     modest_ui_actions_on_settings      (GtkAction *action, ModestWindow *win);
 
 /**
+ * modest_ui_actions_on_help:
+ * @action: a #GtkAction
+ * @win: a #ModestWindow
+ * 
+ * Shows the help dialog
+ **/
+void     modest_ui_actions_on_help          (GtkAction *action, ModestWindow *win);
+
+/**
  * modest_ui_actions_toggle_folders_view:
  * @action: the #GtkAction
  * @main_window: the #ModestMainWindow

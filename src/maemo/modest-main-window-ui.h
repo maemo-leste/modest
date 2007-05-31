@@ -99,7 +99,7 @@ static const GtkActionEntry modest_action_entries [] = {
 	{ "ToolsContacts",            NULL,      N_("mcen_me_inbox_open_addressbook"),                      NULL, NULL,  NULL },
 	{ "ToolsAddToContacts",            NULL,      N_("mcen_me_viewer_addtocontacts"),                      NULL, NULL,  G_CALLBACK (modest_ui_actions_on_add_to_contacts) },
 	{ "ToolsSearchMessages",            NULL,      N_("mcen_me_inbox_search"),                      NULL, NULL,  NULL },
-	{ "ToolsHelp",            NULL,      N_("mcen_me_inbox_help"),                      NULL, NULL,  NULL },
+	{ "ToolsHelp", NULL, N_("mcen_me_inbox_help"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_help) },
 
 	/* Close */
 	{ "CloseWindow",          NULL,     N_("mcen_me_inbox_close_window"),               NULL, NULL,  G_CALLBACK (modest_ui_actions_on_close_window) },

@@ -73,6 +73,8 @@ static const GtkActionEntry modest_msg_edit_action_entries [] = {
 	{ "CheckNames", NULL, N_("mcen_me_editor_checknames"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_check_names)},
 	{ "CloseWindow", NULL, N_("mcen_me_inbox_close_window"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_close_window)},
 	{ "CloseAllWindows", NULL, N_("mcen_me_inbox_close_windows"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_quit) },
+	{ "Help", NULL, N_("mcen_me_inbox_help"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_help) },
+
 
 	/* KEY ACCELERATOR ACTIONS */
 	{ "ZoomPlus", NULL, N_("Zoom +"), "F7", NULL, G_CALLBACK (modest_ui_actions_on_zoom_plus) },

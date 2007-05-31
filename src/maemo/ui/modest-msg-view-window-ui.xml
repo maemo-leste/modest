@@ -79,6 +79,12 @@
    <menu name="ToolsMenu" action="Tools">
       <menuitem name="ToolsAddToContactsMenu" action="ToolsAddToContacts"/>
       <separator/>
+<!--
+      <menuitem name="ToolsFindOnPageMenu" action="ToolsFindOnPage"/>
+      <menuitem name="ToolSearchMessagesMenu" action="ToolSearchMessages"/>
+      <separator/>
+-->
+      <menuitem name="ToolsHelpMenu" action="ToolsHelp"/>
    </menu>
 
    <menu name="CloseMenu" action="Close">

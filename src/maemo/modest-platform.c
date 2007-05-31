@@ -781,12 +781,24 @@ modest_platform_on_new_msg (void)
 }
 
 
-
-gboolean
-modest_platform_show_help (GtkWidget *widget, const gchar *help_id)
+void
+modest_platform_show_help (GtkWindow *parent_window, 
+			   const gchar *help_id)
 {
-	g_return_val_if_fail (help_id, FALSE);
-	g_return_val_if_fail (osso_context, FALSE);
+	osso_return_t result;
 
-	return ossohelp_show (osso_context, help_id, OSSO_HELP_SHOW_DIALOG);
+	g_return_if_fail (help_id);
+	g_return_if_fail (osso_context);
+
+	/* Show help */
+	result = ossohelp_show (osso_context, help_id, OSSO_HELP_SHOW_DIALOG);
+
+	if (result != OSSO_OK) {
+		gchar *error_msg;
+		error_msg = g_strdup_printf ("FIXME The help topic %s could not be found", help_id); 
+		hildon_banner_show_information (GTK_WIDGET (parent_window),
+						NULL,
+						error_msg);
+		g_free (error_msg);
+	}
 }
