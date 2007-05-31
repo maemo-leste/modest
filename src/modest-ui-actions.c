@@ -606,7 +606,7 @@ modest_ui_actions_get_msgs_full_error_handler (ModestMailOperation *mail_op,
 	const GError *error;
 
 	error = modest_mail_operation_get_error (mail_op);
-	if (error->code == MODEST_MAIL_OPERATION_ERROR_SIZE_LIMIT) {
+	if (error->code == MODEST_MAIL_OPERATION_ERROR_MESSAGE_SIZE_LIMIT) {
 		GObject *win = modest_mail_operation_get_source (mail_op);
 
 		modest_platform_run_information_dialog ((win) ? GTK_WINDOW (win) : NULL,

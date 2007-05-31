@@ -1,5 +1,20 @@
 2007-05-31  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-error.h: 
+	* src/modest-ui-actions.c:
+	(modest_ui_actions_get_msgs_full_error_handler):
+	Renamed an enum, added comments, added an enum 
+	for retrieve-limit errors.
+	
+	* src/modest-mail-operation.c: (foreach_add_item),
+	(internal_folder_observer_update), (update_account_thread),
+	(modest_mail_operation_get_msgs_full):
+	(modest_mail_operation_update_account),
+	Added comments about how this works, and some code that should 
+	(but does not) check the retrieve-limit. See the TODO comment.
+
+2007-05-31  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/modest-ui-actions.c: (modest_ui_actions_on_help):
 	Initialize help_id to fix the build. Warnings are good.
 

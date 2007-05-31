@@ -609,6 +609,9 @@ G_DEFINE_TYPE_WITH_CODE (InternalFolderObserver,
 static void
 foreach_add_item (gpointer header, gpointer user_data)
 {
+	/* printf("DEBUG: %s: header subject=%s\n", 
+	 * __FUNCTION__, tny_header_get_subject(TNY_HEADER(header)));
+	 */
 	tny_list_prepend (TNY_LIST (user_data), 
 			  g_object_ref (G_OBJECT (header)));
 }
@@ -617,6 +620,8 @@ foreach_add_item (gpointer header, gpointer user_data)
 static void
 internal_folder_observer_update (TnyFolderObserver *self, TnyFolderChange *change)
 {
+	InternalFolderObserver *derived = (InternalFolderObserver *)self;
+	
 	TnyFolderChangeChanged changed;
 
 	changed = tny_folder_change_get_changed (change);
@@ -628,9 +633,13 @@ internal_folder_observer_update (TnyFolderObserver *self, TnyFolderChange *chang
 		list = tny_simple_list_new ();
 		tny_folder_change_get_added_headers (change, list);
 
+		/* printf ("DEBUG: %s: Calling foreach with a list of size=%d\n", 
+		 * 	__FUNCTION__, tny_list_get_length(list));
+		 */
+		 
 		/* Add them to the folder observer */
 		tny_list_foreach (list, foreach_add_item, 
-				  ((InternalFolderObserver *)self)->new_headers);
+				  derived->new_headers);
 
 		g_object_unref (G_OBJECT (list));
 	}
@@ -782,7 +791,7 @@ update_account_thread (gpointer thr_user_data)
 	/* Get account and set it into mail_operation */
 	priv->account = g_object_ref (info->account);
 
-	/* Get all the folders We can do it synchronously because
+	/* Get all the folders. We can do it synchronously because
 	   we're already running in a different thread than the UI */
 	all_folders = tny_simple_list_new ();
 	query = tny_folder_store_query_new ();
@@ -806,7 +815,7 @@ update_account_thread (gpointer thr_user_data)
 	g_object_unref (G_OBJECT (iter));
 
 	/* Update status and notify. We need to call the notification
-	   with a source functopm in order to call it from the main
+	   with a source function in order to call it from the main
 	   loop. We need that in order not to get into trouble with
 	   Gtk+. We use a timeout in order to provide more status
 	   information, because the sync tinymail call does not
@@ -822,8 +831,18 @@ update_account_thread (gpointer thr_user_data)
 		TnyFolderStore *folder = TNY_FOLDER_STORE (tny_iterator_get_current (iter));
 
 		/* Refresh the folder */
+		/* Our observer receives notification of new emails during folder refreshes,
+		 * so we can use observer->new_headers.
+		 * TODO: This does not seem to be providing accurate numbers.
+		 * Possibly the observer is notified asynchronously.
+		 */
 		observer = g_object_new (internal_folder_observer_get_type (), NULL);
 		tny_folder_add_observer (TNY_FOLDER (folder), TNY_FOLDER_OBSERVER (observer));
+		
+		/* This gets the status information (headers) from the server.
+		 * We use the blocking version, because we are already in a separate 
+		 * thread.
+		 */
 		tny_folder_refresh (TNY_FOLDER (folder), &(priv->error));
 
 		/* If the retrieve type is headers only do nothing more */
@@ -834,6 +853,11 @@ update_account_thread (gpointer thr_user_data)
 			iter = tny_list_create_iterator (observer->new_headers);
 			while (!tny_iterator_is_done (iter)) {
 				TnyHeader *header = TNY_HEADER (tny_iterator_get_current (iter));
+				/* printf ("  DEBUG1.2 %s: checking size: account=%s, subject=%s\n", 
+				 * 	__FUNCTION__, tny_account_get_id (priv->account), 
+				 * tny_header_get_subject (header));
+				 */
+				 
 				/* Apply per-message size limits */
 				if (tny_header_get_message_size (header) < info->max_size)
 					g_ptr_array_add (new_headers, g_object_ref (header));
@@ -843,8 +867,10 @@ update_account_thread (gpointer thr_user_data)
 			}
 			g_object_unref (iter);
 		}
+		
 		tny_folder_remove_observer (TNY_FOLDER (folder), TNY_FOLDER_OBSERVER (observer));
 		g_object_unref (observer);
+		observer = NULL;
 
 		if (priv->error)
 			priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
@@ -862,11 +888,26 @@ update_account_thread (gpointer thr_user_data)
 		g_ptr_array_sort (new_headers, (GCompareFunc) compare_headers_by_date);
 
 		/* Apply message count limit */
-		/* TODO if the number of messages exceeds the maximum, ask the
-		   user to download them all */
+		/* If the number of messages exceeds the maximum, ask the
+		 * user to download them all,
+		 * as per the UI spec "Retrieval Limits" section in 4.4: 
+		 */
+		printf ("DEBUG: %s: account=%s, len=%d, retrieve_limit = %d\n", __FUNCTION__, 
+			tny_account_get_id (priv->account), new_headers->len, info->retrieve_limit);
+		if (new_headers->len > info->retrieve_limit) {
+			/* TODO: Ask the user, instead of just failing, showing mail_nc_msg_count_limit_exceeded, 
+			 * with 'Get all' and 'Newest only' buttons. */
+			g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
+			     MODEST_MAIL_OPERATION_ERROR_RETRIEVAL_NUMBER_LIMIT,
+			     "The number of messages to retrieve exceeds the chosen limit for account %s\n", 
+			     tny_account_get_name (TNY_ACCOUNT (info->transport_account)));
+			priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
+			goto out;
+		}
+		
 		priv->done = 0;
 		priv->total = MIN (new_headers->len, info->retrieve_limit);
-		while ((msg_num < priv->total)) {
+		while (msg_num < priv->total) {
 
 			TnyHeader *header = TNY_HEADER (g_ptr_array_index (new_headers, msg_num));
 			TnyFolder *folder = tny_header_get_folder (header);
@@ -1017,6 +1058,8 @@ modest_mail_operation_update_account (ModestMailOperation *self,
 							   MODEST_ACCOUNT_LIMIT_RETRIEVE, FALSE);
 	if (info->retrieve_limit == 0)
 		info->retrieve_limit = G_MAXINT;
+		
+	printf ("DEBUG: %s: info->retrieve_limit = %d\n", __FUNCTION__, info->retrieve_limit);
 
 	thread = g_thread_create (update_account_thread, info, FALSE, NULL);
 
@@ -1627,7 +1670,7 @@ modest_mail_operation_get_msgs_full (ModestMailOperation *self,
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 		/* FIXME: the error msg is different for pop */
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
-			     MODEST_MAIL_OPERATION_ERROR_SIZE_LIMIT,
+			     MODEST_MAIL_OPERATION_ERROR_MESSAGE_SIZE_LIMIT,
 			     _("emev_ni_ui_imap_msg_size_exceed_error"));
 		/* Remove from queue and free resources */
 		modest_mail_operation_notify_end (self);
