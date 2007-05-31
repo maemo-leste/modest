@@ -4,6 +4,14 @@
 	(modest_hbox_cell_renderer_append):
 	* src/widgets/modest-vbox-cell-renderer.c:
 	(modest_vbox_cell_renderer_append):
+	Fix the last commit by doing an extra ref.
+
+2007-05-31  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/widgets/modest-hbox-cell-renderer.c:
+	(modest_hbox_cell_renderer_append):
+	* src/widgets/modest-vbox-cell-renderer.c:
+	(modest_vbox_cell_renderer_append):
 	For glib < 2.10, use gtk_object_sink() instead of g_object_ref_sink(), 
 	to fix the build with Maemo Bora.
 	However, there seems to be a remaining crash, probably due to reference 

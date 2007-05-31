@@ -187,6 +187,7 @@ modest_vbox_cell_renderer_append (ModestVBoxCellRenderer *vbox_renderer,
 #if GLIB_CHECK_VERSION(2, 10, 0) /* g_object_ref_sink() was added in glib 2.10: */
 	g_object_ref_sink (G_OBJECT (cell));
 #else
+	g_object_ref (G_OBJECT (cell));
 	gtk_object_sink (GTK_OBJECT (cell));
 #endif
 }
