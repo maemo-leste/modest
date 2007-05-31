@@ -132,16 +132,19 @@ modest_address_book_add_address (const gchar *address)
 	}
 	
 	account = osso_abook_account_get (EVC_EMAIL, NULL, address);
-	dialog = osso_abook_add_to_contacts_dialog_new (contact_model, account);
-	g_object_unref (account);
-	gtk_dialog_run (GTK_DIALOG (dialog));
+	if (account)
+	{
+		dialog = osso_abook_add_to_contacts_dialog_new (contact_model, account);
+		g_object_unref (account);
+		gtk_dialog_run (GTK_DIALOG (dialog));
 
-	if (contact_model) {
-		g_object_unref (contact_model);
-		contact_model = NULL;
+		if (contact_model) {
+			g_object_unref (contact_model);
+			contact_model = NULL;
+		}
+
+		gtk_widget_destroy (dialog);
 	}
-
-	gtk_widget_destroy (dialog);
 
 }
 
