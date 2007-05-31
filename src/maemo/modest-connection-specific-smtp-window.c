@@ -513,6 +513,10 @@ void update_model_server_names (ModestConnectionSpecificSmtpWindow *self)
 					    MODEL_COL_SERVER_NAME, hostname,
 					    -1);
 			g_free (hostname);
+		} else {
+			gtk_list_store_set (GTK_LIST_STORE (priv->model), &iter,
+					    MODEL_COL_SERVER_NAME, _("mcen_ia_optionalsmtp_notdefined"),
+					    -1);
 		}
 			
 		/* Get next row: */
