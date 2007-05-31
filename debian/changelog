@@ -1,3 +1,13 @@
+modest (1.0-week22) gutsy; urgency=low
+
+  * svn 2001
+  * Fixes: 57294, 58263, 57398, 57478, 57325, 57465, 57461
+  * Fixes: 57328, 57359, 55452, 56966, 57458, 57522, 56140
+  * Fixes: 56137, 57224
+  * This release implements all features, except for the new notifications
+
+ -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Thu, 31 May 2007 08:38:00 +0300
+
 modest (1.0-week21pre1) gutsy; urgency=low
 
   * svn revision 1948
