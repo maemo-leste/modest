@@ -173,7 +173,7 @@ on_caption_combobox_changed (GtkComboBox *widget, gpointer user_data)
 /** This is a convenience function to create a caption containing a mandatory widget.
  * When the widget is edited, the enable_buttons() vfunc will be called.
  */
-static GtkWidget* create_caption_new_with_asterix(ModestEasysetupWizardDialog *self,
+static GtkWidget* create_caption_new_with_asterisk(ModestEasysetupWizardDialog *self,
 						  GtkSizeGroup *group,
 						  const gchar *value,
 						  GtkWidget *control,
@@ -286,7 +286,7 @@ create_page_account_details (ModestEasysetupWizardDialog *self)
 
 	/* The country widgets: */
 	self->combo_account_country = GTK_WIDGET (easysetup_country_combo_box_new ());
-	GtkWidget *caption = create_caption_new_with_asterix (self, sizegroup, _("mcen_fi_country"), 
+	GtkWidget *caption = create_caption_new_with_asterisk (self, sizegroup, _("mcen_fi_country"), 
 							      self->combo_account_country, NULL, HILDON_CAPTION_OPTIONAL);
 	gtk_widget_show (self->combo_account_country);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
@@ -303,7 +303,7 @@ create_page_account_details (ModestEasysetupWizardDialog *self)
 	/* The service provider widgets: */	
 	self->combo_account_serviceprovider = GTK_WIDGET (easysetup_provider_combo_box_new ());
 	
-	caption = create_caption_new_with_asterix (self, sizegroup, _("mcen_fi_serviceprovider"), 
+	caption = create_caption_new_with_asterisk (self, sizegroup, _("mcen_fi_serviceprovider"), 
 						   self->combo_account_serviceprovider, NULL, HILDON_CAPTION_OPTIONAL);
 	gtk_widget_show (self->combo_account_serviceprovider);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
@@ -369,7 +369,7 @@ create_page_account_details (ModestEasysetupWizardDialog *self)
 	g_free (default_account_name);
 	default_account_name = NULL;
 
-	caption = create_caption_new_with_asterix (self, sizegroup, _("mcen_fi_account_title"), 
+	caption = create_caption_new_with_asterisk (self, sizegroup, _("mcen_fi_account_title"), 
 						   self->entry_account_title, NULL, HILDON_CAPTION_MANDATORY);
 	gtk_widget_show (self->entry_account_title);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
@@ -423,7 +423,7 @@ create_page_user_details (ModestEasysetupWizardDialog *self)
 	gtk_entry_set_max_length (GTK_ENTRY (self->entry_user_name), 64);
 	modest_validating_entry_set_max_func (MODEST_VALIDATING_ENTRY (self->entry_user_name), 
 					      on_entry_max, self);
-	GtkWidget *caption = create_caption_new_with_asterix (self, sizegroup, 
+	GtkWidget *caption = create_caption_new_with_asterisk (self, sizegroup, 
 							      _("mcen_li_emailsetup_name"), self->entry_user_name, NULL, HILDON_CAPTION_OPTIONAL);
 	gtk_widget_show (self->entry_user_name);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
@@ -442,7 +442,7 @@ create_page_user_details (ModestEasysetupWizardDialog *self)
 	self->entry_user_username = GTK_WIDGET (modest_validating_entry_new ());
 	/* Auto-capitalization is the default, so let's turn it off: */
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (self->entry_user_username), HILDON_GTK_INPUT_MODE_FULL);
-	caption = create_caption_new_with_asterix (self, sizegroup, _("mail_fi_username"), 
+	caption = create_caption_new_with_asterisk (self, sizegroup, _("mail_fi_username"), 
 						   self->entry_user_username, NULL, HILDON_CAPTION_MANDATORY);
 	gtk_widget_show (self->entry_user_username);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
@@ -466,7 +466,7 @@ create_page_user_details (ModestEasysetupWizardDialog *self)
 					 HILDON_GTK_INPUT_MODE_FULL | HILDON_GTK_INPUT_MODE_INVISIBLE);
 	gtk_entry_set_visibility (GTK_ENTRY (self->entry_user_password), FALSE);
 	/* gtk_entry_set_invisible_char (GTK_ENTRY (self->entry_user_password), '*'); */
-	caption = create_caption_new_with_asterix (self, sizegroup, 
+	caption = create_caption_new_with_asterisk (self, sizegroup, 
 						   _("mail_fi_password"), self->entry_user_password, NULL, HILDON_CAPTION_OPTIONAL);
 	gtk_widget_show (self->entry_user_password);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
@@ -476,7 +476,7 @@ create_page_user_details (ModestEasysetupWizardDialog *self)
 	self->entry_user_email = GTK_WIDGET (modest_validating_entry_new ());
 	/* Auto-capitalization is the default, so let's turn it off: */
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (self->entry_user_email), HILDON_GTK_INPUT_MODE_FULL);
-	caption = create_caption_new_with_asterix (self, sizegroup, 
+	caption = create_caption_new_with_asterisk (self, sizegroup, 
 						   _("mcen_li_emailsetup_email_address"), self->entry_user_email, NULL, HILDON_CAPTION_MANDATORY);
 	gtk_entry_set_text (GTK_ENTRY (self->entry_user_email), EXAMPLE_EMAIL_ADDRESS); /* Default text. */
 	gtk_widget_show (self->entry_user_email);
@@ -561,7 +561,7 @@ static GtkWidget* create_page_custom_incoming (ModestEasysetupWizardDialog *self
 		self->combo_incoming_servertype = GTK_WIDGET (easysetup_servertype_combo_box_new ());
 	easysetup_servertype_combo_box_set_active_servertype (
 		EASYSETUP_SERVERTYPE_COMBO_BOX (self->combo_incoming_servertype), MODEST_PROTOCOL_STORE_POP);
-	GtkWidget *caption = create_caption_new_with_asterix (self, sizegroup, 
+	GtkWidget *caption = create_caption_new_with_asterisk (self, sizegroup, 
 							      _("mcen_li_emailsetup_type"), self->combo_incoming_servertype, NULL, HILDON_CAPTION_MANDATORY);
 	gtk_widget_show (self->combo_incoming_servertype);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
@@ -579,7 +579,7 @@ static GtkWidget* create_page_custom_incoming (ModestEasysetupWizardDialog *self
 	/* The caption title will be updated in update_incoming_server_title().
 	 * so this default text will never be seen: */
 	/* (Note: Changing the title seems pointless. murrayc) */
-	self->caption_incoming = create_caption_new_with_asterix (self, sizegroup, 
+	self->caption_incoming = create_caption_new_with_asterisk (self, sizegroup, 
 								  "Incoming Server", self->entry_incomingserver, NULL, HILDON_CAPTION_MANDATORY);
 	update_incoming_server_title (self);
 	gtk_widget_show (self->entry_incomingserver);
@@ -670,7 +670,7 @@ static GtkWidget* create_page_custom_outgoing (ModestEasysetupWizardDialog *self
 		self->entry_outgoingserver = gtk_entry_new ();
 	/* Auto-capitalization is the default, so let's turn it off: */
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (self->entry_outgoingserver), HILDON_GTK_INPUT_MODE_FULL);
-	GtkWidget *caption = create_caption_new_with_asterix (self, sizegroup, 
+	GtkWidget *caption = create_caption_new_with_asterisk (self, sizegroup, 
 							      _("mcen_li_emailsetup_smtp"), self->entry_outgoingserver, NULL, HILDON_CAPTION_OPTIONAL);
 	gtk_widget_show (self->entry_outgoingserver);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
