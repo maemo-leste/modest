@@ -291,6 +291,8 @@ on_selection_changed (GtkTreeSelection *sel, ModestConnectionSpecificSmtpWindow 
 static void
 modest_connection_specific_smtp_window_init (ModestConnectionSpecificSmtpWindow *self)
 {
+	ModestWindowMgr *mgr;
+
 	/* Specify a default size, because the GtkTreeView's default requested size  
 	 * is not big enough: */
 	gtk_window_set_default_size (GTK_WINDOW (self), 500, 200);
@@ -381,8 +383,12 @@ modest_connection_specific_smtp_window_init (ModestConnectionSpecificSmtpWindow 
 	
 	/* When this window is shown, hibernation should not be possible, 
 	 * because there is no sensible way to save the state: */
-    modest_window_mgr_prevent_hibernation_while_window_is_shown (
-    	modest_runtime_get_window_mgr (), GTK_WINDOW (self)); 
+	mgr = modest_runtime_get_window_mgr ();
+	modest_window_mgr_prevent_hibernation_while_window_is_shown (mgr, 
+								     GTK_WINDOW (self)); 
+
+	/* Set window title */
+	gtk_window_set_title (GTK_WINDOW (self), _("mcen_ti_optionalsmtp_servers"));
 }
 
 ModestConnectionSpecificSmtpWindow*
