@@ -235,14 +235,14 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 			      NULL);
 	else
 		g_object_set (G_OBJECT (attach_cell), "pixbuf",
-			      get_pixbuf_for_flag (0), NULL);
+			      NULL, NULL);
 	if (flags & TNY_HEADER_FLAG_PRIORITY)
 		g_object_set (G_OBJECT (priority_cell), "pixbuf",
 			      get_pixbuf_for_flag (flags & TNY_HEADER_FLAG_PRIORITY),
 			      NULL);
 	else
 		g_object_set (G_OBJECT (priority_cell), "pixbuf",
-			      get_pixbuf_for_flag (0), NULL);
+			      NULL, NULL);
 	header = g_markup_printf_escaped ("%s", (subject && strlen (subject)) ? subject : _("mail_va_no_subject"));
 	g_free (subject);
 	g_object_set (G_OBJECT (subject_cell), "markup", header, NULL);
