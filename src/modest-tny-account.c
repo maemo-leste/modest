@@ -40,9 +40,12 @@
 #include <tny-camel-imap-store-account.h>
 #include <tny-camel-pop-store-account.h>
 #include <tny-folder-stats.h>
-#include <hildon-widgets/hildon-file-system-info.h>
 #include <string.h>
-
+#ifdef MODEST_HILDON_VERSION_0
+#include <hildon-widgets/hildon-file-system-info.h>
+#else
+#include <hildon/hildon-file-system-info.h>
+#endif
 
 TnyFolder *
 modest_tny_account_get_special_folder (TnyAccount *account,
