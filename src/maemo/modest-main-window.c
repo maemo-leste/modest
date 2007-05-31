@@ -388,6 +388,13 @@ on_account_store_connecting_finished (TnyAccountStore *store, ModestMainWindow *
 	 * (without the check for >0 accounts, though that is not specified): */
 
 	TnyDevice *device = tny_account_store_get_device (store);
+	
+	/* Check that we are really online.
+	 * This signal should not be emitted when we are not connected, 
+	 * but it seems to happen sometimes: */
+	 if (!tny_device_is_online (device))
+	 	return;
+	 	
 	const gchar *iap_id = tny_maemo_conic_device_get_current_iap_id (TNY_MAEMO_CONIC_DEVICE (device));
 	printf ("DEBUG: %s: connection id=%s\n", __FUNCTION__, iap_id);
 	

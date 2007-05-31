@@ -1,5 +1,12 @@
 2007-05-31  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/maemo/modest-main-window.c:
+	(on_account_store_connecting_finished): Do not try to get the 
+	connection ID if we are not really connected. I am surprised that 
+	this signal handler is called when we are not connected.
+
+2007-05-31  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/modest-error.h: 
 	* src/modest-ui-actions.c:
 	(modest_ui_actions_get_msgs_full_error_handler):
