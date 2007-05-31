@@ -602,6 +602,10 @@ modest_msg_view_window_new (TnyMsg *msg, const gchar *account_name)
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/EditMenu/EditCutMenu");
 	gtk_action_set_sensitive (action, FALSE);
 
+	/* also set the add to contacts status to false as it depends on clipboard status */
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/ToolsMenu/ToolsAddToContactsMenu");
+	gtk_action_set_sensitive (action, FALSE);
+
 	gtk_widget_grab_focus (priv->msg_view);
 
 	return MODEST_WINDOW(obj);
