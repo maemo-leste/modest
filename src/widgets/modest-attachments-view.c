@@ -115,6 +115,9 @@ modest_attachments_view_set_message (ModestAttachmentsView *attachments_view, Tn
 	
 	priv->msg = msg;
 
+	g_list_free (priv->selected);
+	priv->selected = NULL;
+
 	gtk_container_foreach (GTK_CONTAINER (priv->box), (GtkCallback) gtk_widget_destroy, NULL);
 	
 	if (priv->msg == NULL) {
