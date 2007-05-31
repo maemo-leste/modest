@@ -1,3 +1,10 @@
+modest (1.0-week22-2) gutsy; urgency=low
+
+   * svn 2013
+   * Fixes: 56485, 56975, 57592, 57415
+
+ -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Thu, 31 May 2007 18:43:15 +0300
+
 modest (1.0-week22) gutsy; urgency=low
 
   * svn 2001
