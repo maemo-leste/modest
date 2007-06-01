@@ -1066,7 +1066,7 @@ modest_mail_operation_update_account (ModestMailOperation *self,
 	if (info->retrieve_limit == 0)
 		info->retrieve_limit = G_MAXINT;
 		
-	printf ("DEBUG: %s: info->retrieve_limit = %d\n", __FUNCTION__, info->retrieve_limit);
+	/* printf ("DEBUG: %s: info->retrieve_limit = %d\n", __FUNCTION__, info->retrieve_limit); */
 
 	thread = g_thread_create (update_account_thread, info, FALSE, NULL);
 
