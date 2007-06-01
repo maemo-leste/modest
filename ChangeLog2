@@ -1,5 +1,20 @@
 2007-06-01  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-tny-account-store.c: (recreate_all_accounts),
+	(get_cached_accounts), (get_server_accounts): Do more sensible 
+	ref-counting of the temporarily-cached outbox accounts list. This seems 
+	to fix a crash when entering the password when the password was wrong.
+
+2007-06-01  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/gnome/modest-main-window.c: (connect_signals):
+	* src/modest-tny-account-store.c: (get_password),
+	(modest_tny_account_store_alert): Added comments and clues and 
+	commented-out code about how we currently fail to deal with connection 
+	errors and wrong passwords, and how we should.
+
+2007-06-01  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/widgets/modest-retrieve-combo-box.c:
 	(modest_retrieve_combo_box_fill): Correc the choices for POP and IMAP.
 	This fixes projects.maemo.org bug NB#58472 .

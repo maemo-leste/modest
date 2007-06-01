@@ -48,6 +48,9 @@
 #include <modest-tny-account.h>
 #include <modest-account-mgr.h>
 #include <modest-account-mgr-helpers.h>
+#include <widgets/modest-window-mgr.h>
+#include <modest-account-settings-dialog.h>
+
 
 #include "modest-tny-account-store.h"
 #include "modest-tny-platform-factory.h"
@@ -58,8 +61,10 @@
 #include <tny-maemo-conic-device.h>
 #ifdef MODEST_HILDON_VERSION_0
 #include <hildon-widgets/hildon-note.h>
+#include <hildon-widgets/hildon-banner.h>
 #else
 #include <hildon/hildon-note.h>
+#include <hildon/hildon-banner.h>
 #endif
 #endif
 
@@ -244,6 +249,11 @@ recreate_all_accounts (ModestTnyAccountStore *self)
 	ModestTnyAccountStorePrivate *priv = 
 		MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
 	
+	if (priv->store_accounts_outboxes) {
+		account_list_free (priv->store_accounts_outboxes);
+		priv->store_accounts_outboxes = NULL;
+	}
+			
 	if (priv->store_accounts) {
 		account_list_free (priv->store_accounts);
 		priv->store_accounts = NULL;
@@ -392,6 +402,10 @@ get_password (TnyAccount *account, const gchar *prompt, gboolean *cancel)
 	}
 
 	/* if it was already asked, it must have been wrong, so ask again */
+	/* TODO: However, when we supply a wrong password to tinymail, 
+	 * it seems to (at least sometimes) call our alert_func() instead of 
+	 * asking for the password again.
+	 */
 	if (already_asked || !pwd || strlen(pwd) == 0) {
 		/* we don't have it yet. Get the password from the user */
 		const gchar* account_id = tny_account_get_id (account);
@@ -554,7 +568,11 @@ get_cached_accounts (TnyAccountStore *self, TnyList *list, TnyAccountType type)
 
 	cursor = accounts;
 	while (cursor) {
-		tny_list_prepend (list, G_OBJECT(cursor->data));
+		if (cursor->data) {
+			GObject *object = G_OBJECT(cursor->data);
+			tny_list_prepend (list, object);
+		}
+			
 		cursor = cursor->next;
 	}
 }
@@ -773,8 +791,12 @@ get_server_accounts  (TnyAccountStore *self, TnyList *list, TnyAccountType type)
 				if (list && outbox_account)
 					tny_list_prepend (list,  G_OBJECT(outbox_account));
 					
+				g_object_ref (outbox_account);
 				accounts = g_slist_append (accounts, outbox_account);
 			}
+			
+			account_list_free (priv->store_accounts_outboxes);
+			priv->store_accounts_outboxes = NULL;
 		}
 	}
 		
@@ -924,7 +946,45 @@ modest_tny_account_store_alert (TnyAccountStore *self, TnyAlertType type,
 			/* prompt = _("Modest account not yet fully configured."); */
 			prompt = g_strdup_printf(_("Modest account not yet fully configured. Error=%s"), 
 				error->message);
+				
+			/* TODO: If we can ever determine that the problem is a wrong password:
+			 * In this case, the UI spec wants us to show a banner, and then 
+			 * open the Account Settings dialog. */
+			/* Note: Sometimes, the get_password() function seems to be called again 
+			 * when a password is wrong, but sometimes this alert_func is called. */
+			#if 0
+			GtkWidget *parent_widget = 
+				GTK_WIDGET (
+					modest_window_mgr_get_main_window (
+						modest_runtime_get_window_mgr ()));
+			
+			hildon_banner_show_information (
+				parent_widget,
+				NULL /* icon name */,
+				_("mcen_ib_username_pw_incorrect") );
+				
+			/* Show the Account Settings window: */
+			ModestAccountSettingsDialog *dialog = modest_account_settings_dialog_new ();
+			/* TODO: Get the account somehow. Maybe tinymail should send it with the signal. */
+			const gchar* modest_account_name = 
+				modest_tny_account_get_parent_modest_account_name_for_server_account (account);
+			g_assert (modest_account_name);
+			modest_account_settings_dialog_set_account_name (dialog, 
+				modest_account_name);
+			
+			gtk_window_set_transient_for (GTK_WINDOW (dialog), GTK_WINDOW (self));
+			gtk_dialog_run (GTK_DIALOG (dialog));
+			gtk_widget_destroy (GTK_WIDGET (dialog));
+			#endif
+			 
 			break;
+			
+		//TODO: We have started receiving errors of 
+		//domain=TNY_ACCOUNT_ERROR, code=TNY_ACCOUNT_ERROR_TRY_CONNECT, messagae="Canceled".
+		//If this is really a result of us cancelling our own operation then 
+		//a) this probably shouldn't be an error, and
+		//b) should have its own error code.
+		
 		default:
 			g_warning ("%s: Unhandled GError code: %d, message=%s", 
 				__FUNCTION__, error->code, error->message);
