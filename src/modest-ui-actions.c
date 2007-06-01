@@ -1412,11 +1412,39 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 	
 	gchar *from = modest_account_mgr_get_from_string (account_mgr, account_name);
 
+	MsgData *data = modest_msg_edit_window_get_msg_data (edit_window);
+
+	/* mail content checks and dialogs */
+	if (data->subject == NULL || data->subject[0] == '\0') {
+		GtkResponseType response;
+		response = modest_platform_run_confirmation_dialog (GTK_WINDOW (edit_window),
+								    _("mcen_nc_subject_is_empty_send"));
+		if (response == GTK_RESPONSE_CANCEL) {
+			g_free (account_name);
+			return;
+		}
+	}
+
+	if (data->plain_body == NULL || data->plain_body[0] == '\0') {
+		GtkResponseType response;
+		gchar *note_message;
+		gchar *note_subject = data->subject;
+		if (note_subject == NULL || note_subject[0] == '\0')
+			note_subject = _("mail_va_no_subject");
+		note_message = g_strdup_printf (_("emev_ni_ui_smtp_message_null"), note_subject);
+		response = modest_platform_run_confirmation_dialog (GTK_WINDOW (edit_window),
+								    note_message);
+		g_free (note_message);
+		if (response == GTK_RESPONSE_CANCEL) {
+			g_free (account_name);
+			return;
+		}
+	}
+
 	/* Create the mail operation */
 	ModestMailOperation *mail_operation = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_SEND, G_OBJECT(edit_window));
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_operation);
 
-	MsgData *data = modest_msg_edit_window_get_msg_data (edit_window);
 	modest_mail_operation_send_new_mail (mail_operation,
 					     transport_account,
 					     from,
