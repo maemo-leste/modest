@@ -2060,7 +2060,7 @@ modest_ui_actions_on_cut (GtkAction *action,
 		GtkTextBuffer *buffer;
 		GtkClipboard *clipboard;
 
-		clipboard = gtk_clipboard_get (GDK_SELECTION_PRIMARY);
+		clipboard = gtk_clipboard_get (GDK_SELECTION_CLIPBOARD);
 		buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (focused_widget));
 		gtk_text_buffer_cut_clipboard (buffer, clipboard, TRUE);
 	}
@@ -2073,7 +2073,7 @@ modest_ui_actions_on_copy (GtkAction *action,
 	GtkClipboard *clipboard;
 	GtkWidget *focused_widget;
 
-	clipboard = gtk_clipboard_get (GDK_SELECTION_PRIMARY);
+	clipboard = gtk_clipboard_get (GDK_SELECTION_CLIPBOARD);
 	focused_widget = gtk_window_get_focus (GTK_WINDOW (window));
 	if (GTK_IS_LABEL (focused_widget)) {
 		gtk_clipboard_set_text (clipboard, gtk_label_get_text (GTK_LABEL (focused_widget)), -1);
@@ -2111,7 +2111,7 @@ modest_ui_actions_on_paste (GtkAction *action,
 		GtkTextBuffer *buffer;
 		GtkClipboard *clipboard;
 
-		clipboard = gtk_clipboard_get (GDK_SELECTION_PRIMARY);
+		clipboard = gtk_clipboard_get (GDK_SELECTION_CLIPBOARD);
 		buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (focused_widget));
 		gtk_text_buffer_paste_clipboard (buffer, clipboard, NULL, TRUE);
 	}
