@@ -1,5 +1,12 @@
 2007-06-01  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/maemo/easysetup/modest-easysetup-wizard.c:
+	(create_page_complete_custom): Show the second sentence of text 
+	(mcen_ia_easysetup_complete). This fixes projects.maemo.org bug 
+	NB#59023 .
+
+2007-06-01  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/modest-account-mgr.c: (modest_account_mgr_add_account):
 	Set the leave-on-server conf key by default. This fixes 
 	projects.maemo.org bug NB#59258 .

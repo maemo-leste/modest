@@ -496,9 +496,11 @@ create_page_user_details (ModestEasysetupWizardDialog *self)
 static GtkWidget* create_page_complete_easysetup (ModestEasysetupWizardDialog *self)
 {
 	GtkWidget *box = gtk_vbox_new (FALSE, MODEST_MARGIN_NONE);
+	
 	GtkWidget *label = gtk_label_new(_("mcen_ia_emailsetup_setup_complete"));
 	gtk_box_pack_start (GTK_BOX (box), label, FALSE, FALSE, 0);
 	gtk_widget_show (label);
+	
 	gtk_widget_show (GTK_WIDGET (box));
 	return GTK_WIDGET (box);
 }
@@ -807,6 +809,12 @@ static GtkWidget* create_page_complete_custom (ModestEasysetupWizardDialog *self
 {
 	GtkWidget *box = gtk_vbox_new (FALSE, MODEST_MARGIN_NONE);
 	GtkWidget *label = gtk_label_new(_("mcen_ia_emailsetup_setup_complete"));
+	gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
+	gtk_box_pack_start (GTK_BOX (box), label, FALSE, FALSE, 0);
+	gtk_widget_show (label);
+	
+	label = gtk_label_new (_("mcen_ia_easysetup_complete"));
+	gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
 	gtk_box_pack_start (GTK_BOX (box), label, FALSE, FALSE, 0);
 	gtk_widget_show (label);
 	
