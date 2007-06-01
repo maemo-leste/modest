@@ -1,5 +1,11 @@
 2007-06-01  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-account-mgr.c: (modest_account_mgr_add_account):
+	Set the leave-on-server conf key by default. This fixes 
+	projects.maemo.org bug NB#59258 .
+
+2007-06-01  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/maemo/modest-account-view-window.c:
 	(on_delete_button_clicked): Use the new emev_nc_delete_mailboximap 
 	logical ID for the confirmation messages. Fixed projects.maemo.org bug 

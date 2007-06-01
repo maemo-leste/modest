@@ -288,6 +288,14 @@ modest_account_mgr_add_account (ModestAccountMgr *self,
 			return FALSE;
 		}
 	}
+
+	/* Make sure that leave-messages-on-server is enabled by default, 
+	 * as per the UI spec, though it is only meaningful for accounts using POP.
+	 * (possibly this gconf key should be under the server account): */
+	modest_account_mgr_set_bool (self, name,
+		MODEST_ACCOUNT_LEAVE_ON_SERVER, TRUE, FALSE /* not server account */);
+
+
 	modest_account_mgr_set_enabled (self, name, enabled);
 
 	/* if no default account has been defined yet, do so now */
