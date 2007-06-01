@@ -391,6 +391,9 @@ current_connection (void)
 	account_store = TNY_ACCOUNT_STORE (modest_runtime_get_account_store ());
 	device = tny_account_store_get_device (account_store);
 
+	if (!tny_device_is_online (device))
+		return MODEST_CONNECTED_VIA_ANY;
+
 	/* Get iap id */
 	const gchar *iap_id = tny_maemo_conic_device_get_current_iap_id (TNY_MAEMO_CONIC_DEVICE (device));
 	if (iap_id) {

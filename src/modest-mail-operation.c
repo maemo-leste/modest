@@ -997,6 +997,13 @@ modest_mail_operation_update_account (ModestMailOperation *self,
 	g_return_val_if_fail (MODEST_IS_MAIL_OPERATION (self), FALSE);
 	g_return_val_if_fail (account_name, FALSE);
 
+	/* Make sure that we have a connection, and request one 
+	 * if necessary:
+	 * TODO: Is there some way to trigger this for every attempt to 
+	 * use the network? */
+	if (!modest_platform_connect_and_wait(NULL))
+		return FALSE;
+	
 	/* Init mail operation. Set total and done to 0, and do not
 	   update them, this way the progress objects will know that
 	   we have no clue about the number of the objects */

@@ -651,12 +651,8 @@ gboolean modest_platform_connect_and_wait (GtkWindow *parent_window)
 	if (tny_device_is_online (device))
 		return TRUE;
 		
-	/* TODO: Block on the result: */
-	gboolean request_sent = tny_maemo_conic_device_connect (TNY_MAEMO_CONIC_DEVICE (device), NULL);
-	if (!request_sent)
-		return FALSE;
-
-	return TRUE;
+	/* This blocks on the result: */
+	return tny_maemo_conic_device_connect (TNY_MAEMO_CONIC_DEVICE (device), NULL);
 }
 
 void

@@ -1,3 +1,16 @@
+2007-06-01  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/maemo/modest-maemo-global-settings-dialog.c:
+	(current_connection): Check that we are even connected before trying to 
+	get the current connection name, to prevent a warning.
+	
+	* src/maemo/modest-platform.c: (modest_platform_connect_and_wait):
+	Change the comments because tny_maemo_conic_device_connect() is now meant to 
+	block.
+	* src/modest-mail-operation.c:
+	(modest_mail_operation_update_account): Call modest_platform_connect_and_wait() to 
+	make sure we have a connection and fail if we can't connect.
+
 2007-05-31  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/maemo/modest-main-window.c:
