@@ -1,5 +1,13 @@
 2007-06-01  Murray Cumming  <murrayc@murrayc.com>
 
+
+	* src/maemo/easysetup/modest-easysetup-wizard.c:
+	(create_page_complete_easysetup): 
+	(create_page_complete_custom): Correct the last commit, 
+	putting the correct sentences in the correct pages.
+
+2007-06-01  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/maemo/easysetup/modest-easysetup-wizard.c:
 	(create_page_complete_custom): Show the second sentence of text 
 	(mcen_ia_easysetup_complete). This fixes projects.maemo.org bug 
