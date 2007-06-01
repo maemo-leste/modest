@@ -1,5 +1,12 @@
 2007-06-01  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/maemo/modest-account-view-window.c:
+	(on_delete_button_clicked): Use the new emev_nc_delete_mailboximap 
+	logical ID for the confirmation messages. Fixed projects.maemo.org bug 
+	NB#59037 .
+
+2007-06-01  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/maemo/easysetup/modest-easysetup-wizard.c:
 	(create_caption_new_with_asterisk): 
 	* src/maemo/modest-account-settings-dialog.c:

@@ -179,9 +179,7 @@ on_delete_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 						      GTK_STOCK_OK,
 						      GTK_RESPONSE_ACCEPT,
 						      NULL);
-		/* TODO: This confirmation dialog is not specified in the Maemo UI spec, 
-		 * but we really need one: */
-		txt = g_strdup_printf (_("Do you really want to delete the account %s?"), 
+		txt = g_strdup_printf (_("emev_nc_delete_mailboximap"), 
 			account_title);
 		gtk_box_pack_start (GTK_BOX(GTK_DIALOG(dialog)->vbox), 
 				    gtk_label_new (txt), FALSE, FALSE, 0);
