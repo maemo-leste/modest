@@ -138,18 +138,19 @@ void modest_retrieve_combo_box_fill (ModestRetrieveComboBox *combobox, ModestTra
 		MODEL_COL_CONF_NAME, MODEST_ACCOUNT_RETRIEVE_VALUE_HEADERS_ONLY, 
 		MODEL_COL_NAME, _("mcen_fi_advsetup_retrievetype_headers"), -1);
 	
-	gtk_list_store_append (liststore, &iter);
-	gtk_list_store_set (liststore, &iter, 
-		MODEL_COL_CONF_NAME, MODEST_ACCOUNT_RETRIEVE_VALUE_MESSAGES, 
-		MODEL_COL_NAME, _("mcen_fi_advsetup_retrievetype_messages"), -1);
-	
 	/* Only IMAP should have this option, according to the UI spec: */
 	if (protocol == MODEST_PROTOCOL_STORE_IMAP) {
 		gtk_list_store_append (liststore, &iter);
 		gtk_list_store_set (liststore, &iter, 
-			MODEL_COL_CONF_NAME, MODEST_ACCOUNT_RETRIEVE_VALUE_MESSAGES_AND_ATTACHMENTS, 
-			MODEL_COL_NAME, _("mcen_fi_advsetup_retrievetype_messages_attachments"), -1);
+			MODEL_COL_CONF_NAME, MODEST_ACCOUNT_RETRIEVE_VALUE_MESSAGES, 
+			MODEL_COL_NAME, _("mcen_fi_advsetup_retrievetype_messages"), -1);
 	}
+	
+	
+	gtk_list_store_append (liststore, &iter);
+	gtk_list_store_set (liststore, &iter, 
+		MODEL_COL_CONF_NAME, MODEST_ACCOUNT_RETRIEVE_VALUE_MESSAGES_AND_ATTACHMENTS, 
+		MODEL_COL_NAME, _("mcen_fi_advsetup_retrievetype_messages_attachments"), -1);
 }
 
 /**

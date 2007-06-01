@@ -1,5 +1,10 @@
 2007-06-01  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/widgets/modest-retrieve-combo-box.c:
+	(modest_retrieve_combo_box_fill): Correc the choices for POP and IMAP.
+	This fixes projects.maemo.org bug NB#58472 .
+
+2007-06-01  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/maemo/easysetup/modest-easysetup-wizard.c:
 	(create_page_complete_easysetup): 
