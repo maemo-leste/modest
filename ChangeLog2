@@ -1,5 +1,15 @@
 2007-06-01  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/maemo/easysetup/modest-easysetup-wizard.c:
+	(create_caption_new_with_asterisk): 
+	* src/maemo/modest-account-settings-dialog.c:
+	(create_caption_new_with_asterisk):
+	Uncomment the code to add the asterisk, because they are no longer in the 
+	translated text in the .po file. Fixes projects.maemo.org bug NB#59202 .
+	(update_incoming_server_title): Add an asterisk here too.
+
+2007-06-01  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/maemo/modest-maemo-global-settings-dialog.c:
 	(current_connection): Check that we are even connected before trying to 
 	get the current connection name, to prevent a warning.

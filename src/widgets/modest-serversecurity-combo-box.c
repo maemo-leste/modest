@@ -157,6 +157,7 @@ void modest_serversecurity_combo_box_fill (ModestServersecurityComboBox *combobo
 	
 	GtkTreeIter iter;
 	gtk_list_store_append (liststore, &iter);
+	/* TODO: This logical ID is not in the .po file: */
 	gtk_list_store_set (liststore, &iter, MODEL_COL_ID, (gint)MODEST_PROTOCOL_CONNECTION_NORMAL, MODEL_COL_NAME, _("mcen_fi_advsetup_other_security_none"), -1);
 	
 	/* Select the None item: */

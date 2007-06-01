@@ -180,12 +180,11 @@ static GtkWidget* create_caption_new_with_asterisk(ModestEasysetupWizardDialog *
 						  GtkWidget *icon,
 						  HildonCaptionStatus flag)
 {
-	GtkWidget *caption = hildon_caption_new (group, value, control, icon, flag);
+	GtkWidget *caption = NULL;
   
-/* The translated strings seem to already contain the *,
- * but this code can be used if that is not true in future.
- */
-#if 0
+	/* Note: Previously, the translated strings already contained the "*",
+	 * Comment out this code if they do again.
+	 */
 	/* Add a * character to indicate mandatory fields,
 	 * as specified in our "Email UI Specification": */
 	if (flag == HILDON_CAPTION_MANDATORY) {
@@ -195,7 +194,6 @@ static GtkWidget* create_caption_new_with_asterisk(ModestEasysetupWizardDialog *
 	}	
 	else
 		caption = hildon_caption_new (group, value, control, icon, flag);
-#endif
 
 	/* Connect to the appropriate changed signal for the widget, 
 	 * so we can ask for the prev/next buttons to be enabled/disabled appropriately:

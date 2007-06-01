@@ -212,12 +212,11 @@ static GtkWidget* create_caption_new_with_asterisk(ModestAccountSettingsDialog *
 	GtkWidget *icon,
 	HildonCaptionStatus flag)
 {
-  GtkWidget *caption = hildon_caption_new (group, value, control, icon, flag);
+ 	GtkWidget *caption = NULL;
   
-/* The translated strings seem to already contain the *,
- * but this code can be used if that is not true in future.
- */
-#if 0
+	/* Note: Previously, the translated strings already contained the "*",
+	 * Comment out this code if they do again.
+	 */
 	/* Add a * character to indicate mandatory fields,
 	 * as specified in our "Email UI Specification": */
 	if (flag == HILDON_CAPTION_MANDATORY) {
@@ -227,7 +226,6 @@ static GtkWidget* create_caption_new_with_asterisk(ModestAccountSettingsDialog *
 	}	
 	else
 		caption = hildon_caption_new (group, value, control, icon, flag);
-#endif
 
 	/* Connect to the appropriate changed signal for the widget, 
 	 * so we can ask for the prev/next buttons to be enabled/disabled appropriately:
@@ -496,8 +494,14 @@ static void update_incoming_server_title (ModestAccountSettingsDialog *self, Mod
 	 * because the compiler does not know that the translated string will have a %s in it.
 	 * I do not see a way to avoid the warning while still using these Logical IDs. murrayc. */
 	gchar* incomingserver_title = g_strdup_printf(_("mcen_li_emailsetup_servertype"), type);
-	g_object_set (G_OBJECT (self->caption_incoming), "label", incomingserver_title, NULL);
-	g_free(incomingserver_title);
+	
+	/* This is a mandatory field, so add a *. This is usually done by 
+	 * create_caption_new_with_asterisk() but we can't use that here. */
+	gchar *with_asterisk = g_strconcat (incomingserver_title, "*", NULL);
+	g_free (incomingserver_title);
+	
+	g_object_set (G_OBJECT (self->caption_incoming), "label", with_asterisk, NULL);
+	g_free(with_asterisk);
 }
 
 /** Change the caption title for the incoming server, 
