@@ -89,6 +89,7 @@ static void  text_buffer_refresh_attributes (WPTextBuffer *buffer, ModestMsgEdit
 static void  text_buffer_delete_range (GtkTextBuffer *buffer, GtkTextIter *start, GtkTextIter *end, gpointer userdata);
 static void  text_buffer_can_undo (GtkTextBuffer *buffer, gboolean can_undo, ModestMsgEditWindow *window);
 static void  text_buffer_delete_images_by_id (GtkTextBuffer *buffer, const gchar * image_id);
+static void  subject_field_changed (GtkEditable *editable, ModestMsgEditWindow *window);
 static void  modest_msg_edit_window_color_button_change (ModestMsgEditWindow *window,
 							 gpointer userdata);
 static void  modest_msg_edit_window_size_change (GtkCheckMenuItem *menu_item,
@@ -114,6 +115,7 @@ static void modest_msg_edit_window_show_toolbar   (ModestWindow *window,
 static void modest_msg_edit_window_clipboard_owner_change (GtkClipboard *clipboard,
 							   GdkEvent *event,
 							   ModestMsgEditWindow *window);
+static void update_window_title (ModestMsgEditWindow *window);
 static void update_dimmed (ModestMsgEditWindow *window);
 
 
@@ -408,6 +410,7 @@ init_window (ModestMsgEditWindow *obj)
 	g_signal_connect (G_OBJECT (modest_recpt_editor_get_buffer (MODEST_RECPT_EDITOR (priv->to_field))),
 			  "changed", G_CALLBACK (to_field_changed), obj);
 	to_field_changed (modest_recpt_editor_get_buffer (MODEST_RECPT_EDITOR (priv->to_field)), MODEST_MSG_EDIT_WINDOW (obj));
+	g_signal_connect (G_OBJECT (priv->subject_field), "changed", G_CALLBACK (subject_field_changed), obj);
 
 	priv->scroll = gtk_scrolled_window_new (NULL, NULL);
 	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (priv->scroll), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
@@ -548,11 +551,13 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg)
 	if (bcc)
 		modest_recpt_editor_set_recipients (MODEST_RECPT_EDITOR (priv->bcc_field), bcc);
 	if (subject)
-		gtk_entry_set_text (GTK_ENTRY(priv->subject_field), subject);	
+		gtk_entry_set_text (GTK_ENTRY(priv->subject_field), subject);
+
+	update_window_title (self);
 
 /* 	gtk_text_buffer_set_can_paste_rich_text (priv->text_buffer, TRUE); */
 	wp_text_buffer_reset_buffer (WP_TEXT_BUFFER (priv->text_buffer), TRUE);
-	body = modest_tny_msg_get_body (msg, FALSE);
+	body = modest_tny_msg_get_body (msg, TRUE);
 
 	if ((body == NULL)||(body[0] == '\0')) {
 		g_free (body);
@@ -861,7 +866,6 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name)
 
 	restore_settings (MODEST_MSG_EDIT_WINDOW(obj));
 		
-	gtk_window_set_title (GTK_WINDOW(obj), "Modest");
 	gtk_window_set_icon_from_file (GTK_WINDOW(obj), MODEST_APP_ICON, NULL);
 
 	g_signal_connect (G_OBJECT(obj), "delete-event",
@@ -2307,3 +2311,24 @@ modest_msg_edit_window_clipboard_owner_change (GtkClipboard *clipboard,
 	gtk_action_set_sensitive (action, (selection != NULL) && (!MODEST_IS_ATTACHMENTS_VIEW (focused)));
 }
 
+static void 
+update_window_title (ModestMsgEditWindow *window)
+{
+	ModestMsgEditWindowPrivate *priv = NULL;
+	const gchar *subject;
+
+	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
+	subject = gtk_entry_get_text (GTK_ENTRY (priv->subject_field));
+	if (subject == NULL || subject[0] == '\0')
+		subject = _("mail_va_new_email");
+
+	gtk_window_set_title (GTK_WINDOW (window), subject);
+
+}
+
+static void  
+subject_field_changed (GtkEditable *editable, 
+		       ModestMsgEditWindow *window)
+{
+	update_window_title (window);
+}
