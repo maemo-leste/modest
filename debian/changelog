@@ -1,19 +1,15 @@
-modest (1.0-week22-2) gutsy; urgency=low
+modest (1.0-2007.22-3) gutsy; urgency=low
 
-   * svn 2013
-   * Fixes: 56485, 56975, 57592, 57415
+  * svn 2023
+  * Fixes: NB#59220, NB#58227, NB#57580, NB#55363, NB#59217
+  * Fixes: NB#56485, NB#56975, NB#57592, NB#57415
+  * Fixes: NB#57294, NB#58263, NB#57398, NB#57478, NB#57325, NB#57465, NB#57461
+  * Fixes: NB#57328, NB#57359, NB#55452, NB#56966, NB#57458, NB#57522, NB#56140
+  * Fixes: NB#56137, NB#57224
+  * This release implements all features, except for the new notifications, search and send-as-email
 
- -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Thu, 31 May 2007 18:43:15 +0300
+ -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Fri, 01 Jun 2007 10:16:42 +0300
 
-modest (1.0-week22) gutsy; urgency=low
-
-  * svn 2001
-  * Fixes: 57294, 58263, 57398, 57478, 57325, 57465, 57461
-  * Fixes: 57328, 57359, 55452, 56966, 57458, 57522, 56140
-  * Fixes: 56137, 57224
-  * This release implements all features, except for the new notifications
-
- -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Thu, 31 May 2007 08:38:00 +0300
 
 modest (1.0-week21pre1) gutsy; urgency=low
 
