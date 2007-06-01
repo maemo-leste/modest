@@ -129,7 +129,24 @@ ModestTnyFolderRules  modest_tny_folder_get_rules   (TnyFolder *folder);
  * Returns: TRUE if this folder is the per-account outbox for the account.
  */
 gboolean modest_tny_folder_is_outbox_for_account (TnyFolder *folder, 
-	TnyAccount *account);
+						  TnyAccount *account);
+
+/**
+ * modest_tny_msg_get_header_unique_id:
+ * @header: a #TnyHeader
+ * 
+ * this function returns a unique id for a message summary, that's it
+ * a TnyHeader retrieved with tny_folder_get_headers (you can not use
+ * the TnyHeader returned by tny_msg_get_header because it has not an
+ * uid).
+ *
+ * This uid is built from the folder URL string and the header uid,
+ * the caller of the function must free the unique id when no longer
+ * needed
+ * 
+ * Returns: a unique identificator for a header object
+ **/
+gchar* modest_tny_folder_get_header_unique_id (TnyHeader *header);
 
 G_END_DECLS
 

@@ -279,3 +279,26 @@ modest_tny_folder_is_outbox_for_account (TnyFolder *folder, TnyAccount *account)
 #endif
 }
 
+gchar* 
+modest_tny_folder_get_header_unique_id (TnyHeader *header)
+{
+	TnyFolder *folder;
+	gchar *url, *retval;
+	const gchar *uid;
+
+	g_return_val_if_fail (TNY_IS_HEADER (header), NULL);
+
+	folder = tny_header_get_folder (header);
+	if (!folder)
+		return NULL;
+
+	url = tny_folder_get_url_string (folder);
+	uid = tny_header_get_uid (header);
+
+	retval = g_strjoin ("/", url, uid, NULL);
+
+	g_free (url);
+	g_object_unref (folder);
+
+	return retval;
+}

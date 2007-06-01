@@ -75,7 +75,9 @@ GType        modest_msg_view_window_get_type    (void) G_GNUC_CONST;
  *
  * Returns: a new #ModestMsgViewWindow, or NULL in case of error
  */
-ModestWindow*   modest_msg_view_window_new         (TnyMsg *msg, const gchar *account);
+ModestWindow*   modest_msg_view_window_new         (TnyMsg *msg, 
+						    const gchar *account,
+						    const gchar *msg_uid);
 
 /**
  * modest_msg_view_window_new_with_header_model:
@@ -93,6 +95,7 @@ ModestWindow*   modest_msg_view_window_new         (TnyMsg *msg, const gchar *ac
  */
 ModestWindow*   modest_msg_view_window_new_with_header_model (TnyMsg *msg, 
 							      const gchar *account, 
+							      const gchar *msg_uid,
 							      GtkTreeModel *model, 
 							      GtkTreeRowReference *row_reference);
 

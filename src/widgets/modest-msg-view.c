@@ -1382,6 +1382,12 @@ modest_msg_view_set_message (ModestMsgView *self, TnyMsg *msg)
 		} else {
 			gtk_widget_hide_all (priv->attachments_box);
 		}
+
+/* 		g_print ("---\nfilename %s\ncontent_location %s\ncontent_id%s\ncontent_type%s\n", */
+/* 			 tny_mime_part_get_filename (body), */
+/* 			 tny_mime_part_get_content_location (body), */
+/* 			 tny_mime_part_get_content_id (body), */
+/* 			 tny_mime_part_get_content_type (body)); */
 			
 	} else 
 		set_empty_message (self);

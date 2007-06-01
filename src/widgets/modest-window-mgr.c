@@ -30,6 +30,7 @@
 #include <string.h>
 #include "modest-window-mgr.h"
 #include "modest-runtime.h"
+#include "modest-tny-folder.h"
 #include "widgets/modest-main-window.h"
 #include "widgets/modest-msg-edit-window.h"
 #include "widgets/modest-msg-view-window.h"
@@ -294,6 +295,7 @@ compare_msguids (ModestWindow *win,
 
 	/* Get message uid from msg window */
 	msg_uid = modest_msg_view_window_get_message_uid (MODEST_MSG_VIEW_WINDOW (win));
+
 	if (msg_uid && !strcmp (msg_uid, uid))
 		return 0;
 	else
@@ -301,23 +303,28 @@ compare_msguids (ModestWindow *win,
 }
 
 ModestWindow*  
-modest_window_mgr_find_window_by_msguid (ModestWindowMgr *self, 
-					 const gchar *msguid)
+modest_window_mgr_find_window_by_header (ModestWindowMgr *self, 
+					 TnyHeader *header)
 {
 	ModestWindowMgrPrivate *priv;
 	GList *win = NULL;
+	gchar *msg_uid;
 
 	g_return_val_if_fail (MODEST_IS_WINDOW_MGR (self), NULL);
-	g_return_val_if_fail (msguid != NULL, NULL);
+	g_return_val_if_fail (TNY_IS_HEADER (header), NULL);
 
 	priv = MODEST_WINDOW_MGR_GET_PRIVATE (self);
+	msg_uid = modest_tny_folder_get_header_unique_id (header);
 
 	/* Look for the window */
 	if (priv->window_list)
 		win = g_list_find_custom (priv->window_list, 
-					  msguid, 
+					  msg_uid, 
 					  (GCompareFunc) compare_msguids);
+	/* Free */
+	g_free (msg_uid);
 
+	/* Return the window */
 	if (win)
 		return win->data;
 	else 
@@ -496,5 +503,3 @@ void modest_window_mgr_save_state_for_all_windows (ModestWindowMgr *self)
 		win = g_list_next (win);
 	}
 }
-
-

@@ -88,17 +88,17 @@ void           modest_window_mgr_unregister_window     (ModestWindowMgr *self,
 
 
 /**
- * modest_window_mgr_find_window_by_msguid:
+ * modest_window_mgr_find_window_by_header:
  * @self: the #ModestWindowMgr
  * @msgid: the message uid
  * 
- * Looks for a #ModestWindow that shows the message specified by the
- * message uid passed as argument
+ * Looks for a #ModestWindow that shows the message whose header is
+ * passed as argument
  *
  * Return value: the #ModestWindow if found, else NULL
  **/
-ModestWindow*  modest_window_mgr_find_window_by_msguid (ModestWindowMgr *self, 
-							const gchar *msguid);
+ModestWindow*  modest_window_mgr_find_window_by_header (ModestWindowMgr *self, 
+							TnyHeader *header);
 
 /**
  * modest_window_mgr_set_fullscreen_mode:

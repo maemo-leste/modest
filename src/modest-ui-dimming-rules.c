@@ -544,9 +544,9 @@ _already_opened_msg (ModestWindow *win)
 	/* Check dimmed rule (TODO: check focus on widgets */	
 	mgr = modest_runtime_get_window_mgr ();
 	iter = tny_list_create_iterator (selected_headers);
-	while (!tny_iterator_is_done (iter) && result) {	
+	while (!tny_iterator_is_done (iter) && result) {
 		header = TNY_HEADER (tny_iterator_get_current (iter));
-		window = modest_window_mgr_find_window_by_msguid (mgr, tny_header_get_uid (header));
+		window = modest_window_mgr_find_window_by_header (mgr, header);
 		result = result && (window != NULL);
 			
 		g_object_unref (header);

@@ -57,6 +57,8 @@ struct _ModestMsgViewWindowPrivate {
 	GtkWidget   *toolbar;
 	GtkWidget   *menubar;
 	GtkWidget   *msg_view;
+
+	gchar *msg_uid;
 };
 
 #define MODEST_MSG_VIEW_WINDOW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -160,9 +162,10 @@ modest_msg_view_window_init (ModestMsgViewWindow *obj)
 	ModestMsgViewWindowPrivate *priv;
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE(obj);
 
-	priv->toolbar       = NULL;
-	priv->menubar       = NULL;
-	priv->msg_view      = NULL;
+	priv->toolbar  = NULL;
+	priv->menubar  = NULL;
+	priv->msg_view = NULL;
+	priv->msg_uid  = NULL;
 }
 
 
@@ -195,7 +198,16 @@ init_window (ModestMsgViewWindow *obj, TnyMsg *msg)
 
 static void
 modest_msg_view_window_finalize (GObject *obj)
-{	
+{
+	ModestMsgViewWindowPrivate *priv;
+
+	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE(obj);
+
+	if (priv->msg_uid) {
+		g_free (priv->msg_uid);
+		msg_uid = NULL;
+	}
+
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
@@ -210,7 +222,9 @@ on_delete_event (GtkWidget *widget, GdkEvent *event, ModestMsgViewWindow *self)
 
 
 ModestWindow *
-modest_msg_view_window_new (TnyMsg *msg, const gchar *account)
+modest_msg_view_window_new (TnyMsg *msg, 
+			    const gchar *account, 
+			    const gchar *msg_uid)
 {
 	GObject *obj;
 	ModestMsgViewWindowPrivate *priv;
@@ -225,6 +239,8 @@ modest_msg_view_window_new (TnyMsg *msg, const gchar *account)
 	obj = g_object_new(MODEST_TYPE_MSG_VIEW_WINDOW, NULL);
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE(obj);
 	parent_priv = MODEST_WINDOW_GET_PRIVATE(obj);
+
+	priv->msg_uid = g_strdup (msg_uid);
 
 	modest_window_set_active_account (MODEST_WINDOW(obj), account);
 	
@@ -321,6 +337,7 @@ modest_msg_view_window_get_message_uid (ModestMsgViewWindow *self)
 ModestWindow*   
 modest_msg_view_window_new_with_header_model (TnyMsg *msg, 
 					      const gchar *account, 
+					      const gchar *msg_uid,
 					      GtkTreeModel *model, 
 					      GtkTreeRowReference *row_reference)
 {

@@ -153,6 +153,8 @@ struct _ModestMsgViewWindowPrivate {
 	guint queue_change_handler;
 
 	guint progress_bar_timeout;
+
+	gchar *msg_uid;
 };
 
 #define MODEST_MSG_VIEW_WINDOW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -239,6 +241,7 @@ modest_msg_view_window_init (ModestMsgViewWindow *obj)
 
 	priv->optimized_view  = FALSE;
 	priv->progress_bar_timeout = 0;
+	priv->msg_uid = NULL;
 }
 
 
@@ -443,6 +446,11 @@ modest_msg_view_window_finalize (GObject *obj)
 		priv->row_reference = NULL;
 	}
 
+	if (priv->msg_uid) {
+		g_free (priv->msg_uid);
+		priv->msg_uid = NULL;
+	}
+
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
@@ -456,13 +464,16 @@ on_delete_event (GtkWidget *widget, GdkEvent *event, ModestMsgViewWindow *self)
 }
 
 ModestWindow *
-modest_msg_view_window_new_with_header_model (TnyMsg *msg, const gchar *account_name,
-					      GtkTreeModel *model, GtkTreeRowReference *row_reference)
+modest_msg_view_window_new_with_header_model (TnyMsg *msg, 
+					      const gchar *account_name,
+					      const gchar *msg_uid,
+					      GtkTreeModel *model, 
+					      GtkTreeRowReference *row_reference)
 {
 	ModestMsgViewWindow *window = NULL;
 	ModestMsgViewWindowPrivate *priv = NULL;
 
-	window = MODEST_MSG_VIEW_WINDOW(modest_msg_view_window_new (msg, account_name));
+	window = MODEST_MSG_VIEW_WINDOW(modest_msg_view_window_new (msg, account_name, msg_uid));
 	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (window), NULL);
 
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
@@ -480,7 +491,9 @@ modest_msg_view_window_new_with_header_model (TnyMsg *msg, const gchar *account_
 
 
 ModestWindow *
-modest_msg_view_window_new (TnyMsg *msg, const gchar *account_name)
+modest_msg_view_window_new (TnyMsg *msg, 
+			    const gchar *account_name,
+			    const gchar *msg_uid)
 {
 	ModestMsgViewWindow *self = NULL;
 	GObject *obj = NULL;
@@ -498,6 +511,8 @@ modest_msg_view_window_new (TnyMsg *msg, const gchar *account_name)
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE(obj);
 	parent_priv = MODEST_WINDOW_GET_PRIVATE(obj);
 	self = MODEST_MSG_VIEW_WINDOW (obj);
+
+	priv->msg_uid = g_strdup (msg_uid);
 
 	parent_priv->ui_manager = gtk_ui_manager_new();
 	parent_priv->ui_dimming_manager = modest_ui_dimming_manager_new();
@@ -654,23 +669,8 @@ modest_msg_view_window_get_message (ModestMsgViewWindow *self)
 const gchar*
 modest_msg_view_window_get_message_uid (ModestMsgViewWindow *self)
 {
-	TnyMsg *msg;
-	TnyHeader *header;
-	const gchar *retval = NULL;
-
-	msg = modest_msg_view_window_get_message (self);
-
-	if (!msg)
-		return NULL;
-
-	header = tny_msg_get_header (msg);
-	if (header) {
-		retval = tny_header_get_uid (header);
-		g_object_unref (header);
-	}
-	g_object_unref (msg);
-
-	return retval;
+	ModestMsgViewWindowPrivate *priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (self);
+	return (const gchar*) priv->msg_uid;
 }
 
 static void 
@@ -1536,18 +1536,17 @@ modest_msg_view_window_view_attachment (ModestMsgViewWindow *window, TnyMimePart
 		/* message attachment */
 		TnyHeader *header = NULL;
 		ModestWindowMgr *mgr;
-		ModestWindow *msg_win;
+		ModestWindow *msg_win = NULL;
 
 		header = tny_msg_get_header (TNY_MSG (mime_part));
 		mgr = modest_runtime_get_window_mgr ();
-		/* TODO: this is not getting any uid */
-		msg_win = modest_window_mgr_find_window_by_msguid (mgr, tny_header_get_uid (header));
+		msg_win = modest_window_mgr_find_window_by_header (mgr, header);
 
 		if (!msg_win) {
 			gchar *account = g_strdup (modest_window_get_active_account (MODEST_WINDOW (window)));
 			if (!account)
 				account = modest_account_mgr_get_default_account (modest_runtime_get_account_mgr ());
-			msg_win = modest_msg_view_window_new (TNY_MSG (mime_part), account);
+			msg_win = modest_msg_view_window_new (TNY_MSG (mime_part), account, NULL);
 			modest_window_mgr_register_window (mgr, msg_win);
 			gtk_window_set_transient_for (GTK_WINDOW (msg_win), GTK_WINDOW (window));
 		}

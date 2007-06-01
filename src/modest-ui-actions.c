@@ -32,6 +32,7 @@
 #endif /*HAVE_CONFIG_H*/
 
 #include <glib/gi18n.h>
+#include <glib/gprintf.h>
 #include <string.h>
 #include <modest-runtime.h>
 #include <modest-tny-folder.h>
@@ -235,11 +236,40 @@ modest_ui_actions_on_delete (GtkAction *action, ModestWindow *win)
 	gchar *message = NULL;
 	gchar *desc = NULL;
 	gint response;
+	gboolean found;
+	ModestWindowMgr *mgr;
 
 	g_return_if_fail (MODEST_IS_WINDOW(win));
 
 	header_list = get_selected_headers (win);
 	if (!header_list) return;
+
+	/* Check if any of the headers is already opened */
+	iter = tny_list_create_iterator (header_list);
+	found = FALSE;
+	mgr = modest_runtime_get_window_mgr ();
+	while (!tny_iterator_is_done (iter) && !found) {
+		header = TNY_HEADER (tny_iterator_get_current (iter));
+		if (modest_window_mgr_find_window_by_header (mgr, header))
+			found = TRUE;
+		g_object_unref (header);
+		tny_iterator_next (iter);
+	}
+	g_object_unref (iter);
+
+	if (found) {
+		gchar *num, *msg;
+
+		num = g_strdup_printf ("%d", tny_list_get_length (header_list));
+		msg = g_strdup_printf (_("mcen_nc_unable_to_delete_n_messages"), num);
+
+		modest_platform_run_information_dialog (GTK_WINDOW (win), (const gchar *) msg);
+
+		g_free (msg);
+		g_free (num);
+		g_object_unref (header_list);
+		return;
+	}
 
 	/* Select message */
 	if (tny_list_get_length(header_list) > 1)
@@ -249,6 +279,8 @@ modest_ui_actions_on_delete (GtkAction *action, ModestWindow *win)
 		header = TNY_HEADER (tny_iterator_get_current (iter));
 		desc = g_strdup_printf ("%s", tny_header_get_subject (header)); 
 		message = g_strdup_printf(_("emev_nc_delete_message"), desc);
+		g_object_unref (header);
+		g_object_unref (iter);
 	}
 
 	/* Confirmation dialog */		
@@ -275,7 +307,6 @@ modest_ui_actions_on_delete (GtkAction *action, ModestWindow *win)
 	g_free(message);
 	g_free(desc);
 	g_object_unref (header_list);
-	g_object_unref (iter);
 }
 
 
@@ -548,6 +579,8 @@ open_msg_cb (ModestMailOperation *mail_op,
 	if (folder_type == TNY_FOLDER_TYPE_DRAFTS) {
 		win = modest_msg_edit_window_new (msg, account);
 	} else {
+		gchar *uid = modest_tny_folder_get_header_unique_id (header);
+
 		if (MODEST_IS_MAIN_WINDOW (parent_win)) {
 			GtkWidget *header_view;
 			GtkTreeSelection *sel;
@@ -568,16 +601,18 @@ open_msg_cb (ModestMailOperation *mail_op,
 				g_list_free (sel_list);
 				
 				win = modest_msg_view_window_new_with_header_model (msg, 
-										    account, 
+										    account,
+										    (const gchar*) uid,
 										    model, 
 										    row_reference);
 				gtk_tree_row_reference_free (row_reference);
 			} else {
-				win = modest_msg_view_window_new (msg, account);
+				win = modest_msg_view_window_new (msg, account, (const gchar*) uid);
 			}
 		} else {
-			win = modest_msg_view_window_new (msg, account);
+			win = modest_msg_view_window_new (msg, account, (const gchar*) uid);
 		}
+		g_free (uid);
 	}
 	
 	/* Register and show new window */
@@ -636,9 +671,13 @@ _modest_ui_actions_open (TnyList *headers, ModestWindow *win)
 		TnyHeader *header;
 
 		header = TNY_HEADER (tny_iterator_get_current (iter));
-		window = modest_window_mgr_find_window_by_msguid (mgr, tny_header_get_uid (header));
-		if (window)
+		window = modest_window_mgr_find_window_by_header (mgr, header);
+		if (window) {
+			/* Do not open again the message and present
+			   the window to the user */
 			tny_list_remove (headers, G_OBJECT (header));
+			gtk_window_present (GTK_WINDOW (window));
+		}
 
 		g_object_unref (header);
 		tny_iterator_next (iter);
