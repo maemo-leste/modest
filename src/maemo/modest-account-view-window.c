@@ -230,6 +230,24 @@ on_edit_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 	if (!account_name)
 		return;
 		
+	/* Check whether any connections are active, and cancel them if 
+	 * the user wishes.
+	 * TODO: Check only for connections with this account, instead of all.
+	 * Maybe we need a queue per account.
+	 */
+	ModestMailOperationQueue* queue = modest_runtime_get_mail_operation_queue ();
+	if (modest_mail_operation_queue_num_elements(queue)) {
+		GtkWidget *note = hildon_note_new_confirmation (GTK_WINDOW (self), 
+			_("emev_nc_disconnect_account"));
+		const int response = gtk_dialog_run (GTK_DIALOG(note));
+		gtk_widget_destroy (note);
+		if (response == GTK_RESPONSE_OK) {
+			modest_mail_operation_queue_cancel_all(queue);;
+		}
+		else
+			return;
+	}
+		
 	/* Freeze updates, so we can do just one update afterwards, 
 	 * instead of responding to every conf key change: */
 	modest_account_view_block_conf_updates (priv->account_view);

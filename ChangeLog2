@@ -1,5 +1,14 @@
 2007-06-01  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/maemo/modest-account-view-window.c: (on_edit_button_clicked):
+	Check for running mail operations, and offer to cancel them, as per the UI 
+	spec. This fixes projects.maemo.org bug NB#59041 .
+	However, I suspect that tinymail may still use the network connection 
+	in ways that we cannot detect or cancel. But it should at least adapt to 
+	changes fairly well.
+
+2007-06-01  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/modest-tny-account-store.c: (recreate_all_accounts),
 	(get_cached_accounts), (get_server_accounts): Do more sensible 
 	ref-counting of the temporarily-cached outbox accounts list. This seems 
