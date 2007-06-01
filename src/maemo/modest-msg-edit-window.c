@@ -670,6 +670,7 @@ modest_msg_edit_window_setup_toolbar (ModestMsgEditWindow *window)
 	tool_item = GTK_WIDGET (gtk_tool_item_new ());
 	priv->font_color_button = hildon_color_button_new ();
 	GTK_WIDGET_UNSET_FLAGS (tool_item, GTK_CAN_FOCUS);
+	GTK_WIDGET_UNSET_FLAGS (priv->font_color_button, GTK_CAN_FOCUS);
 	gtk_container_add (GTK_CONTAINER (tool_item), priv->font_color_button);
 	gtk_tool_item_set_expand (GTK_TOOL_ITEM (tool_item), TRUE);
 	gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (tool_item), TRUE);
@@ -2174,6 +2175,7 @@ msg_body_focus (GtkWidget *focus,
 		GdkEventFocus *event,
 		gpointer userdata)
 {
+	
 	update_dimmed (MODEST_MSG_EDIT_WINDOW (userdata));
 	return FALSE;
 }
@@ -2304,3 +2306,4 @@ modest_msg_edit_window_clipboard_owner_change (GtkClipboard *clipboard,
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/EditMenu/CopyMenu");
 	gtk_action_set_sensitive (action, (selection != NULL) && (!MODEST_IS_ATTACHMENTS_VIEW (focused)));
 }
+
