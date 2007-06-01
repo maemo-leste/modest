@@ -502,7 +502,7 @@ static GtkWidget* create_page_complete_easysetup (ModestEasysetupWizardDialog *s
 	gtk_box_pack_start (GTK_BOX (box), label, FALSE, FALSE, 0);
 	gtk_widget_show (label);
 	
-	label = gtk_label_new (_("mcen_ia_customsetup_complete"));
+	label = gtk_label_new (_("mcen_ia_easysetup_complete"));
 	gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
 	gtk_box_pack_start (GTK_BOX (box), label, FALSE, FALSE, 0);
 	gtk_widget_show (label);
@@ -819,7 +819,7 @@ static GtkWidget* create_page_complete_custom (ModestEasysetupWizardDialog *self
 	gtk_box_pack_start (GTK_BOX (box), label, FALSE, FALSE, 0);
 	gtk_widget_show (label);
 	
-	label = gtk_label_new (_("mcen_ia_easysetup_complete"));
+	label = gtk_label_new (_("mcen_ia_customsetup_complete"));
 	gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
 	gtk_box_pack_start (GTK_BOX (box), label, FALSE, FALSE, 0);
 	gtk_widget_show (label);
