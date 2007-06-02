@@ -1,30 +1,39 @@
 #include <libmodest-dbus-client/libmodest-dbus-client.h>
 #include <stdio.h>
 
-int main(int argc, char *argv[])
+int
+main (int argc, char *argv[])
 {
-	/* Initialize maemo application */
-	osso_context_t * osso_context = osso_initialize(
-	    "test_hello", "0.0.1", TRUE, NULL);
+	osso_context_t *osso_context;
+	const char *url;
+      	gboolean ret; 
+
+	osso_context = osso_initialize ("test_open_msg",
+					"0.0.1",
+					TRUE,
+					NULL);
 	       
-	/* Check that initialization was ok */
-	if (osso_context == NULL)
-	{
-		printf("osso_initialize() failed.\n");
-	    return OSSO_ERROR;
+	if (osso_context == NULL) {
+		g_printerr ("osso_initialize() failed.\n");
+	    return -1;
 	}
 	
-	/* Call the function in libmodest-dbus-client: */
-	/* TODO: The Message URI system is not yet implemented. */
-	const gboolean ret = libmodest_dbus_client_open_message (osso_context,
-		"http://todo_some_message_uri");
-	if (!ret) {
-			printf("libmodest_dbus_client_open_message() failed.\n");
-		return OSSO_ERROR;
+	if (argc == 2) {
+		url = argv[1];
 	} else {
-		printf("libmodest_dbus_client_open_message() succeeded.\n");
+		url = "local://???FIXME???";
+	}
+
+	g_print ("Trying to open msg: %s\n", url);
+	ret = libmodest_dbus_client_open_message (osso_context,
+						  url);
+
+	if (!ret) {
+		g_printerr ("libmodest_dbus_client_open_message() failed.\n");
+	} else {
+		g_print ("libmodest_dbus_client_open_message() succeeded.\n");
 	}
 		
-    /* Exit */
-    return 0;
+    return ret ? 0 : -1;
+
 }

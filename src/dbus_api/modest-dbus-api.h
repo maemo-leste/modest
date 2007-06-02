@@ -80,4 +80,9 @@ enum ModestDbusComposeMailArguments
 	MODEST_DEBUS_COMPOSE_MAIL_ARGS_COUNT
 };
 
+#define MODEST_DBUS_METHOD_SEARCH "Search"
+
+
+
+
 #endif /* __MODEST_DBUS_API__ */

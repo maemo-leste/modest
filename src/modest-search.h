@@ -4,6 +4,8 @@
 #include <glib.h>
 #include <tny-folder.h>
 
+#define _GNU_SOURCE
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -28,7 +30,7 @@ typedef enum {
 typedef struct {
 	gchar *subject, *from, *recipient, *body;
 	time_t before, after;
-	guint minsize;
+	guint32 minsize;
 	ModestSearchFlags flags;
 #ifdef MODEST_HAVE_OGS
 	const gchar     *query;
@@ -36,8 +38,9 @@ typedef struct {
 #endif
 } ModestSearch;
 
-GList * modest_search (TnyFolder *folder, ModestSearch *search);
-
+GList * modest_search_folder (TnyFolder *folder, ModestSearch *search);
+GList * modest_search_all_accounts (ModestSearch *search);
+GList * modest_search_account (TnyAccount *account, ModestSearch *search);
 G_END_DECLS
 
 #endif

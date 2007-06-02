@@ -1,3 +1,38 @@
+2007-06-03  Christian Kellner  <ckellner@openismus.com>
+
+	* libmodest-dbus-client/libmodest-dbus-client.c:
+	* libmodest-dbus-client/libmodest-dbus-client.h:
+	Implement searching for mesages over raw dbus. (Client side)
+	
+	* src/dbus_api/Makefile.am:
+	* src/dbus_api/modest-dbus-api.h:
+	* src/dbus_api/modest-dbus-callbacks.c:
+	* src/dbus_api/modest-dbus-callbacks.h:
+	Search framework (Server side). Also implement on_idle_open_message().
+
+	* src/maemo/modest-platform.c: (modest_platform_init):
+	Prepare for raw dbus/osso rpc interaction.
+
+	* src/modest-search.h:
+	Changed minsize from unspecific guint to guint32.
+
+	* src/modest-search.c: 
+	(add_header):
+	Added strange hack which magically made tnymail work.
+	
+	(modest_search_folder),
+	(modest_search_account),
+	(modest_search_all_accounts):
+	Implement helper functions to search all accounts, specific account
+	and folder.
+
+	* tests/dbus_api/Makefile.am:
+	* tests/dbus_api/test_open_message.c:
+	Read url to open from commandline.
+
+	* tests/dbus_api/test_search.c:
+	Implement small test for dbus search stuff
+
 2007-06-02  Armin Burgmeier  <armin@openismus.com>
 
 	* src/maemo/modest-account-settings-dialog.c: Changed window title to

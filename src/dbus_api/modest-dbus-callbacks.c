@@ -33,8 +33,10 @@
 #include "modest-account-mgr-helpers.h"
 #include "modest-tny-account.h"
 #include "modest-ui-actions.h"
+#include "modest-search.h"
 #include "widgets/modest-msg-edit-window.h"
 #include "modest-tny-msg.h"
+#include <libmodest-dbus-client/libmodest-dbus-client.h>
 #include <libgnomevfs/gnome-vfs-utils.h>
 #include <stdio.h>
 #include <string.h>
@@ -503,14 +505,105 @@ static gint on_compose_mail(GArray * arguments, gpointer data, osso_rpc_t * retv
 }
 
 
-static gboolean
-on_idle_open_message(gpointer user_data)
+static TnyMsg *
+find_message_by_url (const char *uri, TnyAccount **ac_out)
 {
-	gchar *uri = (gchar*)user_data;
+
+	ModestTnyAccountStore *astore;
+	TnyAccount            *account;
+	TnyFolder             *folder;
+	TnyMsg                *msg;
+
+	account = NULL;
+	msg = NULL;
+	folder = NULL;
+
+	astore = modest_runtime_get_account_store ();
 	
-	g_message ("not implemented yet %s", __FUNCTION__);
+	if (astore == NULL) {
+		return NULL;
+	}
 	
-	g_free(uri);
+	g_debug ("Got AccountStore, lets go");
+
+	account = tny_account_store_find_account (TNY_ACCOUNT_STORE (astore),
+						  uri);
+	
+	if (account == NULL) {
+		return NULL;
+	}
+
+	g_debug ("Found account");
+
+	if ( ! TNY_IS_STORE_ACCOUNT (account)) {
+		goto out;
+	}
+
+	g_debug ("Account is store account");
+
+	*ac_out = account;
+
+	folder = tny_store_account_find_folder (TNY_STORE_ACCOUNT (account),
+						uri,
+						NULL);
+
+	if (folder == NULL) {
+		goto out;
+	}
+	g_debug ("Found folder");
+	
+
+	msg = tny_folder_find_msg (folder, uri, NULL);
+
+out:
+	if (account && !msg) {
+		g_object_unref (account);
+		*ac_out = NULL;
+	}
+
+	if (folder) {
+		g_object_unref (folder);
+	}
+
+	return msg;
+}
+
+static gboolean
+on_idle_open_message (gpointer user_data)
+{
+	ModestWindow *msg_view;
+	TnyMsg       *msg;
+	TnyAccount   *account;
+	TnyHeader    *header; 
+	const char   *msg_uid;
+	const char   *account_name;
+	char         *uri;
+       
+	uri = (char *) user_data;
+
+	g_debug ("Trying to find msg by url: %s", uri);	
+	msg = find_message_by_url (uri, &account);
+	g_free (uri);
+
+	if (msg == NULL) {
+		return FALSE;
+	}
+	g_debug ("Found message");
+
+	header = tny_msg_get_header (msg);
+	account_name = tny_account_get_name (account);
+	msg_uid = tny_header_get_uid (header);
+	
+	msg_view = modest_msg_view_window_new (msg,
+					       account_name,
+					       msg_uid);
+	/* TODO: does that leak the msg_view ?! */
+
+	gtk_widget_show_all (GTK_WIDGET (msg_view));
+
+	g_object_unref (header);
+	g_object_unref (account);
+	
 	return FALSE; /* Do not call this callback again. */
 }
 
@@ -568,10 +661,10 @@ gint modest_dbus_req_handler(const gchar * interface, const gchar * method,
                       GArray * arguments, gpointer data,
                       osso_rpc_t * retval)
 {
-	/*
+	
 	printf("debug: modest_dbus_req_handler()\n");
 	printf("debug: method received: %s\n", method);
-	*/
+	
 	if (g_ascii_strcasecmp(method, MODEST_DBUS_METHOD_SEND_MAIL) == 0) {
 		return on_send_mail (arguments, data, retval);
 	} else if (g_ascii_strcasecmp(method, MODEST_DBUS_METHOD_MAIL_TO) == 0) {
@@ -583,8 +676,246 @@ gint modest_dbus_req_handler(const gchar * interface, const gchar * method,
 	} else if (g_ascii_strcasecmp(method, MODEST_DBUS_METHOD_COMPOSE_MAIL) == 0) {
 		return on_compose_mail (arguments, data, retval);
 	}
-	else
-		return OSSO_ERROR;
+	else {
+		/* We need to return INVALID here so
+		 * osso is returning DBUS_HANDLER_RESULT_NOT_YET_HANDLED 
+		 * so our modest_dbus_req_filter can kick in!
+		 * */
+		return OSSO_INVALID;
+	}
+}
+
+#define SEARCH_HIT_DBUS_TYPE \
+	DBUS_STRUCT_BEGIN_CHAR_AS_STRING \
+	DBUS_TYPE_STRING_AS_STRING \
+	DBUS_TYPE_STRING_AS_STRING \
+	DBUS_TYPE_STRING_AS_STRING \
+	DBUS_TYPE_STRING_AS_STRING \
+	DBUS_TYPE_UINT64_AS_STRING \
+	DBUS_TYPE_BOOLEAN_AS_STRING \
+	DBUS_TYPE_BOOLEAN_AS_STRING \
+	DBUS_TYPE_INT64_AS_STRING \
+	DBUS_STRUCT_END_CHAR_AS_STRING
+
+static DBusMessage *
+search_result_to_messsage (DBusMessage *reply,
+			   GList       *hits)
+{
+	DBusMessageIter iter;
+	DBusMessageIter array_iter;
+	GList          *hit_iter;
+
+	dbus_message_iter_init_append (reply, &iter); 
+	dbus_message_iter_open_container (&iter,
+					  DBUS_TYPE_ARRAY,
+					  SEARCH_HIT_DBUS_TYPE,
+					  &array_iter); 
+
+	for (hit_iter = hits; hit_iter; hit_iter = hit_iter->next) {
+		DBusMessageIter  struct_iter;
+		TnyFolder       *tf;
+		TnyHeader       *header;
+		TnyHeaderFlags   flags;
+		char            *msg_url = "";
+		const char      *subject = "";
+		const char      *folder = "";
+		const char      *sender = "";
+		guint64          size = 0;
+		gboolean         has_attachemnt = FALSE;
+		gboolean         is_unread = FALSE;
+		gint64           ts = 0;
+		char             *furl;
+		const char       *uid;
+
+		g_debug ("Marshalling hit ...(%s)",
+			 TNY_IS_HEADER (hit_iter->data) ? "yes" : "no");
+
+		header = TNY_HEADER (hit_iter->data);
+		tf = tny_header_get_folder (header);
+		furl = tny_folder_get_url_string (tf);
+
+		uid = tny_header_get_uid (header);
+		msg_url = g_strdup_printf ("%s/%s", furl, uid);
+		
+		subject = tny_header_get_subject (header);
+		folder = furl;
+		sender = tny_header_get_from (header);
+		size = tny_header_get_message_size (header);
+
+		flags = tny_header_get_flags (header);
+		has_attachemnt = flags & TNY_HEADER_FLAG_ATTACHMENTS;
+		is_unread = ! (flags & TNY_HEADER_FLAG_SEEN);
+		ts = tny_header_get_date_received (header);
+
+		g_debug ("Adding hit: %s", msg_url);	
+		
+		dbus_message_iter_open_container (&array_iter,
+						  DBUS_TYPE_STRUCT,
+						  NULL,
+						  &struct_iter);
+
+   		dbus_message_iter_append_basic (&struct_iter,
+						DBUS_TYPE_STRING,
+						&msg_url);
+
+		dbus_message_iter_append_basic (&struct_iter,
+						DBUS_TYPE_STRING,
+						&subject); 
+
+		dbus_message_iter_append_basic (&struct_iter,
+						DBUS_TYPE_STRING,
+						&folder);
+
+		dbus_message_iter_append_basic (&struct_iter,
+						DBUS_TYPE_STRING,
+						&sender);
+
+		dbus_message_iter_append_basic (&struct_iter,
+						DBUS_TYPE_UINT64,
+						&size);
+
+		dbus_message_iter_append_basic (&struct_iter,
+						DBUS_TYPE_BOOLEAN,
+						&has_attachemnt);
+
+		dbus_message_iter_append_basic (&struct_iter,
+						DBUS_TYPE_BOOLEAN,
+						&is_unread);
+		
+		dbus_message_iter_append_basic (&struct_iter,
+						DBUS_TYPE_INT64,
+						&ts);
+
+		dbus_message_iter_close_container (&array_iter,
+						   &struct_iter); 
+
+
+		g_free (msg_url);
+		g_free (furl);
+		
+		/* Also unref the header, we don't need it anymore */
+		g_object_unref (header);
+	}
+
+	dbus_message_iter_close_container (&iter, &array_iter);
+
+	return reply;
+}
+
+DBusHandlerResult
+modest_dbus_req_filter (DBusConnection *con,
+			DBusMessage    *message,
+			void           *user_data)
+{
+	gboolean  handled = FALSE;
+  	DBusError error;
+
+	if (dbus_message_is_method_call (message,
+					 MODEST_DBUS_IFACE,
+					 MODEST_DBUS_METHOD_SEARCH)) {
+		ModestDBusSearchFlags dbus_flags;
+		ModestSearch  search;
+		DBusMessage  *reply = NULL;
+		dbus_bool_t  res;
+		dbus_int64_t sd_v;
+		dbus_int64_t ed_v;
+		dbus_int32_t flags_v;
+		dbus_uint32_t serial;
+		dbus_uint32_t size_v;
+		char *folder;
+		char *query;
+		time_t start_date;
+		time_t end_date;
+		GList *hits;
+
+		handled = TRUE;
+
+		dbus_error_init (&error);
+
+		sd_v = ed_v = 0;
+		flags_v = 0;
+
+		res = dbus_message_get_args (message,
+					     &error,
+					     DBUS_TYPE_STRING, &query,
+					     DBUS_TYPE_STRING, &folder,
+					     DBUS_TYPE_INT64, &sd_v,
+					     DBUS_TYPE_INT64, &ed_v,
+					     DBUS_TYPE_INT32, &flags_v,
+					     DBUS_TYPE_UINT32, &size_v,
+					     DBUS_TYPE_INVALID);
+		
+		dbus_flags = (ModestDBusSearchFlags) flags_v;
+		start_date = (time_t) sd_v;
+		end_date = (time_t) ed_v;
+
+		memset (&search, 0, sizeof (search));
+		search.query  = query;
+		search.before = start_date;
+		search.after  = end_date;
+		search.flags  = 0;
+
+		if (dbus_flags & MODEST_DBUS_SEARCH_SUBJECT) {
+			search.flags |= MODEST_SEARCH_SUBJECT;
+			search.subject = query;
+		}
+
+		if (dbus_flags & MODEST_DBUS_SEARCH_SENDER) {
+			search.flags |=  MODEST_SEARCH_SENDER;
+			search.from = query;
+		}
+
+		if (dbus_flags & MODEST_DBUS_SEARCH_RECIPIENT) {
+			search.flags |= MODEST_SEARCH_RECIPIENT; 
+			search.recipient = query;
+		}
+
+		if (dbus_flags & MODEST_DBUS_SEARCH_BODY) {
+			search.flags |=  MODEST_SEARCH_BODY; 
+			search.subject = query;
+		}
+
+		if (sd_v > 0) {
+			search.flags |= MODEST_SEARCH_BEFORE;
+			search.before = start_date;
+		}
+
+		if (ed_v > 0) {
+			search.flags |= MODEST_SEARCH_AFTER;
+			search.after = end_date;
+		}
+
+		if (size_v > 0) {
+			search.flags |= MODEST_SEARCH_SIZE;
+			search.minsize = size_v;
+		}
+
+#ifdef MODEST_HAVE_OGS
+		search.flags |= MODEST_SEARCH_USE_OGS;
+#endif
+
+		hits = modest_search_all_accounts (&search);
+
+		reply = dbus_message_new_method_return (message);
+
+		search_result_to_messsage (reply, hits);
+		
+		if (reply == NULL) {
+			g_warning ("Could not create reply");
+		}
+
+		if (reply) {
+			dbus_connection_send (con, reply, &serial);
+	    		dbus_connection_flush (con);
+	    		dbus_message_unref (reply);
+		}
+
+	}
+	
+
+	return (handled ? 
+		DBUS_HANDLER_RESULT_HANDLED :
+		DBUS_HANDLER_RESULT_NOT_YET_HANDLED);
 }
 
 void

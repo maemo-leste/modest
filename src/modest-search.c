@@ -8,23 +8,29 @@
 
 #include <tny-shared.h>
 #include <tny-folder.h>
+#include <tny-folder-store.h>
 #include <tny-list.h>
 #include <tny-iterator.h>
 #include <tny-simple-list.h>
 
 #include "modest-text-utils.h"
-
+#include "modest-account-mgr.h"
+#include "modest-tny-account-store.h"
+#include "modest-tny-account.h"
 #include "modest-search.h"
-
+#include "modest-runtime.h"
 
 static GList*
 add_header (GList *list, TnyHeader *header, TnyFolder *folder)
 {
-	gchar *furl = tny_folder_get_url_string (folder);
-	const gchar *uid = tny_header_get_uid (header);
-	gchar *str  = g_strdup_printf ("%s/%s", furl, uid);
-	g_free (furl);
-	return g_list_prepend (list, str);
+	TnyFolder *f;
+       
+	/* TODO: we need this call otherwise it will crash later
+	 * when we try to do that call again without having the
+	 * folder around, I guess that is a bug in TinyThingy */
+	f = tny_header_get_folder (header);
+
+	return g_list_prepend (list, g_object_ref (header));
 }
 
 static gboolean
@@ -199,12 +205,17 @@ search_string (const char      *what,
 		ogs_text_searcher_reset (search->text_searcher);
 	} else {
 #endif
+		if (what == NULL || where == NULL) {
+			return FALSE;
+		}
+
 		found = !modest_text_utils_utf8_strcmp (what, where, TRUE);
 #ifdef MODEST_HAVE_OGS
 	}
 #endif
 	return found;
 }
+
 
 
 /**
@@ -216,7 +227,7 @@ search_string (const char      *what,
  * It will return a doubly linked list with URIs that point to the message.
  **/
 GList *
-modest_search (TnyFolder *folder, ModestSearch *search)
+modest_search_folder (TnyFolder *folder, ModestSearch *search)
 {
 	GList *retval = NULL;
 	TnyIterator *iter;
@@ -249,7 +260,7 @@ modest_search (TnyFolder *folder, ModestSearch *search)
 		TnyHeader *cur = (TnyHeader *) tny_iterator_get_current (iter);
 		time_t t = tny_header_get_date_sent (cur);
 		gboolean found = FALSE;
-
+		
 		if (search->flags & MODEST_SEARCH_BEFORE)
 			if (!(t <= search->before))
 				goto go_next;
@@ -259,7 +270,7 @@ modest_search (TnyFolder *folder, ModestSearch *search)
 				goto go_next;
 
 		if (search->flags & MODEST_SEARCH_SIZE)
-			if (tny_header_get_message_size  (cur) < search->minsize)
+			if (tny_header_get_message_size (cur) < search->minsize)
 				goto go_next;
 
 		if (search->flags & MODEST_SEARCH_SUBJECT) {
@@ -285,7 +296,7 @@ modest_search (TnyFolder *folder, ModestSearch *search)
 				retval = add_header (retval, cur, folder);
 			}
 		}
-		
+	
 		if (!found && search->flags & MODEST_SEARCH_BODY) {
 			TnyHeaderFlags flags;
 			GError      *err = NULL;
@@ -339,4 +350,100 @@ go_next:
 	g_object_unref (list);
 	return retval;
 }
+
+GList *
+modest_search_account (TnyAccount *account, ModestSearch *search)
+{
+	TnyFolderStore      *store;
+	TnyIterator         *iter;
+	TnyList             *folders;
+	GList               *hits;
+	GError              *error;
+
+	error = NULL;
+	hits = NULL;
+
+	store = TNY_FOLDER_STORE (account);
+
+	folders = tny_simple_list_new ();
+	tny_folder_store_get_folders (store, folders, NULL, &error);
+	
+	if (error != NULL) {
+		g_object_unref (folders);
+		return NULL;
+	}
+
+	iter = tny_list_create_iterator (folders);
+	while (!tny_iterator_is_done (iter)) {
+		TnyFolder *folder;
+		GList     *res;
+
+		folder = TNY_FOLDER (tny_iterator_get_current (iter));
+		
+		res = modest_search_folder (folder, search);
+
+		if (res != NULL) {
+			if (hits == NULL) {
+				hits = res;
+			} else {
+				hits = g_list_concat (hits, res);
+			}
+		}
+
+		g_object_unref (folder);
+		tny_iterator_next (iter);
+	}
+
+	g_object_unref (iter);
+	g_object_unref (folders);
+
+	return hits;
+}
+
+GList *
+modest_search_all_accounts (ModestSearch *search)
+{
+	ModestAccountMgr      *account_mgr;
+	ModestTnyAccountStore *astore;
+	GSList                *accounts;
+	GSList                *iter;
+	GList                 *hits;
+
+	account_mgr = modest_runtime_get_account_mgr ();
+
+	accounts = modest_account_mgr_account_names (account_mgr, FALSE);
+	astore = modest_runtime_get_account_store ();
+	hits = NULL;
+
+	for (iter = accounts; iter; iter = iter->next) {
+		GList      *res;
+		const char *ac_name;
+		TnyAccount *account = NULL;
+
+		ac_name = (const char *) iter->data;
+
+		account = modest_tny_account_store_get_tny_account_by_account (astore,
+									       ac_name,
+									       TNY_ACCOUNT_TYPE_STORE);
+
+		if (account == NULL) {
+			g_warning ("Could not get account for %s", ac_name);
+			continue;
+		}
+		
+		res = modest_search_account (account, search);
+		
+		if (res != NULL) {
+
+			if (hits == NULL) {
+				hits = res;
+			} else {
+				hits = g_list_concat (hits, res);
+			}
+		}
+	}
+
+	return hits;
+}
+
 

@@ -65,12 +65,28 @@ on_modest_conf_update_interval_changed (ModestConf* self, const gchar *key,
 gboolean
 modest_platform_init (void)
 {
-	osso_hw_state_t hw_state = { 0 };	
+	osso_hw_state_t hw_state = { 0 };
+	DBusConnection *con;	
 	osso_context =
 		osso_initialize(PACKAGE,PACKAGE_VERSION,
 				FALSE, NULL);	
 	if (!osso_context) {
 		g_printerr ("modest: failed to acquire osso context\n");
+		return FALSE;
+	}
+
+	if ((con = osso_get_dbus_connection (osso_context)) == NULL) {
+		g_printerr ("Could not get dbus connection\n");
+		return FALSE;
+
+	}
+
+	if (!dbus_connection_add_filter (con,
+					 modest_dbus_req_filter,
+					 NULL,
+					 NULL)) {
+
+		g_printerr ("Could not add dbus filter\n");
 		return FALSE;
 	}
 
