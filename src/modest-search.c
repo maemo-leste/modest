@@ -341,6 +341,7 @@ modest_search_folder (TnyFolder *folder, ModestSearch *search)
 			g_object_unref (msg);
 
 		}
+
 go_next:
 		g_object_unref (cur);
 		tny_iterator_next (iter);
@@ -403,34 +404,28 @@ modest_search_account (TnyAccount *account, ModestSearch *search)
 GList *
 modest_search_all_accounts (ModestSearch *search)
 {
-	ModestAccountMgr      *account_mgr;
 	ModestTnyAccountStore *astore;
-	GSList                *accounts;
-	GSList                *iter;
+	TnyList               *accounts;
+	TnyIterator           *iter;
 	GList                 *hits;
 
-	account_mgr = modest_runtime_get_account_mgr ();
-
-	accounts = modest_account_mgr_account_names (account_mgr, FALSE);
-	astore = modest_runtime_get_account_store ();
 	hits = NULL;
+	astore = modest_runtime_get_account_store ();
 
-	for (iter = accounts; iter; iter = iter->next) {
+	accounts = tny_simple_list_new ();
+	tny_account_store_get_accounts (TNY_ACCOUNT_STORE (astore),
+					accounts,
+					TNY_ACCOUNT_STORE_STORE_ACCOUNTS);
+
+	iter = tny_list_create_iterator (accounts);
+	while (!tny_iterator_is_done (iter)) {
+		TnyAccount *account;
 		GList      *res;
-		const char *ac_name;
-		TnyAccount *account = NULL;
 
-		ac_name = (const char *) iter->data;
+		account = TNY_ACCOUNT (tny_iterator_get_current (iter));
 
-		account = modest_tny_account_store_get_tny_account_by_account (astore,
-									       ac_name,
-									       TNY_ACCOUNT_TYPE_STORE);
-
-		if (account == NULL) {
-			g_warning ("Could not get account for %s", ac_name);
-			continue;
-		}
-		
+		g_debug ("Searching account %s",
+			 tny_account_get_name (account));
 		res = modest_search_account (account, search);
 		
 		if (res != NULL) {
@@ -441,7 +436,12 @@ modest_search_all_accounts (ModestSearch *search)
 				hits = g_list_concat (hits, res);
 			}
 		}
+
+		g_object_unref (account);
+		tny_iterator_next (iter);
 	}
+
+	g_object_unref (accounts);
 
 	return hits;
 }

@@ -894,6 +894,8 @@ modest_dbus_req_filter (DBusConnection *con,
 		search.flags |= MODEST_SEARCH_USE_OGS;
 #endif
 
+		g_debug ("Starting search for %s", search.query);
+
 		hits = modest_search_all_accounts (&search);
 
 		reply = dbus_message_new_method_return (message);

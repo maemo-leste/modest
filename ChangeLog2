@@ -1,6 +1,22 @@
 2007-06-03  Christian Kellner  <ckellner@openismus.com>
 
 	* libmodest-dbus-client/libmodest-dbus-client.c:
+	Removed debugging spew.
+
+	* src/dbus_api/modest-dbus-callbacks.c:
+	Added debugging info.
+
+	* src/modest-search.c: 
+	(modest_search_all_accounts):
+	Use tny_account_store_get_accounts () on the account store
+	to get all accounts which is the way to get all accounts.
+
+	* tests/dbus_api/test_search.c: (main):
+	Make it possible to supply the search term on the command line.
+
+2007-06-03  Christian Kellner  <ckellner@openismus.com>
+
+	* libmodest-dbus-client/libmodest-dbus-client.c:
 	* libmodest-dbus-client/libmodest-dbus-client.h:
 	Implement searching for mesages over raw dbus. (Client side)
 	

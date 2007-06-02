@@ -8,6 +8,7 @@ int main (int argc, char *argv[])
 	gboolean res;
 	ModestDBusSearchFlags flags;
 	GList *hits, *iter;
+	const char *query;
 
 	osso_context = osso_initialize ("test_search",
 					"0.0.1",
@@ -24,10 +25,16 @@ int main (int argc, char *argv[])
 	hits = NULL;
 	flags = MODEST_DBUS_SEARCH_SUBJECT | MODEST_DBUS_SEARCH_BODY;
 
-	g_print ("Starting search ...\n");
+	if (argc == 2) {
+		query = argv[1];
+	} else {
+		query = "no";
+	}
+
+	g_print ("Starting search (%s)...\n", query);
 
 	res = libmodest_dbus_client_search (osso_context,
-					    "no",
+					    query,
 					    "",
 					    0,
 					    0,
