@@ -1,5 +1,13 @@
 2007-06-02  Armin Burgmeier  <armin@openismus.com>
 
+	* src/maemo/modest-account-settings-dialog.c: Changed window title to
+	include account type and account title. This fixes projects.maemo.org
+	bug NB#59000.
+
+	* src/maemo/modest-account-view-window.c: Set a title for the window.
+
+2007-06-02  Armin Burgmeier  <armin@openismus.com>
+
 	* src/maemo/easysetup/modest-easysetup-wizard.c: Always prefill
 	incoming and outgoing server name based on email address and server
 	types as long as the names have not been edited manually. This fixes

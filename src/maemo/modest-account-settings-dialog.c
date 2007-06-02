@@ -908,9 +908,6 @@ modest_account_settings_dialog_init (ModestAccountSettingsDialog *self)
 	 * Each page of the notebook will be a page of the wizard: */
 	GtkNotebook *notebook = GTK_NOTEBOOK (gtk_notebook_new());
 
-    
-    gtk_window_set_title (GTK_WINDOW (self), _("mcen_ti_emailsetup"));
-	
 	/* Get the account manager object, 
 	 * so we can check for existing accounts,
 	 * and create new accounts: */
@@ -1138,7 +1135,21 @@ void modest_account_settings_dialog_set_account_name (ModestAccountSettingsDialo
 			GTK_TOGGLE_BUTTON (dialog->checkbox_outgoing_smtp_specific), 
 			has_specific);
 	}
-	
+
+	/* Set window title according to account: */
+	/* TODO: Is this the correct way to find a human-readable name for
+	 * the protocol used? */
+	const gchar* proto_str = modest_protocol_info_get_transport_store_protocol_name (dialog->incoming_protocol);
+	gchar *proto_name = g_utf8_strup(proto_str, -1);
+	gchar *account_title = modest_account_mgr_get_display_name(dialog->account_manager, account_name);
+
+	gchar *title = g_strdup_printf(_("mcen_ti_account_settings"), proto_name, account_title);
+	g_free (proto_name);
+	g_free (account_title);
+
+	gtk_window_set_title (GTK_WINDOW (dialog), title);
+	g_free (title);
+
 	/* account_data->is_enabled,  */
 	/*account_data->is_default,  */
 

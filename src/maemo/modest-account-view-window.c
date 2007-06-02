@@ -384,6 +384,8 @@ modest_account_view_window_init (ModestAccountViewWindow *obj)
 	
 	gtk_box_pack_start (GTK_BOX((GTK_DIALOG (obj)->action_area)), GTK_WIDGET (button_box_new (obj)), 
 		TRUE, TRUE, 2);
+
+	gtk_window_set_title (GTK_WINDOW (obj), _("mcen_ti_emailsetup_accounts"));
 }
 
 
