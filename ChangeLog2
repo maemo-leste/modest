@@ -1,5 +1,11 @@
 2007-06-02  Armin Burgmeier  <armin@openismus.com>
 
+	* src/maemo/easysetup/modest-easysetup-wizard.c: Added a note that the
+	server type cannot be changed in future to the incoming details page
+	when creating an account. This fixes projects.maemo.org bug NB#59029.
+
+2007-06-02  Armin Burgmeier  <armin@openismus.com>
+
 	* src/maemo/easysetup/modest-easysetup-wizard.c: Made labels wrapping
 	and assigned max width chars so that they wrap instead of being
 	truncated. Fixes projects.maemo.org bug NB#56126.
