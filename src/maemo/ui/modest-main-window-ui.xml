@@ -114,12 +114,22 @@
     <toolitem action="ToolbarCancel"/>
   </toolbar>
 
-  <popup name="HeaderViewCSM" action="HeaderViewCSM">
-    <menuitem action="EmailReply"/>
-    <menuitem action="EmailForward"/>
+  <popup name="HeaderViewCSM">
+    <menuitem action="HeaderViewCSMOpen"/>
+    <menuitem action="HeaderViewCSMReply"/>
+    <menuitem action="HeaderViewCSMReplyAll"/>
+    <menuitem action="HeaderViewCSMForward"/>
+    <separator/>
+    <menuitem action="HeaderViewCSMCut"/>
+    <menuitem action="HeaderViewCSMCopy"/>
+    <menuitem action="HeaderViewCSMPaste"/>
+    <separator/>
+    <menuitem action="HeaderViewCSMDelete"/>
+    <menuitem action="HeaderViewCSMCancelSending"/>
+    <menuitem action="HeaderViewCSMHelp"/>
   </popup>
   
-  <popup name="FolderViewCSM" action="FolderViewCSM">
+  <popup name="FolderViewCSM">
     <menuitem action="FolderViewCSMNewFolder"/>
     <menuitem action="FolderViewCSMRenameFolder"/>
     <separator/>

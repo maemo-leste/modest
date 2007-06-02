@@ -38,6 +38,7 @@ struct _ModestDimmingRulePrivate {
 	ModestWindow *win;
 	ModestDimmingCallback dimming_rule;
 	gchar *action_path;
+	gchar *notification;
 };
 
 #define MODEST_DIMMING_RULE_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -92,6 +93,7 @@ modest_dimming_rule_init (ModestDimmingRule *obj)
 	priv->win = NULL;
 	priv->dimming_rule = NULL;
 	priv->action_path = NULL;
+	priv->notification = NULL;
 }
 
 static void
@@ -103,6 +105,8 @@ modest_dimming_rule_finalize (GObject *obj)
 
 	if (priv->action_path != NULL)
 		g_free(priv->action_path);
+	if (priv->notification != NULL)
+		g_free(priv->notification);
 
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
@@ -145,10 +149,38 @@ modest_dimming_rule_process (ModestDimmingRule *self)
 	g_return_if_fail (priv->action_path != NULL);
 
 	/* process dimming rule */
-	dimmed = priv->dimming_rule (priv->win, NULL);
+	dimmed = priv->dimming_rule (priv->win, self);
 
 	/* Update dimming status */
         action = modest_window_get_action (priv->win, priv->action_path);	
 	g_return_if_fail (action != NULL);
 	gtk_action_set_sensitive (action, !dimmed);
+}
+
+void
+modest_dimming_rule_set_notification (ModestDimmingRule *rule,
+				      const gchar *notification)
+{
+	ModestDimmingRulePrivate *priv = NULL;
+
+	g_return_if_fail (MODEST_IS_DIMMING_RULE (rule));
+	priv = MODEST_DIMMING_RULE_GET_PRIVATE(rule);
+	
+	/* Free previous notification */
+	if (priv->notification != NULL)
+		g_free(priv->notification);
+
+	/* Set new notification message */
+	priv->notification = g_strdup(notification);
+}
+
+gchar *
+modest_dimming_rule_get_notification (ModestDimmingRule *rule)
+{
+	ModestDimmingRulePrivate *priv = NULL;
+
+	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (rule), NULL);
+	priv = MODEST_DIMMING_RULE_GET_PRIVATE(rule);
+	
+	return g_strdup(priv->notification);
 }

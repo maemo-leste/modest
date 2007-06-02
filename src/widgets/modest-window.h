@@ -200,6 +200,18 @@ void     modest_window_save_state (ModestWindow *window);
 GtkAction * modest_window_get_action (ModestWindow *window, const gchar *action_path); 
 
 /**
+ * modest_window_get_action_widget:
+ * @window: a #ModestWindow instance object
+ * @action_path: the full path of required action.
+ * 
+ * Get action widget from ui manager, using @action_path parameter,
+ * which represent the full path to the required action into UIManager 
+ * xml definition.
+ **/
+GtkWidget *modest_window_get_action_widget (ModestWindow *window, 
+					    const gchar *action_path);
+
+/**
  * modest_window_check_dimming_rules:
  * @self: a #ModestWindow instance object
  * 
@@ -207,6 +219,19 @@ GtkAction * modest_window_get_action (ModestWindow *window, const gchar *action_
  * 
  **/
 void modest_window_check_dimming_rules (ModestWindow *self);
+
+/**
+ * modest_window_check_dimming_rules:
+ * @self: a #ModestWindow instance object
+ * @group: a #ModestWindow instance object
+ * 
+ * Calls UI Dimming Manager of @self window to check @group_name specific
+ * dimming rules.
+ * 
+ **/
+void
+modest_window_check_dimming_rules_group (ModestWindow *self,
+					 const gchar *group_name);
 
 G_END_DECLS
 

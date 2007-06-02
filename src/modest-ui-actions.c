@@ -1174,6 +1174,9 @@ modest_ui_actions_on_header_selected (ModestHeaderView *header_view,
 		else
 			gtk_window_set_title (GTK_WINDOW (main_window), _("mail_va_no_subject"));
 	}
+
+	/* Update toolbar dimming state */
+	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (main_window));
 }
 
 void
@@ -1266,6 +1269,9 @@ modest_ui_actions_on_folder_selection_changed (ModestFolderView *folder_view,
 			modest_header_view_set_folder (MODEST_HEADER_VIEW(header_view), NULL);
 		}
 	}
+
+	/* Update toolbar dimming state */
+	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (main_window));
 }
 
 void 
@@ -2139,6 +2145,21 @@ modest_ui_actions_on_select_all (GtkAction *action,
 		gtk_text_buffer_get_end_iter (buffer, &end);
 		gtk_text_buffer_select_range (buffer, &start, &end);
 	}
+	else if ((MODEST_IS_FOLDER_VIEW (focused_widget)) ||
+		 (MODEST_IS_HEADER_VIEW (focused_widget))) {
+		
+		GtkTreeSelection *selection = NULL;
+
+		/* Get header view */		
+		GtkWidget *header_view = focused_widget;
+		if (MODEST_IS_FOLDER_VIEW (focused_widget))
+			header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (window),
+									   MODEST_WIDGET_TYPE_HEADER_VIEW);
+
+		/* Select all messages */
+		selection = gtk_tree_view_get_selection (GTK_TREE_VIEW(header_view));
+		gtk_tree_selection_select_all (selection);
+	}
 }
 
 void
@@ -2931,7 +2952,7 @@ modest_ui_actions_on_email_menu_activated (GtkAction *action,
 	g_return_if_fail (MODEST_IS_WINDOW (window));
 
 	/* Update dimmed */	
-	modest_window_check_dimming_rules (window);	
+	modest_window_check_dimming_rules_group (window, "ModestMenuDimmingRules");	
 }
 
 void
@@ -2941,7 +2962,7 @@ modest_ui_actions_on_edit_menu_activated (GtkAction *action,
 	g_return_if_fail (MODEST_IS_WINDOW (window));
 
 	/* Update dimmed */	
-	modest_window_check_dimming_rules (window);	
+	modest_window_check_dimming_rules_group (window, "ModestMenuDimmingRules");	
 }
 
 void
@@ -2951,7 +2972,7 @@ modest_ui_actions_on_toolbar_csm_menu_activated (GtkAction *action,
 	g_return_if_fail (MODEST_IS_WINDOW (window));
 
 	/* Update dimmed */	
-	modest_window_check_dimming_rules (window);	
+	modest_window_check_dimming_rules_group (window, "ModestMenuDimmingRules");	
 }
 
 void
@@ -2961,7 +2982,7 @@ modest_ui_actions_on_folder_view_csm_menu_activated (GtkAction *action,
 	g_return_if_fail (MODEST_IS_WINDOW (window));
 
 	/* Update dimmed */	
-	modest_window_check_dimming_rules (window);	
+	modest_window_check_dimming_rules_group (window, "ModestMenuDimmingRules");	
 }
 
 void
@@ -2971,5 +2992,14 @@ modest_ui_actions_on_header_view_csm_menu_activated (GtkAction *action,
 	g_return_if_fail (MODEST_IS_WINDOW (window));
 
 	/* Update dimmed */	
-	modest_window_check_dimming_rules (window);	
+	modest_window_check_dimming_rules_group (window, "ModestMenuDimmingRules");	
+}
+
+void
+modest_ui_actions_check_toolbar_dimming_rules (ModestWindow *window)
+{
+	g_return_if_fail (MODEST_IS_WINDOW (window));
+
+	/* Update dimmed */	
+	modest_window_check_dimming_rules_group (window, "ModestToolbarDimmingRules");	
 }

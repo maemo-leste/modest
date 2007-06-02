@@ -352,6 +352,9 @@ void
 modest_ui_actions_on_header_view_csm_menu_activated (GtkAction *action,
 						     ModestWindow *window);
 
+void
+modest_ui_actions_check_toolbar_dimming_rules (ModestWindow *window);
+
 /**
  * modest_ui_actions_move_folder_error_handler:
  * @mail_op: a #ModestMailOperation

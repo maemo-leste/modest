@@ -172,8 +172,22 @@ modest_window_check_dimming_rules (ModestWindow *self)
 {
 	ModestWindowPrivate *priv;	
 
+	g_return_if_fail (MODEST_IS_WINDOW (self));
 	priv = MODEST_WINDOW_GET_PRIVATE(self);
+
 	modest_ui_dimming_manager_process_dimming_rules (priv->ui_dimming_manager);
+}
+
+void
+modest_window_check_dimming_rules_group (ModestWindow *self,
+					 const gchar *group_name)
+{
+	ModestWindowPrivate *priv;	
+
+	g_return_if_fail (MODEST_IS_WINDOW (self));
+	priv = MODEST_WINDOW_GET_PRIVATE(self);
+
+	modest_ui_dimming_manager_process_dimming_rules_group (priv->ui_dimming_manager, group_name);
 }
 
 GtkAction *
@@ -183,11 +197,27 @@ modest_window_get_action (ModestWindow *window,
 	GtkAction *action = NULL;
 	ModestWindowPrivate *priv;	
 
+	g_return_val_if_fail (MODEST_IS_WINDOW (window), NULL);
 	priv = MODEST_WINDOW_GET_PRIVATE(window);
 
         action = gtk_ui_manager_get_action (priv->ui_manager, action_path);	
 
 	return action;
+}
+
+GtkWidget *
+modest_window_get_action_widget (ModestWindow *window, 
+				 const gchar *action_path) 
+{
+	GtkWidget *widget = NULL;
+	ModestWindowPrivate *priv;	
+
+	g_return_val_if_fail (MODEST_IS_WINDOW (window), NULL);
+	priv = MODEST_WINDOW_GET_PRIVATE(window);
+
+        widget = gtk_ui_manager_get_widget (priv->ui_manager, action_path);	
+
+	return widget;
 }
 
 void

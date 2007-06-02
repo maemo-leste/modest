@@ -7,8 +7,8 @@
 G_BEGIN_DECLS
 
 
-/* Dimming rules entries */
-static const ModestDimmingEntry modest_dimming_entries [] = {
+/* Menu Dimming rules entries */
+static const ModestDimmingEntry modest_main_window_menu_dimming_entries [] = {
 
 	/* Email Menu */
 	{ "/MenuBar/EmailMenu/EmailNewMainMenu", NULL },
@@ -60,24 +60,23 @@ static const ModestDimmingEntry modest_dimming_entries [] = {
 	{ "/MenuBar/ToolsMenu/CloseWindowMenu", NULL },
 	{ "/MenuBar/ToolsMenu/CloseAllWindowsMenu", NULL },
 
-	/* Toolbar */
-	{ "/Toolbar/ToolbarMessageNew", NULL },
-	{ "/Toolbar/ToolbarMessageReply", NULL },
-	{ "/Toolbar/ToolbarDeleteMessage", NULL },
-	{ "/Toolbar/ToolbarToggleView", NULL },
-	{ "/Toolbar/ToolbarSort", NULL },
-	{ "/Toolbar/ToolbarSendReceive", NULL },
-	{ "/Toolbar/ToolbarCancel", NULL },
-
 	/* Contextual Menus (Header View) */
-	{ "/HeaderViewCSM/EmailReply", NULL },
-	{ "/HeaderViewCSM/EmailForward", NULL },
+	{ "/HeaderViewCSM/HeaderViewCSMOpen", G_CALLBACK(modest_ui_dimming_rules_on_open_msg) },
+	{ "/HeaderViewCSM/HeaderViewCSMReply", G_CALLBACK(modest_ui_dimming_rules_on_reply_msg) },
+	{ "/HeaderViewCSM/HeaderViewCSMReplyAll", G_CALLBACK(modest_ui_dimming_rules_on_reply_msg) },
+	{ "/HeaderViewCSM/HeaderViewCSMForward", G_CALLBACK(modest_ui_dimming_rules_on_reply_msg) },
+	{ "/HeaderViewCSM/HeaderViewCSMCut", NULL },
+	{ "/HeaderViewCSM/HeaderViewCSMCopy", NULL },
+	{ "/HeaderViewCSM/HeaderViewCSMPaste", G_CALLBACK(modest_ui_dimming_rules_on_paste_msgs) },
+	{ "/HeaderViewCSM/HeaderViewCSMDelete", G_CALLBACK(modest_ui_dimming_rules_on_delete_msg) },
+	{ "/HeaderViewCSM/HeaderViewCSMCancelSending", NULL },
+	{ "/HeaderViewCSM/HeaderViewCSMHelp", NULL },
 
 	/* Contextual Menus (Folder View) */
 	{ "/FolderViewCSM/FolderViewCSMNewFolder", G_CALLBACK(modest_ui_dimming_rules_on_new_folder) },
 	{ "/FolderViewCSM/FolderViewCSMRenameFolder", G_CALLBACK(modest_ui_dimming_rules_on_rename_folder) },
 	{ "/FolderViewCSM/FolderViewCSMPasteMsgs", G_CALLBACK(modest_ui_dimming_rules_on_paste_msgs) },
-	{ "/FolderViewCSM/FolderViewCSMDeleteFolder", G_CALLBACK(modest_ui_dimming_rules_on_paste_msgs) },
+	{ "/FolderViewCSM/FolderViewCSMDeleteFolder", G_CALLBACK(modest_ui_dimming_rules_on_delete_folder) },
 	{ "/FolderViewCSM/FolderViewCSMSearchMessages", NULL },
 	{ "/FolderViewCSM/FolderViewCSMHelp", NULL },
 
@@ -86,6 +85,19 @@ static const ModestDimmingEntry modest_dimming_entries [] = {
 	{ "/ToolbarReplyCSM/ToolbarMessageReplyAll", NULL },
 	{ "/ToolbarReplyCSM/ToolbarMessageReply", NULL },
 	
+};
+
+/* Toolbar Dimming rules entries */
+static const ModestDimmingEntry modest_main_window_toolbar_dimming_entries [] = {
+
+	/* Toolbar */
+	{ "/ToolBar/ToolbarMessageNew", NULL },
+	{ "/ToolBar/ToolbarMessageReply", G_CALLBACK(modest_ui_dimming_rules_on_reply_msg) },
+	{ "/ToolBar/ToolbarDeleteMessage", G_CALLBACK(modest_ui_dimming_rules_on_delete_msg) },
+	{ "/ToolBar/ToolbarToggleView", NULL },
+	{ "/ToolBar/ToolbarSort", NULL },
+	{ "/ToolBar/ToolbarSendReceive", NULL },
+	{ "/ToolBar/ToolbarCancel", NULL },
 };
 
 G_END_DECLS

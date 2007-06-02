@@ -499,7 +499,8 @@ modest_msg_view_window_new (TnyMsg *msg,
 	GObject *obj = NULL;
 	ModestMsgViewWindowPrivate *priv = NULL;
 	ModestWindowPrivate *parent_priv = NULL;
-	ModestDimmingRulesGroup *rules_group = NULL;
+	ModestDimmingRulesGroup *menu_rules_group = NULL;
+	ModestDimmingRulesGroup *toolbar_rules_group = NULL;
 	GtkActionGroup *action_group = NULL;
 	GError *error = NULL;
 	GdkPixbuf *window_icon = NULL;
@@ -520,7 +521,8 @@ modest_msg_view_window_new (TnyMsg *msg,
 	action_group = gtk_action_group_new ("ModestMsgViewWindowActions");
 	gtk_action_group_set_translation_domain (action_group, GETTEXT_PACKAGE);
 
-	rules_group = modest_dimming_rules_group_new ("ModestCommonDimmingRules");
+	menu_rules_group = modest_dimming_rules_group_new ("ModestMenuDimmingRules");
+	toolbar_rules_group = modest_dimming_rules_group_new ("ModestToolbarDimmingRules");
 
 	/* Add common actions */
 	gtk_action_group_add_actions (action_group,
@@ -556,14 +558,20 @@ modest_msg_view_window_new (TnyMsg *msg,
 	/* ****** */
 
 	/* Add common dimming rules */
-	modest_dimming_rules_group_add_rules (rules_group, 
-					      modest_msg_view_dimming_entries,
-					      G_N_ELEMENTS (modest_msg_view_dimming_entries),
+	modest_dimming_rules_group_add_rules (menu_rules_group, 
+					      modest_msg_view_menu_dimming_entries,
+					      G_N_ELEMENTS (modest_msg_view_menu_dimming_entries),
+					      self);
+	modest_dimming_rules_group_add_rules (toolbar_rules_group, 
+					      modest_msg_view_toolbar_dimming_entries,
+					      G_N_ELEMENTS (modest_msg_view_toolbar_dimming_entries),
 					      self);
 
 	/* Insert dimming rules group for this window */
-	modest_ui_dimming_manager_insert_rules_group (parent_priv->ui_dimming_manager, rules_group);
-	g_object_unref (rules_group);
+	modest_ui_dimming_manager_insert_rules_group (parent_priv->ui_dimming_manager, menu_rules_group);
+	modest_ui_dimming_manager_insert_rules_group (parent_priv->ui_dimming_manager, toolbar_rules_group);
+	g_object_unref (menu_rules_group);
+	g_object_unref (toolbar_rules_group);
 
 	/* Add accelerators */
 	gtk_window_add_accel_group (GTK_WINDOW (obj), 

@@ -30,10 +30,14 @@
 #include "modest-dimming-rules-group.h"
 #include "modest-dimming-rules-group-priv.h"
 #include "modest-dimming-rule.h"
+#include "modest-hildon-includes.h"
 
 static void modest_dimming_rules_group_class_init (ModestDimmingRulesGroupClass *klass);
 static void modest_dimming_rules_group_init       (ModestDimmingRulesGroup *obj);
 static void modest_dimming_rules_group_finalize   (GObject *obj);
+
+static void _insensitive_press_callback (GtkWidget *widget, gpointer user_data);
+
 
 typedef struct _ModestDimmingRulesGroupPrivate ModestDimmingRulesGroupPrivate;
 struct _ModestDimmingRulesGroupPrivate {	
@@ -49,6 +53,7 @@ struct _ModestDimmingRulesGroupPrivate {
 static GObjectClass *parent_class = NULL;
 
 static void _execute_dimming_rule (gpointer key, gpointer value, gpointer user_data);
+static void _insensitive_press_callback (GtkWidget *widget, gpointer user_data);
 
 
 
@@ -157,6 +162,7 @@ modest_dimming_rules_group_add_rules (ModestDimmingRulesGroup *self,
 	ModestDimmingRulesGroupPrivate *priv;
 	ModestDimmingRule *dim_rule = NULL;
 	ModestDimmingEntry entry;
+	GtkWidget *widget = NULL;
 	gboolean unique = FALSE;
 	guint i;
 
@@ -178,11 +184,18 @@ modest_dimming_rules_group_add_rules (ModestDimmingRulesGroup *self,
 		unique = g_hash_table_lookup (priv->rules_map, entry.action_path) == NULL;
 		if (!unique) continue;
 
+		/* Check action path is valid */
+		widget = modest_window_get_action_widget (MODEST_WINDOW (user_data), entry.action_path);
+		if (widget == NULL) continue;
+
 		/* Create a new dimming rule */
 		dim_rule = modest_dimming_rule_new (MODEST_WINDOW(user_data),
 						    (ModestDimmingCallback) entry.callback,
 						    entry.action_path);
 		
+		/* Connect insensitive-presss handler to show notifications */
+		g_signal_connect (G_OBJECT (widget), "insensitive-press", G_CALLBACK (_insensitive_press_callback), dim_rule);
+
 		/* Register new dimming rule */		
 		g_hash_table_insert (priv->rules_map, g_strdup(entry.action_path), dim_rule);
 	}
@@ -206,4 +219,24 @@ _execute_dimming_rule (gpointer key, gpointer value, gpointer user_data)
 
 	/* Process diomming rule */
 	modest_dimming_rule_process (MODEST_DIMMING_RULE(value));
+}
+
+static void
+_insensitive_press_callback (GtkWidget *widget, gpointer user_data)
+{
+	ModestDimmingRule *rule;
+	gchar *notification = NULL;
+
+	g_return_if_fail (MODEST_IS_DIMMING_RULE (user_data));
+	rule = MODEST_DIMMING_RULE (user_data);
+
+	/* Get specific notification */
+	notification = modest_dimming_rule_get_notification (rule);
+	if (notification == NULL) return;
+
+	/* Show notification banner */
+	hildon_banner_show_information (NULL, NULL, notification);	
+
+	/* Free */
+	g_free(notification);
 }

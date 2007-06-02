@@ -81,8 +81,23 @@ ModestDimmingRule*    modest_dimming_rule_new     (ModestWindow *win,
 						   ModestDimmingCallback dimming_rule,
 						   const gchar *action_path);
 
-void
-modest_dimming_rule_process (ModestDimmingRule *self);
+/**
+ * modest_dimming_rule_process:
+ * @rule: a #ModestDimmingRule object to process.
+ * 
+ * Process dimming rule, executing private callback defined at 
+ * instantiation time. This callback may updates notification provate field
+ * of @rule in order to show information banners when 'insensitive-press'
+ * events occurs. 
+ *
+ **/
+void modest_dimming_rule_process (ModestDimmingRule *self);
+
+void modest_dimming_rule_set_notification (ModestDimmingRule *rule,
+					   const gchar *notification);
+
+gchar *modest_dimming_rule_get_notification (ModestDimmingRule *rule);
+					   
 
 G_END_DECLS
 

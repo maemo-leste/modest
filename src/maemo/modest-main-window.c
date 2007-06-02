@@ -193,6 +193,20 @@ static const GtkActionEntry modest_folder_view_action_entries [] = {
 	{ "FolderViewCSMHelp", NULL, N_("mcen_me_inbox_help"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_help) },
 };
 
+static const GtkActionEntry modest_header_view_action_entries [] = {
+
+	/* Header View CSM actions */
+	{ "HeaderViewCSMOpen",          NULL,  N_("mcen_me_inbox_open"),        NULL,       NULL, G_CALLBACK (modest_ui_actions_on_new_folder) },
+	{ "HeaderViewCSMReply",         NULL,  N_("mcen_me_inbox_reply"),       NULL,      NULL, G_CALLBACK (modest_ui_actions_on_reply) },
+	{ "HeaderViewCSMReplyAll",      NULL,  N_("mcen_me_inbox_replytoall"),  NULL,      NULL, G_CALLBACK (modest_ui_actions_on_reply_all) },
+	{ "HeaderViewCSMForward",       NULL,  N_("mcen_me_inbox_forward"),     NULL,      NULL, G_CALLBACK (modest_ui_actions_on_forward) },
+	{ "HeaderViewCSMCut",           NULL,  N_("mcen_me_inbox_cut"),         "<CTRL>X", NULL, G_CALLBACK (modest_ui_actions_on_cut) },
+	{ "HeaderViewCSMCopy",          NULL,  N_("mcen_me_inbox_copy"),        "<CTRL>C", NULL, G_CALLBACK (modest_ui_actions_on_copy) },
+	{ "HeaderViewCSMPaste",         NULL,  N_("mcen_me_inbox_paste"),       "<CTRL>V", NULL, G_CALLBACK (modest_ui_actions_on_paste) },
+	{ "HeaderViewCSMDelete",        NULL,  N_("mcen_me_inbox_delete"),      NULL,      NULL, G_CALLBACK (modest_ui_actions_on_delete) },
+	{ "HeaderViewCSMCancelSending", NULL,  N_("mcen_me_outbox_cancelsend"), NULL,      NULL, NULL },
+	{ "HeaderViewCSMHelp",          NULL,  N_("mcen_me_inbox_help"),        NULL,      NULL, G_CALLBACK (modest_ui_actions_on_help) },
+};
 
 static const GtkToggleActionEntry modest_main_window_toggle_action_entries [] = {
 	{ "ToolbarToggleView", MODEST_STOCK_SPLIT_VIEW, N_("gqn_toolb_rss_fldonoff"), "<CTRL>t", NULL, G_CALLBACK (modest_ui_actions_toggle_folders_view), FALSE },
@@ -440,9 +454,19 @@ _folder_view_csm_menu_activated (GtkWidget *widget, gpointer user_data)
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW (user_data));
 
 	/* Update dimmed */	
-	modest_window_check_dimming_rules (MODEST_WINDOW (user_data));	
+	modest_window_check_dimming_rules_group (MODEST_WINDOW (user_data), "ModestMenuDimmingRules");	
 }
 
+static void
+_header_view_csm_menu_activated (GtkWidget *widget, gpointer user_data)
+{
+	g_return_if_fail (MODEST_IS_MAIN_WINDOW (user_data));
+
+	/* Update visibility */
+
+	/* Update dimmed */	
+	modest_window_check_dimming_rules_group (MODEST_WINDOW (user_data), "ModestMenuDimmingRules");	
+}
 
 static void
 connect_signals (ModestMainWindow *self)
@@ -462,6 +486,7 @@ connect_signals (ModestMainWindow *self)
 	g_signal_connect (G_OBJECT(priv->folder_view), "folder-display-name-changed",
 			  G_CALLBACK(modest_ui_actions_on_folder_display_name_changed), self);
 
+	/* Folder view CSM */
 	menu = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/FolderViewCSM");
 	gtk_widget_tap_and_hold_setup (GTK_WIDGET (priv->folder_view), menu, NULL, 0);
 	g_signal_connect (G_OBJECT(priv->folder_view), "tap-and-hold",
@@ -479,6 +504,13 @@ connect_signals (ModestMainWindow *self)
 	g_signal_connect (G_OBJECT(priv->header_view), "key-press-event",
 			  G_CALLBACK(on_inner_widgets_key_pressed), self);
 
+	/* Header view CSM */
+	menu = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/HeaderViewCSM");
+	gtk_widget_tap_and_hold_setup (GTK_WIDGET (priv->header_view), menu, NULL, 0);
+	g_signal_connect (G_OBJECT(priv->header_view), "tap-and-hold",
+			  G_CALLBACK(_header_view_csm_menu_activated),
+			  self);
+	
 	/* window */
 	g_signal_connect (G_OBJECT(self), "delete-event", G_CALLBACK(on_delete_event), self);
 	g_signal_connect (G_OBJECT (self), "window-state-event",
@@ -570,7 +602,8 @@ modest_main_window_new (void)
 	ModestMainWindowPrivate *priv = NULL;
 	ModestWindowPrivate *parent_priv = NULL;
 	GtkWidget *folder_win = NULL;
-	ModestDimmingRulesGroup *rules_group = NULL;
+	ModestDimmingRulesGroup *menu_rules_group = NULL;
+	ModestDimmingRulesGroup *toolbar_rules_group = NULL;
 	GtkActionGroup *action_group = NULL;
 	GError *error = NULL;
 	TnyFolderStoreQuery *query = NULL;
@@ -588,7 +621,8 @@ modest_main_window_new (void)
 	action_group = gtk_action_group_new ("ModestMainWindowActions");
 	gtk_action_group_set_translation_domain (action_group, GETTEXT_PACKAGE);
 
-	rules_group = modest_dimming_rules_group_new ("ModestCommonDimmingRules");
+	menu_rules_group = modest_dimming_rules_group_new ("ModestMenuDimmingRules");
+	toolbar_rules_group = modest_dimming_rules_group_new ("ModestToolbarDimmingRules");
 
 	/* Add common actions */
 	gtk_action_group_add_actions (action_group,
@@ -599,6 +633,11 @@ modest_main_window_new (void)
 	gtk_action_group_add_actions (action_group,
 				      modest_folder_view_action_entries,
 				      G_N_ELEMENTS (modest_folder_view_action_entries),
+				      self);
+
+	gtk_action_group_add_actions (action_group,
+				      modest_header_view_action_entries,
+				      G_N_ELEMENTS (modest_header_view_action_entries),
 				      self);
 
 	gtk_action_group_add_toggle_actions (action_group,
@@ -624,14 +663,20 @@ modest_main_window_new (void)
 	}
 
 	/* Add common dimming rules */
-	modest_dimming_rules_group_add_rules (rules_group, 
-					      modest_dimming_entries,
-					      G_N_ELEMENTS (modest_dimming_entries),
+	modest_dimming_rules_group_add_rules (menu_rules_group, 
+					      modest_main_window_menu_dimming_entries,
+					      G_N_ELEMENTS (modest_main_window_menu_dimming_entries),
+					      self);
+	modest_dimming_rules_group_add_rules (toolbar_rules_group, 
+					      modest_main_window_toolbar_dimming_entries,
+					      G_N_ELEMENTS (modest_main_window_toolbar_dimming_entries),
 					      self);
 
 	/* Insert dimming rules group for this window */
-	modest_ui_dimming_manager_insert_rules_group (parent_priv->ui_dimming_manager, rules_group);							 
-	g_object_unref (rules_group);
+	modest_ui_dimming_manager_insert_rules_group (parent_priv->ui_dimming_manager, menu_rules_group);
+	modest_ui_dimming_manager_insert_rules_group (parent_priv->ui_dimming_manager, toolbar_rules_group);
+	g_object_unref (menu_rules_group);
+	g_object_unref (toolbar_rules_group);
 	
 	/* Add accelerators */
 	gtk_window_add_accel_group (GTK_WINDOW (self), 

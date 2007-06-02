@@ -171,10 +171,11 @@ modest_ui_dimming_manager_process_dimming_rules_group (ModestUIDimmingManager *s
 	priv = MODEST_UI_DIMMING_MANAGER_GET_PRIVATE(self);
 
 	/* Serach group by name */
-	group = g_hash_table_lookup (priv->groups_map, group_name);
+	group = MODEST_DIMMING_RULES_GROUP(g_hash_table_lookup (priv->groups_map, group_name));
 	g_return_if_fail (group != NULL);
 	
-	/*  */
+	/* Performs group dimming rules checking */
+	modest_dimming_rules_group_execute (group);
 }
 
 

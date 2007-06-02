@@ -7,8 +7,8 @@
 G_BEGIN_DECLS
 
 
-/* Dimming rules entries */
-static const ModestDimmingEntry modest_msg_view_dimming_entries [] = {
+/* Menu Dimming rules entries */
+static const ModestDimmingEntry modest_msg_view_menu_dimming_entries [] = {
 
 	/* Message Menu */
 	{ "/MenuBar/MessageMenu/MessageNewMenu", G_CALLBACK(modest_ui_dimming_rules_on_new_msg) },
@@ -48,21 +48,25 @@ static const ModestDimmingEntry modest_msg_view_dimming_entries [] = {
 	{ "/MenuBar/ToolsMenu/CloseWindowMenu", NULL },
 	{ "/MenuBar/ToolsMenu/CloseAllWindowsMenu", NULL },
 
-	/* Toolbar */
-	{ "/Toolbar/ToolbarMessageNew", NULL },
-	{ "/Toolbar/ToolbarMessageReply", NULL },
-	{ "/Toolbar/ToolbarDeleteMessage", NULL },
-	{ "/Toolbar/ToolbarMoveTo", NULL },
-	{ "/Toolbar/ToolbarFindInMessage", NULL },
-	{ "/Toolbar/ToolbarMessageBack", NULL },
-	{ "/Toolbar/ToolbarMessageNext", NULL },
-	{ "/Toolbar/ToolbarCancel", NULL },
-
 	/* Contextual Menus (Toolbar) */
 	{ "/ToolbarReplyCSM/MessageForwardMenu", NULL },
 	{ "/ToolbarReplyCSM/MessageReplyAllMenu", NULL },
 	{ "/ToolbarReplyCSM/MessageReplyMenu", NULL },
 	
+};
+
+/* Menu Dimming rules entries */
+static const ModestDimmingEntry modest_msg_view_toolbar_dimming_entries [] = {
+
+	/* Toolbar */
+	{ "/Toolbar/ToolbarMessageNew", NULL },
+	{ "/Toolbar/ToolbarMessageReply", G_CALLBACK(modest_ui_dimming_rules_on_reply_msg) },
+	{ "/Toolbar/ToolbarDeleteMessage",  G_CALLBACK(modest_ui_dimming_rules_on_delete_msg) },
+	{ "/Toolbar/ToolbarMoveTo", G_CALLBACK(modest_ui_dimming_rules_on_move_to) },
+	{ "/Toolbar/ToolbarFindInMessage", NULL },
+	{ "/Toolbar/ToolbarMessageBack", NULL },
+	{ "/Toolbar/ToolbarMessageNext", NULL },
+	{ "/Toolbar/ToolbarCancel", NULL },
 };
 
 G_END_DECLS
