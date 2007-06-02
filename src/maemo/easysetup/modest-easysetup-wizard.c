@@ -69,9 +69,18 @@ G_DEFINE_TYPE (ModestEasysetupWizardDialog, modest_easysetup_wizard_dialog, MODE
 
 typedef struct _ModestEasysetupWizardDialogPrivate ModestEasysetupWizardDialogPrivate;
 
+typedef enum {
+	MODEST_EASYSETUP_WIZARD_DIALOG_INCOMING_CHANGED = 0x01,
+	MODEST_EASYSETUP_WIZARD_DIALOG_OUTGOING_CHANGED = 0x02
+} ModestEasysetupWizardDialogServerChanges;
+
 struct _ModestEasysetupWizardDialogPrivate
 {
 	ModestPresets *presets;
+
+	/* Remember what fields the user edited manually to not prefill them
+	 * again. */
+	ModestEasysetupWizardDialogServerChanges server_changes;
 };
 
 static void
@@ -560,8 +569,17 @@ static void on_combo_servertype_changed(GtkComboBox *combobox, gpointer user_dat
 	ModestEasysetupWizardDialog *self = MODEST_EASYSETUP_WIZARD_DIALOG (user_data);
 	update_incoming_server_title (self);
 	update_incoming_server_security_choices (self);
+
+	set_default_custom_servernames (self);
 }
-           
+
+static void on_entry_incoming_servername_changed(GtkEntry *entry, gpointer user_data)
+{
+	ModestEasysetupWizardDialog *self = MODEST_EASYSETUP_WIZARD_DIALOG (user_data);
+	ModestEasysetupWizardDialogPrivate *priv = WIZARD_DIALOG_GET_PRIVATE (self);
+	priv->server_changes |= MODEST_EASYSETUP_WIZARD_DIALOG_INCOMING_CHANGED;
+}
+
 static GtkWidget* create_page_custom_incoming (ModestEasysetupWizardDialog *self)
 {
 	GtkWidget *box = gtk_vbox_new (FALSE, MODEST_MARGIN_NONE);
@@ -570,7 +588,7 @@ static GtkWidget* create_page_custom_incoming (ModestEasysetupWizardDialog *self
 	GtkWidget *label = gtk_label_new (_("mcen_ia_emailsetup_account_type"));
 	gtk_label_set_line_wrap (GTK_LABEL (label), TRUE);
 	gtk_label_set_max_width_chars (GTK_LABEL (label), 40);
-	gtk_box_pack_start (GTK_BOX (box), label, FALSE, FALSE, MODEST_MARGIN_HALF);
+	gtk_box_pack_start (GTK_BOX (box), label, FALSE, FALSE, 0);
 	gtk_widget_show (label);
 	
 	/* Create a size group to be used by all captions.
@@ -612,7 +630,11 @@ static GtkWidget* create_page_custom_incoming (ModestEasysetupWizardDialog *self
 	 * as in the UI spec: */
 	g_signal_connect (G_OBJECT (self->combo_incoming_servertype), "changed",
 			  G_CALLBACK (on_combo_servertype_changed), self);
-	
+
+	/* Remember when the servername was changed manually: */
+	g_signal_connect (G_OBJECT (self->entry_incomingserver), "changed",
+	                  G_CALLBACK (on_entry_incoming_servername_changed), self);
+
 	/* The secure connection widgets: */	
 	if (!self->combo_incoming_security)
 		self->combo_incoming_security = GTK_WIDGET (modest_serversecurity_combo_box_new ());
@@ -676,6 +698,13 @@ on_button_outgoing_smtp_servers (GtkButton *button, gpointer user_data)
 	/* Show the window: */
 	gtk_window_set_transient_for (GTK_WINDOW (self->specific_window), GTK_WINDOW (self));
 	gtk_widget_show (self->specific_window);
+}
+
+static void on_entry_outgoing_servername_changed (GtkEntry *entry, gpointer user_data)
+{
+	ModestEasysetupWizardDialog *self = MODEST_EASYSETUP_WIZARD_DIALOG (user_data);
+	ModestEasysetupWizardDialogPrivate *priv = WIZARD_DIALOG_GET_PRIVATE (self);
+	priv->server_changes |= MODEST_EASYSETUP_WIZARD_DIALOG_OUTGOING_CHANGED;
 }
 
 static GtkWidget* create_page_custom_outgoing (ModestEasysetupWizardDialog *self)
@@ -753,6 +782,9 @@ static GtkWidget* create_page_custom_outgoing (ModestEasysetupWizardDialog *self
 		
 	g_signal_connect (G_OBJECT (self->button_outgoing_smtp_servers), "clicked",
 			  G_CALLBACK (on_button_outgoing_smtp_servers), self);
+
+	g_signal_connect (G_OBJECT (self->entry_outgoingserver), "changed",
+	                  G_CALLBACK (on_entry_outgoing_servername_changed), self);
 	
 	
 	gtk_widget_show (GTK_WIDGET (box));
@@ -903,8 +935,10 @@ modest_easysetup_wizard_dialog_init (ModestEasysetupWizardDialog *self)
 	}
 	
 	g_assert(priv->presets);
-	
-	
+
+	/* The server fields did not have been manually changed yet */
+	priv->server_changes = 0;
+
 	/* Get the account manager object, 
 	 * so we can check for existing accounts,
 	 * and create new accounts: */
@@ -947,7 +981,7 @@ modest_easysetup_wizard_dialog_init (ModestEasysetupWizardDialog *self)
 	 */
 	g_signal_connect_after (G_OBJECT (self), "response",
 				G_CALLBACK (on_response), self);
-            
+
 	/* When this window is shown, hibernation should not be possible, 
 	 * because there is no sensible way to save the state: */
 	modest_window_mgr_prevent_hibernation_while_window_is_shown (
@@ -1087,21 +1121,27 @@ util_get_default_servername_from_email_address (const gchar* email_address, Mode
 
 static void set_default_custom_servernames (ModestEasysetupWizardDialog *account_wizard)
 {
+	ModestEasysetupWizardDialogPrivate *priv = WIZARD_DIALOG_GET_PRIVATE(account_wizard);
+
 	if (!account_wizard->entry_incomingserver)
 		return;
 		
 	/* Set a default domain for the server, based on the email address,
 	 * if no server name was already specified.
 	 */
-	const gchar* incoming_existing = gtk_entry_get_text (GTK_ENTRY (account_wizard->entry_incomingserver));
-	if ((!incoming_existing || (strlen(incoming_existing) == 0)) 
-	    && account_wizard->entry_user_email) {
+	if (account_wizard->entry_user_email
+	    && ((priv->server_changes & MODEST_EASYSETUP_WIZARD_DIALOG_INCOMING_CHANGED) == 0)) {
 		const ModestTransportStoreProtocol protocol = easysetup_servertype_combo_box_get_active_servertype (
 			EASYSETUP_SERVERTYPE_COMBO_BOX (account_wizard->combo_incoming_servertype));
 		const gchar* email_address = gtk_entry_get_text (GTK_ENTRY(account_wizard->entry_user_email));
 		
 		gchar* servername = util_get_default_servername_from_email_address (email_address, protocol);
+
+		/* Do not set the INCOMING_CHANGED flag because of this edit */
+		g_signal_handlers_block_by_func (G_OBJECT (account_wizard->entry_incomingserver), G_CALLBACK (on_entry_incoming_servername_changed), account_wizard);
 		gtk_entry_set_text (GTK_ENTRY (account_wizard->entry_incomingserver), servername);
+		g_signal_handlers_unblock_by_func (G_OBJECT (account_wizard->entry_incomingserver), G_CALLBACK (on_entry_incoming_servername_changed), account_wizard);
+
 		g_free (servername);
 	}
 	
@@ -1111,13 +1151,17 @@ static void set_default_custom_servernames (ModestEasysetupWizardDialog *account
 	if (!account_wizard->entry_outgoingserver)
 		return;
 		
-	const gchar* outgoing_existing = gtk_entry_get_text (GTK_ENTRY (account_wizard->entry_outgoingserver));
-	if ((!outgoing_existing || (strlen(outgoing_existing) == 0)) 
-	    && account_wizard->entry_user_email) {
+	if (account_wizard->entry_user_email
+	    && ((priv->server_changes & MODEST_EASYSETUP_WIZARD_DIALOG_OUTGOING_CHANGED) == 0)) {
 		const gchar* email_address = gtk_entry_get_text (GTK_ENTRY(account_wizard->entry_user_email));
 		
 		gchar* servername = util_get_default_servername_from_email_address (email_address, MODEST_PROTOCOL_TRANSPORT_SMTP);
+
+		/* Do not set the OUTGOING_CHANGED flag because of this edit */
+		g_signal_handlers_block_by_func (G_OBJECT (account_wizard->entry_outgoingserver), G_CALLBACK (on_entry_outgoing_servername_changed), account_wizard);
 		gtk_entry_set_text (GTK_ENTRY (account_wizard->entry_outgoingserver), servername);
+		g_signal_handlers_unblock_by_func (G_OBJECT (account_wizard->entry_outgoingserver), G_CALLBACK (on_entry_outgoing_servername_changed), account_wizard);
+
 		g_free (servername);
 	}
 }
