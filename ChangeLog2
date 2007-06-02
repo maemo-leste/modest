@@ -1,5 +1,11 @@
 2007-06-02  Armin Burgmeier  <armin@openismus.com>
 
+	* src/maemo/easysetup/modest-easysetup-wizard.c: Made labels wrapping
+	and assigned max width chars so that they wrap instead of being
+	truncated. Fixes projects.maemo.org bug NB#56126.
+
+2007-06-02  Armin Burgmeier  <armin@openismus.com>
+
 	* src/maemo/modest-connection-specific-smtp-window.c: Add an
 	introductory note to the connection specific smtp servers dialog, as
 	section 8.12 of the email UI specification requires. This fixes
@@ -2159,4 +2165,3 @@
 	
 Started ChangeLog2 file, because I cannot work without a ChangeLog. murrayc.
 Apparently ChangeLog is not used for some vague Nokia legal reasons.
-

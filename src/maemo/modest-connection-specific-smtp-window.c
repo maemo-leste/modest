@@ -345,13 +345,13 @@ modest_connection_specific_smtp_window_init (ModestConnectionSpecificSmtpWindow 
 	
 	GtkWidget *vbox = gtk_vbox_new (FALSE, MODEST_MARGIN_DEFAULT);
 
-  /* Introductory note: */
-  GtkWidget *label = gtk_label_new(_("mcen_ia_optionalsmtp_note"));
-  gtk_label_set_line_wrap (GTK_LABEL (label), TRUE);
-  /* So that it is shown without being truncated: */
-  gtk_label_set_max_width_chars (GTK_LABEL (label), 40);
-  gtk_widget_show (label);
-  gtk_box_pack_start (GTK_BOX (vbox), label, FALSE, FALSE, MODEST_MARGIN_HALF);
+	/* Introductory note: */
+	GtkWidget *label = gtk_label_new(_("mcen_ia_optionalsmtp_note"));
+	gtk_label_set_line_wrap (GTK_LABEL (label), TRUE);
+	/* So that it is shown without being truncated: */
+	gtk_label_set_max_width_chars (GTK_LABEL (label), 40);
+	gtk_widget_show (label);
+	gtk_box_pack_start (GTK_BOX (vbox), label, FALSE, FALSE, MODEST_MARGIN_HALF);
 	
 	/* Put the treeview in a scrolled window and add it to the box: */
 	GtkWidget *scrolled_window = gtk_scrolled_window_new (NULL, NULL);

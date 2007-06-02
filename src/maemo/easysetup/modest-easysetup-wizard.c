@@ -216,6 +216,9 @@ create_page_welcome (ModestEasysetupWizardDialog *self)
 {
 	GtkWidget *box = gtk_vbox_new (FALSE, MODEST_MARGIN_NONE);
 	GtkWidget *label = gtk_label_new(_("mcen_ia_emailsetup_intro"));
+	gtk_label_set_line_wrap (GTK_LABEL (label), TRUE);
+	/* So that it is not truncated: */
+	gtk_label_set_max_width_chars (GTK_LABEL (label), 40);
 	gtk_box_pack_start (GTK_BOX (box), label, FALSE, FALSE, 0);
 	gtk_widget_show (label);
 	gtk_widget_show (GTK_WIDGET (box));
@@ -274,6 +277,8 @@ create_page_account_details (ModestEasysetupWizardDialog *self)
 {
 	GtkWidget *box = gtk_vbox_new (FALSE, MODEST_MARGIN_NONE);
 	GtkWidget *label = gtk_label_new(_("mcen_ia_accountdetails"));
+	gtk_label_set_line_wrap (GTK_LABEL (label), TRUE);
+	gtk_label_set_max_width_chars (GTK_LABEL (label), 40);
 	gtk_box_pack_start (GTK_BOX (box), label, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (label);
 	
@@ -498,11 +503,15 @@ static GtkWidget* create_page_complete_easysetup (ModestEasysetupWizardDialog *s
 	GtkWidget *box = gtk_vbox_new (FALSE, MODEST_MARGIN_NONE);
 	
 	GtkWidget *label = gtk_label_new(_("mcen_ia_emailsetup_setup_complete"));
+	gtk_label_set_line_wrap (GTK_LABEL (label), TRUE);
+	gtk_label_set_max_width_chars (GTK_LABEL (label), 40);
 	gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
 	gtk_box_pack_start (GTK_BOX (box), label, FALSE, FALSE, 0);
 	gtk_widget_show (label);
 	
 	label = gtk_label_new (_("mcen_ia_easysetup_complete"));
+	gtk_label_set_line_wrap (GTK_LABEL (label), TRUE);
+	gtk_label_set_max_width_chars (GTK_LABEL (label), 40);
 	gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
 	gtk_box_pack_start (GTK_BOX (box), label, FALSE, FALSE, 0);
 	gtk_widget_show (label);
@@ -914,7 +923,6 @@ modest_easysetup_wizard_dialog_init (ModestEasysetupWizardDialog *self)
 	 * because we need _some_ final page to enable the Next and Finish buttons: */
 	create_subsequent_easysetup_pages (self);
 
-            
 	/* Connect to the dialog's response signal so we can enable/disable buttons 
 	 * for the newly-selected page, because the prev/next buttons cause response to be emitted.
 	 * Note that we use g_signal_connect_after() instead of g_signal_connect()
