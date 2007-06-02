@@ -295,7 +295,7 @@ modest_connection_specific_smtp_window_init (ModestConnectionSpecificSmtpWindow 
 
 	/* Specify a default size, because the GtkTreeView's default requested size  
 	 * is not big enough: */
-	gtk_window_set_default_size (GTK_WINDOW (self), 500, 200);
+	gtk_window_set_default_size (GTK_WINDOW (self), 500, 300);
 	
 	/* This seems to be necessary to make the window show at the front with decoration.
 	 * If we use property type=GTK_WINDOW_TOPLEVEL instead of the default GTK_WINDOW_POPUP+decoration, 
@@ -344,6 +344,14 @@ modest_connection_specific_smtp_window_init (ModestConnectionSpecificSmtpWindow 
 	/* The application must call modest_connection_specific_smtp_window_fill_with_connections(). */
 	
 	GtkWidget *vbox = gtk_vbox_new (FALSE, MODEST_MARGIN_DEFAULT);
+
+  /* Introductory note: */
+  GtkWidget *label = gtk_label_new(_("mcen_ia_optionalsmtp_note"));
+  gtk_label_set_line_wrap (GTK_LABEL (label), TRUE);
+  /* So that it is shown without being truncated: */
+  gtk_label_set_max_width_chars (GTK_LABEL (label), 40);
+  gtk_widget_show (label);
+  gtk_box_pack_start (GTK_BOX (vbox), label, FALSE, FALSE, MODEST_MARGIN_HALF);
 	
 	/* Put the treeview in a scrolled window and add it to the box: */
 	GtkWidget *scrolled_window = gtk_scrolled_window_new (NULL, NULL);

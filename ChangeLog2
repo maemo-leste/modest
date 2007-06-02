@@ -1,3 +1,10 @@
+2007-06-02  Armin Burgmeier  <armin@openismus.com>
+
+	* src/maemo/modest-connection-specific-smtp-window.c: Add an
+	introductory note to the connection specific smtp servers dialog, as
+	section 8.12 of the email UI specification requires. This fixes
+	projects.maemo.org bug NB#59212.
+
 2007-06-01  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/maemo/modest-account-view-window.c: (on_edit_button_clicked):
