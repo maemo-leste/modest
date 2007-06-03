@@ -1366,7 +1366,7 @@ void modest_mail_operation_get_msg (ModestMailOperation *self,
 	/* Get message from folder */
 	if (folder) {
 		/* Get account and set it into mail_operation */
-		priv->account = tny_folder_get_account (TNY_FOLDER(folder));		
+		priv->account = tny_folder_get_account (TNY_FOLDER(folder));
 
 		helper = g_slice_new0 (GetMsgAsyncHelper);
 		helper->mail_op = self;
@@ -1629,13 +1629,18 @@ modest_mail_operation_get_msgs_full (ModestMailOperation *self,
 	priv->total = tny_list_get_length(header_list);
 
 	/* Get account and set it into mail_operation */
-	if (tny_list_get_length (header_list) > 1) {
-		iter = tny_list_create_iterator (header_list);		
+	if (tny_list_get_length (header_list) >= 1) {
+		iter = tny_list_create_iterator (header_list);
 		header = TNY_HEADER (tny_iterator_get_current (iter));
 		folder = tny_header_get_folder (header);		
 		priv->account = tny_folder_get_account (TNY_FOLDER(folder));
 		g_object_unref (header);
 		g_object_unref (folder);
+
+		if (tny_list_get_length (header_list) == 1) {
+			g_object_unref (iter);
+			iter = NULL;
+		}
 	}
 
 	/* Get msg size limit */
@@ -2001,7 +2006,4 @@ modest_mail_operation_notify_end (ModestMailOperation *self)
 	state = modest_mail_operation_clone_state (self);
 	g_signal_emit (G_OBJECT (self), signals[PROGRESS_CHANGED_SIGNAL], 0, state, NULL);
 	g_slice_free (ModestMailOperationState, state);
-
-	/* Notify the queue */
-	modest_mail_operation_queue_remove (modest_runtime_get_mail_operation_queue (), self);
 }

@@ -121,7 +121,7 @@ typedef struct {
 	guint      total;
 	gboolean   finished;
 	ModestMailOperationStatus        status;
-	ModestMailOperationTypeOperation op_type;		
+	ModestMailOperationTypeOperation op_type;
 } ModestMailOperationState;
 
 

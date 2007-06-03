@@ -37,14 +37,10 @@ static void modest_mail_operation_queue_class_init (ModestMailOperationQueueClas
 static void modest_mail_operation_queue_init       (ModestMailOperationQueue *obj);
 static void modest_mail_operation_queue_finalize   (GObject *obj);
 
-static void modest_mail_operation_queue_cancel_no_block_wrapper (ModestMailOperation *mail_op,
-								 ModestMailOperationQueue *op_queue);
-
-static void modest_mail_operation_queue_cancel_no_block         (ModestMailOperationQueue *op_queue,
-								 ModestMailOperation *mail_op);
-
 static void
-modest_mail_operation_queue_cancel_all_no_block (ModestMailOperationQueue *self);
+on_progress_changed (ModestMailOperation *mail_op,
+                     ModestMailOperationState *state,
+		     gpointer user_data);
 
 /* list my signals  */
 enum {
@@ -135,6 +131,28 @@ modest_mail_operation_queue_init (ModestMailOperationQueue *obj)
 }
 
 static void
+on_finalize_foreach(gpointer op,
+                    gpointer user_data)
+{
+	ModestMailOperationQueue *queue;
+	ModestMailOperationQueuePrivate *priv;
+	ModestMailOperation *mail_op;
+
+	queue = MODEST_MAIL_OPERATION_QUEUE (user_data);
+	priv = MODEST_MAIL_OPERATION_QUEUE_GET_PRIVATE (queue);
+	mail_op = MODEST_MAIL_OPERATION (op);
+
+	/* Simply remove from queue, but without emitting a
+	 * QUEUE_CHANGED_SIGNAL because we are in finalize anyway and have
+	 * the lock acquired. */
+	g_signal_handlers_disconnect_by_func (mail_op, G_CALLBACK (on_progress_changed), user_data);
+
+	modest_mail_operation_cancel (mail_op);
+	g_queue_remove (priv->op_queue, mail_op);
+	g_object_unref (G_OBJECT (mail_op));
+}
+
+static void
 modest_mail_operation_queue_finalize (GObject *obj)
 {
 	ModestMailOperationQueuePrivate *priv;
@@ -145,8 +163,12 @@ modest_mail_operation_queue_finalize (GObject *obj)
 
 	if (priv->op_queue) {
 		/* Cancel all */
-		if (!g_queue_is_empty (priv->op_queue))
-			modest_mail_operation_queue_cancel_all_no_block (MODEST_MAIL_OPERATION_QUEUE (obj));
+		if (!g_queue_is_empty (priv->op_queue)) {
+			g_queue_foreach (priv->op_queue,
+			                 (GFunc)on_finalize_foreach,
+			                 MODEST_MAIL_OPERATION_QUEUE (obj));
+		}
+
 		g_queue_free (priv->op_queue);
 	}
 
@@ -162,6 +184,21 @@ modest_mail_operation_queue_new (void)
 	ModestMailOperationQueue *self = g_object_new (MODEST_TYPE_MAIL_OPERATION_QUEUE, NULL);
 
 	return MODEST_MAIL_OPERATION_QUEUE (self);
+}
+
+static void
+on_progress_changed (ModestMailOperation *mail_op,
+                     ModestMailOperationState *state,
+		     gpointer user_data)
+{
+	ModestMailOperationQueue *queue;
+
+	if(!state->finished)
+		return;
+
+	/* Remove operation from queue when finished */
+	queue = MODEST_MAIL_OPERATION_QUEUE (user_data);
+	modest_mail_operation_queue_remove (queue, mail_op);
 }
 
 void 
@@ -180,13 +217,17 @@ modest_mail_operation_queue_add (ModestMailOperationQueue *self,
 	modest_mail_operation_set_id (mail_op, priv->op_id++);
 	g_mutex_unlock (priv->queue_lock);
 
+	/* Get notified when the operation ends to remove it from the queue */
+	g_signal_connect (G_OBJECT (mail_op), "progress_changed",
+	                  G_CALLBACK (on_progress_changed), self);
+
 	/* Notify observers */
 	g_signal_emit (self, signals[QUEUE_CHANGED_SIGNAL], 0,
 		       mail_op, MODEST_MAIL_OPERATION_QUEUE_OPERATION_ADDED);
 }
 
 void 
-modest_mail_operation_queue_remove (ModestMailOperationQueue *self, 
+modest_mail_operation_queue_remove (ModestMailOperationQueue *self,
 				    ModestMailOperation *mail_op)
 {
 	ModestMailOperationQueuePrivate *priv;
@@ -200,6 +241,10 @@ modest_mail_operation_queue_remove (ModestMailOperationQueue *self,
 	g_mutex_lock (priv->queue_lock);
 	g_queue_remove (priv->op_queue, mail_op);
 	g_mutex_unlock (priv->queue_lock);
+
+	g_signal_handlers_disconnect_by_func (G_OBJECT (mail_op),
+	                                      G_CALLBACK (on_progress_changed),
+	                                      self);
 
 	/* Notify observers */
 	g_signal_emit (self, signals[QUEUE_CHANGED_SIGNAL], 0,
@@ -226,7 +271,12 @@ modest_mail_operation_queue_remove (ModestMailOperationQueue *self,
 	}
 
 	/* Free object */
-	modest_runtime_verify_object_last_ref (mail_op, "");
+
+	/* We do not own the last reference when this operation is deleted
+	 * as response to a progress changed signal from the mail operation
+	 * itself, in which case the glib signal system owns a reference
+	 * until the signal emission is complete. armin. */
+	/* modest_runtime_verify_object_last_ref (mail_op, ""); */
 	g_object_unref (G_OBJECT (mail_op));
 }
 
@@ -247,39 +297,6 @@ modest_mail_operation_queue_num_elements (ModestMailOperationQueue *self)
 	return length;
 }
 
-
-/* Utility function intended to be used with g_queue_foreach */
-static void
-modest_mail_operation_queue_cancel_no_block_wrapper (ModestMailOperation *self,
-						     ModestMailOperationQueue *op_queue)
-{
-	modest_mail_operation_queue_cancel_no_block (op_queue, self);
-}
-
-static void 
-modest_mail_operation_queue_cancel_no_block (ModestMailOperationQueue *self,
-					     ModestMailOperation *mail_op)
-{
-	if (modest_mail_operation_is_finished (mail_op))
-		return;
-
-	/* TODO: the implementation is still empty */
-	modest_mail_operation_cancel (mail_op);
-
-	/* Remove from the queue */
-	modest_mail_operation_queue_remove (self, mail_op);
-}
-
-static void
-modest_mail_operation_queue_cancel_all_no_block (ModestMailOperationQueue *self)
-{
-	ModestMailOperationQueuePrivate *priv = MODEST_MAIL_OPERATION_QUEUE_GET_PRIVATE (self);
-
-	g_queue_foreach (priv->op_queue, 
-			 (GFunc) modest_mail_operation_queue_cancel_no_block_wrapper, 
-			 self);
-}
-
 void 
 modest_mail_operation_queue_cancel (ModestMailOperationQueue *self, 
 				    ModestMailOperation *mail_op)
@@ -291,21 +308,44 @@ modest_mail_operation_queue_cancel (ModestMailOperationQueue *self,
 
 	priv = MODEST_MAIL_OPERATION_QUEUE_GET_PRIVATE(self);
 
-	g_mutex_lock (priv->queue_lock);
-	modest_mail_operation_queue_cancel_no_block (self, mail_op);
-	g_mutex_unlock (priv->queue_lock);
+	/* This triggers a progess_changed signal in which we remove
+	 * the operation from the queue. */
+	modest_mail_operation_cancel (mail_op);
+}
+
+static void
+on_cancel_all_foreach (gpointer op, gpointer list)
+{
+	*((GSList**)list) = g_slist_prepend (*((GSList**)list), MODEST_MAIL_OPERATION (op));
 }
 
 void 
 modest_mail_operation_queue_cancel_all (ModestMailOperationQueue *self)
 {
 	ModestMailOperationQueuePrivate *priv;
+	GSList* operations_to_cancel;
+	GSList* cur;
 
 	g_return_if_fail (MODEST_IS_MAIL_OPERATION_QUEUE (self));
 
 	priv = MODEST_MAIL_OPERATION_QUEUE_GET_PRIVATE(self);
 
+	/* Remember which operations to cancel. This is the only thing that
+	 * is done while holding the lock, so we do not need to call
+	 * functions from other files while holding the lock, which could
+	 * lead to a deadlock if such a call re-enters into this queue and
+	 * tries to acquire another lock. */
 	g_mutex_lock (priv->queue_lock);
-	modest_mail_operation_queue_cancel_all_no_block (self);
+	g_queue_foreach (priv->op_queue, (GFunc) on_cancel_all_foreach, &operations_to_cancel);
 	g_mutex_unlock (priv->queue_lock);
+
+	/* TODO: Reverse the list, to remove operations in order? */
+
+	for(cur = operations_to_cancel; cur != NULL; cur = cur->next) {
+		/* This triggers a progress_changed signal in which we remove
+		 * the operation from the queue. */
+		modest_mail_operation_cancel (MODEST_MAIL_OPERATION (cur->data));
+	}
+
+	g_slist_free(operations_to_cancel);
 }

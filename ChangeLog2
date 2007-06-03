@@ -1,3 +1,23 @@
+2007-06-03  Armin Burgmeier  <armin@openismus.com>
+
+	* src/modest-mail-operation.c:
+	(modest_mail_operation_get_msgs_full): Set priv->account also when
+	only retrieving a single message. This avoids a crash when canceling
+	the operation.
+
+	(modest_mail_operation_notify_end): Do not explicitely remove the
+	operation from the queue but only emit the progress_changed signal.
+	The queue itself listens to that signal to remove the operation when
+	it is finished. This reduces coupling and removes a potential deadlock
+	when modest_mail_operation_notify_end() is called from the queue
+	itself. If that is a problem performance-wise, I would suggest to
+	implement a status-changed signal or something.
+
+	* src/modest-mail-operation-queue.c: Make sure to never call a
+	function from another file while the queue is locked. This (hopefully)
+	fixes another deadlock when exiting the application while retrieving
+	mail.
+
 2007-06-03  Johannes Schmid <johannes.schmid@openismus.com>
 
 	* src/dbus_api/modest-dbus-callbacks.c: (modest_dbus_req_filter):
