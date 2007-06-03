@@ -41,6 +41,10 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <tny-list.h>
+#include <tny-iterator.h>
+#include <tny-simple-list.h>
+
 typedef struct 
 {
 	gchar *to;
@@ -627,6 +631,104 @@ static gint on_open_message(GArray * arguments, gpointer data, osso_rpc_t * retv
 }
 
 
+static gint
+on_delete_message (GArray *arguments, gpointer data, osso_rpc_t *retval)
+{
+	TnyList      *headers;
+	TnyFolder    *folder;
+	TnyIterator  *iter; 
+	TnyHeader    *header;
+	TnyHeader    *msg_header;
+	TnyMsg       *msg;
+	TnyAccount   *account;
+	GError       *error;
+	osso_rpc_t    val;
+	const char   *uri;
+	const char   *uid;
+	gint          res;
+
+	if (arguments->len != MODEST_DEBUS_DELETE_MESSAGE_ARGS_COUNT) {
+		return OSSO_ERROR;
+	}
+
+	val = g_array_index (arguments,
+			     osso_rpc_t,
+			     MODEST_DEBUS_DELETE_MESSAGE_ARG_URI);
+
+	uri = (const char *) val.value.s;
+
+	g_debug ("Searching message (delete message)");
+	
+	msg = find_message_by_url (uri, &account);
+
+	if (msg == NULL) {
+		return OSSO_ERROR;
+	}
+
+	g_debug ("Found message");
+	
+	msg_header = tny_msg_get_header (msg);
+	uid = tny_header_get_uid (msg_header);
+	folder = tny_msg_get_folder (msg);
+
+
+	/* tny_msg_get_header () flaw:
+	 * From tinythingy doc: You can't use the returned instance with the
+	 * TnyFolder operations
+	 *
+	 * To get a header instance that will work with these folder methods,
+	 * you can use tny_folder_get_headers.
+	 *
+	 * Ok, we will do so then. Sigh.
+	 * */
+	headers = tny_simple_list_new ();
+
+	tny_folder_get_headers (folder, headers, TRUE, NULL);
+	iter = tny_list_create_iterator (headers);
+	header = NULL;
+
+	g_debug ("Searching header for msg in folder");
+	while (!tny_iterator_is_done (iter)) {
+		const char *cur_id;
+
+		header = TNY_HEADER (tny_iterator_get_current (iter));
+		cur_id = tny_header_get_uid (header);
+		
+		if (cur_id && uid && g_str_equal (cur_id, uid)) {
+			g_debug ("Found correspoding header from folder");
+			break;
+		}
+
+		header = NULL;
+		g_object_unref (header);
+		tny_iterator_next (iter);
+	}
+
+	g_object_unref (iter);
+	g_object_unref (headers);
+	
+	g_object_unref (msg_header);
+	g_object_unref (msg);
+
+	if (header == NULL) {
+		g_object_unref (folder);
+		return OSSO_ERROR;
+	}
+
+
+	error = NULL;
+	res = OSSO_OK;
+	tny_folder_remove_msg (folder, header, &error);
+
+	if (error != NULL) {
+		res = OSSO_ERROR;
+		g_error_free (error);
+	}
+
+	g_object_unref (folder);
+	return res;
+}
+
 static gboolean
 on_idle_send_receive(gpointer user_data)
 {
@@ -662,8 +764,8 @@ gint modest_dbus_req_handler(const gchar * interface, const gchar * method,
                       osso_rpc_t * retval)
 {
 	
-	printf("debug: modest_dbus_req_handler()\n");
-	printf("debug: method received: %s\n", method);
+	g_debug ("modest_dbus_req_handler()\n");
+	g_debug ("debug: method received: %s\n", method);
 	
 	if (g_ascii_strcasecmp(method, MODEST_DBUS_METHOD_SEND_MAIL) == 0) {
 		return on_send_mail (arguments, data, retval);
@@ -675,8 +777,10 @@ gint modest_dbus_req_handler(const gchar * interface, const gchar * method,
 		return on_send_receive (arguments, data, retval);
 	} else if (g_ascii_strcasecmp(method, MODEST_DBUS_METHOD_COMPOSE_MAIL) == 0) {
 		return on_compose_mail (arguments, data, retval);
+	} else if (g_ascii_strcasecmp(method, MODEST_DBUS_METHOD_DELETE_MESSAGE) == 0) {
+		return on_delete_message (arguments,data, retval);
 	}
-	else {
+	else { 
 		/* We need to return INVALID here so
 		 * osso is returning DBUS_HANDLER_RESULT_NOT_YET_HANDLED 
 		 * so our modest_dbus_req_filter can kick in!

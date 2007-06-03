@@ -82,6 +82,12 @@ enum ModestDbusComposeMailArguments
 
 #define MODEST_DBUS_METHOD_SEARCH "Search"
 
+#define MODEST_DBUS_METHOD_DELETE_MESSAGE "DeleteMessage"
+enum ModestDbusDeleteMessageArguments
+{
+	MODEST_DEBUS_DELETE_MESSAGE_ARG_URI,
+	MODEST_DEBUS_DELETE_MESSAGE_ARGS_COUNT
+};
 
 
 

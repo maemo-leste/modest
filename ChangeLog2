@@ -1,3 +1,27 @@
+2007-06-03  Christian Kellner  <ckellner@openismus.com>
+
+	* libmodest-dbus-client/libmodest-dbus-client.h:
+	* libmodest-dbus-client/libmodest-dbus-client.c:
+	(libmodest_dbus_client_delete_message):
+	Implement deletion of messages (Client side).
+
+	(modest_search_hit_free),
+	(modest_search_hit_list_free):
+	Utility functions to free the result hits.
+
+	* src/dbus_api/modest-dbus-api.h:
+	* src/dbus_api/modest-dbus-callbacks.c:
+	(on_delete_message),
+	(modest_dbus_req_handler):
+	Implement deletion of messages (Server side).
+	
+	* tests/dbus_api/test_search.c: (main):
+	Free the hits.
+
+	* tests/dbus_api/Makefile.am:
+	* tests/dbus_api/test_delete_message:
+	Add little test for the message deletion logic
+
 2007-06-03  Armin Burgmeier  <armin@openismus.com>
 
 	* src/modest-mail-operation-queue.c: Fixed a deadlock in finalize()

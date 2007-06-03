@@ -51,5 +51,7 @@ int main (int argc, char *argv[])
 
 	}
 
+	modest_search_hit_list_free (hits);
+
 	return res ? 0 : -1;
 }
