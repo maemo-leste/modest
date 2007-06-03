@@ -56,9 +56,12 @@ static const ProtocolInfo ConnectionProtocolMap[] = {
 	{ MODEST_PROTOCOL_CONNECTION_TLS_OP,    "tls-op",   N_("TLS when possible") }
 	/* op stands for optional */
 };
+
+
+/* FIXME: these names must match those of tny_camel_account_get_supported_secure_auth */
 static const ProtocolInfo AuthProtocolMap[] = {
 	{ MODEST_PROTOCOL_AUTH_NONE,          "none",     N_("None") },
-	{ MODEST_PROTOCOL_AUTH_PASSWORD,      "password", N_("Password") },
+	{ MODEST_PROTOCOL_AUTH_PASSWORD,      "Password", N_("Password") },
 	{ MODEST_PROTOCOL_AUTH_CRAMMD5,       "cram-md5", N_("Cram MD5") }
 };
 
@@ -177,5 +180,3 @@ modest_protocol_info_protocol_is_store (ModestTransportStoreProtocol proto)
 	return proto == MODEST_PROTOCOL_STORE_MBOX || proto == MODEST_PROTOCOL_STORE_MAILDIR ||
 		proto == MODEST_PROTOCOL_STORE_POP || proto == MODEST_PROTOCOL_STORE_IMAP;
 }
-
-

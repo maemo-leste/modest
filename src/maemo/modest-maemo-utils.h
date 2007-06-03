@@ -32,6 +32,7 @@
 #define __MODEST_MAEMO_UTILS_H__
 
 #include <gtk/gtk.h>
+#include <modest-protocol-info.h>
 
 /**
  * modest_maemo_utils_menubar_to_menu:
@@ -84,5 +85,21 @@ gboolean modest_maemo_utils_file_exists (const gchar *filename);
  * Returns: a #TnyFsStream, or %NULL if operation failed.
  */
 TnyFsStream *modest_maemo_utils_create_temp_stream (gchar **path);
+
+/**
+ * modest_protocol_info_protocol_is_local_store:
+ * @proto: the protocol
+ * @hostname: hostname of the mail server to check
+ * @port: mail server port
+ * @parent_window: a GtkWindow that can be used a parent for progress indication
+ *
+ * Get a list of supported authentication methods of the server
+ *  
+ * Returns: GList* of the method names. This list needs to be freed using g_list_free.
+ *
+ */
+
+GList* modest_maemo_utils_get_supported_secure_authentication_methods (ModestTransportStoreProtocol proto, 
+	const gchar* hostname, gint port, GtkWindow *parent_window);
 
 #endif /*__MODEST_MAEMO_UTILS_H__*/

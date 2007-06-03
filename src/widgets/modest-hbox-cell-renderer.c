@@ -30,7 +30,6 @@
 #include <config.h>
 
 #include <glib/gi18n-lib.h>
-
 #include <gtk/gtkwidget.h>
 
 #include <modest-text-utils.h>

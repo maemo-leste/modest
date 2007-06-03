@@ -50,13 +50,16 @@
 #include "modest-account-mgr.h"
 #include "modest-account-mgr-helpers.h" /* For modest_account_mgr_get_account_data(). */
 #include "modest-runtime.h" /* For modest_runtime_get_account_mgr(). */
+#include "modest-protocol-info.h"
 #include "maemo/modest-connection-specific-smtp-window.h"
 #include "maemo/modest-signature-editor-dialog.h"
+#include "maemo/modest-maemo-utils.h"
 #include "widgets/modest-ui-constants.h"
 
 #include <tny-camel-transport-account.h>
 #include <tny-camel-imap-store-account.h>
 #include <tny-camel-pop-store-account.h>
+#include <tny-status.h>
 
 #include <gconf/gconf-client.h>
 #include <string.h> /* For strlen(). */
@@ -884,9 +887,11 @@ on_response (GtkDialog *wizard_dialog,
 	}
 		
 	if (response_id == GTK_RESPONSE_OK) {
-		/* Try to save the changes: */	
-		const gboolean saved = save_configuration (self);
-		if (saved) {
+		/* Try to save the changes if modified (NB #59251): */
+		if (self->modified)
+		{
+			const gboolean saved = save_configuration (self);
+			if (saved) {
 			/* Do not show the account-saved dialog if we are just saving this 
 			 * temporarily, because from the user's point of view it will not 
 			 * really be saved (saved + enabled) until later.
@@ -895,9 +900,10 @@ on_response (GtkDialog *wizard_dialog,
 				modest_account_mgr_get_enabled (self->account_manager, self->account_name);
 			if (enabled)
 				show_ok (GTK_WINDOW (self), _("mcen_ib_advsetup_settings_saved"));
+			}
+			else
+				show_error (GTK_WINDOW (self), _("mail_ib_setting_failed"));
 		}
-		else
-			show_error (GTK_WINDOW (self), _("mail_ib_setting_failed"));
 	}
 }
 
@@ -1161,9 +1167,6 @@ void modest_account_settings_dialog_set_account_name (ModestAccountSettingsDialo
 	dialog->modified = FALSE;
 }
 
-static GList* get_supported_secure_authentication_methods (ModestTransportStoreProtocol proto, 
-	const gchar* hostname, gint port, GtkWindow *parent_window);
-
 static gboolean
 save_configuration (ModestAccountSettingsDialog *dialog)
 {
@@ -1245,7 +1248,7 @@ save_configuration (ModestAccountSettingsDialog *dialog)
 	if (gtk_toggle_button_get_active (
 			GTK_TOGGLE_BUTTON (dialog->checkbox_incoming_auth))) {
 		GList *list_auth_methods = 
-			get_supported_secure_authentication_methods (dialog->incoming_protocol, 
+			modest_maemo_utils_get_supported_secure_authentication_methods (dialog->incoming_protocol, 
 				hostname, port_num, GTK_WINDOW (dialog));	
 		if (list_auth_methods) {
 			/* Use the first supported method.
@@ -1255,7 +1258,17 @@ save_configuration (ModestAccountSettingsDialog *dialog)
 			g_list_free (list_auth_methods);
 		}
 		else
-			g_warning ("%s: get_supported_secure_authentication_methods() returned NULL.\n", __FUNCTION__);
+	  {
+      GtkWidget* error_dialog = gtk_message_dialog_new(GTK_WINDOW(dialog),
+                                                       GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR,
+                                                       GTK_BUTTONS_OK, _("Server does not support secure authentication!"));
+      gtk_dialog_run(GTK_DIALOG(error_dialog));
+      gtk_widget_destroy(error_dialog);
+			/* This is a nasty hack. jschmid. */
+			/* Don't let the dialog close */
+    	g_signal_stop_emission_by_name (dialog, "response");
+      return FALSE;
+    }
 		
 	}
 	
@@ -1402,171 +1415,9 @@ show_error (GtkWindow *parent_window, const gchar* text)
 static void
 show_ok (GtkWindow *parent_window, const gchar* text)
 {
-	GtkDialog *dialog = GTK_DIALOG (hildon_note_new_information (parent_window, text));
-	/*
-	GtkDialog *dialog = GTK_DIALOG (gtk_message_dialog_new (parent_window,
-		(GtkDialogFlags)0,
-		 GTK_MESSAGE_INFO,
-		 GTK_BUTTONS_OK,
-		 text ));
-	*/
-		 
-	gtk_dialog_run (dialog);
-	gtk_widget_destroy (GTK_WIDGET (dialog));
-}
-
-/* TODO: Enable this when tinymail has the API: */
-#if 0
-typedef struct 
-{
-	gboolean finished;
-	GList *result;
-} ModestGetSupportedAuthInfo;
-
-static void on_camel_account_get_supported_secure_authentication_status (
-	GObject *self, TnyStatus *status, gpointer user_data)
-{
-	printf ("DEBUG: %s.\n", __FUNCTION__);
-}
-
-static void
-on_camel_account_get_supported_secure_authentication (
-  TnyCamelAccount *self, gboolean cancelled,
-  GList *auth_types, GError **err, 
-  gpointer user_data)
-{
-	printf ("DEBUG: %s.\n", __FUNCTION__);
-		
-	ModestGetSupportedAuthInfo *info = (ModestGetSupportedAuthInfo*)user_data;
-	g_return_if_fail (info);
-	
-	if (!auth_types) {
-		printf ("DEBUG: %s: auth_types is NULL.\n", __FUNCTION__);
-		info->finished = TRUE; /* We are blocking, waiting for this. */
-		return;
-	}
-		
-	ModestPairList* pairs = modest_protocol_info_get_protocol_auth_pair_list ();
-
-	/* Get the enum value for the strings: */
-	GList *result = NULL;
-	GList* iter = auth_types;
-	while (iter) {
-		const gchar *auth_name = (const gchar*)iter->data;
-		printf("DEBUG: %s: auth_name=%s\n", __FUNCTION__, auth_name);
-		ModestPair *matching = modest_pair_list_find_by_first_as_string (pairs, 
-			auth_name);
-		if (matching)
-			g_list_append (result, GINT_TO_POINTER((ModestConnectionProtocol)matching->second));
-				
-		iter = g_list_next (iter);	
-	}
-	
-	g_list_free (auth_types);
-	
-	modest_pair_list_free (pairs);
-	
-	info->result = result;
-	info->finished = TRUE; /* We are blocking, waiting for this. */
-}
-#endif
-
-
-static GList* get_supported_secure_authentication_methods (ModestTransportStoreProtocol proto, 
-	const gchar* hostname, gint port, GtkWindow *parent_window)
-{
-	return NULL;
-	
-/* TODO: Enable this when tinymail has the API: */
-#if 0
-	g_return_val_if_fail (proto != MODEST_PROTOCOL_TRANSPORT_STORE_UNKNOWN, NULL);
-	
-	/*
-	result = g_list_append (result, GINT_TO_POINTER (MODEST_PROTOCOL_AUTH_CRAMMD5));
-	*/
-	
-	/* Create a TnyCamelAccount so we can use 
-	 * tny_camel_account_get_supported_secure_authentication(): */
-	TnyAccount * tny_account = NULL;
-	switch (proto) {
-	case MODEST_PROTOCOL_TRANSPORT_SENDMAIL:
-	case MODEST_PROTOCOL_TRANSPORT_SMTP:
-		tny_account = TNY_ACCOUNT(tny_camel_transport_account_new ()); break;
-	case MODEST_PROTOCOL_STORE_POP:
-		tny_account = TNY_ACCOUNT(tny_camel_pop_store_account_new ()); break;
-	case MODEST_PROTOCOL_STORE_IMAP:
-		tny_account = TNY_ACCOUNT(tny_camel_imap_store_account_new ()); break;
-	case MODEST_PROTOCOL_STORE_MAILDIR:
-	case MODEST_PROTOCOL_STORE_MBOX:
-		tny_account = TNY_ACCOUNT(tny_camel_store_account_new()); break;
-	default:
-		tny_account = NULL;
-	}
-	
-	if (!tny_account) {
-		g_printerr ("%s could not create tny account.", __FUNCTION__);
-		return NULL;
-	}
-	
-	/* Set proto, so that the prepare_func() vfunc will work when we call 
-	 * set_session(): */
-	 /* TODO: Why isn't this done in account_new()? */
-	tny_account_set_proto (tny_account,
-			       modest_protocol_info_get_transport_store_protocol_name(proto));
-			       
-	/* Set the session for the account, so we can use it: */
-	ModestTnyAccountStore *account_store = modest_runtime_get_account_store ();
-	TnySessionCamel *session = 
-		modest_tny_account_store_get_session (TNY_ACCOUNT_STORE (account_store));
-	g_return_val_if_fail (session, NULL);
-	tny_camel_account_set_session (TNY_CAMEL_ACCOUNT(tny_account), session);
-	
-	tny_account_set_hostname (tny_account, hostname);
-	
-	if(port > 0)
-		tny_account_set_port (tny_account, port);
-		
-
-	/* Ask camel to ask the server, asynchronously: */
-	ModestGetSupportedAuthInfo *info = g_slice_new (ModestGetSupportedAuthInfo);
-	info->finished = FALSE;
-	info->result = NULL;
-	
-	GtkDialog *dialog = GTK_DIALOG (hildon_note_new_information (parent_window, 
-		_("Asking the server for supported secure authentication mechanisms.")));
-	gtk_dialog_run (dialog);
-	
-	printf ("DEBUG: %s: STARTING.\n", __FUNCTION__);
-	tny_camel_account_get_supported_secure_authentication (
-		TNY_CAMEL_ACCOUNT (tny_account),
-		on_camel_account_get_supported_secure_authentication,
-		on_camel_account_get_supported_secure_authentication_status,
-		info);
-		
-	printf ("DEBUG: %s: AFTER STARTING.\n", __FUNCTION__);
-		
-	/* Block until the callback has been called,
-	 * driving the main context, so that the (idle handler) callback can be 
-	 * called, and so that our dialog is clickable: */
-	while (!(info->finished)) {
-		printf ("DEBUG: %s: finished is FALSE.\n", __FUNCTION__);
-		if (g_main_context_pending (NULL)) {
-			printf ("DEBUG: iterating\n");
-			g_main_context_iteration (NULL, FALSE);
-			printf ("DEBUG: after iterating\n");
-		}
-	}
-	
-	printf ("DEBUG: %s: FINISHED.\n", __FUNCTION__);
-	
-	gtk_widget_destroy (GTK_WIDGET (dialog));
-		
-	GList *result = info->result;
-	g_slice_free (ModestGetSupportedAuthInfo, info);
-	info = NULL;
-	
-	return result;
-#endif
+	/* Don't show a dialog but Banner (NB #59248) */
+	hildon_banner_show_information(GTK_WIDGET(
+																						gtk_widget_get_parent_window(GTK_WIDGET(parent_window))), NULL, text);
 }
 
 

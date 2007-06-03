@@ -37,6 +37,12 @@
 #include <modest-runtime.h>
 #include <libgnomevfs/gnome-vfs.h>
 #include <tny-fs-stream.h>
+#include <tny-camel-account.h>
+#include <tny-status.h>
+#include <tny-camel-transport-account.h>
+#include <tny-camel-imap-store-account.h>
+#include <tny-camel-pop-store-account.h>
+#include "modest-hildon-includes.h"
 
 #include "modest-maemo-utils.h"
 
@@ -239,4 +245,156 @@ modest_maemo_utils_create_temp_stream (gchar **path)
 	tmp_fs_stream = tny_fs_stream_new (fd);
 	
 	return TNY_FS_STREAM (tmp_fs_stream);
+}
+
+typedef struct 
+{
+	gboolean finished;
+	GList *result;
+  GtkWidget* banner;
+} ModestGetSupportedAuthInfo;
+
+#if 0
+static void on_camel_account_get_supported_secure_authentication_status (
+	GObject *self, TnyStatus *status, gpointer user_data)
+{
+
+	printf ("DEBUG: %s.\n", __FUNCTION__);
+  ModestGetSupportedAuthInfo* info = (ModestGetSupportedAuthInfo*) user_data;
+  GDK_THREADS_ENTER();
+  hildon_banner_set_fraction(HILDON_BANNER(info->banner), tny_status_get_fraction(status));
+  GDK_THREADS_LEAVE();
+}
+
+static void
+on_camel_account_get_supported_secure_authentication (
+  TnyCamelAccount *self, gboolean cancelled,
+  TnyList *auth_types, GError **err, 
+  gpointer user_data)
+{
+	printf ("DEBUG: %s.\n", __FUNCTION__);
+		
+	ModestGetSupportedAuthInfo *info = (ModestGetSupportedAuthInfo*)user_data;
+	g_return_if_fail (info);
+	
+	if (!auth_types) {
+		printf ("DEBUG: %s: auth_types is NULL.\n", __FUNCTION__);
+		info->finished = TRUE; /* We are blocking, waiting for this. */
+		return;
+	}
+		
+	ModestPairList* pairs = modest_protocol_info_get_auth_protocol_pair_list ();
+  
+	/* Get the enum value for the strings: */
+	GList *result = NULL;
+	TnyIterator* iter = tny_list_create_iterator(auth_types);
+	while (!tny_iterator_is_done(iter)) {
+		const gchar *auth_name = tny_pair_get_name(TNY_PAIR(tny_iterator_get_current(iter)));
+		printf("DEBUG: %s: auth_name=%s\n", __FUNCTION__, auth_name);
+		ModestPair *matching = modest_pair_list_find_by_first_as_string (pairs, 
+			auth_name);
+		if (matching)
+    {
+      result = g_list_append (result, GINT_TO_POINTER((ModestConnectionProtocol)matching->first));
+    }
+		tny_iterator_next(iter);
+	}
+	
+  g_object_unref(auth_types);
+	
+	modest_pair_list_free (pairs);
+	
+	info->result = result;
+  printf("DEBUG: finished\n");
+	info->finished = TRUE; /* We are blocking, waiting for this. */
+}
+#endif
+
+GList* modest_maemo_utils_get_supported_secure_authentication_methods (ModestTransportStoreProtocol proto, 
+	const gchar* hostname, gint port, GtkWindow *parent_window)
+{
+	return NULL;
+/* FIXME: Activate when changes are merged into tinymail */
+#if 0
+	g_return_val_if_fail (proto != MODEST_PROTOCOL_TRANSPORT_STORE_UNKNOWN, NULL);
+	
+	/*
+	result = g_list_append (result, GINT_TO_POINTER (MODEST_PROTOCOL_AUTH_CRAMMD5));
+	*/
+	
+	/* Create a TnyCamelAccount so we can use 
+	 * tny_camel_account_get_supported_secure_authentication(): */
+	TnyAccount * tny_account = NULL;
+	switch (proto) {
+	case MODEST_PROTOCOL_TRANSPORT_SENDMAIL:
+	case MODEST_PROTOCOL_TRANSPORT_SMTP:
+		tny_account = TNY_ACCOUNT(tny_camel_transport_account_new ()); break;
+	case MODEST_PROTOCOL_STORE_POP:
+		tny_account = TNY_ACCOUNT(tny_camel_pop_store_account_new ()); break;
+	case MODEST_PROTOCOL_STORE_IMAP:
+		tny_account = TNY_ACCOUNT(tny_camel_imap_store_account_new ()); break;
+	case MODEST_PROTOCOL_STORE_MAILDIR:
+	case MODEST_PROTOCOL_STORE_MBOX:
+		tny_account = TNY_ACCOUNT(tny_camel_store_account_new()); break;
+	default:
+		tny_account = NULL;
+	}
+	
+	if (!tny_account) {
+		g_printerr ("%s could not create tny account.", __FUNCTION__);
+		return NULL;
+	}
+	
+	/* Set proto, so that the prepare_func() vfunc will work when we call 
+	 * set_session(): */
+	 /* TODO: Why isn't this done in account_new()? */
+	tny_account_set_proto (tny_account,
+			       modest_protocol_info_get_transport_store_protocol_name(proto));
+			       
+	/* Set the session for the account, so we can use it: */
+	ModestTnyAccountStore *account_store = modest_runtime_get_account_store ();
+	TnySessionCamel *session = 
+		modest_tny_account_store_get_session (TNY_ACCOUNT_STORE (account_store));
+	g_return_val_if_fail (session, NULL);
+	tny_camel_account_set_session (TNY_CAMEL_ACCOUNT(tny_account), session);
+	
+	tny_account_set_hostname (tny_account, hostname);
+	
+	if(port > 0)
+		tny_account_set_port (tny_account, port);
+		
+
+	/* Ask camel to ask the server, asynchronously: */
+	ModestGetSupportedAuthInfo *info = g_slice_new (ModestGetSupportedAuthInfo);
+	info->finished = FALSE;
+	info->result = NULL;
+	GtkWidget* progressbar = gtk_progress_bar_new();
+  info->banner = hildon_banner_show_progress (GTK_WIDGET(parent_window), 
+                                              GTK_PROGRESS_BAR(progressbar),
+                                              _("Checking for supported authentification types"));
+  gtk_progress_bar_pulse(GTK_PROGRESS_BAR(progressbar));
+	
+	
+	printf ("DEBUG: %s: STARTING.\n", __FUNCTION__);
+	tny_camel_account_get_supported_secure_authentication (
+		TNY_CAMEL_ACCOUNT (tny_account),
+		on_camel_account_get_supported_secure_authentication,
+		on_camel_account_get_supported_secure_authentication_status,
+		info);
+		
+	/* Block until the callback has been called,
+	 * driving the main context, so that the (idle handler) callback can be 
+	 * called, and so that our dialog is clickable: */
+	while (!(info->finished)) {
+    gtk_main_iteration_do(FALSE); 
+	}
+	
+  gtk_widget_destroy(info->banner);
+		
+	GList *result = info->result;
+	g_slice_free (ModestGetSupportedAuthInfo, info);
+	info = NULL;
+	
+	return result;
+#endif
 }

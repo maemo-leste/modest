@@ -1,3 +1,29 @@
+2007-06-03  Johannes Schmid <johannes.schmid@openismus.com>
+
+	* src/maemo/easysetup/modest-easysetup-wizard.c: (on_before_next):
+	Added currently commented code to check for secure auth
+	
+	* src/maemo/modest-account-settings-dialog.c: (on_response),
+	(save_configuration), (show_ok):
+	Fixed projects.maemo.org bugs NB #59248 and #59251
+	
+	* src/maemo/modest-maemo-utils.c:
+	(on_camel_account_get_supported_secure_authentication_status),
+	(on_camel_account_get_supported_secure_authentication),
+	(modest_maemo_utils_get_supported_secure_authentication_methods):
+	* src/maemo/modest-maemo-utils.h:
+	Moved get_supported_secure_authentication() method here to be able
+	to use it from easysetup wizard.
+	
+	* src/modest-pair.c: (on_pair_compare_as_string):
+	Should compare string with first part of pair and not
+	strcmp pairs which will crash.
+	
+	* src/modest-protocol-info.c:
+	(modest_protocol_info_protocol_is_store):
+	* src/modest-protocol-info.h:
+	Added modest_protocol_info_get_auth_protocol_name()
+
 2007-06-03  Armin Burgmeier  <armin@openismus.com>
 
 	* src/modest-mail-operation.c:

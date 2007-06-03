@@ -52,6 +52,7 @@
 #include "maemo/modest-connection-specific-smtp-window.h"
 #include "widgets/modest-ui-constants.h"
 #include "maemo/modest-account-settings-dialog.h"
+#include "maemo/modest-maemo-utils.h"
 #include <gconf/gconf-client.h>
 #include <string.h> /* For strlen(). */
 
@@ -1221,6 +1222,36 @@ on_before_next (ModestWizardDialog *dialog, GtkWidget *current_page, GtkWidget *
 	}
 	else if (next_page == account_wizard->page_custom_outgoing) {
 		set_default_custom_servernames (account_wizard);
+    /* Check if the server support secure authentication */
+    if (gtk_toggle_button_get_active (
+			GTK_TOGGLE_BUTTON (account_wizard->checkbox_incoming_auth))) {
+#if 0
+				const ModestTransportStoreProtocol protocol = 
+          easysetup_servertype_combo_box_get_active_servertype (
+                                                                EASYSETUP_SERVERTYPE_COMBO_BOX (account_wizard->combo_incoming_servertype));
+        const gchar* hostname = gtk_entry_get_text(GTK_ENTRY(account_wizard->entry_incomingserver));
+        /* FIXME: Get correct port */
+
+        int port_num = 22; 
+        GList *list_auth_methods = 
+          modest_maemo_utils_get_supported_secure_authentication_methods (
+                                                                      protocol, 
+                                                                      hostname, port_num, GTK_WINDOW (dialog));	
+        if (list_auth_methods) {
+          /* TODO: Select the correct method */
+          g_list_free (list_auth_methods);
+        }
+        else
+        {
+          GtkWidget* error_dialog = gtk_message_dialog_new(GTK_WINDOW(dialog),
+                                                       GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR,
+                                                       GTK_BUTTONS_OK, _("Server does not support secure authentication!"));
+          gtk_dialog_run(GTK_DIALOG(error_dialog));
+          gtk_widget_destroy(error_dialog);
+          return FALSE;
+        }
+#endif
+		 }
 	}
 	
 	/* If this is the last page, and this is a click on Finish, 

@@ -140,6 +140,18 @@ modest_protocol_info_get_transport_store_protocol_name (ModestTransportStoreProt
 const gchar*
 modest_protocol_info_get_auth_protocol_name (ModestAuthProtocol proto);
 
+/*
+ * modest_protocol_get_auth_protocol_pair_list:
+ *
+ * Get the list of support authentication methods supported by modest including 
+ * the display names of those.
+ *
+ * Returns: List of method/display name pairs
+ */
+
+ModestPairList*
+modest_protocol_info_get_auth_protocol_pair_list ();
+
 /**
  * modest_protocol_info_get_auth_protocol_name:
  * @proto: the protocol you are looking for
