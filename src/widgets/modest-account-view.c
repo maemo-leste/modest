@@ -293,6 +293,23 @@ on_account_enable_toggled (GtkCellRendererToggle *cell_renderer, gchar *path,
 }
 #endif
 
+static gboolean
+find_default_account(ModestAccountView *self, GtkTreeIter *iter)
+{
+	GtkTreeModel *model = gtk_tree_view_get_model (GTK_TREE_VIEW (self));
+	gboolean result;
+	for (result = gtk_tree_model_get_iter_first(model, iter);
+	     result == TRUE; result = gtk_tree_model_iter_next(model, iter))
+	{
+		gboolean is_default;
+		gtk_tree_model_get (model, iter, MODEST_ACCOUNT_VIEW_IS_DEFAULT_COLUMN, &is_default, -1);
+		if(is_default)
+			return TRUE;
+	}
+
+	return FALSE;
+}
+
 static void
 on_account_default_toggled (GtkCellRendererToggle *cell_renderer, gchar *path,
 			   ModestAccountView *self)
@@ -319,7 +336,20 @@ on_account_default_toggled (GtkCellRendererToggle *cell_renderer, gchar *path,
 			    -1);
 	
 	/* Set this previously-non-default account as the default: */
-	modest_account_mgr_set_default_account (priv->account_mgr, account_name);
+	if (modest_account_mgr_set_default_account (priv->account_mgr, account_name))
+	{
+		/* Explicitely set default column because we are ignoring gconf changes */
+		GtkTreeIter old_default_iter;
+		if (find_default_account (self, &old_default_iter)) {
+			gtk_list_store_set (GTK_LIST_STORE (model), &old_default_iter,
+			                    MODEST_ACCOUNT_VIEW_IS_DEFAULT_COLUMN, FALSE, -1);
+		} else {
+			g_warning ("%s: Did not find old default account in view", __FUNCTION__);
+		}
+
+		gtk_list_store_set (GTK_LIST_STORE (model), &iter,
+		                    MODEST_ACCOUNT_VIEW_IS_DEFAULT_COLUMN, TRUE, -1);
+	}
 
 	g_free (account_name);
 }

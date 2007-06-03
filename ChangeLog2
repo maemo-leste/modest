@@ -1,3 +1,12 @@
+2007-06-03  Armin Burgmeier  <armin@openismus.com>
+
+	* src/widgets/modest-account-view.c
+	(on_account_default_toggled): Toggle default account column
+	explicitely instead of waiting for gconf notification (which is
+	currently ignored). This should fix maemo.projects.org bug NB#56910
+	for now. It should probably be removed when gconf notifications are
+	re-enabled.
+
 2007-06-03  Christian Kellner  <ckellner@openismus.com>
 
 	* libmodest-dbus-client/libmodest-dbus-client.c:
