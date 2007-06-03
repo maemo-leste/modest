@@ -1,3 +1,14 @@
+2007-06-03  Christian Kellner  <ckellner@openismus.com> 
+
+	* libmodest-dbus-client/libmodest-dbus-client.c:
+	(modest_search_hit_list_free):
+	Make it save to call it with NULL.
+
+	* src/dbus_api/modest-dbus-callbacks.c:
+	* src/modest-search.c:
+	Return full ModestSearchHits as the search result list not TnyHeader
+	since can't be around withouth the correspoding TnyFolder.
+
 2007-06-03  Johannes Schmid <johannes.schmid@openismus.com>
 
 	* src/maemo/easysetup/modest-easysetup-wizard.c: (on_before_next):

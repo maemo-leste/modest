@@ -13,6 +13,8 @@
 #include <tny-iterator.h>
 #include <tny-simple-list.h>
 
+#include <libmodest-dbus-client/libmodest-dbus-client.h>
+
 #include "modest-text-utils.h"
 #include "modest-account-mgr.h"
 #include "modest-tny-account-store.h"
@@ -20,17 +22,49 @@
 #include "modest-search.h"
 #include "modest-runtime.h"
 
-static GList*
-add_header (GList *list, TnyHeader *header, TnyFolder *folder)
+static char *
+g_strdup_or_null (const char *str)
 {
-	TnyFolder *f;
-       
-	/* TODO: we need this call otherwise it will crash later
-	 * when we try to do that call again without having the
-	 * folder around, I guess that is a bug in TinyThingy */
-	f = tny_header_get_folder (header);
+	char *string = NULL;
 
-	return g_list_prepend (list, g_object_ref (header));
+	if  (str != NULL) {
+		string = g_strdup (str);
+	}
+
+	return string;
+}
+
+static GList*
+add_hit (GList *list, TnyHeader *header, TnyFolder *folder)
+{
+	ModestSearchHit *hit;
+	TnyHeaderFlags   flags;
+	char            *furl;
+	char            *msg_url;
+	const char      *uid;
+	const char      *subject;
+	const char      *sender;
+
+	hit = g_slice_new0 (ModestSearchHit);
+
+	furl = tny_folder_get_url_string (folder);
+	uid = tny_header_get_uid (header);
+	msg_url = g_strdup_printf ("%s/%s", furl, uid);
+	subject = tny_header_get_subject (header);
+	sender = tny_header_get_from (header);
+
+	flags = tny_header_get_flags (header);
+
+	hit->msgid = msg_url;
+	hit->subject = g_strdup_or_null (subject);
+	hit->sender = g_strdup_or_null (sender);
+	hit->folder = furl;
+	hit->msize = tny_header_get_message_size (header);
+	hit->has_attachment = flags & TNY_HEADER_FLAG_ATTACHMENTS;
+	hit->is_unread = ! (flags & TNY_HEADER_FLAG_SEEN);
+	hit->timestamp = tny_header_get_date_received (header);
+
+	return g_list_prepend (list, hit);
 }
 
 static gboolean
@@ -277,7 +311,7 @@ modest_search_folder (TnyFolder *folder, ModestSearch *search)
 			const char *str = tny_header_get_subject (cur);
 
 			if ((found = search_string (search->subject, str, search))) {
-			    retval = add_header (retval, cur, folder);
+			    retval = add_hit (retval, cur, folder);
 			}
 		}
 		
@@ -285,7 +319,7 @@ modest_search_folder (TnyFolder *folder, ModestSearch *search)
 			const char *str = tny_header_get_from (cur);
 
 			if ((found = search_string (search->from, str, search))) {
-				retval = add_header (retval, cur, folder);
+				retval = add_hit (retval, cur, folder);
 			}
 		}
 		
@@ -293,7 +327,7 @@ modest_search_folder (TnyFolder *folder, ModestSearch *search)
 			const char *str = tny_header_get_to (cur);
 
 			if ((found = search_string (search->recipient, str, search))) {
-				retval = add_header (retval, cur, folder);
+				retval = add_hit (retval, cur, folder);
 			}
 		}
 	
@@ -329,7 +363,7 @@ modest_search_folder (TnyFolder *folder, ModestSearch *search)
 				TnyMimePart *pcur = (TnyMimePart *) tny_iterator_get_current (piter);
 
 				if ((found = part_search_func (pcur, search))) {
-					retval = add_header (retval, cur, folder);				
+					retval = add_hit (retval, cur, folder);				
 				}
 
 				g_object_unref (pcur);

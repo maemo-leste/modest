@@ -817,39 +817,26 @@ search_result_to_messsage (DBusMessage *reply,
 
 	for (hit_iter = hits; hit_iter; hit_iter = hit_iter->next) {
 		DBusMessageIter  struct_iter;
-		TnyFolder       *tf;
-		TnyHeader       *header;
-		TnyHeaderFlags   flags;
-		char            *msg_url = "";
-		const char      *subject = "";
-		const char      *folder = "";
-		const char      *sender = "";
-		guint64          size = 0;
-		gboolean         has_attachemnt = FALSE;
-		gboolean         is_unread = FALSE;
-		gint64           ts = 0;
-		char             *furl;
-		const char       *uid;
+		ModestSearchHit *hit;
+		char            *msg_url;
+		const char      *subject;
+		const char      *folder;
+		const char      *sender;
+		guint64          size;
+		gboolean         has_attachment;
+		gboolean         is_unread;
+		gint64           ts;
 
-		g_debug ("Marshalling hit ...(%s)",
-			 TNY_IS_HEADER (hit_iter->data) ? "yes" : "no");
+		hit = (ModestSearchHit *) hit_iter->data;
 
-		header = TNY_HEADER (hit_iter->data);
-		tf = tny_header_get_folder (header);
-		furl = tny_folder_get_url_string (tf);
-
-		uid = tny_header_get_uid (header);
-		msg_url = g_strdup_printf ("%s/%s", furl, uid);
-		
-		subject = tny_header_get_subject (header);
-		folder = furl;
-		sender = tny_header_get_from (header);
-		size = tny_header_get_message_size (header);
-
-		flags = tny_header_get_flags (header);
-		has_attachemnt = flags & TNY_HEADER_FLAG_ATTACHMENTS;
-		is_unread = ! (flags & TNY_HEADER_FLAG_SEEN);
-		ts = tny_header_get_date_received (header);
+		msg_url = hit->msgid;
+		subject = hit->subject;
+		folder  = hit->folder;
+		sender  = hit->sender;
+		size           = hit->msize;
+		has_attachment = hit->has_attachment;
+		is_unread      = hit->is_unread;
+		ts             = hit->timestamp;
 
 		g_debug ("Adding hit: %s", msg_url);	
 		
@@ -880,7 +867,7 @@ search_result_to_messsage (DBusMessage *reply,
 
 		dbus_message_iter_append_basic (&struct_iter,
 						DBUS_TYPE_BOOLEAN,
-						&has_attachemnt);
+						&has_attachment);
 
 		dbus_message_iter_append_basic (&struct_iter,
 						DBUS_TYPE_BOOLEAN,
@@ -893,12 +880,12 @@ search_result_to_messsage (DBusMessage *reply,
 		dbus_message_iter_close_container (&array_iter,
 						   &struct_iter); 
 
+		g_free (hit->msgid);
+		g_free (hit->subject);
+		g_free (hit->folder);
+		g_free (hit->sender);
 
-		g_free (msg_url);
-		g_free (furl);
-		
-		/* Also unref the header, we don't need it anymore */
-		g_object_unref (header);
+		g_slice_free (ModestSearchHit, hit);
 	}
 
 	dbus_message_iter_close_container (&iter, &array_iter);
@@ -1005,7 +992,7 @@ modest_dbus_req_filter (DBusConnection *con,
 		reply = dbus_message_new_method_return (message);
 
 		search_result_to_messsage (reply, hits);
-		
+
 		if (reply == NULL) {
 			g_warning ("Could not create reply");
 		}
@@ -1015,6 +1002,8 @@ modest_dbus_req_filter (DBusConnection *con,
 	    		dbus_connection_flush (con);
 	    		dbus_message_unref (reply);
 		}
+
+		g_list_free (hits);
 
 	}
 	
