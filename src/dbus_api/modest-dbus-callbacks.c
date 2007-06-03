@@ -954,7 +954,9 @@ modest_dbus_req_filter (DBusConnection *con,
 		end_date = (time_t) ed_v;
 
 		memset (&search, 0, sizeof (search));
+#ifdef MODEST_HAVE_OGS
 		search.query  = query;
+#endif
 		search.before = start_date;
 		search.after  = end_date;
 		search.flags  = 0;
@@ -996,10 +998,8 @@ modest_dbus_req_filter (DBusConnection *con,
 
 #ifdef MODEST_HAVE_OGS
 		search.flags |= MODEST_SEARCH_USE_OGS;
-#endif
-
 		g_debug ("Starting search for %s", search.query);
-
+#endif
 		hits = modest_search_all_accounts (&search);
 
 		reply = dbus_message_new_method_return (message);
