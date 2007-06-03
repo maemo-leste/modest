@@ -1,9 +1,15 @@
 2007-06-03  Armin Burgmeier  <armin@openismus.com>
 
+	* src/modest-mail-operation-queue.c: Fixed a deadlock in finalize()
+	when the operation queue was not empty. projects.maemo.org bug
+	NB#58976.
+
+2007-06-03  Armin Burgmeier  <armin@openismus.com>
+
 	* src/widgets/modest-account-view.c
 	(on_account_default_toggled): Toggle default account column
 	explicitely instead of waiting for gconf notification (which is
-	currently ignored). This should fix maemo.projects.org bug NB#56910
+	currently ignored). This should fix projects.maemo.org bug NB#56910
 	for now. It should probably be removed when gconf notifications are
 	re-enabled.
 

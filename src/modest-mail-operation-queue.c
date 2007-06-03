@@ -43,6 +43,9 @@ static void modest_mail_operation_queue_cancel_no_block_wrapper (ModestMailOpera
 static void modest_mail_operation_queue_cancel_no_block         (ModestMailOperationQueue *op_queue,
 								 ModestMailOperation *mail_op);
 
+static void
+modest_mail_operation_queue_cancel_all_no_block (ModestMailOperationQueue *self);
+
 /* list my signals  */
 enum {
 	QUEUE_CHANGED_SIGNAL,
@@ -143,7 +146,7 @@ modest_mail_operation_queue_finalize (GObject *obj)
 	if (priv->op_queue) {
 		/* Cancel all */
 		if (!g_queue_is_empty (priv->op_queue))
-			modest_mail_operation_queue_cancel_all (MODEST_MAIL_OPERATION_QUEUE (obj));
+			modest_mail_operation_queue_cancel_all_no_block (MODEST_MAIL_OPERATION_QUEUE (obj));
 		g_queue_free (priv->op_queue);
 	}
 
@@ -267,6 +270,16 @@ modest_mail_operation_queue_cancel_no_block (ModestMailOperationQueue *self,
 	modest_mail_operation_queue_remove (self, mail_op);
 }
 
+static void
+modest_mail_operation_queue_cancel_all_no_block (ModestMailOperationQueue *self)
+{
+	ModestMailOperationQueuePrivate *priv = MODEST_MAIL_OPERATION_QUEUE_GET_PRIVATE (self);
+
+	g_queue_foreach (priv->op_queue, 
+			 (GFunc) modest_mail_operation_queue_cancel_no_block_wrapper, 
+			 self);
+}
+
 void 
 modest_mail_operation_queue_cancel (ModestMailOperationQueue *self, 
 				    ModestMailOperation *mail_op)
@@ -293,8 +306,6 @@ modest_mail_operation_queue_cancel_all (ModestMailOperationQueue *self)
 	priv = MODEST_MAIL_OPERATION_QUEUE_GET_PRIVATE(self);
 
 	g_mutex_lock (priv->queue_lock);
-	g_queue_foreach (priv->op_queue, 
-			 (GFunc) modest_mail_operation_queue_cancel_no_block_wrapper, 
-			 self);
+	modest_mail_operation_queue_cancel_all_no_block (self);
 	g_mutex_unlock (priv->queue_lock);
 }
