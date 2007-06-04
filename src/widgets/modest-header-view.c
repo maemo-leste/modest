@@ -50,9 +50,8 @@ static void modest_header_view_class_init  (ModestHeaderViewClass *klass);
 static void modest_header_view_init        (ModestHeaderView *obj);
 static void modest_header_view_finalize    (GObject *obj);
 
-static gboolean      on_header_clicked      (GtkWidget *widget, 
-					    GdkEventButton *event, 
-					    gpointer user_data);
+static void          on_header_row_activated (GtkTreeView *treeview, GtkTreePath *path,
+					      GtkTreeViewColumn *column, gpointer userdata);
 
 static gint          cmp_rows               (GtkTreeModel *tree_model,
 					     GtkTreeIter *iter1,
@@ -522,8 +521,8 @@ modest_header_view_new (TnyFolder *folder, ModestHeaderViewStyle style)
 	g_signal_connect (sel, "changed",
 			  G_CALLBACK(on_selection_changed), self);
 	
-	g_signal_connect (self, "button-press-event",
-			  G_CALLBACK(on_header_clicked), NULL);
+	g_signal_connect (self, "row-activated",
+			  G_CALLBACK (on_header_row_activated), NULL);
 
 	g_signal_connect (self, "focus-in-event",
 			  G_CALLBACK(on_focus_in), NULL);
@@ -935,25 +934,23 @@ modest_header_view_set_folder (ModestHeaderView *self, TnyFolder *folder)
 	}
 }
 
-static gboolean
-on_header_clicked (GtkWidget *widget, GdkEventButton *event, gpointer user_data)
+static void
+on_header_row_activated (GtkTreeView *treeview, GtkTreePath *path,
+			 GtkTreeViewColumn *column, gpointer userdata)
 {
 	ModestHeaderView *self = NULL;
 	ModestHeaderViewPrivate *priv = NULL;
-	GtkTreePath *path = NULL;
 	GtkTreeIter iter;
 	GtkTreeModel *model = NULL;
 	TnyHeader *header;
-	/* ignore everything but doubleclick */
-	if (event->type != GDK_2BUTTON_PRESS)
-		return FALSE;
 
-	self = MODEST_HEADER_VIEW (widget);
+	self = MODEST_HEADER_VIEW (treeview);
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
+
+	model = gtk_tree_view_get_model (treeview);
 	
-	path = get_selected_row (GTK_TREE_VIEW(self), &model);
 	if ((path == NULL) || (!gtk_tree_model_get_iter(model, &iter, path))) 
-		return FALSE;
+		return;
 			
 	/* get the first selected item */
 	gtk_tree_model_get (model, &iter,
@@ -966,11 +963,8 @@ on_header_clicked (GtkWidget *widget, GdkEventButton *event, gpointer user_data)
 
 	/* Free */
 	g_object_unref (G_OBJECT (header));
-	gtk_tree_path_free(path);
 
-	return TRUE;
 }
-
 
 static void
 on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
