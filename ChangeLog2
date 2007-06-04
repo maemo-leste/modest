@@ -1,6 +1,13 @@
 2007-06-05  Christian Kellner  <ckellner@openismus.com> 
 
 	* libmodest-dbus-client/libmodest-dbus-client.c:
+	Fix small typo in doc (why do you always see them
+	AFTER committing stuff?)
+
+
+2007-06-05  Christian Kellner  <ckellner@openismus.com> 
+
+	* libmodest-dbus-client/libmodest-dbus-client.c:
 	(libmodest_dbus_client_search):
 	Initialize hit list with NULL. Also set folder list 
 	to "" if NULL was supplied. 
