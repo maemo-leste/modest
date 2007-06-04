@@ -803,7 +803,11 @@ modest_platform_show_help (GtkWindow *parent_window,
 	g_return_if_fail (osso_context);
 
 	/* Show help */
+#ifdef MODEST_HILDON_VERSION_0
 	result = ossohelp_show (osso_context, help_id, OSSO_HELP_SHOW_DIALOG);
+#elsif
+	result = hildon_help_show (osso_context, help_id, OSSO_HELP_SHOW_DIALOG);
+#endif
 
 	if (result != OSSO_OK) {
 		gchar *error_msg;

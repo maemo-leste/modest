@@ -60,6 +60,7 @@ k * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
 #include <hildon/hildon-find-toolbar.h>
 #include <hildon/hildon-sort-dialog.h>
 #include <hildon/hildon-number-editor.h>
+#include <hildon/hildon-help.h>
 #endif /* MODEST_HILDON_VERSION_0*/
 
 
