@@ -77,6 +77,8 @@ typedef struct  {
 	gchar *from, *to, *cc, *bcc, *subject, *plain_body, *html_body;
 	GList *attachments;
 	TnyHeaderFlags priority_flags;
+	TnyMsg *draft_msg;
+	gchar *account_name;
 } MsgData;
 
 typedef struct {

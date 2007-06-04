@@ -233,6 +233,7 @@ void    modest_mail_operation_send_mail       (ModestMailOperation *self,
  * modest_mail_operation_send_new_mail:
  * @self: a #ModestMailOperation
  * @transport_account: a non-NULL #TnyTransportAccount
+ * @draft_msg: a #TnyMsg of the origin draft message, if any
  * @from: the email address of the mail sender
  * @to: a non-NULL email address of the mail receiver
  * @cc: a comma-separated list of email addresses where to send a carbon copy
@@ -250,6 +251,7 @@ void    modest_mail_operation_send_mail       (ModestMailOperation *self,
   **/
 void    modest_mail_operation_send_new_mail   (ModestMailOperation *self,
 					       TnyTransportAccount *transport_account,
+					       TnyMsg *draft_msg,
 					       const gchar *from,
 					       const gchar *to,
 					       const gchar *cc,
@@ -265,6 +267,8 @@ void    modest_mail_operation_send_new_mail   (ModestMailOperation *self,
  * modest_mail_operation_save_to_drafts:
  * @self: a #ModestMailOperation
  * @transport_account: a non-NULL #TnyTransportAccount
+ * @draft_msg: the previous draft message, in case it's an update
+ * to an existing draft.
  * @from: the email address of the mail sender
  * @to: a non-NULL email address of the mail receiver
  * @cc: a comma-separated list of email addresses where to send a carbon copy
@@ -282,6 +286,7 @@ void    modest_mail_operation_send_new_mail   (ModestMailOperation *self,
   **/
 void    modest_mail_operation_save_to_drafts   (ModestMailOperation *self,
 						TnyTransportAccount *transport_account,
+						TnyMsg *draft_msg,
 						const gchar *from,
 						const gchar *to,
 						const gchar *cc,

@@ -286,6 +286,7 @@ send_mail (const gchar* account_name,
 	mail_operation = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_SEND, NULL);
 
 	modest_mail_operation_send_new_mail (mail_operation, account,
+					     NULL,
 					     from_string, mailto,
 					     cc, bcc, subject, body, NULL /* html_body */,
 					     NULL /* attachments */, 0 /* priority */);

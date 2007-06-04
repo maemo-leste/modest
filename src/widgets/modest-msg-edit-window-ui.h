@@ -74,6 +74,7 @@ static const GtkActionEntry modest_msg_edit_action_entries [] = {
 	{ "CloseWindow", NULL, N_("mcen_me_inbox_close_window"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_close_window)},
 	{ "CloseAllWindows", NULL, N_("mcen_me_inbox_close_windows"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_quit) },
 	{ "Help", NULL, N_("mcen_me_inbox_help"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_help) },
+	{ "SearchMessages",            NULL,      N_("mcen_me_inbox_search"),                      NULL, NULL,  NULL },
 
 
 	/* KEY ACCELERATOR ACTIONS */
@@ -105,6 +106,9 @@ static const GtkToggleActionEntry modest_msg_edit_toggle_action_entries [] = {
 	/* Toolbar buttons */
 	{ "ActionsBold", GTK_STOCK_BOLD, NULL, NULL, NULL, G_CALLBACK (modest_ui_actions_on_toggle_bold), FALSE },
 	{ "ActionsItalics", GTK_STOCK_ITALIC, NULL, NULL, NULL, G_CALLBACK (modest_ui_actions_on_toggle_italics), FALSE },
+
+	/* Find in page */
+	{ "FindInMessage", NULL, N_("mcen_me_viewer_find"), NULL, NULL, NULL, FALSE },
 
 };
 

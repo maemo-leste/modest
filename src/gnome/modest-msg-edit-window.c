@@ -409,13 +409,14 @@ modest_msg_edit_window_get_msg_data (ModestMsgEditWindow *edit_window)
 	}
 	
 	
-
+	
 	data = g_slice_new0 (MsgData);
-	data->from    =  from_string, /* will be freed when data is freed */
-	data->to      =  g_strdup (gtk_entry_get_text (GTK_ENTRY(priv->to_field))));
+	data->from    =  from_string; /* will be freed when data is freed */
+	data->to      =  g_strdup (gtk_entry_get_text (GTK_ENTRY(priv->to_field)));
 	data->cc      =  g_strdup ( gtk_entry_get_text (GTK_ENTRY(priv->cc_field)));
 	data->bcc     =  g_strdup ( gtk_entry_get_text (GTK_ENTRY(priv->bcc_field)));
 	data->subject =  g_strdup ( gtk_entry_get_text (GTK_ENTRY(priv->subject_field)));
+	data->msg_id = NULL;
 
 	GtkTextBuffer *buf = gtk_text_view_get_buffer (GTK_TEXT_VIEW (priv->msg_body));
 	GtkTextIter b, e;

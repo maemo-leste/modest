@@ -952,10 +952,16 @@ modest_msg_edit_window_get_msg_data (ModestMsgEditWindow *edit_window)
 	data = g_slice_new0 (MsgData);
 	data->from    =  modest_account_mgr_get_from_string (modest_runtime_get_account_mgr(),
 							     account_name);
+	data->account_name = g_strdup (account_name);
 	data->to      =  g_strdup (modest_recpt_editor_get_recipients (MODEST_RECPT_EDITOR (priv->to_field)));
 	data->cc      =  g_strdup (modest_recpt_editor_get_recipients (MODEST_RECPT_EDITOR (priv->cc_field)));
 	data->bcc     =  g_strdup (modest_recpt_editor_get_recipients (MODEST_RECPT_EDITOR (priv->bcc_field)));
 	data->subject =  g_strdup (gtk_entry_get_text (GTK_ENTRY (priv->subject_field)));
+	if (priv->draft_msg) {
+		data->draft_msg = g_object_ref (priv->draft_msg);
+	} else {
+		data->draft_msg = NULL;
+	}
 
 	GtkTextBuffer *buf = gtk_text_view_get_buffer (GTK_TEXT_VIEW (priv->msg_body));
 	GtkTextIter b, e;
@@ -989,6 +995,11 @@ modest_msg_edit_window_free_msg_data (ModestMsgEditWindow *edit_window,
 	g_free (data->subject);
 	g_free (data->plain_body);
 	g_free (data->html_body);
+	if (data->draft_msg != NULL) {
+		g_object_unref (data->draft_msg);
+		data->draft_msg = NULL;
+	}
+	g_free (data->account_name);
 
 	/* TODO: Free data->attachments? */
 
@@ -1556,14 +1567,19 @@ modest_msg_edit_window_size_change (GtkCheckMenuItem *menu_item,
 
 	if (gtk_check_menu_item_get_active (menu_item)) {
 		gchar *markup;
+		WPTextBufferFormat format;
 
 		label = gtk_bin_get_child (GTK_BIN (menu_item));
 		
 		new_size_index = atoi (gtk_label_get_text (GTK_LABEL (label)));
+		memset (&format, 0, sizeof (format));
+		format.cs.font_size = TRUE;
+		format.font_size = wp_get_font_size_index (new_size_index, DEFAULT_FONT_SIZE);
+		wp_text_buffer_set_format (WP_TEXT_BUFFER (priv->text_buffer), &format);
 
-		if (!wp_text_buffer_set_attribute (WP_TEXT_BUFFER (priv->text_buffer), WPT_FONT_SIZE, 
-						   (gpointer) wp_get_font_size_index (new_size_index, 12)))
-			wp_text_view_reset_and_show_im (WP_TEXT_VIEW (priv->msg_body));
+/* 		if (!wp_text_buffer_set_attribute (WP_TEXT_BUFFER (priv->text_buffer), WPT_FONT_SIZE, */
+/* 						   (gpointer) wp_get_font_size_index (new_size_index, 12))) */
+/* 			wp_text_view_reset_and_show_im (WP_TEXT_VIEW (priv->msg_body)); */
 		
 		text_buffer_refresh_attributes (WP_TEXT_BUFFER (priv->text_buffer), MODEST_MSG_EDIT_WINDOW (window));
 		markup = g_strconcat ("<span font_family='Serif'>", gtk_label_get_text (GTK_LABEL (label)), "</span>", NULL);

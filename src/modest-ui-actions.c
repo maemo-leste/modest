@@ -1392,6 +1392,11 @@ modest_ui_actions_on_save_to_drafts (GtkWidget *widget, ModestMsgEditWindow *edi
 		modest_msg_edit_window_free_msg_data (edit_window, data);
 		return;
 	}
+
+	if (!strcmp (account_name, MODEST_ACTUAL_LOCAL_FOLDERS_ACCOUNT_ID)) {
+		account_name = g_strdup (data->account_name);
+	}
+
 	transport_account =
 		TNY_TRANSPORT_ACCOUNT(modest_tny_account_store_get_tny_account_by_account
 				      (modest_runtime_get_account_store(),
@@ -1411,6 +1416,7 @@ modest_ui_actions_on_save_to_drafts (GtkWidget *widget, ModestMsgEditWindow *edi
 
 	modest_mail_operation_save_to_drafts (mail_operation,
 					      transport_account,
+					      data->draft_msg,
 					      from,
 					      data->to, 
 					      data->cc, 
@@ -1453,6 +1459,11 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 		g_printerr ("modest: no account found\n");
 		return;
 	}
+	MsgData *data = modest_msg_edit_window_get_msg_data (edit_window);
+
+	if (!strcmp (account_name, MODEST_ACTUAL_LOCAL_FOLDERS_ACCOUNT_ID)) {
+		account_name = g_strdup (data->account_name);
+	}
 	
 	/* Get the currently-active transport account for this modest account: */
 	TnyTransportAccount *transport_account =
@@ -1462,12 +1473,11 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 	if (!transport_account) {
 		g_printerr ("modest: no transport account found for '%s'\n", account_name);
 		g_free (account_name);
+		modest_msg_edit_window_free_msg_data (edit_window, data);
 		return;
 	}
 	
 	gchar *from = modest_account_mgr_get_from_string (account_mgr, account_name);
-
-	MsgData *data = modest_msg_edit_window_get_msg_data (edit_window);
 
 	/* mail content checks and dialogs */
 	if (data->subject == NULL || data->subject[0] == '\0') {
@@ -1502,6 +1512,7 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 
 	modest_mail_operation_send_new_mail (mail_operation,
 					     transport_account,
+					     data->draft_msg,
 					     from,
 					     data->to, 
 					     data->cc, 

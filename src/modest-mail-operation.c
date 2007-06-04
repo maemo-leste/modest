@@ -473,6 +473,7 @@ modest_mail_operation_send_mail (ModestMailOperation *self,
 void
 modest_mail_operation_send_new_mail (ModestMailOperation *self,
 				     TnyTransportAccount *transport_account,
+				     TnyMsg *draft_msg,
 				     const gchar *from,  const gchar *to,
 				     const gchar *cc,  const gchar *bcc,
 				     const gchar *subject, const gchar *plain_body,
@@ -481,6 +482,7 @@ modest_mail_operation_send_new_mail (ModestMailOperation *self,
 				     TnyHeaderFlags priority_flags)
 {
 	TnyMsg *new_msg = NULL;
+	TnyFolder *folder = NULL;
 	ModestMailOperationPrivate *priv = NULL;
 
 	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
@@ -517,6 +519,15 @@ modest_mail_operation_send_new_mail (ModestMailOperation *self,
 	/* Call mail operation */
 	modest_mail_operation_send_mail (self, transport_account, new_msg);
 
+	folder = modest_tny_account_get_special_folder (TNY_ACCOUNT (transport_account), TNY_FOLDER_TYPE_DRAFTS);
+	if (folder) {
+		if (draft_msg != NULL) {
+			TnyHeader *header = tny_msg_get_header (draft_msg);
+			tny_folder_remove_msg (folder, header, NULL);
+			g_object_unref (header);
+		}
+	}
+
 	/* Free */
 	g_object_unref (G_OBJECT (new_msg));
 }
@@ -524,6 +535,7 @@ modest_mail_operation_send_new_mail (ModestMailOperation *self,
 void
 modest_mail_operation_save_to_drafts (ModestMailOperation *self,
 				      TnyTransportAccount *transport_account,
+				      TnyMsg *draft_msg,
 				      const gchar *from,  const gchar *to,
 				      const gchar *cc,  const gchar *bcc,
 				      const gchar *subject, const gchar *plain_body,
@@ -561,6 +573,12 @@ modest_mail_operation_save_to_drafts (ModestMailOperation *self,
 			     MODEST_MAIL_OPERATION_ERROR_ITEM_NOT_FOUND,
 			     "modest: failed to create a new msg\n");
 		goto end;
+	}
+
+	if (draft_msg != NULL) {
+		TnyHeader *header = tny_msg_get_header (draft_msg);
+		tny_folder_remove_msg (folder, header, NULL);
+		g_object_unref (header);
 	}
 	
 	tny_folder_add_msg (folder, msg, &(priv->error));

@@ -100,6 +100,7 @@ on_idle_send_mail(gpointer user_data)
 			
 	 		modest_mail_operation_send_new_mail (mail_operation,
 					     transport_account,
+					     NULL,
 					     from, /* from */
 					     idle_data->to, idle_data->cc, idle_data->bcc, idle_data->subject, 
 					     idle_data->body, /* plain_body */
