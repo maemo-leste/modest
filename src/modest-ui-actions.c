@@ -91,6 +91,7 @@ typedef struct _ReplyForwardHelper {
 	guint reply_forward_type;
 	ReplyForwardAction action;
 	gchar *account_name;
+	GtkWidget *parent_window;
 } ReplyForwardHelper;
 
 /*
@@ -809,10 +810,17 @@ reply_forward_cb (ModestMailOperation *mail_op,
 		goto cleanup;
 	}	
 
-	/* Create and register the windows */			
+	/* Create and register the windows */
 	msg_win = modest_msg_edit_window_new (new_msg, rf_helper->account_name);
 	mgr = modest_runtime_get_window_mgr ();
 	modest_window_mgr_register_window (mgr, msg_win);
+
+	if (rf_helper->parent_window != NULL) {
+		gdouble parent_zoom;
+
+		parent_zoom = modest_window_get_zoom (MODEST_WINDOW (rf_helper->parent_window));
+		modest_window_set_zoom (msg_win, parent_zoom);
+	}
 
 	/* Show edit window */
 	gtk_widget_show_all (GTK_WIDGET (msg_win));
@@ -913,6 +921,8 @@ reply_forward (ReplyForwardAction action, ModestWindow *win)
 	rf_helper->reply_forward_type = reply_forward_type;
 	rf_helper->action = action;
 	rf_helper->account_name = g_strdup (modest_window_get_active_account (win));
+	if ((win != NULL) && (MODEST_IS_WINDOW (win)))
+		rf_helper->parent_window = GTK_WIDGET (win);
 	if (!rf_helper->account_name)
 		rf_helper->account_name =
 			modest_account_mgr_get_default_account (modest_runtime_get_account_mgr());
