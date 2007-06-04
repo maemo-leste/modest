@@ -738,8 +738,6 @@ reply_forward_cb (ModestMailOperation *mail_op,
 	ModestWindow *msg_win;
 	ModestEditType edit_type;
 	gchar *from;
-	GError *err = NULL;
-	TnyFolder *folder = NULL;
 	TnyAccount *account = NULL;
 	ModestWindowMgr *mgr;
 	gchar *signature = NULL;
@@ -796,20 +794,6 @@ reply_forward_cb (ModestMailOperation *mail_op,
 		goto cleanup;
 	}
 
-	folder = modest_tny_account_get_special_folder (account, TNY_FOLDER_TYPE_DRAFTS);
-	if (!folder) {
-		g_printerr ("modest: failed to find Drafts folder\n");
-		goto cleanup;
-	}
-	
-	tny_folder_add_msg (folder, msg, &err);
-	if (err) {
-		g_printerr ("modest: error adding msg to Drafts folder: %s",
-			    err->message);
-		g_error_free (err);
-		goto cleanup;
-	}	
-
 	/* Create and register the windows */
 	msg_win = modest_msg_edit_window_new (new_msg, rf_helper->account_name);
 	mgr = modest_runtime_get_window_mgr ();
@@ -828,8 +812,6 @@ reply_forward_cb (ModestMailOperation *mail_op,
 cleanup:
 	if (new_msg)
 		g_object_unref (G_OBJECT (new_msg));
-	if (folder)
-		g_object_unref (G_OBJECT (folder));
 	if (account)
 		g_object_unref (G_OBJECT (account));
 	g_object_unref (msg);
