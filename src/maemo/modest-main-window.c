@@ -1317,28 +1317,22 @@ create_details_widget (TnyAccount *account)
 	} else if (TNY_IS_ACCOUNT(folder_store)) {
 		TnyAccount *account = TNY_ACCOUNT(folder_store);
 		
-		if (!strcmp (tny_account_get_id (account), MODEST_MMC_ACCOUNT_ID)) {
-			gtk_box_pack_start (GTK_BOX (vbox), 
-				gtk_label_new (tny_account_get_name (account)),
-				FALSE, FALSE, 0);
-		} else {
-			time_t last_updated;
-			gchar *last_updated_string;
-			/* Get last updated from configuration */
-			last_updated = modest_account_mgr_get_int (modest_runtime_get_account_mgr (), 
-								  tny_account_get_id (account), 
-								  MODEST_ACCOUNT_LAST_UPDATED, 
-								  TRUE);
-			if (last_updated > 0) 
-				last_updated_string = modest_text_utils_get_display_date(last_updated);
-			else
-				last_updated_string = g_strdup (_("FIXME: Never"));
-	
-			label = g_strdup_printf ("%s: %s", _("mcen_ti_lastupdated"), last_updated_string);
-			gtk_box_pack_start (GTK_BOX (vbox), gtk_label_new (label), FALSE, FALSE, 0);
-			g_free (last_updated_string);
-			g_free (label);
-		}
+		time_t last_updated;
+		gchar *last_updated_string;
+		/* Get last updated from configuration */
+		last_updated = modest_account_mgr_get_int (modest_runtime_get_account_mgr (), 
+							  tny_account_get_id (account), 
+							  MODEST_ACCOUNT_LAST_UPDATED, 
+							  TRUE);
+		if (last_updated > 0) 
+			last_updated_string = modest_text_utils_get_display_date(last_updated);
+		else
+			last_updated_string = g_strdup (_("FIXME: Never"));
+
+		label = g_strdup_printf ("%s: %s", _("mcen_ti_lastupdated"), last_updated_string);
+		gtk_box_pack_start (GTK_BOX (vbox), gtk_label_new (label), FALSE, FALSE, 0);
+		g_free (last_updated_string);
+		g_free (label);
 	}
 
 	/* Set alignment */

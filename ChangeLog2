@@ -1,5 +1,11 @@
 2007-06-05  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/maemo/modest-main-window.c: (create_details_widget):
+	Show the total size for memory card accounts too, instead of showing 
+	the name again. Fixes bug projects.maemo.org bug NB#59307.
+
+2007-06-05  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/Makefile.am:
 	* src/modest-tny-simple-folder-store.c:
 	* src/modest-tny-simple-folder-store.h: Removed.
