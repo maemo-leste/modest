@@ -30,6 +30,7 @@
 #include <modest-tny-platform-factory.h>
 #include <modest-tny-account.h>
 #include <modest-tny-account-store.h>
+#include <modest-tny-local-folders-account.h>
 #include <modest-runtime.h>
 #include <tny-simple-list.h>
 #include <modest-tny-folder.h>
@@ -443,9 +444,19 @@ modest_tny_account_new_for_local_folders (ModestAccountMgr *account_mgr, TnySess
 
 	g_return_val_if_fail (account_mgr, NULL);
 	
-	tny_account = tny_camel_store_account_new ();
+	if (!location_filepath) {
+		/* A NULL filepath means that this is the special local-folders maildir 
+		 * account: */
+		tny_account = TNY_STORE_ACCOUNT (modest_tny_local_folders_account_new ());
+	}
+	else {
+		/* Else, for instance, a per-account outbox maildir account: */
+		tny_account = TNY_STORE_ACCOUNT (tny_camel_store_account_new ());
+	}
+		
 	if (!tny_account) {
-		g_printerr ("modest: cannot create account for local folders");
+		g_printerr ("modest: %s: cannot create account for local folders. filepath=%s", 
+			__FUNCTION__, location_filepath);
 		return NULL;
 	}
 	tny_camel_account_set_session (TNY_CAMEL_ACCOUNT(tny_account), session);

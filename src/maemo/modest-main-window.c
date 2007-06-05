@@ -1248,7 +1248,7 @@ set_alignment (GtkWidget *widget,
 }
 
 static GtkWidget *
-create_details_widget (TnyFolderStore *folder_store)
+create_details_widget (TnyAccount *account)
 {
 	GtkWidget *vbox;
 	gchar *label;
@@ -1257,7 +1257,7 @@ create_details_widget (TnyFolderStore *folder_store)
 
 	/* Account description: */
 	
-	if (modest_tny_folder_store_is_virtual_local_folders (folder_store)) {
+	if (modest_tny_account_is_virtual_local_folders (account)) {
 		/* Local folders: */
 	
 		/* Get device name */
@@ -1270,9 +1270,7 @@ create_details_widget (TnyFolderStore *folder_store)
 		gtk_box_pack_start (GTK_BOX (vbox), gtk_label_new (label), FALSE, FALSE, 0);
 		g_free (device_name);
 		g_free (label);
-	} else if (TNY_IS_ACCOUNT (folder_store)) {
-		TnyAccount *account = TNY_ACCOUNT(folder_store);
-		
+	} else {
 		if(!strcmp (tny_account_get_id (account), MODEST_MMC_ACCOUNT_ID)) {
 			gtk_box_pack_start (GTK_BOX (vbox), 
 				gtk_label_new (tny_account_get_name (account)), 
@@ -1297,7 +1295,7 @@ create_details_widget (TnyFolderStore *folder_store)
 	}
 
 	/* Message count */
-	
+	TnyFolderStore *folder_store = TNY_FOLDER_STORE (account);
 	label = g_strdup_printf ("%s: %d", _("mcen_fi_rootfolder_messages"), 
 				 modest_tny_folder_store_get_message_count (folder_store));
 	gtk_box_pack_start (GTK_BOX (vbox), gtk_label_new (label), FALSE, FALSE, 0);
@@ -1310,7 +1308,7 @@ create_details_widget (TnyFolderStore *folder_store)
 	g_free (label);
 
 	/* Size / Date */
-	if (modest_tny_folder_store_is_virtual_local_folders (folder_store)) {
+	if (modest_tny_account_is_virtual_local_folders (account)) {
 		/* FIXME: format size */
 		label = g_strdup_printf ("%s: %d", _("mcen_fi_rootfolder_size"), 
 					 modest_tny_folder_store_get_local_size (folder_store));
@@ -1386,11 +1384,13 @@ modest_main_window_set_contents_style (ModestMainWindow *self,
 		/* TODO: show here account details */
 		TnyFolderStore *selected_folderstore = 
 			modest_folder_view_get_selected (priv->folder_view);
-			
-		priv->details_widget = create_details_widget (selected_folderstore);
+		if (TNY_IS_ACCOUNT (selected_folderstore)) {	
+			priv->details_widget = create_details_widget (
+				TNY_ACCOUNT (selected_folderstore));
 
-		wrap_in_scrolled_window (priv->contents_widget, 
-				 priv->details_widget);
+			wrap_in_scrolled_window (priv->contents_widget, 
+					 priv->details_widget);
+		}
 		break;
 	}
 	default:

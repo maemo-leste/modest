@@ -81,6 +81,8 @@ modest_SOURCES=\
 	modest-tny-account-store.h\
 	modest-tny-account.c\
 	modest-tny-account.h\
+	modest-tny-local-folders-account.c\
+	modest-tny-local-folders-account.h\
 	modest-tny-outbox-account.c\
 	modest-tny-outbox-account.h\
 	modest-tny-folder.c \
@@ -90,8 +92,6 @@ modest_SOURCES=\
 	modest-platform.h\
 	modest-tny-platform-factory.c \
 	modest-tny-platform-factory.h \
-	modest-tny-simple-folder-store.c \
-	modest-tny-simple-folder-store.h \
 	modest-tny-send-queue.c\
 	modest-tny-send-queue.h\
 	modest-ui-actions.c\

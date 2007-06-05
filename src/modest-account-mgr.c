@@ -488,7 +488,7 @@ modest_account_mgr_remove_account (ModestAccountMgr * self,
 	g_return_val_if_fail (name, FALSE);
 
 	if (!modest_account_mgr_account_exists (self, name, server_account)) {
-		g_printerr ("modest: account '%s' does not exist\n", name);
+		g_printerr ("modest: %s: account '%s' does not exist\n", __FUNCTION__, name);
 		return FALSE;
 	}
 

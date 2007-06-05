@@ -1233,9 +1233,6 @@ modest_ui_actions_on_folder_selection_changed (ModestFolderView *folder_view,
 		set_active_account_from_tny_account (TNY_ACCOUNT (folder_store), MODEST_WINDOW (main_window));
 		/* Show account details */
 		modest_main_window_set_contents_style (main_window, MODEST_MAIN_WINDOW_CONTENTS_STYLE_DETAILS);
-	} else if (modest_tny_folder_store_is_virtual_local_folders  (folder_store )) {
-		//TODO: Set the virtual folder store as the "active account" somehow:
-		modest_main_window_set_contents_style (main_window, MODEST_MAIN_WINDOW_CONTENTS_STYLE_DETAILS);
 	} else {
 		if (TNY_IS_FOLDER (folder_store) && selected) {
 			

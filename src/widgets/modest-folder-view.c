@@ -40,13 +40,11 @@
 #include <tny-folder.h>
 #include <tny-camel-folder.h>
 #include <tny-simple-list.h>
-#include <tny-merge-folder.h>
 #include <modest-tny-folder.h>
-#include <modest-tny-simple-folder-store.h>
+#include <modest-tny-local-folders-account.h>
 #include <modest-marshal.h>
 #include <modest-icon-names.h>
 #include <modest-tny-account-store.h>
-#include <modest-tny-outbox-account.h>
 #include <modest-text-utils.h>
 #include <modest-runtime.h>
 #include "modest-folder-view.h"
@@ -298,21 +296,14 @@ text_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 
 	} else if (TNY_IS_ACCOUNT (instance)) {
 		/* If it's a server account */
-		const gchar * account_id = tny_account_get_id (TNY_ACCOUNT (instance));
-		if (!strcmp (account_id, MODEST_ACTUAL_LOCAL_FOLDERS_ACCOUNT_ID)) {
+		if (modest_tny_account_is_virtual_local_folders (
+				TNY_ACCOUNT (instance))) {
 			item_name = g_strdup (priv->local_account_name);
+			item_weight = 400;
 		} else {
 			item_name = g_strdup (fname);
+			item_weight = 800;
 		}
-
-		item_weight = 800;
-	} else if (modest_tny_folder_store_is_virtual_local_folders (
-		TNY_FOLDER_STORE(instance)))
-	{
-		/* We use ModestTnySimpleFolder store to group the outboxes and 
-		 * the other local folders together: */
-		item_name = g_strdup (priv->local_account_name);
-		item_weight = 400;
 	}
 	
 	if (!item_name)
@@ -373,23 +364,19 @@ icon_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 	switch (type) {
 	case TNY_FOLDER_TYPE_ROOT:
 		if (TNY_IS_ACCOUNT (instance)) {
-			account_id = tny_account_get_id (TNY_ACCOUNT (instance));
-			/*
-			if (!strcmp (account_id, MODEST_ACTUAL_LOCAL_FOLDERS_ACCOUNT_ID)) {
+			
+			if (modest_tny_account_is_virtual_local_folders (
+				TNY_ACCOUNT (instance))) {
 				pixbuf = modest_platform_get_icon (MODEST_FOLDER_ICON_LOCAL_FOLDERS);
-			} else {
-			*/
+			}
+			else {
+				account_id = tny_account_get_id (TNY_ACCOUNT (instance));
+				
 				if (!strcmp (account_id, MODEST_MMC_ACCOUNT_ID))
 					pixbuf = modest_platform_get_icon (MODEST_FOLDER_ICON_MMC);
 				else
 					pixbuf = modest_platform_get_icon (MODEST_FOLDER_ICON_ACCOUNT);
-			/*
 			}
-			*/
-		}
-		else if (modest_tny_folder_store_is_virtual_local_folders (
-			TNY_FOLDER_STORE (instance))) {
-			pixbuf = modest_platform_get_icon (MODEST_FOLDER_ICON_LOCAL_FOLDERS);
 		}
 		break;
 	case TNY_FOLDER_TYPE_INBOX:
@@ -699,7 +686,8 @@ filter_row (GtkTreeModel *model,
 			
 			/* If it isn't a special folder, 
 			 * don't show it unless it is the visible account: */
-			if (strcmp (account_id, MODEST_MMC_ACCOUNT_ID)) { 
+			if (!modest_tny_account_is_virtual_local_folders (acc) &&
+				strcmp (account_id, MODEST_MMC_ACCOUNT_ID)) { 
 				/* Show only the visible account id */
 				ModestFolderViewPrivate *priv = 
 					MODEST_FOLDER_VIEW_GET_PRIVATE (data);
@@ -726,94 +714,6 @@ static void on_tnylist_accounts_debug_print(gpointer data,  gpointer user_data)
 }
 */
 
-static void
-add_account_folders_to_merged_folder (TnyAccount *account, TnyMergeFolder* merge_folder)
-{
-	const gchar* account_id = tny_account_get_id (account);
-	const gboolean is_actual_local_folders_account = account_id && 
-		(strcmp (account_id, MODEST_ACTUAL_LOCAL_FOLDERS_ACCOUNT_ID) == 0);
-		
-	TnyList *list_outbox_folders = tny_simple_list_new ();
-	tny_folder_store_get_folders (TNY_FOLDER_STORE (account), 
-		list_outbox_folders, NULL, NULL);
-		
-	TnyIterator*  iter =  tny_list_create_iterator (list_outbox_folders);
-	while (!tny_iterator_is_done (iter))
-	{
-		TnyFolder *folder = TNY_FOLDER (tny_iterator_get_current (iter));
-		
-		if (folder) {
-			gboolean add = TRUE;
-			/* TODO: Do not add outboxes that are inside local-folders/, 
-			 * because these are just left-over from earlier Modest versions 
-			 * that put the outbox there: */
-			if (is_actual_local_folders_account) {
-				const TnyFolderType type = modest_tny_folder_get_local_folder_type (folder);
-				if (type == TNY_FOLDER_TYPE_OUTBOX) {
-					add = FALSE;
-				}
-			}
-			
-			if (add)
-				tny_merge_folder_add_folder (merge_folder, folder);
-				
-			g_object_unref (folder);	
-		}
-		
-		tny_iterator_next (iter);
-	}
-	
-	g_object_unref (list_outbox_folders);
-}
-
-
-static void
-add_account_folders_to_simple_folder_store (TnyAccount *account, ModestTnySimpleFolderStore* store)
-{
-	g_return_if_fail (account);
-	g_return_if_fail (store);
-		
-	TnyList *list_outbox_folders = tny_simple_list_new ();
-	tny_folder_store_get_folders (TNY_FOLDER_STORE (account), 
-		list_outbox_folders, NULL, NULL);
-	
-	/* Special handling for the .modest/local-folders account,
-	 * to avoid adding unwanted folders.
-	 * We cannot prevent them from being in the TnyAccount without 
-	 * changing the libtinymail-camel. */
-	const gchar* account_id = tny_account_get_id (account);
-	const gboolean is_actual_local_folders_account = account_id && 
-		(strcmp (account_id, MODEST_ACTUAL_LOCAL_FOLDERS_ACCOUNT_ID) == 0);
-	
-	TnyIterator*  iter =  tny_list_create_iterator (list_outbox_folders);
-	while (!tny_iterator_is_done (iter))
-	{
-		TnyFolder *folder = TNY_FOLDER (tny_iterator_get_current (iter));
-		
-		if (folder) {
-			gboolean add = TRUE;
-			/* TODO: Do not add outboxes that are inside local-folders/, 
-			 * because these are just left-over from earlier Modest versions 
-			 * that put the outbox there: */
-			if (is_actual_local_folders_account) {
-				const TnyFolderType type = modest_tny_folder_get_local_folder_type (folder);
-				if (type == TNY_FOLDER_TYPE_OUTBOX) {
-					add = FALSE;
-				}
-			}
-			
-			if (add)
-				modest_tny_simple_folder_store_add_folder (store, folder);
-				
-			g_object_unref (folder);	
-		}
-		
-		tny_iterator_next (iter);
-	}
-	
-	g_object_unref (list_outbox_folders);
-}
-
 static gboolean
 update_model (ModestFolderView *self, ModestTnyAccountStore *account_store)
 {
@@ -838,68 +738,19 @@ update_model (ModestFolderView *self, ModestTnyAccountStore *account_store)
 	 * filling the TnyList via a get_accounts() call: */
 	TnyList *model_as_list = TNY_LIST(model);
 
-	/* Create a virtual local-folders folder store, 
-	 * containing the real local folders and the (merged) various per-account 
-	 * outbox folders:
-	 */
-	ModestTnySimpleFolderStore *store = modest_tny_simple_folder_store_new ();
-
 	/* Get the accounts: */
-	TnyList *account_list = tny_simple_list_new ();
 	tny_account_store_get_accounts (TNY_ACCOUNT_STORE(account_store),
-					account_list,
+					model_as_list,
 					TNY_ACCOUNT_STORE_STORE_ACCOUNTS);
-	TnyIterator* iter =  tny_list_create_iterator (account_list);
 	
-	/* All per-account outbox folders are merged into one folders
-	 * so that they appear as one outbox to the user: */
-	TnyMergeFolder *merged_outbox = TNY_MERGE_FOLDER (tny_merge_folder_new());
-	
-	while (!tny_iterator_is_done (iter))
-	{
-		GObject *cur = tny_iterator_get_current (iter);
-		TnyAccount *account = TNY_ACCOUNT (cur);
-		if (account) {
-			/* Add both outbox account and local-folders account folders
-			 * to our one combined account:
-			 */
-			if (MODEST_IS_TNY_OUTBOX_ACCOUNT (account)) {
-				/* Add the folder to the merged folder.
-				 * We will add it later to the virtual local-folders store: */
-				add_account_folders_to_merged_folder (account, merged_outbox);
-			} else {
-				const gchar *account_id = tny_account_get_id (account);
-				if (account_id && !strcmp (account_id, MODEST_ACTUAL_LOCAL_FOLDERS_ACCOUNT_ID)) {
-					/* Add the folders to the virtual local-folders store: */
-					add_account_folders_to_simple_folder_store (account, store);
-				}
-				else {
-					/* Just add the account: */
-					tny_list_append (model_as_list, G_OBJECT (account));
-				}
-			}
-		}
-	   
-		g_object_unref (cur);
-		tny_iterator_next (iter);
-	}
-	
-	/* Add the merged outbox folder to the virtual local-folders store: */
-	modest_tny_simple_folder_store_add_folder (store, TNY_FOLDER(merged_outbox));
-	g_object_unref (merged_outbox);
-	merged_outbox = NULL;
-	
-	/* Add the virtual local-folders store to the model: */
-	tny_list_append (model_as_list, G_OBJECT (store));
-	
-	
-	g_object_unref (account_list);
-	account_list = NULL;
 	
 	g_object_unref (model_as_list);
 	model_as_list = NULL;	
-		
-	/* tny_list_foreach (account_list, on_tnylist_accounts_debug_print, "update_model: "); */
+	
+	/*	
+	if (account_list)
+		tny_list_foreach (account_list, on_tnylist_accounts_debug_print, "update_model: ");
+    */
                                                      
 	GtkTreeModel *filter_model = NULL, *sortable = NULL;
 
@@ -1006,9 +857,9 @@ get_cmp_rows_type_pos (GObject *folder)
 	/* Remote accounts -> Local account -> MMC account .*/
 	/* 0, 1, 2 */
 	
-	if (TNY_IS_FOLDER_STORE (folder) && 
-		modest_tny_folder_store_is_virtual_local_folders (
-			TNY_FOLDER_STORE (folder))) {
+	if (TNY_IS_ACCOUNT (folder) && 
+		modest_tny_account_is_virtual_local_folders (
+			TNY_ACCOUNT (folder))) {
 		return 1;
 	} else if (TNY_IS_ACCOUNT (folder)) {
 		TnyAccount *account = TNY_ACCOUNT (folder);

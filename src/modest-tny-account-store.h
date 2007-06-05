@@ -39,8 +39,8 @@
 #include <tny-session-camel.h>
 #include <tny-shared.h>
 #include <tny-folder.h>
-#include <modest-tny-simple-folder-store.h>
 #include <modest-account-mgr.h>
+#include <modest-tny-local-folders-account.h>
 
 /* other include files */
 
@@ -123,7 +123,7 @@ TnyAccount* modest_tny_account_store_get_tny_account_by_id  (ModestTnyAccountSto
 TnyAccount* modest_tny_account_store_get_tny_account_by_account (ModestTnyAccountStore *self,
 								 const gchar *account_name,
 								 TnyAccountType type);
-		
+						     
 /**
  * modest_tny_account_store_get_transport_account_for_open_connection
  * @self: a ModestTnyAccountStore instance
@@ -151,14 +151,14 @@ TnyAccount* modest_tny_account_store_get_transport_account_for_open_connection (
 TnySessionCamel*    modest_tny_account_store_get_session    (TnyAccountStore *self);
 
 
-/** modest_tny_folder_store_is_virtual_local_folders:
- * @self A TnyFolderStore.
+/** modest_tny_account_is_virtual_local_folders:
+ * @self A TnyAccount.
  * 
- * A convenience function to identify whether TnyAccount or other TnyFolderStore 
- * is the virtual local folders store, containing the folders from local_folders/
+ * A convenience function to identify whether TnyAccount 
+ * is the virtual local folders account, containing the folders from local_folders/
  * and the outboxes from outboxes/<account-name>/.
  **/
-gboolean modest_tny_folder_store_is_virtual_local_folders (TnyFolderStore *self);
+gboolean modest_tny_account_is_virtual_local_folders (TnyAccount *self);
 
 G_END_DECLS
 

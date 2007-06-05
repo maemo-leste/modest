@@ -1,3 +1,41 @@
+2007-06-05  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/Makefile.am:
+	* src/modest-tny-simple-folder-store.c:
+	* src/modest-tny-simple-folder-store.h: Removed.
+	
+	* src/modest-tny-local-folders-account.h
+	* src/modest-tny-local-folders-account.c: Added a derived TnyAccount 
+	for the local-folders maildir, with an extra TnyMergedFolder containing 
+	the folders of the per-account outbox store accounts.
+	* src/modest-tny-account-store.c: (get_server_accounts):
+	Add the outboxes to the special local folders account after creating it.
+		
+	* src/modest-tny-account.c:
+	(modest_tny_account_new_for_local_folders): Create the derived 
+	account when creating the main local-folders account.
+	
+	* src/maemo/modest-main-window.c: (create_details_widget),
+	(modest_main_window_set_contents_style):
+	Adapted to the use of the derived account instead of the folder store.
+	
+	* src/modest-ui-actions.c:
+	(modest_ui_actions_on_folder_selection_changed):
+	* src/modest-ui-dimming-rules.c:
+	(modest_ui_dimming_rules_on_new_folder):
+	* src/widgets/modest-folder-view.c: (text_cell_data),
+	(icon_cell_data), (filter_row), (update_model),
+	(get_cmp_rows_type_pos):
+	
+
+	* src/modest-tny-send-queue.c: (modest_tny_send_queue_new): 
+	Do not get the priv struct, because no priv struct has been set, 
+	to avoid a runtime warning.
+	
+	* src/maemo/modest-platform.c: (modest_platform_show_help): Replace 
+	#ifelse with #else, to fix a warning, to fix the build.
+	
+	
 2007-06-05  Christian Kellner  <ckellner@openismus.com> 
 
 	* libmodest-dbus-client/libmodest-dbus-client.c:

@@ -46,6 +46,7 @@
 #include <modest-protocol-info.h>
 #include <modest-local-folder-info.h>
 #include <modest-tny-account.h>
+#include <modest-tny-local-folders-account.h>
 #include <modest-account-mgr.h>
 #include <modest-account-mgr-helpers.h>
 #include <widgets/modest-window-mgr.h>
@@ -667,16 +668,7 @@ get_server_accounts  (TnyAccountStore *self, TnyList *list, TnyAccountType type)
 			}
 	}
 	
-	if (type == TNY_ACCOUNT_TYPE_STORE) {
-		/* Also add the local folder pseudo-account: */
-		TnyAccount *tny_account =
-			modest_tny_account_new_for_local_folders (priv->account_mgr, 
-				priv->session, NULL);
-		if (list)
-			tny_list_prepend (list, G_OBJECT(tny_account));
-		accounts = g_slist_append (accounts, tny_account); /* cache it */
-		
-		
+	if (type == TNY_ACCOUNT_TYPE_STORE) {		
 		/* Also add the Memory card account if it is mounted: */
 		gboolean mmc_is_mounted = FALSE;
 		GnomeVFSVolumeMonitor* monitor = 
@@ -795,6 +787,21 @@ get_server_accounts  (TnyAccountStore *self, TnyList *list, TnyAccountType type)
 				accounts = g_slist_append (accounts, outbox_account);
 			}
 			
+			
+			/* Also add the local folder pseudo-account: */
+			TnyAccount *tny_account =
+				modest_tny_account_new_for_local_folders (priv->account_mgr, 
+					priv->session, NULL);
+			/* Add a merged folder, merging all the per-account outbox folders: */
+			modest_tny_local_folders_account_add_merged_outbox_folders (
+				MODEST_TNY_LOCAL_FOLDERS_ACCOUNT (tny_account), priv->store_accounts_outboxes);
+	
+			if (list)
+				tny_list_prepend (list, G_OBJECT(tny_account));
+			accounts = g_slist_append (accounts, tny_account); /* cache it */
+			
+			
+			/* We have finished with this temporary list, so free it: */
 			account_list_free (priv->store_accounts_outboxes);
 			priv->store_accounts_outboxes = NULL;
 		}
@@ -1241,9 +1248,9 @@ modest_tny_account_store_get_transport_account_for_open_connection (ModestTnyAcc
 	return account;
 }
 
-gboolean modest_tny_folder_store_is_virtual_local_folders (TnyFolderStore *self)
+gboolean modest_tny_account_is_virtual_local_folders (TnyAccount *self)
 {
-	/* We should make this more sophisticated if we ever use ModestTnySimpleFolderStore 
+	/* We should make this more sophisticated if we ever use ModestTnyLocalFoldersAccount 
 	 * for anything else. */
-	return MODEST_IS_TNY_SIMPLE_FOLDER_STORE (self);
+	return MODEST_IS_TNY_LOCAL_FOLDERS_ACCOUNT (self);
 }
