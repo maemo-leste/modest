@@ -255,20 +255,16 @@ modest_maemo_utils_create_temp_stream (const gchar *extension, gchar **path)
 typedef struct 
 {
 	gboolean finished;
+	gboolean cancel;
 	GList *result;
-  GtkWidget* banner;
+	GtkWidget* dialog;
+  GtkWidget* progress;
 } ModestGetSupportedAuthInfo;
 
-#if 0
 static void on_camel_account_get_supported_secure_authentication_status (
 	GObject *self, TnyStatus *status, gpointer user_data)
 {
-
-	printf ("DEBUG: %s.\n", __FUNCTION__);
-  ModestGetSupportedAuthInfo* info = (ModestGetSupportedAuthInfo*) user_data;
-  GDK_THREADS_ENTER();
-  hildon_banner_set_fraction(HILDON_BANNER(info->banner), tny_status_get_fraction(status));
-  GDK_THREADS_LEAVE();
+	/*ModestGetSupportedAuthInfo* info = (ModestGetSupportedAuthInfo*) user_data;*/
 }
 
 static void
@@ -277,7 +273,6 @@ on_camel_account_get_supported_secure_authentication (
   TnyList *auth_types, GError **err, 
   gpointer user_data)
 {
-	printf ("DEBUG: %s.\n", __FUNCTION__);
 		
 	ModestGetSupportedAuthInfo *info = (ModestGetSupportedAuthInfo*)user_data;
 	g_return_if_fail (info);
@@ -313,14 +308,19 @@ on_camel_account_get_supported_secure_authentication (
   printf("DEBUG: finished\n");
 	info->finished = TRUE; /* We are blocking, waiting for this. */
 }
-#endif
+
+static void on_secure_auth_cancel(GtkWidget* dialog, int response, gpointer user_data)
+{
+	ModestGetSupportedAuthInfo *info = (ModestGetSupportedAuthInfo*)user_data;
+	g_return_if_fail(info);
+	/* We are blocking */
+	info->result = NULL;
+	info->cancel = TRUE;
+}
 
 GList* modest_maemo_utils_get_supported_secure_authentication_methods (ModestTransportStoreProtocol proto, 
 	const gchar* hostname, gint port, GtkWindow *parent_window)
 {
-	return NULL;
-/* FIXME: Activate when changes are merged into tinymail */
-#if 0
 	g_return_val_if_fail (proto != MODEST_PROTOCOL_TRANSPORT_STORE_UNKNOWN, NULL);
 	
 	/*
@@ -373,12 +373,19 @@ GList* modest_maemo_utils_get_supported_secure_authentication_methods (ModestTra
 	ModestGetSupportedAuthInfo *info = g_slice_new (ModestGetSupportedAuthInfo);
 	info->finished = FALSE;
 	info->result = NULL;
-	GtkWidget* progressbar = gtk_progress_bar_new();
-  info->banner = hildon_banner_show_progress (GTK_WIDGET(parent_window), 
-                                              GTK_PROGRESS_BAR(progressbar),
-                                              _("Checking for supported authentification types"));
-  gtk_progress_bar_pulse(GTK_PROGRESS_BAR(progressbar));
+	info->progress = gtk_progress_bar_new();
+  info->dialog = gtk_dialog_new_with_buttons(_("Checking for supported authentication types"),
+																parent_window, GTK_DIALOG_MODAL,
+																GTK_STOCK_CANCEL,
+																GTK_RESPONSE_REJECT,
+																NULL);
 	
+	g_signal_connect(G_OBJECT(info->dialog), "response", G_CALLBACK(on_secure_auth_cancel), info);
+	
+	gtk_container_add(GTK_CONTAINER(GTK_DIALOG(info->dialog)->vbox), info->progress);
+	gtk_widget_show(info->progress);
+	gtk_widget_show(info->dialog);
+  gtk_progress_bar_pulse(GTK_PROGRESS_BAR(info->progress));
 	
 	printf ("DEBUG: %s: STARTING.\n", __FUNCTION__);
 	tny_camel_account_get_supported_secure_authentication (
@@ -390,16 +397,15 @@ GList* modest_maemo_utils_get_supported_secure_authentication_methods (ModestTra
 	/* Block until the callback has been called,
 	 * driving the main context, so that the (idle handler) callback can be 
 	 * called, and so that our dialog is clickable: */
-	while (!(info->finished)) {
+	while (!(info->finished) && (!info->cancel)) {
     gtk_main_iteration_do(FALSE); 
 	}
 	
-  gtk_widget_destroy(info->banner);
+  gtk_widget_destroy(info->dialog);
 		
 	GList *result = info->result;
 	g_slice_free (ModestGetSupportedAuthInfo, info);
 	info = NULL;
 	
 	return result;
-#endif
 }

@@ -1061,6 +1061,8 @@ void modest_account_settings_dialog_set_account_name (ModestAccountSettingsDialo
     	 * If secure authentication is checked, require one of the secure methods during connection: SSL, TLS, CRAM-MD5 etc. 
 	  	 * TODO: Do we need to discover which of these (SSL, TLS, CRAM-MD5) is supported?
          */
+		/* Is AUTH_PASSWORD a secure method? We accept AUTH_PASSWORD while
+		saving so we should accept it here, too */
 		const ModestAuthProtocol secure_auth = modest_server_account_get_secure_auth(
 			dialog->account_manager, incoming_account->account_name);
 		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (dialog->checkbox_incoming_auth), 

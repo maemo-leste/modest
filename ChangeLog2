@@ -1,3 +1,17 @@
+2007-06-05  Johannes Schmid <johannes.schmid@openismus.com>
+
+	* src/maemo/easysetup/modest-easysetup-wizard.c:
+	(get_serverport_incoming), (on_before_next), (create_account):
+	* src/maemo/modest-account-settings-dialog.c:
+	(modest_account_settings_dialog_set_account_name):
+	* src/maemo/modest-maemo-utils.c:
+	(on_camel_account_get_supported_secure_authentication_status),
+	(on_camel_account_get_supported_secure_authentication),
+	(on_secure_auth_cancel),
+	(modest_maemo_utils_get_supported_secure_authentication_methods):
+
+	Implemented security authentication for settings and easysetup.
+
 2007-06-05  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/maemo/modest-main-window.c: (create_details_widget):

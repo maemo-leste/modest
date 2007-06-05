@@ -145,6 +145,21 @@ set_default_custom_servernames(ModestEasysetupWizardDialog *dialog);
 
 static void on_combo_servertype_changed(GtkComboBox *combobox, gpointer user_data);
 
+static gint get_serverport_incoming(ModestPresetsServerType servertype_incoming,
+																		ModestPresetsSecurity security_incoming)
+{
+	int serverport_incoming = 0;
+		/* We don't check for SMTP here as that is impossible for an incoming server. */
+		if (servertype_incoming == MODEST_PRESETS_SERVER_TYPE_IMAP) {
+			serverport_incoming =
+				(security_incoming & MODEST_PRESETS_SECURITY_SECURE_INCOMING_ALTERNATE_PORT) ? 993 : 143; 
+		} else if (servertype_incoming == MODEST_PRESETS_SERVER_TYPE_POP) {
+			serverport_incoming =
+				(security_incoming & MODEST_PRESETS_SECURITY_SECURE_INCOMING_ALTERNATE_PORT) ? 995 : 110; 
+		}
+	return serverport_incoming;
+}
+
 static void
 invoke_enable_buttons_vfunc (ModestEasysetupWizardDialog *wizard_dialog)
 {
@@ -1225,18 +1240,19 @@ on_before_next (ModestWizardDialog *dialog, GtkWidget *current_page, GtkWidget *
     /* Check if the server support secure authentication */
     if (gtk_toggle_button_get_active (
 			GTK_TOGGLE_BUTTON (account_wizard->checkbox_incoming_auth))) {
-#if 0
 				const ModestTransportStoreProtocol protocol = 
           easysetup_servertype_combo_box_get_active_servertype (
                                                                 EASYSETUP_SERVERTYPE_COMBO_BOX (account_wizard->combo_incoming_servertype));
         const gchar* hostname = gtk_entry_get_text(GTK_ENTRY(account_wizard->entry_incomingserver));
-        /* FIXME: Get correct port */
-
-        int port_num = 22; 
+				const ModestConnectionProtocol protocol_security_incoming = 
+					modest_serversecurity_combo_box_get_active_serversecurity (
+																																		 MODEST_SERVERSECURITY_COMBO_BOX (
+																																																			account_wizard->combo_incoming_security));
+        int port_num = get_serverport_incoming(protocol, protocol_security_incoming); 
         GList *list_auth_methods = 
           modest_maemo_utils_get_supported_secure_authentication_methods (
                                                                       protocol, 
-                                                                      hostname, port_num, GTK_WINDOW (dialog));	
+                                                                      hostname, port_num, GTK_WINDOW (account_wizard));	
         if (list_auth_methods) {
           /* TODO: Select the correct method */
           g_list_free (list_auth_methods);
@@ -1250,7 +1266,6 @@ on_before_next (ModestWizardDialog *dialog, GtkWidget *current_page, GtkWidget *
           gtk_widget_destroy(error_dialog);
           return FALSE;
         }
-#endif
 		 }
 	}
 	
@@ -1435,18 +1450,15 @@ create_account (ModestEasysetupWizardDialog *self, gboolean enabled)
 												   TRUE /* incoming */);
 
 		g_warning ("security incoming: %x", security_incoming);
-		
+			
 		/* We don't check for SMTP here as that is impossible for an incoming server. */
 		if (servertype_incoming == MODEST_PRESETS_SERVER_TYPE_IMAP) {
 			protocol_incoming = MODEST_PROTOCOL_STORE_IMAP;
-			serverport_incoming =
-				(security_incoming & MODEST_PRESETS_SECURITY_SECURE_INCOMING_ALTERNATE_PORT) ? 993 : 143; 
 		} else if (servertype_incoming == MODEST_PRESETS_SERVER_TYPE_POP) {
-			protocol_incoming = MODEST_PROTOCOL_STORE_POP;
-			serverport_incoming =
-				(security_incoming & MODEST_PRESETS_SECURITY_SECURE_INCOMING_ALTERNATE_PORT) ? 995 : 110; 
+			protocol_incoming = MODEST_PROTOCOL_STORE_POP; 
 		}
-				
+		serverport_incoming = get_serverport_incoming(servertype_incoming, security_incoming);
+		
 		if (security_incoming & MODEST_PRESETS_SECURITY_SECURE_INCOMING)
 			protocol_security_incoming = MODEST_PROTOCOL_CONNECTION_SSL; /* TODO: Is this what we want? */
 		
