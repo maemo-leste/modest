@@ -1,5 +1,10 @@
 2007-06-05  Johannes Schmid <johannes.schmid@openismus.com>
 
+	* src/modest-account-view.c:
+	Fixed bug projects.maemo.org bug NB#59307
+
+2007-06-05  Johannes Schmid <johannes.schmid@openismus.com>
+
 	* src/maemo/easysetup/modest-easysetup-wizard.c:
 	(get_serverport_incoming), (on_before_next), (create_account):
 	* src/maemo/modest-account-settings-dialog.c:
