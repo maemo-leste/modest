@@ -1531,11 +1531,24 @@ modest_msg_view_window_view_attachment (ModestMsgViewWindow *window, TnyMimePart
 
 	if (!TNY_IS_MSG (mime_part)) {
 		gchar *filepath = NULL;
-		TnyFsStream *temp_stream = modest_maemo_utils_create_temp_stream (&filepath);
+		const gchar *att_filename = tny_mime_part_get_filename (mime_part);
+		gchar *extension = NULL;
+		TnyFsStream *temp_stream = NULL;
+
+		if (att_filename) {
+			extension = g_strrstr (att_filename, ".");
+			if (extension != NULL)
+				extension++;
+		}
+
+		temp_stream = modest_maemo_utils_create_temp_stream (extension, &filepath);
 
 		if (temp_stream) {
+			const gchar *content_type;
+			content_type = tny_mime_part_get_content_type (mime_part);
 			tny_mime_part_decode_to_stream (mime_part, TNY_STREAM (temp_stream));
-			modest_platform_activate_file (filepath);
+			
+			modest_platform_activate_file (filepath, content_type);
 			g_object_unref (temp_stream);
 			g_free (filepath);
 			/* TODO: delete temporary file */

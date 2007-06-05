@@ -78,13 +78,14 @@ gboolean modest_maemo_utils_file_exists (const gchar *filename);
 
 /**
  * modest_maemo_utils_create_temp_stream:
+ * @extension: a string with the extension the file should get, or %NULL
  * @path: a string with the created file path
  *
  * Creates a temporary fs stream 
  *
  * Returns: a #TnyFsStream, or %NULL if operation failed.
  */
-TnyFsStream *modest_maemo_utils_create_temp_stream (gchar **path);
+TnyFsStream *modest_maemo_utils_create_temp_stream (const gchar *extension, gchar **path);
 
 /**
  * modest_protocol_info_protocol_is_local_store:

@@ -171,7 +171,7 @@ guess_mime_type_from_name (const gchar* name)
 		return octet_stream;
 	
 	for (i = 0; i != G_N_ELEMENTS(mime_map); ++i) {
-		if (g_ascii_strcasecmp (mime_map[i][0], ext + 1)) /* +1: ignore '.'*/
+		if (!g_ascii_strcasecmp (mime_map[i][0], ext + 1)) /* +1: ignore '.'*/
 			return mime_map[i][1];
 	}
 	return octet_stream;
@@ -189,7 +189,7 @@ modest_platform_get_file_icon_name (const gchar* name, const gchar* mime_type,
 	
 	g_return_val_if_fail (name || mime_type, NULL);
 
-	if (!mime_type || g_ascii_strcasecmp (mime_type, "application/octet-stream")) 
+	if (!mime_type || !g_ascii_strcasecmp (mime_type, "application/octet-stream")) 
 		mime_str = g_string_new (guess_mime_type_from_name(name));
 	else {
 		mime_str = g_string_new (mime_type);
@@ -233,23 +233,33 @@ modest_platform_activate_uri (const gchar *uri)
 }
 
 gboolean 
-modest_platform_activate_file (const gchar *path)
+modest_platform_activate_file (const gchar *path, const gchar *mime_type)
 {
 	gint result;
 	DBusConnection *con;
 	gchar *uri_path = NULL;
+	GString *mime_str = NULL;
+
+	if (!mime_type || !g_ascii_strcasecmp (mime_type, "application/octet-stream")) 
+		mime_str = g_string_new (guess_mime_type_from_name(path));
+	else {
+		mime_str = g_string_new (mime_type);
+		g_string_ascii_down (mime_str);
+	}
 
 	uri_path = g_strconcat ("file://", path, NULL);
 	
 	con = osso_get_dbus_connection (osso_context);
 #ifdef MODEST_HILDON_VERSION_0
-	result = osso_mime_open_file (con, uri_path);
+	result = osso_mime_open_file_with_mime_type (con, uri_path, mime_str->str);
+	g_string_free (mime_str, TRUE);
 
 	if (result != 1)
 		hildon_banner_show_information (NULL, NULL, _("mcen_ni_noregistered_viewer"));
 	return result != 1;
 #else
-	result = hildon_mime_open_file (con, uri_path);
+	result = hildon_mime_open_file_with_mime_type (con, uri_path, mime_str->str);
+	g_string_free (mime_str, TRUE);
 
 	if (result != 1)
 		hildon_banner_show_information (NULL, NULL, _("mcen_ni_noregistered_viewer"));

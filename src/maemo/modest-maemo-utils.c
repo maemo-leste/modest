@@ -229,13 +229,18 @@ modest_maemo_utils_file_exists (const gchar *filename)
 }
 
 TnyFsStream *
-modest_maemo_utils_create_temp_stream (gchar **path)
+modest_maemo_utils_create_temp_stream (const gchar *extension, gchar **path)
 {
-	TnyStream *tmp_fs_stream;
+	TnyStream *tmp_fs_stream = NULL;
 	gint fd;
-	gchar *filepath;
+	gchar *filepath = NULL;
+	gchar *template = NULL;
 
-	fd = g_file_open_tmp (NULL, &filepath, NULL);
+	if (extension != NULL)
+		template = g_strdup_printf ("XXXXXX.%s", extension);
+
+	fd = g_file_open_tmp (template, &filepath, NULL);
+	g_free (template);
 	if (path != NULL)
 		*path = filepath;
 	if (fd == -1) {

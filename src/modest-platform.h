@@ -95,12 +95,13 @@ gboolean modest_platform_activate_uri (const gchar *uri);
 /**
  * modest_platform_activate_file:
  * @path: the path to activate
+ * @mime_type: the mime type of the path, or %NULL to guess
  *
  * This function activates a file
  *
  * Returns: %TRUE if successful, %FALSE if not.
  **/
-gboolean modest_platform_activate_file (const gchar *path);
+gboolean modest_platform_activate_file (const gchar *path, const gchar *mime_type);
 
 /**
  * modest_platform_show_uri_popup:

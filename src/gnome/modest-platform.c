@@ -90,7 +90,7 @@ modest_platform_activate_uri (const gchar *uri)
 }
 
 gboolean 
-modest_platform_activate_file (const gchar *path)
+modest_platform_activate_file (const gchar *path, const gchar *mime_type)
 {
 	modest_runtime_not_implemented (NULL);
 	return FALSE;
