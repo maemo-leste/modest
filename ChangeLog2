@@ -1,3 +1,19 @@
+
+2007-06-06  Marcus Bauer  <marcusb@openismus.com>
+
+	* libmodest-dbus-client/libmodest-dbus-client.h:
+	added libmodest_dbus_client_compose_mail()
+	* src/dbus_api/modest-dbus-callbacks.c: (on_idle_compose_mail),
+	(on_compose_mail):
+	added functions needed for SendAsMail() functionality
+	* src/maemo/modest-msg-edit-window.c:
+	(modest_msg_edit_window_attach_file_noninteractive):
+	non interactively attaching files to message edit window
+	* src/widgets/modest-msg-edit-window.h:
+	* tests/dbus_api/Makefile.am:
+	added test_compose_mail.c
+	* tests/dbus_api/test_compose_mail.c: (main):
+
 2007-06-05  Johannes Schmid <johannes.schmid@openismus.com>
 
 	* src/modest-account-view.c:

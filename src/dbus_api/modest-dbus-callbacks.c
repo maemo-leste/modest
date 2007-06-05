@@ -33,6 +33,7 @@
 #include "modest-account-mgr-helpers.h"
 #include "modest-tny-account.h"
 #include "modest-ui-actions.h"
+
 #include "modest-search.h"
 #include "widgets/modest-msg-edit-window.h"
 #include "modest-tny-msg.h"
@@ -40,6 +41,9 @@
 #include <libgnomevfs/gnome-vfs-utils.h>
 #include <stdio.h>
 #include <string.h>
+#include <glib/gstdio.h>
+#include <libgnomevfs/gnome-vfs-mime.h>
+#include <tny-fs-stream.h>
 
 #include <tny-list.h>
 #include <tny-iterator.h>
@@ -61,7 +65,7 @@ typedef struct
  	gchar *bcc;
  	gchar *subject;
  	gchar *body;
-	GSList *attachments;
+	gchar *attachments;
 } ComposeMailIdleData;
 
 static gboolean
@@ -393,10 +397,15 @@ static gint on_mail_to(GArray * arguments, gpointer data, osso_rpc_t * retval)
 }
 
 
+
+
+
 static gboolean
 on_idle_compose_mail(gpointer user_data)
 {
 	ComposeMailIdleData *idle_data = (ComposeMailIdleData*)user_data;
+	gchar **list = NULL;
+	gint i = 0;
 
 	/* Get the TnyTransportAccount so we can instantiate a mail operation: */
  	ModestAccountMgr *account_mgr = modest_runtime_get_account_mgr();
@@ -412,18 +421,18 @@ on_idle_compose_mail(gpointer user_data)
 	}
 	
 	if (!account) {
-		g_printerr ("modest: failed to get tny account folder'\n", account_name);
+		g_printerr ("modest: failed to get tny account folder'%s'\n", account_name);
 	} else {
 		gchar * from = modest_account_mgr_get_from_string (account_mgr,
 								  account_name);
 		if (!from) {
 			g_printerr ("modest: no from address for account '%s'\n", account_name);
 		} else {
-			
+	
 			/* Create the message: */
 			TnyMsg *msg  = modest_tny_msg_new (idle_data->to, from, 
 				idle_data->cc, idle_data->bcc, idle_data->subject, idle_data->body, 
-				idle_data->attachments);
+				NULL); /* NULL because m_t_m_n doesn't use it */
 				
 			if (!msg) {
 				g_printerr ("modest: failed to create message\n");
@@ -439,6 +448,14 @@ on_idle_compose_mail(gpointer user_data)
 					tny_folder_add_msg (folder, msg, NULL); /* TODO: check err */
 		
 					ModestWindow *win = modest_msg_edit_window_new (msg, account_name);
+
+					list = g_strsplit(idle_data->attachments, ",", 0);
+					for (i=0; list[i] != NULL; i++) {
+						modest_msg_edit_window_attach_file_noninteractive(
+								(ModestMsgEditWindow *)win, list[i]);
+					}
+					g_strfreev(list);
+					
 					gtk_widget_show_all (GTK_WIDGET (win));
 				
 					g_object_unref (G_OBJECT(folder));
@@ -466,8 +483,7 @@ on_idle_compose_mail(gpointer user_data)
 
 static gint on_compose_mail(GArray * arguments, gpointer data, osso_rpc_t * retval)
 {
-	gchar **list = NULL;
-	gint i = 0;
+
 	
 	if (arguments->len != MODEST_DEBUS_COMPOSE_MAIL_ARGS_COUNT)
      	return OSSO_ERROR;
@@ -492,17 +508,9 @@ static gint on_compose_mail(GArray * arguments, gpointer data, osso_rpc_t * retv
  	idle_data->body = g_strdup (val.value.s);
  	
  	val = g_array_index(arguments, osso_rpc_t, MODEST_DEBUS_COMPOSE_MAIL_ARG_ATTACHMENTS);
- 	gchar *attachments_str = g_strdup (val.value.s);
+ 	idle_data->attachments = g_strdup (val.value.s);
 
-	list = g_strsplit(attachments_str, ",", 0);
-	for (i=0; list[i] != NULL; i++) {
-		idle_data->attachments = g_slist_append(idle_data->attachments, g_strdup(list[i]));
-	}
-	g_strfreev(list);
-
- 	
- 	/* printf("  debug: to=%s\n", idle_data->to); */
- 	g_idle_add(on_idle_compose_mail, (gpointer)idle_data);
+  	g_idle_add(on_idle_compose_mail, (gpointer)idle_data);
  	
  	/* Note that we cannot report failures during sending, 
  	 * because that would be asynchronous. */

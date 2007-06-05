@@ -211,6 +211,15 @@ void                    modest_msg_edit_window_insert_image          (ModestMsgE
 void                    modest_msg_edit_window_attach_file           (ModestMsgEditWindow *window);
 
 /**
+ * modest_msg_edit_window_attach_file_noninteractive:
+ * @self: a #ModestMsgEditWindow
+ *
+ * attach a file to a MsgEditWindow non interactively, 
+ * without file dialog. This is needed by dbus callbacks.
+ */
+void                    modest_msg_edit_window_attach_file_noninteractive           (ModestMsgEditWindow *window, gchar *filename);
+
+/**
  * modest_msg_edit_window_remove_attachments:
  * @self: a #ModestMsgEditWindow
  * @att_list: a #GList of #TnyMimePart
@@ -306,4 +315,3 @@ gboolean        modest_msg_edit_window_check_names    (ModestMsgEditWindow *wind
 G_END_DECLS
 
 #endif /* __MODEST_MSG_EDIT_WINDOW_H__ */
-

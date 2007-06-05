@@ -20,7 +20,8 @@ noinst_PROGRAMS = test_send_mail      \
 		  test_mail_to        \
 		  test_open_message   \
 		  test_search         \
-		  test_delete_message
+		  test_delete_message \
+		  test_compose_mail
 
 test_send_mail_SOURCES = test_send_mail.c
 test_send_mail_LDADD = $(objects)
@@ -31,8 +32,13 @@ test_mail_to_LDADD = $(objects)
 test_open_message_SOURCES = test_open_message.c
 test_open_message_LDADD = $(objects)
 
+
+test_compose_mail_SOURCES = test_compose_mail.c
+test_compose_mail_LDADD = $(objects)
+
 test_search_SOURCES = test_search.c
 test_search_LDADD = $(objects)
+
 
 test_delete_message_SOURCES = test_delete_message.c
 test_delete_message_LDADD = $(objects)

@@ -1484,6 +1484,54 @@ modest_msg_edit_window_attach_file (ModestMsgEditWindow *window)
 }
 
 void
+modest_msg_edit_window_attach_file_noninteractive (
+		ModestMsgEditWindow *window,
+		gchar *filename)
+{
+	
+	ModestMsgEditWindowPrivate *priv;
+	
+	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
+
+	if (filename) {
+		gint file_id;
+		
+		file_id = g_open (filename, O_RDONLY, 0);
+		if (file_id != -1) {
+			TnyMimePart *mime_part;
+			TnyStream *stream;
+			const gchar *mime_type;
+			gchar *basename;
+			gchar *content_id;
+			
+			mime_type = gnome_vfs_get_file_mime_type_fast (filename, NULL);
+			mime_part = tny_platform_factory_new_mime_part
+				(modest_runtime_get_platform_factory ());
+			stream = TNY_STREAM (tny_fs_stream_new (file_id));
+			
+			tny_mime_part_construct_from_stream (mime_part, stream, mime_type);
+			
+			content_id = g_strdup_printf ("%d", priv->last_cid);
+			tny_mime_part_set_content_id (mime_part, content_id);
+			g_free (content_id);
+			priv->last_cid++;
+			
+			basename = g_path_get_basename (filename);
+			tny_mime_part_set_filename (mime_part, basename);
+			g_free (basename);
+			
+			priv->attachments = g_list_prepend (priv->attachments, mime_part);
+			modest_attachments_view_add_attachment (MODEST_ATTACHMENTS_VIEW (priv->attachments_view),
+								mime_part);
+			gtk_widget_set_no_show_all (priv->attachments_caption, FALSE);
+			gtk_widget_show_all (priv->attachments_caption);
+		} else if (file_id == -1) {
+			close (file_id);
+		}
+	}
+}
+
+void
 modest_msg_edit_window_remove_attachments (ModestMsgEditWindow *window,
 					  GList *att_list)
 {
