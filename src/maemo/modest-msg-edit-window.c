@@ -2156,6 +2156,7 @@ text_buffer_delete_images_by_id (GtkTextBuffer *buffer, const gchar * image_id)
 				}
 			}
 		}
+		gtk_text_iter_forward_char (&iter);
 	}
 }
 
