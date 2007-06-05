@@ -34,6 +34,7 @@
 #include <string.h>
 #include <tny-account-store.h>
 #include <tny-fs-stream.h>
+#include <tny-vfs-stream.h>
 
 #include <config.h>
 
@@ -1424,7 +1425,7 @@ modest_msg_edit_window_attach_file (ModestMsgEditWindow *window)
 	ModestMsgEditWindowPrivate *priv;
 	GtkWidget *dialog = NULL;
 	gint response = 0;
-	gchar *filename = NULL;
+	gchar *uri = NULL, *filename = NULL;
 	
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
 	
@@ -1433,6 +1434,7 @@ modest_msg_edit_window_attach_file (ModestMsgEditWindow *window)
 	response = gtk_dialog_run (GTK_DIALOG (dialog));
 	switch (response) {
 	case GTK_RESPONSE_OK:
+		uri = gtk_file_chooser_get_uri (GTK_FILE_CHOOSER (dialog));
 		filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog));
 		break;
 	default:
@@ -1440,21 +1442,25 @@ modest_msg_edit_window_attach_file (ModestMsgEditWindow *window)
 	}
 	gtk_widget_destroy (dialog);
 
-	if (filename) {
-		gint file_id;
-		
-		file_id = g_open (filename, O_RDONLY, 0);
-		if (file_id != -1) {
+	if (uri) {
+
+		GnomeVFSHandle *handle = NULL;
+		GnomeVFSResult result;
+
+		result = gnome_vfs_open (&handle, uri, GNOME_VFS_OPEN_READ);
+		if (result == GNOME_VFS_OK) {
 			TnyMimePart *mime_part;
 			TnyStream *stream;
-			const gchar *mime_type;
+			const gchar *mime_type = NULL;
 			gchar *basename;
 			gchar *content_id;
+			GnomeVFSFileInfo info;
 			
-			mime_type = gnome_vfs_get_file_mime_type_fast (filename, NULL);
+			if (gnome_vfs_get_file_info_from_handle (handle, &info, GNOME_VFS_FILE_INFO_GET_MIME_TYPE) == GNOME_VFS_OK)
+				mime_type = gnome_vfs_file_info_get_mime_type (&info);
 			mime_part = tny_platform_factory_new_mime_part
 				(modest_runtime_get_platform_factory ());
-			stream = TNY_STREAM (tny_fs_stream_new (file_id));
+			stream = TNY_STREAM (tny_vfs_stream_new (handle));
 			
 			tny_mime_part_construct_from_stream (mime_part, stream, mime_type);
 			
@@ -1472,9 +1478,8 @@ modest_msg_edit_window_attach_file (ModestMsgEditWindow *window)
 								mime_part);
 			gtk_widget_set_no_show_all (priv->attachments_caption, FALSE);
 			gtk_widget_show_all (priv->attachments_caption);
-		} else if (file_id == -1) {
-			close (file_id);
-		}
+		} 
+		g_free (filename);
 	}
 }
 
