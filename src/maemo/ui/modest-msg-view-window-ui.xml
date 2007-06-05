@@ -79,11 +79,10 @@
    <menu name="ToolsMenu" action="Tools">
       <menuitem name="ToolsAddToContactsMenu" action="ToolsAddToContacts"/>
       <separator/>
-<!--
-      <menuitem name="ToolsFindOnPageMenu" action="ToolsFindOnPage"/>
-      <menuitem name="ToolSearchMessagesMenu" action="ToolSearchMessages"/>
+
+<!--       <menuitem name="ToolsFindOnPageMenu" action="ToolsFindOnPage"/> -->
+      <menuitem name="ToolsSearchMessagesMenu" action="ToolsSearchMessages"/>
       <separator/>
--->
       <menuitem name="ToolsHelpMenu" action="ToolsHelp"/>
    </menu>
 

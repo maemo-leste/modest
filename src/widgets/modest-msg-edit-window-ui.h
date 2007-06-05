@@ -74,7 +74,7 @@ static const GtkActionEntry modest_msg_edit_action_entries [] = {
 	{ "CloseWindow", NULL, N_("mcen_me_inbox_close_window"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_close_window)},
 	{ "CloseAllWindows", NULL, N_("mcen_me_inbox_close_windows"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_quit) },
 	{ "Help", NULL, N_("mcen_me_inbox_help"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_help) },
-	{ "SearchMessages",            NULL,      N_("mcen_me_inbox_search"),                      NULL, NULL,  NULL },
+	{ "SearchMessages",            NULL,      N_("mcen_me_inbox_search"),                      NULL, NULL,  G_CALLBACK (modest_ui_actions_on_search_messages) },
 
 
 	/* KEY ACCELERATOR ACTIONS */

@@ -365,5 +365,15 @@ modest_ui_actions_check_toolbar_dimming_rules (ModestWindow *window);
 void     modest_ui_actions_move_folder_error_handler      (ModestMailOperation *mail_op, 
 							   gpointer user_data);
 
+/**
+ * modest_ui_actions_on_search_messages:
+ * @action: a #GtkAction
+ * @window: a #ModestWindow
+ *
+ * Shows the search messages dialog
+ **/
+void     modest_ui_actions_on_search_messages             (GtkAction *action,
+							   ModestWindow *window);
+
 G_END_DECLS
 #endif /* __MODEST_UI_ACTIONS_H__ */

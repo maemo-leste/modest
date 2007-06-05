@@ -223,3 +223,9 @@ modest_platform_show_help (GtkWidget *widget, const gchar *help_id)
 {
 	return TRUE; /* TODO */
 }
+
+void
+modest_platform_show_search_messages (GtkWindow *parent_window)
+{
+	modest_runtime_not_implemented (NULL);
+}

@@ -828,3 +828,15 @@ modest_platform_show_help (GtkWindow *parent_window,
 		g_free (error_msg);
 	}
 }
+
+void 
+modest_platform_show_search_messages (GtkWindow *parent_window)
+{
+	osso_return_t result = OSSO_ERROR;
+	
+	result = osso_rpc_run_with_defaults (osso_context, "osso_global_search", "search_email", NULL, DBUS_TYPE_INVALID);
+
+	if (result != OSSO_OK) {
+		/* TODO: warning about error showing dialog */
+	}
+}

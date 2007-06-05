@@ -3003,3 +3003,11 @@ modest_ui_actions_check_toolbar_dimming_rules (ModestWindow *window)
 	/* Update dimmed */	
 	modest_window_check_dimming_rules_group (window, "ModestToolbarDimmingRules");	
 }
+
+void
+modest_ui_actions_on_search_messages (GtkAction *action, ModestWindow *window)
+{
+	g_return_if_fail (MODEST_IS_WINDOW (window));
+
+	modest_platform_show_search_messages (GTK_WINDOW (window));
+}

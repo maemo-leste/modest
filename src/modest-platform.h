@@ -225,6 +225,14 @@ void modest_platform_on_new_msg (void);
 void modest_platform_show_help (GtkWindow *parent_window, 
 				const gchar *help_id);
 
+/**
+ * modest_platform_show_search_messages:
+ * @parent_window: window the dialog will be child of
+ *
+ * shows the search messages dialog
+ **/
+void modest_platform_show_search_messages (GtkWindow *parent_window);
+
 G_END_DECLS
 
 #endif /* __MODEST_PLATFORM_UTILS_H__ */
