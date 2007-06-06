@@ -1264,8 +1264,7 @@ create_details_widget (TnyAccount *account)
 		gchar *device_name = modest_conf_get_string (modest_runtime_get_conf(),
 						      MODEST_CONF_DEVICE_NAME, NULL);
    
-		label = g_strdup_printf ("%s: %s",
-					 _("mcen_fi_localroot_description"),
+		label = g_strdup_printf (_("mcen_fi_localroot_description"),
 					 device_name);
 		gtk_box_pack_start (GTK_BOX (vbox), gtk_label_new (label), FALSE, FALSE, 0);
 		g_free (device_name);
@@ -1279,15 +1278,18 @@ create_details_widget (TnyAccount *account)
 			/* Other accounts, such as IMAP and POP: */
 			
 			GString *proto;
+			gchar *tmp;
 	
 			/* Put proto in uppercase */
 			proto = g_string_new (tny_account_get_proto (account));
 			proto = g_string_ascii_up (proto);
-	
-			label = g_strdup_printf ("%s %s: %s", 
-						 proto->str,
-						 _("mcen_fi_remoteroot_account"),
-						 tny_account_get_name (account));
+			
+			/* note: mcen_fi_localroot_description is something like "%s account"
+			 * however, we should display "%s account: %s"... therefore, ugly tmp */
+			tmp   = g_strdup_printf (_("mcen_fi_remoteroot_account"),proto->str);
+			label = g_strdup_printf ("%s: %s", tmp,tny_account_get_name (account));
+			g_free (tmp);
+
 			gtk_box_pack_start (GTK_BOX (vbox), gtk_label_new (label), FALSE, FALSE, 0);
 			g_string_free (proto, TRUE);
 			g_free (label);
