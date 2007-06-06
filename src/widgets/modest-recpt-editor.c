@@ -324,7 +324,7 @@ modest_recpt_editor_instance_init (GTypeInstance *instance, gpointer g_class)
 	gtk_button_set_focus_on_click (GTK_BUTTON (priv->abook_button), FALSE);
 	GTK_WIDGET_UNSET_FLAGS (priv->abook_button, GTK_CAN_FOCUS);
 	gtk_button_set_alignment (GTK_BUTTON (priv->abook_button), 1.0, 1.0);
-	abook_icon = gtk_image_new_from_icon_name ("qgn_list_gene_contacts", GTK_ICON_SIZE_BUTTON);
+	abook_icon = gtk_image_new_from_icon_name ("qgn_list_addressbook", GTK_ICON_SIZE_BUTTON);
 	gtk_container_add (GTK_CONTAINER (priv->abook_button), abook_icon);
 
 	priv->text_view = gtk_text_view_new ();
