@@ -1622,11 +1622,15 @@ modest_msg_edit_window_size_change (GtkCheckMenuItem *menu_item,
 		gchar *markup;
 		WPTextBufferFormat format;
 
+		memset (&format, 0, sizeof (format));
+		wp_text_buffer_get_current_state (WP_TEXT_BUFFER (priv->text_buffer), &format);
+
 		label = gtk_bin_get_child (GTK_BIN (menu_item));
 		
 		new_size_index = atoi (gtk_label_get_text (GTK_LABEL (label)));
-		memset (&format, 0, sizeof (format));
 		format.cs.font_size = TRUE;
+		format.cs.text_position = TRUE;
+		format.cs.font = TRUE;
 		format.font_size = wp_get_font_size_index (new_size_index, DEFAULT_FONT_SIZE);
 		wp_text_buffer_set_format (WP_TEXT_BUFFER (priv->text_buffer), &format);
 

@@ -468,7 +468,7 @@ modest_ui_actions_on_new_msg (GtkAction *action, ModestWindow *win)
 /* 	GError *err = NULL; */
 	TnyAccount *account = NULL;
 	ModestWindowMgr *mgr;
-	gchar *signature = NULL;
+	gchar *signature = NULL, *blank_and_signature = NULL;
 	
 	account_name = g_strdup(modest_window_get_active_account (win));
 	if (!account_name)
@@ -496,11 +496,13 @@ modest_ui_actions_on_new_msg (GtkAction *action, ModestWindow *win)
 					 MODEST_ACCOUNT_USE_SIGNATURE, FALSE)) {
 		signature = modest_account_mgr_get_string (modest_runtime_get_account_mgr (), account_name,
 							   MODEST_ACCOUNT_SIGNATURE, FALSE);
+		blank_and_signature = g_strconcat ("\n", signature, NULL);
+		g_free (signature);
 	} else {
-		signature = g_strdup ("");
+		blank_and_signature = g_strdup ("");
 	}
 
-	msg = modest_tny_msg_new ("", from_str, "", "", "", signature, NULL);
+	msg = modest_tny_msg_new ("", from_str, "", "", "", blank_and_signature, NULL);
 	if (!msg) {
 		g_printerr ("modest: failed to create new msg\n");
 		goto cleanup;
@@ -534,7 +536,7 @@ modest_ui_actions_on_new_msg (GtkAction *action, ModestWindow *win)
 cleanup:
 	g_free (account_name);
 	g_free (from_str);
-	g_free (signature);
+	g_free (blank_and_signature);
 	if (account)
 		g_object_unref (G_OBJECT(account));
 	if (msg)
