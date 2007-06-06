@@ -47,6 +47,7 @@ static gboolean _selected_folder_is_any_of_type (ModestMainWindow *win, TnyFolde
 static gboolean _selected_folder_is_root (ModestMainWindow *win);
 static gboolean _selected_folder_is_empty (ModestMainWindow *win);
 static gboolean _msg_download_in_progress (ModestMsgViewWindow *win);
+static gboolean _msg_sent_in_progress (ModestWindow *win);
 
 
 gboolean 
@@ -151,6 +152,10 @@ modest_ui_dimming_rules_on_open_msg (ModestWindow *win, gpointer user_data)
 	/* Check dimmed rule */	
 	if (!dimmed)
 		dimmed = _invalid_msg_selected (MODEST_MAIN_WINDOW(win), TRUE, user_data);
+	if (!dimmed) {
+		dimmed = _msg_sent_in_progress (win);
+		modest_dimming_rule_set_notification (rule, _("TEST"));
+	}
 
 	return dimmed;
 }
@@ -696,6 +701,69 @@ _msg_download_in_progress (ModestMsgViewWindow *win)
 	gboolean result = FALSE;
 
 	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (win), FALSE);
+
+	return result;
+}
+
+static gboolean
+_msg_sent_in_progress (ModestWindow *win)
+{
+	ModestTnySendQueue *send_queue = NULL;
+	GtkWidget *header_view = NULL; 
+	ModestTnyAccountStore *acc_store = NULL;
+	TnyAccount *account = NULL; 	
+	TnyList *header_list = NULL;
+	TnyIterator *iter = NULL;
+	TnyHeader *header = NULL;
+	const gchar *account_name = NULL;
+	gboolean result = FALSE;	
+	gchar *id = NULL;
+	
+	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (win), FALSE);
+	
+	/* Get transport account */  
+	acc_store = modest_runtime_get_account_store();
+	account_name = modest_window_get_active_account (win);	
+	account = modest_tny_account_store_get_transport_account_for_open_connection (acc_store, account_name);
+
+	/* Get send queue for current ransport account */ 
+	send_queue = modest_runtime_get_send_queue (TNY_TRANSPORT_ACCOUNT(account));
+	g_return_val_if_fail (MODEST_IS_TNY_SEND_QUEUE (send_queue), FALSE);
+
+	if (MODEST_IS_MAIN_WINDOW(win)) {
+		
+		/* Get header view to check selected messages */
+		header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(win),
+								   MODEST_WIDGET_TYPE_HEADER_VIEW);
+		
+		/* Get selected headers */
+		header_list = modest_header_view_get_selected_headers (MODEST_HEADER_VIEW(header_view));
+
+		/* Get message header */
+		if (!header_list) return FALSE;
+		iter = tny_list_create_iterator (header_list);
+		header = TNY_HEADER (tny_iterator_get_current (iter));
+
+		/* Get message id */
+		id = g_strdup(tny_header_get_message_id (header));		
+		
+        } else if (MODEST_IS_MSG_VIEW_WINDOW(win)) {
+		
+		/* Get message header */
+		header = modest_msg_view_window_get_header (MODEST_MSG_VIEW_WINDOW(win));		
+
+		/* Get message id */
+		id = g_strdup(tny_header_get_message_id (header));		
+	}
+
+	/* Check if msg id is being processed inside send queue */
+	result = modest_tny_send_queue_msg_is_being_sent (send_queue, id);
+
+	/* Free */
+	g_free(id);
+	g_object_unref (header);
+	g_free(header_list);
+	g_free(iter);
 
 	return result;
 }

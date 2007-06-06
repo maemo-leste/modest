@@ -975,6 +975,7 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 	GtkTreeIter iter;
 	ModestHeaderView *self;
 	ModestHeaderViewPrivate *priv;
+	GList *selected = NULL;
 	
 	g_return_if_fail (sel);
 	g_return_if_fail (user_data);
@@ -982,7 +983,9 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 	self = MODEST_HEADER_VIEW (user_data);
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);	
 
-	path = get_selected_row (GTK_TREE_VIEW(self), &model);
+	selected = gtk_tree_selection_get_selected_rows (sel, &model);
+	if (selected != NULL) 
+		path = (GtkTreePath *) selected->data;
 	if ((path == NULL) || (!gtk_tree_model_get_iter(model, &iter, path)))
 		return; /* msg was _un_selected */
 
@@ -1181,6 +1184,7 @@ on_focus_in (GtkWidget     *self,
 
 	/* Need to get the all the rows because is selection multiple */
 	selected = gtk_tree_selection_get_selected_rows (selection, &model);
+	if (selected == NULL) return FALSE;
 	selected_path = (GtkTreePath *) selected->data;
 
 	/* Check if we need to scroll */

@@ -916,7 +916,7 @@ reply_forward (ReplyForwardAction action, ModestWindow *win)
 		   reply_forward_cb must do it */
 		msg = modest_msg_view_window_get_message (MODEST_MSG_VIEW_WINDOW(win));
 		header = modest_msg_view_window_get_header (MODEST_MSG_VIEW_WINDOW(win));
-		if (!msg || !header) {
+ 		if (!msg || !header) {
 			if (msg)
 				g_object_unref (msg);
 			if (header)
