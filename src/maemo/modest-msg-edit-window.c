@@ -79,7 +79,7 @@ static void  modest_msg_edit_window_init         (ModestMsgEditWindow *obj);
 static void  modest_msg_edit_window_finalize     (GObject *obj);
 
 static gboolean msg_body_focus (GtkWidget *focus, GdkEventFocus *event, gpointer userdata);
-static void  to_field_changed (GtkTextBuffer *buffer, ModestMsgEditWindow *editor);
+static void  recpt_field_changed (GtkTextBuffer *buffer, ModestMsgEditWindow *editor);
 static void  send_insensitive_press (GtkWidget *widget, ModestMsgEditWindow *editor);
 static void  style_insensitive_press (GtkWidget *widget, ModestMsgEditWindow *editor);
 static void  setup_insensitive_handlers (ModestMsgEditWindow *editor);
@@ -409,8 +409,12 @@ init_window (ModestMsgEditWindow *obj)
 	g_signal_connect (G_OBJECT (priv->msg_body), "focus-out-event",
 			  G_CALLBACK (msg_body_focus), obj);
 	g_signal_connect (G_OBJECT (modest_recpt_editor_get_buffer (MODEST_RECPT_EDITOR (priv->to_field))),
-			  "changed", G_CALLBACK (to_field_changed), obj);
-	to_field_changed (modest_recpt_editor_get_buffer (MODEST_RECPT_EDITOR (priv->to_field)), MODEST_MSG_EDIT_WINDOW (obj));
+			  "changed", G_CALLBACK (recpt_field_changed), obj);
+	g_signal_connect (G_OBJECT (modest_recpt_editor_get_buffer (MODEST_RECPT_EDITOR (priv->cc_field))),
+			  "changed", G_CALLBACK (recpt_field_changed), obj);
+	g_signal_connect (G_OBJECT (modest_recpt_editor_get_buffer (MODEST_RECPT_EDITOR (priv->bcc_field))),
+			  "changed", G_CALLBACK (recpt_field_changed), obj);
+	recpt_field_changed (modest_recpt_editor_get_buffer (MODEST_RECPT_EDITOR (priv->to_field)), MODEST_MSG_EDIT_WINDOW (obj));
 	g_signal_connect (G_OBJECT (priv->subject_field), "changed", G_CALLBACK (subject_field_changed), obj);
 
 	priv->scroll = gtk_scrolled_window_new (NULL, NULL);
@@ -2283,16 +2287,27 @@ msg_body_focus (GtkWidget *focus,
 }
 
 static void
-to_field_changed (GtkTextBuffer *buffer,
+recpt_field_changed (GtkTextBuffer *buffer,
 		  ModestMsgEditWindow *editor)
 {
 	ModestWindowPrivate *parent_priv = MODEST_WINDOW_GET_PRIVATE (editor);
+	ModestMsgEditWindowPrivate *priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (editor);
+	GtkTextBuffer *to_buffer, *cc_buffer, *bcc_buffer;
+	gboolean dim = FALSE;
 	GtkAction *action;
 
+	to_buffer = modest_recpt_editor_get_buffer (MODEST_RECPT_EDITOR (priv->to_field));
+	cc_buffer = modest_recpt_editor_get_buffer (MODEST_RECPT_EDITOR (priv->cc_field));
+	bcc_buffer = modest_recpt_editor_get_buffer (MODEST_RECPT_EDITOR (priv->bcc_field));
+	
+	dim = ((gtk_text_buffer_get_char_count (to_buffer) + 
+		gtk_text_buffer_get_char_count (cc_buffer) +
+		gtk_text_buffer_get_char_count (bcc_buffer)) == 0);
+			
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ToolbarSend");
-	gtk_action_set_sensitive (action, gtk_text_buffer_get_char_count (buffer) != 0);
+	gtk_action_set_sensitive (action, !dim);
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/EmailMenu/SendMenu");
-	gtk_action_set_sensitive (action, gtk_text_buffer_get_char_count (buffer) != 0);
+	gtk_action_set_sensitive (action, !dim);
 }
 
 static void  
