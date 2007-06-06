@@ -533,7 +533,7 @@ modest_account_mgr_get_default_account  (ModestAccountMgr *self)
 	}
 
 	/* sanity check */
-	if (!modest_account_mgr_account_exists (self, account, FALSE)) {
+	if (account && !modest_account_mgr_account_exists (self, account, FALSE)) {
 		g_printerr ("modest: default account does not exist\n");
 		g_free (account);
 		return NULL;

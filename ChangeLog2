@@ -1,4 +1,10 @@
-2007-06-06  Murray Cumming  <murrayc@murrayc.come>
+2007-06-06  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/modest-account-mgr-helpers.c:
+	(modest_account_mgr_get_default_account): Do not check that the account 
+	exists if there is no default account (NULL), to fix a runtime warning.
+
+2007-06-06  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/widgets/modest-folder-view.c: (update_model):
 	Do not unref the treemodel before we have finished with it.
