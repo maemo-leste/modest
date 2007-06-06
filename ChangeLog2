@@ -1,5 +1,15 @@
 2007-06-06  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/maemo/easysetup/modest-easysetup-wizard.c:
+	(create_account): Correct the position of the gconf sanity check warning.
+	(on_button_edit_advanced_settings): Show the dialog immediately, instead 
+	of using the g_idle_add() hack, because this does not seem to be necessary 
+	on osso 1.1. It might even work on Maemo Bora if the problems were actually 
+	caused by something other than maemo's gconf.
+	This fixes projects.maemo.org bug #59022.
+
+2007-06-06  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/modest-account-mgr-helpers.c:
 	(modest_account_mgr_get_default_account): Do not check that the account 
 	exists if there is no default account (NULL), to fix a runtime warning.

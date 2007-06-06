@@ -809,7 +809,7 @@ static GtkWidget* create_page_custom_outgoing (ModestEasysetupWizardDialog *self
 }
 
 static gboolean
-on_timeout_show_advanced_edit(gpointer user_data)
+show_advanced_edit(gpointer user_data)
 {
 	ModestEasysetupWizardDialog * self = MODEST_EASYSETUP_WIZARD_DIALOG (user_data);
 	
@@ -824,18 +824,7 @@ on_timeout_show_advanced_edit(gpointer user_data)
 	
 	gtk_dialog_run (GTK_DIALOG (dialog));
 
-	/* TODO: The hide() is not necessary.
-	 * It is just here to show that it doesn't work,
-	 * just as destroy doesn't work.
-	 */
-	gtk_widget_hide (GTK_WIDGET(dialog));
-
-	/* TODO: The dialog remains on screen, not allowing any interaction.
-	 * But gtk_widget_destroy() should always destroy.
-	 */
-	printf("debug: destroying settings dialog\n");
 	gtk_widget_destroy (GTK_WIDGET (dialog));
-	printf("debug: after destroying settings dialog (doesn't seem to work).\n");
 	
 	return FALSE; /* Do not call this timeout callback again. */
 }
@@ -850,10 +839,8 @@ on_button_edit_advanced_settings (GtkButton *button, gpointer user_data)
 	 * This account will be deleted if Finish is never actually clicked. */
 
 	gboolean saved = TRUE;
-	gboolean was_already_saved = TRUE;
 	if (!(self->saved_account_name)) {
 		saved = create_account (self, FALSE);
-		was_already_saved = FALSE;
 	}
 		
 	if (!saved)
@@ -863,17 +850,7 @@ on_button_edit_advanced_settings (GtkButton *button, gpointer user_data)
 		return;
 	
 	/* Show the Account Settings window: */
-	if (was_already_saved) {
-		/* Just show the dialog immediately: */
-		on_timeout_show_advanced_edit(self);
-	}
-	else
-	{
-		printf ("debug: waiting for gconf to update its local cache. "
-			"This is a hack to work around a maemo gconf bug in maemo bora.\n");
-       
-		g_timeout_add (5000, on_timeout_show_advanced_edit, self);
-	}
+	show_advanced_edit(self);
 }
 static GtkWidget* create_page_complete_custom (ModestEasysetupWizardDialog *self)
 {
@@ -1510,18 +1487,6 @@ create_account (ModestEasysetupWizardDialog *self, gboolean enabled)
 		return FALSE;	
 	}
 	
-	/* Sanity check: */
-	/* There must be at least one account now: */
-	/* Note, when this fails is is caused by a Maemo gconf bug that has been 
-	 * fixed in versions after 3.1. */
-	GSList *account_names = modest_account_mgr_account_names (self->account_manager, FALSE);
-	if(!account_names)
-	{
-		g_warning ("modest_account_mgr_account_names() returned NULL after adding an account.");
-	}
-	g_slist_free (account_names);
-	
-	
 	/* Outgoing server: */
 	gchar* servername_outgoing = NULL;
 	ModestTransportStoreProtocol protocol_outgoing = MODEST_PROTOCOL_STORE_POP;
@@ -1605,6 +1570,20 @@ create_account (ModestEasysetupWizardDialog *self, gboolean enabled)
 		show_error (GTK_WINDOW (self), _("An error occurred while creating the account."));
 		return FALSE;	
 	}
+
+
+	/* Sanity check: */
+	/* There must be at least one account now: */
+	/* Note, when this fails is is caused by a Maemo gconf bug that has been 
+	 * fixed in versions after 3.1. */
+	GSList *account_names = modest_account_mgr_account_names (self->account_manager, FALSE);
+	if(!account_names)
+	{
+		g_warning ("modest_account_mgr_account_names() returned NULL after adding an account.");
+	}
+	g_slist_free (account_names);
+
+
 	
 	/* The user name and email address must be set additionally: */
 	const gchar* user_name = gtk_entry_get_text (GTK_ENTRY (self->entry_user_name));
