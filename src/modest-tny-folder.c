@@ -120,10 +120,10 @@ modest_tny_folder_get_rules   (TnyFolder *folder)
 		type = modest_tny_folder_get_local_folder_type (folder);
 		
 		switch (type) {
-		case TNY_FOLDER_TYPE_DRAFTS:
 		case TNY_FOLDER_TYPE_OUTBOX:
 		case TNY_FOLDER_TYPE_SENT:
 			rules |= MODEST_FOLDER_RULES_FOLDER_NON_WRITEABLE;
+		case TNY_FOLDER_TYPE_DRAFTS:
 		case TNY_FOLDER_TYPE_INBOX:
 		case TNY_FOLDER_TYPE_JUNK:
 		case TNY_FOLDER_TYPE_TRASH:
