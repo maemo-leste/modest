@@ -1576,6 +1576,11 @@ modest_msg_edit_window_remove_attachments (ModestMsgEditWindow *window,
 		}
 		dialog_response = (gtk_dialog_run (GTK_DIALOG (confirmation_dialog))==GTK_RESPONSE_OK);
 		gtk_widget_destroy (confirmation_dialog);
+		if (!dialog_response) {
+			if (clean_list)
+				g_list_free (att_list);
+			return;
+		}
 		hildon_banner_show_information (NULL, NULL, _("mcen_ib_removing_attachment"));
 
 		for (node = att_list; node != NULL; node = g_list_next (node)) {
