@@ -1,4 +1,9 @@
+2007-06-06  Murray Cumming  <murrayc@murrayc.come>
 
+	* src/widgets/modest-folder-view.c: (update_model):
+	Do not unref the treemodel before we have finished with it.
+	This prevents a valgrind warning and an occasional crash at startup.
+	
 2007-06-06  Marcus Bauer  <marcusb@openismus.com>
 
 	* libmodest-dbus-client/libmodest-dbus-client.h:

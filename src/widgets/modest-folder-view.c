@@ -742,9 +742,6 @@ update_model (ModestFolderView *self, ModestTnyAccountStore *account_store)
 	tny_account_store_get_accounts (TNY_ACCOUNT_STORE(account_store),
 					model_as_list,
 					TNY_ACCOUNT_STORE_STORE_ACCOUNTS);
-	
-	
-	g_object_unref (model_as_list);
 	model_as_list = NULL;	
 	
 	/*	
@@ -776,6 +773,14 @@ update_model (ModestFolderView *self, ModestTnyAccountStore *account_store)
 				 (filter_model) ? filter_model : sortable);
 	expand_root_items (self); /* expand all account folders */
 	
+	
+	g_object_unref (model);
+	
+	if (filter_model)
+			g_object_unref (filter_model);
+			
+	g_object_unref (sortable);
+			
 	return TRUE;
 }
 
