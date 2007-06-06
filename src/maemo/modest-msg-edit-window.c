@@ -427,10 +427,14 @@ init_window (ModestMsgEditWindow *obj)
 	gtk_container_set_focus_vadjustment (GTK_CONTAINER (main_vbox), gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (priv->scroll)));
 	gtk_widget_show_all (GTK_WIDGET(priv->scroll));
 	
-	if (!modest_conf_get_bool(modest_runtime_get_conf(), MODEST_CONF_SHOW_CC, NULL))
-		gtk_widget_hide (priv->cc_field);
-	if (!modest_conf_get_bool(modest_runtime_get_conf(), MODEST_CONF_SHOW_BCC, NULL))
-		gtk_widget_hide (priv->bcc_field);
+	if (!modest_conf_get_bool(modest_runtime_get_conf(), MODEST_CONF_SHOW_CC, NULL)) {
+		gtk_widget_set_no_show_all (priv->cc_caption, TRUE);
+		gtk_widget_hide (priv->cc_caption);
+	}
+	if (!modest_conf_get_bool(modest_runtime_get_conf(), MODEST_CONF_SHOW_BCC, NULL)) {
+		gtk_widget_set_no_show_all (priv->bcc_caption, TRUE);
+		gtk_widget_hide (priv->bcc_caption);
+	}
 
 	gtk_container_add (GTK_CONTAINER(obj), priv->scroll);
 	scroll_area = modest_scroll_area_new (priv->scroll, priv->msg_body);
@@ -891,6 +895,14 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name)
 	gtk_action_set_sensitive (action, FALSE);
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/EditMenu/CopyMenu");
 	gtk_action_set_sensitive (action, FALSE);
+
+	/* set initial state of cc and bcc */
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/ViewMenu/ViewCcFieldMenu");
+	gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (action),
+				      modest_conf_get_bool(modest_runtime_get_conf(), MODEST_CONF_SHOW_CC, NULL));
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/ViewMenu/ViewBccFieldMenu");
+	gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (action),
+				      modest_conf_get_bool(modest_runtime_get_conf(), MODEST_CONF_SHOW_BCC, NULL));
 
 	/* Setup the file format */
 	conf = modest_runtime_get_conf ();
@@ -1800,10 +1812,12 @@ modest_msg_edit_window_show_cc (ModestMsgEditWindow *window,
 	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
 
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
+	gtk_widget_set_no_show_all (priv->cc_caption, TRUE);
 	if (show)
 		gtk_widget_show (priv->cc_caption);
 	else
 		gtk_widget_hide (priv->cc_caption);
+	modest_conf_set_bool(modest_runtime_get_conf(), MODEST_CONF_SHOW_CC, show, NULL);
 }
 
 void
@@ -1814,10 +1828,12 @@ modest_msg_edit_window_show_bcc (ModestMsgEditWindow *window,
 	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
 
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
+	gtk_widget_set_no_show_all (priv->bcc_caption, TRUE);
 	if (show)
 		gtk_widget_show (priv->bcc_caption);
 	else
 		gtk_widget_hide (priv->bcc_caption);
+	modest_conf_set_bool(modest_runtime_get_conf(), MODEST_CONF_SHOW_BCC, show, NULL);
 }
 
 static void
