@@ -1419,6 +1419,7 @@ modest_msg_edit_window_insert_image (ModestMsgEditWindow *window)
 				priv->attachments = g_list_prepend (priv->attachments, image_part);
 				modest_attachments_view_add_attachment (MODEST_ATTACHMENTS_VIEW (priv->attachments_view),
 									image_part);
+				gtk_text_buffer_set_modified (priv->text_buffer, TRUE);
 				gtk_widget_set_no_show_all (priv->attachments_caption, FALSE);
 				gtk_widget_show_all (priv->attachments_caption);
 			} else if (image_file_id == -1) {
@@ -1490,6 +1491,7 @@ modest_msg_edit_window_attach_file (ModestMsgEditWindow *window)
 								mime_part);
 			gtk_widget_set_no_show_all (priv->attachments_caption, FALSE);
 			gtk_widget_show_all (priv->attachments_caption);
+			gtk_text_buffer_set_modified (priv->text_buffer, TRUE);
 		} 
 		g_free (filename);
 	}
@@ -1588,6 +1590,7 @@ modest_msg_edit_window_remove_attachments (ModestMsgEditWindow *window,
 				text_buffer_delete_images_by_id (gtk_text_view_get_buffer (GTK_TEXT_VIEW (priv->msg_body)),
 								 att_id);
 			g_object_unref (mime_part);
+			gtk_text_buffer_set_modified (priv->text_buffer, TRUE);
 		}
 	}
 
@@ -2420,5 +2423,7 @@ static void
 subject_field_changed (GtkEditable *editable, 
 		       ModestMsgEditWindow *window)
 {
+	ModestMsgEditWindowPrivate *priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
 	update_window_title (window);
+	gtk_text_buffer_set_modified (priv->text_buffer, TRUE);
 }
