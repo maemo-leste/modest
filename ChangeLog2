@@ -1,5 +1,32 @@
 2007-06-07  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-tny-account-store.h:
+	* src/modest-tny-account-store.c:
+	Added modest_tny_account_store_get_local_folders_account().
+	
+	* src/modest-tny-folder.h:
+	* src/modest-tny-folder.c:
+	(modest_tny_folder_get_account):
+	Added this replacement for tny_folder_get_account() which returns 
+	the local-folders account for TnyMergeFolders, to avoid the 
+	warning about the unimplemented get_account_func() vfunc().
+	
+	(modest_tny_folder_get_rules),
+	* src/modest-ui-actions.c:
+	(modest_ui_actions_on_folder_selection_changed):
+	* src/modest-mail-operation.c:
+	(modest_mail_operation_remove_folder),
+	(modest_mail_operation_xfer_folder),
+	(modest_mail_operation_rename_folder),
+	(modest_mail_operation_get_msg),
+	(modest_mail_operation_get_msgs_full),
+	(modest_mail_operation_remove_msg),
+	(modest_mail_operation_xfer_msgs),
+	(modest_mail_operation_refresh_folder):
+	Use modest_tny_folder_get_account() instead of tny_folder_get_account().
+	
+2007-06-07  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/modest-account-mgr-helpers.c: (get_security_for_conf_string),
 	(modest_server_account_set_security): 
 	* src/modest-defs.h: Add comments explaining that our 

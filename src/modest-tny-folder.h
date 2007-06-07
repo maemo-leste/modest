@@ -130,6 +130,17 @@ ModestTnyFolderRules  modest_tny_folder_get_rules   (TnyFolder *folder);
  */
 gboolean modest_tny_folder_is_outbox_for_account (TnyFolder *folder, 
 						  TnyAccount *account);
+					
+/**
+ * modest_tny_folder_get_account:
+ * @folder: a folder
+ * 
+ * Get the parent account of the folder or, for TnyMergeFolder 
+ * instances, get the local-folders account.
+ *  
+ * Returns: the account. You should call g_object_unref() on this.
+ */	  
+TnyAccount *modest_tny_folder_get_account (TnyFolder *folder);
 
 /**
  * modest_tny_msg_get_header_unique_id:

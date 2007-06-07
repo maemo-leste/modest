@@ -1170,7 +1170,7 @@ modest_mail_operation_remove_folder (ModestMailOperation *self,
 	}
 
 	/* Get the account */
-	account = tny_folder_get_account (folder);
+	account = modest_tny_folder_get_account (folder);
 	priv->account = g_object_ref(account);
 
 	/* Delete folder or move to trash */
@@ -1279,7 +1279,7 @@ modest_mail_operation_xfer_folder (ModestMailOperation *self,
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
 
 	/* Get account and set it into mail_operation */
-	priv->account = tny_folder_get_account (TNY_FOLDER(folder));
+	priv->account = modest_tny_folder_get_account (TNY_FOLDER(folder));
 	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
 
 	/* Get folder rules */
@@ -1340,7 +1340,7 @@ modest_mail_operation_rename_folder (ModestMailOperation *self,
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
 
 	/* Get account and set it into mail_operation */
-	priv->account = tny_folder_get_account (TNY_FOLDER(folder));
+	priv->account = modest_tny_folder_get_account (TNY_FOLDER(folder));
 
 	/* Check folder rules */
 	rules = modest_tny_folder_get_rules (TNY_FOLDER (folder));
@@ -1392,7 +1392,7 @@ void modest_mail_operation_get_msg (ModestMailOperation *self,
 	/* Get message from folder */
 	if (folder) {
 		/* Get account and set it into mail_operation */
-		priv->account = tny_folder_get_account (TNY_FOLDER(folder));
+		priv->account = modest_tny_folder_get_account (TNY_FOLDER(folder));
 
 		helper = g_slice_new0 (GetMsgAsyncHelper);
 		helper->mail_op = self;
@@ -1659,7 +1659,7 @@ modest_mail_operation_get_msgs_full (ModestMailOperation *self,
 		iter = tny_list_create_iterator (header_list);
 		header = TNY_HEADER (tny_iterator_get_current (iter));
 		folder = tny_header_get_folder (header);		
-		priv->account = tny_folder_get_account (TNY_FOLDER(folder));
+		priv->account = modest_tny_folder_get_account (TNY_FOLDER(folder));
 		g_object_unref (header);
 		g_object_unref (folder);
 
@@ -1733,7 +1733,7 @@ modest_mail_operation_remove_msg (ModestMailOperation *self,
 	folder = tny_header_get_folder (header);
 
 	/* Get account and set it into mail_operation */
-	priv->account = tny_folder_get_account (TNY_FOLDER(folder));
+	priv->account = modest_tny_folder_get_account (TNY_FOLDER(folder));
 
 	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
 
@@ -1742,7 +1742,7 @@ modest_mail_operation_remove_msg (ModestMailOperation *self,
 		TnyFolder *trash_folder;
 		TnyStoreAccount *store_account;
 
-		store_account = TNY_STORE_ACCOUNT (tny_folder_get_account (folder));
+		store_account = TNY_STORE_ACCOUNT (modest_tny_folder_get_account (folder));
 		trash_folder = modest_tny_account_get_special_folder (TNY_ACCOUNT(store_account),
 								      TNY_FOLDER_TYPE_TRASH);
 		if (trash_folder) {
@@ -1917,7 +1917,7 @@ modest_mail_operation_xfer_msgs (ModestMailOperation *self,
 	g_object_unref (iter);
 
 	/* Get account and set it into mail_operation */
-	priv->account = tny_folder_get_account (src_folder);
+	priv->account = modest_tny_folder_get_account (src_folder);
 
 	/* Transfer messages */
 	tny_folder_transfer_msgs_async (src_folder, 
@@ -2004,7 +2004,7 @@ modest_mail_operation_refresh_folder  (ModestMailOperation *self,
 	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
 
 	/* Get account and set it into mail_operation */
-	priv->account = tny_folder_get_account (folder);
+	priv->account = modest_tny_folder_get_account  (folder);
 
 	/* Refresh the folder. TODO: tinymail could issue a status
 	   updates before the callback call then this could happen. We

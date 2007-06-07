@@ -150,6 +150,12 @@ TnyAccount* modest_tny_account_store_get_transport_account_for_open_connection (
  */
 TnySessionCamel*    modest_tny_account_store_get_session    (TnyAccountStore *self);
 
+/** modest_tny_account_store_get_local_folders_account:
+ * @self: a TnyAccountStore instance
+ * 
+ * Get the user-visible local folders account.
+ **/
+TnyAccount * modest_tny_account_store_get_local_folders_account (TnyAccountStore *self);
 
 /** modest_tny_account_is_virtual_local_folders:
  * @self A TnyAccount.

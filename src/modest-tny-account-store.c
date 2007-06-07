@@ -1254,3 +1254,27 @@ gboolean modest_tny_account_is_virtual_local_folders (TnyAccount *self)
 	 * for anything else. */
 	return MODEST_IS_TNY_LOCAL_FOLDERS_ACCOUNT (self);
 }
+
+TnyAccount* modest_tny_account_store_get_local_folders_account (TnyAccountStore *self)
+{
+	TnyAccount *account = NULL;
+	ModestTnyAccountStorePrivate *priv;	
+	GSList *cursor;
+
+	g_return_val_if_fail (self, NULL);
+	
+	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
+
+	for (cursor = priv->store_accounts; cursor ; cursor = cursor->next) {
+		TnyAccount *this_account = TNY_ACCOUNT(cursor->data);
+		if (modest_tny_account_is_virtual_local_folders (this_account)) {
+				 account = this_account;
+				 break;
+		}
+	}
+
+	if (account)
+		g_object_ref (G_OBJECT(account));
+	
+	return account;
+}

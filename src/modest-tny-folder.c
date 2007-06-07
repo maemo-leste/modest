@@ -36,6 +36,8 @@
 #include <tny-merge-folder.h>
 #include <camel/camel-folder.h>
 #include <modest-protocol-info.h>
+#include <modest-runtime.h>
+#include <modest-tny-account-store.h>
 
 TnyFolderType
 modest_tny_folder_guess_folder_type_from_name (const gchar* name)
@@ -143,7 +145,7 @@ modest_tny_folder_get_rules   (TnyFolder *folder)
 	} else {
 		ModestTransportStoreProtocol proto;
 		TnyAccount *account =
-			tny_folder_get_account ((TnyFolder*)folder);
+			modest_tny_folder_get_account ((TnyFolder*)folder);
 		if (!account)
 			return -1; /* no account: nothing is allowed */
 		
@@ -302,3 +304,22 @@ modest_tny_folder_get_header_unique_id (TnyHeader *header)
 
 	return retval;
 }
+
+TnyAccount *modest_tny_folder_get_account (TnyFolder *folder)
+{
+	TnyAccount *account = NULL;
+	
+	if (TNY_IS_MERGE_FOLDER (folder)) {
+		/* TnyMergeFolder does not support get_account(), 
+		 * because it could be merging folders from multiple accounts.
+		 * So we assume that this is the local folders account: */
+		 
+		account = modest_tny_account_store_get_local_folders_account (
+			TNY_ACCOUNT_STORE (modest_runtime_get_account_store()));
+	} else {
+		account = tny_folder_get_account (folder);
+	}
+	
+	return account;
+}
+

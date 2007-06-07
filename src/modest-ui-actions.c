@@ -1240,7 +1240,7 @@ modest_ui_actions_on_folder_selection_changed (ModestFolderView *folder_view,
 			
 			if (!TNY_IS_MERGE_FOLDER (folder_store)) { /* TnyMergeFolder can have no get_account() implementation. */
 				/* Update the active account */
-				TnyAccount *account = tny_folder_get_account (TNY_FOLDER (folder_store));
+				TnyAccount *account = modest_tny_folder_get_account (TNY_FOLDER (folder_store));
 				set_active_account_from_tny_account (account, MODEST_WINDOW (main_window));
 				g_object_unref (account);
 			}
