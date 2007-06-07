@@ -324,9 +324,10 @@ get_security_for_conf_string(const gchar* value)
 	if (value) {
 		if (strcmp(value, MODEST_ACCOUNT_SECURITY_VALUE_NONE) == 0)
 			result = MODEST_PROTOCOL_CONNECTION_NORMAL;
-		else if (strcmp(value, MODEST_ACCOUNT_SECURITY_VALUE_NORMAL) == 0)
+		else if (strcmp(value, MODEST_ACCOUNT_SECURITY_VALUE_NORMAL) == 0) {
+			/* The UI has "Normal (TLS)": */
 			result = MODEST_PROTOCOL_CONNECTION_TLS;
-		else if (strcmp(value, MODEST_ACCOUNT_SECURITY_VALUE_SSL) == 0)
+		} else if (strcmp(value, MODEST_ACCOUNT_SECURITY_VALUE_SSL) == 0)
 			result = MODEST_PROTOCOL_CONNECTION_SSL;
 	}
 	
@@ -357,9 +358,10 @@ modest_server_account_set_security (ModestAccountMgr *self,
 	const gchar* str_value = NULL;
 	if (security == MODEST_PROTOCOL_CONNECTION_NORMAL)
 		str_value = MODEST_ACCOUNT_SECURITY_VALUE_NONE;
-	else if (security == MODEST_PROTOCOL_CONNECTION_TLS)
+	else if (security == MODEST_PROTOCOL_CONNECTION_TLS) {
+		/* The UI has "Normal (TLS)": */
 		str_value = MODEST_ACCOUNT_SECURITY_VALUE_NORMAL;
-	else if (security == MODEST_PROTOCOL_CONNECTION_SSL)
+	} else if (security == MODEST_PROTOCOL_CONNECTION_SSL)
 		str_value = MODEST_ACCOUNT_SECURITY_VALUE_SSL;
 	
 	/* Set it in the configuration: */

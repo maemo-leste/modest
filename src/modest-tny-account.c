@@ -128,8 +128,14 @@ modest_tny_account_get_special_folder (TnyAccount *account,
  */
 #define MODEST_ACCOUNT_OPTION_SSL "use_ssl"
 #define MODEST_ACCOUNT_OPTION_SSL_NEVER "never"
-#define MODEST_ACCOUNT_OPTION_SSL_ALWAYS "always"
+/* This is a tinymail camel-lite specific option, 
+ * roughly equivalent to "always" in regular camel,
+ * which is appropriate for a generic "SSL" connection option: */
+#define MODEST_ACCOUNT_OPTION_SSL_WRAPPED "wrapped"
+/* Not used in our UI so far: */
 #define MODEST_ACCOUNT_OPTION_SSL_WHEN_POSSIBLE "when-possible"
+/* This is a tinymailcamel-lite specific option that is not in regular camel. */
+#define MODEST_ACCOUNT_OPTION_SSL_TLS "tls"
 
 /* These seem to be listed in 
  * libtinymail-camel/camel-lite/camel/providers/imap/camel-imap-provider.c 
@@ -232,10 +238,15 @@ modest_tny_account_new_from_server_account (ModestAccountMgr *account_mgr,
 			option_security = MODEST_ACCOUNT_OPTION_SSL "=" MODEST_ACCOUNT_OPTION_SSL_NEVER;
 			break;
 		case MODEST_PROTOCOL_CONNECTION_SSL:
+			/* Apparently, use of "IMAPS" (specified in our UI spec), implies 
+			 * use of the "wrapped" option: */
+			option_security = MODEST_ACCOUNT_OPTION_SSL "=" MODEST_ACCOUNT_OPTION_SSL_WRAPPED;
+			break;
 		case MODEST_PROTOCOL_CONNECTION_TLS:
-			option_security = MODEST_ACCOUNT_OPTION_SSL "=" MODEST_ACCOUNT_OPTION_SSL_ALWAYS;;
+			option_security = MODEST_ACCOUNT_OPTION_SSL "=" MODEST_ACCOUNT_OPTION_SSL_TLS;
 			break;
 		case MODEST_PROTOCOL_CONNECTION_TLS_OP:
+			/* This is not actually in our UI: */
 			option_security = MODEST_ACCOUNT_OPTION_SSL "=" MODEST_ACCOUNT_OPTION_SSL_WHEN_POSSIBLE;
 			break;
 		default:

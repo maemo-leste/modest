@@ -158,7 +158,7 @@
 
 #define MODEST_ACCOUNT_SECURITY "security"
 #define MODEST_ACCOUNT_SECURITY_VALUE_NONE "none"
-#define MODEST_ACCOUNT_SECURITY_VALUE_NORMAL "normal"
+#define MODEST_ACCOUNT_SECURITY_VALUE_NORMAL "normal" /* Meaning "Normal (TLS)", as in our UI spec. */ 
 #define MODEST_ACCOUNT_SECURITY_VALUE_SSL "ssl"
 
 /* Macros for different text formats in mail editor */

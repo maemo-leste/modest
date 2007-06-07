@@ -1,3 +1,15 @@
+2007-06-07  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/modest-account-mgr-helpers.c: (get_security_for_conf_string),
+	(modest_server_account_set_security): 
+	* src/modest-defs.h: Add comments explaining that our 
+	UI spec means TLS when it says Normal, so these do not look like errors.
+	
+	* src/modest-tny-account.c:
+	(modest_tny_account_new_from_server_account): Use the new tinymail 
+	'wrapped' option for regular SSL, and use the new tinymail 'tls' option 
+	for TLS. This should fix projects.maemo.org bug NB#58460.
+
 2007-06-06  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/maemo/easysetup/modest-easysetup-wizard.c:
