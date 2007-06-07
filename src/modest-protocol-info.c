@@ -180,3 +180,15 @@ modest_protocol_info_protocol_is_store (ModestTransportStoreProtocol proto)
 	return proto == MODEST_PROTOCOL_STORE_MBOX || proto == MODEST_PROTOCOL_STORE_MAILDIR ||
 		proto == MODEST_PROTOCOL_STORE_POP || proto == MODEST_PROTOCOL_STORE_IMAP;
 }
+
+gboolean
+modest_protocol_info_is_secure(ModestConnectionProtocol protocol)
+{
+	return (protocol == MODEST_PROTOCOL_CONNECTION_SSL ||
+					protocol == MODEST_PROTOCOL_CONNECTION_TLS);
+}
+
+gboolean modest_protocol_info_auth_is_secure(ModestAuthProtocol protocol)
+{
+	return (protocol == MODEST_PROTOCOL_AUTH_CRAMMD5);
+}

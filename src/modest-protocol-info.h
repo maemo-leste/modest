@@ -188,6 +188,29 @@ gboolean modest_protocol_info_protocol_is_store (ModestTransportStoreProtocol pr
 gboolean modest_protocol_info_protocol_is_local_store (ModestTransportStoreProtocol proto);
 
 
+/**
+ * modest_protocol_info_is_secure:
+ * @protocol
+ * 
+ * is the protocol connection secure (e.g encrypted)?
+ * 
+ * Returns: TRUE if it is secure, FALSE otherwise
+ *
+ */
+gboolean modest_protocol_info_is_secure(ModestConnectionProtocol protocol);
+
+/**
+ * modest_protocol_info_auth_is_secure:
+ * @protocol
+ * 
+ * is the protocol authentication secure (e.g encrypted)?
+ * 
+ * Returns: TRUE if it is secure, FALSE otherwise
+ *
+ */
+gboolean modest_protocol_info_auth_is_secure(ModestAuthProtocol protocol);
+
+
 G_END_DECLS
 #endif /* __MODEST_PROTOCOL_INFO_H__ */
 

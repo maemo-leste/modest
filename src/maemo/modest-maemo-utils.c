@@ -277,6 +277,14 @@ on_camel_account_get_supported_secure_authentication (
 	ModestGetSupportedAuthInfo *info = (ModestGetSupportedAuthInfo*)user_data;
 	g_return_if_fail (info);
 	
+	/* Free everything if the actual action was canceled */
+	if (info->cancel)
+	{
+		g_slice_free (ModestGetSupportedAuthInfo, info);
+		info = NULL;
+		return;
+	}
+
 	if (!auth_types) {
 		printf ("DEBUG: %s: auth_types is NULL.\n", __FUNCTION__);
 		info->finished = TRUE; /* We are blocking, waiting for this. */
@@ -373,6 +381,7 @@ GList* modest_maemo_utils_get_supported_secure_authentication_methods (ModestTra
 	ModestGetSupportedAuthInfo *info = g_slice_new (ModestGetSupportedAuthInfo);
 	info->finished = FALSE;
 	info->result = NULL;
+	info->cancel = FALSE;
 	info->progress = gtk_progress_bar_new();
   info->dialog = gtk_dialog_new_with_buttons(_("Checking for supported authentication types"),
 																parent_window, GTK_DIALOG_MODAL,
@@ -397,15 +406,17 @@ GList* modest_maemo_utils_get_supported_secure_authentication_methods (ModestTra
 	/* Block until the callback has been called,
 	 * driving the main context, so that the (idle handler) callback can be 
 	 * called, and so that our dialog is clickable: */
-	while (!(info->finished) && (!info->cancel)) {
+	while (!(info->finished) && !(info->cancel)) {
     gtk_main_iteration_do(FALSE); 
 	}
 	
   gtk_widget_destroy(info->dialog);
 		
 	GList *result = info->result;
-	g_slice_free (ModestGetSupportedAuthInfo, info);
-	info = NULL;
-	
+	if (!info->cancel)
+	{
+		g_slice_free (ModestGetSupportedAuthInfo, info);
+		info = NULL;
+	}
 	return result;
 }

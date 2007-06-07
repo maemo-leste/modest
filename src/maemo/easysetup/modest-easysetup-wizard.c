@@ -1215,8 +1215,14 @@ on_before_next (ModestWizardDialog *dialog, GtkWidget *current_page, GtkWidget *
 	else if (next_page == account_wizard->page_custom_outgoing) {
 		set_default_custom_servernames (account_wizard);
     /* Check if the server support secure authentication */
+		const ModestConnectionProtocol security_incoming = 
+			modest_serversecurity_combo_box_get_active_serversecurity (
+																																 MODEST_SERVERSECURITY_COMBO_BOX (
+																																																	account_wizard->combo_incoming_security));
     if (gtk_toggle_button_get_active (
-			GTK_TOGGLE_BUTTON (account_wizard->checkbox_incoming_auth))) {
+			GTK_TOGGLE_BUTTON (account_wizard->checkbox_incoming_auth))
+				&& !modest_protocol_info_is_secure(security_incoming))
+		{
 				const ModestTransportStoreProtocol protocol = 
           easysetup_servertype_combo_box_get_active_servertype (
                                                                 EASYSETUP_SERVERTYPE_COMBO_BOX (account_wizard->combo_incoming_servertype));

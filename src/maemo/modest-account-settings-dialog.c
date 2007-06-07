@@ -748,6 +748,7 @@ static GtkWidget* create_page_outgoing (ModestAccountSettingsDialog *self)
 	 * and modest_serversecurity_combo_box_set_active_serversecurity().
 	 */
 	if (!self->combo_outgoing_security)
+		
 		self->combo_outgoing_security = GTK_WIDGET (modest_serversecurity_combo_box_new ());
 	caption = hildon_caption_new (sizegroup, _("mcen_li_emailsetup_secure_connection"), 
 		self->combo_outgoing_security, NULL, HILDON_CAPTION_OPTIONAL);
@@ -1043,7 +1044,8 @@ void modest_account_settings_dialog_set_account_name (ModestAccountSettingsDialo
 	} else {
 		gtk_widget_show (dialog->caption_leave_messages);
 	}
-		
+	
+	update_incoming_server_security_choices (dialog, incoming_account->proto);
 	if (incoming_account) {
 		/* Remember this for later: */
 		dialog->incoming_protocol = incoming_account->proto;
@@ -1060,22 +1062,32 @@ void modest_account_settings_dialog_set_account_name (ModestAccountSettingsDialo
 		 * If secure authentication is unchecked, allow sending username and password also as plain text.
     	 * If secure authentication is checked, require one of the secure methods during connection: SSL, TLS, CRAM-MD5 etc. 
 	  	 * TODO: Do we need to discover which of these (SSL, TLS, CRAM-MD5) is supported?
-         */
-		/* Is AUTH_PASSWORD a secure method? We accept AUTH_PASSWORD while
-		saving so we should accept it here, too */
-		const ModestAuthProtocol secure_auth = modest_server_account_get_secure_auth(
-			dialog->account_manager, incoming_account->account_name);
-		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (dialog->checkbox_incoming_auth), 
-			secure_auth != MODEST_PROTOCOL_AUTH_PASSWORD);
-		/* Note that MODEST_PROTOCOL_AUTH_PLAIN should probably never be used. */
-			
-		update_incoming_server_title (dialog, incoming_account->proto);
-		update_incoming_server_security_choices (dialog, incoming_account->proto);
-		
+         */														 
 		const ModestConnectionProtocol security = modest_server_account_get_security (
 			dialog->account_manager, incoming_account->account_name);
 		modest_serversecurity_combo_box_set_active_serversecurity (
 			MODEST_SERVERSECURITY_COMBO_BOX (dialog->combo_incoming_security), security);
+		
+		/* Check if we have
+		 - a secure protocol
+		 OR
+		 - use encrypted passwords
+		*/
+		const ModestAuthProtocol secure_auth = modest_server_account_get_secure_auth(
+			dialog->account_manager, incoming_account->account_name);
+		if (modest_protocol_info_is_secure(security) || 
+				modest_protocol_info_auth_is_secure(secure_auth))
+		{
+			gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (dialog->checkbox_incoming_auth), 
+																	 TRUE);
+		}
+		else
+		{
+			gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (dialog->checkbox_incoming_auth), 
+																	 FALSE);
+		};
+					
+		update_incoming_server_title (dialog, incoming_account->proto);
 		
 		const gint port_num = modest_account_mgr_get_int (dialog->account_manager, incoming_account->account_name,
 			MODEST_ACCOUNT_PORT, TRUE /* server account */);
@@ -1245,42 +1257,54 @@ save_configuration (ModestAccountSettingsDialog *dialog)
 	 * If secure authentication is unchecked, allow sending username and password also as plain text.
 	 * If secure authentication is checked, require one of the secure methods during connection: SSL, TLS, CRAM-MD5 etc. 
 	 */
-	ModestAuthProtocol protocol_authentication_incoming = 
-		MODEST_PROTOCOL_AUTH_PASSWORD;
-	if (gtk_toggle_button_get_active (
-			GTK_TOGGLE_BUTTON (dialog->checkbox_incoming_auth))) {
-		GList *list_auth_methods = 
-			modest_maemo_utils_get_supported_secure_authentication_methods (dialog->incoming_protocol, 
-				hostname, port_num, GTK_WINDOW (dialog));	
-		if (list_auth_methods) {
-			/* Use the first supported method.
-			 * TODO: Should we prioritize them, to prefer a particular one? */
-			protocol_authentication_incoming = 
-				(ModestAuthProtocol)(GPOINTER_TO_INT(list_auth_methods->data));
-			g_list_free (list_auth_methods);
-		}
-		else
-	  {
-      GtkWidget* error_dialog = gtk_message_dialog_new(GTK_WINDOW(dialog),
-                                                       GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR,
-                                                       GTK_BUTTONS_OK, _("Server does not support secure authentication!"));
-      gtk_dialog_run(GTK_DIALOG(error_dialog));
-      gtk_widget_destroy(error_dialog);
-			/* This is a nasty hack. jschmid. */
-			/* Don't let the dialog close */
-    	g_signal_stop_emission_by_name (dialog, "response");
-      return FALSE;
-    }
-		
-	}
-	
-	modest_server_account_set_secure_auth (dialog->account_manager, incoming_account_name, protocol_authentication_incoming);
-	
 	
 	const ModestConnectionProtocol protocol_security_incoming = modest_serversecurity_combo_box_get_active_serversecurity (
 		MODEST_SERVERSECURITY_COMBO_BOX (dialog->combo_incoming_security));
 	modest_server_account_set_security (dialog->account_manager, incoming_account_name, protocol_security_incoming);
 	
+	ModestAuthProtocol protocol_authentication_incoming = 
+			MODEST_PROTOCOL_AUTH_PASSWORD;
+	/* If we use an encrypted protocol then there is no need to encrypt the password */
+	if (!modest_protocol_info_is_secure(protocol_security_incoming))
+	{
+		if (gtk_toggle_button_get_active (
+				GTK_TOGGLE_BUTTON (dialog->checkbox_incoming_auth))) {
+			GList *list_auth_methods = 
+				modest_maemo_utils_get_supported_secure_authentication_methods (dialog->incoming_protocol, 
+					hostname, port_num, GTK_WINDOW (dialog));	
+			if (list_auth_methods) {
+				/* Use the first supported method.
+				 * TODO: Should we prioritize them, to prefer a particular one? */
+				GList* method;
+				for (method = list_auth_methods; method != NULL; method = g_list_next(method))
+				{
+					ModestAuthProtocol proto = (ModestAuthProtocol)(GPOINTER_TO_INT(list_auth_methods->data));
+					// Allow secure methods, e.g MD5 only
+					if (modest_protocol_info_auth_is_secure(proto))
+					{
+						protocol_authentication_incoming = proto;
+						break;
+					}
+				}
+				g_list_free (list_auth_methods);
+			}
+			if (list_auth_methods == NULL || 
+					!modest_protocol_info_auth_is_secure(protocol_authentication_incoming))
+		  {
+	      GtkWidget* error_dialog = gtk_message_dialog_new(GTK_WINDOW(dialog),
+	                                                       GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR,
+	                                                       GTK_BUTTONS_OK, _("Server does not support secure authentication!"));
+	      gtk_dialog_run(GTK_DIALOG(error_dialog));
+	      gtk_widget_destroy(error_dialog);
+				/* This is a nasty hack. jschmid. */
+				/* Don't let the dialog close */
+	    	g_signal_stop_emission_by_name (dialog, "response");
+	      return FALSE;
+	    }
+		}
+	}
+	
+	modest_server_account_set_secure_auth (dialog->account_manager, incoming_account_name, protocol_authentication_incoming);
 	
 		
 	g_free (incoming_account_name);

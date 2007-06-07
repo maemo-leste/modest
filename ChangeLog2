@@ -1,3 +1,28 @@
+2007-06-07  Johannes Schmid <johannes.schmid@openismus.com>
+
+	* src/maemo/easysetup/modest-easysetup-wizard.c: (on_before_next):
+	* src/maemo/modest-account-settings-dialog.c:
+	(create_page_outgoing),
+	(modest_account_settings_dialog_set_account_name),
+	(save_configuration):
+	- Fixed handling of the "Use secure authentication" toggle to comply with
+	the ui specification. See also projects.maemo.org bug NB#58400
+	
+	- Restore the Secure connection setting combo correctly when loading
+	the settings dialog
+	
+	* src/maemo/modest-maemo-utils.c:
+	(on_camel_account_get_supported_secure_authentication),
+	(modest_maemo_utils_get_supported_secure_authentication_methods):
+	Fixed a crasher if operation is canceled
+	
+	* src/modest-protocol-info.c: (modest_protocol_info_is_secure),
+	(modest_protocol_info_auth_is_secure):
+	* src/modest-protocol-info.h:
+	
+	Added two new methods to determine if a protocol/auth method is secure/encrypted in 
+	the sense of the "Use secure authentication" toggle.
+
 2007-06-07  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/modest-tny-account-store.h:
