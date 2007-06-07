@@ -172,6 +172,7 @@ modest_mail_operation_class_init (ModestMailOperationClass *klass)
 			      NULL, NULL,
 			      g_cclosure_marshal_VOID__POINTER,
 			      G_TYPE_NONE, 1, G_TYPE_POINTER);
+
 }
 
 static void
@@ -768,6 +769,9 @@ static gboolean
 notify_update_account_queue (gpointer data)
 {
 	ModestMailOperation *mail_op = MODEST_MAIL_OPERATION (data);
+	ModestMailOperationPrivate *priv = NULL;
+
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(mail_op);
 
 	modest_mail_operation_notify_end (mail_op);
 	g_object_unref (mail_op);
@@ -1050,6 +1054,7 @@ modest_mail_operation_update_account (ModestMailOperation *self,
 			     MODEST_MAIL_OPERATION_ERROR_ITEM_NOT_FOUND,
 			     "cannot get tny store account for %s\n", account_name);
 		modest_mail_operation_notify_end (self);
+
 		return FALSE;
 	}
 
@@ -1064,6 +1069,7 @@ modest_mail_operation_update_account (ModestMailOperation *self,
 			     MODEST_MAIL_OPERATION_ERROR_ITEM_NOT_FOUND,
 			     "cannot get tny transport account for %s\n", account_name);
 		modest_mail_operation_notify_end (self);
+
 		return FALSE;
 	}
 

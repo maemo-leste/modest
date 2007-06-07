@@ -424,6 +424,7 @@ modest_ui_dimming_rules_on_delete_msgs (ModestWindow *win, gpointer user_data)
 }
 
 
+
 /* *********************** static utility functions ******************** */
 
 static gboolean
@@ -767,3 +768,4 @@ _msg_sent_in_progress (ModestWindow *win)
 
 	return result;
 }
+

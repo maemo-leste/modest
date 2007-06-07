@@ -67,6 +67,11 @@
 
 #define MODEST_MAIN_WINDOW_ACTION_GROUP_ADDITIONS "ModestMainWindowActionAdditions"
 
+#define XALIGN 0.5
+#define YALIGN 0.5
+#define XSPACE 1
+#define YSPACE 0
+
 /* 'private'/'protected' functions */
 static void modest_main_window_class_init    (ModestMainWindowClass *klass);
 static void modest_main_window_init          (ModestMainWindow *obj);
@@ -117,6 +122,10 @@ static void on_refresh_account_action_activated   (GtkAction *action,
 
 static void on_send_receive_csm_activated         (GtkMenuItem *item,
 						   gpointer user_data);
+
+
+static GtkWidget * create_empty_view (void);
+
 /* list my signals */
 enum {
 	/* MY_SIGNAL_1, */
@@ -131,6 +140,7 @@ struct _ModestMainWindowPrivate {
 	GtkWidget *main_paned;
 	GtkWidget *main_vbox;
 	GtkWidget *contents_widget;
+	GtkWidget *empty_view;
 
 	/* Progress observers */
 	GtkWidget        *progress_bar;
@@ -152,6 +162,9 @@ struct _ModestMainWindowPrivate {
 
 	/* Optimized view enabled */
 	gboolean optimized_view;
+
+	/* Optimized view enabled */
+	gboolean send_receive_in_progress;
 
 	ModestHeaderView *header_view;
 	ModestFolderView *folder_view;
@@ -269,6 +282,7 @@ modest_main_window_init (ModestMainWindow *obj)
 	priv->contents_widget  = NULL;
 	priv->accounts_popup  = NULL;
 	priv->details_widget  = NULL;
+	priv->empty_view  = NULL;
 
 	priv->progress_widgets  = NULL;
 	priv->progress_bar = NULL;
@@ -280,6 +294,7 @@ modest_main_window_init (ModestMainWindow *obj)
 	priv->merge_ids = NULL;
 
 	priv->optimized_view  = FALSE;
+	priv->send_receive_in_progress  = FALSE;
 	priv->progress_bar_timeout = 0;
 }
 
@@ -326,7 +341,6 @@ modest_main_window_get_child_widget (ModestMainWindow *self,
 
 	return widget ? GTK_WIDGET(widget) : NULL;
 }
-
 
 
 static void
@@ -715,7 +729,10 @@ modest_main_window_new (void)
 	if (!priv->header_view)
 		g_printerr ("modest: cannot instantiate header view\n");
 	modest_header_view_set_style (priv->header_view, MODEST_HEADER_VIEW_STYLE_TWOLINES);
-	
+
+	/* Empty view */ 
+	priv->empty_view = create_empty_view ();
+		 
 	/* Create scrolled windows */
 	folder_win = gtk_scrolled_window_new (NULL, NULL);
 	priv->contents_widget = gtk_scrolled_window_new (NULL, NULL);
@@ -1248,6 +1265,20 @@ set_alignment (GtkWidget *widget,
 }
 
 static GtkWidget *
+create_empty_view (void)
+{
+	GtkLabel *label = NULL;
+	GtkWidget *align = NULL;
+
+	align = gtk_alignment_new(XALIGN, YALIGN, XSPACE, YSPACE);
+	label = GTK_LABEL(gtk_label_new (_("mcen_ia_nomessages")));
+	gtk_label_set_justify (label, GTK_JUSTIFY_CENTER);	
+	gtk_container_add (GTK_CONTAINER (align), GTK_WIDGET(label));
+
+	return GTK_WIDGET(align);
+}
+
+static GtkWidget *
 create_details_widget (TnyAccount *account)
 {
 	GtkWidget *vbox;
@@ -1344,6 +1375,39 @@ create_details_widget (TnyAccount *account)
 }
 
 void 
+modest_main_window_notify_send_receive_initied (ModestMainWindow *self)
+{
+	GtkAction *action = NULL;
+	GtkWidget *widget = NULL;
+
+	g_return_if_fail (MODEST_IS_MAIN_WINDOW (self));
+
+        action = modest_window_get_action (MODEST_WINDOW(self), "/MenuBar/ToolsMenu/ToolsSendReceiveMainMenu/ToolsSendReceiveAllMenu");	
+	gtk_action_set_sensitive (action, FALSE);
+        action = modest_window_get_action (MODEST_WINDOW(self), "/MenuBar/ToolsMenu/ToolsSendReceiveMainMenu/ToolsSendReceiveCancelSendingMenu");	
+	gtk_action_set_sensitive (action, FALSE);
+        widget = modest_window_get_action_widget (MODEST_WINDOW(self), "/MenuBar/ToolsMenu/ToolsSendReceiveMainMenu/ToolsMenuAdditions");	
+	gtk_widget_set_sensitive (widget, FALSE);
+} 
+
+void 
+modest_main_window_notify_send_receive_completed (ModestMainWindow *self)
+{
+	GtkAction *action = NULL;
+	GtkWidget *widget = NULL;
+
+	g_return_if_fail (MODEST_IS_MAIN_WINDOW (self));
+
+        action = modest_window_get_action (MODEST_WINDOW(self), "/MenuBar/ToolsMenu/ToolsSendReceiveMainMenu/ToolsSendReceiveAllMenu");	
+	gtk_action_set_sensitive (action, TRUE);
+        action = modest_window_get_action (MODEST_WINDOW(self), "/MenuBar/ToolsMenu/ToolsSendReceiveMainMenu/ToolsSendReceiveCancelSendingMenu");	
+	gtk_action_set_sensitive (action, TRUE);
+        widget = modest_window_get_action_widget (MODEST_WINDOW(self), "/MenuBar/ToolsMenu/ToolsSendReceiveMainMenu/ToolsMenuAdditions");	
+	gtk_widget_set_sensitive (widget, TRUE);
+} 
+
+
+void 
 modest_main_window_set_contents_style (ModestMainWindow *self, 
 				       ModestMainWindowContentsStyle style)
 {
@@ -1357,15 +1421,20 @@ modest_main_window_set_contents_style (ModestMainWindow *self,
 	   set if there are details, because it could happen when we're
 	   selecting different accounts consecutively */
 	if ((priv->contents_style == style) &&
-	    (priv->contents_style == MODEST_MAIN_WINDOW_CONTENTS_STYLE_HEADERS))
+	    (priv->contents_style != MODEST_MAIN_WINDOW_CONTENTS_STYLE_DETAILS))
 		return;
 
 	/* Remove previous child. Delete it if it was an account
 	   details widget */
 	GtkWidget *content = gtk_bin_get_child (GTK_BIN (priv->contents_widget));
 	if (content) {
-		if (priv->contents_style != MODEST_MAIN_WINDOW_CONTENTS_STYLE_DETAILS)
+		if (priv->contents_style == MODEST_MAIN_WINDOW_CONTENTS_STYLE_HEADERS)
 			g_object_ref (content);
+		else if (priv->contents_style == MODEST_MAIN_WINDOW_CONTENTS_STYLE_EMPTY) {
+			g_object_ref (priv->empty_view);
+			gtk_container_remove (GTK_CONTAINER (content), priv->empty_view);
+		}
+		
 		gtk_container_remove (GTK_CONTAINER (priv->contents_widget), content);
 	}
 
@@ -1389,6 +1458,9 @@ modest_main_window_set_contents_style (ModestMainWindow *self,
 		}
 		break;
 	}
+	case MODEST_MAIN_WINDOW_CONTENTS_STYLE_EMPTY:
+		wrap_in_scrolled_window (priv->contents_widget, GTK_WIDGET (priv->empty_view));
+		break;
 	default:
 		g_return_if_reached ();
 	}

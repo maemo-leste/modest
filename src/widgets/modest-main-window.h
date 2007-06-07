@@ -77,6 +77,7 @@ typedef enum _ModestMainWindowStyle {
 typedef enum _ModestMainWindowContentsStyle {
 	MODEST_MAIN_WINDOW_CONTENTS_STYLE_HEADERS,
 	MODEST_MAIN_WINDOW_CONTENTS_STYLE_DETAILS,
+	MODEST_MAIN_WINDOW_CONTENTS_STYLE_EMPTY,
 } ModestMainWindowContentsStyle;
 
 /* toolbar modes  */
@@ -173,6 +174,23 @@ ModestMainWindowStyle       modest_main_window_get_style        (ModestMainWindo
 void       modest_main_window_set_contents_style       (ModestMainWindow *self, 
 							ModestMainWindowContentsStyle style);
 
+/**
+ * modest_main_window_notify_send_receive_initied:
+ * @self: the #ModestMainWindow
+ * 
+ * Notifies main window that send/receive operaiton was just started. 
+ **/
+void 
+modest_main_window_notify_send_receive_initied (ModestMainWindow *self);
+
+/**
+ * modest_main_window_notify_send_receive_completed:
+ * @self: the #ModestMainWindow
+ * 
+ * Notifies main window that send/receive operaiton was completed. 
+ **/
+void 
+modest_main_window_notify_send_receive_completed (ModestMainWindow *self);
 
 G_END_DECLS
 
