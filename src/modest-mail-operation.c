@@ -71,6 +71,8 @@ static void     get_msg_status_cb (GObject *obj,
 
 static void     modest_mail_operation_notify_end (ModestMailOperation *self);
 
+static gboolean did_a_cancel = FALSE;
+
 enum _ModestMailOperationSignals 
 {
 	PROGRESS_CHANGED_SIGNAL,
@@ -333,6 +335,8 @@ modest_mail_operation_cancel (ModestMailOperation *self)
 
 	/* cancel current operation in account */
 	tny_account_cancel (priv->account);
+
+	did_a_cancel = TRUE;
 
 	/* Set new status */
 	priv->status = MODEST_MAIL_OPERATION_STATUS_CANCELED;
@@ -843,7 +847,8 @@ update_account_thread (gpointer thr_user_data)
 	/* Refresh folders */
 	new_headers = g_ptr_array_new ();
 	iter = tny_list_create_iterator (all_folders);
-	while (!tny_iterator_is_done (iter) && !priv->error) {
+
+	while (!tny_iterator_is_done (iter) && !priv->error && !did_a_cancel) {
 
 		InternalFolderObserver *observer;
 		TnyFolderStore *folder = TNY_FOLDER_STORE (tny_iterator_get_current (iter));
@@ -896,6 +901,9 @@ update_account_thread (gpointer thr_user_data)
 		g_object_unref (G_OBJECT (folder));
 		tny_iterator_next (iter);
 	}
+
+	did_a_cancel = FALSE;
+
 	g_object_unref (G_OBJECT (iter));
 	g_source_remove (timeout);
 
