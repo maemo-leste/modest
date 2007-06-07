@@ -233,6 +233,14 @@ void modest_platform_show_help (GtkWindow *parent_window,
  **/
 void modest_platform_show_search_messages (GtkWindow *parent_window);
 
+/**
+ * modest_platform_show_addressbook:
+ * @parent_window: window the dialog will be child of
+ *
+ * shows the addressbook
+ **/
+void modest_platform_show_addressbook (GtkWindow *parent_window);
+
 G_END_DECLS
 
 #endif /* __MODEST_PLATFORM_UTILS_H__ */

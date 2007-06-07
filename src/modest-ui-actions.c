@@ -3039,6 +3039,14 @@ modest_ui_actions_on_search_messages (GtkAction *action, ModestWindow *window)
 	modest_platform_show_search_messages (GTK_WINDOW (window));
 }
 
+void     
+modest_ui_actions_on_open_addressbook (GtkAction *action, ModestWindow *win)
+{
+	g_return_if_fail (MODEST_IS_WINDOW (win));
+	modest_platform_show_addressbook (GTK_WINDOW (win));
+}
+
+
 void
 modest_ui_actions_on_toggle_find_in_page (GtkToggleAction *action,
 					  ModestWindow *window)
