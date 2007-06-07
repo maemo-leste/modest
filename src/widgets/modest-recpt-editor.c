@@ -328,8 +328,15 @@ modest_recpt_editor_instance_init (GTypeInstance *instance, gpointer g_class)
 	gtk_container_add (GTK_CONTAINER (priv->abook_button), abook_icon);
 
 	priv->text_view = gtk_text_view_new ();
+	
+/* on maemo, explicitly turn on autocaps */
+#ifdef  MODEST_PLATFORM_MAEMO
+	hildon_gtk_text_view_set_input_mode (GTK_TEXT_VIEW(priv->text_view), HILDON_GTK_INPUT_MODE_AUTOCAP);
+#endif  /*MODEST_PLATFORM_MAEMO_0*/
+	
 	priv->scrolled_window = modest_scroll_text_new (GTK_TEXT_VIEW (priv->text_view), 5);
-	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (priv->scrolled_window), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
+	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (priv->scrolled_window), GTK_POLICY_NEVER,
+					GTK_POLICY_AUTOMATIC);
 	gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (priv->scrolled_window), GTK_SHADOW_IN);
 /* 	gtk_container_add (GTK_CONTAINER (priv->scrolled_window), priv->text_view); */
 
