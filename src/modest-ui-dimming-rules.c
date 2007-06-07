@@ -48,6 +48,7 @@ static gboolean _selected_folder_is_root (ModestMainWindow *win);
 static gboolean _selected_folder_is_empty (ModestMainWindow *win);
 static gboolean _msg_download_in_progress (ModestMsgViewWindow *win);
 static gboolean _msg_sent_in_progress (ModestWindow *win);
+static gboolean _marked_as_deleted (ModestWindow *win);
 
 
 gboolean 
@@ -251,6 +252,14 @@ modest_ui_dimming_rules_on_delete_msg (ModestWindow *win, gpointer user_data)
 		dimmed = _already_opened_msg (win);
 		modest_dimming_rule_set_notification (rule, _("mcen_nc_unable_to_delete_n_messages"));
 	}
+	if (!dimmed) {
+		dimmed = _marked_as_deleted (win);
+		modest_dimming_rule_set_notification (rule, _("mcen_ib_message_unableto_delete"));
+	}
+	if (!dimmed) {
+		dimmed = _msg_sent_in_progress (win);
+		modest_dimming_rule_set_notification (rule, _("mcen_ib_message_unableto_delete"));
+	}
 
 	return dimmed;
 }
@@ -288,6 +297,7 @@ modest_ui_dimming_rules_on_details (ModestWindow *win, gpointer user_data)
 
 	return dimmed;
 }
+
 
 gboolean 
 modest_ui_dimming_rules_on_mark_as_read_msg (ModestWindow *win, gpointer user_data)
@@ -423,9 +433,36 @@ modest_ui_dimming_rules_on_delete_msgs (ModestWindow *win, gpointer user_data)
 	return dimmed;
 }
 
+gboolean 
+modest_ui_dimming_rules_on_select_all (ModestWindow *win, gpointer user_data)
+{
+	gboolean dimmed = FALSE;
+
+	/* Check dimmed rule */	
+	if (!dimmed) 
+		dimmed = _selected_folder_is_empty (MODEST_MAIN_WINDOW(win));			
+		
+	return dimmed;
+}
 
 
 /* *********************** static utility functions ******************** */
+
+static gboolean 
+_marked_as_deleted (ModestWindow *win)
+{
+	gboolean result = FALSE;
+	TnyHeaderFlags flags;
+
+	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW(win), FALSE);
+	
+	flags = TNY_HEADER_FLAG_DELETED; 
+
+	/* Check dimmed rule */	
+	result = _selected_msg_marked_as (win, flags, FALSE);
+	
+	return result;
+}
 
 static gboolean
 _selected_folder_not_writeable (ModestMainWindow *win)
@@ -473,6 +510,36 @@ _selected_folder_is_root (ModestMainWindow *win)
 	/* Check folder type */
 	result = _selected_folder_is_any_of_type (win, types, 2);
 
+	if (!result) {
+		GtkWidget *folder_view = NULL;
+		TnyFolderStore *parent_folder = NULL;
+		
+		folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(win),
+								   MODEST_WIDGET_TYPE_FOLDER_VIEW);
+		/* Get selected folder as parent of new folder to create */
+		parent_folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW(folder_view));
+		if (!parent_folder)
+			return TRUE;
+
+		if (TNY_IS_ACCOUNT (parent_folder)) {
+			/* If it's the local account then do not dim */
+			if (modest_tny_account_is_virtual_local_folders (
+									 TNY_ACCOUNT (parent_folder)))
+				return FALSE;
+			else {
+				/* If it's the MMC root folder then dim it */
+				if (!strcmp (tny_account_get_id (TNY_ACCOUNT (parent_folder)), MODEST_MMC_ACCOUNT_ID)) {
+					result = TRUE;
+				} else {
+					const gchar *proto_str = tny_account_get_proto (TNY_ACCOUNT (parent_folder));
+					/* If it's POP then dim */
+					result = (modest_protocol_info_get_transport_store_protocol (proto_str) == 
+						  MODEST_PROTOCOL_STORE_POP) ? TRUE : FALSE;
+				}
+			}
+		}
+	}
+		
 	return result;
 }
 
@@ -596,7 +663,7 @@ _invalid_msg_selected (ModestMainWindow *win,
 			  (GTK_WIDGET_HAS_FOCUS (folder_view)));
 		modest_dimming_rule_set_notification (rule, _("mcen_ib_no_message_selected"));
 	}
-	if (!result) {
+	if (!result && unique) {
 		result = tny_list_get_length (selected_headers) > 1;
 		modest_dimming_rule_set_notification (rule, _("mcen_ib_select_one_message"));
 	}

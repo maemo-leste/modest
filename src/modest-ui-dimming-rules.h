@@ -54,6 +54,7 @@ gboolean modest_ui_dimming_rules_on_main_window_move_to (ModestWindow *win, gpoi
 gboolean modest_ui_dimming_rules_on_view_window_move_to (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_paste_msgs (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_delete_msgs (ModestWindow *win, gpointer user_data);
+gboolean modest_ui_dimming_rules_on_select_all (ModestWindow *win, gpointer user_data);
 
 G_END_DECLS
 #endif 

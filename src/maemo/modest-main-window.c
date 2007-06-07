@@ -1382,12 +1382,18 @@ modest_main_window_notify_send_receive_initied (ModestMainWindow *self)
 
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW (self));
 
+	/* Tools menu options */
         action = modest_window_get_action (MODEST_WINDOW(self), "/MenuBar/ToolsMenu/ToolsSendReceiveMainMenu/ToolsSendReceiveAllMenu");	
 	gtk_action_set_sensitive (action, FALSE);
         action = modest_window_get_action (MODEST_WINDOW(self), "/MenuBar/ToolsMenu/ToolsSendReceiveMainMenu/ToolsSendReceiveCancelSendingMenu");	
 	gtk_action_set_sensitive (action, FALSE);
         widget = modest_window_get_action_widget (MODEST_WINDOW(self), "/MenuBar/ToolsMenu/ToolsSendReceiveMainMenu/ToolsMenuAdditions");	
 	gtk_widget_set_sensitive (widget, FALSE);
+	
+	/* Header view CSM */
+        action = modest_window_get_action (MODEST_WINDOW(self), "/HeaderViewCSM/HeaderViewCSMCancelSending");	
+	gtk_action_set_sensitive (action, FALSE);
+	    
 } 
 
 void 

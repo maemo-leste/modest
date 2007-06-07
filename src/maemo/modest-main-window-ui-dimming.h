@@ -29,7 +29,7 @@ static const ModestDimmingEntry modest_main_window_menu_dimming_entries [] = {
 	{ "/MenuBar/EditMenu/EditCutMenu", NULL },
 	{ "/MenuBar/EditMenu/EditCopyMenu", NULL },
 	{ "/MenuBar/EditMenu/EditPasteMenu", G_CALLBACK(modest_ui_dimming_rules_on_paste_msgs) },
-	{ "/MenuBar/EditMenu/EditSelectAllMenu", NULL },
+	{ "/MenuBar/EditMenu/EditSelectAllMenu", G_CALLBACK(modest_ui_dimming_rules_on_select_all)},
 	{ "/MenuBar/EditMenu/EditMarkAsReadMenu", G_CALLBACK(modest_ui_dimming_rules_on_mark_as_read_msg) },
 	{ "/MenuBar/EditMenu/EditMarkAsUnreadMenu", G_CALLBACK(modest_ui_dimming_rules_on_mark_as_unread_msg) },
 	{ "/MenuBar/EditMenu/EditMoveToMenu", G_CALLBACK(modest_ui_dimming_rules_on_move_to) },
