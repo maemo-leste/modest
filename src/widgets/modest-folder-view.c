@@ -719,8 +719,8 @@ static gboolean
 update_model (ModestFolderView *self, ModestTnyAccountStore *account_store)
 {
 	ModestFolderViewPrivate *priv;
-	GtkTreeModel *model, *old_model;
-	TnyAccount *local_account;
+	GtkTreeModel *model /* , *old_model */;
+	/* TnyAccount *local_account; */
 	TnyList *model_as_list;
 
 	g_return_val_if_fail (account_store, FALSE);
@@ -733,11 +733,13 @@ update_model (ModestFolderView *self, ModestTnyAccountStore *account_store)
 		       NULL, TRUE);
 
 	/* Remove the old model as observer of the local folder account */
+#if 0 /* Commented out until Sergio fixes the crash. */
 	local_account = 
 		modest_tny_account_store_get_tny_account_by_account (modest_runtime_get_account_store (),
 								     MODEST_ACTUAL_LOCAL_FOLDERS_ACCOUNT_ID,
 								     TNY_ACCOUNT_TYPE_STORE);
 	old_model = gtk_tree_view_get_model (GTK_TREE_VIEW (self));
+
 	if (old_model) {
 		GtkTreeModel *sorted, *model;
 
@@ -751,6 +753,7 @@ update_model (ModestFolderView *self, ModestTnyAccountStore *account_store)
 		tny_folder_store_remove_observer (TNY_FOLDER_STORE (local_account),
 						  TNY_FOLDER_STORE_OBSERVER (model));
 	}
+#endif
 
 	/* FIXME: the local accounts are not shown when the query
 	   selects only the subscribed folders. */
@@ -766,16 +769,18 @@ update_model (ModestFolderView *self, ModestTnyAccountStore *account_store)
 					model_as_list,
 					TNY_ACCOUNT_STORE_STORE_ACCOUNTS);
 	
+#if 0 /* Commented out until Sergio fixes the crash. */
 	/* Set the folder view as an account observer in order to let
 	   us see the UI changes automatically when creating and
 	   deleting folders just under the local account */
 	tny_folder_store_add_observer (TNY_FOLDER_STORE (local_account),
 				       TNY_FOLDER_STORE_OBSERVER (model));
+	g_object_unref (local_account);
+#endif
 	
 	g_object_unref (model_as_list);
 	model_as_list = NULL;	
-	g_object_unref (local_account);
-	
+
 	/*	
 	if (account_list)
 		tny_list_foreach (account_list, on_tnylist_accounts_debug_print, "update_model: ");

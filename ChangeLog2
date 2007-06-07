@@ -1,3 +1,8 @@
+2007-06-07  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/widgets/modest-folder-view.c: (update_model): Comment out some 
+	code that is causing a crash at startup. Sergio says that he is fixing this.
+
 2007-06-07  Johannes Schmid <johannes.schmid@openismus.com>
 
 	* src/maemo/easysetup/modest-easysetup-wizard.c: (on_before_next):
