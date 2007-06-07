@@ -1415,7 +1415,7 @@ modest_msg_view_get_message (ModestMsgView *self)
 {
 	TnyMsg *msg;
 
-	g_return_val_if_fail (self, NULL);
+	g_return_val_if_fail (MODEST_IS_MSG_VIEW (self), NULL);
 
 	msg = MODEST_MSG_VIEW_GET_PRIVATE(self)->msg;
 
