@@ -35,7 +35,7 @@
 /* Note that the com.nokia service name and /com/nokia object name 
  * are what is assumed by the, bizarrely named, osso_rpc_run_with_defaults() function, 
  * so they are probably a good choice. */
-#define MODEST_DBUS_NAME    "modestemail"
+#define MODEST_DBUS_NAME    "modest"
 #define MODEST_DBUS_SERVICE "com.nokia."MODEST_DBUS_NAME
 #define MODEST_DBUS_OBJECT  "/com/nokia/"MODEST_DBUS_NAME
 #define MODEST_DBUS_IFACE   "com.nokia."MODEST_DBUS_NAME

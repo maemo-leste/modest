@@ -1550,6 +1550,7 @@ modest_msg_edit_window_attach_file_noninteractive (
 			gtk_widget_show_all (priv->attachments_caption);
 		} else if (file_id == -1) {
 			close (file_id);
+			g_warning("file to be attached does not exist: %s", filename);
 		}
 	}
 }

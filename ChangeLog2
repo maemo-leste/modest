@@ -1,3 +1,13 @@
+2007-06-07  Marcus Bauer  <marcusb@openismus.com>
+
+	* src/dbus_api/modest-dbus-api.h:
+	changed MODEST_DBUS_NAME in order to get dbus auto-activation to work
+	* src/maemo/modest-msg-edit-window.c:
+	(modest_msg_edit_window_attach_file_noninteractive):
+	added g_warning in case the file to be attached does not exist
+	* tests/dbus_api/test_compose_mail.c: (main):
+	removed obsolete comment, added generic files as test case
+
 2007-06-07  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/modest-tny-account-store.c: (get_server_accounts): 

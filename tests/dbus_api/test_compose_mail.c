@@ -17,13 +17,12 @@ int main(int argc, char *argv[])
 	}
 	
 	/* Call the function in libmodest-dbus-client: */
-	/* TODO: The Message URI system is not yet implemented. */
 	
-	attachments = g_slist_append(attachments, "/home/m/MyDocs/bar1.txt,/home/m/MyDocs/foo.txt");
+	attachments = g_slist_append(attachments, "/usr/include/math.h,/usr/include/malloc.h");
 	
 	const gboolean ret = libmodest_dbus_client_compose_mail (
 		osso_context,
-		"marcusb@openismus.com", /* to */
+		"modesttest@openismus.com", /* to */
 		"cc test", /* cc */
 		"bcc test", /* bcc */
 		"test subject", /* subject */
