@@ -655,6 +655,27 @@ modest_attachments_view_get_selection (ModestAttachmentsView *atts_view)
 	return selection;
 }
 
+GList *
+modest_attachments_view_get_attachments (ModestAttachmentsView *atts_view)
+{
+	ModestAttachmentsViewPrivate *priv;
+	GList *children, *node, *att_list = NULL;
+
+	g_return_val_if_fail (MODEST_IS_ATTACHMENTS_VIEW (atts_view), NULL);
+	priv = MODEST_ATTACHMENTS_VIEW_GET_PRIVATE (atts_view);
+
+	children = gtk_container_get_children (GTK_CONTAINER (priv->box));
+	for (node = children; node != NULL; node = g_list_next (node)) {
+		GtkWidget *att_view = GTK_WIDGET (node->data);
+		TnyMimePart *mime_part = tny_mime_part_view_get_part (TNY_MIME_PART_VIEW (att_view));
+		att_list = g_list_prepend (att_list, mime_part);
+	}
+	g_list_free (children);
+	att_list = g_list_reverse (att_list);
+	return att_list;
+
+}
+
 void
 modest_attachments_view_select_all (ModestAttachmentsView *atts_view)
 {

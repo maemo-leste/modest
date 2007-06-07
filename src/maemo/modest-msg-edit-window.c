@@ -597,8 +597,13 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg)
 	
 	/* Add attachments to the view */
 	modest_attachments_view_set_message (MODEST_ATTACHMENTS_VIEW (priv->attachments_view), msg);
-	if (priv->attachments == NULL)
-		gtk_widget_hide_all (priv->attachments_caption);
+	priv->attachments = modest_attachments_view_get_attachments (MODEST_ATTACHMENTS_VIEW (priv->attachments_view));
+	if (priv->attachments == NULL) {
+		gtk_widget_hide (priv->attachments_caption);
+	} else {
+		gtk_widget_set_no_show_all (priv->attachments_caption, FALSE);
+		gtk_widget_show_all (priv->attachments_caption);
+	}
 
 	gtk_text_buffer_get_start_iter (priv->text_buffer, &iter);
 	gtk_text_buffer_place_cursor (priv->text_buffer, &iter);
@@ -1594,6 +1599,8 @@ modest_msg_edit_window_remove_attachments (ModestMsgEditWindow *window,
 
 			modest_attachments_view_remove_attachment (MODEST_ATTACHMENTS_VIEW (priv->attachments_view),
 								   mime_part);
+			if (priv->attachments == NULL)
+				gtk_widget_hide (priv->attachments_caption);
 			att_id = tny_mime_part_get_content_id (mime_part);
 			if (att_id != NULL)
 				text_buffer_delete_images_by_id (gtk_text_view_get_buffer (GTK_TEXT_VIEW (priv->msg_body)),
