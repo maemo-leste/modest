@@ -61,6 +61,8 @@
 #define MSG_SIZE_DEF_VAL 1000
 #define MSG_SIZE_MIN_VAL 1
 
+#define DEFAULT_FOCUS_WIDGET "default-focus-widget"
+
 /* 'private'/'protected' functions */
 static void modest_maemo_global_settings_dialog_class_init (ModestMaemoGlobalSettingsDialogClass *klass);
 static void modest_maemo_global_settings_dialog_init       (ModestMaemoGlobalSettingsDialog *obj);
@@ -136,6 +138,28 @@ modest_maemo_global_settings_dialog_class_init (ModestMaemoGlobalSettingsDialogC
 	MODEST_GLOBAL_SETTINGS_DIALOG_CLASS (klass)->current_connection_func = current_connection;
 }
 
+
+static void
+on_switch_page (GtkNotebook *notebook, GtkNotebookPage *page, guint page_num, gpointer user_data)
+{
+	/* grab the focus to the default element in the current page */
+	GtkWidget *child, *focus_item;
+	
+	child = gtk_notebook_get_nth_page (notebook, page_num);
+	if (!child) {
+		g_printerr ("modest: cannot get nth page\n");
+		return;
+	}
+	
+	focus_item = GTK_WIDGET(g_object_get_data (G_OBJECT(child), DEFAULT_FOCUS_WIDGET));
+	if (!focus_item) {
+		g_printerr ("modest: cannot get focus item\n");
+		return;
+	}
+
+	gtk_widget_grab_focus (focus_item);
+}
+
 static void
 modest_maemo_global_settings_dialog_init (ModestMaemoGlobalSettingsDialog *self)
 {
@@ -155,6 +179,8 @@ modest_maemo_global_settings_dialog_init (ModestMaemoGlobalSettingsDialog *self)
 	gtk_container_add (GTK_CONTAINER (GTK_DIALOG (self)->vbox), ppriv->notebook);
 	gtk_container_set_border_width (GTK_CONTAINER (GTK_DIALOG (self)->vbox), MODEST_MARGIN_HALF);
 
+	g_signal_connect (G_OBJECT(ppriv->notebook), "switch-page", G_CALLBACK(on_switch_page), NULL);
+	
 	/* Load current config */
 	_modest_global_settings_dialog_load_conf (MODEST_GLOBAL_SETTINGS_DIALOG (self));
 	gtk_widget_show_all (ppriv->notebook);
@@ -264,6 +290,9 @@ create_updating_page (ModestMaemoGlobalSettingsDialog *self)
 	/* Add to vbox */
 	gtk_box_pack_start (GTK_BOX (vbox), vbox_limit, FALSE, FALSE, MODEST_MARGIN_HALF);
 
+	/* set the special magic default widget as the DEFAULT_FOCUS_WIDGET gobject property */
+	g_object_set_data (G_OBJECT(vbox), DEFAULT_FOCUS_WIDGET, (gpointer)ppriv->auto_update);
+	
 	return vbox;
 }
 
@@ -305,6 +334,9 @@ create_composing_page (ModestMaemoGlobalSettingsDialog *self)
 				      NULL, 
 				      HILDON_CAPTION_MANDATORY);
 	gtk_box_pack_start (GTK_BOX (vbox), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
+
+	/* set the special magic default widget as the DEFAULT_FOCUS_WIDGET gobject property */
+	g_object_set_data (G_OBJECT(vbox), DEFAULT_FOCUS_WIDGET, (gpointer)ppriv->msg_format);
 
 	return vbox;
 }
