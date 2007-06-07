@@ -21,10 +21,14 @@ ifeq (,$(findstring nostrip,$(DEB_BUILD_OPTIONS)))
 	INSTALL_PROGRAM += -s
 endif
 
-LAUNCHER = no
-ifneq (,$(findstring maemo-launcher,$(DEB_BUILD_OPTIONS)))
-	LAUNCHER = yes
+ifneq (,$(findstring thumb,$(DEB_BUILD_OPTIONS)))
+        CFLAGS += -mthumb
 endif
+
+LAUNCHER = no
+#ifneq (,$(findstring maemo-launcher,$(DEB_BUILD_OPTIONS)))
+#	LAUNCHER = yes
+#endif
 
 ifeq "$(strip $(LAUNCHER))" "yes"
 	LAUNCHER_DEPENDS = -Vlauncher:Depends="maemo-launcher"
@@ -61,7 +65,7 @@ clean:
 	dh_testroot
 	rm -f build-stamp 
 
-	# commands to clean up after the build process.
+# commands to clean up after the build process.
 	-$(MAKE) distclean
 ifneq "$(wildcard /usr/share/misc/config.sub)" ""
 	cp -f /usr/share/misc/config.sub config.sub
@@ -77,7 +81,7 @@ install: build
 	dh_clean -k 
 	dh_installdirs
 
-	# install the package into debian/tmp/
+# install the package into debian/tmp/
 	$(MAKE) install DESTDIR=$(CURDIR)/debian/tmp
 
 ifeq "$(strip $(LAUNCHER))" "yes"
