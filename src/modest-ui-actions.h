@@ -375,5 +375,15 @@ void     modest_ui_actions_move_folder_error_handler      (ModestMailOperation *
 void     modest_ui_actions_on_search_messages             (GtkAction *action,
 							   ModestWindow *window);
 
+/**
+ * modest_ui_actions_on_find_in_page:
+ * @action: a #GtkToggleAction
+ * @window: a #ModestWindow
+ *
+ * Toggles the visibility of the find in page toolbar
+ **/
+void     modest_ui_actions_on_toggle_find_in_page             (GtkToggleAction *action,
+							       ModestWindow *window);
+
 G_END_DECLS
 #endif /* __MODEST_UI_ACTIONS_H__ */

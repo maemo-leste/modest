@@ -119,6 +119,12 @@ static void modest_msg_edit_window_clipboard_owner_change (GtkClipboard *clipboa
 static void update_window_title (ModestMsgEditWindow *window);
 static void update_dimmed (ModestMsgEditWindow *window);
 
+/* Find toolbar */
+static void modest_msg_edit_window_find_toolbar_search (GtkWidget *widget,
+							ModestMsgEditWindow *window);
+static void modest_msg_edit_window_find_toolbar_close (GtkWidget *widget,
+						       ModestMsgEditWindow *window);
+
 
 /* list my signals */
 enum {
@@ -156,6 +162,8 @@ struct _ModestMsgEditWindowPrivate {
 	GtkWidget   *font_tool_button_label;
 	GSList      *size_items_group;
 	GtkWidget   *size_tool_button_label;
+	
+	GtkWidget   *find_toolbar;
 
 	GtkWidget   *scroll;
 
@@ -265,6 +273,8 @@ modest_msg_edit_window_init (ModestMsgEditWindow *obj)
 
 	priv->priority_flags = 0;
 
+	priv->find_toolbar = NULL;
+
 	priv->draft_msg = NULL;
 	priv->clipboard_change_handler_id = 0;
 }
@@ -319,6 +329,7 @@ init_window (ModestMsgEditWindow *obj)
 	GtkWidget *scroll_area;
 	GtkWidget *subject_box;
 	GtkWidget *attachment_icon;
+	GtkWidget *window_box;
 
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE(obj);
 
@@ -385,6 +396,9 @@ init_window (ModestMsgEditWindow *obj)
 /* 	gtk_text_buffer_set_can_paste_rich_text (priv->text_buffer, TRUE); */
 	wp_text_buffer_reset_buffer (WP_TEXT_BUFFER (priv->text_buffer), TRUE);
 
+	priv->find_toolbar = hildon_find_toolbar_new (NULL);
+	gtk_widget_set_no_show_all (priv->find_toolbar, TRUE);
+
 	g_signal_connect (G_OBJECT (priv->text_buffer), "refresh_attributes",
 			  G_CALLBACK (text_buffer_refresh_attributes), obj);
 	g_signal_connect (G_OBJECT (priv->text_buffer), "delete-range",
@@ -417,6 +431,9 @@ init_window (ModestMsgEditWindow *obj)
 	recpt_field_changed (modest_recpt_editor_get_buffer (MODEST_RECPT_EDITOR (priv->to_field)), MODEST_MSG_EDIT_WINDOW (obj));
 	g_signal_connect (G_OBJECT (priv->subject_field), "changed", G_CALLBACK (subject_field_changed), obj);
 
+	g_signal_connect (G_OBJECT (priv->find_toolbar), "close", G_CALLBACK (modest_msg_edit_window_find_toolbar_close), obj);
+	g_signal_connect (G_OBJECT (priv->find_toolbar), "search", G_CALLBACK (modest_msg_edit_window_find_toolbar_search), obj);
+
 	priv->scroll = gtk_scrolled_window_new (NULL, NULL);
 	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (priv->scroll), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
 	gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (priv->scroll), GTK_SHADOW_NONE);
@@ -440,7 +457,10 @@ init_window (ModestMsgEditWindow *obj)
 		gtk_widget_hide (priv->bcc_caption);
 	}
 
-	gtk_container_add (GTK_CONTAINER(obj), priv->scroll);
+	window_box = gtk_vbox_new (FALSE, 0);
+	gtk_box_pack_start (GTK_BOX (window_box), priv->scroll, TRUE, TRUE, 0);
+	gtk_box_pack_end (GTK_BOX (window_box), priv->find_toolbar, FALSE, FALSE, 0);
+	gtk_container_add (GTK_CONTAINER(obj), window_box);
 	scroll_area = modest_scroll_area_new (priv->scroll, priv->msg_body);
 	gtk_container_add (GTK_CONTAINER (frame), scroll_area);
 	gtk_container_set_focus_vadjustment (GTK_CONTAINER (scroll_area), 
@@ -457,7 +477,6 @@ modest_msg_edit_window_finalize (GObject *obj)
 {
 	ModestMsgEditWindowPrivate *priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (obj);
 
-	
 	if (priv->clipboard_change_handler_id > 0) {
 		g_signal_handler_disconnect (gtk_clipboard_get (GDK_SELECTION_PRIMARY), priv->clipboard_change_handler_id);
 		priv->clipboard_change_handler_id = 0;
@@ -2455,3 +2474,68 @@ subject_field_changed (GtkEditable *editable,
 	update_window_title (window);
 	gtk_text_buffer_set_modified (priv->text_buffer, TRUE);
 }
+
+void
+modest_msg_edit_window_toggle_find_toolbar (ModestMsgEditWindow *window,
+					    gboolean show)
+{
+	ModestMsgEditWindowPrivate *priv = NULL;
+
+	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
+	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
+
+	gtk_widget_set_no_show_all (priv->find_toolbar, FALSE);
+	if (show) {
+		gtk_widget_show_all (priv->find_toolbar);
+		hildon_find_toolbar_highlight_entry (HILDON_FIND_TOOLBAR (priv->find_toolbar), TRUE);
+	} else {
+		gtk_widget_hide_all (priv->find_toolbar);
+		gtk_widget_grab_focus (priv->msg_body);
+	}
+    
+}
+
+static void 
+modest_msg_edit_window_find_toolbar_search (GtkWidget *widget,
+					    ModestMsgEditWindow *window)
+{
+	gchar *current_search = NULL;
+	ModestMsgEditWindowPrivate *priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
+	gboolean result;
+	GtkTextIter selection_start, selection_end;
+	GtkTextIter match_start, match_end;
+
+	g_object_get (G_OBJECT (widget), "prefix", &current_search, NULL);
+	if ((current_search == NULL) && (strcmp (current_search, "") == 0)) {
+		g_free (current_search);
+		return;
+	}
+
+	gtk_text_buffer_get_selection_bounds (priv->text_buffer, &selection_start, &selection_end);
+	result = gtk_text_iter_forward_search (&selection_end, current_search, GTK_TEXT_SEARCH_VISIBLE_ONLY, &match_start, &match_end, NULL);
+	if (!result) {
+		GtkTextIter buffer_start;
+		gtk_text_buffer_get_start_iter (priv->text_buffer, &buffer_start);
+		result = gtk_text_iter_forward_search (&buffer_start, current_search, GTK_TEXT_SEARCH_VISIBLE_ONLY, &match_start, &match_end, &selection_start);
+	}
+	if (result) {
+		gtk_text_buffer_select_range (priv->text_buffer, &match_start, &match_end);
+		gtk_text_view_scroll_to_iter (GTK_TEXT_VIEW (priv->msg_body), &match_start, 0.0, TRUE, 0.0, 0.0);
+	} else {
+		/* TODO: warning about non succesful search */
+	}
+	g_free (current_search);
+}
+
+static void
+modest_msg_edit_window_find_toolbar_close (GtkWidget *widget,
+					   ModestMsgEditWindow *window)
+{
+	GtkToggleAction *toggle;
+	ModestWindowPrivate *parent_priv;
+	parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
+
+	toggle = GTK_TOGGLE_ACTION (gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/ToolsMenu/FindInMessageMenu"));
+	gtk_toggle_action_set_active (toggle, FALSE);
+}
+

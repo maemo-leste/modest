@@ -312,6 +312,15 @@ void            modest_msg_edit_window_select_contacts    (ModestMsgEditWindow *
  */
 gboolean        modest_msg_edit_window_check_names    (ModestMsgEditWindow *window);
 
+/**
+ * modest_msg_edit_window_toggle_find_toolbar:
+ * @window: a #ModestMsgEditWindow
+ * @show: a #gboolean
+ *
+ * Shows/Hides the find toolbar
+ */
+void            modest_msg_edit_window_toggle_find_toolbar (ModestMsgEditWindow *window,
+							    gboolean show);
 G_END_DECLS
 
 #endif /* __MODEST_MSG_EDIT_WINDOW_H__ */

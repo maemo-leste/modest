@@ -3039,6 +3039,14 @@ modest_ui_actions_on_search_messages (GtkAction *action, ModestWindow *window)
 	modest_platform_show_search_messages (GTK_WINDOW (window));
 }
 
+void
+modest_ui_actions_on_toggle_find_in_page (GtkToggleAction *action,
+					  ModestWindow *window)
+{
+	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
+
+	modest_msg_edit_window_toggle_find_toolbar (MODEST_MSG_EDIT_WINDOW (window), gtk_toggle_action_get_active (action));
+}
 
 static void 
 _on_send_receive_progress_changed (ModestMailOperation  *mail_op, 

@@ -91,6 +91,7 @@
     <menu name="AttachmentsMenu" action="Attachments">
       <menuitem name="AttachFileMenu" action="AttachFile"/>
       <menuitem name="InsertImageMenu" action="InsertImage"/>
+      <separator/>
       <menuitem name="RemoveAttachmentsMenu" action="RemoveAttachments"/>
     </menu>
 
