@@ -1,5 +1,11 @@
 2007-06-07  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-tny-account-store.c: (get_server_accounts): 
+	Create the local folders account only once, not once for each outbox, and 
+	not only when there are some outboxes.
+
+2007-06-07  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/widgets/modest-folder-view.c: (update_model): Comment out some 
 	code that is causing a crash at startup. Sergio says that he is fixing this.
 

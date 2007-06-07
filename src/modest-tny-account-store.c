@@ -775,6 +775,11 @@ get_server_accounts  (TnyAccountStore *self, TnyList *list, TnyAccountType type)
 			create_per_account_local_outbox_folders	(self);
 		}
 	
+		/* Also add the local folder pseudo-account: */
+		TnyAccount *tny_account =
+			modest_tny_account_new_for_local_folders (priv->account_mgr, 
+				priv->session, NULL);
+					
 		/* Add them to the TnyList: */
 		if (priv->store_accounts_outboxes) {
 			GSList *iter = NULL;
@@ -787,24 +792,18 @@ get_server_accounts  (TnyAccountStore *self, TnyList *list, TnyAccountType type)
 				accounts = g_slist_append (accounts, outbox_account);
 			}
 			
-			
-			/* Also add the local folder pseudo-account: */
-			TnyAccount *tny_account =
-				modest_tny_account_new_for_local_folders (priv->account_mgr, 
-					priv->session, NULL);
 			/* Add a merged folder, merging all the per-account outbox folders: */
 			modest_tny_local_folders_account_add_merged_outbox_folders (
 				MODEST_TNY_LOCAL_FOLDERS_ACCOUNT (tny_account), priv->store_accounts_outboxes);
 	
-			if (list)
-				tny_list_prepend (list, G_OBJECT(tny_account));
-			accounts = g_slist_append (accounts, tny_account); /* cache it */
-			
-			
 			/* We have finished with this temporary list, so free it: */
 			account_list_free (priv->store_accounts_outboxes);
 			priv->store_accounts_outboxes = NULL;
 		}
+		
+		if (list)
+			tny_list_prepend (list, G_OBJECT(tny_account));
+		accounts = g_slist_append (accounts, tny_account); /* cache it */	
 	}
 		
 	if (type == TNY_ACCOUNT_TYPE_STORE) {
