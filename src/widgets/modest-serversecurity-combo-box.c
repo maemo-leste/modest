@@ -173,7 +173,7 @@ void modest_serversecurity_combo_box_fill (ModestServersecurityComboBox *combobo
 		gtk_list_store_set (liststore, &iter, MODEL_COL_ID, (gint)MODEST_PROTOCOL_CONNECTION_SSL, MODEL_COL_NAME, _("mcen_fi_advsetup_other_security_securepop3s"), -1);
 	} else if(protocol == MODEST_PROTOCOL_STORE_IMAP) {
 		gtk_list_store_append (liststore, &iter);
-		gtk_list_store_set (liststore, &iter, MODEL_COL_ID, (gint)MODEST_PROTOCOL_CONNECTION_SSL, MODEL_COL_NAME, _("mcen_fi_advsetup_other_security_secureimap4"), -1);
+		gtk_list_store_set (liststore, &iter, MODEL_COL_ID, (gint)MODEST_PROTOCOL_CONNECTION_SSL, MODEL_COL_NAME, _("mcen_fi_advsetup_other_security_secureimap4s"), -1);
 	} else if(protocol == MODEST_PROTOCOL_TRANSPORT_SMTP) {
 		gtk_list_store_append (liststore, &iter);
 		gtk_list_store_set (liststore, &iter, MODEL_COL_ID, (gint)MODEST_PROTOCOL_CONNECTION_SSL, MODEL_COL_NAME, _("mcen_fi_advsetup_other_security_ssl"), -1);

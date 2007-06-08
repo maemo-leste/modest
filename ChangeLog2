@@ -1,5 +1,20 @@
 2007-06-08  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-tny-account-store.c: (modest_tny_account_store_alert):
+	Improve the error dialog to show Incorrect Account Settings, which seems 
+	clearer, and say that the internal error message (to be removed from the 
+	dialog later) is often misleading.
+	I have confirmed that projects.maemo.org bug NB#58543 is no longer a problem.
+	
+	* src/modest-tny-account.c:
+	(modest_tny_account_new_from_server_account): Uncomment the printf of the 
+	URL because this is so useful for debugging on the device.
+	
+	* src/widgets/modest-serversecurity-combo-box.c:
+	(modest_serversecurity_combo_box_fill): Correct a logical ID.
+
+2007-06-08  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/modest-mail-operation.c:
 	(modest_mail_operation_send_new_mail):
 	Added a comment about a nasty but apparently harmless message. Details 

@@ -319,9 +319,10 @@ modest_tny_account_new_from_server_account (ModestAccountMgr *account_mgr,
 			tny_account_set_port (tny_account, account_data->port);
 	}
 
-	/* FIXME: for debugging */
+	/* FIXME: for debugging. 
+	 * Let's keep this because it is very useful for debugging. */
 	url = tny_account_get_url_string (TNY_ACCOUNT(tny_account));
-/* 	g_message ("modest: %s:\n  account-url: %s", __FUNCTION__, url); */
+ 	printf ("DEBUG %s:\n  account-url: %s\n", __FUNCTION__, url);
 	g_free (url);
 	/***********************/
 	

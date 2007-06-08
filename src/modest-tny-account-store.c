@@ -923,6 +923,8 @@ static gboolean
 modest_tny_account_store_alert (TnyAccountStore *self, TnyAlertType type,
 				gboolean question, const GError *error)
 {
+	/* TODO: It would be nice to know what account caused this error. */
+	
 	g_return_val_if_fail (error, FALSE);
 
 	if ((error->domain != TNY_ACCOUNT_ERROR) 
@@ -942,7 +944,10 @@ modest_tny_account_store_alert (TnyAccountStore *self, TnyAlertType type,
 		/* The tinymail camel implementation just sends us this for almost 
 		 * everything, so we have to guess at the cause.
 		 * It could be a wrong password, or inability to resolve a hostname, 
-		 * or lack of network, or something entirely different: */
+		 * or lack of network, or incorrect authentication method, or something entirely different: */
+		/* TODO: Fix camel to provide specific error codes, and then use the 
+		 * specific dialog messages from Chapter 12 of the UI spec.
+		 */
 		case TNY_ACCOUNT_STORE_ERROR_UNKNOWN_ALERT: 
 		    g_debug ("%s: Handling GError domain=%d, code=%d, message=%s", 
 				__FUNCTION__, error->domain, error->code, error->message);
@@ -950,7 +955,9 @@ modest_tny_account_store_alert (TnyAccountStore *self, TnyAlertType type,
 			/* TODO: Remove the internal error message for the real release.
 			 * This is just so the testers can give us more information: */
 			/* prompt = _("Modest account not yet fully configured."); */
-			prompt = g_strdup_printf(_("Modest account not yet fully configured. Error=%s"), 
+			prompt = g_strdup_printf(
+				"%s\n (Internal error message, often very misleading:\n%s", 
+				_("Incorrect Account Settings"), 
 				error->message);
 				
 			/* TODO: If we can ever determine that the problem is a wrong password:
@@ -986,7 +993,7 @@ modest_tny_account_store_alert (TnyAccountStore *self, TnyAlertType type,
 			break;
 			
 		//TODO: We have started receiving errors of 
-		//domain=TNY_ACCOUNT_ERROR, code=TNY_ACCOUNT_ERROR_TRY_CONNECT, messagae="Canceled".
+		//domain=TNY_ACCOUNT_ERROR, code=TNY_ACCOUNT_ERROR_TRY_CONNECT, message="Canceled".
 		//If this is really a result of us cancelling our own operation then 
 		//a) this probably shouldn't be an error, and
 		//b) should have its own error code.
