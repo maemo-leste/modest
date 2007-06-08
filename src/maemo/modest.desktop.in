@@ -20,8 +20,8 @@ MimeType=application/x-executable;
 #
 # below to be activated when dbus/send to functionality works
 #
-#X-Osso-URI-Actions=mailto
-#[X-Osso-URI-Action Handler mailto]
-#Methods=send_mailto
-#Name=uri_link_compose_email
-#TranslationDomain=osso-uri
+X-Osso-URI-Actions=mailto;
+[X-Osso-URI-Action Handler mailto]
+Method=MailTo
+Name=uri_link_compose_email
+TranslationDomain=osso-uri

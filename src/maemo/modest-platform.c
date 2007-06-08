@@ -49,6 +49,8 @@
 #include <string.h>
 
 
+#define HILDON_OSSO_URI_ACTION "uri-action"
+
 static osso_context_t *osso_context = NULL;
 	
 static void	
@@ -295,20 +297,24 @@ activate_uri_popup_item (GtkMenuItem *menu_item,
 {
 	GSList *node;
 	ModestPlatformPopupInfo *popup_info = (ModestPlatformPopupInfo *) userdata;
-	GtkWidget *label;
+	const gchar* action_name;
 
-	label = gtk_bin_get_child (GTK_BIN (menu_item));
-
+	action_name = g_object_get_data (G_OBJECT(menu_item), HILDON_OSSO_URI_ACTION);
+	if (!action_name) {
+		g_printerr ("modest: no action name defined\n");
+		return;
+	}
+	
 	for (node = popup_info->actions; node != NULL; node = g_slist_next (node)) {
 #ifdef MODEST_HILDON_VERSION_0
 		OssoURIAction *action = (OssoURIAction *) node->data;
-		if (strcmp (gtk_label_get_text (GTK_LABEL(label)), osso_uri_action_get_name (action))==0) {
+		if (strcmp (action_name, osso_uri_action_get_name (action))==0) {
 			osso_uri_open (popup_info->uri, action, NULL);
 			break;
 		}
 #else
 		HildonURIAction *action = (HildonURIAction *) node->data;
-		if (strcmp (gtk_label_get_text (GTK_LABEL(label)), hildon_uri_action_get_name (action))==0) {
+		if (strcmp (action_name, hildon_uri_action_get_name (action))==0) {
 			hildon_uri_open (popup_info->uri, action, NULL);
 			break;
 		}
@@ -341,13 +347,15 @@ modest_platform_show_uri_popup (const gchar *uri)
 	      
 		for (node = actions_list; node != NULL; node = g_slist_next (node)) {
 			GtkWidget *menu_item;
-
+			const gchar* action_name;
 #ifdef MODEST_HILDON_VERSION_0
-			OssoURIAction *action;
-
-			action = (OssoURIAction *) node->data;
-			menu_item = gtk_menu_item_new_with_label (osso_uri_action_get_name (action));
-			g_signal_connect (G_OBJECT (menu_item), "activate", G_CALLBACK (activate_uri_popup_item), popup_info);
+			OssoURIAction *action = (OssoURIAction *) node->data;
+			action_name = osso_uri_action_get_name (action);		
+			menu_item = gtk_menu_item_new_with_label (dgettext("osso-uri",action_name));
+			g_object_set_data (G_OBJECT(menu_item), HILDON_OSSO_URI_ACTION, (gpointer)action_name);
+			/* hack, we add it as a gobject property*/
+			g_signal_connect (G_OBJECT (menu_item), "activate", G_CALLBACK (activate_uri_popup_item),
+					  popup_info);
 			
 			if (osso_uri_is_default_action (action, NULL)) {
 				gtk_menu_shell_prepend (GTK_MENU_SHELL (menu), menu_item);
@@ -355,28 +363,29 @@ modest_platform_show_uri_popup (const gchar *uri)
 				gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_item);
 			}
 #else
-			HildonURIAction *action;
-
-			action = (HildonURIAction *) node->data;
-			menu_item = gtk_menu_item_new_with_label (hildon_uri_action_get_name (action));
-			g_signal_connect (G_OBJECT (menu_item), "activate", G_CALLBACK (activate_uri_popup_item), popup_info);
-			
+			HildonURIAction *action = (HildonURIAction *) node->data;
+			action_name = hildon_uri_action_get_name (action);
+			menu_item = gtk_menu_item_new_with_label (dgettext("osso-uri", action_name));
+			g_object_set_data (G_OBJECT(menu_item), HILDON_OSSO_URI_ACTION, (gpointer)action_name);  /* hack */
+			g_signal_connect (G_OBJECT (menu_item), "activate", G_CALLBACK (activate_uri_popup_item),
+					  popup_info);
+								  
 			if (hildon_uri_is_default_action (action, NULL)) {
 				gtk_menu_shell_prepend (GTK_MENU_SHELL (menu), menu_item);
 			} else {
 				gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_item);
 			}
-#endif
-
+#endif	
 			gtk_widget_show (menu_item);
 		}
+		
 		g_signal_connect (G_OBJECT (menu), "delete-event", G_CALLBACK (delete_uri_popup), popup_info);
 		gtk_menu_popup (GTK_MENU(menu), NULL, NULL, NULL, NULL, 1, gtk_get_current_event_time ());
 						  
 	} else {
 		hildon_banner_show_information (NULL, NULL, _("mcen_ib_unsupported_link"));
 	}
-		
+	
 	g_free (scheme);
 	return TRUE;
 }
