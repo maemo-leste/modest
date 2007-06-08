@@ -50,23 +50,49 @@ enum {
 static GObjectClass *parent_class = NULL;
 static guint signals[LAST_SIGNAL] = {0};
 
+/* We signal key changes in batches, every X seconds: */
+static gboolean
+on_timeout_notify_changes (gpointer data)
+{
+	ModestAccountMgr *self = MODEST_ACCOUNT_MGR (data);
+	ModestAccountMgrPrivate *priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
+	
+	/* TODO: Also store the account names, and notify one list for each account,
+	 * if anything uses the account names. */
+	
+	if (priv->changed_conf_keys) {
+		gchar *default_account =
+				modest_account_mgr_get_default_account (self);
+		
+		g_signal_emit (G_OBJECT(self), signals[ACCOUNT_CHANGED_SIGNAL], 0,
+				 default_account, priv->changed_conf_keys, FALSE);
+			
+		g_free (default_account);
+		
+		g_slist_free (priv->changed_conf_keys);
+		priv->changed_conf_keys = NULL;
+	}
+	
+	return TRUE; /* Call this again later. */
+}
+
 static void
 on_key_change (ModestConf *conf, const gchar *key, ModestConfEvent event, gpointer user_data)
 {
 	/* printf("DEBUG: %s: key=%s\n", __FUNCTION__, key); */
 	
 	ModestAccountMgr *self = MODEST_ACCOUNT_MGR (user_data);
-	/* ModestAccountMgrPrivate *priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self); */
+	ModestAccountMgrPrivate *priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
 
 	/* there is only one not-really-account key which will still emit
 	 * a signal: a change in MODEST_CONF_DEFAULT_ACCOUNT */
 	if (key && strcmp (key, MODEST_CONF_DEFAULT_ACCOUNT) == 0) {
-		gchar *default_account =
-			modest_account_mgr_get_default_account (self);
-		g_signal_emit (G_OBJECT(self), signals[ACCOUNT_CHANGED_SIGNAL], 0,
-			       default_account, key, FALSE);
-		g_free (default_account);
-		return;
+		/* Get the default account instead. */
+		
+		/* Store the key for later notification in our timeout callback.
+		 * Notifying for every key change would cause unnecessary work: */
+		priv->changed_conf_keys = g_slist_append (NULL, 
+			(gpointer)key);
 	}
 	
 	gboolean is_account_key = FALSE;
@@ -97,9 +123,12 @@ on_key_change (ModestConf *conf, const gchar *key, ModestConfEvent event, gpoint
 	 */
 	if (enabled ||
 	    g_str_has_suffix (key, MODEST_ACCOUNT_ENABLED) ||
-	    strcmp (key, MODEST_CONF_DEFAULT_ACCOUNT) == 0)
-		g_signal_emit (G_OBJECT(self), signals[ACCOUNT_CHANGED_SIGNAL], 0,
-			       account, key, is_server_account);
+	    strcmp (key, MODEST_CONF_DEFAULT_ACCOUNT) == 0) {
+		/* Store the key for later notification in our timeout callback.
+		 * Notifying for every key change would cause unnecessary work: */
+		priv->changed_conf_keys = g_slist_append (NULL, 
+			(gpointer)key);
+	}
 
 	g_free (account);
 }
@@ -159,7 +188,7 @@ modest_account_mgr_class_init (ModestAccountMgrClass * klass)
 			      G_STRUCT_OFFSET(ModestAccountMgrClass,account_changed),
 			      NULL, NULL,
 			      modest_marshal_VOID__STRING_STRING_BOOLEAN,
-			      G_TYPE_NONE, 3, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_BOOLEAN);
+			      G_TYPE_NONE, 3, G_TYPE_STRING, G_TYPE_POINTER, G_TYPE_BOOLEAN);
 }
 
 
@@ -170,18 +199,26 @@ modest_account_mgr_init (ModestAccountMgr * obj)
 		MODEST_ACCOUNT_MGR_GET_PRIVATE (obj);
 
 	priv->modest_conf = NULL;
+	
+	priv->timeout = g_timeout_add (1000 /* milliseconds */, on_timeout_notify_changes, obj);
 }
 
 static void
 modest_account_mgr_finalize (GObject * obj)
 {
-	ModestAccountMgrPrivate *priv =
+	ModestAccountMgrPrivate *priv = 
 		MODEST_ACCOUNT_MGR_GET_PRIVATE (obj);
 
 	if (priv->modest_conf) {
 		g_object_unref (G_OBJECT(priv->modest_conf));
 		priv->modest_conf = NULL;
 	}
+	
+	if (priv->timeout)
+		g_source_remove (priv->timeout);
+		
+	if (priv->changed_conf_keys)
+		g_slist_free (priv->changed_conf_keys);
 
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }

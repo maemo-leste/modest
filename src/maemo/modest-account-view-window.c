@@ -166,10 +166,6 @@ on_delete_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 		gboolean removed;
 		GtkWidget *dialog;
 		gchar *txt;
-
-		/* Freeze updates, so we can do just one update afterwards, 
-		 * instead of responding to every conf key change: */
-		modest_account_view_block_conf_updates (priv->account_view);
 		
 		dialog = gtk_dialog_new_with_buttons (_("Confirmation dialog"),
 						      GTK_WINDOW (self),
@@ -215,9 +211,6 @@ on_delete_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 		gtk_widget_destroy (dialog);
 		g_free (account_title);
 		g_free (account_name);
-		
-		/* Update the view: */
-		modest_account_view_unblock_conf_updates (priv->account_view);
 	}
 }
 
@@ -248,10 +241,6 @@ on_edit_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 			return;
 	}
 		
-	/* Freeze updates, so we can do just one update afterwards, 
-	 * instead of responding to every conf key change: */
-	modest_account_view_block_conf_updates (priv->account_view);
-		
 	/* Show the Account Settings window: */
 	ModestAccountSettingsDialog *dialog = modest_account_settings_dialog_new ();
 	modest_account_settings_dialog_set_account_name (dialog, account_name);
@@ -261,31 +250,16 @@ on_edit_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 	gtk_widget_destroy (GTK_WIDGET (dialog));
 	
 	g_free (account_name);
-	
-	/* Update the view: */
-	modest_account_view_unblock_conf_updates (priv->account_view);
-	
-	/* TODO: Call modest_account_view_select_account() when 
-	 * the view has actually been update. */
 }
 
 static void
 on_new_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 {
-	ModestAccountViewWindowPrivate *priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE(self);
-	
-	/* Freeze updates, so we can do just one update afterwards, 
-	 * instead of responding to every conf key change: */
-	modest_account_view_block_conf_updates (priv->account_view);
-	
 	/* Show the easy-setup wizard: */
 	ModestEasysetupWizardDialog *wizard = modest_easysetup_wizard_dialog_new ();
 	gtk_window_set_transient_for (GTK_WINDOW (wizard), GTK_WINDOW (self));
 	gtk_dialog_run (GTK_DIALOG (wizard));
 	gtk_widget_destroy (GTK_WIDGET (wizard));
-	
-	/* Allow updates: */
-	modest_account_view_unblock_conf_updates (priv->account_view);
 }
 
 

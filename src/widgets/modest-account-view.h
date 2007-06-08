@@ -94,27 +94,10 @@ gchar*   modest_account_view_get_selected_account    (ModestAccountView *account
  * 
  * Sets the currently selected account.
  **/
+/* Not used outside:
 void modest_account_view_select_account (ModestAccountView *account_view, 
 	const gchar* account_name);
-
-/** 
- * modest_account_view_block_conf_updates
- * @account_view: a #ModestAccountView
- * 
- * Stops the widget from updating in response to configuration key changes.
- * This can be a useful optimization when making many configuration changes.
- **/
-void modest_account_view_block_conf_updates    (ModestAccountView *account_view);
-
-/** 
- * modest_account_view_unblock_conf_updates
- * @account_view: a #ModestAccountView
- * 
- * Allows the widget tp update again in response to configuration key changes.
- * When this is called it will cause the widget to immediately update its view from the 
- * configuration data.
- **/
-void modest_account_view_unblock_conf_updates    (ModestAccountView *account_view);
+*/
 
 G_END_DECLS
 

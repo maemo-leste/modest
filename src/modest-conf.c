@@ -355,7 +355,8 @@ modest_conf_set_list (ModestConf* self, const gchar* key,
 	       
 		if(debug_list_length_start != debug_list_length_after)
 			g_warning("modest_conf_set_list(): The list length after setting is "
-				  "not the same as the specified list. key=%s", key);
+				  "not the same as the specified list. key=%s. "
+				  "We think that we fixed this, so tell us if you see this.", key);
 		g_slist_free(debug_list);
 	}
 
@@ -456,15 +457,6 @@ static void
 modest_conf_on_change (GConfClient *client, guint conn_id, GConfEntry *entry,
 		       gpointer data)
 {
-	/*
-	 * on maemo, there's a nasty bug in gconf, which makes it really
-	 * slow, for updates and notifications. as an ugly hack, we turn off all
-	 * gconf-based notifications, and send them ourselves, a short time
-	 * after we do a change. this does not work for non-modest-conf
-	 * changes of course...
-	 */
-#ifndef MODEST_PLATFORM_MAEMO
-
 	ModestConfEvent event;
 	const gchar* key;
 
@@ -474,7 +466,6 @@ modest_conf_on_change (GConfClient *client, guint conn_id, GConfEntry *entry,
 	g_signal_emit (G_OBJECT(data),
 		       signals[KEY_CHANGED_SIGNAL], 0,
 		       key, event);
-#endif /*!MODEST_PLATFORM_MAEMO*/
 }
 
 
@@ -509,13 +500,14 @@ modest_conf_type_to_gconf_type (ModestConfValueType value_type, GError **err)
 
 ////////////////////////////////////////////////////////////////////////////////
 /* workaround for the b0rked dbus-gconf on maemo */
-/* fires a fake change notification after 0.3 secs */
+/* fires a fake change notification after 0.3 secs.
+ * Might not be necessary anymore. */
+#if 0
 #ifdef MODEST_PLATFORM_MAEMO
 typedef struct {
 	GObject *obj;
 	gchar   *key;
 } ChangeHelper;
-
 
 ChangeHelper*
 change_helper_new (ModestConf *conf, const gchar *key)
@@ -560,10 +552,13 @@ emit_remove_cb (ChangeHelper *helper)
 	return FALSE;
 }
 #endif /* MODEST_PLATFORM_MAEMO */
+#endif
 	
 static void
 modest_conf_maemo_fake_on_change (ModestConf *conf, const gchar* key, ModestConfEvent event)
 {
+/* hack for faster notification, might not be necessary anymore: */
+#if 0
 #ifdef MODEST_PLATFORM_MAEMO
 
 	ChangeHelper *helper = change_helper_new (conf,key); 
@@ -571,6 +566,7 @@ modest_conf_maemo_fake_on_change (ModestConf *conf, const gchar* key, ModestConf
 		       (event == MODEST_CONF_EVENT_KEY_CHANGED)
 		       ? (GSourceFunc)emit_change_cb : (GSourceFunc)emit_remove_cb,
 		       (gpointer)helper);
-#endif /*MODEST_PLATFORM_MAEMO*/
+#endif /* MODEST_PLATFORM_MAEMO */
+#endif 
 }
 //////////////////////////////////////////////////////////////////////////////////

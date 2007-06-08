@@ -46,6 +46,8 @@ static void modest_account_view_class_init    (ModestAccountViewClass *klass);
 static void modest_account_view_init          (ModestAccountView *obj);
 static void modest_account_view_finalize      (GObject *obj);
 
+static void modest_account_view_select_account (ModestAccountView *account_view, 
+	const gchar* account_name);
 
 typedef enum {
 	MODEST_ACCOUNT_VIEW_NAME_COLUMN,
@@ -162,7 +164,14 @@ update_account_view (ModestAccountMgr *account_mgr, ModestAccountView *view)
 	GSList *account_names, *cursor;
 	GtkListStore *model;
 		
-	model = GTK_LIST_STORE(gtk_tree_view_get_model (GTK_TREE_VIEW(view)));	
+	model = GTK_LIST_STORE(gtk_tree_view_get_model (GTK_TREE_VIEW(view)));
+	
+	/* Get the ID of the currently-selected account, 
+	 * so we can select it again after rebuilding the list.
+	 * Note that the name doesn't change even when the display name changes.
+	 */
+	gchar *selected_name = modest_account_view_get_selected_account (view);
+
 	gtk_list_store_clear (model);
 
 	/* Note: We do not show disabled accounts.
@@ -227,12 +236,18 @@ update_account_view (ModestAccountMgr *account_mgr, ModestAccountView *view)
 		cursor = cursor->next;
 	}
 	g_slist_free (account_names);
+	
+	/* Try to re-select the same account: */
+	if (selected_name) {
+		modest_account_view_select_account (view, selected_name);
+		g_free (selected_name);
+	}
 }
 
 
 static void
 on_account_changed (ModestAccountMgr *account_mgr,
-		    const gchar* account, const gchar* key,
+		    const gchar* account, GSList *keys,
 		    gboolean server_account, ModestAccountView *self)
 {	
 	/* Never update the view in response to gconf changes.
@@ -244,12 +259,8 @@ on_account_changed (ModestAccountMgr *account_mgr,
 	 * notification does not happen so long after the key was set.
 	 * (We have no way to know when the last key was set, to do a final update)..
 	 */
-	 return;
 	 
-	ModestAccountViewPrivate* priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE(self);
-	
-	if (!priv->block_conf_updates)
-		update_account_view (account_mgr, self);
+	update_account_view (account_mgr, self);
 }
 
 
@@ -258,9 +269,7 @@ on_account_removed (ModestAccountMgr *account_mgr,
 		    const gchar* account, gboolean server_account,
 		    ModestAccountView *self)
 {
-	ModestAccountViewPrivate* priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE(self);
-	if (!priv->block_conf_updates)
-		on_account_changed (account_mgr, account, NULL, server_account, self);
+	on_account_changed (account_mgr, account, NULL, server_account, self);
 }
 
 
@@ -515,7 +524,7 @@ on_model_foreach_select_account(GtkTreeModel *model,
 	return FALSE; /* Keep walking the tree. */
 }
 
-void modest_account_view_select_account (ModestAccountView *account_view, 
+static void modest_account_view_select_account (ModestAccountView *account_view, 
 	const gchar* account_name)
 {	
 	/* Create a state instance so we can send two items of data to the signal handler: */
@@ -531,18 +540,3 @@ void modest_account_view_select_account (ModestAccountView *account_view,
 	g_free (state);
 }
 
-
-
-void modest_account_view_block_conf_updates (ModestAccountView *account_view)
-{
-	ModestAccountViewPrivate* priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE(account_view);
-	priv->block_conf_updates = TRUE;
-}
-
-void modest_account_view_unblock_conf_updates (ModestAccountView *account_view)
-{
-	ModestAccountViewPrivate* priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE(account_view);
-	priv->block_conf_updates = FALSE;
-	
-	update_account_view (modest_runtime_get_account_mgr(), account_view);
-}

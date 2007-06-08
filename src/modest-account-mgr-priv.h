@@ -49,6 +49,10 @@ gchar * _modest_account_mgr_get_account_keyname (const gchar *account_name, cons
 typedef struct _ModestAccountMgrPrivate ModestAccountMgrPrivate;
 struct _ModestAccountMgrPrivate {
 	ModestConf        *modest_conf;
+	
+	/* We store these as they change, and send notifications every X seconds: */
+	GSList *changed_conf_keys; 
+	guint timeout;
 };
 
 #define MODEST_ACCOUNT_MGR_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
