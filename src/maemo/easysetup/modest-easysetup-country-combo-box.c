@@ -27,7 +27,10 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE /* So we can use the getline() function, which is a convenient GNU extension. */
+#endif
+
 #include <stdio.h>
 
 #include "modest-easysetup-country-combo-box.h"

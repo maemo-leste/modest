@@ -4,7 +4,9 @@
 #include <glib.h>
 #include <tny-folder.h>
 
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE
+#endif
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>

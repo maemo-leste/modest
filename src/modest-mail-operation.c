@@ -820,6 +820,7 @@ update_account_thread (gpointer thr_user_data)
 	ModestMailOperationPrivate *priv;
 	ModestTnySendQueue *send_queue;
 
+
 	info = (UpdateAccountInfo *) thr_user_data;
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(info->mail_op);
 
@@ -879,12 +880,13 @@ update_account_thread (gpointer thr_user_data)
 		 * We use the blocking version, because we are already in a separate 
 		 * thread.
 		 */
-		tny_folder_refresh (TNY_FOLDER (folder), &(priv->error));
 
 		/* If the retrieve type is headers only do nothing more */
 		if (!g_ascii_strcasecmp (info->retrieve_type, MODEST_ACCOUNT_RETRIEVE_VALUE_MESSAGES) || 
 		    !g_ascii_strcasecmp (info->retrieve_type, MODEST_ACCOUNT_RETRIEVE_VALUE_MESSAGES_AND_ATTACHMENTS)) {
 			TnyIterator *iter;
+
+			tny_folder_refresh (TNY_FOLDER (folder), &(priv->error));
 
 			iter = tny_list_create_iterator (observer->new_headers);
 			while (!tny_iterator_is_done (iter)) {
@@ -902,7 +904,8 @@ update_account_thread (gpointer thr_user_data)
 				tny_iterator_next (iter);
 			}
 			g_object_unref (iter);
-		}
+		} else
+			tny_folder_poke_status (TNY_FOLDER (folder));
 		
 		tny_folder_remove_observer (TNY_FOLDER (folder), TNY_FOLDER_OBSERVER (observer));
 		g_object_unref (observer);
