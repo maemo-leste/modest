@@ -488,6 +488,7 @@ modest_mail_operation_send_new_mail (ModestMailOperation *self,
 {
 	TnyMsg *new_msg = NULL;
 	TnyFolder *folder = NULL;
+	TnyHeader *header = NULL;
 	ModestMailOperationPrivate *priv = NULL;
 
 	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
@@ -518,8 +519,9 @@ modest_mail_operation_send_new_mail (ModestMailOperation *self,
 		return;
 	}
 
-	/* TODO: add priority handling. It's received in the priority_flags operator, and
-	   it should have effect in the sending operation */
+	/* Set priority flags in message */
+	header = tny_msg_get_header (new_msg);
+	tny_header_set_flags (header, priority_flags);
 
 	/* Call mail operation */
 	modest_mail_operation_send_mail (self, transport_account, new_msg);
@@ -527,7 +529,7 @@ modest_mail_operation_send_new_mail (ModestMailOperation *self,
 	folder = modest_tny_account_get_special_folder (TNY_ACCOUNT (transport_account), TNY_FOLDER_TYPE_DRAFTS);
 	if (folder) {
 		if (draft_msg != NULL) {
-			TnyHeader *header = tny_msg_get_header (draft_msg);
+			header = tny_msg_get_header (draft_msg);
 			tny_folder_remove_msg (folder, header, NULL);
 			g_object_unref (header);
 		}
@@ -550,6 +552,7 @@ modest_mail_operation_save_to_drafts (ModestMailOperation *self,
 {
 	TnyMsg *msg = NULL;
 	TnyFolder *folder = NULL;
+	TnyHeader *header = NULL;
 	ModestMailOperationPrivate *priv = NULL;
 
 	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
@@ -572,6 +575,10 @@ modest_mail_operation_save_to_drafts (ModestMailOperation *self,
 		goto end;
 	}
 
+	/* add priority flags */
+	header = tny_msg_get_header (msg);
+	tny_header_set_flags (header, priority_flags);
+
 	folder = modest_tny_account_get_special_folder (TNY_ACCOUNT (transport_account), TNY_FOLDER_TYPE_DRAFTS);
 	if (!folder) {
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
@@ -581,7 +588,7 @@ modest_mail_operation_save_to_drafts (ModestMailOperation *self,
 	}
 
 	if (draft_msg != NULL) {
-		TnyHeader *header = tny_msg_get_header (draft_msg);
+		header = tny_msg_get_header (draft_msg);
 		tny_folder_remove_msg (folder, header, NULL);
 		g_object_unref (header);
 	}
