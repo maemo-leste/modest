@@ -809,6 +809,21 @@ compare_headers_by_date (gconstpointer a,
 		return -1;
 }
 
+static gboolean 
+set_last_updated_idle (gpointer data)
+{
+	/* It does not matter if the time is not exactly the same than
+	   the time when this idle was called, it's just an
+	   approximation and it won't be very different */
+	modest_account_mgr_set_int (modest_runtime_get_account_mgr (), 
+				    (gchar *) data, 
+				    MODEST_ACCOUNT_LAST_UPDATED, 
+				    time(NULL), 
+				    TRUE);
+
+	return FALSE;
+}
+
 static gpointer
 update_account_thread (gpointer thr_user_data)
 {
@@ -1000,12 +1015,13 @@ update_account_thread (gpointer thr_user_data)
 	if (!priv->error) {
 		priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
 
-		/* Update the last updated key */
-		modest_account_mgr_set_int (modest_runtime_get_account_mgr (), 
-					    tny_account_get_id (TNY_ACCOUNT (info->account)), 
-					    MODEST_ACCOUNT_LAST_UPDATED, 
-					    time(NULL), 
-					    TRUE);
+		/* Update the last updated key. TODO: this causes
+		   sometimes an error in dbus, in order to fix this we
+		   must call gconf from the main loop */
+		g_idle_add_full (G_PRIORITY_HIGH_IDLE, 
+				 set_last_updated_idle, 
+				 g_strdup (tny_account_get_id (TNY_ACCOUNT (info->account))),
+				 (GDestroyNotify) g_free);
 	}
 
  out:

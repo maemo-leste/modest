@@ -103,9 +103,11 @@ on_key_change (ModestConf *conf, const gchar *key, ModestConfEvent event, gpoint
 	if (!account)
 		return;
 
-	/* account was removed -- emit this, even if the account was disabled */
+	/* account was removed -- emit this, even if the account was
+	   disabled. This should not happen unless the user directly
+	   does it in gconf */
 	if (is_account_key && event == MODEST_CONF_EVENT_KEY_UNSET) {
-		g_signal_emit (G_OBJECT(self), signals[ACCOUNT_REMOVED_SIGNAL], 0,
+		g_signal_emit (G_OBJECT(self), signals[ACCOUNT_REMOVED_SIGNAL], 0, 
 			       account, is_server_account);
 		g_free (account);
 		return;
@@ -514,7 +516,7 @@ modest_account_mgr_add_server_account_uri (ModestAccountMgr * self,
 
 gboolean
 modest_account_mgr_remove_account (ModestAccountMgr * self,
-				   const gchar * name,  gboolean server_account)
+				   const gchar* name,  gboolean server_account)
 {
 	ModestAccountMgrPrivate *priv;
 	gchar *key;
@@ -529,7 +531,15 @@ modest_account_mgr_remove_account (ModestAccountMgr * self,
 		return FALSE;
 	}
 
-	/* in case we're not deleting an account, also delete the dependent store and transport account */
+	/* Notify the observers. We need to do that here because they
+	   could need to use the configuration keys before deleting
+	   them, i.e., the account store will delete the cache. We
+	   only notify about removals of modest accounts */
+	if (!server_account)
+		g_signal_emit (G_OBJECT(self), signals[ACCOUNT_REMOVED_SIGNAL], 0, 
+			       name, server_account);
+
+	/* in case we're deleting an account, also delete the dependent store and transport account */
 	if (!server_account) {
 		gchar *server_account_name;
 		
@@ -1059,5 +1069,94 @@ modest_account_mgr_unset (ModestAccountMgr *self, const gchar *name,
 		retval = FALSE;
 	}
 	g_free (keyname);
+	return retval;
+}
+
+gchar*
+_modest_account_mgr_account_from_key (const gchar *key, gboolean *is_account_key, gboolean *is_server_account)
+{
+	/* Initialize input parameters: */
+	if (is_account_key)
+		*is_account_key = FALSE;
+
+	if (is_server_account)
+		*is_server_account = FALSE;
+
+	const gchar* account_ns        = MODEST_ACCOUNT_NAMESPACE "/";
+	const gchar* server_account_ns = MODEST_SERVER_ACCOUNT_NAMESPACE "/";
+	gchar *cursor;
+	gchar *account = NULL;
+
+	/* determine whether it's an account or a server account,
+	 * based on the prefix */
+	if (g_str_has_prefix (key, account_ns)) {
+
+		if (is_server_account)
+			*is_server_account = FALSE;
+		
+		account = g_strdup (key + strlen (account_ns));
+
+	} else if (g_str_has_prefix (key, server_account_ns)) {
+
+		if (is_server_account)
+			*is_server_account = TRUE;
+		
+		account = g_strdup (key + strlen (server_account_ns));	
+	} else
+		return NULL;
+
+	/* if there are any slashes left in the key, it's not
+	 * the toplevel entry for an account
+	 */
+	cursor = strstr(account, "/");
+	
+	if (is_account_key && cursor)
+		*is_account_key = TRUE;
+
+	/* put a NULL where the first slash was */
+	if (cursor)
+		*cursor = '\0';
+
+	if (account) {
+		/* The key is an escaped string, so unescape it to get the actual account name: */
+		gchar *unescaped_name = modest_conf_key_unescape (account);
+		g_free (account);
+		return unescaped_name;
+	} else
+		return NULL;
+}
+
+
+
+/* must be freed by caller */
+gchar *
+_modest_account_mgr_get_account_keyname (const gchar *account_name, const gchar * name, gboolean server_account)
+{
+	gchar *retval = NULL;
+	
+	gchar *namespace = server_account ? MODEST_SERVER_ACCOUNT_NAMESPACE : MODEST_ACCOUNT_NAMESPACE;
+	
+	if (!account_name)
+		return g_strdup (namespace);
+	
+	/* Always escape the conf keys, so that it is acceptable to gconf: */
+	gchar *escaped_account_name = account_name ? modest_conf_key_escape (account_name) : NULL;
+	gchar *escaped_name =  name ? modest_conf_key_escape (name) : NULL;
+
+	if (escaped_account_name && escaped_name)
+		retval = g_strconcat (namespace, "/", escaped_account_name, "/", escaped_name, NULL);
+	else if (escaped_account_name)
+		retval = g_strconcat (namespace, "/", escaped_account_name, NULL);
+
+	/* Sanity check: */
+	if (!modest_conf_key_is_valid (retval)) {
+		g_warning ("%s: Generated conf key was invalid: %s", __FUNCTION__, retval);
+		g_free (retval);
+		retval = NULL;
+	}
+
+	g_free (escaped_name);
+	g_free (escaped_account_name);
+
 	return retval;
 }

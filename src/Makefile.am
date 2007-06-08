@@ -33,7 +33,6 @@ bin_PROGRAMS=\
 modest_SOURCES=\
 	modest-account-mgr-helpers.c\
 	modest-account-mgr-helpers.h\
-	modest-account-mgr-priv.c\
 	modest-account-mgr-priv.h\
 	modest-account-mgr.c\
 	modest-account-mgr.h\

@@ -317,16 +317,29 @@ on_vfs_volume_unmounted(GnomeVFSVolumeMonitor *volume_monitor,
 }
 
 static void
-on_account_removed (ModestAccountMgr *acc_mgr, const gchar *account, gboolean server_account,
+on_account_removed (ModestAccountMgr *acc_mgr, 
+		    const gchar *account,
+		    gboolean server_account,
 		    gpointer user_data)
 {
 	ModestTnyAccountStore *self = MODEST_TNY_ACCOUNT_STORE(user_data);
-	
-	/* FIXME: make this more finegrained; changes do not really affect _all_
-	 * accounts, and some do not affect tny accounts at all (such as 'last_update')
+	TnyAccount *store_account;
+
+	/* Clear the account cache */
+	store_account =
+		modest_tny_account_store_get_server_account (self,
+							     account,
+							     TNY_ACCOUNT_TYPE_STORE);
+	if (store_account) {
+		tny_store_account_delete_cache (TNY_STORE_ACCOUNT (store_account));
+		g_object_unref (store_account);
+	}
+
+	/* FIXME: make this more finegrained; changes do not
+	 * really affect _all_ accounts, and some do not
+	 * affect tny accounts at all (such as 'last_update')
 	 */
-	if (server_account)
-		recreate_all_accounts (self);
+	recreate_all_accounts (self);
 	
 	g_signal_emit (G_OBJECT(self), signals[ACCOUNT_UPDATE_SIGNAL], 0,
 		       account);
