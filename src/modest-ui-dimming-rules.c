@@ -47,6 +47,7 @@ static gboolean _selected_folder_is_any_of_type (ModestMainWindow *win, TnyFolde
 static gboolean _selected_folder_is_root (ModestMainWindow *win);
 static gboolean _selected_folder_is_empty (ModestMainWindow *win);
 static gboolean _msg_download_in_progress (ModestMsgViewWindow *win);
+static gboolean _msg_download_completed (ModestMainWindow *win);
 static gboolean _msg_sent_in_progress (ModestWindow *win);
 static gboolean _marked_as_deleted (ModestWindow *win);
 
@@ -155,7 +156,8 @@ modest_ui_dimming_rules_on_open_msg (ModestWindow *win, gpointer user_data)
 		dimmed = _invalid_msg_selected (MODEST_MAIN_WINDOW(win), TRUE, user_data);
 	if (!dimmed) {
 		dimmed = _msg_sent_in_progress (win);
-		modest_dimming_rule_set_notification (rule, _("TEST"));
+		if (dimmed)
+			modest_dimming_rule_set_notification (rule, _("TEST"));
 	}
 
 	return dimmed;
@@ -181,11 +183,13 @@ modest_ui_dimming_rules_on_reply_msg (ModestWindow *win, gpointer user_data)
 		/* Check dimmed rule */	
 		if (!dimmed) {
 			dimmed = _selected_folder_is_any_of_type (MODEST_MAIN_WINDOW(win), types, 3);			
-			modest_dimming_rule_set_notification (rule, _("mcen_ib_unable_to_reply"));
+			if (dimmed)
+				modest_dimming_rule_set_notification (rule, _("mcen_ib_unable_to_reply"));
 		}
 		if (!dimmed) {
 			dimmed = _selected_folder_is_empty (MODEST_MAIN_WINDOW(win));			
-			modest_dimming_rule_set_notification (rule, _("mcen_ib_nothing_to_reply"));
+			if (dimmed)
+				modest_dimming_rule_set_notification (rule, _("mcen_ib_nothing_to_reply"));
 		}
 		if (!dimmed)
 			dimmed = _invalid_msg_selected (MODEST_MAIN_WINDOW(win), TRUE, rule);
@@ -210,7 +214,10 @@ modest_ui_dimming_rules_on_contents_msg (ModestWindow *win, gpointer user_data)
 	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW(win), FALSE);
 		
 	/* Check dimmed rule */	
-	dimmed = _invalid_msg_selected (MODEST_MAIN_WINDOW(win), FALSE, user_data);
+	if (!dimmed)
+		dimmed = _invalid_msg_selected (MODEST_MAIN_WINDOW(win), FALSE, user_data);
+	if (!dimmed)
+		dimmed = _msg_download_completed (MODEST_MAIN_WINDOW(win));
 
 	return dimmed;
 }
@@ -242,23 +249,28 @@ modest_ui_dimming_rules_on_delete_msg (ModestWindow *win, gpointer user_data)
 	/* Check dimmed rule */	
 	if (!dimmed) {
 		dimmed = _selected_folder_is_empty (MODEST_MAIN_WINDOW(win));			
-		modest_dimming_rule_set_notification (rule, _("mcen_ib_nothing_to_del"));
+		if (dimmed)
+			modest_dimming_rule_set_notification (rule, _("mcen_ib_nothing_to_del"));
 	}
 	if (!dimmed) {
 		dimmed = _invalid_msg_selected (MODEST_MAIN_WINDOW(win), FALSE, user_data);
-		modest_dimming_rule_set_notification (rule, _("mcen_ib_no_message_selected"));
+		if (dimmed)
+			modest_dimming_rule_set_notification (rule, _("mcen_ib_no_message_selected"));
 	}
 	if (!dimmed) {
 		dimmed = _already_opened_msg (win);
-		modest_dimming_rule_set_notification (rule, _("mcen_nc_unable_to_delete_n_messages"));
+		if (dimmed)
+			modest_dimming_rule_set_notification (rule, _("mcen_nc_unable_to_delete_n_messages"));
 	}
 	if (!dimmed) {
 		dimmed = _marked_as_deleted (win);
-		modest_dimming_rule_set_notification (rule, _("mcen_ib_message_unableto_delete"));
+		if (dimmed)
+			modest_dimming_rule_set_notification (rule, _("mcen_ib_message_unableto_delete"));
 	}
 	if (!dimmed) {
 		dimmed = _msg_sent_in_progress (win);
-		modest_dimming_rule_set_notification (rule, _("mcen_ib_message_unableto_delete"));
+		if (dimmed)
+			modest_dimming_rule_set_notification (rule, _("mcen_ib_message_unableto_delete"));
 	}
 
 	return dimmed;
@@ -661,11 +673,13 @@ _invalid_msg_selected (ModestMainWindow *win,
 	if (!result) {
 		result = ((selected_headers == NULL) || 
 			  (GTK_WIDGET_HAS_FOCUS (folder_view)));
-		modest_dimming_rule_set_notification (rule, _("mcen_ib_no_message_selected"));
+		if (result)
+			modest_dimming_rule_set_notification (rule, _("mcen_ib_no_message_selected"));
 	}
 	if (!result && unique) {
 		result = tny_list_get_length (selected_headers) > 1;
-		modest_dimming_rule_set_notification (rule, _("mcen_ib_select_one_message"));
+		if (result)
+			modest_dimming_rule_set_notification (rule, _("mcen_ib_select_one_message"));
 	}
 
 	/* free */
@@ -769,6 +783,51 @@ _msg_download_in_progress (ModestMsgViewWindow *win)
 	gboolean result = FALSE;
 
 	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (win), FALSE);
+
+	result = modest_msg_view_window_toolbar_on_transfer_mode (win);
+
+	return result;
+}
+
+static gboolean
+_msg_download_completed (ModestMainWindow *win)
+{
+	GtkWidget *header_view = NULL;
+	TnyList *selected_headers = NULL;
+	TnyIterator *iter = NULL;
+	TnyHeader *header = NULL;
+	TnyHeaderFlags flags;
+	gboolean result = FALSE;
+
+	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW (win), FALSE);
+
+
+	/* Get header view to check selected messages */
+	header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(win),
+							   MODEST_WIDGET_TYPE_HEADER_VIEW);
+
+	/* Get selected headers */
+	selected_headers = modest_header_view_get_selected_headers (MODEST_HEADER_VIEW(header_view));
+	if (selected_headers == NULL) 
+		return TRUE;
+
+	/* Check dimmed rule  */	
+	result = TRUE;
+	iter = tny_list_create_iterator (selected_headers);
+	while (!tny_iterator_is_done (iter) && result) {
+		header = TNY_HEADER (tny_iterator_get_current (iter));
+			
+		flags = tny_header_get_flags (header);
+		/* TODO: is this the right flag?, it seems that some
+		   headers that have been previously downloaded do not
+		   come with it */
+		result = (flags & TNY_HEADER_FLAG_CACHED);
+
+		g_object_unref (header);
+		tny_iterator_next (iter);
+	}
+
+	g_object_unref (iter);
 
 	return result;
 }

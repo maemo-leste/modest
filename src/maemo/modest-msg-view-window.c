@@ -105,6 +105,8 @@ static void set_toolbar_mode (ModestMsgViewWindow *self,
 
 static gboolean set_toolbar_transfer_mode     (ModestMsgViewWindow *self); 
 
+
+
 /* list my signals */
 enum {
 	/* MY_SIGNAL_1, */
@@ -142,6 +144,7 @@ struct _ModestMsgViewWindowPrivate {
 	GtkWidget   *cancel_toolitem;
 	GtkWidget   *prev_toolitem;
 	GtkWidget   *next_toolitem;
+	ModestToolBarModes current_toolbar_mode;
 
 	/* Optimized view enabled */
 	gboolean optimized_view;
@@ -238,6 +241,7 @@ modest_msg_view_window_init (ModestMsgViewWindow *obj)
 	priv->msg_view      = NULL;
 	priv->header_model  = NULL;
 	priv->clipboard_change_handler = 0;
+	priv->current_toolbar_mode = TOOLBAR_MODE_NORMAL;
 
 	priv->optimized_view  = FALSE;
 	priv->progress_bar_timeout = 0;
@@ -277,6 +281,9 @@ set_toolbar_mode (ModestMsgViewWindow *self,
 	parent_priv = MODEST_WINDOW_GET_PRIVATE(self);
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE(self);
 			
+	/* Sets current toolbar mode */
+	priv->current_toolbar_mode = mode;
+
 	switch (mode) {
 	case TOOLBAR_MODE_NORMAL:
 		widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ToolbarMessageNew");
@@ -635,6 +642,16 @@ modest_msg_view_window_new (TnyMsg *msg,
 }
 
 
+gboolean 
+modest_msg_view_window_toolbar_on_transfer_mode     (ModestMsgViewWindow *self)
+{
+	ModestMsgViewWindowPrivate *priv= NULL; 
+
+	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (self), FALSE);
+	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (self);
+
+	return priv->current_toolbar_mode == TOOLBAR_MODE_TRANSFER;
+}
 
 TnyHeader*
 modest_msg_view_window_get_header (ModestMsgViewWindow *self)
@@ -981,6 +998,8 @@ modest_msg_view_window_select_next_message (ModestMsgViewWindow *window)
 			flags = tny_header_get_flags (header);
 			if (!(flags & TNY_HEADER_FLAG_SEEN))
 				tny_header_set_flags (header, flags | TNY_HEADER_FLAG_SEEN);
+
+			/* Msg download initied */
 
 			/* New mail operation */
 			mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_RECEIVE, G_OBJECT(window));
@@ -1712,3 +1731,5 @@ modest_msg_view_window_remove_attachments (ModestMsgViewWindow *window, GList *m
 {
 /* 	g_message ("not implemented %s", __FUNCTION__); */
 }
+
+

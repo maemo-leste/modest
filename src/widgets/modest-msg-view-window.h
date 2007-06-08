@@ -209,6 +209,17 @@ void            modest_msg_view_window_save_attachments (ModestMsgViewWindow *wi
 void            modest_msg_view_window_remove_attachments (ModestMsgViewWindow *window,
 							   GList *mime_parts);
 
+
+/**
+ * modest_msg_view_window_toolbar_on_transfer_mode:
+ * @window: a #ModestMsgViewWindow
+ *
+ * Check if toolbar is in transfer mode, which determines whether a
+ * transfer operation is being processed.
+ */
+gboolean 
+modest_msg_view_window_toolbar_on_transfer_mode     (ModestMsgViewWindow *self);
+
 G_END_DECLS
 
 #endif /* __MODEST_MSG_VIEW_WINDOW_H__ */
