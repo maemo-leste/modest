@@ -2656,6 +2656,7 @@ modest_ui_actions_on_main_window_move_to (GtkAction *action,
 
 	/* Create and run the dialog */
 	dialog = create_move_to_dialog (MODEST_WINDOW (win), folder_view, &tree_view);
+	modest_folder_view_select_first_inbox_or_local (MODEST_FOLDER_VIEW (tree_view));
 	result = gtk_dialog_run (GTK_DIALOG(dialog));
 	g_object_ref (tree_view);
 

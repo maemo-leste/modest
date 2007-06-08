@@ -123,7 +123,7 @@ GdkPixbuf* modest_platform_get_icon (const gchar *name);
 
 
 /**
- * modest_platform_get_application_name:
+ * modest_platform_get_app_name:
  *
  * this function returns the name of the application. Do not modify.
  */

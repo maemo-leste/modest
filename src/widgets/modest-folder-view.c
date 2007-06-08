@@ -749,7 +749,7 @@ update_model (ModestFolderView *self, ModestTnyAccountStore *account_store)
 			sorted = old_model;
 
 		model = gtk_tree_model_sort_get_model (GTK_TREE_MODEL_SORT (sorted));
-		
+
 		tny_folder_store_remove_observer (TNY_FOLDER_STORE (local_account),
 						  TNY_FOLDER_STORE_OBSERVER (model));
 	}
@@ -1109,11 +1109,13 @@ drag_and_drop_from_header_view (GtkTreeModel *source_model,
 	g_signal_connect (G_OBJECT (mail_op), "progress-changed",
 			  G_CALLBACK (on_progress_changed), helper);
 
-	/* FIXME: I replaced this because the API changed, but D&D
-	   should be reviewed in order to allow multiple drags*/
 	headers = tny_simple_list_new ();
 	tny_list_append (headers, G_OBJECT (header));
-	modest_mail_operation_xfer_msgs (mail_op, headers, folder, helper->delete_source, NULL, NULL);
+	modest_mail_operation_xfer_msgs (mail_op, 
+					 headers, 
+					 folder, 
+					 helper->delete_source, 
+					 NULL, NULL);
 	
 	/* Frees */
 	g_object_unref (G_OBJECT (mail_op));
@@ -1592,4 +1594,54 @@ modest_folder_view_get_account_id_of_visible_server_account (ModestFolderView *s
 	priv = MODEST_FOLDER_VIEW_GET_PRIVATE(self);
 
 	return (const gchar *) priv->visible_account_id;
+}
+
+static gboolean
+find_inbox_iter (GtkTreeModel *model, GtkTreeIter *iter, GtkTreeIter *inbox_iter)
+{
+	do {
+		GtkTreeIter child;
+		gint type;
+
+		gtk_tree_model_get (model, iter, 
+				    TNY_GTK_FOLDER_STORE_TREE_MODEL_TYPE_COLUMN, 
+				    &type, -1);
+
+		if (type == TNY_FOLDER_TYPE_INBOX) {
+			*inbox_iter = *iter;
+			return TRUE;
+		}
+
+		if (gtk_tree_model_iter_children (model, &child, iter))	{
+			if (find_inbox_iter (model, &child, inbox_iter))
+				return TRUE;
+		}
+
+	} while (gtk_tree_model_iter_next (model, iter));
+
+	return FALSE;
+}
+
+
+
+void 
+modest_folder_view_select_first_inbox_or_local (ModestFolderView *self)
+{
+	GtkTreeModel *model;
+	GtkTreeIter iter, inbox_iter;
+	GtkTreeSelection *sel;
+
+	model = gtk_tree_view_get_model (GTK_TREE_VIEW (self));
+	if (!model)
+		return;
+
+	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (self));
+
+	gtk_tree_model_get_iter_first (model, &iter);
+	if (find_inbox_iter (model, &iter, &inbox_iter))
+		gtk_tree_selection_select_iter (sel, &inbox_iter);
+	else {
+		gtk_tree_model_get_iter_first (model, &iter);
+		gtk_tree_selection_select_iter (sel, &iter);
+	}
 }

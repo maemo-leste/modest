@@ -182,6 +182,9 @@ void         modest_folder_view_set_account_id_of_visible_server_account (Modest
  **/
 const gchar* modest_folder_view_get_account_id_of_visible_server_account (ModestFolderView *self);
 
+
+void         modest_folder_view_select_first_inbox_or_local  (ModestFolderView *self);
+
 G_END_DECLS
 
 #endif /* __MODEST_FOLDER_VIEW_H__ */
