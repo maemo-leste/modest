@@ -62,7 +62,7 @@ struct _ModestAccountMgrClass {
 				    gpointer user_data);
 	void (* account_changed)   (ModestAccountMgr *obj, 
 				    const gchar* account,
-				    const gchar* key, 
+				    const GSList* key, 
 				    gboolean server_account,
 				    gpointer user_data);
 };
