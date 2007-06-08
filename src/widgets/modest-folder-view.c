@@ -732,29 +732,6 @@ update_model (ModestFolderView *self, ModestTnyAccountStore *account_store)
 		       signals[FOLDER_SELECTION_CHANGED_SIGNAL], 0,
 		       NULL, TRUE);
 
-	/* Remove the old model as observer of the local folder account */
-#if 0 /* Commented out until Sergio fixes the crash. */
-	local_account = 
-		modest_tny_account_store_get_server_account (modest_runtime_get_account_store (),
-								     MODEST_LOCAL_FOLDERS_ACCOUNT_ID,
-								     TNY_ACCOUNT_TYPE_STORE);
-	old_model = gtk_tree_view_get_model (GTK_TREE_VIEW (self));
-
-	if (old_model) {
-		GtkTreeModel *sorted, *model;
-
-		if (GTK_IS_TREE_MODEL_FILTER (old_model))
-			sorted = gtk_tree_model_filter_get_model (GTK_TREE_MODEL_FILTER (old_model));
-		else
-			sorted = old_model;
-
-		model = gtk_tree_model_sort_get_model (GTK_TREE_MODEL_SORT (sorted));
-
-		tny_folder_store_remove_observer (TNY_FOLDER_STORE (local_account),
-						  TNY_FOLDER_STORE_OBSERVER (model));
-	}
-#endif
-
 	/* FIXME: the local accounts are not shown when the query
 	   selects only the subscribed folders. */
 /* 	model        = tny_gtk_folder_store_tree_model_new (TRUE, priv->query); */
@@ -768,23 +745,8 @@ update_model (ModestFolderView *self, ModestTnyAccountStore *account_store)
 	tny_account_store_get_accounts (TNY_ACCOUNT_STORE(account_store),
 					model_as_list,
 					TNY_ACCOUNT_STORE_STORE_ACCOUNTS);
-	
-#if 0 /* Commented out until Sergio fixes the crash. */
-	/* Set the folder view as an account observer in order to let
-	   us see the UI changes automatically when creating and
-	   deleting folders just under the local account */
-	tny_folder_store_add_observer (TNY_FOLDER_STORE (local_account),
-				       TNY_FOLDER_STORE_OBSERVER (model));
-	g_object_unref (local_account);
-#endif
-	
 	g_object_unref (model_as_list);
 	model_as_list = NULL;	
-
-	/*	
-	if (account_list)
-		tny_list_foreach (account_list, on_tnylist_accounts_debug_print, "update_model: ");
-    */
                                                      
 	GtkTreeModel *filter_model = NULL, *sortable = NULL;
 
@@ -810,11 +772,10 @@ update_model (ModestFolderView *self, ModestTnyAccountStore *account_store)
 				 (filter_model) ? filter_model : sortable);
 	expand_root_items (self); /* expand all account folders */
 	
-	
 	g_object_unref (model);
 	
 	if (filter_model)
-			g_object_unref (filter_model);
+		g_object_unref (filter_model);
 			
 	g_object_unref (sortable);
 			
@@ -1635,6 +1596,7 @@ modest_folder_view_select_first_inbox_or_local (ModestFolderView *self)
 	if (!model)
 		return;
 
+	expand_root_items (self);
 	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (self));
 
 	gtk_tree_model_get_iter_first (model, &iter);
