@@ -1127,7 +1127,7 @@ modest_tny_account_store_get_tny_account_by_id  (ModestTnyAccountStore *self, co
 }
 
 TnyAccount*
-modest_tny_account_store_get_tny_account_by_account (ModestTnyAccountStore *self,
+modest_tny_account_store_get_server_account (ModestTnyAccountStore *self,
 						     const gchar *account_name,
 						     TnyAccountType type)
 {
@@ -1143,9 +1143,13 @@ modest_tny_account_store_get_tny_account_by_account (ModestTnyAccountStore *self
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
 
 	/* Special case for the local account */
-	if (!strcmp (account_name, MODEST_ACTUAL_LOCAL_FOLDERS_ACCOUNT_ID) && 
-	    type == TNY_ACCOUNT_TYPE_STORE) {
-		id = g_strdup (MODEST_ACTUAL_LOCAL_FOLDERS_ACCOUNT_ID);
+	if (!strcmp (account_name, MODEST_LOCAL_FOLDERS_ACCOUNT_ID)) {
+		if(type == TNY_ACCOUNT_TYPE_STORE)
+			id = g_strdup (MODEST_LOCAL_FOLDERS_ACCOUNT_ID);
+		else {
+			/* The local folders modest account has no transport server account. */
+			return NULL;
+		}
 	} else {
 		ModestAccountData *account_data;
 
@@ -1240,7 +1244,12 @@ modest_tny_account_store_get_transport_account_for_open_connection (ModestTnyAcc
 	 * just get the regular transport account: */
 	if (!account) {
 		/* printf("DEBUG: %s: using regular transport account for account %s.\n", __FUNCTION__, account_name); */
-		account = modest_tny_account_store_get_tny_account_by_account (self, account_name, 
+
+		/* The special local folders don't have transport accounts. */
+		if (strcmp (account_name, MODEST_LOCAL_FOLDERS_ACCOUNT_ID) == 0)
+			account = NULL;
+		else
+			account = modest_tny_account_store_get_server_account (self, account_name, 
 						     TNY_ACCOUNT_TYPE_TRANSPORT);
 	}
 			     

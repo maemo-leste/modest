@@ -182,7 +182,7 @@ add_account_folders_to_merged_folder (TnyAccount *account, TnyMergeFolder* merge
 {
 	const gchar* account_id = tny_account_get_id (account);
 	const gboolean is_actual_local_folders_account = account_id && 
-		(strcmp (account_id, MODEST_ACTUAL_LOCAL_FOLDERS_ACCOUNT_ID) == 0);
+		(strcmp (account_id, MODEST_LOCAL_FOLDERS_ACCOUNT_ID) == 0);
 		
 	TnyList *list_outbox_folders = tny_simple_list_new ();
 	tny_folder_store_get_folders (TNY_FOLDER_STORE (account), 

@@ -509,7 +509,7 @@ on_delete_event (GtkWidget *widget, GdkEvent *event, ModestMsgEditWindow *self)
 /* 	/\* remove old message from drafts *\/ */
 /* 	if (priv->draft_msg) { */
 /* 		TnyHeader *header = tny_msg_get_header (priv->draft_msg); */
-/* 		TnyAccount *account = modest_tny_account_store_get_tny_account_by_account (modest_runtime_get_account_store(), */
+/* 		TnyAccount *account = modest_tny_account_store_get_server_account (modest_runtime_get_account_store(), */
 /* 											   account_name, */
 /* 											   TNY_ACCOUNT_TYPE_STORE); */
 /* 		TnyFolder *folder = modest_tny_account_get_special_folder (account, TNY_FOLDER_TYPE_DRAFTS); */

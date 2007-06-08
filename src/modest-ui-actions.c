@@ -485,7 +485,7 @@ modest_ui_actions_on_new_msg (GtkAction *action, ModestWindow *win)
 		goto cleanup;
 	}
 	
-	account = modest_tny_account_store_get_tny_account_by_account (modest_runtime_get_account_store(),
+	account = modest_tny_account_store_get_server_account (modest_runtime_get_account_store(),
 								       account_name,
 								       TNY_ACCOUNT_TYPE_STORE);
 	if (!account) {
@@ -795,7 +795,7 @@ reply_forward_cb (ModestMailOperation *mail_op,
 		goto cleanup;
 	}
 
-	account = modest_tny_account_store_get_tny_account_by_account (modest_runtime_get_account_store(),
+	account = modest_tny_account_store_get_server_account (modest_runtime_get_account_store(),
 								       rf_helper->account_name,
 								       TNY_ACCOUNT_TYPE_STORE);
 	if (!account) {
@@ -1399,12 +1399,12 @@ modest_ui_actions_on_save_to_drafts (GtkWidget *widget, ModestMsgEditWindow *edi
 		return;
 	}
 
-	if (!strcmp (account_name, MODEST_ACTUAL_LOCAL_FOLDERS_ACCOUNT_ID)) {
+	if (!strcmp (account_name, MODEST_LOCAL_FOLDERS_ACCOUNT_ID)) {
 		account_name = g_strdup (data->account_name);
 	}
 
 	transport_account =
-		TNY_TRANSPORT_ACCOUNT(modest_tny_account_store_get_tny_account_by_account
+		TNY_TRANSPORT_ACCOUNT(modest_tny_account_store_get_server_account
 				      (modest_runtime_get_account_store(),
 				       account_name,
 				       TNY_ACCOUNT_TYPE_TRANSPORT));
@@ -1467,7 +1467,7 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 	}
 	MsgData *data = modest_msg_edit_window_get_msg_data (edit_window);
 
-	if (!strcmp (account_name, MODEST_ACTUAL_LOCAL_FOLDERS_ACCOUNT_ID)) {
+	if (!strcmp (account_name, MODEST_LOCAL_FOLDERS_ACCOUNT_ID)) {
 		account_name = g_strdup (data->account_name);
 	}
 	

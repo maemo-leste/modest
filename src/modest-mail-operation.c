@@ -1044,7 +1044,7 @@ modest_mail_operation_update_account (ModestMailOperation *self,
 	
 	/* Get the Modest account */
 	modest_account = (TnyStoreAccount *)
-		modest_tny_account_store_get_tny_account_by_account (modest_runtime_get_account_store (),
+		modest_tny_account_store_get_server_account (modest_runtime_get_account_store (),
 								     account_name,
 								     TNY_ACCOUNT_TYPE_STORE);
 

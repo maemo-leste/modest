@@ -47,6 +47,7 @@ enum {
 	LAST_SIGNAL
 };
 
+#if 0
 typedef struct _ModestTnySendQueuePrivate ModestTnySendQueuePrivate;
 struct _ModestTnySendQueuePrivate {
 	/* empty */
@@ -54,6 +55,8 @@ struct _ModestTnySendQueuePrivate {
 #define MODEST_TNY_SEND_QUEUE_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                    MODEST_TYPE_TNY_SEND_QUEUE, \
                                                    ModestTnySendQueuePrivate))
+#endif
+
 /* globals */
 static TnyCamelSendQueueClass *parent_class = NULL;
 
@@ -74,13 +77,9 @@ modest_tny_send_queue_cancel (TnySendQueue *self, gboolean remove, GError **err)
 static void
 modest_tny_send_queue_add (TnySendQueue *self, TnyMsg *msg, GError **err)
 {
-	ModestTnySendQueuePrivate *priv; 
-	
 	g_return_if_fail (TNY_IS_SEND_QUEUE(self));
 	g_return_if_fail (TNY_IS_CAMEL_MSG(msg));
 	
-	priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE (self);
-
 	/* FIXME: do something smart here... */
 	
 	TNY_CAMEL_SEND_QUEUE_CLASS(parent_class)->add_func (self, msg, err); /* FIXME */
@@ -169,7 +168,7 @@ modest_tny_send_queue_class_init (ModestTnySendQueueClass *klass)
         TNY_CAMEL_SEND_QUEUE_CLASS(klass)->get_sentbox_func = modest_tny_send_queue_get_sentbox;
         TNY_CAMEL_SEND_QUEUE_CLASS(klass)->cancel_func      = modest_tny_send_queue_cancel;
 
-	g_type_class_add_private (gobject_class, sizeof(ModestTnySendQueuePrivate));
+	/* g_type_class_add_private (gobject_class, sizeof(ModestTnySendQueuePrivate)); */
 }
 
 static void

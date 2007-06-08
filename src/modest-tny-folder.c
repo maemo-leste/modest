@@ -198,7 +198,7 @@ modest_tny_folder_is_local_folder   (TnyFolder *folder)
 
 	g_object_unref (G_OBJECT(account));
 	
-	return (strcmp (account_id, MODEST_ACTUAL_LOCAL_FOLDERS_ACCOUNT_ID) == 0);
+	return (strcmp (account_id, MODEST_LOCAL_FOLDERS_ACCOUNT_ID) == 0);
 }	
 
 

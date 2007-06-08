@@ -110,17 +110,17 @@ TnyAccount* modest_tny_account_store_get_tny_account_by_id  (ModestTnyAccountSto
 							     const gchar *id);
 
 /**
- * modest_tny_account_store_get_tny_account_by_account
+ * modest_tny_account_store_get_server_account
  * @self: a ModestTnyAccountStore instance
- * @account_name: an account name
- * @type: the tny account type
+ * @account_name: a modest account name
+ * @type: the tny account type (store or transport)
  * 
  * Get the tny account corresponding to one of the server_accounts for account with @account_name
  * 
  * Returns: the tnyaccount for the server account or NULL in case it's not found or error,
  * g_object_unref when it's no longer needed
  */
-TnyAccount* modest_tny_account_store_get_tny_account_by_account (ModestTnyAccountStore *self,
+TnyAccount* modest_tny_account_store_get_server_account (ModestTnyAccountStore *self,
 								 const gchar *account_name,
 								 TnyAccountType type);
 						     

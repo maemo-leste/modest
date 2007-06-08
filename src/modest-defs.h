@@ -43,13 +43,14 @@
 #define MODEST_DIR	                  ".modest"
 #define MODEST_CACHE_DIR                  "cache"
 
-/** Sent, Drafts, etc, 
+#define MODEST_LOCAL_FOLDERS_ACCOUNT_ID   "local_folders"
+#define MODEST_LOCAL_FOLDERS_ACCOUNT_NAME MODEST_LOCAL_FOLDERS_ACCOUNT_ID
+
+/** Sent, Drafts, etc, are on-disk 
  * but not outbox, because outbox is a virtual folder merged from the 
  * various outboxes/<account-name>/outbox folders.
  */
-#define MODEST_ACTUAL_LOCAL_FOLDERS_ACCOUNT_ID   "local_folders"
-#define MODEST_LOCAL_FOLDERS_ACCOUNT_NAME MODEST_ACTUAL_LOCAL_FOLDERS_ACCOUNT_ID
-#define MODEST_LOCAL_FOLDERS_MAILDIR      MODEST_ACTUAL_LOCAL_FOLDERS_ACCOUNT_ID
+#define MODEST_LOCAL_FOLDERS_MAILDIR      MODEST_LOCAL_FOLDERS_ACCOUNT_ID
 
 /** There is an outboxes/<account-name>/outbox/ folder for each account,
  * though we merge them so that the user sees only one outbox.

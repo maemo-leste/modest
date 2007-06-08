@@ -1382,18 +1382,12 @@ modest_main_window_notify_send_receive_initied (ModestMainWindow *self)
 
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW (self));
 
-	/* Tools menu options */
         action = modest_window_get_action (MODEST_WINDOW(self), "/MenuBar/ToolsMenu/ToolsSendReceiveMainMenu/ToolsSendReceiveAllMenu");	
 	gtk_action_set_sensitive (action, FALSE);
         action = modest_window_get_action (MODEST_WINDOW(self), "/MenuBar/ToolsMenu/ToolsSendReceiveMainMenu/ToolsSendReceiveCancelSendingMenu");	
 	gtk_action_set_sensitive (action, FALSE);
         widget = modest_window_get_action_widget (MODEST_WINDOW(self), "/MenuBar/ToolsMenu/ToolsSendReceiveMainMenu/ToolsMenuAdditions");	
 	gtk_widget_set_sensitive (widget, FALSE);
-	
-	/* Header view CSM */
-        action = modest_window_get_action (MODEST_WINDOW(self), "/HeaderViewCSM/HeaderViewCSMCancelSending");	
-	gtk_action_set_sensitive (action, FALSE);
-	    
 } 
 
 void 
@@ -1494,7 +1488,7 @@ on_configuration_key_changed (ModestConf* conf,
 
 	account = (TnyAccount *) modest_folder_view_get_selected (priv->folder_view);
 	if (TNY_IS_ACCOUNT (account) &&
-	    !strcmp (tny_account_get_id (account), MODEST_ACTUAL_LOCAL_FOLDERS_ACCOUNT_ID)) {
+	    !strcmp (tny_account_get_id (account), MODEST_LOCAL_FOLDERS_ACCOUNT_ID)) {
 		GList *children;
 		GtkLabel *label;
 		const gchar *device_name;

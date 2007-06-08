@@ -1,3 +1,40 @@
+2007-06-08  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/modest-tny-send-queue.c: (modest_tny_send_queue_add),
+	(modest_tny_send_queue_class_init):
+	Do not use the priv struct because it is empty, to avoid g_warnings 
+	about a non-existant priv struct.
+	
+	* src/modest-tny-account-store.c:
+	(modest_tny_account_store_get_server_account),
+	(modest_tny_account_store_get_transport_account_for_open_connection
+	): Do not try to get transport server accounts for local folders, 
+	because they don't have any. This avoids a g_warning().
+	
+	* src/maemo/modest-main-window.c:
+	(modest_main_window_notify_send_receive_initied),
+	(on_configuration_key_changed):
+	* src/maemo/modest-msg-edit-window.c: (on_delete_event):
+	* src/modest-defs.h:
+	* src/modest-mail-operation.c:
+	(modest_mail_operation_update_account):
+	* src/modest-tny-account-store.h:
+	* src/modest-tny-account.c:
+	(modest_tny_account_get_special_folder),
+	(modest_tny_account_new_for_local_folders),
+	(modest_tny_account_new_for_per_account_local_outbox_folder):
+	* src/modest-tny-folder.c: (modest_tny_folder_is_local_folder):
+	* src/modest-tny-local-folders-account.c:
+	(add_account_folders_to_merged_folder):
+	* src/modest-ui-actions.c: (modest_ui_actions_on_new_msg),
+	(reply_forward_cb), (modest_ui_actions_on_save_to_drafts),
+	(modest_ui_actions_on_send):
+	* src/widgets/modest-folder-view.c: (update_model):
+	Rename MODEST_ACTUAL_LOCAL_FOLDERS_ACCOUNT_ID to 
+	MODEST_LOCAL_FOLDERS_ACCOUNT_ID and rename 
+	modest_tny_account_store_get_tny_account_by_account() to 
+	modest_tny_account_store_get_server_account() to make the code clearer.
+
 2007-06-07  Marcus Bauer  <marcusb@openismus.com>
 
 	* src/dbus_api/modest-dbus-api.h:

@@ -735,8 +735,8 @@ update_model (ModestFolderView *self, ModestTnyAccountStore *account_store)
 	/* Remove the old model as observer of the local folder account */
 #if 0 /* Commented out until Sergio fixes the crash. */
 	local_account = 
-		modest_tny_account_store_get_tny_account_by_account (modest_runtime_get_account_store (),
-								     MODEST_ACTUAL_LOCAL_FOLDERS_ACCOUNT_ID,
+		modest_tny_account_store_get_server_account (modest_runtime_get_account_store (),
+								     MODEST_LOCAL_FOLDERS_ACCOUNT_ID,
 								     TNY_ACCOUNT_TYPE_STORE);
 	old_model = gtk_tree_view_get_model (GTK_TREE_VIEW (self));
 

@@ -85,7 +85,7 @@ modest_tny_account_get_special_folder (TnyAccount *account,
 	} else {
 		/* Other local folders are all in one on-disk directory: */
 		local_account = modest_tny_account_store_get_tny_account_by_id (modest_runtime_get_account_store(),
-										MODEST_ACTUAL_LOCAL_FOLDERS_ACCOUNT_ID);
+										MODEST_LOCAL_FOLDERS_ACCOUNT_ID);
 	}
 	
 	if (!local_account) {
@@ -522,14 +522,14 @@ modest_tny_account_new_for_local_folders (ModestAccountMgr *account_mgr, TnySess
  	
 	
 	const gchar* id = is_mmc ? MODEST_MMC_ACCOUNT_ID :
-		MODEST_ACTUAL_LOCAL_FOLDERS_ACCOUNT_ID;
+		MODEST_LOCAL_FOLDERS_ACCOUNT_ID;
 	tny_account_set_id (TNY_ACCOUNT(tny_account), id);
 	
 	tny_account_set_forget_pass_func (TNY_ACCOUNT(tny_account), forget_pass_dummy);
 	tny_account_set_pass_func (TNY_ACCOUNT(tny_account), get_pass_dummy);
 	
 	modest_tny_account_set_parent_modest_account_name_for_server_account (
-		TNY_ACCOUNT (tny_account), MODEST_ACTUAL_LOCAL_FOLDERS_ACCOUNT_ID);
+		TNY_ACCOUNT (tny_account), id);
 	
 	camel_url_free (url);
 	g_free (maildir);
@@ -597,7 +597,7 @@ modest_tny_account_new_for_per_account_local_outbox_folder (ModestAccountMgr *ac
 	
 	/* Make this think that it belongs to the modest local-folders parent account: */
 	modest_tny_account_set_parent_modest_account_name_for_server_account (
-		TNY_ACCOUNT (tny_account), MODEST_ACTUAL_LOCAL_FOLDERS_ACCOUNT_ID);
+		TNY_ACCOUNT (tny_account), MODEST_LOCAL_FOLDERS_ACCOUNT_ID);
 
 	return TNY_ACCOUNT(tny_account);
 }
