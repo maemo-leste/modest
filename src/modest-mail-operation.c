@@ -881,11 +881,11 @@ update_account_thread (gpointer thr_user_data)
 		 * thread.
 		 */
 
-		/* If the retrieve type is headers only do nothing more */
 		if (!g_ascii_strcasecmp (info->retrieve_type, MODEST_ACCOUNT_RETRIEVE_VALUE_MESSAGES) || 
 		    !g_ascii_strcasecmp (info->retrieve_type, MODEST_ACCOUNT_RETRIEVE_VALUE_MESSAGES_AND_ATTACHMENTS)) {
 			TnyIterator *iter;
 
+			/* If the retrieve type is full messages, refresh and get the messages */
 			tny_folder_refresh (TNY_FOLDER (folder), &(priv->error));
 
 			iter = tny_list_create_iterator (observer->new_headers);
@@ -904,7 +904,7 @@ update_account_thread (gpointer thr_user_data)
 				tny_iterator_next (iter);
 			}
 			g_object_unref (iter);
-		} else
+		} else /* If it's headers only, then just poke the folder status (this will update the unread and total count of folder observers, like the folder list model*/
 			tny_folder_poke_status (TNY_FOLDER (folder));
 		
 		tny_folder_remove_observer (TNY_FOLDER (folder), TNY_FOLDER_OBSERVER (observer));
