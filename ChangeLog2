@@ -1,5 +1,12 @@
 2007-06-08  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-mail-operation.c:
+	(modest_mail_operation_send_new_mail):
+	Added a comment about a nasty but apparently harmless message. Details 
+	added to the wiki g_warnings() page.
+
+2007-06-08  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/modest-tny-send-queue.c: (modest_tny_send_queue_add),
 	(modest_tny_send_queue_class_init):
 	Do not use the priv struct because it is empty, to avoid g_warnings 

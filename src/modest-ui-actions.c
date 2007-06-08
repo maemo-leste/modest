@@ -1465,6 +1465,7 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 		g_printerr ("modest: no account found\n");
 		return;
 	}
+	
 	MsgData *data = modest_msg_edit_window_get_msg_data (edit_window);
 
 	if (!strcmp (account_name, MODEST_LOCAL_FOLDERS_ACCOUNT_ID)) {

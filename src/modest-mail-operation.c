@@ -530,6 +530,8 @@ modest_mail_operation_send_new_mail (ModestMailOperation *self,
 	if (folder) {
 		if (draft_msg != NULL) {
 			header = tny_msg_get_header (draft_msg);
+			/* Note: This can fail (with a warning) if the message is not really already in a folder,
+			 * because this function requires it to have a UID. */
 			tny_folder_remove_msg (folder, header, NULL);
 			g_object_unref (header);
 		}
