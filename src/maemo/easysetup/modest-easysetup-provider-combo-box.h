@@ -69,7 +69,7 @@ GType easysetup_provider_combo_box_get_type (void);
 
 EasysetupProviderComboBox* easysetup_provider_combo_box_new (void);
 
-void easysetup_provider_combo_box_fill (EasysetupProviderComboBox *combobox, ModestPresets *presets, gint country_id);
+void easysetup_provider_combo_box_fill (EasysetupProviderComboBox *combobox, ModestPresets *presets, GSList * list_country_id);
 
 gchar* easysetup_provider_combo_box_get_active_provider_id (EasysetupProviderComboBox *combobox);
 

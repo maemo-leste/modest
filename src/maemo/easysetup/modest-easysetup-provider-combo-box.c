@@ -142,7 +142,7 @@ easysetup_provider_combo_box_new (void)
 	return g_object_new (EASYSETUP_TYPE_PROVIDER_COMBO_BOX, NULL);
 }
 
-void easysetup_provider_combo_box_fill (EasysetupProviderComboBox *combobox, ModestPresets *presets, gint country_id)
+void easysetup_provider_combo_box_fill (EasysetupProviderComboBox *combobox, ModestPresets *presets, GSList * list_country_id)
 {	
 	EasysetupProviderComboBoxPrivate *priv = PROVIDER_COMBO_BOX_GET_PRIVATE (combobox);
 	
@@ -150,38 +150,60 @@ void easysetup_provider_combo_box_fill (EasysetupProviderComboBox *combobox, Mod
 	GtkListStore *liststore = GTK_LIST_STORE (priv->model);
 	gtk_list_store_clear (liststore);
 	
-	/* Add the appropriate rows for this country, from the presets file: */
-	gchar ** provider_ids = NULL;
-	gchar ** provider_names = modest_presets_get_providers (presets, country_id, 
-		TRUE /* include_globals */, &provider_ids);
+	GSList *provider_ids_used_already = NULL;
 	
-	gchar ** iter_provider_names = provider_names;
-	gchar ** iter_provider_ids = provider_ids;
-	while(iter_provider_names && *iter_provider_names && iter_provider_ids && *iter_provider_ids)
-	{
-		const gchar* provider_name = *iter_provider_names;
-		if(!provider_name)
-			continue;
+	GSList *iter_ids = list_country_id;
+	while (iter_ids) {
+		const guint country_id = GPOINTER_TO_UINT (iter_ids->data);
+		
+		/* Add the appropriate rows for this country, from the presets file: */
+		gchar ** provider_ids = NULL;
+		gchar ** provider_names = modest_presets_get_providers (presets, country_id, 
+			TRUE /* include_globals */, &provider_ids);
+		
+		gchar ** iter_provider_names = provider_names;
+		gchar ** iter_provider_ids = provider_ids;
+		while(iter_provider_names && *iter_provider_names && iter_provider_ids && *iter_provider_ids)
+		{
+			const gchar* provider_name = *iter_provider_names;
+			if(!provider_name)
+				continue;
+				
+			const gchar* provider_id = *iter_provider_ids;
+			if(!provider_id)
+				continue;
 			
-		const gchar* provider_id = *iter_provider_ids;
-		if(!provider_id)
-			continue;
+			/* Prevent duplicate providers: */
+			if (g_slist_find_custom (provider_ids_used_already, 
+				provider_id, (GCompareFunc)strcmp) == NULL) {
+				/* printf("debug: provider_name=%s\n", provider_name); */
+			
+				/* Add the row: */
+				GtkTreeIter iter;
+				gtk_list_store_append (liststore, &iter);
+				
+				gchar *debug = g_strdup_printf ("%s: %s", provider_id, provider_name);
+				gtk_list_store_set(liststore, &iter, 
+					MODEL_COL_ID, provider_id, 
+					MODEL_COL_NAME, debug, -1);
+				g_free (debug);
+				
+				provider_ids_used_already = g_slist_append (
+					provider_ids_used_already, (gpointer)g_strdup (provider_id));
+			}
+				
+			++iter_provider_names;
+			++iter_provider_ids;	
+		}
 		
-		/* printf("debug: provider_name=%s\n", provider_name); */
-	
-		/* Add the row: */
-		GtkTreeIter iter;
-		gtk_list_store_append (liststore, &iter);
-		gtk_list_store_set(liststore, &iter, MODEL_COL_ID, provider_id, MODEL_COL_NAME, provider_name, -1);
+		/* Free the result of modest_presets_get_providers()
+		 * as specified by its documentation: */
+		g_strfreev (provider_names);
+		g_strfreev (provider_ids);
 		
-		++iter_provider_names;
-		++iter_provider_ids;	
+		iter_ids = g_slist_next (iter_ids);
 	}
 	
-	/* Free the result of modest_presets_get_providers()
-	 * as specified by its documentation: */
-	g_strfreev (provider_names);
-	g_strfreev (provider_ids);
 	
 	/* Add the "Other" item: */
 	/* Note that ID 0 means "Other" for us: */
@@ -192,6 +214,9 @@ void easysetup_provider_combo_box_fill (EasysetupProviderComboBox *combobox, Mod
 	
 	/* Select the "Other" item: */
 	gtk_combo_box_set_active_iter (GTK_COMBO_BOX (combobox), &iter);
+	
+	g_slist_foreach (provider_ids_used_already, (GFunc)g_free, NULL);
+	g_slist_free (provider_ids_used_already);
 }
 
 /**

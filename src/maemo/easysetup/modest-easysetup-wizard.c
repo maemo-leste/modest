@@ -258,10 +258,10 @@ on_combo_account_country (GtkComboBox *widget, gpointer user_data)
 	ModestEasysetupWizardDialogPrivate *priv = WIZARD_DIALOG_GET_PRIVATE (self);
 	
 	/* Fill the providers combo, based on the selected country: */
-	gint mcc_id = easysetup_country_combo_box_get_active_country_id (
+	GSList *list_mcc_ids = easysetup_country_combo_box_get_active_country_ids (
 		EASYSETUP_COUNTRY_COMBO_BOX (self->combo_account_country));
 	easysetup_provider_combo_box_fill (
-		EASYSETUP_PROVIDER_COMBO_BOX (self->combo_account_serviceprovider), priv->presets, mcc_id);
+		EASYSETUP_PROVIDER_COMBO_BOX (self->combo_account_serviceprovider), priv->presets, list_mcc_ids);
 }
 
 static void

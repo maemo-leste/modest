@@ -87,11 +87,29 @@ easysetup_country_combo_box_dispose (GObject *object)
 		G_OBJECT_CLASS (easysetup_country_combo_box_parent_class)->dispose (object);
 }
 
+enum MODEL_COLS {
+	MODEL_COL_NAME = 0, /* string */
+	MODEL_COL_IDS = 1 /* A GSList* of guints. */
+};
+
+static gboolean 
+on_model_foreach_release (GtkTreeModel *model, GtkTreePath *path, 
+	GtkTreeIter *iter, gpointer data)
+{
+	GSList *list = NULL;
+	gtk_tree_model_get (model, iter, MODEL_COL_IDS, &list, -1); 
+	if (list)
+		g_slist_free (list);
+		
+	return FALSE; /* keep walking. */
+}
+	
 static void
 easysetup_country_combo_box_finalize (GObject *object)
 {
 	EasysetupCountryComboBoxPrivate *priv = COUNTRY_COMBO_BOX_GET_PRIVATE (object);
 
+	gtk_tree_model_foreach (priv->model, on_model_foreach_release, NULL);
 	g_object_unref (G_OBJECT (priv->model));
 
 	G_OBJECT_CLASS (easysetup_country_combo_box_parent_class)->finalize (object);
@@ -109,11 +127,6 @@ easysetup_country_combo_box_class_init (EasysetupCountryComboBoxClass *klass)
 	object_class->dispose = easysetup_country_combo_box_dispose;
 	object_class->finalize = easysetup_country_combo_box_finalize;
 }
-
-enum MODEL_COLS {
-	MODEL_COL_NAME = 0,
-	MODEL_COL_ID = 1
-};
 
 /** id and country must be freed.
  */
@@ -184,6 +197,7 @@ static void load_from_file (EasysetupCountryComboBox *self)
 	/* this is the official version, in the 'operator-wizard-settings' package */
 	const gchar* filepath = "/usr/share/operator-wizard/mcc_mapping";
 #endif /*MODEST_HILDON_VERSION_0*/
+	printf ("DEBUG: %s: filepath=%s\n", __FUNCTION__, filepath);
 	FILE *file = fopen(filepath, "r");
 	if (!file)
 	{
@@ -203,37 +217,84 @@ static void load_from_file (EasysetupCountryComboBox *self)
 	/* We use the getline() GNU extension,
 	 * because it reads per line, which simplifies our code,
 	 * and it doesn't require us to hard-code a buffer length.
+	 * TODO: Could we make this faster?
 	 */
 	int len = 0;
 	char *line = NULL;
+	guint previous_id = 0;
+	gchar* previous_country = NULL;
+	GSList *list = NULL;
 	while (getline (&line, &len, file) > 0) { /* getline will realloc line if necessary. */
 		/* printf ("DBEUG: len=%d, line: %s\n", len, line); */
 		
 		char *id_str = NULL;
 		char *country = NULL;
 		parse_mcc_mapping_line (line, &id_str, &country);
-		//printf("DEBUG: parsed: id=%s, country=%s\n", id_str, country); 
+		/* printf("DEBUG: parsed: id=%s, country=%s\n", id_str, country); */
 		
 		if(id_str && country) {
-			guint id = (guint)g_ascii_strtod(id_str, NULL); /* Note that this parses locale-independent text. */
 			
-			/* Get the translation for the country name:
-			 * Note that the osso_countries_1.0 translation domain files are installed 
-			 * by the operator-wizard-settings package. */
-			/* For post-Bora, there is a separate (meta)package osso-countries-l10n-mr0 */
-			const gchar *name_translated = dgettext ("osso-countries", country);
-			if(!name_translated)
-			  name_translated = country;
+			if (previous_country) {
+				/* printf ("  debug: storing id=%d for country=%s\n", previous_id, previous_country); */
+				list = g_slist_append (list, GUINT_TO_POINTER (previous_id));
+			}
 			
-			/* Add the row to the model: */
-			GtkTreeIter iter;
-			gtk_list_store_append (liststore, &iter);
-			gtk_list_store_set(liststore, &iter, MODEL_COL_ID, id, MODEL_COL_NAME, name_translated, -1);
+			/* Group multiple MMC IDs for the same country together:
+			 * This assumes that they are in sequence.
+			 * We don't know why some countries, such as the USA, have several MMC IDs.
+			 * If they are regions in the country, and we need to show them separately, then 
+			 * we would need to have that information in the file to distinguish them.
+			 */
+			if (!previous_country || 
+			   (previous_country && strcmp (previous_country, country) != 0)) {
+			 	
+			 	/* Get the translation for the country name:
+				 * Note that the osso_countries_1.0 translation domain files are installed 
+				 * by the operator-wizard-settings package. */
+				/* For post-Bora, there is a separate (meta)package osso-countries-l10n-mr0 */
+				
+				/* Note: Even when the untranslated names are different, there may still be 
+				 * duplicate translated names. They would be translation bugs.
+				 */
+				const gchar *name_translated = dgettext ("osso-countries", previous_country);
+				if(!name_translated)
+				  name_translated = previous_country;
+				
+				/* Add the row to the model: */
+				GtkTreeIter iter;
+				gtk_list_store_append (liststore, &iter);
+				gtk_list_store_set(liststore, &iter, MODEL_COL_IDS, list, MODEL_COL_NAME, name_translated, -1);
+				
+				/* The list will be freed in our finalize(). */
+				list = NULL;
+			}
+			
+			g_free (previous_country);
+			previous_country = g_strdup (country);
+			
+			const guint id = (guint)g_ascii_strtod(id_str, NULL); /* Note that this parses locale-independent text. */
+			previous_id = id;
 		}
 		
 		g_free (id_str);
 		g_free (country);
 	}
+	
+	/* Deal with the last country: */
+	const gchar *name_translated = dgettext ("osso-countries", previous_country);
+	if(!name_translated)
+	  name_translated = previous_country;
+	
+	/* Add the row to the model: */
+	GtkTreeIter iter;
+	gtk_list_store_append (liststore, &iter);
+	gtk_list_store_set(liststore, &iter, MODEL_COL_IDS, list, MODEL_COL_NAME, name_translated, -1);
+	
+	if (list) {
+	 	g_slist_free (list);
+		list = NULL;
+	}
+				
 
 	if (line)
 		free (line);
@@ -250,7 +311,9 @@ easysetup_country_combo_box_init (EasysetupCountryComboBox *self)
 	 * with a string for the name, and an int for the MCC ID.
 	 * This must match our MODEL_COLS enum constants.
 	 */
-	priv->model = GTK_TREE_MODEL (gtk_list_store_new (2, G_TYPE_STRING, G_TYPE_UINT));
+	priv->model = GTK_TREE_MODEL (gtk_list_store_new (2, 
+		G_TYPE_STRING, 
+		G_TYPE_POINTER));
 
 	/* Setup the combo box: */
 	GtkComboBox *combobox = GTK_COMBO_BOX (self);
@@ -275,21 +338,22 @@ easysetup_country_combo_box_new (void)
 
 /**
  * Returns the MCC number of the selected country, or 0 if no country was selected. 
+ * The list should not be freed.
  */
-guint
-easysetup_country_combo_box_get_active_country_id (EasysetupCountryComboBox *self)
+GSList *
+easysetup_country_combo_box_get_active_country_ids (EasysetupCountryComboBox *self)
 {
 	GtkTreeIter active;
 	const gboolean found = gtk_combo_box_get_active_iter (GTK_COMBO_BOX (self), &active);
 	if (found) {
 		EasysetupCountryComboBoxPrivate *priv = COUNTRY_COMBO_BOX_GET_PRIVATE (self);
 
-		guint id = 0;
-		gtk_tree_model_get (priv->model, &active, MODEL_COL_ID, &id, -1); 
-		return id;	
+		GSList *list = NULL;
+		gtk_tree_model_get (priv->model, &active, MODEL_COL_IDS, &list, -1); 
+		return list;	
 	}
 
-	return 0; /* Failed. */
+	return NULL; /* Failed. */
 }
 
 
@@ -309,9 +373,9 @@ on_model_foreach_select_id(GtkTreeModel *model,
 	ForEachData *state = (ForEachData*)(user_data);
 	
 	/* Select the item if it has the matching ID: */
-	guint id = 0;
-	gtk_tree_model_get (model, iter, MODEL_COL_ID, &id, -1); 
-	if(id == state->mcc_id) {
+	GSList *list = NULL;
+	gtk_tree_model_get (model, iter, MODEL_COL_IDS, &list, -1);
+	if(list && g_slist_find (list, GUINT_TO_POINTER (state->mcc_id))) {
 		gtk_combo_box_set_active_iter (GTK_COMBO_BOX (state->self), iter);
 		
 		state->found = TRUE;

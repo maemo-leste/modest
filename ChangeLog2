@@ -1,5 +1,22 @@
 2007-06-08  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/maemo/easysetup/modest-easysetup-country-combo-box.h:
+	* src/maemo/easysetup/modest-easysetup-country-combo-box.c:
+	(on_model_foreach_release), (easysetup_country_combo_box_finalize),
+	(load_from_file), (easysetup_country_combo_box_init),
+	(easysetup_country_combo_box_get_active_country_ids),
+	(on_model_foreach_select_id): Store a GSList* of IDs in the model row, 
+	instead of just one ID, to avoid duplicate country names in the UI.
+
+	* src/maemo/easysetup/modest-easysetup-provider-combo-box.h:
+	* src/maemo/easysetup/modest-easysetup-provider-combo-box.c:
+	(easysetup_provider_combo_box_fill): Adapt to use a list rather than 
+	a single ID, avoiding duplicate providers.
+	* src/maemo/easysetup/modest-easysetup-wizard.c:
+	(on_combo_account_country): Adapt to use a list.
+
+2007-06-08  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/modest-account-mgr-priv.h: Added a timeout id and a GSList of 
 	keys changed in the last X seconds.
 	
