@@ -1,3 +1,9 @@
+2007-06-10  Johannes Schmid <johannes.schmid@openismus.com>
+
+	* src/maemo/modest-main-window.c: (sync_accounts_cb):
+	Fixed projects.maemo.org bug NB#56472 (not yet activated as there
+	is another problem with the code, see Murray's comment at line 772)
+
 2007-06-08  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/maemo/easysetup/modest-easysetup-country-combo-box.h:
