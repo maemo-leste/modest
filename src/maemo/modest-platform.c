@@ -47,7 +47,7 @@
 #include <gtk/gtkmenuitem.h>
 #include <gtk/gtkmain.h>
 #include <string.h>
-
+#include <hildon/hildon-notification.h>
 
 #define HILDON_OSSO_URI_ACTION "uri-action"
 
@@ -805,10 +805,27 @@ modest_platform_get_global_settings_dialog ()
 void 
 modest_platform_on_new_msg (void)
 {
-	/* TODO: play sound SR-SND-18 */
-	/* TODO: LED lightning pattern */
-	/* TODO: update the application icon in the task navigator */ 
-	g_print ("--------------- NEW MESSAGE ARRIVED ---------------\n");
+	HildonNotification *not;
+
+	/* Create a new notification. FIXME put the right values, need
+	   some more specs */
+	not = hildon_notification_new ("Summary",
+				       "Description",
+				       "qgn_contact_group_chat_invitation",
+				       "system.note.dialog");
+
+	/* Play sound SR-SND-18. TODO: play the right file */
+/* 	hildon_notification_set_sound (not, "/usr/share/sounds/ui-battery_low.wav"); */
+
+	/* Set the led pattern */
+	notify_notification_set_hint_int32 (NOTIFY_NOTIFICATION (not), "led-pattern", 3);
+
+	/* Notify. We need to do this in an idle because this function
+	   could be called from a thread */
+	if (!notify_notification_show (NOTIFY_NOTIFICATION (not), NULL))
+		g_error ("Failed to send notification");
+
+	g_object_unref (not);
 }
 
 

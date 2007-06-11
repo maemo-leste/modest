@@ -48,6 +48,11 @@
 #include <modest-icon-names.h>
 #include "widgets/modest-global-settings-dialog.h"
 #include "modest-tny-msg.h"
+#ifdef MODEST_PLATFORM_MAEMO
+#include <hildon/hildon-notification.h>
+#else
+#include <libnotify/notify.h>
+#endif
 
 static gboolean init_header_columns (ModestConf *conf, gboolean overwrite);
 static gboolean init_default_account_maybe  (ModestAccountMgr *acc_mgr);
@@ -191,7 +196,12 @@ modest_init_init_ui (gint argc, gchar** argv)
 	g_set_application_name (modest_platform_get_app_name());
 	/* g_message (modest_platform_get_app_name()); */
 
+	/* Init stock icons */
 	init_stock_icons ();
+
+	/* Init notification system */
+	notify_init ("Basics");
+
 	return TRUE;
 }
 

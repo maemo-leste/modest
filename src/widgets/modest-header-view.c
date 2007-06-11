@@ -1216,6 +1216,14 @@ on_focus_in (GtkWidget     *self,
 	return FALSE;
 }
 
+static gboolean
+idle_notify_added_headers (gpointer data)
+{
+	modest_platform_on_new_msg ();
+
+	return FALSE;
+}
+
 static void
 folder_monitor_update (TnyFolderObserver *self, 
 		       TnyFolderChange *change)
@@ -1227,23 +1235,11 @@ folder_monitor_update (TnyFolderObserver *self,
 
 	changed = tny_folder_change_get_changed (change);
 
-	if (changed & TNY_FOLDER_CHANGE_CHANGED_ADDED_HEADERS) {
-/* 	TnyIterator *iter; */
-/* 	TnyList *list; */
-/* 		/\* The added headers *\/ */
-/* 		list = tny_simple_list_new (); */
-/* 		tny_folder_change_get_added_headers (change, list); */
-/* 		iter = tny_list_create_iterator (list); */
-/* 		while (!tny_iterator_is_done (iter)) */
-/* 		{ */
-/* 			TnyHeader *header = TNY_HEADER (tny_iterator_get_current (iter)); */
-/* 			g_object_unref (G_OBJECT (header)); */
-/* 			tny_iterator_next (iter); */
-/* 		} */
-/* 		g_object_unref (G_OBJECT (iter)); */
-/* 		g_object_unref (G_OBJECT (list)); */
-		modest_platform_on_new_msg ();
-	}
+	/* We need an idle because this function is called from within
+	   a thread, so it could cause problems if the modest platform
+	   code calls dbus for example */
+	if (changed & TNY_FOLDER_CHANGE_CHANGED_ADDED_HEADERS)
+		g_idle_add (idle_notify_added_headers, NULL);
 
 	g_mutex_unlock (priv->observers_lock);
 }
