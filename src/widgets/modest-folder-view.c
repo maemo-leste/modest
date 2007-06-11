@@ -1044,27 +1044,40 @@ drag_and_drop_from_header_view (GtkTreeModel *source_model,
 				GtkTreePath  *dest_row,
 				DndHelper    *helper)
 {
-	TnyList *headers;
-	TnyHeader *header;
-	TnyFolder *folder;
-	ModestMailOperation *mail_op;
+	TnyList *headers = NULL;
+	TnyHeader *header = NULL;
+	TnyFolder *folder = NULL;
+	ModestMailOperation *mail_op = NULL;
 	GtkTreeIter source_iter, dest_iter;
 
+	g_return_if_fail (GTK_IS_TREE_MODEL(source_model));
+	g_return_if_fail (GTK_IS_TREE_MODEL(dest_model));
+	g_return_if_fail (dest_row);
+	g_return_if_fail (helper);
+	
 	/* Get header */
 	gtk_tree_model_get_iter (source_model, &source_iter, helper->source_row);
 	gtk_tree_model_get (source_model, &source_iter, 
 			    TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN, 
 			    &header, -1);
-
+	if (!TNY_IS_HEADER(header)) {
+		g_warning ("BUG: %s could not get a valid header", __FUNCTION__);
+		goto cleanup;
+	}
+	
 	/* Get Folder */
 	gtk_tree_model_get_iter (dest_model, &dest_iter, dest_row);
 	gtk_tree_model_get (dest_model, &dest_iter, 
 			    TNY_GTK_FOLDER_STORE_TREE_MODEL_INSTANCE_COLUMN, 
 			    &folder, -1);
 
+	if (!TNY_IS_FOLDER(folder)) {
+		g_warning ("BUG: %s could not get a valid folder", __FUNCTION__);
+		goto cleanup;
+	}
+
 	/* Transfer message */
 	mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_RECEIVE, NULL);
-
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
 					 mail_op);
 	g_signal_connect (G_OBJECT (mail_op), "progress-changed",
@@ -1079,10 +1092,15 @@ drag_and_drop_from_header_view (GtkTreeModel *source_model,
 					 NULL, NULL);
 	
 	/* Frees */
-	g_object_unref (G_OBJECT (mail_op));
-	g_object_unref (G_OBJECT (header));
-	g_object_unref (G_OBJECT (folder));
-	g_object_unref (headers);
+cleanup:
+	if (G_IS_OBJECT(mail_op))
+		g_object_unref (G_OBJECT (mail_op));
+	if (G_IS_OBJECT(header))
+		g_object_unref (G_OBJECT (header));
+	if (G_IS_OBJECT(folder))
+		g_object_unref (G_OBJECT (folder));
+	if (G_IS_OBJECT(headers))
+		g_object_unref (headers);
 }
 
 /*
