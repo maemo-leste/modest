@@ -217,7 +217,7 @@ _execute_dimming_rule (gpointer key, gpointer value, gpointer user_data)
 {
 	g_return_if_fail (MODEST_IS_DIMMING_RULE (value));
 
-	/* Process diomming rule */
+	/* Process dimming rule */
 	modest_dimming_rule_process (MODEST_DIMMING_RULE(value));
 }
 

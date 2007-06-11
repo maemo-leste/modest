@@ -1949,6 +1949,11 @@ modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 	
 	gchar *server_name = modest_server_account_get_hostname (
 		modest_runtime_get_account_mgr(), server_account_name);
+	if (!server_name) {/* This happened once, though I don't know why. murrayc. */
+		g_warning("%s: Could not get server name for server account '%s'", __FUNCTION__, server_account_name);
+		*cancel = TRUE;
+		return;
+	}
 	
 	/* This causes a warning because the logical ID has no %s in it, 
 	 * though the translation does, but there is not much we can do about that: */
@@ -2078,7 +2083,7 @@ modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 
 	gtk_widget_destroy (dialog);
 	
-	printf ("DEBUG: %s: cancel=%d\n", __FUNCTION__, *cancel);
+	/* printf ("DEBUG: %s: cancel=%d\n", __FUNCTION__, *cancel); */
 }
 
 void

@@ -1,3 +1,17 @@
+2007-06-11  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/modest-ui-actions.c:
+	(modest_ui_actions_on_password_requested): Check that the server name 
+	is not NULL, because I just saw a password dialog with (null) as the 
+	server name.
+
+	* src/modest-tny-folder.[h|c]: Added 
+	modest_tny_folder_is_memory_card_folder().
+	* src/modest-ui-dimming-rules.c:
+	(modest_ui_dimming_rules_on_new_folder): Do not dim the new folder context 
+	menu item for memory cards, as per the UI spec (section 7.4). This should 
+	fix projects.maemo.org bug NB#59297.
+
 2007-06-10  Johannes Schmid <johannes.schmid@openismus.com>
 
 	* src/maemo/modest-main-window.c: (sync_accounts_cb):

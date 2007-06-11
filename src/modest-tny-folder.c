@@ -117,7 +117,8 @@ modest_tny_folder_get_rules   (TnyFolder *folder)
 
 	g_return_val_if_fail (TNY_IS_FOLDER(folder), -1);
 
-	if (modest_tny_folder_is_local_folder (folder)) {
+	if (modest_tny_folder_is_local_folder (folder) ||
+	    modest_tny_folder_is_memory_card_folder (folder)) {
 	
 		type = modest_tny_folder_get_local_folder_type (folder);
 		
@@ -199,6 +200,31 @@ modest_tny_folder_is_local_folder   (TnyFolder *folder)
 	g_object_unref (G_OBJECT(account));
 	
 	return (strcmp (account_id, MODEST_LOCAL_FOLDERS_ACCOUNT_ID) == 0);
+}
+
+gboolean
+modest_tny_folder_is_memory_card_folder   (TnyFolder *folder)
+{
+	g_return_val_if_fail (folder, FALSE);
+	
+	/* The merge folder is a special case, 
+	 * used to merge the per-account local outbox folders. 
+	 * and can have no get_account() implementation.
+	 */
+	if (TNY_IS_MERGE_FOLDER (folder))
+		return FALSE;
+
+	TnyAccount* account = tny_folder_get_account ((TnyFolder*)folder);
+	if (!account)
+		return FALSE;
+
+	const gchar* account_id = tny_account_get_id (account);
+	if (!account_id)
+		return FALSE;
+
+	g_object_unref (G_OBJECT(account));
+	
+	return (strcmp (account_id, MODEST_MMC_ACCOUNT_ID) == 0);
 }	
 
 

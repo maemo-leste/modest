@@ -95,6 +95,16 @@ TnyFolderType  modest_tny_folder_guess_folder_type_from_name   (const gchar *fol
  */
 gboolean modest_tny_folder_is_local_folder   (TnyFolder *folder);
 
+/**
+ * modest_tny_folder_is_memory_card_folder:
+ * @folder: a valid tnymail folder
+ * 
+ * checks if the folder is part of the memory card account.
+ *  
+ * Returns: TRUE if it's a memory card folder, FALSE otherwise
+ */
+gboolean
+modest_tny_folder_is_memory_card_folder   (TnyFolder *folder);
 
 /**
  * modest_tny_folder_get_local_folder_type:
