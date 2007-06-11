@@ -428,6 +428,18 @@ gboolean        modest_account_mgr_unset           (ModestAccountMgr *self,
 						    const gchar *key,
 						    gboolean server_account);
 
+/**
+ * modest_account_mgr_has_accounts:
+ * @self: a ModestAccountMgr instance
+ * @enabled: TRUE to search for enabled accounts only
+ * 
+ * Checks if any accounts exist
+ *
+ * Returns: TRUE if accounts exist, FALSE otherwise
+ */
+
+gboolean modest_account_mgr_has_accounts (ModestAccountMgr* self, gboolean enabled);
+
 G_END_DECLS
 
 #endif /* __MODEST_ACCOUNT_MGR_H__ */

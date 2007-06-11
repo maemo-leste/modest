@@ -1163,3 +1163,15 @@ _modest_account_mgr_get_account_keyname (const gchar *account_name, const gchar 
 
 	return retval;
 }
+
+gboolean
+modest_account_mgr_has_accounts (ModestAccountMgr* self, gboolean enabled)
+{
+	/* Check that at least one account exists: */
+	GSList *account_names = modest_account_mgr_account_names (self,
+				enabled);
+	gboolean accounts_exist = account_names != NULL;
+	g_slist_free (account_names);
+	
+	return accounts_exist;
+}

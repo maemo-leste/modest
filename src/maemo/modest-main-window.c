@@ -564,7 +564,7 @@ connect_signals (ModestMainWindow *self)
 gboolean
 sync_accounts_cb (ModestMainWindow *win)
 {
-	modest_ui_actions_on_send_receive (NULL, MODEST_WINDOW (win));
+	modest_ui_actions_do_send_receive (NULL, MODEST_WINDOW (win));
 	return FALSE; /* Do not call this idle handler again. */
 }
 #endif
@@ -769,6 +769,18 @@ modest_main_window_new (void)
 	tny_account_store_view_set_account_store (TNY_ACCOUNT_STORE_VIEW (priv->folder_view),
 						  TNY_ACCOUNT_STORE (modest_runtime_get_account_store ()));
 
+	/* Check if accounts exist and show the account wizard if not */
+	gboolean accounts_exist = 
+		modest_account_mgr_has_accounts(modest_runtime_get_account_mgr(), TRUE);
+	
+	if (!accounts_exist)
+	{
+			/* This is necessary to have the main window shown behind the dialog 
+			It's an ugly hack... jschmid */
+			gtk_widget_show_all(GTK_WIDGET(self));
+			modest_ui_actions_on_accounts (NULL, MODEST_WINDOW(self));
+	}
+	
 	/* Do send & receive when we are idle */
 	/* TODO: Enable this again. I have commented it out because, 
 	 * at least in scratchbox, this can cause us to start a second 

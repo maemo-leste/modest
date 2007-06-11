@@ -369,10 +369,8 @@ modest_ui_actions_on_accounts (GtkAction *action, ModestWindow *win)
 	 * because it requires a providers preset file which is not publically available.
 	 */
 #ifdef MODEST_PLATFORM_MAEMO /* Defined in config.h */
-	GSList *account_names = modest_account_mgr_account_names (modest_runtime_get_account_mgr(), 
-				TRUE /* enabled accounts only */);
-	gboolean accounts_exist = account_names != NULL;
-	g_slist_free (account_names);
+	gboolean accounts_exist = modest_account_mgr_has_accounts(
+																														modest_runtime_get_account_mgr(), TRUE);
 	
 	if (!accounts_exist) {
 		/* If there are no accounts yet, just show the easy-setup wizard, as per the UI spec: */
@@ -1115,11 +1113,9 @@ modest_ui_actions_do_send_receive_all (ModestWindow *win)
 void
 modest_ui_actions_on_send_receive (GtkAction *action,  ModestWindow *win)
 {
-	/* Check that at least one account exists: */
-	GSList *account_names = modest_account_mgr_account_names (modest_runtime_get_account_mgr(),
-				TRUE /* enabled accounts only */);
-	gboolean accounts_exist = account_names != NULL;
-	g_slist_free (account_names);
+	/* Check if accounts exist */
+	gboolean accounts_exist = 
+		modest_account_mgr_has_accounts(modest_runtime_get_account_mgr(), TRUE);
 	
 	/* If not, allow the user to create an account before trying to send/receive. */
 	if (!accounts_exist)

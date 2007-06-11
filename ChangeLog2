@@ -1,3 +1,22 @@
+2007-06-11  Johannes Schmid <johannes.schmid@openismus.com>
+
+	* src/maemo/modest-maemo-utils.c:
+	(modest_maemo_utils_get_supported_secure_authentication_methods):
+	Added label to dialog instead of unreadable title
+	
+	* src/maemo/modest-main-window.c: (sync_accounts_cb),
+	(modest_main_window_new):
+	Fixed projects.maemo.org bug NB#58576 by moving previous fix out of
+	dead code.
+	
+	* src/modest-account-mgr.c: (modest_account_mgr_has_accounts):
+	* src/modest-account-mgr.h:
+	Added method to avoid code duplication
+	
+	* src/modest-ui-actions.c: (modest_ui_actions_on_accounts),
+	(modest_ui_actions_on_send_receive):
+	Use modest_account_mgr_has_accounts
+
 2007-06-11  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/maemo/easysetup/modest-presets.c:

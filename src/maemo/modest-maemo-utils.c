@@ -383,17 +383,19 @@ GList* modest_maemo_utils_get_supported_secure_authentication_methods (ModestTra
 	info->result = NULL;
 	info->cancel = FALSE;
 	info->progress = gtk_progress_bar_new();
-  info->dialog = gtk_dialog_new_with_buttons(_("Checking for supported authentication types"),
+  info->dialog = gtk_dialog_new_with_buttons(_("Authentication"),
 																parent_window, GTK_DIALOG_MODAL,
 																GTK_STOCK_CANCEL,
 																GTK_RESPONSE_REJECT,
 																NULL);
+	//gtk_window_set_default_size(GTK_WINDOW(info->dialog), 300, 100);
 	
 	g_signal_connect(G_OBJECT(info->dialog), "response", G_CALLBACK(on_secure_auth_cancel), info);
 	
+	gtk_container_add(GTK_CONTAINER(GTK_DIALOG(info->dialog)->vbox),
+										gtk_label_new("Checking for supported authentication types..."));
 	gtk_container_add(GTK_CONTAINER(GTK_DIALOG(info->dialog)->vbox), info->progress);
-	gtk_widget_show(info->progress);
-	gtk_widget_show(info->dialog);
+	gtk_widget_show_all(info->dialog);
   gtk_progress_bar_pulse(GTK_PROGRESS_BAR(info->progress));
 	
 	printf ("DEBUG: %s: STARTING.\n", __FUNCTION__);
