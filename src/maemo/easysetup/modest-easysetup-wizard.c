@@ -1517,15 +1517,19 @@ create_account (ModestEasysetupWizardDialog *self, gboolean enabled)
 		ModestPresetsSecurity security_outgoing = 
 			modest_presets_get_info_server_security (priv->presets, provider_id, 
 								 FALSE /* incoming */);
-			
+
+		/* TODO: There is no SMTP authentication enum for presets, 
+		   so we should probably check what the server supports. */
 		protocol_security_outgoing = MODEST_PROTOCOL_CONNECTION_NORMAL;
 		if (security_outgoing & MODEST_PRESETS_SECURITY_SECURE_SMTP) {
+			/* printf("DEBUG: %s: using secure SMTP\n", __FUNCTION__); */
 			protocol_security_outgoing = MODEST_PROTOCOL_CONNECTION_SSL; /* TODO: Is this what we want? */
 			serverport_outgoing = 465;
 			protocol_authentication_outgoing = MODEST_PROTOCOL_AUTH_PASSWORD;
-		} else
+		} else {
+			/* printf("DEBUG: %s: using non-secure SMTP\n", __FUNCTION__); */
 			protocol_authentication_outgoing = MODEST_PROTOCOL_AUTH_NONE;
-		/* TODO: There is no SMTP authentication enum for presets. */
+		}
 	}
 	else {
 		/* Use custom pages because no preset was specified: */

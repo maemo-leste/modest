@@ -1,6 +1,17 @@
 2007-06-11  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/maemo/easysetup/modest-presets.c:
+	(modest_presets_get_info_server_security): Do not report secure auth 
+	if there is none.
+	* src/modest-protocol-info.c: Use the defines for the gconf key names 
+	for secure authentication. This was not working because we were writing 
+	Password and reading password, and the check was case sensitive.
+	With this, gmail now works for receiving and sending when created via 
+	easysetup.
+
+2007-06-11  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/maemo/easysetup/modest-presets.c:
 	(modest_presets_get_info_server_security): Correct the key name for 
 	SecureSmtp, because it seems to be case-sensitive.
 	* src/maemo/easysetup/modest-wizard-dialog.c: (create_title):

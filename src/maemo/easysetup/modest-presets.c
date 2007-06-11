@@ -268,7 +268,6 @@ modest_presets_get_info_server_security (ModestPresets *self, const gchar *provi
 					     MODEST_PRESETS_KEY_OUTGOING, NULL);
 		if (val) {
 			g_free (val);
-			info |= MODEST_PRESETS_SECURITY_SECURE_SMTP;
 			
 			val = g_key_file_get_string (self->keyfile, provider_id,
 						     MODEST_PRESETS_KEY_SECURE_SMTP, NULL);

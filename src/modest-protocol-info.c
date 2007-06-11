@@ -31,6 +31,7 @@
 #include <string.h> /* strcmp */
 #include <modest-protocol-info.h>
 #include <modest-pair.h>
+#include <modest-defs.h>
 
 
 typedef struct {
@@ -60,9 +61,9 @@ static const ProtocolInfo ConnectionProtocolMap[] = {
 
 /* FIXME: these names must match those of tny_camel_account_get_supported_secure_auth */
 static const ProtocolInfo AuthProtocolMap[] = {
-	{ MODEST_PROTOCOL_AUTH_NONE,          "none",     N_("None") },
-	{ MODEST_PROTOCOL_AUTH_PASSWORD,      "Password", N_("Password") },
-	{ MODEST_PROTOCOL_AUTH_CRAMMD5,       "cram-md5", N_("Cram MD5") }
+	{ MODEST_PROTOCOL_AUTH_NONE,          MODEST_ACCOUNT_AUTH_MECH_VALUE_NONE,     N_("None") },
+	{ MODEST_PROTOCOL_AUTH_PASSWORD,      MODEST_ACCOUNT_AUTH_MECH_VALUE_PASSWORD, N_("Password") },
+	{ MODEST_PROTOCOL_AUTH_CRAMMD5,       MODEST_ACCOUNT_AUTH_MECH_VALUE_CRAMMD5, N_("Cram MD5") }
 };
 
 
