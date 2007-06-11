@@ -1015,9 +1015,7 @@ update_account_thread (gpointer thr_user_data)
 	if (!priv->error) {
 		priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
 
-		/* Update the last updated key. TODO: this causes
-		   sometimes an error in dbus, in order to fix this we
-		   must call gconf from the main loop */
+		/* Update the last updated key */
 		g_idle_add_full (G_PRIORITY_HIGH_IDLE, 
 				 set_last_updated_idle, 
 				 g_strdup (tny_account_get_id (TNY_ACCOUNT (info->account))),

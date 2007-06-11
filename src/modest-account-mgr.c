@@ -69,6 +69,7 @@ on_timeout_notify_changes (gpointer data)
 			
 		g_free (default_account);
 		
+		g_slist_foreach (priv->changed_conf_keys, (GFunc) g_free, NULL);
 		g_slist_free (priv->changed_conf_keys);
 		priv->changed_conf_keys = NULL;
 	}
@@ -92,7 +93,7 @@ on_key_change (ModestConf *conf, const gchar *key, ModestConfEvent event, gpoint
 		/* Store the key for later notification in our timeout callback.
 		 * Notifying for every key change would cause unnecessary work: */
 		priv->changed_conf_keys = g_slist_append (NULL, 
-			(gpointer)key);
+			(gpointer) g_strdup (key));
 	}
 	
 	gboolean is_account_key = FALSE;
@@ -129,7 +130,7 @@ on_key_change (ModestConf *conf, const gchar *key, ModestConfEvent event, gpoint
 		/* Store the key for later notification in our timeout callback.
 		 * Notifying for every key change would cause unnecessary work: */
 		priv->changed_conf_keys = g_slist_append (NULL, 
-			(gpointer)key);
+			(gpointer) g_strdup (key));
 	}
 
 	g_free (account);
@@ -189,7 +190,7 @@ modest_account_mgr_class_init (ModestAccountMgrClass * klass)
 			      G_SIGNAL_RUN_FIRST,
 			      G_STRUCT_OFFSET(ModestAccountMgrClass,account_changed),
 			      NULL, NULL,
-			      modest_marshal_VOID__STRING_STRING_BOOLEAN,
+			      modest_marshal_VOID__STRING_POINTER_BOOLEAN,
 			      G_TYPE_NONE, 3, G_TYPE_STRING, G_TYPE_POINTER, G_TYPE_BOOLEAN);
 }
 

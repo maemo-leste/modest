@@ -636,7 +636,7 @@ modest_folder_view_new (TnyFolderStoreQuery *query)
 	priv->changed_signal = g_signal_connect (sel, "changed",
 						 G_CALLBACK (on_selection_changed), self);
 
-	return GTK_WIDGET(self);
+ 	return GTK_WIDGET(self);
 }
 
 /* this feels dirty; any other way to expand all the root items? */
