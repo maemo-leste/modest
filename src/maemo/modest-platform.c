@@ -805,12 +805,13 @@ modest_platform_get_global_settings_dialog ()
 void 
 modest_platform_on_new_msg (void)
 {
+	return; /* TODO: Reenable this later. I disabled it to avoid having one notification per email. */
 	HildonNotification *not;
 
 	/* Create a new notification. FIXME put the right values, need
 	   some more specs */
-	not = hildon_notification_new ("Summary",
-				       "Description",
+	not = hildon_notification_new ("TODO: (new email) Summary",
+				       "TODO: (new email) Description",
 				       "qgn_contact_group_chat_invitation",
 				       "system.note.dialog");
 

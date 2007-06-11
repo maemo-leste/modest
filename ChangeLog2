@@ -1,5 +1,11 @@
 2007-06-11  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/maemo/modest-platform.c: (modest_platform_on_new_msg):
+	Prevent use of the new notification feature for now, because it currently 
+	shows one dialog for each new email, which is annoying.
+
+2007-06-11  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/maemo/easysetup/modest-easysetup-provider-combo-box.c:
 	(easysetup_provider_combo_box_fill): Ask for the providers for mmc=0 
 	when no country was selected, so that we show the global ones.
