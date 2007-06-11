@@ -318,13 +318,20 @@ button_press_event (GtkWidget *widget,
 		    GdkEventButton *event,
 		    ModestAttachmentsView *atts_view)
 {
+	gint widget_x, widget_y;
 	ModestAttachmentsViewPrivate *priv = MODEST_ATTACHMENTS_VIEW_GET_PRIVATE (atts_view);
 	if (!GTK_WIDGET_HAS_FOCUS (widget))
 		gtk_widget_grab_focus (widget);
 
 	if (event->button == 1 && event->type == GDK_BUTTON_PRESS) {
-		GtkWidget *att_view = get_att_view_at_coords (MODEST_ATTACHMENTS_VIEW (widget), 
-							      event->x, event->y);
+		GtkWidget *att_view = NULL;
+		GdkWindow *parent_window;
+
+		parent_window = gtk_widget_get_parent_window (widget);
+		gdk_window_get_origin (parent_window, &widget_x, &widget_y);
+
+		att_view = get_att_view_at_coords (MODEST_ATTACHMENTS_VIEW (widget), 
+						   ((gint) event->x_root) - widget_x, ((gint) event->y_root) - widget_y);
 
 		if (att_view != NULL) {
 			if (GTK_WIDGET_STATE (att_view) == GTK_STATE_SELECTED && (g_list_length (priv->selected) < 2)) {
@@ -351,8 +358,15 @@ button_release_event (GtkWidget *widget,
 {
 	ModestAttachmentsViewPrivate *priv = MODEST_ATTACHMENTS_VIEW_GET_PRIVATE (atts_view);
 	if (widget == gtk_grab_get_current ()) {
-		GtkWidget *att_view = get_att_view_at_coords (MODEST_ATTACHMENTS_VIEW (widget), 
-							      event->x, event->y);
+		GdkWindow *parent_window;
+		GtkWidget *att_view = NULL;
+		gint widget_x, widget_y;
+
+		parent_window = gtk_widget_get_parent_window (widget);
+		gdk_window_get_origin (parent_window, &widget_x, &widget_y);
+
+		att_view = get_att_view_at_coords (MODEST_ATTACHMENTS_VIEW (widget), 
+						   ((gint) event->x_root) - widget_x, ((gint) event->y_root) - widget_y);
 
 		if (att_view != NULL) {
 			unselect_all (MODEST_ATTACHMENTS_VIEW (widget));
@@ -374,8 +388,15 @@ motion_notify_event (GtkWidget *widget,
 {
 	ModestAttachmentsViewPrivate *priv = MODEST_ATTACHMENTS_VIEW_GET_PRIVATE (atts_view);
 	if (gtk_grab_get_current () == widget) {
-		GtkWidget *att_view = get_att_view_at_coords (MODEST_ATTACHMENTS_VIEW (widget), 
-							      event->x, event->y);
+		GtkWidget *att_view = NULL;
+		GdkWindow *parent_window;
+		gint widget_x, widget_y;
+
+		parent_window = gtk_widget_get_parent_window (widget);
+		gdk_window_get_origin (parent_window, &widget_x, &widget_y);
+
+		att_view = get_att_view_at_coords (MODEST_ATTACHMENTS_VIEW (widget), 
+						   ((gint) event->x_root) - widget_x, ((gint) event->y_root) - widget_y);
 
 		if (att_view != NULL) {
 			unselect_all (MODEST_ATTACHMENTS_VIEW (widget));
