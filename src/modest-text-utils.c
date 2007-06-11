@@ -105,6 +105,7 @@ static gchar*   modest_text_utils_quote_plain_text (const gchar *text,
 static gchar*   modest_text_utils_quote_html       (const gchar *text, 
 						    const gchar *cite, 
 						    int limit);
+static gchar*   get_email_from_address (const gchar *address);
 
 
 /* ******************************************************************* */
@@ -262,15 +263,20 @@ modest_text_utils_remove_address (const gchar *address_list, const gchar *addres
 {
 	gchar *dup, *token, *ptr, *result;
 	GString *filtered_emails;
+	gchar *email_address;
 
 	g_return_val_if_fail (address_list, NULL);
 
 	if (!address)
 		return g_strdup (address_list);
+
+	email_address = get_email_from_address (address);
 	
 	/* search for substring */
-	if (!strstr ((const char *) address_list, (const char *) address))
+	if (!strstr ((const char *) address_list, (const char *) email_address)) {
+		g_free (email_address);
 		return g_strdup (address_list);
+	}
 
 	dup = g_strdup (address_list);
 	filtered_emails = g_string_new (NULL);
@@ -279,7 +285,7 @@ modest_text_utils_remove_address (const gchar *address_list, const gchar *addres
 
 	while (token != NULL) {
 		/* Add to list if not found */
-		if (!strstr ((const char *) token, (const char *) address)) {
+		if (!strstr ((const char *) token, (const char *) email_address)) {
 			if (filtered_emails->len == 0)
 				g_string_append_printf (filtered_emails, "%s", g_strstrip (token));
 			else
@@ -290,6 +296,7 @@ modest_text_utils_remove_address (const gchar *address_list, const gchar *addres
 	result = filtered_emails->str;
 
 	/* Clean */
+	g_free (email_address);
 	g_free (dup);
 	g_string_free (filtered_emails, FALSE);
 
@@ -1128,4 +1135,18 @@ modest_text_utils_get_display_size (guint64 size)
 		return g_strdup_printf (_FM("sfil_li_size_10mb_1gb"), size / MB);
 	else
 		return g_strdup_printf (_FM("sfil_li_size_1gb_or_greater"), (float) size / GB);	
+}
+
+static gchar *
+get_email_from_address (const gchar * address)
+{
+	gchar *left_limit, *right_limit;
+
+	left_limit = strstr (address, "<");
+	right_limit = g_strrstr (address, ">");
+
+	if ((left_limit == NULL)||(right_limit == NULL)|| (left_limit > right_limit))
+		return g_strdup (address);
+	else
+		return g_strndup (left_limit + 1, (right_limit - left_limit) - 1);
 }
