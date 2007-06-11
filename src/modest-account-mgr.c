@@ -220,8 +220,10 @@ modest_account_mgr_finalize (GObject * obj)
 	if (priv->timeout)
 		g_source_remove (priv->timeout);
 		
-	if (priv->changed_conf_keys)
+	if (priv->changed_conf_keys) {
+		g_slist_foreach (priv->changed_conf_keys, (GFunc) g_free, NULL);
 		g_slist_free (priv->changed_conf_keys);
+	}
 
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }

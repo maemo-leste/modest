@@ -1,5 +1,11 @@
 2007-06-11  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-account-mgr.c: (modest_account_mgr_finalize):
+	Free the changed_conf_keys string items. They are already freed in the 
+	idle handler if that runs first.
+
+2007-06-11  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/modest-ui-actions.c:
 	(modest_ui_actions_on_password_requested): Check that the server name 
 	is not NULL, because I just saw a password dialog with (null) as the 
