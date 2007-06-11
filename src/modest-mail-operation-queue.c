@@ -344,7 +344,10 @@ modest_mail_operation_queue_cancel_all (ModestMailOperationQueue *self)
 	for(cur = operations_to_cancel; cur != NULL; cur = cur->next) {
 		/* This triggers a progress_changed signal in which we remove
 		 * the operation from the queue. */
-		modest_mail_operation_cancel (MODEST_MAIL_OPERATION (cur->data));
+		if (!MODEST_IS_MAIL_OPERATION(cur->data))
+			g_printerr ("modest: cur->data is not a valid mail operation\n");
+		else
+			modest_mail_operation_cancel (MODEST_MAIL_OPERATION (cur->data));
 	}
 
 	g_slist_free(operations_to_cancel);
