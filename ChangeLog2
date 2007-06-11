@@ -1,6 +1,15 @@
 2007-06-11  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/maemo/easysetup/modest-easysetup-provider-combo-box.c:
+	(easysetup_provider_combo_box_fill): Ask for the providers for mmc=0 
+	when no country was selected, so that we show the global ones.
+	* src/maemo/easysetup/modest-presets.c:
+	(modest_presets_get_providers): Return only the global providers, not 
+	all providers when mmc=0 was requested.
+
+2007-06-11  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/maemo/easysetup/modest-easysetup-provider-combo-box.c:
 	(easysetup_provider_combo_box_fill): Remove debug code that showed the 
 	provider ID in the combo.
 	

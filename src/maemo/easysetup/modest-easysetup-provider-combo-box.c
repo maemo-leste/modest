@@ -144,6 +144,15 @@ easysetup_provider_combo_box_new (void)
 
 void easysetup_provider_combo_box_fill (EasysetupProviderComboBox *combobox, ModestPresets *presets, GSList * list_country_id)
 {	
+	/* If the list is empty then use mmc=0 to get the providers for all countries: */
+	GSList *list = list_country_id;
+	GSList *fake_list = NULL;
+	if (!list_country_id) {
+		fake_list = g_slist_append(fake_list, GUINT_TO_POINTER(0));
+		list = fake_list;
+	}
+	
+		
 	EasysetupProviderComboBoxPrivate *priv = PROVIDER_COMBO_BOX_GET_PRIVATE (combobox);
 	
 	/* Remove any existing rows: */
@@ -152,7 +161,7 @@ void easysetup_provider_combo_box_fill (EasysetupProviderComboBox *combobox, Mod
 	
 	GSList *provider_ids_used_already = NULL;
 	
-	GSList *iter_ids = list_country_id;
+	GSList *iter_ids = list;
 	while (iter_ids) {
 		const guint country_id = GPOINTER_TO_UINT (iter_ids->data);
 		
@@ -202,7 +211,6 @@ void easysetup_provider_combo_box_fill (EasysetupProviderComboBox *combobox, Mod
 		iter_ids = g_slist_next (iter_ids);
 	}
 	
-	
 	/* Add the "Other" item: */
 	/* Note that ID 0 means "Other" for us: */
 	/* TODO: We need a Logical ID for this text. */
@@ -215,6 +223,9 @@ void easysetup_provider_combo_box_fill (EasysetupProviderComboBox *combobox, Mod
 	
 	g_slist_foreach (provider_ids_used_already, (GFunc)g_free, NULL);
 	g_slist_free (provider_ids_used_already);
+	
+	if (fake_list)
+		g_slist_free (fake_list);
 }
 
 /**

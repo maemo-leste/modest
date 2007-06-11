@@ -115,10 +115,12 @@ modest_presets_get_providers  (ModestPresets *self, guint mcc,
 	};
 		
 	/* return *all* providers? */
+	/*
 	if (mcc == 0 && include_globals) {
 		*provider_ids = all_provider_ids;
 		return all_providers;
 	}
+	*/
 	
 	/* nope: filter them */
 
