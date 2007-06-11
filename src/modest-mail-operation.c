@@ -34,6 +34,7 @@
 #include <tny-folder-store.h>
 #include <tny-folder-store-query.h>
 #include <tny-camel-stream.h>
+#include <tny-camel-pop-store-account.h>
 #include <tny-simple-list.h>
 #include <tny-send-queue.h>
 #include <tny-status.h>
@@ -842,6 +843,13 @@ update_account_thread (gpointer thr_user_data)
 	/* Get account and set it into mail_operation */
 	priv->account = g_object_ref (info->account);
 
+	/*
+	 * for POP3, we do a logout-login upon send/receive -- many POP-servers (like Gmail) do not
+	 * show any updates unless we do that
+	 */
+	if (TNY_IS_CAMEL_POP_STORE_ACCOUNT(priv->account)) 
+		tny_camel_pop_store_account_reconnect (TNY_CAMEL_POP_STORE_ACCOUNT(priv->account));
+
 	/* Get all the folders. We can do it synchronously because
 	   we're already running in a different thread than the UI */
 	all_folders = tny_simple_list_new ();
@@ -919,7 +927,8 @@ update_account_thread (gpointer thr_user_data)
 				tny_iterator_next (iter);
 			}
 			g_object_unref (iter);
-		} else /* If it's headers only, then just poke the folder status (this will update the unread and total count of folder observers, like the folder list model*/
+		} else /* If it's headers only, then just poke the folder status (this will update the unread and
+			* total count of folder observers, like the folder list model*/
 			tny_folder_poke_status (TNY_FOLDER (folder));
 		
 		tny_folder_remove_observer (TNY_FOLDER (folder), TNY_FOLDER_OBSERVER (observer));
@@ -1084,6 +1093,7 @@ modest_mail_operation_update_account (ModestMailOperation *self,
 		return FALSE;
 	}
 
+	
 	/* Get the transport account, we can not do it in the thread
 	   due to some problems with dbus */
 	transport_account = (TnyTransportAccount *)
