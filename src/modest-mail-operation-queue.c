@@ -316,6 +316,7 @@ modest_mail_operation_queue_cancel (ModestMailOperationQueue *self,
 static void
 on_cancel_all_foreach (gpointer op, gpointer list)
 {
+	g_return_if_fail (list);
 	*((GSList**)list) = g_slist_prepend (*((GSList**)list), MODEST_MAIL_OPERATION (op));
 }
 
@@ -323,7 +324,7 @@ void
 modest_mail_operation_queue_cancel_all (ModestMailOperationQueue *self)
 {
 	ModestMailOperationQueuePrivate *priv;
-	GSList* operations_to_cancel;
+	GSList* operations_to_cancel = NULL;
 	GSList* cur;
 
 	g_return_if_fail (MODEST_IS_MAIL_OPERATION_QUEUE (self));
@@ -338,7 +339,7 @@ modest_mail_operation_queue_cancel_all (ModestMailOperationQueue *self)
 	g_mutex_lock (priv->queue_lock);
 	g_queue_foreach (priv->op_queue, (GFunc) on_cancel_all_foreach, &operations_to_cancel);
 	g_mutex_unlock (priv->queue_lock);
-
+	
 	/* TODO: Reverse the list, to remove operations in order? */
 
 	for(cur = operations_to_cancel; cur != NULL; cur = cur->next) {
