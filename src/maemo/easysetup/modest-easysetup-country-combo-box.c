@@ -197,7 +197,7 @@ static void load_from_file (EasysetupCountryComboBox *self)
 	/* this is the official version, in the 'operator-wizard-settings' package */
 	const gchar* filepath = "/usr/share/operator-wizard/mcc_mapping";
 #endif /*MODEST_HILDON_VERSION_0*/
-	printf ("DEBUG: %s: filepath=%s\n", __FUNCTION__, filepath);
+	/* printf ("DEBUG: %s: filepath=%s\n", __FUNCTION__, filepath); */
 	FILE *file = fopen(filepath, "r");
 	if (!file)
 	{

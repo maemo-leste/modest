@@ -455,9 +455,9 @@ create_title (ModestWizardDialog *wizard_dialog)
         return;
 
     /* Get page information, we'll need that when creating title */
-    /*
     gint pages = gtk_notebook_get_n_pages (notebook);
-	*/
+    if (pages == 0)
+      return;
 	
     gint current = gtk_notebook_get_current_page (priv->notebook);
     if (current < 0)

@@ -1,5 +1,14 @@
 2007-06-11  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/maemo/easysetup/modest-presets.c:
+	(modest_presets_get_info_server_security): Correct the key name for 
+	SecureSmtp, because it seems to be case-sensitive.
+	* src/maemo/easysetup/modest-wizard-dialog.c: (create_title):
+	Do not try to get the 0th notebook page if there are 0 pages, to 
+	avoid a g_warning().
+
+2007-06-11  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/maemo/modest-platform.c: (modest_platform_on_new_msg):
 	Prevent use of the new notification feature for now, because it currently 
 	shows one dialog for each new email, which is annoying.

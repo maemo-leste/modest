@@ -29,6 +29,7 @@
 
 #include <string.h> /* for strcmp */
 #include "modest-presets.h"
+#include <stdio.h>
 
 /* Include config.h so that _() works: */
 #ifdef HAVE_CONFIG_H
@@ -43,7 +44,7 @@
 #define MODEST_PRESETS_KEY_OUTGOING            "OutgoingMailServer"
 #define MODEST_PRESETS_KEY_MAILBOX_TYPE        "MailboxType"
 #define MODEST_PRESETS_KEY_APOP                "APOPSecureLogin"
-#define MODEST_PRESETS_KEY_SECURE_SMTP         "SecureSMTP"
+#define MODEST_PRESETS_KEY_SECURE_SMTP         "SecureSmtp"
 						    
 
 ModestPresets*
@@ -271,6 +272,7 @@ modest_presets_get_info_server_security (ModestPresets *self, const gchar *provi
 			
 			val = g_key_file_get_string (self->keyfile, provider_id,
 						     MODEST_PRESETS_KEY_SECURE_SMTP, NULL);
+			/* printf("debug: %s: provider_id=%s, secure-smtp val=%s\n", __FUNCTION__, provider_id, val); */
 			if (val && strcmp(val,"true") == 0)
 				info |= MODEST_PRESETS_SECURITY_SECURE_SMTP;
 			g_free(val);
