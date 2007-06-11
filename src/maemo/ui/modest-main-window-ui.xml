@@ -132,10 +132,10 @@
   <popup name="FolderViewCSM">
     <menuitem action="FolderViewCSMNewFolder"/>
     <menuitem action="FolderViewCSMRenameFolder"/>
+    <menuitem action="FolderViewCSMDeleteFolder"/>
     <separator/>
     <menuitem action="FolderViewCSMPasteMsgs"/>
     <separator/>
-    <menuitem action="FolderViewCSMDeleteFolder"/>
     <separator/>
     <menuitem action="FolderViewCSMSearchMessages"/>
     <menuitem action="FolderViewCSMHelp"/>
