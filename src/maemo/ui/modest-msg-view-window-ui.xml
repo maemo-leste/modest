@@ -66,6 +66,11 @@
       <separator/>
       <menuitem name="ViewToggleFullscreenMenu" action="ViewToggleFullscreen"/>
       <separator/>
+      <menu name="ViewShowToolbarMenu" action="ViewShowToolbar">
+	<menuitem name="ViewShowToolbarNormalScreenMenu" action="ViewShowToolbarNormalScreen"/>
+	<menuitem name="ViewShowToolbarFullScreenMenu" action="ViewShowToolbarFullScreen"/>
+      </menu>
+      <separator/>
       <menuitem name="ViewPreviousMessageMenu" action="ViewPreviousMessage"/>
       <menuitem name="ViewNextMessageMenu" action="ViewNextMessage"/>
     </menu>
@@ -79,8 +84,7 @@
    <menu name="ToolsMenu" action="Tools">
       <menuitem name="ToolsAddToContactsMenu" action="ToolsAddToContacts"/>
       <separator/>
-
-<!--       <menuitem name="ToolsFindOnPageMenu" action="ToolsFindOnPage"/> -->
+      <menuitem name="ToolsFindInMessageMenu" action="ToolsFindInMessage"/>
       <menuitem name="ToolsSearchMessagesMenu" action="ToolsSearchMessages"/>
       <separator/>
       <menuitem name="ToolsHelpMenu" action="ToolsHelp"/>

@@ -36,7 +36,7 @@ static const ModestDimmingEntry modest_main_window_menu_dimming_entries [] = {
 
 	/* View Menu */
 	{ "/MenuBar/ViewMenu", NULL },
-	{ "/MenuBar/ViewMenu/ViewSortMenu", NULL },
+	{ "/MenuBar/ViewMenu/ViewSortMenu", G_CALLBACK(modest_ui_dimming_rules_on_sort) },
 	{ "/MenuBar/ViewMenu/ViewToggleFoldersMenu", NULL },
 	{ "/MenuBar/ViewMenu/ViewToggleFullscreenMenu", NULL },
 	{ "/MenuBar/ViewMenu/ViewShowToolbarMainMenu", NULL },
@@ -95,7 +95,7 @@ static const ModestDimmingEntry modest_main_window_toolbar_dimming_entries [] = 
 	{ "/ToolBar/ToolbarMessageReply", G_CALLBACK(modest_ui_dimming_rules_on_reply_msg) },
 	{ "/ToolBar/ToolbarDeleteMessage", G_CALLBACK(modest_ui_dimming_rules_on_delete_msg) },
 	{ "/ToolBar/ToolbarToggleView", NULL },
-	{ "/ToolBar/ToolbarSort", NULL },
+	{ "/ToolBar/ToolbarSort", G_CALLBACK(modest_ui_dimming_rules_on_sort) },
 	{ "/ToolBar/ToolbarSendReceive", NULL },
 	{ "/ToolBar/ToolbarCancel", NULL },
 };

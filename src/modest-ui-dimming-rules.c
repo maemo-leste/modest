@@ -44,6 +44,7 @@ static gboolean _already_opened_msg (ModestWindow *win);
 static gboolean _selected_msg_marked_as (ModestWindow *win, TnyHeaderFlags mask, gboolean opposite);
 static gboolean _selected_folder_not_writeable (ModestMainWindow *win);
 static gboolean _selected_folder_is_any_of_type (ModestMainWindow *win, TnyFolderType types[], guint ntypes);
+static gboolean _selected_folder_is_root_or_inbox (ModestMainWindow *win);
 static gboolean _selected_folder_is_root (ModestMainWindow *win);
 static gboolean _selected_folder_is_empty (ModestMainWindow *win);
 static gboolean _msg_download_in_progress (ModestMsgViewWindow *win);
@@ -115,9 +116,24 @@ modest_ui_dimming_rules_on_delete_folder (ModestWindow *win, gpointer user_data)
 	if (!dimmed)
 		dimmed = _selected_folder_not_writeable (MODEST_MAIN_WINDOW(win));
 	if (!dimmed)
+		dimmed = _selected_folder_is_root_or_inbox (MODEST_MAIN_WINDOW(win));
+
+	return dimmed;
+}
+
+gboolean
+modest_ui_dimming_rules_on_sort (ModestWindow *win, gpointer user_data)
+{
+	gboolean dimmed = FALSE;
+
+	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW(win), FALSE);
+		
+	/* Check dimmed rule */	
+	if (!dimmed)
 		dimmed = _selected_folder_is_root (MODEST_MAIN_WINDOW(win));
 
 	return dimmed;
+	
 }
 
 gboolean 
@@ -131,7 +147,7 @@ modest_ui_dimming_rules_on_rename_folder (ModestWindow *win, gpointer user_data)
 	if (!dimmed)
 		dimmed = _selected_folder_not_writeable (MODEST_MAIN_WINDOW(win));
 	if (!dimmed)
-		dimmed = _selected_folder_is_root (MODEST_MAIN_WINDOW(win));
+		dimmed = _selected_folder_is_root_or_inbox (MODEST_MAIN_WINDOW(win));
 
 	return dimmed;
 }
@@ -504,7 +520,7 @@ _selected_folder_not_writeable (ModestMainWindow *win)
 }
 
 static gboolean
-_selected_folder_is_root (ModestMainWindow *win)
+_selected_folder_is_root_or_inbox (ModestMainWindow *win)
 {
 	TnyFolderType types[2];
 	gboolean result = FALSE;
@@ -546,6 +562,22 @@ _selected_folder_is_root (ModestMainWindow *win)
 			}
 		}
 	}
+		
+	return result;
+}
+
+static gboolean
+_selected_folder_is_root (ModestMainWindow *win)
+{
+	TnyFolderType types[1];
+	gboolean result = FALSE;
+
+	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW(win), FALSE);
+
+	types[0] = TNY_FOLDER_TYPE_ROOT; 
+
+	/* Check folder type */
+	result = _selected_folder_is_any_of_type (win, types, 1);
 		
 	return result;
 }
