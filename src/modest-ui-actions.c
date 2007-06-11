@@ -1169,15 +1169,16 @@ modest_ui_actions_on_header_selected (ModestHeaderView *header_view,
 				      ModestMainWindow *main_window)
 {
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW(main_window));
-
+	g_return_if_fail (MODEST_IS_HEADER_VIEW (header_view));
+	
 	/* If no header has been selected then exit */
 	if (!header)
 		return;
-
+	
 	/* Update Main window title */
 	if (GTK_WIDGET_HAS_FOCUS (header_view)) {
 		const gchar *subject = tny_header_get_subject (header);
-		if (subject && strcmp (subject, ""))
+		if (subject && strlen(subject) > 0)
 			gtk_window_set_title (GTK_WINDOW (main_window), subject);
 		else
 			gtk_window_set_title (GTK_WINDOW (main_window), _("mail_va_no_subject"));
