@@ -182,11 +182,9 @@ void easysetup_provider_combo_box_fill (EasysetupProviderComboBox *combobox, Mod
 				GtkTreeIter iter;
 				gtk_list_store_append (liststore, &iter);
 				
-				gchar *debug = g_strdup_printf ("%s: %s", provider_id, provider_name);
 				gtk_list_store_set(liststore, &iter, 
 					MODEL_COL_ID, provider_id, 
-					MODEL_COL_NAME, debug, -1);
-				g_free (debug);
+					MODEL_COL_NAME, provider_name, -1);
 				
 				provider_ids_used_already = g_slist_append (
 					provider_ids_used_already, (gpointer)g_strdup (provider_id));

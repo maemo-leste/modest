@@ -73,8 +73,6 @@ gboolean modest_init_uninit (void);
 
 /**
  * modest_init_local_folders:
- * @location_filepath: The location at which the local-folders directory should be created, 
- * or NULL to specify $HOME.
  * 
  * create the Local Folders folder under cache, if they
  * do not exist yet.
@@ -82,7 +80,7 @@ gboolean modest_init_uninit (void);
  * Returns: TRUE if the folder were already there, or
  * they were created, FALSE otherwise
  */
-gboolean modest_init_local_folders  (const gchar* location_filepath);
+gboolean modest_init_local_folders  ();
 
 /**
  * modest_init_one_local_folder:

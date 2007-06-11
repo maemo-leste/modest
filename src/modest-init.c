@@ -168,7 +168,7 @@ modest_init_init_core (void)
 
 	init_default_settings (modest_runtime_get_conf ());
 	
-	if (!modest_init_local_folders(NULL /* means $HOME */)) {
+	if (!modest_init_local_folders()) {
 		modest_init_uninit ();
 		g_printerr ("modest: failed to init local folders\n");
 		return FALSE;
@@ -336,8 +336,6 @@ gboolean modest_init_one_local_folder (gchar *maildir_path)
 
 /**
  * modest_init_local_folders:
- * @location_filepath: The location at which the local-folders directory should be created, 
- * or NULL to specify $HOME.
  * 
  * create the Local Folders folder under cache, if they
  * do not exist yet.
@@ -346,9 +344,9 @@ gboolean modest_init_one_local_folder (gchar *maildir_path)
  * they were created, FALSE otherwise
  */
 gboolean
-modest_init_local_folders  (const gchar* location_filepath)
+modest_init_local_folders  ()
 {	
-	gchar *maildir_path = modest_local_folder_info_get_maildir_path (location_filepath);
+	gchar *maildir_path = modest_local_folder_info_get_maildir_path (NULL);
 
 	/* Create each of the standard on-disk folders.
 	 * Per-account outbox folders will be created when first needed. */

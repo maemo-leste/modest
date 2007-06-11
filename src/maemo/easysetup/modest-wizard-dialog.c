@@ -441,7 +441,6 @@ get_property (GObject      *object,
 static void
 create_title (ModestWizardDialog *wizard_dialog)
 {
-    gint pages, current;
     gchar *str = NULL;
     ModestWizardDialogPrivate *priv = NULL;
     GtkNotebook *notebook = NULL;
@@ -456,22 +455,37 @@ create_title (ModestWizardDialog *wizard_dialog)
         return;
 
     /* Get page information, we'll need that when creating title */
-    pages = gtk_notebook_get_n_pages (notebook);
-    current = gtk_notebook_get_current_page (priv->notebook);
+    /*
+    gint pages = gtk_notebook_get_n_pages (notebook);
+	*/
+	
+    gint current = gtk_notebook_get_current_page (priv->notebook);
     if (current < 0)
         current = 0;
 
     /* the welcome title on the initial page */
+    /* This is the standard wizard title, with, e.g., 1/4 at the end,
+	 * but the Modest UI spec does not want this. */
+	/*
     if (current == 0) {
         str = g_strdup_printf (_("ecdg_ti_wizard_welcome"), 
                 priv->wizard_name, pages);
     } else {
-        const gchar *steps = gtk_notebook_get_tab_label_text (notebook,
-                gtk_notebook_get_nth_page (notebook, current));
-
+    */
+    	const gchar *steps = gtk_notebook_get_tab_label_text (notebook,
+        	gtk_notebook_get_nth_page (notebook, current));
+                
+		/* This is the standard wizard title, with, e.g., 1/4 at the end,
+		 * but the Modest UI spec does not want this.
+		 */
+		/*
         str = g_strdup_printf (_("ecdg_ti_wizard_step"), 
                 priv->wizard_name, current + 1, pages, steps);
-    }
+        */
+
+        str = g_strdup_printf (_("%s: %s"), 
+                priv->wizard_name, steps);
+    /* } */
 
     /* Update the dialog to display the generated title */
     gtk_window_set_title (GTK_WINDOW (wizard_dialog), str);
