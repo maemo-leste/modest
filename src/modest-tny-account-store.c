@@ -971,7 +971,7 @@ modest_tny_account_store_alert (TnyAccountStore *self, TnyAlertType type,
 			 * This is just so the testers can give us more information: */
 			/* prompt = _("Modest account not yet fully configured."); */
 			prompt = g_strdup_printf(
-				"%s\n (Internal error message, often very misleading:\n%s", 
+				"%s\n (Internal error message, often very misleading):\n%s", 
 				_("Incorrect Account Settings"), 
 				error->message);
 				
