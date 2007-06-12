@@ -324,8 +324,6 @@ on_account_removed (ModestAccountMgr *acc_mgr,
 {
 	ModestTnyAccountStore *self = MODEST_TNY_ACCOUNT_STORE(user_data);
 	TnyAccount *store_account;
-
-	g_warning ("removing account %s", account);
 	
 	/* Clear the account cache */
 	store_account =
@@ -354,8 +352,6 @@ on_account_changed (ModestAccountMgr *acc_mgr, const gchar *account,
 
 {
 	ModestTnyAccountStore *self = MODEST_TNY_ACCOUNT_STORE(user_data);
-
-	g_warning ("updating account %s (%d change(s))", account, g_slist_length((GSList*)keys));
 	
 	/* Ignore the change if it's a change in the last_updated value */
 	if (g_slist_length ((GSList *)keys) == 1 &&
