@@ -1316,9 +1316,9 @@ _on_new_folder_assigned (const GObject *obj, TnyFolder *folder, gpointer user_da
 	ModestMainWindow *win = NULL;
 	gboolean folder_empty = FALSE;
 
-	g_return_if_fail (MODEST_IS_MAIN_WINDOW (obj));
 	g_return_if_fail (TNY_IS_FOLDER (folder));
 
+	if (!MODEST_IS_MAIN_WINDOW (obj)) return;
 	win = MODEST_MAIN_WINDOW (obj);
 	
 	/* Check if folder is empty and set headers view contents style */

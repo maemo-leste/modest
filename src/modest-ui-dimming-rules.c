@@ -42,7 +42,7 @@
 
 static gboolean _folder_is_any_of_type (TnyFolder *folder, TnyFolderType types[], guint ntypes);
 static gboolean _invalid_msg_selected (ModestMainWindow *win, gboolean unique, ModestDimmingRule *rule);
-static gboolean _invalid_attach_selected (ModestMsgViewWindow *win, gboolean unique, ModestDimmingRule *rule);
+static gboolean _invalid_attach_selected (ModestWindow *win, gboolean unique, ModestDimmingRule *rule);
 static gboolean _invalid_clipboard_selected (ModestMsgViewWindow *win);
 static gboolean _already_opened_msg (ModestWindow *win);
 static gboolean _selected_msg_marked_as (ModestWindow *win, TnyHeaderFlags mask, gboolean opposite);
@@ -499,7 +499,7 @@ modest_ui_dimming_rules_on_view_attachments (ModestWindow *win, gpointer user_da
 
 	/* Check dimmed rule */	
 	if (!dimmed) 
-		dimmed = _invalid_attach_selected (MODEST_MSG_VIEW_WINDOW(win), TRUE, rule);			
+		dimmed = _invalid_attach_selected (win, TRUE, rule);			
 		
 	return dimmed;
 }
@@ -516,7 +516,7 @@ modest_ui_dimming_rules_on_save_attachments (ModestWindow *win, gpointer user_da
 
 	/* Check dimmed rule */	
 	if (!dimmed) 
-		dimmed = _invalid_attach_selected (MODEST_MSG_VIEW_WINDOW(win), FALSE, rule);			
+		dimmed = _invalid_attach_selected (win, FALSE, rule);			
 		
 	return dimmed;
 }
@@ -527,13 +527,13 @@ modest_ui_dimming_rules_on_remove_attachments (ModestWindow *win, gpointer user_
 	ModestDimmingRule *rule = NULL;
 	gboolean dimmed = FALSE;
 
-	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW(win), FALSE);
+	g_return_val_if_fail (MODEST_IS_WINDOW(win), FALSE);
 	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
 	rule = MODEST_DIMMING_RULE (user_data);
 
 	/* Check dimmed rule */	
 	if (!dimmed) {
-		dimmed = _invalid_attach_selected (MODEST_MSG_VIEW_WINDOW(win), FALSE, NULL);			
+		dimmed = _invalid_attach_selected (win, FALSE, NULL);			
 		modest_dimming_rule_set_notification (rule, _("mcen_ib_unable_to_display_more"));
 	}
 
@@ -833,54 +833,62 @@ _invalid_clipboard_selected (ModestMsgViewWindow *win)
 }
 
 static gboolean
-_invalid_attach_selected (ModestMsgViewWindow *win,
+_invalid_attach_selected (ModestWindow *win,
 			  gboolean unique,
 			  ModestDimmingRule *rule) 
 {
 	GList *attachments, *node;
 	gint n_selected;
+	TnyHeaderFlags flags;
 	gboolean nested_attachments = FALSE;
 	gboolean selected_messages = FALSE;
 	gboolean result = FALSE;
 
-	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (win), TRUE);
-
-	/* Get selected atachments */
-	attachments = modest_msg_view_window_get_attachments (win);
-	n_selected = g_list_length (attachments);
-	for (node = attachments; node != NULL; node = g_list_next (node)) {
-		TnyMimePart *mime_part = TNY_MIME_PART (node->data);
-		TnyList *nested_list = tny_simple_list_new ();
-		if (!tny_mime_part_is_attachment (mime_part)) {
-			selected_messages = TRUE;
-			break;
-		}
-		tny_mime_part_get_parts (mime_part, nested_list);
-		if (tny_list_get_length (nested_list) > 0)
-			nested_attachments = TRUE;
-		g_object_unref (nested_list);
-	}
-
-	/* Check unique */
-	if (unique) 
-		result = n_selected != 1;
-	else
+	if (MODEST_IS_MAIN_WINDOW (win)) {
+		flags = TNY_HEADER_FLAG_ATTACHMENTS;
+		if (!result)
+			result = _selected_msg_marked_as (win, flags, TRUE);
 		
-		result = n_selected == 1;
-
-	/* Set notifications */
-	if (!result && rule != NULL) {
-		if (selected_messages) {
-			modest_dimming_rule_set_notification (rule, _("mcen_ib_unable_to_save_attach_mail"));
-		} else if (nested_attachments) {
-			modest_dimming_rule_set_notification (rule, _("FIXME:unable to save attachments with nested elements"));
-		} else if (n_selected == 0) {
-			modest_dimming_rule_set_notification (rule, _("FIXME:no attachment selected"));
-		}
 	}
-	
-	/* Free */
-	g_list_free (attachments);
+	else if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
+		
+		/* Get selected atachments */
+		attachments = modest_msg_view_window_get_attachments (MODEST_MSG_VIEW_WINDOW(win));
+		n_selected = g_list_length (attachments);
+		for (node = attachments; node != NULL; node = g_list_next (node)) {
+			TnyMimePart *mime_part = TNY_MIME_PART (node->data);
+			TnyList *nested_list = tny_simple_list_new ();
+			if (!tny_mime_part_is_attachment (mime_part)) {
+				selected_messages = TRUE;
+				break;
+			}
+			tny_mime_part_get_parts (mime_part, nested_list);
+			if (tny_list_get_length (nested_list) > 0)
+				nested_attachments = TRUE;
+			g_object_unref (nested_list);
+		}
+		
+		/* Check unique */
+		if (unique) 
+			result = n_selected != 1;
+		else
+			
+			result = n_selected == 1;
+		
+		/* Set notifications */
+		if (!result && rule != NULL) {
+			if (selected_messages) {
+				modest_dimming_rule_set_notification (rule, _("mcen_ib_unable_to_save_attach_mail"));
+			} else if (nested_attachments) {
+				modest_dimming_rule_set_notification (rule, _("FIXME:unable to save attachments with nested elements"));
+			} else if (n_selected == 0) {
+				modest_dimming_rule_set_notification (rule, _("FIXME:no attachment selected"));
+			}
+		}
+		
+		/* Free */
+		g_list_free (attachments);
+	}
 
 	return result;
 }
