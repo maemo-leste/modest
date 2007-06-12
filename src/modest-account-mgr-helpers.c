@@ -585,6 +585,10 @@ modest_account_mgr_set_first_account_as_default  (ModestAccountMgr *self)
 {
 	gboolean result = FALSE;
 	GSList *account_names = modest_account_mgr_account_names (self, TRUE /* only enabled */);
+
+	/* Return TRUE if there is no account */
+	if (!account_names)
+		return TRUE;
 		
 	/* Get the first one, alphabetically, by title: */
 	GSList* list_sorted = g_slist_sort (account_names, 
