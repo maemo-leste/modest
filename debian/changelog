@@ -1,3 +1,19 @@
+modest (1.0-2007.24-2) gutsy; urgency=low
+
+  * Fixes: NB#60246, NB#58780, NB#56305, NB#57434, NB#58040, NB#60060
+  * Fixes: NB#60144, NB#59431, NB#59825, NB#59993, NB#59961, NB#59169
+  * Known problems:
+    - Startup time can be slow.
+    - Restart is required after adding a new account, To see the new account.
+    - Application restart may be required to update mails.
+    - To view the mails, the particular account has to selected from the View menu
+    - If right-hand view is not visible, try the folowing command
+    - "gconftool-2 --recursive-unset /apps/modest/widgets"
+    - Folders do not reflect newly moved messages instantenously,
+    - click around for the folder to update.
+
+ -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Tue, 12 Jun 2007 19:04:40 +0300
+
 modest (1.0-2007.24-1) gutsy; urgency=low
 
   * Fixes: NB#58576
