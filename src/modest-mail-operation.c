@@ -927,9 +927,7 @@ update_account_thread (gpointer thr_user_data)
 				tny_iterator_next (iter);
 			}
 			g_object_unref (iter);
-		} else /* If it's headers only, then just poke the folder status (this will update the unread and
-			* total count of folder observers, like the folder list model*/
-			tny_folder_poke_status (TNY_FOLDER (folder));
+		}
 		
 		tny_folder_remove_observer (TNY_FOLDER (folder), TNY_FOLDER_OBSERVER (observer));
 		g_object_unref (observer);
