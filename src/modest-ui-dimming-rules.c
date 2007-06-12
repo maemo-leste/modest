@@ -101,9 +101,18 @@ modest_ui_dimming_rules_on_new_folder (ModestWindow *win, gpointer user_data)
 		}
 	} else {
 		/* TODO: the specs say that only one level of subfolder is allowed, is this true ? */
+		
+		TnyFolderType types[3];
+				
+		types[0] = TNY_FOLDER_TYPE_DRAFTS; 
+		types[1] = TNY_FOLDER_TYPE_OUTBOX;
+		types[2] = TNY_FOLDER_TYPE_SENT;
 
 		/* Apply folder rules */	
-		dimmed = _selected_folder_not_writeable (MODEST_MAIN_WINDOW(win));
+		if (!dimmed)
+			dimmed = _selected_folder_not_writeable (MODEST_MAIN_WINDOW(win));
+		if (!dimmed)
+			dimmed = _selected_folder_is_any_of_type (win, types, 3);
 	}
 
 	return dimmed;
@@ -113,6 +122,13 @@ gboolean
 modest_ui_dimming_rules_on_delete_folder (ModestWindow *win, gpointer user_data)
 {
 	gboolean dimmed = FALSE;
+	TnyFolderType types[3];
+
+	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW(win), FALSE);
+
+	types[0] = TNY_FOLDER_TYPE_DRAFTS; 
+	types[1] = TNY_FOLDER_TYPE_OUTBOX;
+	types[2] = TNY_FOLDER_TYPE_SENT;
 
 	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW(win), FALSE);
 		
@@ -121,6 +137,8 @@ modest_ui_dimming_rules_on_delete_folder (ModestWindow *win, gpointer user_data)
 		dimmed = _selected_folder_not_writeable (MODEST_MAIN_WINDOW(win));
 	if (!dimmed)
 		dimmed = _selected_folder_is_root_or_inbox (MODEST_MAIN_WINDOW(win));
+	if (!dimmed)
+		dimmed = _selected_folder_is_any_of_type (win, types, 3);
 
 	return dimmed;
 }
@@ -144,7 +162,14 @@ gboolean
 modest_ui_dimming_rules_on_rename_folder (ModestWindow *win, gpointer user_data)
 {
 	gboolean dimmed = FALSE;
+	TnyFolderType types[3];
 
+	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW(win), FALSE);
+
+	types[0] = TNY_FOLDER_TYPE_DRAFTS; 
+	types[1] = TNY_FOLDER_TYPE_OUTBOX;
+	types[2] = TNY_FOLDER_TYPE_SENT;
+	
 	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW(win), FALSE);
 		
 	/* Check dimmed rule */	
@@ -152,6 +177,8 @@ modest_ui_dimming_rules_on_rename_folder (ModestWindow *win, gpointer user_data)
 		dimmed = _selected_folder_not_writeable (MODEST_MAIN_WINDOW(win));
 	if (!dimmed)
 		dimmed = _selected_folder_is_root_or_inbox (MODEST_MAIN_WINDOW(win));
+	if (!dimmed)
+		dimmed = _selected_folder_is_any_of_type (win, types, 3);
 
 	return dimmed;
 }
