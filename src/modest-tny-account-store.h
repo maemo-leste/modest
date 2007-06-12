@@ -121,9 +121,9 @@ TnyAccount* modest_tny_account_store_get_tny_account_by_id  (ModestTnyAccountSto
  * g_object_unref when it's no longer needed
  */
 TnyAccount* modest_tny_account_store_get_server_account (ModestTnyAccountStore *self,
-								 const gchar *account_name,
-								 TnyAccountType type);
-						     
+							 const gchar *account_name,
+							 TnyAccountType type);
+
 /**
  * modest_tny_account_store_get_transport_account_for_open_connection
  * @self: a ModestTnyAccountStore instance
@@ -137,7 +137,7 @@ TnyAccount* modest_tny_account_store_get_server_account (ModestTnyAccountStore *
  * g_object_unref when it's no longer needed
  */						 
 TnyAccount* modest_tny_account_store_get_transport_account_for_open_connection (ModestTnyAccountStore *self,
-								 const gchar *account_name);
+										const gchar *account_name);
 
 /**
  * tny_account_store_get_session

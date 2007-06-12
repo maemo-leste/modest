@@ -240,7 +240,7 @@ gboolean
 modest_server_account_get_username_has_succeeded (ModestAccountMgr *self, const gchar* account_name)
 {
 	return modest_account_mgr_get_bool (self, account_name, MODEST_ACCOUNT_USERNAME_HAS_SUCCEEDED, 
-		TRUE /* server account */);
+					    TRUE /* server account */);
 }
 
 void
@@ -248,15 +248,15 @@ modest_server_account_set_username_has_succeeded (ModestAccountMgr *self, const 
 	gboolean succeeded)
 {
 	modest_account_mgr_set_bool (self, account_name, MODEST_ACCOUNT_USERNAME_HAS_SUCCEEDED, 
-		succeeded, TRUE /* server account */);
+				     succeeded, TRUE /* server account */);
 }
 
 void
 modest_server_account_set_password (ModestAccountMgr *self, const gchar* account_name, 
-	const gchar* password)
+				    const gchar* password)
 {
 	modest_account_mgr_set_string (self, account_name, MODEST_ACCOUNT_PASSWORD, 
-		password, TRUE /* server account */);
+				       password, TRUE /* server account */);
 }
 	
 gchar*
@@ -527,13 +527,6 @@ modest_account_mgr_get_default_account  (ModestAccountMgr *self)
 		return  NULL;
 	}
 	
-	/* Make sure that at least one account is always the default, if possible:
-	 * (It would be meaningless to have enabled accounts but no default account. */
-	if (!account) {
-		modest_account_mgr_set_first_account_as_default (self);
-		account = modest_conf_get_string (conf, MODEST_CONF_DEFAULT_ACCOUNT, &err);
-	}
-
 	/* sanity check */
 	if (account && !modest_account_mgr_account_exists (self, account, FALSE)) {
 		g_printerr ("modest: default account does not exist\n");
@@ -556,7 +549,7 @@ modest_account_mgr_set_default_account  (ModestAccountMgr *self, const gchar* ac
 			      FALSE);
 	
 	conf = MODEST_ACCOUNT_MGR_GET_PRIVATE (self)->modest_conf;
-		
+
 	return modest_conf_set_string (conf, MODEST_CONF_DEFAULT_ACCOUNT,
 				       account, NULL);
 
@@ -580,23 +573,29 @@ gint on_accounts_list_sort_by_title(gconstpointer a, gconstpointer b)
  	return g_utf8_collate((const gchar*)a, (const gchar*)b);
 }
 
+
+static void
+free_element (gpointer data, gpointer user_data)
+{
+	g_free (data);
+}
+
 gboolean
 modest_account_mgr_set_first_account_as_default  (ModestAccountMgr *self)
 {
 	gboolean result = FALSE;
 	GSList *account_names = modest_account_mgr_account_names (self, TRUE /* only enabled */);
-	
+		
 	/* Get the first one, alphabetically, by title: */
 	GSList* list_sorted = g_slist_sort (account_names, 
 		on_accounts_list_sort_by_title);
-	if(list_sorted)
-	{
+	if(list_sorted) {
 		const gchar* account_name = (const gchar*)list_sorted->data;
 		if (account_name) 
 			result = modest_account_mgr_set_default_account (self, account_name);
 	}
 	
-	/* TODO: Free the strings too? */
+	g_slist_foreach (account_names, free_element, NULL);
 	g_slist_free (account_names);
 	
 	return result;

@@ -325,6 +325,8 @@ on_account_removed (ModestAccountMgr *acc_mgr,
 	ModestTnyAccountStore *self = MODEST_TNY_ACCOUNT_STORE(user_data);
 	TnyAccount *store_account;
 
+	g_warning ("removing account %s", account);
+	
 	/* Clear the account cache */
 	store_account =
 		modest_tny_account_store_get_server_account (self,
@@ -333,8 +335,9 @@ on_account_removed (ModestAccountMgr *acc_mgr,
 	if (store_account) {
 		tny_store_account_delete_cache (TNY_STORE_ACCOUNT (store_account));
 		g_object_unref (store_account);
-	}
-
+	} else
+		g_printerr ("modest: cannot find server account for %s", account);
+	
 	/* FIXME: make this more finegrained; changes do not
 	 * really affect _all_ accounts, and some do not
 	 * affect tny accounts at all (such as 'last_update')
@@ -351,6 +354,8 @@ on_account_changed (ModestAccountMgr *acc_mgr, const gchar *account,
 
 {
 	ModestTnyAccountStore *self = MODEST_TNY_ACCOUNT_STORE(user_data);
+
+	g_warning ("updating account %s (%d change(s))", account, g_slist_length((GSList*)keys));
 	
 	/* Ignore the change if it's a change in the last_updated value */
 	if (g_slist_length ((GSList *)keys) == 1 &&
@@ -1173,10 +1178,10 @@ modest_tny_account_store_get_server_account (ModestTnyAccountStore *self,
 		}
 	} else {
 		ModestAccountData *account_data;
-
 		account_data = modest_account_mgr_get_account_data (priv->account_mgr, account_name);
 		if (!account_data) {
-			g_printerr ("modest: %s: cannot get account data for account '%s'\n", __FUNCTION__, account_name);
+			g_printerr ("modest: %s: cannot get account data for account '%s'\n", __FUNCTION__,
+				    account_name);
 			return NULL;
 		}
 
@@ -1277,14 +1282,16 @@ modest_tny_account_store_get_transport_account_for_open_connection (ModestTnyAcc
 	return account;
 }
 
-gboolean modest_tny_account_is_virtual_local_folders (TnyAccount *self)
+gboolean
+modest_tny_account_is_virtual_local_folders (TnyAccount *self)
 {
 	/* We should make this more sophisticated if we ever use ModestTnyLocalFoldersAccount 
 	 * for anything else. */
 	return MODEST_IS_TNY_LOCAL_FOLDERS_ACCOUNT (self);
 }
 
-TnyAccount* modest_tny_account_store_get_local_folders_account (TnyAccountStore *self)
+TnyAccount*
+modest_tny_account_store_get_local_folders_account (TnyAccountStore *self)
 {
 	TnyAccount *account = NULL;
 	ModestTnyAccountStorePrivate *priv;	
