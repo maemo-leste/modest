@@ -196,12 +196,6 @@ on_delete_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 									     account_name,
 									     FALSE);
 									     
-			if (removed && is_default) {
-				/* Set a different account as the default, so there is always at least one default:
-				 * This is not specified, and might be the wrong behaviour. murrayc. */
-				modest_account_mgr_set_first_account_as_default (account_mgr);
-			}
-									 
 			if (removed) {
 				/* Show confirmation dialog ??? */
 			} else {
