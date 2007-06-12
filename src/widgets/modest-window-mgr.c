@@ -265,6 +265,10 @@ modest_window_mgr_unregister_window (ModestWindowMgr *self,
 		return;
 	}
 
+	/* If it's the main window unset it */
+	if (priv->main_window == window)
+		priv->main_window = NULL;
+
 	/* Remove from list. Remove the reference to the window */
 	g_object_unref (win->data);
 	priv->window_list = g_list_remove_link (priv->window_list, win);

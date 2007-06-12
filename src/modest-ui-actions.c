@@ -55,6 +55,7 @@
 #include <widgets/modest-account-view-window.h>
 #include <widgets/modest-details-dialog.h>
 #include <widgets/modest-attachments-view.h>
+#include "widgets/modest-folder-view.h"
 #include "widgets/modest-global-settings-dialog.h"
 #include "modest-connection-specific-smtp-window.h"
 #include "modest-account-mgr-helpers.h"
@@ -2519,8 +2520,18 @@ create_move_to_dialog (ModestWindow *win,
 
 	/* Create folder view */
 	*tree_view = modest_folder_view_new (NULL);
-	gtk_tree_view_set_model (GTK_TREE_VIEW (*tree_view),
-				 gtk_tree_view_get_model (GTK_TREE_VIEW (folder_view)));
+
+	/* It could happen that we're trying to move a message from a
+	   window (msg window for example) after the main window was
+	   closed, so we can not just get the model of the folder
+	   view */
+	if (MODEST_IS_FOLDER_VIEW (folder_view))
+		gtk_tree_view_set_model (GTK_TREE_VIEW (*tree_view),
+					 gtk_tree_view_get_model (GTK_TREE_VIEW (folder_view)));
+	else
+		modest_folder_view_update_model (MODEST_FOLDER_VIEW (*tree_view), 
+						 TNY_ACCOUNT_STORE (modest_runtime_get_account_store ()));
+
 	gtk_container_add (GTK_CONTAINER (scroll), *tree_view);
 
 	/* Add scroll to dialog */
@@ -2751,8 +2762,11 @@ modest_ui_actions_on_msg_view_window_move_to (GtkAction *action,
 
 	/* Get the folder view */
 	main_window = MODEST_MAIN_WINDOW (modest_window_mgr_get_main_window (modest_runtime_get_window_mgr ()));
-	folder_view = modest_main_window_get_child_widget (main_window,
-							   MODEST_WIDGET_TYPE_FOLDER_VIEW);
+	if (main_window)
+		folder_view = modest_main_window_get_child_widget (main_window,
+								   MODEST_WIDGET_TYPE_FOLDER_VIEW);
+	else
+		folder_view = NULL;
 
 	/* Create and run the dialog */
 	dialog = create_move_to_dialog (MODEST_WINDOW (win), folder_view, &tree_view);	
@@ -2793,7 +2807,7 @@ modest_ui_actions_on_msg_view_window_move_to (GtkAction *action,
 							 tranasfer_msgs_from_viewer_cb,
 							 NULL);
 			g_object_unref (G_OBJECT (mail_op));
-		} 
+		}
 		g_object_unref (headers);
 		g_object_unref (folder_store);
 	}

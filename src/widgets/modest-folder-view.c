@@ -66,9 +66,6 @@ static void         tny_account_store_view_init (gpointer g,
 static void         modest_folder_view_set_account_store (TnyAccountStoreView *self, 
 							  TnyAccountStore     *account_store);
 
-static gboolean     update_model           (ModestFolderView *self,
-					    ModestTnyAccountStore *account_store);
-
 static void         on_selection_changed   (GtkTreeSelection *sel, gpointer data);
 
 static void         on_account_update      (TnyAccountStore *account_store, 
@@ -583,8 +580,8 @@ static void
 on_account_update (TnyAccountStore *account_store, const gchar *account,
 		   gpointer user_data)
 {
-	if (!update_model (MODEST_FOLDER_VIEW(user_data), 
-			   MODEST_TNY_ACCOUNT_STORE(account_store)))
+	if (!modest_folder_view_update_model (MODEST_FOLDER_VIEW(user_data), 
+					      account_store))
 		g_printerr ("modest: failed to update model for changes in '%s'",
 			    account);
 }
@@ -596,8 +593,7 @@ on_accounts_reloaded   (TnyAccountStore *account_store,
 	ModestConf *conf = modest_runtime_get_conf ();
 
 	modest_widget_memory_save (conf, G_OBJECT (user_data), MODEST_CONF_FOLDER_VIEW_KEY);
-	update_model (MODEST_FOLDER_VIEW (user_data), 
-		      MODEST_TNY_ACCOUNT_STORE(account_store));
+	modest_folder_view_update_model (MODEST_FOLDER_VIEW (user_data), account_store);
 	modest_widget_memory_restore (conf, G_OBJECT (user_data), MODEST_CONF_FOLDER_VIEW_KEY);
 }
 
@@ -705,18 +701,9 @@ filter_row (GtkTreeModel *model,
 	return retval;
 }
 
-/*
-static void on_tnylist_accounts_debug_print(gpointer data,  gpointer user_data)
-{
-	TnyAccount* account = TNY_ACCOUNT(data);
-	const gchar *prefix = (const gchar*)(user_data);
-	
-	printf("%s account id=%s\n", prefix, tny_account_get_id (account));
-}
-*/
-
-static gboolean
-update_model (ModestFolderView *self, ModestTnyAccountStore *account_store)
+gboolean
+modest_folder_view_update_model (ModestFolderView *self,
+				 TnyAccountStore *account_store)
 {
 	ModestFolderViewPrivate *priv;
 	GtkTreeModel *model /* , *old_model */;

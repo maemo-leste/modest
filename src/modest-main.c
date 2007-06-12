@@ -227,6 +227,7 @@ start_ui (const gchar *account_name, const gchar* mailto, const gchar *cc, const
 	} else {
 		ModestWindowMgr *mgr = modest_runtime_get_window_mgr ();
 		modest_window_mgr_register_window (mgr, win);
+		g_object_unref (win);
 	}
 	
 	gtk_widget_show_all (GTK_WIDGET (win));
