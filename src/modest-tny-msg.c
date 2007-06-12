@@ -66,13 +66,18 @@ modest_tny_msg_new (const gchar* mailto, const gchar* from, const gchar *cc,
 	new_msg = tny_platform_factory_new_msg (fact);
 	header  = tny_msg_get_header (new_msg);
 	
-	tny_header_set_from (TNY_HEADER (header), from);
-	tny_header_set_replyto (TNY_HEADER (header), from);
-	tny_header_set_to (TNY_HEADER (header), mailto);
-	tny_header_set_cc (TNY_HEADER (header), cc);
-	tny_header_set_bcc (TNY_HEADER (header), bcc);
-
-	if (subject)
+	if ((from != NULL) && (strlen(from) > 0)) {
+		tny_header_set_from (TNY_HEADER (header), from);
+		tny_header_set_replyto (TNY_HEADER (header), from);
+	}
+	if ((mailto != NULL) && (strlen(mailto) > 0)) 
+		tny_header_set_to (TNY_HEADER (header), mailto);
+	if ((cc != NULL) && (strlen(cc) > 0)) 
+		tny_header_set_cc (TNY_HEADER (header), cc);
+	if ((bcc != NULL) && (strlen(bcc) > 0)) 
+		tny_header_set_bcc (TNY_HEADER (header), bcc);
+	
+	if ((subject != NULL) && (strlen(subject) > 0)) 
 		tny_header_set_subject (TNY_HEADER (header), subject);
 
 	content_type = get_content_type(body);
@@ -105,12 +110,19 @@ modest_tny_msg_new_html_plain (const gchar* mailto, const gchar* from, const gch
 	new_msg = tny_platform_factory_new_msg (fact);
 	header  = tny_msg_get_header (new_msg);
 	
-	tny_header_set_from (TNY_HEADER (header), from);
-	tny_header_set_replyto (TNY_HEADER (header), from);
-	tny_header_set_to (TNY_HEADER (header), mailto);
-	tny_header_set_cc (TNY_HEADER (header), cc);
-	tny_header_set_bcc (TNY_HEADER (header), bcc);
-	tny_header_set_subject (TNY_HEADER (header), subject);
+	if ((from != NULL) && (strlen(from) > 0)) {
+		tny_header_set_from (TNY_HEADER (header), from);
+		tny_header_set_replyto (TNY_HEADER (header), from);
+	}
+	if ((mailto != NULL) && (strlen(mailto) > 0)) 
+		tny_header_set_to (TNY_HEADER (header), mailto);
+	if ((cc != NULL) && (strlen(cc) > 0)) 
+		tny_header_set_cc (TNY_HEADER (header), cc);
+	if ((bcc != NULL) && (strlen(bcc) > 0)) 
+		tny_header_set_bcc (TNY_HEADER (header), bcc);
+	
+	if ((subject != NULL) && (strlen(subject) > 0)) 
+		tny_header_set_subject (TNY_HEADER (header), subject);
 
 	content_type = get_content_type(plain_body);
 		

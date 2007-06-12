@@ -77,10 +77,6 @@ static gboolean modest_msg_view_window_window_state_event (GtkWidget *widget,
 							   gpointer userdata);
 static void modest_msg_view_window_scroll_up (ModestWindow *window);
 static void modest_msg_view_window_scroll_down (ModestWindow *window);
-static gboolean modest_msg_view_window_is_last_message (ModestMsgViewWindow *window);
-static gboolean modest_msg_view_window_is_first_message (ModestMsgViewWindow *window);
-static TnyFolderType modest_msg_view_window_get_folder_type (ModestMsgViewWindow *window);
-static void modest_msg_view_window_update_dimmed (ModestMsgViewWindow *window);
 static void modest_msg_view_window_update_priority (ModestMsgViewWindow *window);
 
 static void modest_msg_view_window_show_toolbar   (ModestWindow *window,
@@ -105,8 +101,6 @@ static void set_toolbar_mode (ModestMsgViewWindow *self,
 
 static gboolean set_toolbar_transfer_mode     (ModestMsgViewWindow *self); 
 
-static void view_attachment_insensitive_press (GtkWidget *widget, ModestMsgViewWindow *window);
-static void save_attachment_insensitive_press (GtkWidget *widget, ModestMsgViewWindow *window);
 
 static void update_window_title (ModestMsgViewWindow *window);
 
@@ -494,8 +488,6 @@ modest_msg_view_window_new_with_header_model (TnyMsg *msg,
 
 	modest_msg_view_window_update_priority (window);
 
-	modest_msg_view_window_update_dimmed (window);
-
 	return MODEST_WINDOW(window);
 }
 
@@ -514,8 +506,6 @@ modest_msg_view_window_new (TnyMsg *msg,
 	GtkActionGroup *action_group = NULL;
 	GError *error = NULL;
 	GdkPixbuf *window_icon = NULL;
-	GtkAction *action = NULL;
-	GtkWidget *widget = NULL;
 
 	g_return_val_if_fail (msg, NULL);
 	
@@ -623,29 +613,12 @@ modest_msg_view_window_new (TnyMsg *msg,
 
 	priv->last_search = NULL;
 
-	modest_msg_view_window_update_dimmed (MODEST_MSG_VIEW_WINDOW (obj));
 
 	/* Set window icon */
 	window_icon = modest_platform_get_icon (MODEST_APP_MSG_VIEW_ICON);
 	gtk_window_set_icon (GTK_WINDOW (obj), window_icon);
 
 	/* Init the clipboard actions dim status */
-	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/EditMenu/EditCopyMenu");
-	gtk_action_set_sensitive (action, FALSE);
-
-	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/EditMenu/EditCutMenu");
-	gtk_action_set_sensitive (action, FALSE);
-
-	/* also set the add to contacts status to false as it depends on clipboard status */
-	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/ToolsMenu/ToolsAddToContactsMenu");
-	gtk_action_set_sensitive (action, FALSE);
-
-	/* insensitive handlers */
-	widget = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/MenuBar/AttachmentsMenu/ViewAttachmentMenu");
-	g_signal_connect (G_OBJECT (widget), "insensitive-press", G_CALLBACK (view_attachment_insensitive_press), self);
-	widget = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/MenuBar/AttachmentsMenu/SaveAttachmentMenu");
-	g_signal_connect (G_OBJECT (widget), "insensitive-press", G_CALLBACK (save_attachment_insensitive_press), self);
-
 	gtk_widget_grab_focus (priv->msg_view);
 
 	update_window_title (MODEST_MSG_VIEW_WINDOW (obj));
@@ -887,8 +860,8 @@ modest_msg_view_window_scroll_down (ModestWindow *window)
 	g_signal_emit_by_name (G_OBJECT (priv->main_scroll), "scroll-child", GTK_SCROLL_STEP_DOWN, FALSE);
 }
 
-static gboolean 
-modest_msg_view_window_is_last_message (ModestMsgViewWindow *window)
+gboolean
+modest_msg_view_window_last_message_selected (ModestMsgViewWindow *window)
 {
 	GtkTreePath *path;
 	ModestMsgViewWindowPrivate *priv;
@@ -922,8 +895,19 @@ modest_msg_view_window_is_last_message (ModestMsgViewWindow *window)
 	
 }
 
-static gboolean 
-modest_msg_view_window_is_first_message (ModestMsgViewWindow *window)
+gboolean
+modest_msg_view_window_has_headers_model (ModestMsgViewWindow *window)
+{
+	ModestMsgViewWindowPrivate *priv;
+
+	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (window), TRUE);
+	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
+
+	return priv->header_model != NULL;
+}
+
+gboolean
+modest_msg_view_window_first_message_selected (ModestMsgViewWindow *window)
 {
 	GtkTreePath *path;
 	ModestMsgViewWindowPrivate *priv;
@@ -1139,13 +1123,12 @@ view_msg_cb (ModestMailOperation *mail_op,
 
 	/* Set new message */
 	modest_msg_view_set_message (MODEST_MSG_VIEW (priv->msg_view), msg);
-	modest_msg_view_window_update_dimmed (self);
 	modest_msg_view_window_update_priority (self);
 	update_window_title (MODEST_MSG_VIEW_WINDOW (self));
 	gtk_widget_grab_focus (priv->msg_view);
 }
 
-static TnyFolderType
+TnyFolderType
 modest_msg_view_window_get_folder_type (ModestMsgViewWindow *window)
 {
 	ModestMsgViewWindowPrivate *priv;
@@ -1178,77 +1161,6 @@ modest_msg_view_window_get_folder_type (ModestMsgViewWindow *window)
 	return folder_type;
 }
 
-static void
-modest_msg_view_window_update_dimmed (ModestMsgViewWindow *window)
-{
-	ModestWindowPrivate *parent_priv;
-	ModestMsgViewWindowPrivate *priv;
-	GtkAction *widget;
-	gboolean is_first, is_last;
-	TnyFolderType folder_type;
-	gboolean is_not_sent;
-	GList *attachments, *node;
-	gint n_selected;
-	gboolean selected_messages = FALSE;
-	gboolean nested_attachments = FALSE;
-
-	parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
-	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
-
-	is_first = modest_msg_view_window_is_first_message (window);
-	is_last = modest_msg_view_window_is_last_message (window);
-
-	widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ToolbarMessageBack");
-	gtk_action_set_sensitive (widget, !is_first);
-	widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/ViewMenu/ViewPreviousMessageMenu");
-	gtk_action_set_sensitive (widget, !is_first);
-		
-	widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ToolbarMessageNext");
-	gtk_action_set_sensitive (widget, !is_last);
-	widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/ViewMenu/ViewNextMessageMenu");
-	gtk_action_set_sensitive (widget, !is_last);
-
-	folder_type = modest_msg_view_window_get_folder_type (MODEST_MSG_VIEW_WINDOW (window));
-	is_not_sent = ((folder_type == TNY_FOLDER_TYPE_DRAFTS)||(folder_type == TNY_FOLDER_TYPE_OUTBOX));
-	widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ToolbarMessageReply");
-	gtk_action_set_sensitive (widget, !is_not_sent);
-	widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/MessageMenu/MessageReplyMenu");
-	gtk_action_set_sensitive (widget, !is_not_sent);
-	widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/MessageMenu/MessageReplyAllMenu");
-	gtk_action_set_sensitive (widget, !is_not_sent);
-	widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/MessageMenu/MessageForwardMenu");
-	gtk_action_set_sensitive (widget, !is_not_sent);
-
-	/* Attachment actions dimming */
-	attachments = modest_msg_view_get_selected_attachments (MODEST_MSG_VIEW (priv->msg_view));
-	n_selected = g_list_length (attachments);
-	for (node = attachments; node != NULL; node = g_list_next (node)) {
-		TnyMimePart *mime_part = TNY_MIME_PART (node->data);
-		TnyList *nested_list = tny_simple_list_new ();
-		if (!tny_mime_part_is_attachment (mime_part)) {
-			selected_messages = TRUE;
-			break;
-		}
-		tny_mime_part_get_parts (mime_part, nested_list);
-		if (tny_list_get_length (nested_list) > 0)
-			nested_attachments = TRUE;
-		g_object_unref (nested_list);
-	}
-	g_list_free (attachments);
-
-	widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/AttachmentsMenu/ViewAttachmentMenu");
-	gtk_action_set_sensitive (widget, n_selected == 1);
-	widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/AttachmentsMenu/SaveAttachmentMenu");
-	gtk_action_set_sensitive (widget, (n_selected > 0) && (!selected_messages) &&  (!nested_attachments));
-
-	/* Dimming depending of message being an attachment or not. It's not an attachment if
-	 * we opened it outside a folder view */
-	widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/MessageMenu/MessageDeleteMenu");
-	gtk_action_set_sensitive (widget, priv->header_model != NULL);
-	widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/EditMenu/EditMoveToMenu");
-	gtk_action_set_sensitive (widget, priv->header_model != NULL);
-
-}
 
 static void
 modest_msg_view_window_update_priority (ModestMsgViewWindow *window)
@@ -1404,7 +1316,7 @@ modest_msg_view_window_clipboard_owner_change (GtkClipboard *clipboard,
 					       ModestMsgViewWindow *window)
 {
 	ModestWindowPrivate *parent_priv;
-	GtkAction *action;
+/* 	GtkAction *action; */
 	gboolean is_address;
 	gchar *selection;
 	GtkWidget *focused;
@@ -1414,19 +1326,19 @@ modest_msg_view_window_clipboard_owner_change (GtkClipboard *clipboard,
 
 	is_address = ((selection != NULL) && (modest_text_utils_validate_recipient (selection)));
 	
-	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/ToolsMenu/ToolsAddToContactsMenu");
-	gtk_action_set_sensitive (action, is_address);
+/* 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/ToolsMenu/ToolsAddToContactsMenu"); */
+/* 	gtk_action_set_sensitive (action, is_address); */
 
 	focused = gtk_window_get_focus (GTK_WINDOW (window));
 
-	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/EditMenu/EditCopyMenu");
-	gtk_action_set_sensitive (action, (selection != NULL) && (!MODEST_IS_ATTACHMENTS_VIEW (focused)));
+/* 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/EditMenu/EditCopyMenu"); */
+/* 	gtk_action_set_sensitive (action, (selection != NULL) && (!MODEST_IS_ATTACHMENTS_VIEW (focused))); */
 
-	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/EditMenu/EditCutMenu");
-	gtk_action_set_sensitive (action, (selection != NULL) && (!MODEST_IS_ATTACHMENTS_VIEW (focused)));
+/* 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/EditMenu/EditCutMenu"); */
+/* 	gtk_action_set_sensitive (action, (selection != NULL) && (!MODEST_IS_ATTACHMENTS_VIEW (focused))); */
 
 	g_free (selection);
-	modest_msg_view_window_update_dimmed (window);
+/* 	modest_msg_view_window_update_dimmed (window); */
 	
 }
 
@@ -1530,6 +1442,20 @@ on_queue_changed (ModestMailOperationQueue *queue,
 		}
 		break;
 	}
+}
+
+GList *
+modest_msg_view_window_get_attachments (ModestMsgViewWindow *win) 
+{
+	ModestMsgViewWindowPrivate *priv;
+	GList *selected_attachments = NULL;
+	
+	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (win), NULL);
+	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (win);
+
+	selected_attachments = modest_msg_view_get_selected_attachments (MODEST_MSG_VIEW (priv->msg_view));
+	
+	return selected_attachments;
 }
 
 void
@@ -1746,56 +1672,6 @@ modest_msg_view_window_remove_attachments (ModestMsgViewWindow *window, GList *m
 /* 	g_message ("not implemented %s", __FUNCTION__); */
 }
 
-static void 
-view_attachment_insensitive_press (GtkWidget *widget, ModestMsgViewWindow *window)
-{
-	GList *attachments = NULL;
-	ModestMsgViewWindowPrivate *priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
-
-	attachments = modest_msg_view_get_selected_attachments (MODEST_MSG_VIEW (priv->msg_view));
-	if (g_list_length (attachments) > 1)
-		hildon_banner_show_information (NULL, NULL, _("mcen_ib_unable_to_display_more"));
-
-	g_list_free (attachments);
-
-}
-
-static void 
-save_attachment_insensitive_press (GtkWidget *widget, ModestMsgViewWindow *window)
-{
-	GList *attachments = NULL;
-	ModestMsgViewWindowPrivate *priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
-	gboolean selected_messages = FALSE;
-	gboolean nested_attachments = FALSE;
-	gint n_selected = 0;
-	GList *node = NULL;
-
-	attachments = modest_msg_view_get_selected_attachments (MODEST_MSG_VIEW (priv->msg_view));
-	n_selected = g_list_length (attachments);
-	for (node = attachments; node != NULL; node = g_list_next (node)) {
-		TnyMimePart *mime_part = TNY_MIME_PART (node->data);
-		TnyList *nested_list = tny_simple_list_new ();
-		if (!tny_mime_part_is_attachment (mime_part)) {
-			selected_messages = TRUE;
-			break;
-		}
-		tny_mime_part_get_parts (mime_part, nested_list);
-		if (tny_list_get_length (nested_list) > 0)
-			nested_attachments = TRUE;
-		g_object_unref (nested_list);
-	}
-	g_list_free (attachments);
-	if (selected_messages) {
-		hildon_banner_show_information (NULL, NULL, _("mcen_ib_unable_to_save_attach_mail"));
-	} else if (nested_attachments) {
-		hildon_banner_show_information (NULL, NULL, _("FIXME:unable to save attachments with nested elements"));
-	} else if (n_selected == 0) {
-		hildon_banner_show_information (NULL, NULL, _("FIXME:no attachment selected"));
-	}
-
-	return ;
-		
-}
 
 static void
 update_window_title (ModestMsgViewWindow *window)

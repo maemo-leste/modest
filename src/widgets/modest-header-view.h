@@ -31,6 +31,7 @@
 #define __MODEST_HEADER_VIEW_H__
 
 #include <tny-folder.h>
+#include <tny-folder-change.h>
 #include <tny-gtk-account-list-model.h>
 #include <tny-msg.h>
 #include <tny-header.h>
@@ -115,12 +116,10 @@ struct _ModestHeaderViewClass {
 				  TnyHeader *header,
 				  gpointer user_data);
 
-	/* msg == NULL implies that the operation is finished, ie.
-	 * the progress indictation can be hidden */
-	void (*status_update) (ModestHeaderView* self,
-			       const gchar* msg,
-			       gint num, gint total,
-			       gpointer user_data);
+	void (*msg_count_changed) (ModestHeaderView* self,
+				   TnyFolder *folder,
+				   TnyFolderChange *change,
+				   gpointer user_data);
 };
 
 /**

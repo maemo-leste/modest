@@ -38,6 +38,8 @@
 #include <modest-dnd.h>
 #include <modest-tny-folder.h>
 
+#include <modest-main-window.h>
+
 #include <modest-marshal.h>
 #include <modest-text-utils.h>
 #include <modest-icon-names.h>
@@ -74,6 +76,9 @@ static void          folder_monitor_update  (TnyFolderObserver *self,
 
 static void          tny_folder_observer_init (TnyFolderObserverIface *klass);
 
+static void          _on_new_folder_assigned (const GObject *obj, TnyFolder *folder, gpointer user_data);
+
+
 typedef struct _ModestHeaderViewPrivate ModestHeaderViewPrivate;
 struct _ModestHeaderViewPrivate {
 	TnyFolder            *folder;
@@ -88,6 +93,13 @@ struct _ModestHeaderViewPrivate {
 
 };
 
+typedef struct _HeadersCountChangedHelper HeadersCountChangedHelper;
+struct _HeadersCountChangedHelper {
+	ModestHeaderView *self;
+	TnyFolderChange  *change;	
+};
+
+
 #define MODEST_HEADER_VIEW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
 						MODEST_TYPE_HEADER_VIEW, \
                                                 ModestHeaderViewPrivate))
@@ -100,7 +112,7 @@ enum {
 	HEADER_SELECTED_SIGNAL,
 	HEADER_ACTIVATED_SIGNAL,
 	ITEM_NOT_FOUND_SIGNAL,
-	STATUS_UPDATE_SIGNAL,
+	MSG_COUNT_CHANGED_SIGNAL,
 	LAST_SIGNAL
 };
 
@@ -185,14 +197,14 @@ modest_header_view_class_init (ModestHeaderViewClass *klass)
 			      g_cclosure_marshal_VOID__INT,
 			      G_TYPE_NONE, 1, G_TYPE_INT);
 
-	signals[STATUS_UPDATE_SIGNAL] =
-		g_signal_new ("status_update",
+	signals[MSG_COUNT_CHANGED_SIGNAL] =
+		g_signal_new ("msg_count_changed",
 			      G_TYPE_FROM_CLASS (gobject_class),
 			      G_SIGNAL_RUN_FIRST,
-			      G_STRUCT_OFFSET (ModestHeaderViewClass,status_update),
+			      G_STRUCT_OFFSET (ModestHeaderViewClass, msg_count_changed),
 			      NULL, NULL,
-			      modest_marshal_VOID__STRING_INT_INT,
-			      G_TYPE_NONE, 3, G_TYPE_STRING, G_TYPE_INT, G_TYPE_INT);
+			      modest_marshal_VOID__POINTER_POINTER,
+			      G_TYPE_NONE, 2, G_TYPE_POINTER, G_TYPE_POINTER);
 }
 
 static void
@@ -886,7 +898,10 @@ void
 modest_header_view_set_folder (ModestHeaderView *self, TnyFolder *folder)
 {
 	ModestHeaderViewPrivate *priv;
-
+	ModestMailOperation *mail_op = NULL;
+	ModestWindowMgr *mgr = NULL;
+	GObject *source = NULL;
+ 
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
 
 	if (priv->folder) {
@@ -898,7 +913,10 @@ modest_header_view_set_folder (ModestHeaderView *self, TnyFolder *folder)
 	}
 
 	if (folder) {
-		ModestMailOperation *mail_op;
+
+		/* Get main window to use it as source of mail operation */
+		mgr = modest_runtime_get_window_mgr ();
+		source = G_OBJECT (modest_window_mgr_get_main_window (modest_runtime_get_window_mgr ()));
 
 		/* Set folder in the model */
 		modest_header_view_set_folder_intern (self, folder);
@@ -909,13 +927,15 @@ modest_header_view_set_folder (ModestHeaderView *self, TnyFolder *folder)
 		/* no message selected */
 		g_signal_emit (G_OBJECT(self), signals[HEADER_SELECTED_SIGNAL], 0, NULL);
 
-		/* Create the mail operation */
-		mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_RECEIVE, NULL);
+		/* Create the mail operation (source will be the parent widget) */
+		mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_RECEIVE, source);
 		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
 						 mail_op);
 
 		/* Refresh the folder asynchronously */
-		modest_mail_operation_refresh_folder (mail_op, folder);
+		modest_mail_operation_refresh_folder (mail_op, folder,
+						      _on_new_folder_assigned,
+						      NULL);
 
 		/* Free */
 		g_object_unref (mail_op);
@@ -1026,19 +1046,19 @@ cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 	gint t1, t2;
 	gint val1, val2;
 	gint cmp;
-	static int counter = 0;
+/* 	static int counter = 0; */
 
 	g_return_val_if_fail (GTK_IS_TREE_VIEW_COLUMN(user_data), 0);
 /* 	col_id = gtk_tree_sortable_get_sort_column_id (GTK_TREE_SORTABLE (tree_model)); */
 	col_id = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(user_data), MODEST_HEADER_VIEW_FLAG_SORT));
 	
-	if (!(++counter % 100)) {
-		GObject *header_view = g_object_get_data(G_OBJECT(user_data),
-							 MODEST_HEADER_VIEW_PTR);
-		g_signal_emit (header_view,
-			       signals[STATUS_UPDATE_SIGNAL],
-			       0, _("Sorting..."), 0, 0);
-	}
+/* 	if (!(++counter % 100)) { */
+/* 		GObject *header_view = g_object_get_data(G_OBJECT(user_data), */
+/* 							 MODEST_HEADER_VIEW_PTR); */
+/* 		g_signal_emit (header_view, */
+/* 			       signals[STATUS_UPDATE_SIGNAL], */
+/* 			       0, _("Sorting..."), 0, 0); */
+/* 	} */
 	switch (col_id) {
 	case TNY_HEADER_FLAG_ATTACHMENTS:
 
@@ -1225,13 +1245,47 @@ idle_notify_added_headers (gpointer data)
 }
 
 static void
+idle_notify_headers_count_changed_destroy (gpointer data)
+{
+	HeadersCountChangedHelper *helper = NULL;
+
+	g_return_if_fail (data != NULL);
+	helper = (HeadersCountChangedHelper *) data; 
+
+	g_object_unref (helper->change);
+	g_slice_free (HeadersCountChangedHelper, helper);
+}
+
+static gboolean
+idle_notify_headers_count_changed (gpointer data)
+{
+	TnyFolder *folder = NULL;
+	ModestHeaderViewPrivate *priv = NULL;
+	HeadersCountChangedHelper *helper = NULL;
+
+	g_return_val_if_fail (data != NULL, FALSE);
+	helper = (HeadersCountChangedHelper *) data; 
+	g_return_val_if_fail (MODEST_IS_HEADER_VIEW(helper->self), FALSE);
+	g_return_val_if_fail (TNY_FOLDER_CHANGE(helper->change), FALSE);
+
+	folder = tny_folder_change_get_folder (helper->change);
+
+	priv = MODEST_HEADER_VIEW_GET_PRIVATE (helper->self);
+	g_mutex_lock (priv->observers_lock);
+
+	g_signal_emit (G_OBJECT(helper->self), signals[MSG_COUNT_CHANGED_SIGNAL], 0, folder, helper->change);
+		
+	g_mutex_unlock (priv->observers_lock);
+
+	return FALSE;
+}
+
+static void
 folder_monitor_update (TnyFolderObserver *self, 
 		       TnyFolderChange *change)
 {
-	ModestHeaderViewPrivate *priv = MODEST_HEADER_VIEW_GET_PRIVATE (self);
 	TnyFolderChangeChanged changed;
-
-	g_mutex_lock (priv->observers_lock);
+	HeadersCountChangedHelper *helper = NULL;
 
 	changed = tny_folder_change_get_changed (change);
 
@@ -1240,6 +1294,44 @@ folder_monitor_update (TnyFolderObserver *self,
 	   code calls dbus for example */
 	if (changed & TNY_FOLDER_CHANGE_CHANGED_ADDED_HEADERS)
 		g_idle_add (idle_notify_added_headers, NULL);
+	
+	/* Check folder count */
+	if ((changed & TNY_FOLDER_CHANGE_CHANGED_ADDED_HEADERS) ||
+	    (changed & TNY_FOLDER_CHANGE_CHANGED_REMOVED_HEADERS)) {
+		helper = g_slice_new0 (HeadersCountChangedHelper);
+		helper->self = MODEST_HEADER_VIEW(self);
+		helper->change = g_object_ref(change);
+		
+		g_idle_add_full (G_PRIORITY_DEFAULT, 
+				 idle_notify_headers_count_changed, 
+				 helper,
+				 idle_notify_headers_count_changed_destroy);
+	}	
+}
 
-	g_mutex_unlock (priv->observers_lock);
+
+static void
+_on_new_folder_assigned (const GObject *obj, TnyFolder *folder, gpointer user_data)
+{
+	ModestMainWindow *win = NULL;
+	gboolean folder_empty = FALSE;
+
+	g_return_if_fail (MODEST_IS_MAIN_WINDOW (obj));
+	g_return_if_fail (TNY_IS_FOLDER (folder));
+
+	win = MODEST_MAIN_WINDOW (obj);
+	
+	/* Check if folder is empty and set headers view contents style */
+	folder_empty = tny_folder_get_all_count (folder) == 0;
+	if (folder_empty)  {
+		modest_main_window_set_contents_style (win,
+						       MODEST_MAIN_WINDOW_CONTENTS_STYLE_EMPTY);
+	}
+	else {
+		modest_main_window_set_contents_style (win,
+						       MODEST_MAIN_WINDOW_CONTENTS_STYLE_HEADERS);
+/* 		modest_widget_memory_restore (conf, G_OBJECT(header_view), */
+/* 					      MODEST_CONF_HEADER_VIEW_KEY); */
+	}
+	
 }

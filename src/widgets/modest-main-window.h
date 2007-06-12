@@ -192,6 +192,7 @@ modest_main_window_notify_send_receive_initied (ModestMainWindow *self);
 void 
 modest_main_window_notify_send_receive_completed (ModestMainWindow *self);
 
+
 G_END_DECLS
 
 #endif /* __MODEST_MAIN_WINDOW_H__ */

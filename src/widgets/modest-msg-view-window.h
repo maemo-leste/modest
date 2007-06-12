@@ -188,6 +188,14 @@ void            modest_msg_view_window_view_attachment (ModestMsgViewWindow *win
 							TnyMimePart *mime_part);
 
 /**
+ * modest_msg_view_window_get_attachments:
+ * @window: a #ModestMsgViewWindow
+ *
+ * Get selected attachments from #ModetMsgView private object.  
+ */
+GList *         modest_msg_view_window_get_attachments (ModestMsgViewWindow *win);
+
+/**
  * modest_msg_view_window_save_attachments:
  * @window: a #ModestMsgViewWindow
  * @mime_parts: a #GList of #TnyMimePart
@@ -217,8 +225,42 @@ void            modest_msg_view_window_remove_attachments (ModestMsgViewWindow *
  * Check if toolbar is in transfer mode, which determines whether a
  * transfer operation is being processed.
  */
-gboolean 
-modest_msg_view_window_toolbar_on_transfer_mode     (ModestMsgViewWindow *self);
+gboolean  modest_msg_view_window_toolbar_on_transfer_mode     (ModestMsgViewWindow *self);
+
+
+/**
+ * modest_msg_view_window_last_message_selected:
+ * @window: a #ModestMsgViewWindow
+ *
+ * Check message currently viewed is the last message into folder . 
+*/
+gboolean modest_msg_view_window_last_message_selected (ModestMsgViewWindow *window); 
+
+
+/**
+ * modest_msg_view_window_first_message_selected:
+ * @window: a #ModestMsgViewWindow
+ *
+ * Check message currently viewed is the last message into folder . 
+*/
+gboolean modest_msg_view_window_first_message_selected (ModestMsgViewWindow *window);
+
+/**
+ * modest_msg_view_window_has_headers_model:
+ * @window: a #ModestMsgViewWindow
+ *
+ * Check if window has been created with a full headers model. 
+*/
+gboolean modest_msg_view_window_has_headers_model (ModestMsgViewWindow *window);
+
+/**
+ * modest_msg_view_window_get_folder_type:
+ * @window: a #ModestMsgViewWindow
+ *
+ * Gets folder type of message currently viewed . 
+*/
+TnyFolderType
+modest_msg_view_window_get_folder_type (ModestMsgViewWindow *window);
 
 G_END_DECLS
 

@@ -40,13 +40,13 @@ G_BEGIN_DECLS
 static const GtkActionEntry modest_action_entries [] = {
 
 	/* Toplevel menus */
-	{ "Email", NULL, N_("mcen_me_inbox_email"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_email_menu_activated) },
-	{ "Edit",    NULL, N_("mcen_me_inbox_edit"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_edit_menu_activated) },
-	{ "View",    NULL, N_("mcen_me_inbox_view") },
-	{ "Tools",   NULL, N_("mcen_me_inbox_tools") },
-	{ "Attachments", NULL, N_("mcen_me_viewer_attachments") },
-	{ "Close",   NULL, N_("mcen_me_inbox_close") },
-	{ "Zoom",   NULL, N_("Zoom") },
+	{ "Email",       NULL, N_("mcen_me_inbox_email"),        NULL, NULL, G_CALLBACK (modest_ui_actions_on_email_menu_activated) },
+	{ "Edit",        NULL, N_("mcen_me_inbox_edit"),         NULL, NULL, G_CALLBACK (modest_ui_actions_on_edit_menu_activated) },
+	{ "View",        NULL, N_("mcen_me_inbox_view"),         NULL, NULL, G_CALLBACK (modest_ui_actions_on_view_menu_activated) },
+	{ "Tools",       NULL, N_("mcen_me_inbox_tools"),        NULL, NULL, G_CALLBACK (modest_ui_actions_on_tools_menu_activated) },
+	{ "Attachments", NULL, N_("mcen_me_viewer_attachments"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_attachment_menu_activated) },
+	{ "Close",       NULL, N_("mcen_me_inbox_close") },
+	{ "Zoom",        NULL, N_("Zoom") },
 
 	/* Zoom and fullscreen keyboard actions*/
 	{ "ZoomPlus", NULL, N_("Zoom +"), "F7", NULL, G_CALLBACK (modest_ui_actions_on_zoom_plus) },

@@ -1233,7 +1233,6 @@ modest_ui_actions_on_folder_selection_changed (ModestFolderView *folder_view,
 {
 	ModestConf *conf;
 	GtkWidget *header_view;
-	gboolean folder_empty = FALSE;
 
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW(main_window));
 
@@ -1258,24 +1257,21 @@ modest_ui_actions_on_folder_selection_changed (ModestFolderView *folder_view,
 				set_active_account_from_tny_account (account, MODEST_WINDOW (main_window));
 				g_object_unref (account);
 			}
-			
-
+						
 			/* Set folder on header view */
 			modest_header_view_set_folder (MODEST_HEADER_VIEW(header_view),
 						       TNY_FOLDER (folder_store));				
-			
+
+			/* Resore configuration */
+			modest_widget_memory_restore (conf, G_OBJECT(header_view),
+					      MODEST_CONF_HEADER_VIEW_KEY);
+
 			/* Set main view style */
-			folder_empty = tny_folder_get_all_count (TNY_FOLDER (folder_store)) == 0;
-			if (folder_empty)  {
-				modest_main_window_set_contents_style (main_window, 
-								       MODEST_MAIN_WINDOW_CONTENTS_STYLE_EMPTY);
-			}
-			else {
-				modest_main_window_set_contents_style (main_window, 
-								       MODEST_MAIN_WINDOW_CONTENTS_STYLE_HEADERS);
-				modest_widget_memory_restore (conf, G_OBJECT(header_view),
-							      MODEST_CONF_HEADER_VIEW_KEY);
-			}
+/* 			modest_main_window_set_contents_style (main_window, */
+/* 							       MODEST_MAIN_WINDOW_CONTENTS_STYLE_HEADERS); */
+/* 			modest_widget_memory_restore (conf, G_OBJECT(header_view), */
+/* 						      MODEST_CONF_HEADER_VIEW_KEY); */
+
 		} else {
 			/* Update the active account */
 			modest_window_set_active_account (MODEST_WINDOW (main_window), NULL);
@@ -3003,6 +2999,36 @@ modest_ui_actions_on_email_menu_activated (GtkAction *action,
 
 void
 modest_ui_actions_on_edit_menu_activated (GtkAction *action,
+					  ModestWindow *window)
+{
+	g_return_if_fail (MODEST_IS_WINDOW (window));
+
+	/* Update dimmed */	
+	modest_window_check_dimming_rules_group (window, "ModestMenuDimmingRules");	
+}
+
+void
+modest_ui_actions_on_view_menu_activated (GtkAction *action,
+					  ModestWindow *window)
+{
+	g_return_if_fail (MODEST_IS_WINDOW (window));
+
+	/* Update dimmed */	
+	modest_window_check_dimming_rules_group (window, "ModestMenuDimmingRules");	
+}
+
+void
+modest_ui_actions_on_tools_menu_activated (GtkAction *action,
+					  ModestWindow *window)
+{
+	g_return_if_fail (MODEST_IS_WINDOW (window));
+
+	/* Update dimmed */	
+	modest_window_check_dimming_rules_group (window, "ModestMenuDimmingRules");	
+}
+
+void
+modest_ui_actions_on_attachment_menu_activated (GtkAction *action,
 					  ModestWindow *window)
 {
 	g_return_if_fail (MODEST_IS_WINDOW (window));

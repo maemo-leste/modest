@@ -343,6 +343,18 @@ modest_ui_actions_on_edit_menu_activated (GtkAction *action,
 					  ModestWindow *window);
 
 void
+modest_ui_actions_on_view_menu_activated (GtkAction *action,
+					  ModestWindow *window);
+
+void
+modest_ui_actions_on_tools_menu_activated (GtkAction *action,
+					  ModestWindow *window);
+
+void
+modest_ui_actions_on_attachment_menu_activated (GtkAction *action,
+						ModestWindow *window);
+
+void
 modest_ui_actions_on_toolbar_csm_menu_activated (GtkAction *action,
 						 ModestWindow *window);
 

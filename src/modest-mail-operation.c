@@ -109,6 +109,12 @@ typedef struct _GetMsgAsyncHelper {
 	gpointer user_data;
 } GetMsgAsyncHelper;
 
+typedef struct _RefreshAsyncHelper {	
+	ModestMailOperation *mail_op;
+	RefreshAsyncUserCallback user_callback;	
+	gpointer user_data;
+} RefreshAsyncHelper;
+
 typedef struct _XFerMsgAsyncHelper
 {
 	ModestMailOperation *mail_op;
@@ -336,7 +342,7 @@ modest_mail_operation_cancel (ModestMailOperation *self)
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
 
 	/* cancel current operation in account */
-	tny_account_cancel (priv->account);
+	//tny_account_cancel (priv->account);
 
 	did_a_cancel = TRUE;
 
@@ -1976,10 +1982,12 @@ on_refresh_folder (TnyFolder   *folder,
 		   GError     **error,
 		   gpointer     user_data)
 {
-	ModestMailOperation *self;
-	ModestMailOperationPrivate *priv;
+	RefreshAsyncHelper *helper = NULL;
+	ModestMailOperation *self = NULL;
+	ModestMailOperationPrivate *priv = NULL;
 
-	self = MODEST_MAIL_OPERATION (user_data);
+	helper = (RefreshAsyncHelper *) user_data;
+	self = helper->mail_op;
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
 
 	if (*error) {
@@ -1999,8 +2007,14 @@ on_refresh_folder (TnyFolder   *folder,
 
 	priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
 
+	/* Call user defined callback, if it exists */
+	if (helper->user_callback)
+		helper->user_callback (priv->source, folder, helper->user_data);
+
  out:
 	/* Free */
+	g_object_unref (helper->mail_op);
+	g_slice_free   (RefreshAsyncHelper, helper);
 	g_object_unref (folder);
 
 	/* Notify about operation end */
@@ -2012,14 +2026,19 @@ on_refresh_folder_status_update (GObject *obj,
 				 TnyStatus *status,
 				 gpointer user_data)
 {
-	ModestMailOperation *self;
-	ModestMailOperationPrivate *priv;
+	RefreshAsyncHelper *helper = NULL;
+	ModestMailOperation *self = NULL;
+	ModestMailOperationPrivate *priv = NULL;
 	ModestMailOperationState *state;
 
+	g_return_if_fail (user_data != NULL);
 	g_return_if_fail (status != NULL);
 	g_return_if_fail (status->code == TNY_FOLDER_STATUS_CODE_REFRESH);
 
-	self = MODEST_MAIL_OPERATION (user_data);
+	helper = (RefreshAsyncHelper *) user_data;
+	self = helper->mail_op;
+	g_return_if_fail (MODEST_IS_MAIL_OPERATION(self));
+
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
 
 	priv->done = status->position;
@@ -2032,9 +2051,12 @@ on_refresh_folder_status_update (GObject *obj,
 
 void 
 modest_mail_operation_refresh_folder  (ModestMailOperation *self,
-				       TnyFolder *folder)
+				       TnyFolder *folder,
+				       RefreshAsyncUserCallback user_callback,
+				       gpointer user_data)
 {
-	ModestMailOperationPrivate *priv;
+	ModestMailOperationPrivate *priv = NULL;
+	RefreshAsyncHelper *helper = NULL;
 
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
 
@@ -2046,13 +2068,19 @@ modest_mail_operation_refresh_folder  (ModestMailOperation *self,
 	/* Get account and set it into mail_operation */
 	priv->account = modest_tny_folder_get_account  (folder);
 
+	/* Create the helper */
+	helper = g_slice_new0 (RefreshAsyncHelper);
+	helper->mail_op = g_object_ref(self);
+	helper->user_callback = user_callback;
+	helper->user_data = user_data;
+
 	/* Refresh the folder. TODO: tinymail could issue a status
 	   updates before the callback call then this could happen. We
 	   must review the design */
 	tny_folder_refresh_async (folder,
 				  on_refresh_folder,
 				  on_refresh_folder_status_update,
-				  self);
+				  helper);
 }
 
 /**

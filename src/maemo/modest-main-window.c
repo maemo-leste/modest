@@ -123,6 +123,12 @@ static void on_refresh_account_action_activated   (GtkAction *action,
 static void on_send_receive_csm_activated         (GtkMenuItem *item,
 						   gpointer user_data);
 
+static void
+_on_msg_count_changed (ModestHeaderView *header_view,
+		       TnyFolder *folder,
+		       TnyFolderChange *change,
+		       ModestMainWindow *main_window);
+
 
 static GtkWidget * create_empty_view (void);
 
@@ -518,6 +524,8 @@ connect_signals (ModestMainWindow *self)
 			  G_CALLBACK(modest_ui_actions_on_item_not_found), self);
 	g_signal_connect (G_OBJECT(priv->header_view), "key-press-event",
 			  G_CALLBACK(on_inner_widgets_key_pressed), self);
+	g_signal_connect (G_OBJECT(priv->header_view), "msg_count_changed",
+			  G_CALLBACK(_on_msg_count_changed), self);
 
 	/* Header view CSM */
 	menu = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/HeaderViewCSM");
@@ -1424,6 +1432,39 @@ modest_main_window_notify_send_receive_completed (ModestMainWindow *self)
 	gtk_widget_set_sensitive (widget, TRUE);
 } 
 
+
+static void
+_on_msg_count_changed (ModestHeaderView *header_view,
+		       TnyFolder *folder,
+		       TnyFolderChange *change,
+		       ModestMainWindow *main_window)
+{
+	gboolean folder_empty = FALSE;
+	TnyFolderChangeChanged changed;
+	
+	g_return_if_fail (MODEST_IS_MAIN_WINDOW (main_window));
+	g_return_if_fail (TNY_IS_FOLDER(folder));
+	g_return_if_fail (TNY_IS_FOLDER_CHANGE(change));
+	
+	changed = tny_folder_change_get_changed (change);
+	
+	/* If something changes */
+	if ((changed) & TNY_FOLDER_CHANGE_CHANGED_ALL_COUNT)
+		folder_empty = (tny_folder_change_get_new_all_count (change) == 0);	
+	else
+		folder_empty = (tny_folder_get_all_count (TNY_FOLDER (folder)) == 0);
+	
+	/* Set contents style of headers view */
+	if (folder_empty)  {
+		modest_main_window_set_contents_style (main_window,
+						       MODEST_MAIN_WINDOW_CONTENTS_STYLE_EMPTY);
+	}
+	else {
+		modest_main_window_set_contents_style (main_window,
+						       MODEST_MAIN_WINDOW_CONTENTS_STYLE_HEADERS);
+	}
+	
+}
 
 void 
 modest_main_window_set_contents_style (ModestMainWindow *self, 
