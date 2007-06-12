@@ -368,16 +368,6 @@ modest_init_local_folders  ()
 	return TRUE;
 }
 
-
-
-static void
-free_element (gpointer data, gpointer user_data)
-{
-	g_free (data);
-}
-
-
-/* TODO: This is a duplicate of modest_account_mgr_set_first_account_as_default(). */
 /**
  * init_default_account_maybe:
  *
@@ -391,29 +381,14 @@ free_element (gpointer data, gpointer user_data)
 static gboolean
 init_default_account_maybe  (ModestAccountMgr *acc_mgr)
 {
-	GSList *all_accounts = NULL;
 	gchar *default_account;
 	gboolean retval = TRUE;
-	
-	all_accounts = modest_account_mgr_account_names (acc_mgr, TRUE /* enabled accounts only */);
-	if (all_accounts) { /* if there are any accounts, there should be a default one */
-		default_account = 
-			modest_account_mgr_get_default_account (acc_mgr);
-		if (!default_account) {
-			gchar *first_account;
-			g_printerr ("modest: no default account defined\n");
-			first_account = (gchar*)all_accounts->data;
-			if ((retval = modest_account_mgr_set_default_account (acc_mgr, first_account)))
-				g_printerr ("modest: set '%s' as the default account\n",
-					    first_account);
-			else
-				g_printerr ("modest: failed to set '%s' as the default account\n",
-					    first_account);
-			g_free (default_account);
-		}
-		g_slist_foreach (all_accounts, free_element, NULL);
-		g_slist_free    (all_accounts);
-	}
+
+	default_account =  modest_account_mgr_get_default_account (acc_mgr);
+	if (!default_account)
+		retval = modest_account_mgr_set_first_account_as_default (acc_mgr);
+	g_free (default_account);
+
 	return retval;
 }
 
