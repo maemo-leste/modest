@@ -133,7 +133,6 @@ enum {
 	LAST_SIGNAL
 };
 
-
 typedef struct _ModestMainWindowPrivate ModestMainWindowPrivate;
 struct _ModestMainWindowPrivate {
 	GtkWidget *msg_paned;
@@ -174,6 +173,8 @@ struct _ModestMainWindowPrivate {
 
 	guint progress_bar_timeout;
 
+	/* Signal handler UIDs */
+	gint queue_changed_handler_uid; 
 };
 #define MODEST_MAIN_WINDOW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                 MODEST_TYPE_MAIN_WINDOW, \
@@ -209,7 +210,7 @@ static const GtkActionEntry modest_folder_view_action_entries [] = {
 static const GtkActionEntry modest_header_view_action_entries [] = {
 
 	/* Header View CSM actions */
-	{ "HeaderViewCSMOpen",          NULL,  N_("mcen_me_inbox_open"),        NULL,       NULL, G_CALLBACK (modest_ui_actions_on_new_folder) },
+	{ "HeaderViewCSMOpen",          NULL,  N_("mcen_me_inbox_open"),        NULL,       NULL, G_CALLBACK (modest_ui_actions_on_open) },
 	{ "HeaderViewCSMReply",         NULL,  N_("mcen_me_inbox_reply"),       NULL,      NULL, G_CALLBACK (modest_ui_actions_on_reply) },
 	{ "HeaderViewCSMReplyAll",      NULL,  N_("mcen_me_inbox_replytoall"),  NULL,      NULL, G_CALLBACK (modest_ui_actions_on_reply_all) },
 	{ "HeaderViewCSMForward",       NULL,  N_("mcen_me_inbox_forward"),     NULL,      NULL, G_CALLBACK (modest_ui_actions_on_forward) },
@@ -283,19 +284,16 @@ modest_main_window_init (ModestMainWindow *obj)
 	priv->accounts_popup  = NULL;
 	priv->details_widget  = NULL;
 	priv->empty_view  = NULL;
-
 	priv->progress_widgets  = NULL;
 	priv->progress_bar = NULL;
 	priv->current_toolbar_mode = TOOLBAR_MODE_NORMAL;
-
 	priv->style  = MODEST_MAIN_WINDOW_STYLE_SPLIT;
 	priv->contents_style  = MODEST_MAIN_WINDOW_CONTENTS_STYLE_HEADERS;
-
 	priv->merge_ids = NULL;
-
 	priv->optimized_view  = FALSE;
 	priv->send_receive_in_progress  = FALSE;
 	priv->progress_bar_timeout = 0;
+	priv->queue_changed_handler_uid = 0;
 }
 
 static void
@@ -313,6 +311,11 @@ modest_main_window_finalize (GObject *obj)
 		g_source_remove (priv->progress_bar_timeout);
 		priv->progress_bar_timeout = 0;
 	}
+
+	/* Disconnect signal handlers */
+	if (priv->queue_changed_handler_uid)
+		g_signal_handler_disconnect (modest_runtime_get_mail_operation_queue (),
+					     priv->queue_changed_handler_uid);
 
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
@@ -491,7 +494,7 @@ connect_signals (ModestMainWindow *self)
 	
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
 	parent_priv = MODEST_WINDOW_GET_PRIVATE(self);
-	
+
 	/* folder view */
 	g_signal_connect (G_OBJECT(priv->folder_view), "key-press-event",
 			  G_CALLBACK(on_inner_widgets_key_pressed), self);
@@ -507,8 +510,6 @@ connect_signals (ModestMainWindow *self)
 			  G_CALLBACK(_folder_view_csm_menu_activated),
 			  self);
 	/* header view */
-/* 	g_signal_connect (G_OBJECT(priv->header_view), "status_update", */
-/* 			  G_CALLBACK(modest_ui_actions_on_header_status_update), self); */
 	g_signal_connect (G_OBJECT(priv->header_view), "header_selected",
 			  G_CALLBACK(modest_ui_actions_on_header_selected), self);
 	g_signal_connect (G_OBJECT(priv->header_view), "header_activated",
@@ -531,31 +532,30 @@ connect_signals (ModestMainWindow *self)
 			  G_CALLBACK (modest_main_window_window_state_event),
 			  NULL);
 	g_signal_connect (G_OBJECT(self), "delete-event", G_CALLBACK(on_delete_event), self);
-
+	
 	/* Mail Operation Queue */
-	g_signal_connect (G_OBJECT (modest_runtime_get_mail_operation_queue ()),
-			  "queue-changed",
-			  G_CALLBACK (on_queue_changed),
-			  self);
+	priv->queue_changed_handler_uid = 
+		g_signal_connect (G_OBJECT (modest_runtime_get_mail_operation_queue ()),
+				  "queue-changed", G_CALLBACK (on_queue_changed), self);
 
 	/* Track changes in the device name */
 	g_signal_connect (G_OBJECT(modest_runtime_get_conf ()),
-			  "key_changed",
-			  G_CALLBACK (on_configuration_key_changed), 
+			  "key_changed", G_CALLBACK (on_configuration_key_changed), 
 			  self);
 
 	/* Track account changes. We need to refresh the toolbar */
 	g_signal_connect (G_OBJECT (modest_runtime_get_account_store ()),
-			  "account_update",
-			  G_CALLBACK (on_account_update),
+			  "account_update", G_CALLBACK (on_account_update),
 			  self);
 
 	/* Account store */
-	g_signal_connect (G_OBJECT (modest_runtime_get_account_store()), "password_requested",
+	g_signal_connect (G_OBJECT (modest_runtime_get_account_store()), 
+			  "password_requested",
 			  G_CALLBACK (modest_ui_actions_on_password_requested), self);
 			  
 	/* Device */
-	g_signal_connect (G_OBJECT(modest_runtime_get_account_store()), "connecting-finished",
+	g_signal_connect (G_OBJECT(modest_runtime_get_account_store()), 
+			  "connecting-finished",
 			  G_CALLBACK(on_account_store_connecting_finished), self);
 }
 
