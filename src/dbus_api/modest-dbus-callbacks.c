@@ -766,6 +766,34 @@ static gint on_send_receive(GArray * arguments, gpointer data, osso_rpc_t * retv
  	 * because that would be asynchronous. */
  	return OSSO_OK;
 }
+
+static gboolean
+on_idle_open_default_inbox(gpointer user_data)
+{
+	ModestWindow *win = 
+		modest_window_mgr_get_main_window (modest_runtime_get_window_mgr ());
+
+	/* Get the folder view */
+	GtkWidget *folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win),
+							   MODEST_WIDGET_TYPE_FOLDER_VIEW);
+	modest_folder_view_select_first_inbox_or_local (
+		MODEST_FOLDER_VIEW (folder_view));
+	
+	return FALSE; /* Do not call this callback again. */
+}
+
+static gint on_open_default_inbox(GArray * arguments, gpointer data, osso_rpc_t * retval)
+{
+    /* Use g_idle to context-switch into the application's thread: */
+
+    /* This method has no arguments. */
+ 	
+ 	g_idle_add(on_idle_open_default_inbox, NULL);
+ 	
+ 	/* Note that we cannot report failures during send/receive, 
+ 	 * because that would be asynchronous. */
+ 	return OSSO_OK;
+}
                       
 /* Callback for normal D-BUS messages */
 gint modest_dbus_req_handler(const gchar * interface, const gchar * method,
@@ -788,6 +816,8 @@ gint modest_dbus_req_handler(const gchar * interface, const gchar * method,
 		return on_compose_mail (arguments, data, retval);
 	} else if (g_ascii_strcasecmp(method, MODEST_DBUS_METHOD_DELETE_MESSAGE) == 0) {
 		return on_delete_message (arguments,data, retval);
+	} else if (g_ascii_strcasecmp(method, MODEST_DBUS_METHOD_OPEN_DEFAULT_INBOX) == 0) {
+		return on_open_default_inbox (arguments, data, retval);
 	}
 	else { 
 		/* We need to return INVALID here so
@@ -1021,6 +1051,7 @@ modest_dbus_req_filter (DBusConnection *con,
 		DBUS_HANDLER_RESULT_HANDLED :
 		DBUS_HANDLER_RESULT_NOT_YET_HANDLED);
 }
+
 
 void
 modest_osso_cb_hw_state_handler(osso_hw_state_t *state, gpointer data)

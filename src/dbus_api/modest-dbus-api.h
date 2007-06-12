@@ -89,6 +89,9 @@ enum ModestDbusDeleteMessageArguments
 	MODEST_DEBUS_DELETE_MESSAGE_ARGS_COUNT
 };
 
+#define MODEST_DBUS_METHOD_OPEN_DEFAULT_INBOX "OpenDefaultInbox"
+
+
 
 
 #endif /* __MODEST_DBUS_API__ */

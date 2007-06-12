@@ -1,5 +1,23 @@
 2007-06-12  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/dbus_api/modest-dbus-api.h:
+	* src/dbus_api/modest-dbus-callbacks.c:
+	(on_idle_open_default_inbox), (on_open_default_inbox),
+	(modest_dbus_req_handler):
+	Added a new OpenDefaultInbox method.
+	
+	* libmodest-dbus-client/libmodest-dbus-client.h:
+	* libmodest-dbus-client/libmodest-dbus-client.c:
+	Added libmodest_dbus_client_open_default_inbox() to call the new 
+	dbus method. This should be useful to projects.maemo.org bug NB#57214,
+	though it should maybe be used by a new osso-email-interface function.
+	
+	* tests/dbus_api/Makefile.am:
+	* tests/dbus_api/test_open_default_inbox.c: Added a test for the new 
+	function.
+
+2007-06-12  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/modest-account-mgr.c: (on_key_change): Append to the list, not to 
 	NULL, so that the signals get all the keys. This should not actually 
 	change any behaviour because we currently update everything when anything 
