@@ -114,6 +114,21 @@ typedef void (*GetMsgAsyncUserCallback) (ModestMailOperation *mail_op,
 typedef void (*XferMsgsAsynUserCallback) (const GObject *obj, gpointer user_data);
 
 
+/**
+ * RefreshAsyncUserCallback:
+ *
+ * @obj: a #GObject generic object which has created current mail operation.
+ * @folder: a #TnyFolder which has been refreshed .
+ * @user_data: generic data passed to user defined function.
+ *
+ * This function will be called after refresh_folder_async_cb private function, which is
+ * used as tinymail operation callback. The private function fills private 
+ * fields of mail operation and calls user defined callback if it exists.
+ */
+typedef void (*RefreshAsyncUserCallback) (const GObject *obj, 
+					  TnyFolder *folder, 
+					  gpointer user_data);
+
 /* This struct represents the internal state of a mail operation in a
    given time */
 typedef struct {
@@ -556,11 +571,18 @@ gboolean  modest_mail_operation_cancel          (ModestMailOperation *self);
  * modest_mail_operation_refresh_folder
  * @self: a #ModestMailOperation
  * @folder: the #TnyFolder to refresh
+ * @user_callback: the #RefreshAsyncUserCallback function to be called
+ * after internal refresh async callback was being executed.
  * 
- * Refreshes the contents of a folder
+ * Refreshes the contents of a folder. After internal callback was executed, 
+ * and all interna mail operation field were filled, if exists, it calls an 
+ * user callback function to make UI operations which must be done after folder
+ * was refreshed.
  */
 void      modest_mail_operation_refresh_folder  (ModestMailOperation *self,
-						 TnyFolder *folder);
+						 TnyFolder *folder,
+						 RefreshAsyncUserCallback user_callback,
+						 gpointer user_data);
 
 guint     modest_mail_operation_get_id          (ModestMailOperation *self);
 
