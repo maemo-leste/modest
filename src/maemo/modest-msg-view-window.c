@@ -108,6 +108,8 @@ static gboolean set_toolbar_transfer_mode     (ModestMsgViewWindow *self);
 static void view_attachment_insensitive_press (GtkWidget *widget, ModestMsgViewWindow *window);
 static void save_attachment_insensitive_press (GtkWidget *widget, ModestMsgViewWindow *window);
 
+static void update_window_title (ModestMsgViewWindow *window);
+
 /* list my signals */
 enum {
 	/* MY_SIGNAL_1, */
@@ -646,6 +648,8 @@ modest_msg_view_window_new (TnyMsg *msg,
 
 	gtk_widget_grab_focus (priv->msg_view);
 
+	update_window_title (MODEST_MSG_VIEW_WINDOW (obj));
+
 	return MODEST_WINDOW(obj);
 }
 
@@ -1137,6 +1141,7 @@ view_msg_cb (ModestMailOperation *mail_op,
 	modest_msg_view_set_message (MODEST_MSG_VIEW (priv->msg_view), msg);
 	modest_msg_view_window_update_dimmed (self);
 	modest_msg_view_window_update_priority (self);
+	update_window_title (MODEST_MSG_VIEW_WINDOW (self));
 	gtk_widget_grab_focus (priv->msg_view);
 }
 
@@ -1790,4 +1795,24 @@ save_attachment_insensitive_press (GtkWidget *widget, ModestMsgViewWindow *windo
 
 	return ;
 		
+}
+
+static void
+update_window_title (ModestMsgViewWindow *window)
+{
+	ModestMsgViewWindowPrivate *priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
+	TnyMsg *msg = NULL;
+	TnyHeader *header = NULL;
+	const gchar *subject = NULL;
+
+	msg = modest_msg_view_get_message (MODEST_MSG_VIEW (priv->msg_view));
+	if (msg != NULL) {
+		header = tny_msg_get_header (msg);
+		subject = tny_header_get_subject (header);
+	}
+
+	if ((subject == NULL)||(subject[0] == '\0'))
+		subject = _("mail_va_no_subject");
+
+	gtk_window_set_title (GTK_WINDOW (window), subject);
 }
