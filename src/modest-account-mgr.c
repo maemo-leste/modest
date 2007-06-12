@@ -350,8 +350,6 @@ modest_account_mgr_add_account (ModestAccountMgr *self,
 }
 
 
-
-
 gboolean
 modest_account_mgr_add_server_account (ModestAccountMgr * self,
 				       const gchar * name, const gchar *hostname,
@@ -584,8 +582,10 @@ modest_account_mgr_remove_account (ModestAccountMgr * self,
 		if (default_account_name && (strcmp (default_account_name, name) == 0))
 			modest_account_mgr_unset_default_account (self);
 		g_free (default_account_name);
+		
+		/* pick another one as the new default account */
+		modest_account_mgr_set_first_account_as_default (self);
 	}
-	
 	return retval;
 }
 
@@ -997,7 +997,6 @@ modest_account_mgr_account_exists (ModestAccountMgr * self, const gchar * name,
         g_return_val_if_fail (name, FALSE);
 
 	keyname = _modest_account_mgr_get_account_keyname (name, NULL, server_account);
-
 	priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
 	retval = modest_conf_key_exists (priv->modest_conf, keyname, &err);
 	if (err) {
@@ -1010,8 +1009,8 @@ modest_account_mgr_account_exists (ModestAccountMgr * self, const gchar * name,
 	return retval;
 }
 
-gboolean	modest_account_mgr_account_with_display_name_exists	  (ModestAccountMgr *self,
-							   const gchar *display_name)
+gboolean
+modest_account_mgr_account_with_display_name_exists  (ModestAccountMgr *self, const gchar *display_name)
 {
 	GSList *account_names = NULL;
 	GSList *cursor = NULL;
