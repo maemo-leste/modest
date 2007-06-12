@@ -677,7 +677,7 @@ _modest_ui_actions_open (TnyList *headers, ModestWindow *win)
 	while (!tny_iterator_is_done (iter)) {
 		ModestWindow *window;
 		TnyHeader *header;
-
+		
 		header = TNY_HEADER (tny_iterator_get_current (iter));
 		window = modest_window_mgr_find_window_by_header (mgr, header);
 		if (window) {
@@ -691,6 +691,7 @@ _modest_ui_actions_open (TnyList *headers, ModestWindow *win)
 		tny_iterator_next (iter);
 	}
 
+	
 	/* Open each message */
 	mail_op = modest_mail_operation_new_with_error_handling (MODEST_MAIL_OPERATION_TYPE_RECEIVE, 
 								 G_OBJECT (win), 
@@ -702,8 +703,8 @@ _modest_ui_actions_open (TnyList *headers, ModestWindow *win)
 					     open_msg_cb, 
 					     NULL, 
 					     NULL);
-
 	/* Clean */
+	g_object_unref (iter);
 	g_object_unref(mail_op);
 }
 
