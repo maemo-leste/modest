@@ -1372,7 +1372,7 @@ create_details_widget (TnyAccount *account)
 		if (last_updated > 0) 
 			last_updated_string = modest_text_utils_get_display_date(last_updated);
 		else
-			last_updated_string = g_strdup (_("FIXME: Never"));
+			last_updated_string = g_strdup (_("mcen_va_never"));
 
 		label = g_strdup_printf ("%s: %s", _("mcen_ti_lastupdated"), last_updated_string);
 		gtk_box_pack_start (GTK_BOX (vbox), gtk_label_new (label), FALSE, FALSE, 0);

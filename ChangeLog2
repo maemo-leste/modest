@@ -1,3 +1,8 @@
+2007-06-12   Murray Cumming  <murrayc@murrayc.com>
+
+	* src/maemo/modest-main-window.c: (create_details_widget):
+	Use the mcen_va_never logical ID.
+
 2007-06-12  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/dbus_api/modest-dbus-api.h:
