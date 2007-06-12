@@ -806,11 +806,13 @@ get_server_accounts  (TnyAccountStore *self, TnyList *list, TnyAccountType type)
 				g_object_ref (outbox_account);
 				accounts = g_slist_append (accounts, outbox_account);
 			}
+		}
+		
+		/* Add a merged folder, merging all the per-account outbox folders: */
+		modest_tny_local_folders_account_add_merged_outbox_folders (
+			MODEST_TNY_LOCAL_FOLDERS_ACCOUNT (tny_account), priv->store_accounts_outboxes);
 			
-			/* Add a merged folder, merging all the per-account outbox folders: */
-			modest_tny_local_folders_account_add_merged_outbox_folders (
-				MODEST_TNY_LOCAL_FOLDERS_ACCOUNT (tny_account), priv->store_accounts_outboxes);
-	
+		if (priv->store_accounts_outboxes) {
 			/* We have finished with this temporary list, so free it: */
 			account_list_free (priv->store_accounts_outboxes);
 			priv->store_accounts_outboxes = NULL;

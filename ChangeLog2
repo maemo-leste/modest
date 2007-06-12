@@ -1,3 +1,10 @@
+2007-06-12  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/modest-tny-account-store.c: (get_server_accounts):
+	Call modest_tny_local_folders_account_add_merged_outbox_folders() 
+	even when there are no accounts, so that the Outbox folder is always 
+	visible. This fixes projects.maemo.org bug NB#60158.
+
 2007-06-12   Murray Cumming  <murrayc@murrayc.com>
 
 	* src/maemo/modest-main-window.c: (create_details_widget):
