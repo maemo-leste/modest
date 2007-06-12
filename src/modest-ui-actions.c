@@ -1330,7 +1330,7 @@ modest_ui_actions_on_item_not_found (ModestHeaderView *header_view,ModestItemTyp
 
 		gtk_window_set_default_size (GTK_WINDOW(dialog), 300, 300);
 		if (gtk_dialog_run (GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
-//			modest_platform_connect_and_wait ();;
+//			modest_platform_connect_and_wait ();
 		}
 	}
 	gtk_widget_destroy (dialog);

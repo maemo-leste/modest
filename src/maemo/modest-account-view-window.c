@@ -229,7 +229,7 @@ on_edit_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 		const int response = gtk_dialog_run (GTK_DIALOG(note));
 		gtk_widget_destroy (note);
 		if (response == GTK_RESPONSE_OK) {
-			modest_mail_operation_queue_cancel_all(queue);;
+			modest_mail_operation_queue_cancel_all(queue);
 		}
 		else
 			return;

@@ -47,7 +47,7 @@ static const ModestDimmingEntry modest_main_window_menu_dimming_entries [] = {
 	{ "/MenuBar/ToolsMenu", NULL },
 	{ "/MenuBar/ToolsMenu/ToolsSettingsMenu", NULL },
 	{ "/MenuBar/ToolsMenu/ToolsAccountsMenu", NULL },
-	{ "/MenuBar/ToolsMenu/ToolsSMTPServersMenu", NULL },
+	{ "/MenuBar/ToolsMenu/ToolsSMTPServersMenu", G_CALLBACK(modest_ui_dimming_rules_on_tools_smtp_servers) },
 	{ "/MenuBar/ToolsMenu/ToolsSendReceiveMainMenu", NULL },
 	{ "/MenuBar/ToolsMenu/ToolsSendReceiveMainMenu/ToolsSendReceiveAllMenu", NULL },
 	{ "/MenuBar/ToolsMenu/ToolsSendReceiveCancelSendingMenu", NULL },

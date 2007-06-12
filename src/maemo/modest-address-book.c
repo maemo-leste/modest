@@ -603,7 +603,7 @@ modest_address_book_check_names (ModestRecptEditor *recpt_editor)
 		if (!modest_text_utils_validate_recipient (address)) {
 			if (strstr (address, "@") == NULL) {
 				/* here goes searching in addressbook */
-				gchar *contact_id = NULL;;
+				gchar *contact_id = NULL;
 				GSList *resolved_addresses = NULL;
 				result = resolve_address (address, &resolved_addresses, &contact_id);
 

@@ -235,8 +235,9 @@ text_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 	ModestFolderViewPrivate *priv;
 	GObject *rendobj;
 	gchar *fname = NULL;
-	gint unread, all;
-	TnyFolderType type;
+	gint unread = 0;
+	gint all = 0;
+	TnyFolderType type = TNY_FOLDER_TYPE_UNKNOWN;
 	GObject *instance = NULL;
 	
 	g_return_if_fail (column);
@@ -269,11 +270,11 @@ text_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 		gint number = 0;
 		
 		if (modest_tny_folder_is_local_folder (TNY_FOLDER (instance))) {
-			TnyFolderType type;
-			type = modest_tny_folder_get_local_folder_type (TNY_FOLDER (instance));
-			if (type != TNY_FOLDER_TYPE_UNKNOWN) {
+			TnyFolderType folder_type
+				= modest_tny_folder_get_local_folder_type (TNY_FOLDER (instance));
+			if (folder_type != TNY_FOLDER_TYPE_UNKNOWN) {
 				g_free (fname);
-				fname = g_strdup(modest_local_folder_info_get_type_display_name (type));
+				fname = g_strdup(modest_local_folder_info_get_type_display_name (folder_type));
 			}
 		}
 
@@ -334,10 +335,10 @@ icon_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 {
 	GObject *rendobj = NULL, *instance = NULL;
 	GdkPixbuf *pixbuf = NULL;
-	TnyFolderType type;
+	TnyFolderType type = TNY_FOLDER_TYPE_UNKNOWN;
 	gchar *fname = NULL;
 	const gchar *account_id = NULL;
-	gint unread;
+	gint unread = 0;
 	
 	rendobj = G_OBJECT(renderer);
 	gtk_tree_model_get (tree_model, iter,
@@ -660,7 +661,7 @@ filter_row (GtkTreeModel *model,
 	    gpointer data)
 {
 	gboolean retval = TRUE;
-	gint type = 0;
+	TnyFolderType type = TNY_FOLDER_TYPE_UNKNOWN;
 	GObject *instance = NULL;
 
 	gtk_tree_model_get (model, iter,
@@ -778,7 +779,6 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 	GtkTreeIter             iter;
 	ModestFolderView        *tree_view;
 	ModestFolderViewPrivate *priv;
-	gint                    type;
 
 	g_return_if_fail (sel);
 	g_return_if_fail (user_data);
@@ -801,7 +801,6 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 	tree_view = MODEST_FOLDER_VIEW (user_data);
 
 	gtk_tree_model_get (model, &iter,
-			    TNY_GTK_FOLDER_STORE_TREE_MODEL_TYPE_COLUMN, &type,
 			    TNY_GTK_FOLDER_STORE_TREE_MODEL_INSTANCE_COLUMN, &folder,
 			    -1);
 
@@ -876,8 +875,9 @@ cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 	  gpointer user_data)
 {
 	gint cmp;
-	gchar         *name1, *name2;
-	TnyFolderType type;
+	gchar *name1 = NULL;
+	gchar *name2 = NULL;
+	TnyFolderType type = TNY_FOLDER_TYPE_UNKNOWN;
 	GObject *folder1 = NULL;
 	GObject *folder2 = NULL;
 
@@ -1567,13 +1567,35 @@ find_inbox_iter (GtkTreeModel *model, GtkTreeIter *iter, GtkTreeIter *inbox_iter
 {
 	do {
 		GtkTreeIter child;
-		gint type;
+		TnyFolderType type = TNY_FOLDER_TYPE_UNKNOWN;
+		gchar *name = NULL;
 
 		gtk_tree_model_get (model, iter, 
+					TNY_GTK_FOLDER_STORE_TREE_MODEL_NAME_COLUMN, &name,
 				    TNY_GTK_FOLDER_STORE_TREE_MODEL_TYPE_COLUMN, 
 				    &type, -1);
 
+		/*
+		printf ("DEBUG: %s: name=%s, type=%d, TNY_FOLDER_TYPE_INBOX=%d\n", 
+			__FUNCTION__, name, type, TNY_FOLDER_TYPE_INBOX);
+		*/
+			
+		gboolean result = FALSE;
 		if (type == TNY_FOLDER_TYPE_INBOX) {
+			result = TRUE;
+		} else if (type == TNY_FOLDER_TYPE_NORMAL) {
+			/* tinymail's camel implementation only provides TNY_FOLDER_TYPE_NORMAL
+			 * when getting folders from the cache, before connectin, so we do 
+			 * an extra check. We could fix this in tinymail, but it's easier 
+			 * to do here.
+			 */
+			 if (strcmp (name, "Inbox") == 0)
+			 	result = TRUE;
+		}
+		
+		g_free (name);
+		
+		if (result) {
 			*inbox_iter = *iter;
 			return TRUE;
 		}
@@ -1605,8 +1627,9 @@ modest_folder_view_select_first_inbox_or_local (ModestFolderView *self)
 	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (self));
 
 	gtk_tree_model_get_iter_first (model, &iter);
-	if (find_inbox_iter (model, &iter, &inbox_iter))
+	if (find_inbox_iter (model, &iter, &inbox_iter)) {
 		gtk_tree_selection_select_iter (sel, &inbox_iter);
+	}
 	else {
 		gtk_tree_model_get_iter_first (model, &iter);
 		gtk_tree_selection_select_iter (sel, &iter);

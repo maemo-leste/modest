@@ -56,12 +56,12 @@ on_timeout_notify_changes (gpointer data)
 {
 	ModestAccountMgr *self = MODEST_ACCOUNT_MGR (data);
 	ModestAccountMgrPrivate *priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
-	
+		
 	/* TODO: Also store the account names, and notify one list for each account,
 	 * if anything uses the account names. */
 	
 	if (priv->changed_conf_keys) {
-		gchar *default_account =
+		gchar *default_account = 
 				modest_account_mgr_get_default_account (self);
 		
 		g_signal_emit (G_OBJECT(self), signals[ACCOUNT_CHANGED_SIGNAL], 0,
@@ -80,8 +80,6 @@ on_timeout_notify_changes (gpointer data)
 static void
 on_key_change (ModestConf *conf, const gchar *key, ModestConfEvent event, gpointer user_data)
 {
-	/* printf("DEBUG: %s: key=%s\n", __FUNCTION__, key); */
-	
 	ModestAccountMgr *self = MODEST_ACCOUNT_MGR (user_data);
 	ModestAccountMgrPrivate *priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
 
@@ -92,7 +90,7 @@ on_key_change (ModestConf *conf, const gchar *key, ModestConfEvent event, gpoint
 		
 		/* Store the key for later notification in our timeout callback.
 		 * Notifying for every key change would cause unnecessary work: */
-		priv->changed_conf_keys = g_slist_append (NULL, 
+		priv->changed_conf_keys = g_slist_append (priv->changed_conf_keys, 
 			(gpointer) g_strdup (key));
 	}
 	

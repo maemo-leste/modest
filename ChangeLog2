@@ -1,3 +1,28 @@
+2007-06-12  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/modest-account-mgr.c: (on_key_change): Append to the list, not to 
+	NULL, so that the signals get all the keys. This should not actually 
+	change any behaviour because we currently update everything when anything 
+	changes.
+
+2007-06-12  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/widgets/modest-folder-view.c: (text_cell_data),
+	(icon_cell_data), (filter_row), (on_selection_changed), (cmp_rows),
+	(find_inbox_iter): If tinymail tells us that the folder is 
+	a non-specific TNY_FOLDER_TYPE_NORMAL then do an extra check on the name.
+	This causes the inbox to be selected at startup, fixing part of 
+	projects.maemo.org bug NB#56305.
+
+	* src/modest-ui-dimming-rules.c:
+	(modest_ui_dimming_rules_on_tools_smtp_servers):
+	* src/modest-ui-dimming-rules.h: Added a callback function to dim 
+	the SMTP servers menu item.
+	* src/maemo/modest-main-window-ui-dimming.h: Used the function, so 
+	that the SMTP Servers menu item is dimmed when there are no accounts, 
+	as a future version of the UI spec will require. This fixes 
+	projects.maemo.org bug NB#56305.
+
 2007-06-11  Johannes Schmid <johannes.schmid@openismus.com>
 
 	* src/maemo/modest-maemo-utils.c:

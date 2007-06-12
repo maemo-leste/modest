@@ -268,8 +268,8 @@ create_updating_page (ModestMaemoGlobalSettingsDialog *self)
 	size_group = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);
 
 	/* Size limit */
-	ppriv->size_limit = hildon_number_editor_new (MSG_SIZE_MIN_VAL, MSG_SIZE_MAX_VAL);;
-	hildon_number_editor_set_value (HILDON_NUMBER_EDITOR (ppriv->size_limit), MSG_SIZE_DEF_VAL);;
+	ppriv->size_limit = hildon_number_editor_new (MSG_SIZE_MIN_VAL, MSG_SIZE_MAX_VAL);
+	hildon_number_editor_set_value (HILDON_NUMBER_EDITOR (ppriv->size_limit), MSG_SIZE_DEF_VAL);
 	g_signal_connect (ppriv->size_limit, "range_error", G_CALLBACK (on_range_error), self);
 	caption = hildon_caption_new (size_group, 
 				      _("mcen_fi_advsetup_sizelimit"), 

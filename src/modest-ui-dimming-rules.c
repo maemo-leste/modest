@@ -469,6 +469,16 @@ modest_ui_dimming_rules_on_select_all (ModestWindow *win, gpointer user_data)
 }
 
 
+gboolean modest_ui_dimming_rules_on_tools_smtp_servers (ModestWindow *win, gpointer user_data)
+{
+	const gboolean dimmed = 
+		!modest_account_mgr_has_accounts(modest_runtime_get_account_mgr(), 
+			TRUE);	
+		
+	return dimmed;
+}
+
+
 /* *********************** static utility functions ******************** */
 
 static gboolean 
