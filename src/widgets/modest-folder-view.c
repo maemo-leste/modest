@@ -51,7 +51,6 @@
 #include "modest-folder-view.h"
 #include <modest-dnd.h>
 #include <modest-platform.h>
-#include <modest-account-mgr-helpers.h>
 #include <modest-widget-memory.h>
 #include <modest-ui-actions.h>
 
@@ -70,6 +69,10 @@ static void         on_selection_changed   (GtkTreeSelection *sel, gpointer data
 
 static void         on_account_update      (TnyAccountStore *account_store, 
 					    const gchar *account,
+					    gpointer user_data);
+
+static void         on_account_removed     (TnyAccountStore *self, 
+					    TnyAccount *account,
 					    gpointer user_data);
 
 static void         on_accounts_reloaded   (TnyAccountStore *store, 
@@ -135,6 +138,7 @@ struct _ModestFolderViewPrivate {
 	gulong                account_update_signal;
 	gulong                changed_signal;
 	gulong                accounts_reloaded_signal;
+	gulong                account_removed_signal;
 	
 	TnyFolderStoreQuery  *query;
 	guint                 timer_expander;
@@ -518,6 +522,8 @@ modest_folder_view_finalize (GObject *obj)
 					     priv->account_update_signal);
 		g_signal_handler_disconnect (G_OBJECT(priv->account_store),
 					     priv->accounts_reloaded_signal);
+		g_signal_handler_disconnect (G_OBJECT(priv->account_store),
+					     priv->account_removed_signal);
 		g_object_unref (G_OBJECT(priv->account_store));
 		priv->account_store = NULL;
 	}
@@ -560,6 +566,10 @@ modest_folder_view_set_account_store (TnyAccountStoreView *self, TnyAccountStore
 						   priv->accounts_reloaded_signal))
 			g_signal_handler_disconnect (G_OBJECT (priv->account_store), 
 						     priv->accounts_reloaded_signal);
+		if (g_signal_handler_is_connected (G_OBJECT (priv->account_store), 
+						   priv->account_removed_signal))
+			g_signal_handler_disconnect (G_OBJECT (priv->account_store), 
+						     priv->account_removed_signal);
 
 		g_object_unref (G_OBJECT (priv->account_store));
 	}
@@ -569,6 +579,10 @@ modest_folder_view_set_account_store (TnyAccountStoreView *self, TnyAccountStore
 	priv->account_update_signal = 
 		g_signal_connect (G_OBJECT(account_store), "account_update",
 				  G_CALLBACK (on_account_update), self);
+
+	priv->account_removed_signal = 
+		g_signal_connect (G_OBJECT(account_store), "account_removed",
+				  G_CALLBACK (on_account_removed), self);
 
 	priv->accounts_reloaded_signal = 
 		g_signal_connect (G_OBJECT(account_store), "accounts_reloaded",
@@ -580,11 +594,36 @@ modest_folder_view_set_account_store (TnyAccountStoreView *self, TnyAccountStore
 }
 
 static void
-on_account_update (TnyAccountStore *account_store, const gchar *account,
+on_account_removed (TnyAccountStore *account_store, 
+		    TnyAccount *account,
+		    gpointer user_data)
+{
+	ModestFolderView *self = MODEST_FOLDER_VIEW (user_data);
+	ModestFolderViewPrivate *priv;
+
+	priv = MODEST_FOLDER_VIEW_GET_PRIVATE (self);
+
+	/* If the removed account is the currently viewed one then
+	   clear the configuration value. The new visible account will be the default account */
+	if (!strcmp (priv->visible_account_id, tny_account_get_id (account))) {
+		modest_folder_view_set_account_id_of_visible_server_account (self, NULL);
+	}
+}
+
+static void
+on_account_update (TnyAccountStore *account_store, 
+		   const gchar *account,
 		   gpointer user_data)
 {
-	if (!modest_folder_view_update_model (MODEST_FOLDER_VIEW(user_data), 
-					      account_store))
+	ModestFolderView *self = MODEST_FOLDER_VIEW (user_data);
+	ModestFolderViewPrivate *priv;
+
+	priv = MODEST_FOLDER_VIEW_GET_PRIVATE (self);
+	if (!priv->visible_account_id)
+		modest_widget_memory_restore (modest_runtime_get_conf(), G_OBJECT(self),
+					      MODEST_CONF_FOLDER_VIEW_KEY);
+
+	if (!modest_folder_view_update_model (self, account_store))
 		g_printerr ("modest: failed to update model for changes in '%s'",
 			    account);
 }
@@ -593,11 +632,7 @@ static void
 on_accounts_reloaded   (TnyAccountStore *account_store, 
 			gpointer user_data)
 {
-	ModestConf *conf = modest_runtime_get_conf ();
-
-	modest_widget_memory_save (conf, G_OBJECT (user_data), MODEST_CONF_FOLDER_VIEW_KEY);
 	modest_folder_view_update_model (MODEST_FOLDER_VIEW (user_data), account_store);
-	modest_widget_memory_restore (conf, G_OBJECT (user_data), MODEST_CONF_FOLDER_VIEW_KEY);
 }
 
 void
@@ -683,7 +718,7 @@ filter_row (GtkTreeModel *model,
 		if (TNY_IS_ACCOUNT (instance)) {
 			TnyAccount *acc = TNY_ACCOUNT (instance);
 			const gchar *account_id = tny_account_get_id (acc);
-			
+	
 			/* If it isn't a special folder, 
 			 * don't show it unless it is the visible account: */
 			if (!modest_tny_account_is_virtual_local_folders (acc) &&
@@ -1542,14 +1577,21 @@ modest_folder_view_set_account_id_of_visible_server_account (ModestFolderView *s
 
 	/* This will be used by the filter_row callback,
 	 * to decided which rows to show: */
-	if (priv->visible_account_id)
+	if (priv->visible_account_id) {
 		g_free (priv->visible_account_id);
-	priv->visible_account_id = g_strdup (account_id);
+		priv->visible_account_id = NULL;
+	}
+	if (account_id)
+		priv->visible_account_id = g_strdup (account_id);
 
 	/* Refilter */
 	model = gtk_tree_view_get_model (GTK_TREE_VIEW (self));
 	if (GTK_IS_TREE_MODEL_FILTER (model))
 		gtk_tree_model_filter_refilter (GTK_TREE_MODEL_FILTER (model));
+
+	/* Save settings to gconf */
+	modest_widget_memory_save (modest_runtime_get_conf (), G_OBJECT(self),
+				   MODEST_CONF_FOLDER_VIEW_KEY);
 }
 
 const gchar *

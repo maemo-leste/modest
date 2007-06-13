@@ -81,9 +81,9 @@ static void    modest_tny_account_store_instance_init (ModestTnyAccountStore *ob
 static void    modest_tny_account_store_init          (gpointer g, gpointer iface_data);
 
 
-static void
-get_server_accounts  (TnyAccountStore *self, TnyList *list, TnyAccountType type);
-
+static void    get_server_accounts                    (TnyAccountStore *self, 
+						       TnyList *list, 
+						       TnyAccountType type);
 
 /* list my signals */
 enum {
@@ -326,12 +326,16 @@ on_account_removed (ModestAccountMgr *acc_mgr,
 	TnyAccount *store_account;
 	
 	/* Clear the account cache */
-	store_account =
-		modest_tny_account_store_get_server_account (self,
-							     account,
-							     TNY_ACCOUNT_TYPE_STORE);
+	store_account = modest_tny_account_store_get_tny_account_by  (self, 
+								      MODEST_TNY_ACCOUNT_STORE_QUERY_NAME, 
+								      account);
 	if (store_account) {
 		tny_store_account_delete_cache (TNY_STORE_ACCOUNT (store_account));
+		
+		g_signal_emit (G_OBJECT (self), 
+					 tny_account_store_signals [TNY_ACCOUNT_STORE_ACCOUNT_REMOVED], 
+					 0, store_account);
+
 		g_object_unref (store_account);
 	} else
 		g_printerr ("modest: cannot find server account for %s", account);
@@ -341,7 +345,7 @@ on_account_removed (ModestAccountMgr *acc_mgr,
 	 * affect tny accounts at all (such as 'last_update')
 	 */
 	recreate_all_accounts (self);
-	
+
 	g_signal_emit (G_OBJECT(self), signals[ACCOUNT_UPDATE_SIGNAL], 0,
 		       account);
 }
@@ -359,10 +363,9 @@ on_account_changed (ModestAccountMgr *acc_mgr, const gchar *account,
 		return;
 
 	/* FIXME: make this more finegrained; changes do not really affect _all_
-	 * accounts, and some do not affect tny accounts at all (such as 'last_update')
+	 * accounts
 	 */
-	if (server_account)
-		recreate_all_accounts (self);
+	recreate_all_accounts (self);
 
 	g_signal_emit (G_OBJECT(self), signals[ACCOUNT_UPDATE_SIGNAL], 0,
 		       account);
@@ -650,8 +653,8 @@ get_server_accounts  (TnyAccountStore *self, TnyList *list, TnyAccountType type)
 			return;
 	}
 	
-	GSList                       *account_names = NULL, *cursor = NULL;
-	GSList                       *accounts = NULL;
+	GSList *account_names = NULL, *cursor = NULL;
+	GSList *accounts = NULL;
 
 	/* These are account names, not server_account names */
 	account_names = modest_account_mgr_account_names (priv->account_mgr,FALSE);
@@ -903,35 +906,9 @@ modest_tny_account_store_get_device (TnyAccountStore *self)
 static TnyAccount*
 modest_tny_account_store_find_account_by_url (TnyAccountStore *self, const gchar* url_string)
 {
-	TnyAccount *account = NULL;
-	ModestTnyAccountStorePrivate *priv;	
-	GSList *cursor;
-	
-	g_return_val_if_fail (self, NULL);
-	g_return_val_if_fail (url_string, NULL);
-	
-	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
-
-	for (cursor = priv->store_accounts; cursor ; cursor = cursor->next) {
-		if (tny_account_matches_url_string (TNY_ACCOUNT(cursor->data), url_string)) {
-			account = TNY_ACCOUNT(cursor->data);
-			break;
-		}
-	}
-
-	if (!account) {
-		for (cursor = priv->transport_accounts; !account && cursor ; cursor = cursor->next) {
-			if (tny_account_matches_url_string (TNY_ACCOUNT(cursor->data), url_string)) {
-				account = TNY_ACCOUNT(cursor->data);
-				break;
-			}
-		}
-	}
-
-	if (account)
-		g_object_ref (G_OBJECT(account));
-
-	return account;
+	return modest_tny_account_store_get_tny_account_by (MODEST_TNY_ACCOUNT_STORE (self), 
+							    MODEST_TNY_ACCOUNT_STORE_QUERY_URL,
+							    url_string);
 }
 
 
@@ -966,8 +943,8 @@ modest_tny_account_store_alert (TnyAccountStore *self, TnyAlertType type,
 		 * specific dialog messages from Chapter 12 of the UI spec.
 		 */
 		case TNY_ACCOUNT_STORE_ERROR_UNKNOWN_ALERT: 
-		    g_debug ("%s: Handling GError domain=%d, code=%d, message=%s", 
-				__FUNCTION__, error->domain, error->code, error->message);
+/* 		    g_debug ("%s: Handling GError domain=%d, code=%d, message=%s",  */
+/* 				__FUNCTION__, error->domain, error->code, error->message); */
 			
 			/* TODO: Remove the internal error message for the real release.
 			 * This is just so the testers can give us more information: */
@@ -1115,35 +1092,70 @@ modest_tny_account_store_get_session  (TnyAccountStore *self)
 
 
 TnyAccount*
-modest_tny_account_store_get_tny_account_by_id  (ModestTnyAccountStore *self, const gchar *id)
+modest_tny_account_store_get_tny_account_by (ModestTnyAccountStore *self, 
+					     ModestTnyAccountStoreQueryType type,
+					     const gchar *str)
 {
 	TnyAccount *account = NULL;
 	ModestTnyAccountStorePrivate *priv;	
 	GSList *cursor;
+	const gchar *val;
 
 	g_return_val_if_fail (self, NULL);
-	g_return_val_if_fail (id, NULL);
+	g_return_val_if_fail (str, NULL);
 	
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
 
-
+	/* Search in store accounts */
 	for (cursor = priv->store_accounts; cursor ; cursor = cursor->next) {
-		const gchar *acc_id = tny_account_get_id (TNY_ACCOUNT(cursor->data));
-		if (acc_id && strcmp (acc_id, id) == 0) {
-			account = TNY_ACCOUNT(cursor->data);
+		switch (type) {
+		case MODEST_TNY_ACCOUNT_STORE_QUERY_ID:
+			val = tny_account_get_id (TNY_ACCOUNT(cursor->data));
 			break;
+		case MODEST_TNY_ACCOUNT_STORE_QUERY_NAME:
+			val = modest_tny_account_get_parent_modest_account_name_for_server_account (TNY_ACCOUNT(cursor->data));
+			break;
+		case MODEST_TNY_ACCOUNT_STORE_QUERY_URL:
+			val = tny_account_get_url_string (TNY_ACCOUNT(cursor->data));
+			break;
+		}
+		if (type == MODEST_TNY_ACCOUNT_STORE_QUERY_URL && 
+		    tny_account_matches_url_string (TNY_ACCOUNT(cursor->data), val)) {
+			account = TNY_ACCOUNT (cursor->data);
+			goto end;
+		} else {
+			if (strcmp (val, str) == 0) {
+				account = TNY_ACCOUNT(cursor->data);
+				goto end;
+			}
 		}
 	}
 		
 	/* if we already found something, no need to search the transport accounts */
 	for (cursor = priv->transport_accounts; !account && cursor ; cursor = cursor->next) {
-		const gchar *acc_id = tny_account_get_id (TNY_ACCOUNT(cursor->data));
-		if (acc_id && strcmp (acc_id, id) == 0) {
-			account = TNY_ACCOUNT(cursor->data);
+		switch (type) {
+		case MODEST_TNY_ACCOUNT_STORE_QUERY_ID:
+			val = tny_account_get_id (TNY_ACCOUNT(cursor->data));
+			break;
+		case MODEST_TNY_ACCOUNT_STORE_QUERY_NAME:
+			val = tny_account_get_name (TNY_ACCOUNT(cursor->data));
+			break;
+		case MODEST_TNY_ACCOUNT_STORE_QUERY_URL:
+			val = tny_account_get_url_string (TNY_ACCOUNT(cursor->data));
 			break;
 		}
+		if (type == MODEST_TNY_ACCOUNT_STORE_QUERY_URL && 
+		    tny_account_matches_url_string (TNY_ACCOUNT(cursor->data), val)) {
+			account = TNY_ACCOUNT (cursor->data);
+			goto end;
+		} else {
+			if (strcmp (val, str) == 0) {
+				account = TNY_ACCOUNT(cursor->data);
+				goto end;
+			}
+		}
 	}
-
+ end:
 	if (account)
 		g_object_ref (G_OBJECT(account));
 	
@@ -1195,7 +1207,7 @@ modest_tny_account_store_get_server_account (ModestTnyAccountStore *self,
 		g_printerr ("modest: could not get an id for account %s\n",
 			    account_name);
 	else 	
-		account = modest_tny_account_store_get_tny_account_by_id (self, id);
+		account = modest_tny_account_store_get_tny_account_by (self, MODEST_TNY_ACCOUNT_STORE_QUERY_ID, id);
 
 	if (!account)
 		g_printerr ("modest: could not get tny %s account for %s (id=%s)\n",
@@ -1242,7 +1254,9 @@ get_smtp_specific_transport_account_for_open_connection (ModestTnyAccountStore *
 		return NULL; /* No connection-specific SMTP server was specified for this connection. */
 	}
 		
-	TnyAccount* account = modest_tny_account_store_get_tny_account_by_id (self, server_account_name);
+	TnyAccount* account = modest_tny_account_store_get_tny_account_by (self, 
+									   MODEST_TNY_ACCOUNT_STORE_QUERY_ID, 
+									   server_account_name);
 
 	/* printf ("DEBUG: %s: account=%p\n", __FUNCTION__, account); */
 	g_free (server_account_name);	

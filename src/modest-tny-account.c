@@ -79,13 +79,15 @@ modest_tny_account_get_special_folder (TnyAccount *account,
 			MODEST_PER_ACCOUNT_LOCAL_OUTBOX_FOLDER_ACCOUNT_ID_PREFIX "%s", 
 			modest_account_name);
 		
-		local_account = modest_tny_account_store_get_tny_account_by_id (modest_runtime_get_account_store(),
-									account_id);
+		local_account = modest_tny_account_store_get_tny_account_by (modest_runtime_get_account_store(),
+									     MODEST_TNY_ACCOUNT_STORE_QUERY_ID,
+									     account_id);
 		g_free (account_id);
 	} else {
 		/* Other local folders are all in one on-disk directory: */
-		local_account = modest_tny_account_store_get_tny_account_by_id (modest_runtime_get_account_store(),
-										MODEST_LOCAL_FOLDERS_ACCOUNT_ID);
+		local_account = modest_tny_account_store_get_tny_account_by (modest_runtime_get_account_store(),
+									     MODEST_TNY_ACCOUNT_STORE_QUERY_ID,
+									     MODEST_LOCAL_FOLDERS_ACCOUNT_ID);
 	}
 	
 	if (!local_account) {

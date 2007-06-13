@@ -669,29 +669,30 @@ _modest_ui_actions_open (TnyList *headers, ModestWindow *win)
 	ModestWindowMgr *mgr;
 	TnyIterator *iter;
 	ModestMailOperation *mail_op;
+	TnyList *not_opened_headers;
 
 	/* Look if we already have a message view for each header. If
 	   true, then remove the header from the list of headers to
 	   open */
 	mgr = modest_runtime_get_window_mgr ();
 	iter = tny_list_create_iterator (headers);
+	not_opened_headers = tny_simple_list_new ();
 	while (!tny_iterator_is_done (iter)) {
 		ModestWindow *window;
 		TnyHeader *header;
 		
 		header = TNY_HEADER (tny_iterator_get_current (iter));
 		window = modest_window_mgr_find_window_by_header (mgr, header);
-		if (window) {
-			/* Do not open again the message and present
-			   the window to the user */
-			tny_list_remove (headers, G_OBJECT (header));
+		/* Do not open again the message and present the
+		   window to the user */
+		if (window)
 			gtk_window_present (GTK_WINDOW (window));
-		}
+		else
+			tny_list_append (not_opened_headers, G_OBJECT (header));
 
 		g_object_unref (header);
 		tny_iterator_next (iter);
 	}
-
 	
 	/* Open each message */
 	mail_op = modest_mail_operation_new_with_error_handling (MODEST_MAIL_OPERATION_TYPE_RECEIVE, 
@@ -700,13 +701,14 @@ _modest_ui_actions_open (TnyList *headers, ModestWindow *win)
 								 NULL);
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
 	modest_mail_operation_get_msgs_full (mail_op, 
-					     headers, 
+					     not_opened_headers, 
 					     open_msg_cb, 
 					     NULL, 
 					     NULL);
 	/* Clean */
+	g_object_unref (not_opened_headers);
 	g_object_unref (iter);
-	g_object_unref(mail_op);
+	g_object_unref (mail_op);
 }
 
 void
@@ -1216,8 +1218,9 @@ set_active_account_from_tny_account (TnyAccount *account,
 	   account store because that is the one that
 	   knows the name of the Modest account */
 	TnyAccount *modest_server_account = modest_server_account = 
-		modest_tny_account_store_get_tny_account_by_id  (modest_runtime_get_account_store (), 
-								 server_acc_name);
+		modest_tny_account_store_get_tny_account_by (modest_runtime_get_account_store (),
+							     MODEST_TNY_ACCOUNT_STORE_QUERY_ID, 
+							     server_acc_name);
 	
 	const gchar *modest_acc_name = 
 		modest_tny_account_get_parent_modest_account_name_for_server_account (modest_server_account);

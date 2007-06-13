@@ -174,7 +174,7 @@ modest_init_init_core (void)
 		return FALSE;
 	}
 	
-	if (!init_default_account_maybe(modest_runtime_get_account_mgr ())) {
+	if (!init_default_account_maybe (modest_runtime_get_account_mgr ())) {
 		modest_init_uninit ();
 		g_printerr ("modest: failed to init default account\n");
 		return FALSE;

@@ -268,8 +268,8 @@ static void
 on_account_removed (ModestAccountMgr *account_mgr,
 		    const gchar* account, gboolean server_account,
 		    ModestAccountView *self)
-{
-	on_account_changed (account_mgr, account, NULL, server_account, self);
+{		 
+	update_account_view (account_mgr, self);
 }
 
 

@@ -77,6 +77,13 @@ struct _ModestTnyAccountStoreClass {
 				       gpointer user_data);
 };
 
+typedef enum {
+	MODEST_TNY_ACCOUNT_STORE_QUERY_ID,
+	MODEST_TNY_ACCOUNT_STORE_QUERY_NAME,
+	MODEST_TNY_ACCOUNT_STORE_QUERY_URL,
+} ModestTnyAccountStoreQueryType;
+
+
 /**
  * modest_tny_account_store_get_type:
  *
@@ -97,17 +104,18 @@ ModestTnyAccountStore*    modest_tny_account_store_new (ModestAccountMgr *accoun
 
 
 /**
- * modest_tny_account_store_get_account_by_id 
+ * modest_tny_account_store_get_account_by 
  * @self: a ModestTnyAccountStore instance
  * @id: some ID
  * 
- * get the account with the given ID or NULL if it's not found
+ * get the account with the given str or NULL if it's not found
  * 
  * Returns: the tnyaccount or NULL,
  * g_object_unref when it's no longer needed
  */
-TnyAccount* modest_tny_account_store_get_tny_account_by_id  (ModestTnyAccountStore *self,
-							     const gchar *id);
+TnyAccount* modest_tny_account_store_get_tny_account_by  (ModestTnyAccountStore *self,
+							  ModestTnyAccountStoreQueryType type,
+							  const gchar *str);
 
 /**
  * modest_tny_account_store_get_server_account

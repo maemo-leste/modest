@@ -400,8 +400,9 @@ save_settings_folder_view (ModestConf *conf, ModestFolderView *folder_view,
 	account_id = modest_folder_view_get_account_id_of_visible_server_account (folder_view);
 	if (account_id)
 		modest_conf_set_string (conf, key, account_id, NULL);
+	else
+		modest_conf_remove_key (conf, key, NULL);
 	g_free (key);
-
 
 	return TRUE;
 }

@@ -82,6 +82,9 @@ on_key_change (ModestConf *conf, const gchar *key, ModestConfEvent event, gpoint
 {
 	ModestAccountMgr *self = MODEST_ACCOUNT_MGR (user_data);
 	ModestAccountMgrPrivate *priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
+	gboolean is_account_key;
+	gboolean is_server_account;
+	gchar* account = NULL;
 
 	/* there is only one not-really-account key which will still emit
 	 * a signal: a change in MODEST_CONF_DEFAULT_ACCOUNT */
@@ -90,24 +93,25 @@ on_key_change (ModestConf *conf, const gchar *key, ModestConfEvent event, gpoint
 		
 		/* Store the key for later notification in our timeout callback.
 		 * Notifying for every key change would cause unnecessary work: */
-		priv->changed_conf_keys = g_slist_append (priv->changed_conf_keys, 
+		priv->changed_conf_keys = g_slist_append (priv->changed_conf_keys,
 			(gpointer) g_strdup (key));
 	}
 	
-	gboolean is_account_key = FALSE;
-	gboolean is_server_account = FALSE;
-	gchar* account = _modest_account_mgr_account_from_key (key, &is_account_key, &is_server_account);
-	
+	is_account_key = FALSE;
+	is_server_account = FALSE;
+	account = _modest_account_mgr_account_from_key (key, &is_account_key, 
+							&is_server_account);
+
 	/* if this is not an account-related key change, ignore */
 	if (!account)
 		return;
 
-	/* account was removed -- emit this, even if the account was
-	   disabled. This should not happen unless the user directly
-	   does it in gconf */
-	if (is_account_key && event == MODEST_CONF_EVENT_KEY_UNSET) {
-		g_signal_emit (G_OBJECT(self), signals[ACCOUNT_REMOVED_SIGNAL], 0, 
-			       account, is_server_account);
+	/* account was removed. Do not emit an account removed signal
+	   because it was already being done in the remove_account
+	   method. Do not notify also the removal of the server
+	   account keys for the same reason */
+	if ((is_account_key || is_server_account) && 
+	    event == MODEST_CONF_EVENT_KEY_UNSET) {
 		g_free (account);
 		return;
 	}
@@ -116,7 +120,7 @@ on_key_change (ModestConf *conf, const gchar *key, ModestConfEvent event, gpoint
 	gboolean enabled = FALSE;
 	if (is_server_account)
 		enabled = TRUE;
-	else 
+	else
 		enabled = modest_account_mgr_get_enabled (self, account);
 
 	/* Notify is server account was changed, default account was changed
@@ -127,10 +131,9 @@ on_key_change (ModestConf *conf, const gchar *key, ModestConfEvent event, gpoint
 	    strcmp (key, MODEST_CONF_DEFAULT_ACCOUNT) == 0) {
 		/* Store the key for later notification in our timeout callback.
 		 * Notifying for every key change would cause unnecessary work: */
-		priv->changed_conf_keys = g_slist_append (NULL, 
+		priv->changed_conf_keys = g_slist_append (NULL,
 			(gpointer) g_strdup (key));
 	}
-
 	g_free (account);
 }
 
@@ -200,7 +203,6 @@ modest_account_mgr_init (ModestAccountMgr * obj)
 		MODEST_ACCOUNT_MGR_GET_PRIVATE (obj);
 
 	priv->modest_conf = NULL;
-	
 	priv->timeout = g_timeout_add (1000 /* milliseconds */, on_timeout_notify_changes, obj);
 }
 
@@ -209,6 +211,12 @@ modest_account_mgr_finalize (GObject * obj)
 {
 	ModestAccountMgrPrivate *priv = 
 		MODEST_ACCOUNT_MGR_GET_PRIVATE (obj);
+
+	if (priv->key_changed_handler_uid) {
+		g_signal_handler_disconnect (priv->modest_conf, 
+					     priv->key_changed_handler_uid);
+		priv->key_changed_handler_uid = 0;
+	}
 
 	if (priv->modest_conf) {
 		g_object_unref (G_OBJECT(priv->modest_conf));
@@ -241,9 +249,10 @@ modest_account_mgr_new (ModestConf *conf)
 	g_object_ref (G_OBJECT(conf));
 	priv->modest_conf = conf;
 
-	g_signal_connect (G_OBJECT (conf), "key_changed",
-	                  G_CALLBACK (on_key_change),
-			  obj);
+	priv->key_changed_handler_uid =
+		g_signal_connect (G_OBJECT (conf), "key_changed",
+				  G_CALLBACK (on_key_change),
+				  obj);
 	
 	return MODEST_ACCOUNT_MGR (obj);
 }
@@ -274,7 +283,7 @@ modest_account_mgr_add_account (ModestAccountMgr *self,
 	g_return_val_if_fail (strchr(name, '/') == NULL, FALSE);
 	
 	priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
-	
+
 	/*
 	 * we create the account by adding an account 'dir', with the name <name>,
 	 * and in that the 'display_name' string key
@@ -308,7 +317,6 @@ modest_account_mgr_add_account (ModestAccountMgr *self,
 				g_printerr ("modest: Error adding store account conf: %s\n", err->message);
 				g_error_free (err);
 			}
-			
 			return FALSE;
 		}
 	}
@@ -343,7 +351,7 @@ modest_account_mgr_add_account (ModestAccountMgr *self,
 	if (!default_account)
 		modest_account_mgr_set_default_account (self, name);
 	g_free (default_account);
-	
+
 	return TRUE;
 }
 
@@ -361,13 +369,13 @@ modest_account_mgr_add_server_account (ModestAccountMgr * self,
 	gchar *key;
 	gboolean ok = TRUE;
 	GError *err = NULL;
-	
+
 	g_return_val_if_fail (MODEST_IS_ACCOUNT_MGR(self), FALSE);
 	g_return_val_if_fail (name, FALSE);
 	g_return_val_if_fail (strchr(name, '/') == NULL, FALSE);
 			      
 	priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
-	
+
 	/* hostname */
 	key = _modest_account_mgr_get_account_keyname (name, MODEST_ACCOUNT_HOSTNAME, TRUE);
 	if (modest_conf_key_exists (priv->modest_conf, key, &err)) {
@@ -511,8 +519,6 @@ modest_account_mgr_add_server_account_uri (ModestAccountMgr * self,
 	return TRUE;
 }
 
-
-
 gboolean
 modest_account_mgr_remove_account (ModestAccountMgr * self,
 				   const gchar* name,  gboolean server_account)
@@ -530,18 +536,10 @@ modest_account_mgr_remove_account (ModestAccountMgr * self,
 		return FALSE;
 	}
 
-	/* Notify the observers. We need to do that here because they
-	   could need to use the configuration keys before deleting
-	   them, i.e., the account store will delete the cache. We
-	   only notify about removals of modest accounts */
-	if (!server_account)
-		g_signal_emit (G_OBJECT(self), signals[ACCOUNT_REMOVED_SIGNAL], 0, 
-			       name, server_account);
-
-	/* in case we're deleting an account, also delete the dependent store and transport account */
 	if (!server_account) {
 		gchar *server_account_name;
-		
+
+		/* in case we're deleting an account, also delete the dependent store and transport account */
 		server_account_name = modest_account_mgr_get_string (self, name, MODEST_ACCOUNT_STORE_ACCOUNT,
 								    FALSE);
 		if (server_account_name) {
@@ -561,7 +559,7 @@ modest_account_mgr_remove_account (ModestAccountMgr * self,
 			g_free (server_account_name);
 		} else
 			g_printerr ("modest: could not find the transport account for %s\n", name);
-	}			
+	}
 			
 	priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
 	key = _modest_account_mgr_get_account_keyname (name, NULL, server_account);
@@ -583,6 +581,12 @@ modest_account_mgr_remove_account (ModestAccountMgr * self,
 		
 		/* pick another one as the new default account */
 		modest_account_mgr_set_first_account_as_default (self);
+
+		/* Notify the observers. We do this *after* deleting
+		   the keys, because otherwise a call to account_names
+		   will retrieve also the deleted account */
+		g_signal_emit (G_OBJECT(self), signals[ACCOUNT_REMOVED_SIGNAL], 0,
+			       name, server_account);
 	}
 	return retval;
 }
@@ -669,9 +673,9 @@ modest_account_mgr_account_names (ModestAccountMgr * self, gboolean only_enabled
 	g_return_val_if_fail (self, NULL);
 
 	priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
-	
 	accounts = modest_conf_list_subkeys (priv->modest_conf,
                                              MODEST_ACCOUNT_NAMESPACE, &err);
+
 	if (err) {
 		g_printerr ("modest: failed to get subkeys (%s): %s\n",
 			    MODEST_ACCOUNT_NAMESPACE, err->message);
