@@ -1,5 +1,16 @@
 2007-06-13  Murray Cumming  <murrayc@murrayc.com>
 
+	* libmodest-dbus-client/libmodest-dbus-client-1.0.pc.in:
+	Remove unnecessary lib/include, though it is good in principle when needed.
+	
+	* src/modest-init.c: (modest_init_one_local_folder),
+	(modest_init_local_folders):
+	* src/modest-init.h: Initialize the .modest library for memory cards, 
+	instead of just doing nothing for them. This should allow us to create 
+	folders there, fixing projects.maemo.org bug NB#59297.
+
+2007-06-13  Murray Cumming  <murrayc@murrayc.com>
+
 	* libmodest-dbus-client/libmodest-dbus-client.c:
 	(libmodest_dbus_client_send_mail), (libmodest_dbus_client_mail_to),
 	(libmodest_dbus_client_compose_mail),

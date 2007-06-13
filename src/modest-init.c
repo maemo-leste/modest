@@ -323,7 +323,7 @@ gboolean modest_init_one_local_folder (gchar *maildir_path)
 					maildirs[j],
 					NULL);
 		if (g_mkdir_with_parents (dir, 0755) < 0) {
-			g_printerr ("modest: failed to create %s\n", dir);
+			g_printerr ("modest: %s: failed to create %s\n", __FUNCTION__, dir);
 			g_free (dir);
 			return FALSE;
 		}
@@ -344,23 +344,33 @@ gboolean modest_init_one_local_folder (gchar *maildir_path)
  * they were created, FALSE otherwise
  */
 gboolean
-modest_init_local_folders  ()
+modest_init_local_folders (const gchar* location_filepath)
 {	
-	gchar *maildir_path = modest_local_folder_info_get_maildir_path (NULL);
+	gchar *maildir_path = modest_local_folder_info_get_maildir_path (location_filepath);
 
-	/* Create each of the standard on-disk folders.
-	 * Per-account outbox folders will be created when first needed. */
-	int i;
-	for (i = 0; i != G_N_ELEMENTS(LOCAL_FOLDERS); ++i) {
-		gchar *dir = g_build_filename (maildir_path,
-						modest_local_folder_info_get_type_name(LOCAL_FOLDERS[i]),
-						NULL);			
-		const gboolean created = modest_init_one_local_folder (dir);
-		g_free(dir);
-		
-		if (!created) {
+	if (location_filepath) {
+		/* For instance, for memory card, just create the top-level .modest folder: */
+		if (g_mkdir_with_parents (maildir_path, 0755) < 0) {
+			g_printerr ("modest: %s: failed to create %s\n", __FUNCTION__, dir);
 			g_free (maildir_path);
 			return FALSE;
+		}
+	}
+	else {
+		/* Create each of the standard on-disk folders.
+		 * Per-account outbox folders will be created when first needed. */
+		int i;
+		for (i = 0; i != G_N_ELEMENTS(LOCAL_FOLDERS); ++i) {
+			gchar *dir = g_build_filename (maildir_path,
+							modest_local_folder_info_get_type_name(LOCAL_FOLDERS[i]),
+							NULL);			
+			const gboolean created = modest_init_one_local_folder (dir);
+			g_free(dir);
+			
+			if (!created) {
+				g_free (maildir_path);
+				return FALSE;
+			}
 		}
 	}
 	

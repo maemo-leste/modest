@@ -80,7 +80,7 @@ gboolean modest_init_uninit (void);
  * Returns: TRUE if the folder were already there, or
  * they were created, FALSE otherwise
  */
-gboolean modest_init_local_folders  ();
+gboolean modest_init_local_folders  (const gchar* location_filepath);
 
 /**
  * modest_init_one_local_folder:
