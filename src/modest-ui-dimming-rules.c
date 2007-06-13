@@ -49,6 +49,7 @@ static gboolean _selected_msg_marked_as (ModestWindow *win, TnyHeaderFlags mask,
 static gboolean _selected_folder_not_writeable (ModestMainWindow *win);
 static gboolean _selected_folder_is_any_of_type (ModestWindow *win, TnyFolderType types[], guint ntypes);
 static gboolean _selected_folder_is_root_or_inbox (ModestMainWindow *win);
+static gboolean _selected_folder_is_MMC_or_POP_root (ModestMainWindow *win);
 static gboolean _selected_folder_is_root (ModestMainWindow *win);
 static gboolean _selected_folder_is_empty (ModestMainWindow *win);
 static gboolean _msg_download_in_progress (ModestMsgViewWindow *win);
@@ -137,6 +138,8 @@ modest_ui_dimming_rules_on_delete_folder (ModestWindow *win, gpointer user_data)
 		dimmed = _selected_folder_not_writeable (MODEST_MAIN_WINDOW(win));
 	if (!dimmed)
 		dimmed = _selected_folder_is_root_or_inbox (MODEST_MAIN_WINDOW(win));
+	if (!dimmed)
+		dimmed = _selected_folder_is_MMC_or_POP_root (MODEST_MAIN_WINDOW(win));
 	if (!dimmed)
 		dimmed = _selected_folder_is_any_of_type (win, types, 3);
 
@@ -684,38 +687,14 @@ _selected_folder_is_root_or_inbox (ModestMainWindow *win)
 	/* Check folder type */
 	result = _selected_folder_is_any_of_type (MODEST_WINDOW(win), types, 2);
 
+	/* Check pop and MMC accounts */
 	if (!result) {
-		GtkWidget *folder_view = NULL;
-		TnyFolderStore *parent_folder = NULL;
-		
-		folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(win),
-								   MODEST_WIDGET_TYPE_FOLDER_VIEW);
-		/* Get selected folder as parent of new folder to create */
-		parent_folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW(folder_view));
-		if (!parent_folder)
-			return TRUE;
-
-		if (TNY_IS_ACCOUNT (parent_folder)) {
-			/* If it's the local account then do not dim */
-			if (modest_tny_account_is_virtual_local_folders (
-									 TNY_ACCOUNT (parent_folder)))
-				return FALSE;
-			else {
-				/* If it's the MMC root folder then dim it */
-				if (!strcmp (tny_account_get_id (TNY_ACCOUNT (parent_folder)), MODEST_MMC_ACCOUNT_ID)) {
-					result = TRUE;
-				} else {
-					const gchar *proto_str = tny_account_get_proto (TNY_ACCOUNT (parent_folder));
-					/* If it's POP then dim */
-					result = (modest_protocol_info_get_transport_store_protocol (proto_str) == 
-						  MODEST_PROTOCOL_STORE_POP) ? TRUE : FALSE;
-				}
-			}
-		}
+		result = _selected_folder_is_MMC_or_POP_root (win);
 	}
 		
 	return result;
 }
+
 
 static gboolean
 _selected_folder_is_root (ModestMainWindow *win)
@@ -730,8 +709,50 @@ _selected_folder_is_root (ModestMainWindow *win)
 	/* Check folder type */
 	result = _selected_folder_is_any_of_type (MODEST_WINDOW(win), types, 1);
 		
+	/* Check pop and MMC accounts */
+	if (!result) {
+		result = _selected_folder_is_MMC_or_POP_root (win);
+	}
+
 	return result;
 }
+
+static gboolean
+_selected_folder_is_MMC_or_POP_root (ModestMainWindow *win)
+{
+	GtkWidget *folder_view = NULL;
+	TnyFolderStore *parent_folder = NULL;
+	gboolean result = FALSE;
+
+	folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(win),
+							   MODEST_WIDGET_TYPE_FOLDER_VIEW);
+	/* Get selected folder as parent of new folder to create */
+	parent_folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW(folder_view));
+	if (!parent_folder)
+		return TRUE;
+	
+	if (TNY_IS_ACCOUNT (parent_folder)) {
+		/* If it's the local account then do not dim */
+		if (modest_tny_account_is_virtual_local_folders (
+								 TNY_ACCOUNT (parent_folder)))
+			return FALSE;
+		else {
+				/* If it's the MMC root folder then dim it */
+			if (!strcmp (tny_account_get_id (TNY_ACCOUNT (parent_folder)), MODEST_MMC_ACCOUNT_ID)) {
+					result = TRUE;
+			} else {
+				const gchar *proto_str = tny_account_get_proto (TNY_ACCOUNT (parent_folder));
+				/* If it's POP then dim */
+				result = (modest_protocol_info_get_transport_store_protocol (proto_str) == 
+						  MODEST_PROTOCOL_STORE_POP) ? TRUE : FALSE;
+			}
+		}
+	}
+
+	return result;
+}
+
+
 
 
 static gboolean
