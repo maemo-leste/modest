@@ -241,6 +241,9 @@ restore_settings_paned (ModestConf *conf, GtkPaned *paned, const gchar *name)
 	if (modest_conf_key_exists (conf, key, NULL)) {
 		pos = modest_conf_get_int (conf, key, NULL);
 		gtk_paned_set_position (paned, pos);
+	} else {
+		/* The initial position must follow the 30/70 rule */
+		gtk_paned_set_position (paned, GTK_WIDGET(paned)->requisition.width/3);
 	}
 
 	g_free (key);
