@@ -211,9 +211,13 @@ modest_tny_send_queue_new (TnyCamelTransportAccount *account)
 						    account); 
 
 	/* Connect signals to control when a msg is being or has been sent */
-	g_signal_connect (G_OBJECT(self), "msg-sending",
-			  G_CALLBACK(_on_msg_start_sending), 
-			  NULL);
+	/* TODO: this signal was implemented in tinymail camel send queue, but im
+	   waiting for implement some unit tests nbefore commited changes */
+	if (FALSE) {
+		g_signal_connect (G_OBJECT(self), "msg-sending",
+				  G_CALLBACK(_on_msg_start_sending), 
+				  NULL);
+	}
 			  
 	g_signal_connect (G_OBJECT(self), "msg-sent",
 			  G_CALLBACK(_on_msg_has_been_sent), 
