@@ -40,6 +40,11 @@ static void modest_tny_send_queue_class_init (ModestTnySendQueueClass *klass);
 static void modest_tny_send_queue_finalize   (GObject *obj);
 static void modest_tny_send_queue_instance_init (GTypeInstance *instance, gpointer g_class);
 
+/* Signal handlers */ 
+static void _on_msg_start_sending (TnySendQueue *self, TnyMsg *msg, guint processed, guint total);
+static void _on_msg_has_been_sent (TnySendQueue *self, TnyMsg *msg, guint processed, guint total);
+
+
 /* list my signals  */
 enum {
 	/* MY_SIGNAL_1, */
@@ -47,15 +52,15 @@ enum {
 	LAST_SIGNAL
 };
 
-#if 0
 typedef struct _ModestTnySendQueuePrivate ModestTnySendQueuePrivate;
 struct _ModestTnySendQueuePrivate {
-	/* empty */
+	gchar *current_msg_id;
+
 };
+
 #define MODEST_TNY_SEND_QUEUE_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                    MODEST_TYPE_TNY_SEND_QUEUE, \
                                                    ModestTnySendQueuePrivate))
-#endif
 
 /* globals */
 static TnyCamelSendQueueClass *parent_class = NULL;
@@ -168,18 +173,28 @@ modest_tny_send_queue_class_init (ModestTnySendQueueClass *klass)
         TNY_CAMEL_SEND_QUEUE_CLASS(klass)->get_sentbox_func = modest_tny_send_queue_get_sentbox;
         TNY_CAMEL_SEND_QUEUE_CLASS(klass)->cancel_func      = modest_tny_send_queue_cancel;
 
-	/* g_type_class_add_private (gobject_class, sizeof(ModestTnySendQueuePrivate)); */
+	g_type_class_add_private (gobject_class, sizeof(ModestTnySendQueuePrivate));
 }
 
 static void
 modest_tny_send_queue_instance_init (GTypeInstance *instance, gpointer g_class)
 {
-   
+	ModestTnySendQueuePrivate *priv;
+		
+	priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE (instance);
+	priv->current_msg_id = NULL;
+	
 }
 
 static void
 modest_tny_send_queue_finalize (GObject *obj)
 {
+	ModestTnySendQueuePrivate *priv;
+		
+	priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE (obj);
+	if (priv->current_msg_id != NULL)
+		g_free(priv->current_msg_id);
+
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
@@ -194,6 +209,15 @@ modest_tny_send_queue_new (TnyCamelTransportAccount *account)
 	
 	tny_camel_send_queue_set_transport_account (TNY_CAMEL_SEND_QUEUE(self),
 						    account); 
+
+	/* Connect signals to control when a msg is being or has been sent */
+	g_signal_connect (G_OBJECT(self), "msg-sending",
+			  G_CALLBACK(_on_msg_start_sending), 
+			  NULL);
+			  
+	g_signal_connect (G_OBJECT(self), "msg-sent",
+			  G_CALLBACK(_on_msg_has_been_sent), 
+			  NULL);
 	return self;
 }
 
@@ -205,4 +229,68 @@ modest_tny_send_queue_try_to_send (ModestTnySendQueue* self)
 	/* TODO: Rename this to tny_camel_send_queue_try_to_send() in tinymail 
 	and check that it works, without creating a second worker. */
 /* 	tny_camel_send_queue_flush (TNY_CAMEL_SEND_QUEUE(self)); */
+}
+
+gboolean
+modest_tny_send_queue_msg_is_being_sent (ModestTnySendQueue* self,
+					 const gchar *msg_id)
+{	
+	ModestTnySendQueuePrivate *priv;
+	
+	g_return_val_if_fail (msg_id != NULL, FALSE); 
+	priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE (self);
+	
+	if (modest_tny_send_queue_sending_in_progress(self))
+		return g_ascii_strcasecmp(priv->current_msg_id, msg_id);
+	else 
+		return FALSE;
+}
+
+gboolean
+modest_tny_send_queue_sending_in_progress (ModestTnySendQueue* self)
+{	
+	ModestTnySendQueuePrivate *priv;
+	
+	priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE (self);
+	
+	return priv->current_msg_id != NULL;
+}
+
+
+static void 
+_on_msg_start_sending (TnySendQueue *self,
+		       TnyMsg *msg, 
+		       guint processed,
+		       guint total)
+{
+	ModestTnySendQueuePrivate *priv;
+	TnyHeader *header = NULL;
+
+	priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE (self);
+
+	/* Delete previous msg_id */
+	if (priv->current_msg_id != NULL)
+		g_free(priv->current_msg_id);
+	
+	/* Set current msg_id */
+	header = tny_msg_get_header(msg);
+	priv->current_msg_id = g_strdup(tny_header_get_message_id (header));
+}
+
+static void 
+_on_msg_has_been_sent (TnySendQueue *self,
+		       TnyMsg *msg, 
+		       guint processed,
+		       guint total)
+{
+	ModestTnySendQueuePrivate *priv;
+	
+	priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE (self);
+	
+	/* Delete previous msg_id */
+	if (priv->current_msg_id != NULL)
+		g_free(priv->current_msg_id);
+	
+	/* Unset current msg_id */
+	priv->current_msg_id = NULL;
 }

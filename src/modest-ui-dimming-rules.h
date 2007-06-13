@@ -62,8 +62,9 @@ gboolean modest_ui_dimming_rules_on_remove_attachments (ModestWindow *win, gpoin
 gboolean modest_ui_dimming_rules_on_copy (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_view_previous (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_view_next (ModestWindow *win, gpointer user_data);
-
 gboolean modest_ui_dimming_rules_on_tools_smtp_servers (ModestWindow *win, gpointer user_data);
+gboolean modest_ui_dimming_rules_on_cancel_sending (ModestWindow *win, gpointer user_data);
+gboolean modest_ui_dimming_rules_on_send_receive (ModestWindow *win, gpointer user_data);
 
 G_END_DECLS
 #endif 

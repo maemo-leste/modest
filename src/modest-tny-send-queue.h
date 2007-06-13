@@ -93,6 +93,24 @@ ModestTnySendQueue*    modest_tny_send_queue_new        (TnyCamelTransportAccoun
 void modest_tny_send_queue_try_to_send (ModestTnySendQueue* self);
 
 
+/**
+ * modest_tny_send_queue_sending_in_progress:
+ * @self: a valid #ModestTnySendQueue instance
+ *
+ * Checks if sending operation is currently in progress on @self send queue.
+ */
+gboolean modest_tny_send_queue_sending_in_progress (ModestTnySendQueue* self);
+
+/**
+ * modest_tny_send_queue_msg_is_being_sent:
+ * @self: a valid #ModestTnySendQueue instance
+ * @msg_id: the message id ti check.
+ *
+ * Checks if message identifies with @msg_id is currently being sent.
+ */
+gboolean modest_tny_send_queue_msg_is_being_sent (ModestTnySendQueue* self, const gchar *msg_id);
+
+
 G_END_DECLS
 
 #endif /* __MODEST_TNY_SEND_QUEUE_H__ */

@@ -49,8 +49,8 @@ static const ModestDimmingEntry modest_main_window_menu_dimming_entries [] = {
 	{ "/MenuBar/ToolsMenu/ToolsAccountsMenu", NULL },
 	{ "/MenuBar/ToolsMenu/ToolsSMTPServersMenu", G_CALLBACK(modest_ui_dimming_rules_on_tools_smtp_servers) },
 	{ "/MenuBar/ToolsMenu/ToolsSendReceiveMainMenu", NULL },
-	{ "/MenuBar/ToolsMenu/ToolsSendReceiveMainMenu/ToolsSendReceiveAllMenu", NULL },
-	{ "/MenuBar/ToolsMenu/ToolsSendReceiveCancelSendingMenu", NULL },
+	{ "/MenuBar/ToolsMenu/ToolsSendReceiveMainMenu/ToolsSendReceiveAllMenu", G_CALLBACK(modest_ui_dimming_rules_on_send_receive) },
+	{ "/MenuBar/ToolsMenu/ToolsSendReceiveMainMenu/ToolsSendReceiveCancelSendingMenu", G_CALLBACK(modest_ui_dimming_rules_on_cancel_sending) },
 	{ "/MenuBar/ToolsMenu/ToolsContactsMenu", NULL },
 	{ "/MenuBar/ToolsMenu/ToolsSearchMessagesMenu", NULL },
 	{ "/MenuBar/ToolsMenu/ToolsHelpMenu", NULL },
@@ -69,7 +69,7 @@ static const ModestDimmingEntry modest_main_window_menu_dimming_entries [] = {
 	{ "/HeaderViewCSM/HeaderViewCSMCopy", NULL },
 	{ "/HeaderViewCSM/HeaderViewCSMPaste", G_CALLBACK(modest_ui_dimming_rules_on_paste_msgs) },
 	{ "/HeaderViewCSM/HeaderViewCSMDelete", G_CALLBACK(modest_ui_dimming_rules_on_delete_msg) },
-	{ "/HeaderViewCSM/HeaderViewCSMCancelSending", NULL },
+	{ "/HeaderViewCSM/HeaderViewCSMCancelSending", G_CALLBACK(modest_ui_dimming_rules_on_cancel_sending) },
 	{ "/HeaderViewCSM/HeaderViewCSMHelp", NULL },
 
 	/* Contextual Menus (Folder View) */
@@ -96,7 +96,7 @@ static const ModestDimmingEntry modest_main_window_toolbar_dimming_entries [] = 
 	{ "/ToolBar/ToolbarDeleteMessage", G_CALLBACK(modest_ui_dimming_rules_on_delete_msg) },
 	{ "/ToolBar/ToolbarToggleView", NULL },
 	{ "/ToolBar/ToolbarSort", G_CALLBACK(modest_ui_dimming_rules_on_sort) },
-	{ "/ToolBar/ToolbarSendReceive", NULL },
+	{ "/ToolBar/ToolbarSendReceive", G_CALLBACK(modest_ui_dimming_rules_on_send_receive) },
 	{ "/ToolBar/ToolbarCancel", NULL },
 };
 
