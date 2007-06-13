@@ -179,12 +179,10 @@ static GList* check_for_supported_auth_methods(ModestEasysetupWizardDialog* acco
           /* TODO: Select the correct method */
 			  GList* list = NULL;
 			  GList* method;
-			  for (method = list_auth_methods; method != NULL; method = g_list_next(method))
-			 {
+			  for (method = list_auth_methods; method != NULL; method = g_list_next(method)) {
 				  ModestAuthProtocol auth = (ModestAuthProtocol) (GPOINTER_TO_INT(method->data));
-				  if (modest_protocol_info_auth_is_secure(auth))
-				 {
-					  g_list_append(list, GINT_TO_POINTER(auth));
+				  if (modest_protocol_info_auth_is_secure(auth)) {
+					 list = g_list_append(list, GINT_TO_POINTER(auth));
 				 }
 			 }
 			 g_list_free(list_auth_methods);
