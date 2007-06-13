@@ -168,7 +168,7 @@ modest_init_init_core (void)
 
 	init_default_settings (modest_runtime_get_conf ());
 	
-	if (!modest_init_local_folders()) {
+	if (!modest_init_local_folders(NULL)) {
 		modest_init_uninit ();
 		g_printerr ("modest: failed to init local folders\n");
 		return FALSE;
@@ -351,7 +351,7 @@ modest_init_local_folders (const gchar* location_filepath)
 	if (location_filepath) {
 		/* For instance, for memory card, just create the top-level .modest folder: */
 		if (g_mkdir_with_parents (maildir_path, 0755) < 0) {
-			g_printerr ("modest: %s: failed to create %s\n", __FUNCTION__, dir);
+			g_printerr ("modest: %s: failed to create %s\n", __FUNCTION__, location_filepath);
 			g_free (maildir_path);
 			return FALSE;
 		}

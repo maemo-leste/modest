@@ -1,5 +1,10 @@
 2007-06-13  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-init.c: (modest_init_init_core),
+	(modest_init_local_folders): Fixed compilation errors.
+
+2007-06-13  Murray Cumming  <murrayc@murrayc.com>
+
 	* libmodest-dbus-client/libmodest-dbus-client-1.0.pc.in:
 	Remove unnecessary lib/include, though it is good in principle when needed.
 	

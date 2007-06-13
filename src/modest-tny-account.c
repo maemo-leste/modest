@@ -450,8 +450,7 @@ TnyAccount*
 modest_tny_account_new_for_local_folders (ModestAccountMgr *account_mgr, TnySessionCamel *session, const gchar* location_filepath)
 {
 	/* Make sure that the directories exist: */
-	if (location_filepath == NULL) /* Only for the special local folders account, not for the memory card. */
-		modest_init_local_folders ();
+	modest_init_local_folders (location_filepath);
 
 	TnyStoreAccount *tny_account;
 	CamelURL *url;
