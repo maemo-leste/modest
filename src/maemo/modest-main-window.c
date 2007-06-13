@@ -82,7 +82,7 @@ static gboolean modest_main_window_window_state_event (GtkWidget *widget,
 
 static void connect_signals (ModestMainWindow *self);
 
-static void restore_settings (ModestMainWindow *self);
+static void restore_settings (ModestMainWindow *self, gboolean do_folder_view_too);
 static void save_state (ModestWindow *self);
 
 static void modest_main_window_show_toolbar   (ModestWindow *window,
@@ -353,7 +353,7 @@ modest_main_window_get_child_widget (ModestMainWindow *self,
 
 
 static void
-restore_settings (ModestMainWindow *self)
+restore_settings (ModestMainWindow *self, gboolean do_folder_view_too)
 {
 	ModestConf *conf;
 	ModestMainWindowPrivate *priv;
@@ -366,7 +366,9 @@ restore_settings (ModestMainWindow *self)
 				      MODEST_CONF_MAIN_WINDOW_KEY);
 	modest_widget_memory_restore (conf, G_OBJECT(priv->header_view),
 				      MODEST_CONF_HEADER_VIEW_KEY);
-	modest_widget_memory_restore (conf, G_OBJECT(priv->folder_view),
+
+	if (do_folder_view_too)
+		modest_widget_memory_restore (conf, G_OBJECT(priv->folder_view),
 				      MODEST_CONF_FOLDER_VIEW_KEY);
 	modest_widget_memory_restore (conf, G_OBJECT(priv->main_paned),
 				      MODEST_CONF_MAIN_PANED_KEY);
@@ -615,7 +617,54 @@ static void on_hildon_program_is_topmost_notify(GObject *self,
 	
 }
 
+static void
+modest_main_window_on_show (GtkWidget *self, gpointer user_data)
+{
+	GtkWidget *folder_win = (GtkWidget *) user_data;
+	ModestMainWindowPrivate *priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
 
+	priv->folder_view = MODEST_FOLDER_VIEW(modest_folder_view_new (NULL));
+	if (!priv->folder_view)
+		g_printerr ("modest: cannot instantiate folder view\n");
+
+	gtk_widget_show (GTK_WIDGET (priv->folder_view));
+
+	/* Connect signals */
+	connect_signals ((ModestMainWindow*)self);
+
+	modest_folder_view_set_style (priv->folder_view,
+		      MODEST_FOLDER_VIEW_STYLE_SHOW_ONE);
+
+
+	/* Set account store */
+	tny_account_store_view_set_account_store (TNY_ACCOUNT_STORE_VIEW (priv->folder_view),
+						  TNY_ACCOUNT_STORE (modest_runtime_get_account_store ()));
+
+
+	/* Check if accounts exist and show the account wizard if not */
+	gboolean accounts_exist = 
+		modest_account_mgr_has_accounts(modest_runtime_get_account_mgr(), TRUE);
+
+	
+	if (!accounts_exist)
+	{
+		/* This is necessary to have the main window shown behind the dialog 
+		It's an ugly hack... jschmid */
+		gtk_widget_show_all(GTK_WIDGET(self));
+		modest_ui_actions_on_accounts (NULL, MODEST_WINDOW(self));
+	}
+
+	wrap_in_scrolled_window (folder_win, GTK_WIDGET(priv->folder_view));
+	wrap_in_scrolled_window (priv->contents_widget, GTK_WIDGET(priv->header_view));
+
+	/* Load previous osso state, for instance if we are being restored from 
+	 * hibernation:  */
+	modest_osso_load_state();
+
+	/* Restore window & widget settings */
+
+	restore_settings (MODEST_MAIN_WINDOW(self), TRUE);
+}
 
 ModestWindow*
 modest_main_window_new (void)
@@ -628,7 +677,6 @@ modest_main_window_new (void)
 	ModestDimmingRulesGroup *toolbar_rules_group = NULL;
 	GtkActionGroup *action_group = NULL;
 	GError *error = NULL;
-	TnyFolderStoreQuery *query = NULL;
 	GdkPixbuf *window_icon = NULL; 
 	ModestConf *conf = NULL;
 	GtkAction *action = NULL;
@@ -720,23 +768,6 @@ modest_main_window_new (void)
 	/* Get device name */
 	modest_maemo_utils_get_device_name ();
 
-	/* folder view */
-	query = NULL; 
-
-	/* tny_folder_store_query_new ();
-
-	tny_folder_store_query_add_item (query, NULL,
-					 TNY_FOLDER_STORE_QUERY_OPTION_SUBSCRIBED);
-	*/
-
-	priv->folder_view = MODEST_FOLDER_VIEW(modest_folder_view_new (query));
-	if (!priv->folder_view)
-		g_printerr ("modest: cannot instantiate folder view\n");
-	/* g_object_unref (G_OBJECT (query)); */
-
-	modest_folder_view_set_style (priv->folder_view,
-				      MODEST_FOLDER_VIEW_STYLE_SHOW_ONE);
-
 	/* header view */
 	priv->header_view  =
 		MODEST_HEADER_VIEW(modest_header_view_new (NULL, MODEST_HEADER_VIEW_STYLE_DETAILS));
@@ -757,9 +788,6 @@ modest_main_window_new (void)
 					GTK_POLICY_NEVER,
 					GTK_POLICY_AUTOMATIC);
 
-	wrap_in_scrolled_window (folder_win, GTK_WIDGET(priv->folder_view));
-	wrap_in_scrolled_window (priv->contents_widget, GTK_WIDGET(priv->header_view));
-
 	/* paned */
 	priv->main_paned = gtk_hpaned_new ();
 	gtk_paned_pack1 (GTK_PANED(priv->main_paned), folder_win, TRUE, TRUE);
@@ -776,24 +804,7 @@ modest_main_window_new (void)
 	window_icon = modest_platform_get_icon (MODEST_APP_ICON);
 	gtk_window_set_icon (GTK_WINDOW (self), window_icon);
 	
-	/* Connect signals */
-	connect_signals (self);
 
-	/* Set account store */
-	tny_account_store_view_set_account_store (TNY_ACCOUNT_STORE_VIEW (priv->folder_view),
-						  TNY_ACCOUNT_STORE (modest_runtime_get_account_store ()));
-
-	/* Check if accounts exist and show the account wizard if not */
-	gboolean accounts_exist = 
-		modest_account_mgr_has_accounts(modest_runtime_get_account_mgr(), TRUE);
-	
-	if (!accounts_exist)
-	{
-			/* This is necessary to have the main window shown behind the dialog 
-			It's an ugly hack... jschmid */
-			gtk_widget_show_all(GTK_WIDGET(self));
-			modest_ui_actions_on_accounts (NULL, MODEST_WINDOW(self));
-	}
 	
 	/* Do send & receive when we are idle */
 	/* TODO: Enable this again. I have commented it out because, 
@@ -819,13 +830,12 @@ modest_main_window_new (void)
     */
 	g_signal_connect (G_OBJECT(app), "notify::is-topmost",
 		G_CALLBACK (on_hildon_program_is_topmost_notify), self);
-		
-	/* Load previous osso state, for instance if we are being restored from 
-	 * hibernation:  */
-	modest_osso_load_state();
 
-	/* Restore window & widget settings */
-	restore_settings (MODEST_MAIN_WINDOW(self));
+	g_signal_connect (G_OBJECT(self), "show",
+		G_CALLBACK (modest_main_window_on_show), folder_win);
+		
+
+	restore_settings (MODEST_MAIN_WINDOW(self), FALSE);
 
 	return MODEST_WINDOW(self);
 }
