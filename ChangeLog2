@@ -1,3 +1,8 @@
+2007-06-13  Johannes Schmid <johannes.schmid@openismus.com>
+
+	* src/maemo/easysetup/modest-easysetup-wizard.c: (create_account):
+	Fixed projects.maemo.org bug NB# 58991
+
 2007-06-13  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/modest-init.c: (modest_init_init_core),

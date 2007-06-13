@@ -1399,10 +1399,8 @@ create_account (ModestEasysetupWizardDialog *self, gboolean enabled)
 
 	/* Increment the non-user visible name if necessary, 
 	 * based on the display name: */
-	gchar *account_name_start = g_strdup_printf ("%sID", display_name);
 	gchar* account_name = modest_account_mgr_get_unused_account_name (self->account_manager,
-									  account_name_start, FALSE /* not a server account */);
-	g_free (account_name_start);
+									  display_name, FALSE /* not a server account */);
 		
 	/* username and password (for both incoming and outgoing): */
 	const gchar* username = gtk_entry_get_text (GTK_ENTRY (self->entry_user_username));
