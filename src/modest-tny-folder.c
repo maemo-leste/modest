@@ -92,14 +92,16 @@ TnyFolderType
 modest_tny_folder_guess_folder_type (const TnyFolder *folder)
 {
 	TnyFolderType type;
+	
+	g_return_val_if_fail (TNY_IS_FOLDER(folder), TNY_FOLDER_TYPE_UNKNOWN);
 
-	g_return_val_if_fail (folder, TNY_FOLDER_TYPE_UNKNOWN);
-
-	type = tny_folder_get_folder_type (TNY_FOLDER (folder));
+	if (modest_tny_folder_is_local_folder ((TnyFolder*)folder))
+		type = modest_tny_folder_get_local_folder_type ((TnyFolder*)folder);
+	else
+		type = tny_folder_get_folder_type (TNY_FOLDER (folder));
 	
 	if (type == TNY_FOLDER_TYPE_UNKNOWN) {
 		const gchar *folder_name;
-
 		folder_name = tny_folder_get_name (TNY_FOLDER (folder));
 		type =	modest_tny_folder_guess_folder_type_from_name (folder_name);
 	}

@@ -825,7 +825,7 @@ modest_platform_on_new_msg (void)
 	   could be called from a thread */
 	if (!notify_notification_show (NOTIFY_NOTIFICATION (not), NULL))
 		g_error ("Failed to send notification");
-
+		
 	g_object_unref (not);
 }
 

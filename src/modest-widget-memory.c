@@ -293,8 +293,8 @@ save_settings_header_view (ModestConf *conf, ModestHeaderView *header_view,
 		width = gtk_tree_view_column_get_width (col);
 		sort = 0;
 		if (sort_colid == col_id)
-			sort = (sort_type == GTK_SORT_ASCENDING) ? 1:-1;
-			
+			sort = (sort_type == GTK_SORT_ASCENDING) ? 1:0;
+		
 		g_string_append_printf (str, "%d:%d:%d ", col_id, width, sort);
 		cursor = g_list_next (cursor);
 	}
@@ -320,13 +320,12 @@ restore_settings_header_view (ModestConf *conf, ModestHeaderView *header_view,
 	TnyFolder *folder;
 	TnyFolderType type;
 	ModestHeaderViewStyle style;
-
+	
 	folder = modest_header_view_get_folder (header_view);
 	if (!folder || modest_header_view_is_empty (header_view))
 		return TRUE; /* no non-empty folder: no settings */
 	
-	type = modest_tny_folder_guess_folder_type (folder);
-	style = modest_header_view_get_style   (header_view);
+	type = modest_tny_folder_guess_folder_type (folder);	style = modest_header_view_get_style   (header_view);
 
 	key = _modest_widget_memory_get_keyname_with_double_type (name, type, style,
 								  MODEST_WIDGET_MEMORY_PARAM_COLUMN_WIDTH);
@@ -340,6 +339,7 @@ restore_settings_header_view (ModestConf *conf, ModestHeaderView *header_view,
 
 		cursor = data = modest_conf_get_string (conf, key, NULL);
 		while (cursor && sscanf (cursor, "%d:%d:%d ", &col, &width, &sort) == 3) {
+
 			cols      = g_list_append (cols, GINT_TO_POINTER(col));
 			colwidths = g_list_append (colwidths, GINT_TO_POINTER(width));
 			colsortables = g_list_append (colsortables, GINT_TO_POINTER(sort));

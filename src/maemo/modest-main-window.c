@@ -364,6 +364,7 @@ restore_settings (ModestMainWindow *self, gboolean do_folder_view_too)
 
 	modest_widget_memory_restore (conf, G_OBJECT(self),
 				      MODEST_CONF_MAIN_WINDOW_KEY);
+
 	modest_widget_memory_restore (conf, G_OBJECT(priv->header_view),
 				      MODEST_CONF_HEADER_VIEW_KEY);
 
@@ -393,8 +394,8 @@ save_state (ModestWindow *window)
 				   MODEST_CONF_MAIN_WINDOW_KEY);
 	modest_widget_memory_save (conf, G_OBJECT(priv->main_paned), 
 				   MODEST_CONF_MAIN_PANED_KEY);
-/* 	modest_widget_memory_save (conf, G_OBJECT(priv->header_view),  */
-/* 				   MODEST_CONF_HEADER_VIEW_KEY); */
+	//	modest_widget_memory_save (conf, G_OBJECT(priv->header_view), 
+ 	//			   MODEST_CONF_HEADER_VIEW_KEY);
 	modest_widget_memory_save (conf, G_OBJECT(priv->folder_view), 
 				   MODEST_CONF_FOLDER_VIEW_KEY);
 }
@@ -622,7 +623,7 @@ modest_main_window_on_show (GtkWidget *self, gpointer user_data)
 {
 	GtkWidget *folder_win = (GtkWidget *) user_data;
 	ModestMainWindowPrivate *priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
-
+	
 	priv->folder_view = MODEST_FOLDER_VIEW(modest_folder_view_new (NULL));
 	if (!priv->folder_view)
 		g_printerr ("modest: cannot instantiate folder view\n");
@@ -774,6 +775,8 @@ modest_main_window_new (void)
 	if (!priv->header_view)
 		g_printerr ("modest: cannot instantiate header view\n");
 	modest_header_view_set_style (priv->header_view, MODEST_HEADER_VIEW_STYLE_TWOLINES);
+	modest_widget_memory_restore (modest_runtime_get_conf (), G_OBJECT(priv->header_view),
+				      MODEST_CONF_HEADER_VIEW_KEY);
 
 	/* Empty view */ 
 	priv->empty_view = create_empty_view ();
