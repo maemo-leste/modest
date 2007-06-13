@@ -325,7 +325,7 @@ modest_mail_operation_queue_cancel_all (ModestMailOperationQueue *self)
 {
 	ModestMailOperationQueuePrivate *priv;
 	GSList* operations_to_cancel = NULL;
-	GSList* cur;
+	GSList* cur = NULL;
 
 	g_return_if_fail (MODEST_IS_MAIL_OPERATION_QUEUE (self));
 

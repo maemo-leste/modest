@@ -71,11 +71,20 @@ static gchar*           check_account (const gchar *account);
 
 static ModestErrorCode  start_ui      (const gchar *account,
 				       const gchar* mailto, const gchar *cc,
-				       const gchar *bcc, const gchar* subject, const gchar *body);
+				       const gchar *bcc, const gchar* subject, const gchar *body, GtkWidget **ui);
 
 static ModestErrorCode  send_mail     (const gchar* account,
 				       const gchar* mailto, const gchar *cc, const gchar *bcc,
 				       const gchar* subject, const gchar *body);
+
+static void 
+on_show (GtkWidget *widget, gpointer user_data)
+{
+	if (modest_conf_get_bool (modest_runtime_get_conf(),
+		MODEST_CONF_CONNECT_AT_STARTUP, NULL))
+	modest_platform_connect_and_wait(NULL);
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -134,12 +143,11 @@ main (int argc, char *argv[])
 			retval = MODEST_ERR_UI;
 			goto cleanup;
 		} else {
-			if (modest_conf_get_bool (modest_runtime_get_conf(),
-						  MODEST_CONF_CONNECT_AT_STARTUP, NULL))
-				modest_platform_connect_and_wait(NULL);
-			
+			GtkWidget *ui = NULL;
 			retval = start_ui (account_or_default,
-					   mailto, cc, bcc, subject, body);
+					   mailto, cc, bcc, subject, body, &ui);
+			if (ui)	
+				g_signal_connect (G_OBJECT (ui), "show", G_CALLBACK(on_show), NULL);
 		}
 	} else {
 		if (!account_or_default) {
@@ -168,7 +176,7 @@ cleanup:
 
 static ModestErrorCode 
 start_ui (const gchar *account_name, const gchar* mailto, const gchar *cc, const gchar *bcc,
-	  const gchar* subject, const gchar *body)
+	  const gchar* subject, const gchar *body, GtkWidget **ui)
 {
 	ModestWindow *win = NULL;
 
@@ -227,6 +235,7 @@ start_ui (const gchar *account_name, const gchar* mailto, const gchar *cc, const
 	} else {
 		ModestWindowMgr *mgr = modest_runtime_get_window_mgr ();
 		modest_window_mgr_register_window (mgr, win);
+		*ui = (GtkWidget*) win;
 		g_object_unref (win);
 	}
 	
