@@ -525,7 +525,7 @@ find_message_by_url (const char *uri, TnyAccount **ac_out)
 	TnyAccount            *account;
 	TnyFolder             *folder;
 	TnyMsg                *msg;
-
+	GError *err = NULL;
 	account = NULL;
 	msg = NULL;
 	folder = NULL;
@@ -556,22 +556,26 @@ find_message_by_url (const char *uri, TnyAccount **ac_out)
 
 	folder = tny_store_account_find_folder (TNY_STORE_ACCOUNT (account),
 						uri,
-						NULL);
+						&err);
 
 	if (folder == NULL) {
 		g_debug ("%s: tny_store_account_find_folder() failed.\n", __FUNCTION__);
 		goto out;
 	}
-	g_debug ("%s: Found folder.\n",  __FUNCTION__);
+	g_debug ("%s: Found folder. (%s)\n",  __FUNCTION__, uri);
 	
 
-	msg = tny_folder_find_msg (folder, uri, NULL);
+	msg = tny_folder_find_msg (folder, uri, &err);
 	
 	if (!msg) {
-		g_debug ("%s: tny_folder_find_msg() failed.\n", __FUNCTION__);
+		g_debug ("%s: tny_folder_find_msg() failed (%s).\n",
+			 __FUNCTION__, err->message);
 	}
 
 out:
+	if (err)
+		g_error_free (err);
+
 	if (account && !msg) {
 		g_object_unref (account);
 		*ac_out = NULL;

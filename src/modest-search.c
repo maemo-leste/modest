@@ -360,11 +360,12 @@ modest_search_folder (TnyFolder *folder, ModestSearch *search)
 		}
 		
 		if (!found && search->flags & MODEST_SEARCH_SENDER) {
-			const char *str = tny_header_get_from (cur);
+			char *str = g_strdup (tny_header_get_from (cur));
 
-			if ((found = search_string (search->from, str, search))) {
+			if ((found = search_string (search->from, (const gchar *) str, search))) {
 				retval = add_hit (retval, cur, folder);
 			}
+			g_free (str);
 		}
 		
 		if (!found && search->flags & MODEST_SEARCH_RECIPIENT) {
