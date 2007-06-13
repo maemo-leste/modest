@@ -1,5 +1,15 @@
 2007-06-13  Johannes Schmid <johannes.schmid@openismus.com>
 
+	* src/maemo/easysetup/modest-easysetup-wizard.c:
+	(check_for_supported_auth_methods), (on_before_next),
+	(create_account):
+	
+	More correct fix for projects.maemo.org bug NB# 58991
+	Do not longer accept AUTH_PASSWORD as secure method and choose
+	correct method when creating the account.
+
+2007-06-13  Johannes Schmid <johannes.schmid@openismus.com>
+
 	* src/maemo/easysetup/modest-easysetup-wizard.c: (create_account):
 	Fixed projects.maemo.org bug NB# 58991
 

@@ -160,6 +160,46 @@ static gint get_serverport_incoming(ModestPresetsServerType servertype_incoming,
 	return serverport_incoming;
 }
 
+static GList* check_for_supported_auth_methods(ModestEasysetupWizardDialog* account_wizard)
+{
+		const ModestTransportStoreProtocol protocol = 
+          easysetup_servertype_combo_box_get_active_servertype (
+                                                                EASYSETUP_SERVERTYPE_COMBO_BOX (account_wizard->combo_incoming_servertype));
+    const gchar* hostname = gtk_entry_get_text(GTK_ENTRY(account_wizard->entry_incomingserver));
+	  const ModestConnectionProtocol protocol_security_incoming = 
+					modest_serversecurity_combo_box_get_active_serversecurity (
+																																		 MODEST_SERVERSECURITY_COMBO_BOX (
+																																																			account_wizard->combo_incoming_security));
+     int port_num = get_serverport_incoming(protocol, protocol_security_incoming); 
+     GList *list_auth_methods = 
+          modest_maemo_utils_get_supported_secure_authentication_methods (
+                                                                      protocol, 
+                                                                      hostname, port_num, GTK_WINDOW (account_wizard));	
+     if (list_auth_methods) {
+          /* TODO: Select the correct method */
+			  GList* list = NULL;
+			  GList* method;
+			  for (method = list_auth_methods; method != NULL; method = g_list_next(method))
+			 {
+				  ModestAuthProtocol auth = (ModestAuthProtocol) (GPOINTER_TO_INT(method->data));
+				  if (modest_protocol_info_auth_is_secure(auth))
+				 {
+					  g_list_append(list, GINT_TO_POINTER(auth));
+				 }
+			 }
+			 g_list_free(list_auth_methods);
+			 if (list)
+				 return list;
+		 }
+		 /* no secure methods supported */
+     GtkWidget* error_dialog = gtk_message_dialog_new(GTK_WINDOW(account_wizard),
+                                                     GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR,
+                                                     GTK_BUTTONS_OK, _("Server does not support secure authentication!"));
+     gtk_dialog_run(GTK_DIALOG(error_dialog));
+     gtk_widget_destroy(error_dialog);
+     return NULL;
+}
+
 static void
 invoke_enable_buttons_vfunc (ModestEasysetupWizardDialog *wizard_dialog)
 {
@@ -1214,42 +1254,23 @@ on_before_next (ModestWizardDialog *dialog, GtkWidget *current_page, GtkWidget *
 	}
 	else if (next_page == account_wizard->page_custom_outgoing) {
 		set_default_custom_servernames (account_wizard);
-    /* Check if the server support secure authentication */
+    /* Check if the server supports secure authentication */
 		const ModestConnectionProtocol security_incoming = 
 			modest_serversecurity_combo_box_get_active_serversecurity (
 																																 MODEST_SERVERSECURITY_COMBO_BOX (
 																																																	account_wizard->combo_incoming_security));
-    if (gtk_toggle_button_get_active (
+		if (gtk_toggle_button_get_active (
 			GTK_TOGGLE_BUTTON (account_wizard->checkbox_incoming_auth))
 				&& !modest_protocol_info_is_secure(security_incoming))
 		{
-				const ModestTransportStoreProtocol protocol = 
-          easysetup_servertype_combo_box_get_active_servertype (
-                                                                EASYSETUP_SERVERTYPE_COMBO_BOX (account_wizard->combo_incoming_servertype));
-        const gchar* hostname = gtk_entry_get_text(GTK_ENTRY(account_wizard->entry_incomingserver));
-				const ModestConnectionProtocol protocol_security_incoming = 
-					modest_serversecurity_combo_box_get_active_serversecurity (
-																																		 MODEST_SERVERSECURITY_COMBO_BOX (
-																																																			account_wizard->combo_incoming_security));
-        int port_num = get_serverport_incoming(protocol, protocol_security_incoming); 
-        GList *list_auth_methods = 
-          modest_maemo_utils_get_supported_secure_authentication_methods (
-                                                                      protocol, 
-                                                                      hostname, port_num, GTK_WINDOW (account_wizard));	
-        if (list_auth_methods) {
-          /* TODO: Select the correct method */
-          g_list_free (list_auth_methods);
-        }
-        else
-        {
-          GtkWidget* error_dialog = gtk_message_dialog_new(GTK_WINDOW(dialog),
-                                                       GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR,
-                                                       GTK_BUTTONS_OK, _("Server does not support secure authentication!"));
-          gtk_dialog_run(GTK_DIALOG(error_dialog));
-          gtk_widget_destroy(error_dialog);
-          return FALSE;
-        }
-		 }
+				GList* methods = check_for_supported_auth_methods(account_wizard);
+				if (!methods)
+				{
+					g_list_free(methods);
+					return FALSE;
+				}
+				g_list_free(methods);
+		}
 	}
 	
 	/* If this is the last page, and this is a click on Finish, 
@@ -1399,13 +1420,14 @@ create_account (ModestEasysetupWizardDialog *self, gboolean enabled)
 
 	/* Increment the non-user visible name if necessary, 
 	 * based on the display name: */
+	gchar *account_name_start = g_strdup_printf ("%sID", display_name);
 	gchar* account_name = modest_account_mgr_get_unused_account_name (self->account_manager,
-									  display_name, FALSE /* not a server account */);
+									  account_name_start, FALSE /* not a server account */);
+	g_free (account_name_start);
 		
 	/* username and password (for both incoming and outgoing): */
 	const gchar* username = gtk_entry_get_text (GTK_ENTRY (self->entry_user_username));
 	const gchar* password = gtk_entry_get_text (GTK_ENTRY (self->entry_user_password));
-	
 	/* Incoming server: */
 	/* Note: We need something as default for the ModestTransportStoreProtocol* values, 
 	 * or modest_account_mgr_add_server_account will fail. */
@@ -1414,7 +1436,7 @@ create_account (ModestEasysetupWizardDialog *self, gboolean enabled)
 	ModestTransportStoreProtocol protocol_incoming = MODEST_PROTOCOL_STORE_POP;
 	ModestConnectionProtocol protocol_security_incoming = MODEST_PROTOCOL_CONNECTION_NORMAL;
 	ModestAuthProtocol protocol_authentication_incoming = MODEST_PROTOCOL_AUTH_NONE;
-	
+
 	/* Get details from the specified presets: */
 	gchar* provider_id = easysetup_provider_combo_box_get_active_provider_id (
 		EASYSETUP_PROVIDER_COMBO_BOX (self->combo_account_serviceprovider));
@@ -1459,11 +1481,19 @@ create_account (ModestEasysetupWizardDialog *self, gboolean enabled)
 		/* The UI spec says:
 		 * If secure authentication is unchecked, allow sending username and password also as plain text.
 		 * If secure authentication is checked, require one of the secure methods during connection: SSL, TLS, CRAM-MD5 etc. 
-	  	 * TODO: Do we need to discover which of these (SSL, TLS, CRAM-MD5) is supported?
 		 */
-		protocol_authentication_incoming = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->checkbox_incoming_auth)) 
-			? MODEST_PROTOCOL_AUTH_CRAMMD5
-			: MODEST_PROTOCOL_AUTH_PASSWORD;
+		
+		if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->checkbox_incoming_auth)) &&
+				!modest_protocol_info_is_secure(protocol_security_incoming))
+		{
+				GList* methods = check_for_supported_auth_methods(self);
+				if (!methods)
+					return FALSE;
+				else
+				  protocol_authentication_incoming = (ModestAuthProtocol) (GPOINTER_TO_INT(methods->data));
+		}
+		else
+			protocol_authentication_incoming = MODEST_PROTOCOL_AUTH_PASSWORD;
 	}
 	
 	/* First we add the 2 server accounts, and then we add the account that uses them.
@@ -1566,7 +1596,7 @@ create_account (ModestEasysetupWizardDialog *self, gboolean enabled)
 	
 	
 	/* Create the account, which will contain the two "server accounts": */
- 	created = modest_account_mgr_add_account (self->account_manager, account_name, 
+ 	created = modest_account_mgr_add_account (self->account_manager, display_name, 
 						  store_name, /* The name of our POP/IMAP server account. */
 						  transport_name, /* The name of our SMTP server account. */
 						  enabled);
