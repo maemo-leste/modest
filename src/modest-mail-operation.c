@@ -2007,11 +2007,11 @@ on_refresh_folder (TnyFolder   *folder,
 
 	priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
 
+ out:
 	/* Call user defined callback, if it exists */
 	if (helper->user_callback)
 		helper->user_callback (priv->source, folder, helper->user_data);
 
- out:
 	/* Free */
 	g_object_unref (helper->mail_op);
 	g_slice_free   (RefreshAsyncHelper, helper);

@@ -1228,6 +1228,36 @@ set_active_account_from_tny_account (TnyAccount *account,
 	g_object_unref (modest_server_account);
 }
 
+
+static void
+folder_refreshed_cb (const GObject *obj, 
+		     TnyFolder *folder, 
+		     gpointer user_data)
+{
+	ModestMainWindow *win = NULL;
+	GtkWidget *header_view;
+
+	g_return_if_fail (TNY_IS_FOLDER (folder));
+
+	win = MODEST_MAIN_WINDOW (user_data);
+	header_view = 
+		modest_main_window_get_child_widget(win, MODEST_WIDGET_TYPE_HEADER_VIEW);
+
+	/* Check if folder is empty and set headers view contents style */
+	if (tny_folder_get_all_count (folder) == 0) {
+		modest_main_window_set_contents_style (win,
+						       MODEST_MAIN_WINDOW_CONTENTS_STYLE_EMPTY);
+	} else {
+		modest_main_window_set_contents_style (win,
+						       MODEST_MAIN_WINDOW_CONTENTS_STYLE_HEADERS);
+
+		/* Restore configuration */
+		modest_widget_memory_restore (modest_runtime_get_conf (), 
+					      G_OBJECT(header_view),
+					      MODEST_CONF_HEADER_VIEW_KEY);
+	}
+}
+
 void 
 modest_ui_actions_on_folder_selection_changed (ModestFolderView *folder_view,
 					       TnyFolderStore *folder_store, 
@@ -1263,24 +1293,15 @@ modest_ui_actions_on_folder_selection_changed (ModestFolderView *folder_view,
 						
 			/* Set folder on header view */
 			modest_header_view_set_folder (MODEST_HEADER_VIEW(header_view),
-						       TNY_FOLDER (folder_store));				
-
-			/* Resore configuration */
-			modest_widget_memory_restore (conf, G_OBJECT(header_view),
-					      MODEST_CONF_HEADER_VIEW_KEY);
-
-			/* Set main view style */
-/* 			modest_main_window_set_contents_style (main_window, */
-/* 							       MODEST_MAIN_WINDOW_CONTENTS_STYLE_HEADERS); */
-/* 			modest_widget_memory_restore (conf, G_OBJECT(header_view), */
-/* 						      MODEST_CONF_HEADER_VIEW_KEY); */
-
+						       TNY_FOLDER (folder_store),
+						       folder_refreshed_cb,
+						       main_window);				
 		} else {
 			/* Update the active account */
 			modest_window_set_active_account (MODEST_WINDOW (main_window), NULL);
 			/* Do not show folder */
 			modest_widget_memory_save (conf, G_OBJECT (header_view), MODEST_CONF_HEADER_VIEW_KEY);
-			modest_header_view_set_folder (MODEST_HEADER_VIEW(header_view), NULL);
+			modest_header_view_clear (MODEST_HEADER_VIEW(header_view));
 		}
 	}
 
@@ -1814,7 +1835,7 @@ modest_ui_actions_on_rename_folder (GtkAction *action,
 			modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
 							 mail_op);
 
-			modest_header_view_set_folder (MODEST_HEADER_VIEW (header_view), NULL);
+			modest_header_view_clear (MODEST_HEADER_VIEW (header_view));
 
 			modest_mail_operation_rename_folder (mail_op,
 							     TNY_FOLDER (folder),
@@ -2689,7 +2710,7 @@ modest_ui_actions_on_main_window_move_to (GtkAction *action,
 		src_folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW (folder_view));
 
 		/* Clean folder on header view before moving it */
-		modest_header_view_set_folder (MODEST_HEADER_VIEW (header_view), NULL); 
+		modest_header_view_clear (MODEST_HEADER_VIEW (header_view)); 
 
 		if (TNY_IS_FOLDER (src_folder)) {
 			mail_op = 

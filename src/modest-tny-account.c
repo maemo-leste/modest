@@ -324,7 +324,7 @@ modest_tny_account_new_from_server_account (ModestAccountMgr *account_mgr,
 	/* FIXME: for debugging. 
 	 * Let's keep this because it is very useful for debugging. */
 	url = tny_account_get_url_string (TNY_ACCOUNT(tny_account));
- 	printf ("DEBUG %s:\n  account-url: %s\n", __FUNCTION__, url);
+ /* 	printf ("DEBUG %s:\n  account-url: %s\n", __FUNCTION__, url); */
 	g_free (url);
 	/***********************/
 	
@@ -431,7 +431,7 @@ on_modest_file_system_info(HildonFileSystemInfoHandle *handle,
 	TnyAccount *account = TNY_ACCOUNT (data);
 	
 	if (error) {
-		printf ("  DEBUG: %s: error=%s\n", __FUNCTION__, error->message);
+/* 		printf ("  DEBUG: %s: error=%s\n", __FUNCTION__, error->message); */
 	}
 	
 	const gchar *display_name = NULL;
@@ -487,7 +487,7 @@ modest_tny_account_new_for_local_folders (ModestAccountMgr *account_mgr, TnySess
 	url_string = camel_url_to_string (url, 0);
 	
 	tny_account_set_url_string (TNY_ACCOUNT(tny_account), url_string);
-	printf("DEBUG: %s:\n  url=%s\n", __FUNCTION__, url_string);
+/* 	printf("DEBUG: %s:\n  url=%s\n", __FUNCTION__, url_string); */
 
 	/* TODO: Use a more generic way of identifying memory card paths, 
 	 * and of marking accounts as memory card accounts, maybe
@@ -582,7 +582,7 @@ modest_tny_account_new_for_per_account_local_outbox_folder (ModestAccountMgr *ac
 	camel_url_free (url);
 	
 	tny_account_set_url_string (TNY_ACCOUNT(tny_account), url_string);
-	printf("DEBUG: %s:\n  url=%s\n", __FUNCTION__, url_string);
+/* 	printf("DEBUG: %s:\n  url=%s\n", __FUNCTION__, url_string); */
 	g_free (url_string);
 
 	/* This text should never been seen,

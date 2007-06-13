@@ -76,8 +76,6 @@ static void          folder_monitor_update  (TnyFolderObserver *self,
 
 static void          tny_folder_observer_init (TnyFolderObserverIface *klass);
 
-static void          _on_new_folder_assigned (const GObject *obj, TnyFolder *folder, gpointer user_data);
-
 
 typedef struct _ModestHeaderViewPrivate ModestHeaderViewPrivate;
 struct _ModestHeaderViewPrivate {
@@ -520,7 +518,7 @@ modest_header_view_new (TnyFolder *folder, ModestHeaderViewStyle style)
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
 	
 	modest_header_view_set_style   (self, style);
-	modest_header_view_set_folder (self, NULL);
+	modest_header_view_set_folder (self, NULL, NULL, NULL);
 
 	gtk_tree_view_columns_autosize (GTK_TREE_VIEW(obj));
 	gtk_tree_view_set_fixed_height_mode (GTK_TREE_VIEW(obj),TRUE);
@@ -895,7 +893,10 @@ modest_header_view_get_sort_type (ModestHeaderView *self,
 }
 
 void
-modest_header_view_set_folder (ModestHeaderView *self, TnyFolder *folder)
+modest_header_view_set_folder (ModestHeaderView *self, 
+			       TnyFolder *folder,
+			       RefreshAsyncUserCallback callback,
+			       gpointer user_data)
 {
 	ModestHeaderViewPrivate *priv;
 	ModestMailOperation *mail_op = NULL;
@@ -934,8 +935,8 @@ modest_header_view_set_folder (ModestHeaderView *self, TnyFolder *folder)
 
 		/* Refresh the folder asynchronously */
 		modest_mail_operation_refresh_folder (mail_op, folder,
-						      _on_new_folder_assigned,
-						      NULL);
+						      callback,
+						      user_data);
 
 		/* Free */
 		g_object_unref (mail_op);
@@ -1309,29 +1310,8 @@ folder_monitor_update (TnyFolderObserver *self,
 	}	
 }
 
-
-static void
-_on_new_folder_assigned (const GObject *obj, TnyFolder *folder, gpointer user_data)
+void
+modest_header_view_clear (ModestHeaderView *self)
 {
-	ModestMainWindow *win = NULL;
-	gboolean folder_empty = FALSE;
-
-	g_return_if_fail (TNY_IS_FOLDER (folder));
-
-	if (!MODEST_IS_MAIN_WINDOW (obj)) return;
-	win = MODEST_MAIN_WINDOW (obj);
-	
-	/* Check if folder is empty and set headers view contents style */
-	folder_empty = tny_folder_get_all_count (folder) == 0;
-	if (folder_empty)  {
-		modest_main_window_set_contents_style (win,
-						       MODEST_MAIN_WINDOW_CONTENTS_STYLE_EMPTY);
-	}
-	else {
-		modest_main_window_set_contents_style (win,
-						       MODEST_MAIN_WINDOW_CONTENTS_STYLE_HEADERS);
-/* 		modest_widget_memory_restore (conf, G_OBJECT(header_view), */
-/* 					      MODEST_CONF_HEADER_VIEW_KEY); */
-	}
-	
+	modest_header_view_set_folder (self, NULL, NULL, NULL);
 }

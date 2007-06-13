@@ -36,6 +36,7 @@
 #include <tny-msg.h>
 #include <tny-header.h>
 #include <tny-gtk-header-list-model.h>
+#include "modest-mail-operation.h"
 
 G_BEGIN_DECLS
 
@@ -153,7 +154,9 @@ GtkWidget*   modest_header_view_new        (TnyFolder *folder,
  * set the folder for this ModestHeaderView
  */
 void         modest_header_view_set_folder (ModestHeaderView *self,
-					    TnyFolder *folder);
+					    TnyFolder *folder,
+					    RefreshAsyncUserCallback callback,
+					    gpointer user_data);
 
 /**
  * modest_header_view_get_folder:
@@ -315,6 +318,15 @@ modest_header_view_sort_by_column_id (ModestHeaderView *self,
 				      guint sort_colid,
 				      GtkSortType sort_type);
 
+/**
+ * modest_header_view_clear:
+ * @self: a #ModestHeaderView
+ *
+ * Clear the contents of a header view. It internally calls the
+ * set_folder function with last three arguments as NULL
+ **/
+void
+modest_header_view_clear (ModestHeaderView *self);
 
 G_END_DECLS
 

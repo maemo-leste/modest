@@ -393,8 +393,8 @@ save_state (ModestWindow *window)
 				   MODEST_CONF_MAIN_WINDOW_KEY);
 	modest_widget_memory_save (conf, G_OBJECT(priv->main_paned), 
 				   MODEST_CONF_MAIN_PANED_KEY);
-	modest_widget_memory_save (conf, G_OBJECT(priv->header_view), 
-				   MODEST_CONF_HEADER_VIEW_KEY);
+/* 	modest_widget_memory_save (conf, G_OBJECT(priv->header_view),  */
+/* 				   MODEST_CONF_HEADER_VIEW_KEY); */
 	modest_widget_memory_save (conf, G_OBJECT(priv->folder_view), 
 				   MODEST_CONF_FOLDER_VIEW_KEY);
 }

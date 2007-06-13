@@ -85,6 +85,17 @@ on_show (GtkWidget *widget, gpointer user_data)
 	modest_platform_connect_and_wait(NULL);
 }
 
+static void
+log_default_handler (const gchar *log_domain,
+		     GLogLevelFlags log_level,
+		     const gchar *message,
+		     gpointer unused_data)
+{
+	if (log_level == G_LOG_LEVEL_ERROR || 
+	    log_level == G_LOG_LEVEL_CRITICAL)
+		g_print ("EEEEE ------ %s\n", message);
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -128,6 +139,8 @@ main (int argc, char *argv[])
 	}
 	g_option_context_free (context);
 	
+	g_log_set_default_handler (log_default_handler, NULL);
+
 	if (!modest_init_init_core ()) {
 		g_printerr ("modest: cannot init modest core\n");
 		return MODEST_ERR_INIT;
