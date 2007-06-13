@@ -1220,8 +1220,8 @@ _selected_msg_sent_in_progress (ModestWindow *win)
 	/* Free */
 	g_free(id);
 	g_object_unref (header);
-	g_free(header_list);
-	g_free(iter);
+	g_object_unref(header_list);
+	g_object_unref(iter);
 
 	return result;
 }
