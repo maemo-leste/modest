@@ -79,8 +79,21 @@ add_hit (GList *list, TnyHeader *header, TnyFolder *folder)
 	hit = g_slice_new0 (ModestSearchHit);
 
 	furl = tny_folder_get_url_string (folder);
+	if (!furl) {
+		g_warning ("%s: tny_folder_get_url_string(): returned NULL for folder. Folder name=%s\n", __FUNCTION__, tny_folder_get_name (folder));
+	}
+	
+	/* Make sure that we use the short UID instead of the long UID,
+	 * and/or find out what UID form is used when finding, in camel_data_cache_get().
+	 * so we can find what we get. Philip is working on this.
+	 */
 	uid = tny_header_get_uid (header);
+	if (!furl) {
+		g_warning ("%s: tny_header_get_uid(): returned NULL for message with subject=%s\n", __FUNCTION__, tny_header_get_subject (header));
+	}
+	
 	msg_url = g_strdup_printf ("%s/%s", furl, uid);
+	
 	subject = tny_header_get_subject (header);
 	sender = tny_header_get_from (header);
 
@@ -89,12 +102,12 @@ add_hit (GList *list, TnyHeader *header, TnyFolder *folder)
 	hit->msgid = msg_url;
 	hit->subject = g_strdup_or_null (subject);
 	hit->sender = g_strdup_or_null (sender);
-	hit->folder = furl;
+	hit->folder = furl; /* We just provide our new instance instead of copying it and freeing it. */
 	hit->msize = tny_header_get_message_size (header);
 	hit->has_attachment = flags & TNY_HEADER_FLAG_ATTACHMENTS;
 	hit->is_unread = ! (flags & TNY_HEADER_FLAG_SEEN);
 	hit->timestamp = tny_header_get_date_received (header);
-
+	
 	return g_list_prepend (list, hit);
 }
 
@@ -378,7 +391,7 @@ modest_search_folder (TnyFolder *folder, ModestSearch *search)
 			msg = tny_folder_get_msg (folder, cur, &err);
 
 			if (err != NULL || msg == NULL) {
-				g_warning ("Could not get message\n");
+				g_warning ("%s: Could not get message.\n", __FUNCTION__);
 				g_error_free (err);
 
 				if (msg) {
@@ -489,8 +502,8 @@ modest_search_all_accounts (ModestSearch *search)
 
 		account = TNY_ACCOUNT (tny_iterator_get_current (iter));
 
-		g_debug ("Searching account %s",
-			 tny_account_get_name (account));
+		g_debug ("DEBUG: %s: Searching account %s",
+			 __FUNCTION__, tny_account_get_name (account));
 		res = modest_search_account (account, search);
 		
 		if (res != NULL) {

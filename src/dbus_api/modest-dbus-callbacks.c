@@ -521,7 +521,6 @@ static gint on_compose_mail(GArray * arguments, gpointer data, osso_rpc_t * retv
 static TnyMsg *
 find_message_by_url (const char *uri, TnyAccount **ac_out)
 {
-
 	ModestTnyAccountStore *astore;
 	TnyAccount            *account;
 	TnyFolder             *folder;
@@ -536,23 +535,22 @@ find_message_by_url (const char *uri, TnyAccount **ac_out)
 	if (astore == NULL) {
 		return NULL;
 	}
-	
-	g_debug ("Got AccountStore, lets go");
 
 	account = tny_account_store_find_account (TNY_ACCOUNT_STORE (astore),
 						  uri);
 	
 	if (account == NULL) {
+		g_debug ("%s: tny_account_store_find_account() failed.\n", __FUNCTION__);
 		return NULL;
 	}
 
-	g_debug ("Found account");
+	g_debug ("%s: Found account.\n", __FUNCTION__);
 
 	if ( ! TNY_IS_STORE_ACCOUNT (account)) {
 		goto out;
 	}
 
-	g_debug ("Account is store account");
+	g_debug ("%s: Account is store account.\n", __FUNCTION__);
 
 	*ac_out = account;
 
@@ -561,12 +559,17 @@ find_message_by_url (const char *uri, TnyAccount **ac_out)
 						NULL);
 
 	if (folder == NULL) {
+		g_debug ("%s: tny_store_account_find_folder() failed.\n", __FUNCTION__);
 		goto out;
 	}
-	g_debug ("Found folder");
+	g_debug ("%s: Found folder.\n",  __FUNCTION__);
 	
 
 	msg = tny_folder_find_msg (folder, uri, NULL);
+	
+	if (!msg) {
+		g_debug ("%s: tny_folder_find_msg() failed.\n", __FUNCTION__);
+	}
 
 out:
 	if (account && !msg) {
@@ -594,14 +597,15 @@ on_idle_open_message (gpointer user_data)
        
 	uri = (char *) user_data;
 
-	g_debug ("Trying to find msg by url: %s", uri);	
+	g_debug ("%s: Trying to find msg by url: %s", __FUNCTION__, uri);	
 	msg = find_message_by_url (uri, &account);
 	g_free (uri);
 
 	if (msg == NULL) {
+		g_debug ("  %s: message not found.", __FUNCTION__);
 		return FALSE;
 	}
-	g_debug ("Found message");
+	g_debug ("  %s: Found message.", __FUNCTION__);
 
 	header = tny_msg_get_header (msg);
 	account_name = tny_account_get_name (account);
@@ -801,8 +805,8 @@ gint modest_dbus_req_handler(const gchar * interface, const gchar * method,
                       osso_rpc_t * retval)
 {
 	
-	g_debug ("modest_dbus_req_handler()\n");
-	g_debug ("debug: method received: %s\n", method);
+	g_debug ("debug: %s\n", __FUNCTION__);
+	g_debug ("debug: %s: method received: %s\n", __FUNCTION__, method);
 	
 	if (g_ascii_strcasecmp(method, MODEST_DBUS_METHOD_SEND_MAIL) == 0) {
 		return on_send_mail (arguments, data, retval);
@@ -841,7 +845,7 @@ gint modest_dbus_req_handler(const gchar * interface, const gchar * method,
 	DBUS_STRUCT_END_CHAR_AS_STRING
 
 static DBusMessage *
-search_result_to_messsage (DBusMessage *reply,
+search_result_to_message (DBusMessage *reply,
 			   GList       *hits)
 {
 	DBusMessageIter iter;
@@ -877,7 +881,7 @@ search_result_to_messsage (DBusMessage *reply,
 		is_unread      = hit->is_unread;
 		ts             = hit->timestamp;
 
-		g_debug ("Adding hit: %s", msg_url);	
+		g_debug ("DEBUG: %s: Adding hit: %s", __FUNCTION__, msg_url);	
 		
 		dbus_message_iter_open_container (&array_iter,
 						  DBUS_TYPE_STRUCT,
@@ -1030,7 +1034,7 @@ modest_dbus_req_filter (DBusConnection *con,
 
 		reply = dbus_message_new_method_return (message);
 
-		search_result_to_messsage (reply, hits);
+		search_result_to_message (reply, hits);
 
 		if (reply == NULL) {
 			g_warning ("Could not create reply");

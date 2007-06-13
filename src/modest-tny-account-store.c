@@ -1099,7 +1099,7 @@ modest_tny_account_store_get_tny_account_by (ModestTnyAccountStore *self,
 	TnyAccount *account = NULL;
 	ModestTnyAccountStorePrivate *priv;	
 	GSList *cursor;
-	const gchar *val;
+	const gchar *val = NULL;
 
 	g_return_val_if_fail (self, NULL);
 	g_return_val_if_fail (str, NULL);
@@ -1119,6 +1119,7 @@ modest_tny_account_store_get_tny_account_by (ModestTnyAccountStore *self,
 			val = tny_account_get_url_string (TNY_ACCOUNT(cursor->data));
 			break;
 		}
+		
 		if (type == MODEST_TNY_ACCOUNT_STORE_QUERY_URL && 
 		    tny_account_matches_url_string (TNY_ACCOUNT(cursor->data), val)) {
 			account = TNY_ACCOUNT (cursor->data);
@@ -1144,6 +1145,7 @@ modest_tny_account_store_get_tny_account_by (ModestTnyAccountStore *self,
 			val = tny_account_get_url_string (TNY_ACCOUNT(cursor->data));
 			break;
 		}
+		
 		if (type == MODEST_TNY_ACCOUNT_STORE_QUERY_URL && 
 		    tny_account_matches_url_string (TNY_ACCOUNT(cursor->data), val)) {
 			account = TNY_ACCOUNT (cursor->data);

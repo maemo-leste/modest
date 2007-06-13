@@ -18,10 +18,16 @@ main (int argc, char *argv[])
 	    return -1;
 	}
 	
+	/* For instance, 
+	 * "pop://murray.cumming%40gmail.com@pop.gmail.com:995/;use_ssl=wrapped/inbox/GmailId112e166949157685"
+	 */
 	if (argc == 2) {
 		url = argv[1];
 	} else {
-		url = "local://???FIXME???";
+		/* TODO: Add some test DBus method to get a valid URL for a message, 
+		 * just so we can test this method. */
+		g_printerr ("No email URL argument supplied on the command line.\n");
+		return -1;
 	}
 
 	g_print ("Trying to open msg: %s\n", url);

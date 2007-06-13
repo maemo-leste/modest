@@ -1,3 +1,27 @@
+2007-06-13  Murray Cumming  <murrayc@murrayc.com>
+
+	* libmodest-dbus-client/libmodest-dbus-client.c:
+	(libmodest_dbus_client_send_mail), (libmodest_dbus_client_mail_to),
+	(libmodest_dbus_client_compose_mail),
+	(libmodest_dbus_client_open_message),
+	(libmodest_dbus_client_send_and_receive),
+	(libmodest_dbus_client_open_default_inbox):  Improved debug messages.
+	
+	* src/dbus_api/modest-dbus-callbacks.c: (find_message_by_url),
+	(on_idle_open_message), (modest_dbus_req_handler),
+	(search_result_to_message), (modest_dbus_req_filter):
+	* src/modest-search.c: (add_hit), (modest_search_folder),
+	(modest_search_all_accounts): Improved debug messages.
+	
+	* tests/dbus_api/test_open_message.c: (main): Improved comments.
+	
+	* src/modest-tny-account-store.c:
+	(modest_tny_account_store_get_tny_account_by): Initialize a variable to 
+	fix the build.
+
+2007-06-13  Murray Cumming  <murrayc@murrayc.com>
+
+
 2007-06-12  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/modest-tny-account-store.c: (get_server_accounts):
