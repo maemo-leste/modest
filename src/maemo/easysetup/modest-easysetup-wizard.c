@@ -1594,7 +1594,7 @@ create_account (ModestEasysetupWizardDialog *self, gboolean enabled)
 	
 	
 	/* Create the account, which will contain the two "server accounts": */
- 	created = modest_account_mgr_add_account (self->account_manager, display_name, 
+ 	created = modest_account_mgr_add_account (self->account_manager, account_name, 
 						  store_name, /* The name of our POP/IMAP server account. */
 						  transport_name, /* The name of our SMTP server account. */
 						  enabled);
