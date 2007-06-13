@@ -1175,8 +1175,6 @@ _selected_msg_sent_in_progress (ModestWindow *win)
 	gboolean result = FALSE;
 	gchar *id = NULL;
 	
-	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (win), FALSE);
-	
 	/* Get transport account */
 	acc_store = modest_runtime_get_account_store();
 	account_name = modest_window_get_active_account (win);
