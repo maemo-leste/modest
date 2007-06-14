@@ -32,6 +32,7 @@
 
 #include <tny-device.h>
 #include "widgets/modest-window.h"
+#include "widgets/modest-folder-view.h"
 
 G_BEGIN_DECLS
 
@@ -240,6 +241,9 @@ void modest_platform_show_search_messages (GtkWindow *parent_window);
  * shows the addressbook
  **/
 void modest_platform_show_addressbook (GtkWindow *parent_window);
+
+
+GtkWidget* modest_platform_create_folder_view (TnyFolderStoreQuery *query);
 
 G_END_DECLS
 

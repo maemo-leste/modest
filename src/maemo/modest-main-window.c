@@ -625,18 +625,12 @@ modest_main_window_on_show (GtkWidget *self, gpointer user_data)
 	GtkWidget *folder_win = (GtkWidget *) user_data;
 	ModestMainWindowPrivate *priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
 	
-	priv->folder_view = MODEST_FOLDER_VIEW(modest_folder_view_new (NULL));
-	if (!priv->folder_view)
-		g_printerr ("modest: cannot instantiate folder view\n");
+	priv->folder_view = MODEST_FOLDER_VIEW (modest_platform_create_folder_view (NULL));
 
 	gtk_widget_show (GTK_WIDGET (priv->folder_view));
 
 	/* Connect signals */
 	connect_signals ((ModestMainWindow*)self);
-
-	modest_folder_view_set_style (priv->folder_view,
-		      MODEST_FOLDER_VIEW_STYLE_SHOW_ONE);
-
 
 	/* Set account store */
 	tny_account_store_view_set_account_store (TNY_ACCOUNT_STORE_VIEW (priv->folder_view),
@@ -649,7 +643,7 @@ modest_main_window_on_show (GtkWidget *self, gpointer user_data)
 	
 	/* Load previous osso state, for instance if we are being restored from 
 	 * hibernation:  */
-	modest_osso_load_state();
+	modest_osso_load_state ();
 
 	/* Restore window & widget settings */
 	
@@ -665,7 +659,6 @@ modest_main_window_on_show (GtkWidget *self, gpointer user_data)
 		gtk_widget_show_all(GTK_WIDGET(self));
 		modest_ui_actions_on_accounts (NULL, MODEST_WINDOW(self));
 	}
-
 }
 
 ModestWindow*
@@ -771,8 +764,8 @@ modest_main_window_new (void)
 	modest_maemo_utils_get_device_name ();
 
 	/* header view */
-	priv->header_view  =
-		MODEST_HEADER_VIEW(modest_header_view_new (NULL, MODEST_HEADER_VIEW_STYLE_DETAILS));
+	priv->header_view =
+		MODEST_HEADER_VIEW (modest_header_view_new (NULL, MODEST_HEADER_VIEW_STYLE_DETAILS));
 	if (!priv->header_view)
 		g_printerr ("modest: cannot instantiate header view\n");
 	modest_header_view_set_style (priv->header_view, MODEST_HEADER_VIEW_STYLE_TWOLINES);

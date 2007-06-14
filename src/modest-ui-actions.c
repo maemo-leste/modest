@@ -2577,7 +2577,7 @@ create_move_to_dialog (ModestWindow *win,
 					 GTK_POLICY_AUTOMATIC);
 
 	/* Create folder view */
-	*tree_view = modest_folder_view_new (NULL);
+	*tree_view = modest_platform_create_folder_view (NULL);
 
 	/* It could happen that we're trying to move a message from a
 	   window (msg window for example) after the main window was
@@ -2597,6 +2597,9 @@ create_move_to_dialog (ModestWindow *win,
 			    scroll, FALSE, FALSE, 0);
 
 	gtk_widget_show_all (GTK_WIDGET(GTK_DIALOG(dialog)->vbox));
+
+	/* Select INBOX or local account */
+	modest_folder_view_select_first_inbox_or_local (MODEST_FOLDER_VIEW (*tree_view));
 
 	return dialog;
 }

@@ -229,3 +229,15 @@ modest_platform_show_search_messages (GtkWindow *parent_window)
 {
 	modest_runtime_not_implemented (NULL);
 }
+
+GtkWidget *
+modest_platform_create_folder_view (TnyFolderStoreQuery *query)
+{
+	GtkWidget *widget = modest_folder_view_new (query);
+
+	/* Show all accounts by default */
+	modest_folder_view_set_style (MODEST_FOLDER_VIEW (widget),
+				      MODEST_FOLDER_VIEW_STYLE_SHOW_ALL);
+
+	return widget;
+}

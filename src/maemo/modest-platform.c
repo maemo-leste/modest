@@ -34,7 +34,7 @@
 #include <modest-main-window.h>
 #include <modest-header-view.h>
 #include "maemo/modest-maemo-global-settings-dialog.h"
-
+#include "modest-widget-memory.h"
 #include <modest-hildon-includes.h>
 #include <osso-helplib.h>
 #include <dbus_api/modest-dbus-callbacks.h>
@@ -816,7 +816,7 @@ modest_platform_on_new_msg (void)
 				       "system.note.dialog");
 
 	/* Play sound SR-SND-18. TODO: play the right file */
-/* 	hildon_notification_set_sound (not, "/usr/share/sounds/ui-battery_low.wav"); */
+/* 	hildon_notification_set_sound (not, "/usr/share/sounds/ui-new_email.wav"); */
 
 	/* Set the led pattern */
 	notify_notification_set_hint_int32 (NOTIFY_NOTIFICATION (not), "led-pattern", 3);
@@ -878,4 +878,21 @@ modest_platform_show_addressbook (GtkWindow *parent_window)
 	if (result != OSSO_OK) {
 		/* TODO: warning about error showing dialog */
 	}
+}
+
+GtkWidget *
+modest_platform_create_folder_view (TnyFolderStoreQuery *query)
+{
+	GtkWidget *widget = modest_folder_view_new (query);
+
+	/* Show all accounts by default */
+	modest_folder_view_set_style (MODEST_FOLDER_VIEW (widget),
+				      MODEST_FOLDER_VIEW_STYLE_SHOW_ONE);
+
+	/* Restore settings */
+	modest_widget_memory_restore (modest_runtime_get_conf(), 
+				      G_OBJECT (widget),
+				      MODEST_CONF_FOLDER_VIEW_KEY);
+
+	return widget;
 }
