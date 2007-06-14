@@ -100,10 +100,12 @@ static int      get_breakpoint          (const gchar * s, const gint indent, con
 
 static gchar*   modest_text_utils_quote_plain_text (const gchar *text, 
 						    const gchar *cite, 
+						    const gchar *signature,
 						    int limit);
 
 static gchar*   modest_text_utils_quote_html       (const gchar *text, 
-						    const gchar *cite, 
+						    const gchar *cite,
+						    const gchar *signature,
 						    int limit);
 static gchar*   get_email_from_address (const gchar *address);
 
@@ -130,9 +132,9 @@ modest_text_utils_quote (const gchar *text,
 	if (content_type && strcmp (content_type, "text/html") == 0)
 		/* TODO: extract the <body> of the HTML and pass it to
 		   the function */
-		retval = modest_text_utils_quote_html (text, cited, limit);
+		retval = modest_text_utils_quote_html (text, cited, signature, limit);
 	else
-		retval = modest_text_utils_quote_plain_text (text, cited, limit);
+		retval = modest_text_utils_quote_plain_text (text, cited, signature, limit);
 	
 	g_free (cited);
 
@@ -690,6 +692,7 @@ cite (const time_t sent_date, const gchar *from)
 static gchar *
 modest_text_utils_quote_plain_text (const gchar *text, 
 				    const gchar *cite, 
+				    const gchar *signature,
 				    int limit)
 {
 	const gchar *iter;
@@ -741,24 +744,44 @@ modest_text_utils_quote_plain_text (const gchar *text,
 		g_string_free (l, TRUE);
 	} while ((iter < text + len) || (remaining->str[0]));
 
+	if (signature != NULL) {
+		q = g_string_append_c (q, '\n');
+		q = g_string_append (q, signature);
+	}
+
 	return g_string_free (q, FALSE);
 }
 
 static gchar*
 modest_text_utils_quote_html (const gchar *text, 
 			      const gchar *cite, 
+			      const gchar *signature,
 			      int limit)
 {
+	gchar *result = NULL;
+	gchar *signature_result = NULL;
 	const gchar *format = \
 		"<!DOCTYPE html PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n" \
 		"<html>\n" \
 		"<body>\n" \
 		"%s" \
 		"<blockquote type=\"cite\">\n%s\n</blockquote>\n" \
+		"%s" \
 		"</body>\n" \
 		"</html>\n";
+	const gchar *signature_format =		\
+		"<pre>\n" \
+		"%s\n" \
+		"</pre>";
 
-	return g_strdup_printf (format, cite, text);
+	if (signature == NULL)
+		signature_result = g_strdup ("");
+	else
+		signature_result = g_strdup_printf (signature_format, signature);
+
+	result = g_strdup_printf (format, cite, text, signature_result);
+	g_free (signature_result);
+	return result;
 }
 
 static gint 
