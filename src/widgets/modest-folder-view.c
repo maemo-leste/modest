@@ -43,6 +43,7 @@
 #include <tny-simple-list.h>
 #include <modest-tny-folder.h>
 #include <modest-tny-local-folders-account.h>
+#include <modest-tny-outbox-account.h>
 #include <modest-marshal.h>
 #include <modest-icon-names.h>
 #include <modest-tny-account-store.h>
@@ -729,6 +730,11 @@ filter_row (GtkTreeModel *model,
 				if (priv->visible_account_id && strcmp (account_id, priv->visible_account_id))
 					retval = FALSE;
 			}
+			
+			/* Never show these to the user. They are merged into one folder 
+			 * in the local-folders account instead: */
+			if (retval && MODEST_IS_TNY_OUTBOX_ACCOUNT (acc))
+				retval = FALSE;
 		}
 	}
 	

@@ -1,5 +1,12 @@
 2007-06-14  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/widgets/modest-folder-view.c: (filter_row):
+	Explictly filter out the per-account outbox accounts. I don't know why 
+	these only sometimes show up, but now they should never show up in the UI.
+	This should fix projects.maemo.org bug NB#60160.
+
+2007-06-14  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/maemo/modest-main-window.c: (set_toolbar_mode): Prevent a warning
 	when the toolbar does not exist yet.
 	* src/modest-widget-memory.c: (save_settings_header_view):
