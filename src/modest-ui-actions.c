@@ -128,6 +128,20 @@ static void     _on_send_receive_progress_changed (ModestMailOperation  *mail_op
 
 
 
+static void
+run_account_setup_wizard (ModestWindow *win)
+{
+	ModestEasysetupWizardDialog *wizard;
+
+	g_return_if_fail (MODEST_IS_WINDOW(win));
+	
+	wizard = modest_easysetup_wizard_dialog_new ();
+	gtk_window_set_transient_for (GTK_WINDOW (wizard), GTK_WINDOW (win));
+	gtk_dialog_run (GTK_DIALOG (wizard));
+	gtk_widget_destroy (GTK_WIDGET (wizard));
+}
+
+
 void   
 modest_ui_actions_on_about (GtkAction *action, ModestWindow *win)
 {
@@ -366,19 +380,11 @@ modest_ui_actions_on_add_to_contacts (GtkAction *action, ModestWindow *win)
 void
 modest_ui_actions_on_accounts (GtkAction *action, ModestWindow *win)
 {
-	/* This is currently only implemented for Maemo,
-	 * because it requires a providers preset file which is not publically available.
-	 */
+	/* This is currently only implemented for Maemo */
 #ifdef MODEST_PLATFORM_MAEMO /* Defined in config.h */
-	gboolean accounts_exist = modest_account_mgr_has_accounts(
-																														modest_runtime_get_account_mgr(), TRUE);
-	
-	if (!accounts_exist) {
-		/* If there are no accounts yet, just show the easy-setup wizard, as per the UI spec: */
-		ModestEasysetupWizardDialog *wizard = modest_easysetup_wizard_dialog_new ();
-		gtk_window_set_transient_for (GTK_WINDOW (wizard), GTK_WINDOW (win));
-		gtk_dialog_run (GTK_DIALOG (wizard));
-		gtk_widget_destroy (GTK_WIDGET (wizard));
+	if (!modest_account_mgr_has_accounts(modest_runtime_get_account_mgr(), TRUE)) {
+		run_account_setup_wizard (win);
+		return;
 	} else 	{
 		/* Show the list of accounts: */
 		GtkDialog *account_win = GTK_DIALOG(modest_account_view_window_new ());
@@ -424,6 +430,8 @@ on_smtp_servers_window_hide (GtkWindow* window, gpointer user_data)
 			modest_window_get_active_account (main_window));
 	gtk_widget_destroy (GTK_WIDGET (window));
 }
+
+
 
 void
 modest_ui_actions_on_smtp_servers (GtkAction *action, ModestWindow *win)
@@ -475,6 +483,12 @@ modest_ui_actions_on_new_msg (GtkAction *action, ModestWindow *win)
 	TnyAccount *account = NULL;
 	ModestWindowMgr *mgr;
 	gchar *signature = NULL, *blank_and_signature = NULL;
+
+	/* if there are no accounts yet, just show the wizard */
+	if (!modest_account_mgr_has_accounts (modest_runtime_get_account_mgr(), TRUE)) {
+			run_account_setup_wizard (win);
+			return;
+	}
 	
 	account_name = g_strdup(modest_window_get_active_account (win));
 	if (!account_name)
@@ -520,13 +534,6 @@ modest_ui_actions_on_new_msg (GtkAction *action, ModestWindow *win)
 		goto cleanup;
 	}
 	
-/* 	tny_folder_add_msg (folder, msg, &err); */
-/* 	if (err) { */
-/* 		g_printerr ("modest: error adding msg to Drafts folder: %s", */
-/* 			    err->message); */
-/* 		g_error_free (err); */
-/* 		goto cleanup; */
-/* 	} */
 
 	/* Create and register edit window */
 	/* This is destroyed by TOOD. */
@@ -586,6 +593,11 @@ open_msg_cb (ModestMailOperation *mail_op,
 	/* If the header is in the drafts folder then open the editor,
 	   else the message view window */
 	if (folder_type == TNY_FOLDER_TYPE_DRAFTS) {
+		/* we cannot edit without a valid account... */
+		if (!modest_account_mgr_has_accounts(modest_runtime_get_account_mgr(), TRUE)) {
+			run_account_setup_wizard(parent_win);
+			goto cleanup;
+		}
 		win = modest_msg_edit_window_new (msg, account);
 	} else {
 		gchar *uid = modest_tny_folder_get_header_unique_id (header);
@@ -632,6 +644,7 @@ open_msg_cb (ModestMailOperation *mail_op,
 		gtk_widget_show_all (GTK_WIDGET(win));
 	}
 
+cleanup:
 	/* Free */
 	g_free(account);
 	g_object_unref (msg);
@@ -889,6 +902,12 @@ reply_forward (ReplyForwardAction action, ModestWindow *win)
 	
 	g_return_if_fail (MODEST_IS_WINDOW(win));
 
+	/* we need an account when editing */
+	if (!modest_account_mgr_has_accounts(modest_runtime_get_account_mgr(), TRUE)) {
+		run_account_setup_wizard (win);
+		return;
+	}
+	
 	header_list = get_selected_headers (win);
 	if (!header_list)
 		return;

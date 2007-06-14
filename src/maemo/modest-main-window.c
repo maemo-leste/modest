@@ -643,29 +643,29 @@ modest_main_window_on_show (GtkWidget *self, gpointer user_data)
 						  TNY_ACCOUNT_STORE (modest_runtime_get_account_store ()));
 
 
+	
+	wrap_in_scrolled_window (folder_win, GTK_WIDGET(priv->folder_view));
+	wrap_in_scrolled_window (priv->contents_widget, GTK_WIDGET(priv->header_view));
+	
+	/* Load previous osso state, for instance if we are being restored from 
+	 * hibernation:  */
+	modest_osso_load_state();
+
+	/* Restore window & widget settings */
+	
+	restore_settings (MODEST_MAIN_WINDOW(self), TRUE);
+
 	/* Check if accounts exist and show the account wizard if not */
 	gboolean accounts_exist = 
 		modest_account_mgr_has_accounts(modest_runtime_get_account_mgr(), TRUE);
 
-	
-	if (!accounts_exist)
-	{
+	if (!accounts_exist) {
 		/* This is necessary to have the main window shown behind the dialog 
 		It's an ugly hack... jschmid */
 		gtk_widget_show_all(GTK_WIDGET(self));
 		modest_ui_actions_on_accounts (NULL, MODEST_WINDOW(self));
 	}
 
-	wrap_in_scrolled_window (folder_win, GTK_WIDGET(priv->folder_view));
-	wrap_in_scrolled_window (priv->contents_widget, GTK_WIDGET(priv->header_view));
-
-	/* Load previous osso state, for instance if we are being restored from 
-	 * hibernation:  */
-	modest_osso_load_state();
-
-	/* Restore window & widget settings */
-
-	restore_settings (MODEST_MAIN_WINDOW(self), TRUE);
 }
 
 ModestWindow*
@@ -836,7 +836,7 @@ modest_main_window_new (void)
 		G_CALLBACK (on_hildon_program_is_topmost_notify), self);
 
 	g_signal_connect (G_OBJECT(self), "show",
-		G_CALLBACK (modest_main_window_on_show), folder_win);
+			  G_CALLBACK (modest_main_window_on_show), folder_win);
 		
 
 	restore_settings (MODEST_MAIN_WINDOW(self), FALSE);

@@ -461,15 +461,14 @@ on_nonhibernating_window_show(GtkWidget *widget, gpointer user_data)
 		G_CALLBACK (on_nonhibernating_window_hide), self);
 }
 
-void modest_window_mgr_prevent_hibernation_while_window_is_shown (ModestWindowMgr *self, GtkWindow *window)
+void modest_window_mgr_prevent_hibernation_while_window_is_shown (ModestWindowMgr *self,
+								  GtkWindow *window)
 {
 	g_return_if_fail (MODEST_IS_WINDOW_MGR (self));
 	
 	if (GTK_WIDGET_VISIBLE(window)) {
 		on_nonhibernating_window_show (GTK_WIDGET (window), self);
-	}
-	else
-	{
+	} else {
 		/* Wait for it to be shown: */
 		g_signal_connect (window, "show", 
 			G_CALLBACK (on_nonhibernating_window_show), self);	

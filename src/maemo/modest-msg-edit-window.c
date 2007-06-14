@@ -833,6 +833,7 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name)
 	gint file_format;
 
 	g_return_val_if_fail (msg, NULL);
+	g_return_val_if_fail (account_name, NULL);
 	
 	obj = g_object_new(MODEST_TYPE_MSG_EDIT_WINDOW, NULL);
 
@@ -880,7 +881,8 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name)
 	g_object_unref (action_group);
 
 	/* Load the UI definition */
-	gtk_ui_manager_add_ui_from_file (parent_priv->ui_manager, MODEST_UIDIR "modest-msg-edit-window-ui.xml", &error);
+	gtk_ui_manager_add_ui_from_file (parent_priv->ui_manager, MODEST_UIDIR "modest-msg-edit-window-ui.xml",
+					 &error);
 	if (error != NULL) {
 		g_warning ("Could not merge modest-msg-edit-window-ui.xml: %s", error->message);
 		g_clear_error (&error);
