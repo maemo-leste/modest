@@ -1,3 +1,10 @@
+2007-06-14  set REAL_NAME environment variable  <set EMAIL_ADDRESS environment variable>
+
+	reviewed by: <delete if not using a buddy>
+
+	* src/maemo/modest-main-window.c: (_on_msg_count_changed):
+	* src/modest-ui-actions.c: (folder_refreshed_cb):
+
 2007-06-14  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/widgets/modest-folder-view.c: (filter_row):

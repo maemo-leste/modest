@@ -1255,6 +1255,7 @@ folder_refreshed_cb (const GObject *obj,
 		     TnyFolder *folder, 
 		     gpointer user_data)
 {
+	printf ("DEBUG: %s\n", __FUNCTION__);
 	ModestMainWindow *win = NULL;
 	GtkWidget *header_view;
 
@@ -1266,9 +1267,11 @@ folder_refreshed_cb (const GObject *obj,
 
 	/* Check if folder is empty and set headers view contents style */
 	if (tny_folder_get_all_count (folder) == 0) {
+	printf ("DEBUG: %s: tny_folder_get_all_count() returned 0.\n", __FUNCTION__);
 		modest_main_window_set_contents_style (win,
 						       MODEST_MAIN_WINDOW_CONTENTS_STYLE_EMPTY);
 	} else {
+		printf ("DEBUG: %s: tny_folder_get_all_count() returned >0.\n", __FUNCTION__);
 		/* Restore configuration. There is no need to set the
 		   contents style to headers because it was already
 		   being done in folder_selection_changed */

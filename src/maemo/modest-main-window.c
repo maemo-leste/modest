@@ -1453,6 +1453,7 @@ _on_msg_count_changed (ModestHeaderView *header_view,
 		       TnyFolderChange *change,
 		       ModestMainWindow *main_window)
 {
+	printf ("DEBUG: %s\n", __FUNCTION__);
 	gboolean folder_empty = FALSE;
 	TnyFolderChangeChanged changed;
 	
@@ -1468,6 +1469,8 @@ _on_msg_count_changed (ModestHeaderView *header_view,
 	else
 		folder_empty = (tny_folder_get_all_count (TNY_FOLDER (folder)) == 0);
 	
+	printf ("DEBUG: %s: folder_empty=%d\n", __FUNCTION__, folder_empty);
+
 	/* Set contents style of headers view */
 	if (folder_empty)  {
 		modest_main_window_set_contents_style (main_window,
