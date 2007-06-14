@@ -528,7 +528,8 @@ modest_mail_operation_send_new_mail (ModestMailOperation *self,
 
 	/* Set priority flags in message */
 	header = tny_msg_get_header (new_msg);
-	tny_header_set_flags (header, priority_flags);
+	if (priority_flags != 0)
+		tny_header_set_flags (header, priority_flags);
 
 	/* Call mail operation */
 	modest_mail_operation_send_mail (self, transport_account, new_msg);

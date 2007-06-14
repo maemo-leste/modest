@@ -30,6 +30,7 @@
 #include <glib/gi18n.h>
 #include <string.h>
 #include <tny-header.h>
+#include <tny-simple-list.h>
 #include <tny-gtk-text-buffer-stream.h>
 #include <tny-camel-stream.h>
 #include <camel/camel-stream-mem.h>
@@ -52,7 +53,7 @@ static GObjectClass *parent_class = NULL;
 typedef gchar* FormatterFunc (ModestFormatter *self, const gchar *text, TnyHeader *header);
 
 static TnyMsg *modest_formatter_do (ModestFormatter *self, TnyMimePart *body,  TnyHeader *header, 
-				    FormatterFunc func);
+				    FormatterFunc func, gboolean has_attachments);
 
 static gchar*  modest_formatter_wrapper_cite   (ModestFormatter *self, const gchar *text, TnyHeader *header);
 static gchar*  modest_formatter_wrapper_quote  (ModestFormatter *self, const gchar *text, TnyHeader *header);
@@ -116,18 +117,20 @@ construct_from_text (TnyMimePart *part,
 }
 
 static TnyMsg *
-modest_formatter_do (ModestFormatter *self, TnyMimePart *body, TnyHeader *header, FormatterFunc func)
+modest_formatter_do (ModestFormatter *self, TnyMimePart *body, TnyHeader *header, FormatterFunc func, gboolean has_attachments)
 {
 	TnyMsg *new_msg = NULL;
 	gchar *body_text = NULL, *txt = NULL;
 	ModestFormatterPrivate *priv;
+	TnyMimePart *body_part = NULL;
 
 	g_return_val_if_fail (self, NULL);
 	g_return_val_if_fail (header, NULL);
 	g_return_val_if_fail (func, NULL);
 
 	/* Build new part */
-	new_msg = tny_platform_factory_new_msg (modest_runtime_get_platform_factory());
+	new_msg = modest_formatter_create_message (self, TRUE, has_attachments);
+	body_part = modest_formatter_create_body_part (self, new_msg);
 
 	if (body)
 		body_text = extract_text (self, body);
@@ -136,7 +139,8 @@ modest_formatter_do (ModestFormatter *self, TnyMimePart *body, TnyHeader *header
 
 	txt = (gchar *) func (self, (const gchar*) body_text, header);
 	priv = MODEST_FORMATTER_GET_PRIVATE (self);
-	construct_from_text (TNY_MIME_PART (new_msg), (const gchar*) txt, priv->content_type);
+	construct_from_text (TNY_MIME_PART (body_part), (const gchar*) txt, priv->content_type);
+	g_object_unref (body_part);
 
 	/* Clean */
 	g_free (body_text);
@@ -148,19 +152,19 @@ modest_formatter_do (ModestFormatter *self, TnyMimePart *body, TnyHeader *header
 TnyMsg *
 modest_formatter_cite (ModestFormatter *self, TnyMimePart *body, TnyHeader *header)
 {
-	return modest_formatter_do (self, body, header, modest_formatter_wrapper_cite);
+	return modest_formatter_do (self, body, header, modest_formatter_wrapper_cite, FALSE);
 }
 
 TnyMsg *
 modest_formatter_quote (ModestFormatter *self, TnyMimePart *body, TnyHeader *header)
 {
-	return modest_formatter_do (self, body, header, modest_formatter_wrapper_quote);
+	return modest_formatter_do (self, body, header, modest_formatter_wrapper_quote, FALSE);
 }
 
 TnyMsg *
-modest_formatter_inline (ModestFormatter *self, TnyMimePart *body, TnyHeader *header)
+modest_formatter_inline (ModestFormatter *self, TnyMimePart *body, TnyHeader *header, gboolean has_attachments)
 {
-	return modest_formatter_do (self, body, header, modest_formatter_wrapper_inline);
+	return modest_formatter_do (self, body, header, modest_formatter_wrapper_inline, has_attachments);
 }
 
 TnyMsg *
@@ -175,21 +179,22 @@ modest_formatter_attach (ModestFormatter *self, TnyMimePart *body, TnyHeader *he
 
 	fact = modest_runtime_get_platform_factory ();
 	/* Build new part */
-	new_msg     = tny_platform_factory_new_msg (fact);
-	body_part   = tny_platform_factory_new_mime_part (fact);
+	new_msg     = modest_formatter_create_message (self, TRUE, TRUE);
+	body_part = modest_formatter_create_body_part (self, new_msg);
 	attach_part = tny_platform_factory_new_mime_part (fact);
 
 	/* Create the two parts */
 	priv = MODEST_FORMATTER_GET_PRIVATE (self);
 	attach_text = extract_text (self, body);
 	construct_from_text (body_part, "", priv->content_type);
+	g_object_unref (body_part);
 	construct_from_text (attach_part, (const gchar*) attach_text, priv->content_type);
 	subject = tny_header_get_subject (header);
 	tny_mime_part_set_filename (attach_part, subject ? subject : _("No subject"));
 
 	/* Add parts */
-	tny_mime_part_add_part (TNY_MIME_PART (new_msg), body_part);
 	tny_mime_part_add_part (TNY_MIME_PART (new_msg), attach_part);
+	g_object_unref (attach_part);
 
 	/* Clean */
 	g_free (attach_text);
@@ -314,4 +319,75 @@ modest_formatter_wrapper_quote (ModestFormatter *self, const gchar *text, TnyHea
 					tny_header_get_from (header), 
 					tny_header_get_date_sent (header),
 					80);
+}
+
+TnyMsg * 
+modest_formatter_create_message (ModestFormatter *self, gboolean single_body, gboolean has_attachments)
+{
+	TnyMsg *result = NULL;
+	TnyPlatformFactory *fact = NULL;
+	TnyMimePart *body_mime_part = NULL;
+	fact    = modest_runtime_get_platform_factory ();
+	result = tny_platform_factory_new_msg (fact);
+	if (has_attachments) {
+		tny_mime_part_set_content_type (TNY_MIME_PART (result), "multipart/mixed");
+		if (!single_body) {
+			body_mime_part = tny_platform_factory_new_mime_part (fact);
+			tny_mime_part_set_content_type (body_mime_part, "multipart/alternative");
+			tny_mime_part_add_part (TNY_MIME_PART (result), body_mime_part);
+			g_object_unref (body_mime_part);
+		}
+	} else if (!single_body) {
+		tny_mime_part_set_content_type (TNY_MIME_PART (result), "multipart/alternative");
+	}
+
+	return result;
+}
+
+TnyMimePart * 
+modest_formatter_create_body_part (ModestFormatter *self, TnyMsg *msg)
+{
+	TnyMimePart *result = NULL;
+	const gchar *msg_content_type = NULL;
+	TnyPlatformFactory *fact = NULL;
+
+	fact = modest_runtime_get_platform_factory ();
+	msg_content_type = tny_mime_part_get_content_type (TNY_MIME_PART (msg));
+	/* First it checks if the main part is alternative */
+	if ((msg_content_type != NULL) && 
+	    (!g_strcasecmp (msg_content_type, "multipart/alternative"))) {
+		result = tny_platform_factory_new_mime_part (fact);
+		tny_mime_part_add_part (TNY_MIME_PART (msg), result);
+		return result;
+	} else if ((msg_content_type != NULL) &&
+		   (!g_strcasecmp (msg_content_type, "multipart/mixed"))) {
+		TnyList *parts = NULL;
+		TnyIterator *iter = NULL;
+		TnyMimePart *alternative_part = NULL;
+
+		parts = TNY_LIST (tny_simple_list_new ());
+		tny_mime_part_get_parts (TNY_MIME_PART (msg), parts);
+		iter = tny_list_create_iterator (parts);
+		while (!tny_iterator_is_done (iter)) {
+			TnyMimePart *part = TNY_MIME_PART (tny_iterator_get_current (iter));
+			if (!g_strcasecmp(tny_mime_part_get_content_type (part), "multipart/alternative")) {
+				alternative_part = part;
+				break;
+			}
+			tny_iterator_next (iter);
+		}
+		result = tny_platform_factory_new_mime_part (fact);
+		if (alternative_part != NULL) {
+			tny_mime_part_add_part (alternative_part, result);
+		} else {
+			tny_mime_part_add_part (TNY_MIME_PART (msg), result);
+		}
+		g_object_unref (G_OBJECT (parts));
+		return result;
+	} else {
+		/* We add a reference as this method is intended to obtain
+		   a ref'ed part */
+		g_object_ref (msg);
+		return TNY_MIME_PART (msg);
+	}
 }

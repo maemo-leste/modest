@@ -152,7 +152,7 @@ TnyMsg * modest_formatter_quote  (ModestFormatter *self, TnyMimePart *part, TnyH
  *
  * Returns: a newly formatted #TnyMsg or NULL in case of error
  **/
-TnyMsg * modest_formatter_inline (ModestFormatter *self, TnyMimePart *part, TnyHeader *header);
+TnyMsg * modest_formatter_inline (ModestFormatter *self, TnyMimePart *part, TnyHeader *header, gboolean has_attachments);
 
 /**
  * modest_formatter_attach:
@@ -166,6 +166,35 @@ TnyMsg * modest_formatter_inline (ModestFormatter *self, TnyMimePart *part, TnyH
  **/
 TnyMsg * modest_formatter_attach (ModestFormatter *self, TnyMimePart *part, TnyHeader *header);
 
+/**
+ * modest_formatter_create_message:
+ * @self: a #ModestFormatter
+ * @single_body: a #gboolean
+ * @has_attachments: a #gboolean
+ *
+ * Creates an empty #TnyMsg with the expected parts for Modest
+ * formatters and body embedders.
+ *
+ * If @has_attachments is %TRUE, the mail will be formatted as
+ * "multipart/mixed", and attachments will be stored as parts
+ * of it. The body will be just another multipart. If %FALSE,
+ * the bodies will be stored directly as the message.
+ *
+ * If @single_body is %TRUE, the body will be stored as a
+ * "multipart/alternative", and the parts will be the different
+ * alternatives. If %FALSE, this body will be stored directly.
+ */
+TnyMsg * modest_formatter_create_message (ModestFormatter *self, gboolean single_body, gboolean has_attachments);
+
+/**
+ * modest_formatter_create_body_part:
+ * @self: a #ModestFormatter
+ *
+ * Obtains a new formatted body part for @msg, or
+ * @msg itself if the body is intended to be stored directly
+ * in it.
+ */ 
+TnyMimePart * modest_formatter_create_body_part (ModestFormatter *self, TnyMsg *msg);
 
 G_END_DECLS
 

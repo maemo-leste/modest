@@ -45,7 +45,7 @@
 #include "modest-text-utils.h"
 
 static TnyMimePart * add_body_part (TnyMsg *msg, const gchar *body,
-				    const gchar *content_type, gboolean has_attachments);
+				    const gchar *content_type);
 static TnyMimePart * add_html_body_part (TnyMsg *msg, const gchar *body);
 static void add_attachments (TnyMsg *msg, GList *attachments_list);
 static char * get_content_type(const gchar *s);
@@ -56,14 +56,12 @@ modest_tny_msg_new (const gchar* mailto, const gchar* from, const gchar *cc,
 		    const gchar *bcc, const gchar* subject, const gchar *body,
 		    GSList *attachments)
 {
-	TnyPlatformFactory *fact;
 	TnyMsg *new_msg;
 	TnyHeader *header;
 	gchar *content_type;
 	
 	/* Create new msg */
-	fact    = modest_runtime_get_platform_factory ();
-	new_msg = tny_platform_factory_new_msg (fact);
+	new_msg = modest_formatter_create_message (NULL, TRUE, (attachments != NULL));
 	header  = tny_msg_get_header (new_msg);
 	
 	if ((from != NULL) && (strlen(from) > 0)) {
@@ -84,7 +82,7 @@ modest_tny_msg_new (const gchar* mailto, const gchar* from, const gchar *cc,
 		
 	/* Add the body of the new mail */
 	/* This is needed even if body is NULL or empty. */
-	add_body_part (new_msg, body, content_type, (attachments ? TRUE: FALSE));
+	add_body_part (new_msg, body, content_type);
 	g_free (content_type);
 		       
 	/* Add attachments */
@@ -100,14 +98,12 @@ modest_tny_msg_new_html_plain (const gchar* mailto, const gchar* from, const gch
 			       const gchar *html_body, const gchar *plain_body,
 			       GSList *attachments)
 {
-	TnyPlatformFactory *fact;
 	TnyMsg *new_msg;
 	TnyHeader *header;
 	gchar *content_type;
 	
 	/* Create new msg */
-	fact    = modest_runtime_get_platform_factory ();
-	new_msg = tny_platform_factory_new_msg (fact);
+	new_msg = modest_formatter_create_message (NULL, FALSE, (attachments != NULL));
 	header  = tny_msg_get_header (new_msg);
 	
 	if ((from != NULL) && (strlen(from) > 0)) {
@@ -127,7 +123,7 @@ modest_tny_msg_new_html_plain (const gchar* mailto, const gchar* from, const gch
 	content_type = get_content_type(plain_body);
 		
 	/* Add the body of the new mail */	
-	add_body_part (new_msg, plain_body, content_type, TRUE);
+	add_body_part (new_msg, plain_body, content_type);
 	add_html_body_part (new_msg, html_body);
 	g_free (content_type);
 		       
@@ -142,8 +138,7 @@ modest_tny_msg_new_html_plain (const gchar* mailto, const gchar* from, const gch
 static TnyMimePart *
 add_body_part (TnyMsg *msg, 
 	       const gchar *body,
-	       const gchar *content_type,
-	       gboolean has_attachments)
+	       const gchar *content_type)
 {
 	TnyMimePart *text_body_part = NULL;
 	TnyStream *text_body_stream;
@@ -153,12 +148,7 @@ add_body_part (TnyMsg *msg,
 				       (camel_stream_mem_new_with_buffer
 					(body, (body ? strlen(body) : 0))));
 
-	/* Create body part if needed */
-	if (has_attachments)
-		text_body_part = tny_platform_factory_new_mime_part
-			(modest_runtime_get_platform_factory ());
-	else
-		text_body_part = TNY_MIME_PART(msg);
+	text_body_part = modest_formatter_create_body_part (NULL, msg);
 
 	/* Construct MIME part */
 	tny_stream_reset (text_body_stream);
@@ -167,11 +157,7 @@ add_body_part (TnyMsg *msg,
 					     content_type);
 	tny_stream_reset (text_body_stream);
 
-	/* Add part if needed */
-	if (has_attachments) {
-		tny_mime_part_add_part (TNY_MIME_PART (msg), text_body_part);
-		g_object_unref (G_OBJECT(text_body_part));
-	}
+	g_object_unref (G_OBJECT(text_body_part));
 
 	/* Clean */
 	g_object_unref (text_body_stream);
@@ -192,8 +178,7 @@ add_html_body_part (TnyMsg *msg,
 					(body, strlen(body))));
 
 	/* Create body part if needed */
-	html_body_part = tny_platform_factory_new_mime_part
-		(modest_runtime_get_platform_factory ());
+	html_body_part = modest_formatter_create_body_part (NULL, msg);
 
 	/* Construct MIME part */
 	tny_stream_reset (html_body_stream);
@@ -202,8 +187,6 @@ add_html_body_part (TnyMsg *msg,
 					     "text/html; charset=utf-8");
 	tny_stream_reset (html_body_stream);
 
-	/* Add part if needed */
-	tny_mime_part_add_part (TNY_MIME_PART (msg), html_body_part);
 	g_object_unref (G_OBJECT(html_body_part));
 
 	/* Clean */
@@ -227,12 +210,16 @@ add_attachments (TnyMsg *msg, GList *attachments_list)
 		old_attachment = pos->data;
 		attachment_filename = tny_mime_part_get_filename (old_attachment);
 		attachment_stream = tny_mime_part_get_stream (old_attachment);
-		attachment_part = tny_platform_factory_new_mime_part (
-			modest_runtime_get_platform_factory());
-		
+		if (TNY_IS_MSG (old_attachment)) {
+			attachment_part = TNY_MIME_PART (tny_platform_factory_new_msg (modest_runtime_get_platform_factory ()));
+		} else {
+			attachment_part = tny_platform_factory_new_mime_part (
+				modest_runtime_get_platform_factory());
+		}
 		attachment_content_type = tny_mime_part_get_content_type (old_attachment);
 		attachment_cid = tny_mime_part_get_content_id (old_attachment);
-				 
+
+		tny_stream_reset (attachment_stream);
 		tny_mime_part_construct_from_stream (attachment_part,
 						     attachment_stream,
 						     attachment_content_type);
@@ -242,6 +229,7 @@ add_attachments (TnyMsg *msg, GList *attachments_list)
 		tny_mime_part_set_content_id (attachment_part, attachment_cid);
 		
 		tny_mime_part_add_part (TNY_MIME_PART (msg), attachment_part);
+		g_object_unref (attachment_stream);
 /* 		g_object_unref (attachment_part); */
 	}
 }
@@ -358,7 +346,8 @@ modest_tny_msg_find_body_part (TnyMsg *msg, gboolean want_html)
 
 
 static TnyMsg *
-create_reply_forward_mail (TnyMsg *msg, const gchar *from, const gchar *signature, gboolean is_reply, guint type)
+create_reply_forward_mail (TnyMsg *msg, const gchar *from, const gchar *signature, 
+			   gboolean is_reply, guint type, gboolean has_attachments)
 {
 	TnyMsg *new_msg;
 	TnyHeader *new_header, *header;
@@ -393,7 +382,7 @@ create_reply_forward_mail (TnyMsg *msg, const gchar *from, const gchar *signatur
 		switch (type) {
 		case MODEST_TNY_MSG_FORWARD_TYPE_INLINE:
 		default:
-			new_msg = modest_formatter_inline  (formatter, body, header);
+			new_msg = modest_formatter_inline  (formatter, body, header, has_attachments);
 			break;
 		case MODEST_TNY_MSG_FORWARD_TYPE_ATTACHMENT:
 			new_msg = modest_formatter_attach (formatter, body, header);
@@ -431,13 +420,13 @@ static void
 add_if_attachment (gpointer data, gpointer user_data)
 {
 	TnyMimePart *part;
-	GList *attachments_list;
+	GList **attachments_list;
 
 	part = TNY_MIME_PART (data);
-	attachments_list = (GList *) user_data;
+	attachments_list = ((GList **) user_data);
 
-	if (tny_mime_part_is_attachment (part))
-		attachments_list = g_list_prepend (attachments_list, part);
+	if ((tny_mime_part_is_attachment (part))||(TNY_IS_MSG (part)))
+		*attachments_list = g_list_prepend (*attachments_list, part);
 }
 
 TnyMsg* 
@@ -450,12 +439,13 @@ modest_tny_msg_create_forward_msg (TnyMsg *msg,
 	TnyList *parts = NULL;
 	GList *attachments_list = NULL;
 
-	new_msg = create_reply_forward_mail (msg, from, signature, FALSE, forward_type);
 
 	/* Add attachments */
 	parts = TNY_LIST (tny_simple_list_new());
 	tny_mime_part_get_parts (TNY_MIME_PART (msg), parts);
-	tny_list_foreach (parts, add_if_attachment, attachments_list);
+	tny_list_foreach (parts, add_if_attachment, &attachments_list);
+
+	new_msg = create_reply_forward_mail (msg, from, signature, FALSE, forward_type, (attachments_list != NULL));
 	add_attachments (new_msg, attachments_list);
 
 	/* Clean */
@@ -480,7 +470,7 @@ modest_tny_msg_create_reply_msg (TnyMsg *msg,
 	const gchar *cc = NULL, *bcc = NULL;
 	GString *tmp = NULL;
 
-	new_msg = create_reply_forward_mail (msg, from, signature, TRUE, reply_type);
+	new_msg = create_reply_forward_mail (msg, from, signature, TRUE, reply_type, FALSE);
 
 	/* Fill the header */
 	header = tny_msg_get_header (msg);
