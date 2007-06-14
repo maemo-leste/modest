@@ -94,6 +94,7 @@ TnyMsg * modest_formatter_cite   (ModestFormatter *self, TnyMimePart *part, TnyH
  * @self: a #ModestFormatter
  * @part: a non-NULL #TnyMimePart with the body of the original message
  * @header: a non-NULL #TnyHeader of the original message
+ * @attachments: a #GList of attachments in original message
  * 
  * Creates a new message with a text body made from the body of the
  * original message quoted. This function is locale-sensitive.
@@ -109,13 +110,14 @@ TnyMsg * modest_formatter_cite   (ModestFormatter *self, TnyMimePart *part, TnyH
  * Quoted message
  * -------------
  * Body:
- * On 1970/01/01 somemailATmodest.org wrote:
+ * ------ Original message -----
  * > This is the body of the text
+ * > Attachment: file1.txt
  * </para></programlisting>
  *
  * Returns: a newly formatted #TnyMsg or NULL in case of error
  **/
-TnyMsg * modest_formatter_quote  (ModestFormatter *self, TnyMimePart *part, TnyHeader *header);
+TnyMsg * modest_formatter_quote  (ModestFormatter *self, TnyMimePart *part, TnyHeader *header, GList *attachments);
 
 
 /**
@@ -123,6 +125,7 @@ TnyMsg * modest_formatter_quote  (ModestFormatter *self, TnyMimePart *part, TnyH
  * @self: a #ModestFormatter
  * @part: a non-NULL #TnyMimePart with the body of the original message
  * @header: a non-NULL #TnyHeader of the original message
+ * @attachments: a #GList of attachments
  * 
  * Creates a new message with a text body made from the body of the
  * original message inlined ready to be forwarded. This function is
@@ -152,7 +155,7 @@ TnyMsg * modest_formatter_quote  (ModestFormatter *self, TnyMimePart *part, TnyH
  *
  * Returns: a newly formatted #TnyMsg or NULL in case of error
  **/
-TnyMsg * modest_formatter_inline (ModestFormatter *self, TnyMimePart *part, TnyHeader *header, gboolean has_attachments);
+TnyMsg * modest_formatter_inline (ModestFormatter *self, TnyMimePart *part, TnyHeader *header, GList *attachments);
 
 /**
  * modest_formatter_attach:

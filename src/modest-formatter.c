@@ -50,14 +50,14 @@ struct _ModestFormatterPrivate {
 
 static GObjectClass *parent_class = NULL;
 
-typedef gchar* FormatterFunc (ModestFormatter *self, const gchar *text, TnyHeader *header);
+typedef gchar* FormatterFunc (ModestFormatter *self, const gchar *text, TnyHeader *header, GList *attachments);
 
 static TnyMsg *modest_formatter_do (ModestFormatter *self, TnyMimePart *body,  TnyHeader *header, 
-				    FormatterFunc func, gboolean has_attachments);
+				    FormatterFunc func, GList *attachments);
 
-static gchar*  modest_formatter_wrapper_cite   (ModestFormatter *self, const gchar *text, TnyHeader *header);
-static gchar*  modest_formatter_wrapper_quote  (ModestFormatter *self, const gchar *text, TnyHeader *header);
-static gchar*  modest_formatter_wrapper_inline (ModestFormatter *self, const gchar *text, TnyHeader *header);
+static gchar*  modest_formatter_wrapper_cite   (ModestFormatter *self, const gchar *text, TnyHeader *header, GList *attachments);
+static gchar*  modest_formatter_wrapper_quote  (ModestFormatter *self, const gchar *text, TnyHeader *header, GList *attachments);
+static gchar*  modest_formatter_wrapper_inline (ModestFormatter *self, const gchar *text, TnyHeader *header, GList *attachments);
 
 static gchar *
 extract_text (ModestFormatter *self, TnyMimePart *body)
@@ -117,7 +117,7 @@ construct_from_text (TnyMimePart *part,
 }
 
 static TnyMsg *
-modest_formatter_do (ModestFormatter *self, TnyMimePart *body, TnyHeader *header, FormatterFunc func, gboolean has_attachments)
+modest_formatter_do (ModestFormatter *self, TnyMimePart *body, TnyHeader *header, FormatterFunc func, GList *attachments)
 {
 	TnyMsg *new_msg = NULL;
 	gchar *body_text = NULL, *txt = NULL;
@@ -129,7 +129,7 @@ modest_formatter_do (ModestFormatter *self, TnyMimePart *body, TnyHeader *header
 	g_return_val_if_fail (func, NULL);
 
 	/* Build new part */
-	new_msg = modest_formatter_create_message (self, TRUE, has_attachments);
+	new_msg = modest_formatter_create_message (self, TRUE, attachments != NULL);
 	body_part = modest_formatter_create_body_part (self, new_msg);
 
 	if (body)
@@ -137,7 +137,7 @@ modest_formatter_do (ModestFormatter *self, TnyMimePart *body, TnyHeader *header
 	else
 		body_text = g_strdup ("");
 
-	txt = (gchar *) func (self, (const gchar*) body_text, header);
+	txt = (gchar *) func (self, (const gchar*) body_text, header, attachments);
 	priv = MODEST_FORMATTER_GET_PRIVATE (self);
 	construct_from_text (TNY_MIME_PART (body_part), (const gchar*) txt, priv->content_type);
 	g_object_unref (body_part);
@@ -152,19 +152,19 @@ modest_formatter_do (ModestFormatter *self, TnyMimePart *body, TnyHeader *header
 TnyMsg *
 modest_formatter_cite (ModestFormatter *self, TnyMimePart *body, TnyHeader *header)
 {
-	return modest_formatter_do (self, body, header, modest_formatter_wrapper_cite, FALSE);
+	return modest_formatter_do (self, body, header, modest_formatter_wrapper_cite, NULL);
 }
 
 TnyMsg *
-modest_formatter_quote (ModestFormatter *self, TnyMimePart *body, TnyHeader *header)
+modest_formatter_quote (ModestFormatter *self, TnyMimePart *body, TnyHeader *header, GList *attachments)
 {
-	return modest_formatter_do (self, body, header, modest_formatter_wrapper_quote, FALSE);
+	return modest_formatter_do (self, body, header, modest_formatter_wrapper_quote, attachments);
 }
 
 TnyMsg *
-modest_formatter_inline (ModestFormatter *self, TnyMimePart *body, TnyHeader *header, gboolean has_attachments)
+modest_formatter_inline (ModestFormatter *self, TnyMimePart *body, TnyHeader *header, GList *attachments)
 {
-	return modest_formatter_do (self, body, header, modest_formatter_wrapper_inline, has_attachments);
+	return modest_formatter_do (self, body, header, modest_formatter_wrapper_inline, attachments);
 }
 
 TnyMsg *
@@ -282,7 +282,7 @@ modest_formatter_get_type (void)
 
 /****************/
 static gchar *
-modest_formatter_wrapper_cite (ModestFormatter *self, const gchar *text, TnyHeader *header) 
+modest_formatter_wrapper_cite (ModestFormatter *self, const gchar *text, TnyHeader *header, GList *attachments) 
 {
 	ModestFormatterPrivate *priv = MODEST_FORMATTER_GET_PRIVATE (self);
 
@@ -294,7 +294,7 @@ modest_formatter_wrapper_cite (ModestFormatter *self, const gchar *text, TnyHead
 }
 
 static gchar *
-modest_formatter_wrapper_inline (ModestFormatter *self, const gchar *text, TnyHeader *header) 
+modest_formatter_wrapper_inline (ModestFormatter *self, const gchar *text, TnyHeader *header, GList *attachments) 
 {
 	ModestFormatterPrivate *priv = MODEST_FORMATTER_GET_PRIVATE (self);
 
@@ -308,17 +308,46 @@ modest_formatter_wrapper_inline (ModestFormatter *self, const gchar *text, TnyHe
 }
 
 static gchar *
-modest_formatter_wrapper_quote (ModestFormatter *self, const gchar *text, TnyHeader *header) 
+modest_formatter_wrapper_quote (ModestFormatter *self, const gchar *text, TnyHeader *header, GList *attachments) 
 {
 	ModestFormatterPrivate *priv = MODEST_FORMATTER_GET_PRIVATE (self);
+	GList *filenames = NULL;
+	GList *node = NULL;
+	gchar *result = NULL;
+       
+	/* First we need a GList of attachments filenames */
+	for (node = attachments; node != NULL; node = g_list_next (node)) {
+		TnyMimePart *part = (TnyMimePart *) node->data;
+		gchar *filename = NULL;
+		if (TNY_IS_MSG (part)) {
+			TnyHeader *header = tny_msg_get_header (TNY_MSG (part));
+			filename = g_strdup (tny_header_get_subject (header));
+			if ((filename == NULL)||(filename[0] == '\0')) {
+				g_free (filename);
+				filename = g_strdup (_("mail_va_no_subject"));
+			}
+			g_object_unref (header);
+		} else {
+			filename = g_strdup (tny_mime_part_get_filename (part));
+			if ((filename == NULL)||(filename[0] == '\0'))
+				filename = g_strdup ("");
+		}
+		filenames = g_list_append (filenames, filename);
+	}
+	filenames = g_list_reverse (filenames);
 
 	/* TODO: get 80 from the configuration */
-	return modest_text_utils_quote (text, 
-					priv->content_type, 
-					priv->signature,
-					tny_header_get_from (header), 
-					tny_header_get_date_sent (header),
-					80);
+	result = modest_text_utils_quote (text, 
+					  priv->content_type, 
+					  priv->signature,
+					  tny_header_get_from (header), 
+					  tny_header_get_date_sent (header),
+					  filenames,
+					  80);
+
+	g_list_foreach (filenames, (GFunc) g_free, NULL);
+	g_list_free (filenames);
+	return result;
 }
 
 TnyMsg * 

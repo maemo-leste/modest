@@ -347,7 +347,7 @@ modest_tny_msg_find_body_part (TnyMsg *msg, gboolean want_html)
 
 static TnyMsg *
 create_reply_forward_mail (TnyMsg *msg, const gchar *from, const gchar *signature, 
-			   gboolean is_reply, guint type, gboolean has_attachments)
+			   gboolean is_reply, guint type, GList *attachments)
 {
 	TnyMsg *new_msg;
 	TnyHeader *new_header, *header;
@@ -375,14 +375,14 @@ create_reply_forward_mail (TnyMsg *msg, const gchar *from, const gchar *signatur
 			new_msg = modest_formatter_cite  (formatter, body, header);
 			break;
 		case MODEST_TNY_MSG_REPLY_TYPE_QUOTE:
-			new_msg = modest_formatter_quote (formatter, body, header);
+			new_msg = modest_formatter_quote (formatter, body, header, attachments);
 			break;
 		}
 	} else {
 		switch (type) {
 		case MODEST_TNY_MSG_FORWARD_TYPE_INLINE:
 		default:
-			new_msg = modest_formatter_inline  (formatter, body, header, has_attachments);
+			new_msg = modest_formatter_inline  (formatter, body, header, attachments);
 			break;
 		case MODEST_TNY_MSG_FORWARD_TYPE_ATTACHMENT:
 			new_msg = modest_formatter_attach (formatter, body, header);
@@ -439,13 +439,12 @@ modest_tny_msg_create_forward_msg (TnyMsg *msg,
 	TnyList *parts = NULL;
 	GList *attachments_list = NULL;
 
-
 	/* Add attachments */
 	parts = TNY_LIST (tny_simple_list_new());
 	tny_mime_part_get_parts (TNY_MIME_PART (msg), parts);
 	tny_list_foreach (parts, add_if_attachment, &attachments_list);
 
-	new_msg = create_reply_forward_mail (msg, from, signature, FALSE, forward_type, (attachments_list != NULL));
+	new_msg = create_reply_forward_mail (msg, from, signature, FALSE, forward_type, attachments_list);
 	add_attachments (new_msg, attachments_list);
 
 	/* Clean */
@@ -469,8 +468,20 @@ modest_tny_msg_create_reply_msg (TnyMsg *msg,
 	gchar *new_cc = NULL;
 	const gchar *cc = NULL, *bcc = NULL;
 	GString *tmp = NULL;
+	TnyList *parts = NULL;
+	GList *attachments_list = NULL;
 
-	new_msg = create_reply_forward_mail (msg, from, signature, TRUE, reply_type, FALSE);
+	/* Add attachments */
+	parts = TNY_LIST (tny_simple_list_new());
+	tny_mime_part_get_parts (TNY_MIME_PART (msg), parts);
+	tny_list_foreach (parts, add_if_attachment, &attachments_list);
+
+	new_msg = create_reply_forward_mail (msg, from, signature, TRUE, reply_type, attachments_list);
+	if (attachments_list) {
+		g_list_foreach (attachments_list, (GFunc) g_object_unref, NULL);
+		g_list_free (attachments_list);
+	}
+	g_object_unref (G_OBJECT (parts));
 
 	/* Fill the header */
 	header = tny_msg_get_header (msg);

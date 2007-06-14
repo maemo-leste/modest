@@ -60,6 +60,7 @@ gchar* modest_text_utils_derived_subject (const gchar *subject,
  * @content_type: the non-NULL content type for the quoting, e.g. "text/html"
  * @signature: NULL or the signature to add
  * @sent_date: sent date/time of the original message
+ * @attachments: a #GList of the attachments
  * @limit: specifies the maximum characters per line in the quoted text
  * 
  * quote an existing message
@@ -71,6 +72,7 @@ gchar* modest_text_utils_quote (const gchar *text,
 				const gchar *signature,
 			        const gchar *from,
 			        const time_t sent_date, 
+				GList *attachments,
 				int limit);
 
 

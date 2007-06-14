@@ -101,11 +101,13 @@ static int      get_breakpoint          (const gchar * s, const gint indent, con
 static gchar*   modest_text_utils_quote_plain_text (const gchar *text, 
 						    const gchar *cite, 
 						    const gchar *signature,
+						    GList *attachments, 
 						    int limit);
 
 static gchar*   modest_text_utils_quote_html       (const gchar *text, 
 						    const gchar *cite,
 						    const gchar *signature,
+						    GList *attachments,
 						    int limit);
 static gchar*   get_email_from_address (const gchar *address);
 
@@ -120,6 +122,7 @@ modest_text_utils_quote (const gchar *text,
 			 const gchar *signature,
 			 const gchar *from,
 			 const time_t sent_date, 
+			 GList *attachments,
 			 int limit)
 {
 	gchar *retval, *cited;
@@ -132,9 +135,9 @@ modest_text_utils_quote (const gchar *text,
 	if (content_type && strcmp (content_type, "text/html") == 0)
 		/* TODO: extract the <body> of the HTML and pass it to
 		   the function */
-		retval = modest_text_utils_quote_html (text, cited, signature, limit);
+		retval = modest_text_utils_quote_html (text, cited, signature, attachments, limit);
 	else
-		retval = modest_text_utils_quote_plain_text (text, cited, signature, limit);
+		retval = modest_text_utils_quote_plain_text (text, cited, signature, attachments, limit);
 	
 	g_free (cited);
 
@@ -331,7 +334,7 @@ modest_text_utils_convert_buffer_to_html (GString *html, const gchar *data)
 		case '\t' : g_string_append (html, "&nbsp;&nbsp;&nbsp; "); break; /* note the space at the end*/
 		case ' ':
 			if (space_seen) { /* second space in a row */
-				g_string_append (html, "&nbsp ");
+				g_string_append (html, "&nbsp; ");
 				space_seen = FALSE;
 			} else
 				space_seen = TRUE;
@@ -676,29 +679,40 @@ get_breakpoint (const gchar * s, const gint indent, const gint limit)
 static gchar *
 cite (const time_t sent_date, const gchar *from)
 {
-	gchar sent_str[101];
-
-	/* format sent_date */
-	modest_text_utils_strftime (sent_str, 100, "%c", sent_date);
-	return g_strdup_printf (N_("On %s, %s wrote:\n"), 
-				sent_str, 
-				(from) ? from : EMPTY_STRING);
+	return g_strdup (_("mcen_ia_editor_original_message"));
 }
 
+static gchar *
+quoted_attachments (GList *attachments)
+{
+	GList *node = NULL;
+	GString *result = g_string_new ("");
+	for (node = attachments; node != NULL; node = g_list_next (node)) {
+		gchar *filename = (gchar *) node->data;
+		g_string_append_printf ( result, "%s %s\n", _("mcen_ia_editor_attach_filename"), filename);
+	}
+
+	return g_string_free (result, FALSE);
+
+}
 
 static gchar *
 modest_text_utils_quote_plain_text (const gchar *text, 
 				    const gchar *cite, 
 				    const gchar *signature,
+				    GList *attachments,
 				    int limit)
 {
 	const gchar *iter;
 	gint indent, breakpoint, rem_indent = 0;
 	GString *q, *l, *remaining;
 	gsize len;
+	gchar *attachments_string = NULL;
 
 	/* remaining will store the rest of the line if we have to break it */
-	q = g_string_new (cite);
+	q = g_string_new ("\n");
+	q = g_string_append (q, cite);
+	q = g_string_append_c (q, '\n');
 	remaining = g_string_new ("");
 
 	iter = text;
@@ -741,6 +755,10 @@ modest_text_utils_quote_plain_text (const gchar *text,
 		g_string_free (l, TRUE);
 	} while ((iter < text + len) || (remaining->str[0]));
 
+	attachments_string = quoted_attachments (attachments);
+	q = g_string_append (q, attachments_string);
+	g_free (attachments_string);
+
 	if (signature != NULL) {
 		q = g_string_append_c (q, '\n');
 		q = g_string_append (q, signature);
@@ -753,6 +771,7 @@ static gchar*
 modest_text_utils_quote_html (const gchar *text, 
 			      const gchar *cite, 
 			      const gchar *signature,
+			      GList *attachments,
 			      int limit)
 {
 	gchar *result = NULL;
@@ -761,22 +780,26 @@ modest_text_utils_quote_html (const gchar *text,
 		"<!DOCTYPE html PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n" \
 		"<html>\n" \
 		"<body>\n" \
-		"%s" \
-		"<blockquote type=\"cite\">\n%s\n</blockquote>\n" \
-		"%s" \
+		"<br/>%s<br/>" \
+		"<pre>%s<br/>%s<br/>%s</pre>\n" \
 		"</body>\n" \
 		"</html>\n";
-	const gchar *signature_format =		\
-		"<pre>\n" \
-		"%s\n" \
-		"</pre>";
+	gchar *attachments_string = NULL;
+	gchar *q_attachments_string = NULL;
+	gchar *html_text = NULL;
 
 	if (signature == NULL)
 		signature_result = g_strdup ("");
 	else
-		signature_result = g_strdup_printf (signature_format, signature);
+		signature_result = modest_text_utils_convert_to_html_body (signature);
 
-	result = g_strdup_printf (format, cite, text, signature_result);
+	attachments_string = quoted_attachments (attachments);
+	q_attachments_string = modest_text_utils_convert_to_html_body (attachments_string);
+	html_text = modest_text_utils_convert_to_html_body (text);
+	result = g_strdup_printf (format, signature_result, cite, html_text, q_attachments_string);
+	g_free (html_text);
+	g_free (attachments_string);
+	g_free (q_attachments_string);
 	g_free (signature_result);
 	return result;
 }
