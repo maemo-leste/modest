@@ -127,8 +127,8 @@ modest_tny_folder_get_rules   (TnyFolder *folder)
 		switch (type) {
 		case TNY_FOLDER_TYPE_OUTBOX:
 		case TNY_FOLDER_TYPE_SENT:
-			rules |= MODEST_FOLDER_RULES_FOLDER_NON_WRITEABLE;
 		case TNY_FOLDER_TYPE_DRAFTS:
+			rules |= MODEST_FOLDER_RULES_FOLDER_NON_WRITEABLE;
 		case TNY_FOLDER_TYPE_INBOX:
 		case TNY_FOLDER_TYPE_JUNK:
 		case TNY_FOLDER_TYPE_TRASH:
@@ -191,16 +191,17 @@ modest_tny_folder_is_local_folder   (TnyFolder *folder)
 
 	/* Outbox is a special case, using a derived TnyAccount: */
 	if (MODEST_IS_TNY_OUTBOX_ACCOUNT (account)) {
-		g_object_unref (account);
-		return TRUE;  
+		g_object_unref (G_OBJECT(account));
+		return TRUE;
 	}
 
 	const gchar* account_id = tny_account_get_id (account);
-	if (!account_id)
+	if (!account_id) {
+		g_object_unref (G_OBJECT(account));
 		return FALSE;
-
-	g_object_unref (G_OBJECT(account));
+	}
 	
+	g_object_unref (G_OBJECT(account));
 	return (strcmp (account_id, MODEST_LOCAL_FOLDERS_ACCOUNT_ID) == 0);
 }
 
