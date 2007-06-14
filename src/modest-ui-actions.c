@@ -73,6 +73,8 @@
 #include <tny-device.h>
 #include <tny-merge-folder.h>
 
+#include <gtkhtml/gtkhtml.h>
+
 typedef struct _GetMsgAsyncHelper {	
 	ModestWindow *window;
 	ModestMailOperation *mail_op;
@@ -2242,6 +2244,8 @@ modest_ui_actions_on_select_all (GtkAction *action,
 		/* Select all messages */
 		selection = gtk_tree_view_get_selection (GTK_TREE_VIEW(header_view));
 		gtk_tree_selection_select_all (selection);
+	} else if (GTK_IS_HTML (focused_widget)) {
+		gtk_html_select_all (GTK_HTML (focused_widget));
 	}
 }
 

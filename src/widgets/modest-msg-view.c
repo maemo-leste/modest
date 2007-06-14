@@ -1535,3 +1535,14 @@ modest_msg_view_get_selected_attachments (ModestMsgView *self)
 	return modest_attachments_view_get_selection (MODEST_ATTACHMENTS_VIEW (priv->attachments_view));
 	
 }
+
+void
+modest_msg_view_grab_focus (ModestMsgView *view)
+{
+	ModestMsgViewPrivate *priv = NULL;
+
+	g_return_if_fail (MODEST_IS_MSG_VIEW (view));
+	priv = MODEST_MSG_VIEW_GET_PRIVATE (view);
+
+	gtk_widget_grab_focus (priv->gtkhtml);
+}

@@ -619,7 +619,7 @@ modest_msg_view_window_new (TnyMsg *msg,
 	gtk_window_set_icon (GTK_WINDOW (obj), window_icon);
 
 	/* Init the clipboard actions dim status */
-	gtk_widget_grab_focus (priv->msg_view);
+	modest_msg_view_grab_focus(MODEST_MSG_VIEW (priv->msg_view));
 
 	update_window_title (MODEST_MSG_VIEW_WINDOW (obj));
 
@@ -1125,7 +1125,7 @@ view_msg_cb (ModestMailOperation *mail_op,
 	modest_msg_view_set_message (MODEST_MSG_VIEW (priv->msg_view), msg);
 	modest_msg_view_window_update_priority (self);
 	update_window_title (MODEST_MSG_VIEW_WINDOW (self));
-	gtk_widget_grab_focus (priv->msg_view);
+	modest_msg_view_grab_focus (MODEST_MSG_VIEW (priv->msg_view));
 }
 
 TnyFolderType
