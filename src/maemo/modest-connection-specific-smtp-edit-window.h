@@ -79,7 +79,9 @@ void modest_connection_specific_smtp_edit_window_set_connection (
 ModestServerAccountData* modest_connection_specific_smtp_edit_window_get_settings (
 	ModestConnectionSpecificSmtpEditWindow *window, 
 	ModestAccountMgr *account_manager);
-	
+
+gboolean modest_connection_specific_smtp_edit_window_is_dirty(
+	ModestConnectionSpecificSmtpEditWindow *window);
 	
 G_END_DECLS
 

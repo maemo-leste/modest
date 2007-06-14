@@ -61,6 +61,8 @@ struct _ModestConnectionSpecificSmtpEditWindowPrivate
 	
 	GtkWidget *button_ok;
 	GtkWidget *button_cancel;
+	
+	gboolean is_dirty;
 };
 
 static void
@@ -116,12 +118,22 @@ enum MODEL_COLS {
 };
 
 static void
+on_change(GtkWidget* widget, ModestConnectionSpecificSmtpEditWindow *self)
+{
+	ModestConnectionSpecificSmtpEditWindowPrivate *priv = 
+		CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW_GET_PRIVATE (self);
+	priv->is_dirty = TRUE;
+}
+
+static void
 on_combo_security_changed (GtkComboBox *widget, gpointer user_data)
 {
 	ModestConnectionSpecificSmtpEditWindow *self = 
 		MODEST_CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW (user_data);
 	ModestConnectionSpecificSmtpEditWindowPrivate *priv = 
 		CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW_GET_PRIVATE (self);
+	
+	on_change(GTK_WIDGET(widget), self);
 	
 	const gint port_number = 
 		modest_serversecurity_combo_box_get_active_serversecurity_port (
@@ -153,6 +165,8 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 		priv->entry_outgoingserver = gtk_entry_new ();
 	/* Auto-capitalization is the default, so let's turn it off: */
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_outgoingserver), HILDON_GTK_INPUT_MODE_FULL);
+	g_signal_connect(G_OBJECT(priv->entry_outgoingserver), "changed", G_CALLBACK(on_change), self);
+	
 	GtkWidget *caption = hildon_caption_new (sizegroup, 
 		_("mcen_li_emailsetup_smtp"), priv->entry_outgoingserver, NULL, HILDON_CAPTION_OPTIONAL);
 	gtk_widget_show (priv->entry_outgoingserver);
@@ -164,6 +178,7 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 		priv->combo_outgoing_auth = GTK_WIDGET (modest_secureauth_combo_box_new ());
 	caption = hildon_caption_new (sizegroup, _("mcen_li_emailsetup_secure_authentication"), 
 		priv->combo_outgoing_auth, NULL, HILDON_CAPTION_OPTIONAL);
+	g_signal_connect (G_OBJECT (priv->combo_outgoing_auth), "changed", G_CALLBACK(on_change), self);
 	gtk_widget_show (priv->combo_outgoing_auth);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (caption);
@@ -174,6 +189,7 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_user_username), HILDON_GTK_INPUT_MODE_FULL);
 	caption = hildon_caption_new (sizegroup, _("mail_fi_username"), 
 		priv->entry_user_username, NULL, HILDON_CAPTION_MANDATORY);
+	g_signal_connect(G_OBJECT(priv->entry_user_username), "changed", G_CALLBACK(on_change), self);
 	gtk_widget_show (priv->entry_user_username);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (caption);
@@ -196,6 +212,7 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	/* gtk_entry_set_invisible_char (GTK_ENTRY (priv->entry_user_password), '*'); */
 	caption = hildon_caption_new (sizegroup, 
 		_("mail_fi_password"), priv->entry_user_password, NULL, HILDON_CAPTION_OPTIONAL);
+	g_signal_connect(G_OBJECT(priv->entry_user_password), "changed", G_CALLBACK(on_change), self);
 	gtk_widget_show (priv->entry_user_password);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (caption);
@@ -218,6 +235,7 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 		priv->entry_port = GTK_WIDGET (hildon_number_editor_new (0, 65535));
 	caption = hildon_caption_new (sizegroup, 
 		_("mcen_li_emailsetup_smtp"), priv->entry_port, NULL, HILDON_CAPTION_OPTIONAL);
+	/* FIXME: There is no changed signal for hildon_number_editor */
 	gtk_widget_show (priv->entry_port);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (caption);
@@ -230,6 +248,7 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	gtk_dialog_add_button (GTK_DIALOG (self), GTK_STOCK_OK, GTK_RESPONSE_OK);
 	gtk_dialog_add_button (GTK_DIALOG (self), GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL);
 	
+	priv->is_dirty = FALSE;
 	
 	gtk_widget_show (box);
 	
@@ -274,6 +293,10 @@ modest_connection_specific_smtp_edit_window_set_connection (
 		/* port: */
 		hildon_number_editor_set_value (
 			HILDON_NUMBER_EDITOR (priv->entry_port), data->port);
+		
+		
+		/* This will cause changed signals so we set dirty back to FALSE */
+		priv->is_dirty = FALSE;
 	}
 }
 
@@ -306,4 +329,13 @@ modest_connection_specific_smtp_edit_window_get_settings (
 			HILDON_NUMBER_EDITOR (priv->entry_port));
 			
 	return result;
+}
+
+gboolean modest_connection_specific_smtp_edit_window_is_dirty(
+	ModestConnectionSpecificSmtpEditWindow *window)
+{
+	ModestConnectionSpecificSmtpEditWindowPrivate *priv = 
+		CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW_GET_PRIVATE (window);
+	
+	return priv->is_dirty;
 }

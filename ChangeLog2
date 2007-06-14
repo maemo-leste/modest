@@ -1,3 +1,18 @@
+2007-06-14  Johannes Schmid <johannes.schmid@openismus.com>
+
+	* src/maemo/modest-connection-specific-smtp-edit-window.c:
+	(on_change), (on_combo_security_changed),
+	(modest_connection_specific_smtp_edit_window_init),
+	(modest_connection_specific_smtp_edit_window_set_connection),
+	(modest_connection_specific_smtp_edit_window_is_dirty):
+	* src/maemo/modest-connection-specific-smtp-edit-window.h:
+	* src/maemo/modest-connection-specific-smtp-window.c:
+	(on_button_edit):
+	
+	Show an comfirmation dialog for the smpt-edit-window if there are
+	unsaved changes and the user hits cancel.
+	(projects.maemo.org but NB#60479
+
 2007-06-14  Armin Burgmeier  <armin@openismus.com>
 
 	* src/maemo/easysetup/modest-easysetup-wizard.c:

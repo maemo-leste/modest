@@ -17,6 +17,8 @@
 #include <gtk/gtkvbox.h>
 #include <gtk/gtkstock.h>
 
+#include "modest-hildon-includes.h"
+
 #include <glib/gi18n.h>
 
 G_DEFINE_TYPE (ModestConnectionSpecificSmtpWindow, modest_connection_specific_smtp_window, GTK_TYPE_WINDOW);
@@ -232,33 +234,63 @@ on_button_edit (GtkButton *button, gpointer user_data)
 		}
 			
 		gtk_window_set_transient_for (GTK_WINDOW (self), GTK_WINDOW (window));
-		gint response = gtk_dialog_run (GTK_DIALOG (window));
-		gtk_widget_hide (window);
 		
-		if (response == GTK_RESPONSE_OK) {
-			/* Delete any previous data for this row: */
-			if (data) 
-			{
-				modest_account_mgr_free_server_account_data (priv->account_manager, data);
-				data = NULL;
+		gboolean dialog_finished = FALSE;
+		while (!dialog_finished)
+		{
+			gint response = gtk_dialog_run (GTK_DIALOG (window));
+			if (response == GTK_RESPONSE_OK) {
+				gtk_widget_hide (window);
+				dialog_finished = TRUE;
+				/* Delete any previous data for this row: */
+				if (data) 
+				{
+					modest_account_mgr_free_server_account_data (priv->account_manager, data);
+					data = NULL;
+				}
+				
+				/* Get the new account data and save it in the row for later:
+				 * We free this in finalize(),
+				 * and save it to our configuration in 
+				 * modest_connection_specific_smtp_window_save_server_accounts(). */
+				data = modest_connection_specific_smtp_edit_window_get_settings (
+							MODEST_CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW (window), 
+							priv->account_manager);
+				
+				const gchar* server_name = data ? data->hostname : NULL;
+				gtk_list_store_set (GTK_LIST_STORE (priv->model), &iter, 
+						MODEL_COL_SERVER_ACCOUNT_DATA, data,
+						MODEL_COL_SERVER_NAME, server_name,
+						-1);
 			}
-			
-			/* Get the new account data and save it in the row for later:
-			 * We free this in finalize(),
-			 * and save it to our configuration in 
-			 * modest_connection_specific_smtp_window_save_server_accounts(). */
-			data = modest_connection_specific_smtp_edit_window_get_settings (
-						MODEST_CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW (window), 
-						priv->account_manager);
-			
-			const gchar* server_name = data ? data->hostname : NULL;
-			gtk_list_store_set (GTK_LIST_STORE (priv->model), &iter, 
-					MODEL_COL_SERVER_ACCOUNT_DATA, data,
-					MODEL_COL_SERVER_NAME, server_name,
-					-1);
+			else
+			{
+				if (!modest_connection_specific_smtp_edit_window_is_dirty(
+						MODEST_CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW(window)))
+				{
+					gtk_widget_hide(window);
+					dialog_finished = TRUE;
+				}
+				else
+				{
+						
+					/* FIXME: Add a logical ID here */
+					GtkDialog *dialog = GTK_DIALOG (hildon_note_new_confirmation (GTK_WINDOW (window), 
+						_("All changes made to the SMTP settings will be lost. Continue anyway?")));
+					/* TODO: These button names will be ambiguous, and not specified in the UI specification. */
+			 
+			 		const gint dialog_response = gtk_dialog_run (dialog);
+			 		gtk_widget_destroy (GTK_WIDGET (dialog));
+			 
+					if (dialog_response == GTK_RESPONSE_OK)
+					{
+						gtk_widget_hide(window);
+						dialog_finished = TRUE;
+					}
+				}
+			}
 		}
 	}
-	
 	g_free (connection_name);
 	g_free (id);
 	g_free (server_account_name);
