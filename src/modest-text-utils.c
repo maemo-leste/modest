@@ -149,7 +149,7 @@ modest_text_utils_cite (const gchar *text,
 			const gchar *from,
 			time_t sent_date)
 {
-	gchar *tmp, *retval;
+	gchar *retval;
 	gchar *tmp_sig;
 
 	g_return_val_if_fail (text, NULL);
@@ -163,10 +163,8 @@ modest_text_utils_cite (const gchar *text,
 		tmp_sig = g_strdup (signature);
 	}
 
-	tmp = cite (sent_date, from);
-	retval = g_strdup_printf ("%s%s%s\n", tmp_sig, tmp, text);
+	retval = g_strdup_printf ("\n%s\n", tmp_sig);
 	g_free (tmp_sig);
-	g_free (tmp);
 
 	return retval;
 }
