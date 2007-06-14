@@ -275,29 +275,28 @@ text_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 		gint number = 0;
 		
 		if (modest_tny_folder_is_local_folder (TNY_FOLDER (instance))) {
-			TnyFolderType folder_type
-				= modest_tny_folder_get_local_folder_type (TNY_FOLDER (instance));
-			if (folder_type != TNY_FOLDER_TYPE_UNKNOWN) {
+			type = modest_tny_folder_get_local_folder_type (TNY_FOLDER (instance));
+			if (type != TNY_FOLDER_TYPE_UNKNOWN) {
 				g_free (fname);
-				fname = g_strdup(modest_local_folder_info_get_type_display_name (folder_type));
+				fname = g_strdup(modest_local_folder_info_get_type_display_name (type));
 			}
 		}
 
-		/* Select the number to show */
+		/* Select the number to show: the unread or unsent messages */
 		if ((type == TNY_FOLDER_TYPE_DRAFTS) || (type == TNY_FOLDER_TYPE_OUTBOX))
 			number = all;
 		else
 			number = unread;
-
-		/* Use bold font style if there are unread messages */
-		if (unread > 0) {
-			item_name = g_strdup_printf ("%s (%d)", fname, unread);
+		
+		/* Use bold font style if there are unread or unset messages */
+		if (number > 0) {
+			item_name = g_strdup_printf ("%s (%d)", fname, number);
 			item_weight = 800;
 		} else {
 			item_name = g_strdup (fname);
 			item_weight = 400;
 		}
-
+		
 	} else if (TNY_IS_ACCOUNT (instance)) {
 		/* If it's a server account */
 		if (modest_tny_account_is_virtual_local_folders (
