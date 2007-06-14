@@ -305,7 +305,7 @@ save_settings_header_view (ModestConf *conf, ModestHeaderView *header_view,
 		cursor = g_list_next (cursor);
 	}
 
-	if (str->str == NULL) {
+	if ((str->str == NULL) || (strlen(str->str) == 0)) {
 		/* TODO: Find out why this happens sometimes. */
 		g_warning ("DEBUG: %s: Attempting to write an empty value to "
 			"gconf key %s. Preventing.", __FUNCTION__, key);
