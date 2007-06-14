@@ -803,6 +803,9 @@ modest_folder_view_update_model (ModestFolderView *self,
 		g_object_unref (filter_model);
 			
 	g_object_unref (sortable);
+
+	/* Select the first inbox or the local account if not found */
+	modest_folder_view_select_first_inbox_or_local (self);
 			
 	return TRUE;
 }

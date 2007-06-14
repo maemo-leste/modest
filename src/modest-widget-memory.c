@@ -450,9 +450,6 @@ restore_settings_folder_view (ModestConf *conf,
 
 	g_free (key);
 
-	/* Select the first INBOX folder */
-	modest_folder_view_select_first_inbox_or_local (folder_view);
-
 	return TRUE;
 }
 
