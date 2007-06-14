@@ -1231,11 +1231,12 @@ on_before_next (ModestWizardDialog *dialog, GtkWidget *current_page, GtkWidget *
 			
 		if (!modest_text_utils_validate_email_address (email_address)) {
 			/* Warn the user via a dialog: */
-			show_error (GTK_WINDOW (account_wizard), _("mcen_ib_invalid_email"));
+			hildon_banner_show_information (NULL, NULL, _("mcen_ib_invalid_email"));
                                              
 			/* Return focus to the email address entry: */
 			gtk_widget_grab_focus (account_wizard->entry_user_email);
-            
+			gtk_editable_select_region (GTK_EDITABLE (account_wizard->entry_user_email), 0, -1);
+
 			return FALSE;
 		}
 		

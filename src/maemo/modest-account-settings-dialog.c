@@ -837,11 +837,12 @@ check_data (ModestAccountSettingsDialog *self)
 			
 	if (!modest_text_utils_validate_email_address (email_address)) {
 		/* Warn the user via a dialog: */
-		show_error (GTK_WINDOW (self), _("mcen_ib_invalid_email"));
+		/*show_error (GTK_WINDOW (self), _("mcen_ib_invalid_email"));*/
+		hildon_banner_show_information (NULL, NULL, _("mcen_ib_invalid_email"));
                                          
-        /* Return focus to the email address entry: */
-        gtk_widget_grab_focus (self->entry_user_email);
-        
+	        /* Return focus to the email address entry: */
+        	gtk_widget_grab_focus (self->entry_user_email);
+		gtk_editable_select_region (GTK_EDITABLE (self->entry_user_email), 0, -1);
 		return FALSE;
 	}
 	
@@ -883,7 +884,7 @@ on_response (GtkDialog *wizard_dialog,
 	if (prevent_response) {
 		/* This is a nasty hack. murrayc. */
 		/* Don't let the dialog close */
-    	g_signal_stop_emission_by_name (wizard_dialog, "response");
+		g_signal_stop_emission_by_name (wizard_dialog, "response");
 		return;	
 	}
 		

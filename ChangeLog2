@@ -1,3 +1,10 @@
+2007-06-14  Armin Burgmeier  <armin@openismus.com>
+
+	* src/maemo/easysetup/modest-easysetup-wizard.c:
+	* src/maemo/modest-account-settings-dialog.c: Show "invalid email
+	address" info in banner instead of node, and select all the text as
+	per UI spec. This fixes projects.maemo.org bug NB#60550.
+
 2007-06-14  set REAL_NAME environment variable  <set EMAIL_ADDRESS environment variable>
 
 	reviewed by: <delete if not using a buddy>
