@@ -190,7 +190,9 @@ modest_details_dialog_set_header_default (ModestDetailsDialog *self,
 	gchar *size_s;
 	TnyFolder *folder;
 	TnyFolderType folder_type;
-
+#define DATE_TIME_BUFFER_SIZE 128
+	gchar date_time_buffer [DATE_TIME_BUFFER_SIZE];
+	
 	/* Set window title & Add close button */
 	gtk_window_set_title (GTK_WINDOW (self), _("mcen_ti_message_properties"));
 	gtk_dialog_add_button (GTK_DIALOG (self), _("mcen_bd_close"), GTK_RESPONSE_CLOSE);
@@ -222,28 +224,24 @@ modest_details_dialog_set_header_default (ModestDetailsDialog *self,
 	modest_details_dialog_add_data (self, _("mcen_fi_message_properties_subject"), subject);
 
 	/* Set received (optional) */
-	if ((folder_type != TNY_FOLDER_TYPE_SENT) &&
+	if (received && (folder_type != TNY_FOLDER_TYPE_SENT) &&
 	    (folder_type != TNY_FOLDER_TYPE_DRAFTS) &&
 	    (folder_type != TNY_FOLDER_TYPE_OUTBOX)) {
-		gchar *received_s;
 
-		received_s = modest_text_utils_get_display_date (received);
-		if (received_s == NULL)
-			received_s = g_strdup (received_s);
-		modest_details_dialog_add_data (self, _("mcen_fi_message_properties_received"), received_s);
-		g_free (received_s);
+		modest_text_utils_strftime (date_time_buffer, DATE_TIME_BUFFER_SIZE, "%x %X",
+					    received);
+		modest_details_dialog_add_data (self, _("mcen_fi_message_properties_received"),
+						date_time_buffer);
 	}
 
 	/* Set date sent (optional) */
-	if ((folder_type != TNY_FOLDER_TYPE_DRAFTS)&&
+	if (sent && (folder_type != TNY_FOLDER_TYPE_DRAFTS)&&
 	    (folder_type != TNY_FOLDER_TYPE_OUTBOX)) {
-		gchar *sent_s;
 
-		sent_s = modest_text_utils_get_display_date (sent);
-		if (sent_s == NULL)
-			sent_s = g_strdup (sent_s);
-		modest_details_dialog_add_data (self, _("mcen_fi_message_properties_sent"), sent_s);
-		g_free (sent_s);
+		modest_text_utils_strftime (date_time_buffer, DATE_TIME_BUFFER_SIZE, "%x %X",
+					    sent);
+		modest_details_dialog_add_data (self, _("mcen_fi_message_properties_sent"),
+						date_time_buffer);
 	}
 
 	/* Set To and CC */
