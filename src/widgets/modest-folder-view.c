@@ -1666,6 +1666,10 @@ modest_folder_view_select_first_inbox_or_local (ModestFolderView *self)
 	GtkTreeIter iter, inbox_iter;
 	GtkTreeSelection *sel;
 
+	/* Do not set it if the folder view was not painted */
+	if (!GTK_WIDGET_MAPPED (self))
+		return;
+
 	model = gtk_tree_view_get_model (GTK_TREE_VIEW (self));
 	if (!model)
 		return;
