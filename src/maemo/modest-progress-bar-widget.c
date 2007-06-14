@@ -191,13 +191,6 @@ modest_progress_bar_widget_init (ModestProgressBarWidget *self)
 }
 
 static void
-destroy_observable_data (ObservableData *data)
-{
-	g_signal_handler_disconnect (data->mail_op, data->signal_handler);
-	g_object_unref (data->mail_op);
-}
-
-static void
 modest_progress_bar_widget_finalize (GObject *obj)
 {
 	ModestProgressBarWidgetPrivate *priv;
@@ -207,8 +200,10 @@ modest_progress_bar_widget_finalize (GObject *obj)
 		GSList *tmp;
 
 		for (tmp = priv->observables; tmp; tmp = g_slist_next (tmp)) {
-			destroy_observable_data ((ObservableData *) tmp->data);
-			g_free (tmp->data);
+			ObservableData *ob_data = tmp->data;
+			g_signal_handler_disconnect (ob_data->mail_op, ob_data->signal_handler);
+			g_object_unref (ob_data->mail_op);
+			g_free (ob_data);
 		}
 		g_slist_free (priv->observables);
 		priv->observables = NULL;
@@ -268,15 +263,20 @@ modest_progress_bar_remove_operation (ModestProgressObject *self,
 
 	/* Find item */
 	tmp_data = g_malloc0 (sizeof (ObservableData));
-        tmp_data->mail_op = g_object_ref (mail_op);  
+        tmp_data->mail_op = mail_op;  
 	link = g_slist_find_custom (priv->observables,
 				    tmp_data,
 				    (GCompareFunc) compare_observable_data);
 	
 	/* Remove the item */
 	if (link) {
-		priv->observables = g_slist_remove_link (priv->observables, link);
-		destroy_observable_data ((ObservableData *) link->data);
+		ObservableData *ob_data = link->data;
+		g_signal_handler_disconnect (ob_data->mail_op, ob_data->signal_handler);
+		g_object_unref (ob_data->mail_op);
+		g_free (ob_data);
+		priv->observables = g_slist_delete_link (priv->observables, link);
+		tmp_data->mail_op = NULL;
+		link = NULL;
 	}
 	
 	/* Update the current mail operation */

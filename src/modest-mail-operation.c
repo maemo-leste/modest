@@ -1,3 +1,4 @@
+
 /* Copyright (c) 2006, Nokia Corporation
  * All rights reserved.
  *
@@ -843,7 +844,6 @@ update_account_thread (gpointer thr_user_data)
 	ModestMailOperationPrivate *priv;
 	ModestTnySendQueue *send_queue;
 
-
 	info = (UpdateAccountInfo *) thr_user_data;
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(info->mail_op);
 
@@ -1040,7 +1040,7 @@ update_account_thread (gpointer thr_user_data)
 	/* Notify about operation end. Note that the info could be
 	   freed before this idle happens, but the mail operation will
 	   be still alive */
-	g_idle_add (notify_update_account_queue, info->mail_op);
+	g_idle_add (notify_update_account_queue, g_object_ref (info->mail_op));
 
 	/* Frees */
 	g_object_unref (query);
@@ -1669,7 +1669,7 @@ get_msgs_full_thread (gpointer thr_user_data)
 		priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
 
 	/* Notify about operation end */
-	g_idle_add (notify_update_account_queue, info->mail_op);
+	g_idle_add (notify_update_account_queue, g_object_ref (info->mail_op));
 
 	/* Free thread resources. Will be called after all previous idles */
 	g_idle_add_full (G_PRIORITY_DEFAULT_IDLE + 1, get_msgs_full_destroyer, info, NULL);
