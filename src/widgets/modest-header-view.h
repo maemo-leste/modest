@@ -172,7 +172,7 @@ TnyFolder *modest_header_view_get_folder (ModestHeaderView *self);
 /**
  * modest_header_view_set_columns:
  * @self: a ModestHeaderView instance
- * @columns: a list of ModestHeaderViewColumn
+ * @columns: a list of gint ModestHeaderViewColumn column IDs, using GINT_TO_POINTER() and GPOINTER_TO_INT().
  * @type: #TnyFolderType type
  * 
  * set the columns for this ModestHeaderView.

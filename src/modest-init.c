@@ -122,6 +122,54 @@ static const TnyFolderType LOCAL_FOLDERS[] = {
 };
 #endif /* MODEST_PLATFORM_MAEMO */
 
+static GList* new_cold_ids_gslist_from_array( const FolderCols* cols, guint col_num)
+{
+	GList *result = NULL;
+	
+	guint i = 0;
+	for (i = 0; i < col_num; ++i) {
+		result = g_list_append (result, GINT_TO_POINTER (cols[i].col));
+	}
+	
+	return result;
+}
+
+GList * modest_init_get_default_header_view_column_ids (TnyFolderType folder_type, ModestHeaderViewStyle style)
+{
+		GList *result = NULL;
+		
+		switch (folder_type) {
+		case TNY_FOLDER_TYPE_SENT:
+		case TNY_FOLDER_TYPE_DRAFTS:
+			if (style == MODEST_HEADER_VIEW_STYLE_DETAILS)
+				result = new_cold_ids_gslist_from_array (OUTBOX_COLUMNS_DETAILS,
+				      G_N_ELEMENTS(OUTBOX_COLUMNS_DETAILS));
+			else if (style == MODEST_HEADER_VIEW_STYLE_TWOLINES)
+				result = new_cold_ids_gslist_from_array (SENT_COLUMNS_TWOLINES,
+				      G_N_ELEMENTS(SENT_COLUMNS_TWOLINES));
+		break;
+		case TNY_FOLDER_TYPE_OUTBOX:
+			if (style == MODEST_HEADER_VIEW_STYLE_TWOLINES)
+				result = new_cold_ids_gslist_from_array (OUTBOX_COLUMNS_TWOLINES,
+				      G_N_ELEMENTS(OUTBOX_COLUMNS_TWOLINES));
+		break;
+
+		default:
+			if (style == MODEST_HEADER_VIEW_STYLE_DETAILS)
+				result =  new_cold_ids_gslist_from_array (INBOX_COLUMNS_DETAILS,
+				      G_N_ELEMENTS(INBOX_COLUMNS_DETAILS));
+			else if (style == MODEST_HEADER_VIEW_STYLE_TWOLINES)
+				result = new_cold_ids_gslist_from_array (INBOX_COLUMNS_TWOLINES,
+				      G_N_ELEMENTS(INBOX_COLUMNS_TWOLINES));
+		};
+		
+		if (!result) {
+			g_warning("DEBUG: %s: No default columns IDs found for "
+				"folder_type=%d, style=%d\n", __FUNCTION__, folder_type, style);	
+		}
+		
+		return result;
+}
 
 gboolean
 modest_init_init_core (void)

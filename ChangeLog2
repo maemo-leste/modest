@@ -1,3 +1,16 @@
+2007-06-14  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/modest-init.h:
+	* src/modest-init.c: 
+	Added modest_init_get_default_header_view_column_ids().
+
+	* src/modest-widget-memory.c: (restore_settings_header_view):
+	Use the new function to get defaults, if the gconf key is empty, 
+	instead of not creating any columns. This seems to fix the 
+	empty right-hand pane problems.
+	
+	* src/widgets/modest-header-view.h: Improved documentation.
+
 2007-06-13  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/maemo/easysetup/modest-easysetup-wizard.c: (create_account):

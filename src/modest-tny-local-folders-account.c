@@ -245,7 +245,7 @@ void modest_tny_local_folders_account_add_merged_outbox_folders (ModestTnyLocalF
 	}
 	
 	/* Add the merged outbox folder to the virtual local-folders store: */
-	printf ("Debug: %s: adding merged outbox.\n", __FUNCTION__);
+	/* printf ("Debug: %s: adding merged outbox.\n", __FUNCTION__); */
 	modest_tny_local_folders_account_add_extra_folder (self, TNY_FOLDER(merged_outbox));
 	g_object_unref (merged_outbox);
 	merged_outbox = NULL;

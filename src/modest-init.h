@@ -33,6 +33,7 @@
 #include <glib.h>
 #include <glib-object.h>
 #include <modest-runtime.h>
+#include <widgets/modest-header-view.h>
 
 G_BEGIN_DECLS
 
@@ -91,6 +92,15 @@ gboolean modest_init_local_folders  (const gchar* location_filepath);
  */
 gboolean modest_init_one_local_folder (gchar *maildir_path);
 
+/**
+ * modest_init_get_default_header_view_column_widths:
+ *
+ * Get a GList* containing the default column ids, 
+ * for when suitable values cannot be retrieved from gconf.
+ * The result should be freed with g_slist_free().
+ * Use (ModestHeaderViewColumn(GPOINTER_TO_INT(item->data)) to get the IDs.
+ */
+GList * modest_init_get_default_header_view_column_ids (TnyFolderType folder_type, ModestHeaderViewStyle style);
 
 G_END_DECLS
 

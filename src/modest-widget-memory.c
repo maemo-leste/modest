@@ -33,6 +33,7 @@
 #include <modest-account-mgr-helpers.h>
 #include <modest-tny-platform-factory.h>
 #include <modest-tny-folder.h>
+#include <modest-init.h>
 #include <widgets/modest-header-view.h>
 #include <widgets/modest-msg-view.h>
 #include <widgets/modest-folder-view.h>
@@ -346,6 +347,18 @@ restore_settings_header_view (ModestConf *conf, ModestHeaderView *header_view,
 			cursor = strchr (cursor + 1, ' ');
 		}
 		g_free (data);	
+		
+		/* Use defaults if gconf has no, or empty information: */
+		/* We don't know why the value is empty sometimes. */
+		if (g_list_length(cols) == 0) {
+			g_warning("%s: gconf key %s was empty. Using default column IDs.\n", 
+				__FUNCTION__, key);
+			g_list_free (cols);
+			cols = NULL;
+		}
+		
+		if (!cols)
+			cols = modest_init_get_default_header_view_column_ids (type, style);
 		
 		if (cols) {
 			GList *viewcolumns, *colcursor, *widthcursor, *sortablecursor;
