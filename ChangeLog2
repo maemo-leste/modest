@@ -1,3 +1,15 @@
+2007-06-14  Armin Burgmeier  <armin@openismus.com>
+
+	* src/widgets/modest-attachments-view.h:
+	* src/widgets/modest-attachments-view.c: Added
+	modest_attachments_view_has_attachments() and fixed coordinate
+	transformation in get_att_view_at_coords(). This fixes attachment
+	selection.
+
+	* src/widgets/modest-msg-view.c: Make use of
+	modest_attachments_view_has_attachments() to decide whether to show
+	attachments in the header.
+
 2007-06-14  Johannes Schmid <johannes.schmid@openismus.com>
 
 	* src/maemo/modest-connection-specific-smtp-edit-window.c:

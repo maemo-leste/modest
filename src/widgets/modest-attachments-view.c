@@ -531,8 +531,8 @@ get_att_view_at_coords (ModestAttachmentsView *atts_view,
 		w = att_view->allocation.width;
 		h = att_view->allocation.height;
 
-		int_x = (gint) x;
-		int_y = (gint) y;
+		int_x = (gint) x - GTK_WIDGET (atts_view)->allocation.x;
+		int_y = (gint) y - GTK_WIDGET (atts_view)->allocation.y;
 
 		if ((x >= pos_x) && (x <= (pos_x + w)) && (y >= pos_y) && (y <= (pos_y + h))) {
 			result = att_view;
@@ -718,6 +718,23 @@ modest_attachments_view_select_all (ModestAttachmentsView *atts_view)
 	g_list_free (children);
 
 	own_clipboard (atts_view);
+}
+
+gboolean
+modest_attachments_view_has_attachments (ModestAttachmentsView *atts_view)
+{
+	ModestAttachmentsViewPrivate *priv;
+	GList *children;
+	gboolean result;
+
+	g_return_val_if_fail (MODEST_IS_ATTACHMENTS_VIEW (atts_view), FALSE);
+	priv = MODEST_ATTACHMENTS_VIEW_GET_PRIVATE (atts_view);
+
+	children = gtk_container_get_children (GTK_CONTAINER (priv->box));
+	result = (children != NULL);
+	g_list_free (children);
+
+	return result;
 }
 
 static void

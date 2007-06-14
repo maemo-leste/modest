@@ -1369,16 +1369,13 @@ modest_msg_view_set_message (ModestMsgView *self, TnyMsg *msg)
 	
 	body = modest_tny_msg_find_body_part (msg,TRUE);
 	if (body) {
-		GList *att_children;
 		if (tny_mime_part_content_type_is (body, "text/html"))
 			set_html_message (self, body, msg);
 		else
 			set_text_message (self, body, msg);
 
-		att_children = gtk_container_get_children (GTK_CONTAINER (priv->attachments_view));
-		if (att_children != NULL) {
+		if(modest_attachments_view_has_attachments (MODEST_ATTACHMENTS_VIEW (priv->attachments_view))) {
 			gtk_widget_show_all (priv->attachments_box);
-			g_list_free (att_children);
 		} else {
 			gtk_widget_hide_all (priv->attachments_box);
 		}

@@ -74,6 +74,7 @@ GList *modest_attachments_view_get_attachments (ModestAttachmentsView *attachmen
 GList *modest_attachments_view_get_selection (ModestAttachmentsView *attachments_view);
 void modest_attachments_view_select_all (ModestAttachmentsView *attachments_view);
 
+gboolean modest_attachments_view_has_attachments (ModestAttachmentsView *attachments_view);
 
 G_END_DECLS
 
