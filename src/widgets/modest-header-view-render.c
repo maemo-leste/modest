@@ -255,7 +255,14 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 	g_object_set (G_OBJECT (recipient_cell), "markup", header, NULL);	
 	set_common_flags (recipient_cell, flags);
 
-	tmp_date = modest_text_utils_get_display_date (date);
+	/* in some rare cases, mail might have no Date: field. it case,
+	 * don't show the date, instead of bogus 1/1/1970
+	 */
+	if (date)
+		tmp_date = modest_text_utils_get_display_date (date);
+	else
+		tmp_date = g_strdup ("");
+	
 	display_date = g_strdup_printf ("<small>%s</small>", tmp_date);
 	g_object_set (G_OBJECT (date_cell), "markup", display_date, NULL);
 	g_free (tmp_date);
