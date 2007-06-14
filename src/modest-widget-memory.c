@@ -276,6 +276,11 @@ save_settings_header_view (ModestConf *conf, ModestHeaderView *header_view,
 								  MODEST_WIDGET_MEMORY_PARAM_COLUMN_WIDTH);
 
 	cursor = cols = modest_header_view_get_columns (header_view);
+	if (!cols) {
+		g_warning ("DEBUG: %s: modest_header_view_get_columns() returned NULL.",
+			 __FUNCTION__);
+	}
+	
 	str = g_string_new (NULL);
 
 	/* NOTE: the exact details of this format are important, as they
@@ -300,7 +305,13 @@ save_settings_header_view (ModestConf *conf, ModestHeaderView *header_view,
 		cursor = g_list_next (cursor);
 	}
 
-	modest_conf_set_string (conf, key, str->str, NULL);
+	if (str->str == NULL) {
+		/* TODO: Find out why this happens sometimes. */
+		g_warning ("DEBUG: %s: Attempting to write an empty value to "
+			"gconf key %s. Preventing.", __FUNCTION__, key);
+	}
+	else
+		modest_conf_set_string (conf, key, str->str, NULL);
 
 	g_free (key);	
 	g_string_free (str, TRUE);

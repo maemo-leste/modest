@@ -1618,6 +1618,10 @@ set_toolbar_mode (ModestMainWindow *self,
 	parent_priv = MODEST_WINDOW_GET_PRIVATE(self);
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
 
+	/* In case this was called before the toolbar exists: */
+	if (!(parent_priv->toolbar))
+		return;
+
 	g_return_if_fail (GTK_IS_TOOLBAR(parent_priv->toolbar)); 
 	
 	sort_action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ToolbarSort");
