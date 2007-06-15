@@ -321,7 +321,9 @@ modest_attachment_view_instance_init (GTypeInstance *instance, gpointer g_class)
 	
 	pango_layout_set_ellipsize (priv->layout_full_filename, PANGO_ELLIPSIZE_NONE);
 
-	gtk_event_box_set_above_child (GTK_EVENT_BOX (instance), TRUE);
+	gtk_event_box_set_above_child (GTK_EVENT_BOX (instance), FALSE);
+	gtk_event_box_set_visible_window (GTK_EVENT_BOX (instance), TRUE);
+	gtk_widget_set_events (GTK_WIDGET (instance), 0);
 
 	GTK_WIDGET_UNSET_FLAGS (GTK_WIDGET (instance), GTK_CAN_FOCUS);
 
