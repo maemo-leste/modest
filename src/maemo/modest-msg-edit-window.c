@@ -1175,7 +1175,7 @@ modest_msg_edit_window_set_format_state (ModestMsgEditWindow *self,
 		wp_text_buffer_set_attribute (WP_TEXT_BUFFER (priv->text_buffer), WPT_BOLD, (gpointer) (buffer_format->font));
 	}
 	if (buffer_format->cs.bullet) {
-		wp_text_buffer_set_attribute (WP_TEXT_BUFFER (priv->text_buffer), WPT_BULLET, (gpointer) (buffer_format->bullet));
+		wp_text_buffer_set_attribute (WP_TEXT_BUFFER (priv->text_buffer), WPT_BULLET, (gpointer) ((int)buffer_format->bullet));
 	}
 /* 	wp_text_buffer_set_format (WP_TEXT_BUFFER (priv->text_buffer), buffer_format); */
 	wp_text_buffer_thaw (WP_TEXT_BUFFER (priv->text_buffer));
