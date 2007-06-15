@@ -360,9 +360,13 @@ icon_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 		g_free (fname);
 		return;
 	}
-	
-	if (type == TNY_FOLDER_TYPE_NORMAL || type == TNY_FOLDER_TYPE_UNKNOWN) {
-		type = modest_tny_folder_guess_folder_type_from_name (fname);
+
+	/* We include the MERGE type here because it's used to create
+	   the local OUTBOX folder */
+	if (type == TNY_FOLDER_TYPE_NORMAL || 
+	    type == TNY_FOLDER_TYPE_UNKNOWN ||
+	    type == TNY_FOLDER_TYPE_MERGE) {
+		type = modest_tny_folder_guess_folder_type (TNY_FOLDER (instance));
 	}
 
 	switch (type) {

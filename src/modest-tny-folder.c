@@ -170,7 +170,7 @@ modest_tny_folder_get_rules   (TnyFolder *folder)
 		g_object_unref (G_OBJECT(account));
 
 		/* Neither INBOX not ROOT folders should me moveable */
-		folder_type = tny_folder_get_folder_type (folder);
+		folder_type = modest_tny_folder_guess_folder_type (folder);
 		if ((folder_type ==  TNY_FOLDER_TYPE_INBOX) ||
 		    (folder_type == TNY_FOLDER_TYPE_ROOT)) {
 			rules |= MODEST_FOLDER_RULES_FOLDER_NON_DELETABLE;
