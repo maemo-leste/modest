@@ -106,7 +106,6 @@ struct _ModestMailOperationPrivate {
 typedef struct _GetMsgAsyncHelper {	
 	ModestMailOperation *mail_op;
 	GetMsgAsyncUserCallback user_callback;	
-	guint pending_ops;
 	gpointer user_data;
 } GetMsgAsyncHelper;
 
@@ -1444,7 +1443,6 @@ void modest_mail_operation_get_msg (ModestMailOperation *self,
 		helper = g_slice_new0 (GetMsgAsyncHelper);
 		helper->mail_op = self;
 		helper->user_callback = user_callback;
-		helper->pending_ops = 1;
 		helper->user_data = user_data;
 
 		tny_folder_get_msg_async (folder, header, get_msg_cb, get_msg_status_cb, helper);
@@ -1478,8 +1476,6 @@ get_msg_cb (TnyFolder *folder,
 	self = helper->mail_op;
 	g_return_if_fail (MODEST_IS_MAIL_OPERATION(self));
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
-	
-	helper->pending_ops--;
 
 	/* Check errors and cancel */
 	if (*error) {
@@ -1503,14 +1499,12 @@ get_msg_cb (TnyFolder *folder,
 		helper->user_callback (self, NULL, msg, helper->user_data);
 	}
 
-	/* Free */
  out:
-	if (helper->pending_ops == 0) {
-		g_slice_free (GetMsgAsyncHelper, helper);
+	/* Free */
+	g_slice_free (GetMsgAsyncHelper, helper);
 		
-		/* Notify about operation end */
-		modest_mail_operation_notify_end (self);	
-	}
+	/* Notify about operation end */
+	modest_mail_operation_notify_end (self);	
 }
 
 static void     

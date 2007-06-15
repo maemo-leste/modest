@@ -2901,22 +2901,34 @@ do_headers_action (ModestWindow *win,
 {
 	TnyList *headers_list;
 	TnyIterator *iter;
+	TnyHeader *header;
+	TnyFolder *folder;
 
 	/* Get headers */
 	headers_list = get_selected_headers (win);
 	if (!headers_list)
 		return;
 
-	/* Call the function for each header */
+	/* Get the folder */
 	iter = tny_list_create_iterator (headers_list);
-	while (!tny_iterator_is_done (iter)) {
-		TnyHeader *header;
+	header = TNY_HEADER (tny_iterator_get_current (iter));
+	folder = tny_header_get_folder (header);
+	g_object_unref (header);
 
+	/* Call the function for each header */
+	while (!tny_iterator_is_done (iter)) {
 		header = TNY_HEADER (tny_iterator_get_current (iter));
 		func (header, win, user_data);
 		g_object_unref (header);
 		tny_iterator_next (iter);
 	}
+
+	/* Trick: do a poke status in order to speed up the signaling
+	   of observers */
+	tny_folder_poke_status (folder);
+
+	/* Frees */
+	g_object_unref (folder);
 	g_object_unref (iter);
 	g_object_unref (headers_list);
 }

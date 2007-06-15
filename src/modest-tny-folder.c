@@ -147,8 +147,10 @@ modest_tny_folder_get_rules   (TnyFolder *folder)
 		}
 	} else {
 		ModestTransportStoreProtocol proto;
-		TnyAccount *account =
-			modest_tny_folder_get_account ((TnyFolder*)folder);
+		TnyFolderType folder_type;
+		TnyAccount *account;
+
+		account = modest_tny_folder_get_account ((TnyFolder*)folder);
 		if (!account)
 			return -1; /* no account: nothing is allowed */
 		
@@ -166,6 +168,15 @@ modest_tny_folder_get_rules   (TnyFolder *folder)
 
 		}
 		g_object_unref (G_OBJECT(account));
+
+		/* Neither INBOX not ROOT folders should me moveable */
+		folder_type = tny_folder_get_folder_type (folder);
+		if ((folder_type ==  TNY_FOLDER_TYPE_INBOX) ||
+		    (folder_type == TNY_FOLDER_TYPE_ROOT)) {
+			rules |= MODEST_FOLDER_RULES_FOLDER_NON_DELETABLE;
+			rules |= MODEST_FOLDER_RULES_FOLDER_NON_MOVEABLE;
+			rules |= MODEST_FOLDER_RULES_FOLDER_NON_RENAMEABLE;
+		}
 	}
 	return rules;
 }

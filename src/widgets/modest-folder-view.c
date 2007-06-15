@@ -140,6 +140,7 @@ struct _ModestFolderViewPrivate {
 	gulong                changed_signal;
 	gulong                accounts_reloaded_signal;
 	gulong                account_removed_signal;
+	gulong                conf_key_signal;
 	
 	TnyFolderStoreQuery  *query;
 	guint                 timer_expander;
@@ -486,10 +487,10 @@ modest_folder_view_init (ModestFolderView *obj)
 	 * Track changes in the local account name (in the device it
 	 * will be the device name)
 	 */
-	g_signal_connect (G_OBJECT(conf), 
-			  "key_changed",
-			  G_CALLBACK(on_configuration_key_changed), obj);
-
+	priv->conf_key_signal = 
+		g_signal_connect (G_OBJECT(conf), 
+				  "key_changed",
+				  G_CALLBACK(on_configuration_key_changed), obj);
 }
 
 static void
@@ -540,6 +541,12 @@ modest_folder_view_finalize (GObject *obj)
 	g_free (priv->local_account_name);
 	g_free (priv->visible_account_id);
 	
+	if (priv->conf_key_signal) {
+		g_signal_handler_disconnect (modest_runtime_get_conf (),
+					     priv->conf_key_signal);
+		priv->conf_key_signal = 0;
+	}
+
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
