@@ -184,7 +184,8 @@ modest_progress_bar_widget_init (ModestProgressBarWidget *self)
 	gtk_progress_bar_set_ellipsize (GTK_PROGRESS_BAR (priv->progress_bar), PANGO_ELLIPSIZE_END);
 	gtk_widget_size_request (priv->progress_bar, &req);
 	gtk_container_add (GTK_CONTAINER (align), priv->progress_bar);
-	
+	gtk_widget_size_request (align, &req);
+
 	/* Add progress bar widget */	
 	gtk_box_pack_start (GTK_BOX(self), align, TRUE, TRUE, 0);
 	gtk_widget_show_all (GTK_WIDGET(self));       
@@ -230,7 +231,6 @@ modest_progress_bar_add_operation (ModestProgressObject *self,
 						 "progress-changed",
 						 G_CALLBACK (on_progress_changed),
 						 me);
-
 	if (priv->observables == NULL) {
 		priv->current = mail_op;
 	}
@@ -339,15 +339,15 @@ on_progress_changed (ModestMailOperation  *mail_op,
 		switch (state->op_type) {
 		case MODEST_MAIL_OPERATION_TYPE_RECEIVE:		
 			if (determined)
-/* 				msg = g_strdup_printf(_("mcen_me_receiving"), done, total); */
-				msg = g_strdup_printf("Receiving %d/%d", state->done, state->total);
+ 				msg = g_strdup_printf(_("mcen_me_receiving"),
+						      state->done, state->total); 
 			else 
-/* 				msg = g_strdup(_("mail_me_receiving")); */
-				msg = g_strdup("Receiving ...");
+ 				msg = g_strdup(_("mail_me_receiving"));
 			break;
 		case MODEST_MAIL_OPERATION_TYPE_SEND:		
 			if (determined)
-				msg = g_strdup_printf(_("mcen_me_sending"), state->done, state->total);
+				msg = g_strdup_printf(_("mcen_me_sending"), state->done,
+						      state->total);
 			else 
 				msg = g_strdup(_("mail_me_sending"));
 			break;
@@ -394,7 +394,7 @@ modest_progress_bar_widget_set_progress   (ModestProgressBarWidget *self,
 	priv = MODEST_PROGRESS_BAR_WIDGET_GET_PRIVATE (self);
 	
 	/* Set progress */
-	if (total != 0)
+	if (total != 100) /* FIXME: tinymail send 1/100 when it doesn't know better.. */
 		gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR (priv->progress_bar),
 					       (gdouble)done/(gdouble)total);
 	else
