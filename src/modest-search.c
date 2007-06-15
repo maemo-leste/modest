@@ -197,8 +197,8 @@ search_mime_part_strcmp (TnyMimePart *part, ModestSearch *search)
 	TnyStream *stream;
 	char       buffer[8193];
 	char      *chunk[2];
-	gsize      len;
-	gssize     nread;
+	gssize     len;
+	gsize     nread;
 	gboolean   found;
 	gboolean   res;
 
