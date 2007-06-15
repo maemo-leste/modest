@@ -262,7 +262,7 @@ modest_mail_header_view_set_header_default (TnyHeaderView *self, TnyHeader *head
 
 		priv->subject_box = gtk_hbox_new (FALSE, 0);
 		subject_label = gtk_label_new (NULL);
-		if (subject)
+		if (subject && (subject[0] != '\0'))
 			gtk_label_set_text (GTK_LABEL (subject_label), subject);
 		else
 			gtk_label_set_text (GTK_LABEL (subject_label), _("mail_va_no_subject"));
