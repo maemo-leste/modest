@@ -658,7 +658,7 @@ init_default_settings (ModestConf *conf)
 static void
 init_device_name (ModestConf *conf)
 {
-	int len = 255; /* max len */
+	unsigned int len = 255; /* max len */
 	gchar *devname = NULL;
 	
 	if (!g_file_get_contents("/etc/hostname", &devname, &len, NULL) || len < 2 || len > 254) {
