@@ -140,7 +140,7 @@ modest_text_utils_quote (const gchar *text,
 		retval = modest_text_utils_quote_plain_text (text, cited, signature, attachments, limit);
 	
 	g_free (cited);
-
+	
 	return retval;
 }
 
@@ -159,17 +159,30 @@ modest_text_utils_cite (const gchar *text,
 	g_return_val_if_fail (content_type, NULL);
 
 	if (!signature)
-		tmp_sig = g_strdup ("");
+		retval = g_strdup ("");
 	else if (!strcmp(content_type, "text/html")) {
-		tmp_sig = modest_text_utils_convert_to_html_body(signature);
+		tmp_sig = g_strconcat ("\n", signature, NULL);
+		retval = modest_text_utils_convert_to_html_body(tmp_sig);
+		g_free (tmp_sig);
 	} else {
-		tmp_sig = g_strdup (signature);
+		retval = g_strconcat ("\n", signature, NULL);
 	}
 
-	retval = g_strdup_printf ("\n%s\n", tmp_sig);
-	g_free (tmp_sig);
-
 	return retval;
+}
+
+static gchar *
+forward_cite (const gchar *from,
+		    const gchar *sent,
+		    const gchar *to,
+		    const gchar *subject)
+{
+	return g_strdup_printf ("%s\n%s %s\n%s %s\n%s %s\n%s %s\n", 
+				FORWARD_STRING, 
+				FROM_STRING, (from)?from:"",
+				SENT_STRING, sent,
+				TO_STRING, (to)?to:"",
+				SUBJECT_STRING, (subject)?subject:"");
 }
 
 gchar * 
@@ -182,47 +195,23 @@ modest_text_utils_inline (const gchar *text,
 			  const gchar *subject)
 {
 	gchar sent_str[101];
-	gchar *formatted_signature;
-	const gchar *plain_format = "%s%s\n%s %s\n%s %s\n%s %s\n%s %s\n\n%s";
-	const gchar *html_format = \
-		"%s%s<br>\n<table width=\"100%\" border=\"0\" cellspacing=\"2\" cellpadding=\"2\">\n" \
-		"<tr><td>%s</td><td>%s</td></tr>\n" \
-		"<tr><td>%s</td><td>%s</td></tr>\n" \
-		"<tr><td>%s</td><td>%s</td></tr>\n" \
-		"<tr><td>%s</td><td>%s</td></tr>\n" \
-		"<br><br>%s";
-	const gchar *format;
-
+	gchar *cited;
+	gchar *retval;
+	
 	g_return_val_if_fail (text, NULL);
 	g_return_val_if_fail (content_type, NULL);
-	g_return_val_if_fail (text, NULL);
 	
 	modest_text_utils_strftime (sent_str, 100, "%c", sent_date);
 
-	if (!strcmp (content_type, "text/html"))
-		/* TODO: extract the <body> of the HTML and pass it to
-		   the function */
-		format = html_format;
+	cited = forward_cite (from, sent_str, to, subject);
+	
+	if (content_type && strcmp (content_type, "text/html") == 0)
+		retval = modest_text_utils_quote_html (text, cited, signature, NULL, 80);
 	else
-		format = plain_format;
-
-	if (signature != NULL) {
-		if (!strcmp (content_type, "text/html")) {
-			formatted_signature = g_strconcat (signature, "<br/>", NULL);
-		} else {
-			formatted_signature = g_strconcat (signature, "\n", NULL);
-		}
-	} else {
-		formatted_signature = "";
-	}
-
-	return g_strdup_printf (format, formatted_signature, 
-				FORWARD_STRING,
-				FROM_STRING, (from) ? from : EMPTY_STRING,
-				SENT_STRING, sent_str,
-				TO_STRING, (to) ? to : EMPTY_STRING,
-				SUBJECT_STRING, (subject) ? subject : EMPTY_STRING,
-				text);
+		retval = modest_text_utils_quote_plain_text (text, cited, signature, NULL, 80);
+	
+	g_free (cited);
+	return retval;
 }
 
 /* just to prevent warnings:
@@ -786,6 +775,7 @@ modest_text_utils_quote_html (const gchar *text,
 		"</html>\n";
 	gchar *attachments_string = NULL;
 	gchar *q_attachments_string = NULL;
+	gchar *q_cite = NULL;
 	gchar *html_text = NULL;
 
 	if (signature == NULL)
@@ -795,8 +785,10 @@ modest_text_utils_quote_html (const gchar *text,
 
 	attachments_string = quoted_attachments (attachments);
 	q_attachments_string = modest_text_utils_convert_to_html_body (attachments_string);
+	q_cite = modest_text_utils_convert_to_html_body (cite);
 	html_text = modest_text_utils_convert_to_html_body (text);
-	result = g_strdup_printf (format, signature_result, cite, html_text, q_attachments_string);
+	result = g_strdup_printf (format, signature_result, q_cite, html_text, q_attachments_string);
+	g_free (q_cite);
 	g_free (html_text);
 	g_free (attachments_string);
 	g_free (q_attachments_string);
