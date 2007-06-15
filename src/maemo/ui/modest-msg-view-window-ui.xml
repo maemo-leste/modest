@@ -112,7 +112,6 @@
   </toolbar>
 
   <popup name="ToolbarReplyCSM">
-      <menuitem name="MessageReplyMenu" action="EmailReply"/>
       <menuitem name="MessageReplyAllMenu" action="EmailReplyAll"/>
       <menuitem name="MessageForwardMenu" action="EmailForward"/>
   </popup>
