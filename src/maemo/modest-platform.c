@@ -50,6 +50,7 @@
 #include <hildon/hildon-notification.h>
 
 #define HILDON_OSSO_URI_ACTION "uri-action"
+#define URI_ACTION_COPY "copy:"
 
 static osso_context_t *osso_context = NULL;
 	
@@ -271,8 +272,8 @@ modest_platform_activate_file (const gchar *path, const gchar *mime_type)
 }
 
 typedef struct  {
-	GSList * actions;
-	gchar *uri;
+	GSList *actions;
+	gchar  *uri;
 } ModestPlatformPopupInfo;
 
 static gboolean
@@ -304,7 +305,21 @@ activate_uri_popup_item (GtkMenuItem *menu_item,
 		g_printerr ("modest: no action name defined\n");
 		return;
 	}
+
+	/* special handling for the copy menu item -- copy the uri to the clipboard */
+	/* if it's a copy thingy, the uri will look like 'copy:http://slashdot.org' */
+	if (g_str_has_prefix (action_name, URI_ACTION_COPY)) {
+		GtkClipboard *clipboard = gtk_clipboard_get (GDK_NONE);
+		action_name += strlen(URI_ACTION_COPY); /* jump past the prefix */
+
+		if (g_str_has_prefix (action_name, "mailto:")) /* ignore mailto: prefixes */
+			action_name += strlen ("mailto:");
+		
+		gtk_clipboard_set_text (clipboard, action_name, strlen (action_name));
+		return; /* we're done */
+	}
 	
+	/* now, the real uri-actions... */
 	for (node = popup_info->actions; node != NULL; node = g_slist_next (node)) {
 #ifdef MODEST_HILDON_VERSION_0
 		OssoURIAction *action = (OssoURIAction *) node->data;
@@ -330,6 +345,7 @@ modest_platform_show_uri_popup (const gchar *uri)
 
 	if (uri == NULL)
 		return FALSE;
+	
 #ifdef MODEST_HILDON_VERSION_0
 	scheme = osso_uri_get_scheme_from_uri (uri, NULL);
 	actions_list = osso_uri_get_actions (scheme, NULL);
@@ -378,7 +394,18 @@ modest_platform_show_uri_popup (const gchar *uri)
 #endif	
 			gtk_widget_show (menu_item);
 		}
+
+		/* always add the copy item */
+		GtkWidget* menu_item = gtk_menu_item_new_with_label (dgettext("osso-uri", "uri_link_copy_link_location"));
+		g_object_set_data_full (G_OBJECT(menu_item), HILDON_OSSO_URI_ACTION,
+					g_strconcat (URI_ACTION_COPY, uri, NULL),
+					g_free);
+		g_signal_connect (G_OBJECT (menu_item), "activate", G_CALLBACK (activate_uri_popup_item),NULL);
+		gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_item);
+		gtk_widget_show (menu_item);
+
 		
+		/* and what to do when the link is deleted */
 		g_signal_connect (G_OBJECT (menu), "delete-event", G_CALLBACK (delete_uri_popup), popup_info);
 		gtk_menu_popup (GTK_MENU(menu), NULL, NULL, NULL, NULL, 1, gtk_get_current_event_time ());
 						  
