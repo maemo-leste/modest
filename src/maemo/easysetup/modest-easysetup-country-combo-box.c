@@ -219,7 +219,7 @@ static void load_from_file (EasysetupCountryComboBox *self)
 	 * and it doesn't require us to hard-code a buffer length.
 	 * TODO: Could we make this faster?
 	 */
-	int len = 0;
+	unsigned int len = 0;
 	char *line = NULL;
 	guint previous_id = 0;
 	gchar* previous_country = NULL;
