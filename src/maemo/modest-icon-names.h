@@ -87,6 +87,8 @@
 #define  MODEST_TOOLBAR_ICON_SORT               "qgn_list_sort"
 #define  MODEST_TOOLBAR_ICON_REFRESH            "qgn_toolb_gene_refresh"
 #define  MODEST_TOOLBAR_ICON_MOVE_TO_FOLDER     "qgn_toolb_gene_movetofldr"
+#define  MODEST_TOOLBAR_ICON_BOLD               "qgn_list_gene_bold"
+#define  MODEST_TOOLBAR_ICON_ITALIC             "qgn_list_gene_italic"
 
 /* Stock icon names */
 #define  MODEST_STOCK_MAIL_SEND    "modest-stock-mail-send"

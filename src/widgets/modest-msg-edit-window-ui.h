@@ -104,8 +104,8 @@ static const GtkToggleActionEntry modest_msg_edit_toggle_action_entries [] = {
 	{ "ActionsBulletedList", NULL, N_("mcen_me_editor_bullets"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_toggle_bullets), FALSE },
 
 	/* Toolbar buttons */
-	{ "ActionsBold", GTK_STOCK_BOLD, NULL, NULL, NULL, G_CALLBACK (modest_ui_actions_on_toggle_bold), FALSE },
-	{ "ActionsItalics", GTK_STOCK_ITALIC, NULL, NULL, NULL, G_CALLBACK (modest_ui_actions_on_toggle_italics), FALSE },
+	{ "ActionsBold", MODEST_TOOLBAR_ICON_BOLD, NULL, NULL, NULL, G_CALLBACK (modest_ui_actions_on_toggle_bold), FALSE },
+	{ "ActionsItalics", MODEST_TOOLBAR_ICON_ITALIC, NULL, NULL, NULL, G_CALLBACK (modest_ui_actions_on_toggle_italics), FALSE },
 
 	/* Find in page */
 	{ "FindInMessage", NULL, N_("mcen_me_viewer_find"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_toggle_find_in_page), FALSE },
