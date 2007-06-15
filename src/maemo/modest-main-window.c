@@ -1538,6 +1538,18 @@ modest_main_window_set_contents_style (ModestMainWindow *self,
 	gtk_widget_show_all (priv->contents_widget);
 }
 
+ModestMainWindowContentsStyle
+modest_main_window_get_contents_style (ModestMainWindow *self)
+{
+	ModestMainWindowPrivate *priv;
+
+	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW (self), -1);
+
+	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
+	return priv->contents_style;
+}
+
+
 static void 
 on_configuration_key_changed (ModestConf* conf, 
 			      const gchar *key, 

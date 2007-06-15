@@ -175,6 +175,18 @@ void       modest_main_window_set_contents_style       (ModestMainWindow *self,
 							ModestMainWindowContentsStyle style);
 
 /**
+ * modest_main_window_get_contents_style:
+ * @self: the #ModestMainWindow
+ * 
+ * Gets the currently selected #ModestMainWindowContentsStyle
+ * 
+ * Returns: the #ModestMainWindowContentsStyle of the main window
+ **/
+ModestMainWindowContentsStyle modest_main_window_get_contents_style (ModestMainWindow *self);
+
+
+
+/**
  * modest_main_window_notify_send_receive_initied:
  * @self: the #ModestMainWindow
  * 

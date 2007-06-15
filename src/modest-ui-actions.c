@@ -1272,6 +1272,15 @@ folder_refreshed_cb (const GObject *obj,
 						       MODEST_MAIN_WINDOW_CONTENTS_STYLE_EMPTY);
 	} else {
 		printf ("DEBUG: %s: tny_folder_get_all_count() returned >0.\n", __FUNCTION__);
+
+		/* Set the header view, we could change it to
+		   the empty view after the refresh. We do not
+		   need to save the configuration because we
+		   have already done that when unselecting the
+		   folder */
+		modest_main_window_set_contents_style (win, 
+						       MODEST_MAIN_WINDOW_CONTENTS_STYLE_HEADERS);
+
 		/* Restore configuration. There is no need to set the
 		   contents style to headers because it was already
 		   being done in folder_selection_changed */
@@ -1313,15 +1322,6 @@ modest_ui_actions_on_folder_selection_changed (ModestFolderView *folder_view,
 				set_active_account_from_tny_account (account, MODEST_WINDOW (main_window));
 				g_object_unref (account);
 			}
-
-			/* Set the header view, we could change it to
-			   the empty view after the refresh */
-			modest_main_window_set_contents_style (main_window, 
-							       MODEST_MAIN_WINDOW_CONTENTS_STYLE_HEADERS);
-			
-			modest_widget_memory_save (modest_runtime_get_conf(),
-						   G_OBJECT(header_view),
-						   MODEST_CONF_HEADER_VIEW_KEY);
 
 			/* Set folder on header view. This function
 			   will call tny_folder_refresh_async so we

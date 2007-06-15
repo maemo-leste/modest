@@ -722,6 +722,14 @@ modest_main_window_set_contents_style (ModestMainWindow *self,
 	/* TODO */
 }
 
+ModestMainWindowContentsStyle
+modest_main_window_get_contents_style (ModestMainWindow *self)
+{
+	/* TODO */
+	return MODEST_MAIN_WINDOW_CONTENTS_STYLE_HEADERS;
+}
+
+
 static void
 get_msg_callback (TnyFolder *folder, 
 		  gboolean cancelled,
