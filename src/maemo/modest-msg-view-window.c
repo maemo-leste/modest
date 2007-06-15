@@ -488,6 +488,9 @@ modest_msg_view_window_new_with_header_model (TnyMsg *msg,
 
 	modest_msg_view_window_update_priority (window);
 
+	/* Check toolbar dimming rules */
+	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (window));
+
 	return MODEST_WINDOW(window);
 }
 
@@ -1004,6 +1007,9 @@ modest_msg_view_window_select_next_message (ModestMsgViewWindow *window)
 			modest_mail_operation_get_msg (mail_op, header, view_msg_cb, NULL);
 			g_object_unref (mail_op);
 
+			/* Update toolbar dimming rules */
+			modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (window));
+
 			return TRUE;
 		}
 	}
@@ -1023,20 +1029,25 @@ modest_msg_view_window_select_first_message (ModestMsgViewWindow *self)
 	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (self), FALSE);
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (self);
 
-	path = gtk_tree_path_new_from_string ("0");
+	/* Check that the model is not empty */
+	if (!gtk_tree_model_get_iter_first (priv->header_model, &iter))
+		return FALSE;
 
-	/* Update the row reference */
-	/* Get first message */
-	gtk_tree_model_get_iter (priv->header_model, &iter, path);
-	gtk_tree_model_get (priv->header_model, &iter, TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN,
+	/* Get the header */
+	gtk_tree_model_get (priv->header_model, 
+			    &iter, 
+			    TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN,
 			    &header, -1);
 	
 	g_return_val_if_fail (TNY_IS_HEADER (header), FALSE);
-	if (tny_header_get_flags (header) & TNY_HEADER_FLAG_DELETED)
+	if (tny_header_get_flags (header) & TNY_HEADER_FLAG_DELETED) {
+		g_object_unref (header);
 		return modest_msg_view_window_select_next_message (self);
+	}
 	
 	/* Update the row reference */
 	gtk_tree_row_reference_free (priv->row_reference);
+	path = gtk_tree_path_new_first ();
 	priv->row_reference = gtk_tree_row_reference_new (priv->header_model, path);
 	gtk_tree_path_free (path);
 
@@ -1050,9 +1061,12 @@ modest_msg_view_window_select_first_message (ModestMsgViewWindow *self)
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
 	modest_mail_operation_get_msg (mail_op, header, view_msg_cb, NULL);
 	g_object_unref (mail_op);
+
+	/* Update toolbar dimming rules */
+	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (self));
 	
 	/* Free */
-/* 	g_object_unref (header); */
+	g_object_unref (header);
 
 	return TRUE;
 }
@@ -1062,43 +1076,52 @@ modest_msg_view_window_select_previous_message (ModestMsgViewWindow *window)
 {
 	TnyHeaderFlags flags;
 	ModestMsgViewWindowPrivate *priv = NULL;
+	GtkTreePath *path;
 	ModestMailOperation *mail_op = NULL;
 
 	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (window), FALSE);
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
 
-	if (priv->header_model) {
-		GtkTreePath *path;
+	/* Return inmediatly if there is no header model */
+	if (!priv->header_model)
+		return FALSE;
 
-		path = gtk_tree_row_reference_get_path (priv->row_reference);
-		while (gtk_tree_path_prev (path)) {
-			TnyHeader *header;
-			GtkTreeIter iter;
+	path = gtk_tree_row_reference_get_path (priv->row_reference);
+	while (gtk_tree_path_prev (path)) {
+		TnyHeader *header;
+		GtkTreeIter iter;
 
-			gtk_tree_model_get_iter (priv->header_model, &iter, path);
-			gtk_tree_model_get (priv->header_model, &iter, TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN,
-					    &header, -1);
-			if (!header)
-				break;
-			if (tny_header_get_flags (header) & TNY_HEADER_FLAG_DELETED)
-				continue;
-
-			/* Update the row reference */
-			gtk_tree_row_reference_free (priv->row_reference);
-			priv->row_reference = gtk_tree_row_reference_new (priv->header_model, path);
-			
-			/* Mark as read */
-			flags = tny_header_get_flags (header);
-			if (!(flags & TNY_HEADER_FLAG_SEEN))
-				tny_header_set_flags (header, flags | TNY_HEADER_FLAG_SEEN);
-
-			/* New mail operation */
-			mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_RECEIVE, G_OBJECT(window));
-			modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
-			modest_mail_operation_get_msg (mail_op, header, view_msg_cb, NULL);		
-
-			return TRUE;
+		gtk_tree_model_get_iter (priv->header_model, &iter, path);
+		gtk_tree_model_get (priv->header_model, &iter, 
+				    TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN,
+				    &header, -1);
+		if (!header)
+			break;
+		if (tny_header_get_flags (header) & TNY_HEADER_FLAG_DELETED) {
+			g_object_unref (header);
+			continue;
 		}
+
+		/* Update the row reference */
+		gtk_tree_row_reference_free (priv->row_reference);
+		priv->row_reference = gtk_tree_row_reference_new (priv->header_model, path);
+			
+		/* Mark as read */
+		flags = tny_header_get_flags (header);
+		if (!(flags & TNY_HEADER_FLAG_SEEN))
+			tny_header_set_flags (header, flags | TNY_HEADER_FLAG_SEEN);
+
+		/* New mail operation */
+		mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_RECEIVE, G_OBJECT(window));
+		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
+		modest_mail_operation_get_msg (mail_op, header, view_msg_cb, NULL);		
+
+		/* Update toolbar dimming rules */
+		modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (window));
+
+		g_object_unref (header);
+
+		return TRUE;
 	}
 
 	return FALSE;

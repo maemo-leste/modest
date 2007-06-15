@@ -287,8 +287,7 @@ modest_ui_dimming_rules_on_delete_msg (ModestWindow *win, gpointer user_data)
 {
 	ModestDimmingRule *rule = NULL;
 	gboolean dimmed = FALSE;
-	
-	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW (win), FALSE);
+
 	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
 	rule = MODEST_DIMMING_RULE (user_data);
 	

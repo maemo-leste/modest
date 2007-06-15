@@ -2683,16 +2683,17 @@ msgs_move_to_confirmation (GtkWindow *win,
 
 
 static void
-tranasfer_msgs_from_viewer_cb (const GObject *object, gpointer user_data)
+transfer_msgs_from_viewer_cb (const GObject *object, gpointer user_data)
 {
 	ModestMsgViewWindow *self = NULL;
-	gboolean found = FALSE;
 
 	g_return_if_fail (MODEST_IS_MSG_VIEW_WINDOW (object));
 	self = MODEST_MSG_VIEW_WINDOW (object);
 
-	found = modest_msg_view_window_select_first_message (self);
-	g_return_if_fail (found);
+	/* If there are not more messages don't do anything. The
+	   viewer will show the same message */
+	if (!modest_msg_view_window_select_first_message (self))
+	    return;
 }
 
 void
@@ -2865,7 +2866,7 @@ modest_ui_actions_on_msg_view_window_move_to (GtkAction *action,
 							 headers,
 							 TNY_FOLDER (folder_store),
 							 TRUE,
-							 tranasfer_msgs_from_viewer_cb,
+							 transfer_msgs_from_viewer_cb,
 							 NULL);
 			g_object_unref (G_OBJECT (mail_op));
 		}

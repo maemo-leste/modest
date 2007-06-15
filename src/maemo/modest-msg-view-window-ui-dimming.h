@@ -59,14 +59,14 @@ static const ModestDimmingEntry modest_msg_view_menu_dimming_entries [] = {
 static const ModestDimmingEntry modest_msg_view_toolbar_dimming_entries [] = {
 
 	/* Toolbar */
-	{ "/Toolbar/ToolbarMessageNew", NULL },
-	{ "/Toolbar/ToolbarMessageReply", G_CALLBACK(modest_ui_dimming_rules_on_reply_msg) },
-	{ "/Toolbar/ToolbarDeleteMessage",  G_CALLBACK(modest_ui_dimming_rules_on_delete_msg) },
-	{ "/Toolbar/ToolbarMoveTo", G_CALLBACK(modest_ui_dimming_rules_on_move_to) },
-	{ "/Toolbar/ToolbarFindInMessage", NULL },
-	{ "/Toolbar/ToolbarMessageBack", G_CALLBACK(modest_ui_dimming_rules_on_view_previous) },
-	{ "/Toolbar/ToolbarMessageNext", G_CALLBACK(modest_ui_dimming_rules_on_view_next) },
-	{ "/Toolbar/ToolbarCancel", NULL },
+	{ "/ToolBar/ToolbarMessageNew", NULL },
+	{ "/ToolBar/ToolbarMessageReply", G_CALLBACK(modest_ui_dimming_rules_on_reply_msg) },
+	{ "/ToolBar/ToolbarDeleteMessage",  G_CALLBACK(modest_ui_dimming_rules_on_delete_msg) },
+	{ "/ToolBar/ToolbarMoveTo", G_CALLBACK(modest_ui_dimming_rules_on_move_to) },
+	{ "/ToolBar/ToolbarFindInMessage", NULL },
+	{ "/ToolBar/ToolbarMessageBack", G_CALLBACK(modest_ui_dimming_rules_on_view_previous) },
+	{ "/ToolBar/ToolbarMessageNext", G_CALLBACK(modest_ui_dimming_rules_on_view_next) },
+	{ "/ToolBar/ToolbarCancel", NULL },
 };
 
 G_END_DECLS
