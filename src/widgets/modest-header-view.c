@@ -60,6 +60,11 @@ static gint          cmp_rows               (GtkTreeModel *tree_model,
 					     GtkTreeIter *iter2,
 					     gpointer user_data);
 
+static gint          cmp_subject_rows       (GtkTreeModel *tree_model,
+					     GtkTreeIter *iter1,
+					     GtkTreeIter *iter2,
+					     gpointer user_data);
+
 static void          on_selection_changed   (GtkTreeSelection *sel, 
 					     gpointer user_data);
 
@@ -445,6 +450,10 @@ modest_header_view_set_columns (ModestHeaderView *self, const GList *columns, Tn
 						 TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN,
 						 (GtkTreeIterCompareFunc) cmp_rows,
 						 compact_column, NULL);
+		gtk_tree_sortable_set_sort_func (GTK_TREE_SORTABLE (sortable),
+						 TNY_GTK_HEADER_LIST_MODEL_SUBJECT_COLUMN,
+						 (GtkTreeIterCompareFunc) cmp_subject_rows,
+						 compact_column, NULL);
 	}
 
 
@@ -813,6 +822,10 @@ modest_header_view_set_folder_intern (ModestHeaderView *self, TnyFolder *folder)
 						 TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN,
 						 (GtkTreeIterCompareFunc) cmp_rows,
 						 cols->data, NULL);
+		gtk_tree_sortable_set_sort_func (GTK_TREE_SORTABLE(sortable),
+						 TNY_GTK_HEADER_LIST_MODEL_SUBJECT_COLUMN,
+						 (GtkTreeIterCompareFunc) cmp_subject_rows,
+						 cols->data, NULL);
 	}
 
 	/* Set new model */
@@ -1091,6 +1104,30 @@ cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 	default:
 		return &iter1 - &iter2; /* oughhhh  */
 	}
+}
+
+static gint
+cmp_subject_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
+		  gpointer user_data)
+{
+	gint t1, t2;
+	gchar *val1, *val2;
+	gint cmp;
+/* 	static int counter = 0; */
+
+	g_return_val_if_fail (GTK_IS_TREE_VIEW_COLUMN(user_data), 0);
+
+	gtk_tree_model_get (tree_model, iter1, TNY_GTK_HEADER_LIST_MODEL_SUBJECT_COLUMN, &val1,
+			    TNY_GTK_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN, &t1, -1);
+	gtk_tree_model_get (tree_model, iter2, TNY_GTK_HEADER_LIST_MODEL_SUBJECT_COLUMN, &val2,
+			    TNY_GTK_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN, &t2, -1);
+
+	cmp = modest_text_utils_utf8_strcmp (val1 + modest_text_utils_get_subject_prefix_len(val1),
+					     val2 + modest_text_utils_get_subject_prefix_len(val2),
+					     TRUE);
+	g_free (val1);
+	g_free (val2);
+	return cmp;
 }
 
 /* Drag and drop stuff */

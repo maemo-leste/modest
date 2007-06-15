@@ -957,10 +957,11 @@ modest_text_utils_get_subject_prefix_len (const gchar *sub)
 {
 	gint i;
 	static const gchar* prefix[] = {
-		"Re:", "RE:", "Fwd:", "FWD:", "FW:", NULL
+		"Re:", "RE:", "RV:", "re:"
+		"Fwd:", "FWD:", "FW:", "fwd:", "Fw:", "fw:", NULL
 	};
 		
-	if (!sub || (sub[0] != 'R' && sub[0] != 'F')) /* optimization */
+	if (!sub || (sub[0] != 'R' && sub[0] != 'F' && sub[0] != 'r' && sub[0] != 'f')) /* optimization */
 		return 0;
 
 	i = 0;
