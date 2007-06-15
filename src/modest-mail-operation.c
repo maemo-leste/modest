@@ -599,7 +599,9 @@ modest_mail_operation_save_to_drafts (ModestMailOperation *self,
 
 	if (draft_msg != NULL) {
 		header = tny_msg_get_header (draft_msg);
+		/* Remove the old draft expunging it */
 		tny_folder_remove_msg (folder, header, NULL);
+		tny_folder_sync (folder, TRUE, NULL);
 		g_object_unref (header);
 	}
 	
