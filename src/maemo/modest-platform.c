@@ -47,7 +47,6 @@
 #include <gtk/gtkmenuitem.h>
 #include <gtk/gtkmain.h>
 #include <string.h>
-#include <hildon/hildon-notification.h>
 
 #define HILDON_OSSO_URI_ACTION "uri-action"
 #define URI_ACTION_COPY "copy:"
@@ -833,6 +832,7 @@ void
 modest_platform_on_new_msg (void)
 {
 	return; /* TODO: Reenable this later. I disabled it to avoid having one notification per email. */
+#ifndef MODEST_HILDON_VERSION_0
 	HildonNotification *not;
 
 	/* Create a new notification. FIXME put the right values, need
@@ -854,6 +854,7 @@ modest_platform_on_new_msg (void)
 		g_error ("Failed to send notification");
 		
 	g_object_unref (not);
+#endif /*MODEST_HILDON_VERSION_0*/
 }
 
 

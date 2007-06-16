@@ -46,7 +46,9 @@ k * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
 #include <hildon-widgets/hildon-font-selection-dialog.h>
 #include <hildon-widgets/hildon-find-toolbar.h>
 #include <hildon-widgets/hildon-sort-dialog.h>
+
 #else
+
 #include <hildon-mime.h>
 #include <hildon-uri.h>
 #include <hildon/hildon-file-chooser-dialog.h>
@@ -61,7 +63,8 @@ k * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
 #include <hildon/hildon-sort-dialog.h>
 #include <hildon/hildon-number-editor.h>
 #include <hildon/hildon-help.h>
-#endif /* MODEST_HILDON_VERSION_0*/
+#include <hildon/hildon-notification.h>
 
 
+#endif /*__MODEST_HILDON_VERSION_0_*/
 #endif /*__MODEST_HILDON_INCLUDES__*/
