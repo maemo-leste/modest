@@ -84,6 +84,7 @@ enum _ModestMailOperationSignals
 typedef struct _ModestMailOperationPrivate ModestMailOperationPrivate;
 struct _ModestMailOperationPrivate {
 	TnyAccount                 *account;
+	gchar										 *account_name;
 	guint                      done;
 	guint                      total;
 	GObject                   *source;
@@ -206,6 +207,8 @@ modest_mail_operation_finalize (GObject *obj)
 
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(obj);
 
+	
+	
 	if (priv->error) {
 		g_error_free (priv->error);
 		priv->error = NULL;
@@ -635,6 +638,7 @@ typedef struct
 	gint max_size;
 	gint retrieve_limit;
 	gchar *retrieve_type;
+	gchar *account_name;
 } UpdateAccountInfo;
 
 /***** I N T E R N A L    F O L D E R    O B S E R V E R *****/
@@ -764,7 +768,7 @@ idle_notify_progress (gpointer data)
 	state = modest_mail_operation_clone_state (mail_op);
 	g_signal_emit (G_OBJECT (mail_op), signals[PROGRESS_CHANGED_SIGNAL], 0, state, NULL);
 	g_slice_free (ModestMailOperationState, state);
-
+	
 	return TRUE;
 }
 
@@ -800,7 +804,7 @@ notify_update_account_queue (gpointer data)
 	ModestMailOperationPrivate *priv = NULL;
 
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(mail_op);
-
+	
 	modest_mail_operation_notify_end (mail_op);
 	g_object_unref (mail_op);
 
@@ -1051,7 +1055,7 @@ update_account_thread (gpointer thr_user_data)
 	   freed before this idle happens, but the mail operation will
 	   be still alive */
 	g_idle_add (notify_update_account_queue, g_object_ref (info->mail_op));
-
+	
 	/* Frees */
 	g_object_unref (query);
 	g_object_unref (all_folders);
@@ -1151,6 +1155,10 @@ modest_mail_operation_update_account (ModestMailOperation *self,
 		
 	/* printf ("DEBUG: %s: info->retrieve_limit = %d\n", __FUNCTION__, info->retrieve_limit); */
 
+	/* Set account busy */
+	modest_account_mgr_set_account_busy(mgr, account_name, TRUE);
+	priv->account_name = g_strdup(account_name);
+	
 	thread = g_thread_create (update_account_thread, info, FALSE, NULL);
 
 	return TRUE;
@@ -2101,7 +2109,19 @@ static void
 modest_mail_operation_notify_end (ModestMailOperation *self)
 {
 	ModestMailOperationState *state;
+	ModestMailOperationPrivate *priv = NULL;
 
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
+	
+	/* Set the account back to not busy */
+	if (priv->account_name)
+	{
+		modest_account_mgr_set_account_busy(modest_runtime_get_account_mgr(), priv->account_name,
+																				FALSE);
+		g_free(priv->account_name);
+		priv->account_name = NULL;
+	}
+	
 	/* Notify the observers about the mail opertation end */
 	state = modest_mail_operation_clone_state (self);
 	g_signal_emit (G_OBJECT (self), signals[PROGRESS_CHANGED_SIGNAL], 0, state, NULL);

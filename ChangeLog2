@@ -1,3 +1,32 @@
+2007-06-17  Johannes Schmid <johannes.schmid@openismus.com>
+
+	* configure.ac:
+	Fixed build with hildon < 0.99
+	
+	* src/maemo/modest-account-view-window.c: (on_edit_button_clicked):
+	Check if the selected account is busy instead of checking all accounts
+	
+	* src/modest-account-mgr-priv.h:
+	* src/modest-account-mgr.c: (modest_account_mgr_class_init),
+	(modest_account_mgr_init), (compare_account_name),
+	(modest_account_mgr_set_account_busy),
+	(modest_account_mgr_account_is_busy):
+	* src/modest-account-mgr.h:
+	Added busy information to the account manager. It possible to
+	set an account to busy or not busy now.
+	
+	* src/modest-mail-operation.c: (modest_mail_operation_finalize),
+	(modest_mail_operation_update_account),
+	(modest_mail_operation_notify_end):
+		Set the account to busy/not busy depending on the operation state.
+
+	* src/widgets/modest-account-view.c:
+	(modest_account_view_finalize), (get_last_updated_string),
+	(update_account_view), (on_account_busy_changed), (init_view):
+	Show string "Refreshing..." if the account is currently busy.
+
+	All this fixes projects.maemo.org bug NB#59711
+
 2007-06-14  Armin Burgmeier  <armin@openismus.com>
 
 	* src/widgets/modest-attachments-view.h:
@@ -23,7 +52,7 @@
 	
 	Show an comfirmation dialog for the smpt-edit-window if there are
 	unsaved changes and the user hits cancel.
-	(projects.maemo.org but NB#60479
+	(projects.maemo.org bug NB#60479)
 
 2007-06-14  Armin Burgmeier  <armin@openismus.com>
 

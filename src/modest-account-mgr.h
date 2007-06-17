@@ -65,6 +65,11 @@ struct _ModestAccountMgrClass {
 				    const GSList* key, 
 				    gboolean server_account,
 				    gpointer user_data);
+		void (* account_busy_changed)   (ModestAccountMgr *obj, 
+				    const gchar* account,
+				    gboolean busy,
+				    gpointer user_data);
+	
 };
 
 /**
@@ -439,6 +444,31 @@ gboolean        modest_account_mgr_unset           (ModestAccountMgr *self,
  */
 
 gboolean modest_account_mgr_has_accounts (ModestAccountMgr* self, gboolean enabled);
+
+/**
+ * modest_account_mgr_set_account_busy
+ * @self: a ModestAccountMgr instance
+ * @account_name: name of the account
+ * @busy: whether to set busy or not busy
+ * 
+ * Changes the busy flag of an account
+ *
+ */
+
+void modest_account_mgr_set_account_busy(ModestAccountMgr* self, const gchar* account_name, 
+																		gboolean busy);
+
+/**
+ * modest_account_mgr_account_is_busy
+ * @self: a ModestAccountMgr instance
+ * @account_name: name of the account
+ * 
+ * Returns: If the account is currently busy or not
+ *
+ */
+gboolean
+modest_account_mgr_account_is_busy(ModestAccountMgr* self, const gchar* account_name);
+
 
 G_END_DECLS
 

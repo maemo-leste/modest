@@ -42,6 +42,7 @@ static void modest_account_mgr_finalize   (GObject * obj);
 enum {
 	ACCOUNT_CHANGED_SIGNAL,
 	ACCOUNT_REMOVED_SIGNAL,
+	ACCOUNT_BUSY_SIGNAL,
 	LAST_SIGNAL
 };
 
@@ -193,6 +194,14 @@ modest_account_mgr_class_init (ModestAccountMgrClass * klass)
 			      NULL, NULL,
 			      modest_marshal_VOID__STRING_POINTER_BOOLEAN,
 			      G_TYPE_NONE, 3, G_TYPE_STRING, G_TYPE_POINTER, G_TYPE_BOOLEAN);
+	signals[ACCOUNT_BUSY_SIGNAL] =
+ 		g_signal_new ("account_busy_changed",
+			      G_TYPE_FROM_CLASS (klass),
+			      G_SIGNAL_RUN_FIRST,
+			      G_STRUCT_OFFSET(ModestAccountMgrClass,account_busy_changed),
+			      NULL, NULL,
+			      modest_marshal_VOID__STRING_BOOLEAN,
+			      G_TYPE_NONE, 2, G_TYPE_STRING, G_TYPE_BOOLEAN);
 }
 
 
@@ -203,6 +212,7 @@ modest_account_mgr_init (ModestAccountMgr * obj)
 		MODEST_ACCOUNT_MGR_GET_PRIVATE (obj);
 
 	priv->modest_conf = NULL;
+	priv->busy_accounts = NULL;
 	priv->timeout = g_timeout_add (1000 /* milliseconds */, on_timeout_notify_changes, obj);
 }
 
@@ -1176,3 +1186,51 @@ modest_account_mgr_has_accounts (ModestAccountMgr* self, gboolean enabled)
 	
 	return accounts_exist;
 }
+
+static int
+compare_account_name(gconstpointer a, gconstpointer b)
+{
+	const gchar* account_name = (const gchar*) a;
+	const gchar* account_name2 = (const gchar*) b;
+	return strcmp(account_name, account_name2);
+}
+
+void 
+modest_account_mgr_set_account_busy(ModestAccountMgr* self, const gchar* account_name, 
+																		gboolean busy)
+{
+	ModestAccountMgrPrivate* priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
+	if (busy)
+	{
+		GSList *account_names = modest_account_mgr_account_names (self,
+				TRUE);
+		GSList* account = 
+			g_slist_find_custom(account_names, account_name, (GCompareFunc) compare_account_name);
+		if (account && !modest_account_mgr_account_is_busy(self, account_name))
+		{
+			priv->busy_accounts = g_slist_append(priv->busy_accounts, g_strdup(account_name));
+			g_signal_emit_by_name(G_OBJECT(self), "account-busy-changed", account_name, TRUE);
+		}
+		g_slist_free(account_names);
+	}
+	else
+	{
+		GSList* account = 
+			g_slist_find_custom(priv->busy_accounts, account_name, (GCompareFunc) compare_account_name);
+		if (account)
+		{
+			g_free(account->data);
+			priv->busy_accounts = g_slist_delete_link(priv->busy_accounts, account);
+			g_signal_emit_by_name(G_OBJECT(self), "account-busy-changed", account_name, FALSE);
+		}
+	}
+}
+
+gboolean
+modest_account_mgr_account_is_busy(ModestAccountMgr* self, const gchar* account_name)
+{
+	ModestAccountMgrPrivate* priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
+	return (g_slist_find_custom(priv->busy_accounts, account_name, (GCompareFunc) compare_account_name)
+					!= NULL);
+}
+	

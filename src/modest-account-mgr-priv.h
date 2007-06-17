@@ -54,6 +54,7 @@ struct _ModestAccountMgrPrivate {
 	GSList *changed_conf_keys; 
 	guint timeout;
 	gulong key_changed_handler_uid;
+	GSList* busy_accounts;
 };
 
 #define MODEST_ACCOUNT_MGR_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \

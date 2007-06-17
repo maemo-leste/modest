@@ -71,7 +71,7 @@ enum {
 typedef struct _ModestAccountViewPrivate ModestAccountViewPrivate;
 struct _ModestAccountViewPrivate {
 	ModestAccountMgr *account_mgr;
-	gulong sig1, sig2;
+	gulong sig1, sig2, sig3;
 	
 	/* When this is TRUE, we ignore configuration key changes.
 	 * This is useful when making many changes. */
@@ -149,6 +149,9 @@ modest_account_view_finalize (GObject *obj)
 		if (priv->sig2)
 			g_signal_handler_disconnect (priv->account_mgr, priv->sig2);
 
+		if (priv->sig3)
+			g_signal_handler_disconnect (priv->account_mgr, priv->sig3);
+		
 		g_object_unref (G_OBJECT(priv->account_mgr));
 		priv->account_mgr = NULL; 
 	}
@@ -156,7 +159,27 @@ modest_account_view_finalize (GObject *obj)
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
-
+/* Get the string for the last updated time. Result must be g_freed */
+static gchar*
+get_last_updated_string(ModestAccountMgr* account_mgr, ModestAccountData *account_data)
+{
+	/* FIXME: let's assume that 'last update' applies to the store account... */
+	gchar* last_updated_string;
+	time_t last_updated = account_data->store_account->last_updated;
+	if (!modest_account_mgr_account_is_busy(account_mgr, account_data->account_name))
+	{
+		if (last_updated > 0) 
+				last_updated_string = modest_text_utils_get_display_date(last_updated);
+		else
+				last_updated_string = g_strdup (_("mcen_va_never"));
+	}
+	else
+	{
+		/* FIXME: There should be a logical name in the UI specs */
+		last_updated_string = g_strdup(_("Refreshing..."));
+	}
+	return last_updated_string;
+}
 
 static void
 update_account_view (ModestAccountMgr *account_mgr, ModestAccountView *view)
@@ -205,15 +228,8 @@ update_account_view (ModestAccountMgr *account_mgr, ModestAccountView *view)
 		if (account_data->store_account) {
 
 			GtkTreeIter iter;
-			time_t last_updated; 
-			gchar *last_updated_string;
 			
-			/* FIXME: let's assume that 'last update' applies to the store account... */
-			last_updated = account_data->store_account->last_updated;
-			if (last_updated > 0) 
-				last_updated_string = modest_text_utils_get_display_date(last_updated);
-			else
-				last_updated_string = g_strdup (_("mcen_va_never"));
+			gchar *last_updated_string = get_last_updated_string(account_mgr, account_data);
 			
 			if (account_data->is_enabled) {
 				gtk_list_store_insert_with_values (
@@ -222,14 +238,14 @@ update_account_view (ModestAccountMgr *account_mgr, ModestAccountView *view)
 					MODEST_ACCOUNT_VIEW_DISPLAY_NAME_COLUMN,  account_data->display_name,
 					MODEST_ACCOUNT_VIEW_IS_ENABLED_COLUMN,    account_data->is_enabled,
 					MODEST_ACCOUNT_VIEW_IS_DEFAULT_COLUMN,    account_data->is_default,
-	
+
 					MODEST_ACCOUNT_VIEW_PROTO_COLUMN,
 					modest_protocol_info_get_transport_store_protocol_name (account_data->store_account->proto),
 	
 					MODEST_ACCOUNT_VIEW_LAST_UPDATED_COLUMN,  last_updated_string,
 					-1);
-				g_free (last_updated_string);
 			}
+			g_free (last_updated_string);
 		}
 
 		modest_account_mgr_free_account_data (account_mgr, account_data);
@@ -263,6 +279,36 @@ on_account_changed (ModestAccountMgr *account_mgr,
 	update_account_view (account_mgr, self);
 }
 
+static void
+on_account_busy_changed(ModestAccountMgr *account_mgr, const gchar *account_name,
+												gboolean busy, ModestAccountView *self)
+{
+	GtkListStore *model = GTK_LIST_STORE(gtk_tree_view_get_model (GTK_TREE_VIEW(self)));
+	GtkTreeIter iter;
+	if (!gtk_tree_model_get_iter_first(GTK_TREE_MODEL(model), &iter))
+		return;
+	do
+	{
+		gchar* cur_name;
+		gtk_tree_model_get(GTK_TREE_MODEL(model), &iter, MODEST_ACCOUNT_VIEW_NAME_COLUMN, 
+											 &cur_name, -1);
+		if (g_str_equal(cur_name, account_name))
+		{
+			ModestAccountData* account_data = 
+				modest_account_mgr_get_account_data (account_mgr, account_name);
+			if (!account_data)
+				return;
+			gchar* last_updated_string = get_last_updated_string(account_mgr, account_data);
+			gtk_list_store_set(model, &iter, 
+												 MODEST_ACCOUNT_VIEW_LAST_UPDATED_COLUMN,  last_updated_string,
+												 -1);
+			g_free (last_updated_string);
+			modest_account_mgr_free_account_data (account_mgr, account_data);
+			return;
+		}
+	}
+	while (gtk_tree_model_iter_next(GTK_TREE_MODEL(model), &iter));
+}
 
 static void
 on_account_removed (ModestAccountMgr *account_mgr,
@@ -448,6 +494,8 @@ init_view (ModestAccountView *self)
 				       G_CALLBACK(on_account_removed), self);
 	priv->sig2 = g_signal_connect (G_OBJECT(priv->account_mgr), "account_changed",
 				       G_CALLBACK(on_account_changed), self);
+	priv->sig3 = g_signal_connect (G_OBJECT(priv->account_mgr), "account_busy_changed",
+							 G_CALLBACK(on_account_busy_changed), self);
 }
 
 
