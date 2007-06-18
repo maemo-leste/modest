@@ -302,7 +302,11 @@ modest_mail_operation_get_source (ModestMailOperation *self)
 	ModestMailOperationPrivate *priv;
 
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
-
+	if (!priv) {
+		g_warning ("BUG: %s: priv == NULL", __FUNCTION__);
+		return NULL;
+	}
+	
 	return g_object_ref (priv->source);
 }
 
@@ -316,6 +320,11 @@ modest_mail_operation_get_status (ModestMailOperation *self)
 			      MODEST_MAIL_OPERATION_STATUS_INVALID);
 
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
+	if (!priv) {
+		g_warning ("BUG: %s: priv == NULL", __FUNCTION__);
+		return MODEST_MAIL_OPERATION_STATUS_INVALID;
+	}
+	
 	return priv->status;
 }
 
@@ -328,6 +337,12 @@ modest_mail_operation_get_error (ModestMailOperation *self)
 	g_return_val_if_fail (MODEST_IS_MAIL_OPERATION (self), NULL);
 
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
+
+	if (!priv) {
+		g_warning ("BUG: %s: priv == NULL", __FUNCTION__);
+		return NULL;
+	}
+
 	return priv->error;
 }
 
@@ -342,18 +357,22 @@ modest_mail_operation_cancel (ModestMailOperation *self)
 	}
 
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
+	if (!priv) {
+		g_warning ("BUG: %s: priv == NULL", __FUNCTION__);
+		return FALSE;
+	}
 
-	/* cancel current operation in account */
-	//tny_account_cancel (priv->account);
+	/* Notify about operation end */
+	modest_mail_operation_notify_end (self);
 
 	did_a_cancel = TRUE;
 
 	/* Set new status */
 	priv->status = MODEST_MAIL_OPERATION_STATUS_CANCELED;
+	
+	modest_mail_operation_queue_cancel_all (modest_runtime_get_mail_operation_queue());
 
-	/* Notify about operation end */
-	modest_mail_operation_notify_end (self);
-
+	
 	return TRUE;
 }
 
