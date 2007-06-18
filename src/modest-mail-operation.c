@@ -301,6 +301,8 @@ modest_mail_operation_get_source (ModestMailOperation *self)
 {
 	ModestMailOperationPrivate *priv;
 
+	g_return_val_if_fail (self, NULL);
+	
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
 	if (!priv) {
 		g_warning ("BUG: %s: priv == NULL", __FUNCTION__);
@@ -2130,11 +2132,17 @@ modest_mail_operation_notify_end (ModestMailOperation *self)
 	ModestMailOperationState *state;
 	ModestMailOperationPrivate *priv = NULL;
 
+	g_return_if_fail (self);
+
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
+
+	if (!priv) {
+		g_warning ("BUG: %s: priv == NULL", __FUNCTION__);
+		return;
+	}
 	
 	/* Set the account back to not busy */
-	if (priv->account_name)
-	{
+	if (priv->account_name) {
 		modest_account_mgr_set_account_busy(modest_runtime_get_account_mgr(), priv->account_name,
 																				FALSE);
 		g_free(priv->account_name);
