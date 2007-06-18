@@ -300,7 +300,7 @@ compare_msguids (ModestWindow *win,
 	/* Get message uid from msg window */
 	msg_uid = modest_msg_view_window_get_message_uid (MODEST_MSG_VIEW_WINDOW (win));
 
-	if (msg_uid && !strcmp (msg_uid, uid))
+	if (msg_uid && uid &&!strcmp (msg_uid, uid))
 		return 0;
 	else
 		return 1;
