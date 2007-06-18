@@ -1214,7 +1214,7 @@ _selected_msg_sent_in_progress (ModestWindow *win)
 	}
 
 	/* Check if msg id is being processed inside send queue */
-	result = modest_tny_send_queue_msg_is_being_sent (send_queue, id);
+	result = (modest_tny_send_queue_get_msg_status (send_queue, tny_header_get_message_id(header)) == MODEST_TNY_SEND_QUEUE_SENDING);
 
 	/* Free */
 	g_free(id);

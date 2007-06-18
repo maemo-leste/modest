@@ -34,6 +34,8 @@
 #include <tny-folder.h>
 #include <tny-camel-msg.h>
 #include <modest-tny-account.h>
+#include <modest-marshal.h>
+#include <string.h> /* strcmp */
 
 /* 'private'/'protected' functions */
 static void modest_tny_send_queue_class_init (ModestTnySendQueueClass *klass);
@@ -41,21 +43,32 @@ static void modest_tny_send_queue_finalize   (GObject *obj);
 static void modest_tny_send_queue_instance_init (GTypeInstance *instance, gpointer g_class);
 
 /* Signal handlers */ 
-static void _on_msg_start_sending (TnySendQueue *self, TnyMsg *msg, guint processed, guint total);
-static void _on_msg_has_been_sent (TnySendQueue *self, TnyMsg *msg, guint processed, guint total);
+static void _on_msg_start_sending (TnySendQueue *self, TnyMsg *msg, gpointer user_data);
+static void _on_msg_has_been_sent (TnySendQueue *self, TnyMsg *msg, gpointer user_data);
+static void _on_msg_error_happened (TnySendQueue *self, TnyHeader *header, TnyMsg *msg, GError *err, gpointer user_data);
 
 
 /* list my signals  */
 enum {
+	STATUS_CHANGED,
 	/* MY_SIGNAL_1, */
 	/* MY_SIGNAL_2, */
 	LAST_SIGNAL
 };
 
+typedef struct _SendInfo SendInfo;
+struct _SendInfo {
+	gchar* msg_id;
+	ModestTnySendQueueStatus status;
+};
+
 typedef struct _ModestTnySendQueuePrivate ModestTnySendQueuePrivate;
 struct _ModestTnySendQueuePrivate {
-	gchar *current_msg_id;
+	/* Queued infos */
+	GQueue* queue;
 
+	/* The info that is currently being sent */
+	GList* current;
 };
 
 #define MODEST_TNY_SEND_QUEUE_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -66,28 +79,100 @@ struct _ModestTnySendQueuePrivate {
 static TnyCamelSendQueueClass *parent_class = NULL;
 
 /* uncomment the following if you have defined any signals */
-/* static guint signals[LAST_SIGNAL] = {0}; */
+static guint signals[LAST_SIGNAL] = {0};
 
 /*
- * this thread actually tries to send all the mails in the outbox
+ * this thread actually tries to send all the mails in the outbox and keeps
+ * track of their state.
  */
 
+static int
+on_modest_tny_send_queue_compare_id(gconstpointer info, gconstpointer msg_id)
+{
+	return strcmp( ((SendInfo*)info)->msg_id, msg_id);
+}
+
+static void
+modest_tny_send_queue_info_free(SendInfo *info)
+{
+	g_free(info->msg_id);
+	g_slice_free(SendInfo, info);
+}
+
+static GList*
+modest_tny_send_queue_lookup_info (ModestTnySendQueue *self, const gchar *msg_id)
+{
+	ModestTnySendQueuePrivate *priv;
+	priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE (self);
+
+	return g_queue_find_custom (priv->queue, msg_id, on_modest_tny_send_queue_compare_id);
+}
 
 static void
 modest_tny_send_queue_cancel (TnySendQueue *self, gboolean remove, GError **err)
-{	
+{
+	ModestTnySendQueuePrivate *priv;
+	SendInfo *info;
+
+	priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE (self);
+	if(priv->current != NULL)
+	{
+		info = priv->current->data;
+		priv->current = NULL;
+
+		/* Keep in list until retry, so that we know that this was suspended
+		 * by the user and not by an error. */
+		info->status = MODEST_TNY_SEND_QUEUE_SUSPENDED;
+
+		g_signal_emit (self, signals[STATUS_CHANGED], 0, info->msg_id, info->status);
+	}
+
 	TNY_CAMEL_SEND_QUEUE_CLASS(parent_class)->cancel_func (self, remove, err); /* FIXME */
 }
 
 static void
 modest_tny_send_queue_add (TnySendQueue *self, TnyMsg *msg, GError **err)
 {
+	ModestTnySendQueuePrivate *priv;
+	TnyHeader *header;
+	SendInfo *info;
+	GList* existing;
+	const gchar* msg_id;
+
 	g_return_if_fail (TNY_IS_SEND_QUEUE(self));
 	g_return_if_fail (TNY_IS_CAMEL_MSG(msg));
-	
+
+	priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE (self);
+	header = tny_msg_get_header (msg);
+
 	/* FIXME: do something smart here... */
-	
+
+	/* Note that this call actually sets the message id to something
+	 * sensible. */	
 	TNY_CAMEL_SEND_QUEUE_CLASS(parent_class)->add_func (self, msg, err); /* FIXME */
+
+	/* Check whether the mail is already in the queue */
+	msg_id = tny_header_get_message_id (header);
+	existing = modest_tny_send_queue_lookup_info (MODEST_TNY_SEND_QUEUE(self), msg_id);
+	if(existing != NULL)
+	{
+		g_assert(info->status == MODEST_TNY_SEND_QUEUE_SUSPENDED ||
+		         info->status == MODEST_TNY_SEND_QUEUE_FAILED);
+
+		info = existing->data;
+		info->status = MODEST_TNY_SEND_QUEUE_WAITING;
+	}
+	else
+	{
+		
+		info = g_slice_new (SendInfo);
+
+		info->msg_id = strdup(msg_id);
+		info->status = MODEST_TNY_SEND_QUEUE_WAITING;
+		g_queue_push_tail (priv->queue, info);
+	}
+
+	g_signal_emit (self, signals[STATUS_CHANGED], 0, info->msg_id, info->status);
 }
 
 static TnyFolder*
@@ -131,7 +216,6 @@ modest_tny_send_queue_get_outbox (TnySendQueue *self)
 	return folder;
 }
 
-
 GType
 modest_tny_send_queue_get_type (void)
 {
@@ -172,6 +256,16 @@ modest_tny_send_queue_class_init (ModestTnySendQueueClass *klass)
 	TNY_CAMEL_SEND_QUEUE_CLASS(klass)->get_outbox_func  = modest_tny_send_queue_get_outbox;
         TNY_CAMEL_SEND_QUEUE_CLASS(klass)->get_sentbox_func = modest_tny_send_queue_get_sentbox;
         TNY_CAMEL_SEND_QUEUE_CLASS(klass)->cancel_func      = modest_tny_send_queue_cancel;
+	klass->status_changed   = NULL;
+
+	signals[STATUS_CHANGED] =
+		g_signal_new ("status_changed",
+		              G_TYPE_FROM_CLASS (gobject_class),
+			      G_SIGNAL_RUN_FIRST,
+			      G_STRUCT_OFFSET (ModestTnySendQueueClass, status_changed),
+			      NULL, NULL,
+			      modest_marshal_VOID__STRING_INT,
+			      G_TYPE_NONE, 2, G_TYPE_STRING, G_TYPE_INT);
 
 	g_type_class_add_private (gobject_class, sizeof(ModestTnySendQueuePrivate));
 }
@@ -180,10 +274,10 @@ static void
 modest_tny_send_queue_instance_init (GTypeInstance *instance, gpointer g_class)
 {
 	ModestTnySendQueuePrivate *priv;
-		
+
 	priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE (instance);
-	priv->current_msg_id = NULL;
-	
+	priv->queue = g_queue_new();
+	priv->current = NULL;
 }
 
 static void
@@ -192,8 +286,9 @@ modest_tny_send_queue_finalize (GObject *obj)
 	ModestTnySendQueuePrivate *priv;
 		
 	priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE (obj);
-	if (priv->current_msg_id != NULL)
-		g_free(priv->current_msg_id);
+
+	g_queue_foreach (priv->queue, (GFunc)modest_tny_send_queue_info_free, NULL);
+	g_queue_free (priv->queue);
 
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
@@ -222,6 +317,9 @@ modest_tny_send_queue_new (TnyCamelTransportAccount *account)
 	g_signal_connect (G_OBJECT(self), "msg-sent",
 			  G_CALLBACK(_on_msg_has_been_sent), 
 			  NULL);
+	g_signal_connect (G_OBJECT(self), "error-happened",
+	                  G_CALLBACK(_on_msg_error_happened),
+			  NULL);
 	return self;
 }
 
@@ -235,6 +333,7 @@ modest_tny_send_queue_try_to_send (ModestTnySendQueue* self)
 /* 	tny_camel_send_queue_flush (TNY_CAMEL_SEND_QUEUE(self)); */
 }
 
+#if 0
 gboolean
 modest_tny_send_queue_msg_is_being_sent (ModestTnySendQueue* self,
 					 const gchar *msg_id)
@@ -249,52 +348,109 @@ modest_tny_send_queue_msg_is_being_sent (ModestTnySendQueue* self,
 	else 
 		return FALSE;
 }
+#endif
 
 gboolean
 modest_tny_send_queue_sending_in_progress (ModestTnySendQueue* self)
 {	
 	ModestTnySendQueuePrivate *priv;
-	
 	priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE (self);
 	
-	return priv->current_msg_id != NULL;
+	return priv->current != NULL;
 }
 
+ModestTnySendQueueStatus
+modest_tny_send_queue_get_msg_status (ModestTnySendQueue *self, const gchar *msg_id)
+{
+  GList *item;
+  item = modest_tny_send_queue_lookup_info (self, msg_id);
+  if(item == NULL) return MODEST_TNY_SEND_QUEUE_SUSPENDED;
+  return ((SendInfo*)item->data)->status;
+}
 
 static void 
 _on_msg_start_sending (TnySendQueue *self,
-		       TnyMsg *msg, 
-		       guint processed,
-		       guint total)
+		       TnyMsg *msg,
+		       gpointer user_data)
 {
 	ModestTnySendQueuePrivate *priv;
-	TnyHeader *header = NULL;
+	TnyHeader *header;
+	GList *item;
+	SendInfo *info;
 
 	priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE (self);
 
-	/* Delete previous msg_id */
-	if (priv->current_msg_id != NULL)
-		g_free(priv->current_msg_id);
-	
-	/* Set current msg_id */
 	header = tny_msg_get_header(msg);
-	priv->current_msg_id = g_strdup(tny_header_get_message_id (header));
+	item = modest_tny_send_queue_lookup_info (MODEST_TNY_SEND_QUEUE (self), tny_header_get_message_id (header));
+
+	if (item != NULL)
+	{
+		info = item->data;
+		info->status = MODEST_TNY_SEND_QUEUE_SENDING;
+
+		g_signal_emit (self, signals[STATUS_CHANGED], 0, info->msg_id, info->status);
+	}
+
+	priv->current = item;
 }
 
 static void 
 _on_msg_has_been_sent (TnySendQueue *self,
 		       TnyMsg *msg, 
-		       guint processed,
-		       guint total)
+		       gpointer user_data)
 {
 	ModestTnySendQueuePrivate *priv;
-	
+	TnyHeader *header;
+	GList *item;
+
 	priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE (self);
-	
-	/* Delete previous msg_id */
-	if (priv->current_msg_id != NULL)
-		g_free(priv->current_msg_id);
-	
-	/* Unset current msg_id */
-	priv->current_msg_id = NULL;
+
+	header = tny_msg_get_header (msg);
+
+	/* TODO: Use this version as soon as the msg-sending
+	 *  notification works */
+#if 0
+	item = priv->current;
+	g_assert(item != NULL);
+#else
+	item = modest_tny_send_queue_lookup_info (MODEST_TNY_SEND_QUEUE (self), tny_header_get_message_id(header));
+	g_assert(item != NULL);
+#endif
+
+	modest_tny_send_queue_info_free (item->data);
+	g_queue_delete_link (priv->queue, item);
+	priv->current = NULL;
+}
+
+static void _on_msg_error_happened (TnySendQueue *self,
+                                    TnyHeader *header,
+				    TnyMsg *msg,
+				    GError *err,
+				    gpointer user_data)
+{
+	ModestTnySendQueuePrivate *priv;
+	SendInfo *info;
+	GList *item;
+
+	priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE (self);
+
+	/* TODO: Use this version as soon as the msg-sending
+	 *  notification works */
+#if 0
+	item = priv->current;
+	g_assert(item != NULL);
+	info = priv->current->data;
+#else
+	/* TODO: Why do we get the msg and its header separately? The docs
+	 * don't really tell. */
+	g_assert(header == tny_msg_get_header (msg)); // ????
+	item = modest_tny_send_queue_lookup_info (MODEST_TNY_SEND_QUEUE (self), tny_header_get_message_id (header));
+	g_assert(item != NULL);
+	info = item->data;
+#endif
+
+	/* Keep in queue so that we remember that the opertion has failed
+	 * and was not just cancelled */
+	info->status = MODEST_TNY_SEND_QUEUE_FAILED;
+	g_signal_emit (self, signals[STATUS_CHANGED], 0, info->msg_id, info->status);
 }

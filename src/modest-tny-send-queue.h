@@ -50,12 +50,21 @@ G_BEGIN_DECLS
 typedef struct _ModestTnySendQueue      ModestTnySendQueue;
 typedef struct _ModestTnySendQueueClass ModestTnySendQueueClass;
 
+typedef enum {
+	MODEST_TNY_SEND_QUEUE_WAITING,
+	MODEST_TNY_SEND_QUEUE_SUSPENDED,
+	MODEST_TNY_SEND_QUEUE_SENDING,
+	MODEST_TNY_SEND_QUEUE_FAILED
+} ModestTnySendQueueStatus;
+
 struct _ModestTnySendQueue {
 	TnyCamelSendQueue  parent;
 };
 
 struct _ModestTnySendQueueClass {
 	TnyCamelSendQueueClass parent_class;
+
+	void (*status_changed)(ModestTnySendQueue *self, const gchar *msg_id, ModestTnySendQueueStatus status);
 };
 
 /**
@@ -92,7 +101,6 @@ ModestTnySendQueue*    modest_tny_send_queue_new        (TnyCamelTransportAccoun
  */
 void modest_tny_send_queue_try_to_send (ModestTnySendQueue* self);
 
-
 /**
  * modest_tny_send_queue_sending_in_progress:
  * @self: a valid #ModestTnySendQueue instance
@@ -101,6 +109,7 @@ void modest_tny_send_queue_try_to_send (ModestTnySendQueue* self);
  */
 gboolean modest_tny_send_queue_sending_in_progress (ModestTnySendQueue* self);
 
+#if 0
 /**
  * modest_tny_send_queue_msg_is_being_sent:
  * @self: a valid #ModestTnySendQueue instance
@@ -109,7 +118,19 @@ gboolean modest_tny_send_queue_sending_in_progress (ModestTnySendQueue* self);
  * Checks if message identifies with @msg_id is currently being sent.
  */
 gboolean modest_tny_send_queue_msg_is_being_sent (ModestTnySendQueue* self, const gchar *msg_id);
+#endif
 
+/**
+ * modest_tny_send_queue_get_msg_status:
+ * @self: a valid #ModestTnySendQueue instance
+ * @msg_id: The message id to check
+ *
+ * Returns the status of the message identified with @msg_id. The status tells
+ * whether the message is currently being sent, is waiting for being sent or
+ * sending the message failed.
+ */
+ModestTnySendQueueStatus
+modest_tny_send_queue_get_msg_status (ModestTnySendQueue *self, const gchar *msg_id);
 
 G_END_DECLS
 

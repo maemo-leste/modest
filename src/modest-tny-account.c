@@ -343,7 +343,7 @@ modest_tny_account_new_from_server_account_name (ModestAccountMgr *account_mgr,
 
 	TnyAccount *result = modest_tny_account_new_from_server_account (
 		account_mgr, account_data);
-		
+
 	modest_account_mgr_free_server_account_data (account_mgr, account_data);
 	
 	return result;
@@ -726,7 +726,7 @@ const gchar* modest_tny_account_get_parent_modest_account_name_for_server_accoun
 void modest_tny_account_set_parent_modest_account_name_for_server_account (TnyAccount *self, const gchar* parent_modest_acount_name)
 {
 	g_object_set_data_full (G_OBJECT(self), "modest_account",
-				(gpointer*) g_strdup (parent_modest_acount_name), g_free);
+				(gpointer) g_strdup (parent_modest_acount_name), g_free);
 }
 
 

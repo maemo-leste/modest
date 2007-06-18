@@ -1,3 +1,16 @@
+2007-06-18  Armin Burgmeier  <armin@openismus.com>
+
+	* src/modest-tny-send-queue.h:
+	* src/modest-tny-send-queue.c: Keep track of the status of messages in
+	the queue so we can later show it in the UI. Replaced
+	modest_tny_send_queue_msg_is_being_sent() by
+	modest_tny_send_queue_get_msg_status().
+
+	* src/modest-ui-dimming-rules.c: Adjust for the replaced function.
+
+	* src/modest-tny-account.c: Changed a cast to gpointer* to one to
+	gpointer. This probably was not harmful, but just to be sure.
+
 2007-06-18  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/maemo/modest-platform.c: (modest_platform_activate_uri):
