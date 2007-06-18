@@ -1,5 +1,12 @@
 2007-06-18  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/maemo/modest-platform.c: (modest_platform_activate_uri):
+	Fix the build, but leave the function broken on Bora, because
+	hildon_uri_action_get_service() does not exist. 
+	osso_uri_action_get_service() does not exist either, it seems.
+
+2007-06-18  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/modest-tny-account.c:
 	(modest_tny_account_new_from_server_account):
 	Uncommented the url debug output again, because it is useful for 

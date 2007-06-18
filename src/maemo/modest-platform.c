@@ -241,7 +241,8 @@ modest_platform_activate_uri (const gchar *uri)
 	
 	for (iter = actions; iter; iter = g_slist_next (iter)) {
 		action = (OssoURIAction*) iter->data;
-		if (action && strcmp (hildon_uri_action_get_service (action), "com.nokia.modest") == 0) {
+		const gchar* service = NULL; /* TODO: hildon_uri_action_get_service (action); */
+		if (action && service && strcmp (service, "com.nokia.modest") == 0) {
 			GError *err = NULL;
 			result = osso_uri_open (uri, action, &err);
 			if (!result && err) {
