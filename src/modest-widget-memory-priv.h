@@ -40,6 +40,7 @@ G_BEGIN_DECLS
 #define MODEST_WIDGET_MEMORY_PARAM_POS           "pos"
 #define MODEST_WIDGET_MEMORY_PARAM_COLUMN_WIDTH  "column-width"
 #define MODEST_WIDGET_MEMORY_PARAM_WINDOW_STYLE  "window-style"
+#define MODEST_WIDGET_MEMORY_PARAM_COLUMN_SORT   "column-sort"
 
 /* private functions, only for use in modest-widget-memory and modest-init */
 gchar* _modest_widget_memory_get_keyname           (const gchar *name, const gchar *param);

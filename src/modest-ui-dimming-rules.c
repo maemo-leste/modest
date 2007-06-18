@@ -952,7 +952,7 @@ _invalid_attach_selected (ModestWindow *win,
 			result = n_selected != 1;
 		else
 			
-			result = n_selected == 1;
+			result = n_selected < 1;
 		
 		/* Set notifications */
 		if (!result && rule != NULL) {

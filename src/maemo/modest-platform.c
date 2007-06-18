@@ -596,6 +596,10 @@ launch_sort_headers_dialog (GtkWindow *parent_window,
 	gint default_key = 0;
 	gint result;
 	gboolean outgoing = FALSE;
+	gint current_sort_colid = -1;
+	GtkSortType current_sort_type;
+	gint attachments_sort_id;
+	gint priority_sort_id;
 	
 	/* Get header window */
 	if (MODEST_IS_MAIN_WINDOW (parent_window)) {
@@ -609,6 +613,7 @@ launch_sort_headers_dialog (GtkWindow *parent_window,
 	if (cols == NULL) return;
 	int sort_model_ids[6];
 	int sort_ids[6];
+
 
 	outgoing = (GPOINTER_TO_INT (g_object_get_data(G_OBJECT(cols->data), MODEST_HEADER_VIEW_COLUMN))==
 		    MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER_OUT);
@@ -642,6 +647,7 @@ launch_sort_headers_dialog (GtkWindow *parent_window,
 	sort_key = hildon_sort_dialog_add_sort_key (dialog, _("mcen_li_sort_attachment"));
 	sort_model_ids[sort_key] = TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN;
 	sort_ids[sort_key] = TNY_HEADER_FLAG_ATTACHMENTS;
+	attachments_sort_id = sort_key;
 
 	sort_key = hildon_sort_dialog_add_sort_key (dialog, _("mcen_li_sort_size"));
 	sort_model_ids[sort_key] = TNY_GTK_HEADER_LIST_MODEL_MESSAGE_SIZE_COLUMN;
@@ -650,10 +656,33 @@ launch_sort_headers_dialog (GtkWindow *parent_window,
 	sort_key = hildon_sort_dialog_add_sort_key (dialog, _("mcen_li_sort_priority"));
 	sort_model_ids[sort_key] = TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN;
 	sort_ids[sort_key] = TNY_HEADER_FLAG_PRIORITY;
+	priority_sort_id = sort_key;
 
 	/* Launch dialogs */
-	hildon_sort_dialog_set_sort_key (dialog, default_key);
-	hildon_sort_dialog_set_sort_order (dialog, GTK_SORT_DESCENDING);
+	if (!gtk_tree_sortable_get_sort_column_id (GTK_TREE_SORTABLE (gtk_tree_view_get_model (GTK_TREE_VIEW (header_view))),
+						   &current_sort_colid, &current_sort_type)) {
+		hildon_sort_dialog_set_sort_key (dialog, default_key);
+		hildon_sort_dialog_set_sort_order (dialog, GTK_SORT_DESCENDING);
+	} else {
+		hildon_sort_dialog_set_sort_order (dialog, current_sort_type);
+		if (current_sort_colid == TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN) {
+			gpointer flags_sort_type_pointer;
+			flags_sort_type_pointer = g_object_get_data (G_OBJECT (cols->data), MODEST_HEADER_VIEW_FLAG_SORT);
+			if (GPOINTER_TO_INT (flags_sort_type_pointer) == TNY_HEADER_FLAG_PRIORITY)
+				hildon_sort_dialog_set_sort_key (dialog, priority_sort_id);
+			else
+				hildon_sort_dialog_set_sort_key (dialog, attachments_sort_id);
+		} else {
+			gint current_sort_keyid = 0;
+			while (current_sort_keyid < 6) {
+				if (sort_model_ids[current_sort_keyid] == current_sort_colid)
+					break;
+				else 
+					current_sort_keyid++;
+			}
+			hildon_sort_dialog_set_sort_key (dialog, current_sort_keyid);
+		}
+	}
 	result = gtk_dialog_run (GTK_DIALOG (dialog));
 	if (result == GTK_RESPONSE_OK) {
 		sort_key = hildon_sort_dialog_get_sort_key (dialog);
