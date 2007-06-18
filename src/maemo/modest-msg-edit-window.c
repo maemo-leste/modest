@@ -349,7 +349,8 @@ init_window (ModestMsgEditWindow *obj)
 	priv->priority_icon = gtk_image_new ();
 	gtk_box_pack_start (GTK_BOX (subject_box), priv->priority_icon, FALSE, FALSE, 0);
 	priv->subject_field = gtk_entry_new_with_max_length (SUBJECT_MAX_LENGTH);
-	g_object_set (G_OBJECT (priv->subject_field), "hildon-input-mode", HILDON_GTK_INPUT_MODE_FULL, NULL);
+	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->subject_field), 
+					 HILDON_GTK_INPUT_MODE_FULL | HILDON_GTK_INPUT_MODE_AUTOCAP);
 	gtk_box_pack_start (GTK_BOX (subject_box), priv->subject_field, TRUE, TRUE, 0);
 	priv->add_attachment_button = gtk_button_new ();
 	GTK_WIDGET_UNSET_FLAGS (GTK_WIDGET (priv->add_attachment_button), GTK_CAN_FOCUS);
