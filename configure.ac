@@ -95,7 +95,8 @@ if test "x$with_platform" = "xmaemo"; then
       PKG_CHECK_MODULES(MODEST_LIBTINYMAIL_MAEMO, conic libtinymail-maemo-1.0 hildon-1 libosso libhildonmime osso-addressbook-1.0 wpeditor hildon-help libebook-1.2 libalarm hildon-notify libnotify)     	
    
     else     # the old hildon
-     PKG_CHECK_MODULES(MODEST_LIBTINYMAIL_MAEMO, conic libtinymail-maemo-1.0 hildon-libs >= 0.12.0 libosso libossomime libossohelp osso-addressbook-1.0 libwpeditor-plus libebook-1.2 libalarm gnome-vfs-module-2.0 hildon-notify libnotify)    	 AC_DEFINE_UNQUOTED(MODEST_HILDON_VERSION_0, 1, ["The Hildon version we support."])   
+     PKG_CHECK_MODULES(MODEST_LIBTINYMAIL_MAEMO, conic libtinymail-maemo-1.0 hildon-libs >= 0.12.0 libosso libossomime libossohelp osso-addressbook-1.0 libwpeditor-plus libebook-1.2 libalarm gnome-vfs-module-2.0)
+     AC_DEFINE_UNQUOTED(MODEST_HILDON_VERSION_0, 1, ["The Hildon version we support."])   
     fi 	
    
    AC_SUBST(MODEST_LIBTINYMAIL_MAEMO_CFLAGS)

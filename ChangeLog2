@@ -1,3 +1,10 @@
+2007-06-18  Murray Cumming  <murrayc@murrayc.com>
+
+	* configure.ac: Do not require hildon-notify for Maemo Bora. It is not 
+	available.
+	* src/modest-init.c: (modest_init_init_ui): Do not call notify_init() 
+	for Mameo Bora, to fix the build.
+	
 2007-06-17  Johannes Schmid <johannes.schmid@openismus.com>
 
 	* configure.ac:

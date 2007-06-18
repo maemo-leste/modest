@@ -49,9 +49,7 @@
 #include "widgets/modest-global-settings-dialog.h"
 #include "modest-tny-msg.h"
 #ifdef MODEST_PLATFORM_MAEMO
-#include <hildon/hildon-notification.h>
-#else
-#include <libnotify/notify.h>
+#include "modest-hildon-includes.h"
 #endif
 
 static gboolean init_header_columns (ModestConf *conf, gboolean overwrite);
@@ -251,7 +249,9 @@ modest_init_init_ui (gint argc, gchar** argv)
 	init_stock_icons ();
 
 	/* Init notification system */
+	#ifndef MODEST_HILDON_VERSION_0
 	notify_init ("Basics");
+	#endif
 
 	return TRUE;
 }
