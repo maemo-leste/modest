@@ -132,6 +132,11 @@ _on_msg_count_changed (ModestHeaderView *header_view,
 
 static GtkWidget * create_empty_view (void);
 
+static gchar * 
+translate_func (const gchar *msgid,
+		const gchar *domain_name);
+
+
 /* list my signals */
 enum {
 	/* MY_SIGNAL_1, */
@@ -685,10 +690,11 @@ modest_main_window_new (void)
 
 	action_group = gtk_action_group_new ("ModestMainWindowActions");
 	gtk_action_group_set_translation_domain (action_group, GETTEXT_PACKAGE);
+	gtk_action_group_set_translate_func (action_group, (GtkTranslateFunc) translate_func, GETTEXT_PACKAGE, g_free);
 
 	menu_rules_group = modest_dimming_rules_group_new ("ModestMenuDimmingRules");
 	toolbar_rules_group = modest_dimming_rules_group_new ("ModestToolbarDimmingRules");
-	
+
 	/* Add common actions */
 	gtk_action_group_add_actions (action_group,
 				      modest_action_entries,
@@ -1843,4 +1849,11 @@ on_send_receive_csm_activated (GtkMenuItem *item,
 			       gpointer user_data)
 {
 	refresh_account ((const gchar*) user_data);
+}
+
+static gchar * 
+translate_func (const gchar *msgid,
+		const gchar *domain_name)
+{
+	return _(msgid);
 }

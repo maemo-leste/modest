@@ -83,8 +83,8 @@ static const GtkActionEntry modest_action_entries [] = {
 	/* View */
 	{ "ViewSort",            NULL,        N_("mcen_me_inbox_sort"),     NULL,      NULL,  G_CALLBACK (modest_ui_actions_on_sort) },
 	{ "ViewShowToolbar", NULL, N_("mcen_me_inbox_toolbar") }, /* submenu */
-	{ "ViewPreviousMessage", NULL,    N_("qgn_toolb_gene_back"),         NULL, NULL, G_CALLBACK (modest_ui_actions_on_prev) },
-	{ "ViewNextMessage", NULL, N_("qgn_toolb_gene_forward"),      NULL, NULL, G_CALLBACK (modest_ui_actions_on_next) },
+	{ "ViewPreviousMessage", NULL,    N_("mcen_me_viewer_previousmessage"),         NULL, NULL, G_CALLBACK (modest_ui_actions_on_prev) },
+	{ "ViewNextMessage", NULL, N_("mcen_me_viewer_nextmessage"),      NULL, NULL, G_CALLBACK (modest_ui_actions_on_next) },
 
 	/* Attachments */
 	{ "ViewAttachment", NULL, N_("mcen_me_viewer_view_attachment"), NULL, NULL, G_CALLBACK (modest_ui_actions_view_attachment) },
