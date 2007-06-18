@@ -492,9 +492,9 @@ modest_ui_actions_on_new_msg (GtkAction *action, ModestWindow *win)
 			return;
 	}
 	
-	account_name = g_strdup(modest_window_get_active_account (win));
+	account_name = modest_account_mgr_get_default_account (modest_runtime_get_account_mgr ());
 	if (!account_name)
-		account_name = modest_account_mgr_get_default_account (modest_runtime_get_account_mgr());
+		account_name = g_strdup (modest_window_get_active_account (win));
 	if (!account_name) {
 		g_printerr ("modest: no account found\n");
 		goto cleanup;
@@ -584,9 +584,9 @@ open_msg_cb (ModestMailOperation *mail_op,
 	headers_action_mark_as_read (header, MODEST_WINDOW(parent_win), NULL);
 
 	/* Get account */
-	account =  g_strdup (modest_window_get_active_account (MODEST_WINDOW (parent_win)));
+	account = modest_account_mgr_get_default_account (modest_runtime_get_account_mgr());
 	if (!account)
-		account = modest_account_mgr_get_default_account (modest_runtime_get_account_mgr());
+		account =  g_strdup (modest_window_get_active_account (MODEST_WINDOW (parent_win)));
 	
 	/* Gets folder type (OUTBOX headers will be opened in edit window */
 	if (modest_tny_folder_is_local_folder (folder))

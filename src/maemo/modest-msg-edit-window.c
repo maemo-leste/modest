@@ -831,6 +831,7 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name)
 	ModestConf *conf;
 	gboolean prefer_formatted;
 	gint file_format;
+	ModestPair *account_pair = NULL;
 
 	g_return_val_if_fail (msg, NULL);
 	g_return_val_if_fail (account_name, NULL);
@@ -911,6 +912,10 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name)
 	modest_msg_edit_window_setup_toolbar (MODEST_MSG_EDIT_WINDOW (obj));
 
 	setup_insensitive_handlers (MODEST_MSG_EDIT_WINDOW (obj));
+
+	account_pair = modest_pair_list_find_by_first_as_string (priv->from_field_protos, account_name);
+	if (account_pair != NULL)
+		modest_combo_box_set_active_id (MODEST_COMBO_BOX (priv->from_field), account_pair->first);
 
 	set_msg (MODEST_MSG_EDIT_WINDOW (obj), msg);
 
