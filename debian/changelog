@@ -1,3 +1,9 @@
+modest (1.0-2007.25-1ubuntu1) feisty; urgency=low
+
+  * 
+
+ -- vivek <vivek@vivek-ubuntu>  Mon, 18 Jun 2007 16:48:59 +0300
+
 modest (1.0-2007.25-1) gutsy; urgency=low
 
   * Fixes : NB#58394, NB#58430, NB#58610, NB#58612, NB#60059, NB#59711
@@ -24,7 +30,7 @@ modest (1.0-2007.24-4) gutsy; urgency=low
 modest (1.0-2007.24-3) gutsy; urgency=low
 
   * Fixes: NB#60186, NB#58823, NB#60332, NB#60158, NB#59235, NB#59433
-  * Fixes: NB#59029, NB#60176, NB#59753
+  * Fixes: NB#60176, NB#59753
 
  -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Wed, 13 Jun 2007 18:34:40 +0300
 
@@ -80,7 +86,7 @@ modest (1.0-2007.23-1) gutsy; urgency=low
 
 modest (1.0-2007.23-0) gutsy; urgency=low
 
-  * Fixes: NB#59243, NB#59239, NB#59250, NB#56892, NB#59258, NB#59023
+  * Fixes: NB#59243, NB#59239, NB#59250, NB#56892, NB#59023
   * Fixes: NB#59290, NB#58996, NB#59013, NB#56696, NB#58618, NB#58472, NB#55874
   * Fixes: NB#57316, NB#56901, NB#56935, NB#59041, NB#56894, NB#57625, NB#57627
   * Fixes: NB#57514, NB#57628, NB#57629, NB#58459, NB#58608, NB#59236, NB#56720
@@ -89,7 +95,7 @@ modest (1.0-2007.23-0) gutsy; urgency=low
   * Fixes: NB#56475, NB#56476, NB#57855, NB#57496, NB#57675, NB#56200, NB#56477
   * Fixes: NB#56267, NB#56483, NB#56702, NB#57213, NB#57671, NB#57575, NB#59440
   * Fixes: NB#58404, NB#56893, NB#58484, NB#59130, NB#59132, NB#58488, NB#57856
-  * Fixes: NB#59037, NB#59071, NB#57191, NB#59300, NB#58780, NB#59307, NB#56372
+  * Fixes: NB#59037, NB#59071, NB#57191, NB#59300, NB#59307, NB#56372
   * Fixes: NB#57209, NB#57852, NB#58679, NB#56719, NB#57068, NB#56945, NB#59022
   * Fixes: NB#57218, NB#57688, NB#58872, NB#57929, NB#59387	
 
