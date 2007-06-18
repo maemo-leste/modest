@@ -1,5 +1,12 @@
 2007-06-18  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-tny-account.c:
+	(modest_tny_account_new_from_server_account):
+	Uncommented the url debug output again, because it is useful for 
+	debugging, as I said in the comment.
+
+2007-06-18  Murray Cumming  <murrayc@murrayc.com>
+
 	* configure.ac: Do not require hildon-notify for Maemo Bora. It is not 
 	available.
 	* src/modest-init.c: (modest_init_init_ui): Do not call notify_init() 

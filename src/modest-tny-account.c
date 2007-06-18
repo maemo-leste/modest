@@ -324,7 +324,7 @@ modest_tny_account_new_from_server_account (ModestAccountMgr *account_mgr,
 	/* FIXME: for debugging. 
 	 * Let's keep this because it is very useful for debugging. */
 	url = tny_account_get_url_string (TNY_ACCOUNT(tny_account));
- /* 	printf ("DEBUG %s:\n  account-url: %s\n", __FUNCTION__, url); */
+    printf ("DEBUG %s:\n  account-url: %s\n", __FUNCTION__, url);
 	g_free (url);
 	/***********************/
 	
