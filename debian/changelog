@@ -1,3 +1,10 @@
+modest (1.0-2007.25-2) gutsy; urgency=low
+
+  * Fixes : NB#58219, NB#58214, NB#60430, NB#57201, NB#57578, NB#57932
+  * Fixes : NB#58220, NB#58174, NB#59240, NB#60950
+
+ -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Mon, 18 Jun 2007 17:48:06 +0300
+
 modest (1.0-2007.25-1) gutsy; urgency=low
 
   * Fixes : NB#58394, NB#58430, NB#58610, NB#58612, NB#60059, NB#59711
@@ -14,7 +21,7 @@ modest (1.0-2007.24-5) gutsy; urgency=low
 
 modest (1.0-2007.24-4) gutsy; urgency=low
 
-  * Fixes: NB#59297, NB#59258, NB#58400, NB#57580, NB#60396, NB#59404
+  * Fixes: NB#59297,  NB#58400, NB#57580, NB#60396, NB#59404
   * Fixes: NB#59572, NB#58991, NB#55368, NB#60466, NB#58104, NB#58181
   * Fixes: NB#59346, NB#59316, NB#59102, NB#58743, NB#60293, NB#60119
   * Fixes: NB#59461
@@ -30,7 +37,7 @@ modest (1.0-2007.24-3) gutsy; urgency=low
 
 modest (1.0-2007.24-2) gutsy; urgency=low
 
-  * Fixes: NB#60246, NB#58780, NB#56305, NB#57434, NB#58040, NB#60060
+  * Fixes: NB#60246, NB#56305, NB#57434, NB#58040, NB#60060
   * Fixes: NB#60144, NB#59431, NB#59825, NB#59993, NB#59961, NB#59169
   * Known problems:
   * Startup time can be slow.
@@ -44,169 +51,3 @@ modest (1.0-2007.24-2) gutsy; urgency=low
     - click around for the folder to update.
 
  -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Tue, 12 Jun 2007 19:04:40 +0300
-
-modest (1.0-2007.24-1) gutsy; urgency=low
-
-  * Fixes: NB#58576
-
- -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Tue, 12 Jun 2007 09:57:31 +0300
-
-modest (1.0-2007.24-0) gutsy; urgency=low
-
-  * Fixes: NB#56472, NB#56941, NB#60043, NB#58954, NB#59682, NB#59417, NB#59421
-  * Fixes: NB#59458, NB#58037, NB#59028, NB#59462, NB#60048, NB#59041, NB#59328
-  * Fixes: NB#60073, NB#60074, NB#60247
-
- -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Mon, 11 Jun 2007 18:44:15 +0300
-
-modest (1.0-2007.23-3) gutsy; urgency=low
-
-  * Fixes: NB#59451, NB#59253, NB#59191, NB#58543, NB#56933, NB#58233, NB#56420
-
- -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Fri,  8 Jun 2007 17:44:49 +0300
-
-modest (1.0-2007.23-2) gutsy; urgency=low
-
-  * Fixes: NB#56983, NB#57495, NB#55874, NB#57590
-
- -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Fri,  8 Jun 2007 09:27:53 +0300
-
-modest (1.0-2007.23-1) gutsy; urgency=low
-
-  * Fixes: NB#56181, NB#57291, NB#55338, NB#57756, NB#59002, NB#59003, NB#56474, NB#58756
-  * Fixes: NB#57494, NB#59805
-
- -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Thu,  7 Jun 2007 16:34:06 +0300
-
-modest (1.0-2007.23-0) gutsy; urgency=low
-
-  * Fixes: NB#59243, NB#59239, NB#59250, NB#56892, NB#59023
-  * Fixes: NB#59290, NB#58996, NB#59013, NB#56696, NB#58618, NB#58472, NB#55874
-  * Fixes: NB#57316, NB#56901, NB#56935, NB#59041, NB#56894, NB#57625, NB#57627
-  * Fixes: NB#57514, NB#57628, NB#57629, NB#58459, NB#58608, NB#59236, NB#56720
-  * Fixes: NB#59186, NB#56979, NB#59212, NB#56126, NB#59029, NB#58671, NB#59000
-  * Fixes: NB#58976, NB#59251, NB#59248, NB#56704, NB#56910, NB#55864, NB#56409
-  * Fixes: NB#56475, NB#56476, NB#57855, NB#57496, NB#57675, NB#56200, NB#56477
-  * Fixes: NB#56267, NB#56483, NB#56702, NB#57213, NB#57671, NB#57575, NB#59440
-  * Fixes: NB#58404, NB#56893, NB#58484, NB#59130, NB#59132, NB#58488, NB#57856
-  * Fixes: NB#59037, NB#59071, NB#57191, NB#59300, NB#59307, NB#56372
-  * Fixes: NB#57209, NB#57852, NB#58679, NB#56719, NB#57068, NB#56945, NB#59022
-  * Fixes: NB#57218, NB#57688, NB#58872, NB#57929, NB#59387	
-
- -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Thu, 07 Jun 2007 09:14:56 +0300
-
-modest (1.0-2007.22-3) gutsy; urgency=low
-
-  * svn 2023
-  * Fixes: NB#59220, NB#58227, NB#57580, NB#55363, NB#59217
-  * Fixes: NB#56485, NB#56975, NB#57592, NB#57415
-  * Fixes: NB#57294, NB#58263, NB#57398, NB#57478, NB#57325, NB#57465, NB#57461
-  * Fixes: NB#57328, NB#57359, NB#55452, NB#56966, NB#57458, NB#57522, NB#56140
-  * Fixes: NB#56137, NB#57224
-  * This release implements all features, except for the new notifications, search and send-as-email
-
- -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Fri, 01 Jun 2007 10:16:42 +0300
-
-
-modest (1.0-week21pre1) gutsy; urgency=low
-
-  * svn revision 1948
-
- -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Tue, 22 May 2007 15:23:10 +0300
-
-modest (1.0-svn1903osso0ubuntu1) gutsy; urgency=low
-
-  * 
-
- -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Fri, 18 May 2007 14:15:01 +0300
-
-modest (1.0-svn1903osso0) unstable; urgency=low
-
-  * Week 21 (pre)release
-  * Fixes: NB#56142 (account title name goes missing)
-  * Fixes: NB#56273 (port value not automatically updated)
-  * Fixes: NB#56305 (connection specific smtp)
-  * Fixes: NB#55497 (connection specific smtp)
-  * Fixes: NB#56288 (connection specific smtp)
-  * Fixes: NB#56130 (crash in sorting dialog)
-  * Fixes: NB#57045 (unable to create account)
-  
-  * Feature implementations according to the implementation plan
-    (https://projects.maemo.org/trac/email/wiki/EmailWorkItems)
-  * Exceptions: receiving has limitations, searching not yet working,
-    send-as-email not yet working, memcard not yet working, sending has
-    limitations
-
- -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Fri, 18 May 2007 11:47:14 +0300
-
-modest (1.0-svn1889ubuntu4) gutsy; urgency=low
-
-  * debian/changelog
-
- -- Dirk/Jan C. Binnema <djcb@localhost.localdomain>  Fri, 18 May 2007 11:29:43 +0300
-
-modest (1.0-svn1889ubuntu3) gutsy; urgency=low
-
-  * debian/changelog
-
- -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Fri, 18 May 2007 11:19:17 +0300
-
-modest (1.0-svn1889ubuntu2) gutsy; urgency=low
-
-  * debian/changelog
-
- -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Fri, 18 May 2007 11:18:32 +0300
-
-modest (1.0-svn1889ubuntu1) gutsy; urgency=low
-
-  * debian/changelog
-
- -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Fri, 18 May 2007 11:16:50 +0300
-
-modest (1.0-svn1889) unstable; urgency=low
-
-  * Fixes: NB#56697, NB#55364
-
- -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Tue, 15 May 2007 20:56:12 +0300
-
-modest (1.0-svn1860) unstable; urgency=low
-
-  * update for the tny account security settings update
-  * temporary change to give testers more info when connections don't work
-
- -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Mon, 14 May 2007 14:39:08 +0300
-
-modest (1.0-svn1845) unstable; urgency=low
-
-  * Week 20 prelease (2)
-  * Fixes: NB#56180, NB#56182, NB#56212, NB#56634, NB#56713, NB#56303
-
-  * Changes:
-  * many fixes all over, incl. 3 major bugs fixed
-  * added global settings
-
- -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Mon, 14 May 2007 12:28:39 +0300
-
-modest (1.0-svn1823) unstable; urgency=low
-
-  * Week 20 prelease
-  * Fixes: NB#55333, NB#55355, NB#55375, NB#56145, NB#56183, NB#56209, NB#56314, NB#56418, 
-    NB#56130, NB#56180,NB#56212, NB#56477, NB#55397  
-
- -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Thu, 10 May 2007 17:15:00 +0300
-
-modest (1.0-svn1759) unstable; urgency=low
-
-  * Week 19 prelease
-  * Fixes: NB#55338, NB#55341, NB#55343, NB#55370, NB#55377, NB#55390,
-    NB#55391, NB#55441, NB#55446, NB#55514, NB#55934
-
- -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Fri,  4 May 2007 18:33:33 +0300
-
-modest (1.0-svn1729) unstable; urgency=low
- 
-  * First release to integration
-  * Implemented: NR#149683, NR#149681, NR#149685, NR#149679, NR#149677, NR#149675, NR#149662, NR#149672, NR#149667, NR#149669, NR#149670, NR#149794, NR#149795, NR#149796, NR#149797, NR#149798, NR#149800, NR#149801, NR#149804, NR#149782, NR#149783, NR#149784, NR#149788, NR#149789, NR#149692, NR#149701, NR#149702, NR#149703, NR#149704, NR#149705, NR#149706, NR#149710, NR#149711, NR#149712, NR#149713, NR#149693, NR#149714, NR#149697, NR#149698, NR#149699, NR#149700, NR#149719, NR#149720, NR#149754, NR#149765, NR#149766, NR#149767, NR#149768, NR#149769, NR#149779, NR#149756, NR#149758, NR#149735, NR#149736, NR#149737, NR#149738, NR#149740, NR#149724, NR#149742, NR#149743, NR#149726, NR#149750, NR#149727, NR#149728, NR#149729, NR#149730, NR#149731, NR#149732
-
- -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Wed,  2 May 2007 08:12:04 +0300
-
