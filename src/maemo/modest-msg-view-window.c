@@ -113,6 +113,7 @@ enum {
 
 static const GtkToggleActionEntry msg_view_toggle_action_entries [] = {
 	{ "FindInMessage",    GTK_STOCK_FIND,    N_("qgn_toolb_gene_find"), NULL, NULL, G_CALLBACK (modest_msg_view_window_toggle_find_toolbar), FALSE },
+	{ "ToolsFindInMessage", NULL, N_("mcen_me_viewer_find"), NULL, NULL, G_CALLBACK (modest_msg_view_window_toggle_find_toolbar), FALSE },
 };
 
 static const GtkRadioActionEntry msg_view_zoom_action_entries [] = {
@@ -686,20 +687,52 @@ modest_msg_view_window_get_message_uid (ModestMsgViewWindow *self)
 	return (const gchar*) priv->msg_uid;
 }
 
+static void
+toggle_action_set_active_block_notify (GtkToggleAction *action,
+				       gboolean value)
+{
+	GSList *proxies = NULL;
+
+	for (proxies = gtk_action_get_proxies (GTK_ACTION (action));
+	     proxies != NULL; proxies = g_slist_next (proxies)) {
+		GtkWidget *widget = (GtkWidget *) proxies->data;
+		gtk_action_block_activate_from (GTK_ACTION (action), widget);
+	}
+
+	gtk_toggle_action_set_active (action, value);
+
+	for (proxies = gtk_action_get_proxies (GTK_ACTION (action));
+	     proxies != NULL; proxies = g_slist_next (proxies)) {
+		GtkWidget *widget = (GtkWidget *) proxies->data;
+		gtk_action_unblock_activate_from (GTK_ACTION (action), widget);
+	}
+}
+
+
 static void 
 modest_msg_view_window_toggle_find_toolbar (GtkToggleAction *toggle,
 					    gpointer data)
 {
 	ModestMsgViewWindow *window = MODEST_MSG_VIEW_WINDOW (data);
 	ModestMsgViewWindowPrivate *priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
+	ModestWindowPrivate *parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
+	gboolean is_active;
+	GtkAction *action;
 
-	if (gtk_toggle_action_get_active (toggle)) {
+	is_active = gtk_toggle_action_get_active (toggle);
+
+	if (is_active) {
 		gtk_widget_show (priv->find_toolbar);
 		hildon_find_toolbar_highlight_entry (HILDON_FIND_TOOLBAR (priv->find_toolbar), TRUE);
 	} else {
 		gtk_widget_hide (priv->find_toolbar);
 	}
 
+	/* update the toggle buttons status */
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/FindInMessage");
+	toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action), is_active);
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/ToolsMenu/ToolsFindInMessageMenu");
+	toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action), is_active);
 	
 }
 
