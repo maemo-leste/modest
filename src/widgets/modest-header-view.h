@@ -328,6 +328,41 @@ modest_header_view_sort_by_column_id (ModestHeaderView *self,
 void
 modest_header_view_clear (ModestHeaderView *self);
 
+/**
+ * modest_header_view_copy_selection:
+ * @self: a #ModestHeaderView
+ * 
+ * Stores a #TnyList of selected headers in the own clibpoard of 
+ * @self header view.
+ **/
+void 
+modest_header_view_copy_selection (ModestHeaderView *header_view);
+
+/**
+ * modest_header_view_cut_selection:
+ * @self: a #ModestHeaderView
+ * 
+ * Stores a #TnyList of selected headers in the own clibpoard of 
+ * @self header view and filter them into headers tree model to
+ * hide these rows in treeview.
+ **/
+void 
+modest_header_view_cut_selection (ModestHeaderView *header_view);
+
+
+/**
+ * modest_header_view_paste_selection:
+ * @self: a #ModestHeaderView
+ * @headers: ouput parameter with a #TnyList of headers which will be returned.
+ * @delete: output parameter with indication about delete or not the selected headers. 
+ * 
+ * Gets the selected headers to copy/cut.
+ **/
+void
+modest_header_view_paste_selection (ModestHeaderView *header_view,
+				    TnyList **headers,
+				    gboolean *delete);
+
 G_END_DECLS
 
 
