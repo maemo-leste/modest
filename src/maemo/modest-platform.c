@@ -241,8 +241,7 @@ modest_platform_activate_uri (const gchar *uri)
 	
 	for (iter = actions; iter; iter = g_slist_next (iter)) {
 		action = (OssoURIAction*) iter->data;
-		const gchar* service = NULL; /* TODO: hildon_uri_action_get_service (action); */
-		if (action && service && strcmp (service, "com.nokia.modest") == 0) {
+		if (action && strcmp (osso_uri_action_get_name (action), "uri_link_compose_email") == 0) {
 			GError *err = NULL;
 			result = osso_uri_open (uri, action, &err);
 			if (!result && err) {
@@ -259,7 +258,7 @@ modest_platform_activate_uri (const gchar *uri)
 	return result;
 }
 
-#else /* MODEST_HILDON_VERSION_0*/
+#else /* !MODEST_HILDON_VERSION_0*/
 
 
 gboolean 
