@@ -218,21 +218,86 @@ modest_platform_get_file_icon_name (const gchar* name, const gchar* mime_type,
 	return icon_name;
 }
 
+
+
+
+#ifdef MODEST_HILDON_VERSION_0
+
 gboolean 
 modest_platform_activate_uri (const gchar *uri)
 {
-	gboolean result;
+	OssoURIAction *action;
+	gboolean result = FALSE;
+	GSList *actions, *iter = NULL;
+	const gchar *scheme;
+	
+	g_return_val_if_fail (uri, FALSE);
+	if (!uri)
+		return FALSE;
 
-#ifdef MODEST_HILDON_VERSION_0
-	result = osso_uri_open (uri, NULL, NULL);
-#else
-	result = hildon_uri_open (uri, NULL, NULL);
-#endif
-
+	/* the default action should be email */
+	scheme = osso_uri_get_scheme_from_uri (uri, NULL);
+	actions = osso_uri_get_actions (scheme, NULL);
+	
+	for (iter = actions; iter; iter = g_slist_next (iter)) {
+		action = (OssoURIAction*) iter->data;
+		if (action && strcmp (hildon_uri_action_get_service (action), "com.nokia.modest") == 0) {
+			GError *err = NULL;
+			result = osso_uri_open (uri, action, &err);
+			if (!result && err) {
+				g_printerr ("modest: modest_platform_activate_uri : %s",
+					    err->message ? err->message : "unknown error");
+				g_error_free (err);
+			}
+			break;
+		}
+	}
+			
 	if (!result)
 		hildon_banner_show_information (NULL, NULL, _("mcen_ib_unsupported_link"));
 	return result;
 }
+
+#else /* MODEST_HILDON_VERSION_0*/
+
+
+gboolean 
+modest_platform_activate_uri (const gchar *uri)
+{
+	HildonURIAction *action;
+	gboolean result = FALSE;
+	GSList *actions, *iter = NULL;
+	const gchar *scheme;
+	
+	g_return_val_if_fail (uri, FALSE);
+	if (!uri)
+		return FALSE;
+
+	/* the default action should be email */
+	scheme = hildon_uri_get_scheme_from_uri (uri, NULL);
+	actions = hildon_uri_get_actions (scheme, NULL);
+	
+	for (iter = actions; iter; iter = g_slist_next (iter)) {
+		action = (HildonURIAction*) iter->data;
+		if (action && strcmp (hildon_uri_action_get_service (action), "com.nokia.modest") == 0) {
+			GError *err = NULL;
+			result = hildon_uri_open (uri, action, &err);
+			if (!result && err) {
+				g_printerr ("modest: modest_platform_activate_uri : %s",
+					    err->message ? err->message : "unknown error");
+				g_error_free (err);
+			}
+			break;
+		}
+	}
+			
+	if (!result)
+		hildon_banner_show_information (NULL, NULL, _("mcen_ib_unsupported_link"));
+	return result;
+}
+
+
+#endif /* MODEST_HILDON_VERSION_0*/
 
 gboolean 
 modest_platform_activate_file (const gchar *path, const gchar *mime_type)
