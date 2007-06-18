@@ -35,6 +35,7 @@
 #include <modest-conf.h>
 #include <modest-account-mgr.h>
 #include <modest-cache-mgr.h>
+#include <modest-email-clipboard.h>
 #include <modest-mail-operation-queue.h>
 #include <modest-tny-account-store.h>
 #include <modest-tny-send-queue.h>
@@ -130,6 +131,15 @@ ModestConf*         modest_runtime_get_conf   (void);
  * Returns: the ModestAccountMgr singleton. This should NOT be unref'd.
  **/
 ModestAccountMgr*         modest_runtime_get_account_mgr   (void);
+
+/**
+ * modest_runtime_get_email_clipboard:
+ * 
+ * get the #ModestEmailClipboard singleton instance
+ * 
+ * Returns: the #ModestEamilClipboard singleton. This should NOT be unref'd.
+ **/
+ModestEmailClipboard*     modest_runtime_get_email_clipboard   (void);
 
 /**
  * modest_runtime_get_account_store:

@@ -36,6 +36,8 @@ modest_SOURCES=\
 	modest-account-mgr-priv.h\
 	modest-account-mgr.c\
 	modest-account-mgr.h\
+	modest-email-clipboard.c\
+	modest-email-clipboard.h\
 	modest-address-book.h\
 	modest-cache-mgr.c\
 	modest-cache-mgr.h\

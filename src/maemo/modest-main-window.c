@@ -688,7 +688,7 @@ modest_main_window_new (void)
 
 	menu_rules_group = modest_dimming_rules_group_new ("ModestMenuDimmingRules");
 	toolbar_rules_group = modest_dimming_rules_group_new ("ModestToolbarDimmingRules");
-
+	
 	/* Add common actions */
 	gtk_action_group_add_actions (action_group,
 				      modest_action_entries,

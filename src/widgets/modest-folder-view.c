@@ -125,6 +125,12 @@ static gint         expand_row_timeout     (gpointer data);
 
 static void         setup_drag_and_drop    (GtkTreeView *self);
 
+static void          _clipboard_set_selected_data (ModestFolderView *folder_view, gboolean delete);
+
+static void          _clear_hidding_filter (ModestFolderView *folder_view);
+
+
+
 enum {
 	FOLDER_SELECTION_CHANGED_SIGNAL,
 	FOLDER_DISPLAY_NAME_CHANGED_SIGNAL,
@@ -142,6 +148,13 @@ struct _ModestFolderViewPrivate {
 	gulong                account_removed_signal;
 	gulong                conf_key_signal;
 	
+	/* not unref this object, its a singlenton */
+	ModestEmailClipboard *clipboard;
+
+	/* Filter tree model */
+	gchar **hidding_ids;
+	guint n_selected;
+
 	TnyFolderStoreQuery  *query;
 	guint                 timer_expander;
 
@@ -476,6 +489,11 @@ modest_folder_view_init (ModestFolderView *obj)
 	conf = modest_runtime_get_conf();
 	priv->local_account_name = modest_conf_get_string (conf, MODEST_CONF_DEVICE_NAME, NULL);
 
+	/* Init email clipboard */
+	priv->clipboard = modest_runtime_get_email_clipboard ();
+	priv->hidding_ids = NULL;
+	priv->n_selected = 0;
+
 	/* Build treeview */
 	add_columns (GTK_WIDGET (obj));
 
@@ -550,6 +568,9 @@ modest_folder_view_finalize (GObject *obj)
 					     priv->conf_key_signal);
 		priv->conf_key_signal = 0;
 	}
+
+	/* Clear hidding array created by cut operation */
+	_clear_hidding_filter (MODEST_FOLDER_VIEW (obj));
 
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
@@ -708,9 +729,17 @@ filter_row (GtkTreeModel *model,
 	    GtkTreeIter *iter,
 	    gpointer data)
 {
+	ModestFolderViewPrivate *priv;
 	gboolean retval = TRUE;
 	TnyFolderType type = TNY_FOLDER_TYPE_UNKNOWN;
 	GObject *instance = NULL;
+	const gchar *id = NULL;
+	guint i;
+	gboolean found = FALSE;
+	gboolean cleared = FALSE;
+	
+	g_return_val_if_fail (MODEST_IS_FOLDER_VIEW (data), FALSE);
+	priv = MODEST_FOLDER_VIEW_GET_PRIVATE (data);
 
 	gtk_tree_model_get (model, iter,
 			    TNY_GTK_FOLDER_STORE_TREE_MODEL_TYPE_COLUMN, &type,
@@ -735,8 +764,6 @@ filter_row (GtkTreeModel *model,
 			if (!modest_tny_account_is_virtual_local_folders (acc) &&
 				strcmp (account_id, MODEST_MMC_ACCOUNT_ID)) { 
 				/* Show only the visible account id */
-				ModestFolderViewPrivate *priv = 
-					MODEST_FOLDER_VIEW_GET_PRIVATE (data);
 				if (priv->visible_account_id && strcmp (account_id, priv->visible_account_id))
 					retval = FALSE;
 			}
@@ -750,6 +777,19 @@ filter_row (GtkTreeModel *model,
 	
 	/* The virtual local-folders folder store is also shown by default. */
 
+	/* Check hiding (if necessary) */
+	cleared = modest_email_clipboard_cleared (priv->clipboard);  	       
+	if ((retval) && (!cleared) && (TNY_IS_FOLDER (instance))) {
+		id = tny_folder_get_id (TNY_FOLDER(instance));
+		if (priv->hidding_ids != NULL)
+			for (i=0; i < priv->n_selected && !found; i++)
+				if (priv->hidding_ids[i] != NULL && id != NULL)
+					found = (!strcmp (priv->hidding_ids[i], id));
+		
+		retval = !found;
+	}
+
+	/* Free */
 	g_object_unref (instance);
 
 	return retval;
@@ -800,23 +840,30 @@ modest_folder_view_update_model (ModestFolderView *self,
 					 cmp_rows, NULL, NULL);
 
 	/* Create filter model */
-	if (priv->style == MODEST_FOLDER_VIEW_STYLE_SHOW_ONE) {
-		filter_model = gtk_tree_model_filter_new (sortable, NULL);
-		gtk_tree_model_filter_set_visible_func (GTK_TREE_MODEL_FILTER (filter_model),
-							filter_row,
-							self,
-							NULL);
-	}
+	filter_model = gtk_tree_model_filter_new (sortable, NULL);
+	gtk_tree_model_filter_set_visible_func (GTK_TREE_MODEL_FILTER (filter_model),
+						filter_row,
+						self,
+						NULL);
+/* 	if (priv->style == MODEST_FOLDER_VIEW_STYLE_SHOW_ONE) { */
+/* 		filter_model = gtk_tree_model_filter_new (sortable, NULL); */
+/* 		gtk_tree_model_filter_set_visible_func (GTK_TREE_MODEL_FILTER (filter_model), */
+/* 							filter_row, */
+/* 							self, */
+/* 							NULL); */
+/* 	} */
 
 	/* Set new model */
-	gtk_tree_view_set_model (GTK_TREE_VIEW(self), 
-				 (filter_model) ? filter_model : sortable);
+	gtk_tree_view_set_model (GTK_TREE_VIEW(self), filter_model);
+/* 	gtk_tree_view_set_model (GTK_TREE_VIEW(self),  */
+/* 				 (filter_model) ? filter_model : sortable); */
 	expand_root_items (self); /* expand all account folders */
 	
 	g_object_unref (model);
 	
-	if (filter_model)
-		g_object_unref (filter_model);
+	g_object_unref (filter_model);
+/* 	if (filter_model) */
+/* 		g_object_unref (filter_model); */
 			
 	g_object_unref (sortable);
 
@@ -1699,4 +1746,77 @@ modest_folder_view_select_first_inbox_or_local (ModestFolderView *self)
 		gtk_tree_model_get_iter_first (model, &iter);
 		gtk_tree_selection_select_iter (sel, &iter);
 	}
+}
+
+void 
+modest_folder_view_copy_selection (ModestFolderView *folder_view)
+{
+	/* Copy selection */
+	_clipboard_set_selected_data (folder_view, FALSE);
+}
+
+void 
+modest_folder_view_cut_selection (ModestFolderView *folder_view)
+{
+	ModestFolderViewPrivate *priv = NULL;
+	GtkTreeModel *model = NULL;
+	const gchar **hidding = NULL;
+	guint i, n_selected;
+
+	g_return_if_fail (MODEST_IS_FOLDER_VIEW (folder_view));
+	priv = MODEST_FOLDER_VIEW_GET_PRIVATE (folder_view);
+
+	/* Copy selection */
+	_clipboard_set_selected_data (folder_view, TRUE);
+
+	/* Get hidding ids */
+	hidding = modest_email_clipboard_get_hidding_ids (priv->clipboard, &n_selected); 
+	
+	/* Clear hidding array created by previous cut operation */
+	_clear_hidding_filter (MODEST_FOLDER_VIEW (folder_view));
+
+	/* Copy hidding array */
+	priv->n_selected = n_selected;
+	priv->hidding_ids = g_malloc0(sizeof(gchar *) * n_selected);
+	for (i=0; i < n_selected; i++) 
+		priv->hidding_ids[i] = g_strdup(hidding[i]); 		
+
+	/* Hide cut folders */
+	model = gtk_tree_view_get_model (GTK_TREE_VIEW (folder_view));
+	gtk_tree_model_filter_refilter (GTK_TREE_MODEL_FILTER (model));
+}
+
+static void
+_clipboard_set_selected_data (ModestFolderView *folder_view,
+			      gboolean delete)
+{
+	ModestFolderViewPrivate *priv = NULL;
+	TnyFolderStore *folder = NULL;
+
+	g_return_if_fail (MODEST_IS_FOLDER_VIEW (folder_view));
+	priv = MODEST_FOLDER_VIEW_GET_PRIVATE (folder_view);
+		
+	/* Set selected data on clipboard   */
+	g_return_if_fail (MODEST_IS_EMAIL_CLIPBOARD (priv->clipboard));
+	folder = modest_folder_view_get_selected (folder_view);
+	modest_email_clipboard_set_data (priv->clipboard, TNY_FOLDER(folder), NULL, delete);
+
+	/* Free */
+	g_object_unref (folder);
+}
+
+static void
+_clear_hidding_filter (ModestFolderView *folder_view) 
+{
+	ModestFolderViewPrivate *priv;
+	guint i;
+	
+	g_return_if_fail (MODEST_IS_FOLDER_VIEW (folder_view));	
+	priv = MODEST_FOLDER_VIEW_GET_PRIVATE(folder_view);
+
+	if (priv->hidding_ids != NULL) {
+		for (i=0; i < priv->n_selected; i++) 
+			g_free (priv->hidding_ids[i]);
+		g_free(priv->hidding_ids);
+	}	
 }

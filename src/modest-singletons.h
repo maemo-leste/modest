@@ -34,6 +34,7 @@
 
 #include <glib-object.h>
 #include <modest-conf.h>
+#include <modest-email-clipboard.h>
 #include <modest-account-mgr.h>
 #include <modest-tny-account-store.h>
 #include <modest-mail-operation-queue.h>
@@ -111,6 +112,17 @@ ModestConf*               modest_singletons_get_conf          (ModestSingletons 
  **/
 ModestAccountMgr*         modest_singletons_get_account_mgr   (ModestSingletons *self);
 
+/**
+ * modest_singletons_get_account_mgr:
+ * @self: a valid #ModestSingletons instance
+ * 
+ * get the #ModestEamilClipboard singleton instance
+ * don't use this function directly, use the modest-runtime
+ * functions instead.
+ * 
+ * Returns: the #ModestEmailClipboard singleton
+ **/
+ModestEmailClipboard*      modest_singletons_get_email_clipboard (ModestSingletons *self);
 
 /**
  * modest_singletons_get_account_store:

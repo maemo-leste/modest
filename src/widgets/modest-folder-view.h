@@ -185,6 +185,41 @@ const gchar* modest_folder_view_get_account_id_of_visible_server_account (Modest
 
 void         modest_folder_view_select_first_inbox_or_local  (ModestFolderView *self);
 
+/**
+ * modest_folder_view_copy_selection:
+ * @self: a #ModestFolderView
+ * 
+ * Stores a #TnyList of selected folders in the own clibpoard of 
+ * @self folder view.
+ **/
+void 
+modest_folder_view_copy_selection (ModestFolderView *folder_view);
+
+/**
+ * modest_folder_view_cut_selection:
+ * @self: a #ModestFolderView
+ * 
+ * Stores a #TnyList of selected folders in the own clibpoard of 
+ * @self folder view and filter them into folders tree model to
+ * hide these rows in treeview.
+ **/
+void 
+modest_folder_view_cut_selection (ModestFolderView *folder_view);
+
+
+/**
+ * modest_folder_view_paste_selection:
+ * @self: a #ModestFolderView
+ * @folders: ouput parameter with a #TnyList of folders which will be returned.
+ * @delete: output parameter with indication about delete or not the selected folders. 
+ * 
+ * Gets the selected folders to copy/cut.
+ **/
+void
+modest_folder_view_paste_selection (ModestFolderView *folder_view,
+				    TnyList **folders,
+				    gboolean *delete);
+
 G_END_DECLS
 
 #endif /* __MODEST_FOLDER_VIEW_H__ */

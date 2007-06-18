@@ -97,6 +97,7 @@ typedef struct _ReplyForwardHelper {
 	GtkWidget *parent_window;
 } ReplyForwardHelper;
 
+
 /*
  * The do_headers_action uses this kind of functions to perform some
  * action to each member of a list of headers
@@ -2157,6 +2158,10 @@ modest_ui_actions_on_cut (GtkAction *action,
 		clipboard = gtk_clipboard_get (GDK_SELECTION_CLIPBOARD);
 		buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (focused_widget));
 		gtk_text_buffer_cut_clipboard (buffer, clipboard, TRUE);
+	} else if (MODEST_IS_HEADER_VIEW (focused_widget)) {
+		modest_header_view_cut_selection (MODEST_HEADER_VIEW (focused_widget));
+	} else if (MODEST_IS_FOLDER_VIEW (focused_widget)) {
+ 		modest_folder_view_cut_selection (MODEST_FOLDER_VIEW (focused_widget));
 	}
 }
 
@@ -2175,10 +2180,14 @@ modest_ui_actions_on_copy (GtkAction *action,
 		gtk_editable_copy_clipboard (GTK_EDITABLE(focused_widget));
 	} else if (GTK_IS_TEXT_VIEW (focused_widget)) {
 		GtkTextBuffer *buffer;
-
 		buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (focused_widget));
 		gtk_text_buffer_copy_clipboard (buffer, clipboard);
-	}
+		modest_header_view_copy_selection (MODEST_HEADER_VIEW (focused_widget));
+	} else if (MODEST_IS_HEADER_VIEW (focused_widget)) {
+ 		modest_header_view_copy_selection (MODEST_HEADER_VIEW (focused_widget));
+	} else if (MODEST_IS_FOLDER_VIEW (focused_widget)) {
+ 		modest_folder_view_copy_selection (MODEST_FOLDER_VIEW (focused_widget));
+	}    
 }
 
 void
@@ -2197,6 +2206,7 @@ modest_ui_actions_on_paste (GtkAction *action,
 			    ModestWindow *window)
 {
 	GtkWidget *focused_widget;
+	ModestMailOperation *mail_op = NULL;
 
 	focused_widget = gtk_window_get_focus (GTK_WINDOW (window));
 	if (GTK_IS_EDITABLE (focused_widget)) {
@@ -2208,6 +2218,52 @@ modest_ui_actions_on_paste (GtkAction *action,
 		clipboard = gtk_clipboard_get (GDK_SELECTION_CLIPBOARD);
 		buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (focused_widget));
 		gtk_text_buffer_paste_clipboard (buffer, clipboard, NULL, TRUE);
+	} else if (MODEST_IS_FOLDER_VIEW (focused_widget)) {
+		ModestEmailClipboard *clipboard = NULL;
+		TnyFolder *src_folder = NULL;
+		TnyFolderStore *folder_store = NULL;
+		TnyList *data = NULL;		
+		gboolean delete = FALSE;
+		
+		/* Check clipboard source */
+		clipboard = modest_runtime_get_email_clipboard ();
+		if (modest_email_clipboard_cleared (clipboard)) 
+			return;
+		
+		/* Get elements to paste */
+		modest_email_clipboard_get_data (clipboard, &src_folder, &data, &delete);
+
+		/* Create a new mail operation */
+		mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_RECEIVE, G_OBJECT(window));
+		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), 
+						 mail_op);
+		
+		/* Get destination folder */
+		folder_store = modest_folder_view_get_selected (MODEST_FOLDER_VIEW (focused_widget));
+
+		/* transfer messages  */
+		if (data != NULL) {
+			modest_mail_operation_xfer_msgs (mail_op, 
+							 data,
+							 TNY_FOLDER (folder_store),
+							 delete,
+							 NULL,
+							 NULL);
+			
+		} else if (src_folder != NULL) {			
+			modest_mail_operation_xfer_folder (mail_op, 
+							   src_folder,
+							   folder_store,
+							   delete);
+		}
+
+		/* Free */
+		if (data != NULL) 
+			g_object_unref (data);
+		if (src_folder != NULL) 
+			g_object_unref (src_folder);
+		if (folder_store != NULL) 
+			g_object_unref (folder_store);
 	}
 }
 
@@ -3191,3 +3247,5 @@ _on_send_receive_progress_changed (ModestMailOperation  *mail_op,
 		modest_main_window_notify_send_receive_completed (MODEST_MAIN_WINDOW(user_data));
 	
 }
+
+

@@ -31,10 +31,12 @@
 #define __MODEST_MAIN_WINDOW_UI_PRIV_H__
 
 #include <glib/gi18n.h>
+
 #include "modest-icon-names.h"
 #include "modest-ui-actions.h"
 
 G_BEGIN_DECLS
+
 
 /* Action entries */
 static const GtkActionEntry modest_action_entries [] = {

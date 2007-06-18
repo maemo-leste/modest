@@ -65,6 +65,10 @@ static gint          cmp_subject_rows       (GtkTreeModel *tree_model,
 					     GtkTreeIter *iter2,
 					     gpointer user_data);
 
+static gboolean     filter_row             (GtkTreeModel *model,
+					    GtkTreeIter *iter,
+					    gpointer data);
+
 static void          on_selection_changed   (GtkTreeSelection *sel, 
 					     gpointer user_data);
 
@@ -81,6 +85,10 @@ static void          folder_monitor_update  (TnyFolderObserver *self,
 
 static void          tny_folder_observer_init (TnyFolderObserverIface *klass);
 
+static void          _clipboard_set_selected_data (ModestHeaderView *header_view, gboolean delete);
+
+static void          _clear_hidding_filter (ModestHeaderView *header_view);
+
 
 typedef struct _ModestHeaderViewPrivate ModestHeaderViewPrivate;
 struct _ModestHeaderViewPrivate {
@@ -89,6 +97,13 @@ struct _ModestHeaderViewPrivate {
 
 	TnyFolderMonitor     *monitor;
 	GMutex               *observers_lock;
+
+	/* not unref this object, its a singlenton */
+	ModestEmailClipboard *clipboard;
+
+	/* Filter tree model */
+	gchar **hidding_ids;
+	guint n_selected;
 
 	gint                  sort_colid[2][TNY_FOLDER_TYPE_NUM];
 	gint                  sort_type[2][TNY_FOLDER_TYPE_NUM];
@@ -262,7 +277,7 @@ remove_all_columns (ModestHeaderView *obj)
 gboolean
 modest_header_view_set_columns (ModestHeaderView *self, const GList *columns, TnyFolderType type)
 {
-	GtkTreeModel *sortable;
+	GtkTreeModel *tree_filter, *sortable;
 	GtkTreeViewColumn *column=NULL;
 	GtkTreeSelection *selection = NULL;
 	GtkCellRenderer *renderer_msgtype,*renderer_header,
@@ -324,7 +339,9 @@ modest_header_view_set_columns (ModestHeaderView *self, const GList *columns, Tn
 
 	selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(self));
 	gtk_tree_selection_set_mode(selection, GTK_SELECTION_MULTIPLE);
-	sortable = gtk_tree_view_get_model (GTK_TREE_VIEW (self));
+/* 	sortable = gtk_tree_view_get_model (GTK_TREE_VIEW (self)); */
+	tree_filter = gtk_tree_view_get_model (GTK_TREE_VIEW (self));
+	sortable = gtk_tree_model_filter_get_model (GTK_TREE_MODEL_FILTER(tree_filter));
 
 	/* Add new columns */
 	for (cursor = columns; cursor; cursor = g_list_next(cursor)) {
@@ -473,6 +490,10 @@ modest_header_view_init (ModestHeaderView *obj)
 	priv->monitor	     = NULL;
 	priv->observers_lock = g_mutex_new ();
 
+	priv->clipboard = modest_runtime_get_email_clipboard ();
+	priv->hidding_ids = NULL;
+	priv->n_selected = 0;
+
 	/* Sort parameters */
 	for (j=0; j < 2; j++) {
 		for (i=0; i < TNY_FOLDER_TYPE_NUM; i++) {
@@ -506,6 +527,9 @@ modest_header_view_finalize (GObject *obj)
 		g_object_unref (G_OBJECT (priv->folder));
 		priv->folder   = NULL;
 	}
+
+	/* Clear hidding array created by cut operation */
+	_clear_hidding_filter (MODEST_HEADER_VIEW (obj));
 
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
@@ -744,7 +768,11 @@ modest_header_view_get_style (ModestHeaderView *self)
 static void
 modest_header_view_set_model (GtkTreeView *header_view, GtkTreeModel *model)
 {
-	GtkTreeModel *old_model_sort = gtk_tree_view_get_model (GTK_TREE_VIEW (header_view));
+	GtkTreeModel *old_model_filter = gtk_tree_view_get_model (GTK_TREE_VIEW (header_view));
+	GtkTreeModel *old_model_sort = NULL;
+
+	if (old_model_filter) 
+		old_model_sort = gtk_tree_model_filter_get_model (GTK_TREE_MODEL_FILTER(old_model_filter));
 
 	if (old_model_sort && GTK_IS_TREE_MODEL_SORT (old_model_sort)) { 
 		GtkTreeModel *old_model;
@@ -780,7 +808,7 @@ modest_header_view_set_folder_intern (ModestHeaderView *self, TnyFolder *folder)
 	TnyList *headers;
 	ModestHeaderViewPrivate *priv;
 	GList *cols, *cursor;
-	GtkTreeModel *sortable; 
+	GtkTreeModel *filter_model, *sortable; 
 	guint sort_colid;
 	GtkSortType sort_type;
 
@@ -807,6 +835,14 @@ modest_header_view_set_folder_intern (ModestHeaderView *self, TnyFolder *folder)
 	sortable = gtk_tree_model_sort_new_with_model (GTK_TREE_MODEL(headers));
 	g_object_unref (G_OBJECT (headers));
 
+	/* Create a tree model filter to hide and show rows for cut operations  */
+	filter_model = gtk_tree_model_filter_new (sortable, NULL);
+	gtk_tree_model_filter_set_visible_func (GTK_TREE_MODEL_FILTER (filter_model),
+						filter_row,
+						self,
+						NULL);
+	g_object_unref (G_OBJECT (sortable));
+
 	/* install our special sorting functions */
 	cursor = cols = gtk_tree_view_get_columns (GTK_TREE_VIEW(self));
 
@@ -829,8 +865,10 @@ modest_header_view_set_folder_intern (ModestHeaderView *self, TnyFolder *folder)
 	}
 
 	/* Set new model */
-	modest_header_view_set_model (GTK_TREE_VIEW (self), sortable);
-	g_object_unref (G_OBJECT (sortable));
+	modest_header_view_set_model (GTK_TREE_VIEW (self), filter_model);
+	g_object_unref (G_OBJECT (filter_model));
+/* 	modest_header_view_set_model (GTK_TREE_VIEW (self), sortable); */
+/* 	g_object_unref (G_OBJECT (sortable)); */
 
 	/* Free */
 	g_list_free (cols);
@@ -842,12 +880,14 @@ modest_header_view_sort_by_column_id (ModestHeaderView *self,
 				      GtkSortType sort_type)
 {
 	ModestHeaderViewPrivate *priv = NULL;
-	GtkTreeModel *sortable = NULL; 
+	GtkTreeModel *tree_filter, *sortable = NULL; 
 	TnyFolderType type;
 
 	/* Get model and private data */
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);		
-	sortable = gtk_tree_view_get_model (GTK_TREE_VIEW (self));
+	tree_filter = gtk_tree_view_get_model (GTK_TREE_VIEW (self));
+	sortable = gtk_tree_model_filter_get_model (GTK_TREE_MODEL_FILTER(tree_filter));
+/* 	sortable = gtk_tree_view_get_model (GTK_TREE_VIEW (self)); */
 	
 	/* Sort tree model */
 	type  = modest_tny_folder_guess_folder_type (priv->folder);
@@ -1311,8 +1351,12 @@ idle_notify_headers_count_changed (gpointer data)
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE (helper->self);
 	g_mutex_lock (priv->observers_lock);
 
+	/* Emmit signal to evaluate how headers changes affects to the window view  */
 	g_signal_emit (G_OBJECT(helper->self), signals[MSG_COUNT_CHANGED_SIGNAL], 0, folder, helper->change);
 		
+	/* Added or removed headers, so data sotred on cliboard are invalid  */
+	modest_email_clipboard_clear (priv->clipboard);
+
 	g_mutex_unlock (priv->observers_lock);
 
 	return FALSE;
@@ -1351,4 +1395,122 @@ void
 modest_header_view_clear (ModestHeaderView *self)
 {
 	modest_header_view_set_folder (self, NULL, NULL, NULL);
+}
+
+void 
+modest_header_view_copy_selection (ModestHeaderView *header_view)
+{
+	/* Copy selection */
+	_clipboard_set_selected_data (header_view, FALSE);
+}
+
+void 
+modest_header_view_cut_selection (ModestHeaderView *header_view)
+{
+	ModestHeaderViewPrivate *priv = NULL;
+	GtkTreeModel *model = NULL;
+	const gchar **hidding = NULL;
+	guint i, n_selected;
+
+	g_return_if_fail (MODEST_IS_HEADER_VIEW (header_view));
+	priv = MODEST_HEADER_VIEW_GET_PRIVATE (header_view);
+
+	/* Copy selection */
+	_clipboard_set_selected_data (header_view, TRUE);
+
+	/* Get hidding ids */
+	hidding = modest_email_clipboard_get_hidding_ids (priv->clipboard, &n_selected); 
+	
+	/* Clear hidding array created by previous cut operation */
+	_clear_hidding_filter (MODEST_HEADER_VIEW (header_view));
+
+	/* Copy hidding array */
+	priv->n_selected = n_selected;
+	priv->hidding_ids = g_malloc0(sizeof(gchar *) * n_selected);
+	for (i=0; i < n_selected; i++) 
+		priv->hidding_ids[i] = g_strdup(hidding[i]); 		
+
+	/* Hide cut headers */
+	model = gtk_tree_view_get_model (GTK_TREE_VIEW (header_view));
+	if (GTK_IS_TREE_MODEL_FILTER (model))
+		gtk_tree_model_filter_refilter (GTK_TREE_MODEL_FILTER (model));
+}
+
+
+ 
+
+static void
+_clipboard_set_selected_data (ModestHeaderView *header_view,
+			      gboolean delete)
+{
+	ModestHeaderViewPrivate *priv = NULL;
+	TnyList *headers = NULL;
+
+	g_return_if_fail (MODEST_IS_HEADER_VIEW (header_view));
+	priv = MODEST_HEADER_VIEW_GET_PRIVATE (header_view);
+		
+	/* Set selected data on clipboard   */
+	g_return_if_fail (MODEST_IS_EMAIL_CLIPBOARD (priv->clipboard));
+	headers = modest_header_view_get_selected_headers (header_view);
+	modest_email_clipboard_set_data (priv->clipboard, priv->folder, headers, delete);
+
+	/* Free */
+	g_object_unref (headers);
+}
+
+
+
+static gboolean
+filter_row (GtkTreeModel *model,
+	    GtkTreeIter *iter,
+	    gpointer user_data)
+{
+	ModestHeaderViewPrivate *priv = NULL;
+	TnyHeader *header = NULL;
+	guint i;
+	gchar *id = NULL;
+	gboolean found = FALSE;
+	
+	g_return_val_if_fail (MODEST_IS_HEADER_VIEW (user_data), FALSE);
+	priv = MODEST_HEADER_VIEW_GET_PRIVATE (user_data);
+
+	/* If no data on clipboard, return always TRUE */
+	if (modest_email_clipboard_cleared(priv->clipboard)) return TRUE;
+	    	
+	/* Get header from model */
+	gtk_tree_model_get (model, iter,
+			    TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN, &header,
+			    -1);
+	
+	/* Get message id from header (ensure is a valid id) */
+	if (!header) return FALSE;
+	id = g_strdup(tny_header_get_message_id (header));
+	
+	/* Check hiding */
+	if (priv->hidding_ids != NULL)
+		for (i=0; i < priv->n_selected && !found; i++)
+			if (priv->hidding_ids[i] != NULL && id != NULL)
+				found = (!strcmp (priv->hidding_ids[i], id));
+	
+	/* Free */
+	g_object_unref (header);
+	g_free(id);
+
+	return !found;
+}
+
+static void
+_clear_hidding_filter (ModestHeaderView *header_view) 
+{
+	ModestHeaderViewPrivate *priv;
+	guint i;
+	
+	g_return_if_fail (MODEST_IS_HEADER_VIEW (header_view));	
+	priv = MODEST_HEADER_VIEW_GET_PRIVATE(header_view);
+
+	if (priv->hidding_ids != NULL) {
+		for (i=0; i < priv->n_selected; i++) 
+			g_free (priv->hidding_ids[i]);
+		g_free(priv->hidding_ids);
+	}	
 }

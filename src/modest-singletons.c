@@ -39,6 +39,7 @@ typedef struct _ModestSingletonsPrivate ModestSingletonsPrivate;
 struct _ModestSingletonsPrivate {
 	ModestConf                *conf;
 	ModestAccountMgr          *account_mgr;
+	ModestEmailClipboard      *email_clipboard;
 	ModestTnyAccountStore     *account_store;
 	ModestCacheMgr            *cache_mgr;	
 	ModestMailOperationQueue  *mail_op_queue;
@@ -94,14 +95,15 @@ modest_singletons_init (ModestSingletons *obj)
 	ModestSingletonsPrivate *priv;
 	priv = MODEST_SINGLETONS_GET_PRIVATE(obj);
 
-	priv->conf           = NULL;
-	priv->account_mgr    = NULL;
-	priv->account_store  = NULL;
-	priv->cache_mgr      = NULL;
-	priv->mail_op_queue  = NULL;
-	priv->platform_fact  = NULL;
-	priv->device         = NULL;
-	priv->window_mgr     = NULL;
+	priv->conf            = NULL;
+	priv->account_mgr     = NULL;
+	priv->email_clipboard = NULL;
+	priv->account_store   = NULL;
+	priv->cache_mgr       = NULL;
+	priv->mail_op_queue   = NULL;
+	priv->platform_fact   = NULL;
+	priv->device          = NULL;
+	priv->window_mgr      = NULL;
 	
 	priv->conf           = modest_conf_new ();
 	if (!priv->conf) {
@@ -112,6 +114,12 @@ modest_singletons_init (ModestSingletons *obj)
 	priv->account_mgr    = modest_account_mgr_new (priv->conf);
 	if (!priv->account_mgr) {
 		g_printerr ("modest: cannot create modest account mgr instance\n");
+		return;
+	}
+
+	priv->email_clipboard    = modest_email_clipboard_new ();
+	if (!priv->email_clipboard) {
+		g_printerr ("modest: cannot create modest email clipboard instance\n");
 		return;
 	}
 
@@ -171,6 +179,12 @@ modest_singletons_finalize (GObject *obj)
 		priv->account_mgr = NULL;
 	}
 
+	if (priv->email_clipboard) {
+		modest_runtime_verify_object_last_ref(priv->email_clipboard,"");
+		g_object_unref (G_OBJECT(priv->email_clipboard));
+		priv->email_clipboard = NULL;
+	}
+
 	if (priv->conf) {
 		modest_runtime_verify_object_last_ref(priv->conf,"");
 		g_object_unref (G_OBJECT(priv->conf));
@@ -227,7 +241,7 @@ modest_singletons_new (void)
 	priv = MODEST_SINGLETONS_GET_PRIVATE(self);
 	
 	/* widget_factory will still be NULL, as it is initialized lazily */
-	if (!(priv->conf && priv->account_mgr && priv->account_store &&
+	if (!(priv->conf && priv->account_mgr && priv->email_clipboard && priv->account_store &&
 	      priv->cache_mgr && priv->mail_op_queue && priv->device && priv->platform_fact)) {
 		g_printerr ("modest: failed to create singletons object\n");
 		g_object_unref (G_OBJECT(self));
@@ -253,6 +267,13 @@ modest_singletons_get_account_mgr (ModestSingletons *self)
 	return MODEST_SINGLETONS_GET_PRIVATE(self)->account_mgr;
 }
 
+ModestEmailClipboard*
+modest_singletons_get_email_clipboard (ModestSingletons *self)
+{
+	g_return_val_if_fail (self, NULL);
+	return MODEST_SINGLETONS_GET_PRIVATE(self)->email_clipboard;
+}
+
 ModestTnyAccountStore*
 modest_singletons_get_account_store (ModestSingletons *self)
 {
@@ -274,15 +295,12 @@ modest_singletons_get_mail_operation_queue (ModestSingletons *self)
 	return MODEST_SINGLETONS_GET_PRIVATE(self)->mail_op_queue;
 }
 
-
-
 TnyDevice*
 modest_singletons_get_device (ModestSingletons *self)
 {
 	g_return_val_if_fail (self, NULL);
 	return MODEST_SINGLETONS_GET_PRIVATE(self)->device;
 }
-
 
 
 TnyPlatformFactory*
