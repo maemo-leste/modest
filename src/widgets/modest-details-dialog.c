@@ -273,7 +273,7 @@ modest_details_dialog_set_folder_default (ModestDetailsDialog *self,
 	
 	/* Set window title */
 	gtk_window_set_title (GTK_WINDOW (self), _("mcen_ti_folder_properties"));
-	gtk_dialog_add_button (GTK_DIALOG (self), _("mcen_bd_folder_properties_close"), GTK_RESPONSE_CLOSE);
+	gtk_dialog_add_button (GTK_DIALOG (self), _("mcen_bd_close"), GTK_RESPONSE_CLOSE);
 
 	/* Get stats */
 	stats = tny_folder_get_stats (folder);
