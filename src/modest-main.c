@@ -115,6 +115,11 @@ main (int argc, char *argv[])
 		{ NULL, 0, 0, 0, NULL, NULL, NULL }
 	};
 
+	/* Enable threads before anything else, to prevent memory corruption */
+	if (!g_thread_supported())
+		g_thread_init(NULL);
+	gdk_threads_init ();
+
 	context = g_option_context_new (NULL);
 	g_option_context_add_main_entries (context, options, NULL);
 	

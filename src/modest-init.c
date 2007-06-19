@@ -51,6 +51,7 @@
 #ifdef MODEST_PLATFORM_MAEMO
 #include "modest-hildon-includes.h"
 #endif
+#include <locale.h>
 
 static gboolean init_header_columns (ModestConf *conf, gboolean overwrite);
 static gboolean init_default_account_maybe  (ModestAccountMgr *acc_mgr);
@@ -185,11 +186,6 @@ modest_init_init_core (void)
 	init_i18n();
 	init_debug_g_type();
 	init_debug_logging();
-
-	if (!g_thread_supported())
-		g_thread_init(NULL);
-	
-	gdk_threads_init ();
 	
 	if (!modest_runtime_init()) {
 		modest_init_uninit ();

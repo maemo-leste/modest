@@ -957,10 +957,6 @@ update_account_thread (gpointer thr_user_data)
 			iter = tny_list_create_iterator (observer->new_headers);
 			while (!tny_iterator_is_done (iter)) {
 				TnyHeader *header = TNY_HEADER (tny_iterator_get_current (iter));
-				/* printf ("  DEBUG1.2 %s: checking size: account=%s, subject=%s\n", 
-				 * 	__FUNCTION__, tny_account_get_id (priv->account), 
-				 * tny_header_get_subject (header));
-				 */
 				 
 				/* Apply per-message size limits */
 				if (tny_header_get_message_size (header) < info->max_size)
@@ -970,8 +966,13 @@ update_account_thread (gpointer thr_user_data)
 				tny_iterator_next (iter);
 			}
 			g_object_unref (iter);
+		} else {
+			/* We do not need to do it the first time
+			   because it's automatically done by the tree
+			   model */
+			if (G_UNLIKELY (!first_time))
+				tny_folder_poke_status (TNY_FOLDER (folder));
 		}
-		
 		tny_folder_remove_observer (TNY_FOLDER (folder), TNY_FOLDER_OBSERVER (observer));
 		g_object_unref (observer);
 		observer = NULL;
@@ -999,7 +1000,7 @@ update_account_thread (gpointer thr_user_data)
 		 * user to download them all,
 		 * as per the UI spec "Retrieval Limits" section in 4.4: 
 		 */
-		printf ("DEBUG: %s: account=%s, len=%d, retrieve_limit = %d\n", __FUNCTION__, 
+		printf ("************************** DEBUG: %s: account=%s, len=%d, retrieve_limit = %d\n", __FUNCTION__, 
 			tny_account_get_id (priv->account), new_headers->len, info->retrieve_limit);
 		if (new_headers->len > info->retrieve_limit) {
 			/* TODO: Ask the user, instead of just failing, showing mail_nc_msg_count_limit_exceeded, 
