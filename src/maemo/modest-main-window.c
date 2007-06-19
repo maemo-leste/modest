@@ -469,7 +469,7 @@ on_sendqueue_error_happened (TnySendQueue *self, TnyHeader *header, TnyMsg *msg,
 		gchar *str = g_strdup_printf ("%s. Do you want to remove the message (%s)?",
 			err->message, tny_header_get_subject (header));
 		OnResponseInfo *info = g_slice_new (OnResponseInfo);
-		GtkWidget *dialog = gtk_message_dialog_new (NULL, 0,
+		GtkWidget *dialog = gtk_message_dialog_new (GTK_WINDOW (user_data), 0,
 			GTK_MESSAGE_ERROR, GTK_BUTTONS_YES_NO, str);
 		g_free (str);
 		info->queue = g_object_ref (self);
@@ -546,6 +546,7 @@ on_account_store_connecting_finished (TnyAccountStore *store, ModestMainWindow *
 				modest_tny_account_store_get_transport_account_for_open_connection
 						 (modest_runtime_get_account_store(), account_name));
 			if (account) {
+				/* Q: Is this the first location where the send-queues are requested? */
 				QueueErrorSignal *esignal = g_slice_new (QueueErrorSignal);
 				printf ("debug: %s:\n  Transport account for %s: %s\n", __FUNCTION__, account_name, 
 					tny_account_get_id(TNY_ACCOUNT(account)));
