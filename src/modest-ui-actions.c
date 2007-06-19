@@ -2183,6 +2183,7 @@ modest_ui_actions_on_copy (GtkAction *action,
 
 	clipboard = gtk_clipboard_get (GDK_SELECTION_CLIPBOARD);
 	focused_widget = gtk_window_get_focus (GTK_WINDOW (window));
+
 	if (GTK_IS_LABEL (focused_widget)) {
 		gtk_clipboard_set_text (clipboard, gtk_label_get_text (GTK_LABEL (focused_widget)), -1);
 	} else if (GTK_IS_EDITABLE (focused_widget)) {
@@ -2193,7 +2194,26 @@ modest_ui_actions_on_copy (GtkAction *action,
 		gtk_text_buffer_copy_clipboard (buffer, clipboard);
 		modest_header_view_copy_selection (MODEST_HEADER_VIEW (focused_widget));
 	} else if (MODEST_IS_HEADER_VIEW (focused_widget)) {
- 		modest_header_view_copy_selection (MODEST_HEADER_VIEW (focused_widget));
+		gboolean continue_download, ask;
+		TnyList *header_list = modest_header_view_get_selected_headers (MODEST_HEADER_VIEW (focused_widget));
+		TnyIterator *iter = tny_list_create_iterator (header_list);
+		TnyHeader *header = TNY_HEADER (tny_iterator_get_current (iter));
+		TnyFolder *folder = tny_header_get_folder (header);
+		TnyAccount *account = tny_folder_get_account (folder);
+		const gchar *proto_str = tny_account_get_proto (TNY_ACCOUNT (account));
+		/* If it's POP then ask */
+		ask = (modest_protocol_info_get_transport_store_protocol (proto_str) == 
+		       MODEST_PROTOCOL_STORE_POP) ? TRUE : FALSE;
+		g_object_unref (account);
+		g_object_unref (folder);
+		g_object_unref (header);
+		g_object_unref (iter);
+		/* Check that the messages have been previously downloaded */
+		if (ask)
+			continue_download = download_uncached_messages (header_list, GTK_WINDOW (window));
+		if (continue_download)
+			modest_header_view_copy_selection (MODEST_HEADER_VIEW (focused_widget));
+		g_object_unref (header_list);
 	} else if (MODEST_IS_FOLDER_VIEW (focused_widget)) {
  		modest_folder_view_copy_selection (MODEST_FOLDER_VIEW (focused_widget));
 	}    
