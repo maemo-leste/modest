@@ -986,7 +986,7 @@ modest_platform_show_search_messages (GtkWindow *parent_window)
 	result = osso_rpc_run_with_defaults (osso_context, "osso_global_search", "search_email", NULL, DBUS_TYPE_INVALID);
 
 	if (result != OSSO_OK) {
-		/* TODO: warning about error showing dialog */
+		g_warning ("%s: osso_rpc_run_with_defaults() failed.\n", __FUNCTION__);
 	}
 }
 
@@ -998,7 +998,7 @@ modest_platform_show_addressbook (GtkWindow *parent_window)
 	result = osso_rpc_run_with_defaults (osso_context, "osso_addressbook", "top_application", NULL, DBUS_TYPE_INVALID);
 
 	if (result != OSSO_OK) {
-		/* TODO: warning about error showing dialog */
+		g_warning ("%s: osso_rpc_run_with_defaults() failed.\n", __FUNCTION__);
 	}
 }
 
