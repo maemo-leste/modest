@@ -1029,9 +1029,8 @@ _invalid_msg_selected (ModestMainWindow *win,
 
 	/* Check dimmed rule (TODO: check focus on widgets */	
 	if (!result) {
-		result = (selected_headers == NULL);
-/* 		result = ((selected_headers == NULL) ||  */
-/* 			  (GTK_WIDGET_HAS_FOCUS (folder_view))); */
+		result = ((selected_headers == NULL) ||
+			  (GTK_WIDGET_HAS_FOCUS (folder_view)));
 		if (result)
 			modest_dimming_rule_set_notification (rule, _("mcen_ib_no_message_selected"));
 	}

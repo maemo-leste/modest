@@ -264,8 +264,17 @@ modest_ui_actions_on_delete (GtkAction *action, ModestWindow *win)
 	gint response;
 	gboolean found;
 	ModestWindowMgr *mgr;
+	GtkWidget *header_view;
 
 	g_return_if_fail (MODEST_IS_WINDOW(win));
+
+	/* Check first if the header view has the focus */
+	if (MODEST_IS_MAIN_WINDOW (win)) {
+		header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win),
+								   MODEST_WIDGET_TYPE_HEADER_VIEW);
+		if (!GTK_WIDGET_HAS_FOCUS (header_view))
+			return;
+	}
 
 	header_list = get_selected_headers (win);
 	if (!header_list) return;
