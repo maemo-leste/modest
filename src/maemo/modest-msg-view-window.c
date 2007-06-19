@@ -1534,7 +1534,7 @@ modest_msg_view_window_view_attachment (ModestMsgViewWindow *window, TnyMimePart
 		if (selected_attachments == NULL) {
 			error = TRUE;
 		} else if (g_list_length (selected_attachments) > 1) {
-			hildon_banner_show_information (NULL, NULL, _("TODO: more than one attachment is selected"));
+			hildon_banner_show_information (NULL, NULL, _("mcen_ib_unable_to_display_more"));
 			error = TRUE;
 		} else {
 			mime_part = (TnyMimePart *) selected_attachments->data;

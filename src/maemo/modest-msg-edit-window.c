@@ -562,6 +562,7 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg)
 	gchar *body;
 	ModestMsgEditWindowPrivate *priv;
 	GtkTextIter iter;
+	TnyHeaderFlags priority_flags;
 	
 	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (self));
 	g_return_if_fail (TNY_IS_MSG (msg));
@@ -573,6 +574,7 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg)
 	cc      = tny_header_get_cc (header);
 	bcc     = tny_header_get_bcc (header);
 	subject = tny_header_get_subject (header);
+	priority_flags = tny_header_get_flags (header) & TNY_HEADER_FLAG_PRIORITY;
 
 	if (to)
 		modest_recpt_editor_set_recipients (MODEST_RECPT_EDITOR (priv->to_field),  to);
@@ -582,6 +584,8 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg)
 		modest_recpt_editor_set_recipients (MODEST_RECPT_EDITOR (priv->bcc_field), bcc);
 	if (subject)
 		gtk_entry_set_text (GTK_ENTRY(priv->subject_field), subject);
+	modest_msg_edit_window_set_priority_flags (MODEST_MSG_EDIT_WINDOW(self),
+						   priority_flags);
 
 	update_window_title (self);
 
@@ -1956,13 +1960,16 @@ modest_msg_edit_window_set_priority_flags (ModestMsgEditWindow *window,
 					   TnyHeaderFlags priority_flags)
 {
 	ModestMsgEditWindowPrivate *priv;
+	ModestWindowPrivate *parent_priv;
 
 	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
 
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
+	parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
 	priority_flags = priority_flags & (TNY_HEADER_FLAG_HIGH_PRIORITY);
 
 	if (priv->priority_flags != priority_flags) {
+		GtkAction *priority_action = NULL;
 
 		priv->priority_flags = priority_flags;
 
@@ -1970,15 +1977,23 @@ modest_msg_edit_window_set_priority_flags (ModestMsgEditWindow *window,
 		case TNY_HEADER_FLAG_HIGH_PRIORITY:
 			gtk_image_set_from_icon_name (GTK_IMAGE (priv->priority_icon), "qgn_list_messaging_high", GTK_ICON_SIZE_MENU);
 			gtk_widget_show (priv->priority_icon);
+			priority_action = gtk_ui_manager_get_action (parent_priv->ui_manager, 
+								     "/MenuBar/ToolsMenu/MessagePriorityMenu/MessagePriorityHighMenu");
 			break;
 		case TNY_HEADER_FLAG_LOW_PRIORITY:
 			gtk_image_set_from_icon_name (GTK_IMAGE (priv->priority_icon), "qgn_list_messaging_low", GTK_ICON_SIZE_MENU);
 			gtk_widget_show (priv->priority_icon);
+			priority_action = gtk_ui_manager_get_action (parent_priv->ui_manager, 
+								     "/MenuBar/ToolsMenu/MessagePriorityMenu/MessagePriorityLowMenu");
 			break;
 		default:
 			gtk_widget_hide (priv->priority_icon);
+			priority_action = gtk_ui_manager_get_action (parent_priv->ui_manager, 
+								     "/MenuBar/ToolsMenu/MessagePriorityMenu/MessagePriorityNormalMenu");
 			break;
 		}
+		gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (priority_action), TRUE);
+		gtk_text_buffer_set_modified (priv->text_buffer, TRUE);
 	}
 }
 
