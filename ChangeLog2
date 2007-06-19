@@ -1,3 +1,26 @@
+2007-06-19  Murray Cumming,,,  <murrayc@murrayc-desktop>
+
+	* libmodest-dbus-client/libmodest-dbus-client.c:
+	(_dbus_iter_get_string_or_null): Initialize the string variable in 
+	case this helps with Dirk's crash.
+
+2007-06-19  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/dbus_api/modest-dbus-api.h: Add the attachments enum for send_mail, 
+	though it is not implemented yet (this function is maybe not even used),
+	to avoid breaking ABI in future.
+	* libmodest-dbus-client/libmodest-dbus-client.c:
+	(get_attachments_string): Moved some code into this generic function.
+	(libmodest_dbus_client_send_mail): Corrected the documentation. This really 
+	sends email. It is maybe not used.
+	* src/dbus_api/modest-dbus-callbacks.c: (on_idle_send_mail),
+	(on_send_mail): Use attachments.
+	
+	* src/widgets/modest-msg-edit-window.h: Improve the documentation.
+	* src/maemo/modest-msg-edit-window.c:
+	(modest_msg_edit_window_attach_file_noninteractive): Convert the URI to 
+	a filename before using it, to fix projects.maemo.org bug NB#58233.
+
 2007-06-19  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/modest-ui-actions.c: (modest_ui_actions_on_copy):

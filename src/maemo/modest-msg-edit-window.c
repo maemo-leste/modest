@@ -1541,16 +1541,24 @@ modest_msg_edit_window_attach_file (ModestMsgEditWindow *window)
 void
 modest_msg_edit_window_attach_file_noninteractive (
 		ModestMsgEditWindow *window,
-		gchar *filename)
+		const gchar *file_uri)
 {
 	
 	ModestMsgEditWindowPrivate *priv;
 	
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
 
-	if (filename) {
-		gint file_id;
+	if (file_uri) {
+		gint file_id = 0;
 		
+		/* TODO: We should probably try to use only the URI,
+		 * instead of using a filename.
+		 */
+		gchar* filename = g_filename_from_uri (file_uri, NULL, NULL);
+		if (!filename) {
+			g_warning("%s: g_filename_from_uri(%s) failed.\n", __FUNCTION__, file_uri);
+		}
+
 		file_id = g_open (filename, O_RDONLY, 0);
 		if (file_id != -1) {
 			TnyMimePart *mime_part;
@@ -1584,6 +1592,8 @@ modest_msg_edit_window_attach_file_noninteractive (
 			close (file_id);
 			g_warning("file to be attached does not exist: %s", filename);
 		}
+
+		g_free (filename);
 	}
 }
 

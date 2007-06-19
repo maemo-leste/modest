@@ -56,6 +56,7 @@ typedef struct
  	gchar *bcc;
  	gchar *subject;
  	gchar *body;
+ 	gchar *attachments;
 } SendMailIdleData;
 
 typedef struct 
@@ -127,11 +128,15 @@ on_idle_send_mail(gpointer user_data)
 	g_free (idle_data->bcc);
 	g_free (idle_data->subject);
 	g_free (idle_data->body);
+	g_free (idle_data->attachments);
 	g_free (idle_data);
 	
 	return FALSE; /* Do not call this callback again. */
 }
 
+/* TODO: Is this actually used by anything?
+ * I guess that everything uses *_compose_mail() instead. murrayc.
+ */
 static gint on_send_mail(GArray * arguments, gpointer data, osso_rpc_t * retval)
 {
 	if (arguments->len != MODEST_DEBUS_SEND_MAIL_ARGS_COUNT)
@@ -155,6 +160,9 @@ static gint on_send_mail(GArray * arguments, gpointer data, osso_rpc_t * retval)
  	
  	val = g_array_index(arguments, osso_rpc_t, MODEST_DEBUS_SEND_MAIL_ARG_BODY);
  	idle_data->body = g_strdup (val.value.s);
+ 	
+ 	val = g_array_index(arguments, osso_rpc_t, MODEST_DEBUS_SEND_MAIL_ARG_ATTACHMENTS);
+ 	idle_data->attachments = g_strdup (val.value.s);
  	
  	/* printf("  debug: to=%s\n", idle_data->to); */
  	g_idle_add(on_idle_send_mail, (gpointer)idle_data);

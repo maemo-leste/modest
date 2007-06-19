@@ -213,11 +213,12 @@ void                    modest_msg_edit_window_attach_file           (ModestMsgE
 /**
  * modest_msg_edit_window_attach_file_noninteractive:
  * @self: a #ModestMsgEditWindow
+ * @file_uri: The URI of a file to attach to the email message.
  *
  * attach a file to a MsgEditWindow non interactively, 
  * without file dialog. This is needed by dbus callbacks.
  */
-void                    modest_msg_edit_window_attach_file_noninteractive           (ModestMsgEditWindow *window, gchar *filename);
+void                    modest_msg_edit_window_attach_file_noninteractive           (ModestMsgEditWindow *window, const gchar *file_uri);
 
 /**
  * modest_msg_edit_window_remove_attachments:
