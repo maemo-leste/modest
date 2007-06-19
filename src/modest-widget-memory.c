@@ -359,11 +359,8 @@ restore_settings_header_view (ModestConf *conf, ModestHeaderView *header_view,
 	gint sort_colid = -1, sort_type;
 	
 	folder = modest_header_view_get_folder (header_view);
-	if (!folder || modest_header_view_is_empty (header_view)) {
-		if (folder)
-			g_object_unref (folder);
-		return TRUE; /* no non-empty folder: no settings */
-	}
+	if (!folder)
+		return TRUE; /* no folder: no settings */
 	
 	type = modest_tny_folder_guess_folder_type (folder);	
 	style = modest_header_view_get_style (header_view);

@@ -1277,24 +1277,11 @@ folder_refreshed_cb (const GObject *obj,
 
 	/* Check if folder is empty and set headers view contents style */
 	if (tny_folder_get_all_count (folder) == 0) {
-/* 	printf ("DEBUG: %s: tny_folder_get_all_count() returned 0.\n", __FUNCTION__); */
+	printf ("DEBUG: %s: tny_folder_get_all_count() returned 0.\n", __FUNCTION__);
 		modest_main_window_set_contents_style (win,
 						       MODEST_MAIN_WINDOW_CONTENTS_STYLE_EMPTY);
 	} else {
-/* 		printf ("DEBUG: %s: tny_folder_get_all_count() returned >0.\n", __FUNCTION__); */
-
-		/* Set the header view, we could change it to
-		   the empty view after the refresh. We do not
-		   need to save the configuration because we
-		   have already done that when unselecting the
-		   folder */
-		modest_main_window_set_contents_style (win, 
-						       MODEST_MAIN_WINDOW_CONTENTS_STYLE_HEADERS);
-
-		/* Restore configuration */
-		modest_widget_memory_restore (modest_runtime_get_conf (), 
-					      G_OBJECT(header_view),
-					      MODEST_CONF_HEADER_VIEW_KEY);
+		printf ("DEBUG: %s: tny_folder_get_all_count() returned >0.\n", __FUNCTION__);
 	}
 }
 
@@ -1333,6 +1320,12 @@ modest_ui_actions_on_folder_selection_changed (ModestFolderView *folder_view,
 				g_object_unref (account);
 			}
 
+			/* Set the header style by default, it could
+			   be changed later by the refresh callback to
+			   empty */
+			modest_main_window_set_contents_style (main_window, 
+							       MODEST_MAIN_WINDOW_CONTENTS_STYLE_HEADERS);
+
 			/* Set folder on header view. This function
 			   will call tny_folder_refresh_async so we
 			   pass a callback that will be called when
@@ -1342,6 +1335,14 @@ modest_ui_actions_on_folder_selection_changed (ModestFolderView *folder_view,
 						       TNY_FOLDER (folder_store),
 						       folder_refreshed_cb,
 						       main_window);
+			
+			/* Restore configuration. We need to do this
+			   *after* the set_folder because the widget
+			   memory asks the header view about its
+			   folder  */
+			modest_widget_memory_restore (modest_runtime_get_conf (), 
+						      G_OBJECT(header_view),
+						      MODEST_CONF_HEADER_VIEW_KEY);
 		} else {
 			/* Update the active account */
 			modest_window_set_active_account (MODEST_WINDOW (main_window), NULL);
