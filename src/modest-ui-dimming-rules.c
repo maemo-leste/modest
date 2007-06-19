@@ -35,6 +35,7 @@
 #include "modest-ui-dimming-rules.h"
 #include "modest-dimming-rule.h"
 #include "modest-tny-folder.h"
+#include "modest-text-utils.h"
 #include <widgets/modest-attachments-view.h>
 #include <modest-runtime.h>
 #include <tny-simple-list.h>
@@ -649,6 +650,27 @@ modest_ui_dimming_rules_on_send_receive (ModestWindow *win, gpointer user_data)
 		dimmed = !modest_account_mgr_has_accounts(modest_runtime_get_account_mgr(), 
 							  TRUE);	
 		modest_dimming_rule_set_notification (rule, _("mcen_nc_no_email_acnts_defined"));
+	}
+
+	return dimmed;
+}
+
+gboolean
+modest_ui_dimming_rules_on_add_to_contacts (ModestWindow *win, gpointer user_data)
+{
+	ModestDimmingRule *rule = NULL;
+	gboolean dimmed = FALSE;
+
+	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
+	rule = MODEST_DIMMING_RULE (user_data);
+
+	/* Check dimmed rule */
+	if (!dimmed) {
+		GtkClipboard *clipboard = gtk_clipboard_get (GDK_SELECTION_PRIMARY);
+		gchar *selection = NULL;
+		selection = gtk_clipboard_wait_for_text (clipboard);
+
+		dimmed = !((selection != NULL) && (modest_text_utils_validate_recipient (selection)));
 	}
 
 	return dimmed;

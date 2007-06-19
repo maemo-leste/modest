@@ -36,12 +36,12 @@ static const ModestDimmingEntry modest_msg_view_menu_dimming_entries [] = {
 	/* Attachments Menu */
 	{ "/MenuBar/AttachmentsMenu", NULL },
 	{ "/MenuBar/AttachmentsMenu/ViewAttachmentMenu", G_CALLBACK(modest_ui_dimming_rules_on_view_attachments) },
-	{ "/MenuBar/AttachmentsMenu/SaveAttachmentMenu", G_CALLBACK(modest_ui_dimming_rules_on_view_attachments) },
+	{ "/MenuBar/AttachmentsMenu/SaveAttachmentMenu", G_CALLBACK(modest_ui_dimming_rules_on_save_attachments) },
 	{ "/MenuBar/AttachmentsMenu/RemoveAttachmentMenu", G_CALLBACK(modest_ui_dimming_rules_on_remove_attachments) },
 
 	/* Tools Menu */
 	{ "/MenuBar/ToolsMenu", NULL },
-	{ "/MenuBar/ToolsMenu/ToolsContactsMenu",  },
+	{ "/MenuBar/ToolsMenu/ToolsAddToContactsMenu", G_CALLBACK (modest_ui_dimming_rules_on_add_to_contacts) },
 
 	/* Close Menu */
 	{ "/MenuBar/CloseMenu", NULL },

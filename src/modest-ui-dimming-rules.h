@@ -65,6 +65,7 @@ gboolean modest_ui_dimming_rules_on_view_next (ModestWindow *win, gpointer user_
 gboolean modest_ui_dimming_rules_on_tools_smtp_servers (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_cancel_sending (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_send_receive (ModestWindow *win, gpointer user_data);
+gboolean modest_ui_dimming_rules_on_add_to_contacts (ModestWindow *win, gpointer user_data);
 
 G_END_DECLS
 #endif 
