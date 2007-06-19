@@ -135,7 +135,7 @@ modest_tny_send_queue_add (TnySendQueue *self, TnyMsg *msg, GError **err)
 {
 	ModestTnySendQueuePrivate *priv;
 	TnyHeader *header;
-	SendInfo *info;
+	SendInfo *info = NULL;
 	GList* existing;
 	const gchar* msg_id;
 

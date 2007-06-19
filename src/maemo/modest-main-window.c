@@ -129,6 +129,9 @@ _on_msg_count_changed (ModestHeaderView *header_view,
 		       TnyFolderChange *change,
 		       ModestMainWindow *main_window);
 
+static void
+modest_main_window_cleanup_queue_error_signals (ModestMainWindow *self);
+
 
 static GtkWidget * create_empty_view (void);
 
@@ -186,6 +189,7 @@ struct _ModestMainWindowPrivate {
 
 	/* Signal handler UIDs */
 	gint queue_changed_handler_uid; 
+	GList *queue_err_signals;
 };
 #define MODEST_MAIN_WINDOW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                 MODEST_TYPE_MAIN_WINDOW, \
@@ -314,6 +318,8 @@ modest_main_window_finalize (GObject *obj)
 
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(obj);
 
+	modest_main_window_cleanup_queue_error_signals ((ModestMainWindow *) obj);
+
 	g_slist_free (priv->progress_widgets);
 
 	g_byte_array_free (priv->merge_ids, TRUE);
@@ -425,10 +431,82 @@ on_delete_event (GtkWidget *widget, GdkEvent  *event, ModestMainWindow *self)
 	return FALSE;
 }
 
+typedef struct
+{
+	ModestMainWindow *self;
+	TnySendQueue *queue;
+	TnyHeader *header;
+} OnResponseInfo;
+
+static void
+on_response (GtkDialog *dialog, gint arg1, gpointer user_data)
+{
+	OnResponseInfo *info = (OnResponseInfo *) user_data;
+	ModestMainWindow *self = info->self;
+	TnyHeader *header = info->header;
+	TnySendQueue *queue = info->queue;
+
+	if (arg1 == GTK_RESPONSE_YES) {
+		TnyFolder *outbox = tny_send_queue_get_outbox (queue);
+		tny_folder_remove_msg (outbox, header, NULL);
+		tny_folder_sync (outbox, TRUE, NULL);
+		g_object_unref (outbox);
+	}
+
+	g_object_unref (queue);
+	g_object_unref (header);
+	g_object_unref (self);
+
+	gtk_widget_destroy (GTK_WIDGET (dialog));
+	g_slice_free (OnResponseInfo, info);
+}
+
+
+static void
+on_sendqueue_error_happened (TnySendQueue *self, TnyHeader *header, TnyMsg *msg, GError *err, ModestMainWindow *user_data)
+{
+	if (header) {
+		gchar *str = g_strdup_printf ("%s. Do you want to remove the message (%s)?",
+			err->message, tny_header_get_subject (header));
+		OnResponseInfo *info = g_slice_new (OnResponseInfo);
+		GtkWidget *dialog = gtk_message_dialog_new (NULL, 0,
+			GTK_MESSAGE_ERROR, GTK_BUTTONS_YES_NO, str);
+		g_free (str);
+		info->queue = g_object_ref (self);
+		info->self = g_object_ref (user_data);
+		info->header = g_object_ref (header);
+		g_signal_connect (G_OBJECT (dialog), "response",
+			G_CALLBACK (on_response), info);
+		gtk_widget_show_all (dialog);
+	}
+}
+
+typedef struct {
+	TnySendQueue *queue;
+	guint signal;
+} QueueErrorSignal;
+
+static void
+modest_main_window_cleanup_queue_error_signals (ModestMainWindow *self)
+{
+	ModestMainWindowPrivate *priv = MODEST_MAIN_WINDOW_GET_PRIVATE (self);
+
+	GList *oerrsignals = priv->queue_err_signals;
+	while (oerrsignals) {
+		QueueErrorSignal *esignal = (QueueErrorSignal *) oerrsignals->data;
+		g_signal_handler_disconnect (esignal->queue, esignal->signal);
+		g_slice_free (QueueErrorSignal, esignal);
+		oerrsignals = g_list_next (oerrsignals);
+	}
+	g_list_free (priv->queue_err_signals);
+	priv->queue_err_signals = NULL;
+}
 
 static void
 on_account_store_connecting_finished (TnyAccountStore *store, ModestMainWindow *self)
 {
+	ModestMainWindowPrivate *priv = MODEST_MAIN_WINDOW_GET_PRIVATE (self);
+
 	/* When going online, do the equivalent of pressing the send/receive button, 
 	 * as per the specification:
 	 * (without the check for >0 accounts, though that is not specified): */
@@ -454,6 +532,9 @@ on_account_store_connecting_finished (TnyAccountStore *store, ModestMainWindow *
 	/* TODO: Does this really destroy the TnySendQueues and their threads
 	 * We do not want 2 TnySendQueues to exist with the same underlying 
 	 * outbox directory. */
+
+	modest_main_window_cleanup_queue_error_signals (self);
+
 	GSList *account_names = modest_account_mgr_account_names (
 		modest_runtime_get_account_mgr(), 
 		TRUE /* enabled accounts only */);
@@ -465,9 +546,13 @@ on_account_store_connecting_finished (TnyAccountStore *store, ModestMainWindow *
 				modest_tny_account_store_get_transport_account_for_open_connection
 						 (modest_runtime_get_account_store(), account_name));
 			if (account) {
+				QueueErrorSignal *esignal = g_slice_new (QueueErrorSignal);
 				printf ("debug: %s:\n  Transport account for %s: %s\n", __FUNCTION__, account_name, 
 					tny_account_get_id(TNY_ACCOUNT(account)));
-				modest_runtime_get_send_queue (account);
+				esignal->queue = TNY_SEND_QUEUE (modest_runtime_get_send_queue (account));
+				esignal->signal = g_signal_connect (G_OBJECT (esignal->queue), "error-happened",
+					G_CALLBACK (on_sendqueue_error_happened), self);
+				priv->queue_err_signals = g_list_prepend (priv->queue_err_signals, esignal);
 			}
 		}
 		
