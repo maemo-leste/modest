@@ -1685,7 +1685,11 @@ modest_msg_view_window_save_attachments (ModestMsgViewWindow *window, GList *mim
 	} else {
 		GtkWidget *save_dialog = NULL;
 		gchar *folder;
-		save_dialog = hildon_file_chooser_dialog_new (GTK_WINDOW (window), GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER);
+		gchar *save_multiple_str = g_strdup_printf (_("FIXME: %d attachments"), 
+							    g_list_length (mime_parts));
+		save_dialog = hildon_file_chooser_dialog_new (GTK_WINDOW (window), GTK_FILE_CHOOSER_ACTION_SAVE);
+		g_object_set (G_OBJECT (save_dialog), "save-multiple", save_multiple_str, NULL);
+		
 		folder = g_build_filename (g_get_home_dir (), DEFAULT_FOLDER, NULL);
 		gtk_file_chooser_set_current_folder (GTK_FILE_CHOOSER (save_dialog), folder);
 		g_free (folder);
