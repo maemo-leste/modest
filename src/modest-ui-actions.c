@@ -307,16 +307,15 @@ modest_ui_actions_on_delete (GtkAction *action, ModestWindow *win)
 	}
 
 	/* Select message */
-	if (tny_list_get_length(header_list) > 1)
-		message = g_strdup(_("emev_nc_delete_messages"));
-	else {
+	if (tny_list_get_length(header_list) == 1) {
 		iter = tny_list_create_iterator (header_list);
 		header = TNY_HEADER (tny_iterator_get_current (iter));
 		desc = g_strdup_printf ("%s", tny_header_get_subject (header)); 
-		message = g_strdup_printf(_("emev_nc_delete_message"), desc);
 		g_object_unref (header);
 		g_object_unref (iter);
 	}
+	message = g_strdup_printf(ngettext("emev_nc_delete_message", "emev_nc_delete_messages", 
+					   tny_list_get_length(header_list)), desc);
 
 	/* Confirmation dialog */		
 	response = modest_platform_run_confirmation_dialog (GTK_WINDOW (win),
@@ -2750,17 +2749,13 @@ msgs_move_to_confirmation (GtkWindow *win,
 		if (!modest_tny_folder_is_local_folder (src_folder)) {
 			const gchar *message;
 			
-			if (tny_list_get_length (headers) == 1)
-				if (has_retrieved_msgs (headers))
-					message = _("mcen_nc_move_retrieve");
-				else
-					message = _("mcen_nc_move_header");
-			else
-				if (has_retrieved_msgs (headers))
-					message = _("mcen_nc_move_retrieves");
-				else
-					message = _("mcen_nc_move_headers");
-			
+			if (has_retrieved_msgs (headers))
+				message = ngettext ("mcen_nc_move_retrieve", "mcen_nc_move_retrieves",
+						    tny_list_get_length (headers));
+			else 
+				message = ngettext ("mcen_nc_move_header", "mcen_nc_move_headers",
+						    tny_list_get_length (headers));
+
 			response = modest_platform_run_confirmation_dialog (GTK_WINDOW (win),
 									    (const gchar *) message);
 		}
