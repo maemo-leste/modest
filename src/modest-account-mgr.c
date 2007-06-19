@@ -618,58 +618,6 @@ strip_prefix_from_elements (GSList * lst, guint n)
 	}
 }
 
-#if 0
-/* Not used. */
-GSList*
-modest_account_mgr_search_server_accounts (ModestAccountMgr * self,
-					   const gchar * account_name,
-					   ModestTransportStoreProtocol proto)
-{
-	GSList *accounts;
-	GSList *cursor;
-	ModestAccountMgrPrivate *priv;
-	gchar *key;
-	GError *err = NULL;
-	
-	g_return_val_if_fail (self, NULL);
-	
-	key      = _modest_account_mgr_get_account_keyname (account_name, NULL, TRUE);
-	priv     = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
-	
-	/* get the list of all server accounts */
-	accounts = modest_conf_list_subkeys (priv->modest_conf, key, &err);
-	if (err) {
-		g_printerr ("modest: failed to get subkeys for '%s' (%s)\n", key,
-			err->message);
-		g_error_free(err);
-		return NULL;
-	}
-	
-	/* filter out the ones with the wrong protocol */
-	/* we could optimize for unknown proto / unknown type, but it will only
-	 * make the code more complex */
-	cursor = accounts;
-	while (cursor) { 
-		gchar *account   = _modest_account_mgr_account_from_key ((gchar*)cursor->data, NULL, NULL);
-		gchar *acc_proto = modest_account_mgr_get_string (self, account, MODEST_ACCOUNT_PROTO,TRUE);
-		ModestTransportStoreProtocol this_proto = 
-			modest_protocol_info_get_transport_store_protocol (acc_proto);
-		if (this_proto != MODEST_PROTOCOL_TRANSPORT_STORE_UNKNOWN && this_proto != proto) {
-			GSList *nxt = cursor->next;
-			accounts = g_slist_delete_link (accounts, cursor);
-			cursor = nxt;
-		} else
-			cursor = cursor->next;
-		
-		g_free (account);
-		g_free (acc_proto);
-	}
-	
-	/* +1 because we must remove the ending '/' as well */
-	strip_prefix_from_elements (accounts, strlen(key)+1);
-	return accounts;	
-}
-#endif
 
 GSList*
 modest_account_mgr_account_names (ModestAccountMgr * self, gboolean only_enabled)
@@ -704,11 +652,9 @@ modest_account_mgr_account_names (ModestAccountMgr * self, gboolean only_enabled
 			continue;
 			
 		const gchar* account_name_key = (const gchar*)iter->data;
-		/* printf ("DEBUG: %s: account_name_key=%s\n", __FUNCTION__, account_name_key); */
 		gchar* unescaped_name = account_name_key ? 
 			modest_conf_key_unescape (account_name_key) 
 			: NULL;
-		/* printf ("  DEBUG: %s: unescaped name=%s\n", __FUNCTION__, unescaped_name); */
 		
 		gboolean add = TRUE;
 		if (only_enabled) {
@@ -718,22 +664,33 @@ modest_account_mgr_account_names (ModestAccountMgr * self, gboolean only_enabled
 			}
 		}
 		
-		if (add) {	
+		if (add) 	
 			result = g_slist_append (result, unescaped_name);
-		}
-		else {
+		else 
 			g_free (unescaped_name);
-		}
-			
+
+		g_free (iter->data);
+		iter->data = NULL;
+		
 		iter = g_slist_next (iter);	
 	}
 	
-	/* TODO: Free the strings too? */
-	g_slist_free (accounts);
-	accounts = NULL;
 
+	/* we already freed the strings in the loop */
+	g_slist_free (accounts);
+	
+	accounts = NULL;
 	return result;
 }
+
+
+void
+modest_account_mgr_free_account_names (GSList *account_names)
+{
+	g_slist_foreach (account_names, (GFunc)g_free, NULL);
+	g_slist_free (account_names);
+}
+
 
 
 gchar *
@@ -1028,7 +985,7 @@ modest_account_mgr_account_with_display_name_exists  (ModestAccountMgr *self, co
 	GSList *cursor = NULL;
 	
 	cursor = account_names = modest_account_mgr_account_names (self, 
-		TRUE /* enabled accounts, because disabled accounts are not user visible. */);
+								   TRUE /* enabled accounts, because disabled accounts are not user visible. */);
 
 	gboolean found = FALSE;
 	
@@ -1050,7 +1007,8 @@ modest_account_mgr_account_with_display_name_exists  (ModestAccountMgr *self, co
 		modest_account_mgr_free_account_data (self, account_data);
 		cursor = cursor->next;
 	}
-	g_slist_free (account_names);
+	modest_account_mgr_free_account_names (account_names);
+	account_names = NULL;
 	
 	return found;
 }
@@ -1180,9 +1138,11 @@ modest_account_mgr_has_accounts (ModestAccountMgr* self, gboolean enabled)
 {
 	/* Check that at least one account exists: */
 	GSList *account_names = modest_account_mgr_account_names (self,
-				enabled);
+								  enabled);
 	gboolean accounts_exist = account_names != NULL;
-	g_slist_free (account_names);
+	
+	modest_account_mgr_free_account_names (account_names);
+	account_names = NULL;
 	
 	return accounts_exist;
 }
@@ -1211,10 +1171,9 @@ modest_account_mgr_set_account_busy(ModestAccountMgr* self, const gchar* account
 			priv->busy_accounts = g_slist_append(priv->busy_accounts, g_strdup(account_name));
 			g_signal_emit_by_name(G_OBJECT(self), "account-busy-changed", account_name, TRUE);
 		}
-		g_slist_free(account_names);
-	}
-	else
-	{
+		modest_account_mgr_free_account_names (account_names);
+		account_names = NULL;
+	} else {
 		GSList* account = 
 			g_slist_find_custom(priv->busy_accounts, account_name, (GCompareFunc) compare_account_name);
 		if (account)

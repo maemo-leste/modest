@@ -292,11 +292,11 @@ get_transports (void)
 	
 	ModestAccountMgr *account_mgr = modest_runtime_get_account_mgr();
  	GSList *accounts = modest_account_mgr_account_names (account_mgr, 
- 						TRUE /* only enabled accounts. */); 
+							     TRUE /* only enabled accounts. */); 
  						
  	GSList *cursor = accounts;
 	while (cursor) {
-		const gchar *account_name = cursor->data;
+		gchar *account_name = cursor->data;
 		gchar *from_string  = NULL;
 		if (account_name) {
 			from_string = modest_account_mgr_get_from_string (account_mgr,
@@ -304,7 +304,7 @@ get_transports (void)
 		}
 		
 		if (from_string && account_name) {
-			gchar *name = g_strdup (account_name);
+			gchar *name = account_name;
 			ModestPair *pair = modest_pair_new ((gpointer) name,
 						(gpointer) from_string , TRUE);
 			transports = g_slist_prepend (transports, pair);
@@ -312,7 +312,8 @@ get_transports (void)
 		
 		cursor = cursor->next;
 	}
-	g_slist_free (accounts);
+	g_slist_free (accounts); /* only free the accounts, not the elements,
+				  * because they are used in the pairlist */
 	return transports;
 }
 

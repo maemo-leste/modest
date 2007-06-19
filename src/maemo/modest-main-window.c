@@ -560,9 +560,9 @@ on_account_store_connecting_finished (TnyAccountStore *store, ModestMainWindow *
 		
 		iter = g_slist_next (iter);
 	}
-	
-	g_slist_free (account_names);
-	
+
+	modest_account_mgr_free_account_names (account_names);
+	account_names = NULL;
 	
 	modest_ui_actions_do_send_receive (NULL, MODEST_WINDOW (self));
 }
@@ -1179,7 +1179,8 @@ on_account_update (TnyAccountStore *account_store,
 
 		iter = iter->next;
 	}
-	g_slist_free (account_names);
+	modest_account_mgr_free_account_names (account_names);
+	account_names = NULL;
 
 	/* Order the list of accounts by its display name */
 	accounts = g_slist_sort (accounts, (GCompareFunc) compare_display_names);

@@ -1113,14 +1113,8 @@ cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 	g_return_val_if_fail (GTK_IS_TREE_VIEW_COLUMN(user_data), 0);
 /* 	col_id = gtk_tree_sortable_get_sort_column_id (GTK_TREE_SORTABLE (tree_model)); */
 	col_id = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(user_data), MODEST_HEADER_VIEW_FLAG_SORT));
+
 	
-/* 	if (!(++counter % 100)) { */
-/* 		GObject *header_view = g_object_get_data(G_OBJECT(user_data), */
-/* 							 MODEST_HEADER_VIEW_PTR); */
-/* 		g_signal_emit (header_view, */
-/* 			       signals[STATUS_UPDATE_SIGNAL], */
-/* 			       0, _("Sorting..."), 0, 0); */
-/* 	} */
 	switch (col_id) {
 	case TNY_HEADER_FLAG_ATTACHMENTS:
 

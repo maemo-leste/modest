@@ -1367,7 +1367,7 @@ modest_msg_view_set_message (ModestMsgView *self, TnyMsg *msg)
 	modest_attachments_view_set_message (MODEST_ATTACHMENTS_VIEW(priv->attachments_view),
 					     msg);
 	
-	body = modest_tny_msg_find_body_part (msg,TRUE);
+	body = modest_tny_msg_find_body_part (msg, TRUE);
 	if (body) {
 		if (tny_mime_part_content_type_is (body, "text/html"))
 			set_html_message (self, body, msg);

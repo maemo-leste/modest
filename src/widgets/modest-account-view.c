@@ -207,10 +207,8 @@ update_account_view (ModestAccountMgr *account_mgr, ModestAccountView *view)
 	cursor = account_names = modest_account_mgr_account_names (account_mgr,
 		TRUE /* only enabled accounts. */);
 	
-	if(account_names == NULL)
-	{
-	  printf ("debug: modest_account_mgr_account_names() returned  NULL\n");
-	}
+	if (!account_names)
+		g_warning ("debug: modest_account_mgr_account_names() returned  NULL\n");
 
 	while (cursor) {
 		gchar *account_name;
@@ -251,7 +249,9 @@ update_account_view (ModestAccountMgr *account_mgr, ModestAccountView *view)
 		modest_account_mgr_free_account_data (account_mgr, account_data);
 		cursor = cursor->next;
 	}
-	g_slist_free (account_names);
+
+	modest_account_mgr_free_account_names (account_names);
+	account_names = NULL;
 	
 	/* Try to re-select the same account: */
 	if (selected_name) {

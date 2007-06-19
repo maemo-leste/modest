@@ -371,7 +371,7 @@ restore_settings_header_view (ModestConf *conf, ModestHeaderView *header_view,
 	key = _modest_widget_memory_get_keyname_with_double_type (name, type, style,
 								  MODEST_WIDGET_MEMORY_PARAM_COLUMN_WIDTH);
 	sort_key = _modest_widget_memory_get_keyname_with_double_type (name, type, style,
-								  MODEST_WIDGET_MEMORY_PARAM_COLUMN_SORT);
+								       MODEST_WIDGET_MEMORY_PARAM_COLUMN_SORT);
 
 	if (modest_conf_key_exists (conf, sort_key, NULL)) {
 		gchar *value = modest_conf_get_string (conf, sort_key, NULL);
@@ -451,6 +451,8 @@ restore_settings_header_view (ModestConf *conf, ModestHeaderView *header_view,
 	}
 
 	g_free (key);
+	g_free (sort_key);
+	
 	g_object_unref (G_OBJECT (folder));
 
 	return TRUE;

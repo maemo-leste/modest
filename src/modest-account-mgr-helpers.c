@@ -573,13 +573,6 @@ gint on_accounts_list_sort_by_title(gconstpointer a, gconstpointer b)
  	return g_utf8_collate((const gchar*)a, (const gchar*)b);
 }
 
-
-static void
-free_element (gpointer data, gpointer user_data)
-{
-	g_free (data);
-}
-
 gboolean
 modest_account_mgr_set_first_account_as_default  (ModestAccountMgr *self)
 {
@@ -598,10 +591,10 @@ modest_account_mgr_set_first_account_as_default  (ModestAccountMgr *self)
 		if (account_name) 
 			result = modest_account_mgr_set_default_account (self, account_name);
 	}
-	
-	g_slist_foreach (account_names, free_element, NULL);
-	g_slist_free (account_names);
-	
+
+	modest_account_mgr_free_account_names (account_names);
+	account_names = NULL;
+
 	return result;
 }
 

@@ -246,13 +246,13 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 	header = g_markup_printf_escaped ("%s", (subject && strlen (subject)) ? subject : _("mail_va_no_subject"));
 	g_free (subject);
 	g_object_set (G_OBJECT (subject_cell), "markup", header, NULL);
+	g_free (header);
 	set_common_flags (subject_cell, flags);
-
+	
 	header = g_markup_printf_escaped ("<small>%s</small>", modest_text_utils_get_display_address (address));
 	g_free (address);
 	g_object_set (G_OBJECT (recipient_cell), "markup", header, NULL);
-
-	g_object_set (G_OBJECT (recipient_cell), "markup", header, NULL);	
+	g_free (header);
 	set_common_flags (recipient_cell, flags);
 
 	/* in some rare cases, mail might have no Date: field. it case,
@@ -268,8 +268,6 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 	g_free (tmp_date);
 	g_free (display_date);
 	set_common_flags (date_cell, flags);
-	
-	g_free (header);
 }
 
 

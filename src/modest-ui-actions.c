@@ -1128,9 +1128,9 @@ modest_ui_actions_do_send_receive_all (ModestWindow *win)
 		modest_ui_actions_do_send_receive ((const char*) iter->data, win);
 		iter = g_slist_next (iter);
 	}
-	
-	g_slist_foreach (account_names, (GFunc) g_free, NULL);
-	g_slist_free (account_names);
+
+	modest_account_mgr_free_account_names (account_names);
+	account_names = NULL;
 }
 
 /*

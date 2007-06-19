@@ -184,32 +184,20 @@ gboolean        modest_account_mgr_remove_account         (ModestAccountMgr *sel
  * Returns: a newly allocated list of account names, or NULL in case of error or
  * if there are no accounts. The caller must free the returned GSList.
  *
- * TODO: I believe that the caller must free the strings in the GSList items too, 
- * because this is implemented via gconf_client_all_dirs() which also requires a deep free, 
- * though that's not documented. murrayc.
  */
 GSList*	        modest_account_mgr_account_names    (ModestAccountMgr *self,
 						     gboolean only_enabled);
 
-#if 0
-/* Not used. */
 /**
- * modest_account_mgr_search_server_account:
- * @self: a ModestAccountMgr instance
- * @account_name: get only server accounts for @account_name, or NULL for any
- * @type: get only server accounts from protocol type @type, or MODEST_PROTOCOL_TYPE_UNKNOWN
- * @proto: get only server account with protocol @proto, or MODEST_PROTOCOL_TRANSPORT_STORE_UNKNOWN for any
+ * modest_account_mgr_free_account_names:
+ * @account_name: a gslist of account names
  * 
- * List all the server account names, optionally narrowing the result down to one account.
+ * list all account names
  *
- * Returns: a newly allocated list of server account names, or NULL in case of
- * error or if there are no server accounts. The caller must free the returned GSList
+ * free the list of account names
  */
-GSList*  modest_account_mgr_search_server_accounts  (ModestAccountMgr *self,
-						     const gchar*       account_name,
-						     ModestProtocolType type,
-						     ModestTransportStoreProtocol     proto);
-#endif
+void	        modest_account_mgr_free_account_names    (GSList *account_names);
+							  
 
 /**
  * modest_account_mgr_account_exists:

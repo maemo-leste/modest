@@ -624,8 +624,9 @@ create_per_account_local_outbox_folders (TnyAccountStore *self)
 				
 		accounts = g_slist_append (accounts, tny_account_outbox); /* cache it */
 	};
-	
-	g_slist_free (account_names);
+
+	modest_account_mgr_free_account_names (account_names);
+	account_names = NULL;
 	
 	priv->store_accounts_outboxes = accounts;
 }
@@ -638,8 +639,6 @@ static void
 get_server_accounts  (TnyAccountStore *self, TnyList *list, TnyAccountType type)
 {
 	g_return_if_fail (self);
-	
-	/* printf ("DEBUG: %s: list=%p, type=%d\n", __FUNCTION__, list, type); */
 		
 	ModestTnyAccountStorePrivate *priv = 
 		MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
@@ -766,13 +765,11 @@ get_server_accounts  (TnyAccountStore *self, TnyList *list, TnyAccountType type)
 			iter_account_names = g_slist_next (iter_account_names);
 		}		
 	}
-	
-	g_slist_free (account_names);
+
+	/* free the account_names */
+	modest_account_mgr_free_account_names (account_names);
 	account_names = NULL;
-	
-	/* TODO: Delete the strings in the GSList */
-	
-	
+
 	/* We also create a per-account local outbox folder (a _store_ account) 
 	 * for each _transport_ account. */
 	if (type == TNY_ACCOUNT_TYPE_TRANSPORT) {

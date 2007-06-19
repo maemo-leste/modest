@@ -1608,20 +1608,13 @@ create_account (ModestEasysetupWizardDialog *self, gboolean enabled)
 		return FALSE;	
 	}
 
-
 	/* Sanity check: */
 	/* There must be at least one account now: */
 	/* Note, when this fails is is caused by a Maemo gconf bug that has been 
 	 * fixed in versions after 3.1. */
-	GSList *account_names = modest_account_mgr_account_names (self->account_manager, FALSE);
-	if(!account_names)
-	{
+	if(!modest_account_mgr_has_accounts (self->account_manager, FALSE))
 		g_warning ("modest_account_mgr_account_names() returned NULL after adding an account.");
-	}
-	g_slist_free (account_names);
-
-
-	
+		
 	/* The user name and email address must be set additionally: */
 	const gchar* user_name = gtk_entry_get_text (GTK_ENTRY (self->entry_user_name));
 	modest_account_mgr_set_string (self->account_manager, account_name,

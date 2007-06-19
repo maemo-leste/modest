@@ -510,6 +510,8 @@ init_i18n (void)
 	
 	bind_textdomain_codeset (gettext_package, "UTF-8");
 	textdomain (gettext_package);
+
+	setlocale (LC_ALL, "");
 }
 
 
