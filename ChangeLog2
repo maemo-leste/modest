@@ -1,3 +1,9 @@
+2007-06-19  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/modest-ui-actions.c: (modest_ui_actions_on_copy):
+	Initialize the continue_download variable to fix the build, and probably
+	to fix randome behaviour.
+
 2007-06-18  Armin Burgmeier  <armin@openismus.com>
 
 	* src/modest-tny-send-queue.h:
