@@ -568,8 +568,8 @@ find_message_by_url (const char *uri, TnyAccount **ac_out)
 	msg = tny_folder_find_msg (folder, uri, &err);
 	
 	if (!msg) {
-		g_debug ("%s: tny_folder_find_msg() failed (%s).\n",
-			 __FUNCTION__, err->message);
+		g_debug ("%s: tny_folder_find_msg() failed for folder %s\n  with error=%s.\n",
+			 __FUNCTION__, tny_folder_get_id (folder), err->message);
 	}
 
 out:
