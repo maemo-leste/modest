@@ -299,7 +299,7 @@ modest_main_window_init (ModestMainWindow *obj)
 	priv->progress_bar = NULL;
 	priv->current_toolbar_mode = TOOLBAR_MODE_NORMAL;
 	priv->style  = MODEST_MAIN_WINDOW_STYLE_SPLIT;
-	priv->contents_style  = MODEST_MAIN_WINDOW_CONTENTS_STYLE_HEADERS;
+	priv->contents_style  = -1; /* invalid contents style. We need this to select it for the first time */
 	priv->merge_ids = NULL;
 	priv->optimized_view  = FALSE;
 	priv->send_receive_in_progress  = FALSE;
@@ -631,6 +631,8 @@ modest_main_window_on_show (GtkWidget *self, gpointer user_data)
 	ModestMainWindowPrivate *priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
 	
 	priv->folder_view = MODEST_FOLDER_VIEW (modest_platform_create_folder_view (NULL));
+	wrap_in_scrolled_window (folder_win, GTK_WIDGET(priv->folder_view));
+/* 	wrap_in_scrolled_window (priv->contents_widget, GTK_WIDGET(priv->header_view)); */
 
 	gtk_widget_show (GTK_WIDGET (priv->folder_view));
 
@@ -641,11 +643,6 @@ modest_main_window_on_show (GtkWidget *self, gpointer user_data)
 	tny_account_store_view_set_account_store (TNY_ACCOUNT_STORE_VIEW (priv->folder_view),
 						  TNY_ACCOUNT_STORE (modest_runtime_get_account_store ()));
 
-
-	
-	wrap_in_scrolled_window (folder_win, GTK_WIDGET(priv->folder_view));
-	wrap_in_scrolled_window (priv->contents_widget, GTK_WIDGET(priv->header_view));
-	
 	/* Load previous osso state, for instance if we are being restored from 
 	 * hibernation:  */
 	modest_osso_load_state ();
@@ -666,7 +663,23 @@ modest_main_window_on_show (GtkWidget *self, gpointer user_data)
 	}
 }
 
-ModestWindow*
+/* Debugging */
+/* static void  */
+/* on_window_destroy (ModestWindow *window,  */
+/* 		   ModestWindowMgr *self) */
+/* { */
+/* 	ModestMainWindow *mw = NULL;	 */
+/* 	ModestMainWindowPrivate *priv = NULL; */
+
+/* 	mw  = MODEST_MAIN_WINDOW (window); */
+/* 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self); */
+
+/* 	g_print ("\tMW: %d\n", ((GObject*)mw)->ref_count); */
+/* 	g_print ("\tHV: %d\n", ((GObject*)priv->header_view)->ref_count); */
+/* 	g_print ("\tFV: %d\n", ((GObject*)priv->folder_view)->ref_count); */
+/* } */
+
+ModestWindow *
 modest_main_window_new (void)
 {
 	ModestMainWindow *self = NULL;	
@@ -807,30 +820,9 @@ modest_main_window_new (void)
 	window_icon = modest_platform_get_icon (MODEST_APP_ICON);
 	gtk_window_set_icon (GTK_WINDOW (self), window_icon);
 	
-
-	
-	/* Do send & receive when we are idle */
-	/* TODO: Enable this again. I have commented it out because, 
-	 * at least in scratchbox, this can cause us to start a second 
-	 * update (in response to a connection change) when we are already 
-	 * doing an update (started here, at startup). Tinymail doesn't like that.
-	 * murrayc.
-	 */
-	/* g_idle_add ((GSourceFunc)sync_accounts_cb, self); */
-	
 	HildonProgram *app = hildon_program_get_instance ();
 	hildon_program_add_window (app, HILDON_WINDOW (self));
 	
-	/* Register HildonProgram  signal handlers: */
-	/* These are apparently deprecated, according to the 
-	 * "HildonApp/HildonAppView to HildonProgram/HildonWindow migration guide",
-	 * though the API reference does not mention that:
-	 *
-	g_signal_connect (G_OBJECT(app), "topmost_status_lose",
-		G_CALLBACK (on_hildon_program_save_state), self);
-	g_signal_connect (G_OBJECT(app), "topmost_status_acquire",
-		G_CALLBACK (on_hildon_program_status_acquire), self);
-    */
 	g_signal_connect (G_OBJECT(app), "notify::is-topmost",
 		G_CALLBACK (on_hildon_program_is_topmost_notify), self);
 
@@ -839,6 +831,11 @@ modest_main_window_new (void)
 		
 
 	restore_settings (MODEST_MAIN_WINDOW(self), FALSE);
+
+/* 	{ */
+/* 		g_signal_connect (self, "destroy",  */
+/* 				  G_CALLBACK (on_window_destroy), self); */
+/* 	} */
 
 	return MODEST_WINDOW(self);
 }
@@ -1521,7 +1518,6 @@ modest_main_window_set_contents_style (ModestMainWindow *self,
 		break;
 	case MODEST_MAIN_WINDOW_CONTENTS_STYLE_DETAILS:
 	{
-		/* TODO: show here account details */
 		TnyFolderStore *selected_folderstore = 
 			modest_folder_view_get_selected (priv->folder_view);
 		if (TNY_IS_ACCOUNT (selected_folderstore)) {	
@@ -1531,6 +1527,7 @@ modest_main_window_set_contents_style (ModestMainWindow *self,
 			wrap_in_scrolled_window (priv->contents_widget, 
 					 priv->details_widget);
 		}
+		g_object_unref (selected_folderstore);
 		break;
 	}
 	case MODEST_MAIN_WINDOW_CONTENTS_STYLE_EMPTY:
@@ -1598,6 +1595,7 @@ on_configuration_key_changed (ModestConf* conf,
 		g_free (new_text);
 		g_list_free (children);
 	}
+	g_object_unref (account);
 }
 
 static gboolean

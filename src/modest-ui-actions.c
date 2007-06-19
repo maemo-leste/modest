@@ -1256,7 +1256,7 @@ folder_refreshed_cb (const GObject *obj,
 		     TnyFolder *folder, 
 		     gpointer user_data)
 {
-	printf ("DEBUG: %s\n", __FUNCTION__);
+/* 	printf ("DEBUG: %s\n", __FUNCTION__); */
 	ModestMainWindow *win = NULL;
 	GtkWidget *header_view;
 
@@ -1268,11 +1268,11 @@ folder_refreshed_cb (const GObject *obj,
 
 	/* Check if folder is empty and set headers view contents style */
 	if (tny_folder_get_all_count (folder) == 0) {
-	printf ("DEBUG: %s: tny_folder_get_all_count() returned 0.\n", __FUNCTION__);
+/* 	printf ("DEBUG: %s: tny_folder_get_all_count() returned 0.\n", __FUNCTION__); */
 		modest_main_window_set_contents_style (win,
 						       MODEST_MAIN_WINDOW_CONTENTS_STYLE_EMPTY);
 	} else {
-		printf ("DEBUG: %s: tny_folder_get_all_count() returned >0.\n", __FUNCTION__);
+/* 		printf ("DEBUG: %s: tny_folder_get_all_count() returned >0.\n", __FUNCTION__); */
 
 		/* Set the header view, we could change it to
 		   the empty view after the refresh. We do not
@@ -1282,9 +1282,7 @@ folder_refreshed_cb (const GObject *obj,
 		modest_main_window_set_contents_style (win, 
 						       MODEST_MAIN_WINDOW_CONTENTS_STYLE_HEADERS);
 
-		/* Restore configuration. There is no need to set the
-		   contents style to headers because it was already
-		   being done in folder_selection_changed */
+		/* Restore configuration */
 		modest_widget_memory_restore (modest_runtime_get_conf (), 
 					      G_OBJECT(header_view),
 					      MODEST_CONF_HEADER_VIEW_KEY);
@@ -1310,10 +1308,12 @@ modest_ui_actions_on_folder_selection_changed (ModestFolderView *folder_view,
 	conf = modest_runtime_get_conf ();
 
 	if (TNY_IS_ACCOUNT (folder_store)) {
-		/* Update active account */
-		set_active_account_from_tny_account (TNY_ACCOUNT (folder_store), MODEST_WINDOW (main_window));
-		/* Show account details */
-		modest_main_window_set_contents_style (main_window, MODEST_MAIN_WINDOW_CONTENTS_STYLE_DETAILS);
+		if (selected) {
+			/* Update active account */
+			set_active_account_from_tny_account (TNY_ACCOUNT (folder_store), MODEST_WINDOW (main_window));
+			/* Show account details */
+			modest_main_window_set_contents_style (main_window, MODEST_MAIN_WINDOW_CONTENTS_STYLE_DETAILS);
+		}
 	} else {
 		if (TNY_IS_FOLDER (folder_store) && selected) {
 			
@@ -1339,7 +1339,7 @@ modest_ui_actions_on_folder_selection_changed (ModestFolderView *folder_view,
 			/* Do not show folder */
 			modest_widget_memory_save (conf, G_OBJECT (header_view), MODEST_CONF_HEADER_VIEW_KEY);
 			modest_header_view_clear (MODEST_HEADER_VIEW(header_view));
-		}			
+		}
 	}
 
 	/* Update toolbar dimming state */
@@ -2506,6 +2506,7 @@ modest_ui_actions_on_details (GtkAction *action,
 				return;
 
 			show_folder_details (folder, GTK_WINDOW (win));
+			g_object_unref (folder);
 
 		} else {
 			header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win),
@@ -3085,6 +3086,7 @@ modest_ui_actions_on_help (GtkAction *action,
 					help_id = NULL;
 				}
 			}
+			g_object_unref (folder_store);
 		} else {
 			help_id = "applications_email_mainview";	
 		}

@@ -51,6 +51,7 @@
 static void modest_header_view_class_init  (ModestHeaderViewClass *klass);
 static void modest_header_view_init        (ModestHeaderView *obj);
 static void modest_header_view_finalize    (GObject *obj);
+static void modest_header_view_dispose     (GObject *obj);
 
 static void          on_header_row_activated (GtkTreeView *treeview, GtkTreePath *path,
 					      GtkTreeViewColumn *column, gpointer userdata);
@@ -184,6 +185,7 @@ modest_header_view_class_init (ModestHeaderViewClass *klass)
 
 	parent_class            = g_type_class_peek_parent (klass);
 	gobject_class->finalize = modest_header_view_finalize;
+	gobject_class->dispose = modest_header_view_dispose;
 	
 	g_type_class_add_private (gobject_class, sizeof(ModestHeaderViewPrivate));
 	
@@ -506,6 +508,26 @@ modest_header_view_init (ModestHeaderView *obj)
 }
 
 static void
+modest_header_view_dispose (GObject *obj)
+{
+	ModestHeaderView        *self;
+	ModestHeaderViewPrivate *priv;
+	
+	self = MODEST_HEADER_VIEW(obj);
+	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
+
+	if (priv->folder) {
+		tny_folder_remove_observer (priv->folder, TNY_FOLDER_OBSERVER (obj));
+		g_object_unref (G_OBJECT (priv->folder));
+		priv->folder   = NULL;
+	}
+
+	G_OBJECT_CLASS(parent_class)->dispose (obj);
+}
+
+
+
+static void
 modest_header_view_finalize (GObject *obj)
 {
 	ModestHeaderView        *self;
@@ -521,12 +543,6 @@ modest_header_view_finalize (GObject *obj)
 	}
 	g_mutex_unlock (priv->observers_lock);
 	g_mutex_free (priv->observers_lock);
-
-	if (priv->folder) {
-		tny_folder_remove_observer (priv->folder, TNY_FOLDER_OBSERVER (obj));
-		g_object_unref (G_OBJECT (priv->folder));
-		priv->folder   = NULL;
-	}
 
 	/* Clear hidding array created by cut operation */
 	_clear_hidding_filter (MODEST_HEADER_VIEW (obj));
@@ -551,7 +567,7 @@ modest_header_view_new (TnyFolder *folder, ModestHeaderViewStyle style)
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
 	
 	modest_header_view_set_style   (self, style);
-	modest_header_view_set_folder (self, NULL, NULL, NULL);
+/* 	modest_header_view_set_folder (self, NULL, NULL, NULL); */
 
 	gtk_tree_view_columns_autosize (GTK_TREE_VIEW(obj));
 	gtk_tree_view_set_fixed_height_mode (GTK_TREE_VIEW(obj),TRUE);
@@ -768,25 +784,17 @@ modest_header_view_get_style (ModestHeaderView *self)
 static void
 modest_header_view_set_model (GtkTreeView *header_view, GtkTreeModel *model)
 {
-	GtkTreeModel *old_model_filter = gtk_tree_view_get_model (GTK_TREE_VIEW (header_view));
-	GtkTreeModel *old_model_sort = NULL;
+/* 	GtkTreeModel *old_model_sort = gtk_tree_view_get_model (GTK_TREE_VIEW (header_view)); */
+/* 	if (old_model_sort && GTK_IS_TREE_MODEL_SORT (old_model_sort)) { */
+/* 		GtkTreeModel *old_model; */
+/* 		ModestHeaderViewPrivate *priv; */
+/* 		priv = MODEST_HEADER_VIEW_GET_PRIVATE (header_view); */
+/* 		old_model = gtk_tree_model_sort_get_model (GTK_TREE_MODEL_SORT (old_model_sort)); */
 
-	if (old_model_filter) 
-		old_model_sort = gtk_tree_model_filter_get_model (GTK_TREE_MODEL_FILTER(old_model_filter));
-
-	if (old_model_sort && GTK_IS_TREE_MODEL_SORT (old_model_sort)) { 
-		GtkTreeModel *old_model;
-		ModestHeaderViewPrivate *priv;
-
-		priv = MODEST_HEADER_VIEW_GET_PRIVATE (header_view);
-		old_model = gtk_tree_model_sort_get_model (GTK_TREE_MODEL_SORT (old_model_sort));
-
-		/* Set new model */
-		gtk_tree_view_set_model (header_view, model);
-	} else
-		gtk_tree_view_set_model (header_view, model);
-
-	return;
+/* 		/\* Set new model *\/ */
+/* 		gtk_tree_view_set_model (header_view, model); */
+/* 	} else */
+	gtk_tree_view_set_model (header_view, model);
 }
 
 TnyFolder*
@@ -952,7 +960,6 @@ modest_header_view_set_folder (ModestHeaderView *self,
 			       gpointer user_data)
 {
 	ModestHeaderViewPrivate *priv;
-	ModestMailOperation *mail_op = NULL;
 	ModestWindowMgr *mgr = NULL;
 	GObject *source = NULL;
  
@@ -962,11 +969,13 @@ modest_header_view_set_folder (ModestHeaderView *self,
 		g_mutex_lock (priv->observers_lock);
 		tny_folder_remove_observer (priv->folder, TNY_FOLDER_OBSERVER (self));
 		g_object_unref (priv->folder);
+/* 		g_print ("---------- REMAINING %d\n", ((GObject*)priv->folder)->ref_count); */
 		priv->folder = NULL;
 		g_mutex_unlock (priv->observers_lock);
 	}
 
 	if (folder) {
+		ModestMailOperation *mail_op = NULL;
 
 		/* Get main window to use it as source of mail operation */
 		mgr = modest_runtime_get_window_mgr ();
@@ -993,7 +1002,6 @@ modest_header_view_set_folder (ModestHeaderView *self,
 
 		/* Free */
 		g_object_unref (mail_op);
-
 	} else {
 		g_mutex_lock (priv->observers_lock);
 

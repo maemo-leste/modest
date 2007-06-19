@@ -569,6 +569,11 @@ modest_folder_view_finalize (GObject *obj)
 		priv->conf_key_signal = 0;
 	}
 
+	if (priv->cur_folder_store) {
+		g_object_unref (priv->cur_folder_store);
+		priv->cur_folder_store = NULL;
+	}
+
 	/* Clear hidding array created by cut operation */
 	_clear_hidding_filter (MODEST_FOLDER_VIEW (obj));
 
@@ -888,27 +893,21 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 	
 	priv = MODEST_FOLDER_VIEW_GET_PRIVATE(user_data);
 
-	/* folder was _un_selected if true */
-	if (!gtk_tree_selection_get_selected (sel, &model, &iter)) {
-		if (priv->cur_folder_store)
-			g_object_unref (priv->cur_folder_store);
-		priv->cur_folder_store = NULL;
-
-		/* Notify the display name observers */
-		g_signal_emit (G_OBJECT(user_data),
-			       signals[FOLDER_DISPLAY_NAME_CHANGED_SIGNAL], 0,
-			       NULL);
+	if(!gtk_tree_selection_get_selected (sel, &model, &iter))
 		return;
-	}
+
+	/* Notify the display name observers */
+	g_signal_emit (G_OBJECT(user_data),
+		       signals[FOLDER_DISPLAY_NAME_CHANGED_SIGNAL], 0,
+		       NULL);
 
 	tree_view = MODEST_FOLDER_VIEW (user_data);
-
 	gtk_tree_model_get (model, &iter,
 			    TNY_GTK_FOLDER_STORE_TREE_MODEL_INSTANCE_COLUMN, &folder,
 			    -1);
 
 	/* If the folder is the same do not notify */
-	if (priv->cur_folder_store == folder) {
+	if (priv->cur_folder_store == folder && folder) {
 		g_object_unref (folder);
 		return;
 	}
@@ -918,6 +917,7 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 		g_signal_emit (G_OBJECT(tree_view), signals[FOLDER_SELECTION_CHANGED_SIGNAL], 0,
 			       priv->cur_folder_store, FALSE);
 		g_object_unref (priv->cur_folder_store);
+		priv->cur_folder_store = NULL;
 	}
 
 	/* New current references */
@@ -926,7 +926,7 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 	/* New folder has been selected */
 	g_signal_emit (G_OBJECT(tree_view),
 		       signals[FOLDER_SELECTION_CHANGED_SIGNAL],
-		       0, folder, TRUE);
+		       0, priv->cur_folder_store, TRUE);
 }
 
 TnyFolderStore *
@@ -1681,7 +1681,7 @@ find_inbox_iter (GtkTreeModel *model, GtkTreeIter *iter, GtkTreeIter *inbox_iter
 		gchar *name = NULL;
 
 		gtk_tree_model_get (model, iter, 
-					TNY_GTK_FOLDER_STORE_TREE_MODEL_NAME_COLUMN, &name,
+				    TNY_GTK_FOLDER_STORE_TREE_MODEL_NAME_COLUMN, &name,
 				    TNY_GTK_FOLDER_STORE_TREE_MODEL_TYPE_COLUMN, 
 				    &type, -1);
 
@@ -1727,9 +1727,9 @@ modest_folder_view_select_first_inbox_or_local (ModestFolderView *self)
 	GtkTreeIter iter, inbox_iter;
 	GtkTreeSelection *sel;
 
-	/* Do not set it if the folder view was not painted */
-	if (!GTK_WIDGET_MAPPED (self))
-		return;	
+/* 	/\* Do not set it if the folder view was not painted *\/ */
+/* 	if (!GTK_WIDGET_MAPPED (self)) */
+/* 		return; */
 
 	model = gtk_tree_view_get_model (GTK_TREE_VIEW (self));
 	if (!model)

@@ -92,10 +92,9 @@ modest_ui_dimming_rules_on_new_folder (ModestWindow *win, gpointer user_data)
 	
 	if (TNY_IS_ACCOUNT (parent_folder)) {
 		/* If it's the local account then do not dim */
-		if (modest_tny_account_is_virtual_local_folders (
-			TNY_ACCOUNT (parent_folder)))
-			return FALSE;
-		else {
+		if (modest_tny_account_is_virtual_local_folders (TNY_ACCOUNT (parent_folder))) {
+			dimmed = FALSE;
+		} else {
 			const gchar *proto_str = tny_account_get_proto (TNY_ACCOUNT (parent_folder));
 			/* If it's POP then dim */
 			dimmed = (modest_protocol_info_get_transport_store_protocol (proto_str) == 
@@ -116,6 +115,7 @@ modest_ui_dimming_rules_on_new_folder (ModestWindow *win, gpointer user_data)
 		if (!dimmed)
 			dimmed = _selected_folder_is_any_of_type (win, types, 3);
 	}
+	g_object_unref (parent_folder);
 
 	return dimmed;
 }
@@ -691,8 +691,11 @@ _selected_folder_not_writeable (ModestMainWindow *win)
 	
 	/* Get selected folder as parent of new folder to create */
 	parent_folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW(folder_view));
-	if (!(parent_folder && TNY_IS_FOLDER(parent_folder)))
+	if (!(parent_folder && TNY_IS_FOLDER(parent_folder))) {
+		if (parent_folder)
+			g_object_unref (parent_folder);
 		return TRUE;
+	}
 	
 	/* Check dimmed rule */	
 	rules = modest_tny_folder_get_rules (TNY_FOLDER (parent_folder));
@@ -764,10 +767,9 @@ _selected_folder_is_MMC_or_POP_root (ModestMainWindow *win)
 	
 	if (TNY_IS_ACCOUNT (parent_folder)) {
 		/* If it's the local account then do not dim */
-		if (modest_tny_account_is_virtual_local_folders (
-								 TNY_ACCOUNT (parent_folder)))
-			return FALSE;
-		else {
+		if (modest_tny_account_is_virtual_local_folders (TNY_ACCOUNT (parent_folder))) {
+			result = FALSE;
+		} else {
 				/* If it's the MMC root folder then dim it */
 			if (!strcmp (tny_account_get_id (TNY_ACCOUNT (parent_folder)), MODEST_MMC_ACCOUNT_ID)) {
 					result = TRUE;
@@ -779,6 +781,7 @@ _selected_folder_is_MMC_or_POP_root (ModestMainWindow *win)
 			}
 		}
 	}
+	g_object_unref (parent_folder);
 
 	return result;
 }
@@ -804,8 +807,11 @@ _selected_folder_is_empty (ModestMainWindow *win)
 	
 	/* Get selected folder as parent of new folder to create */
 	folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW(folder_view));
-	if (!(folder && TNY_IS_FOLDER(folder)))
+	if (!(folder && TNY_IS_FOLDER(folder))) {
+		if (folder)
+			g_object_unref (folder);
 		return TRUE;
+	}
 	
 	/* Check folder type */
 	result = tny_folder_get_all_count (TNY_FOLDER (folder)) == 0;
@@ -840,8 +846,11 @@ _selected_folder_is_any_of_type (ModestWindow *win,
 		/* Get selected folder as parent of new folder to create */
 		folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW(folder_view));
 
-		if (!(folder && TNY_IS_FOLDER(folder)))
+		if (!(folder && TNY_IS_FOLDER(folder))) {
+			if (folder)
+				g_object_unref (folder);
 			return TRUE;
+		}
 		
 		/* Check folder type */
 		result = _folder_is_any_of_type (TNY_FOLDER(folder), types, ntypes);

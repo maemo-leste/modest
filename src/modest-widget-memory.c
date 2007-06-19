@@ -269,8 +269,11 @@ save_settings_header_view (ModestConf *conf, ModestHeaderView *header_view,
 	gint sort_flag_id = 0;
 	
 	folder = modest_header_view_get_folder (header_view);
-	if (!folder || modest_header_view_is_empty (header_view))
+	if (!folder || modest_header_view_is_empty (header_view)) {
+		if (folder)
+			g_object_unref (folder);
 		return TRUE; /* no non-empty folder: no settings */
+	}
 	
 	type  = modest_tny_folder_guess_folder_type (folder);
 	style = modest_header_view_get_style   (header_view);
@@ -356,10 +359,14 @@ restore_settings_header_view (ModestConf *conf, ModestHeaderView *header_view,
 	gint sort_colid = -1, sort_type;
 	
 	folder = modest_header_view_get_folder (header_view);
-	if (!folder || modest_header_view_is_empty (header_view))
+	if (!folder || modest_header_view_is_empty (header_view)) {
+		if (folder)
+			g_object_unref (folder);
 		return TRUE; /* no non-empty folder: no settings */
+	}
 	
-	type = modest_tny_folder_guess_folder_type (folder);	style = modest_header_view_get_style   (header_view);
+	type = modest_tny_folder_guess_folder_type (folder);	
+	style = modest_header_view_get_style (header_view);
 
 	key = _modest_widget_memory_get_keyname_with_double_type (name, type, style,
 								  MODEST_WIDGET_MEMORY_PARAM_COLUMN_WIDTH);
@@ -564,7 +571,7 @@ modest_widget_memory_restore (ModestConf *conf, GObject *widget, const gchar *na
 	g_return_val_if_fail (conf, FALSE);
 	g_return_val_if_fail (widget, FALSE);
 	g_return_val_if_fail (name, FALSE);
-	
+
 	if (GTK_IS_WINDOW(widget))
 		return restore_settings_window (conf, GTK_WINDOW(widget), name);
 	else if (GTK_IS_PANED(widget))
