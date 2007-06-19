@@ -427,11 +427,13 @@ modest_platform_show_uri_popup (const gchar *uri)
 	      
 		for (node = actions_list; node != NULL; node = g_slist_next (node)) {
 			GtkWidget *menu_item;
-			const gchar* action_name;
+			const gchar *action_name;
+			const gchar *translation_domain;
 #ifdef MODEST_HILDON_VERSION_0
 			OssoURIAction *action = (OssoURIAction *) node->data;
-			action_name = osso_uri_action_get_name (action);		
-			menu_item = gtk_menu_item_new_with_label (dgettext("osso-uri",action_name));
+			action_name = osso_uri_action_get_name (action);
+			translation_domain = osso_uri_action_get_translation_domain (action);
+			menu_item = gtk_menu_item_new_with_label (dgettext(translation_domain,action_name));
 			g_object_set_data (G_OBJECT(menu_item), HILDON_OSSO_URI_ACTION, (gpointer)action_name);
 			/* hack, we add it as a gobject property*/
 			g_signal_connect (G_OBJECT (menu_item), "activate", G_CALLBACK (activate_uri_popup_item),
@@ -445,7 +447,8 @@ modest_platform_show_uri_popup (const gchar *uri)
 #else
 			HildonURIAction *action = (HildonURIAction *) node->data;
 			action_name = hildon_uri_action_get_name (action);
-			menu_item = gtk_menu_item_new_with_label (dgettext("osso-uri", action_name));
+			translation_domain = hildon_uri_action_get_translation_domain (action);
+			menu_item = gtk_menu_item_new_with_label (dgettext(translation_domain, action_name));
 			g_object_set_data (G_OBJECT(menu_item), HILDON_OSSO_URI_ACTION, (gpointer)action_name);  /* hack */
 			g_signal_connect (G_OBJECT (menu_item), "activate", G_CALLBACK (activate_uri_popup_item),
 					  popup_info);
