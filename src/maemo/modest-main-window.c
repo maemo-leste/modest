@@ -290,6 +290,7 @@ modest_main_window_init (ModestMainWindow *obj)
 
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(obj);
 
+	priv->queue_err_signals = NULL;
 	priv->msg_paned    = NULL;
 	priv->main_paned   = NULL;	
 	priv->main_vbox    = NULL;
