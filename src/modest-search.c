@@ -343,7 +343,14 @@ modest_search_folder (TnyFolder *folder, ModestSearch *search)
 #endif
 
 	list = tny_simple_list_new ();
-	tny_folder_get_headers (folder, list, FALSE, NULL);
+	GError *error = NULL;
+	tny_folder_get_headers (folder, list, FALSE /* don't refresh */, &error);
+	if (error) {
+		g_warning ("%s: tny_folder_get_headers() failed with error=%s.\n", 
+		__FUNCTION__, error->message);
+		g_error_free (error);
+		error = NULL;	
+	}
 
 	iter = tny_list_create_iterator (list);
 
