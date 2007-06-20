@@ -65,6 +65,7 @@ g_strdup_or_null (const gchar *str)
 	return string;
 }
 
+
 static GList*
 add_hit (GList *list, TnyHeader *header, TnyFolder *folder)
 {
@@ -96,13 +97,14 @@ add_hit (GList *list, TnyHeader *header, TnyFolder *folder)
 	
 	subject = tny_header_get_subject (header);
 	sender = tny_header_get_from (header);
-
+	
 	flags = tny_header_get_flags (header);
 
 	hit->msgid = msg_url;
 	hit->subject = g_strdup_or_null (subject);
 	hit->sender = g_strdup_or_null (sender);
-	hit->folder = furl; /* We just provide our new instance instead of copying it and freeing it. */
+	hit->folder = g_strdup_or_null (tny_folder_get_name (folder));
+		//furl; /* We just provide our new instance instead of copying it and freeing it. */
 	hit->msize = tny_header_get_message_size (header);
 	hit->has_attachment = flags & TNY_HEADER_FLAG_ATTACHMENTS;
 	hit->is_unread = ! (flags & TNY_HEADER_FLAG_SEEN);
