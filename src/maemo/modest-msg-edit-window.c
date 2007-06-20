@@ -82,6 +82,7 @@ static gboolean msg_body_focus (GtkWidget *focus, GdkEventFocus *event, gpointer
 static void  recpt_field_changed (GtkTextBuffer *buffer, ModestMsgEditWindow *editor);
 static void  send_insensitive_press (GtkWidget *widget, ModestMsgEditWindow *editor);
 static void  style_insensitive_press (GtkWidget *widget, ModestMsgEditWindow *editor);
+static void  remove_attachment_insensitive_press (GtkWidget *widget, ModestMsgEditWindow *editor);
 static void  setup_insensitive_handlers (ModestMsgEditWindow *editor);
 static void  reset_modified (ModestMsgEditWindow *editor);
 static gboolean is_modified (ModestMsgEditWindow *editor);
@@ -948,6 +949,8 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name)
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/EditMenu/CutMenu");
 	gtk_action_set_sensitive (action, FALSE);
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/EditMenu/CopyMenu");
+	gtk_action_set_sensitive (action, FALSE);
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/AttachmentsMenu/RemoveAttachmentsMenu");
 	gtk_action_set_sensitive (action, FALSE);
 
 	/* set initial state of cc and bcc */
@@ -2292,6 +2295,8 @@ setup_insensitive_handlers (ModestMsgEditWindow *window)
 	widget = priv->font_face_toolitem;
 	g_signal_connect (G_OBJECT (widget), "insensitive-press", G_CALLBACK (style_insensitive_press), window);
 
+	widget = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/MenuBar/AttachmentsMenu/RemoveAttachmentsMenu");
+	g_signal_connect (G_OBJECT (widget), "insensitive-press", G_CALLBACK (remove_attachment_insensitive_press), window);
 }
 
 static void  
@@ -2405,6 +2410,28 @@ send_insensitive_press (GtkWidget *widget, ModestMsgEditWindow *editor)
 	hildon_banner_show_information (NULL, NULL, _("mcen_ib_add_recipients_first"));
 }
 
+static void  
+remove_attachment_insensitive_press (GtkWidget *widget, ModestMsgEditWindow *editor)
+{
+	ModestWindowPrivate *parent_priv;
+	ModestMsgEditWindowPrivate *priv;
+	GList *selected_attachments = NULL;
+	gint n_att_selected = 0;
+
+	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (editor);
+	parent_priv = MODEST_WINDOW_GET_PRIVATE (editor);
+
+	selected_attachments = modest_attachments_view_get_selection (MODEST_ATTACHMENTS_VIEW (priv->attachments_view));
+	n_att_selected = g_list_length (selected_attachments);
+	g_list_free (selected_attachments);
+
+	if (n_att_selected > 1)
+		hildon_banner_show_information (NULL, NULL, _("mcen_ib_unable_to_display_more"));
+	else if (n_att_selected == 0)
+		hildon_banner_show_information (NULL, NULL, _("TODO: select one attachment"));
+		
+}
+
 static void
 style_insensitive_press (GtkWidget *widget, ModestMsgEditWindow *editor)
 {
@@ -2499,10 +2526,14 @@ modest_msg_edit_window_clipboard_owner_change (GtkClipboard *clipboard,
 					       ModestMsgEditWindow *window)
 {
 	ModestWindowPrivate *parent_priv;
+	ModestMsgEditWindowPrivate *priv;
 	GtkAction *action;
 	gchar *selection;
 	GtkWidget *focused;
+	GList *selected_attachments = NULL;
+	gint n_att_selected = 0;
 
+	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
 	parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
 	selection = gtk_clipboard_wait_for_text (clipboard);
 	focused = gtk_window_get_focus (GTK_WINDOW (window));
@@ -2511,6 +2542,14 @@ modest_msg_edit_window_clipboard_owner_change (GtkClipboard *clipboard,
 	gtk_action_set_sensitive (action, (selection != NULL) && (!MODEST_IS_ATTACHMENTS_VIEW (focused)));
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/EditMenu/CopyMenu");
 	gtk_action_set_sensitive (action, (selection != NULL) && (!MODEST_IS_ATTACHMENTS_VIEW (focused)));
+
+	selected_attachments = modest_attachments_view_get_selection (MODEST_ATTACHMENTS_VIEW (priv->attachments_view));
+	n_att_selected = g_list_length (selected_attachments);
+	g_list_free (selected_attachments);
+
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/AttachmentsMenu/RemoveAttachmentsMenu");
+	gtk_action_set_sensitive (action, n_att_selected == 1);
+	
 
 	update_paste_dimming (window);
 }
