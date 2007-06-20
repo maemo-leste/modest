@@ -402,10 +402,14 @@ modest_progress_bar_widget_set_progress (ModestProgressBarWidget *self,
 	priv = MODEST_PROGRESS_BAR_WIDGET_GET_PRIVATE (self);
 	
 	/* Set progress */
-	if (total != 100) /* FIXME: tinymail send 1/100 when it doesn't know better.. */
+	if (total != 100) /* FIXME: tinymail send 1/100 when it doesn't know better.. */ {
+		gdouble percent = 0;
+		if (total != 0) /* Avoid division by zero. */
+			percent = (gdouble)done/(gdouble)total;
+
 		gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR (priv->progress_bar),
-					       (gdouble)done/(gdouble)total);
-	else
+					       percent);
+	}else
 		gtk_progress_bar_pulse (GTK_PROGRESS_BAR (priv->progress_bar));
 
 	/* Set text */

@@ -194,7 +194,7 @@ static void load_from_file (EasysetupCountryComboBox *self)
 #ifndef MODEST_HILDON_VERSION_0
 	const gchar* filepath = PROVIDER_DATA_DIR "/mcc_mapping";
 #else
-	/* this is the official version, in the 'operator-wizard-settings' package */
+	/* This is the official version, in the 'operator-wizard-settings' package */
 	const gchar* filepath = "/usr/share/operator-wizard/mcc_mapping";
 #endif /*MODEST_HILDON_VERSION_0*/
 	/* printf ("DEBUG: %s: filepath=%s\n", __FUNCTION__, filepath); */
@@ -300,6 +300,10 @@ static void load_from_file (EasysetupCountryComboBox *self)
 		free (line);
 		
 	fclose (file);
+	
+	/* Sort the items: */
+	gtk_tree_sortable_set_sort_column_id (GTK_TREE_SORTABLE (liststore), 
+		MODEL_COL_NAME, GTK_SORT_ASCENDING);
 }
 
 static void

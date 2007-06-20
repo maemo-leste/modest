@@ -1478,7 +1478,7 @@ modest_msg_edit_window_attach_file (ModestMsgEditWindow *window)
 	ModestMsgEditWindowPrivate *priv;
 	GtkWidget *dialog = NULL;
 	gint response = 0;
-	GSList *uris;
+	GSList *uris = NULL;
 	GSList *uri_node;
 	
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);

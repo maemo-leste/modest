@@ -31,10 +31,10 @@ int main(int argc, char *argv[])
 		
 	
 	if (!ret) {
-			printf("libmodest_dbus_client_open_message() failed.\n");
+		printf("libmodest_dbus_client_compose_mai() failed.\n");
 		return OSSO_ERROR;
 	} else {
-		printf("libmodest_dbus_client_open_message() succeeded!\n");
+		printf("libmodest_dbus_client_compose_mail() succeeded\n");
 	}
 		
     /* Exit */

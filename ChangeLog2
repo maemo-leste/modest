@@ -1,5 +1,19 @@
 2007-06-20  Murray Cumming  <murrayc@murrayc-desktop>
 
+	* src/maemo/easysetup/modest-easysetup-country-combo-box.c:
+	(load_from_file): Sort the list. The unsorted list would be more noticeable 
+	in non-English locales.
+	
+	* src/maemo/modest-msg-edit-window.c:
+	(modest_msg_edit_window_attach_file): Initialize a variable to avoid a
+	warning and fix the build.
+	
+	* src/maemo/modest-progress-bar-widget.c:
+	(modest_progress_bar_widget_set_progress): Avoid a division by zero, to 
+	avoid a g_warning, and probably to avoid a crash.
+
+2007-06-20  Murray Cumming  <murrayc@murrayc-desktop>
+
 	* src/modest-search.c: (modest_search_folder): Check for a GError 
 	when calling tny_folder_get_headers(), to show that this is not the cause 
 	of later failure.
