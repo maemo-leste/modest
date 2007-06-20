@@ -1206,7 +1206,7 @@ modest_ui_actions_on_header_selected (ModestHeaderView *header_view,
 		return;
 	
 	/* Update Main window title */
-	if (GTK_WIDGET_HAS_FOCUS (header_view)) {
+	if (gtk_widget_is_focus (GTK_WIDGET(header_view))) {
 		const gchar *subject = tny_header_get_subject (header);
 		if (subject && strlen(subject) > 0)
 			gtk_window_set_title (GTK_WINDOW (main_window), subject);

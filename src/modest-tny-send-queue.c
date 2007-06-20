@@ -43,7 +43,7 @@ static void modest_tny_send_queue_finalize   (GObject *obj);
 static void modest_tny_send_queue_instance_init (GTypeInstance *instance, gpointer g_class);
 
 /* Signal handlers */ 
-static void _on_msg_start_sending (TnySendQueue *self, TnyMsg *msg, gpointer user_data);
+/* static void _on_msg_start_sending (TnySendQueue *self, TnyMsg *msg, gpointer user_data); */
 static void _on_msg_has_been_sent (TnySendQueue *self, TnyMsg *msg, gpointer user_data);
 static void _on_msg_error_happened (TnySendQueue *self, TnyHeader *header, TnyMsg *msg, GError *err, gpointer user_data);
 
@@ -308,11 +308,11 @@ modest_tny_send_queue_new (TnyCamelTransportAccount *account)
 	/* Connect signals to control when a msg is being or has been sent */
 	/* TODO: this signal was implemented in tinymail camel send queue, but im
 	   waiting for implement some unit tests nbefore commited changes */
-	if (FALSE) {
-		g_signal_connect (G_OBJECT(self), "msg-sending",
-				  G_CALLBACK(_on_msg_start_sending), 
-				  NULL);
-	}
+/* 	if (FALSE) { */
+/* 		g_signal_connect (G_OBJECT(self), "msg-sending", */
+/* 				  G_CALLBACK(_on_msg_start_sending),  */
+/* 				  NULL); */
+/* 	} */
 			  
 	g_signal_connect (G_OBJECT(self), "msg-sent",
 			  G_CALLBACK(_on_msg_has_been_sent), 
@@ -363,31 +363,31 @@ modest_tny_send_queue_get_msg_status (ModestTnySendQueue *self, const gchar *msg
   return ((SendInfo*)item->data)->status;
 }
 
-static void 
-_on_msg_start_sending (TnySendQueue *self,
-		       TnyMsg *msg,
-		       gpointer user_data)
-{
-	ModestTnySendQueuePrivate *priv;
-	TnyHeader *header;
-	GList *item;
-	SendInfo *info;
+/* static void  */
+/* _on_msg_start_sending (TnySendQueue *self, */
+/* 		       TnyMsg *msg, */
+/* 		       gpointer user_data) */
+/* { */
+/* 	ModestTnySendQueuePrivate *priv; */
+/* 	TnyHeader *header; */
+/* 	GList *item; */
+/* 	SendInfo *info; */
 
-	priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE (self);
+/* 	priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE (self); */
 
-	header = tny_msg_get_header(msg);
-	item = modest_tny_send_queue_lookup_info (MODEST_TNY_SEND_QUEUE (self), tny_header_get_message_id (header));
+/* 	header = tny_msg_get_header(msg); */
+/* 	item = modest_tny_send_queue_lookup_info (MODEST_TNY_SEND_QUEUE (self), tny_header_get_message_id (header)); */
 
-	if (item != NULL)
-	{
-		info = item->data;
-		info->status = MODEST_TNY_SEND_QUEUE_SENDING;
+/* 	if (item != NULL) */
+/* 	{ */
+/* 		info = item->data; */
+/* 		info->status = MODEST_TNY_SEND_QUEUE_SENDING; */
 
-		g_signal_emit (self, signals[STATUS_CHANGED], 0, info->msg_id, info->status);
-	}
+/* 		g_signal_emit (self, signals[STATUS_CHANGED], 0, info->msg_id, info->status); */
+/* 	} */
 
-	priv->current = item;
-}
+/* 	priv->current = item; */
+/* } */
 
 static void 
 _on_msg_has_been_sent (TnySendQueue *self,
