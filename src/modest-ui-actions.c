@@ -658,6 +658,7 @@ open_msg_cb (ModestMailOperation *mail_op,
 cleanup:
 	/* Free */
 	g_free(account);
+	g_object_unref (parent_win);
 	g_object_unref (msg);
 	g_object_unref (folder);
 	g_object_unref (header);
@@ -679,6 +680,7 @@ modest_ui_actions_get_msgs_full_error_handler (ModestMailOperation *mail_op,
 
 		modest_platform_run_information_dialog ((win) ? GTK_WINDOW (win) : NULL,
 							error->message);
+		g_object_unref (win);
 	}
 }
 
@@ -1903,6 +1905,7 @@ modest_ui_actions_delete_folder_error_handler (ModestMailOperation *mail_op,
 
 	modest_platform_run_information_dialog ((win) ? GTK_WINDOW (win) : NULL,
 						_("mail_in_ui_folder_delete_error"));
+	g_object_unref (win);
 }
 
 static void
@@ -2789,6 +2792,7 @@ modest_ui_actions_move_folder_error_handler (ModestMailOperation *mail_op,
 	/* TODO: show error message */
 	modest_platform_run_information_dialog ((win) ? GTK_WINDOW (win) : NULL,
 						_("mail_in_ui_folder_move_target_error"));
+	g_object_unref (win);
 }
 
 /*

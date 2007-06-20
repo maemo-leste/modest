@@ -1183,6 +1183,9 @@ view_msg_cb (ModestMailOperation *mail_op,
 	modest_msg_view_window_update_priority (self);
 	update_window_title (MODEST_MSG_VIEW_WINDOW (self));
 	modest_msg_view_grab_focus (MODEST_MSG_VIEW (priv->msg_view));
+
+	/* Free new references */
+	g_object_unref (self);
 }
 
 TnyFolderType

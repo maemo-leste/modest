@@ -746,22 +746,6 @@ modest_main_window_on_show (GtkWidget *self, gpointer user_data)
 	}
 }
 
-/* Debugging */
-/* static void  */
-/* on_window_destroy (ModestWindow *window,  */
-/* 		   ModestWindowMgr *self) */
-/* { */
-/* 	ModestMainWindow *mw = NULL;	 */
-/* 	ModestMainWindowPrivate *priv = NULL; */
-
-/* 	mw  = MODEST_MAIN_WINDOW (window); */
-/* 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self); */
-
-/* 	g_print ("\tMW: %d\n", ((GObject*)mw)->ref_count); */
-/* 	g_print ("\tHV: %d\n", ((GObject*)priv->header_view)->ref_count); */
-/* 	g_print ("\tFV: %d\n", ((GObject*)priv->folder_view)->ref_count); */
-/* } */
-
 ModestWindow *
 modest_main_window_new (void)
 {
@@ -913,11 +897,6 @@ modest_main_window_new (void)
 		
 
 	restore_settings (MODEST_MAIN_WINDOW(self), FALSE);
-
-/* 	{ */
-/* 		g_signal_connect (self, "destroy",  */
-/* 				  G_CALLBACK (on_window_destroy), self); */
-/* 	} */
 
 	return MODEST_WINDOW(self);
 }

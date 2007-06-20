@@ -525,8 +525,6 @@ modest_header_view_dispose (GObject *obj)
 	G_OBJECT_CLASS(parent_class)->dispose (obj);
 }
 
-
-
 static void
 modest_header_view_finalize (GObject *obj)
 {
@@ -969,7 +967,6 @@ modest_header_view_set_folder (ModestHeaderView *self,
 		g_mutex_lock (priv->observers_lock);
 		tny_folder_remove_observer (priv->folder, TNY_FOLDER_OBSERVER (self));
 		g_object_unref (priv->folder);
-/* 		g_print ("---------- REMAINING %d\n", ((GObject*)priv->folder)->ref_count); */
 		priv->folder = NULL;
 		g_mutex_unlock (priv->observers_lock);
 	}

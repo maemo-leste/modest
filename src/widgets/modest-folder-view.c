@@ -161,6 +161,8 @@ struct _ModestFolderViewPrivate {
 	gchar                *local_account_name;
 	gchar                *visible_account_id;
 	ModestFolderViewStyle style;
+
+	gboolean              reselect; /* we use this to force a reselection of the INBOX */
 };
 #define MODEST_FOLDER_VIEW_GET_PRIVATE(o)			\
 	(G_TYPE_INSTANCE_GET_PRIVATE((o),			\
@@ -493,6 +495,7 @@ modest_folder_view_init (ModestFolderView *obj)
 	priv->clipboard = modest_runtime_get_email_clipboard ();
 	priv->hidding_ids = NULL;
 	priv->n_selected = 0;
+	priv->reselect = FALSE;
 
 	/* Build treeview */
 	add_columns (GTK_WIDGET (obj));
@@ -690,6 +693,24 @@ modest_folder_view_set_title (ModestFolderView *self, const gchar *title)
 					   title != NULL);
 }
 
+static gboolean
+modest_folder_view_on_map (ModestFolderView *self, 
+			   GdkEventExpose *event,
+			   gpointer data)
+{
+	ModestFolderViewPrivate *priv;
+
+	priv = MODEST_FOLDER_VIEW_GET_PRIVATE (self);
+
+	/* This won't happen often */
+	if (G_UNLIKELY (priv->reselect)) {
+		/* Select the first inbox or the local account if not found */
+		modest_folder_view_select_first_inbox_or_local (self);
+		priv->reselect = FALSE;
+	}
+	return FALSE;
+}
+
 GtkWidget*
 modest_folder_view_new (TnyFolderStoreQuery *query)
 {
@@ -706,6 +727,8 @@ modest_folder_view_new (TnyFolderStoreQuery *query)
 	sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(self));
 	priv->changed_signal = g_signal_connect (sel, "changed",
 						 G_CALLBACK (on_selection_changed), self);
+
+	g_signal_connect (self, "expose-event", G_CALLBACK (modest_folder_view_on_map), NULL);
 
  	return GTK_WIDGET(self);
 }
@@ -862,18 +885,16 @@ modest_folder_view_update_model (ModestFolderView *self,
 	gtk_tree_view_set_model (GTK_TREE_VIEW(self), filter_model);
 /* 	gtk_tree_view_set_model (GTK_TREE_VIEW(self),  */
 /* 				 (filter_model) ? filter_model : sortable); */
-	expand_root_items (self); /* expand all account folders */
-	
+
 	g_object_unref (model);
-	
 	g_object_unref (filter_model);
 /* 	if (filter_model) */
 /* 		g_object_unref (filter_model); */
 			
 	g_object_unref (sortable);
 
-	/* Select the first inbox or the local account if not found */
-	modest_folder_view_select_first_inbox_or_local (self);
+	/* Force a reselection of the INBOX next time the widget is shown */
+	priv->reselect = TRUE;
 			
 	return TRUE;
 }
