@@ -164,7 +164,7 @@ modest_address_book_select_addresses (ModestRecptEditor *recpt_editor)
 	toplevel = gtk_widget_get_toplevel (GTK_WIDGET (recpt_editor));
 
 	contact_model = osso_abook_contact_model_new ();
-	if (!open_addressbook_sync ()) {
+	if (!open_addressbook ()) {
 		if (contact_model) {
 			g_object_unref (contact_model);
 			contact_model = NULL;

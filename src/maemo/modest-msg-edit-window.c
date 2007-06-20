@@ -1478,36 +1478,41 @@ modest_msg_edit_window_attach_file (ModestMsgEditWindow *window)
 	ModestMsgEditWindowPrivate *priv;
 	GtkWidget *dialog = NULL;
 	gint response = 0;
-	gchar *uri = NULL, *filename = NULL;
+	GSList *uris;
+	GSList *uri_node;
 	
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
 	
 	dialog = hildon_file_chooser_dialog_new (GTK_WINDOW (window), GTK_FILE_CHOOSER_ACTION_OPEN);
+	gtk_file_chooser_set_select_multiple (GTK_FILE_CHOOSER (dialog), TRUE);
 
 	response = gtk_dialog_run (GTK_DIALOG (dialog));
 	switch (response) {
 	case GTK_RESPONSE_OK:
-		uri = gtk_file_chooser_get_uri (GTK_FILE_CHOOSER (dialog));
-		filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog));
+		uris = gtk_file_chooser_get_uris (GTK_FILE_CHOOSER (dialog));
 		break;
 	default:
 		break;
 	}
 	gtk_widget_destroy (dialog);
 
-	if (uri) {
-
+	for (uri_node = uris; uri_node != NULL; uri_node = g_slist_next (uri_node)) {
+		const gchar *uri;
 		GnomeVFSHandle *handle = NULL;
 		GnomeVFSResult result;
 
+		uri = (const gchar *) uri_node->data;
 		result = gnome_vfs_open (&handle, uri, GNOME_VFS_OPEN_READ);
 		if (result == GNOME_VFS_OK) {
 			TnyMimePart *mime_part;
 			TnyStream *stream;
 			const gchar *mime_type = NULL;
 			gchar *basename;
+			gchar *filename;
 			gchar *content_id;
 			GnomeVFSFileInfo info;
+
+			filename = g_filename_from_uri (uri, NULL, NULL);
 			
 			if (gnome_vfs_get_file_info_from_handle (handle, &info, GNOME_VFS_FILE_INFO_GET_MIME_TYPE) == GNOME_VFS_OK)
 				mime_type = gnome_vfs_file_info_get_mime_type (&info);
@@ -1532,9 +1537,12 @@ modest_msg_edit_window_attach_file (ModestMsgEditWindow *window)
 			gtk_widget_set_no_show_all (priv->attachments_caption, FALSE);
 			gtk_widget_show_all (priv->attachments_caption);
 			gtk_text_buffer_set_modified (priv->text_buffer, TRUE);
+			g_free (filename);
+
 		} 
-		g_free (filename);
 	}
+	g_slist_foreach (uris, (GFunc) g_free, NULL);
+	g_slist_free (uris);
 }
 
 void

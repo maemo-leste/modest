@@ -758,8 +758,9 @@ modest_msg_view_window_find_toolbar_search (GtkWidget *widget,
 
 	g_object_get (G_OBJECT (widget), "prefix", &current_search, NULL);
 
-	if ((current_search == NULL) && (strcmp (current_search, "") == 0)) {
+	if ((current_search == NULL) || (strcmp (current_search, "") == 0)) {
 		g_free (current_search);
+		hildon_banner_show_information (NULL, NULL, dgettext("hildon-common-strings", "ecdg_ib_find_rep_enter_text"));
 		return;
 	}
 
