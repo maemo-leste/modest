@@ -567,7 +567,8 @@ find_message_by_url (const char *uri, TnyAccount **ac_out)
 						&err);
 
 	if (folder == NULL) {
-		g_debug ("%s: tny_store_account_find_folder() failed.\n", __FUNCTION__);
+		g_debug ("%s: tny_store_account_find_folder() failed\naccount=%s, uri=%s.\n", __FUNCTION__, 
+			tny_account_get_id (TNY_ACCOUNT(account)), uri);
 		goto out;
 	}
 	g_debug ("%s: Found folder. (%s)\n",  __FUNCTION__, uri);

@@ -1,4 +1,13 @@
-2007-06-20  Murray Cumming  <murrayc@murrayc-desktop>
+2007-06-20  Murray Cumming  <murrayc@murrayc.com>
+
+	* libmodest-dbus-client/libmodest-dbus-client.h: Document the folder 
+	struct item.
+	* src/dbus_api/modest-dbus-callbacks.c: (find_message_by_url):
+	Better debug message when the folder cannot be found.
+	This should help with fixing projects.maemo.org bug #61287.
+	* src/modest-search.c: (add_hit): Do not leak the furl string.
+
+2007-06-20  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/modest-ui-actions.c:
 	(modest_ui_actions_on_folder_selection_changed): 
@@ -7,7 +16,7 @@
 	projects.maemo.org bug NB#60955 (The smtp connections dialog was not 
 	shown when the Outbox was selected).
 
-2007-06-19  Murray Cumming,,,  <murrayc@murrayc-desktop>
+2007-06-19  Murray Cumming,,,  <murrayc@murrayc.com>
 
 	* libmodest-dbus-client/libmodest-dbus-client.c:
 	(_dbus_iter_get_string_or_null): Initialize the string variable in 

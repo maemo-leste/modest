@@ -80,6 +80,7 @@ add_hit (GList *list, TnyHeader *header, TnyFolder *folder)
 	hit = g_slice_new0 (ModestSearchHit);
 
 	furl = tny_folder_get_url_string (folder);
+	printf ("DEBUG: %s: folder URL=%s\n", __FUNCTION__, furl);
 	if (!furl) {
 		g_warning ("%s: tny_folder_get_url_string(): returned NULL for folder. Folder name=%s\n", __FUNCTION__, tny_folder_get_name (folder));
 	}
@@ -94,6 +95,7 @@ add_hit (GList *list, TnyHeader *header, TnyFolder *folder)
 	}
 	
 	msg_url = g_strdup_printf ("%s/%s", furl, uid);
+	g_free (furl);
 	
 	subject = tny_header_get_subject (header);
 	sender = tny_header_get_from (header);
@@ -104,7 +106,6 @@ add_hit (GList *list, TnyHeader *header, TnyFolder *folder)
 	hit->subject = g_strdup_or_null (subject);
 	hit->sender = g_strdup_or_null (sender);
 	hit->folder = g_strdup_or_null (tny_folder_get_name (folder));
-		//furl; /* We just provide our new instance instead of copying it and freeing it. */
 	hit->msize = tny_header_get_message_size (header);
 	hit->has_attachment = flags & TNY_HEADER_FLAG_ATTACHMENTS;
 	hit->is_unread = ! (flags & TNY_HEADER_FLAG_SEEN);
