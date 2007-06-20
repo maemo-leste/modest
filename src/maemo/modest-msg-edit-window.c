@@ -116,8 +116,12 @@ static void modest_msg_edit_window_show_toolbar   (ModestWindow *window,
 static void modest_msg_edit_window_clipboard_owner_change (GtkClipboard *clipboard,
 							   GdkEvent *event,
 							   ModestMsgEditWindow *window);
+static void modest_msg_edit_window_system_clipboard_owner_change (GtkClipboard *clipboard,
+								  GdkEvent *event,
+								  ModestMsgEditWindow *window);
 static void update_window_title (ModestMsgEditWindow *window);
 static void update_dimmed (ModestMsgEditWindow *window);
+static void update_paste_dimming (ModestMsgEditWindow *window);
 
 /* Find toolbar */
 static void modest_msg_edit_window_find_toolbar_search (GtkWidget *widget,
@@ -174,6 +178,7 @@ struct _ModestMsgEditWindowPrivate {
 	gdouble zoom_level;
 	
 	gulong      clipboard_change_handler_id;
+	gulong      system_clipboard_change_handler_id;
 
 	TnyMsg      *draft_msg;
 };
@@ -276,6 +281,7 @@ modest_msg_edit_window_init (ModestMsgEditWindow *obj)
 
 	priv->draft_msg = NULL;
 	priv->clipboard_change_handler_id = 0;
+	priv->system_clipboard_change_handler_id = 0;
 }
 
 
@@ -469,6 +475,8 @@ init_window (ModestMsgEditWindow *obj)
 
 	priv->clipboard_change_handler_id = g_signal_connect (G_OBJECT (gtk_clipboard_get (GDK_SELECTION_PRIMARY)), "owner-change",
 							      G_CALLBACK (modest_msg_edit_window_clipboard_owner_change), obj);
+	priv->system_clipboard_change_handler_id = g_signal_connect (G_OBJECT (gtk_clipboard_get (GDK_SELECTION_CLIPBOARD)), "owner-change",
+							      G_CALLBACK (modest_msg_edit_window_system_clipboard_owner_change), obj);
 }
 	
 
@@ -481,6 +489,12 @@ modest_msg_edit_window_finalize (GObject *obj)
 	if (priv->clipboard_change_handler_id > 0) {
 		g_signal_handler_disconnect (gtk_clipboard_get (GDK_SELECTION_PRIMARY), priv->clipboard_change_handler_id);
 		priv->clipboard_change_handler_id = 0;
+	}
+	
+	if (priv->system_clipboard_change_handler_id > 0) {
+		g_signal_handler_disconnect (gtk_clipboard_get (GDK_SELECTION_CLIPBOARD), 
+					     priv->system_clipboard_change_handler_id);
+		priv->system_clipboard_change_handler_id = 0;
 	}
 	
 	/* This had to stay alive for as long as the combobox that used it: */
@@ -955,6 +969,8 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name)
 			MODEST_FILE_FORMAT_FORMATTED_TEXT : 
 			MODEST_FILE_FORMAT_PLAIN_TEXT;
 	modest_msg_edit_window_set_file_format (MODEST_MSG_EDIT_WINDOW (obj), file_format);
+
+	update_paste_dimming (MODEST_MSG_EDIT_WINDOW (obj));
 	
 	return (ModestWindow*) obj;
 }
@@ -1400,6 +1416,7 @@ modest_msg_edit_window_insert_image (ModestMsgEditWindow *window)
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
 	
 	dialog = hildon_file_chooser_dialog_new (GTK_WINDOW (window), GTK_FILE_CHOOSER_ACTION_OPEN);
+	gtk_window_set_title (GTK_WINDOW (dialog), _("mcen_ia_select_inline_image_title"));
 
 	response = gtk_dialog_run (GTK_DIALOG (dialog));
 	switch (response) {
@@ -2494,6 +2511,8 @@ modest_msg_edit_window_clipboard_owner_change (GtkClipboard *clipboard,
 	gtk_action_set_sensitive (action, (selection != NULL) && (!MODEST_IS_ATTACHMENTS_VIEW (focused)));
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/EditMenu/CopyMenu");
 	gtk_action_set_sensitive (action, (selection != NULL) && (!MODEST_IS_ATTACHMENTS_VIEW (focused)));
+
+	update_paste_dimming (window);
 }
 
 static void 
@@ -2584,4 +2603,26 @@ modest_msg_edit_window_find_toolbar_close (GtkWidget *widget,
 	gtk_toggle_action_set_active (toggle, FALSE);
 }
 
+
+static void 
+update_paste_dimming (ModestMsgEditWindow *window)
+{
+	ModestWindowPrivate *parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
+	GtkAction *action = NULL;
+	GtkClipboard *clipboard = NULL;
+
+	clipboard = gtk_clipboard_get (GDK_SELECTION_CLIPBOARD);
+
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/EditMenu/PasteMenu");
+	gtk_action_set_sensitive (action, gtk_clipboard_wait_is_text_available (clipboard));
+
+}
+
+static void
+modest_msg_edit_window_system_clipboard_owner_change (GtkClipboard *clipboard,
+						      GdkEvent *event,
+						      ModestMsgEditWindow *window)
+{
+	update_paste_dimming (window);
+}
 
