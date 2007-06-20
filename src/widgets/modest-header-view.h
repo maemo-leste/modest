@@ -220,6 +220,26 @@ gboolean   modest_header_view_set_style (ModestHeaderView *self,
 ModestHeaderViewStyle   modest_header_view_get_style (ModestHeaderView *self);
 
 /**
+ * modest_header_view_count_selected_headers:
+ * @self: a ModestHeaderView instance
+ * 
+ * Check selected headers counter. 
+ * Returns: the number of selected headers.
+ */
+guint
+modest_header_view_count_selected_headers (ModestHeaderView *self);
+
+/**
+ * modest_header_view_has_selected_headers:
+ * @self: a ModestHeaderView instance
+ * 
+ * Check if any row is selected on headers tree view. 
+ * Returns: TRUE if any header is selected, FALSE otherwise.
+ */
+gboolean
+modest_header_view_has_selected_headers (ModestHeaderView *self);
+
+/**
  * modest_header_view_get_selected_headers:
  * @self: a ModestHeaderView instance
  * 

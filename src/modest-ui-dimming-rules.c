@@ -1010,7 +1010,7 @@ _invalid_msg_selected (ModestMainWindow *win,
 {
 	GtkWidget *header_view = NULL;		
 	GtkWidget *folder_view = NULL;
-	TnyList *selected_headers = NULL;
+	gboolean selected_headers = FALSE;
 	gboolean result = FALSE;
 
 	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW(win), FALSE);
@@ -1025,24 +1025,20 @@ _invalid_msg_selected (ModestMainWindow *win,
 							   MODEST_WIDGET_TYPE_FOLDER_VIEW);
 
 	/* Get selected headers */
-	selected_headers = modest_header_view_get_selected_headers (MODEST_HEADER_VIEW(header_view));
+	selected_headers = modest_header_view_has_selected_headers (MODEST_HEADER_VIEW(header_view));
 
 	/* Check dimmed rule (TODO: check focus on widgets */	
 	if (!result) {
-		result = ((selected_headers == NULL) ||
+		result = ((!selected_headers) ||
 			  (gtk_widget_is_focus (folder_view)));
 		if (result)
 			modest_dimming_rule_set_notification (rule, _("mcen_ib_no_message_selected"));
 	}
 	if (!result && unique) {
-		result = tny_list_get_length (selected_headers) > 1;
+		result = modest_header_view_count_selected_headers (MODEST_HEADER_VIEW(header_view)) > 1;
 		if (result)
 			modest_dimming_rule_set_notification (rule, _("mcen_ib_select_one_message"));
 	}
-
-	/* free */
-	if (selected_headers != NULL) 
-		g_object_unref (selected_headers);
 
 	return result;
 }
@@ -1064,6 +1060,11 @@ _already_opened_msg (ModestWindow *win)
 	header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(win),
 							   MODEST_WIDGET_TYPE_HEADER_VIEW);
 
+
+	/* Check no selection */
+	if (!modest_header_view_has_selected_headers (MODEST_HEADER_VIEW(header_view)))
+	    return FALSE;
+	    
 	/* Get selected headers */
 	selected_headers = modest_header_view_get_selected_headers (MODEST_HEADER_VIEW(header_view));
 	if (selected_headers == NULL) 
@@ -1105,6 +1106,10 @@ _selected_msg_marked_as (ModestWindow *win,
 	/* Get header view to check selected messages */
 	header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(win),
 							   MODEST_WIDGET_TYPE_HEADER_VIEW);
+
+	/* Check no selection */
+	if (!modest_header_view_has_selected_headers (MODEST_HEADER_VIEW(header_view)))
+	    return TRUE;
 
 	/* Get selected headers */
 	selected_headers = modest_header_view_get_selected_headers (MODEST_HEADER_VIEW(header_view));
@@ -1163,6 +1168,10 @@ _msg_download_completed (ModestMainWindow *win)
 	/* Get header view to check selected messages */
 	header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(win),
 							   MODEST_WIDGET_TYPE_HEADER_VIEW);
+
+	/* Check no selection */
+	if (!modest_header_view_has_selected_headers (MODEST_HEADER_VIEW(header_view)))
+	    return TRUE;
 
 	/* Get selected headers */
 	selected_headers = modest_header_view_get_selected_headers (MODEST_HEADER_VIEW(header_view));
@@ -1223,6 +1232,10 @@ _selected_msg_sent_in_progress (ModestWindow *win)
 		header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(win),
 								   MODEST_WIDGET_TYPE_HEADER_VIEW);
 		
+		/* Check no selection */
+		if (!modest_header_view_has_selected_headers (MODEST_HEADER_VIEW(header_view)))
+		    return FALSE;
+
 		/* Get selected headers */
 		header_list = modest_header_view_get_selected_headers (MODEST_HEADER_VIEW(header_view));
 

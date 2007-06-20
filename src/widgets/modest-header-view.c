@@ -588,6 +588,37 @@ modest_header_view_new (TnyFolder *folder, ModestHeaderViewStyle style)
 }
 
 
+guint
+modest_header_view_count_selected_headers (ModestHeaderView *self)
+{
+	GtkTreeSelection *sel;
+	guint selected_rows;
+
+	g_return_val_if_fail (self, 0);
+	
+	/* Get selection object and check selected rows count */
+	sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(self));
+	selected_rows = gtk_tree_selection_count_selected_rows (sel);
+	
+	return selected_rows;
+}
+
+gboolean
+modest_header_view_has_selected_headers (ModestHeaderView *self)
+{
+	GtkTreeSelection *sel;
+	gboolean empty;
+
+	g_return_val_if_fail (self, FALSE);
+	
+	/* Get selection object and check selected rows count */
+	sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(self));
+	empty = gtk_tree_selection_count_selected_rows (sel) == 0;
+	
+	return !empty;
+}
+
+
 TnyList * 
 modest_header_view_get_selected_headers (ModestHeaderView *self)
 {
