@@ -504,6 +504,8 @@ modest_mail_operation_send_mail (ModestMailOperation *self,
 
 	/* Get account and set it into mail_operation */
 	priv->account = g_object_ref (transport_account);
+	priv->done = 1;
+	priv->total = 1;
 
 	send_queue = TNY_SEND_QUEUE (modest_runtime_get_send_queue (transport_account));
 	if (!TNY_IS_SEND_QUEUE(send_queue)) {
@@ -511,10 +513,16 @@ modest_mail_operation_send_mail (ModestMailOperation *self,
 			     MODEST_MAIL_OPERATION_ERROR_ITEM_NOT_FOUND,
 			     "modest: could not find send queue for account\n");
 	} else {
+		/* TODO: connect to the msg-sent in order to know when
+		   the mail operation is finished */
 		tny_send_queue_add (send_queue, msg, &(priv->error));
+		/* TODO: we're setting always success, do the check in
+		   the handler */
+		priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
 	}
 
-	/* Notify about operation end */
+	/* TODO: do this in the handler of the "msg-sent"
+	   signal.Notify about operation end */
 	modest_mail_operation_notify_end (self);
 }
 
@@ -538,9 +546,6 @@ modest_mail_operation_send_new_mail (ModestMailOperation *self,
 	g_return_if_fail (TNY_IS_TRANSPORT_ACCOUNT (transport_account));
 
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
-
-	/* Get account and set it into mail_operation */
-	priv->account = g_object_ref (transport_account);
 
 	/* Check parametters */
 	if (to == NULL) {
