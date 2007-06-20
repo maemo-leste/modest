@@ -97,7 +97,6 @@
   </menubar>
 
   <toolbar name="ToolBar">
-    <toolitem action="ToolbarMessageNew"/>
     <toolitem action="ToolbarMessageReply"/> 
 <!--     <toolitem action="ToolbarMessageReplyAll"/> -->
 <!--     <toolitem action="ToolbarMessageForward"/>  -->
