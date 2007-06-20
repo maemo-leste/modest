@@ -726,11 +726,20 @@ _modest_ui_actions_open (TnyList *headers, ModestWindow *win)
 								 modest_ui_actions_get_msgs_full_error_handler, 
 								 NULL);
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
-	modest_mail_operation_get_msgs_full (mail_op, 
-					     not_opened_headers, 
-					     open_msg_cb, 
-					     NULL, 
-					     NULL);
+	if (tny_list_get_length (not_opened_headers) > 1) {
+		modest_mail_operation_get_msgs_full (mail_op, 
+						     not_opened_headers, 
+						     open_msg_cb, 
+						     NULL, 
+						     NULL);
+	} else {
+		TnyIterator *iter = tny_list_create_iterator (not_opened_headers);
+		TnyHeader *header = TNY_HEADER (tny_iterator_get_current (iter));
+		modest_mail_operation_get_msg (mail_op, header, open_msg_cb, NULL);
+		g_object_unref (header);
+		g_object_unref (iter);
+	}
+
 	/* Clean */
 	g_object_unref (not_opened_headers);
 	g_object_unref (iter);

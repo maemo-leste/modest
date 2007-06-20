@@ -333,7 +333,7 @@ on_progress_changed (ModestMailOperation  *mail_op,
 	if (priv->current == mail_op) {
 		gchar *msg = NULL;
 		
-		determined = (state->done > 0 && state->total > 0) & 
+		determined = (state->done > 0 && state->total > 0) && 
 			!(state->done == 1 && state->total == 100);
 
 		switch (state->op_type) {
@@ -359,7 +359,15 @@ on_progress_changed (ModestMailOperation  *mail_op,
 			msg = g_strdup("");
 		}
 		
-		modest_progress_bar_widget_set_progress (self, msg, state->done, state->total);
+		/* If we have byte information use it */
+		if ((state->bytes_done == 0) && (state->bytes_total == 0))
+			modest_progress_bar_widget_set_progress (self, msg, 
+								 state->bytes_done, 
+								 state->bytes_total);
+		else
+			modest_progress_bar_widget_set_progress (self, msg,
+								 state->done,
+								 state->total);
 		g_free (msg);
 	}
 }
@@ -381,10 +389,10 @@ modest_progress_bar_widget_new ()
 
 
 void 
-modest_progress_bar_widget_set_progress   (ModestProgressBarWidget *self,
-					   const gchar *message,
-					   guint done,
-					   guint total)
+modest_progress_bar_widget_set_progress (ModestProgressBarWidget *self,
+					 const gchar *message,
+					 gint done,
+					 gint total)
 {
 	ModestProgressBarWidgetPrivate *priv;
 	

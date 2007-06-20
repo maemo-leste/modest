@@ -105,6 +105,7 @@ struct _ModestMailOperationPrivate {
 
 typedef struct _GetMsgAsyncHelper {	
 	ModestMailOperation *mail_op;
+	TnyHeader *header;
 	GetMsgAsyncUserCallback user_callback;	
 	gpointer user_data;
 } GetMsgAsyncHelper;
@@ -477,6 +478,8 @@ modest_mail_operation_clone_state (ModestMailOperation *self)
 	state->done = priv->done;
 	state->total = priv->total;
 	state->finished = modest_mail_operation_is_finished (self);
+	state->bytes_done = 0;
+	state->bytes_total = 0;
 
 	return state;
 }
@@ -1488,6 +1491,7 @@ void modest_mail_operation_get_msg (ModestMailOperation *self,
 		helper->mail_op = self;
 		helper->user_callback = user_callback;
 		helper->user_data = user_data;
+		helper->header = g_object_ref (header);
 
 		tny_folder_get_msg_async (folder, header, get_msg_cb, get_msg_status_cb, helper);
 
@@ -1540,11 +1544,12 @@ get_msg_cb (TnyFolder *folder,
 
 	/* If user defined callback function was defined, call it */
 	if (helper->user_callback) {
-		helper->user_callback (self, NULL, msg, helper->user_data);
+		helper->user_callback (self, helper->header, msg, helper->user_data);
 	}
 
  out:
 	/* Free */
+	g_object_unref (helper->header);
 	g_slice_free (GetMsgAsyncHelper, helper);
 		
 	/* Notify about operation end */
@@ -1577,6 +1582,8 @@ get_msg_status_cb (GObject *obj,
 	priv->total = 1;
 
 	state = modest_mail_operation_clone_state (self);
+	state->bytes_done = status->position;
+	state->bytes_total = status->of_total;
 	g_signal_emit (G_OBJECT (self), signals[PROGRESS_CHANGED_SIGNAL], 0, state, NULL);
 	g_slice_free (ModestMailOperationState, state);
 }

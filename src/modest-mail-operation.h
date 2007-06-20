@@ -134,6 +134,8 @@ typedef void (*RefreshAsyncUserCallback) (const GObject *obj,
 typedef struct {
 	guint      done;
 	guint      total;
+	gdouble    bytes_done;
+	gdouble    bytes_total;
 	gboolean   finished;
 	ModestMailOperationStatus        status;
 	ModestMailOperationTypeOperation op_type;
