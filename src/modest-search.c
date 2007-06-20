@@ -138,8 +138,6 @@ read_chunk (TnyStream *stream, char *buffer, gsize count, gsize *nread)
 
 	*nread = _nread;
 	return TRUE;
-
-
 }
 
 #ifdef MODEST_HAVE_OGS
@@ -155,8 +153,9 @@ search_mime_part_ogs (TnyMimePart *part, ModestSearch *search)
 	gboolean   res;
 
 
-	if (! tny_mime_part_content_type_is (part, "text/ *") ||
+	if (! tny_mime_part_content_type_is (part, "text/*") ||
 	    ! (is_html = tny_mime_part_content_type_is (part, "text/html"))) {
+	    g_debug ("%s: No text or html MIME part found.\n", __FUNCTION__);
 		return FALSE;
 	}
 
@@ -166,6 +165,8 @@ search_mime_part_ogs (TnyMimePart *part, ModestSearch *search)
 
 	while ((res = read_chunk (stream, buffer, len, &nread))) {
 
+		/* search->text_searcher was instantiated in modest_search_folder(). */
+		
 		if (is_html) {
 
 			found = ogs_text_searcher_search_html (search->text_searcher,
@@ -189,10 +190,22 @@ search_mime_part_ogs (TnyMimePart *part, ModestSearch *search)
 	}
 
 	ogs_text_searcher_reset (search->text_searcher);
+	
+	/* debug stuff:
+	if (!found) {
+		buffer[len -1] = 0;
+		printf ("DEBUG: %s: query %s was not found in message text: %s\n", 
+			__FUNCTION__, search->query, buffer);	
+		
+	} else {
+		printf ("DEBUG: %s: found.\n", __FUNCTION__);	
+	}
+	*/
 
 	return found;
 }
-#endif /*MODEST_HAVE_OGS*/
+
+#else
 
 static gboolean
 search_mime_part_strcmp (TnyMimePart *part, ModestSearch *search)
@@ -205,7 +218,8 @@ search_mime_part_strcmp (TnyMimePart *part, ModestSearch *search)
 	gboolean   found;
 	gboolean   res;
 
-	if (! tny_mime_part_content_type_is (part, "text/ *")) {
+	if (! tny_mime_part_content_type_is (part, "text/*")) {
+		g_debug ("%s: No text MIME part found.\n", __FUNCTION__);
 		return FALSE;
 	}
 
@@ -270,6 +284,7 @@ done:
 	g_object_unref (stream);
 	return found;
 }
+#endif /*MODEST_HAVE_OGS*/
 
 static gboolean
 search_string (const char      *what,
@@ -311,12 +326,9 @@ GList *
 modest_search_folder (TnyFolder *folder, ModestSearch *search)
 {
 	GList *retval = NULL;
-	TnyIterator *iter;
-	TnyList *list;
-	gboolean (*part_search_func) (TnyMimePart *part, ModestSearch *search);
-
-	part_search_func = search_mime_part_strcmp;
-
+	TnyIterator *iter = NULL;
+	TnyList *list = NULL;
+	
 #ifdef MODEST_HAVE_OGS
 	if (search->flags & MODEST_SEARCH_USE_OGS) {
 	
@@ -327,8 +339,6 @@ modest_search_folder (TnyFolder *folder, ModestSearch *search)
 			ogs_text_searcher_parse_query (text_searcher, search->query);
 			search->text_searcher = text_searcher;
 		}
-
-		part_search_func = search_mime_part_ogs;
 	}
 #endif
 
@@ -405,12 +415,25 @@ modest_search_folder (TnyFolder *folder, ModestSearch *search)
 
 			parts = tny_simple_list_new ();
 			tny_mime_part_get_parts (TNY_MIME_PART (msg), parts);
+			
+			if (tny_list_get_length(parts) == 0) {
+				gchar *url_string = tny_msg_get_url_string (msg);
+				g_debug ("DEBUG: %s: tny_mime_part_get_parts(msg) returned an empty list for message url=%s", 
+					__FUNCTION__, url_string);
+				g_free (url_string);	
+			}
 
 			piter = tny_list_create_iterator (parts);
 			while (!found && !tny_iterator_is_done (piter)) {
 				TnyMimePart *pcur = (TnyMimePart *) tny_iterator_get_current (piter);
 
-				if ((found = part_search_func (pcur, search))) {
+				#ifdef MODEST_HAVE_OGS
+				found = search_mime_part_ogs (pcur, search);
+				#else
+				found = search_mime_part_strcmp (pcur, search);
+				#endif
+		
+				if (found) {
 					retval = add_hit (retval, cur, folder);				
 				}
 
@@ -462,6 +485,8 @@ modest_search_account (TnyAccount *account, ModestSearch *search)
 		GList     *res;
 
 		folder = TNY_FOLDER (tny_iterator_get_current (iter));
+		/* g_debug ("DEBUG: %s: searching folder %s.", 
+			__FUNCTION__, tny_folder_get_name (folder)); */
 		
 		res = modest_search_folder (folder, search);
 
@@ -506,8 +531,8 @@ modest_search_all_accounts (ModestSearch *search)
 
 		account = TNY_ACCOUNT (tny_iterator_get_current (iter));
 
-		g_debug ("DEBUG: %s: Searching account %s",
-			 __FUNCTION__, tny_account_get_name (account));
+		/* g_debug ("DEBUG: %s: Searching account %s",
+			 __FUNCTION__, tny_account_get_name (account)); */
 		res = modest_search_account (account, search);
 		
 		if (res != NULL) {

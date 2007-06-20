@@ -1021,7 +1021,7 @@ modest_dbus_req_filter (DBusConnection *con,
 
 		if (dbus_flags & MODEST_DBUS_SEARCH_BODY) {
 			search.flags |=  MODEST_SEARCH_BODY; 
-			search.subject = query;
+			search.body = query;
 		}
 
 		if (sd_v > 0) {
@@ -1041,7 +1041,7 @@ modest_dbus_req_filter (DBusConnection *con,
 
 #ifdef MODEST_HAVE_OGS
 		search.flags |= MODEST_SEARCH_USE_OGS;
-		g_debug ("Starting search for %s", search.query);
+		g_debug ("%s: Starting search for %s", __FUNCTION__, search.query);
 #endif
 		hits = modest_search_all_accounts (&search);
 

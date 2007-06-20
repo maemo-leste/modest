@@ -1,5 +1,19 @@
 2007-06-20  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/dbus_api/modest-dbus-callbacks.c: (modest_dbus_req_filter):
+	Actually set the body query instead of the subject query.
+	
+	* src/modest-search.c: (search_mime_part_ogs),
+	(search_mime_part_strcmp): Remove extra space from the text/* regex,
+	which would probably cause it to fail if we got this far.
+		
+	(modest_search_folder): Use simple #ifdefs instead of the function pointer, 
+	to simplify the code.
+	Warn when tny_mime_part_get_parts() returns an empty list, which seems to 
+	be causing search-in-body to fail.
+
+2007-06-20  Murray Cumming  <murrayc@murrayc.com>
+
 	* libmodest-dbus-client/libmodest-dbus-client.h: Document the folder 
 	struct item.
 	* src/dbus_api/modest-dbus-callbacks.c: (find_message_by_url):
