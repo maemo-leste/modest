@@ -2544,16 +2544,20 @@ modest_ui_actions_on_details (GtkAction *action,
 		folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win),
 								    MODEST_WIDGET_TYPE_FOLDER_VIEW);
 		if (gtk_widget_is_focus (folder_view)) {
-			TnyFolder *folder;
-
-			folder = (TnyFolder *) modest_folder_view_get_selected (MODEST_FOLDER_VIEW (folder_view));
-
+			TnyFolderStore *folder_store
+				= modest_folder_view_get_selected (MODEST_FOLDER_VIEW (folder_view));
+			if (!folder_store) {
+				g_warning ("%s: No item was selected.\n", __FUNCTION__);
+				return;	
+			}
 			/* Show only when it's a folder */
-			if (!folder || !TNY_IS_FOLDER (folder))
-				return;
+			/* This function should not be called for account items, 
+			 * because we dim the menu item for them. */
+			if (TNY_IS_FOLDER (folder_store)) {
+				show_folder_details (TNY_FOLDER (folder_store), GTK_WINDOW (win));
+			}
 
-			show_folder_details (folder, GTK_WINDOW (win));
-			g_object_unref (folder);
+			g_object_unref (folder_store);
 
 		} else {
 			header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win),

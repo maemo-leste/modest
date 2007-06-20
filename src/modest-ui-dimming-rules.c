@@ -344,14 +344,31 @@ modest_ui_dimming_rules_on_details (ModestWindow *win, gpointer user_data)
 		header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win),
 								   MODEST_WIDGET_TYPE_HEADER_VIEW);
 		
-		/* If the header view does not have the focus then do
-		   not apply msg dimming rules because the action will
-		   show the folder details that have no dimming
-		   rule */
-		if (gtk_widget_is_focus (header_view)) {
+		/* If the header view has the focus: */
+		if (header_view && gtk_widget_is_focus (header_view)) {
 			/* Check dimmed rule */	
 			if (!dimmed)
 				dimmed = _invalid_msg_selected (MODEST_MAIN_WINDOW(win), TRUE, user_data);
+		}
+		else {
+			/* If the folder view has the focus: */
+			GtkWidget *folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win),
+				MODEST_WIDGET_TYPE_FOLDER_VIEW);
+			if (folder_view && gtk_widget_is_focus (folder_view)) {
+				TnyFolderStore *folder_store
+					= modest_folder_view_get_selected (MODEST_FOLDER_VIEW (folder_view));
+				if (folder_store) {
+					/* Only enable for folders, not accounts,
+					 * though the UI spec is not clear about that.
+					 * If we enable this for accounts then we must 
+					 * add code to handle them in modest_ui_actions_on_details(). */
+					if (!TNY_IS_FOLDER(folder_store))
+						dimmed = TRUE;
+
+					g_object_unref (folder_store);
+				}
+			}
+
 		}
 
 	/* msg view window dimming rules */
