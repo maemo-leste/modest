@@ -40,8 +40,6 @@
       <menuitem name="CheckNamesMenu" action="CheckNames"/>
       <separator/>
       <menuitem name="NewMessageMenu" action="ActionsNewMessage"/>
-      <separator/>
-      <menuitem name="DeleteMenu" action="ActionsDelete"/>
     </menu>
 
     <menu name="EditMenu" action="Edit">
