@@ -1127,6 +1127,16 @@ _modest_header_view_change_selection (GtkTreeSelection *selection,
 	on_selection_changed (selection, user_data);
 }
 
+static gint compare_priorities (TnyHeaderFlags p1, TnyHeaderFlags p2)
+{
+	p1 = p1 & TNY_HEADER_FLAG_PRIORITY;
+	p2 = p2 & TNY_HEADER_FLAG_PRIORITY;
+	if (p1 == 0) 
+		p1 = TNY_HEADER_FLAG_LOW_PRIORITY + 1;
+	if (p2 == 0) 
+		p2 = TNY_HEADER_FLAG_LOW_PRIORITY + 1;
+	return p1 - p2;
+}
 
 static gint
 cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
@@ -1164,10 +1174,7 @@ cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 
 		/* This is for making priority values respect the intuitive sort relationship 
 		 * as HIGH is 11, LOW is 01, and we put NORMAL AS 10 (2) */
-		if (val1 == 0) val1 = 2;
-		if (val2 == 0) val2 = 2;
-
-		cmp =  (val1 & TNY_HEADER_FLAG_PRIORITY) - (val2 & TNY_HEADER_FLAG_PRIORITY);
+		cmp =  compare_priorities (val1, val2);
 
 		return cmp ? cmp : t1 - t2;
 

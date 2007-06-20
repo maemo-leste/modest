@@ -437,7 +437,9 @@ restore_settings_header_view (ModestConf *conf, ModestHeaderView *header_view,
 	}
 
 	if (sort_colid >= 0) {
-		GtkTreeModel *sortable = gtk_tree_view_get_model (GTK_TREE_VIEW (header_view));
+	  GtkTreeModel *sortable = 
+		  gtk_tree_model_filter_get_model (
+			  GTK_TREE_MODEL_FILTER (gtk_tree_view_get_model (GTK_TREE_VIEW (header_view))));
 		if (sort_colid == TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN)
 			modest_header_view_sort_by_column_id (header_view, 0, sort_type);
 		gtk_tree_sortable_set_sort_column_id (GTK_TREE_SORTABLE(sortable),

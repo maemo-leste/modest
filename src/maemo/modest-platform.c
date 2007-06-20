@@ -603,6 +603,7 @@ launch_sort_headers_dialog (GtkWindow *parent_window,
 	GtkSortType current_sort_type;
 	gint attachments_sort_id;
 	gint priority_sort_id;
+	GtkTreeSortable *sortable;
 	
 	/* Get header window */
 	if (MODEST_IS_MAIN_WINDOW (parent_window)) {
@@ -612,7 +613,7 @@ launch_sort_headers_dialog (GtkWindow *parent_window,
 	if (!header_view) return;
 
 	/* Add sorting keys */
-	cols = modest_header_view_get_columns (header_view);	
+	cols = modest_header_view_get_columns (header_view);
 	if (cols == NULL) return;
 	int sort_model_ids[6];
 	int sort_ids[6];
@@ -661,8 +662,9 @@ launch_sort_headers_dialog (GtkWindow *parent_window,
 	sort_ids[sort_key] = TNY_HEADER_FLAG_PRIORITY;
 	priority_sort_id = sort_key;
 
+	sortable = GTK_TREE_SORTABLE (gtk_tree_model_filter_get_model (GTK_TREE_MODEL_FILTER (gtk_tree_view_get_model (GTK_TREE_VIEW (header_view)))));
 	/* Launch dialogs */
-	if (!gtk_tree_sortable_get_sort_column_id (GTK_TREE_SORTABLE (gtk_tree_view_get_model (GTK_TREE_VIEW (header_view))),
+	if (!gtk_tree_sortable_get_sort_column_id (sortable,
 						   &current_sort_colid, &current_sort_type)) {
 		hildon_sort_dialog_set_sort_key (dialog, default_key);
 		hildon_sort_dialog_set_sort_order (dialog, GTK_SORT_DESCENDING);
@@ -703,8 +705,11 @@ launch_sort_headers_dialog (GtkWindow *parent_window,
 		}
 
 		modest_header_view_sort_by_column_id (header_view, sort_model_ids[sort_key], sort_type);
-		gtk_tree_sortable_sort_column_changed (GTK_TREE_SORTABLE (gtk_tree_view_get_model (GTK_TREE_VIEW (header_view))));
+		gtk_tree_sortable_sort_column_changed (sortable);
 	}
+
+	modest_widget_memory_save (modest_runtime_get_conf (),
+				   G_OBJECT (header_view), MODEST_CONF_HEADER_VIEW_KEY);
 	
 	/* free */
 	g_list_free(cols);	
