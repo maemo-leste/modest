@@ -628,6 +628,9 @@ modest_folder_view_set_account_store (TnyAccountStoreView *self, TnyAccountStore
 		g_signal_connect (G_OBJECT(account_store), "accounts_reloaded",
 				  G_CALLBACK (on_accounts_reloaded), self);
 
+	g_signal_connect (G_OBJECT(account_store), "connecting_finished",
+				G_CALLBACK (on_accounts_reloaded), self);
+
 	on_accounts_reloaded (account_store, (gpointer ) self);
 	
 	g_object_unref (G_OBJECT (device));

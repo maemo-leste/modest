@@ -509,6 +509,8 @@ on_account_store_connecting_finished (TnyAccountStore *store, ModestMainWindow *
 	 * (without the check for >0 accounts, though that is not specified): */
 
 	TnyDevice *device = tny_account_store_get_device (store);
+
+	modest_folder_view_update_model (MODEST_FOLDER_VIEW (priv->folder_view), store);
 	
 	/* Check that we are really online.
 	 * This signal should not be emitted when we are not connected, 
@@ -1895,6 +1897,7 @@ refresh_account (const gchar *account_name)
 		modest_ui_actions_do_send_receive_all (win);
 	else
 		modest_ui_actions_do_send_receive (account_name, win);
+	
 }
 
 static void 
