@@ -745,7 +745,18 @@ modest_main_window_on_show (GtkWidget *self, gpointer user_data)
 		It's an ugly hack... jschmid */
 		gtk_widget_show_all(GTK_WIDGET(self));
 		modest_ui_actions_on_accounts (NULL, MODEST_WINDOW(self));
+	} else {
+		GSList *accounts;
+		GtkAction *send_receive_all;
+		ModestWindowPrivate *parent_priv = MODEST_WINDOW_GET_PRIVATE (self);
+		accounts = modest_account_mgr_account_names (modest_runtime_get_account_mgr (), TRUE);
+		send_receive_all = gtk_ui_manager_get_action (parent_priv->ui_manager, 
+							      "/MenuBar/ToolsMenu/ToolsSendReceiveMainMenu/ToolsSendReceiveAllMenu");
+		gtk_action_set_visible (send_receive_all, g_slist_length (accounts));
+		modest_account_mgr_free_account_names (accounts);
 	}
+
+
 }
 
 ModestWindow *
@@ -1137,6 +1148,7 @@ on_account_update (TnyAccountStore *account_store,
 	GList *groups;
 	gchar *default_account;
 	GtkWidget *send_receive_button, *item;
+	GtkAction *send_receive_all = NULL;
 		
 	self = MODEST_MAIN_WINDOW (user_data);
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE (self);
@@ -1161,6 +1173,10 @@ on_account_update (TnyAccountStore *account_store,
 	/* Order the list of accounts by its display name */
 	accounts = g_slist_sort (accounts, (GCompareFunc) compare_display_names);
 	num_accounts = g_slist_length (accounts);
+
+	send_receive_all = gtk_ui_manager_get_action (parent_priv->ui_manager, 
+						      "/MenuBar/ToolsMenu/ToolsSendReceiveMainMenu/ToolsSendReceiveAllMenu");
+	gtk_action_set_visible (send_receive_all, num_accounts > 1);
 
 	/* Delete old send&receive popup items. We can not just do a
 	   menu_detach because it does not work well with
