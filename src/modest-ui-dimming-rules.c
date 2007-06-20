@@ -1029,7 +1029,6 @@ _invalid_msg_selected (ModestMainWindow *win,
 
 	/* Check dimmed rule (TODO: check focus on widgets */	
 	if (!result) {
-/* 		result = (selected_headers == NULL); */
 		result = ((selected_headers == NULL) ||
 			  (gtk_widget_is_focus (folder_view)));
 		if (result)

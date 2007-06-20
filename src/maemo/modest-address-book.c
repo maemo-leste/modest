@@ -627,7 +627,7 @@ modest_address_book_check_names (ModestRecptEditor *recpt_editor)
 			} else {
 				/* this address is not valid, select it and return control to user showing banner */
 
-				hildon_banner_show_information (NULL, NULL, _("mcen_ib_invalid_mail"));
+				hildon_banner_show_information (NULL, NULL, _("mcen_ib_invalid_email"));
 				result = FALSE;
 			}
 		}
