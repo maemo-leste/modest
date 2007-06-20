@@ -333,22 +333,17 @@ modest_tny_send_queue_try_to_send (ModestTnySendQueue* self)
 /* 	tny_camel_send_queue_flush (TNY_CAMEL_SEND_QUEUE(self)); */
 }
 
-#if 0
 gboolean
 modest_tny_send_queue_msg_is_being_sent (ModestTnySendQueue* self,
 					 const gchar *msg_id)
 {	
-	ModestTnySendQueuePrivate *priv;
+	ModestTnySendQueueStatus status;
 	
 	g_return_val_if_fail (msg_id != NULL, FALSE); 
-	priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE (self);
 	
-	if (modest_tny_send_queue_sending_in_progress(self))
-		return g_ascii_strcasecmp(priv->current_msg_id, msg_id);
-	else 
-		return FALSE;
+	status = modest_tny_send_queue_get_msg_status (self, msg_id);
+	return status == MODEST_TNY_SEND_QUEUE_SENDING;
 }
-#endif
 
 gboolean
 modest_tny_send_queue_sending_in_progress (ModestTnySendQueue* self)

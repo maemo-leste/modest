@@ -125,7 +125,6 @@ static void modest_msg_edit_window_find_toolbar_search (GtkWidget *widget,
 static void modest_msg_edit_window_find_toolbar_close (GtkWidget *widget,
 						       ModestMsgEditWindow *window);
 
-
 /* list my signals */
 enum {
 	/* MY_SIGNAL_1, */
@@ -2576,4 +2575,5 @@ modest_msg_edit_window_find_toolbar_close (GtkWidget *widget,
 	toggle = GTK_TOGGLE_ACTION (gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/ToolsMenu/FindInMessageMenu"));
 	gtk_toggle_action_set_active (toggle, FALSE);
 }
+
 

@@ -104,9 +104,6 @@ static gboolean set_toolbar_transfer_mode     (ModestMsgViewWindow *self);
 
 static void update_window_title (ModestMsgViewWindow *window);
 
-static gchar * 
-translate_func (const gchar *msgid,
-		const gchar *domain_name);
 
 /* list my signals */
 enum {
@@ -529,7 +526,6 @@ modest_msg_view_window_new (TnyMsg *msg,
 
 	action_group = gtk_action_group_new ("ModestMsgViewWindowActions");
 	gtk_action_group_set_translation_domain (action_group, GETTEXT_PACKAGE);
-	gtk_action_group_set_translate_func (action_group, (GtkTranslateFunc) translate_func, GETTEXT_PACKAGE, g_free);
 
 	menu_rules_group = modest_dimming_rules_group_new ("ModestMenuDimmingRules");
 	toolbar_rules_group = modest_dimming_rules_group_new ("ModestToolbarDimmingRules");
@@ -1758,9 +1754,3 @@ update_window_title (ModestMsgViewWindow *window)
 	gtk_window_set_title (GTK_WINDOW (window), subject);
 }
 
-static gchar * 
-translate_func (const gchar *msgid,
-		const gchar *domain_name)
-{
-	return _(msgid);
-}

@@ -135,10 +135,6 @@ modest_main_window_cleanup_queue_error_signals (ModestMainWindow *self);
 
 static GtkWidget * create_empty_view (void);
 
-static gchar * 
-translate_func (const gchar *msgid,
-		const gchar *domain_name);
-
 
 /* list my signals */
 enum {
@@ -790,7 +786,6 @@ modest_main_window_new (void)
 
 	action_group = gtk_action_group_new ("ModestMainWindowActions");
 	gtk_action_group_set_translation_domain (action_group, GETTEXT_PACKAGE);
-	gtk_action_group_set_translate_func (action_group, (GtkTranslateFunc) translate_func, GETTEXT_PACKAGE, g_free);
 
 	menu_rules_group = modest_dimming_rules_group_new ("ModestMenuDimmingRules");
 	toolbar_rules_group = modest_dimming_rules_group_new ("ModestToolbarDimmingRules");
@@ -1937,9 +1932,3 @@ on_send_receive_csm_activated (GtkMenuItem *item,
 	refresh_account ((const gchar*) user_data);
 }
 
-static gchar * 
-translate_func (const gchar *msgid,
-		const gchar *domain_name)
-{
-	return _(msgid);
-}

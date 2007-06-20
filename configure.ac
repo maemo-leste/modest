@@ -32,10 +32,6 @@ AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_SRCDIR(src/modest-main.c)
 AM_INIT_AUTOMAKE([dist-bzip2])
 
-# Check for gettext support
-GETTEXT_PACKAGE=modest
-AC_SUBST(GETTEXT_PACKAGE)
-AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE, "$GETTEXT_PACKAGE", ["Description"])
 
 ALL_LINGUAS="en_GB"
 
@@ -94,9 +90,13 @@ if test "x$with_platform" = "xmaemo"; then
    if test "$hildon1" == "yes"; then   # the 'new' hildon      			
       PKG_CHECK_MODULES(MODEST_LIBTINYMAIL_MAEMO, conic libtinymail-maemo-1.0 hildon-1 libosso libhildonmime osso-addressbook-1.0 wpeditor hildon-help libebook-1.2 libalarm hildon-notify libnotify)     	
    
+      GETTEXT_PACKAGE=osso-email
+
     else     # the old hildon
-     PKG_CHECK_MODULES(MODEST_LIBTINYMAIL_MAEMO, conic libtinymail-maemo-1.0 hildon-libs >= 0.12.0 libosso libossomime libossohelp osso-addressbook-1.0 libwpeditor-plus libebook-1.2 libalarm gnome-vfs-module-2.0)
-     AC_DEFINE_UNQUOTED(MODEST_HILDON_VERSION_0, 1, ["The Hildon version we support."])   
+      PKG_CHECK_MODULES(MODEST_LIBTINYMAIL_MAEMO, conic libtinymail-maemo-1.0 hildon-libs >= 0.12.0 libosso libossomime libossohelp osso-addressbook-1.0 libwpeditor-plus libebook-1.2 libalarm gnome-vfs-module-2.0)
+      AC_DEFINE_UNQUOTED(MODEST_HILDON_VERSION_0, 1, ["The Hildon version we support."])   
+
+      GETTEXT_PACKAGE=modest
     fi 	
    
    AC_SUBST(MODEST_LIBTINYMAIL_MAEMO_CFLAGS)
@@ -116,6 +116,10 @@ if test "x$with_platform" = "xmaemo"; then
   icon_scalabledir=$datadir/icons/hicolor/scalable/hildon
   pluginlibdir=`$PKG_CONFIG hildon-control-panel --variable=plugindir`
   plugindesktopentrydir=`$PKG_CONFIG hildon-control-panel --variable=plugindesktopentrydir`
+
+  # Check for gettext support
+  AC_SUBST(GETTEXT_PACKAGE)
+  AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE, "$GETTEXT_PACKAGE", ["Description"])
 
   dbus_api="dbus_api"
   AC_SUBST(dbus_api)

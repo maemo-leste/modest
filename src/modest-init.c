@@ -496,14 +496,16 @@ init_i18n (void)
 	const gchar* gettext_package;
 	/* Setup gettext, to use our .po files: */
 	/* GETTEXT_PACKAGE and MODEST_LOCALE_DIR are defined in config.h */
-#ifdef MODEST_HILDON_VERSION_0
-	gettext_package = GETTEXT_PACKAGE;
-	bindtextdomain (gettext_package, MODEST_LOCALE_DIR);
-#else
-	gettext_package = "osso-email"; /* HACK to use the localizations */
-	bindtextdomain (gettext_package, "/usr/share/locale");
-#endif /*MODEST_HILDON_VERSION_0*/
+/* #ifdef MODEST_HILDON_VERSION_0 */
+/* 	gettext_package = GETTEXT_PACKAGE; */
+/* 	bindtextdomain (gettext_package, MODEST_LOCALE_DIR); */
+/* #else */
+/* 	gettext_package = "osso-email"; /\* HACK to use the localizations *\/ */
+/* 	bindtextdomain (gettext_package, "/usr/share/locale"); */
+/* #endif /\*MODEST_HILDON_VERSION_0*\/ */
 	
+	gettext_package = GETTEXT_PACKAGE;
+
 	bind_textdomain_codeset (gettext_package, "UTF-8");
 	textdomain (gettext_package);
 

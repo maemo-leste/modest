@@ -297,7 +297,7 @@ modest_ui_dimming_rules_on_delete_msg (ModestWindow *win, gpointer user_data)
 		if (!dimmed) {
 			dimmed = _selected_folder_is_empty (MODEST_MAIN_WINDOW(win));			
 			if (dimmed)
-				modest_dimming_rule_set_notification (rule, _("mcen_ib_nothing_to_del"));
+				modest_dimming_rule_set_notification (rule, _("ckct_ib_nothing_to_delete"));
 		}
 		if (!dimmed) {
 			dimmed = _invalid_msg_selected (MODEST_MAIN_WINDOW(win), FALSE, user_data);
@@ -1029,8 +1029,9 @@ _invalid_msg_selected (ModestMainWindow *win,
 
 	/* Check dimmed rule (TODO: check focus on widgets */	
 	if (!result) {
-		result = ((selected_headers == NULL) ||
-			  (GTK_WIDGET_HAS_FOCUS (folder_view)));
+		result = (selected_headers == NULL);
+/* 		result = ((selected_headers == NULL) || */
+/* 			  (GTK_WIDGET_HAS_FOCUS (folder_view))); */
 		if (result)
 			modest_dimming_rule_set_notification (rule, _("mcen_ib_no_message_selected"));
 	}
@@ -1244,7 +1245,7 @@ _selected_msg_sent_in_progress (ModestWindow *win)
 	}
 
 	/* Check if msg id is being processed inside send queue */
-	result = (modest_tny_send_queue_get_msg_status (send_queue, tny_header_get_message_id(header)) == MODEST_TNY_SEND_QUEUE_SENDING);
+	result = modest_tny_send_queue_msg_is_being_sent (send_queue, id);
 
 	/* Free */
 	g_free(id);

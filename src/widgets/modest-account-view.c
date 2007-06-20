@@ -300,8 +300,8 @@ on_account_busy_changed(ModestAccountMgr *account_mgr, const gchar *account_name
 				return;
 			gchar* last_updated_string = get_last_updated_string(account_mgr, account_data);
 			gtk_list_store_set(model, &iter, 
-												 MODEST_ACCOUNT_VIEW_LAST_UPDATED_COLUMN,  last_updated_string,
-												 -1);
+					   MODEST_ACCOUNT_VIEW_LAST_UPDATED_COLUMN, last_updated_string,
+					   -1);
 			g_free (last_updated_string);
 			modest_account_mgr_free_account_data (account_mgr, account_data);
 			return;

@@ -109,7 +109,6 @@ void modest_tny_send_queue_try_to_send (ModestTnySendQueue* self);
  */
 gboolean modest_tny_send_queue_sending_in_progress (ModestTnySendQueue* self);
 
-#if 0
 /**
  * modest_tny_send_queue_msg_is_being_sent:
  * @self: a valid #ModestTnySendQueue instance
@@ -118,7 +117,6 @@ gboolean modest_tny_send_queue_sending_in_progress (ModestTnySendQueue* self);
  * Checks if message identifies with @msg_id is currently being sent.
  */
 gboolean modest_tny_send_queue_msg_is_being_sent (ModestTnySendQueue* self, const gchar *msg_id);
-#endif
 
 /**
  * modest_tny_send_queue_get_msg_status:
