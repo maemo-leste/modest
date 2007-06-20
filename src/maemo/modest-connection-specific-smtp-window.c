@@ -378,6 +378,7 @@ modest_connection_specific_smtp_window_init (ModestConnectionSpecificSmtpWindow 
 	GtkWidget *vbox = gtk_vbox_new (FALSE, MODEST_MARGIN_DEFAULT);
 
 	/* Introductory note: */
+	/* TODO: For some reason this label does not wrap. It is truncated. */
 	GtkWidget *label = gtk_label_new(_("mcen_ia_optionalsmtp_note"));
 	gtk_label_set_line_wrap (GTK_LABEL (label), TRUE);
 	/* So that it is shown without being truncated: */

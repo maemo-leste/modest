@@ -474,9 +474,9 @@ modest_ui_actions_on_smtp_servers (GtkAction *action, ModestWindow *win)
 	/* Show the window: */	
 	gtk_window_set_transient_for (GTK_WINDOW (specific_window), GTK_WINDOW (win));
 	gtk_window_set_modal (GTK_WINDOW (specific_window), TRUE);
-    gtk_widget_show (specific_window);
+    	gtk_widget_show (specific_window);
     
-    /* Save changes when the window is hidden: */
+    	/* Save changes when the window is hidden: */
 	g_signal_connect (specific_window, "hide", 
 		G_CALLBACK (on_smtp_servers_window_hide), win);
 #endif /* MODEST_PLATFORM_MAEMO */
@@ -1312,11 +1312,12 @@ modest_ui_actions_on_folder_selection_changed (ModestFolderView *folder_view,
 	} else {
 		if (TNY_IS_FOLDER (folder_store) && selected) {
 			
-			if (!TNY_IS_MERGE_FOLDER (folder_store)) { /* TnyMergeFolder can have no get_account() implementation. */
-				/* Update the active account */
-				TnyAccount *account = modest_tny_folder_get_account (TNY_FOLDER (folder_store));
+			/* Update the active account */
+			TnyAccount *account = modest_tny_folder_get_account (TNY_FOLDER (folder_store));
+			if (account) {
 				set_active_account_from_tny_account (account, MODEST_WINDOW (main_window));
 				g_object_unref (account);
+				account = NULL;
 			}
 
 			/* Set the header style by default, it could
