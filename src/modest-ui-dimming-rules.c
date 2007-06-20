@@ -125,13 +125,15 @@ gboolean
 modest_ui_dimming_rules_on_delete_folder (ModestWindow *win, gpointer user_data)
 {
 	gboolean dimmed = FALSE;
-	TnyFolderType types[3];
+	TnyFolderType types[5];
 
 	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW(win), FALSE);
 
 	types[0] = TNY_FOLDER_TYPE_DRAFTS; 
 	types[1] = TNY_FOLDER_TYPE_OUTBOX;
 	types[2] = TNY_FOLDER_TYPE_SENT;
+	types[3] = TNY_FOLDER_TYPE_INBOX;
+	types[4] = TNY_FOLDER_TYPE_ROOT;
 
 	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW(win), FALSE);
 		
@@ -139,11 +141,11 @@ modest_ui_dimming_rules_on_delete_folder (ModestWindow *win, gpointer user_data)
 	if (!dimmed)
 		dimmed = _selected_folder_not_writeable (MODEST_MAIN_WINDOW(win));
 	if (!dimmed)
+		dimmed = _selected_folder_is_any_of_type (win, types, 5);
+	if (!dimmed)
 		dimmed = _selected_folder_is_root_or_inbox (MODEST_MAIN_WINDOW(win));
 	if (!dimmed)
 		dimmed = _selected_folder_is_MMC_or_POP_root (MODEST_MAIN_WINDOW(win));
-	if (!dimmed)
-		dimmed = _selected_folder_is_any_of_type (win, types, 3);
 
 	return dimmed;
 }
@@ -204,7 +206,7 @@ modest_ui_dimming_rules_on_open_msg (ModestWindow *win, gpointer user_data)
 	if (!dimmed) {
 		dimmed = _selected_msg_sent_in_progress (win);
 		if (dimmed)
-			modest_dimming_rule_set_notification (rule, _("TEST"));
+			modest_dimming_rule_set_notification (rule, _("mcen_ib_unable_to_open_while_sent"));
 	}
 
 	return dimmed;
@@ -483,33 +485,16 @@ modest_ui_dimming_rules_on_paste_msgs (ModestWindow *win, gpointer user_data)
 	return dimmed;
 }
 
-gboolean 
-modest_ui_dimming_rules_on_delete_msgs (ModestWindow *win, gpointer user_data)
-{
-	TnyFolderType types[5];
-	gboolean dimmed = FALSE;
-
-	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW(win), FALSE);
-
-	types[0] = TNY_FOLDER_TYPE_DRAFTS; 
-	types[1] = TNY_FOLDER_TYPE_OUTBOX;
-	types[2] = TNY_FOLDER_TYPE_SENT;
-	types[3] = TNY_FOLDER_TYPE_INBOX;
-	types[4] = TNY_FOLDER_TYPE_ROOT;
-	
-	/* Check dimmed rule */	
-	if (!dimmed)
-		dimmed = _selected_folder_is_any_of_type (win, types, 5);
-
-	return dimmed;
-}
 
 gboolean 
 modest_ui_dimming_rules_on_select_all (ModestWindow *win, gpointer user_data)
 {
+	ModestDimmingRule *rule = NULL;
 	gboolean dimmed = FALSE;
 
 	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW(win), FALSE);
+	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
+	rule = MODEST_DIMMING_RULE (user_data);
 
 	/* Check dimmed rule */	
 	if (!dimmed) 
