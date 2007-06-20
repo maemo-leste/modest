@@ -615,7 +615,11 @@ static void clipboard_get (GtkClipboard *clipboard, GtkSelectionData *selection_
 			if (TNY_IS_MSG (mime_part)) {
 				TnyHeader *header = tny_msg_get_header (TNY_MSG (mime_part));
 				if (TNY_IS_HEADER (header)) {
-					gtk_selection_data_set_text (selection_data, tny_header_get_subject (header), -1);
+					const gchar *subject = NULL;
+					subject = tny_header_get_subject (header);
+					if ((subject == NULL) || (subject[0] == '\0'))
+						subject = _("mail_va_no_subject");
+					gtk_selection_data_set_text (selection_data, subject, -1);
 					g_object_unref (header);
 				}
 			} else {
