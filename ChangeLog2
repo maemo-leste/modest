@@ -1,3 +1,15 @@
+2007-06-21  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/modest-search.c: 
+	(search_mime_part_and_child_parts): Moved some code here so we 
+	can search recursively in child folders.
+	(modest_search_folder): Search in the message as a mime part, instead 
+	of just its child mime parts.
+	(read_chunk), (search_mime_part_ogs):
+	Check how many bytes were read, to prevent an endless loop.
+	Searching in message bodies now works. This finishes the fix for 
+	projects.maemo.org bug NB#61007.
+
 2007-06-20  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/modest-ui-actions.c: (modest_ui_actions_on_details):

@@ -114,26 +114,30 @@ add_hit (GList *list, TnyHeader *header, TnyFolder *folder)
 	return g_list_prepend (list, hit);
 }
 
+/** Call this until it returns FALSE or nread is set to 0.
+ * 
+ * @result: FALSE is something failed. */
 static gboolean
 read_chunk (TnyStream *stream, char *buffer, gsize count, gsize *nread)
 {
-	gsize _nread;
-	gssize res;
+	gsize _nread = 0;
+	gssize res = 0;
 
-	_nread = 0;
 	while (_nread < count) {
 		res = tny_stream_read (stream,
 				       buffer + _nread, 
 				       count - _nread);
-		if (res == -1) {
+		if (res == -1) { /* error */
 			*nread = _nread;
 			return FALSE;
 		}
 
-		if (res == 0)
-			break;
-
 		_nread += res;
+		
+		if (res == 0) { /* no more bytes read. */
+			*nread = _nread;
+			return TRUE;
+		}
 	}
 
 	*nread = _nread;
@@ -144,30 +148,47 @@ read_chunk (TnyStream *stream, char *buffer, gsize count, gsize *nread)
 static gboolean
 search_mime_part_ogs (TnyMimePart *part, ModestSearch *search)
 {
-	TnyStream *stream;
+	TnyStream *stream = NULL;
 	char       buffer[4096];
-	gsize      len;
-	gsize      nread;
-	gboolean   is_html = FALSE;
-	gboolean   found;
-	gboolean   res;
+	const gsize len = sizeof (buffer);
+	gsize      nread = 0;
+	gboolean   is_text_html = FALSE;
+	gboolean   found = FALSE;
+	gboolean   res = FALSE;
 
-
-	if (! tny_mime_part_content_type_is (part, "text/*") ||
-	    ! (is_html = tny_mime_part_content_type_is (part, "text/html"))) {
-	    g_debug ("%s: No text or html MIME part found.\n", __FUNCTION__);
-		return FALSE;
+	gboolean is_text = tny_mime_part_content_type_is (part, "text/*");
+	if (!is_text) {
+		g_debug ("%s: tny_mime_part_content_type_is() failed to find a "
+			"text/* MIME part. Content type is %s", 
+	    	__FUNCTION__, "Unknown (calling tny_mime_part_get_content_type(part) causes a deadlock)");
+	    	
+	    /* Retry with specific MIME types, because the wildcard seems to fail
+	     * in tinymail.
+	     * Actually I'm not sure anymore that it fails, so we could probalby 
+	     * remove this later: murrayc */
+	    is_text = (
+	    	tny_mime_part_content_type_is (part, "text/plain") ||
+	    	tny_mime_part_content_type_is (part, "text/html") );
+	    	
+	   	if (is_text) {
+	   	  g_debug ("%s: Retryting with text/plain or text/html succeeded", 
+	   	  	__FUNCTION__);	
+	   	}
 	}
+	
+	if (!is_text) {
+	    return FALSE;
+	}
+	
+	is_text_html = tny_mime_part_content_type_is (part, "text/html");
 
-	found = FALSE;
-	len = sizeof (buffer);
 	stream = tny_mime_part_get_stream (part);
 
-	while ((res = read_chunk (stream, buffer, len, &nread))) {
-
+	res = read_chunk (stream, buffer, len, &nread);
+	while (res && (nread > 0)) {
 		/* search->text_searcher was instantiated in modest_search_folder(). */
 		
-		if (is_html) {
+		if (is_text_html) {
 
 			found = ogs_text_searcher_search_html (search->text_searcher,
 							       buffer,
@@ -182,7 +203,9 @@ search_mime_part_ogs (TnyMimePart *part, ModestSearch *search)
 		if (found) {
 			break;
 		}
-
+		
+		nread = 0;
+		res = read_chunk (stream, buffer, len, &nread);
 	}
 
 	if (!found) {
@@ -313,6 +336,38 @@ search_string (const char      *what,
 }
 
 
+static gboolean search_mime_part_and_child_parts (TnyMimePart *part, ModestSearch *search)
+{
+	gboolean found = FALSE;
+	#ifdef MODEST_HAVE_OGS
+	found = search_mime_part_ogs (part, search);
+	#else
+	found = search_mime_part_strcmp (part, search);
+	#endif
+
+	if (found) {	
+		return found;		
+	}
+	
+	/* Check the child part too, recursively: */
+	TnyList *child_parts = tny_simple_list_new ();
+	tny_mime_part_get_parts (TNY_MIME_PART (part), child_parts);
+
+	TnyIterator *piter = tny_list_create_iterator (child_parts);
+	while (!found && !tny_iterator_is_done (piter)) {
+		TnyMimePart *pcur = (TnyMimePart *) tny_iterator_get_current (piter);
+
+		found = search_mime_part_and_child_parts (pcur, search);
+
+		g_object_unref (pcur);
+		tny_iterator_next (piter);
+	}
+
+	g_object_unref (piter);
+	g_object_unref (child_parts);
+	
+	return found;
+}
 
 /**
  * modest_search:
@@ -400,8 +455,6 @@ modest_search_folder (TnyFolder *folder, ModestSearch *search)
 			TnyHeaderFlags flags;
 			GError      *err = NULL;
 			TnyMsg      *msg = NULL;
-			TnyIterator *piter;
-			TnyList     *parts;
 
 			flags = tny_header_get_flags (cur);
 
@@ -420,36 +473,12 @@ modest_search_folder (TnyFolder *folder, ModestSearch *search)
 				}
 			}	
 
-			parts = tny_simple_list_new ();
-			tny_mime_part_get_parts (TNY_MIME_PART (msg), parts);
+			found = search_mime_part_and_child_parts (TNY_MIME_PART (msg), 
+				search);
+			if (found) {
+				retval = add_hit (retval, cur, folder);
+			}
 			
-			if (tny_list_get_length(parts) == 0) {
-				gchar *url_string = tny_msg_get_url_string (msg);
-				g_debug ("DEBUG: %s: tny_mime_part_get_parts(msg) returned an empty list for message url=%s", 
-					__FUNCTION__, url_string);
-				g_free (url_string);	
-			}
-
-			piter = tny_list_create_iterator (parts);
-			while (!found && !tny_iterator_is_done (piter)) {
-				TnyMimePart *pcur = (TnyMimePart *) tny_iterator_get_current (piter);
-
-				#ifdef MODEST_HAVE_OGS
-				found = search_mime_part_ogs (pcur, search);
-				#else
-				found = search_mime_part_strcmp (pcur, search);
-				#endif
-		
-				if (found) {
-					retval = add_hit (retval, cur, folder);				
-				}
-
-				g_object_unref (pcur);
-				tny_iterator_next (piter);
-			}
-
-			g_object_unref (piter);
-			g_object_unref (parts);
 			g_object_unref (msg);
 
 		}
