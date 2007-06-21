@@ -1,3 +1,9 @@
+modest (1.0-2007.25-4) gutsy; urgency=low
+
+  * new release with the send-email crash fixed 
+
+ -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Thu, 21 Jun 2007 15:16:35 +0300
+
 modest (1.0-2007.25-3) gutsy; urgency=low
 
   * Fixes : NB#60765, NB#60768, NB#60770, NB#60771, NB#60773, NB#60774
