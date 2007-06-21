@@ -327,7 +327,7 @@ static void on_secure_auth_cancel(GtkWidget* dialog, int response, gpointer user
 }
 
 GList* modest_maemo_utils_get_supported_secure_authentication_methods (ModestTransportStoreProtocol proto, 
-	const gchar* hostname, gint port, GtkWindow *parent_window)
+	const gchar* hostname, gint port, const gchar* username, GtkWindow *parent_window)
 {
 	g_return_val_if_fail (proto != MODEST_PROTOCOL_TRANSPORT_STORE_UNKNOWN, NULL);
 	
@@ -363,6 +363,9 @@ GList* modest_maemo_utils_get_supported_secure_authentication_methods (ModestTra
 	 /* TODO: Why isn't this done in account_new()? */
 	tny_account_set_proto (tny_account,
 			       modest_protocol_info_get_transport_store_protocol_name(proto));
+
+	/* Required for POP, at least */
+	tny_account_set_user (tny_account, username);
 			       
 	/* Set the session for the account, so we can use it: */
 	ModestTnyAccountStore *account_store = modest_runtime_get_account_store ();

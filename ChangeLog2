@@ -1,3 +1,15 @@
+2007-06-21  Armin Burgmeier  <armin@openismus.com>
+
+	* src/maemo/modest-maemo-utils.h:
+	* src/maemo/modest-maemo-utils.c: Added a username parameter to the
+	modest_maemo_utils_get_supported_secure_authentication_methods()
+	to query authentication methods for a specific user. This should fix
+	projects.maemo.org bug NB#61369.
+
+	* src/maemo/easysetup/modest-easysetup-wizard.c:
+	* src/maemo/modest-account-settings-dialog.c: Adjusted calls to that
+	function.
+
 2007-06-21  Murray Cumming  <murrayc@murrayc.com>
 
 	* libmodest-dbus-client/libmodest-dbus-client.h:

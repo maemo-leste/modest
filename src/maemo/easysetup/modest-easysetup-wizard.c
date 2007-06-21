@@ -166,6 +166,7 @@ static GList* check_for_supported_auth_methods(ModestEasysetupWizardDialog* acco
           easysetup_servertype_combo_box_get_active_servertype (
                                                                 EASYSETUP_SERVERTYPE_COMBO_BOX (account_wizard->combo_incoming_servertype));
     const gchar* hostname = gtk_entry_get_text(GTK_ENTRY(account_wizard->entry_incomingserver));
+    const gchar* username = gtk_entry_get_text(GTK_ENTRY(account_wizard->entry_user_username));
 	  const ModestConnectionProtocol protocol_security_incoming = 
 					modest_serversecurity_combo_box_get_active_serversecurity (
 																																		 MODEST_SERVERSECURITY_COMBO_BOX (
@@ -174,7 +175,7 @@ static GList* check_for_supported_auth_methods(ModestEasysetupWizardDialog* acco
      GList *list_auth_methods = 
           modest_maemo_utils_get_supported_secure_authentication_methods (
                                                                       protocol, 
-                                                                      hostname, port_num, GTK_WINDOW (account_wizard));	
+                                                                      hostname, port_num, username, GTK_WINDOW (account_wizard));	
      if (list_auth_methods) {
           /* TODO: Select the correct method */
 			  GList* list = NULL;

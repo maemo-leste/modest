@@ -1272,7 +1272,7 @@ save_configuration (ModestAccountSettingsDialog *dialog)
 				GTK_TOGGLE_BUTTON (dialog->checkbox_incoming_auth))) {
 			GList *list_auth_methods = 
 				modest_maemo_utils_get_supported_secure_authentication_methods (dialog->incoming_protocol, 
-					hostname, port_num, GTK_WINDOW (dialog));	
+					hostname, port_num, username, GTK_WINDOW (dialog));	
 			if (list_auth_methods) {
 				/* Use the first supported method.
 				 * TODO: Should we prioritize them, to prefer a particular one? */

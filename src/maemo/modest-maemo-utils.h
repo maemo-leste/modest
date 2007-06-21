@@ -88,10 +88,11 @@ gboolean modest_maemo_utils_file_exists (const gchar *filename);
 TnyFsStream *modest_maemo_utils_create_temp_stream (const gchar *extension, gchar **path);
 
 /**
- * modest_protocol_info_protocol_is_local_store:
+ * modest_maemo_utils_get_supported_secure_authentication_methods:
  * @proto: the protocol
  * @hostname: hostname of the mail server to check
  * @port: mail server port
+ * @username: username of the account to check for
  * @parent_window: a GtkWindow that can be used a parent for progress indication
  *
  * Get a list of supported authentication methods of the server
@@ -101,6 +102,6 @@ TnyFsStream *modest_maemo_utils_create_temp_stream (const gchar *extension, gcha
  */
 
 GList* modest_maemo_utils_get_supported_secure_authentication_methods (ModestTransportStoreProtocol proto, 
-	const gchar* hostname, gint port, GtkWindow *parent_window);
+	const gchar* hostname, gint port, const gchar* username, GtkWindow *parent_window);
 
 #endif /*__MODEST_MAEMO_UTILS_H__*/
