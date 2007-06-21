@@ -973,7 +973,7 @@ modest_platform_on_new_msg (void)
 				       "system.note.dialog");
 
 	/* Play sound SR-SND-18. TODO: play the right file */
-	hildon_notification_set_sound (not, "/usr/share/sounds/ui-new_email.wav");
+	/* TODO: Where is this declared? hildon_notification_set_sound (not, "/usr/share/sounds/ui-new_email.wav"); */
 
 	/* Set the led pattern */
 	notify_notification_set_hint_int32 (NOTIFY_NOTIFICATION (not), "led-pattern", 3);

@@ -1,1 +1,7 @@
+2007-06-21  Murray Cumming,,,  <murrayc@murrayc-desktop>
+
+	reviewed by: <delete if not using a buddy>
+
+	* src/maemo/modest-platform.c: (modest_platform_on_new_msg):
+
 * please check the svn log instead

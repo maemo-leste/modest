@@ -1,3 +1,9 @@
+2007-06-21  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/maemo/modest-platform.c: (modest_platform_on_new_msg):
+	Comment out the use of hildon_notification_set_sound() because it is 
+	not declared, to fix the build. Warnings are serious, people.
+
 2007-06-21  Armin Burgmeier  <armin@openismus.com>
 
 	* src/maemo/modest-maemo-utils.h:
