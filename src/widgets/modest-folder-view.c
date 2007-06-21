@@ -991,6 +991,27 @@ get_cmp_rows_type_pos (GObject *folder)
 	}
 }
 
+static gint
+get_cmp_subfolder_type_pos (TnyFolderType t)
+{
+	/* Outbox, Drafts, Sent, User */
+	/* 0, 1, 2, 3 */
+
+	switch (t) {
+	case TNY_FOLDER_TYPE_OUTBOX:
+		return 0;
+		break;
+	case TNY_FOLDER_TYPE_DRAFTS:
+		return 1;
+		break;
+	case TNY_FOLDER_TYPE_SENT:
+		return 2;
+		break;
+	default:
+		return 3;
+	}
+}
+
 /*
  * This function orders the mail accounts according to these rules:
  * 1st - remote accounts
@@ -1005,6 +1026,7 @@ cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 	gchar *name1 = NULL;
 	gchar *name2 = NULL;
 	TnyFolderType type = TNY_FOLDER_TYPE_UNKNOWN;
+	TnyFolderType type2 = TNY_FOLDER_TYPE_UNKNOWN;
 	GObject *folder1 = NULL;
 	GObject *folder2 = NULL;
 
@@ -1015,6 +1037,7 @@ cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 			    -1);
 	gtk_tree_model_get (tree_model, iter2,
 			    TNY_GTK_FOLDER_STORE_TREE_MODEL_NAME_COLUMN, &name2,
+			    TNY_GTK_FOLDER_STORE_TREE_MODEL_TYPE_COLUMN, &type2,
 			    TNY_GTK_FOLDER_STORE_TREE_MODEL_INSTANCE_COLUMN, &folder2,
 			    -1);
 
@@ -1055,7 +1078,30 @@ cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 				cmp = modest_text_utils_utf8_strcmp (name1, name2, TRUE);
 		}
 	} else {
-		cmp = modest_text_utils_utf8_strcmp (name1, name2, TRUE);
+		GtkTreeIter parent;
+		gboolean has_parent;
+		gint cmp1 = 0, cmp2 = 0;
+		/* get the parent to know if it's a local folder */
+		has_parent = gtk_tree_model_iter_parent (tree_model, &parent, iter1);
+		if (has_parent) {
+			GObject *parent_folder;
+			TnyFolderType parent_type = TNY_FOLDER_TYPE_UNKNOWN;
+			gtk_tree_model_get (tree_model, &parent, 
+					    TNY_GTK_FOLDER_STORE_TREE_MODEL_TYPE_COLUMN, &parent_type,
+					    TNY_GTK_FOLDER_STORE_TREE_MODEL_INSTANCE_COLUMN, &parent_folder,
+					    -1);
+			if ((parent_type == TNY_FOLDER_TYPE_ROOT) &&
+			    TNY_IS_ACCOUNT (parent_folder) &&
+			    modest_tny_account_is_virtual_local_folders (TNY_ACCOUNT (parent_folder))) {
+				cmp1 = get_cmp_subfolder_type_pos (modest_tny_folder_get_local_folder_type (TNY_FOLDER (folder1)));
+				cmp2 = get_cmp_subfolder_type_pos (modest_tny_folder_get_local_folder_type (TNY_FOLDER (folder2)));
+			}
+			g_object_unref (parent_folder);
+		}
+		if (cmp1 == cmp2)
+			cmp = modest_text_utils_utf8_strcmp (name1, name2, TRUE);
+		else 
+			cmp = (cmp1 - cmp2);
 	}
 	
 	if (folder1)
