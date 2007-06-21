@@ -123,12 +123,15 @@ static void modest_msg_edit_window_system_clipboard_owner_change (GtkClipboard *
 static void update_window_title (ModestMsgEditWindow *window);
 static void update_dimmed (ModestMsgEditWindow *window);
 static void update_paste_dimming (ModestMsgEditWindow *window);
+static void update_select_all_dimming (ModestMsgEditWindow *window);
 
 /* Find toolbar */
 static void modest_msg_edit_window_find_toolbar_search (GtkWidget *widget,
 							ModestMsgEditWindow *window);
 static void modest_msg_edit_window_find_toolbar_close (GtkWidget *widget,
 						       ModestMsgEditWindow *window);
+static void edit_menu_activated (GtkAction *action,
+				 gpointer userdata);
 
 /* list my signals */
 enum {
@@ -952,6 +955,11 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name)
 	gtk_action_set_sensitive (action, FALSE);
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/AttachmentsMenu/RemoveAttachmentsMenu");
 	gtk_action_set_sensitive (action, FALSE);
+
+	/* Update select all */
+	update_select_all_dimming (MODEST_MSG_EDIT_WINDOW (obj));
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/EditMenu");
+	g_signal_connect (G_OBJECT (action), "activate", G_CALLBACK (edit_menu_activated), obj);
 
 	/* set initial state of cc and bcc */
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/ViewMenu/ViewCcFieldMenu");
@@ -2007,7 +2015,7 @@ modest_msg_edit_window_set_priority_flags (ModestMsgEditWindow *window,
 
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
 	parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
-	priority_flags = priority_flags & (TNY_HEADER_FLAG_HIGH_PRIORITY);
+	priority_flags = priority_flags & (TNY_HEADER_FLAG_PRIORITY);
 
 	if (priv->priority_flags != priority_flags) {
 		GtkAction *priority_action = NULL;
@@ -2665,3 +2673,34 @@ modest_msg_edit_window_system_clipboard_owner_change (GtkClipboard *clipboard,
 	update_paste_dimming (window);
 }
 
+static void 
+update_select_all_dimming (ModestMsgEditWindow *window)
+{
+	GtkWidget *focused;
+	gboolean dimmed = FALSE;
+	GtkAction *action;
+	ModestWindowPrivate *parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
+
+	focused = gtk_window_get_focus (GTK_WINDOW (window));
+	if (GTK_IS_ENTRY (focused)) {
+		const gchar *current_text;
+		current_text = gtk_entry_get_text (GTK_ENTRY (focused));
+		dimmed = ((current_text == NULL) || (current_text[0] == '\0'));
+	} else if (GTK_IS_TEXT_VIEW (focused)) {
+		GtkTextBuffer *buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (focused));
+		dimmed = (gtk_text_buffer_get_char_count (buffer) < 1);
+	} else if (MODEST_IS_ATTACHMENTS_VIEW (focused)) {
+		dimmed = FALSE;
+	}
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/EditMenu/SelectAllMenu");
+	gtk_action_set_sensitive (action, !dimmed);
+}
+
+static void
+edit_menu_activated (GtkAction *action,
+		     gpointer userdata)
+{
+	ModestMsgEditWindow *window = MODEST_MSG_EDIT_WINDOW (userdata);
+
+	update_select_all_dimming (window);
+}
