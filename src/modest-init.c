@@ -276,6 +276,8 @@ save_header_settings (ModestConf *conf, TnyFolderType type,
 {
 	int i;
 	gchar *key;
+	gchar *sort_key;
+	gchar *sort_value;
 	GString *str;
 
 	g_return_val_if_fail (cols, FALSE);
@@ -283,6 +285,9 @@ save_header_settings (ModestConf *conf, TnyFolderType type,
 	key = _modest_widget_memory_get_keyname_with_double_type ("header-view",
 								  type, style,
 								  MODEST_WIDGET_MEMORY_PARAM_COLUMN_WIDTH);
+	sort_key = _modest_widget_memory_get_keyname_with_double_type ("header-view",
+								       type, style,
+								       MODEST_WIDGET_MEMORY_PARAM_COLUMN_SORT);
 	/* if we're not in overwrite mode, only write stuff it
 	 * there was nothing before */
 	if (!overwrite &&  modest_conf_key_exists(conf, key, NULL)) {
@@ -299,6 +304,18 @@ save_header_settings (ModestConf *conf, TnyFolderType type,
 	modest_conf_set_string (conf, key, str->str, NULL);
 	g_free (key);
 	g_string_free (str, TRUE);
+
+	if ( col_num > 0 ) {
+		gint sort_col_id;
+		if (cols[i].col == MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER_OUT)
+			sort_col_id = TNY_GTK_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN;
+		else
+			sort_col_id = TNY_GTK_HEADER_LIST_MODEL_DATE_RECEIVED_TIME_T_COLUMN;
+		sort_value = g_strdup_printf("%d:%d:%d", sort_col_id, GTK_SORT_DESCENDING, 0);
+		modest_conf_set_string (conf, sort_key, sort_value, NULL);
+		g_free (sort_value);
+	}
+	g_free (sort_key);
 	
 	return TRUE;
 }
