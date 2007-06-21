@@ -1083,9 +1083,9 @@ get_folders_result_to_message (DBusMessage *reply,
 	GList *list_iter = folder_ids;
 	for (list_iter = folder_ids; list_iter; list_iter = list_iter->next) {
 		
-		const gchar *folder_id = (const gchar*)list_iter->data;
-		if (folder_id) {
-			g_debug ("DEBUG: %s: Adding folder: %s", __FUNCTION__, folder_id);	
+		const gchar *folder_name = (const gchar*)list_iter->data;
+		if (folder_name) {
+			g_debug ("DEBUG: %s: Adding folder: %s", __FUNCTION__, folder_name);	
 			
 			DBusMessageIter struct_iter;
 			dbus_message_iter_open_container (&array_iter,
@@ -1093,12 +1093,7 @@ get_folders_result_to_message (DBusMessage *reply,
 							  NULL,
 							  &struct_iter);
 	
-	   		dbus_message_iter_append_basic (&struct_iter,
-							DBUS_TYPE_STRING,
-							&folder_id);
-	
 			/* name: */
-			const gchar *folder_name = (const gchar*)list_iter->data;
 			dbus_message_iter_append_basic (&struct_iter,
 							DBUS_TYPE_STRING,
 							&folder_name); /* The string will be copied. */
@@ -1119,17 +1114,47 @@ get_folders_result_to_message (DBusMessage *reply,
 	return reply;
 }
 
-void add_folders_to_list (TnyFolderStore *folder_store, GList** list)
+static void
+add_single_folder_to_list (TnyFolder *folder, GList** list)
 {
-	if (!folder_store)
+	if (!folder)
 		return;
 		
 	/* Add this folder to the list: */
-	if (TNY_IS_FOLDER (folder_store)) {
-		const gchar * folder_name = tny_folder_get_name (TNY_FOLDER (folder_store));
-		if (folder_name)
-			*list = g_list_append(*list, g_strdup (folder_name));
+	/*
+	const gchar * folder_name = tny_folder_get_name (folder);
+	if (folder_name)
+		*list = g_list_append(*list, g_strdup (folder_name));
+	else {
+	*/
+		/* osso-global-search only uses one string,
+		 * so ID is the only thing that could possibly identify a folder.
+		 * TODO: osso-global search should probably be changed to 
+		 * take an ID and a Name.
+		 */
+		const gchar * id =  tny_folder_get_id (folder);
+		if (id && strlen(id))
+			*list = g_list_append(*list, g_strdup (id));
+		/*
+		else {
+			g_warning ("DEBUG: %s: folder has no name or ID.\n", __FUNCTION__);	
+		}
+		
 	}
+	*/
+}
+
+static void
+add_folders_to_list (TnyFolderStore *folder_store, GList** list)
+{
+	if (!folder_store)
+		return;
+	
+	/* Add this folder to the list: */
+	if (TNY_IS_FOLDER (folder_store)) {
+		add_single_folder_to_list (TNY_FOLDER (folder_store), list);
+	}	
+	
 		
 	/* Recurse into child folders: */
 		
@@ -1145,9 +1170,12 @@ void add_folders_to_list (TnyFolderStore *folder_store, GList** list)
 
 	TnyIterator *iter = tny_list_create_iterator (all_folders);
 	while (!tny_iterator_is_done (iter)) {
-		TnyFolderStore *folder = TNY_FOLDER_STORE (tny_iterator_get_current (iter));
-
-		add_folders_to_list (folder, list);
+		TnyFolder *folder = TNY_FOLDER (tny_iterator_get_current (iter));
+		if (TNY_IS_FOLDER_STORE (folder))
+			add_folders_to_list (TNY_FOLDER_STORE (folder), list);
+		else {
+			add_single_folder_to_list (TNY_FOLDER (folder), list);
+		}
 		
 		tny_iterator_next (iter);
 	}
@@ -1178,15 +1206,29 @@ on_dbus_method_get_folders (DBusConnection *con, DBusMessage *message)
 		g_printerr ("modest: failed to get tny account folder'%s'\n", account_name);
 	} 
 		
+	printf("DEBUG: %s: Getting folders for account name=%s\n", __FUNCTION__, account_name);
 	g_free (account_name);
 	account_name = NULL;
 	
 	GList *folder_names = NULL;
 	add_folders_to_list (TNY_FOLDER_STORE (account), &folder_names);
-	
 
 	g_object_unref (account);
 	account = NULL;
+	
+	
+	/* Also add the folders from the local folders account,
+	 * because they are (currently) used with all accounts:
+	 * TODO: This is not working. It seems to get only the Merged Folder (with an ID of "" (not NULL)).
+	 */
+	TnyAccount *account_local = 
+		modest_tny_account_store_get_local_folders_account (
+			TNY_ACCOUNT_STORE (modest_runtime_get_account_store()));
+	add_folders_to_list (TNY_FOLDER_STORE (account_local), &folder_names);
+
+	g_object_unref (account_local);
+	account_local = NULL;
+
 
 	/* Put the result in a DBus reply: */
 	reply = dbus_message_new_method_return (message);
