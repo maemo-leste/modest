@@ -1081,6 +1081,17 @@ modest_ui_actions_on_sort (GtkAction *action,
 	}
 }
 
+static void
+new_messages_arrived (ModestMailOperation *self, 
+		      gint new_messages,
+		      gpointer user_data)
+{
+	if (new_messages == 0)
+		return;
+
+	modest_platform_on_new_msg ();
+}
+
 /*
  * This function performs the send & receive required actions. The
  * window is used to create the mail operation. Typically it should
@@ -1123,7 +1134,7 @@ modest_ui_actions_do_send_receive (const gchar *account_name, ModestWindow *win)
 	   internally, so the progress objects will receive the proper
 	   progress information */
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
-	modest_mail_operation_update_account (mail_op, acc_name);
+	modest_mail_operation_update_account (mail_op, acc_name, new_messages_arrived, NULL);
 	g_object_unref (G_OBJECT (mail_op));
 	
 	/* Free */
@@ -1275,7 +1286,6 @@ folder_refreshed_cb (const GObject *obj,
 		     TnyFolder *folder, 
 		     gpointer user_data)
 {
-/* 	printf ("DEBUG: %s\n", __FUNCTION__); */
 	ModestMainWindow *win = NULL;
 	GtkWidget *header_view;
 
@@ -1357,8 +1367,11 @@ modest_ui_actions_on_folder_selection_changed (ModestFolderView *folder_view,
 		} else {
 			/* Update the active account */
 			modest_window_set_active_account (MODEST_WINDOW (main_window), NULL);
-			/* Do not show folder */
-			modest_widget_memory_save (conf, G_OBJECT (header_view), MODEST_CONF_HEADER_VIEW_KEY);
+			/* Save only if we're seeing headers */
+			if (modest_main_window_get_contents_style (main_window) ==
+			    MODEST_MAIN_WINDOW_CONTENTS_STYLE_HEADERS)
+				modest_widget_memory_save (conf, G_OBJECT (header_view), 
+							   MODEST_CONF_HEADER_VIEW_KEY);
 			modest_header_view_clear (MODEST_HEADER_VIEW(header_view));
 		}
 	}

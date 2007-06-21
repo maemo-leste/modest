@@ -129,6 +129,21 @@ typedef void (*RefreshAsyncUserCallback) (const GObject *obj,
 					  TnyFolder *folder, 
 					  gpointer user_data);
 
+/**
+ * UpdateAccountCallback:
+ *
+ * @obj: a #GObject generic object which has created current mail operation.
+ * @new_messages: the amount of new messages received
+ * @user_data: generic data passed to user defined function.
+ *
+ * This is the callback of the update_account operation. It informs
+ * the caller about the amount of new messages that have been
+ * downloaded
+ */
+typedef void (*UpdateAccountCallback) (ModestMailOperation *self, 
+				       gint new_messages,
+				       gpointer user_data);
+
 /* This struct represents the internal state of a mail operation in a
    given time */
 typedef struct {
@@ -340,7 +355,9 @@ void    modest_mail_operation_save_to_drafts   (ModestMailOperation *self,
  * Returns: TRUE if the mail operation could be started, or FALSE otherwise
  **/
 gboolean      modest_mail_operation_update_account (ModestMailOperation *self,
-						    const gchar *account_name);
+						    const gchar *account_name,
+						    UpdateAccountCallback callback,
+						    gpointer user_data);
 
 /* Functions that perform store operations */
 

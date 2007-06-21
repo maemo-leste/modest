@@ -667,6 +667,8 @@ typedef struct
 	gint retrieve_limit;
 	gchar *retrieve_type;
 	gchar *account_name;
+	UpdateAccountCallback callback;
+	gpointer user_data;
 } UpdateAccountInfo;
 
 /***** I N T E R N A L    F O L D E R    O B S E R V E R *****/
@@ -881,11 +883,11 @@ update_account_thread (gpointer thr_user_data)
 	static gboolean first_time = TRUE;
 	UpdateAccountInfo *info;
 	TnyList *all_folders = NULL;
-	GPtrArray *new_headers;
+	GPtrArray *new_headers = NULL;
 	TnyIterator *iter = NULL;
 	TnyFolderStoreQuery *query = NULL;
-	ModestMailOperationPrivate *priv;
-	ModestTnySendQueue *send_queue;
+	ModestMailOperationPrivate *priv = NULL;
+	ModestTnySendQueue *send_queue = NULL;
 
 	info = (UpdateAccountInfo *) thr_user_data;
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(info->mail_op);
@@ -943,8 +945,6 @@ update_account_thread (gpointer thr_user_data)
 		/* Refresh the folder */
 		/* Our observer receives notification of new emails during folder refreshes,
 		 * so we can use observer->new_headers.
-		 * TODO: This does not seem to be providing accurate numbers.
-		 * Possibly the observer is notified asynchronously.
 		 */
 		observer = g_object_new (internal_folder_observer_get_type (), NULL);
 		tny_folder_add_observer (TNY_FOLDER (folder), TNY_FOLDER_OBSERVER (observer));
@@ -1007,11 +1007,11 @@ update_account_thread (gpointer thr_user_data)
 		 * user to download them all,
 		 * as per the UI spec "Retrieval Limits" section in 4.4: 
 		 */
-		printf ("************************** DEBUG: %s: account=%s, len=%d, retrieve_limit = %d\n", __FUNCTION__, 
-			tny_account_get_id (priv->account), new_headers->len, info->retrieve_limit);
 		if (new_headers->len > info->retrieve_limit) {
-			/* TODO: Ask the user, instead of just failing, showing mail_nc_msg_count_limit_exceeded, 
-			 * with 'Get all' and 'Newest only' buttons. */
+			/* TODO: Ask the user, instead of just
+			 * failing, showing
+			 * mail_nc_msg_count_limit_exceeded, with 'Get
+			 * all' and 'Newest only' buttons. */
 			g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 			     MODEST_MAIL_OPERATION_ERROR_RETRIEVAL_NUMBER_LIMIT,
 			     "The number of messages to retrieve exceeds the chosen limit for account %s\n", 
@@ -1085,6 +1085,11 @@ update_account_thread (gpointer thr_user_data)
 	   freed before this idle happens, but the mail operation will
 	   be still alive */
 	g_idle_add (notify_update_account_queue, g_object_ref (info->mail_op));
+
+	if (info->callback) 
+		info->callback (info->mail_op, 
+				(new_headers) ? new_headers->len : 0, 
+				info->user_data);
 	
 	/* Frees */
 	g_object_unref (query);
@@ -1101,7 +1106,9 @@ update_account_thread (gpointer thr_user_data)
 
 gboolean
 modest_mail_operation_update_account (ModestMailOperation *self,
-				      const gchar *account_name)
+				      const gchar *account_name,
+				      UpdateAccountCallback callback,
+				      gpointer user_data)
 {
 	GThread *thread;
 	UpdateAccountInfo *info;
@@ -1113,13 +1120,6 @@ modest_mail_operation_update_account (ModestMailOperation *self,
 	g_return_val_if_fail (MODEST_IS_MAIL_OPERATION (self), FALSE);
 	g_return_val_if_fail (account_name, FALSE);
 
-	/* Make sure that we have a connection, and request one 
-	 * if necessary:
-	 * TODO: Is there some way to trigger this for every attempt to 
-	 * use the network? */
-	if (!modest_platform_connect_and_wait(NULL))
-		return FALSE;
-	
 	/* Init mail operation. Set total and done to 0, and do not
 	   update them, this way the progress objects will know that
 	   we have no clue about the number of the objects */
@@ -1127,7 +1127,14 @@ modest_mail_operation_update_account (ModestMailOperation *self,
 	priv->total = 0;
 	priv->done  = 0;
 	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
-	
+
+	/* Make sure that we have a connection, and request one 
+	 * if necessary:
+	 * TODO: Is there some way to trigger this for every attempt to 
+	 * use the network? */
+	if (!modest_platform_connect_and_wait(NULL))
+		goto error;
+
 	/* Get the Modest account */
 	modest_account = (TnyStoreAccount *)
 		modest_tny_account_store_get_server_account (modest_runtime_get_account_store (),
@@ -1135,13 +1142,10 @@ modest_mail_operation_update_account (ModestMailOperation *self,
 								     TNY_ACCOUNT_TYPE_STORE);
 
 	if (!modest_account) {
-		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 			     MODEST_MAIL_OPERATION_ERROR_ITEM_NOT_FOUND,
 			     "cannot get tny store account for %s\n", account_name);
-		modest_mail_operation_notify_end (self);
-
-		return FALSE;
+		goto error;
 	}
 
 	
@@ -1151,13 +1155,10 @@ modest_mail_operation_update_account (ModestMailOperation *self,
 		modest_tny_account_store_get_transport_account_for_open_connection (modest_runtime_get_account_store(),
 										    account_name);
 	if (!transport_account) {
-		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 			     MODEST_MAIL_OPERATION_ERROR_ITEM_NOT_FOUND,
 			     "cannot get tny transport account for %s\n", account_name);
-		modest_mail_operation_notify_end (self);
-
-		return FALSE;
+		goto error;
 	}
 
 	/* Create the helper object */
@@ -1165,6 +1166,8 @@ modest_mail_operation_update_account (ModestMailOperation *self,
 	info->mail_op = self;
 	info->account = modest_account;
 	info->transport_account = transport_account;
+	info->callback = callback;
+	info->user_data = user_data;
 
 	/* Get the message size limit */
 	info->max_size  = modest_conf_get_int (modest_runtime_get_conf (), 
@@ -1194,6 +1197,13 @@ modest_mail_operation_update_account (ModestMailOperation *self,
 	thread = g_thread_create (update_account_thread, info, FALSE, NULL);
 
 	return TRUE;
+
+ error:
+	priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
+	if (callback) 
+		callback (self, 0, user_data);
+	modest_mail_operation_notify_end (self);
+	return FALSE;
 }
 
 /* ******************************************************************* */

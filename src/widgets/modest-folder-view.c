@@ -785,7 +785,8 @@ filter_row (GtkTreeModel *model,
 		return FALSE;
 
 	if (type == TNY_FOLDER_TYPE_ROOT) {
-		/* TNY_FOLDER_TYPE_ROOT means that the instance is an account instead of a folder. */
+		/* TNY_FOLDER_TYPE_ROOT means that the instance is an
+		   account instead of a folder. */
 		if (TNY_IS_ACCOUNT (instance)) {
 			TnyAccount *acc = TNY_ACCOUNT (instance);
 			const gchar *account_id = tny_account_get_id (acc);

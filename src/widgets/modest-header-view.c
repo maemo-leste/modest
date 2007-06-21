@@ -247,7 +247,7 @@ get_new_column (const gchar *name, GtkCellRenderer *renderer,
 	if (resizable) 
 		gtk_tree_view_column_set_expand (column, TRUE);
 	
-	if (show_as_text) 
+	if (show_as_text)
 		gtk_tree_view_column_add_attribute (column, renderer, "text",
 						    sort_col_id);
 	if (sort_col_id >= 0)
@@ -519,7 +519,7 @@ modest_header_view_dispose (GObject *obj)
 	if (priv->folder) {
 		tny_folder_remove_observer (priv->folder, TNY_FOLDER_OBSERVER (obj));
 		g_object_unref (G_OBJECT (priv->folder));
-		priv->folder   = NULL;
+		priv->folder = NULL;
 	}
 
 	G_OBJECT_CLASS(parent_class)->dispose (obj);
@@ -866,7 +866,6 @@ modest_header_view_set_folder_intern (ModestHeaderView *self, TnyFolder *folder)
 	priv->monitor = TNY_FOLDER_MONITOR (tny_folder_monitor_new (folder));
 	tny_folder_monitor_add_list (priv->monitor, TNY_LIST (headers));
 	tny_folder_monitor_start (priv->monitor);
-	tny_folder_add_observer (folder, TNY_FOLDER_OBSERVER (self));
 	g_mutex_unlock (priv->observers_lock);
 
 	sortable = gtk_tree_model_sort_new_with_model (GTK_TREE_MODEL(headers));
@@ -982,6 +981,40 @@ modest_header_view_get_sort_type (ModestHeaderView *self,
 	return priv->sort_type[style][type];
 }
 
+typedef struct {
+	ModestHeaderView *header_view;
+	RefreshAsyncUserCallback cb;
+	gpointer user_data;
+} SetFolderHelper;
+
+static void
+folder_refreshed_cb (const GObject *obj, 
+		     TnyFolder *folder, 
+		     gpointer user_data)
+{
+	ModestHeaderViewPrivate *priv;
+	SetFolderHelper *info;
+ 
+	info = (SetFolderHelper*) user_data;
+
+	priv = MODEST_HEADER_VIEW_GET_PRIVATE(info->header_view);
+
+	/* User callback */
+	if (info->cb)
+		info->cb (obj, folder, info->user_data);
+
+	/* Start the folder count changes observer. We do not need it
+	   before the refresh. Note that the monitor could still be
+	   called for this refresh but now we know that the callback
+	   was previously called */
+	g_mutex_lock (priv->observers_lock);
+	tny_folder_add_observer (folder, TNY_FOLDER_OBSERVER (info->header_view));
+	g_mutex_unlock (priv->observers_lock);
+
+	/* Frees */
+	g_free (info);
+}
+
 void
 modest_header_view_set_folder (ModestHeaderView *self, 
 			       TnyFolder *folder,
@@ -991,6 +1024,7 @@ modest_header_view_set_folder (ModestHeaderView *self,
 	ModestHeaderViewPrivate *priv;
 	ModestWindowMgr *mgr = NULL;
 	GObject *source = NULL;
+	SetFolderHelper *info;
  
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
 
@@ -1018,15 +1052,21 @@ modest_header_view_set_folder (ModestHeaderView *self,
 		/* no message selected */
 		g_signal_emit (G_OBJECT(self), signals[HEADER_SELECTED_SIGNAL], 0, NULL);
 
+		info = g_malloc0 (sizeof(SetFolderHelper));
+		info->header_view = self;
+		info->cb = callback;
+		info->user_data = user_data;
+
 		/* Create the mail operation (source will be the parent widget) */
 		mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_RECEIVE, source);
 		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
 						 mail_op);
 
 		/* Refresh the folder asynchronously */
-		modest_mail_operation_refresh_folder (mail_op, folder,
-						      callback,
-						      user_data);
+		modest_mail_operation_refresh_folder (mail_op, 
+						      folder,
+						      folder_refreshed_cb,
+						      info);
 
 		/* Free */
 		g_object_unref (mail_op);
@@ -1351,14 +1391,6 @@ on_focus_in (GtkWidget     *self,
 	return FALSE;
 }
 
-static gboolean
-idle_notify_added_headers (gpointer data)
-{
-	modest_platform_on_new_msg ();
-
-	return FALSE;
-}
-
 static void
 idle_notify_headers_count_changed_destroy (gpointer data)
 {
@@ -1404,17 +1436,19 @@ static void
 folder_monitor_update (TnyFolderObserver *self, 
 		       TnyFolderChange *change)
 {
+	ModestHeaderViewPrivate *priv;
 	TnyFolderChangeChanged changed;
 	HeadersCountChangedHelper *helper = NULL;
 
 	changed = tny_folder_change_get_changed (change);
-
-	/* We need an idle because this function is called from within
-	   a thread, so it could cause problems if the modest platform
-	   code calls dbus for example */
-	if (changed & TNY_FOLDER_CHANGE_CHANGED_ADDED_HEADERS)
-		g_idle_add (idle_notify_added_headers, NULL);
 	
+	/* Do not notify the observers if the folder of the header
+	   view has changed before this call to the observer
+	   happens */
+	priv = MODEST_HEADER_VIEW_GET_PRIVATE (MODEST_HEADER_VIEW (self));
+	if (tny_folder_change_get_folder (change) != priv->folder)
+		return;
+
 	/* Check folder count */
 	if ((changed & TNY_FOLDER_CHANGE_CHANGED_ADDED_HEADERS) ||
 	    (changed & TNY_FOLDER_CHANGE_CHANGED_REMOVED_HEADERS)) {

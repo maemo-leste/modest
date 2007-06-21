@@ -938,27 +938,27 @@ modest_platform_get_global_settings_dialog ()
 void 
 modest_platform_on_new_msg (void)
 {
-/* 	HildonNotification *not; */
+	HildonNotification *not;
 
-/* 	/\* Create a new notification. FIXME put the right values, need */
-/* 	   some more specs *\/ */
-/* 	not = hildon_notification_new ("TODO: (new email) Summary", */
-/* 				       "TODO: (new email) Description", */
-/* 				       "qgn_contact_group_chat_invitation", */
-/* 				       "system.note.dialog"); */
+	/* Create a new notification. FIXME put the right values, need
+	   some more specs */
+	not = hildon_notification_new ("TODO: (new email) Summary",
+				       "TODO: (new email) Description",
+				       "qgn_contact_group_chat_invitation",
+				       "system.note.dialog");
 
-/* 	/\* Play sound SR-SND-18. TODO: play the right file *\/ */
-/* 	hildon_notification_set_sound (not, "/usr/share/sounds/ui-new_email.wav"); */
+	/* Play sound SR-SND-18. TODO: play the right file */
+	hildon_notification_set_sound (not, "/usr/share/sounds/ui-new_email.wav");
 
-/* 	/\* Set the led pattern *\/ */
-/* 	notify_notification_set_hint_int32 (NOTIFY_NOTIFICATION (not), "led-pattern", 3); */
+	/* Set the led pattern */
+	notify_notification_set_hint_int32 (NOTIFY_NOTIFICATION (not), "led-pattern", 3);
 
-/* 	/\* Notify. We need to do this in an idle because this function */
-/* 	   could be called from a thread *\/ */
-/* 	if (!notify_notification_show (NOTIFY_NOTIFICATION (not), NULL)) */
-/* 		g_error ("Failed to send notification"); */
+	/* Notify. We need to do this in an idle because this function
+	   could be called from a thread */
+	if (!notify_notification_show (NOTIFY_NOTIFICATION (not), NULL))
+		g_error ("Failed to send notification");
 		
-/* 	g_object_unref (not); */
+	g_object_unref (not);
 }
 
 
