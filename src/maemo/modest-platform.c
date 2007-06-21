@@ -544,7 +544,7 @@ entry_insert_text (GtkEditable *editable,
 	/* Show WID-INF036 */
 	if (chars_length == 20) {
 		hildon_banner_show_information  (gtk_widget_get_parent (GTK_WIDGET (data)), NULL,
-						 _("mcen_ib_maxchar_reached"));
+						 dgettext("hildon-common-strings", "ckdg_ib_maximum_characters_reached"));
 	} else {
 		if (chars_length == 0) {
 			/* A blank space is not valid as first character */
@@ -720,19 +720,18 @@ launch_sort_headers_dialog (GtkWindow *parent_window,
 	g_list_free(cols);	
 }
 
-
-
-gint
-modest_platform_run_new_folder_dialog (GtkWindow *parent_window,
-				       TnyFolderStore *parent_folder,
-				       gchar *suggested_name,
-				       gchar **folder_name)
+static gint
+modest_platform_run_folder_name_dialog (GtkWindow *parent_window,
+					const gchar *dialog_title,
+					const gchar *label_text,
+					const gchar *suggested_name,
+					gchar **folder_name)
 {
 	GtkWidget *dialog, *entry, *label, *hbox;
 	gint result;
 
 	/* Ask the user for the folder name */
-	dialog = gtk_dialog_new_with_buttons (_("mcen_ti_new_folder"),
+	dialog = gtk_dialog_new_with_buttons (dialog_title,
 					      parent_window,
 					      GTK_DIALOG_MODAL | GTK_DIALOG_NO_SEPARATOR | GTK_DIALOG_DESTROY_WITH_PARENT,
 					      GTK_STOCK_OK,
@@ -742,7 +741,7 @@ modest_platform_run_new_folder_dialog (GtkWindow *parent_window,
 					      NULL);
 
 	/* Create label and entry */
-	label = gtk_label_new (_("mcen_fi_new_folder_name"));
+	label = gtk_label_new (label_text);
 	/* TODO: check that the suggested name does not exist */
 	/* We set 21 as maximum because we want to show WID-INF036
 	   when the user inputs more that 20 */
@@ -781,6 +780,32 @@ modest_platform_run_new_folder_dialog (GtkWindow *parent_window,
 	gtk_widget_destroy (dialog);
 
 	return result;
+}
+
+gint
+modest_platform_run_new_folder_dialog (GtkWindow *parent_window,
+				       TnyFolderStore *parent_folder,
+				       gchar *suggested_name,
+				       gchar **folder_name)
+{
+	return modest_platform_run_folder_name_dialog (parent_window, 
+						       _("mcen_ti_new_folder"),
+						       _("mcen_fi_new_folder_name"),
+						       suggested_name,
+						       folder_name);
+}
+
+gint
+modest_platform_run_rename_folder_dialog (GtkWindow *parent_window,
+					  TnyFolderStore *parent_folder,
+					  const gchar *suggested_name,
+					  gchar **folder_name)
+{
+	return modest_platform_run_folder_name_dialog (parent_window, 
+						       _("New folder name"),
+						       _("Enter new folder name:"),
+						       suggested_name,
+						       folder_name);
 }
 
 gint

@@ -151,6 +151,23 @@ gint      modest_platform_run_new_folder_dialog        (GtkWindow *parent_window
 							gchar **folder_name);
 
 /**
+ * modest_platform_run_rename_folder_dialog:
+ * @parent_window: a #GtkWindow
+ * @parent: the parent of the folder
+ * @suggested_name: current name of the folder
+ * @folder_name: the new folder name selected by the user for the folder
+ * 
+ * runs a "rename folder" confirmation dialog. If the user input a valid folder name it's
+ * returned in the #folder_name attribute.
+ * 
+ * Returns: the #GtkResponseType returned by the dialog
+ **/
+gint      modest_platform_run_rename_folder_dialog        (GtkWindow *parent_window,
+							   TnyFolderStore *parent,
+							   const gchar *current_name,
+							   gchar **folder_name);
+
+/**
  * modest_platform_run_confirmation_dialog:
  * @parent_window: the parent #GtkWindow of the dialog
  * @message: the message to show to the user

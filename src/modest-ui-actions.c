@@ -122,8 +122,6 @@ static void     reply_forward_cb       (ModestMailOperation *mail_op,
 
 static void     reply_forward          (ReplyForwardAction action, ModestWindow *win);
 
-static gchar*   ask_for_folder_name    (GtkWindow *parent_window, const gchar *title);
-
 
 static void     _on_send_receive_progress_changed (ModestMailOperation  *mail_op, 
 						   ModestMailOperationState *state,
@@ -1779,46 +1777,6 @@ modest_ui_actions_on_remove_attachments (GtkAction *action,
 	modest_msg_edit_window_remove_attachments (window, NULL);
 }
 
-/*
- * Shows a dialog with an entry that asks for some text. The returned
- * value must be freed by the caller. The dialog window title will be
- * set to @title.
- */
-static gchar *
-ask_for_folder_name (GtkWindow *parent_window,
-		     const gchar *title)
-{
-	GtkWidget *dialog, *entry;
-	gchar *folder_name = NULL;
-
-	/* Ask for folder name */
-	dialog = gtk_dialog_new_with_buttons (_("New Folder Name"),
-					      parent_window,
-					      GTK_DIALOG_MODAL,
-					      GTK_STOCK_CANCEL,
-					      GTK_RESPONSE_REJECT,
-					      GTK_STOCK_OK,
-					      GTK_RESPONSE_ACCEPT,
-					      NULL);
-	gtk_box_pack_start (GTK_BOX(GTK_DIALOG(dialog)->vbox), 
-			    gtk_label_new(title),
-			    FALSE, FALSE, 0);
-		
-	entry = gtk_entry_new_with_max_length (40);
-	gtk_box_pack_start (GTK_BOX(GTK_DIALOG(dialog)->vbox), 
-			    entry,
-			    TRUE, FALSE, 0);	
-	
-	gtk_widget_show_all (GTK_WIDGET(GTK_DIALOG(dialog)->vbox));
-	
-	if (gtk_dialog_run (GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)		
-		folder_name = g_strdup (gtk_entry_get_text (GTK_ENTRY (entry)));
-
-	gtk_widget_destroy (dialog);
-
-	return folder_name;
-}
-
 void 
 modest_ui_actions_on_new_folder (GtkAction *action, ModestMainWindow *main_window)
 {
@@ -1898,10 +1856,14 @@ modest_ui_actions_on_rename_folder (GtkAction *action,
 	
 	if (folder && TNY_IS_FOLDER (folder)) {
 		gchar *folder_name;
-		folder_name = ask_for_folder_name (GTK_WINDOW (main_window),
-						   _("Please enter a new name for the folder"));
+		gint response;
+		const gchar *current_name;
 
-		if (folder_name != NULL && strlen (folder_name) > 0) {
+		current_name = tny_folder_get_name (TNY_FOLDER (folder));
+		response = modest_platform_run_rename_folder_dialog (GTK_WINDOW (main_window), NULL,
+								     current_name, &folder_name);
+
+		if (response == GTK_RESPONSE_OK && strlen (folder_name) > 0) {
 			ModestMailOperation *mail_op;
 
 			mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_INFO, G_OBJECT(main_window));
