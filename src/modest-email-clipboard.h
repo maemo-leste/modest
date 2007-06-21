@@ -86,6 +86,7 @@ ModestEmailClipboard*        modest_email_clipboard_new (void);
  * Gets data from clipboard to manage them with copy, cut and paste operations.
  * Currently imementation allows #TnyFolder or #TnyHeader objects.
  *
+ * After getting data, clipboard will be cleared.
  */
 void
 modest_email_clipboard_get_data (ModestEmailClipboard *self,
@@ -129,6 +130,20 @@ void modest_email_clipboard_clear (ModestEmailClipboard *self);
  */
 gboolean modest_email_clipboard_cleared (ModestEmailClipboard *self);
 
+
+/**
+ * modest_email_clipboard_cleared:
+ * @self: a #ModestEmailClipboard singlenton instance.   
+ * @folder: a #TnyFolder instance to compare.
+ * 
+ * Determines if source folder stored on clipboard is the 
+ * same as @folder, passed as argument. 
+ *  
+ * returns TRUE, if clipboard is cleared, FALSE otherwise.
+ */
+gboolean 
+modest_email_clipboard_check_source_folder (ModestEmailClipboard *self,
+					    const TnyFolder *folder);
 
 /**
  * modest_email_clipboard_set_data:

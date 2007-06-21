@@ -44,7 +44,7 @@
 static gboolean _folder_is_any_of_type (TnyFolder *folder, TnyFolderType types[], guint ntypes);
 static gboolean _invalid_msg_selected (ModestMainWindow *win, gboolean unique, ModestDimmingRule *rule);
 static gboolean _invalid_attach_selected (ModestWindow *win, gboolean unique, ModestDimmingRule *rule);
-static gboolean _invalid_clipboard_selected (ModestMsgViewWindow *win);
+static gboolean _invalid_clipboard_selected (ModestWindow *win);
 static gboolean _already_opened_msg (ModestWindow *win);
 static gboolean _selected_msg_marked_as (ModestWindow *win, TnyHeaderFlags mask, gboolean opposite);
 static gboolean _selected_folder_not_writeable (ModestMainWindow *win);
@@ -53,6 +53,7 @@ static gboolean _selected_folder_is_root_or_inbox (ModestMainWindow *win);
 static gboolean _selected_folder_is_MMC_or_POP_root (ModestMainWindow *win);
 static gboolean _selected_folder_is_root (ModestMainWindow *win);
 static gboolean _selected_folder_is_empty (ModestMainWindow *win);
+static gboolean _selected_folder_is_same_as_source (ModestWindow *win);
 static gboolean _msg_download_in_progress (ModestMsgViewWindow *win);
 static gboolean _msg_download_completed (ModestMainWindow *win);
 static gboolean _selected_msg_sent_in_progress (ModestWindow *win);
@@ -486,18 +487,28 @@ modest_ui_dimming_rules_on_view_window_move_to (ModestWindow *win, gpointer user
 gboolean 
 modest_ui_dimming_rules_on_paste_msgs (ModestWindow *win, gpointer user_data)
 {
+	ModestDimmingRule *rule = NULL;
 	TnyFolderType types[3];
 	gboolean dimmed = FALSE;
 
 	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW(win), FALSE);
+	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
+	rule = MODEST_DIMMING_RULE (user_data);
 
 	types[0] = TNY_FOLDER_TYPE_DRAFTS; 
 	types[1] = TNY_FOLDER_TYPE_OUTBOX;
 	types[2] = TNY_FOLDER_TYPE_SENT;
 	
 	/* Check dimmed rule */	
+	if (!dimmed) 
+		dimmed = _invalid_clipboard_selected (win);
 	if (!dimmed)
 		dimmed = _selected_folder_is_any_of_type (win, types, 3);
+	if (!dimmed) {
+		dimmed = _selected_folder_is_same_as_source (win);
+		if (dimmed)
+			modest_dimming_rule_set_notification (rule, _("mcen_ib_unable_to_copy_samefolder"));
+	}
 
 	return dimmed;
 }
@@ -567,7 +578,8 @@ modest_ui_dimming_rules_on_remove_attachments (ModestWindow *win, gpointer user_
 	/* Check dimmed rule */	
 	if (!dimmed) {
 		dimmed = _invalid_attach_selected (win, FALSE, NULL);			
-		modest_dimming_rule_set_notification (rule, _("mcen_ib_unable_to_display_more"));
+		if (dimmed) 
+			modest_dimming_rule_set_notification (rule, _("mcen_ib_unable_to_display_more"));
 	}
 
 	return dimmed;
@@ -582,7 +594,7 @@ modest_ui_dimming_rules_on_copy (ModestWindow *win, gpointer user_data)
 
 	/* Check dimmed rule */	
 	if (!dimmed) 
-		dimmed = _invalid_clipboard_selected (MODEST_MSG_VIEW_WINDOW(win));			
+		dimmed = _invalid_clipboard_selected (win);			
 		
 	return dimmed;
 }
@@ -651,7 +663,8 @@ modest_ui_dimming_rules_on_send_receive (ModestWindow *win, gpointer user_data)
 	if (!dimmed) {
 		dimmed = !modest_account_mgr_has_accounts(modest_runtime_get_account_mgr(), 
 							  TRUE);	
-		modest_dimming_rule_set_notification (rule, _("mcen_nc_no_email_acnts_defined"));
+		if (dimmed)
+			modest_dimming_rule_set_notification (rule, _("mcen_nc_no_email_acnts_defined"));
 	}
 
 	return dimmed;
@@ -847,6 +860,47 @@ _selected_folder_is_empty (ModestMainWindow *win)
 }
 
 static gboolean
+_selected_folder_is_same_as_source (ModestWindow *win)
+{
+	ModestEmailClipboard *clipboard = NULL;
+	GtkWidget *folder_view = NULL;
+	TnyFolderStore *folder = NULL;
+	gboolean result = FALSE;
+
+	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW(win), FALSE);
+
+	/* Get folder view */
+	folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(win),
+							   MODEST_WIDGET_TYPE_FOLDER_VIEW);
+	if (!folder_view)
+		return FALSE;
+	
+	/* Get selected folder as destination folder */
+	folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW(folder_view));
+	if (!(folder && TNY_IS_FOLDER(folder))) {
+		result = FALSE;
+		goto frees;
+	}
+	
+	/* Check clipboard is cleared */
+	clipboard = modest_runtime_get_email_clipboard ();
+	if (modest_email_clipboard_cleared (clipboard)) {
+		result = FALSE;
+		goto frees;
+	}
+		
+	/* Check source folder */
+	result = modest_email_clipboard_check_source_folder (clipboard, 
+							     (const TnyFolder *) folder);
+	
+	/* Free */
+ frees:
+	g_object_unref (folder);
+	
+	return result;
+}
+
+static gboolean
 _selected_folder_is_any_of_type (ModestWindow *win,
 				 TnyFolderType types[], 
 				 guint ntypes)
@@ -921,26 +975,34 @@ _folder_is_any_of_type (TnyFolder *folder,
 
 
 static gboolean
-_invalid_clipboard_selected (ModestMsgViewWindow *win)
+_invalid_clipboard_selected (ModestWindow *win)
 {
-	GtkClipboard *clipboard = NULL;
-	gchar *selection = NULL;
-	GtkWidget *focused = NULL;
 	gboolean result = FALSE;
 
-	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (win), TRUE);
+	if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
+		GtkClipboard *clipboard = NULL;
+		gchar *selection = NULL;
+		GtkWidget *focused = NULL;
 
-	/* Get clipboard selection*/
-	clipboard = gtk_clipboard_get (GDK_SELECTION_PRIMARY);
-	selection = gtk_clipboard_wait_for_text (clipboard);
+		/* Get clipboard selection*/
+		clipboard = gtk_clipboard_get (GDK_SELECTION_PRIMARY);
+		selection = gtk_clipboard_wait_for_text (clipboard);
 
-	/* Get focuesed widget */
-	focused = gtk_window_get_focus (GTK_WINDOW (win));
+		/* Get focuesed widget */
+		focused = gtk_window_get_focus (GTK_WINDOW (win));
 
-	/* Check dimming */
-	result = ((selection == NULL) || 
-		  (MODEST_IS_ATTACHMENTS_VIEW (focused)));
-		  
+		/* Check dimming */
+		result = ((selection == NULL) || 
+			  (MODEST_IS_ATTACHMENTS_VIEW (focused)));
+	}		
+	else if (MODEST_IS_MAIN_WINDOW (win)) {
+		ModestEmailClipboard *clipboard = NULL;
+
+		clipboard = modest_runtime_get_email_clipboard ();
+		if (modest_email_clipboard_cleared (clipboard)) 
+			result = TRUE;
+	}
+	
 	return result;
 }
 
