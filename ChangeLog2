@@ -1,5 +1,12 @@
 2007-06-21  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/dbus_api/modest-dbus-callbacks.c: (add_folders_to_list):
+	Do not use a query, so that we get all folders, including for POP and 
+	local-folders. They work as search criteria too.
+	This fixes projects.maemo.org bug NB#57740.
+
+2007-06-21  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/maemo/modest-platform.c: (modest_platform_on_new_msg):
 	Comment out the use of hildon_notification_set_sound() because it is 
 	not declared, to fix the build. Warnings are serious, people.

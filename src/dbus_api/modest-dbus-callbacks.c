@@ -1159,13 +1159,15 @@ add_folders_to_list (TnyFolderStore *folder_store, GList** list)
 	/* Recurse into child folders: */
 		
 	/* Get the folders list: */
+	/*
 	TnyFolderStoreQuery *query = tny_folder_store_query_new ();
 	tny_folder_store_query_add_item (query, NULL, 
 		TNY_FOLDER_STORE_QUERY_OPTION_SUBSCRIBED);
+	*/
 	TnyList *all_folders = tny_simple_list_new ();
 	tny_folder_store_get_folders (folder_store,
 				      all_folders,
-				      query,
+				      NULL /* query */,
 				      NULL /* error */);
 
 	TnyIterator *iter = tny_list_create_iterator (all_folders);
