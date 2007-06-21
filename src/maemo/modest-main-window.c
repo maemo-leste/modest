@@ -96,6 +96,8 @@ static void         on_queue_changed                     (ModestMailOperationQue
 							  ModestMailOperationQueueNotification type,
 							  ModestMainWindow *self);
 
+static gboolean on_zoom_minus_plus_not_implemented (ModestWindow *window);
+
 static void on_account_update                 (TnyAccountStore *account_store, 
 					       const gchar *account_name,
 					       gpointer user_data);
@@ -277,6 +279,8 @@ modest_main_window_class_init (ModestMainWindowClass *klass)
 	
 	modest_window_class->show_toolbar_func = modest_main_window_show_toolbar;
 	modest_window_class->save_state_func = save_state;
+	modest_window_class->zoom_minus_func = on_zoom_minus_plus_not_implemented;
+	modest_window_class->zoom_plus_func = on_zoom_minus_plus_not_implemented;
 }
 
 static void
@@ -1930,3 +1934,12 @@ on_send_receive_csm_activated (GtkMenuItem *item,
 	refresh_account ((const gchar*) user_data);
 }
 
+static gboolean
+on_zoom_minus_plus_not_implemented (ModestWindow *window)
+{
+	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW (window), FALSE);
+
+	hildon_banner_show_information (NULL, NULL, dgettext("hildon-common-strings", "ckct_ib_cannot_zoom_here"));
+	return FALSE;
+
+}

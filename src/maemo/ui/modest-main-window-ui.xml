@@ -147,5 +147,7 @@
     <menuitem action="ToolbarMessageReply"/>
   </popup>
 
+  <accelerator name="AccelZoomMinus" action="ZoomMinus"/>
+  <accelerator name="AccelZoomPlus" action="ZoomPlus"/>
   <accelerator name="AccelToggleFullscreen" action="ToggleFullscreen"/>
 </ui>

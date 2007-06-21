@@ -83,6 +83,7 @@ static void  recpt_field_changed (GtkTextBuffer *buffer, ModestMsgEditWindow *ed
 static void  send_insensitive_press (GtkWidget *widget, ModestMsgEditWindow *editor);
 static void  style_insensitive_press (GtkWidget *widget, ModestMsgEditWindow *editor);
 static void  remove_attachment_insensitive_press (GtkWidget *widget, ModestMsgEditWindow *editor);
+static void  zoom_insensitive_press (GtkWidget *widget, ModestMsgEditWindow *editor);
 static void  setup_insensitive_handlers (ModestMsgEditWindow *editor);
 static void  reset_modified (ModestMsgEditWindow *editor);
 static gboolean is_modified (ModestMsgEditWindow *editor);
@@ -124,6 +125,7 @@ static void update_window_title (ModestMsgEditWindow *window);
 static void update_dimmed (ModestMsgEditWindow *window);
 static void update_paste_dimming (ModestMsgEditWindow *window);
 static void update_select_all_dimming (ModestMsgEditWindow *window);
+static void update_zoom_dimming (ModestMsgEditWindow *window);
 
 /* Find toolbar */
 static void modest_msg_edit_window_find_toolbar_search (GtkWidget *widget,
@@ -131,6 +133,8 @@ static void modest_msg_edit_window_find_toolbar_search (GtkWidget *widget,
 static void modest_msg_edit_window_find_toolbar_close (GtkWidget *widget,
 						       ModestMsgEditWindow *window);
 static void edit_menu_activated (GtkAction *action,
+				 gpointer userdata);
+static void view_menu_activated (GtkAction *action,
 				 gpointer userdata);
 
 /* list my signals */
@@ -960,6 +964,8 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name)
 	update_select_all_dimming (MODEST_MSG_EDIT_WINDOW (obj));
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/EditMenu");
 	g_signal_connect (G_OBJECT (action), "activate", G_CALLBACK (edit_menu_activated), obj);
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/ViewMenu");
+	g_signal_connect (G_OBJECT (action), "activate", G_CALLBACK (view_menu_activated), obj);
 
 	/* set initial state of cc and bcc */
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/ViewMenu/ViewCcFieldMenu");
@@ -1814,11 +1820,26 @@ modest_msg_edit_window_get_zoom (ModestWindow *window)
 }
 
 static gboolean
+zoom_allowed (ModestMsgEditWindow *window)
+{
+	GtkWidget *focus;
+
+	focus = gtk_window_get_focus (GTK_WINDOW (window));
+	return (focus != NULL && WP_IS_TEXT_VIEW (focus));
+}
+
+static gboolean
 modest_msg_edit_window_zoom_plus (ModestWindow *window)
 {
 	ModestWindowPrivate *parent_priv;
 	GtkRadioAction *zoom_radio_action;
 	GSList *group, *node;
+
+	/* First we check if the text view is focused. If not, zooming is not allowed */
+	if (!zoom_allowed (MODEST_MSG_EDIT_WINDOW (window))) {
+		hildon_banner_show_information (NULL, NULL, dgettext("hildon-common-strings", "ckct_ib_cannot_zoom_here"));
+		return FALSE;
+	}
 
 	parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
 	zoom_radio_action = GTK_RADIO_ACTION (gtk_ui_manager_get_action (parent_priv->ui_manager, 
@@ -1827,7 +1848,7 @@ modest_msg_edit_window_zoom_plus (ModestWindow *window)
 	group = gtk_radio_action_get_group (zoom_radio_action);
 
 	if (gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (group->data))) {
-		hildon_banner_show_information (NULL, NULL, _("ckct_ib_max_zoom_level_reached"));
+		hildon_banner_show_information (NULL, NULL, dgettext("hildon-common-strings", "ckct_ib_max_zoom_level_reached"));
 		return FALSE;
 	}
 
@@ -1847,6 +1868,12 @@ modest_msg_edit_window_zoom_minus (ModestWindow *window)
 	GtkRadioAction *zoom_radio_action;
 	GSList *group, *node;
 
+	/* First we check if the text view is focused. If not, zooming is not allowed */
+	if (!zoom_allowed (MODEST_MSG_EDIT_WINDOW (window))) {
+		hildon_banner_show_information (NULL, NULL, dgettext("hildon-common-strings", "ckct_ib_cannot_zoom_here"));
+		return FALSE;
+	}
+
 	parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
 	zoom_radio_action = GTK_RADIO_ACTION (gtk_ui_manager_get_action (parent_priv->ui_manager, 
 									 "/MenuBar/ViewMenu/ZoomMenu/Zoom50Menu"));
@@ -1859,7 +1886,7 @@ modest_msg_edit_window_zoom_minus (ModestWindow *window)
 				gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (node->next->data), TRUE);
 				return TRUE;
 			} else
-				hildon_banner_show_information (NULL, NULL, _("ckct_ib_min_zoom_level_reached"));
+				hildon_banner_show_information (NULL, NULL, dgettext("hildon-common-strings", "ckct_ib_min_zoom_level_reached"));
 			break;
 		}
 	}
@@ -2305,6 +2332,8 @@ setup_insensitive_handlers (ModestMsgEditWindow *window)
 
 	widget = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/MenuBar/AttachmentsMenu/RemoveAttachmentsMenu");
 	g_signal_connect (G_OBJECT (widget), "insensitive-press", G_CALLBACK (remove_attachment_insensitive_press), window);
+	widget = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/MenuBar/ViewMenu/ZoomMenu");
+	g_signal_connect (G_OBJECT (widget), "insensitive-press", G_CALLBACK (zoom_insensitive_press), window);
 }
 
 static void  
@@ -2416,6 +2445,12 @@ static void
 send_insensitive_press (GtkWidget *widget, ModestMsgEditWindow *editor)
 {
 	hildon_banner_show_information (NULL, NULL, _("mcen_ib_add_recipients_first"));
+}
+
+static void  
+zoom_insensitive_press (GtkWidget *widget, ModestMsgEditWindow *editor)
+{
+	hildon_banner_show_information (NULL, NULL, dgettext("hildon-common-strings", "ckct_ib_cannot_zoom_here"));
 }
 
 static void  
@@ -2696,6 +2731,20 @@ update_select_all_dimming (ModestMsgEditWindow *window)
 	gtk_action_set_sensitive (action, !dimmed);
 }
 
+static void 
+update_zoom_dimming (ModestMsgEditWindow *window)
+{
+	GtkWidget *focused;
+	gboolean dimmed = FALSE;
+	GtkAction *action;
+	ModestWindowPrivate *parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
+
+	focused = gtk_window_get_focus (GTK_WINDOW (window));
+	dimmed = ! WP_IS_TEXT_VIEW (focused);
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/ViewMenu/ZoomMenu");
+	gtk_action_set_sensitive (action, !dimmed);
+}
+
 static void
 edit_menu_activated (GtkAction *action,
 		     gpointer userdata)
@@ -2703,4 +2752,12 @@ edit_menu_activated (GtkAction *action,
 	ModestMsgEditWindow *window = MODEST_MSG_EDIT_WINDOW (userdata);
 
 	update_select_all_dimming (window);
+}
+static void
+view_menu_activated (GtkAction *action,
+		     gpointer userdata)
+{
+	ModestMsgEditWindow *window = MODEST_MSG_EDIT_WINDOW (userdata);
+
+	update_zoom_dimming (window);
 }
