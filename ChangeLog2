@@ -1,3 +1,17 @@
+2007-06-21  Armin Burgmeier  <armin@openismus.com>
+
+	* src/modest-mail-operation.c: Do not call
+	modest_mail_operation_queue_cancel_all() in _cancel() but do instead
+	notify the operation's end after having set the status to CANCELED for
+	the operation queue to listen on. This fixes a deadlock when there
+	were mail operations in the queue during its finalization.
+
+	* src/modest-singletons.c: Reordered uninitialization of the account
+	manager to happen after the mail operation queue was uninitialized
+	because the mail operation's in the queue might still try to access
+	the account manager (see modest_mail_operation_notify_end()). This
+	fixes a potential crash when terminating the application.
+
 2007-06-21  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/modest-search.c: 
@@ -3101,5 +3115,3 @@
 	New Account menu item. It shows the easysetup wizard.
 	* po/en_GB.po: Added additional needed logical IDs and translations.
 	
-Started ChangeLog2 file, because I cannot work without a ChangeLog. murrayc.
-Apparently ChangeLog is not used for some vague Nokia legal reasons.

@@ -173,12 +173,6 @@ modest_singletons_finalize (GObject *obj)
 		priv->account_store = NULL;
 	}
 
-	if (priv->account_mgr) {
-		modest_runtime_verify_object_last_ref(priv->account_mgr,"");
-		g_object_unref (G_OBJECT(priv->account_mgr));
-		priv->account_mgr = NULL;
-	}
-
 	if (priv->email_clipboard) {
 		modest_runtime_verify_object_last_ref(priv->email_clipboard,"");
 		g_object_unref (G_OBJECT(priv->email_clipboard));
@@ -214,7 +208,17 @@ modest_singletons_finalize (GObject *obj)
 		g_object_unref (G_OBJECT(priv->mail_op_queue));
 		priv->mail_op_queue = NULL;
 	}
-	
+
+	/* It is important that the account manager is uninitialized after
+	 * the mail op queue is uninitialized because the mail op queue
+	 * cancells any mail operations which in turn access the account
+	 * manager (see modest_mail_operation_notify_end()). */
+	if (priv->account_mgr) {
+		modest_runtime_verify_object_last_ref(priv->account_mgr,"");
+		g_object_unref (G_OBJECT(priv->account_mgr));
+		priv->account_mgr = NULL;
+	}
+
 	if (priv->window_mgr) {
 		modest_runtime_verify_object_last_ref(priv->window_mgr,"");
 		g_object_unref (G_OBJECT(priv->window_mgr));

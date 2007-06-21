@@ -365,16 +365,15 @@ modest_mail_operation_cancel (ModestMailOperation *self)
 		return FALSE;
 	}
 
-	/* Notify about operation end */
-	modest_mail_operation_notify_end (self);
-
 	did_a_cancel = TRUE;
 
 	/* Set new status */
 	priv->status = MODEST_MAIL_OPERATION_STATUS_CANCELED;
-	
-	modest_mail_operation_queue_cancel_all (modest_runtime_get_mail_operation_queue());
 
+	/* This emits progress-changed on which the mail operation queue is
+	 * listening, so the mail operation is correctly removed from the
+	 * queue without further explicit calls. */
+	modest_mail_operation_notify_end (self);
 	
 	return TRUE;
 }
