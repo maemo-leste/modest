@@ -1,8 +1,1 @@
-2007-06-21  Murray Cumming,,,  <murrayc@murrayc-desktop>
-
-	reviewed by: <delete if not using a buddy>
-
-	* src/modest-search.c: (read_chunk), (search_mime_part_ogs),
-	(search_mime_part_and_child_parts), (modest_search_folder):
-
 * please check the svn log instead
