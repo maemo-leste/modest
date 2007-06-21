@@ -83,16 +83,21 @@ modest_platform_init (void)
 
 	}
 
+	/* Add a D-Bus handler to be used when the main osso-rpc 
+	 * D-Bus handler has not handled something.
+	 * We use this for D-Bus methods that need to use more complex types 
+	 * than osso-rpc supports. 
+	 */
 	if (!dbus_connection_add_filter (con,
 					 modest_dbus_req_filter,
 					 NULL,
 					 NULL)) {
 
-		g_printerr ("Could not add dbus filter\n");
+		g_printerr ("Could not add D-Bus filter\n");
 		return FALSE;
 	}
 
-	/* Register our D-Bus callbacks, via the osso API: */
+	/* Register our simple D-Bus callbacks, via the osso API: */
 	osso_return_t result = osso_rpc_set_cb_f(osso_context, 
                                MODEST_DBUS_SERVICE, 
                                MODEST_DBUS_OBJECT, 

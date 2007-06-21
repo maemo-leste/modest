@@ -80,8 +80,6 @@ enum ModestDbusComposeMailArguments
 	MODEST_DEBUS_COMPOSE_MAIL_ARGS_COUNT
 };
 
-#define MODEST_DBUS_METHOD_SEARCH "Search"
-
 #define MODEST_DBUS_METHOD_DELETE_MESSAGE "DeleteMessage"
 enum ModestDbusDeleteMessageArguments
 {
@@ -91,7 +89,9 @@ enum ModestDbusDeleteMessageArguments
 
 #define MODEST_DBUS_METHOD_OPEN_DEFAULT_INBOX "OpenDefaultInbox"
 
-
+/* These are handle via normal D-Bus instead of osso-rpc: */
+#define MODEST_DBUS_METHOD_SEARCH "Search"
+#define MODEST_DBUS_METHOD_GET_FOLDERS "GetFolders"
 
 
 #endif /* __MODEST_DBUS_API__ */

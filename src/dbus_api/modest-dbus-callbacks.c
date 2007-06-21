@@ -838,23 +838,26 @@ gint modest_dbus_req_handler(const gchar * interface, const gchar * method,
 	}
 	else { 
 		/* We need to return INVALID here so
-		 * osso is returning DBUS_HANDLER_RESULT_NOT_YET_HANDLED 
-		 * so our modest_dbus_req_filter can kick in!
+		 * libosso will return DBUS_HANDLER_RESULT_NOT_YET_HANDLED,
+		 * so that our modest_dbus_req_filter will then be tried instead.
 		 * */
 		return OSSO_INVALID;
 	}
 }
-
+					 
+/* A complex D-Bus type (like a struct),
+ * used to return various information about a search hit.
+ */
 #define SEARCH_HIT_DBUS_TYPE \
 	DBUS_STRUCT_BEGIN_CHAR_AS_STRING \
-	DBUS_TYPE_STRING_AS_STRING \
-	DBUS_TYPE_STRING_AS_STRING \
-	DBUS_TYPE_STRING_AS_STRING \
-	DBUS_TYPE_STRING_AS_STRING \
-	DBUS_TYPE_UINT64_AS_STRING \
-	DBUS_TYPE_BOOLEAN_AS_STRING \
-	DBUS_TYPE_BOOLEAN_AS_STRING \
-	DBUS_TYPE_INT64_AS_STRING \
+	DBUS_TYPE_STRING_AS_STRING /* msgid */ \
+	DBUS_TYPE_STRING_AS_STRING /* subject */ \
+	DBUS_TYPE_STRING_AS_STRING /* folder */ \
+	DBUS_TYPE_STRING_AS_STRING /* sender */ \
+	DBUS_TYPE_UINT64_AS_STRING /* msize */ \
+	DBUS_TYPE_BOOLEAN_AS_STRING /* has_attachment */ \
+	DBUS_TYPE_BOOLEAN_AS_STRING /* is_unread */ \
+	DBUS_TYPE_INT64_AS_STRING /* timestamp */ \
 	DBUS_STRUCT_END_CHAR_AS_STRING
 
 static DBusMessage *
@@ -949,121 +952,287 @@ search_result_to_message (DBusMessage *reply,
 	return reply;
 }
 
+
+static void
+on_dbus_method_search (DBusConnection *con, DBusMessage *message)
+{
+	ModestDBusSearchFlags dbus_flags;
+	ModestSearch  search;
+	DBusMessage  *reply = NULL;
+	dbus_bool_t  res;
+	dbus_int64_t sd_v;
+	dbus_int64_t ed_v;
+	dbus_int32_t flags_v;
+	dbus_uint32_t size_v;
+	char *folder;
+	char *query;
+	time_t start_date;
+	time_t end_date;
+	GList *hits;
+
+	DBusError error;
+	dbus_error_init (&error);
+
+	sd_v = ed_v = 0;
+	flags_v = 0;
+
+	res = dbus_message_get_args (message,
+				     &error,
+				     DBUS_TYPE_STRING, &query,
+				     DBUS_TYPE_STRING, &folder,
+				     DBUS_TYPE_INT64, &sd_v,
+				     DBUS_TYPE_INT64, &ed_v,
+				     DBUS_TYPE_INT32, &flags_v,
+				     DBUS_TYPE_UINT32, &size_v,
+				     DBUS_TYPE_INVALID);
+	
+	dbus_flags = (ModestDBusSearchFlags) flags_v;
+	start_date = (time_t) sd_v;
+	end_date = (time_t) ed_v;
+
+	memset (&search, 0, sizeof (search));
+#ifdef MODEST_HAVE_OGS
+	search.query  = query;
+#endif
+	search.before = start_date;
+	search.after  = end_date;
+	search.flags  = 0;
+
+	if (dbus_flags & MODEST_DBUS_SEARCH_SUBJECT) {
+		search.flags |= MODEST_SEARCH_SUBJECT;
+		search.subject = query;
+	}
+
+	if (dbus_flags & MODEST_DBUS_SEARCH_SENDER) {
+		search.flags |=  MODEST_SEARCH_SENDER;
+		search.from = query;
+	}
+
+	if (dbus_flags & MODEST_DBUS_SEARCH_RECIPIENT) {
+		search.flags |= MODEST_SEARCH_RECIPIENT; 
+		search.recipient = query;
+	}
+
+	if (dbus_flags & MODEST_DBUS_SEARCH_BODY) {
+		search.flags |=  MODEST_SEARCH_BODY; 
+		search.body = query;
+	}
+
+	if (sd_v > 0) {
+		search.flags |= MODEST_SEARCH_BEFORE;
+		search.before = start_date;
+	}
+
+	if (ed_v > 0) {
+		search.flags |= MODEST_SEARCH_AFTER;
+		search.after = end_date;
+	}
+
+	if (size_v > 0) {
+		search.flags |= MODEST_SEARCH_SIZE;
+		search.minsize = size_v;
+	}
+
+#ifdef MODEST_HAVE_OGS
+	search.flags |= MODEST_SEARCH_USE_OGS;
+	g_debug ("%s: Starting search for %s", __FUNCTION__, search.query);
+#endif
+	hits = modest_search_all_accounts (&search);
+
+	reply = dbus_message_new_method_return (message);
+
+	search_result_to_message (reply, hits);
+
+	if (reply == NULL) {
+		g_warning ("%s: Could not create reply.", __FUNCTION__);
+	}
+
+	if (reply) {
+		dbus_uint32_t serial = 0;
+		dbus_connection_send (con, reply, &serial);
+    	dbus_connection_flush (con);
+    	dbus_message_unref (reply);
+	}
+
+	g_list_free (hits);
+}
+
+
+/* A complex D-Bus type (like a struct),
+ * used to return various information about a folder.
+ */
+#define GET_FOLDERS_RESULT_DBUS_TYPE \
+	DBUS_STRUCT_BEGIN_CHAR_AS_STRING \
+	DBUS_TYPE_STRING_AS_STRING /* Folder Name */ \
+	DBUS_TYPE_STRING_AS_STRING /* Folder URI */ \
+	DBUS_STRUCT_END_CHAR_AS_STRING
+
+static DBusMessage *
+get_folders_result_to_message (DBusMessage *reply,
+			   GList *folder_ids)
+{
+	DBusMessageIter iter;	
+	dbus_message_iter_init_append (reply, &iter); 
+	
+	DBusMessageIter array_iter;
+	dbus_message_iter_open_container (&iter,
+					  DBUS_TYPE_ARRAY,
+					  GET_FOLDERS_RESULT_DBUS_TYPE,
+					  &array_iter); 
+
+	GList *list_iter = folder_ids;
+	for (list_iter = folder_ids; list_iter; list_iter = list_iter->next) {
+		
+		const gchar *folder_id = (const gchar*)list_iter->data;
+		if (folder_id) {
+			g_debug ("DEBUG: %s: Adding folder: %s", __FUNCTION__, folder_id);	
+			
+			DBusMessageIter struct_iter;
+			dbus_message_iter_open_container (&array_iter,
+							  DBUS_TYPE_STRUCT,
+							  NULL,
+							  &struct_iter);
+	
+	   		dbus_message_iter_append_basic (&struct_iter,
+							DBUS_TYPE_STRING,
+							&folder_id);
+	
+			/* name: */
+			const gchar *folder_name = (const gchar*)list_iter->data;
+			dbus_message_iter_append_basic (&struct_iter,
+							DBUS_TYPE_STRING,
+							&folder_name); /* The string will be copied. */
+							
+			/* URI: This is maybe not needed by osso-global-search: */
+			const gchar *folder_uri = "TODO:unimplemented";
+			dbus_message_iter_append_basic (&struct_iter,
+							DBUS_TYPE_STRING,
+							&folder_uri); /* The string will be copied. */
+	
+			dbus_message_iter_close_container (&array_iter,
+							   &struct_iter); 
+		}
+	}
+
+	dbus_message_iter_close_container (&iter, &array_iter);
+
+	return reply;
+}
+
+void add_folders_to_list (TnyFolderStore *folder_store, GList** list)
+{
+	if (!folder_store)
+		return;
+		
+	/* Add this folder to the list: */
+	if (TNY_IS_FOLDER (folder_store)) {
+		const gchar * folder_name = tny_folder_get_name (TNY_FOLDER (folder_store));
+		if (folder_name)
+			*list = g_list_append(*list, g_strdup (folder_name));
+	}
+		
+	/* Recurse into child folders: */
+		
+	/* Get the folders list: */
+	TnyFolderStoreQuery *query = tny_folder_store_query_new ();
+	tny_folder_store_query_add_item (query, NULL, 
+		TNY_FOLDER_STORE_QUERY_OPTION_SUBSCRIBED);
+	TnyList *all_folders = tny_simple_list_new ();
+	tny_folder_store_get_folders (folder_store,
+				      all_folders,
+				      query,
+				      NULL /* error */);
+
+	TnyIterator *iter = tny_list_create_iterator (all_folders);
+	while (!tny_iterator_is_done (iter)) {
+		TnyFolderStore *folder = TNY_FOLDER_STORE (tny_iterator_get_current (iter));
+
+		add_folders_to_list (folder, list);
+		
+		tny_iterator_next (iter);
+	}
+	g_object_unref (G_OBJECT (iter));
+}
+
+static void
+on_dbus_method_get_folders (DBusConnection *con, DBusMessage *message)
+{
+	DBusMessage  *reply = NULL;
+	
+
+	/* Get the TnyStoreAccount so we can get the folders: */
+ 	ModestAccountMgr *account_mgr = modest_runtime_get_account_mgr();
+	gchar *account_name = modest_account_mgr_get_default_account (account_mgr);
+	if (!account_name) {
+		g_printerr ("modest: no account found\n");
+	}
+	
+	TnyAccount *account = NULL;
+	if (account_mgr) {
+		account = modest_tny_account_store_get_server_account (
+			modest_runtime_get_account_store(), account_name, 
+			TNY_ACCOUNT_TYPE_STORE);
+	}
+	
+	if (!account) {
+		g_printerr ("modest: failed to get tny account folder'%s'\n", account_name);
+	} 
+		
+	g_free (account_name);
+	account_name = NULL;
+	
+	GList *folder_names = NULL;
+	add_folders_to_list (TNY_FOLDER_STORE (account), &folder_names);
+	
+
+	g_object_unref (account);
+	account = NULL;
+
+	/* Put the result in a DBus reply: */
+	reply = dbus_message_new_method_return (message);
+
+	get_folders_result_to_message (reply, folder_names);
+
+	if (reply == NULL) {
+		g_warning ("%s: Could not create reply.", __FUNCTION__);
+	}
+
+	if (reply) {
+		dbus_uint32_t serial = 0;
+		dbus_connection_send (con, reply, &serial);
+    	dbus_connection_flush (con);
+    	dbus_message_unref (reply);
+	}
+
+	g_list_foreach (folder_names, (GFunc)g_free, NULL);
+	g_list_free (folder_names);
+}
+
+
+/** This D-Bus handler is used when the main osso-rpc 
+ * D-Bus handler has not handled something.
+ * We use this for D-Bus methods that need to use more complex types 
+ * than osso-rpc supports.
+ */
 DBusHandlerResult
 modest_dbus_req_filter (DBusConnection *con,
 			DBusMessage    *message,
 			void           *user_data)
 {
-	gboolean  handled = FALSE;
-  	DBusError error;
+	gboolean handled = FALSE;
 
 	if (dbus_message_is_method_call (message,
 					 MODEST_DBUS_IFACE,
 					 MODEST_DBUS_METHOD_SEARCH)) {
-		ModestDBusSearchFlags dbus_flags;
-		ModestSearch  search;
-		DBusMessage  *reply = NULL;
-		dbus_bool_t  res;
-		dbus_int64_t sd_v;
-		dbus_int64_t ed_v;
-		dbus_int32_t flags_v;
-		dbus_uint32_t serial;
-		dbus_uint32_t size_v;
-		char *folder;
-		char *query;
-		time_t start_date;
-		time_t end_date;
-		GList *hits;
-
-		handled = TRUE;
-
-		dbus_error_init (&error);
-
-		sd_v = ed_v = 0;
-		flags_v = 0;
-
-		res = dbus_message_get_args (message,
-					     &error,
-					     DBUS_TYPE_STRING, &query,
-					     DBUS_TYPE_STRING, &folder,
-					     DBUS_TYPE_INT64, &sd_v,
-					     DBUS_TYPE_INT64, &ed_v,
-					     DBUS_TYPE_INT32, &flags_v,
-					     DBUS_TYPE_UINT32, &size_v,
-					     DBUS_TYPE_INVALID);
-		
-		dbus_flags = (ModestDBusSearchFlags) flags_v;
-		start_date = (time_t) sd_v;
-		end_date = (time_t) ed_v;
-
-		memset (&search, 0, sizeof (search));
-#ifdef MODEST_HAVE_OGS
-		search.query  = query;
-#endif
-		search.before = start_date;
-		search.after  = end_date;
-		search.flags  = 0;
-
-		if (dbus_flags & MODEST_DBUS_SEARCH_SUBJECT) {
-			search.flags |= MODEST_SEARCH_SUBJECT;
-			search.subject = query;
-		}
-
-		if (dbus_flags & MODEST_DBUS_SEARCH_SENDER) {
-			search.flags |=  MODEST_SEARCH_SENDER;
-			search.from = query;
-		}
-
-		if (dbus_flags & MODEST_DBUS_SEARCH_RECIPIENT) {
-			search.flags |= MODEST_SEARCH_RECIPIENT; 
-			search.recipient = query;
-		}
-
-		if (dbus_flags & MODEST_DBUS_SEARCH_BODY) {
-			search.flags |=  MODEST_SEARCH_BODY; 
-			search.body = query;
-		}
-
-		if (sd_v > 0) {
-			search.flags |= MODEST_SEARCH_BEFORE;
-			search.before = start_date;
-		}
-
-		if (ed_v > 0) {
-			search.flags |= MODEST_SEARCH_AFTER;
-			search.after = end_date;
-		}
-
-		if (size_v > 0) {
-			search.flags |= MODEST_SEARCH_SIZE;
-			search.minsize = size_v;
-		}
-
-#ifdef MODEST_HAVE_OGS
-		search.flags |= MODEST_SEARCH_USE_OGS;
-		g_debug ("%s: Starting search for %s", __FUNCTION__, search.query);
-#endif
-		hits = modest_search_all_accounts (&search);
-
-		reply = dbus_message_new_method_return (message);
-
-		search_result_to_message (reply, hits);
-
-		if (reply == NULL) {
-			g_warning ("Could not create reply");
-		}
-
-		if (reply) {
-			dbus_connection_send (con, reply, &serial);
-	    		dbus_connection_flush (con);
-	    		dbus_message_unref (reply);
-		}
-
-		g_list_free (hits);
-
+		on_dbus_method_search (con, message);
+		handled = TRUE;			 	
+	} else if (dbus_message_is_method_call (message,
+					 MODEST_DBUS_IFACE,
+					 MODEST_DBUS_METHOD_GET_FOLDERS)) {
+		on_dbus_method_get_folders (con, message);
+		handled = TRUE;			 	
 	}
 	
-
 	return (handled ? 
 		DBUS_HANDLER_RESULT_HANDLED :
 		DBUS_HANDLER_RESULT_NOT_YET_HANDLED);

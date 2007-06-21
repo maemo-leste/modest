@@ -1,1 +1,23 @@
+2007-06-21  Murray Cumming,,,  <murrayc@murrayc-desktop>
+
+	reviewed by: <delete if not using a buddy>
+
+	* libmodest-dbus-client/libmodest-dbus-client.c:
+	(modest_dbus_message_iter_get_search_hit),
+	(libmodest_dbus_client_search), (modest_folder_result_free),
+	(modest_folder_result_list_free),
+	(modest_dbus_message_iter_get_folder_item),
+	(libmodest_dbus_client_get_folders):
+	* libmodest-dbus-client/libmodest-dbus-client.h:
+	* src/dbus_api/modest-dbus-api.h:
+	* src/dbus_api/modest-dbus-callbacks.c: (modest_dbus_req_handler),
+	(on_dbus_method_search), (get_folders_result_to_message),
+	(add_folders_to_list), (on_dbus_method_get_folders),
+	(modest_dbus_req_filter):
+	* src/maemo/modest-platform.c: (modest_platform_init):
+	* src/modest-tny-account-store.h:
+	* tests/dbus_api/Makefile.am:
+	* tests/dbus_api/test_compose_mail.c: (main):
+	* tests/dbus_api/test_get_folders.c: (main):
+
 * please check the svn log instead

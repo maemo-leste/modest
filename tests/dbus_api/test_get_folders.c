@@ -20,23 +20,31 @@ int main(int argc, char *argv[])
 	
 	attachments = g_slist_append(attachments, "/usr/include/math.h,/usr/include/malloc.h");
 	
-	const gboolean ret = libmodest_dbus_client_compose_mail (
-		osso_context,
-		"modesttest@openismus.com", /* to */
-		"cc test", /* cc */
-		"bcc test", /* bcc */
-		"test subject", /* subject */
-		"test body\nline two", /* body */
-		attachments);
+	GList *list = NULL;
+	const gboolean ret = libmodest_dbus_client_get_folders (
+		osso_context, &list);
 		
-	
 	if (!ret) {
-		printf("libmodest_dbus_client_compose_mail() failed.\n");
+		printf("libmodest_dbus_client_get_folders() failed.\n");
 		return OSSO_ERROR;
 	} else {
-		printf("libmodest_dbus_client_compose_mail() succeeded\n");
+		printf("libmodest_dbus_client_get_folders() succeeded\n");
 	}
-		
+	
+	if (list) {
+		GList *iter = NULL;
+		for (iter = list; iter; iter = iter->next) {
+			ModestFolderResult *item = (ModestFolderResult*)iter->data;	
+			if (item) {
+				printf("  Folder name=%s\n", item->folder_name);
+			}
+		}
+	
+		modest_folder_result_list_free (list);
+	} else {
+		printf("  The list of folders was empty.\n");	
+	}	
+	
     /* Exit */
     return 0;
 }

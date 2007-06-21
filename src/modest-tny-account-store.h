@@ -126,7 +126,7 @@ TnyAccount* modest_tny_account_store_get_tny_account_by  (ModestTnyAccountStore 
  * Get the tny account corresponding to one of the server_accounts for account with @account_name
  * 
  * Returns: the tnyaccount for the server account or NULL in case it's not found or error,
- * g_object_unref when it's no longer needed
+ * g_object_unref when it's no longer needed. TODO: Check that callers are unreffing.
  */
 TnyAccount* modest_tny_account_store_get_server_account (ModestTnyAccountStore *self,
 							 const gchar *account_name,

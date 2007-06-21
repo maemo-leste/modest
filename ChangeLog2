@@ -1,3 +1,31 @@
+2007-06-21  Murray Cumming  <murrayc@murrayc.com>
+
+	* libmodest-dbus-client/libmodest-dbus-client.h:
+	* libmodest-dbus-client/libmodest-dbus-client.c:
+	(modest_dbus_message_iter_get_search_hit),
+	(libmodest_dbus_client_search):
+	Reorganised and commented this.
+	Removed modest_search_hit_free() from the public API because it 
+	is not needed.
+	
+	Added libmodest_dbus_client_get_folders() and 
+	modest_folder_result_list_free().
+	
+	* src/dbus_api/modest-dbus-api.h:
+	* src/dbus_api/modest-dbus-callbacks.c: 
+	(modest_dbus_req_filter): Commented. Moved most code to 
+	on_dbus_method_search() and added on_dbus_method_get_folders().
+
+	* src/maemo/modest-platform.c: (modest_platform_init): Commented the use 
+	of the extra D-Bus handler.
+	
+	* tests/dbus_api/Makefile.am:
+	* tests/dbus_api/test_get_folders.c: New test for 
+	libmodest_dbus_client_get_folders(). This seems to return an empty list 
+	at the moment. That could be the same error that causes the message list 
+	to be empty sometimes.
+	This should help with projects.maemo.org bug NB#57740.
+
 2007-06-21  Armin Burgmeier  <armin@openismus.com>
 
 	* src/modest-mail-operation.c: Do not call

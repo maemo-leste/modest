@@ -22,7 +22,8 @@ noinst_PROGRAMS = test_send_mail      \
 		  test_search         \
 		  test_delete_message \
 		  test_compose_mail \
-		  test_open_default_inbox
+		  test_open_default_inbox \
+		  test_get_folders
 
 test_send_mail_SOURCES = test_send_mail.c
 test_send_mail_LDADD = $(objects)
@@ -44,3 +45,6 @@ test_delete_message_LDADD = $(objects)
 
 test_open_default_inbox_SOURCES = test_open_default_inbox.c
 test_open_default_inbox_LDADD = $(objects)
+
+test_get_folders_SOURCES = test_get_folders.c
+test_get_folders_LDADD = $(objects)
