@@ -120,7 +120,9 @@ static const GtkRadioActionEntry modest_msg_edit_alignment_radio_action_entries 
 
 static const GtkRadioActionEntry modest_msg_edit_zoom_action_entries [] = {
 	{ "Zoom50", NULL, N_("mcen_me_viewer_50"), NULL, NULL, 50 },
+	{ "Zoom80", NULL, N_("mcen_me_viewer_80"), NULL, NULL, 80 },
 	{ "Zoom100", NULL, N_("mcen_me_viewer_100"), NULL, NULL, 100 },
+	{ "Zoom120", NULL, N_("mcen_me_viewer_120"), NULL, NULL, 120 },
 	{ "Zoom150", NULL, N_("mcen_me_viewer_150"), NULL, NULL, 150 },
 	{ "Zoom200", NULL, N_("mcen_me_viewer_200"), NULL, NULL, 200 }
 };

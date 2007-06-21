@@ -1800,12 +1800,21 @@ modest_msg_edit_window_set_zoom (ModestWindow *window,
 				 gdouble zoom)
 {
 	ModestMsgEditWindowPrivate *priv;
+	ModestWindowPrivate *parent_priv;
+	GtkRadioAction *zoom_radio_action;
      
 	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
 
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
+	parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
 	priv->zoom_level = zoom;
 	wp_text_buffer_set_font_scaling_factor (WP_TEXT_BUFFER (priv->text_buffer), zoom);
+
+	/* Zoom level menu options should be updated with the current zoom level */
+	parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
+	zoom_radio_action = GTK_RADIO_ACTION (gtk_ui_manager_get_action (parent_priv->ui_manager, 
+									 "/MenuBar/ViewMenu/ZoomMenu/Zoom50Menu"));
+	gtk_radio_action_set_current_value (zoom_radio_action, (gint) (zoom*100.0+0.1));
 }
 
 static gdouble
