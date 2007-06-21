@@ -30,7 +30,7 @@
 #include "modest-dimming-rules-group.h"
 #include "modest-dimming-rules-group-priv.h"
 #include "modest-dimming-rule.h"
-#include "modest-hildon-includes.h"
+#include "modest-platform.h"
 
 static void modest_dimming_rules_group_class_init (ModestDimmingRulesGroupClass *klass);
 static void modest_dimming_rules_group_init       (ModestDimmingRulesGroup *obj);
@@ -235,7 +235,7 @@ _insensitive_press_callback (GtkWidget *widget, gpointer user_data)
 	if (notification == NULL) return;
 
 	/* Show notification banner */
-	hildon_banner_show_information (NULL, NULL, notification);	
+	modest_platform_information_banner (NULL, NULL, notification);	
 
 	/* Free */
 	g_free(notification);

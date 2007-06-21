@@ -1023,3 +1023,11 @@ modest_platform_create_folder_view (TnyFolderStoreQuery *query)
 
 	return widget;
 }
+
+void 
+modest_platform_information_banner (GtkWidget *widget,
+				    const gchar *icon_name,
+				    const gchar *text)
+{
+	hildon_banner_show_information (widget, icon_name, text);
+}

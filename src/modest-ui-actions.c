@@ -1590,6 +1590,8 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 		}
 	}
 
+	modest_platform_information_banner (NULL, NULL, _("mcen_ib_outbox_waiting_to_be_sent"));
+
 	/* Create the mail operation */
 	ModestMailOperation *mail_operation = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_SEND, G_OBJECT(edit_window));
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_operation);

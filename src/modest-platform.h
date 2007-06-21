@@ -245,6 +245,10 @@ void modest_platform_show_addressbook (GtkWindow *parent_window);
 
 GtkWidget* modest_platform_create_folder_view (TnyFolderStoreQuery *query);
 
+void modest_platform_information_banner (GtkWidget *widget,
+					 const gchar *icon_name,
+					 const gchar *text);
+
 G_END_DECLS
 
 #endif /* __MODEST_PLATFORM_UTILS_H__ */
