@@ -381,9 +381,11 @@ get_account_store_for_account (TnyAccount *account)
 
 /* This callback will be called by Tinymail when it needs the password
  * from the user, for instance if the password was not remembered.
+ * It also calls forget_password() before calling this,
+ * so that we clear wrong passwords out of our account settings.
  * Note that TnyAccount here will be the server account. */
 static gchar*
-get_password (TnyAccount *account, const gchar *prompt, gboolean *cancel)
+get_password (TnyAccount *account, const gchar * prompt_not_used, gboolean *cancel)
 {
 	/* Initialize the output parameter: */
 	if (cancel)
@@ -431,18 +433,25 @@ get_password (TnyAccount *account, const gchar *prompt, gboolean *cancel)
 		gboolean remember = FALSE;
 		pwd = NULL;
 		
-		/* Note that we ignore the returned username here,
-		 * because it is enough that it will be stored in gconf 
-		 * by the signal handler. */
 		g_signal_emit (G_OBJECT(self), signals[PASSWORD_REQUESTED_SIGNAL], 0,
 			       account_id, /* server_account_name */
 			       &username, &pwd, cancel, &remember);
 		
 		if (!*cancel) {
-			if (remember)
+			/* The password will be returned as the result,
+			 * but we need to tell tinymail about the username too: */
+			tny_account_set_user (account, username);
+			
+			if (remember) {
+				printf ("%s: Storing username=%s, password=%s\n", 
+					__FUNCTION__, username, pwd);
+				modest_account_mgr_set_string (priv->account_mgr,key,
+							       MODEST_ACCOUNT_USERNAME,
+							       username, TRUE);
 				modest_account_mgr_set_string (priv->account_mgr,key,
 							       MODEST_ACCOUNT_PASSWORD,
 							       pwd, TRUE);
+			}
 			/* We need to dup the string even knowing that
 			   it's already a dup of the contents of an
 			   entry, because it if it's wrong, then camel

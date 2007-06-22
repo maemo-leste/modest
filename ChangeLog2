@@ -1,3 +1,15 @@
+2007-06-22  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/modest-tny-account-store.c: (get_password):
+	Use tny_account_set_username() to tell tinymail that the username might 
+	have changed too. But tinymail ignores this: see projects.maemo.org 
+	bug #61463.
+	* src/modest-ui-actions.c:
+	(modest_ui_actions_on_password_requested): Remove the useless attempt to 
+	reset the connection when changing the username, and improve the comments.
+	Save the changed username to gconf at least, so it is used when Modest is 
+	restarted.
+
 2007-06-21  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/dbus_api/modest-dbus-callbacks.c: (add_folders_to_list):

@@ -2094,12 +2094,8 @@ modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 			const gboolean username_was_changed = 
 				(strcmp (*username, initial_username) != 0);
 			if (username_was_changed) {
-				/* To actually use a changed username, 
-				 * we must reset the connection, according to pvanhoof.
-				 * This _might_ be a sensible way to do that: */
-				 TnyDevice *device = modest_runtime_get_device();
-				 tny_device_force_offline (device);
-				 tny_device_force_online (device);
+				g_warning ("%s: tinymail does not yet support changing the "
+					"username in the get_password() callback.\n", __FUNCTION__);
 			}
 		}
 			
