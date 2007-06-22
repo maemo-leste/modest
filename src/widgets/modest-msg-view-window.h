@@ -209,13 +209,10 @@ void            modest_msg_view_window_save_attachments (ModestMsgViewWindow *wi
 /**
  * modest_msg_view_window_remove_attachments:
  * @window: a #ModestMsgViewWindow
- * @mime_parts: a #GList of #TnyMimePart
  *
- * Removes the attachments in @mime_parts, or currently selected attachments
- * if @mime_parts is %NULL, from local storage.
+ * Removes selected attachments.
  */
-void            modest_msg_view_window_remove_attachments (ModestMsgViewWindow *window,
-							   GList *mime_parts);
+void            modest_msg_view_window_remove_attachments (ModestMsgViewWindow *window);
 
 
 /**

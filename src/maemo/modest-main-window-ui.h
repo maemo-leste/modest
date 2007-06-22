@@ -89,7 +89,7 @@ static const GtkActionEntry modest_action_entries [] = {
 	/* Attachments */
 	{ "ViewAttachment", NULL, N_("mcen_me_viewer_view_attachment"), NULL, NULL, G_CALLBACK (modest_ui_actions_view_attachment) },
 	{ "SaveAttachment", NULL, N_("mcen_me_viewer_save_attachments"), NULL, NULL, G_CALLBACK (modest_ui_actions_save_attachments) },
-	{ "RemoveAttachment", NULL, N_("mcen_me_viewer_remove_attachments"), NULL, NULL, G_CALLBACK (modest_ui_actions_remove_attachments) },
+	{ "RemoveAttachment", NULL, N_("mcen_me_inbox_remove_attachments"), NULL, NULL, G_CALLBACK (modest_ui_actions_remove_attachments) },
 	
 	/* Tools */
 	{ "ToolsSettings",        NULL,      N_("mcen_me_inbox_options"),	              NULL, NULL, G_CALLBACK (modest_ui_actions_on_settings) },

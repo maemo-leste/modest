@@ -1543,3 +1543,19 @@ modest_msg_view_grab_focus (ModestMsgView *view)
 
 	gtk_widget_grab_focus (priv->gtkhtml);
 }
+
+void
+modest_msg_view_remove_attachment (ModestMsgView *view, TnyMimePart *attachment)
+{
+	TnyMsg *msg;
+	ModestMsgViewPrivate *priv;
+
+	g_return_if_fail (MODEST_IS_MSG_VIEW (view));
+	g_return_if_fail (TNY_IS_MIME_PART (attachment));
+	priv = MODEST_MSG_VIEW_GET_PRIVATE (view);
+
+	msg = modest_msg_view_get_message (view);
+	modest_attachments_view_remove_attachment (MODEST_ATTACHMENTS_VIEW (priv->attachments_view),
+						   attachment);
+	tny_mime_part_del_part (TNY_MIME_PART (msg), attachment);
+}

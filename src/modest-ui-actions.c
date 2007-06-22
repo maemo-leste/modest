@@ -3046,7 +3046,7 @@ modest_ui_actions_remove_attachments (GtkAction *action,
 				      ModestWindow *window)
 {
 	if (MODEST_IS_MSG_VIEW_WINDOW (window)) {
-		modest_msg_view_window_remove_attachments (MODEST_MSG_VIEW_WINDOW (window), NULL);
+		modest_msg_view_window_remove_attachments (MODEST_MSG_VIEW_WINDOW (window));
 	} else {
 		/* not supported window for this action */
 		g_return_if_reached ();
