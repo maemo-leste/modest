@@ -1,3 +1,13 @@
+2007-06-22  Armin Burgmeier  <armin@openismus.com>
+
+	* src/maemo/modest-maemo-utils.h:
+	* src/maemo/modest-maemo-utils.c: Added a GError parameter to
+	modest_maemo_utils_get_supported_secure_authentication_methods.
+
+	* src/maemo/easysetup/modest-easysetup-wizard.c:
+	* src/maemo/modest-account-settings-dialog.c: Show correct error if
+	one occured, not just "Server does not support secure authentication".
+
 2007-06-22  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/modest-tny-account-store.c: (get_password):
@@ -3198,4 +3208,3 @@
 	Added modest_ui_actions_on_new_account() as a signal handler for the 
 	New Account menu item. It shows the easysetup wizard.
 	* po/en_GB.po: Added additional needed logical IDs and translations.
-	

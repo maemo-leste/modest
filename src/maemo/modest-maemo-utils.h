@@ -105,7 +105,7 @@ TnyFsStream *modest_maemo_utils_create_temp_stream (const gchar *extension, gcha
  */
 
 GList* modest_maemo_utils_get_supported_secure_authentication_methods (ModestTransportStoreProtocol proto, 
-	const gchar* hostname, gint port, const gchar* username, GtkWindow *parent_window);
+	const gchar* hostname, gint port, const gchar* username, GtkWindow *parent_window, GError** error);
 
 /**
  * modest_maemo_utils_setup_images_filechooser:

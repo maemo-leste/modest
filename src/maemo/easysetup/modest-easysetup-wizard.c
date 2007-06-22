@@ -162,7 +162,8 @@ static gint get_serverport_incoming(ModestPresetsServerType servertype_incoming,
 
 static GList* check_for_supported_auth_methods(ModestEasysetupWizardDialog* account_wizard)
 {
-		const ModestTransportStoreProtocol protocol = 
+	GError *error = NULL;
+	const ModestTransportStoreProtocol protocol = 
           easysetup_servertype_combo_box_get_active_servertype (
                                                                 EASYSETUP_SERVERTYPE_COMBO_BOX (account_wizard->combo_incoming_servertype));
     const gchar* hostname = gtk_entry_get_text(GTK_ENTRY(account_wizard->entry_incomingserver));
@@ -172,11 +173,11 @@ static GList* check_for_supported_auth_methods(ModestEasysetupWizardDialog* acco
 																																		 MODEST_SERVERSECURITY_COMBO_BOX (
 																																																			account_wizard->combo_incoming_security));
      int port_num = get_serverport_incoming(protocol, protocol_security_incoming); 
-     GList *list_auth_methods = 
+     GList *list_auth_methods =
           modest_maemo_utils_get_supported_secure_authentication_methods (
                                                                       protocol, 
-                                                                      hostname, port_num, username, GTK_WINDOW (account_wizard));	
-     if (list_auth_methods) {
+                                                                      hostname, port_num, username, GTK_WINDOW (account_wizard), &error);
+	if (list_auth_methods) {
           /* TODO: Select the correct method */
 			  GList* list = NULL;
 			  GList* method;
@@ -193,7 +194,9 @@ static GList* check_for_supported_auth_methods(ModestEasysetupWizardDialog* acco
 		 /* no secure methods supported */
      GtkWidget* error_dialog = gtk_message_dialog_new(GTK_WINDOW(account_wizard),
                                                      GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR,
-                                                     GTK_BUTTONS_OK, _("Server does not support secure authentication!"));
+                                                     GTK_BUTTONS_OK, error != NULL ? error->message : _("Server does not support secure authentication!"));
+     if(error != NULL) g_error_free(error);
+
      gtk_dialog_run(GTK_DIALOG(error_dialog));
      gtk_widget_destroy(error_dialog);
      return NULL;

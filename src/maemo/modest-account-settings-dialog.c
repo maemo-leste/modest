@@ -1270,9 +1270,10 @@ save_configuration (ModestAccountSettingsDialog *dialog)
 	{
 		if (gtk_toggle_button_get_active (
 				GTK_TOGGLE_BUTTON (dialog->checkbox_incoming_auth))) {
+			GError *error = NULL;
 			GList *list_auth_methods = 
 				modest_maemo_utils_get_supported_secure_authentication_methods (dialog->incoming_protocol, 
-					hostname, port_num, username, GTK_WINDOW (dialog));	
+					hostname, port_num, username, GTK_WINDOW (dialog), &error);
 			if (list_auth_methods) {
 				/* Use the first supported method.
 				 * TODO: Should we prioritize them, to prefer a particular one? */
@@ -1294,7 +1295,8 @@ save_configuration (ModestAccountSettingsDialog *dialog)
 		  {
 	      GtkWidget* error_dialog = gtk_message_dialog_new(GTK_WINDOW(dialog),
 	                                                       GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR,
-	                                                       GTK_BUTTONS_OK, _("Server does not support secure authentication!"));
+	                                                       GTK_BUTTONS_OK, (error != NULL) ? error->message : _("Server does not support secure authentication!"));
+	      if(error != NULL) g_error_free(error);
 	      gtk_dialog_run(GTK_DIALOG(error_dialog));
 	      gtk_widget_destroy(error_dialog);
 				/* This is a nasty hack. jschmid. */

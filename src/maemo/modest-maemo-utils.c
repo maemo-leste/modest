@@ -258,7 +258,8 @@ typedef struct
 	gboolean cancel;
 	GList *result;
 	GtkWidget* dialog;
-  GtkWidget* progress;
+	GtkWidget* progress;
+	GError* error;
 } ModestGetSupportedAuthInfo;
 
 static void on_camel_account_get_supported_secure_authentication_status (
@@ -276,7 +277,7 @@ on_camel_account_get_supported_secure_authentication (
 		
 	ModestGetSupportedAuthInfo *info = (ModestGetSupportedAuthInfo*)user_data;
 	g_return_if_fail (info);
-	
+
 	/* Free everything if the actual action was canceled */
 	if (info->cancel)
 	{
@@ -285,6 +286,14 @@ on_camel_account_get_supported_secure_authentication (
 		return;
 	}
 
+	/* Why is this a pointer to a pointer? We are not supposed to set it,
+	 * are we? */
+	if(err != NULL && *err != NULL)
+	{
+		printf("Err: %s\n", (*err)->message);
+		info->error = g_error_copy(*err);
+	}
+	
 	if (!auth_types) {
 		printf ("DEBUG: %s: auth_types is NULL.\n", __FUNCTION__);
 		info->finished = TRUE; /* We are blocking, waiting for this. */
@@ -327,7 +336,7 @@ static void on_secure_auth_cancel(GtkWidget* dialog, int response, gpointer user
 }
 
 GList* modest_maemo_utils_get_supported_secure_authentication_methods (ModestTransportStoreProtocol proto, 
-	const gchar* hostname, gint port, const gchar* username, GtkWindow *parent_window)
+	const gchar* hostname, gint port, const gchar* username, GtkWindow *parent_window, GError** error)
 {
 	g_return_val_if_fail (proto != MODEST_PROTOCOL_TRANSPORT_STORE_UNKNOWN, NULL);
 	
@@ -364,6 +373,7 @@ GList* modest_maemo_utils_get_supported_secure_authentication_methods (ModestTra
 	tny_account_set_proto (tny_account,
 			       modest_protocol_info_get_transport_store_protocol_name(proto));
 
+	tny_account_set_hostname (tny_account, hostname);
 	/* Required for POP, at least */
 	tny_account_set_user (tny_account, username);
 			       
@@ -374,8 +384,6 @@ GList* modest_maemo_utils_get_supported_secure_authentication_methods (ModestTra
 	g_return_val_if_fail (session, NULL);
 	tny_camel_account_set_session (TNY_CAMEL_ACCOUNT(tny_account), session);
 	
-	tny_account_set_hostname (tny_account, hostname);
-	
 	if(port > 0)
 		tny_account_set_port (tny_account, port);
 		
@@ -385,6 +393,7 @@ GList* modest_maemo_utils_get_supported_secure_authentication_methods (ModestTra
 	info->finished = FALSE;
 	info->result = NULL;
 	info->cancel = FALSE;
+	info->error = NULL;
 	info->progress = gtk_progress_bar_new();
   info->dialog = gtk_dialog_new_with_buttons(_("Authentication"),
 																parent_window, GTK_DIALOG_MODAL,
@@ -420,6 +429,9 @@ GList* modest_maemo_utils_get_supported_secure_authentication_methods (ModestTra
 	GList *result = info->result;
 	if (!info->cancel)
 	{
+		if(info->error != NULL)
+			g_propagate_error(error, info->error);
+
 		g_slice_free (ModestGetSupportedAuthInfo, info);
 		info = NULL;
 	}
