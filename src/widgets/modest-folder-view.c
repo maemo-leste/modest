@@ -318,7 +318,7 @@ text_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 		if (modest_tny_account_is_virtual_local_folders (
 				TNY_ACCOUNT (instance))) {
 			item_name = g_strdup (priv->local_account_name);
-			item_weight = 400;
+			item_weight = 800;
 		} else {
 			item_name = g_strdup (fname);
 			item_weight = 800;
