@@ -1472,6 +1472,7 @@ modest_ui_actions_on_save_to_drafts (GtkWidget *widget, ModestMsgEditWindow *edi
 	MsgData *data;
 	gchar *account_name, *from;
 	ModestAccountMgr *account_mgr;
+	gchar *info_text = NULL;
 
 	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW(edit_window));
 	
@@ -1527,6 +1528,10 @@ modest_ui_actions_on_save_to_drafts (GtkWidget *widget, ModestMsgEditWindow *edi
 	g_object_unref (G_OBJECT (mail_operation));
 
 	modest_msg_edit_window_free_msg_data (edit_window, data);
+
+	info_text = g_strdup_printf (_("mail_va_saved_to_drafts"), _("mcen_me_folder_drafts"));
+	modest_platform_information_banner (NULL, NULL, info_text);
+	g_free (info_text);
 
 	/* Save settings and close the window */
 	gtk_widget_destroy (GTK_WIDGET (edit_window));
