@@ -1,5 +1,12 @@
 2007-06-22  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-tny-account-store.c: (get_password):
+	Restored the call to tny_account_set_user() because Philip seems to have 
+	stopped this from crashing (by not using the freed string). It still does 
+	not work, but now we can test it.
+
+2007-06-22  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/maemo/modest-msg-edit-window.c: (init_window):
 	Comment out use of an uninitialzed GtkScrolledWindow variable, 
 	to fix the build and stop a crash. Yet again.

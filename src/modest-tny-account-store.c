@@ -440,10 +440,7 @@ get_password (TnyAccount *account, const gchar * prompt_not_used, gboolean *canc
 		if (!*cancel) {
 			/* The password will be returned as the result,
 			 * but we need to tell tinymail about the username too: */
-			/* TODO: This causes a crash because it frees memory that 
-			 * tinymail is already using. tinymail needs to detect the change 
-			 * and stop using the old username: 
-			 * tny_account_set_user (account, username); */
+			tny_account_set_user (account, username);
 			
 			if (remember) {
 				printf ("%s: Storing username=%s, password=%s\n", 
