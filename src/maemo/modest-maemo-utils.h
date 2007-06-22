@@ -34,6 +34,9 @@
 #include <gtk/gtk.h>
 #include <modest-protocol-info.h>
 
+#define MODEST_MAEMO_UTILS_MYDOCS_FOLDER "MyDocs"
+#define MODEST_MAEMO_UTILS_DEFAULT_IMAGE_FOLDER ".images"
+
 /**
  * modest_maemo_utils_menubar_to_menu:
  * @ui_manager: a ui manager, with the menubar at "/MenuBar" 
@@ -103,5 +106,14 @@ TnyFsStream *modest_maemo_utils_create_temp_stream (const gchar *extension, gcha
 
 GList* modest_maemo_utils_get_supported_secure_authentication_methods (ModestTransportStoreProtocol proto, 
 	const gchar* hostname, gint port, const gchar* username, GtkWindow *parent_window);
+
+/**
+ * modest_maemo_utils_setup_images_filechooser:
+ * @chooser: a #GtkFileChooser
+ *
+ * Configures the default folder, and mime filter of a filechooser
+ * for images.
+ */
+void modest_maemo_utils_setup_images_filechooser (GtkFileChooser *chooser);
 
 #endif /*__MODEST_MAEMO_UTILS_H__*/

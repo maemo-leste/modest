@@ -65,6 +65,7 @@
 #include "modest-hildon-includes.h"
 #include "widgets/modest-msg-edit-window-ui.h"
 #include <libgnomevfs/gnome-vfs-mime.h>
+#include "modest-maemo-utils.h"
 
 
 #define DEFAULT_FONT_SIZE 3
@@ -73,6 +74,7 @@
 #define DEFAULT_SIZE_COMBOBOX_WIDTH 80
 #define DEFAULT_MAIN_VBOX_SPACING 6
 #define SUBJECT_MAX_LENGTH 1000
+#define IMAGE_MAX_WIDTH 640
 
 static void  modest_msg_edit_window_class_init   (ModestMsgEditWindowClass *klass);
 static void  modest_msg_edit_window_init         (ModestMsgEditWindow *obj);
@@ -177,6 +179,7 @@ struct _ModestMsgEditWindowPrivate {
 	GtkWidget   *find_toolbar;
 
 	GtkWidget   *scroll;
+	GtkWidget   *scroll_area;
 
 	gint last_cid;
 	GList *attachments;
@@ -476,8 +479,8 @@ init_window (ModestMsgEditWindow *obj)
 	gtk_box_pack_start (GTK_BOX (window_box), priv->scroll, TRUE, TRUE, 0);
 	gtk_box_pack_end (GTK_BOX (window_box), priv->find_toolbar, FALSE, FALSE, 0);
 	gtk_container_add (GTK_CONTAINER(obj), window_box);
-	scroll_area = modest_scroll_area_new (priv->scroll, priv->msg_body);
-	gtk_container_add (GTK_CONTAINER (frame), scroll_area);
+	priv->scroll_area = modest_scroll_area_new (priv->scroll, priv->msg_body);
+	gtk_container_add (GTK_CONTAINER (frame), priv->scroll_area);
 	gtk_container_set_focus_vadjustment (GTK_CONTAINER (scroll_area), 
 					     gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (priv->scroll)));
 
@@ -1421,6 +1424,7 @@ modest_msg_edit_window_select_background_color (ModestMsgEditWindow *window)
 
 }
 
+
 void
 modest_msg_edit_window_insert_image (ModestMsgEditWindow *window)
 {
@@ -1428,77 +1432,102 @@ modest_msg_edit_window_insert_image (ModestMsgEditWindow *window)
 	ModestMsgEditWindowPrivate *priv;
 	GtkWidget *dialog = NULL;
 	gint response = 0;
-	gchar *filename = NULL;
+	GSList *uris = NULL;
+	GSList *uri_node = NULL;
 	
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
 	
 	dialog = hildon_file_chooser_dialog_new (GTK_WINDOW (window), GTK_FILE_CHOOSER_ACTION_OPEN);
 	gtk_window_set_title (GTK_WINDOW (dialog), _("mcen_ia_select_inline_image_title"));
+	gtk_file_chooser_set_select_multiple (GTK_FILE_CHOOSER (dialog), TRUE);
+
+	modest_maemo_utils_setup_images_filechooser (GTK_FILE_CHOOSER (dialog));
 
 	response = gtk_dialog_run (GTK_DIALOG (dialog));
 	switch (response) {
 	case GTK_RESPONSE_OK:
-		filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog));
+		uris = gtk_file_chooser_get_uris (GTK_FILE_CHOOSER (dialog));
 		break;
 	default:
 		break;
 	}
 	gtk_widget_destroy (dialog);
 
-	if (filename) {
-		GdkPixbuf *pixbuf = NULL;
+	for (uri_node = uris; uri_node != NULL; uri_node = g_slist_next (uri_node)) {
+		const gchar *uri;
+		GnomeVFSHandle *handle = NULL;
+		GnomeVFSResult result;
 		GtkTextIter position;
 		GtkTextMark *insert_mark;
 
-		pixbuf = gdk_pixbuf_new_from_file (filename, NULL);
-		if (pixbuf) {
-			gint image_file_id;
-			GdkPixbufFormat *pixbuf_format;
+		uri = (const gchar *) uri_node->data;
+		result = gnome_vfs_open (&handle, uri, GNOME_VFS_OPEN_READ);
+		if (result == GNOME_VFS_OK) {
+			GdkPixbufLoader *loader;
+			GdkPixbuf *pixbuf;
+			GnomeVFSFileInfo info;
+			gchar *filename, *basename;
+			TnyMimePart *mime_part;
+			TnyStream *stream;
+			gchar *content_id;
+			const gchar *mime_type = NULL;
 
-			image_file_id = g_open (filename, O_RDONLY, 0);
-			pixbuf_format = gdk_pixbuf_get_file_info (filename, NULL, NULL);
-			if ((image_file_id != -1)&&(pixbuf_format != NULL)) {
-				TnyMimePart *image_part;
-				TnyStream *image_stream;
-				gchar **mime_types;
-				gchar *mime_type;
-				gchar *basename;
-				gchar *content_id;
+			filename = g_filename_from_uri (uri, NULL, NULL);
+			if (gnome_vfs_get_file_info_from_handle (handle, &info, GNOME_VFS_FILE_INFO_GET_MIME_TYPE) 
+			    == GNOME_VFS_OK)
+				mime_type = gnome_vfs_file_info_get_mime_type (&info);
 
-				mime_types = gdk_pixbuf_format_get_mime_types (pixbuf_format);
-				if ((mime_types != NULL) && (mime_types[0] != NULL)) {
-					mime_type = mime_types[0];
-				} else {
-					mime_type = "image/unknown";
-				}
-				image_part = tny_platform_factory_new_mime_part
-					(modest_runtime_get_platform_factory ());
-				image_stream = TNY_STREAM (tny_fs_stream_new (image_file_id));
+			mime_part = tny_platform_factory_new_mime_part
+				(modest_runtime_get_platform_factory ());
+			stream = TNY_STREAM (tny_vfs_stream_new (handle));
+			
+			tny_mime_part_construct_from_stream (mime_part, stream, mime_type);
+			
+			content_id = g_strdup_printf ("%d", priv->last_cid);
+			tny_mime_part_set_content_id (mime_part, content_id);
+			g_free (content_id);
+			priv->last_cid++;
+			
+			basename = g_path_get_basename (filename);
+			tny_mime_part_set_filename (mime_part, basename);
+			g_free (basename);
+			
+			priv->attachments = g_list_prepend (priv->attachments, mime_part);
+			modest_attachments_view_add_attachment (MODEST_ATTACHMENTS_VIEW (priv->attachments_view),
+								mime_part);
+			gtk_widget_set_no_show_all (priv->attachments_caption, FALSE);
+			gtk_widget_show_all (priv->attachments_caption);
+			gtk_text_buffer_set_modified (priv->text_buffer, TRUE);
+			g_free (filename);
 
-				tny_mime_part_construct_from_stream (image_part, image_stream, mime_type);
-				g_strfreev (mime_types);
+			loader = gdk_pixbuf_loader_new_with_mime_type (mime_type, NULL);
+			while (!tny_stream_is_eos (TNY_STREAM (stream))) {
+				char read_buffer[128];
+				gint readed;
+				readed = tny_stream_read (TNY_STREAM (stream), read_buffer, 128);
+				if (!gdk_pixbuf_loader_write (loader, read_buffer, readed, NULL))
+					break;
+			}
+			pixbuf = gdk_pixbuf_loader_get_pixbuf (loader);
+			g_object_ref (pixbuf);
+			gdk_pixbuf_loader_close (loader, NULL);
+			g_object_unref (loader);
 
-				content_id = g_strdup_printf ("%d", priv->last_cid);
-				tny_mime_part_set_content_id (image_part, content_id);
-				g_free (content_id);
-				priv->last_cid++;
+			if (gdk_pixbuf_get_width (pixbuf) > IMAGE_MAX_WIDTH) {
+				GdkPixbuf *new_pixbuf;
+				gint new_height;
+				new_height = (gdk_pixbuf_get_height (pixbuf) * IMAGE_MAX_WIDTH) /
+					gdk_pixbuf_get_width (pixbuf);
+				new_pixbuf = gdk_pixbuf_scale_simple (pixbuf, IMAGE_MAX_WIDTH, new_height, GDK_INTERP_BILINEAR);
+				g_object_unref (pixbuf);
+				pixbuf = new_pixbuf;
+			}
 
-				basename = g_path_get_basename (filename);
-				tny_mime_part_set_filename (image_part, basename);
-				g_free (basename);
-				
+			if (pixbuf != NULL) {
 				insert_mark = gtk_text_buffer_get_insert (GTK_TEXT_BUFFER (priv->text_buffer));
 				gtk_text_buffer_get_iter_at_mark (GTK_TEXT_BUFFER (priv->text_buffer), &position, insert_mark);
-				wp_text_buffer_insert_image (WP_TEXT_BUFFER (priv->text_buffer), &position, g_strdup (tny_mime_part_get_content_id (image_part)), pixbuf);
-				priv->attachments = g_list_prepend (priv->attachments, image_part);
-				modest_attachments_view_add_attachment (MODEST_ATTACHMENTS_VIEW (priv->attachments_view),
-									image_part);
-				gtk_text_buffer_set_modified (priv->text_buffer, TRUE);
-				gtk_widget_set_no_show_all (priv->attachments_caption, FALSE);
-				gtk_widget_show_all (priv->attachments_caption);
-			} else if (image_file_id == -1) {
-				close (image_file_id);
-			}
+				wp_text_buffer_insert_image (WP_TEXT_BUFFER (priv->text_buffer), &position, g_strdup (tny_mime_part_get_content_id (mime_part)), pixbuf);
+			} 
 		}
 	}
 

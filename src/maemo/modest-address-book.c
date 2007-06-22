@@ -176,7 +176,6 @@ modest_address_book_select_addresses (ModestRecptEditor *recpt_editor)
 	osso_abook_contact_selector_set_minimum_selection (OSSO_ABOOK_CONTACT_SELECTOR (contact_view), 1);
 
 	contact_dialog = osso_abook_select_dialog_new (OSSO_ABOOK_TREE_VIEW (contact_view));
-	osso_abook_select_dialog_set_new_contact (OSSO_ABOOK_SELECT_DIALOG (contact_dialog), TRUE);
 	gtk_window_set_title (GTK_WINDOW (contact_dialog), _("mcen_ti_select_recipients"));
 
 	gtk_widget_show (contact_dialog);
