@@ -1,5 +1,11 @@
 2007-06-22  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/maemo/modest-msg-edit-window.c: (init_window):
+	Comment out use of an uninitialzed GtkScrolledWindow variable, 
+	to fix the build and stop a crash. Yet again.
+
+2007-06-22  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/modest-tny-account-store.c: (get_password):
 	Remove the call to tny_account_set_user() because this actually crashes.
 	As mentioned in the last commit, it is known to not work anyway.

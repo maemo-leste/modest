@@ -343,7 +343,6 @@ init_window (ModestMsgEditWindow *obj)
 
 	GtkSizeGroup *size_group;
 	GtkWidget *frame;
-	GtkWidget *scroll_area;
 	GtkWidget *subject_box;
 	GtkWidget *attachment_icon;
 	GtkWidget *window_box;
@@ -481,8 +480,13 @@ init_window (ModestMsgEditWindow *obj)
 	gtk_container_add (GTK_CONTAINER(obj), window_box);
 	priv->scroll_area = modest_scroll_area_new (priv->scroll, priv->msg_body);
 	gtk_container_add (GTK_CONTAINER (frame), priv->scroll_area);
+	
+	/*
+	 TODO: scroll_area was never instantiated.
+	 Stop building without warnings-as-errors. murrayc.
 	gtk_container_set_focus_vadjustment (GTK_CONTAINER (scroll_area), 
 					     gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (priv->scroll)));
+	*/
 
 	priv->clipboard_change_handler_id = g_signal_connect (G_OBJECT (gtk_clipboard_get (GDK_SELECTION_PRIMARY)), "owner-change",
 							      G_CALLBACK (modest_msg_edit_window_clipboard_owner_change), obj);
