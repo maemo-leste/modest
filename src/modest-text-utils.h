@@ -35,6 +35,7 @@
 
 #include <time.h>
 #include <glib.h>
+#include <gdk/gdkcolor.h>
 
 #define _FM(str) dgettext("hildon-fm",str)
 
@@ -296,5 +297,16 @@ GSList      *modest_text_utils_split_addresses_list (const gchar *addresses);
  * Returns: a GSList of strings
  **/
 void         modest_text_utils_get_addresses_indexes (const gchar *addresses, GSList **start_indexes, GSList **end_indexes);
+
+/**
+ * modest_text_utils_get_color_string:
+ * @color: a #GdkColor
+ *
+ * Obtains a proper markup string for @color, in the format used
+ * by Pango and HTML.
+ *
+ * Returns: a newly allocated string
+ */
+gchar *      modest_text_utils_get_color_string (GdkColor *color);
 
 #endif /* __MODEST_TEXT_UTILS_H__ */

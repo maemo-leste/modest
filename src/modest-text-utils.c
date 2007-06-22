@@ -1185,3 +1185,16 @@ get_email_from_address (const gchar * address)
 	else
 		return g_strndup (left_limit + 1, (right_limit - left_limit) - 1);
 }
+
+gchar *      
+modest_text_utils_get_color_string (GdkColor *color)
+{
+
+	return g_strdup_printf ("#%x%x%x%x%x%x%x%x%x%x%x%x",
+				(color->red >> 12)   & 0xf, (color->red >> 8)   & 0xf,
+				(color->red >>  4)   & 0xf, (color->red)        & 0xf,
+				(color->green >> 12) & 0xf, (color->green >> 8) & 0xf,
+				(color->green >>  4) & 0xf, (color->green)      & 0xf,
+				(color->blue >> 12)  & 0xf, (color->blue >> 8)  & 0xf,
+				(color->blue >>  4)  & 0xf, (color->blue)       & 0xf);
+}

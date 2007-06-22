@@ -1399,25 +1399,37 @@ create_empty_view (void)
 }
 
 static GtkWidget *
-create_details_widget (TnyAccount *account)
+create_details_widget (GtkWidget *styled_widget, TnyAccount *account)
 {
 	GtkWidget *vbox;
+	GtkWidget *label_w;
 	gchar *label;
+	gchar *gray_color_markup;
+	GdkColor color;
 
 	vbox = gtk_vbox_new (FALSE, 0);
+
+	/* Obtain the secondary text color. We need a realized widget, that's why 
+	   we get styled_widget from outside */
+	gtk_style_lookup_color (styled_widget->style, "SecondaryTextColor", &color);
+	gray_color_markup = modest_text_utils_get_color_string (&color);
 
 	/* Account description: */
 	
 	if (modest_tny_account_is_virtual_local_folders (account)) {
+		gchar *tmp;
 		/* Local folders: */
 	
 		/* Get device name */
 		gchar *device_name = modest_conf_get_string (modest_runtime_get_conf(),
 						      MODEST_CONF_DEVICE_NAME, NULL);
-   
-		label = g_strdup_printf (_("mcen_fi_localroot_description"),
-					 device_name);
-		gtk_box_pack_start (GTK_BOX (vbox), gtk_label_new (label), FALSE, FALSE, 0);
+		tmp = g_strdup_printf (_("mcen_fi_localroot_description"), "");
+		label = g_markup_printf_escaped ("<span color='%s'>%s</span>%s",
+						 gray_color_markup, tmp, device_name);
+		g_free (tmp);
+		label_w = gtk_label_new (NULL);
+		gtk_label_set_markup (GTK_LABEL (label_w), label);
+		gtk_box_pack_start (GTK_BOX (vbox), label_w, FALSE, FALSE, 0);
 		g_free (device_name);
 		g_free (label);
 	} else {
@@ -1438,10 +1450,13 @@ create_details_widget (TnyAccount *account)
 			/* note: mcen_fi_localroot_description is something like "%s account"
 			 * however, we should display "%s account: %s"... therefore, ugly tmp */
 			tmp   = g_strdup_printf (_("mcen_fi_remoteroot_account"),proto->str);
-			label = g_strdup_printf ("%s: %s", tmp,tny_account_get_name (account));
+			label = g_markup_printf_escaped ("<span color='%s'>%s:</span> %s", 
+							 gray_color_markup, tmp, tny_account_get_name (account));
 			g_free (tmp);
 
-			gtk_box_pack_start (GTK_BOX (vbox), gtk_label_new (label), FALSE, FALSE, 0);
+			label_w = gtk_label_new (NULL);
+			gtk_label_set_markup (GTK_LABEL (label_w), label);
+			gtk_box_pack_start (GTK_BOX (vbox), label_w, FALSE, FALSE, 0);
 			g_string_free (proto, TRUE);
 			g_free (label);
 		}
@@ -1449,23 +1464,33 @@ create_details_widget (TnyAccount *account)
 
 	/* Message count */
 	TnyFolderStore *folder_store = TNY_FOLDER_STORE (account);
-	label = g_strdup_printf ("%s: %d", _("mcen_fi_rootfolder_messages"), 
-				 modest_tny_folder_store_get_message_count (folder_store));
-	gtk_box_pack_start (GTK_BOX (vbox), gtk_label_new (label), FALSE, FALSE, 0);
+	label = g_markup_printf_escaped ("<span color='%s'>%s:</span> %d", 
+					 gray_color_markup, _("mcen_fi_rootfolder_messages"), 
+					 modest_tny_folder_store_get_message_count (folder_store));
+	label_w = gtk_label_new (NULL);
+	gtk_label_set_markup (GTK_LABEL (label_w), label);
+	gtk_box_pack_start (GTK_BOX (vbox), label_w, FALSE, FALSE, 0);
 	g_free (label);
 
 	/* Folder count */
-	label = g_strdup_printf ("%s: %d", _("mcen_fi_rootfolder_folders"), 
-				 modest_tny_folder_store_get_folder_count (folder_store));
-	gtk_box_pack_start (GTK_BOX (vbox), gtk_label_new (label), FALSE, FALSE, 0);
+	label = g_markup_printf_escaped ("<span color='%s'>%s</span>: %d", 
+					 gray_color_markup, 
+					 _("mcen_fi_rootfolder_folders"), 
+					 modest_tny_folder_store_get_folder_count (folder_store));
+	label_w = gtk_label_new (NULL);
+	gtk_label_set_markup (GTK_LABEL (label_w), label);
+	gtk_box_pack_start (GTK_BOX (vbox), label_w, FALSE, FALSE, 0);
 	g_free (label);
 
 	/* Size / Date */
 	if (modest_tny_account_is_virtual_local_folders (account)) {
 		/* FIXME: format size */
-		label = g_strdup_printf ("%s: %d", _("mcen_fi_rootfolder_size"), 
-					 modest_tny_folder_store_get_local_size (folder_store));
-		gtk_box_pack_start (GTK_BOX (vbox), gtk_label_new (label), FALSE, FALSE, 0);
+		label = g_markup_printf_escaped ("<span color='%s'>%s:</span> %d", 
+						 gray_color_markup, _("mcen_fi_rootfolder_size"), 
+						 modest_tny_folder_store_get_local_size (folder_store));
+		label_w = gtk_label_new (NULL);
+		gtk_label_set_markup (GTK_LABEL (label_w), label);
+		gtk_box_pack_start (GTK_BOX (vbox), label_w, FALSE, FALSE, 0);
 		g_free (label);
 	} else if (TNY_IS_ACCOUNT(folder_store)) {
 		TnyAccount *account = TNY_ACCOUNT(folder_store);
@@ -1482,11 +1507,16 @@ create_details_widget (TnyAccount *account)
 		else
 			last_updated_string = g_strdup (_("mcen_va_never"));
 
-		label = g_strdup_printf ("%s: %s", _("mcen_ti_lastupdated"), last_updated_string);
-		gtk_box_pack_start (GTK_BOX (vbox), gtk_label_new (label), FALSE, FALSE, 0);
+		label = g_markup_printf_escaped ("<span color='%s'>%s:</span> %s", 
+						 gray_color_markup, _("mcen_ti_lastupdated"), last_updated_string);
+		label_w = gtk_label_new (NULL);
+		gtk_label_set_markup (GTK_LABEL (label_w), label);
+		gtk_box_pack_start (GTK_BOX (vbox), label_w, FALSE, FALSE, 0);
 		g_free (last_updated_string);
 		g_free (label);
 	}
+
+	g_free (gray_color_markup);
 
 	/* Set alignment */
 	gtk_container_foreach (GTK_CONTAINER (vbox), (GtkCallback) set_alignment, NULL);
@@ -1605,8 +1635,8 @@ modest_main_window_set_contents_style (ModestMainWindow *self,
 		TnyFolderStore *selected_folderstore = 
 			modest_folder_view_get_selected (priv->folder_view);
 		if (TNY_IS_ACCOUNT (selected_folderstore)) {	
-			priv->details_widget = create_details_widget (
-				TNY_ACCOUNT (selected_folderstore));
+		  priv->details_widget = create_details_widget (GTK_WIDGET (self),
+								TNY_ACCOUNT (selected_folderstore));
 
 			wrap_in_scrolled_window (priv->contents_widget, 
 					 priv->details_widget);
