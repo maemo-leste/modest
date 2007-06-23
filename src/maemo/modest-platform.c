@@ -963,6 +963,7 @@ modest_platform_get_global_settings_dialog ()
 void 
 modest_platform_on_new_msg (void)
 {
+#ifndef MODEST_HILDON_VERSION_0
 	HildonNotification *not;
 
 	/* Create a new notification. FIXME put the right values, need
@@ -984,6 +985,7 @@ modest_platform_on_new_msg (void)
 		g_error ("Failed to send notification");
 		
 	g_object_unref (not);
+#endif /*MODEST_HILDON_VERSION_0*/
 }
 
 
