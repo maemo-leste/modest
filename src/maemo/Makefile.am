@@ -29,12 +29,17 @@
 SUBDIRS=easysetup
 
 INCLUDES=\
-	$(MODEST_GSTUFF_CFLAGS) \
-	$(MODEST_LIBTINYMAIL_MAEMO_CFLAGS) \
-	-I ${top_srcdir}/src/widgets  \
-	-I ${top_srcdir}/src  \
-	-DPREFIX=\"@prefix@\" \
-	-DMAEMO_CHANGES \
+	$(MODEST_GSTUFF_CFLAGS)             \
+	$(MODEST_WPEDITOR_CFLAGS)           \
+	$(MODEST_PLATFORM_CFLAGS)           \
+	$(MODEST_HILDON_WIDGETS_CFLAGS)     \
+	$(MODEST_HILDON_HELP_CFLAGS)        \
+	$(MODEST_HILDON_MIME_CFLAGS)        \
+	$(MODEST_HILDON_NOTIFY_CFLAGS)      \
+	-I ${top_srcdir}/src/widgets        \
+	-I ${top_srcdir}/src                \
+	-DPREFIX=\"@prefix@\" 	            \
+	-DMAEMO_CHANGES                     \
 	-DPIXMAP_PREFIX=\"${datadir}/pixmaps/modest/\" \
 	-DMODEST_UIDIR=\""$(datadir)/modest/ui/"\" \
 	-Wall
@@ -79,7 +84,12 @@ libmodest_ui_la_SOURCES=              \
 
 libmodest_ui_la_LIBADD = \
 	$(MODEST_GSTUFF_LIBS) \
-	$(MODEST_LIBTINYMAIL_MAEMO_LIBS) \
+	$(MODEST_PLATFORM_LIBS) \
+	$(MODEST_WPEDITOR_LIBS) \
+	$(MODEST_HILDON_WIDGETS_LIBS) \
+	$(MODEST_HILDON_MIME_LIBS) \
+	$(MODEST_HILDON_HELP_LIBS) \
+	$(MODEST_HILDON_NOTIFY_LIBS)\
 	easysetup/libmodest-easysetup.la 
 
 PIXMAP_FILES=\
@@ -102,7 +112,7 @@ serviceentry_DATA   = com.nokia.modest.service
 desktopentry_DATA   = modest.desktop
 backupsettings_DATA = modest.conf
 
-icon_26x26_DATA    = pixmaps/modest-icon.png
+icon_26x26_DATA     = pixmaps/modest-icon.png
 
 EXTRA_DIST=\
 	$(UI_FILES) \

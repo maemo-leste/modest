@@ -345,10 +345,11 @@ modest_ui_actions_on_delete (GtkAction *action, ModestWindow *win)
 void
 modest_ui_actions_on_quit (GtkAction *action, ModestWindow *win)
 {
-	#ifdef MODEST_PLATFORM_MAEMO
+#ifdef MODEST_PLATFORM_MAEMO
 	modest_osso_save_state();
-	#endif /* MODEST_PLATFORM_MAEMO */
-	
+#endif /* MODEST_PLATFORM_MAEMO */
+
+	g_message ("quiting...");	
 	gtk_main_quit ();
 }
 

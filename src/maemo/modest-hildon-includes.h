@@ -33,9 +33,33 @@ k * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
 #include <config.h>
 #endif
 
-#ifdef MODEST_HILDON_VERSION_0
+/* helplib to use */
+#ifdef MODEST_HAVE_OSSO_HELP
+#include <osso-helplib.h>
+#else
+#ifdef MODEST_HAVE_HILDON_HELP
+#include <hildon/hildon-help.h>
+#endif /*MODEST_HAVE_HILDON_HELP*/
+#endif /*MODEST_HAVE_OSSO_HELP*/
+
+/* mimelib to use */
+#ifdef MODEST_HAVE_OSSO_MIME
 #include <osso-mime.h>
 #include <osso-uri.h>
+#else
+#ifdef MODEST_HAVE_HILDON_MIME
+#include <hildon-mime.h>
+#include <hildon-uri.h>
+#endif /*MODEST_HAVE_HILDON_MIME*/
+#endif /*MODEST_HAVE_OSSO_MIME*/
+
+
+#ifdef MODEST_HAVE_HILDON_NOTIFY
+#include <hildon/hildon-notification.h>
+#endif /*MODEST_HILDON_NOTIFY*/
+
+
+#ifdef MODEST_HAVE_HILDON0_WIDGETS
 #include <hildon-widgets/hildon-color-selector.h>
 #include <hildon-widgets/hildon-color-button.h>
 #include <hildon-widgets/hildon-banner.h>
@@ -49,8 +73,8 @@ k * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
 
 #else
 
-#include <hildon-mime.h>
-#include <hildon-uri.h>
+#ifdef MODEST_HAVE_HILDON1_WIDGETS
+
 #include <hildon/hildon-file-chooser-dialog.h>
 #include <hildon/hildon-color-chooser.h>
 #include <hildon/hildon-banner.h>
@@ -62,9 +86,8 @@ k * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
 #include <hildon/hildon-find-toolbar.h>
 #include <hildon/hildon-sort-dialog.h>
 #include <hildon/hildon-number-editor.h>
-#include <hildon/hildon-help.h>
-#include <hildon/hildon-notification.h>
 
+#endif /*__MODEST_HAVE_HILDON1_WIDGETS*/
+#endif /*__MODEST_HAVE_HILDON0_WIDGETS_*/
 
-#endif /*__MODEST_HILDON_VERSION_0_*/
 #endif /*__MODEST_HILDON_INCLUDES__*/

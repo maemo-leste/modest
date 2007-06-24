@@ -29,8 +29,10 @@
 # HACK_TOP_SRCDIR is temporary and should be remove.
 INCLUDES=\
 	$(MODEST_GSTUFF_CFLAGS) \
-	$(MODEST_LIBTINYMAIL_MAEMO_CFLAGS) \
-	-DMODEST_PLATFORM_ID=$(MODEST_PLATFORM_ID) \
+	$(MODEST_PLATFORM_CFLAGS) \
+	$(MODEST_HILDON_WIDGETS_CFLAGS) \
+	$(MODEST_HILDON_HELP_CFLAGS) \
+	$(MODEST_HILDON_NOTIFY_CFLAGS)\
 	-I ${top_srcdir}/src/widgets  \
 	-I ${top_srcdir}/src  \
 	-DPREFIX=\"@prefix@\" \
@@ -53,8 +55,11 @@ libmodest_easysetup_la_SOURCES=              \
 	modest-easysetup-servertype-combo-box.h modest-easysetup-servertype-combo-box.c
 
 LDADD = \
+	$(MODEST_HILDON_HELP_LIBS) \
+	$(MODEST_HILDON_NOTIFY_LIBS)\
+	$(MODEST_HILDON_WIDGETS_LIBS) \
 	$(MODEST_GSTUFF_LIBS) \
-	$(MODEST_LIBTINYMAIL_MAEMO_LIBS)
+	$(MODEST_PLATFORM_LIBS)
 
 # mcc_mapping will in future be provided by the operator-wizard-settings package:
 MMC_MAPPING_FILE=mcc_mapping

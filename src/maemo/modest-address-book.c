@@ -325,10 +325,10 @@ commit_contact(EContact * contact)
 	if (!contact || !book)
 		return;
 
-#ifdef MODEST_HILDON_VERSION_0	
-	osso_abook_contact_commit(contact, FALSE, book);
-#else
+#ifdef MODEST_HAVE_OLD_ABOOK	
 	osso_abook_contact_commit(contact, FALSE, book, NULL);
+#else
+	osso_abook_contact_commit(contact, FALSE, book);
 #endif /* MODEST_HILDON_VERSION_0 */
 }
 

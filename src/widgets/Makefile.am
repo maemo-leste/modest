@@ -1,15 +1,13 @@
 #
 # Makefile.am
-# Time-stamp: <2007-02-10 14:48:38 (djcb)>
+# Time-stamp: <2007-06-23 15:40:04 (djcb)>
 
 INCLUDES=\
 	$(MODEST_GSTUFF_CFLAGS) \
-	$(MODEST_LIBTINYMAIL_GNOME_DESKTOP_CFLAGS) \
-	$(MODEST_LIBTINYMAIL_MAEMO_CFLAGS) \
+	$(MODEST_PLATFORM_CFLAGS) \
 	-I ${top_srcdir}/src/$(MODEST_PLATFORM) \
 	-I ${top_srcdir}/src \
 	-DPREFIX=\"@prefix@\" \
-	-DMODEST_PLATFORM_ID=$(MODEST_PLATFORM_ID) \
 	-DPIXMAP_PREFIX=\"${datadir}/pixmaps/modest/\" \
 	-Wall
 
@@ -70,5 +68,4 @@ libmodest_widgets_la_SOURCES=          \
 
 LDADD = \
 	$(MODEST_GSTUFF_LIBS) 				\
-	$(MODEST_LIBTINYMAIL_GNOME_DESKTOP_LIBS)        \
-	$(MODEST_LIBTINYMAIL_MAEMO_LIBS) 		
+	$(MODEST_PLATFORM_LIBS)

@@ -109,7 +109,8 @@ static const FolderCols SENT_COLUMNS_TWOLINES[] = {
 static const TnyFolderType LOCAL_FOLDERS[] = {
 /*	TNY_FOLDER_TYPE_OUTBOX, */
 	TNY_FOLDER_TYPE_DRAFTS,
-	TNY_FOLDER_TYPE_SENT
+	TNY_FOLDER_TYPE_SENT,
+	TNY_FOLDER_TYPE_ARCHIVE
 };
 #else
 static const TnyFolderType LOCAL_FOLDERS[] = {
@@ -133,7 +134,8 @@ static GList* new_cold_ids_gslist_from_array( const FolderCols* cols, guint col_
 	return result;
 }
 
-GList * modest_init_get_default_header_view_column_ids (TnyFolderType folder_type, ModestHeaderViewStyle style)
+GList* 
+modest_init_get_default_header_view_column_ids (TnyFolderType folder_type, ModestHeaderViewStyle style)
 {
 		GList *result = NULL;
 		
@@ -204,7 +206,11 @@ modest_init_init_core (void)
 	}
 
 	/* based on the debug settings, we decide whether to overwrite old settings */
-	reset = modest_runtime_get_debug_flags () & MODEST_RUNTIME_DEBUG_FACTORY_SETTINGS;
+	/* FIXME: hack: overwrite the settings, so we're not going to see the invisble
+	   headers problem -- however, this should be fixed more properly, maybe by ripping
+	   out the header-column system, which is really overengineered for our modest needs */
+	//reset = modest_runtime_get_debug_flags () & MODEST_RUNTIME_DEBUG_FACTORY_SETTINGS;
+	reset = TRUE;
 	if (!init_header_columns(modest_runtime_get_conf(), reset)) {
 		modest_init_uninit ();
 		g_printerr ("modest: failed to init header columns\n");

@@ -1,6 +1,6 @@
 #
 # Makefile.am
-# Time-stamp: <2007-05-15 08:46:05 (djcb)>
+# Time-stamp: <2007-06-23 15:17:46 (djcb)>
 
 SUBDIRS=$(MODEST_PLATFORM) widgets $(dbus_api)
 
@@ -8,9 +8,8 @@ DIST_SUBDIRS = widgets gnome maemo dbus_api
 
 INCLUDES=\
 	$(MODEST_GSTUFF_CFLAGS)\
-	$(MODEST_LIBTINYMAIL_GNOME_DESKTOP_CFLAGS) \
-	$(MODEST_LIBTINYMAIL_MAEMO_CFLAGS) \
-	$(OGS_CFLAGS) \
+	$(MODEST_PLATFORM_CFLAGS) \
+	$(MODEST_OGS_CFLAGS) \
 	-I$(MODEST_PLATFORM) \
 	-DPREFIX=\"@prefix@\" \
 	-DMAEMO_CHANGES \
@@ -110,9 +109,8 @@ modest_LDFLAGS = $(MAEMO_LAUNCHER_LDFLAGS)
 
 modest_LDADD = 						\
 	$(MODEST_GSTUFF_LIBS) 				\
-	$(MODEST_LIBTINYMAIL_GNOME_DESKTOP_LIBS)	\
-	$(MODEST_LIBTINYMAIL_MAEMO_LIBS) 		\
-	$(OGS_LIBS)					\
+	$(MODEST_PLATFORM_LIBS)	                        \
+	$(MODEST_OGS_LIBS)				\
 	${easysetupmaybe}				\
 	$(MODEST_PLATFORM)/libmodest-ui.la		\
 	widgets/libmodest-widgets.la \

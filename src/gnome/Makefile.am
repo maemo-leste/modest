@@ -1,6 +1,6 @@
 #
 # Makefile.am
-# Time-stamp: <2007-02-10 14:47:15 (djcb)>
+# Time-stamp: <2007-06-23 15:41:18 (djcb)>
 #
 #
 # use Automake 'trick' ==> convenience static libraries, which
@@ -8,8 +8,7 @@
 #
 INCLUDES=\
 	$(MODEST_GSTUFF_CFLAGS) \
-	$(MODEST_LIBTINYMAIL_GNOME_DESKTOP_CFLAGS) \
-	-DMODEST_PLATFORM_ID=$(MODEST_PLATFORM_ID) \
+	$(MODEST_PLATFORM_CFLAGS) \
 	-I ${top_srcdir}/src  \
 	-DPREFIX=\"@prefix@\" \
 	-DPIXMAP_PREFIX=\"${datadir}/pixmaps/modest/\" \
@@ -46,7 +45,7 @@ libmodest_ui_la_SOURCES=              \
 
 LDADD = \
 	$(MODEST_GSTUFF_LIBS) \
-	$(MODEST_LIBTINYMAIL_GNOME_DESKTOP_LIBS)
+	$(MODEST_PLATFORM_LIBS)
 
 pixmapdir = $(datadir)/pixmaps/modest
 pixmap_DATA = $(PIXMAP_FILES)

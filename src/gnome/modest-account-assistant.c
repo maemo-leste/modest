@@ -313,7 +313,8 @@ add_receiving_page (ModestAccountAssistant *self)
 	/* Note: This ModestPairList* must exist for as long as the combo
 	 * that uses it, because the ModestComboBox uses the ID opaquely, 
 	 * so it can't know how to manage its memory. */
-	priv->receiving_transport_store_protos = modest_protocol_info_get_transport_store_protocol_pair_list (MODEST_PROTOCOL_TYPE_STORE);
+	priv->receiving_transport_store_protos = 
+		modest_protocol_info_get_transport_store_protocol_pair_list ();
 	combo = modest_combo_box_new (priv->receiving_transport_store_protos, g_str_equal);
 	
 	g_signal_connect (G_OBJECT(combo), "changed",

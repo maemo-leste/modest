@@ -202,11 +202,11 @@ modest_platform_get_file_icon_name (const gchar* name, const gchar* mime_type,
 		mime_str = g_string_new (mime_type);
 		g_string_ascii_down (mime_str);
 	}
-#ifdef MODEST_HILDON_VERSION_0
+#ifdef MODEST_HAVE_OSSO_MIME
 	icons = osso_mime_get_icon_names (mime_str->str, NULL);
 #else
 	icons = hildon_mime_get_icon_names (mime_str->str, NULL);
-#endif /*MODEST_HILDON_VERSION_0*/
+#endif /*MODEST_HAVE_OSSO_MIME*/
 	for (cursor = icons; cursor; ++cursor) {
 		if (gtk_icon_theme_has_icon (gtk_icon_theme_get_default(), *cursor)) {
 			icon_name = g_strdup (*cursor);
@@ -226,8 +226,7 @@ modest_platform_get_file_icon_name (const gchar* name, const gchar* mime_type,
 
 
 
-#ifdef MODEST_HILDON_VERSION_0
-
+#ifdef MODEST_HAVE_OSSO_MIME
 gboolean 
 modest_platform_activate_uri (const gchar *uri)
 {
@@ -263,8 +262,7 @@ modest_platform_activate_uri (const gchar *uri)
 	return result;
 }
 
-#else /* !MODEST_HILDON_VERSION_0*/
-
+#else /* !MODEST_HAVE_OSSO_MIME*/
 
 gboolean 
 modest_platform_activate_uri (const gchar *uri)
@@ -302,7 +300,7 @@ modest_platform_activate_uri (const gchar *uri)
 }
 
 
-#endif /* MODEST_HILDON_VERSION_0*/
+#endif /* MODEST_HAVE_OSSO_MIME*/
 
 gboolean 
 modest_platform_activate_file (const gchar *path, const gchar *mime_type)
@@ -322,7 +320,7 @@ modest_platform_activate_file (const gchar *path, const gchar *mime_type)
 	uri_path = g_strconcat ("file://", path, NULL);
 	
 	con = osso_get_dbus_connection (osso_context);
-#ifdef MODEST_HILDON_VERSION_0
+#ifdef MODEST_HAVE_OSSO_MIME
 	result = osso_mime_open_file_with_mime_type (con, uri_path, mime_str->str);
 	g_string_free (mime_str, TRUE);
 
@@ -336,7 +334,7 @@ modest_platform_activate_file (const gchar *path, const gchar *mime_type)
 	if (result != 1)
 		hildon_banner_show_information (NULL, NULL, _("mcen_ni_noregistered_viewer"));
 	return result != 1;
-#endif
+#endif /*MODEST_HAVE_OSSO_MIME*/
 
 }
 
@@ -353,11 +351,11 @@ delete_uri_popup (GtkWidget *menu,
 	ModestPlatformPopupInfo *popup_info = (ModestPlatformPopupInfo *) userdata;
 
 	g_free (popup_info->uri);
-#ifdef MODEST_HILDON_VERSION_0
+#ifdef MODEST_HAVE_OSSO_MIME
 	osso_uri_free_actions (popup_info->actions);
 #else
 	hildon_uri_free_actions (popup_info->actions);
-#endif
+#endif /*MODEST_HAVE_OSSO_MIME*/
 	return FALSE;
 }
 
@@ -390,7 +388,7 @@ activate_uri_popup_item (GtkMenuItem *menu_item,
 	
 	/* now, the real uri-actions... */
 	for (node = popup_info->actions; node != NULL; node = g_slist_next (node)) {
-#ifdef MODEST_HILDON_VERSION_0
+#ifdef MODEST_HAVE_OSSO_MIME
 		OssoURIAction *action = (OssoURIAction *) node->data;
 		if (strcmp (action_name, osso_uri_action_get_name (action))==0) {
 			osso_uri_open (popup_info->uri, action, NULL);
@@ -402,7 +400,7 @@ activate_uri_popup_item (GtkMenuItem *menu_item,
 			hildon_uri_open (popup_info->uri, action, NULL);
 			break;
 		}
-#endif
+#endif /*MODEST_HAVE_OSSO_MIME*/
 	}
 }
 
@@ -415,13 +413,13 @@ modest_platform_show_uri_popup (const gchar *uri)
 	if (uri == NULL)
 		return FALSE;
 	
-#ifdef MODEST_HILDON_VERSION_0
+#ifdef MODEST_HAVE_OSSO_MIME
 	scheme = osso_uri_get_scheme_from_uri (uri, NULL);
 	actions_list = osso_uri_get_actions (scheme, NULL);
 #else
 	scheme = hildon_uri_get_scheme_from_uri (uri, NULL);
 	actions_list = hildon_uri_get_actions (scheme, NULL);
-#endif
+#endif /* MODEST_HAVE_OSSO_MIME */
 	if (actions_list != NULL) {
 		GSList *node;
 		GtkWidget *menu = gtk_menu_new ();
@@ -434,7 +432,7 @@ modest_platform_show_uri_popup (const gchar *uri)
 			GtkWidget *menu_item;
 			const gchar *action_name;
 			const gchar *translation_domain;
-#ifdef MODEST_HILDON_VERSION_0
+#ifdef MODEST_HAVE_OSSO_MIME
 			OssoURIAction *action = (OssoURIAction *) node->data;
 			action_name = osso_uri_action_get_name (action);
 			translation_domain = osso_uri_action_get_translation_domain (action);
@@ -463,7 +461,7 @@ modest_platform_show_uri_popup (const gchar *uri)
 			} else {
 				gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_item);
 			}
-#endif	
+#endif /*MODEST_HAVE_OSSO_MIME*/
 			gtk_widget_show (menu_item);
 		}
 
@@ -963,7 +961,7 @@ modest_platform_get_global_settings_dialog ()
 void 
 modest_platform_on_new_msg (void)
 {
-#ifndef MODEST_HILDON_VERSION_0
+#ifdef MODEST_HAVE_HILDON_NOTIFY
 	HildonNotification *not;
 
 	/* Create a new notification. FIXME put the right values, need
@@ -985,7 +983,7 @@ modest_platform_on_new_msg (void)
 		g_error ("Failed to send notification");
 		
 	g_object_unref (not);
-#endif /*MODEST_HILDON_VERSION_0*/
+#endif /*MODEST_HAVE_HILDON_NOTIFY*/
 }
 
 
@@ -999,7 +997,7 @@ modest_platform_show_help (GtkWindow *parent_window,
 	g_return_if_fail (osso_context);
 
 	/* Show help */
-#ifdef MODEST_HILDON_VERSION_0
+#ifdef MODEST_HAVE_OSSO_HELP
 	result = ossohelp_show (osso_context, help_id, OSSO_HELP_SHOW_DIALOG);
 #else
 	result = hildon_help_show (osso_context, help_id, OSSO_HELP_SHOW_DIALOG);
