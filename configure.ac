@@ -86,6 +86,7 @@ have_easysetup=false
 if test "x$with_platform" == "xgnome"; then
       PKG_CHECK_MODULES(MODEST_PLATFORM,libtinymail-gnome-desktop-1.0 libnm_glib glib-2.0 >= 2.8 gtk+-2.0 >= 2.10 libnotify)
     AC_DEFINE_UNQUOTED(MODEST_PLATFORM_GNOME, 1, ["Whether modest is being built for the GNOME platform."])
+    AC_MSG_ERROR([The GNOME Build is currently broken; please try the Maemo build instead])
 else
     have_easysetup=true
     PKG_CHECK_MODULES(MODEST_PLATFORM,libosso conic libtinymail-maemo-1.0 osso-addressbook-1.0 libebook-1.2 libalarm)
@@ -99,11 +100,10 @@ AC_SUBST(MODEST_PLATFORM)
 
 
 
-
-
 #
-# check for wpeditor or libwpeditor-plus
+# check for wpeditor or libwpeditor-plus (on maemo)
 #
+if test "x$with_platform" == "xmaemo"; then  
 PKG_CHECK_MODULES(MODEST_WPEDITOR,wpeditor,have_wpeditor=true,have_wpeditor=false)
 if test "x$have_wpeditor" == "xfalse"; then
    PKG_CHECK_MODULES(MODEST_WPEDITOR,libwpeditor-plus,have_libwpeditorplus=true,have_libwpeditorplus=false)	
@@ -117,12 +117,13 @@ else
    wpeditor="wpeditor"	
    AC_DEFINE_UNQUOTED(MODEST_HAVE_WPEDITOR, 1, ["Whether wpeditor is used."])		
 fi
-
+fi
 
 
 #
-# check the providers-data
+# check the providers-data (on maemo)
 #
+if test "x$with_platform" == "xmaemo"; then  
 PKG_CHECK_MODULES(MODEST_PROVIDERS_DATA,modest-providers-data,have_modest_providers_data=true,have_modest_providers_data=false)
 if test "x$have_modest_providers_data" == "xfalse"; then
    PKG_CHECK_MODULES(MODEST_PROVIDERS_DATA,maemo-providers-data,have_maemo_providers_data=true,have_maemo_providers_data=false)
@@ -139,7 +140,7 @@ else
   AC_DEFINE_UNQUOTED([MODEST_PROVIDERS_DATA_PATH],["`$PKG_CONFIG --variable=path modest-providers-data`"],[modest-providers-data file path])
   providers_data="modest-providers-data"								
 fi
-      
+fi      
    
 
 
@@ -197,7 +198,8 @@ fi
 
 
 #dnl wether we can and should build the 
-#dnl search plugin
+#dnl search plugin (on maemo)
+if test "x$with_platform" == "xmaemo"; then  
 PKG_CHECK_MODULES(MODEST_OGS, libosso >= 0.8.5 libogs-1.2, have_ogs=true, have_ogs=false)
 have_ogs_support=false
 AC_ARG_ENABLE(ogs_support,
@@ -216,6 +218,7 @@ esac],[have_ogs_support=$have_ogs])
 
 if test x$have_ogs_support = xtrue; then
 	AC_DEFINE_UNQUOTED(MODEST_HAVE_OGS, 1, ["Whether ogs is available."])
+fi
 fi
 
 

@@ -391,7 +391,7 @@ add_sending_page (ModestAccountAssistant *self)
 	/* Note: This ModestPairList* must exist for as long as the combo
 	 * that uses it, because the ModestComboBox uses the ID opaquely, 
 	 * so it can't know how to manage its memory. */
-	priv->sending_transport_store_protos = modest_protocol_info_get_transport_store_protocol_pair_list (MODEST_PROTOCOL_TYPE_TRANSPORT);
+	priv->sending_transport_store_protos = modest_protocol_info_get_transport_store_protocol_pair_list ();
 	combo = modest_combo_box_new (priv->sending_transport_store_protos, g_str_equal);
 
 	g_signal_connect (G_OBJECT(combo), "changed",
@@ -616,7 +616,7 @@ on_apply (ModestAccountAssistant *self, gpointer user_data)
 {
 	ModestAccountAssistantPrivate *priv;
 	ModestTransportStoreProtocol proto = MODEST_PROTOCOL_TRANSPORT_STORE_UNKNOWN;
-	ModestAuthProtocol security = MODEST_PROTOCOL_SECURITY_NONE;
+	ModestAuthProtocol security = MODEST_PROTOCOL_CONNECTION_NORMAL;
 	ModestConnectionProtocol auth = MODEST_PROTOCOL_AUTH_NONE;
 	gchar *store_name, *transport_name;
 	const gchar *account_name, *username, *servername, *path;
@@ -641,8 +641,15 @@ on_apply (ModestAccountAssistant *self, gpointer user_data)
 		modest_account_mgr_add_server_account_uri (priv->account_mgr, store_name, proto, uri);
 		g_free (uri);
 	} else
-		modest_account_mgr_add_server_account (priv->account_mgr, store_name, servername,
-						       username, NULL, proto, security, auth);
+		modest_account_mgr_add_server_account (priv->account_mgr,
+						       store_name, 
+						       servername,
+						       0, /* FIXME: does this mean default?*/
+						       username,
+						       NULL, 
+						       proto, 
+						       security, 
+						       auth);
 		
 	/* create server account -> transport */
 	transport = MODEST_TRANSPORT_WIDGET(priv->transport_widget);
@@ -657,9 +664,10 @@ on_apply (ModestAccountAssistant *self, gpointer user_data)
 	
 	transport_name = get_new_server_account_name (priv->account_mgr, proto,username, servername);
 	modest_account_mgr_add_server_account (priv->account_mgr,
-						transport_name,	servername,
-						username, NULL,
-						proto, security, auth);
+					       transport_name,	servername,
+					       0, /* FIXME: does this mean default?*/
+					       username, NULL,
+					       proto, security, auth);
 
 	/* create account */
 	account_name = get_account_name (self);
