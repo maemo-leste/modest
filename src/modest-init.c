@@ -109,8 +109,7 @@ static const FolderCols SENT_COLUMNS_TWOLINES[] = {
 static const TnyFolderType LOCAL_FOLDERS[] = {
 /*	TNY_FOLDER_TYPE_OUTBOX, */
 	TNY_FOLDER_TYPE_DRAFTS,
-	TNY_FOLDER_TYPE_SENT,
-	TNY_FOLDER_TYPE_ARCHIVE
+	TNY_FOLDER_TYPE_SENT
 };
 #else
 static const TnyFolderType LOCAL_FOLDERS[] = {
@@ -205,12 +204,7 @@ modest_init_init_core (void)
 		return FALSE;
 	}
 
-	/* based on the debug settings, we decide whether to overwrite old settings */
-	/* FIXME: hack: overwrite the settings, so we're not going to see the invisble
-	   headers problem -- however, this should be fixed more properly, maybe by ripping
-	   out the header-column system, which is really overengineered for our modest needs */
-	//reset = modest_runtime_get_debug_flags () & MODEST_RUNTIME_DEBUG_FACTORY_SETTINGS;
-	reset = TRUE;
+	reset = modest_runtime_get_debug_flags () & MODEST_RUNTIME_DEBUG_FACTORY_SETTINGS;
 	if (!init_header_columns(modest_runtime_get_conf(), reset)) {
 		modest_init_uninit ();
 		g_printerr ("modest: failed to init header columns\n");

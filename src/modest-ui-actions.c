@@ -349,7 +349,9 @@ modest_ui_actions_on_quit (GtkAction *action, ModestWindow *win)
 	modest_osso_save_state();
 #endif /* MODEST_PLATFORM_MAEMO */
 
-	g_message ("quiting...");	
+	/* FIXME: we need to cancel all actions/threads here,
+	 so we really quit */
+
 	gtk_main_quit ();
 }
 
