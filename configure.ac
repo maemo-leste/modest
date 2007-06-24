@@ -82,20 +82,19 @@ AC_ARG_WITH(platform,
 esac], [MODEST_PLATFORM=gnome
                with_platform=gnome])
 
-
+have_easysetup=false
 if test "x$with_platform" == "xgnome"; then
       PKG_CHECK_MODULES(MODEST_PLATFORM,libtinymail-gnome-desktop-1.0 libnm_glib glib-2.0 >= 2.8 gtk+-2.0 >= 2.10 libnotify)
     AC_DEFINE_UNQUOTED(MODEST_PLATFORM_GNOME, 1, ["Whether modest is being built for the GNOME platform."])
 else
+    have_easysetup=true
     PKG_CHECK_MODULES(MODEST_PLATFORM,libosso conic libtinymail-maemo-1.0 osso-addressbook-1.0 libebook-1.2 libalarm)
     AC_DEFINE_UNQUOTED(MODEST_PLATFORM_MAEMO, 1, ["Whether modest is being built for the MAEMO platform."])
+    AC_DEFINE_UNQUOTED(MODEST_HAVE_EASYSETUP, 1, ["Whether we have the easysetup feature"])
 fi		    
 
-
-
+AM_CONDITIONAL(MODEST_HAVE_EASYSETUP,test "x$have_easysetup" == "xtrue")
 AC_SUBST(MODEST_PLATFORM)
-
-
 
 
 

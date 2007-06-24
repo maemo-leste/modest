@@ -326,9 +326,9 @@ commit_contact(EContact * contact)
 		return;
 
 #ifdef MODEST_HAVE_OLD_ABOOK	
-	osso_abook_contact_commit(contact, FALSE, book, NULL);
-#else
 	osso_abook_contact_commit(contact, FALSE, book);
+#else
+	osso_abook_contact_commit(contact, FALSE, book, NULL);
 #endif /* MODEST_HILDON_VERSION_0 */
 }
 

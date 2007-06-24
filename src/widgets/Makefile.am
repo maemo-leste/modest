@@ -5,6 +5,7 @@
 INCLUDES=\
 	$(MODEST_GSTUFF_CFLAGS) \
 	$(MODEST_PLATFORM_CFLAGS) \
+	$(MODEST_HILDON_WIDGETS_CFLAGS) \
 	-I ${top_srcdir}/src/$(MODEST_PLATFORM) \
 	-I ${top_srcdir}/src \
 	-DPREFIX=\"@prefix@\" \
@@ -68,4 +69,5 @@ libmodest_widgets_la_SOURCES=          \
 
 LDADD = \
 	$(MODEST_GSTUFF_LIBS) 				\
-	$(MODEST_PLATFORM_LIBS)
+	$(MODEST_PLATFORM_LIBS)				\
+	$(MODEST_HILDON_WIDGETS_LIBS) 
