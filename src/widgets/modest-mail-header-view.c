@@ -300,12 +300,12 @@ modest_mail_header_view_set_header_default (TnyHeaderView *self, TnyHeader *head
 			gtk_label_set_markup (GTK_LABEL (priv->fromto_label), _("mail_va_from"));
 			if (from)
 				modest_recpt_view_set_recipients (MODEST_RECPT_VIEW (priv->fromto_contents), from);
+			if (to)
+				add_recpt_header (MODEST_MAIL_HEADER_VIEW (self), _("mail_va_to"), to);
 			if (cc)
 				add_recpt_header (MODEST_MAIL_HEADER_VIEW (self), _("mail_va_cc"), cc);
 			if (bcc)
 				add_recpt_header (MODEST_MAIL_HEADER_VIEW (self), _("mail_va_hotfix1"), bcc);
-			if (to)
-				add_recpt_header (MODEST_MAIL_HEADER_VIEW (self), _("mail_va_to"), to);
 			modest_mail_header_view_add_custom_header (MODEST_MAIL_HEADER_VIEW (self), _("mail_va_subject"),
 								   priv->subject_box, TRUE, TRUE);
 			add_date_time_header (MODEST_MAIL_HEADER_VIEW (self), _("mcen_fi_message_properties_received"),
