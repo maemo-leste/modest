@@ -665,7 +665,6 @@ cleanup:
 	g_object_unref (parent_win);
 	g_object_unref (msg);
 	g_object_unref (folder);
-	g_object_unref (header);
 }
 
 /*
@@ -3075,7 +3074,7 @@ modest_ui_actions_on_settings (GtkAction *action,
 
 	dialog = modest_platform_get_global_settings_dialog ();
 	gtk_window_set_transient_for (GTK_WINDOW (dialog), GTK_WINDOW (win));
-	gtk_widget_show (dialog);
+	gtk_widget_show_all (dialog);
 
 	gtk_dialog_run (GTK_DIALOG (dialog));
 

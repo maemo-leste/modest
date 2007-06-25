@@ -1091,10 +1091,14 @@ update_account_thread (gpointer thr_user_data)
 	   be still alive */
 	g_idle_add (notify_update_account_queue, g_object_ref (info->mail_op));
 
-	if (info->callback) 
+	if (info->callback) {
+		/* This thread is not in the main lock */
+		gdk_threads_enter ();
 		info->callback (info->mail_op, 
 				(new_headers) ? new_headers->len : 0, 
 				info->user_data);
+		gdk_threads_leave ();
+	}
 	
 	/* Frees */
 	g_object_unref (query);
@@ -1563,7 +1567,11 @@ get_msg_cb (TnyFolder *folder,
 
 	/* If user defined callback function was defined, call it */
 	if (helper->user_callback) {
+		/* This callback is called into an iddle by tinymail,
+		   and idles are not in the main lock */
+		gdk_threads_enter ();
 		helper->user_callback (self, helper->header, msg, helper->user_data);
+		gdk_threads_leave ();
 	}
 
  out:
@@ -1636,8 +1644,11 @@ notify_get_msgs_full (gpointer data)
 
 	info = (NotifyGetMsgsInfo *) data;	
 
-	/* Call the user callback */
+	/* Call the user callback. Idles are not in the main lock, so
+	   lock it */
+	gdk_threads_enter ();
 	info->user_callback (info->mail_op, info->header, info->msg, info->user_data);
+	gdk_threads_leave ();
 
 	g_slice_free (NotifyGetMsgsInfo, info);
 
