@@ -93,6 +93,7 @@ static void  send_insensitive_press (GtkWidget *widget, ModestMsgEditWindow *edi
 static void  style_insensitive_press (GtkWidget *widget, ModestMsgEditWindow *editor);
 static void  remove_attachment_insensitive_press (GtkWidget *widget, ModestMsgEditWindow *editor);
 static void  zoom_insensitive_press (GtkWidget *widget, ModestMsgEditWindow *editor);
+static void  paste_insensitive_press (GtkWidget *widget, ModestMsgEditWindow *editor);
 static void  setup_insensitive_handlers (ModestMsgEditWindow *editor);
 static void  reset_modified (ModestMsgEditWindow *editor);
 
@@ -2364,6 +2365,9 @@ setup_insensitive_handlers (ModestMsgEditWindow *window)
 	g_signal_connect (G_OBJECT (widget), "insensitive-press", G_CALLBACK (remove_attachment_insensitive_press), window);
 	widget = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/MenuBar/ViewMenu/ZoomMenu");
 	g_signal_connect (G_OBJECT (widget), "insensitive-press", G_CALLBACK (zoom_insensitive_press), window);
+
+	widget = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/MenuBar/EditMenu/PasteMenu");
+	g_signal_connect (G_OBJECT (widget), "insensitive-press", G_CALLBACK (paste_insensitive_press), window);
 }
 
 static void  
@@ -2722,13 +2726,36 @@ update_paste_dimming (ModestMsgEditWindow *window)
 	ModestWindowPrivate *parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
 	GtkAction *action = NULL;
 	GtkClipboard *clipboard = NULL;
+	GtkWidget *focused;
+	gboolean active;
+
+	focused = gtk_window_get_focus (GTK_WINDOW (window));
 
 	clipboard = gtk_clipboard_get (GDK_SELECTION_CLIPBOARD);
+	active = gtk_clipboard_wait_is_text_available (clipboard);
+
+	if (active) {
+		if (MODEST_IS_ATTACHMENTS_VIEW (focused))
+			active = FALSE;
+	}
 
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/EditMenu/PasteMenu");
-	gtk_action_set_sensitive (action, gtk_clipboard_wait_is_text_available (clipboard));
+	gtk_action_set_sensitive (action, active);
 
 }
+
+static void  
+paste_insensitive_press (GtkWidget *widget, ModestMsgEditWindow *editor)
+{
+	GtkWidget *focused = gtk_window_get_focus (GTK_WINDOW (editor));
+
+	if (MODEST_IS_ATTACHMENTS_VIEW (focused))
+		hildon_banner_show_information (NULL, NULL, dgettext("hildon-common-strings", "ckct_ib_unable_to_paste_here"));
+	else
+		hildon_banner_show_information (NULL, NULL, dgettext("hildon-common-strings", "ecoc_ib_edwin_nothing_to_paste"));
+		
+}
+
 
 static void
 modest_msg_edit_window_system_clipboard_owner_change (GtkClipboard *clipboard,
