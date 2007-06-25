@@ -1971,7 +1971,9 @@ transfer_msgs_cb (TnyFolder *folder, gboolean cancelled, GError **err, gpointer 
 
 	/* If user defined callback function was defined, call it */
 	if (helper->user_callback) {
+		gdk_threads_enter ();
 		helper->user_callback (priv->source, helper->user_data);
+		gdk_threads_leave ();
 	}
 
 	/* Free */
@@ -2084,8 +2086,11 @@ on_refresh_folder (TnyFolder   *folder,
 
  out:
 	/* Call user defined callback, if it exists */
-	if (helper->user_callback)
+	if (helper->user_callback) {
+		gdk_threads_enter ();
 		helper->user_callback (priv->source, folder, helper->user_data);
+		gdk_threads_leave ();
+	}
 
 	/* Free */
 	g_object_unref (helper->mail_op);
