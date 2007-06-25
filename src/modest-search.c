@@ -548,6 +548,7 @@ modest_search_account (TnyAccount *account, ModestSearch *search)
 	g_object_unref (iter);
 	g_object_unref (folders);
 
+	/* printf ("DEBUG: %s: hits length = %d\n", __FUNCTION__, g_list_length (hits)); */
 	return hits;
 }
 
@@ -595,6 +596,7 @@ modest_search_all_accounts (ModestSearch *search)
 	g_object_unref (accounts);
 	g_object_unref (iter);
 
+	/* printf ("DEBUG: %s: end: hits length=%d\n", __FUNCTION__, g_list_length(hits)); */
 	return hits;
 }
 

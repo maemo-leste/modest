@@ -1053,6 +1053,10 @@ on_dbus_method_search (DBusConnection *con, DBusMessage *message)
 	search.flags |= MODEST_SEARCH_USE_OGS;
 	g_debug ("%s: Starting search for %s", __FUNCTION__, search.query);
 #endif
+
+	/* Note that this currently gets folders and messages from the servers, 
+	 * which can take a long time. libmodest_dbus_client_search() can timeout, 
+	 * reporting no results, if this takes a long time: */
 	hits = modest_search_all_accounts (&search);
 
 	reply = dbus_message_new_method_return (message);
@@ -1101,7 +1105,7 @@ get_folders_result_to_message (DBusMessage *reply,
 		
 		const gchar *folder_name = (const gchar*)list_iter->data;
 		if (folder_name) {
-			g_debug ("DEBUG: %s: Adding folder: %s", __FUNCTION__, folder_name);	
+			/* g_debug ("DEBUG: %s: Adding folder: %s", __FUNCTION__, folder_name);	*/
 			
 			DBusMessageIter struct_iter;
 			dbus_message_iter_open_container (&array_iter,

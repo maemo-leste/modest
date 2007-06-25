@@ -1,5 +1,19 @@
 2007-06-25  Murray Cumming  <murrayc@murrayc.com>
 
+	* libmodest-dbus-client/libmodest-dbus-client.c:
+	(libmodest_dbus_client_search),
+	(libmodest_dbus_client_get_folders): Use large timeouts (2 minutes) 
+	instead of 1 second, because the search gets folders and messages from 
+	the server, which can take a long time. When it times out, 
+	osso-global-search will report no results.
+	
+	We need to specify whether we should search only cached information 
+	(maybe with a user preference), and the osso-email-search-plugin
+	API should really be improved to allow that option, and to allow results 
+	to be delivered asynchronously in batches.
+
+2007-06-25  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/maemo/easysetup/modest-wizard-dialog.c: (init):
 	Fix a typo to fix the osso 1.1. build. See the TODO comment though -
 	GTK_ICON_SIZE_DIALOG is probably the wrong size.
