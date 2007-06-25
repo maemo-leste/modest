@@ -957,15 +957,14 @@ static void
 on_dbus_method_search (DBusConnection *con, DBusMessage *message)
 {
 	ModestDBusSearchFlags dbus_flags;
-	ModestSearch  search;
 	DBusMessage  *reply = NULL;
 	dbus_bool_t  res;
 	dbus_int64_t sd_v;
 	dbus_int64_t ed_v;
 	dbus_int32_t flags_v;
 	dbus_uint32_t size_v;
-	char *folder;
-	char *query;
+	const char *folder;
+	const char *query;
 	time_t start_date;
 	time_t end_date;
 	GList *hits;
@@ -979,7 +978,7 @@ on_dbus_method_search (DBusConnection *con, DBusMessage *message)
 	res = dbus_message_get_args (message,
 				     &error,
 				     DBUS_TYPE_STRING, &query,
-				     DBUS_TYPE_STRING, &folder,
+				     DBUS_TYPE_STRING, &folder, /* e.g. "INBOX/drafts": TODO: Use both an ID and a display name. */
 				     DBUS_TYPE_INT64, &sd_v,
 				     DBUS_TYPE_INT64, &ed_v,
 				     DBUS_TYPE_INT32, &flags_v,
@@ -990,14 +989,27 @@ on_dbus_method_search (DBusConnection *con, DBusMessage *message)
 	start_date = (time_t) sd_v;
 	end_date = (time_t) ed_v;
 
+	ModestSearch search;
 	memset (&search, 0, sizeof (search));
+	
+	/* Remember what folder we are searching in:
+	 *
+	 * Note that we don't copy the strings, 
+	 * because this struct will only be used for the lifetime of this function.
+	 */
+	search.folder = folder;
+
+   /* Remember the text to search for: */
 #ifdef MODEST_HAVE_OGS
 	search.query  = query;
 #endif
+
+	/* Other criteria: */
 	search.before = start_date;
 	search.after  = end_date;
 	search.flags  = 0;
 
+	/* Text to serach for in various parts of the message: */
 	if (dbus_flags & MODEST_DBUS_SEARCH_SUBJECT) {
 		search.flags |= MODEST_SEARCH_SUBJECT;
 		search.subject = query;

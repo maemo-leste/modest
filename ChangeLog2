@@ -1,3 +1,12 @@
+2007-06-25  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/dbus_api/modest-dbus-callbacks.c: (on_dbus_method_search):
+	* src/modest-search.c: (modest_search_folder),
+	(modest_search_all_accounts): Actually search only in the specified folder, 
+	doing a simple match on the folder ID.
+	* src/modest-search.h: Added a folder field to the ModestSearch struct, 
+	and added some documentation.
+
 2007-06-22  Armin Burgmeier  <armin@openismus.com>
 
 	* src/maemo/modest-maemo-utils.h:

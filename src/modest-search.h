@@ -59,12 +59,20 @@ typedef enum {
 } ModestSearchFlags;
 
 typedef struct {
-	gchar *subject, *from, *recipient, *body;
+	const gchar *folder; /* The folder to search in */
+	
+	/* Text to search for in various parts: */
+	const gchar *subject;
+	const gchar *from;
+	const gchar *recipient;
+	const gchar *body;
+	
+	/* Other criteria: */
 	time_t before, after;
 	guint32 minsize;
 	ModestSearchFlags flags;
 #ifdef MODEST_HAVE_OGS
-	const gchar     *query;
+	const gchar     *query; /* The text to search for. */
 	OgsTextSearcher *text_searcher;	
 #endif
 } ModestSearch;

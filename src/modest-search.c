@@ -374,12 +374,19 @@ static gboolean search_mime_part_and_child_parts (TnyMimePart *part, ModestSearc
  * @folder: a #TnyFolder instance
  * @search: a #ModestSearch query
  *
- * This operation will search @folder for headers that match the query @search.
+ * This operation will search @folder for headers that match the query @search,
+ * if the folder itself matches the query.
  * It will return a doubly linked list with URIs that point to the message.
  **/
 GList *
 modest_search_folder (TnyFolder *folder, ModestSearch *search)
 {
+	/* Check that we should be searching this folder. */
+	/* Note that we don't try to search sub-folders. 
+	 * Maybe we should, but that should be specified. */
+	if (search->folder && (strcmp (tny_folder_get_id (folder), search->folder) != 0))
+		return NULL;
+		
 	GList *retval = NULL;
 	TnyIterator *iter = NULL;
 	TnyList *list = NULL;
@@ -547,6 +554,7 @@ modest_search_account (TnyAccount *account, ModestSearch *search)
 GList *
 modest_search_all_accounts (ModestSearch *search)
 {
+	/* printf ("DEBUG: %s: query=%s\n", __FUNCTION__, search->query); */
 	ModestTnyAccountStore *astore;
 	TnyList               *accounts;
 	TnyIterator           *iter;
