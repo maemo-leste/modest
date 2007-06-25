@@ -2,6 +2,6 @@
 
 	reviewed by: <delete if not using a buddy>
 
-	* src/modest-search.c: (modest_search_folder):
+	* src/maemo/easysetup/modest-wizard-dialog.c: (init):
 
 * please check the svn log instead

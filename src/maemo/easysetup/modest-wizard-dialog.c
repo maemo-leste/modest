@@ -260,7 +260,7 @@ init (ModestWizardDialog *wizard_dialog)
 						HILDON_ICON_SIZE_WIDG_WIZARD);
 #else
     priv->image = gtk_image_new_from_icon_name ("qgn_widg_wizard",
-						MODEST_HAVE_HILDON0_WIDGETS;
+						GTK_ICON_SIZE_DIALOG); /* TODO: Is this an appropriate size? */
 #endif /*MODEST_HILDON_VERSION_0*/
     /* Default values for user provided properties */
     priv->notebook = NULL;

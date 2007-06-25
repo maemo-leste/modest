@@ -1,5 +1,11 @@
 2007-06-25  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/maemo/easysetup/modest-wizard-dialog.c: (init):
+	Fix a typo to fix the osso 1.1. build. See the TODO comment though -
+	GTK_ICON_SIZE_DIALOG is probably the wrong size.
+
+2007-06-25  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/modest-search.c: (modest_search_folder): Ignore a seach folder 
 	that is an empty string. D-Bus seems to give us these instead of NULL.
 
