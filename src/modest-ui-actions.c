@@ -882,11 +882,11 @@ static gboolean
 download_uncached_messages (TnyList *header_list, GtkWindow *win)
 {
 	TnyIterator *iter;
-	gboolean found, retval;
+	gboolean retval;
+	gint uncached_messages = 0;
 
 	iter = tny_list_create_iterator (header_list);
-	found = FALSE;
-	while (!tny_iterator_is_done (iter) && !found) {
+	while (!tny_iterator_is_done (iter)) {
 		TnyHeader *header;
 		TnyHeaderFlags flags;
 
@@ -895,7 +895,8 @@ download_uncached_messages (TnyList *header_list, GtkWindow *win)
 		/* TODO: is this the right flag?, it seems that some
 		   headers that have been previously downloaded do not
 		   come with it */
-		found = !(flags & TNY_HEADER_FLAG_CACHED);
+		if (! (flags & TNY_HEADER_FLAG_CACHED))
+			uncached_messages ++;
 		g_object_unref (header);
 		tny_iterator_next (iter);
 	}
@@ -903,11 +904,13 @@ download_uncached_messages (TnyList *header_list, GtkWindow *win)
 
 	/* Ask for user permission to download the messages */
 	retval = TRUE;
-	if (found) {
+	if (uncached_messages > 0) {
 		GtkResponseType response;
 		response = 
 			modest_platform_run_confirmation_dialog (GTK_WINDOW (win),
-								 _("mcen_nc_get_multi_msg_txt"));
+								 ngettext("mcen_nc_get_msg",
+									  "mcen_nc_get_msgs",
+									 uncached_messages));
 		if (response == GTK_RESPONSE_CANCEL)
 			retval = FALSE;
 	}
