@@ -939,6 +939,9 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 	
 	/* Current folder was unselected */
 	if (priv->cur_folder_store) {
+		if (TNY_IS_FOLDER(priv->cur_folder_store))
+			tny_folder_sync (TNY_FOLDER(priv->cur_folder_store), FALSE, NULL);
+
 		g_signal_emit (G_OBJECT(tree_view), signals[FOLDER_SELECTION_CHANGED_SIGNAL], 0,
 			       priv->cur_folder_store, FALSE);
 		g_object_unref (priv->cur_folder_store);
