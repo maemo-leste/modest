@@ -1998,7 +1998,6 @@ modest_mail_operation_xfer_msgs (ModestMailOperation *self,
 
 	/* Apply folder rules */
 	rules = modest_tny_folder_get_rules (TNY_FOLDER (folder));
-
 	if (rules & MODEST_FOLDER_RULES_FOLDER_NON_WRITEABLE) {
  		/* Set status failed and set an error */
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;

@@ -1227,7 +1227,11 @@ modest_ui_actions_on_header_selected (ModestHeaderView *header_view,
 	/* If no header has been selected then exit */
 	if (!header)
 		return;
-	
+
+	/* Update focus */
+	if (!gtk_widget_is_focus (GTK_WIDGET(header_view)))
+	    gtk_widget_grab_focus (GTK_WIDGET(header_view));
+
 	/* Update Main window title */
 	if (gtk_widget_is_focus (GTK_WIDGET(header_view))) {
 		const gchar *subject = tny_header_get_subject (header);
@@ -2892,8 +2896,9 @@ modest_ui_actions_on_main_window_move_to (GtkAction *action,
 			g_object_unref (headers);
 		}
 	}
-	g_object_unref (folder_store);
  end:
+	if (folder_store != NULL)
+		g_object_unref (folder_store);
 	gtk_widget_destroy (dialog);
 }
 
