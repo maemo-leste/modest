@@ -574,10 +574,22 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg)
 
 	if (to)
 		modest_recpt_editor_set_recipients (MODEST_RECPT_EDITOR (priv->to_field),  to);
-	if (cc)
+	if (cc) {
 		modest_recpt_editor_set_recipients (MODEST_RECPT_EDITOR (priv->cc_field),  cc);
-	if (bcc)
+		gtk_widget_set_no_show_all (priv->cc_caption, FALSE);
+		gtk_widget_show (priv->cc_caption);
+	} else if (!modest_conf_get_bool (modest_runtime_get_conf (), MODEST_CONF_SHOW_CC, NULL)) {
+		gtk_widget_set_no_show_all (priv->cc_caption, FALSE);
+		gtk_widget_hide (priv->cc_caption);
+	}
+	if (bcc) {
 		modest_recpt_editor_set_recipients (MODEST_RECPT_EDITOR (priv->bcc_field), bcc);
+		gtk_widget_set_no_show_all (priv->cc_caption, FALSE);
+		gtk_widget_show (priv->bcc_caption);
+	} else if (!modest_conf_get_bool (modest_runtime_get_conf (), MODEST_CONF_SHOW_BCC, NULL)) {
+		gtk_widget_set_no_show_all (priv->bcc_caption, FALSE);
+		gtk_widget_hide (priv->bcc_caption);
+	} 
 	if (subject)
 		gtk_entry_set_text (GTK_ENTRY(priv->subject_field), subject);
 	modest_msg_edit_window_set_priority_flags (MODEST_MSG_EDIT_WINDOW(self),
@@ -1951,11 +1963,13 @@ modest_msg_edit_window_show_cc (ModestMsgEditWindow *window,
 				gboolean show)
 {
 	ModestMsgEditWindowPrivate *priv = NULL;
+	const gchar *recipients;
 	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
 
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
 	gtk_widget_set_no_show_all (priv->cc_caption, TRUE);
-	if (show)
+	recipients = modest_recpt_editor_get_recipients (MODEST_RECPT_EDITOR (priv->cc_field));
+	if ((show) || ((recipients != NULL) && (recipients[0] != '\0')))
 		gtk_widget_show (priv->cc_caption);
 	else
 		gtk_widget_hide (priv->cc_caption);
@@ -1967,11 +1981,13 @@ modest_msg_edit_window_show_bcc (ModestMsgEditWindow *window,
 				 gboolean show)
 {
 	ModestMsgEditWindowPrivate *priv = NULL;
+	const gchar *recipients;
 	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
 
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
 	gtk_widget_set_no_show_all (priv->bcc_caption, TRUE);
-	if (show)
+	recipients = modest_recpt_editor_get_recipients (MODEST_RECPT_EDITOR (priv->bcc_field));
+	if ((show) || ((recipients != NULL) && (recipients[0] != '\0')))
 		gtk_widget_show (priv->bcc_caption);
 	else
 		gtk_widget_hide (priv->bcc_caption);
