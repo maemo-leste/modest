@@ -68,7 +68,7 @@
 #define MODEST_MAIN_WINDOW_ACTION_GROUP_ADDITIONS "ModestMainWindowActionAdditions"
 
 #define XALIGN 0.5
-#define YALIGN 0.5
+#define YALIGN 0.0
 #define XSPACE 1
 #define YSPACE 0
 
