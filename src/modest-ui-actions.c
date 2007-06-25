@@ -486,7 +486,7 @@ modest_ui_actions_on_smtp_servers (GtkAction *action, ModestWindow *win)
 void
 modest_ui_actions_on_new_msg (GtkAction *action, ModestWindow *win)
 {
-	ModestWindow *msg_win;
+	ModestWindow *msg_win = NULL;
 	TnyMsg *msg = NULL;
 	TnyFolder *folder = NULL;
 	gchar *account_name = NULL;
@@ -785,11 +785,11 @@ reply_forward_cb (ModestMailOperation *mail_op,
 {
 	TnyMsg *new_msg;
 	ReplyForwardHelper *rf_helper;
-	ModestWindow *msg_win;
+	ModestWindow *msg_win = NULL;
 	ModestEditType edit_type;
-	gchar *from;
+	gchar *from = NULL;
 	TnyAccount *account = NULL;
-	ModestWindowMgr *mgr;
+	ModestWindowMgr *mgr = NULL;
 	gchar *signature = NULL;
 			
 	g_return_if_fail (user_data != NULL);

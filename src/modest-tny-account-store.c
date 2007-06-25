@@ -1127,7 +1127,7 @@ modest_tny_account_store_get_tny_account_by (ModestTnyAccountStore *self,
 		}
 		
 		if (type == MODEST_TNY_ACCOUNT_STORE_QUERY_URL && 
-		    tny_account_matches_url_string (TNY_ACCOUNT(cursor->data), val)) {
+		    tny_account_matches_url_string (TNY_ACCOUNT(cursor->data), str)) {
 			account = TNY_ACCOUNT (cursor->data);
 			goto end;
 		} else {

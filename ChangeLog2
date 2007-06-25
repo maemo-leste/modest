@@ -1,6 +1,18 @@
 2007-06-25  Murray Cumming  <murrayc@murrayc.com>
 
 	* libmodest-dbus-client/libmodest-dbus-client.c:
+	(libmodest_dbus_client_search): Fix the build. Sorry.
+	* src/modest-ui-actions.c: (modest_ui_actions_on_new_msg),
+	(reply_forward_cb): Initialize variables to fix the build.
+	
+	* src/modest-tny-account-store.c:
+	(modest_tny_account_store_get_tny_account_by): Fix the account URI 
+	comparison (a silly typo) so that email search results can be opened 
+	when there are more than one account.
+
+2007-06-25  Murray Cumming  <murrayc@murrayc.com>
+
+	* libmodest-dbus-client/libmodest-dbus-client.c:
 	(libmodest_dbus_client_search),
 	(libmodest_dbus_client_get_folders): Use large timeouts (2 minutes) 
 	instead of 1 second, because the search gets folders and messages from 
