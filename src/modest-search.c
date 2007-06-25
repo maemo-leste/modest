@@ -384,9 +384,9 @@ modest_search_folder (TnyFolder *folder, ModestSearch *search)
 	/* Check that we should be searching this folder. */
 	/* Note that we don't try to search sub-folders. 
 	 * Maybe we should, but that should be specified. */
-	if (search->folder && (strcmp (tny_folder_get_id (folder), search->folder) != 0))
+	if (search->folder && strlen (search->folder) && (strcmp (tny_folder_get_id (folder), search->folder) != 0))
 		return NULL;
-		
+	
 	GList *retval = NULL;
 	TnyIterator *iter = NULL;
 	TnyList *list = NULL;

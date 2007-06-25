@@ -1,3 +1,8 @@
+2007-06-25  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/modest-search.c: (modest_search_folder): Ignore a seach folder 
+	that is an empty string. D-Bus seems to give us these instead of NULL.
+
 2007-06-25  Johannes Schmid <johannes.schmid@openismus.com>
 
 	* src/dbus_api/modest-dbus-callbacks.c:
