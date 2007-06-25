@@ -245,7 +245,7 @@ modest_init_init_ui (gint argc, gchar** argv)
 	init_stock_icons ();
 
 	/* Init notification system */
-	#ifndef MODEST_HILDON_VERSION_0
+	#ifdef MODEST_HAVE_HILDON_NOTIFY
 	notify_init ("Basics");
 	#endif
 

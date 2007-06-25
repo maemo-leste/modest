@@ -170,7 +170,7 @@ fi
 #
 if test "x$with_platform" == "xmaemo"; then  
    PKG_CHECK_MODULES(MODEST_HILDON_NOTIFY,hildon-notify libnotify,have_hildon_notify=true,have_hildon_notify=false)
-   if test "x$have_hildon_notify"="xtrue"; then
+   if test "x$have_hildon_notify" == "xtrue"; then
       AC_DEFINE_UNQUOTED(MODEST_HAVE_HILDON_NOTIFY, 1, ["Whether hildon-notify is available"])      
    fi
 fi

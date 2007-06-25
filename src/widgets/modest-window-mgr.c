@@ -145,7 +145,7 @@ modest_window_mgr_finalize (GObject *obj)
 
 	/* Free the hash table with the handlers */
 	if (priv->destroy_handlers) {
-		g_hash_table_unref (priv->destroy_handlers);
+		g_hash_table_destroy (priv->destroy_handlers);
 		priv->destroy_handlers = NULL;
 	}
 

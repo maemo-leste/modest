@@ -1,3 +1,10 @@
+2007-06-25  Armin Burgmeier  <armin@openismus.com>
+
+	* src/widgets/modest-window-mgr.c:
+	* src/modest-init.c:
+	* configure.ac: Correctly recognize hildon-notify presence and fixed
+	the build without it being installed.
+
 2007-06-25  Murray Cumming  <murrayc@murrayc.com>
 
 	* libmodest-dbus-client/libmodest-dbus-client.c:
