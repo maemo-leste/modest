@@ -1643,6 +1643,7 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 	g_object_unref (G_OBJECT (mail_operation));
 
 	modest_msg_edit_window_free_msg_data (edit_window, data);
+	modest_msg_edit_window_set_sent (edit_window, TRUE);
 
 	/* Save settings and close the window: */
 	gtk_widget_destroy (GTK_WIDGET (edit_window));

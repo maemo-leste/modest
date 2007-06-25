@@ -68,6 +68,8 @@ struct _ModestMsgEditWindowPrivate {
 	GtkWidget   *cc_field;
 	GtkWidget   *bcc_field;
 	GtkWidget   *subject_field;
+
+	gboolean    sent;
 };
 
 #define MODEST_MSG_EDIT_WINDOW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -150,6 +152,7 @@ modest_msg_edit_window_init (ModestMsgEditWindow *obj)
 	priv->cc_field      = NULL;
 	priv->bcc_field     = NULL;
 	priv->subject_field = NULL;
+	priv->sent          = FALSE;
 }
 
 /** 
@@ -617,4 +620,23 @@ modest_msg_edit_window_set_file_format (ModestMsgEditWindow *window,
 	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
 
 	g_message ("not implemented yet %s", __FUNCTION__);
+}
+
+gboolean 
+modest_msg_edit_window_get_sent (ModestMsgEditWindow *window)
+{
+	ModestMsgEditWindowPrivate *priv;
+
+	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE(window);
+	return priv->sent;
+}
+
+void 
+modest_msg_edit_window_set_sent (ModestMsgEditWindow *window, 
+				 gboolean sent)
+{
+	ModestMsgEditWindowPrivate *priv;
+
+	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE(window);
+	priv->sent = sent;
 }

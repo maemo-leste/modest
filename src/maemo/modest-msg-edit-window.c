@@ -199,6 +199,7 @@ struct _ModestMsgEditWindowPrivate {
 	gulong      system_clipboard_change_handler_id;
 
 	TnyMsg      *draft_msg;
+	gboolean    sent;
 };
 
 #define MODEST_MSG_EDIT_WINDOW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -300,6 +301,7 @@ modest_msg_edit_window_init (ModestMsgEditWindow *obj)
 	priv->draft_msg = NULL;
 	priv->clipboard_change_handler_id = 0;
 	priv->system_clipboard_change_handler_id = 0;
+	priv->sent = FALSE;
 }
 
 
@@ -2817,4 +2819,23 @@ view_menu_activated (GtkAction *action,
 	ModestMsgEditWindow *window = MODEST_MSG_EDIT_WINDOW (userdata);
 
 	update_zoom_dimming (window);
+}
+
+gboolean 
+modest_msg_edit_window_get_sent (ModestMsgEditWindow *window)
+{
+	ModestMsgEditWindowPrivate *priv;
+
+	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE(window);
+	return priv->sent;
+}
+
+void 
+modest_msg_edit_window_set_sent (ModestMsgEditWindow *window, 
+				 gboolean sent)
+{
+	ModestMsgEditWindowPrivate *priv;
+
+	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE(window);
+	priv->sent = sent;
 }

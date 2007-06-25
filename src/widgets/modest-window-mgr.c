@@ -250,9 +250,12 @@ on_window_destroy (ModestWindow *window, ModestWindowMgr *self)
 			}
 		}
 	} else {
-		if (MODEST_IS_MSG_EDIT_WINDOW (window))
-			/* Save currently edited message to Drafts */
-			if (modest_msg_edit_window_is_modified (MODEST_MSG_EDIT_WINDOW (window))) {
+		if (MODEST_IS_MSG_EDIT_WINDOW (window)) {
+			gboolean sent;
+
+			sent = modest_msg_edit_window_get_sent (MODEST_MSG_EDIT_WINDOW (window));
+			/* Save currently edited message to Drafts if it was not sent */
+			if (!sent && modest_msg_edit_window_is_modified (MODEST_MSG_EDIT_WINDOW (window))) {
 				gint response = 
 					modest_platform_run_confirmation_dialog (GTK_WINDOW (self), 
 										 _("mcen_nc_no_email_message_modified_save_changes"));
@@ -260,6 +263,7 @@ on_window_destroy (ModestWindow *window, ModestWindowMgr *self)
 					modest_ui_actions_on_save_to_drafts (NULL, MODEST_MSG_EDIT_WINDOW (window));
 				}
 			}
+		}
 	}
 
 	/* Unregister window */
@@ -272,7 +276,7 @@ modest_window_mgr_unregister_window (ModestWindowMgr *self,
 {
 	GList *win;
 	ModestWindowMgrPrivate *priv;
-	gint *handler_id;
+	gint *tmp, handler_id;
 
 	g_return_if_fail (MODEST_IS_WINDOW_MGR (self));
 	g_return_if_fail (MODEST_IS_WINDOW (window));
@@ -292,19 +296,18 @@ modest_window_mgr_unregister_window (ModestWindowMgr *self,
 	/* Save state */
 	modest_window_save_state (window);
 
-	/* Remove from list */
+	/* Remove from list & hash table */
 	priv->window_list = g_list_remove_link (priv->window_list, win);
+	tmp = g_hash_table_lookup (priv->destroy_handlers, window);
+	handler_id = *tmp;
+	g_hash_table_remove (priv->destroy_handlers, window);
 
 	/* Remove the reference to the window. We need to block the
 	   destroy event handler to avoid recursive calls */
-	handler_id = g_hash_table_lookup (priv->destroy_handlers, window);
-	g_signal_handler_block (window, *handler_id);
+	g_signal_handler_block (window, handler_id);
 	gtk_widget_destroy (win->data);
-	if (G_IS_OBJECT (window)) {
-		g_warning ("This should not happen the window was not completely destroyed");
-		g_signal_handler_unblock (window, *handler_id);
-	}
-	g_hash_table_remove (priv->destroy_handlers, window);
+	if (G_IS_OBJECT (window))
+		g_signal_handler_unblock (window, handler_id);
 
 	/* If there are no more windows registered then exit program */
 	if (priv->window_list == NULL) {

@@ -334,6 +334,9 @@ void            modest_msg_edit_window_toggle_find_toolbar (ModestMsgEditWindow 
  */
 gboolean        modest_msg_edit_window_is_modified         (ModestMsgEditWindow *window);
 
+gboolean        modest_msg_edit_window_get_sent            (ModestMsgEditWindow *window);
+void            modest_msg_edit_window_set_sent            (ModestMsgEditWindow *window, 
+							    gboolean sent);
 
 G_END_DECLS
 
