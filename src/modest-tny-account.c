@@ -324,10 +324,12 @@ modest_tny_account_new_from_server_account (ModestAccountMgr *account_mgr,
 	/* FIXME: for debugging. 
 	 * Let's keep this because it is very useful for debugging. */
 	url = tny_account_get_url_string (TNY_ACCOUNT(tny_account));
-    printf ("DEBUG %s:\n  account-url: %s\n", __FUNCTION__, url);
+
+	printf ("DEBUG %s:\n  account-url: %s\n", __FUNCTION__, url);
+
 	g_free (url);
 	/***********************/
-	
+
 	return tny_account;
 }
 
@@ -407,6 +409,18 @@ modest_tny_account_new_from_account (ModestAccountMgr *account_mgr, const gchar 
 					  forget_pass_func ? forget_pass_func : forget_pass_dummy);
 	tny_account_set_pass_func (tny_account,
 				   get_pass_func ? get_pass_func: get_pass_dummy);
+	
+
+	TnyAccountStore *astore = (TnyAccountStore *) modest_runtime_get_account_store ();
+ 	if (astore) {
+		TnyDevice *device = tny_account_store_get_device (astore);
+		GError *err = NULL;
+		tny_camel_account_set_online (TNY_CAMEL_ACCOUNT (tny_account),
+				tny_device_is_online (device), &err);
+		if (err)
+			g_print ("Error connecting: %s\n", err->message);
+		g_object_unref (device);
+	}
 	
 	/* This name is what shows up in the folder view -- so for some POP/IMAP/... server
 	 * account, we set its name to the account of which it is part. */

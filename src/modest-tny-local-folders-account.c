@@ -161,6 +161,7 @@ get_folders (TnyFolderStore *self, TnyList *list, TnyFolderStoreQuery *query, GE
 	while (iter)
 	{
 		TnyFolder *folder = TNY_FOLDER (iter->data);
+
 		if (folder)
 			tny_list_append (list, G_OBJECT (folder));
 	  		

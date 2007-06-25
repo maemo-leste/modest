@@ -1486,9 +1486,9 @@ modest_msg_edit_window_insert_image (ModestMsgEditWindow *window)
 
 			loader = gdk_pixbuf_loader_new_with_mime_type (mime_type, NULL);
 			while (!tny_stream_is_eos (TNY_STREAM (stream))) {
-				char read_buffer[128];
+				unsigned char read_buffer[128];
 				gint readed;
-				readed = tny_stream_read (TNY_STREAM (stream), read_buffer, 128);
+				readed = tny_stream_read (TNY_STREAM (stream), (char *) read_buffer, 128);
 				if (!gdk_pixbuf_loader_write (loader, read_buffer, readed, NULL))
 					break;
 			}

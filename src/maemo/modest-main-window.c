@@ -514,7 +514,7 @@ on_account_store_connecting_finished (TnyAccountStore *store, ModestMainWindow *
 
 	TnyDevice *device = tny_account_store_get_device (store);
 
-	modest_folder_view_update_model (MODEST_FOLDER_VIEW (priv->folder_view), store);
+	/* modest_folder_view_update_model (MODEST_FOLDER_VIEW (priv->folder_view), store); */
 	
 	/* Check that we are really online.
 	 * This signal should not be emitted when we are not connected, 
