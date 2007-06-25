@@ -2212,6 +2212,10 @@ modest_ui_actions_on_copy (GtkAction *action,
 	} else if (MODEST_IS_FOLDER_VIEW (focused_widget)) {
  		modest_folder_view_copy_selection (MODEST_FOLDER_VIEW (focused_widget));
 	}    
+
+	/* Show information banner */
+	modest_platform_information_banner (NULL, NULL, _CS("ecoc_ib_edwin_copied"));
+	
 }
 
 void

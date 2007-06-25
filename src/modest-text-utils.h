@@ -38,6 +38,7 @@
 #include <gdk/gdkcolor.h>
 
 #define _FM(str) dgettext("hildon-fm",str)
+#define _CS(str) dgettext("hildon-common-strings",str)
 
 /**
  * modest_text_utils_derived_subject:

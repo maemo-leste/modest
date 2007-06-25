@@ -300,7 +300,7 @@ modest_ui_dimming_rules_on_delete_msg (ModestWindow *win, gpointer user_data)
 		if (!dimmed) {
 			dimmed = _selected_folder_is_empty (MODEST_MAIN_WINDOW(win));			
 			if (dimmed)
-				modest_dimming_rule_set_notification (rule, _("ckct_ib_nothing_to_delete"));
+				modest_dimming_rule_set_notification (rule, _CS("ckct_ib_nothing_to_delete"));
 		}
 		if (!dimmed) {
 			dimmed = _invalid_msg_selected (MODEST_MAIN_WINDOW(win), FALSE, user_data);
