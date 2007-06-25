@@ -59,6 +59,7 @@ static gboolean _msg_download_completed (ModestMainWindow *win);
 static gboolean _selected_msg_sent_in_progress (ModestWindow *win);
 static gboolean _sending_in_progress (ModestWindow *win);
 static gboolean _marked_as_deleted (ModestWindow *win);
+static gboolean _invalid_attachment_for_purge (ModestWindow *win, ModestDimmingRule *rule);
 
 
 gboolean 
@@ -576,6 +577,10 @@ modest_ui_dimming_rules_on_remove_attachments (ModestWindow *win, gpointer user_
 	rule = MODEST_DIMMING_RULE (user_data);
 
 	/* Check dimmed rule */	
+	if (!dimmed) {
+		dimmed = _invalid_attachment_for_purge (win, rule);
+	}
+
 	if (!dimmed) {
 		dimmed = _invalid_attach_selected (win, TRUE, TRUE, rule);			
 	}
@@ -1369,3 +1374,43 @@ _sending_in_progress (ModestWindow *win)
 
 	return result;
 }
+
+static gboolean
+_invalid_attachment_for_purge (ModestWindow *win, ModestDimmingRule *rule)
+{
+	gboolean result = FALSE;
+
+	if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
+		TnyMsg *msg;
+		TnyFolder *folder;
+		TnyAccount *account;
+
+		msg = modest_msg_view_window_get_message (MODEST_MSG_VIEW_WINDOW (win));
+		folder = tny_msg_get_folder (msg);
+		g_object_unref (msg);
+		account = modest_tny_folder_get_account (folder);
+		g_object_unref (folder);
+		if (modest_tny_account_is_virtual_local_folders (TNY_ACCOUNT (account))) {
+		} else {
+			const gchar *proto_str = tny_account_get_proto (TNY_ACCOUNT (account));
+			/* If it's POP then dim */
+			if (modest_protocol_info_get_transport_store_protocol (proto_str) == 
+			    MODEST_PROTOCOL_STORE_POP) {
+				GList *attachments;
+				gint n_selected;
+				result = TRUE;
+				attachments = modest_msg_view_window_get_attachments (MODEST_MSG_VIEW_WINDOW(win));
+				n_selected = g_list_length (attachments);
+				g_list_free (attachments);
+
+				modest_dimming_rule_set_notification (
+					rule, 
+					ngettext ("mail_ib_unable_to_pure_attach_pop_mail_singular",
+						  "mail_ib_unable_to_pure_attach_pop_mail_plural", n_selected));
+			}
+		}
+	}
+
+	return result;
+}
+
