@@ -273,7 +273,7 @@ set_toolbar_mode (ModestMsgViewWindow *self,
 {
 	ModestWindowPrivate *parent_priv;
 	ModestMsgViewWindowPrivate *priv;
-	GtkAction *widget = NULL;
+	GtkWidget *widget = NULL;
 
 	g_return_if_fail (MODEST_IS_MSG_VIEW_WINDOW (self));
 
@@ -283,18 +283,20 @@ set_toolbar_mode (ModestMsgViewWindow *self,
 	/* Sets current toolbar mode */
 	priv->current_toolbar_mode = mode;
 
+	/* Get toolbar widget */
+	widget = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar");
+
 	switch (mode) {
-	case TOOLBAR_MODE_NORMAL:
-		widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ToolbarMessageNew");
-		gtk_action_set_sensitive (widget, TRUE);
-		widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ToolbarMessageReply");
-		gtk_action_set_sensitive (widget, TRUE);
-		widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ToolbarDeleteMessage");
-		gtk_action_set_sensitive (widget, TRUE);
-		widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ToolbarMessageMoveTo");
-		gtk_action_set_sensitive (widget, TRUE);
-		widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/FindInMessage");
-		gtk_action_set_sensitive (widget, TRUE);
+	case TOOLBAR_MODE_NORMAL:		
+ 		gtk_widget_set_sensitive (widget, TRUE);
+/* 		widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ToolbarMessageReply"); */
+/* 		gtk_action_set_sensitive (widget, TRUE); */
+/* 		widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ToolbarDeleteMessage"); */
+/* 		gtk_action_set_sensitive (widget, TRUE); */
+/* 		widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ToolbarMessageMoveTo"); */
+/* 		gtk_action_set_sensitive (widget, TRUE); */
+/* 		widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/FindInMessage"); */
+/* 		gtk_action_set_sensitive (widget, TRUE); */
 
 		if (priv->prev_toolitem)
 			gtk_widget_show (priv->prev_toolitem);
@@ -318,16 +320,15 @@ set_toolbar_mode (ModestMsgViewWindow *self,
 
 		break;
 	case TOOLBAR_MODE_TRANSFER:
-		widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ToolbarMessageNew");
-		gtk_action_set_sensitive (widget, FALSE);
-		widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ToolbarMessageReply");
-		gtk_action_set_sensitive (widget, FALSE);
-		widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ToolbarDeleteMessage");
-		gtk_action_set_sensitive (widget, FALSE);
-		widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ToolbarMessageMoveTo");
-		gtk_action_set_sensitive (widget, FALSE);
-		widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/FindInMessage");
-		gtk_action_set_sensitive (widget, FALSE);
+		gtk_widget_set_sensitive (widget, FALSE);
+/* 		widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ToolbarMessageReply"); */
+/* 		gtk_action_set_sensitive (widget, FALSE); */
+/* 		widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ToolbarDeleteMessage"); */
+/* 		gtk_action_set_sensitive (widget, FALSE); */
+/* 		widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ToolbarMessageMoveTo"); */
+/* 		gtk_action_set_sensitive (widget, FALSE); */
+/* 		widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/FindInMessage"); */
+/* 		gtk_action_set_sensitive (widget, FALSE); */
 
 		if (priv->prev_toolitem)
 			gtk_widget_hide (priv->prev_toolitem);
@@ -628,6 +629,9 @@ modest_msg_view_window_new (TnyMsg *msg,
 
 	update_window_title (MODEST_MSG_VIEW_WINDOW (obj));
 
+	/* Check toolbar dimming rules */
+	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (obj));
+
 	return MODEST_WINDOW(obj);
 }
 
@@ -647,11 +651,20 @@ TnyHeader*
 modest_msg_view_window_get_header (ModestMsgViewWindow *self)
 {
 	ModestMsgViewWindowPrivate *priv= NULL; 
+	TnyMsg *msg = NULL;
 	TnyHeader *header = NULL;
  	GtkTreeIter iter;
 
 	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (self), NULL);
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (self);
+
+	/* Message is not obtained from a treemodel (Attachment ?) */
+	if (priv->header_model == NULL) {
+		msg = modest_msg_view_window_get_message (self);
+		header = tny_msg_get_header (msg);
+		g_object_unref (msg);
+		return header;
+	}
 
 	/* Get current message iter */
 	gtk_tree_model_get_iter (priv->header_model, 
@@ -1804,6 +1817,7 @@ update_window_title (ModestMsgViewWindow *window)
 	if (msg != NULL) {
 		header = tny_msg_get_header (msg);
 		subject = tny_header_get_subject (header);
+		g_object_unref (msg);
 	}
 
 	if ((subject == NULL)||(subject[0] == '\0'))

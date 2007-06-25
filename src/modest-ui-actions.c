@@ -2759,6 +2759,10 @@ msgs_move_to_confirmation (GtkWindow *win,
 		g_object_unref (header);
 		g_object_unref (iter);
 
+		/* if no src_folder, message may be an attahcment */
+		if (src_folder == NULL) 
+			return GTK_RESPONSE_CANCEL;
+
 		/* If the source is a remote folder */
 		if (!modest_tny_folder_is_local_folder (src_folder)) {
 			const gchar *message;
@@ -2942,6 +2946,7 @@ modest_ui_actions_on_msg_view_window_move_to (GtkAction *action,
 
 		/* Create header list */
 		header = modest_msg_view_window_get_header (MODEST_MSG_VIEW_WINDOW (win));		
+			
 		headers = tny_simple_list_new ();
 		tny_list_prepend (headers, G_OBJECT (header));
 		g_object_unref (header);

@@ -45,7 +45,7 @@ static gboolean _folder_is_any_of_type (TnyFolder *folder, TnyFolderType types[]
 static gboolean _invalid_msg_selected (ModestMainWindow *win, gboolean unique, ModestDimmingRule *rule);
 static gboolean _invalid_attach_selected (ModestWindow *win, gboolean unique, gboolean for_view, ModestDimmingRule *rule);
 static gboolean _invalid_clipboard_selected (ModestWindow *win);
-static gboolean _already_opened_msg (ModestWindow *win);
+static gboolean _already_opened_msg (ModestWindow *win, guint *n_messages);
 static gboolean _selected_msg_marked_as (ModestWindow *win, TnyHeaderFlags mask, gboolean opposite);
 static gboolean _selected_folder_not_writeable (ModestMainWindow *win);
 static gboolean _selected_folder_is_any_of_type (ModestWindow *win, TnyFolderType types[], guint ntypes);
@@ -291,6 +291,7 @@ gboolean
 modest_ui_dimming_rules_on_delete_msg (ModestWindow *win, gpointer user_data)
 {
 	ModestDimmingRule *rule = NULL;
+	guint n_messages = 0;
 	gboolean dimmed = FALSE;
 
 	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
@@ -309,9 +310,14 @@ modest_ui_dimming_rules_on_delete_msg (ModestWindow *win, gpointer user_data)
 				modest_dimming_rule_set_notification (rule, _("mcen_ib_no_message_selected"));
 		}
 		if (!dimmed) {
-			dimmed = _already_opened_msg (win);
-			if (dimmed)
-				modest_dimming_rule_set_notification (rule, _("mcen_nc_unable_to_delete_n_messages"));
+			dimmed = _already_opened_msg (win, &n_messages);
+ 			if (dimmed) {
+				gchar *num = g_strdup_printf ("%d", n_messages);
+				gchar *message = g_strdup_printf(_("mcen_nc_unable_to_delete_n_messages"), n_messages);
+				modest_dimming_rule_set_notification (rule, message);
+				g_free(message);
+				g_free(num);
+			}
 		}
 		if (!dimmed) {
 			dimmed = _marked_as_deleted (win);
@@ -327,6 +333,11 @@ modest_ui_dimming_rules_on_delete_msg (ModestWindow *win, gpointer user_data)
 	else if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
 		if (!dimmed) {
 			dimmed = !modest_msg_view_window_has_headers_model (MODEST_MSG_VIEW_WINDOW(win));
+ 			if (dimmed) {
+				gchar *message = g_strdup_printf(_("mcen_nc_unable_to_delete_n_messages"), "1");
+				modest_dimming_rule_set_notification (rule, message);
+				g_free(message);
+			}
 		}
 	}
 
@@ -442,9 +453,13 @@ modest_ui_dimming_rules_on_main_window_move_to (ModestWindow *win, gpointer user
 {
 	GtkWidget *folder_view = NULL;
 	GtkWidget *header_view = NULL;
+	ModestDimmingRule *rule = NULL;
+	const gchar *message = NULL;
 	gboolean dimmed = FALSE;
 	
 	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW(win), TRUE);
+	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
+	rule = MODEST_DIMMING_RULE (user_data);
 	
 	/* Get the folder view */
 	folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(win),
@@ -453,35 +468,44 @@ modest_ui_dimming_rules_on_main_window_move_to (ModestWindow *win, gpointer user
 	/* Get header view */
 	header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(win),
 							   MODEST_WIDGET_TYPE_HEADER_VIEW);
-
-	/* Check common diming rules */
-
-	/* Check diming rules for folder transfer  */
-	if (gtk_widget_is_focus (folder_view)) {
-		if (!dimmed) 
-			dimmed = _selected_folder_not_writeable(MODEST_MAIN_WINDOW(win));
-	}
-	/* Check diming rules for msg transfer  */
-	else if (gtk_widget_is_focus (header_view)) {
-		if (!dimmed)
-			dimmed = _invalid_msg_selected (MODEST_MAIN_WINDOW(win), FALSE, user_data);
+	
+	/* Check diming rules for folders and messages transfer  */
+	if (!dimmed) {
+		dimmed = _selected_folder_not_writeable(MODEST_MAIN_WINDOW(win));
+		if (dimmed) {
+			if (gtk_widget_is_focus (folder_view))
+				message = _("mail_in_ui_folder_move_target_error");
+			else
+				message = ngettext ("mail_in_ui_folder_move_target_error", "mail_in_ui_folder_move_targets_error",
+						    modest_header_view_count_selected_headers (MODEST_HEADER_VIEW(header_view)) > 1);		       			
+		}
+	}		
+	if (!dimmed) {
+		dimmed = _invalid_msg_selected (MODEST_MAIN_WINDOW(win), FALSE, user_data);
 		
 	}
-
+	
 	return dimmed;
 }
 
 gboolean 
 modest_ui_dimming_rules_on_view_window_move_to (ModestWindow *win, gpointer user_data)
 {
+	ModestDimmingRule *rule = NULL;
 	gboolean dimmed = FALSE;
 
 	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW(win), FALSE);
+	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
+	rule = MODEST_DIMMING_RULE (user_data);
 
 	/* Check dimmed rule */	
-	if (!dimmed)
+	if (!dimmed) {
 		dimmed = !modest_msg_view_window_has_headers_model (MODEST_MSG_VIEW_WINDOW(win));
-	
+		if (dimmed) 
+			modest_dimming_rule_set_notification (rule, _("mcen_ib_unable_to_move_mail_attachment"));
+		
+	}
+
 	return dimmed;
 }
 
@@ -578,12 +602,12 @@ modest_ui_dimming_rules_on_remove_attachments (ModestWindow *win, gpointer user_
 
 	/* Check dimmed rule */	
 	if (!dimmed) {
+		dimmed = _invalid_attach_selected (win, TRUE, TRUE, rule);			
+	}
+	if (!dimmed) {
 		dimmed = _invalid_attachment_for_purge (win, rule);
 	}
 
-	if (!dimmed) {
-		dimmed = _invalid_attach_selected (win, TRUE, TRUE, rule);			
-	}
 
 	return dimmed;
 }
@@ -1009,6 +1033,7 @@ _invalid_clipboard_selected (ModestWindow *win)
 	return result;
 }
 
+
 static gboolean
 _invalid_attach_selected (ModestWindow *win,
 			  gboolean unique,
@@ -1025,8 +1050,7 @@ _invalid_attach_selected (ModestWindow *win,
 	if (MODEST_IS_MAIN_WINDOW (win)) {
 		flags = TNY_HEADER_FLAG_ATTACHMENTS;
 		if (!result)
-			result = _selected_msg_marked_as (win, flags, TRUE);
-		
+			result = _selected_msg_marked_as (win, flags, TRUE);		
 	}
 	else if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
 		
@@ -1042,7 +1066,7 @@ _invalid_attach_selected (ModestWindow *win,
 				
 				result = n_selected < 1;
 		}
-
+		
 		/* Check attached type (view operation not required) */
 		if (!result && !for_view)  {
 			for (node = attachments; node != NULL && !result; node = g_list_next (node)) {
@@ -1122,7 +1146,8 @@ _invalid_msg_selected (ModestMainWindow *win,
 }
 
 static gboolean
-_already_opened_msg (ModestWindow *win)
+_already_opened_msg (ModestWindow *win,
+		     guint *n_messages)
 {
 	ModestWindow *window = NULL;
 	ModestWindowMgr *mgr = NULL;
@@ -1147,6 +1172,8 @@ _already_opened_msg (ModestWindow *win)
 	selected_headers = modest_header_view_get_selected_headers (MODEST_HEADER_VIEW(header_view));
 	if (selected_headers == NULL) 
 		return FALSE;
+
+	*n_messages = tny_list_get_length (selected_headers);
 
 	/* Check dimmed rule (TODO: check focus on widgets */	
 	mgr = modest_runtime_get_window_mgr ();
@@ -1376,22 +1403,29 @@ _sending_in_progress (ModestWindow *win)
 }
 
 static gboolean
-_invalid_attachment_for_purge (ModestWindow *win, ModestDimmingRule *rule)
+_invalid_attachment_for_purge (ModestWindow *win, 
+			       ModestDimmingRule *rule)
 {
-	gboolean result = FALSE;
+	TnyMsg *msg = NULL;
+	TnyFolder *folder = NULL;
+	TnyAccount *account = NULL;
+	gboolean result = TRUE;
 
 	if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
-		TnyMsg *msg;
-		TnyFolder *folder;
-		TnyAccount *account;
 
+		/* Get folder and account of message */
 		msg = modest_msg_view_window_get_message (MODEST_MSG_VIEW_WINDOW (win));
-		folder = tny_msg_get_folder (msg);
-		g_object_unref (msg);
+		g_return_val_if_fail(msg != NULL, TRUE); 			
+		folder = tny_msg_get_folder (msg);		
+		if (folder == NULL) {
+			modest_dimming_rule_set_notification (rule, _("mail_ib_unable_to_purge_attachments"));
+			goto frees; 			
+		}
 		account = modest_tny_folder_get_account (folder);
-		g_object_unref (folder);
-		if (modest_tny_account_is_virtual_local_folders (TNY_ACCOUNT (account))) {
-		} else {
+		if (account == NULL) goto frees; 			
+		
+		/* Check account */
+		if (!modest_tny_account_is_virtual_local_folders (TNY_ACCOUNT (account))) {
 			const gchar *proto_str = tny_account_get_proto (TNY_ACCOUNT (account));
 			/* If it's POP then dim */
 			if (modest_protocol_info_get_transport_store_protocol (proto_str) == 
@@ -1402,15 +1436,23 @@ _invalid_attachment_for_purge (ModestWindow *win, ModestDimmingRule *rule)
 				attachments = modest_msg_view_window_get_attachments (MODEST_MSG_VIEW_WINDOW(win));
 				n_selected = g_list_length (attachments);
 				g_list_free (attachments);
-
-				modest_dimming_rule_set_notification (
-					rule, 
-					ngettext ("mail_ib_unable_to_pure_attach_pop_mail_singular",
-						  "mail_ib_unable_to_pure_attach_pop_mail_plural", n_selected));
+				
+				modest_dimming_rule_set_notification (rule, 
+								      ngettext ("mail_ib_unable_to_pure_attach_pop_mail_singular",
+										"mail_ib_unable_to_pure_attach_pop_mail_plural", 
+										n_selected));
 			}
 		}
 	}
 
+ frees:
+	if (msg != NULL)
+		g_object_unref (msg);
+	if (folder != NULL)
+		g_object_unref (folder);
+	if (account != NULL)
+		g_object_unref (account);
+	
 	return result;
 }
 

@@ -153,8 +153,10 @@ modest_dimming_rule_process (ModestDimmingRule *self)
 
 	/* Update dimming status */
         action = modest_window_get_action (priv->win, priv->action_path);	
-	g_return_if_fail (action != NULL);
-	gtk_action_set_sensitive (action, !dimmed);
+	if (action == NULL)
+		g_printerr ("modest: action path '%s' has not associatd action\n", priv->action_path);
+	else
+		gtk_action_set_sensitive (action, !dimmed);
 }
 
 void

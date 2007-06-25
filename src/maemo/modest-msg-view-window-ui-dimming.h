@@ -59,10 +59,9 @@ static const ModestDimmingEntry modest_msg_view_menu_dimming_entries [] = {
 static const ModestDimmingEntry modest_msg_view_toolbar_dimming_entries [] = {
 
 	/* Toolbar */
-	{ "/ToolBar/ToolbarMessageNew", NULL },
 	{ "/ToolBar/ToolbarMessageReply", G_CALLBACK(modest_ui_dimming_rules_on_reply_msg) },
+	{ "/ToolBar/ToolbarMessageMoveTo", G_CALLBACK(modest_ui_dimming_rules_on_move_to) },
 	{ "/ToolBar/ToolbarDeleteMessage",  G_CALLBACK(modest_ui_dimming_rules_on_delete_msg) },
-	{ "/ToolBar/ToolbarMoveTo", G_CALLBACK(modest_ui_dimming_rules_on_move_to) },
 	{ "/ToolBar/ToolbarFindInMessage", NULL },
 	{ "/ToolBar/ToolbarMessageBack", G_CALLBACK(modest_ui_dimming_rules_on_view_previous) },
 	{ "/ToolBar/ToolbarMessageNext", G_CALLBACK(modest_ui_dimming_rules_on_view_next) },
