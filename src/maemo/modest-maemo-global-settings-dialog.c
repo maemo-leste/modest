@@ -31,7 +31,7 @@
 #include <config.h>
 #endif /*HAVE_CONFIG_H*/
 
-#ifdef MODEST_HILDON_VERSION_0
+#ifdef MODEST_HAVE_HILDON0_WIDGETS
 #include <hildon-widgets/hildon-caption.h>
 #include <hildon-widgets/hildon-number-editor.h>
 #include <hildon-widgets/hildon-banner.h>
@@ -39,7 +39,7 @@
 #include <hildon/hildon-caption.h>
 #include <hildon/hildon-number-editor.h>
 #include <hildon/hildon-banner.h>
-#endif /*MODEST_HILDON_VERSION_0*/
+#endif /*MODEST_HAVE_HILDON0_WIDGETS*/
 
 #include <glib/gi18n.h>
 #include <string.h>
@@ -370,7 +370,7 @@ on_range_error (HildonNumberEditor *editor,
 	gint new_val;
 
 	switch (type) {
-#ifdef MODEST_HILDON_VERSION_0
+#ifdef MODEST_HAVE_HILDON0_WIDGETS
 	case MAXIMUM_VALUE_EXCEED:
 #else
 	case HILDON_NUMBER_EDITOR_ERROR_MAXIMUM_VALUE_EXCEED:
@@ -378,7 +378,7 @@ on_range_error (HildonNumberEditor *editor,
 		msg = g_strdup_printf (_("ckct_ib_maximum_value"), MSG_SIZE_MAX_VAL);
 		new_val = MSG_SIZE_MAX_VAL;
 		break;
-#ifdef MODEST_HILDON_VERSION_0
+#ifdef MODEST_HAVE_HILDON0_WIDGETS
 	case MINIMUM_VALUE_EXCEED:
 #else
 	case HILDON_NUMBER_EDITOR_ERROR_MINIMUM_VALUE_EXCEED:
@@ -386,7 +386,7 @@ on_range_error (HildonNumberEditor *editor,
 		msg = g_strdup_printf (_("ckct_ib_minimum_value"), MSG_SIZE_MIN_VAL);
 		new_val = MSG_SIZE_MIN_VAL;
 		break;
-#ifdef MODEST_HILDON_VERSION_0
+#ifdef MODEST_HAVE_HILDON0_WIDGETS
 	case ERRONEOUS_VALUE:
 #else
 	case HILDON_NUMBER_EDITOR_ERROR_ERRONEOUS_VALUE:

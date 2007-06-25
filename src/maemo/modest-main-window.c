@@ -59,11 +59,11 @@
 #include "modest-ui-dimming-manager.h"
 #include "maemo/modest-osso-state-saving.h"
 
-#ifdef MODEST_HILDON_VERSION_0
+#ifdef MODEST_HAVE_HILDON0_WIDGETS
 #include <hildon-widgets/hildon-program.h>
 #else
 #include <hildon/hildon-program.h>
-#endif /*MODEST_HILDON_VERSION_0*/
+#endif /*MODEST_HAVE_HILDON0_WIDGETS*/
 
 #define MODEST_MAIN_WINDOW_ACTION_GROUP_ADDITIONS "ModestMainWindowActionAdditions"
 
@@ -1405,15 +1405,18 @@ create_details_widget (GtkWidget *styled_widget, TnyAccount *account)
 	GtkWidget *label_w;
 	gchar *label;
 	gchar *gray_color_markup;
-	GdkColor color;
 
 	vbox = gtk_vbox_new (FALSE, 0);
 
 	/* Obtain the secondary text color. We need a realized widget, that's why 
 	   we get styled_widget from outside */
+#ifndef MODEST_HAVE_HILDON0_WIDGETS
+	GdkColor color;
 	gtk_style_lookup_color (styled_widget->style, "SecondaryTextColor", &color);
 	gray_color_markup = modest_text_utils_get_color_string (&color);
-
+#else
+	gray_color_markup = "#BBBBBB";	
+#endif	
 	/* Account description: */
 	
 	if (modest_tny_account_is_virtual_local_folders (account)) {

@@ -1,3 +1,27 @@
+2007-06-25  Johannes Schmid <johannes.schmid@openismus.com>
+
+	* src/dbus_api/modest-dbus-callbacks.c:
+	* src/maemo/easysetup/modest-easysetup-wizard.h:
+	* src/maemo/easysetup/modest-wizard-dialog.c: (init):
+	* src/maemo/modest-connection-specific-smtp-edit-window.c:
+	(modest_connection_specific_smtp_edit_window_init):
+	* src/maemo/modest-maemo-global-settings-dialog.c:
+	(on_range_error):
+	* src/maemo/modest-maemo-utils.c:
+	(modest_maemo_utils_setup_images_filechooser):
+	* src/maemo/modest-main-window.c: (create_details_widget):
+	* src/maemo/modest-msg-edit-window.c:
+	(modest_msg_edit_window_attach_file_noninteractive),
+	(modest_msg_edit_window_color_button_change),
+	(modest_msg_edit_window_set_zoom):
+	* src/modest-mail-operation.c: (update_account_thread):
+	* src/modest-tny-account-store.c:
+	* src/modest-tny-account.c:
+	* src/widgets/modest-global-settings-dialog.c:
+	* src/widgets/modest-window.h:
+	
+	Fixed build on bora!
+
 2007-06-25  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/dbus_api/modest-dbus-callbacks.c: (on_dbus_method_search):

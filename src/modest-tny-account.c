@@ -42,7 +42,7 @@
 #include <tny-camel-pop-store-account.h>
 #include <tny-folder-stats.h>
 #include <string.h>
-#ifdef MODEST_HILDON_VERSION_0
+#ifdef MODEST_HAVE_HILDON0_WIDGETS
 #include <hildon-widgets/hildon-file-system-info.h>
 #else
 #include <hildon/hildon-file-system-info.h>

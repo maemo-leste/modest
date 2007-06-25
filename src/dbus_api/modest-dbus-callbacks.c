@@ -42,7 +42,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <glib/gstdio.h>
+#ifdef MODEST_HAVE_HILDON0_WIDGETS
+#include <libgnomevfs/gnome-vfs-mime-utils.h>
+#else
 #include <libgnomevfs/gnome-vfs-mime.h>
+#endif
 #include <tny-fs-stream.h>
 
 #include <tny-list.h>

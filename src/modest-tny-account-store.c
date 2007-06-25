@@ -60,7 +60,7 @@
 
 #ifdef MODEST_PLATFORM_MAEMO
 #include <tny-maemo-conic-device.h>
-#ifdef MODEST_HILDON_VERSION_0
+#ifdef MODEST_HAVE_HILDON0_WIDGETS
 #include <hildon-widgets/hildon-note.h>
 #include <hildon-widgets/hildon-banner.h>
 #else

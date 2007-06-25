@@ -54,11 +54,11 @@
 #include <config.h>
 #endif
 
-#ifdef MODEST_HILDON_VERSION_0
+#ifdef MODEST_HAVE_HILDON0_WIDGETS
 #include <hildon-widgets/hildon-defines.h>
 #else
 #include <hildon/hildon-defines.h>
-#endif /*MODEST_HILDON_VERSION_0*/
+#endif /*MODEST_HAVE_HILDON0_WIDGETS*/
 
 #include "modest-wizard-dialog.h"
 
@@ -255,12 +255,12 @@ init (ModestWizardDialog *wizard_dialog)
     gtk_dialog_set_has_separator (dialog, FALSE);
     wizard_dialog->priv = priv;
     priv->box = GTK_BOX (gtk_hbox_new (FALSE, 0));
-#ifdef MODEST_HILDON_VERSION_0
+#ifdef MODEST_HAVE_HILDON0_WIDGETS
     priv->image = gtk_image_new_from_icon_name ("qgn_widg_wizard",
 						HILDON_ICON_SIZE_WIDG_WIZARD);
 #else
     priv->image = gtk_image_new_from_icon_name ("qgn_widg_wizard",
-						HILDON_ICON_SIZE_WIZARD);
+						MODEST_HAVE_HILDON0_WIDGETS;
 #endif /*MODEST_HILDON_VERSION_0*/
     /* Default values for user provided properties */
     priv->notebook = NULL;

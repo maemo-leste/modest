@@ -39,11 +39,11 @@
 #include <config.h>
 #endif
 
-#ifdef MODEST_HILDON_VERSION_0
+#ifdef MODEST_HAVE_HILDON0_WIDGETS
 #include <hildon-widgets/hildon-caption.h>
 #else
 #include <hildon/hildon-caption.h>
-#endif /*MODEST_HILDON_VERSION_0*/
+#endif /*MODEST_HAVE_HILDON0_WIDGETS*/
 
 G_BEGIN_DECLS
 

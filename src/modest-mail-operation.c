@@ -982,12 +982,15 @@ update_account_thread (gpointer thr_user_data)
 		}
 		tny_folder_remove_observer (TNY_FOLDER (folder), TNY_FOLDER_OBSERVER (observer));
 		g_object_unref (observer);
-		observer = NULL;
-
-		if (priv->error)
-			priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
+		observer = NULL;			
 
 		g_object_unref (G_OBJECT (folder));
+		if (priv->error)
+		{
+			priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
+			goto out;
+		}
+		
 		tny_iterator_next (iter);
 	}
 
@@ -1047,7 +1050,7 @@ update_account_thread (gpointer thr_user_data)
 		g_ptr_array_foreach (new_headers, (GFunc) g_object_unref, NULL);
 		g_ptr_array_free (new_headers, FALSE);
 	}
-
+	
 	/* Perform send */
 	priv->op_type = MODEST_MAIL_OPERATION_TYPE_SEND;
 	priv->done = 0;

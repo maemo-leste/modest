@@ -42,11 +42,11 @@
 #include "modest-platform.h"
 #include "widgets/modest-combo-box.h"
 #ifdef MODEST_PLATFORM_MAEMO
-#ifdef MODEST_HILDON_VERSION_0
+#ifdef MODEST_HAVE_HILDON0_WIDGETS
 #include <hildon-widgets/hildon-number-editor.h>
 #else
 #include <hildon/hildon-number-editor.h>
-#endif /*MODEST_HILDON_VERSION_0*/
+#endif /*MODEST_HAVE_HILDON0_WIDGETS*/
 #endif
 /* include other impl specific header files */
 

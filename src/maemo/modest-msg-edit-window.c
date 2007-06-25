@@ -63,8 +63,15 @@
 #include "modest-scroll-area.h"
 
 #include "modest-hildon-includes.h"
+#ifdef MODEST_HAVE_HILDON0_WIDGETS
+#include <hildon-widgets/hildon-color-chooser.h>
+#endif
 #include "widgets/modest-msg-edit-window-ui.h"
+#ifdef MODEST_HAVE_HILDON0_WIDGETS
+#include <libgnomevfs/gnome-vfs-mime-utils.h>
+#else
 #include <libgnomevfs/gnome-vfs-mime.h>
+#endif
 #include "modest-maemo-utils.h"
 
 
@@ -1640,8 +1647,11 @@ modest_msg_edit_window_attach_file_noninteractive (
 			const gchar *mime_type;
 			gchar *basename;
 			gchar *content_id;
-			
+#ifdef MODEST_HAVE_HILDON0_WIDGETS
+			mime_type = gnome_vfs_get_mime_type(filename);
+#else
 			mime_type = gnome_vfs_get_file_mime_type_fast (filename, NULL);
+#endif
 			mime_part = tny_platform_factory_new_mime_part
 				(modest_runtime_get_platform_factory ());
 			stream = TNY_STREAM (tny_fs_stream_new (file_id));
@@ -1743,13 +1753,13 @@ modest_msg_edit_window_color_button_change (ModestMsgEditWindow *window,
 	GdkColor *new_color;
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
 	
-#ifdef MODEST_HILDON_VERSION_0	
+#ifdef MODEST_HAVE_HILDON0_WIDGETS	
 	new_color = hildon_color_button_get_color (HILDON_COLOR_BUTTON (priv->font_color_button));
 #else 
 	GdkColor col;
 	hildon_color_button_get_color (HILDON_COLOR_BUTTON(priv->font_color_button), &col);
 	new_color = &col;
-#endif /*MODEST_HILDON_VERSION_0*/
+#endif /*#ifdef MODEST_HAVE_HILDON0_WIDGETS*/
 
 	wp_text_buffer_set_attribute (WP_TEXT_BUFFER (priv->text_buffer), WPT_FORECOLOR, (gpointer) new_color);
 	
@@ -1847,7 +1857,11 @@ modest_msg_edit_window_set_zoom (ModestWindow *window,
 	parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
 	zoom_radio_action = GTK_RADIO_ACTION (gtk_ui_manager_get_action (parent_priv->ui_manager, 
 									 "/MenuBar/ViewMenu/ZoomMenu/Zoom50Menu"));
+#ifdef MODEST_HAVE_HILDON0_WIDGETS
+	/* FIXME: Not availible before Gtk 2.10 */
+#else
 	gtk_radio_action_set_current_value (zoom_radio_action, (gint) (zoom*100.0+0.1));
+#endif
 }
 
 static gdouble
