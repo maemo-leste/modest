@@ -770,8 +770,15 @@ modest_msg_view_window_find_toolbar_search (GtkWidget *widget,
 		priv->last_search = g_strdup (current_search);
 		result = modest_msg_view_search (MODEST_MSG_VIEW (priv->msg_view),
 						 priv->last_search);
+		if (!result) {
+			hildon_banner_show_information (NULL, NULL, dgettext("hildon-libs", "ckct_ib_find_no_matches"));
+		} 
 	} else {
-		modest_msg_view_search_next (MODEST_MSG_VIEW (priv->msg_view));
+		if (!modest_msg_view_search_next (MODEST_MSG_VIEW (priv->msg_view))) {
+			hildon_banner_show_information (NULL, NULL, dgettext("hildon-libs", "ckct_ib_find_search_complete"));
+			g_free (priv->last_search);
+			priv->last_search = NULL;
+		}
 	}
 	
 	g_free (current_search);
@@ -1624,7 +1631,7 @@ save_mime_part_to_file_with_checks (GtkWindow *parent, const gchar *filename, Tn
 	if (modest_maemo_utils_file_exists (filename)) {
 		GtkWidget *confirm_overwrite_dialog;
 		confirm_overwrite_dialog = hildon_note_new_confirmation (GTK_WINDOW (parent),
-									 _("TODO: confirm overwrite"));
+									 _("emev_nc_replace_files"));
 		if (gtk_dialog_run (GTK_DIALOG (confirm_overwrite_dialog)) != GTK_RESPONSE_OK) {
 			gtk_widget_destroy (confirm_overwrite_dialog);
 			return FALSE;
