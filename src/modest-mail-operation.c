@@ -2087,9 +2087,9 @@ on_refresh_folder (TnyFolder   *folder,
  out:
 	/* Call user defined callback, if it exists */
 	if (helper->user_callback) {
-		gdk_threads_enter ();
+/* 		gdk_threads_enter (); */
 		helper->user_callback (priv->source, folder, helper->user_data);
-		gdk_threads_leave ();
+/* 		gdk_threads_leave (); */
 	}
 
 	/* Free */
