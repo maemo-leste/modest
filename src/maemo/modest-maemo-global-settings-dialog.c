@@ -87,9 +87,14 @@ static gboolean   on_range_error         (HildonNumberEditor *editor,
 static void       on_auto_update_toggled (GtkToggleButton *togglebutton,
 					  gpointer user_data);
 
+static gboolean   on_inner_tabs_key_pressed (GtkWidget *widget,
+					     GdkEventKey *event,
+					     gpointer user_data);
+
 typedef struct _ModestMaemoGlobalSettingsDialogPrivate ModestMaemoGlobalSettingsDialogPrivate;
 struct _ModestMaemoGlobalSettingsDialogPrivate {
 	ModestPairList *connect_via_list;
+	gint switch_handler;
 };
 #define MODEST_MAEMO_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                            MODEST_TYPE_MAEMO_GLOBAL_SETTINGS_DIALOG, \
@@ -138,57 +143,119 @@ modest_maemo_global_settings_dialog_class_init (ModestMaemoGlobalSettingsDialogC
 	MODEST_GLOBAL_SETTINGS_DIALOG_CLASS (klass)->current_connection_func = current_connection;
 }
 
+typedef struct {
+	ModestMaemoGlobalSettingsDialog *dia;
+	GtkWidget *focus_widget;
+} SwitchPageHelper;
+
+static gboolean
+idle_select_default_focus (gpointer data) 
+{
+	ModestGlobalSettingsDialogPrivate *ppriv;
+	ModestMaemoGlobalSettingsDialogPrivate *priv;
+	SwitchPageHelper *helper;
+
+	helper = (SwitchPageHelper *) data;
+	priv  = MODEST_MAEMO_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE (helper->dia);
+	ppriv = MODEST_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE (helper->dia);
+
+	/* Grab focus, we need to block in order to prevent a
+	   recursive call to this callback */
+	g_signal_handler_block (G_OBJECT (ppriv->notebook), priv->switch_handler);
+	gtk_widget_grab_focus (helper->focus_widget);
+	g_signal_handler_unblock (G_OBJECT (ppriv->notebook), priv->switch_handler);
+
+	g_free (helper);
+
+	return FALSE;
+}
+
 
 static void
 on_switch_page (GtkNotebook *notebook, GtkNotebookPage *page, guint page_num, gpointer user_data)
 {
 	/* grab the focus to the default element in the current page */
-	GtkWidget *child, *focus_item;
-	
-	child = gtk_notebook_get_nth_page (notebook, page_num);
-	if (!child) {
-		g_printerr ("modest: cannot get nth page\n");
-		return;
-	}
-	
-	focus_item = GTK_WIDGET(g_object_get_data (G_OBJECT(child), DEFAULT_FOCUS_WIDGET));
+	GtkWidget *selected_page = NULL, *focus_item = NULL;
+	ModestGlobalSettingsDialogPrivate *ppriv;
+	ModestMaemoGlobalSettingsDialogPrivate *priv;
+	SwitchPageHelper *helper;
+
+	priv  = MODEST_MAEMO_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE (user_data);
+	ppriv = MODEST_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE (user_data);
+
+	selected_page = gtk_notebook_get_nth_page (notebook, page_num);
+	focus_item = GTK_WIDGET(g_object_get_data (G_OBJECT(selected_page), DEFAULT_FOCUS_WIDGET));
 	if (!focus_item) {
 		g_printerr ("modest: cannot get focus item\n");
 		return;
 	}
 
-	gtk_widget_grab_focus (focus_item);
+	/* Create the helper */
+	helper = g_malloc0 (sizeof (SwitchPageHelper));
+	helper->dia = MODEST_MAEMO_GLOBAL_SETTINGS_DIALOG (user_data);
+	helper->focus_widget = focus_item;
+
+	/* Focus the widget in an idle. We need to do this in an idle,
+	   because this handler is executed *before* the page was
+	   really switched, so the focus is not placed in the right
+	   widget */
+	g_idle_add (idle_select_default_focus, helper);
 }
+
 
 static void
 modest_maemo_global_settings_dialog_init (ModestMaemoGlobalSettingsDialog *self)
 {
+	ModestMaemoGlobalSettingsDialogPrivate *priv;
 	ModestGlobalSettingsDialogPrivate *ppriv;
 
+	priv  = MODEST_MAEMO_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE (self);
 	ppriv = MODEST_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE (self);
 
 	ppriv->updating_page = create_updating_page (self);
 	ppriv->composing_page = create_composing_page (self);
     
+	/* Set the default focusable widgets */
+	g_object_set_data (G_OBJECT(ppriv->updating_page), DEFAULT_FOCUS_WIDGET,
+			   (gpointer)ppriv->auto_update);
+	g_object_set_data (G_OBJECT(ppriv->composing_page), DEFAULT_FOCUS_WIDGET,
+			   (gpointer)ppriv->msg_format);
+
 	/* Add the notebook pages: */
 	gtk_notebook_append_page (GTK_NOTEBOOK (ppriv->notebook), ppriv->updating_page, 
-		gtk_label_new (_("mcen_ti_options_updating")));
+				  gtk_label_new (_("mcen_ti_options_updating")));
 	gtk_notebook_append_page (GTK_NOTEBOOK (ppriv->notebook), ppriv->composing_page, 
-		gtk_label_new (_("mcen_ti_options_composing")));
+				  gtk_label_new (_("mcen_ti_options_composing")));
 		
 	gtk_container_add (GTK_CONTAINER (GTK_DIALOG (self)->vbox), ppriv->notebook);
 	gtk_container_set_border_width (GTK_CONTAINER (GTK_DIALOG (self)->vbox), MODEST_MARGIN_HALF);
 
-	g_signal_connect (G_OBJECT(ppriv->notebook), "switch-page", G_CALLBACK(on_switch_page), NULL);
-	
+	g_signal_connect (G_OBJECT (self), "key-press-event",
+			  G_CALLBACK (on_inner_tabs_key_pressed), self);
+	priv->switch_handler = g_signal_connect (G_OBJECT(ppriv->notebook), "switch-page",
+						 G_CALLBACK(on_switch_page), self);
+
 	/* Load current config */
 	_modest_global_settings_dialog_load_conf (MODEST_GLOBAL_SETTINGS_DIALOG (self));
-	gtk_widget_show_all (ppriv->notebook);
+
+	/* Set first page */
+	gtk_notebook_set_current_page (GTK_NOTEBOOK (ppriv->notebook), 0);
 }
 
 static void
 modest_maemo_global_settings_dialog_finalize (GObject *obj)
 {
+	ModestGlobalSettingsDialogPrivate *ppriv;
+	ModestMaemoGlobalSettingsDialogPrivate *priv;
+
+	priv = MODEST_MAEMO_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE (obj);
+	ppriv = MODEST_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE (obj);
+
+	if (priv->switch_handler) {
+		g_signal_handler_disconnect (G_OBJECT (ppriv->notebook), priv->switch_handler);
+		priv->switch_handler = 0;
+	}
+
 /* 	free/unref instance resources here */
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
@@ -289,9 +356,6 @@ create_updating_page (ModestMaemoGlobalSettingsDialog *self)
 
 	/* Add to vbox */
 	gtk_box_pack_start (GTK_BOX (vbox), vbox_limit, FALSE, FALSE, MODEST_MARGIN_HALF);
-
-	/* set the special magic default widget as the DEFAULT_FOCUS_WIDGET gobject property */
-	g_object_set_data (G_OBJECT(vbox), DEFAULT_FOCUS_WIDGET, (gpointer)ppriv->auto_update);
 	
 	return vbox;
 }
@@ -334,9 +398,6 @@ create_composing_page (ModestMaemoGlobalSettingsDialog *self)
 				      NULL, 
 				      HILDON_CAPTION_MANDATORY);
 	gtk_box_pack_start (GTK_BOX (vbox), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
-
-	/* set the special magic default widget as the DEFAULT_FOCUS_WIDGET gobject property */
-	g_object_set_data (G_OBJECT(vbox), DEFAULT_FOCUS_WIDGET, (gpointer)ppriv->msg_format);
 
 	return vbox;
 }
@@ -442,6 +503,29 @@ current_connection (void)
 		g_object_unref (iap);
 	}
 	g_object_unref (device);
+
+	return retval;
+}
+
+static gboolean
+on_inner_tabs_key_pressed (GtkWidget *widget,
+			   GdkEventKey *event,
+			   gpointer user_data)
+{
+	ModestGlobalSettingsDialogPrivate *ppriv;
+	gboolean retval = FALSE;
+
+	ppriv = MODEST_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE (user_data);
+
+	if (widget == user_data) {
+		if (event->keyval == GDK_Right) {
+			gtk_notebook_next_page (GTK_NOTEBOOK (ppriv->notebook));
+			retval = TRUE;
+		} else if (event->keyval == GDK_Left) {
+			gtk_notebook_prev_page (GTK_NOTEBOOK (ppriv->notebook));
+			retval = TRUE;
+		}
+	}
 
 	return retval;
 }
