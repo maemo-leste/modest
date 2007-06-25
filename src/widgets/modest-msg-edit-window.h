@@ -322,6 +322,19 @@ gboolean        modest_msg_edit_window_check_names    (ModestMsgEditWindow *wind
  */
 void            modest_msg_edit_window_toggle_find_toolbar (ModestMsgEditWindow *window,
 							    gboolean show);
+
+
+/**
+ * modest_msg_edit_window_is_modified:
+ * @window: a #ModestMsgEditWindow
+ *
+ * Examines whether or not the message has been modified
+ *
+ * Returns: %TRUE if any field has been modified, %FALSE otherwise
+ */
+gboolean        modest_msg_edit_window_is_modified         (ModestMsgEditWindow *window);
+
+
 G_END_DECLS
 
 #endif /* __MODEST_MSG_EDIT_WINDOW_H__ */

@@ -31,6 +31,8 @@
 #include "modest-window-mgr.h"
 #include "modest-runtime.h"
 #include "modest-tny-folder.h"
+#include "modest-ui-actions.h"
+#include "modest-platform.h"
 #include "widgets/modest-main-window.h"
 #include "widgets/modest-msg-edit-window.h"
 #include "widgets/modest-msg-view-window.h"
@@ -53,13 +55,14 @@ enum {
 
 typedef struct _ModestWindowMgrPrivate ModestWindowMgrPrivate;
 struct _ModestWindowMgrPrivate {
-	GList *window_list;
+	GList        *window_list;
 	ModestWindow *main_window;
-	gboolean fullscreen_mode;
-	gboolean show_toolbars;
-	gboolean show_toolbars_fullscreen;
+	gboolean     fullscreen_mode;
+	gboolean     show_toolbars;
+	gboolean     show_toolbars_fullscreen;
 	
-	GSList* windows_that_prevent_hibernation;
+	GSList       *windows_that_prevent_hibernation;
+	GHashTable   *destroy_handlers;
 };
 #define MODEST_WINDOW_MGR_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                MODEST_TYPE_WINDOW_MGR, \
@@ -120,6 +123,7 @@ modest_window_mgr_init (ModestWindowMgr *obj)
 	   ready yet */
 	priv->show_toolbars = FALSE;
 	priv->show_toolbars_fullscreen = FALSE;
+	priv->destroy_handlers = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, g_free);
 }
 
 static void
@@ -137,6 +141,12 @@ modest_window_mgr_finalize (GObject *obj)
 		}
 		g_list_free (priv->window_list);
 		priv->window_list = NULL;
+	}
+
+	/* Free the hash table with the handlers */
+	if (priv->destroy_handlers) {
+		g_hash_table_unref (priv->destroy_handlers);
+		priv->destroy_handlers = NULL;
 	}
 
 	/* Do not unref priv->main_window because it does not hold a
@@ -159,6 +169,7 @@ modest_window_mgr_register_window (ModestWindowMgr *self,
 	GList *win;
 	gboolean show;
 	ModestWindowMgrPrivate *priv;
+	gint *handler_id;
 
 	g_return_if_fail (MODEST_IS_WINDOW_MGR (self));
 	g_return_if_fail (MODEST_IS_WINDOW (window));
@@ -186,7 +197,9 @@ modest_window_mgr_register_window (ModestWindowMgr *self,
 	priv->window_list = g_list_prepend (priv->window_list, window);
 
 	/* Listen to object destruction */
-	g_signal_connect (window, "destroy", G_CALLBACK (on_window_destroy), self);
+	handler_id = g_malloc0 (sizeof (gint));
+	*handler_id = g_signal_connect (window, "destroy", G_CALLBACK (on_window_destroy), self);
+	g_hash_table_insert (priv->destroy_handlers, window, handler_id);
 
 	/* Put into fullscreen if needed */
 	if (priv->fullscreen_mode)
@@ -237,10 +250,16 @@ on_window_destroy (ModestWindow *window, ModestWindowMgr *self)
 			}
 		}
 	} else {
-		if (MODEST_IS_MSG_EDIT_WINDOW (window)) {
-			/* TODO: Save currently edited message to Drafts
-			   folder */
-		}
+		if (MODEST_IS_MSG_EDIT_WINDOW (window))
+			/* Save currently edited message to Drafts */
+			if (modest_msg_edit_window_is_modified (MODEST_MSG_EDIT_WINDOW (window))) {
+				gint response = 
+					modest_platform_run_confirmation_dialog (GTK_WINDOW (self), 
+										 _("mcen_nc_no_email_message_modified_save_changes"));
+				if (response != GTK_RESPONSE_CANCEL) {
+					modest_ui_actions_on_save_to_drafts (NULL, MODEST_MSG_EDIT_WINDOW (window));
+				}
+			}
 	}
 
 	/* Unregister window */
@@ -253,6 +272,7 @@ modest_window_mgr_unregister_window (ModestWindowMgr *self,
 {
 	GList *win;
 	ModestWindowMgrPrivate *priv;
+	gint *handler_id;
 
 	g_return_if_fail (MODEST_IS_WINDOW_MGR (self));
 	g_return_if_fail (MODEST_IS_WINDOW (window));
@@ -269,9 +289,22 @@ modest_window_mgr_unregister_window (ModestWindowMgr *self,
 	if (priv->main_window == window)
 		priv->main_window = NULL;
 
-	/* Remove from list. Remove the reference to the window */
-	g_object_unref (win->data);
+	/* Save state */
+	modest_window_save_state (window);
+
+	/* Remove from list */
 	priv->window_list = g_list_remove_link (priv->window_list, win);
+
+	/* Remove the reference to the window. We need to block the
+	   destroy event handler to avoid recursive calls */
+	handler_id = g_hash_table_lookup (priv->destroy_handlers, window);
+	g_signal_handler_block (window, *handler_id);
+	gtk_widget_destroy (win->data);
+	if (G_IS_OBJECT (window)) {
+		g_warning ("This should not happen the window was not completely destroyed");
+		g_signal_handler_unblock (window, *handler_id);
+	}
+	g_hash_table_remove (priv->destroy_handlers, window);
 
 	/* If there are no more windows registered then exit program */
 	if (priv->window_list == NULL) {

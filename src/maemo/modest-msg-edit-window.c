@@ -95,7 +95,6 @@ static void  remove_attachment_insensitive_press (GtkWidget *widget, ModestMsgEd
 static void  zoom_insensitive_press (GtkWidget *widget, ModestMsgEditWindow *editor);
 static void  setup_insensitive_handlers (ModestMsgEditWindow *editor);
 static void  reset_modified (ModestMsgEditWindow *editor);
-static gboolean is_modified (ModestMsgEditWindow *editor);
 
 static void  text_buffer_refresh_attributes (WPTextBuffer *buffer, ModestMsgEditWindow *window);
 static void  text_buffer_delete_range (GtkTextBuffer *buffer, GtkTextIter *start, GtkTextIter *end, gpointer userdata);
@@ -525,44 +524,6 @@ modest_msg_edit_window_finalize (GObject *obj)
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
-static gboolean
-on_delete_event (GtkWidget *widget, GdkEvent *event, ModestMsgEditWindow *self)
-{
-	GtkWidget *close_dialog;
-	ModestMsgEditWindowPrivate *priv;
-	gint response;
-
-	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (self);
-	modest_window_save_state (MODEST_WINDOW (self));
-	if (is_modified (self)) {
-		close_dialog = hildon_note_new_confirmation (GTK_WINDOW (self), _("mcen_nc_no_email_message_modified_save_changes"));
-		response = gtk_dialog_run (GTK_DIALOG (close_dialog));
-		gtk_widget_destroy (close_dialog);
-
-		if (response != GTK_RESPONSE_CANCEL) {
-			modest_ui_actions_on_save_to_drafts (NULL, self);
-		}
-	} 
-/* 	/\* remove old message from drafts *\/ */
-/* 	if (priv->draft_msg) { */
-/* 		TnyHeader *header = tny_msg_get_header (priv->draft_msg); */
-/* 		TnyAccount *account = modest_tny_account_store_get_server_account (modest_runtime_get_account_store(), */
-/* 											   account_name, */
-/* 											   TNY_ACCOUNT_TYPE_STORE); */
-/* 		TnyFolder *folder = modest_tny_account_get_special_folder (account, TNY_FOLDER_TYPE_DRAFTS); */
-/* 		g_return_val_if_fail (TNY_IS_HEADER (header), FALSE); */
-/* 		g_return_val_if_fail (TNY_IS_FOLDER (folder), FALSE); */
-/* 		tny_folder_remove_msg (folder, header, NULL); */
-/* 		g_object_unref (folder); */
-/* 		g_object_unref (header); */
-/* 		g_object_unref (priv->draft_msg); */
-/* 		priv->draft_msg = NULL; */
-/* 	} */
-	gtk_widget_destroy (GTK_WIDGET (self));
-	
-	return TRUE;
-}
-
 static GtkWidget *
 menubar_to_menu (GtkUIManager *ui_manager)
 {
@@ -944,9 +905,6 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name)
 	restore_settings (MODEST_MSG_EDIT_WINDOW(obj));
 		
 	gtk_window_set_icon_from_file (GTK_WINDOW(obj), MODEST_APP_ICON, NULL);
-
-	g_signal_connect (G_OBJECT(obj), "delete-event",
-			  G_CALLBACK(on_delete_event), obj);
 
 	modest_window_set_active_account (MODEST_WINDOW(obj), account_name);
 
@@ -2561,8 +2519,8 @@ reset_modified (ModestMsgEditWindow *editor)
 	gtk_text_buffer_set_modified (priv->text_buffer, FALSE);
 }
 
-static gboolean
-is_modified (ModestMsgEditWindow *editor)
+gboolean
+modest_msg_edit_window_is_modified (ModestMsgEditWindow *editor)
 {
 	ModestMsgEditWindowPrivate *priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (editor);
 	GtkTextBuffer *buffer;

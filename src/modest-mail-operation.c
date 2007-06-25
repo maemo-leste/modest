@@ -619,6 +619,7 @@ modest_mail_operation_save_to_drafts (ModestMailOperation *self,
 		msg = modest_tny_msg_new_html_plain (to, from, cc, bcc, subject, html_body, plain_body, (GSList *) attachments_list);
 	}
 	if (!msg) {
+		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 			     MODEST_MAIL_OPERATION_ERROR_INSTANCE_CREATION_FAILED,
 			     "modest: failed to create a new msg\n");
@@ -631,6 +632,7 @@ modest_mail_operation_save_to_drafts (ModestMailOperation *self,
 
 	folder = modest_tny_account_get_special_folder (TNY_ACCOUNT (transport_account), TNY_FOLDER_TYPE_DRAFTS);
 	if (!folder) {
+		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 			     MODEST_MAIL_OPERATION_ERROR_ITEM_NOT_FOUND,
 			     "modest: failed to create a new msg\n");
@@ -646,8 +648,8 @@ modest_mail_operation_save_to_drafts (ModestMailOperation *self,
 	}
 	
 	tny_folder_add_msg (folder, msg, &(priv->error));
-	if (priv->error)
-		goto end;
+	if (!priv->error)
+		priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
 
 end:
 	if (msg)

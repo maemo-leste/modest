@@ -562,6 +562,8 @@ cleanup:
 	g_free (account_name);
 	g_free (from_str);
 	g_free (blank_and_signature);
+	if (msg_win)
+		g_object_unref (msg_win);
 	if (account)
 		g_object_unref (G_OBJECT(account));
 	if (msg)
@@ -652,6 +654,7 @@ open_msg_cb (ModestMailOperation *mail_op,
 	if (win != NULL) {
 		mgr = modest_runtime_get_window_mgr ();
 		modest_window_mgr_register_window (mgr, win);
+		g_object_unref (win);
 		gtk_window_set_transient_for (GTK_WINDOW (win), GTK_WINDOW (parent_win));
 		gtk_widget_show_all (GTK_WIDGET(win));
 	}
@@ -857,6 +860,8 @@ reply_forward_cb (ModestMailOperation *mail_op,
 	gtk_widget_show_all (GTK_WIDGET (msg_win));
 
 cleanup:
+	if (msg_win)
+		g_object_unref (msg_win);
 	if (new_msg)
 		g_object_unref (G_OBJECT (new_msg));
 	if (account)
@@ -1539,9 +1544,6 @@ modest_ui_actions_on_save_to_drafts (GtkWidget *widget, ModestMsgEditWindow *edi
 	info_text = g_strdup_printf (_("mail_va_saved_to_drafts"), _("mcen_me_folder_drafts"));
 	modest_platform_information_banner (NULL, NULL, info_text);
 	g_free (info_text);
-
-	/* Save settings and close the window */
-	gtk_widget_destroy (GTK_WIDGET (edit_window));
 }
 
 /* For instance, when clicking the Send toolbar button when editing a message: */
