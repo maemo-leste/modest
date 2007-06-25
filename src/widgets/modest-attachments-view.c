@@ -186,7 +186,9 @@ modest_attachments_view_remove_attachment (ModestAttachmentsView *atts_view, Tny
 	}
 
 	if (found_att_view) {
+		priv->selected = g_list_remove (priv->selected, found_att_view);
 		gtk_widget_destroy (GTK_WIDGET (found_att_view));
+		own_clipboard (atts_view);
 	}
 
 }
@@ -209,11 +211,15 @@ modest_attachments_view_remove_attachment_by_id (ModestAttachmentsView *atts_vie
 		const gchar *mime_part_id = NULL;
 
 		mime_part_id = tny_mime_part_get_content_id (cur_mime_part);
-		if ((mime_part_id != NULL) && (strcmp (mime_part_id, att_id) == 0))
+		if ((mime_part_id != NULL) && (strcmp (mime_part_id, att_id) == 0)) {
 			gtk_widget_destroy (GTK_WIDGET (att_view));
+			priv->selected = g_list_remove (priv->selected, att_view);
+		}
 
 		g_object_unref (cur_mime_part);
 	}
+
+	own_clipboard (atts_view);
 
 }
 
