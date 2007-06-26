@@ -141,6 +141,13 @@ static void modest_msg_edit_window_find_toolbar_search (GtkWidget *widget,
 							ModestMsgEditWindow *window);
 static void modest_msg_edit_window_find_toolbar_close (GtkWidget *widget,
 						       ModestMsgEditWindow *window);
+static gboolean gtk_text_iter_forward_search_insensitive (const GtkTextIter *iter,
+							  const gchar *str,
+							  GtkTextIter *match_start,
+							  GtkTextIter *match_end);
+							  
+
+
 static void edit_menu_activated (GtkAction *action,
 				 gpointer userdata);
 static void view_menu_activated (GtkAction *action,
@@ -184,6 +191,7 @@ struct _ModestMsgEditWindowPrivate {
 	GtkWidget   *size_tool_button_label;
 	
 	GtkWidget   *find_toolbar;
+	gchar       *last_search;
 
 	GtkWidget   *scroll;
 	GtkWidget   *scroll_area;
@@ -297,6 +305,7 @@ modest_msg_edit_window_init (ModestMsgEditWindow *obj)
 	priv->priority_flags = 0;
 
 	priv->find_toolbar = NULL;
+	priv->last_search = NULL;
 
 	priv->draft_msg = NULL;
 	priv->clipboard_change_handler_id = 0;
@@ -2677,6 +2686,63 @@ modest_msg_edit_window_toggle_find_toolbar (ModestMsgEditWindow *window,
     
 }
 
+static gboolean 
+gtk_text_iter_forward_search_insensitive (const GtkTextIter *iter,
+					  const gchar *str,
+					  GtkTextIter *match_start,
+					  GtkTextIter *match_end)
+{
+	GtkTextIter end_iter;
+	gchar *str_casefold;
+	gint str_chars_n;
+	gchar *range_text;
+	gchar *range_casefold;
+	gint offset;
+	gint range_chars_n;
+	gboolean result = FALSE;
+
+	if (str == NULL)
+		return TRUE;
+	
+	/* get end iter */
+	end_iter = *iter;
+	gtk_text_iter_forward_to_end (&end_iter);
+
+	str_casefold = g_utf8_casefold (str, -1);
+	str_chars_n = strlen (str);
+
+	range_text = gtk_text_iter_get_visible_text (iter, &end_iter);
+	range_casefold = g_utf8_casefold (range_text, -1);
+	range_chars_n = strlen (range_casefold);
+
+	if (range_chars_n < str_chars_n) {
+		g_free (str_casefold);
+		g_free (range_text);
+		g_free (range_casefold);
+		return FALSE;
+	}
+
+	for (offset = 0; offset <= range_chars_n - str_chars_n; offset++) {
+		gchar *range_subtext = g_strndup (range_casefold + offset, str_chars_n);
+		if (!g_utf8_collate (range_subtext, str_casefold)) {
+			gchar *found_text = g_strndup (range_text + offset, str_chars_n);
+			result = TRUE;
+			gtk_text_iter_forward_search (iter, found_text, GTK_TEXT_SEARCH_VISIBLE_ONLY|GTK_TEXT_SEARCH_TEXT_ONLY,
+						      match_start, match_end, NULL);
+			g_free (found_text);
+		}
+		g_free (range_subtext);
+		if (result)
+			break;
+	}
+	g_free (str_casefold);
+	g_free (range_text);
+	g_free (range_casefold);
+
+	return result;
+}
+
+
 static void 
 modest_msg_edit_window_find_toolbar_search (GtkWidget *widget,
 					    ModestMsgEditWindow *window)
@@ -2686,25 +2752,47 @@ modest_msg_edit_window_find_toolbar_search (GtkWidget *widget,
 	gboolean result;
 	GtkTextIter selection_start, selection_end;
 	GtkTextIter match_start, match_end;
+	gboolean continue_search = FALSE;
 
 	g_object_get (G_OBJECT (widget), "prefix", &current_search, NULL);
-	if ((current_search == NULL) && (strcmp (current_search, "") == 0)) {
+	if ((current_search == NULL) || (strcmp (current_search, "") == 0)) {
 		g_free (current_search);
+		g_free (priv->last_search);
+		priv->last_search = NULL;
+		/* Information banner about empty search */
+		hildon_banner_show_information (NULL, NULL, dgettext ("hildon-common-strings", "ecdg_ib_find_rep_enter_text"));
 		return;
 	}
 
-	gtk_text_buffer_get_selection_bounds (priv->text_buffer, &selection_start, &selection_end);
-	result = gtk_text_iter_forward_search (&selection_end, current_search, GTK_TEXT_SEARCH_VISIBLE_ONLY, &match_start, &match_end, NULL);
-	if (!result) {
+	if ((priv->last_search != NULL)&&(!strcmp (current_search, priv->last_search))) {
+		continue_search = TRUE;
+	} else {
+		g_free (priv->last_search);
+		priv->last_search = g_strdup (current_search);
+	}
+
+	if (continue_search) {
+		gtk_text_buffer_get_selection_bounds (priv->text_buffer, &selection_start, &selection_end);
+		result = gtk_text_iter_forward_search_insensitive (&selection_end, current_search, 
+								   &match_start, &match_end);
+		if (!result)
+			hildon_banner_show_information (NULL, NULL, dgettext ("hildon-libs", "ckct_ib_find_search_complete"));
+	} else {
 		GtkTextIter buffer_start;
 		gtk_text_buffer_get_start_iter (priv->text_buffer, &buffer_start);
-		result = gtk_text_iter_forward_search (&buffer_start, current_search, GTK_TEXT_SEARCH_VISIBLE_ONLY, &match_start, &match_end, &selection_start);
+		result = gtk_text_iter_forward_search_insensitive (&buffer_start, current_search, 
+								   &match_start, &match_end);
+		if (!result)
+			hildon_banner_show_information (NULL, NULL, dgettext ("hildon-libs", "ckct_ib_find_no_matches"));
 	}
+
+	/* Mark as selected the string found in search */
 	if (result) {
 		gtk_text_buffer_select_range (priv->text_buffer, &match_start, &match_end);
 		gtk_text_view_scroll_to_iter (GTK_TEXT_VIEW (priv->msg_body), &match_start, 0.0, TRUE, 0.0, 0.0);
 	} else {
-		/* TODO: warning about non succesful search */
+		g_free (priv->last_search);
+		priv->last_search = NULL;
 	}
 	g_free (current_search);
 }
