@@ -649,16 +649,17 @@ recurse_folders (TnyFolderStore *store,
 		folder = TNY_FOLDER (tny_iterator_get_current (iter));
 		stats = tny_folder_get_stats (folder);
 
-		/* initially, we sometimes get -1 from tinymail; ignore that */
-		if (helper->function && helper->function (stats) > 0)
-			helper->sum += helper->function (stats);
+		if (stats) {
+			/* initially, we sometimes get -1 from tinymail; ignore that */
+			if (helper->function && helper->function (stats) > 0)
+				helper->sum += helper->function (stats);
 
-		if (TNY_IS_FOLDER_STORE (folder)) {
-			recurse_folders (TNY_FOLDER_STORE (folder), query, helper);
-		}
-	    
+			if (TNY_IS_FOLDER_STORE (folder)) {
+				recurse_folders (TNY_FOLDER_STORE (folder), query, helper);
+			}
+			g_object_unref (stats);
+		}    
  		g_object_unref (folder);
- 		g_object_unref (stats);
 		tny_iterator_next (iter);
 	}
 	 g_object_unref (G_OBJECT (iter));
