@@ -1096,7 +1096,6 @@ add_folders_to_list (TnyFolderStore *folder_store, GList** list)
 	if (TNY_IS_FOLDER (folder_store)) {
 		add_single_folder_to_list (TNY_FOLDER (folder_store), list);
 	}	
-	
 		
 	/* Recurse into child folders: */
 		
@@ -1114,12 +1113,21 @@ add_folders_to_list (TnyFolderStore *folder_store, GList** list)
 
 	TnyIterator *iter = tny_list_create_iterator (all_folders);
 	while (!tny_iterator_is_done (iter)) {
+		
+		/* Do not recurse, because the osso-global-search UI specification 
+		 * does not seem to want the sub-folders, though that spec seems to 
+		 * be generally unsuitable for Modest.
+		 */
 		TnyFolder *folder = TNY_FOLDER (tny_iterator_get_current (iter));
+		add_single_folder_to_list (TNY_FOLDER (folder), list);
+		 
+		#if 0
 		if (TNY_IS_FOLDER_STORE (folder))
 			add_folders_to_list (TNY_FOLDER_STORE (folder), list);
 		else {
 			add_single_folder_to_list (TNY_FOLDER (folder), list);
 		}
+		#endif
 		
 		tny_iterator_next (iter);
 	}

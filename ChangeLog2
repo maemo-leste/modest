@@ -1,5 +1,12 @@
 2007-06-26  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/dbus_api/modest-dbus-callbacks.c: (add_folders_to_list):
+	Only return the first level of folders under accounts, because the 
+	osso-global-search UI spec doesn't want the rest.
+	This fixed projects.maemo.org bug NB#61811.
+
+2007-06-26  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/modest-tny-account-store.c:
 	* src/modest-tny-account-store.h:
 	Added modest_tny_account_is_memory_card_account().
