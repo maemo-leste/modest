@@ -218,9 +218,10 @@ static void
 modest_progress_bar_add_operation (ModestProgressObject *self,
 				   ModestMailOperation  *mail_op)
 {
-	ModestProgressBarWidget *me;
-	ObservableData *data;
-	ModestProgressBarWidgetPrivate *priv;
+	ModestProgressBarWidget *me = NULL;
+	ObservableData *data = NULL;
+	ModestProgressBarWidgetPrivate *priv = NULL;
+	ModestMailOperationState *state = NULL;
 	
 	me = MODEST_PROGRESS_BAR_WIDGET (self);
 	priv = MODEST_PROGRESS_BAR_WIDGET_GET_PRIVATE (me);
@@ -233,11 +234,17 @@ modest_progress_bar_add_operation (ModestProgressObject *self,
 						 me);
 	if (priv->observables == NULL) {
 		priv->current = mail_op;
+
+		/* Call progress_change handler to initialize progress message */
+		state = g_malloc0(sizeof(ModestMailOperationState));
+		state->done = 0;
+		state->total = 0;
+		state->op_type = modest_mail_operation_get_type_operation (mail_op);;
+		on_progress_changed (mail_op, state, me);
+		g_free(state);
 	}
 	priv->observables = g_slist_append (priv->observables, data);
 
-	/* Call progress_change handler to initialize progress message */
-/* 	on_progress_changed (mail_op, me); */
 }
 
 static gint

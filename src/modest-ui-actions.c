@@ -695,58 +695,98 @@ modest_ui_actions_get_msgs_full_error_handler (ModestMailOperation *mail_op,
 static void
 _modest_ui_actions_open (TnyList *headers, ModestWindow *win)
 {
-	ModestWindowMgr *mgr;
-	TnyIterator *iter;
-	ModestMailOperation *mail_op;
-	TnyList *not_opened_headers;
-
+	ModestWindowMgr *mgr = NULL;
+	TnyIterator *iter = NULL;
+	ModestMailOperation *mail_op1 = NULL;
+	ModestMailOperation *mail_op2 = NULL;
+	TnyList *not_opened_headers = NULL;
+	TnyList *not_opened_cached_headers = NULL;
+	TnyHeaderFlags flags;
+		
 	/* Look if we already have a message view for each header. If
 	   true, then remove the header from the list of headers to
 	   open */
 	mgr = modest_runtime_get_window_mgr ();
 	iter = tny_list_create_iterator (headers);
 	not_opened_headers = tny_simple_list_new ();
+	not_opened_cached_headers = tny_simple_list_new ();
 	while (!tny_iterator_is_done (iter)) {
 		ModestWindow *window;
 		TnyHeader *header;
 		
 		header = TNY_HEADER (tny_iterator_get_current (iter));
+		flags = tny_header_get_flags (header);
 		window = modest_window_mgr_find_window_by_header (mgr, header);
+
 		/* Do not open again the message and present the
 		   window to the user */
 		if (window)
 			gtk_window_present (GTK_WINDOW (window));
-		else
+		else if (!(flags & TNY_HEADER_FLAG_CACHED))
 			tny_list_append (not_opened_headers, G_OBJECT (header));
-
+		/* Check if msg has already been retreived */
+		else
+			tny_list_append (not_opened_cached_headers, G_OBJECT (header));
+		
 		g_object_unref (header);
 		tny_iterator_next (iter);
 	}
 	
-	/* Open each message */
-	mail_op = modest_mail_operation_new_with_error_handling (MODEST_MAIL_OPERATION_TYPE_RECEIVE, 
-								 G_OBJECT (win), 
-								 modest_ui_actions_get_msgs_full_error_handler, 
-								 NULL);
-	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
-	if (tny_list_get_length (not_opened_headers) > 1) {
-		modest_mail_operation_get_msgs_full (mail_op, 
-						     not_opened_headers, 
-						     open_msg_cb, 
-						     NULL, 
-						     NULL);
-	} else {
-		TnyIterator *iter = tny_list_create_iterator (not_opened_headers);
-		TnyHeader *header = TNY_HEADER (tny_iterator_get_current (iter));
-		modest_mail_operation_get_msg (mail_op, header, open_msg_cb, NULL);
-		g_object_unref (header);
-		g_object_unref (iter);
+	/* Open each uncached message */
+	if (tny_list_get_length (not_opened_headers) > 0) {
+		mail_op1 = modest_mail_operation_new_with_error_handling (MODEST_MAIL_OPERATION_TYPE_RECEIVE, 
+									 G_OBJECT (win), 
+									 modest_ui_actions_get_msgs_full_error_handler, 
+									 NULL);
+		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op1);
+		if (tny_list_get_length (not_opened_headers) > 1) {
+			modest_mail_operation_get_msgs_full (mail_op1, 
+							     not_opened_headers, 
+							     open_msg_cb, 
+							     NULL, 
+							     NULL);
+		} else {
+			TnyIterator *iter = tny_list_create_iterator (not_opened_headers);
+			TnyHeader *header = TNY_HEADER (tny_iterator_get_current (iter));
+			modest_mail_operation_get_msg (mail_op1, header, open_msg_cb, NULL);
+			g_object_unref (header);
+			g_object_unref (iter);
+		}
+	}
+
+	/* Open each cached message */
+	if (tny_list_get_length (not_opened_cached_headers) > 0) {
+		mail_op2 = modest_mail_operation_new_with_error_handling (MODEST_MAIL_OPERATION_TYPE_OPEN, 
+									 G_OBJECT (win), 
+									 modest_ui_actions_get_msgs_full_error_handler, 
+									 NULL);
+		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op2);
+		if (tny_list_get_length (not_opened_cached_headers) > 1) {
+			modest_mail_operation_get_msgs_full (mail_op2, 
+							     not_opened_headers, 
+							     open_msg_cb, 
+							     NULL, 
+							     NULL);
+		} else {
+			TnyIterator *iter = tny_list_create_iterator (not_opened_cached_headers);
+			TnyHeader *header = TNY_HEADER (tny_iterator_get_current (iter));
+			modest_mail_operation_get_msg (mail_op2, header, open_msg_cb, NULL);
+			g_object_unref (header);
+			g_object_unref (iter);
+		}
 	}
 
 	/* Clean */
-	g_object_unref (not_opened_headers);
-	g_object_unref (iter);
-	g_object_unref (mail_op);
+	if (not_opened_headers != NULL)
+		g_object_unref (not_opened_headers);
+	if (not_opened_cached_headers != NULL)
+		g_object_unref (not_opened_cached_headers);
+	if (iter != NULL) 
+		g_object_unref (iter);
+	if (mail_op1 != NULL)
+		g_object_unref (mail_op1);
+	if (mail_op2 != NULL) 
+		g_object_unref (mail_op2);
 }
 
 void

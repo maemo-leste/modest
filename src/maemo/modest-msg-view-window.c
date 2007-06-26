@@ -1052,13 +1052,15 @@ modest_msg_view_window_select_next_message (ModestMsgViewWindow *window)
 			/* Mark as read */
 			flags = tny_header_get_flags (header);
 			if (!(flags & TNY_HEADER_FLAG_SEEN))
-/* 				tny_header_set_flags (header, flags | TNY_HEADER_FLAG_SEEN); */
 				tny_header_set_flags (header, TNY_HEADER_FLAG_SEEN);
 
-			/* Msg download initied */
-
+			/* Msg download completed */
+			if (flags & TNY_HEADER_FLAG_CACHED)
+				mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_OPEN, G_OBJECT(window));
+			else
+				mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_RECEIVE, G_OBJECT(window));
+				
 			/* New mail operation */
-			mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_RECEIVE, G_OBJECT(window));
 			modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
 			modest_mail_operation_get_msg (mail_op, header, view_msg_cb, NULL);
 			g_object_unref (mail_op);
@@ -1110,11 +1112,15 @@ modest_msg_view_window_select_first_message (ModestMsgViewWindow *self)
 	/* Mark as read */
 	flags = tny_header_get_flags (header);
 	if (!(flags & TNY_HEADER_FLAG_SEEN))
-/* 		tny_header_set_flags (header, flags | TNY_HEADER_FLAG_SEEN); */
 		tny_header_set_flags (header, TNY_HEADER_FLAG_SEEN);
 	
+	/* Msg download completed */
+	if (flags & TNY_HEADER_FLAG_CACHED)
+		mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_OPEN, G_OBJECT(self));
+	else 
+		mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_RECEIVE, G_OBJECT(self));
+	
 	/* New mail operation */
-	mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_RECEIVE, G_OBJECT(self));
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
 	modest_mail_operation_get_msg (mail_op, header, view_msg_cb, NULL);
 	g_object_unref (mail_op);
@@ -1166,11 +1172,15 @@ modest_msg_view_window_select_previous_message (ModestMsgViewWindow *window)
 		/* Mark as read */
 		flags = tny_header_get_flags (header);
 		if (!(flags & TNY_HEADER_FLAG_SEEN))
-/* 			tny_header_set_flags (header, flags | TNY_HEADER_FLAG_SEEN); */
 			tny_header_set_flags (header, TNY_HEADER_FLAG_SEEN);
-
+		
+		/* Msg download completed */
+		if (flags & TNY_HEADER_FLAG_CACHED)
+			mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_OPEN, G_OBJECT(window));
+		else
+			mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_RECEIVE, G_OBJECT(window));
+		
 		/* New mail operation */
-		mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_RECEIVE, G_OBJECT(window));
 		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
 		modest_mail_operation_get_msg (mail_op, header, view_msg_cb, NULL);		
 
@@ -1488,6 +1498,7 @@ on_queue_changed (ModestMailOperationQueue *queue,
 	switch (op_type) {
 	case MODEST_MAIL_OPERATION_TYPE_SEND:
 	case MODEST_MAIL_OPERATION_TYPE_RECEIVE:
+	case MODEST_MAIL_OPERATION_TYPE_OPEN:
 		mode = TOOLBAR_MODE_TRANSFER;
 		break;
 	default:
