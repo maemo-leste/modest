@@ -103,7 +103,8 @@ modest_runtime_get_email_clipboard   (void)
 ModestTnyAccountStore*
 modest_runtime_get_account_store   (void)
 {
-	g_return_val_if_fail (_singletons, NULL);
+	if (!_singletons)
+		return NULL;
 	return modest_singletons_get_account_store (_singletons);
 
 }

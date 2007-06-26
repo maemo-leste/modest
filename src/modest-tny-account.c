@@ -421,27 +421,17 @@ modest_tny_account_new_from_account (ModestAccountMgr *account_mgr, const gchar 
 
         modest_account_mgr_free_account_data (account_mgr, account_data);
 
-
-	static gboolean first_time = TRUE;
-
-	/* The first time we are creating the initial accounts. They will be set online by other
- 	 * code that comes later. After the first time, this only happens when a new account is
- 	 * created in the wizard. That account needs to be set online if the device is online. */
-
-	if (!first_time)
-	{
-	  TnyAccountStore *astore = (TnyAccountStore *) modest_runtime_get_account_store ();
- 	  if (astore) {
+	 TnyAccountStore *astore = (TnyAccountStore *) modest_runtime_get_account_store ();
+ 	 if (astore) {
 		TnyDevice *device = tny_account_store_get_device (astore);
 		GError *err = NULL;
+		g_object_set_data (G_OBJECT(tny_account), "account_store", (gpointer)astore);
 		tny_camel_account_set_online (TNY_CAMEL_ACCOUNT (tny_account),
 				tny_device_is_online (device), &err);
 		if (err)
 			g_print ("Error connecting: %s\n", err->message);
 		g_object_unref (device);
-	  }
-	}
-	first_time = FALSE;
+	 } 
 
 	return tny_account;
 }
