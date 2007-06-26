@@ -1,5 +1,10 @@
 2007-06-26  Murray Cumming  <murrayc@murrayc.com>
 
+	* tests/dbus_api/Makefile.am: Fix the build of the tests. This was 
+	necessary because configure.ac now defines different variables.
+
+2007-06-26  Murray Cumming  <murrayc@murrayc.com>
+
 	* libmodest-dbus-client/libmodest-dbus-client.c:
 	* libmodest-dbus-client/libmodest-dbus-client.h:
 	Removed libmodest_dbus_client_send_mail() because it is not used by anything.
