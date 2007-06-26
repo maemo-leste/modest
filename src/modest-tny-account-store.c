@@ -388,8 +388,6 @@ static gchar*
 get_password (TnyAccount *account, const gchar * prompt_not_used, gboolean *cancel)
 {
 	/* Initialize the output parameter: */
-	if (cancel)
-	  *cancel = FALSE;
 	  
 	g_return_val_if_fail (account, NULL);
 	  
@@ -401,10 +399,22 @@ get_password (TnyAccount *account, const gchar * prompt_not_used, gboolean *canc
 	gchar *pwd = NULL;
 	gpointer pwd_ptr;
 	gboolean already_asked;
-	
+
+	if (cancel)
+		*cancel = FALSE;
+		
 	key           = tny_account_get_id (account);
 	account_store = TNY_ACCOUNT_STORE(get_account_store_for_account (account));
-	
+
+	if (!key || !account_store) {
+		g_warning ("BUG: could not retrieve account_store for account %s",
+			   key ? key : "<NULL>");
+		if (cancel)
+			*cancel = TRUE;
+		
+		return NULL;
+	}
+
 	self = MODEST_TNY_ACCOUNT_STORE (account_store);
         priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
 	
@@ -555,7 +565,7 @@ modest_tny_account_store_new (ModestAccountMgr *account_mgr, TnyDevice *device) 
 
 	GObject *obj;
 	ModestTnyAccountStorePrivate *priv;
- 	TnyList *list; 
+// 	TnyList *list; 
 	
 	g_return_val_if_fail (account_mgr, NULL);
 	g_return_val_if_fail (device, NULL);
@@ -573,10 +583,10 @@ modest_tny_account_store_new (ModestAccountMgr *account_mgr, TnyDevice *device) 
 	tny_session_camel_set_async_connecting (priv->session, TRUE);
 	
 	/* force a cache fill... ugly */
-	list = TNY_LIST(tny_simple_list_new());
-	tny_account_store_get_accounts (TNY_ACCOUNT_STORE(obj), list,
-					TNY_ACCOUNT_STORE_BOTH);
-	g_object_unref(list);
+	/* list = TNY_LIST(tny_simple_list_new()); */
+/* 	tny_account_store_get_accounts (TNY_ACCOUNT_STORE(obj), list, */
+/* 					TNY_ACCOUNT_STORE_BOTH); */
+/* 	g_object_unref(list); */
 	
 	/* Connect signals */
 	g_signal_connect (G_OBJECT(account_mgr), "account_changed",
@@ -1100,6 +1110,27 @@ modest_tny_account_store_get_session  (TnyAccountStore *self)
 }
 
 
+static void
+fill_server_account_cache_if_needed (ModestTnyAccountStore *self)
+{
+	/* cache if needed */
+	ModestTnyAccountStorePrivate *priv;	
+	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
+
+	TnyList* list = TNY_LIST(tny_simple_list_new());
+	if (!priv->store_accounts)
+		modest_tny_account_store_get_accounts  (TNY_ACCOUNT_STORE(self),
+							list, TNY_ACCOUNT_STORE_STORE_ACCOUNTS);
+	g_object_unref (list);
+
+	list = TNY_LIST(tny_simple_list_new());
+	if (!priv->transport_accounts)
+		modest_tny_account_store_get_accounts  (TNY_ACCOUNT_STORE(self),
+							list, TNY_ACCOUNT_STORE_TRANSPORT_ACCOUNTS);
+	g_object_unref (list);
+}
+
+
 TnyAccount*
 modest_tny_account_store_get_tny_account_by (ModestTnyAccountStore *self, 
 					     ModestTnyAccountStoreQueryType type,
@@ -1115,6 +1146,8 @@ modest_tny_account_store_get_tny_account_by (ModestTnyAccountStore *self,
 	
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
 
+	fill_server_account_cache_if_needed (self);
+		
 	/* Search in store accounts */
 	for (cursor = priv->store_accounts; cursor ; cursor = cursor->next) {
 		switch (type) {
