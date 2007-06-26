@@ -943,9 +943,9 @@ modest_msg_view_window_last_message_selected (ModestMsgViewWindow *window)
 			if (!(tny_header_get_flags(header)&TNY_HEADER_FLAG_DELETED)) {
 				has_next = TRUE;
 				break;
-			}
-			
+			}	
 		}
+		gtk_tree_path_free (path);
 		return !has_next;
 	} else {
 		return TRUE;
