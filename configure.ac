@@ -190,7 +190,7 @@ if test "x$with_platform" == "xmaemo"; then
 	AC_MSG_ERROR([you need to have either osso-mime or hildon-mime installed])
       fi
    else
-     helplib="hildon-mime"	
+     mimelib="hildon-mime"	
      AC_DEFINE_UNQUOTED(MODEST_HAVE_HILDON_MIME, 1, ["Whether hildon-mime is used."])		
    fi
 fi
