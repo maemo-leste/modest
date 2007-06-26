@@ -45,7 +45,7 @@ static gboolean _folder_is_any_of_type (TnyFolder *folder, TnyFolderType types[]
 static gboolean _invalid_msg_selected (ModestMainWindow *win, gboolean unique, ModestDimmingRule *rule);
 static gboolean _invalid_attach_selected (ModestWindow *win, gboolean unique, gboolean for_view, ModestDimmingRule *rule);
 static gboolean _clipboard_is_empty (ModestWindow *win);
-static gboolean _invalid_clipboard_selected (ModestWindow *win);
+static gboolean _invalid_clipboard_selected (ModestWindow *win, ModestDimmingRule *rule);
 static gboolean _already_opened_msg (ModestWindow *win, guint *n_messages);
 static gboolean _selected_msg_marked_as (ModestWindow *win, TnyHeaderFlags mask, gboolean opposite);
 static gboolean _selected_folder_not_writeable (ModestMainWindow *win);
@@ -112,7 +112,7 @@ modest_ui_dimming_rules_on_new_folder (ModestWindow *win, gpointer user_data)
 			dimmed = (modest_protocol_info_get_transport_store_protocol (proto_str) == 
 				  MODEST_PROTOCOL_STORE_POP) ? TRUE : FALSE;
 			if (dimmed)
-				modest_dimming_rule_set_notification (rule, "");
+				modest_dimming_rule_set_notification (rule, _("mail_in_ui_folder_create_error"));
 		}
 	} else {
 		/* TODO: the specs say that only one level of subfolder is allowed, is this true ? */
@@ -127,12 +127,12 @@ modest_ui_dimming_rules_on_new_folder (ModestWindow *win, gpointer user_data)
 		if (!dimmed) {
 			dimmed = _selected_folder_not_writeable (MODEST_MAIN_WINDOW(win));
 			if (dimmed)
-				modest_dimming_rule_set_notification (rule, "");
+				modest_dimming_rule_set_notification (rule, _("mail_in_ui_folder_create_error"));
 		}
 		if (!dimmed) {
 			dimmed = _selected_folder_is_any_of_type (win, types, 3);
 			if (dimmed)
-				modest_dimming_rule_set_notification (rule, "");
+				modest_dimming_rule_set_notification (rule, _("mail_in_ui_folder_create_error"));
 		}
 	}
 	g_object_unref (parent_folder);
@@ -162,22 +162,22 @@ modest_ui_dimming_rules_on_delete_folder (ModestWindow *win, gpointer user_data)
 	if (!dimmed) {
 		dimmed = _selected_folder_not_writeable (MODEST_MAIN_WINDOW(win));
 		if (dimmed)
-			modest_dimming_rule_set_notification (rule, "");
+			modest_dimming_rule_set_notification (rule, _("mail_in_ui_folder_delete_error"));
 	}
 	if (!dimmed) {
 		dimmed = _selected_folder_is_any_of_type (win, types, 5);
 		if (dimmed)
-			modest_dimming_rule_set_notification (rule, "");
+			modest_dimming_rule_set_notification (rule, _("mail_in_ui_folder_delete_error"));
 	}
 	if (!dimmed) {
 		dimmed = _selected_folder_is_root_or_inbox (MODEST_MAIN_WINDOW(win));
 		if (dimmed)
-			modest_dimming_rule_set_notification (rule, "");
+			modest_dimming_rule_set_notification (rule, _("mail_in_ui_folder_delete_error"));
 	}
 	if (!dimmed) {
 		dimmed = _selected_folder_is_MMC_or_POP_root (MODEST_MAIN_WINDOW(win));
 		if (dimmed)
-			modest_dimming_rule_set_notification (rule, "");
+			modest_dimming_rule_set_notification (rule, _("mail_in_ui_folder_delete_error"));
 	}
 
 	return dimmed;
@@ -615,7 +615,7 @@ modest_ui_dimming_rules_on_paste_msgs (ModestWindow *win, gpointer user_data)
 	if (!dimmed) {
 		dimmed = _selected_folder_is_any_of_type (win, types, 3);
 		if (dimmed)
-			modest_dimming_rule_set_notification (rule, "");
+			modest_dimming_rule_set_notification (rule, _("ckct_ib_unable_to_paste_here"));
 	}
 	if (!dimmed) {
 		dimmed = _selected_folder_is_same_as_source (win);
@@ -733,9 +733,7 @@ modest_ui_dimming_rules_on_cut (ModestWindow *win, gpointer user_data)
 
 	/* Check common dimming rules */
 	if (!dimmed) {
-		dimmed = _invalid_clipboard_selected (win);
-		if (dimmed)
-			modest_dimming_rule_set_notification (rule, "");
+		dimmed = _invalid_clipboard_selected (win, rule);
 	}
 
 	/* Check window specific dimming rules */
@@ -743,7 +741,7 @@ modest_ui_dimming_rules_on_cut (ModestWindow *win, gpointer user_data)
 		if (!dimmed) {
 			dimmed = _selected_folder_not_writeable (MODEST_MAIN_WINDOW(win));
 			if (dimmed)
-				modest_dimming_rule_set_notification (rule, "");
+				modest_dimming_rule_set_notification (rule, _("mcen_ib_message_unableto_delete"));
 		}
 		if (!dimmed) { 
 			dimmed = _selected_folder_is_empty (MODEST_MAIN_WINDOW(win));			
@@ -771,9 +769,7 @@ modest_ui_dimming_rules_on_copy (ModestWindow *win, gpointer user_data)
 
 	/* Check common dimming rules */
 	if (!dimmed) {
-		dimmed = _invalid_clipboard_selected (win);
-		if (dimmed)
-			modest_dimming_rule_set_notification (rule, "");
+		dimmed = _invalid_clipboard_selected (win, rule);
 	}
 	
 	/* Check window specific dimming rules */
@@ -1195,7 +1191,8 @@ _clipboard_is_empty (ModestWindow *win)
 }
 
 static gboolean
-_invalid_clipboard_selected (ModestWindow *win)
+_invalid_clipboard_selected (ModestWindow *win,
+		       ModestDimmingRule *rule) 
 {
 	gboolean result = FALSE;
 
@@ -1214,6 +1211,9 @@ _invalid_clipboard_selected (ModestWindow *win)
 		/* Check dimming */
 		result = ((selection == NULL) || 
 			  (MODEST_IS_ATTACHMENTS_VIEW (focused)));
+		
+		if (result)
+			modest_dimming_rule_set_notification (rule, _(""));			
 	}		
 	else if (MODEST_IS_MAIN_WINDOW (win)) {
 		GtkWidget *header_view = NULL;
@@ -1224,6 +1224,8 @@ _invalid_clipboard_selected (ModestWindow *win)
 	
 		/* Check dimming */
 		result = !modest_header_view_has_selected_headers (MODEST_HEADER_VIEW(header_view));		
+		if (result)
+			modest_dimming_rule_set_notification (rule, _("mcen_ib_select_one_message"));			
 	}
 	
 	return result;
