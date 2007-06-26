@@ -2271,9 +2271,16 @@ void
 modest_ui_actions_on_undo (GtkAction *action,
 			   ModestWindow *window)
 {
+	ModestEmailClipboard *clipboard = NULL;
+
 	if (MODEST_IS_MSG_EDIT_WINDOW (window)) {
 		modest_msg_edit_window_undo (MODEST_MSG_EDIT_WINDOW (window));
-	} else {
+	} if (MODEST_IS_MAIN_WINDOW (window)) {
+		/* Clear clipboard source */
+		clipboard = modest_runtime_get_email_clipboard ();
+		modest_email_clipboard_clear (clipboard); 		
+	}
+	else {
 		g_return_if_reached ();
 	}
 }
@@ -2365,28 +2372,24 @@ modest_ui_actions_on_select_all (GtkAction *action,
 		gtk_text_buffer_get_start_iter (buffer, &start);
 		gtk_text_buffer_get_end_iter (buffer, &end);
 		gtk_text_buffer_select_range (buffer, &start, &end);
-	}
-	else if ((MODEST_IS_FOLDER_VIEW (focused_widget)) ||
-		 (MODEST_IS_HEADER_VIEW (focused_widget))) {
-		
-		GtkTreeSelection *selection = NULL;
-
-		/* Get header view */		
+	} else if (GTK_IS_HTML (focused_widget)) {
+		gtk_html_select_all (GTK_HTML (focused_widget));
+	} else if (MODEST_IS_MAIN_WINDOW (window)) {
 		GtkWidget *header_view = focused_widget;
-		if (MODEST_IS_FOLDER_VIEW (focused_widget))
+ 		GtkTreeSelection *selection = NULL;
+		
+		if (!(MODEST_IS_HEADER_VIEW (focused_widget)))
 			header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (window),
 									   MODEST_WIDGET_TYPE_HEADER_VIEW);
-
+				
 		/* Select all messages */
 		selection = gtk_tree_view_get_selection (GTK_TREE_VIEW(header_view));
 		gtk_tree_selection_select_all (selection);
 
 		/* Set focuse on header view */
 		gtk_widget_grab_focus (header_view);
-
-	} else if (GTK_IS_HTML (focused_widget)) {
-		gtk_html_select_all (GTK_HTML (focused_widget));
 	}
+
 }
 
 void

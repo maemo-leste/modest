@@ -71,7 +71,7 @@ static const GtkActionEntry modest_action_entries [] = {
 	
 
 	/* Edit */
-	{ "EditUndo",        NULL,      N_("mcen_me_inbox_undo"),        "<CTRL>Z",    NULL, NULL },
+	{ "EditUndo",        NULL,      N_("mcen_me_inbox_undo"),        "<CTRL>Z",    NULL, G_CALLBACK (modest_ui_actions_on_undo) },
 	{ "EditCut",         NULL,      N_("mcen_me_inbox_cut"),          "<CTRL>X",    NULL, G_CALLBACK (modest_ui_actions_on_cut) },
 	{ "EditCopy",        NULL,      N_("mcen_me_inbox_copy"),         "<CTRL>C",    NULL, G_CALLBACK (modest_ui_actions_on_copy) },
 	{ "EditPaste",       NULL,      N_("mcen_me_inbox_paste"),        "<CTRL>V",    NULL, G_CALLBACK (modest_ui_actions_on_paste) },

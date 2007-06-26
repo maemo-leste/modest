@@ -44,6 +44,7 @@
 static gboolean _folder_is_any_of_type (TnyFolder *folder, TnyFolderType types[], guint ntypes);
 static gboolean _invalid_msg_selected (ModestMainWindow *win, gboolean unique, ModestDimmingRule *rule);
 static gboolean _invalid_attach_selected (ModestWindow *win, gboolean unique, gboolean for_view, ModestDimmingRule *rule);
+static gboolean _clipboard_is_empty (ModestWindow *win);
 static gboolean _invalid_clipboard_selected (ModestWindow *win);
 static gboolean _already_opened_msg (ModestWindow *win, guint *n_messages);
 static gboolean _selected_msg_marked_as (ModestWindow *win, TnyHeaderFlags mask, gboolean opposite);
@@ -65,13 +66,19 @@ static gboolean _invalid_attachment_for_purge (ModestWindow *win, ModestDimmingR
 gboolean 
 modest_ui_dimming_rules_on_new_msg (ModestWindow *win, gpointer user_data)
 {
+	ModestDimmingRule *rule = NULL;
 	gboolean dimmed = FALSE;
 
 	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW(win), FALSE);
+	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
+	rule = MODEST_DIMMING_RULE (user_data);
 		
 	/* Check dimmed rule */	
-	if (!dimmed)
+	if (!dimmed) {
 		dimmed = _msg_download_in_progress (MODEST_MSG_VIEW_WINDOW(win));
+		if (dimmed)
+			modest_dimming_rule_set_notification (rule, "");
+	}
 
 	return dimmed;
 }
@@ -79,16 +86,18 @@ modest_ui_dimming_rules_on_new_msg (ModestWindow *win, gpointer user_data)
 gboolean 
 modest_ui_dimming_rules_on_new_folder (ModestWindow *win, gpointer user_data)
 {
-	gboolean dimmed = FALSE;
+	ModestDimmingRule *rule = NULL;
 	GtkWidget *folder_view = NULL;
 	TnyFolderStore *parent_folder = NULL;
+	gboolean dimmed = FALSE;
 
 	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW(win), FALSE);
+	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
+	rule = MODEST_DIMMING_RULE (user_data);
 
-
+	/* Get selected folder as parent of new folder to create */
 	folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(win),
 							   MODEST_WIDGET_TYPE_FOLDER_VIEW);
-	/* Get selected folder as parent of new folder to create */
 	parent_folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW(folder_view));
 	if (!parent_folder)
 		return TRUE;
@@ -102,6 +111,8 @@ modest_ui_dimming_rules_on_new_folder (ModestWindow *win, gpointer user_data)
 			/* If it's POP then dim */
 			dimmed = (modest_protocol_info_get_transport_store_protocol (proto_str) == 
 				  MODEST_PROTOCOL_STORE_POP) ? TRUE : FALSE;
+			if (dimmed)
+				modest_dimming_rule_set_notification (rule, "");
 		}
 	} else {
 		/* TODO: the specs say that only one level of subfolder is allowed, is this true ? */
@@ -113,10 +124,16 @@ modest_ui_dimming_rules_on_new_folder (ModestWindow *win, gpointer user_data)
 		types[2] = TNY_FOLDER_TYPE_SENT;
 
 		/* Apply folder rules */	
-		if (!dimmed)
+		if (!dimmed) {
 			dimmed = _selected_folder_not_writeable (MODEST_MAIN_WINDOW(win));
-		if (!dimmed)
+			if (dimmed)
+				modest_dimming_rule_set_notification (rule, "");
+		}
+		if (!dimmed) {
 			dimmed = _selected_folder_is_any_of_type (win, types, 3);
+			if (dimmed)
+				modest_dimming_rule_set_notification (rule, "");
+		}
 	}
 	g_object_unref (parent_folder);
 
@@ -126,10 +143,13 @@ modest_ui_dimming_rules_on_new_folder (ModestWindow *win, gpointer user_data)
 gboolean 
 modest_ui_dimming_rules_on_delete_folder (ModestWindow *win, gpointer user_data)
 {
-	gboolean dimmed = FALSE;
+	ModestDimmingRule *rule = NULL;
 	TnyFolderType types[5];
+	gboolean dimmed = FALSE;
 
 	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW(win), FALSE);
+	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
+	rule = MODEST_DIMMING_RULE (user_data);
 
 	types[0] = TNY_FOLDER_TYPE_DRAFTS; 
 	types[1] = TNY_FOLDER_TYPE_OUTBOX;
@@ -137,17 +157,28 @@ modest_ui_dimming_rules_on_delete_folder (ModestWindow *win, gpointer user_data)
 	types[3] = TNY_FOLDER_TYPE_INBOX;
 	types[4] = TNY_FOLDER_TYPE_ROOT;
 
-	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW(win), FALSE);
 		
 	/* Check dimmed rule */	
-	if (!dimmed)
+	if (!dimmed) {
 		dimmed = _selected_folder_not_writeable (MODEST_MAIN_WINDOW(win));
-	if (!dimmed)
+		if (dimmed)
+			modest_dimming_rule_set_notification (rule, "");
+	}
+	if (!dimmed) {
 		dimmed = _selected_folder_is_any_of_type (win, types, 5);
-	if (!dimmed)
+		if (dimmed)
+			modest_dimming_rule_set_notification (rule, "");
+	}
+	if (!dimmed) {
 		dimmed = _selected_folder_is_root_or_inbox (MODEST_MAIN_WINDOW(win));
-	if (!dimmed)
+		if (dimmed)
+			modest_dimming_rule_set_notification (rule, "");
+	}
+	if (!dimmed) {
 		dimmed = _selected_folder_is_MMC_or_POP_root (MODEST_MAIN_WINDOW(win));
+		if (dimmed)
+			modest_dimming_rule_set_notification (rule, "");
+	}
 
 	return dimmed;
 }
@@ -155,13 +186,19 @@ modest_ui_dimming_rules_on_delete_folder (ModestWindow *win, gpointer user_data)
 gboolean
 modest_ui_dimming_rules_on_sort (ModestWindow *win, gpointer user_data)
 {
+	ModestDimmingRule *rule = NULL;
 	gboolean dimmed = FALSE;
 
 	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW(win), FALSE);
+	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
+	rule = MODEST_DIMMING_RULE (user_data);
 		
 	/* Check dimmed rule */	
-	if (!dimmed)
+	if (!dimmed) {
 		dimmed = _selected_folder_is_root (MODEST_MAIN_WINDOW(win));
+		if (dimmed)
+			modest_dimming_rule_set_notification (rule, "");
+	}
 
 	return dimmed;
 	
@@ -170,24 +207,34 @@ modest_ui_dimming_rules_on_sort (ModestWindow *win, gpointer user_data)
 gboolean 
 modest_ui_dimming_rules_on_rename_folder (ModestWindow *win, gpointer user_data)
 {
-	gboolean dimmed = FALSE;
+ 	ModestDimmingRule *rule = NULL;
 	TnyFolderType types[3];
+	gboolean dimmed = FALSE;
 
 	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW(win), FALSE);
+	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
+	rule = MODEST_DIMMING_RULE (user_data);
 
 	types[0] = TNY_FOLDER_TYPE_DRAFTS; 
 	types[1] = TNY_FOLDER_TYPE_OUTBOX;
 	types[2] = TNY_FOLDER_TYPE_SENT;
 	
-	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW(win), FALSE);
-		
 	/* Check dimmed rule */	
-	if (!dimmed)
+	if (!dimmed) {
 		dimmed = _selected_folder_not_writeable (MODEST_MAIN_WINDOW(win));
-	if (!dimmed)
+		if (dimmed)
+			modest_dimming_rule_set_notification (rule, "");
+	}
+	if (!dimmed) {
 		dimmed = _selected_folder_is_root_or_inbox (MODEST_MAIN_WINDOW(win));
-	if (!dimmed)
+		if (dimmed)
+			modest_dimming_rule_set_notification (rule, "");
+	}
+	if (!dimmed) {
 		dimmed = _selected_folder_is_any_of_type (win, types, 3);
+		if (dimmed)
+			modest_dimming_rule_set_notification (rule, "");
+	}
 
 	return dimmed;
 }
@@ -203,8 +250,9 @@ modest_ui_dimming_rules_on_open_msg (ModestWindow *win, gpointer user_data)
 	rule = MODEST_DIMMING_RULE (user_data);
 		
 	/* Check dimmed rule */	
-	if (!dimmed)
+	if (!dimmed) {
 		dimmed = _invalid_msg_selected (MODEST_MAIN_WINDOW(win), TRUE, user_data);
+	}
 	if (!dimmed) {
 		dimmed = _selected_msg_sent_in_progress (win);
 		if (dimmed)
@@ -242,15 +290,18 @@ modest_ui_dimming_rules_on_reply_msg (ModestWindow *win, gpointer user_data)
 			if (dimmed)
 				modest_dimming_rule_set_notification (rule, _("mcen_ib_nothing_to_reply"));
 		}
-		if (!dimmed)
+		if (!dimmed) {
 			dimmed = _invalid_msg_selected (MODEST_MAIN_WINDOW(win), TRUE, rule);
-
+		}
 	/* msg view window dimming rules */
 	} else if (MODEST_IS_MSG_VIEW_WINDOW(win)) {
 		
 		/* Check dimmed rule */	
-		if (!dimmed)
+		if (!dimmed) {
 			dimmed = _msg_download_in_progress (MODEST_MSG_VIEW_WINDOW(win));
+			if (dimmed)
+				modest_dimming_rule_set_notification (rule, "");
+		}
 	}
 	
 	return dimmed;
@@ -260,15 +311,22 @@ modest_ui_dimming_rules_on_reply_msg (ModestWindow *win, gpointer user_data)
 gboolean 
 modest_ui_dimming_rules_on_contents_msg (ModestWindow *win, gpointer user_data)
 {
+ 	ModestDimmingRule *rule = NULL;
 	gboolean dimmed = FALSE;
 
 	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW(win), FALSE);
+	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
+	rule = MODEST_DIMMING_RULE (user_data);
 		
 	/* Check dimmed rule */	
-	if (!dimmed)
+	if (!dimmed) {
 		dimmed = _invalid_msg_selected (MODEST_MAIN_WINDOW(win), FALSE, user_data);
-	if (!dimmed)
+	}
+	if (!dimmed) {
 		dimmed = _msg_download_completed (MODEST_MAIN_WINDOW(win));
+		if (dimmed)
+			modest_dimming_rule_set_notification (rule, "");
+	}
 
 	return dimmed;
 }
@@ -306,8 +364,6 @@ modest_ui_dimming_rules_on_delete_msg (ModestWindow *win, gpointer user_data)
 		}
 		if (!dimmed) {
 			dimmed = _invalid_msg_selected (MODEST_MAIN_WINDOW(win), FALSE, user_data);
-			if (dimmed)
-				modest_dimming_rule_set_notification (rule, _("mcen_ib_no_message_selected"));
 		}
 		if (!dimmed) {
 			dimmed = _already_opened_msg (win, &n_messages);
@@ -347,8 +403,12 @@ modest_ui_dimming_rules_on_delete_msg (ModestWindow *win, gpointer user_data)
 gboolean 
 modest_ui_dimming_rules_on_details (ModestWindow *win, gpointer user_data)
 {
-	gboolean dimmed = FALSE;
+ 	ModestDimmingRule *rule = NULL;
 	GtkWidget *header_view = NULL;
+	gboolean dimmed = FALSE;
+
+	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
+	rule = MODEST_DIMMING_RULE (user_data);
 	
 	/* main window dimming rules */
 	if (MODEST_IS_MAIN_WINDOW(win)) {
@@ -375,8 +435,10 @@ modest_ui_dimming_rules_on_details (ModestWindow *win, gpointer user_data)
 					 * though the UI spec is not clear about that.
 					 * If we enable this for accounts then we must 
 					 * add code to handle them in modest_ui_actions_on_details(). */
-					if (!TNY_IS_FOLDER(folder_store))
+					if (!TNY_IS_FOLDER(folder_store)) {
 						dimmed = TRUE;
+						modest_dimming_rule_set_notification (rule, "");
+					}
 
 					g_object_unref (folder_store);
 				}
@@ -388,8 +450,11 @@ modest_ui_dimming_rules_on_details (ModestWindow *win, gpointer user_data)
 	} else {
 
 		/* Check dimmed rule */	
-		if (!dimmed)
+		if (!dimmed) {
 			dimmed = _msg_download_in_progress (MODEST_MSG_VIEW_WINDOW(win));
+			if (dimmed)
+				modest_dimming_rule_set_notification (rule, "");
+		}
 	}
 
 	return dimmed;
@@ -399,37 +464,50 @@ modest_ui_dimming_rules_on_details (ModestWindow *win, gpointer user_data)
 gboolean 
 modest_ui_dimming_rules_on_mark_as_read_msg (ModestWindow *win, gpointer user_data)
 {
-	gboolean dimmed = FALSE;
+ 	ModestDimmingRule *rule = NULL;
 	TnyHeaderFlags flags;
+	gboolean dimmed = FALSE;
 
 	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW(win), FALSE);
+	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
+	rule = MODEST_DIMMING_RULE (user_data);
 	
 	flags = TNY_HEADER_FLAG_SEEN; 
 
 	/* Check dimmed rule */	
-	if (!dimmed)
+	if (!dimmed) {
 		dimmed = _invalid_msg_selected (MODEST_MAIN_WINDOW(win), FALSE, user_data);
-	if (!dimmed) 
+	}
+	if (!dimmed) {
 		dimmed = _selected_msg_marked_as (win, flags, FALSE);
-	
+		if (dimmed)
+			modest_dimming_rule_set_notification (rule, "");
+	}	
+
 	return dimmed;
 }
 
 gboolean 
 modest_ui_dimming_rules_on_mark_as_unread_msg (ModestWindow *win, gpointer user_data)
 {
-	gboolean dimmed = FALSE;
+ 	ModestDimmingRule *rule = NULL;
 	TnyHeaderFlags flags;
+	gboolean dimmed = FALSE;
 
 	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW(win), FALSE);
+	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
+	rule = MODEST_DIMMING_RULE (user_data);
 	
 	flags = TNY_HEADER_FLAG_SEEN; 
 
 	/* Check dimmed rule */	
 	if (!dimmed)
 		dimmed = _invalid_msg_selected (MODEST_MAIN_WINDOW(win), FALSE, user_data);
-	if (!dimmed) 
+	if (!dimmed) {
 		dimmed = _selected_msg_marked_as (win, flags, TRUE);
+		if (dimmed)
+			modest_dimming_rule_set_notification (rule, "");
+	}
 
 	return dimmed;
 }
@@ -437,7 +515,11 @@ modest_ui_dimming_rules_on_mark_as_unread_msg (ModestWindow *win, gpointer user_
 gboolean 
 modest_ui_dimming_rules_on_move_to (ModestWindow *win, gpointer user_data)
 {
+ 	ModestDimmingRule *rule = NULL;
 	gboolean dimmed = FALSE;
+
+	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
+	rule = MODEST_DIMMING_RULE (user_data);
 
 	if (MODEST_IS_MAIN_WINDOW (win)) 
 		dimmed = modest_ui_dimming_rules_on_main_window_move_to (win, user_data);
@@ -525,10 +607,16 @@ modest_ui_dimming_rules_on_paste_msgs (ModestWindow *win, gpointer user_data)
 	types[2] = TNY_FOLDER_TYPE_SENT;
 	
 	/* Check dimmed rule */	
-	if (!dimmed) 
-		dimmed = _invalid_clipboard_selected (win);
-	if (!dimmed)
+	if (!dimmed) {
+		dimmed = _clipboard_is_empty (win);
+		if (dimmed)
+			modest_dimming_rule_set_notification (rule, "");
+	}
+	if (!dimmed) {
 		dimmed = _selected_folder_is_any_of_type (win, types, 3);
+		if (dimmed)
+			modest_dimming_rule_set_notification (rule, "");
+	}
 	if (!dimmed) {
 		dimmed = _selected_folder_is_same_as_source (win);
 		if (dimmed)
@@ -550,8 +638,11 @@ modest_ui_dimming_rules_on_select_all (ModestWindow *win, gpointer user_data)
 	rule = MODEST_DIMMING_RULE (user_data);
 
 	/* Check dimmed rule */	
-	if (!dimmed) 
+	if (!dimmed) {
 		dimmed = _selected_folder_is_empty (MODEST_MAIN_WINDOW(win));			
+		if (dimmed)
+			modest_dimming_rule_set_notification (rule, "");
+	}
 		
 	return dimmed;
 }
@@ -613,15 +704,91 @@ modest_ui_dimming_rules_on_remove_attachments (ModestWindow *win, gpointer user_
 }
 
 gboolean 
-modest_ui_dimming_rules_on_copy (ModestWindow *win, gpointer user_data)
+modest_ui_dimming_rules_on_undo (ModestWindow *win, gpointer user_data)
 {
+	ModestDimmingRule *rule = NULL;
 	gboolean dimmed = FALSE;
-
-	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW(win), FALSE);
+	
+	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
+	rule = MODEST_DIMMING_RULE (user_data);
 
 	/* Check dimmed rule */	
-	if (!dimmed) 
-		dimmed = _invalid_clipboard_selected (win);			
+	if (!dimmed) {
+		dimmed = _clipboard_is_empty (win); 
+		if (dimmed)
+			modest_dimming_rule_set_notification (rule, "");
+	}
+				
+	return dimmed;	
+}
+
+gboolean 
+modest_ui_dimming_rules_on_cut (ModestWindow *win, gpointer user_data)
+{
+	ModestDimmingRule *rule = NULL;
+	gboolean dimmed = FALSE;
+	
+	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
+	rule = MODEST_DIMMING_RULE (user_data);
+
+	/* Check common dimming rules */
+	if (!dimmed) {
+		dimmed = _invalid_clipboard_selected (win);
+		if (dimmed)
+			modest_dimming_rule_set_notification (rule, "");
+	}
+
+	/* Check window specific dimming rules */
+	if (MODEST_IS_MAIN_WINDOW (win)) {
+		if (!dimmed) {
+			dimmed = _selected_folder_not_writeable (MODEST_MAIN_WINDOW(win));
+			if (dimmed)
+				modest_dimming_rule_set_notification (rule, "");
+		}
+		if (!dimmed) { 
+			dimmed = _selected_folder_is_empty (MODEST_MAIN_WINDOW(win));			
+			if (dimmed)
+				modest_dimming_rule_set_notification (rule, "");
+		}
+		if (!dimmed) {
+			dimmed = _selected_msg_sent_in_progress (win);
+			if (dimmed)
+				modest_dimming_rule_set_notification (rule, _("mcen_ib_unable_to_cut_mess"));
+		}
+	}
+	
+	return dimmed;
+}
+
+gboolean 
+modest_ui_dimming_rules_on_copy (ModestWindow *win, gpointer user_data)
+{
+	ModestDimmingRule *rule = NULL;
+	gboolean dimmed = FALSE;
+	
+	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
+	rule = MODEST_DIMMING_RULE (user_data);
+
+	/* Check common dimming rules */
+	if (!dimmed) {
+		dimmed = _invalid_clipboard_selected (win);
+		if (dimmed)
+			modest_dimming_rule_set_notification (rule, "");
+	}
+	
+	/* Check window specific dimming rules */
+	if (MODEST_IS_MAIN_WINDOW (win)) {
+		if (!dimmed) {
+			dimmed = _selected_folder_is_empty (MODEST_MAIN_WINDOW(win));			
+			if (dimmed)
+				modest_dimming_rule_set_notification (rule, "");
+		}		
+		if (!dimmed) {
+			dimmed = _selected_msg_sent_in_progress (win);
+			if (dimmed)
+				modest_dimming_rule_set_notification (rule, _("mcen_ib_unable_to_cut_mess"));
+		}
+	}
 		
 	return dimmed;
 }
@@ -629,28 +796,41 @@ modest_ui_dimming_rules_on_copy (ModestWindow *win, gpointer user_data)
 gboolean 
 modest_ui_dimming_rules_on_view_previous (ModestWindow *win, gpointer user_data)
 {
+	ModestDimmingRule *rule = NULL;
 	gboolean dimmed = FALSE;
+	
+	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
+	rule = MODEST_DIMMING_RULE (user_data);
 
 	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW(win), FALSE);
 
 	/* Check dimmed rule */	
-	if (!dimmed) 
+	if (!dimmed) {
 		dimmed = modest_msg_view_window_first_message_selected (MODEST_MSG_VIEW_WINDOW(win));
-		
+		if (dimmed)
+			modest_dimming_rule_set_notification (rule, "");
+	}		
+
 	return dimmed;
 }
 
 gboolean 
 modest_ui_dimming_rules_on_view_next (ModestWindow *win, gpointer user_data)
 {
+ 	ModestDimmingRule *rule = NULL;
 	gboolean dimmed = FALSE;
 
 	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW(win), FALSE);
+	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
+	rule = MODEST_DIMMING_RULE (user_data);
 
 	/* Check dimmed rule */	
-	if (!dimmed) 
+	if (!dimmed) {
 		dimmed = modest_msg_view_window_last_message_selected (MODEST_MSG_VIEW_WINDOW(win));
-		
+		if (dimmed)
+			modest_dimming_rule_set_notification (rule, "");
+	}		
+
 	return dimmed;
 }
 
@@ -999,7 +1179,20 @@ _folder_is_any_of_type (TnyFolder *folder,
 	return result;
 }
 
+static gboolean
+_clipboard_is_empty (ModestWindow *win)
+{
+	gboolean result = FALSE;
+	
+	if (MODEST_IS_MAIN_WINDOW (win)) {
+		ModestEmailClipboard *clipboard = NULL;
+		clipboard = modest_runtime_get_email_clipboard ();
+		if (modest_email_clipboard_cleared (clipboard)) 
+		 result = TRUE;	 
+	}
 
+	return result;
+}
 
 static gboolean
 _invalid_clipboard_selected (ModestWindow *win)
@@ -1023,11 +1216,14 @@ _invalid_clipboard_selected (ModestWindow *win)
 			  (MODEST_IS_ATTACHMENTS_VIEW (focused)));
 	}		
 	else if (MODEST_IS_MAIN_WINDOW (win)) {
-		ModestEmailClipboard *clipboard = NULL;
+		GtkWidget *header_view = NULL;
 
-		clipboard = modest_runtime_get_email_clipboard ();
-		if (modest_email_clipboard_cleared (clipboard)) 
-			result = TRUE;
+		/* Get header view to check selected messages */
+		header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(win),
+								   MODEST_WIDGET_TYPE_HEADER_VIEW);
+	
+		/* Check dimming */
+		result = !modest_header_view_has_selected_headers (MODEST_HEADER_VIEW(header_view));		
 	}
 	
 	return result;
