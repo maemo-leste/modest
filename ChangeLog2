@@ -1,3 +1,11 @@
+2007-06-26  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/modest-init.c: (modest_init_local_folders):
+	For memory-card (or other non local-folders) maildir accounts, 
+	always create an Archive folder, so that there is somewhere to put 
+	messages. This should be less confusing, because the user does not need 
+	to guess that the need to create a folder.
+
 2007-06-25  Johannes Schmid <johannes.schmid@openismus.com>
 
 	* src/maemo/easysetup/modest-wizard-dialog.c: (init):
