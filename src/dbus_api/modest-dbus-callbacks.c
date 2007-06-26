@@ -364,6 +364,14 @@ on_idle_compose_mail(gpointer user_data)
 		
 					ModestWindow *win = modest_msg_edit_window_new (msg, account_name);
 
+					/* it seems Sketch at least sends a leading ',' -- take that into account,
+					 * ie strip that ,*/
+					if (idle_data->attachments && idle_data->attachments[0]==',') {
+						gchar *tmp = g_strdup (idle_data->attachments + 1);
+						g_free(idle_data->attachments);
+						idle_data->attachments = tmp;
+					}
+
 					list = g_strsplit(idle_data->attachments, ",", 0);
 					for (i=0; list[i] != NULL; i++) {
 						modest_msg_edit_window_attach_file_noninteractive(
