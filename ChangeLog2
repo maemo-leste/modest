@@ -1,5 +1,22 @@
 2007-06-26  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/maemo/modest-maemo-global-settings-dialog.c:
+	(idle_select_default_focus):
+	* src/modest-mail-operation.c: (idle_notify_progress),
+	(idle_notify_progress_once), (idle_notify_update_account_queue),
+	(set_last_updated_idle), (update_account_thread),
+	(notify_get_msgs_full), (get_msgs_full_destroyer),
+	(get_msgs_full_thread):
+	* src/widgets/modest-attachment-view.c: (get_size_idle_func):
+	* src/widgets/modest-header-view.c:
+	(idle_notify_headers_count_changed_destroy),
+	(idle_notify_headers_count_changed):
+	Use gdk_threads_enter() and gdk_threads_enter_leave() in 
+	all idle handlers, because some other thread could be blocking 
+	the GDK lock, so that it can do GUI stuff.
+
+2007-06-26  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/dbus_api/modest-dbus-callbacks.c: (on_idle_mail_to),
 	(on_idle_compose_mail), (on_compose_mail), (on_idle_open_message),
 	(on_idle_send_receive), (on_idle_open_default_inbox):

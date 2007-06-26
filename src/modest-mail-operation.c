@@ -794,6 +794,8 @@ recurse_folders (TnyFolderStore *store, TnyFolderStoreQuery *query, TnyList *all
 static gboolean
 idle_notify_progress (gpointer data)
 {
+	gdk_threads_enter ();
+
 	ModestMailOperation *mail_op = MODEST_MAIL_OPERATION (data);
 	ModestMailOperationState *state;
 
@@ -801,6 +803,8 @@ idle_notify_progress (gpointer data)
 	g_signal_emit (G_OBJECT (mail_op), signals[PROGRESS_CHANGED_SIGNAL], 0, state, NULL);
 	g_slice_free (ModestMailOperationState, state);
 	
+	gdk_threads_leave ();
+
 	return TRUE;
 }
 
@@ -812,6 +816,8 @@ idle_notify_progress (gpointer data)
 static gboolean
 idle_notify_progress_once (gpointer data)
 {
+	gdk_threads_enter ();
+
 	ModestPair *pair;
 
 	pair = (ModestPair *) data;
@@ -822,6 +828,8 @@ idle_notify_progress_once (gpointer data)
 	g_slice_free (ModestMailOperationState, (ModestMailOperationState*)pair->second);
 	g_object_unref (pair->first);
 
+	gdk_threads_leave ();
+
 	return FALSE;
 }
 
@@ -830,8 +838,10 @@ idle_notify_progress_once (gpointer data)
  * loop. We call it inside an idle call to achieve that
  */
 static gboolean
-notify_update_account_queue (gpointer data)
+idle_notify_update_account_queue (gpointer data)
 {
+	gdk_threads_enter ();
+
 	ModestMailOperation *mail_op = MODEST_MAIL_OPERATION (data);
 	ModestMailOperationPrivate *priv = NULL;
 
@@ -839,6 +849,8 @@ notify_update_account_queue (gpointer data)
 	
 	modest_mail_operation_notify_end (mail_op);
 	g_object_unref (mail_op);
+
+	gdk_threads_leave ();
 
 	return FALSE;
 }
@@ -867,6 +879,8 @@ compare_headers_by_date (gconstpointer a,
 static gboolean 
 set_last_updated_idle (gpointer data)
 {
+	gdk_threads_enter ();
+
 	/* It does not matter if the time is not exactly the same than
 	   the time when this idle was called, it's just an
 	   approximation and it won't be very different */
@@ -875,6 +889,8 @@ set_last_updated_idle (gpointer data)
 				    MODEST_ACCOUNT_LAST_UPDATED, 
 				    time(NULL), 
 				    TRUE);
+
+	gdk_threads_leave ();
 
 	return FALSE;
 }
@@ -1089,7 +1105,7 @@ update_account_thread (gpointer thr_user_data)
 	/* Notify about operation end. Note that the info could be
 	   freed before this idle happens, but the mail operation will
 	   be still alive */
-	g_idle_add (notify_update_account_queue, g_object_ref (info->mail_op));
+	g_idle_add (idle_notify_update_account_queue, g_object_ref (info->mail_op));
 
 	if (info->callback) {
 		/* This thread is not in the main lock */
@@ -1640,6 +1656,8 @@ typedef struct {
 static gboolean
 notify_get_msgs_full (gpointer data)
 {
+	gdk_threads_enter ();
+
 	NotifyGetMsgsInfo *info;
 
 	info = (NotifyGetMsgsInfo *) data;	
@@ -1652,6 +1670,8 @@ notify_get_msgs_full (gpointer data)
 
 	g_slice_free (NotifyGetMsgsInfo, info);
 
+	gdk_threads_leave ();
+
 	return FALSE;
 }
 
@@ -1662,6 +1682,8 @@ notify_get_msgs_full (gpointer data)
 static gboolean
 get_msgs_full_destroyer (gpointer data)
 {
+	gdk_threads_enter ();
+
 	GetFullMsgsInfo *info;
 
 	info = (GetFullMsgsInfo *) data;
@@ -1672,6 +1694,8 @@ get_msgs_full_destroyer (gpointer data)
 	/* free */
 	g_object_unref (info->headers);
 	g_slice_free (GetFullMsgsInfo, info);
+
+	gdk_threads_leave ();
 
 	return FALSE;
 }
@@ -1744,7 +1768,7 @@ get_msgs_full_thread (gpointer thr_user_data)
 		priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
 
 	/* Notify about operation end */
-	g_idle_add (notify_update_account_queue, g_object_ref (info->mail_op));
+	g_idle_add (idle_notify_update_account_queue, g_object_ref (info->mail_op));
 
 	/* Free thread resources. Will be called after all previous idles */
 	g_idle_add_full (G_PRIORITY_DEFAULT_IDLE + 1, get_msgs_full_destroyer, info, NULL);

@@ -1394,6 +1394,8 @@ on_focus_in (GtkWidget     *self,
 static void
 idle_notify_headers_count_changed_destroy (gpointer data)
 {
+	gdk_threads_enter ();
+
 	HeadersCountChangedHelper *helper = NULL;
 
 	g_return_if_fail (data != NULL);
@@ -1401,11 +1403,15 @@ idle_notify_headers_count_changed_destroy (gpointer data)
 
 	g_object_unref (helper->change);
 	g_slice_free (HeadersCountChangedHelper, helper);
+
+	gdk_threads_leave ();
 }
 
 static gboolean
 idle_notify_headers_count_changed (gpointer data)
 {
+	gdk_threads_enter ();
+
 	TnyFolder *folder = NULL;
 	ModestHeaderViewPrivate *priv = NULL;
 	HeadersCountChangedHelper *helper = NULL;
@@ -1428,6 +1434,8 @@ idle_notify_headers_count_changed (gpointer data)
 	    modest_email_clipboard_clear (priv->clipboard);
 	    
 	g_mutex_unlock (priv->observers_lock);
+
+	gdk_threads_leave ();
 
 	return FALSE;
 }
