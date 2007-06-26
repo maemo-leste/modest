@@ -16,17 +16,13 @@ objects=\
         $(MODEST_LIBTINYMAIL_MAEMO_LIBS) \
         ${top_srcdir}/libmodest-dbus-client/libmodest-dbus-client-1.0.la
         
-noinst_PROGRAMS = test_send_mail      \
-		  test_mail_to        \
+noinst_PROGRAMS = test_mail_to \
 		  test_open_message   \
 		  test_search         \
 		  test_delete_message \
 		  test_compose_mail \
 		  test_open_default_inbox \
 		  test_get_folders
-
-test_send_mail_SOURCES = test_send_mail.c
-test_send_mail_LDADD = $(objects)
 
 test_mail_to_SOURCES = test_mail_to.c
 test_mail_to_LDADD = $(objects)

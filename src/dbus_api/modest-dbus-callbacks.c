@@ -73,109 +73,6 @@ typedef struct
 	gchar *attachments;
 } ComposeMailIdleData;
 
-static gboolean
-on_idle_send_mail(gpointer user_data)
-{
-	SendMailIdleData *idle_data = (SendMailIdleData*)user_data;
-	
-	/* Get the TnyTransportAccount so we can instantiate a mail operation: */
- 	ModestAccountMgr *account_mgr = modest_runtime_get_account_mgr();
-	gchar *account_name = modest_account_mgr_get_default_account (account_mgr);
-	if (!account_name) {
-		g_printerr ("modest: no account found\n");
-	}
-	
-	TnyTransportAccount *transport_account = NULL;
-	if (account_mgr) {
-		transport_account = TNY_TRANSPORT_ACCOUNT(modest_tny_account_store_get_transport_account_for_open_connection
-				      (modest_runtime_get_account_store(),
-				       account_name));
-	}
-	
-	if (!transport_account) {
-		g_printerr ("modest: no transport account found for '%s'\n", account_name);
-	}
-	
- 	/* Create the mail operation: */
- 	if (transport_account) {	
- 		/* Use the mail operation: */
-		gchar * from = modest_account_mgr_get_from_string (account_mgr,
-								  account_name);
-		if (!from) {
-			g_printerr ("modest: no from address for account '%s'\n", account_name);
-		} else {
-			ModestMailOperation *mail_operation = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_SEND, NULL);
-			modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_operation);
-			
-	 		modest_mail_operation_send_new_mail (mail_operation,
-					     transport_account,
-					     NULL,
-					     from, /* from */
-					     idle_data->to, idle_data->cc, idle_data->bcc, idle_data->subject, 
-					     idle_data->body, /* plain_body */
-					     NULL, /* html_body */
-					     NULL, /* attachments_list, GSList of TnyMimePart. */
-					     (TnyHeaderFlags)0);
-					     
-			g_free (from);
-			g_object_unref (G_OBJECT (mail_operation));
-		}
-				     
-		g_object_unref (G_OBJECT (transport_account));
- 	}
- 	
- 	g_free (account_name);
-	
-	/* Free the idle data: */
-	g_free (idle_data->to);
-	g_free (idle_data->cc);
-	g_free (idle_data->bcc);
-	g_free (idle_data->subject);
-	g_free (idle_data->body);
-	g_free (idle_data->attachments);
-	g_free (idle_data);
-	
-	return FALSE; /* Do not call this callback again. */
-}
-
-/* TODO: Is this actually used by anything?
- * I guess that everything uses *_compose_mail() instead. murrayc.
- */
-static gint on_send_mail(GArray * arguments, gpointer data, osso_rpc_t * retval)
-{
-	if (arguments->len != MODEST_DEBUS_SEND_MAIL_ARGS_COUNT)
-     	return OSSO_ERROR;
-     	
-    /* Use g_idle to context-switch into the application's thread: */
- 	SendMailIdleData *idle_data = g_new0(SendMailIdleData, 1); /* Freed in the idle callback. */
- 	
-    /* Get the arguments: */
- 	osso_rpc_t val = g_array_index(arguments, osso_rpc_t, MODEST_DEBUS_SEND_MAIL_ARG_TO);
- 	idle_data->to = g_strdup (val.value.s);
- 	
- 	val = g_array_index(arguments, osso_rpc_t, MODEST_DEBUS_SEND_MAIL_ARG_CC);
- 	idle_data->cc = g_strdup (val.value.s);
- 	
- 	val = g_array_index(arguments, osso_rpc_t, MODEST_DEBUS_SEND_MAIL_ARG_BCC);
- 	idle_data->bcc = g_strdup (val.value.s);
- 	
- 	val = g_array_index(arguments, osso_rpc_t, MODEST_DEBUS_SEND_MAIL_ARG_SUBJECT);
- 	idle_data->subject = g_strdup (val.value.s);
- 	
- 	val = g_array_index(arguments, osso_rpc_t, MODEST_DEBUS_SEND_MAIL_ARG_BODY);
- 	idle_data->body = g_strdup (val.value.s);
- 	
- 	val = g_array_index(arguments, osso_rpc_t, MODEST_DEBUS_SEND_MAIL_ARG_ATTACHMENTS);
- 	idle_data->attachments = g_strdup (val.value.s);
- 	
- 	/* printf("  debug: to=%s\n", idle_data->to); */
- 	g_idle_add(on_idle_send_mail, (gpointer)idle_data);
- 	
- 	/* Note that we cannot report failures during sending, 
- 	 * because that would be asynchronous. */
- 	return OSSO_OK;
-}
-
 /** uri_unescape:
  * @uri An escaped URI. URIs should always be escaped.
  * @len The length of the @uri string, or -1 if the string is null terminated.
@@ -825,9 +722,7 @@ gint modest_dbus_req_handler(const gchar * interface, const gchar * method,
 	g_debug ("debug: %s\n", __FUNCTION__);
 	g_debug ("debug: %s: method received: %s\n", __FUNCTION__, method);
 	
-	if (g_ascii_strcasecmp(method, MODEST_DBUS_METHOD_SEND_MAIL) == 0) {
-		return on_send_mail (arguments, data, retval);
-	} else if (g_ascii_strcasecmp(method, MODEST_DBUS_METHOD_MAIL_TO) == 0) {
+	if (g_ascii_strcasecmp(method, MODEST_DBUS_METHOD_MAIL_TO) == 0) {
 		return on_mail_to (arguments, data, retval);
 	} else if (g_ascii_strcasecmp(method, MODEST_DBUS_METHOD_OPEN_MESSAGE) == 0) {
 		return on_open_message (arguments, data, retval);
