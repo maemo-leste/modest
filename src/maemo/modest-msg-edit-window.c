@@ -530,6 +530,11 @@ modest_msg_edit_window_finalize (GObject *obj)
 		priv->system_clipboard_change_handler_id = 0;
 	}
 	
+	if (priv->draft_msg != NULL) {
+		g_object_unref (priv->draft_msg);
+		priv->draft_msg = NULL;
+	}
+
 	/* This had to stay alive for as long as the combobox that used it: */
 	modest_pair_list_free (priv->from_field_protos);
 	
@@ -658,7 +663,7 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg)
 	update_dimmed (self);
 	text_buffer_can_undo (priv->text_buffer, FALSE, self);
 
-	priv->draft_msg = msg;
+	priv->draft_msg = g_object_ref(msg);
 }
 
 static void
