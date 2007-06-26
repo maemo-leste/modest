@@ -150,7 +150,7 @@ main (int argc, char *argv[])
 			GtkWidget *ui = NULL;
 			retval = start_ui (account_or_default,
 					   mailto, cc, bcc, subject, body, &ui);
-			if (ui)	
+			if (G_IS_OBJECT(ui))	
 				g_signal_connect (G_OBJECT (ui), "show", G_CALLBACK(on_show), NULL);
 		}
 	} else {

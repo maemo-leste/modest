@@ -304,6 +304,7 @@ save_header_settings (ModestConf *conf, TnyFolderType type,
 	 * there was nothing before */
 	if (!overwrite &&  modest_conf_key_exists(conf, key, NULL)) {
 		g_free (key);
+		g_free (sort_key);
 		return TRUE;
 	}
 
