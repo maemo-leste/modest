@@ -1,7 +1,1 @@
-2007-06-26  Murray Cumming,,,  <murrayc@murrayc-desktop>
-
-	reviewed by: <delete if not using a buddy>
-
-	* src/modest-tny-account-store.c: (get_password):
-
 * please check the svn log instead

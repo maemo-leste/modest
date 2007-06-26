@@ -1,5 +1,14 @@
 2007-06-26  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-tny-account-store.c:
+	* src/modest-tny-account-store.h:
+	Added modest_tny_account_is_memory_card_account().
+	* src/maemo/modest-main-window.c: (create_details_widget):
+	Show the same information items for the memory card as we show for the 
+	local-folders, to fix projects.maemo.org bug NB#59307.
+
+2007-06-26  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/modest-tny-account-store.c: (get_password):
 	Added some checks for NULL to maybe prevent crashes, though I think 
 	it was Philip's last commit that actually prevented the crash here 

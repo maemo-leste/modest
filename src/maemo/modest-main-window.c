@@ -1401,6 +1401,8 @@ create_empty_view (void)
 static GtkWidget *
 create_details_widget (GtkWidget *styled_widget, TnyAccount *account)
 {
+	/* TODO: Clean up this function. It's a mess, with lots of copy/paste. murrayc. */
+	
 	GtkWidget *vbox;
 	GtkWidget *label_w;
 	gchar *label;
@@ -1419,14 +1421,20 @@ create_details_widget (GtkWidget *styled_widget, TnyAccount *account)
 #endif	
 	/* Account description: */
 	
-	if (modest_tny_account_is_virtual_local_folders (account)) {
+	if (modest_tny_account_is_virtual_local_folders (account)
+		|| (modest_tny_account_is_memory_card_account (account))) {
 		gchar *tmp;
 		/* Local folders: */
 	
 		/* Get device name */
-		gchar *device_name = modest_conf_get_string (modest_runtime_get_conf(),
+		gchar *device_name = NULL;
+		if (modest_tny_account_is_virtual_local_folders (account))
+			device_name = modest_conf_get_string (modest_runtime_get_conf(),
 						      MODEST_CONF_DEVICE_NAME, NULL);
-		tmp = g_strdup_printf (_("mcen_fi_localroot_description"), "");
+		else
+			device_name = g_strdup (tny_account_get_name (account));
+						      
+		tmp = g_strdup_printf (_("mcen_fi_localroot_description"), ""); //TODO: Why the ""?
 		label = g_markup_printf_escaped ("<span color='%s'>%s</span>%s",
 						 gray_color_markup, tmp, device_name);
 		g_free (tmp);
@@ -1486,7 +1494,8 @@ create_details_widget (GtkWidget *styled_widget, TnyAccount *account)
 	g_free (label);
 
 	/* Size / Date */
-	if (modest_tny_account_is_virtual_local_folders (account)) {
+	if (modest_tny_account_is_virtual_local_folders (account)
+		|| modest_tny_account_is_memory_card_account (account)) {
 		/* FIXME: format size */
 		label = g_markup_printf_escaped ("<span color='%s'>%s:</span> %d", 
 						 gray_color_markup, _("mcen_fi_rootfolder_size"), 

@@ -1346,6 +1346,20 @@ modest_tny_account_is_virtual_local_folders (TnyAccount *self)
 	return MODEST_IS_TNY_LOCAL_FOLDERS_ACCOUNT (self);
 }
 
+
+gboolean
+modest_tny_account_is_memory_card_account (TnyAccount *self)
+{
+	if (!self)
+		return FALSE;
+
+	const gchar* account_id = tny_account_get_id (self);
+	if (!account_id)
+		return FALSE;
+	
+	return (strcmp (account_id, MODEST_MMC_ACCOUNT_ID) == 0);
+}
+
 TnyAccount*
 modest_tny_account_store_get_local_folders_account (TnyAccountStore *self)
 {
@@ -1370,3 +1384,5 @@ modest_tny_account_store_get_local_folders_account (TnyAccountStore *self)
 	
 	return account;
 }
+
+
