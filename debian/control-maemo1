@@ -19,7 +19,7 @@ Description: debug package for modest
 Package: libmodest-dbus-client
 Section: devel
 Architecture: any
-Depends: ${shlibs:Depends}
+Depends: ${shlibs:Depends}, modest
 Description: library wrapping modest's dbus interface
 
 Package: libmodest-dbus-client-dev
