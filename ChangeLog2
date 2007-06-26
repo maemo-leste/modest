@@ -1,5 +1,11 @@
 2007-06-26  Armin Burgmeier  <armin@openismus.com>
 
+	* src/maemo/modest-maemo-utils.c: Replaced a busy wait while waiting
+	for supported secure authentication methods from server by
+	gtk_dialog_run(), saving CPU time and a potential race condition.
+
+2007-06-26  Armin Burgmeier  <armin@openismus.com>
+
 	* src/maemo/modest-maemo-utils.h: 
 	* src/maemo/modest-maemo-utils.c: Added a
 	ModestMaemoUtilsGetSupportedSecureAuthenticationError with CANCELED as

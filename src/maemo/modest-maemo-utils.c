@@ -258,7 +258,6 @@ modest_maemo_utils_create_temp_stream (const gchar *extension, gchar **path)
 
 typedef struct 
 {
-	gboolean finished;
 	gboolean cancel;
 	GList *result;
 	GtkWidget* dialog;
@@ -272,6 +271,18 @@ static void on_camel_account_get_supported_secure_authentication_status (
 	/*ModestGetSupportedAuthInfo* info = (ModestGetSupportedAuthInfo*) user_data;*/
 }
 
+static gboolean
+on_secure_auth_finished (gpointer user_data)
+{
+	ModestGetSupportedAuthInfo *info = (ModestGetSupportedAuthInfo*)user_data;
+	/* Operation has finished, close the dialog. Control continues after
+	 * gtk_dialog_run in modest_maemo_utils_get_supported_secure_authentication_methods() */
+	gdk_threads_enter();
+	gtk_dialog_response (GTK_DIALOG (info->dialog), GTK_RESPONSE_ACCEPT);
+	gdk_threads_leave();
+	return FALSE;
+}
+
 static void
 on_camel_account_get_supported_secure_authentication (
   TnyCamelAccount *self, gboolean cancelled,
@@ -282,61 +293,74 @@ on_camel_account_get_supported_secure_authentication (
 	ModestGetSupportedAuthInfo *info = (ModestGetSupportedAuthInfo*)user_data;
 	g_return_if_fail (info);
 
+	gdk_threads_enter();
+
 	/* Free everything if the actual action was canceled */
 	if (info->cancel)
 	{
+		/* The operation was canceled and the ownership of the info given to us
+		 * so that we could still check the cancel flag. */
 		g_slice_free (ModestGetSupportedAuthInfo, info);
 		info = NULL;
-		return;
+	}
+	else
+	{
+		/* TODO: Why is this a pointer to a pointer? We are not supposed to
+		 * set it, are we? */
+		if(err != NULL && *err != NULL)
+		{
+			if(info->error != NULL) g_error_free(info->error);
+			info->error = g_error_copy(*err);
+		}
+
+		if (!auth_types) {
+			printf ("DEBUG: %s: auth_types is NULL.\n", __FUNCTION__);
+		}
+		else
+		{
+			ModestPairList* pairs = modest_protocol_info_get_auth_protocol_pair_list ();
+  
+			/* Get the enum value for the strings: */
+			GList *result = NULL;
+			TnyIterator* iter = tny_list_create_iterator(auth_types);
+			while (!tny_iterator_is_done(iter)) {
+				const gchar *auth_name = tny_pair_get_name(TNY_PAIR(tny_iterator_get_current(iter)));
+				printf("DEBUG: %s: auth_name=%s\n", __FUNCTION__, auth_name);
+				ModestPair *matching = modest_pair_list_find_by_first_as_string (pairs, 
+					auth_name);
+				if (matching)
+	   			{
+					result = g_list_append (result, GINT_TO_POINTER((ModestConnectionProtocol)matching->first));
+				}
+				tny_iterator_next(iter);
+			}
+	
+			g_object_unref(auth_types);
+
+			modest_pair_list_free (pairs);
+	
+			info->result = result;
+		}
+
+		printf("DEBUG: finished\n");
+
+		/* Close the dialog in a main thread */
+		g_idle_add(on_secure_auth_finished, info);
 	}
 
-	/* TODO: Why is this a pointer to a pointer? We are not supposed to
-	 * set it, are we? */
-	if(err != NULL && *err != NULL)
-	{
-		if(info->error != NULL) g_error_free(info->error);
-		info->error = g_error_copy(*err);
-	}
-	
-	if (!auth_types) {
-		printf ("DEBUG: %s: auth_types is NULL.\n", __FUNCTION__);
-		info->finished = TRUE; /* We are blocking, waiting for this. */
-		return;
-	}
-		
-	ModestPairList* pairs = modest_protocol_info_get_auth_protocol_pair_list ();
-  
-	/* Get the enum value for the strings: */
-	GList *result = NULL;
-	TnyIterator* iter = tny_list_create_iterator(auth_types);
-	while (!tny_iterator_is_done(iter)) {
-		const gchar *auth_name = tny_pair_get_name(TNY_PAIR(tny_iterator_get_current(iter)));
-		printf("DEBUG: %s: auth_name=%s\n", __FUNCTION__, auth_name);
-		ModestPair *matching = modest_pair_list_find_by_first_as_string (pairs, 
-			auth_name);
-		if (matching)
-    {
-      result = g_list_append (result, GINT_TO_POINTER((ModestConnectionProtocol)matching->first));
-    }
-		tny_iterator_next(iter);
-	}
-	
-  g_object_unref(auth_types);
-	
-	modest_pair_list_free (pairs);
-	
-	info->result = result;
-  printf("DEBUG: finished\n");
-	info->finished = TRUE; /* We are blocking, waiting for this. */
+	gdk_threads_leave();
 }
 
 static void on_secure_auth_cancel(GtkWidget* dialog, int response, gpointer user_data)
 {
-	ModestGetSupportedAuthInfo *info = (ModestGetSupportedAuthInfo*)user_data;
-	g_return_if_fail(info);
-	/* We are blocking */
-	info->result = NULL;
-	info->cancel = TRUE;
+	if(response == GTK_RESPONSE_REJECT || response == GTK_RESPONSE_DELETE_EVENT)
+	{
+		ModestGetSupportedAuthInfo *info = (ModestGetSupportedAuthInfo*)user_data;
+		g_return_if_fail(info);
+		/* This gives the ownership of the info to the worker thread. */
+		info->result = NULL;
+		info->cancel = TRUE;
+	}
 }
 
 GList* modest_maemo_utils_get_supported_secure_authentication_methods (ModestTransportStoreProtocol proto, 
@@ -394,25 +418,24 @@ GList* modest_maemo_utils_get_supported_secure_authentication_methods (ModestTra
 
 	/* Ask camel to ask the server, asynchronously: */
 	ModestGetSupportedAuthInfo *info = g_slice_new (ModestGetSupportedAuthInfo);
-	info->finished = FALSE;
 	info->result = NULL;
 	info->cancel = FALSE;
 	info->error = NULL;
 	info->progress = gtk_progress_bar_new();
-  info->dialog = gtk_dialog_new_with_buttons(_("Authentication"),
-																parent_window, GTK_DIALOG_MODAL,
-																GTK_STOCK_CANCEL,
-																GTK_RESPONSE_REJECT,
-																NULL);
+	info->dialog = gtk_dialog_new_with_buttons(_("Authentication"),
+	                                           parent_window, GTK_DIALOG_MODAL,
+	                                           GTK_STOCK_CANCEL,
+	                                           GTK_RESPONSE_REJECT,
+	                                           NULL);
 	//gtk_window_set_default_size(GTK_WINDOW(info->dialog), 300, 100);
 	
 	g_signal_connect(G_OBJECT(info->dialog), "response", G_CALLBACK(on_secure_auth_cancel), info);
 	
 	gtk_container_add(GTK_CONTAINER(GTK_DIALOG(info->dialog)->vbox),
-										gtk_label_new("Checking for supported authentication types..."));
+	                  gtk_label_new("Checking for supported authentication types..."));
 	gtk_container_add(GTK_CONTAINER(GTK_DIALOG(info->dialog)->vbox), info->progress);
 	gtk_widget_show_all(info->dialog);
-  gtk_progress_bar_pulse(GTK_PROGRESS_BAR(info->progress));
+	gtk_progress_bar_pulse(GTK_PROGRESS_BAR(info->progress));
 	
 	printf ("DEBUG: %s: STARTING.\n", __FUNCTION__);
 	tny_camel_account_get_supported_secure_authentication (
@@ -420,15 +443,10 @@ GList* modest_maemo_utils_get_supported_secure_authentication_methods (ModestTra
 		on_camel_account_get_supported_secure_authentication,
 		on_camel_account_get_supported_secure_authentication_status,
 		info);
-		
-	/* Block until the callback has been called,
-	 * driving the main context, so that the (idle handler) callback can be 
-	 * called, and so that our dialog is clickable: */
-	while (!(info->finished) && !(info->cancel)) {
-    gtk_main_iteration_do(FALSE); 
-	}
+
+	gtk_dialog_run (GTK_DIALOG (info->dialog));
 	
-  gtk_widget_destroy(info->dialog);
+	gtk_widget_destroy(info->dialog);
 		
 	GList *result = info->result;
 	if (!info->cancel)
