@@ -38,6 +38,7 @@
 #include <modest-hildon-includes.h>
 #include <osso-helplib.h>
 #include <dbus_api/modest-dbus-callbacks.h>
+#include <libosso-abook/osso-abook.h>
 #include <maemo/modest-osso-autosave-callbacks.h>
 #include <libosso.h>
 #include <alarmd/alarm_event.h> /* For alarm_event_add(), etc. */
@@ -47,6 +48,7 @@
 #include <gtk/gtkmenuitem.h>
 #include <gtk/gtkmain.h>
 #include <string.h>
+
 
 #define HILDON_OSSO_URI_ACTION "uri-action"
 #define URI_ACTION_COPY "copy:"
@@ -65,10 +67,11 @@ on_modest_conf_update_interval_changed (ModestConf* self, const gchar *key,
 }
 
 gboolean
-modest_platform_init (void)
+modest_platform_init (int argc, char *argv[])
 {
 	osso_hw_state_t hw_state = { 0 };
 	DBusConnection *con;	
+
 	osso_context =
 		osso_initialize(PACKAGE,PACKAGE_VERSION,
 				FALSE, NULL);	
@@ -78,11 +81,11 @@ modest_platform_init (void)
 	}
 
 	if ((con = osso_get_dbus_connection (osso_context)) == NULL) {
-		g_printerr ("Could not get dbus connection\n");
+		g_printerr ("modest: could not get dbus connection\n");
 		return FALSE;
 
 	}
-
+	
 	/* Add a D-Bus handler to be used when the main osso-rpc 
 	 * D-Bus handler has not handled something.
 	 * We use this for D-Bus methods that need to use more complex types 
@@ -93,7 +96,7 @@ modest_platform_init (void)
 					 NULL,
 					 NULL)) {
 
-		g_printerr ("Could not add D-Bus filter\n");
+		g_printerr ("modest: Could not add D-Bus filter\n");
 		return FALSE;
 	}
 
@@ -104,8 +107,8 @@ modest_platform_init (void)
                                MODEST_DBUS_IFACE,
                                modest_dbus_req_handler, NULL /* user_data */);
     	if (result != OSSO_OK) {
-       		g_print("Error setting D-BUS callback (%d)\n", result);
-       		return OSSO_ERROR;
+       		g_printerr ("modest: Error setting D-BUS callback (%d)\n", result);
+       		return FALSE;
    	}
 
 	/* Add handler for Exit D-BUS messages.
@@ -127,7 +130,8 @@ modest_platform_init (void)
 	result = osso_application_set_autosave_cb (osso_context, 
 		modest_on_osso_application_autosave, NULL /* user_data */);
 	if (result != OSSO_OK) {
-		g_warning ("osso_application_set_autosave_cb() failed.");	
+		g_printerr ("modest: osso_application_set_autosave_cb() failed.\n");
+		return FALSE;
 	}
 	
 
@@ -142,7 +146,13 @@ modest_platform_init (void)
 	/* Get the initial update interval from gconf: */
 	on_modest_conf_update_interval_changed(conf, MODEST_CONF_UPDATE_INTERVAL,
 		MODEST_CONF_EVENT_KEY_CHANGED, NULL);
-	
+
+	/* initialize the addressbook */
+	if (!osso_abook_init (&argc, &argv, osso_context)) {
+		g_printerr ("modest: failed to initialized addressbook\n");
+		return FALSE;
+	}
+		
 	return TRUE;
 }
 

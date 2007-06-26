@@ -172,7 +172,7 @@ modest_init_get_default_header_view_column_ids (TnyFolderType folder_type, Modes
 }
 
 gboolean
-modest_init_init_core (void)
+modest_init_init_core (int argc, char *argv[])
 {
 	gboolean reset;
 	static gboolean invoked = FALSE;
@@ -187,6 +187,13 @@ modest_init_init_core (void)
 	init_i18n();
 	init_debug_g_type();
 	init_debug_logging();
+
+	if (!gnome_vfs_initialized()) {
+		if (!gnome_vfs_init ()) {
+			g_printerr ("modest: failed to init gnome-vfs\n");
+			return FALSE;
+		}
+	}
 	
 	if (!modest_runtime_init()) {
 		modest_init_uninit ();
@@ -194,11 +201,12 @@ modest_init_init_core (void)
 		return FALSE;
 	}
 
-
+	
 	/* do an initial guess for the device name */
 	init_device_name (modest_runtime_get_conf());
 
-	if (!modest_platform_init()) {
+	
+	if (!modest_platform_init(argc, argv)) {
 		modest_init_uninit ();
 		g_printerr ("modest: failed to run platform-specific initialization\n");
 		return FALSE;
@@ -245,10 +253,11 @@ modest_init_init_ui (gint argc, gchar** argv)
 	init_stock_icons ();
 
 	/* Init notification system */
-	#ifdef MODEST_HAVE_HILDON_NOTIFY
+#ifdef MODEST_HAVE_HILDON_NOTIFY
 	notify_init ("Basics");
-	#endif
+#endif
 
+	
 	return TRUE;
 }
 
@@ -258,7 +267,10 @@ modest_init_uninit (void)
 {
 	if (!modest_runtime_uninit())
 		g_printerr ("modest: failed to uninit runtime\n");
-     		
+
+	if (gnome_vfs_initialized())
+		gnome_vfs_shutdown ();
+	
 	return TRUE;
 }
 

@@ -37,7 +37,7 @@
 #include "gnome/modest-gnome-global-settings-dialog.h"
 
 gboolean
-modest_platform_init (void)
+modest_platform_init (int argc, char *argv[])
 {	
 	return TRUE; /* nothing to do */
 }

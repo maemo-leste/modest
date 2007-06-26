@@ -39,6 +39,8 @@ G_BEGIN_DECLS
 
 /**
  * modest_init_init_core:
+ * @argc:
+ * @argv:
  *
  * initialize the modest runtime system (which sets up the
  * environment, instantiates singletons and so on)
@@ -47,7 +49,7 @@ G_BEGIN_DECLS
  *  
  * TRUE if this succeeded, FALSE otherwise.
  */
-gboolean modest_init_init_core (void);
+gboolean modest_init_init_core (int argc, char *argv[]);
 
 
 /**

@@ -133,10 +133,9 @@ main (int argc, char *argv[])
 	}
 	g_option_context_free (context);
 	
-	if (!modest_init_init_core ()) {
+	if (!modest_init_init_core (argc, argv)) {
 		g_printerr ("modest: cannot init modest core\n");
 		return MODEST_ERR_INIT;
-		
 	}
 	
 	account_or_default = check_account (account);
