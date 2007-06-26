@@ -46,6 +46,8 @@ typedef struct {
 	ModestTransportStoreProtocol incoming_protocol; /* This may not change. */
 	ModestTransportStoreProtocol outgoing_protocol; /* This may not change. */
 	gchar * original_account_title;
+
+	ModestAuthProtocol protocol_authentication_incoming;
 	
 	GtkWidget *page_account_details;
 	GtkWidget *entry_account_title;

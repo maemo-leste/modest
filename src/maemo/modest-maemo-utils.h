@@ -37,6 +37,12 @@
 #define MODEST_MAEMO_UTILS_MYDOCS_FOLDER "MyDocs"
 #define MODEST_MAEMO_UTILS_DEFAULT_IMAGE_FOLDER ".images"
 
+typedef enum {
+	MODEST_MAEMO_UTILS_GET_SUPPORTED_SECURE_AUTHENTICATION_ERROR_CANCELED
+} ModestMaemoUtilsGetSupportedSecureAuthenticationError;
+
+GQuark modest_maemo_utils_get_supported_secure_authentication_error_quark (void);
+
 /**
  * modest_maemo_utils_menubar_to_menu:
  * @ui_manager: a ui manager, with the menubar at "/MenuBar" 

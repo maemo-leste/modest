@@ -1,3 +1,23 @@
+2007-06-26  Armin Burgmeier  <armin@openismus.com>
+
+	* src/maemo/modest-maemo-utils.h: 
+	* src/maemo/modest-maemo-utils.c: Added a
+	ModestMaemoUtilsGetSupportedSecureAuthenticationError with CANCELED as
+	only error code to tell the calling code when the user canceled the
+	operation.
+
+	* src/maemo/modest-account-settings-dialog.h:
+	* src/maemo/modest-account-settings-dialog.c:
+	* src/maemo/easysetup/modest-easysetup-wizard.c: Do not show an error
+	message if the retrieval of secure authentication methods was canceled
+	by the user. Perform the check before saving anything to configuration
+	to not end up with half-committed configuration changes, do not show
+	a "Saving to configuration failed" note when authentication methods
+	could not be retrieved.
+
+	* src/maemo/modest-main-window.c: Fixed a crash on startup when built
+	with old hildon.
+
 2007-06-26  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/dbus_api/modest-dbus-callbacks.c: (add_folders_to_list):

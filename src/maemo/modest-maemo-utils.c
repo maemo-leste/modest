@@ -61,6 +61,10 @@
 #define BTNAME_MATCH_RULE "type='signal',interface='" BTNAME_SIGNAL_IF \
                           "',member='" BTNAME_SIG_CHANGED "'"
 
+GQuark modest_maemo_utils_get_supported_secure_authentication_error_quark (void)
+{
+	return g_quark_from_static_string("modest-maemo-utils-get-supported-secure-authentication-error-quark");
+}
 
 GtkWidget*
 modest_maemo_utils_menubar_to_menu (GtkUIManager *ui_manager)
@@ -286,11 +290,11 @@ on_camel_account_get_supported_secure_authentication (
 		return;
 	}
 
-	/* Why is this a pointer to a pointer? We are not supposed to set it,
-	 * are we? */
+	/* TODO: Why is this a pointer to a pointer? We are not supposed to
+	 * set it, are we? */
 	if(err != NULL && *err != NULL)
 	{
-		printf("Err: %s\n", (*err)->message);
+		if(info->error != NULL) g_error_free(info->error);
 		info->error = g_error_copy(*err);
 	}
 	
@@ -435,6 +439,16 @@ GList* modest_maemo_utils_get_supported_secure_authentication_methods (ModestTra
 		g_slice_free (ModestGetSupportedAuthInfo, info);
 		info = NULL;
 	}
+	else
+	{
+		// Tell the caller that the operation was canceled so it can
+		// make a difference
+		g_set_error(error,
+		            modest_maemo_utils_get_supported_secure_authentication_error_quark(),
+		            MODEST_MAEMO_UTILS_GET_SUPPORTED_SECURE_AUTHENTICATION_ERROR_CANCELED,
+			    "User has canceled query");
+	}
+
 	return result;
 }
 

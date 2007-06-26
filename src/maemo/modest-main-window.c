@@ -1417,7 +1417,8 @@ create_details_widget (GtkWidget *styled_widget, TnyAccount *account)
 	gtk_style_lookup_color (styled_widget->style, "SecondaryTextColor", &color);
 	gray_color_markup = modest_text_utils_get_color_string (&color);
 #else
-	gray_color_markup = "#BBBBBB";	
+	// gray_color_markup is freed below
+	gray_color_markup = g_strdup ("#BBBBBB");
 #endif	
 	/* Account description: */
 	
