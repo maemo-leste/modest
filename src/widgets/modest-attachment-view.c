@@ -128,7 +128,7 @@ modest_attachment_view_set_part (TnyMimePartView *self, TnyMimePart *mime_part)
 
 static gboolean
 get_size_idle_func (gpointer data)
-{
+{	
 	gdk_threads_enter ();
 
 	ModestAttachmentView *self = (ModestAttachmentView *) data;
