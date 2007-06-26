@@ -51,8 +51,8 @@ typedef enum _ModestSortDialogType {
  * 
  * Returns: TRUE if succeeded, FALSE otherwise
  */
-gboolean modest_platform_init (void);
-
+gboolean modest_platform_init (int argc, char *argv[]);
+	
 
 /**
  * modest_platform_get_new_device:
