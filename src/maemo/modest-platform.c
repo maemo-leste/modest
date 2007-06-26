@@ -586,6 +586,7 @@ entry_changed (GtkEditable *editable,
 	gchar *chars;
 
 	chars = gtk_editable_get_chars (editable, 0, -1);
+	g_return_if_fail (chars != NULL);
 
 	/* Dimm OK button */
 	if (strlen (chars) == 0) {
@@ -597,7 +598,12 @@ entry_changed (GtkEditable *editable,
 		gtk_widget_set_sensitive (ok_button, FALSE);
 
 		g_list_free (buttons);
+	} else if (strlen (chars) == 21) {
+		hildon_banner_show_information  (gtk_widget_get_parent (GTK_WIDGET (user_data)), NULL,
+						 dgettext("hildon-common-strings", "ckdg_ib_maximum_characters_reached"));		
 	}
+
+	/* Free */
 	g_free (chars);
 }
 
