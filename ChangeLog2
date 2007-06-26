@@ -1,5 +1,14 @@
 2007-06-26  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-tny-account-store.c: (get_password):
+	Added some checks for NULL to maybe prevent crashes, though I think 
+	it was Philip's last commit that actually prevented the crash here 
+	when creating a first new account.
+	But the new account is still not usable (no messages are shown) 
+	until a restart of the application.
+
+2007-06-26  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/maemo/modest-maemo-global-settings-dialog.c:
 	(idle_select_default_focus):
 	* src/modest-mail-operation.c: (idle_notify_progress),

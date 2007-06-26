@@ -391,6 +391,8 @@ get_password (TnyAccount *account, const gchar * prompt_not_used, gboolean *canc
 	if (cancel)
 	  *cancel = FALSE;
 	  
+	g_return_val_if_fail (account, NULL);
+	  
 	const gchar *key;
 	const TnyAccountStore *account_store;
 	ModestTnyAccountStore *self;
@@ -410,7 +412,8 @@ get_password (TnyAccount *account, const gchar * prompt_not_used, gboolean *canc
 	/* is it in the hash? if it's already there, it must be wrong... */
 	pwd_ptr = (gpointer)&pwd; /* pwd_ptr so the compiler does not complained about
 				   * type-punned ptrs...*/
-	already_asked = g_hash_table_lookup_extended (priv->password_hash,
+	already_asked = priv->password_hash && 
+				g_hash_table_lookup_extended (priv->password_hash,
 						      key,
 						      NULL,
 						      (gpointer*)&pwd_ptr);
