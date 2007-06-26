@@ -1,5 +1,20 @@
 2007-06-26  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/dbus_api/modest-dbus-callbacks.c: (on_idle_mail_to),
+	(on_idle_compose_mail), (on_compose_mail), (on_idle_open_message),
+	(on_idle_send_receive), (on_idle_open_default_inbox):
+	* src/maemo/modest-msg-edit-window.c:
+	(modest_msg_edit_window_attach_file_noninteractive):
+	Use gdk_threads_enter() and gdk_threads_leave() in all the idle handlers, 
+	to prevent a hang. I don't quite understand why these are necessary, 
+	beause we should already be in the main loop. I guess something outside 
+	of the main loop is taking the lock.
+	
+	* tests/dbus_api/test_compose_mail.c: (main): Use file:// prefixes so 
+	we are really using URIs, and use files that are more likely to exist.
+
+2007-06-26  Murray Cumming  <murrayc@murrayc.com>
+
 	* tests/dbus_api/Makefile.am: Fix the build of the tests. This was 
 	necessary because configure.ac now defines different variables.
 

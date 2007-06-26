@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
 	
 	/* Call the function in libmodest-dbus-client: */
 	
-	attachments = g_slist_append(attachments, "/usr/include/math.h,/usr/include/malloc.h");
+	attachments = g_slist_append(attachments, "file:///usr/include/math.h,file:///usr/include/glib-2.0/glib.h");
 	
 	const gboolean ret = libmodest_dbus_client_compose_mail (
 		osso_context,

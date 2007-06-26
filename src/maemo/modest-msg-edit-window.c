@@ -1611,7 +1611,7 @@ modest_msg_edit_window_attach_file_noninteractive (
 	
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
 
-	if (file_uri) {
+	if (file_uri && strlen(file_uri)) {
 		gint file_id = 0;
 		
 		/* TODO: We should probably try to use only the URI,
@@ -1619,7 +1619,7 @@ modest_msg_edit_window_attach_file_noninteractive (
 		 */
 		gchar* filename = g_filename_from_uri (file_uri, NULL, NULL);
 		if (!filename) {
-			g_warning("%s: g_filename_from_uri(%s) failed.\n", __FUNCTION__, file_uri);
+			g_warning("%s: g_filename_from_uri('%s') failed.\n", __FUNCTION__, file_uri);
 		}
 
 		file_id = g_open (filename, O_RDONLY, 0);

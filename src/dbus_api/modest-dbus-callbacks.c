@@ -185,6 +185,8 @@ static gchar* uri_parse_mailto (const gchar* mailto, GSList** list_items_and_val
 static gboolean
 on_idle_mail_to(gpointer user_data)
 {
+	gdk_threads_enter();
+	
 	/* This is based on the implemenation of main.c:start_uil(): */
 	
 	gchar *uri = (gchar*)user_data;
@@ -283,6 +285,8 @@ on_idle_mail_to(gpointer user_data)
 		
 	g_free(uri);
 
+	gdk_threads_leave();
+	
 	return FALSE; /* Do not call this callback again. */
 }
 
@@ -312,6 +316,8 @@ static gint on_mail_to(GArray * arguments, gpointer data, osso_rpc_t * retval)
 static gboolean
 on_idle_compose_mail(gpointer user_data)
 {
+	gdk_threads_enter();
+	
 	ComposeMailIdleData *idle_data = (ComposeMailIdleData*)user_data;
 	gchar **list = NULL;
 	gint i = 0;
@@ -387,13 +393,14 @@ on_idle_compose_mail(gpointer user_data)
 	g_free (idle_data);
 	
  	g_free (account_name);
+ 	
+ 	gdk_threads_leave();
+ 	
 	return FALSE; /* Do not call this callback again. */
 }
 
 static gint on_compose_mail(GArray * arguments, gpointer data, osso_rpc_t * retval)
 {
-
-	
 	if (arguments->len != MODEST_DEBUS_COMPOSE_MAIL_ARGS_COUNT)
      	return OSSO_ERROR;
      	
@@ -501,6 +508,8 @@ out:
 static gboolean
 on_idle_open_message (gpointer user_data)
 {
+	gdk_threads_enter();
+	
 	ModestWindow *msg_view;
 	TnyMsg       *msg;
 	TnyAccount   *account;
@@ -517,6 +526,7 @@ on_idle_open_message (gpointer user_data)
 
 	if (msg == NULL) {
 		g_debug ("  %s: message not found.", __FUNCTION__);
+		gdk_threads_leave();
 		return FALSE;
 	}
 	g_debug ("  %s: Found message.", __FUNCTION__);
@@ -534,6 +544,8 @@ on_idle_open_message (gpointer user_data)
 
 	g_object_unref (header);
 	g_object_unref (account);
+	
+	gdk_threads_leave();
 	
 	return FALSE; /* Do not call this callback again. */
 }
@@ -659,6 +671,7 @@ on_delete_message (GArray *arguments, gpointer data, osso_rpc_t *retval)
 static gboolean
 on_idle_send_receive(gpointer user_data)
 {
+	gdk_threads_enter();
 	ModestWindow *win;
 
 	/* Pick the main window if it exists */
@@ -667,6 +680,8 @@ on_idle_send_receive(gpointer user_data)
 	/* Send & receive all if "Update automatically" is set */
 	/* TODO: check the auto-update parameter in the configuration */
 	modest_ui_actions_do_send_receive_all (win);
+	
+	gdk_threads_leave();
 	
 	return FALSE; /* Do not call this callback again. */
 }
@@ -688,6 +703,8 @@ static gint on_send_receive(GArray * arguments, gpointer data, osso_rpc_t * retv
 static gboolean
 on_idle_open_default_inbox(gpointer user_data)
 {
+	gdk_threads_enter();
+	
 	ModestWindow *win = 
 		modest_window_mgr_get_main_window (modest_runtime_get_window_mgr ());
 
@@ -696,6 +713,8 @@ on_idle_open_default_inbox(gpointer user_data)
 							   MODEST_WIDGET_TYPE_FOLDER_VIEW);
 	modest_folder_view_select_first_inbox_or_local (
 		MODEST_FOLDER_VIEW (folder_view));
+	
+	gdk_threads_leave();
 	
 	return FALSE; /* Do not call this callback again. */
 }
