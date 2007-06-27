@@ -1,3 +1,17 @@
+2007-06-27  Murray Cumming  <murrayc@murrayc.com
+
+	* src/maemo/modest-maemo-global-settings-dialog.c:
+	(idle_select_default_focus):
+	* src/modest-mail-operation.c: (idle_notify_progress),
+	(idle_notify_progress_once), (set_last_updated_idle),
+	(update_account_thread), (get_msgs_full_thread):
+	* src/widgets/modest-attachment-view.c: (get_size_idle_func):
+	* src/widgets/modest-header-view.c:
+	(idle_notify_headers_count_changed_destroy),
+	(idle_notify_headers_count_changed):
+	Reverted the additions of gdk_threads_enter/leave(), in case this 
+	helps with a startup hang on the device.
+
 2007-06-26  Armin Burgmeier  <armin@openismus.com>
 
 	* src/maemo/modest-maemo-utils.c: Replaced a busy wait while waiting

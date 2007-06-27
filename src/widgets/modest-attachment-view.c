@@ -160,9 +160,8 @@ get_size_idle_func (gpointer data)
 		priv->get_size_idle_id = 0;
 	}
 
-	gdk_threads_leave ();
-
 	return (priv->get_size_stream != NULL);
+	
 }
 
 static void

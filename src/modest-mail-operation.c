@@ -795,8 +795,6 @@ recurse_folders (TnyFolderStore *store, TnyFolderStoreQuery *query, TnyList *all
 static gboolean
 idle_notify_progress (gpointer data)
 {
-	gdk_threads_enter ();
-
 	ModestMailOperation *mail_op = MODEST_MAIL_OPERATION (data);
 	ModestMailOperationState *state;
 
@@ -804,8 +802,6 @@ idle_notify_progress (gpointer data)
 	g_signal_emit (G_OBJECT (mail_op), signals[PROGRESS_CHANGED_SIGNAL], 0, state, NULL);
 	g_slice_free (ModestMailOperationState, state);
 	
-	gdk_threads_leave ();
-
 	return TRUE;
 }
 
@@ -817,8 +813,6 @@ idle_notify_progress (gpointer data)
 static gboolean
 idle_notify_progress_once (gpointer data)
 {
-	gdk_threads_enter ();
-
 	ModestPair *pair;
 
 	pair = (ModestPair *) data;
@@ -828,8 +822,6 @@ idle_notify_progress_once (gpointer data)
 	/* Free the state and the reference to the mail operation */
 	g_slice_free (ModestMailOperationState, (ModestMailOperationState*)pair->second);
 	g_object_unref (pair->first);
-
-	gdk_threads_leave ();
 
 	return FALSE;
 }
@@ -887,8 +879,6 @@ set_last_updated_idle (gpointer data)
 				    MODEST_ACCOUNT_LAST_UPDATED, 
 				    time(NULL), 
 				    TRUE);
-
-	gdk_threads_leave ();
 
 	return FALSE;
 }
@@ -1103,7 +1093,7 @@ update_account_thread (gpointer thr_user_data)
 	/* Notify about operation end. Note that the info could be
 	   freed before this idle happens, but the mail operation will
 	   be still alive */
-	g_idle_add (idle_notify_update_account_queue, g_object_ref (info->mail_op));
+	g_idle_add (notify_update_account_queue, g_object_ref (info->mail_op));
 
 	if (info->callback) {
 		/* This thread is not in the main lock */
@@ -1760,7 +1750,7 @@ get_msgs_full_thread (gpointer thr_user_data)
 		priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
 
 	/* Notify about operation end */
-	g_idle_add (idle_notify_update_account_queue, g_object_ref (info->mail_op));
+	g_idle_add (notify_update_account_queue, g_object_ref (info->mail_op));
 
 	/* Free thread resources. Will be called after all previous idles */
 	g_idle_add_full (G_PRIORITY_DEFAULT_IDLE + 1, get_msgs_full_destroyer, info, NULL);
