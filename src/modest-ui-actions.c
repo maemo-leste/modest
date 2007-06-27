@@ -660,7 +660,9 @@ open_msg_cb (ModestMailOperation *mail_op,
 	}
 
 	/* Update toolbar dimming state */
-	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (win));
+	if (MODEST_IS_MAIN_WINDOW (parent_win)) {
+		modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (parent_win));
+	}
 
 cleanup:
 	/* Free */

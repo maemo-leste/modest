@@ -392,7 +392,7 @@ modest_ui_dimming_rules_on_delete_msg (ModestWindow *win, gpointer user_data)
 			dimmed = !modest_msg_view_window_has_headers_model (MODEST_MSG_VIEW_WINDOW(win));
  			if (dimmed) {
 				gchar *num = g_strdup("1");
-				gchar *message = g_strdup_printf(_("mcen_nc_unable_to_delete_n_messages"), "1");
+				gchar *message = g_strdup_printf(_("mcen_nc_unable_to_delete_n_messages"), num);
 /* 				modest_dimming_rule_set_notification (rule, _("mcen_nc_unable_to_delete_n_messages")); */
 				modest_dimming_rule_set_notification (rule, message);
 				g_free(message);
