@@ -1360,7 +1360,8 @@ static void
 transfer_folder_cb (TnyFolder *folder, 
 		    TnyFolderStore *into, 
 		    gboolean cancelled, 
-		    TnyFolder *new_folder, GError **err, 
+		    TnyFolder *new_folder, 
+		    GError **err, 
 		    gpointer user_data)
 {
 	ModestMailOperation *self = NULL;
@@ -2212,8 +2213,8 @@ modest_mail_operation_notify_end (ModestMailOperation *self)
 	
 	/* Set the account back to not busy */
 	if (priv->account_name) {
-		modest_account_mgr_set_account_busy(modest_runtime_get_account_mgr(), priv->account_name,
-																				FALSE);
+		modest_account_mgr_set_account_busy (modest_runtime_get_account_mgr(), 
+						     priv->account_name, FALSE);
 		g_free(priv->account_name);
 		priv->account_name = NULL;
 	}

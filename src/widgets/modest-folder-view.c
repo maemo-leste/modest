@@ -847,7 +847,11 @@ modest_folder_view_update_model (ModestFolderView *self,
 	/* Notify that there is no folder selected */
 	g_signal_emit (G_OBJECT(self), 
 		       signals[FOLDER_SELECTION_CHANGED_SIGNAL], 0,
-		       NULL, TRUE);
+		       NULL, FALSE);
+	if (priv->cur_folder_store) {
+		g_object_unref (priv->cur_folder_store);
+		priv->cur_folder_store = NULL;
+	}
 
 	/* FIXME: the local accounts are not shown when the query
 	   selects only the subscribed folders. */
@@ -1370,9 +1374,18 @@ on_drag_data_received (GtkWidget *widget,
 		   won't longer exist. We can not wait for the end of
 		   the operation, because the operation won't start if
 		   the folder is in use */
-		if (source_widget == widget)
+		if (source_widget == widget) {
+			ModestFolderViewPrivate *priv;
+
+			priv = MODEST_FOLDER_VIEW_GET_PRIVATE (widget);
+			if (priv->cur_folder_store) {
+				g_object_unref (priv->cur_folder_store);
+				priv->cur_folder_store = NULL;
+			}
+
 			g_signal_emit (G_OBJECT (widget), 
-				       signals[FOLDER_SELECTION_CHANGED_SIGNAL], 0, NULL, TRUE);
+				       signals[FOLDER_SELECTION_CHANGED_SIGNAL], 0, NULL, FALSE);
+		}
 	}
 
 	/* Check if the get_data failed */

@@ -1920,7 +1920,7 @@ modest_ui_actions_on_rename_folder (GtkAction *action,
 		response = modest_platform_run_rename_folder_dialog (GTK_WINDOW (main_window), NULL,
 								     current_name, &folder_name);
 
-		if (response == GTK_RESPONSE_OK && strlen (folder_name) > 0) {
+		if (response == GTK_RESPONSE_ACCEPT && strlen (folder_name) > 0) {
 			ModestMailOperation *mail_op;
 
 			mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_INFO, G_OBJECT(main_window));
@@ -1978,7 +1978,7 @@ delete_folder (ModestMainWindow *main_window, gboolean move_to_trash)
 	/* Ask the user */	
 	message =  g_strdup_printf (_("mcen_nc_delete_folder_text"), 
 				    tny_folder_get_name (TNY_FOLDER (folder)));
-	response = modest_platform_run_confirmation_dialog (GTK_WINDOW (main_window), 
+	response = modest_platform_run_confirmation_dialog (GTK_WINDOW (main_window),
 							    (const gchar *) message);
 	g_free (message);
 
