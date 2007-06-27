@@ -43,8 +43,11 @@ static void modest_window_mgr_class_init (ModestWindowMgrClass *klass);
 static void modest_window_mgr_init       (ModestWindowMgr *obj);
 static void modest_window_mgr_finalize   (GObject *obj);
 
-static void on_window_destroy            (ModestWindow *window, 
-					  ModestWindowMgr *self);
+/* static void on_window_destroy            (ModestWindow *window,  */
+/* 					  ModestWindowMgr *self); */
+static gboolean on_window_destroy            (ModestWindow *window,
+					      GdkEvent *event,
+					      ModestWindowMgr *self);
 
 /* list my signals  */
 enum {
@@ -198,7 +201,8 @@ modest_window_mgr_register_window (ModestWindowMgr *self,
 
 	/* Listen to object destruction */
 	handler_id = g_malloc0 (sizeof (gint));
-	*handler_id = g_signal_connect (window, "destroy", G_CALLBACK (on_window_destroy), self);
+	*handler_id = g_signal_connect (window, "delete-event", G_CALLBACK (on_window_destroy), self);
+/* 	*handler_id = g_signal_connect (window, "destroy", G_CALLBACK (on_window_destroy), self); */
 	g_hash_table_insert (priv->destroy_handlers, window, handler_id);
 
 	/* Put into fullscreen if needed */
@@ -223,8 +227,12 @@ modest_window_mgr_register_window (ModestWindowMgr *self,
 	modest_window_show_toolbar (window, show);
 }
 
-static void
-on_window_destroy (ModestWindow *window, ModestWindowMgr *self)
+/* static void */
+/* on_window_destroy (ModestWindow *window, ModestWindowMgr *self) */
+static gboolean
+on_window_destroy (ModestWindow *window, 
+		   GdkEvent *event,
+		   ModestWindowMgr *self)
 {
 	/* Specific stuff first */
 	if (MODEST_IS_MAIN_WINDOW (window)) {
@@ -241,6 +249,7 @@ on_window_destroy (ModestWindow *window, ModestWindowMgr *self)
 					if (iter->data != window) {
 						GList *tmp = iter->next;
 						on_window_destroy (MODEST_WINDOW (iter->data),
+								   event,
 								   self);
 						iter = tmp;
 					} else {
@@ -249,25 +258,30 @@ on_window_destroy (ModestWindow *window, ModestWindowMgr *self)
 				} while (iter);
 			}
 		}
-	} else {
+	}
+	else {
 		if (MODEST_IS_MSG_EDIT_WINDOW (window)) {
-			gboolean sent;
-
+			gboolean sent = FALSE;
+			gint response = GTK_RESPONSE_ACCEPT;
 			sent = modest_msg_edit_window_get_sent (MODEST_MSG_EDIT_WINDOW (window));
 			/* Save currently edited message to Drafts if it was not sent */
 			if (!sent && modest_msg_edit_window_is_modified (MODEST_MSG_EDIT_WINDOW (window))) {
-				gint response = 
-					modest_platform_run_confirmation_dialog (GTK_WINDOW (self), 
+				
+				response =
+					modest_platform_run_confirmation_dialog (GTK_WINDOW (window),
 										 _("mcen_nc_no_email_message_modified_save_changes"));
-				if (response != GTK_RESPONSE_CANCEL) {
+				/* Save to drafts */
+				if (response != GTK_RESPONSE_CANCEL) 				
 					modest_ui_actions_on_save_to_drafts (NULL, MODEST_MSG_EDIT_WINDOW (window));
-				}
+				
 			}
 		}
 	}
 
 	/* Unregister window */
 	modest_window_mgr_unregister_window (self, window);
+	
+	return FALSE;
 }
 
 void 

@@ -277,10 +277,11 @@ modest_msg_edit_window_class_init (ModestMsgEditWindowClass *klass)
 	modest_window_class->zoom_plus_func = modest_msg_edit_window_zoom_plus;
 	modest_window_class->zoom_minus_func = modest_msg_edit_window_zoom_minus;
 	modest_window_class->show_toolbar_func = modest_msg_edit_window_show_toolbar;
+	modest_window_class->save_state_func = save_state;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestMsgEditWindowPrivate));
 
-	modest_window_class->save_state_func = save_state;
+
 }
 
 static void
@@ -2932,3 +2933,5 @@ modest_msg_edit_window_set_sent (ModestMsgEditWindow *window,
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE(window);
 	priv->sent = sent;
 }
+
+

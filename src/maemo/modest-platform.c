@@ -832,6 +832,7 @@ modest_platform_run_confirmation_dialog (GtkWindow *parent_window,
 	gint response;
 
 	dialog = hildon_note_new_confirmation (parent_window, message);
+	gtk_window_set_modal (GTK_WINDOW(dialog), TRUE);
 
 	response = gtk_dialog_run (GTK_DIALOG (dialog));
 
