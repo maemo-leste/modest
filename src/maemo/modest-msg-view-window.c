@@ -1773,6 +1773,8 @@ modest_msg_view_window_remove_attachments (ModestMsgViewWindow *window)
 	gchar *confirmation_message;
 	gint response;
 	gint n_attachments;
+	TnyMsg *msg;
+/* 	TnyFolder *folder; */
 
 	g_return_if_fail (MODEST_IS_MSG_VIEW_WINDOW (window));
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
@@ -1808,11 +1810,23 @@ modest_msg_view_window_remove_attachments (ModestMsgViewWindow *window)
 	if (response != GTK_RESPONSE_OK)
 		return;
 
+	msg = modest_msg_view_get_message (MODEST_MSG_VIEW (priv->msg_view));
+/* 	folder = tny_msg_get_folder (msg); */
+/* 	tny_msg_uncache_attachments (msg); */
+/* 	tny_folder_refresh (folder, NULL); */
+/* 	g_object_unref (folder); */
+	
+	modest_msg_view_set_message (MODEST_MSG_VIEW (priv->msg_view), msg);
+
 	for (node = mime_parts; node != NULL; node = g_list_next (node)) {
-		modest_msg_view_remove_attachment (MODEST_MSG_VIEW (priv->msg_view), node->data);
+		tny_mime_part_set_purged (TNY_MIME_PART (node->data));
+/* 		modest_msg_view_remove_attachment (MODEST_MSG_VIEW (priv->msg_view), node->data); */
 	}
+	tny_msg_rewrite_cache (msg);
 	g_list_foreach (mime_parts, (GFunc) g_object_unref, NULL);
 	g_list_free (mime_parts);
+	modest_platform_information_banner (NULL, NULL, _("mcen_ib_removing_attachment"));
+
 }
 
 

@@ -795,6 +795,8 @@ recurse_folders (TnyFolderStore *store, TnyFolderStoreQuery *query, TnyList *all
 static gboolean
 idle_notify_progress (gpointer data)
 {
+	gdk_threads_enter ();
+
 	ModestMailOperation *mail_op = MODEST_MAIL_OPERATION (data);
 	ModestMailOperationState *state;
 
@@ -802,6 +804,8 @@ idle_notify_progress (gpointer data)
 	g_signal_emit (G_OBJECT (mail_op), signals[PROGRESS_CHANGED_SIGNAL], 0, state, NULL);
 	g_slice_free (ModestMailOperationState, state);
 	
+	gdk_threads_leave ();
+
 	return TRUE;
 }
 
@@ -813,6 +817,8 @@ idle_notify_progress (gpointer data)
 static gboolean
 idle_notify_progress_once (gpointer data)
 {
+	gdk_threads_enter ();
+
 	ModestPair *pair;
 
 	pair = (ModestPair *) data;
@@ -822,6 +828,8 @@ idle_notify_progress_once (gpointer data)
 	/* Free the state and the reference to the mail operation */
 	g_slice_free (ModestMailOperationState, (ModestMailOperationState*)pair->second);
 	g_object_unref (pair->first);
+
+	gdk_threads_leave ();
 
 	return FALSE;
 }
@@ -879,6 +887,8 @@ set_last_updated_idle (gpointer data)
 				    MODEST_ACCOUNT_LAST_UPDATED, 
 				    time(NULL), 
 				    TRUE);
+
+	gdk_threads_leave ();
 
 	return FALSE;
 }

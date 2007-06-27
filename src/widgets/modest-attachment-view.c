@@ -160,8 +160,9 @@ get_size_idle_func (gpointer data)
 		priv->get_size_idle_id = 0;
 	}
 
+	gdk_threads_leave ();
+
 	return (priv->get_size_stream != NULL);
-	
 }
 
 static void
@@ -170,6 +171,7 @@ modest_attachment_view_set_part_default (TnyMimePartView *self, TnyMimePart *mim
 	ModestAttachmentViewPriv *priv = NULL;
 	const gchar *filename = NULL;
 	gchar *file_icon_name = NULL;
+	gboolean show_size = FALSE;
 	
 	g_return_if_fail (TNY_IS_MIME_PART_VIEW (self));
 	g_return_if_fail (TNY_IS_MIME_PART (mime_part));
@@ -192,8 +194,11 @@ modest_attachment_view_set_part_default (TnyMimePartView *self, TnyMimePart *mim
 	}
 
 	priv->size = 0;
-
-	if (TNY_IS_MSG (mime_part)) {
+	
+	if (tny_mime_part_is_purged (mime_part)) {
+		filename = _("TODO: purged file");
+		file_icon_name = modest_platform_get_file_icon_name (NULL, NULL, NULL);
+	} else if (TNY_IS_MSG (mime_part)) {
 		TnyHeader *header = tny_msg_get_header (TNY_MSG (mime_part));
 		if (TNY_IS_HEADER (header)) {
 			filename = tny_header_get_subject (header);
@@ -207,6 +212,7 @@ modest_attachment_view_set_part_default (TnyMimePartView *self, TnyMimePart *mim
 		file_icon_name = modest_platform_get_file_icon_name (filename, 
 								     tny_mime_part_get_content_type (mime_part), 
 								     NULL);
+		show_size = TRUE;
 	}
 
 	if (file_icon_name) {
@@ -219,9 +225,10 @@ modest_attachment_view_set_part_default (TnyMimePartView *self, TnyMimePart *mim
 	gtk_label_set_text (GTK_LABEL (priv->filename_view), filename);
 	update_filename_request (MODEST_ATTACHMENT_VIEW (self));
 
-	gtk_label_set_text (GTK_LABEL (priv->size_view), " ");
+	gtk_label_set_text (GTK_LABEL (priv->size_view), "");
 
-	priv->get_size_idle_id = g_idle_add ((GSourceFunc) get_size_idle_func, (gpointer) self);
+	if (show_size)
+		priv->get_size_idle_id = g_idle_add ((GSourceFunc) get_size_idle_func, (gpointer) self);
 
 	gtk_widget_queue_draw (GTK_WIDGET (self));
 }

@@ -163,7 +163,6 @@ modest_address_book_select_addresses (ModestRecptEditor *recpt_editor)
 
 	toplevel = gtk_widget_get_toplevel (GTK_WIDGET (recpt_editor));
 
-	contact_model = osso_abook_contact_model_new ();
 	if (!open_addressbook ()) {
 		if (contact_model) {
 			g_object_unref (contact_model);
@@ -171,6 +170,7 @@ modest_address_book_select_addresses (ModestRecptEditor *recpt_editor)
 		}
 		return;
 	}
+	contact_model = osso_abook_contact_model_new ();
 
 	contact_view = osso_abook_contact_selector_new_basic (contact_model);
 	osso_abook_contact_selector_set_minimum_selection (OSSO_ABOOK_CONTACT_SELECTOR (contact_view), 1);

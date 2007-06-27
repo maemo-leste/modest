@@ -44,6 +44,7 @@
 static gboolean _folder_is_any_of_type (TnyFolder *folder, TnyFolderType types[], guint ntypes);
 static gboolean _invalid_msg_selected (ModestMainWindow *win, gboolean unique, ModestDimmingRule *rule);
 static gboolean _invalid_attach_selected (ModestWindow *win, gboolean unique, gboolean for_view, ModestDimmingRule *rule);
+static gboolean _purged_attach_selected (ModestWindow *win);
 static gboolean _clipboard_is_empty (ModestWindow *win);
 static gboolean _invalid_clipboard_selected (ModestWindow *win, ModestDimmingRule *rule);
 static gboolean _already_opened_msg (ModestWindow *win, guint *n_messages);
@@ -546,7 +547,6 @@ modest_ui_dimming_rules_on_main_window_move_to (ModestWindow *win, gpointer user
 	GtkWidget *folder_view = NULL;
 	GtkWidget *header_view = NULL;
 	ModestDimmingRule *rule = NULL;
-	const gchar *message = NULL;
 	gboolean dimmed = FALSE;
 	
 	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW(win), TRUE);
@@ -562,16 +562,6 @@ modest_ui_dimming_rules_on_main_window_move_to (ModestWindow *win, gpointer user
 							   MODEST_WIDGET_TYPE_HEADER_VIEW);
 	
 	/* Check diming rules for folders and messages transfer  */
-	if (!dimmed) {
-		dimmed = _selected_folder_not_writeable(MODEST_MAIN_WINDOW(win));
-		if (dimmed) {
-			if (gtk_widget_is_focus (folder_view))
-				message = _("mail_in_ui_folder_move_target_error");
-			else
-				message = ngettext ("mail_in_ui_folder_move_target_error", "mail_in_ui_folder_move_targets_error",
-						    modest_header_view_count_selected_headers (MODEST_HEADER_VIEW(header_view)) > 1);		       			
-		}
-	}		
 	if (!dimmed) {
 		dimmed = _invalid_msg_selected (MODEST_MAIN_WINDOW(win), FALSE, user_data);
 		
@@ -701,10 +691,13 @@ modest_ui_dimming_rules_on_remove_attachments (ModestWindow *win, gpointer user_
 	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
 	rule = MODEST_DIMMING_RULE (user_data);
 
-	/* Check dimmed rule */	
+	/* Check dimmed rule */
 	if (!dimmed) {
-		dimmed = _invalid_attach_selected (win, TRUE, TRUE, rule);			
+		dimmed = _purged_attach_selected (win);
+		if (dimmed)
+			modest_dimming_rule_set_notification (rule, _("mail_ib_attachment_already_purged"));
 	}
+
 	if (!dimmed) {
 		dimmed = _invalid_attachment_for_purge (win, rule);
 	}
@@ -1357,6 +1350,34 @@ _invalid_attach_selected (ModestWindow *win,
 }
 
 static gboolean
+_purged_attach_selected (ModestWindow *win) 
+{
+	GList *attachments, *node;
+	gint n_selected;
+	gboolean result = FALSE;
+
+	if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
+		
+		/* Get selected atachments */
+		attachments = modest_msg_view_window_get_attachments (MODEST_MSG_VIEW_WINDOW(win));
+		n_selected = g_list_length (attachments);
+
+		for (node = attachments; node != NULL && !result; node = g_list_next (node)) {
+			TnyMimePart *mime_part = TNY_MIME_PART (node->data);
+			if (tny_mime_part_is_purged (mime_part)) {
+				result = TRUE;
+				break;
+			}
+		}
+		
+		/* Free */
+		g_list_free (attachments);
+	}
+
+	return result;
+}
+
+static gboolean
 _invalid_msg_selected (ModestMainWindow *win,
 		       gboolean unique,
 		       ModestDimmingRule *rule) 
@@ -1660,7 +1681,7 @@ _invalid_attachment_for_purge (ModestWindow *win,
 	TnyMsg *msg = NULL;
 	TnyFolder *folder = NULL;
 	TnyAccount *account = NULL;
-	gboolean result = TRUE;
+	gboolean result = FALSE;
 
 	if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
 

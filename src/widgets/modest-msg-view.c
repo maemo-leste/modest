@@ -1440,6 +1440,21 @@ modest_msg_view_search (ModestMsgView *self, const gchar *search)
 	result = gtk_html_engine_search (GTK_HTML (priv->gtkhtml),
 					 search,
 					 FALSE, TRUE, TRUE);
+#if 0
+	if (result) {
+		gint x, y, w, h;
+		gdouble offset_top, offset_bottom;
+		GtkAdjustment *adj;
+		gtk_html_get_selection_area (GTK_HTML (priv->gtkhtml), &x, &y, &w, &h);
+		offset_top = (gdouble) (priv->headers_box->requisition.height + y);
+		offset_bottom = (gdouble) (priv->headers_box->requisition.height + y + h);
+		adj = GTK_ADJUSTMENT (priv->vadj);
+		if (offset_top < adj->value)
+			gtk_adjustment_set_value (adj, offset_top + adj->page_increment - adj->page_size);
+		else if (offset_bottom > adj->value + adj->page_increment)
+			gtk_adjustment_set_value (adj, offset_bottom - adj->page_increment);
+	}
+#endif
 	y_offset = tmp_vadj->value;
 	gtk_layout_set_vadjustment (GTK_LAYOUT (priv->gtkhtml), vadj);
 	g_object_unref (vadj);
@@ -1457,14 +1472,22 @@ modest_msg_view_search_next (ModestMsgView *self)
 
 	priv = MODEST_MSG_VIEW_GET_PRIVATE (self);
 	result = gtk_html_engine_search_next (GTK_HTML (priv->gtkhtml));
-
-/*
-	{
+#if 0
+	if (result) {
+		gint x, y, w, h;
+		gdouble offset_top, offset_bottom;
 		GtkAdjustment *adj;
-
-		adj = gtk_container_get_focus_vadjustment (GTK_CONTAINER (priv->gtkhtml));
+		gtk_html_get_selection_area (GTK_HTML (priv->gtkhtml), &x, &y, &w, &h);
+		g_message ("SELECTION AREA x%d y%d w%d h%d", x, y, w, h);
+		offset_top = (gdouble) (priv->headers_box->requisition.height + y);
+		offset_bottom = (gdouble) (priv->headers_box->requisition.height + y + h);
+		adj = GTK_ADJUSTMENT (priv->vadj);
+		if (offset_top < adj->value)
+			gtk_adjustment_set_value (adj, offset_top + adj->page_increment - adj->page_size);
+		else if (offset_bottom > adj->value + adj->page_increment)
+			gtk_adjustment_set_value (adj, offset_bottom - adj->page_increment);
 	}
-*/
+#endif
 
 	return result;
 }
@@ -1557,5 +1580,5 @@ modest_msg_view_remove_attachment (ModestMsgView *view, TnyMimePart *attachment)
 	msg = modest_msg_view_get_message (view);
 	modest_attachments_view_remove_attachment (MODEST_ATTACHMENTS_VIEW (priv->attachments_view),
 						   attachment);
-	tny_mime_part_del_part (TNY_MIME_PART (msg), attachment);
+	
 }
