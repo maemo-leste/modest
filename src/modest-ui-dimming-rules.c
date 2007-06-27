@@ -592,7 +592,8 @@ modest_ui_dimming_rules_on_main_window_move_to (ModestWindow *win, gpointer user
 	
 	/* Check diming rules for folders and messages transfer  */
 	if (!dimmed) {
-		dimmed = _invalid_msg_selected (MODEST_MAIN_WINDOW(win), FALSE, user_data);
+		if (!gtk_widget_is_focus (folder_view))
+			dimmed = _invalid_msg_selected (MODEST_MAIN_WINDOW(win), FALSE, user_data);
 		
 	}
 	

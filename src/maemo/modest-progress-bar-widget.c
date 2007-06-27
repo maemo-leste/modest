@@ -367,7 +367,7 @@ on_progress_changed (ModestMailOperation  *mail_op,
 		}
 		
 		/* If we have byte information use it */
-		if ((state->bytes_done == 0) && (state->bytes_total == 0))
+		if ((state->bytes_done != 0) && (state->bytes_total != 0))
 			modest_progress_bar_widget_set_progress (self, msg, 
 								 state->bytes_done, 
 								 state->bytes_total);
