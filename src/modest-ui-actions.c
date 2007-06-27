@@ -663,7 +663,7 @@ cleanup:
 	/* Free */
 	g_free(account);
 	g_object_unref (parent_win);
-	g_object_unref (msg);
+/* 	g_object_unref (msg); */
 	g_object_unref (folder);
 }
 
@@ -905,7 +905,7 @@ cleanup:
 		g_object_unref (G_OBJECT (new_msg));
 	if (account)
 		g_object_unref (G_OBJECT (account));
-	g_object_unref (msg);
+/* 	g_object_unref (msg); */
 	g_object_unref (header);
 }
 

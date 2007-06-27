@@ -1387,8 +1387,6 @@ transfer_folder_cb (TnyFolder *folder,
 	/* Free */
 	g_object_unref (folder);
 	g_object_unref (into);
-	if (new_folder != NULL)
-		g_object_unref (new_folder);
 
 	/* Notify about operation end */
 	modest_mail_operation_notify_end (self, TRUE);
