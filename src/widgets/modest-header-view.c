@@ -1149,7 +1149,10 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 		       0, header);
 
 	g_object_unref (G_OBJECT (header));
-	gtk_tree_path_free(path);
+
+	/* free all items in 'selected' */
+	g_list_foreach (selected, (GFunc)gtk_tree_path_free, NULL);
+	g_list_free (selected);
 }
 
 
