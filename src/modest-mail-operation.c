@@ -70,7 +70,8 @@ static void     get_msg_status_cb (GObject *obj,
 				   TnyStatus *status,  
 				   gpointer user_data);
 
-static void     modest_mail_operation_notify_end (ModestMailOperation *self);
+static void     modest_mail_operation_notify_end (ModestMailOperation *self,
+						  gboolean need_lock);
 
 static gboolean did_a_cancel = FALSE;
 
@@ -373,7 +374,7 @@ modest_mail_operation_cancel (ModestMailOperation *self)
 	/* This emits progress-changed on which the mail operation queue is
 	 * listening, so the mail operation is correctly removed from the
 	 * queue without further explicit calls. */
-	modest_mail_operation_notify_end (self);
+	modest_mail_operation_notify_end (self, FALSE);
 	
 	return TRUE;
 }
@@ -522,7 +523,7 @@ modest_mail_operation_send_mail (ModestMailOperation *self,
 
 	/* TODO: do this in the handler of the "msg-sent"
 	   signal.Notify about operation end */
-	modest_mail_operation_notify_end (self);
+	modest_mail_operation_notify_end (self, FALSE);
 }
 
 void
@@ -657,7 +658,7 @@ end:
 	if (folder)
 		g_object_unref (G_OBJECT(folder));
 
- 	modest_mail_operation_notify_end (self);
+ 	modest_mail_operation_notify_end (self, FALSE);
 }
 
 typedef struct 
@@ -840,17 +841,14 @@ idle_notify_progress_once (gpointer data)
 static gboolean
 idle_notify_update_account_queue (gpointer data)
 {
-	gdk_threads_enter ();
-
 	ModestMailOperation *mail_op = MODEST_MAIL_OPERATION (data);
 	ModestMailOperationPrivate *priv = NULL;
 
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(mail_op);
-	
-	modest_mail_operation_notify_end (mail_op);
-	g_object_unref (mail_op);
 
-	gdk_threads_leave ();
+	/* Do not need to block, the notify end will do it for us */	
+	modest_mail_operation_notify_end (mail_op, TRUE);
+	g_object_unref (mail_op);
 
 	return FALSE;
 }
@@ -1227,7 +1225,7 @@ modest_mail_operation_update_account (ModestMailOperation *self,
 	priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 	if (callback) 
 		callback (self, 0, user_data);
-	modest_mail_operation_notify_end (self);
+	modest_mail_operation_notify_end (self, FALSE);
 	return FALSE;
 }
 
@@ -1271,7 +1269,7 @@ modest_mail_operation_create_folder (ModestMailOperation *self,
 	}
 
 	/* Notify about operation end */
-	modest_mail_operation_notify_end (self);
+	modest_mail_operation_notify_end (self, FALSE);
 
 	return new_folder;
 }
@@ -1326,7 +1324,7 @@ modest_mail_operation_remove_folder (ModestMailOperation *self,
 
  end:
 	/* Notify about operation end */
-	modest_mail_operation_notify_end (self);
+	modest_mail_operation_notify_end (self, FALSE);
 }
 
 static void
@@ -1393,7 +1391,7 @@ transfer_folder_cb (TnyFolder *folder,
 		g_object_unref (new_folder);
 
 	/* Notify about operation end */
-	modest_mail_operation_notify_end (self);
+	modest_mail_operation_notify_end (self, TRUE);
 }
 
 void
@@ -1432,7 +1430,7 @@ modest_mail_operation_xfer_folder (ModestMailOperation *self,
 			     _("mail_in_ui_folder_move_target_error"));
 
 		/* Notify the queue */
-		modest_mail_operation_notify_end (self);
+		modest_mail_operation_notify_end (self, FALSE);
 	} else if (parent_rules & MODEST_FOLDER_RULES_FOLDER_NON_WRITEABLE) {
  		/* Set status failed and set an error */
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
@@ -1441,7 +1439,7 @@ modest_mail_operation_xfer_folder (ModestMailOperation *self,
 			     _("FIXME: parent folder does not accept new folders"));
 
 		/* Notify the queue */
-		modest_mail_operation_notify_end (self);
+		modest_mail_operation_notify_end (self, FALSE);
 	} else {
 		/* Pick references for async calls */
 		g_object_ref (folder);
@@ -1485,7 +1483,7 @@ modest_mail_operation_rename_folder (ModestMailOperation *self,
 			     _("FIXME: unable to rename"));
 
 		/* Notify about operation end */
-		modest_mail_operation_notify_end (self);
+		modest_mail_operation_notify_end (self, FALSE);
 	} else {
 		/* Rename. Camel handles folder subscription/unsubscription */
 		TnyFolderStore *into;
@@ -1544,7 +1542,7 @@ void modest_mail_operation_get_msg (ModestMailOperation *self,
 			     _("Error trying to get a message. No folder found for header"));
 
 		/* Notify the queue */
-		modest_mail_operation_notify_end (self);
+		modest_mail_operation_notify_end (self, FALSE);
 	}
 }
 
@@ -1597,7 +1595,7 @@ get_msg_cb (TnyFolder *folder,
 	g_slice_free (GetMsgAsyncHelper, helper);
 		
 	/* Notify about operation end */
-	modest_mail_operation_notify_end (self);	
+	modest_mail_operation_notify_end (self, TRUE);
 }
 
 static void     
@@ -1657,8 +1655,6 @@ typedef struct {
 static gboolean
 notify_get_msgs_full (gpointer data)
 {
-	gdk_threads_enter ();
-
 	NotifyGetMsgsInfo *info;
 
 	info = (NotifyGetMsgsInfo *) data;	
@@ -1671,8 +1667,6 @@ notify_get_msgs_full (gpointer data)
 
 	g_slice_free (NotifyGetMsgsInfo, info);
 
-	gdk_threads_leave ();
-
 	return FALSE;
 }
 
@@ -1683,20 +1677,19 @@ notify_get_msgs_full (gpointer data)
 static gboolean
 get_msgs_full_destroyer (gpointer data)
 {
-	gdk_threads_enter ();
-
 	GetFullMsgsInfo *info;
 
 	info = (GetFullMsgsInfo *) data;
 
-	if (info->notify)
+	if (info->notify) {
+		gdk_threads_enter ();	
 		info->notify (info->user_data);
+		gdk_threads_leave ();
+	}
 
 	/* free */
 	g_object_unref (info->headers);
 	g_slice_free (GetFullMsgsInfo, info);
-
-	gdk_threads_leave ();
 
 	return FALSE;
 }
@@ -1858,7 +1851,7 @@ modest_mail_operation_get_msgs_full (ModestMailOperation *self,
 			     MODEST_MAIL_OPERATION_ERROR_MESSAGE_SIZE_LIMIT,
 			     _("emev_ni_ui_imap_msg_size_exceed_error"));
 		/* Remove from queue and free resources */
-		modest_mail_operation_notify_end (self);
+		modest_mail_operation_notify_end (self, FALSE);
 		if (notify)
 			notify (user_data);
 	}
@@ -1932,7 +1925,7 @@ modest_mail_operation_remove_msg (ModestMailOperation *self,
 	g_object_unref (G_OBJECT (folder));
 
 	/* Notify about operation end */
-	modest_mail_operation_notify_end (self);
+	modest_mail_operation_notify_end (self, FALSE);
 }
 
 static void
@@ -2009,7 +2002,7 @@ transfer_msgs_cb (TnyFolder *folder, gboolean cancelled, GError **err, gpointer 
 	g_object_unref (folder);
 
 	/* Notify about operation end */
-	modest_mail_operation_notify_end (self);
+	modest_mail_operation_notify_end (self, TRUE);
 }
 
 void
@@ -2045,7 +2038,7 @@ modest_mail_operation_xfer_msgs (ModestMailOperation *self,
 			     MODEST_MAIL_OPERATION_ERROR_FOLDER_RULES,
 			     _("FIXME: folder does not accept msgs"));
 		/* Notify the queue */
-		modest_mail_operation_notify_end (self);
+		modest_mail_operation_notify_end (self, FALSE);
 		return;
 	}
 
@@ -2112,9 +2105,9 @@ on_refresh_folder (TnyFolder   *folder,
  out:
 	/* Call user defined callback, if it exists */
 	if (helper->user_callback) {
-/* 		gdk_threads_enter (); */
+		gdk_threads_enter ();
 		helper->user_callback (priv->source, folder, helper->user_data);
-/* 		gdk_threads_leave (); */
+		gdk_threads_leave ();
 	}
 
 	/* Free */
@@ -2123,7 +2116,7 @@ on_refresh_folder (TnyFolder   *folder,
 	g_object_unref (folder);
 
 	/* Notify about operation end */
-	modest_mail_operation_notify_end (self);
+	modest_mail_operation_notify_end (self, TRUE);
 }
 
 static void
@@ -2197,7 +2190,8 @@ modest_mail_operation_refresh_folder  (ModestMailOperation *self,
  * callback).
  */
 static void
-modest_mail_operation_notify_end (ModestMailOperation *self)
+modest_mail_operation_notify_end (ModestMailOperation *self,
+				  gboolean need_lock)
 {
 	ModestMailOperationState *state;
 	ModestMailOperationPrivate *priv = NULL;
@@ -2221,6 +2215,10 @@ modest_mail_operation_notify_end (ModestMailOperation *self)
 	
 	/* Notify the observers about the mail opertation end */
 	state = modest_mail_operation_clone_state (self);
+	if (need_lock)
+		gdk_threads_enter ();
 	g_signal_emit (G_OBJECT (self), signals[PROGRESS_CHANGED_SIGNAL], 0, state, NULL);
+	if (need_lock)
+		gdk_threads_leave ();
 	g_slice_free (ModestMailOperationState, state);
 }

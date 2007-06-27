@@ -707,6 +707,7 @@ launch_sort_headers_dialog (GtkWindow *parent_window,
 			hildon_sort_dialog_set_sort_key (dialog, current_sort_keyid);
 		}
 	}
+
 	result = gtk_dialog_run (GTK_DIALOG (dialog));
 	if (result == GTK_RESPONSE_OK) {
 		sort_key = hildon_sort_dialog_get_sort_key (dialog);
@@ -787,6 +788,7 @@ modest_platform_run_folder_name_dialog (GtkWindow *parent_window,
 	
 	gtk_widget_show_all (GTK_WIDGET(GTK_DIALOG(dialog)->vbox));
 	
+	gtk_window_set_transient_for (GTK_WINDOW (dialog), parent_window);
 	result = gtk_dialog_run (GTK_DIALOG(dialog));
 	if (result == GTK_RESPONSE_ACCEPT)
 		*folder_name = g_strdup (gtk_entry_get_text (GTK_ENTRY (entry)));

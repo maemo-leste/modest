@@ -1888,6 +1888,18 @@ modest_ui_actions_on_new_folder (GtkAction *action, ModestMainWindow *main_windo
 	}
 }
 
+static void
+modest_ui_actions_rename_folder_error_handler (ModestMailOperation *mail_op,
+					       gpointer user_data)
+{
+	GObject *win = modest_mail_operation_get_source (mail_op);
+
+	/* TODO: what should we do in case of this error ? */
+	g_warning ("Invalid folder name");
+
+	g_object_unref (win);
+}
+
 void 
 modest_ui_actions_on_rename_folder (GtkAction *action,
 				     ModestMainWindow *main_window)
@@ -1923,7 +1935,13 @@ modest_ui_actions_on_rename_folder (GtkAction *action,
 		if (response == GTK_RESPONSE_ACCEPT && strlen (folder_name) > 0) {
 			ModestMailOperation *mail_op;
 
-			mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_INFO, G_OBJECT(main_window));
+			mail_op = 
+				modest_mail_operation_new_with_error_handling (MODEST_MAIL_OPERATION_TYPE_INFO, 
+									       G_OBJECT(main_window),
+									       modest_ui_actions_rename_folder_error_handler,
+									       NULL);
+
+
 			modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
 							 mail_op);
 
