@@ -1,3 +1,8 @@
+2007-06-27  Armin Burgmeier  <armin@openismus.com>
+
+	* src/modest-mail-operation.c: Fixed a crash when canceling a mail
+	receive operation.
+
 2007-06-27  Murray Cumming  <murrayc@murrayc.com
 
 	* src/modest-tny-account.h:

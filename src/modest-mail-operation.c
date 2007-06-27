@@ -1529,6 +1529,11 @@ void modest_mail_operation_get_msg (ModestMailOperation *self,
 		helper->user_data = user_data;
 		helper->header = g_object_ref (header);
 
+		// The callback's reference so that the mail op is not
+		// finalized until the async operation is completed even if
+		// the user canceled the request meanwhile.
+		g_object_ref (G_OBJECT (helper->mail_op));
+
 		tny_folder_get_msg_async (folder, header, get_msg_cb, get_msg_status_cb, helper);
 
 		g_object_unref (G_OBJECT (folder));
@@ -1576,15 +1581,19 @@ get_msg_cb (TnyFolder *folder,
 		goto out;
 	}
 
-	priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
+	/* The mail operation might have been canceled in which case we do not
+	   want to notify anyone anymore. */
+	if(priv->status != MODEST_MAIL_OPERATION_STATUS_CANCELED) {
+		priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
 
-	/* If user defined callback function was defined, call it */
-	if (helper->user_callback) {
-		/* This callback is called into an iddle by tinymail,
-		   and idles are not in the main lock */
-		gdk_threads_enter ();
-		helper->user_callback (self, helper->header, msg, helper->user_data);
-		gdk_threads_leave ();
+		/* If user defined callback function was defined, call it */
+		if (helper->user_callback) {
+			/* This callback is called into an iddle by tinymail,
+			   and idles are not in the main lock */
+			gdk_threads_enter ();
+			helper->user_callback (self, helper->header, msg, helper->user_data);
+			gdk_threads_leave ();
+		}
 	}
 
  out:
@@ -1593,7 +1602,10 @@ get_msg_cb (TnyFolder *folder,
 	g_slice_free (GetMsgAsyncHelper, helper);
 		
 	/* Notify about operation end */
-	modest_mail_operation_notify_end (self, TRUE);
+	if(priv->status != MODEST_MAIL_OPERATION_STATUS_CANCELED)
+		modest_mail_operation_notify_end (self, TRUE);
+
+	g_object_unref (G_OBJECT (self));
 }
 
 static void     
@@ -1614,6 +1626,9 @@ get_msg_status_cb (GObject *obj,
 
 	self = helper->mail_op;
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
+
+	if(priv->status == MODEST_MAIL_OPERATION_STATUS_CANCELED)
+		return;
 
 	if ((status->position == 1) && (status->of_total == 100))
 		return;
