@@ -335,7 +335,8 @@ save_settings_header_view (ModestConf *conf, ModestHeaderView *header_view,
 
 
 
-	g_free (key);	
+	g_free (key);
+	g_free (sort_key);	
 	g_string_free (str, TRUE);
 	g_list_free (cols);
 	g_object_unref (G_OBJECT (folder));
