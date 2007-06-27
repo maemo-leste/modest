@@ -54,6 +54,8 @@
 #define URI_ACTION_COPY "copy:"
 
 static osso_context_t *osso_context = NULL;
+
+static void  folder_name_insensitive_press (GtkWidget *widget, ModestWindow *window);
 	
 static void	
 on_modest_conf_update_interval_changed (ModestConf* self, const gchar *key, 
@@ -742,7 +744,9 @@ modest_platform_run_folder_name_dialog (GtkWindow *parent_window,
 					const gchar *suggested_name,
 					gchar **folder_name)
 {
+	GtkWidget *accept_btn = NULL; 
 	GtkWidget *dialog, *entry, *label, *hbox;
+	GList *buttons = NULL;
 	gint result;
 
 	/* Ask the user for the folder name */
@@ -754,6 +758,11 @@ modest_platform_run_folder_name_dialog (GtkWindow *parent_window,
 					      GTK_STOCK_CANCEL,
 					      GTK_RESPONSE_REJECT,
 					      NULL);
+
+	/* Add accept button (with unsensitive handler) */
+	buttons = gtk_container_get_children (GTK_CONTAINER (GTK_DIALOG (dialog)->action_area));
+	accept_btn = GTK_WIDGET (buttons->next->data);
+	g_signal_connect (G_OBJECT (accept_btn), "insensitive-press", G_CALLBACK (folder_name_insensitive_press), parent_window);
 
 	/* Create label and entry */
 	label = gtk_label_new (label_text);
@@ -796,6 +805,12 @@ modest_platform_run_folder_name_dialog (GtkWindow *parent_window,
 	gtk_widget_destroy (dialog);
 
 	return result;
+}
+
+static void  
+folder_name_insensitive_press (GtkWidget *widget, ModestWindow *window)
+{
+	hildon_banner_show_information (NULL, NULL, _("(empty)"));
 }
 
 gint

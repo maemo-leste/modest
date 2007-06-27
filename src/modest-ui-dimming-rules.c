@@ -86,6 +86,29 @@ modest_ui_dimming_rules_on_new_msg (ModestWindow *win, gpointer user_data)
 }
 
 gboolean 
+modest_ui_dimming_rules_on_csm_new_folder (ModestWindow *win, gpointer user_data)
+{
+	ModestDimmingRule *rule = NULL;
+	gboolean dimmed = FALSE;
+
+	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW(win), FALSE);
+	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
+	rule = MODEST_DIMMING_RULE (user_data);
+
+	/* Check common new folder menu item dimming rules */	
+	dimmed = modest_ui_dimming_rules_on_new_folder (win, user_data);
+	
+	/* Check CSM specific dimming rules */
+	if (!dimmed) {
+		dimmed = _selected_folder_is_snd_level (MODEST_MAIN_WINDOW(win));
+		if (dimmed)
+			modest_dimming_rule_set_notification (rule, _("mail_in_ui_folder_create_error"));
+	}
+	
+	return dimmed;
+}
+
+gboolean 
 modest_ui_dimming_rules_on_new_folder (ModestWindow *win, gpointer user_data)
 {
 	ModestDimmingRule *rule = NULL;
@@ -126,11 +149,6 @@ modest_ui_dimming_rules_on_new_folder (ModestWindow *win, gpointer user_data)
 		types[2] = TNY_FOLDER_TYPE_SENT;
 
 		/* Apply folder rules */	
-		if (!dimmed) {
-			dimmed = _selected_folder_is_snd_level (MODEST_MAIN_WINDOW(win));
-			if (dimmed)
-				modest_dimming_rule_set_notification (rule, _("mail_in_ui_folder_create_error"));
-		}
 		if (!dimmed) {
 			dimmed = _selected_folder_not_writeable (MODEST_MAIN_WINDOW(win));
 			if (dimmed)
@@ -1209,7 +1227,7 @@ _selected_folder_is_snd_level (ModestMainWindow *win)
 	if (!gtk_tree_selection_get_selected (sel, &model, &iter))
 		goto frees;
 	path = gtk_tree_model_get_path (model, &iter);
-	result = gtk_tree_path_get_depth (path) > 1;
+	result = gtk_tree_path_get_depth (path) > 2;
 	
  frees:
 	if (folder != NULL)

@@ -73,7 +73,7 @@ static const ModestDimmingEntry modest_main_window_menu_dimming_entries [] = {
 	{ "/HeaderViewCSM/HeaderViewCSMHelp", NULL },
 
 	/* Contextual Menus (Folder View) */
-	{ "/FolderViewCSM/FolderViewCSMNewFolder", G_CALLBACK(modest_ui_dimming_rules_on_new_folder) },
+	{ "/FolderViewCSM/FolderViewCSMNewFolder", G_CALLBACK(modest_ui_dimming_rules_on_csm_new_folder) },
 	{ "/FolderViewCSM/FolderViewCSMRenameFolder", G_CALLBACK(modest_ui_dimming_rules_on_rename_folder) },
 	{ "/FolderViewCSM/FolderViewCSMPasteMsgs", G_CALLBACK(modest_ui_dimming_rules_on_paste_msgs) },
 	{ "/FolderViewCSM/FolderViewCSMDeleteFolder", G_CALLBACK(modest_ui_dimming_rules_on_delete_folder) },
