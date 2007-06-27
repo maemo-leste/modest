@@ -1,5 +1,11 @@
 2007-06-27  Murray Cumming  <murrayc@murrayc.com
 
+	* src/modest-mail-operation.c: (update_account_thread),
+	(get_msgs_full_thread): Fix typo failures in the revert
+	to fix the build.
+
+2007-06-27  Murray Cumming  <murrayc@murrayc.com
+
 	* src/maemo/modest-maemo-global-settings-dialog.c:
 	(idle_select_default_focus):
 	* src/modest-mail-operation.c: (idle_notify_progress),

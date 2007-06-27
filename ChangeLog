@@ -1,1 +1,8 @@
+2007-06-27  Murray Cumming,,,  <murrayc@murrayc-desktop>
+
+	reviewed by: <delete if not using a buddy>
+
+	* src/modest-mail-operation.c: (update_account_thread),
+	(get_msgs_full_thread):
+
 * please check the svn log instead

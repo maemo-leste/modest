@@ -1093,7 +1093,7 @@ update_account_thread (gpointer thr_user_data)
 	/* Notify about operation end. Note that the info could be
 	   freed before this idle happens, but the mail operation will
 	   be still alive */
-	g_idle_add (notify_update_account_queue, g_object_ref (info->mail_op));
+	g_idle_add (idle_notify_update_account_queue, g_object_ref (info->mail_op));
 
 	if (info->callback) {
 		/* This thread is not in the main lock */
@@ -1750,7 +1750,7 @@ get_msgs_full_thread (gpointer thr_user_data)
 		priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
 
 	/* Notify about operation end */
-	g_idle_add (notify_update_account_queue, g_object_ref (info->mail_op));
+	g_idle_add (idle_notify_update_account_queue, g_object_ref (info->mail_op));
 
 	/* Free thread resources. Will be called after all previous idles */
 	g_idle_add_full (G_PRIORITY_DEFAULT_IDLE + 1, get_msgs_full_destroyer, info, NULL);
