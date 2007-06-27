@@ -273,7 +273,7 @@ set_toolbar_mode (ModestMsgViewWindow *self,
 {
 	ModestWindowPrivate *parent_priv;
 	ModestMsgViewWindowPrivate *priv;
-	GtkWidget *widget = NULL;
+/* 	GtkWidget *widget = NULL; */
 
 	g_return_if_fail (MODEST_IS_MSG_VIEW_WINDOW (self));
 
@@ -283,12 +283,11 @@ set_toolbar_mode (ModestMsgViewWindow *self,
 	/* Sets current toolbar mode */
 	priv->current_toolbar_mode = mode;
 
-	/* Get toolbar widget */
-	widget = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar");
+	/* Update toolbar dimming state */
+	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (self));
 
 	switch (mode) {
 	case TOOLBAR_MODE_NORMAL:		
- 		gtk_widget_set_sensitive (widget, TRUE);
 /* 		widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ToolbarMessageReply"); */
 /* 		gtk_action_set_sensitive (widget, TRUE); */
 /* 		widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ToolbarDeleteMessage"); */
@@ -320,7 +319,6 @@ set_toolbar_mode (ModestMsgViewWindow *self,
 
 		break;
 	case TOOLBAR_MODE_TRANSFER:
-		gtk_widget_set_sensitive (widget, FALSE);
 /* 		widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ToolbarMessageReply"); */
 /* 		gtk_action_set_sensitive (widget, FALSE); */
 /* 		widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ToolbarDeleteMessage"); */
@@ -1398,6 +1396,7 @@ modest_msg_view_window_show_toolbar (ModestWindow *self,
 		
 		gtk_widget_show (GTK_WIDGET (parent_priv->toolbar));
 		set_toolbar_mode (MODEST_MSG_VIEW_WINDOW(self), TOOLBAR_MODE_NORMAL);			
+		
 	} else {
 		gtk_widget_set_no_show_all (parent_priv->toolbar, TRUE);
 		gtk_widget_hide (GTK_WIDGET (parent_priv->toolbar));
@@ -1434,6 +1433,17 @@ modest_msg_view_window_clipboard_owner_change (GtkClipboard *clipboard,
 	g_free (selection);
 /* 	modest_msg_view_window_update_dimmed (window); */
 	
+}
+
+gboolean 
+modest_msg_view_window_transfer_mode_enabled (ModestMsgViewWindow *self)
+{
+	ModestMsgViewWindowPrivate *priv;
+	
+	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (self), FALSE);	
+	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE(self);
+
+	return priv->current_toolbar_mode == TOOLBAR_MODE_TRANSFER;
 }
 
 static void
@@ -1850,4 +1860,5 @@ update_window_title (ModestMsgViewWindow *window)
 
 	gtk_window_set_title (GTK_WINDOW (window), subject);
 }
+
 

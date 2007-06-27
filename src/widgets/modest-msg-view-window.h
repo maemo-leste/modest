@@ -259,6 +259,17 @@ gboolean modest_msg_view_window_has_headers_model (ModestMsgViewWindow *window);
 TnyFolderType
 modest_msg_view_window_get_folder_type (ModestMsgViewWindow *window);
 
+/**
+ * modest_msg_view_window_transfer_mode_enabled:
+ * @window: a #ModestMsgViewWindow
+ *
+ * Determines if some transfer operation is in progress.
+ *
+ * Returns: TRUE if transfer mode is enabled, FASE otherwise.
+*/
+gboolean 
+modest_msg_view_window_transfer_mode_enabled (ModestMsgViewWindow *self);
+
 G_END_DECLS
 
 #endif /* __MODEST_MSG_VIEW_WINDOW_H__ */
