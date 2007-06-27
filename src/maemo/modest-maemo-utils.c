@@ -272,7 +272,7 @@ static void on_camel_account_get_supported_secure_authentication_status (
 }
 
 static gboolean
-on_secure_auth_finished (gpointer user_data)
+on_idle_secure_auth_finished (gpointer user_data)
 {
 	ModestGetSupportedAuthInfo *info = (ModestGetSupportedAuthInfo*)user_data;
 	/* Operation has finished, close the dialog. Control continues after
@@ -345,7 +345,7 @@ on_camel_account_get_supported_secure_authentication (
 		printf("DEBUG: finished\n");
 
 		/* Close the dialog in a main thread */
-		g_idle_add(on_secure_auth_finished, info);
+		g_idle_add(on_idle_secure_auth_finished, info);
 	}
 
 	gdk_threads_leave();

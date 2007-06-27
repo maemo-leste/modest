@@ -429,8 +429,10 @@ modest_tny_account_new_from_account (ModestAccountMgr *account_mgr, const gchar 
 		g_object_set_data (G_OBJECT(tny_account), "account_store", (gpointer)astore);
 		tny_camel_account_set_online (TNY_CAMEL_ACCOUNT (tny_account),
 				tny_device_is_online (device), &err);
-		if (err)
-			g_print ("Error connecting: %s\n", err->message);
+		if (err) {
+			g_print ("%s: tny_camel_account_set_online() failed: %s\n", __FUNCTION__, err->message);
+			g_error_free (err);
+		}
 		g_object_unref (device);
 	 } 
 */
@@ -438,15 +440,25 @@ modest_tny_account_new_from_account (ModestAccountMgr *account_mgr, const gchar 
 	return tny_account;
 }
 
-/* TODO: Notify the treemodel somehow that the display name 
- * is now available. We should probably request this from the cell_data_func 
- * so we can provide a treerowreference. */
+typedef struct
+{
+	TnyStoreAccount *account;
+	
+	ModestTnyAccountGetMmcAccountNameCallback callback;
+	gpointer user_data;
+} GetMmcAccountNameData;
+
+/* Gets the memory card name: */
 static void 
 on_modest_file_system_info(HildonFileSystemInfoHandle *handle,
-                           HildonFileSystemInfo *info,
-                           const GError *error, gpointer data)
+                             HildonFileSystemInfo *info,
+                             const GError *error, gpointer data)
 {
-	TnyAccount *account = TNY_ACCOUNT (data);
+	GetMmcAccountNameData *callback_data = (GetMmcAccountNameData*)data;
+
+	if (error) {
+		g_warning ("%s: error=%s", __FUNCTION__, error->message);
+  	}
 	
 	if (error) {
 /* 		printf ("  DEBUG: %s: error=%s\n", __FUNCTION__, error->message); */
@@ -457,12 +469,49 @@ on_modest_file_system_info(HildonFileSystemInfoHandle *handle,
 		display_name = hildon_file_system_info_get_display_name(info);
 	}
 	
-	if (display_name) {
+	TnyAccount *account = TNY_ACCOUNT (callback_data->account);
+	
+	const gchar * previous_display_name = tny_account_get_name (account);
+	
+	/* Use the new name if it is different: */
+	if (display_name && 
+		(previous_display_name && (strcmp (display_name, previous_display_name) != 0))) {
 		/* printf ("DEBUG: %s: display name=%s\n", __FUNCTION__,  display_name); */
 		tny_account_set_name (account, display_name);
+		
+		/* Inform the application that the name is now ready: */
+		if (callback_data->callback)
+			(*(callback_data->callback)) (callback_data->account, 
+				callback_data->user_data);
 	}
+	
+	g_object_unref (callback_data->account);
+	g_slice_free (GetMmcAccountNameData, callback_data);
 }
 
+void modest_tny_account_get_mmc_account_name (TnyStoreAccount* self, ModestTnyAccountGetMmcAccountNameCallback callback, gpointer user_data)
+{
+	gchar* uri = tny_account_get_url_string (TNY_ACCOUNT (self));
+	if (!uri)
+		return;
+		
+	//This is freed in the callback:
+	GetMmcAccountNameData * callback_data = g_slice_new0(GetMmcAccountNameData);
+	callback_data->account = self;
+	g_object_ref (callback_data->account); /* Unrefed when we destroy the struct. */
+	callback_data->user_data = user_data;
+		
+	/* TODO: gnome_vfs_volume_get_display_name() does not return 
+	 * the same string. But why not? Why does hildon needs its own 
+	 * function for this?
+	 */
+	hildon_file_system_info_async_new(uri, 
+		on_modest_file_system_info, callback_data /* user_data */);
+
+	g_free (uri);
+}
+
+ 				
 
 TnyAccount*
 modest_tny_account_new_for_local_folders (ModestAccountMgr *account_mgr, TnySessionCamel *session, const gchar* location_filepath)
@@ -529,12 +578,11 @@ modest_tny_account_new_for_local_folders (ModestAccountMgr *account_mgr, TnySess
  			g_error_free (error);
  			error = NULL;	
  		} else if (uri) {
- 			/* TODO: gnome_vfs_volume_get_display_name() does not return 
- 			 * the same string. But why not? Why does hildon needs its own 
- 			 * function for this?
+ 			/* Get the account name asynchronously:
+ 			 * This might not happen soon enough, so some UI code might 
+ 			 * need to call this again, specifying a callback.
  			 */
- 			hildon_file_system_info_async_new(uri, 
- 				on_modest_file_system_info, tny_account /* user_data */);
+ 			modest_tny_account_get_mmc_account_name (tny_account, NULL, NULL);
  				
  			g_free (uri);
  			uri = NULL;
@@ -747,5 +795,7 @@ void modest_tny_account_set_parent_modest_account_name_for_server_account (TnyAc
 	g_object_set_data_full (G_OBJECT(self), "modest_account",
 				(gpointer) g_strdup (parent_modest_acount_name), g_free);
 }
+
+
 
 

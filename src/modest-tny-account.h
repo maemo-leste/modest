@@ -161,7 +161,17 @@ const gchar* modest_tny_account_get_parent_modest_account_name_for_server_accoun
  * so it can be retrieved later with 
  * modest_tny_account_get_parent_modest_account_name_for_server_account().
  */
-void modest_tny_account_set_parent_modest_account_name_for_server_account (TnyAccount *self, const gchar* parent_modest_acount_name);
+void modest_tny_account_set_parent_modest_account_name_for_server_account (TnyAccount *account, const gchar* parent_modest_acount_name);
+
+
+typedef void (*ModestTnyAccountGetMmcAccountNameCallback) (TnyStoreAccount* self, gpointer user_data);
+
+/** modest_tny_account_get_mmc_account_name:
+ * Asnchronously get the name of a memory card account and set it in the TnyAccount,
+ * calling the callback (if not NULL) to notify that the name is changed.
+ * if the name was changed. The callback will not be called if the name was not changed.
+ */
+void modest_tny_account_get_mmc_account_name (TnyStoreAccount* self, ModestTnyAccountGetMmcAccountNameCallback callback, gpointer user_data);
 
 G_END_DECLS
 

@@ -1,5 +1,20 @@
 2007-06-27  Murray Cumming  <murrayc@murrayc.com
 
+	* src/modest-tny-account.h:
+	* src/modest-tny-account.c: 
+	Added modest_tny_account_get_mmc_account_name(), to set the memory 
+	card name asynchronously for the given account and then notify.
+	(modest_tny_account_new_for_local_folders): Use this new function instead 
+	of using hildon_file_system_info_async_new() directly.
+	
+	* src/widgets/modest-folder-view.c: (text_cell_data):
+	Use modest_tny_account_get_mmc_account_name() to get the real name, calling 
+	gtk_tree_model_row_changed() when it is available.
+	
+	This should fix projects.maemo.org bug NB#59301.
+
+2007-06-27  Murray Cumming  <murrayc@murrayc.com
+
 	* src/modest-mail-operation.c: (update_account_thread),
 	(get_msgs_full_thread): Fix typo failures in the revert
 	to fix the build.

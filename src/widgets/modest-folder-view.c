@@ -41,6 +41,7 @@
 #include <tny-folder.h>
 #include <tny-camel-folder.h>
 #include <tny-simple-list.h>
+#include <modest-tny-account.h>
 #include <modest-tny-folder.h>
 #include <modest-tny-local-folders-account.h>
 #include <modest-tny-outbox-account.h>
@@ -249,6 +250,57 @@ modest_folder_view_class_init (ModestFolderViewClass *klass)
 			      G_TYPE_NONE, 1, G_TYPE_STRING);
 }
 
+static gboolean on_model_foreach_set_name(GtkTreeModel *model, GtkTreePath *path,  GtkTreeIter *iter, gpointer data)
+{
+	GObject *instance = NULL;
+	
+	gtk_tree_model_get (model, iter,
+			    TNY_GTK_FOLDER_STORE_TREE_MODEL_INSTANCE_COLUMN, &instance,
+			    -1);
+			    
+	if (!instance)
+		return FALSE; /* keep walking */
+			
+	if (!TNY_IS_ACCOUNT (instance)) {
+		g_object_unref (instance);
+		return FALSE; /* keep walking */	
+	}    
+	
+	/* Check if this is the looked-for account: */
+	TnyAccount *this_account = TNY_ACCOUNT (instance);
+	TnyAccount *account = TNY_ACCOUNT (data);
+	
+	const gchar *this_account_id = tny_account_get_id(this_account);
+	const gchar *account_id = tny_account_get_id(account);
+	if (this_account_id && account_id && 
+		(strcmp (this_account_id, account_id) == 0)) {
+			
+		/* Tell the model that the data has changed, so that
+	 	 * it calls the cell_data_func callbacks again: */
+		gtk_tree_model_row_changed (model, path, iter);
+		
+		g_object_unref (instance);
+		return TRUE; /* stop walking */
+	}
+	
+	g_object_unref (instance);
+	return FALSE; /* keep walking */
+}
+
+void on_get_mmc_account_name (TnyStoreAccount* account, gpointer user_data)
+{
+	ModestFolderView *self = MODEST_FOLDER_VIEW (user_data);
+	
+	/* If this has been called then it means that the account name has 
+	 * changed, so we tell the model that the data has changed, so that 
+	 * it calls the cell_data_func callbacks again: */
+	 GtkTreeModel *model = gtk_tree_view_get_model (GTK_TREE_VIEW (self));
+	 if (!model)
+	 	return;
+	 
+	 gtk_tree_model_foreach(model, on_model_foreach_set_name, self);
+}
+
 static void
 text_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 		 GtkTreeModel *tree_model,  GtkTreeIter *iter,  gpointer data)
@@ -281,8 +333,8 @@ text_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 		return;
 	}
 
-	
-	priv =	MODEST_FOLDER_VIEW_GET_PRIVATE (data);
+	ModestFolderView *self = MODEST_FOLDER_VIEW (data);
+	priv =	MODEST_FOLDER_VIEW_GET_PRIVATE (self);
 	
 	gchar *item_name = NULL;
 	gint item_weight = 400;
@@ -343,6 +395,14 @@ text_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 		
 	}
 	
+	/* If it is a Memory card account, make sure that we have the correct name: */
+	if (TNY_IS_STORE_ACCOUNT (instance) && 
+		modest_tny_account_is_memory_card_account (TNY_ACCOUNT (instance))) {
+		/* Get the account name asynchronously: */
+		modest_tny_account_get_mmc_account_name (TNY_STORE_ACCOUNT (instance), 
+			on_get_mmc_account_name, self);
+	}
+ 			
 	g_object_unref (G_OBJECT (instance));
 	g_free (fname);
 }

@@ -962,8 +962,10 @@ modest_tny_account_store_alert (TnyAccountStore *self, TnyAlertType type,
 		 * specific dialog messages from Chapter 12 of the UI spec.
 		 */
 		case TNY_ACCOUNT_STORE_ERROR_UNKNOWN_ALERT: 
-/* 		    g_debug ("%s: Handling GError domain=%d, code=%d, message=%s",  */
-/* 				__FUNCTION__, error->domain, error->code, error->message); */
+			/* This debug output is useful. Please keep it uncommented until 
+			 * we have fixed the problems in this function: */
+ 		    g_debug ("%s: Handling GError domain=%d, code=%d, message=%s", 
+ 				__FUNCTION__, error->domain, error->code, error->message);
 			
 			/* TODO: Remove the internal error message for the real release.
 			 * This is just so the testers can give us more information: */
