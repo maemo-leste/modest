@@ -1973,7 +1973,8 @@ modest_folder_view_cut_selection (ModestFolderView *folder_view)
 	priv = MODEST_FOLDER_VIEW_GET_PRIVATE (folder_view);
 
 	/* Copy selection */
-	_clipboard_set_selected_data (folder_view, TRUE);
+	if (!_clipboard_set_selected_data (folder_view, TRUE))
+		return;
 
 	/* Get hidding ids */
 	hidding = modest_email_clipboard_get_hidding_ids (priv->clipboard, &n_selected); 
@@ -1992,12 +1993,14 @@ modest_folder_view_cut_selection (ModestFolderView *folder_view)
 	gtk_tree_model_filter_refilter (GTK_TREE_MODEL_FILTER (model));
 }
 
-static void
+/* Returns FALSE if it did not selected anything */
+static gboolean
 _clipboard_set_selected_data (ModestFolderView *folder_view,
 			      gboolean delete)
 {
 	ModestFolderViewPrivate *priv = NULL;
 	TnyFolderStore *folder = NULL;
+	gboolean retval = FALSE;
 
 	g_return_if_fail (MODEST_IS_FOLDER_VIEW (folder_view));
 	priv = MODEST_FOLDER_VIEW_GET_PRIVATE (folder_view);
@@ -2005,10 +2008,17 @@ _clipboard_set_selected_data (ModestFolderView *folder_view,
 	/* Set selected data on clipboard   */
 	g_return_if_fail (MODEST_IS_EMAIL_CLIPBOARD (priv->clipboard));
 	folder = modest_folder_view_get_selected (folder_view);
-	modest_email_clipboard_set_data (priv->clipboard, TNY_FOLDER(folder), NULL, delete);
+
+	/* Do not allow to select an account */
+	if (TNY_IS_FOLDER (folder)) {
+		modest_email_clipboard_set_data (priv->clipboard, TNY_FOLDER(folder), NULL, delete);
+		retval = TRUE;
+	}
 
 	/* Free */
 	g_object_unref (folder);
+
+	return retval;
 }
 
 static void
