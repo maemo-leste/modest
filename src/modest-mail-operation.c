@@ -1264,6 +1264,13 @@ modest_mail_operation_create_folder (ModestMailOperation *self,
 		}
 	}
 
+	if (!strcmp (name, " ") || strchr (name, '/')) {
+		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
+		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
+			     MODEST_MAIL_OPERATION_ERROR_FOLDER_RULES,
+			     _("mail_in_ui_folder_create_error"));
+	}
+
 	if (!priv->error) {
 		/* Create the folder */
 		new_folder = tny_folder_store_create_folder (parent, name, &(priv->error));
@@ -1486,18 +1493,24 @@ modest_mail_operation_rename_folder (ModestMailOperation *self,
 
 		/* Notify about operation end */
 		modest_mail_operation_notify_end (self, FALSE);
+	} else if (!strcmp (name, " ") || strchr (name, '/')) {
+		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
+		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
+			     MODEST_MAIL_OPERATION_ERROR_FOLDER_RULES,
+			     _("FIXME: unable to rename"));
+		/* Notify about operation end */
+		modest_mail_operation_notify_end (self, FALSE);
 	} else {
-		/* Rename. Camel handles folder subscription/unsubscription */
 		TnyFolderStore *into;
 
+		/* Rename. Camel handles folder subscription/unsubscription */
 		into = tny_folder_get_folder_store (folder);
 		tny_folder_copy_async (folder, into, name, TRUE,
 				 transfer_folder_cb,
 				 transfer_folder_status_cb,
 				 self);
 		if (into)
-			g_object_unref (into);
-		
+			g_object_unref (into);		
 	}
  }
 

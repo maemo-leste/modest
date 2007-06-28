@@ -590,8 +590,8 @@ entry_changed (GtkEditable *editable,
 	chars = gtk_editable_get_chars (editable, 0, -1);
 	g_return_if_fail (chars != NULL);
 
-	/* Dimm OK button */
-	if (strlen (chars) == 0) {
+	/* Dimm OK button. Do not allow also the "/" */
+	if (strlen (chars) == 0 || strchr (chars, '/')) {
 		GtkWidget *ok_button;
 		GList *buttons;
 
