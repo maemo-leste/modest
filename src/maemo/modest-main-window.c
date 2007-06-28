@@ -1228,7 +1228,7 @@ on_account_update (TnyAccountStore *account_store,
 				  G_CALLBACK (on_send_receive_csm_activated),
 				  NULL);
 		item = gtk_separator_menu_item_new ();
-		gtk_menu_shell_append (GTK_MENU_SHELL (priv->accounts_popup), GTK_WIDGET (item));
+		gtk_menu_shell_prepend (GTK_MENU_SHELL (priv->accounts_popup), GTK_WIDGET (item));
 	}
 
 	/* Create a new action group */
@@ -1312,7 +1312,7 @@ on_account_update (TnyAccountStore *account_store,
 			   it'll be no menu */
 			if (priv->accounts_popup) {
 				item = gtk_menu_item_new_with_label (display_name);
-				gtk_menu_shell_append (GTK_MENU_SHELL (priv->accounts_popup), GTK_WIDGET (item));
+				gtk_menu_shell_prepend (GTK_MENU_SHELL (priv->accounts_popup), GTK_WIDGET (item));
 				g_signal_connect_data (G_OBJECT (item), 
 						       "activate", 
 						       G_CALLBACK (on_send_receive_csm_activated),
