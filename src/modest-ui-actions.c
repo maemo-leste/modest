@@ -3029,7 +3029,8 @@ modest_ui_actions_on_main_window_move_to (GtkAction *action,
 
 	folder_store = modest_folder_view_get_selected (MODEST_FOLDER_VIEW (tree_view));
 
-	if (TNY_IS_ACCOUNT (folder_store))
+	if (TNY_IS_ACCOUNT (folder_store) && 
+	    !MODEST_IS_TNY_LOCAL_FOLDERS_ACCOUNT (folder_store))
 		goto end;
 
 	/* Get folder or messages to transfer */

@@ -1168,6 +1168,13 @@ cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 			    TNY_GTK_FOLDER_STORE_TREE_MODEL_INSTANCE_COLUMN, &folder2,
 			    -1);
 
+	/* Return if we get no folder. This could happen when folder
+	   operations are happening. The model is updated after the
+	   folder copy/move actually occurs, so there could be
+	   situations where the model to be drawn is not correct */
+	if (!folder1 || !folder2)
+		return 0;
+
 	if (type == TNY_FOLDER_TYPE_ROOT) {
 		/* Compare the types, so that 
 		 * Remote accounts -> Local account -> MMC account .*/

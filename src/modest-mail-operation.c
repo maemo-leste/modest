@@ -1414,7 +1414,6 @@ modest_mail_operation_xfer_folder (ModestMailOperation *self,
 
 	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
 	g_return_if_fail (TNY_IS_FOLDER (folder));
-	g_return_if_fail (TNY_IS_FOLDER (parent));
 
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
 
@@ -1424,11 +1423,8 @@ modest_mail_operation_xfer_folder (ModestMailOperation *self,
 
 	/* Get folder rules */
 	rules = modest_tny_folder_get_rules (TNY_FOLDER (folder));
-	parent_rules = modest_tny_folder_get_rules (TNY_FOLDER (parent));
-
-	if (!TNY_IS_FOLDER_STORE (parent)) {
-		
-	}
+	if (TNY_IS_FOLDER (parent))
+		parent_rules = modest_tny_folder_get_rules (TNY_FOLDER (parent));
 	
 	/* The moveable restriction is applied also to copy operation */
 	if ((!TNY_IS_FOLDER_STORE (parent)) || (rules & MODEST_FOLDER_RULES_FOLDER_NON_MOVEABLE)) {
@@ -1440,7 +1436,8 @@ modest_mail_operation_xfer_folder (ModestMailOperation *self,
 
 		/* Notify the queue */
 		modest_mail_operation_notify_end (self, FALSE);
-	} else if (parent_rules & MODEST_FOLDER_RULES_FOLDER_NON_WRITEABLE) {
+	} else if (TNY_IS_FOLDER (parent) && 
+		   (parent_rules & MODEST_FOLDER_RULES_FOLDER_NON_WRITEABLE)) {
  		/* Set status failed and set an error */
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
