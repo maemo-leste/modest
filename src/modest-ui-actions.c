@@ -2853,14 +2853,21 @@ static void
 transfer_msgs_from_viewer_cb (const GObject *object, gpointer user_data)
 {
 	ModestMsgViewWindow *self = NULL;
+	gboolean last, first;
 
 	g_return_if_fail (MODEST_IS_MSG_VIEW_WINDOW (object));
 	self = MODEST_MSG_VIEW_WINDOW (object);
-
-	/* If there are not more messages don't do anything. The
-	   viewer will show the same message */
-	if (!modest_msg_view_window_select_first_message (self))
-	    return;
+	
+	last = modest_msg_view_window_last_message_selected (self);
+	first = modest_msg_view_window_first_message_selected (self);	
+	if (last & first) {
+		/* No more messages to view, so close this window */
+		gboolean ret_value;
+		g_signal_emit_by_name (G_OBJECT (self), "delete-event", NULL, &ret_value);
+	} else if (last)
+		modest_msg_view_window_select_previous_message (self);
+	else 
+		modest_msg_view_window_select_next_message (self);
 }
 
 void

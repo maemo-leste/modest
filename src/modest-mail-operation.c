@@ -2016,6 +2016,9 @@ transfer_msgs_cb (TnyFolder *folder, gboolean cancelled, GError **err, gpointer 
 		priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
 	}
 
+	/* Notify about operation end */
+	modest_mail_operation_notify_end (self, TRUE);
+
 	/* If user defined callback function was defined, call it */
 	if (helper->user_callback) {
 		gdk_threads_enter ();
@@ -2030,8 +2033,6 @@ transfer_msgs_cb (TnyFolder *folder, gboolean cancelled, GError **err, gpointer 
 	g_slice_free   (XFerMsgAsyncHelper, helper);
 	g_object_unref (folder);
 
-	/* Notify about operation end */
-	modest_mail_operation_notify_end (self, TRUE);
 }
 
 void

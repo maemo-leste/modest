@@ -651,6 +651,7 @@ modest_msg_view_window_get_header (ModestMsgViewWindow *self)
 	ModestMsgViewWindowPrivate *priv= NULL; 
 	TnyMsg *msg = NULL;
 	TnyHeader *header = NULL;
+ 	GtkTreePath *path = NULL;
  	GtkTreeIter iter;
 
 	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (self), NULL);
@@ -665,9 +666,11 @@ modest_msg_view_window_get_header (ModestMsgViewWindow *self)
 	}
 
 	/* Get current message iter */
+	path = gtk_tree_row_reference_get_path (priv->row_reference);
+	g_return_val_if_fail (path != NULL, NULL);
 	gtk_tree_model_get_iter (priv->header_model, 
 				 &iter, 
-				 gtk_tree_row_reference_get_path (priv->row_reference));
+				 path);
 
 	/* Get current message header */
 	gtk_tree_model_get (priv->header_model, &iter, 
@@ -929,8 +932,7 @@ modest_msg_view_window_last_message_selected (ModestMsgViewWindow *window)
 
 	if (priv->header_model) {
 		path = gtk_tree_row_reference_get_path (priv->row_reference);
-		if (!path)
-			return TRUE;
+		if (path == NULL) return FALSE;
 		while (!has_next) {
 			TnyHeader *header;
 			gtk_tree_path_next (path);
@@ -1021,15 +1023,19 @@ modest_msg_view_window_select_next_message (ModestMsgViewWindow *window)
 	TnyHeaderFlags flags;
 	ModestMailOperation *mail_op = NULL;
 	ModestMsgViewWindowPrivate *priv;
+	GtkTreePath *path= NULL;
 	GtkTreeIter tmp_iter;
 
 	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (window), FALSE);
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
 
 	if (priv->header_model) {
+		path = gtk_tree_row_reference_get_path (priv->row_reference);
+		if (path != NULL) return FALSE;
+
 		gtk_tree_model_get_iter (priv->header_model,
 					 &tmp_iter,
-					 gtk_tree_row_reference_get_path (priv->row_reference));
+					 path);
 		while (gtk_tree_model_iter_next (priv->header_model, &tmp_iter)) {
 			TnyHeader *header;
 			GtkTreePath *path;
@@ -1265,7 +1271,10 @@ modest_msg_view_window_update_priority (ModestMsgViewWindow *window)
 	if (priv->header_model) {
 		TnyHeader *header;
 		GtkTreeIter iter;
+		GtkTreePath *path = NULL;
 
+		path = gtk_tree_row_reference_get_path (priv->row_reference);
+		g_return_if_fail (path != NULL);
 		gtk_tree_model_get_iter (priv->header_model, 
 					 &iter, 
 					 gtk_tree_row_reference_get_path (priv->row_reference));
