@@ -460,13 +460,10 @@ on_modest_file_system_info(HildonFileSystemInfoHandle *handle,
 		g_warning ("%s: error=%s", __FUNCTION__, error->message);
   	}
 	
-	if (error) {
-/* 		printf ("  DEBUG: %s: error=%s\n", __FUNCTION__, error->message); */
-	}
-	
 	const gchar *display_name = NULL;
 	if (!error && info) {
 		display_name = hildon_file_system_info_get_display_name(info);
+		printf ("DEBUG: %s: display name=%s\n", __FUNCTION__,  display_name);
 	}
 	
 	TnyAccount *account = TNY_ACCOUNT (callback_data->account);
@@ -505,6 +502,7 @@ void modest_tny_account_get_mmc_account_name (TnyStoreAccount* self, ModestTnyAc
 	 * the same string. But why not? Why does hildon needs its own 
 	 * function for this?
 	 */
+	printf ("DEBUG: %s Calling hildon_file_system_info_async_new() with URI=%s\n", __FUNCTION__, uri);
 	hildon_file_system_info_async_new(uri, 
 		on_modest_file_system_info, callback_data /* user_data */);
 

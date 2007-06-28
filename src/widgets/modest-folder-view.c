@@ -289,6 +289,8 @@ static gboolean on_model_foreach_set_name(GtkTreeModel *model, GtkTreePath *path
 
 void on_get_mmc_account_name (TnyStoreAccount* account, gpointer user_data)
 {
+	printf ("DEBUG: %s: account name=%s\n", __FUNCTION__, tny_account_get_name (TNY_ACCOUNT(account)));
+
 	ModestFolderView *self = MODEST_FOLDER_VIEW (user_data);
 	
 	/* If this has been called then it means that the account name has 
