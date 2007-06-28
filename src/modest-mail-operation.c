@@ -1928,8 +1928,10 @@ modest_mail_operation_remove_msg (ModestMailOperation *self,
 		g_object_unref (G_OBJECT (store_account));
 	} else {
 		tny_folder_remove_msg (folder, header, &(priv->error));
-		if (!priv->error)
+		if (!priv->error) {
+			tny_header_set_flags (header, TNY_HEADER_FLAG_DELETED);
 			tny_folder_sync(folder, TRUE, &(priv->error));
+		}
 	}
 
 	/* Set status */

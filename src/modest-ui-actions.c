@@ -335,6 +335,9 @@ modest_ui_actions_on_delete (GtkAction *action, ModestWindow *win)
 		} 
 	}
 
+	/* Update toolbar dimming state */
+	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (win));
+
 	/* free */
 	g_free(message);
 	g_free(desc);

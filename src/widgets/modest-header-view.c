@@ -1092,27 +1092,37 @@ on_header_row_activated (GtkTreeView *treeview, GtkTreePath *path,
 	ModestHeaderViewPrivate *priv = NULL;
 	GtkTreeIter iter;
 	GtkTreeModel *model = NULL;
-	TnyHeader *header;
+	TnyHeader *header = NULL;
+	TnyHeaderFlags flags;
 
 	self = MODEST_HEADER_VIEW (treeview);
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
 
-	model = gtk_tree_view_get_model (treeview);
-	
+	model = gtk_tree_view_get_model (treeview);	
 	if ((path == NULL) || (!gtk_tree_model_get_iter(model, &iter, path))) 
-		return;
-			
+		goto frees;
+
 	/* get the first selected item */
 	gtk_tree_model_get (model, &iter,
-			    TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN,
-			    &header, -1);
+			    TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN, &flags,
+			    TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN, &header, 
+			    -1);
+
+	/* Dont open DELETED messages */
+	if (flags & TNY_HEADER_FLAG_DELETED) {
+		modest_platform_information_banner (NULL, NULL, _("mcen_ib_message_already_deleted"));
+		goto frees;
+	}
+
 	/* Emit signal */
 	g_signal_emit (G_OBJECT(self), 
 		       signals[HEADER_ACTIVATED_SIGNAL], 
 		       0, header);
 
 	/* Free */
-	g_object_unref (G_OBJECT (header));
+ frees:
+	if (header != NULL) 
+		g_object_unref (G_OBJECT (header));	
 
 }
 
@@ -1546,37 +1556,54 @@ filter_row (GtkTreeModel *model,
 	    gpointer user_data)
 {
 	ModestHeaderViewPrivate *priv = NULL;
+	TnyHeaderFlags flags;
 	TnyHeader *header = NULL;
 	guint i;
 	gchar *id = NULL;
+	gboolean visible = TRUE;
 	gboolean found = FALSE;
 	
 	g_return_val_if_fail (MODEST_IS_HEADER_VIEW (user_data), FALSE);
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE (user_data);
 
-	/* If no data on clipboard, return always TRUE */
-	if (modest_email_clipboard_cleared(priv->clipboard)) return TRUE;
-	    	
 	/* Get header from model */
 	gtk_tree_model_get (model, iter,
+			    TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN, &flags,
 			    TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN, &header,
 			    -1);
 	
+	/* Hide mark as deleted heders */
+	if (flags & TNY_HEADER_FLAG_DELETED) {
+		visible = FALSE;
+		goto frees;
+	}
+
+	/* If no data on clipboard, return always TRUE */
+	if (modest_email_clipboard_cleared(priv->clipboard)) {
+		visible = TRUE;
+		goto frees;
+	}	    	
+
 	/* Get message id from header (ensure is a valid id) */
 	if (!header) return FALSE;
 	id = g_strdup(tny_header_get_message_id (header));
 	
 	/* Check hiding */
-	if (priv->hidding_ids != NULL)
+	if (priv->hidding_ids != NULL) {
 		for (i=0; i < priv->n_selected && !found; i++)
 			if (priv->hidding_ids[i] != NULL && id != NULL)
 				found = (!strcmp (priv->hidding_ids[i], id));
 	
+		visible = !found;
+	}
+
 	/* Free */
-	g_object_unref (header);
+ frees:
+	if (header)
+		g_object_unref (header);
 	g_free(id);
 
-	return !found;
+	return visible;
 }
 
 static void

@@ -280,6 +280,11 @@ modest_ui_dimming_rules_on_open_msg (ModestWindow *win, gpointer user_data)
 		dimmed = _invalid_msg_selected (MODEST_MAIN_WINDOW(win), TRUE, user_data);
 	}
 	if (!dimmed) {
+		dimmed = _marked_as_deleted (win);
+		if (dimmed)
+			modest_dimming_rule_set_notification (rule, _("mcen_ib_message_already_deleted"));
+	}
+	if (!dimmed) {
 		dimmed = _selected_msg_sent_in_progress (win);
 		if (dimmed)
 			modest_dimming_rule_set_notification (rule, _("mcen_ib_unable_to_open_while_sent"));
@@ -410,7 +415,7 @@ modest_ui_dimming_rules_on_delete_msg (ModestWindow *win, gpointer user_data)
 		if (!dimmed) {
 			dimmed = _marked_as_deleted (win);
 			if (dimmed)
-				modest_dimming_rule_set_notification (rule, _("mcen_ib_message_unableto_delete"));
+				modest_dimming_rule_set_notification (rule, _("mcen_ib_message_already_deleted"));
 		}
 		if (!dimmed) {
 			dimmed = _selected_msg_sent_in_progress (win);
