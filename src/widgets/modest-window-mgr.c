@@ -316,12 +316,10 @@ modest_window_mgr_unregister_window (ModestWindowMgr *self,
 	handler_id = *tmp;
 	g_hash_table_remove (priv->destroy_handlers, window);
 
-	/* Remove the reference to the window. We need to block the
-	   destroy event handler to avoid recursive calls */
-	g_signal_handler_block (window, handler_id);
+	/* Remove the reference to the window. Disconnect also the
+	   delete-event handler, we won't need it anymore */
+	g_signal_handler_disconnect (window, handler_id);
 	gtk_widget_destroy (win->data);
-	if (G_IS_OBJECT (window))
-		g_signal_handler_unblock (window, handler_id);
 
 	/* If there are no more windows registered then exit program */
 	if (priv->window_list == NULL) {

@@ -151,8 +151,6 @@ typedef struct {
 static gboolean
 idle_select_default_focus (gpointer data) 
 {
-	gdk_threads_enter ();
-
 	ModestGlobalSettingsDialogPrivate *ppriv;
 	ModestMaemoGlobalSettingsDialogPrivate *priv;
 	SwitchPageHelper *helper;
@@ -164,12 +162,11 @@ idle_select_default_focus (gpointer data)
 	/* Grab focus, we need to block in order to prevent a
 	   recursive call to this callback */
 	g_signal_handler_block (G_OBJECT (ppriv->notebook), priv->switch_handler);
+	gdk_threads_enter ();
 	gtk_widget_grab_focus (helper->focus_widget);
-	g_signal_handler_unblock (G_OBJECT (ppriv->notebook), priv->switch_handler);
-
-	g_free (helper);
-
 	gdk_threads_leave ();
+	g_signal_handler_unblock (G_OBJECT (ppriv->notebook), priv->switch_handler);
+	g_free (helper);
 
 	return FALSE;
 }

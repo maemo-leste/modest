@@ -644,13 +644,17 @@ modest_mail_operation_save_to_drafts (ModestMailOperation *self,
 		header = tny_msg_get_header (draft_msg);
 		/* Remove the old draft expunging it */
 		tny_folder_remove_msg (folder, header, NULL);
-		tny_folder_sync (folder, TRUE, NULL);
+		tny_folder_sync (folder, TRUE, &(priv->error));
 		g_object_unref (header);
 	}
 	
-	tny_folder_add_msg (folder, msg, &(priv->error));
+	if (!priv->error)
+		tny_folder_add_msg (folder, msg, &(priv->error));
+
 	if (!priv->error)
 		priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
+	else
+		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 
 end:
 	if (msg)

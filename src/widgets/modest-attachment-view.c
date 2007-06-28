@@ -129,8 +129,6 @@ modest_attachment_view_set_part (TnyMimePartView *self, TnyMimePart *mime_part)
 static gboolean
 get_size_idle_func (gpointer data)
 {	
-	gdk_threads_enter ();
-
 	ModestAttachmentView *self = (ModestAttachmentView *) data;
 	ModestAttachmentViewPriv *priv = MODEST_ATTACHMENT_VIEW_GET_PRIVATE (self);
 	gssize readed_size;
@@ -147,6 +145,8 @@ get_size_idle_func (gpointer data)
 	if (tny_stream_is_eos (priv->get_size_stream)) {
 		gchar *display_size;
 
+		gdk_threads_enter ();
+
 		display_size = modest_text_utils_get_display_size (priv->size);
 		size_string = g_strdup_printf (" (%s)", display_size);
 		g_free (display_size);
@@ -158,10 +158,9 @@ get_size_idle_func (gpointer data)
 		gtk_widget_queue_resize (priv->size_view);
 		priv->get_size_stream = NULL;
 		priv->get_size_idle_id = 0;
+
+		gdk_threads_leave ();
 	}
-
-	gdk_threads_leave ();
-
 	return (priv->get_size_stream != NULL);
 }
 

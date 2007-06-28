@@ -1602,8 +1602,7 @@ _on_msg_count_changed (ModestHeaderView *header_view,
 	else {
 		modest_main_window_set_contents_style (main_window,
 						       MODEST_MAIN_WINDOW_CONTENTS_STYLE_HEADERS);
-	}
-	
+	}	
 }
 
 void 

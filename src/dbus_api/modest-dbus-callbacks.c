@@ -181,12 +181,9 @@ static gchar* uri_parse_mailto (const gchar* mailto, GSList** list_items_and_val
 	return result_to;
 }
 
-
 static gboolean
 on_idle_mail_to(gpointer user_data)
 {
-	gdk_threads_enter ();
-	
 	/* This is based on the implemenation of main.c:start_uil(): */
 	
 	gchar *uri = (gchar*)user_data;
@@ -260,11 +257,16 @@ on_idle_mail_to(gpointer user_data)
 				} else {
 			
 					tny_folder_add_msg (folder, msg, NULL); /* TODO: check err */
-		
+					gdk_threads_enter ();
+
 					ModestWindow *win = modest_msg_edit_window_new (msg, account_name);
+					modest_window_mgr_register_window (modest_runtime_get_window_mgr (), win);
 					gtk_widget_show_all (GTK_WIDGET (win));
+
+					gdk_threads_leave ();
 				
 					g_object_unref (G_OBJECT(folder));
+					g_object_unref (win);
 				}
 			
 				g_object_unref (G_OBJECT(msg));
@@ -284,8 +286,6 @@ on_idle_mail_to(gpointer user_data)
  	g_free(to);
 		
 	g_free(uri);
-
-	gdk_threads_leave ();
 	
 	return FALSE; /* Do not call this callback again. */
 }
@@ -316,8 +316,6 @@ static gint on_mail_to(GArray * arguments, gpointer data, osso_rpc_t * retval)
 static gboolean
 on_idle_compose_mail(gpointer user_data)
 {
-	gdk_threads_enter ();
-	
 	ComposeMailIdleData *idle_data = (ComposeMailIdleData*)user_data;
 	gchar **list = NULL;
 	gint i = 0;
@@ -361,7 +359,9 @@ on_idle_compose_mail(gpointer user_data)
 				} else {
 			
 					tny_folder_add_msg (folder, msg, NULL); /* TODO: check err */
-		
+
+					gdk_threads_enter ();
+	
 					ModestWindow *win = modest_msg_edit_window_new (msg, account_name);
 
 					/* it seems Sketch at least sends a leading ',' -- take that into account,
@@ -378,10 +378,14 @@ on_idle_compose_mail(gpointer user_data)
 								(ModestMsgEditWindow *)win, list[i]);
 					}
 					g_strfreev(list);
-					
+
+					modest_window_mgr_register_window (modest_runtime_get_window_mgr (), win);
 					gtk_widget_show_all (GTK_WIDGET (win));
+
+					gdk_threads_leave ();
 				
 					g_object_unref (G_OBJECT(folder));
+					g_object_unref (win);
 				}
 			
 				g_object_unref (G_OBJECT(msg));
@@ -401,8 +405,6 @@ on_idle_compose_mail(gpointer user_data)
 	g_free (idle_data);
 	
  	g_free (account_name);
- 	
- 	gdk_threads_leave ();
  	
 	return FALSE; /* Do not call this callback again. */
 }
@@ -516,8 +518,6 @@ out:
 static gboolean
 on_idle_open_message (gpointer user_data)
 {
-	gdk_threads_enter ();
-	
 	ModestWindow *msg_view;
 	TnyMsg       *msg;
 	TnyAccount   *account;
@@ -534,7 +534,6 @@ on_idle_open_message (gpointer user_data)
 
 	if (msg == NULL) {
 		g_debug ("  %s: message not found.", __FUNCTION__);
-		gdk_threads_leave ();
 		return FALSE;
 	}
 	g_debug ("  %s: Found message.", __FUNCTION__);
@@ -543,17 +542,20 @@ on_idle_open_message (gpointer user_data)
 	account_name = tny_account_get_name (account);
 	msg_uid = tny_header_get_uid (header);
 	
+	gdk_threads_enter ();
+	
 	msg_view = modest_msg_view_window_new (msg,
 					       account_name,
 					       msg_uid);
-	/* TODO: does that leak the msg_view ?! */
 
+	modest_window_mgr_register_window (modest_runtime_get_window_mgr (), msg_view);
 	gtk_widget_show_all (GTK_WIDGET (msg_view));
+
+	gdk_threads_leave ();
 
 	g_object_unref (header);
 	g_object_unref (account);
-	
-	gdk_threads_leave ();
+	g_object_unref (msg_view);
 	
 	return FALSE; /* Do not call this callback again. */
 }
@@ -679,8 +681,9 @@ on_delete_message (GArray *arguments, gpointer data, osso_rpc_t *retval)
 static gboolean
 on_idle_send_receive(gpointer user_data)
 {
-	gdk_threads_enter ();
 	ModestWindow *win;
+
+	gdk_threads_enter ();
 
 	/* Pick the main window if it exists */
 	win = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr ());
@@ -719,8 +722,7 @@ on_idle_open_default_inbox(gpointer user_data)
 	/* Get the folder view */
 	GtkWidget *folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win),
 							   MODEST_WIDGET_TYPE_FOLDER_VIEW);
-	modest_folder_view_select_first_inbox_or_local (
-		MODEST_FOLDER_VIEW (folder_view));
+	modest_folder_view_select_first_inbox_or_local (MODEST_FOLDER_VIEW (folder_view));
 	
 	gdk_threads_leave ();
 	

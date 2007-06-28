@@ -1397,8 +1397,6 @@ on_focus_in (GtkWidget     *self,
 static void
 idle_notify_headers_count_changed_destroy (gpointer data)
 {
-	gdk_threads_enter ();
-
 	HeadersCountChangedHelper *helper = NULL;
 
 	g_return_if_fail (data != NULL);
@@ -1406,15 +1404,11 @@ idle_notify_headers_count_changed_destroy (gpointer data)
 
 	g_object_unref (helper->change);
 	g_slice_free (HeadersCountChangedHelper, helper);
-
-	gdk_threads_leave ();
 }
 
 static gboolean
 idle_notify_headers_count_changed (gpointer data)
 {
-	gdk_threads_enter ();
-
 	TnyFolder *folder = NULL;
 	ModestHeaderViewPrivate *priv = NULL;
 	HeadersCountChangedHelper *helper = NULL;
@@ -1427,18 +1421,21 @@ idle_notify_headers_count_changed (gpointer data)
 	folder = tny_folder_change_get_folder (helper->change);
 
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE (helper->self);
+
 	g_mutex_lock (priv->observers_lock);
 
-	/* Emmit signal to evaluate how headers changes affects to the window view  */
-	g_signal_emit (G_OBJECT(helper->self), signals[MSG_COUNT_CHANGED_SIGNAL], 0, folder, helper->change);
+	/* Emit signal to evaluate how headers changes affects to the window view  */
+	gdk_threads_enter ();
+	g_signal_emit (G_OBJECT(helper->self), 
+		       signals[MSG_COUNT_CHANGED_SIGNAL], 
+		       0, folder, helper->change);
+	gdk_threads_leave ();
 		
 	/* Added or removed headers, so data stored on cliboard are invalid  */
 	if (modest_email_clipboard_check_source_folder (priv->clipboard, folder))
 	    modest_email_clipboard_clear (priv->clipboard);
 	    
 	g_mutex_unlock (priv->observers_lock);
-
-	gdk_threads_leave ();
 
 	return FALSE;
 }
