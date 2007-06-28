@@ -250,6 +250,19 @@ modest_folder_view_class_init (ModestFolderViewClass *klass)
 			      G_TYPE_NONE, 1, G_TYPE_STRING);
 }
 
+/* Simplify checks for NULLs: */
+static gboolean strings_are_equal (const gchar *a, const gchar *b)
+{
+	if (!a && !b)
+		return TRUE;
+	if (a && b)
+	{
+		return (strcmp (a, b) == 0);
+	}
+	else
+		return FALSE;
+}
+
 static gboolean on_model_foreach_set_name(GtkTreeModel *model, GtkTreePath *path,  GtkTreeIter *iter, gpointer data)
 {
 	GObject *instance = NULL;
@@ -272,35 +285,48 @@ static gboolean on_model_foreach_set_name(GtkTreeModel *model, GtkTreePath *path
 	
 	const gchar *this_account_id = tny_account_get_id(this_account);
 	const gchar *account_id = tny_account_get_id(account);
-	if (this_account_id && account_id && 
-		(strcmp (this_account_id, account_id) == 0)) {
-			
+	g_object_unref (instance);
+	instance = NULL;
+
+	/* printf ("DEBUG: %s: this_account_id=%s, account_id=%s\n", __FUNCTION__, this_account_id, account_id); */
+	if (strings_are_equal(this_account_id, account_id)) {
 		/* Tell the model that the data has changed, so that
 	 	 * it calls the cell_data_func callbacks again: */
+		/* TODO: This does not seem to actually cause the new string to be shown: */
 		gtk_tree_model_row_changed (model, path, iter);
 		
-		g_object_unref (instance);
 		return TRUE; /* stop walking */
 	}
 	
-	g_object_unref (instance);
 	return FALSE; /* keep walking */
 }
 
-void on_get_mmc_account_name (TnyStoreAccount* account, gpointer user_data)
+typedef struct 
 {
-	printf ("DEBUG: %s: account name=%s\n", __FUNCTION__, tny_account_get_name (TNY_ACCOUNT(account)));
+	ModestFolderView *self;
+	gchar *previous_name;
+} GetMmcAccountNameData;
 
-	ModestFolderView *self = MODEST_FOLDER_VIEW (user_data);
+static void on_get_mmc_account_name (TnyStoreAccount* account, gpointer user_data)
+{
+	/* printf ("DEBU1G: %s: account name=%s\n", __FUNCTION__, tny_account_get_name (TNY_ACCOUNT(account))); */
+
+	GetMmcAccountNameData *data = (GetMmcAccountNameData*)user_data;
+
+	if (!strings_are_equal (
+		tny_account_get_name(TNY_ACCOUNT(account)), 
+		data->previous_name)) {
 	
-	/* If this has been called then it means that the account name has 
-	 * changed, so we tell the model that the data has changed, so that 
-	 * it calls the cell_data_func callbacks again: */
-	 GtkTreeModel *model = gtk_tree_view_get_model (GTK_TREE_VIEW (self));
-	 if (!model)
-	 	return;
-	 
-	 gtk_tree_model_foreach(model, on_model_foreach_set_name, self);
+		/* Tell the model that the data has changed, so that 
+		 * it calls the cell_data_func callbacks again: */
+		ModestFolderView *self = data->self;
+		GtkTreeModel *model = gtk_tree_view_get_model (GTK_TREE_VIEW (self));
+	 	if (model)
+			gtk_tree_model_foreach(model, on_model_foreach_set_name, account);
+	}
+
+	g_free (data->previous_name);
+	g_slice_free (GetMmcAccountNameData, data);
 }
 
 static void
@@ -326,7 +352,7 @@ text_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 			    TNY_GTK_FOLDER_STORE_TREE_MODEL_INSTANCE_COLUMN, &instance,
 			    -1);
 	rendobj = G_OBJECT(renderer);
- 
+
 	if (!fname)
 		return;
 
@@ -373,6 +399,15 @@ text_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 				TNY_ACCOUNT (instance))) {
 			item_name = g_strdup (priv->local_account_name);
 			item_weight = 800;
+		} else if (modest_tny_account_is_memory_card_account (
+				TNY_ACCOUNT (instance))) {
+			/* fname is only correct when the items are first 
+			 * added to the model, not when the account is 
+			 * changed later, so get the name from the account
+			 * instance: */
+			item_name = g_strdup (tny_account_get_name (
+				TNY_ACCOUNT (instance)));
+			item_weight = 800;
 		} else {
 			item_name = g_strdup (fname);
 			item_weight = 800;
@@ -387,8 +422,9 @@ text_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 		g_object_set (rendobj,"text", item_name, "weight", item_weight, NULL);
 		
 		/* Notify display name observers */
+		/* TODO: What listens for this signal, and how can it use only the new name? */
 		if (G_OBJECT (priv->cur_folder_store) == instance) {
-			g_signal_emit (G_OBJECT(data),
+			g_signal_emit (G_OBJECT(self),
 					       signals[FOLDER_DISPLAY_NAME_CHANGED_SIGNAL], 0,
 					       item_name);
 		}
@@ -397,12 +433,22 @@ text_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 		
 	}
 	
-	/* If it is a Memory card account, make sure that we have the correct name: */
+	/* If it is a Memory card account, make sure that we have the correct name.
+	 * This function will be trigerred again when the name has been retrieved: */
 	if (TNY_IS_STORE_ACCOUNT (instance) && 
 		modest_tny_account_is_memory_card_account (TNY_ACCOUNT (instance))) {
+
 		/* Get the account name asynchronously: */
+		GetMmcAccountNameData *callback_data = 
+			g_slice_new0(GetMmcAccountNameData);
+		callback_data->self = self;
+
+		const gchar *name = tny_account_get_name (TNY_ACCOUNT(instance));
+		if (name)
+			callback_data->previous_name = g_strdup (name); 
+
 		modest_tny_account_get_mmc_account_name (TNY_STORE_ACCOUNT (instance), 
-			on_get_mmc_account_name, self);
+			on_get_mmc_account_name, callback_data);
 	}
  			
 	g_object_unref (G_OBJECT (instance));

@@ -448,6 +448,9 @@ typedef struct
 	gpointer user_data;
 } GetMmcAccountNameData;
 
+
+
+
 /* Gets the memory card name: */
 static void 
 on_modest_file_system_info(HildonFileSystemInfoHandle *handle,
@@ -460,27 +463,23 @@ on_modest_file_system_info(HildonFileSystemInfoHandle *handle,
 		g_warning ("%s: error=%s", __FUNCTION__, error->message);
   	}
 	
+	TnyAccount *account = TNY_ACCOUNT (callback_data->account);
+	
+	const gchar *previous_display_name = NULL;
+	
 	const gchar *display_name = NULL;
 	if (!error && info) {
 		display_name = hildon_file_system_info_get_display_name(info);
-		printf ("DEBUG: %s: display name=%s\n", __FUNCTION__,  display_name);
+		previous_display_name = tny_account_get_name (account);
 	}
-	
-	TnyAccount *account = TNY_ACCOUNT (callback_data->account);
-	
-	const gchar * previous_display_name = tny_account_get_name (account);
-	
-	/* Use the new name if it is different: */
-	if (display_name && 
-		(previous_display_name && (strcmp (display_name, previous_display_name) != 0))) {
-		/* printf ("DEBUG: %s: display name=%s\n", __FUNCTION__,  display_name); */
-		tny_account_set_name (account, display_name);
+		 
+	/* printf ("DEBUG: %s: display name=%s\n", __FUNCTION__,  display_name); */
+	tny_account_set_name (account, display_name);
 		
-		/* Inform the application that the name is now ready: */
-		if (callback_data->callback)
-			(*(callback_data->callback)) (callback_data->account, 
-				callback_data->user_data);
-	}
+	/* Inform the application that the name is now ready: */
+	if (callback_data->callback)
+		(*(callback_data->callback)) (callback_data->account, 
+			callback_data->user_data);
 	
 	g_object_unref (callback_data->account);
 	g_slice_free (GetMmcAccountNameData, callback_data);
@@ -488,25 +487,44 @@ on_modest_file_system_info(HildonFileSystemInfoHandle *handle,
 
 void modest_tny_account_get_mmc_account_name (TnyStoreAccount* self, ModestTnyAccountGetMmcAccountNameCallback callback, gpointer user_data)
 {
+	/* Just use the hard-coded path for the single memory card,
+	 * rather than try to figure out the path to the specific card by 
+	 * looking at the maildir URI:
+	 */
+	const gchar *uri_real = MODEST_MCC1_VOLUMEPATH_URI;
+
+	/*
 	gchar* uri = tny_account_get_url_string (TNY_ACCOUNT (self));
 	if (!uri)
 		return;
-		
-	//This is freed in the callback:
-	GetMmcAccountNameData * callback_data = g_slice_new0(GetMmcAccountNameData);
-	callback_data->account = self;
-	g_object_ref (callback_data->account); /* Unrefed when we destroy the struct. */
-	callback_data->user_data = user_data;
-		
-	/* TODO: gnome_vfs_volume_get_display_name() does not return 
-	 * the same string. But why not? Why does hildon needs its own 
-	 * function for this?
-	 */
-	printf ("DEBUG: %s Calling hildon_file_system_info_async_new() with URI=%s\n", __FUNCTION__, uri);
-	hildon_file_system_info_async_new(uri, 
-		on_modest_file_system_info, callback_data /* user_data */);
 
-	g_free (uri);
+	TODO: This gets the name of the folder, but we want the name of the volume.
+	gchar *uri_real = NULL;
+	const gchar* prefix = "maildir://localhost/";
+	if ((strstr (uri, prefix) == uri) && (strlen(uri) > strlen(prefix)) )
+		uri_real = g_strconcat ("file:///", uri + strlen (prefix), NULL);
+	*/
+
+	if (uri_real) {
+		//This is freed in the callback:
+		GetMmcAccountNameData * callback_data = g_slice_new0(GetMmcAccountNameData);
+		callback_data->account = self;
+		g_object_ref (callback_data->account); /* Unrefed when we destroy the struct. */
+		callback_data->callback = callback;
+		callback_data->user_data = user_data;
+		
+		/* TODO: gnome_vfs_volume_get_display_name() does not return 
+		 * the same string. But why not? Why does hildon needs its own 
+		 * function for this?
+		 */
+		/* printf ("DEBUG: %s Calling hildon_file_system_info_async_new() with URI=%s\n", __FUNCTION__, uri_real); */
+		hildon_file_system_info_async_new(uri_real, 
+			on_modest_file_system_info, callback_data /* user_data */);
+
+		/* g_free (uri_real); */
+	}
+
+	/* g_free (uri); */
 }
 
  				

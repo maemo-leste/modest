@@ -1,3 +1,18 @@
+2007-06-28  Murray Cumming  <murrayc@murrayc.com
+
+	* src/modest-tny-account.c: (on_modest_file_system_info),
+	(modest_tny_account_get_mmc_account_name):
+	Always call the callback, without checking whether the name has changed.
+	* src/widgets/modest-folder-view.c: (strings_are_equal),
+	(on_model_foreach_set_name), (on_get_mmc_account_name),
+	(text_cell_data): Compare the name here, and use the name from 
+	the account rather than from the 
+	TNY_GTK_FOLDER_STORE_TREE_MODEL_NAME_COLUMN because that will be wrong 
+	if the name was changed after the account was added to the model.
+	That's a tinymail bug but not one that I want to fix now.
+
+	This finally fixes projects.maemo.org bug NB#59301.
+
 2007-06-27  Armin Burgmeier  <armin@openismus.com>
 
 	* src/modest-mail-operation.c: Fixed a crash when canceling a mail
