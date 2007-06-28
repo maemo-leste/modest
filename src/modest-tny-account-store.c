@@ -244,6 +244,24 @@ account_list_free (GSList *accounts)
 	g_slist_free (accounts);
 }
 
+
+
+/* disconnect the list of TnyAccounts */
+static void
+account_list_disconnect (GSList *accounts)
+{
+	GSList *cursor = accounts;
+
+	g_printerr ("modest: DEBUG disconnecting all accounts\n");
+	while (cursor) {
+		if (TNY_IS_CAMEL_ACCOUNT(cursor->data))  /* check twice... */
+			tny_camel_account_set_online (TNY_CAMEL_ACCOUNT(cursor->data), FALSE, NULL);
+		cursor = g_slist_next (cursor);
+	}
+}
+
+
+
 static void
 recreate_all_accounts (ModestTnyAccountStore *self)
 {
@@ -544,6 +562,10 @@ modest_tny_account_store_finalize (GObject *obj)
 		priv->device = NULL;
 	}
 
+	/* disconnect all accounts when we are destroyed */
+	account_list_disconnect (priv->store_accounts);
+	account_list_disconnect (priv->transport_accounts);
+		
 	/* this includes the local folder */
 	account_list_free (priv->store_accounts);
 	priv->store_accounts = NULL;
