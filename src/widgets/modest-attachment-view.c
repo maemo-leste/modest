@@ -168,7 +168,7 @@ static void
 modest_attachment_view_set_part_default (TnyMimePartView *self, TnyMimePart *mime_part)
 {
 	ModestAttachmentViewPriv *priv = NULL;
-	const gchar *filename = NULL;
+	gchar *filename = NULL;
 	gchar *file_icon_name = NULL;
 	gboolean show_size = FALSE;
 	
@@ -195,19 +195,22 @@ modest_attachment_view_set_part_default (TnyMimePartView *self, TnyMimePart *mim
 	priv->size = 0;
 	
 	if (tny_mime_part_is_purged (mime_part)) {
-		filename = _("TODO: purged file");
+		const gchar *real_filename = tny_mime_part_get_filename (mime_part);
+		if (real_filename == NULL)
+			real_filename = "";
+		filename = g_strdup_printf (_("FIXME: Purged %s"), real_filename);
 		file_icon_name = modest_platform_get_file_icon_name (NULL, NULL, NULL);
 	} else if (TNY_IS_MSG (mime_part)) {
 		TnyHeader *header = tny_msg_get_header (TNY_MSG (mime_part));
 		if (TNY_IS_HEADER (header)) {
-			filename = tny_header_get_subject (header);
+			filename = g_strdup (tny_header_get_subject (header));
 			if (filename == NULL)
-				filename = _("mail_va_no_subject");
+				filename = g_strdup (_("mail_va_no_subject"));
 			file_icon_name = modest_platform_get_file_icon_name (NULL, tny_mime_part_get_content_type (mime_part), NULL);
 			g_object_unref (header);
 		}
 	} else {
-		filename = tny_mime_part_get_filename (mime_part);
+		filename = g_strdup (tny_mime_part_get_filename (mime_part));
 		file_icon_name = modest_platform_get_file_icon_name (filename, 
 								     tny_mime_part_get_content_type (mime_part), 
 								     NULL);
@@ -222,6 +225,7 @@ modest_attachment_view_set_part_default (TnyMimePartView *self, TnyMimePart *mim
 	}
 
 	gtk_label_set_text (GTK_LABEL (priv->filename_view), filename);
+	g_free (filename);
 	update_filename_request (MODEST_ATTACHMENT_VIEW (self));
 
 	gtk_label_set_text (GTK_LABEL (priv->size_view), "");

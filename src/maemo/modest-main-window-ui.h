@@ -67,7 +67,7 @@ static const GtkActionEntry modest_action_entries [] = {
 	{ "EmailDelete",      NULL,  N_("mcen_me_inbox_delete"),    NULL,      NULL,   G_CALLBACK (modest_ui_actions_on_delete) },
 	{ "EmailContents",    NULL,  N_("mcen_me_inbox_retrieve_contents"), NULL,      NULL,   G_CALLBACK (modest_ui_actions_on_retrieve_msg_contents) },
 	{ "EmailDetails",     NULL,  N_("mcen_me_inbox_messagedetails"),        NULL,      NULL,   G_CALLBACK (modest_ui_actions_on_details) },
-	{ "EmailPurgeAttachments", NULL, N_("mcen_me_inbox_remove_attachments"), NULL,  NULL,   NULL },
+	{ "EmailPurgeAttachments", NULL, N_("mcen_me_inbox_remove_attachments"), NULL,  NULL,   G_CALLBACK (modest_ui_actions_remove_attachments) },
 	
 
 	/* Edit */

@@ -44,7 +44,7 @@
 static gboolean _folder_is_any_of_type (TnyFolder *folder, TnyFolderType types[], guint ntypes);
 static gboolean _invalid_msg_selected (ModestMainWindow *win, gboolean unique, ModestDimmingRule *rule);
 static gboolean _invalid_attach_selected (ModestWindow *win, gboolean unique, gboolean for_view, ModestDimmingRule *rule);
-static gboolean _purged_attach_selected (ModestWindow *win);
+static gboolean _purged_attach_selected (ModestWindow *win, gboolean all, ModestDimmingRule *rule);
 static gboolean _clipboard_is_empty (ModestWindow *win);
 static gboolean _invalid_clipboard_selected (ModestWindow *win, ModestDimmingRule *rule);
 static gboolean _already_opened_msg (ModestWindow *win, guint *n_messages);
@@ -62,7 +62,7 @@ static gboolean _msg_download_completed (ModestMainWindow *win);
 static gboolean _selected_msg_sent_in_progress (ModestWindow *win);
 static gboolean _sending_in_progress (ModestWindow *win);
 static gboolean _marked_as_deleted (ModestWindow *win);
-static gboolean _invalid_attachment_for_purge (ModestWindow *win, ModestDimmingRule *rule);
+static gboolean _invalid_folder_for_purge (ModestWindow *win, ModestDimmingRule *rule);
 static gboolean _transfer_mode_enabled (ModestWindow *win);
 
 
@@ -719,6 +719,13 @@ modest_ui_dimming_rules_on_view_attachments (ModestWindow *win, gpointer user_da
 	/* Check dimmed rule */	
 	if (!dimmed) 
 		dimmed = _invalid_attach_selected (win, TRUE, TRUE, rule);			
+
+	if (!dimmed) {
+		dimmed = _purged_attach_selected (win, FALSE, NULL);
+		if (dimmed) {
+			modest_dimming_rule_set_notification (rule, _("mail_ib_attach_not_local"));
+		}
+	}
 		
 	return dimmed;
 }
@@ -735,7 +742,14 @@ modest_ui_dimming_rules_on_save_attachments (ModestWindow *win, gpointer user_da
 
 	/* Check dimmed rule */	
 	if (!dimmed) 
-		dimmed = _invalid_attach_selected (win, FALSE, FALSE, rule);			
+		dimmed = _invalid_attach_selected (win, FALSE, FALSE, rule);
+
+	if (!dimmed) {
+		dimmed = _purged_attach_selected (win, FALSE, NULL);
+		if (dimmed) {
+			modest_dimming_rule_set_notification (rule, _("mail_ib_attach_not_local"));
+		}
+	}
 		
 	return dimmed;
 }
@@ -750,15 +764,40 @@ modest_ui_dimming_rules_on_remove_attachments (ModestWindow *win, gpointer user_
 	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
 	rule = MODEST_DIMMING_RULE (user_data);
 
-	/* Check dimmed rule */
-	if (!dimmed) {
-		dimmed = _purged_attach_selected (win);
-		if (dimmed)
-			modest_dimming_rule_set_notification (rule, _("mail_ib_attachment_already_purged"));
+	/* Check in main window if there's only one message selected */
+	if (!dimmed && MODEST_IS_MAIN_WINDOW (win)) {
+		dimmed = _invalid_msg_selected (MODEST_MAIN_WINDOW (win), TRUE, rule);
 	}
 
+	/* Check in view window if there's any attachment selected */
+	if (!dimmed && MODEST_IS_MSG_VIEW_WINDOW (win)) {
+		dimmed = _invalid_attach_selected (win, FALSE, FALSE, NULL);
+		if (dimmed)
+			modest_dimming_rule_set_notification (rule, _("FIXME:no attachment selected"));
+	}
+
+	/* cannot purge in editable drafts nor pop folders */
 	if (!dimmed) {
-		dimmed = _invalid_attachment_for_purge (win, rule);
+		dimmed = _invalid_folder_for_purge (win, rule);
+	}
+
+	/* Check if the selected message in main window has attachments */
+	if (!dimmed && MODEST_IS_MAIN_WINDOW (win)) {
+		dimmed = _selected_msg_marked_as (win, TNY_HEADER_FLAG_ATTACHMENTS, TRUE);
+		if (dimmed)
+			modest_dimming_rule_set_notification (rule, _("mail_ib_unable_to_purge_attachments"));
+	}
+
+	/* Check if all attachments are already purged */
+	if (!dimmed) {
+		dimmed = _purged_attach_selected (win, TRUE, rule);
+	}
+
+	/* Check if the message is already downloaded */
+	if (!dimmed && MODEST_IS_MAIN_WINDOW (win)) {
+		dimmed = !_msg_download_completed (MODEST_MAIN_WINDOW (win));
+		if (dimmed)
+			modest_dimming_rule_set_notification (rule, _("mail_ib_attach_not_local"));
 	}
 
 
@@ -1419,29 +1458,46 @@ _invalid_attach_selected (ModestWindow *win,
 }
 
 static gboolean
-_purged_attach_selected (ModestWindow *win) 
+_purged_attach_selected (ModestWindow *win, gboolean all, ModestDimmingRule *rule) 
 {
 	GList *attachments, *node;
-	gint n_selected;
+	gint purged = 0;
+	gint n_attachments = 0;
 	gboolean result = FALSE;
 
-	if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
-		
-		/* Get selected atachments */
-		attachments = modest_msg_view_window_get_attachments (MODEST_MSG_VIEW_WINDOW(win));
-		n_selected = g_list_length (attachments);
+	/* This should check if _all_ the attachments are already purged. If only some
+	 * of them are purged, then it does not cause dim as there's a confirmation dialog
+	 * for removing only local attachments */
 
-		for (node = attachments; node != NULL && !result; node = g_list_next (node)) {
-			TnyMimePart *mime_part = TNY_MIME_PART (node->data);
-			if (tny_mime_part_is_purged (mime_part)) {
-				result = TRUE;
-				break;
-			}
-		}
-		
-		/* Free */
-		g_list_free (attachments);
+	/* Get selected atachments */
+	if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
+		attachments = modest_msg_view_window_get_attachments (MODEST_MSG_VIEW_WINDOW(win));
+	} else if (MODEST_IS_MAIN_WINDOW (win)) {
+		/* If we're in main window, we won't know if there are already purged attachments */
+		return FALSE;
 	}
+
+	if (attachments == NULL)
+		return FALSE;
+
+	for (node = attachments; node != NULL; node = g_list_next (node)) {
+		TnyMimePart *mime_part = TNY_MIME_PART (node->data);
+		if (tny_mime_part_is_purged (mime_part)) {
+			purged++;
+		}
+		n_attachments++;
+	}
+		
+	/* Free */
+	g_list_free (attachments);
+
+	if (all)
+		result = (purged == n_attachments);
+	else
+		result = (purged > 0);
+
+	if (result && (rule != NULL))
+		modest_dimming_rule_set_notification (rule, _("mail_ib_attachment_already_purged"));
 
 	return result;
 }
@@ -1744,8 +1800,8 @@ _sending_in_progress (ModestWindow *win)
 }
 
 static gboolean
-_invalid_attachment_for_purge (ModestWindow *win, 
-			       ModestDimmingRule *rule)
+_invalid_folder_for_purge (ModestWindow *win, 
+			   ModestDimmingRule *rule)
 {
 	TnyMsg *msg = NULL;
 	TnyFolder *folder = NULL;
@@ -1762,33 +1818,57 @@ _invalid_attachment_for_purge (ModestWindow *win,
 			modest_dimming_rule_set_notification (rule, _("mail_ib_unable_to_purge_attachments"));
 			goto frees; 			
 		}
-		account = modest_tny_folder_get_account (folder);
-		if (account == NULL) goto frees; 			
+		g_object_unref (msg);
+	} else if (MODEST_IS_MAIN_WINDOW (win)) {
+		GtkWidget *folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win),
+									      MODEST_WIDGET_TYPE_FOLDER_VIEW);
+		if (!folder_view)
+			return FALSE;
+		folder = TNY_FOLDER (modest_folder_view_get_selected (MODEST_FOLDER_VIEW (folder_view)));
+		if (folder == NULL || ! TNY_IS_FOLDER (folder))
+			return FALSE;
+		g_object_ref (folder);
 		
-		/* Check account */
-		if (!modest_tny_account_is_virtual_local_folders (TNY_ACCOUNT (account))) {
-			const gchar *proto_str = tny_account_get_proto (TNY_ACCOUNT (account));
-			/* If it's POP then dim */
-			if (modest_protocol_info_get_transport_store_protocol (proto_str) == 
-			    MODEST_PROTOCOL_STORE_POP) {
-				GList *attachments;
-				gint n_selected;
-				result = TRUE;
-				attachments = modest_msg_view_window_get_attachments (MODEST_MSG_VIEW_WINDOW(win));
-				n_selected = g_list_length (attachments);
-				g_list_free (attachments);
-				
-				modest_dimming_rule_set_notification (rule, 
-								      ngettext ("mail_ib_unable_to_pure_attach_pop_mail_singular",
-										"mail_ib_unable_to_pure_attach_pop_mail_plural", 
-										n_selected));
-			}
+	} else {
+		g_return_val_if_reached (FALSE);
+	}
+	account = modest_tny_folder_get_account (folder);
+	if (account == NULL) goto frees; 			
+		
+	/* Check account */
+	if (modest_tny_account_is_virtual_local_folders (TNY_ACCOUNT (account))) {
+		TnyFolderType types[2];
+		types[0] = TNY_FOLDER_TYPE_DRAFTS;
+		types[1] = TNY_FOLDER_TYPE_OUTBOX;
+		
+		if (_selected_folder_is_any_of_type (win, types, 2)) {
+			result = TRUE;
+			modest_dimming_rule_set_notification (rule, _("mail_ib_unable_to_purge_editable_msg"));
+		} else {
+			/* We're currently disabling purge in any local store */
+			result = TRUE;
+			modest_dimming_rule_set_notification (rule, _("mail_ib_unable_to_purge_attachments"));
+		}
+	} else {
+		const gchar *proto_str = tny_account_get_proto (TNY_ACCOUNT (account));
+		/* If it's POP then dim */
+		if (modest_protocol_info_get_transport_store_protocol (proto_str) == 
+		    MODEST_PROTOCOL_STORE_POP) {
+			GList *attachments;
+			gint n_selected;
+			result = TRUE;
+			attachments = modest_msg_view_window_get_attachments (MODEST_MSG_VIEW_WINDOW(win));
+			n_selected = g_list_length (attachments);
+			g_list_free (attachments);
+			
+			modest_dimming_rule_set_notification (rule, 
+							      ngettext ("mail_ib_unable_to_pure_attach_pop_mail_singular",
+									"mail_ib_unable_to_pure_attach_pop_mail_plural", 
+									n_selected));
 		}
 	}
-
- frees:
-	if (msg != NULL)
-		g_object_unref (msg);
+	
+frees:
 	if (folder != NULL)
 		g_object_unref (folder);
 	if (account != NULL)

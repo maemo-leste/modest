@@ -1593,6 +1593,12 @@ modest_msg_view_window_view_attachment (ModestMsgViewWindow *window, TnyMimePart
 		g_object_ref (mime_part);
 	}
 
+	if (tny_mime_part_is_purged (mime_part)) {
+		g_object_unref (mime_part);
+		hildon_banner_show_information (NULL, NULL, _("mail_ib_attach_not_local"));
+		return;
+	}
+
 	if (!TNY_IS_MSG (mime_part)) {
 		gchar *filepath = NULL;
 		const gchar *att_filename = tny_mime_part_get_filename (mime_part);
@@ -1776,7 +1782,7 @@ modest_msg_view_window_save_attachments (ModestMsgViewWindow *window, GList *mim
 }
 
 void
-modest_msg_view_window_remove_attachments (ModestMsgViewWindow *window)
+modest_msg_view_window_remove_attachments (ModestMsgViewWindow *window, gboolean get_all)
 {
 	ModestMsgViewWindowPrivate *priv;
 	GList *mime_parts = NULL, *node;
@@ -1789,7 +1795,25 @@ modest_msg_view_window_remove_attachments (ModestMsgViewWindow *window)
 	g_return_if_fail (MODEST_IS_MSG_VIEW_WINDOW (window));
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
 
-	mime_parts = modest_msg_view_get_selected_attachments (MODEST_MSG_VIEW (priv->msg_view));
+	if (get_all)
+		mime_parts = modest_msg_view_get_attachments (MODEST_MSG_VIEW (priv->msg_view));
+	else
+		mime_parts = modest_msg_view_get_selected_attachments (MODEST_MSG_VIEW (priv->msg_view));
+		
+	/* Remove already purged messages from mime parts list */
+	node = mime_parts;
+	while (node != NULL) {
+		TnyMimePart *part = TNY_MIME_PART (node->data);
+		if (tny_mime_part_is_purged (part)) {
+			GList *deleted_node = node;
+			node = g_list_next (node);
+			g_object_unref (part);
+			mime_parts = g_list_delete_link (mime_parts, deleted_node);
+		} else {
+			node = g_list_next (node);
+		}
+	}
+
 	if (mime_parts == NULL)
 		return;
 
@@ -1820,22 +1844,26 @@ modest_msg_view_window_remove_attachments (ModestMsgViewWindow *window)
 	if (response != GTK_RESPONSE_OK)
 		return;
 
-	msg = modest_msg_view_get_message (MODEST_MSG_VIEW (priv->msg_view));
 /* 	folder = tny_msg_get_folder (msg); */
 /* 	tny_msg_uncache_attachments (msg); */
 /* 	tny_folder_refresh (folder, NULL); */
 /* 	g_object_unref (folder); */
 	
-	modest_msg_view_set_message (MODEST_MSG_VIEW (priv->msg_view), msg);
+	modest_platform_information_banner (NULL, NULL, _("mcen_ib_removing_attachment"));
 
 	for (node = mime_parts; node != NULL; node = g_list_next (node)) {
 		tny_mime_part_set_purged (TNY_MIME_PART (node->data));
 /* 		modest_msg_view_remove_attachment (MODEST_MSG_VIEW (priv->msg_view), node->data); */
 	}
+
+	msg = modest_msg_view_get_message (MODEST_MSG_VIEW (priv->msg_view));
+	modest_msg_view_set_message (MODEST_MSG_VIEW (priv->msg_view), NULL);
 	tny_msg_rewrite_cache (msg);
+	modest_msg_view_set_message (MODEST_MSG_VIEW (priv->msg_view), msg);
+
 	g_list_foreach (mime_parts, (GFunc) g_object_unref, NULL);
 	g_list_free (mime_parts);
-	modest_platform_information_banner (NULL, NULL, _("mcen_ib_removing_attachment"));
+
 
 }
 

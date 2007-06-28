@@ -1556,6 +1556,18 @@ modest_msg_view_get_selected_attachments (ModestMsgView *self)
 	
 }
 
+GList *
+modest_msg_view_get_attachments (ModestMsgView *self)
+{
+	ModestMsgViewPrivate *priv;
+
+	g_return_val_if_fail (MODEST_IS_MSG_VIEW (self), NULL);
+	priv = MODEST_MSG_VIEW_GET_PRIVATE (self);
+
+	return modest_attachments_view_get_attachments (MODEST_ATTACHMENTS_VIEW (priv->attachments_view));
+	
+}
+
 void
 modest_msg_view_grab_focus (ModestMsgView *view)
 {

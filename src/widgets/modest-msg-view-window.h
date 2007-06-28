@@ -209,10 +209,13 @@ void            modest_msg_view_window_save_attachments (ModestMsgViewWindow *wi
 /**
  * modest_msg_view_window_remove_attachments:
  * @window: a #ModestMsgViewWindow
+ * @get_all: a #gboolean. If %TRUE, purges all attachmnents, if %FALSE,
+ * purges only selected ones.
  *
  * Removes selected attachments.
  */
-void            modest_msg_view_window_remove_attachments (ModestMsgViewWindow *window);
+void            modest_msg_view_window_remove_attachments (ModestMsgViewWindow *window,
+							   gboolean get_all);
 
 
 /**

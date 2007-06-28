@@ -2875,6 +2875,124 @@ modest_ui_actions_move_folder_error_handler (ModestMailOperation *mail_op,
 	g_object_unref (win);
 }
 
+static void
+open_msg_for_purge_cb (ModestMailOperation *mail_op, 
+		       TnyHeader *header, 
+		       TnyMsg *msg, 
+		       gpointer user_data)
+{
+	TnyList *parts;
+	TnyIterator *iter;
+	gint pending_purges = 0;
+	gboolean some_purged = FALSE;
+	ModestWindow *win = MODEST_WINDOW (user_data);
+	if (!msg)
+		return;
+
+	/* Once the message has been retrieved for purging, we check if
+	 * it's all ok for purging */
+
+	parts = tny_simple_list_new ();
+	tny_mime_part_get_parts (TNY_MIME_PART (msg), parts);
+	iter = tny_list_create_iterator (parts);
+
+	while (!tny_iterator_is_done (iter)) {
+		TnyMimePart *part;
+		part = TNY_MIME_PART (tny_iterator_get_current (iter));
+		if (tny_mime_part_is_attachment (part) || TNY_IS_MSG (part)) {
+			if (tny_mime_part_is_purged (part))
+				some_purged = TRUE;
+			else
+				pending_purges++;
+		}
+		tny_iterator_next (iter);
+	}
+
+	if (pending_purges>0) {
+		gint response;
+		response = modest_platform_run_confirmation_dialog (GTK_WINDOW (win),_("mcen_nc_purge_file_text_inbox"));
+
+		if (response == GTK_RESPONSE_OK) {
+			modest_platform_information_banner (NULL, NULL, _("mcen_ib_removing_attachment"));
+			tny_iterator_first (iter);
+			while (!tny_iterator_is_done (iter)) {
+				TnyMimePart *part;
+				
+				part = TNY_MIME_PART (tny_iterator_get_current (iter));
+				if (tny_mime_part_is_attachment (part) || TNY_IS_MSG (part))
+					tny_mime_part_set_purged (part);
+				tny_iterator_next (iter);
+			}
+			
+			tny_msg_rewrite_cache (msg);
+		}
+	} else {
+		modest_platform_information_banner (NULL, NULL, _("mail_ib_attachment_already_purged"));
+	}
+
+	/* remove attachments */
+	tny_iterator_first (iter);
+	while (!tny_iterator_is_done (iter)) {
+		TnyMimePart *part;
+			
+		part = TNY_MIME_PART (tny_iterator_get_current (iter));
+		g_object_unref (part);
+		tny_iterator_next (iter);
+	}
+
+	g_object_unref (iter);
+	g_object_unref (parts);
+}
+
+static void
+modest_ui_actions_on_main_window_remove_attachments (GtkAction *action,
+						     ModestMainWindow *win)
+{
+	GtkWidget *header_view;
+	TnyList *header_list;
+	TnyIterator *iter;
+	TnyHeader *header;
+	TnyHeaderFlags flags;
+	GtkWidget *msg_view_window;
+	g_return_if_fail (MODEST_IS_MAIN_WINDOW (win));
+
+	header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win),
+							   MODEST_WIDGET_TYPE_HEADER_VIEW);
+
+	header_list = modest_header_view_get_selected_headers (MODEST_HEADER_VIEW (header_view));
+
+	if (tny_list_get_length (header_list) == 1) {
+		iter = tny_list_create_iterator (header_list);
+		header = TNY_HEADER (tny_iterator_get_current (iter));
+		g_object_unref (iter);
+	} else {
+		return;
+	}
+
+	msg_view_window = GTK_WIDGET (modest_window_mgr_find_window_by_header (modest_runtime_get_window_mgr (), header));
+	flags = tny_header_get_flags (header);
+	if (!(flags & TNY_HEADER_FLAG_CACHED))
+		return;
+
+	if (msg_view_window != NULL) {
+		modest_msg_view_window_remove_attachments (MODEST_MSG_VIEW_WINDOW (msg_view_window), TRUE);
+	} else {
+		ModestMailOperation *mail_op = NULL;
+		mail_op = modest_mail_operation_new_with_error_handling (MODEST_MAIL_OPERATION_TYPE_OPEN,
+									 G_OBJECT (win),
+									 modest_ui_actions_get_msgs_full_error_handler,
+									 NULL);
+		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
+		modest_mail_operation_get_msg (mail_op, header, open_msg_for_purge_cb, win);
+
+		g_object_unref (mail_op);
+	}
+	if (header)
+		g_object_unref (header);
+	if (header_list)
+		g_object_unref (header_list);
+}
+
 /*
  * UI handler for the "Move to" action when invoked from the
  * ModestMainWindow
@@ -3132,8 +3250,10 @@ void
 modest_ui_actions_remove_attachments (GtkAction *action,
 				      ModestWindow *window)
 {
-	if (MODEST_IS_MSG_VIEW_WINDOW (window)) {
-		modest_msg_view_window_remove_attachments (MODEST_MSG_VIEW_WINDOW (window));
+	if (MODEST_IS_MAIN_WINDOW (window)) {
+		modest_ui_actions_on_main_window_remove_attachments (action, MODEST_MAIN_WINDOW (window));
+	} else if (MODEST_IS_MSG_VIEW_WINDOW (window)) {
+		modest_msg_view_window_remove_attachments (MODEST_MSG_VIEW_WINDOW (window), FALSE);
 	} else {
 		/* not supported window for this action */
 		g_return_if_reached ();
