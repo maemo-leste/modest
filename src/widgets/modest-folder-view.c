@@ -772,7 +772,13 @@ modest_folder_view_on_map (ModestFolderView *self,
 	/* This won't happen often */
 	if (G_UNLIKELY (priv->reselect)) {
 		/* Select the first inbox or the local account if not found */
-		modest_folder_view_select_first_inbox_or_local (self);
+
+		/* TODO: this could cause a lock at startup, so we
+		   comment it for the moment. We know that this will
+		   be a bug, because the INBOX is not selected, but we
+		   need to rewrite some parts of Modest to avoid the
+		   deathlock situation */
+/* 		modest_folder_view_select_first_inbox_or_local (self); */
 		priv->reselect = FALSE;
 	}
 	return FALSE;
