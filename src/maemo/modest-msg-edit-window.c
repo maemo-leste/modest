@@ -2523,7 +2523,8 @@ remove_attachment_insensitive_press (GtkWidget *widget, ModestMsgEditWindow *edi
 		hildon_banner_show_information (NULL, NULL, _("mcen_ib_unable_to_display_more"));
 	else if (n_att_selected == 0)
 		hildon_banner_show_information (NULL, NULL, _("TODO: select one attachment"));
-		
+	else
+		hildon_banner_show_information (NULL, NULL, _("mail_ib_unable_to_purge_attachments"));
 }
 
 static void
