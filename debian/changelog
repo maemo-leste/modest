@@ -1,4 +1,12 @@
-modest (1.0-2007.26-2ubuntu1) gutsy; urgency=low
+modest (1.0-2007.26-4) gutsy; urgency=low
+
+  * Fixes : NB#60166, NB#61860, NB#61835, NB#60458, NB#57940, NB#60240
+  * Fixes : NB#61044, NB#60441, NB#61648, NB#61497, NB#59301, NB#61607
+  * Fixes : NB#59012
+
+ -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Thu, 28 Jun 2007 18:45:21 +0300
+
+modest (1.0-2007.26-3) gutsy; urgency=low
 
   * Fixes : NB#56201, NB#59307, NB#60916, NB#58364, NB#61811, NB#59325
   * Fixes : NB#60714, NB#61369, NB#61707, NB#61607, NB#61437, NB#61432
