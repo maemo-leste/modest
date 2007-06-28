@@ -1447,8 +1447,6 @@ modest_ui_actions_on_item_not_found (ModestHeaderView *header_view,ModestItemTyp
 
 	item = (type == MODEST_ITEM_TYPE_FOLDER) ? "folder" : "message";
 	
-	if (g_main_depth > 0)	
-		gdk_threads_enter ();
 	online = tny_device_is_online (modest_runtime_get_device());
 
 	if (online) {
@@ -1482,8 +1480,6 @@ modest_ui_actions_on_item_not_found (ModestHeaderView *header_view,ModestItemTyp
 		}
 	}
 	gtk_widget_destroy (dialog);
-	if (g_main_depth > 0)	
-		gdk_threads_leave ();
 }
 
 void
