@@ -142,15 +142,17 @@ main (int argc, char *argv[])
 	g_free (account);
 	
 	if (!batch) {
+		gdk_threads_enter ();
 		if (!modest_init_init_ui (argc, argv)) {
 			g_printerr ("modest: cannot init modest ui\n");
 			retval = MODEST_ERR_UI;
+			gdk_threads_leave ();
 			goto cleanup;
 		} else {
 			GtkWidget *ui = NULL;
 			retval = start_ui (account_or_default,
 					   mailto, cc, bcc, subject, body, &ui);
-			if (G_IS_OBJECT(ui))	
+			if (G_IS_OBJECT(ui))
 				g_signal_connect (G_OBJECT (ui), "show", G_CALLBACK(on_show), NULL);
 		}
 	} else {
@@ -245,6 +247,7 @@ start_ui (const gchar *account_name, const gchar* mailto, const gchar *cc, const
 	
 	gtk_widget_show_all (GTK_WIDGET (win));
 	gtk_main();
+	gdk_threads_leave ();
 	
 	return MODEST_ERR_NONE;
 }
