@@ -126,9 +126,9 @@ static gint         expand_row_timeout     (gpointer data);
 
 static void         setup_drag_and_drop    (GtkTreeView *self);
 
-static void          _clipboard_set_selected_data (ModestFolderView *folder_view, gboolean delete);
+static gboolean     _clipboard_set_selected_data (ModestFolderView *folder_view, gboolean delete);
 
-static void          _clear_hidding_filter (ModestFolderView *folder_view);
+static void         _clear_hidding_filter (ModestFolderView *folder_view);
 
 
 
@@ -2002,11 +2002,11 @@ _clipboard_set_selected_data (ModestFolderView *folder_view,
 	TnyFolderStore *folder = NULL;
 	gboolean retval = FALSE;
 
-	g_return_if_fail (MODEST_IS_FOLDER_VIEW (folder_view));
+	g_return_val_if_fail (MODEST_IS_FOLDER_VIEW (folder_view), FALSE);
 	priv = MODEST_FOLDER_VIEW_GET_PRIVATE (folder_view);
 		
 	/* Set selected data on clipboard   */
-	g_return_if_fail (MODEST_IS_EMAIL_CLIPBOARD (priv->clipboard));
+	g_return_val_if_fail (MODEST_IS_EMAIL_CLIPBOARD (priv->clipboard), FALSE);
 	folder = modest_folder_view_get_selected (folder_view);
 
 	/* Do not allow to select an account */

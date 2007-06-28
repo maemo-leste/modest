@@ -268,7 +268,7 @@ modest_details_dialog_set_folder_default (ModestDetailsDialog *self,
 					  TnyFolder *folder)
 {
 	TnyFolderStats *stats;
-	gchar *count, *size_s;
+	gchar *count, *size_s, *name;
 	gint size;
 	
 	/* Set window title */
@@ -285,12 +285,21 @@ modest_details_dialog_set_folder_default (ModestDetailsDialog *self,
 	else
 		size_s = modest_text_utils_get_display_size (size);
 
-	modest_details_dialog_add_data (self, _("mcen_fi_folder_properties_foldername"), 
-					tny_folder_get_name (folder));
+	/* Different names for the local folders */
+	if (modest_tny_folder_is_local_folder (folder)) {
+		gint type = modest_tny_folder_get_local_folder_type (folder);
+		if (type != TNY_FOLDER_TYPE_UNKNOWN)
+			name = g_strdup(modest_local_folder_info_get_type_display_name (type));
+	} else {
+		name = g_strdup (tny_folder_get_name (folder));
+	}
+
+	modest_details_dialog_add_data (self, _("mcen_fi_folder_properties_foldername"), name);
 	modest_details_dialog_add_data (self, _("mcen_fi_folder_properties_messages"), count);
 	modest_details_dialog_add_data (self, _("mcen_fi_folder_properties_size"), size_s);
 
 	/* Frees */
+	g_free (name);
 	g_free (size_s);
 	g_free (count);
 	g_object_unref (stats);
