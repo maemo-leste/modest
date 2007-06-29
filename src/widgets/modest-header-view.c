@@ -283,7 +283,7 @@ modest_header_view_set_columns (ModestHeaderView *self, const GList *columns, Tn
 	GtkTreeViewColumn *column=NULL;
 	GtkTreeSelection *selection = NULL;
 	GtkCellRenderer *renderer_msgtype,*renderer_header,
-		*renderer_attach, *renderer_compact_date;
+		*renderer_attach, *renderer_compact_date_or_status;
 	GtkCellRenderer *renderer_compact_header, *renderer_recpt_box, 
 		*renderer_subject, *renderer_subject_box, *renderer_recpt,
 		*renderer_priority;
@@ -304,7 +304,7 @@ modest_header_view_set_columns (ModestHeaderView *self, const GList *columns, Tn
 	renderer_subject_box = modest_hbox_cell_renderer_new ();
 	renderer_recpt = gtk_cell_renderer_text_new ();
 	renderer_subject = gtk_cell_renderer_text_new ();
-	renderer_compact_date  = gtk_cell_renderer_text_new ();
+	renderer_compact_date_or_status  = gtk_cell_renderer_text_new ();
 
 	modest_vbox_cell_renderer_append (MODEST_VBOX_CELL_RENDERER (renderer_compact_header), renderer_subject_box, FALSE);
 	g_object_set_data (G_OBJECT (renderer_compact_header), "subject-box-renderer", renderer_subject_box);
@@ -318,8 +318,8 @@ modest_header_view_set_columns (ModestHeaderView *self, const GList *columns, Tn
 	g_object_set_data (G_OBJECT (renderer_recpt_box), "attach-renderer", renderer_attach);
 	modest_hbox_cell_renderer_append (MODEST_HBOX_CELL_RENDERER (renderer_recpt_box), renderer_recpt, TRUE);
 	g_object_set_data (G_OBJECT (renderer_recpt_box), "recipient-renderer", renderer_recpt);
-	modest_hbox_cell_renderer_append (MODEST_HBOX_CELL_RENDERER (renderer_recpt_box), renderer_compact_date, FALSE);
-	g_object_set_data (G_OBJECT (renderer_recpt_box), "date-renderer", renderer_compact_date);
+	modest_hbox_cell_renderer_append (MODEST_HBOX_CELL_RENDERER (renderer_recpt_box), renderer_compact_date_or_status, FALSE);
+	g_object_set_data (G_OBJECT (renderer_recpt_box), "date-renderer", renderer_compact_date_or_status);
 
 	g_object_set(G_OBJECT(renderer_header),
 		     "ellipsize", PANGO_ELLIPSIZE_END,
@@ -330,7 +330,7 @@ modest_header_view_set_columns (ModestHeaderView *self, const GList *columns, Tn
 	g_object_set (G_OBJECT (renderer_recpt),
 		      "ellipsize", PANGO_ELLIPSIZE_END,
 		      NULL);
-	g_object_set(G_OBJECT(renderer_compact_date),
+	g_object_set(G_OBJECT(renderer_compact_date_or_status),
 		     "xalign", 1.0,
 		     NULL);
 
@@ -397,16 +397,18 @@ modest_header_view_set_columns (ModestHeaderView *self, const GList *columns, Tn
 						     TNY_GTK_HEADER_LIST_MODEL_FROM_COLUMN,
 						     FALSE,
 						     (GtkTreeCellDataFunc)_modest_header_view_compact_header_cell_data,
-						     GINT_TO_POINTER(TRUE));
+						     GINT_TO_POINTER(MODEST_HEADER_VIEW_COMPACT_HEADER_MODE_IN));
 			compact_column = column;
 			break;
 
 		case MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER_OUT:
 			column = get_new_column (_("Header"), renderer_compact_header, TRUE,
-						     TNY_GTK_HEADER_LIST_MODEL_FROM_COLUMN,
-						     FALSE,
-						     (GtkTreeCellDataFunc)_modest_header_view_compact_header_cell_data,
-						     GINT_TO_POINTER(FALSE));
+						 TNY_GTK_HEADER_LIST_MODEL_FROM_COLUMN,
+						 FALSE,
+						 (GtkTreeCellDataFunc)_modest_header_view_compact_header_cell_data,
+						 GINT_TO_POINTER((type == TNY_FOLDER_TYPE_OUTBOX)?
+								 MODEST_HEADER_VIEW_COMPACT_HEADER_MODE_OUTBOX:
+								 MODEST_HEADER_VIEW_COMPACT_HEADER_MODE_OUT));
 			compact_column = column;
 			break;
 
@@ -443,7 +445,7 @@ modest_header_view_set_columns (ModestHeaderView *self, const GList *columns, Tn
 						 NULL); 
 			break;
 		case MODEST_HEADER_VIEW_COLUMN_STATUS:
-			column = get_new_column (_("Status"), renderer_compact_date, TRUE,
+			column = get_new_column (_("Status"), renderer_compact_date_or_status, TRUE,
 						 TNY_GTK_HEADER_LIST_MODEL_MESSAGE_SIZE_COLUMN,
 						 FALSE,
 						 (GtkTreeCellDataFunc)_modest_header_view_status_cell_data,

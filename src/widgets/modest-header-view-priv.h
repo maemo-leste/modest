@@ -60,6 +60,12 @@ void _modest_header_view_sender_receiver_cell_data  (GtkTreeViewColumn *column, 
 void _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 						    GtkTreeModel *tree_model,  GtkTreeIter *iter,  gpointer user_data);
 
+typedef enum _ModestHeaderViewCompactHeaderMode {
+	MODEST_HEADER_VIEW_COMPACT_HEADER_MODE_IN = 0,
+	MODEST_HEADER_VIEW_COMPACT_HEADER_MODE_OUT = 1,
+	MODEST_HEADER_VIEW_COMPACT_HEADER_MODE_OUTBOX = 2
+} ModestHeaderViewCompactHeaderMode;
+
 G_END_DECLS
 
 #endif /* __MODEST_HEADER_VIEW_PRIV_H__ */

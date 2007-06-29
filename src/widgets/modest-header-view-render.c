@@ -31,10 +31,69 @@
 #include <modest-header-view-priv.h>
 #include <modest-icon-names.h>
 #include <modest-text-utils.h>
+#include <modest-tny-send-queue.h>
+#include <modest-tny-folder.h>
+#include <modest-tny-account.h>
 #include <modest-runtime.h>
 #include <glib/gi18n.h>
 #include <modest-platform.h>
 #include <string.h>
+
+
+void 
+fill_list_of_caches (gpointer key, gpointer value, gpointer userdata)
+{
+	GSList **send_queues = (GSList **) userdata;
+	*send_queues = g_slist_prepend (*send_queues, value);
+}
+
+static ModestTnySendQueueStatus
+get_status_of_uid (const gchar *uid)
+{
+	ModestCacheMgr *cache_mgr;
+	GHashTable     *send_queue_cache;
+	GSList *send_queues = NULL, *node;
+	/* get_msg_status returns suspended by default, so we want to detect changes */
+	ModestTnySendQueueStatus status = MODEST_TNY_SEND_QUEUE_SUSPENDED;
+	
+	cache_mgr = modest_runtime_get_cache_mgr ();
+	send_queue_cache = modest_cache_mgr_get_cache (cache_mgr,
+						       MODEST_CACHE_MGR_CACHE_TYPE_SEND_QUEUE);
+
+	g_hash_table_foreach (send_queue_cache, (GHFunc) fill_list_of_caches, &send_queues);
+
+	for (node = send_queues; node != NULL; node = g_slist_next (node)) {
+		ModestTnySendQueueStatus queue_status = modest_tny_send_queue_get_msg_status (
+			MODEST_TNY_SEND_QUEUE (node->data), uid);
+		if (queue_status != MODEST_TNY_SEND_QUEUE_SUSPENDED)
+			status = queue_status;
+		break;
+	}
+	g_slist_free (send_queues);
+	return status;
+}
+
+static const gchar *
+get_status_string (ModestTnySendQueueStatus status)
+{
+	switch (status) {
+	case MODEST_TNY_SEND_QUEUE_WAITING:
+		return _("mcen_li_outbox_waiting");
+		break;
+	case MODEST_TNY_SEND_QUEUE_SENDING:
+		return _("mcen_li_outbox_sending");
+		break;
+	case MODEST_TNY_SEND_QUEUE_SUSPENDED:
+		return _("mcen_li_outbox_suspended");
+		break;
+	case MODEST_TNY_SEND_QUEUE_FAILED:
+		return _("mcen_li_outbox_failed");
+		break;
+	default:
+		return "";
+		break;
+	}
+}
 
 static GdkPixbuf*
 get_pixbuf_for_flag (TnyHeaderFlags flag)
@@ -196,10 +255,11 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 	TnyHeaderFlags flags;
 	gchar *address, *subject, *header;
 	time_t date;
-	gboolean is_incoming;
-	GtkCellRenderer *recipient_cell, *date_cell, *subject_cell,
+	ModestHeaderViewCompactHeaderMode header_mode;
+	GtkCellRenderer *recipient_cell, *date_or_status_cell, *subject_cell,
 		*attach_cell, *priority_cell,
 		*recipient_box, *subject_box;
+	TnyHeader *msg_header;
 	gchar *display_date = NULL, *tmp_date = NULL;
 
 	recipient_box = GTK_CELL_RENDERER (g_object_get_data (G_OBJECT (renderer), "recpt-box-renderer"));
@@ -208,12 +268,11 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 	subject_cell = GTK_CELL_RENDERER (g_object_get_data (G_OBJECT (subject_box), "subject-renderer"));
 	attach_cell = GTK_CELL_RENDERER (g_object_get_data (G_OBJECT (recipient_box), "attach-renderer"));
 	recipient_cell = GTK_CELL_RENDERER (g_object_get_data (G_OBJECT (recipient_box), "recipient-renderer"));
-	date_cell = GTK_CELL_RENDERER (g_object_get_data (G_OBJECT (recipient_box), "date-renderer"));
+	date_or_status_cell = GTK_CELL_RENDERER (g_object_get_data (G_OBJECT (recipient_box), "date-renderer"));
 
-	is_incoming = GPOINTER_TO_INT(user_data); /* GPOINTER_TO_BOOLEAN is not available
-						   * in older versions of glib...*/
+	header_mode = GPOINTER_TO_INT (user_data); 
 
-	if (is_incoming)
+	if (header_mode == MODEST_HEADER_VIEW_COMPACT_HEADER_MODE_IN)
 		gtk_tree_model_get (tree_model, iter,
 				    TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN, &flags,
 				    TNY_GTK_HEADER_LIST_MODEL_FROM_COLUMN,  &address,
@@ -225,7 +284,8 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 				    TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN, &flags,
 				    TNY_GTK_HEADER_LIST_MODEL_TO_COLUMN,  &address,
 				    TNY_GTK_HEADER_LIST_MODEL_SUBJECT_COLUMN, &subject,
-				    TNY_GTK_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN, &date,   
+				    TNY_GTK_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN, &date,
+				    TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN, &msg_header,
 				    -1);
 
 	/* flags */
@@ -255,19 +315,34 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 	g_free (header);
 	set_common_flags (recipient_cell, flags);
 
-	/* in some rare cases, mail might have no Date: field. it case,
-	 * don't show the date, instead of bogus 1/1/1970
-	 */
-	if (date)
-		tmp_date = modest_text_utils_get_display_date (date);
-	else
-		tmp_date = g_strdup ("");
-	
-	display_date = g_strdup_printf ("<small>%s</small>", tmp_date);
-	g_object_set (G_OBJECT (date_cell), "markup", display_date, NULL);
-	g_free (tmp_date);
-	g_free (display_date);
-	set_common_flags (date_cell, flags);
+	if (header_mode == MODEST_HEADER_VIEW_COMPACT_HEADER_MODE_OUTBOX) {
+		ModestTnySendQueueStatus status = MODEST_TNY_SEND_QUEUE_WAITING;
+		const gchar *status_str = "";
+		if (msg_header != NULL) {
+			status = get_status_of_uid (tny_header_get_message_id (msg_header));
+		}
+		status_str = get_status_string (status);
+		/* TODO: for now we set the status to waiting always, we need a way to
+		 * retrieve the current send status of a message */
+		status_str = get_status_string (MODEST_TNY_SEND_QUEUE_WAITING);
+		display_date = g_strdup_printf("<small>%s</small>", status_str);
+		g_object_set (G_OBJECT (date_or_status_cell), "markup", display_date, NULL);
+		g_free (display_date);
+	} else {
+		/* in some rare cases, mail might have no Date: field. it case,
+		 * don't show the date, instead of bogus 1/1/1970
+		 */
+		if (date)
+			tmp_date = modest_text_utils_get_display_date (date);
+		else
+			tmp_date = g_strdup ("");
+		
+		display_date = g_strdup_printf ("<small>%s</small>", tmp_date);
+		g_object_set (G_OBJECT (date_or_status_cell), "markup", display_date, NULL);
+		g_free (tmp_date);
+		g_free (display_date);
+	}
+	set_common_flags (date_or_status_cell, flags);
 }
 
 
