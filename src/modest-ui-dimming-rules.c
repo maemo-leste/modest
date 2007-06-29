@@ -1460,7 +1460,7 @@ _invalid_attach_selected (ModestWindow *win,
 static gboolean
 _purged_attach_selected (ModestWindow *win, gboolean all, ModestDimmingRule *rule) 
 {
-	GList *attachments = NULL, *node = NULL;
+	GList *attachments = NULL, *node;
 	gint purged = 0;
 	gint n_attachments = 0;
 	gboolean result = FALSE;
@@ -1546,13 +1546,13 @@ static gboolean
 _already_opened_msg (ModestWindow *win,
 		     guint *n_messages)
 {
-	ModestWindow *window = NULL;
+	//ModestWindow *window = NULL;
 	ModestWindowMgr *mgr = NULL;
 	GtkWidget *header_view = NULL;		
 	TnyList *selected_headers = NULL;
 	TnyIterator *iter = NULL;
 	TnyHeader *header = NULL;
-	gboolean result = TRUE;
+	gboolean found;
 
 	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW(win), FALSE);
 		
@@ -1575,22 +1575,25 @@ _already_opened_msg (ModestWindow *win,
 	/* Check dimmed rule (TODO: check focus on widgets */	
 	mgr = modest_runtime_get_window_mgr ();
 	iter = tny_list_create_iterator (selected_headers);
-	while (!tny_iterator_is_done (iter) && result) {
+	found = FALSE;
+	while (!tny_iterator_is_done (iter)) {
 		header = TNY_HEADER (tny_iterator_get_current (iter));
-		window = modest_window_mgr_find_window_by_header (mgr, header);
-		result = result && (window != NULL);
-			
+		found = modest_window_mgr_find_registered_header (mgr,header, NULL);
+		
 		g_object_unref (header);
 		tny_iterator_next (iter);
+
+		if (found)
+			break;
 	}
-	
+		
 	/* free */
 	if (selected_headers != NULL) 
 		g_object_unref (selected_headers);
 	if (iter != NULL)
 		g_object_unref (iter);
 		
-	return result;
+	return found;
 }
 
 static gboolean

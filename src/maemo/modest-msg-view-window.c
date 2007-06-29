@@ -698,7 +698,12 @@ modest_msg_view_window_get_message (ModestMsgViewWindow *self)
 const gchar*
 modest_msg_view_window_get_message_uid (ModestMsgViewWindow *self)
 {
-	ModestMsgViewWindowPrivate *priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (self);
+	ModestMsgViewWindowPrivate *priv;
+
+	g_return_val_if_fail (self, NULL);
+	
+	priv  = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (self);
+
 	return (const gchar*) priv->msg_uid;
 }
 
@@ -1637,21 +1642,30 @@ modest_msg_view_window_view_attachment (ModestMsgViewWindow *window, TnyMimePart
 		TnyHeader *header = NULL;
 		ModestWindowMgr *mgr;
 		ModestWindow *msg_win = NULL;
-
+		gboolean found;
+		
 		header = tny_msg_get_header (TNY_MSG (mime_part));
-		mgr = modest_runtime_get_window_mgr ();
-		msg_win = modest_window_mgr_find_window_by_header (mgr, header);
+		mgr = modest_runtime_get_window_mgr ();		
+		found = modest_window_mgr_find_registered_header (mgr, header, &msg_win);
 
-		if (!msg_win) {
+		if (found) {
+			if (msg_win) 				/* there is already a window for this uid; top it */
+				gtk_window_present (GTK_WINDOW(msg_win));
+			else 
+				/* if it's found, but there is no msg_win, it's probably in the process of being created;
+				 * thus, we don't do anything */
+				g_warning ("window for is already being created");
+		} else { 
+			/* it's not found, so create a new window for it */
+			modest_window_mgr_register_header (mgr, header); /* register the uid before building the window */
 			gchar *account = g_strdup (modest_window_get_active_account (MODEST_WINDOW (window)));
 			if (!account)
 				account = modest_account_mgr_get_default_account (modest_runtime_get_account_mgr ());
 			msg_win = modest_msg_view_window_new (TNY_MSG (mime_part), account, NULL);
 			modest_window_mgr_register_window (mgr, msg_win);
 			gtk_window_set_transient_for (GTK_WINDOW (msg_win), GTK_WINDOW (window));
+			gtk_widget_show_all (GTK_WIDGET (msg_win));
 		}
-
-		gtk_widget_show_all (GTK_WIDGET (msg_win));
 	}
 	g_object_unref (mime_part);
 }

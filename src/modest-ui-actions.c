@@ -277,14 +277,13 @@ modest_ui_actions_on_delete (GtkAction *action, ModestWindow *win)
 	header_list = get_selected_headers (win);
 	if (!header_list) return;
 
-	/* Check if any of the headers is already opened */
+	/* Check if any of the headers is already opened, or in the process of being opened */
 	iter = tny_list_create_iterator (header_list);
 	found = FALSE;
 	mgr = modest_runtime_get_window_mgr ();
 	while (!tny_iterator_is_done (iter) && !found) {
 		header = TNY_HEADER (tny_iterator_get_current (iter));
-		if (modest_window_mgr_find_window_by_header (mgr, header))
-			found = TRUE;
+		found =  modest_window_mgr_find_registered_header (mgr, header, NULL);
 		g_object_unref (header);
 		tny_iterator_next (iter);
 	}
@@ -618,13 +617,13 @@ open_msg_cb (ModestMailOperation *mail_op,
 		win = modest_msg_edit_window_new (msg, account);
 	} else {
 		gchar *uid = modest_tny_folder_get_header_unique_id (header);
-
+		
 		if (MODEST_IS_MAIN_WINDOW (parent_win)) {
 			GtkWidget *header_view;
 			GtkTreeSelection *sel;
 			GList *sel_list = NULL;
 			GtkTreeModel *model;
-		
+			
 			header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(parent_win),
 									   MODEST_WIDGET_TYPE_HEADER_VIEW);
 
@@ -719,23 +718,37 @@ _modest_ui_actions_open (TnyList *headers, ModestWindow *win)
 	not_opened_headers = tny_simple_list_new ();
 	not_opened_cached_headers = tny_simple_list_new ();
 	while (!tny_iterator_is_done (iter)) {
+
 		ModestWindow *window;
 		TnyHeader *header;
+		gboolean found;
 		
 		header = TNY_HEADER (tny_iterator_get_current (iter));
 		flags = tny_header_get_flags (header);
-		window = modest_window_mgr_find_window_by_header (mgr, header);
 
+		window = NULL;
+		found = modest_window_mgr_find_registered_header (mgr, header, &window);
+		
 		/* Do not open again the message and present the
 		   window to the user */
-		if (window)
-			gtk_window_present (GTK_WINDOW (window));
-		else if (!(flags & TNY_HEADER_FLAG_CACHED))
-			tny_list_append (not_opened_headers, G_OBJECT (header));
-		/* Check if msg has already been retreived */
-		else
-			tny_list_append (not_opened_cached_headers, G_OBJECT (header));
-		
+		if (found) {
+			if (window)
+				gtk_window_present (GTK_WINDOW (window));
+			else
+				/* the header has been registered already, we don't do
+				 * anything but wait for the window to come up*/
+				g_warning ("debug: header %p already registered, waiting for window",
+					   header);
+		} else {
+			/* register the header before actually creating the window */
+			modest_window_mgr_register_header (mgr, header);
+				
+			if (!(flags & TNY_HEADER_FLAG_CACHED))
+				tny_list_append (not_opened_headers, G_OBJECT (header));
+			/* Check if msg has already been retreived */
+			else
+				tny_list_append (not_opened_cached_headers, G_OBJECT (header));
+		}
 		g_object_unref (header);
 		tny_iterator_next (iter);
 	}
@@ -2960,7 +2973,9 @@ modest_ui_actions_on_main_window_remove_attachments (GtkAction *action,
 	TnyIterator *iter;
 	TnyHeader *header;
 	TnyHeaderFlags flags;
-	GtkWidget *msg_view_window;
+	ModestWindow *msg_view_window =  NULL;
+	gboolean found;
+
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW (win));
 
 	header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win),
@@ -2976,22 +2991,28 @@ modest_ui_actions_on_main_window_remove_attachments (GtkAction *action,
 		return;
 	}
 
-	msg_view_window = GTK_WIDGET (modest_window_mgr_find_window_by_header (modest_runtime_get_window_mgr (), header));
+	found = modest_window_mgr_find_registered_header (modest_runtime_get_window_mgr (),
+							  header, &msg_view_window);
 	flags = tny_header_get_flags (header);
 	if (!(flags & TNY_HEADER_FLAG_CACHED))
 		return;
-
-	if (msg_view_window != NULL) {
-		modest_msg_view_window_remove_attachments (MODEST_MSG_VIEW_WINDOW (msg_view_window), TRUE);
+	if (found) {
+		if (msg_view_window != NULL) 
+			modest_msg_view_window_remove_attachments (MODEST_MSG_VIEW_WINDOW (msg_view_window), TRUE);
+		else {
+			/* do nothing; uid was registered before, so window is probably on it's way */
+			g_warning ("debug: header %p has already been registered", header);
+		}
 	} else {
 		ModestMailOperation *mail_op = NULL;
+		modest_window_mgr_register_header (modest_runtime_get_window_mgr (), header);
 		mail_op = modest_mail_operation_new_with_error_handling (MODEST_MAIL_OPERATION_TYPE_OPEN,
 									 G_OBJECT (win),
 									 modest_ui_actions_get_msgs_full_error_handler,
 									 NULL);
 		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
 		modest_mail_operation_get_msg (mail_op, header, open_msg_for_purge_cb, win);
-
+		
 		g_object_unref (mail_op);
 	}
 	if (header)
