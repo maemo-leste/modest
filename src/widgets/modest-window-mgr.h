@@ -87,18 +87,6 @@ void           modest_window_mgr_unregister_window     (ModestWindowMgr *self,
 							ModestWindow *window);
 
 
-/**
- * modest_window_mgr_find_window_by_header:
- * @self: the #ModestWindowMgr
- * @msgid: the message uid
- * 
- * Looks for a #ModestWindow that shows the message whose header is
- * passed as argument
- *
- * Return value: the #ModestWindow if found, else NULL
- **/
-ModestWindow*  modest_window_mgr_find_window_by_header (ModestWindowMgr *self, 
-							TnyHeader *header);
 
 /**
  * modest_window_mgr_set_fullscreen_mode:
@@ -154,6 +142,35 @@ ModestWindow*  modest_window_mgr_get_main_window       (ModestWindowMgr *self);
  **/
 void modest_window_mgr_prevent_hibernation_while_window_is_shown (ModestWindowMgr *self, 
 	GtkWindow *window);
+
+
+/**
+ * modest_window_mgr_find_registered_header
+ * @self: a #ModestWindowMgr
+ * @header: a valid #TnyHeader
+ * 
+ * search for the given uid in both the list of preregistered uids and in the window list;
+ * if it's available in the window list, fill the *win out-param
+ *
+ * returns TRUE if found, FALSE otherwise
+ **/
+gboolean modest_window_mgr_find_registered_header (ModestWindowMgr *self,  TnyHeader *header,
+					       ModestWindow **win);
+
+
+/**
+ * modest_window_mgr_register_header
+ * @self: a #ModestWindowMgr
+ * @header: a valid #TnyHeader
+ * 
+ * register the uid, even before the window is created. thus, we know when
+ * some window creation might already be underway. the uid will automatically be
+ * removed when the window itself will registered
+ * 
+ **/
+void  modest_window_mgr_register_header (ModestWindowMgr *self,  TnyHeader *header);
+	
+
 
 /**
  * modest_window_mgr_get_hibernation_is_prevented:

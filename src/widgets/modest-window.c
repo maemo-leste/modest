@@ -293,6 +293,8 @@ modest_window_show_toolbar_default (ModestWindow *window,
 	g_warning ("modest: You should implement %s", __FUNCTION__);
 }
 
+
+
 void
 modest_window_save_state (ModestWindow *window)
 {
@@ -300,3 +302,5 @@ modest_window_save_state (ModestWindow *window)
 	if (klass->save_state_func)
 		klass->save_state_func (window);
 }
+
+
