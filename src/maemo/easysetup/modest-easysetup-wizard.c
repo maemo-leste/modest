@@ -1226,7 +1226,7 @@ on_before_next (ModestWizardDialog *dialog, GtkWidget *current_page, GtkWidget *
 
 		if (name_in_use) {
 			/* Warn the user via a dialog: */
-			show_error (GTK_WINDOW (account_wizard), _("mail_ib_account_name_already_existing"));
+			hildon_banner_show_information(NULL, NULL, _("mail_ib_account_name_already_existing"));
             
 			return FALSE;
 		}

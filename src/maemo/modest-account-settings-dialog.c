@@ -824,7 +824,7 @@ check_data (ModestAccountSettingsDialog *self)
 	
 		if (name_in_use) {
 			/* Warn the user via a dialog: */
-			show_error (GTK_WINDOW (self), _("mail_ib_account_name_already_existing"));
+			hildon_banner_show_information(NULL, NULL, _("mail_ib_account_name_already_existing"));
 	        
 			return FALSE;
 		}
@@ -1464,7 +1464,3 @@ show_ok (GtkWindow *parent_window, const gchar* text)
 	hildon_banner_show_information(GTK_WIDGET(
 																						gtk_widget_get_parent_window(GTK_WIDGET(parent_window))), NULL, text);
 }
-
-
-
-
