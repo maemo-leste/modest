@@ -1036,7 +1036,7 @@ modest_msg_view_window_select_next_message (ModestMsgViewWindow *window)
 
 	if (priv->header_model) {
 		path = gtk_tree_row_reference_get_path (priv->row_reference);
-		if (path != NULL) return FALSE;
+		if (path == NULL) return FALSE;
 
 		gtk_tree_model_get_iter (priv->header_model,
 					 &tmp_iter,
