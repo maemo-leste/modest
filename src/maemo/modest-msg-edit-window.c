@@ -1789,7 +1789,7 @@ modest_msg_edit_window_size_change (GtkCheckMenuItem *menu_item,
 			wp_text_view_reset_and_show_im (WP_TEXT_VIEW (priv->msg_body));
 		
 		text_buffer_refresh_attributes (WP_TEXT_BUFFER (priv->text_buffer), MODEST_MSG_EDIT_WINDOW (window));
-		markup = g_strconcat ("<span font_family='Serif'>", gtk_label_get_text (GTK_LABEL (label)), "</span>", NULL);
+		markup = g_strconcat ("<span font_family='", DEFAULT_SIZE_BUTTON_FONT_FAMILY, "'>", gtk_label_get_text (GTK_LABEL (label)), "</span>", NULL);
 		gtk_label_set_markup (GTK_LABEL (priv->size_tool_button_label), markup);
 		g_free (markup);
 	}
