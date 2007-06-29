@@ -44,6 +44,7 @@
 
 #include "modest-tny-platform-factory.h"
 #include "modest-platform.h"
+#include <tny-mime-part.h>
 
 #ifdef MODEST_PLATFORM_MAEMO
 #include "maemo/modest-osso-state-saving.h"
