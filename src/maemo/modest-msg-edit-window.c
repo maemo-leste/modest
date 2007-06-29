@@ -1198,7 +1198,7 @@ modest_msg_edit_window_set_format_state (ModestMsgEditWindow *self,
 		wp_text_buffer_set_attribute (WP_TEXT_BUFFER (priv->text_buffer), WPT_FORECOLOR, (gpointer) (&(buffer_format->color)));
 	}
 	if (buffer_format->cs.font_size) {
-		wp_text_buffer_set_attribute (WP_TEXT_BUFFER (priv->text_buffer), WPT_BOLD, (gpointer) (buffer_format->font_size));
+		wp_text_buffer_set_attribute (WP_TEXT_BUFFER (priv->text_buffer), WPT_FONT_SIZE, (gpointer) (buffer_format->font_size));
 	}
 	if (buffer_format->cs.justification) {
 		switch (buffer_format->justification) {
@@ -1217,7 +1217,7 @@ modest_msg_edit_window_set_format_state (ModestMsgEditWindow *self,
 			
 	}
 	if (buffer_format->cs.font) {
-		wp_text_buffer_set_attribute (WP_TEXT_BUFFER (priv->text_buffer), WPT_BOLD, (gpointer) (buffer_format->font));
+		wp_text_buffer_set_attribute (WP_TEXT_BUFFER (priv->text_buffer), WPT_FONT, (gpointer) (buffer_format->font));
 	}
 	if (buffer_format->cs.bullet) {
 		wp_text_buffer_set_attribute (WP_TEXT_BUFFER (priv->text_buffer), WPT_BULLET, (gpointer) ((int)buffer_format->bullet));
@@ -1773,7 +1773,7 @@ modest_msg_edit_window_size_change (GtkCheckMenuItem *menu_item,
 		WPTextBufferFormat format;
 
 		memset (&format, 0, sizeof (format));
-		wp_text_buffer_get_current_state (WP_TEXT_BUFFER (priv->text_buffer), &format);
+		wp_text_buffer_get_attributes (WP_TEXT_BUFFER (priv->text_buffer), &format, FALSE);
 
 		label = gtk_bin_get_child (GTK_BIN (menu_item));
 		
@@ -1782,11 +1782,11 @@ modest_msg_edit_window_size_change (GtkCheckMenuItem *menu_item,
 		format.cs.text_position = TRUE;
 		format.cs.font = TRUE;
 		format.font_size = wp_get_font_size_index (new_size_index, DEFAULT_FONT_SIZE);
-		wp_text_buffer_set_format (WP_TEXT_BUFFER (priv->text_buffer), &format);
+/* 		wp_text_buffer_set_format (WP_TEXT_BUFFER (priv->text_buffer), &format); */
 
-/* 		if (!wp_text_buffer_set_attribute (WP_TEXT_BUFFER (priv->text_buffer), WPT_FONT_SIZE, */
-/* 						   (gpointer) wp_get_font_size_index (new_size_index, 12))) */
-/* 			wp_text_view_reset_and_show_im (WP_TEXT_VIEW (priv->msg_body)); */
+		if (!wp_text_buffer_set_attribute (WP_TEXT_BUFFER (priv->text_buffer), WPT_FONT_SIZE,
+						   (gpointer) wp_get_font_size_index (new_size_index, 12)))
+			wp_text_view_reset_and_show_im (WP_TEXT_VIEW (priv->msg_body));
 		
 		text_buffer_refresh_attributes (WP_TEXT_BUFFER (priv->text_buffer), MODEST_MSG_EDIT_WINDOW (window));
 		markup = g_strconcat ("<span font_family='Serif'>", gtk_label_get_text (GTK_LABEL (label)), "</span>", NULL);
