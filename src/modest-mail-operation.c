@@ -1410,7 +1410,7 @@ modest_mail_operation_xfer_folder (ModestMailOperation *self,
 				   gboolean delete_original)
 {
 	ModestMailOperationPrivate *priv = NULL;
-	ModestTnyFolderRules parent_rules, rules;
+	ModestTnyFolderRules parent_rules = 0, rules = 0;
 
 	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
 	g_return_if_fail (TNY_IS_FOLDER (folder));

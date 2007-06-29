@@ -1460,7 +1460,7 @@ _invalid_attach_selected (ModestWindow *win,
 static gboolean
 _purged_attach_selected (ModestWindow *win, gboolean all, ModestDimmingRule *rule) 
 {
-	GList *attachments, *node;
+	GList *attachments = NULL, *node = NULL;
 	gint purged = 0;
 	gint n_attachments = 0;
 	gboolean result = FALSE;

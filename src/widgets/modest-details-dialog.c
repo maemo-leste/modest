@@ -268,7 +268,7 @@ modest_details_dialog_set_folder_default (ModestDetailsDialog *self,
 					  TnyFolder *folder)
 {
 	TnyFolderStats *stats;
-	gchar *count, *size_s, *name;
+	gchar *count = NULL, *size_s = NULL, *name = NULL;
 	gint size;
 	
 	/* Set window title */
