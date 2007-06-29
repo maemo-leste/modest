@@ -170,9 +170,9 @@ on_delete_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 		dialog = gtk_dialog_new_with_buttons (_("Confirmation dialog"),
 						      GTK_WINDOW (self),
 						      GTK_DIALOG_MODAL,
-						      GTK_STOCK_YES,
+						      GTK_STOCK_OK,
 						      GTK_RESPONSE_ACCEPT,
-						      GTK_STOCK_NO,
+						      GTK_STOCK_CANCEL,
 						      GTK_RESPONSE_REJECT,
 						      NULL);
 		txt = g_strdup_printf (_("emev_nc_delete_mailboximap"), 
