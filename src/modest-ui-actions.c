@@ -2875,8 +2875,9 @@ transfer_msgs_from_viewer_cb (const GObject *object, gpointer user_data)
 	first = modest_msg_view_window_first_message_selected (self);	
 	if (last & first) {
 		/* No more messages to view, so close this window */
-		gboolean ret_value;
-		g_signal_emit_by_name (G_OBJECT (self), "delete-event", NULL, &ret_value);
+/* 		gboolean ret_value; */
+/* 		g_signal_emit_by_name (G_OBJECT (self), "delete-event", NULL, &ret_value); */
+		modest_ui_actions_on_close_window (NULL, MODEST_WINDOW(self));
 	} else if (last)
 		modest_msg_view_window_select_previous_message (self);
 	else 

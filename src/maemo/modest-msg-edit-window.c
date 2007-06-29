@@ -148,6 +148,11 @@ static gboolean gtk_text_iter_forward_search_insensitive (const GtkTextIter *ite
 							  
 
 
+/* static gboolean */
+/* on_key_pressed (GtkWidget *self, */
+/* 		GdkEventKey *event, */
+/* 		gpointer user_data); */
+
 static void edit_menu_activated (GtkAction *action,
 				 gpointer userdata);
 static void view_menu_activated (GtkAction *action,
@@ -434,6 +439,8 @@ init_window (ModestMsgEditWindow *obj)
 
 	priv->find_toolbar = hildon_find_toolbar_new (NULL);
 	gtk_widget_set_no_show_all (priv->find_toolbar, TRUE);
+
+/* 	g_signal_connect (G_OBJECT (obj), "key_pressed", G_CALLBACK (on_key_pressed), NULL) */
 
 	g_signal_connect (G_OBJECT (priv->text_buffer), "refresh_attributes",
 			  G_CALLBACK (text_buffer_refresh_attributes), obj);

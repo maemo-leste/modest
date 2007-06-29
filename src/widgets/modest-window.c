@@ -29,6 +29,7 @@
 
 #include "modest-window.h"
 #include "modest-window-priv.h"
+#include "modest-ui-actions.h"
 #include "modest-tny-platform-factory.h"
 
 /* 'private'/'protected' functions */
@@ -43,6 +44,9 @@ static gboolean    modest_window_zoom_plus_default      (ModestWindow *window);
 static gboolean    modest_window_zoom_minus_default     (ModestWindow *window);
 static void        modest_window_show_toolbar_default   (ModestWindow *window,
 							 gboolean show_toolbar);
+
+static gboolean    on_key_pressed (GtkWidget *self, GdkEventKey *event, gpointer user_data);
+
 
 /* list my signals  */
 enum {
@@ -117,6 +121,11 @@ modest_window_init (ModestWindow *obj)
 	priv->menubar        = NULL;
 
 	priv->active_account = NULL;
+
+	/* Connect signals */
+	g_signal_connect (G_OBJECT (obj), 
+			  "key-press-event", 
+			  G_CALLBACK (on_key_pressed), NULL);
 }
 
 static void
@@ -303,4 +312,22 @@ modest_window_save_state (ModestWindow *window)
 		klass->save_state_func (window);
 }
 
-
+static gboolean
+on_key_pressed (GtkWidget *self,
+		GdkEventKey *event,
+		gpointer user_data)
+{
+	switch (event->keyval) {
+	case GDK_F6: 
+		modest_ui_actions_on_change_fullscreen (NULL, MODEST_WINDOW(self));
+		break;
+	case GDK_F7: 
+		modest_ui_actions_on_zoom_plus (NULL, MODEST_WINDOW(self));
+		break;
+	case GDK_F8: 
+		modest_ui_actions_on_zoom_minus	(NULL, MODEST_WINDOW(self));
+		break;
+	}
+	
+	return TRUE;
+}
