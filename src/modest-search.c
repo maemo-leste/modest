@@ -478,16 +478,16 @@ modest_search_folder (TnyFolder *folder, ModestSearch *search)
 				if (msg) {
 					g_object_unref (msg);
 				}
-			}	
-
-			found = search_mime_part_and_child_parts (TNY_MIME_PART (msg), 
-				search);
-			if (found) {
-				retval = add_hit (retval, cur, folder);
-			}
+			} else {	
 			
-			g_object_unref (msg);
-
+				found = search_mime_part_and_child_parts (TNY_MIME_PART (msg), 
+									  search);
+				if (found) {
+					retval = add_hit (retval, cur, folder);
+				}
+			}
+			if (msg)
+				g_object_unref (msg);
 		}
 
 go_next:
@@ -575,20 +575,21 @@ modest_search_all_accounts (ModestSearch *search)
 		GList      *res;
 
 		account = TNY_ACCOUNT (tny_iterator_get_current (iter));
-
-		/* g_debug ("DEBUG: %s: Searching account %s",
-			 __FUNCTION__, tny_account_get_name (account)); */
-		res = modest_search_account (account, search);
+	
 		
+		/* g_debug ("DEBUG: %s: Searching account %s",
+		   __FUNCTION__, tny_account_get_name (account)); */
+		res = modest_search_account (account, search);
+			
 		if (res != NULL) {
-
+			
 			if (hits == NULL) {
 				hits = res;
 			} else {
 				hits = g_list_concat (hits, res);
 			}
 		}
-
+			
 		g_object_unref (account);
 		tny_iterator_next (iter);
 	}
