@@ -1,3 +1,9 @@
+2007-06-29  Murray Cumming  <murrayc@murrayc.com
+
+	* libmodest-dbus-client/libmodest-dbus-client.c: Improved the documentation slightly.
+	* src/modest-mail-operation.c: (modest_mail_operation_xfer_folder):
+	Debug output to give some more clue when a folder move is not allowed.
+
 2007-06-28  Murray Cumming  <murrayc@murrayc.com
 
 	* src/modest-tny-account.c: (on_modest_file_system_info),
