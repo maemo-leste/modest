@@ -391,12 +391,7 @@ progressbar_clean (GtkProgressBar *bar)
 GtkWidget*
 modest_progress_bar_widget_new ()
 {
-	GtkWidget *progress_bar;
-
-	progress_bar = GTK_WIDGET (g_object_new (MODEST_TYPE_PROGRESS_BAR_WIDGET, NULL));
-	gtk_progress_bar_set_pulse_step (GTK_PROGRESS_BAR (progress_bar), 0.25);
-
-	return progress_bar;
+	return GTK_WIDGET (g_object_new (MODEST_TYPE_PROGRESS_BAR_WIDGET, NULL));
 }
 
 
