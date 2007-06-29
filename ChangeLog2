@@ -1,4 +1,24 @@
-2007-06-29  Murray Cumming  <murrayc@murrayc-desktop>
+2007-06-29  Murray Cumming  <murrayc@murrayc.com
+
+	* src/modest-tny-account.c: 
+	(modest_tny_account_new_from_server_account):
+	Handle the TnyAccount::"connection-status-changed" signal, which tinymail 
+	now uses to request a connection when it needs one, and which it uses 
+	to tell us that something is wrong with the connection, so we can force 
+	the accounts offline to prevent further problems.
+	
+	* src/modest-defs.h:
+	* src/modest-init.c: (init_default_settings):
+	* src/modest-mail-operation.c:
+	(modest_mail_operation_update_account):
+	* src/modest-main.c: (on_show): Do not try to connect explicitly on startup.
+	This should not be necessary anymore. Do not set the conf key that 
+	determined this (it was always TRUE and not set anywhere else).
+	
+	* src/modest-ui-actions.h: Remove unused and unimplemented 
+	modest_ui_actions_on_online_toggle_toggled().
+
+2007-06-29  Murray Cumming  <murrayc@murrayc.com
 
 	* src/maemo/modest-main-window.c: (connect_signals):
 	Don't connect to delete_event twice. Maybe this was harmless.

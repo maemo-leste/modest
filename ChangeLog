@@ -1,1 +1,20 @@
+2007-06-29  Murray Cumming,,,  <set EMAIL_ADDRESS environment variable>
+
+	reviewed by: <delete if not using a buddy>
+
+	* src/maemo/modest-maemo-utils.c:
+	(modest_maemo_utils_get_supported_secure_authentication_methods):
+	* src/maemo/modest-main-window.c:
+	(on_zoom_minus_plus_not_implemented),
+	(modest_main_window_set_offline):
+	* src/modest-defs.h:
+	* src/modest-init.c: (init_default_settings):
+	* src/modest-mail-operation.c:
+	(modest_mail_operation_update_account):
+	* src/modest-main.c: (on_show):
+	* src/modest-tny-account.c: (on_connection_status_changed),
+	(modest_tny_account_new_from_server_account):
+	* src/modest-ui-actions.h:
+	* src/widgets/modest-main-window.h:
+
 * please check the svn log instead

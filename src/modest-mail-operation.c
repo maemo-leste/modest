@@ -1147,13 +1147,6 @@ modest_mail_operation_update_account (ModestMailOperation *self,
 	priv->done  = 0;
 	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
 
-	/* Make sure that we have a connection, and request one 
-	 * if necessary:
-	 * TODO: Is there some way to trigger this for every attempt to 
-	 * use the network? */
-	if (!modest_platform_connect_and_wait(NULL))
-		goto error;
-
 	/* Get the Modest account */
 	modest_account = (TnyStoreAccount *)
 		modest_tny_account_store_get_server_account (modest_runtime_get_account_store (),

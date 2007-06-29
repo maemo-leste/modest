@@ -32,6 +32,7 @@
 #include <modest-tny-account-store.h>
 #include <modest-tny-local-folders-account.h>
 #include <modest-runtime.h>
+#include <modest-platform.h>
 #include <tny-simple-list.h>
 #include <modest-tny-folder.h>
 #include <modest-tny-outbox-account.h>
@@ -121,6 +122,34 @@ modest_tny_account_get_special_folder (TnyAccount *account,
 	g_object_unref (G_OBJECT (local_account));
 
 	return special_folder;
+}
+
+static void
+on_connection_status_changed (TnyAccount *account, TnyConnectionStatus status, gpointer user_data)
+{
+	printf ("DEBUG: %s: status=%d\n", __FUNCTION__, status);
+	
+	if (status == TNY_CONNECTION_STATUS_DISCONNECTED) {
+		/* We are trying to use the network with an account, 
+		 * but the accounts are set as offline, because our TnyDevice is offline,
+		 * because libconic says we are offline.
+		 * So ask the user to go online:
+		 */
+		modest_platform_connect_and_wait(NULL);	
+	} else if (status == TNY_CONNECTION_STATUS_CONNECTED_BROKEN) {
+		printf ("DEBUG: %s: Connection broken. Forcing TnyDevice offline.\n", 
+			__FUNCTION__);
+			
+		/* Something went wrong during some network operation.
+		 * Stop trying to use the network now,
+		 * by forcing accounts into offline mode:
+		 * 
+		 * When libconic reconnects, it will set the device back online again,
+		 * regardless of it being forced offline before.
+		 */
+		TnyDevice *device = modest_runtime_get_device ();
+		tny_device_force_offline (device);
+	}
 }
 
 /* Camel options: */
@@ -215,6 +244,11 @@ modest_tny_account_new_from_server_account (ModestAccountMgr *account_mgr,
 		return NULL;
 	}
 	tny_account_set_id (tny_account, account_data->account_name);
+
+	/* Handle connection requests:
+	 * This (badly-named) signal will be called when we try to use an offline account. */
+	g_signal_connect (G_OBJECT (tny_account), "connection-status-changed",
+			G_CALLBACK (on_connection_status_changed), NULL);
 
 	/* Proto */
 	const gchar* proto_name =

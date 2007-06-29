@@ -80,9 +80,13 @@ static ModestErrorCode  send_mail     (const gchar* account,
 static void 
 on_show (GtkWidget *widget, gpointer user_data)
 {
+	/* This key is not used by any preferences UI and 
+	 * I don't think this behavior is specified in the UI specification. murrayc: */
+/*
 	if (modest_conf_get_bool (modest_runtime_get_conf(),
 		MODEST_CONF_CONNECT_AT_STARTUP, NULL))
 	modest_platform_connect_and_wait(NULL);
+*/
 }
 
 int

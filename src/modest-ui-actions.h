@@ -128,9 +128,6 @@ void     modest_ui_actions_on_folder_selection_changed (ModestFolderView *folder
 							 gboolean selected,
 							 ModestMainWindow *main_window);
 
-void     modest_ui_actions_on_online_toggle_toggled    (GtkToggleButton *toggle,
-							 ModestMainWindow *main_window);
-
 void     modest_ui_actions_on_item_not_found           (ModestHeaderView *header_view,
 							 ModestItemType type,
 							 ModestWindow *window);

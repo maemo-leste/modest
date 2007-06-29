@@ -389,6 +389,8 @@ GList* modest_maemo_utils_get_supported_secure_authentication_methods (ModestTra
 	default:
 		tny_account = NULL;
 	}
+
+	/* TODO: Handle connection requests. */
 	
 	if (!tny_account) {
 		g_printerr ("%s could not create tny account.", __FUNCTION__);

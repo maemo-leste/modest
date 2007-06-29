@@ -72,7 +72,7 @@
 #define MODEST_ACCOUNT_NAMESPACE         MODEST_CONF_NAMESPACE "/accounts"
 #define MODEST_CONF_DEFAULT_ACCOUNT      MODEST_CONF_NAMESPACE "/default_account"
 
-#define MODEST_CONF_CONNECT_AT_STARTUP   MODEST_CONF_NAMESPACE "/connect_at_startup"      
+/* Not used: #define MODEST_CONF_CONNECT_AT_STARTUP   MODEST_CONF_NAMESPACE "/connect_at_startup" */      
 
 #define MODEST_CONF_SHOW_CC              MODEST_CONF_NAMESPACE "/show_cc"           
 #define MODEST_CONF_SHOW_BCC             MODEST_CONF_NAMESPACE "/show_bcc"           
