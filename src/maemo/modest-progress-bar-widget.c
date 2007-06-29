@@ -391,7 +391,12 @@ progressbar_clean (GtkProgressBar *bar)
 GtkWidget*
 modest_progress_bar_widget_new ()
 {
-	return GTK_WIDGET (g_object_new (MODEST_TYPE_PROGRESS_BAR_WIDGET, NULL));
+	GtkWidget *progress_bar;
+
+	progress_bar = GTK_WIDGET (g_object_new (MODEST_TYPE_PROGRESS_BAR_WIDGET, NULL));
+	gtk_progress_bar_set_pulse_step (GTK_PROGRESS_BAR (progress_bar), 0.25);
+
+	return progress_bar;
 }
 
 
@@ -407,17 +412,22 @@ modest_progress_bar_widget_set_progress (ModestProgressBarWidget *self,
 	g_return_if_fail (done <= total);
 	
 	priv = MODEST_PROGRESS_BAR_WIDGET_GET_PRIVATE (self);
-	
-	/* Set progress */
-	if (total != 100) /* FIXME: tinymail send 1/100 when it doesn't know better.. */ {
+
+	/* Set progress. Tinymail sometimes returns us 1/100 when it
+	   does not have any clue, NOTE that 1/100 could be also a
+	   valid progress (we will loose it), but it will be recovered
+	   once the done is greater than 1 */
+	if ((done == 0 && total == 0) || 
+	    (done == 1 && total == 100)) {
+		gtk_progress_bar_pulse (GTK_PROGRESS_BAR (priv->progress_bar));
+	} else {
 		gdouble percent = 0;
 		if (total != 0) /* Avoid division by zero. */
 			percent = (gdouble)done/(gdouble)total;
 
 		gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR (priv->progress_bar),
-					       percent);
-	}else
-		gtk_progress_bar_pulse (GTK_PROGRESS_BAR (priv->progress_bar));
+						       percent);
+	}
 
 	/* Set text */
 	gtk_progress_bar_set_text (GTK_PROGRESS_BAR (priv->progress_bar), message);
