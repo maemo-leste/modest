@@ -1090,12 +1090,16 @@ modest_msg_edit_window_free_msg_data (ModestMsgEditWindow *edit_window,
 	g_free (data->subject);
 	g_free (data->plain_body);
 	g_free (data->html_body);
+	g_free (data->account_name);
+	
 	if (data->draft_msg != NULL) {
 		g_object_unref (data->draft_msg);
 		data->draft_msg = NULL;
 	}
-	g_free (data->account_name);
 
+	g_list_foreach (data->attachments, (GFunc)g_free, NULL);
+	g_list_free (data->attachments);
+	
 	/* TODO: Free data->attachments? */
 
 	g_slice_free (MsgData, data);

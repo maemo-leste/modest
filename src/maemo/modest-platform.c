@@ -936,26 +936,28 @@ gboolean modest_platform_set_update_interval (guint minutes)
 	st_time->tm_min += minutes;
 	
 	/* Set the time in alarm_event_t structure: */
-	alarm_event_t event;
-	memset (&event, 0, sizeof (alarm_event_t));
-	event.alarm_time = mktime (st_time);
+	alarm_event_t *event = g_new0(alarm_event_t, 1);
+	event->alarm_time = mktime (st_time);
 
 	/* Specify what should happen when the alarm happens:
 	 * It should call this D-Bus method: */
 	 
 	/* Note: I am surpised that alarmd can't just use the modest.service file
 	 * for this. murrayc. */
-	event.dbus_path = g_strdup(PREFIX "/bin/modest");
+	event->dbus_path = g_strdup(PREFIX "/bin/modest");
 	
-	event.dbus_interface = g_strdup (MODEST_DBUS_IFACE);
-	event.dbus_service = g_strdup (MODEST_DBUS_SERVICE);
-	event.dbus_name = g_strdup (MODEST_DBUS_METHOD_SEND_RECEIVE);
+	event->dbus_interface = g_strdup (MODEST_DBUS_IFACE);
+	event->dbus_service = g_strdup (MODEST_DBUS_SERVICE);
+	event->dbus_name = g_strdup (MODEST_DBUS_METHOD_SEND_RECEIVE);
 
 	/* Otherwise, a dialog will be shown if exect_name or dbus_path is NULL,
 	even though we have specified no dialog text: */
-	event.flags = ALARM_EVENT_NO_DIALOG;
+	event->flags = ALARM_EVENT_NO_DIALOG;
 	
-	alarm_cookie = alarm_event_add (&event);
+	alarm_cookie = alarm_event_add (event);
+
+	/* now, free it */
+	alarm_event_free (event);
 	
 	/* Store the alarm ID in GConf, so we can remove it later:
 	 * This is apparently valid between application instances. */
