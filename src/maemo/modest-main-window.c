@@ -637,7 +637,6 @@ connect_signals (ModestMainWindow *self)
 	g_signal_connect (G_OBJECT (self), "window-state-event",
 			  G_CALLBACK (modest_main_window_window_state_event),
 			  NULL);
-	g_signal_connect (G_OBJECT(self), "delete-event", G_CALLBACK(on_delete_event), self);
 	
 	/* Mail Operation Queue */
 	priv->queue_changed_handler_uid = 

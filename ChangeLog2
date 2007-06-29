@@ -1,3 +1,8 @@
+2007-06-29  Murray Cumming  <murrayc@murrayc-desktop>
+
+	* src/maemo/modest-main-window.c: (connect_signals):
+	Don't connect to delete_event twice. Maybe this was harmless.
+
 2007-06-29  Murray Cumming  <murrayc@murrayc.com
 
 	* libmodest-dbus-client/libmodest-dbus-client.c: Improved the documentation slightly.
