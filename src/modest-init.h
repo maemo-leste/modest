@@ -49,20 +49,8 @@ G_BEGIN_DECLS
  *  
  * TRUE if this succeeded, FALSE otherwise.
  */
-gboolean modest_init_init_core (int argc, char *argv[]);
+gboolean modest_init (int argc, char *argv[]);
 
-
-/**
- * modest_init_init_ui:
- * @argc: the #argc argument to the main function
- * @argv: the #argv argument to the main function
- * 
- * initialize the modest UI; this replaces the call to
- * gtk_init
- *  
- * TRUE if this succeeded, FALSE otherwise.
- */
-gboolean modest_init_init_ui (gint argc, gchar** argv);
 
 /**
  * modest_init_uninit:

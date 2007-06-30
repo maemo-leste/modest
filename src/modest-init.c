@@ -61,6 +61,7 @@ static void     init_debug_g_type (void);
 static void     init_debug_logging (void);
 static void     init_default_settings (ModestConf *conf);
 static void     init_device_name (ModestConf *conf);
+static gboolean init_ui (gint argc, gchar** argv);
 
 /*
  * defaults for the column headers
@@ -171,8 +172,9 @@ modest_init_get_default_header_view_column_ids (TnyFolderType folder_type, Modes
 		return result;
 }
 
+
 gboolean
-modest_init_init_core (int argc, char *argv[])
+modest_init (int argc, char *argv[])
 {
 	gboolean reset;
 	static gboolean invoked = FALSE;
@@ -183,7 +185,7 @@ modest_init_init_core (int argc, char *argv[])
 		return FALSE;
 	} else
 		invoked = TRUE;
-	
+
 	init_i18n();
 	init_debug_g_type();
 	init_debug_logging();
@@ -200,11 +202,9 @@ modest_init_init_core (int argc, char *argv[])
 		g_printerr ("modest: failed to initialize the modest runtime\n");
 		return FALSE;
 	}
-
 	
 	/* do an initial guess for the device name */
 	init_device_name (modest_runtime_get_conf());
-
 	
 	if (!modest_platform_init(argc, argv)) {
 		modest_init_uninit ();
@@ -231,20 +231,21 @@ modest_init_init_core (int argc, char *argv[])
 		modest_init_uninit ();
 		g_printerr ("modest: failed to init default account\n");
 		return FALSE;
+	}	
+	
+	if (!init_ui (argc, argv)) {
+		modest_init_uninit ();
+		g_printerr ("modest: failed to init ui\n");
+		return FALSE;
 	}
 	
 	return TRUE;
 }
 
 
-gboolean
-modest_init_init_ui (gint argc, gchar** argv)
+static gboolean
+init_ui (gint argc, gchar** argv)
 {
-	if (!gtk_init_check(&argc, &argv)) {
-		g_printerr ("modest: failed to initialize graphical ui\n");
-		return FALSE;
-	}
-
 	/* Set application name */
 	g_set_application_name (modest_platform_get_app_name());
 	/* g_message (modest_platform_get_app_name()); */
@@ -252,12 +253,10 @@ modest_init_init_ui (gint argc, gchar** argv)
 	/* Init stock icons */
 	init_stock_icons ();
 
-	/* Init notification system */
+		/* Init notification system */
 #ifdef MODEST_HAVE_HILDON_NOTIFY
 	notify_init ("Basics");
 #endif
-
-	
 	return TRUE;
 }
 
