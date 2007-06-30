@@ -328,7 +328,8 @@ modest_recpt_editor_instance_init (GTypeInstance *instance, gpointer g_class)
 	gtk_container_add (GTK_CONTAINER (priv->abook_button), abook_icon);
 
 	priv->text_view = gtk_text_view_new ();
-	
+	priv->recipients = NULL;
+
 	priv->scrolled_window = modest_scroll_text_new (GTK_TEXT_VIEW (priv->text_view), 5);
 	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (priv->scrolled_window), GTK_POLICY_NEVER,
 					GTK_POLICY_AUTOMATIC);
@@ -758,6 +759,14 @@ modest_recpt_editor_grab_focus (ModestRecptEditor *recpt_editor)
 static void
 modest_recpt_editor_finalize (GObject *object)
 {
+	ModestRecptEditorPrivate *priv;
+	priv = MODEST_RECPT_EDITOR_GET_PRIVATE (object);
+
+	if (priv->recipients) {
+		g_free (priv->recipients);
+		priv->recipients = NULL;
+	}
+
 	(*parent_class->finalize) (object);
 
 	return;

@@ -1397,6 +1397,11 @@ on_focus_in (GtkWidget     *self,
 						      0.0);
 		}
 	}
+	if (start_path)
+		gtk_tree_path_free (start_path);
+	if (end_path)
+		gtk_tree_path_free (end_path);
+
 	#endif /* GTK_CHECK_VERSION */
 
 	/* Frees */	
