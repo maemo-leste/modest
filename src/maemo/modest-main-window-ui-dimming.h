@@ -20,7 +20,7 @@ static const ModestDimmingEntry modest_main_window_menu_dimming_entries [] = {
 	{ "/MenuBar/EmailMenu/EmailForwardMenu",  G_CALLBACK(modest_ui_dimming_rules_on_reply_msg) },
 	{ "/MenuBar/EmailMenu/EmailContentsMenu", G_CALLBACK(modest_ui_dimming_rules_on_contents_msg) },
 	{ "/MenuBar/EmailMenu/EmailPurgeAttachmentsMenu", G_CALLBACK(modest_ui_dimming_rules_on_remove_attachments) },
-	{ "/MenuBar/EmailMenu/EmailDeleteMenu",  G_CALLBACK(modest_ui_dimming_rules_on_delete_msg) },
+	{ "/MenuBar/EmailMenu/EmailDeleteMenu",  G_CALLBACK(modest_ui_dimming_rules_on_delete) },
 	{ "/MenuBar/EmailMenu/EmailDetailsMenu", G_CALLBACK(modest_ui_dimming_rules_on_details) },
 
 	/* Edit Menu */
@@ -93,7 +93,7 @@ static const ModestDimmingEntry modest_main_window_toolbar_dimming_entries [] = 
 	/* Toolbar */
 	{ "/ToolBar/ToolbarMessageNew", NULL },
 	{ "/ToolBar/ToolbarMessageReply", G_CALLBACK(modest_ui_dimming_rules_on_reply_msg) },
-	{ "/ToolBar/ToolbarDeleteMessage", G_CALLBACK(modest_ui_dimming_rules_on_delete_msg) },
+	{ "/ToolBar/ToolbarDeleteMessage", G_CALLBACK(modest_ui_dimming_rules_on_delete) },
 	{ "/ToolBar/ToolbarToggleView", NULL },
 	{ "/ToolBar/ToolbarSort", G_CALLBACK(modest_ui_dimming_rules_on_sort) },
 	{ "/ToolBar/ToolbarSendReceive", G_CALLBACK(modest_ui_dimming_rules_on_send_receive) },

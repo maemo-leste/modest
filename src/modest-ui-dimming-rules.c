@@ -167,6 +167,37 @@ modest_ui_dimming_rules_on_new_folder (ModestWindow *win, gpointer user_data)
 }
 
 gboolean 
+modest_ui_dimming_rules_on_delete (ModestWindow *win, gpointer user_data)
+{
+	ModestDimmingRule *rule = NULL;
+	GtkWidget *folder_view = NULL;
+	GtkWidget *header_view = NULL;	
+	gboolean dimmed = FALSE;
+
+	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW(win), FALSE);
+	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
+	rule = MODEST_DIMMING_RULE (user_data);
+	
+	/* Get the folder view */
+	folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(win),
+							   MODEST_WIDGET_TYPE_FOLDER_VIEW);
+
+	/* Get header view */
+	header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(win),
+							   MODEST_WIDGET_TYPE_HEADER_VIEW);
+
+	if (header_view && gtk_widget_is_focus (header_view)) 
+		dimmed = modest_ui_dimming_rules_on_delete_msg (win, rule);
+
+	if (folder_view && gtk_widget_is_focus (folder_view)) 
+		dimmed = modest_ui_dimming_rules_on_delete_folder (win, rule);
+
+	return dimmed;
+}
+
+
+
+gboolean 
 modest_ui_dimming_rules_on_delete_folder (ModestWindow *win, gpointer user_data)
 {
 	ModestDimmingRule *rule = NULL;

@@ -40,14 +40,15 @@ G_BEGIN_DECLS
 gboolean modest_ui_dimming_rules_on_new_msg (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_new_folder (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_csm_new_folder (ModestWindow *win, gpointer user_data);
+gboolean modest_ui_dimming_rules_on_delete (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_delete_folder (ModestWindow *win, gpointer user_data);
+gboolean modest_ui_dimming_rules_on_delete_msg (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_rename_folder (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_sort (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_open_msg (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_reply_msg (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_contents_msg (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_always_dimmed (ModestWindow *win, gpointer user_data);
-gboolean modest_ui_dimming_rules_on_delete_msg (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_details (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_mark_as_read_msg (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_mark_as_unread_msg (ModestWindow *win, gpointer user_data);
