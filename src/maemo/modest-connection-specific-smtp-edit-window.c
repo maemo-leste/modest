@@ -126,6 +126,12 @@ on_change(GtkWidget* widget, ModestConnectionSpecificSmtpEditWindow *self)
 }
 
 static void
+on_value_changed(GtkWidget* widget, GValue* value, ModestConnectionSpecificSmtpEditWindow *self)
+{
+	on_change(widget, self);
+}
+
+static void
 on_combo_security_changed (GtkComboBox *widget, gpointer user_data)
 {
 	ModestConnectionSpecificSmtpEditWindow *self = 
@@ -235,7 +241,7 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 		priv->entry_port = GTK_WIDGET (hildon_number_editor_new (0, 65535));
 	caption = hildon_caption_new (sizegroup, 
 		_("mcen_li_emailsetup_smtp"), priv->entry_port, NULL, HILDON_CAPTION_OPTIONAL);
-	g_signal_connect(G_OBJECT(priv->entry_port), "changed", G_CALLBACK(on_change), self);
+	g_signal_connect(G_OBJECT(priv->entry_port), "notify::value", G_CALLBACK(on_value_changed), self);
 	gtk_widget_show (priv->entry_port);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (caption);
