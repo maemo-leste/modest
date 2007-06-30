@@ -1442,11 +1442,9 @@ idle_notify_headers_count_changed (gpointer data)
 	g_mutex_lock (priv->observers_lock);
 
 	/* Emit signal to evaluate how headers changes affects to the window view  */
-	gdk_threads_enter ();
 	g_signal_emit (G_OBJECT(helper->self), 
 		       signals[MSG_COUNT_CHANGED_SIGNAL], 
 		       0, folder, helper->change);
-	gdk_threads_leave ();
 		
 	/* Added or removed headers, so data stored on cliboard are invalid  */
 	if (modest_email_clipboard_check_source_folder (priv->clipboard, folder))
