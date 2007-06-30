@@ -1536,13 +1536,29 @@ create_details_widget (GtkWidget *styled_widget, TnyAccount *account)
 	return vbox;
 }
 
+gboolean
+modest_main_window_send_receive_in_progress (ModestMainWindow *self)
+{
+	ModestMainWindowPrivate *priv = NULL;
+	
+	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW (self), FALSE);
+
+	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
+
+	return priv->send_receive_in_progress;
+}
+
 void 
 modest_main_window_notify_send_receive_initied (ModestMainWindow *self)
 {
 	GtkAction *action = NULL;
 	GtkWidget *widget = NULL;
-
+	ModestMainWindowPrivate *priv = NULL;
+	        
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW (self));
+	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
+	
+	priv->send_receive_in_progress  = TRUE;
 
         action = modest_window_get_action (MODEST_WINDOW(self), "/MenuBar/ToolsMenu/ToolsSendReceiveMainMenu/ToolsSendReceiveAllMenu");	
 	gtk_action_set_sensitive (action, FALSE);
@@ -1557,8 +1573,12 @@ modest_main_window_notify_send_receive_completed (ModestMainWindow *self)
 {
 	GtkAction *action = NULL;
 	GtkWidget *widget = NULL;
-
+	ModestMainWindowPrivate *priv = NULL;
+	        
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW (self));
+	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
+
+	priv->send_receive_in_progress  = FALSE;
 
         action = modest_window_get_action (MODEST_WINDOW(self), "/MenuBar/ToolsMenu/ToolsSendReceiveMainMenu/ToolsSendReceiveAllMenu");	
 	gtk_action_set_sensitive (action, TRUE);

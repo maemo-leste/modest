@@ -375,6 +375,16 @@ modest_ui_actions_check_toolbar_dimming_rules (ModestWindow *window);
  **/
 void     modest_ui_actions_move_folder_error_handler      (ModestMailOperation *mail_op, 
 							   gpointer user_data);
+/**
+ * modest_ui_actions_send-receive_error_handler:
+ * @mail_op: a #ModestMailOperation
+ * @user_data: user data
+ * 
+ * manages an error in a mail operation that tries to execute
+ * a send&receive operation.
+ **/
+void     modest_ui_actions_send_receive_error_handler      (ModestMailOperation *mail_op, 
+							    gpointer user_data);
 
 /**
  * modest_ui_actions_on_search_messages:

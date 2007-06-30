@@ -986,12 +986,34 @@ modest_ui_dimming_rules_on_tools_smtp_servers (ModestWindow *win, gpointer user_
 gboolean 
 modest_ui_dimming_rules_on_cancel_sending (ModestWindow *win, gpointer user_data)
 {
+ 	ModestDimmingRule *rule = NULL;
+	TnyFolderType types[1];
+	guint n_messages = 0;
 	gboolean dimmed = FALSE;
 
-	/* Check dimmed rule */	
-	if (!dimmed) 
+	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW(win), FALSE);
+	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
+	rule = MODEST_DIMMING_RULE (user_data);
+
+	types[0] = TNY_FOLDER_TYPE_OUTBOX; 
+
+	/* Check dimmed rules */	
+	if (!dimmed) {
+		dimmed = _already_opened_msg (win, &n_messages);
+ 		if (dimmed) 
+			modest_dimming_rule_set_notification (rule, _("mcen_ib_message_unableto_cancel_send"));
+	}
+	if (!dimmed) {
+		dimmed = !_selected_folder_is_any_of_type (win, types, 1);
+ 		if (dimmed) 
+			modest_dimming_rule_set_notification (rule, "");
+	}
+	if (!dimmed) {
 		dimmed = !_sending_in_progress (win);
-		
+ 		if (dimmed) 
+			modest_dimming_rule_set_notification (rule, "");
+	}
+
 	return dimmed;
 }
 
@@ -1808,27 +1830,12 @@ _selected_msg_sent_in_progress (ModestWindow *win)
 static gboolean
 _sending_in_progress (ModestWindow *win)
 {
-	ModestTnySendQueue *send_queue = NULL;
-	ModestTnyAccountStore *acc_store = NULL;
-	TnyAccount *account = NULL;
-	const gchar *account_name = NULL;
 	gboolean result = FALSE;
 	
-	/* Get transport account */
-	acc_store = modest_runtime_get_account_store();
-	account_name = modest_window_get_active_account (win);
+	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW (win), FALSE);
 
-	/* If no account defined, this action must be always dimmed  */
-	if (account_name == NULL) return FALSE;
-	account = modest_tny_account_store_get_transport_account_for_open_connection (acc_store, account_name);
-	if (!TNY_IS_TRANSPORT_ACCOUNT (account)) return FALSE;
-
-	/* Get send queue for current ransport account */
-	send_queue = modest_runtime_get_send_queue (TNY_TRANSPORT_ACCOUNT(account));
-	g_return_val_if_fail (MODEST_IS_TNY_SEND_QUEUE (send_queue), FALSE);
-
-	/* Check if send queue is perfimring any send operation */
-	result = modest_tny_send_queue_sending_in_progress (send_queue);
+	/* Check if send operation is in progress */
+	result = modest_main_window_send_receive_in_progress (MODEST_MAIN_WINDOW (win));
 
 	return result;
 }

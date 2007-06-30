@@ -190,6 +190,19 @@ ModestMainWindowContentsStyle modest_main_window_get_contents_style (ModestMainW
  * modest_main_window_notify_send_receive_initied:
  * @self: the #ModestMainWindow
  * 
+ * Determines if send&receive operaiton is currently in 
+ * progress.
+ *
+ * Returns: TRUE if send$receive operaton is in 
+ * progress, FALSE otherwise.
+ **/
+gboolean
+modest_main_window_send_receive_in_progress (ModestMainWindow *self);
+
+/**
+ * modest_main_window_notify_send_receive_initied:
+ * @self: the #ModestMainWindow
+ * 
  * Notifies main window that send/receive operaiton was just started. 
  **/
 void 

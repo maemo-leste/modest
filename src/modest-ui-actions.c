@@ -361,16 +361,19 @@ modest_ui_actions_on_quit (GtkAction *action, ModestWindow *win)
 void
 modest_ui_actions_on_close_window (GtkAction *action, ModestWindow *win)
 {
-	if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
-		gtk_widget_destroy (GTK_WIDGET (win));
-	} else if (MODEST_IS_MSG_EDIT_WINDOW (win)) {
-		gboolean ret_value;
-		g_signal_emit_by_name (G_OBJECT (win), "delete-event", NULL, &ret_value);
-	} else if (MODEST_IS_WINDOW (win)) {
-		gtk_widget_destroy (GTK_WIDGET (win));
-	} else {
-		g_return_if_reached ();
-	}
+	gboolean ret_value;
+	g_signal_emit_by_name (G_OBJECT (win), "delete-event", NULL, &ret_value);
+
+/* 	if (MODEST_IS_MSG_VIEW_WINDOW (win)) { */
+/* 		gtk_widget_destroy (GTK_WIDGET (win)); */
+/* 	} else if (MODEST_IS_MSG_EDIT_WINDOW (win)) { */
+/* 		gboolean ret_value; */
+/* 		g_signal_emit_by_name (G_OBJECT (win), "delete-event", NULL, &ret_value); */
+/* 	} else if (MODEST_IS_WINDOW (win)) { */
+/* 		gtk_widget_destroy (GTK_WIDGET (win)); */
+/* 	} else { */
+/* 		g_return_if_reached (); */
+/* 	} */
 }
 
 void
@@ -1191,7 +1194,12 @@ modest_ui_actions_do_send_receive (const gchar *account_name, ModestWindow *win)
 	/* Set send/receive operation in progress */	
 	modest_main_window_notify_send_receive_initied (MODEST_MAIN_WINDOW(win));
 
-	mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_RECEIVE, G_OBJECT(win));
+/* 	mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_RECEIVE, G_OBJECT(win)); */
+	mail_op = modest_mail_operation_new_with_error_handling (MODEST_MAIL_OPERATION_TYPE_OPEN,
+								 G_OBJECT (win),
+								 modest_ui_actions_send_receive_error_handler,
+								 NULL);
+
 	g_signal_connect (G_OBJECT(mail_op), "progress-changed", 
 			  G_CALLBACK (_on_send_receive_progress_changed), 
 			  win);
@@ -2895,6 +2903,25 @@ modest_ui_actions_move_folder_error_handler (ModestMailOperation *mail_op,
 	modest_platform_run_information_dialog ((win) ? GTK_WINDOW (win) : NULL,
 						_("mail_in_ui_folder_move_target_error"));
 	g_object_unref (win);
+}
+
+void
+modest_ui_actions_send_receive_error_handler (ModestMailOperation *mail_op, 
+					      gpointer user_data)
+{
+	GObject *win = modest_mail_operation_get_source (mail_op);
+	const GError *error = modest_mail_operation_get_error (mail_op);
+
+	g_return_if_fail (error != NULL);
+	if (error->message != NULL)		
+		g_printerr ("modest: %s\n", error->message);
+	else
+		g_printerr ("modest: unkonw error on sedn&receive operation");
+
+	/* Show error message */
+	modest_platform_run_information_dialog ((win) ? GTK_WINDOW (win) : NULL,
+						_CS("sfil_ib_unable_to_send"));	
+/* 	g_object_unref (win); */
 }
 
 static void
