@@ -900,7 +900,10 @@ modest_main_window_new (void)
 
 	/* Set window icon */
 	window_icon = modest_platform_get_icon (MODEST_APP_ICON);
-	gtk_window_set_icon (GTK_WINDOW (self), window_icon);
+	if (window_icon) {
+		gtk_window_set_icon (GTK_WINDOW (self), window_icon);
+		g_object_unref (G_OBJECT(window_icon));
+	}
 	
 	HildonProgram *app = hildon_program_get_instance ();
 	hildon_program_add_window (app, HILDON_WINDOW (self));
