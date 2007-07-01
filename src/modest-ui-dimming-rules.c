@@ -687,7 +687,7 @@ modest_ui_dimming_rules_on_paste_msgs (ModestWindow *win, gpointer user_data)
 	ModestDimmingRule *rule = NULL;
 	TnyFolderType types[3];
 	gboolean dimmed = FALSE;
-
+	
 	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW(win), FALSE);
 	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
 	rule = MODEST_DIMMING_RULE (user_data);
@@ -706,6 +706,12 @@ modest_ui_dimming_rules_on_paste_msgs (ModestWindow *win, gpointer user_data)
 		dimmed = _selected_folder_is_any_of_type (win, types, 3);
 		if (dimmed)
 			modest_dimming_rule_set_notification (rule, _("ckct_ib_unable_to_paste_here"));
+	}
+	if (!dimmed) {
+		dimmed = _selected_folder_not_writeable (MODEST_MAIN_WINDOW(win));
+		if (dimmed) {
+			modest_dimming_rule_set_notification (rule, _("ckct_ib_unable_to_paste_here"));
+		}
 	}
 	if (!dimmed) {
 		dimmed = _selected_folder_is_same_as_source (win);

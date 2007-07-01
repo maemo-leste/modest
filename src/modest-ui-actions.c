@@ -2909,10 +2909,19 @@ modest_ui_actions_move_folder_error_handler (ModestMailOperation *mail_op,
 					     gpointer user_data)
 {
 	GObject *win = modest_mail_operation_get_source (mail_op);
-
-	/* TODO: show error message */
-	modest_platform_run_information_dialog ((win) ? GTK_WINDOW (win) : NULL,
-						_("mail_in_ui_folder_move_target_error"));
+	const GError *error = NULL;
+	const gchar *message = NULL;
+	
+	/* Get error message */
+	error = modest_mail_operation_get_error (mail_op);
+	if (error != NULL && error->message != NULL) {
+		message = error->message;
+	} else {
+		message = _("mail_in_ui_folder_move_target_error");
+	}
+	
+	/* Show notification dialog */
+	modest_platform_run_information_dialog ((win) ? GTK_WINDOW (win) : NULL, message);
 	g_object_unref (win);
 }
 

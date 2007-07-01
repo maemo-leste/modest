@@ -2055,7 +2055,7 @@ modest_mail_operation_xfer_msgs (ModestMailOperation *self,
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 			     MODEST_MAIL_OPERATION_ERROR_FOLDER_RULES,
-			     _("FIXME: folder does not accept msgs"));
+			     _("ckct_ib_unable_to_paste_here"));
 		/* Notify the queue */
 		modest_mail_operation_notify_end (self, FALSE);
 		return;
