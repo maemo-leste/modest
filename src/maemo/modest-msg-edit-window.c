@@ -941,8 +941,6 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name)
 
 	restore_settings (MODEST_MSG_EDIT_WINDOW(obj));
 		
-	gtk_window_set_icon_from_file (GTK_WINDOW(obj), MODEST_APP_ICON, NULL);
-
 	modest_window_set_active_account (MODEST_WINDOW(obj), account_name);
 
 	modest_msg_edit_window_setup_toolbar (MODEST_MSG_EDIT_WINDOW (obj));

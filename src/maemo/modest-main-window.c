@@ -773,7 +773,6 @@ modest_main_window_new (void)
 	ModestDimmingRulesGroup *toolbar_rules_group = NULL;
 	GtkActionGroup *action_group = NULL;
 	GError *error = NULL;
-	GdkPixbuf *window_icon = NULL; 
 	ModestConf *conf = NULL;
 	GtkAction *action = NULL;
 
@@ -897,13 +896,6 @@ modest_main_window_new (void)
 	gtk_box_pack_start (GTK_BOX(priv->main_vbox), priv->main_paned, TRUE, TRUE,0);
 
 	gtk_container_add (GTK_CONTAINER(self), priv->main_vbox);
-
-	/* Set window icon */
-	window_icon = modest_platform_get_icon (MODEST_APP_ICON);
-	if (window_icon) {
-		gtk_window_set_icon (GTK_WINDOW (self), window_icon);
-		g_object_unref (G_OBJECT(window_icon));
-	}
 	
 	HildonProgram *app = hildon_program_get_instance ();
 	hildon_program_add_window (app, HILDON_WINDOW (self));
