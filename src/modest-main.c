@@ -73,14 +73,18 @@ main (int argc, char *argv[])
 	g_object_unref (win);
 	
 	gtk_main ();	
-	retval = 1;
+	retval = 0;
 
 cleanup:
 	gdk_threads_leave ();
 
-	if (!modest_init_uninit ()) 
+	if (!modest_init_uninit ()) {
 		g_printerr ("modest: modest_init_uninit failed\n");
-	
+		retval = 1;
+	}
+
+	g_debug ("closing modest with retval %d", retval);
+
 	return retval;
 }
 

@@ -352,8 +352,19 @@ modest_ui_actions_on_quit (GtkAction *action, ModestWindow *win)
 	modest_osso_save_state();
 #endif /* MODEST_PLATFORM_MAEMO */
 
-	/* FIXME: we need to cancel all actions/threads here,
-	 so we really quit */
+	g_debug ("closing down, clearing %d item(s) from operation queue",
+		 modest_mail_operation_queue_num_elements
+		 (modest_runtime_get_mail_operation_queue()));
+
+	/* cancel all outstanding operations */
+	modest_mail_operation_queue_cancel_all 
+		(modest_runtime_get_mail_operation_queue());
+	
+	g_debug ("queue has been cleared");
+
+	/* note: when modest-tny-account-store is finalized,
+	   it will automatically set all network connections
+	   to offline */
 
 	gtk_main_quit ();
 }

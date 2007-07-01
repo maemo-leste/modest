@@ -252,7 +252,6 @@ account_list_disconnect (GSList *accounts)
 {
 	GSList *cursor = accounts;
 
-	g_printerr ("modest: DEBUG disconnecting all accounts\n");
 	while (cursor) {
 		if (TNY_IS_CAMEL_ACCOUNT(cursor->data))  /* check twice... */
 			tny_camel_account_set_online (TNY_CAMEL_ACCOUNT(cursor->data), FALSE, NULL);
@@ -563,7 +562,9 @@ modest_tny_account_store_finalize (GObject *obj)
 	}
 
 	/* disconnect all accounts when we are destroyed */
+	g_debug ("modest: disconnecting all store accounts");
 	account_list_disconnect (priv->store_accounts);
+	g_debug ("modest: disconnecting all transport accounts");
 	account_list_disconnect (priv->transport_accounts);
 		
 	/* this includes the local folder */
