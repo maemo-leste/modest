@@ -3141,7 +3141,11 @@ modest_ui_actions_on_main_window_move_to (GtkAction *action,
 
 			/* Transfer messages */
 			if (response == GTK_RESPONSE_OK) {
-				mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_RECEIVE, G_OBJECT(win));
+				mail_op = 
+					modest_mail_operation_new_with_error_handling (MODEST_MAIL_OPERATION_TYPE_RECEIVE, 
+										       G_OBJECT(win),
+										       modest_ui_actions_move_folder_error_handler,
+										       NULL);
 				modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), 
 								 mail_op);
 

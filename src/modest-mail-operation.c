@@ -2035,6 +2035,9 @@ modest_mail_operation_xfer_msgs (ModestMailOperation *self,
 	XFerMsgAsyncHelper *helper;
 	TnyHeader *header;
 	ModestTnyFolderRules rules;
+	const gchar *id1 = NULL;
+	const gchar *id2 = NULL;
+	gboolean same_folder = FALSE;
 
 	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
 	g_return_if_fail (TNY_IS_LIST (headers));
@@ -2057,6 +2060,32 @@ modest_mail_operation_xfer_msgs (ModestMailOperation *self,
 		modest_mail_operation_notify_end (self, FALSE);
 		return;
 	}
+		
+	/* Get source folder */
+	iter = tny_list_create_iterator (headers);
+	header = TNY_HEADER (tny_iterator_get_current (iter));
+	src_folder = tny_header_get_folder (header);
+	g_object_unref (header);
+	g_object_unref (iter);
+
+	/* Check folder source and destination */
+	id1 = tny_folder_get_id (src_folder);
+	id2 = tny_folder_get_id (TNY_FOLDER(folder));
+	same_folder = !g_ascii_strcasecmp (id1, id2);
+	if (same_folder) {
+ 		/* Set status failed and set an error */
+		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
+		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
+			     MODEST_MAIL_OPERATION_ERROR_BAD_PARAMETER,
+			     _("mcen_ib_unable_to_copy_samefolder"));
+		
+		/* Notify the queue */
+		modest_mail_operation_notify_end (self, FALSE);
+		
+		/* Free */
+		g_object_unref (src_folder);		
+		return;
+	}
 
 	/* Create the helper */
 	helper = g_slice_new0 (XFerMsgAsyncHelper);
@@ -2065,13 +2094,6 @@ modest_mail_operation_xfer_msgs (ModestMailOperation *self,
 	helper->headers = g_object_ref(headers);
 	helper->user_callback = user_callback;
 	helper->user_data = user_data;
-
-	/* Get source folder */
-	iter = tny_list_create_iterator (headers);
-	header = TNY_HEADER (tny_iterator_get_current (iter));
-	src_folder = tny_header_get_folder (header);
-	g_object_unref (header);
-	g_object_unref (iter);
 
 	/* Get account and set it into mail_operation */
 	priv->account = modest_tny_folder_get_account (src_folder);
