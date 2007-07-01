@@ -612,6 +612,7 @@ modest_ui_dimming_rules_on_main_window_move_to (ModestWindow *win, gpointer user
 	GtkWidget *folder_view = NULL;
 	GtkWidget *header_view = NULL;
 	ModestDimmingRule *rule = NULL;
+	guint n_messages = 0;
 	gboolean dimmed = FALSE;
 	
 	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW(win), TRUE);
@@ -627,6 +628,14 @@ modest_ui_dimming_rules_on_main_window_move_to (ModestWindow *win, gpointer user
 							   MODEST_WIDGET_TYPE_HEADER_VIEW);
 	
 	/* Check diming rules for folders and messages transfer  */
+	if (!dimmed) {
+		dimmed = _already_opened_msg (win, &n_messages);
+		if (dimmed) {
+			gchar *message = g_strdup_printf(_("emev_bd_unabletomove_items"), n_messages);
+			modest_dimming_rule_set_notification (rule, message);
+			g_free(message);
+		}
+	}
 	if (!dimmed) {
 		if (!gtk_widget_is_focus (folder_view))
 			dimmed = _invalid_msg_selected (MODEST_MAIN_WINDOW(win), FALSE, user_data);

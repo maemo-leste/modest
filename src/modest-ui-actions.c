@@ -1930,10 +1930,19 @@ modest_ui_actions_rename_folder_error_handler (ModestMailOperation *mail_op,
 					       gpointer user_data)
 {
 	GObject *win = modest_mail_operation_get_source (mail_op);
-
-	/* TODO: what should we do in case of this error ? */
-	g_warning ("Invalid folder name");
-
+	const GError *error = NULL;
+	const gchar *message = NULL;
+	
+	/* Get error message */
+	error = modest_mail_operation_get_error (mail_op);
+	if (error != NULL && error->message != NULL) {
+		message = error->message;
+	} else {
+		message = _("!!! FIXME: Unable to rename");
+	}
+	
+	/* Show notification dialog */
+	modest_platform_run_information_dialog ((win) ? GTK_WINDOW (win) : NULL, message);
 	g_object_unref (win);
 }
 
