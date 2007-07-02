@@ -1365,7 +1365,7 @@ _selected_folder_is_snd_level (ModestMainWindow *win)
 	GtkTreeModel *model = NULL;
 	GtkTreePath *path = NULL;
 	GtkTreeIter iter;
-	TnyFolderStore *folder = NULL;
+ 	TnyFolderStore *folder = NULL;
 	gboolean result = FALSE;
 
 	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW(win), TRUE);
@@ -1393,7 +1393,7 @@ _selected_folder_is_snd_level (ModestMainWindow *win)
  frees:
 	if (folder != NULL)
 		g_object_unref (folder);
-	if (path != NULL) 
+	if (path != NULL)
 		gtk_tree_path_free (path);
 	
 	return result;
