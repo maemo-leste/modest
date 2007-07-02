@@ -1503,7 +1503,6 @@ void
 modest_header_view_cut_selection (ModestHeaderView *header_view)
 {
 	ModestHeaderViewPrivate *priv = NULL;
-	GtkTreeModel *model = NULL;
 	const gchar **hidding = NULL;
 	guint i, n_selected;
 
@@ -1526,9 +1525,7 @@ modest_header_view_cut_selection (ModestHeaderView *header_view)
 		priv->hidding_ids[i] = g_strdup(hidding[i]); 		
 
 	/* Hide cut headers */
-	model = gtk_tree_view_get_model (GTK_TREE_VIEW (header_view));
-	if (GTK_IS_TREE_MODEL_FILTER (model))
-		gtk_tree_model_filter_refilter (GTK_TREE_MODEL_FILTER (model));
+	modest_header_view_refilter (header_view);
 }
 
 
@@ -1625,4 +1622,17 @@ _clear_hidding_filter (ModestHeaderView *header_view)
 			g_free (priv->hidding_ids[i]);
 		g_free(priv->hidding_ids);
 	}	
+}
+
+void 
+modest_header_view_refilter (ModestHeaderView *header_view)
+{
+	GtkTreeModel *model;
+
+	g_return_if_fail (MODEST_IS_HEADER_VIEW (header_view));
+
+	/* Hide cut headers */
+	model = gtk_tree_view_get_model (GTK_TREE_VIEW (header_view));
+	if (GTK_IS_TREE_MODEL_FILTER (model))
+		gtk_tree_model_filter_refilter (GTK_TREE_MODEL_FILTER (model));
 }

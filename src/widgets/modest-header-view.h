@@ -383,6 +383,8 @@ modest_header_view_paste_selection (ModestHeaderView *header_view,
 				    TnyList **headers,
 				    gboolean *delete);
 
+void modest_header_view_refilter (ModestHeaderView *header_view);
+
 G_END_DECLS
 
 

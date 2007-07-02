@@ -242,7 +242,6 @@ headers_action_delete (TnyHeader *header,
 		       gpointer user_data)
 {
 	ModestMailOperation *mail_op = NULL;
-	GtkTreeModel *model = NULL;
 
 	mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_DELETE, G_OBJECT(win));
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
@@ -253,10 +252,8 @@ headers_action_delete (TnyHeader *header,
 	g_object_unref (G_OBJECT (mail_op));
 
 	/* refilter treemodel to hide marked-as-deleted rows */
-	if (MODEST_IS_HEADER_VIEW (user_data)) {		
-		model = gtk_tree_view_get_model (GTK_TREE_VIEW (user_data));
-		gtk_tree_model_filter_refilter (GTK_TREE_MODEL_FILTER (model));
-	}
+	if (MODEST_IS_HEADER_VIEW (user_data))
+		modest_header_view_refilter (MODEST_HEADER_VIEW (user_data));
 }
 
 void
@@ -268,16 +265,16 @@ modest_ui_actions_on_delete (GtkAction *action, ModestWindow *win)
 	gchar *message = NULL;
 	gchar *desc = NULL;
 	gint response;
-	gboolean found;
 	ModestWindowMgr *mgr;
-	GtkWidget *header_view;
+	GtkWidget *header_view = NULL;
 
 	g_return_if_fail (MODEST_IS_WINDOW(win));
-	header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win),
-							   MODEST_WIDGET_TYPE_HEADER_VIEW);
 	
 	/* Check first if the header view has the focus */
 	if (MODEST_IS_MAIN_WINDOW (win)) {
+		header_view = 
+			modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win),
+							     MODEST_WIDGET_TYPE_HEADER_VIEW);
 		if (!gtk_widget_is_focus (header_view))
 			return;
 	}
@@ -286,29 +283,32 @@ modest_ui_actions_on_delete (GtkAction *action, ModestWindow *win)
 	if (!header_list) return;
 
 	/* Check if any of the headers is already opened, or in the process of being opened */
-	iter = tny_list_create_iterator (header_list);
-	found = FALSE;
-	mgr = modest_runtime_get_window_mgr ();
-	while (!tny_iterator_is_done (iter) && !found) {
-		header = TNY_HEADER (tny_iterator_get_current (iter));
-		found =  modest_window_mgr_find_registered_header (mgr, header, NULL);
-		g_object_unref (header);
-		tny_iterator_next (iter);
-	}
-	g_object_unref (iter);
+	if (MODEST_IS_MAIN_WINDOW (win)) {
+		gboolean found;
+		iter = tny_list_create_iterator (header_list);
+		found = FALSE;
+		mgr = modest_runtime_get_window_mgr ();
+		while (!tny_iterator_is_done (iter) && !found) {
+			header = TNY_HEADER (tny_iterator_get_current (iter));
+			found =  modest_window_mgr_find_registered_header (mgr, header, NULL);
+			g_object_unref (header);
+			tny_iterator_next (iter);
+		}
+		g_object_unref (iter);
 
-	if (found) {
-		gchar *num, *msg;
+		if (found) {
+			gchar *num, *msg;
 
-		num = g_strdup_printf ("%d", tny_list_get_length (header_list));
-		msg = g_strdup_printf (_("mcen_nc_unable_to_delete_n_messages"), num);
+			num = g_strdup_printf ("%d", tny_list_get_length (header_list));
+			msg = g_strdup_printf (_("mcen_nc_unable_to_delete_n_messages"), num);
 
-		modest_platform_run_information_dialog (GTK_WINDOW (win), (const gchar *) msg);
-
-		g_free (msg);
-		g_free (num);
-		g_object_unref (header_list);
-		return;
+			modest_platform_run_information_dialog (GTK_WINDOW (win), (const gchar *) msg);
+			
+			g_free (msg);
+			g_free (num);
+			g_object_unref (header_list);
+			return;
+		}
 	}
 
 	/* Select message */
@@ -327,23 +327,37 @@ modest_ui_actions_on_delete (GtkAction *action, ModestWindow *win)
 							    message);
 	
 
-	if (response == GTK_RESPONSE_OK) {
-		if (MODEST_IS_MSG_EDIT_WINDOW (win)) {
-			gboolean ret_value;
-			g_signal_emit_by_name (G_OBJECT (win), "delete-event", NULL, &ret_value);
-			return;
-		}
-		
-		/* Remove each header */
+	if (response == GTK_RESPONSE_OK) {	
+		ModestMainWindow *main_window;
+		ModestWindowMgr *mgr;
+
+		/* Remove each header. If it's a view window header_view == NULL */
 		do_headers_action (win, headers_action_delete, header_view);
 
 		if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
-			gtk_widget_destroy (GTK_WIDGET(win));
-		} 
-	}
+			/* Close msg view window or select next */
+			if (modest_msg_view_window_last_message_selected (MODEST_MSG_VIEW_WINDOW (win)) &&
+			    modest_msg_view_window_first_message_selected (MODEST_MSG_VIEW_WINDOW (win))) {
+				modest_ui_actions_on_close_window (NULL, MODEST_WINDOW (win));
+			} else {
+				modest_msg_view_window_select_next_message (MODEST_MSG_VIEW_WINDOW (win));
+			}
+		}
 
-	/* Update toolbar dimming state */
-	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (win));
+		/* Refilter header view model, if main window still exists */
+		mgr = modest_runtime_get_window_mgr ();
+		main_window = MODEST_MAIN_WINDOW (modest_window_mgr_get_main_window (mgr));
+		if (main_window) {
+			GtkWidget *widget;
+
+			widget = modest_main_window_get_child_widget (main_window,
+								      MODEST_WIDGET_TYPE_HEADER_VIEW);
+			modest_header_view_refilter (MODEST_HEADER_VIEW (widget));
+		}
+
+		/* Update toolbar dimming state */
+		modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (win));
+	}
 
 	/* free */
 	g_free(message);
