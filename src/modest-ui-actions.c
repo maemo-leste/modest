@@ -242,6 +242,7 @@ headers_action_delete (TnyHeader *header,
 		       gpointer user_data)
 {
 	ModestMailOperation *mail_op = NULL;
+	GtkTreeModel *model = NULL;
 
 	mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_DELETE, G_OBJECT(win));
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
@@ -250,6 +251,12 @@ headers_action_delete (TnyHeader *header,
 	/* Always delete. TODO: Move to trash still not supported */
 	modest_mail_operation_remove_msg (mail_op, header, FALSE);
 	g_object_unref (G_OBJECT (mail_op));
+
+	/* refilter treemodel to hide marked-as-deleted rows */
+	if (MODEST_IS_HEADER_VIEW (user_data)) {		
+		model = gtk_tree_view_get_model (GTK_TREE_VIEW (user_data));
+		gtk_tree_model_filter_refilter (GTK_TREE_MODEL_FILTER (model));
+	}
 }
 
 void
@@ -266,15 +273,15 @@ modest_ui_actions_on_delete (GtkAction *action, ModestWindow *win)
 	GtkWidget *header_view;
 
 	g_return_if_fail (MODEST_IS_WINDOW(win));
-
+	header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win),
+							   MODEST_WIDGET_TYPE_HEADER_VIEW);
+	
 	/* Check first if the header view has the focus */
 	if (MODEST_IS_MAIN_WINDOW (win)) {
-		header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win),
-								   MODEST_WIDGET_TYPE_HEADER_VIEW);
 		if (!gtk_widget_is_focus (header_view))
 			return;
 	}
-
+	
 	header_list = get_selected_headers (win);
 	if (!header_list) return;
 
@@ -328,7 +335,7 @@ modest_ui_actions_on_delete (GtkAction *action, ModestWindow *win)
 		}
 		
 		/* Remove each header */
-		do_headers_action (win, headers_action_delete, NULL);
+		do_headers_action (win, headers_action_delete, header_view);
 
 		if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
 			gtk_widget_destroy (GTK_WIDGET(win));
@@ -792,7 +799,7 @@ _modest_ui_actions_open (TnyList *headers, ModestWindow *win)
 
 	/* Open each cached message */
 	if (tny_list_get_length (not_opened_cached_headers) > 0) {
-		mail_op2 = modest_mail_operation_new_with_error_handling (MODEST_MAIL_OPERATION_TYPE_OPEN, 
+		mail_op2 = modest_mail_operation_new_with_error_handling (MODEST_MAIL_OPERATION_TYPE_RECEIVE, 
 									 G_OBJECT (win), 
 									 modest_ui_actions_get_msgs_full_error_handler, 
 									 NULL);
@@ -1205,8 +1212,7 @@ modest_ui_actions_do_send_receive (const gchar *account_name, ModestWindow *win)
 	/* Set send/receive operation in progress */	
 	modest_main_window_notify_send_receive_initied (MODEST_MAIN_WINDOW(win));
 
-/* 	mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_RECEIVE, G_OBJECT(win)); */
-	mail_op = modest_mail_operation_new_with_error_handling (MODEST_MAIL_OPERATION_TYPE_OPEN,
+	mail_op = modest_mail_operation_new_with_error_handling (MODEST_MAIL_OPERATION_TYPE_RECEIVE,
 								 G_OBJECT (win),
 								 modest_ui_actions_send_receive_error_handler,
 								 NULL);
@@ -2948,9 +2954,13 @@ modest_ui_actions_send_receive_error_handler (ModestMailOperation *mail_op,
 		g_printerr ("modest: unkonw error on sedn&receive operation");
 
 	/* Show error message */
-	modest_platform_run_information_dialog ((win) ? GTK_WINDOW (win) : NULL,
-						_CS("sfil_ib_unable_to_send"));	
-/* 	g_object_unref (win); */
+	if (modest_mail_operation_get_id (mail_op) == MODEST_MAIL_OPERATION_TYPE_RECEIVE)
+		modest_platform_run_information_dialog ((win) ? GTK_WINDOW (win) : NULL,
+							_CS("sfil_ib_unable_to_receive"));
+	else 
+		modest_platform_run_information_dialog ((win) ? GTK_WINDOW (win) : NULL,
+							_CS("sfil_ib_unable_to_send"));
+		g_object_unref (win);
 }
 
 static void
@@ -3064,7 +3074,7 @@ modest_ui_actions_on_main_window_remove_attachments (GtkAction *action,
 	} else {
 		ModestMailOperation *mail_op = NULL;
 		modest_window_mgr_register_header (modest_runtime_get_window_mgr (), header);
-		mail_op = modest_mail_operation_new_with_error_handling (MODEST_MAIL_OPERATION_TYPE_OPEN,
+		mail_op = modest_mail_operation_new_with_error_handling (MODEST_MAIL_OPERATION_TYPE_RECEIVE,
 									 G_OBJECT (win),
 									 modest_ui_actions_get_msgs_full_error_handler,
 									 NULL);

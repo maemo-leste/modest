@@ -1786,64 +1786,64 @@ set_toolbar_mode (ModestMainWindow *self,
 	/* Show and hide toolbar items */
 	switch (mode) {
 	case TOOLBAR_MODE_NORMAL:
-/* 		if (sort_action)  */
-/* 			gtk_action_set_visible (sort_action, TRUE); */
-/* 		if (refresh_action)  */
-/* 			gtk_action_set_visible (refresh_action, TRUE); */
-/* 		if (priv->progress_toolitem) { */
-/* 			gtk_tool_item_set_expand (GTK_TOOL_ITEM (priv->progress_toolitem), FALSE); */
-/* 			gtk_widget_hide (priv->progress_toolitem); */
-/* 		} */
-/* 		if (priv->progress_bar) */
-/* 			gtk_widget_hide (priv->progress_bar); */
-		
-/* 		if (cancel_action) */
-/* 			gtk_action_set_visible (cancel_action, FALSE); */
-		if (priv->sort_toolitem)
-			gtk_widget_show (priv->sort_toolitem);
-		
-		if (priv->refresh_toolitem)
-			gtk_widget_show (priv->refresh_toolitem);
-			
-		if (priv->progress_toolitem)
+		if (sort_action)
+			gtk_action_set_visible (sort_action, TRUE);
+		if (refresh_action)
+			gtk_action_set_visible (refresh_action, TRUE);
+		if (priv->progress_toolitem) {
 			gtk_tool_item_set_expand (GTK_TOOL_ITEM (priv->progress_toolitem), FALSE);
+			gtk_widget_hide (priv->progress_toolitem);
+		}
 		if (priv->progress_bar)
 			gtk_widget_hide (priv->progress_bar);
+		
+		if (cancel_action)
+			gtk_action_set_visible (cancel_action, FALSE);
+/* 		if (priv->sort_toolitem) */
+/* 			gtk_widget_show (priv->sort_toolitem); */
+		
+/* 		if (priv->refresh_toolitem) */
+/* 			gtk_widget_show (priv->refresh_toolitem); */
 			
-		if (priv->cancel_toolitem)
-			gtk_widget_hide (priv->cancel_toolitem);
+/* 		if (priv->progress_toolitem) */
+/* 			gtk_tool_item_set_expand (GTK_TOOL_ITEM (priv->progress_toolitem), FALSE); */
+/* 		if (priv->progress_bar) */
+/* 			gtk_widget_hide (priv->progress_bar); */
+			
+/* 		if (priv->cancel_toolitem) */
+/* 			gtk_widget_hide (priv->cancel_toolitem); */
 
 		/* Hide toolbar if optimized view is enabled */
 		if (priv->optimized_view)
 			gtk_widget_hide (GTK_WIDGET(parent_priv->toolbar));
 		break;
 	case TOOLBAR_MODE_TRANSFER:
-/* 		if (sort_action) */
-/* 			gtk_action_set_visible (sort_action, FALSE); */
-/* 		if (refresh_action) */
-/* 			gtk_action_set_visible (refresh_action, FALSE); */
-/* 		if (cancel_action) */
-/* 			gtk_action_set_visible (cancel_action, TRUE); */
-/* 		if (priv->progress_toolitem) { */
-/* 			gtk_tool_item_set_expand (GTK_TOOL_ITEM (priv->progress_toolitem), TRUE); */
-/* 			gtk_widget_show (priv->progress_toolitem); */
-/* 		} */
-/* 		if (priv->progress_bar) */
-/* 			gtk_widget_show (priv->progress_bar); */
-
-		if (priv->sort_toolitem)
-			gtk_widget_hide (priv->sort_toolitem);
-		
-		if (priv->refresh_toolitem)
-			gtk_widget_hide (priv->refresh_toolitem);
-		
-		if (priv->progress_toolitem)
+		if (sort_action)
+			gtk_action_set_visible (sort_action, FALSE);
+		if (refresh_action)
+			gtk_action_set_visible (refresh_action, FALSE);
+		if (cancel_action)
+			gtk_action_set_visible (cancel_action, TRUE);
+		if (priv->progress_toolitem) {
 			gtk_tool_item_set_expand (GTK_TOOL_ITEM (priv->progress_toolitem), TRUE);
+			gtk_widget_show (priv->progress_toolitem);
+		}
 		if (priv->progress_bar)
 			gtk_widget_show (priv->progress_bar);
+
+/* 		if (priv->sort_toolitem) */
+/* 			gtk_widget_hide (priv->sort_toolitem); */
+		
+/* 		if (priv->refresh_toolitem) */
+/* 			gtk_widget_hide (priv->refresh_toolitem); */
+		
+/* 		if (priv->progress_toolitem) */
+/* 			gtk_tool_item_set_expand (GTK_TOOL_ITEM (priv->progress_toolitem), TRUE); */
+/* 		if (priv->progress_bar) */
+/* 			gtk_widget_show (priv->progress_bar); */
 			
-		if (priv->cancel_toolitem)
-			gtk_widget_show (priv->cancel_toolitem);
+/* 		if (priv->cancel_toolitem) */
+/* 			gtk_widget_show (priv->cancel_toolitem); */
 
 		/* Show toolbar if it's hiden (optimized view ) */
 		if (priv->optimized_view)
