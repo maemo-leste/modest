@@ -35,6 +35,8 @@
 #include <tny-folder-store-query.h>
 #include <tny-camel-stream.h>
 #include <tny-camel-pop-store-account.h>
+#include <tny-camel-pop-folder.h>
+#include <tny-camel-imap-folder.h>
 #include <tny-simple-list.h>
 #include <tny-send-queue.h>
 #include <tny-status.h>
@@ -1872,15 +1874,17 @@ modest_mail_operation_get_msgs_full (ModestMailOperation *self,
 
 
 void 
-modest_mail_operation_remove_msg (ModestMailOperation *self,
-				  TnyHeader *header,
-				  gboolean remove_to_trash)
+modest_mail_operation_remove_msg (ModestMailOperation *self,  TnyHeader *header,
+				  gboolean remove_to_trash /*ignored*/)
 {
 	TnyFolder *folder;
 	ModestMailOperationPrivate *priv;
 
 	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
 	g_return_if_fail (TNY_IS_HEADER (header));
+
+	if (remove_to_trash)
+		g_warning ("remove to trash is not implemented");
 
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
 	folder = tny_header_get_folder (header);
@@ -1890,46 +1894,21 @@ modest_mail_operation_remove_msg (ModestMailOperation *self,
 
 	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
 
-	/* Delete or move to trash */
-	if (remove_to_trash) {
-		TnyFolder *trash_folder;
-		TnyStoreAccount *store_account;
 
-		store_account = TNY_STORE_ACCOUNT (modest_tny_folder_get_account (folder));
-		trash_folder = modest_tny_account_get_special_folder (TNY_ACCOUNT(store_account),
-								      TNY_FOLDER_TYPE_TRASH);
-		if (trash_folder) {
-			TnyList *headers;
+	tny_folder_remove_msg (folder, header, &(priv->error));
+	if (!priv->error) {
+		tny_header_set_flags (header, TNY_HEADER_FLAG_DELETED);
 
-			/* Create list */
-			headers = tny_simple_list_new ();
-			tny_list_append (headers, G_OBJECT (header));
-			g_object_unref (header);
-
-			/* Move to trash */
-			modest_mail_operation_xfer_msgs (self, headers, trash_folder, TRUE, NULL, NULL);
-			g_object_unref (headers);
-/* 			g_object_unref (trash_folder); */
-		} else {
-			ModestMailOperationPrivate *priv;
-
-			/* Set status failed and set an error */
-			priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
-			priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
-			g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
-				     MODEST_MAIL_OPERATION_ERROR_ITEM_NOT_FOUND,
-				     _("Error trying to delete a message. Trash folder not found"));
-		}
-
-		g_object_unref (G_OBJECT (store_account));
-	} else {
-		tny_folder_remove_msg (folder, header, &(priv->error));
-		if (!priv->error) {
-			tny_header_set_flags (header, TNY_HEADER_FLAG_DELETED);
+		if (TNY_IS_CAMEL_IMAP_FOLDER (folder))
 			tny_folder_sync(folder, FALSE, &(priv->error)); /* FALSE --> don't expunge */
-		}
+		else if (TNY_IS_CAMEL_POP_FOLDER (folder))
+			tny_folder_sync(folder, TRUE, &(priv->error)); /* TRUE --> expunge */
+		else
+			/* lcoal folders */
+			tny_folder_sync(folder, TRUE, &(priv->error)); /* TRUE --> expunge */
 	}
-
+	
+	
 	/* Set status */
 	if (!priv->error)
 		priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
