@@ -47,36 +47,36 @@
 #include <string.h>
 
 typedef struct
-  {
-    GtkWidget *fixed;
+{
+	GtkWidget *fixed;
 
-    /* Scrolled windows */
-    GtkWidget *swouter;
-    GtkWidget *swinner;
+	/* Scrolled windows */
+	GtkWidget *swouter;
+	GtkWidget *swinner;
 
-    /* Widget that's being contained */
-    GtkWidget *child;
+	/* Widget that's being contained */
+	GtkWidget *child;
 
-    /* Vertical adjustment for scrolled windows */
-    GtkAdjustment *outadj;
-    GtkAdjustment *inadj;
+	/* Vertical adjustment for scrolled windows */
+	GtkAdjustment *outadj;
+	GtkAdjustment *inadj;
 
-  } HildonScrollArea;
+} ModestScrollArea;
 
 
 static void modest_scroll_area_outer_value_changed (GtkAdjustment *adjustment,
-						    HildonScrollArea *sc);
+						    ModestScrollArea *sc);
 static void modest_scroll_area_inner_value_changed (GtkAdjustment *adjustment,
-						    HildonScrollArea *sc);
+						    ModestScrollArea *sc);
 static void modest_scroll_area_size_allocate (GtkWidget *widget,
 					      GtkAllocation *allocation,
-					      HildonScrollArea *sc);
+					      ModestScrollArea *sc);
 static void modest_scroll_area_child_requisition (GtkWidget *widget,
 						  GtkRequisition *req,
-						  HildonScrollArea *sc);
+						  ModestScrollArea *sc);
 static void modest_scroll_area_fixed_allocate (GtkWidget *widget,
 					       GtkAllocation *allocation,
-					       HildonScrollArea *sc);
+					       ModestScrollArea *sc);
 
 static int calculate_size (GtkWidget *widget);
 
@@ -104,62 +104,65 @@ static int calculate_size (GtkWidget *widget);
  *
  * Returns: a @GtkFixed
  */
-GtkWidget *modest_scroll_area_new (GtkWidget *sw, GtkWidget *child)
+GtkWidget *
+modest_scroll_area_new (GtkWidget *sw, GtkWidget *child)
 {
-  GtkWidget *swi;
-  GtkWidget *fixed;
-  HildonScrollArea *sc;
+	GtkWidget *swi;
+	GtkWidget *fixed;
+	ModestScrollArea *sc;
 
-  g_return_val_if_fail (GTK_IS_SCROLLED_WINDOW (sw)
-			&& GTK_IS_WIDGET (child), NULL);
+	g_return_val_if_fail (GTK_IS_SCROLLED_WINDOW (sw)
+			      && GTK_IS_WIDGET (child), NULL);
 
-  swi = gtk_scrolled_window_new (NULL, NULL);
-  fixed = gtk_fixed_new ();
-  sc = g_malloc (sizeof (HildonScrollArea));
-  memset (sc, 0, sizeof (HildonScrollArea));
+	swi = gtk_scrolled_window_new (NULL, NULL);
+	fixed = gtk_fixed_new ();
+	sc = g_malloc (sizeof (ModestScrollArea));
+	memset (sc, 0, sizeof (ModestScrollArea));
 
-  gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (swi),
-				  GTK_POLICY_NEVER, GTK_POLICY_NEVER);
+	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (swi),
+					GTK_POLICY_NEVER, GTK_POLICY_NEVER);
 
-  gtk_container_add (GTK_CONTAINER (swi), child);
-  gtk_fixed_put (GTK_FIXED (fixed), swi, 0, 0);
+	gtk_container_add (GTK_CONTAINER (swi), child);
+	gtk_fixed_put (GTK_FIXED (fixed), swi, 0, 0);
 
-  sc->fixed = fixed;
-  sc->swouter = sw;
-  sc->swinner = swi;
-  sc->child = child;
-  sc->outadj = gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (sw));
-  sc->inadj = gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (swi));
+	sc->fixed = fixed;
+	sc->swouter = sw;
+	sc->swinner = swi;
+	sc->child = child;
+	sc->outadj = gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (sw));
+	sc->inadj = gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (swi));
 
-  g_signal_connect_after (G_OBJECT (child), "size-request",
-			  G_CALLBACK (modest_scroll_area_child_requisition), sc);
+	g_signal_connect_after (G_OBJECT (child), "size-request",
+				G_CALLBACK (modest_scroll_area_child_requisition), sc);
 
-  g_signal_connect_after (G_OBJECT (sc->outadj), "value_changed",
-			  G_CALLBACK (modest_scroll_area_outer_value_changed), sc);
-  g_signal_connect_after (G_OBJECT (sc->inadj), "value_changed",
-			  G_CALLBACK (modest_scroll_area_inner_value_changed), sc);
+	g_signal_connect_after (G_OBJECT (sc->outadj), "value_changed",
+				G_CALLBACK (modest_scroll_area_outer_value_changed), sc);
+	g_signal_connect_after (G_OBJECT (sc->inadj), "value_changed",
+				G_CALLBACK (modest_scroll_area_inner_value_changed), sc);
 
-  g_signal_connect_after (G_OBJECT (sw), "size-allocate",
-			  G_CALLBACK (modest_scroll_area_size_allocate), sc);
-  g_signal_connect (G_OBJECT (sc->fixed), "size-allocate",
-		    G_CALLBACK (modest_scroll_area_fixed_allocate), sc);
-  g_signal_connect_swapped (G_OBJECT (sw), "destroy",
-		    G_CALLBACK (g_free), sc);
+	g_signal_connect_after (G_OBJECT (sw), "size-allocate",
+				G_CALLBACK (modest_scroll_area_size_allocate), sc);
+	g_signal_connect (G_OBJECT (sc->fixed), "size-allocate",
+			  G_CALLBACK (modest_scroll_area_fixed_allocate), sc);
+	g_signal_connect_swapped (G_OBJECT (sw), "destroy",
+				  G_CALLBACK (g_free), sc);
 
-  gtk_widget_show_all (sw);
-  return fixed;
+	gtk_widget_show_all (sw);
+	return fixed;
 }
 
-static void modest_scroll_area_fixed_allocate (GtkWidget *widget,
-					       GtkAllocation *allocation,
-					       HildonScrollArea *sc)
+static void 
+modest_scroll_area_fixed_allocate (GtkWidget *widget,
+				   GtkAllocation *allocation,
+				   ModestScrollArea *sc)
 {
-  gtk_widget_set_size_request (sc->swinner, -1,
-			       MIN (sc->outadj->page_size, allocation->height));
+	gtk_widget_set_size_request (sc->swinner, -1,
+				     MIN (sc->outadj->page_size, allocation->height));
 }
 
 
-static int calculate_size (GtkWidget *widget)
+static int 
+calculate_size (GtkWidget *widget)
 {
 	int size = 0;
 	
@@ -184,62 +187,78 @@ static int calculate_size (GtkWidget *widget)
 	return size;
 }
 
-static void modest_scroll_area_child_requisition (GtkWidget *widget,
-						  GtkRequisition *req,
-						  HildonScrollArea *sc)
+static void 
+modest_scroll_area_child_requisition (GtkWidget *widget,
+				      GtkRequisition *req,
+				      ModestScrollArea *sc)
 {
-  /* Limit height to fixed height */
-  gint new_req = MAX (req->height, sc->fixed->allocation.height);
-  gint adjust_factor = calculate_size (sc->swouter) * 0.7;
+	/* Limit height to fixed height */
+	gint new_req = MAX (req->height, sc->fixed->allocation.height);
+	gint adjust_factor = calculate_size (sc->swouter) * 0.7;
   
-  adjust_factor = MAX (0, adjust_factor - sc->outadj->value);
-  new_req = MIN (sc->outadj->page_size - adjust_factor, new_req);
-
-  gtk_widget_set_size_request (sc->fixed, -1, req->height);
-  /* Request inner scrolled window at most page size */
-  gtk_widget_set_size_request (sc->swinner, -1, new_req);
+	adjust_factor = MAX (0, adjust_factor - sc->outadj->value);
+	new_req = MIN (sc->outadj->page_size - adjust_factor, new_req);
+	
+	/* FIXME: hack, to provent gtk criticals */
+	if (new_req < -1)
+		new_req = -1;
+		
+	gtk_widget_set_size_request (sc->fixed, -1, req->height);
+	/* Request inner scrolled window at most page size */
+	gtk_widget_set_size_request (sc->swinner, -1, new_req);
 }
 
-static void modest_scroll_area_outer_value_changed (GtkAdjustment *adjustment,
-                                                    HildonScrollArea *sc)
+static void 
+modest_scroll_area_outer_value_changed (GtkAdjustment *adjustment,
+					ModestScrollArea *sc)
 {
-  GtkRequisition req;
-  gtk_widget_size_request (sc->child, &req);
+	GtkRequisition req;
 
-  /* Update inner adjustment position based on outer one, update fixed position */
-  if ((sc->outadj->value + sc->outadj->page_size) > sc->fixed->allocation.y
-      && sc->outadj->value < (sc->fixed->allocation.y + req.height))
-    {
-      gdouble new_pos = 0;
+	gtk_widget_size_request (sc->child, &req);
 
-      new_pos = MAX (sc->outadj->value - sc->fixed->allocation.y, 0);
-      new_pos = MIN (new_pos, req.height - sc->inadj->page_size);
-      new_pos = MAX (new_pos, 0);
+	/* Update inner adjustment position based on outer one, update fixed position */
+	if ((sc->outadj->value + sc->outadj->page_size) > sc->fixed->allocation.y
+	    && sc->outadj->value < (sc->fixed->allocation.y + req.height))
+	{
+		gdouble new_pos = 0;
 
-      gtk_fixed_move (GTK_FIXED (sc->fixed), sc->swinner, 0, new_pos);
-      gtk_adjustment_set_value (sc->inadj, new_pos);
-    }
+		new_pos = MAX (sc->outadj->value - sc->fixed->allocation.y, 0);
+		new_pos = MIN (new_pos, req.height - sc->inadj->page_size);
+		new_pos = MAX (new_pos, 0);
+
+		gtk_fixed_move (GTK_FIXED (sc->fixed), sc->swinner, 0, new_pos);
+		gtk_adjustment_set_value (sc->inadj, new_pos);
+	}
 }
 
-static void modest_scroll_area_inner_value_changed (GtkAdjustment *adjustment,
-						    HildonScrollArea *sc)
+static void 
+modest_scroll_area_inner_value_changed (GtkAdjustment *adjustment,
+						    ModestScrollArea *sc)
 {
-  /* Update outer adjustment based on inner adjustment position */
-  if (sc->outadj->value != sc->fixed->allocation.y + adjustment->value)
-    gtk_adjustment_set_value (sc->outadj,
-			      sc->fixed->allocation.y + adjustment->value);
+	/* Update outer adjustment based on inner adjustment position */
+	if (sc->outadj->value != sc->fixed->allocation.y + adjustment->value)
+		gtk_adjustment_set_value (sc->outadj,
+					  sc->fixed->allocation.y + adjustment->value);
 }
 
-__inline__ static gint calculate_width (HildonScrollArea *sc)
+__inline__ static gint 
+calculate_width (ModestScrollArea *sc)
 {
-  GtkScrolledWindow *scwin = GTK_SCROLLED_WINDOW (sc->swouter);
-  return (scwin->hscrollbar_visible * scwin->hscrollbar->allocation.width);
+	GtkScrolledWindow *scwin = GTK_SCROLLED_WINDOW (sc->swouter);
+	return (scwin->hscrollbar_visible * scwin->hscrollbar->allocation.width);
 }
 
-static void modest_scroll_area_size_allocate (GtkWidget *widget,
-					      GtkAllocation *allocation,
-					      HildonScrollArea *sc)
+static void 
+modest_scroll_area_size_allocate (GtkWidget *widget,
+				  GtkAllocation *allocation,
+				  ModestScrollArea *sc)
 {
-  gtk_widget_set_size_request (sc->fixed, calculate_width (sc), sc->fixed->allocation.height);
-  gtk_widget_set_size_request (sc->child, sc->fixed->allocation.width, -1);
+	g_return_if_fail (widget);
+	g_return_if_fail (allocation);
+	g_return_if_fail (sc);
+
+	gtk_widget_set_size_request (sc->fixed, calculate_width (sc), 
+				     sc->fixed->allocation.height);
+	gtk_widget_set_size_request (sc->child, 
+				     sc->fixed->allocation.width, -1);
 }
