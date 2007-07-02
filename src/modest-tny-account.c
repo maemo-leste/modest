@@ -124,6 +124,54 @@ modest_tny_account_get_special_folder (TnyAccount *account,
 	return special_folder;
 }
 
+typedef struct
+{
+	GSourceFunc func;
+	GMainLoop* loop;
+} UtilIdleData;
+
+static gboolean util_on_idle(gpointer user_data)
+{
+	/* We are now in the main thread, 
+	 * so we can call the function:
+	 */
+	UtilIdleData *idle_data = (UtilIdleData*)user_data;
+	if (idle_data && idle_data->func)
+		(*(idle_data->func))(NULL);
+
+	/* Stop the main loop so that the caller can continue: */
+	if (idle_data->loop)
+		g_main_loop_quit (idle_data->loop);
+
+	return FALSE; /* Stop calling this callback. */
+}
+
+static void
+util_run_in_main_thread_and_wait(GSourceFunc function)
+{
+	UtilIdleData *data = g_slice_new0 (UtilIdleData);
+	data->func = function;
+	data->loop = g_main_loop_new (NULL, FALSE /* not running */);
+	
+	/* Cause the function to be run in an idle-handler, which is always 
+	 * in the main thread:
+	 */
+	g_idle_add (util_on_idle, &data);
+
+	/* This main loop will run until the idle handler has stopped it: */
+	g_main_loop_run (data->loop);
+	g_main_loop_unref (data->loop);
+
+	g_slice_free (UtilIdleData, data);
+}
+
+static gboolean 
+connect_and_wait(gpointer user_data)
+{
+	modest_platform_connect_and_wait(NULL);
+	return TRUE; /* Ignored */
+}
+
 static void
 on_connection_status_changed (TnyAccount *account, TnyConnectionStatus status, gpointer user_data)
 {
@@ -134,8 +182,12 @@ on_connection_status_changed (TnyAccount *account, TnyConnectionStatus status, g
 		 * but the accounts are set as offline, because our TnyDevice is offline,
 		 * because libconic says we are offline.
 		 * So ask the user to go online:
+		 *
+		 * We make sure that this UI is shown in the main thread, to avoid races,
+		 * because tinymail does not guarantee that this signal handler will be called 
+		 * in the main thread.
 		 */
-		modest_platform_connect_and_wait(NULL);	
+		util_run_in_main_thread_and_wait (&connect_and_wait);
 	} else if (status == TNY_CONNECTION_STATUS_CONNECTED_BROKEN) {
 		printf ("DEBUG: %s: Connection broken. Forcing TnyDevice offline.\n", 
 			__FUNCTION__);
