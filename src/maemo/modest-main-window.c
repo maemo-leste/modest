@@ -31,6 +31,8 @@
 #include <gtk/gtktreeviewcolumn.h>
 #include <tny-account-store-view.h>
 #include <tny-simple-list.h>
+#include <tny-list.h>
+#include <tny-iterator.h>
 #include <tny-maemo-conic-device.h>
 #include "modest-hildon-includes.h"
 #include "modest-defs.h"
@@ -968,6 +970,21 @@ modest_main_window_set_style (ModestMainWindow *self,
 		g_signal_handlers_block_by_func (action, modest_ui_actions_toggle_folders_view, self);
 		gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (action), TRUE);
 		g_signal_handlers_unblock_by_func (action, modest_ui_actions_toggle_folders_view, self);
+
+		if (modest_header_view_has_selected_headers (MODEST_HEADER_VIEW (priv->header_view))) {
+			TnyList *selection = modest_header_view_get_selected_headers (MODEST_HEADER_VIEW (priv->header_view));
+			TnyIterator *iterator = tny_list_create_iterator (selection);
+			TnyHeader *header;
+			tny_iterator_first (iterator);
+			header = TNY_HEADER (tny_iterator_get_current (iterator));
+			if (tny_header_get_subject (header))
+				gtk_window_set_title (GTK_WINDOW(self), tny_header_get_subject (header));
+			else
+				gtk_window_set_title (GTK_WINDOW (self), _("mail_va_no_subject"));
+			g_object_unref (header);
+			g_object_unref (iterator);
+			g_object_unref (selection);
+		}
 
 		break;
 	case MODEST_MAIN_WINDOW_STYLE_SPLIT:
