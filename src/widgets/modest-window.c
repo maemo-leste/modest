@@ -31,6 +31,8 @@
 #include "modest-window-priv.h"
 #include "modest-ui-actions.h"
 #include "modest-tny-platform-factory.h"
+#include "modest-runtime.h"
+#include "modest-window-mgr.h"
 
 /* 'private'/'protected' functions */
 static void modest_window_class_init (ModestWindowClass *klass);
@@ -317,6 +319,10 @@ on_key_pressed (GtkWidget *self,
 		GdkEventKey *event,
 		gpointer user_data)
 {
+	ModestWindowMgr *mgr = NULL;
+
+	mgr = modest_runtime_get_window_mgr ();
+
 	switch (event->keyval) {
  	case GDK_F6: 
 		modest_ui_actions_on_change_fullscreen (NULL, MODEST_WINDOW(self));
@@ -328,7 +334,8 @@ on_key_pressed (GtkWidget *self,
 		modest_ui_actions_on_zoom_minus	(NULL, MODEST_WINDOW(self));
 		return TRUE;
  	case GDK_Escape: 
-		modest_ui_actions_on_change_fullscreen (NULL, MODEST_WINDOW(self));
+		if (modest_window_mgr_get_fullscreen_mode (mgr))
+			modest_ui_actions_on_change_fullscreen (NULL, MODEST_WINDOW(self));
 		break;
 	}
 	
