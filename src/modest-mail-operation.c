@@ -644,7 +644,7 @@ modest_mail_operation_save_to_drafts (ModestMailOperation *self,
 		header = tny_msg_get_header (draft_msg);
 		/* Remove the old draft expunging it */
 		tny_folder_remove_msg (folder, header, NULL);
-		tny_folder_sync (folder, TRUE, &(priv->error));
+		tny_folder_sync (folder, FALSE, &(priv->error));  /* FALSE --> don't expunge */
 		g_object_unref (header);
 	}
 	
@@ -1926,7 +1926,7 @@ modest_mail_operation_remove_msg (ModestMailOperation *self,
 		tny_folder_remove_msg (folder, header, &(priv->error));
 		if (!priv->error) {
 			tny_header_set_flags (header, TNY_HEADER_FLAG_DELETED);
-			tny_folder_sync(folder, TRUE, &(priv->error));
+			tny_folder_sync(folder, FALSE, &(priv->error)); /* FALSE --> don't expunge */
 		}
 	}
 
