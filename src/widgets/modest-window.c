@@ -320,14 +320,17 @@ on_key_pressed (GtkWidget *self,
 	switch (event->keyval) {
 	case GDK_F6: 
 		modest_ui_actions_on_change_fullscreen (NULL, MODEST_WINDOW(self));
+		return TRUE;
 		break;
 	case GDK_F7: 
 		modest_ui_actions_on_zoom_plus (NULL, MODEST_WINDOW(self));
+		return TRUE;
 		break;
 	case GDK_F8: 
 		modest_ui_actions_on_zoom_minus	(NULL, MODEST_WINDOW(self));
+		return TRUE;
 		break;
 	}
 	
-	return TRUE;
+	return FALSE;
 }

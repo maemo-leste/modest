@@ -2360,7 +2360,7 @@ modest_ui_actions_on_undo (GtkAction *action,
 
 	if (MODEST_IS_MSG_EDIT_WINDOW (window)) {
 		modest_msg_edit_window_undo (MODEST_MSG_EDIT_WINDOW (window));
-	} if (MODEST_IS_MAIN_WINDOW (window)) {
+	} else if (MODEST_IS_MAIN_WINDOW (window)) {
 		/* Clear clipboard source */
 		clipboard = modest_runtime_get_email_clipboard ();
 		modest_email_clipboard_clear (clipboard); 		
