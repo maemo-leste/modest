@@ -411,6 +411,7 @@ modest_tny_account_new_from_account (ModestAccountMgr *account_mgr, const gchar 
 
 	g_return_val_if_fail (account_mgr, NULL);
 	g_return_val_if_fail (account_name, NULL);
+	g_return_val_if_fail (session, NULL);
 
 	account_data = modest_account_mgr_get_account_data (account_mgr, account_name);
 	if (!account_data) {
@@ -564,8 +565,11 @@ void modest_tny_account_get_mmc_account_name (TnyStoreAccount* self, ModestTnyAc
  				
 
 TnyAccount*
-modest_tny_account_new_for_local_folders (ModestAccountMgr *account_mgr, TnySessionCamel *session, const gchar* location_filepath)
+modest_tny_account_new_for_local_folders (ModestAccountMgr *account_mgr, TnySessionCamel *session,
+					  const gchar* location_filepath)
 {
+
+	
 	/* Make sure that the directories exist: */
 	modest_init_local_folders (location_filepath);
 
@@ -574,6 +578,8 @@ modest_tny_account_new_for_local_folders (ModestAccountMgr *account_mgr, TnySess
 	gchar *maildir, *url_string;
 
 	g_return_val_if_fail (account_mgr, NULL);
+	g_return_val_if_fail (session, NULL);
+
 	
 	if (!location_filepath) {
 		/* A NULL filepath means that this is the special local-folders maildir 
@@ -659,10 +665,13 @@ modest_tny_account_new_for_local_folders (ModestAccountMgr *account_mgr, TnySess
 
 
 TnyAccount*
-modest_tny_account_new_for_per_account_local_outbox_folder (ModestAccountMgr *account_mgr, const gchar* account_name, TnySessionCamel *session)
+modest_tny_account_new_for_per_account_local_outbox_folder (ModestAccountMgr *account_mgr,
+							    const gchar* account_name,
+							    TnySessionCamel *session)
 {
 	g_return_val_if_fail (account_mgr, NULL);
 	g_return_val_if_fail (account_name, NULL);
+	g_return_val_if_fail (session, NULL);
 	
 	/* Notice that we create a ModestTnyOutboxAccount here, 
 	 * instead of just a TnyCamelStoreAccount,
