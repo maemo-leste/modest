@@ -94,6 +94,7 @@ static void  style_insensitive_press (GtkWidget *widget, ModestMsgEditWindow *ed
 static void  remove_attachment_insensitive_press (GtkWidget *widget, ModestMsgEditWindow *editor);
 static void  zoom_insensitive_press (GtkWidget *widget, ModestMsgEditWindow *editor);
 static void  paste_insensitive_press (GtkWidget *widget, ModestMsgEditWindow *editor);
+static void  copy_insensitive_press (GtkWidget *widget, ModestMsgEditWindow *editor);
 static void  setup_insensitive_handlers (ModestMsgEditWindow *editor);
 static void  reset_modified (ModestMsgEditWindow *editor);
 
@@ -2394,6 +2395,8 @@ setup_insensitive_handlers (ModestMsgEditWindow *window)
 
 	widget = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/MenuBar/EditMenu/PasteMenu");
 	g_signal_connect (G_OBJECT (widget), "insensitive-press", G_CALLBACK (paste_insensitive_press), window);
+	widget = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/MenuBar/EditMenu/CopyMenu");
+	g_signal_connect (G_OBJECT (widget), "insensitive-press", G_CALLBACK (copy_insensitive_press), window);
 }
 
 static void  
@@ -2859,6 +2862,13 @@ paste_insensitive_press (GtkWidget *widget, ModestMsgEditWindow *editor)
 		hildon_banner_show_information (NULL, NULL, dgettext("hildon-common-strings", "ckct_ib_unable_to_paste_here"));
 	else
 		hildon_banner_show_information (NULL, NULL, dgettext("hildon-common-strings", "ecoc_ib_edwin_nothing_to_paste"));
+		
+}
+
+static void  
+copy_insensitive_press (GtkWidget *widget, ModestMsgEditWindow *editor)
+{
+	hildon_banner_show_information (NULL, NULL, dgettext("hildon-common-strings", "ckct_ib_unable_to_copy"));
 		
 }
 
