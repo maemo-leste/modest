@@ -139,6 +139,14 @@ modest_main_window_cleanup_queue_error_signals (ModestMainWindow *self);
 
 static GtkWidget * create_empty_view (void);
 
+static gboolean
+on_folder_view_focus_in (GtkWidget *widget,
+			 GdkEventFocus *event,
+			 gpointer userdata);
+static gboolean
+on_header_view_focus_in (GtkWidget *widget,
+			 GdkEventFocus *event,
+			 gpointer userdata);
 
 /* list my signals */
 enum {
@@ -608,6 +616,8 @@ connect_signals (ModestMainWindow *self)
 			  G_CALLBACK(modest_ui_actions_on_folder_selection_changed), self);
 	g_signal_connect (G_OBJECT(priv->folder_view), "folder-display-name-changed",
 			  G_CALLBACK(modest_ui_actions_on_folder_display_name_changed), self);
+	g_signal_connect (G_OBJECT (priv->folder_view), "focus-in-event", 
+			  G_CALLBACK (on_folder_view_focus_in), self);
 
 	/* Folder view CSM */
 	menu = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/FolderViewCSM");
@@ -626,6 +636,8 @@ connect_signals (ModestMainWindow *self)
 			  G_CALLBACK(on_inner_widgets_key_pressed), self);
 	g_signal_connect (G_OBJECT(priv->header_view), "msg_count_changed",
 			  G_CALLBACK(_on_msg_count_changed), self);
+	g_signal_connect (G_OBJECT (priv->header_view), "focus-in-event",
+			  G_CALLBACK (on_header_view_focus_in), self);
 
 	/* Header view CSM */
 	menu = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/HeaderViewCSM");
@@ -2043,4 +2055,40 @@ on_zoom_minus_plus_not_implemented (ModestWindow *window)
 	hildon_banner_show_information (NULL, NULL, dgettext("hildon-common-strings", "ckct_ib_cannot_zoom_here"));
 	return FALSE;
 
+}
+
+static gboolean
+on_folder_view_focus_in (GtkWidget *widget,
+			 GdkEventFocus *event,
+			 gpointer userdata)
+{
+	return FALSE;
+}
+
+static gboolean
+on_header_view_focus_in (GtkWidget *widget,
+			 GdkEventFocus *event,
+			 gpointer userdata)
+{
+	ModestMainWindow *main_window = MODEST_MAIN_WINDOW (userdata);
+	ModestMainWindowPrivate *priv = MODEST_MAIN_WINDOW_GET_PRIVATE (main_window);
+
+	if (modest_header_view_has_selected_headers (MODEST_HEADER_VIEW (priv->header_view))) {
+		TnyList *selection = modest_header_view_get_selected_headers (MODEST_HEADER_VIEW (priv->header_view));
+		TnyIterator *iterator = tny_list_create_iterator (selection);
+		TnyHeader *header;
+
+		tny_iterator_first (iterator);
+		header = TNY_HEADER (tny_iterator_get_current (iterator));
+		
+		if (tny_header_get_subject (header))
+			gtk_window_set_title (GTK_WINDOW(main_window), tny_header_get_subject (header));
+		else
+			gtk_window_set_title (GTK_WINDOW (main_window), _("mail_va_no_subject"));
+
+		g_object_unref (header);
+		g_object_unref (iterator);
+		g_object_unref (selection);
+	}
+	return FALSE;
 }
