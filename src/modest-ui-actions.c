@@ -1758,7 +1758,7 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 	modest_msg_edit_window_set_sent (edit_window, TRUE);
 
 	/* Save settings and close the window: */
-	gtk_widget_destroy (GTK_WIDGET (edit_window));
+	modest_ui_actions_on_close_window (NULL, MODEST_WINDOW (edit_window));
 }
 
 void 
