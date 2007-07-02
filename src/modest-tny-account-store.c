@@ -787,7 +787,7 @@ get_server_accounts  (TnyAccountStore *self, TnyList *list, TnyAccountType type)
 						TnyAccount * tny_account = NULL;
 						/* Add the account: */
 						tny_account = modest_tny_account_new_from_server_account_name (
-							priv->account_mgr, transport_account_name);
+							priv->account_mgr, priv->session, transport_account_name);
 						if (tny_account) {
 							g_object_set_data (G_OBJECT(tny_account), "account_store",
 									   (gpointer)self);

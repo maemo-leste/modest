@@ -1,3 +1,18 @@
+2007-07-02  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/modest-tny-account.h:
+	* src/modest-tny-account.c:
+	(modest_tny_account_new_from_server_account),
+	(modest_tny_account_new_from_server_account_name),
+	(modest_tny_account_new_from_account): Added a TnyCamelSession parameter, 
+	because this must now be set before setting the proto. This is usd in 
+	modest_tny_account_new_from_server_account(). It avoids a (maybe harmless) 
+	warning in camel_session_get_service() caused by 
+	tny_camel_transport_account_prepare().
+	
+	* src/modest-tny-account-store.c: (get_server_accounts): Pass the new 
+	session parameter.
+
 2007-06-30  Johannes Schmid <johannes.schmid@openismus.com>
 
 	* src/maemo/modest-connection-specific-smtp-edit-window.c:

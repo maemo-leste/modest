@@ -195,7 +195,8 @@ on_connection_status_changed (TnyAccount *account, TnyConnectionStatus status, g
 /**
  * modest_tny_account_new_from_server_account:
  * @account_mgr: a valid account mgr instance
- * @account_name: the server account name for which to create a corresponding tny account
+ * @session: A valid TnySessionCamel instance.
+ * @account_data: the server account for which to create a corresponding tny account
  * @type: the type of account to create (TNY_ACCOUNT_TYPE_STORE or TNY_ACCOUNT_TYPE_TRANSPORT)
  * 
  * get a tnyaccount corresponding to the server_accounts (store or transport) for this account.
@@ -205,11 +206,13 @@ on_connection_status_changed (TnyAccount *account, TnyConnectionStatus status, g
  */
 static TnyAccount*
 modest_tny_account_new_from_server_account (ModestAccountMgr *account_mgr,
+					    TnySessionCamel *session,
 					    ModestServerAccountData *account_data)
 {
 	gchar *url = NULL;
 
 	g_return_val_if_fail (account_mgr, NULL);
+	g_return_val_if_fail (session, NULL);
 	g_return_val_if_fail (account_data, NULL);
 
 	/* sanity checks */
@@ -245,6 +248,9 @@ modest_tny_account_new_from_server_account (ModestAccountMgr *account_mgr,
 	}
 	tny_account_set_id (tny_account, account_data->account_name);
 
+	/* This must be set quite early, or other set() functions will fail. */
+    tny_camel_account_set_session (TNY_CAMEL_ACCOUNT (tny_account), session);
+    
 	/* Handle connection requests:
 	 * This (badly-named) signal will be called when we try to use an offline account. */
 	g_signal_connect (G_OBJECT (tny_account), "connection-status-changed",
@@ -369,7 +375,8 @@ modest_tny_account_new_from_server_account (ModestAccountMgr *account_mgr,
 
 TnyAccount*
 modest_tny_account_new_from_server_account_name (ModestAccountMgr *account_mgr,
-					    const gchar *server_account_name)
+					    	TnySessionCamel *session,
+						const gchar *server_account_name)
 {
 	ModestServerAccountData *account_data = 
 		modest_account_mgr_get_server_account_data (account_mgr, 
@@ -378,7 +385,7 @@ modest_tny_account_new_from_server_account_name (ModestAccountMgr *account_mgr,
 		return NULL;
 
 	TnyAccount *result = modest_tny_account_new_from_server_account (
-		account_mgr, account_data);
+		account_mgr, session, account_data);
 
 	modest_account_mgr_free_server_account_data (account_mgr, account_data);
 	
@@ -431,7 +438,7 @@ modest_tny_account_new_from_account (ModestAccountMgr *account_mgr, const gchar 
 		return NULL;
 	}
 	
-	tny_account = modest_tny_account_new_from_server_account (account_mgr, server_data);
+	tny_account = modest_tny_account_new_from_server_account (account_mgr, session, server_data);
 	if (!tny_account) { 
 		g_printerr ("modest: failed to create tny account for %s (%s)\n",
 			    account_data->account_name, server_data->account_name);
@@ -439,7 +446,6 @@ modest_tny_account_new_from_account (ModestAccountMgr *account_mgr, const gchar 
 		return NULL;
 	}
 	
-	tny_camel_account_set_session (TNY_CAMEL_ACCOUNT(tny_account), session);
 	tny_account_set_forget_pass_func (tny_account,
 					  forget_pass_func ? forget_pass_func : forget_pass_dummy);
 	tny_account_set_pass_func (tny_account,

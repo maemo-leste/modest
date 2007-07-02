@@ -95,13 +95,14 @@ TnyAccount* modest_tny_account_new_for_per_account_local_outbox_folder (
 /**
  * modest_tny_account_new_from_server_account_name:
  * @account_mgr: a valid account mgr instance
+ * @session: a valid TnySessionCamel instance.
  * @server_account_name: the name of a server account in the configuration system.
  *
  * Returns: a new TnyAccount or NULL in case of error.
  */
 TnyAccount*
 modest_tny_account_new_from_server_account_name (ModestAccountMgr *account_mgr, 
-	const gchar* server_account_name);
+	TnySessionCamel *session, const gchar* server_account_name);
 	
 /**
  * modest_tny_account_get_special_folder:
