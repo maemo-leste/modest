@@ -1440,6 +1440,9 @@ modest_msg_view_search (ModestMsgView *self, const gchar *search)
 	result = gtk_html_engine_search (GTK_HTML (priv->gtkhtml),
 					 search,
 					 FALSE, TRUE, TRUE);
+
+// wait for the updated gtkhtml (w27) to enable this
+#if 0
 	if (result) {
 		gint x, y, w, h;
 		gdouble offset_top, offset_bottom;
@@ -1453,6 +1456,8 @@ modest_msg_view_search (ModestMsgView *self, const gchar *search)
 		else if (offset_bottom > adj->value + adj->page_increment)
 			gtk_adjustment_set_value (adj, offset_bottom - adj->page_increment);
 	}
+#endif 
+
 	y_offset = tmp_vadj->value;
 	gtk_layout_set_vadjustment (GTK_LAYOUT (priv->gtkhtml), vadj);
 	g_object_unref (vadj);
@@ -1471,6 +1476,8 @@ modest_msg_view_search_next (ModestMsgView *self)
 	priv = MODEST_MSG_VIEW_GET_PRIVATE (self);
 	result = gtk_html_engine_search_next (GTK_HTML (priv->gtkhtml));
 
+// fixme wait for new gtkhtml
+#if 0
 	if (result) {
 		gint x, y, w, h;
 		gdouble offset_top, offset_bottom;
@@ -1485,7 +1492,7 @@ modest_msg_view_search_next (ModestMsgView *self)
 		else if (offset_bottom > adj->value + adj->page_increment)
 			gtk_adjustment_set_value (adj, offset_bottom - adj->page_increment);
 	}
-
+#endif
 	return result;
 }
 
