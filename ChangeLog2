@@ -1,3 +1,9 @@
+2007-07-02  Armin Burgmeier  <armin@openismus.com>
+
+	* src/maemo/easysetup/modest-easysetup-wizard.c: Added a confirmation
+	note when trying to cancel the wizard. This fixes projects.maemo.org
+	bug NB#60946.
+
 2007-07-02  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/modest-tny-account.h:

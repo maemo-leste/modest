@@ -936,16 +936,40 @@ on_response (ModestWizardDialog *wizard_dialog,
 	     gpointer user_data)
 {
 	ModestEasysetupWizardDialog *self = MODEST_EASYSETUP_WIZARD_DIALOG (wizard_dialog);
-	
 	if (response_id == GTK_RESPONSE_CANCEL) {
 		/* Remove any temporarily-saved account that will not actually be needed: */
 		if (self->saved_account_name) {
 			modest_account_mgr_remove_account (self->account_manager,
 							   self->saved_account_name, FALSE);
-		}	
+		}
 	}
-	
+
 	invoke_enable_buttons_vfunc (self);
+}
+
+static void 
+on_response_before (ModestWizardDialog *wizard_dialog,
+                    gint response_id,
+                    gpointer user_data)
+{
+	ModestEasysetupWizardDialog *self = MODEST_EASYSETUP_WIZARD_DIALOG (wizard_dialog);
+	if (response_id == GTK_RESPONSE_CANCEL) {
+		/* This is mostly copied from
+		 * src/maemo/modest-account-settings-dialog.c */
+		GtkDialog *dialog = GTK_DIALOG (hildon_note_new_confirmation (GTK_WINDOW (self), 
+			_("imum_nc_wizard_confirm_lose_changes")));
+		/* TODO: These button names will be ambiguous, and not specified in the UI specification. */
+
+		const gint dialog_response = gtk_dialog_run (dialog);
+		gtk_widget_destroy (GTK_WIDGET (dialog));
+
+		if (dialog_response != GTK_RESPONSE_OK)
+		{
+			/* This is a nasty hack. murrayc. */
+			/* Don't let the dialog close */
+			g_signal_stop_emission_by_name (wizard_dialog, "response");
+		}
+	}
 }
 
 static void
@@ -1020,6 +1044,10 @@ modest_easysetup_wizard_dialog_init (ModestEasysetupWizardDialog *self)
 	 */
 	g_signal_connect_after (G_OBJECT (self), "response",
 				G_CALLBACK (on_response), self);
+
+	/* This is to show a confirmation dialog when the user hits cancel */
+	g_signal_connect (G_OBJECT (self), "response",
+	                  G_CALLBACK (on_response_before), self);
 
 	/* When this window is shown, hibernation should not be possible, 
 	 * because there is no sensible way to save the state: */
