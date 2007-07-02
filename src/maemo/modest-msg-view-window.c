@@ -30,7 +30,8 @@
 #include <string.h>
 #include <tny-account-store.h>
 #include <tny-simple-list.h>
-#include <tny-header.h>
+#include <tny-msg.h>
+#include <tny-mime-part.h>
 #include <tny-vfs-stream.h>
 #include "modest-platform.h"
 #include <modest-maemo-utils.h>
