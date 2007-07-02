@@ -950,6 +950,7 @@ cleanup:
 		g_object_unref (G_OBJECT (account));
 /* 	g_object_unref (msg); */
 	g_object_unref (header);
+	free_reply_forward_helper (rf_helper);
 }
 
 /*
@@ -1069,17 +1070,31 @@ reply_forward (ReplyForwardAction action, ModestWindow *win)
 		} else
 			reply_forward_cb (NULL, header, msg, rf_helper);
 	} else {
+		TnyHeader *header;
+		TnyIterator *iter;
+
 		/* Retrieve messages */
 		mail_op = modest_mail_operation_new_with_error_handling (MODEST_MAIL_OPERATION_TYPE_RECEIVE, 
 									 G_OBJECT(win),
 									 modest_ui_actions_get_msgs_full_error_handler, 
 									 NULL);
 		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
-		modest_mail_operation_get_msgs_full (mail_op, 
-						     header_list, 
-						     reply_forward_cb, 
-						     rf_helper, 
-						     free_reply_forward_helper);
+
+		/* Only reply/forward to one message */
+		iter = tny_list_create_iterator (header_list);
+		header = TNY_HEADER (tny_iterator_get_current (iter));
+		g_object_unref (iter);
+
+		modest_mail_operation_get_msg (mail_op,
+					       header,
+					       reply_forward_cb,
+					       rf_helper);
+
+/* 		modest_mail_operation_get_msgs_full (mail_op,  */
+/* 						     header_list,  */
+/* 						     reply_forward_cb,  */
+/* 						     rf_helper,  */
+/* 						     free_reply_forward_helper); */
 
 		/* Clean */
 		g_object_unref(mail_op);

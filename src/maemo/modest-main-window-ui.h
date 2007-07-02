@@ -113,9 +113,9 @@ static const GtkActionEntry modest_action_entries [] = {
 	 */
 	/* Headers Toolbar */
 	{ "ToolbarMessageNew",        MODEST_STOCK_NEW_MAIL,     N_("qgn_toolb_messagin_new"), NULL, NULL,  G_CALLBACK (modest_ui_actions_on_new_msg) },
-	{ "ToolbarMessageReply",      MODEST_STOCK_REPLY,     N_("qgn_toolb_messagin_reply"),          NULL, NULL,  G_CALLBACK (modest_ui_actions_on_reply) },
-	{ "ToolbarMessageReplyAll",   MODEST_STOCK_REPLY_ALL,     N_("qgn_toolb_messagin_replyall"),         NULL, NULL,  G_CALLBACK (modest_ui_actions_on_reply_all) },
-	{ "ToolbarMessageForward",    MODEST_STOCK_FORWARD,     N_("qgn_toolb_messagin_forward"),      NULL, NULL,  G_CALLBACK (modest_ui_actions_on_forward) },
+	{ "ToolbarMessageReply",      MODEST_STOCK_REPLY,     N_("mcen_me_inbox_reply"),          NULL, NULL,  G_CALLBACK (modest_ui_actions_on_reply) },
+	{ "ToolbarMessageReplyAll",   MODEST_STOCK_REPLY_ALL,     N_("mcen_me_inbox_replytoall"),         NULL, NULL,  G_CALLBACK (modest_ui_actions_on_reply_all) },
+	{ "ToolbarMessageForward",    MODEST_STOCK_FORWARD,     N_("mcen_me_inbox_forward"),      NULL, NULL,  G_CALLBACK (modest_ui_actions_on_forward) },
 	{ "ToolbarSendReceive",       MODEST_STOCK_REFRESH,   N_("qgn_toolb_gene_refresh"),      NULL, NULL,  G_CALLBACK (modest_ui_actions_on_send_receive) },
 /* 	{ "ToolbarToggleView",        MODEST_STOCK_SPLIT_VIEW,      N_("gqn_toolb_rss_fldonoff"),                "<CTRL>t", NULL,  G_CALLBACK (modest_ui_actions_toggle_folders_view) }, */
 	{ "ToolbarDeleteMessage",     MODEST_STOCK_DELETE,     N_("qgn_toolb_gene_deletebutton"),             NULL, NULL,  G_CALLBACK (modest_ui_actions_on_delete) },

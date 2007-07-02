@@ -1340,9 +1340,6 @@ transfer_folder_status_cb (GObject *obj,
 	self = MODEST_MAIL_OPERATION (user_data);
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
 
-	if ((status->position == 1) && (status->of_total == 100))
-		return;
-
 	priv->done = status->position;
 	priv->total = status->of_total;
 
@@ -1630,9 +1627,6 @@ get_msg_status_cb (GObject *obj,
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
 
 	if(priv->status == MODEST_MAIL_OPERATION_STATUS_CANCELED)
-		return;
-
-	if ((status->position == 1) && (status->of_total == 100))
 		return;
 
 	priv->done = 1;
@@ -1941,9 +1935,6 @@ transfer_msgs_status_cb (GObject *obj,
 
 	self = helper->mail_op;
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
-
-	if ((status->position == 1) && (status->of_total == 100))
-		return;
 
 	priv->done = status->position;
 	priv->total = status->of_total;
