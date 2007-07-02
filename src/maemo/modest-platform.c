@@ -214,13 +214,18 @@ modest_platform_get_file_icon_name (const gchar* name, const gchar* mime_type,
 		mime_str = g_string_new (mime_type);
 		g_string_ascii_down (mime_str);
 	}
+
 #ifdef MODEST_HAVE_OSSO_MIME
 	icons = osso_mime_get_icon_names (mime_str->str, NULL);
 #else
 	icons = hildon_mime_get_icon_names (mime_str->str, NULL);
 #endif /*MODEST_HAVE_OSSO_MIME*/
 	for (cursor = icons; cursor; ++cursor) {
-		if (gtk_icon_theme_has_icon (gtk_icon_theme_get_default(), *cursor)) {
+		if (!g_ascii_strcasecmp (*cursor, "gnome-mime-message") ||
+		    !g_ascii_strcasecmp (*cursor, "gnome-mime-message-rfc822")) {
+			icon_name = g_strdup ("qgn_list_messagin");
+			break;
+		} else if (gtk_icon_theme_has_icon (gtk_icon_theme_get_default(), *cursor)) {
 			icon_name = g_strdup (*cursor);
 			break;
 		}
