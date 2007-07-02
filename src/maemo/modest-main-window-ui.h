@@ -58,7 +58,7 @@ static const GtkActionEntry modest_action_entries [] = {
 	/* Email */
 	{ "EmailNew", NULL, N_("mcen_me_inbox_new") }, /* submenu */
 	{ "EmailNewMessage",  NULL,  N_("mcen_me_inbox_message"),      "<CTRL>N", NULL,   G_CALLBACK (modest_ui_actions_on_new_msg) },
-	{ "EmailNewDefault", NULL, N_("mcen_me_inbox_new"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_new_msg) },
+	{ "EmailNewDefault", NULL, N_("mcen_me_viewer_newemail"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_new_msg) },
 	{ "EmailNewFolder",   NULL,  N_("mcen_me_inbox_folder"),       NULL,      NULL,   G_CALLBACK (modest_ui_actions_on_new_folder) },
 	{ "EmailOpen",        NULL,  N_("mcen_me_inbox_open"),	        "<CTRL>O", NULL,   G_CALLBACK (modest_ui_actions_on_open) },
 	{ "EmailReply",       NULL,  N_("mcen_me_inbox_reply"),            NULL,      NULL,   G_CALLBACK (modest_ui_actions_on_reply) },
