@@ -308,10 +308,17 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 	g_object_set (G_OBJECT (subject_cell), "markup", header, NULL);
 	g_free (header);
 	set_common_flags (subject_cell, flags);
+
+
+	/* fixme: we hardcode the color to #666666; instead we should use SecundaryTextColour from the
+	 * theme (gtkrc file) */
 	
 	header = g_markup_printf_escaped ("<small>%s</small>", modest_text_utils_get_display_address (address));
 	g_free (address);
-	g_object_set (G_OBJECT (recipient_cell), "markup", header, NULL);
+	g_object_set (G_OBJECT (recipient_cell),
+		      "markup", header,
+		      "foreground", "#666666",
+		      NULL);
 	g_free (header);
 	set_common_flags (recipient_cell, flags);
 
@@ -326,7 +333,10 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 		 * retrieve the current send status of a message */
 		status_str = get_status_string (MODEST_TNY_SEND_QUEUE_WAITING);
 		display_date = g_strdup_printf("<small>%s</small>", status_str);
-		g_object_set (G_OBJECT (date_or_status_cell), "markup", display_date, NULL);
+		g_object_set (G_OBJECT (date_or_status_cell),
+			      "markup", display_date,
+			      "foreground", "#666666",
+			      NULL);
 		g_free (display_date);
 	} else {
 		/* in some rare cases, mail might have no Date: field. it case,
@@ -338,7 +348,10 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 			tmp_date = g_strdup ("");
 		
 		display_date = g_strdup_printf ("<small>%s</small>", tmp_date);
-		g_object_set (G_OBJECT (date_or_status_cell), "markup", display_date, NULL);
+		g_object_set (G_OBJECT (date_or_status_cell),
+			      "markup", display_date,
+			      "foreground", "#666666",
+			      NULL);
 		g_free (tmp_date);
 		g_free (display_date);
 	}
