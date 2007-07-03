@@ -255,16 +255,21 @@ gchar * modest_text_utils_get_display_size (guint64 size);
 /**
  * modest_text_utils_validate_email_address:
  * @email_address: a string
+ * @invalid_char_position: pointer to the position of the invalid
+ * character in case validation failed because of this, or %NULL.
  * 
  * validates the email address passed as argument
  * 
  * Returns: TRUE if the address is valid, FALSE otherwise
  **/
-gboolean     modest_text_utils_validate_email_address (const gchar *email_address);
+gboolean     modest_text_utils_validate_email_address (const gchar *email_address, 
+						       const gchar **invalid_char_position);
 
 /**
  * modest_text_utils_validate_recipient:
  * @recipient: a string
+ * @invalid_char_position: pointer to the position of the invalid char,
+ * if validation failed because there's an invalid char there, or %NULL.
  *
  * validates @recipient as a valid recipient field for header.
  * It's different from modest_text_utils_validate_email_address()
@@ -273,7 +278,8 @@ gboolean     modest_text_utils_validate_email_address (const gchar *email_addres
  *
  * Returns: %TRUE if the recipient is valid, FALSE otherwise
  **/
-gboolean     modest_text_utils_validate_recipient (const gchar *recipient);
+gboolean     modest_text_utils_validate_recipient (const gchar *recipient,
+						   const gchar **invalid_char_position);
 
 /**
  * modest_text_utils_split_addresses_list:

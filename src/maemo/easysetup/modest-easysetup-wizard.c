@@ -1265,7 +1265,7 @@ on_before_next (ModestWizardDialog *dialog, GtkWidget *current_page, GtkWidget *
 		if ((!email_address) || (strlen(email_address) == 0))
 			return FALSE;
 			
-		if (!modest_text_utils_validate_email_address (email_address)) {
+		if (!modest_text_utils_validate_email_address (email_address, NULL)) {
 			/* Warn the user via a dialog: */
 			hildon_banner_show_information (NULL, NULL, _("mcen_ib_invalid_email"));
                                              

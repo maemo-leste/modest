@@ -449,13 +449,24 @@ run_add_email_addr_to_contact_dlg(const gchar * contact_name)
 		result = gtk_dialog_run(GTK_DIALOG(add_email_addr_to_contact_dlg));
 
 		if (result == GTK_RESPONSE_ACCEPT) {
+			const gchar *invalid_char_offset = NULL;
 			new_email_addr = g_strdup(gtk_entry_get_text(GTK_ENTRY(email_entry)));
 			new_email_addr = g_strstrip(new_email_addr);
-			if (!modest_text_utils_validate_email_address (new_email_addr)) {
+			if (!modest_text_utils_validate_email_address (new_email_addr, &invalid_char_offset)) {
 				gtk_widget_grab_focus(email_entry);
+				if ((invalid_char_offset != NULL)&&(*invalid_char_offset != '\0')) {
+					gchar *char_in_string = g_strdup_printf ("%c", *invalid_char_offset);
+					gchar *message = g_strdup_printf(
+						dgettext("hildon-common-strings", "ckdg_ib_illegal_characters_entered"), 
+						char_in_string);
+					hildon_banner_show_information (
+						add_email_addr_to_contact_dlg, NULL, message );
+					g_free (message);
+				} else {
+					hildon_banner_show_information (add_email_addr_to_contact_dlg, NULL, _("mcen_ib_invalid_email"));
+					run_dialog = TRUE;
+				}
 				gtk_editable_select_region((GtkEditable *) email_entry, 0, -1);
-				hildon_banner_show_information (add_email_addr_to_contact_dlg, NULL, _("mcen_ib_invalid_email"));
-				run_dialog = TRUE;
 				g_free(new_email_addr);
 				new_email_addr = NULL;
 			}
@@ -587,6 +598,7 @@ modest_address_book_check_names (ModestRecptEditor *recpt_editor)
 		gchar *address;
 		gchar *start_ptr, *end_ptr;
 		gint start_pos, end_pos;
+		const gchar *invalid_char_position = NULL;
 
 		start_pos = (*((gint*) current_start->data)) + offset_delta;
 		end_pos = (*((gint*) current_end->data)) + offset_delta;
@@ -599,8 +611,17 @@ modest_address_book_check_names (ModestRecptEditor *recpt_editor)
 		gtk_text_buffer_get_iter_at_offset (buffer, &end_iter, end_pos);
 		gtk_text_buffer_select_range (buffer, &start_iter, &end_iter);
 
-		if (!modest_text_utils_validate_recipient (address)) {
-			if (strstr (address, "@") == NULL) {
+		if (!modest_text_utils_validate_recipient (address, &invalid_char_position)) {
+			if ((invalid_char_position != NULL) && (*invalid_char_position != '\0')) {
+				gchar *char_in_string = g_strdup_printf("%c", *invalid_char_position);
+				gchar *message = g_strdup_printf(
+					dgettext("hildon-common-strings", "ckdg_ib_illegal_characters_entered"), 
+					char_in_string);
+				g_free (char_in_string);
+				hildon_banner_show_information (NULL, NULL, message );
+				g_free (message);				
+				result = FALSE;
+			} else if (strstr (address, "@") == NULL) {
 				/* here goes searching in addressbook */
 				gchar *contact_id = NULL;
 				GSList *resolved_addresses = NULL;

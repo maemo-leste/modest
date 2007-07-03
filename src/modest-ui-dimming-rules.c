@@ -1070,7 +1070,7 @@ modest_ui_dimming_rules_on_add_to_contacts (ModestWindow *win, gpointer user_dat
 		gchar *selection = NULL;
 		selection = gtk_clipboard_wait_for_text (clipboard);
 
-		dimmed = !((selection != NULL) && (modest_text_utils_validate_recipient (selection)));
+		dimmed = !((selection != NULL) && (modest_text_utils_validate_recipient (selection, NULL)));
 	}
 
 	return dimmed;

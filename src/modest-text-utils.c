@@ -1018,12 +1018,15 @@ modest_text_utils_get_display_date (time_t date)
 	return g_strdup(date_buf);
 }
 
-gboolean 
-modest_text_utils_validate_email_address (const gchar *email_address)
+gboolean
+modest_text_utils_validate_email_address (const gchar *email_address, const gchar **invalid_char_position)
 {
 	int count = 0;
 	const gchar *c = NULL, *domain = NULL;
-	static gchar *rfc822_specials = "()<>@,;:\\\"[]";
+	static gchar *rfc822_specials = "()<>@,;:\\\"[]&";
+
+	if (invalid_char_position != NULL)
+		*invalid_char_position = NULL;
 
 	/* first we validate the name portion (name@domain) */
 	for (c = email_address;  *c;  c++) {
@@ -1051,8 +1054,11 @@ modest_text_utils_validate_email_address (const gchar *email_address)
 			break;
 		if (*c <= ' ' || *c >= 127) 
 			return FALSE;
-		if (strchr(rfc822_specials, *c)) 
+		if (strchr(rfc822_specials, *c)) {
+			if (invalid_char_position)
+				*invalid_char_position = c;
 			return FALSE;
+		}
 	}
 	if (c == email_address || *(c - 1) == '.') 
 		return FALSE;
@@ -1068,21 +1074,24 @@ modest_text_utils_validate_email_address (const gchar *email_address)
 		}
 		if (*c <= ' ' || *c >= 127) 
 			return FALSE;
-		if (strchr(rfc822_specials, *c)) 
+		if (strchr(rfc822_specials, *c)) {
+			if (invalid_char_position)
+				*invalid_char_position = c;
 			return FALSE;
+		}
 	} while (*++c);
 
 	return (count >= 1) ? TRUE : FALSE;
 }
 
 gboolean 
-modest_text_utils_validate_recipient (const gchar *recipient)
+modest_text_utils_validate_recipient (const gchar *recipient, const gchar **invalid_char_position)
 {
 	gchar *stripped, *current;
 	gchar *right_part;
 	gboolean has_error = FALSE;
 
-	if (modest_text_utils_validate_email_address (recipient))
+	if (modest_text_utils_validate_email_address (recipient, invalid_char_position))
 		return TRUE;
 	stripped = g_strdup (recipient);
 	stripped = g_strstrip (stripped);
@@ -1139,7 +1148,7 @@ modest_text_utils_validate_recipient (const gchar *recipient)
 
 		address = g_strndup (right_part+1, strlen (right_part) - 2);
 		g_free (right_part);
-		valid = modest_text_utils_validate_email_address (address);
+		valid = modest_text_utils_validate_email_address (address, invalid_char_position);
 		g_free (address);
 		return valid;
 	} else {

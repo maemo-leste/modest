@@ -1428,7 +1428,7 @@ modest_msg_view_window_clipboard_owner_change (GtkClipboard *clipboard,
 	parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
 	selection = gtk_clipboard_wait_for_text (clipboard);
 
-	is_address = ((selection != NULL) && (modest_text_utils_validate_recipient (selection)));
+	is_address = ((selection != NULL) && (modest_text_utils_validate_recipient (selection, NULL)));
 	
 /* 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/ToolsMenu/ToolsAddToContactsMenu"); */
 /* 	gtk_action_set_sensitive (action, is_address); */
