@@ -273,6 +273,11 @@ modest_platform_activate_uri (const gchar *uri)
 			break;
 		}
 	}
+
+	/* if we could open it with email, try something else */
+	if (!result)
+	       	result = osso_uri_open (uri, NULL, NULL);	
+	
 			
 	if (!result)
 		hildon_banner_show_information (NULL, NULL, _("mcen_ib_unsupported_link"));
@@ -293,7 +298,6 @@ modest_platform_activate_uri (const gchar *uri)
 	if (!uri)
 		return FALSE;
 
-	/* the default action should be email */
 	scheme = hildon_uri_get_scheme_from_uri (uri, NULL);
 	actions = hildon_uri_get_actions (scheme, NULL);
 	
@@ -310,9 +314,14 @@ modest_platform_activate_uri (const gchar *uri)
 			break;
 		}
 	}
-			
+	
+	/* if we could open it with email, try something else */
+	if (!result)
+	       	result = hildon_uri_open (uri, NULL, NULL);	
+		
 	if (!result)
 		hildon_banner_show_information (NULL, NULL, _("mcen_ib_unsupported_link"));
+	
 	return result;
 }
 
