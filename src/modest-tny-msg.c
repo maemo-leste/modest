@@ -36,6 +36,7 @@
 #include "modest-formatter.h"
 #include <tny-camel-stream.h>
 #include <camel/camel-stream-mem.h>
+#include <glib/gprintf.h>
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -50,6 +51,7 @@ static TnyMimePart * add_html_body_part (TnyMsg *msg, const gchar *body);
 static void add_attachments (TnyMsg *msg, GList *attachments_list);
 static char * get_content_type(const gchar *s);
 static gboolean is_ascii(const gchar *s);
+
 
 TnyMsg*
 modest_tny_msg_new (const gchar* mailto, const gchar* from, const gchar *cc,
@@ -195,42 +197,72 @@ add_html_body_part (TnyMsg *msg,
 	return html_body_part;
 }
 
+static TnyMimePart *
+copy_mime_part (TnyMimePart *part)
+{
+	TnyMimePart *result = NULL;
+	const gchar *attachment_content_type;
+	const gchar *attachment_filename;
+	const gchar *attachment_cid;
+	TnyList *parts;
+	TnyIterator *iterator;
+	TnyStream *attachment_stream;
+
+	if (TNY_IS_MSG (part)) {
+		result = TNY_MIME_PART (tny_platform_factory_new_msg (modest_runtime_get_platform_factory ()));
+		attachment_content_type = "message/rfc822";
+		tny_mime_part_set_content_type (result, attachment_content_type);
+	} else {
+		result = tny_platform_factory_new_mime_part (
+			modest_runtime_get_platform_factory());
+		attachment_content_type = tny_mime_part_get_content_type (part);
+	}
+
+	/* get mime part headers */
+	attachment_filename = tny_mime_part_get_filename (part);
+	attachment_cid = tny_mime_part_get_content_id (part);
+	
+	/* fill the stream */
+	attachment_stream = tny_mime_part_get_stream (part);
+	tny_stream_reset (attachment_stream);
+	tny_mime_part_construct_from_stream (result,
+					     attachment_stream,
+					     attachment_content_type);
+	tny_stream_reset (attachment_stream);
+	
+	/* set other mime part fields */
+	tny_mime_part_set_filename (result, attachment_filename);
+	tny_mime_part_set_content_id (result, attachment_cid);
+
+	/* copy subparts */
+	parts = tny_simple_list_new ();
+	tny_mime_part_get_parts (part, parts);
+	iterator = tny_list_create_iterator (parts);
+	while (!tny_iterator_is_done (iterator)) {
+		TnyMimePart *subpart = TNY_MIME_PART (tny_iterator_get_current (iterator));
+		TnyMimePart *subpart_copy = copy_mime_part (subpart);
+		tny_mime_part_add_part (result, subpart_copy);
+		g_object_unref (subpart);
+		tny_iterator_next (iterator);
+	}
+	g_object_unref (iterator);
+	g_object_unref (parts);
+	g_object_unref (attachment_stream);
+
+	return result;
+}
+
 static void
 add_attachments (TnyMsg *msg, GList *attachments_list)
 {
 	GList *pos;
 	TnyMimePart *attachment_part, *old_attachment;
-	const gchar *attachment_content_type;
-	const gchar *attachment_filename;
-	const gchar *attachment_cid;
-	TnyStream *attachment_stream;
 
 	for (pos = (GList *)attachments_list; pos; pos = pos->next) {
 
 		old_attachment = pos->data;
-		attachment_filename = tny_mime_part_get_filename (old_attachment);
-		attachment_stream = tny_mime_part_get_stream (old_attachment);
-		if (TNY_IS_MSG (old_attachment)) {
-			attachment_part = TNY_MIME_PART (tny_platform_factory_new_msg (modest_runtime_get_platform_factory ()));
-		} else {
-			attachment_part = tny_platform_factory_new_mime_part (
-				modest_runtime_get_platform_factory());
-		}
-		attachment_content_type = tny_mime_part_get_content_type (old_attachment);
-		attachment_cid = tny_mime_part_get_content_id (old_attachment);
-
-		tny_stream_reset (attachment_stream);
-		tny_mime_part_construct_from_stream (attachment_part,
-						     attachment_stream,
-						     attachment_content_type);
-		tny_stream_reset (attachment_stream);
-		
-		tny_mime_part_set_filename (attachment_part, attachment_filename);
-		tny_mime_part_set_content_id (attachment_part, attachment_cid);
-		
+		attachment_part = copy_mime_part (old_attachment);
 		tny_mime_part_add_part (TNY_MIME_PART (msg), attachment_part);
-		g_object_unref (attachment_stream);
-/* 		g_object_unref (attachment_part); */
 	}
 }
 

@@ -1081,8 +1081,9 @@ reply_forward (ReplyForwardAction action, ModestWindow *win)
 				g_object_unref (header);
 			g_printerr ("modest: no message found\n");
 			return;
-		} else
+		} else {
 			reply_forward_cb (NULL, header, msg, rf_helper);
+		}
 	} else {
 		TnyHeader *header;
 		TnyIterator *iter;
