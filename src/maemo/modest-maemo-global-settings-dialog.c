@@ -437,7 +437,7 @@ on_range_error (HildonNumberEditor *editor,
 #else
 	case HILDON_NUMBER_EDITOR_ERROR_MAXIMUM_VALUE_EXCEED:
 #endif
-		msg = g_strdup_printf (_("ckct_ib_maximum_value"), MSG_SIZE_MAX_VAL);
+		msg = g_strdup_printf (dgettext("hildon-libs", "ckct_ib_maximum_value"), MSG_SIZE_MAX_VAL);
 		new_val = MSG_SIZE_MAX_VAL;
 		break;
 #ifdef MODEST_HAVE_HILDON0_WIDGETS
@@ -445,7 +445,7 @@ on_range_error (HildonNumberEditor *editor,
 #else
 	case HILDON_NUMBER_EDITOR_ERROR_MINIMUM_VALUE_EXCEED:
 #endif
-		msg = g_strdup_printf (_("ckct_ib_minimum_value"), MSG_SIZE_MIN_VAL);
+		msg = g_strdup_printf (dgettext("hildon-libs", "ckct_ib_minimum_value"), MSG_SIZE_MIN_VAL);
 		new_val = MSG_SIZE_MIN_VAL;
 		break;
 #ifdef MODEST_HAVE_HILDON0_WIDGETS
