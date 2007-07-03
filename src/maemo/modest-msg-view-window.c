@@ -905,18 +905,20 @@ static void
 modest_msg_view_window_scroll_up (ModestWindow *window)
 {
 	ModestMsgViewWindowPrivate *priv;
+	gboolean return_value;
 
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
-	g_signal_emit_by_name (G_OBJECT (priv->main_scroll), "scroll-child", GTK_SCROLL_STEP_UP, FALSE);
+	g_signal_emit_by_name (G_OBJECT (priv->main_scroll), "scroll-child", GTK_SCROLL_STEP_UP, FALSE, &return_value);
 }
 
 static void
 modest_msg_view_window_scroll_down (ModestWindow *window)
 {
 	ModestMsgViewWindowPrivate *priv;
+	gboolean return_value;
 
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
-	g_signal_emit_by_name (G_OBJECT (priv->main_scroll), "scroll-child", GTK_SCROLL_STEP_DOWN, FALSE);
+	g_signal_emit_by_name (G_OBJECT (priv->main_scroll), "scroll-child", GTK_SCROLL_STEP_DOWN, FALSE, &return_value);
 }
 
 gboolean
