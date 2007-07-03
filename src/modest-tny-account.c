@@ -83,6 +83,11 @@ modest_tny_account_get_special_folder (TnyAccount *account,
 		local_account = modest_tny_account_store_get_tny_account_by (modest_runtime_get_account_store(),
 									     MODEST_TNY_ACCOUNT_STORE_QUERY_ID,
 									     account_id);
+		if (!local_account) {
+			g_printerr ("modest: %s: modest_tny_account_store_get_tny_account_by(ID) returned NULL for %s\n", __FUNCTION__, account_id);
+		return NULL;
+		}
+	
 		g_free (account_id);
 	} else {
 		/* Other local folders are all in one on-disk directory: */
@@ -100,9 +105,17 @@ modest_tny_account_get_special_folder (TnyAccount *account,
 
 	/* There is no need to do this _async, as these are local folders. */
 	/* TODO: However, this seems to fail sometimes when the network is busy, 
-	 * returning an empty list. murrayc. */
+	 * returning an empty list. murrayc. */	
 	tny_folder_store_get_folders (TNY_FOLDER_STORE (local_account),
 				      folders, NULL, NULL);
+				      
+	if (tny_list_get_length (folders) == 0) {
+		gchar* url_string = tny_account_get_url_string (local_account);
+		g_printerr ("modest: %s: tny_folder_store_get_folders() returned an empty list for account with URL '%s'\n", 
+			__FUNCTION__, url_string);
+		g_free (url_string);
+	}
+	
 	iter = tny_list_create_iterator (folders);
 
 	while (!tny_iterator_is_done (iter)) {
@@ -121,6 +134,12 @@ modest_tny_account_get_special_folder (TnyAccount *account,
 	g_object_unref (G_OBJECT (iter));
 	g_object_unref (G_OBJECT (local_account));
 
+	/*
+	if (!special_folder) {
+		g_warning ("%s: Returning NULL.", __FUNCTION__);	
+	}
+	*/
+	
 	return special_folder;
 }
 

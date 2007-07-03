@@ -211,6 +211,12 @@ modest_tny_send_queue_get_outbox (TnySendQueue *self)
 	}
 	folder  = modest_tny_account_get_special_folder (TNY_ACCOUNT(account),
 							 TNY_FOLDER_TYPE_OUTBOX);
+
+	/* This vfunc's tinymail contract does not allow it to return NULL. */
+	if (!folder) {
+		g_warning("%s: Returning NULL.\n", __FUNCTION__);
+	}
+
 	g_object_unref (G_OBJECT(account));
 
 	return folder;

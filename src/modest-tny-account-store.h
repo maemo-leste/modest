@@ -79,7 +79,6 @@ struct _ModestTnyAccountStoreClass {
 
 typedef enum {
 	MODEST_TNY_ACCOUNT_STORE_QUERY_ID,
-	MODEST_TNY_ACCOUNT_STORE_QUERY_NAME,
 	MODEST_TNY_ACCOUNT_STORE_QUERY_URL,
 } ModestTnyAccountStoreQueryType;
 

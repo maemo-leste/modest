@@ -344,7 +344,7 @@ on_account_removed (ModestAccountMgr *acc_mgr,
 	
 	/* Clear the account cache */
 	store_account = modest_tny_account_store_get_tny_account_by  (self, 
-								      MODEST_TNY_ACCOUNT_STORE_QUERY_NAME, 
+								      MODEST_TNY_ACCOUNT_STORE_QUERY_ID, 
 								      account);
 	if (store_account) {
 		tny_store_account_delete_cache (TNY_STORE_ACCOUNT (store_account));
@@ -1164,9 +1164,6 @@ modest_tny_account_store_get_tny_account_by (ModestTnyAccountStore *self,
 		case MODEST_TNY_ACCOUNT_STORE_QUERY_ID:
 			val = tny_account_get_id (TNY_ACCOUNT(cursor->data));
 			break;
-		case MODEST_TNY_ACCOUNT_STORE_QUERY_NAME:
-			val = modest_tny_account_get_parent_modest_account_name_for_server_account (TNY_ACCOUNT(cursor->data));
-			break;
 		case MODEST_TNY_ACCOUNT_STORE_QUERY_URL:
 			val = tny_account_get_url_string (TNY_ACCOUNT(cursor->data));
 			break;
@@ -1190,9 +1187,6 @@ modest_tny_account_store_get_tny_account_by (ModestTnyAccountStore *self,
 		case MODEST_TNY_ACCOUNT_STORE_QUERY_ID:
 			val = tny_account_get_id (TNY_ACCOUNT(cursor->data));
 			break;
-		case MODEST_TNY_ACCOUNT_STORE_QUERY_NAME:
-			val = tny_account_get_name (TNY_ACCOUNT(cursor->data));
-			break;
 		case MODEST_TNY_ACCOUNT_STORE_QUERY_URL:
 			val = tny_account_get_url_string (TNY_ACCOUNT(cursor->data));
 			break;
@@ -1212,6 +1206,17 @@ modest_tny_account_store_get_tny_account_by (ModestTnyAccountStore *self,
  end:
 	if (account)
 		g_object_ref (G_OBJECT(account));
+	else {
+		/* Warn if nothing was found. This is generally unusual. */
+		switch (type) {
+		case MODEST_TNY_ACCOUNT_STORE_QUERY_ID:
+			g_warning("%s: Failed to find account with ID=%s\n", __FUNCTION__, str);
+			break;
+		case MODEST_TNY_ACCOUNT_STORE_QUERY_URL:
+			g_warning("%s: Failed to find account with URL=%s\n", __FUNCTION__, str);
+			break;
+		}
+	}
 	
 	return account;
 }
