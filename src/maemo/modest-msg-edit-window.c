@@ -2136,10 +2136,12 @@ modest_msg_edit_window_set_file_format (ModestMsgEditWindow *window,
 					gint file_format)
 {
 	ModestMsgEditWindowPrivate *priv;
+	ModestWindowPrivate *parent_priv;
 	gint current_format;
 
 	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
 
+	parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
 
 	current_format = wp_text_buffer_is_rich_text (WP_TEXT_BUFFER (priv->text_buffer))
@@ -2157,8 +2159,12 @@ modest_msg_edit_window_set_file_format (ModestMsgEditWindow *window,
 			dialog = hildon_note_new_confirmation (NULL, _("emev_nc_formatting_lost"));
 			response = gtk_dialog_run (GTK_DIALOG (dialog));
 			gtk_widget_destroy (dialog);
-			if (response == GTK_RESPONSE_OK)
+			if (response == GTK_RESPONSE_OK) {
 				wp_text_buffer_enable_rich_text (WP_TEXT_BUFFER (priv->text_buffer), FALSE);
+			} else {
+				GtkToggleAction *action = GTK_TOGGLE_ACTION (gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/FormatMenu/FileFormatMenu/FileFormatFormattedTextMenu"));
+				toggle_action_set_active_block_notify (action, TRUE);
+			}
 		}
 			break;
 		}
