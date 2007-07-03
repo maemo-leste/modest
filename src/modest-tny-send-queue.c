@@ -429,12 +429,12 @@ static void _on_msg_error_happened (TnySendQueue *self,
 				    GError *err,
 				    gpointer user_data)
 {
-	ModestTnySendQueuePrivate *priv;
-	SendInfo *info;
-	GList *item;
-	TnyHeader *msg_header;
+/* 	ModestTnySendQueuePrivate *priv; */
+/* 	SendInfo *info; */
+/* 	GList *item; */
+/* 	TnyHeader *msg_header; */
 
-	priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE (self);
+/* 	priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE (self); */
 
 	/* TODO: Use this version as soon as the msg-sending
 	 *  notification works */
@@ -446,16 +446,16 @@ static void _on_msg_error_happened (TnySendQueue *self,
 /* 	/\* TODO: Why do we get the msg and its header separately? The docs */
 /* 	 * don't really tell. *\/ */
 /* 	g_assert(header == tny_msg_get_header (msg)); // ???? */
-	msg_header = tny_msg_get_header (msg);
-	item = modest_tny_send_queue_lookup_info (MODEST_TNY_SEND_QUEUE (self), 
-						  tny_header_get_message_id (msg_header));
-	g_object_unref (msg_header);
-	g_assert(item != NULL);
-	info = item->data;
+/* 	msg_header = tny_msg_get_header (msg); */
+/* 	item = modest_tny_send_queue_lookup_info (MODEST_TNY_SEND_QUEUE (self),  */
+/* 						  tny_header_get_message_id (msg_header)); */
+/* 	g_object_unref (msg_header); */
+/* 	g_assert(item != NULL); */
+/* 	info = item->data; */
 /* #endif */
 
 	/* Keep in queue so that we remember that the opertion has failed
 	 * and was not just cancelled */
-	info->status = MODEST_TNY_SEND_QUEUE_FAILED;
-	g_signal_emit (self, signals[STATUS_CHANGED], 0, info->msg_id, info->status);
+/* 	info->status = MODEST_TNY_SEND_QUEUE_FAILED; */
+/* 	g_signal_emit (self, signals[STATUS_CHANGED], 0, info->msg_id, info->status); */
 }
