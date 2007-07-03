@@ -1266,12 +1266,14 @@ modest_tny_account_store_get_server_account (ModestTnyAccountStore *self,
 		g_printerr ("modest: could not get an id for account %s\n",
 			    account_name);
 	else 	
-		account = modest_tny_account_store_get_tny_account_by (self, MODEST_TNY_ACCOUNT_STORE_QUERY_ID, id);
+		account = modest_tny_account_store_get_tny_account_by (self, 
+								       MODEST_TNY_ACCOUNT_STORE_QUERY_ID, id);
 
 	if (!account)
 		g_printerr ("modest: could not get tny %s account for %s (id=%s)\n",
 			    type == TNY_ACCOUNT_TYPE_STORE ? "store" : "transport",
 			    account_name, id ? id : "<none>");
+	g_free (id);
 
 	return account;	
 }

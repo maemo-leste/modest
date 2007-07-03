@@ -510,7 +510,6 @@ modest_msg_view_window_new (TnyMsg *msg,
 	ModestDimmingRulesGroup *toolbar_rules_group = NULL;
 	GtkActionGroup *action_group = NULL;
 	GError *error = NULL;
-	GdkPixbuf *window_icon = NULL;
 
 	g_return_val_if_fail (msg, NULL);
 	
@@ -617,11 +616,6 @@ modest_msg_view_window_new (TnyMsg *msg,
 	modest_window_set_active_account (MODEST_WINDOW(obj), account_name);
 
 	priv->last_search = NULL;
-
-
-	/* Set window icon */
-	window_icon = modest_platform_get_icon (MODEST_APP_MSG_VIEW_ICON);
-	gtk_window_set_icon (GTK_WINDOW (obj), window_icon);
 
 	/* Init the clipboard actions dim status */
 	modest_msg_view_grab_focus(MODEST_MSG_VIEW (priv->msg_view));

@@ -319,9 +319,10 @@ modest_tny_msg_find_body_part_from_mime_part (TnyMimePart *msg, gboolean want_ht
 	iter  = tny_list_create_iterator(parts);
 
 	/* no parts? assume it's single-part message */
-	if (tny_iterator_is_done(iter)) 
+	if (tny_iterator_is_done(iter)) {
+		g_object_unref (G_OBJECT(iter));
 		return TNY_MIME_PART (g_object_ref(G_OBJECT(msg)));
-	else {
+	} else {
 		gchar *content_type = NULL;
 		do {
 			part = TNY_MIME_PART(tny_iterator_get_current (iter));
