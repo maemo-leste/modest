@@ -1,5 +1,19 @@
 2007-07-03  Murray Cumming <murrayc@murrayc.com>
 
+	* src/modest-tny-account.c:
+	(modest_tny_account_get_special_folder): (util_on_idle),
+	Handle the GError so we can see when tny_folder_store_get_folders() 
+	fails, as it currently does while something else is connecting.
+	
+	Added util_run_in_main_thread_and_wait() 
+	which uses an idlen handler and mainloop to ensure that the function 
+	is called in the main thread.
+	(on_connection_status_changed): Use util_run_in_main_thread_and_wait() 
+	to make sure that we call attempt the connection in the mainloop only, 
+	which might solve some hangs.
+	
+2007-07-03  Murray Cumming <murrayc@murrayc.com>
+
 	(modest_tny_account_store_get_tny_account_by): Do not allow accounts to 
 	be found by their display name. This is never useful.
 	* src/modest-tny-account-store.c: (on_account_removed): Find the account 
