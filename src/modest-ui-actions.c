@@ -2980,16 +2980,16 @@ modest_ui_actions_send_receive_error_handler (ModestMailOperation *mail_op,
 	if (error->message != NULL)		
 		g_printerr ("modest: %s\n", error->message);
 	else
-		g_printerr ("modest: unkonw error on sedn&receive operation");
+		g_printerr ("modest: unkonw error on send&receive operation");
 
 	/* Show error message */
-	if (modest_mail_operation_get_id (mail_op) == MODEST_MAIL_OPERATION_TYPE_RECEIVE)
-		modest_platform_run_information_dialog ((win) ? GTK_WINDOW (win) : NULL,
-							_CS("sfil_ib_unable_to_receive"));
-	else 
-		modest_platform_run_information_dialog ((win) ? GTK_WINDOW (win) : NULL,
-							_CS("sfil_ib_unable_to_send"));
-		g_object_unref (win);
+/* 	if (modest_mail_operation_get_id (mail_op) == MODEST_MAIL_OPERATION_TYPE_RECEIVE) */
+/* 		modest_platform_run_information_dialog ((win) ? GTK_WINDOW (win) : NULL, */
+/* 							_CS("sfil_ib_unable_to_receive")); */
+/* 	else  */
+/* 		modest_platform_run_information_dialog ((win) ? GTK_WINDOW (win) : NULL, */
+/* 							_CS("sfil_ib_unable_to_send")); */
+	g_object_unref (win);
 }
 
 static void
