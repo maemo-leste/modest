@@ -1,3 +1,9 @@
+modest (1.0-2007.27-3) gutsy; urgency=low
+
+  * Adding a new version number for integration.
+
+ -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Tue,  3 Jul 2007 17:16:39 +0300
+
 modest (1.0-2007.27-2) feisty; urgency=low
 
   * Fixes : NB#55333, NB#55355, NB#55364, NB#55370, NB#55375, NB#55935
