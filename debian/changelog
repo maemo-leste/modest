@@ -1,3 +1,12 @@
+modest (1.0-2007.27-3ubuntu1) gutsy; urgency=low
+
+  * Fixes : NB#62256, NB#56047, NB#61783, NB#62479, NB#61018, NB#62441
+  * Fixes : NB#62471, NB#62475, NB#59405, NB#62434, NB#59494, NB#60594
+  * Fixes : NB#60650, NB#62153, NB#62267, NB#62302, NB#61020, NB#60794
+  * Fixes : NB#58182, NB#59472, NB#60430, NB#60257
+
+ -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Wed,  4 Jul 2007 16:15:33 +0300
+
 modest (1.0-2007.27-3) gutsy; urgency=low
 
   * Adding a new version number for integration.
