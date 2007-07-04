@@ -1,5 +1,11 @@
 2007-07-04  Murray Cumming <murrayc@murrayc.com>
 
+	* src/modest-tny-account.c: (on_connection_status_changed):
+	Do not use tny_device_force_offline() when tinymail says that something 
+	went wrong with the connection. It seems to report this unnecessarily.
+
+2007-07-04  Murray Cumming <murrayc@murrayc.com>
+
 	* src/maemo/modest-connection-specific-smtp-window.c:
 	(modest_connection_specific_smtp_window_init):
 	Use gtk_widget_set_size_request(), because gtk_label_set_max_width_chars()

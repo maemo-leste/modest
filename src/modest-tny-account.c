@@ -184,8 +184,13 @@ on_connection_status_changed (TnyAccount *account, TnyConnectionStatus status, g
 		 * When libconic reconnects, it will set the device back online again,
 		 * regardless of it being forced offline before.
 		 */
+		/* TODO: Find out when this is falsely being emitted. */
+		printf ("  DEBUG: %s: Not forcing offline because tinymail is sometimes reporting false connection breaks.\n", 
+			__FUNCTION__);
+		/*
 		TnyDevice *device = modest_runtime_get_device ();
 		tny_device_force_offline (device);
+		*/
 	}
 }
 
