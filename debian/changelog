@@ -1,3 +1,9 @@
+modest (1.0-2007.27-4) gutsy; urgency=low
+
+  * Changed the previous mistake in versioning.
+
+ -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Wed,  4 Jul 2007 16:42:24 +0300
+
 modest (1.0-2007.27-3ubuntu1) gutsy; urgency=low
 
   * Fixes : NB#62256, NB#56047, NB#61783, NB#62479, NB#61018, NB#62441
