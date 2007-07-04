@@ -409,5 +409,35 @@ void     modest_ui_actions_on_search_messages             (GtkAction *action,
 void     modest_ui_actions_on_toggle_find_in_page             (GtkToggleAction *action,
 							       ModestWindow *window);
 
+/**
+ * modest_ui_actions_msg_retrieval_check
+ * @mail_op: a #ModestMailOperation
+ * @header: a #TnyHeader
+ * @msg: a #TnyMsg
+ *
+ * This function checks that the message has been retrieved
+ * successfully. It it was not the case it unregisters the header from
+ * the window manager because it won't do it automatically unless the
+ * operation run fine
+ *
+ * Returns: TRUE if the operation was OK, otherwise FALSE
+ **/
+gboolean modest_ui_actions_msg_retrieval_check                (ModestMailOperation *mail_op, 
+							       TnyHeader *header,
+							       TnyMsg *msg);
+
+
+/**
+ * modest_ui_actions_get_msgs_full_error_handler
+ * @mail_op: a #ModestMailOperation
+ *
+ * Error handler for message retrieval operations like
+ * modest_mail_operation_get_msg or
+ * modest_mail_operation_get_msgs_full
+ **/
+void     modest_ui_actions_get_msgs_full_error_handler         (ModestMailOperation *mail_op,
+								gpointer user_data);
+
+
 G_END_DECLS
 #endif /* __MODEST_UI_ACTIONS_H__ */

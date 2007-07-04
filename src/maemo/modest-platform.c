@@ -880,9 +880,12 @@ modest_platform_run_information_dialog (GtkWindow *parent_window,
 
 	dialog = hildon_note_new_information (parent_window, message);
 
-	gtk_dialog_run (GTK_DIALOG (dialog));
+	g_signal_connect_swapped (dialog,
+				  "response", 
+				  G_CALLBACK (gtk_widget_destroy),
+				  dialog);
 
-	gtk_widget_destroy (GTK_WIDGET (dialog));
+	gtk_widget_show_all (dialog);
 }
 
 

@@ -105,11 +105,9 @@ typedef struct _ReplyForwardHelper {
  */
 typedef void (*HeadersFunc) (TnyHeader *header, ModestWindow *win, gpointer user_data);
 
-static void
-do_headers_action (ModestWindow *win, 
-		   HeadersFunc func,
-		   gpointer user_data);
-
+static void     do_headers_action     (ModestWindow *win, 
+				       HeadersFunc func,
+				       gpointer user_data);
 
 static void     open_msg_cb            (ModestMailOperation *mail_op, 
 					TnyHeader *header, 
@@ -610,6 +608,27 @@ cleanup:
 		g_object_unref (G_OBJECT(folder));
 }
 
+gboolean 
+modest_ui_actions_msg_retrieval_check (ModestMailOperation *mail_op,
+				       TnyHeader *header,
+				       TnyMsg *msg)
+{
+	ModestMailOperationStatus status;
+
+	/* If there is no message or the operation was not successful */
+	status = modest_mail_operation_get_status (mail_op);
+	if (!msg || status != MODEST_MAIL_OPERATION_STATUS_SUCCESS) {
+
+		/* Remove the header from the preregistered uids */
+		modest_window_mgr_unregister_header (modest_runtime_get_window_mgr (),  
+						     header);
+
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
 static void
 open_msg_cb (ModestMailOperation *mail_op, 
 	     TnyHeader *header, 
@@ -623,8 +642,10 @@ open_msg_cb (ModestMailOperation *mail_op,
 	gchar *account = NULL;
 	TnyFolder *folder;
 	
-	/* TODO: Show an error? (review the specs) */
-	if (!msg)
+	/* Do nothing if there was any problem with the mail
+	   operation. The error will be shown by the error_handler of
+	   the mail operation */
+	if (!modest_ui_actions_msg_retrieval_check (mail_op, header, msg))
 		return;
 
 	parent_win = (ModestWindow *) modest_mail_operation_get_source (mail_op);
@@ -710,24 +731,25 @@ cleanup:
 	g_object_unref (folder);
 }
 
-/*
- * This function is the error handler of the
- * modest_mail_operation_get_msgs_full operation
- */
-static void
+void
 modest_ui_actions_get_msgs_full_error_handler (ModestMailOperation *mail_op,
 					       gpointer user_data)
 {
 	const GError *error;
+	GObject *win = modest_mail_operation_get_source (mail_op);
 
 	error = modest_mail_operation_get_error (mail_op);
 	if (error->code == MODEST_MAIL_OPERATION_ERROR_MESSAGE_SIZE_LIMIT) {
-		GObject *win = modest_mail_operation_get_source (mail_op);
 
 		modest_platform_run_information_dialog ((win) ? GTK_WINDOW (win) : NULL,
 							error->message);
-		g_object_unref (win);
+	} else {
+		modest_platform_run_information_dialog ((win) ? GTK_WINDOW (win) : NULL,
+							_("mail_ni_ui_folder_get_msg_folder_error"));
 	}
+
+	if (win)
+		g_object_unref (win);
 }
 
 /*
@@ -887,6 +909,10 @@ reply_forward_cb (ModestMailOperation *mail_op,
 	TnyAccount *account = NULL;
 	ModestWindowMgr *mgr = NULL;
 	gchar *signature = NULL;
+
+	/* If there was any error */
+	if (!modest_ui_actions_msg_retrieval_check (mail_op, header, msg))
+		return;
 			
 	g_return_if_fail (user_data != NULL);
 	rf_helper = (ReplyForwardHelper *) user_data;
@@ -3058,7 +3084,9 @@ open_msg_for_purge_cb (ModestMailOperation *mail_op,
 	gint pending_purges = 0;
 	gboolean some_purged = FALSE;
 	ModestWindow *win = MODEST_WINDOW (user_data);
-	if (!msg)
+
+	/* If there was any error */
+	if (!modest_ui_actions_msg_retrieval_check (mail_op, header, msg))
 		return;
 
 	/* Once the message has been retrieved for purging, we check if

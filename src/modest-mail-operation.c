@@ -1643,42 +1643,33 @@ get_msg_cb (TnyFolder *folder,
 	if (*error) {
 		priv->error = g_error_copy (*error);
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
-		goto out;
-	}
-	if (cancelled) {
+	} else if (cancelled) {
 		priv->status = MODEST_MAIL_OPERATION_STATUS_CANCELED;
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 			     MODEST_MAIL_OPERATION_ERROR_ITEM_NOT_FOUND,
 			     _("Error trying to refresh the contents of %s"),
 			     tny_folder_get_name (folder));
-		goto out;
-	}
-
-	/* The mail operation might have been canceled in which case we do not
-	   want to notify anyone anymore. */
-	if(priv->status != MODEST_MAIL_OPERATION_STATUS_CANCELED) {
+	} else {
 		priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
-
-		/* If user defined callback function was defined, call it */
-		if (helper->user_callback) {
-			/* This callback is called into an iddle by tinymail,
-			   and idles are not in the main lock */
-			gdk_threads_enter ();
-			helper->user_callback (self, helper->header, msg, helper->user_data);
-			gdk_threads_leave ();
-		}
 	}
 
- out:
+	/* If user defined callback function was defined, call it even
+	   if the operation failed*/
+	if (helper->user_callback) {
+		/* This callback is called into an iddle by tinymail,
+		   and idles are not in the main lock */
+		gdk_threads_enter ();
+		helper->user_callback (self, helper->header, msg, helper->user_data);
+		gdk_threads_leave ();	
+	}
+
 	/* Free */
+	g_object_unref (helper->mail_op);
 	g_object_unref (helper->header);
 	g_slice_free (GetMsgAsyncHelper, helper);
 		
 	/* Notify about operation end */
-	if(priv->status != MODEST_MAIL_OPERATION_STATUS_CANCELED)
-		modest_mail_operation_notify_end (self);
-
-	g_object_unref (G_OBJECT (self));
+	modest_mail_operation_notify_end (self);
 }
 
 static void     

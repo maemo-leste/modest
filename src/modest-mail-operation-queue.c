@@ -257,9 +257,9 @@ modest_mail_operation_queue_remove (ModestMailOperationQueue *self,
 		   prevent possible application crashes. It's useful
 		   also for detecting mail operations with invalid
 		   status and error handling */
-		if (modest_mail_operation_get_error (mail_op) != NULL)
+		if (modest_mail_operation_get_error (mail_op) != NULL) {
 			modest_mail_operation_execute_error_handler (mail_op);
-		else {
+		} else {
 			if (status == MODEST_MAIL_OPERATION_STATUS_CANCELED) 
 				g_warning ("%s: operation canceled \n", __FUNCTION__);
 			else

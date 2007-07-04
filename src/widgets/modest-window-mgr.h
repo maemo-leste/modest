@@ -168,9 +168,20 @@ gboolean modest_window_mgr_find_registered_header (ModestWindowMgr *self,  TnyHe
  * removed when the window itself will registered
  * 
  **/
-void  modest_window_mgr_register_header (ModestWindowMgr *self,  TnyHeader *header);
+void  modest_window_mgr_register_header   (ModestWindowMgr *self,  TnyHeader *header);
 	
 
+/**
+ * modest_window_mgr_unregister_header
+ * @self: a #ModestWindowMgr
+ * @header: a valid #TnyHeader
+ * 
+ * unregister the uid. We could need to do that if there is any error
+ * retrieving a message. In that case the window will not be
+ * registered and thus the header will not be removed, so we must do
+ * it manually
+ **/
+void  modest_window_mgr_unregister_header (ModestWindowMgr *self,  TnyHeader *header);
 
 /**
  * modest_window_mgr_get_hibernation_is_prevented:

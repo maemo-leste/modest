@@ -1073,7 +1073,7 @@ modest_tny_account_store_alert (TnyAccountStore *self, TnyAlertType type,
 		break;
 	}
 	
-	GtkWidget *dialog = gtk_message_dialog_new (NULL, GTK_DIALOG_MODAL,
+	GtkWidget *dialog = gtk_message_dialog_new (NULL, 0,
 		gtktype, GTK_BUTTONS_YES_NO, prompt);
 #endif /* #ifdef MODEST_PLATFORM_MAEMO */
 
@@ -1081,7 +1081,7 @@ modest_tny_account_store_alert (TnyAccountStore *self, TnyAlertType type,
 	const int response = gtk_dialog_run (GTK_DIALOG (dialog));
 	if (question) {
 		retval = (response == GTK_RESPONSE_YES) ||
-				 (response == GTK_RESPONSE_OK);	
+				 (response == GTK_RESPONSE_OK);
 	}
 
 	gtk_widget_destroy (dialog);

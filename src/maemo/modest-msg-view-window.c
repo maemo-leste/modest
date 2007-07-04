@@ -104,8 +104,6 @@ static gboolean set_toolbar_transfer_mode     (ModestMsgViewWindow *self);
 
 static void update_window_title (ModestMsgViewWindow *window);
 
-static gboolean download_uncached_message (TnyHeader *header, GtkWindow *win);
-
 
 /* list my signals */
 enum {
@@ -1022,11 +1020,79 @@ modest_msg_view_window_first_message_selected (ModestMsgViewWindow *window)
 	
 }
 
+/**
+ * Reads the message whose summary item is @header. It takes care of
+ * several things, among others:
+ *
+ * If the message was not previously downloaded then ask the user
+ * before downloading. If there is no connection launch the connection
+ * dialog. Update toolbar dimming rules.
+ *
+ * Returns: TRUE if the mail operation was started, otherwise if the
+ * user do not want to download the message, or if the user do not
+ * want to connect, then the operation is not issued
+ **/
+static gboolean
+message_reader (ModestMsgViewWindow *window,
+		ModestMsgViewWindowPrivate *priv,
+		TnyHeader *header,
+		GtkTreeIter iter)
+{
+	ModestMailOperation *mail_op = NULL;
+	GtkTreePath *path = NULL;
+	ModestMailOperationTypeOperation op_type;
+
+	/* Msg download completed */
+	if (tny_header_get_flags (header) & TNY_HEADER_FLAG_CACHED) {
+		op_type = MODEST_MAIL_OPERATION_TYPE_OPEN;
+	} else {
+		TnyFolder *folder;
+		GtkResponseType response;
+
+		op_type = MODEST_MAIL_OPERATION_TYPE_RECEIVE;
+
+		/* Ask the user if he wants to download the message */
+		response = modest_platform_run_confirmation_dialog (GTK_WINDOW (window),
+								    _("mcen_nc_get_msg"));
+		if (response == GTK_RESPONSE_CANCEL)
+			return FALSE;
+		
+		/* Offer the connection dialog if necessary */
+		/* FIXME: should this stuff go directly to the mail
+		   operation instead of spread it all over the
+		   code? */
+		folder = tny_header_get_folder (header);
+		if (folder) {
+			if (!modest_platform_connect_and_wait_if_network_folderstore (NULL, TNY_FOLDER_STORE (folder))) {
+				g_object_unref (folder);
+				return FALSE;
+			}
+			g_object_unref (folder);
+		}
+	}
+
+	/* Get the path, will be freed by the callback */
+	path = gtk_tree_model_get_path (priv->header_model, &iter);
+
+	/* New mail operation */
+	mail_op = modest_mail_operation_new_with_error_handling (op_type, 
+								 G_OBJECT(window),
+								 modest_ui_actions_get_msgs_full_error_handler, 
+								 NULL);
+				
+	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
+	modest_mail_operation_get_msg (mail_op, header, view_msg_cb, path);
+	g_object_unref (mail_op);
+
+	/* Update toolbar dimming rules */
+	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (window));
+
+	return TRUE;
+}
+
 gboolean        
 modest_msg_view_window_select_next_message (ModestMsgViewWindow *window)
 {
-	TnyHeaderFlags flags;
-	ModestMailOperation *mail_op = NULL;
 	ModestMsgViewWindowPrivate *priv;
 	GtkTreePath *path= NULL;
 	GtkTreeIter tmp_iter;
@@ -1043,56 +1109,26 @@ modest_msg_view_window_select_next_message (ModestMsgViewWindow *window)
 					 path);
 		while (gtk_tree_model_iter_next (priv->header_model, &tmp_iter)) {
 			TnyHeader *header;
-			GtkTreePath *path;
 
-			gtk_tree_model_get (priv->header_model, &tmp_iter, TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN,
+			gtk_tree_model_get (priv->header_model, &tmp_iter, 
+					    TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN,
 					    &header, -1);
 			if (!header)
 				break;
-			if (tny_header_get_flags (header) & TNY_HEADER_FLAG_DELETED)
-				continue;
 
-			if (!download_uncached_message (header, GTK_WINDOW (window))) {
+			if (tny_header_get_flags (header) & TNY_HEADER_FLAG_DELETED) {
+				g_object_unref (header);
+				continue;
+			}
+
+			/* Read the message & show it */
+			if (!message_reader (window, priv, header, tmp_iter)) {
+				g_object_unref (header);
 				break;
 			}
 
-			/* Update the row reference */
-			gtk_tree_row_reference_free (priv->row_reference);
-			path = gtk_tree_model_get_path (priv->header_model, &tmp_iter);
-			priv->row_reference = gtk_tree_row_reference_new (priv->header_model, path);
-			gtk_tree_path_free (path);
-
-			/* Mark as read */
-			flags = tny_header_get_flags (header);
-			if (!(flags & TNY_HEADER_FLAG_SEEN))
-				tny_header_set_flags (header, TNY_HEADER_FLAG_SEEN);
-
-			/* Msg download completed */
-			if (flags & TNY_HEADER_FLAG_CACHED) {
-				/* No download is necessary, because the message is cached: */
-				mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_OPEN, G_OBJECT(window));
-			} else {
-				/* Offer the connection dialog if necessary: */
-				TnyFolder *folder = tny_header_get_folder(header);
-				if (!modest_platform_connect_and_wait_if_network_folderstore (NULL, TNY_FOLDER_STORE (folder))) {
-					g_object_unref (folder);
-					return FALSE;
-				}
-				if (folder) {
-					g_object_unref (folder);
-					folder = NULL;
-				}
-
-				mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_RECEIVE, G_OBJECT(window));
-			}
-				
-			/* New mail operation */
-			modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
-			modest_mail_operation_get_msg (mail_op, header, view_msg_cb, NULL);
-			g_object_unref (mail_op);
-
-			/* Update toolbar dimming rules */
-			modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (window));
+			/* Free */
+			g_object_unref (header);
 
 			return TRUE;
 		}
@@ -1105,10 +1141,7 @@ gboolean
 modest_msg_view_window_select_first_message (ModestMsgViewWindow *self)
 {
 	ModestMsgViewWindowPrivate *priv = NULL;
-	ModestMailOperation *mail_op = NULL;
 	TnyHeader *header = NULL;
-	TnyHeaderFlags flags;
-	GtkTreePath *path = NULL;
 	GtkTreeIter iter;
 
 	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (self), FALSE);
@@ -1130,30 +1163,8 @@ modest_msg_view_window_select_first_message (ModestMsgViewWindow *self)
 		return modest_msg_view_window_select_next_message (self);
 	}
 	
-	/* Update the row reference */
-	gtk_tree_row_reference_free (priv->row_reference);
-	path = gtk_tree_path_new_first ();
-	priv->row_reference = gtk_tree_row_reference_new (priv->header_model, path);
-	gtk_tree_path_free (path);
-
-	/* Mark as read */
-	flags = tny_header_get_flags (header);
-	if (!(flags & TNY_HEADER_FLAG_SEEN))
-		tny_header_set_flags (header, TNY_HEADER_FLAG_SEEN);
-	
-	/* Msg download completed */
-	if (flags & TNY_HEADER_FLAG_CACHED)
-		mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_OPEN, G_OBJECT(self));
-	else 
-		mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_RECEIVE, G_OBJECT(self));
-	
-	/* New mail operation */
-	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
-	modest_mail_operation_get_msg (mail_op, header, view_msg_cb, NULL);
-	g_object_unref (mail_op);
-
-	/* Update toolbar dimming rules */
-	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (self));
+	/* Read the message & show it */
+	message_reader (self, priv, header, iter);
 	
 	/* Free */
 	g_object_unref (header);
@@ -1164,10 +1175,8 @@ modest_msg_view_window_select_first_message (ModestMsgViewWindow *self)
 gboolean        
 modest_msg_view_window_select_previous_message (ModestMsgViewWindow *window)
 {
-	TnyHeaderFlags flags;
 	ModestMsgViewWindowPrivate *priv = NULL;
 	GtkTreePath *path;
-	ModestMailOperation *mail_op = NULL;
 
 	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (window), FALSE);
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
@@ -1192,30 +1201,11 @@ modest_msg_view_window_select_previous_message (ModestMsgViewWindow *window)
 			continue;
 		}
 
-		if (!download_uncached_message (header, GTK_WINDOW (window))) {
+		/* Read the message & show it */
+		if (!message_reader (window, priv, header, iter)) {
+			g_object_unref (header);
 			break;
 		}
-		/* Update the row reference */
-		gtk_tree_row_reference_free (priv->row_reference);
-		priv->row_reference = gtk_tree_row_reference_new (priv->header_model, path);
-			
-		/* Mark as read */
-		flags = tny_header_get_flags (header);
-		if (!(flags & TNY_HEADER_FLAG_SEEN))
-			tny_header_set_flags (header, TNY_HEADER_FLAG_SEEN);
-		
-		/* Msg download completed */
-		if (flags & TNY_HEADER_FLAG_CACHED)
-			mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_OPEN, G_OBJECT(window));
-		else
-			mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_RECEIVE, G_OBJECT(window));
-		
-		/* New mail operation */
-		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
-		modest_mail_operation_get_msg (mail_op, header, view_msg_cb, NULL);		
-
-		/* Update toolbar dimming rules */
-		modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (window));
 
 		g_object_unref (header);
 
@@ -1234,14 +1224,28 @@ view_msg_cb (ModestMailOperation *mail_op,
 {
 	ModestMsgViewWindow *self = NULL;
 	ModestMsgViewWindowPrivate *priv = NULL;
+	GtkTreePath *path;
 
-	g_return_if_fail (TNY_IS_MSG (msg));
+	/* If there was any error */
+	path = (GtkTreePath *) user_data;
+	if (!modest_ui_actions_msg_retrieval_check (mail_op, header, msg)) {
+		gtk_tree_path_free (path);			
+		return;
+	}
 
 	/* Get the window */ 
 	self = (ModestMsgViewWindow *) modest_mail_operation_get_source (mail_op);
 	g_return_if_fail (MODEST_IS_MSG_VIEW_WINDOW (self));
-
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (self);
+
+	/* Update the row reference */
+	gtk_tree_row_reference_free (priv->row_reference);
+	priv->row_reference = gtk_tree_row_reference_new (priv->header_model, path);
+	gtk_tree_path_free (path);
+
+	/* Mark header as read */
+	if (!(tny_header_get_flags (header) & TNY_HEADER_FLAG_SEEN))
+		tny_header_set_flags (header, TNY_HEADER_FLAG_SEEN);
 
 	/* Set new message */
 	modest_msg_view_set_message (MODEST_MSG_VIEW (priv->msg_view), msg);
@@ -1933,23 +1937,4 @@ update_window_title (ModestMsgViewWindow *window)
 		subject = _("mail_va_no_subject");
 
 	gtk_window_set_title (GTK_WINDOW (window), subject);
-}
-
-static gboolean 
-download_uncached_message (TnyHeader *header, GtkWindow *win)
-{
-	TnyHeaderFlags flags;
-	gboolean retval = TRUE;
-
-	flags = tny_header_get_flags (header);
-
-	if (! (flags & TNY_HEADER_FLAG_CACHED)) {
-		GtkResponseType response;
-		response = 
-			modest_platform_run_confirmation_dialog (GTK_WINDOW (win),
-								 _("mcen_nc_get_msg"));
-		if (response == GTK_RESPONSE_CANCEL)
-			retval = FALSE;
-	}
-	return retval;
 }

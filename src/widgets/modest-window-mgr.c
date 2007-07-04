@@ -239,7 +239,23 @@ modest_window_mgr_register_header (ModestWindowMgr *self,  TnyHeader *header)
 	g_free (uid);
 }
 
+void 
+modest_window_mgr_unregister_header (ModestWindowMgr *self,  TnyHeader *header)
+{
+	ModestWindowMgrPrivate *priv;
+	gchar* uid;
+	
+	g_return_if_fail (MODEST_IS_WINDOW_MGR (self));
+	g_return_if_fail (TNY_IS_HEADER(header));
+		
+	priv = MODEST_WINDOW_MGR_GET_PRIVATE (self);
+	uid = modest_tny_folder_get_header_unique_id (header);
+	
+	if (has_uid (priv->preregistered_uids, uid))
+		priv->preregistered_uids = remove_uid (priv->preregistered_uids, uid);
 
+	g_free (uid);
+}
 
 static gint
 compare_msguids (ModestWindow *win,
