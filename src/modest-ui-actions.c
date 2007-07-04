@@ -645,8 +645,11 @@ open_msg_cb (ModestMailOperation *mail_op,
 	/* Do nothing if there was any problem with the mail
 	   operation. The error will be shown by the error_handler of
 	   the mail operation */
-	if (!modest_ui_actions_msg_retrieval_check (mail_op, header, msg))
+	if (!modest_ui_actions_msg_retrieval_check (mail_op, header, msg)) {
+		printf ("DEBUG: %s: modest_ui_actions_msg_retrieval_check() failed.\n", 
+			__FUNCTION__);
 		return;
+	}
 
 	parent_win = (ModestWindow *) modest_mail_operation_get_source (mail_op);
 	folder = tny_header_get_folder (header);
@@ -739,6 +742,8 @@ modest_ui_actions_get_msgs_full_error_handler (ModestMailOperation *mail_op,
 	GObject *win = modest_mail_operation_get_source (mail_op);
 
 	error = modest_mail_operation_get_error (mail_op);
+	printf ("DEBUG: %s: Error: code=%d, text=%s\n", __FUNCTION__, error->code, error->message);
+ 
 	if (error->code == MODEST_MAIL_OPERATION_ERROR_MESSAGE_SIZE_LIMIT) {
 
 		modest_platform_run_information_dialog ((win) ? GTK_WINDOW (win) : NULL,
@@ -798,9 +803,6 @@ _modest_ui_actions_open (TnyList *headers, ModestWindow *win)
 				g_warning ("debug: header %p already registered, waiting for window",
 					   header);
 		} else {
-			/* register the header before actually creating the window */
-			modest_window_mgr_register_header (mgr, header);
-				
 			if (!(flags & TNY_HEADER_FLAG_CACHED))
 				tny_list_append (not_opened_headers, G_OBJECT (header));
 			/* Check if msg has already been retreived */
@@ -810,6 +812,47 @@ _modest_ui_actions_open (TnyList *headers, ModestWindow *win)
 		g_object_unref (header);
 		tny_iterator_next (iter);
 	}
+	g_object_unref (iter);
+	iter = NULL;
+	
+	/* If some messages would have to be downloaded, ask the user to 
+	 * make a connection. It's generally easier to do this here (in the mainloop) 
+	 * than later in a thread:
+	 */
+	if (tny_list_get_length (not_opened_cached_headers) > 0) {
+		gboolean connected = modest_platform_connect_and_wait (GTK_WINDOW (win));
+		
+		/* Don't go further if a connection would be necessary but none is available: */
+		if (!connected) {
+			g_object_unref (not_opened_headers);
+			g_object_unref (not_opened_cached_headers);
+			return;
+		}
+	}
+	
+	/* Register the headers before actually creating the windows: */
+	TnyIterator *iter_not_opened = tny_list_create_iterator (not_opened_headers);
+	while (!tny_iterator_is_done (iter_not_opened)) {
+		TnyHeader *header = TNY_HEADER (tny_iterator_get_current (iter_not_opened));
+		modest_window_mgr_register_header (mgr, header);
+		g_object_unref (header);
+		
+		tny_iterator_next (iter_not_opened);
+	}
+	g_object_unref (iter_not_opened);
+	iter_not_opened = NULL;
+	
+	TnyIterator *iter_cached = tny_list_create_iterator (not_opened_cached_headers);
+	while (!tny_iterator_is_done (iter_cached)) {
+		TnyHeader *header = TNY_HEADER (tny_iterator_get_current (iter_cached));
+		modest_window_mgr_register_header (mgr, header);
+		g_object_unref (header);
+		
+		tny_iterator_next (iter_cached);
+	}
+	g_object_unref (iter_cached);
+	iter_cached = NULL;
+	
 	
 	/* Open each uncached message */
 	if (tny_list_get_length (not_opened_headers) > 0) {

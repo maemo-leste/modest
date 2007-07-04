@@ -1,3 +1,18 @@
+2007-07-04   Murray Cumming <murrayc@murrayc.com>
+
+	* src/modest-ui-actions.c: (open_msg_cb): Add a printf() to provide a 
+	clue when this has failed, because the error dialog is not always shown 
+	(at least in earlier version).
+	
+	(modest_ui_actions_get_msgs_full_error_handler): prinf() the actual 
+	GError message, because the generic error dialog is not helpful.
+	I am getting
+	'This message is not currently available (can't let a new connection go online)'
+	when trying to open an IMAP message.
+	
+	(_modest_ui_actions_open): Offer a connection when some messages would 
+	have to be downloaded and we are offline.
+
 2007-07-04  Johannes Schmid <johannes.schmid@openismus.com>
 
 	* src/widgets/modest-folder-view.c:
@@ -6,7 +21,7 @@
 	NOTE: For the last two changes you need to update your tinymail copy
 	because of API changes!
 
-2007-07-04  Johanens Schmid <johannes.schmid@openismus.com>
+2007-07-04  Johannes Schmid <johannes.schmid@openismus.com>
 
 	* src/modest-tny-local-folders-account.c:
 	Set the folder type for the TnyMergeFolder to TNY_MERGE_FOLDER_OUTBOX
