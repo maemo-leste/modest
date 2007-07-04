@@ -167,7 +167,12 @@ on_connection_status_changed (TnyAccount *account, TnyConnectionStatus status, g
 		 * because tinymail does not guarantee that this signal handler will be called 
 		 * in the main thread.
 		 */
-		modest_platform_connect_and_wait (NULL);
+		/* TODO: Commented out (and setting offline instead), because this causes hangs, probably related to 
+		 * our use of mainloops:
+		 * modest_platform_connect_and_wait (NULL);
+		 */
+		 TnyDevice *device = modest_runtime_get_device ();
+		 tny_device_force_offline (device);
 	} else if (status == TNY_CONNECTION_STATUS_CONNECTED_BROKEN) {
 		printf ("DEBUG: %s: Connection broken. Forcing TnyDevice offline.\n", 
 			__FUNCTION__);

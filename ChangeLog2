@@ -1,5 +1,13 @@
 2007-07-04  Murray Cumming <murrayc@murrayc.com>
 
+	* src/modest-tny-account.c: (on_connection_status_changed):
+	Commented out the call to modest_platform_connect_and_wait() because this 
+	seems to always hang, and I would like to know if this is the only thing 
+	that causes a hang when showing the connection dialog.
+	It is not very useful anyway.
+
+2007-07-04  Murray Cumming <murrayc@murrayc.com>
+
 	* src/maemo/modest-msg-view-window.c:
 	(modest_msg_view_window_select_next_message):
 	
