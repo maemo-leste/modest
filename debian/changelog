@@ -1,3 +1,10 @@
+modest (1.0-2007.27-5) gutsy; urgency=low
+
+  * Fixes : NB#60479
+  * Building package for w27-04 at 18:30.
+
+ -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Wed,  4 Jul 2007 18:33:03 +0300
+
 modest (1.0-2007.27-4) gutsy; urgency=low
 
   * Changed the previous mistake in versioning.
