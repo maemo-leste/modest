@@ -227,6 +227,9 @@ void modest_tny_local_folders_account_add_merged_outbox_folders (ModestTnyLocalF
 	 * so that they appear as one outbox to the user: */
 	TnyMergeFolder *merged_outbox = TNY_MERGE_FOLDER (tny_merge_folder_new());
 	
+	/* Set type to outbox (NB#61580) */
+	tny_merge_folder_set_folder_type (merged_outbox, TNY_FOLDER_TYPE_OUTBOX);
+	
 	GSList *iter = accounts;
 	while (iter)
 	{
