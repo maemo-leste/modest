@@ -61,6 +61,7 @@
 #include "modest-text-utils.h"
 #include "modest-ui-dimming-manager.h"
 #include "maemo/modest-osso-state-saving.h"
+#include "modest-text-utils.h"
 
 #ifdef MODEST_HAVE_HILDON0_WIDGETS
 #include <hildon-widgets/hildon-program.h>
@@ -1526,10 +1527,15 @@ create_details_widget (GtkWidget *styled_widget, TnyAccount *account)
 	/* Size / Date */
 	if (modest_tny_account_is_virtual_local_folders (account)
 		|| modest_tny_account_is_memory_card_account (account)) {
-		/* FIXME: format size */
-		label = g_markup_printf_escaped ("<span color='%s'>%s:</span> %d", 
-						 gray_color_markup, _("mcen_fi_rootfolder_size"), 
-						 modest_tny_folder_store_get_local_size (folder_store));
+
+		gchar *size = modest_text_utils_get_display_size (
+			modest_tny_folder_store_get_local_size (folder_store));
+		
+		label = g_markup_printf_escaped ("<span color='%s'>%s:</span> %s", 
+						 gray_color_markup, _("mcen_fi_rootfolder_size"),
+						 size);
+		g_free (size);
+		
 		label_w = gtk_label_new (NULL);
 		gtk_label_set_markup (GTK_LABEL (label_w), label);
 		gtk_box_pack_start (GTK_BOX (vbox), label_w, FALSE, FALSE, 0);
