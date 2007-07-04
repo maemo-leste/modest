@@ -1071,7 +1071,16 @@ modest_msg_edit_window_get_msg_data (ModestMsgEditWindow *edit_window)
 	else
 		data->html_body = NULL;
 
-	data->attachments = priv->attachments; /* TODO: copy and free ? */
+	/* deep-copy the data */
+	GList *cursor = priv->attachments;
+	data->attachments = NULL;
+	while (cursor) {
+		data->attachments = g_list_append (data->attachments,
+						   g_strdup ((gchar*)cursor->data));
+		cursor = g_list_next (cursor);
+	}
+	
+
 	data->priority_flags = priv->priority_flags;
 
 	return data;
@@ -1103,8 +1112,6 @@ modest_msg_edit_window_free_msg_data (ModestMsgEditWindow *edit_window,
 	g_list_foreach (data->attachments, (GFunc)g_free, NULL);
 	g_list_free (data->attachments);
 	
-	/* TODO: Free data->attachments? */
-
 	g_slice_free (MsgData, data);
 }
 
