@@ -1,3 +1,11 @@
+2007-07-04  Johannes Schmid <johannes.schmid@openismus.com>
+
+	* src/widgets/modest-folder-view.c:
+	Don't check for MERGE type anymore as we use the correct type
+	now.
+	NOTE: For the last two changes you need to update your tinymail copy
+	because of API changes!
+
 2007-07-04  Johanens Schmid <johannes.schmid@openismus.com>
 
 	* src/modest-tny-local-folders-account.c:

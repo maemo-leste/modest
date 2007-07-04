@@ -484,11 +484,11 @@ icon_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 		return;
 	}
 
+	/* MERGE is not needed anymore as the folder now has the correct type jschmid */
 	/* We include the MERGE type here because it's used to create
 	   the local OUTBOX folder */
 	if (type == TNY_FOLDER_TYPE_NORMAL || 
-	    type == TNY_FOLDER_TYPE_UNKNOWN ||
-	    type == TNY_FOLDER_TYPE_MERGE) {
+	    type == TNY_FOLDER_TYPE_UNKNOWN) {
 		type = modest_tny_folder_guess_folder_type (TNY_FOLDER (instance));
 	}
 
