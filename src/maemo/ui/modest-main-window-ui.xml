@@ -115,20 +115,19 @@
   </toolbar>
 
   <popup name="HeaderViewCSM">
-    <menuitem action="HeaderViewCSMOpen"/>
     <menuitem action="HeaderViewCSMReply"/>
     <menuitem action="HeaderViewCSMReplyAll"/>
     <menuitem action="HeaderViewCSMForward"/>
+    <menuitem action="HeaderViewCSMCancelSending"/>
     <separator/>
     <menuitem action="HeaderViewCSMCut"/>
     <menuitem action="HeaderViewCSMCopy"/>
     <menuitem action="HeaderViewCSMPaste"/>
     <separator/>
     <menuitem action="HeaderViewCSMDelete"/>
-    <menuitem action="HeaderViewCSMCancelSending"/>
     <menuitem action="HeaderViewCSMHelp"/>
   </popup>
-  
+
   <popup name="FolderViewCSM">
     <menuitem action="FolderViewCSMNewFolder"/>
     <menuitem action="FolderViewCSMRenameFolder"/>

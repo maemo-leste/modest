@@ -50,6 +50,7 @@
 #include "modest-main-window-ui-dimming.h"
 #include "modest-account-mgr.h"
 #include "modest-tny-account.h"
+#include "modest-tny-folder.h"
 #include "modest-conf.h"
 #include <modest-maemo-utils.h>
 #include "modest-tny-platform-factory.h"
@@ -147,6 +148,11 @@ static gboolean
 on_header_view_focus_in (GtkWidget *widget,
 			 GdkEventFocus *event,
 			 gpointer userdata);
+static void 
+modest_main_window_on_folder_selection_changed (ModestFolderView *folder_view,
+						TnyFolderStore *folder_store, 
+						gboolean selected,
+						ModestMainWindow *main_window);
 
 /* list my signals */
 enum {
@@ -613,7 +619,7 @@ connect_signals (ModestMainWindow *self)
 	g_signal_connect (G_OBJECT(priv->folder_view), "key-press-event",
 			  G_CALLBACK(on_inner_widgets_key_pressed), self);
 	g_signal_connect (G_OBJECT(priv->folder_view), "folder_selection_changed",
-			  G_CALLBACK(modest_ui_actions_on_folder_selection_changed), self);
+			  G_CALLBACK(modest_main_window_on_folder_selection_changed), self);
 	g_signal_connect (G_OBJECT(priv->folder_view), "folder-display-name-changed",
 			  G_CALLBACK(modest_ui_actions_on_folder_display_name_changed), self);
 	g_signal_connect (G_OBJECT (priv->folder_view), "focus-in-event", 
@@ -2091,4 +2097,72 @@ on_header_view_focus_in (GtkWidget *widget,
 		g_object_unref (selection);
 	}
 	return FALSE;
+}
+
+static void 
+modest_main_window_on_folder_selection_changed (ModestFolderView *folder_view,
+						TnyFolderStore *folder_store, 
+						gboolean selected,
+						ModestMainWindow *main_window)
+{
+	ModestWindowPrivate *parent_priv = MODEST_WINDOW_GET_PRIVATE (main_window);
+	GtkAction *action = NULL;
+	gboolean show_reply = TRUE;
+	gboolean show_forward = TRUE;
+	gboolean show_cancel_send = FALSE;
+	gboolean show_clipboard = TRUE;
+	gboolean show_delete = TRUE;
+
+	if (selected) {
+		if (TNY_IS_ACCOUNT (folder_store)) {
+			show_reply = show_forward = show_cancel_send = show_clipboard = show_delete = FALSE;
+		} else if (TNY_IS_FOLDER (folder_store)) {
+			if (modest_tny_folder_is_local_folder (TNY_FOLDER (folder_store))) {
+				TnyFolderType folder_type = modest_tny_folder_get_local_folder_type (
+					TNY_FOLDER (folder_store));
+				switch (folder_type) {
+				case TNY_FOLDER_TYPE_DRAFTS:
+					show_clipboard = show_delete = TRUE;
+					show_reply = show_forward = show_cancel_send = FALSE;
+					break;
+				case TNY_FOLDER_TYPE_SENT:
+					show_forward = show_clipboard = show_delete = TRUE;
+					show_reply = show_cancel_send = FALSE;
+					break;
+				case TNY_FOLDER_TYPE_OUTBOX:
+					show_clipboard = show_delete = show_cancel_send = TRUE;
+					show_reply = show_forward = FALSE;
+					break;
+				default:
+					show_reply = show_forward = show_clipboard = show_delete = TRUE;
+					show_cancel_send = FALSE;
+				}
+			} else {
+				show_reply = show_forward = show_clipboard = show_delete = TRUE;
+				show_cancel_send = FALSE;
+			}
+		}
+	}
+
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/HeaderViewCSM/HeaderViewCSMReply");
+	gtk_action_set_visible (action, show_reply);
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/HeaderViewCSM/HeaderViewCSMReplyAll");
+	gtk_action_set_visible (action, show_reply);
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/HeaderViewCSM/HeaderViewCSMForward");
+	gtk_action_set_visible (action, show_forward);
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/HeaderViewCSM/HeaderViewCSMCancelSending");
+	gtk_action_set_visible (action, show_cancel_send);
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/HeaderViewCSM/HeaderViewCSMCut");
+	gtk_action_set_visible (action, show_clipboard);
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/HeaderViewCSM/HeaderViewCSMCopy");
+	gtk_action_set_visible (action, show_clipboard);
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/HeaderViewCSM/HeaderViewCSMPaste");
+	gtk_action_set_visible (action, show_clipboard);
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/HeaderViewCSM/HeaderViewCSMDelete");
+	gtk_action_set_visible (action, show_delete);
+
+	/* We finally call to the ui actions handler, after updating properly
+	 * the header view CSM */
+	modest_ui_actions_on_folder_selection_changed (folder_view, folder_store, selected, main_window);
+
 }
