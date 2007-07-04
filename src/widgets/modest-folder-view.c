@@ -467,6 +467,7 @@ icon_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 	gchar *fname = NULL;
 	const gchar *account_id = NULL;
 	gint unread = 0;
+	gboolean has_children;
 	
 	rendobj = G_OBJECT(renderer);
 	gtk_tree_model_get (tree_model, iter,
@@ -475,6 +476,7 @@ icon_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 			    TNY_GTK_FOLDER_STORE_TREE_MODEL_UNREAD_COLUMN, &unread,
 			    TNY_GTK_FOLDER_STORE_TREE_MODEL_INSTANCE_COLUMN, &instance,
 			    -1);
+	has_children = gtk_tree_model_iter_has_child (tree_model, iter);
 
 	if (!fname)
 		return;
@@ -539,6 +541,39 @@ icon_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 
 	/* Set pixbuf */
 	g_object_set (rendobj, "pixbuf", pixbuf, NULL);
+	if (has_children && (pixbuf != NULL)) {
+		GdkPixbuf *open_pixbuf, *closed_pixbuf;
+		GdkPixbuf *open_emblem, *closed_emblem;
+		open_pixbuf = gdk_pixbuf_copy (pixbuf);
+		closed_pixbuf = gdk_pixbuf_copy (pixbuf);
+		open_emblem = modest_platform_get_icon ("qgn_list_gene_fldr_exp");
+		closed_emblem = modest_platform_get_icon ("qgn_list_gene_fldr_clp");
+
+		if (open_emblem) {
+			gdk_pixbuf_composite (open_emblem, open_pixbuf, 0, 0, 
+					      MIN (gdk_pixbuf_get_width (open_emblem), 
+						   gdk_pixbuf_get_width (open_pixbuf)),
+					      MIN (gdk_pixbuf_get_height (open_emblem), 
+						   gdk_pixbuf_get_height (open_pixbuf)),
+					      0, 0, 1, 1, GDK_INTERP_NEAREST, 255);
+			g_object_set (rendobj, "pixbuf-expander-open", open_pixbuf, NULL);
+			g_object_unref (open_emblem);
+		}
+		if (closed_emblem) {
+			gdk_pixbuf_composite (closed_emblem, closed_pixbuf, 0, 0, 
+					      MIN (gdk_pixbuf_get_width (closed_emblem), 
+						   gdk_pixbuf_get_width (closed_pixbuf)),
+					      MIN (gdk_pixbuf_get_height (closed_emblem), 
+						   gdk_pixbuf_get_height (closed_pixbuf)),
+					      0, 0, 1, 1, GDK_INTERP_NEAREST, 255);
+			g_object_set (rendobj, "pixbuf-expander-closed", closed_pixbuf, NULL);
+			g_object_unref (closed_emblem);
+		}
+		if (closed_pixbuf)
+			g_object_unref (closed_pixbuf);
+		if (open_pixbuf)
+			g_object_unref (open_pixbuf);
+	}
 
 	if (pixbuf != NULL)
 		g_object_unref (pixbuf);
