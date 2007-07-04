@@ -108,7 +108,7 @@ modest_attachments_view_set_message (ModestAttachmentsView *attachments_view, Tn
 	
 	if (msg == priv->msg) return;
 
-	if (priv->msg) 
+	if (priv->msg)
 		g_object_unref (priv->msg);
 	if (msg)
 		g_object_ref (G_OBJECT(msg));

@@ -102,8 +102,9 @@ static void set_toolbar_mode (ModestMsgViewWindow *self,
 
 static gboolean set_toolbar_transfer_mode     (ModestMsgViewWindow *self); 
 
-
 static void update_window_title (ModestMsgViewWindow *window);
+
+static gboolean download_uncached_message (TnyHeader *header, GtkWindow *win);
 
 
 /* list my signals */
@@ -1051,6 +1052,10 @@ modest_msg_view_window_select_next_message (ModestMsgViewWindow *window)
 			if (tny_header_get_flags (header) & TNY_HEADER_FLAG_DELETED)
 				continue;
 
+			if (!download_uncached_message (header, GTK_WINDOW (window))) {
+				break;
+			}
+
 			/* Update the row reference */
 			gtk_tree_row_reference_free (priv->row_reference);
 			path = gtk_tree_model_get_path (priv->header_model, &tmp_iter);
@@ -1187,6 +1192,9 @@ modest_msg_view_window_select_previous_message (ModestMsgViewWindow *window)
 			continue;
 		}
 
+		if (!download_uncached_message (header, GTK_WINDOW (window))) {
+			break;
+		}
 		/* Update the row reference */
 		gtk_tree_row_reference_free (priv->row_reference);
 		priv->row_reference = gtk_tree_row_reference_new (priv->header_model, path);
@@ -1927,4 +1935,21 @@ update_window_title (ModestMsgViewWindow *window)
 	gtk_window_set_title (GTK_WINDOW (window), subject);
 }
 
+static gboolean 
+download_uncached_message (TnyHeader *header, GtkWindow *win)
+{
+	TnyHeaderFlags flags;
+	gboolean retval = TRUE;
 
+	flags = tny_header_get_flags (header);
+
+	if (! (flags & TNY_HEADER_FLAG_CACHED)) {
+		GtkResponseType response;
+		response = 
+			modest_platform_run_confirmation_dialog (GTK_WINDOW (win),
+								 _("mcen_nc_get_msg"));
+		if (response == GTK_RESPONSE_CANCEL)
+			retval = FALSE;
+	}
+	return retval;
+}
