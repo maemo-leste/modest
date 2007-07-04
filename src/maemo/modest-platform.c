@@ -1105,9 +1105,23 @@ modest_platform_create_folder_view (TnyFolderStoreQuery *query)
 }
 
 void 
-modest_platform_information_banner (GtkWidget *widget,
+modest_platform_information_banner (GtkWidget *parent,
 				    const gchar *icon_name,
 				    const gchar *text)
 {
-	hildon_banner_show_information (widget, icon_name, text);
+	hildon_banner_show_information (parent, icon_name, text);
+}
+
+GtkWidget *
+modest_platform_animation_banner (GtkWidget *parent,
+				  const gchar *animation_name,
+				  const gchar *text)
+{
+	GtkWidget *inf_note = NULL;
+
+	g_return_val_if_fail (text != NULL, NULL);
+
+	inf_note = hildon_banner_show_animation (parent, animation_name, text);
+
+	return inf_note;
 }

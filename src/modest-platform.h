@@ -266,6 +266,11 @@ void modest_platform_information_banner (GtkWidget *widget,
 					 const gchar *icon_name,
 					 const gchar *text);
 
+GtkWidget *
+modest_platform_animation_banner (GtkWidget *parent,
+				  const gchar *annimation_name,
+				  const gchar *text);
+
 G_END_DECLS
 
 #endif /* __MODEST_PLATFORM_UTILS_H__ */

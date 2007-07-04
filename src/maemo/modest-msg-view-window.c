@@ -672,6 +672,7 @@ modest_msg_view_window_get_header (ModestMsgViewWindow *self)
 			    TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN, 
 			    &header, -1);
 
+	gtk_tree_path_free (path);
 	return header;
 }
 
@@ -1012,6 +1013,7 @@ modest_msg_view_window_first_message_selected (ModestMsgViewWindow *window)
 			}
 			g_free (path_string);
 		}
+		gtk_tree_path_free (path);
 		return result;
 	} else {
 		return TRUE;
@@ -1076,6 +1078,7 @@ modest_msg_view_window_select_next_message (ModestMsgViewWindow *window)
 
 			return TRUE;
 		}
+		gtk_tree_path_free (path);
 	}
 	return FALSE;       	
 }
@@ -1198,6 +1201,7 @@ modest_msg_view_window_select_previous_message (ModestMsgViewWindow *window)
 		return TRUE;
 	}
 
+	gtk_tree_path_free (path);
 	return FALSE;
 }
 
@@ -1284,6 +1288,7 @@ modest_msg_view_window_update_priority (ModestMsgViewWindow *window)
 		gtk_tree_model_get (priv->header_model, &iter, TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN,
 				    &header, -1);
 		flags = tny_header_get_flags (header);
+		gtk_tree_path_free (path);
 	}
 
 	modest_msg_view_set_priority (MODEST_MSG_VIEW(priv->msg_view), flags);

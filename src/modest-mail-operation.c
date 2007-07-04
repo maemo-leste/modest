@@ -572,6 +572,7 @@ modest_mail_operation_send_new_mail (ModestMailOperation *self,
 	header = tny_msg_get_header (new_msg);
 	if (priority_flags != 0)
 		tny_header_set_flags (header, priority_flags);
+	g_object_unref (G_OBJECT(header));
 
 	/* Call mail operation */
 	modest_mail_operation_send_mail (self, transport_account, new_msg);
@@ -583,6 +584,7 @@ modest_mail_operation_send_new_mail (ModestMailOperation *self,
 			/* Note: This can fail (with a warning) if the message is not really already in a folder,
 			 * because this function requires it to have a UID. */
 			tny_folder_remove_msg (folder, header, NULL);
+			tny_header_set_flags (header, TNY_HEADER_FLAG_DELETED);
 			g_object_unref (header);
 		}
 	}
@@ -631,6 +633,7 @@ modest_mail_operation_save_to_drafts (ModestMailOperation *self,
 	/* add priority flags */
 	header = tny_msg_get_header (msg);
 	tny_header_set_flags (header, priority_flags);
+	g_object_unref (G_OBJECT(header));
 
 	folder = modest_tny_account_get_special_folder (TNY_ACCOUNT (transport_account), TNY_FOLDER_TYPE_DRAFTS);
 	if (!folder) {
@@ -645,6 +648,7 @@ modest_mail_operation_save_to_drafts (ModestMailOperation *self,
 		header = tny_msg_get_header (draft_msg);
 		/* Remove the old draft expunging it */
 		tny_folder_remove_msg (folder, header, NULL);
+		tny_header_set_flags (header, TNY_HEADER_FLAG_DELETED);
 		tny_folder_sync (folder, FALSE, &(priv->error));  /* FALSE --> don't expunge */
 		g_object_unref (header);
 	}
@@ -1332,7 +1336,8 @@ modest_mail_operation_remove_folder (ModestMailOperation *self,
 								      TNY_FOLDER_TYPE_TRASH);
 		/* TODO: error_handling */
 		 modest_mail_operation_xfer_folder (self, folder,
-						    TNY_FOLDER_STORE (trash_folder), TRUE);
+						    TNY_FOLDER_STORE (trash_folder), 
+						    TRUE, NULL, NULL);
 	} else {
 		TnyFolderStore *parent = tny_folder_get_folder_store (folder);
 
@@ -1357,11 +1362,15 @@ transfer_folder_status_cb (GObject *obj,
 	ModestMailOperation *self;
 	ModestMailOperationPrivate *priv;
 	ModestMailOperationState *state;
+	XFerMsgAsyncHelper *helper;
 
 	g_return_if_fail (status != NULL);
 	g_return_if_fail (status->code == TNY_FOLDER_STATUS_CODE_COPY_FOLDER);
 
-	self = MODEST_MAIL_OPERATION (user_data);
+	helper = (XFerMsgAsyncHelper *) user_data;
+	g_return_if_fail (helper != NULL);       
+
+	self = helper->mail_op;
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
 
 	priv->done = status->position;
@@ -1381,12 +1390,15 @@ transfer_folder_cb (TnyFolder *folder,
 		    GError **err, 
 		    gpointer user_data)
 {
+	XFerMsgAsyncHelper *helper;
 	ModestMailOperation *self = NULL;
 	ModestMailOperationPrivate *priv = NULL;
 
-	self = MODEST_MAIL_OPERATION (user_data);
+	helper = (XFerMsgAsyncHelper *) user_data;
+	g_return_if_fail (helper != NULL);       
 
-	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
+	self = helper->mail_op;
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
 
 	if (*err) {
 		priv->error = g_error_copy (*err);
@@ -1403,22 +1415,34 @@ transfer_folder_cb (TnyFolder *folder,
 		priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
 	}
 		
-	/* Free */
-	g_object_unref (folder);
-	g_object_unref (into);
-
 	/* Notify about operation end */
 	modest_mail_operation_notify_end (self);
+
+	/* If user defined callback function was defined, call it */
+	if (helper->user_callback) {
+		gdk_threads_enter ();
+		helper->user_callback (priv->source, helper->user_data);
+		gdk_threads_leave ();
+	}
+
+	/* Free */
+	g_object_unref (helper->mail_op);
+	g_slice_free   (XFerMsgAsyncHelper, helper);
+	g_object_unref (folder);
+	g_object_unref (into);
 }
 
 void
 modest_mail_operation_xfer_folder (ModestMailOperation *self,
 				   TnyFolder *folder,
 				   TnyFolderStore *parent,
-				   gboolean delete_original)
+				   gboolean delete_original,
+				   XferMsgsAsynUserCallback user_callback,
+				   gpointer user_data)
 {
 	ModestMailOperationPrivate *priv = NULL;
 	ModestTnyFolderRules parent_rules = 0, rules; 
+	XFerMsgAsyncHelper *helper = NULL;
 
 	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
 	g_return_if_fail (TNY_IS_FOLDER (folder));
@@ -1460,6 +1484,14 @@ modest_mail_operation_xfer_folder (ModestMailOperation *self,
 		g_object_ref (folder);
 		g_object_ref (parent);
 
+		/* Create the helper */
+		helper = g_slice_new0 (XFerMsgAsyncHelper);
+		helper->mail_op = g_object_ref(self);
+		helper->dest_folder = NULL;
+		helper->headers = NULL;
+		helper->user_callback = user_callback;
+		helper->user_data = user_data;
+		
 		/* Move/Copy folder */		
 		tny_folder_copy_async (folder,
 				       parent,
@@ -1467,7 +1499,8 @@ modest_mail_operation_xfer_folder (ModestMailOperation *self,
 				       delete_original,
 				       transfer_folder_cb,
 				       transfer_folder_status_cb,
-				       self);
+				       helper);
+/* 				       self); */
 	}
 }
 
@@ -1478,6 +1511,7 @@ modest_mail_operation_rename_folder (ModestMailOperation *self,
 {
 	ModestMailOperationPrivate *priv;
 	ModestTnyFolderRules rules;
+	XFerMsgAsyncHelper *helper;
 
 	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
 	g_return_if_fail (TNY_IS_FOLDER_STORE (folder));
@@ -1509,12 +1543,21 @@ modest_mail_operation_rename_folder (ModestMailOperation *self,
 	} else {
 		TnyFolderStore *into;
 
+		/* Create the helper */
+		helper = g_slice_new0 (XFerMsgAsyncHelper);
+		helper->mail_op = g_object_ref(self);
+		helper->dest_folder = NULL;
+		helper->headers = NULL;
+		helper->user_callback = NULL;
+		helper->user_data = NULL;
+
 		/* Rename. Camel handles folder subscription/unsubscription */
 		into = tny_folder_get_folder_store (folder);
 		tny_folder_copy_async (folder, into, name, TRUE,
 				 transfer_folder_cb,
 				 transfer_folder_status_cb,
-				 self);
+				 helper);
+/* 				 self); */
 		if (into)
 			g_object_unref (into);		
 	}

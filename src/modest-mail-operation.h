@@ -414,6 +414,8 @@ void          modest_mail_operation_rename_folder  (ModestMailOperation *self,
  * @folder: a #TnyFolder
  * @parent: the new parent of the folder as #TnyFolderStore
  * @delete_original: wheter or not delete the original folder
+ * @user_callback: a #XferMsgsAsynUserCallback function to call after tinymail callback execution.
+ * @user_data: generic user data which will be passed to @user_callback function.
  * 
  * Sets the given @folder as child of a provided #TnyFolderStore. This
  * operation also transfers all the messages contained in the folder
@@ -428,7 +430,10 @@ void          modest_mail_operation_rename_folder  (ModestMailOperation *self,
 void          modest_mail_operation_xfer_folder    (ModestMailOperation *self,
 						    TnyFolder *folder,
 						    TnyFolderStore *parent,
-						    gboolean delete_original);
+						    gboolean delete_original,
+						    XferMsgsAsynUserCallback user_callback,
+						    gpointer user_data);
+						    
 
 /* Functions that performs msg operations */
 

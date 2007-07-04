@@ -770,10 +770,13 @@ on_account_update (TnyAccountStore *account_store,
 		   const gchar *account,
 		   gpointer user_data)
 {
-	ModestFolderView *self = MODEST_FOLDER_VIEW (user_data);
+	ModestFolderView *self = NULL;
 	ModestFolderViewPrivate *priv;
 
+	g_return_if_fail (MODEST_IS_FOLDER_VIEW (user_data));
+	self = MODEST_FOLDER_VIEW (user_data);
 	priv = MODEST_FOLDER_VIEW_GET_PRIVATE (self);
+
 	if (!priv->visible_account_id)
 		modest_widget_memory_restore (modest_runtime_get_conf(), G_OBJECT(self),
 					      MODEST_CONF_FOLDER_VIEW_KEY);
@@ -787,6 +790,7 @@ static void
 on_accounts_reloaded   (TnyAccountStore *account_store, 
 			gpointer user_data)
 {
+	g_return_if_fail (MODEST_IS_FOLDER_VIEW (user_data));
 	modest_folder_view_update_model (MODEST_FOLDER_VIEW (user_data), account_store);
 }
 
@@ -954,6 +958,7 @@ modest_folder_view_update_model (ModestFolderView *self,
 	/* TnyAccount *local_account; */
 	TnyList *model_as_list;
 
+	g_return_val_if_fail (MODEST_IS_FOLDER_VIEW (self), FALSE);
 	g_return_val_if_fail (account_store, FALSE);
 
 	priv =	MODEST_FOLDER_VIEW_GET_PRIVATE(self);
@@ -1450,7 +1455,9 @@ drag_and_drop_from_folder_view (GtkTreeModel     *source_model,
 	modest_mail_operation_xfer_folder (mail_op, 
 					   folder, 
 					   parent_folder,
-					   helper->delete_source);
+					   helper->delete_source,
+					   NULL,
+					   NULL);
 	
 	/* Frees */
 	g_object_unref (G_OBJECT (parent_folder));
