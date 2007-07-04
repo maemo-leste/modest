@@ -243,6 +243,9 @@ void     modest_ui_actions_on_password_requested (TnyAccountStore *account_store
 void     modest_ui_actions_on_undo                     (GtkAction *action,
 							ModestWindow *window);
 
+void     modest_ui_actions_on_redo                     (GtkAction *action,
+							ModestWindow *window);
+
 void     modest_ui_actions_on_cut                      (GtkAction *action,
 							ModestWindow *window);
 

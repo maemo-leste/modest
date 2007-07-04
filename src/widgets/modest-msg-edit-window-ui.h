@@ -64,6 +64,7 @@ static const GtkActionEntry modest_msg_edit_action_entries [] = {
 	{ "AttachFile", NULL, N_("mcen_me_editor_attachfile"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_attach_file)},
 	{ "RemoveAttachments", NULL, N_("mcen_me_inbox_remove_attachments"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_remove_attachments) },
 	{ "Undo", NULL, N_("mcen_me_inbox_undo"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_undo)},
+	{ "Redo", NULL, N_("mcen_me_inbox_redo"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_redo)},
 	{ "Cut", NULL, N_("mcen_me_inbox_cut"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_cut)},
 	{ "Copy", NULL, N_("mcen_me_inbox_copy"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_copy)},
 	{ "Paste", NULL, N_("mcen_me_inbox_paste"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_paste)},

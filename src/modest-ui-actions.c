@@ -2403,6 +2403,18 @@ modest_ui_actions_on_undo (GtkAction *action,
 	}
 }
 
+void
+modest_ui_actions_on_redo (GtkAction *action,
+			   ModestWindow *window)
+{
+	if (MODEST_IS_MSG_EDIT_WINDOW (window)) {
+		modest_msg_edit_window_redo (MODEST_MSG_EDIT_WINDOW (window));
+	}
+	else {
+		g_return_if_reached ();
+	}
+}
+
 
 static void
 paste_msgs_cb (const GObject *object, gpointer user_data)

@@ -294,6 +294,14 @@ void            modest_msg_edit_window_select_font        (ModestMsgEditWindow *
 void            modest_msg_edit_window_undo               (ModestMsgEditWindow *window);
 
 /**
+ * modest_msg_edit_window_redo:
+ * @window: a #ModestMsgEditWindow
+ *
+ * Revert last undo
+ */
+void            modest_msg_edit_window_redo               (ModestMsgEditWindow *window);
+
+/**
  * modest_msg_edit_window_select_contacts:
  * @window: a #ModestMsgEditWindow
  *

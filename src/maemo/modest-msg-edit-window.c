@@ -101,6 +101,7 @@ static void  reset_modified (ModestMsgEditWindow *editor);
 static void  text_buffer_refresh_attributes (WPTextBuffer *buffer, ModestMsgEditWindow *window);
 static void  text_buffer_delete_range (GtkTextBuffer *buffer, GtkTextIter *start, GtkTextIter *end, gpointer userdata);
 static void  text_buffer_can_undo (GtkTextBuffer *buffer, gboolean can_undo, ModestMsgEditWindow *window);
+static void  text_buffer_can_redo (GtkTextBuffer *buffer, gboolean can_redo, ModestMsgEditWindow *window);
 static void  text_buffer_delete_images_by_id (GtkTextBuffer *buffer, const gchar * image_id);
 static void  subject_field_changed (GtkEditable *editable, ModestMsgEditWindow *window);
 static void  modest_msg_edit_window_color_button_change (ModestMsgEditWindow *window,
@@ -449,6 +450,8 @@ init_window (ModestMsgEditWindow *obj)
 			  G_CALLBACK (text_buffer_delete_range), obj);
 	g_signal_connect (G_OBJECT (priv->text_buffer), "can-undo",
 			  G_CALLBACK (text_buffer_can_undo), obj);
+	g_signal_connect (G_OBJECT (priv->text_buffer), "can-redo",
+			  G_CALLBACK (text_buffer_can_redo), obj);
 	g_signal_connect (G_OBJECT (obj), "window-state-event",
 			  G_CALLBACK (modest_msg_edit_window_window_state_event),
 			  NULL);
@@ -671,6 +674,7 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg)
 
 	update_dimmed (self);
 	text_buffer_can_undo (priv->text_buffer, FALSE, self);
+	text_buffer_can_redo (priv->text_buffer, FALSE, self);
 
 	priv->draft_msg = g_object_ref(msg);
 }
@@ -2318,6 +2322,20 @@ modest_msg_edit_window_undo (ModestMsgEditWindow *window)
 
 }
 
+void
+modest_msg_edit_window_redo (ModestMsgEditWindow *window)
+{
+	ModestMsgEditWindowPrivate *priv;
+
+	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
+	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
+	
+	wp_text_buffer_redo (WP_TEXT_BUFFER (priv->text_buffer));
+
+	update_dimmed (window);
+
+}
+
 static void
 update_dimmed (ModestMsgEditWindow *window)
 {
@@ -2413,6 +2431,16 @@ text_buffer_can_undo (GtkTextBuffer *buffer, gboolean can_undo, ModestMsgEditWin
 
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/EditMenu/UndoMenu");
 	gtk_action_set_sensitive (action, can_undo);
+}
+
+static void  
+text_buffer_can_redo (GtkTextBuffer *buffer, gboolean can_redo, ModestMsgEditWindow *window)
+{
+	ModestWindowPrivate *parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
+	GtkAction *action;
+
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/EditMenu/RedoMenu");
+	gtk_action_set_sensitive (action, can_redo);
 }
 
 static void

@@ -44,6 +44,7 @@
 
     <menu name="EditMenu" action="Edit">
       <menuitem name="UndoMenu" action="Undo"/>
+      <menuitem name="RedoMenu" action="Redo"/>
       <separator/>
       <menuitem name="CutMenu" action="Cut"/>
       <menuitem name="CopyMenu" action="Copy"/>
