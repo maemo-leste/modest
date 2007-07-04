@@ -378,7 +378,11 @@ modest_connection_specific_smtp_window_init (ModestConnectionSpecificSmtpWindow 
 	GtkWidget *label = gtk_label_new(_("mcen_ia_optionalsmtp_note"));
 	gtk_label_set_line_wrap (GTK_LABEL (label), TRUE);
 	/* So that it is shown without being truncated: */
-	gtk_label_set_max_width_chars (GTK_LABEL (label), 40);
+	gtk_label_set_max_width_chars (GTK_LABEL (label), 20);
+	/* The documentation for gtk_label_set_line_wrap() says that we must 
+	 * call gtk_widget_set_size_request() with a hard-coded width, 
+	 * though I wonder why gtk_label_set_max_width_chars() isn't enough. */
+	gtk_widget_set_size_request (label, 400, -1);
 	gtk_widget_show (label);
 	gtk_box_pack_start (GTK_BOX (vbox), label, FALSE, FALSE, MODEST_MARGIN_HALF);
 	

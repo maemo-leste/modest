@@ -1,3 +1,11 @@
+2007-07-04  Murray Cumming <murrayc@murrayc.com>
+
+	* src/maemo/modest-connection-specific-smtp-window.c:
+	(modest_connection_specific_smtp_window_init):
+	Use gtk_widget_set_size_request(), because gtk_label_set_max_width_chars()
+	does not seem to have any effect in osso 1.1 (though it works in 
+	Maemo Bora). This fixes bug projects.maemo.org NB#59212.
+
 2007-07-04  Johannes Schmid <johannes.schmid@openismus.com>
 
 	* src/maemo/modest-connection-specific-smtp-window.c:
