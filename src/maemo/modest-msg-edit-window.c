@@ -1075,18 +1075,29 @@ modest_msg_edit_window_get_msg_data (ModestMsgEditWindow *edit_window)
 	GList *cursor = priv->attachments;
 	data->attachments = NULL;
 	while (cursor) {
+		if (!(TNY_IS_MIME_PART(cursor->data))) {
+			g_warning ("strange data in attachment list");
+			continue;
+		}
 		data->attachments = g_list_append (data->attachments,
-						   g_strdup ((gchar*)cursor->data));
+						   g_object_ref (cursor->data));
 		cursor = g_list_next (cursor);
 	}
 	
-
 	data->priority_flags = priv->priority_flags;
 
 	return data;
 }
 
-/* TODO: We must duplicate this implementation for GNOME and Maemo, but that is unwise. */
+
+static void
+unref_gobject (GObject *obj, gpointer data)
+{
+	if (!G_IS_OBJECT(obj))
+		return;
+	g_object_unref (obj);
+}
+
 void 
 modest_msg_edit_window_free_msg_data (ModestMsgEditWindow *edit_window,
 						      MsgData *data)
@@ -1108,8 +1119,8 @@ modest_msg_edit_window_free_msg_data (ModestMsgEditWindow *edit_window,
 		g_object_unref (data->draft_msg);
 		data->draft_msg = NULL;
 	}
-
-	g_list_foreach (data->attachments, (GFunc)g_free, NULL);
+	
+	g_list_foreach (data->attachments, (GFunc)unref_gobject,  NULL);
 	g_list_free (data->attachments);
 	
 	g_slice_free (MsgData, data);
