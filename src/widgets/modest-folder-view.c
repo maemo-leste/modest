@@ -1414,10 +1414,10 @@ drag_and_drop_from_folder_view (GtkTreeModel     *source_model,
 				GtkSelectionData *selection_data,
 				DndHelper        *helper)
 {
-	ModestMailOperation *mail_op;
+	ModestMailOperation *mail_op = NULL;
 	GtkTreeIter parent_iter, iter;
-	TnyFolderStore *parent_folder;
-	TnyFolder *folder;
+	TnyFolderStore *parent_folder = NULL;
+	TnyFolder *folder = NULL;
 
 	/* Check if the drag is possible */
 /* 	if (!gtk_tree_path_compare (helper->source_row, dest_row) || */
@@ -1442,22 +1442,26 @@ drag_and_drop_from_folder_view (GtkTreeModel     *source_model,
 			    TNY_GTK_FOLDER_STORE_TREE_MODEL_INSTANCE_COLUMN,
 			    &folder, -1);
 
-	/* Do the mail operation */
-	mail_op = modest_mail_operation_new_with_error_handling (MODEST_MAIL_OPERATION_TYPE_RECEIVE, 
+	/* Offer the connection dialog if necessary, for the destination parent folder and source folder: */
+	if (modest_platform_connect_and_wait_if_network_folderstore (NULL, parent_folder) && 
+		modest_platform_connect_and_wait_if_network_folderstore (NULL, TNY_FOLDER_STORE (folder))) {
+		/* Do the mail operation */
+		mail_op = modest_mail_operation_new_with_error_handling (MODEST_MAIL_OPERATION_TYPE_RECEIVE, 
 								 NULL,
 								 modest_ui_actions_move_folder_error_handler,
 								 NULL);
-	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), 
+		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), 
 					 mail_op);
-	g_signal_connect (G_OBJECT (mail_op), "progress-changed",
-			  G_CALLBACK (on_progress_changed), helper);
+		g_signal_connect (G_OBJECT (mail_op), "progress-changed",
+				  G_CALLBACK (on_progress_changed), helper);
 
-	modest_mail_operation_xfer_folder (mail_op, 
+		modest_mail_operation_xfer_folder (mail_op, 
 					   folder, 
 					   parent_folder,
 					   helper->delete_source,
 					   NULL,
 					   NULL);
+	}
 	
 	/* Frees */
 	g_object_unref (G_OBJECT (parent_folder));

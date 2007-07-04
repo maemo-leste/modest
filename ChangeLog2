@@ -1,3 +1,43 @@
+2007-07-04  Murray Cumming <murrayc@murrayc.com>
+
+	* src/maemo/modest-msg-view-window.c:
+	(modest_msg_view_window_select_next_message):
+	
+	* src/modest-platform.h:
+	* src/maemo/modest-platform.c: 
+	Added modest_platform_connect_and_wait(), which calls 
+	tny_maemo_conic_device_connect() always in the main thread, by calling it 
+	in an idle handler and waiting for the idle handler to run. It should be 
+	in the main thread because it uses GTK+ UI code. It just returns TRUE 
+	if the device is already online.
+	
+	There is some nasty code to ensure that subsequent calls to 
+	modest_platform_connect_and_wait() just wait for the first one to finish, 
+	by checking repeatedly in another idle handler. This is necessary, 
+	because other threads (or even the main thread, via another idle handler) 
+	can call modest_platform_connect_and_wait() while 
+	modest_platform_connect_and_wait() is running.
+	
+	(modest_platform_connect_and_wait_if_network_account),
+	(modest_platform_connect_and_wait_if_network_folderstore):
+	Convenience functions that calls modest_platform_connect_and_wait() if 
+	the account or folder might want network access.
+	
+	* src/modest-mail-operation.c:
+	(modest_mail_operation_update_account):
+	* src/modest-ui-actions.c: (download_uncached_messages),
+	(modest_ui_actions_on_rename_folder), (delete_folder),
+	(modest_ui_actions_on_main_window_move_to),
+	(modest_ui_actions_on_msg_view_window_move_to):
+	* src/widgets/modest-folder-view.c:
+	(drag_and_drop_from_folder_view):
+	Offer a connection if we are offline.
+	
+	* src/modest-tny-account.c: (on_connection_status_changed): 
+	Document this as only handling errors during network operations in progress,
+	and replace the idle code with a simple call to 
+	modest_platform_connect_and_wait(), which does this instead.
+
 2007-07-03  Murray Cumming <murrayc@murrayc.com>
 
 	* src/modest-tny-account.c:

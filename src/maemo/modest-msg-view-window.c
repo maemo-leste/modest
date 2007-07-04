@@ -1063,10 +1063,23 @@ modest_msg_view_window_select_next_message (ModestMsgViewWindow *window)
 				tny_header_set_flags (header, TNY_HEADER_FLAG_SEEN);
 
 			/* Msg download completed */
-			if (flags & TNY_HEADER_FLAG_CACHED)
+			if (flags & TNY_HEADER_FLAG_CACHED) {
+				/* No download is necessary, because the message is cached: */
 				mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_OPEN, G_OBJECT(window));
-			else
+			} else {
+				/* Offer the connection dialog if necessary: */
+				TnyFolder *folder = tny_header_get_folder(header);
+				if (!modest_platform_connect_and_wait_if_network_folderstore (NULL, TNY_FOLDER_STORE (folder))) {
+					g_object_unref (folder);
+					return FALSE;
+				}
+				if (folder) {
+					g_object_unref (folder);
+					folder = NULL;
+				}
+
 				mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_RECEIVE, G_OBJECT(window));
+			}
 				
 			/* New mail operation */
 			modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);

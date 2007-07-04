@@ -27,12 +27,12 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <modest-platform.h>
 #include <modest-tny-platform-factory.h>
 #include <modest-tny-account.h>
 #include <modest-tny-account-store.h>
 #include <modest-tny-local-folders-account.h>
 #include <modest-runtime.h>
-#include <modest-platform.h>
 #include <tny-simple-list.h>
 #include <modest-tny-folder.h>
 #include <modest-tny-outbox-account.h>
@@ -148,70 +148,26 @@ modest_tny_account_get_special_folder (TnyAccount *account,
 	return special_folder;
 }
 
-typedef struct
-{
-	GSourceFunc func;
-	GMainLoop* loop;
-} UtilIdleData;
-
-static gboolean util_on_idle(gpointer user_data)
-{
-	/* We are now in the main thread, 
-	 * so we can call the function:
-	 */
-	UtilIdleData *idle_data = (UtilIdleData*)user_data;
-	if (idle_data && idle_data->func)
-		(*(idle_data->func))(NULL);
-
-	/* Stop the main loop so that the caller can continue: */
-	if (idle_data->loop)
-		g_main_loop_quit (idle_data->loop);
-
-	return FALSE; /* Stop calling this callback. */
-}
-
-static void
-util_run_in_main_thread_and_wait(GSourceFunc function)
-{
-	UtilIdleData *data = g_slice_new0 (UtilIdleData);
-	data->func = function;
-	data->loop = g_main_loop_new (NULL, FALSE /* not running */);
-	
-	/* Cause the function to be run in an idle-handler, which is always 
-	 * in the main thread:
-	 */
-	g_idle_add (util_on_idle, data);
-
-	/* This main loop will run until the idle handler has stopped it: */
-	g_main_loop_run (data->loop);
-	g_main_loop_unref (data->loop);
-
-	g_slice_free (UtilIdleData, data);
-}
-
-static gboolean 
-connect_and_wait(gpointer user_data)
-{
-	modest_platform_connect_and_wait(NULL);
-	return TRUE; /* Ignored */
-}
-
 static void
 on_connection_status_changed (TnyAccount *account, TnyConnectionStatus status, gpointer user_data)
 {
 	printf ("DEBUG: %s: status=%d\n", __FUNCTION__, status);
 	
 	if (status == TNY_CONNECTION_STATUS_DISCONNECTED) {
-		/* We are trying to use the network with an account, 
-		 * but the accounts are set as offline, because our TnyDevice is offline,
+		/* A tinymail network operation failed, and tinymail then noticed that 
+		 * the account is offline, because our TnyDevice is offline,
 		 * because libconic says we are offline.
-		 * So ask the user to go online:
+		 * So ask the user to go online again.
+		 * 
+		 * Note that this signal will not be emitted if the account was offline 
+		 * when the network operation was first attempted. For those cases, 
+		 * the application must do its own explicit checks.
 		 *
 		 * We make sure that this UI is shown in the main thread, to avoid races,
 		 * because tinymail does not guarantee that this signal handler will be called 
 		 * in the main thread.
 		 */
-		util_run_in_main_thread_and_wait (&connect_and_wait);
+		modest_platform_connect_and_wait (NULL);
 	} else if (status == TNY_CONNECTION_STATUS_CONNECTED_BROKEN) {
 		printf ("DEBUG: %s: Connection broken. Forcing TnyDevice offline.\n", 
 			__FUNCTION__);

@@ -190,6 +190,13 @@ gboolean modest_platform_connect_and_wait (GtkWindow *parent_window)
 	return TRUE;
 }
 
+gboolean modest_platform_connect_and_wait_if_network_account (GtkWindow *parent_window, TnyAccount *account)
+{
+	/* TODO: Do something with network-manager? 
+	   Otherwise, maybe it is safe to assume that we would already be online if we could be. */
+	return TRUE;
+}
+
 gboolean modest_platform_set_update_interval (guint minutes)
 {
 	/* TODO. */

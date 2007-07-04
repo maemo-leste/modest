@@ -44,6 +44,8 @@
 #include <alarmd/alarm_event.h> /* For alarm_event_add(), etc. */
 #include <tny-maemo-conic-device.h>
 #include <tny-folder.h>
+#include <tny-camel-imap-store-account.h>
+#include <tny-camel-pop-store-account.h>
 #include <gtk/gtkicontheme.h>
 #include <gtk/gtkmenuitem.h>
 #include <gtk/gtkmain.h>
@@ -883,15 +885,148 @@ modest_platform_run_information_dialog (GtkWindow *parent_window,
 	gtk_widget_destroy (GTK_WIDGET (dialog));
 }
 
+
+
+typedef struct
+{
+	GMainLoop* loop;
+} UtilIdleData;
+
+static gboolean 
+on_idle_connect_and_wait(gpointer user_data)
+{
+	printf ("DEBUG: %s:\n", __FUNCTION__);
+	TnyDevice *device = modest_runtime_get_device();
+	if (!tny_device_is_online (device)) {
+		gdk_threads_enter();
+		tny_maemo_conic_device_connect (TNY_MAEMO_CONIC_DEVICE (device), NULL);
+		gdk_threads_leave();
+	}
+	
+	/* Allow the function that requested this idle callback to continue: */
+	UtilIdleData *data = (UtilIdleData*)user_data;
+	if (data->loop)
+		g_main_loop_quit (data->loop);
+	
+	return FALSE; /* Don't call this again. */
+}
+
+static gboolean connect_request_in_progress = FALSE;
+
+/* This callback is used when connect_and_wait() is already queued as an idle callback.
+ * This can happen because the gtk_dialog_run() for the connection dialog 
+ * (at least in the fake scratchbox version) allows idle handlers to keep running.
+ */
+static gboolean 
+on_idle_wait_for_previous_connect_to_finish(gpointer user_data)
+{
+	gboolean result = FALSE;
+	TnyDevice *device = modest_runtime_get_device();
+	if (tny_device_is_online (device))
+		result = FALSE; /* Stop trying. */
+	else {
+		/* Keep trying until connect_request_in_progress is FALSE. */
+		if (connect_request_in_progress)
+			result = TRUE; /* Keep trying */
+		else {
+			printf ("DEBUG: %s: other idle has finished.\n", __FUNCTION__);
+						
+			result = FALSE; /* Stop trying, now that a result should be available. */
+		}
+	}
+	
+	if (result == FALSE) {
+		/* Allow the function that requested this idle callback to continue: */
+		UtilIdleData *data = (UtilIdleData*)user_data;
+		if (data->loop)
+			g_main_loop_quit (data->loop);	
+	}
+		
+	return result;
+}
+
+
 gboolean modest_platform_connect_and_wait (GtkWindow *parent_window)
 {
+	if (connect_request_in_progress)
+		return FALSE;
+		
+	printf ("DEBUG: %s:\n", __FUNCTION__);
 	TnyDevice *device = modest_runtime_get_device();
 	
-	if (tny_device_is_online (device))
+	if (tny_device_is_online (device)) {
+		printf ("DEBUG: %s: Already online.\n", __FUNCTION__);
 		return TRUE;
+	} else
+	{
+		printf ("DEBUG: %s: tny_device_is_online() returned FALSE\n", __FUNCTION__);
+	}
 		
 	/* This blocks on the result: */
-	return tny_maemo_conic_device_connect (TNY_MAEMO_CONIC_DEVICE (device), NULL);
+	UtilIdleData *data = g_slice_new0 (UtilIdleData);
+	
+	GMainContext *context = NULL; /* g_main_context_new (); */
+	data->loop = g_main_loop_new (context, FALSE /* not running */);
+	
+	/* Cause the function to be run in an idle-handler, which is always 
+	 * in the main thread:
+	 */
+	if (!connect_request_in_progress) {
+		printf ("DEBUG: %s: First request\n", __FUNCTION__);
+		connect_request_in_progress = TRUE;
+		g_idle_add (&on_idle_connect_and_wait, data);
+	}
+	else {
+		printf ("DEBUG: %s: nth request\n", __FUNCTION__);
+		g_idle_add_full (G_PRIORITY_LOW, &on_idle_wait_for_previous_connect_to_finish, data, NULL);
+	}
+
+	/* This main loop will run until the idle handler has stopped it: */
+	printf ("DEBUG: %s: before g_main_loop_run()\n", __FUNCTION__);
+	GDK_THREADS_LEAVE();
+	g_main_loop_run (data->loop);
+	GDK_THREADS_ENTER();
+	printf ("DEBUG: %s: after g_main_loop_run()\n", __FUNCTION__);
+	connect_request_in_progress = FALSE;
+	printf ("DEBUG: %s: Finished\n", __FUNCTION__);
+	g_main_loop_unref (data->loop);
+	/* g_main_context_unref (context); */
+
+	g_slice_free (UtilIdleData, data);
+	
+	return tny_device_is_online (device);
+}
+
+gboolean modest_platform_connect_and_wait_if_network_account (GtkWindow *parent_window, TnyAccount *account)
+{
+	if (tny_account_get_account_type (account) == TNY_ACCOUNT_TYPE_STORE) {
+		if (!TNY_IS_CAMEL_POP_STORE_ACCOUNT (account) &&
+		    !TNY_IS_CAMEL_IMAP_STORE_ACCOUNT (account)) {
+			/* This must be a maildir account, which does not require a connection: */
+			return TRUE;
+		}
+	}
+
+	return modest_platform_connect_and_wait (parent_window);
+}
+
+gboolean modest_platform_connect_and_wait_if_network_folderstore (GtkWindow *parent_window, TnyFolderStore *folder_store)
+{
+	if (!folder_store)
+		return TRUE; /* Maybe it is something local. */
+		
+	gboolean result = TRUE;
+	if (TNY_IS_FOLDER (folder_store)) {
+		/* Get the folder's parent account: */
+		TnyAccount *account = tny_folder_get_account(TNY_FOLDER (folder_store));
+		result = modest_platform_connect_and_wait_if_network_account (NULL, account);
+		g_object_unref (account);
+	} else if (TNY_IS_ACCOUNT (folder_store)) {
+		/* Use the folder store as an account: */
+		result = modest_platform_connect_and_wait_if_network_account (NULL, TNY_ACCOUNT (folder_store));
+	}
+
+	return result;
 }
 
 void

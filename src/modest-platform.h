@@ -211,6 +211,29 @@ void      modest_platform_run_sort_dialog       (GtkWindow *parent_window,
  */		
 gboolean modest_platform_connect_and_wait (GtkWindow *parent_window);
 
+		
+/*
+ * modest_platform_connect_and_wait_if_network_account:
+ * @parent_window: the parent #GtkWindow for any interactive or progress feedback UI.
+ * @account: The account that might need a connection in subsequent operations.
+ * @return value: Whether a connection was made. Also returns TRUE if no connection is necessary.
+ * 
+ * Like modest_platform_connect_and_wait(), but only attempts to make a connection if the 
+ * account uses the network. For instance, this just returns TRUE for local maildir accounts. 
+ */
+gboolean modest_platform_connect_and_wait_if_network_account (GtkWindow *parent_window, TnyAccount *account);
+
+/*
+ * modest_platform_connect_and_wait_if_network_account:
+ * @parent_window: the parent #GtkWindow for any interactive or progress feedback UI.
+ * @folder_store: The folder store (folder or account) that might need a connection in subsequent operations.
+ * @return value: Whether a connection was made. Also returns TRUE if no connection is necessary.
+ * 
+ * Like modest_platform_connect_and_wait(), but only attempts to make a connection if the 
+ * folder store uses the network. For instance, this just returns TRUE for local maildir folders. 
+ */
+gboolean modest_platform_connect_and_wait_if_network_folderstore (GtkWindow *parent_window, TnyFolderStore *folder_store);
+
 /**
  * modest_platform_set_update_interval:
  * @minutes: The number of minutes between updates, or 0 for no updates.
