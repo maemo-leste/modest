@@ -18,6 +18,7 @@
 #include <gtk/gtkstock.h>
 
 #include "modest-hildon-includes.h"
+#include "modest-platform.h"
 
 #include <glib/gi18n.h>
 
@@ -274,15 +275,10 @@ on_button_edit (GtkButton *button, gpointer user_data)
 				else
 				{
 						
-					/* FIXME: Add a logical ID here */
-					GtkDialog *dialog = GTK_DIALOG (hildon_note_new_confirmation (GTK_WINDOW (window), 
-						_("All changes made to the SMTP settings will be lost. Continue anyway?")));
-					/* TODO: These button names will be ambiguous, and not specified in the UI specification. */
-			 
-			 		const gint dialog_response = gtk_dialog_run (dialog);
-			 		gtk_widget_destroy (GTK_WIDGET (dialog));
-			 
-					if (dialog_response == GTK_RESPONSE_OK)
+					gint response;
+					response = modest_platform_run_confirmation_dialog (GTK_WINDOW (window), 
+									    _("imum_nc_wizard_confirm_lose_changes"));			 
+					if (response == GTK_RESPONSE_OK)
 					{
 						gtk_widget_hide(window);
 						dialog_finished = TRUE;
