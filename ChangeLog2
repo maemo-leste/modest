@@ -1,3 +1,8 @@
+2007-07-04  Johannes Schmid <johannes.schmid@openismus.com>
+
+	* src/maemo/modest-connection-specific-smtp-window.c:
+	Fix UI specification problems with projects.meamo.org NB#60479
+
 2007-07-04   Murray Cumming <murrayc@murrayc.com>
 
 	* src/modest-ui-actions.c: (open_msg_cb): Add a printf() to provide a 
