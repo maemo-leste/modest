@@ -1,3 +1,9 @@
+2007-07-05  Armin Burgmeier  <armin@openismus.com>
+
+	* src/maemo/modest-account-settings-dialog.c: Use the notify::value
+	notification of HildonNumberEditor instead of remembering the port
+	number. Thanks to Johannes for pointing this out.
+
 2007-07-05  Johannes Schmid <johannes.schmid@openismus.com>
 
 	* src/maemo/easysetup/modest-easysetup-wizard.c:

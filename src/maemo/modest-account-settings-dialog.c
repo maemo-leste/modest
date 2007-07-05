@@ -80,7 +80,6 @@ typedef struct _ModestAccountSettingsDialogPrivate ModestAccountSettingsDialogPr
 
 struct _ModestAccountSettingsDialogPrivate
 {
-	guint initial_port;
 };
 
 static void
@@ -172,21 +171,32 @@ on_modified_checkbox_toggled (GtkToggleButton *togglebutton, gpointer user_data)
 	self->modified = TRUE;
 }
 
+static void
+on_modified_number_editor_changed (HildonNumberEditor *number_editor, gint new_value, gpointer user_data)
+{
+	ModestAccountSettingsDialog *self = MODEST_ACCOUNT_SETTINGS_DIALOG (user_data);
+	self->modified = TRUE;
+}
+
 /* Set a modified boolean whenever the widget is changed, 
  * so we can check for it later.
  */
 static void
 connect_for_modified (ModestAccountSettingsDialog *self, GtkWidget *widget)
 {
-	if (GTK_IS_ENTRY (widget)) {
-	  g_signal_connect (G_OBJECT (widget), "changed",
-        	G_CALLBACK (on_modified_entry_changed), self);	
+	if (HILDON_IS_NUMBER_EDITOR (widget)) {
+		g_signal_connect (G_OBJECT (widget), "notify::value",
+			G_CALLBACK (on_modified_number_editor_changed), self);
+	}
+	else if (GTK_IS_ENTRY (widget)) {
+		g_signal_connect (G_OBJECT (widget), "changed",
+			G_CALLBACK (on_modified_entry_changed), self);
 	} else if (GTK_IS_COMBO_BOX (widget)) {
 		g_signal_connect (G_OBJECT (widget), "changed",
-        	G_CALLBACK (on_modified_combobox_changed), self);	
+        		G_CALLBACK (on_modified_combobox_changed), self);	
 	} else if (GTK_IS_TOGGLE_BUTTON (widget)) {
 		g_signal_connect (G_OBJECT (widget), "toggled",
-        	G_CALLBACK (on_modified_checkbox_toggled), self);
+			G_CALLBACK (on_modified_checkbox_toggled), self);
 	}
 }
 
@@ -922,12 +932,6 @@ on_response (GtkDialog *wizard_dialog,
 	
 	gboolean prevent_response = FALSE;
 
-	/* Set modified flag when the port number changed */
-	gint port_num = hildon_number_editor_get_value (
-			HILDON_NUMBER_EDITOR (self->entry_incoming_port));
-	if(ACCOUNT_SETTINGS_DIALOG_GET_PRIVATE(self)->initial_port != port_num)
-		self->modified = TRUE;
-
 	/* Warn about unsaved changes: */
 	if (response_id == GTK_RESPONSE_CANCEL && self->modified) {
 		GtkDialog *dialog = GTK_DIALOG (hildon_note_new_confirmation (GTK_WINDOW (self), 
@@ -1170,13 +1174,6 @@ void modest_account_settings_dialog_set_account_name (ModestAccountSettingsDialo
 			hildon_number_editor_set_value (
 				HILDON_NUMBER_EDITOR (dialog->entry_incoming_port), port_num);
 		}
-
-		/* HildonNumberEditor has no changed signal, so we do not get
-		 * notified when the port number changes. Instead we check
-		 * whether the number has changed before the dialog is closed. */
-		ACCOUNT_SETTINGS_DIALOG_GET_PRIVATE(dialog)->initial_port =
-		       	hildon_number_editor_get_value (
-				HILDON_NUMBER_EDITOR (dialog->entry_incoming_port));
 	}
 	
 	ModestServerAccountData *outgoing_account = account_data->transport_account;
