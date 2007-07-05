@@ -1673,6 +1673,7 @@ modest_ui_actions_on_save_to_drafts (GtkWidget *widget, ModestMsgEditWindow *edi
 	gchar *account_name, *from;
 	ModestAccountMgr *account_mgr;
 	gchar *info_text = NULL;
+	TnyMsg *new_draft = NULL;
 
 	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW(edit_window));
 	
@@ -1709,18 +1710,18 @@ modest_ui_actions_on_save_to_drafts (GtkWidget *widget, ModestMsgEditWindow *edi
 	mail_operation = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_INFO, G_OBJECT(edit_window));
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_operation);
 
-	modest_mail_operation_save_to_drafts (mail_operation,
-					      transport_account,
-					      data->draft_msg,
-					      from,
-					      data->to, 
-					      data->cc, 
-					      data->bcc,
-					      data->subject, 
-					      data->plain_body, 
-					      data->html_body,
-					      data->attachments,
-					      data->priority_flags);
+	new_draft = modest_mail_operation_save_to_drafts (mail_operation,
+							  transport_account,
+							  data->draft_msg,
+							  from,
+							  data->to, 
+							  data->cc, 
+							  data->bcc,
+							  data->subject, 
+							  data->plain_body, 
+							  data->html_body,
+							  data->attachments,
+							  data->priority_flags);
 	/* Frees */
 	g_free (from);
 	g_free (account_name);
@@ -1728,6 +1729,10 @@ modest_ui_actions_on_save_to_drafts (GtkWidget *widget, ModestMsgEditWindow *edi
 	g_object_unref (G_OBJECT (mail_operation));
 
 	modest_msg_edit_window_free_msg_data (edit_window, data);
+
+	modest_msg_edit_window_set_draft (edit_window, new_draft);
+	if (new_draft != NULL)
+		g_object_unref (new_draft);
 
 	info_text = g_strdup_printf (_("mail_va_saved_to_drafts"), _("mcen_me_folder_drafts"));
 	modest_platform_information_banner (NULL, NULL, info_text);

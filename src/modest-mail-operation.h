@@ -316,8 +316,10 @@ void    modest_mail_operation_send_new_mail   (ModestMailOperation *self,
  * #TnyTransportAccount. This operation is synchronous, so the
  * #ModestMailOperation should not be added to any
  * #ModestMailOperationQueue
+ *
+ * Returns: the newly created message with an own reference.
   **/
-void    modest_mail_operation_save_to_drafts   (ModestMailOperation *self,
+TnyMsg* modest_mail_operation_save_to_drafts   (ModestMailOperation *self,
 						TnyTransportAccount *transport_account,
 						TnyMsg *draft_msg,
 						const gchar *from,

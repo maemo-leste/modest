@@ -546,6 +546,11 @@ modest_msg_edit_window_finalize (GObject *obj)
 	}
 	
 	if (priv->draft_msg != NULL) {
+		TnyHeader *header = tny_msg_get_header (priv->draft_msg);
+		if (TNY_IS_HEADER (header)) {
+			ModestWindowMgr *mgr = modest_runtime_get_window_mgr ();
+			modest_window_mgr_unregister_header (mgr, header);
+		}
 		g_object_unref (priv->draft_msg);
 		priv->draft_msg = NULL;
 	}
@@ -3016,3 +3021,33 @@ modest_msg_edit_window_set_sent (ModestMsgEditWindow *window,
 }
 
 
+void            
+modest_msg_edit_window_set_draft (ModestMsgEditWindow *window,
+				  TnyMsg *draft)
+{
+	ModestMsgEditWindowPrivate *priv;
+	TnyHeader *header = NULL;
+
+	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
+	g_return_if_fail ((draft == NULL)||(TNY_IS_MSG (draft)));
+
+	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
+	ModestWindowMgr *mgr = modest_runtime_get_window_mgr ();
+
+	if (priv->draft_msg != NULL) {
+		header = tny_msg_get_header (priv->draft_msg);
+		if (TNY_IS_HEADER (header)) {
+			modest_window_mgr_unregister_header (mgr, header);
+		}
+		g_object_unref (priv->draft_msg);
+	}
+
+	if (draft != NULL) {
+		g_object_ref (draft);
+		header = tny_msg_get_header (draft);
+		if (TNY_IS_HEADER (header))
+			modest_window_mgr_register_header (mgr, header);
+	}
+
+	priv->draft_msg = draft;
+}

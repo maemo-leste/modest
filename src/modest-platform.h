@@ -179,6 +179,18 @@ gint      modest_platform_run_rename_folder_dialog        (GtkWindow *parent_win
 gint      modest_platform_run_confirmation_dialog      (GtkWindow *parent_window,
 							const gchar *message);
 
+/**
+ * modest_platform_run_yes_no_dialog:
+ * @parent_window: the parent #GtkWindow of the dialog
+ * @message: the message to show to the user
+ * 
+ * runs a dialog that offers yes and no buttons.
+ * 
+ * Returns: GTK_RESPONSE_YES or GTK_RESPONSE_NO
+ **/
+gint      modest_platform_run_yes_no_dialog      (GtkWindow *parent_window,
+						  const gchar *message);
+
 
 /**
  * modest_platform_run_information_dialog:

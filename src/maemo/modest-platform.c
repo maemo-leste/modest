@@ -872,6 +872,26 @@ modest_platform_run_confirmation_dialog (GtkWindow *parent_window,
 	return response;
 }
 
+gint
+modest_platform_run_yes_no_dialog (GtkWindow *parent_window,
+				   const gchar *message)
+{
+	GtkWidget *dialog;
+	gint response;
+
+	dialog = hildon_note_new_confirmation_add_buttons (parent_window, message,
+							   _("mcen_bd_yes"), GTK_RESPONSE_YES,
+							   _("mcen_bd_no"), GTK_RESPONSE_NO,
+							   NULL);
+	gtk_window_set_modal (GTK_WINDOW(dialog), TRUE);
+
+	response = gtk_dialog_run (GTK_DIALOG (dialog));
+
+	gtk_widget_destroy (GTK_WIDGET (dialog));
+
+	return response;
+}
+
 void
 modest_platform_run_information_dialog (GtkWindow *parent_window,
 					const gchar *message)

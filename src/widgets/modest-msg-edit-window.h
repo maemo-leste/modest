@@ -346,6 +346,17 @@ gboolean        modest_msg_edit_window_get_sent            (ModestMsgEditWindow 
 void            modest_msg_edit_window_set_sent            (ModestMsgEditWindow *window, 
 							    gboolean sent);
 
+/**
+ * modest_msg_edit_window_set_draft:
+ * @window: a #ModestMsgEditWindow
+ * @draft: a #TnyMsg, or %NULL
+ *
+ * Set @draft as the original draft message of the editor. This
+ * message will be removed on saving or sending the message.
+ */
+void            modest_msg_edit_window_set_draft           (ModestMsgEditWindow *window,
+							    TnyMsg *draft);
+
 G_END_DECLS
 
 #endif /* __MODEST_MSG_EDIT_WINDOW_H__ */

@@ -593,7 +593,7 @@ modest_mail_operation_send_new_mail (ModestMailOperation *self,
 	g_object_unref (G_OBJECT (new_msg));
 }
 
-void
+TnyMsg*
 modest_mail_operation_save_to_drafts (ModestMailOperation *self,
 				      TnyTransportAccount *transport_account,
 				      TnyMsg *draft_msg,
@@ -609,8 +609,8 @@ modest_mail_operation_save_to_drafts (ModestMailOperation *self,
 	TnyHeader *header = NULL;
 	ModestMailOperationPrivate *priv = NULL;
 
-	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
-	g_return_if_fail (TNY_IS_TRANSPORT_ACCOUNT (transport_account));
+	g_return_val_if_fail (MODEST_IS_MAIL_OPERATION (self), NULL);
+	g_return_val_if_fail (TNY_IS_TRANSPORT_ACCOUNT (transport_account), NULL);
 
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
 
@@ -662,12 +662,11 @@ modest_mail_operation_save_to_drafts (ModestMailOperation *self,
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 
 end:
-	if (msg)
-		g_object_unref (G_OBJECT(msg));
 	if (folder)
 		g_object_unref (G_OBJECT(folder));
 
  	modest_mail_operation_notify_end (self);
+	return msg;
 }
 
 typedef struct 
