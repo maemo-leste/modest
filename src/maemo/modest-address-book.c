@@ -513,6 +513,10 @@ select_email_addrs_for_contact(GList * email_addr_list)
 					_("mcen_bd_dialog_cancel"), GTK_RESPONSE_REJECT, NULL);
 	gtk_dialog_set_has_separator(GTK_DIALOG(select_email_addr_dlg), FALSE);
 
+	/* Make the window approximately big enough, because it doesn't resize to be big enough 
+	 * for the window title text: */
+	gtk_window_set_default_size (GTK_WINDOW (select_email_addr_dlg), 400, -1);
+
 	scrolledwindow = gtk_scrolled_window_new(NULL, NULL);
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(select_email_addr_dlg)->vbox), scrolledwindow, TRUE,
 			   TRUE, 0);

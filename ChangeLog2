@@ -1,5 +1,12 @@
 2007-07-05  Murray Cumming <murrayc@murrayc.com>
 
+	* src/maemo/modest-address-book.c:
+	(select_email_addrs_for_contact): Specify a default window size for the 
+	select-email-address dialog, so that it is probably big enough for the 
+	title. This should fix projects.maemo.org bug NB#62277.
+
+2007-07-05  Murray Cumming <murrayc@murrayc.com>
+
 	* src/maemo/easysetup/modest-easysetup-wizard.c:
 	(create_page_complete_easysetup): Use 
 	gtk_widget_set_size() request to ensure that the text wraps 
