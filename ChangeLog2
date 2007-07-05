@@ -2,7 +2,7 @@
 
 	* src/maemo/easysetup/modest-easysetup-wizard.c:
 	Check if there are any user changes before showing a confirmation
-	dialog (projects.maemo.org NB#59361)
+	dialog (projects.maemo.org NB#60946)
 
 2007-07-05  Armin Burgmeier  <armin@openismus.com>
 
