@@ -55,6 +55,7 @@
 #include "modest-mail-operation.h"
 #include "modest-tny-platform-factory.h"
 #include "modest-tny-msg.h"
+#include "modest-tny-folder.h"
 #include "modest-address-book.h"
 #include "modest-text-utils.h"
 #include <tny-simple-list.h>
@@ -590,6 +591,7 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg)
 	ModestMsgEditWindowPrivate *priv;
 	GtkTextIter iter;
 	TnyHeaderFlags priority_flags;
+	TnyFolder *msg_folder;
 	
 	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (self));
 	g_return_if_fail (TNY_IS_MSG (msg));
@@ -677,7 +679,14 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg)
 	text_buffer_can_undo (priv->text_buffer, FALSE, self);
 	text_buffer_can_redo (priv->text_buffer, FALSE, self);
 
-	priv->draft_msg = g_object_ref(msg);
+	/* we should set a reference to the incoming message if it is a draft */
+	msg_folder = tny_msg_get_folder (msg);
+	if (msg_folder) {
+		if (modest_tny_folder_is_local_folder (msg_folder) &&
+		    modest_tny_folder_get_local_folder_type (msg_folder) == TNY_FOLDER_TYPE_DRAFTS)
+			priv->draft_msg = g_object_ref(msg);
+		g_object_unref (msg_folder);
+	}
 }
 
 static void
