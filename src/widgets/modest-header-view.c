@@ -1474,7 +1474,7 @@ folder_monitor_update (TnyFolderObserver *self,
 
 	/* Check folder count */
 	if ((changed & TNY_FOLDER_CHANGE_CHANGED_ADDED_HEADERS) ||
-	    (changed & TNY_FOLDER_CHANGE_CHANGED_REMOVED_HEADERS)) {
+	    (changed & TNY_FOLDER_CHANGE_CHANGED_EXPUNGED_HEADERS)) {
 		helper = g_slice_new0 (HeadersCountChangedHelper);
 		helper->self = MODEST_HEADER_VIEW(self);
 		helper->change = g_object_ref(change);
