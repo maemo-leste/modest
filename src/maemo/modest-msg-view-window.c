@@ -786,6 +786,8 @@ modest_msg_view_window_find_toolbar_search (GtkWidget *widget,
 						 priv->last_search);
 		if (!result) {
 			hildon_banner_show_information (NULL, NULL, dgettext("hildon-libs", "ckct_ib_find_no_matches"));
+			g_free (priv->last_search);
+			priv->last_search = NULL;
 		} 
 	} else {
 		if (!modest_msg_view_search_next (MODEST_MSG_VIEW (priv->msg_view))) {
