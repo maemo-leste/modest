@@ -1743,6 +1743,10 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 	if (!modest_msg_edit_window_check_names (edit_window))
 		return;
 	
+	/* Offer the connection dialog, if necessary: */	
+	if (!modest_platform_connect_and_wait (GTK_WINDOW (edit_window)))
+		return;
+	
 	/* FIXME: Code added just for testing. The final version will
 	   use the send queue provided by tinymail and some
 	   classifier */

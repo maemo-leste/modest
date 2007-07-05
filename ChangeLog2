@@ -1,5 +1,11 @@
 2007-07-05  Murray Cumming <murrayc@murrayc.com>
 
+	* src/modest-ui-actions.c: (modest_ui_actions_on_send):
+	Call modest_platform_connect_and_wait() to ask for a connection if necessary, 
+	to fix projects.maemo.org bug NB#62439.
+
+2007-07-05  Murray Cumming <murrayc@murrayc.com>
+
 	* src/modest-tny-account.c: (on_connection_status_changed):
 	Really do not use tny_device_force_offline() here. See the previous comment.
 
