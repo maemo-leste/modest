@@ -990,7 +990,7 @@ typedef struct {
 } SetFolderHelper;
 
 static void
-folder_refreshed_cb (const GObject *obj, 
+folder_refreshed_cb (ModestMailOperation *mail_op,
 		     TnyFolder *folder, 
 		     gpointer user_data)
 {
@@ -1003,7 +1003,7 @@ folder_refreshed_cb (const GObject *obj,
 
 	/* User callback */
 	if (info->cb)
-		info->cb (obj, folder, info->user_data);
+		info->cb (mail_op, folder, info->user_data);
 
 	/* Start the folder count changes observer. We do not need it
 	   before the refresh. Note that the monitor could still be

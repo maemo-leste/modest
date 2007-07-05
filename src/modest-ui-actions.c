@@ -1484,7 +1484,7 @@ set_active_account_from_tny_account (TnyAccount *account,
 
 
 static void
-folder_refreshed_cb (const GObject *obj, 
+folder_refreshed_cb (ModestMailOperation *mail_op, 
 		     TnyFolder *folder, 
 		     gpointer user_data)
 {

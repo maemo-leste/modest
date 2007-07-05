@@ -88,7 +88,8 @@ typedef void (*ErrorCheckingUserCallback) (ModestMailOperation *mail_op, gpointe
 /**
  * GetMsgAsyncUserCallback:
  *
- * @obj: a #GObject generic object which has created current mail operation.
+ * @mail_op: the current #ModestMailOperation.
+ * @header: a #TnyHeader summary item.
  * @msg: a #TnyMsg message retrieved by async operation.
  * @user_data: generic data passed to user defined function.
  *
@@ -117,7 +118,7 @@ typedef void (*XferMsgsAsynUserCallback) (const GObject *obj, gpointer user_data
 /**
  * RefreshAsyncUserCallback:
  *
- * @obj: a #GObject generic object which has created current mail operation.
+ * @mail_op: the current #ModestMailOperation.
  * @folder: a #TnyFolder which has been refreshed .
  * @user_data: generic data passed to user defined function.
  *
@@ -125,7 +126,7 @@ typedef void (*XferMsgsAsynUserCallback) (const GObject *obj, gpointer user_data
  * used as tinymail operation callback. The private function fills private 
  * fields of mail operation and calls user defined callback if it exists.
  */
-typedef void (*RefreshAsyncUserCallback) (const GObject *obj, 
+typedef void (*RefreshAsyncUserCallback) (ModestMailOperation *mail_op, 
 					  TnyFolder *folder, 
 					  gpointer user_data);
 
