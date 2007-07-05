@@ -893,6 +893,11 @@ modest_main_window_new (void)
 	modest_widget_memory_restore (modest_runtime_get_conf (), G_OBJECT(priv->header_view),
 				      MODEST_CONF_HEADER_VIEW_KEY);
 
+	/* Other style properties of header view */
+	g_object_set (G_OBJECT (priv->header_view), 
+		      "rules-hint", FALSE,
+		      NULL);
+
 	/* Empty view */ 
 	priv->empty_view = create_empty_view ();
 		 

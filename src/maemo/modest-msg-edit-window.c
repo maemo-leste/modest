@@ -436,7 +436,9 @@ init_window (ModestMsgEditWindow *obj)
 	priv->text_buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (priv->msg_body));
 	g_object_set (priv->text_buffer, "font_scale", 1.0, NULL);
 	wp_text_buffer_enable_rich_text (WP_TEXT_BUFFER (priv->text_buffer), TRUE);
-/* 	gtk_text_buffer_set_can_paste_rich_text (priv->text_buffer, TRUE); */
+	gtk_text_buffer_register_serialize_tagset(GTK_TEXT_BUFFER(priv->text_buffer), "wp-text-buffer");
+	gtk_text_buffer_register_deserialize_tagset(GTK_TEXT_BUFFER(priv->text_buffer), "wp-text-buffer");
+
 	wp_text_buffer_reset_buffer (WP_TEXT_BUFFER (priv->text_buffer), TRUE);
 
 	priv->find_toolbar = hildon_find_toolbar_new (NULL);
@@ -626,7 +628,6 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg)
 
 	update_window_title (self);
 
-/* 	gtk_text_buffer_set_can_paste_rich_text (priv->text_buffer, TRUE); */
 	wp_text_buffer_reset_buffer (WP_TEXT_BUFFER (priv->text_buffer), TRUE);
 	body = modest_tny_msg_get_body (msg, TRUE);
 
@@ -2687,20 +2688,20 @@ modest_msg_edit_window_clipboard_owner_change (GtkClipboard *clipboard,
 	ModestWindowPrivate *parent_priv;
 	ModestMsgEditWindowPrivate *priv;
 	GtkAction *action;
-	gchar *selection;
+	gboolean has_selection;
 	GtkWidget *focused;
 	GList *selected_attachments = NULL;
 	gint n_att_selected = 0;
 
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
 	parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
-	selection = gtk_clipboard_wait_for_text (clipboard);
+	has_selection = gtk_clipboard_wait_for_targets (clipboard, NULL, NULL);
 	focused = gtk_window_get_focus (GTK_WINDOW (window));
 
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/EditMenu/CutMenu");
-	gtk_action_set_sensitive (action, (selection != NULL) && (!MODEST_IS_ATTACHMENTS_VIEW (focused)));
+	gtk_action_set_sensitive (action, (has_selection) && (!MODEST_IS_ATTACHMENTS_VIEW (focused)));
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/EditMenu/CopyMenu");
-	gtk_action_set_sensitive (action, (selection != NULL) && (!MODEST_IS_ATTACHMENTS_VIEW (focused)));
+	gtk_action_set_sensitive (action, (has_selection) && (!MODEST_IS_ATTACHMENTS_VIEW (focused)));
 
 	selected_attachments = modest_attachments_view_get_selection (MODEST_ATTACHMENTS_VIEW (priv->attachments_view));
 	n_att_selected = g_list_length (selected_attachments);
@@ -2709,7 +2710,6 @@ modest_msg_edit_window_clipboard_owner_change (GtkClipboard *clipboard,
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/AttachmentsMenu/RemoveAttachmentsMenu");
 	gtk_action_set_sensitive (action, n_att_selected == 1);
 	
-
 	update_paste_dimming (window);
 }
 
