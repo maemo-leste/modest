@@ -1,3 +1,10 @@
+2007-07-05  Murray Cumming <murrayc@murrayc.com>
+
+	* src/maemo/easysetup/modest-easysetup-wizard.c:
+	(create_page_complete_easysetup): Use 
+	gtk_widget_set_size() request to ensure that the text wraps 
+	even in osso 1.1.
+
 2007-07-05  Johannes Schmid <johannes.schmid@openismus.com>
 
 	* src/maemo/easysetup/modest-easysetup-wizard.c:
@@ -11,7 +18,6 @@
 	* src/widgets/modest-validating-entry.h:
 	Added a new callback function to be able to react to prevented 
 	characters whitespaces to e.g show a banner.
-
 
 2007-07-05  Armin Burgmeier  <armin@openismus.com>
 

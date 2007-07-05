@@ -625,6 +625,12 @@ static GtkWidget* create_page_complete_easysetup (ModestEasysetupWizardDialog *s
 	label = gtk_label_new (_("mcen_ia_easysetup_complete"));
 	gtk_label_set_line_wrap (GTK_LABEL (label), TRUE);
 	gtk_label_set_max_width_chars (GTK_LABEL (label), 40);
+	
+	/* The documentation for gtk_label_set_line_wrap() says that we must 
+	 * call gtk_widget_set_size_request() with a hard-coded width, 
+	 * though I wonder why gtk_label_set_max_width_chars() isn't enough. */
+	gtk_widget_set_size_request (label, 400, -1);
+	
 	gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
 	gtk_box_pack_start (GTK_BOX (box), label, FALSE, FALSE, 0);
 	gtk_widget_show (label);
