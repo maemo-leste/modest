@@ -2079,6 +2079,14 @@ on_folder_view_focus_in (GtkWidget *widget,
 			 GdkEventFocus *event,
 			 gpointer userdata)
 {
+	ModestMainWindow *main_window = NULL;
+	
+	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW (userdata), FALSE);
+	main_window = MODEST_MAIN_WINDOW (userdata);
+	
+	/* Update toolbar dimming state */
+	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (main_window));
+
 	return FALSE;
 }
 
@@ -2087,8 +2095,12 @@ on_header_view_focus_in (GtkWidget *widget,
 			 GdkEventFocus *event,
 			 gpointer userdata)
 {
-	ModestMainWindow *main_window = MODEST_MAIN_WINDOW (userdata);
-	ModestMainWindowPrivate *priv = MODEST_MAIN_WINDOW_GET_PRIVATE (main_window);
+	ModestMainWindow *main_window = NULL;
+	ModestMainWindowPrivate *priv = NULL;
+
+	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW (userdata), FALSE);
+	main_window = MODEST_MAIN_WINDOW (userdata);
+	priv = MODEST_MAIN_WINDOW_GET_PRIVATE (main_window);
 
 	if (modest_header_view_has_selected_headers (MODEST_HEADER_VIEW (priv->header_view))) {
 		TnyList *selection = modest_header_view_get_selected_headers (MODEST_HEADER_VIEW (priv->header_view));
@@ -2107,6 +2119,11 @@ on_header_view_focus_in (GtkWidget *widget,
 		g_object_unref (iterator);
 		g_object_unref (selection);
 	}
+
+
+	/* Update toolbar dimming state */
+	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (main_window));
+
 	return FALSE;
 }
 
