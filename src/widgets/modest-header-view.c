@@ -31,6 +31,7 @@
 #include <tny-list.h>
 #include <tny-simple-list.h>
 #include <tny-folder-monitor.h>
+#include <tny-folder-change.h>
 #include <string.h>
 
 #include <modest-header-view.h>
