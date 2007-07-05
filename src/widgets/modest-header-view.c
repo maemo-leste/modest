@@ -1272,6 +1272,7 @@ drag_data_get_cb (GtkWidget *widget, GdkDragContext *context,
 	GtkTreeModel *model = NULL;
 	GtkTreeIter iter;
 	GtkTreePath *source_row = NULL;
+	GtkTreeSelection *sel = NULL;	
 	
 	source_row = get_selected_row (GTK_TREE_VIEW (widget), &model);
 	if ((source_row == NULL) || (!gtk_tree_model_get_iter(model, &iter, source_row))) return;
@@ -1293,6 +1294,11 @@ drag_data_get_cb (GtkWidget *widget, GdkDragContext *context,
 	default:
 		g_message ("%s: default switch case.", __FUNCTION__);
 	}
+
+	/* Set focus on next header */
+	sel = gtk_tree_view_get_selection(GTK_TREE_VIEW (widget));
+	gtk_tree_path_next (source_row);
+	gtk_tree_selection_select_path (sel, source_row);
 
 	gtk_tree_path_free (source_row);
 }
