@@ -1,3 +1,18 @@
+2007-07-05  Johannes Schmid <johannes.schmid@openismus.com>
+
+	* src/maemo/easysetup/modest-easysetup-wizard.c:
+	(on_entry_invalid_character), (create_page_account_details),
+	(create_page_user_details):
+	Use new API of ModestValidatingEntry. But for some reason the banner is
+	not shown. I will have to investigate that further.
+
+	* src/widgets/modest-validating-entry.c: (on_insert_text),
+	(modest_validating_entry_set_func):
+	* src/widgets/modest-validating-entry.h:
+	Added a new callback function to be able to react to prevented 
+	characters whitespaces to e.g show a banner.
+
+
 2007-07-05  Armin Burgmeier  <armin@openismus.com>
 
 	* src/maemo/modest-account-settings-dialog.c: Use the notify::value

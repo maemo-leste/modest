@@ -29,6 +29,9 @@ struct _ModestValidatingEntryPrivate
 	
 	gboolean prevent_whitespace;
 	
+	EasySetupValidatingEntryFunc func;
+	gpointer func_user_data;
+
 	EasySetupValidatingEntryMaxFunc max_func;
 	gpointer max_func_user_data;
 };
@@ -131,6 +134,10 @@ on_insert_text(GtkEditable *editable,
 			GList *found = g_list_find_custom(priv->list_prevent, &one_char, &on_list_compare);
 			if(found) {
 				allow = FALSE;
+				if (priv->func)
+				{
+					priv->func(self, iter, priv->func_user_data);
+				}
 				break;
 			}	
 		}
@@ -140,6 +147,10 @@ on_insert_text(GtkEditable *editable,
 			gunichar one_char = g_utf8_get_char (iter);
 			if (g_unichar_isspace (one_char)) {
 				allow = FALSE;
+				if (priv->func)
+				{
+					priv->func(self, NULL, priv->func_user_data);
+				}
 				break;
 			}
 		}
@@ -240,5 +251,16 @@ void modest_validating_entry_set_max_func (ModestValidatingEntry *self, EasySetu
 	ModestValidatingEntryPrivate *priv = VALIDATING_ENTRY_GET_PRIVATE (self);
 	priv->max_func = func;
 	priv->max_func_user_data = user_data;
+}
+
+/** Set a callback to be called when a character was prevented so that a
+ * note can be shown by the application to inform the user. For whitespaces,
+ * character will be NULL
+ */
+void modest_validating_entry_set_func (ModestValidatingEntry *self, EasySetupValidatingEntryFunc func, gpointer user_data)
+{
+	ModestValidatingEntryPrivate *priv = VALIDATING_ENTRY_GET_PRIVATE (self);
+	priv->func = func;
+	priv->func_user_data = user_data;
 }
 

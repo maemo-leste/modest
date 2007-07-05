@@ -46,6 +46,10 @@ ModestValidatingEntry* modest_validating_entry_new (void);
 
 void modest_validating_entry_set_unallowed_characters (ModestValidatingEntry *self, GList *list);
 void modest_validating_entry_set_unallowed_characters_whitespace (ModestValidatingEntry *self);
+typedef void (* EasySetupValidatingEntryFunc) (ModestValidatingEntry *self, const gchar* character, gpointer user_data);
+void modest_validating_entry_set_func (ModestValidatingEntry *self, EasySetupValidatingEntryFunc func, gpointer user_data);
+
+
 
 typedef void (* EasySetupValidatingEntryMaxFunc) (ModestValidatingEntry *self, gpointer user_data);
 void modest_validating_entry_set_max_func (ModestValidatingEntry *self, EasySetupValidatingEntryMaxFunc func, gpointer user_data);

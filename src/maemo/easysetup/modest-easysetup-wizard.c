@@ -358,6 +358,17 @@ on_entry_max (ModestValidatingEntry *self, gpointer user_data)
 	show_error (GTK_WINDOW (dialog), _("ckdg_ib_maximum_characters_reached"));
 }
 
+static void
+on_entry_invalid_character (ModestValidatingEntry *self, const gchar* character, gpointer user_data)
+{
+	ModestEasysetupWizardDialog *dialog = MODEST_EASYSETUP_WIZARD_DIALOG (user_data);	
+	/* We could add a special case for whitespace here 
+	if (character == NULL) ...
+	*/
+	hildon_banner_show_information (
+						GTK_WIDGET(dialog), NULL, _("ckdg_ib_illegal_characters_entered"));
+}
+
 static GtkWidget*
 create_page_account_details (ModestEasysetupWizardDialog *self)
 {
@@ -483,6 +494,8 @@ create_page_account_details (ModestEasysetupWizardDialog *self)
 	modest_validating_entry_set_unallowed_characters (
 	 	MODEST_VALIDATING_ENTRY (self->entry_account_title), list_prevent);
 	g_list_free (list_prevent);
+	modest_validating_entry_set_func(MODEST_VALIDATING_ENTRY(self->entry_account_title),
+																	 on_entry_invalid_character, self);
 	
 	/* Set max length as in the UI spec:
 	 * The UI spec seems to want us to show a dialog if we hit the maximum. */
@@ -529,6 +542,8 @@ create_page_user_details (ModestEasysetupWizardDialog *self)
 	list_prevent = g_list_append (list_prevent, ">");
 	modest_validating_entry_set_unallowed_characters (
 	 	MODEST_VALIDATING_ENTRY (self->entry_user_name), list_prevent);
+	modest_validating_entry_set_func(MODEST_VALIDATING_ENTRY(self->entry_account_title),
+																	 on_entry_invalid_character, self);
 	g_list_free (list_prevent);
 	
 	/* The username widgets: */	
@@ -547,6 +562,8 @@ create_page_user_details (ModestEasysetupWizardDialog *self)
 	 * as required by our UI specification: */
 	modest_validating_entry_set_unallowed_characters_whitespace (
 	 	MODEST_VALIDATING_ENTRY (self->entry_user_username));
+	modest_validating_entry_set_func(MODEST_VALIDATING_ENTRY(self->entry_account_title),
+																	 on_entry_invalid_character, self);
 	
 	/* Set max length as in the UI spec:
 	 * The UI spec seems to want us to show a dialog if we hit the maximum. */
