@@ -1,7 +1,1 @@
-2007-07-04  Murray Cumming,,,  <murrayc@murrayc-desktop>
-
-	reviewed by: <delete if not using a buddy>
-
-	* src/modest-tny-account.c: (on_connection_status_changed):
-
 * please check the svn log instead
