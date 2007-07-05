@@ -1,5 +1,13 @@
 2007-07-05  Murray Cumming <murrayc@murrayc.com>
 
+	* src/modest-ui-actions.c:
+	(modest_ui_actions_on_main_window_move_to): Check whether the source folder needs 
+	a connection before asking anything else. Correct the check for the destination 
+	folder so that it succeeds when online.
+	This fixed projects.maemo.org bug NB#61645.
+
+2007-07-05  Murray Cumming <murrayc@murrayc.com>
+
 	* src/modest-ui-actions.c: (modest_ui_actions_on_send):
 	Call modest_platform_connect_and_wait() to ask for a connection if necessary, 
 	to fix projects.maemo.org bug NB#62439.
