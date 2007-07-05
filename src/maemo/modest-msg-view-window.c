@@ -461,12 +461,12 @@ modest_msg_view_window_finalize (GObject *obj)
 
 
 
-static gboolean
-on_delete_event (GtkWidget *widget, GdkEvent *event, ModestMsgViewWindow *self)
-{
-	modest_window_save_state (MODEST_WINDOW (self));
-	return FALSE;
-}
+/* static gboolean */
+/* on_delete_event (GtkWidget *widget, GdkEvent *event, ModestMsgViewWindow *self) */
+/* { */
+/* 	modest_window_save_state (MODEST_WINDOW (self)); */
+/* 	return FALSE; */
+/* } */
 
 ModestWindow *
 modest_msg_view_window_new_with_header_model (TnyMsg *msg, 
@@ -585,7 +585,7 @@ modest_msg_view_window_new (TnyMsg *msg,
 	init_window (MODEST_MSG_VIEW_WINDOW(obj), msg);
 	restore_settings (MODEST_MSG_VIEW_WINDOW(obj));
 	
-	g_signal_connect (G_OBJECT(obj), "delete-event", G_CALLBACK(on_delete_event), obj);
+/* 	g_signal_connect (G_OBJECT(obj), "delete-event", G_CALLBACK(on_delete_event), obj); */
 
 	g_signal_connect (G_OBJECT(priv->msg_view), "link_clicked",
 			  G_CALLBACK (modest_ui_actions_on_msg_link_clicked), obj);

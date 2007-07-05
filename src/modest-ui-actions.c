@@ -351,10 +351,10 @@ modest_ui_actions_on_delete (GtkAction *action, ModestWindow *win)
 			widget = modest_main_window_get_child_widget (main_window,
 								      MODEST_WIDGET_TYPE_HEADER_VIEW);
 			modest_header_view_refilter (MODEST_HEADER_VIEW (widget));
-		}
 
-		/* Update toolbar dimming state */
-		modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (win));
+			/* Update toolbar dimming state */
+			modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (main_window));
+		}
 	}
 
 	/* free */

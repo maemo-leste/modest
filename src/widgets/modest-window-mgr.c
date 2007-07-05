@@ -437,6 +437,11 @@ on_window_destroy (ModestWindow *window,
 		}
 	}
 
+	/* Save configuration state (TODO: why edit window does not require this function ?) */
+	if (!MODEST_IS_MSG_EDIT_WINDOW (window)) 
+		modest_window_save_state (MODEST_WINDOW(window));
+
+
 	/* Unregister window */
 	modest_window_mgr_unregister_window (self, window);
 	

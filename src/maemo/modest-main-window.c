@@ -442,12 +442,12 @@ wrap_in_scrolled_window (GtkWidget *win, GtkWidget *widget)
 }
 
 
-static gboolean
-on_delete_event (GtkWidget *widget, GdkEvent  *event, ModestMainWindow *self)
-{
-	modest_window_save_state (MODEST_WINDOW(self));
-	return FALSE;
-}
+/* static gboolean */
+/* on_delete_event (GtkWidget *widget, GdkEvent  *event, ModestMainWindow *self) */
+/* { */
+/* 	modest_window_save_state (MODEST_WINDOW(self)); */
+/* 	return FALSE; */
+/* } */
 
 typedef struct
 {
@@ -654,7 +654,7 @@ connect_signals (ModestMainWindow *self)
 			  self);
 	
 	/* window */
-	g_signal_connect (G_OBJECT(self), "delete-event", G_CALLBACK(on_delete_event), self);
+/* 	g_signal_connect (G_OBJECT(self), "delete-event", G_CALLBACK(on_delete_event), self); */
 	g_signal_connect (G_OBJECT (self), "window-state-event",
 			  G_CALLBACK (modest_main_window_window_state_event),
 			  NULL);

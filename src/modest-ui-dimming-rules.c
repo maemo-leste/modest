@@ -1438,7 +1438,7 @@ _invalid_clipboard_selected (ModestWindow *win,
 			  (MODEST_IS_ATTACHMENTS_VIEW (focused)));
 		
 		if (result)
-			modest_dimming_rule_set_notification (rule, _(""));			
+			modest_dimming_rule_set_notification (rule, "");
 	}		
 	else if (MODEST_IS_MAIN_WINDOW (win)) {
 		GtkWidget *header_view = NULL;
