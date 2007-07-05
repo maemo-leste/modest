@@ -80,6 +80,7 @@ typedef struct _ModestAccountSettingsDialogPrivate ModestAccountSettingsDialogPr
 
 struct _ModestAccountSettingsDialogPrivate
 {
+	guint initial_port;
 };
 
 static void
@@ -902,7 +903,7 @@ check_data (ModestAccountSettingsDialog *self)
 			}
 		}
 	}
-	
+
 	/* TODO: The UI Spec wants us to check that the servernames are valid, 
 	 * but does not specify how.
 	 */
@@ -920,7 +921,13 @@ on_response (GtkDialog *wizard_dialog,
 	enable_buttons (self);
 	
 	gboolean prevent_response = FALSE;
-	
+
+	/* Set modified flag when the port number changed */
+	gint port_num = hildon_number_editor_get_value (
+			HILDON_NUMBER_EDITOR (self->entry_incoming_port));
+	if(ACCOUNT_SETTINGS_DIALOG_GET_PRIVATE(self)->initial_port != port_num)
+		self->modified = TRUE;
+
 	/* Warn about unsaved changes: */
 	if (response_id == GTK_RESPONSE_CANCEL && self->modified) {
 		GtkDialog *dialog = GTK_DIALOG (hildon_note_new_confirmation (GTK_WINDOW (self), 
@@ -1163,6 +1170,13 @@ void modest_account_settings_dialog_set_account_name (ModestAccountSettingsDialo
 			hildon_number_editor_set_value (
 				HILDON_NUMBER_EDITOR (dialog->entry_incoming_port), port_num);
 		}
+
+		/* HildonNumberEditor has no changed signal, so we do not get
+		 * notified when the port number changes. Instead we check
+		 * whether the number has changed before the dialog is closed. */
+		ACCOUNT_SETTINGS_DIALOG_GET_PRIVATE(dialog)->initial_port =
+		       	hildon_number_editor_get_value (
+				HILDON_NUMBER_EDITOR (dialog->entry_incoming_port));
 	}
 	
 	ModestServerAccountData *outgoing_account = account_data->transport_account;

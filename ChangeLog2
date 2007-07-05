@@ -1,3 +1,11 @@
+2007-07-05  Armin Burgmeier  <armin@openismus.com>
+
+	* src/maemo/modest-account-settings-dialog.c: Remember custom port
+	number at the beginning of the dialog and set the modified flag at the
+	end if the port number has changed. This is necessary because
+	HildonNumberEditor does not support notification when the value has
+	changed.
+
 2007-07-05  Murray Cumming <murrayc@murrayc.com>
 
 	* src/modest-ui-actions.c:
