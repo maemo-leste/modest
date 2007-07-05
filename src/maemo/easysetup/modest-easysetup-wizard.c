@@ -82,7 +82,18 @@ struct _ModestEasysetupWizardDialogPrivate
 	/* Remember what fields the user edited manually to not prefill them
 	 * again. */
 	ModestEasysetupWizardDialogServerChanges server_changes;
+	
+	/* Check if the user changes a field to show a confirmation dialog */
+	gboolean dirty;
 };
+
+static void
+on_easysetup_changed(GtkWidget* widget, ModestEasysetupWizardDialog* wizard)
+{
+	ModestEasysetupWizardDialogPrivate* priv = WIZARD_DIALOG_GET_PRIVATE(wizard);
+	g_return_if_fail (priv != NULL);
+	priv->dirty = TRUE;
+}
 
 static void
 modest_easysetup_wizard_dialog_get_property (GObject *object, guint property_id,
@@ -303,6 +314,8 @@ on_combo_account_country (GtkComboBox *widget, gpointer user_data)
 	g_assert(self);
 	ModestEasysetupWizardDialogPrivate *priv = WIZARD_DIALOG_GET_PRIVATE (self);
 	
+	priv->dirty = TRUE;
+	
 	/* Fill the providers combo, based on the selected country: */
 	GSList *list_mcc_ids = easysetup_country_combo_box_get_active_country_ids (
 		EASYSETUP_COUNTRY_COMBO_BOX (self->combo_account_country));
@@ -316,6 +329,8 @@ on_combo_account_serviceprovider (GtkComboBox *widget, gpointer user_data)
 	ModestEasysetupWizardDialog *self = MODEST_EASYSETUP_WIZARD_DIALOG (user_data);
 	g_assert(self);
 	ModestEasysetupWizardDialogPrivate *priv = WIZARD_DIALOG_GET_PRIVATE (self);
+	
+	priv->dirty = TRUE;
 	
 	/* Fill the providers combo, based on the selected country: */
 	gchar* provider_id = easysetup_provider_combo_box_get_active_provider_id (
@@ -427,6 +442,8 @@ create_page_account_details (ModestEasysetupWizardDialog *self)
 	
 	/* The description widgets: */	
 	self->entry_account_title = GTK_WIDGET (modest_validating_entry_new ());
+	g_signal_connect(G_OBJECT(self->entry_account_title), "changed",
+									 G_CALLBACK(on_easysetup_changed), self);
 	/* Do use auto-capitalization: */
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (self->entry_account_title), 
 					 HILDON_GTK_INPUT_MODE_FULL | HILDON_GTK_INPUT_MODE_AUTOCAP);
@@ -499,6 +516,8 @@ create_page_user_details (ModestEasysetupWizardDialog *self)
 					      on_entry_max, self);
 	GtkWidget *caption = create_caption_new_with_asterisk (self, sizegroup, 
 							      _("mcen_li_emailsetup_name"), self->entry_user_name, NULL, HILDON_CAPTION_OPTIONAL);
+	g_signal_connect(G_OBJECT(self->entry_user_name), "changed", 
+									 G_CALLBACK(on_easysetup_changed), self);
 	gtk_widget_show (self->entry_user_name);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (caption);
@@ -520,6 +539,8 @@ create_page_user_details (ModestEasysetupWizardDialog *self)
 						   self->entry_user_username, NULL, HILDON_CAPTION_MANDATORY);
 	gtk_widget_show (self->entry_user_username);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
+	g_signal_connect(G_OBJECT(self->entry_user_username), "changed", 
+									 G_CALLBACK(on_easysetup_changed), self);
 	gtk_widget_show (caption);
 	
 	/* Prevent the use of some characters in the username, 
@@ -542,6 +563,8 @@ create_page_user_details (ModestEasysetupWizardDialog *self)
 	/* gtk_entry_set_invisible_char (GTK_ENTRY (self->entry_user_password), '*'); */
 	caption = create_caption_new_with_asterisk (self, sizegroup, 
 						   _("mail_fi_password"), self->entry_user_password, NULL, HILDON_CAPTION_OPTIONAL);
+	g_signal_connect(G_OBJECT(self->entry_user_password), "changed", 
+									 G_CALLBACK(on_easysetup_changed), self);
 	gtk_widget_show (self->entry_user_password);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (caption);
@@ -555,6 +578,8 @@ create_page_user_details (ModestEasysetupWizardDialog *self)
 	gtk_entry_set_text (GTK_ENTRY (self->entry_user_email), EXAMPLE_EMAIL_ADDRESS); /* Default text. */
 	gtk_widget_show (self->entry_user_email);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
+	g_signal_connect(G_OBJECT(self->entry_user_email), "changed", 
+									 G_CALLBACK(on_easysetup_changed), self);
 	gtk_widget_show (caption);
 	
 	/* Set max length as in the UI spec:
@@ -629,6 +654,10 @@ static void update_incoming_server_security_choices (ModestEasysetupWizardDialog
 static void on_combo_servertype_changed(GtkComboBox *combobox, gpointer user_data)
 {
 	ModestEasysetupWizardDialog *self = MODEST_EASYSETUP_WIZARD_DIALOG (user_data);
+	ModestEasysetupWizardDialogPrivate *priv = WIZARD_DIALOG_GET_PRIVATE(self);
+	
+	priv->dirty = TRUE;
+	
 	update_incoming_server_title (self);
 	update_incoming_server_security_choices (self);
 
@@ -639,6 +668,7 @@ static void on_entry_incoming_servername_changed(GtkEntry *entry, gpointer user_
 {
 	ModestEasysetupWizardDialog *self = MODEST_EASYSETUP_WIZARD_DIALOG (user_data);
 	ModestEasysetupWizardDialogPrivate *priv = WIZARD_DIALOG_GET_PRIVATE (self);
+	priv->dirty = TRUE;
 	priv->server_changes |= MODEST_EASYSETUP_WIZARD_DIALOG_INCOMING_CHANGED;
 }
 
@@ -670,7 +700,11 @@ static GtkWidget* create_page_custom_incoming (ModestEasysetupWizardDialog *self
 	gtk_widget_show (caption);
 	
 	if(!self->entry_incomingserver)
+	{
 		self->entry_incomingserver = gtk_entry_new ();
+		g_signal_connect(G_OBJECT(self->entry_incomingserver), "changed",
+										 G_CALLBACK(on_easysetup_changed), self);
+	}
 	/* Auto-capitalization is the default, so let's turn it off: */
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (self->entry_incomingserver), HILDON_GTK_INPUT_MODE_FULL);
 	set_default_custom_servernames (self);
@@ -705,14 +739,21 @@ static GtkWidget* create_page_custom_incoming (ModestEasysetupWizardDialog *self
 		MODEST_SERVERSECURITY_COMBO_BOX (self->combo_incoming_security), MODEST_PROTOCOL_CONNECTION_NORMAL);
 	caption = hildon_caption_new (sizegroup, _("mcen_li_emailsetup_secure_connection"), 
 				      self->combo_incoming_security, NULL, HILDON_CAPTION_OPTIONAL);
+	g_signal_connect (G_OBJECT (self->combo_incoming_security), "changed",
+	                  G_CALLBACK (on_easysetup_changed), self);
 	gtk_widget_show (self->combo_incoming_security);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (caption);
 	
 	if(!self->checkbox_incoming_auth)
+	{
 		self->checkbox_incoming_auth = gtk_check_button_new ();
+		g_signal_connect (G_OBJECT (self->checkbox_incoming_auth), "toggled",
+	                  G_CALLBACK (on_easysetup_changed), self);
+	}
 	caption = hildon_caption_new (sizegroup, _("mcen_li_emailsetup_secure_authentication"), 
 				      self->checkbox_incoming_auth, NULL, HILDON_CAPTION_OPTIONAL);
+	
 	gtk_widget_show (self->checkbox_incoming_auth);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (caption);
@@ -748,6 +789,11 @@ static void
 on_button_outgoing_smtp_servers (GtkButton *button, gpointer user_data)
 {
 	ModestEasysetupWizardDialog * self = MODEST_EASYSETUP_WIZARD_DIALOG (user_data);
+	ModestEasysetupWizardDialogPrivate* priv = WIZARD_DIALOG_GET_PRIVATE(self);
+	
+	/* We set dirty here because setting it depending on the connection specific dialog
+	seems overkill */
+	priv->dirty = TRUE;
 	
 	/* Create the window, if necessary: */
 	if (!(self->specific_window)) {
@@ -780,7 +826,11 @@ static GtkWidget* create_page_custom_outgoing (ModestEasysetupWizardDialog *self
 	 
 	/* The outgoing server widgets: */
 	if (!self->entry_outgoingserver)
+	{
 		self->entry_outgoingserver = gtk_entry_new ();
+		g_signal_connect (G_OBJECT (self->entry_outgoingserver), "changed",
+	                  G_CALLBACK (on_easysetup_changed), self);
+	}
 	/* Auto-capitalization is the default, so let's turn it off: */
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (self->entry_outgoingserver), HILDON_GTK_INPUT_MODE_FULL);
 	GtkWidget *caption = create_caption_new_with_asterisk (self, sizegroup, 
@@ -792,7 +842,11 @@ static GtkWidget* create_page_custom_outgoing (ModestEasysetupWizardDialog *self
 	
 	/* The secure connection widgets: */	
 	if (!self->combo_outgoing_security)
+	{
 		self->combo_outgoing_security = GTK_WIDGET (modest_serversecurity_combo_box_new ());
+		g_signal_connect (G_OBJECT (self->combo_outgoing_security), "changed",
+	                  G_CALLBACK (on_easysetup_changed), self);
+	}
 	modest_serversecurity_combo_box_fill (
 		MODEST_SERVERSECURITY_COMBO_BOX (self->combo_outgoing_security), MODEST_PROTOCOL_TRANSPORT_SMTP);
 	modest_serversecurity_combo_box_set_active_serversecurity (
@@ -805,7 +859,11 @@ static GtkWidget* create_page_custom_outgoing (ModestEasysetupWizardDialog *self
 	
 	/* The secure authentication widgets: */
 	if (!self->combo_outgoing_auth)
+	{
 		self->combo_outgoing_auth = GTK_WIDGET (modest_secureauth_combo_box_new ());
+				g_signal_connect (G_OBJECT (self->combo_outgoing_auth), "changed",
+	                  G_CALLBACK (on_easysetup_changed), self);
+	}
 	caption = hildon_caption_new (sizegroup, _("mcen_li_emailsetup_secure_authentication"), 
 				      self->combo_outgoing_auth, NULL, HILDON_CAPTION_OPTIONAL);
 	gtk_widget_show (self->combo_outgoing_auth);
@@ -821,6 +879,9 @@ static GtkWidget* create_page_custom_outgoing (ModestEasysetupWizardDialog *self
 		self->checkbox_outgoing_smtp_specific = gtk_check_button_new ();
 		gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->checkbox_outgoing_smtp_specific), 
 					      FALSE);
+		g_signal_connect (G_OBJECT (self->checkbox_outgoing_smtp_specific), "toggled",
+	                  G_CALLBACK (on_easysetup_changed), self);
+
 	}
 	caption = hildon_caption_new (sizegroup, _("mcen_fi_advsetup_connection_smtp"), 
 				      self->checkbox_outgoing_smtp_specific, NULL, HILDON_CAPTION_OPTIONAL);
@@ -953,21 +1014,25 @@ on_response_before (ModestWizardDialog *wizard_dialog,
                     gpointer user_data)
 {
 	ModestEasysetupWizardDialog *self = MODEST_EASYSETUP_WIZARD_DIALOG (wizard_dialog);
+	ModestEasysetupWizardDialogPrivate *priv = WIZARD_DIALOG_GET_PRIVATE(wizard_dialog);
 	if (response_id == GTK_RESPONSE_CANCEL) {
 		/* This is mostly copied from
 		 * src/maemo/modest-account-settings-dialog.c */
-		GtkDialog *dialog = GTK_DIALOG (hildon_note_new_confirmation (GTK_WINDOW (self), 
-			_("imum_nc_wizard_confirm_lose_changes")));
-		/* TODO: These button names will be ambiguous, and not specified in the UI specification. */
-
-		const gint dialog_response = gtk_dialog_run (dialog);
-		gtk_widget_destroy (GTK_WIDGET (dialog));
-
-		if (dialog_response != GTK_RESPONSE_OK)
+		if (priv->dirty)
 		{
-			/* This is a nasty hack. murrayc. */
-			/* Don't let the dialog close */
-			g_signal_stop_emission_by_name (wizard_dialog, "response");
+			GtkDialog *dialog = GTK_DIALOG (hildon_note_new_confirmation (GTK_WINDOW (self), 
+				_("imum_nc_wizard_confirm_lose_changes")));
+			/* TODO: These button names will be ambiguous, and not specified in the UI specification. */
+
+			const gint dialog_response = gtk_dialog_run (dialog);
+			gtk_widget_destroy (GTK_WIDGET (dialog));
+
+			if (dialog_response != GTK_RESPONSE_OK)
+			{
+				/* This is a nasty hack. murrayc. */
+				/* Don't let the dialog close */
+				g_signal_stop_emission_by_name (wizard_dialog, "response");
+			}
 		}
 	}
 }
@@ -1049,6 +1114,9 @@ modest_easysetup_wizard_dialog_init (ModestEasysetupWizardDialog *self)
 	g_signal_connect (G_OBJECT (self), "response",
 	                  G_CALLBACK (on_response_before), self);
 
+	/* Reset dirty, because there was no user input until now */
+	priv->dirty = FALSE;
+	
 	/* When this window is shown, hibernation should not be possible, 
 	 * because there is no sensible way to save the state: */
 	modest_window_mgr_prevent_hibernation_while_window_is_shown (
