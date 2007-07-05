@@ -454,7 +454,7 @@ modest_ui_dimming_rules_on_delete_msg (ModestWindow *win, gpointer user_data)
 		if (!dimmed) {
 			dimmed = _selected_msg_sent_in_progress (win);
 			if (dimmed)
-				modest_dimming_rule_set_notification (rule, _("mcen_ib_message_unableto_delete"));
+				modest_dimming_rule_set_notification (rule, _("ckct_ib_unable_to_delete]"));
 		}
 	} 
 	else if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
@@ -888,11 +888,6 @@ modest_ui_dimming_rules_on_cut (ModestWindow *win, gpointer user_data)
 
 	/* Check window specific dimming rules */
 	if (MODEST_IS_MAIN_WINDOW (win)) {
-		if (!dimmed) {
-			dimmed = _selected_folder_not_writeable (MODEST_MAIN_WINDOW(win));
-			if (dimmed)
-				modest_dimming_rule_set_notification (rule, _("mcen_ib_message_unableto_delete"));
-		}
 		if (!dimmed) { 
 			dimmed = _selected_folder_is_empty (MODEST_MAIN_WINDOW(win));			
 			if (dimmed)
@@ -1304,7 +1299,7 @@ _selected_folder_is_any_of_type (ModestWindow *win,
 								   MODEST_WIDGET_TYPE_FOLDER_VIEW);
 		/* If no folder view, always dimmed */
 		if (!folder_view)
-			return TRUE;
+			return FALSE;
 	
 		/* Get selected folder as parent of new folder to create */
 		folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW(folder_view));
@@ -1312,7 +1307,7 @@ _selected_folder_is_any_of_type (ModestWindow *win,
 		if (!(folder && TNY_IS_FOLDER(folder))) {
 			if (folder)
 				g_object_unref (folder);
-			return TRUE;
+			return FALSE;
 		}
 		
 		/* Check folder type */
