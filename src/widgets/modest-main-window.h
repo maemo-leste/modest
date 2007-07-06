@@ -36,7 +36,7 @@
 #include <widgets/modest-header-view.h>
 #include <widgets/modest-folder-view.h>
 #include <widgets/modest-msg-view.h>
-
+#include <widgets/modest-msg-view-window.h>
 
 G_BEGIN_DECLS
 
@@ -196,8 +196,7 @@ ModestMainWindowContentsStyle modest_main_window_get_contents_style (ModestMainW
  * Returns: TRUE if send$receive operaton is in 
  * progress, FALSE otherwise.
  **/
-gboolean
-modest_main_window_send_receive_in_progress (ModestMainWindow *self);
+gboolean  modest_main_window_send_receive_in_progress       (ModestMainWindow *self);
 
 /**
  * modest_main_window_notify_send_receive_initied:
@@ -205,8 +204,7 @@ modest_main_window_send_receive_in_progress (ModestMainWindow *self);
  * 
  * Notifies main window that send/receive operaiton was just started. 
  **/
-void 
-modest_main_window_notify_send_receive_initied (ModestMainWindow *self);
+void      modest_main_window_notify_send_receive_initied    (ModestMainWindow *self);
 
 /**
  * modest_main_window_notify_send_receive_completed:
@@ -214,9 +212,13 @@ modest_main_window_notify_send_receive_initied (ModestMainWindow *self);
  * 
  * Notifies main window that send/receive operaiton was completed. 
  **/
-void 
-modest_main_window_notify_send_receive_completed (ModestMainWindow *self);
+void      modest_main_window_notify_send_receive_completed  (ModestMainWindow *self);
 
+
+gboolean  modest_main_window_on_msg_view_window_msg_changed (ModestMsgViewWindow *view_window,
+							     GtkTreeModel *model,
+							     GtkTreeRowReference *row_reference,
+							     ModestMainWindow *self);
 
 G_END_DECLS
 

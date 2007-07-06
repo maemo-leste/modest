@@ -71,7 +71,7 @@ static gboolean     filter_row             (GtkTreeModel *model,
 					    GtkTreeIter *iter,
 					    gpointer data);
 
-static void          on_selection_changed   (GtkTreeSelection *sel, 
+static void          on_selection_changed   (GtkTreeSelection *sel,
 					     gpointer user_data);
 
 static void          setup_drag_and_drop    (GtkTreeView *self);
@@ -104,13 +104,13 @@ struct _ModestHeaderViewPrivate {
 	ModestEmailClipboard *clipboard;
 
 	/* Filter tree model */
-	gchar **hidding_ids;
-	guint n_selected;
+	gchar               **hidding_ids;
+	guint                 n_selected;
 
 	gint                  sort_colid[2][TNY_FOLDER_TYPE_NUM];
 	gint                  sort_type[2][TNY_FOLDER_TYPE_NUM];
 
-
+	gulong                selection_changed_handler;
 };
 
 typedef struct _HeadersCountChangedHelper HeadersCountChangedHelper;
@@ -342,7 +342,6 @@ modest_header_view_set_columns (ModestHeaderView *self, const GList *columns, Tn
 
 	selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(self));
 	gtk_tree_selection_set_mode(selection, GTK_SELECTION_MULTIPLE);
-/* 	sortable = gtk_tree_view_get_model (GTK_TREE_VIEW (self)); */
 	tree_filter = gtk_tree_view_get_model (GTK_TREE_VIEW (self));
 	sortable = gtk_tree_model_filter_get_model (GTK_TREE_MODEL_FILTER(tree_filter));
 
@@ -498,6 +497,7 @@ modest_header_view_init (ModestHeaderView *obj)
 	priv->clipboard = modest_runtime_get_email_clipboard ();
 	priv->hidding_ids = NULL;
 	priv->n_selected = 0;
+	priv->selection_changed_handler = 0;
 
 	/* Sort parameters */
 	for (j=0; j < 2; j++) {
@@ -536,6 +536,11 @@ modest_header_view_finalize (GObject *obj)
 	
 	self = MODEST_HEADER_VIEW(obj);
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
+
+	if (priv->selection_changed_handler) {
+		g_signal_handler_disconnect (self, priv->selection_changed_handler);
+		priv->selection_changed_handler = 0;
+	}
 
 	g_mutex_lock (priv->observers_lock);
 	if (priv->monitor) {
@@ -578,8 +583,9 @@ modest_header_view_new (TnyFolder *folder, ModestHeaderViewStyle style)
 				      TRUE); /* alternating row colors */
 	sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(self));
 	
-	g_signal_connect (sel, "changed",
-			  G_CALLBACK(on_selection_changed), self);
+	priv->selection_changed_handler =
+		g_signal_connect_after (sel, "changed",
+					G_CALLBACK(on_selection_changed), self);
 	
 	g_signal_connect (self, "row-activated",
 			  G_CALLBACK (on_header_row_activated), NULL);
@@ -1647,4 +1653,27 @@ modest_header_view_refilter (ModestHeaderView *header_view)
 	model = gtk_tree_view_get_model (GTK_TREE_VIEW (header_view));
 	if (GTK_IS_TREE_MODEL_FILTER (model))
 		gtk_tree_model_filter_refilter (GTK_TREE_MODEL_FILTER (model));
+}
+
+/**
+ * Protected method, selects a row pointed by path
+ **/
+void 
+_modest_header_view_select_from_path (ModestHeaderView *self, 
+				      GtkTreePath *path)
+{
+	GtkTreeSelection *selection = NULL;
+	ModestHeaderViewPrivate *priv;
+	
+	g_return_if_fail (MODEST_HEADER_VIEW (self));
+	g_return_if_fail (path != NULL);
+
+	priv = MODEST_HEADER_VIEW_GET_PRIVATE (self);
+	selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (self));
+
+	/* Unselect previous selection */
+	gtk_tree_selection_unselect_all (selection);
+
+	/* Select new path*/
+	gtk_tree_selection_select_path (selection, path);
 }

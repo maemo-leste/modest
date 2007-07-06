@@ -33,6 +33,7 @@
 #include <tny-msg.h>
 #include <tny-mime-part.h>
 #include <tny-vfs-stream.h>
+#include "modest-marshal.h"
 #include "modest-platform.h"
 #include <modest-maemo-utils.h>
 #include <modest-tny-msg.h>
@@ -107,8 +108,7 @@ static void update_window_title (ModestMsgViewWindow *window);
 
 /* list my signals */
 enum {
-	/* MY_SIGNAL_1, */
-	/* MY_SIGNAL_2, */
+	MSG_CHANGED_SIGNAL,
 	LAST_SIGNAL
 };
 
@@ -166,7 +166,7 @@ struct _ModestMsgViewWindowPrivate {
 static GtkWindowClass *parent_class = NULL;
 
 /* uncomment the following if you have defined any signals */
-/* static guint signals[LAST_SIGNAL] = {0}; */
+static guint signals[LAST_SIGNAL] = {0};
 
 GType
 modest_msg_view_window_get_type (void)
@@ -229,6 +229,15 @@ modest_msg_view_window_class_init (ModestMsgViewWindowClass *klass)
 	g_type_class_add_private (gobject_class, sizeof(ModestMsgViewWindowPrivate));
 
 	modest_window_class->save_state_func = save_state;
+
+	signals[MSG_CHANGED_SIGNAL] =
+		g_signal_new ("msg-changed",
+			      G_TYPE_FROM_CLASS (gobject_class),
+			      G_SIGNAL_RUN_FIRST,
+			      G_STRUCT_OFFSET (ModestMsgViewWindowClass, msg_changed),
+			      NULL, NULL,
+			      modest_marshal_VOID__POINTER_POINTER,
+			      G_TYPE_NONE, 2, G_TYPE_POINTER, G_TYPE_POINTER);
 }
 
 static void
@@ -1254,6 +1263,16 @@ view_msg_cb (ModestMailOperation *mail_op,
 	modest_msg_view_window_update_priority (self);
 	update_window_title (MODEST_MSG_VIEW_WINDOW (self));
 	modest_msg_view_grab_focus (MODEST_MSG_VIEW (priv->msg_view));
+
+	/* Set the new message uid of the window  */
+	if (priv->msg_uid) {
+		g_free (priv->msg_uid);
+		priv->msg_uid = modest_tny_folder_get_header_unique_id (header);
+	}
+
+	/* Notify the observers */
+	g_signal_emit (G_OBJECT (self), signals[MSG_CHANGED_SIGNAL], 
+		       0, priv->header_model, priv->row_reference);
 
 	/* Free new references */
 	g_object_unref (self);

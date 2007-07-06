@@ -67,6 +67,7 @@ struct _ModestWindowMgrPrivate {
 	GSList       *windows_that_prevent_hibernation;
 	GSList       *preregistered_uids;
 	GHashTable   *destroy_handlers;
+	GHashTable   *viewer_handlers;
 };
 #define MODEST_WINDOW_MGR_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                MODEST_TYPE_WINDOW_MGR, \
@@ -129,7 +130,8 @@ modest_window_mgr_init (ModestWindowMgr *obj)
 	   ready yet */
 	priv->show_toolbars = FALSE;
 	priv->show_toolbars_fullscreen = FALSE;
-	priv->destroy_handlers = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, g_free);
+	priv->destroy_handlers = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, g_free);	
+	priv->viewer_handlers = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, g_free);
 }
 
 static void
@@ -157,6 +159,11 @@ modest_window_mgr_finalize (GObject *obj)
 	if (priv->destroy_handlers) {
 		g_hash_table_destroy (priv->destroy_handlers);
 		priv->destroy_handlers = NULL;
+	}
+
+	if (priv->viewer_handlers) {
+		g_hash_table_destroy (priv->viewer_handlers);
+		priv->viewer_handlers = NULL;
 	}
 
 	/* Do not unref priv->main_window because it does not hold a
@@ -361,8 +368,17 @@ modest_window_mgr_register_window (ModestWindowMgr *self,
 	/* Listen to object destruction */
 	handler_id = g_malloc0 (sizeof (gint));
 	*handler_id = g_signal_connect (window, "delete-event", G_CALLBACK (on_window_destroy), self);
-/* 	*handler_id = g_signal_connect (window, "destroy", G_CALLBACK (on_window_destroy), self); */
 	g_hash_table_insert (priv->destroy_handlers, window, handler_id);
+
+	/* If there is a msg view window, let the main window listen the msg-changed signal */
+	if (MODEST_IS_MSG_VIEW_WINDOW(window) && priv->main_window) {
+		gulong *handler;
+		handler = g_malloc0 (sizeof (gulong));
+		*handler = g_signal_connect (window, "msg-changed", 
+					     G_CALLBACK (modest_main_window_on_msg_view_window_msg_changed), 
+					     priv->main_window);
+		g_hash_table_insert (priv->viewer_handlers, window, handler);
+	}
 
 	/* Put into fullscreen if needed */
 	if (priv->fullscreen_mode)
@@ -448,6 +464,18 @@ on_window_destroy (ModestWindow *window,
 	return FALSE;
 }
 
+static void
+disconnect_msg_changed (gpointer key, 
+			gpointer value, 
+			gpointer user_data)
+{
+	gulong *handler_id;
+
+	handler_id = (gulong *) value;
+	g_signal_handler_disconnect (G_OBJECT (key), *handler_id);
+}
+
+
 void 
 modest_window_mgr_unregister_window (ModestWindowMgr *self, 
 				     ModestWindow *window)
@@ -468,8 +496,16 @@ modest_window_mgr_unregister_window (ModestWindowMgr *self,
 	}
 
 	/* If it's the main window unset it */
-	if (priv->main_window == window)
+	if (priv->main_window == window) {
 		priv->main_window = NULL;
+
+		/* Disconnect all emissions of msg-changed */
+		g_hash_table_foreach (priv->viewer_handlers, 
+				      disconnect_msg_changed, 
+				      NULL);
+		g_hash_table_destroy (priv->viewer_handlers);
+		priv->viewer_handlers = NULL;
+	}
 
 	/* Save state */
 	modest_window_save_state (window);
@@ -480,9 +516,10 @@ modest_window_mgr_unregister_window (ModestWindowMgr *self,
 	handler_id = *tmp;
 	g_hash_table_remove (priv->destroy_handlers, window);
 
-	/* Remove the reference to the window. Disconnect also the
-	   delete-event handler, we won't need it anymore */
+	/* Disconnect the "delete-event" handler, we won't need it anymore */
 	g_signal_handler_disconnect (window, handler_id);
+
+	/* Destroy the window */
 	gtk_widget_destroy (win->data);
 
 	/* If there are no more windows registered then exit program */

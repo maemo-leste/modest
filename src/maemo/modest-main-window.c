@@ -37,7 +37,7 @@
 #include "modest-hildon-includes.h"
 #include "modest-defs.h"
 #include <string.h>
-
+#include "widgets/modest-header-view-priv.h"
 #include "widgets/modest-main-window.h"
 #include "widgets/modest-msg-edit-window.h"
 #include "widgets/modest-account-view-window.h"
@@ -2197,4 +2197,33 @@ modest_main_window_on_folder_selection_changed (ModestFolderView *folder_view,
 	 * the header view CSM */
 	modest_ui_actions_on_folder_selection_changed (folder_view, folder_store, selected, main_window);
 
+}
+
+gboolean 
+modest_main_window_on_msg_view_window_msg_changed (ModestMsgViewWindow *view_window,
+						   GtkTreeModel *model,
+						   GtkTreeRowReference *row_reference,
+						   ModestMainWindow *self)
+{
+	ModestMainWindowPrivate *priv = NULL;
+	GtkTreeModel *header_model = NULL;
+ 	GtkTreePath *path = NULL;
+
+	g_return_val_if_fail (MODEST_MSG_VIEW_WINDOW (view_window), FALSE);
+	g_return_val_if_fail (MODEST_MAIN_WINDOW (self), FALSE);
+	g_return_val_if_fail (gtk_tree_row_reference_valid (row_reference), FALSE);
+
+	priv = MODEST_MAIN_WINDOW_GET_PRIVATE (self);
+	header_model = gtk_tree_view_get_model (GTK_TREE_VIEW (priv->header_view));
+
+	/* Do nothing if we changed the folder in the main view */
+	if (header_model != model)
+		return FALSE;
+
+	/* Select the message in the header view */
+	path = gtk_tree_row_reference_get_path (row_reference);
+	_modest_header_view_select_from_path (MODEST_HEADER_VIEW (priv->header_view), path);
+	gtk_tree_path_free (path);
+
+	return TRUE;
 }

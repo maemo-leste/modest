@@ -1380,7 +1380,7 @@ transfer_folder_status_cb (GObject *obj,
 	g_return_if_fail (status->code == TNY_FOLDER_STATUS_CODE_COPY_FOLDER);
 
 	helper = (XFerMsgAsyncHelper *) user_data;
-	g_return_if_fail (helper != NULL);       
+	g_return_if_fail (helper != NULL);
 
 	self = helper->mail_op;
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
@@ -2179,7 +2179,6 @@ on_refresh_folder (TnyFolder   *folder,
 	}
 
 	priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
-
  out:
 	/* Call user defined callback, if it exists */
 	if (helper->user_callback) {
@@ -2277,11 +2276,6 @@ modest_mail_operation_notify_end (ModestMailOperation *self)
 
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
 
-	if (!priv) {
-		g_warning ("BUG: %s: priv == NULL", __FUNCTION__);
-		return;
-	}
-	
 	/* Set the account back to not busy */
 	if (priv->account_name) {
 		modest_account_mgr_set_account_busy (modest_runtime_get_account_mgr(), 

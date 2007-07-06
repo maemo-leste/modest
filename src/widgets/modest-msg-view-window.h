@@ -51,8 +51,11 @@ typedef struct {
 	
 typedef struct {
 	ModestWindowClass parent_class;
-	/* insert signal callback declarations, eg. */
-	/* void (* my_event) (ModestEditMsgWindow* obj); */
+
+	void (*msg_changed) (ModestMsgViewWindow *self,
+			     GtkTreeModel *model,
+			     GtkTreeRowReference *row_reference, 
+			     gpointer user_data);
 } ModestMsgViewWindowClass;
 
 /**
