@@ -572,6 +572,9 @@ modest_mail_operation_send_new_mail (ModestMailOperation *self,
 	header = tny_msg_get_header (new_msg);
 	if (priority_flags != 0)
 		tny_header_set_flags (header, priority_flags);
+	if (attachments_list != NULL) {
+		tny_header_set_flags (header, TNY_HEADER_FLAG_ATTACHMENTS);
+	}
 	g_object_unref (G_OBJECT(header));
 
 	/* Call mail operation */
@@ -633,6 +636,8 @@ modest_mail_operation_save_to_drafts (ModestMailOperation *self,
 	/* add priority flags */
 	header = tny_msg_get_header (msg);
 	tny_header_set_flags (header, priority_flags);
+	if (attachments_list != NULL)
+		tny_header_set_flags (header, TNY_HEADER_FLAG_ATTACHMENTS);
 	g_object_unref (G_OBJECT(header));
 
 	folder = modest_tny_account_get_special_folder (TNY_ACCOUNT (transport_account), TNY_FOLDER_TYPE_DRAFTS);
