@@ -289,7 +289,6 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 				    -1);
 
 	/* flags */
-	flags = tny_header_get_flags (msg_header);
 	prior_flags = flags & TNY_HEADER_FLAG_PRIORITY;
 	if (flags & TNY_HEADER_FLAG_ATTACHMENTS)
 		g_object_set (G_OBJECT (attach_cell), "pixbuf",
