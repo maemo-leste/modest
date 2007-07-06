@@ -83,6 +83,7 @@
 #define DEFAULT_MAIN_VBOX_SPACING 6
 #define SUBJECT_MAX_LENGTH 1000
 #define IMAGE_MAX_WIDTH 640
+#define DEFAULT_FONT_SCALE 1.5
 
 static void  modest_msg_edit_window_class_init   (ModestMsgEditWindowClass *klass);
 static void  modest_msg_edit_window_init         (ModestMsgEditWindow *obj);
@@ -435,7 +436,7 @@ init_window (ModestMsgEditWindow *obj)
 	priv->msg_body = wp_text_view_new ();
 	gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (priv->msg_body), GTK_WRAP_WORD_CHAR);
 	priv->text_buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (priv->msg_body));
-	g_object_set (priv->text_buffer, "font_scale", 1.0, NULL);
+	g_object_set (priv->text_buffer, "font_scale", DEFAULT_FONT_SCALE, NULL);
 	wp_text_buffer_enable_rich_text (WP_TEXT_BUFFER (priv->text_buffer), TRUE);
 	gtk_text_buffer_register_serialize_tagset(GTK_TEXT_BUFFER(priv->text_buffer), "wp-text-buffer");
 	gtk_text_buffer_register_deserialize_tagset(GTK_TEXT_BUFFER(priv->text_buffer), "wp-text-buffer");
@@ -1886,7 +1887,7 @@ modest_msg_edit_window_set_zoom (ModestWindow *window,
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
 	parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
 	priv->zoom_level = zoom;
-	wp_text_buffer_set_font_scaling_factor (WP_TEXT_BUFFER (priv->text_buffer), zoom);
+	wp_text_buffer_set_font_scaling_factor (WP_TEXT_BUFFER (priv->text_buffer), zoom*DEFAULT_FONT_SCALE);
 
 	/* Zoom level menu options should be updated with the current zoom level */
 	parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
