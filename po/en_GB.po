@@ -606,6 +606,10 @@ msgstr "Unable to copy item(s) to target folder"
 msgid "emev_nc_unabletomove_items"
 msgstr "Unable to move %d item(s)"
 
+# MSG-NOT59004, Saving
+msgid "mail_ib_saving_mime_part"
+msgstr "Saving"
+
 # MSG-NOT317
 msgid "mcen_ib_removing_attachment"
 msgstr "Removing attachment…"
