@@ -1336,8 +1336,15 @@ TnyAccount*
 modest_tny_account_store_get_transport_account_for_open_connection (ModestTnyAccountStore *self,
 								    const gchar *account_name)
 {
+	g_return_val_if_fail (self, NULL);
+	g_return_val_if_fail (account_name, NULL);
+
+	if (!account_name || !self)
+		return NULL;
+	
 	/*  Get the connection-specific transport acccount, if any: */
-	TnyAccount *account = get_smtp_specific_transport_account_for_open_connection (self, account_name);
+	TnyAccount *account =
+		get_smtp_specific_transport_account_for_open_connection (self, account_name);
 			
 	/* If there is no connection-specific transport account (the common case), 
 	 * just get the regular transport account: */
