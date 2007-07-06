@@ -67,6 +67,7 @@ static gboolean button_press_event (GtkWidget *widget, GdkEventButton *event, Mo
 static gboolean motion_notify_event (GtkWidget *widget, GdkEventMotion *event, ModestAttachmentsView *atts_view);
 static gboolean button_release_event (GtkWidget *widget, GdkEventButton *event, ModestAttachmentsView *atts_view);
 static gboolean key_press_event (GtkWidget *widget, GdkEventKey *event, ModestAttachmentsView *atts_view);
+static gboolean focus_out_event (GtkWidget *widget, GdkEventFocus *event, ModestAttachmentsView *atts_view);
 static GtkWidget *get_att_view_at_coords (ModestAttachmentsView *atts_view,
 					  gdouble x, gdouble y);
 static void unselect_all (ModestAttachmentsView *atts_view);
@@ -240,6 +241,7 @@ modest_attachments_view_instance_init (GTypeInstance *instance, gpointer g_class
 	g_signal_connect (G_OBJECT (instance), "button-release-event", G_CALLBACK (button_release_event), instance);
 	g_signal_connect (G_OBJECT (instance), "motion-notify-event", G_CALLBACK (motion_notify_event), instance);
 	g_signal_connect (G_OBJECT (instance), "key-press-event", G_CALLBACK (key_press_event), instance);
+	g_signal_connect (G_OBJECT (instance), "focus-out-event", G_CALLBACK (focus_out_event), instance);
 
 	GTK_WIDGET_SET_FLAGS (instance, GTK_CAN_FOCUS);
 
@@ -749,4 +751,13 @@ own_clipboard (ModestAttachmentsView *atts_view)
 				      targets, G_N_ELEMENTS (targets),
 				      clipboard_get, clipboard_clear, G_OBJECT(atts_view));
 			      
+}
+
+static gboolean 
+focus_out_event (GtkWidget *widget, GdkEventFocus *event, ModestAttachmentsView *atts_view)
+{
+	if (!gtk_widget_is_focus (widget))
+		unselect_all (atts_view);
+
+	return FALSE;
 }

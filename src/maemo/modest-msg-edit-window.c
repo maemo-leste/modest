@@ -93,10 +93,6 @@ static gboolean msg_body_focus (GtkWidget *focus, GdkEventFocus *event, gpointer
 static void  recpt_field_changed (GtkTextBuffer *buffer, ModestMsgEditWindow *editor);
 static void  send_insensitive_press (GtkWidget *widget, ModestMsgEditWindow *editor);
 static void  style_insensitive_press (GtkWidget *widget, ModestMsgEditWindow *editor);
-static void  remove_attachment_insensitive_press (GtkWidget *widget, ModestMsgEditWindow *editor);
-static void  zoom_insensitive_press (GtkWidget *widget, ModestMsgEditWindow *editor);
-static void  paste_insensitive_press (GtkWidget *widget, ModestMsgEditWindow *editor);
-static void  copy_insensitive_press (GtkWidget *widget, ModestMsgEditWindow *editor);
 static void  setup_insensitive_handlers (ModestMsgEditWindow *editor);
 static void  reset_modified (ModestMsgEditWindow *editor);
 
@@ -2418,23 +2414,6 @@ setup_insensitive_handlers (ModestMsgEditWindow *window)
 
 	widget = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/ToolbarSend");
 	g_signal_connect (G_OBJECT (widget), "insensitive-press", G_CALLBACK (send_insensitive_press), window);
-	widget = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/MenuBar/EmailMenu/SendMenu");
-	g_signal_connect (G_OBJECT (widget), "insensitive-press", G_CALLBACK (send_insensitive_press), window);
-
-	widget = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/MenuBar/FormatMenu/SelectFontMenu");
-	g_signal_connect (G_OBJECT (widget), "insensitive-press", G_CALLBACK (style_insensitive_press), window);
-	widget = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/MenuBar/FormatMenu/BulletedListMenu");
-	g_signal_connect (G_OBJECT (widget), "insensitive-press", G_CALLBACK (style_insensitive_press), window);
-	widget = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/MenuBar/FormatMenu/AlignmentMenu");
-	g_signal_connect (G_OBJECT (widget), "insensitive-press", G_CALLBACK (style_insensitive_press), window);
-	widget = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/MenuBar/FormatMenu/AlignmentMenu/AlignmentLeftMenu");
-	g_signal_connect (G_OBJECT (widget), "insensitive-press", G_CALLBACK (style_insensitive_press), window);
-	widget = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/MenuBar/FormatMenu/AlignmentMenu/AlignmentCenterMenu");
-	g_signal_connect (G_OBJECT (widget), "insensitive-press", G_CALLBACK (style_insensitive_press), window);
-	widget = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/MenuBar/FormatMenu/AlignmentMenu/AlignmentRightMenu");
-	g_signal_connect (G_OBJECT (widget), "insensitive-press", G_CALLBACK (style_insensitive_press), window);
-	widget = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/MenuBar/AttachmentsMenu/InsertImageMenu");
-	g_signal_connect (G_OBJECT (widget), "insensitive-press", G_CALLBACK (style_insensitive_press), window);
 	widget = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/ActionsBold");
 	g_signal_connect (G_OBJECT (widget), "insensitive-press", G_CALLBACK (style_insensitive_press), window);
 	widget = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/ActionsItalics");
@@ -2446,15 +2425,6 @@ setup_insensitive_handlers (ModestMsgEditWindow *window)
 	widget = priv->font_face_toolitem;
 	g_signal_connect (G_OBJECT (widget), "insensitive-press", G_CALLBACK (style_insensitive_press), window);
 
-	widget = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/MenuBar/AttachmentsMenu/RemoveAttachmentsMenu");
-	g_signal_connect (G_OBJECT (widget), "insensitive-press", G_CALLBACK (remove_attachment_insensitive_press), window);
-	widget = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/MenuBar/ViewMenu/ZoomMenu");
-	g_signal_connect (G_OBJECT (widget), "insensitive-press", G_CALLBACK (zoom_insensitive_press), window);
-
-	widget = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/MenuBar/EditMenu/PasteMenu");
-	g_signal_connect (G_OBJECT (widget), "insensitive-press", G_CALLBACK (paste_insensitive_press), window);
-	widget = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/MenuBar/EditMenu/CopyMenu");
-	g_signal_connect (G_OBJECT (widget), "insensitive-press", G_CALLBACK (copy_insensitive_press), window);
 }
 
 static void  
@@ -2576,35 +2546,6 @@ static void
 send_insensitive_press (GtkWidget *widget, ModestMsgEditWindow *editor)
 {
 	hildon_banner_show_information (NULL, NULL, _("mcen_ib_add_recipients_first"));
-}
-
-static void  
-zoom_insensitive_press (GtkWidget *widget, ModestMsgEditWindow *editor)
-{
-	hildon_banner_show_information (NULL, NULL, dgettext("hildon-common-strings", "ckct_ib_cannot_zoom_here"));
-}
-
-static void  
-remove_attachment_insensitive_press (GtkWidget *widget, ModestMsgEditWindow *editor)
-{
-	ModestWindowPrivate *parent_priv;
-	ModestMsgEditWindowPrivate *priv;
-	GList *selected_attachments = NULL;
-	gint n_att_selected = 0;
-
-	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (editor);
-	parent_priv = MODEST_WINDOW_GET_PRIVATE (editor);
-
-	selected_attachments = modest_attachments_view_get_selection (MODEST_ATTACHMENTS_VIEW (priv->attachments_view));
-	n_att_selected = g_list_length (selected_attachments);
-	g_list_free (selected_attachments);
-
-	if (n_att_selected > 1)
-		hildon_banner_show_information (NULL, NULL, _("mcen_ib_unable_to_display_more"));
-	else if (n_att_selected == 0)
-		hildon_banner_show_information (NULL, NULL, _("TODO: select one attachment"));
-	else
-		hildon_banner_show_information (NULL, NULL, _("mail_ib_unable_to_purge_attachments"));
 }
 
 static void
@@ -2918,25 +2859,6 @@ update_paste_dimming (ModestMsgEditWindow *window)
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/EditMenu/PasteMenu");
 	gtk_action_set_sensitive (action, active);
 
-}
-
-static void  
-paste_insensitive_press (GtkWidget *widget, ModestMsgEditWindow *editor)
-{
-	GtkWidget *focused = gtk_window_get_focus (GTK_WINDOW (editor));
-
-	if (MODEST_IS_ATTACHMENTS_VIEW (focused))
-		hildon_banner_show_information (NULL, NULL, dgettext("hildon-common-strings", "ckct_ib_unable_to_paste_here"));
-	else
-		hildon_banner_show_information (NULL, NULL, dgettext("hildon-common-strings", "ecoc_ib_edwin_nothing_to_paste"));
-		
-}
-
-static void  
-copy_insensitive_press (GtkWidget *widget, ModestMsgEditWindow *editor)
-{
-	hildon_banner_show_information (NULL, NULL, dgettext("hildon-common-strings", "ckct_ib_unable_to_copy"));
-		
 }
 
 
