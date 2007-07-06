@@ -807,8 +807,8 @@ modest_main_window_new (void)
 	action_group = gtk_action_group_new ("ModestMainWindowActions");
 	gtk_action_group_set_translation_domain (action_group, GETTEXT_PACKAGE);
 
-	menu_rules_group = modest_dimming_rules_group_new ("ModestMenuDimmingRules");
-	toolbar_rules_group = modest_dimming_rules_group_new ("ModestToolbarDimmingRules");
+	menu_rules_group = modest_dimming_rules_group_new ("ModestMenuDimmingRules", FALSE);
+	toolbar_rules_group = modest_dimming_rules_group_new ("ModestToolbarDimmingRules", TRUE);
 
 	/* Add common actions */
 	gtk_action_group_add_actions (action_group,

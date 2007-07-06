@@ -953,8 +953,8 @@ modest_ui_dimming_rules_on_view_previous (ModestWindow *win, gpointer user_data)
 	}
 	if (!dimmed) {
 		dimmed = modest_msg_view_window_first_message_selected (MODEST_MSG_VIEW_WINDOW(win));
-		if (dimmed)
-			modest_dimming_rule_set_notification (rule, "");
+/* 		if (dimmed) */
+/* 			modest_dimming_rule_set_notification (rule, ""); */
 	}		
 
 	return dimmed;
@@ -978,8 +978,8 @@ modest_ui_dimming_rules_on_view_next (ModestWindow *win, gpointer user_data)
 	}
 	if (!dimmed) {
 		dimmed = modest_msg_view_window_last_message_selected (MODEST_MSG_VIEW_WINDOW(win));
-		if (dimmed)
-			modest_dimming_rule_set_notification (rule, "");
+/* 		if (dimmed) */
+/* 			modest_dimming_rule_set_notification (rule, ""); */
 	}		
 
 	return dimmed;

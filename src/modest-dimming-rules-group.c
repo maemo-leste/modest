@@ -42,8 +42,10 @@ static void _insensitive_press_callback (GtkWidget *widget, gpointer user_data);
 typedef struct _ModestDimmingRulesGroupPrivate ModestDimmingRulesGroupPrivate;
 struct _ModestDimmingRulesGroupPrivate {	
 	gchar *name;
+	gboolean notifications_enabled;
 	GHashTable *rules_map;
 };
+
 
 #define MODEST_DIMMING_RULES_GROUP_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                    MODEST_TYPE_DIMMING_RULES_GROUP, \
@@ -125,7 +127,8 @@ modest_dimming_rules_group_finalize (GObject *obj)
 
 
 ModestDimmingRulesGroup*
-modest_dimming_rules_group_new(const gchar *group_name)
+modest_dimming_rules_group_new(const gchar *group_name,
+			       gboolean notifications_enabled)
 {
 	ModestDimmingRulesGroup *obj;
 	ModestDimmingRulesGroupPrivate *priv;
@@ -136,6 +139,7 @@ modest_dimming_rules_group_new(const gchar *group_name)
 
 	priv = MODEST_DIMMING_RULES_GROUP_GET_PRIVATE(obj);
 	priv->name = g_strdup(group_name);
+	priv->notifications_enabled = notifications_enabled;
 
 	return obj;
 }
@@ -194,18 +198,33 @@ modest_dimming_rules_group_add_rules (ModestDimmingRulesGroup *self,
 						    entry.action_path);
 		
 		/* Connect insensitive-presss handler to show notifications */
-		g_signal_connect (G_OBJECT (widget), "insensitive-press", G_CALLBACK (_insensitive_press_callback), dim_rule);
+		g_signal_connect (G_OBJECT (widget), "insensitive-press", 
+				  G_CALLBACK (_insensitive_press_callback), 
+				  dim_rule);
 
 		/* Register new dimming rule */		
+		modest_dimming_rule_set_group (dim_rule, self);
 		g_hash_table_insert (priv->rules_map, g_strdup(entry.action_path), dim_rule);
 	}
 }
+
+gboolean 
+modest_dimming_rules_group_notifications_enabled (ModestDimmingRulesGroup *self)
+{
+	ModestDimmingRulesGroupPrivate *priv;
+
+	g_return_val_if_fail (MODEST_IS_DIMMING_RULES_GROUP(self), FALSE);
+	priv = MODEST_DIMMING_RULES_GROUP_GET_PRIVATE(self);
+	
+	return priv->notifications_enabled;
+} 
 
 void 
 modest_dimming_rules_group_execute (ModestDimmingRulesGroup *self) 
 {
 	ModestDimmingRulesGroupPrivate *priv;
 
+	g_return_if_fail (MODEST_IS_DIMMING_RULES_GROUP(self));
 	priv = MODEST_DIMMING_RULES_GROUP_GET_PRIVATE(self);
 
 	g_hash_table_foreach (priv->rules_map, _execute_dimming_rule, NULL);
@@ -224,19 +243,30 @@ _execute_dimming_rule (gpointer key, gpointer value, gpointer user_data)
 static void
 _insensitive_press_callback (GtkWidget *widget, gpointer user_data)
 {
-	ModestDimmingRule *rule;
+	ModestDimmingRulesGroup *group = NULL;
+	ModestDimmingRule *rule = NULL;
 	gchar *notification = NULL;
 
 	g_return_if_fail (MODEST_IS_DIMMING_RULE (user_data));
 	rule = MODEST_DIMMING_RULE (user_data);
 
+	/* Check if this group has notification system enabled */
+	group = modest_dimming_rule_get_group (rule);
+	if (!modest_dimming_rules_group_notifications_enabled (group))
+		goto frees;
+
 	/* Get specific notification */
 	notification = modest_dimming_rule_get_notification (rule);
-	if (notification == NULL) return;
-
+	if (notification == NULL)
+		goto frees;
+	
 	/* Show notification banner */
 	modest_platform_information_banner (NULL, NULL, notification);	
-
+	
 	/* Free */
-	g_free(notification);
+ frees:
+	if (group != NULL)
+		g_object_unref(group);
+	if (notification != NULL)
+		g_free(notification);
 }

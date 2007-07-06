@@ -32,6 +32,7 @@
 
 #include <glib-object.h>
 #include "widgets/modest-window.h"
+#include "modest-dimming-rules-group.h"
 
 G_BEGIN_DECLS
 
@@ -92,6 +93,28 @@ ModestDimmingRule*    modest_dimming_rule_new     (ModestWindow *win,
  *
  **/
 void modest_dimming_rule_process (ModestDimmingRule *self);
+
+/**
+ * modest_dimming_rule_set_group:
+ * @rule: a #ModestDimmingRule object to process.
+ * @group: a #ModestDimmingRulesGroup object to associate.
+ * 
+ * Creates a new reference of @group, associated to this "rule.
+ */
+void modest_dimming_rule_set_group (ModestDimmingRule *rule,
+				    ModestDimmingRulesGroup *group);
+
+/**
+ * modest_dimming_rule_set_group:
+ * @rule: a #ModestDimmingRule object to process.
+ * 
+ * Gets a new reference of associated group of this @rule.
+ *
+ * @Returns: a new object reference of #ModestDimmingRulesGroup, or 
+ * NULL if invalid @rule.
+ */
+ModestDimmingRulesGroup *
+modest_dimming_rule_get_group (ModestDimmingRule *rule);
 
 void modest_dimming_rule_set_notification (ModestDimmingRule *rule,
 					   const gchar *notification);

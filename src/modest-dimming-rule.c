@@ -35,6 +35,7 @@ static void modest_dimming_rule_finalize   (GObject *obj);
 
 typedef struct _ModestDimmingRulePrivate ModestDimmingRulePrivate;
 struct _ModestDimmingRulePrivate {
+	ModestDimmingRulesGroup *group;
 	ModestWindow *win;
 	ModestDimmingCallback dimming_rule;
 	gchar *action_path;
@@ -90,6 +91,7 @@ modest_dimming_rule_init (ModestDimmingRule *obj)
 	ModestDimmingRulePrivate *priv;
 
 	priv = MODEST_DIMMING_RULE_GET_PRIVATE(obj);
+	priv->group= NULL;
 	priv->win = NULL;
 	priv->dimming_rule = NULL;
 	priv->action_path = NULL;
@@ -103,6 +105,8 @@ modest_dimming_rule_finalize (GObject *obj)
 
 	priv = MODEST_DIMMING_RULE_GET_PRIVATE(obj);
 
+	if (priv->group != NULL)
+		g_object_unref(priv->group);
 	if (priv->action_path != NULL)
 		g_free(priv->action_path);
 	if (priv->notification != NULL)
@@ -157,6 +161,35 @@ modest_dimming_rule_process (ModestDimmingRule *self)
 		g_printerr ("modest: action path '%s' has not associatd action\n", priv->action_path);
 	else
 		gtk_action_set_sensitive (action, !dimmed);
+}
+
+void
+modest_dimming_rule_set_group (ModestDimmingRule *rule,
+			       ModestDimmingRulesGroup *group)
+{
+	ModestDimmingRulePrivate *priv = NULL;
+
+	g_return_if_fail (MODEST_IS_DIMMING_RULE (rule));
+	g_return_if_fail (MODEST_IS_DIMMING_RULES_GROUP (group));
+	priv = MODEST_DIMMING_RULE_GET_PRIVATE(rule);
+
+	if (priv->group == group) 
+		return;
+	if (priv->group != NULL) 
+		g_object_unref (priv->group);
+	priv->group = g_object_ref (group);			
+}	
+
+ModestDimmingRulesGroup *
+modest_dimming_rule_get_group (ModestDimmingRule *rule)
+{
+	ModestDimmingRulePrivate *priv = NULL;
+	
+	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (rule), NULL);
+	priv = MODEST_DIMMING_RULE_GET_PRIVATE(rule);
+	g_return_val_if_fail (MODEST_IS_DIMMING_RULES_GROUP (priv->group), NULL);
+	
+	return g_object_ref(priv->group);
 }
 
 void

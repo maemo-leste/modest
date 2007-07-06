@@ -69,14 +69,18 @@ GType        modest_dimming_rules_group_get_type    (void) G_GNUC_CONST;
 /**
  * modest_dimming_rules_group_new:
  * @group_name: the name to identify new created group 
+ * @notifications_enabled: notification system status.
  * 
  * Creates a new instance of class #ModestDimmingRulesGroup. The @group_name
  * parameter identifies uniquely new group created, so it must not be NULL.
+ * The @notifications_enabled: parameter sets notification system status
+ * when dimmed rule is called.
  *
  * Returns: a new #ModestDimmingRulesGroup instance, or NULL if parameters 
  * are invalid.
  **/
-ModestDimmingRulesGroup*    modest_dimming_rules_group_new     (const gchar *group_name);
+ModestDimmingRulesGroup*    modest_dimming_rules_group_new     (const gchar *group_name,
+								gboolean notifications_enabled);
 
 
 
