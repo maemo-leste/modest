@@ -32,6 +32,7 @@
 #include <widgets/modest-combo-box.h>
 #include "modest-progress-bar-widget.h"
 #include <string.h>
+#include "modest-platform.h"
 
 /* 'private'/'protected' functions */
 static void modest_progress_bar_widget_class_init (ModestProgressBarWidgetClass *klass);
@@ -88,6 +89,9 @@ struct _ModestProgressBarWidgetPrivate {
 
 /* globals */
 static GtkContainerClass *parent_class = NULL;
+
+/* Flag to show or not show Recv cancellation banner */
+static gboolean f_receivingOngoing = FALSE;
 
 /* uncomment the following if you have defined any signals */
 /* static guint signals[LAST_SIGNAL] = {0}; */
@@ -323,9 +327,17 @@ modest_progress_bar_cancel_current_operation (ModestProgressObject *self)
 	priv = MODEST_PROGRESS_BAR_WIDGET_GET_PRIVATE (me);
 
 	if (priv->current == NULL) return;
-	modest_mail_operation_cancel (priv->current);
 
+	/* bug 59107: if received canceled we shall show banner */
+	if ( f_receivingOngoing )
+	{
+		f_receivingOngoing = FALSE;
+		modest_platform_information_banner (NULL, NULL, _("emev_ib_ui_pop3_msg_recv_cancel"));
+	}
+
+	modest_mail_operation_cancel (priv->current);
 }
+
 static void 
 on_progress_changed (ModestMailOperation  *mail_op, 
 		     ModestMailOperationState *state,
@@ -334,6 +346,7 @@ on_progress_changed (ModestMailOperation  *mail_op,
 	ModestProgressBarWidgetPrivate *priv;
 	gboolean determined = FALSE;
 
+	f_receivingOngoing = FALSE;
 	priv = MODEST_PROGRESS_BAR_WIDGET_GET_PRIVATE (self);
 
 	/* If the mail operation is the currently shown one */
@@ -345,6 +358,7 @@ on_progress_changed (ModestMailOperation  *mail_op,
 
 		switch (state->op_type) {
 		case MODEST_MAIL_OPERATION_TYPE_RECEIVE:		
+			f_receivingOngoing = TRUE;
 			if (determined)
  				msg = g_strdup_printf(_("mcen_me_receiving"),
 						      state->done, state->total); 
