@@ -47,6 +47,8 @@ static void modest_tny_send_queue_instance_init (GTypeInstance *instance, gpoint
 static void _on_msg_has_been_sent (TnySendQueue *self, TnyMsg *msg, gpointer user_data);
 static void _on_msg_error_happened (TnySendQueue *self, TnyHeader *header, TnyMsg *msg, GError *err, gpointer user_data);
 
+static TnyFolder*modest_tny_send_queue_get_outbox (TnySendQueue *self);
+static TnyFolder*modest_tny_send_queue_get_sentbox (TnySendQueue *self);
 
 /* list my signals  */
 enum {
@@ -127,6 +129,28 @@ modest_tny_send_queue_cancel (TnySendQueue *self, gboolean remove, GError **err)
 		g_signal_emit (self, signals[STATUS_CHANGED], 0, info->msg_id, info->status);
 	}
 
+	/* Set flags to supend sending operaiton (if removed, this is not necessary) */
+	if (!remove) {
+		TnyIterator *iter = NULL;
+		TnyFolder *outbox = NULL;
+		TnyList *headers = tny_simple_list_new ();
+		outbox = modest_tny_send_queue_get_outbox (self);
+		tny_folder_get_headers (outbox, headers, TRUE, err);
+		if (err != NULL && *err != NULL) goto frees;
+		iter = tny_list_create_iterator (headers);
+		while (!tny_iterator_is_done (iter)) {
+			TnyHeader *header = TNY_HEADER (tny_iterator_get_current (iter));
+			tny_header_unset_flags (header, TNY_HEADER_FLAG_PRIORITY);
+			tny_header_set_flags (header, TNY_HEADER_FLAG_SUSPENDED_PRIORITY);
+			g_object_unref (header);
+			tny_iterator_next (iter);
+		}
+	frees:
+		g_object_unref (G_OBJECT (headers));
+		g_object_unref (G_OBJECT (outbox));
+	}
+		
+	/* Dont call super class implementaiton, becasue camel removes messages from outbox */
 	TNY_CAMEL_SEND_QUEUE_CLASS(parent_class)->cancel_func (self, remove, err); /* FIXME */
 }
 
@@ -334,9 +358,8 @@ modest_tny_send_queue_new (TnyCamelTransportAccount *account)
 void
 modest_tny_send_queue_try_to_send (ModestTnySendQueue* self)
 {
-	/* TODO: Rename this to tny_camel_send_queue_try_to_send() in tinymail 
-	and check that it works, without creating a second worker. */
-/* 	tny_camel_send_queue_flush (TNY_CAMEL_SEND_QUEUE(self)); */
+	/* Flush send queue */
+	tny_camel_send_queue_flush (TNY_CAMEL_SEND_QUEUE(self));
 }
 
 gboolean

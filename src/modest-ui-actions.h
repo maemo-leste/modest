@@ -186,6 +186,8 @@ void     modest_ui_actions_on_mark_as_read            (GtkAction *action,
 void     modest_ui_actions_on_mark_as_unread            (GtkAction *action,
 							 ModestWindow *window);
 
+void     modest_ui_actions_cancel_send (GtkAction *action,  ModestWindow *win);
+
 /**
  * modest_ui_actions_do_send_receive_all:
  * @win: the window that will be used as source of the refresh mail operation

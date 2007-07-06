@@ -47,31 +47,31 @@ fill_list_of_caches (gpointer key, gpointer value, gpointer userdata)
 	*send_queues = g_slist_prepend (*send_queues, value);
 }
 
-static ModestTnySendQueueStatus
-get_status_of_uid (const gchar *uid)
-{
-	ModestCacheMgr *cache_mgr;
-	GHashTable     *send_queue_cache;
-	GSList *send_queues = NULL, *node;
-	/* get_msg_status returns suspended by default, so we want to detect changes */
-	ModestTnySendQueueStatus status = MODEST_TNY_SEND_QUEUE_SUSPENDED;
+/* static ModestTnySendQueueStatus */
+/* get_status_of_uid (const gchar *uid) */
+/* { */
+/* 	ModestCacheMgr *cache_mgr; */
+/* 	GHashTable     *send_queue_cache; */
+/* 	GSList *send_queues = NULL, *node; */
+/* 	/\* get_msg_status returns suspended by default, so we want to detect changes *\/ */
+/* 	ModestTnySendQueueStatus status = MODEST_TNY_SEND_QUEUE_SUSPENDED; */
 	
-	cache_mgr = modest_runtime_get_cache_mgr ();
-	send_queue_cache = modest_cache_mgr_get_cache (cache_mgr,
-						       MODEST_CACHE_MGR_CACHE_TYPE_SEND_QUEUE);
+/* 	cache_mgr = modest_runtime_get_cache_mgr (); */
+/* 	send_queue_cache = modest_cache_mgr_get_cache (cache_mgr, */
+/* 						       MODEST_CACHE_MGR_CACHE_TYPE_SEND_QUEUE); */
 
-	g_hash_table_foreach (send_queue_cache, (GHFunc) fill_list_of_caches, &send_queues);
+/* 	g_hash_table_foreach (send_queue_cache, (GHFunc) fill_list_of_caches, &send_queues); */
 
-	for (node = send_queues; node != NULL; node = g_slist_next (node)) {
-		ModestTnySendQueueStatus queue_status = modest_tny_send_queue_get_msg_status (
-			MODEST_TNY_SEND_QUEUE (node->data), uid);
-		if (queue_status != MODEST_TNY_SEND_QUEUE_SUSPENDED)
-			status = queue_status;
-		break;
-	}
-	g_slist_free (send_queues);
-	return status;
-}
+/* 	for (node = send_queues; node != NULL; node = g_slist_next (node)) { */
+/* 		ModestTnySendQueueStatus queue_status = modest_tny_send_queue_get_msg_status ( */
+/* 			MODEST_TNY_SEND_QUEUE (node->data), uid); */
+/* 		if (queue_status != MODEST_TNY_SEND_QUEUE_SUSPENDED) */
+/* 			status = queue_status; */
+/* 		break; */
+/* 	} */
+/* 	g_slist_free (send_queues); */
+/* 	return status; */
+/* } */
 
 static const gchar *
 get_status_string (ModestTnySendQueueStatus status)
@@ -252,7 +252,7 @@ void
 _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 					       GtkTreeModel *tree_model,  GtkTreeIter *iter,  gpointer user_data)
 {
-	TnyHeaderFlags flags;
+	TnyHeaderFlags flags, prior_flags;
 	gchar *address, *subject, *header;
 	time_t date;
 	ModestHeaderViewCompactHeaderMode header_mode;
@@ -289,6 +289,8 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 				    -1);
 
 	/* flags */
+	flags = tny_header_get_flags (msg_header);
+	prior_flags = flags & TNY_HEADER_FLAG_PRIORITY;
 	if (flags & TNY_HEADER_FLAG_ATTACHMENTS)
 		g_object_set (G_OBJECT (attach_cell), "pixbuf",
 			      get_pixbuf_for_flag (TNY_HEADER_FLAG_ATTACHMENTS),
@@ -298,7 +300,8 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 			      NULL, NULL);
 	if (flags & TNY_HEADER_FLAG_PRIORITY)
 		g_object_set (G_OBJECT (priority_cell), "pixbuf",
-			      get_pixbuf_for_flag (flags & TNY_HEADER_FLAG_PRIORITY),
+			      get_pixbuf_for_flag (prior_flags),
+/* 			      get_pixbuf_for_flag (flags & TNY_HEADER_FLAG_PRIORITY), */
 			      NULL);
 	else
 		g_object_set (G_OBJECT (priority_cell), "pixbuf",
@@ -326,12 +329,15 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 		ModestTnySendQueueStatus status = MODEST_TNY_SEND_QUEUE_WAITING;
 		const gchar *status_str = "";
 		if (msg_header != NULL) {
-			status = get_status_of_uid (tny_header_get_message_id (msg_header));
+			/* TODO: ask send queue for msg sending status */
+/* 			status = get_status_of_uid (tny_header_get_message_id (msg_header)); */
+			if (prior_flags == TNY_HEADER_FLAG_SUSPENDED_PRIORITY)
+				status = MODEST_TNY_SEND_QUEUE_SUSPENDED;
 		}
 		status_str = get_status_string (status);
 		/* TODO: for now we set the status to waiting always, we need a way to
 		 * retrieve the current send status of a message */
-		status_str = get_status_string (MODEST_TNY_SEND_QUEUE_WAITING);
+/* 		status_str = get_status_string (MODEST_TNY_SEND_QUEUE_WAITING); */
 		display_date = g_strdup_printf("<small>%s</small>", status_str);
 		g_object_set (G_OBJECT (date_or_status_cell),
 			      "markup", display_date,
@@ -386,17 +392,20 @@ _modest_header_view_status_cell_data  (GtkTreeViewColumn *column,  GtkCellRender
 				       GtkTreeModel *tree_model,  GtkTreeIter *iter,
 				       gpointer user_data)
 {
-        TnyHeaderFlags flags;
+        TnyHeaderFlags flags, prior_flags;
 	//guint status;
 	gchar *status_str;
 	
 	gtk_tree_model_get (tree_model, iter,
 			    TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN, &flags,
-	//		    TNY_GTK_HEADER_LIST_MODEL_MESSAGE_SIZE_COLUMN, &status,
 			    -1);
 	
-	status_str = g_strdup(_("mcen_li_outbox_waiting"));
-	
+       prior_flags = flags & TNY_HEADER_FLAG_PRIORITY;
+       if (prior_flags == TNY_HEADER_FLAG_SUSPENDED_PRIORITY)
+	       status_str = g_strdup(_("mcen_li_outbox_suspended"));
+       else	       
+	       status_str = g_strdup(_("mcen_li_outbox_waiting"));
+       
 	g_object_set (G_OBJECT(renderer), "text", status_str, NULL);
 	set_common_flags (renderer, flags);
 

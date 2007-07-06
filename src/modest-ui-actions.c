@@ -1342,6 +1342,76 @@ modest_ui_actions_do_send_receive (const gchar *account_name, ModestWindow *win)
 	g_free (acc_name);
 }
 
+
+static void
+modest_ui_actions_do_cancel_send (const gchar *account_name,  
+				  ModestWindow *win)
+{
+	TnyTransportAccount *transport_account;
+	TnySendQueue *send_queue = NULL;
+	GError *error = NULL;
+
+	/* Get transport account */
+	transport_account =
+		TNY_TRANSPORT_ACCOUNT(modest_tny_account_store_get_server_account
+				      (modest_runtime_get_account_store(),
+				       account_name,
+				       TNY_ACCOUNT_TYPE_TRANSPORT));
+	if (!transport_account) {
+		g_printerr ("modest: no transport account found for '%s'\n", account_name);
+		goto frees;
+	}
+
+	/* Get send queue*/
+	send_queue = TNY_SEND_QUEUE (modest_runtime_get_send_queue (transport_account));
+	if (!TNY_IS_SEND_QUEUE(send_queue)) {
+		g_set_error (&error, MODEST_MAIL_OPERATION_ERROR,
+			     MODEST_MAIL_OPERATION_ERROR_ITEM_NOT_FOUND,
+			     "modest: could not find send queue for account\n");
+	} else {
+		/* Keeep messages in outbox folder */
+		tny_send_queue_cancel (send_queue, FALSE, &error);
+	}	
+
+ frees:
+	if (transport_account != NULL) 
+		g_object_unref (G_OBJECT (transport_account));
+}
+
+static void
+modest_ui_actions_cancel_send_all (ModestWindow *win) 
+{
+	GSList *account_names, *iter;
+
+	account_names = modest_account_mgr_account_names (modest_runtime_get_account_mgr(), 
+							  TRUE);
+
+	iter = account_names;
+	while (iter) {			
+		modest_ui_actions_do_cancel_send ((const char*) iter->data, win);
+		iter = g_slist_next (iter);
+	}
+
+	modest_account_mgr_free_account_names (account_names);
+	account_names = NULL;
+}
+
+void
+modest_ui_actions_cancel_send (GtkAction *action,  ModestWindow *win)
+
+{
+	/* Check if accounts exist */
+	gboolean accounts_exist = 
+		modest_account_mgr_has_accounts(modest_runtime_get_account_mgr(), TRUE);
+	
+	/* If not, allow the user to create an account before trying to send/receive. */
+	if (!accounts_exist)
+		modest_ui_actions_on_accounts (NULL, win);
+	
+	/* Cancel all sending operaitons */	
+	modest_ui_actions_cancel_send_all (win);
+}
+
 /*
  * Refreshes all accounts. This function will be used by automatic
  * updates

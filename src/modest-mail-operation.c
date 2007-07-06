@@ -1094,7 +1094,8 @@ update_account_thread (gpointer thr_user_data)
 		g_ptr_array_free (new_headers, FALSE);
 	}
 	
-	/* Perform send */
+	/* Perform send (if operation was not cancelled) */
+	if (did_a_cancel) goto out;		
 	priv->op_type = MODEST_MAIL_OPERATION_TYPE_SEND;
 	priv->done = 0;
 	priv->total = 0;
