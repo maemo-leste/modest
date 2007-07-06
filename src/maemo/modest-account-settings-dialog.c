@@ -898,14 +898,12 @@ check_data (ModestAccountSettingsDialog *self)
 		  		if(error == NULL || error->domain != modest_maemo_utils_get_supported_secure_authentication_error_quark() ||
 						error->code != MODEST_MAEMO_UTILS_GET_SUPPORTED_SECURE_AUTHENTICATION_ERROR_CANCELED)
 				{
-					GtkWidget* error_dialog = gtk_message_dialog_new(GTK_WINDOW(self),
-					                                                 GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR,
-					                                                 GTK_BUTTONS_OK, (error != NULL) ? error->message : _("Server does not support secure authentication!"));
-					gtk_dialog_run(GTK_DIALOG(error_dialog));
-					gtk_widget_destroy(error_dialog);
+					show_error (GTK_WINDOW (self), _("Could not discover supported secure authentication methods."));
 				}
 
-				if(error != NULL) g_error_free(error);
+				if(error != NULL)
+					g_error_free(error);
+					
 				/* This is a nasty hack. jschmid. */
 				/* Don't let the dialog close */
 				/*g_signal_stop_emission_by_name (dialog, "response");*/

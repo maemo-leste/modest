@@ -973,6 +973,33 @@ modest_tny_account_store_alert (TnyAccountStore *self, TnyAlertType type,
 	/* const gchar *prompt = NULL; */
 	gchar *prompt = NULL;
 	switch (error->code) {
+		case TNY_ACCOUNT_STORE_ERROR_CANCEL_ALERT:
+			/* Don't show waste the user's time by showing him a dialog telling the 
+			 * user that he has just cancelled something: */
+			g_debug ("%s: Handling GError domain=%d, code=%d (cancelled) without showing a dialog, message=%s", 
+ 				__FUNCTION__, error->domain, error->code, error->message);
+			prompt = NULL;
+			break;
+		case TNY_ACCOUNT_ERROR_TRY_CONNECT_HOST_LOOKUP_FAILED:
+			g_debug ("%s: Handling GError domain=%d, code=%d (lookup failed), message=%s", 
+ 				__FUNCTION__, error->domain, error->code, error->message);
+			prompt = g_strdup (_("emev_ni_ui_pop3_msg_connect_error"));
+			/*
+			prompt = g_strdup_printf(
+				"%s\n Host lookup failed.%s", 
+				_("Incorrect Account Settings"), 
+				error->message);
+			*/
+			break;
+		case TNY_ACCOUNT_ERROR_TRY_CONNECT_AUTHENTICATION_NOT_SUPPORTED:
+			g_debug ("%s: Handling GError domain=%d, code=%d (authentication not supported), message=%s", 
+ 				__FUNCTION__, error->domain, error->code, error->message);
+			prompt = g_strdup_printf(
+				"%s\n The secure authentication method is not supported.\n%s", 
+				_("Incorrect Account Settings"), 
+				error->message);
+			break;
+		
 		case TNY_ACCOUNT_ERROR_TRY_CONNECT:
 		/* The tinymail camel implementation just sends us this for almost 
 		 * everything, so we have to guess at the cause.
@@ -984,7 +1011,7 @@ modest_tny_account_store_alert (TnyAccountStore *self, TnyAlertType type,
 		case TNY_ACCOUNT_STORE_ERROR_UNKNOWN_ALERT: 
 			/* This debug output is useful. Please keep it uncommented until 
 			 * we have fixed the problems in this function: */
- 		    g_debug ("%s: Handling GError domain=%d, code=%d, message=%s", 
+			g_debug ("%s: Handling GError domain=%d, code=%d, message=%s", 
  				__FUNCTION__, error->domain, error->code, error->message);
 			
 			/* TODO: Remove the internal error message for the real release.

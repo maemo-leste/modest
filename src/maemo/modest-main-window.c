@@ -483,6 +483,10 @@ on_response (GtkDialog *dialog, gint arg1, gpointer user_data)
 static void
 on_sendqueue_error_happened (TnySendQueue *self, TnyHeader *header, TnyMsg *msg, GError *err, ModestMainWindow *user_data)
 {
+	if (err) {
+		printf ("DEBUG: %s: err->code=%d, err->message=%s\n", __FUNCTION__, err->code, err->message);
+	}
+
 	if (header) {
 		gchar *str = g_strdup_printf ("%s. Do you want to remove the message (%s)?",
 			err->message, tny_header_get_subject (header));
