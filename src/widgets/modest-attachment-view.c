@@ -140,6 +140,10 @@ get_size_idle_func (gpointer data)
 		priv->get_size_stream = tny_camel_mem_stream_new ();
 		tny_mime_part_decode_to_stream (priv->mime_part, priv->get_size_stream);
 		tny_stream_reset (priv->get_size_stream);
+		if (tny_stream_is_eos (priv->get_size_stream)) {
+			tny_stream_close (priv->get_size_stream);
+			priv->get_size_stream = tny_mime_part_get_stream (priv->mime_part);
+		}
 	}
 
 	readed_size = tny_stream_read (priv->get_size_stream, read_buffer, GET_SIZE_BUFFER_SIZE);
