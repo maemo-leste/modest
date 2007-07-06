@@ -121,6 +121,9 @@ static void     reply_forward_cb       (ModestMailOperation *mail_op,
 
 static void     reply_forward          (ReplyForwardAction action, ModestWindow *win);
 
+static void     folder_refreshed_cb    (ModestMailOperation *mail_op, 
+					TnyFolder *folder, 
+					gpointer user_data);
 
 static void     _on_send_receive_progress_changed (ModestMailOperation  *mail_op, 
 						   ModestMailOperationState *state,
@@ -1374,6 +1377,38 @@ modest_ui_actions_on_send_receive (GtkAction *action,  ModestWindow *win)
 	/* If not, allow the user to create an account before trying to send/receive. */
 	if (!accounts_exist)
 		modest_ui_actions_on_accounts (NULL, win);
+
+	/* Refresh currently selected folder. Note that if we only
+	   want to retrive the headers, then the refresh only will
+	   invoke a poke_status over all folders, i.e., only the
+	   total/unread count will be updated */
+	if (MODEST_IS_MAIN_WINDOW (win)) {
+		GtkWidget *header_view, *folder_view;
+		TnyFolderStore *folder_store;
+
+		/* Get folder and header view */
+		folder_view = 
+			modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win), 
+							     MODEST_WIDGET_TYPE_FOLDER_VIEW);
+
+		folder_store = modest_folder_view_get_selected (MODEST_FOLDER_VIEW (folder_view));
+
+		if (TNY_IS_FOLDER (folder_store)) {
+			header_view = 
+				modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win),
+								     MODEST_WIDGET_TYPE_HEADER_VIEW);
+		
+			/* We do not need to set the contents style
+			   because it hasn't changed. We also do not
+			   need to save the widget status. Just force
+			   a refresh */
+			modest_header_view_set_folder (MODEST_HEADER_VIEW(header_view),
+						       TNY_FOLDER (folder_store),
+						       folder_refreshed_cb,
+						       MODEST_MAIN_WINDOW (win));
+		}
+		g_object_unref (folder_store);
+	}
 	
 	/* Refresh the active account */
 	modest_ui_actions_do_send_receive (NULL, win);
