@@ -986,8 +986,7 @@ modest_tny_account_store_alert (TnyAccountStore *self, TnyAlertType type,
 			prompt = g_strdup (_("emev_ni_ui_pop3_msg_connect_error"));
 			/*
 			prompt = g_strdup_printf(
-				"%s\n Host lookup failed.%s", 
-				_("Incorrect Account Settings"), 
+				_("Incorrect Account Settings:\n Host lookup failed.%s"), 
 				error->message);
 			*/
 			break;
@@ -995,8 +994,14 @@ modest_tny_account_store_alert (TnyAccountStore *self, TnyAlertType type,
 			g_debug ("%s: Handling GError domain=%d, code=%d (authentication not supported), message=%s", 
  				__FUNCTION__, error->domain, error->code, error->message);
 			prompt = g_strdup_printf(
-				"%s\n The secure authentication method is not supported.\n%s", 
-				_("Incorrect Account Settings"), 
+				_("Incorrect Account Settings:\n The secure authentication method is not supported.\n%s"), 
+				error->message);
+			break;
+		case TNY_ACCOUNT_ERROR_TRY_CONNECT_CERTIFICATE:
+			g_debug ("%s: Handling GError domain=%d, code=%d (certificatae), message=%s", 
+ 				__FUNCTION__, error->domain, error->code, error->message);
+			prompt = g_strdup_printf(
+				_("Certificate Problem:\n%s"), 
 				error->message);
 			break;
 		
