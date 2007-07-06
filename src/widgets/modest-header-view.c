@@ -1041,6 +1041,7 @@ modest_header_view_set_folder (ModestHeaderView *self,
 
 	if (folder) {
 		ModestMailOperation *mail_op = NULL;
+		 GtkTreeSelection *selection;
 
 		/* Get main window to use it as source of mail operation */
 		mgr = modest_runtime_get_window_mgr ();
@@ -1059,6 +1060,10 @@ modest_header_view_set_folder (ModestHeaderView *self,
 		info->header_view = self;
 		info->cb = callback;
 		info->user_data = user_data;
+
+		/* bug 57631: Clear the selection if exists */
+		selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(self));
+		gtk_tree_selection_unselect_all(selection);
 
 		/* Create the mail operation (source will be the parent widget) */
 		mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_RECEIVE, source);
