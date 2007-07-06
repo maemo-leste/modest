@@ -496,7 +496,9 @@ modest_window_mgr_unregister_window (ModestWindowMgr *self,
 				      priv->show_toolbars, NULL);
 
 		/* Quit main loop */
-		gtk_main_quit ();
+		/* FIXME: do we ever need to do this here? */
+		if (gtk_main_level() > 0)
+			gtk_main_quit ();
 	}
 }
 

@@ -166,7 +166,13 @@ modest_singletons_finalize (GObject *obj)
 	ModestSingletonsPrivate *priv;
 		
 	priv = MODEST_SINGLETONS_GET_PRIVATE(obj);
-
+	
+	if (priv->window_mgr) {
+		modest_runtime_verify_object_last_ref(priv->window_mgr,"");
+		g_object_unref (G_OBJECT(priv->window_mgr));
+		priv->window_mgr = NULL;
+	}
+	
 	if (priv->account_store) {
 		modest_runtime_verify_object_last_ref(priv->account_store,"");
 		g_object_unref (G_OBJECT(priv->account_store));
@@ -177,12 +183,6 @@ modest_singletons_finalize (GObject *obj)
 		modest_runtime_verify_object_last_ref(priv->email_clipboard,"");
 		g_object_unref (G_OBJECT(priv->email_clipboard));
 		priv->email_clipboard = NULL;
-	}
-
-	if (priv->conf) {
-		modest_runtime_verify_object_last_ref(priv->conf,"");
-		g_object_unref (G_OBJECT(priv->conf));
-		priv->conf = NULL;
 	}
 
 	if (priv->cache_mgr) {
@@ -218,13 +218,13 @@ modest_singletons_finalize (GObject *obj)
 		g_object_unref (G_OBJECT(priv->account_mgr));
 		priv->account_mgr = NULL;
 	}
-
-	if (priv->window_mgr) {
-		modest_runtime_verify_object_last_ref(priv->window_mgr,"");
-		g_object_unref (G_OBJECT(priv->window_mgr));
-		priv->window_mgr = NULL;
+	
+	if (priv->conf) {
+		modest_runtime_verify_object_last_ref(priv->conf,"");
+		g_object_unref (G_OBJECT(priv->conf));
+		priv->conf = NULL;
 	}
-
+	
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
