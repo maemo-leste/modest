@@ -57,6 +57,7 @@ struct _ModestAttachmentViewPriv
 	guint64 size;
 
 	PangoLayout *layout_full_filename;
+	gboolean is_purged;
 
 };
 
@@ -200,12 +201,12 @@ modest_attachment_view_set_part_default (TnyMimePartView *self, TnyMimePart *mim
 	}
 
 	priv->size = 0;
+	priv->is_purged = tny_mime_part_is_purged (mime_part);
 	
-	if (tny_mime_part_is_purged (mime_part)) {
-		const gchar *real_filename = tny_mime_part_get_filename (mime_part);
-		if (real_filename == NULL)
-			real_filename = "";
-		filename = g_strdup_printf (_("FIXME: Purged %s"), real_filename);
+	if (priv->is_purged) {
+		filename = g_strdup( tny_mime_part_get_filename (mime_part));
+		if (filename == NULL)
+			filename = g_strdup ("");
 		file_icon_name = modest_platform_get_file_icon_name (NULL, NULL, NULL);
 	} else if (TNY_IS_MSG (mime_part)) {
 		TnyHeader *header = tny_msg_get_header (TNY_MSG (mime_part));
@@ -231,7 +232,15 @@ modest_attachment_view_set_part_default (TnyMimePartView *self, TnyMimePart *mim
 		gtk_image_set_from_icon_name (GTK_IMAGE (priv->icon), UNKNOWN_FILE_ICON, GTK_ICON_SIZE_MENU);
 	}
 
-	gtk_label_set_text (GTK_LABEL (priv->filename_view), filename);
+	if (priv->is_purged) {
+		gchar * label_str = g_markup_printf_escaped(
+			"<span style='italic' foreground='grey'>%s</span>",
+			filename);
+		gtk_label_set_markup (GTK_LABEL (priv->filename_view), label_str);
+		g_free (label_str);
+	} else {
+		gtk_label_set_text (GTK_LABEL (priv->filename_view), filename);
+	}
 	g_free (filename);
 	update_filename_request (MODEST_ATTACHMENT_VIEW (self));
 
