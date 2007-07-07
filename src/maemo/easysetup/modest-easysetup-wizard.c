@@ -351,7 +351,7 @@ static void
 on_entry_max (ModestValidatingEntry *self, gpointer user_data)
 {
 	ModestEasysetupWizardDialog *dialog = MODEST_EASYSETUP_WIZARD_DIALOG (user_data);
-	show_error (GTK_WINDOW (dialog), _("ckdg_ib_maximum_characters_reached"));
+	show_error (GTK_WINDOW (dialog), _CS("ckdg_ib_maximum_characters_reached"));
 }
 
 static void

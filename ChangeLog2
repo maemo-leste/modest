@@ -1,3 +1,13 @@
+2007-07-07  Armin Burgmeier  <armin@openismus.com>
+
+	* src/maemo/easysetup/modest-easysetup-wizard.c: Translate
+	ckdg_ib_maximum_characters_reached from correct package.
+
+	* src/modest-ui-actions.c: Show an error message when a folder could
+	not be created. Tinymail does not give us specific error codes about
+	what has gone wrong, so we assume that a folder with that name
+	already exists, though there might be other reasons.
+
 2007-07-06  Murray Cumming <murrayc@murrayc.com>
 
 	* src/modest-tny-account-store.c: (modest_tny_account_store_alert):

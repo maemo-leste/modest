@@ -2126,6 +2126,25 @@ modest_ui_actions_on_remove_attachments (GtkAction *action,
 	modest_msg_edit_window_remove_attachments (window, NULL);
 }
 
+static void
+modest_ui_actions_new_folder_error_handler (ModestMailOperation *mail_op,
+                                            gpointer user_data)
+{
+	ModestMainWindow *window = MODEST_MAIN_WINDOW (user_data);
+
+	/* TODO: Note that folder creation might go wrong due to other
+	 * failures such as when the parent folder is non-writable. We can
+	 * query a GError* with modest_mail_operation_get_error(), but the
+	 * the error code (from tinymail) does not give us a clue about what
+	 * has gone wrong. We might use the error->message but it might come
+	 * from camel and not be suitable to show to the user directly. */
+	modest_platform_information_banner (GTK_WIDGET (window), NULL,
+	                                    _CS("ckdg_ib_folder_already_exists"));
+
+/*	modest_platform_information_banner (GTK_WIDGET (window), NULL,
+	                                    modest_mail_operation_get_error (mail_op)->message);*/
+}
+
 void 
 modest_ui_actions_on_new_folder (GtkAction *action, ModestMainWindow *main_window)
 {
@@ -2153,14 +2172,20 @@ modest_ui_actions_on_new_folder (GtkAction *action, ModestMainWindow *main_windo
 									suggested_name,
 									&folder_name);
 
+			g_free (suggested_name);
+			suggested_name = NULL;
+
 			if (result == GTK_RESPONSE_REJECT) {
 				finished = TRUE;
 			} else {
 				ModestMailOperation *mail_op;
 				TnyFolder *new_folder = NULL;
 
-				mail_op  = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_INFO, 
-								      G_OBJECT(main_window));
+				mail_op  = modest_mail_operation_new_with_error_handling (MODEST_MAIL_OPERATION_TYPE_INFO,
+								                          G_OBJECT(main_window),
+											  modest_ui_actions_new_folder_error_handler,
+											  main_window);
+
 				modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), 
 								 mail_op);
 				new_folder = modest_mail_operation_create_folder (mail_op,
@@ -2172,7 +2197,8 @@ modest_ui_actions_on_new_folder (GtkAction *action, ModestMainWindow *main_windo
 				}
 				g_object_unref (mail_op);
 			}
-			g_free (folder_name);
+
+			suggested_name = folder_name;
 			folder_name = NULL;
 		}
 
