@@ -40,7 +40,9 @@ G_BEGIN_DECLS
 /* Menu & toolbar actions */
 void     modest_ui_actions_on_about         (GtkAction *action, ModestWindow *win);
 
-void     modest_ui_actions_on_delete        (GtkAction *action, ModestWindow *win);
+void     modest_ui_actions_on_delete_message     (GtkAction *action, ModestWindow *win);
+
+void     modest_ui_actions_on_delete_message_or_folder (GtkAction *action, ModestWindow *win);
 
 void     modest_ui_actions_on_quit          (GtkAction *action, ModestWindow *win);
 

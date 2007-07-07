@@ -247,7 +247,7 @@ static const GtkActionEntry modest_header_view_action_entries [] = {
 	{ "HeaderViewCSMCut",           NULL,  N_("mcen_me_inbox_cut"),         "<CTRL>X", NULL, G_CALLBACK (modest_ui_actions_on_cut) },
 	{ "HeaderViewCSMCopy",          NULL,  N_("mcen_me_inbox_copy"),        "<CTRL>C", NULL, G_CALLBACK (modest_ui_actions_on_copy) },
 	{ "HeaderViewCSMPaste",         NULL,  N_("mcen_me_inbox_paste"),       "<CTRL>V", NULL, G_CALLBACK (modest_ui_actions_on_paste) },
-	{ "HeaderViewCSMDelete",        NULL,  N_("mcen_me_inbox_delete"),      NULL,      NULL, G_CALLBACK (modest_ui_actions_on_delete) },
+	{ "HeaderViewCSMDelete",        NULL,  N_("mcen_me_inbox_delete"),      NULL,      NULL, G_CALLBACK (modest_ui_actions_on_delete_message) },
 	{ "HeaderViewCSMCancelSending", NULL,  N_("mcen_me_outbox_cancelsend"), NULL,      NULL, G_CALLBACK (modest_ui_actions_cancel_send) },
 	{ "HeaderViewCSMHelp",          NULL,  N_("mcen_me_inbox_help"),        NULL,      NULL, G_CALLBACK (modest_ui_actions_on_help) },
 };
