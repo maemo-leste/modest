@@ -49,6 +49,7 @@
 #include <gtk/gtkicontheme.h>
 #include <gtk/gtkmenuitem.h>
 #include <gtk/gtkmain.h>
+#include <modest-text-utils.h>
 #include <string.h>
 
 
@@ -565,12 +566,12 @@ entry_insert_text (GtkEditable *editable,
 	gint chars_length;
 
 	chars = gtk_editable_get_chars (editable, 0, -1);
-	chars_length = strlen (chars);
+	chars_length = g_utf8_strlen (chars, -1);
 
 	/* Show WID-INF036 */
-	if (chars_length == 20) {
+	if (chars_length >= 20) {
 		hildon_banner_show_information  (gtk_widget_get_parent (GTK_WIDGET (data)), NULL,
-						 dgettext("hildon-common-strings", "ckdg_ib_maximum_characters_reached"));
+						 _CS("ckdg_ib_maximum_characters_reached"));
 	} else {
 		if (chars_length == 0) {
 			/* A blank space is not valid as first character */
@@ -616,11 +617,9 @@ entry_changed (GtkEditable *editable,
 		gtk_widget_set_sensitive (ok_button, FALSE);
 
 		g_list_free (buttons);
-	} else if (strlen (chars) == 21) {
+	} else if (g_utf8_strlen (chars,-1) >= 21)
 		hildon_banner_show_information  (gtk_widget_get_parent (GTK_WIDGET (user_data)), NULL,
-						 dgettext("hildon-common-strings", "ckdg_ib_maximum_characters_reached"));		
-	}
-
+						 _CS("ckdg_ib_maximum_characters_reached"));		
 	/* Free */
 	g_free (chars);
 }
