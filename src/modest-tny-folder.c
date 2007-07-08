@@ -50,20 +50,20 @@ modest_tny_folder_guess_folder_type_from_name (const gchar* name)
 	type = TNY_FOLDER_TYPE_UNKNOWN;
 	folder = g_utf8_strdown (name, strlen(name));
 
-	if (strcmp (folder, "inbox") == 0 ||
-	    strcmp (folder, _("inbox")) == 0 ||
-	    strcmp (folder, _("mcen_me_folder_inbox")) == 0)
-		type = TNY_FOLDER_TYPE_INBOX;
-	else if (strcmp (folder, "outbox") == 0 ||
+//	if (strcmp (folder, "inbox") == 0 ||
+//	    strcmp (folder, _("inbox")) == 0 ||
+//	    strcmp (folder, _("mcen_me_folder_inbox")) == 0)
+//		type = TNY_FOLDER_TYPE_INBOX;
+	if (strcmp (folder, "outbox") == 0 ||
 		 strcmp (folder, _("outbox")) == 0 ||
 		 strcmp (folder, _("mcen_me_folder_outbox")) == 0)
 		type = TNY_FOLDER_TYPE_OUTBOX;
-	else if (g_str_has_prefix(folder, "junk") ||
-		 g_str_has_prefix(folder, _("junk")))
-		type = TNY_FOLDER_TYPE_JUNK;
-	else if (g_str_has_prefix(folder, "trash") ||
-		 g_str_has_prefix(folder, _("trash")))
-		type = TNY_FOLDER_TYPE_TRASH;
+//	else if (g_str_has_prefix(folder, "junk") ||
+//		 g_str_has_prefix(folder, _("junk")))
+//		type = TNY_FOLDER_TYPE_JUNK;
+//	else if (g_str_has_prefix(folder, "trash") ||
+//		 g_str_has_prefix(folder, _("trash")))
+//		type = TNY_FOLDER_TYPE_TRASH;
 	else if (g_str_has_prefix(folder, "sent") ||
 		 g_str_has_prefix(folder, _("sent")) ||
 		 strcmp (folder, _("mcen_me_folder_sent")) == 0)
@@ -72,15 +72,15 @@ modest_tny_folder_guess_folder_type_from_name (const gchar* name)
 		 g_str_has_prefix(folder, _("draft")) ||
 		 strcmp (folder, _("mcen_me_folder_drafts")) == 0)
 		type = TNY_FOLDER_TYPE_DRAFTS;
-	else if (g_str_has_prefix(folder, "notes") ||
-		 g_str_has_prefix(folder, _("notes")))
-		type = TNY_FOLDER_TYPE_NOTES;
-	else if (g_str_has_prefix(folder, "contacts") ||
-		 g_str_has_prefix(folder, _("contacts")))
-		type = TNY_FOLDER_TYPE_CONTACTS;
-	else if (g_str_has_prefix(folder, "calendar") ||
-		 g_str_has_prefix(folder, _("calendar")))
-		type = TNY_FOLDER_TYPE_CALENDAR;
+//	else if (g_str_has_prefix(folder, "notes") ||
+//		 g_str_has_prefix(folder, _("notes")))
+//		type = TNY_FOLDER_TYPE_NOTES;
+//	else if (g_str_has_prefix(folder, "contacts") ||
+//		 g_str_has_prefix(folder, _("contacts")))
+//		type = TNY_FOLDER_TYPE_CONTACTS;
+//	else if (g_str_has_prefix(folder, "calendar") ||
+//		 g_str_has_prefix(folder, _("calendar")))
+//		type = TNY_FOLDER_TYPE_CALENDAR;
 	
 	g_free (folder);
 	return type;

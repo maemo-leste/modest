@@ -1161,21 +1161,24 @@ get_cmp_rows_type_pos (GObject *folder)
 static gint
 get_cmp_subfolder_type_pos (TnyFolderType t)
 {
-	/* Outbox, Drafts, Sent, User */
-	/* 0, 1, 2, 3 */
+	/* Inbox, Outbox, Drafts, Sent, User */
+	/* 0, 1, 2, 3, 4 */
 
 	switch (t) {
-	case TNY_FOLDER_TYPE_OUTBOX:
+	case TNY_FOLDER_TYPE_INBOX:
 		return 0;
 		break;
-	case TNY_FOLDER_TYPE_DRAFTS:
+	case TNY_FOLDER_TYPE_OUTBOX:
 		return 1;
 		break;
-	case TNY_FOLDER_TYPE_SENT:
+	case TNY_FOLDER_TYPE_DRAFTS:
 		return 2;
 		break;
-	default:
+	case TNY_FOLDER_TYPE_SENT:
 		return 3;
+		break;
+	default:
+		return 4;
 	}
 }
 
@@ -1252,10 +1255,11 @@ cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 				cmp = modest_text_utils_utf8_strcmp (name1, name2, TRUE);
 		}
 	} else {
-		GtkTreeIter parent;
-		gboolean has_parent;
 		gint cmp1 = 0, cmp2 = 0;
 		/* get the parent to know if it's a local folder */
+
+		GtkTreeIter parent;
+		gboolean has_parent;
 		has_parent = gtk_tree_model_iter_parent (tree_model, &parent, iter1);
 		if (has_parent) {
 			GObject *parent_folder;
@@ -1272,6 +1276,13 @@ cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 			}
 			g_object_unref (parent_folder);
 		}
+
+		/* if they are not local folders */
+ 		if (cmp1 == cmp2) {
+			cmp1 = get_cmp_subfolder_type_pos (tny_folder_get_folder_type (TNY_FOLDER (folder1)));
+			cmp2 = get_cmp_subfolder_type_pos (tny_folder_get_folder_type (TNY_FOLDER (folder2)));
+		}
+
 		if (cmp1 == cmp2)
 			cmp = modest_text_utils_utf8_strcmp (name1, name2, TRUE);
 		else 
