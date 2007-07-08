@@ -1278,7 +1278,9 @@ on_account_update (TnyAccountStore *account_store,
 		
 		ModestAccountData *account_data = (ModestAccountData *) g_slist_nth_data (accounts, i);
 
-		/* Create display name. The default account is shown differently */
+		/* Create display name. The UI specification specifies a different format string 
+		 * to use for the default account, though both seem to be "%s", so 
+		 * I don't see what the point is. murrayc. */
 		if (default_account && account_data->account_name && 
 			!(strcmp (default_account, account_data->account_name) == 0)) {
 			display_name = g_strdup_printf (_("mcen_me_toolbar_sendreceive_default"), 
@@ -1304,7 +1306,7 @@ on_account_update (TnyAccountStore *account_store,
 			/* Add ui from account data. We allow 2^9-1 account
 			   changes in a single execution because we're
 			   downcasting the guint to a guint8 in order to use a
-			   GByteArray, it should be enough */
+			   GByteArray. It should be enough. */
 			item_name = g_strconcat (account_data->account_name, "Menu", NULL);
 			merge_id = (guint8) gtk_ui_manager_new_merge_id (parent_priv->ui_manager);
 			priv->merge_ids = g_byte_array_append (priv->merge_ids, &merge_id, 1);

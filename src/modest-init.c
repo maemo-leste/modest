@@ -645,7 +645,7 @@ init_stock_icons (void)
 				g_object_unref (transparent);
 			}
 			else
-				g_warning ("failed to load %s icon", items_names[i]);
+				g_warning ("Modest: %s: failed to load %s icon", __FUNCTION__, items_names[i]);
 		}
 		/* Drop our reference to the factory, GTK will hold a reference. */
 		g_object_unref (factory);

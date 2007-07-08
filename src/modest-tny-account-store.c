@@ -993,8 +993,9 @@ modest_tny_account_store_alert (TnyAccountStore *self, TnyAlertType type,
 		case TNY_ACCOUNT_ERROR_TRY_CONNECT_AUTHENTICATION_NOT_SUPPORTED:
 			g_debug ("%s: Handling GError domain=%d, code=%d (authentication not supported), message=%s", 
  				__FUNCTION__, error->domain, error->code, error->message);
+			/* TODO: This needs a logical ID for the string: */
 			prompt = g_strdup_printf(
-				_("Incorrect Account Settings:\n The secure authentication method is not supported.\n%s"), 
+				_("Incorrect Account Settings:\nThe secure authentication method is not supported.\n%s"), 
 				error->message);
 			break;
 		case TNY_ACCOUNT_ERROR_TRY_CONNECT_CERTIFICATE:
