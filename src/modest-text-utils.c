@@ -300,6 +300,7 @@ modest_text_utils_convert_buffer_to_html (GString *html, const gchar *data)
 	guint		 i;
 	gboolean	space_seen = FALSE;
 	gsize           len;
+	guint           break_dist = 0; /* distance since last break point */
 
 	len = strlen (data);
 
@@ -312,6 +313,15 @@ modest_text_utils_convert_buffer_to_html (GString *html, const gchar *data)
 			space_seen = FALSE;
 		}
 		
+		/* we artificially insert a breakpoint (newline)
+		 * after 256, to make sure our lines are not so long
+		 * they will DOS the regexping later
+		 */
+		if (++break_dist == 256) {
+			g_string_append_c (html, '\n');
+			break_dist = 0;
+		}
+		
 		switch (kar) {
 		case 0:  break; /* ignore embedded \0s */	
 		case '<'  : g_string_append (html, "&lt;");   break;
@@ -319,9 +329,10 @@ modest_text_utils_convert_buffer_to_html (GString *html, const gchar *data)
 		case '&'  : g_string_append (html, "&amp;");  break;
 		case '"'  : g_string_append (html, "&quot;");  break;
 		case '\'' : g_string_append (html, "&apos;"); break;
-		case '\n' : g_string_append (html, "<br>\n");  break;
-		case '\t' : g_string_append (html, "&nbsp;&nbsp;&nbsp; "); break; /* note the space at the end*/
+		case '\n' : g_string_append (html, "<br>\n");              break_dist= 0; break;
+		case '\t' : g_string_append (html, "&nbsp;&nbsp;&nbsp; "); break_dist=0; break; /* note the space at the end*/
 		case ' ':
+			break_dist = 0;
 			if (space_seen) { /* second space in a row */
 				g_string_append (html, "&nbsp; ");
 				space_seen = FALSE;
