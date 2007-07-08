@@ -1,3 +1,9 @@
+2007-07-09  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/maemo/modest-msg-edit-window.c:
+	(modest_msg_edit_window_attach_file): Set the file chooser dialog title 
+	as per the UI spec. This fixes proejcts.maemo.org bug NB#59056.
+
 2007-07-07  Armin Burgmeier  <armin@openismus.com>
 
 	* src/maemo/easysetup/modest-easysetup-wizard.c: Translate
