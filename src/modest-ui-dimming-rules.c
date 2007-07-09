@@ -1023,7 +1023,7 @@ modest_ui_dimming_rules_on_cancel_sending (ModestWindow *win, gpointer user_data
 	}
 	if (!dimmed) {
 		dimmed = !_sending_in_progress (win);
- 		if (dimmed) 
+ 		if (dimmed)
 			modest_dimming_rule_set_notification (rule, "");
 	}
 

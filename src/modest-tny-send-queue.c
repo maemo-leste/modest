@@ -115,6 +115,10 @@ modest_tny_send_queue_cancel (TnySendQueue *self, gboolean remove, GError **err)
 {
 	ModestTnySendQueuePrivate *priv;
 	SendInfo *info;
+	TnyIterator *iter = NULL;
+	TnyFolder *outbox = NULL;
+	TnyList *headers = tny_simple_list_new ();
+	TnyHeader *header = NULL;
 
 	priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE (self);
 	if(priv->current != NULL)
@@ -130,7 +134,19 @@ modest_tny_send_queue_cancel (TnySendQueue *self, gboolean remove, GError **err)
 	}
 
 	/* Set flags to supend sending operaiton (if removed, this is not necessary) */
-	if (!remove) {
+	if (!remove) {		
+		outbox = modest_tny_send_queue_get_outbox (TNY_SEND_QUEUE(self));
+		tny_folder_get_headers (outbox, headers, TRUE, err);
+		if (err != NULL) goto frees;
+		iter = tny_list_create_iterator (headers);
+		while (!tny_iterator_is_done (iter)) {
+			header = TNY_HEADER (tny_iterator_get_current (iter));		
+			tny_header_unset_flags (header, TNY_HEADER_FLAG_PRIORITY);
+			tny_header_set_flags (header, TNY_HEADER_FLAG_SUSPENDED_PRIORITY);
+			tny_iterator_next (iter);
+			g_object_unref (header);
+		}
+		
 		g_queue_foreach (priv->queue, (GFunc)modest_tny_send_queue_info_free, NULL);
 		g_queue_free (priv->queue);
 		priv->queue = g_queue_new();
@@ -138,6 +154,14 @@ modest_tny_send_queue_cancel (TnySendQueue *self, gboolean remove, GError **err)
 		
 	/* Dont call super class implementaiton, becasue camel removes messages from outbox */
 	TNY_CAMEL_SEND_QUEUE_CLASS(parent_class)->cancel_func (self, remove, err); /* FIXME */
+
+ frees:
+	if (headers != NULL)
+		g_object_unref (G_OBJECT (headers));
+	if (outbox != NULL) 
+		g_object_unref (G_OBJECT (outbox));
+	if (iter != NULL) 
+		g_object_unref (iter);
 }
 
 static void
@@ -206,7 +230,8 @@ _add_message (ModestTnySendQueue *self, TnyHeader *header)
 	case MODEST_TNY_SEND_QUEUE_UNKNONW:
 	case MODEST_TNY_SEND_QUEUE_SUSPENDED:
 	case MODEST_TNY_SEND_QUEUE_FAILED:
-		tny_header_unset_flags (header, TNY_HEADER_FLAG_PRIORITY);
+		if (status != MODEST_TNY_SEND_QUEUE_SUSPENDED)
+			tny_header_unset_flags (header, TNY_HEADER_FLAG_PRIORITY);
 		existing = modest_tny_send_queue_lookup_info (MODEST_TNY_SEND_QUEUE(self), msg_uid);
 		if(existing != NULL) return;
 	
@@ -405,8 +430,12 @@ modest_tny_send_queue_try_to_send (ModestTnySendQueue* self)
 	tny_camel_send_queue_flush (TNY_CAMEL_SEND_QUEUE(self));
 
  frees:
-	g_object_unref (G_OBJECT (headers));
-	g_object_unref (G_OBJECT (outbox));
+	if (headers != NULL)
+		g_object_unref (G_OBJECT (headers));
+	if (outbox != NULL) 
+		g_object_unref (G_OBJECT (outbox));
+	if (iter != NULL) 
+		g_object_unref (iter);
 }
 
 gboolean

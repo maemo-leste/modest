@@ -58,7 +58,7 @@ get_status_of_uid (TnyHeader *header)
 	ModestTnySendQueueStatus queue_status = MODEST_TNY_SEND_QUEUE_SUSPENDED;
 	gchar *msg_uid = NULL;
 	
-	msg_uid = modest_tny_send_queue_get_msg_id (header);		
+	msg_uid = modest_tny_send_queue_get_msg_id (header);
 	cache_mgr = modest_runtime_get_cache_mgr ();
 	send_queue_cache = modest_cache_mgr_get_cache (cache_mgr,
 						       MODEST_CACHE_MGR_CACHE_TYPE_SEND_QUEUE);
@@ -335,20 +335,15 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 		ModestTnySendQueueStatus status = MODEST_TNY_SEND_QUEUE_WAITING;
 		const gchar *status_str = "";
 		if (msg_header != NULL) {
-			/* TODO: ask send queue for msg sending status */
-/* 			status = get_status_of_uid (tny_header_get_message_id (msg_header)); */
 			status = get_status_of_uid (msg_header);
 			if (status == MODEST_TNY_SEND_QUEUE_SUSPENDED) {
 				tny_header_unset_flags (msg_header, TNY_HEADER_FLAG_PRIORITY);
 				tny_header_set_flags (msg_header, TNY_HEADER_FLAG_SUSPENDED_PRIORITY);
-			}				
+			}
 /* 			if (prior_flags == TNY_HEADER_FLAG_SUSPENDED_PRIORITY) */
 /* 				status = MODEST_TNY_SEND_QUEUE_SUSPENDED; */
 		}
 		status_str = get_status_string (status);
-		/* TODO: for now we set the status to waiting always, we need a way to
-		 * retrieve the current send status of a message */
-/* 		status_str = get_status_string (MODEST_TNY_SEND_QUEUE_WAITING); */
 		display_date = g_strdup_printf("<small>%s</small>", status_str);
 		g_object_set (G_OBJECT (date_or_status_cell),
 			      "markup", display_date,
