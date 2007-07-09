@@ -974,7 +974,10 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name)
 
 	/* Set window icon */
 	window_icon = modest_platform_get_icon (MODEST_APP_MSG_EDIT_ICON);
-	gtk_window_set_icon (GTK_WINDOW (obj), window_icon);
+	if (window_icon) {
+		gtk_window_set_icon (GTK_WINDOW (obj), window_icon);
+		g_object_unref (window_icon);
+	}
 
 	/* Dim at start clipboard actions */
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/EditMenu/CutMenu");

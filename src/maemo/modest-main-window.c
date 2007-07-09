@@ -800,7 +800,8 @@ modest_main_window_new (void)
 	GError *error = NULL;
 	ModestConf *conf = NULL;
 	GtkAction *action = NULL;
-
+	GdkPixbuf *window_icon;
+	
 	self  = MODEST_MAIN_WINDOW(g_object_new(MODEST_TYPE_MAIN_WINDOW, NULL));
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
 	parent_priv = MODEST_WINDOW_GET_PRIVATE(self);
@@ -936,6 +937,12 @@ modest_main_window_new (void)
 	g_signal_connect (G_OBJECT(self), "show",
 			  G_CALLBACK (modest_main_window_on_show), folder_win);
 		
+	/* Set window icon */
+	window_icon = modest_platform_get_icon (MODEST_APP_ICON);
+	if (window_icon) {
+		gtk_window_set_icon (GTK_WINDOW (self), window_icon);
+		g_object_unref (window_icon);
+	}
 
 	restore_settings (MODEST_MAIN_WINDOW(self), FALSE);
 

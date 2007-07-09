@@ -518,6 +518,7 @@ modest_msg_view_window_new (TnyMsg *msg,
 	ModestDimmingRulesGroup *toolbar_rules_group = NULL;
 	GtkActionGroup *action_group = NULL;
 	GError *error = NULL;
+	GdkPixbuf *window_icon;
 
 	g_return_val_if_fail (msg, NULL);
 	
@@ -594,7 +595,14 @@ modest_msg_view_window_new (TnyMsg *msg,
 	init_window (MODEST_MSG_VIEW_WINDOW(obj), msg);
 	restore_settings (MODEST_MSG_VIEW_WINDOW(obj));
 	
-/* 	g_signal_connect (G_OBJECT(obj), "delete-event", G_CALLBACK(on_delete_event), obj); */
+	/* Set window icon */
+	window_icon = modest_platform_get_icon (MODEST_APP_MSG_VIEW_ICON); 
+	if (window_icon) {
+		gtk_window_set_icon (GTK_WINDOW (obj), window_icon);
+		g_object_unref (window_icon);
+	}
+
+ 	/* g_signal_connect (G_OBJECT(obj), "delete-event", G_CALLBACK(on_delete_event), obj); */
 
 	g_signal_connect (G_OBJECT(priv->msg_view), "link_clicked",
 			  G_CALLBACK (modest_ui_actions_on_msg_link_clicked), obj);
