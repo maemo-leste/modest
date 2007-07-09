@@ -1,5 +1,11 @@
 2007-07-09  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-ui-actions.c: (modest_ui_actions_on_send_receive):
+	Do not try to unref a NULL folder store, to avoid a runtime warning.
+	This seems to happen sometimes when changing accounts settings.
+
+2007-07-09  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/modest-tny-account-store.c:
 	(modest_tny_account_store_instance_init),
 	(modest_tny_account_store_finalize),

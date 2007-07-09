@@ -1487,7 +1487,7 @@ modest_ui_actions_on_send_receive (GtkAction *action,  ModestWindow *win)
 
 		folder_store = modest_folder_view_get_selected (MODEST_FOLDER_VIEW (folder_view));
 
-		if (TNY_IS_FOLDER (folder_store)) {
+		if (folder_store && TNY_IS_FOLDER (folder_store)) {
 			header_view = 
 				modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win),
 								     MODEST_WIDGET_TYPE_HEADER_VIEW);
@@ -1501,7 +1501,9 @@ modest_ui_actions_on_send_receive (GtkAction *action,  ModestWindow *win)
 						       folder_refreshed_cb,
 						       MODEST_MAIN_WINDOW (win));
 		}
-		g_object_unref (folder_store);
+		
+		if (folder_store)
+			g_object_unref (folder_store);
 	}
 	
 	/* Refresh the active account */
