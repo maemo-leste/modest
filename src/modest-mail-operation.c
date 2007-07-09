@@ -713,9 +713,6 @@ G_DEFINE_TYPE_WITH_CODE (InternalFolderObserver,
 static void
 foreach_add_item (gpointer header, gpointer user_data)
 {
-	/* printf("DEBUG: %s: header subject=%s\n", 
-	 * __FUNCTION__, tny_header_get_subject(TNY_HEADER(header)));
-	 */
 	tny_list_prepend (TNY_LIST (user_data), 
 			  g_object_ref (G_OBJECT (header)));
 }
@@ -737,10 +734,6 @@ internal_folder_observer_update (TnyFolderObserver *self, TnyFolderChange *chang
 		list = tny_simple_list_new ();
 		tny_folder_change_get_added_headers (change, list);
 
-		/* printf ("DEBUG: %s: Calling foreach with a list of size=%d\n", 
-		 * 	__FUNCTION__, tny_list_get_length(list));
-		 */
-		 
 		/* Add them to the folder observer */
 		tny_list_foreach (list, foreach_add_item, 
 				  derived->new_headers);

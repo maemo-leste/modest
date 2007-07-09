@@ -336,35 +336,37 @@ on_vfs_volume_unmounted(GnomeVFSVolumeMonitor *volume_monitor,
 static void
 on_account_removed (ModestAccountMgr *acc_mgr, 
 		    const gchar *account,
-		    gboolean server_account,
+		    gboolean is_server_account,
 		    gpointer user_data)
 {
 	ModestTnyAccountStore *self = MODEST_TNY_ACCOUNT_STORE(user_data);
-	TnyAccount *store_account;
+	TnyAccount *server_account;
 	
 	/* Clear the account cache */
-	store_account = modest_tny_account_store_get_tny_account_by  (self, 
+	server_account = modest_tny_account_store_get_tny_account_by  (self, 
 								      MODEST_TNY_ACCOUNT_STORE_QUERY_ID, 
 								      account);
-	if (store_account) {
-		tny_store_account_delete_cache (TNY_STORE_ACCOUNT (store_account));
-		
-		g_signal_emit (G_OBJECT (self), 
-					 tny_account_store_signals [TNY_ACCOUNT_STORE_ACCOUNT_REMOVED], 
-					 0, store_account);
+	if (server_account) {
+		if (TNY_IS_STORE_ACCOUNT (server_account)) {
 
-		g_object_unref (store_account);
+			tny_store_account_delete_cache (TNY_STORE_ACCOUNT (server_account));
+		
+			g_signal_emit (G_OBJECT (self), 
+				       tny_account_store_signals [TNY_ACCOUNT_STORE_ACCOUNT_REMOVED], 
+				       0, server_account);
+
+/* 			/\* FIXME: make this more finegrained; changes do not */
+/* 			 * really affect _all_ accounts, and some do not */
+/* 			 * affect tny accounts at all (such as 'last_update') */
+/* 			 *\/ */
+/* 			recreate_all_accounts (self); */
+			
+/* 			g_signal_emit (G_OBJECT(self), signals[ACCOUNT_UPDATE_SIGNAL], 0, */
+/* 				       account); */
+		}
+		g_object_unref (server_account);
 	} else
 		g_printerr ("modest: cannot find server account for %s", account);
-	
-	/* FIXME: make this more finegrained; changes do not
-	 * really affect _all_ accounts, and some do not
-	 * affect tny accounts at all (such as 'last_update')
-	 */
-	recreate_all_accounts (self);
-
-	g_signal_emit (G_OBJECT(self), signals[ACCOUNT_UPDATE_SIGNAL], 0,
-		       account);
 }
 
 static void
@@ -1289,7 +1291,7 @@ modest_tny_account_store_get_server_account (ModestTnyAccountStore *self,
 
 		if (type == TNY_ACCOUNT_TYPE_STORE && account_data->store_account)
 			id = g_strdup (account_data->store_account->account_name);
-		else if (account_data->transport_account)
+		else if (type == TNY_ACCOUNT_TYPE_TRANSPORT && account_data->transport_account)
 			id = g_strdup (account_data->transport_account->account_name);
 
 		modest_account_mgr_free_account_data (priv->account_mgr, account_data);

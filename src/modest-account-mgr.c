@@ -535,7 +535,7 @@ modest_account_mgr_remove_account (ModestAccountMgr * self,
 {
 	ModestAccountMgrPrivate *priv;
 	gchar *key;
-	gboolean retval;
+	gboolean retval, default_account_deleted;
 	GError *err = NULL;
 
 	g_return_val_if_fail (MODEST_IS_ACCOUNT_MGR(self), FALSE);
@@ -546,8 +546,18 @@ modest_account_mgr_remove_account (ModestAccountMgr * self,
 		return FALSE;
 	}
 
+	default_account_deleted = FALSE;
+
 	if (!server_account) {
-		gchar *server_account_name;
+		gchar *server_account_name, *default_account_name;
+
+		/* If this was the default, then remove that setting: */
+		default_account_name = modest_account_mgr_get_default_account (self);
+		if (default_account_name && (strcmp (default_account_name, name) == 0)) {
+			modest_account_mgr_unset_default_account (self);
+			default_account_deleted = TRUE;
+		}
+		g_free (default_account_name);
 
 		/* in case we're deleting an account, also delete the dependent store and transport account */
 		server_account_name = modest_account_mgr_get_string (self, name, MODEST_ACCOUNT_STORE_ACCOUNT,
@@ -582,22 +592,22 @@ modest_account_mgr_remove_account (ModestAccountMgr * self,
 		g_error_free (err);
 	}
 
-	/* If this was the default, then remove that setting: */
-	if (!server_account) {
-		gchar *default_account_name = modest_account_mgr_get_default_account (self);
-		if (default_account_name && (strcmp (default_account_name, name) == 0))
-			modest_account_mgr_unset_default_account (self);
-		g_free (default_account_name);
-		
-		/* pick another one as the new default account */
+	if (default_account_deleted) {	
+		/* pick another one as the new default account. We do
+		   this *after* deleting the keys, because otherwise a
+		   call to account_names will retrieve also the
+		   deleted account */
 		modest_account_mgr_set_first_account_as_default (self);
+	}
 
+	if (server_account) {
 		/* Notify the observers. We do this *after* deleting
 		   the keys, because otherwise a call to account_names
 		   will retrieve also the deleted account */
 		g_signal_emit (G_OBJECT(self), signals[ACCOUNT_REMOVED_SIGNAL], 0,
 			       name, server_account);
 	}
+
 	return retval;
 }
 
