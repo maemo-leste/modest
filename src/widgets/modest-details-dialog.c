@@ -232,6 +232,10 @@ modest_details_dialog_set_header_default (ModestDetailsDialog *self,
 					    received);
 		modest_details_dialog_add_data (self, _("mcen_fi_message_properties_received"),
 						date_time_buffer);
+ 		modest_text_utils_strftime (date_time_buffer, DATE_TIME_BUFFER_SIZE, "%x %X",
+					    sent);
+		modest_details_dialog_add_data (self, _("mcen_fi_message_properties_created"),
+						date_time_buffer);
 	}
 
 	/* Set date sent (optional) */
@@ -241,6 +245,17 @@ modest_details_dialog_set_header_default (ModestDetailsDialog *self,
 		modest_text_utils_strftime (date_time_buffer, DATE_TIME_BUFFER_SIZE, "%x %X",
 					    sent);
 		modest_details_dialog_add_data (self, _("mcen_fi_message_properties_sent"),
+						date_time_buffer);
+ 		modest_text_utils_strftime (date_time_buffer, DATE_TIME_BUFFER_SIZE, "%x %X",
+					    received);
+		modest_details_dialog_add_data (self, _("mcen_fi_message_properties_created"),
+						date_time_buffer);
+	}
+
+	if ((folder_type == TNY_FOLDER_TYPE_DRAFTS)|| (folder_type == TNY_FOLDER_TYPE_OUTBOX)) {
+ 		modest_text_utils_strftime (date_time_buffer, DATE_TIME_BUFFER_SIZE, "%x %X",
+					    received);
+		modest_details_dialog_add_data (self, _("mcen_fi_message_properties_created"),
 						date_time_buffer);
 	}
 
