@@ -979,8 +979,10 @@ reply_forward_cb (ModestMailOperation *mail_op,
 	ModestWindowMgr *mgr = NULL;
 	gchar *signature = NULL;
 
-	/* If there was any error */
-	if (!modest_ui_actions_msg_retrieval_check (mail_op, header, msg))
+	/* If there was any error. The mail operation could be NULL,
+	   this means that we already have the message downloaded and
+	   that we didn't do a mail operation to retrieve it */
+	if (mail_op && !modest_ui_actions_msg_retrieval_check (mail_op, header, msg))
 		return;
 			
 	g_return_if_fail (user_data != NULL);
