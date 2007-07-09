@@ -2584,6 +2584,8 @@ modest_ui_actions_on_copy (GtkAction *action,
 		gtk_clipboard_set_text (clipboard, gtk_label_get_text (GTK_LABEL (focused_widget)), -1);
 	} else if (GTK_IS_EDITABLE (focused_widget)) {
 		gtk_editable_copy_clipboard (GTK_EDITABLE(focused_widget));
+	} else if (GTK_IS_HTML (focused_widget)) {
+		gtk_html_copy (GTK_HTML (focused_widget));
 	} else if (GTK_IS_TEXT_VIEW (focused_widget)) {
 		GtkTextBuffer *buffer;
 		buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (focused_widget));

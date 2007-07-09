@@ -127,9 +127,6 @@ static void modest_msg_edit_window_show_toolbar   (ModestWindow *window,
 static void modest_msg_edit_window_clipboard_owner_change (GtkClipboard *clipboard,
 							   GdkEvent *event,
 							   ModestMsgEditWindow *window);
-static void modest_msg_edit_window_system_clipboard_owner_change (GtkClipboard *clipboard,
-								  GdkEvent *event,
-								  ModestMsgEditWindow *window);
 static void update_window_title (ModestMsgEditWindow *window);
 static void update_dimmed (ModestMsgEditWindow *window);
 static void update_paste_dimming (ModestMsgEditWindow *window);
@@ -209,7 +206,6 @@ struct _ModestMsgEditWindowPrivate {
 	gdouble zoom_level;
 	
 	gulong      clipboard_change_handler_id;
-	gulong      system_clipboard_change_handler_id;
 
 	TnyMsg      *draft_msg;
 	gboolean    sent;
@@ -315,7 +311,6 @@ modest_msg_edit_window_init (ModestMsgEditWindow *obj)
 
 	priv->draft_msg = NULL;
 	priv->clipboard_change_handler_id = 0;
-	priv->system_clipboard_change_handler_id = 0;
 	priv->sent = FALSE;
 }
 
@@ -520,8 +515,6 @@ init_window (ModestMsgEditWindow *obj)
 
 	priv->clipboard_change_handler_id = g_signal_connect (G_OBJECT (gtk_clipboard_get (GDK_SELECTION_PRIMARY)), "owner-change",
 							      G_CALLBACK (modest_msg_edit_window_clipboard_owner_change), obj);
-	priv->system_clipboard_change_handler_id = g_signal_connect (G_OBJECT (gtk_clipboard_get (GDK_SELECTION_CLIPBOARD)), "owner-change",
-							      G_CALLBACK (modest_msg_edit_window_system_clipboard_owner_change), obj);
 }
 	
 
@@ -534,12 +527,6 @@ modest_msg_edit_window_finalize (GObject *obj)
 	if (priv->clipboard_change_handler_id > 0) {
 		g_signal_handler_disconnect (gtk_clipboard_get (GDK_SELECTION_PRIMARY), priv->clipboard_change_handler_id);
 		priv->clipboard_change_handler_id = 0;
-	}
-	
-	if (priv->system_clipboard_change_handler_id > 0) {
-		g_signal_handler_disconnect (gtk_clipboard_get (GDK_SELECTION_CLIPBOARD), 
-					     priv->system_clipboard_change_handler_id);
-		priv->system_clipboard_change_handler_id = 0;
 	}
 	
 	if (priv->draft_msg != NULL) {
@@ -2885,15 +2872,6 @@ update_paste_dimming (ModestMsgEditWindow *window)
 
 }
 
-
-static void
-modest_msg_edit_window_system_clipboard_owner_change (GtkClipboard *clipboard,
-						      GdkEvent *event,
-						      ModestMsgEditWindow *window)
-{
-	update_paste_dimming (window);
-}
-
 static void 
 update_select_all_dimming (ModestMsgEditWindow *window)
 {
@@ -2938,6 +2916,7 @@ edit_menu_activated (GtkAction *action,
 	ModestMsgEditWindow *window = MODEST_MSG_EDIT_WINDOW (userdata);
 
 	update_select_all_dimming (window);
+	update_paste_dimming (window);
 }
 static void
 view_menu_activated (GtkAction *action,
