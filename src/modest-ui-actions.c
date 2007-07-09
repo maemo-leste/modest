@@ -3771,8 +3771,10 @@ modest_ui_actions_on_help (GtkAction *action,
 					help_id = "applications_email_archive";
 					break;
 				default:
-					help_id = NULL;
+					help_id = "applications_email_mainview";
 				}
+			} else {
+				help_id = "applications_email_mainview";	
 			}
 			g_object_unref (folder_store);
 		} else {
