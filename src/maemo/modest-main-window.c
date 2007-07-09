@@ -1971,7 +1971,7 @@ on_queue_changed (ModestMailOperationQueue *queue,
 	/* Get toolbar mode from operation id*/
 	op_type = modest_mail_operation_get_type_operation (mail_op);
 	switch (op_type) {
-	case MODEST_MAIL_OPERATION_TYPE_SEND:
+/* 	case MODEST_MAIL_OPERATION_TYPE_SEND: */
 	case MODEST_MAIL_OPERATION_TYPE_RECEIVE:
 	case MODEST_MAIL_OPERATION_TYPE_OPEN:
 		mode = TOOLBAR_MODE_TRANSFER;

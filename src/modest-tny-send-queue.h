@@ -51,6 +51,7 @@ typedef struct _ModestTnySendQueue      ModestTnySendQueue;
 typedef struct _ModestTnySendQueueClass ModestTnySendQueueClass;
 
 typedef enum {
+	MODEST_TNY_SEND_QUEUE_UNKNONW,
 	MODEST_TNY_SEND_QUEUE_WAITING,
 	MODEST_TNY_SEND_QUEUE_SUSPENDED,
 	MODEST_TNY_SEND_QUEUE_SENDING,
@@ -129,6 +130,9 @@ gboolean modest_tny_send_queue_msg_is_being_sent (ModestTnySendQueue* self, cons
  */
 ModestTnySendQueueStatus
 modest_tny_send_queue_get_msg_status (ModestTnySendQueue *self, const gchar *msg_id);
+
+gchar *
+modest_tny_send_queue_get_msg_id (TnyHeader *header);
 
 G_END_DECLS
 

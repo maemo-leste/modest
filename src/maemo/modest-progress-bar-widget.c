@@ -236,19 +236,19 @@ modest_progress_bar_add_operation (ModestProgressObject *self,
 						 "progress-changed",
 						 G_CALLBACK (on_progress_changed),
 						 me);
-	if (priv->observables == NULL) {
-		priv->current = mail_op;
+	/* Set curent operation */
+	priv->current = mail_op;
 
-		/* Call progress_change handler to initialize progress message */
-		state = g_malloc0(sizeof(ModestMailOperationState));
-		state->done = 0;
-		state->total = 0;
-		state->op_type = modest_mail_operation_get_type_operation (mail_op);;
-		on_progress_changed (mail_op, state, me);
-		g_free(state);
-	}
-	priv->observables = g_slist_append (priv->observables, data);
+	/* Call progress_change handler to initialize progress message */
+	state = g_malloc0(sizeof(ModestMailOperationState));
+	state->done = 0;
+	state->total = 0;
+	state->op_type = modest_mail_operation_get_type_operation (mail_op);;
+/* 	on_progress_changed (mail_op, state, me); */
+	g_free(state);
 
+	/* Add operation to obserbable objects list */
+	priv->observables = g_slist_prepend (priv->observables, data);
 }
 
 static gint
@@ -369,7 +369,7 @@ on_progress_changed (ModestMailOperation  *mail_op,
 			if (determined)
 				msg = g_strdup_printf(_("mcen_me_sending"), state->done,
 						      state->total);
-			else 
+			else
 				msg = g_strdup(_("mail_me_sending"));
 			break;
 			

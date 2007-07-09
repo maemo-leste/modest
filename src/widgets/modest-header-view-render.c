@@ -47,31 +47,38 @@ fill_list_of_caches (gpointer key, gpointer value, gpointer userdata)
 	*send_queues = g_slist_prepend (*send_queues, value);
 }
 
-/* static ModestTnySendQueueStatus */
-/* get_status_of_uid (const gchar *uid) */
-/* { */
-/* 	ModestCacheMgr *cache_mgr; */
-/* 	GHashTable     *send_queue_cache; */
-/* 	GSList *send_queues = NULL, *node; */
-/* 	/\* get_msg_status returns suspended by default, so we want to detect changes *\/ */
-/* 	ModestTnySendQueueStatus status = MODEST_TNY_SEND_QUEUE_SUSPENDED; */
+static ModestTnySendQueueStatus
+get_status_of_uid (TnyHeader *header)
+{
+	ModestCacheMgr *cache_mgr;
+	GHashTable     *send_queue_cache;
+	GSList *send_queues = NULL, *node;
+	/* get_msg_status returns suspended by default, so we want to detect changes */
+	ModestTnySendQueueStatus status = MODEST_TNY_SEND_QUEUE_SUSPENDED;
+	ModestTnySendQueueStatus queue_status = MODEST_TNY_SEND_QUEUE_SUSPENDED;
+	gchar *msg_uid = NULL;
 	
-/* 	cache_mgr = modest_runtime_get_cache_mgr (); */
-/* 	send_queue_cache = modest_cache_mgr_get_cache (cache_mgr, */
-/* 						       MODEST_CACHE_MGR_CACHE_TYPE_SEND_QUEUE); */
+	msg_uid = modest_tny_send_queue_get_msg_id (header);		
+	cache_mgr = modest_runtime_get_cache_mgr ();
+	send_queue_cache = modest_cache_mgr_get_cache (cache_mgr,
+						       MODEST_CACHE_MGR_CACHE_TYPE_SEND_QUEUE);
+	
+	g_hash_table_foreach (send_queue_cache, (GHFunc) fill_list_of_caches, &send_queues);
+	
+	for (node = send_queues; node != NULL; node = g_slist_next (node)) {
+		ModestTnySendQueue *send_queue = MODEST_TNY_SEND_QUEUE (node->data);
 
-/* 	g_hash_table_foreach (send_queue_cache, (GHFunc) fill_list_of_caches, &send_queues); */
+		queue_status = modest_tny_send_queue_get_msg_status (send_queue, msg_uid);
+		if (queue_status != MODEST_TNY_SEND_QUEUE_UNKNONW) {
+			status = queue_status;
+			break;
+		}
+	}
 
-/* 	for (node = send_queues; node != NULL; node = g_slist_next (node)) { */
-/* 		ModestTnySendQueueStatus queue_status = modest_tny_send_queue_get_msg_status ( */
-/* 			MODEST_TNY_SEND_QUEUE (node->data), uid); */
-/* 		if (queue_status != MODEST_TNY_SEND_QUEUE_SUSPENDED) */
-/* 			status = queue_status; */
-/* 		break; */
-/* 	} */
-/* 	g_slist_free (send_queues); */
-/* 	return status; */
-/* } */
+	g_free(msg_uid);
+	g_slist_free (send_queues);
+	return status;
+}
 
 static const gchar *
 get_status_string (ModestTnySendQueueStatus status)
@@ -330,8 +337,13 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 		if (msg_header != NULL) {
 			/* TODO: ask send queue for msg sending status */
 /* 			status = get_status_of_uid (tny_header_get_message_id (msg_header)); */
-			if (prior_flags == TNY_HEADER_FLAG_SUSPENDED_PRIORITY)
-				status = MODEST_TNY_SEND_QUEUE_SUSPENDED;
+			status = get_status_of_uid (msg_header);
+			if (status == MODEST_TNY_SEND_QUEUE_SUSPENDED) {
+				tny_header_unset_flags (msg_header, TNY_HEADER_FLAG_PRIORITY);
+				tny_header_set_flags (msg_header, TNY_HEADER_FLAG_SUSPENDED_PRIORITY);
+			}				
+/* 			if (prior_flags == TNY_HEADER_FLAG_SUSPENDED_PRIORITY) */
+/* 				status = MODEST_TNY_SEND_QUEUE_SUSPENDED; */
 		}
 		status_str = get_status_string (status);
 		/* TODO: for now we set the status to waiting always, we need a way to

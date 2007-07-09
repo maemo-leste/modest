@@ -1096,7 +1096,7 @@ update_account_thread (gpointer thr_user_data)
 	
 	/* Perform send (if operation was not cancelled) */
 	if (did_a_cancel) goto out;		
-	priv->op_type = MODEST_MAIL_OPERATION_TYPE_SEND;
+/* 	priv->op_type = MODEST_MAIL_OPERATION_TYPE_SEND; */
 	priv->done = 0;
 	priv->total = 0;
 	if (priv->account != NULL) 
@@ -1105,9 +1105,9 @@ update_account_thread (gpointer thr_user_data)
 	
 	send_queue = modest_runtime_get_send_queue (info->transport_account);
 	if (send_queue) {
-		timeout = g_timeout_add (250, idle_notify_progress, info->mail_op);
+/* 		timeout = g_timeout_add (250, idle_notify_progress, info->mail_op); */
 		modest_tny_send_queue_try_to_send (send_queue);
-		g_source_remove (timeout);
+/* 		g_source_remove (timeout); */
 	} else {
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 			     MODEST_MAIL_OPERATION_ERROR_INSTANCE_CREATION_FAILED,
