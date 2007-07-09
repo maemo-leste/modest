@@ -10,6 +10,7 @@
 	Use the logical IDs for the error message, though they are not 
 	specific enough. Note that I used modest_maemo_show_information_note_and_forget() 
 	because gtk_dialog_run() caused a hang here (the window did not close).
+	This fixes projects.maemo.org bug NB#62646.
 
 2007-07-09  Murray Cumming  <murrayc@murrayc.com>
 
