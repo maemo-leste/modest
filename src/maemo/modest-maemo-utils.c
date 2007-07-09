@@ -515,7 +515,8 @@ on_response (GtkDialog *dialog, gint response, gpointer user_data)
 	gtk_widget_destroy (GTK_WIDGET (dialog));
 }
 
-void modest_maemo_show_information_note_and_forget (GtkWindow *parent_window, const gchar* message)
+void
+modest_maemo_show_information_note_and_forget (GtkWindow *parent_window, const gchar* message)
 {
 	GtkDialog *dialog = GTK_DIALOG (hildon_note_new_information (parent_window, message));
 	
@@ -524,3 +525,13 @@ void modest_maemo_show_information_note_and_forget (GtkWindow *parent_window, co
 	gtk_widget_show (GTK_WIDGET (dialog));
 }
 
+
+
+void
+modest_maemo_set_thumbable_scrollbar (GtkScrolledWindow *win, gboolean thumbable)
+{
+	g_return_if_fail (GTK_IS_SCROLLED_WINDOW(win));
+#ifdef MODEST_HAVE_HILDON1_WIDGETS		
+	hildon_helper_set_thumb_scrollbar (win, thumbable);
+#endif /* MODEST_HAVE_HILDON1_WIDGETS */
+}

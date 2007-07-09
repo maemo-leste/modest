@@ -74,7 +74,7 @@ k * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
 #else
 
 #ifdef MODEST_HAVE_HILDON1_WIDGETS
-
+#include <hildon/hildon-helper.h>
 #include <hildon/hildon-file-chooser-dialog.h>
 #include <hildon/hildon-color-chooser.h>
 #include <hildon/hildon-banner.h>

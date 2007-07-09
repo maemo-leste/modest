@@ -1684,6 +1684,7 @@ _on_msg_count_changed (ModestHeaderView *header_view,
 	}	
 }
 
+
 void 
 modest_main_window_set_contents_style (ModestMainWindow *self, 
 				       ModestMainWindowContentsStyle style)
@@ -1720,6 +1721,8 @@ modest_main_window_set_contents_style (ModestMainWindow *self,
 	switch (priv->contents_style) {
 	case MODEST_MAIN_WINDOW_CONTENTS_STYLE_HEADERS:
 		wrap_in_scrolled_window (priv->contents_widget, GTK_WIDGET (priv->header_view));
+		modest_maemo_set_thumbable_scrollbar (GTK_SCROLLED_WINDOW(priv->contents_widget),
+						      TRUE);
 		break;
 	case MODEST_MAIN_WINDOW_CONTENTS_STYLE_DETAILS:
 	{
@@ -1733,10 +1736,16 @@ modest_main_window_set_contents_style (ModestMainWindow *self,
 					 priv->details_widget);
 		}
 		g_object_unref (selected_folderstore);
+		modest_maemo_set_thumbable_scrollbar (GTK_SCROLLED_WINDOW(priv->contents_widget),
+						      FALSE);
+
+		
 		break;
 	}
 	case MODEST_MAIN_WINDOW_CONTENTS_STYLE_EMPTY:
 		wrap_in_scrolled_window (priv->contents_widget, GTK_WIDGET (priv->empty_view));
+		modest_maemo_set_thumbable_scrollbar (GTK_SCROLLED_WINDOW(priv->contents_widget),
+						      FALSE);
 		break;
 	default:
 		g_return_if_reached ();

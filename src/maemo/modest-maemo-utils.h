@@ -132,4 +132,7 @@ void modest_maemo_utils_setup_images_filechooser (GtkFileChooser *chooser);
  */
 void modest_maemo_show_information_note_and_forget (GtkWindow *parent_window, const gchar* message);
 
+
+void modest_maemo_set_thumbable_scrollbar (GtkScrolledWindow *win, gboolean thumbable);
+
 #endif /*__MODEST_MAEMO_UTILS_H__*/
