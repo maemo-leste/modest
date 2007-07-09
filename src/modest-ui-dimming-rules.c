@@ -204,7 +204,7 @@ gboolean
 modest_ui_dimming_rules_on_delete_folder (ModestWindow *win, gpointer user_data)
 {
 	ModestDimmingRule *rule = NULL;
-	TnyFolderType types[5];
+	TnyFolderType types[6];
 	gboolean dimmed = FALSE;
 
 	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW(win), FALSE);
@@ -216,6 +216,7 @@ modest_ui_dimming_rules_on_delete_folder (ModestWindow *win, gpointer user_data)
 	types[2] = TNY_FOLDER_TYPE_SENT;
 	types[3] = TNY_FOLDER_TYPE_INBOX;
 	types[4] = TNY_FOLDER_TYPE_ROOT;
+	types[5] = TNY_FOLDER_TYPE_ARCHIVE;
 
 		
 	/* Check dimmed rule */	
@@ -225,7 +226,7 @@ modest_ui_dimming_rules_on_delete_folder (ModestWindow *win, gpointer user_data)
 			modest_dimming_rule_set_notification (rule, _("mail_in_ui_folder_delete_error"));
 	}
 	if (!dimmed) {
-		dimmed = _selected_folder_is_any_of_type (win, types, 5);
+		dimmed = _selected_folder_is_any_of_type (win, types, 6);
 		if (dimmed)
 			modest_dimming_rule_set_notification (rule, _("mail_in_ui_folder_delete_error"));
 	}
@@ -1202,8 +1203,6 @@ _selected_folder_is_MMC_or_POP_root (ModestMainWindow *win)
 
 	return result;
 }
-
-
 
 
 static gboolean
