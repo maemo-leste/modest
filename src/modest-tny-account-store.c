@@ -1321,6 +1321,10 @@ get_smtp_specific_transport_account_for_open_connection (ModestTnyAccountStore *
 	if (!tny_device_is_online (device))
 		return NULL;
 
+	g_return_val_if_fail (self, NULL);
+	g_return_val_if_fail (account_name, NULL);
+	
+	
 #ifdef MODEST_PLATFORM_MAEMO
 	g_assert (TNY_IS_MAEMO_CONIC_DEVICE (device));
 	TnyMaemoConicDevice *maemo_device = TNY_MAEMO_CONIC_DEVICE (device);	
