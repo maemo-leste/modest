@@ -1512,14 +1512,22 @@ modest_msg_edit_window_insert_image (ModestMsgEditWindow *window)
 			GdkPixbufLoader *loader;
 			GdkPixbuf *pixbuf;
 			GnomeVFSFileInfo info;
-			gchar *filename, *basename;
+			gchar *filename, *basename, *escaped_filename;
 			TnyMimePart *mime_part;
 			TnyStream *stream;
 			gchar *content_id;
 			const gchar *mime_type = NULL;
+			GnomeVFSURI *vfs_uri;
 
-			filename = g_filename_from_uri (uri, NULL, NULL);
-			if (gnome_vfs_get_file_info_from_handle (handle, &info, GNOME_VFS_FILE_INFO_GET_MIME_TYPE) 
+			vfs_uri = gnome_vfs_uri_new (uri);
+
+			escaped_filename = g_path_get_basename (gnome_vfs_uri_get_path (vfs_uri));
+			filename = gnome_vfs_unescape_string_for_display (escaped_filename);
+			g_free (escaped_filename);
+			gnome_vfs_uri_unref (vfs_uri);
+
+			if (gnome_vfs_get_file_info (uri, &info, GNOME_VFS_FILE_INFO_GET_MIME_TYPE
+						     | GNOME_VFS_FILE_INFO_FORCE_SLOW_MIME_TYPE) 
 			    == GNOME_VFS_OK)
 				mime_type = gnome_vfs_file_info_get_mime_type (&info);
 
@@ -1618,13 +1626,25 @@ modest_msg_edit_window_attach_file (ModestMsgEditWindow *window)
 			TnyStream *stream;
 			const gchar *mime_type = NULL;
 			gchar *basename;
+			gchar *escaped_filename;
 			gchar *filename;
 			gchar *content_id;
 			GnomeVFSFileInfo info;
+			GnomeVFSURI *vfs_uri;
 
-			filename = g_filename_from_uri (uri, NULL, NULL);
+			vfs_uri = gnome_vfs_uri_new (uri);
 			
-			if (gnome_vfs_get_file_info_from_handle (handle, &info, GNOME_VFS_FILE_INFO_GET_MIME_TYPE) == GNOME_VFS_OK)
+
+			escaped_filename = g_path_get_basename (gnome_vfs_uri_get_path (vfs_uri));
+			filename = gnome_vfs_unescape_string_for_display (escaped_filename);
+			g_free (escaped_filename);
+			gnome_vfs_uri_unref (vfs_uri);
+			
+			if (gnome_vfs_get_file_info (uri, 
+						     &info, 
+						     GNOME_VFS_FILE_INFO_GET_MIME_TYPE |
+						     GNOME_VFS_FILE_INFO_FORCE_SLOW_MIME_TYPE)
+			    == GNOME_VFS_OK)
 				mime_type = gnome_vfs_file_info_get_mime_type (&info);
 			mime_part = tny_platform_factory_new_mime_part
 				(modest_runtime_get_platform_factory ());
