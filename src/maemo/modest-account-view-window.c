@@ -160,31 +160,29 @@ on_delete_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 	if(!account_name)
 		return;
 		
-	gchar *account_title = modest_account_mgr_get_display_name(account_mgr, account_name);
-
 	if (account_name) {
-		gboolean removed;
-		GtkWidget *dialog;
-		gchar *txt;
+		gchar *account_title = modest_account_mgr_get_display_name(account_mgr, account_name);
 		
-		dialog = gtk_dialog_new_with_buttons (_("Confirmation dialog"),
-						      GTK_WINDOW (self),
-						      GTK_DIALOG_MODAL,
-						      GTK_STOCK_OK,
-						      GTK_RESPONSE_ACCEPT,
-						      GTK_STOCK_CANCEL,
-						      GTK_RESPONSE_REJECT,
-						      NULL);
-		txt = g_strdup_printf (_("emev_nc_delete_mailboximap"), 
-			account_title);
-		gtk_box_pack_start (GTK_BOX(GTK_DIALOG(dialog)->vbox), 
-				    gtk_label_new (txt), FALSE, FALSE, 0);
-		gtk_widget_show_all (GTK_WIDGET(GTK_DIALOG(dialog)->vbox));
+		/* The warning text depends on the account type: */
+		gchar *txt = NULL;	
+		if (modest_account_mgr_get_store_protocol (account_mgr, account_name) 
+			== MODEST_PROTOCOL_STORE_POP) {
+			txt = g_strdup_printf (_("emev_nc_delete_mailbox"), 
+				account_title);
+		} else {
+			txt = g_strdup_printf (_("emev_nc_delete_mailboximap"), 
+				account_title);
+		}
+		
+		GtkDialog *dialog = GTK_DIALOG (hildon_note_new_confirmation (GTK_WINDOW (self), 
+			txt));
+		gtk_window_set_transient_for (GTK_WINDOW (dialog), GTK_WINDOW (self));
 		g_free (txt);
+		txt = NULL;
 
-		if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT) {
-			/* Remove account. If succeeded it removes also 
-			   the account from the ModestAccountView */
+		if (gtk_dialog_run (dialog) == GTK_RESPONSE_OK) {
+			/* Remove account. If it succeeds then it also removes
+			   the account from the ModestAccountView: */
 			  
 			gboolean is_default = FALSE;
 			gchar *default_account_name = modest_account_mgr_get_default_account (account_mgr);
@@ -192,17 +190,14 @@ on_delete_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 				is_default = TRUE;
 			g_free (default_account_name);
 				
-			removed = modest_account_mgr_remove_account (account_mgr,
+			gboolean removed = modest_account_mgr_remove_account (account_mgr,
 									     account_name,
 									     FALSE);
-									     
-			if (removed) {
-				/* Show confirmation dialog ??? */
-			} else {
-				/* Show error dialog ??? */
+			if (!removed) {
+				g_warning ("%s: modest_account_mgr_remove_account() failed.\n", __FUNCTION__);
 			}
 		}
-		gtk_widget_destroy (dialog);
+		gtk_widget_destroy (GTK_WIDGET (dialog));
 		g_free (account_title);
 		g_free (account_name);
 	}

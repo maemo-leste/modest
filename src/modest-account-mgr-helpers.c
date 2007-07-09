@@ -75,7 +75,27 @@ gchar* modest_account_mgr_get_signature (ModestAccountMgr *self, const gchar* na
 	
 	return modest_account_mgr_get_string (self, name, MODEST_ACCOUNT_SIGNATURE, FALSE);
 }
+
+
+ModestTransportStoreProtocol modest_account_mgr_get_store_protocol (ModestAccountMgr *self, const gchar* name)
+{
+	ModestTransportStoreProtocol result = MODEST_PROTOCOL_STORE_POP; /* Arbitrary default */
 	
+	gchar *server_account_name = modest_account_mgr_get_string (self, name,
+							MODEST_ACCOUNT_STORE_ACCOUNT,
+							FALSE);
+	if (server_account_name) {
+		ModestServerAccountData* server_data = 
+			modest_account_mgr_get_server_account_data (self, server_account_name);
+		result = server_data->proto;
+			
+		modest_account_mgr_free_server_account_data (self, server_data);
+		
+		g_free (server_account_name);
+	}
+	
+	return result;
+}
 
 gboolean modest_account_mgr_set_connection_specific_smtp (ModestAccountMgr *self, 
 	const gchar* account_name,

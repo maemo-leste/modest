@@ -199,6 +199,17 @@ gboolean modest_account_mgr_set_signature (ModestAccountMgr *self, const gchar* 
  */
 gchar* modest_account_mgr_get_signature (ModestAccountMgr *self, const gchar* name, 
 	gboolean* use_signature);
+	
+/**
+ * modest_account_mgr_get_store_protocol:
+ * @self: a ModestAccountMgr instance
+ * @name: the account name
+ *
+ * Gets the protocol type (For instance, POP or IMAP) used for the store server account.
+ *
+ * Returns: The protocol type.
+ */
+ModestTransportStoreProtocol modest_account_mgr_get_store_protocol (ModestAccountMgr *self, const gchar* name);
 
 /**
  * modest_account_mgr_set_connection_specific_smtp
