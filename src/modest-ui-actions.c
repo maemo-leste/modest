@@ -369,7 +369,7 @@ modest_ui_actions_on_delete_message (GtkAction *action, ModestWindow *win)
 
 
 
-/* delete either message or folder, based on what has focus */
+/* delete either message or folder, based on where we are */
 void
 modest_ui_actions_on_delete_message_or_folder (GtkAction *action, ModestWindow *win)
 {
@@ -378,14 +378,6 @@ modest_ui_actions_on_delete_message_or_folder (GtkAction *action, ModestWindow *
 	/* Check first if the header view has the focus */
 	if (MODEST_IS_MAIN_WINDOW (win)) {
 		GtkWidget *w;
-
-		w = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win),
-							 MODEST_WIDGET_TYPE_HEADER_VIEW);
-		if (gtk_widget_is_focus (w)) {
-			modest_ui_actions_on_delete_message (action, win);
-			return;
-		}
-		
 		w = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win),
 							 MODEST_WIDGET_TYPE_FOLDER_VIEW);
 		if (gtk_widget_is_focus (w)) {
@@ -393,8 +385,7 @@ modest_ui_actions_on_delete_message_or_folder (GtkAction *action, ModestWindow *
 			return;
 		}
 	}
-	g_warning ("BUG: delete toolbar button pressed with neither headerview nor folderview "
-		   "having focus");
+	modest_ui_actions_on_delete_message (action, win);
 }
 
 
