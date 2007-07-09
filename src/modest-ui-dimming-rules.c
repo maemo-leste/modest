@@ -191,6 +191,13 @@ modest_ui_dimming_rules_on_delete (ModestWindow *win, gpointer user_data)
 
 		if (folder_view && gtk_widget_is_focus (folder_view)) 
 			dimmed = modest_ui_dimming_rules_on_delete_folder (win, rule);
+
+		if (header_view && folder_view &&
+		    !gtk_widget_is_focus (header_view) &&
+		    !gtk_widget_is_focus (folder_view)) {
+			dimmed = TRUE;
+			modest_dimming_rule_set_notification (rule, dgettext("hildon-common-strings", "ckct_ib_nothing_to_delete"));			
+		}
 	} else {
 		dimmed = modest_ui_dimming_rules_on_delete_folder (win, rule);
 	}
