@@ -485,18 +485,19 @@ modest_tny_account_new_from_account (ModestAccountMgr *account_mgr, const gchar 
 		modest_account_mgr_free_account_data (account_mgr, account_data);
 		return NULL;
 	}
-	
+
+
+	/* This name is what shows up in the folder view -- so for some POP/IMAP/... server
+ 	 * account, we set its name to the account of which it is part. */
+ 
+	if (account_data->display_name)
+		tny_account_set_name (tny_account, account_data->display_name);
+
 	tny_account_set_forget_pass_func (tny_account,
 					  forget_pass_func ? forget_pass_func : forget_pass_dummy);
 	tny_account_set_pass_func (tny_account,
 				   get_pass_func ? get_pass_func: get_pass_dummy);
 	
-
-        /* This name is what shows up in the folder view -- so for some POP/IMAP/... server
- 	*  account, we set its name to the account of which it is part. */
-
-        if (account_data->display_name)
-                tny_account_set_name (tny_account, account_data->display_name);
 
         modest_tny_account_set_parent_modest_account_name_for_server_account (tny_account, account_name);
 
