@@ -322,11 +322,10 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 	/* fixme: we hardcode the color to #666666; instead we should use SecundaryTextColour from the
 	 * theme (gtkrc file) */
 	
-	header = g_markup_printf_escaped ("<small>%s</small>", modest_text_utils_get_display_address (address));
+	header = g_markup_printf_escaped ("<span size='small' foreground='#666666'>%s</span>", modest_text_utils_get_display_address (address));
 	g_free (address);
 	g_object_set (G_OBJECT (recipient_cell),
 		      "markup", header,
-		      "foreground", "#666666",
 		      NULL);
 	g_free (header);
 	set_common_flags (recipient_cell, flags);
@@ -344,10 +343,9 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 /* 				status = MODEST_TNY_SEND_QUEUE_SUSPENDED; */
 		}
 		status_str = get_status_string (status);
-		display_date = g_strdup_printf("<small>%s</small>", status_str);
+		display_date = g_strdup_printf("<span size='small' foreground='#666666'>%s</span>", status_str);
 		g_object_set (G_OBJECT (date_or_status_cell),
 			      "markup", display_date,
-			      "foreground", "#666666",
 			      NULL);
 		g_free (display_date);
 	} else {
@@ -359,10 +357,9 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 		else
 			tmp_date = g_strdup ("");
 		
-		display_date = g_strdup_printf ("<small>%s</small>", tmp_date);
+		display_date = g_strdup_printf ("<span size='small' foreground='#666666'>%s</span>", tmp_date);
 		g_object_set (G_OBJECT (date_or_status_cell),
 			      "markup", display_date,
-			      "foreground", "#666666",
 			      NULL);
 		g_free (tmp_date);
 		g_free (display_date);
