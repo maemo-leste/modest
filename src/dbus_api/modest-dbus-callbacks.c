@@ -668,6 +668,7 @@ on_delete_message (GArray *arguments, gpointer data, osso_rpc_t *retval)
 	error = NULL;
 	res = OSSO_OK;
 	tny_folder_remove_msg (folder, header, &error);
+	tny_header_set_flags (header, TNY_HEADER_FLAG_SEEN);
 
 	if (error != NULL) {
 		res = OSSO_ERROR;

@@ -588,6 +588,7 @@ modest_mail_operation_send_new_mail (ModestMailOperation *self,
 			 * because this function requires it to have a UID. */
 			tny_folder_remove_msg (folder, header, NULL);
 			tny_header_set_flags (header, TNY_HEADER_FLAG_DELETED);
+			tny_header_set_flags (header, TNY_HEADER_FLAG_SEEN);
 			g_object_unref (header);
 		}
 	}
@@ -654,6 +655,7 @@ modest_mail_operation_save_to_drafts (ModestMailOperation *self,
 		/* Remove the old draft expunging it */
 		tny_folder_remove_msg (folder, header, NULL);
 		tny_header_set_flags (header, TNY_HEADER_FLAG_DELETED);
+		tny_header_set_flags (header, TNY_HEADER_FLAG_SEEN);
 		tny_folder_sync (folder, FALSE, &(priv->error));  /* FALSE --> don't expunge */
 		g_object_unref (header);
 	}
@@ -1962,6 +1964,7 @@ modest_mail_operation_remove_msg (ModestMailOperation *self,  TnyHeader *header,
 	tny_folder_remove_msg (folder, header, &(priv->error));
 	if (!priv->error) {
 		tny_header_set_flags (header, TNY_HEADER_FLAG_DELETED);
+		tny_header_set_flags (header, TNY_HEADER_FLAG_SEEN);
 
 		if (TNY_IS_CAMEL_IMAP_FOLDER (folder))
 			tny_folder_sync(folder, FALSE, &(priv->error)); /* FALSE --> don't expunge */
