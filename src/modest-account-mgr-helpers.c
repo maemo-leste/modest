@@ -594,9 +594,12 @@ gint on_accounts_list_sort_by_title(gconstpointer a, gconstpointer b)
 }
 
 gboolean
-modest_account_mgr_set_first_account_as_default  (ModestAccountMgr *self)
+modest_account_mgr_set_first_account_as_default (ModestAccountMgr *self)
 {
-	gboolean result = FALSE;
+	gchar *old_default;
+	gboolean result = FALSE, found;
+	GSList* list_sorted, *iter;
+	const gchar* account_name;
 	GSList *account_names = modest_account_mgr_account_names (self, TRUE /* only enabled */);
 
 	/* Return TRUE if there is no account */
@@ -604,13 +607,27 @@ modest_account_mgr_set_first_account_as_default  (ModestAccountMgr *self)
 		return TRUE;
 		
 	/* Get the first one, alphabetically, by title: */
-	GSList* list_sorted = g_slist_sort (account_names, 
-		on_accounts_list_sort_by_title);
-	if(list_sorted) {
-		const gchar* account_name = (const gchar*)list_sorted->data;
-		if (account_name) 
-			result = modest_account_mgr_set_default_account (self, account_name);
+	old_default = modest_account_mgr_get_default_account (self);
+	list_sorted = g_slist_sort (account_names, on_accounts_list_sort_by_title);
+
+	iter = list_sorted;
+	found = FALSE;
+	while (iter && !found) {
+		account_name = (const gchar*)list_sorted->data;
+
+		if (old_default) {
+			/* The new should be different than the old one */
+			if (strcmp (old_default, account_name))
+				found = TRUE;
+		} else
+			found = TRUE;
+
+		if (!found)
+			iter = g_slist_next (iter);
 	}
+
+	if (found)
+		result = modest_account_mgr_set_default_account (self, account_name);
 
 	modest_account_mgr_free_account_names (account_names);
 	account_names = NULL;
