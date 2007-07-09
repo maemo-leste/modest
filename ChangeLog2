@@ -1,5 +1,16 @@
 2007-07-09  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-tny-account-store.c:
+	(modest_tny_account_store_instance_init),
+	(modest_tny_account_store_finalize),
+	(on_account_settings_hide), (on_idle_wrong_password):
+	Use a GHashTable to ensure that we only show one account settings 
+	dialog per modest account. This avoids us having a dialog open for 
+	both the store and transport accounts, or due to repeated get_password() 
+	calls that shouldn't happen anyway.
+
+2007-07-09  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/maemo/modest-maemo-utils.c: (on_hide),
 	(modest_maemo_show_dialog_and_forget): Handle the response, because 
 	the window is not even hidden by default.

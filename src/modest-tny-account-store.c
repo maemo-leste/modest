@@ -97,6 +97,7 @@ typedef struct _ModestTnyAccountStorePrivate ModestTnyAccountStorePrivate;
 struct _ModestTnyAccountStorePrivate {
 	gchar              *cache_dir;	
 	GHashTable         *password_hash;
+	GHashTable         *account_settings_dialog_hash;
 	ModestAccountMgr   *account_mgr;
 	TnySessionCamel    *session;
 	TnyDevice          *device;
@@ -216,6 +217,11 @@ modest_tny_account_store_instance_init (ModestTnyAccountStore *obj)
          */
 	priv->password_hash          = g_hash_table_new_full (g_str_hash, g_str_equal,
 							      g_free, g_free);
+							     
+	/* A hash-map of modest account names to dialog pointers,
+	 * so we can avoid showing the account settings twice for the same modest account: */				      
+	priv->account_settings_dialog_hash = g_hash_table_new_full (g_str_hash, g_str_equal, 
+		g_free, NULL);
 							      
 	/* Respond to volume mounts and unmounts, such 
 	 * as the insertion/removal of the memory card: */
@@ -399,30 +405,84 @@ get_account_store_for_account (TnyAccount *account)
 							   "account_store"));
 }
 
-gboolean on_idle_wrong_password (gpointer user_data)
+static 
+void on_account_settings_hide (GtkWidget *widget, gpointer user_data)
 {
-	/* TODO: Remember the window per account, 
-	 * so we can just reshow it
-	 * instead of showing multiple ones.
-	 */
-	 
-	TnyAccount *account = user_data;
+	TnyAccount *account = (TnyAccount*)user_data;
 	
-	ModestWindow *main_window = 
-			modest_window_mgr_get_main_window (modest_runtime_get_window_mgr ());
-	hildon_banner_show_information ( 
-		GTK_WIDGET(main_window), NULL, _("mcen_ib_username_pw_incorrect"));
-		
+	/* This is easier than using a struct for the user_data: */
+	ModestTnyAccountStore *self = modest_runtime_get_account_store();
+	ModestTnyAccountStorePrivate *priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
+	
 	const gchar *modest_account_name = 
-		modest_tny_account_get_parent_modest_account_name_for_server_account (account);
+			modest_tny_account_get_parent_modest_account_name_for_server_account (account);
+	if (modest_account_name)
+		g_hash_table_remove (priv->account_settings_dialog_hash, modest_account_name);
+}
+
+static 
+gboolean on_idle_wrong_password (gpointer user_data)
+{ 
+	TnyAccount *account = (TnyAccount*)user_data;
+	/* This is easier than using a struct for the user_data: */
+	ModestTnyAccountStore *self = modest_runtime_get_account_store();
+	ModestTnyAccountStorePrivate *priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
+	
+	const gchar *modest_account_name = 
+			modest_tny_account_get_parent_modest_account_name_for_server_account (account);
 	if (!modest_account_name) {
 		g_warning ("%s: modest_tny_account_get_parent_modest_account_name_for_server_account() failed.\n", 
 			__FUNCTION__);
+			
+		g_object_unref (account);
+		return FALSE;
 	}
 	
-	ModestAccountSettingsDialog *dialog = modest_account_settings_dialog_new ();
-	modest_account_settings_dialog_set_account_name (dialog, modest_account_name);
-	modest_maemo_show_dialog_and_forget (GTK_WINDOW (main_window), GTK_DIALOG (dialog));
+	
+	/* Check whether this window is already open,
+	 * for instance because of a previous get_password() call: 
+	 */
+	gpointer dialog_as_gpointer = NULL;
+	priv->account_settings_dialog_hash && 
+				g_hash_table_lookup_extended (priv->account_settings_dialog_hash,
+						      modest_account_name,
+						      NULL,
+						      (gpointer*)&dialog_as_gpointer);
+						      
+	ModestAccountSettingsDialog *dialog = dialog_as_gpointer;
+					
+	ModestWindow *main_window = 
+				modest_window_mgr_get_main_window (modest_runtime_get_window_mgr ());
+					      
+	gboolean created_dialog = FALSE;
+	if (!dialog) {
+		
+		dialog = modest_account_settings_dialog_new ();
+		modest_account_settings_dialog_set_account_name (dialog, modest_account_name);
+		modest_account_settings_dialog_switch_to_user_info (dialog);
+		
+		g_hash_table_insert (priv->account_settings_dialog_hash, g_strdup (modest_account_name), dialog);
+		
+		created_dialog = TRUE;
+	}
+	
+	/* Show an explanatory temporary banner: */
+	hildon_banner_show_information ( 
+		GTK_WIDGET(dialog), NULL, _("mcen_ib_username_pw_incorrect"));
+		
+	if (created_dialog) {
+		/* Forget it when it closes: */
+		g_signal_connect_object (G_OBJECT (dialog), "hide", G_CALLBACK (on_account_settings_hide), 
+			account, 0);
+			
+		/* Show it and delete it when it closes: */
+		modest_maemo_show_dialog_and_forget (GTK_WINDOW (main_window), GTK_DIALOG (dialog));
+	}
+	else {
+		/* Just show it instead of showing it and deleting it when it closes,
+		 * though it is probably open already: */
+		gtk_widget_show (GTK_WIDGET (dialog));
+	}
 	
 	g_object_unref (account);
 	
@@ -442,7 +502,7 @@ get_password (TnyAccount *account, const gchar * prompt_not_used, gboolean *canc
 	 * same dialogs repeatedly.
 	 */
 	 
-	/* printf ("%s: prompt (not shown) = %s\n", __FUNCTION__, prompt_not_used); */
+	printf ("DEBUG: modest: %s: prompt (not shown) = %s\n", __FUNCTION__, prompt_not_used);
 	  
 	g_return_val_if_fail (account, NULL);
 	  
@@ -606,6 +666,11 @@ modest_tny_account_store_finalize (GObject *obj)
 	if (priv->password_hash) {
 		g_hash_table_destroy (priv->password_hash);
 		priv->password_hash = NULL;
+	}
+	
+	if (priv->account_settings_dialog_hash) {
+		g_hash_table_destroy (priv->account_settings_dialog_hash);
+		priv->account_settings_dialog_hash = NULL;
 	}
 
 	if (priv->account_mgr) {
@@ -1019,13 +1084,13 @@ modest_tny_account_store_alert (TnyAccountStore *self, TnyAlertType type,
 
 	if ((error->domain != TNY_ACCOUNT_ERROR) 
 		&& (error->domain != TNY_ACCOUNT_STORE_ERROR)) {
-		g_warning("%s: Unexpected error domain: != TNY_ACCOUNT_ERROR: %d, message=%s", 
+		g_warning("modest: %s: Unexpected error domain: != TNY_ACCOUNT_ERROR: %d, message=%s", 
 			__FUNCTION__, error->domain, error->message); 
 			
 		return FALSE;
 	}
 	
-	printf("DEBUG: %s: GError code: %d, message=%s", 
+	printf("DEBUG: %s: GError code: %d, message=%s\n", 
 				__FUNCTION__, error->code, error->message);
 	
 
