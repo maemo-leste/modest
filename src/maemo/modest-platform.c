@@ -351,20 +351,14 @@ modest_platform_activate_file (const gchar *path, const gchar *mime_type)
 	con = osso_get_dbus_connection (osso_context);
 #ifdef MODEST_HAVE_OSSO_MIME
 	result = osso_mime_open_file_with_mime_type (con, uri_path, mime_str->str);
-	g_string_free (mime_str, TRUE);
-
-	if (result != 1)
-		hildon_banner_show_information (NULL, NULL, _("mcen_ni_noregistered_viewer"));
-	return result != 1;
 #else
 	result = hildon_mime_open_file_with_mime_type (con, uri_path, mime_str->str);
+#endif /*MODEST_HAVE_OSSO_MIME*/
 	g_string_free (mime_str, TRUE);
 
 	if (result != 1)
-		hildon_banner_show_information (NULL, NULL, _("mcen_ni_noregistered_viewer"));
+		modest_platform_run_information_dialog (NULL, _("mcen_ni_noregistered_viewer"));
 	return result != 1;
-#endif /*MODEST_HAVE_OSSO_MIME*/
-
 }
 
 typedef struct  {
