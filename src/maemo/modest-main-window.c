@@ -34,6 +34,7 @@
 #include <tny-list.h>
 #include <tny-iterator.h>
 #include <tny-maemo-conic-device.h>
+#include <tny-error.h>
 #include "modest-hildon-includes.h"
 #include "modest-defs.h"
 #include <string.h>
@@ -449,37 +450,6 @@ wrap_in_scrolled_window (GtkWidget *win, GtkWidget *widget)
 /* 	return FALSE; */
 /* } */
 
-typedef struct
-{
-	ModestMainWindow *self;
-	TnySendQueue *queue;
-	TnyHeader *header;
-} OnResponseInfo;
-
-static void
-on_response (GtkDialog *dialog, gint arg1, gpointer user_data)
-{
-	OnResponseInfo *info = (OnResponseInfo *) user_data;
-	ModestMainWindow *self = info->self;
-	TnyHeader *header = info->header;
-	TnySendQueue *queue = info->queue;
-
-	if (arg1 == GTK_RESPONSE_YES) {
-		TnyFolder *outbox = tny_send_queue_get_outbox (queue);
-		tny_folder_remove_msg (outbox, header, NULL);
-		tny_folder_sync (outbox, TRUE, NULL);
-		g_object_unref (outbox);
-	}
-
-	g_object_unref (queue);
-	g_object_unref (header);
-	g_object_unref (self);
-
-	gtk_widget_destroy (GTK_WIDGET (dialog));
-	g_slice_free (OnResponseInfo, info);
-}
-
-
 static void
 on_sendqueue_error_happened (TnySendQueue *self, TnyHeader *header, TnyMsg *msg, GError *err, ModestMainWindow *user_data)
 {
@@ -487,20 +457,56 @@ on_sendqueue_error_happened (TnySendQueue *self, TnyHeader *header, TnyMsg *msg,
 		printf ("DEBUG: %s: err->code=%d, err->message=%s\n", __FUNCTION__, err->code, err->message);
 	}
 
-	if (header) {
-		gchar *str = g_strdup_printf ("%s. Do you want to remove the message (%s)?",
-			err->message, tny_header_get_subject (header));
-		OnResponseInfo *info = g_slice_new (OnResponseInfo);
-		GtkWidget *dialog = gtk_message_dialog_new (GTK_WINDOW (user_data), 0,
-			GTK_MESSAGE_ERROR, GTK_BUTTONS_YES_NO, str);
-		g_free (str);
-		info->queue = g_object_ref (self);
-		info->self = g_object_ref (user_data);
-		info->header = g_object_ref (header);
-		g_signal_connect (G_OBJECT (dialog), "response",
-			G_CALLBACK (on_response), info);
-		gtk_widget_show_all (dialog);
+	/* Get the account name: */
+	const gchar* server_name = NULL;
+	
+	TnyCamelTransportAccount* server_account = tny_camel_send_queue_get_transport_account (
+		TNY_CAMEL_SEND_QUEUE (self));
+	if (server_account) {
+		server_name = tny_account_get_hostname (TNY_ACCOUNT (server_account));
+			
+		g_object_unref (server_account);
+		server_account = NULL;
 	}
+	
+	if (!server_name)
+		server_name = _("Unknown Server");	
+
+	/* Show the appropriate message text for the GError: */
+	gchar *message = NULL;
+	if (err) {
+		switch (err->code) {
+			case TNY_TRANSPORT_ACCOUNT_ERROR_SEND_HOST_LOOKUP_FAILED:
+				message = g_strdup_printf (_("emev_ib_ui_smtp_server_invalid"), server_name);
+				break;
+			case TNY_TRANSPORT_ACCOUNT_ERROR_SEND_SERVICE_UNAVAILABLE:
+				message = g_strdup_printf (_("emev_ib_ui_smtp_server_invalid"), server_name);
+				break;
+			case TNY_TRANSPORT_ACCOUNT_ERROR_SEND_AUTHENTICATION_NOT_SUPPORTED:
+				/* TODO: This logical ID seems more suitable for a wrong username or password than for a 
+				 * wrong authentication method. The user is unlikely to guess at the real cause.
+				 */
+				message = g_strdup_printf (_("eemev_ni_ui_smtp_authentication_fail_error"), server_name);
+				break;
+			case TNY_TRANSPORT_ACCOUNT_ERROR_SEND:
+			default:
+				message = g_strdup (_("emev_ib_ui_smtp_send_error"));
+				break;
+		}
+	} else {
+		message = g_strdup (_("emev_ib_ui_smtp_send_error"));
+	}
+	
+	modest_maemo_show_information_note_and_forget (GTK_WINDOW (user_data), message);
+	g_free (message);
+	
+	/* TODO: Offer to remove the message, to avoid messages in future? */
+	/*
+	TnyFolder *outbox = tny_send_queue_get_outbox (queue);
+	tny_folder_remove_msg (outbox, header, NULL);
+	tny_folder_sync (outbox, TRUE, NULL);
+	g_object_unref (outbox);
+	*/
 }
 
 typedef struct {

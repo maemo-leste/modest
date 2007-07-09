@@ -507,3 +507,20 @@ modest_maemo_utils_setup_images_filechooser (GtkFileChooser *chooser)
 #endif
 
 }
+
+static void
+on_response (GtkDialog *dialog, gint response, gpointer user_data)
+{
+	/* Just destroy the dialog: */
+	gtk_widget_destroy (GTK_WIDGET (dialog));
+}
+
+void modest_maemo_show_information_note_and_forget (GtkWindow *parent_window, const gchar* message)
+{
+	GtkDialog *dialog = GTK_DIALOG (hildon_note_new_information (parent_window, message));
+	
+	/* Destroy the dialog when it is closed: */
+	g_signal_connect (G_OBJECT (dialog), "response", G_CALLBACK (on_response), NULL);
+	gtk_widget_show (GTK_WIDGET (dialog));
+}
+

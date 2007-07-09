@@ -1,5 +1,18 @@
 2007-07-09  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/maemo/modest-maemo-utils.h:
+	* src/maemo/modest-maemo-utils.c: 
+	Added modest_maemo_show_information_note_and_forget() for use instead of 
+	gtk_dialog_run() when the response is not needed, to avoid an extra 
+	mainloop which could cause a hang.
+
+	* src/maemo/modest-main-window.c: (on_sendqueue_error_happened):
+	Use the logical IDs for the error message, though they are not 
+	specific enough. Note that I used modest_maemo_show_information_note_and_forget() 
+	because gtk_dialog_run() caused a hang here (the window did not close).
+
+2007-07-09  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/modest-account-mgr-helpers.h:
 	* src/modest-account-mgr-helpers.c:
 	Added modest_account_mgr_get_store_protocol().
