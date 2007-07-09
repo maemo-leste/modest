@@ -89,6 +89,9 @@
 #define  MODEST_TOOLBAR_ICON_MOVE_TO_FOLDER     "qgn_toolb_gene_movetofldr"
 #define  MODEST_TOOLBAR_ICON_BOLD               "qgn_list_gene_bold"
 #define  MODEST_TOOLBAR_ICON_ITALIC             "qgn_list_gene_italic"
+#define  MODEST_TOOLBAR_ICON_NEXT               "qgn_toolb_gene_forward"
+#define  MODEST_TOOLBAR_ICON_PREV               "qgn_toolb_gene_back"
+#define  MODEST_TOOLBAR_ICON_FIND               "qgn_toolb_gene_find"
 
 /* Stock icon names */
 #define  MODEST_STOCK_MAIL_SEND    "modest-stock-mail-send"

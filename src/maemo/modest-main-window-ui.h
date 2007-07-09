@@ -120,9 +120,9 @@ static const GtkActionEntry modest_action_entries [] = {
 /* 	{ "ToolbarToggleView",        MODEST_STOCK_SPLIT_VIEW,      N_("gqn_toolb_rss_fldonoff"),                "<CTRL>t", NULL,  G_CALLBACK (modest_ui_actions_toggle_folders_view) }, */
 	{ "ToolbarDeleteMessage",     MODEST_STOCK_DELETE,     N_("qgn_toolb_gene_deletebutton"),             NULL, NULL,  G_CALLBACK (modest_ui_actions_on_delete_message_or_folder) },
 	{ "ToolbarSort",     MODEST_STOCK_SORT,     N_("qgn_list_sort"),             NULL, NULL,  G_CALLBACK (modest_ui_actions_on_sort) },
-	{ "ToolbarFindInMessage",     GTK_STOCK_FIND,       N_("qgn_toolb_gene_find"),         NULL, NULL, NULL },
-	{ "ToolbarMessageBack",       GTK_STOCK_GO_BACK,    N_("qgn_toolb_gene_back"),         NULL, NULL, G_CALLBACK (modest_ui_actions_on_prev) },
-	{ "ToolbarMessageNext",    GTK_STOCK_GO_FORWARD, N_("qgn_toolb_gene_forward"),      NULL, NULL, G_CALLBACK (modest_ui_actions_on_next) },
+	{ "ToolbarFindInMessage",     MODEST_TOOLBAR_ICON_FIND,       N_("qgn_toolb_gene_find"),         NULL, NULL, NULL },
+	{ "ToolbarMessageBack",       MODEST_TOOLBAR_ICON_PREV,    N_("qgn_toolb_gene_back"),         NULL, NULL, G_CALLBACK (modest_ui_actions_on_prev) },
+	{ "ToolbarMessageNext",    MODEST_TOOLBAR_ICON_NEXT, N_("qgn_toolb_gene_forward"),      NULL, NULL, G_CALLBACK (modest_ui_actions_on_next) },
 	{ "ToolbarMessageMoveTo",     MODEST_TOOLBAR_ICON_MOVE_TO_FOLDER, N_("qgn_toolb_gene_movetofldr"),   NULL, NULL, G_CALLBACK(modest_ui_actions_on_move_to) },
 	{ "ToolbarCancel",       GTK_STOCK_STOP,   "",      NULL, NULL,  NULL },
 };
