@@ -278,6 +278,29 @@ modest_server_account_set_password (ModestAccountMgr *self, const gchar* account
 	modest_account_mgr_set_string (self, account_name, MODEST_ACCOUNT_PASSWORD, 
 				       password, TRUE /* server account */);
 }
+
+	
+gchar*
+modest_server_account_get_password (ModestAccountMgr *self, const gchar* account_name)
+{
+	return modest_account_mgr_get_string (self, account_name, MODEST_ACCOUNT_PASSWORD, 
+		TRUE /* server account */);	
+}
+
+gboolean
+modest_server_account_get_has_password (ModestAccountMgr *self, const gchar* account_name)
+{
+	gboolean result = FALSE;
+	gchar *password = modest_account_mgr_get_string (self, account_name, MODEST_ACCOUNT_PASSWORD, 
+		TRUE /* server account */);
+	if (password && strlen (password)) {
+		result = TRUE;
+	}
+	
+	g_free (password);
+	return result;
+}
+			 
 	
 gchar*
 modest_server_account_get_hostname (ModestAccountMgr *self, const gchar* account_name)

@@ -51,6 +51,7 @@
 #include <modest-account-mgr-helpers.h>
 #include <widgets/modest-window-mgr.h>
 #include <modest-account-settings-dialog.h>
+#include <maemo/modest-maemo-utils.h>
 
 
 #include "modest-tny-account-store.h"
@@ -398,36 +399,71 @@ get_account_store_for_account (TnyAccount *account)
 							   "account_store"));
 }
 
+gboolean on_idle_wrong_password (gpointer user_data)
+{
+	/* TODO: Remember the window per account, 
+	 * so we can just reshow it
+	 * instead of showing multiple ones.
+	 */
+	 
+	TnyAccount *account = user_data;
+	
+	ModestWindow *main_window = 
+			modest_window_mgr_get_main_window (modest_runtime_get_window_mgr ());
+	hildon_banner_show_information ( 
+		GTK_WIDGET(main_window), NULL, _("mcen_ib_username_pw_incorrect"));
+		
+	const gchar *modest_account_name = 
+		modest_tny_account_get_parent_modest_account_name_for_server_account (account);
+	if (!modest_account_name) {
+		g_warning ("%s: modest_tny_account_get_parent_modest_account_name_for_server_account() failed.\n", 
+			__FUNCTION__);
+	}
+	
+	ModestAccountSettingsDialog *dialog = modest_account_settings_dialog_new ();
+	modest_account_settings_dialog_set_account_name (dialog, modest_account_name);
+	modest_maemo_show_dialog_and_forget (GTK_WINDOW (main_window), GTK_DIALOG (dialog));
+	
+	g_object_unref (account);
+	
+	return FALSE; /* Dont' call this again. */
+}
+
 /* This callback will be called by Tinymail when it needs the password
- * from the user, for instance if the password was not remembered.
- * It also calls forget_password() before calling this,
+ * from the user or the account settings.
+ * It can also call forget_password() before calling this,
  * so that we clear wrong passwords out of our account settings.
  * Note that TnyAccount here will be the server account. */
 static gchar*
 get_password (TnyAccount *account, const gchar * prompt_not_used, gboolean *cancel)
 {
-	/* Initialize the output parameter: */
+	/* TODO: Settting cancel to FALSE does not actually cancel everything.
+	 * We still get multiple requests afterwards, so we end up showing the 
+	 * same dialogs repeatedly.
+	 */
+	 
+	/* printf ("%s: prompt (not shown) = %s\n", __FUNCTION__, prompt_not_used); */
 	  
 	g_return_val_if_fail (account, NULL);
 	  
-	const gchar *key;
-	const TnyAccountStore *account_store;
-	ModestTnyAccountStore *self;
+	const TnyAccountStore *account_store = NULL;
+	ModestTnyAccountStore *self = NULL;
 	ModestTnyAccountStorePrivate *priv;
 	gchar *username = NULL;
 	gchar *pwd = NULL;
-	gpointer pwd_ptr;
-	gboolean already_asked;
+	gpointer pwd_ptr = NULL;
+	gboolean already_asked = FALSE;
 
+	/* Initialize the output parameter: */
 	if (cancel)
 		*cancel = FALSE;
 		
-	key           = tny_account_get_id (account);
+	const gchar *server_account_name = tny_account_get_id (account);
 	account_store = TNY_ACCOUNT_STORE(get_account_store_for_account (account));
 
-	if (!key || !account_store) {
-		g_warning ("BUG: could not retrieve account_store for account %s",
-			   key ? key : "<NULL>");
+	if (!server_account_name || !account_store) {
+		g_warning ("%s: could not retrieve account_store for account %s",
+			   __FUNCTION__, server_account_name ? server_account_name : "<NULL>");
 		if (cancel)
 			*cancel = TRUE;
 		
@@ -435,31 +471,50 @@ get_password (TnyAccount *account, const gchar * prompt_not_used, gboolean *canc
 	}
 
 	self = MODEST_TNY_ACCOUNT_STORE (account_store);
-        priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
+	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
 	
 	/* This hash map stores passwords, including passwords that are not stored in gconf. */
-	/* is it in the hash? if it's already there, it must be wrong... */
+	/* Is it in the hash? if it's already there, it must be wrong... */
 	pwd_ptr = (gpointer)&pwd; /* pwd_ptr so the compiler does not complained about
 				   * type-punned ptrs...*/
 	already_asked = priv->password_hash && 
 				g_hash_table_lookup_extended (priv->password_hash,
-						      key,
+						      server_account_name,
 						      NULL,
 						      (gpointer*)&pwd_ptr);
+						      
+	printf ("DEBUG: modest: %s: Already asked = %d\n", __FUNCTION__, already_asked);
 
-	/* if the password is not already there, try ModestConf */
+	/* If the password is not already there, try ModestConf */
 	if (!already_asked) {
-		pwd  = modest_account_mgr_get_string (priv->account_mgr,
-						      key, MODEST_ACCOUNT_PASSWORD, TRUE);
-		g_hash_table_insert (priv->password_hash, g_strdup (key), g_strdup (pwd));
+		pwd  = modest_server_account_get_password (priv->account_mgr,
+						      server_account_name);
+		g_hash_table_insert (priv->password_hash, g_strdup (server_account_name), g_strdup (pwd));
 	}
 
-	/* if it was already asked, it must have been wrong, so ask again */
-	/* TODO: However, when we supply a wrong password to tinymail, 
-	 * it seems to (at least sometimes) call our alert_func() instead of 
-	 * asking for the password again.
-	 */
+	/* If it was already asked, it must have been wrong, so ask again */
 	if (already_asked || !pwd || strlen(pwd) == 0) {
+		/* As per the UI spec, if no password was set in the account settings, 
+		 * ask for it now. But if the password is wrong in the account settings, 
+		 * then show a banner and the account settings dialog so it can be corrected:
+		 */
+		const gboolean settings_have_password = 
+			modest_server_account_get_has_password (priv->account_mgr, server_account_name);
+		printf ("DEBUG: modest: %s: settings_have_password=%d\n", __FUNCTION__, settings_have_password);
+		if (settings_have_password) {
+	
+			
+			/* The password must be wrong, so show the account settings dialog so it can be corrected: */
+			/* We show it in the main loop, because this function might no tbe in the main loop. */
+			g_object_ref (account); /* unrefed in the idle handler. */
+			g_idle_add (on_idle_wrong_password, account);
+			
+			if (cancel)
+				*cancel = TRUE;
+				
+			return NULL;
+		}
+	
 		/* we don't have it yet. Get the password from the user */
 		const gchar* account_id = tny_account_get_id (account);
 		gboolean remember = FALSE;
@@ -477,20 +532,18 @@ get_password (TnyAccount *account, const gchar * prompt_not_used, gboolean *canc
 			if (remember) {
 				printf ("%s: Storing username=%s, password=%s\n", 
 					__FUNCTION__, username, pwd);
-				modest_account_mgr_set_string (priv->account_mgr,key,
-							       MODEST_ACCOUNT_USERNAME,
-							       username, TRUE);
-				modest_account_mgr_set_string (priv->account_mgr,key,
-							       MODEST_ACCOUNT_PASSWORD,
-							       pwd, TRUE);
+				modest_server_account_set_username (priv->account_mgr, server_account_name,
+							       username);
+				modest_server_account_set_password (priv->account_mgr, server_account_name,
+							       pwd);
 			}
 			/* We need to dup the string even knowing that
 			   it's already a dup of the contents of an
 			   entry, because it if it's wrong, then camel
 			   will free it */
-			g_hash_table_insert (priv->password_hash, g_strdup (key), g_strdup(pwd));
+			g_hash_table_insert (priv->password_hash, g_strdup (server_account_name), g_strdup(pwd));
 		} else {
-			g_hash_table_remove (priv->password_hash, key);
+			g_hash_table_remove (priv->password_hash, server_account_name);
 			
 			g_free (pwd);
 			pwd = NULL;
@@ -532,8 +585,10 @@ forget_password (TnyAccount *account)
 	}
 
 	/* Remove from configuration system */
+	/*
 	modest_account_mgr_unset (priv->account_mgr,
 				  key, MODEST_ACCOUNT_PASSWORD, TRUE);
+	*/
 }
 
 
@@ -966,18 +1021,21 @@ modest_tny_account_store_alert (TnyAccountStore *self, TnyAlertType type,
 		&& (error->domain != TNY_ACCOUNT_STORE_ERROR)) {
 		g_warning("%s: Unexpected error domain: != TNY_ACCOUNT_ERROR: %d, message=%s", 
 			__FUNCTION__, error->domain, error->message); 
+			
 		return FALSE;
 	}
 	
-	/* printf("DEBUG: %s: error->message=%s\n", __FUNCTION__, error->message); */
+	printf("DEBUG: %s: GError code: %d, message=%s", 
+				__FUNCTION__, error->code, error->message);
 	
 
 	/* const gchar *prompt = NULL; */
 	gchar *prompt = NULL;
 	switch (error->code) {
 		case TNY_ACCOUNT_STORE_ERROR_CANCEL_ALERT:
-			/* Don't show waste the user's time by showing him a dialog telling the 
-			 * user that he has just cancelled something: */
+		case TNY_ACCOUNT_ERROR_TRY_CONNECT_USER_CANCEL:
+			/* Don't show waste the user's time by showing him a dialog telling 
+			 * him that he has just cancelled something: */
 			g_debug ("%s: Handling GError domain=%d, code=%d (cancelled) without showing a dialog, message=%s", 
  				__FUNCTION__, error->domain, error->code, error->message);
 			prompt = NULL;

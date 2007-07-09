@@ -48,6 +48,7 @@
 
 #ifdef MODEST_PLATFORM_MAEMO
 #include "maemo/modest-osso-state-saving.h"
+#include "maemo/modest-maemo-utils.h"
 #endif /* MODEST_PLATFORM_MAEMO */
 
 #include "widgets/modest-ui-constants.h"
@@ -462,9 +463,7 @@ modest_ui_actions_on_accounts (GtkAction *action, ModestWindow *win)
 	} else 	{
 		/* Show the list of accounts: */
 		GtkDialog *account_win = GTK_DIALOG(modest_account_view_window_new ());
-		gtk_window_set_transient_for (GTK_WINDOW (account_win), GTK_WINDOW(win));
-		gtk_dialog_run (account_win);
-		gtk_widget_destroy (GTK_WIDGET(account_win));
+		modest_maemo_show_dialog_and_forget (GTK_WINDOW (win), account_win); 
 	}
 #else
 	GtkWidget *dialog, *label;

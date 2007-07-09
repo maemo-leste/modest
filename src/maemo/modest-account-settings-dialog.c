@@ -980,7 +980,7 @@ modest_account_settings_dialog_init (ModestAccountSettingsDialog *self)
 {
 	/* Create the notebook to be used by the GtkDialog base class:
 	 * Each page of the notebook will be a page of the wizard: */
-	GtkNotebook *notebook = GTK_NOTEBOOK (gtk_notebook_new());
+	self->notebook = GTK_NOTEBOOK (gtk_notebook_new());
 
 	/* Get the account manager object, 
 	 * so we can check for existing accounts,
@@ -999,19 +999,19 @@ modest_account_settings_dialog_init (ModestAccountSettingsDialog *self)
 	self->page_outgoing = create_page_outgoing (self);
 	
 	/* Add the notebook pages: */
-	gtk_notebook_append_page (notebook, self->page_account_details, 
+	gtk_notebook_append_page (self->notebook, self->page_account_details, 
 		gtk_label_new (_("mcen_ti_account_settings_account")));
-	gtk_notebook_append_page (notebook, self->page_user_details, 
+	gtk_notebook_append_page (self->notebook, self->page_user_details, 
 		gtk_label_new (_("mcen_ti_account_settings_userinfo")));
-	gtk_notebook_append_page (notebook, self->page_incoming,
+	gtk_notebook_append_page (self->notebook, self->page_incoming,
 		gtk_label_new (_("mcen_ti_advsetup_retrieval")));
-	gtk_notebook_append_page (notebook, self->page_outgoing,
+	gtk_notebook_append_page (self->notebook, self->page_outgoing,
 		gtk_label_new (_("mcen_ti_advsetup_sending")));
 		
 	GtkDialog *dialog = GTK_DIALOG (self);
-	gtk_container_add (GTK_CONTAINER (dialog->vbox), GTK_WIDGET (notebook));
+	gtk_container_add (GTK_CONTAINER (dialog->vbox), GTK_WIDGET (self->notebook));
 	gtk_container_set_border_width (GTK_CONTAINER (dialog->vbox), MODEST_MARGIN_HALF);
-	gtk_widget_show (GTK_WIDGET (notebook));
+	gtk_widget_show (GTK_WIDGET (self->notebook));
         
     /* Add the buttons: */
     gtk_dialog_add_button (GTK_DIALOG(self), GTK_STOCK_OK, GTK_RESPONSE_OK);
@@ -1249,6 +1249,24 @@ void modest_account_settings_dialog_set_account_name (ModestAccountSettingsDialo
 	
 	/* Unset the modified flag so we can detect changes later: */
 	dialog->modified = FALSE;
+}
+
+/** Show the User Info tab.
+ */
+void modest_account_settings_dialog_switch_to_user_info (ModestAccountSettingsDialog *dialog)
+{
+	const gint page_num = gtk_notebook_page_num (dialog->notebook, dialog->page_user_details);
+	if (page_num == -1) {
+		g_warning ("%s: notebook page not found.\n", __FUNCTION__);	
+	}
+		
+	/* Ensure that the widget is visible so that gtk_notebook_set_current_page() works: */
+	/* TODO: even this hack (recommened by the GTK+ documentation) doesn't seem to work. */
+	
+	gtk_widget_show (dialog->page_user_details);
+	gtk_widget_show (GTK_WIDGET (dialog->notebook));
+	gtk_widget_show (GTK_WIDGET (dialog));
+	gtk_notebook_set_current_page (dialog->notebook, page_num);
 }
 
 static gboolean

@@ -49,6 +49,8 @@ typedef struct {
 
 	ModestAuthProtocol protocol_authentication_incoming;
 	
+	GtkNotebook *notebook;
+	
 	GtkWidget *page_account_details;
 	GtkWidget *entry_account_title;
 	GtkWidget *combo_retrieve;
@@ -99,6 +101,8 @@ GType modest_account_settings_dialog_get_type (void);
 ModestAccountSettingsDialog* modest_account_settings_dialog_new (void);
 
 void modest_account_settings_dialog_set_account_name (ModestAccountSettingsDialog *dialog, const gchar* account_name);
+
+void modest_account_settings_dialog_switch_to_user_info (ModestAccountSettingsDialog *dialog);
 
 G_END_DECLS
 

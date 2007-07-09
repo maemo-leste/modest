@@ -39,6 +39,7 @@
 #include "modest-tny-platform-factory.h"
 #include "maemo/easysetup/modest-easysetup-wizard.h"
 #include "maemo/modest-account-settings-dialog.h"
+#include <maemo/modest-maemo-utils.h>
 #include "widgets/modest-ui-constants.h"
 
 /* 'private'/'protected' functions */
@@ -234,9 +235,7 @@ on_edit_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 	ModestAccountSettingsDialog *dialog = modest_account_settings_dialog_new ();
 	modest_account_settings_dialog_set_account_name (dialog, account_name);
 	
-	gtk_window_set_transient_for (GTK_WINDOW (dialog), GTK_WINDOW (self));
-	gtk_dialog_run (GTK_DIALOG (dialog));
-	gtk_widget_destroy (GTK_WIDGET (dialog));
+	modest_maemo_show_dialog_and_forget (GTK_WINDOW (self), GTK_DIALOG (dialog));
 	
 	g_free (account_name);
 }

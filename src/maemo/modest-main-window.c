@@ -455,6 +455,11 @@ on_sendqueue_error_happened (TnySendQueue *self, TnyHeader *header, TnyMsg *msg,
 {
 	if (err) {
 		printf ("DEBUG: %s: err->code=%d, err->message=%s\n", __FUNCTION__, err->code, err->message);
+
+		if (err->code == TNY_ACCOUNT_ERROR_TRY_CONNECT_USER_CANCEL)
+			/* Don't show waste the user's time by showing him a dialog telling him
+			 * that he has just cancelled something: */
+			return;
 	}
 
 	/* Get the account name: */

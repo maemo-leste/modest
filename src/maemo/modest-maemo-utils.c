@@ -525,7 +525,23 @@ modest_maemo_show_information_note_and_forget (GtkWindow *parent_window, const g
 	gtk_widget_show (GTK_WIDGET (dialog));
 }
 
+#if 0
+static void
+on_hide (GtkDialog *dialog, gpointer user_data)
+{
+	/* Just destroy the dialog: */
+	gtk_widget_destroy (GTK_WIDGET (dialog));
+}
+#endif
 
+void modest_maemo_show_dialog_and_forget (GtkWindow *parent_window, GtkDialog *dialog)
+{
+	gtk_window_set_transient_for (GTK_WINDOW (dialog), parent_window);
+	
+	/* Destroy the dialog when it is closed: */
+	g_signal_connect (G_OBJECT (dialog), "response", G_CALLBACK (on_response), NULL);
+	gtk_widget_show (GTK_WIDGET (dialog));
+}
 
 void
 modest_maemo_set_thumbable_scrollbar (GtkScrolledWindow *win, gboolean thumbable)
@@ -535,3 +551,4 @@ modest_maemo_set_thumbable_scrollbar (GtkScrolledWindow *win, gboolean thumbable
 	hildon_helper_set_thumb_scrollbar (win, thumbable);
 #endif /* MODEST_HAVE_HILDON1_WIDGETS */
 }
+

@@ -132,6 +132,16 @@ void modest_maemo_utils_setup_images_filechooser (GtkFileChooser *chooser);
  */
 void modest_maemo_show_information_note_and_forget (GtkWindow *parent_window, const gchar* message);
 
+/** modest_maemo_show_dialog_and_forget:
+ * @parent_window: The window for which the note should be transient.
+ * @message: The dialog to show.
+ * 
+ * Show the dialog and destroy it when it is closed, without 
+ * blocking. Use this when you don't want to use gtk_dialog_run(), which might lead 
+ * to hangs.
+ */
+void modest_maemo_show_dialog_and_forget (GtkWindow *parent_window, GtkDialog *dialog);
+
 
 void modest_maemo_set_thumbable_scrollbar (GtkScrolledWindow *win, gboolean thumbable);
 

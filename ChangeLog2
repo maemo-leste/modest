@@ -1,5 +1,42 @@
 2007-07-09  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/maemo/modest-maemo-utils.c: (on_hide),
+	(modest_maemo_show_dialog_and_forget): Handle the response, because 
+	the window is not even hidden by default.
+
+	* src/maemo/modest-account-view-window.c: (on_edit_button_clicked):
+	* src/modest-ui-actions.c: (modest_ui_actions_on_accounts):
+	Use modest_maemo_show_dialog_and_forget() instead of gtk_dialog_run() 
+	which seems to prevent some modality problems.
+
+	* src/maemo/modest-main-window.c: (on_sendqueue_error_happened):
+	Ignore user cancellation errors.
+
+	* src/modest-account-mgr-helpers.h:
+	* src/modest-account-mgr-helpers.c:
+	Added modest_server_account_get_password() and 
+	modest_server_account_get_has_password() to avoid direct use of 
+	conf enums.
+
+	* src/maemo/modest-account-settings-dialog.h:
+	* src/maemo/modest-account-settings-dialog.c:
+	(modest_account_settings_dialog_init): Store the notebook so we can 
+	use it later.
+	Added modest_account_settings_dialog_switch_to_user_info().
+
+	* src/modest-tny-account-store.c: 
+	(get_password): When the password in the account settings is wrong (we think), 
+	show the relevant page of the account settings dialog, in the mainloop.
+	However, we currently get many of these at once because cancel does not 
+	seem to cancel.
+	(forget_password): Do not forget the password 
+	from the account settings, because this causes side-effects when 
+	tinymail seems to call it at strange time, maybe because of how we 
+	are cancelling get_password().
+	(modest_tny_account_store_alert): Ignore user cancellations.
+
+2007-07-09  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/maemo/modest-maemo-utils.h:
 	* src/maemo/modest-maemo-utils.c: 
 	Added modest_maemo_show_information_note_and_forget() for use instead of 

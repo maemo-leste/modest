@@ -316,12 +316,31 @@ modest_server_account_set_username_has_succeeded (ModestAccountMgr *self, const 
  * @account_name: The name of a server account.
  * @password: The new password.
  *
- * Sets the password this server account.
+ * Sets the password for this server account.
  */
 void
 modest_server_account_set_password (ModestAccountMgr *self, const gchar* account_name, 
 	const gchar* password);
-			 
+	
+/**
+ * modest_server_account_get_password:
+ * @self: a ModestAccountMgr instance
+ * @account_name: The name of a server account.
+ *
+ * Gets the password for this server account from the account settings.
+ */
+gchar*
+modest_server_account_get_password (ModestAccountMgr *self, const gchar* account_name);
+
+/**
+ * modest_server_account_get_has_password:
+ * @self: a ModestAccountMgr instance
+ * @account_name: The name of a server account.
+ *
+ * Gets whether a password has been set for this server account in the account settings.
+ */
+gboolean
+modest_server_account_get_has_password (ModestAccountMgr *self, const gchar* account_name);	 
 
 /**
  * modest_server_account_modest_server_account_get_hostnameget_username:
