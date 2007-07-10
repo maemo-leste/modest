@@ -143,7 +143,7 @@ modest_easysetup_wizard_dialog_finalize (GObject *object)
 }
 
 static void
-show_error (GtkWindow *parent_window, const gchar* text);
+show_error (GtkWidget *parent_widget, const gchar* text);
 
 static gboolean
 create_account (ModestEasysetupWizardDialog *self, gboolean enabled);
@@ -206,7 +206,7 @@ static GList* check_for_supported_auth_methods(ModestEasysetupWizardDialog* acco
 	if(error == NULL || error->domain != modest_maemo_utils_get_supported_secure_authentication_error_quark() ||
 			error->code != MODEST_MAEMO_UTILS_GET_SUPPORTED_SECURE_AUTHENTICATION_ERROR_CANCELED)
 	{
-		show_error (GTK_WINDOW (account_wizard), _("Could not discover supported secure authentication methods."));
+		show_error (GTK_WIDGET(account_wizard), _("Could not discover supported secure authentication methods."));
 	}
 
 	if(error != NULL) g_error_free(error);
@@ -350,19 +350,18 @@ on_combo_account_serviceprovider (GtkComboBox *widget, gpointer user_data)
 static void
 on_entry_max (ModestValidatingEntry *self, gpointer user_data)
 {
-	ModestEasysetupWizardDialog *dialog = MODEST_EASYSETUP_WIZARD_DIALOG (user_data);
-	show_error (GTK_WINDOW (dialog), _CS("ckdg_ib_maximum_characters_reached"));
+	/* ModestEasysetupWizardDialog *dialog = MODEST_EASYSETUP_WIZARD_DIALOG (user_data); */
+	show_error (GTK_WIDGET (self), _CS("ckdg_ib_maximum_characters_reached"));
 }
 
 static void
 on_entry_invalid_character (ModestValidatingEntry *self, const gchar* character, gpointer user_data)
 {
-	ModestEasysetupWizardDialog *dialog = MODEST_EASYSETUP_WIZARD_DIALOG (user_data);	
+	/* ModestEasysetupWizardDialog *dialog = MODEST_EASYSETUP_WIZARD_DIALOG (user_data); */
 	/* We could add a special case for whitespace here 
 	if (character == NULL) ...
 	*/
-	hildon_banner_show_information (
-						GTK_WIDGET(dialog), NULL, _("ckdg_ib_illegal_characters_entered"));
+	show_error (GTK_WIDGET (self), _CS("ckdg_ib_illegal_characters_entered"));
 }
 
 static GtkWidget*
@@ -1504,8 +1503,11 @@ modest_easysetup_wizard_dialog_class_init (ModestEasysetupWizardDialogClass *kla
 }
  
 static void
-show_error (GtkWindow *parent_window, const gchar* text)
+show_error (GtkWidget *parent_widget, const gchar* text)
 {
+	hildon_banner_show_information(parent_widget, NULL, text);
+	
+#if 0
 	GtkDialog *dialog = GTK_DIALOG (hildon_note_new_information (parent_window, text));
 	/*
 	  GtkDialog *dialog = GTK_DIALOG (gtk_message_dialog_new (parent_window,
@@ -1517,6 +1519,7 @@ show_error (GtkWindow *parent_window, const gchar* text)
 		 
 	gtk_dialog_run (dialog);
 	gtk_widget_destroy (GTK_WIDGET (dialog));
+#endif
 }
 
 /** Attempt to create the account from the information that the user has entered.
@@ -1639,7 +1642,7 @@ create_account (ModestEasysetupWizardDialog *self, gboolean enabled)
 	
 	if (!created) {
 		/* TODO: Provide a Logical ID for the text: */
-		show_error (GTK_WINDOW (self), _("An error occurred while creating the incoming account."));
+		show_error (GTK_WIDGET (self), _("An error occurred while creating the incoming account."));
 		return FALSE;	
 	}
 	
@@ -1712,7 +1715,7 @@ create_account (ModestEasysetupWizardDialog *self, gboolean enabled)
 		
 	if (!created) {
 		/* TODO: Provide a Logical ID for the text: */
-		show_error (GTK_WINDOW (self), _("An error occurred while creating the outgoing account."));
+		show_error (GTK_WIDGET (self), _("An error occurred while creating the outgoing account."));
 		return FALSE;	
 	}
 	
@@ -1727,7 +1730,7 @@ create_account (ModestEasysetupWizardDialog *self, gboolean enabled)
 	
 	if (!created) {
 		/* TODO: Provide a Logical ID for the text: */
-		show_error (GTK_WINDOW (self), _("An error occurred while creating the account."));
+		show_error (GTK_WIDGET (self), _("An error occurred while creating the account."));
 		return FALSE;	
 	}
 

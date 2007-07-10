@@ -1,3 +1,17 @@
+2007-07-10   Murray Cumming  <murrayc@murrayc.com>
+
+	* src/maemo/easysetup/modest-easysetup-wizard.c: (show_error):
+	Take a parent widget instead of a parent window, and 
+	implement this with hildon_banner_show_information() instead.
+	Non-Maemo builds can just ifdef that there.
+	This fixed projects.maemo.org bug NB#62766.
+
+	(on_entry_invalid_character): Use show_error() again instead 
+	of using hildon directly, and use the _CS() macro to use the correct 
+	translation domain.
+	(create_account), (check_for_supported_auth_methods), (on_entry_max):
+	Pass a widget instead od a window to show_error().
+
 2007-07-10  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/modest-tny-account-store.c: (modest_tny_account_store_alert):
