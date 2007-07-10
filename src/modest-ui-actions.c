@@ -254,8 +254,8 @@ headers_action_delete (TnyHeader *header,
 	g_object_unref (G_OBJECT (mail_op));
 
 	/* refilter treemodel to hide marked-as-deleted rows */
-	if (MODEST_IS_HEADER_VIEW (user_data))
-		modest_header_view_refilter (MODEST_HEADER_VIEW (user_data));
+/* 	if (MODEST_IS_HEADER_VIEW (user_data)) */
+/* 		modest_header_view_refilter (MODEST_HEADER_VIEW (user_data)); */
 }
 
 void
