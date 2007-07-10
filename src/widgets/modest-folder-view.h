@@ -208,6 +208,17 @@ modest_folder_view_cut_selection (ModestFolderView *folder_view);
 
 
 /**
+ * modest_folder_view_select_folder
+ * @self: a #ModestFolderView
+ * @folder: a #TnyFolder
+ * @after_change: should we select directly (TRUE), or after the first change to the view (FALSE)
+ *
+ * select the given TnyFolder in the folder;
+ * return TRUE if it succeeded, FALSE otherwise.
+ **/
+gboolean modest_folder_view_select_folder (ModestFolderView *self, TnyFolder *folder, gboolean after_change);
+
+/**
  * modest_folder_view_paste_selection:
  * @self: a #ModestFolderView
  * @folders: ouput parameter with a #TnyList of folders which will be returned.

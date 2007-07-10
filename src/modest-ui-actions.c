@@ -2170,6 +2170,7 @@ modest_ui_actions_new_folder_error_handler (ModestMailOperation *mail_op,
 	                                    modest_mail_operation_get_error (mail_op)->message);*/
 }
 
+
 void 
 modest_ui_actions_on_new_folder (GtkAction *action, ModestMainWindow *main_window)
 {
@@ -2217,6 +2218,14 @@ modest_ui_actions_on_new_folder (GtkAction *action, ModestMainWindow *main_windo
 										  parent_folder,
 										  (const gchar *) folder_name);
 				if (new_folder) {
+					if (main_window) {
+						folder_view = modest_main_window_get_child_widget (main_window,
+												   MODEST_WIDGET_TYPE_FOLDER_VIEW);
+						if (folder_view)
+							modest_folder_view_select_folder (MODEST_FOLDER_VIEW(folder_view), 
+											  new_folder, TRUE);
+					}
+
 					g_object_unref (new_folder);
 					finished = TRUE;
 				}
