@@ -37,6 +37,7 @@
 #include <tny-camel-pop-store-account.h>
 #include <tny-camel-pop-folder.h>
 #include <tny-camel-imap-folder.h>
+#include <tny-camel-mem-stream.h>
 #include <tny-simple-list.h>
 #include <tny-send-queue.h>
 #include <tny-status.h>
@@ -56,6 +57,7 @@
 #include "modest-mail-operation.h"
 
 #define KB 1024
+#define GET_SIZE_BUFFER_SIZE 128
 
 /* 'private'/'protected' functions */
 static void modest_mail_operation_class_init (ModestMailOperationClass *klass);
@@ -126,6 +128,44 @@ typedef struct _XFerMsgAsyncHelper
 	XferMsgsAsynUserCallback user_callback;	
 	gpointer user_data;
 } XFerMsgAsyncHelper;
+
+typedef void (*ModestMailOperationCreateMsgCallback) (ModestMailOperation *mail_op,
+						      TnyMsg *msg,
+						      gpointer userdata);
+
+static void          modest_mail_operation_create_msg (ModestMailOperation *self,
+						       const gchar *from, const gchar *to,
+						       const gchar *cc, const gchar *bcc,
+						       const gchar *subject, const gchar *plain_body,
+						       const gchar *html_body, const GList *attachments_list,
+						       TnyHeaderFlags priority_flags,
+						       ModestMailOperationCreateMsgCallback callback,
+						       gpointer userdata);
+
+static gboolean      idle_notify_queue (gpointer data);
+typedef struct
+{
+	ModestMailOperation *mail_op;
+	gchar *from;
+	gchar *to;
+	gchar *cc;
+	gchar *bcc;
+	gchar *subject;
+	gchar *plain_body;
+	gchar *html_body;
+	GList *attachments_list;
+	TnyHeaderFlags priority_flags;
+	ModestMailOperationCreateMsgCallback callback;
+	gpointer userdata;
+} CreateMsgInfo;
+
+typedef struct
+{
+	ModestMailOperation *mail_op;
+	TnyMsg *msg;
+	ModestMailOperationCreateMsgCallback callback;
+	gpointer userdata;
+} CreateMsgIdleInfo;
 
 /* globals */
 static GObjectClass *parent_class = NULL;
@@ -527,6 +567,165 @@ modest_mail_operation_send_mail (ModestMailOperation *self,
 	modest_mail_operation_notify_end (self);
 }
 
+static gboolean
+idle_create_msg_cb (gpointer idle_data)
+{
+	CreateMsgIdleInfo *info = (CreateMsgIdleInfo *) idle_data;
+
+	gdk_threads_enter ();
+	info->callback (info->mail_op, info->msg, info->userdata);
+	gdk_threads_leave ();
+	g_object_unref (info->mail_op);
+	if (info->msg)
+		g_object_unref (info->msg);
+	g_slice_free (CreateMsgIdleInfo, info);
+
+	return FALSE;
+}
+
+static gpointer 
+create_msg_thread (gpointer thread_data)
+{
+	CreateMsgInfo *info = (CreateMsgInfo *) thread_data;
+	TnyMsg *new_msg = NULL;
+	ModestMailOperationPrivate *priv;
+
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(info->mail_op);
+	if (info->html_body == NULL) {
+		new_msg = modest_tny_msg_new (info->to, info->from, info->cc, 
+					      info->bcc, info->subject, info->plain_body, 
+					      info->attachments_list); /* FIXME: attachments */
+	} else {
+		new_msg = modest_tny_msg_new_html_plain (info->to, info->from, info->cc,
+							 info->bcc, info->subject, info->html_body,
+							 info->plain_body, info->attachments_list);
+	}
+
+	if (new_msg) {
+		TnyHeader *header;
+		/* Set priority flags in message */
+		header = tny_msg_get_header (new_msg);
+		if (info->priority_flags != 0)
+			tny_header_set_flags (header, info->priority_flags);
+		if (info->attachments_list != NULL) {
+			tny_header_set_flags (header, TNY_HEADER_FLAG_ATTACHMENTS);
+		}
+		g_object_unref (G_OBJECT(header));
+	} else {
+		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
+		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
+			     MODEST_MAIL_OPERATION_ERROR_INSTANCE_CREATION_FAILED,
+			     "modest: failed to create a new msg\n");
+	}
+
+
+	g_free (info->to);
+	g_free (info->from);
+	g_free (info->cc);
+	g_free (info->bcc);
+	g_free (info->plain_body);
+	g_free (info->html_body);
+	g_free (info->subject);
+	g_list_foreach (info->attachments_list, (GFunc) g_object_unref, NULL);
+	g_list_free (info->attachments_list);
+
+	if (info->callback) {
+		CreateMsgIdleInfo *idle_info;
+		idle_info = g_slice_new0 (CreateMsgIdleInfo);
+		idle_info->mail_op = info->mail_op;
+		g_object_ref (info->mail_op);
+		idle_info->msg = new_msg;
+		if (new_msg)
+			g_object_ref (new_msg);
+		idle_info->callback = info->callback;
+		idle_info->userdata = info->userdata;
+		g_idle_add (idle_create_msg_cb, idle_info);
+	} else {
+		g_idle_add (idle_notify_queue, g_object_ref (info->mail_op));
+	}
+
+	g_object_unref (info->mail_op);
+	g_slice_free (CreateMsgInfo, info);
+	return NULL;
+}
+
+void
+modest_mail_operation_create_msg (ModestMailOperation *self,
+				  const gchar *from, const gchar *to,
+				  const gchar *cc, const gchar *bcc,
+				  const gchar *subject, const gchar *plain_body,
+				  const gchar *html_body,
+				  const GList *attachments_list,
+				  TnyHeaderFlags priority_flags,
+				  ModestMailOperationCreateMsgCallback callback,
+				  gpointer userdata)
+{
+	CreateMsgInfo *info = NULL;
+
+	info = g_slice_new0 (CreateMsgInfo);
+	info->mail_op = self;
+	g_object_ref (self);
+
+	info->from = g_strdup (from);
+	info->to = g_strdup (to);
+	info->cc = g_strdup (cc);
+	info->subject = g_strdup (subject);
+	info->plain_body = g_strdup (plain_body);
+	info->html_body = g_strdup (html_body);
+	info->attachments_list = g_list_copy ((GList *) attachments_list);
+	g_list_foreach (info->attachments_list, (GFunc) g_object_ref, NULL);
+	info->priority_flags = priority_flags;
+
+	info->callback = callback;
+	info->userdata = userdata;
+
+	g_thread_create (create_msg_thread, info, FALSE, NULL);
+}
+
+typedef struct
+{
+	TnyTransportAccount *transport_account;
+	TnyMsg *draft_msg;
+} SendNewMailInfo;
+
+static void
+modest_mail_operation_send_new_mail_cb (ModestMailOperation *self,
+					TnyMsg *msg,
+					gpointer userdata)
+{
+	SendNewMailInfo *info = (SendNewMailInfo *) userdata;
+	TnyFolder *folder;
+	TnyHeader *header;
+
+	if (!msg) {
+		goto end;
+	}
+
+	/* Call mail operation */
+	modest_mail_operation_send_mail (self, info->transport_account, msg);
+
+	folder = modest_tny_account_get_special_folder (TNY_ACCOUNT (info->transport_account), TNY_FOLDER_TYPE_DRAFTS);
+	if (folder) {
+		if (info->draft_msg != NULL) {
+			header = tny_msg_get_header (info->draft_msg);
+			/* Note: This can fail (with a warning) if the message is not really already in a folder,
+			 * because this function requires it to have a UID. */
+			tny_folder_remove_msg (folder, header, NULL);
+			tny_header_set_flags (header, TNY_HEADER_FLAG_DELETED);
+			tny_header_set_flags (header, TNY_HEADER_FLAG_SEEN);
+			g_object_unref (header);
+		}
+	}
+
+end:
+	if (info->draft_msg)
+		g_object_unref (info->draft_msg);
+	if (info->transport_account)
+		g_object_unref (info->transport_account);
+	g_slice_free (SendNewMailInfo, info);
+	modest_mail_operation_notify_end (self);
+}
+
 void
 modest_mail_operation_send_new_mail (ModestMailOperation *self,
 				     TnyTransportAccount *transport_account,
@@ -538,10 +737,8 @@ modest_mail_operation_send_new_mail (ModestMailOperation *self,
 				     const GList *attachments_list,
 				     TnyHeaderFlags priority_flags)
 {
-	TnyMsg *new_msg = NULL;
-	TnyFolder *folder = NULL;
-	TnyHeader *header = NULL;
 	ModestMailOperationPrivate *priv = NULL;
+	SendNewMailInfo *info;
 
 	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
 	g_return_if_fail (TNY_IS_TRANSPORT_ACCOUNT (transport_account));
@@ -557,75 +754,37 @@ modest_mail_operation_send_new_mail (ModestMailOperation *self,
 			     _("Error trying to send a mail. You need to set at least one recipient"));
 		return;
 	}
+	info = g_slice_new0 (SendNewMailInfo);
+	info->transport_account = transport_account;
+	if (transport_account)
+		g_object_ref (transport_account);
+	info->draft_msg = draft_msg;
+	if (draft_msg)
+		g_object_ref (draft_msg);
+	modest_mail_operation_create_msg (self, from, to, cc, bcc, subject, plain_body, html_body,
+					  attachments_list, priority_flags,
+					  modest_mail_operation_send_new_mail_cb, info);
 
-	if (html_body == NULL) {
-		new_msg = modest_tny_msg_new (to, from, cc, bcc, subject, plain_body, (GSList *) attachments_list); /* FIXME: attachments */
-	} else {
-		new_msg = modest_tny_msg_new_html_plain (to, from, cc, bcc, subject, html_body, plain_body, (GSList *) attachments_list);
-	}
-	if (!new_msg) {
-		g_printerr ("modest: failed to create a new msg\n");
-		return;
-	}
-
-	/* Set priority flags in message */
-	header = tny_msg_get_header (new_msg);
-	if (priority_flags != 0)
-		tny_header_set_flags (header, priority_flags);
-	if (attachments_list != NULL) {
-		tny_header_set_flags (header, TNY_HEADER_FLAG_ATTACHMENTS);
-	}
-	g_object_unref (G_OBJECT(header));
-
-	/* Call mail operation */
-	modest_mail_operation_send_mail (self, transport_account, new_msg);
-
-	folder = modest_tny_account_get_special_folder (TNY_ACCOUNT (transport_account), TNY_FOLDER_TYPE_DRAFTS);
-	if (folder) {
-		if (draft_msg != NULL) {
-			header = tny_msg_get_header (draft_msg);
-			/* Note: This can fail (with a warning) if the message is not really already in a folder,
-			 * because this function requires it to have a UID. */
-			tny_folder_remove_msg (folder, header, NULL);
-			tny_header_set_flags (header, TNY_HEADER_FLAG_DELETED);
-			tny_header_set_flags (header, TNY_HEADER_FLAG_SEEN);
-			g_object_unref (header);
-		}
-	}
-
-	/* Free */
-	g_object_unref (G_OBJECT (new_msg));
 }
 
-TnyMsg*
-modest_mail_operation_save_to_drafts (ModestMailOperation *self,
-				      TnyTransportAccount *transport_account,
-				      TnyMsg *draft_msg,
-				      const gchar *from,  const gchar *to,
-				      const gchar *cc,  const gchar *bcc,
-				      const gchar *subject, const gchar *plain_body,
-				      const gchar *html_body,
-				      const GList *attachments_list,
-				      TnyHeaderFlags priority_flags)
+typedef struct
 {
-	TnyMsg *msg = NULL;
+	TnyTransportAccount *transport_account;
+	TnyMsg *draft_msg;
+	ModestMsgEditWindow *edit_window;
+} SaveToDraftsInfo;
+
+static void
+modest_mail_operation_save_to_drafts_cb (ModestMailOperation *self,
+					 TnyMsg *msg,
+					 gpointer userdata)
+{
 	TnyFolder *folder = NULL;
 	TnyHeader *header = NULL;
 	ModestMailOperationPrivate *priv = NULL;
-
-	g_return_val_if_fail (MODEST_IS_MAIL_OPERATION (self), NULL);
-	g_return_val_if_fail (TNY_IS_TRANSPORT_ACCOUNT (transport_account), NULL);
+	SaveToDraftsInfo *info = (SaveToDraftsInfo *) userdata;
 
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
-
-	/* Get account and set it into mail_operation */
-	priv->account = g_object_ref (transport_account);
-
-	if (html_body == NULL) {
-		msg = modest_tny_msg_new (to, from, cc, bcc, subject, plain_body, (GSList *) attachments_list); /* FIXME: attachments */
-	} else {
-		msg = modest_tny_msg_new_html_plain (to, from, cc, bcc, subject, html_body, plain_body, (GSList *) attachments_list);
-	}
 	if (!msg) {
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
@@ -634,14 +793,7 @@ modest_mail_operation_save_to_drafts (ModestMailOperation *self,
 		goto end;
 	}
 
-	/* add priority flags */
-	header = tny_msg_get_header (msg);
-	tny_header_set_flags (header, priority_flags);
-	if (attachments_list != NULL)
-		tny_header_set_flags (header, TNY_HEADER_FLAG_ATTACHMENTS);
-	g_object_unref (G_OBJECT(header));
-
-	folder = modest_tny_account_get_special_folder (TNY_ACCOUNT (transport_account), TNY_FOLDER_TYPE_DRAFTS);
+	folder = modest_tny_account_get_special_folder (TNY_ACCOUNT (info->transport_account), TNY_FOLDER_TYPE_DRAFTS);
 	if (!folder) {
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
@@ -650,8 +802,8 @@ modest_mail_operation_save_to_drafts (ModestMailOperation *self,
 		goto end;
 	}
 
-	if (draft_msg != NULL) {
-		header = tny_msg_get_header (draft_msg);
+	if (info->draft_msg != NULL) {
+		header = tny_msg_get_header (info->draft_msg);
 		/* Remove the old draft expunging it */
 		tny_folder_remove_msg (folder, header, NULL);
 		tny_header_set_flags (header, TNY_HEADER_FLAG_DELETED);
@@ -668,12 +820,60 @@ modest_mail_operation_save_to_drafts (ModestMailOperation *self,
 	else
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 
+	if (info->edit_window)
+		modest_msg_edit_window_set_draft (info->edit_window, msg);
+
+
 end:
 	if (folder)
 		g_object_unref (G_OBJECT(folder));
+	if (info->edit_window)
+		g_object_unref (G_OBJECT(info->edit_window));
+	if (info->draft_msg)
+		g_object_unref (G_OBJECT (info->draft_msg));
+	if (info->transport_account)
+		g_object_unref (G_OBJECT(info->transport_account));
+	g_slice_free (SaveToDraftsInfo, info);
 
  	modest_mail_operation_notify_end (self);
-	return msg;
+}
+
+void
+modest_mail_operation_save_to_drafts (ModestMailOperation *self,
+				      TnyTransportAccount *transport_account,
+				      TnyMsg *draft_msg,
+				      ModestMsgEditWindow *edit_window,
+				      const gchar *from,  const gchar *to,
+				      const gchar *cc,  const gchar *bcc,
+				      const gchar *subject, const gchar *plain_body,
+				      const gchar *html_body,
+				      const GList *attachments_list,
+				      TnyHeaderFlags priority_flags)
+{
+	ModestMailOperationPrivate *priv = NULL;
+	SaveToDraftsInfo *info = NULL;
+
+	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
+	g_return_if_fail (TNY_IS_TRANSPORT_ACCOUNT (transport_account));
+
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
+
+	/* Get account and set it into mail_operation */
+	priv->account = g_object_ref (transport_account);
+
+	info = g_slice_new0 (SaveToDraftsInfo);
+	info->transport_account = g_object_ref (transport_account);
+	info->draft_msg = draft_msg;
+	if (draft_msg)
+		g_object_ref (draft_msg);
+	info->edit_window = edit_window;
+	if (edit_window)
+		g_object_ref (edit_window);
+
+	modest_mail_operation_create_msg (self, from, to, cc, bcc, subject, plain_body, html_body,
+					  attachments_list, priority_flags,
+					  modest_mail_operation_save_to_drafts_cb, info);
+
 }
 
 typedef struct 
@@ -689,6 +889,15 @@ typedef struct
 	gpointer user_data;
 	gint new_headers;
 } UpdateAccountInfo;
+
+typedef struct
+{
+	ModestMailOperation *mail_op;
+	TnyMimePart *mime_part;
+	gssize size;
+	GetMimePartSizeCallback callback;
+	gpointer userdata;
+} GetMimePartSizeInfo;
 
 /***** I N T E R N A L    F O L D E R    O B S E R V E R *****/
 /* We use this folder observer to track the headers that have been
@@ -836,16 +1045,13 @@ idle_notify_progress_once (gpointer data)
 }
 
 /* 
- * Used by update_account_thread to notify the queue from the main
+ * Used to notify the queue from the main
  * loop. We call it inside an idle call to achieve that
  */
 static gboolean
-idle_notify_update_account_queue (gpointer data)
+idle_notify_queue (gpointer data)
 {
 	ModestMailOperation *mail_op = MODEST_MAIL_OPERATION (data);
-	ModestMailOperationPrivate *priv = NULL;
-
-	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(mail_op);
 
 	/* Do not need to block, the notify end will do it for us */	
 	modest_mail_operation_notify_end (mail_op);
@@ -1138,7 +1344,7 @@ update_account_thread (gpointer thr_user_data)
 	/* Notify about operation end. Note that the info could be
 	   freed before this idle happens, but the mail operation will
 	   be still alive */
-	g_idle_add (idle_notify_update_account_queue, g_object_ref (info->mail_op));
+	g_idle_add (idle_notify_queue, g_object_ref (info->mail_op));
 
 	/* Frees */
 	g_object_unref (query);
@@ -1622,6 +1828,99 @@ void modest_mail_operation_get_msg (ModestMailOperation *self,
 	}
 }
 
+static gboolean
+idle_get_mime_part_size_cb (gpointer userdata)
+{
+	GetMimePartSizeInfo *idle_info;
+
+	idle_info = (GetMimePartSizeInfo *) userdata;
+
+	gdk_threads_enter ();
+	idle_info->callback (idle_info->mail_op,
+			     idle_info->size,
+			     idle_info->userdata);
+	gdk_threads_leave ();
+
+	g_object_unref (idle_info->mail_op);
+	g_slice_free (GetMimePartSizeInfo, idle_info);
+
+	return FALSE;
+}
+
+static gpointer
+get_mime_part_size_thread (gpointer thr_user_data)
+{
+	GetMimePartSizeInfo *info;
+	gchar read_buffer[GET_SIZE_BUFFER_SIZE];
+	TnyStream *stream;
+	gssize readed_size;
+	gssize total = 0;
+	ModestMailOperationPrivate *priv;
+
+	info = (GetMimePartSizeInfo *) thr_user_data;
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (info->mail_op);
+
+	stream = tny_camel_mem_stream_new ();
+	tny_mime_part_decode_to_stream (info->mime_part, stream);
+	tny_stream_reset (stream);
+	if (tny_stream_is_eos (stream)) {
+		tny_stream_close (stream);
+		stream = tny_mime_part_get_stream (info->mime_part);
+	}
+	
+	while (!tny_stream_is_eos (stream)) {
+		readed_size = tny_stream_read (stream, read_buffer, GET_SIZE_BUFFER_SIZE);
+		total += readed_size;
+	}
+
+	if (info->callback) {
+		GetMimePartSizeInfo *idle_info;
+
+		idle_info = g_slice_new0 (GetMimePartSizeInfo);
+		idle_info->mail_op = g_object_ref (info->mail_op);
+		idle_info->size = total;
+		idle_info->callback = info->callback;
+		idle_info->userdata = info->userdata;
+		g_idle_add (idle_get_mime_part_size_cb, idle_info);
+	}
+
+	g_idle_add (idle_notify_queue, g_object_ref (info->mail_op));
+
+	g_object_unref (info->mail_op);
+	g_object_unref (stream);
+	g_object_unref (info->mime_part);
+	g_slice_free  (GetMimePartSizeInfo, info);
+
+	return NULL;
+}
+
+void          
+modest_mail_operation_get_mime_part_size (ModestMailOperation *self,
+					  TnyMimePart *part,
+					  GetMimePartSizeCallback user_callback,
+					  gpointer user_data,
+					  GDestroyNotify notify)
+{
+	GetMimePartSizeInfo *info;
+	ModestMailOperationPrivate *priv;
+	GThread *thread;
+	
+	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
+	g_return_if_fail (TNY_IS_MIME_PART (part));
+	
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
+
+	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
+	info = g_slice_new0 (GetMimePartSizeInfo);
+	info->mail_op = g_object_ref (self);
+	info->mime_part = g_object_ref (part);
+	info->callback = user_callback;
+	info->userdata = user_data;
+
+	thread = g_thread_create (get_mime_part_size_thread, info, FALSE, NULL);
+
+}
+
 static void
 get_msg_cb (TnyFolder *folder, 
 	    gboolean cancelled, 
@@ -1836,7 +2135,7 @@ get_msgs_full_thread (gpointer thr_user_data)
 		priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
 
 	/* Notify about operation end */
-	g_idle_add (idle_notify_update_account_queue, g_object_ref (info->mail_op));
+	g_idle_add (idle_notify_queue, g_object_ref (info->mail_op));
 
 	/* Free thread resources. Will be called after all previous idles */
 	g_idle_add_full (G_PRIORITY_DEFAULT_IDLE + 1, get_msgs_full_destroyer, info, NULL);

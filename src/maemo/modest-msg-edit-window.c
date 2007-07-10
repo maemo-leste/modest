@@ -1082,6 +1082,7 @@ modest_msg_edit_window_get_msg_data (ModestMsgEditWindow *edit_window)
 	while (cursor) {
 		if (!(TNY_IS_MIME_PART(cursor->data))) {
 			g_warning ("strange data in attachment list");
+			cursor = g_list_next (cursor);
 			continue;
 		}
 		data->attachments = g_list_append (data->attachments,
@@ -2665,6 +2666,9 @@ modest_msg_edit_window_clipboard_owner_change (GtkClipboard *clipboard,
 
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
 	parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
+
+	if (!GTK_WIDGET_VISIBLE (window))
+		return;
 	has_selection = gtk_clipboard_wait_for_targets (clipboard, NULL, NULL);
 	focused = gtk_window_get_focus (GTK_WINDOW (window));
 

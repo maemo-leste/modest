@@ -39,6 +39,9 @@
 #include <modest-text-utils.h>
 #include <tny-msg.h>
 #include <tny-camel-mem-stream.h>
+#include <modest-mail-operation.h>
+#include <modest-mail-operation-queue.h>
+#include <modest-runtime.h>
 
 static GObjectClass *parent_class = NULL;
 
@@ -62,7 +65,6 @@ struct _ModestAttachmentViewPriv
 };
 
 #define UNKNOWN_FILE_ICON "qgn_list_gene_unknown_file"
-#define GET_SIZE_BUFFER_SIZE 128
 
 #define MODEST_ATTACHMENT_VIEW_GET_PRIVATE(o)	\
 	(G_TYPE_INSTANCE_GET_PRIVATE ((o), MODEST_TYPE_ATTACHMENT_VIEW, ModestAttachmentViewPriv))
@@ -86,8 +88,31 @@ static void tny_mime_part_view_init (gpointer g, gpointer iface_data);
 
 
 
-static gboolean get_size_idle_func (gpointer data);
 static void update_filename_request (ModestAttachmentView *self);
+
+static void get_mime_part_size_cb (ModestMailOperation *mail_op,
+				   gssize size,
+				   gpointer userdata);
+
+
+static void 
+get_mime_part_size_cb (ModestMailOperation *mail_op,
+		       gssize size,
+		       gpointer userdata)
+{
+	ModestAttachmentView *att_view = MODEST_ATTACHMENT_VIEW (userdata);
+	ModestAttachmentViewPriv *priv = MODEST_ATTACHMENT_VIEW_GET_PRIVATE (att_view);
+	gchar *size_str;
+	gchar *label_text;
+
+	if (GTK_WIDGET_VISIBLE (att_view)) {
+		size_str = modest_text_utils_get_display_size (size);
+		label_text = g_strdup_printf (" (%s)", size_str);
+		g_free (size_str);
+		gtk_label_set_text (GTK_LABEL (priv->size_view), label_text);
+		g_free (label_text);
+	}
+}
 
 
 
@@ -128,50 +153,6 @@ modest_attachment_view_set_part (TnyMimePartView *self, TnyMimePart *mime_part)
 }
 
 
-static gboolean
-get_size_idle_func (gpointer data)
-{	
-	ModestAttachmentView *self = (ModestAttachmentView *) data;
-	ModestAttachmentViewPriv *priv = MODEST_ATTACHMENT_VIEW_GET_PRIVATE (self);
-	gssize readed_size;
-	gchar read_buffer[GET_SIZE_BUFFER_SIZE];
-	gchar *size_string;
-
-	if (priv->get_size_stream == NULL) {
-		priv->get_size_stream = tny_camel_mem_stream_new ();
-		tny_mime_part_decode_to_stream (priv->mime_part, priv->get_size_stream);
-		tny_stream_reset (priv->get_size_stream);
-		if (tny_stream_is_eos (priv->get_size_stream)) {
-			tny_stream_close (priv->get_size_stream);
-			priv->get_size_stream = tny_mime_part_get_stream (priv->mime_part);
-		}
-	}
-
-	readed_size = tny_stream_read (priv->get_size_stream, read_buffer, GET_SIZE_BUFFER_SIZE);
-	priv->size += readed_size;
-
-	if (tny_stream_is_eos (priv->get_size_stream)) {
-		gchar *display_size;
-
-		gdk_threads_enter ();
-
-		display_size = modest_text_utils_get_display_size (priv->size);
-		size_string = g_strdup_printf (" (%s)", display_size);
-		g_free (display_size);
-		gtk_label_set_text (GTK_LABEL (priv->size_view), size_string);
-		g_free (size_string);
-
-		g_object_unref (priv->get_size_stream);
-
-		gtk_widget_queue_resize (priv->size_view);
-		priv->get_size_stream = NULL;
-		priv->get_size_idle_id = 0;
-
-		gdk_threads_leave ();
-	}
-	return (priv->get_size_stream != NULL);
-}
-
 static void
 modest_attachment_view_set_part_default (TnyMimePartView *self, TnyMimePart *mime_part)
 {
@@ -189,16 +170,6 @@ modest_attachment_view_set_part_default (TnyMimePartView *self, TnyMimePart *mim
 	}
 
 	priv->mime_part = mime_part;
-
-	if (priv->get_size_idle_id != 0) {
-		g_source_remove (priv->get_size_idle_id);
-		priv->get_size_idle_id = 0;
-	}
-
-	if (priv->get_size_stream != NULL) {
-		g_object_unref (priv->get_size_stream);
-		priv->get_size_stream = NULL;
-	}
 
 	priv->size = 0;
 	priv->is_purged = tny_mime_part_is_purged (mime_part);
@@ -246,8 +217,14 @@ modest_attachment_view_set_part_default (TnyMimePartView *self, TnyMimePart *mim
 
 	gtk_label_set_text (GTK_LABEL (priv->size_view), "");
 
-	if (show_size)
-		priv->get_size_idle_id = g_idle_add ((GSourceFunc) get_size_idle_func, (gpointer) self);
+	if (show_size) {
+		ModestMailOperation *mail_op = 
+			modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_INFO, G_OBJECT (self));
+		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
+		modest_mail_operation_get_mime_part_size (mail_op, mime_part, get_mime_part_size_cb,
+							  self, NULL);
+		g_object_unref (mail_op);
+	}
 
 	gtk_widget_queue_draw (GTK_WIDGET (self));
 }

@@ -32,6 +32,7 @@
 
 #include <tny-transport-account.h>
 #include <tny-folder-store.h>
+#include <widgets/modest-msg-edit-window.h>
 
 G_BEGIN_DECLS
 
@@ -100,6 +101,18 @@ typedef void (*ErrorCheckingUserCallback) (ModestMailOperation *mail_op, gpointe
 typedef void (*GetMsgAsyncUserCallback) (ModestMailOperation *mail_op, 
 					 TnyHeader *header, 
 					 TnyMsg *msg, 
+					 gpointer user_data);
+
+/**
+ * GetMimePartSizeCallback:
+ *
+ * @mail_op: the current #ModestMailOperation.
+ * @size: size of the attachment
+ * @user_data: generic data passed to user defined function.
+ *
+ */
+typedef void (*GetMimePartSizeCallback) (ModestMailOperation *mail_op, 
+					 gssize size,
 					 gpointer user_data);
 
 /**
@@ -317,20 +330,20 @@ void    modest_mail_operation_send_new_mail   (ModestMailOperation *self,
  * #ModestMailOperation should not be added to any
  * #ModestMailOperationQueue
  *
- * Returns: the newly created message with an own reference.
   **/
-TnyMsg* modest_mail_operation_save_to_drafts   (ModestMailOperation *self,
-						TnyTransportAccount *transport_account,
-						TnyMsg *draft_msg,
-						const gchar *from,
-						const gchar *to,
-						const gchar *cc,
-						const gchar *bcc,
-						const gchar *subject,
-						const gchar *plain_body,
-						const gchar *html_body,
-						const GList *attachments_list,
-						TnyHeaderFlags priority_flags);
+void modest_mail_operation_save_to_drafts   (ModestMailOperation *self,
+					     TnyTransportAccount *transport_account,
+					     TnyMsg *draft_msg,
+					     ModestMsgEditWindow *edit_window,
+					     const gchar *from,
+					     const gchar *to,
+					     const gchar *cc,
+					     const gchar *bcc,
+					     const gchar *subject,
+					     const gchar *plain_body,
+					     const gchar *html_body,
+					     const GList *attachments_list,
+					     TnyHeaderFlags priority_flags);
 /**
  * modest_mail_operation_update_account:
  * @self: a #ModestMailOperation
@@ -523,6 +536,21 @@ void          modest_mail_operation_get_msgs_full   (ModestMailOperation *self,
 						     GetMsgAsyncUserCallback user_callback,
 						     gpointer user_data,
 						     GDestroyNotify notify);
+
+/**
+ * modest_mail_operation_get_mime_part_size:
+ * @self: a #ModestMailOperation
+ * @part: a #TnyMimePart
+ * @user_callback: a #GetMimePartSizeAsyncUserCallback
+ * @user_data: user data passed to the user callback
+ *
+ * gets the size of the mime part, simply getting all the stream.
+ */
+void          modest_mail_operation_get_mime_part_size (ModestMailOperation *self,
+							TnyMimePart *part,
+							GetMimePartSizeCallback user_callback,
+							gpointer user_data,
+							GDestroyNotify notify);
 
 /* Functions to control mail operations */
 /**

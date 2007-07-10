@@ -77,7 +77,7 @@ typedef enum _ModestTnyMsgReplyMode {
  */	 
 TnyMsg* modest_tny_msg_new (const gchar* mailto, const gchar* mailfrom, const gchar *cc,
 			    const gchar *bcc, const gchar* subject, const gchar *body,
-			    GSList *attachments);
+			    GList *attachments);
 
 /**
  * modest_tny_msg_new_html_plain:
@@ -97,7 +97,7 @@ TnyMsg* modest_tny_msg_new (const gchar* mailto, const gchar* mailfrom, const gc
 TnyMsg* modest_tny_msg_new_html_plain (const gchar* mailto, const gchar* mailfrom, const gchar *cc,
 				       const gchar *bcc, const gchar* subject, 
 				       const gchar *html_body, const gchar *plain_body,
-				       GSList *attachments);
+				       GList *attachments);
 
 /**
  * modest_tny_msg_find_body_part:

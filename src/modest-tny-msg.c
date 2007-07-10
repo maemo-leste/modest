@@ -35,6 +35,8 @@
 #include <modest-runtime.h>
 #include "modest-formatter.h"
 #include <tny-camel-stream.h>
+#include <tny-camel-mime-part.h>
+#include <camel/camel-stream-buffer.h>
 #include <camel/camel-stream-mem.h>
 #include <glib/gprintf.h>
 
@@ -56,7 +58,7 @@ static gboolean is_ascii(const gchar *s);
 TnyMsg*
 modest_tny_msg_new (const gchar* mailto, const gchar* from, const gchar *cc,
 		    const gchar *bcc, const gchar* subject, const gchar *body,
-		    GSList *attachments)
+		    GList *attachments)
 {
 	TnyMsg *new_msg;
 	TnyHeader *header;
@@ -89,7 +91,7 @@ modest_tny_msg_new (const gchar* mailto, const gchar* from, const gchar *cc,
 		       
 	/* Add attachments */
 	if (attachments)
-		add_attachments (new_msg, (GList*) attachments);
+		add_attachments (new_msg, attachments);
 
 	return new_msg;
 }
@@ -98,7 +100,7 @@ TnyMsg*
 modest_tny_msg_new_html_plain (const gchar* mailto, const gchar* from, const gchar *cc,
 			       const gchar *bcc, const gchar* subject, 
 			       const gchar *html_body, const gchar *plain_body,
-			       GSList *attachments)
+			       GList *attachments)
 {
 	TnyMsg *new_msg;
 	TnyHeader *header;
@@ -130,7 +132,7 @@ modest_tny_msg_new_html_plain (const gchar* mailto, const gchar* from, const gch
 	g_free (content_type);
 		       
 	/* Add attachments */
-	add_attachments (new_msg, (GList*) attachments);
+	add_attachments (new_msg, attachments);
 
 	return new_msg;
 }
@@ -223,7 +225,7 @@ copy_mime_part (TnyMimePart *part)
 	attachment_cid = tny_mime_part_get_content_id (part);
 	
 	/* fill the stream */
-	attachment_stream = tny_mime_part_get_stream (part);
+ 	attachment_stream = tny_mime_part_get_stream (part);
 	tny_stream_reset (attachment_stream);
 	tny_mime_part_construct_from_stream (result,
 					     attachment_stream,
