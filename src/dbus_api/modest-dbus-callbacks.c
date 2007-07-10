@@ -446,7 +446,7 @@ static gint on_compose_mail(GArray * arguments, gpointer data, osso_rpc_t * retv
 
 
 static TnyMsg *
-find_message_by_url (const char *uri, TnyFolder **folder_out, TnyAccount **ac_out)
+find_message_by_url (const char *uri,  TnyAccount **ac_out)
 {
 	ModestTnyAccountStore *astore;
 	TnyAccount            *account;
@@ -489,11 +489,9 @@ find_message_by_url (const char *uri, TnyFolder **folder_out, TnyAccount **ac_ou
 			tny_account_get_id (TNY_ACCOUNT(account)), uri);
 		goto out;
 	}
-	*folder = folder;
-
+	
 	g_debug ("%s: Found folder. (%s)\n",  __FUNCTION__, uri);
 	
-
 	msg = tny_folder_find_msg (folder, uri, &err);
 	
 	if (!msg) {
@@ -510,10 +508,8 @@ out:
 		*ac_out = NULL;
 	}
 
-	if (folder && !msg) {
+	if (folder)
 		g_object_unref (folder);
-		*folder_out = NULL;
-	}
 
 	return msg;
 }
@@ -534,7 +530,7 @@ on_idle_open_message (gpointer user_data)
 	uri = (char *) user_data;
 
 	g_debug ("%s: Trying to find msg by url: %s", __FUNCTION__, uri);
-	msg = find_message_by_url (uri, &folder, &account);
+	msg = find_message_by_url (uri, &account);
 	g_free (uri);
 
 	if (msg == NULL) {
@@ -543,8 +539,9 @@ on_idle_open_message (gpointer user_data)
 	}
 	g_debug ("  %s: Found message.", __FUNCTION__);
 
+	folder = tny_msg_get_folder (msg);
 	if (modest_tny_folder_get_local_folder_type (folder) == TNY_FOLDER_TYPE_DRAFTS) {
-		g_debug ("draft messages should be opened in edit mode... ");
+		g_debug ("TODO: draft messages should be opened in edit mode... ");
 	}
 
 	header = tny_msg_get_header (msg);
