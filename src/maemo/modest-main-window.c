@@ -2065,6 +2065,8 @@ on_show_account_action_activated  (GtkAction *action,
 									     acc_data->store_account->account_name);
 		modest_window_set_active_account (MODEST_WINDOW (self), acc_data->account_name);
 	}
+	
+	modest_folder_view_select_first_inbox_or_local (priv->folder_view);
 
 	/* Free */
 	modest_account_mgr_free_account_data (mgr, acc_data);
