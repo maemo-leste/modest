@@ -3122,7 +3122,7 @@ modest_ui_actions_on_check_names (GtkAction *action, ModestMsgEditWindow *window
 
 
 static GtkWidget*
-create_move_to_dialog (ModestWindow *win,
+create_move_to_dialog (GtkWindow *win,
 		       GtkWidget *folder_view,
 		       GtkWidget **tree_view)
 {
@@ -3157,6 +3157,8 @@ create_move_to_dialog (ModestWindow *win,
 		modest_folder_view_update_model (MODEST_FOLDER_VIEW (*tree_view), 
 						 TNY_ACCOUNT_STORE (modest_runtime_get_account_store ()));
 
+	modest_folder_view_show_non_move_folders(MODEST_FOLDER_VIEW (*tree_view), FALSE);
+	
 	gtk_container_add (GTK_CONTAINER (scroll), *tree_view);
 
 	/* Add scroll to dialog */
@@ -3480,9 +3482,10 @@ modest_ui_actions_on_main_window_move_to (GtkAction *action,
 							   MODEST_WIDGET_TYPE_HEADER_VIEW);
 
 	/* Create and run the dialog */
-	dialog = create_move_to_dialog (MODEST_WINDOW (win), folder_view, &tree_view);
+	dialog = create_move_to_dialog (GTK_WINDOW(win), folder_view, &tree_view);
 	modest_folder_view_select_first_inbox_or_local (MODEST_FOLDER_VIEW (tree_view));
 	result = gtk_dialog_run (GTK_DIALOG(dialog));
+	modest_folder_view_show_non_move_folders(MODEST_FOLDER_VIEW (tree_view), TRUE);
 	g_object_ref (tree_view);
 
 	/* We do this to save an indentation level ;-) */
@@ -3593,8 +3596,9 @@ modest_ui_actions_on_msg_view_window_move_to (GtkAction *action,
 		folder_view = NULL;
 
 	/* Create and run the dialog */
-	dialog = create_move_to_dialog (MODEST_WINDOW (win), folder_view, &tree_view);	
+	dialog = create_move_to_dialog (GTK_WINDOW (win), folder_view, &tree_view);	
 	result = gtk_dialog_run (GTK_DIALOG(dialog));
+	modest_folder_view_show_non_move_folders(MODEST_FOLDER_VIEW (tree_view), TRUE);
 
 	if (result == GTK_RESPONSE_ACCEPT) {
 		TnyFolderStore *folder_store;

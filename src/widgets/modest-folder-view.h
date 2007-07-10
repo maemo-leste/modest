@@ -220,6 +220,17 @@ modest_folder_view_paste_selection (ModestFolderView *folder_view,
 				    TnyList **folders,
 				    gboolean *delete);
 
+/*
+ * modest_folder_view_show_non_move_folders:
+ * @self: a #ModestFolderView
+ * @show: show or hide the folders
+ * 
+ * Whether to show folders where no messages can be moved to 
+ **/
+void
+modest_folder_view_show_non_move_folders (ModestFolderView *folder_view,
+				    gboolean show);
+
 G_END_DECLS
 
 #endif /* __MODEST_FOLDER_VIEW_H__ */

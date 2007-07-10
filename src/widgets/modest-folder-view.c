@@ -164,6 +164,7 @@ struct _ModestFolderViewPrivate {
 	ModestFolderViewStyle style;
 
 	gboolean              reselect; /* we use this to force a reselection of the INBOX */
+	gboolean							show_non_move;
 };
 #define MODEST_FOLDER_VIEW_GET_PRIVATE(o)			\
 	(G_TYPE_INSTANCE_GET_PRIVATE((o),			\
@@ -639,6 +640,7 @@ modest_folder_view_init (ModestFolderView *obj)
 	priv->hidding_ids = NULL;
 	priv->n_selected = 0;
 	priv->reselect = FALSE;
+	priv->show_non_move = TRUE;
 
 	/* Build treeview */
 	add_columns (GTK_WIDGET (obj));
@@ -977,7 +979,20 @@ filter_row (GtkTreeModel *model,
 		
 		retval = !found;
 	}
-
+	
+	if (!priv->show_non_move)
+	{
+		switch (type)
+		{
+			case TNY_FOLDER_TYPE_OUTBOX:
+			case TNY_FOLDER_TYPE_SENT:
+				retval = FALSE;
+				break;
+			default:
+				break;	
+		}	
+	}
+	
 	/* Free */
 	g_object_unref (instance);
 
@@ -2055,6 +2070,16 @@ modest_folder_view_cut_selection (ModestFolderView *folder_view)
 	/* Hide cut folders */
 	model = gtk_tree_view_get_model (GTK_TREE_VIEW (folder_view));
 	gtk_tree_model_filter_refilter (GTK_TREE_MODEL_FILTER (model));
+}
+
+void
+modest_folder_view_show_non_move_folders (ModestFolderView *folder_view,
+				    gboolean show)
+{
+	ModestFolderViewPrivate* priv = MODEST_FOLDER_VIEW_GET_PRIVATE(folder_view);
+	priv->show_non_move = show;
+	modest_folder_view_update_model(folder_view,
+																	TNY_ACCOUNT_STORE(modest_runtime_get_account_store()));
 }
 
 /* Returns FALSE if it did not selected anything */

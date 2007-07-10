@@ -1,5 +1,17 @@
 2007-07-10  Johannes Schmid <johannes.schmid@openismus.com>
 
+	* src/modest-ui-actions.c: (create_move_to_dialog),
+	(modest_ui_actions_on_main_window_move_to),
+	(modest_ui_actions_on_msg_view_window_move_to):
+	* src/widgets/modest-folder-view.c: (modest_folder_view_init),
+	(filter_row), (modest_folder_view_show_non_move_folders):
+	* src/widgets/modest-folder-view.h:
+
+	Hide Sent & Outbox folder in "move to"-dialog. Does not work for
+	the Sent folder yet as it does not report the correct folder type.
+
+2007-07-10  Johannes Schmid <johannes.schmid@openismus.com>
+
 	* src/maemo/modest-msg-edit-window.c: (init_window):
 	Fixed bora build
 
