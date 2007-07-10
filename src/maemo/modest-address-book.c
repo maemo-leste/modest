@@ -37,6 +37,7 @@
 #include <libebook/e-book-view.h>
 #include <libosso-abook/osso-abook.h>
 #include "modest-hildon-includes.h"
+#include "modest-platform.h"
 #include <string.h>
 #include <gtk/gtksizegroup.h>
 #include <gtk/gtkbox.h>
@@ -753,7 +754,7 @@ resolve_address (const gchar *address, GSList **resolved_addresses, gchar **cont
 
 	if (resolved_contacts == NULL) {
 		/* no matching contacts for the search string */
-		hildon_banner_show_information (NULL, NULL, _("mcen_nc_no_matching_contacts"));
+		modest_platform_run_information_dialog (NULL, _("mcen_nc_no_matching_contacts"));
 		return FALSE;
 	}
 
