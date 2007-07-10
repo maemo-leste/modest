@@ -78,7 +78,8 @@ modest_ui_dimming_rules_on_new_msg (ModestWindow *win, gpointer user_data)
 		
 	/* Check dimmed rule */	
 	if (!dimmed) {
-		dimmed = _msg_download_in_progress (MODEST_MSG_VIEW_WINDOW(win));
+		if (MODEST_IS_MSG_VIEW_WINDOW (win))
+			dimmed = _msg_download_in_progress (MODEST_MSG_VIEW_WINDOW(win));
 		if (dimmed)
 			modest_dimming_rule_set_notification (rule, "");
 	}
@@ -376,7 +377,8 @@ modest_ui_dimming_rules_on_reply_msg (ModestWindow *win, gpointer user_data)
 				modest_dimming_rule_set_notification (rule, _("mail_ib_notavailable_downloading"));
 		}
 		if (!dimmed) {
-			dimmed = _msg_download_in_progress (MODEST_MSG_VIEW_WINDOW(win));
+			if (MODEST_IS_MSG_VIEW_WINDOW (win))
+				dimmed = _msg_download_in_progress (MODEST_MSG_VIEW_WINDOW (win));
 			if (dimmed)
 				modest_dimming_rule_set_notification (rule, "");
 		}
@@ -472,7 +474,8 @@ modest_ui_dimming_rules_on_delete_msg (ModestWindow *win, gpointer user_data)
 				modest_dimming_rule_set_notification (rule, _("mail_ib_notavailable_downloading"));
 		}
 		if (!dimmed) {
-			dimmed = !modest_msg_view_window_has_headers_model (MODEST_MSG_VIEW_WINDOW(win));
+			if (MODEST_IS_MSG_VIEW_WINDOW (win))
+				dimmed = !modest_msg_view_window_has_headers_model (MODEST_MSG_VIEW_WINDOW (win));
  			if (dimmed) {
 				gchar *num = g_strdup("1");
 				gchar *message = g_strdup_printf(_("mcen_nc_unable_to_delete_n_messages"), num);
@@ -538,7 +541,8 @@ modest_ui_dimming_rules_on_details (ModestWindow *win, gpointer user_data)
 
 		/* Check dimmed rule */	
 		if (!dimmed) {
-			dimmed = _msg_download_in_progress (MODEST_MSG_VIEW_WINDOW(win));
+			if (MODEST_IS_MSG_VIEW_WINDOW (win))
+				dimmed = _msg_download_in_progress (MODEST_MSG_VIEW_WINDOW (win));
 			if (dimmed)
 				modest_dimming_rule_set_notification (rule, "");
 		}
@@ -673,7 +677,8 @@ modest_ui_dimming_rules_on_view_window_move_to (ModestWindow *win, gpointer user
 			modest_dimming_rule_set_notification (rule, _("mail_ib_notavailable_downloading"));
 	}
 	if (!dimmed) {
-		dimmed = !modest_msg_view_window_has_headers_model (MODEST_MSG_VIEW_WINDOW(win));
+		if (MODEST_IS_MSG_VIEW_WINDOW (win))
+			dimmed = !modest_msg_view_window_has_headers_model (MODEST_MSG_VIEW_WINDOW (win));
 		if (dimmed) 
 			modest_dimming_rule_set_notification (rule, _("mcen_ib_unable_to_move_mail_attachment"));
 	}
@@ -960,7 +965,8 @@ modest_ui_dimming_rules_on_view_previous (ModestWindow *win, gpointer user_data)
 			modest_dimming_rule_set_notification (rule, _("mail_ib_notavailable_downloading"));
 	}
 	if (!dimmed) {
-		dimmed = modest_msg_view_window_first_message_selected (MODEST_MSG_VIEW_WINDOW(win));
+		if (MODEST_IS_MSG_VIEW_WINDOW (win))
+			dimmed = modest_msg_view_window_first_message_selected (MODEST_MSG_VIEW_WINDOW(win));
 /* 		if (dimmed) */
 /* 			modest_dimming_rule_set_notification (rule, ""); */
 	}		
@@ -985,7 +991,8 @@ modest_ui_dimming_rules_on_view_next (ModestWindow *win, gpointer user_data)
 			modest_dimming_rule_set_notification (rule, _("mail_ib_notavailable_downloading"));
 	}
 	if (!dimmed) {
-		dimmed = modest_msg_view_window_last_message_selected (MODEST_MSG_VIEW_WINDOW(win));
+		if (MODEST_IS_MSG_VIEW_WINDOW (win))
+			dimmed = modest_msg_view_window_last_message_selected (MODEST_MSG_VIEW_WINDOW (win));
 /* 		if (dimmed) */
 /* 			modest_dimming_rule_set_notification (rule, ""); */
 	}		
@@ -1914,12 +1921,17 @@ _invalid_folder_for_purge (ModestWindow *win,
 		/* If it's POP then dim */
 		if (modest_protocol_info_get_transport_store_protocol (proto_str) == 
 		    MODEST_PROTOCOL_STORE_POP) {
-			GList *attachments;
-			gint n_selected;
+			GList *attachments = NULL;
+			gint n_selected = 0;
 			result = TRUE;
-			attachments = modest_msg_view_window_get_attachments (MODEST_MSG_VIEW_WINDOW(win));
-			n_selected = g_list_length (attachments);
-			g_list_free (attachments);
+			
+			/* TODO: This check is here to prevent a gwarning, but this looks like a logic error.
+			 * murrayc */
+			if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
+				attachments = modest_msg_view_window_get_attachments (MODEST_MSG_VIEW_WINDOW(win));
+				n_selected = g_list_length (attachments);
+				g_list_free (attachments);
+			}
 			
 			modest_dimming_rule_set_notification (rule, 
 							      ngettext ("mail_ib_unable_to_pure_attach_pop_mail_singular",

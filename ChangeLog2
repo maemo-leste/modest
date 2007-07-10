@@ -1,5 +1,20 @@
 2007-07-10  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-ui-dimming-rules.c:
+	(modest_ui_dimming_rules_on_new_msg),
+	(modest_ui_dimming_rules_on_reply_msg),
+	(modest_ui_dimming_rules_on_delete_msg),
+	(modest_ui_dimming_rules_on_details),
+	(modest_ui_dimming_rules_on_view_window_move_to),
+	(modest_ui_dimming_rules_on_view_previous),
+	(modest_ui_dimming_rules_on_view_next),
+	(_invalid_folder_for_purge): Added checks before 
+	casting the window. This looks like an actual 
+	logic error in _invalid_folder_for_purge(), because it 
+	tries to use a ModestMainWindow as a message window.
+
+2007-07-10  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/maemo/modest-account-settings-dialog.c:
 	(show_error): Use the same implementation as in 
 	modest-easysetup-wizard.c:
