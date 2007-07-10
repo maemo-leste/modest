@@ -453,7 +453,8 @@ gboolean on_idle_wrong_password (gpointer user_data)
 					
 	ModestWindow *main_window = 
 				modest_window_mgr_get_main_window (modest_runtime_get_window_mgr ());
-					      
+
+	gdk_threads_enter ();
 	gboolean created_dialog = FALSE;
 	if (!found || !dialog) {
 		dialog = modest_account_settings_dialog_new ();
@@ -480,10 +481,11 @@ gboolean on_idle_wrong_password (gpointer user_data)
 	else {
 		/* Just show it instead of showing it and deleting it when it closes,
 		 * though it is probably open already: */
-		gtk_widget_show (GTK_WIDGET (dialog));
+		gtk_window_present (GTK_WINDOW (dialog));
 	}
 	
 	g_object_unref (account);
+	gdk_threads_leave ();
 	
 	return FALSE; /* Dont' call this again. */
 }

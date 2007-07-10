@@ -68,7 +68,7 @@
     <menu name="ViewMenu" action="View">
       <menuitem name="ViewSortMenu" action="ViewSort"/>
       <separator/>
-      <menuitem name="ViewToggleFoldersMenu" action="ViewToggleFolders"/>
+      <menuitem name="ViewToggleFoldersMenu" action="ToggleFolders"/>
       <menuitem name="ViewToggleFullscreenMenu" action="ViewToggleFullscreen"/>
       <separator/>
       <menu name="ViewShowToolbarMainMenu" action="ViewShowToolbar">
@@ -107,7 +107,7 @@
     <toolitem action="ToolbarMessageNew"/> 
     <toolitem action="ToolbarMessageReply"/> 
     <toolitem action="ToolbarDeleteMessage"/>
-    <toolitem action="ToolbarToggleView"/>
+    <toolitem action="ToggleFolders"/>
     <toolitem action="ToolbarSort"/>
     <toolitem action="ToolbarSendReceive"/>
     <placeholder name="ProgressBarView" />

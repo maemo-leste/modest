@@ -3048,16 +3048,12 @@ void
 modest_ui_actions_toggle_folders_view (GtkAction *action, 
 				       ModestMainWindow *main_window)
 {
-	ModestConf *conf;
-	
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW(main_window));
 
-	conf = modest_runtime_get_conf ();
-	
-	if (modest_main_window_get_style (main_window) == MODEST_MAIN_WINDOW_STYLE_SPLIT)
-		modest_main_window_set_style (main_window, MODEST_MAIN_WINDOW_STYLE_SIMPLE);
-	else
+	if (gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (action)))
 		modest_main_window_set_style (main_window, MODEST_MAIN_WINDOW_STYLE_SPLIT);
+	else
+		modest_main_window_set_style (main_window, MODEST_MAIN_WINDOW_STYLE_SIMPLE);
 }
 
 void 

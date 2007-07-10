@@ -254,7 +254,7 @@ static const GtkActionEntry modest_header_view_action_entries [] = {
 };
 
 static const GtkToggleActionEntry modest_main_window_toggle_action_entries [] = {
-	{ "ToolbarToggleView", MODEST_STOCK_SPLIT_VIEW, N_("gqn_toolb_rss_fldonoff"), "<CTRL>t", NULL, G_CALLBACK (modest_ui_actions_toggle_folders_view), FALSE },
+	{ "ToggleFolders",     MODEST_STOCK_SPLIT_VIEW, N_("mcen_me_inbox_hidefolders"), "<CTRL>t", NULL, G_CALLBACK (modest_ui_actions_toggle_folders_view), TRUE },
 };
 
 /************************************************************************/
@@ -990,6 +990,7 @@ modest_main_window_set_style (ModestMainWindow *self,
 	ModestMainWindowPrivate *priv;
 	ModestWindowPrivate *parent_priv;
 	GtkAction *action;
+	gboolean active;
 
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW (self));
 
@@ -1000,8 +1001,17 @@ modest_main_window_set_style (ModestMainWindow *self,
 	if (priv->style == style)
 		return;
 
-	/* Get toggle button */
-	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ToolbarToggleView");
+       /* Get toggle button and update the state if needed. This will
+	  happen only when the set_style is not invoked from the UI,
+	  for example when it's called from widget memory */
+       action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ToggleFolders");
+       active = gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (action));
+       if ((active && style == MODEST_MAIN_WINDOW_STYLE_SIMPLE) ||
+	   (!active && style == MODEST_MAIN_WINDOW_STYLE_SPLIT)) {
+	       g_signal_handlers_block_by_func (action, modest_ui_actions_toggle_folders_view, self);
+	       gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (action), !active);
+	       g_signal_handlers_unblock_by_func (action, modest_ui_actions_toggle_folders_view, self);
+       }
 
 	priv->style = style;
 	switch (style) {
@@ -1012,10 +1022,6 @@ modest_main_window_set_style (ModestMainWindow *self,
 
 		/* Reparent the contents widget to the main vbox */
 		gtk_widget_reparent (priv->contents_widget, priv->main_vbox);
-
-		g_signal_handlers_block_by_func (action, modest_ui_actions_toggle_folders_view, self);
-		gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (action), TRUE);
-		g_signal_handlers_unblock_by_func (action, modest_ui_actions_toggle_folders_view, self);
 
 		if (modest_header_view_has_selected_headers (MODEST_HEADER_VIEW (priv->header_view))) {
 			TnyList *selection = modest_header_view_get_selected_headers (MODEST_HEADER_VIEW (priv->header_view));
@@ -1041,10 +1047,6 @@ modest_main_window_set_style (ModestMainWindow *self,
 		/* Reparent the main paned */
 		gtk_paned_add2 (GTK_PANED (priv->main_paned), priv->contents_widget);
 		gtk_container_add (GTK_CONTAINER (priv->main_vbox), priv->main_paned);
-
-		g_signal_handlers_block_by_func (action, modest_ui_actions_toggle_folders_view, self);
-		gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (action), FALSE);
-		g_signal_handlers_unblock_by_func (action, modest_ui_actions_toggle_folders_view, self);
 
 		break;
 	default:
