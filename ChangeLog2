@@ -1,3 +1,8 @@
+2007-07-10  Johannes Schmid <johannes.schmid@openismus.com>
+
+	* src/maemo/modest-msg-edit-window.c: (init_window):
+	Fixed bora build
+
 2007-07-10   Murray Cumming  <murrayc@murrayc.com>
 
 	* src/maemo/easysetup/modest-easysetup-wizard.c: (show_error):

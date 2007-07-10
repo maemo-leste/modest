@@ -430,9 +430,10 @@ init_window (ModestMsgEditWindow *obj)
 	priv->text_buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (priv->msg_body));
 	g_object_set (priv->text_buffer, "font_scale", DEFAULT_FONT_SCALE, NULL);
 	wp_text_buffer_enable_rich_text (WP_TEXT_BUFFER (priv->text_buffer), TRUE);
+#if (GTK_MINOR_VERSION >= 10)
 	gtk_text_buffer_register_serialize_tagset(GTK_TEXT_BUFFER(priv->text_buffer), "wp-text-buffer");
 	gtk_text_buffer_register_deserialize_tagset(GTK_TEXT_BUFFER(priv->text_buffer), "wp-text-buffer");
-
+#endif
 	wp_text_buffer_reset_buffer (WP_TEXT_BUFFER (priv->text_buffer), TRUE);
 
 	priv->find_toolbar = hildon_find_toolbar_new (NULL);
