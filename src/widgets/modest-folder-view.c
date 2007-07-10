@@ -2065,12 +2065,17 @@ find_folder_iter (GtkTreeModel *model, GtkTreeIter *iter, GtkTreeIter *folder_it
 		GtkTreeIter child;
 		TnyFolderType type = TNY_FOLDER_TYPE_UNKNOWN;
 		TnyFolder* a_folder;
+		gchar *name = NULL;
 		
 		gtk_tree_model_get (model, iter, 
 				    TNY_GTK_FOLDER_STORE_TREE_MODEL_INSTANCE_COLUMN, &a_folder,
+				    TNY_GTK_FOLDER_STORE_TREE_MODEL_NAME_COLUMN, &name,
 				    TNY_GTK_FOLDER_STORE_TREE_MODEL_TYPE_COLUMN, &type, 
 				    -1);		
 	
+		g_debug ("===> %s (%p ---- %p)", name, a_folder, folder);
+		g_free (name);
+
 		if (folder == a_folder) {
 			g_object_unref (a_folder);
 			*folder_iter = *iter;
@@ -2094,6 +2099,7 @@ on_row_changed_maybe_select_folder (GtkTreeModel *tree_model, GtkTreePath  *path
 				    ModestFolderView *self)
 {
 	ModestFolderViewPrivate *priv = NULL;
+	GtkTreeSelection *sel;
 
 	if (!MODEST_IS_FOLDER_VIEW(self))
 		return;
@@ -2101,12 +2107,18 @@ on_row_changed_maybe_select_folder (GtkTreeModel *tree_model, GtkTreePath  *path
 	g_return_if_fail (MODEST_IS_FOLDER_VIEW (self));
 	priv = MODEST_FOLDER_VIEW_GET_PRIVATE (self);
 	
+	sel  = gtk_tree_view_get_selection (GTK_TREE_VIEW(self));
+	
 	if (priv->folder_to_select) {
-		modest_folder_view_select_folder (self, priv->folder_to_select,
-							   FALSE);
+		if (!modest_folder_view_select_folder (self, priv->folder_to_select,
+						       FALSE)) {
+			sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (self));
+			gtk_tree_selection_select_iter (sel, iter);
+			g_debug ("could not find changed folder");
+		} 
 		g_object_unref (priv->folder_to_select);
 		priv->folder_to_select = NULL;
-	}
+	} 
 }
 
 
@@ -2121,7 +2133,7 @@ modest_folder_view_select_folder (ModestFolderView *self, TnyFolder *folder,
 	
 	g_return_val_if_fail (MODEST_IS_FOLDER_VIEW (self), FALSE);	
 	g_return_val_if_fail (TNY_IS_FOLDER (folder), FALSE);	
-	
+		
 	priv = MODEST_FOLDER_VIEW_GET_PRIVATE (self);
 
 	if (after_change) {
