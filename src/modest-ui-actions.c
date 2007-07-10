@@ -1103,7 +1103,8 @@ cleanup:
  * of them are currently downloaded
  */
 static gboolean
-download_uncached_messages (TnyList *header_list, GtkWindow *win)
+download_uncached_messages (TnyList *header_list, GtkWindow *win,
+			    gboolean reply_fwd)
 {
 	TnyIterator *iter;
 	gboolean retval;
@@ -1130,11 +1131,15 @@ download_uncached_messages (TnyList *header_list, GtkWindow *win)
 	retval = TRUE;
 	if (uncached_messages > 0) {
 		GtkResponseType response;
-		response = 
-			modest_platform_run_confirmation_dialog (GTK_WINDOW (win),
-								 ngettext("mcen_nc_get_msg",
-									  "mcen_nc_get_msgs",
-									 uncached_messages));
+		if (reply_fwd)
+			response = modest_platform_run_confirmation_dialog (GTK_WINDOW (win),
+									    _("emev_nc_include_original"));
+		else
+			response =
+				modest_platform_run_confirmation_dialog (GTK_WINDOW (win),
+									 ngettext("mcen_nc_get_msg",
+										  "mcen_nc_get_msgs",
+										  uncached_messages));
 		if (response == GTK_RESPONSE_CANCEL)
 			retval = FALSE;
 		else {
@@ -1171,7 +1176,7 @@ reply_forward (ReplyForwardAction action, ModestWindow *win)
 		return;
 
 	/* Check that the messages have been previously downloaded */
-	continue_download = download_uncached_messages (header_list, GTK_WINDOW (win));
+	continue_download = download_uncached_messages (header_list, GTK_WINDOW (win), TRUE);
 	if (!continue_download) {
 		g_object_unref (header_list);
 		return;
@@ -2640,7 +2645,7 @@ modest_ui_actions_on_copy (GtkAction *action,
 		/* Check that the messages have been previously downloaded */
 		gboolean continue_download = TRUE;
 		if (ask)
-			continue_download = download_uncached_messages (header_list, GTK_WINDOW (window));
+			continue_download = download_uncached_messages (header_list, GTK_WINDOW (window), FALSE);
 		if (continue_download)
 			modest_header_view_copy_selection (MODEST_HEADER_VIEW (focused_widget));
 		g_object_unref (header_list);
