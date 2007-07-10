@@ -780,9 +780,12 @@ modest_tny_account_new_for_per_account_local_outbox_folder (ModestAccountMgr *ac
 
 
 typedef gint (*TnyStatsFunc) (TnyFolderStats *stats);
+#define TASK_GET_ALL_COUNT	0
+#define TASK_GET_LOCAL_SIZE	1
+#define TASK_GET_FOLDER_COUNT	2
 
 typedef struct _RecurseFoldersHelper {
-	TnyStatsFunc function;
+	gint task;
 	guint sum;
 	guint folders;
 } RecurseFoldersHelper;
@@ -801,22 +804,19 @@ recurse_folders (TnyFolderStore *store,
 	helper->folders += tny_list_get_length (folders);
 
 	while (!tny_iterator_is_done (iter)) {
-		TnyFolderStats *stats;
 		TnyFolder *folder;
 
 		folder = TNY_FOLDER (tny_iterator_get_current (iter));
-		stats = tny_folder_get_stats (folder);
 
-		if (stats) {
-			/* initially, we sometimes get -1 from tinymail; ignore that */
-			if (helper->function && helper->function (stats) > 0)
-				helper->sum += helper->function (stats);
+		if (helper->task == TASK_GET_ALL_COUNT)
+			helper->sum += tny_folder_get_all_count (folder);
 
-			if (TNY_IS_FOLDER_STORE (folder)) {
-				recurse_folders (TNY_FOLDER_STORE (folder), query, helper);
-			}
-			g_object_unref (stats);
-		}    
+		if (helper->task == TASK_GET_LOCAL_SIZE)
+			helper->sum += tny_folder_get_local_size (folder);
+
+		if (TNY_IS_FOLDER_STORE (folder))
+			recurse_folders (TNY_FOLDER_STORE (folder), query, helper);
+
  		g_object_unref (folder);
 		tny_iterator_next (iter);
 	}
@@ -834,7 +834,7 @@ modest_tny_folder_store_get_folder_count (TnyFolderStore *self)
 
 	/* Create helper */
 	helper = g_malloc0 (sizeof (RecurseFoldersHelper));
-	helper->function = NULL;
+	helper->task = TASK_GET_FOLDER_COUNT;
 	helper->sum = 0;
 	helper->folders = 0;
 
@@ -857,7 +857,7 @@ modest_tny_folder_store_get_message_count (TnyFolderStore *self)
 	
 	/* Create helper */
 	helper = g_malloc0 (sizeof (RecurseFoldersHelper));
-	helper->function = (TnyStatsFunc) tny_folder_stats_get_all_count;
+	helper->task = TASK_GET_ALL_COUNT;
 	helper->sum = 0;
 
 	recurse_folders (self, NULL, helper);
@@ -879,7 +879,7 @@ modest_tny_folder_store_get_local_size (TnyFolderStore *self)
 
 	/* Create helper */
 	helper = g_malloc0 (sizeof (RecurseFoldersHelper));
-	helper->function = (TnyStatsFunc) tny_folder_stats_get_local_size;
+	helper->task = TASK_GET_LOCAL_SIZE;
 	helper->sum = 0;
 
 	recurse_folders (self, NULL, helper);
