@@ -448,7 +448,6 @@ gboolean on_idle_wrong_password (gpointer user_data)
 		found = g_hash_table_lookup_extended (priv->account_settings_dialog_hash,
 			modest_account_name, NULL, (gpointer*)&dialog_as_gpointer);
 	}
-			      
 	ModestAccountSettingsDialog *dialog = dialog_as_gpointer;
 					
 	ModestWindow *main_window = 
@@ -1014,6 +1013,9 @@ modest_tny_account_store_get_accounts  (TnyAccountStore *self, TnyList *list,
 						       TNY_ACCOUNT_STORE_STORE_ACCOUNTS);
 		modest_tny_account_store_get_accounts (self, list,
 						       TNY_ACCOUNT_STORE_TRANSPORT_ACCOUNTS);
+
+		tny_session_camel_set_initialized (priv->session);
+
 		return;
 	}
 	
@@ -1022,12 +1024,16 @@ modest_tny_account_store_get_accounts  (TnyAccountStore *self, TnyList *list,
 			get_server_accounts (self, list, TNY_ACCOUNT_TYPE_STORE);
 		else
 			get_cached_accounts (self, list, TNY_ACCOUNT_TYPE_STORE);
+
+		tny_session_camel_set_initialized (priv->session);
 		
 	} else if (request_type == TNY_ACCOUNT_STORE_TRANSPORT_ACCOUNTS) {
 		if (!priv->transport_accounts)
 			get_server_accounts (self, list, TNY_ACCOUNT_TYPE_TRANSPORT);
 		else
 			get_cached_accounts (self, list, TNY_ACCOUNT_TYPE_TRANSPORT);
+
+		tny_session_camel_set_initialized (priv->session);
 	} else
 		g_return_if_reached (); /* incorrect req type */
 }
