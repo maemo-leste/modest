@@ -1047,8 +1047,10 @@ gboolean modest_platform_connect_and_wait_if_network_folderstore (GtkWindow *par
 	if (TNY_IS_FOLDER (folder_store)) {
 		/* Get the folder's parent account: */
 		TnyAccount *account = tny_folder_get_account(TNY_FOLDER (folder_store));
-		result = modest_platform_connect_and_wait_if_network_account (NULL, account);
-		g_object_unref (account);
+		if (account != NULL) {
+			result = modest_platform_connect_and_wait_if_network_account (NULL, account);
+			g_object_unref (account);
+		}
 	} else if (TNY_IS_ACCOUNT (folder_store)) {
 		/* Use the folder store as an account: */
 		result = modest_platform_connect_and_wait_if_network_account (NULL, TNY_ACCOUNT (folder_store));
