@@ -32,6 +32,7 @@
 #include "modest-account-mgr.h"
 #include "modest-account-mgr-helpers.h"
 #include "modest-tny-account.h"
+#include "modest-tny-folder.h"
 #include "modest-ui-actions.h"
 
 #include "modest-search.h"
@@ -445,7 +446,7 @@ static gint on_compose_mail(GArray * arguments, gpointer data, osso_rpc_t * retv
 
 
 static TnyMsg *
-find_message_by_url (const char *uri, TnyAccount **ac_out)
+find_message_by_url (const char *uri, TnyFolder **folder_out, TnyAccount **ac_out)
 {
 	ModestTnyAccountStore *astore;
 	TnyAccount            *account;
@@ -477,7 +478,6 @@ find_message_by_url (const char *uri, TnyAccount **ac_out)
 	}
 
 	g_debug ("%s: Account is store account.\n", __FUNCTION__);
-
 	*ac_out = account;
 
 	folder = tny_store_account_find_folder (TNY_STORE_ACCOUNT (account),
@@ -489,6 +489,8 @@ find_message_by_url (const char *uri, TnyAccount **ac_out)
 			tny_account_get_id (TNY_ACCOUNT(account)), uri);
 		goto out;
 	}
+	*folder = folder;
+
 	g_debug ("%s: Found folder. (%s)\n",  __FUNCTION__, uri);
 	
 
@@ -508,8 +510,9 @@ out:
 		*ac_out = NULL;
 	}
 
-	if (folder) {
+	if (folder && !msg) {
 		g_object_unref (folder);
+		*folder_out = NULL;
 	}
 
 	return msg;
@@ -518,18 +521,20 @@ out:
 static gboolean
 on_idle_open_message (gpointer user_data)
 {
-	ModestWindow *msg_view;
+	ModestWindow *msg_view = NULL;
 	TnyMsg       *msg;
-	TnyAccount   *account;
+	TnyAccount   *account = NULL;
 	TnyHeader    *header; 
 	const char   *msg_uid;
 	const char   *account_name;
 	char         *uri;
-       
+	ModestWindowMgr *win_mgr;
+	TnyFolder    *folder = NULL;
+
 	uri = (char *) user_data;
 
-	g_debug ("%s: Trying to find msg by url: %s", __FUNCTION__, uri);	
-	msg = find_message_by_url (uri, &account);
+	g_debug ("%s: Trying to find msg by url: %s", __FUNCTION__, uri);
+	msg = find_message_by_url (uri, &folder, &account);
 	g_free (uri);
 
 	if (msg == NULL) {
@@ -538,25 +543,40 @@ on_idle_open_message (gpointer user_data)
 	}
 	g_debug ("  %s: Found message.", __FUNCTION__);
 
+	if (modest_tny_folder_get_local_folder_type (folder) == TNY_FOLDER_TYPE_DRAFTS) {
+		g_debug ("draft messages should be opened in edit mode... ");
+	}
+
 	header = tny_msg_get_header (msg);
 	account_name = tny_account_get_name (account);
-	msg_uid = tny_header_get_uid (header);
-	
+	msg_uid =  modest_tny_folder_get_header_unique_id(header); 
+/* FIXME:  modest_tny_folder_get_header_unique_id warns against this */
+	win_mgr = modest_runtime_get_window_mgr ();
+		
 	gdk_threads_enter ();
-	
-	msg_view = modest_msg_view_window_new (msg,
-					       account_name,
-					       msg_uid);
 
-	modest_window_mgr_register_window (modest_runtime_get_window_mgr (), msg_view);
-	gtk_widget_show_all (GTK_WIDGET (msg_view));
+	if (modest_window_mgr_find_registered_header (win_mgr, header, &msg_view)) {
+		g_debug ("window for this msg is open already");
+		if (!MODEST_IS_MSG_VIEW_WINDOW(msg_view)) 
+			g_debug ("not a msg view");
+		else {
+			gtk_window_present (GTK_WINDOW(msg_view));
+		}
+	} else {
+		g_debug ("creating new window for this msg");
+		modest_window_mgr_register_header (win_mgr, header);
+		msg_view = modest_msg_view_window_new (msg,account_name,
+						       msg_uid);
+		modest_window_mgr_register_window (win_mgr, msg_view);
+		gtk_widget_show_all (GTK_WIDGET (msg_view));
+	}
 
 	gdk_threads_leave ();
 
 	g_object_unref (header);
 	g_object_unref (account);
-	g_object_unref (msg_view);
-	
+	g_object_unref (folder);
+
 	return FALSE; /* Do not call this callback again. */
 }
 
