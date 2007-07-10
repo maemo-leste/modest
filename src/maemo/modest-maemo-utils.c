@@ -203,6 +203,11 @@ modest_maemo_utils_get_device_name (void)
 gboolean 
 modest_maemo_utils_folder_writable (const gchar *filename)
 {
+	g_return_val_if_fail (filename, FALSE);
+
+	if (!filename)
+		return FALSE;
+	
 	if (g_strncasecmp (filename, "obex", 4) != 0) {
 		GnomeVFSFileInfo folder_info;
 		gchar *folder;

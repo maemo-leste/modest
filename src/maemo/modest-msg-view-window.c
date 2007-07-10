@@ -1734,7 +1734,8 @@ save_mime_part_to_file (const gchar *filename, TnyMimePart *mime_part)
 	GnomeVFSHandle *handle;
 	TnyStream *stream;
 
-	hildon_banner_show_information (NULL, NULL, _("mail_ib_saving_mime_part"));
+	hildon_banner_show_information (NULL, NULL, 
+			_CS("sfil_ib_saving"));
 	result = gnome_vfs_create (&handle, filename, GNOME_VFS_OPEN_WRITE, FALSE, 0777);
 	if (result != GNOME_VFS_OK) {
 		hildon_banner_show_information (NULL, NULL, _("mail_ib_file_operation_failed"));
