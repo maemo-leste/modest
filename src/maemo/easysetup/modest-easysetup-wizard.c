@@ -361,7 +361,9 @@ on_entry_invalid_character (ModestValidatingEntry *self, const gchar* character,
 	/* We could add a special case for whitespace here 
 	if (character == NULL) ...
 	*/
-	show_error (GTK_WIDGET (self), _CS("ckdg_ib_illegal_characters_entered"));
+	/* TODO: Should this show just this one bad character or all the not-allowed characters? */
+	gchar *message = g_strdup_printf (_CS("ckdg_ib_illegal_characters_entered"), character);
+	show_error (GTK_WIDGET (self), message);
 }
 
 static GtkWidget*
@@ -489,6 +491,7 @@ create_page_account_details (ModestEasysetupWizardDialog *self)
 	modest_validating_entry_set_unallowed_characters (
 	 	MODEST_VALIDATING_ENTRY (self->entry_account_title), list_prevent);
 	g_list_free (list_prevent);
+	list_prevent = NULL;
 	modest_validating_entry_set_func(MODEST_VALIDATING_ENTRY(self->entry_account_title),
 																	 on_entry_invalid_character, self);
 	
@@ -537,7 +540,7 @@ create_page_user_details (ModestEasysetupWizardDialog *self)
 	list_prevent = g_list_append (list_prevent, ">");
 	modest_validating_entry_set_unallowed_characters (
 	 	MODEST_VALIDATING_ENTRY (self->entry_user_name), list_prevent);
-	modest_validating_entry_set_func(MODEST_VALIDATING_ENTRY(self->entry_account_title),
+	modest_validating_entry_set_func(MODEST_VALIDATING_ENTRY(self->entry_user_name),
 																	 on_entry_invalid_character, self);
 	g_list_free (list_prevent);
 	
@@ -557,7 +560,7 @@ create_page_user_details (ModestEasysetupWizardDialog *self)
 	 * as required by our UI specification: */
 	modest_validating_entry_set_unallowed_characters_whitespace (
 	 	MODEST_VALIDATING_ENTRY (self->entry_user_username));
-	modest_validating_entry_set_func(MODEST_VALIDATING_ENTRY(self->entry_account_title),
+	modest_validating_entry_set_func(MODEST_VALIDATING_ENTRY(self->entry_user_username),
 																	 on_entry_invalid_character, self);
 	
 	/* Set max length as in the UI spec:
@@ -1508,7 +1511,7 @@ show_error (GtkWidget *parent_widget, const gchar* text)
 	hildon_banner_show_information(parent_widget, NULL, text);
 	
 #if 0
-	GtkDialog *dialog = GTK_DIALOG (hildon_note_new_information (parent_window, text));
+	GtkDialog *dialog = GTK_DIALOG (hildon_note_new_information (parent_window, text)); */
 	/*
 	  GtkDialog *dialog = GTK_DIALOG (gtk_message_dialog_new (parent_window,
 	  (GtkDialogFlags)0,

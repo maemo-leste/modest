@@ -730,6 +730,8 @@ modest_tny_account_new_for_per_account_local_outbox_folder (ModestAccountMgr *ac
 		return NULL;
 	}
 	
+	printf ("DEBUG: %s: Setting session for account: session=%p\n", 
+		__FUNCTION__, session);
 	tny_camel_account_set_session (TNY_CAMEL_ACCOUNT(tny_account), session);
 	
 	/* Make sure that the paths exists on-disk so that TnyCamelStoreAccount can 

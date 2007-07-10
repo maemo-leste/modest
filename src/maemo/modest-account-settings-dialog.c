@@ -139,10 +139,7 @@ modest_account_settings_dialog_finalize (GObject *object)
 }
 
 static void
-show_error (GtkWindow *parent_window, const gchar* text);
-
-static void
-show_ok (GtkWindow *parent_window, const gchar* text);
+show_error (GtkWidget *parent_widget, const gchar* text);
 
 static void
 on_combo_incoming_security_changed (GtkComboBox *widget, gpointer user_data);
@@ -257,12 +254,23 @@ static GtkWidget* create_caption_new_with_asterisk(ModestAccountSettingsDialog *
 	return caption;
 }
 
+static void
+on_entry_invalid_character (ModestValidatingEntry *self, const gchar* character, gpointer user_data)
+{
+	/* ModestEasysetupWizardDialog *dialog = MODEST_EASYSETUP_WIZARD_DIALOG (user_data); */
+	/* We could add a special case for whitespace here 
+	if (character == NULL) ...
+	*/
+	/* TODO: Should this show just this one bad character or all the not-allowed characters? */
+	gchar *message = g_strdup_printf (_CS("ckdg_ib_illegal_characters_entered"), character);
+	show_error (GTK_WIDGET (self), message);
+}
 
 static void
 on_entry_max (ModestValidatingEntry *self, gpointer user_data)
 {
-	ModestAccountSettingsDialog *dialog = MODEST_ACCOUNT_SETTINGS_DIALOG (user_data);
-	show_error (GTK_WINDOW (dialog), _CS("ckdg_ib_maximum_characters_reached"));
+	/* ModestAccountSettingsDialog *dialog = MODEST_ACCOUNT_SETTINGS_DIALOG (user_data); */
+	show_error (GTK_WIDGET (self), _CS("ckdg_ib_maximum_characters_reached"));
 }
 
 static GtkWidget*
@@ -307,6 +315,8 @@ create_page_account_details (ModestAccountSettingsDialog *self)
 	modest_validating_entry_set_unallowed_characters (
 	 	MODEST_VALIDATING_ENTRY (self->entry_account_title), list_prevent);
 	g_list_free (list_prevent);
+	modest_validating_entry_set_func(MODEST_VALIDATING_ENTRY(self->entry_account_title),
+																	 on_entry_invalid_character, self);
 	
 	/* Set max length as in the UI spec:
 	 * The UI spec seems to want us to show a dialog if we hit the maximum. */
@@ -898,7 +908,7 @@ check_data (ModestAccountSettingsDialog *self)
 		  		if(error == NULL || error->domain != modest_maemo_utils_get_supported_secure_authentication_error_quark() ||
 						error->code != MODEST_MAEMO_UTILS_GET_SUPPORTED_SECURE_AUTHENTICATION_ERROR_CANCELED)
 				{
-					show_error (GTK_WINDOW (self), _("Could not discover supported secure authentication methods."));
+					show_error (GTK_WIDGET (self), _("Could not discover supported secure authentication methods."));
 				}
 
 				if(error != NULL)
@@ -967,10 +977,10 @@ on_response (GtkDialog *wizard_dialog,
 				const gboolean enabled = 
 					modest_account_mgr_get_enabled (self->account_manager, self->account_name);
 				if (enabled)
-					show_ok (GTK_WINDOW (self), _("mcen_ib_advsetup_settings_saved"));
+					show_error (GTK_WIDGET (self), _("mcen_ib_advsetup_settings_saved"));
 			}
 			else
-				show_error (GTK_WINDOW (self), _("mail_ib_setting_failed"));
+				show_error (GTK_WIDGET (self), _("mail_ib_setting_failed"));
 		}
 	}
 }
@@ -1469,25 +1479,21 @@ modest_account_settings_dialog_class_init (ModestAccountSettingsDialogClass *kla
 }
  
 static void
-show_error (GtkWindow *parent_window, const gchar* text)
+show_error (GtkWidget *parent_widget, const gchar* text)
 {
-	GtkDialog *dialog = GTK_DIALOG (hildon_note_new_information (parent_window, text));
-	/*
-	GtkDialog *dialog = GTK_DIALOG (gtk_message_dialog_new (parent_window,
-		(GtkDialogFlags)0,
-		 GTK_MESSAGE_ERROR,
-		 GTK_BUTTONS_OK,
-		 text ));
-	*/	 
+	hildon_banner_show_information(parent_widget, NULL, text);
 	
+#if 0
+	GtkDialog *dialog = GTK_DIALOG (hildon_note_new_information (parent_widget, text);
+	/*
+	  GtkDialog *dialog = GTK_DIALOG (gtk_message_dialog_new (parent_window,
+	  (GtkDialogFlags)0,
+	  GTK_MESSAGE_ERROR,
+	  GTK_BUTTONS_OK,
+	  text ));
+	*/
+		 
 	gtk_dialog_run (dialog);
 	gtk_widget_destroy (GTK_WIDGET (dialog));
-}
-
-static void
-show_ok (GtkWindow *parent_window, const gchar* text)
-{
-	/* Don't show a dialog but Banner (NB #59248) */
-	hildon_banner_show_information(GTK_WIDGET(
-																						gtk_widget_get_parent_window(GTK_WIDGET(parent_window))), NULL, text);
+#endif
 }

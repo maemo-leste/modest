@@ -1109,8 +1109,16 @@ modest_tny_account_store_alert (TnyAccountStore *self, TnyAccount *account, TnyA
 	if (!server_name)
 		server_name = _("Unknown Server");	
 		
-	const ModestTransportStoreProtocol proto
-		= modest_protocol_info_get_transport_store_protocol (tny_account_get_proto (account));
+	ModestTransportStoreProtocol proto = MODEST_PROTOCOL_STORE_POP; /* Arbitrary default. */
+	if (account) {
+		const gchar *proto_name = tny_account_get_proto (account);
+		if (proto_name)
+			proto = modest_protocol_info_get_transport_store_protocol (proto_name);
+		else {
+			g_warning("modest: %s: account with id=%s has no proto.\n", __FUNCTION__, 
+				tny_account_get_id (account));
+		}
+	}
 		
 	/* const gchar *prompt = NULL; */
 	gchar *prompt = NULL;

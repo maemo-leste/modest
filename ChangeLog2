@@ -1,3 +1,24 @@
+2007-07-10  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/maemo/modest-account-settings-dialog.c:
+	(show_error): Use the same implementation as in 
+	modest-easysetup-wizard.c:
+	(on_entry_invalid_character): The logical ID contains a %s. 
+	Guessed what it should be.
+	(on_entry_max), (check_data), (on_response): Adapt to 
+	changed show_error().
+	(create_page_account_details): Really call 
+	modest_validating_entry_set_func() on the correct widgets.
+	* src/maemo/easysetup/modest-easysetup-wizard.c:
+	(on_entry_invalid_character): Fix the logical ID here too.
+ (create_page_account_details),
+	(create_page_user_details):
+	Really call 
+	modest_validating_entry_set_func() on the correct widgets.
+
+	* src/modest-tny-account-store.c: (modest_tny_account_store_alert):
+	Do not try to use the account if it is NULL.
+
 2007-07-10  Johannes Schmid <johannes.schmid@openismus.com>
 
 	* src/modest-ui-actions.c: (create_move_to_dialog),

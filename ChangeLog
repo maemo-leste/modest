@@ -1,1 +1,17 @@
+2007-07-10  Murray Cumming,,,  <murrayc@murrayc-desktop>
+
+	reviewed by: <delete if not using a buddy>
+
+	* ChangeLog2:
+	* src/maemo/easysetup/modest-easysetup-wizard.c:
+	(on_entry_invalid_character), (create_page_account_details),
+	(create_page_user_details), (show_error):
+	* src/maemo/modest-account-settings-dialog.c:
+	(on_entry_invalid_character), (on_entry_max),
+	(create_page_account_details), (check_data), (on_response),
+	(show_error):
+	* src/modest-tny-account-store.c: (modest_tny_account_store_alert):
+	* src/modest-tny-account.c:
+	(modest_tny_account_new_for_per_account_local_outbox_folder):
+
 * please check the svn log instead
