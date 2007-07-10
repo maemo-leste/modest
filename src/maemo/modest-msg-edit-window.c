@@ -82,7 +82,7 @@
 #define DEFAULT_SIZE_COMBOBOX_WIDTH 80
 #define DEFAULT_MAIN_VBOX_SPACING 6
 #define SUBJECT_MAX_LENGTH 1000
-#define IMAGE_MAX_WIDTH 640
+#define IMAGE_MAX_WIDTH 608
 #define DEFAULT_FONT_SCALE 1.5
 
 static void  modest_msg_edit_window_class_init   (ModestMsgEditWindowClass *klass);
