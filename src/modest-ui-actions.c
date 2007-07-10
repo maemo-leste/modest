@@ -330,9 +330,29 @@ modest_ui_actions_on_delete_message (GtkAction *action, ModestWindow *win)
 	
 
 	if (response == GTK_RESPONSE_OK) {	
-		ModestMainWindow *main_window;
-		ModestWindowMgr *mgr;
+		ModestWindow *main_window = NULL;
+		ModestWindowMgr *mgr = NULL;
+		GtkTreeModel *model = NULL;
+		GtkTreeSelection *sel = NULL;
+		GList *sel_list = NULL, *tmp = NULL;
+		GtkTreeRowReference *row_reference = NULL;
+		GtkTreePath *next_path = NULL;
 
+		/* Find last selected row */			
+		if (MODEST_IS_MAIN_WINDOW (win)) {
+			model = gtk_tree_view_get_model (GTK_TREE_VIEW (header_view));
+			sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (header_view));
+			sel_list = gtk_tree_selection_get_selected_rows (sel, &model);
+			for (tmp=sel_list; tmp; tmp=tmp->next) {
+				if (tmp->next == NULL) {
+					next_path = gtk_tree_path_copy((GtkTreePath *) tmp->data);
+					gtk_tree_path_next (next_path);
+					row_reference = gtk_tree_row_reference_new (model, next_path);
+					gtk_tree_path_free (next_path);
+				}
+			}
+		}
+		
 		/* Remove each header. If it's a view window header_view == NULL */
 		do_headers_action (win, headers_action_delete, header_view);
 
@@ -344,24 +364,34 @@ modest_ui_actions_on_delete_message (GtkAction *action, ModestWindow *win)
 			} else {
 				modest_msg_view_window_select_next_message (MODEST_MSG_VIEW_WINDOW (win));
 			}
+			
+			/* Get main window */
+			mgr = modest_runtime_get_window_mgr ();
+			main_window = modest_window_mgr_get_main_window (mgr);
+		}
+		else {			
+			/* Move cursor to next row */
+			main_window = win; 
+
+			/* Select next row */
+			if (gtk_tree_row_reference_valid (row_reference)) {
+				next_path = gtk_tree_row_reference_get_path (row_reference);
+				gtk_tree_selection_select_path (sel, next_path);
+				gtk_tree_path_free (next_path);
+			}
+			if (row_reference != NULL)
+				gtk_tree_row_reference_free (row_reference);
 		}
 
-		/* Refilter header view model, if main window still exists */
-		mgr = modest_runtime_get_window_mgr ();
-		main_window = MODEST_MAIN_WINDOW (modest_window_mgr_get_main_window (mgr));
-		if (main_window) {
-			GtkWidget *widget;
+		/* Update toolbar dimming state */
+		modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (main_window));
 
-			widget = modest_main_window_get_child_widget (main_window,
-								      MODEST_WIDGET_TYPE_HEADER_VIEW);
-			modest_header_view_refilter (MODEST_HEADER_VIEW (widget));
-
-			/* Update toolbar dimming state */
-			modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (main_window));
-		}
+		/* Free */
+		g_list_foreach (sel_list, (GFunc) gtk_tree_path_free, NULL);
+		g_list_free (sel_list);
 	}
 
-	/* free */
+	/* Free*/
 	g_free(message);
 	g_free(desc);
 	g_object_unref (header_list);

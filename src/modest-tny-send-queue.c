@@ -188,6 +188,7 @@ modest_tny_send_queue_add (TnySendQueue *self, TnyMsg *msg, GError **err)
 	/* Check whether the mail is already in the queue */
 /* 	msg_id = tny_header_get_message_id (header); */
 	msg_id = tny_header_get_uid (header);
+	g_return_if_fail (msg_id != NULL);
 	existing = modest_tny_send_queue_lookup_info (MODEST_TNY_SEND_QUEUE(self), msg_id);
 	if(existing != NULL)
 	{
