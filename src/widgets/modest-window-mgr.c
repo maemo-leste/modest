@@ -443,10 +443,10 @@ on_window_destroy (ModestWindow *window,
 			if (!sent && modest_msg_edit_window_is_modified (MODEST_MSG_EDIT_WINDOW (window))) {
 				
 				response =
-					modest_platform_run_yes_no_dialog (GTK_WINDOW (window),
-									   _("mcen_nc_no_email_message_modified_save_changes"));
+					modest_platform_run_confirmation_dialog (GTK_WINDOW (window),
+										 _("mcen_nc_no_email_message_modified_save_changes"));
 				/* Save to drafts */
-				if (response != GTK_RESPONSE_NO) 				
+				if (response != GTK_RESPONSE_CANCEL) 				
 					modest_ui_actions_on_save_to_drafts (NULL, MODEST_MSG_EDIT_WINDOW (window));
 				
 			}
