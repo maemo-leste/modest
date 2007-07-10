@@ -1076,11 +1076,9 @@ modest_tny_account_store_find_account_by_url (TnyAccountStore *self, const gchar
 
 
 static gboolean
-modest_tny_account_store_alert (TnyAccountStore *self, TnyAlertType type,
+modest_tny_account_store_alert (TnyAccountStore *self, TnyAccount *account, TnyAlertType type,
 				gboolean question, const GError *error)
 {
-	/* TODO: It would be nice to know what account caused this error. */
-	
 	g_return_val_if_fail (error, FALSE);
 
 	if ((error->domain != TNY_ACCOUNT_ERROR) 
@@ -1094,7 +1092,20 @@ modest_tny_account_store_alert (TnyAccountStore *self, TnyAlertType type,
 	printf("DEBUG: %s: GError code: %d, message=%s\n", 
 				__FUNCTION__, error->code, error->message);
 	
-
+	/* Get the server name: */
+	const gchar* server_name = NULL;
+	if (account && TNY_IS_ACCOUNT (account)) {
+		server_name = tny_account_get_hostname (account);
+		printf ("modest: %s: account name = %s, server_name=%s\n", __FUNCTION__, 
+			tny_account_get_id (account), server_name);
+	}
+	
+	if (!server_name)
+		server_name = _("Unknown Server");	
+		
+	const ModestTransportStoreProtocol proto
+		= modest_protocol_info_get_transport_store_protocol (tny_account_get_proto (account));
+		
 	/* const gchar *prompt = NULL; */
 	gchar *prompt = NULL;
 	switch (error->code) {
@@ -1106,16 +1117,32 @@ modest_tny_account_store_alert (TnyAccountStore *self, TnyAlertType type,
  				__FUNCTION__, error->domain, error->code, error->message);
 			prompt = NULL;
 			break;
+			
 		case TNY_ACCOUNT_ERROR_TRY_CONNECT_HOST_LOOKUP_FAILED:
+			/* TODO: Show the appropriate message, depending on whether it's POP or IMAP: */
 			g_debug ("%s: Handling GError domain=%d, code=%d (lookup failed), message=%s", 
  				__FUNCTION__, error->domain, error->code, error->message);
-			prompt = g_strdup (_("emev_ni_ui_pop3_msg_connect_error"));
+ 				
+ 			switch (proto) {
+ 				case MODEST_PROTOCOL_STORE_POP:
+					prompt = g_strdup_printf (_("emev_ni_ui_pop3_msg_connect_error"), server_name);
+					break;
+				case MODEST_PROTOCOL_STORE_IMAP:
+					prompt = g_strdup_printf (_("emev_ni_ui_imap_connect_server_error"), server_name);
+					break;
+				case MODEST_PROTOCOL_TRANSPORT_SMTP:
+				default: /* Arbitrary default. */
+					prompt = g_strdup_printf (_("emev_ib_ui_smtp_server_invalid"), server_name);
+					break;
+ 			}
+	
 			/*
 			prompt = g_strdup_printf(
 				_("Incorrect Account Settings:\n Host lookup failed.%s"), 
 				error->message);
 			*/
 			break;
+			
 		case TNY_ACCOUNT_ERROR_TRY_CONNECT_AUTHENTICATION_NOT_SUPPORTED:
 			g_debug ("%s: Handling GError domain=%d, code=%d (authentication not supported), message=%s", 
  				__FUNCTION__, error->domain, error->code, error->message);
@@ -1124,6 +1151,7 @@ modest_tny_account_store_alert (TnyAccountStore *self, TnyAlertType type,
 				_("Incorrect Account Settings:\nThe secure authentication method is not supported.\n%s"), 
 				error->message);
 			break;
+			
 		case TNY_ACCOUNT_ERROR_TRY_CONNECT_CERTIFICATE:
 			g_debug ("%s: Handling GError domain=%d, code=%d (certificatae), message=%s", 
  				__FUNCTION__, error->domain, error->code, error->message);
@@ -1154,43 +1182,10 @@ modest_tny_account_store_alert (TnyAccountStore *self, TnyAlertType type,
 				_("Incorrect Account Settings"), 
 				error->message);
 				
-			/* TODO: If we can ever determine that the problem is a wrong password:
-			 * In this case, the UI spec wants us to show a banner, and then 
-			 * open the Account Settings dialog. */
-			/* Note: Sometimes, the get_password() function seems to be called again 
-			 * when a password is wrong, but sometimes this alert_func is called. */
-			#if 0
-			GtkWidget *parent_widget = 
-				GTK_WIDGET (
-					modest_window_mgr_get_main_window (
-						modest_runtime_get_window_mgr ()));
-			
-			hildon_banner_show_information (
-				parent_widget,
-				NULL /* icon name */,
-				_("mcen_ib_username_pw_incorrect") );
-				
-			/* Show the Account Settings window: */
-			ModestAccountSettingsDialog *dialog = modest_account_settings_dialog_new ();
-			/* TODO: Get the account somehow. Maybe tinymail should send it with the signal. */
-			const gchar* modest_account_name = 
-				modest_tny_account_get_parent_modest_account_name_for_server_account (account);
-			g_assert (modest_account_name);
-			modest_account_settings_dialog_set_account_name (dialog, 
-				modest_account_name);
-			
-			gtk_window_set_transient_for (GTK_WINDOW (dialog), GTK_WINDOW (self));
-			gtk_dialog_run (GTK_DIALOG (dialog));
-			gtk_widget_destroy (GTK_WIDGET (dialog));
-			#endif
+			/* Note: If the password was wrong then get_password() would be called again,
+			 * instead of this vfunc being called. */
 			 
 			break;
-			
-		//TODO: We have started receiving errors of 
-		//domain=TNY_ACCOUNT_ERROR, code=TNY_ACCOUNT_ERROR_TRY_CONNECT, message="Canceled".
-		//If this is really a result of us cancelling our own operation then 
-		//a) this probably shouldn't be an error, and
-		//b) should have its own error code.
 		
 		default:
 			g_warning ("%s: Unhandled GError code: %d, message=%s", 

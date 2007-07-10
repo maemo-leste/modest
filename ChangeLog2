@@ -1,5 +1,13 @@
 2007-07-10  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-tny-account-store.c: (modest_tny_account_store_alert):
+	Adapt to the changed tinymail API, using the new TnyAccount* parameter.
+	This allows us to show the server name in the error message, fixing 
+	projects.maemo.org bug NB#62904.
+	Also, use the appropriate logical ID message for the account protocol.
+
+2007-07-10  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/modest-tny-account-store.c: (on_idle_wrong_password):
 	A compilation fix, though the build wasn't broken for me.
 

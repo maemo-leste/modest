@@ -462,7 +462,7 @@ on_sendqueue_error_happened (TnySendQueue *self, TnyHeader *header, TnyMsg *msg,
 			return;
 	}
 
-	/* Get the account name: */
+	/* Get the server name: */
 	const gchar* server_name = NULL;
 	
 	TnyCamelTransportAccount* server_account = tny_camel_send_queue_get_transport_account (

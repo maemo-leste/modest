@@ -622,7 +622,7 @@ modest_account_mgr_set_first_account_as_default (ModestAccountMgr *self)
 	gchar *old_default;
 	gboolean result = FALSE, found;
 	GSList* list_sorted, *iter;
-	const gchar* account_name;
+	const gchar* account_name = NULL;
 	GSList *account_names = modest_account_mgr_account_names (self, TRUE /* only enabled */);
 
 	/* Return TRUE if there is no account */
@@ -649,7 +649,7 @@ modest_account_mgr_set_first_account_as_default (ModestAccountMgr *self)
 			iter = g_slist_next (iter);
 	}
 
-	if (found)
+	if (found && account_name)
 		result = modest_account_mgr_set_default_account (self, account_name);
 
 	modest_account_mgr_free_account_names (account_names);
