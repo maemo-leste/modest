@@ -1,3 +1,8 @@
+2007-07-10  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/modest-tny-account-store.c: (on_idle_wrong_password):
+	A compilation fix, though the build wasn't broken for me.
+
 2007-07-09  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/modest-ui-actions.c: (modest_ui_actions_on_send_receive):

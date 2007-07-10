@@ -443,20 +443,19 @@ gboolean on_idle_wrong_password (gpointer user_data)
 	 * for instance because of a previous get_password() call: 
 	 */
 	gpointer dialog_as_gpointer = NULL;
-	priv->account_settings_dialog_hash && 
-				g_hash_table_lookup_extended (priv->account_settings_dialog_hash,
-						      modest_account_name,
-						      NULL,
-						      (gpointer*)&dialog_as_gpointer);
-						      
+	gboolean found = FALSE;
+	if (priv->account_settings_dialog_hash) {
+		found = g_hash_table_lookup_extended (priv->account_settings_dialog_hash,
+			modest_account_name, NULL, (gpointer*)&dialog_as_gpointer);
+	}
+			      
 	ModestAccountSettingsDialog *dialog = dialog_as_gpointer;
 					
 	ModestWindow *main_window = 
 				modest_window_mgr_get_main_window (modest_runtime_get_window_mgr ());
 					      
 	gboolean created_dialog = FALSE;
-	if (!dialog) {
-		
+	if (!found || !dialog) {
 		dialog = modest_account_settings_dialog_new ();
 		modest_account_settings_dialog_set_account_name (dialog, modest_account_name);
 		modest_account_settings_dialog_switch_to_user_info (dialog);
