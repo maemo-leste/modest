@@ -150,6 +150,7 @@ struct _ModestMsgViewWindowPrivate {
 
 	GtkTreeModel *header_model;
 	GtkTreeRowReference *row_reference;
+	GtkTreeRowReference *next_row_reference;
 
 	guint clipboard_change_handler;
 	guint queue_change_handler;
@@ -461,6 +462,11 @@ modest_msg_view_window_finalize (GObject *obj)
 		priv->row_reference = NULL;
 	}
 
+	if (priv->next_row_reference) {
+		gtk_tree_row_reference_free (priv->next_row_reference);
+		priv->next_row_reference = NULL;
+	}
+
 	if (priv->msg_uid) {
 		g_free (priv->msg_uid);
 		priv->msg_uid = NULL;
@@ -469,14 +475,41 @@ modest_msg_view_window_finalize (GObject *obj)
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
+static gboolean
+select_next_valid_row (GtkTreeModel *model,
+		       GtkTreeRowReference **row_reference,
+		       gboolean cycle)
+{
+	GtkTreeIter tmp_iter;
+	GtkTreePath *path, *next;
+	gboolean retval = FALSE;
 
+	g_return_val_if_fail (gtk_tree_row_reference_valid (*row_reference), FALSE);
 
-/* static gboolean */
-/* on_delete_event (GtkWidget *widget, GdkEvent *event, ModestMsgViewWindow *self) */
-/* { */
-/* 	modest_window_save_state (MODEST_WINDOW (self)); */
-/* 	return FALSE; */
-/* } */
+	path = gtk_tree_row_reference_get_path (*row_reference);
+	gtk_tree_model_get_iter (model, &tmp_iter, path);
+	gtk_tree_row_reference_free (*row_reference);
+	*row_reference = NULL;
+
+	if (gtk_tree_model_iter_next (model, &tmp_iter)) {
+		next = gtk_tree_model_get_path (model, &tmp_iter);
+		*row_reference = gtk_tree_row_reference_new (model, next);
+		retval = TRUE;
+	} else if (cycle && gtk_tree_model_get_iter_first (model, &tmp_iter)) {
+		next = gtk_tree_model_get_path (model, &tmp_iter);
+
+		/* Ensure that we are not selecting the same */
+		if (gtk_tree_path_compare (path, next) != 0) {
+			*row_reference = gtk_tree_row_reference_new (model, next);
+			retval = TRUE;
+		}
+	}
+
+	/* Free */
+	gtk_tree_path_free (path);
+
+	return retval;
+}
 
 ModestWindow *
 modest_msg_view_window_new_with_header_model (TnyMsg *msg, 
@@ -496,6 +529,8 @@ modest_msg_view_window_new_with_header_model (TnyMsg *msg,
 	g_object_ref (model);
 	priv->header_model = model;
 	priv->row_reference = gtk_tree_row_reference_copy (row_reference);
+	priv->next_row_reference = gtk_tree_row_reference_copy (row_reference);
+	select_next_valid_row (model, &(priv->next_row_reference), TRUE);
 
 	modest_msg_view_window_update_priority (window);
 
@@ -1116,45 +1151,33 @@ modest_msg_view_window_select_next_message (ModestMsgViewWindow *window)
 	ModestMsgViewWindowPrivate *priv;
 	GtkTreePath *path= NULL;
 	GtkTreeIter tmp_iter;
+	TnyHeader *header;
+	gboolean retval = TRUE;
 
 	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (window), FALSE);
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
 
-	if (priv->header_model) {
-		path = gtk_tree_row_reference_get_path (priv->row_reference);
-		if (path == NULL) return FALSE;
+	path = gtk_tree_row_reference_get_path (priv->next_row_reference);
+	if (path == NULL) 
+		return FALSE;
 
-		gtk_tree_model_get_iter (priv->header_model,
-					 &tmp_iter,
-					 path);
-		while (gtk_tree_model_iter_next (priv->header_model, &tmp_iter)) {
-			TnyHeader *header;
+	gtk_tree_model_get_iter (priv->header_model,
+				 &tmp_iter,
+				 path);
 
-			gtk_tree_model_get (priv->header_model, &tmp_iter, 
-					    TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN,
-					    &header, -1);
-			if (!header)
-				break;
+	gtk_tree_model_get (priv->header_model, &tmp_iter, 
+			    TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN,
+			    &header, -1);
+	
+	/* Read the message & show it */
+	if (!message_reader (window, priv, header, tmp_iter))
+		retval = FALSE;
 
-			if (tny_header_get_flags (header) & TNY_HEADER_FLAG_DELETED) {
-				g_object_unref (header);
-				continue;
-			}
+	/* Free */
+	g_object_unref (header);
+	gtk_tree_path_free (path);
 
-			/* Read the message & show it */
-			if (!message_reader (window, priv, header, tmp_iter)) {
-				g_object_unref (header);
-				break;
-			}
-
-			/* Free */
-			g_object_unref (header);
-
-			return TRUE;
-		}
-		gtk_tree_path_free (path);
-	}
-	return FALSE;       	
+	return retval;       	
 }
 
 gboolean 
@@ -1261,6 +1284,8 @@ view_msg_cb (ModestMailOperation *mail_op,
 	/* Update the row reference */
 	gtk_tree_row_reference_free (priv->row_reference);
 	priv->row_reference = gtk_tree_row_reference_new (priv->header_model, path);
+	priv->next_row_reference = gtk_tree_row_reference_copy (priv->row_reference);
+	select_next_valid_row (priv->header_model, &(priv->next_row_reference), TRUE);
 	gtk_tree_path_free (path);
 
 	/* Mark header as read */

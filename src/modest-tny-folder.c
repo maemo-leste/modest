@@ -185,7 +185,7 @@ modest_tny_folder_get_rules   (TnyFolder *folder)
 gboolean
 modest_tny_folder_is_local_folder   (TnyFolder *folder)
 {
-	g_return_val_if_fail (folder, FALSE);
+	g_return_val_if_fail (TNY_IS_FOLDER (folder), FALSE);
 	
 	/* The merge folder is a special case, 
 	 * used to merge the per-account local outbox folders. 
