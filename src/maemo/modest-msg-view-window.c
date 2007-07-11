@@ -1752,50 +1752,133 @@ modest_msg_view_window_view_attachment (ModestMsgViewWindow *window, TnyMimePart
 	g_object_unref (mime_part);
 }
 
+typedef struct
+{
+	gchar *filename;
+	TnyMimePart *part;
+} SaveMimePartPair;
+
+typedef struct
+{
+	GList *pairs;
+	GtkWidget *banner;
+	gboolean result;
+} SaveMimePartInfo;
+
+static void save_mime_part_info_free (SaveMimePartInfo *info, gboolean with_struct);
+static gboolean idle_save_mime_part_show_result (SaveMimePartInfo *info);
+static gpointer save_mime_part_to_file (SaveMimePartInfo *info);
+static void save_mime_parts_to_file_with_checks (SaveMimePartInfo *info);
+
+static void 
+save_mime_part_info_free (SaveMimePartInfo *info, gboolean with_struct)
+{
+	
+	GList *node;
+	for (node = info->pairs; node != NULL; node = g_list_next (node)) {
+		SaveMimePartPair *pair = (SaveMimePartPair *) node->data;
+		g_free (pair->filename);
+		g_object_unref (pair->part);
+		g_slice_free (SaveMimePartPair, pair);
+	}
+	g_list_free (info->pairs);
+	info->pairs = NULL;
+	if (with_struct) {
+		gtk_widget_destroy (info->banner);
+		g_object_unref (info->banner);
+		g_slice_free (SaveMimePartInfo, info);
+	}
+}
+
 static gboolean
-save_mime_part_to_file (const gchar *filename, TnyMimePart *mime_part)
+idle_save_mime_part_show_result (SaveMimePartInfo *info)
+{
+	if (info->pairs != NULL) {
+		gdk_threads_enter ();
+		save_mime_parts_to_file_with_checks (info);
+		gdk_threads_leave ();
+	} else {
+		gboolean result;
+		result = info->result;
+
+		gdk_threads_enter ();
+		save_mime_part_info_free (info, TRUE);
+		if (result) {
+			hildon_banner_show_information (NULL, NULL, _CS("sfil_ib_saved"));
+		} else {
+			hildon_banner_show_information (NULL, NULL, _("mail_ib_file_operation_failed"));
+		}
+		gdk_threads_leave ();
+	}
+
+	return FALSE;
+}
+
+static gpointer
+save_mime_part_to_file (SaveMimePartInfo *info)
 {
 	GnomeVFSResult result;
 	GnomeVFSHandle *handle;
 	TnyStream *stream;
+	SaveMimePartPair *pair = (SaveMimePartPair *) info->pairs->data;
 
-	hildon_banner_show_information (NULL, NULL, 
-			_CS("sfil_ib_saving"));
-	result = gnome_vfs_create (&handle, filename, GNOME_VFS_OPEN_WRITE, FALSE, 0777);
-	if (result != GNOME_VFS_OK) {
-		hildon_banner_show_information (NULL, NULL, _("mail_ib_file_operation_failed"));
-		return FALSE;
+	result = gnome_vfs_create (&handle, pair->filename, GNOME_VFS_OPEN_WRITE, FALSE, 0777);
+	if (result == GNOME_VFS_OK) {
+		stream = tny_vfs_stream_new (handle);
+		tny_mime_part_decode_to_stream (pair->part, stream);
+		g_object_unref (G_OBJECT (stream));
+		g_object_unref (pair->part);
+		g_slice_free (SaveMimePartPair, pair);
+		info->pairs = g_list_delete_link (info->pairs, info->pairs);
+		info->result = TRUE;
+	} else {
+		save_mime_part_info_free (info, FALSE);
+		info->result = FALSE;
 	}
-	stream = tny_vfs_stream_new (handle);
-	tny_mime_part_decode_to_stream (mime_part, stream);
-	g_object_unref (G_OBJECT (stream));
-	return TRUE;
+
+	g_idle_add ((GSourceFunc) idle_save_mime_part_show_result, info);
+	return NULL;
 }
 
-static gboolean
-save_mime_part_to_file_with_checks (GtkWindow *parent, const gchar *filename, TnyMimePart *mime_part)
+static void
+save_mime_parts_to_file_with_checks (SaveMimePartInfo *info)
 {
-	if (modest_maemo_utils_file_exists (filename)) {
+	SaveMimePartPair *pair;
+	gboolean is_ok = TRUE;
+
+	pair = info->pairs->data;
+	if (modest_maemo_utils_file_exists (pair->filename)) {
 		GtkWidget *confirm_overwrite_dialog;
-		confirm_overwrite_dialog = hildon_note_new_confirmation (GTK_WINDOW (parent),
+		confirm_overwrite_dialog = hildon_note_new_confirmation (NULL,
 									 _("emev_nc_replace_files"));
 		if (gtk_dialog_run (GTK_DIALOG (confirm_overwrite_dialog)) != GTK_RESPONSE_OK) {
-			gtk_widget_destroy (confirm_overwrite_dialog);
-			return FALSE;
+			is_ok = FALSE;
 		}
 		gtk_widget_destroy (confirm_overwrite_dialog);
 	}
 
-	return save_mime_part_to_file (filename, mime_part);
+	if (!is_ok) {
+		save_mime_part_info_free (info, TRUE);
+	} else {
+		g_thread_create ((GThreadFunc)save_mime_part_to_file, info, FALSE, NULL);
+	}
+
 }
+
 
 void
 modest_msg_view_window_save_attachments (ModestMsgViewWindow *window, GList *mime_parts)
 {
 	gboolean clean_list = FALSE;
 	ModestMsgViewWindowPrivate *priv;
-	g_return_if_fail (MODEST_IS_MSG_VIEW_WINDOW (window));
+	GList *files_to_save = NULL;
+	GtkWidget *save_dialog = NULL;
+	gchar *folder = NULL;
+	gboolean canceled = FALSE;
+	const gchar *filename = NULL;
+	gchar *save_multiple_str = NULL;
 
+	g_return_if_fail (MODEST_IS_MSG_VIEW_WINDOW (window));
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
 
 	if (mime_parts == NULL) {
@@ -1805,86 +1888,91 @@ modest_msg_view_window_save_attachments (ModestMsgViewWindow *window, GList *mim
 		clean_list = TRUE;
 	}
 
+	/* prepare dialog */
 	if (mime_parts->next == NULL) {
 		/* only one attachment selected */
-		GtkWidget *save_dialog = NULL;
 		TnyMimePart *mime_part = (TnyMimePart *) mime_parts->data;
 		if (!TNY_IS_MSG (mime_part) && tny_mime_part_is_attachment (mime_part)) {
-			const gchar *filename;
-			gchar *folder;
-			save_dialog = hildon_file_chooser_dialog_new (GTK_WINDOW (window), GTK_FILE_CHOOSER_ACTION_SAVE);
-			folder = g_build_filename (g_get_home_dir (), DEFAULT_FOLDER, NULL);
-			gtk_file_chooser_set_current_folder (GTK_FILE_CHOOSER (save_dialog), folder);
-			g_free (folder);
 			filename = tny_mime_part_get_filename (mime_part);
-			if (filename != NULL)
-				gtk_file_chooser_set_current_name (GTK_FILE_CHOOSER (save_dialog), filename);
-			while (gtk_dialog_run (GTK_DIALOG (save_dialog)) == GTK_RESPONSE_OK) {
-				gchar *filename_tmp = gtk_file_chooser_get_uri (GTK_FILE_CHOOSER (save_dialog));
-				gboolean save_result;
-				if (!modest_maemo_utils_folder_writable (filename_tmp)) {
-					g_free (filename_tmp);
-					hildon_banner_show_information (NULL, NULL, _("TODO: read only location"));
-					continue;
-				}
-				save_result = save_mime_part_to_file_with_checks (GTK_WINDOW (save_dialog), 
-										  filename_tmp, mime_part);
-				g_free (filename_tmp);
-				if (save_result)
-					break;
-				else
-					continue;
-			}
-			gtk_widget_destroy (save_dialog);
 		} else {
 			g_warning ("Tried to save a non-file attachment");
+			canceled = TRUE;
 		}
 	} else {
-		GtkWidget *save_dialog = NULL;
-		gchar *folder;
-		gchar *save_multiple_str = g_strdup_printf (_("FIXME: %d attachments"), 
-							    g_list_length (mime_parts));
-		save_dialog = hildon_file_chooser_dialog_new (GTK_WINDOW (window), GTK_FILE_CHOOSER_ACTION_SAVE);
+		save_multiple_str = g_strdup_printf (_("FIXME: %d attachments"), 
+						     g_list_length (mime_parts));
+	}
+	
+	save_dialog = hildon_file_chooser_dialog_new (GTK_WINDOW (window), 
+						      GTK_FILE_CHOOSER_ACTION_SAVE);
+
+	/* set folder */
+	folder = g_build_filename (g_get_home_dir (), DEFAULT_FOLDER, NULL);
+	gtk_file_chooser_set_current_folder (GTK_FILE_CHOOSER (save_dialog), folder);
+	g_free (folder);
+
+	/* set filename */
+	if (filename != NULL)
+		gtk_file_chooser_set_current_name (GTK_FILE_CHOOSER (save_dialog), 
+						   filename);
+
+	/* if multiple, set multiple string */
+	if (save_multiple_str) {
 		g_object_set (G_OBJECT (save_dialog), "save-multiple", save_multiple_str, NULL);
+	}
 		
-		folder = g_build_filename (g_get_home_dir (), DEFAULT_FOLDER, NULL);
-		gtk_file_chooser_set_current_folder (GTK_FILE_CHOOSER (save_dialog), folder);
-		g_free (folder);
-		if (gtk_dialog_run (GTK_DIALOG (save_dialog)) == GTK_RESPONSE_OK) {
-			gchar *foldername = gtk_file_chooser_get_uri (GTK_FILE_CHOOSER (save_dialog));
+	/* show dialog */
+	if (gtk_dialog_run (GTK_DIALOG (save_dialog)) == GTK_RESPONSE_OK) {
+		gchar *chooser_uri = gtk_file_chooser_get_uri (GTK_FILE_CHOOSER (save_dialog));
+
+		if (!modest_maemo_utils_folder_writable (chooser_uri)) {
+			hildon_banner_show_information 
+				(NULL, NULL, dgettext("hildon-fm", "sfil_ib_readonly_location"));
+		} else {
 			GList *node = NULL;
-			gboolean attachment_found = FALSE;
-			if (!modest_maemo_utils_folder_writable (foldername)) {
-				g_free (foldername);
-				hildon_banner_show_information (NULL, NULL, _("TODO: read only location"));
-			}
+
 			for (node = mime_parts; node != NULL; node = g_list_next (node)) {
 				TnyMimePart *mime_part = (TnyMimePart *) node->data;
+				
 				if (tny_mime_part_is_attachment (mime_part)) {
-					const gchar *att_filename = tny_mime_part_get_filename (mime_part);
-					if (att_filename != NULL) {
-						gchar *full_filename;
-						gboolean save_result;
-						full_filename = g_build_filename (foldername, att_filename, NULL);
-						attachment_found = TRUE;
-						
-						save_result = save_mime_part_to_file_with_checks (GTK_WINDOW (save_dialog), 
-												  full_filename, mime_part);
-						g_free (full_filename);
-						if (!save_result)
-							break;
+					SaveMimePartPair *pair;
+
+					if ((mime_parts->next != NULL) &&
+					    (tny_mime_part_get_filename (mime_part) == NULL))
+						continue;
+					
+					pair = g_slice_new0 (SaveMimePartPair);
+					if (mime_parts->next == NULL) {
+						pair->filename = g_strdup (chooser_uri);
+					} else {
+						pair->filename = 
+							g_build_filename (chooser_uri,
+									  tny_mime_part_get_filename (mime_part), NULL);
 					}
+					pair->part = g_object_ref (mime_part);
+					files_to_save = g_list_prepend (files_to_save, pair);
 				}
 			}
-			gtk_widget_destroy (save_dialog);
-		} else {
-			g_warning ("Tried to save a non-file attachment");
 		}
-		/* more than one attachment selected */
+		g_free (chooser_uri);
 	}
+
+	gtk_widget_destroy (save_dialog);
+
 	if (clean_list) {
 		g_list_foreach (mime_parts, (GFunc) g_object_unref, NULL);
 		g_list_free (mime_parts);
+	}
+
+	if (files_to_save != NULL) {
+		SaveMimePartInfo *info = g_slice_new0 (SaveMimePartInfo);
+		GtkWidget *banner = hildon_banner_show_animation (NULL, NULL, 
+								  _CS("sfil_ib_saving"));
+		info->pairs = files_to_save;
+		info->banner = banner;
+		info->result = TRUE;
+		g_object_ref (banner);
+		save_mime_parts_to_file_with_checks (info);
 	}
 }
 
