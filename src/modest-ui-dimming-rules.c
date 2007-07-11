@@ -1090,8 +1090,6 @@ _marked_as_deleted (ModestWindow *win)
 	gboolean result = FALSE;
 	TnyHeaderFlags flags;
 
-	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW(win), FALSE);
-	
 	flags = TNY_HEADER_FLAG_DELETED; 
 
 	/* Check dimmed rule */	
@@ -1676,6 +1674,7 @@ _selected_msg_marked_as (ModestWindow *win,
 			 TnyHeaderFlags mask, 
 			 gboolean opposite)
 {
+	ModestWindow *main_window = NULL;
 	GtkWidget *header_view = NULL;
 	TnyList *selected_headers = NULL;
 	TnyIterator *iter = NULL;
@@ -1683,8 +1682,16 @@ _selected_msg_marked_as (ModestWindow *win,
 	TnyHeaderFlags flags;
 	gboolean result = FALSE;
 
+	if (MODEST_IS_MAIN_WINDOW (win))
+		main_window = win;
+	else {
+		main_window = 
+			modest_window_mgr_get_main_window (modest_runtime_get_window_mgr ());		
+	}
+		
+
 	/* Get header view to check selected messages */
-	header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(win),
+	header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(main_window),
 							   MODEST_WIDGET_TYPE_HEADER_VIEW);
 
 	/* Check no selection */
