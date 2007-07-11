@@ -266,7 +266,7 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 	GtkCellRenderer *recipient_cell, *date_or_status_cell, *subject_cell,
 		*attach_cell, *priority_cell,
 		*recipient_box, *subject_box;
-	TnyHeader *msg_header;
+	TnyHeader *msg_header = NULL;
 	gchar *display_date = NULL, *tmp_date = NULL;
 
 	recipient_box = GTK_CELL_RENDERER (g_object_get_data (G_OBJECT (renderer), "recpt-box-renderer"));
@@ -364,6 +364,8 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 		g_free (tmp_date);
 		g_free (display_date);
 	}
+	if (msg_header != NULL)
+		g_object_unref (msg_header);
 	set_common_flags (date_or_status_cell, flags);
 }
 
