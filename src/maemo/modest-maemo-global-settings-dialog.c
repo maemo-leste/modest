@@ -453,7 +453,7 @@ on_range_error (HildonNumberEditor *editor,
 #else
 	case HILDON_NUMBER_EDITOR_ERROR_ERRONEOUS_VALUE:
 #endif
-		msg = g_strdup_printf (_("ckct_ib_set_a_value_within_range"), 
+		msg = g_strdup_printf (dgettext("hildon-libs", "ckct_ib_set_a_value_within_range"), 
 				       MSG_SIZE_MIN_VAL, 
 				       MSG_SIZE_MAX_VAL);
 		/* FIXME: use the previous */
