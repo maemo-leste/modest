@@ -336,6 +336,8 @@ on_key_pressed (GtkWidget *self,
  	case GDK_Escape: 
 		if (modest_window_mgr_get_fullscreen_mode (mgr))
 			modest_ui_actions_on_change_fullscreen (NULL, MODEST_WINDOW(self));
+		else if (MODEST_IS_MSG_VIEW_WINDOW (self)||MODEST_IS_MSG_EDIT_WINDOW (self))
+			modest_ui_actions_on_close_window (NULL, MODEST_WINDOW (self));
 		break;
 	}
 	
