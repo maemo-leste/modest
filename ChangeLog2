@@ -1,3 +1,10 @@
+2007-07-11  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/maemo/easysetup/modest-easysetup-wizard.c: (create_account):
+	Ignore the wrong (for now) secure-smtp setting in the presets - 
+	just default to requiring secure authentication for SMTP, because 
+	that is most common.
+
 2007-07-11  Johannes Schmid <johannes.schmid@openismus.com>
 
 	* src/widgets/modest-folder-view.c: (filter_row)
@@ -13,7 +20,7 @@
 	Guess folder type and hide Sent & Outbox if necessary.
 	Fixed project.maemo.org NB#57328
 
-2007-07-11  Murray Cumming  <murrayc@murrayc-desktop>
+2007-07-11  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/modest-ui-actions.h:
 	* src/modest-ui-actions.c:
@@ -29,7 +36,7 @@
 	if the deleted message was open in a window. This fixed 
 	projects.maemo.org bug NB#62862.
 
-2007-07-11  Murray Cumming  <murrayc@murrayc-desktop>
+2007-07-11  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/modest-main.c: (main): Only show the UI at the start if 
 	the showui command line option was given. For instance,

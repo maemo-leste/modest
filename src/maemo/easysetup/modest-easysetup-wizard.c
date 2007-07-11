@@ -1674,8 +1674,10 @@ create_account (ModestEasysetupWizardDialog *self, gboolean enabled)
 			modest_presets_get_info_server_security (priv->presets, provider_id, 
 								 FALSE /* incoming */);
 
-		/* TODO: There is no SMTP authentication enum for presets, 
-		   so we should probably check what the server supports. */
+		/* TODO: The secure-smtp information in the presets data is currently wrong,
+		 * so we choose a reasonable default. Remove this when the presets data is corrected: */
+		security_outgoing = security_outgoing & MODEST_PRESETS_SECURITY_SECURE_SMTP;
+
 		protocol_security_outgoing = MODEST_PROTOCOL_CONNECTION_NORMAL;
 		if (security_outgoing & MODEST_PRESETS_SECURITY_SECURE_SMTP) {
 			/* printf("DEBUG: %s: using secure SMTP\n", __FUNCTION__); */
