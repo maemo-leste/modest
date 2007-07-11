@@ -989,18 +989,23 @@ filter_row (GtkTreeModel *model,
 		retval = !found;
 	}
 	
+	
+	/* If this is a move to dialog, hide Sent, Outbox and Drafts
+	folder as no message can be move there according to UI specs */
 	if (!priv->show_non_move)
 	{
 		switch (type)
 		{
 			case TNY_FOLDER_TYPE_OUTBOX:
 			case TNY_FOLDER_TYPE_SENT:
+			case TNY_FOLDER_TYPE_DRAFTS:
 				retval = FALSE;
 				break;
 			case TNY_FOLDER_TYPE_UNKNOWN:
 			case TNY_FOLDER_TYPE_NORMAL:
 				type = modest_tny_folder_guess_folder_type(TNY_FOLDER(instance));
-				if (type == TNY_FOLDER_TYPE_OUTBOX || type == TNY_FOLDER_TYPE_SENT)
+				if (type == TNY_FOLDER_TYPE_OUTBOX || type == TNY_FOLDER_TYPE_SENT
+						|| type == TNY_FOLDER_TYPE_DRAFTS)
 				{
 					retval = FALSE;
 				}

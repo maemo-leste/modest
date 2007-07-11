@@ -1,5 +1,10 @@
 2007-07-11  Johannes Schmid <johannes.schmid@openismus.com>
 
+	* src/widgets/modest-folder-view.c: (filter_row)
+	Do not show drafts folder (see UI specs)
+
+2007-07-11  Johannes Schmid <johannes.schmid@openismus.com>
+
 	* src/modest-ui-actions.c:
 	Remove call to show_non_move_folders(TRUE) which was moved to a wrong
 	place and also not necessary.
