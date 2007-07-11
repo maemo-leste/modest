@@ -877,8 +877,8 @@ modest_folder_view_on_map (ModestFolderView *self,
 		   need to rewrite some parts of Modest to avoid the
 		   deathlock situation */
 		/* TODO: check if this is still the case */
- 		modest_folder_view_select_first_inbox_or_local (self);
 		priv->reselect = FALSE;
+ 		modest_folder_view_select_first_inbox_or_local (self);
 	}
 	return FALSE;
 }

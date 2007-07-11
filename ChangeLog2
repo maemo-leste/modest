@@ -1,5 +1,12 @@
 2007-07-11  Armin Burgmeier  <armin@openismus.com>
 
+	* src/widgets/maemo-folder-view.c (modest_folder_view_on_map): Set
+	priv->reselect to FALSE prior to calling
+	modest_folder_view_select_first_inbox_or_local() to prevent endless
+	recursion and thus a crash on startup.
+
+2007-07-11  Armin Burgmeier  <armin@openismus.com>
+
 	* src/maemo/modest-account-settings-dialog.h: Include
 	<gtk/gtknotebook.h> to fix the build (at least for me).
 
