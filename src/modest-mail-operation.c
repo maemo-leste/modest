@@ -55,6 +55,8 @@
 #include "modest-marshal.h"
 #include "modest-error.h"
 #include "modest-mail-operation.h"
+#include "widgets/modest-header-view.h"
+#include "widgets/modest-main-window.h"
 
 #define KB 1024
 #define GET_SIZE_BUFFER_SIZE 128
@@ -1756,6 +1758,10 @@ modest_mail_operation_rename_folder (ModestMailOperation *self,
 	} else {
 		TnyFolderStore *into;
 
+		ModestHeaderView *v = (ModestHeaderView *) modest_main_window_get_child_widget (
+			(ModestMainWindow *)modest_window_mgr_get_main_window (
+			modest_runtime_get_window_mgr ()), MODEST_WIDGET_TYPE_HEADER_VIEW);
+
 		/* Create the helper */
 		helper = g_slice_new0 (XFerMsgAsyncHelper);
 		helper->mail_op = g_object_ref(self);
@@ -1763,6 +1769,8 @@ modest_mail_operation_rename_folder (ModestMailOperation *self,
 		helper->headers = NULL;
 		helper->user_callback = NULL;
 		helper->user_data = NULL;
+
+		modest_header_view_clear (v);
 
 		/* Rename. Camel handles folder subscription/unsubscription */
 		into = tny_folder_get_folder_store (folder);
