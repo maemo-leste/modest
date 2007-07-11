@@ -997,6 +997,14 @@ filter_row (GtkTreeModel *model,
 			case TNY_FOLDER_TYPE_SENT:
 				retval = FALSE;
 				break;
+			case TNY_FOLDER_TYPE_UNKNOWN:
+			case TNY_FOLDER_TYPE_NORMAL:
+				type = modest_tny_folder_guess_folder_type(TNY_FOLDER(instance));
+				if (type == TNY_FOLDER_TYPE_OUTBOX || type == TNY_FOLDER_TYPE_SENT)
+				{
+					retval = FALSE;
+				}
+				break;
 			default:
 				break;	
 		}	

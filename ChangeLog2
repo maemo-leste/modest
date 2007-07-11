@@ -1,3 +1,13 @@
+2007-07-11  Johannes Schmid <johannes.schmid@openismus.com>
+
+	* src/modest-ui-actions.c:
+	Remove call to show_non_move_folders(TRUE) which was moved to a wrong
+	place and also not necessary.
+	
+	* src/widgets/modest-folder-view.c: (filter_row)
+	Guess folder type and hide Sent & Outbox if necessary.
+	Fixed project.maemo.org NB#57328
+
 2007-07-11  Murray Cumming  <murrayc@murrayc-desktop>
 
 	* src/modest-main.c: (main): Only show the UI at the start if 
