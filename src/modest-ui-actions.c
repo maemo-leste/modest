@@ -701,8 +701,6 @@ open_msg_cb (ModestMailOperation *mail_op,
 	   operation. The error will be shown by the error_handler of
 	   the mail operation */
 	if (!modest_ui_actions_msg_retrieval_check (mail_op, header, msg)) {
-		printf ("DEBUG: %s: modest_ui_actions_msg_retrieval_check() failed.\n", 
-			__FUNCTION__);
 		return;
 	}
 

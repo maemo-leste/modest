@@ -1962,13 +1962,13 @@ get_msg_cb (TnyFolder *folder,
 		gdk_threads_leave ();	
 	}
 
+	/* Notify about operation end */
+	modest_mail_operation_notify_end (self);
 	/* Free */
 	g_object_unref (helper->mail_op);
 	g_object_unref (helper->header);
 	g_slice_free (GetMsgAsyncHelper, helper);
 		
-	/* Notify about operation end */
-	modest_mail_operation_notify_end (self);
 }
 
 static void     
@@ -1990,8 +1990,20 @@ get_msg_status_cb (GObject *obj,
 	self = helper->mail_op;
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
 
-	if(priv->status == MODEST_MAIL_OPERATION_STATUS_CANCELED)
+	if(priv->status == MODEST_MAIL_OPERATION_STATUS_CANCELED) {
+		TnyFolder *folder = tny_header_get_folder (helper->header);
+		if (folder) {
+			TnyAccount *account;
+			account = tny_folder_get_account (folder);
+			if (account) {
+				tny_account_cancel (account);
+				g_object_unref (account);
+			}
+			g_object_unref (folder);
+		}
+	       
 		return;
+	}
 
 	priv->done = 1;
 	priv->total = 1;
@@ -2118,7 +2130,7 @@ get_msgs_full_thread (gpointer thr_user_data)
 							 info_notify, NULL);
 				}
 				g_object_unref (msg);
-			}
+			} 
 		} else {
 			/* Set status failed and set an error */
 			priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
