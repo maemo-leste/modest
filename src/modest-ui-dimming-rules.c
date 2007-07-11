@@ -265,8 +265,7 @@ modest_ui_dimming_rules_on_sort (ModestWindow *win, gpointer user_data)
 	/* Check dimmed rule */	
 	if (!dimmed) {
 		dimmed = _selected_folder_is_root (MODEST_MAIN_WINDOW(win));
-		if (dimmed)
-			modest_dimming_rule_set_notification (rule, "");
+		modest_dimming_rule_set_notification (rule, NULL);
 	}
 
 	return dimmed;
@@ -380,7 +379,7 @@ modest_ui_dimming_rules_on_reply_msg (ModestWindow *win, gpointer user_data)
 			if (MODEST_IS_MSG_VIEW_WINDOW (win))
 				dimmed = _msg_download_in_progress (MODEST_MSG_VIEW_WINDOW (win));
 			if (dimmed)
-				modest_dimming_rule_set_notification (rule, "");
+				modest_dimming_rule_set_notification (rule, _("mcen_ib_unable_to_reply"));
 		}
 	}
 	
@@ -464,7 +463,7 @@ modest_ui_dimming_rules_on_delete_msg (ModestWindow *win, gpointer user_data)
 		if (!dimmed) {
 			dimmed = _selected_msg_sent_in_progress (win);
 			if (dimmed)
-				modest_dimming_rule_set_notification (rule, _("ckct_ib_unable_to_delete]"));
+				modest_dimming_rule_set_notification (rule, _("ckct_ib_unable_to_delete"));
 		}
 	} 
 	else if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
@@ -474,15 +473,14 @@ modest_ui_dimming_rules_on_delete_msg (ModestWindow *win, gpointer user_data)
 				modest_dimming_rule_set_notification (rule, _("mail_ib_notavailable_downloading"));
 		}
 		if (!dimmed) {
-			if (MODEST_IS_MSG_VIEW_WINDOW (win))
-				dimmed = !modest_msg_view_window_has_headers_model (MODEST_MSG_VIEW_WINDOW (win));
+			dimmed = _marked_as_deleted (win);
+			if (dimmed)
+				modest_dimming_rule_set_notification (rule, _("mcen_ib_message_already_deleted"));
+		}
+		if (!dimmed) {
+			dimmed = !modest_msg_view_window_has_headers_model (MODEST_MSG_VIEW_WINDOW(win));
  			if (dimmed) {
-				gchar *num = g_strdup("1");
-				gchar *message = g_strdup_printf(_("mcen_nc_unable_to_delete_n_messages"), num);
-/* 				modest_dimming_rule_set_notification (rule, _("mcen_nc_unable_to_delete_n_messages")); */
-				modest_dimming_rule_set_notification (rule, message);
-				g_free(message);
-				g_free(num);
+				modest_dimming_rule_set_notification (rule, _("ckct_ib_unable_to_delete"));
 			}
 		}
 	}
@@ -967,8 +965,7 @@ modest_ui_dimming_rules_on_view_previous (ModestWindow *win, gpointer user_data)
 	if (!dimmed) {
 		if (MODEST_IS_MSG_VIEW_WINDOW (win))
 			dimmed = modest_msg_view_window_first_message_selected (MODEST_MSG_VIEW_WINDOW(win));
-/* 		if (dimmed) */
-/* 			modest_dimming_rule_set_notification (rule, ""); */
+		modest_dimming_rule_set_notification (rule, NULL);
 	}		
 
 	return dimmed;
@@ -993,8 +990,7 @@ modest_ui_dimming_rules_on_view_next (ModestWindow *win, gpointer user_data)
 	if (!dimmed) {
 		if (MODEST_IS_MSG_VIEW_WINDOW (win))
 			dimmed = modest_msg_view_window_last_message_selected (MODEST_MSG_VIEW_WINDOW (win));
-/* 		if (dimmed) */
-/* 			modest_dimming_rule_set_notification (rule, ""); */
+		modest_dimming_rule_set_notification (rule, NULL);
 	}		
 
 	return dimmed;

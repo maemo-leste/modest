@@ -202,11 +202,14 @@ modest_dimming_rule_set_notification (ModestDimmingRule *rule,
 	priv = MODEST_DIMMING_RULE_GET_PRIVATE(rule);
 	
 	/* Free previous notification */
-	if (priv->notification != NULL)
+	if (priv->notification != NULL) {
 		g_free(priv->notification);
+		priv->notification = NULL;
+	}
 
 	/* Set new notification message */
-	priv->notification = g_strdup(notification);
+	if (notification != NULL)
+		priv->notification = g_strdup(notification);
 }
 
 gchar *
