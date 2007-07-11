@@ -319,7 +319,7 @@ save_header_settings (ModestConf *conf, TnyFolderType type,
 
 	if ( col_num > 0 ) {
 		gint sort_col_id;
-		if (cols[i].col == MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER_OUT)
+		if (cols[0].col == MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER_OUT)
 			sort_col_id = TNY_GTK_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN;
 		else
 			sort_col_id = TNY_GTK_HEADER_LIST_MODEL_DATE_RECEIVED_TIME_T_COLUMN;
