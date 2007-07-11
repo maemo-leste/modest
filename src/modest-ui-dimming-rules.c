@@ -1883,10 +1883,10 @@ _invalid_folder_for_purge (ModestWindow *win,
 		/* Get folder and account of message */
 		msg = modest_msg_view_window_get_message (MODEST_MSG_VIEW_WINDOW (win));
 		g_return_val_if_fail(msg != NULL, TRUE); 			
-		folder = tny_msg_get_folder (msg);		
+		folder = tny_msg_get_folder (msg);	
 		if (folder == NULL) {
 			modest_dimming_rule_set_notification (rule, _("mail_ib_unable_to_purge_attachments"));
-			goto frees; 			
+			goto frees;
 		}
 		g_object_unref (msg);
 	} else if (MODEST_IS_MAIN_WINDOW (win)) {
@@ -1896,9 +1896,7 @@ _invalid_folder_for_purge (ModestWindow *win,
 			return FALSE;
 		folder = TNY_FOLDER (modest_folder_view_get_selected (MODEST_FOLDER_VIEW (folder_view)));
 		if (folder == NULL || ! TNY_IS_FOLDER (folder))
-			return FALSE;
-		g_object_ref (folder);
-		
+			goto frees;		
 	} else {
 		g_return_val_if_reached (FALSE);
 	}

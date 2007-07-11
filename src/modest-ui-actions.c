@@ -2289,6 +2289,8 @@ modest_ui_actions_on_rename_folder (GtkAction *action,
 		return;
 
 	folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW(folder_view));
+	if (!folder)
+		return;
 
 	/* Offer the connection dialog if necessary: */
 	if (!modest_platform_connect_and_wait_if_network_folderstore (NULL, folder)) {
@@ -2297,7 +2299,7 @@ modest_ui_actions_on_rename_folder (GtkAction *action,
 	}
 
 	
-	if (folder && TNY_IS_FOLDER (folder)) {
+	if (TNY_IS_FOLDER (folder)) {
 		gchar *folder_name;
 		gint response;
 		const gchar *current_name;
@@ -2334,8 +2336,8 @@ modest_ui_actions_on_rename_folder (GtkAction *action,
 			g_object_unref (mail_op);
 			g_free (folder_name);
 		}
-		g_object_unref (folder);
 	}
+	g_object_unref (folder);
 }
 
 static void

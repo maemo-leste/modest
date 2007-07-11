@@ -1002,7 +1002,7 @@ typedef struct {
 
 static void
 folder_refreshed_cb (ModestMailOperation *mail_op,
-		     TnyFolder *folder, 
+		     TnyFolder *folder,
 		     gpointer user_data)
 {
 	ModestHeaderViewPrivate *priv;
@@ -1051,7 +1051,7 @@ modest_header_view_set_folder (ModestHeaderView *self,
 
 	if (folder) {
 		ModestMailOperation *mail_op = NULL;
-		 GtkTreeSelection *selection;
+		GtkTreeSelection *selection;
 
 		/* Get main window to use it as source of mail operation */
 		mgr = modest_runtime_get_window_mgr ();
@@ -1081,7 +1081,7 @@ modest_header_view_set_folder (ModestHeaderView *self,
 						 mail_op);
 
 		/* Refresh the folder asynchronously */
-		modest_mail_operation_refresh_folder (mail_op, 
+		modest_mail_operation_refresh_folder (mail_op,
 						      folder,
 						      folder_refreshed_cb,
 						      info);

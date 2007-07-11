@@ -2497,7 +2497,6 @@ on_refresh_folder (TnyFolder   *folder,
 	/* Free */
 	g_object_unref (helper->mail_op);
 	g_slice_free   (RefreshAsyncHelper, helper);
-	g_object_unref (folder);
 
 	/* Notify about operation end */
 	modest_mail_operation_notify_end (self);
@@ -2541,9 +2540,6 @@ modest_mail_operation_refresh_folder  (ModestMailOperation *self,
 	RefreshAsyncHelper *helper = NULL;
 
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
-
-	/* Pick a reference */
-	g_object_ref (folder);
 
 	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
 
