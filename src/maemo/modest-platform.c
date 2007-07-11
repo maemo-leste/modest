@@ -43,6 +43,7 @@
 #include <libosso.h>
 #include <alarmd/alarm_event.h> /* For alarm_event_add(), etc. */
 #include <tny-maemo-conic-device.h>
+#include <tny-simple-list.h>
 #include <tny-folder.h>
 #include <tny-camel-imap-store-account.h>
 #include <tny-camel-pop-store-account.h>
@@ -834,11 +835,62 @@ modest_platform_run_new_folder_dialog (GtkWindow *parent_window,
 				       gchar *suggested_name,
 				       gchar **folder_name)
 {
-	return modest_platform_run_folder_name_dialog (parent_window, 
-						       _("mcen_ti_new_folder"),
-						       _("mcen_fi_new_folder_name"),
-						       suggested_name,
-						       folder_name);
+	gchar *real_suggested_name = NULL;
+	gint result;
+
+	if(suggested_name == NULL)
+	{
+		const gchar *default_name = _("mcen_ia_default_folder_name");
+		unsigned int i;
+		gchar num_str[3];
+
+		for(i = 0; i < 100; ++ i)
+		{
+			TnyList *list = tny_simple_list_new ();
+			TnyFolderStoreQuery *query = tny_folder_store_query_new ();
+			guint length;
+
+			sprintf(num_str, "%.2u", i);
+
+			if (i == 0)
+				real_suggested_name = g_strdup (default_name);
+			else
+				real_suggested_name = g_strdup_printf (_("mcen_ia_default_folder_name_s"),
+				                                       num_str);
+
+			tny_folder_store_query_add_item (query, real_suggested_name,
+			                                 TNY_FOLDER_STORE_QUERY_OPTION_MATCH_ON_NAME);
+
+			tny_folder_store_get_folders (parent_folder, list, query, NULL);
+
+			length = tny_list_get_length (list);
+			g_object_unref (query);
+			g_object_unref (list);
+
+			if (length == 0)
+				break;
+
+			g_free (real_suggested_name);
+		}
+
+		/* Didn't find a free number */
+		if (i == 100)
+			real_suggested_name = g_strdup (default_name);
+	}
+	else
+	{
+		real_suggested_name = suggested_name;
+	}
+
+	result = modest_platform_run_folder_name_dialog (parent_window, 
+	                                                 _("mcen_ti_new_folder"),
+	                                                 _("mcen_fi_new_folder_name"),
+	                                                 real_suggested_name,
+	                                                 folder_name);
+	if (suggested_name == NULL)
+		g_free(real_suggested_name);
+
+	return result;
 }
 
 gint

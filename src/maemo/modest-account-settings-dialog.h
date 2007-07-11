@@ -6,7 +6,8 @@
 #ifndef _MODEST_ACCOUNT_SETTINGS_DIALOG
 #define _MODEST_ACCOUNT_SETTINGS_DIALOG
 
-#include <gtk/gtkdialog.h> 
+#include <gtk/gtkdialog.h>
+#include <gtk/gtknotebook.h>
 #include "modest-account-mgr.h"
 #include "modest-hildon-includes.h"
 

@@ -1,3 +1,14 @@
+2007-07-11  Armin Burgmeier  <armin@openismus.com>
+
+	* src/maemo/modest-account-settings-dialog.h: Include
+	<gtk/gtknotebook.h> to fix the build (at least for me).
+
+	* src/maemo/modest-platform.c (modest_platform_run_new_folder_dialog):
+	Use "New FolderN" as default suggested name if "New folder" already
+	exists, with N being the first free number, though never exceed "New
+	folder99" in which case we just fall back to "New Folder" even though
+	it already exists. This fixes projects.maemo.org bug NB#58663.
+
 2007-07-11  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/maemo/modest-account-view-window.c: (on_new_button_clicked):
