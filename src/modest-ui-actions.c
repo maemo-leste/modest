@@ -3757,9 +3757,9 @@ modest_ui_actions_on_help (GtkAction *action,
 
 			/* Switch help_id */
 			if (TNY_IS_FOLDER (folder_store)) {
-				switch (tny_folder_get_folder_type (TNY_FOLDER (folder_store))) {
+				switch (modest_tny_folder_guess_folder_type (TNY_FOLDER (folder_store))) {
 				case TNY_FOLDER_TYPE_NORMAL:
-					help_id = "applications_email_userfolder";
+					help_id = "applications_email_managefolders";
 					break;
 				case TNY_FOLDER_TYPE_INBOX:
 					help_id = "applications_email_inbox";
@@ -3774,10 +3774,10 @@ modest_ui_actions_on_help (GtkAction *action,
 					help_id = "applications_email_drafts";
 					break;
 				case TNY_FOLDER_TYPE_ARCHIVE:
-					help_id = "applications_email_archive";
+					help_id = "applications_email_managefolders";
 					break;
 				default:
-					help_id = "applications_email_mainview";
+					help_id = "applications_email_managefolders";
 				}
 			} else {
 				help_id = "applications_email_mainview";	
