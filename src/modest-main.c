@@ -60,6 +60,14 @@ main (int argc, char *argv[])
 	}
 
 	win = modest_main_window_new ();
+
+	/* TODO: Do not show this now. 
+	 * Only show it when we get the "top_application" D-Bus method.
+	 * This allows modest to start via D-Bus activation to provide a service, 
+	 * without showing the UI.
+	 * The UI will be shown later (or just after starting if no otehr D-Bus method was used),
+	 * when we receive the "top_application" D-Bus method.
+	 */
 	gtk_widget_show_all (GTK_WIDGET(win));
 		
 	if (!win) {

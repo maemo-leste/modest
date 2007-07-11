@@ -221,11 +221,15 @@ save_settings_paned (ModestConf *conf, GtkPaned *paned, const gchar *name)
 	gchar *key;
 	int pos;
 
-	pos = gtk_paned_get_position (paned);
-	
-	key = _modest_widget_memory_get_keyname (name, MODEST_WIDGET_MEMORY_PARAM_POS);
-	modest_conf_set_int (conf, key, pos, NULL);
-	g_free (key);
+	/* Don't save the paned position if it's not visible, 
+	 * because it could not be correct: */
+	if (GTK_WIDGET_VISIBLE (GTK_WIDGET (paned)) && GTK_WIDGET_REALIZED (GTK_WIDGET (paned))) {
+		pos = gtk_paned_get_position (paned);
+		
+		key = _modest_widget_memory_get_keyname (name, MODEST_WIDGET_MEMORY_PARAM_POS);
+		modest_conf_set_int (conf, key, pos, NULL);
+		g_free (key);
+	}
 	
 	return TRUE;
 }
@@ -241,6 +245,16 @@ restore_settings_paned (ModestConf *conf, GtkPaned *paned, const gchar *name)
 	
 	if (modest_conf_key_exists (conf, key, NULL)) {
 		pos = modest_conf_get_int (conf, key, NULL);
+		
+		/* TODO: Remove this hack so that paned positions can really be used.
+		 * The paned position is incorrectly saved somehow before its even visible,
+		 * when we show the main window only some time after creating it,
+		 * so this prevents a wrong value from being used. */
+		const gint max = (GTK_WIDGET(paned)->requisition.width)/3;
+		if (pos > max)
+			pos = max;
+		
+			
 		gtk_paned_set_position (paned, pos);
 	} else {
 		/* The initial position must follow the 30/70 rule */

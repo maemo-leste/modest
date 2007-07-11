@@ -385,6 +385,8 @@ modest_main_window_get_child_widget (ModestMainWindow *self,
 static void
 restore_settings (ModestMainWindow *self, gboolean do_folder_view_too)
 {
+	printf ("DEBUGDEBUG: %s\n", __FUNCTION__);
+	
 	ModestConf *conf;
 	ModestMainWindowPrivate *priv;
 
@@ -896,6 +898,7 @@ modest_main_window_new (void)
 	gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (action),
 				      modest_conf_get_bool (conf, MODEST_CONF_SHOW_TOOLBAR_FULLSCREEN, NULL));
 	hildon_window_set_menu (HILDON_WINDOW (self), GTK_MENU (parent_priv->menubar));
+	gtk_widget_show (parent_priv->menubar);
 
 	/* Get device name */
 	modest_maemo_utils_get_device_name ();
@@ -913,9 +916,11 @@ modest_main_window_new (void)
 	g_object_set (G_OBJECT (priv->header_view), 
 		      "rules-hint", FALSE,
 		      NULL);
+	/* gtk_widget_show (priv->header_view); */
 
 	/* Empty view */ 
 	priv->empty_view = create_empty_view ();
+	gtk_widget_show (priv->empty_view);
 		 
 	/* Create scrolled windows */
 	folder_win = gtk_scrolled_window_new (NULL, NULL);
@@ -926,6 +931,7 @@ modest_main_window_new (void)
 	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (priv->contents_widget),
 					GTK_POLICY_NEVER,
 					GTK_POLICY_AUTOMATIC);
+	/* gtk_widget_show (priv->contents_widget); */
 
 	/* paned */
 	priv->main_paned = gtk_hpaned_new ();
@@ -936,7 +942,8 @@ modest_main_window_new (void)
 	/* putting it all together... */
 	priv->main_vbox = gtk_vbox_new (FALSE, 6);
 	gtk_box_pack_start (GTK_BOX(priv->main_vbox), priv->main_paned, TRUE, TRUE,0);
-
+	gtk_widget_show (priv->main_vbox);
+	
 	gtk_container_add (GTK_CONTAINER(self), priv->main_vbox);
 	
 	HildonProgram *app = hildon_program_get_instance ();
@@ -955,7 +962,12 @@ modest_main_window_new (void)
 		g_object_unref (window_icon);
 	}
 
-	restore_settings (MODEST_MAIN_WINDOW(self), FALSE);
+	/* Dont't restore settings here, 
+	 * because it requires a gtk_widget_show(), 
+	 * and we don't want to do that until later,
+	 * so that the UI is not visible for non-menu D-Bus activation.
+	 */
+	/* restore_settings (MODEST_MAIN_WINDOW(self), FALSE); */
 
 	return MODEST_WINDOW(self);
 }

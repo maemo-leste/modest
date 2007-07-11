@@ -1,3 +1,31 @@
+2007-07-11  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/dbus_api/modest-dbus-api.h: Added a define for a 
+	top-application D-Bus method.
+	* src/dbus_api/modest-dbus-callbacks.c: 
+	(on_top_application),
+	(modest_dbus_req_handler): Handle the top-application D-Bus 
+	method, which might be an undocumented D-Bus signal sent by 
+	hildon-desktop when it starts the application from the menu.
+	But I am not sure and I need to test it on the device, because 
+	my scratchbox does not have the application in the menu now.
+	This method shows the main window, so that it can be invisible 
+	when started, for instance, just for email searching from 
+	osso-global-search.
+
+	* src/maemo/modest-main-window.c: (restore_settings),
+	(modest_main_window_new): Do not show the window immediately 
+	upon creation. We show it later.
+	* src/modest-widget-memory.c: (save_settings_paned):
+	Try (unsuccessfully) to avoid saving the paned position when 
+	it is not even visible. 
+	(restore_settings_paned): Do not allow a silly paned position.
+	This seems necessary when not showing the window at first.
+
+	* tests/dbus_api/Makefile.am:
+	* tests/dbus_api/test_top_application.c: (main): Test for the 
+	new D-Bus method.
+
 2007-07-10  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/modest-ui-dimming-rules.c:

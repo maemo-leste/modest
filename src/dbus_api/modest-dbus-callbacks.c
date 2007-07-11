@@ -293,13 +293,13 @@ on_idle_mail_to(gpointer user_data)
 
 static gint on_mail_to(GArray * arguments, gpointer data, osso_rpc_t * retval)
 {
-	if (arguments->len != MODEST_DEBUS_MAIL_TO_ARGS_COUNT)
+	if (arguments->len != MODEST_DBUS_MAIL_TO_ARGS_COUNT)
      	return OSSO_ERROR;
      	
     /* Use g_idle to context-switch into the application's thread: */
  
     /* Get the arguments: */
- 	osso_rpc_t val = g_array_index(arguments, osso_rpc_t, MODEST_DEBUS_MAIL_TO_ARG_URI);
+ 	osso_rpc_t val = g_array_index(arguments, osso_rpc_t, MODEST_DBUS_MAIL_TO_ARG_URI);
  	gchar *uri = g_strdup (val.value.s);
  	
  	/* printf("  debug: to=%s\n", idle_data->to); */
@@ -412,29 +412,29 @@ on_idle_compose_mail(gpointer user_data)
 
 static gint on_compose_mail(GArray * arguments, gpointer data, osso_rpc_t * retval)
 {
-	if (arguments->len != MODEST_DEBUS_COMPOSE_MAIL_ARGS_COUNT)
+	if (arguments->len != MODEST_DBUS_COMPOSE_MAIL_ARGS_COUNT)
      	return OSSO_ERROR;
      	
 	/* Use g_idle to context-switch into the application's thread: */
  	ComposeMailIdleData *idle_data = g_new0(ComposeMailIdleData, 1); /* Freed in the idle callback. */
  	
 	/* Get the arguments: */
- 	osso_rpc_t val = g_array_index(arguments, osso_rpc_t, MODEST_DEBUS_COMPOSE_MAIL_ARG_TO);
+ 	osso_rpc_t val = g_array_index(arguments, osso_rpc_t, MODEST_DBUS_COMPOSE_MAIL_ARG_TO);
  	idle_data->to = g_strdup (val.value.s);
  	
- 	val = g_array_index(arguments, osso_rpc_t, MODEST_DEBUS_COMPOSE_MAIL_ARG_CC);
+ 	val = g_array_index(arguments, osso_rpc_t, MODEST_DBUS_COMPOSE_MAIL_ARG_CC);
  	idle_data->cc = g_strdup (val.value.s);
  	
- 	val = g_array_index(arguments, osso_rpc_t, MODEST_DEBUS_COMPOSE_MAIL_ARG_BCC);
+ 	val = g_array_index(arguments, osso_rpc_t, MODEST_DBUS_COMPOSE_MAIL_ARG_BCC);
  	idle_data->bcc = g_strdup (val.value.s);
  	
- 	val = g_array_index(arguments, osso_rpc_t, MODEST_DEBUS_COMPOSE_MAIL_ARG_SUBJECT);
+ 	val = g_array_index(arguments, osso_rpc_t, MODEST_DBUS_COMPOSE_MAIL_ARG_SUBJECT);
  	idle_data->subject = g_strdup (val.value.s);
  	
- 	val = g_array_index(arguments, osso_rpc_t, MODEST_DEBUS_COMPOSE_MAIL_ARG_BODY);
+ 	val = g_array_index(arguments, osso_rpc_t, MODEST_DBUS_COMPOSE_MAIL_ARG_BODY);
  	idle_data->body = g_strdup (val.value.s);
  	
- 	val = g_array_index(arguments, osso_rpc_t, MODEST_DEBUS_COMPOSE_MAIL_ARG_ATTACHMENTS);
+ 	val = g_array_index(arguments, osso_rpc_t, MODEST_DBUS_COMPOSE_MAIL_ARG_ATTACHMENTS);
  	idle_data->attachments = g_strdup (val.value.s);
 
   	g_idle_add(on_idle_compose_mail, (gpointer)idle_data);
@@ -579,13 +579,13 @@ on_idle_open_message (gpointer user_data)
 
 static gint on_open_message(GArray * arguments, gpointer data, osso_rpc_t * retval)
 {
-	if (arguments->len != MODEST_DEBUS_OPEN_MESSAGE_ARGS_COUNT)
+	if (arguments->len != MODEST_DBUS_OPEN_MESSAGE_ARGS_COUNT)
      	return OSSO_ERROR;
      	
     /* Use g_idle to context-switch into the application's thread: */
 
     /* Get the arguments: */
- 	osso_rpc_t val = g_array_index(arguments, osso_rpc_t, MODEST_DEBUS_OPEN_MESSAGE_ARG_URI);
+ 	osso_rpc_t val = g_array_index(arguments, osso_rpc_t, MODEST_DBUS_OPEN_MESSAGE_ARG_URI);
  	gchar *uri = g_strdup (val.value.s);
  	
  	/* printf("  debug: to=%s\n", idle_data->to); */
@@ -613,13 +613,13 @@ on_delete_message (GArray *arguments, gpointer data, osso_rpc_t *retval)
 	const char   *uid;
 	gint          res;
 
-	if (arguments->len != MODEST_DEBUS_DELETE_MESSAGE_ARGS_COUNT) {
+	if (arguments->len != MODEST_DBUS_DELETE_MESSAGE_ARGS_COUNT) {
 		return OSSO_ERROR;
 	}
 
 	val = g_array_index (arguments,
 			     osso_rpc_t,
-			     MODEST_DEBUS_DELETE_MESSAGE_ARG_URI);
+			     MODEST_DBUS_DELETE_MESSAGE_ARG_URI);
 
 	uri = (const char *) val.value.s;
 
@@ -759,6 +759,36 @@ static gint on_open_default_inbox(GArray * arguments, gpointer data, osso_rpc_t 
  	 * because that would be asynchronous. */
  	return OSSO_OK;
 }
+
+
+static gboolean on_idle_top_application (gpointer user_data)
+{
+	gdk_threads_enter ();
+
+	ModestWindow *win = 
+		modest_window_mgr_get_main_window (modest_runtime_get_window_mgr ());
+	if (win) {
+		/* Ideally, we would just use gtk_widget_show(), 
+		 * but this widget is not coded correctly to support that: */
+		gtk_widget_show_all (GTK_WIDGET (win));
+		gtk_window_present (GTK_WINDOW (win));
+	}
+
+	gdk_threads_leave ();
+	
+	return FALSE; /* Do not call this callback again. */
+}
+
+static gint on_top_application(GArray * arguments, gpointer data, osso_rpc_t * retval)
+{
+    /* Use g_idle to context-switch into the application's thread: */
+
+    /* This method has no arguments. */
+ 	
+ 	g_idle_add(on_idle_top_application, NULL);
+ 	
+ 	return OSSO_OK;
+}
                       
 /* Callback for normal D-BUS messages */
 gint modest_dbus_req_handler(const gchar * interface, const gchar * method,
@@ -766,23 +796,27 @@ gint modest_dbus_req_handler(const gchar * interface, const gchar * method,
                       osso_rpc_t * retval)
 {
 	
-	g_debug ("debug: %s\n", __FUNCTION__);
+	/* g_debug ("debug: %s\n", __FUNCTION__); */
 	g_debug ("debug: %s: method received: %s\n", __FUNCTION__, method);
 	
-	if (g_ascii_strcasecmp(method, MODEST_DBUS_METHOD_MAIL_TO) == 0) {
+	if (g_ascii_strcasecmp (method, MODEST_DBUS_METHOD_MAIL_TO) == 0) {
 		return on_mail_to (arguments, data, retval);
-	} else if (g_ascii_strcasecmp(method, MODEST_DBUS_METHOD_OPEN_MESSAGE) == 0) {
+	} else if (g_ascii_strcasecmp (method, MODEST_DBUS_METHOD_OPEN_MESSAGE) == 0) {
 		return on_open_message (arguments, data, retval);
-	} else if (g_ascii_strcasecmp(method, MODEST_DBUS_METHOD_SEND_RECEIVE) == 0) {
+	} else if (g_ascii_strcasecmp (method, MODEST_DBUS_METHOD_SEND_RECEIVE) == 0) {
 		return on_send_receive (arguments, data, retval);
-	} else if (g_ascii_strcasecmp(method, MODEST_DBUS_METHOD_COMPOSE_MAIL) == 0) {
+	} else if (g_ascii_strcasecmp (method, MODEST_DBUS_METHOD_COMPOSE_MAIL) == 0) {
 		return on_compose_mail (arguments, data, retval);
-	} else if (g_ascii_strcasecmp(method, MODEST_DBUS_METHOD_DELETE_MESSAGE) == 0) {
+	} else if (g_ascii_strcasecmp (method, MODEST_DBUS_METHOD_DELETE_MESSAGE) == 0) {
 		return on_delete_message (arguments,data, retval);
-	} else if (g_ascii_strcasecmp(method, MODEST_DBUS_METHOD_OPEN_DEFAULT_INBOX) == 0) {
+	} else if (g_ascii_strcasecmp (method, MODEST_DBUS_METHOD_OPEN_DEFAULT_INBOX) == 0) {
 		return on_open_default_inbox (arguments, data, retval);
+	} else if (g_ascii_strcasecmp (method, MODEST_DBUS_METHOD_TOP_APPLICATION) == 0) {
+		return on_top_application (arguments, data, retval);
 	}
 	else { 
+		g_debug ("  debug: %s: Unexpected D-Bus method: %s\n", __FUNCTION__, method);
+	
 		/* We need to return INVALID here so
 		 * libosso will return DBUS_HANDLER_RESULT_NOT_YET_HANDLED,
 		 * so that our modest_dbus_req_filter will then be tried instead.
