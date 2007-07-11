@@ -258,6 +258,20 @@ headers_action_delete (TnyHeader *header,
 /* 		modest_header_view_refilter (MODEST_HEADER_VIEW (user_data)); */
 }
 
+/** After deleing a message that is currently visible in a window, 
+ * show the next message from the list, or close the window if there are no more messages.
+ **/
+void modest_ui_actions_refresh_message_window_after_delete (ModestMsgViewWindow* win)
+{
+	/* Close msg view window or select next */
+	if (modest_msg_view_window_last_message_selected (win) &&
+		modest_msg_view_window_first_message_selected (win)) {
+		modest_ui_actions_on_close_window (NULL, MODEST_WINDOW (win));
+	} else {
+		modest_msg_view_window_select_next_message (win);
+	}
+}
+
 void
 modest_ui_actions_on_delete_message (GtkAction *action, ModestWindow *win)
 {
@@ -284,7 +298,7 @@ modest_ui_actions_on_delete_message (GtkAction *action, ModestWindow *win)
 	header_list = get_selected_headers (win);
 	if (!header_list) return;
 
-	/* Check if any of the headers is already opened, or in the process of being opened */
+	/* Check if any of the headers are already opened, or in the process of being opened */
 	if (MODEST_IS_MAIN_WINDOW (win)) {
 		gboolean found;
 		iter = tny_list_create_iterator (header_list);
@@ -324,7 +338,8 @@ modest_ui_actions_on_delete_message (GtkAction *action, ModestWindow *win)
 	message = g_strdup_printf(ngettext("emev_nc_delete_message", "emev_nc_delete_messages", 
 					   tny_list_get_length(header_list)), desc);
 
-	/* Confirmation dialog */		
+	/* Confirmation dialog */
+	printf("DEBUG: %s\n", __FUNCTION__);	
 	response = modest_platform_run_confirmation_dialog (GTK_WINDOW (win),
 							    message);
 	
@@ -357,13 +372,7 @@ modest_ui_actions_on_delete_message (GtkAction *action, ModestWindow *win)
 		do_headers_action (win, headers_action_delete, header_view);
 
 		if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
-			/* Close msg view window or select next */
-			if (modest_msg_view_window_last_message_selected (MODEST_MSG_VIEW_WINDOW (win)) &&
-			    modest_msg_view_window_first_message_selected (MODEST_MSG_VIEW_WINDOW (win))) {
-				modest_ui_actions_on_close_window (NULL, MODEST_WINDOW (win));
-			} else {
-				modest_msg_view_window_select_next_message (MODEST_MSG_VIEW_WINDOW (win));
-			}
+			modest_ui_actions_refresh_message_window_after_delete (MODEST_MSG_VIEW_WINDOW (win));
 			
 			/* Get main window */
 			mgr = modest_runtime_get_window_mgr ();

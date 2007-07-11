@@ -529,15 +529,15 @@ on_idle_open_message (gpointer user_data)
 
 	uri = (char *) user_data;
 
-	g_debug ("%s: Trying to find msg by url: %s", __FUNCTION__, uri);
+	/* g_debug ("modest: %s: Trying to find msg by url: %s", __FUNCTION__, uri); */
 	msg = find_message_by_url (uri, &account);
 	g_free (uri);
 
 	if (msg == NULL) {
-		g_debug ("  %s: message not found.", __FUNCTION__);
+		g_debug ("modest:  %s: message not found.", __FUNCTION__);
 		return FALSE;
 	}
-	g_debug ("  %s: Found message.", __FUNCTION__);
+	g_debug ("modest:  %s: Found message.", __FUNCTION__);
 
 	folder = tny_msg_get_folder (msg);
 	if (modest_tny_folder_get_local_folder_type (folder) == TNY_FOLDER_TYPE_DRAFTS) {
@@ -553,14 +553,14 @@ on_idle_open_message (gpointer user_data)
 	gdk_threads_enter ();
 
 	if (modest_window_mgr_find_registered_header (win_mgr, header, &msg_view)) {
-		g_debug ("window for this msg is open already");
+		g_debug ("modest: %s: A window for this messsage is open already.", __FUNCTION__);
 		if (!MODEST_IS_MSG_VIEW_WINDOW(msg_view)) 
-			g_debug ("not a msg view");
+			g_debug ("  DEBUG: But the window is not a msg view");
 		else {
 			gtk_window_present (GTK_WINDOW(msg_view));
 		}
 	} else {
-		g_debug ("creating new window for this msg");
+		/* g_debug ("creating new window for this msg"); */
 		modest_window_mgr_register_header (win_mgr, header);
 		msg_view = modest_msg_view_window_new (msg,account_name,
 						       msg_uid);
@@ -596,9 +596,8 @@ static gint on_open_message(GArray * arguments, gpointer data, osso_rpc_t * retv
  	return OSSO_OK;
 }
 
-
-static gint
-on_delete_message (GArray *arguments, gpointer data, osso_rpc_t *retval)
+static gboolean
+on_idle_delete_message (gpointer user_data)
 {
 	TnyList      *headers;
 	TnyFolder    *folder;
@@ -608,22 +607,13 @@ on_delete_message (GArray *arguments, gpointer data, osso_rpc_t *retval)
 	TnyMsg       *msg;
 	TnyAccount   *account;
 	GError       *error;
-	osso_rpc_t    val;
 	const char   *uri;
 	const char   *uid;
 	gint          res;
 
-	if (arguments->len != MODEST_DBUS_DELETE_MESSAGE_ARGS_COUNT) {
-		return OSSO_ERROR;
-	}
+	uri = (char *) user_data;
 
-	val = g_array_index (arguments,
-			     osso_rpc_t,
-			     MODEST_DBUS_DELETE_MESSAGE_ARG_URI);
-
-	uri = (const char *) val.value.s;
-
-	g_debug ("Searching message (delete message)");
+	/* g_debug ("modest: %s Searching for message (delete message)"); */
 	
 	msg = find_message_by_url (uri, &account);
 
@@ -631,7 +621,7 @@ on_delete_message (GArray *arguments, gpointer data, osso_rpc_t *retval)
 		return OSSO_ERROR;
 	}
 
-	g_debug ("Found message");
+	g_debug ("modest: %s: Found message", __FUNCTION__);
 	
 	msg_header = tny_msg_get_header (msg);
 	uid = tny_header_get_uid (msg_header);
@@ -653,7 +643,7 @@ on_delete_message (GArray *arguments, gpointer data, osso_rpc_t *retval)
 	iter = tny_list_create_iterator (headers);
 	header = NULL;
 
-	g_debug ("Searching header for msg in folder");
+	/* g_debug ("Searching header for msg in folder"); */
 	while (!tny_iterator_is_done (iter)) {
 		const char *cur_id;
 
@@ -661,7 +651,7 @@ on_delete_message (GArray *arguments, gpointer data, osso_rpc_t *retval)
 		cur_id = tny_header_get_uid (header);
 		
 		if (cur_id && uid && g_str_equal (cur_id, uid)) {
-			g_debug ("Found correspoding header from folder");
+			/* g_debug ("Found corresponding header from folder"); */
 			break;
 		}
 
@@ -671,17 +661,20 @@ on_delete_message (GArray *arguments, gpointer data, osso_rpc_t *retval)
 	}
 
 	g_object_unref (iter);
+	iter = NULL;
 	g_object_unref (headers);
+	headers = NULL;
 	
 	g_object_unref (msg_header);
+	msg_header = NULL;
 	g_object_unref (msg);
+	msg = NULL;
 
 	if (header == NULL) {
 		g_object_unref (folder);
 		return OSSO_ERROR;
-	}
-
-
+	}	
+		
 	error = NULL;
 	res = OSSO_OK;
 	tny_folder_remove_msg (folder, header, &error);
@@ -691,9 +684,43 @@ on_delete_message (GArray *arguments, gpointer data, osso_rpc_t *retval)
 		res = OSSO_ERROR;
 		g_error_free (error);
 	}
-
+	
+	gdk_threads_enter ();
+	
+	ModestWindowMgr *win_mgr = modest_runtime_get_window_mgr ();	
+	ModestWindow *msg_view = NULL; 
+	if (modest_window_mgr_find_registered_header (win_mgr, header, &msg_view)) {
+		if (MODEST_IS_MSG_VIEW_WINDOW (msg_view))
+			modest_ui_actions_refresh_message_window_after_delete (MODEST_MSG_VIEW_WINDOW (msg_view));
+	}
+	
+	gdk_threads_leave ();
+	
+	g_object_unref (header);
 	g_object_unref (folder);
 	return res;
+}
+
+static gint
+on_delete_message (GArray *arguments, gpointer data, osso_rpc_t *retval)
+{
+	if (arguments->len != MODEST_DBUS_DELETE_MESSAGE_ARGS_COUNT)
+     	return OSSO_ERROR;
+     	
+    /* Use g_idle to context-switch into the application's thread: */
+
+    /* Get the arguments: */
+ 	osso_rpc_t val = g_array_index (arguments,
+			     osso_rpc_t,
+			     MODEST_DBUS_DELETE_MESSAGE_ARG_URI);
+ 	gchar *uri = g_strdup (val.value.s);
+ 	
+ 	/* printf("  debug: to=%s\n", idle_data->to); */
+ 	g_idle_add(on_idle_delete_message, (gpointer)uri);
+ 	
+ 	/* Note that we cannot report failures during sending, 
+ 	 * because that would be asynchronous. */
+ 	return OSSO_OK;
 }
 
 static gboolean

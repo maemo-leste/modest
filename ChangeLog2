@@ -15,6 +15,22 @@
 
 2007-07-11  Murray Cumming  <murrayc@murrayc-desktop>
 
+	* src/modest-ui-actions.h:
+	* src/modest-ui-actions.c:
+	(modest_ui_actions_on_delete_message):
+	Move some code into a new 
+	modest_ui_actions_refresh_message_window_after_delete() 
+	function so we can use it from elsewhere.
+
+	* src/dbus_api/modest-dbus-callbacks.c:
+	(on_idle_delete_message), (on_delete_message): Used an idle 
+	handler, as we do for the other D-Bus method handlers.
+	Call modest_ui_actions_refresh_message_window_after_delete() 
+	if the deleted message was open in a window. This fixed 
+	projects.maemo.org bug NB#62862.
+
+2007-07-11  Murray Cumming  <murrayc@murrayc-desktop>
+
 	* src/modest-main.c: (main): Only show the UI at the start if 
 	the showui command line option was given. For instance,
 	run-standalone src/modest showui
