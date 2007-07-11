@@ -876,7 +876,8 @@ modest_folder_view_on_map (ModestFolderView *self,
 		   be a bug, because the INBOX is not selected, but we
 		   need to rewrite some parts of Modest to avoid the
 		   deathlock situation */
-/* 		modest_folder_view_select_first_inbox_or_local (self); */
+		/* TODO: check if this is still the case */
+ 		modest_folder_view_select_first_inbox_or_local (self);
 		priv->reselect = FALSE;
 	}
 	return FALSE;
