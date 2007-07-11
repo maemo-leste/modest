@@ -311,9 +311,6 @@ static gint on_mail_to(GArray * arguments, gpointer data, osso_rpc_t * retval)
 }
 
 
-
-
-
 static gboolean
 on_idle_compose_mail(gpointer user_data)
 {
@@ -325,11 +322,16 @@ on_idle_compose_mail(gpointer user_data)
  	ModestAccountMgr *account_mgr = modest_runtime_get_account_mgr();
 	gchar *account_name = modest_account_mgr_get_default_account (account_mgr);
 	if (!account_name) {
-		g_printerr ("modest: no account found\n");
+		g_printerr ("modest: no account found.\n");
+		
+		/* TODO: If the call to this D-Bus method caused the application to start
+		 * then the new-account wizard will now be shown, and we need to wait 
+		 * until the account exists instead of just failing.
+		 */
 	}
 	
 	TnyAccount *account = NULL;
-	if (account_mgr) {
+	if (account_name && account_mgr) {
 		account = modest_tny_account_store_get_transport_account_for_open_connection (
 			modest_runtime_get_account_store(), account_name);
 	}
