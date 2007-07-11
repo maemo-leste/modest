@@ -1148,7 +1148,7 @@ static void
 on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 {
 	GtkTreeModel *model;
-	TnyHeader *header;
+	TnyHeader *header = NULL;
 	GtkTreePath *path = NULL;	
 	GtkTreeIter iter;
 	ModestHeaderView *self;
@@ -1297,7 +1297,7 @@ drag_data_get_cb (GtkWidget *widget, GdkDragContext *context,
 		gtk_tree_set_row_drag_data (selection_data, model, source_row);
 		break;
 	case MODEST_MSG: {
-		TnyHeader *hdr;
+		TnyHeader *hdr = NULL;
 		gtk_tree_model_get (model, &iter,
 				    TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN, &hdr,
 				    -1);

@@ -1510,6 +1510,9 @@ modest_msg_view_window_clipboard_owner_change (GtkClipboard *clipboard,
 	gchar *selection;
 	GtkWidget *focused;
 
+	if (!GTK_WIDGET_VISIBLE (window))
+		return;
+
 	parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
 	selection = gtk_clipboard_wait_for_text (clipboard);
 

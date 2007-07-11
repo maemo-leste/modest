@@ -1225,7 +1225,7 @@ static gint
 cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 	  gpointer user_data)
 {
-	gint cmp;
+	gint cmp = 0;
 	gchar *name1 = NULL;
 	gchar *name2 = NULL;
 	TnyFolderType type = TNY_FOLDER_TYPE_UNKNOWN;
@@ -1249,7 +1249,7 @@ cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 	   folder copy/move actually occurs, so there could be
 	   situations where the model to be drawn is not correct */
 	if (!folder1 || !folder2)
-		return 0;
+		goto finish;
 
 	if (type == TNY_FOLDER_TYPE_ROOT) {
 		/* Compare the types, so that 
@@ -1276,16 +1276,17 @@ cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 			const gchar *account_id = account1 ? tny_account_get_id (account1) : NULL;
 			const gchar *account_id2 = account2 ? tny_account_get_id (account2) : NULL;
 	
-			if (!account_id && !account_id2)
-				return 0;
-			else if (!account_id)
-				return -1;
-			else if (!account_id2)
-				return +1;
-			else if (!strcmp (account_id, MODEST_MMC_ACCOUNT_ID))
+			if (!account_id && !account_id2) {
+				cmp = 0;
+			} else if (!account_id) {
+				cmp = -1;
+			} else if (!account_id2) {
 				cmp = +1;
-			else
+			} else if (!strcmp (account_id, MODEST_MMC_ACCOUNT_ID)) {
+				cmp = +1;
+			} else {
 				cmp = modest_text_utils_utf8_strcmp (name1, name2, TRUE);
+			}
 		}
 	} else {
 		gint cmp1 = 0, cmp2 = 0;
@@ -1321,7 +1322,8 @@ cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 		else 
 			cmp = (cmp1 - cmp2);
 	}
-	
+
+finish:	
 	if (folder1)
 		g_object_unref(G_OBJECT(folder1));
 	if (folder2)
@@ -1455,7 +1457,10 @@ drag_and_drop_from_header_view (GtkTreeModel *source_model,
 	}
 
 	/* Transfer message */
-	mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_RECEIVE, NULL);
+	mail_op = modest_mail_operation_new_with_error_handling (MODEST_MAIL_OPERATION_TYPE_RECEIVE, 
+								 NULL,
+								 modest_ui_actions_move_folder_error_handler,
+								 NULL);
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
 					 mail_op);
 	g_signal_connect (G_OBJECT (mail_op), "progress-changed",
