@@ -1,5 +1,11 @@
 2007-07-11  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/maemo/modest-account-view-window.c: (on_new_button_clicked):
+	Do not use gtk_dialog_run() to avoid modality hang problems. This fixes 
+	projects.maemo.org bug NB#62778.
+
+2007-07-11  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/maemo/easysetup/modest-easysetup-wizard.c: (create_account):
 	Ignore the wrong (for now) secure-smtp setting in the presets - 
 	just default to requiring secure authentication for SMTP, because 

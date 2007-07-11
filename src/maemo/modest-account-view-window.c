@@ -245,9 +245,7 @@ on_new_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 {
 	/* Show the easy-setup wizard: */
 	ModestEasysetupWizardDialog *wizard = modest_easysetup_wizard_dialog_new ();
-	gtk_window_set_transient_for (GTK_WINDOW (wizard), GTK_WINDOW (self));
-	gtk_dialog_run (GTK_DIALOG (wizard));
-	gtk_widget_destroy (GTK_WIDGET (wizard));
+	modest_maemo_show_dialog_and_forget (GTK_WINDOW (self), GTK_DIALOG (wizard));
 }
 
 
