@@ -3337,10 +3337,13 @@ open_msg_for_purge_cb (ModestMailOperation *mail_op,
 	gint pending_purges = 0;
 	gboolean some_purged = FALSE;
 	ModestWindow *win = MODEST_WINDOW (user_data);
+	ModestWindowMgr *mgr = modest_runtime_get_window_mgr ();
 
 	/* If there was any error */
-	if (!modest_ui_actions_msg_retrieval_check (mail_op, header, msg))
+	if (!modest_ui_actions_msg_retrieval_check (mail_op, header, msg)) {
+		modest_window_mgr_unregister_header (mgr, header);
 		return;
+	}
 
 	/* Once the message has been retrieved for purging, we check if
 	 * it's all ok for purging */
@@ -3392,6 +3395,7 @@ open_msg_for_purge_cb (ModestMailOperation *mail_op,
 		g_object_unref (part);
 		tny_iterator_next (iter);
 	}
+	modest_window_mgr_unregister_header (mgr, header);
 
 	g_object_unref (iter);
 	g_object_unref (parts);
