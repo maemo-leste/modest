@@ -1,3 +1,14 @@
+2007-07-11  Murray Cumming  <murrayc@murrayc-desktop>
+
+	* src/modest-main.c: (main): Only show the UI at the start if 
+	the showui command line option was given. For instance,
+	run-standalone src/modest showui
+	Otherwise, we wait for the top_application D-Bus method to 
+	be sent by hildon-desktop when the application is selected 
+	from the menu.
+	This allows us to run without a UI when osso-global-search 
+	uses our D-Bus methods.
+
 2007-07-11  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/dbus_api/modest-dbus-api.h: Added a define for a 

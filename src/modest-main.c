@@ -34,10 +34,22 @@
 #include <modest-init.h>
 #include <gdk/gdk.h>
 #include <widgets/modest-main-window.h>
+#include <string.h>
 
 int
 main (int argc, char *argv[])
 {
+	/* Usually we don't show the application at first, 
+	 * because we wait for the top_application D-Bus method to 
+	 * be called. But that's annoying when starting from the 
+	 * command line.: */
+	gboolean show_ui_without_top_application_method = FALSE;
+	if (argc >= 2) {
+		printf ("DEBUG: %s: argv[1]=%s\n", __FUNCTION__, argv[1]);
+		if (strcmp (argv[1], "showui") == 0)
+			show_ui_without_top_application_method = TRUE;
+	}
+	
 	ModestWindow *win;
 	int retval  = 0;
 		
@@ -61,14 +73,14 @@ main (int argc, char *argv[])
 
 	win = modest_main_window_new ();
 
-	/* TODO: Do not show this now. 
-	 * Only show it when we get the "top_application" D-Bus method.
+	/* Usually, we only show the UI when we get the "top_application" D-Bus method.
 	 * This allows modest to start via D-Bus activation to provide a service, 
 	 * without showing the UI.
 	 * The UI will be shown later (or just after starting if no otehr D-Bus method was used),
 	 * when we receive the "top_application" D-Bus method.
 	 */
-	gtk_widget_show_all (GTK_WIDGET(win));
+	if (show_ui_without_top_application_method)
+		gtk_widget_show_all (GTK_WIDGET(win));
 		
 	if (!win) {
 		g_printerr ("modest: failed to create main window\n");
