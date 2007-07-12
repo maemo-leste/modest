@@ -1,5 +1,12 @@
 2007-07-12  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/dbus_api/modest-dbus-callbacks.c:
+	(on_idle_open_message): If the message is in drafts then open it 
+	in an edit window instead of a view window. This fixes 
+	projects.maemo.org bug NB#63005.
+
+2007-07-12  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/dbus_api/modest-dbus-callbacks.c: (on_idle_open_message):
 	Avoided a harmless g_warning().
 

@@ -469,7 +469,8 @@ find_message_by_url (const char *uri,  TnyAccount **ac_out)
 						  uri);
 	
 	if (account == NULL) {
-		g_debug ("%s: tny_account_store_find_account() failed.\n", __FUNCTION__);
+		g_debug ("%s: tny_account_store_find_account() failed for\n  uri=%s\n", 
+			__FUNCTION__, uri);
 		return NULL;
 	}
 
@@ -487,7 +488,7 @@ find_message_by_url (const char *uri,  TnyAccount **ac_out)
 						&err);
 
 	if (folder == NULL) {
-		g_debug ("%s: tny_store_account_find_folder() failed\naccount=%s, uri=%s.\n", __FUNCTION__, 
+		g_debug ("%s: tny_store_account_find_folder() failed for\n  account=%s, uri=%s.\n", __FUNCTION__, 
 			tny_account_get_id (TNY_ACCOUNT(account)), uri);
 		goto out;
 	}
@@ -519,7 +520,6 @@ out:
 static gboolean
 on_idle_open_message (gpointer user_data)
 {
-	ModestWindow *msg_view = NULL;
 	TnyMsg       *msg = NULL;
 	TnyAccount   *account = NULL;
 	TnyHeader    *header = NULL; 
@@ -540,10 +540,14 @@ on_idle_open_message (gpointer user_data)
 	}
 	g_debug ("modest:  %s: Found message.", __FUNCTION__);
 
+	
 	folder = tny_msg_get_folder (msg);
+	
+	/* Drafts will be opened in the editor, instead of the viewer, as per the UI spec: */
+	gboolean is_draft = FALSE;
 	if (folder && modest_tny_folder_is_local_folder (folder) &&
 		(modest_tny_folder_get_local_folder_type (folder) == TNY_FOLDER_TYPE_DRAFTS)) {
-		g_debug ("TODO: draft messages should be opened in edit mode... ");
+		is_draft = TRUE;
 	}
 
 	header = tny_msg_get_header (msg);
@@ -559,21 +563,42 @@ on_idle_open_message (gpointer user_data)
 		
 	gdk_threads_enter ();
 
+	gboolean already_opened = FALSE;
+	ModestWindow *msg_view = NULL;
 	if (modest_window_mgr_find_registered_header (win_mgr, header, &msg_view)) {
-		g_debug ("modest: %s: A window for this messsage is open already.", __FUNCTION__);
-		if (!MODEST_IS_MSG_VIEW_WINDOW(msg_view)) 
-			g_debug ("  DEBUG: But the window is not a msg view");
+		if (msg_view) {
+			g_debug ("modest: %s: A window for this message is open already: type=%s", 
+			__FUNCTION__, G_OBJECT_TYPE_NAME (msg_view));
+		}
+		
+		if (!msg_view)
+			g_debug ("modest_window_mgr_find_registered_header(): Returned TRUE, but msg_view is NULL");
+		else if (!MODEST_IS_MSG_VIEW_WINDOW (msg_view) && !MODEST_IS_MSG_EDIT_WINDOW (msg_view))
+			g_debug ("  DEBUG: But the window is not a msg view or edit window.");
 		else {
 			gtk_window_present (GTK_WINDOW(msg_view));
+			already_opened = TRUE;
 		}
-	} else {
+	}
+	
+	if (!already_opened) {
 		/* g_debug ("creating new window for this msg"); */
 		modest_window_mgr_register_header (win_mgr, header);
 		
 		const gchar *modest_account_name = 
 			modest_tny_account_get_parent_modest_account_name_for_server_account (account);
-		msg_view = modest_msg_view_window_new (msg, modest_account_name,
+			
+		/* Drafts will be opened in the editor, and others will be opened in the viewer, 
+		 * as per the UI spec: */
+		if (is_draft) {
+			/* TODO: Maybe the msg_uid should be registered for edit windows too,
+			 * so we can open the same window again next time: */
+			msg_view = modest_msg_edit_window_new (msg, modest_account_name);
+		} else {
+			msg_view = modest_msg_view_window_new (msg, modest_account_name,
 						       msg_uid);
+		}
+		
 		modest_window_mgr_register_window (win_mgr, msg_view);
 		gtk_widget_show_all (GTK_WIDGET (msg_view));
 	}
