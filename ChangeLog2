@@ -1,3 +1,9 @@
+2007-07-12  Armin Burgmeier  <armin@openismus.com>
+
+	* src/maemo/modest-main-window.c: Make default account appear bold
+	in view, tools/send & receive and toolbar/send & receive SCM menus.
+	This fixes projects.maemo.org bug NB#59010.
+
 2007-07-12  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/modest-ui-dimming-rules.c: (_selected_folder_is_root):

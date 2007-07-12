@@ -1349,7 +1349,7 @@ on_account_update (TnyAccountStore *account_store,
 					       account_data->account_name,
 					       GTK_UI_MANAGER_MENUITEM,
 					       FALSE);
-	
+
 			/* Connect the action signal "activate" */
 			g_signal_connect (G_OBJECT (view_account_action),
 					  "activate",
@@ -1384,7 +1384,22 @@ on_account_update (TnyAccountStore *account_store,
 			   CSM. If there is only one account then
 			   it'll be no menu */
 			if (priv->accounts_popup) {
-				item = gtk_menu_item_new_with_label (display_name);
+				GtkWidget *label = gtk_label_new(NULL);
+				gtk_misc_set_alignment (GTK_MISC (label), 0.0, 0.5);
+				if (default_account && (strcmp(account_data->account_name, default_account) == 0))
+				{
+					gchar *escaped = g_markup_printf_escaped ("<b>%s</b>", display_name);
+					gtk_label_set_markup (GTK_LABEL (label), escaped);
+					g_free (escaped);
+				}
+				else
+				{
+					gtk_label_set_text (GTK_LABEL (label), display_name);
+				}
+
+				item = gtk_menu_item_new ();
+				gtk_container_add (GTK_CONTAINER (item), label);
+
 				gtk_menu_shell_prepend (GTK_MENU_SHELL (priv->accounts_popup), GTK_WIDGET (item));
 				g_signal_connect_data (G_OBJECT (item), 
 						       "activate", 
@@ -1398,9 +1413,53 @@ on_account_update (TnyAccountStore *account_store,
 
 		/* Frees */
 		g_free (display_name);
+	}
+
+	gtk_ui_manager_insert_action_group (parent_priv->ui_manager, action_group, 1);
+
+	/* We cannot do this in the loop above because this relies on the action
+	 * group being inserted. This makes the default account appear in bold.
+	 * I agree it is a rather ugly way, but I don't see another possibility. armin. */
+	for (i = 0; i < num_accounts; i++) {
+		ModestAccountData *account_data = (ModestAccountData *) g_slist_nth_data (accounts, i);
+
+		if(account_data->account_name &&
+		   strcmp (account_data->account_name, default_account) == 0) {
+			gchar *item_name = g_strconcat (account_data->account_name, "Menu", NULL);
+
+			gchar *path = g_strconcat ("/MenuBar/ViewMenu/ViewMenuAdditions/", item_name, NULL);
+			GtkWidget *item = gtk_ui_manager_get_widget (parent_priv->ui_manager, path);
+			g_free(path);
+
+			if (item) {
+				GtkWidget *child = gtk_bin_get_child (GTK_BIN (item));
+				if (GTK_IS_LABEL (child)) {
+					const gchar *cur_name = gtk_label_get_text (GTK_LABEL (child));
+					gchar *bold_name = g_markup_printf_escaped("<b>%s</b>", cur_name);
+					gtk_label_set_markup (GTK_LABEL (child), bold_name);
+					g_free (bold_name);
+				}
+			}
+
+			path = g_strconcat("/MenuBar/ToolsMenu/ToolsSendReceiveMainMenu/ToolsMenuAdditions/", item_name, NULL);
+			item = gtk_ui_manager_get_widget (parent_priv->ui_manager, path);
+			g_free (path);
+
+			if (item) {
+				GtkWidget *child = gtk_bin_get_child (GTK_BIN (item));
+				if (GTK_IS_LABEL (child)) {
+					const gchar *cur_name = gtk_label_get_text (GTK_LABEL (child));
+					gchar *bold_name = g_markup_printf_escaped("<b>%s</b>", cur_name);
+					gtk_label_set_markup (GTK_LABEL (child), bold_name);
+					g_free (bold_name);
+				}
+			}
+
+			g_free(item_name);
+		}
+
 		modest_account_mgr_free_account_data (mgr, account_data);
 	}
-	gtk_ui_manager_insert_action_group (parent_priv->ui_manager, action_group, 1);
 
 	if (priv->accounts_popup) {
 		/* Mandatory in order to view the menu contents */
