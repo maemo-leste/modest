@@ -520,13 +520,12 @@ static gboolean
 on_idle_open_message (gpointer user_data)
 {
 	ModestWindow *msg_view = NULL;
-	TnyMsg       *msg;
+	TnyMsg       *msg = NULL;
 	TnyAccount   *account = NULL;
-	TnyHeader    *header; 
-	const char   *msg_uid;
-	const char   *account_name;
-	char         *uri;
-	ModestWindowMgr *win_mgr;
+	TnyHeader    *header = NULL; 
+	const char   *msg_uid = NULL;
+	char         *uri = NULL;
+	ModestWindowMgr *win_mgr = NULL;
 	TnyFolder    *folder = NULL;
 
 	uri = (char *) user_data;
@@ -547,7 +546,7 @@ on_idle_open_message (gpointer user_data)
 	}
 
 	header = tny_msg_get_header (msg);
-	account_name = tny_account_get_name (account);
+	
 	msg_uid =  modest_tny_folder_get_header_unique_id(header); 
 /* FIXME:  modest_tny_folder_get_header_unique_id warns against this */
 	win_mgr = modest_runtime_get_window_mgr ();
@@ -564,7 +563,10 @@ on_idle_open_message (gpointer user_data)
 	} else {
 		/* g_debug ("creating new window for this msg"); */
 		modest_window_mgr_register_header (win_mgr, header);
-		msg_view = modest_msg_view_window_new (msg,account_name,
+		
+		const gchar *modest_account_name = 
+			modest_tny_account_get_parent_modest_account_name_for_server_account (account);
+		msg_view = modest_msg_view_window_new (msg, modest_account_name,
 						       msg_uid);
 		modest_window_mgr_register_window (win_mgr, msg_view);
 		gtk_widget_show_all (GTK_WIDGET (msg_view));
@@ -679,15 +681,17 @@ on_idle_delete_message (gpointer user_data)
 		
 	error = NULL;
 	res = OSSO_OK;
-	tny_folder_remove_msg (folder, header, &error);
-	tny_header_set_flags (header, TNY_HEADER_FLAG_SEEN);
+	
+	gdk_threads_enter ();
+	ModestWindow *win = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr ());
+	modest_do_message_delete (header, win);
 
 	if (error != NULL) {
 		res = OSSO_ERROR;
 		g_error_free (error);
 	}
 	
-	gdk_threads_enter ();
+	
 	
 	ModestWindowMgr *win_mgr = modest_runtime_get_window_mgr ();	
 	ModestWindow *msg_view = NULL; 

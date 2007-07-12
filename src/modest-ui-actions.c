@@ -237,23 +237,31 @@ headers_action_mark_as_unread (TnyHeader *header,
 	}
 }
 
-
-static void
-headers_action_delete (TnyHeader *header,
-		       ModestWindow *win,
-		       gpointer user_data)
+/** A convenience method, because deleting a message is 
+ * otherwise complicated, and it's best to change it in one place 
+ * when we change it.
+ */
+void modest_do_message_delete (TnyHeader *header, ModestWindow *win)
 {
 	ModestMailOperation *mail_op = NULL;
-
-	mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_DELETE, G_OBJECT(win));
+	mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_DELETE, 
+		win ? G_OBJECT(win) : NULL);
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
 					 mail_op);
 	
 	/* Always delete. TODO: Move to trash still not supported */
 	modest_mail_operation_remove_msg (mail_op, header, FALSE);
 	g_object_unref (G_OBJECT (mail_op));
+}
 
-	/* refilter treemodel to hide marked-as-deleted rows */
+static void
+headers_action_delete (TnyHeader *header,
+		       ModestWindow *win,
+		       gpointer user_data)
+{
+	modest_do_message_delete (header, win);
+
+/* refilter treemodel to hide marked-as-deleted rows */
 /* 	if (MODEST_IS_HEADER_VIEW (user_data)) */
 /* 		modest_header_view_refilter (MODEST_HEADER_VIEW (user_data)); */
 }
@@ -1202,6 +1210,7 @@ reply_forward (ReplyForwardAction action, ModestWindow *win)
 	rf_helper->reply_forward_type = reply_forward_type;
 	rf_helper->action = action;
 	rf_helper->account_name = g_strdup (modest_window_get_active_account (win));
+	
 	if ((win != NULL) && (MODEST_IS_WINDOW (win)))
 		rf_helper->parent_window = GTK_WIDGET (win);
 	if (!rf_helper->account_name)

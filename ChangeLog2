@@ -1,3 +1,30 @@
+2007-07-12  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/dbus_api/modest-dbus-callbacks.c: (on_idle_open_message),
+	Pass the modest account name, not the TnyAccount display name to 
+	modest_msg_view_window_new() so that the reply feature works,
+	fixing projects.maemo.org bug NB#62892.
+
+	* src/gnome/modest-msg-view-window.c: (modest_msg_view_window_new),
+	(modest_msg_view_window_new_with_header_model):
+	* src/maemo/modest-msg-view-window.c:
+	(modest_msg_view_window_new_with_header_model),
+	(modest_msg_view_window_new):
+	* src/modest-ui-actions.c: (reply_forward):
+	* src/widgets/modest-msg-view-window.h:
+	* src/widgets/modest-window.c: (modest_window_set_active_account):
+	Rename an account parameter to modest_account_name to make this clearer.
+
+2007-07-11  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/modest-ui-actions.h:
+	* src/modest-ui-actions.c: (headers_action_delete): Moved some code into 
+	modest_do_message_delete().
+	* src/dbus_api/modest-dbus-callbacks.c: (on_idle_delete_message):
+	Call modest_do_message_delete(), hoping that this would cause messages 
+	to be really deleted from search instead of just marked with strike through.
+	Does not seem to help.
+
 2007-07-11  Armin Burgmeier  <armin@openismus.com>
 
 	* src/widgets/maemo-folder-view.c (modest_folder_view_on_map): Set

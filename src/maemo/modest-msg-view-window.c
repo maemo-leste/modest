@@ -513,7 +513,7 @@ select_next_valid_row (GtkTreeModel *model,
 
 ModestWindow *
 modest_msg_view_window_new_with_header_model (TnyMsg *msg, 
-					      const gchar *account_name,
+					      const gchar *modest_account_name,
 					      const gchar *msg_uid,
 					      GtkTreeModel *model, 
 					      GtkTreeRowReference *row_reference)
@@ -521,7 +521,7 @@ modest_msg_view_window_new_with_header_model (TnyMsg *msg,
 	ModestMsgViewWindow *window = NULL;
 	ModestMsgViewWindowPrivate *priv = NULL;
 
-	window = MODEST_MSG_VIEW_WINDOW(modest_msg_view_window_new (msg, account_name, msg_uid));
+	window = MODEST_MSG_VIEW_WINDOW(modest_msg_view_window_new (msg, modest_account_name, msg_uid));
 	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (window), NULL);
 
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
@@ -543,7 +543,7 @@ modest_msg_view_window_new_with_header_model (TnyMsg *msg,
 
 ModestWindow *
 modest_msg_view_window_new (TnyMsg *msg, 
-			    const gchar *account_name,
+			    const gchar *modest_account_name,
 			    const gchar *msg_uid)
 {
 	ModestMsgViewWindow *self = NULL;
@@ -665,7 +665,7 @@ modest_msg_view_window_new (TnyMsg *msg,
 						       G_CALLBACK (on_queue_changed),
 						       obj);
 
-	modest_window_set_active_account (MODEST_WINDOW(obj), account_name);
+	modest_window_set_active_account (MODEST_WINDOW(obj), modest_account_name);
 
 	priv->last_search = NULL;
 

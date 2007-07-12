@@ -444,6 +444,11 @@ gboolean modest_ui_actions_msg_retrieval_check                (ModestMailOperati
 void     modest_ui_actions_get_msgs_full_error_handler         (ModestMailOperation *mail_op,
 								gpointer user_data);
 
+/** A convenience method, because deleting a message is 
+ * otherwise complicated, and it's best to change it in one place 
+ * when we change it.
+ **/
+void modest_do_message_delete (TnyHeader *header, ModestWindow *win);
 
 G_END_DECLS
 #endif /* __MODEST_UI_ACTIONS_H__ */

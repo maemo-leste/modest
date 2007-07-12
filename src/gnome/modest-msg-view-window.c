@@ -223,7 +223,7 @@ on_delete_event (GtkWidget *widget, GdkEvent *event, ModestMsgViewWindow *self)
 
 ModestWindow *
 modest_msg_view_window_new (TnyMsg *msg, 
-			    const gchar *account, 
+			    const gchar *modest_account_name, 
 			    const gchar *msg_uid)
 {
 	GObject *obj;
@@ -336,7 +336,7 @@ modest_msg_view_window_get_message_uid (ModestMsgViewWindow *self)
 
 ModestWindow*   
 modest_msg_view_window_new_with_header_model (TnyMsg *msg, 
-					      const gchar *account, 
+					      const gchar *modest_account_name, 
 					      const gchar *msg_uid,
 					      GtkTreeModel *model, 
 					      GtkTreeRowReference *row_reference)
