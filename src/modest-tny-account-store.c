@@ -376,6 +376,25 @@ on_account_removed (ModestAccountMgr *acc_mgr,
 		g_printerr ("modest: cannot find server account for %s", account);
 }
 
+/**
+ * modest_tny_account_store_forget_password_in_memory
+ * @self: a TnyAccountStore instance
+ * @account: A server account.
+ * 
+ * Forget any password stored in memory for this account.
+ * For instance, this should be called when the user has changed the password in the account settings.
+ */
+static void
+modest_tny_account_store_forget_password_in_memory (ModestTnyAccountStore *self, const gchar * server_account_name)
+{
+	/* printf ("DEBUG: %s\n", __FUNCTION__); */
+	ModestTnyAccountStorePrivate *priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
+
+	if (server_account_name && priv->password_hash) {
+		g_hash_table_remove (priv->password_hash, server_account_name);
+	}
+}
+
 static void
 on_account_changed (ModestAccountMgr *acc_mgr, const gchar *account,
 		    const GSList *keys, gboolean server_account, gpointer user_data)
@@ -383,15 +402,38 @@ on_account_changed (ModestAccountMgr *acc_mgr, const gchar *account,
 {
 	ModestTnyAccountStore *self = MODEST_TNY_ACCOUNT_STORE(user_data);
 	
+	/*
+	printf ("DEBUG: %s\n", __FUNCTION__);
+	const GSList *iter = keys;
+	for (iter = keys; iter; iter = g_slist_next (iter)) {
+		printf ("  DEBUG: %s: key=%s\n", __FUNCTION__, (const gchar*)iter->data);
+	}
+	*/
+	
 	/* Ignore the change if it's a change in the last_updated value */
 	if (g_slist_length ((GSList *)keys) == 1 &&
-	    g_str_has_suffix ((const gchar *) keys->data, MODEST_ACCOUNT_LAST_UPDATED))
+		g_str_has_suffix ((const gchar *) keys->data, MODEST_ACCOUNT_LAST_UPDATED)) {
 		return;
+	}
 
 	/* FIXME: make this more finegrained; changes do not really affect _all_
 	 * accounts
 	 */
 	recreate_all_accounts (self);
+	
+	/* TODO: This doesn't actually work, because
+	 * a) The account name is not sent correctly per key:
+	 * b) We should test the end of the key, not the whole keym
+	 * c) We don't seem to be getting all keys here.
+	 * Instead, we just forget the password for all accounts when we create them, for now.
+	 */
+	#if 0
+	/* If a password has changed, then forget the previously cached password for this account: */
+	if (server_account && keys && g_slist_find_custom ((GSList *)keys, MODEST_ACCOUNT_PASSWORD, (GCompareFunc)strcmp)) {
+		printf ("DEBUG: %s: Forgetting cached password for account ID=%s\n", __FUNCTION__, account);
+		modest_tny_account_store_forget_password_in_memory (self,  account);
+	}
+	#endif
 
 	g_signal_emit (G_OBJECT(self), signals[ACCOUNT_UPDATE_SIGNAL], 0,
 		       account);
@@ -522,7 +564,7 @@ get_password (TnyAccount *account, const gchar * prompt_not_used, gboolean *canc
 	account_store = TNY_ACCOUNT_STORE(get_account_store_for_account (account));
 
 	if (!server_account_name || !account_store) {
-		g_warning ("%s: could not retrieve account_store for account %s",
+		g_warning ("modest: %s: could not retrieve account_store for account %s",
 			   __FUNCTION__, server_account_name ? server_account_name : "<NULL>");
 		if (cancel)
 			*cancel = TRUE;
@@ -651,6 +693,19 @@ forget_password (TnyAccount *account)
 	*/
 }
 
+static void
+destroy_password_hashtable (ModestTnyAccountStore *self)
+{
+	ModestTnyAccountStorePrivate *priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
+	
+	g_free (priv->cache_dir);
+	priv->cache_dir = NULL;
+	
+	if (priv->password_hash) {
+		g_hash_table_destroy (priv->password_hash);
+		priv->password_hash = NULL;
+	}
+}
 
 static void
 modest_tny_account_store_finalize (GObject *obj)
@@ -668,10 +723,7 @@ modest_tny_account_store_finalize (GObject *obj)
 		priv->password_hash = NULL;
 	}
 	
-	if (priv->account_settings_dialog_hash) {
-		g_hash_table_destroy (priv->account_settings_dialog_hash);
-		priv->account_settings_dialog_hash = NULL;
-	}
+	destroy_password_hashtable (self);
 
 	if (priv->account_mgr) {
 		g_object_unref (G_OBJECT(priv->account_mgr));
@@ -837,6 +889,15 @@ get_server_accounts  (TnyAccountStore *self, TnyList *list, TnyAccountType type)
 								     get_password,
 								     forget_password);
 			if (tny_account) {
+				/* Forget any cached password for the account,
+				 * so that we use a new account if any.
+				 * TODO: Really we should do this in a more precise way in 
+				 * on_account_changed().
+				 */
+				modest_tny_account_store_forget_password_in_memory (
+					MODEST_TNY_ACCOUNT_STORE (self),  
+					tny_account_get_id (tny_account));
+				
 				g_object_set_data (G_OBJECT(tny_account), "account_store",
 						   (gpointer)self);
 				if (list)

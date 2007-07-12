@@ -65,7 +65,7 @@ struct _ModestAccountMgrClass {
 				    const GSList* key, 
 				    gboolean server_account,
 				    gpointer user_data);
-		void (* account_busy_changed)   (ModestAccountMgr *obj, 
+	void (* account_busy_changed)   (ModestAccountMgr *obj, 
 				    const gchar* account,
 				    gboolean busy,
 				    gpointer user_data);

@@ -65,6 +65,8 @@ on_timeout_notify_changes (gpointer data)
 		gchar *default_account = 
 				modest_account_mgr_get_default_account (self);
 		
+		/* printf ("DEBUG: %s: priv->changed_conf_key length=%d\n", 
+			__FUNCTION__, g_slist_length (priv->changed_conf_keys)); */
 		g_signal_emit (G_OBJECT(self), signals[ACCOUNT_CHANGED_SIGNAL], 0,
 				 default_account, priv->changed_conf_keys, FALSE);
 			

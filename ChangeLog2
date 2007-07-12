@@ -1,5 +1,14 @@
 2007-07-12  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-tny-account-store.h:
+	* src/modest-tny-account-store.c: 
+	Added modest_tny_account_store_forget_password_in_memory(),
+	(get_server_accounts): Called modest_tny_account_store_forget_password_in_memory() 
+	when creating a new account, so that new passwords will be used, instead of 
+	us thinking that it's a second request as a result of a failed password again.
+
+2007-07-12  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/dbus_api/modest-dbus-callbacks.c:
 	(on_idle_open_message): If the message is in drafts then open it 
 	in an edit window instead of a view window. This fixes 
