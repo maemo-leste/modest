@@ -51,6 +51,7 @@
 #include "modest-text-utils.h"
 #include "modest-tny-msg.h"
 #include "modest-tny-folder.h"
+#include "modest-tny-account-store.h"
 #include "modest-tny-platform-factory.h"
 #include "modest-marshal.h"
 #include "modest-error.h"
@@ -1660,6 +1661,47 @@ transfer_folder_cb (TnyFolder *folder,
 	g_slice_free   (XFerMsgAsyncHelper, helper);
 }
 
+/**
+ *
+ * This function checks if the new name is a valid name for our local
+ * folders account. The new name could not be the same than then name
+ * of any of the mandatory local folders
+ *
+ * We can not rely on tinymail because tinymail does not check the
+ * name of the virtual folders that the account could have in the case
+ * that we're doing a rename (because it directly calls Camel which
+ * knows nothing about our virtual folders). 
+ *
+ * In the case of an actual copy/move (i.e. move/copy a folder between
+ * accounts) tinymail uses the tny_folder_store_create_account which
+ * is reimplemented by our ModestTnyLocalFoldersAccount that indeed
+ * checks the new name of the folder, so this call in that case
+ * wouldn't be needed. *But* NOTE that if tinymail changes its
+ * implementation (if folder transfers within the same account is no
+ * longer implemented as a rename) this call will allow Modest to work
+ * perfectly
+ *
+ * If the new name is not valid, this function will set the status to
+ * failed and will set also an error in the mail operation
+ */
+static gboolean
+new_name_valid_if_local_account (ModestMailOperationPrivate *priv,
+				 TnyFolderStore *into,
+				 const gchar *new_name)
+{
+	if (TNY_IS_ACCOUNT (into) && 
+	    modest_tny_account_is_virtual_local_folders (TNY_ACCOUNT (into)) &&
+	    modest_tny_local_folders_account_extra_folder_exists (MODEST_TNY_LOCAL_FOLDERS_ACCOUNT (into),
+								  new_name)) {
+		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
+		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
+			     MODEST_MAIL_OPERATION_ERROR_FOLDER_RULES,
+			     _("FIXME: folder name already in use"));
+		return FALSE;
+	} else
+		return TRUE;
+}
+
 void
 modest_mail_operation_xfer_folder (ModestMailOperation *self,
 				   TnyFolder *folder,
@@ -1708,23 +1750,31 @@ modest_mail_operation_xfer_folder (ModestMailOperation *self,
 		/* Notify the queue */
 		modest_mail_operation_notify_end (self);
 	} else {
-		/* Create the helper */
-		helper = g_slice_new0 (XFerMsgAsyncHelper);
-		helper->mail_op = g_object_ref(self);
-		helper->dest_folder = NULL;
-		helper->headers = NULL;
-		helper->user_callback = user_callback;
-		helper->user_data = user_data;
-		
-		/* Move/Copy folder */		
-		tny_folder_copy_async (folder,
-				       parent,
-				       tny_folder_get_name (folder),
-				       delete_original,
-				       transfer_folder_cb,
-				       transfer_folder_status_cb,
-				       helper);
-/* 				       self); */
+
+
+		/* Check that the new folder name is not used by any
+		   special local folder */
+		if (new_name_valid_if_local_account (priv, parent, 
+						     tny_folder_get_name (folder))) {
+			/* Create the helper */
+			helper = g_slice_new0 (XFerMsgAsyncHelper);
+			helper->mail_op = g_object_ref(self);
+			helper->dest_folder = NULL;
+			helper->headers = NULL;
+			helper->user_callback = user_callback;
+			helper->user_data = user_data;
+			
+			/* Move/Copy folder */		
+			tny_folder_copy_async (folder,
+					       parent,
+					       tny_folder_get_name (folder),
+					       delete_original,
+					       transfer_folder_cb,
+					       transfer_folder_status_cb,
+					       helper);
+		} else {
+			modest_mail_operation_notify_end (self);
+		}
 	}
 }
 
@@ -1767,25 +1817,30 @@ modest_mail_operation_rename_folder (ModestMailOperation *self,
 	} else {
 		TnyFolderStore *into;
 
-		/* Create the helper */
-		helper = g_slice_new0 (XFerMsgAsyncHelper);
-		helper->mail_op = g_object_ref(self);
-		helper->dest_folder = NULL;
-		helper->headers = NULL;
-		helper->user_callback = NULL;
-		helper->user_data = NULL;
+		into = tny_folder_get_folder_store (folder);	
 
-		/* Rename. Camel handles folder subscription/unsubscription */
-		into = tny_folder_get_folder_store (folder);
-		tny_folder_copy_async (folder, into, name, TRUE,
-				 transfer_folder_cb,
-				 transfer_folder_status_cb,
-				 helper);
-/* 				 self); */
-		if (into)
-			g_object_unref (into);		
+		/* Check that the new folder name is not used by any
+		   special local folder */
+		if (new_name_valid_if_local_account (priv, into, name)) {
+			/* Create the helper */
+			helper = g_slice_new0 (XFerMsgAsyncHelper);
+			helper->mail_op = g_object_ref(self);
+			helper->dest_folder = NULL;
+			helper->headers = NULL;
+			helper->user_callback = NULL;
+			helper->user_data = NULL;
+		
+			/* Rename. Camel handles folder subscription/unsubscription */
+			tny_folder_copy_async (folder, into, name, TRUE,
+					       transfer_folder_cb,
+					       transfer_folder_status_cb,
+					       helper);
+		} else {
+			modest_mail_operation_notify_end (self);
+		}
+		g_object_unref (into);
 	}
- }
+}
 
 /* ******************************************************************* */
 /* **************************  MSG  ACTIONS  ************************* */

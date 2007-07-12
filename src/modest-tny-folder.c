@@ -54,9 +54,7 @@ modest_tny_folder_guess_folder_type_from_name (const gchar* name)
 //	    strcmp (folder, _("inbox")) == 0 ||
 //	    strcmp (folder, _("mcen_me_folder_inbox")) == 0)
 //		type = TNY_FOLDER_TYPE_INBOX;
-	if (strcmp (folder, "outbox") == 0 ||
-		 strcmp (folder, _("outbox")) == 0 ||
-		 strcmp (folder, _("mcen_me_folder_outbox")) == 0)
+	if (strcmp (folder, _("mcen_me_folder_outbox")) == 0)
 		type = TNY_FOLDER_TYPE_OUTBOX;
 //	else if (g_str_has_prefix(folder, "junk") ||
 //		 g_str_has_prefix(folder, _("junk")))
@@ -64,13 +62,9 @@ modest_tny_folder_guess_folder_type_from_name (const gchar* name)
 //	else if (g_str_has_prefix(folder, "trash") ||
 //		 g_str_has_prefix(folder, _("trash")))
 //		type = TNY_FOLDER_TYPE_TRASH;
-	else if (g_str_has_prefix(folder, "sent") ||
-		 g_str_has_prefix(folder, _("sent")) ||
-		 strcmp (folder, _("mcen_me_folder_sent")) == 0)
+	else if (strcmp (folder, _("mcen_me_folder_sent")) == 0)
 		type = TNY_FOLDER_TYPE_SENT;
-	else if (g_str_has_prefix(folder, "draft") ||
-		 g_str_has_prefix(folder, _("draft")) ||
-		 strcmp (folder, _("mcen_me_folder_drafts")) == 0)
+	else if (strcmp (folder, _("mcen_me_folder_drafts")) == 0)
 		type = TNY_FOLDER_TYPE_DRAFTS;
 //	else if (g_str_has_prefix(folder, "notes") ||
 //		 g_str_has_prefix(folder, _("notes")))

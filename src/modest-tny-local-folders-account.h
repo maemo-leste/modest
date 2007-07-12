@@ -72,11 +72,14 @@ GType modest_tny_local_folders_account_get_type (void);
 
 ModestTnyLocalFoldersAccount* modest_tny_local_folders_account_new (void);
 
-void modest_tny_local_folders_account_add_extra_folder (ModestTnyLocalFoldersAccount *store, 
-	TnyFolder *folder);
+void      modest_tny_local_folders_account_add_extra_folder           (ModestTnyLocalFoldersAccount *store, 
+								       TnyFolder *folder);
 	
-void modest_tny_local_folders_account_add_merged_outbox_folders (ModestTnyLocalFoldersAccount *store, 
-	GSList *accounts);
+void      modest_tny_local_folders_account_add_merged_outbox_folders  (ModestTnyLocalFoldersAccount *store, 
+								       GSList *accounts);
+
+gboolean  modest_tny_local_folders_account_extra_folder_exists        (ModestTnyLocalFoldersAccount *self,
+								       const gchar *name);
 
 G_END_DECLS
 

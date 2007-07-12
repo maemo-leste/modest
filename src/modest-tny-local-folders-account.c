@@ -28,17 +28,17 @@
  */
 
 
+#include <string.h>
+#include <stdio.h>
 #include <config.h>
 #include <glib/gi18n.h>
-
+#include <tny-error.h>
 #include <modest-tny-local-folders-account.h>
 #include <modest-tny-outbox-account.h>
 #include <modest-tny-folder.h>
+#include <tny-camel-folder.h>
 #include <tny-merge-folder.h>
 #include <tny-simple-list.h>
-
-#include <string.h>
-#include <stdio.h>
 
 G_DEFINE_TYPE (ModestTnyLocalFoldersAccount, 
 	modest_tny_local_folders_account, 
@@ -53,6 +53,15 @@ struct _ModestTnyLocalFoldersAccountPrivate
 {
 	GSList *list_extra_folders;
 };
+
+static void         get_folders    (TnyFolderStore *self, 
+				    TnyList *list, 
+				    TnyFolderStoreQuery *query, 
+				    GError **err);
+
+static TnyFolder*   create_folder  (TnyFolderStore *self, 
+				    const gchar *name, 
+				    GError **err);
 
 static void
 modest_tny_local_folders_account_dispose (GObject *object)
@@ -96,12 +105,6 @@ modest_tny_local_folders_account_finalize (GObject *object)
 }
 
 static void
-get_folders (TnyFolderStore *self, TnyList *list, TnyFolderStoreQuery *query, GError **err);
-
-static void 
-get_folders_async (TnyFolderStore *self, TnyList *list, TnyGetFoldersCallback callback, TnyFolderStoreQuery *query, TnyStatusCallback status_callback, gpointer user_data);
-
-static void
 modest_tny_local_folders_account_class_init (ModestTnyLocalFoldersAccountClass *klass)
 {
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
@@ -113,7 +116,7 @@ modest_tny_local_folders_account_class_init (ModestTnyLocalFoldersAccountClass *
 	  
 	/* Override virtual functions from the parent class: */
 	TNY_CAMEL_STORE_ACCOUNT_CLASS(klass)->get_folders_func = get_folders;
-	TNY_CAMEL_STORE_ACCOUNT_CLASS(klass)->get_folders_async_func = get_folders_async;
+	TNY_CAMEL_STORE_ACCOUNT_CLASS(klass)->create_folder_func = create_folder;
 }
 
 static void
@@ -214,15 +217,6 @@ get_folders (TnyFolderStore *self, TnyList *list, TnyFolderStoreQuery *query, GE
 	}
 }
 
-static void 
-get_folders_async (TnyFolderStore *self, TnyList *list, TnyGetFoldersCallback callback, TnyFolderStoreQuery *query, TnyStatusCallback status_callback, gpointer user_data)
-{
-	/* Call the base class implementation: */
-	TnyCamelStoreAccountClass *parent_class = g_type_class_peek_parent (
-		MODEST_TNY_LOCAL_FOLDERS_ACCOUNT_GET_CLASS (self));
-	parent_class->get_folders_async_func (self, list, callback, query, status_callback, user_data);
-}
-
 static void
 add_account_folders_to_merged_folder (TnyAccount *account, TnyMergeFolder* merge_folder)
 {
@@ -300,4 +294,53 @@ void modest_tny_local_folders_account_add_merged_outbox_folders (ModestTnyLocalF
 	merged_outbox = NULL;
 }
 
+gboolean
+modest_tny_local_folders_account_extra_folder_exists (ModestTnyLocalFoldersAccount *self,
+						      const gchar *name)
+{
+	ModestTnyLocalFoldersAccountPrivate *priv;
+	GSList *iter;
+	gboolean found;
+	gchar *down_name;
+	
+	/* Check that we're not trying to create/rename any folder
+	   with the same name that our extra folders */
+	priv = TNY_LOCAL_FOLDERS_ACCOUNT_GET_PRIVATE (self);
+	iter = priv->list_extra_folders;
+	found = FALSE;
+	down_name = g_utf8_strdown (name, strlen (name));
+	while (iter && !found) {
+		TnyFolder *folder = TNY_FOLDER (iter->data);
+		const gchar *type_name;
 
+		type_name = modest_local_folder_info_get_type_name (tny_folder_get_folder_type (folder));
+		if (!strcmp (type_name, down_name))
+	  		found = TRUE;
+		else
+			iter = g_slist_next (iter);
+	}
+	g_free (down_name);
+
+	return found;
+}
+
+static TnyFolder*
+create_folder (TnyFolderStore *self, 
+	       const gchar *name, 
+	       GError **err)
+{
+	TnyCamelStoreAccountClass *parent_class;
+
+	parent_class = g_type_class_peek_parent (MODEST_TNY_LOCAL_FOLDERS_ACCOUNT_GET_CLASS (self));
+
+	/* If the folder name is been used by our extra folders */
+	if (modest_tny_local_folders_account_extra_folder_exists (MODEST_TNY_LOCAL_FOLDERS_ACCOUNT (self), name)) {
+		g_set_error (err, TNY_FOLDER_STORE_ERROR, 
+			     TNY_FOLDER_STORE_ERROR_CREATE_FOLDER,
+			     "Folder name already in use");
+		return NULL;
+	}
+
+	/* Call the base class implementation: */
+	return parent_class->create_folder_func (self, name, err);
+}
