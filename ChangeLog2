@@ -1,5 +1,10 @@
 2007-07-12  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/dbus_api/modest-dbus-callbacks.c: (on_idle_open_message):
+	Avoided a harmless g_warning().
+
+2007-07-12  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/dbus_api/modest-dbus-callbacks.c: (on_idle_open_message),
 	Pass the modest account name, not the TnyAccount display name to 
 	modest_msg_view_window_new() so that the reply feature works,

@@ -156,10 +156,9 @@ TnyAccount *modest_tny_folder_get_account (TnyFolder *folder);
  * modest_tny_msg_get_header_unique_id:
  * @header: a #TnyHeader
  * 
- * this function returns a unique id for a message summary, that's it
- * a TnyHeader retrieved with tny_folder_get_headers (you can not use
- * the TnyHeader returned by tny_msg_get_header because it has not an
- * uid).
+ * This function returns a unique id for a message summary from 
+ * a TnyHeader retrieved with tny_folder_get_headers. You can not use
+ * the TnyHeader returned by tny_msg_get_header because it has no uid.
  *
  * This uid is built from the folder URL string and the header uid,
  * the caller of the function must free the unique id when no longer

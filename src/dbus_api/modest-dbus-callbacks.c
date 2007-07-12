@@ -541,14 +541,20 @@ on_idle_open_message (gpointer user_data)
 	g_debug ("modest:  %s: Found message.", __FUNCTION__);
 
 	folder = tny_msg_get_folder (msg);
-	if (modest_tny_folder_get_local_folder_type (folder) == TNY_FOLDER_TYPE_DRAFTS) {
+	if (folder && modest_tny_folder_is_local_folder (folder) &&
+		(modest_tny_folder_get_local_folder_type (folder) == TNY_FOLDER_TYPE_DRAFTS)) {
 		g_debug ("TODO: draft messages should be opened in edit mode... ");
 	}
 
 	header = tny_msg_get_header (msg);
 	
+	/* TODO:  The modest_tny_folder_get_header_unique_id() documentation warns against 
+	 * using it with tny_msg_get_header(), and there is a 
+	 * " camel_folder_get_full_name: assertion `CAMEL_IS_FOLDER (folder)' failed" runtime warning,
+	 * but it seems to work.
+	 */	
 	msg_uid =  modest_tny_folder_get_header_unique_id(header); 
-/* FIXME:  modest_tny_folder_get_header_unique_id warns against this */
+	
 	win_mgr = modest_runtime_get_window_mgr ();
 		
 	gdk_threads_enter ();
