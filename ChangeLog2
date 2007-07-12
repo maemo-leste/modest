@@ -1,5 +1,13 @@
 2007-07-12  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-ui-dimming-rules.c: (_selected_folder_is_root):
+	Add a short-cut, by checking if the folder store is an account.
+	This ensures that the Sort menu item and toolbar is dimmed for 
+	the local-folders account root item, fixing 
+	projects.maemo.org bug NB#62545.
+
+2007-07-12  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/modest-tny-account-store.c: (get_password):
 	Show the password dialog (via the signal) only in the mainloop, via 
 	an idle handler that we wait for. This could theoretically prevent 

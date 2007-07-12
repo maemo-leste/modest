@@ -1164,6 +1164,21 @@ _selected_folder_is_root (ModestMainWindow *win)
 
 	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW(win), FALSE);
 
+	/* All accounts are root items: */
+	GtkWidget *folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(win),
+							   MODEST_WIDGET_TYPE_FOLDER_VIEW);
+	if (folder_view) {					   
+		TnyFolderStore *folder_store = 
+			modest_folder_view_get_selected (MODEST_FOLDER_VIEW(folder_view));
+		const gboolean is_account = TNY_IS_ACCOUNT (folder_store);
+		g_object_unref (folder_store);
+		folder_store = NULL;
+		
+		if (is_account)
+			return TRUE;
+	}
+		
+	/* Try something more precise: */
 	types[0] = TNY_FOLDER_TYPE_ROOT; 
 
 	/* Check folder type */
@@ -1298,7 +1313,7 @@ _selected_folder_is_any_of_type (ModestWindow *win,
 	guint i=0;
 	gboolean result = FALSE;
 
-	/*Get curent folder */
+	/*Get current folder */
 	if (MODEST_IS_MAIN_WINDOW(win)) {
 
 		/* Get folder view */
@@ -1347,7 +1362,7 @@ _folder_is_any_of_type (TnyFolder *folder,
 
 	/* Get folder type */
 	folder_type = modest_tny_folder_guess_folder_type (folder);
-	
+		
 	/* Check foler type */
 	for (i=0; i < ntypes; i++) {
 		result = result || folder_type == types[i];
