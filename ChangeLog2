@@ -1,5 +1,12 @@
 2007-07-12  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-tny-account-store.c: (get_password):
+	Show the password dialog (via the signal) only in the mainloop, via 
+	an idle handler that we wait for. This could theoretically prevent 
+	hangs, though I worry that it could introduce some too.
+
+2007-07-12  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/gnome/modest-platform.c: (modest_platform_connect_and_wait):
 	* src/maemo/modest-platform.c: 
 	(modest_platform_connect_and_wait):

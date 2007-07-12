@@ -531,6 +531,70 @@ gboolean on_idle_wrong_password (gpointer user_data)
 	return FALSE; /* Dont' call this again. */
 }
 
+typedef struct 
+{
+	GMainLoop *loop;
+	ModestTnyAccountStore* account_store;
+	const gchar* server_account_id;
+	gchar **username;
+	gchar **password;
+	gboolean *cancel;
+	gboolean *remember;
+} IdlePasswordRequest;
+
+static gboolean 
+on_idle_request_password (gpointer user_data)
+{
+	gdk_threads_enter();
+	
+	IdlePasswordRequest* info = (IdlePasswordRequest*)user_data;
+	g_signal_emit (G_OBJECT(info->account_store), signals[PASSWORD_REQUESTED_SIGNAL], 0,
+			       info->server_account_id, /* server_account_name */
+			       info->username, info->password, info->cancel, info->remember);
+			       
+	if (info->loop)
+		g_main_loop_quit (info->loop);
+	
+	gdk_threads_leave();
+	
+	return FALSE; /* Don't call again. */
+}
+
+static void
+request_password_in_main_loop_and_wait (ModestTnyAccountStore *account_store, 
+					 const gchar* server_account_id,
+					 gchar **username,
+					 gchar **password,
+					 gboolean *cancel, 
+					 gboolean *remember)
+{
+	IdlePasswordRequest *data = g_slice_new0 (IdlePasswordRequest);
+	data->account_store = account_store;
+	data->server_account_id = server_account_id;
+	data->username = username;
+	data->password = password;
+	data->cancel = cancel;
+	data->remember = remember;
+
+	data->loop = g_main_loop_new (NULL, FALSE /* not running */);
+	
+	/* Cause the function to be run in an idle-handler, which is always 
+	 * in the main thread:
+	 */
+	g_idle_add (&on_idle_request_password, data);
+	
+	/* This main loop will run until the idle handler has stopped it: */
+	printf ("DEBUG: %s: before g_main_loop_run()\n", __FUNCTION__);
+	GDK_THREADS_LEAVE();
+	g_main_loop_run (data->loop);
+	GDK_THREADS_ENTER();
+	printf ("DEBUG: %s: after g_main_loop_run()\n", __FUNCTION__);
+	printf ("DEBUG: %s: Finished\n", __FUNCTION__);
+	g_main_loop_unref (data->loop);
+
+	g_slice_free (IdlePasswordRequest, data);
+}
+
 /* This callback will be called by Tinymail when it needs the password
  * from the user or the account settings.
  * It can also call forget_password() before calling this,
@@ -622,8 +686,7 @@ get_password (TnyAccount *account, const gchar * prompt_not_used, gboolean *canc
 		gboolean remember = FALSE;
 		pwd = NULL;
 		
-		g_signal_emit (G_OBJECT(self), signals[PASSWORD_REQUESTED_SIGNAL], 0,
-			       account_id, /* server_account_name */
+		request_password_in_main_loop_and_wait (self, account_id, 
 			       &username, &pwd, cancel, &remember);
 		
 		if (!*cancel) {
