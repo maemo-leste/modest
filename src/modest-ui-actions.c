@@ -2171,18 +2171,13 @@ modest_ui_actions_new_folder_error_handler (ModestMailOperation *mail_op,
                                             gpointer user_data)
 {
 	ModestMainWindow *window = MODEST_MAIN_WINDOW (user_data);
+	const GError *error = modest_mail_operation_get_error (mail_op);
 
-	/* TODO: Note that folder creation might go wrong due to other
-	 * failures such as when the parent folder is non-writable. We can
-	 * query a GError* with modest_mail_operation_get_error(), but the
-	 * the error code (from tinymail) does not give us a clue about what
-	 * has gone wrong. We might use the error->message but it might come
-	 * from camel and not be suitable to show to the user directly. */
-	modest_platform_information_banner (GTK_WIDGET (window), NULL,
-	                                    _CS("ckdg_ib_folder_already_exists"));
-
-/*	modest_platform_information_banner (GTK_WIDGET (window), NULL,
-	                                    modest_mail_operation_get_error (mail_op)->message);*/
+	if(error)
+	{
+		modest_platform_information_banner (GTK_WIDGET (window), NULL,
+	        	                            modest_mail_operation_get_error (mail_op)->message);
+	}
 }
 
 

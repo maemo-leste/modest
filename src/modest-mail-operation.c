@@ -1474,10 +1474,27 @@ modest_mail_operation_create_folder (ModestMailOperation *self,
 	ModestMailOperationPrivate *priv;
 	TnyFolder *new_folder = NULL;
 
+	TnyList *list = tny_simple_list_new ();
+	TnyFolderStoreQuery *query = tny_folder_store_query_new ();
+
 	g_return_val_if_fail (TNY_IS_FOLDER_STORE (parent), NULL);
 	g_return_val_if_fail (name, NULL);
 	
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
+
+	/* Check for already existing folder */
+	tny_folder_store_query_add_item (query, name, TNY_FOLDER_STORE_QUERY_OPTION_MATCH_ON_NAME);
+	tny_folder_store_get_folders (parent, list, query, NULL);
+	g_object_unref (G_OBJECT (query));
+
+	if (tny_list_get_length (list) > 0) {
+		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
+		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
+		             MODEST_MAIL_OPERATION_ERROR_FOLDER_EXISTS,
+			     _CS("ckdg_ib_folder_already_exists"));
+	}
+
+	g_object_unref (G_OBJECT (list));
 
 	/* Check parent */
 	if (TNY_IS_FOLDER (parent)) {

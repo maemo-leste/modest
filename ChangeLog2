@@ -1,3 +1,12 @@
+2007-07-12  Armin Burgmeier  <armin@openismus.com>
+
+	* src/modest-error.h: Added MODEST_MAIL_OPERATION_FOLDER_EXISTS error.
+
+	* src/modest-mail-operation.c:
+	* src/modest-ui-actions.c: Check for already existing folder before
+	querying the server, show error message from camel if the request
+	still fails. This fixes projects.maemo.org bug NB#58701.
+
 2007-07-12  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/modest-tny-account-store.h:
