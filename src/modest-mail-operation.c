@@ -1641,8 +1641,6 @@ transfer_folder_cb (TnyFolder *folder,
 	/* Free */
 	g_object_unref (helper->mail_op);
 	g_slice_free   (XFerMsgAsyncHelper, helper);
-	g_object_unref (folder);
-	g_object_unref (into);
 }
 
 void
@@ -1693,10 +1691,6 @@ modest_mail_operation_xfer_folder (ModestMailOperation *self,
 		/* Notify the queue */
 		modest_mail_operation_notify_end (self);
 	} else {
-		/* Pick references for async calls */
-		g_object_ref (folder);
-		g_object_ref (parent);
-
 		/* Create the helper */
 		helper = g_slice_new0 (XFerMsgAsyncHelper);
 		helper->mail_op = g_object_ref(self);

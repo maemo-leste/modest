@@ -1346,10 +1346,7 @@ _folder_is_any_of_type (TnyFolder *folder,
 	g_return_val_if_fail (TNY_IS_FOLDER(folder), FALSE);
 
 	/* Get folder type */
-	if (modest_tny_folder_is_local_folder (folder))
-		folder_type = modest_tny_folder_get_local_folder_type (folder);		
-	else 
-		folder_type = modest_tny_folder_guess_folder_type (folder);		
+	folder_type = modest_tny_folder_guess_folder_type (folder);
 	
 	/* Check foler type */
 	for (i=0; i < ntypes; i++) {

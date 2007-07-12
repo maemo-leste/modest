@@ -145,6 +145,52 @@ modest_tny_local_folders_account_add_extra_folder (ModestTnyLocalFoldersAccount 
 	g_object_ref (folder);
 }
 
+static gboolean 
+modest_tny_local_folders_account_query_passes (TnyFolderStoreQuery *query, TnyFolder *folder)
+{
+	gboolean retval = FALSE;
+
+	if (query && (tny_list_get_length (tny_folder_store_query_get_items (query)) > 0))
+	{
+		TnyList *items = tny_folder_store_query_get_items (query);
+		TnyIterator *iterator;
+		iterator = tny_list_create_iterator (items);
+
+		while (!tny_iterator_is_done (iterator))
+		{
+			TnyFolderStoreQueryItem *item = (TnyFolderStoreQueryItem*) tny_iterator_get_current (iterator);
+			TnyFolderStoreQueryOption options = tny_folder_store_query_item_get_options (item);
+			regex_t *regex = tny_folder_store_query_item_get_regex (item);
+
+			if ((options & TNY_FOLDER_STORE_QUERY_OPTION_SUBSCRIBED) &&
+			    tny_folder_is_subscribed (folder))
+				retval = TRUE;
+
+			if ((options & TNY_FOLDER_STORE_QUERY_OPTION_UNSUBSCRIBED) &&
+			    !(tny_folder_is_subscribed (folder)))
+				retval = TRUE;
+
+			if (regex && options & TNY_FOLDER_STORE_QUERY_OPTION_MATCH_ON_NAME)
+			    if (regexec (regex, tny_folder_get_name (folder), 0, NULL, 0) == 0)
+				retval = TRUE;
+
+			if (regex && options & TNY_FOLDER_STORE_QUERY_OPTION_MATCH_ON_ID)
+			    if (regexec (regex, tny_folder_get_id (folder), 0, NULL, 0) == 0)
+				retval = TRUE;
+
+			g_object_unref (G_OBJECT (item));
+			tny_iterator_next (iterator);
+		}
+		 
+		g_object_unref (G_OBJECT (iterator));    
+		g_object_unref (G_OBJECT (items));
+	} else
+		retval = TRUE;
+
+	return retval;
+}
+
+
 static void
 get_folders (TnyFolderStore *self, TnyList *list, TnyFolderStoreQuery *query, GError **err)
 {
@@ -156,14 +202,13 @@ get_folders (TnyFolderStore *self, TnyList *list, TnyFolderStoreQuery *query, GE
 		MODEST_TNY_LOCAL_FOLDERS_ACCOUNT_GET_CLASS (self));
 	parent_class->get_folders_func (self, list, query, err);
 	
-	/* Add our extra folders: */
+	/* Add our extra folders only if it passes the query */
 	GSList *iter = priv->list_extra_folders;
-	while (iter)
-	{
+	while (iter) {
 		TnyFolder *folder = TNY_FOLDER (iter->data);
 
-		if (folder)
-			tny_list_append (list, G_OBJECT (folder));
+		if (folder && modest_tny_local_folders_account_query_passes (query, folder))
+			tny_list_prepend (list, G_OBJECT (folder));
 	  		
 		iter = g_slist_next (iter);
 	}
@@ -225,7 +270,7 @@ void modest_tny_local_folders_account_add_merged_outbox_folders (ModestTnyLocalF
 	
 	/* All per-account outbox folders are merged into one folders
 	 * so that they appear as one outbox to the user: */
-	TnyMergeFolder *merged_outbox = TNY_MERGE_FOLDER (tny_merge_folder_new());
+	TnyMergeFolder *merged_outbox = TNY_MERGE_FOLDER (tny_merge_folder_new(_("mcen_me_folder_outbox")));
 	
 	/* Set type to outbox (NB#61580) */
 	tny_merge_folder_set_folder_type (merged_outbox, TNY_FOLDER_TYPE_OUTBOX);

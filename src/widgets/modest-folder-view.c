@@ -130,7 +130,9 @@ static gboolean     _clipboard_set_selected_data (ModestFolderView *folder_view,
 
 static void         _clear_hidding_filter (ModestFolderView *folder_view);
 
-static void          on_row_changed_maybe_select_folder (GtkTreeModel *tree_model, GtkTreePath  *path, GtkTreeIter  *iter,
+static void          on_row_changed_maybe_select_folder (GtkTreeModel     *tree_model, 
+							 GtkTreePath      *path, 
+							 GtkTreeIter      *iter,
 							 ModestFolderView *self);
 
 enum {
@@ -937,7 +939,7 @@ filter_row (GtkTreeModel *model,
 	guint i;
 	gboolean found = FALSE;
 	gboolean cleared = FALSE;
-	
+
 	g_return_val_if_fail (MODEST_IS_FOLDER_VIEW (data), FALSE);
 	priv = MODEST_FOLDER_VIEW_GET_PRIVATE (data);
 
@@ -975,8 +977,6 @@ filter_row (GtkTreeModel *model,
 				retval = FALSE;
 		}
 	}
-	
-	/* The virtual local-folders folder store is also shown by default. */
 
 	/* Check hiding (if necessary) */
 	cleared = modest_email_clipboard_cleared (priv->clipboard);  	       
@@ -1070,7 +1070,7 @@ modest_folder_view_update_model (ModestFolderView *self,
 					      GTK_SORT_ASCENDING);
 	gtk_tree_sortable_set_sort_func (GTK_TREE_SORTABLE (sortable),
 					 TNY_GTK_FOLDER_STORE_TREE_MODEL_NAME_COLUMN,
-				 cmp_rows, NULL, NULL);
+					 cmp_rows, NULL, NULL);
 
 	/* Create filter model */
 	filter_model = gtk_tree_model_filter_new (sortable, NULL);
@@ -1078,13 +1078,6 @@ modest_folder_view_update_model (ModestFolderView *self,
 						filter_row,
 						self,
 						NULL);
-/* 	if (priv->style == MODEST_FOLDER_VIEW_STYLE_SHOW_ONE) { */
-/* 		filter_model = gtk_tree_model_filter_new (sortable, NULL); */
-/* 		gtk_tree_model_filter_set_visible_func (GTK_TREE_MODEL_FILTER (filter_model), */
-/* 							filter_row, */
-/* 							self, */
-/* 							NULL); */
-/* 	} */
 
 	/* Set new model */
 	gtk_tree_view_set_model (GTK_TREE_VIEW(self), filter_model);
@@ -1093,16 +1086,9 @@ modest_folder_view_update_model (ModestFolderView *self,
 	g_signal_connect (G_OBJECT(filter_model), "row-inserted",
 			  (GCallback)on_row_changed_maybe_select_folder, self);
 
-	
-
-/* 	gtk_tree_view_set_model (GTK_TREE_VIEW(self),  */
-/* 				 (filter_model) ? filter_model : sortable); */
 
 	g_object_unref (model);
-	g_object_unref (filter_model);
-/* 	if (filter_model) */
-/* 		g_object_unref (filter_model); */
-			
+	g_object_unref (filter_model);		
 	g_object_unref (sortable);
 
 	/* Force a reselection of the INBOX next time the widget is shown */
@@ -1560,12 +1546,13 @@ drag_and_drop_from_folder_view (GtkTreeModel     *source_model,
 					   helper->delete_source,
 					   NULL,
 					   NULL);
+
+		g_object_unref (G_OBJECT (mail_op));	
 	}
 	
 	/* Frees */
 	g_object_unref (G_OBJECT (parent_folder));
 	g_object_unref (G_OBJECT (folder));
-	g_object_unref (G_OBJECT (mail_op));
 }
 
 /*
@@ -2125,9 +2112,7 @@ on_row_changed_maybe_select_folder (GtkTreeModel *tree_model, GtkTreePath  *path
 	if (!MODEST_IS_FOLDER_VIEW(self))
 		return;
 	
-	g_return_if_fail (MODEST_IS_FOLDER_VIEW (self));
 	priv = MODEST_FOLDER_VIEW_GET_PRIVATE (self);
-	
 	
 	if (priv->folder_to_select) {
 		
@@ -2144,10 +2129,10 @@ on_row_changed_maybe_select_folder (GtkTreeModel *tree_model, GtkTreePath  *path
 
 			gtk_tree_path_free (path);
 		
-		} 
+		}
 		g_object_unref (priv->folder_to_select);
 		priv->folder_to_select = NULL;
-	} 
+	}
 }
 
 

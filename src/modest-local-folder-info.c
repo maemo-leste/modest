@@ -41,7 +41,8 @@ typedef struct {
 const ModestLocalFolder ModestLocalFolderMap[] = {
 	{ TNY_FOLDER_TYPE_UNKNOWN,  "<unknown>",  N_("<Unknown>")},
 	{ TNY_FOLDER_TYPE_NORMAL,   "<normal>",   N_("<Normal>")},
-	{ TNY_FOLDER_TYPE_INBOX,    "inbox",      N_("mcen_me_folder_inbox")},
+	/* There is no special Inbox folder for local accounts */
+/* 	{ TNY_FOLDER_TYPE_INBOX,    "inbox",      N_("mcen_me_folder_inbox")}, */
 	{ TNY_FOLDER_TYPE_OUTBOX,   "outbox",     N_("mcen_me_folder_outbox")},
 	{ TNY_FOLDER_TYPE_TRASH,    "trash",      N_("Trash")},
 	{ TNY_FOLDER_TYPE_JUNK,     "junk",       N_("Junk")},
