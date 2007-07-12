@@ -164,8 +164,6 @@ modest_window_get_active_account (ModestWindow *self)
 void
 modest_window_set_active_account (ModestWindow *self, const gchar *active_account)
 {
-	printf ("DEBUG: %s: active_account=%s\n", __FUNCTION__, active_account);
-
 	ModestWindowPrivate *priv;	
 
 	priv = MODEST_WINDOW_GET_PRIVATE(self);
