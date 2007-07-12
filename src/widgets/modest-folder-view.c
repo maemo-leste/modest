@@ -2151,6 +2151,10 @@ modest_folder_view_select_folder (ModestFolderView *self, TnyFolder *folder,
 	priv = MODEST_FOLDER_VIEW_GET_PRIVATE (self);
 
 	if (after_change) {
+
+		sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (self));
+		gtk_tree_selection_unselect_all (sel);
+
 		if (priv->folder_to_select)
 			g_object_unref(priv->folder_to_select);
 		priv->folder_to_select = TNY_FOLDER(g_object_ref(folder));
