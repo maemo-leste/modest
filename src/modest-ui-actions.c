@@ -889,7 +889,7 @@ _modest_ui_actions_open (TnyList *headers, ModestWindow *win)
 	 * than later in a thread:
 	 */
 	if (tny_list_get_length (not_opened_cached_headers) > 0) {
-		gboolean connected = modest_platform_connect_and_wait (GTK_WINDOW (win));
+		gboolean connected = modest_platform_connect_and_wait (GTK_WINDOW (win), NULL);
 		
 		/* Don't go further if a connection would be necessary but none is available: */
 		if (!connected) {
@@ -1158,7 +1158,7 @@ download_uncached_messages (TnyList *header_list, GtkWindow *win,
 			retval = FALSE;
 		else {
 			/* If a download will be necessary, make sure that we have a connection: */
-			retval = modest_platform_connect_and_wait(win);	
+			retval = modest_platform_connect_and_wait(win, NULL);	
 		}
 	}
 	return retval;
@@ -1926,7 +1926,7 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 		return;
 	
 	/* Offer the connection dialog, if necessary: */	
-	if (!modest_platform_connect_and_wait (GTK_WINDOW (edit_window)))
+	if (!modest_platform_connect_and_wait (GTK_WINDOW (edit_window), NULL))
 		return;
 	
 	/* FIXME: Code added just for testing. The final version will

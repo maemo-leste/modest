@@ -183,7 +183,7 @@ modest_platform_run_information_dialog (GtkWindow *parent_window,
 	/* TODO: implement a information dialog */
 }
 
-gboolean modest_platform_connect_and_wait (GtkWindow *parent_window)
+gboolean modest_platform_connect_and_wait (GtkWindow *parent_window, TnyAccount *account)
 {
 	/* TODO: Do something with network-manager? 
 	   Otherwise, maybe it is safe to assume that we would already be online if we could be. */

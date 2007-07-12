@@ -215,13 +215,15 @@ void      modest_platform_run_sort_dialog       (GtkWindow *parent_window,
 /*
  * modest_platform_connect_and_wait:
  * @parent_window: the parent #GtkWindow for any interactive or progress feedback UI.
+ * @account: The account to be used.
  * @return value: Whether a connection was made.
  * 
  * Attempts to make a connection, possibly showing interactive UI to achieve this.
  * This will return TRUE immediately if a connection is already open.
  * Otherwise, this function blocks until the connection attempt has either succeded or failed.
+ * This also sets the account to online, if it is a store account, in case it has been set to offline mode.
  */		
-gboolean modest_platform_connect_and_wait (GtkWindow *parent_window);
+gboolean modest_platform_connect_and_wait (GtkWindow *parent_window, TnyAccount *account);
 
 		
 /*

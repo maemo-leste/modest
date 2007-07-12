@@ -1,3 +1,21 @@
+2007-07-12  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/gnome/modest-platform.c: (modest_platform_connect_and_wait):
+	* src/maemo/modest-platform.c: 
+	(modest_platform_connect_and_wait):
+	Take a TnyAccount* parameter and try to set it to online 
+	(a TnyCamel-only API), because tinymail sets accounts to offline 
+	when the user cancels a password dialog, and doesn't ask again until 
+	it has been set to online.
+	However, this is commented out because it causes a hang now.
+
+	(modest_platform_connect_and_wait_if_network_account):
+	* src/modest-mail-operation.c:
+	(modest_mail_operation_update_account):
+	* src/modest-platform.h:
+	* src/modest-ui-actions.c: (_modest_ui_actions_open),
+	(download_uncached_messages), (modest_ui_actions_on_send): Adapted.
+
 2007-07-12  Armin Burgmeier  <armin@openismus.com>
 
 	* src/modest-error.h: Added MODEST_MAIL_OPERATION_FOLDER_EXISTS error.

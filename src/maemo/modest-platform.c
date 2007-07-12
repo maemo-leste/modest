@@ -1025,8 +1025,34 @@ on_idle_wait_for_previous_connect_to_finish(gpointer user_data)
 	return result;
 }
 
+static void 
+set_account_to_online (TnyAccount *account)
+{
+	/* TODO: This is necessary to prevent a cancel of the password dialog 
+	 * from making a restart necessary to be asked the password again,
+	 * but it causes a hang:
+	 */
+	#if 0
+	if (account && TNY_IS_CAMEL_STORE_ACCOUNT (account)) {
+		/* Make sure that store accounts are online too, 
+		 * because tinymail sets accounts to offline if 
+		 * a password dialog is ever cancelled.
+		 * We don't do this for transport accounts because 
+		 * a) They fundamentally need network access, so they can't really be offline.
+		 * b) That might cause a transport connection to happen too early.
+		 */
+		GError *error = NULL;
+		tny_camel_account_set_online (TNY_CAMEL_ACCOUNT (account), TRUE, &error);
+		if (error) {
+			g_warning ("%s: tny_camel_account_set_online() returned a GError:\n  %s\n", 
+				__FUNCTION__, error->message);
+			g_error_free (error);	
+		}
+	}
+	#endif
+}
 
-gboolean modest_platform_connect_and_wait (GtkWindow *parent_window)
+gboolean modest_platform_connect_and_wait (GtkWindow *parent_window, TnyAccount *account)
 {
 	if (connect_request_in_progress)
 		return FALSE;
@@ -1036,6 +1062,7 @@ gboolean modest_platform_connect_and_wait (GtkWindow *parent_window)
 	
 	if (tny_device_is_online (device)) {
 		printf ("DEBUG: %s: Already online.\n", __FUNCTION__);
+		set_account_to_online (account);
 		return TRUE;
 	} else
 	{
@@ -1073,8 +1100,13 @@ gboolean modest_platform_connect_and_wait (GtkWindow *parent_window)
 	/* g_main_context_unref (context); */
 
 	g_slice_free (UtilIdleData, data);
-	
-	return tny_device_is_online (device);
+
+	gboolean result = tny_device_is_online (device);
+
+	if (result)
+		set_account_to_online (account);
+
+	return result;
 }
 
 gboolean modest_platform_connect_and_wait_if_network_account (GtkWindow *parent_window, TnyAccount *account)
@@ -1087,7 +1119,7 @@ gboolean modest_platform_connect_and_wait_if_network_account (GtkWindow *parent_
 		}
 	}
 
-	return modest_platform_connect_and_wait (parent_window);
+	return modest_platform_connect_and_wait (parent_window, account);
 }
 
 gboolean modest_platform_connect_and_wait_if_network_folderstore (GtkWindow *parent_window, TnyFolderStore *folder_store)

@@ -1365,12 +1365,12 @@ modest_mail_operation_update_account (ModestMailOperation *self,
 				      UpdateAccountCallback callback,
 				      gpointer user_data)
 {
-	GThread *thread;
-	UpdateAccountInfo *info;
-	ModestMailOperationPrivate *priv;
-	ModestAccountMgr *mgr;
-	TnyStoreAccount *modest_account;
-	TnyTransportAccount *transport_account;
+	GThread *thread = NULL;
+	UpdateAccountInfo *info = NULL;
+	ModestMailOperationPrivate *priv = NULL;
+	ModestAccountMgr *mgr = NULL;
+	TnyStoreAccount *store_account = NULL;
+	TnyTransportAccount *transport_account = NULL;
 
 	g_return_val_if_fail (MODEST_IS_MAIL_OPERATION (self), FALSE);
 	g_return_val_if_fail (account_name, FALSE);
@@ -1383,20 +1383,20 @@ modest_mail_operation_update_account (ModestMailOperation *self,
 	priv->done  = 0;
 	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
 
+	/* Get the Modest account */
+	store_account = (TnyStoreAccount *)
+		modest_tny_account_store_get_server_account (modest_runtime_get_account_store (),
+								     account_name,
+								     TNY_ACCOUNT_TYPE_STORE);
+								     
 	/* Make sure that we have a connection, and request one 
 	 * if necessary:
 	 * TODO: Is there some way to trigger this for every attempt to 
 	 * use the network? */
-	if (!modest_platform_connect_and_wait (NULL))
+	if (!modest_platform_connect_and_wait (NULL, TNY_ACCOUNT (store_account)))
 		goto error;
 
-	/* Get the Modest account */
-	modest_account = (TnyStoreAccount *)
-		modest_tny_account_store_get_server_account (modest_runtime_get_account_store (),
-								     account_name,
-								     TNY_ACCOUNT_TYPE_STORE);
-
-	if (!modest_account) {
+	if (!store_account) {
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 			     MODEST_MAIL_OPERATION_ERROR_ITEM_NOT_FOUND,
 			     "cannot get tny store account for %s\n", account_name);
@@ -1419,7 +1419,7 @@ modest_mail_operation_update_account (ModestMailOperation *self,
 	/* Create the helper object */
 	info = g_slice_new (UpdateAccountInfo);
 	info->mail_op = self;
-	info->account = modest_account;
+	info->account = store_account;
 	info->transport_account = transport_account;
 	info->callback = callback;
 	info->user_data = user_data;
