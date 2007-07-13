@@ -1139,14 +1139,14 @@ static gpointer
 update_account_thread (gpointer thr_user_data)
 {
 	static gboolean first_time = TRUE;
-	UpdateAccountInfo *info;
+	UpdateAccountInfo *info = NULL;
 	TnyList *all_folders = NULL;
 	GPtrArray *new_headers = NULL;
 	TnyIterator *iter = NULL;
 	TnyFolderStoreQuery *query = NULL;
 	ModestMailOperationPrivate *priv = NULL;
 	ModestTnySendQueue *send_queue = NULL;
-	gint num_new_headers;
+	gint num_new_headers = 0;
 
 	info = (UpdateAccountInfo *) thr_user_data;
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(info->mail_op);

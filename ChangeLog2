@@ -1,4 +1,9 @@
-2007-07-13  MMurray Cumming  <murrayc@murrayc.com>
+2007-07-13  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/modest-mail-operation.c: (update_account_thread):
+	Initialized num_new_headers to fix the build.
+
+2007-07-13  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/modest-account-mgr.c: (modest_account_mgr_account_names):
 	Ignore modest accounts whose server accounts don't exist in gconf.
