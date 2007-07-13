@@ -1167,12 +1167,15 @@ _selected_folder_is_root (ModestMainWindow *win)
 	/* All accounts are root items: */
 	GtkWidget *folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(win),
 							   MODEST_WIDGET_TYPE_FOLDER_VIEW);
-	if (folder_view) {					   
+	if (folder_view) {					
+		gboolean is_account = FALSE;
 		TnyFolderStore *folder_store = 
 			modest_folder_view_get_selected (MODEST_FOLDER_VIEW(folder_view));
-		const gboolean is_account = TNY_IS_ACCOUNT (folder_store);
-		g_object_unref (folder_store);
-		folder_store = NULL;
+		if (folder_store) {
+			is_account = TNY_IS_ACCOUNT (folder_store);
+			g_object_unref (folder_store);
+			folder_store = NULL;
+		}
 		
 		if (is_account)
 			return TRUE;

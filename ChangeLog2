@@ -1,3 +1,8 @@
+2007-07-13  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/modest-ui-dimming-rules.c: (_selected_folder_is_root):
+	Fix my previous commit, to avoid unrefing a NULL TnyFolderStore.
+
 2007-07-12  Armin Burgmeier  <armin@openismus.com>
 
 	* src/maemo/modest-main-window.c: Make default account appear bold
