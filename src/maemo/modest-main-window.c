@@ -2015,10 +2015,10 @@ cancel_progressbar (GtkToolButton *toolbutton,
 	
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
 
-	/* Get operation observers and cancel its current operation */
+	/* Get operation observers and cancel all the operations */
 	tmp = priv->progress_widgets;
 	while (tmp) {
-		modest_progress_object_cancel_current_operation (MODEST_PROGRESS_OBJECT(tmp->data));
+		modest_progress_object_cancel_all_operations (MODEST_PROGRESS_OBJECT(tmp->data));
 		tmp=g_slist_next(tmp);
 	}
 }

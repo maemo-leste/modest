@@ -33,6 +33,7 @@
 #include "modest-progress-bar-widget.h"
 #include <string.h>
 #include "modest-platform.h"
+#include "modest-runtime.h"
 
 /* 'private'/'protected' functions */
 static void modest_progress_bar_widget_class_init (ModestProgressBarWidgetClass *klass);
@@ -45,11 +46,11 @@ static void modest_progress_bar_add_operation    (ModestProgressObject *self,
 static void modest_progress_bar_remove_operation (ModestProgressObject *self,
 						    ModestMailOperation  *mail_op);
 
-static void 
-modest_progress_bar_cancel_current_operation (ModestProgressObject *self);
+static void modest_progress_bar_cancel_current_operation (ModestProgressObject *self);
 
-static guint
-modest_progress_bar_num_pending_operations (ModestProgressObject *self);
+static void modest_progress_bar_cancel_all_operations    (ModestProgressObject *self);
+
+static guint modest_progress_bar_num_pending_operations (ModestProgressObject *self);
 
 static void on_progress_changed                    (ModestMailOperation  *mail_op, 
 						    ModestMailOperationState *state,
@@ -90,9 +91,6 @@ struct _ModestProgressBarWidgetPrivate {
 /* globals */
 static GtkContainerClass *parent_class = NULL;
 
-/* Flag to show or not show Recv cancellation banner */
-static gboolean f_receivingOngoing = FALSE;
-
 /* uncomment the following if you have defined any signals */
 /* static guint signals[LAST_SIGNAL] = {0}; */
 
@@ -104,6 +102,7 @@ modest_progress_object_init (gpointer g, gpointer iface_data)
 	klass->add_operation_func = modest_progress_bar_add_operation;
 	klass->remove_operation_func = modest_progress_bar_remove_operation;
 	klass->cancel_current_operation_func = modest_progress_bar_cancel_current_operation;
+	klass->cancel_all_operations_func = modest_progress_bar_cancel_all_operations;
 	klass->num_pending_operations_func = modest_progress_bar_num_pending_operations;
 }
 
@@ -175,7 +174,7 @@ modest_progress_bar_widget_init (ModestProgressBarWidget *self)
 	GtkAdjustment *adj;
 
 	priv = MODEST_PROGRESS_BAR_WIDGET_GET_PRIVATE(self);
-	
+
 	/* Alignment */
 	align = gtk_alignment_new(XALIGN, YALIGN, XSPACE, YSPACE);
 
@@ -262,19 +261,22 @@ compare_observable_data (ObservableData *data1, ObservableData *data2)
 
 static void 
 modest_progress_bar_remove_operation (ModestProgressObject *self,
-					ModestMailOperation  *mail_op)
+				      ModestMailOperation  *mail_op)
 {
 	ModestProgressBarWidget *me;
 	ModestProgressBarWidgetPrivate *priv;
 	GSList *link;
 	ObservableData *tmp_data = NULL;
+	gboolean is_current;
 
 	me = MODEST_PROGRESS_BAR_WIDGET (self);
 	priv = MODEST_PROGRESS_BAR_WIDGET_GET_PRIVATE (me);
 
+	is_current = (priv->current == mail_op);
+
 	/* Find item */
 	tmp_data = g_malloc0 (sizeof (ObservableData));
-        tmp_data->mail_op = mail_op;  
+        tmp_data->mail_op = mail_op;
 	link = g_slist_find_custom (priv->observables,
 				    tmp_data,
 				    (GCompareFunc) compare_observable_data);
@@ -291,7 +293,7 @@ modest_progress_bar_remove_operation (ModestProgressObject *self,
 	}
 	
 	/* Update the current mail operation */
-	if (priv->current == mail_op) {
+	if (is_current) {
 		if (priv->observables)
 			priv->current = ((ObservableData *) priv->observables->data)->mail_op;
 		else
@@ -328,14 +330,32 @@ modest_progress_bar_cancel_current_operation (ModestProgressObject *self)
 
 	if (priv->current == NULL) return;
 
-	/* bug 59107: if received canceled we shall show banner */
-	if ( f_receivingOngoing )
-	{
-		f_receivingOngoing = FALSE;
-		modest_platform_information_banner (NULL, NULL, _("emev_ib_ui_pop3_msg_recv_cancel"));
-	}
+	/* If received canceled we shall show banner */
+	if (modest_mail_operation_get_type_operation (priv->current) ==
+	    MODEST_MAIL_OPERATION_TYPE_RECEIVE)
+		modest_platform_information_banner (NULL, NULL, 
+						    _("emev_ib_ui_pop3_msg_recv_cancel"));
 
 	modest_mail_operation_cancel (priv->current);
+}
+
+static void 
+modest_progress_bar_cancel_all_operations (ModestProgressObject *self)
+{
+	ModestProgressBarWidget *me;
+	ModestProgressBarWidgetPrivate *priv;
+
+	me = MODEST_PROGRESS_BAR_WIDGET (self);
+	priv = MODEST_PROGRESS_BAR_WIDGET_GET_PRIVATE (me);
+
+	/* If received canceled we shall show banner */
+	if (priv->current && modest_mail_operation_get_type_operation (priv->current) ==
+	    MODEST_MAIL_OPERATION_TYPE_RECEIVE)
+		modest_platform_information_banner (NULL, NULL, 
+						    _("emev_ib_ui_pop3_msg_recv_cancel"));
+
+	/* Cancel all the mail operations */
+	modest_mail_operation_queue_cancel_all (modest_runtime_get_mail_operation_queue ());
 }
 
 static void 
@@ -346,7 +366,6 @@ on_progress_changed (ModestMailOperation  *mail_op,
 	ModestProgressBarWidgetPrivate *priv;
 	gboolean determined = FALSE;
 
-	f_receivingOngoing = FALSE;
 	priv = MODEST_PROGRESS_BAR_WIDGET_GET_PRIVATE (self);
 
 	/* If the mail operation is the currently shown one */
@@ -358,7 +377,6 @@ on_progress_changed (ModestMailOperation  *mail_op,
 
 		switch (state->op_type) {
 		case MODEST_MAIL_OPERATION_TYPE_RECEIVE:		
-			f_receivingOngoing = TRUE;
 			if (determined)
  				msg = g_strdup_printf(_("mcen_me_receiving"),
 						      state->done, state->total); 

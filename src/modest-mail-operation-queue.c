@@ -316,8 +316,10 @@ modest_mail_operation_queue_cancel (ModestMailOperationQueue *self,
 static void
 on_cancel_all_foreach (gpointer op, gpointer list)
 {
-	g_return_if_fail (list);
-	*((GSList**)list) = g_slist_prepend (*((GSList**)list), MODEST_MAIL_OPERATION (op));
+	GSList **new_list;
+
+	new_list = (GSList**) list;
+	*new_list = g_slist_prepend (*new_list, MODEST_MAIL_OPERATION (op));
 }
 
 void 
@@ -343,8 +345,6 @@ modest_mail_operation_queue_cancel_all (ModestMailOperationQueue *self)
 	/* TODO: Reverse the list, to remove operations in order? */
 
 	for(cur = operations_to_cancel; cur != NULL; cur = cur->next) {
-		/* This triggers a progress_changed signal in which we remove
-		 * the operation from the queue. */
 		if (!MODEST_IS_MAIL_OPERATION(cur->data))
 			g_printerr ("modest: cur->data is not a valid mail operation\n");
 		else

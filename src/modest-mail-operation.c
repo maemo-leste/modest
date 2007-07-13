@@ -83,8 +83,6 @@ static void     get_msg_status_cb (GObject *obj,
 
 static void     modest_mail_operation_notify_end (ModestMailOperation *self);
 
-static gboolean did_a_cancel = FALSE;
-
 enum _ModestMailOperationSignals 
 {
 	PROGRESS_CHANGED_SIGNAL,
@@ -402,24 +400,26 @@ gboolean
 modest_mail_operation_cancel (ModestMailOperation *self)
 {
 	ModestMailOperationPrivate *priv;
+	gboolean canceled = FALSE;
 
-	if (!MODEST_IS_MAIL_OPERATION (self)) {
-		g_warning ("%s: invalid parametter", G_GNUC_FUNCTION);
-		return FALSE;
-	}
+	g_return_val_if_fail (MODEST_IS_MAIL_OPERATION (self), FALSE);
 
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
-	if (!priv) {
-		g_warning ("BUG: %s: priv == NULL", __FUNCTION__);
-		return FALSE;
-	}
 
-	did_a_cancel = TRUE;
+	/* Note that if we call cancel with an already canceled mail
+	   operation the progress changed signal won't be emitted */
+	if (priv->status == MODEST_MAIL_OPERATION_STATUS_CANCELED)
+		return FALSE;
 
 	/* Set new status */
 	priv->status = MODEST_MAIL_OPERATION_STATUS_CANCELED;
 	
-	return TRUE;
+	/* Cancel the mail operation. We need to wrap it between this
+	   start/stop operations to allow following calls to the
+	   account */
+	tny_account_cancel (priv->account);
+
+	return canceled;
 }
 
 guint 
@@ -1146,6 +1146,7 @@ update_account_thread (gpointer thr_user_data)
 	TnyFolderStoreQuery *query = NULL;
 	ModestMailOperationPrivate *priv = NULL;
 	ModestTnySendQueue *send_queue = NULL;
+	gint num_new_headers;
 
 	info = (UpdateAccountInfo *) thr_user_data;
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(info->mail_op);
@@ -1192,10 +1193,12 @@ update_account_thread (gpointer thr_user_data)
 	gint timeout = g_timeout_add (100, idle_notify_progress, info->mail_op);
 
 	/* Refresh folders */
+	num_new_headers = 0;
 	new_headers = g_ptr_array_new ();
 	iter = tny_list_create_iterator (all_folders);
 
-	while (!tny_iterator_is_done (iter) && !priv->error && !did_a_cancel) {
+	while (!tny_iterator_is_done (iter) && !priv->error && 
+	       priv->status != MODEST_MAIL_OPERATION_STATUS_CANCELED) {
 
 		InternalFolderObserver *observer;
 		TnyFolderStore *folder = TNY_FOLDER_STORE (tny_iterator_get_current (iter));
@@ -1244,20 +1247,17 @@ update_account_thread (gpointer thr_user_data)
 
 		g_object_unref (G_OBJECT (folder));
 		if (priv->error)
-		{
 			priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
-			goto out;
-		}
-		
+
 		tny_iterator_next (iter);
 	}
-
-	did_a_cancel = FALSE;
 
 	g_object_unref (G_OBJECT (iter));
 	g_source_remove (timeout);
 
-	if (new_headers->len > 0) {
+	if (priv->status != MODEST_MAIL_OPERATION_STATUS_CANCELED && 
+	    priv->status != MODEST_MAIL_OPERATION_STATUS_FAILED &&
+	    new_headers->len > 0) {
 		gint msg_num = 0;
 
 		/* Order by date */
@@ -1305,12 +1305,17 @@ update_account_thread (gpointer thr_user_data)
 
 			msg_num++;
 		}
-		g_ptr_array_foreach (new_headers, (GFunc) g_object_unref, NULL);
-		g_ptr_array_free (new_headers, FALSE);
 	}
+
+	/* Get the number of new headers and free them */
+	num_new_headers = new_headers->len;
+	g_ptr_array_foreach (new_headers, (GFunc) g_object_unref, NULL);
+	g_ptr_array_free (new_headers, FALSE);
 	
+	if (priv->status == MODEST_MAIL_OPERATION_STATUS_CANCELED)
+		goto out;
+
 	/* Perform send (if operation was not cancelled) */
-	if (did_a_cancel) goto out;		
 /* 	priv->op_type = MODEST_MAIL_OPERATION_TYPE_SEND; */
 	priv->done = 0;
 	priv->total = 0;
@@ -1350,7 +1355,7 @@ update_account_thread (gpointer thr_user_data)
 		/* This thread is not in the main lock */
 		idle_info = g_malloc0 (sizeof (UpdateAccountInfo));
 		idle_info->mail_op = g_object_ref (info->mail_op);
-		idle_info->new_headers = (new_headers) ? new_headers->len : 0;
+		idle_info->new_headers = num_new_headers;
 		idle_info->callback = info->callback;
 		g_idle_add (idle_update_account_cb, idle_info);
 	}
@@ -2075,21 +2080,6 @@ get_msg_status_cb (GObject *obj,
 	self = helper->mail_op;
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
 
-	if(priv->status == MODEST_MAIL_OPERATION_STATUS_CANCELED) {
-		TnyFolder *folder = tny_header_get_folder (helper->header);
-		if (folder) {
-			TnyAccount *account;
-			account = tny_folder_get_account (folder);
-			if (account) {
-				tny_account_cancel (account);
-				g_object_unref (account);
-			}
-			g_object_unref (folder);
-		}
-	       
-		return;
-	}
-
 	priv->done = 1;
 	priv->total = 1;
 
@@ -2592,7 +2582,7 @@ on_refresh_folder (TnyFolder   *folder,
 	}
 
 	/* Free */
-	g_object_unref (helper->mail_op);
+/* 	g_object_unref (helper->mail_op); */
 	g_slice_free   (RefreshAsyncHelper, helper);
 
 	/* Notify about operation end */
