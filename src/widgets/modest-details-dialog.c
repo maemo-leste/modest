@@ -264,7 +264,7 @@ modest_details_dialog_set_header_default (ModestDetailsDialog *self,
 	modest_details_dialog_add_data (self, _("mcen_fi_message_properties_cc"), cc);
 
 	/* Set size */
-	if (size <= 0)
+	if (size < 0)
 		size_s = g_strdup (_("mcen_va_message_properties_size_noinfo"));
 	else
 		size_s = modest_text_utils_get_display_size (size);
