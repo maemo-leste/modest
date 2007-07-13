@@ -60,6 +60,12 @@
 #define KB 1024
 #define GET_SIZE_BUFFER_SIZE 128
 
+/* 
+ * Remove all these #ifdef stuff when the tinymail's idle calls become
+ * locked
+ */
+#define TINYMAIL_IDLES_NOT_LOCKED_YET 1
+
 /* 'private'/'protected' functions */
 static void modest_mail_operation_class_init (ModestMailOperationClass *klass);
 static void modest_mail_operation_init       (ModestMailOperation *obj);
@@ -412,11 +418,6 @@ modest_mail_operation_cancel (ModestMailOperation *self)
 
 	/* Set new status */
 	priv->status = MODEST_MAIL_OPERATION_STATUS_CANCELED;
-
-	/* This emits progress-changed on which the mail operation queue is
-	 * listening, so the mail operation is correctly removed from the
-	 * queue without further explicit calls. */
-	modest_mail_operation_notify_end (self);
 	
 	return TRUE;
 }
@@ -1018,7 +1019,13 @@ idle_notify_progress (gpointer data)
 	ModestMailOperationState *state;
 
 	state = modest_mail_operation_clone_state (mail_op);
+#ifdef TINYMAIL_IDLES_NOT_LOCKED_YET
+	gdk_threads_enter ();
+#endif
 	g_signal_emit (G_OBJECT (mail_op), signals[PROGRESS_CHANGED_SIGNAL], 0, state, NULL);
+#ifdef TINYMAIL_IDLES_NOT_LOCKED_YET
+	gdk_threads_leave ();
+#endif
 	g_slice_free (ModestMailOperationState, state);
 	
 	return TRUE;
@@ -1036,7 +1043,13 @@ idle_notify_progress_once (gpointer data)
 
 	pair = (ModestPair *) data;
 
+#ifdef TINYMAIL_IDLES_NOT_LOCKED_YET
+	gdk_threads_enter ();
+#endif
 	g_signal_emit (G_OBJECT (pair->first), signals[PROGRESS_CHANGED_SIGNAL], 0, pair->second, NULL);
+#ifdef TINYMAIL_IDLES_NOT_LOCKED_YET
+	gdk_threads_leave ();
+#endif
 
 	/* Free the state and the reference to the mail operation */
 	g_slice_free (ModestMailOperationState, (ModestMailOperationState*)pair->second);
@@ -1608,7 +1621,13 @@ transfer_folder_status_cb (GObject *obj,
 	priv->total = status->of_total;
 
 	state = modest_mail_operation_clone_state (self);
+#ifdef TINYMAIL_IDLES_NOT_LOCKED_YET
+	gdk_threads_enter ();
+#endif
 	g_signal_emit (G_OBJECT (self), signals[PROGRESS_CHANGED_SIGNAL], 0, state, NULL);
+#ifdef TINYMAIL_IDLES_NOT_LOCKED_YET
+	gdk_threads_leave ();
+#endif
 	g_slice_free (ModestMailOperationState, state);
 }
 
@@ -2077,7 +2096,13 @@ get_msg_status_cb (GObject *obj,
 	state = modest_mail_operation_clone_state (self);
 	state->bytes_done = status->position;
 	state->bytes_total = status->of_total;
+#ifdef TINYMAIL_IDLES_NOT_LOCKED_YET
+	gdk_threads_enter ();
+#endif
 	g_signal_emit (G_OBJECT (self), signals[PROGRESS_CHANGED_SIGNAL], 0, state, NULL);
+#ifdef TINYMAIL_IDLES_NOT_LOCKED_YET
+	gdk_threads_leave ();
+#endif
 	g_slice_free (ModestMailOperationState, state);
 }
 
@@ -2383,7 +2408,13 @@ transfer_msgs_status_cb (GObject *obj,
 	priv->total = status->of_total;
 
 	state = modest_mail_operation_clone_state (self);
+#ifdef TINYMAIL_IDLES_NOT_LOCKED_YET
+	gdk_threads_enter ();
+#endif
 	g_signal_emit (G_OBJECT (self), signals[PROGRESS_CHANGED_SIGNAL], 0, state, NULL);
+#ifdef TINYMAIL_IDLES_NOT_LOCKED_YET
+	gdk_threads_leave ();
+#endif
 	g_slice_free (ModestMailOperationState, state);
 }
 
@@ -2592,7 +2623,13 @@ on_refresh_folder_status_update (GObject *obj,
 	priv->total = status->of_total;
 
 	state = modest_mail_operation_clone_state (self);
+#ifdef TINYMAIL_IDLES_NOT_LOCKED_YET
+	gdk_threads_enter ();
+#endif
 	g_signal_emit (G_OBJECT (self), signals[PROGRESS_CHANGED_SIGNAL], 0, state, NULL);
+#ifdef TINYMAIL_IDLES_NOT_LOCKED_YET
+	gdk_threads_leave ();
+#endif
 	g_slice_free (ModestMailOperationState, state);
 }
 
@@ -2614,7 +2651,7 @@ modest_mail_operation_refresh_folder  (ModestMailOperation *self,
 
 	/* Create the helper */
 	helper = g_slice_new0 (RefreshAsyncHelper);
-	helper->mail_op = g_object_ref(self);
+	helper->mail_op = g_object_ref (self);
 	helper->user_callback = user_callback;
 	helper->user_data = user_data;
 
@@ -2653,7 +2690,9 @@ modest_mail_operation_notify_end (ModestMailOperation *self)
 		priv->account_name = NULL;
 	}
 	
-	/* Notify the observers about the mail opertation end */
+	/* Notify the observers about the mail operation end */
+	/* We do not wrapp this emission because we assume that this
+	   function is always called from within the main lock */
 	state = modest_mail_operation_clone_state (self);
 	g_signal_emit (G_OBJECT (self), signals[PROGRESS_CHANGED_SIGNAL], 0, state, NULL);
 	g_slice_free (ModestMailOperationState, state);
