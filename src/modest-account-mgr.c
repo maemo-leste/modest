@@ -676,6 +676,31 @@ modest_account_mgr_account_names (ModestAccountMgr * self, gboolean only_enabled
 			}
 		}
 		
+		/* Ignore modest accounts whose server accounts don't exist: 
+		 * (We could be getting this list while the account is being deleted, 
+		 * while the child server accounts have already been deleted, but the 
+		 * parent modest account already exists.
+		 */
+		if (add) {
+			gchar* server_account_name = modest_account_mgr_get_string (self, account_name_key, MODEST_ACCOUNT_STORE_ACCOUNT,
+									    FALSE);
+			if (server_account_name) {
+				if (!modest_account_mgr_account_exists (self, server_account_name, TRUE))
+					add = FALSE;
+				g_free (server_account_name);
+			}
+		}
+		
+		if (add) {
+			gchar* server_account_name = modest_account_mgr_get_string (self, account_name_key, MODEST_ACCOUNT_TRANSPORT_ACCOUNT,
+									    FALSE);
+			if (server_account_name) {
+				if (!modest_account_mgr_account_exists (self, server_account_name, TRUE))
+					add = FALSE;
+				g_free (server_account_name);
+			}
+		}
+		
 		if (add) 	
 			result = g_slist_append (result, unescaped_name);
 		else 

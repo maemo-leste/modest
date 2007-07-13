@@ -1,3 +1,13 @@
+2007-07-13  MMurray Cumming  <murrayc@murrayc.com>
+
+	* src/modest-account-mgr.c: (modest_account_mgr_account_names):
+	Ignore modest accounts whose server accounts don't exist in gconf.
+	This prevents us trying to create TnyAccount instances for those 
+	server accounts when the server account has been removed from gconf, 
+	but the parent modest account has not yet been removed from modest.
+	I don't know why this is only noticeable now. It was probably just 
+	a harmeless g_warning() anyway.
+
 2007-07-13  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/modest-ui-dimming-rules.c: (_selected_folder_is_root):
