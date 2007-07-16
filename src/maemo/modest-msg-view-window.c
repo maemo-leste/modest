@@ -1091,11 +1091,12 @@ static gboolean
 message_reader (ModestMsgViewWindow *window,
 		ModestMsgViewWindowPrivate *priv,
 		TnyHeader *header,
-		GtkTreeIter iter)
+		GtkTreePath *path)
 {
 	ModestMailOperation *mail_op = NULL;
-	GtkTreePath *path = NULL;
 	ModestMailOperationTypeOperation op_type;
+
+	g_return_val_if_fail (path != NULL, FALSE);
 
 	/* Msg download completed */
 	if (tny_header_get_flags (header) & TNY_HEADER_FLAG_CACHED) {
@@ -1125,9 +1126,6 @@ message_reader (ModestMsgViewWindow *window,
 			g_object_unref (folder);
 		}
 	}
-
-	/* Get the path, will be freed by the callback */
-	path = gtk_tree_model_get_path (priv->header_model, &iter);
 
 	/* New mail operation */
 	mail_op = modest_mail_operation_new_with_error_handling (op_type, 
@@ -1170,12 +1168,13 @@ modest_msg_view_window_select_next_message (ModestMsgViewWindow *window)
 			    &header, -1);
 	
 	/* Read the message & show it */
-	if (!message_reader (window, priv, header, tmp_iter))
+	if (!message_reader (window, priv, header, path)) {
 		retval = FALSE;
+		gtk_tree_path_free (path);
+	}
 
 	/* Free */
 	g_object_unref (header);
-	gtk_tree_path_free (path);
 
 	return retval;       	
 }
@@ -1186,6 +1185,7 @@ modest_msg_view_window_select_first_message (ModestMsgViewWindow *self)
 	ModestMsgViewWindowPrivate *priv = NULL;
 	TnyHeader *header = NULL;
 	GtkTreeIter iter;
+	GtkTreePath *path;
 
 	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (self), FALSE);
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (self);
@@ -1199,15 +1199,16 @@ modest_msg_view_window_select_first_message (ModestMsgViewWindow *self)
 			    &iter, 
 			    TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN,
 			    &header, -1);
-	
 	g_return_val_if_fail (TNY_IS_HEADER (header), FALSE);
 	if (tny_header_get_flags (header) & TNY_HEADER_FLAG_DELETED) {
 		g_object_unref (header);
 		return modest_msg_view_window_select_next_message (self);
 	}
 	
+	path = gtk_tree_model_get_path (priv->header_model, &iter);
+	
 	/* Read the message & show it */
-	message_reader (self, priv, header, iter);
+	message_reader (self, priv, header, path);
 	
 	/* Free */
 	g_object_unref (header);
@@ -1245,7 +1246,7 @@ modest_msg_view_window_select_previous_message (ModestMsgViewWindow *window)
 		}
 
 		/* Read the message & show it */
-		if (!message_reader (window, priv, header, iter)) {
+		if (!message_reader (window, priv, header, path)) {
 			g_object_unref (header);
 			break;
 		}
