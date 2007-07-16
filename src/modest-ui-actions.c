@@ -2180,19 +2180,11 @@ modest_ui_actions_new_folder_error_handler (ModestMailOperation *mail_op,
 	}
 }
 
-
-void 
-modest_ui_actions_on_new_folder (GtkAction *action, ModestMainWindow *main_window)
+static void
+modest_ui_actions_create_folder(GtkWidget *parent_window,
+                                GtkWidget *folder_view)
 {
 	TnyFolderStore *parent_folder;
-	GtkWidget *folder_view;
-	
-	g_return_if_fail (MODEST_IS_MAIN_WINDOW(main_window));
-
-	folder_view = modest_main_window_get_child_widget (main_window,
-							   MODEST_WIDGET_TYPE_FOLDER_VIEW);
-	if (!folder_view)
-		return;
 
 	parent_folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW(folder_view));
 	
@@ -2203,7 +2195,7 @@ modest_ui_actions_on_new_folder (GtkAction *action, ModestMainWindow *main_windo
 
 		/* Run the new folder dialog */
 		while (!finished) {
-			result = modest_platform_run_new_folder_dialog (GTK_WINDOW (main_window),
+			result = modest_platform_run_new_folder_dialog (GTK_WINDOW (parent_window),
 									parent_folder,
 									suggested_name,
 									&folder_name);
@@ -2218,9 +2210,9 @@ modest_ui_actions_on_new_folder (GtkAction *action, ModestMainWindow *main_windo
 				TnyFolder *new_folder = NULL;
 
 				mail_op  = modest_mail_operation_new_with_error_handling (MODEST_MAIL_OPERATION_TYPE_INFO,
-								                          G_OBJECT(main_window),
+								                          G_OBJECT(parent_window),
 											  modest_ui_actions_new_folder_error_handler,
-											  main_window);
+											  parent_window);
 
 				modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), 
 								 mail_op);
@@ -2228,13 +2220,8 @@ modest_ui_actions_on_new_folder (GtkAction *action, ModestMainWindow *main_windo
 										  parent_folder,
 										  (const gchar *) folder_name);
 				if (new_folder) {
-					if (main_window) {
-						folder_view = modest_main_window_get_child_widget (main_window,
-												   MODEST_WIDGET_TYPE_FOLDER_VIEW);
-						if (folder_view)
-							modest_folder_view_select_folder (MODEST_FOLDER_VIEW(folder_view), 
-											  new_folder, TRUE);
-					}
+					modest_folder_view_select_folder (MODEST_FOLDER_VIEW(folder_view), 
+									  new_folder, TRUE);
 
 					g_object_unref (new_folder);
 					finished = TRUE;
@@ -2248,6 +2235,21 @@ modest_ui_actions_on_new_folder (GtkAction *action, ModestMainWindow *main_windo
 
 		g_object_unref (parent_folder);
 	}
+}
+
+void 
+modest_ui_actions_on_new_folder (GtkAction *action, ModestMainWindow *main_window)
+{
+	GtkWidget *folder_view;
+	
+	g_return_if_fail (MODEST_IS_MAIN_WINDOW(main_window));
+
+	folder_view = modest_main_window_get_child_widget (main_window,
+							   MODEST_WIDGET_TYPE_FOLDER_VIEW);
+	if (!folder_view)
+		return;
+
+	modest_ui_actions_create_folder (GTK_WIDGET (main_window), folder_view);
 }
 
 static void
@@ -3143,6 +3145,12 @@ modest_ui_actions_on_check_names (GtkAction *action, ModestMsgEditWindow *window
 	modest_msg_edit_window_check_names (window);
 }
 
+static void
+create_move_to_dialog_on_new_folder(GtkWidget *button, gpointer user_data)
+{
+	modest_ui_actions_create_folder (gtk_widget_get_toplevel (button),
+	                                 GTK_WIDGET (user_data));
+}
 
 static GtkWidget*
 create_move_to_dialog (GtkWindow *win,
@@ -3150,15 +3158,19 @@ create_move_to_dialog (GtkWindow *win,
 		       GtkWidget **tree_view)
 {
 	GtkWidget *dialog, *scroll;
+	GtkWidget *new_button;
 
 	dialog = gtk_dialog_new_with_buttons (_("mcen_ti_moveto_folders_title"),
 					      GTK_WINDOW (win),
 					      GTK_DIALOG_MODAL | GTK_DIALOG_NO_SEPARATOR | GTK_DIALOG_DESTROY_WITH_PARENT,
-					      GTK_STOCK_OK,
-					      GTK_RESPONSE_ACCEPT,
-					      GTK_STOCK_CANCEL,
-					      GTK_RESPONSE_REJECT,
-					      NULL);
+	                                      NULL);
+
+	gtk_dialog_add_button (GTK_DIALOG (dialog), GTK_STOCK_OK, GTK_RESPONSE_ACCEPT);
+	/* We do this manually so GTK+ does not associate a response ID for
+	 * the button. */
+	new_button = gtk_button_new_from_stock (GTK_STOCK_NEW);
+	gtk_box_pack_end (GTK_BOX (GTK_DIALOG (dialog)->action_area), new_button, FALSE, FALSE, 0);
+	gtk_dialog_add_button (GTK_DIALOG (dialog), GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT);
 
 	/* Create scrolled window */
 	scroll = gtk_scrolled_window_new (NULL, NULL);
@@ -3168,6 +3180,8 @@ create_move_to_dialog (GtkWindow *win,
 
 	/* Create folder view */
 	*tree_view = modest_platform_create_folder_view (NULL);
+
+	g_signal_connect (G_OBJECT (new_button), "clicked", G_CALLBACK(create_move_to_dialog_on_new_folder), *tree_view);
 
 	/* It could happen that we're trying to move a message from a
 	   window (msg window for example) after the main window was
@@ -3186,9 +3200,10 @@ create_move_to_dialog (GtkWindow *win,
 
 	/* Add scroll to dialog */
 	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox), 
-			    scroll, FALSE, FALSE, 0);
+			    scroll, TRUE, TRUE, 0);
 
 	gtk_widget_show_all (GTK_WIDGET(GTK_DIALOG(dialog)->vbox));
+	gtk_window_set_default_size (GTK_WINDOW (dialog), 300, 300);
 
 	return dialog;
 }
