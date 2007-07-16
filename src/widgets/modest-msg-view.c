@@ -1423,6 +1423,17 @@ modest_msg_view_get_message (ModestMsgView *self)
 }
 
 gboolean 
+modest_msg_view_get_message_is_empty (ModestMsgView *self)
+{
+	/* TODO: Find some gtkhtml API to check whether there is any (visible, non markup)
+	 * text in the message:
+	 */
+	
+	return FALSE;
+}
+
+
+gboolean 
 modest_msg_view_search (ModestMsgView *self, const gchar *search)
 {
 	ModestMsgViewPrivate *priv;

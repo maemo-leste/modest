@@ -120,6 +120,17 @@ void         modest_msg_view_set_message  (ModestMsgView *self, TnyMsg *tny_msg)
  */
 TnyMsg*      modest_msg_view_get_message  (ModestMsgView *self);
 
+/**
+ * modest_msg_view_get_message_is_empty
+ * @self: a ModestMsgView instance
+ *
+ * Returns whether the message contains any visbible (searchable) text.
+ * For instance, this will return FALSE if the message contains only markup.
+ *
+ * Returns: TRUE if the message contains visible text.
+ */
+gboolean modest_msg_view_get_message_is_empty (ModestMsgView *self);
+
 GtkAdjustment *modest_msg_view_get_vadjustment (ModestMsgView *self);
 GtkAdjustment *modest_msg_view_get_hadjustment (ModestMsgView *self);
 void modest_msg_view_set_vadjustment (ModestMsgView *self, GtkAdjustment *vadj);

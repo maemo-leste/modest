@@ -789,6 +789,13 @@ modest_msg_view_window_toggle_find_toolbar (GtkToggleAction *toggle,
 
 	is_active = gtk_toggle_action_get_active (toggle);
 
+	/* Show a warning if there is nothing to search: */
+	if (is_active && priv->msg_view && 
+		modest_msg_view_get_message_is_empty (MODEST_MSG_VIEW (priv->msg_view))) {
+		hildon_banner_show_information (GTK_WIDGET (window), NULL, _("mail_ib_nothing_to_find"));
+		return;
+	}
+
 	if (is_active) {
 		gtk_widget_show (priv->find_toolbar);
 		hildon_find_toolbar_highlight_entry (HILDON_FIND_TOOLBAR (priv->find_toolbar), TRUE);

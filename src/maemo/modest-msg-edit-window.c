@@ -2709,6 +2709,25 @@ subject_field_changed (GtkEditable *editable,
 	gtk_text_buffer_set_modified (priv->text_buffer, TRUE);
 }
 
+gboolean
+message_is_empty (ModestMsgEditWindow *window)
+{
+	ModestMsgEditWindowPrivate *priv = NULL;
+
+	g_return_val_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window), FALSE);
+	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
+	
+	/** TODO: Add wpeditor API to tell us if there is any _visible_ text,
+	 * so we can ignore markup.
+	 */
+	GtkTextBuffer *buf = gtk_text_view_get_buffer (GTK_TEXT_VIEW (priv->msg_body));
+	gint count = 0;
+	if (buf)
+		count = gtk_text_buffer_get_char_count (buf);
+		
+	return count == 0;
+}
+	
 void
 modest_msg_edit_window_toggle_find_toolbar (ModestMsgEditWindow *window,
 					    gboolean show)
@@ -2719,6 +2738,13 @@ modest_msg_edit_window_toggle_find_toolbar (ModestMsgEditWindow *window,
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
 
 	gtk_widget_set_no_show_all (priv->find_toolbar, FALSE);
+
+	/* Show a warning if there is nothing to search: */
+	if (show && message_is_empty (window)) {
+		hildon_banner_show_information (GTK_WIDGET (window), NULL, _("mail_ib_nothing_to_find"));
+		return;
+	}
+
 	if (show) {
 		gtk_widget_show_all (priv->find_toolbar);
 		hildon_find_toolbar_highlight_entry (HILDON_FIND_TOOLBAR (priv->find_toolbar), TRUE);

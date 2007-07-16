@@ -1,3 +1,19 @@
+2007-07-16  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/widgets/modest-msg-view.h:
+	* src/widgets/modest-msg-view.c:
+	Added modest_msg_view_get_message_is_empty() but this needs 
+	to be implemented.
+	* src/maemo/modest-msg-edit-window.c: (message_is_empty):
+	Check if there is any text in the message yet.
+	But this needs to be implemented properly.
+	(modest_msg_edit_window_toggle_find_toolbar):
+	* src/maemo/modest-msg-view-window.c:
+	(modest_msg_view_window_toggle_find_toolbar):
+	Show a banner warning if there is no text to search, when 
+	trying to start a search. This partially fixes 
+	projects.maemo.org bug NB#62350.
+
 2007-07-13  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/modest-mail-operation.c: (update_account_thread):
