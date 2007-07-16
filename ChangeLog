@@ -1,10 +1,1 @@
-2007-07-16  Johannes Schmid,,,  <jhs@idefix>
-
-	reviewed by: <delete if not using a buddy>
-
-	* src/maemo/easysetup/modest-easysetup-wizard.c:
-	(create_page_account_details), (create_page_user_details),
-	(create_page_complete_easysetup), (create_page_custom_incoming),
-	(create_page_custom_outgoing), (create_page_complete_custom):
-
 * please check the svn log instead
