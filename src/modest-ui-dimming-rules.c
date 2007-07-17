@@ -463,7 +463,7 @@ modest_ui_dimming_rules_on_delete_msg (ModestWindow *win, gpointer user_data)
 		if (!dimmed) {
 			dimmed = _selected_msg_sent_in_progress (win);
 			if (dimmed)
-				modest_dimming_rule_set_notification (rule, _("ckct_ib_unable_to_delete"));
+				modest_dimming_rule_set_notification (rule, _CS("ckct_ib_unable_to_delete"));
 		}
 	} 
 	else if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
@@ -480,7 +480,7 @@ modest_ui_dimming_rules_on_delete_msg (ModestWindow *win, gpointer user_data)
 		if (!dimmed) {
 			dimmed = !modest_msg_view_window_has_headers_model (MODEST_MSG_VIEW_WINDOW(win));
  			if (dimmed) {
-				modest_dimming_rule_set_notification (rule, _("ckct_ib_unable_to_delete"));
+				modest_dimming_rule_set_notification (rule, _CS("ckct_ib_unable_to_delete"));
 			}
 		}
 	}
