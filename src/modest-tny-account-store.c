@@ -1035,6 +1035,7 @@ get_server_accounts  (TnyAccountStore *self, TnyList *list, TnyAccountType type)
 						tny_account = modest_tny_account_new_from_server_account_name (
 							priv->account_mgr, priv->session, transport_account_name);
 						if (tny_account) {
+							modest_tny_account_set_parent_modest_account_name_for_server_account (tny_account, account_name);
 							g_object_set_data (G_OBJECT(tny_account), "account_store",
 									   (gpointer)self);
 							if (list)

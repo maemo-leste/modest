@@ -1,3 +1,12 @@
+2007-07-18  Armin Burgmeier  <armin@openismus.com>
+
+	* src/modest-tny-account-store.c:
+	(get_server_accounts): Set parent modest account name for each
+	connection-specific transport account so that special folders of such
+	an account can be looked up. This fixes a crash when changing account
+	settings. This might also be related to projects.maemo.org bug
+	NB#63594.
+
 2007-07-16  Armin Burgmeier  <armin@openismus.com>
 
 	* src/modest-ui-actions.c: Added a button to create a folder to the
