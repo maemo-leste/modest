@@ -63,6 +63,7 @@ struct _ModestConnectionSpecificSmtpEditWindowPrivate
 	GtkWidget *button_cancel;
 	
 	gboolean is_dirty;
+	gboolean range_error_occured;
 };
 
 static void
@@ -128,7 +129,54 @@ on_change(GtkWidget* widget, ModestConnectionSpecificSmtpEditWindow *self)
 static void
 on_value_changed(GtkWidget* widget, GValue* value, ModestConnectionSpecificSmtpEditWindow *self)
 {
+	ModestConnectionSpecificSmtpEditWindowPrivate *priv =
+       		CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW_GET_PRIVATE (self);
+
+	priv->range_error_occured = FALSE;
 	on_change(widget, self);
+}
+
+static gboolean
+on_range_error (GtkWidget *widget, HildonNumberEditorErrorType type, gpointer user_data)
+{
+	ModestConnectionSpecificSmtpEditWindow *self = user_data;
+	ModestConnectionSpecificSmtpEditWindowPrivate *priv =
+       		CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW_GET_PRIVATE (self);
+
+	/* We want to prevent the closure of the dialog when a range error occured. The problem is that
+	 * the hildon number editor already resets the value to the default value, so we have to
+	 * remember that such an error occured. */
+	priv->range_error_occured = TRUE;
+
+	/* Show error message by not returning TRUE */
+	return FALSE;
+}
+
+static void
+on_response (GtkDialog *dialog, int response_id, gpointer user_data)
+{
+	ModestConnectionSpecificSmtpEditWindow *self = user_data;
+	ModestConnectionSpecificSmtpEditWindowPrivate *priv =
+       		CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW_GET_PRIVATE (self);
+
+	/* Don't close the dialog if a range error occured */
+	if(response_id == GTK_RESPONSE_OK && priv->range_error_occured)
+	{
+		g_signal_stop_emission_by_name (dialog, "response");
+		gtk_widget_grab_focus (priv->entry_port);
+	}
+}
+
+static void on_set_focus_child (GtkContainer *container, GtkWidget *widget, gpointer user_data)
+{
+	ModestConnectionSpecificSmtpEditWindow *self = user_data;
+	ModestConnectionSpecificSmtpEditWindowPrivate *priv =
+       		CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW_GET_PRIVATE (self);
+
+	/* Another child gained focus. Since the number editor already reset a
+	 * possible range error to the default value, we allow closure of the
+	 * dialog */
+	priv->range_error_occured = FALSE;
 }
 
 static void
@@ -241,6 +289,8 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 		priv->entry_port = GTK_WIDGET (hildon_number_editor_new (0, 65535));
 	caption = hildon_caption_new (sizegroup, 
 		_("mcen_li_emailsetup_smtp"), priv->entry_port, NULL, HILDON_CAPTION_OPTIONAL);
+	gtk_widget_add_events(GTK_WIDGET(priv->entry_port), GDK_FOCUS_CHANGE_MASK);
+	g_signal_connect(G_OBJECT(priv->entry_port), "range-error", G_CALLBACK(on_range_error), self);
 	g_signal_connect(G_OBJECT(priv->entry_port), "notify::value", G_CALLBACK(on_value_changed), self);
 	gtk_widget_show (priv->entry_port);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
@@ -255,6 +305,9 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	gtk_dialog_add_button (GTK_DIALOG (self), GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL);
 	
 	priv->is_dirty = FALSE;
+	priv->range_error_occured = FALSE;
+	g_signal_connect(G_OBJECT(self), "response", G_CALLBACK(on_response), self);
+	g_signal_connect(G_OBJECT(box), "set-focus-child", G_CALLBACK(on_set_focus_child), self);
 	
 	gtk_widget_show (box);
 	

@@ -1,5 +1,11 @@
 2007-07-18  Armin Burgmeier  <armin@openismus.com>
 
+	* src/maemo/modest-connection-specific-smtp-edit-window.c: Don't let
+	the dialog close after entering an invalid port number and clicking
+	OK. This fixes projects.maemo.org bug NB#63602.
+
+2007-07-18  Armin Burgmeier  <armin@openismus.com>
+
 	* src/modest-tny-account-store.c:
 	(get_server_accounts): Set parent modest account name for each
 	connection-specific transport account so that special folders of such
