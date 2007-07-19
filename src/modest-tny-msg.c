@@ -211,14 +211,14 @@ copy_mime_part (TnyMimePart *part)
 	TnyStream *attachment_stream;
 
 	if (TNY_IS_MSG (part)) {
-		result = TNY_MIME_PART (tny_platform_factory_new_msg (modest_runtime_get_platform_factory ()));
-		attachment_content_type = "message/rfc822";
-		tny_mime_part_set_content_type (result, attachment_content_type);
-	} else {
-		result = tny_platform_factory_new_mime_part (
-			modest_runtime_get_platform_factory());
-		attachment_content_type = tny_mime_part_get_content_type (part);
+		g_object_ref (part);
+		return part;
 	}
+
+	result = tny_platform_factory_new_mime_part (
+		modest_runtime_get_platform_factory());
+
+	attachment_content_type = tny_mime_part_get_content_type (part);
 
 	/* get mime part headers */
 	attachment_filename = tny_mime_part_get_filename (part);
@@ -265,6 +265,7 @@ add_attachments (TnyMsg *msg, GList *attachments_list)
 		old_attachment = pos->data;
 		attachment_part = copy_mime_part (old_attachment);
 		tny_mime_part_add_part (TNY_MIME_PART (msg), attachment_part);
+		g_object_unref (attachment_part);
 	}
 }
 
@@ -328,6 +329,11 @@ modest_tny_msg_find_body_part_from_mime_part (TnyMimePart *msg, gboolean want_ht
 		gchar *content_type = NULL;
 		do {
 			part = TNY_MIME_PART(tny_iterator_get_current (iter));
+			if (TNY_IS_MSG (part)) {
+				g_object_unref (part);
+				tny_iterator_next (iter);
+				continue;
+			}
 
 			/* we need to strdown the content type, because
 			 * tny_mime_part_has_content_type does not do it...
