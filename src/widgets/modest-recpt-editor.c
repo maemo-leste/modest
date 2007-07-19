@@ -440,6 +440,50 @@ modest_recpt_editor_on_focus_in (GtkTextView *text_view,
 	gtk_text_view_place_cursor_onscreen (GTK_TEXT_VIEW (priv->text_view));
 }
 
+static gboolean
+is_valid_insert (const gchar *text, gint len)
+{
+	gunichar c;
+	gint i= 0;
+	const gchar *current;
+	if (text == NULL)
+		return TRUE;
+	current = text;
+
+	while (((len == -1)||(i < len)) && (*text != '\0')) {
+		c = g_utf8_get_char (current);
+		if (c == 0x2022 || c == 0xfffc)
+			return FALSE;
+		current = g_utf8_next_char (current);
+		i = current - text;
+	}
+	return TRUE;
+}
+
+static gchar *
+create_valid_text (const gchar *text, gint len)
+{
+	gunichar c;
+	gint i= 0;
+	GString *str;
+	const gchar *current;
+
+	if (text == NULL)
+		return NULL;
+
+	str = g_string_new ("");
+	current = text;
+
+	while (((len == -1)||(i < len)) && (*text != '\0')) {
+		c = g_utf8_get_char (current);
+		if (c != 0x2022 && c != 0xfffc)
+			str = g_string_append_unichar (str, c);
+		current = g_utf8_next_char (current);
+		i = current - text;
+	}
+	return g_string_free (str, FALSE);
+}
+
 static void 
 modest_recpt_editor_on_insert_text (GtkTextBuffer *buffer,
 				    GtkTextIter *location,
@@ -450,6 +494,13 @@ modest_recpt_editor_on_insert_text (GtkTextBuffer *buffer,
 	GtkTextIter prev;
 	gunichar prev_char;
 	ModestRecptEditorPrivate *priv = MODEST_RECPT_EDITOR_GET_PRIVATE (editor);
+
+	if (!is_valid_insert (text, len)) {
+		gchar *new_text = create_valid_text (text, len);
+		g_signal_stop_emission_by_name (G_OBJECT (buffer), "insert-text");
+		gtk_text_buffer_insert (buffer, location, new_text, -1);
+		g_free (new_text);
+	}
 
 	if (iter_has_recipient (location)) {
 		gtk_text_buffer_get_end_iter (buffer, location);
