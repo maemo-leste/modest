@@ -36,6 +36,8 @@
 #include <modest-text-utils.h>
 #include <modest-recpt-view.h>
 
+#define RECPT_VIEW_CLICK_AREA_THRESHOLD 32
+
 static GObjectClass *parent_class = NULL;
 
 /* signals */
@@ -123,8 +125,10 @@ button_release_event (GtkWidget *widget,
 
 	if ((priv->button_pressed) &&
 	    (event->type == GDK_BUTTON_RELEASE) &&
-	    (priv->pressed_x == event->x) &&
-	    (priv->pressed_y == event->y)) {
+	    ((event->x >= priv->pressed_x - RECPT_VIEW_CLICK_AREA_THRESHOLD)&&
+	     (event->x <= priv->pressed_x + RECPT_VIEW_CLICK_AREA_THRESHOLD)) &&
+	    ((event->y >= priv->pressed_y - RECPT_VIEW_CLICK_AREA_THRESHOLD)&&
+	     (event->y <= priv->pressed_y + RECPT_VIEW_CLICK_AREA_THRESHOLD))) {
 		priv->button_pressed = FALSE;
 		if (event->button == 1) {
 			gint buffer_x, buffer_y;
