@@ -1671,12 +1671,20 @@ folder_refreshed_cb (ModestMailOperation *mail_op,
 {
 	ModestMainWindow *win = NULL;
 	GtkWidget *header_view;
+	TnyFolder *current_folder;
 
 	g_return_if_fail (TNY_IS_FOLDER (folder));
 
 	win = MODEST_MAIN_WINDOW (user_data);
 	header_view = 
 		modest_main_window_get_child_widget(win, MODEST_WIDGET_TYPE_HEADER_VIEW);
+
+	if (header_view) {
+		current_folder = modest_header_view_get_folder (MODEST_HEADER_VIEW (header_view));
+		if (current_folder != NULL && folder != current_folder) {
+			return;
+		}
+	}
 
 	/* Check if folder is empty and set headers view contents style */
 	if (tny_folder_get_all_count (folder) == 0) {
