@@ -403,6 +403,7 @@ modest_formatter_create_body_part (ModestFormatter *self, TnyMsg *msg)
 				alternative_part = part;
 				break;
 			}
+			g_object_unref (part);
 			tny_iterator_next (iter);
 		}
 		result = tny_platform_factory_new_mime_part (fact);
