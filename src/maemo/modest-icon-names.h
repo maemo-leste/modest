@@ -44,6 +44,8 @@
 #define MODEST_HEADER_ICON_UNREAD		"qgn_list_messagin_mail_unread"
 #define MODEST_HEADER_ICON_DELETED		"qgn_list_messagin_mail_deleted"
 #define MODEST_HEADER_ICON_ATTACH		"qgn_list_gene_attacpap"
+#define MODEST_HEADER_ICON_HIGH	                "qgn_list_messaging_high"
+#define MODEST_HEADER_ICON_LOW   		"qgn_list_messaging_low"
 
 /*
  * until we have the custom cell renderer, we use the hacked icons below;

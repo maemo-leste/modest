@@ -128,11 +128,11 @@ get_pixbuf_for_flag (TnyHeaderFlags flag)
 		return attachments_pixbuf;
 	case TNY_HEADER_FLAG_HIGH_PRIORITY:
 		if (G_UNLIKELY(!high_pixbuf))
-			high_pixbuf = modest_platform_get_icon (MODEST_HEADER_ICON_HIGH_PRIORITY);
+			high_pixbuf = modest_platform_get_icon (MODEST_HEADER_ICON_HIGH);
 		return high_pixbuf;
 	case TNY_HEADER_FLAG_LOW_PRIORITY:
 		if (G_UNLIKELY(!low_pixbuf))
-			low_pixbuf = modest_platform_get_icon (MODEST_HEADER_ICON_LOW_PRIORITY);
+			low_pixbuf = modest_platform_get_icon (MODEST_HEADER_ICON_LOW);
 		return low_pixbuf;
 	default:
 		if (G_UNLIKELY(!unread_pixbuf))
