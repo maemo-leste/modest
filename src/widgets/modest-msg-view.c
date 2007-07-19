@@ -869,7 +869,6 @@ modest_msg_view_init (ModestMsgView *obj)
 	priv->headers_window = NULL;
 	priv->html_window = NULL;
 
-
 	gtk_widget_push_composite_child ();
 	priv->html_scroll = gtk_scrolled_window_new (NULL, NULL);
 	gtk_widget_set_composite_name (priv->html_scroll, "contents");
@@ -1323,6 +1322,7 @@ set_empty_message (ModestMsgView *self)
 
 	gtk_html_load_from_string (GTK_HTML(priv->gtkhtml),
 				   "", 1);
+
 	
 	return TRUE;
 }
@@ -1422,14 +1422,30 @@ modest_msg_view_get_message (ModestMsgView *self)
 	return msg;
 }
 
+static gboolean
+has_contents_receiver (gpointer engine, const gchar *data,
+		       size_t len, gboolean *has_contents)
+{
+	if (len > 1 || ((len == 1)&&(data[0]!='\n'))) {
+		*has_contents = TRUE;
+		return FALSE;
+	}
+	return TRUE;
+}
+
 gboolean 
 modest_msg_view_get_message_is_empty (ModestMsgView *self)
 {
 	/* TODO: Find some gtkhtml API to check whether there is any (visible, non markup)
 	 * text in the message:
 	 */
+	ModestMsgViewPrivate *priv = MODEST_MSG_VIEW_GET_PRIVATE (self);
+	gboolean has_contents = FALSE;
+
+	gtk_html_export (GTK_HTML (priv->gtkhtml), "text/plain", 
+			 (GtkHTMLSaveReceiverFn) has_contents_receiver, &has_contents);
 	
-	return FALSE;
+	return !has_contents;
 }
 
 
