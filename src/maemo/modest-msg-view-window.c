@@ -420,13 +420,13 @@ init_window (ModestMsgViewWindow *obj, TnyMsg *msg)
 	gtk_container_add   (GTK_CONTAINER(obj), main_vbox);
 
 	priv->find_toolbar = hildon_find_toolbar_new (NULL);
+	hildon_window_add_toolbar (HILDON_WINDOW (obj), GTK_TOOLBAR (priv->find_toolbar));
 	gtk_widget_set_no_show_all (priv->find_toolbar, TRUE);
 	g_signal_connect (G_OBJECT (priv->find_toolbar), "close", G_CALLBACK (modest_msg_view_window_find_toolbar_close), obj);
 	g_signal_connect (G_OBJECT (priv->find_toolbar), "search", G_CALLBACK (modest_msg_view_window_find_toolbar_search), obj);
 	
 	priv->clipboard_change_handler = g_signal_connect (G_OBJECT (gtk_clipboard_get (GDK_SELECTION_PRIMARY)), "owner-change", G_CALLBACK (modest_msg_view_window_clipboard_owner_change), obj);
 	gtk_widget_show_all (GTK_WIDGET(main_vbox));
-	gtk_box_pack_end (GTK_BOX (main_vbox), priv->find_toolbar, FALSE, FALSE, 0);
 
 }	
 
