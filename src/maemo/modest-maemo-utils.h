@@ -145,4 +145,13 @@ void modest_maemo_show_dialog_and_forget (GtkWindow *parent_window, GtkDialog *d
 
 void modest_maemo_set_thumbable_scrollbar (GtkScrolledWindow *win, gboolean thumbable);
 
+/**
+ * modest_maemo_toggle_action_set_active_block_notify:
+ * @action: a #GtkToggleAction
+ * @value: a #gboolean
+ *
+ * updates the toggle action active status, but blocking the notification of the changes.
+ */
+void modest_maemo_toggle_action_set_active_block_notify (GtkToggleAction *action, gboolean value);
+
 #endif /*__MODEST_MAEMO_UTILS_H__*/

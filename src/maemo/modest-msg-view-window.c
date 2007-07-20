@@ -755,28 +755,6 @@ modest_msg_view_window_get_message_uid (ModestMsgViewWindow *self)
 	return (const gchar*) priv->msg_uid;
 }
 
-static void
-toggle_action_set_active_block_notify (GtkToggleAction *action,
-				       gboolean value)
-{
-	GSList *proxies = NULL;
-
-	for (proxies = gtk_action_get_proxies (GTK_ACTION (action));
-	     proxies != NULL; proxies = g_slist_next (proxies)) {
-		GtkWidget *widget = (GtkWidget *) proxies->data;
-		gtk_action_block_activate_from (GTK_ACTION (action), widget);
-	}
-
-	gtk_toggle_action_set_active (action, value);
-
-	for (proxies = gtk_action_get_proxies (GTK_ACTION (action));
-	     proxies != NULL; proxies = g_slist_next (proxies)) {
-		GtkWidget *widget = (GtkWidget *) proxies->data;
-		gtk_action_unblock_activate_from (GTK_ACTION (action), widget);
-	}
-}
-
-
 static void 
 modest_msg_view_window_toggle_find_toolbar (GtkToggleAction *toggle,
 					    gpointer data)
@@ -798,9 +776,9 @@ modest_msg_view_window_toggle_find_toolbar (GtkToggleAction *toggle,
 
 	/* update the toggle buttons status */
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/FindInMessage");
-	toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action), is_active);
+	modest_maemo_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action), is_active);
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/ToolsMenu/ToolsFindInMessageMenu");
-	toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action), is_active);
+	modest_maemo_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action), is_active);
 	
 }
 

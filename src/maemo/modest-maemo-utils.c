@@ -557,3 +557,25 @@ modest_maemo_set_thumbable_scrollbar (GtkScrolledWindow *win, gboolean thumbable
 #endif /* MODEST_HAVE_HILDON1_WIDGETS */
 }
 
+void
+modest_maemo_toggle_action_set_active_block_notify (GtkToggleAction *action, gboolean value)
+{
+	GSList *proxies = NULL;
+
+	g_return_if_fail (GTK_IS_TOGGLE_ACTION (action));
+
+	for (proxies = gtk_action_get_proxies (GTK_ACTION (action));
+	     proxies != NULL; proxies = g_slist_next (proxies)) {
+		GtkWidget *widget = (GtkWidget *) proxies->data;
+		gtk_action_block_activate_from (GTK_ACTION (action), widget);
+	}
+
+	gtk_toggle_action_set_active (action, value);
+
+	for (proxies = gtk_action_get_proxies (GTK_ACTION (action));
+	     proxies != NULL; proxies = g_slist_next (proxies)) {
+		GtkWidget *widget = (GtkWidget *) proxies->data;
+		gtk_action_unblock_activate_from (GTK_ACTION (action), widget);
+	}
+
+}
