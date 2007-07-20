@@ -1344,8 +1344,11 @@ modest_ui_actions_on_sort (GtkAction *action,
 		GtkWidget *header_view;
 		header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(window),
 								   MODEST_WIDGET_TYPE_HEADER_VIEW);
-		if (!header_view)
+		if (!header_view) {
+			modest_platform_information_banner (NULL, NULL, _CS("ckdg_ib_nothing_to_sort"));
+
 			return;
+		}
 
 		/* Show sorting dialog */
 		modest_platform_run_sort_dialog (GTK_WINDOW (window), MODEST_SORT_HEADERS);	

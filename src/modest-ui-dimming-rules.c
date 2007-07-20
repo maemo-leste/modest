@@ -265,7 +265,12 @@ modest_ui_dimming_rules_on_sort (ModestWindow *win, gpointer user_data)
 	/* Check dimmed rule */	
 	if (!dimmed) {
 		dimmed = _selected_folder_is_root (MODEST_MAIN_WINDOW(win));
-		modest_dimming_rule_set_notification (rule, NULL);
+		modest_dimming_rule_set_notification (rule, _CS("ckdg_ib_nothing_to_sort"));
+	}
+
+	if (!dimmed) {
+		dimmed = _selected_folder_is_empty (MODEST_MAIN_WINDOW(win));
+		modest_dimming_rule_set_notification (rule, _CS("ckdg_ib_nothing_to_sort"));
 	}
 
 	return dimmed;
