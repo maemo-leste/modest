@@ -1,3 +1,13 @@
+2007-07-22  Armin Burgmeier  <armin@openismus.com>
+
+	* src/maemo/modest-ui-actions.c: Use current account instead of
+	default account for creating viewer windows, so that the viewer
+	window knows to which account the viewed message belongs.
+
+	* src/maemo/modest-msg-view-window.c: Destroy the window when the
+	corresponding account is deleted. This fixes projects.maemo.org bug
+	NB#62936.
+
 2007-07-18  Armin Burgmeier  <armin@openismus.com>
 
 	* src/maemo/modest-connection-specific-smtp-edit-window.c: Don't let

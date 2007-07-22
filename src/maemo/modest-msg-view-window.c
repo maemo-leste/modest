@@ -53,6 +53,7 @@
 #include <gtkhtml/gtkhtml-search.h>
 #include "modest-ui-dimming-manager.h"
 #include <gdk/gdkkeysyms.h>
+#include <modest-tny-account.h>
 
 #define DEFAULT_FOLDER "MyDocs/.documents"
 
@@ -95,6 +96,10 @@ static void         on_queue_changed                     (ModestMailOperationQue
 							  ModestMailOperation *mail_op,
 							  ModestMailOperationQueueNotification type,
 							  ModestMsgViewWindow *self);
+static void on_account_removed (ModestAccountMgr *obj,
+                                const gchar *account,
+                                gboolean server_account,
+                                gpointer user_data);
 
 static void view_msg_cb (ModestMailOperation *mail_op, TnyHeader *header, TnyMsg *msg, gpointer user_data);
 
@@ -154,6 +159,7 @@ struct _ModestMsgViewWindowPrivate {
 
 	guint clipboard_change_handler;
 	guint queue_change_handler;
+	guint account_removed_handler;
 
 	guint progress_bar_timeout;
 
@@ -250,6 +256,8 @@ modest_msg_view_window_init (ModestMsgViewWindow *obj)
 	priv->msg_view      = NULL;
 	priv->header_model  = NULL;
 	priv->clipboard_change_handler = 0;
+	priv->queue_change_handler = 0;
+	priv->account_removed_handler = 0;
 	priv->current_toolbar_mode = TOOLBAR_MODE_NORMAL;
 
 	priv->optimized_view  = FALSE;
@@ -445,13 +453,15 @@ modest_msg_view_window_finalize (GObject *obj)
 		g_signal_handler_disconnect (G_OBJECT (modest_runtime_get_mail_operation_queue ()), priv->queue_change_handler);
 		priv->queue_change_handler = 0;
 	}
+	if (priv->account_removed_handler > 0) {
+		g_signal_handler_disconnect (G_OBJECT (modest_runtime_get_account_mgr ()), priv->account_removed_handler);
+		priv->account_removed_handler = 0;
+	}
 	if (priv->header_model != NULL) {
 		g_object_unref (priv->header_model);
 		priv->header_model = NULL;
 	}
 
-	/* disconnet operations queue observer */
-	
 	if (priv->progress_bar_timeout > 0) {
 		g_source_remove (priv->progress_bar_timeout);
 		priv->progress_bar_timeout = 0;
@@ -664,6 +674,12 @@ modest_msg_view_window_new (TnyMsg *msg,
 						       "queue-changed",
 						       G_CALLBACK (on_queue_changed),
 						       obj);
+
+	/* Account manager */
+	priv->account_removed_handler = g_signal_connect (G_OBJECT(modest_runtime_get_account_mgr()),
+	                                                  "account-removed",
+	                                                  G_CALLBACK(on_account_removed),
+	                                                  obj);
 
 	modest_window_set_active_account (MODEST_WINDOW(obj), modest_account_name);
 
@@ -1567,6 +1583,25 @@ observers_empty (ModestMsgViewWindow *self)
 	return is_empty;
 }
 
+static void
+on_account_removed (ModestAccountMgr *mgr,
+                    const gchar *account,
+		    gboolean server_account,
+		    gpointer user_data)
+{
+	ModestTnyAccountStore *store = modest_runtime_get_account_store ();
+	const gchar *our_acc = modest_window_get_active_account (MODEST_WINDOW (user_data));
+
+	TnyAccount *tny_acc = modest_tny_account_store_get_tny_account_by (store, MODEST_TNY_ACCOUNT_STORE_QUERY_ID, account);
+	if(tny_acc != NULL)
+	{
+		const gchar* parent_acc = modest_tny_account_get_parent_modest_account_name_for_server_account (tny_acc);
+		if (strcmp (parent_acc, our_acc) == 0)
+		{
+			gtk_widget_destroy (GTK_WIDGET (user_data));
+		}
+	}
+}
 
 static void
 on_queue_changed (ModestMailOperationQueue *queue,

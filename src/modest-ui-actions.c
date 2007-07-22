@@ -728,9 +728,9 @@ open_msg_cb (ModestMailOperation *mail_op,
 	headers_action_mark_as_read (header, MODEST_WINDOW(parent_win), NULL);
 
 	/* Get account */
-	account = modest_account_mgr_get_default_account (modest_runtime_get_account_mgr());
+	account = g_strdup (modest_window_get_active_account (MODEST_WINDOW (parent_win)));
 	if (!account)
-		account =  g_strdup (modest_window_get_active_account (MODEST_WINDOW (parent_win)));
+		account = modest_account_mgr_get_default_account (modest_runtime_get_account_mgr());
 	
 	/* Gets folder type (OUTBOX headers will be opened in edit window */
 	if (modest_tny_folder_is_local_folder (folder))
