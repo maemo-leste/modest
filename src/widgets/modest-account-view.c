@@ -285,6 +285,7 @@ on_account_busy_changed(ModestAccountMgr *account_mgr, const gchar *account_name
 {
 	GtkListStore *model = GTK_LIST_STORE(gtk_tree_view_get_model (GTK_TREE_VIEW(self)));
 	GtkTreeIter iter;
+	g_message(__FUNCTION__);
 	if (!gtk_tree_model_get_iter_first(GTK_TREE_MODEL(model), &iter))
 		return;
 	do

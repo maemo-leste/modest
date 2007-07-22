@@ -533,10 +533,11 @@ create_page_user_details (ModestEasysetupWizardDialog *self)
 	 * We use GTK_SIZE_GROUP_HORIZONTAL, so that the widths are the same. */
 	GtkSizeGroup* sizegroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
 	 
-	/* The name widgets: */
+	/* The name widgets: (use auto cap) */
 	self->entry_user_name = GTK_WIDGET (modest_validating_entry_new ());
-	/* Auto-capitalization is the default, so let's turn it off: */
-	hildon_gtk_entry_set_input_mode (GTK_ENTRY (self->entry_user_name), HILDON_GTK_INPUT_MODE_FULL);
+	hildon_gtk_entry_set_input_mode (GTK_ENTRY (self->entry_user_name), 
+					 HILDON_GTK_INPUT_MODE_FULL | HILDON_GTK_INPUT_MODE_AUTOCAP);
+	
 	/* Set max length as in the UI spec:
 	 * The UI spec seems to want us to show a dialog if we hit the maximum. */
 	gtk_entry_set_max_length (GTK_ENTRY (self->entry_user_name), 64);

@@ -1,3 +1,10 @@
+2007-07-22  Johannes Schmid <johannes.schmid@openismus.com>
+
+	* src/maemo/easysetup/modest-easysetup-wizard.c:
+	(create_page_user_details):
+	Use auto-cap for name (projects.maemo.org NB#63716)
+	* src/widgets/modest-account-view.c: (on_account_busy_changed):
+
 2007-07-22  Armin Burgmeier  <armin@openismus.com>
 
 	* src/maemo/modest-ui-actions.c: Use current account instead of
