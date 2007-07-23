@@ -717,6 +717,7 @@ modest_mail_operation_send_new_mail_cb (ModestMailOperation *self,
 			tny_header_set_flags (header, TNY_HEADER_FLAG_DELETED);
 			tny_header_set_flags (header, TNY_HEADER_FLAG_SEEN);
 			g_object_unref (header);
+			g_object_unref (folder);
 		}
 	}
 
@@ -1585,9 +1586,12 @@ modest_mail_operation_remove_folder (ModestMailOperation *self,
 		trash_folder = modest_tny_account_get_special_folder (account,
 								      TNY_FOLDER_TYPE_TRASH);
 		/* TODO: error_handling */
-		 modest_mail_operation_xfer_folder (self, folder,
+		if (trash_folder) {
+			modest_mail_operation_xfer_folder (self, folder,
 						    TNY_FOLDER_STORE (trash_folder), 
 						    TRUE, NULL, NULL);
+			g_object_unref (trash_folder);
+		}
 	} else {
 		TnyFolderStore *parent = tny_folder_get_folder_store (folder);
 

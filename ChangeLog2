@@ -1,5 +1,16 @@
 2007-07-23  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-tny-account.c:
+	(modest_tny_account_get_special_folder): Use an if instead of 
+	an assert for when the parent account name is NULL, because this 
+	might be causing a crash in projects.maemo.org bug 63192.
+	* src/modest-mail-operation.c:
+	(modest_mail_operation_send_new_mail_cb),
+	(modest_mail_operation_remove_folder): unref the folder that is 
+	returned from modest_tny_account_get_special_folder().
+
+2007-07-23  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/modest-ui-actions.c:
 	(modest_ui_actions_on_password_requested):
 	Show mail_ib_login_cancelled info banner when the user cancels 

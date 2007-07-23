@@ -115,7 +115,8 @@ modest_tny_account_new_from_server_account_name (ModestAccountMgr *account_mgr,
  * such as (for example) server-side Sent/Junk mail for IMAP accounts 
  * 
  * Returns: the tny folder corresponding to this special folder, or NULL in case
- * of error, or if the special folder does not exist for this account
+ * of error, or if the special folder does not exist for this account. 
+ * This must be unrefed with g_object_unref().
  */
 TnyFolder*    modest_tny_account_get_special_folder   (TnyAccount *self,
 						       TnyFolderType special_type);

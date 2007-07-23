@@ -74,21 +74,24 @@ modest_tny_account_get_special_folder (TnyAccount *account,
 	if (special_type == TNY_FOLDER_TYPE_OUTBOX) {
 		const gchar *modest_account_name = 
 			modest_tny_account_get_parent_modest_account_name_for_server_account (account);
-		g_assert (modest_account_name);
-
-		gchar *account_id = g_strdup_printf (
-			MODEST_PER_ACCOUNT_LOCAL_OUTBOX_FOLDER_ACCOUNT_ID_PREFIX "%s", 
-			modest_account_name);
 		
-		local_account = modest_tny_account_store_get_tny_account_by (modest_runtime_get_account_store(),
-									     MODEST_TNY_ACCOUNT_STORE_QUERY_ID,
-									     account_id);
-		if (!local_account) {
-			g_printerr ("modest: %s: modest_tny_account_store_get_tny_account_by(ID) returned NULL for %s\n", __FUNCTION__, account_id);
-		return NULL;
+		if (modest_account_name) {
+			gchar *account_id = g_strdup_printf (
+				MODEST_PER_ACCOUNT_LOCAL_OUTBOX_FOLDER_ACCOUNT_ID_PREFIX "%s", 
+				modest_account_name);
+			
+			local_account = modest_tny_account_store_get_tny_account_by (modest_runtime_get_account_store(),
+										     MODEST_TNY_ACCOUNT_STORE_QUERY_ID,
+										     account_id);
+			if (!local_account) {
+				g_printerr ("modest: %s: modest_tny_account_store_get_tny_account_by(ID) returned NULL for %s\n", __FUNCTION__, account_id);
+			return NULL;
+			}
+		
+			g_free (account_id);
+		} else {
+			g_warning ("%s: modest_account_name was NULL.", __FUNCTION);
 		}
-	
-		g_free (account_id);
 	} else {
 		/* Other local folders are all in one on-disk directory: */
 		local_account = modest_tny_account_store_get_tny_account_by (modest_runtime_get_account_store(),
@@ -128,7 +131,7 @@ modest_tny_account_get_special_folder (TnyAccount *account,
 			TNY_FOLDER (tny_iterator_get_current (iter));
 		if (modest_tny_folder_get_local_folder_type (folder) == special_type) {
 			special_folder = folder;
-			break;
+			break; /* Leaving a ref for the special_folder return value. */
 		}
 		
 		g_object_unref (G_OBJECT(folder));
