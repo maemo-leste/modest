@@ -1025,6 +1025,7 @@ get_server_accounts  (TnyAccountStore *self, TnyList *list, TnyAccountType type)
 			 * modest account: */
 			GSList *iter = list_specifics;
 			while (iter) {
+				/* The list alternates between the connection name and the transport name: */
 				/* const gchar* this_connection_name = (const gchar*)(iter->data); */
 				iter = g_slist_next (iter);
 				if (iter) {
