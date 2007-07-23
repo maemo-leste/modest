@@ -844,10 +844,8 @@ _modest_ui_actions_open (TnyList *headers, ModestWindow *win)
 {
 	ModestWindowMgr *mgr = NULL;
 	TnyIterator *iter = NULL;
-	ModestMailOperation *mail_op1 = NULL;
-	ModestMailOperation *mail_op2 = NULL;
+	ModestMailOperation *mail_op = NULL;
 	TnyList *not_opened_headers = NULL;
-	TnyList *not_opened_cached_headers = NULL;
 	TnyHeaderFlags flags = 0;
 		
 	/* Look if we already have a message view for each header. If
@@ -856,7 +854,7 @@ _modest_ui_actions_open (TnyList *headers, ModestWindow *win)
 	mgr = modest_runtime_get_window_mgr ();
 	iter = tny_list_create_iterator (headers);
 	not_opened_headers = tny_simple_list_new ();
-	not_opened_cached_headers = tny_simple_list_new ();
+
 	while (!tny_iterator_is_done (iter)) {
 
 		ModestWindow *window = NULL;
@@ -878,14 +876,9 @@ _modest_ui_actions_open (TnyList *headers, ModestWindow *win)
 			else
 				/* the header has been registered already, we don't do
 				 * anything but wait for the window to come up*/
-				g_warning ("debug: header %p already registered, waiting for window",
-					   header);
+				g_debug ("header %p already registered, waiting for window", header);
 		} else {
-			if (!(flags & TNY_HEADER_FLAG_CACHED))
-				tny_list_append (not_opened_headers, G_OBJECT (header));
-			/* Check if msg has already been retreived */
-			else
-				tny_list_append (not_opened_cached_headers, G_OBJECT (header));
+			tny_list_append (not_opened_headers, G_OBJECT (header));
 		}
 
 		if (header)
@@ -900,13 +893,12 @@ _modest_ui_actions_open (TnyList *headers, ModestWindow *win)
 	 * make a connection. It's generally easier to do this here (in the mainloop) 
 	 * than later in a thread:
 	 */
-	if (tny_list_get_length (not_opened_cached_headers) > 0) {
+	if (tny_list_get_length (not_opened_headers) > 0) {
 		gboolean connected = modest_platform_connect_and_wait (GTK_WINDOW (win), NULL);
 		
 		/* Don't go further if a connection would be necessary but none is available: */
 		if (!connected) {
 			g_object_unref (not_opened_headers);
-			g_object_unref (not_opened_cached_headers);
 			return;
 		}
 	}
@@ -925,29 +917,15 @@ _modest_ui_actions_open (TnyList *headers, ModestWindow *win)
 	g_object_unref (iter_not_opened);
 	iter_not_opened = NULL;
 	
-	TnyIterator *iter_cached = tny_list_create_iterator (not_opened_cached_headers);
-	while (!tny_iterator_is_done (iter_cached)) {
-		TnyHeader *header = TNY_HEADER (tny_iterator_get_current (iter_cached));
-		if (header) {
-			modest_window_mgr_register_header (mgr, header);
-			g_object_unref (header);
-		}
-		
-		tny_iterator_next (iter_cached);
-	}
-	g_object_unref (iter_cached);
-	iter_cached = NULL;
-	
-	
-	/* Open each uncached message */
+	/* Open each message */
 	if (tny_list_get_length (not_opened_headers) > 0) {
-		mail_op1 = modest_mail_operation_new_with_error_handling (MODEST_MAIL_OPERATION_TYPE_RECEIVE, 
+		mail_op = modest_mail_operation_new_with_error_handling (MODEST_MAIL_OPERATION_TYPE_RECEIVE, 
 									 G_OBJECT (win), 
 									 modest_ui_actions_get_msgs_full_error_handler, 
 									 NULL);
-		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op1);
+		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
 		if (tny_list_get_length (not_opened_headers) > 1) {
-			modest_mail_operation_get_msgs_full (mail_op1, 
+			modest_mail_operation_get_msgs_full (mail_op, 
 							     not_opened_headers, 
 							     open_msg_cb, 
 							     NULL, 
@@ -955,51 +933,16 @@ _modest_ui_actions_open (TnyList *headers, ModestWindow *win)
 		} else {
 			TnyIterator *iter = tny_list_create_iterator (not_opened_headers);
 			TnyHeader *header = TNY_HEADER (tny_iterator_get_current (iter));
-			if (header) {
-				modest_mail_operation_get_msg (mail_op1, header, open_msg_cb, NULL);
-				g_object_unref (header);
-			}
-
+			modest_mail_operation_get_msg (mail_op, header, open_msg_cb, NULL);
+			g_object_unref (header);
 			g_object_unref (iter);
 		}
-	}
-
-	/* Open each cached message */
-	if (tny_list_get_length (not_opened_cached_headers) > 0) {
-		mail_op2 = modest_mail_operation_new_with_error_handling (MODEST_MAIL_OPERATION_TYPE_RECEIVE, 
-									 G_OBJECT (win), 
-									 modest_ui_actions_get_msgs_full_error_handler, 
-									 NULL);
-		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op2);
-		if (tny_list_get_length (not_opened_cached_headers) > 1) {
-			modest_mail_operation_get_msgs_full (mail_op2, 
-							     not_opened_headers, 
-							     open_msg_cb, 
-							     NULL, 
-							     NULL);
-		} else {
-			TnyIterator *iter = tny_list_create_iterator (not_opened_cached_headers);
-			TnyHeader *header = TNY_HEADER (tny_iterator_get_current (iter));
-			if (header) {
-				modest_mail_operation_get_msg (mail_op2, header, open_msg_cb, NULL);
-				g_object_unref (header);
-			}
-
-			g_object_unref (iter);
-		}
+		g_object_unref (mail_op);
 	}
 
 	/* Clean */
 	if (not_opened_headers != NULL)
 		g_object_unref (not_opened_headers);
-	if (not_opened_cached_headers != NULL)
-		g_object_unref (not_opened_cached_headers);
-	if (iter != NULL) 
-		g_object_unref (iter);
-	if (mail_op1 != NULL)
-		g_object_unref (mail_op1);
-	if (mail_op2 != NULL) 
-		g_object_unref (mail_op2);
 }
 
 void
