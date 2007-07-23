@@ -89,26 +89,29 @@ static void modest_msg_view_window_clipboard_owner_change (GtkClipboard *clipboa
 							   GdkEvent *event,
 							   ModestMsgViewWindow *window);
 
-static void cancel_progressbar (GtkToolButton *toolbutton,
-				ModestMsgViewWindow *self);
+static void cancel_progressbar  (GtkToolButton *toolbutton,
+				 ModestMsgViewWindow *self);
 
-static void         on_queue_changed                     (ModestMailOperationQueue *queue,
-							  ModestMailOperation *mail_op,
-							  ModestMailOperationQueueNotification type,
-							  ModestMsgViewWindow *self);
-static void on_account_removed (ModestAccountMgr *obj,
-                                const gchar *account,
-                                gboolean server_account,
-                                gpointer user_data);
+static void on_queue_changed    (ModestMailOperationQueue *queue,
+				 ModestMailOperation *mail_op,
+				 ModestMailOperationQueueNotification type,
+				 ModestMsgViewWindow *self);
 
-static void view_msg_cb (ModestMailOperation *mail_op, TnyHeader *header, TnyMsg *msg, gpointer user_data);
+static void on_account_removed  (TnyAccountStore *account_store, 
+				 TnyAccount *account,
+				 gpointer user_data);
 
-static void set_toolbar_mode (ModestMsgViewWindow *self, 
-			      ModestToolBarModes mode);
+static void view_msg_cb         (ModestMailOperation *mail_op, 
+				 TnyHeader *header, 
+				 TnyMsg *msg, 
+				 gpointer user_data);
 
-static gboolean set_toolbar_transfer_mode     (ModestMsgViewWindow *self); 
+static void set_toolbar_mode    (ModestMsgViewWindow *self, 
+				 ModestToolBarModes mode);
 
 static void update_window_title (ModestMsgViewWindow *window);
+
+static gboolean set_toolbar_transfer_mode     (ModestMsgViewWindow *self); 
 
 
 /* list my signals */
@@ -446,15 +449,18 @@ modest_msg_view_window_finalize (GObject *obj)
 
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (obj);
 	if (priv->clipboard_change_handler > 0) {
-		g_signal_handler_disconnect (gtk_clipboard_get (GDK_SELECTION_PRIMARY), priv->clipboard_change_handler);
+		g_signal_handler_disconnect (gtk_clipboard_get (GDK_SELECTION_PRIMARY), 
+					     priv->clipboard_change_handler);
 		priv->clipboard_change_handler = 0;
 	}
 	if (priv->queue_change_handler > 0) {
-		g_signal_handler_disconnect (G_OBJECT (modest_runtime_get_mail_operation_queue ()), priv->queue_change_handler);
+		g_signal_handler_disconnect (G_OBJECT (modest_runtime_get_mail_operation_queue ()), 
+					     priv->queue_change_handler);
 		priv->queue_change_handler = 0;
 	}
 	if (priv->account_removed_handler > 0) {
-		g_signal_handler_disconnect (G_OBJECT (modest_runtime_get_account_mgr ()), priv->account_removed_handler);
+		g_signal_handler_disconnect (G_OBJECT (modest_runtime_get_account_store ()), 
+					     priv->account_removed_handler);
 		priv->account_removed_handler = 0;
 	}
 	if (priv->header_model != NULL) {
@@ -676,8 +682,8 @@ modest_msg_view_window_new (TnyMsg *msg,
 						       obj);
 
 	/* Account manager */
-	priv->account_removed_handler = g_signal_connect (G_OBJECT(modest_runtime_get_account_mgr()),
-	                                                  "account-removed",
+	priv->account_removed_handler = g_signal_connect (G_OBJECT (modest_runtime_get_account_store ()),
+	                                                  "account_removed",
 	                                                  G_CALLBACK(on_account_removed),
 	                                                  obj);
 
@@ -1584,25 +1590,20 @@ observers_empty (ModestMsgViewWindow *self)
 }
 
 static void
-on_account_removed (ModestAccountMgr *mgr,
-                    const gchar *account,
-		    gboolean server_account,
+on_account_removed (TnyAccountStore *account_store, 
+		    TnyAccount *account,
 		    gpointer user_data)
 {
-	ModestTnyAccountStore *store;
-	const gchar *our_acc;
-	TnyAccount *tny_acc;
+	/* Do nothing if it's a transport account, because we only
+	   show the messages of a store account */
+	if (tny_account_get_account_type(account) == TNY_ACCOUNT_TYPE_STORE) {
+		const gchar *parent_acc = NULL;
+		const gchar *our_acc = NULL;
 
-	store = modest_runtime_get_account_store ();
-	our_acc = modest_window_get_active_account (MODEST_WINDOW (user_data));
-	tny_acc = modest_tny_account_store_get_tny_account_by (store, 
-							       MODEST_TNY_ACCOUNT_STORE_QUERY_ID, 
-							       account);
+		our_acc = modest_window_get_active_account (MODEST_WINDOW (user_data));
+		parent_acc = modest_tny_account_get_parent_modest_account_name_for_server_account (account);
 
-
-	if(tny_acc != NULL) {
-		const gchar* parent_acc = 
-			modest_tny_account_get_parent_modest_account_name_for_server_account (tny_acc);
+		/* Close this window if I'm showing a message of the removed account */
 		if (strcmp (parent_acc, our_acc) == 0)
 			modest_ui_actions_on_close_window (NULL, MODEST_WINDOW (user_data));
 	}

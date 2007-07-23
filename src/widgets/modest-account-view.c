@@ -144,7 +144,8 @@ modest_account_view_finalize (GObject *obj)
 
 	if (priv->account_mgr) {
 		if (priv->sig1)
-			g_signal_handler_disconnect (priv->account_mgr, priv->sig1);
+			g_signal_handler_disconnect (modest_runtime_get_account_store (), 
+						     priv->sig1);
 
 		if (priv->sig2)
 			g_signal_handler_disconnect (priv->account_mgr, priv->sig2);
@@ -312,11 +313,17 @@ on_account_busy_changed(ModestAccountMgr *account_mgr, const gchar *account_name
 }
 
 static void
-on_account_removed (ModestAccountMgr *account_mgr,
-		    const gchar* account, gboolean server_account,
-		    ModestAccountView *self)
-{		 
-	update_account_view (account_mgr, self);
+on_account_removed (TnyAccountStore *account_store, 
+		    TnyAccount *account,
+		    gpointer user_data)
+{
+	ModestAccountView *self;
+	ModestAccountViewPrivate *priv;
+
+	self = MODEST_ACCOUNT_VIEW (user_data);
+	priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE (self);
+
+	update_account_view (priv->account_mgr, MODEST_ACCOUNT_VIEW (user_data));
 }
 
 
@@ -491,7 +498,7 @@ init_view (ModestAccountView *self)
 	 */			
 	gtk_tree_view_set_headers_visible (GTK_TREE_VIEW(self), TRUE);
 
-	priv->sig1 = g_signal_connect (G_OBJECT(priv->account_mgr),"account_removed",
+	priv->sig1 = g_signal_connect (G_OBJECT (modest_runtime_get_account_store ()),"account_removed",
 				       G_CALLBACK(on_account_removed), self);
 	priv->sig2 = g_signal_connect (G_OBJECT(priv->account_mgr), "account_changed",
 				       G_CALLBACK(on_account_changed), self);

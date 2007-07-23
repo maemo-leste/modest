@@ -186,8 +186,8 @@ modest_account_mgr_class_init (ModestAccountMgrClass * klass)
 			      G_SIGNAL_RUN_FIRST,
 			      G_STRUCT_OFFSET(ModestAccountMgrClass,account_removed),
 			      NULL, NULL,
-			      modest_marshal_VOID__STRING_BOOLEAN,
-			      G_TYPE_NONE, 2, G_TYPE_STRING, G_TYPE_BOOLEAN);
+			      g_cclosure_marshal_VOID__STRING,
+			      G_TYPE_NONE, 1, G_TYPE_STRING);
 	signals[ACCOUNT_CHANGED_SIGNAL] =
  		g_signal_new ("account_changed",
 	                       G_TYPE_FROM_CLASS (klass),
@@ -531,68 +531,67 @@ modest_account_mgr_add_server_account_uri (ModestAccountMgr * self,
 	return TRUE;
 }
 
-gboolean
-modest_account_mgr_remove_account (ModestAccountMgr * self,
-				   const gchar* name,  gboolean server_account)
+/* 
+ * Utility function used by modest_account_mgr_remove_account
+ */
+static void
+real_remove_account (ModestConf *conf,
+		     const gchar *acc_name,
+		     gboolean server_account)
 {
-	ModestAccountMgrPrivate *priv;
-	gchar *key;
-	gboolean retval, default_account_deleted;
 	GError *err = NULL;
+	gchar *key = NULL;
 
-	g_return_val_if_fail (MODEST_IS_ACCOUNT_MGR(self), FALSE);
-	g_return_val_if_fail (name, FALSE);
-
-	if (!modest_account_mgr_account_exists (self, name, server_account)) {
-		g_printerr ("modest: %s: account '%s' does not exist\n", __FUNCTION__, name);
-		return FALSE;
-	}
-
-	default_account_deleted = FALSE;
-
-	if (!server_account) {
-		gchar *server_account_name, *default_account_name;
-
-		/* If this was the default, then remove that setting: */
-		default_account_name = modest_account_mgr_get_default_account (self);
-		if (default_account_name && (strcmp (default_account_name, name) == 0)) {
-			modest_account_mgr_unset_default_account (self);
-			default_account_deleted = TRUE;
-		}
-		g_free (default_account_name);
-
-		/* in case we're deleting an account, also delete the dependent store and transport account */
-		server_account_name = modest_account_mgr_get_string (self, name, MODEST_ACCOUNT_STORE_ACCOUNT,
-								    FALSE);
-		if (server_account_name) {
-			if (!modest_account_mgr_remove_account (self, server_account_name, TRUE))
-				g_printerr ("modest: failed to remove store account '%s' (%s)\n",
-					    server_account_name, name);
-			g_free (server_account_name);
-		} else
-			g_printerr ("modest: could not find the store account for %s\n", name);
-		
-		server_account_name = modest_account_mgr_get_string (self, name, MODEST_ACCOUNT_TRANSPORT_ACCOUNT,
-								    FALSE);
-		if (server_account_name) {
-			if (!modest_account_mgr_remove_account (self, server_account_name, TRUE))
-				g_printerr ("modest: failed to remove transport account '%s' (%s)\n",
-					    server_account_name, name);
-			g_free (server_account_name);
-		} else
-			g_printerr ("modest: could not find the transport account for %s\n", name);
-	}
-			
-	priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
-	key = _modest_account_mgr_get_account_keyname (name, NULL, server_account);
-	
-	retval = modest_conf_remove_key (priv->modest_conf, key, &err);
-	g_free (key);
+	key = _modest_account_mgr_get_account_keyname (acc_name, NULL, server_account);
+	modest_conf_remove_key (conf, key, &err);
+	g_free (key);       
 
 	if (err) {
 		g_printerr ("modest: error removing key: %s\n", err->message);
 		g_error_free (err);
 	}
+}
+
+gboolean
+modest_account_mgr_remove_account (ModestAccountMgr * self,
+				   const gchar* name)
+{
+	ModestAccountMgrPrivate *priv;
+	gchar *default_account_name, *store_acc_name, *transport_acc_name;
+	gboolean default_account_deleted;
+
+	g_return_val_if_fail (MODEST_IS_ACCOUNT_MGR(self), FALSE);
+	g_return_val_if_fail (name, FALSE);
+
+	if (!modest_account_mgr_account_exists (self, name, FALSE)) {
+		g_printerr ("modest: %s: account '%s' does not exist\n", __FUNCTION__, name);
+		return FALSE;
+	}
+
+	priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
+	default_account_deleted = FALSE;
+
+	/* If this was the default, then remove that setting: */
+	default_account_name = modest_account_mgr_get_default_account (self);
+	if (default_account_name && (strcmp (default_account_name, name) == 0)) {
+		modest_account_mgr_unset_default_account (self);
+		default_account_deleted = TRUE;
+	}
+	g_free (default_account_name);
+
+	/* Delete transport and store accounts */
+	store_acc_name = modest_account_mgr_get_string (self, name, 
+							MODEST_ACCOUNT_STORE_ACCOUNT, FALSE);
+	if (store_acc_name)
+		real_remove_account (priv->modest_conf, store_acc_name, TRUE);
+
+	transport_acc_name = modest_account_mgr_get_string (self, name, 
+							    MODEST_ACCOUNT_TRANSPORT_ACCOUNT, FALSE);
+	if (transport_acc_name)
+		real_remove_account (priv->modest_conf, transport_acc_name, TRUE);
+			
+	/* Remove the modest account */
+	real_remove_account (priv->modest_conf, name, FALSE);
 
 	if (default_account_deleted) {	
 		/* pick another one as the new default account. We do
@@ -601,16 +600,13 @@ modest_account_mgr_remove_account (ModestAccountMgr * self,
 		   deleted account */
 		modest_account_mgr_set_first_account_as_default (self);
 	}
+	
+	/* Notify the observers. We do this *after* deleting
+	   the keys, because otherwise a call to account_names
+	   will retrieve also the deleted account */
+	g_signal_emit (G_OBJECT(self), signals[ACCOUNT_REMOVED_SIGNAL], 0, name);
 
-	if (server_account) {
-		/* Notify the observers. We do this *after* deleting
-		   the keys, because otherwise a call to account_names
-		   will retrieve also the deleted account */
-		g_signal_emit (G_OBJECT(self), signals[ACCOUNT_REMOVED_SIGNAL], 0,
-			       name, server_account);
-	}
-
-	return retval;
+	return TRUE;
 }
 
 

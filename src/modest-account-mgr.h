@@ -58,18 +58,18 @@ struct _ModestAccountMgrClass {
 
 	void (* account_removed)   (ModestAccountMgr *obj, 
 				    const gchar* account,
-				    gboolean server_account,
 				    gpointer user_data);
+
 	void (* account_changed)   (ModestAccountMgr *obj, 
 				    const gchar* account,
 				    const GSList* key, 
 				    gboolean server_account,
 				    gpointer user_data);
+
 	void (* account_busy_changed)   (ModestAccountMgr *obj, 
 				    const gchar* account,
 				    gboolean busy,
-				    gpointer user_data);
-	
+				    gpointer user_data);	
 };
 
 /**
@@ -159,7 +159,6 @@ gboolean modest_account_mgr_add_server_account_uri    (ModestAccountMgr *self,
  * modest_account_mgr_remove_account:
  * @self: a ModestAccountMgr instance
  * @name: the name of the account to remove
- * @server_account: TRUE if the account to remove is a server account
  * @err: a #GError ptr, or NULL to ignore.
  * 
  * remove an existing account. the account with @name should already exist; note
@@ -170,9 +169,7 @@ gboolean modest_account_mgr_add_server_account_uri    (ModestAccountMgr *self,
  * @err gives details in case of error
  */
 gboolean        modest_account_mgr_remove_account         (ModestAccountMgr *self,
-							   const gchar* name,
-							   gboolean server_account);
-
+							   const gchar* name);
 
 /**
  * modest_account_mgr_account_names:

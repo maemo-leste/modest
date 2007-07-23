@@ -191,9 +191,7 @@ on_delete_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 				is_default = TRUE;
 			g_free (default_account_name);
 				
-			gboolean removed = modest_account_mgr_remove_account (account_mgr,
-									     account_name,
-									     FALSE);
+			gboolean removed = modest_account_mgr_remove_account (account_mgr, account_name);
 			if (!removed) {
 				g_warning ("%s: modest_account_mgr_remove_account() failed.\n", __FUNCTION__);
 			}

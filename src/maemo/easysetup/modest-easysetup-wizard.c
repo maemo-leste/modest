@@ -1029,7 +1029,7 @@ on_response (ModestWizardDialog *wizard_dialog,
 		/* Remove any temporarily-saved account that will not actually be needed: */
 		if (self->saved_account_name) {
 			modest_account_mgr_remove_account (self->account_manager,
-							   self->saved_account_name, FALSE);
+							   self->saved_account_name);
 		}
 	}
 

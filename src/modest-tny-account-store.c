@@ -343,37 +343,31 @@ on_vfs_volume_unmounted(GnomeVFSVolumeMonitor *volume_monitor,
 static void
 on_account_removed (ModestAccountMgr *acc_mgr, 
 		    const gchar *account,
-		    gboolean is_server_account,
 		    gpointer user_data)
 {
+	TnyAccount *store_account = NULL, *transport_account = NULL;
 	ModestTnyAccountStore *self = MODEST_TNY_ACCOUNT_STORE(user_data);
-	TnyAccount *server_account;
 	
-	/* Clear the account cache */
-	server_account = modest_tny_account_store_get_tny_account_by  (self, 
-								      MODEST_TNY_ACCOUNT_STORE_QUERY_ID, 
-								      account);
-	if (server_account) {
-		if (TNY_IS_STORE_ACCOUNT (server_account)) {
+	/* Get the server and the transport account */
+	store_account = 
+		modest_tny_account_store_get_server_account (self, account, TNY_ACCOUNT_TYPE_STORE);
+	transport_account = 
+		modest_tny_account_store_get_server_account (self, account, TNY_ACCOUNT_TYPE_TRANSPORT);
 
-			tny_store_account_delete_cache (TNY_STORE_ACCOUNT (server_account));
-		
-			g_signal_emit (G_OBJECT (self), 
-				       tny_account_store_signals [TNY_ACCOUNT_STORE_ACCOUNT_REMOVED], 
-				       0, server_account);
+	/* Clear the cache */
+	tny_store_account_delete_cache (TNY_STORE_ACCOUNT (store_account));
 
-/* 			/\* FIXME: make this more finegrained; changes do not */
-/* 			 * really affect _all_ accounts, and some do not */
-/* 			 * affect tny accounts at all (such as 'last_update') */
-/* 			 *\/ */
-/* 			recreate_all_accounts (self); */
-			
-/* 			g_signal_emit (G_OBJECT(self), signals[ACCOUNT_UPDATE_SIGNAL], 0, */
-/* 				       account); */
-		}
-		g_object_unref (server_account);
-	} else
-		g_printerr ("modest: cannot find server account for %s", account);
+	/* Notify the observers */
+	g_signal_emit (G_OBJECT (self),
+		       tny_account_store_signals [TNY_ACCOUNT_STORE_ACCOUNT_REMOVED],
+		       0, store_account);
+	g_signal_emit (G_OBJECT (self),
+		       tny_account_store_signals [TNY_ACCOUNT_STORE_ACCOUNT_REMOVED],
+		       0, transport_account);
+
+	/* Frees */
+	g_object_unref (store_account);
+	g_object_unref (transport_account);
 }
 
 /**
@@ -1517,59 +1511,50 @@ modest_tny_account_store_get_tny_account_by (ModestTnyAccountStore *self,
 
 TnyAccount*
 modest_tny_account_store_get_server_account (ModestTnyAccountStore *self,
-						     const gchar *account_name,
-						     TnyAccountType type)
+					     const gchar *account_name,
+					     TnyAccountType type)
 {
+	ModestTnyAccountStorePrivate *priv = NULL;
 	TnyAccount *account = NULL;
-	gchar *id = NULL;
-	ModestTnyAccountStorePrivate *priv;	
+	GSList *account_list = NULL;
+	gboolean found = FALSE;
 
 	g_return_val_if_fail (self, NULL);
 	g_return_val_if_fail (account_name, NULL);
-	g_return_val_if_fail (type == TNY_ACCOUNT_TYPE_STORE || type == TNY_ACCOUNT_TYPE_TRANSPORT,
+	g_return_val_if_fail (type == TNY_ACCOUNT_TYPE_STORE || 
+			      type == TNY_ACCOUNT_TYPE_TRANSPORT,
 			      NULL);
 	
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
 
-	/* Special case for the local account */
-	if (!strcmp (account_name, MODEST_LOCAL_FOLDERS_ACCOUNT_ID)) {
-		if(type == TNY_ACCOUNT_TYPE_STORE)
-			id = g_strdup (MODEST_LOCAL_FOLDERS_ACCOUNT_ID);
-		else {
-			/* The local folders modest account has no transport server account. */
-			return NULL;
-		}
-	} else {
-		ModestAccountData *account_data;
-		account_data = modest_account_mgr_get_account_data (priv->account_mgr, account_name);
-		if (!account_data) {
-			g_printerr ("modest: %s: cannot get account data for account '%s'\n", __FUNCTION__,
-				    account_name);
-			return NULL;
-		}
+	account_list = (type == TNY_ACCOUNT_TYPE_STORE) ? 
+		priv->store_accounts : 
+		priv->transport_accounts;
+	
+	/* Look for the server account */
+	while (account_list && !found) {
+		const gchar *modest_acc_name;
 
-		if (type == TNY_ACCOUNT_TYPE_STORE && account_data->store_account)
-			id = g_strdup (account_data->store_account->account_name);
-		else if (type == TNY_ACCOUNT_TYPE_TRANSPORT && account_data->transport_account)
-			id = g_strdup (account_data->transport_account->account_name);
-
-		modest_account_mgr_free_account_data (priv->account_mgr, account_data);
+		account = TNY_ACCOUNT (account_list->data);;
+		modest_acc_name = 
+			modest_tny_account_get_parent_modest_account_name_for_server_account (account);
+		
+		if (!strcmp (account_name, modest_acc_name))
+			found = TRUE;
+		else
+			account_list = g_slist_next (account_list);	
 	}
 
-	if (!id)
-		g_printerr ("modest: could not get an id for account %s\n",
+	if (!found) {
+		g_printerr ("modest: could not get tny %s account for %s\n",
+			    (type == TNY_ACCOUNT_TYPE_STORE) ? "store" : "transport",
 			    account_name);
-	else 	
-		account = modest_tny_account_store_get_tny_account_by (self, 
-								       MODEST_TNY_ACCOUNT_STORE_QUERY_ID, id);
+	} else {
+		/* Pick a reference */
+		g_object_ref (account);
+	}
 
-	if (!account)
-		g_printerr ("modest: could not get tny %s account for %s (id=%s)\n",
-			    type == TNY_ACCOUNT_TYPE_STORE ? "store" : "transport",
-			    account_name, id ? id : "<none>");
-	g_free (id);
-
-	return account;	
+	return account;
 }
 
 static TnyAccount*

@@ -126,7 +126,8 @@ static gint         expand_row_timeout     (gpointer data);
 
 static void         setup_drag_and_drop    (GtkTreeView *self);
 
-static gboolean     _clipboard_set_selected_data (ModestFolderView *folder_view, gboolean delete);
+static gboolean     _clipboard_set_selected_data (ModestFolderView *folder_view, 
+						  gboolean delete);
 
 static void         _clear_hidding_filter (ModestFolderView *folder_view);
 
@@ -808,8 +809,18 @@ on_account_removed (TnyAccountStore *account_store,
 
 	/* If the removed account is the currently viewed one then
 	   clear the configuration value. The new visible account will be the default account */
-	if (!strcmp (priv->visible_account_id, tny_account_get_id (account))) {
+	if (priv->visible_account_id &&
+	    !strcmp (priv->visible_account_id, tny_account_get_id (account))) {
+
+		/* Clear the current visible account_id */
 		modest_folder_view_set_account_id_of_visible_server_account (self, NULL);
+
+		/* Call the restore method, this will set the new visible account */
+		modest_widget_memory_restore (modest_runtime_get_conf(), G_OBJECT(self),
+					      MODEST_CONF_FOLDER_VIEW_KEY);
+
+		/* Select the INBOX */
+ 		modest_folder_view_select_first_inbox_or_local (self);
 	}
 }
 
@@ -825,7 +836,10 @@ on_account_update (TnyAccountStore *account_store,
 	self = MODEST_FOLDER_VIEW (user_data);
 	priv = MODEST_FOLDER_VIEW_GET_PRIVATE (self);
 
-	if (!priv->visible_account_id)
+	/* If we're adding a new account, and there is no previous
+	   one, we need to select the visible server account */
+	if (priv->style == MODEST_FOLDER_VIEW_STYLE_SHOW_ONE &&
+	    !priv->visible_account_id)
 		modest_widget_memory_restore (modest_runtime_get_conf(), G_OBJECT(self),
 					      MODEST_CONF_FOLDER_VIEW_KEY);
 
@@ -964,11 +978,17 @@ filter_row (GtkTreeModel *model,
 	
 			/* If it isn't a special folder, 
 			 * don't show it unless it is the visible account: */
-			if (!modest_tny_account_is_virtual_local_folders (acc) &&
-				strcmp (account_id, MODEST_MMC_ACCOUNT_ID)) { 
+			if (priv->style == MODEST_FOLDER_VIEW_STYLE_SHOW_ONE &&
+			    !modest_tny_account_is_virtual_local_folders (acc) &&
+			    strcmp (account_id, MODEST_MMC_ACCOUNT_ID)) {
+				
 				/* Show only the visible account id */
-				if (priv->visible_account_id && strcmp (account_id, priv->visible_account_id))
+				if (priv->visible_account_id) {
+					if (strcmp (account_id, priv->visible_account_id))
+						retval = FALSE;
+				} else {
 					retval = FALSE;
+				}				
 			}
 			
 			/* Never show these to the user. They are merged into one folder 
@@ -1994,11 +2014,6 @@ find_inbox_iter (GtkTreeModel *model, GtkTreeIter *iter, GtkTreeIter *inbox_iter
 				    TNY_GTK_FOLDER_STORE_TREE_MODEL_NAME_COLUMN, &name,
 				    TNY_GTK_FOLDER_STORE_TREE_MODEL_TYPE_COLUMN, 
 				    &type, -1);
-
-		/*
-		printf ("DEBUG: %s: name=%s, type=%d, TNY_FOLDER_TYPE_INBOX=%d\n", 
-			__FUNCTION__, name, type, TNY_FOLDER_TYPE_INBOX);
-		*/
 			
 		gboolean result = FALSE;
 		if (type == TNY_FOLDER_TYPE_INBOX) {

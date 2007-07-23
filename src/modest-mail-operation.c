@@ -1160,7 +1160,7 @@ update_account_thread (gpointer thr_user_data)
 	 * for POP3, we do a logout-login upon send/receive -- many POP-servers (like Gmail) do not
 	 * show any updates unless we do that
 	 */
-	if (!first_time && TNY_IS_CAMEL_POP_STORE_ACCOUNT(priv->account)) 
+	if (!first_time && TNY_IS_CAMEL_POP_STORE_ACCOUNT (priv->account)) 
 		tny_camel_pop_store_account_reconnect (TNY_CAMEL_POP_STORE_ACCOUNT(priv->account));
 
 	/* Get all the folders. We can do it synchronously because
