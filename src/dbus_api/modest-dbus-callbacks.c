@@ -53,6 +53,7 @@
 #include <tny-list.h>
 #include <tny-iterator.h>
 #include <tny-simple-list.h>
+#include <tny-merge-folder.h>
 
 typedef struct 
 {
@@ -1184,6 +1185,20 @@ add_single_folder_to_list (TnyFolder *folder, GList** list)
 	if (!folder)
 		return;
 		
+	if (TNY_IS_MERGE_FOLDER (folder)) {
+		/* Ignore these because their IDs ares
+		 * a) not always unique or sensible.
+		 * b) not human-readable, and currently need a human-readable 
+		 *    ID here, because the osso-email-interface API does not allow 
+		 *    us to return both an ID and a display name.
+		 * 
+		 * This is actually the merged outbox folder.
+		 * We could hack our D-Bus API to understand "outbox" as the merged outboxes, 
+		 * but that seems unwise. murrayc.
+		 */
+		 return;	
+	}
+		
 	/* Add this folder to the list: */
 	/*
 	const gchar * folder_name = tny_folder_get_name (folder);
@@ -1292,12 +1307,8 @@ on_dbus_method_get_folders (DBusConnection *con, DBusMessage *message)
 	GList *folder_names = NULL;
 	add_folders_to_list (TNY_FOLDER_STORE (account), &folder_names);
 
-	printf("DEBUGa0: %s\n", __FUNCTION__);
-	
 	g_object_unref (account);
 	account = NULL;
-	
-	printf("DEBUGa1: %s\n", __FUNCTION__);
 	
 	/* Also add the folders from the local folders account,
 	 * because they are (currently) used with all accounts:
@@ -1311,17 +1322,12 @@ on_dbus_method_get_folders (DBusConnection *con, DBusMessage *message)
 	g_object_unref (account_local);
 	account_local = NULL;
 
-	printf("DEBUGa2: %s\n", __FUNCTION__);
-	
 
 	/* Put the result in a DBus reply: */
 	reply = dbus_message_new_method_return (message);
 
 	get_folders_result_to_message (reply, folder_names);
 
-	printf("DEBUGa3: %s\n", __FUNCTION__);
-	
-	
 	if (reply == NULL) {
 		g_warning ("%s: Could not create reply.", __FUNCTION__);
 	}
@@ -1335,8 +1341,6 @@ on_dbus_method_get_folders (DBusConnection *con, DBusMessage *message)
 
 	g_list_foreach (folder_names, (GFunc)g_free, NULL);
 	g_list_free (folder_names);
-	
-	printf("DEBUGa4: %s\n", __FUNCTION__);
 }
 
 

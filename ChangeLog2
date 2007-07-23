@@ -1,5 +1,13 @@
 2007-07-23  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/dbus_api/modest-dbus-callbacks.c:
+	(add_single_folder_to_list): Ignore TnyMergeFolder folders, 
+	because their ID is not human-readable (see the comment about 
+	improvements needed to the osso-email-interface API) and 
+	TnyMergeFolder::get_id_func() currently crashes with DBC enabled. 
+
+2007-07-23  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/dbus_api/modest-dbus-callbacks.c: (modest_dbus_req_handler),
 	(add_folders_to_list), (on_dbus_method_get_folders),
 	(modest_dbus_req_filter):
