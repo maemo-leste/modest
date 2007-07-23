@@ -1,5 +1,13 @@
 2007-07-23  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-ui-actions.c:
+	(modest_ui_actions_on_password_requested):
+	Show mail_ib_login_cancelled info banner when the user cancels 
+	the protected password dialog, to fix projects.maemo.org 
+	bug NB#63617.
+
+2007-07-23  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/maemo/modest-account-settings-dialog.c:
 	(create_page_outgoing): Put this page in a GtkScrolledWindow, 
 	matching the UI mock-up in the UI spec, and allowing access 

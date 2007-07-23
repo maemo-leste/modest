@@ -49,6 +49,7 @@
 #ifdef MODEST_PLATFORM_MAEMO
 #include "maemo/modest-osso-state-saving.h"
 #include "maemo/modest-maemo-utils.h"
+#include "maemo/modest-hildon-includes.h"
 #endif /* MODEST_PLATFORM_MAEMO */
 
 #include "widgets/modest-ui-constants.h"
@@ -2439,6 +2440,27 @@ modest_ui_actions_on_move_folder_to_trash_folder (GtkAction *action, ModestMainW
 	delete_folder (main_window, TRUE);
 }
 
+
+static void
+show_error (GtkWidget *parent_widget, const gchar* text)
+{
+	hildon_banner_show_information(parent_widget, NULL, text);
+	
+#if 0
+	GtkDialog *dialog = GTK_DIALOG (hildon_note_new_information (parent_window, text)); */
+	/*
+	  GtkDialog *dialog = GTK_DIALOG (gtk_message_dialog_new (parent_window,
+	  (GtkDialogFlags)0,
+	  GTK_MESSAGE_ERROR,
+	  GTK_BUTTONS_OK,
+	  text ));
+	*/
+		 
+	gtk_dialog_run (dialog);
+	gtk_widget_destroy (GTK_WIDGET (dialog));
+#endif
+}
+
 void
 modest_ui_actions_on_password_requested (TnyAccountStore *account_store, 
 					 const gchar* server_account_name,
@@ -2596,6 +2618,8 @@ modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 			*cancel   = FALSE;
 			
 	} else {
+		show_error(GTK_WIDGET (main_window), _("mail_ib_login_cancelled"));
+		
 		if (username)
 			*username = NULL;
 			
