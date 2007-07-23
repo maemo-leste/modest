@@ -1160,8 +1160,21 @@ modest_msg_view_window_select_next_message (ModestMsgViewWindow *window)
 	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (window), FALSE);
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
 
-	path = gtk_tree_row_reference_get_path (priv->next_row_reference);
-	if (path == NULL) 
+	/* Update the next row reference if it's not valid. This could
+	   happen if for example the header which it was pointing to,
+	   was deleted. The best place to do it is in the row-deleted
+	   handler but the tinymail model do not work like the glib
+	   tree models and reports the deletion when the row is still
+	   there */
+	if (!gtk_tree_row_reference_valid (priv->next_row_reference)) {
+		if (gtk_tree_row_reference_valid (priv->row_reference)) {
+			priv->next_row_reference = gtk_tree_row_reference_copy (priv->row_reference);
+			select_next_valid_row (priv->header_model, &(priv->next_row_reference), FALSE);
+		}
+	}
+	if (priv->next_row_reference)
+		path = gtk_tree_row_reference_get_path (priv->next_row_reference);
+	if (path == NULL)
 		return FALSE;
 
 	gtk_tree_model_get_iter (priv->header_model,
