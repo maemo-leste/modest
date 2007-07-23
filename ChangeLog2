@@ -1,5 +1,16 @@
 2007-07-23  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/dbus_api/modest-dbus-callbacks.c:
+	(on_idle_open_default_inbox): Make sure that the application UI is 
+	visible.
+	* src/maemo/easysetup/modest-easysetup-wizard.c:
+	(on_entry_invalid_character): Show the word whitespace instead 
+	of (null) in the banner when whitespace was entered.
+	(show_error): Add a comment that  this does not work in 
+	Maemo Bora, though we do not know why.
+
+2007-07-23  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/modest-tny-account.c:
 	(modest_tny_account_get_special_folder): Use an if instead of 
 	an assert for when the parent account name is NULL, because this 

@@ -793,6 +793,8 @@ static gint on_send_receive(GArray * arguments, gpointer data, osso_rpc_t * retv
  	return OSSO_OK;
 }
 
+static gboolean on_idle_top_application (gpointer user_data);
+
 static gboolean
 on_idle_open_default_inbox(gpointer user_data)
 {
@@ -807,6 +809,10 @@ on_idle_open_default_inbox(gpointer user_data)
 	modest_folder_view_select_first_inbox_or_local (MODEST_FOLDER_VIEW (folder_view));
 	
 	gdk_threads_leave ();
+	
+	/* This D-Bus method is obviously meant to result in the UI being visible,
+	 * so show it, by calling this idle handler directly: */
+	on_idle_top_application(user_data);
 	
 	return FALSE; /* Do not call this callback again. */
 }

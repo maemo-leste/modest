@@ -358,11 +358,17 @@ static void
 on_entry_invalid_character (ModestValidatingEntry *self, const gchar* character, gpointer user_data)
 {
 	/* ModestEasysetupWizardDialog *dialog = MODEST_EASYSETUP_WIZARD_DIALOG (user_data); */
-	/* We could add a special case for whitespace here 
-	if (character == NULL) ...
-	*/
+	
+	const gchar *show_char = NULL;
+	if (character)
+	  show_char = character;
+	else {
+	  /* TODO: We need a logical ID for this: */
+	  show_char = _("whitespace");
+	}
+	
 	/* TODO: Should this show just this one bad character or all the not-allowed characters? */
-	gchar *message = g_strdup_printf (_CS("ckdg_ib_illegal_characters_entered"), character);
+	gchar *message = g_strdup_printf (_CS("ckdg_ib_illegal_characters_entered"), show_char);
 	show_error (GTK_WIDGET (self), message);
 }
 
@@ -542,7 +548,7 @@ create_page_user_details (ModestEasysetupWizardDialog *self)
 	modest_validating_entry_set_unallowed_characters (
 	 	MODEST_VALIDATING_ENTRY (self->entry_user_name), list_prevent);
 	modest_validating_entry_set_func(MODEST_VALIDATING_ENTRY(self->entry_user_name),
-																	 on_entry_invalid_character, self);
+		on_entry_invalid_character, self);
 	g_list_free (list_prevent);
 	
 	/* The username widgets: */	
@@ -562,7 +568,7 @@ create_page_user_details (ModestEasysetupWizardDialog *self)
 	modest_validating_entry_set_unallowed_characters_whitespace (
 	 	MODEST_VALIDATING_ENTRY (self->entry_user_username));
 	modest_validating_entry_set_func(MODEST_VALIDATING_ENTRY(self->entry_user_username),
-																	 on_entry_invalid_character, self);
+		on_entry_invalid_character, self);
 	
 	/* Set max length as in the UI spec:
 	 * The UI spec seems to want us to show a dialog if we hit the maximum. */
@@ -1509,6 +1515,7 @@ modest_easysetup_wizard_dialog_class_init (ModestEasysetupWizardDialogClass *kla
 static void
 show_error (GtkWidget *parent_widget, const gchar* text)
 {
+	//TODO: Apparently this doesn't show anything in Maemo Bora:
 	hildon_banner_show_information(parent_widget, NULL, text);
 	
 #if 0
