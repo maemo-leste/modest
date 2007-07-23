@@ -467,6 +467,7 @@ void
 modest_ui_actions_on_close_window (GtkAction *action, ModestWindow *win)
 {
 	gboolean ret_value;
+
 	g_signal_emit_by_name (G_OBJECT (win), "delete-event", NULL, &ret_value);
 
 /* 	if (MODEST_IS_MSG_VIEW_WINDOW (win)) { */

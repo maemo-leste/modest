@@ -1589,17 +1589,22 @@ on_account_removed (ModestAccountMgr *mgr,
 		    gboolean server_account,
 		    gpointer user_data)
 {
-	ModestTnyAccountStore *store = modest_runtime_get_account_store ();
-	const gchar *our_acc = modest_window_get_active_account (MODEST_WINDOW (user_data));
+	ModestTnyAccountStore *store;
+	const gchar *our_acc;
+	TnyAccount *tny_acc;
 
-	TnyAccount *tny_acc = modest_tny_account_store_get_tny_account_by (store, MODEST_TNY_ACCOUNT_STORE_QUERY_ID, account);
-	if(tny_acc != NULL)
-	{
-		const gchar* parent_acc = modest_tny_account_get_parent_modest_account_name_for_server_account (tny_acc);
+	store = modest_runtime_get_account_store ();
+	our_acc = modest_window_get_active_account (MODEST_WINDOW (user_data));
+	tny_acc = modest_tny_account_store_get_tny_account_by (store, 
+							       MODEST_TNY_ACCOUNT_STORE_QUERY_ID, 
+							       account);
+
+
+	if(tny_acc != NULL) {
+		const gchar* parent_acc = 
+			modest_tny_account_get_parent_modest_account_name_for_server_account (tny_acc);
 		if (strcmp (parent_acc, our_acc) == 0)
-		{
-			gtk_widget_destroy (GTK_WIDGET (user_data));
-		}
+			modest_ui_actions_on_close_window (NULL, MODEST_WINDOW (user_data));
 	}
 }
 
