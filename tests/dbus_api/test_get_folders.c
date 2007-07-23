@@ -4,7 +4,6 @@
 
 int main(int argc, char *argv[])
 {
-	GSList *attachments = NULL;
 	/* Initialize maemo application */
 	osso_context_t * osso_context = osso_initialize(
 	    "test_hello", "0.0.1", TRUE, NULL);
@@ -17,8 +16,6 @@ int main(int argc, char *argv[])
 	}
 	
 	/* Call the function in libmodest-dbus-client: */
-	
-	attachments = g_slist_append(attachments, "/usr/include/math.h,/usr/include/malloc.h");
 	
 	GList *list = NULL;
 	const gboolean ret = libmodest_dbus_client_get_folders (

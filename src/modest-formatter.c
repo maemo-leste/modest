@@ -399,11 +399,14 @@ modest_formatter_create_body_part (ModestFormatter *self, TnyMsg *msg)
 		iter = tny_list_create_iterator (parts);
 		while (!tny_iterator_is_done (iter)) {
 			TnyMimePart *part = TNY_MIME_PART (tny_iterator_get_current (iter));
-			if (!g_strcasecmp(tny_mime_part_get_content_type (part), "multipart/alternative")) {
+			if (part && !g_strcasecmp(tny_mime_part_get_content_type (part), "multipart/alternative")) {
 				alternative_part = part;
 				break;
 			}
-			g_object_unref (part);
+
+			if (part)
+				g_object_unref (part);
+
 			tny_iterator_next (iter);
 		}
 		result = tny_platform_factory_new_mime_part (fact);

@@ -129,12 +129,15 @@ modest_tny_account_get_special_folder (TnyAccount *account,
 	while (!tny_iterator_is_done (iter)) {
 		TnyFolder *folder =
 			TNY_FOLDER (tny_iterator_get_current (iter));
-		if (modest_tny_folder_get_local_folder_type (folder) == special_type) {
-			special_folder = folder;
-			break; /* Leaving a ref for the special_folder return value. */
-		}
+		if (folder) {
+			if (modest_tny_folder_get_local_folder_type (folder) == special_type) {
+				special_folder = folder;
+				break; /* Leaving a ref for the special_folder return value. */
+			}
 		
-		g_object_unref (G_OBJECT(folder));
+			g_object_unref (G_OBJECT(folder));
+		}
+
 		tny_iterator_next (iter);
 	}
 	
@@ -812,17 +815,19 @@ recurse_folders (TnyFolderStore *store,
 		TnyFolder *folder;
 
 		folder = TNY_FOLDER (tny_iterator_get_current (iter));
+		if (folder) {
+			if (helper->task == TASK_GET_ALL_COUNT)
+				helper->sum += tny_folder_get_all_count (folder);
 
-		if (helper->task == TASK_GET_ALL_COUNT)
-			helper->sum += tny_folder_get_all_count (folder);
+			if (helper->task == TASK_GET_LOCAL_SIZE)
+				helper->sum += tny_folder_get_local_size (folder);
 
-		if (helper->task == TASK_GET_LOCAL_SIZE)
-			helper->sum += tny_folder_get_local_size (folder);
+			if (TNY_IS_FOLDER_STORE (folder))
+				recurse_folders (TNY_FOLDER_STORE (folder), query, helper);
 
-		if (TNY_IS_FOLDER_STORE (folder))
-			recurse_folders (TNY_FOLDER_STORE (folder), query, helper);
+ 			g_object_unref (folder);
+		}
 
- 		g_object_unref (folder);
 		tny_iterator_next (iter);
 	}
 	 g_object_unref (G_OBJECT (iter));

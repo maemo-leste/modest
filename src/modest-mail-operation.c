@@ -999,10 +999,11 @@ recurse_folders (TnyFolderStore *store, TnyFolderStoreQuery *query, TnyList *all
 	while (!tny_iterator_is_done (iter)) {
 
 		TnyFolderStore *folder = (TnyFolderStore*) tny_iterator_get_current (iter);
-
-		tny_list_prepend (all_folders, G_OBJECT (folder));
-		recurse_folders (folder, query, all_folders);    
- 		g_object_unref (G_OBJECT (folder));
+		if (folder) {
+			tny_list_prepend (all_folders, G_OBJECT (folder));
+			recurse_folders (folder, query, all_folders);    
+ 			g_object_unref (G_OBJECT (folder));
+		}
 
 		tny_iterator_next (iter);
 	}
@@ -1180,8 +1181,10 @@ update_account_thread (gpointer thr_user_data)
 	iter = tny_list_create_iterator (all_folders);
 	while (!tny_iterator_is_done (iter)) {
 		TnyFolderStore *folder = TNY_FOLDER_STORE (tny_iterator_get_current (iter));
-
-		recurse_folders (folder, query, all_folders);
+		if (folder) {
+			recurse_folders (folder, query, all_folders);
+			g_object_unref (folder);
+		}
 		tny_iterator_next (iter);
 	}
 	g_object_unref (G_OBJECT (iter));
@@ -1247,7 +1250,9 @@ update_account_thread (gpointer thr_user_data)
 		g_object_unref (observer);
 		observer = NULL;			
 
-		g_object_unref (G_OBJECT (folder));
+		if (folder)
+			g_object_unref (G_OBJECT (folder));
+
 		if (priv->error)
 			priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 
@@ -2224,7 +2229,10 @@ get_msgs_full_thread (gpointer thr_user_data)
 				     MODEST_MAIL_OPERATION_ERROR_ITEM_NOT_FOUND,
 				     "Error trying to get a message. No folder found for header");
 		}
-		g_object_unref (header);		
+
+		if (header)
+			g_object_unref (header);
+		
 		tny_iterator_next (iter);
 	}
 
@@ -2269,10 +2277,16 @@ modest_mail_operation_get_msgs_full (ModestMailOperation *self,
 	if (tny_list_get_length (header_list) >= 1) {
 		iter = tny_list_create_iterator (header_list);
 		header = TNY_HEADER (tny_iterator_get_current (iter));
-		folder = tny_header_get_folder (header);		
-		priv->account = modest_tny_folder_get_account (TNY_FOLDER(folder));
-		g_object_unref (header);
-		g_object_unref (folder);
+		if (header) {
+			folder = tny_header_get_folder (header);
+			if (folder) {		
+				priv->account = modest_tny_folder_get_account (TNY_FOLDER(folder));
+
+				g_object_unref (folder);
+			}
+
+			g_object_unref (header);
+		}
 
 		if (tny_list_get_length (header_list) == 1) {
 			g_object_unref (iter);
@@ -2296,9 +2310,12 @@ modest_mail_operation_get_msgs_full (ModestMailOperation *self,
 	if (iter != NULL) {
 		while (!tny_iterator_is_done (iter) && size_ok) {
 			header = TNY_HEADER (tny_iterator_get_current (iter));
-			if (tny_header_get_message_size (header) >= max_size)
-				size_ok = FALSE;
-			g_object_unref (header);
+			if (header) {
+				if (tny_header_get_message_size (header) >= max_size)
+					size_ok = FALSE;
+				g_object_unref (header);
+			}
+
 			tny_iterator_next (iter);
 		}
 		g_object_unref (iter);
@@ -2468,12 +2485,12 @@ modest_mail_operation_xfer_msgs (ModestMailOperation *self,
 				 XferMsgsAsynUserCallback user_callback,
 				 gpointer user_data)
 {
-	ModestMailOperationPrivate *priv;
-	TnyIterator *iter;
-	TnyFolder *src_folder;
-	XFerMsgAsyncHelper *helper;
-	TnyHeader *header;
-	ModestTnyFolderRules rules;
+	ModestMailOperationPrivate *priv = NULL;
+	TnyIterator *iter = NULL;
+	TnyFolder *src_folder = NULL;
+	XFerMsgAsyncHelper *helper = NULL;
+	TnyHeader *header = NULL;
+	ModestTnyFolderRules rules = 0;
 	const gchar *id1 = NULL;
 	const gchar *id2 = NULL;
 	gboolean same_folder = FALSE;
@@ -2503,8 +2520,11 @@ modest_mail_operation_xfer_msgs (ModestMailOperation *self,
 	/* Get source folder */
 	iter = tny_list_create_iterator (headers);
 	header = TNY_HEADER (tny_iterator_get_current (iter));
-	src_folder = tny_header_get_folder (header);
-	g_object_unref (header);
+	if (header) {
+		src_folder = tny_header_get_folder (header);
+		g_object_unref (header);
+	}
+
 	g_object_unref (iter);
 
 	/* Check folder source and destination */

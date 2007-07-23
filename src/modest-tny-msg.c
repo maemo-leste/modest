@@ -242,9 +242,12 @@ copy_mime_part (TnyMimePart *part)
 	iterator = tny_list_create_iterator (parts);
 	while (!tny_iterator_is_done (iterator)) {
 		TnyMimePart *subpart = TNY_MIME_PART (tny_iterator_get_current (iterator));
-		TnyMimePart *subpart_copy = copy_mime_part (subpart);
-		tny_mime_part_add_part (result, subpart_copy);
-		g_object_unref (subpart);
+		if (subpart) {
+			TnyMimePart *subpart_copy = copy_mime_part (subpart);
+			tny_mime_part_add_part (result, subpart_copy);
+			g_object_unref (subpart);
+		}
+
 		tny_iterator_next (iterator);
 	}
 	g_object_unref (iterator);
@@ -310,8 +313,8 @@ modest_tny_msg_find_body_part_from_mime_part (TnyMimePart *msg, gboolean want_ht
 {
 	const gchar *mime_type = want_html ? "text/html" : "text/plain";
 	TnyMimePart *part = NULL;
-	TnyList *parts;
-	TnyIterator *iter;
+	TnyList *parts = NULL;
+	TnyIterator *iter = NULL;
 
 	if (!msg)
 		return NULL;
@@ -329,7 +332,7 @@ modest_tny_msg_find_body_part_from_mime_part (TnyMimePart *msg, gboolean want_ht
 		gchar *content_type = NULL;
 		do {
 			part = TNY_MIME_PART(tny_iterator_get_current (iter));
-			if (TNY_IS_MSG (part)) {
+			if (part && TNY_IS_MSG (part)) {
 				g_object_unref (part);
 				tny_iterator_next (iter);
 				continue;
@@ -338,8 +341,10 @@ modest_tny_msg_find_body_part_from_mime_part (TnyMimePart *msg, gboolean want_ht
 			/* we need to strdown the content type, because
 			 * tny_mime_part_has_content_type does not do it...
 			 */
-			content_type = g_ascii_strdown
-				(tny_mime_part_get_content_type (part), -1);
+			if (part) {
+				content_type = g_ascii_strdown
+					(tny_mime_part_get_content_type (part), -1);
+			}
 							
 			if (g_str_has_prefix (content_type, mime_type) &&
 			    !tny_mime_part_is_attachment (part))
@@ -350,6 +355,7 @@ modest_tny_msg_find_body_part_from_mime_part (TnyMimePart *msg, gboolean want_ht
 				if (part)
 					break;
 			}
+
 			if (part)
 				g_object_unref (G_OBJECT(part));
 

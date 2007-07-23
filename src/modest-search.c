@@ -356,10 +356,12 @@ static gboolean search_mime_part_and_child_parts (TnyMimePart *part, ModestSearc
 	TnyIterator *piter = tny_list_create_iterator (child_parts);
 	while (!found && !tny_iterator_is_done (piter)) {
 		TnyMimePart *pcur = (TnyMimePart *) tny_iterator_get_current (piter);
+		if (pcur) {
+			found = search_mime_part_and_child_parts (pcur, search);
 
-		found = search_mime_part_and_child_parts (pcur, search);
+			g_object_unref (pcur);
+		}
 
-		g_object_unref (pcur);
 		tny_iterator_next (piter);
 	}
 
@@ -524,24 +526,27 @@ modest_search_account (TnyAccount *account, ModestSearch *search)
 
 	iter = tny_list_create_iterator (folders);
 	while (!tny_iterator_is_done (iter)) {
-		TnyFolder *folder;
-		GList     *res;
+		TnyFolder *folder = NULL;
+		GList     *res = NULL;
 
 		folder = TNY_FOLDER (tny_iterator_get_current (iter));
-		/* g_debug ("DEBUG: %s: searching folder %s.", 
-			__FUNCTION__, tny_folder_get_name (folder)); */
+		if (folder) {
+			/* g_debug ("DEBUG: %s: searching folder %s.", 
+				__FUNCTION__, tny_folder_get_name (folder)); */
 		
-		res = modest_search_folder (folder, search);
+			res = modest_search_folder (folder, search);
 
-		if (res != NULL) {
-			if (hits == NULL) {
-				hits = res;
-			} else {
-				hits = g_list_concat (hits, res);
+			if (res != NULL) {
+				if (hits == NULL) {
+					hits = res;
+				} else {
+					hits = g_list_concat (hits, res);
+				}
 			}
+
+			g_object_unref (folder);
 		}
 
-		g_object_unref (folder);
 		tny_iterator_next (iter);
 	}
 
@@ -571,26 +576,26 @@ modest_search_all_accounts (ModestSearch *search)
 
 	iter = tny_list_create_iterator (accounts);
 	while (!tny_iterator_is_done (iter)) {
-		TnyAccount *account;
-		GList      *res;
+		TnyAccount *account = NULL;
+		GList      *res = NULL;
 
 		account = TNY_ACCOUNT (tny_iterator_get_current (iter));
-	
-		
-		/* g_debug ("DEBUG: %s: Searching account %s",
-		   __FUNCTION__, tny_account_get_name (account)); */
-		res = modest_search_account (account, search);
+		if (account) {
+			/* g_debug ("DEBUG: %s: Searching account %s",
+		  	 __FUNCTION__, tny_account_get_name (account)); */
+			res = modest_search_account (account, search);
 			
-		if (res != NULL) {
-			
-			if (hits == NULL) {
-				hits = res;
-			} else {
-				hits = g_list_concat (hits, res);
+			if (res != NULL) {	
+				if (hits == NULL) {
+					hits = res;
+				} else {
+					hits = g_list_concat (hits, res);
+				}
 			}
-		}
 			
-		g_object_unref (account);
+			g_object_unref (account);
+		}
+
 		tny_iterator_next (iter);
 	}
 

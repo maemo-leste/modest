@@ -97,6 +97,9 @@ func (gpointer_data)
 		modest_mail_operation_queue_add (queue, mail_op);
 
 	g_object_unref (G_OBJECT (mail_op));
+	
+	if (account)
+		g_object_unref (account);
 
 	return FALSE;
 }

@@ -133,10 +133,13 @@ modest_attachments_view_set_message (ModestAttachmentsView *attachments_view, Tn
 		TnyMimePart *part;
 
 		part = TNY_MIME_PART (tny_iterator_get_current (iter));
-		if (tny_mime_part_is_attachment (part) || TNY_IS_MSG (part)) {
+		if (part && (tny_mime_part_is_attachment (part) || TNY_IS_MSG (part))) {
 			modest_attachments_view_add_attachment (attachments_view, part);
 		}
-		g_object_unref (part);
+
+		if (part)
+			g_object_unref (part);
+
 		tny_iterator_next (iter);
 	}
 

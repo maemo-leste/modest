@@ -329,7 +329,14 @@ on_camel_account_get_supported_secure_authentication (
 			GList *result = NULL;
 			TnyIterator* iter = tny_list_create_iterator(auth_types);
 			while (!tny_iterator_is_done(iter)) {
-				const gchar *auth_name = tny_pair_get_name(TNY_PAIR(tny_iterator_get_current(iter)));
+				TnyPair *pair = TNY_PAIR(tny_iterator_get_current(iter));
+				const gchar *auth_name = NULL;
+				if (pair) {
+					auth_name = tny_pair_get_name(pair);
+					g_object_unref (pair);
+					pair = NULL;
+				}
+
 				printf("DEBUG: %s: auth_name=%s\n", __FUNCTION__, auth_name);
 				ModestPair *matching = modest_pair_list_find_by_first_as_string (pairs, 
 					auth_name);

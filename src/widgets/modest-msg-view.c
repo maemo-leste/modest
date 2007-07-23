@@ -1196,7 +1196,8 @@ find_cid_image (TnyMsg *msg, const gchar *cid)
 		if (part_cid && strcmp (cid, part_cid) == 0)
 			break;
 
-		g_object_unref (G_OBJECT(part));
+		if (part)
+			g_object_unref (G_OBJECT(part));
 	
 		part = NULL;
 		tny_iterator_next (iter);

@@ -315,8 +315,11 @@ modest_ui_actions_on_delete_message (GtkAction *action, ModestWindow *win)
 		mgr = modest_runtime_get_window_mgr ();
 		while (!tny_iterator_is_done (iter) && !found) {
 			header = TNY_HEADER (tny_iterator_get_current (iter));
-			found =  modest_window_mgr_find_registered_header (mgr, header, NULL);
-			g_object_unref (header);
+			if (header) {
+				found =  modest_window_mgr_find_registered_header (mgr, header, NULL);
+				g_object_unref (header);
+			}
+
 			tny_iterator_next (iter);
 		}
 		g_object_unref (iter);
@@ -340,8 +343,11 @@ modest_ui_actions_on_delete_message (GtkAction *action, ModestWindow *win)
 	if (tny_list_get_length(header_list) == 1) {
 		iter = tny_list_create_iterator (header_list);
 		header = TNY_HEADER (tny_iterator_get_current (iter));
-		desc = g_strdup_printf ("%s", tny_header_get_subject (header)); 
-		g_object_unref (header);
+		if (header) {
+			desc = g_strdup_printf ("%s", tny_header_get_subject (header)); 
+			g_object_unref (header);
+		}
+
 		g_object_unref (iter);
 	}
 	message = g_strdup_printf(ngettext("emev_nc_delete_message", "emev_nc_delete_messages", 
@@ -842,7 +848,7 @@ _modest_ui_actions_open (TnyList *headers, ModestWindow *win)
 	ModestMailOperation *mail_op2 = NULL;
 	TnyList *not_opened_headers = NULL;
 	TnyList *not_opened_cached_headers = NULL;
-	TnyHeaderFlags flags;
+	TnyHeaderFlags flags = 0;
 		
 	/* Look if we already have a message view for each header. If
 	   true, then remove the header from the list of headers to
@@ -853,12 +859,13 @@ _modest_ui_actions_open (TnyList *headers, ModestWindow *win)
 	not_opened_cached_headers = tny_simple_list_new ();
 	while (!tny_iterator_is_done (iter)) {
 
-		ModestWindow *window;
-		TnyHeader *header;
-		gboolean found;
+		ModestWindow *window = NULL;
+		TnyHeader *header = NULL;
+		gboolean found = FALSE;
 		
 		header = TNY_HEADER (tny_iterator_get_current (iter));
-		flags = tny_header_get_flags (header);
+		if (header)
+			flags = tny_header_get_flags (header);
 
 		window = NULL;
 		found = modest_window_mgr_find_registered_header (mgr, header, &window);
@@ -880,7 +887,10 @@ _modest_ui_actions_open (TnyList *headers, ModestWindow *win)
 			else
 				tny_list_append (not_opened_cached_headers, G_OBJECT (header));
 		}
-		g_object_unref (header);
+
+		if (header)
+			g_object_unref (header);
+
 		tny_iterator_next (iter);
 	}
 	g_object_unref (iter);
@@ -905,8 +915,10 @@ _modest_ui_actions_open (TnyList *headers, ModestWindow *win)
 	TnyIterator *iter_not_opened = tny_list_create_iterator (not_opened_headers);
 	while (!tny_iterator_is_done (iter_not_opened)) {
 		TnyHeader *header = TNY_HEADER (tny_iterator_get_current (iter_not_opened));
-		modest_window_mgr_register_header (mgr, header);
-		g_object_unref (header);
+		if (header) {
+			modest_window_mgr_register_header (mgr, header);
+			g_object_unref (header);
+		}
 		
 		tny_iterator_next (iter_not_opened);
 	}
@@ -916,8 +928,10 @@ _modest_ui_actions_open (TnyList *headers, ModestWindow *win)
 	TnyIterator *iter_cached = tny_list_create_iterator (not_opened_cached_headers);
 	while (!tny_iterator_is_done (iter_cached)) {
 		TnyHeader *header = TNY_HEADER (tny_iterator_get_current (iter_cached));
-		modest_window_mgr_register_header (mgr, header);
-		g_object_unref (header);
+		if (header) {
+			modest_window_mgr_register_header (mgr, header);
+			g_object_unref (header);
+		}
 		
 		tny_iterator_next (iter_cached);
 	}
@@ -941,8 +955,11 @@ _modest_ui_actions_open (TnyList *headers, ModestWindow *win)
 		} else {
 			TnyIterator *iter = tny_list_create_iterator (not_opened_headers);
 			TnyHeader *header = TNY_HEADER (tny_iterator_get_current (iter));
-			modest_mail_operation_get_msg (mail_op1, header, open_msg_cb, NULL);
-			g_object_unref (header);
+			if (header) {
+				modest_mail_operation_get_msg (mail_op1, header, open_msg_cb, NULL);
+				g_object_unref (header);
+			}
+
 			g_object_unref (iter);
 		}
 	}
@@ -963,8 +980,11 @@ _modest_ui_actions_open (TnyList *headers, ModestWindow *win)
 		} else {
 			TnyIterator *iter = tny_list_create_iterator (not_opened_cached_headers);
 			TnyHeader *header = TNY_HEADER (tny_iterator_get_current (iter));
-			modest_mail_operation_get_msg (mail_op2, header, open_msg_cb, NULL);
-			g_object_unref (header);
+			if (header) {
+				modest_mail_operation_get_msg (mail_op2, header, open_msg_cb, NULL);
+				g_object_unref (header);
+			}
+
 			g_object_unref (iter);
 		}
 	}
@@ -1132,13 +1152,16 @@ download_uncached_messages (TnyList *header_list, GtkWindow *win,
 		TnyHeaderFlags flags;
 
 		header = TNY_HEADER (tny_iterator_get_current (iter));
-		flags = tny_header_get_flags (header);
-		/* TODO: is this the right flag?, it seems that some
-		   headers that have been previously downloaded do not
-		   come with it */
-		if (! (flags & TNY_HEADER_FLAG_CACHED))
-			uncached_messages ++;
-		g_object_unref (header);
+		if (header) {
+			flags = tny_header_get_flags (header);
+			/* TODO: is this the right flag?, it seems that some
+			   headers that have been previously downloaded do not
+			   come with it */
+			if (! (flags & TNY_HEADER_FLAG_CACHED))
+				uncached_messages ++;
+			g_object_unref (header);
+		}
+
 		tny_iterator_next (iter);
 	}
 	g_object_unref (iter);
@@ -1252,16 +1275,20 @@ reply_forward (ReplyForwardAction action, ModestWindow *win)
 		header = TNY_HEADER (tny_iterator_get_current (iter));
 		g_object_unref (iter);
 
-		modest_mail_operation_get_msg (mail_op,
+		if (header) {
+			modest_mail_operation_get_msg (mail_op,
 					       header,
 					       reply_forward_cb,
 					       rf_helper);
 
-/* 		modest_mail_operation_get_msgs_full (mail_op,  */
+/* 			modest_mail_operation_get_msgs_full (mail_op,  */
 /* 						     header_list,  */
 /* 						     reply_forward_cb,  */
 /* 						     rf_helper,  */
 /* 						     free_reply_forward_helper); */
+
+			g_object_unref (header);
+		}
 
 		/* Clean */
 		g_object_unref(mail_op);
@@ -2692,15 +2719,20 @@ modest_ui_actions_on_copy (GtkAction *action,
 		TnyList *header_list = modest_header_view_get_selected_headers (MODEST_HEADER_VIEW (focused_widget));
 		TnyIterator *iter = tny_list_create_iterator (header_list);
 		TnyHeader *header = TNY_HEADER (tny_iterator_get_current (iter));
-		TnyFolder *folder = tny_header_get_folder (header);
-		TnyAccount *account = tny_folder_get_account (folder);
-		const gchar *proto_str = tny_account_get_proto (TNY_ACCOUNT (account));
-		/* If it's POP then ask */
-		gboolean ask = (modest_protocol_info_get_transport_store_protocol (proto_str) == 
-		       MODEST_PROTOCOL_STORE_POP) ? TRUE : FALSE;
-		g_object_unref (account);
-		g_object_unref (folder);
-		g_object_unref (header);
+		
+		gboolean ask = FALSE;
+		if (header) {
+			TnyFolder *folder = tny_header_get_folder (header);
+			TnyAccount *account = tny_folder_get_account (folder);
+			const gchar *proto_str = tny_account_get_proto (TNY_ACCOUNT (account));
+			/* If it's POP then ask */
+			ask = (modest_protocol_info_get_transport_store_protocol (proto_str) == 
+		       		MODEST_PROTOCOL_STORE_POP) ? TRUE : FALSE;
+			g_object_unref (account);
+			g_object_unref (folder);
+			g_object_unref (header);
+		}
+
 		g_object_unref (iter);
 		
 		/* Check that the messages have been previously downloaded */
@@ -3055,8 +3087,10 @@ modest_ui_actions_on_details (GtkAction *action,
 		iter = tny_list_create_iterator (headers_list);
 
 		header = TNY_HEADER (tny_iterator_get_current (iter));
-		headers_action_show_details (header, win, NULL);
-		g_object_unref (header);
+		if (header) {
+			headers_action_show_details (header, win, NULL);
+			g_object_unref (header);
+		}
 
 		g_object_unref (iter);
 		g_object_unref (headers_list);
@@ -3257,12 +3291,16 @@ has_retrieved_msgs (TnyList *list)
 	iter = tny_list_create_iterator (list);
 	while (tny_iterator_is_done (iter) && !found) {
 		TnyHeader *header;
-		TnyHeaderFlags flags;
+		TnyHeaderFlags flags = 0;
 
 		header = TNY_HEADER (tny_iterator_get_current (iter));
-		flags = tny_header_get_flags (header);
-		if (!(flags & TNY_HEADER_FLAG_PARTIAL))
-			found = TRUE;
+		if (header) {
+			flags = tny_header_get_flags (header);
+			if (!(flags & TNY_HEADER_FLAG_PARTIAL))
+				found = TRUE;
+
+			g_object_unref (header);
+		}
 
 		if (!found)
 			tny_iterator_next (iter);
@@ -3287,15 +3325,18 @@ msgs_move_to_confirmation (GtkWindow *win,
 
 	/* If the destination is a local folder */
 	if (modest_tny_folder_is_local_folder (dest_folder)) {
-		TnyFolder *src_folder;
-		TnyIterator *iter;
-		TnyHeader *header;
+		TnyFolder *src_folder = NULL;
+		TnyIterator *iter = NULL;
+		TnyHeader *header = NULL;
 
 		/* Get source folder */
 		iter = tny_list_create_iterator (headers);
 		header = TNY_HEADER (tny_iterator_get_current (iter));
-		src_folder = tny_header_get_folder (header);
-		g_object_unref (header);
+		if (header) {
+			src_folder = tny_header_get_folder (header);
+			g_object_unref (header);
+		}
+
 		g_object_unref (iter);
 
 		/* if no src_folder, message may be an attahcment */
@@ -3316,8 +3357,10 @@ msgs_move_to_confirmation (GtkWindow *win,
 			response = modest_platform_run_confirmation_dialog (GTK_WINDOW (win),
 									    (const gchar *) message);
 		}
+		
 		g_object_unref (src_folder);
 	}
+	
 	return response;
 }
 
@@ -3410,12 +3453,16 @@ open_msg_for_purge_cb (ModestMailOperation *mail_op,
 	while (!tny_iterator_is_done (iter)) {
 		TnyMimePart *part;
 		part = TNY_MIME_PART (tny_iterator_get_current (iter));
-		if (tny_mime_part_is_attachment (part) || TNY_IS_MSG (part)) {
+		if (part && (tny_mime_part_is_attachment (part) || TNY_IS_MSG (part))) {
 			if (tny_mime_part_is_purged (part))
 				some_purged = TRUE;
 			else
 				pending_purges++;
 		}
+
+		if (part)
+			g_object_unref (part);
+
 		tny_iterator_next (iter);
 	}
 
@@ -3430,8 +3477,12 @@ open_msg_for_purge_cb (ModestMailOperation *mail_op,
 				TnyMimePart *part;
 				
 				part = TNY_MIME_PART (tny_iterator_get_current (iter));
-				if (tny_mime_part_is_attachment (part) || TNY_IS_MSG (part))
+				if (part && (tny_mime_part_is_attachment (part) || TNY_IS_MSG (part)))
 					tny_mime_part_set_purged (part);
+
+				if (part)
+					g_object_unref (part);
+
 				tny_iterator_next (iter);
 			}
 			
@@ -3447,7 +3498,14 @@ open_msg_for_purge_cb (ModestMailOperation *mail_op,
 		TnyMimePart *part;
 			
 		part = TNY_MIME_PART (tny_iterator_get_current (iter));
-		g_object_unref (part);
+		if (part) {
+			/* One for the reference given by tny_iterator_get_current(): */
+			g_object_unref (part);
+
+			/* TODO: Is this meant to remove the attachment by doing another unref()? 
+			 * Otherwise, this seems useless. */
+		}
+
 		tny_iterator_next (iter);
 	}
 	modest_window_mgr_unregister_header (mgr, header);
@@ -3719,10 +3777,10 @@ do_headers_action (ModestWindow *win,
 		   HeadersFunc func,
 		   gpointer user_data)
 {
-	TnyList *headers_list;
-	TnyIterator *iter;
-	TnyHeader *header;
-	TnyFolder *folder;
+	TnyList *headers_list = NULL;
+	TnyIterator *iter = NULL;
+	TnyHeader *header = NULL;
+	TnyFolder *folder = NULL;
 
 	/* Get headers */
 	headers_list = get_selected_headers (win);
@@ -3732,8 +3790,10 @@ do_headers_action (ModestWindow *win,
 	/* Get the folder */
 	iter = tny_list_create_iterator (headers_list);
 	header = TNY_HEADER (tny_iterator_get_current (iter));
-	folder = tny_header_get_folder (header);
-	g_object_unref (header);
+	if (header) {
+		folder = tny_header_get_folder (header);
+		g_object_unref (header);
+	}
 
 	/* Call the function for each header */
 	while (!tny_iterator_is_done (iter)) {

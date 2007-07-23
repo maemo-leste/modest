@@ -65,19 +65,21 @@ find_folders (TnyFolderStore *store, TnyFolderStoreQuery *query,
 	while (!tny_iterator_is_done (iter) && (!*folder_src || !*folder_dst))
 	{
 		TnyFolderStore *folder = (TnyFolderStore*) tny_iterator_get_current (iter);
-		const gchar *folder_name = NULL;
+		if (folder) {
+			const gchar *folder_name = NULL;
 
-		folder_name = tny_folder_get_name (TNY_FOLDER (folder));
+			folder_name = tny_folder_get_name (TNY_FOLDER (folder));
 
-		if (strcmp (folder_name, src_name) == 0)
-		    *folder_src = g_object_ref (folder);
+			if (strcmp (folder_name, src_name) == 0)
+			    *folder_src = g_object_ref (folder);
 		
-		if (!strcmp (folder_name, dst_name))
-		    *folder_dst = g_object_ref (folder);
+			if (!strcmp (folder_name, dst_name))
+			    *folder_dst = g_object_ref (folder);
 
-		find_folders (folder, query, folder_src, folder_dst);
+			find_folders (folder, query, folder_src, folder_dst);
 	    
- 		g_object_unref (G_OBJECT (folder));
+ 			g_object_unref (G_OBJECT (folder));
+		}
 
 		tny_iterator_next (iter);	    
 	}

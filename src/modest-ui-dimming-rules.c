@@ -1671,9 +1671,12 @@ _already_opened_msg (ModestWindow *win,
 	found = FALSE;
 	while (!tny_iterator_is_done (iter)) {
 		header = TNY_HEADER (tny_iterator_get_current (iter));
-		found = modest_window_mgr_find_registered_header (mgr,header, NULL);
+		if (header) {
+			found = modest_window_mgr_find_registered_header (mgr,header, NULL);
 		
-		g_object_unref (header);
+			g_object_unref (header);
+		}
+
 		tny_iterator_next (iter);
 
 		if (found)
@@ -1699,7 +1702,7 @@ _selected_msg_marked_as (ModestWindow *win,
 	TnyList *selected_headers = NULL;
 	TnyIterator *iter = NULL;
 	TnyHeader *header = NULL;
-	TnyHeaderFlags flags;
+	TnyHeaderFlags flags = 0;
 	gboolean result = FALSE;
 
 	if (MODEST_IS_MAIN_WINDOW (win))
@@ -1727,14 +1730,16 @@ _selected_msg_marked_as (ModestWindow *win,
 	iter = tny_list_create_iterator (selected_headers);
 	while (!tny_iterator_is_done (iter) && !result) {
 		header = TNY_HEADER (tny_iterator_get_current (iter));
+		if (header) {
+			flags = tny_header_get_flags (header);
+			if (opposite)
+				result = (flags & mask) == 0; 
+			else
+				result = (flags & mask) != 0; 
 
-		flags = tny_header_get_flags (header);
-		if (opposite)
-			result = (flags & mask) == 0; 
-		else
-			result = (flags & mask) != 0; 
+			g_object_unref (header);
+		}
 
-		g_object_unref (header);
 		tny_iterator_next (iter);
 	}
 
@@ -1766,7 +1771,7 @@ _msg_download_completed (ModestMainWindow *win)
 	TnyList *selected_headers = NULL;
 	TnyIterator *iter = NULL;
 	TnyHeader *header = NULL;
-	TnyHeaderFlags flags;
+	TnyHeaderFlags flags = 0;
 	gboolean result = FALSE;
 
 	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW (win), FALSE);
@@ -1790,14 +1795,16 @@ _msg_download_completed (ModestMainWindow *win)
 	iter = tny_list_create_iterator (selected_headers);
 	while (!tny_iterator_is_done (iter) && result) {
 		header = TNY_HEADER (tny_iterator_get_current (iter));
-			
-		flags = tny_header_get_flags (header);
-		/* TODO: is this the right flag?, it seems that some
-		   headers that have been previously downloaded do not
-		   come with it */
-		result = (flags & TNY_HEADER_FLAG_CACHED);
+		if (header) {
+			flags = tny_header_get_flags (header);
+			/* TODO: is this the right flag?, it seems that some
+			   headers that have been previously downloaded do not
+			   come with it */
+			result = (flags & TNY_HEADER_FLAG_CACHED);
 
-		g_object_unref (header);
+			g_object_unref (header);
+		}
+
 		tny_iterator_next (iter);
 	}
 
@@ -1850,17 +1857,22 @@ _selected_msg_sent_in_progress (ModestWindow *win)
 		if (!header_list) return FALSE;
 		iter = tny_list_create_iterator (header_list);
 		header = TNY_HEADER (tny_iterator_get_current (iter));
-
-		/* Get message id */
-		id = g_strdup(tny_header_get_message_id (header));
+		if (header) {
+			/* Get message id */
+			id = g_strdup(tny_header_get_message_id (header));
+			g_object_unref (header);
+		}
 		
         } else if (MODEST_IS_MSG_VIEW_WINDOW(win)) {
 		
 		/* Get message header */
 		header = modest_msg_view_window_get_header (MODEST_MSG_VIEW_WINDOW(win));
+		if (header) {
+			/* Get message id */
+			id = g_strdup(tny_header_get_message_id (header));
 
-		/* Get message id */
-		id = g_strdup(tny_header_get_message_id (header));
+			g_object_unref (header);
+		}
 	}
 
 	/* Check if msg id is being processed inside send queue */
@@ -1868,7 +1880,6 @@ _selected_msg_sent_in_progress (ModestWindow *win)
 
 	/* Free */
 	g_free(id);
-	g_object_unref (header);
 	g_object_unref(header_list);
 	g_object_unref(iter);
 

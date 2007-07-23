@@ -140,11 +140,13 @@ modest_tny_send_queue_cancel (TnySendQueue *self, gboolean remove, GError **err)
 		if (err != NULL) goto frees;
 		iter = tny_list_create_iterator (headers);
 		while (!tny_iterator_is_done (iter)) {
-			header = TNY_HEADER (tny_iterator_get_current (iter));		
-			tny_header_unset_flags (header, TNY_HEADER_FLAG_PRIORITY);
-			tny_header_set_flags (header, TNY_HEADER_FLAG_SUSPENDED_PRIORITY);
-			tny_iterator_next (iter);
-			g_object_unref (header);
+			header = TNY_HEADER (tny_iterator_get_current (iter));
+			if (header) {	
+				tny_header_unset_flags (header, TNY_HEADER_FLAG_PRIORITY);
+				tny_header_set_flags (header, TNY_HEADER_FLAG_SUSPENDED_PRIORITY);
+				tny_iterator_next (iter);
+				g_object_unref (header);
+			}
 		}
 		
 		g_queue_foreach (priv->queue, (GFunc)modest_tny_send_queue_info_free, NULL);
@@ -419,10 +421,13 @@ modest_tny_send_queue_try_to_send (ModestTnySendQueue* self)
 	if (err != NULL) goto frees;
 	iter = tny_list_create_iterator (headers);
 	while (!tny_iterator_is_done (iter)) {
-		header = TNY_HEADER (tny_iterator_get_current (iter));		
-		_add_message (self, header); 
+		header = TNY_HEADER (tny_iterator_get_current (iter));
+		if (header) {	
+			_add_message (self, header); 
+			g_object_unref (header);
+		}
+
 		tny_iterator_next (iter);
-		g_object_unref (header);
 	}
 	
 	/* Flush send queue */

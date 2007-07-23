@@ -1,5 +1,49 @@
 2007-07-23  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/dbus_api/modest-dbus-callbacks.c: (modest_dbus_req_handler),
+	(add_folders_to_list), (on_dbus_method_get_folders),
+	(modest_dbus_req_filter):
+	* src/maemo/modest-maemo-utils.c:
+	(on_camel_account_get_supported_secure_authentication):
+	* src/maemo/modest-main-window.c: (modest_main_window_set_style),
+	(on_header_view_focus_in):
+	* src/modest-email-clipboard.c: (modest_email_clipboard_set_data):
+	* src/modest-formatter.c: (modest_formatter_create_body_part):
+	* src/modest-mail-operation.c: (recurse_folders),
+	(update_account_thread), (get_msgs_full_thread),
+	(modest_mail_operation_get_msgs_full),
+	(modest_mail_operation_xfer_msgs):
+	* src/modest-search.c: (search_mime_part_and_child_parts),
+	(modest_search_account), (modest_search_all_accounts):
+	* src/modest-tny-account.c:
+	(modest_tny_account_get_special_folder), (recurse_folders):
+	* src/modest-tny-local-folders-account.c:
+	(modest_tny_local_folders_account_query_passes):
+	* src/modest-tny-msg.c: (copy_mime_part),
+	(modest_tny_msg_find_body_part_from_mime_part):
+	* src/modest-tny-send-queue.c: (modest_tny_send_queue_cancel),
+	(modest_tny_send_queue_try_to_send):
+	* src/modest-ui-actions.c: (modest_ui_actions_on_delete_message),
+	(_modest_ui_actions_open), (download_uncached_messages),
+	(reply_forward), (modest_ui_actions_on_copy),
+	(modest_ui_actions_on_details), (has_retrieved_msgs),
+	(msgs_move_to_confirmation), (open_msg_for_purge_cb),
+	(do_headers_action):
+	* src/modest-ui-dimming-rules.c: (_already_opened_msg),
+	(_selected_msg_marked_as), (_msg_download_completed),
+	(_selected_msg_sent_in_progress):
+	* src/widgets/modest-attachments-view.c:
+	(modest_attachments_view_set_message):
+	* src/widgets/modest-msg-view.c: (find_cid_image):
+	* tests/check_folder-transfer.c: (find_folders):
+	* tests/check_update-account.c: (func):
+	* tests/dbus_api/test_get_folders.c: (main):
+	Checked all uses of tny_iterator_get_current(), making sure 
+	that the object is unreferenced (3 or 4 places did not), 
+	and adding checks for NULL.
+
+2007-07-23  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/dbus_api/modest-dbus-callbacks.c:
 	(on_idle_open_default_inbox): Make sure that the application UI is 
 	visible.

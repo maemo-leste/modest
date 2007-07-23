@@ -162,26 +162,29 @@ modest_tny_local_folders_account_query_passes (TnyFolderStoreQuery *query, TnyFo
 		while (!tny_iterator_is_done (iterator))
 		{
 			TnyFolderStoreQueryItem *item = (TnyFolderStoreQueryItem*) tny_iterator_get_current (iterator);
-			TnyFolderStoreQueryOption options = tny_folder_store_query_item_get_options (item);
-			regex_t *regex = tny_folder_store_query_item_get_regex (item);
+			if (item) {
+				TnyFolderStoreQueryOption options = tny_folder_store_query_item_get_options (item);
+				regex_t *regex = tny_folder_store_query_item_get_regex (item);
 
-			if ((options & TNY_FOLDER_STORE_QUERY_OPTION_SUBSCRIBED) &&
-			    tny_folder_is_subscribed (folder))
-				retval = TRUE;
+				if ((options & TNY_FOLDER_STORE_QUERY_OPTION_SUBSCRIBED) &&
+			 	   tny_folder_is_subscribed (folder))
+					retval = TRUE;
 
-			if ((options & TNY_FOLDER_STORE_QUERY_OPTION_UNSUBSCRIBED) &&
-			    !(tny_folder_is_subscribed (folder)))
-				retval = TRUE;
+				if ((options & TNY_FOLDER_STORE_QUERY_OPTION_UNSUBSCRIBED) &&
+				    !(tny_folder_is_subscribed (folder)))
+					retval = TRUE;
 
-			if (regex && options & TNY_FOLDER_STORE_QUERY_OPTION_MATCH_ON_NAME)
-			    if (regexec (regex, tny_folder_get_name (folder), 0, NULL, 0) == 0)
-				retval = TRUE;
+				if (regex && options & TNY_FOLDER_STORE_QUERY_OPTION_MATCH_ON_NAME)
+			 	   if (regexec (regex, tny_folder_get_name (folder), 0, NULL, 0) == 0)
+					retval = TRUE;
 
-			if (regex && options & TNY_FOLDER_STORE_QUERY_OPTION_MATCH_ON_ID)
-			    if (regexec (regex, tny_folder_get_id (folder), 0, NULL, 0) == 0)
-				retval = TRUE;
+				if (regex && options & TNY_FOLDER_STORE_QUERY_OPTION_MATCH_ON_ID)
+			  	  if (regexec (regex, tny_folder_get_id (folder), 0, NULL, 0) == 0)
+					retval = TRUE;
 
-			g_object_unref (G_OBJECT (item));
+				g_object_unref (G_OBJECT (item));
+			}
+
 			tny_iterator_next (iterator);
 		}
 		 

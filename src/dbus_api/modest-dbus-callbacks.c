@@ -885,8 +885,6 @@ gint modest_dbus_req_handler(const gchar * interface, const gchar * method,
 		return on_top_application (arguments, data, retval);
 	}
 	else { 
-		g_debug ("  debug: %s: Unexpected D-Bus method: %s\n", __FUNCTION__, method);
-	
 		/* We need to return INVALID here so
 		 * libosso will return DBUS_HANDLER_RESULT_NOT_YET_HANDLED,
 		 * so that our modest_dbus_req_filter will then be tried instead.
@@ -1243,15 +1241,20 @@ add_folders_to_list (TnyFolderStore *folder_store, GList** list)
 		 * be generally unsuitable for Modest.
 		 */
 		TnyFolder *folder = TNY_FOLDER (tny_iterator_get_current (iter));
-		add_single_folder_to_list (TNY_FOLDER (folder), list);
-		 
-		#if 0
-		if (TNY_IS_FOLDER_STORE (folder))
-			add_folders_to_list (TNY_FOLDER_STORE (folder), list);
-		else {
+		if (folder) {
 			add_single_folder_to_list (TNY_FOLDER (folder), list);
+			 
+			#if 0
+			if (TNY_IS_FOLDER_STORE (folder))
+				add_folders_to_list (TNY_FOLDER_STORE (folder), list);
+			else {
+				add_single_folder_to_list (TNY_FOLDER (folder), list);
+			}
+			#endif
+			
+			/* tny_iterator_get_current() gave us a reference. */
+			g_object_unref (folder);
 		}
-		#endif
 		
 		tny_iterator_next (iter);
 	}
@@ -1289,9 +1292,12 @@ on_dbus_method_get_folders (DBusConnection *con, DBusMessage *message)
 	GList *folder_names = NULL;
 	add_folders_to_list (TNY_FOLDER_STORE (account), &folder_names);
 
+	printf("DEBUGa0: %s\n", __FUNCTION__);
+	
 	g_object_unref (account);
 	account = NULL;
 	
+	printf("DEBUGa1: %s\n", __FUNCTION__);
 	
 	/* Also add the folders from the local folders account,
 	 * because they are (currently) used with all accounts:
@@ -1305,12 +1311,17 @@ on_dbus_method_get_folders (DBusConnection *con, DBusMessage *message)
 	g_object_unref (account_local);
 	account_local = NULL;
 
+	printf("DEBUGa2: %s\n", __FUNCTION__);
+	
 
 	/* Put the result in a DBus reply: */
 	reply = dbus_message_new_method_return (message);
 
 	get_folders_result_to_message (reply, folder_names);
 
+	printf("DEBUGa3: %s\n", __FUNCTION__);
+	
+	
 	if (reply == NULL) {
 		g_warning ("%s: Could not create reply.", __FUNCTION__);
 	}
@@ -1324,6 +1335,8 @@ on_dbus_method_get_folders (DBusConnection *con, DBusMessage *message)
 
 	g_list_foreach (folder_names, (GFunc)g_free, NULL);
 	g_list_free (folder_names);
+	
+	printf("DEBUGa4: %s\n", __FUNCTION__);
 }
 
 
@@ -1337,18 +1350,24 @@ modest_dbus_req_filter (DBusConnection *con,
 			DBusMessage    *message,
 			void           *user_data)
 {
+	printf ("DEBUG: %s\n", __FUNCTION__);
 	gboolean handled = FALSE;
 
 	if (dbus_message_is_method_call (message,
 					 MODEST_DBUS_IFACE,
 					 MODEST_DBUS_METHOD_SEARCH)) {
+		printf ("  DEBUG1: %s\n", __FUNCTION__);
 		on_dbus_method_search (con, message);
 		handled = TRUE;			 	
 	} else if (dbus_message_is_method_call (message,
 					 MODEST_DBUS_IFACE,
 					 MODEST_DBUS_METHOD_GET_FOLDERS)) {
+	    	printf ("  DEBUG2: %s\n", __FUNCTION__);
 		on_dbus_method_get_folders (con, message);
 		handled = TRUE;			 	
+	}
+	else {
+		g_debug ("  debug: %s: Unexpected D-Bus method\n", __FUNCTION__);
 	}
 	
 	return (handled ? 

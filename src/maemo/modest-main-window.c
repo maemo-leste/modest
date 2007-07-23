@@ -1047,7 +1047,10 @@ modest_main_window_set_style (ModestMainWindow *self,
 				gtk_window_set_title (GTK_WINDOW(self), tny_header_get_subject (header));
 			else
 				gtk_window_set_title (GTK_WINDOW (self), _("mail_va_no_subject"));
-			g_object_unref (header);
+			
+			if (header)
+				g_object_unref (header);
+
 			g_object_unref (iterator);
 			g_object_unref (selection);
 		}
@@ -2225,7 +2228,9 @@ on_header_view_focus_in (GtkWidget *widget,
 		else
 			gtk_window_set_title (GTK_WINDOW (main_window), _("mail_va_no_subject"));
 
-		g_object_unref (header);
+		if (header)
+			g_object_unref (header);
+
 		g_object_unref (iterator);
 		g_object_unref (selection);
 	}
