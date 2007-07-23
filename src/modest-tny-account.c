@@ -90,7 +90,7 @@ modest_tny_account_get_special_folder (TnyAccount *account,
 		
 			g_free (account_id);
 		} else {
-			g_warning ("%s: modest_account_name was NULL.", __FUNCTION);
+			g_warning ("%s: modest_account_name was NULL.", __FUNCTION__);
 		}
 	} else {
 		/* Other local folders are all in one on-disk directory: */
