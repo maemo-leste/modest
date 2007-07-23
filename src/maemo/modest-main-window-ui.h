@@ -129,7 +129,7 @@ static const GtkActionEntry modest_action_entries [] = {
 static const GtkToggleActionEntry modest_toggle_action_entries [] = {
 	{ "ViewToggleFullscreen",     GTK_STOCK_FULLSCREEN, N_("mcen_me_inbox_fullscreen"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_toggle_fullscreen), FALSE },
 	{ "ViewShowToolbarNormalScreen", NULL, N_("mcen_me_inbox_normalview"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_toggle_toolbar), TRUE },
-	{ "ViewShowToolbarFullScreen", NULL, N_("mcen_me_inbox_optimizedview"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_toggle_toolbar), TRUE },
+	{ "ViewShowToolbarFullScreen", NULL, N_("mcen_me_inbox_fullscreen"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_toggle_toolbar), TRUE },
 };
 
 G_END_DECLS
