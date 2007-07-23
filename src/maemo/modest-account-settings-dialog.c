@@ -698,6 +698,12 @@ static GtkWidget* create_page_outgoing (ModestAccountSettingsDialog *self)
 {
 	GtkWidget *box = gtk_vbox_new (FALSE, MODEST_MARGIN_NONE);
 	
+	/* Put it all in a scrolled window, so that all widgets can be 
+	 * accessed even when the on-screen keyboard is visible: */
+	GtkWidget *scrollwin = gtk_scrolled_window_new(NULL, NULL);
+	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrollwin), 
+		GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
+	
 	/* Create a size group to be used by all captions.
 	 * Note that HildonCaption does not create a default size group if we do not specify one.
 	 * We use GTK_SIZE_GROUP_HORIZONTAL, so that the widths are the same. */
@@ -826,8 +832,10 @@ static GtkWidget* create_page_outgoing (ModestAccountSettingsDialog *self)
         	G_CALLBACK (on_button_outgoing_smtp_servers), self);
 		
 	gtk_widget_show (GTK_WIDGET (box));
+	gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW(scrollwin), box);
+	gtk_widget_show(scrollwin);
 	
-	return GTK_WIDGET (box);
+	return GTK_WIDGET (scrollwin);
 }
 
 static gboolean

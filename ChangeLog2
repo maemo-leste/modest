@@ -1,4 +1,11 @@
-2007-07-16  Murray Cumming  <murrayc@murrayc.com>
+2007-07-23  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/maemo/modest-account-settings-dialog.c:
+	(create_page_outgoing): Put this page in a GtkScrolledWindow, 
+	matching the UI mock-up in the UI spec, and allowing access 
+	to all widgets even when the on-screen keyboard is active.
+
+2007-07-23  Murray Cumming  <murrayc@murrayc.com>
 
 	Reverted this previous commit from Johannes, 
 	because the scrollbars are always visible and because 
