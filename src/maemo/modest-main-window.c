@@ -496,6 +496,8 @@ on_sendqueue_error_happened (TnySendQueue *self, TnyHeader *header, TnyMsg *msg,
 				message = g_strdup_printf (_("eemev_ni_ui_smtp_authentication_fail_error"), server_name);
 				break;
 			case TNY_TRANSPORT_ACCOUNT_ERROR_SEND:
+				/* TODO: Tinymail is still sending this sometimes when it should 
+				 * send TNY_ACCOUNT_ERROR_TRY_CONNECT_USER_CANCEL. */
 			default:
 				message = g_strdup (_("emev_ib_ui_smtp_send_error"));
 				break;
