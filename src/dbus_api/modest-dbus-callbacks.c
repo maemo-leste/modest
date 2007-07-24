@@ -635,17 +635,17 @@ static gint on_open_message(GArray * arguments, gpointer data, osso_rpc_t * retv
 static gboolean
 on_idle_delete_message (gpointer user_data)
 {
-	TnyList      *headers;
-	TnyFolder    *folder;
-	TnyIterator  *iter; 
-	TnyHeader    *header;
-	TnyHeader    *msg_header;
-	TnyMsg       *msg;
-	TnyAccount   *account;
-	GError       *error;
-	const char   *uri;
-	const char   *uid;
-	gint          res;
+	TnyList      *headers = NULL;
+	TnyFolder    *folder = NULL;
+	TnyIterator  *iter = NULL; 
+	TnyHeader    *header = NULL;
+	TnyHeader    *msg_header = NULL;
+	TnyMsg       *msg = NULL;
+	TnyAccount   *account = NULL;
+	GError       *error = NULL;
+	const char   *uri = NULL;
+	const char   *uid = NULL;
+	gint          res = 0;
 
 	uri = (char *) user_data;
 
@@ -681,18 +681,22 @@ on_idle_delete_message (gpointer user_data)
 
 	/* g_debug ("Searching header for msg in folder"); */
 	while (!tny_iterator_is_done (iter)) {
-		const char *cur_id;
+		const char *cur_id = NULL;
 
 		header = TNY_HEADER (tny_iterator_get_current (iter));
-		cur_id = tny_header_get_uid (header);
+		if (header)
+			cur_id = tny_header_get_uid (header);
 		
 		if (cur_id && uid && g_str_equal (cur_id, uid)) {
 			/* g_debug ("Found corresponding header from folder"); */
 			break;
 		}
 
-		header = NULL;
-		g_object_unref (header);
+		if (header) {
+			g_object_unref (header);
+			header = NULL;
+		}
+		
 		tny_iterator_next (iter);
 	}
 
@@ -707,7 +711,9 @@ on_idle_delete_message (gpointer user_data)
 	msg = NULL;
 
 	if (header == NULL) {
-		g_object_unref (folder);
+		if (folder)
+			g_object_unref (folder);
+			
 		return OSSO_ERROR;
 	}	
 		
@@ -734,10 +740,35 @@ on_idle_delete_message (gpointer user_data)
 	
 	gdk_threads_leave ();
 	
-	g_object_unref (header);
-	g_object_unref (folder);
+	if (header)
+		g_object_unref (header);
+	
+	if (folder) {
+		/* Trick: do a poke status in order to speed up the signaling
+		   of observers.
+		   A delete via the menu does this, in do_headers_action(), 
+		   but it does not seem to solve the stricken-out-but-not-removed problem here.
+		 */
+		tny_folder_poke_status (folder);
+	
+		g_object_unref (folder);
+	}
+	
+	if (account) {
+		/* Do a refresh so that stricken-out emails are really removed from the treeview.
+		 * TODO: Why is this necessary here, but not when doing a delete from the menu or toolbar? */
+		const gchar *modest_account_name = 
+			modest_tny_account_get_parent_modest_account_name_for_server_account (account);
+		modest_ui_actions_do_send_receive (modest_account_name, MODEST_WINDOW (win));
+		
+		g_object_unref (account);
+	}
+	
 	return res;
 }
+
+
+
 
 static gint
 on_delete_message (GArray *arguments, gpointer data, osso_rpc_t *retval)

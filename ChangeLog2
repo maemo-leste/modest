@@ -1,3 +1,11 @@
+2007-07-24  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/dbus_api/modest-dbus-callbacks.c: (on_idle_delete_message):
+	Try a couple of tricks to force the treeview to update (
+	poke the folder, and do a send/receive refresh), but the deleted 
+	email still appears with a strike-through instead of really being 
+	removed.
+
 2007-07-23  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/dbus_api/modest-dbus-callbacks.c:
