@@ -816,6 +816,7 @@ on_idle_send_receive(gpointer user_data)
 
 static gint on_send_receive(GArray * arguments, gpointer data, osso_rpc_t * retval)
 { 	
+	printf("DEBUG: modest: %s\n", __FUNCTION__);
     /* Use g_idle to context-switch into the application's thread: */
 
     /* This method has no arguments. */

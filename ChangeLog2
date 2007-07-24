@@ -1,5 +1,12 @@
 2007-07-24  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/maemo/modest-maemo-global-settings-dialog.c:
+	(current_connection):
+	Avoid a crash (probably only in scratchbox) when strcmp()ing a 
+	NULL when closing the dialog.
+
+2007-07-24  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/dbus_api/modest-dbus-callbacks.c: (on_idle_delete_message):
 	Remove the hacky send/receive that didn't work, and instead 
 	refilter the treemodel to make the deleted email really vanish from 
