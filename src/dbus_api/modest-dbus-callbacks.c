@@ -747,22 +747,25 @@ on_idle_delete_message (gpointer user_data)
 		/* Trick: do a poke status in order to speed up the signaling
 		   of observers.
 		   A delete via the menu does this, in do_headers_action(), 
-		   but it does not seem to solve the stricken-out-but-not-removed problem here.
+		   though I don't know why.
 		 */
 		tny_folder_poke_status (folder);
 	
 		g_object_unref (folder);
 	}
 	
-	if (account) {
-		/* Do a refresh so that stricken-out emails are really removed from the treeview.
-		 * TODO: Why is this necessary here, but not when doing a delete from the menu or toolbar? */
-		const gchar *modest_account_name = 
-			modest_tny_account_get_parent_modest_account_name_for_server_account (account);
-		modest_ui_actions_do_send_receive (modest_account_name, MODEST_WINDOW (win));
-		
+	if (account)
 		g_object_unref (account);
-	}
+		
+	/* Refilter the header view explicitly, to make sure that 
+	 * deleted emails are really removed from view. 
+	 * (They are not really deleted until contact is made with the server, 
+	 * so they would appear with a strike-through until then):
+	 */
+	ModestHeaderView *header_view = MODEST_HEADER_VIEW(modest_main_window_get_child_widget (
+		MODEST_MAIN_WINDOW(win), MODEST_WIDGET_TYPE_HEADER_VIEW));
+	if (header_view && MODEST_IS_HEADER_VIEW (header_view))
+		modest_header_view_refilter (header_view);
 	
 	return res;
 }

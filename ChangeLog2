@@ -1,6 +1,15 @@
 2007-07-24  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/dbus_api/modest-dbus-callbacks.c: (on_idle_delete_message):
+	Remove the hacky send/receive that didn't work, and instead 
+	refilter the treemodel to make the deleted email really vanish from 
+	the UI (though the delete-from-menu code does has commented out 
+	the code that does that). This fixes projects.maemo.org bug 
+	NB#62859.
+
+2007-07-24  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/dbus_api/modest-dbus-callbacks.c: (on_idle_delete_message):
 	Try a couple of tricks to force the treeview to update (
 	poke the folder, and do a send/receive refresh), but the deleted 
 	email still appears with a strike-through instead of really being 
