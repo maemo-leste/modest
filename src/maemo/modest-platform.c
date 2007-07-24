@@ -204,14 +204,11 @@ guess_mime_type_from_name (const gchar* name)
 
 gchar*
 modest_platform_get_file_icon_name (const gchar* name, const gchar* mime_type,
-					  gchar **effective_mime_type)
+				    gchar **effective_mime_type)
 {
 	GString *mime_str = NULL;
 	gchar *icon_name  = NULL;
 	gchar **icons, **cursor;
-	
-	
-	g_return_val_if_fail (name || mime_type, NULL);
 
 	if (!mime_type || !g_ascii_strcasecmp (mime_type, "application/octet-stream")) 
 		mime_str = g_string_new (guess_mime_type_from_name(name));
