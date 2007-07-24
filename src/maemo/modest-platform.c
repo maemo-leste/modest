@@ -59,7 +59,8 @@
 
 static osso_context_t *osso_context = NULL;
 
-static void  folder_name_insensitive_press (GtkWidget *widget, ModestWindow *window);
+static void  folder_name_insensitive_press (GtkWidget *widget, 
+					    ModestWindow *window);
 	
 static void	
 on_modest_conf_update_interval_changed (ModestConf* self, const gchar *key, 
@@ -775,7 +776,9 @@ modest_platform_run_folder_name_dialog (GtkWindow *parent_window,
 	/* Add accept button (with unsensitive handler) */
 	buttons = gtk_container_get_children (GTK_CONTAINER (GTK_DIALOG (dialog)->action_area));
 	accept_btn = GTK_WIDGET (buttons->next->data);
-	g_signal_connect (G_OBJECT (accept_btn), "insensitive-press", G_CALLBACK (folder_name_insensitive_press), parent_window);
+	g_signal_connect (G_OBJECT (accept_btn), "insensitive-press", 
+			  G_CALLBACK (folder_name_insensitive_press), 
+			  parent_window);
 
 	/* Create label and entry */
 	label = gtk_label_new (label_text);
@@ -826,7 +829,7 @@ modest_platform_run_folder_name_dialog (GtkWindow *parent_window,
 static void  
 folder_name_insensitive_press (GtkWidget *widget, ModestWindow *window)
 {
-	hildon_banner_show_information (NULL, NULL, _("(empty)"));
+	hildon_banner_show_information (NULL, NULL, _CS("ckdg_ib_enter_name"));
 }
 
 gint
