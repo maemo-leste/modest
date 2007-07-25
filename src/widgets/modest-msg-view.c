@@ -1467,7 +1467,9 @@ modest_msg_view_search (ModestMsgView *self, const gchar *search)
 	gtk_layout_set_vadjustment (GTK_LAYOUT (priv->gtkhtml), tmp_vadj);
 	result = gtk_html_engine_search (GTK_HTML (priv->gtkhtml),
 					 search,
-					 FALSE, TRUE, TRUE);
+					 FALSE,   /* case sensitive */
+					 TRUE,    /* forward */
+					 FALSE);  /* regexp */
 
 // wait for the updated gtkhtml (w27) to enable this
 #if 0
