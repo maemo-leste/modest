@@ -132,6 +132,16 @@ void modest_maemo_utils_setup_images_filechooser (GtkFileChooser *chooser);
  */
 void modest_maemo_show_information_note_and_forget (GtkWindow *parent_window, const gchar* message);
 
+/** modest_maemo_show_information_note_in_main_context_and_forget:
+ * @parent_window: The window for which the note should be transient.
+ * @message: The text to show.
+ * 
+ * This calls modest_maemo_show_information_note_and_forget() in an idle handler.
+ * This should be used when you are not sure that you are in the main context, 
+ * because you should try to use GTK+ UI code only in the main context.
+ */
+void modest_maemo_show_information_note_in_main_context_and_forget (GtkWindow *parent_window, const gchar* message);
+
 /** modest_maemo_show_dialog_and_forget:
  * @parent_window: The window for which the note should be transient.
  * @message: The dialog to show.

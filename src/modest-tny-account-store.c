@@ -1336,48 +1336,31 @@ modest_tny_account_store_alert (TnyAccountStore *self, TnyAccount *account, TnyA
 	if (!prompt)
 		return FALSE;
 
-#ifdef MODEST_PLATFORM_MAEMO
-	/* The Tinymail documentation says that we should show Yes and No buttons, 
-	 * when it is a question.
-	 * Obviously, we need tinymail to use more specific error codes instead,
-	 * so we know what buttons to show. */
-	 GtkWidget *dialog = NULL;
-	 if (question) {
-	 	dialog = GTK_WIDGET (hildon_note_new_confirmation (NULL, 
-	 		prompt));
-	 } else {
-	 	dialog = GTK_WIDGET (hildon_note_new_information (NULL, 
-	 		prompt));
-	 }
-#else
-
-	GtkMessageType gtktype = GTK_MESSAGE_ERROR;
-	switch (type)
-	{
-		case TNY_ALERT_TYPE_INFO:
-		gtktype = GTK_MESSAGE_INFO;
-		break;
-		case TNY_ALERT_TYPE_WARNING:
-		gtktype = GTK_MESSAGE_WARNING;
-		break;
-		case TNY_ALERT_TYPE_ERROR:
-		default:
-		gtktype = GTK_MESSAGE_ERROR;
-		break;
-	}
-	
-	GtkWidget *dialog = gtk_message_dialog_new (NULL, 0,
-		gtktype, GTK_BUTTONS_YES_NO, prompt);
-#endif /* #ifdef MODEST_PLATFORM_MAEMO */
-
+	ModestWindow *main_window = 
+		modest_window_mgr_get_main_window (modest_runtime_get_window_mgr ());
 	gboolean retval = TRUE;
-	const int response = gtk_dialog_run (GTK_DIALOG (dialog));
 	if (question) {
-		retval = (response == GTK_RESPONSE_YES) ||
-				 (response == GTK_RESPONSE_OK);
-	}
-
-	gtk_widget_destroy (dialog);
+		/* The Tinymail documentation says that we should show Yes and No buttons, 
+		 * when it is a question.
+		 * Obviously, we need tinymail to use more specific error codes instead,
+		 * so we know what buttons to show. */
+	 
+	 	/* TODO: Do this in the main context: */
+		GtkWidget *dialog = GTK_WIDGET (hildon_note_new_confirmation (GTK_WINDOW (main_window), 
+	 		prompt));
+		const int response = gtk_dialog_run (GTK_DIALOG (dialog));
+		if (question) {
+			retval = (response == GTK_RESPONSE_YES) ||
+					 (response == GTK_RESPONSE_OK);
+		}
+	
+		gtk_widget_destroy (dialog);
+	
+	 } else {
+	 	/* Just show the error text and use the default response: */
+	 	modest_maemo_show_information_note_in_main_context_and_forget (GTK_WINDOW (main_window), 
+	 		prompt);
+	 }
 	
 	/* TODO: Don't free this when we no longer strdup the message for testers. */
 	g_free (prompt);

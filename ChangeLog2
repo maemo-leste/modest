@@ -1,5 +1,16 @@
 2007-07-25  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/maemo/modest-maemo-utils.h: 
+	* src/maemo/modest-maemo-utils.c: Added 
+	modest_maemo_show_information_note_in_main_context_and_forget().
+	* src/modest-tny-account-store.c: (modest_tny_account_store_alert):
+	Use the new function to show simple error dialogs in the main 
+	context, though question dialogs are still in the current context, 
+	which is unfortunately usually not the main context. This should 
+	fix some hangs.
+
+2007-07-25  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/modest-tny-account-store.c: (get_password):
 	Never save the entered username and password in gconf, 
 	because the UI spec says we should not. This helps 

@@ -546,6 +546,35 @@ on_hide (GtkDialog *dialog, gpointer user_data)
 }
 #endif
 
+/* user_data for the idle callback: */
+typedef struct 
+{
+	GtkWindow *parent_window;
+	gchar *message;
+} ModestIdleNoteInfo;
+
+static gboolean
+on_idle_show_information(gpointer user_data)
+{
+	ModestIdleNoteInfo *info = (ModestIdleNoteInfo*)user_data;
+	
+	modest_maemo_show_information_note_and_forget (info->parent_window, info->message);
+	
+	g_free (info->message);
+	g_slice_free (ModestIdleNoteInfo, info);
+	
+	return FALSE; /* Don't call this again. */
+}
+
+void modest_maemo_show_information_note_in_main_context_and_forget (GtkWindow *parent_window, const gchar* message)
+{
+	ModestIdleNoteInfo *info = g_slice_new (ModestIdleNoteInfo);
+	info->parent_window = parent_window;
+	info->message = g_strdup (message);
+	
+	g_idle_add (on_idle_show_information, info);
+}
+
 void modest_maemo_show_dialog_and_forget (GtkWindow *parent_window, GtkDialog *dialog)
 {
 	gtk_window_set_transient_for (GTK_WINDOW (dialog), parent_window);
@@ -554,6 +583,8 @@ void modest_maemo_show_dialog_and_forget (GtkWindow *parent_window, GtkDialog *d
 	g_signal_connect (G_OBJECT (dialog), "response", G_CALLBACK (on_response), NULL);
 	gtk_widget_show (GTK_WIDGET (dialog));
 }
+
+
 
 void
 modest_maemo_set_thumbable_scrollbar (GtkScrolledWindow *win, gboolean thumbable)
