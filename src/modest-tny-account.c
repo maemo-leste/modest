@@ -130,7 +130,7 @@ modest_tny_account_get_special_folder (TnyAccount *account,
 		TnyFolder *folder =
 			TNY_FOLDER (tny_iterator_get_current (iter));
 		if (folder) {
-			if (modest_tny_folder_get_local_folder_type (folder) == special_type) {
+			if (modest_tny_folder_get_local_or_mmc_folder_type (folder) == special_type) {
 				special_folder = folder;
 				break; /* Leaving a ref for the special_folder return value. */
 			}

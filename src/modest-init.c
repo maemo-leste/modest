@@ -441,7 +441,8 @@ modest_init_local_folders (const gchar* location_filepath)
 		 */
 
 		gchar *dir = g_build_filename (maildir_path,
-				"Archive", NULL);			
+					       modest_local_folder_info_get_type_name(TNY_FOLDER_TYPE_ARCHIVE),
+					       NULL);
 		const gboolean created = modest_init_one_local_folder (dir);
 		g_free(dir);
 			

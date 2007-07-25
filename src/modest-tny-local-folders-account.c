@@ -242,7 +242,7 @@ add_account_folders_to_merged_folder (TnyAccount *account, TnyMergeFolder* merge
 			 * because these are just left-over from earlier Modest versions 
 			 * that put the outbox there: */
 			if (is_actual_local_folders_account) {
-				const TnyFolderType type = modest_tny_folder_get_local_folder_type (folder);
+				const TnyFolderType type = modest_tny_folder_get_local_or_mmc_folder_type (folder);
 				if (type == TNY_FOLDER_TYPE_OUTBOX) {
 					add = FALSE;
 				}

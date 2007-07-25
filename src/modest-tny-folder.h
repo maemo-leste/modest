@@ -114,7 +114,7 @@ modest_tny_folder_is_memory_card_folder   (TnyFolder *folder);
  *  
  * Returns: TRUE if it's a local folder, FALSE otherwise
  */
-TnyFolderType modest_tny_folder_get_local_folder_type  (TnyFolder *folder);
+TnyFolderType modest_tny_folder_get_local_or_mmc_folder_type  (TnyFolder *folder);
 
 
 /**

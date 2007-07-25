@@ -742,7 +742,7 @@ open_msg_cb (ModestMailOperation *mail_op,
 	
 	/* Gets folder type (OUTBOX headers will be opened in edit window */
 	if (modest_tny_folder_is_local_folder (folder))
-		folder_type = modest_tny_folder_get_local_folder_type (folder);
+		folder_type = modest_tny_folder_get_local_or_mmc_folder_type (folder);
 
 	/* If the header is in the drafts folder then open the editor,
 	   else the message view window */

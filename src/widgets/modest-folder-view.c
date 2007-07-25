@@ -319,7 +319,7 @@ static void on_get_mmc_account_name (TnyStoreAccount* account, gpointer user_dat
 	/* printf ("DEBU1G: %s: account name=%s\n", __FUNCTION__, tny_account_get_name (TNY_ACCOUNT(account))); */
 
 	GetMmcAccountNameData *data = (GetMmcAccountNameData*)user_data;
-
+	
 	if (!strings_are_equal (
 		tny_account_get_name(TNY_ACCOUNT(account)), 
 		data->previous_name)) {
@@ -377,8 +377,9 @@ text_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 	if (type != TNY_FOLDER_TYPE_ROOT) {
 		gint number = 0;
 		
-		if (modest_tny_folder_is_local_folder (TNY_FOLDER (instance))) {
-			type = modest_tny_folder_get_local_folder_type (TNY_FOLDER (instance));
+		if (modest_tny_folder_is_local_folder (TNY_FOLDER (instance)) ||
+		    modest_tny_folder_is_memory_card_folder (TNY_FOLDER (instance))) {
+			type = modest_tny_folder_get_local_or_mmc_folder_type (TNY_FOLDER (instance));
 			if (type != TNY_FOLDER_TYPE_UNKNOWN) {
 				g_free (fname);
 				fname = g_strdup(modest_local_folder_info_get_type_display_name (type));
@@ -1326,8 +1327,8 @@ cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 			if ((parent_type == TNY_FOLDER_TYPE_ROOT) &&
 			    TNY_IS_ACCOUNT (parent_folder) &&
 			    modest_tny_account_is_virtual_local_folders (TNY_ACCOUNT (parent_folder))) {
-				cmp1 = get_cmp_subfolder_type_pos (modest_tny_folder_get_local_folder_type (TNY_FOLDER (folder1)));
-				cmp2 = get_cmp_subfolder_type_pos (modest_tny_folder_get_local_folder_type (TNY_FOLDER (folder2)));
+				cmp1 = get_cmp_subfolder_type_pos (modest_tny_folder_get_local_or_mmc_folder_type (TNY_FOLDER (folder1)));
+				cmp2 = get_cmp_subfolder_type_pos (modest_tny_folder_get_local_or_mmc_folder_type (TNY_FOLDER (folder2)));
 			}
 			g_object_unref (parent_folder);
 		}

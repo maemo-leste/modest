@@ -54,7 +54,7 @@ const ModestLocalFolder ModestLocalFolderMap[] = {
  * 	{ TNY_FOLDER_TYPE_OUTBOX,   "contacts",   N_("Contacts")},
 	{ TNY_FOLDER_TYPE_OUTBOX,   "calendar",   N_("Calendar")},
 */
-	{ TNY_FOLDER_TYPE_ARCHIVE,  "archive",    N_("Archive")}
+	{ TNY_FOLDER_TYPE_ARCHIVE,  "archive",    N_("mcen_me_folder_archive")}
 };
 
 
@@ -114,7 +114,8 @@ modest_local_folder_info_get_maildir_path (const gchar* location_filepath)
 				 NULL);
 }
 
-gchar *modest_per_account_local_outbox_folder_info_get_maildir_path (const gchar* account_name)
+gchar*
+modest_per_account_local_outbox_folder_info_get_maildir_path (const gchar* account_name)
 {
 	/* This directory should contain an "outbox" child directory: */
 	return g_build_filename (g_get_home_dir(),
@@ -124,7 +125,8 @@ gchar *modest_per_account_local_outbox_folder_info_get_maildir_path (const gchar
 				 NULL);
 }
 
-gchar *modest_per_account_local_outbox_folder_info_get_maildir_path_to_outbox_folder (const gchar* account_name)
+gchar*
+modest_per_account_local_outbox_folder_info_get_maildir_path_to_outbox_folder (const gchar* account_name)
 {
 	gchar *path_to_account_folder = 
 		modest_per_account_local_outbox_folder_info_get_maildir_path(account_name);

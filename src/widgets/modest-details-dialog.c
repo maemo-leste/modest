@@ -302,7 +302,7 @@ modest_details_dialog_set_folder_default (ModestDetailsDialog *self,
 
 	/* Different names for the local folders */
 	if (modest_tny_folder_is_local_folder (folder)) {
-		gint type = modest_tny_folder_get_local_folder_type (folder);
+		gint type = modest_tny_folder_get_local_or_mmc_folder_type (folder);
 		if (type != TNY_FOLDER_TYPE_UNKNOWN)
 			name = g_strdup(modest_local_folder_info_get_type_display_name (type));
 	} 

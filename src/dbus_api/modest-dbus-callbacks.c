@@ -545,9 +545,11 @@ on_idle_open_message (gpointer user_data)
 	folder = tny_msg_get_folder (msg);
 	
 	/* Drafts will be opened in the editor, instead of the viewer, as per the UI spec: */
+	/* FIXME: same should happen for Outbox; not enabling that, as the handling
+	 * of edited messages is not clear in that case */
 	gboolean is_draft = FALSE;
 	if (folder && modest_tny_folder_is_local_folder (folder) &&
-		(modest_tny_folder_get_local_folder_type (folder) == TNY_FOLDER_TYPE_DRAFTS)) {
+		(modest_tny_folder_get_local_or_mmc_folder_type (folder) == TNY_FOLDER_TYPE_DRAFTS)) {
 		is_draft = TRUE;
 	}
 

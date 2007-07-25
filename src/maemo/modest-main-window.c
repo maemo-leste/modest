@@ -2261,7 +2261,7 @@ modest_main_window_on_folder_selection_changed (ModestFolderView *folder_view,
 			show_reply = show_forward = show_cancel_send = show_clipboard = show_delete = FALSE;
 		} else if (TNY_IS_FOLDER (folder_store)) {
 			if (modest_tny_folder_is_local_folder (TNY_FOLDER (folder_store))) {
-				TnyFolderType folder_type = modest_tny_folder_get_local_folder_type (
+				TnyFolderType folder_type = modest_tny_folder_get_local_or_mmc_folder_type (
 					TNY_FOLDER (folder_store));
 				switch (folder_type) {
 				case TNY_FOLDER_TYPE_DRAFTS:

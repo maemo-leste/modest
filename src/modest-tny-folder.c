@@ -90,7 +90,7 @@ modest_tny_folder_guess_folder_type (const TnyFolder *folder)
 	g_return_val_if_fail (TNY_IS_FOLDER(folder), TNY_FOLDER_TYPE_UNKNOWN);
 
 	if (modest_tny_folder_is_local_folder ((TnyFolder*)folder))
-		type = modest_tny_folder_get_local_folder_type ((TnyFolder*)folder);
+		type = modest_tny_folder_get_local_or_mmc_folder_type ((TnyFolder*)folder);
 	else
 		type = tny_folder_get_folder_type (TNY_FOLDER (folder));
 	
@@ -116,7 +116,7 @@ modest_tny_folder_get_rules   (TnyFolder *folder)
 	if (modest_tny_folder_is_local_folder (folder) ||
 	    modest_tny_folder_is_memory_card_folder (folder)) {
 	
-		type = modest_tny_folder_get_local_folder_type (folder);
+		type = modest_tny_folder_get_local_or_mmc_folder_type (folder);
 		
 		switch (type) {
 		case TNY_FOLDER_TYPE_OUTBOX:
@@ -193,7 +193,7 @@ modest_tny_folder_is_local_folder   (TnyFolder *folder)
 	TnyAccount* account = tny_folder_get_account ((TnyFolder*)folder);
 	if (!account)
 		return FALSE;
-
+	
 	/* Outbox is a special case, using a derived TnyAccount: */
 	if (MODEST_IS_TNY_OUTBOX_ACCOUNT (account)) {
 		g_object_unref (G_OBJECT(account));
@@ -237,10 +237,13 @@ modest_tny_folder_is_memory_card_folder   (TnyFolder *folder)
 
 
 TnyFolderType
-modest_tny_folder_get_local_folder_type  (TnyFolder *folder)
+modest_tny_folder_get_local_or_mmc_folder_type  (TnyFolder *folder)
 {
 	g_return_val_if_fail (folder, TNY_FOLDER_TYPE_UNKNOWN);
-
+	g_return_val_if_fail (modest_tny_folder_is_local_folder(folder)||
+			      modest_tny_folder_is_memory_card_folder(folder),
+			      TNY_FOLDER_TYPE_UNKNOWN);
+	
 	/* The merge folder is a special case, 
 	 * used to merge the per-account local outbox folders. 
 	 * and can have no get_account() implementation.
@@ -261,11 +264,7 @@ modest_tny_folder_get_local_folder_type  (TnyFolder *folder)
 		g_object_unref (parent_account);
 		parent_account = NULL;
 	}
-
-
-	g_return_val_if_fail (modest_tny_folder_is_local_folder(folder),
-			      TNY_FOLDER_TYPE_UNKNOWN);
-
+	
 	/* we need to use the camel functions, because we want the
 	 * _full name_, that is, the full path name of the folder,
 	 * to distinguish between 'Outbox' and 'myfunkyfolder/Outbox'
@@ -290,7 +289,7 @@ modest_tny_folder_is_outbox_for_account (TnyFolder *folder, TnyAccount *account)
 	g_return_val_if_fail(folder, FALSE);
 	g_return_val_if_fail(account, FALSE);
 	
-	if (modest_tny_folder_get_local_folder_type (folder) != TNY_FOLDER_TYPE_OUTBOX)
+	if (modest_tny_folder_get_local_or_mmc_folder_type (folder) != TNY_FOLDER_TYPE_OUTBOX)
 		return FALSE;
 		
 	return TRUE;

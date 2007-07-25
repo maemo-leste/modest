@@ -671,7 +671,7 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg)
 	msg_folder = tny_msg_get_folder (msg);
 	if (msg_folder) {
 		if (modest_tny_folder_is_local_folder (msg_folder) &&
-		    modest_tny_folder_get_local_folder_type (msg_folder) == TNY_FOLDER_TYPE_DRAFTS)
+		    modest_tny_folder_get_local_or_mmc_folder_type (msg_folder) == TNY_FOLDER_TYPE_DRAFTS)
 			priv->draft_msg = g_object_ref(msg);
 		g_object_unref (msg_folder);
 	}
