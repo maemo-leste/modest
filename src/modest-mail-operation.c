@@ -672,6 +672,7 @@ modest_mail_operation_create_msg (ModestMailOperation *self,
 	info->from = g_strdup (from);
 	info->to = g_strdup (to);
 	info->cc = g_strdup (cc);
+	info->bcc  = g_strdup (bcc);
 	info->subject = g_strdup (subject);
 	info->plain_body = g_strdup (plain_body);
 	info->html_body = g_strdup (html_body);
