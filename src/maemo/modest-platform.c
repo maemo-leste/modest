@@ -1190,17 +1190,13 @@ gboolean modest_platform_set_update_interval (guint minutes)
      
 	/* Register alarm: */
 	
-	/* Get current time: */
-	time_t time_now;
-	time (&time_now);
-	struct tm *st_time = localtime (&time_now);
-	
-	/* Add minutes to tm_min field: */
-	st_time->tm_min += minutes;
-	
-	/* Set the time in alarm_event_t structure: */
+	/* Set the interval in alarm_event_t structure: */
 	alarm_event_t *event = g_new0(alarm_event_t, 1);
-	event->alarm_time = mktime (st_time);
+	event->alarm_time = minutes * 60; /* seconds */
+	
+	/* Set recurrence every few minutes: */
+	event->recurrence = minutes;
+	event->recurrence_count = -1; /* Means infinite */
 
 	/* Specify what should happen when the alarm happens:
 	 * It should call this D-Bus method: */

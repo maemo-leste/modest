@@ -252,7 +252,12 @@ modest_maemo_global_settings_dialog_finalize (GObject *obj)
 	priv = MODEST_MAEMO_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE (obj);
 	ppriv = MODEST_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE (obj);
 
-	if (priv->switch_handler) {
+	if (priv->switch_handler && ppriv->notebook) {
+		/* TODO: This causes a g_warning:
+		 modest[13409]: GLIB WARNING ** GLib-GObject - invalid unclassed pointer in cast to `GObject'
+		modest[13409]: GLIB WARNING ** GLib-GObject - instance with invalid (NULL) class pointer
+		modest[13409]: GLIB CRITICAL ** GLib-GObject - g_signal_handler_disconnect: assertion `G_TYPE_CHECK_INSTANCE (instance)' failed
+		 */
 		g_signal_handler_disconnect (G_OBJECT (ppriv->notebook), priv->switch_handler);
 		priv->switch_handler = 0;
 	}

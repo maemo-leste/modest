@@ -1,3 +1,17 @@
+2007-07-25  Murray Cumming  <murrayc@murrayc.com>
+
+	(modest_platform_set_update_interval): Set the alarm recurrence 
+	fields so that auto-update does not just happen the first time.
+	This should have fixed projects.maemo.org bug NB#63938.
+
+	When this happens you can see a printf when the D-Bus method is 
+	called:
+	GLIB DEBUG default - debug: modest_dbus_req_handler: method received: SendReceive
+
+	However, I do not actually seem to get new POP messages even when 
+	clicking the refresh button manually. A restart gets them. 
+	This might be a problem in today's tinymail only.
+
 2007-07-24  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/maemo/modest-maemo-global-settings-dialog.c:
