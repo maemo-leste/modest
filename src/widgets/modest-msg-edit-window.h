@@ -313,13 +313,15 @@ void            modest_msg_edit_window_select_contacts    (ModestMsgEditWindow *
 /**
  * modest_msg_edit_window_check_names:
  * @window: a #ModestMsgEditWindow
+ * @add_to_addressbook: if TRUE, add valid addresses to the addressbook
  *
  * Validates all the recipients, and shows (if required) dialogs for adding contacts
  * or fixing problems in specific fields.
  *
  * Returns: %TRUE if all fields were validated, %FALSE otherwise
  */
-gboolean        modest_msg_edit_window_check_names    (ModestMsgEditWindow *window);
+gboolean        modest_msg_edit_window_check_names    (ModestMsgEditWindow *window,
+						       gboolean add_to_addressbook);
 
 /**
  * modest_msg_edit_window_toggle_find_toolbar:

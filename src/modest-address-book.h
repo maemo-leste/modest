@@ -57,14 +57,15 @@ modest_address_book_select_addresses (ModestRecptEditor *editor);
 /**
  * modest_address_book_check_names:
  * @editor: a #ModestRecptEditor
- *
+ * @update_addressbook: if TRUE, add valid addresses to the addressbook, recent list
+ * 
  * Performs verification of addresses in a recipient editor.
  *
  * Returns: %TRUE if all recipients are valid or there are
  * no recipients, %FALSE otherwise.
  */
 gboolean
-modest_address_book_check_names (ModestRecptEditor *editor);
+modest_address_book_check_names (ModestRecptEditor *editor, gboolean update_addressbook);
 
 
 

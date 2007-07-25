@@ -1905,7 +1905,7 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 {
 	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW(edit_window));
 
-	if (!modest_msg_edit_window_check_names (edit_window))
+	if (!modest_msg_edit_window_check_names (edit_window, TRUE))
 		return;
 	
 	/* Offer the connection dialog, if necessary: */	
@@ -3155,7 +3155,7 @@ void
 modest_ui_actions_on_check_names (GtkAction *action, ModestMsgEditWindow *window)
 {
 	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
-	modest_msg_edit_window_check_names (window);
+	modest_msg_edit_window_check_names (window, FALSE);
 }
 
 static void

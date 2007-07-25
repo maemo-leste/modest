@@ -51,7 +51,7 @@ static EBook *book = NULL;
 static EBookView * book_view = NULL;
 
 static GSList *get_recipients_for_given_contact(EContact * contact);
-static void commit_contact(EContact * contact);
+static void commit_contact(EContact * contact, gboolean is_new);
 static gchar *get_email_addr_from_user(const gchar * given_name);
 static gchar *ui_get_formatted_email_id(gchar * current_given_name,
 					gchar * current_sur_name, gchar * current_email_id);
@@ -60,6 +60,14 @@ static GSList *select_email_addrs_for_contact(GList * email_addr_list);
 static gboolean resolve_address (const gchar *address, GSList **resolved_addresses, gchar **contact_id);
 static gchar *unquote_string (const gchar *str);
 
+
+static void
+unref_gobject (GObject *obj)
+{
+	if (obj)
+		g_object_unref (obj);
+}
+	
 
 static void
 get_book_view_cb (EBook *book, EBookStatus status, EBookView *bookview, gpointer data)
@@ -275,7 +283,7 @@ static GSList *get_recipients_for_given_contact(EContact * contact)
 
 		if (emailid) {
 			e_contact_set(contact, E_CONTACT_EMAIL_1, emailid);
-			commit_contact(contact);
+			commit_contact(contact, FALSE);
 		}
 	}
 
@@ -321,15 +329,18 @@ static GSList *get_recipients_for_given_contact(EContact * contact)
  * @return void
  */
 static void 
-commit_contact(EContact * contact)
+commit_contact(EContact * contact, gboolean is_new)
 {
+	g_return_if_fail (contact);
+	g_return_if_fail (book);
+	
 	if (!contact || !book)
 		return;
-
+	
 #ifdef MODEST_HAVE_OLD_ABOOK	
-	osso_abook_contact_commit(contact, FALSE, book);
+	osso_abook_contact_commit(contact, is_new, book);
 #else
-	osso_abook_contact_commit(contact, FALSE, book, NULL);
+	osso_abook_contact_commit(contact, is_new, book, NULL);
 #endif /* MODEST_HILDON_VERSION_0 */
 }
 
@@ -567,8 +578,55 @@ select_email_addrs_for_contact(GList * email_addr_list)
 	return selected_email_addr_list;
 }
 
+
+static gboolean /* make this public? */
+add_to_address_book (const gchar* address)
+{
+	EBookQuery *query;
+	GList *contacts = NULL;
+	GError *err = NULL;
+	
+	g_return_val_if_fail (address, FALSE);
+	
+	if (!book)
+		open_addressbook ();
+	
+	g_return_val_if_fail (book, FALSE);
+	
+	query = e_book_query_field_test (E_CONTACT_EMAIL, E_BOOK_QUERY_IS, address);
+	if (!e_book_get_contacts (book, query, &contacts, &err)) {
+		g_printerr ("modest: failed to get contacts: %s",
+			    err ? err->message : "<unknown>");
+		if (err)
+			g_error_free (err);
+		return FALSE;
+	}
+	e_book_query_unref (query);
+	
+	/*  we need to 'commit' it, even if we already found the email
+	 * address in the addressbook; thus, it will show up in the 'recent list' */
+	if (contacts)  {		
+		g_debug ("%s already in the address book", address);
+		commit_contact ((EContact*)contacts->data, FALSE);
+		
+		g_list_foreach (contacts, (GFunc)unref_gobject, NULL);
+		g_list_free (contacts);
+
+	} else {
+		/* it's not yet in the addressbook, add it now! */
+		EContact *new_contact = e_contact_new ();
+		e_contact_set (new_contact, E_CONTACT_EMAIL_1, (const gpointer)address);
+		commit_contact (new_contact, TRUE);
+		g_debug ("%s added to address book", address);
+		g_object_unref (new_contact);
+	}
+
+	return TRUE;
+}
+
+
 gboolean
-modest_address_book_check_names (ModestRecptEditor *recpt_editor)
+modest_address_book_check_names (ModestRecptEditor *recpt_editor, gboolean update_addressbook)
 {
 	const gchar *recipients = NULL;
 	GSList *start_indexes = NULL, *end_indexes = NULL;
@@ -604,7 +662,7 @@ modest_address_book_check_names (ModestRecptEditor *recpt_editor)
 		gchar *start_ptr, *end_ptr;
 		gint start_pos, end_pos;
 		const gchar *invalid_char_position = NULL;
-
+		
 		start_pos = (*((gint*) current_start->data)) + offset_delta;
 		end_pos = (*((gint*) current_end->data)) + offset_delta;
 	       
@@ -647,15 +705,21 @@ modest_address_book_check_names (ModestRecptEditor *recpt_editor)
 					recipients = modest_recpt_editor_get_recipients (recpt_editor);
 					new_length = g_utf8_strlen (recipients, -1);
 					offset_delta = offset_delta + new_length - last_length;
-					last_length = new_length;
+					last_length = new_length;					
 				}
 			} else {
 				/* this address is not valid, select it and return control to user showing banner */
-
 				hildon_banner_show_information (NULL, NULL, _("mcen_ib_invalid_email"));
 				result = FALSE;
 			}
-		}
+		} 
+
+		/* so, it seems a valid address */
+		/* note: adding it the to the addressbook if it did not exist yet,
+		 * and adding it to the recent_list */
+		if (result && update_addressbook)
+			add_to_address_book (address);
+
 		g_free (address);
 		if (result == FALSE)
 			break;
@@ -773,7 +837,10 @@ resolve_address (const gchar *address, GSList **resolved_addresses, gchar **cont
 		if (*resolved_addresses) {
 			*contact_id = g_strdup (e_contact_get_const (contact, E_CONTACT_UID));
 		}
-		/* TODO: free the resolved_contacts list */
+
+		g_list_foreach (resolved_contacts, (GFunc)unref_gobject, NULL);
+		g_list_free (resolved_contacts);
+
 		return TRUE;
 	} else {
 		/* cancelled dialog to select more than one contact or

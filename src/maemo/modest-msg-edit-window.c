@@ -2577,10 +2577,10 @@ modest_msg_edit_window_is_modified (ModestMsgEditWindow *editor)
 }
 
 gboolean
-modest_msg_edit_window_check_names (ModestMsgEditWindow *window)
+modest_msg_edit_window_check_names (ModestMsgEditWindow *window, gboolean add_to_addressbook)
 {
 	ModestMsgEditWindowPrivate *priv = NULL;
-
+	
 	g_return_val_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window), FALSE);
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
 
@@ -2593,11 +2593,11 @@ modest_msg_edit_window_check_names (ModestMsgEditWindow *window)
 		return FALSE;
 	}
 
-	if (!modest_address_book_check_names (MODEST_RECPT_EDITOR (priv->to_field)))
+	if (!modest_address_book_check_names (MODEST_RECPT_EDITOR (priv->to_field),  add_to_addressbook))
 		return FALSE;
-	if (!modest_address_book_check_names (MODEST_RECPT_EDITOR (priv->cc_field)))
+	if (!modest_address_book_check_names (MODEST_RECPT_EDITOR (priv->cc_field),  add_to_addressbook))
 		return FALSE;
-	if (!modest_address_book_check_names (MODEST_RECPT_EDITOR (priv->bcc_field)))
+	if (!modest_address_book_check_names (MODEST_RECPT_EDITOR (priv->bcc_field), add_to_addressbook))
 		return FALSE;
 
 	modest_recpt_editor_grab_focus (MODEST_RECPT_EDITOR (priv->to_field));
