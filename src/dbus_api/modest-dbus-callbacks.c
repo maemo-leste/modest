@@ -378,7 +378,7 @@ on_idle_compose_mail(gpointer user_data)
 
 					list = g_strsplit(idle_data->attachments, ",", 0);
 					for (i=0; list[i] != NULL; i++) {
-						modest_msg_edit_window_attach_file_noninteractive(
+						modest_msg_edit_window_attach_file_one(
 								(ModestMsgEditWindow *)win, list[i]);
 					}
 					g_strfreev(list);

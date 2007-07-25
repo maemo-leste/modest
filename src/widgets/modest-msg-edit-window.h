@@ -203,22 +203,22 @@ void                    modest_msg_edit_window_select_background_color          
 void                    modest_msg_edit_window_insert_image          (ModestMsgEditWindow *window);
 
 /**
- * modest_msg_edit_window_attach_file:
+ * modest_msg_edit_window_offer_attach_file:
  * @self: a #ModestMsgEditWindow
  *
  * show a file selection dialog to attach a file
  */
-void                    modest_msg_edit_window_attach_file           (ModestMsgEditWindow *window);
+void                    modest_msg_edit_window_offer_attach_file           (ModestMsgEditWindow *window);
 
 /**
- * modest_msg_edit_window_attach_file_noninteractive:
+ * modest_msg_edit_window_attach_file_one:
  * @self: a #ModestMsgEditWindow
  * @file_uri: The URI of a file to attach to the email message.
  *
  * attach a file to a MsgEditWindow non interactively, 
  * without file dialog. This is needed by dbus callbacks.
  */
-void                    modest_msg_edit_window_attach_file_noninteractive           (ModestMsgEditWindow *window, const gchar *file_uri);
+void                    modest_msg_edit_window_attach_file_one           (ModestMsgEditWindow *window, const gchar *file_uri);
 
 /**
  * modest_msg_edit_window_remove_attachments:

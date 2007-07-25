@@ -2136,7 +2136,7 @@ modest_ui_actions_on_attach_file (GtkAction *action,
 	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
 	g_return_if_fail (GTK_IS_ACTION (action));
 
-	modest_msg_edit_window_attach_file (window);
+	modest_msg_edit_window_offer_attach_file (window);
 }
 
 void 

@@ -1457,6 +1457,23 @@ modest_msg_edit_window_select_background_color (ModestMsgEditWindow *window)
 
 }
 
+static TnyStream* create_stream_for_uri (const gchar* uri)
+{
+	if (!uri)
+		return NULL;
+		
+	TnyStream *result = NULL;
+
+	GnomeVFSHandle *handle = NULL;
+	GnomeVFSResult test = gnome_vfs_open (&handle, uri, GNOME_VFS_OPEN_READ);
+	if (test == GNOME_VFS_OK) {
+		/* Create the tinymail stream: */
+		/* Presumably tinymai will call gnome_vfs_close (handle) later. */
+		result = TNY_STREAM (tny_vfs_stream_new (handle));
+	}
+	
+	return result;
+}
 
 void
 modest_msg_edit_window_insert_image (ModestMsgEditWindow *window)
@@ -1501,7 +1518,6 @@ modest_msg_edit_window_insert_image (ModestMsgEditWindow *window)
 			GnomeVFSFileInfo info;
 			gchar *filename, *basename, *escaped_filename;
 			TnyMimePart *mime_part;
-			TnyStream *stream;
 			gchar *content_id;
 			const gchar *mime_type = NULL;
 			GnomeVFSURI *vfs_uri;
@@ -1520,8 +1536,8 @@ modest_msg_edit_window_insert_image (ModestMsgEditWindow *window)
 
 			mime_part = tny_platform_factory_new_mime_part
 				(modest_runtime_get_platform_factory ());
-			stream = TNY_STREAM (tny_vfs_stream_new (handle));
-			
+				
+			TnyStream *stream = create_stream_for_uri (uri);
 			tny_mime_part_construct_from_stream (mime_part, stream, mime_type);
 			
 			content_id = g_strdup_printf ("%d", priv->last_cid);
@@ -1578,7 +1594,7 @@ modest_msg_edit_window_insert_image (ModestMsgEditWindow *window)
 }
 
 void
-modest_msg_edit_window_attach_file (ModestMsgEditWindow *window)
+modest_msg_edit_window_offer_attach_file (ModestMsgEditWindow *window)
 {
 	
 	ModestMsgEditWindowPrivate *priv;
@@ -1604,124 +1620,72 @@ modest_msg_edit_window_attach_file (ModestMsgEditWindow *window)
 	gtk_widget_destroy (dialog);
 
 	for (uri_node = uris; uri_node != NULL; uri_node = g_slist_next (uri_node)) {
-		const gchar *uri;
-		GnomeVFSHandle *handle = NULL;
-		GnomeVFSResult result;
-
-		uri = (const gchar *) uri_node->data;
-		result = gnome_vfs_open (&handle, uri, GNOME_VFS_OPEN_READ);
-		if (result == GNOME_VFS_OK) {
-			TnyMimePart *mime_part;
-			TnyStream *stream;
-			const gchar *mime_type = NULL;
-			gchar *basename;
-			gchar *escaped_filename;
-			gchar *filename;
-			gchar *content_id;
-			GnomeVFSFileInfo info;
-			GnomeVFSURI *vfs_uri;
-
-			vfs_uri = gnome_vfs_uri_new (uri);
-			
-
-			escaped_filename = g_path_get_basename (gnome_vfs_uri_get_path (vfs_uri));
-			filename = gnome_vfs_unescape_string_for_display (escaped_filename);
-			g_free (escaped_filename);
-			gnome_vfs_uri_unref (vfs_uri);
-			
-			if (gnome_vfs_get_file_info (uri, 
-						     &info, 
-						     GNOME_VFS_FILE_INFO_GET_MIME_TYPE |
-						     GNOME_VFS_FILE_INFO_FORCE_SLOW_MIME_TYPE)
-			    == GNOME_VFS_OK)
-				mime_type = gnome_vfs_file_info_get_mime_type (&info);
-			mime_part = tny_platform_factory_new_mime_part
-				(modest_runtime_get_platform_factory ());
-			stream = TNY_STREAM (tny_vfs_stream_new (handle));
-			
-			tny_mime_part_construct_from_stream (mime_part, stream, mime_type);
-			
-			content_id = g_strdup_printf ("%d", priv->last_cid);
-			tny_mime_part_set_content_id (mime_part, content_id);
-			g_free (content_id);
-			priv->last_cid++;
-			
-			basename = g_path_get_basename (filename);
-			tny_mime_part_set_filename (mime_part, basename);
-			g_free (basename);
-			
-			priv->attachments = g_list_prepend (priv->attachments, mime_part);
-			modest_attachments_view_add_attachment (MODEST_ATTACHMENTS_VIEW (priv->attachments_view),
-								mime_part);
-			gtk_widget_set_no_show_all (priv->attachments_caption, FALSE);
-			gtk_widget_show_all (priv->attachments_caption);
-			gtk_text_buffer_set_modified (priv->text_buffer, TRUE);
-			g_free (filename);
-
-		} 
+		const gchar *uri = (const gchar *) uri_node->data;
+		modest_msg_edit_window_attach_file_one (window, uri);
 	}
 	g_slist_foreach (uris, (GFunc) g_free, NULL);
 	g_slist_free (uris);
 }
 
 void
-modest_msg_edit_window_attach_file_noninteractive (
+modest_msg_edit_window_attach_file_one (
 		ModestMsgEditWindow *window,
-		const gchar *file_uri)
+		const gchar *uri)
 {
-	
-	ModestMsgEditWindowPrivate *priv;
-	
-	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
-
-	if (file_uri && strlen(file_uri)) {
-		gint file_id = 0;
+	g_return_if_fail (window);
+	g_return_if_fail (uri);
 		
-		/* TODO: We should probably try to use only the URI,
-		 * instead of using a filename.
-		 */
-		gchar* filename = g_filename_from_uri (file_uri, NULL, NULL);
-		if (!filename) {
-			g_warning("%s: g_filename_from_uri('%s') failed.\n", __FUNCTION__, file_uri);
-		}
+	ModestMsgEditWindowPrivate *priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
+	
+	
+	GnomeVFSHandle *handle = NULL;
+	GnomeVFSResult result = gnome_vfs_open (&handle, uri, GNOME_VFS_OPEN_READ);
+	if (result == GNOME_VFS_OK) {
+		TnyMimePart *mime_part;
+		TnyStream *stream;
+		const gchar *mime_type = NULL;
+		gchar *basename;
+		gchar *escaped_filename;
+		gchar *filename;
+		gchar *content_id;
+		GnomeVFSFileInfo info;
+		GnomeVFSURI *vfs_uri;
 
-		file_id = g_open (filename, O_RDONLY, 0);
-		if (file_id != -1) {
-			TnyMimePart *mime_part;
-			TnyStream *stream;
-			const gchar *mime_type;
-			gchar *basename;
-			gchar *content_id;
-#ifdef MODEST_HAVE_HILDON0_WIDGETS
-			mime_type = gnome_vfs_get_mime_type(filename);
-#else
-			mime_type = gnome_vfs_get_file_mime_type_fast (filename, NULL);
-#endif
-			mime_part = tny_platform_factory_new_mime_part
-				(modest_runtime_get_platform_factory ());
-			stream = TNY_STREAM (tny_fs_stream_new (file_id));
-			
-			tny_mime_part_construct_from_stream (mime_part, stream, mime_type);
-			
-			content_id = g_strdup_printf ("%d", priv->last_cid);
-			tny_mime_part_set_content_id (mime_part, content_id);
-			g_free (content_id);
-			priv->last_cid++;
-			
-			basename = g_path_get_basename (filename);
-			tny_mime_part_set_filename (mime_part, basename);
-			g_free (basename);
-			
-			priv->attachments = g_list_prepend (priv->attachments, mime_part);
-			modest_attachments_view_add_attachment (MODEST_ATTACHMENTS_VIEW (priv->attachments_view),
-								mime_part);
-			gtk_widget_set_no_show_all (priv->attachments_caption, FALSE);
-			gtk_widget_show_all (priv->attachments_caption);
-		} else if (file_id == -1) {
-			close (file_id);
-			g_warning("file to be attached does not exist: %s", filename);
-		}
+		vfs_uri = gnome_vfs_uri_new (uri);
+		
 
+		escaped_filename = g_path_get_basename (gnome_vfs_uri_get_path (vfs_uri));
+		filename = gnome_vfs_unescape_string_for_display (escaped_filename);
+		g_free (escaped_filename);
+		gnome_vfs_uri_unref (vfs_uri);
+		
+		if (gnome_vfs_get_file_info (uri, 
+					     &info, 
+					     GNOME_VFS_FILE_INFO_GET_MIME_TYPE |
+					     GNOME_VFS_FILE_INFO_FORCE_SLOW_MIME_TYPE)
+		    == GNOME_VFS_OK)
+			mime_type = gnome_vfs_file_info_get_mime_type (&info);
+		mime_part = tny_platform_factory_new_mime_part
+			(modest_runtime_get_platform_factory ());
+		stream = TNY_STREAM (tny_vfs_stream_new (handle));
+		
+		tny_mime_part_construct_from_stream (mime_part, stream, mime_type);
+		
+		content_id = g_strdup_printf ("%d", priv->last_cid);
+		tny_mime_part_set_content_id (mime_part, content_id);
+		g_free (content_id);
+		priv->last_cid++;
+		
+		basename = g_path_get_basename (filename);
+		tny_mime_part_set_filename (mime_part, basename);
+		g_free (basename);
+		
+		priv->attachments = g_list_prepend (priv->attachments, mime_part);
+		modest_attachments_view_add_attachment (MODEST_ATTACHMENTS_VIEW (priv->attachments_view),
+							mime_part);
+		gtk_widget_set_no_show_all (priv->attachments_caption, FALSE);
+		gtk_widget_show_all (priv->attachments_caption);
+		gtk_text_buffer_set_modified (priv->text_buffer, TRUE);
 		g_free (filename);
 	}
 }
@@ -2646,7 +2610,7 @@ static void
 modest_msg_edit_window_add_attachment_clicked (GtkButton *button,
 					       ModestMsgEditWindow *window)
 {
-	modest_msg_edit_window_attach_file (window);
+	modest_msg_edit_window_offer_attach_file (window);
 }
 
 static void

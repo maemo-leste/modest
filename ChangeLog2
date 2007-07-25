@@ -1,5 +1,25 @@
 2007-07-25  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/widgets/modest-msg-edit-window.h:
+	* src/maemo/modest-msg-edit-window.c: (create_stream_for_uri):
+	Moved some code here to make it simpler.
+	(modest_msg_edit_window_attach_file_one): Renamed from 
+	modest_msg_edit_window_attach_file_interactive().
+	(modest_msg_edit_window_offer_attach_file): Renamed from 
+	modest_msg_edit_window_attach_file() and used 
+	modest_msg_edit_window_attach_file_one() instead of 
+	copy/pasting the code. The old code for one was not using 
+	GnomeVFS. This allows use of smb:// URLs when using send-as 
+	from external applications, fixing bug NB#63741.
+
+	(modest_msg_edit_window_insert_image),
+	(modest_msg_edit_window_add_attachment_clicked):
+	* src/modest-ui-actions.c: (modest_ui_actions_on_attach_file):
+	* src/dbus_api/modest-dbus-callbacks.c: (on_idle_compose_mail):
+	Adapted to the new function names.
+
+2007-07-25  Murray Cumming  <murrayc@murrayc.com>
+
 	(modest_platform_set_update_interval): Set the alarm recurrence 
 	fields so that auto-update does not just happen the first time.
 	This should have fixed projects.maemo.org bug NB#63938.
