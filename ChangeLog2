@@ -1,5 +1,12 @@
 2007-07-25  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-tny-account-store.c: (get_password):
+	Never save the entered username and password in gconf, 
+	because the UI spec says we should not. This helps 
+	slightly with projects.maemo.org bug NB#63671.
+
+2007-07-25  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/widgets/modest-msg-edit-window.h:
 	* src/maemo/modest-msg-edit-window.c: (create_stream_for_uri):
 	Moved some code here to make it simpler.

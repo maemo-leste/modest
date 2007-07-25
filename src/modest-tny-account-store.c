@@ -688,6 +688,9 @@ get_password (TnyAccount *account, const gchar * prompt_not_used, gboolean *canc
 			 * but we need to tell tinymail about the username too: */
 			tny_account_set_user (account, username);
 			
+			/* Do not save the password in gconf, 
+			 * because the UI spec says "The password will never be saved in the account": */
+			/*
 			if (remember) {
 				printf ("%s: Storing username=%s, password=%s\n", 
 					__FUNCTION__, username, pwd);
@@ -696,6 +699,8 @@ get_password (TnyAccount *account, const gchar * prompt_not_used, gboolean *canc
 				modest_server_account_set_password (priv->account_mgr, server_account_name,
 							       pwd);
 			}
+			*/
+
 			/* We need to dup the string even knowing that
 			   it's already a dup of the contents of an
 			   entry, because it if it's wrong, then camel
