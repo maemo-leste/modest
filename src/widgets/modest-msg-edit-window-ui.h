@@ -99,7 +99,7 @@ static const GtkToggleActionEntry modest_msg_edit_toggle_action_entries [] = {
 	{ "ViewToggleFullscreen", NULL, N_("mcen_me_inbox_fullscreen"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_toggle_fullscreen), FALSE},
 	/* Toolbar visibility */
 	{ "ViewShowToolbarNormalScreen", NULL, N_("mcen_me_inbox_normalview"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_toggle_toolbar), TRUE },
-	{ "ViewShowToolbarFullScreen", NULL, N_("mcen_me_inbox_optimizedview"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_toggle_toolbar), TRUE },
+	{ "ViewShowToolbarFullScreen", NULL, N_("mcen_me_inbox_fullscreen"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_toggle_toolbar), TRUE },
 
 	/* Rich text editor functions */
 	{ "ActionsBulletedList", NULL, N_("mcen_me_editor_bullets"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_toggle_bullets), FALSE },
