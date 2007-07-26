@@ -1408,7 +1408,9 @@ modest_dbus_req_filter (DBusConnection *con,
 		handled = TRUE;			 	
 	}
 	else {
-		g_debug ("  debug: %s: Unexpected D-Bus method\n", __FUNCTION__);
+		g_debug ("  debug: %s: Unexpected D-Bus method: Interface=%s, Member=%s\n", 
+			__FUNCTION__, dbus_message_get_interface (message),
+			dbus_message_get_member(message));
 	}
 	
 	return (handled ? 

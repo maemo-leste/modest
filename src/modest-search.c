@@ -420,9 +420,13 @@ modest_search_folder (TnyFolder *folder, ModestSearch *search)
 
 	while (!tny_iterator_is_done (iter)) {
 		TnyHeader *cur = (TnyHeader *) tny_iterator_get_current (iter);
-		time_t t = tny_header_get_date_sent (cur);
+		const time_t t = tny_header_get_date_sent (cur);
 		gboolean found = FALSE;
 		
+		/* Ignore deleted (not yet expunged) emails: */
+		if (tny_header_get_flags(cur) & TNY_HEADER_FLAG_DELETED)
+			goto go_next;
+			
 		if (search->flags & MODEST_SEARCH_BEFORE)
 			if (!(t <= search->before))
 				goto go_next;
@@ -488,6 +492,7 @@ modest_search_folder (TnyFolder *folder, ModestSearch *search)
 					retval = add_hit (retval, cur, folder);
 				}
 			}
+			
 			if (msg)
 				g_object_unref (msg);
 		}

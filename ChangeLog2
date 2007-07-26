@@ -1,3 +1,17 @@
+2007-07-26  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/dbus_api/modest-dbus-callbacks.c: (modest_dbus_req_filter):
+	printf more details when we get unhandled D-Bus methods, because 
+	it is interesting.
+
+	* src/modest-mail-operation.c: (update_account_thread):
+	Comment out the tny_camel_pop_store_account_reconnect(), because this 
+	is apparently no longer needed, and it did not work before anyway. 
+	See the comment in the code.
+
+	* src/modest-search.c: (modest_search_folder): Ignore deleted emails, 
+	by checking the header flags.
+
 2007-07-25  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/maemo/modest-maemo-utils.h: 

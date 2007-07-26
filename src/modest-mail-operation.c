@@ -1159,11 +1159,17 @@ update_account_thread (gpointer thr_user_data)
 	priv->account = g_object_ref (info->account);
 
 	/*
-	 * for POP3, we do a logout-login upon send/receive -- many POP-servers (like Gmail) do not
-	 * show any updates unless we do that
+	 * Previousl, we did this for POP3, to do a logout-login upon send/receive, 
+	 * because many POP-servers (like Gmail) do not
+	 * show any updates unless we do that.
+	 * But that didn't work with gmail anyway, 
+	 * and tinymail now takes care of this itself by disconnecting 
+	 * automatically after using the connection.
 	 */
+	/*
 	if (!first_time && TNY_IS_CAMEL_POP_STORE_ACCOUNT (priv->account)) 
 		tny_camel_pop_store_account_reconnect (TNY_CAMEL_POP_STORE_ACCOUNT(priv->account));
+	*/
 
 	/* Get all the folders. We can do it synchronously because
 	   we're already running in a different thread than the UI */
