@@ -271,6 +271,8 @@ account_list_disconnect (GSList *accounts)
 static void
 recreate_all_accounts (ModestTnyAccountStore *self)
 {
+	/* printf ("DEBUG: %s\n", __FUNCTION__); */
+	
 	ModestTnyAccountStorePrivate *priv = 
 		MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
 	
@@ -279,19 +281,23 @@ recreate_all_accounts (ModestTnyAccountStore *self)
 		priv->store_accounts_outboxes = NULL;
 	}
 			
+			
 	if (priv->store_accounts) {
 		account_list_free (priv->store_accounts);
 		priv->store_accounts = NULL;
-		get_server_accounts (TNY_ACCOUNT_STORE(self),
-					     NULL, TNY_ACCOUNT_TYPE_STORE);
 	}
+	
+	get_server_accounts (TNY_ACCOUNT_STORE(self),
+					     NULL, TNY_ACCOUNT_TYPE_STORE);
+	
 	
 	if (priv->transport_accounts) {
 		account_list_free (priv->transport_accounts);
 		priv->transport_accounts = NULL;
-		get_server_accounts (TNY_ACCOUNT_STORE(self), NULL,
-					     TNY_ACCOUNT_TYPE_TRANSPORT);
 	}
+	
+	get_server_accounts (TNY_ACCOUNT_STORE(self), NULL,
+					     TNY_ACCOUNT_TYPE_TRANSPORT);
 }
 
 static void
@@ -456,6 +462,23 @@ void on_account_settings_hide (GtkWidget *widget, gpointer user_data)
 		g_hash_table_remove (priv->account_settings_dialog_hash, modest_account_name);
 }
 
+static 
+gboolean on_idle_wrong_password_warning_only (gpointer user_data)
+{
+	gdk_threads_enter();
+	
+	ModestWindow *main_window = 
+				modest_window_mgr_get_main_window (modest_runtime_get_window_mgr ());
+				
+	/* Show an explanatory temporary banner: */
+	hildon_banner_show_information ( 
+		GTK_WIDGET(main_window), NULL, _("mcen_ib_username_pw_incorrect"));
+		
+	gdk_threads_leave();
+	
+	return FALSE; /* Don't show again. */
+}
+		
 static 
 gboolean on_idle_wrong_password (gpointer user_data)
 { 
@@ -665,7 +688,7 @@ get_password (TnyAccount *account, const gchar * prompt_not_used, gboolean *canc
 	
 			
 			/* The password must be wrong, so show the account settings dialog so it can be corrected: */
-			/* We show it in the main loop, because this function might no tbe in the main loop. */
+			/* We show it in the main loop, because this function might not be in the main loop. */
 			g_object_ref (account); /* unrefed in the idle handler. */
 			g_idle_add (on_idle_wrong_password, account);
 			
@@ -679,6 +702,11 @@ get_password (TnyAccount *account, const gchar * prompt_not_used, gboolean *canc
 		const gchar* account_id = tny_account_get_id (account);
 		gboolean remember = FALSE;
 		pwd = NULL;
+		
+		if (already_asked) {
+			/* Show an info banner, before we show the protected password dialog: */
+			g_idle_add (on_idle_wrong_password_warning_only, NULL);
+		}
 		
 		request_password_in_main_loop_and_wait (self, account_id, 
 			       &username, &pwd, cancel, &remember);
@@ -1515,15 +1543,27 @@ modest_tny_account_store_get_server_account (ModestTnyAccountStore *self,
 	
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
 
+	/* Make sure that the tny accounts have been created:
+	 * TODO: We might want to do this in several places.
+	 */
+	if (!priv->store_accounts || !priv->transport_accounts)
+		recreate_all_accounts (self);
+
 	account_list = (type == TNY_ACCOUNT_TYPE_STORE) ? 
 		priv->store_accounts : 
 		priv->transport_accounts;
+
+	if (!account_list) {
+		g_printerr ("%s: No server accounts of type %s\n", __FUNCTION__, 
+			(type == TNY_ACCOUNT_TYPE_STORE) ? "store" : "transport");
+		return NULL;
+	}
 	
 	/* Look for the server account */
 	while (account_list && !found) {
 		const gchar *modest_acc_name;
 
-		account = TNY_ACCOUNT (account_list->data);;
+		account = TNY_ACCOUNT (account_list->data);
 		modest_acc_name = 
 			modest_tny_account_get_parent_modest_account_name_for_server_account (account);
 		
@@ -1534,9 +1574,9 @@ modest_tny_account_store_get_server_account (ModestTnyAccountStore *self,
 	}
 
 	if (!found) {
-		g_printerr ("modest: could not get tny %s account for %s\n",
+		g_printerr ("modest: %s: could not get tny %s account for %s\n.  Number of server accounts of this type=%d\n", __FUNCTION__, 
 			    (type == TNY_ACCOUNT_TYPE_STORE) ? "store" : "transport",
-			    account_name);
+			    account_name, g_slist_length (account_list));
 	} else {
 		/* Pick a reference */
 		g_object_ref (account);

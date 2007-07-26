@@ -1,5 +1,22 @@
 2007-07-26  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-tny-account-store.c: (recreate_all_accounts):
+	Recreate them even if they were NULL before. I guess something 
+	else was already creating them before, or this would never 
+	have worked.
+	(modest_tny_account_store_get_server_account): Make sure that 
+	the tny accounts have been created before trying to find one.
+	This allows libmodest_dbus_client_compose_mail() to work 
+	when the UI is not yet visible.
+	This is probably useful in other cases too.
+
+	(get_password): When the password is wrong after it is entered 
+	in the protected password dialog, show an info banner (in an 
+	idle handler) before showing the protected password dialog 
+	again.
+
+2007-07-26  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/modest-ui-actions.h:
 	* src/modest-ui-actions.c: Added 
 	modest_do_refresh_current_folder() containing some code from 
