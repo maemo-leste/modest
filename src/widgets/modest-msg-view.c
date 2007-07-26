@@ -86,6 +86,7 @@ static void adjustment_value_changed (GtkAdjustment *adj, gpointer data);
 static void html_adjustment_changed (GtkAdjustment *adj, gpointer data);
 static void disconnect_vadjustment (ModestMsgView *obj);
 static void disconnect_hadjustment (ModestMsgView *obj);
+static gboolean idle_readjust_scroll (ModestMsgView *obj);
 
 /* GtkContainer methods */
 static void forall (GtkContainer *container, gboolean include_internals,
@@ -1335,6 +1336,7 @@ modest_msg_view_set_message (ModestMsgView *self, TnyMsg *msg)
 	TnyMimePart *body;
 	ModestMsgViewPrivate *priv;
 	TnyHeader *header;
+	GtkAdjustment *html_vadj;
 	
 	g_return_if_fail (self);
 	
@@ -1405,6 +1407,15 @@ modest_msg_view_set_message (ModestMsgView *self, TnyMsg *msg)
 	if (priv->vadj != NULL)
 		priv->vadj->value = 0.0;
 
+	html_vadj = gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (priv->html_scroll));
+
+	g_signal_emit_by_name (G_OBJECT (html_vadj), "changed");
+
+	/* This is a hack to force reallocation of scroll after drawing all the stuff. This
+	 * makes the html view get the proper and expected size and prevent being able to scroll
+	 * the buffer when it shouldn't be scrollable */
+	g_object_ref (self);
+	g_timeout_add (250, (GSourceFunc) idle_readjust_scroll, self);
 }
 
 
@@ -1627,4 +1638,20 @@ modest_msg_view_remove_attachment (ModestMsgView *view, TnyMimePart *attachment)
 	modest_attachments_view_remove_attachment (MODEST_ATTACHMENTS_VIEW (priv->attachments_view),
 						   attachment);
 	
+}
+
+gboolean
+idle_readjust_scroll (ModestMsgView *view)
+{
+	if (GTK_WIDGET_DRAWABLE (view)) {
+		ModestMsgViewPrivate *priv = MODEST_MSG_VIEW_GET_PRIVATE (view);
+		GtkAdjustment *html_vadj;
+		html_vadj = gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (priv->html_scroll));
+		html_vadj->upper = html_vadj->page_size;
+		gtk_adjustment_changed (html_vadj);
+		gtk_widget_queue_resize (GTK_WIDGET (view));
+		gtk_widget_queue_draw (GTK_WIDGET (view));
+	}
+	g_object_unref (G_OBJECT (view));
+	return FALSE;
 }
