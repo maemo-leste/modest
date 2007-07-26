@@ -1647,7 +1647,7 @@ idle_readjust_scroll (ModestMsgView *view)
 		ModestMsgViewPrivate *priv = MODEST_MSG_VIEW_GET_PRIVATE (view);
 		GtkAdjustment *html_vadj;
 		html_vadj = gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (priv->html_scroll));
-		html_vadj->upper = html_vadj->page_size;
+		html_vadj->page_size = html_vadj->upper;
 		gtk_adjustment_changed (html_vadj);
 		gtk_widget_queue_resize (GTK_WIDGET (view));
 		gtk_widget_queue_draw (GTK_WIDGET (view));
