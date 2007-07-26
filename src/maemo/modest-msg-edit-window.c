@@ -97,9 +97,11 @@ static void  setup_insensitive_handlers (ModestMsgEditWindow *editor);
 static void  reset_modified (ModestMsgEditWindow *editor);
 
 static void  text_buffer_refresh_attributes (WPTextBuffer *buffer, ModestMsgEditWindow *window);
-static void  text_buffer_delete_range (GtkTextBuffer *buffer, GtkTextIter *start, GtkTextIter *end, gpointer userdata);
 static void  text_buffer_can_undo (GtkTextBuffer *buffer, gboolean can_undo, ModestMsgEditWindow *window);
 static void  text_buffer_can_redo (GtkTextBuffer *buffer, gboolean can_redo, ModestMsgEditWindow *window);
+static void  text_buffer_apply_tag (GtkTextBuffer *buffer, GtkTextTag *tag, 
+				    GtkTextIter *start, GtkTextIter *end,
+				    gpointer userdata);
 static void  text_buffer_delete_images_by_id (GtkTextBuffer *buffer, const gchar * image_id);
 static void  subject_field_changed (GtkEditable *editable, ModestMsgEditWindow *window);
 static void  modest_msg_edit_window_color_button_change (ModestMsgEditWindow *window,
@@ -143,6 +145,44 @@ static gboolean gtk_text_iter_forward_search_insensitive (const GtkTextIter *ite
 							  GtkTextIter *match_start,
 							  GtkTextIter *match_end);
 							  
+static void DEBUG_BUFFER (WPTextBuffer *buffer)
+{
+#ifdef DEBUG
+	GtkTextIter iter;
+
+	g_message ("BEGIN BUFFER OF SIZE %d", gtk_text_buffer_get_char_count (GTK_TEXT_BUFFER (buffer)));
+	gtk_text_buffer_get_start_iter (GTK_TEXT_BUFFER (buffer), &iter);
+	while (!gtk_text_iter_is_end (&iter)) {
+		GString *output = g_string_new ("");
+		GSList *toggled_tags;
+		GSList *node;
+
+		toggled_tags = gtk_text_iter_get_toggled_tags (&iter, FALSE);
+		g_string_append_printf (output, "%d: CLOSED [ ", gtk_text_iter_get_offset (&iter));
+		for (node = toggled_tags; node != NULL; node = g_slist_next (node)) {
+			GtkTextTag *tag = (GtkTextTag *) node->data;
+			const gchar *name;
+			g_object_get (G_OBJECT (tag), "name", &name, NULL);
+			output = g_string_append (output, name);
+			g_string_append (output, " ");
+		}
+		output = g_string_append (output, "] OPENED [ ");
+		toggled_tags = gtk_text_iter_get_toggled_tags (&iter, TRUE);
+		for (node = toggled_tags; node != NULL; node = g_slist_next (node)) {
+			GtkTextTag *tag = (GtkTextTag *) node->data;
+			const gchar *name;
+			g_object_get (G_OBJECT (tag), "name", &name, NULL);
+			output = g_string_append (output, name);
+			g_string_append (output, " ");
+		}
+		output = g_string_append (output, "]\n");
+		g_message ("%s", output->str);
+		g_string_free (output, TRUE);
+		gtk_text_iter_forward_to_tag_toggle (&iter, NULL);
+	}
+	g_message ("END BUFFER");
+#endif
+}
 
 
 /* static gboolean */
@@ -180,6 +220,7 @@ struct _ModestMsgEditWindowPrivate {
 
 	GtkWidget   *cc_caption;
 	GtkWidget   *bcc_caption;
+	gboolean     update_caption_visibility;
 	GtkWidget   *attachments_caption;
 
 	GtkTextBuffer *text_buffer;
@@ -303,6 +344,7 @@ modest_msg_edit_window_init (ModestMsgEditWindow *obj)
 
 	priv->cc_caption    = NULL;
 	priv->bcc_caption    = NULL;
+	priv->update_caption_visibility = FALSE;
 
 	priv->priority_flags = 0;
 
@@ -365,7 +407,9 @@ init_window (ModestMsgEditWindow *obj)
 	GtkWidget *subject_box;
 	GtkWidget *attachment_icon;
 	GtkWidget *window_box;
-
+#if (GTK_MINOR_VERSION >= 10)
+	GdkAtom deserialize_type;
+#endif
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE(obj);
 
 	size_group = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);
@@ -432,7 +476,10 @@ init_window (ModestMsgEditWindow *obj)
 	wp_text_buffer_enable_rich_text (WP_TEXT_BUFFER (priv->text_buffer), TRUE);
 #if (GTK_MINOR_VERSION >= 10)
 	gtk_text_buffer_register_serialize_tagset(GTK_TEXT_BUFFER(priv->text_buffer), "wp-text-buffer");
-	gtk_text_buffer_register_deserialize_tagset(GTK_TEXT_BUFFER(priv->text_buffer), "wp-text-buffer");
+	deserialize_type = gtk_text_buffer_register_deserialize_tagset(GTK_TEXT_BUFFER(priv->text_buffer), 
+								       "wp-text-buffer");
+	gtk_text_buffer_deserialize_set_can_create_tags (GTK_TEXT_BUFFER (priv->text_buffer), 
+							 deserialize_type, TRUE);
 #endif
 	wp_text_buffer_reset_buffer (WP_TEXT_BUFFER (priv->text_buffer), TRUE);
 
@@ -443,8 +490,6 @@ init_window (ModestMsgEditWindow *obj)
 
 	g_signal_connect (G_OBJECT (priv->text_buffer), "refresh_attributes",
 			  G_CALLBACK (text_buffer_refresh_attributes), obj);
-	g_signal_connect (G_OBJECT (priv->text_buffer), "delete-range",
-			  G_CALLBACK (text_buffer_delete_range), obj);
 	g_signal_connect (G_OBJECT (priv->text_buffer), "can-undo",
 			  G_CALLBACK (text_buffer_can_undo), obj);
 	g_signal_connect (G_OBJECT (priv->text_buffer), "can-redo",
@@ -452,6 +497,8 @@ init_window (ModestMsgEditWindow *obj)
 	g_signal_connect (G_OBJECT (obj), "window-state-event",
 			  G_CALLBACK (modest_msg_edit_window_window_state_event),
 			  NULL);
+	g_signal_connect_after (G_OBJECT (priv->text_buffer), "apply-tag",
+				G_CALLBACK (text_buffer_apply_tag), obj);
 	g_signal_connect_swapped (G_OBJECT (priv->to_field), "open-addressbook", 
 				  G_CALLBACK (modest_msg_edit_window_open_addressbook), obj);
 	g_signal_connect_swapped (G_OBJECT (priv->cc_field), "open-addressbook", 
@@ -493,18 +540,8 @@ init_window (ModestMsgEditWindow *obj)
 	gtk_container_set_focus_vadjustment (GTK_CONTAINER (main_vbox), gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (priv->scroll)));
 	gtk_widget_show_all (GTK_WIDGET(priv->scroll));
 	
-	if (!modest_conf_get_bool(modest_runtime_get_conf(), MODEST_CONF_SHOW_CC, NULL)) {
-		gtk_widget_set_no_show_all (priv->cc_caption, TRUE);
-		gtk_widget_hide (priv->cc_caption);
-	}
-	if (!modest_conf_get_bool(modest_runtime_get_conf(), MODEST_CONF_SHOW_BCC, NULL)) {
-		gtk_widget_set_no_show_all (priv->bcc_caption, TRUE);
-		gtk_widget_hide (priv->bcc_caption);
-	}
-
 	window_box = gtk_vbox_new (FALSE, 0);
 	gtk_box_pack_start (GTK_BOX (window_box), priv->scroll, TRUE, TRUE, 0);
-	gtk_box_pack_end (GTK_BOX (window_box), priv->find_toolbar, FALSE, FALSE, 0);
 	gtk_container_add (GTK_CONTAINER(obj), window_box);
 	priv->scroll_area = modest_scroll_area_new (priv->scroll, priv->msg_body);
 	gtk_container_add (GTK_CONTAINER (frame), priv->scroll_area);
@@ -514,6 +551,7 @@ init_window (ModestMsgEditWindow *obj)
 
 	priv->clipboard_change_handler_id = g_signal_connect (G_OBJECT (gtk_clipboard_get (GDK_SELECTION_PRIMARY)), "owner-change",
 							      G_CALLBACK (modest_msg_edit_window_clipboard_owner_change), obj);
+
 }
 	
 
@@ -569,6 +607,88 @@ menubar_to_menu (GtkUIManager *ui_manager)
 	return main_menu;
 }
 
+static GdkPixbuf *
+pixbuf_from_stream (TnyStream *stream, const gchar *mime_type)
+{
+	GdkPixbufLoader *loader;
+	GdkPixbuf *pixbuf;
+
+	loader = gdk_pixbuf_loader_new_with_mime_type (mime_type, NULL);
+
+	if (loader == NULL)
+		return NULL;
+
+	tny_stream_reset (TNY_STREAM (stream));
+	while (!tny_stream_is_eos (TNY_STREAM (stream))) {
+		unsigned char read_buffer[128];
+		gint readed;
+		readed = tny_stream_read (TNY_STREAM (stream), (char *) read_buffer, 128);
+		if (!gdk_pixbuf_loader_write (loader, read_buffer, readed, NULL))
+			break;
+	}
+
+	pixbuf = gdk_pixbuf_loader_get_pixbuf (loader);
+	g_object_ref (pixbuf);
+	gdk_pixbuf_loader_close (loader, NULL);
+	g_object_unref (loader);
+
+	if (gdk_pixbuf_get_width (pixbuf) > IMAGE_MAX_WIDTH) {
+		GdkPixbuf *new_pixbuf;
+		gint new_height;
+		new_height = (gdk_pixbuf_get_height (pixbuf) * IMAGE_MAX_WIDTH) /
+			gdk_pixbuf_get_width (pixbuf);
+		new_pixbuf = gdk_pixbuf_scale_simple (pixbuf, IMAGE_MAX_WIDTH, new_height, GDK_INTERP_BILINEAR);
+		g_object_unref (pixbuf);
+		pixbuf = new_pixbuf;
+	}
+
+	return pixbuf;
+}
+
+static void
+replace_with_attachments (ModestMsgEditWindow *self, GList *attachments)
+{
+	ModestMsgEditWindowPrivate *priv;
+	GList *node;
+
+	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (self);
+
+	for (node = attachments; node != NULL; node = g_list_next (node)) {
+		TnyMimePart *part = (TnyMimePart *) node->data;
+		const gchar *cid = tny_mime_part_get_content_id (part);
+		const gchar *mime_type = tny_mime_part_get_content_type (part);
+		if ((cid != NULL)&&(mime_type != NULL)) {
+			TnyStream *stream = tny_mime_part_get_stream (part);
+			GdkPixbuf *pixbuf = pixbuf_from_stream (stream, mime_type);
+			g_object_unref (stream);
+
+			if (pixbuf != NULL) {
+				wp_text_buffer_replace_image (WP_TEXT_BUFFER (priv->text_buffer), cid, pixbuf);
+				g_object_unref (pixbuf);
+			}
+		}
+	}
+}
+
+static void
+update_last_cid (ModestMsgEditWindow *self, GList *attachments)
+{
+	GList *node;
+	ModestMsgEditWindowPrivate *priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (self);
+
+	for (node = attachments; node != NULL; node = g_list_next (node)) {
+		TnyMimePart *part = (TnyMimePart *) node->data;
+		const gchar *cid = tny_mime_part_get_content_id (part);
+		if (cid != NULL) {
+			char *invalid = NULL;
+			gint int_cid = strtol (cid, &invalid, 10);
+			if ((invalid != NULL) && (*invalid == '\0') && (int_cid > priv->last_cid)) {
+				priv->last_cid = int_cid;
+			}
+		}
+		
+	}
+}
 
 static void
 set_msg (ModestMsgEditWindow *self, TnyMsg *msg)
@@ -600,15 +720,15 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg)
 		gtk_widget_set_no_show_all (priv->cc_caption, FALSE);
 		gtk_widget_show (priv->cc_caption);
 	} else if (!modest_conf_get_bool (modest_runtime_get_conf (), MODEST_CONF_SHOW_CC, NULL)) {
-		gtk_widget_set_no_show_all (priv->cc_caption, FALSE);
+		gtk_widget_set_no_show_all (priv->cc_caption, TRUE);
 		gtk_widget_hide (priv->cc_caption);
 	}
 	if (bcc) {
 		modest_recpt_editor_set_recipients (MODEST_RECPT_EDITOR (priv->bcc_field), bcc);
-		gtk_widget_set_no_show_all (priv->cc_caption, FALSE);
+		gtk_widget_set_no_show_all (priv->bcc_caption, FALSE);
 		gtk_widget_show (priv->bcc_caption);
 	} else if (!modest_conf_get_bool (modest_runtime_get_conf (), MODEST_CONF_SHOW_BCC, NULL)) {
-		gtk_widget_set_no_show_all (priv->bcc_caption, FALSE);
+		gtk_widget_set_no_show_all (priv->bcc_caption, TRUE);
 		gtk_widget_hide (priv->bcc_caption);
 	} 
 	if (subject)
@@ -656,7 +776,11 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg)
 	} else {
 		gtk_widget_set_no_show_all (priv->attachments_caption, FALSE);
 		gtk_widget_show_all (priv->attachments_caption);
+		replace_with_attachments (self, priv->attachments);
 	}
+	update_last_cid (self, priv->attachments);
+
+	DEBUG_BUFFER (WP_TEXT_BUFFER (priv->text_buffer));
 
 	gtk_text_buffer_get_start_iter (priv->text_buffer, &iter);
 	gtk_text_buffer_place_cursor (priv->text_buffer, &iter);
@@ -947,6 +1071,7 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name)
 	modest_window_set_active_account (MODEST_WINDOW(obj), account_name);
 
 	modest_msg_edit_window_setup_toolbar (MODEST_MSG_EDIT_WINDOW (obj));
+	hildon_window_add_toolbar (HILDON_WINDOW (obj), GTK_TOOLBAR (priv->find_toolbar));
 
 	setup_insensitive_handlers (MODEST_MSG_EDIT_WINDOW (obj));
 
@@ -982,11 +1107,11 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name)
 
 	/* set initial state of cc and bcc */
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/ViewMenu/ViewCcFieldMenu");
-	gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (action),
-				      modest_conf_get_bool(modest_runtime_get_conf(), MODEST_CONF_SHOW_CC, NULL));
+	modest_maemo_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action),
+					       modest_conf_get_bool(modest_runtime_get_conf(), MODEST_CONF_SHOW_CC, NULL));
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/ViewMenu/ViewBccFieldMenu");
-	gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (action),
-				      modest_conf_get_bool(modest_runtime_get_conf(), MODEST_CONF_SHOW_BCC, NULL));
+	modest_maemo_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action),
+					       modest_conf_get_bool(modest_runtime_get_conf(), MODEST_CONF_SHOW_BCC, NULL));
 
 	/* Setup the file format */
 	conf = modest_runtime_get_conf ();
@@ -1001,6 +1126,7 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name)
 	modest_msg_edit_window_set_file_format (MODEST_MSG_EDIT_WINDOW (obj), file_format);
 
 	update_paste_dimming (MODEST_MSG_EDIT_WINDOW (obj));
+	priv->update_caption_visibility = TRUE;
 	
 	return (ModestWindow*) obj;
 }
@@ -1264,27 +1390,6 @@ modest_msg_edit_window_set_format_state (ModestMsgEditWindow *self,
 }
 
 static void
-toggle_action_set_active_block_notify (GtkToggleAction *action,
-				       gboolean value)
-{
-	GSList *proxies = NULL;
-
-	for (proxies = gtk_action_get_proxies (GTK_ACTION (action));
-	     proxies != NULL; proxies = g_slist_next (proxies)) {
-		GtkWidget *widget = (GtkWidget *) proxies->data;
-		gtk_action_block_activate_from (GTK_ACTION (action), widget);
-	}
-
-	gtk_toggle_action_set_active (action, value);
-
-	for (proxies = gtk_action_get_proxies (GTK_ACTION (action));
-	     proxies != NULL; proxies = g_slist_next (proxies)) {
-		GtkWidget *widget = (GtkWidget *) proxies->data;
-		gtk_action_unblock_activate_from (GTK_ACTION (action), widget);
-	}
-}
-
-static void
 text_buffer_refresh_attributes (WPTextBuffer *buffer, ModestMsgEditWindow *window)
 {
 	WPTextBufferFormat *buffer_format = g_new0 (WPTextBufferFormat, 1);
@@ -1300,23 +1405,23 @@ text_buffer_refresh_attributes (WPTextBuffer *buffer, ModestMsgEditWindow *windo
 	if (wp_text_buffer_is_rich_text (WP_TEXT_BUFFER (priv->text_buffer))) {
 		action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/FormatMenu/FileFormatMenu/FileFormatFormattedTextMenu");
 		if (!gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (action)))
-			toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action), TRUE);
+			modest_maemo_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action), TRUE);
 	} else {
 		action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/FormatMenu/FileFormatMenu/FileFormatPlainTextMenu");
 		if (!gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (action)))
-			toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action), TRUE);
+			modest_maemo_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action), TRUE);
 	}
 
 	wp_text_buffer_get_attributes (WP_TEXT_BUFFER (priv->text_buffer), buffer_format, FALSE);
 	
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ActionsBold");
-	toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action), buffer_format->bold);
+	modest_maemo_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action), buffer_format->bold);
 
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ActionsItalics");
-	toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action), buffer_format->italic);
+	modest_maemo_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action), buffer_format->italic);
 
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/FormatMenu/BulletedListMenu");
-	toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action), buffer_format->bullet);
+	modest_maemo_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action), buffer_format->bullet);
 
 	g_signal_handlers_block_by_func (G_OBJECT (priv->font_color_button), 
 					 G_CALLBACK (modest_msg_edit_window_color_button_change),
@@ -1513,7 +1618,6 @@ modest_msg_edit_window_insert_image (ModestMsgEditWindow *window)
 		uri = (const gchar *) uri_node->data;
 		result = gnome_vfs_open (&handle, uri, GNOME_VFS_OPEN_READ);
 		if (result == GNOME_VFS_OK) {
-			GdkPixbufLoader *loader;
 			GdkPixbuf *pixbuf;
 			GnomeVFSFileInfo info;
 			gchar *filename, *basename, *escaped_filename;
@@ -1548,31 +1652,9 @@ modest_msg_edit_window_insert_image (ModestMsgEditWindow *window)
 			basename = g_path_get_basename (filename);
 			tny_mime_part_set_filename (mime_part, basename);
 			g_free (basename);
+
+			pixbuf = pixbuf_from_stream (stream, mime_type);
 			
-			tny_stream_reset (TNY_STREAM (stream));
-			loader = gdk_pixbuf_loader_new_with_mime_type (mime_type, NULL);
-			while (!tny_stream_is_eos (TNY_STREAM (stream))) {
-				unsigned char read_buffer[128];
-				gint readed;
-				readed = tny_stream_read (TNY_STREAM (stream), (char *) read_buffer, 128);
-				if (!gdk_pixbuf_loader_write (loader, read_buffer, readed, NULL))
-					break;
-			}
-			pixbuf = gdk_pixbuf_loader_get_pixbuf (loader);
-			g_object_ref (pixbuf);
-			gdk_pixbuf_loader_close (loader, NULL);
-			g_object_unref (loader);
-
-			if (gdk_pixbuf_get_width (pixbuf) > IMAGE_MAX_WIDTH) {
-				GdkPixbuf *new_pixbuf;
-				gint new_height;
-				new_height = (gdk_pixbuf_get_height (pixbuf) * IMAGE_MAX_WIDTH) /
-					gdk_pixbuf_get_width (pixbuf);
-				new_pixbuf = gdk_pixbuf_scale_simple (pixbuf, IMAGE_MAX_WIDTH, new_height, GDK_INTERP_BILINEAR);
-				g_object_unref (pixbuf);
-				pixbuf = new_pixbuf;
-			}
-
 			if (pixbuf != NULL) {
 				insert_mark = gtk_text_buffer_get_insert (GTK_TEXT_BUFFER (priv->text_buffer));
 				gtk_text_buffer_get_iter_at_mark (GTK_TEXT_BUFFER (priv->text_buffer), &position, insert_mark);
@@ -2002,16 +2084,18 @@ modest_msg_edit_window_show_cc (ModestMsgEditWindow *window,
 				gboolean show)
 {
 	ModestMsgEditWindowPrivate *priv = NULL;
-	const gchar *recipients;
 	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
 
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
+	if (!priv->update_caption_visibility)
+		return;
+
 	gtk_widget_set_no_show_all (priv->cc_caption, TRUE);
-	recipients = modest_recpt_editor_get_recipients (MODEST_RECPT_EDITOR (priv->cc_field));
-	if ((show) || ((recipients != NULL) && (recipients[0] != '\0')))
+	if (show)
 		gtk_widget_show (priv->cc_caption);
 	else
 		gtk_widget_hide (priv->cc_caption);
+
 	modest_conf_set_bool(modest_runtime_get_conf(), MODEST_CONF_SHOW_CC, show, NULL);
 }
 
@@ -2020,16 +2104,18 @@ modest_msg_edit_window_show_bcc (ModestMsgEditWindow *window,
 				 gboolean show)
 {
 	ModestMsgEditWindowPrivate *priv = NULL;
-	const gchar *recipients;
 	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
 
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
+	if (!priv->update_caption_visibility)
+		return;
+
 	gtk_widget_set_no_show_all (priv->bcc_caption, TRUE);
-	recipients = modest_recpt_editor_get_recipients (MODEST_RECPT_EDITOR (priv->bcc_field));
-	if ((show) || ((recipients != NULL) && (recipients[0] != '\0')))
+	if (show)
 		gtk_widget_show (priv->bcc_caption);
 	else
 		gtk_widget_hide (priv->bcc_caption);
+
 	modest_conf_set_bool(modest_runtime_get_conf(), MODEST_CONF_SHOW_BCC, show, NULL);
 }
 
@@ -2174,7 +2260,7 @@ modest_msg_edit_window_set_file_format (ModestMsgEditWindow *window,
 				wp_text_buffer_enable_rich_text (WP_TEXT_BUFFER (priv->text_buffer), FALSE);
 			} else {
 				GtkToggleAction *action = GTK_TOGGLE_ACTION (gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/FormatMenu/FileFormatMenu/FileFormatFormattedTextMenu"));
-				toggle_action_set_active_block_notify (action, TRUE);
+				modest_maemo_toggle_action_set_active_block_notify (action, TRUE);
 			}
 		}
 			break;
@@ -2454,37 +2540,6 @@ text_buffer_delete_images_by_id (GtkTextBuffer *buffer, const gchar * image_id)
 	}
 }
 
-static void
-text_buffer_delete_range (GtkTextBuffer *buffer, GtkTextIter *start, GtkTextIter *end, gpointer userdata)
-{
-	ModestMsgEditWindow *window = (ModestMsgEditWindow *) userdata;
-	GtkTextIter real_start, real_end;
-	ModestMsgEditWindowPrivate *priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
-
-	if (gtk_text_iter_compare (start, end) > 0) {
-		real_start = *end;
-		real_end = *start;
-	} else {
-		real_start = *start;
-		real_end = *end;
-	}
-	do {
-		GSList *tags = gtk_text_iter_get_tags (&real_start);
-		GSList *node;
-		for (node = tags; node != NULL; node = g_slist_next (node)) {
-			GtkTextTag *tag = (GtkTextTag *) node->data;
-			if (g_object_get_data (G_OBJECT (tag), "image-set") != NULL) {
-				gchar *image_id = g_object_get_data (G_OBJECT (tag), "image-index");
-
-				modest_attachments_view_remove_attachment_by_id (MODEST_ATTACHMENTS_VIEW (priv->attachments_view),
-										 image_id);
-				gtk_text_buffer_remove_tag (buffer, tag, start, end);
-			}
-		}
-	} while (gtk_text_iter_forward_char (&real_start)&&
-		 (gtk_text_iter_compare (&real_start, &real_end)<=0));
-}
-
 static gboolean
 msg_body_focus (GtkWidget *focus,
 		GdkEventFocus *event,
@@ -2703,12 +2758,6 @@ modest_msg_edit_window_toggle_find_toolbar (ModestMsgEditWindow *window,
 
 	gtk_widget_set_no_show_all (priv->find_toolbar, FALSE);
 
-	/* Show a warning if there is nothing to search: */
-	if (show && message_is_empty (window)) {
-		hildon_banner_show_information (GTK_WIDGET (window), NULL, _("mail_ib_nothing_to_find"));
-		return;
-	}
-
 	if (show) {
 		gtk_widget_show_all (priv->find_toolbar);
 		hildon_find_toolbar_highlight_entry (HILDON_FIND_TOOLBAR (priv->find_toolbar), TRUE);
@@ -2787,6 +2836,13 @@ modest_msg_edit_window_find_toolbar_search (GtkWidget *widget,
 	GtkTextIter match_start, match_end;
 	gboolean continue_search = FALSE;
 
+	if (message_is_empty (window)) {
+		g_free (priv->last_search);
+		priv->last_search = NULL;
+		hildon_banner_show_information (GTK_WIDGET (window), NULL, _("mail_ib_nothing_to_find"));
+		return;
+	}
+
 	g_object_get (G_OBJECT (widget), "prefix", &current_search, NULL);
 	if ((current_search == NULL) || (strcmp (current_search, "") == 0)) {
 		g_free (current_search);
@@ -2849,13 +2905,19 @@ update_paste_dimming (ModestMsgEditWindow *window)
 	ModestWindowPrivate *parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
 	GtkAction *action = NULL;
 	GtkClipboard *clipboard = NULL;
+	ModestEmailClipboard *e_clipboard;
 	GtkWidget *focused;
 	gboolean active;
 
 	focused = gtk_window_get_focus (GTK_WINDOW (window));
 
-	clipboard = gtk_clipboard_get (GDK_SELECTION_CLIPBOARD);
-	active = gtk_clipboard_wait_is_text_available (clipboard);
+	e_clipboard = modest_runtime_get_email_clipboard ();
+	if (!modest_email_clipboard_cleared (e_clipboard)) {
+		active = TRUE;
+	} else {
+		clipboard = gtk_clipboard_get (GDK_SELECTION_CLIPBOARD);
+		active = gtk_clipboard_wait_is_text_available (clipboard);
+	}
 
 	if (active) {
 		if (MODEST_IS_ATTACHMENTS_VIEW (focused))
@@ -2971,4 +3033,35 @@ modest_msg_edit_window_set_draft (ModestMsgEditWindow *window,
 	}
 
 	priv->draft_msg = draft;
+}
+
+static void  
+text_buffer_apply_tag (GtkTextBuffer *buffer, GtkTextTag *tag, 
+		       GtkTextIter *start, GtkTextIter *end,
+		       gpointer userdata)
+{
+	ModestMsgEditWindow *window = MODEST_MSG_EDIT_WINDOW (userdata);
+	ModestMsgEditWindowPrivate *priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (userdata);
+	gchar *tag_name;
+
+	if (tag == NULL+13) return;
+	g_object_get (G_OBJECT (tag), "name", &tag_name, NULL);
+	if ((tag_name != NULL) && (g_str_has_prefix (tag_name, "image-tag-replace-"))) {
+		replace_with_attachments (window, priv->attachments);
+	}
+}
+
+void                    
+modest_msg_edit_window_add_part (ModestMsgEditWindow *window,
+				 TnyMimePart *part)
+{
+	ModestMsgEditWindowPrivate *priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
+
+	g_return_if_fail (TNY_IS_MIME_PART (part));
+	priv->attachments = g_list_prepend (priv->attachments, part);
+	g_object_ref (part);
+	modest_attachments_view_add_attachment (MODEST_ATTACHMENTS_VIEW (priv->attachments_view), part);
+	gtk_widget_set_no_show_all (priv->attachments_caption, FALSE);
+	gtk_widget_show_all (priv->attachments_caption);
+	gtk_text_buffer_set_modified (priv->text_buffer, TRUE);
 }

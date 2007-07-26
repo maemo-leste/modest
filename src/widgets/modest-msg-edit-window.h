@@ -231,6 +231,16 @@ void                    modest_msg_edit_window_remove_attachments    (ModestMsgE
 								      GList *att_list);
 
 /**
+ * modest_msg_edit_window_add_part:
+ * @self: a #ModestMsgEditWindow
+ * @part: a #TnyMimePart
+ *
+ * Adds @part as an attachment
+ */
+void                    modest_msg_edit_window_add_part (ModestMsgEditWindow *window,
+							 TnyMimePart *part);
+
+/**
  * modest_msg_edit_window_show_cc:
  * @window: a #ModestMsgEditWindow
  * @show: a #gboolean

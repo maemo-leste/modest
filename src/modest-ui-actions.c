@@ -100,6 +100,11 @@ typedef struct _ReplyForwardHelper {
 	GtkWidget *parent_window;
 } ReplyForwardHelper;
 
+typedef struct _PasteAsAttachmentHelper {
+	ModestMsgEditWindow *window;
+	GtkWidget *banner;
+} PasteAsAttachmentHelper;
+
 
 /*
  * The do_headers_action uses this kind of functions to perform some
@@ -2743,6 +2748,32 @@ paste_msgs_cb (const GObject *object, gpointer user_data)
 	gtk_widget_destroy (GTK_WIDGET(user_data));
 }
 
+static void
+paste_as_attachment_free (gpointer data)
+{
+	PasteAsAttachmentHelper *helper = (PasteAsAttachmentHelper *) data;
+
+	gtk_widget_destroy (helper->banner);
+	g_object_unref (helper->banner);
+	g_free (helper);
+}
+
+static void
+paste_msg_as_attachment_cb (ModestMailOperation *mail_op,
+			    TnyHeader *header,
+			    TnyMsg *msg,
+			    gpointer userdata)
+{
+	PasteAsAttachmentHelper *helper = (PasteAsAttachmentHelper *) userdata;
+	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (helper->window));
+
+	if (msg == NULL)
+		return;
+
+	modest_msg_edit_window_add_part (MODEST_MSG_EDIT_WINDOW (helper->window), TNY_MIME_PART (msg));
+	
+}
+
 void
 modest_ui_actions_on_paste (GtkAction *action,
 			    ModestWindow *window)
@@ -2755,12 +2786,41 @@ modest_ui_actions_on_paste (GtkAction *action,
 	if (GTK_IS_EDITABLE (focused_widget)) {
 		gtk_editable_paste_clipboard (GTK_EDITABLE(focused_widget));
 	} else if (GTK_IS_TEXT_VIEW (focused_widget)) {
-		GtkTextBuffer *buffer;
-		GtkClipboard *clipboard;
+		ModestEmailClipboard *e_clipboard = NULL;
+		e_clipboard = modest_runtime_get_email_clipboard ();
+		if (modest_email_clipboard_cleared (e_clipboard)) {
+			GtkTextBuffer *buffer;
+			GtkClipboard *clipboard;
 
-		clipboard = gtk_clipboard_get (GDK_SELECTION_CLIPBOARD);
-		buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (focused_widget));
-		gtk_text_buffer_paste_clipboard (buffer, clipboard, NULL, TRUE);
+			clipboard = gtk_clipboard_get (GDK_SELECTION_CLIPBOARD);
+			buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (focused_widget));
+			gtk_text_buffer_paste_clipboard (buffer, clipboard, NULL, TRUE);
+		} else if (MODEST_IS_MSG_EDIT_WINDOW (window)) {
+			ModestMailOperation *mail_op;
+			TnyFolder *src_folder;
+			TnyList *data;
+			gboolean delete;
+			PasteAsAttachmentHelper *helper = g_new0 (PasteAsAttachmentHelper, 1);
+			helper->window = MODEST_MSG_EDIT_WINDOW (window);
+			helper->banner = modest_platform_animation_banner (GTK_WIDGET (window), NULL,
+									   _CS("ckct_nw_pasting"));
+			modest_email_clipboard_get_data (e_clipboard, &src_folder, &data, &delete);
+			mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_RECEIVE, 
+							     G_OBJECT (window));
+			if (helper->banner != NULL) {
+				g_object_ref (G_OBJECT (helper->banner));
+				gtk_window_set_modal (GTK_WINDOW (helper->banner), FALSE);
+				gtk_widget_show (GTK_WIDGET (helper->banner));
+			}
+
+			if (data != NULL) {
+				modest_mail_operation_get_msgs_full (mail_op, 
+								     data,
+								     (GetMsgAsyncUserCallback) paste_msg_as_attachment_cb,
+								     helper,
+								     paste_as_attachment_free);
+			}
+		}
 	} else if (MODEST_IS_FOLDER_VIEW (focused_widget)) {
 		ModestEmailClipboard *clipboard = NULL;
 		TnyFolder *src_folder = NULL;
