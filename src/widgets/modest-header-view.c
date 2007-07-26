@@ -1668,26 +1668,3 @@ modest_header_view_refilter (ModestHeaderView *header_view)
 	if (GTK_IS_TREE_MODEL_FILTER (model))
 		gtk_tree_model_filter_refilter (GTK_TREE_MODEL_FILTER (model));
 }
-
-/**
- * Protected method, selects a row pointed by path
- **/
-void 
-_modest_header_view_select_from_path (ModestHeaderView *self, 
-				      GtkTreePath *path)
-{
-	GtkTreeSelection *selection = NULL;
-	ModestHeaderViewPrivate *priv;
-	
-	g_return_if_fail (MODEST_HEADER_VIEW (self));
-	g_return_if_fail (path != NULL);
-
-	priv = MODEST_HEADER_VIEW_GET_PRIVATE (self);
-	selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (self));
-
-	/* Unselect previous selection */
-	gtk_tree_selection_unselect_all (selection);
-
-	/* Select new path*/
-	gtk_tree_selection_select_path (selection, path);
-}

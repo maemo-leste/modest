@@ -2333,7 +2333,8 @@ modest_main_window_on_msg_view_window_msg_changed (ModestMsgViewWindow *view_win
 
 	/* Select the message in the header view */
 	path = gtk_tree_row_reference_get_path (row_reference);
-	_modest_header_view_select_from_path (MODEST_HEADER_VIEW (priv->header_view), path);
+	gtk_tree_view_set_cursor (GTK_TREE_VIEW (priv->header_view),
+				  path, NULL, FALSE);
 	gtk_tree_path_free (path);
 
 	return TRUE;
