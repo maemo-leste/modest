@@ -417,8 +417,8 @@ modest_mail_operation_cancel (ModestMailOperation *self)
 	/* Cancel the mail operation. We need to wrap it between this
 	   start/stop operations to allow following calls to the
 	   account */
-	if (priv->account)
-		tny_account_cancel (priv->account);
+	g_return_val_if_fail (priv->account, FALSE);
+	tny_account_cancel (priv->account);
 
 	return canceled;
 }
