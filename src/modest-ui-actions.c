@@ -136,6 +136,9 @@ static void     _on_send_receive_progress_changed (ModestMailOperation  *mail_op
 						   ModestMailOperationState *state,
 						   gpointer user_data);
 
+static gboolean
+download_uncached_messages (TnyList *header_list, GtkWindow *win,
+			    gboolean reply_fwd);
 
 
 static void
@@ -900,12 +903,24 @@ _modest_ui_actions_open (TnyList *headers, ModestWindow *win)
 	 * than later in a thread:
 	 */
 	if (tny_list_get_length (not_opened_headers) > 0) {
-		gboolean connected = modest_platform_connect_and_wait (GTK_WINDOW (win), NULL);
-		
-		/* Don't go further if a connection would be necessary but none is available: */
-		if (!connected) {
+		TnyIterator *iter;
+		gboolean found = FALSE;
+
+		iter = tny_list_create_iterator (not_opened_headers);
+		while (!tny_iterator_is_done (iter) && !found) {
+			TnyHeader *header = TNY_HEADER (tny_iterator_get_current (iter));
+			if (!(tny_header_get_flags (header) & TNY_HEADER_FLAG_CACHED))
+				found = TRUE;
+			else
+				tny_iterator_next (iter);
+
+			g_object_unref (header);
+		}
+		g_object_unref (iter);
+
+		if (found && !modest_platform_connect_and_wait (GTK_WINDOW (win), NULL)) {
 			g_object_unref (not_opened_headers);
-			return;
+			return;			
 		}
 	}
 	
@@ -1088,7 +1103,8 @@ cleanup:
  * of them are currently downloaded
  */
 static gboolean
-download_uncached_messages (TnyList *header_list, GtkWindow *win,
+download_uncached_messages (TnyList *header_list, 
+			    GtkWindow *win,
 			    gboolean reply_fwd)
 {
 	TnyIterator *iter;
@@ -1098,15 +1114,10 @@ download_uncached_messages (TnyList *header_list, GtkWindow *win,
 	iter = tny_list_create_iterator (header_list);
 	while (!tny_iterator_is_done (iter)) {
 		TnyHeader *header;
-		TnyHeaderFlags flags;
 
 		header = TNY_HEADER (tny_iterator_get_current (iter));
 		if (header) {
-			flags = tny_header_get_flags (header);
-			/* TODO: is this the right flag?, it seems that some
-			   headers that have been previously downloaded do not
-			   come with it */
-			if (! (flags & TNY_HEADER_FLAG_CACHED))
+			if (!(tny_header_get_flags (header) & TNY_HEADER_FLAG_CACHED))
 				uncached_messages ++;
 			g_object_unref (header);
 		}
