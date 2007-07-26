@@ -1770,7 +1770,9 @@ modest_mail_operation_xfer_folder (ModestMailOperation *self,
 		parent_rules = modest_tny_folder_get_rules (TNY_FOLDER (parent));
 	
 	/* The moveable restriction is applied also to copy operation */
-	if ((!TNY_IS_FOLDER_STORE (parent)) || (rules & MODEST_FOLDER_RULES_FOLDER_NON_MOVEABLE)) {
+	if ((gpointer) parent == (gpointer) folder ||
+	    (!TNY_IS_FOLDER_STORE (parent)) || 
+	    (rules & MODEST_FOLDER_RULES_FOLDER_NON_MOVEABLE)) {
 		printf("DEBUG: %s: Not allowing the move.\n", __FUNCTION__);
  		/* Set status failed and set an error */
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
