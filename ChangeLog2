@@ -10,7 +10,8 @@
 	See the comment in the code.
 
 	* src/modest-search.c: (modest_search_folder): Ignore deleted emails, 
-	by checking the header flags.
+	by checking the header flags. This fixes projects.maemo.org bug 
+	NB#64225.
 
 2007-07-25  Murray Cumming  <murrayc@murrayc.com>
 
