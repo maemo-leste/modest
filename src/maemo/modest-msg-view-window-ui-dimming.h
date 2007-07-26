@@ -15,7 +15,7 @@ static const ModestDimmingEntry modest_msg_view_menu_dimming_entries [] = {
 	{ "/MenuBar/MessageMenu/MessageReplyMenu", G_CALLBACK(modest_ui_dimming_rules_on_reply_msg) },
 	{ "/MenuBar/MessageMenu/MessageReplyAllMenu", G_CALLBACK(modest_ui_dimming_rules_on_reply_msg) },
 	{ "/MenuBar/MessageMenu/MessageForwardMenu",  G_CALLBACK(modest_ui_dimming_rules_on_reply_msg) },
-	{ "/MenuBar/MessageMenu/MessageDeleteMenu",  NULL },
+	{ "/MenuBar/MessageMenu/MessageDeleteMenu",  G_CALLBACK(modest_ui_dimming_rules_on_delete_msg) },
 	{ "/MenuBar/MessageMenu/MessageDetailsMenu", G_CALLBACK(modest_ui_dimming_rules_on_details) },
 
 	/* Edit Menu */
