@@ -2010,28 +2010,15 @@ find_inbox_iter (GtkTreeModel *model, GtkTreeIter *iter, GtkTreeIter *inbox_iter
 	do {
 		GtkTreeIter child;
 		TnyFolderType type = TNY_FOLDER_TYPE_UNKNOWN;
-		gchar *name = NULL;
 
 		gtk_tree_model_get (model, iter, 
-				    TNY_GTK_FOLDER_STORE_TREE_MODEL_NAME_COLUMN, &name,
 				    TNY_GTK_FOLDER_STORE_TREE_MODEL_TYPE_COLUMN, 
 				    &type, -1);
 			
 		gboolean result = FALSE;
 		if (type == TNY_FOLDER_TYPE_INBOX) {
 			result = TRUE;
-		} else if (type == TNY_FOLDER_TYPE_NORMAL) {
-			/* tinymail's camel implementation only provides TNY_FOLDER_TYPE_NORMAL
-			 * when getting folders from the cache, before connectin, so we do 
-			 * an extra check. We could fix this in tinymail, but it's easier 
-			 * to do here.
-			 */
-			 if (strcmp (name, "Inbox") == 0)
-			 	result = TRUE;
-		}
-		
-		g_free (name);
-		
+		}		
 		if (result) {
 			*inbox_iter = *iter;
 			return TRUE;
@@ -2056,10 +2043,7 @@ modest_folder_view_select_first_inbox_or_local (ModestFolderView *self)
 	GtkTreeModel *model;
 	GtkTreeIter iter, inbox_iter;
 	GtkTreeSelection *sel;
-
-/* 	/\* Do not set it if the folder view was not painted *\/ */
-/* 	if (!GTK_WIDGET_MAPPED (self)) */
-/* 		return; */
+	GtkTreePath *path = NULL;
 
 	model = gtk_tree_view_get_model (GTK_TREE_VIEW (self));
 	if (!model)
@@ -2069,15 +2053,15 @@ modest_folder_view_select_first_inbox_or_local (ModestFolderView *self)
 	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (self));
 
 	gtk_tree_model_get_iter_first (model, &iter);
-	gtk_tree_selection_unselect_all (sel);
 
-	if (find_inbox_iter (model, &iter, &inbox_iter)) {
-		gtk_tree_selection_select_iter (sel, &inbox_iter);
-	}
-	else {
-		gtk_tree_model_get_iter_first (model, &iter);
-		gtk_tree_selection_select_iter (sel, &iter);
-	}
+	if (find_inbox_iter (model, &iter, &inbox_iter))
+		path = gtk_tree_model_get_path (model, &inbox_iter);
+	else
+		path = gtk_tree_path_new_first ();
+
+	/* Select the row and free */
+	gtk_tree_view_set_cursor (GTK_TREE_VIEW (self), path, NULL, FALSE);
+	gtk_tree_path_free (path);
 }
 
 
