@@ -1,3 +1,12 @@
+modest (1.0-2007.31-1) gutsy; urgency=low
+
+  * Fixes: NB#63741, NB#64120, NB#63631, NB#59215, NB#64225, NB#63938
+  * Fixes: NB#63322, NB#63412, NB#56047, NB#63060, NB#64088, NB#62820
+  * Fixes: NB#60968
+  * Fast click between folders in IMAP and pop is not stable.
+
+ -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Thu, 26 Jul 2007 15:40:35 +0300
+
 modest (1.0-2007.30-2) gutsy; urgency=low
 
   * Fixes: NB#63349, NB#60774, NB#58923, NB#63192, NB#63627, NB#64019
