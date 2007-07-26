@@ -1483,22 +1483,11 @@ modest_ui_actions_do_send_receive_all (ModestWindow *win)
 	account_names = NULL;
 }
 
-/*
- * Handler of the click on Send&Receive button in the main toolbar
- */
-void
-modest_ui_actions_on_send_receive (GtkAction *action,  ModestWindow *win)
+void 
+modest_do_refresh_current_folder(ModestWindow *win)
 {
-	/* Check if accounts exist */
-	gboolean accounts_exist = 
-		modest_account_mgr_has_accounts(modest_runtime_get_account_mgr(), TRUE);
-	
-	/* If not, allow the user to create an account before trying to send/receive. */
-	if (!accounts_exist)
-		modest_ui_actions_on_accounts (NULL, win);
-
 	/* Refresh currently selected folder. Note that if we only
-	   want to retrive the headers, then the refresh only will
+	   want to retreive the headers, then the refresh only will
 	   invoke a poke_status over all folders, i.e., only the
 	   total/unread count will be updated */
 	if (MODEST_IS_MAIN_WINDOW (win)) {
@@ -1530,6 +1519,24 @@ modest_ui_actions_on_send_receive (GtkAction *action,  ModestWindow *win)
 		if (folder_store)
 			g_object_unref (folder_store);
 	}
+}
+
+
+/*
+ * Handler of the click on Send&Receive button in the main toolbar
+ */
+void
+modest_ui_actions_on_send_receive (GtkAction *action, ModestWindow *win)
+{
+	/* Check if accounts exist */
+	gboolean accounts_exist = 
+		modest_account_mgr_has_accounts(modest_runtime_get_account_mgr(), TRUE);
+	
+	/* If not, allow the user to create an account before trying to send/receive. */
+	if (!accounts_exist)
+		modest_ui_actions_on_accounts (NULL, win);
+
+	modest_do_refresh_current_folder (win);
 	
 	/* Refresh the active account */
 	modest_ui_actions_do_send_receive (NULL, win);

@@ -1,5 +1,19 @@
 2007-07-26  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-ui-actions.h:
+	* src/modest-ui-actions.c: Added 
+	modest_do_refresh_current_folder() containing some code from 
+	modest_ui_actions_on_send_receive().
+	* src/dbus_api/modest-dbus-callbacks.c: (on_idle_send_receive):
+	Call modest_do_refresh_current_folder() before refreshing the 
+	requested account, as in modest_ui_actions_on_send_receive(). 
+	This is strange, but seems to be necessary to show new mails.
+	Now new emails are finally visible in the UI when downloaded 
+	via the automatic update interval, fixing bug NB#57458.
+	This also works because bug NB#57458 has been fixed somehow.
+
+2007-07-26  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/dbus_api/modest-dbus-callbacks.c: (modest_dbus_req_filter):
 	printf more details when we get unhandled D-Bus methods, because 
 	it is interesting.
