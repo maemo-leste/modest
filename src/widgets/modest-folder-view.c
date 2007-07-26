@@ -436,7 +436,6 @@ text_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 					       signals[FOLDER_DISPLAY_NAME_CHANGED_SIGNAL], 0,
 					       item_name);
 		}
-		
 		g_free (item_name);
 		
 	}
@@ -462,8 +461,6 @@ text_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 	g_object_unref (G_OBJECT (instance));
 	g_free (fname);
 }
-
-
 
 static void
 icon_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
@@ -896,6 +893,10 @@ modest_folder_view_on_map (ModestFolderView *self,
 		/* TODO: check if this is still the case */
 		priv->reselect = FALSE;
  		modest_folder_view_select_first_inbox_or_local (self);
+		/* Notify the display name observers */
+		g_signal_emit (G_OBJECT(self),
+			       signals[FOLDER_DISPLAY_NAME_CHANGED_SIGNAL], 0,
+			       NULL);
 	}
 	return FALSE;
 }
