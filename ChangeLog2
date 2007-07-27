@@ -1,5 +1,15 @@
 2007-07-27  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/maemo/modest-maemo-utils.c:
+	(modest_maemo_utils_get_supported_secure_authentication_methods):
+	Make sure that we have a connection, asking the user for one 
+	if necessary.
+	* src/maemo/modest-main-window.c: (modest_main_window_on_show): 
+	Check for a connection before showing the wizard, because 
+	the wizard needs a connection to check for server capabilities.
+
+2007-07-27  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/maemo/modest-account-view-window.c:
 	(on_new_button_clicked): Remember the wizard dialog instance, 
 	so we can just present it again if necessary. This prevents 

@@ -45,6 +45,7 @@
 #include "modest-hildon-includes.h"
 
 #include "modest-maemo-utils.h"
+#include "modest-platform.h"
 
 /*
  * For getting and tracking the Bluetooth name
@@ -380,6 +381,10 @@ GList* modest_maemo_utils_get_supported_secure_authentication_methods (ModestTra
 {
 	g_return_val_if_fail (proto != MODEST_PROTOCOL_TRANSPORT_STORE_UNKNOWN, NULL);
 	
+	/* We need a connection to get the capabilities; */
+	if (!modest_platform_connect_and_wait (GTK_WINDOW (parent_window), NULL))
+		return NULL;
+	 
 	/*
 	result = g_list_append (result, GINT_TO_POINTER (MODEST_PROTOCOL_AUTH_CRAMMD5));
 	*/
@@ -402,7 +407,6 @@ GList* modest_maemo_utils_get_supported_secure_authentication_methods (ModestTra
 		tny_account = NULL;
 	}
 
-	/* TODO: Handle connection requests. */
 	
 	if (!tny_account) {
 		g_printerr ("%s could not create tny account.", __FUNCTION__);

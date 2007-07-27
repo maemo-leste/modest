@@ -779,6 +779,12 @@ modest_main_window_on_show (GtkWidget *self, gpointer user_data)
 	
 	restore_settings (MODEST_MAIN_WINDOW(self), TRUE);
 
+	/* The UI spec wants us to show a connection dialog when the application is 
+	 * started by the user, if there is no connection.
+	 * Do this before showing the account wizard, 
+	 * because wizard needs a connection to discover capabilities. */
+	 modest_platform_connect_and_wait (GTK_WINDOW (self), NULL);
+	 
 	/* Check if accounts exist and show the account wizard if not */
 	gboolean accounts_exist = 
 		modest_account_mgr_has_accounts(modest_runtime_get_account_mgr(), TRUE);
@@ -798,10 +804,6 @@ modest_main_window_on_show (GtkWidget *self, gpointer user_data)
 		gtk_action_set_visible (send_receive_all, g_slist_length (accounts));
 		modest_account_mgr_free_account_names (accounts);
 	}
-
-	/* The UI spec wants us to show a connection dialog when the application is 
-	 * started by the user, if there is no connection: */
-	 modest_platform_connect_and_wait (GTK_WINDOW (self), NULL);
 }
 
 ModestWindow *
