@@ -663,7 +663,8 @@ replace_with_attachments (ModestMsgEditWindow *self, GList *attachments)
 			g_object_unref (stream);
 
 			if (pixbuf != NULL) {
-				wp_text_buffer_replace_image (WP_TEXT_BUFFER (priv->text_buffer), cid, pixbuf);
+				/* TODO: Use this when this function is available: */
+				/* wp_text_buffer_replace_image (WP_TEXT_BUFFER (priv->text_buffer), cid, pixbuf); */
 				g_object_unref (pixbuf);
 			}
 		}

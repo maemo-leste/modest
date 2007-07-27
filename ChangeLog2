@@ -1,3 +1,9 @@
+2007-07-27  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/maemo/modest-msg-edit-window.c: (replace_with_attachments):	
+	Commented out the use of wp_text_buffer_replace_image() 
+	because it does not exist, to break the build. Added a TODO for it.
+
 2007-07-26  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/modest-tny-account-store.c: (recreate_all_accounts):
