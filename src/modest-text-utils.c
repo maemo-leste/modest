@@ -1023,19 +1023,29 @@ gchar*
 modest_text_utils_get_display_date (time_t date)
 {
 	time_t now;
-	const guint BUF_SIZE = 64; 
+	static const guint BUF_SIZE = 64; 
+	static const guint ONE_DAY = 24 * 60 * 60; /* seconds in one day */
 	gchar date_buf[BUF_SIZE];  
-	gchar now_buf [BUF_SIZE];  
-	
+	gchar today_buf [BUF_SIZE];  
+
+	modest_text_utils_strftime (date_buf, BUF_SIZE, "%x", date); 
+
 	now = time (NULL);
 
-	/* use the localized dates */
- 	modest_text_utils_strftime (date_buf, BUF_SIZE, "%x", date); 
- 	modest_text_utils_strftime (now_buf,  BUF_SIZE, "%x", now); 
-	
-	/* if this is today, get the time instead of the date */
-	if (strcmp (date_buf, now_buf) == 0)
-		modest_text_utils_strftime (date_buf, BUF_SIZE, "%X", date);
+	/* we check if the date is within the last 24h, if not, we don't
+	 * have to do the extra, expensive strftime, which was very visible
+	 * in the profiles.
+	 */
+	if (abs(now - date) < ONE_DAY) {
+		
+		/* it's within the last 24 hours, but double check */
+		/* use the localized dates */
+		modest_text_utils_strftime (today_buf,  BUF_SIZE, "%x", now); 
+
+		/* if it's today, use the time instead */
+		if (strcmp (date_buf, today_buf) == 0)
+			modest_text_utils_strftime (date_buf, BUF_SIZE, "%X", date);
+	}
 	
 	return g_strdup(date_buf);
 }
