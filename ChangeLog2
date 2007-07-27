@@ -1,5 +1,13 @@
 2007-07-27  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/maemo/modest-msg-edit-window.c: (replace_with_attachments):
+	Reverted my last commit. I was able to fix the build by doing 
+	apt-get install wpeditor0 (replacing other wpeditor packages) and 
+	an explicit apt-get install wpeditor-dev to upgrade the -dev 
+	package.
+
+2007-07-27  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/maemo/modest-msg-edit-window.c: (replace_with_attachments):	
 	Commented out the use of wp_text_buffer_replace_image() 
 	because it does not exist, to break the build. Added a TODO for it.
