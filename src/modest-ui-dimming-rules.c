@@ -281,7 +281,7 @@ gboolean
 modest_ui_dimming_rules_on_rename_folder (ModestWindow *win, gpointer user_data)
 {
  	ModestDimmingRule *rule = NULL;
-	TnyFolderType types[3];
+	TnyFolderType types[4];
 	gboolean dimmed = FALSE;
 
 	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW(win), FALSE);
@@ -291,6 +291,7 @@ modest_ui_dimming_rules_on_rename_folder (ModestWindow *win, gpointer user_data)
 	types[0] = TNY_FOLDER_TYPE_DRAFTS; 
 	types[1] = TNY_FOLDER_TYPE_OUTBOX;
 	types[2] = TNY_FOLDER_TYPE_SENT;
+	types[3] = TNY_FOLDER_TYPE_ARCHIVE;
 	
 	/* Check dimmed rule */	
 	if (!dimmed) {
@@ -304,7 +305,7 @@ modest_ui_dimming_rules_on_rename_folder (ModestWindow *win, gpointer user_data)
 			modest_dimming_rule_set_notification (rule, "");
 	}
 	if (!dimmed) {
-		dimmed = _selected_folder_is_any_of_type (win, types, 3);
+		dimmed = _selected_folder_is_any_of_type (win, types, 4);
 		if (dimmed)
 			modest_dimming_rule_set_notification (rule, "");
 	}
