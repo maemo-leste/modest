@@ -1100,8 +1100,21 @@ message_reader (ModestMsgViewWindow *window,
 {
 	ModestMailOperation *mail_op = NULL;
 	ModestMailOperationTypeOperation op_type;
+	gboolean already_showing = FALSE;
+	ModestWindow *msg_window = NULL;
+	ModestWindowMgr *mgr;
 
 	g_return_val_if_fail (path != NULL, FALSE);
+
+	mgr = modest_runtime_get_window_mgr ();
+	already_showing = modest_window_mgr_find_registered_header (mgr, header, &msg_window);
+	if (already_showing && (msg_window != MODEST_WINDOW (window))) {
+		gboolean retval;
+		if (msg_window)
+			gtk_window_present (GTK_WINDOW (msg_window));
+		g_signal_emit_by_name (G_OBJECT (window), "delete-event", NULL, &retval);
+		return TRUE;
+	}
 
 	/* Msg download completed */
 	if (tny_header_get_flags (header) & TNY_HEADER_FLAG_CACHED) {
