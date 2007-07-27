@@ -1,5 +1,11 @@
 2007-07-27  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/maemo/modest-main-window.c: (modest_main_window_on_show):
+	Offer a connection dialog if there is no connection when 
+	starting modest. This should fix projects.maemo.org bug NB#61134.
+
+2007-07-27  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/maemo/modest-msg-edit-window.c: (replace_with_attachments):
 	Reverted my last commit. I was able to fix the build by doing 
 	apt-get install wpeditor0 (replacing other wpeditor packages) and 

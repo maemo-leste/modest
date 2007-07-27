@@ -799,7 +799,9 @@ modest_main_window_on_show (GtkWidget *self, gpointer user_data)
 		modest_account_mgr_free_account_names (accounts);
 	}
 
-
+	/* The UI spec wants us to show a connection dialog when the application is 
+	 * started by the user, if there is no connection: */
+	 modest_platform_connect_and_wait (GTK_WINDOW (self), NULL);
 }
 
 ModestWindow *
