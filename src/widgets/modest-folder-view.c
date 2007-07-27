@@ -1436,6 +1436,22 @@ on_progress_changed (ModestMailOperation *mail_op,
 	g_slice_free (DndHelper, helper);
 }
 
+
+/* get the folder for the row the treepath refers to. */
+/* folder must be unref'd */
+static TnyFolder*
+tree_path_to_folder (GtkTreeModel *model, GtkTreePath *path)
+{
+	GtkTreeIter iter;
+	TnyFolder *folder = NULL;
+	
+	if (gtk_tree_model_get_iter (model,&iter, path))
+		gtk_tree_model_get (model, &iter,
+				    TNY_GTK_FOLDER_STORE_TREE_MODEL_INSTANCE_COLUMN, &folder,
+				    -1);
+	return folder;
+}
+
 /*
  * This function is used by drag_data_received_cb to manage drag and
  * drop of a header, i.e, and drag from the header view to the folder
@@ -1451,13 +1467,13 @@ drag_and_drop_from_header_view (GtkTreeModel *source_model,
 	TnyHeader *header = NULL;
 	TnyFolder *folder = NULL;
 	ModestMailOperation *mail_op = NULL;
-	GtkTreeIter source_iter, dest_iter;
+	GtkTreeIter source_iter;
 
 	g_return_if_fail (GTK_IS_TREE_MODEL(source_model));
 	g_return_if_fail (GTK_IS_TREE_MODEL(dest_model));
 	g_return_if_fail (dest_row);
 	g_return_if_fail (helper);
-	
+
 	/* Get header */
 	gtk_tree_model_get_iter (source_model, &source_iter, helper->source_row);
 	gtk_tree_model_get (source_model, &source_iter, 
@@ -1469,15 +1485,16 @@ drag_and_drop_from_header_view (GtkTreeModel *source_model,
 	}
 	
 	/* Get Folder */
-	gtk_tree_model_get_iter (dest_model, &dest_iter, dest_row);
-	gtk_tree_model_get (dest_model, &dest_iter, 
-			    TNY_GTK_FOLDER_STORE_TREE_MODEL_INSTANCE_COLUMN, 
-			    &folder, -1);
-
+	folder = tree_path_to_folder (dest_model, dest_row);
 	if (!TNY_IS_FOLDER(folder)) {
 		g_warning ("BUG: %s could not get a valid folder", __FUNCTION__);
 		goto cleanup;
 	}
+	if (modest_tny_folder_get_rules(folder) & MODEST_FOLDER_RULES_FOLDER_NON_WRITEABLE) {
+		g_debug ("folder rules: cannot write to that folder");
+		goto cleanup;
+	}
+	
 
 	/* Transfer message */
 	mail_op = modest_mail_operation_new_with_error_handling (MODEST_MAIL_OPERATION_TYPE_RECEIVE, 
@@ -1525,13 +1542,35 @@ drag_and_drop_from_folder_view (GtkTreeModel     *source_model,
 	GtkTreeIter parent_iter, iter;
 	TnyFolderStore *parent_folder = NULL;
 	TnyFolder *folder = NULL;
+	gboolean forbidden = TRUE;
 
+	/* check the folder rules for the destination */
+	folder = tree_path_to_folder (dest_model, dest_row);
+	if (folder) {
+		ModestTnyFolderRules rules =
+			modest_tny_folder_get_rules (folder);
+		forbidden = rules & MODEST_FOLDER_RULES_FOLDER_NON_WRITEABLE;
+		if (forbidden)
+			g_debug ("folder rules: cannot write to that folder");
+		g_object_unref (folder);
+	}
+	
+	if (!forbidden) {
+		/* check the folder rules for the source */
+		folder = tree_path_to_folder (source_model, helper->source_row);
+		if (folder) {
+			ModestTnyFolderRules rules =
+				modest_tny_folder_get_rules (folder);
+			forbidden = rules & MODEST_FOLDER_RULES_FOLDER_NON_MOVEABLE;
+			if (forbidden)
+				g_debug ("folder rules: cannot move that folder");
+			g_object_unref (folder);
+		}
+	}
+
+	
 	/* Check if the drag is possible */
-/* 	if (!gtk_tree_path_compare (helper->source_row, dest_row) || */
-/* 	    !gtk_tree_drag_dest_row_drop_possible (GTK_TREE_DRAG_DEST (dest_model), */
-/* 						   dest_row, */
-/* 						   selection_data)) { */
-	if (!gtk_tree_path_compare (helper->source_row, dest_row)) {
+	if (forbidden || !gtk_tree_path_compare (helper->source_row, dest_row)) {
 
 		gtk_drag_finish (helper->context, FALSE, FALSE, helper->time);
 		gtk_tree_path_free (helper->source_row);	
