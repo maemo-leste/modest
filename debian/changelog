@@ -1,3 +1,12 @@
+modest (1.0-2007.31-2) gutsy; urgency=low
+
+  * Fixes: NB#64270, NB#64200, NB#64169, NB#63810, NB#62722, NB#64130
+  * Fixes: NB#63201, NB#62350, NB#63336, NB#60993, NB#61280, NB#64214
+  * Fixes: NB#63212, NB#63246, NB#62369, NB#64368, NB#64051, NB#61134
+  * Chages submitted to wpeditor and related modest bugs have been fixed.
+
+ -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Fri, 27 Jul 2007 15:47:28 +0300
+
 modest (1.0-2007.31-1) gutsy; urgency=low
 
   * Fixes: NB#63741, NB#64120, NB#63631, NB#59215, NB#64225, NB#63938
