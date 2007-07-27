@@ -259,13 +259,24 @@ void
 _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 					       GtkTreeModel *tree_model,  GtkTreeIter *iter,  gpointer user_data)
 {
-	TnyHeaderFlags flags, prior_flags;
-	gchar *address, *subject, *header;
-	time_t date;
-	ModestHeaderViewCompactHeaderMode header_mode;
+	g_return_if_fail (GTK_IS_TREE_VIEW_COLUMN (column));
+	g_return_if_fail (GTK_IS_CELL_RENDERER (renderer));
+	g_return_if_fail (GTK_IS_TREE_MODEL (tree_model));
+	
+	/* Note that GtkTreeModel is a GtkTreeModelFilter. */
+	
+	/* printf ("DEBUG: %s: tree_model gtype=%s\n", __FUNCTION__, G_OBJECT_TYPE_NAME (tree_model)); */
+	
+	TnyHeaderFlags flags = 0;
+	TnyHeaderFlags prior_flags = 0;
+	gchar *address = NULL;
+	gchar *subject = NULL;
+	gchar *header = NULL;
+	time_t date = 0;
+	
 	GtkCellRenderer *recipient_cell, *date_or_status_cell, *subject_cell,
 		*attach_cell, *priority_cell,
-		*recipient_box, *subject_box;
+		*recipient_box, *subject_box = NULL;
 	TnyHeader *msg_header = NULL;
 	gchar *display_date = NULL, *tmp_date = NULL;
 
@@ -277,7 +288,7 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 	recipient_cell = GTK_CELL_RENDERER (g_object_get_data (G_OBJECT (recipient_box), "recipient-renderer"));
 	date_or_status_cell = GTK_CELL_RENDERER (g_object_get_data (G_OBJECT (recipient_box), "date-renderer"));
 
-	header_mode = GPOINTER_TO_INT (user_data); 
+	ModestHeaderViewCompactHeaderMode header_mode = GPOINTER_TO_INT (user_data); 
 
 	if (header_mode == MODEST_HEADER_VIEW_COMPACT_HEADER_MODE_IN)
 		gtk_tree_model_get (tree_model, iter,

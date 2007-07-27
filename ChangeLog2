@@ -1,5 +1,12 @@
 2007-07-27  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/widgets/modest-header-view-render.c:
+	(_modest_header_view_compact_header_cell_data):
+	Some checks and initialization to try to deal with a crash, 
+	probably ineffective.
+
+2007-07-27  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/maemo/modest-maemo-utils.c:
 	(modest_maemo_utils_get_supported_secure_authentication_methods):
 	Make sure that we have a connection, asking the user for one 
