@@ -469,27 +469,18 @@ icon_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 	GObject *rendobj = NULL, *instance = NULL;
 	GdkPixbuf *pixbuf = NULL;
 	TnyFolderType type = TNY_FOLDER_TYPE_UNKNOWN;
-	gchar *fname = NULL;
 	const gchar *account_id = NULL;
-	gint unread = 0;
 	gboolean has_children;
 	
 	rendobj = G_OBJECT(renderer);
 	gtk_tree_model_get (tree_model, iter,
 			    TNY_GTK_FOLDER_STORE_TREE_MODEL_TYPE_COLUMN, &type,
-			    TNY_GTK_FOLDER_STORE_TREE_MODEL_NAME_COLUMN, &fname,
-			    TNY_GTK_FOLDER_STORE_TREE_MODEL_UNREAD_COLUMN, &unread,
 			    TNY_GTK_FOLDER_STORE_TREE_MODEL_INSTANCE_COLUMN, &instance,
 			    -1);
 	has_children = gtk_tree_model_iter_has_child (tree_model, iter);
 
-	if (!fname)
+	if (!instance) 
 		return;
-
-	if (!instance) {
-		g_free (fname);
-		return;
-	}
 
 	/* MERGE is not needed anymore as the folder now has the correct type jschmid */
 	/* We include the MERGE type here because it's used to create
@@ -542,7 +533,6 @@ icon_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 	}
 	
 	g_object_unref (G_OBJECT (instance));
-	g_free (fname);
 
 	/* Set pixbuf */
 	g_object_set (rendobj, "pixbuf", pixbuf, NULL);
