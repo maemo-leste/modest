@@ -566,18 +566,26 @@ entry_insert_text (GtkEditable *editable,
 		hildon_banner_show_information  (gtk_widget_get_parent (GTK_WIDGET (data)), NULL,
 						 _CS("ckdg_ib_maximum_characters_reached"));
 	} else {
-		if (chars_length == 0) {
-			/* A blank space is not valid as first character */
-			if (strcmp (text, " ")) {
-				GtkWidget *ok_button;
-				GList *buttons;
+		gboolean is_valid = FALSE;
 
-				/* Show OK button */
-				buttons = gtk_container_get_children (GTK_CONTAINER (GTK_DIALOG (data)->action_area));
-				ok_button = GTK_WIDGET (buttons->next->data);
+		if (!text)
+			is_valid = FALSE;
+		else if (strlen(text) == 0 && g_str_has_prefix (chars, " "))
+			is_valid = FALSE;
+		else
+			is_valid = !g_str_has_prefix(text, " ");
+		
+		/* A blank space is not valid as first character */
+		if (is_valid) {
+			GtkWidget *ok_button;
+			GList *buttons;
+			
+			/* Show OK button */
+			buttons = gtk_container_get_children (GTK_CONTAINER (GTK_DIALOG (data)->action_area));
+			ok_button = GTK_WIDGET (buttons->next->data);
 				gtk_widget_set_sensitive (ok_button, TRUE);
 				g_list_free (buttons);
-			}
+		
 		}
 
 		/* Write the text in the entry */
