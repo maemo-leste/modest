@@ -150,6 +150,7 @@ run_account_setup_wizard (ModestWindow *win)
 	
 	wizard = modest_easysetup_wizard_dialog_new ();
 	gtk_window_set_transient_for (GTK_WINDOW (wizard), GTK_WINDOW (win));
+	gtk_window_set_modal (GTK_WINDOW (wizard), TRUE);
 	gtk_dialog_run (GTK_DIALOG (wizard));
 	gtk_widget_destroy (GTK_WIDGET (wizard));
 }
@@ -176,6 +177,8 @@ modest_ui_actions_on_about (GtkAction *action, ModestWindow *win)
 					 "uses the tinymail email framework written by Philip van Hoof"));
 	gtk_about_dialog_set_authors (GTK_ABOUT_DIALOG(about), authors);
 	gtk_about_dialog_set_website (GTK_ABOUT_DIALOG(about), "http://modest.garage.maemo.org");
+	gtk_window_set_transient_for (GTK_WINDOW (about), GTK_WINDOW (win));
+	gtk_window_set_modal (GTK_WINDOW (about), TRUE);
 	
 	gtk_dialog_run (GTK_DIALOG (about));
 	gtk_widget_destroy(about);
@@ -526,6 +529,8 @@ modest_ui_actions_on_accounts (GtkAction *action, ModestWindow *win)
 	} else 	{
 		/* Show the list of accounts: */
 		GtkDialog *account_win = GTK_DIALOG(modest_account_view_window_new ());
+		gtk_window_set_transient_for (GTK_WINDOW (account_win), GTK_WINDOW (win));
+		gtk_window_set_modal (GTK_WINDOW (account_win), TRUE);
 		modest_maemo_show_dialog_and_forget (GTK_WINDOW (win), account_win); 
 	}
 #else
@@ -3069,6 +3074,7 @@ headers_action_show_details (TnyHeader *header,
 	dialog = modest_details_dialog_new_with_header (GTK_WINDOW (window), header);
 
 	/* Run dialog */
+	gtk_window_set_modal (GTK_WINDOW (dialog), TRUE);
 	gtk_widget_show_all (dialog);
 	gtk_dialog_run (GTK_DIALOG (dialog));
 
@@ -3088,6 +3094,7 @@ show_folder_details (TnyFolder *folder,
 	dialog = modest_details_dialog_new_with_folder (window, folder);
 
 	/* Run dialog */
+	gtk_window_set_modal (GTK_WINDOW (dialog), TRUE);
 	gtk_widget_show_all (dialog);
 	gtk_dialog_run (GTK_DIALOG (dialog));
 
@@ -3774,6 +3781,7 @@ modest_ui_actions_on_move_to (GtkAction *action,
 	/* Create and run the dialog */
 	dialog = create_move_to_dialog (GTK_WINDOW (win), folder_view, &tree_view);
 	modest_folder_view_select_first_inbox_or_local (MODEST_FOLDER_VIEW (tree_view));
+	gtk_window_set_modal (GTK_WINDOW (dialog), TRUE);
 	result = gtk_dialog_run (GTK_DIALOG(dialog));
 	g_object_ref (tree_view);
 	gtk_widget_destroy (dialog);
@@ -3892,6 +3900,7 @@ modest_ui_actions_on_settings (GtkAction *action,
 
 	dialog = modest_platform_get_global_settings_dialog ();
 	gtk_window_set_transient_for (GTK_WINDOW (dialog), GTK_WINDOW (win));
+	gtk_window_set_modal (GTK_WINDOW (dialog), TRUE);
 	gtk_widget_show_all (dialog);
 
 	gtk_dialog_run (GTK_DIALOG (dialog));
