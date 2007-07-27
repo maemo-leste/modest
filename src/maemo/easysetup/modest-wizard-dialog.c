@@ -258,8 +258,10 @@ init (ModestWizardDialog *wizard_dialog)
 #ifdef MODEST_HAVE_HILDON0_WIDGETS
     priv->image = gtk_image_new_from_icon_name ("qgn_widg_wizard",
 						HILDON_ICON_SIZE_WIDG_WIZARD);
-#else
-		int icon_size = gtk_icon_size_register("hildon_wizard", 50, 50);
+#else	    
+    static int icon_size = 0;
+    if (!icon_size)
+	    icon_size = gtk_icon_size_register("modest_wizard", 50, 50);
     priv->image = gtk_image_new_from_icon_name ("qgn_widg_wizard",
 						icon_size);
 #endif /*MODEST_HILDON_VERSION_0*/
