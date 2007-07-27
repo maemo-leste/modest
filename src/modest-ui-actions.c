@@ -272,10 +272,6 @@ headers_action_delete (TnyHeader *header,
 		       gpointer user_data)
 {
 	modest_do_message_delete (header, win);
-
-/* refilter treemodel to hide marked-as-deleted rows */
-/* 	if (MODEST_IS_HEADER_VIEW (user_data)) */
-/* 		modest_header_view_refilter (MODEST_HEADER_VIEW (user_data)); */
 }
 
 /** After deleing a message that is currently visible in a window, 
@@ -397,6 +393,9 @@ modest_ui_actions_on_delete_message (GtkAction *action, ModestWindow *win)
 		/* Remove each header. If it's a view window header_view == NULL */
 		do_headers_action (win, headers_action_delete, header_view);
 
+		/* refresh the header view (removing marked-as-deleted)*/
+ 		modest_header_view_refilter (MODEST_HEADER_VIEW(header_view)); 
+		
 		if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
 			modest_ui_actions_refresh_message_window_after_delete (MODEST_MSG_VIEW_WINDOW (win));
 			
