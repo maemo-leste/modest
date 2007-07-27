@@ -1,5 +1,14 @@
 2007-07-27  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/maemo/modest-account-view-window.c:
+	(on_new_button_clicked): Remember the wizard dialog instance, 
+	so we can just present it again if necessary. This prevents 
+	multiple windows from appearing if you click again quickly on the 
+	New button before the dialog appears, fixing projects.maemo.org 
+	bug NB#64169.
+
+2007-07-27  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/maemo/modest-main-window.c: (modest_main_window_on_show):
 	Offer a connection dialog if there is no connection when 
 	starting modest. This should fix projects.maemo.org bug NB#61134.
