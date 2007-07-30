@@ -801,7 +801,7 @@ modest_main_window_on_show (GtkWidget *self, gpointer user_data)
 		accounts = modest_account_mgr_account_names (modest_runtime_get_account_mgr (), TRUE);
 		send_receive_all = gtk_ui_manager_get_action (parent_priv->ui_manager, 
 							      "/MenuBar/ToolsMenu/ToolsSendReceiveMainMenu/ToolsSendReceiveAllMenu");
-		gtk_action_set_visible (send_receive_all, g_slist_length (accounts));
+		gtk_action_set_visible (send_receive_all, g_slist_length (accounts) > 1);
 		modest_account_mgr_free_account_names (accounts);
 	}
 }
