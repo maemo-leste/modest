@@ -451,6 +451,7 @@ is_valid_insert (const gchar *text, gint len)
 	gunichar c;
 	gunichar next_c;
 	gint i= 0;
+	gboolean quoted = FALSE;
 	const gchar *current, *next_current;
 	if (text == NULL)
 		return TRUE;
@@ -463,7 +464,7 @@ is_valid_insert (const gchar *text, gint len)
 			next_c = g_utf8_get_char (g_utf8_next_char (current));
 		else
 			next_c = 0;
-		if (c == g_utf8_get_char(",") || c == g_utf8_get_char (";")) {
+		if (!quoted && ((c == g_utf8_get_char(",") || c == g_utf8_get_char (";")))) {
 			if ((next_c != 0) && (next_c != g_utf8_get_char ("\n")))
 				return FALSE;
 		}
@@ -471,6 +472,8 @@ is_valid_insert (const gchar *text, gint len)
 		    c == g_utf8_get_char ("\n") ||
 		    c == g_utf8_get_char ("\t"))
 			return FALSE;
+		if (c == g_utf8_get_char ("\""))
+			quoted = !quoted;
 		current = g_utf8_next_char (current);
 		i = current - text;
 	}
@@ -484,6 +487,7 @@ create_valid_text (const gchar *text, gint len)
 	gunichar next_c;
 	gint i= 0;
 	GString *str;
+	gboolean quoted = FALSE;
 	const gchar *current, *next_current;
 
 	if (text == NULL)
@@ -503,10 +507,12 @@ create_valid_text (const gchar *text, gint len)
 		    c != g_utf8_get_char ("\n") &&
 		    c != g_utf8_get_char ("\t"))
 			str = g_string_append_unichar (str, c);
-		if (c == g_utf8_get_char(",") || c == g_utf8_get_char (";")) {
+		if (!quoted && ((c == g_utf8_get_char(",") || c == g_utf8_get_char (";")))) {
 			if ((next_c != 0) && (next_c != g_utf8_get_char ("\n")))
 				str = g_string_append_c (str, '\n');
 		}
+		if (c == g_utf8_get_char ("\""))
+			quoted = !quoted;
 		current = g_utf8_next_char (current);
 		i = current - text;
 	}
