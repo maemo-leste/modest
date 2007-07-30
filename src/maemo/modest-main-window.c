@@ -1335,9 +1335,9 @@ on_account_update (TnyAccountStore *account_store,
 		/* Create action and add it to the action group. The
 		   action name must be the account name, this way we
 		   could know in the handlers the account to show */
-		if(account_data->account_name) {
+		if(account_data && account_data->account_name) {
 			gchar* item_name, *refresh_action_name;
-			guint8 merge_id;
+			guint8 merge_id = 0;
 			GtkAction *view_account_action, *refresh_account_action;
 
 			view_account_action = gtk_action_new (account_data->account_name,
@@ -1369,6 +1369,7 @@ on_account_update (TnyAccountStore *account_store,
 			refresh_action_name = g_strconcat ("SendReceive", account_data->account_name, NULL);
 			refresh_account_action = gtk_action_new ((const gchar*) refresh_action_name, 
 								 display_name, NULL, NULL);
+			printf("DEBUG: %s: menu display_name=%s\n", __FUNCTION__, display_name);
 			gtk_action_group_add_action (action_group, refresh_account_action);
 
 			merge_id = (guint8) gtk_ui_manager_new_merge_id (parent_priv->ui_manager);
@@ -2140,7 +2141,7 @@ on_show_account_action_activated  (GtkAction *action,
 	acc_data = modest_account_mgr_get_account_data (mgr, acc_name);
 
 	/* Set the new visible & active account */
-	if (acc_data->store_account) { 
+	if (acc_data && acc_data->store_account) { 
 		modest_folder_view_set_account_id_of_visible_server_account (priv->folder_view,
 									     acc_data->store_account->account_name);
 		modest_window_set_active_account (MODEST_WINDOW (self), acc_data->account_name);
@@ -2149,7 +2150,8 @@ on_show_account_action_activated  (GtkAction *action,
 	modest_folder_view_select_first_inbox_or_local (priv->folder_view);
 
 	/* Free */
-	modest_account_mgr_free_account_data (mgr, acc_data);
+	if (acc_data)
+		modest_account_mgr_free_account_data (mgr, acc_data);
 }
 
 static void

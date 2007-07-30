@@ -1,5 +1,20 @@
 2007-07-30  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-tny-account-store.c: (on_account_removed),
+	(on_account_changed): Emit the ACCOUNT_UPDATE signal so that the 
+	account is removed from the View menu. We have TnyAccountStore 
+	and ModestTnyAccountStore signals that seem very similar, but this 
+	seems to work for now.
+
+	* src/maemo/modest-main-window.c:
+	(on_show_account_action_activated): Prevent dereference 
+	of a NULL if the accoutn does not really exist, though that 
+	should not happen anymore.
+
+	This fixes projects.maemo.org bug NB#64606.
+
+2007-07-30  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/modest-ui-actions.c: (run_account_setup_wizard),
 	(modest_ui_actions_on_accounts): Revert a change that set these 
 	to modal dialogs, freezing the UI when they show secondary dialogs.

@@ -370,6 +370,10 @@ on_account_removed (ModestAccountMgr *acc_mgr,
 	g_signal_emit (G_OBJECT (self),
 		       tny_account_store_signals [TNY_ACCOUNT_STORE_ACCOUNT_REMOVED],
 		       0, transport_account);
+		       
+	/* Make sure that the account is reviewed from the View menu, etc: */
+	g_signal_emit (G_OBJECT(self), signals[ACCOUNT_UPDATE_SIGNAL], 0,
+			       NULL);
 
 	/* Frees */
 	g_object_unref (store_account);
@@ -400,6 +404,8 @@ on_account_changed (ModestAccountMgr *acc_mgr, const gchar *account,
 		    const GSList *keys, gboolean server_account, gpointer user_data)
 
 {
+	printf ("DEBUG: modest: %s\n", __FUNCTION__);
+	
 	ModestTnyAccountStore *self = MODEST_TNY_ACCOUNT_STORE(user_data);
 	
 	/*
@@ -409,6 +415,7 @@ on_account_changed (ModestAccountMgr *acc_mgr, const gchar *account,
 		printf ("  DEBUG: %s: key=%s\n", __FUNCTION__, (const gchar*)iter->data);
 	}
 	*/
+	
 	
 	/* Ignore the change if it's a change in the last_updated value */
 	if (g_slist_length ((GSList *)keys) == 1 &&
