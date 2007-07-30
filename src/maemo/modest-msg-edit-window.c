@@ -1341,7 +1341,7 @@ modest_msg_edit_window_set_format_state (ModestMsgEditWindow *self,
 
 	buffer_format->cs.bold = ((buffer_format->bold&0x1) != (current_format->bold&0x1));
 	buffer_format->cs.italic = ((buffer_format->italic&0x1) != (current_format->italic&0x1));
-	buffer_format->cs.color = gdk_color_equal(&(buffer_format->color), &(current_format->color));
+	buffer_format->cs.color = !gdk_color_equal(&(buffer_format->color), &(current_format->color));
 	buffer_format->cs.font_size =  (buffer_format->font_size != current_format->font_size);
 	buffer_format->cs.font = (buffer_format->font != current_format->font);
 	buffer_format->cs.justification = (buffer_format->justification != current_format->justification);
@@ -1379,11 +1379,11 @@ modest_msg_edit_window_set_format_state (ModestMsgEditWindow *self,
 	if (buffer_format->cs.font) {
 		wp_text_buffer_set_attribute (WP_TEXT_BUFFER (priv->text_buffer), WPT_FONT, (gpointer) (buffer_format->font));
 	}
+	wp_text_buffer_thaw (WP_TEXT_BUFFER (priv->text_buffer));
 	if (buffer_format->cs.bullet) {
-		wp_text_buffer_set_attribute (WP_TEXT_BUFFER (priv->text_buffer), WPT_BULLET, (gpointer) ((int)buffer_format->bullet));
+	  wp_text_buffer_set_attribute (WP_TEXT_BUFFER (priv->text_buffer), WPT_BULLET, (gpointer) ((buffer_format->bullet)?1:0));
 	}
 /* 	wp_text_buffer_set_format (WP_TEXT_BUFFER (priv->text_buffer), buffer_format); */
-	wp_text_buffer_thaw (WP_TEXT_BUFFER (priv->text_buffer));
 
 	g_free (current_format);
 
