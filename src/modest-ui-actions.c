@@ -1043,13 +1043,13 @@ reply_forward_cb (ModestMailOperation *mail_op,
 	switch (rf_helper->action) {
 	case ACTION_REPLY:
 		new_msg = 
-			modest_tny_msg_create_reply_msg (msg,  from, signature,
+			modest_tny_msg_create_reply_msg (msg, header, from, signature,
 							 rf_helper->reply_forward_type,
 							 MODEST_TNY_MSG_REPLY_MODE_SENDER);
 		break;
 	case ACTION_REPLY_TO_ALL:
 		new_msg = 
-			modest_tny_msg_create_reply_msg (msg, from, signature, rf_helper->reply_forward_type,
+			modest_tny_msg_create_reply_msg (msg, header, from, signature, rf_helper->reply_forward_type,
 							 MODEST_TNY_MSG_REPLY_MODE_ALL);
 		edit_type = MODEST_EDIT_TYPE_REPLY;
 		break;
@@ -1101,7 +1101,6 @@ cleanup:
 	if (account)
 		g_object_unref (G_OBJECT (account));
 /* 	g_object_unref (msg); */
-	g_object_unref (header);
 	free_reply_forward_helper (rf_helper);
 }
 
@@ -1172,7 +1171,8 @@ reply_forward (ReplyForwardAction action, ModestWindow *win)
 	TnyList *header_list = NULL;
 	ReplyForwardHelper *rf_helper = NULL;
 	guint reply_forward_type;
-	gboolean continue_download;
+	gboolean continue_download = TRUE;
+	gboolean do_retrieve = TRUE;
 	
 	g_return_if_fail (MODEST_IS_WINDOW(win));
 
@@ -1186,17 +1186,20 @@ reply_forward (ReplyForwardAction action, ModestWindow *win)
 	if (!header_list)
 		return;
 
+	reply_forward_type = 
+		modest_conf_get_int (modest_runtime_get_conf (),
+				     (action == ACTION_FORWARD) ? MODEST_CONF_FORWARD_TYPE : MODEST_CONF_REPLY_TYPE,
+				     NULL);
+
 	/* Check that the messages have been previously downloaded */
-	continue_download = download_uncached_messages (header_list, GTK_WINDOW (win), TRUE);
+	do_retrieve = (action == ACTION_FORWARD) || (reply_forward_type != MODEST_TNY_MSG_REPLY_TYPE_CITE);
+	if (do_retrieve)
+		continue_download = download_uncached_messages (header_list, GTK_WINDOW (win), TRUE);
 	if (!continue_download) {
 		g_object_unref (header_list);
 		return;
 	}
 	
-	reply_forward_type = 
-		modest_conf_get_int (modest_runtime_get_conf (),
-				     (action == ACTION_FORWARD) ? MODEST_CONF_FORWARD_TYPE : MODEST_CONF_REPLY_TYPE,
-				     NULL);
 	/* We assume that we can only select messages of the
 	   same folder and that we reply all of them from the
 	   same account. In fact the interface currently only
@@ -1224,23 +1227,16 @@ reply_forward (ReplyForwardAction action, ModestWindow *win)
  		if (!msg || !header) {
 			if (msg)
 				g_object_unref (msg);
-			if (header)
-				g_object_unref (header);
 			g_printerr ("modest: no message found\n");
 			return;
 		} else {
 			reply_forward_cb (NULL, header, msg, rf_helper);
 		}
+		if (header)
+			g_object_unref (header);
 	} else {
 		TnyHeader *header;
 		TnyIterator *iter;
-
-		/* Retrieve messages */
-		mail_op = modest_mail_operation_new_with_error_handling (MODEST_MAIL_OPERATION_TYPE_RECEIVE, 
-									 G_OBJECT(win),
-									 modest_ui_actions_get_msgs_full_error_handler, 
-									 NULL);
-		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
 
 		/* Only reply/forward to one message */
 		iter = tny_list_create_iterator (header_list);
@@ -1248,22 +1244,32 @@ reply_forward (ReplyForwardAction action, ModestWindow *win)
 		g_object_unref (iter);
 
 		if (header) {
-			modest_mail_operation_get_msg (mail_op,
-					       header,
-					       reply_forward_cb,
-					       rf_helper);
+			/* Retrieve messages */
+			if (do_retrieve) {
+				mail_op = modest_mail_operation_new_with_error_handling (
+					MODEST_MAIL_OPERATION_TYPE_RECEIVE, 
+					G_OBJECT(win),
+					modest_ui_actions_get_msgs_full_error_handler, 
+					NULL);
+				modest_mail_operation_queue_add (
+					modest_runtime_get_mail_operation_queue (), mail_op);
+				
+				modest_mail_operation_get_msg (mail_op,
+							       header,
+							       reply_forward_cb,
+							       rf_helper);
+				/* Clean */
+				g_object_unref(mail_op);
+			} else {
+				/* we put a ref here to prevent double unref as the reply
+				 * forward callback unrefs the header at its end */
+				reply_forward_cb (NULL, header, NULL, rf_helper);
+			}
 
-/* 			modest_mail_operation_get_msgs_full (mail_op,  */
-/* 						     header_list,  */
-/* 						     reply_forward_cb,  */
-/* 						     rf_helper,  */
-/* 						     free_reply_forward_helper); */
 
 			g_object_unref (header);
 		}
 
-		/* Clean */
-		g_object_unref(mail_op);
 	}
 
 	/* Free */

@@ -145,7 +145,8 @@ TnyMsg*       modest_tny_msg_create_forward_msg   (TnyMsg *msg,
 
 /**
  * modest_tny_msg_create_reply_msg:
- * @msg: a valid #TnyMsg instance
+ * @msg: a valid #TnyMsg instance, or %NULL
+ * @header: a valid #TnyHeader instance, or %NULL
  * @from: the sender of the forwarded mail
  * @signature: signature to add to the reply message
  * @reply_type: the type of formatting used to create the reply message
@@ -155,7 +156,8 @@ TnyMsg*       modest_tny_msg_create_forward_msg   (TnyMsg *msg,
  * 
  * Returns: Returns: a new #TnyMsg, or NULL in case of error
  **/
-TnyMsg*       modest_tny_msg_create_reply_msg     (TnyMsg *msg, 
+TnyMsg*       modest_tny_msg_create_reply_msg     (TnyMsg *msg,
+						   TnyHeader *header,
 						   const gchar *from,
 						   const gchar *signature,
 						   ModestTnyMsgReplyType reply_type,
