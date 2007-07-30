@@ -1745,11 +1745,13 @@ _on_msg_count_changed (ModestHeaderView *header_view,
 {
 	printf ("DEBUG: %s\n", __FUNCTION__);
 	gboolean folder_empty = FALSE;
-	TnyFolderChangeChanged changed;
+	TnyFolderChangeChanged changed;	
+	ModestMainWindowPrivate *priv;
 	
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW (main_window));
 	g_return_if_fail (TNY_IS_FOLDER(folder));
 	g_return_if_fail (TNY_IS_FOLDER_CHANGE(change));
+	priv = MODEST_MAIN_WINDOW_GET_PRIVATE (main_window);
 	
 	changed = tny_folder_change_get_changed (change);
 	
@@ -1765,6 +1767,7 @@ _on_msg_count_changed (ModestHeaderView *header_view,
 	if (folder_empty)  {
 		modest_main_window_set_contents_style (main_window,
 						       MODEST_MAIN_WINDOW_CONTENTS_STYLE_EMPTY);
+		gtk_widget_grab_focus (GTK_WIDGET (priv->folder_view));
 	}
 	else {
 		modest_main_window_set_contents_style (main_window,

@@ -1619,6 +1619,20 @@ modest_ui_actions_on_header_selected (ModestHeaderView *header_view,
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW(main_window));
 	g_return_if_fail (MODEST_IS_HEADER_VIEW (header_view));
 	
+	/* in the case the folder is empty, show the empty folder message and focus
+	 * folder view */
+	if (!header && gtk_widget_is_focus (GTK_WIDGET (header_view))) {
+		if (modest_header_view_is_empty (header_view)) {
+			TnyFolder *folder = modest_header_view_get_folder (header_view);
+			GtkWidget *folder_view = 
+				modest_main_window_get_child_widget (main_window,
+								     MODEST_WIDGET_TYPE_FOLDER_VIEW);
+			if (folder != NULL) 
+				modest_folder_view_select_folder (MODEST_FOLDER_VIEW (folder_view), folder, FALSE);
+			gtk_widget_grab_focus (GTK_WIDGET (folder_view));
+			return;
+		}
+	}
 	/* If no header has been selected then exit */
 	if (!header)
 		return;
