@@ -249,6 +249,7 @@ struct _ModestMsgEditWindowPrivate {
 	gulong      clipboard_change_handler_id;
 
 	TnyMsg      *draft_msg;
+	TnyMsg      *outbox_msg;
 	gboolean    sent;
 };
 
@@ -352,6 +353,7 @@ modest_msg_edit_window_init (ModestMsgEditWindow *obj)
 	priv->last_search = NULL;
 
 	priv->draft_msg = NULL;
+	priv->outbox_msg = NULL;
 	priv->clipboard_change_handler_id = 0;
 	priv->sent = FALSE;
 }
@@ -575,6 +577,15 @@ modest_msg_edit_window_finalize (GObject *obj)
 		g_object_unref (priv->draft_msg);
 		priv->draft_msg = NULL;
 	}
+	if (priv->outbox_msg != NULL) {
+		TnyHeader *header = tny_msg_get_header (priv->outbox_msg);
+		if (TNY_IS_HEADER (header)) {
+			ModestWindowMgr *mgr = modest_runtime_get_window_mgr ();
+			modest_window_mgr_unregister_header (mgr, header);
+		}
+		g_object_unref (priv->outbox_msg);
+		priv->outbox_msg = NULL;
+	}
 
 	/* This had to stay alive for as long as the combobox that used it: */
 	modest_pair_list_free (priv->from_field_protos);
@@ -793,10 +804,14 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg)
 
 	/* we should set a reference to the incoming message if it is a draft */
 	msg_folder = tny_msg_get_folder (msg);
-	if (msg_folder) {
-		if (modest_tny_folder_is_local_folder (msg_folder) &&
-		    modest_tny_folder_get_local_or_mmc_folder_type (msg_folder) == TNY_FOLDER_TYPE_DRAFTS)
-			priv->draft_msg = g_object_ref(msg);
+	if (msg_folder) {		
+		if (modest_tny_folder_is_local_folder (msg_folder)) {
+			TnyFolderType type = modest_tny_folder_get_local_or_mmc_folder_type (msg_folder);
+			if (type == TNY_FOLDER_TYPE_DRAFTS) 
+				priv->draft_msg = g_object_ref(msg);
+			if (type == TNY_FOLDER_TYPE_OUTBOX)
+				priv->outbox_msg = g_object_ref(msg);
+		}
 		g_object_unref (msg_folder);
 	}
 }
@@ -1184,6 +1199,9 @@ modest_msg_edit_window_get_msg_data (ModestMsgEditWindow *edit_window)
 	data->subject =  g_strdup (gtk_entry_get_text (GTK_ENTRY (priv->subject_field)));
 	if (priv->draft_msg) {
 		data->draft_msg = g_object_ref (priv->draft_msg);
+	} 
+	if (priv->outbox_msg) {
+		data->draft_msg = g_object_ref (priv->outbox_msg);
 	} else {
 		data->draft_msg = NULL;
 	}

@@ -34,6 +34,8 @@
 #include <tny-folder.h>
 #include <tny-camel-msg.h>
 #include <modest-tny-account.h>
+#include <modest-runtime.h>
+#include <widgets/modest-window-mgr.h>
 #include <modest-marshal.h>
 #include <string.h> /* strcmp */
 
@@ -170,19 +172,17 @@ static void
 modest_tny_send_queue_add (TnySendQueue *self, TnyMsg *msg, GError **err)
 {
 	ModestTnySendQueuePrivate *priv;
-	TnyHeader *header;
+	TnyHeader *header = NULL;
 	SendInfo *info = NULL;
-	GList* existing;
-	const gchar* msg_id;
+	GList* existing = NULL;
+	const gchar* msg_id = NULL;
 
 	g_return_if_fail (TNY_IS_SEND_QUEUE(self));
 	g_return_if_fail (TNY_IS_CAMEL_MSG(msg));
 
 	priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE (self);
 	header = tny_msg_get_header (msg);
-
-	/* FIXME: do something smart here... */
-
+	
 	/* Note that this call actually sets the message id to something
 	 * sensible. */	
 	TNY_CAMEL_SEND_QUEUE_CLASS(parent_class)->add_func (self, msg, err); /* FIXME */
@@ -219,11 +219,13 @@ modest_tny_send_queue_add (TnySendQueue *self, TnyMsg *msg, GError **err)
 static void
 _add_message (ModestTnySendQueue *self, TnyHeader *header)
 {
+	ModestWindowMgr *mgr = NULL;
 	ModestTnySendQueuePrivate *priv;
 	SendInfo *info = NULL;
 	GList* existing = NULL;
 	gchar* msg_uid = NULL;
 	ModestTnySendQueueStatus status = MODEST_TNY_SEND_QUEUE_WAITING;
+	gboolean editing = FALSE;
 
 	g_return_if_fail (TNY_IS_SEND_QUEUE(self));
 	g_return_if_fail (TNY_IS_HEADER(header));
@@ -238,9 +240,16 @@ _add_message (ModestTnySendQueue *self, TnyHeader *header)
 	case MODEST_TNY_SEND_QUEUE_FAILED:
 		if (status != MODEST_TNY_SEND_QUEUE_SUSPENDED)
 			tny_header_unset_flags (header, TNY_HEADER_FLAG_PRIORITY);
+		
+		/* Check if it already exists on queue */
 		existing = modest_tny_send_queue_lookup_info (MODEST_TNY_SEND_QUEUE(self), msg_uid);
 		if(existing != NULL) return;
 	
+		/* Check if its being edited */
+		mgr = modest_runtime_get_window_mgr ();
+		editing = modest_window_mgr_find_registered_header (mgr, header, NULL);
+		if (editing) return;
+		
 		/* Add new meesage info */
 		info = g_slice_new (SendInfo);
 		info->msg_id = strdup(msg_uid);

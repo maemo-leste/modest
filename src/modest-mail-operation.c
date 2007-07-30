@@ -698,7 +698,8 @@ modest_mail_operation_send_new_mail_cb (ModestMailOperation *self,
 					gpointer userdata)
 {
 	SendNewMailInfo *info = (SendNewMailInfo *) userdata;
-	TnyFolder *folder;
+	TnyFolder *draft_folder = NULL;
+	TnyFolder *outbox_folder = NULL;
 	TnyHeader *header;
 
 	if (!msg) {
@@ -708,23 +709,38 @@ modest_mail_operation_send_new_mail_cb (ModestMailOperation *self,
 	/* Call mail operation */
 	modest_mail_operation_send_mail (self, info->transport_account, msg);
 
-	folder = modest_tny_account_get_special_folder (TNY_ACCOUNT (info->transport_account), TNY_FOLDER_TYPE_DRAFTS);
-	if (folder) {
-		if (info->draft_msg != NULL) {
-			header = tny_msg_get_header (info->draft_msg);
-			/* Note: This can fail (with a warning) if the message is not really already in a folder,
-			 * because this function requires it to have a UID. */
-			tny_folder_remove_msg (folder, header, NULL);
-			tny_header_set_flags (header, TNY_HEADER_FLAG_DELETED);
-			tny_header_set_flags (header, TNY_HEADER_FLAG_SEEN);
-			g_object_unref (header);
-			g_object_unref (folder);
-		}
+	/* Remove old mail from its source folder */
+	draft_folder = modest_tny_account_get_special_folder (TNY_ACCOUNT (info->transport_account), TNY_FOLDER_TYPE_DRAFTS);
+	outbox_folder = modest_tny_account_get_special_folder (TNY_ACCOUNT (info->transport_account), TNY_FOLDER_TYPE_OUTBOX);
+	if (info->draft_msg != NULL) {
+		TnyFolder *folder = NULL;
+		TnyFolder *src_folder = NULL;
+		TnyFolderType folder_type;		
+		folder = tny_msg_get_folder (info->draft_msg);		
+		if (folder == NULL) goto end;
+		folder_type = modest_tny_folder_guess_folder_type (folder);
+		if (folder_type == TNY_FOLDER_TYPE_OUTBOX) 
+			src_folder = outbox_folder;
+		else 
+			src_folder = draft_folder;
+
+		/* Note: This can fail (with a warning) if the message is not really already in a folder,
+		 * because this function requires it to have a UID. */		
+		header = tny_msg_get_header (info->draft_msg);
+		tny_folder_remove_msg (src_folder, header, NULL);
+		tny_header_set_flags (header, TNY_HEADER_FLAG_DELETED);
+		tny_header_set_flags (header, TNY_HEADER_FLAG_SEEN);
+		g_object_unref (header);
+		g_object_unref (folder);
 	}
 
 end:
 	if (info->draft_msg)
 		g_object_unref (info->draft_msg);
+	if (draft_folder)
+		g_object_unref (draft_folder);
+	if (outbox_folder)
+		g_object_unref (outbox_folder);
 	if (info->transport_account)
 		g_object_unref (info->transport_account);
 	g_slice_free (SendNewMailInfo, info);
@@ -784,6 +800,7 @@ modest_mail_operation_save_to_drafts_cb (ModestMailOperation *self,
 					 TnyMsg *msg,
 					 gpointer userdata)
 {
+	TnyFolder *src_folder = NULL;
 	TnyFolder *folder = NULL;
 	TnyHeader *header = NULL;
 	ModestMailOperationPrivate *priv = NULL;
@@ -809,11 +826,12 @@ modest_mail_operation_save_to_drafts_cb (ModestMailOperation *self,
 
 	if (info->draft_msg != NULL) {
 		header = tny_msg_get_header (info->draft_msg);
+		src_folder = tny_header_get_folder (header); 
 		/* Remove the old draft expunging it */
-		tny_folder_remove_msg (folder, header, NULL);
+		tny_folder_remove_msg (src_folder, header, NULL);
 		tny_header_set_flags (header, TNY_HEADER_FLAG_DELETED);
 		tny_header_set_flags (header, TNY_HEADER_FLAG_SEEN);
-		tny_folder_sync (folder, FALSE, &(priv->error));  /* FALSE --> don't expunge */
+		tny_folder_sync (src_folder, TRUE, &(priv->error));  /* expunge */
 		g_object_unref (header);
 	}
 	
@@ -832,6 +850,8 @@ modest_mail_operation_save_to_drafts_cb (ModestMailOperation *self,
 end:
 	if (folder)
 		g_object_unref (G_OBJECT(folder));
+	if (src_folder)
+		g_object_unref (G_OBJECT(src_folder));
 	if (info->edit_window)
 		g_object_unref (G_OBJECT(info->edit_window));
 	if (info->draft_msg)

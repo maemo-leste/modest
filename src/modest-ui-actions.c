@@ -773,6 +773,7 @@ open_msg_cb (ModestMailOperation *mail_op,
 			goto cleanup;
 		}
 		win = modest_msg_edit_window_new (msg, account);
+		
 	} else {
 		gchar *uid = modest_tny_folder_get_header_unique_id (header);
 		

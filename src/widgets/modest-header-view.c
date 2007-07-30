@@ -1500,7 +1500,7 @@ folder_monitor_update (TnyFolderObserver *self,
 		return;
 
 	/* Check header removed  (hide marked as DELETED headers) */
-	if (changed & TNY_FOLDER_CHANGE_CHANGED_ADDED_HEADERS) {
+	if (changed & TNY_FOLDER_CHANGE_CHANGED_EXPUNGED_HEADERS) {
 		modest_header_view_refilter (MODEST_HEADER_VIEW(self));
 	}
 

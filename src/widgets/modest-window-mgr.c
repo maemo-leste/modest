@@ -477,7 +477,7 @@ on_window_destroy (ModestWindow *window,
 				if (response != GTK_RESPONSE_CANCEL) 				
 					modest_ui_actions_on_save_to_drafts (NULL, MODEST_MSG_EDIT_WINDOW (window));
 				
-			}
+			} 
 		}
 	}
 
