@@ -684,7 +684,7 @@ modest_ui_actions_on_new_msg (GtkAction *action, ModestWindow *win)
 
 	/* Create and register edit window */
 	/* This is destroyed by TOOD. */
-	msg_win = modest_msg_edit_window_new (msg, account_name);
+	msg_win = modest_msg_edit_window_new (msg, account_name, FALSE);
 	mgr = modest_runtime_get_window_mgr ();
 	modest_window_mgr_register_window (mgr, msg_win);
 
@@ -772,7 +772,7 @@ open_msg_cb (ModestMailOperation *mail_op,
 			run_account_setup_wizard(parent_win);
 			goto cleanup;
 		}
-		win = modest_msg_edit_window_new (msg, account);
+		win = modest_msg_edit_window_new (msg, account, TRUE);
 		
 	} else {
 		gchar *uid = modest_tny_folder_get_header_unique_id (header);
@@ -1079,7 +1079,7 @@ reply_forward_cb (ModestMailOperation *mail_op,
 	}
 
 	/* Create and register the windows */
-	msg_win = modest_msg_edit_window_new (new_msg, rf_helper->account_name);
+	msg_win = modest_msg_edit_window_new (new_msg, rf_helper->account_name, FALSE);
 	mgr = modest_runtime_get_window_mgr ();
 	modest_window_mgr_register_window (mgr, msg_win);
 

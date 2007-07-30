@@ -261,7 +261,7 @@ on_idle_mail_to(gpointer user_data)
 					tny_folder_add_msg (folder, msg, NULL); /* TODO: check err */
 					gdk_threads_enter ();
 
-					ModestWindow *win = modest_msg_edit_window_new (msg, account_name);
+					ModestWindow *win = modest_msg_edit_window_new (msg, account_name, FALSE);
 					modest_window_mgr_register_window (modest_runtime_get_window_mgr (), win);
 					gtk_widget_show_all (GTK_WIDGET (win));
 
@@ -366,7 +366,7 @@ on_idle_compose_mail(gpointer user_data)
 
 					gdk_threads_enter ();
 	
-					ModestWindow *win = modest_msg_edit_window_new (msg, account_name);
+					ModestWindow *win = modest_msg_edit_window_new (msg, account_name, FALSE);
 
 					/* it seems Sketch at least sends a leading ',' -- take that into account,
 					 * ie strip that ,*/
@@ -596,7 +596,7 @@ on_idle_open_message (gpointer user_data)
 		if (is_draft) {
 			/* TODO: Maybe the msg_uid should be registered for edit windows too,
 			 * so we can open the same window again next time: */
-			msg_view = modest_msg_edit_window_new (msg, modest_account_name);
+			msg_view = modest_msg_edit_window_new (msg, modest_account_name, TRUE);
 		} else {
 			msg_view = modest_msg_view_window_new (msg, modest_account_name,
 						       msg_uid);

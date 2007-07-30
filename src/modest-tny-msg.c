@@ -274,13 +274,14 @@ add_attachments (TnyMsg *msg, GList *attachments_list)
 
 
 gchar * 
-modest_tny_msg_get_body (TnyMsg *msg, gboolean want_html)
+modest_tny_msg_get_body (TnyMsg *msg, gboolean want_html, gboolean *is_html)
 {
 	TnyStream *stream;
 	TnyMimePart *body;
 	GtkTextBuffer *buf;
 	GtkTextIter start, end;
 	gchar *to_quote;
+	gboolean result_was_html = TRUE;
 
 	body = modest_tny_msg_find_body_part(msg, want_html);
 	if (!body)
@@ -298,11 +299,15 @@ modest_tny_msg_get_body (TnyMsg *msg, gboolean want_html)
 		gchar *to_quote_converted = modest_text_utils_convert_to_html (to_quote);
 		g_free (to_quote);
 		to_quote = to_quote_converted;
+		result_was_html = FALSE;
 	}
 
 	g_object_unref (buf);
 	g_object_unref (G_OBJECT(stream));
 	g_object_unref (G_OBJECT(body));
+
+	if (is_html != NULL)
+		*is_html = result_was_html;
 
 	return to_quote;
 }

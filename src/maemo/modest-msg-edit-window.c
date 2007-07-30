@@ -702,7 +702,7 @@ update_last_cid (ModestMsgEditWindow *self, GList *attachments)
 }
 
 static void
-set_msg (ModestMsgEditWindow *self, TnyMsg *msg)
+set_msg (ModestMsgEditWindow *self, TnyMsg *msg, gboolean preserve_is_rich)
 {
 	TnyHeader *header;
 	const gchar *to, *cc, *bcc, *subject;
@@ -711,6 +711,7 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg)
 	GtkTextIter iter;
 	TnyHeaderFlags priority_flags;
 	TnyFolder *msg_folder;
+	gboolean is_html = FALSE;
 	
 	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (self));
 	g_return_if_fail (TNY_IS_MSG (msg));
@@ -750,11 +751,12 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg)
 	update_window_title (self);
 
 	wp_text_buffer_reset_buffer (WP_TEXT_BUFFER (priv->text_buffer), TRUE);
-	body = modest_tny_msg_get_body (msg, TRUE);
+	body = modest_tny_msg_get_body (msg, TRUE, &is_html);
 
 	if ((body == NULL)||(body[0] == '\0')) {
 		g_free (body);
 		body = modest_text_utils_convert_to_html ("");
+		is_html = FALSE;
 	}
 	wp_text_buffer_load_document_begin (WP_TEXT_BUFFER (priv->text_buffer), TRUE);
 	wp_text_buffer_load_document_write (WP_TEXT_BUFFER (priv->text_buffer),
@@ -763,8 +765,10 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg)
 	wp_text_buffer_load_document_end (WP_TEXT_BUFFER (priv->text_buffer));
 	g_free (body);
 
+	if (preserve_is_rich && !is_html) {
+		wp_text_buffer_enable_rich_text (WP_TEXT_BUFFER (priv->text_buffer), FALSE);
 	/* Get the default format required from configuration */
-	if (!modest_conf_get_bool (modest_runtime_get_conf (), MODEST_CONF_PREFER_FORMATTED_TEXT, NULL)) {
+	} else if (!modest_conf_get_bool (modest_runtime_get_conf (), MODEST_CONF_PREFER_FORMATTED_TEXT, NULL)) {
 		wp_text_buffer_enable_rich_text (WP_TEXT_BUFFER (priv->text_buffer), FALSE);
 	}
 
@@ -1000,7 +1004,7 @@ modest_msg_edit_window_setup_toolbar (ModestMsgEditWindow *window)
 
 
 ModestWindow*
-modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name)
+modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name, gboolean preserve_is_rich)
 {
 	GObject *obj;
 	ModestWindowPrivate *parent_priv;
@@ -1094,7 +1098,7 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name)
 	if (account_pair != NULL)
 		modest_combo_box_set_active_id (MODEST_COMBO_BOX (priv->from_field), account_pair->first);
 
-	set_msg (MODEST_MSG_EDIT_WINDOW (obj), msg);
+	set_msg (MODEST_MSG_EDIT_WINDOW (obj), msg, preserve_is_rich);
 
 	text_buffer_refresh_attributes (WP_TEXT_BUFFER (priv->text_buffer), MODEST_MSG_EDIT_WINDOW (obj));
 
@@ -1142,6 +1146,8 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name)
 
 	update_paste_dimming (MODEST_MSG_EDIT_WINDOW (obj));
 	priv->update_caption_visibility = TRUE;
+
+	reset_modified (MODEST_MSG_EDIT_WINDOW (obj));
 	
 	return (ModestWindow*) obj;
 }

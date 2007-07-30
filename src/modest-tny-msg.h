@@ -116,6 +116,7 @@ TnyMimePart*  modest_tny_msg_find_body_part  (TnyMsg * self, gboolean want_html)
  * modest_tny_msg_find_body:
  * @self: 
  * @want_html: 
+ * @is_html: if the original body was html or plain text
  * 
  * gets the body of a message as text, if @want_html is true, try HTML mail
  * first.
@@ -123,7 +124,7 @@ TnyMimePart*  modest_tny_msg_find_body_part  (TnyMsg * self, gboolean want_html)
  * Returns: the body of the message as text, or NULL if it is not found
  * the text should be freed with 
  **/
-gchar*        modest_tny_msg_get_body        (TnyMsg *self, gboolean want_html);
+gchar*        modest_tny_msg_get_body        (TnyMsg *self, gboolean want_html, gboolean *is_html);
 
 
 /**

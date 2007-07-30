@@ -314,7 +314,7 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg)
 
 	
 	buf  = gtk_text_view_get_buffer (GTK_TEXT_VIEW(priv->msg_body));
-	body = modest_tny_msg_get_body (msg, FALSE);
+	body = modest_tny_msg_get_body (msg, FALSE, NULL);
 	if (body) 
 		gtk_text_buffer_set_text (buf, body, -1);
 	g_free (body);
