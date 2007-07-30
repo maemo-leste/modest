@@ -100,6 +100,8 @@ static GtkTextTag *prev_iter_has_recipient (GtkTextIter *iter);
 /* static GtkTextTag *next_iter_has_recipient (GtkTextIter *iter); */
 static void select_tag_of_iter (GtkTextIter *iter, GtkTextTag *tag);
 static gboolean quote_opened (GtkTextIter *iter);
+static gboolean is_valid_insert (const gchar *text, gint len);
+static gchar *create_valid_text (const gchar *text, gint len);
 
 /**
  * modest_recpt_editor_new:
@@ -122,14 +124,17 @@ modest_recpt_editor_set_recipients (ModestRecptEditor *recpt_editor, const gchar
 {
 	ModestRecptEditorPrivate *priv;
 	GtkTextBuffer *buffer = NULL;
+	gchar *valid_recipients = NULL;
 
 	g_return_if_fail (MODEST_IS_RECPT_EDITOR (recpt_editor));
 	priv = MODEST_RECPT_EDITOR_GET_PRIVATE (recpt_editor);
 
 	buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (priv->text_view));
 
+	valid_recipients = create_valid_text (recipients, -1);
 	g_signal_handlers_block_by_func (buffer, modest_recpt_editor_on_insert_text, recpt_editor);
-	gtk_text_buffer_set_text (buffer, recipients, -1);
+	gtk_text_buffer_set_text (buffer, valid_recipients, -1);
+	g_free (valid_recipients);
 	if (GTK_WIDGET_REALIZED (recpt_editor))
 		gtk_widget_queue_resize (GTK_WIDGET (recpt_editor));
 	g_signal_handlers_unblock_by_func (buffer, modest_recpt_editor_on_insert_text, recpt_editor);
@@ -444,15 +449,27 @@ static gboolean
 is_valid_insert (const gchar *text, gint len)
 {
 	gunichar c;
+	gunichar next_c;
 	gint i= 0;
-	const gchar *current;
+	const gchar *current, *next_current;
 	if (text == NULL)
 		return TRUE;
 	current = text;
 
-	while (((len == -1)||(i < len)) && (*text != '\0')) {
+	while (((len == -1)||(i < len)) && (*current != '\0')) {
 		c = g_utf8_get_char (current);
-		if (c == 0x2022 || c == 0xfffc)
+		next_current = g_utf8_next_char (current);
+		if (next_current && *next_current != '\0')
+			next_c = g_utf8_get_char (g_utf8_next_char (current));
+		else
+			next_c = 0;
+		if (c == g_utf8_get_char(",") || c == g_utf8_get_char (";")) {
+			if ((next_c != 0) && (next_c != g_utf8_get_char ("\n")))
+				return FALSE;
+		}
+		if (c == 0x2022 || c == 0xfffc ||
+		    c == g_utf8_get_char ("\n") ||
+		    c == g_utf8_get_char ("\t"))
 			return FALSE;
 		current = g_utf8_next_char (current);
 		i = current - text;
@@ -464,9 +481,10 @@ static gchar *
 create_valid_text (const gchar *text, gint len)
 {
 	gunichar c;
+	gunichar next_c;
 	gint i= 0;
 	GString *str;
-	const gchar *current;
+	const gchar *current, *next_current;
 
 	if (text == NULL)
 		return NULL;
@@ -474,10 +492,21 @@ create_valid_text (const gchar *text, gint len)
 	str = g_string_new ("");
 	current = text;
 
-	while (((len == -1)||(i < len)) && (*text != '\0')) {
+	while (((len == -1)||(i < len)) && (*current != '\0')) {
 		c = g_utf8_get_char (current);
-		if (c != 0x2022 && c != 0xfffc)
+		next_current = g_utf8_next_char (current);
+		if (next_current && *next_current != '\0')
+			next_c = g_utf8_get_char (g_utf8_next_char (current));
+		else
+			next_c = 0;
+		if (c != 0x2022 && c != 0xfffc && 
+		    c != g_utf8_get_char ("\n") &&
+		    c != g_utf8_get_char ("\t"))
 			str = g_string_append_unichar (str, c);
+		if (c == g_utf8_get_char(",") || c == g_utf8_get_char (";")) {
+			if ((next_c != 0) && (next_c != g_utf8_get_char ("\n")))
+				str = g_string_append_c (str, '\n');
+		}
 		current = g_utf8_next_char (current);
 		i = current - text;
 	}
