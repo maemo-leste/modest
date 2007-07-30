@@ -624,6 +624,16 @@ add_to_address_book (const gchar* address)
 	return TRUE;
 }
 
+static gboolean
+show_check_names_banner (gpointer data)
+{
+	GtkWidget **banner = (GtkWidget **) data;
+
+	*banner = hildon_banner_show_animation (NULL, NULL, _("mail_ib_checking_names"));
+	g_object_ref (G_OBJECT (*banner));
+
+	return FALSE;
+}
 
 gboolean
 modest_address_book_check_names (ModestRecptEditor *recpt_editor, gboolean update_addressbook)
@@ -636,20 +646,22 @@ modest_address_book_check_names (ModestRecptEditor *recpt_editor, gboolean updat
 	gint offset_delta = 0;
 	gint last_length;
 	GtkTextIter start_iter, end_iter;
-	GtkWidget *banner;
+	GtkWidget *banner = NULL;
+	guint show_banner_timeout;
 
 	g_return_val_if_fail (MODEST_IS_RECPT_EDITOR (recpt_editor), FALSE);
 
-	banner = hildon_banner_show_animation (NULL, NULL, _("mail_ib_checking_names"));
-	g_object_ref (G_OBJECT (banner));
-
+	show_banner_timeout = g_timeout_add (2000, show_check_names_banner, &banner);
 	recipients = modest_recpt_editor_get_recipients (recpt_editor);
 	last_length = g_utf8_strlen (recipients, -1);
 	modest_text_utils_get_addresses_indexes (recipients, &start_indexes, &end_indexes);
 
 	if (start_indexes == NULL) {
-		gtk_widget_destroy (banner);
-		g_object_unref (G_OBJECT(banner));
+		g_source_remove (show_banner_timeout);
+		if (banner != NULL) {
+			gtk_widget_destroy (banner);
+			g_object_unref (G_OBJECT(banner));
+		}
 		return TRUE;
 	}
 
@@ -662,7 +674,7 @@ modest_address_book_check_names (ModestRecptEditor *recpt_editor, gboolean updat
 		gchar *start_ptr, *end_ptr;
 		gint start_pos, end_pos;
 		const gchar *invalid_char_position = NULL;
-		
+
 		start_pos = (*((gint*) current_start->data)) + offset_delta;
 		end_pos = (*((gint*) current_end->data)) + offset_delta;
 	       
@@ -733,8 +745,11 @@ modest_address_book_check_names (ModestRecptEditor *recpt_editor, gboolean updat
 		gtk_text_buffer_place_cursor (buffer, &end_iter);
 	}
 
-	gtk_widget_destroy (banner);
-	g_object_unref (G_OBJECT (banner));
+	g_source_remove (show_banner_timeout);
+	if (banner != NULL) {
+		gtk_widget_destroy (banner);
+		g_object_unref (G_OBJECT (banner));
+	}
 	modest_recpt_editor_grab_focus (recpt_editor);
 
 	g_slist_foreach (start_indexes, (GFunc) g_free, NULL);
