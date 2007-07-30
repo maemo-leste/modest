@@ -1,3 +1,10 @@
+2007-07-30  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/modest-ui-actions.c: (run_account_setup_wizard),
+	(modest_ui_actions_on_accounts): Revert a change that set these 
+	to modal dialogs, freezing the UI when they show secondary dialogs.
+	This fixed projects.maemo.org bug NB#64519.
+
 2007-07-27  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/widgets/modest-header-view-render.c:

@@ -150,7 +150,11 @@ run_account_setup_wizard (ModestWindow *win)
 	
 	wizard = modest_easysetup_wizard_dialog_new ();
 	gtk_window_set_transient_for (GTK_WINDOW (wizard), GTK_WINDOW (win));
-	gtk_window_set_modal (GTK_WINDOW (wizard), TRUE);
+	
+	/* Don't make this a modal window, because secondary windows will then 
+	 * be unusable, freezing the UI: */
+	/* gtk_window_set_modal (GTK_WINDOW (wizard), TRUE); */
+	
 	gtk_dialog_run (GTK_DIALOG (wizard));
 	gtk_widget_destroy (GTK_WIDGET (wizard));
 }
@@ -529,7 +533,10 @@ modest_ui_actions_on_accounts (GtkAction *action, ModestWindow *win)
 		/* Show the list of accounts: */
 		GtkDialog *account_win = GTK_DIALOG(modest_account_view_window_new ());
 		gtk_window_set_transient_for (GTK_WINDOW (account_win), GTK_WINDOW (win));
-		gtk_window_set_modal (GTK_WINDOW (account_win), TRUE);
+		
+		/* Don't make this a modal window, because secondary windows will then 
+		 * be unusable, freezing the UI: */
+		/* gtk_window_set_modal (GTK_WINDOW (account_win), TRUE); */
 		modest_maemo_show_dialog_and_forget (GTK_WINDOW (win), account_win); 
 	}
 #else
