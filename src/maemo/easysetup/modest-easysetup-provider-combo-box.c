@@ -215,8 +215,8 @@ void easysetup_provider_combo_box_fill (EasysetupProviderComboBox *combobox, Mod
 	/* Note that ID 0 means "Other" for us: */
 	/* TODO: We need a Logical ID for this text. */
 	GtkTreeIter iter;
-	gtk_list_store_append (liststore, &iter);
-	gtk_list_store_set (liststore, &iter, MODEL_COL_ID, 0, MODEL_COL_NAME, _("Other..."), -1);
+	gtk_list_store_prepend (liststore, &iter);
+	gtk_list_store_set (liststore, &iter, MODEL_COL_ID, 0, MODEL_COL_NAME, _("mcen_va_serviceprovider_other"), -1);
 	
 	/* Select the "Other" item: */
 	gtk_combo_box_set_active_iter (GTK_COMBO_BOX (combobox), &iter);
