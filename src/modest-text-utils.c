@@ -1239,3 +1239,38 @@ modest_text_utils_get_color_string (GdkColor *color)
 				(color->blue >> 12)  & 0xf, (color->blue >> 8)  & 0xf,
 				(color->blue >>  4)  & 0xf, (color->blue)       & 0xf);
 }
+
+gchar *
+modest_text_utils_text_buffer_get_text (GtkTextBuffer *buffer)
+{
+	GtkTextIter start, end;
+	gchar *slice, *current;
+	GString *result = g_string_new ("");
+
+	g_return_val_if_fail (GTK_IS_TEXT_BUFFER (buffer), NULL);
+
+	gtk_text_buffer_get_start_iter (buffer, &start);
+	gtk_text_buffer_get_end_iter (buffer, &end);
+
+	slice = gtk_text_buffer_get_slice (buffer, &start, &end, FALSE);
+	current = slice;
+
+	while (current && current != '\0') {
+		if (g_utf8_get_char (current) == 0xFFFC) {
+			result = g_string_append_c (result, ' ');
+			current = g_utf8_next_char (current);
+		} else {
+			gchar *next = g_utf8_strchr (current, -1, 0xFFFC);
+			if (next == NULL) {
+				result = g_string_append (result, current);
+			} else {
+				result = g_string_append_len (result, current, next - current);
+			}
+			current = next;
+		}
+	}
+	g_free (slice);
+
+	return g_string_free (result, FALSE);
+	
+}

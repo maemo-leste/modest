@@ -36,6 +36,7 @@
 #include <time.h>
 #include <glib.h>
 #include <gdk/gdkcolor.h>
+#include <gtk/gtktextbuffer.h>
 
 #define _FM(str) dgettext("hildon-fm",str)
 #define _CS(str) dgettext("hildon-common-strings",str)
@@ -315,5 +316,16 @@ void         modest_text_utils_get_addresses_indexes (const gchar *addresses, GS
  * Returns: a newly allocated string
  */
 gchar *      modest_text_utils_get_color_string (GdkColor *color);
+
+/**
+ * modest_text_utils_text_buffer_get_text:
+ * @buffer: a #GtkTextBuffer
+ *
+ * Obtains the contents of a @buffer in a string, replacing image
+ * pixbufs with blank spaces.
+ *
+ * Returns: a newly allocated UTF-8 string
+ */
+gchar *      modest_text_utils_text_buffer_get_text (GtkTextBuffer *buffer);
 
 #endif /* __MODEST_TEXT_UTILS_H__ */

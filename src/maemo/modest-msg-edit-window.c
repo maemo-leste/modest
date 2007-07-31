@@ -1215,7 +1215,7 @@ modest_msg_edit_window_get_msg_data (ModestMsgEditWindow *edit_window)
 	GtkTextBuffer *buf = gtk_text_view_get_buffer (GTK_TEXT_VIEW (priv->msg_body));
 	GtkTextIter b, e;
 	gtk_text_buffer_get_bounds (buf, &b, &e);
-	data->plain_body = g_strdup (gtk_text_buffer_get_text (priv->text_buffer, &b, &e, FALSE)); /* returns a copy */
+	data->plain_body = modest_text_utils_text_buffer_get_text (priv->text_buffer); /* returns a copy */
 
 	if (wp_text_buffer_is_rich_text (WP_TEXT_BUFFER (priv->text_buffer)))
 		data->html_body = get_formatted_data (edit_window); /* returns a copy. */
