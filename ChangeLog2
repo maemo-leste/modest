@@ -1,3 +1,12 @@
+2007-07-30  Johannes Schmid <johannes.schmid@openismus.com>
+
+	* src/modest-ui-actions.c: (modest_ui_actions_on_send):
+	
+	Show account wizard if no accounts are defined while sending
+	(automatic sending after the account wizard finished does not
+	work because it takes some time until the account manager
+	synchronizes everything. (projects.maemo.org NB#62792)
+	
 2007-07-30  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/modest-tny-account-store.c: (on_account_removed),

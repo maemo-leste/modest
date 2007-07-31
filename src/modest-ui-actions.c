@@ -145,7 +145,7 @@ static void
 run_account_setup_wizard (ModestWindow *win)
 {
 	ModestEasysetupWizardDialog *wizard;
-
+	
 	g_return_if_fail (MODEST_IS_WINDOW(win));
 	
 	wizard = modest_easysetup_wizard_dialog_new ();
@@ -1978,7 +1978,8 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 		account_name = modest_account_mgr_get_default_account (account_mgr);
 		
 	if (!account_name) {
-		g_printerr ("modest: no account found\n");
+		/* Run account setup wizard */
+		run_account_setup_wizard(MODEST_WINDOW(edit_window));
 		return;
 	}
 	
@@ -1994,9 +1995,8 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 				      (modest_runtime_get_account_store(),
 				       account_name));
 	if (!transport_account) {
-		g_printerr ("modest: no transport account found for '%s'\n", account_name);
-		g_free (account_name);
-		modest_msg_edit_window_free_msg_data (edit_window, data);
+		/* Run account setup wizard */
+		run_account_setup_wizard(MODEST_WINDOW(edit_window));
 		return;
 	}
 	
