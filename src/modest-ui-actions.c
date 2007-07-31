@@ -288,7 +288,10 @@ void modest_ui_actions_refresh_message_window_after_delete (ModestMsgViewWindow*
 		modest_msg_view_window_first_message_selected (win)) {
 		modest_ui_actions_on_close_window (NULL, MODEST_WINDOW (win));
 	} else {
-		modest_msg_view_window_select_next_message (win);
+		if (!modest_msg_view_window_select_next_message (win)) {
+			gboolean ret_value;
+			g_signal_emit_by_name (G_OBJECT (win), "delete-event", NULL, &ret_value);
+		}
 	}
 }
 

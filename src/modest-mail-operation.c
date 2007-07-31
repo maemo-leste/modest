@@ -2046,6 +2046,8 @@ modest_mail_operation_get_mime_part_size (ModestMailOperation *self,
 	info->callback = user_callback;
 	info->userdata = user_data;
 
+	tny_camel_mem_stream_get_type ();
+
 	thread = g_thread_create (get_mime_part_size_thread, info, FALSE, NULL);
 
 }
