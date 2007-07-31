@@ -60,8 +60,11 @@
 static osso_context_t *osso_context = NULL;
 
 static void	
-on_modest_conf_update_interval_changed (ModestConf* self, const gchar *key, 
-	ModestConfEvent event, gpointer user_data)
+on_modest_conf_update_interval_changed (ModestConf* self, 
+					const gchar *key, 
+					ModestConfEvent event,
+					ModestConfNotificationId id, 
+					gpointer user_data)
 {
 	if (strcmp (key, MODEST_CONF_UPDATE_INTERVAL) == 0) {
 		const guint update_interval_minutes = 
@@ -140,7 +143,13 @@ modest_platform_init (int argc, char *argv[])
 	
 
 	/* Make sure that the update interval is changed whenever its gconf key 
-	 * is changed: */
+	 * is changed */
+	/* CAUTION: we're not using here the
+	   modest_conf_listen_to_namespace because we know that there
+	   are other parts of Modest listening for this namespace, so
+	   we'll receive the notifications anyway. We basically do not
+	   use it because there is no easy way to do the
+	   modest_conf_forget_namespace */
 	ModestConf *conf = modest_runtime_get_conf ();
 	g_signal_connect (G_OBJECT(conf),
 			  "key_changed",
@@ -149,7 +158,7 @@ modest_platform_init (int argc, char *argv[])
 			  
 	/* Get the initial update interval from gconf: */
 	on_modest_conf_update_interval_changed(conf, MODEST_CONF_UPDATE_INTERVAL,
-		MODEST_CONF_EVENT_KEY_CHANGED, NULL);
+					       MODEST_CONF_EVENT_KEY_CHANGED, 0, NULL);
 
 	/* initialize the addressbook */
 	if (!osso_abook_init (&argc, &argv, osso_context)) {
@@ -1337,9 +1346,10 @@ modest_platform_create_folder_view (TnyFolderStoreQuery *query)
 {
 	GtkWidget *widget = modest_folder_view_new (query);
 
-	/* Show all accounts by default */
+	/* Show one account by default */
 	modest_folder_view_set_style (MODEST_FOLDER_VIEW (widget),
 				      MODEST_FOLDER_VIEW_STYLE_SHOW_ONE);
+
 
 	/* Restore settings */
 	modest_widget_memory_restore (modest_runtime_get_conf(), 

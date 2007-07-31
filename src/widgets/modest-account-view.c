@@ -60,32 +60,20 @@ typedef enum {
 	MODEST_ACCOUNT_VIEW_COLUMN_NUM
 } AccountViewColumns;
 
-
-/* list my signals */
-enum {
-	/* MY_SIGNAL_1, */
-	/* MY_SIGNAL_2, */
-	LAST_SIGNAL
-};
-
 typedef struct _ModestAccountViewPrivate ModestAccountViewPrivate;
 struct _ModestAccountViewPrivate {
 	ModestAccountMgr *account_mgr;
-	gulong sig1, sig2, sig3;
-	
-	/* When this is TRUE, we ignore configuration key changes.
-	 * This is useful when making many changes. */
-	gboolean block_conf_updates;
-	
+
+	/* Signal handlers */
+	gulong acc_inserted_handler;
+	gulong acc_removed_handler;
+	gulong sig3;
 };
 #define MODEST_ACCOUNT_VIEW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                  MODEST_TYPE_ACCOUNT_VIEW, \
                                                  ModestAccountViewPrivate))
 /* globals */
 static GtkTreeViewClass *parent_class = NULL;
-
-/* uncomment the following if you have defined any signals */
-/* static guint signals[LAST_SIGNAL] = {0}; */
 
 GType
 modest_account_view_get_type (void)
@@ -131,8 +119,9 @@ modest_account_view_init (ModestAccountView *obj)
 	priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE(obj);
 	
 	priv->account_mgr = NULL; 
-	priv->sig1 = 0;
-	priv->sig2 = 0;
+	priv->acc_inserted_handler = 0;
+	priv->acc_removed_handler = 0;
+	priv->sig3 = 0;
 }
 
 static void
@@ -143,12 +132,15 @@ modest_account_view_finalize (GObject *obj)
 	priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE(obj);
 
 	if (priv->account_mgr) {
-		if (priv->sig1)
+		if (g_signal_handler_is_connected (modest_runtime_get_account_store (),
+						   priv->acc_inserted_handler))
 			g_signal_handler_disconnect (modest_runtime_get_account_store (), 
-						     priv->sig1);
+						     priv->acc_inserted_handler);
 
-		if (priv->sig2)
-			g_signal_handler_disconnect (priv->account_mgr, priv->sig2);
+		if (g_signal_handler_is_connected (modest_runtime_get_account_store (),
+						   priv->acc_removed_handler))
+			g_signal_handler_disconnect (modest_runtime_get_account_store (), 
+						     priv->acc_removed_handler);
 
 		if (priv->sig3)
 			g_signal_handler_disconnect (priv->account_mgr, priv->sig3);
@@ -207,9 +199,6 @@ update_account_view (ModestAccountMgr *account_mgr, ModestAccountView *view)
 	 * current use instead */
 	cursor = account_names = modest_account_mgr_account_names (account_mgr,
 		TRUE /* only enabled accounts. */);
-	
-	if (!account_names)
-		g_warning ("debug: modest_account_mgr_account_names() returned  NULL\n");
 
 	while (cursor) {
 		gchar *account_name;
@@ -261,28 +250,11 @@ update_account_view (ModestAccountMgr *account_mgr, ModestAccountView *view)
 	}
 }
 
-
 static void
-on_account_changed (ModestAccountMgr *account_mgr,
-		    const gchar* account, GSList *keys,
-		    gboolean server_account, ModestAccountView *self)
-{	
-	/* Never update the view in response to gconf changes.
-	 * Always do it explicitly instead.
-	 * This is because we have no way to avoid 10 updates when changing 
-	 * 10 items, and this blocks the UI.
-	 *
-	 * But this block/unblock API might be useful on platforms where the 
-	 * notification does not happen so long after the key was set.
-	 * (We have no way to know when the last key was set, to do a final update)..
-	 */
-	 
-	update_account_view (account_mgr, self);
-}
-
-static void
-on_account_busy_changed(ModestAccountMgr *account_mgr, const gchar *account_name,
-												gboolean busy, ModestAccountView *self)
+on_account_busy_changed(ModestAccountMgr *account_mgr, 
+			const gchar *account_name,
+			gboolean busy, 
+			ModestAccountView *self)
 {
 	GtkListStore *model = GTK_LIST_STORE(gtk_tree_view_get_model (GTK_TREE_VIEW(self)));
 	GtkTreeIter iter;
@@ -313,6 +285,20 @@ on_account_busy_changed(ModestAccountMgr *account_mgr, const gchar *account_name
 }
 
 static void
+on_account_inserted (TnyAccountStore *account_store, 
+		     TnyAccount *account,
+		     gpointer user_data)
+{
+	ModestAccountView *self;
+	ModestAccountViewPrivate *priv;
+
+	self = MODEST_ACCOUNT_VIEW (user_data);
+	priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE (self);
+
+	update_account_view (priv->account_mgr, self);
+}
+
+static void
 on_account_removed (TnyAccountStore *account_store, 
 		    TnyAccount *account,
 		    gpointer user_data)
@@ -323,7 +309,7 @@ on_account_removed (TnyAccountStore *account_store,
 	self = MODEST_ACCOUNT_VIEW (user_data);
 	priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE (self);
 
-	update_account_view (priv->account_mgr, MODEST_ACCOUNT_VIEW (user_data));
+	update_account_view (priv->account_mgr, self);
 }
 
 
@@ -498,10 +484,14 @@ init_view (ModestAccountView *self)
 	 */			
 	gtk_tree_view_set_headers_visible (GTK_TREE_VIEW(self), TRUE);
 
-	priv->sig1 = g_signal_connect (G_OBJECT (modest_runtime_get_account_store ()),"account_removed",
-				       G_CALLBACK(on_account_removed), self);
-	priv->sig2 = g_signal_connect (G_OBJECT(priv->account_mgr), "account_changed",
-				       G_CALLBACK(on_account_changed), self);
+	priv->acc_removed_handler = g_signal_connect (G_OBJECT (modest_runtime_get_account_store ()),
+						      "account_removed",
+						      G_CALLBACK(on_account_removed), self);
+
+	priv->acc_inserted_handler = g_signal_connect (G_OBJECT (modest_runtime_get_account_store ()),
+						       "account_inserted",
+						       G_CALLBACK(on_account_inserted), self);
+	
 	priv->sig3 = g_signal_connect (G_OBJECT(priv->account_mgr), "account_busy_changed",
 							 G_CALLBACK(on_account_busy_changed), self);
 }

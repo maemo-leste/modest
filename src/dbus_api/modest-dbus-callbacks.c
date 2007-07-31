@@ -1357,8 +1357,7 @@ on_dbus_method_get_folders (DBusConnection *con, DBusMessage *message)
 	 * TODO: This is not working. It seems to get only the Merged Folder (with an ID of "" (not NULL)).
 	 */
 	TnyAccount *account_local = 
-		modest_tny_account_store_get_local_folders_account (
-			TNY_ACCOUNT_STORE (modest_runtime_get_account_store()));
+		modest_tny_account_store_get_local_folders_account (modest_runtime_get_account_store());
 	add_folders_to_list (TNY_FOLDER_STORE (account_local), &folder_names);
 
 	g_object_unref (account_local);

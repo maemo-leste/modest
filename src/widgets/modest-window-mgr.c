@@ -43,8 +43,6 @@ static void modest_window_mgr_class_init (ModestWindowMgrClass *klass);
 static void modest_window_mgr_init       (ModestWindowMgr *obj);
 static void modest_window_mgr_finalize   (GObject *obj);
 
-/* static void on_window_destroy            (ModestWindow *window,  */
-/* 					  ModestWindowMgr *self); */
 static gboolean on_window_destroy            (ModestWindow *window,
 					      GdkEvent *event,
 					      ModestWindowMgr *self);
@@ -318,8 +316,8 @@ modest_window_mgr_find_registered_header (ModestWindowMgr *self, TnyHeader *head
 	if (win)
 		*win = NULL;
 	
-	g_debug ("windows in list: %d", g_list_length (priv->window_list));
-	g_debug ("headers in list: %d", g_slist_length (priv->preregistered_uids));
+/* 	g_debug ("windows in list: %d", g_list_length (priv->window_list)); */
+/* 	g_debug ("headers in list: %d", g_slist_length (priv->preregistered_uids)); */
 
 	has_header = has_uid (priv->preregistered_uids, uid);
 		
@@ -430,8 +428,6 @@ modest_window_mgr_register_window (ModestWindowMgr *self,
 	modest_window_show_toolbar (window, show);
 }
 
-/* static void */
-/* on_window_destroy (ModestWindow *window, ModestWindowMgr *self) */
 static gboolean
 on_window_destroy (ModestWindow *window, 
 		   GdkEvent *event,
@@ -510,7 +506,7 @@ modest_window_mgr_unregister_window (ModestWindowMgr *self,
 {
 	GList *win;
 	ModestWindowMgrPrivate *priv;
-	gint *tmp, handler_id;
+	gulong *tmp, handler_id;
 
 	g_return_if_fail (MODEST_IS_WINDOW_MGR (self));
 	g_return_if_fail (MODEST_IS_WINDOW (window));
@@ -535,6 +531,15 @@ modest_window_mgr_unregister_window (ModestWindowMgr *self,
 		priv->viewer_handlers = NULL;
 	}
 
+	/* Remove the viewer window handler from the hash table. The
+	   HashTable could not exist if the main window was closeed
+	   when there were other windows remaining */
+	if (MODEST_IS_MSG_VIEW_WINDOW (window) && priv->viewer_handlers) {
+		tmp = (gulong *) g_hash_table_lookup (priv->viewer_handlers, window);
+		g_signal_handler_disconnect (window, *tmp);
+		g_hash_table_remove (priv->viewer_handlers, window);
+	}
+
 	/* Save state */
 	modest_window_save_state (window);
 
@@ -546,6 +551,9 @@ modest_window_mgr_unregister_window (ModestWindowMgr *self,
 
 	/* Disconnect the "delete-event" handler, we won't need it anymore */
 	g_signal_handler_disconnect (window, handler_id);
+
+	/* Disconnect all the window signals */
+	modest_window_disconnect_signals (window);
 
 	/* Destroy the window */
 	gtk_widget_destroy (win->data);

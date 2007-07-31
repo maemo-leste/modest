@@ -593,9 +593,7 @@ modest_account_mgr_set_default_account  (ModestAccountMgr *self, const gchar* ac
 	
 	conf = MODEST_ACCOUNT_MGR_GET_PRIVATE (self)->modest_conf;
 
-	return modest_conf_set_string (conf, MODEST_CONF_DEFAULT_ACCOUNT,
-				       account, NULL);
-
+	return modest_conf_set_string (conf, MODEST_CONF_DEFAULT_ACCOUNT, account, NULL);
 }
 
 gboolean

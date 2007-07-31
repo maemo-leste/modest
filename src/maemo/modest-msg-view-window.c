@@ -67,8 +67,9 @@ static void  modest_msg_view_window_find_toolbar_close (GtkWidget *widget,
 static void  modest_msg_view_window_find_toolbar_search (GtkWidget *widget,
 							ModestMsgViewWindow *obj);
 
-static void  modest_msg_view_window_set_zoom (ModestWindow *window,
-					      gdouble zoom);
+static void modest_msg_view_window_disconnect_signals (ModestWindow *self);
+static void modest_msg_view_window_set_zoom (ModestWindow *window,
+					     gdouble zoom);
 static gdouble modest_msg_view_window_get_zoom (ModestWindow *window);
 static gboolean modest_msg_view_window_zoom_minus (ModestWindow *window);
 static gboolean modest_msg_view_window_zoom_plus (ModestWindow *window);
@@ -235,6 +236,7 @@ modest_msg_view_window_class_init (ModestMsgViewWindowClass *klass)
 	modest_window_class->zoom_minus_func = modest_msg_view_window_zoom_minus;
 	modest_window_class->zoom_plus_func = modest_msg_view_window_zoom_plus;
 	modest_window_class->show_toolbar_func = modest_msg_view_window_show_toolbar;
+	modest_window_class->disconnect_signals_func = modest_msg_view_window_disconnect_signals;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestMsgViewWindowPrivate));
 
@@ -438,9 +440,30 @@ init_window (ModestMsgViewWindow *obj, TnyMsg *msg)
 	
 	priv->clipboard_change_handler = g_signal_connect (G_OBJECT (gtk_clipboard_get (GDK_SELECTION_PRIMARY)), "owner-change", G_CALLBACK (modest_msg_view_window_clipboard_owner_change), obj);
 	gtk_widget_show_all (GTK_WIDGET(main_vbox));
+}
 
+static void
+modest_msg_view_window_disconnect_signals (ModestWindow *self)
+{
+	ModestMsgViewWindowPrivate *priv;
+
+	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (self);
+
+	if (g_signal_handler_is_connected (gtk_clipboard_get (GDK_SELECTION_PRIMARY),
+					   priv->clipboard_change_handler)) 
+		g_signal_handler_disconnect (gtk_clipboard_get (GDK_SELECTION_PRIMARY), 
+					     priv->clipboard_change_handler);
+
+	if (g_signal_handler_is_connected (G_OBJECT (modest_runtime_get_mail_operation_queue ()), 
+					   priv->queue_change_handler))
+		g_signal_handler_disconnect (G_OBJECT (modest_runtime_get_mail_operation_queue ()), 
+					     priv->queue_change_handler);
+
+	if (g_signal_handler_is_connected (G_OBJECT (modest_runtime_get_account_store ()), 
+					   priv->account_removed_handler))
+		g_signal_handler_disconnect (G_OBJECT (modest_runtime_get_account_store ()), 
+					     priv->account_removed_handler);
 }	
-
 
 static void
 modest_msg_view_window_finalize (GObject *obj)
@@ -448,21 +471,11 @@ modest_msg_view_window_finalize (GObject *obj)
 	ModestMsgViewWindowPrivate *priv;
 
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (obj);
-	if (priv->clipboard_change_handler > 0) {
-		g_signal_handler_disconnect (gtk_clipboard_get (GDK_SELECTION_PRIMARY), 
-					     priv->clipboard_change_handler);
-		priv->clipboard_change_handler = 0;
-	}
-	if (priv->queue_change_handler > 0) {
-		g_signal_handler_disconnect (G_OBJECT (modest_runtime_get_mail_operation_queue ()), 
-					     priv->queue_change_handler);
-		priv->queue_change_handler = 0;
-	}
-	if (priv->account_removed_handler > 0) {
-		g_signal_handler_disconnect (G_OBJECT (modest_runtime_get_account_store ()), 
-					     priv->account_removed_handler);
-		priv->account_removed_handler = 0;
-	}
+
+	/* Sanity check: shouldn't be needed, the window mgr should
+	   call this function before */
+	modest_msg_view_window_disconnect_signals (MODEST_WINDOW (obj));
+
 	if (priv->header_model != NULL) {
 		g_object_unref (priv->header_model);
 		priv->header_model = NULL;

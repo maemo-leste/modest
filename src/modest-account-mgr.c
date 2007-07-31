@@ -37,108 +37,109 @@
 static void modest_account_mgr_class_init (ModestAccountMgrClass * klass);
 static void modest_account_mgr_init       (ModestAccountMgr * obj);
 static void modest_account_mgr_finalize   (GObject * obj);
+static void modest_account_mgr_base_init  (gpointer g_class);
 
 /* list my signals */
 enum {
+	ACCOUNT_INSERTED_SIGNAL,
 	ACCOUNT_CHANGED_SIGNAL,
 	ACCOUNT_REMOVED_SIGNAL,
 	ACCOUNT_BUSY_SIGNAL,
 	LAST_SIGNAL
 };
 
-
 /* globals */
 static GObjectClass *parent_class = NULL;
 static guint signals[LAST_SIGNAL] = {0};
 
-/* We signal key changes in batches, every X seconds: */
-static gboolean
-on_timeout_notify_changes (gpointer data)
-{
-	ModestAccountMgr *self = MODEST_ACCOUNT_MGR (data);
-	ModestAccountMgrPrivate *priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
+/* /\* We signal key changes in batches, every X seconds: *\/ */
+/* static gboolean */
+/* on_timeout_notify_changes (gpointer data) */
+/* { */
+/* 	ModestAccountMgr *self = MODEST_ACCOUNT_MGR (data); */
+/* 	ModestAccountMgrPrivate *priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self); */
 		
-	/* TODO: Also store the account names, and notify one list for each account,
-	 * if anything uses the account names. */
+/* 	/\* TODO: Also store the account names, and notify one list for each account, */
+/* 	 * if anything uses the account names. *\/ */
 	
-	if (priv->changed_conf_keys) {
-		gchar *default_account = 
-				modest_account_mgr_get_default_account (self);
+/* 	if (priv->changed_conf_keys) { */
+/* 		gchar *default_account =  */
+/* 				modest_account_mgr_get_default_account (self); */
 		
-		/* printf ("DEBUG: %s: priv->changed_conf_key length=%d\n", 
-			__FUNCTION__, g_slist_length (priv->changed_conf_keys)); */
-		g_signal_emit (G_OBJECT(self), signals[ACCOUNT_CHANGED_SIGNAL], 0,
-				 default_account, priv->changed_conf_keys, FALSE);
+/* 		/\* printf ("DEBUG: %s: priv->changed_conf_key length=%d\n",  */
+/* 			__FUNCTION__, g_slist_length (priv->changed_conf_keys)); *\/ */
+/* 		g_signal_emit (G_OBJECT(self), signals[ACCOUNT_CHANGED_SIGNAL], 0, */
+/* 				 default_account, priv->changed_conf_keys, FALSE); */
 			
-		g_free (default_account);
+/* 		g_free (default_account); */
 		
-		g_slist_foreach (priv->changed_conf_keys, (GFunc) g_free, NULL);
-		g_slist_free (priv->changed_conf_keys);
-		priv->changed_conf_keys = NULL;
-	}
+/* 		g_slist_foreach (priv->changed_conf_keys, (GFunc) g_free, NULL); */
+/* 		g_slist_free (priv->changed_conf_keys); */
+/* 		priv->changed_conf_keys = NULL; */
+/* 	} */
 	
-	return TRUE; /* Call this again later. */
-}
+/* 	return TRUE; /\* Call this again later. *\/ */
+/* } */
 
-static void
-on_key_change (ModestConf *conf, const gchar *key, ModestConfEvent event, gpointer user_data)
-{
-	ModestAccountMgr *self = MODEST_ACCOUNT_MGR (user_data);
-	ModestAccountMgrPrivate *priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
-	gboolean is_account_key;
-	gboolean is_server_account;
-	gchar* account = NULL;
+/* static void */
+/* on_key_change (ModestConf *conf, const gchar *key, ModestConfEvent event, gpointer user_data) */
+/* { */
+/* 	ModestAccountMgr *self = MODEST_ACCOUNT_MGR (user_data); */
+/* 	ModestAccountMgrPrivate *priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self); */
+/* 	gboolean is_account_key; */
+/* 	gboolean is_server_account; */
+/* 	gchar* account = NULL; */
 
-	/* there is only one not-really-account key which will still emit
-	 * a signal: a change in MODEST_CONF_DEFAULT_ACCOUNT */
-	if (key && strcmp (key, MODEST_CONF_DEFAULT_ACCOUNT) == 0) {
-		/* Get the default account instead. */
+/* 	/\* there is only one not-really-account key which will still emit */
+/* 	 * a signal: a change in MODEST_CONF_DEFAULT_ACCOUNT *\/ */
+/* 	if (key && strcmp (key, MODEST_CONF_DEFAULT_ACCOUNT) == 0) { */
+/* 		/\* Get the default account instead. *\/ */
 		
-		/* Store the key for later notification in our timeout callback.
-		 * Notifying for every key change would cause unnecessary work: */
-		priv->changed_conf_keys = g_slist_append (priv->changed_conf_keys,
-			(gpointer) g_strdup (key));
-	}
+/* 		/\* Store the key for later notification in our timeout callback. */
+/* 		 * Notifying for every key change would cause unnecessary work: *\/ */
+/* 		priv->changed_conf_keys = g_slist_append (priv->changed_conf_keys, */
+/* 			(gpointer) g_strdup (key)); */
+/* 	} */
 	
-	is_account_key = FALSE;
-	is_server_account = FALSE;
-	account = _modest_account_mgr_account_from_key (key, &is_account_key, 
-							&is_server_account);
+/* 	is_account_key = FALSE; */
+/* 	is_server_account = FALSE; */
+/* 	account = _modest_account_mgr_account_from_key (key, &is_account_key,  */
+/* 							&is_server_account); */
 
-	/* if this is not an account-related key change, ignore */
-	if (!account)
-		return;
+/* 	/\* if this is not an account-related key change, ignore *\/ */
+/* 	if (!account) */
+/* 		return; */
 
-	/* account was removed. Do not emit an account removed signal
-	   because it was already being done in the remove_account
-	   method. Do not notify also the removal of the server
-	   account keys for the same reason */
-	if ((is_account_key || is_server_account) && 
-	    event == MODEST_CONF_EVENT_KEY_UNSET) {
-		g_free (account);
-		return;
-	}
+/* 	/\* account was removed. Do not emit an account removed signal */
+/* 	   because it was already being done in the remove_account */
+/* 	   method. Do not notify also the removal of the server */
+/* 	   account keys for the same reason *\/ */
+/* 	if ((is_account_key || is_server_account) &&  */
+/* 	    event == MODEST_CONF_EVENT_KEY_UNSET) { */
+/* 		g_free (account); */
+/* 		return; */
+/* 	} */
 
-	/* is this account enabled? */
-	gboolean enabled = FALSE;
-	if (is_server_account)
-		enabled = TRUE;
-	else
-		enabled = modest_account_mgr_get_enabled (self, account);
+/* 	/\* is this account enabled? *\/ */
+/* 	gboolean enabled = FALSE; */
+/* 	if (is_server_account) */
+/* 		enabled = TRUE; */
+/* 	else */
+/* 		enabled = modest_account_mgr_get_enabled (self, account); */
 
-	/* Notify is server account was changed, default account was changed
-	 * or when enabled/disabled changes:
-	 */
-	if (enabled ||
-	    g_str_has_suffix (key, MODEST_ACCOUNT_ENABLED) ||
-	    strcmp (key, MODEST_CONF_DEFAULT_ACCOUNT) == 0) {
-		/* Store the key for later notification in our timeout callback.
-		 * Notifying for every key change would cause unnecessary work: */
-		priv->changed_conf_keys = g_slist_append (NULL,
-			(gpointer) g_strdup (key));
-	}
-	g_free (account);
-}
+/* 	/\* Notify is server account was changed, default account was changed */
+/* 	 * or when enabled/disabled changes: */
+/* 	 *\/ */
+/* 	if (enabled || */
+/* 	    g_str_has_suffix (key, MODEST_ACCOUNT_ENABLED) || */
+/* 	    strcmp (key, MODEST_CONF_DEFAULT_ACCOUNT) == 0) { */
+/* 		/\* Store the key for later notification in our timeout callback. */
+/* 		 * Notifying for every key change would cause unnecessary work: *\/ */
+/* 		priv->changed_conf_keys = g_slist_append (NULL, */
+/* 			(gpointer) g_strdup (key)); */
+/* 	} */
+/* 	g_free (account); */
+/* } */
 
 
 GType
@@ -149,7 +150,7 @@ modest_account_mgr_get_type (void)
 	if (!my_type) {
 		static const GTypeInfo my_info = {
 			sizeof (ModestAccountMgrClass),
-			NULL,	/* base init */
+			modest_account_mgr_base_init,	/* base init */
 			NULL,	/* base finalize */
 			(GClassInitFunc) modest_account_mgr_class_init,
 			NULL,	/* class finalize */
@@ -167,6 +168,53 @@ modest_account_mgr_get_type (void)
 	return my_type;
 }
 
+static void 
+modest_account_mgr_base_init (gpointer g_class)
+{
+	static gboolean modest_account_mgr_initialized = FALSE;
+
+	if (!modest_account_mgr_initialized) {
+		/* signal definitions */
+		signals[ACCOUNT_INSERTED_SIGNAL] =
+			g_signal_new ("account_inserted",
+				      MODEST_TYPE_ACCOUNT_MGR,
+				      G_SIGNAL_RUN_FIRST,
+				      G_STRUCT_OFFSET(ModestAccountMgrClass,account_inserted),
+				      NULL, NULL,
+				      g_cclosure_marshal_VOID__STRING,
+				      G_TYPE_NONE, 1, G_TYPE_STRING);
+
+		signals[ACCOUNT_REMOVED_SIGNAL] =
+			g_signal_new ("account_removed",
+				      MODEST_TYPE_ACCOUNT_MGR,
+				      G_SIGNAL_RUN_FIRST,
+				      G_STRUCT_OFFSET(ModestAccountMgrClass,account_removed),
+				      NULL, NULL,
+				      g_cclosure_marshal_VOID__STRING,
+				      G_TYPE_NONE, 1, G_TYPE_STRING);
+
+		signals[ACCOUNT_CHANGED_SIGNAL] =
+			g_signal_new ("account_changed",
+				      MODEST_TYPE_ACCOUNT_MGR,
+				      G_SIGNAL_RUN_FIRST,
+				      G_STRUCT_OFFSET(ModestAccountMgrClass,account_changed),
+				      NULL, NULL,
+				      modest_marshal_VOID__STRING_POINTER_BOOLEAN,
+				      G_TYPE_NONE, 3, G_TYPE_STRING, G_TYPE_POINTER, G_TYPE_BOOLEAN);
+
+		signals[ACCOUNT_BUSY_SIGNAL] =
+			g_signal_new ("account_busy_changed",
+				      MODEST_TYPE_ACCOUNT_MGR,
+				      G_SIGNAL_RUN_FIRST,
+				      G_STRUCT_OFFSET(ModestAccountMgrClass,account_busy_changed),
+				      NULL, NULL,
+				      modest_marshal_VOID__STRING_BOOLEAN,
+				      G_TYPE_NONE, 2, G_TYPE_STRING, G_TYPE_BOOLEAN);
+
+		modest_account_mgr_initialized = TRUE;
+	}
+}
+
 static void
 modest_account_mgr_class_init (ModestAccountMgrClass * klass)
 {
@@ -178,32 +226,6 @@ modest_account_mgr_class_init (ModestAccountMgrClass * klass)
 
 	g_type_class_add_private (gobject_class,
 				  sizeof (ModestAccountMgrPrivate));
-
-	/* signal definitions */
-	signals[ACCOUNT_REMOVED_SIGNAL] =
- 		g_signal_new ("account_removed",
-			      G_TYPE_FROM_CLASS (klass),
-			      G_SIGNAL_RUN_FIRST,
-			      G_STRUCT_OFFSET(ModestAccountMgrClass,account_removed),
-			      NULL, NULL,
-			      g_cclosure_marshal_VOID__STRING,
-			      G_TYPE_NONE, 1, G_TYPE_STRING);
-	signals[ACCOUNT_CHANGED_SIGNAL] =
- 		g_signal_new ("account_changed",
-	                       G_TYPE_FROM_CLASS (klass),
-			      G_SIGNAL_RUN_FIRST,
-			      G_STRUCT_OFFSET(ModestAccountMgrClass,account_changed),
-			      NULL, NULL,
-			      modest_marshal_VOID__STRING_POINTER_BOOLEAN,
-			      G_TYPE_NONE, 3, G_TYPE_STRING, G_TYPE_POINTER, G_TYPE_BOOLEAN);
-	signals[ACCOUNT_BUSY_SIGNAL] =
- 		g_signal_new ("account_busy_changed",
-			      G_TYPE_FROM_CLASS (klass),
-			      G_SIGNAL_RUN_FIRST,
-			      G_STRUCT_OFFSET(ModestAccountMgrClass,account_busy_changed),
-			      NULL, NULL,
-			      modest_marshal_VOID__STRING_BOOLEAN,
-			      G_TYPE_NONE, 2, G_TYPE_STRING, G_TYPE_BOOLEAN);
 }
 
 
@@ -215,7 +237,8 @@ modest_account_mgr_init (ModestAccountMgr * obj)
 
 	priv->modest_conf = NULL;
 	priv->busy_accounts = NULL;
-	priv->timeout = g_timeout_add (1000 /* milliseconds */, on_timeout_notify_changes, obj);
+
+	priv->notification_id_accounts = g_hash_table_new_full (g_int_hash, g_int_equal, g_free, g_free);
 }
 
 static void
@@ -223,6 +246,12 @@ modest_account_mgr_finalize (GObject * obj)
 {
 	ModestAccountMgrPrivate *priv = 
 		MODEST_ACCOUNT_MGR_GET_PRIVATE (obj);
+
+	if (priv->notification_id_accounts) {
+		/* TODO: forget dirs */
+
+		g_hash_table_destroy (priv->notification_id_accounts);
+	}
 
 	if (priv->key_changed_handler_uid) {
 		g_signal_handler_disconnect (priv->modest_conf, 
@@ -235,13 +264,13 @@ modest_account_mgr_finalize (GObject * obj)
 		priv->modest_conf = NULL;
 	}
 	
-	if (priv->timeout)
-		g_source_remove (priv->timeout);
+/* 	if (priv->timeout) */
+/* 		g_source_remove (priv->timeout); */
 		
-	if (priv->changed_conf_keys) {
-		g_slist_foreach (priv->changed_conf_keys, (GFunc) g_free, NULL);
-		g_slist_free (priv->changed_conf_keys);
-	}
+/* 	if (priv->changed_conf_keys) { */
+/* 		g_slist_foreach (priv->changed_conf_keys, (GFunc) g_free, NULL); */
+/* 		g_slist_free (priv->changed_conf_keys); */
+/* 	} */
 
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
@@ -261,10 +290,10 @@ modest_account_mgr_new (ModestConf *conf)
 	g_object_ref (G_OBJECT(conf));
 	priv->modest_conf = conf;
 
-	priv->key_changed_handler_uid =
-		g_signal_connect (G_OBJECT (conf), "key_changed",
-				  G_CALLBACK (on_key_change),
-				  obj);
+/* 	priv->key_changed_handler_uid = */
+/* 		g_signal_connect (G_OBJECT (conf), "key_changed", */
+/* 				  G_CALLBACK (on_key_change), */
+/* 				  obj); */
 	
 	return MODEST_ACCOUNT_MGR (obj);
 }
@@ -357,6 +386,9 @@ modest_account_mgr_add_account (ModestAccountMgr *self,
 
 
 	modest_account_mgr_set_enabled (self, name, enabled);
+
+	/* Notify the observers */
+	g_signal_emit (self, signals[ACCOUNT_INSERTED_SIGNAL], 0, name);
 
 	/* if no default account has been defined yet, do so now */
 	default_account = modest_account_mgr_get_default_account (self);

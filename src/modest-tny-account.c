@@ -736,8 +736,6 @@ modest_tny_account_new_for_per_account_local_outbox_folder (ModestAccountMgr *ac
 		return NULL;
 	}
 	
-	printf ("DEBUG: %s: Setting session for account: session=%p\n", 
-		__FUNCTION__, session);
 	tny_camel_account_set_session (TNY_CAMEL_ACCOUNT(tny_account), session);
 	
 	/* Make sure that the paths exists on-disk so that TnyCamelStoreAccount can 
@@ -901,17 +899,43 @@ modest_tny_folder_store_get_local_size (TnyFolderStore *self)
 	return retval;
 }
 
-const gchar* modest_tny_account_get_parent_modest_account_name_for_server_account (TnyAccount *self)
+const gchar* 
+modest_tny_account_get_parent_modest_account_name_for_server_account (TnyAccount *self)
 {
 	return (const gchar *)g_object_get_data (G_OBJECT (self), "modest_account");
 }
 
-void modest_tny_account_set_parent_modest_account_name_for_server_account (TnyAccount *self, const gchar* parent_modest_acount_name)
+void 
+modest_tny_account_set_parent_modest_account_name_for_server_account (TnyAccount *self, 
+								      const gchar* parent_modest_acount_name)
 {
 	g_object_set_data_full (G_OBJECT(self), "modest_account",
 				(gpointer) g_strdup (parent_modest_acount_name), g_free);
 }
 
+gboolean
+modest_tny_account_is_virtual_local_folders (TnyAccount *self)
+{
+	/* We should make this more sophisticated if we ever use ModestTnyLocalFoldersAccount 
+	 * for anything else. */
+	return MODEST_IS_TNY_LOCAL_FOLDERS_ACCOUNT (self);
+}
 
 
+gboolean
+modest_tny_account_is_memory_card_account (TnyAccount *self)
+{
+	const gchar* account_id = NULL;
 
+	g_return_val_if_fail (TNY_ACCOUNT (self), FALSE);
+
+	if (!self)
+		return FALSE;
+
+	account_id = tny_account_get_id (self);
+
+	if (!account_id)
+		return FALSE;
+	else	
+		return (strcmp (account_id, MODEST_MMC_ACCOUNT_ID) == 0);
+}

@@ -36,16 +36,16 @@
 #include <stdio.h>
 
 static void   modest_conf_class_init     (ModestConfClass *klass);
+
 static void   modest_conf_init           (ModestConf *obj);
+
 static void   modest_conf_finalize       (GObject *obj);
+
 static void   modest_conf_on_change	 (GConfClient *client, guint conn_id,
 					  GConfEntry *entry, gpointer data);
+
 static GConfValueType modest_conf_type_to_gconf_type (ModestConfValueType value_type, 
 						      GError **err);
-
-
-static void
-modest_conf_maemo_fake_on_change (ModestConf *conf, const gchar* key, ModestConfEvent event);
 
 /* list my signals */
 enum {
@@ -106,8 +106,8 @@ modest_conf_class_init (ModestConfClass *klass)
 			      G_SIGNAL_RUN_FIRST,
 			      G_STRUCT_OFFSET (ModestConfClass,key_changed),
 			      NULL, NULL,
-			      modest_marshal_VOID__STRING_INT,
-			      G_TYPE_NONE, 2, G_TYPE_STRING, G_TYPE_INT); 
+			      modest_marshal_VOID__STRING_INT_INT,
+			      G_TYPE_NONE, 3, G_TYPE_STRING, G_TYPE_INT, G_TYPE_INT); 
 }
 
 static void
@@ -115,7 +115,7 @@ modest_conf_init (ModestConf *obj)
 {
 	GConfClient *conf = NULL;
 	ModestConfPrivate *priv = MODEST_CONF_GET_PRIVATE(obj);
-	GError *err      = NULL;
+/* 	GError *err      = NULL; */
 
 	
 	priv->gconf_client = NULL;
@@ -125,27 +125,27 @@ modest_conf_init (ModestConf *obj)
 		g_printerr ("modest: could not get gconf client\n");
 		return;
 	}
-	gconf_client_add_dir (conf,MODEST_CONF_NAMESPACE,
-			      GCONF_CLIENT_PRELOAD_NONE,
-			      &err);
-	if (err) {
-		g_printerr ("modest: error %d with gconf_client_add_dir: '%s'\n",
-			    err->code, err->message);
-		g_object_unref (conf);
-		g_error_free (err);
-		return;
-	}
+/* 	gconf_client_add_dir (conf,MODEST_CONF_NAMESPACE, */
+/* 			      GCONF_CLIENT_PRELOAD_NONE, */
+/* 			      &err); */
+/* 	if (err) { */
+/* 		g_printerr ("modest: error %d with gconf_client_add_dir: '%s'\n", */
+/* 			    err->code, err->message); */
+/* 		g_object_unref (conf); */
+/* 		g_error_free (err); */
+/* 		return; */
+/* 	} */
 	
-	gconf_client_notify_add (conf, MODEST_CONF_NAMESPACE,
-				 modest_conf_on_change,
-				 obj, NULL, &err);
-	if (err) {
-		g_printerr ("modest: gconf_client_notify_add error %d: '%s'\n",
-			    err->code, err->message);
-		g_object_unref (conf);
-		g_error_free (err);
-		return;
-	}
+/* 	gconf_client_notify_add (conf, MODEST_CONF_NAMESPACE, */
+/* 				 modest_conf_on_change, */
+/* 				 obj, NULL, &err); */
+/* 	if (err) { */
+/* 		g_printerr ("modest: gconf_client_notify_add error %d: '%s'\n", */
+/* 			    err->code, err->message); */
+/* 		g_object_unref (conf); */
+/* 		g_error_free (err); */
+/* 		return; */
+/* 	} */
 	priv->gconf_client = conf; 	/* all went well! */
 }
 
@@ -265,13 +265,8 @@ modest_conf_set_string (ModestConf* self, const gchar* key, const gchar* val,
 		return FALSE;
 	}
 			
-	if (gconf_client_set_string (priv->gconf_client, key, val, err)) {
-		modest_conf_maemo_fake_on_change (self, key, MODEST_CONF_EVENT_KEY_CHANGED);
-		return TRUE;
-	} else
-		return FALSE;
+	return gconf_client_set_string (priv->gconf_client, key, val, err);
 }
-
 
 gboolean
 modest_conf_set_int  (ModestConf* self, const gchar* key, gint val,
@@ -289,11 +284,7 @@ modest_conf_set_int  (ModestConf* self, const gchar* key, gint val,
 		return FALSE;
 	}
 			
-	if (gconf_client_set_int (priv->gconf_client, key, val, err)) {
-		modest_conf_maemo_fake_on_change (self, key, MODEST_CONF_EVENT_KEY_CHANGED);
-		return TRUE;
-	} else
-		return FALSE;
+	return gconf_client_set_int (priv->gconf_client, key, val, err);
 }
 
 
@@ -313,11 +304,7 @@ modest_conf_set_bool (ModestConf* self, const gchar* key, gboolean val,
 		return FALSE;
 	}
 
-	if (gconf_client_set_bool (priv->gconf_client, key, val, err)) {
-		modest_conf_maemo_fake_on_change (self, key, MODEST_CONF_EVENT_KEY_CHANGED);
-		return TRUE;
-	} else
-		return FALSE;
+	return gconf_client_set_bool (priv->gconf_client, key, val, err);
 }
 
 
@@ -359,9 +346,6 @@ modest_conf_set_list (ModestConf* self, const gchar* key,
 				  "We think that we fixed this, so tell us if you see this.", key);
 		g_slist_free(debug_list);
 	}
-
-	if (result)
-		modest_conf_maemo_fake_on_change (self, key, MODEST_CONF_EVENT_KEY_CHANGED);
 	
 	return result;
 }
@@ -395,11 +379,7 @@ modest_conf_remove_key (ModestConf* self, const gchar* key, GError **err)
 	retval = gconf_client_recursive_unset (priv->gconf_client,key,0,err);
 	gconf_client_suggest_sync (priv->gconf_client, NULL);
 
-	if (retval) {
-		modest_conf_maemo_fake_on_change (self, key, MODEST_CONF_EVENT_KEY_UNSET);
-		return TRUE;
-	} else
-		return FALSE;
+	return retval;
 }
 
 
@@ -452,9 +432,10 @@ modest_conf_key_is_valid (const gchar* key)
 	return gconf_valid_key (key, NULL);
 }
 
-/* hmmm... might need to make specific callback for specific keys */
 static void
-modest_conf_on_change (GConfClient *client, guint conn_id, GConfEntry *entry,
+modest_conf_on_change (GConfClient *client,
+		       guint conn_id,
+		       GConfEntry *entry,
 		       gpointer data)
 {
 	ModestConfEvent event;
@@ -465,7 +446,7 @@ modest_conf_on_change (GConfClient *client, guint conn_id, GConfEntry *entry,
 
 	g_signal_emit (G_OBJECT(data),
 		       signals[KEY_CHANGED_SIGNAL], 0,
-		       key, event);
+		       key, event, conn_id);
 }
 
 
@@ -496,77 +477,57 @@ modest_conf_type_to_gconf_type (ModestConfValueType value_type, GError **err)
 	return gconf_type;
 }
 
-
-
-////////////////////////////////////////////////////////////////////////////////
-/* workaround for the b0rked dbus-gconf on maemo */
-/* fires a fake change notification after 0.3 secs.
- * Might not be necessary anymore. */
-#if 0
-#ifdef MODEST_PLATFORM_MAEMO
-typedef struct {
-	GObject *obj;
-	gchar   *key;
-} ChangeHelper;
-
-ChangeHelper*
-change_helper_new (ModestConf *conf, const gchar *key)
+ModestConfNotificationId
+modest_conf_listen_to_namespace (ModestConf *self,
+				 const gchar *namespace)
 {
-	ChangeHelper *helper = g_slice_alloc  (sizeof(ChangeHelper));
-	helper->obj  = g_object_ref(G_OBJECT(conf));
-	helper->key  = g_strdup (key);
-	return helper;
-}
+	ModestConfPrivate *priv;
+	GError *error = NULL;
+	ModestConfNotificationId notification_id;
 
-static void
-change_helper_free (ChangeHelper *helper)
-{
-	g_object_unref (helper->obj);
-	g_free (helper->key);
-	helper->key = NULL;
-	helper->obj = NULL;
-	g_slice_free (ChangeHelper,helper);
-}
-
-static gboolean
-emit_change_cb (ChangeHelper *helper)
-{
-	if (!helper)
-		return FALSE;	
-	g_signal_emit (G_OBJECT(helper->obj),signals[KEY_CHANGED_SIGNAL], 0,
-		       helper->key, MODEST_CONF_EVENT_KEY_CHANGED);
-	change_helper_free (helper);
+	g_return_val_if_fail (MODEST_IS_CONF (self), 0);
+	g_return_val_if_fail (namespace, 0);
 	
-	return FALSE;
+	priv = MODEST_CONF_GET_PRIVATE(self);
+
+	/* Add the namespace to the list of the namespaces that will
+	   be observed */
+	gconf_client_add_dir (priv->gconf_client, namespace,
+			      GCONF_CLIENT_PRELOAD_NONE,
+			      &error);
+
+	if (error)
+		return 0;
+
+	/* Notify every change under namespace */
+	notification_id = gconf_client_notify_add (priv->gconf_client,
+						   namespace,
+						   modest_conf_on_change,
+						   self,
+						   NULL,
+						   &error);
+	if (error)
+		return 0;
+	else
+		return notification_id;
 }
 
-static gboolean
-emit_remove_cb (ChangeHelper *helper)
+void 
+modest_conf_forget_namespace (ModestConf *self,
+			      const gchar *namespace,
+			      ModestConfNotificationId id)
 {
-	if (!helper)
-		return FALSE;
-	g_signal_emit (G_OBJECT(helper->obj),signals[KEY_CHANGED_SIGNAL], 0,
-		       helper->key, MODEST_CONF_EVENT_KEY_UNSET);
-	change_helper_free (helper);
-	
-	return FALSE;
-}
-#endif /* MODEST_PLATFORM_MAEMO */
-#endif
-	
-static void
-modest_conf_maemo_fake_on_change (ModestConf *conf, const gchar* key, ModestConfEvent event)
-{
-/* hack for faster notification, might not be necessary anymore: */
-#if 0
-#ifdef MODEST_PLATFORM_MAEMO
+	ModestConfPrivate *priv;
 
-	ChangeHelper *helper = change_helper_new (conf,key); 
-	g_timeout_add (100, /* after 100 ms */
-		       (event == MODEST_CONF_EVENT_KEY_CHANGED)
-		       ? (GSourceFunc)emit_change_cb : (GSourceFunc)emit_remove_cb,
-		       (gpointer)helper);
-#endif /* MODEST_PLATFORM_MAEMO */
-#endif 
+	g_return_if_fail (MODEST_IS_CONF (self));
+	g_return_if_fail (namespace);
+	
+	priv = MODEST_CONF_GET_PRIVATE(self);
+
+	/* Remove the namespace to the list of the namespaces that will
+	   be observed */
+	gconf_client_remove_dir (priv->gconf_client, namespace, NULL);
+
+	/* Notify every change under namespace */
+	gconf_client_notify_remove (priv->gconf_client, id);
 }
-//////////////////////////////////////////////////////////////////////////////////

@@ -426,8 +426,13 @@ modest_tny_send_queue_try_to_send (ModestTnySendQueue* self)
 	GError *err = NULL;
 
 	outbox = modest_tny_send_queue_get_outbox (TNY_SEND_QUEUE(self));
+	if (!outbox)
+		return;
+
 	tny_folder_get_headers (outbox, headers, TRUE, &err);
-	if (err != NULL) goto frees;
+	if (err != NULL) 
+		goto frees;
+
 	iter = tny_list_create_iterator (headers);
 	while (!tny_iterator_is_done (iter)) {
 		header = TNY_HEADER (tny_iterator_get_current (iter));

@@ -78,16 +78,21 @@
 #define YSPACE 0
 
 /* 'private'/'protected' functions */
-static void modest_main_window_class_init    (ModestMainWindowClass *klass);
-static void modest_main_window_init          (ModestMainWindow *obj);
-static void modest_main_window_finalize      (GObject *obj);
+static void modest_main_window_class_init  (ModestMainWindowClass *klass);
+static void modest_main_window_init        (ModestMainWindow *obj);
+static void modest_main_window_finalize    (GObject *obj);
+
 static gboolean modest_main_window_window_state_event (GtkWidget *widget, 
 							   GdkEventWindowState *event, 
 							   gpointer userdata);
 
 static void connect_signals (ModestMainWindow *self);
 
-static void restore_settings (ModestMainWindow *self, gboolean do_folder_view_too);
+static void modest_main_window_disconnect_signals (ModestWindow *self);
+
+static void restore_settings (ModestMainWindow *self, 
+			      gboolean do_folder_view_too);
+
 static void save_state (ModestWindow *self);
 
 static void modest_main_window_show_toolbar   (ModestWindow *window,
@@ -96,14 +101,14 @@ static void modest_main_window_show_toolbar   (ModestWindow *window,
 static void cancel_progressbar (GtkToolButton *toolbutton,
 				ModestMainWindow *self);
 
-static void         on_queue_changed                     (ModestMailOperationQueue *queue,
-							  ModestMailOperation *mail_op,
-							  ModestMailOperationQueueNotification type,
-							  ModestMainWindow *self);
+static void on_queue_changed   (ModestMailOperationQueue *queue,
+				ModestMailOperation *mail_op,
+				ModestMailOperationQueueNotification type,
+				ModestMainWindow *self);
 
 static gboolean on_zoom_minus_plus_not_implemented (ModestWindow *window);
 
-static void on_account_update                 (TnyAccountStore *account_store, 
+static void account_number_changed            (TnyAccountStore *account_store, 
 					       const gchar *account_name,
 					       gpointer user_data);
 
@@ -113,7 +118,8 @@ static gboolean on_inner_widgets_key_pressed  (GtkWidget *widget,
 
 static void on_configuration_key_changed      (ModestConf* conf, 
 					       const gchar *key, 
-					       ModestConfEvent event, 
+					       ModestConfEvent event,
+					       ModestConfNotificationId id,
 					       ModestMainWindow *self);
 
 static void set_toolbar_mode                  (ModestMainWindow *self, 
@@ -172,8 +178,8 @@ struct _ModestMainWindowPrivate {
 	GtkWidget *empty_view;
 
 	/* Progress observers */
-	GtkWidget        *progress_bar;
-	GSList           *progress_widgets;
+	GtkWidget   *progress_bar;
+	GSList      *progress_widgets;
 
 	/* Tollbar items */
 	GtkWidget   *progress_toolitem;
@@ -206,6 +212,8 @@ struct _ModestMainWindowPrivate {
 	/* Signal handler UIDs */
 	gint queue_changed_handler_uid; 
 	GList *queue_err_signals;
+
+	ModestConfNotificationId notification_id;
 };
 #define MODEST_MAIN_WINDOW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                 MODEST_TYPE_MAIN_WINDOW, \
@@ -299,6 +307,7 @@ modest_main_window_class_init (ModestMainWindowClass *klass)
 	modest_window_class->save_state_func = save_state;
 	modest_window_class->zoom_minus_func = on_zoom_minus_plus_not_implemented;
 	modest_window_class->zoom_plus_func = on_zoom_minus_plus_not_implemented;
+	modest_window_class->disconnect_signals_func = modest_main_window_disconnect_signals;
 }
 
 static void
@@ -337,6 +346,10 @@ modest_main_window_finalize (GObject *obj)
 
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(obj);
 
+	/* Sanity check: shouldn't be needed, the window mgr should
+	   call this function before */
+	modest_main_window_disconnect_signals (MODEST_WINDOW (obj));
+
 	modest_main_window_cleanup_queue_error_signals ((ModestMainWindow *) obj);
 
 	g_slist_free (priv->progress_widgets);
@@ -348,10 +361,11 @@ modest_main_window_finalize (GObject *obj)
 		priv->progress_bar_timeout = 0;
 	}
 
-	/* Disconnect signal handlers */
-	if (priv->queue_changed_handler_uid)
-		g_signal_handler_disconnect (modest_runtime_get_mail_operation_queue (),
-					     priv->queue_changed_handler_uid);
+	if (priv->notification_id) {
+		modest_conf_forget_namespace (modest_runtime_get_conf (),
+					      MODEST_CONF_NAMESPACE,
+					      priv->notification_id);
+	}
 
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
@@ -452,71 +466,71 @@ wrap_in_scrolled_window (GtkWidget *win, GtkWidget *widget)
 /* 	return FALSE; */
 /* } */
 
-static void
-on_sendqueue_error_happened (TnySendQueue *self, TnyHeader *header, TnyMsg *msg, GError *err, ModestMainWindow *user_data)
-{
-	if (err) {
-		printf ("DEBUG: %s: err->code=%d, err->message=%s\n", __FUNCTION__, err->code, err->message);
+/* static void */
+/* on_sendqueue_error_happened (TnySendQueue *self, TnyHeader *header, TnyMsg *msg, GError *err, ModestMainWindow *user_data) */
+/* { */
+/* 	if (err) { */
+/* 		printf ("DEBUG: %s: err->code=%d, err->message=%s\n", __FUNCTION__, err->code, err->message); */
 
-		if (err->code == TNY_ACCOUNT_ERROR_TRY_CONNECT_USER_CANCEL)
-			/* Don't show waste the user's time by showing him a dialog telling him
-			 * that he has just cancelled something: */
-			return;
-	}
+/* 		if (err->code == TNY_ACCOUNT_ERROR_TRY_CONNECT_USER_CANCEL) */
+/* 			/\* Don't show waste the user's time by showing him a dialog telling him */
+/* 			 * that he has just cancelled something: *\/ */
+/* 			return; */
+/* 	} */
 
-	/* Get the server name: */
-	const gchar* server_name = NULL;
+/* 	/\* Get the server name: *\/ */
+/* 	const gchar* server_name = NULL; */
 	
-	TnyCamelTransportAccount* server_account = tny_camel_send_queue_get_transport_account (
-		TNY_CAMEL_SEND_QUEUE (self));
-	if (server_account) {
-		server_name = tny_account_get_hostname (TNY_ACCOUNT (server_account));
+/* 	TnyCamelTransportAccount* server_account = tny_camel_send_queue_get_transport_account ( */
+/* 		TNY_CAMEL_SEND_QUEUE (self)); */
+/* 	if (server_account) { */
+/* 		server_name = tny_account_get_hostname (TNY_ACCOUNT (server_account)); */
 			
-		g_object_unref (server_account);
-		server_account = NULL;
-	}
+/* 		g_object_unref (server_account); */
+/* 		server_account = NULL; */
+/* 	} */
 	
-	if (!server_name)
-		server_name = _("Unknown Server");	
+/* 	if (!server_name) */
+/* 		server_name = _("Unknown Server");	 */
 
-	/* Show the appropriate message text for the GError: */
-	gchar *message = NULL;
-	if (err) {
-		switch (err->code) {
-			case TNY_TRANSPORT_ACCOUNT_ERROR_SEND_HOST_LOOKUP_FAILED:
-				message = g_strdup_printf (_("emev_ib_ui_smtp_server_invalid"), server_name);
-				break;
-			case TNY_TRANSPORT_ACCOUNT_ERROR_SEND_SERVICE_UNAVAILABLE:
-				message = g_strdup_printf (_("emev_ib_ui_smtp_server_invalid"), server_name);
-				break;
-			case TNY_TRANSPORT_ACCOUNT_ERROR_SEND_AUTHENTICATION_NOT_SUPPORTED:
-				/* TODO: This logical ID seems more suitable for a wrong username or password than for a 
-				 * wrong authentication method. The user is unlikely to guess at the real cause.
-				 */
-				message = g_strdup_printf (_("eemev_ni_ui_smtp_authentication_fail_error"), server_name);
-				break;
-			case TNY_TRANSPORT_ACCOUNT_ERROR_SEND:
-				/* TODO: Tinymail is still sending this sometimes when it should 
-				 * send TNY_ACCOUNT_ERROR_TRY_CONNECT_USER_CANCEL. */
-			default:
-				message = g_strdup (_("emev_ib_ui_smtp_send_error"));
-				break;
-		}
-	} else {
-		message = g_strdup (_("emev_ib_ui_smtp_send_error"));
-	}
+/* 	/\* Show the appropriate message text for the GError: *\/ */
+/* 	gchar *message = NULL; */
+/* 	if (err) { */
+/* 		switch (err->code) { */
+/* 			case TNY_TRANSPORT_ACCOUNT_ERROR_SEND_HOST_LOOKUP_FAILED: */
+/* 				message = g_strdup_printf (_("emev_ib_ui_smtp_server_invalid"), server_name); */
+/* 				break; */
+/* 			case TNY_TRANSPORT_ACCOUNT_ERROR_SEND_SERVICE_UNAVAILABLE: */
+/* 				message = g_strdup_printf (_("emev_ib_ui_smtp_server_invalid"), server_name); */
+/* 				break; */
+/* 			case TNY_TRANSPORT_ACCOUNT_ERROR_SEND_AUTHENTICATION_NOT_SUPPORTED: */
+/* 				/\* TODO: This logical ID seems more suitable for a wrong username or password than for a  */
+/* 				 * wrong authentication method. The user is unlikely to guess at the real cause. */
+/* 				 *\/ */
+/* 				message = g_strdup_printf (_("eemev_ni_ui_smtp_authentication_fail_error"), server_name); */
+/* 				break; */
+/* 			case TNY_TRANSPORT_ACCOUNT_ERROR_SEND: */
+/* 				/\* TODO: Tinymail is still sending this sometimes when it should  */
+/* 				 * send TNY_ACCOUNT_ERROR_TRY_CONNECT_USER_CANCEL. *\/ */
+/* 			default: */
+/* 				message = g_strdup (_("emev_ib_ui_smtp_send_error")); */
+/* 				break; */
+/* 		} */
+/* 	} else { */
+/* 		message = g_strdup (_("emev_ib_ui_smtp_send_error")); */
+/* 	} */
 	
-	modest_maemo_show_information_note_and_forget (GTK_WINDOW (user_data), message);
-	g_free (message);
+/* 	modest_maemo_show_information_note_and_forget (GTK_WINDOW (user_data), message); */
+/* 	g_free (message); */
 	
-	/* TODO: Offer to remove the message, to avoid messages in future? */
-	/*
-	TnyFolder *outbox = tny_send_queue_get_outbox (queue);
-	tny_folder_remove_msg (outbox, header, NULL);
-	tny_folder_sync (outbox, TRUE, NULL);
-	g_object_unref (outbox);
-	*/
-}
+/* 	/\* TODO: Offer to remove the message, to avoid messages in future? *\/ */
+/* 	/\* */
+/* 	TnyFolder *outbox = tny_send_queue_get_outbox (queue); */
+/* 	tny_folder_remove_msg (outbox, header, NULL); */
+/* 	tny_folder_sync (outbox, TRUE, NULL); */
+/* 	g_object_unref (outbox); */
+/* 	*\/ */
+/* } */
 
 typedef struct {
 	TnySendQueue *queue;
@@ -539,71 +553,71 @@ modest_main_window_cleanup_queue_error_signals (ModestMainWindow *self)
 	priv->queue_err_signals = NULL;
 }
 
-static void
-on_account_store_connecting_finished (TnyAccountStore *store, ModestMainWindow *self)
-{
-	ModestMainWindowPrivate *priv = MODEST_MAIN_WINDOW_GET_PRIVATE (self);
+/* static void */
+/* on_account_store_connecting_finished (TnyAccountStore *store, ModestMainWindow *self) */
+/* { */
+/* 	ModestMainWindowPrivate *priv = MODEST_MAIN_WINDOW_GET_PRIVATE (self); */
 
-	/* When going online, do the equivalent of pressing the send/receive button, 
-	 * as per the specification:
-	 * (without the check for >0 accounts, though that is not specified): */
+/* 	/\* When going online, do the equivalent of pressing the send/receive button,  */
+/* 	 * as per the specification: */
+/* 	 * (without the check for >0 accounts, though that is not specified): *\/ */
 
-	TnyDevice *device = tny_account_store_get_device (store);
+/* 	TnyDevice *device = tny_account_store_get_device (store); */
 
-	/* modest_folder_view_update_model (MODEST_FOLDER_VIEW (priv->folder_view), store); */
+/* 	/\* modest_folder_view_update_model (MODEST_FOLDER_VIEW (priv->folder_view), store); *\/ */
 	
-	/* Check that we are really online.
-	 * This signal should not be emitted when we are not connected, 
-	 * but it seems to happen sometimes: */
-	 if (!tny_device_is_online (device))
-	 	return;
+/* 	/\* Check that we are really online. */
+/* 	 * This signal should not be emitted when we are not connected,  */
+/* 	 * but it seems to happen sometimes: *\/ */
+/* 	 if (!tny_device_is_online (device)) */
+/* 	 	return; */
 	 	
-	const gchar *iap_id = tny_maemo_conic_device_get_current_iap_id (TNY_MAEMO_CONIC_DEVICE (device));
-	printf ("DEBUG: %s: connection id=%s\n", __FUNCTION__, iap_id);
+/* 	const gchar *iap_id = tny_maemo_conic_device_get_current_iap_id (TNY_MAEMO_CONIC_DEVICE (device)); */
+/* 	printf ("DEBUG: %s: connection id=%s\n", __FUNCTION__, iap_id); */
 	
-	/* Stop the existing send queues: */
-	modest_runtime_remove_all_send_queues ();
+/* 	/\* Stop the existing send queues: *\/ */
+/* 	modest_runtime_remove_all_send_queues (); */
 	
-	/* Create the send queues again, using the appropriate transport accounts 
-	 * for this new connection.
-	 * This could be the first time that they are created if this is the first 
-	 * connection. */
-	/* TODO: Does this really destroy the TnySendQueues and their threads
-	 * We do not want 2 TnySendQueues to exist with the same underlying 
-	 * outbox directory. */
+/* 	/\* Create the send queues again, using the appropriate transport accounts  */
+/* 	 * for this new connection. */
+/* 	 * This could be the first time that they are created if this is the first  */
+/* 	 * connection. *\/ */
+/* 	/\* TODO: Does this really destroy the TnySendQueues and their threads */
+/* 	 * We do not want 2 TnySendQueues to exist with the same underlying  */
+/* 	 * outbox directory. *\/ */
 
-	modest_main_window_cleanup_queue_error_signals (self);
+/* 	modest_main_window_cleanup_queue_error_signals (self); */
 
-	GSList *account_names = modest_account_mgr_account_names (
-		modest_runtime_get_account_mgr(), 
-		TRUE /* enabled accounts only */);
-	GSList *iter = account_names;
-	while (iter) {
-		const gchar *account_name = (const gchar*)(iter->data);
-			if (account_name) {
-			TnyTransportAccount *account = TNY_TRANSPORT_ACCOUNT (
-				modest_tny_account_store_get_transport_account_for_open_connection
-						 (modest_runtime_get_account_store(), account_name));
-			if (account) {
-				/* Q: Is this the first location where the send-queues are requested? */
-				QueueErrorSignal *esignal = g_slice_new (QueueErrorSignal);
-				printf ("debug: %s:\n  Transport account for %s: %s\n", __FUNCTION__, account_name, 
-					tny_account_get_id(TNY_ACCOUNT(account)));
-				esignal->queue = TNY_SEND_QUEUE (modest_runtime_get_send_queue (account));
-				esignal->signal = g_signal_connect (G_OBJECT (esignal->queue), "error-happened",
-					G_CALLBACK (on_sendqueue_error_happened), self);
-				priv->queue_err_signals = g_list_prepend (priv->queue_err_signals, esignal);
-			}
-		}
+/* 	GSList *account_names = modest_account_mgr_account_names ( */
+/* 		modest_runtime_get_account_mgr(),  */
+/* 		TRUE /\* enabled accounts only *\/); */
+/* 	GSList *iter = account_names; */
+/* 	while (iter) { */
+/* 		const gchar *account_name = (const gchar*)(iter->data); */
+/* 			if (account_name) { */
+/* 			TnyTransportAccount *account = TNY_TRANSPORT_ACCOUNT ( */
+/* 				modest_tny_account_store_get_transport_account_for_open_connection */
+/* 						 (modest_runtime_get_account_store(), account_name)); */
+/* 			if (account) { */
+/* 				/\* Q: Is this the first location where the send-queues are requested? *\/ */
+/* 				QueueErrorSignal *esignal = g_slice_new (QueueErrorSignal); */
+/* 				printf ("debug: %s:\n  Transport account for %s: %s\n", __FUNCTION__, account_name,  */
+/* 					tny_account_get_id(TNY_ACCOUNT(account))); */
+/* 				esignal->queue = TNY_SEND_QUEUE (modest_runtime_get_send_queue (account)); */
+/* 				esignal->signal = g_signal_connect (G_OBJECT (esignal->queue), "error-happened", */
+/* 					G_CALLBACK (on_sendqueue_error_happened), self); */
+/* 				priv->queue_err_signals = g_list_prepend (priv->queue_err_signals, esignal); */
+/* 			} */
+/* 		} */
 		
-		iter = g_slist_next (iter);
-	}
+/* 		iter = g_slist_next (iter); */
+/* 	} */
 
-	modest_account_mgr_free_account_names (account_names);
-	account_names = NULL;
+/* 	modest_account_mgr_free_account_names (account_names); */
+/* 	account_names = NULL; */
 	
-	modest_ui_actions_do_send_receive (NULL, MODEST_WINDOW (self));
-}
+/* 	modest_ui_actions_do_send_receive (NULL, MODEST_WINDOW (self)); */
+/* } */
 
 static void
 _folder_view_csm_menu_activated (GtkWidget *widget, gpointer user_data)
@@ -623,6 +637,20 @@ _header_view_csm_menu_activated (GtkWidget *widget, gpointer user_data)
 
 	/* Update dimmed */	
 	modest_window_check_dimming_rules_group (MODEST_WINDOW (user_data), "ModestMenuDimmingRules");	
+}
+
+static void
+modest_main_window_disconnect_signals (ModestWindow *self)
+{	
+	ModestMainWindowPrivate *priv;
+	
+	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
+
+	/* Disconnect signal handlers */
+	if (g_signal_handler_is_connected (modest_runtime_get_mail_operation_queue (),
+					   priv->queue_changed_handler_uid))
+		g_signal_handler_disconnect (modest_runtime_get_mail_operation_queue (),
+					     priv->queue_changed_handler_uid);
 }
 
 static void
@@ -673,7 +701,6 @@ connect_signals (ModestMainWindow *self)
 			  self);
 	
 	/* window */
-/* 	g_signal_connect (G_OBJECT(self), "delete-event", G_CALLBACK(on_delete_event), self); */
 	g_signal_connect (G_OBJECT (self), "window-state-event",
 			  G_CALLBACK (modest_main_window_window_state_event),
 			  NULL);
@@ -684,13 +711,18 @@ connect_signals (ModestMainWindow *self)
 				  "queue-changed", G_CALLBACK (on_queue_changed), self);
 
 	/* Track changes in the device name */
+	priv->notification_id =  modest_conf_listen_to_namespace (modest_runtime_get_conf (), 
+								  MODEST_CONF_NAMESPACE);
 	g_signal_connect (G_OBJECT(modest_runtime_get_conf ()),
 			  "key_changed", G_CALLBACK (on_configuration_key_changed), 
 			  self);
 
 	/* Track account changes. We need to refresh the toolbar */
 	g_signal_connect (G_OBJECT (modest_runtime_get_account_store ()),
-			  "account_update", G_CALLBACK (on_account_update),
+			  "account_inserted", G_CALLBACK (account_number_changed),
+			  self);
+	g_signal_connect (G_OBJECT (modest_runtime_get_account_store ()),
+			  "account_removed", G_CALLBACK (account_number_changed),
 			  self);
 
 	/* Account store */
@@ -698,10 +730,10 @@ connect_signals (ModestMainWindow *self)
 			  "password_requested",
 			  G_CALLBACK (modest_ui_actions_on_password_requested), self);
 			  
-	/* Device */
-	g_signal_connect (G_OBJECT(modest_runtime_get_account_store()), 
-			  "connecting-finished",
-			  G_CALLBACK(on_account_store_connecting_finished), self);
+/* 	/\* Device *\/ */
+/* 	g_signal_connect (G_OBJECT(modest_runtime_get_account_store()),  */
+/* 			  "connecting-finished", */
+/* 			  G_CALLBACK(on_account_store_connecting_finished), self); */
 }
 
 #if 0
@@ -1194,7 +1226,7 @@ modest_main_window_show_toolbar (ModestWindow *self,
 		gtk_widget_tap_and_hold_setup (GTK_WIDGET (reply_button), menu, NULL, 0);
 
 		/* Set send & receive button tap and hold menu */
-		on_account_update (TNY_ACCOUNT_STORE (modest_runtime_get_account_store ()),
+		account_number_changed (TNY_ACCOUNT_STORE (modest_runtime_get_account_store ()),
 				   NULL, self);
 	}
 
@@ -1218,9 +1250,9 @@ compare_display_names (ModestAccountData *a,
 }
 
 static void 
-on_account_update (TnyAccountStore *account_store, 
-		   const gchar *account_name,
-		   gpointer user_data)
+account_number_changed (TnyAccountStore *account_store, 
+			const gchar *account_name,
+			gpointer user_data)
 {
 	GSList *account_names, *iter, *accounts;
 	ModestMainWindow *self;
@@ -1433,7 +1465,7 @@ on_account_update (TnyAccountStore *account_store,
 	for (i = 0; i < num_accounts; i++) {
 		ModestAccountData *account_data = (ModestAccountData *) g_slist_nth_data (accounts, i);
 
-		if(account_data->account_name &&
+		if(account_data->account_name && default_account &&
 		   strcmp (account_data->account_name, default_account) == 0) {
 			gchar *item_name = g_strconcat (account_data->account_name, "Menu", NULL);
 
@@ -1861,16 +1893,17 @@ modest_main_window_get_contents_style (ModestMainWindow *self)
 static void 
 on_configuration_key_changed (ModestConf* conf, 
 			      const gchar *key, 
-			      ModestConfEvent event, 
+			      ModestConfEvent event,
+			      ModestConfNotificationId id, 
 			      ModestMainWindow *self)
 {
-	ModestMainWindowPrivate *priv;
+	ModestMainWindowPrivate *priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
 	TnyAccount *account;
 
-	if (!key || strcmp (key, MODEST_CONF_DEVICE_NAME))
+	if (!key || 
+	    priv->notification_id != id ||
+	    strcmp (key, MODEST_CONF_DEVICE_NAME))
 		return;
-
-	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
 
 	if (priv->contents_style != MODEST_MAIN_WINDOW_CONTENTS_STYLE_DETAILS)
 		return;

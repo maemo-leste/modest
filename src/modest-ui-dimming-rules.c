@@ -35,6 +35,7 @@
 #include "modest-ui-dimming-rules.h"
 #include "modest-dimming-rule.h"
 #include "modest-tny-folder.h"
+#include "modest-tny-account.h"
 #include "modest-text-utils.h"
 #include <widgets/modest-attachments-view.h>
 #include <modest-runtime.h>
@@ -1708,11 +1709,14 @@ _selected_msg_marked_as (ModestWindow *win,
 
 	if (MODEST_IS_MAIN_WINDOW (win))
 		main_window = win;
-	else {
+	else
 		main_window = 
 			modest_window_mgr_get_main_window (modest_runtime_get_window_mgr ());		
-	}
-		
+
+	/* TODO: Javi, what about if the main window does not
+	   exist?. Adding some code to avoid CRITICALs */
+	if (!main_window)
+		return FALSE;
 
 	/* Get header view to check selected messages */
 	header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(main_window),

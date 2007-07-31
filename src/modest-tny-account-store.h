@@ -75,6 +75,11 @@ struct _ModestTnyAccountStoreClass {
 				       gboolean *remember,
 				       gboolean *cancel,
 				       gpointer user_data);
+
+	/* Signals */
+	void (*account_changed) (TnyAccountStore *self, TnyAccount *account);
+	void (*account_inserted) (TnyAccountStore *self, TnyAccount *account);
+	void (*account_removed) (TnyAccountStore *self, TnyAccount *account);
 };
 
 typedef enum {
@@ -162,27 +167,8 @@ TnySessionCamel*    modest_tny_account_store_get_session    (TnyAccountStore *se
  * 
  * Get the user-visible local folders account.
  **/
-TnyAccount * modest_tny_account_store_get_local_folders_account (TnyAccountStore *self);
-
-/** modest_tny_account_is_virtual_local_folders:
- * @self A TnyAccount.
- * 
- * A convenience function to identify whether TnyAccount 
- * is the virtual local folders account, containing the folders from local_folders/
- * and the outboxes from outboxes/<account-name>/.
- **/
-gboolean modest_tny_account_is_virtual_local_folders (TnyAccount *self);
-
-/** modest_tny_account_is_memory_card_account:
- * @self A TnyAccount.
- * 
- * A convenience function to identify whether TnyAccount 
- * is the memory card account.
- **/
-gboolean
-modest_tny_account_is_memory_card_account (TnyAccount *self);
+TnyAccount * modest_tny_account_store_get_local_folders_account (ModestTnyAccountStore *self);
 
 G_END_DECLS
 
 #endif /* __MODEST_TNY_ACCOUNT_STORE_H__ */
-

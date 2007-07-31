@@ -56,6 +56,10 @@ struct _ModestAccountMgr {
 struct _ModestAccountMgrClass {
 	GObjectClass parent_class;
 
+	void (* account_inserted)  (ModestAccountMgr *obj, 
+				    const gchar* account,
+				    gpointer user_data);
+
 	void (* account_removed)   (ModestAccountMgr *obj, 
 				    const gchar* account,
 				    gpointer user_data);
@@ -67,9 +71,9 @@ struct _ModestAccountMgrClass {
 				    gpointer user_data);
 
 	void (* account_busy_changed)   (ModestAccountMgr *obj, 
-				    const gchar* account,
-				    gboolean busy,
-				    gpointer user_data);	
+					 const gchar* account,
+					 gboolean busy,
+					 gpointer user_data);	
 };
 
 /**

@@ -120,7 +120,8 @@ static void modest_msg_edit_window_add_attachment_clicked (GtkButton *button,
 							   ModestMsgEditWindow *window);
 
 /* ModestWindow methods implementation */
-static void  modest_msg_edit_window_set_zoom (ModestWindow *window, gdouble zoom);
+static void modest_msg_edit_window_disconnect_signals (ModestWindow *window);
+static void modest_msg_edit_window_set_zoom (ModestWindow *window, gdouble zoom);
 static gdouble modest_msg_edit_window_get_zoom (ModestWindow *window);
 static gboolean modest_msg_edit_window_zoom_minus (ModestWindow *window);
 static gboolean modest_msg_edit_window_zoom_plus (ModestWindow *window);
@@ -321,10 +322,9 @@ modest_msg_edit_window_class_init (ModestMsgEditWindowClass *klass)
 	modest_window_class->zoom_minus_func = modest_msg_edit_window_zoom_minus;
 	modest_window_class->show_toolbar_func = modest_msg_edit_window_show_toolbar;
 	modest_window_class->save_state_func = save_state;
+	modest_window_class->disconnect_signals_func = modest_msg_edit_window_disconnect_signals;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestMsgEditWindowPrivate));
-
-
 }
 
 static void
@@ -556,17 +556,25 @@ init_window (ModestMsgEditWindow *obj)
 
 }
 	
+static void
+modest_msg_edit_window_disconnect_signals (ModestWindow *window)
+{
+	ModestMsgEditWindowPrivate *priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
 
+	if (g_signal_handler_is_connected (gtk_clipboard_get (GDK_SELECTION_PRIMARY), 
+					   priv->clipboard_change_handler_id))
+		g_signal_handler_disconnect (gtk_clipboard_get (GDK_SELECTION_PRIMARY), 
+					     priv->clipboard_change_handler_id);
+}
 
 static void
 modest_msg_edit_window_finalize (GObject *obj)
 {
 	ModestMsgEditWindowPrivate *priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (obj);
 
-	if (priv->clipboard_change_handler_id > 0) {
-		g_signal_handler_disconnect (gtk_clipboard_get (GDK_SELECTION_PRIMARY), priv->clipboard_change_handler_id);
-		priv->clipboard_change_handler_id = 0;
-	}
+	/* Sanity check: shouldn't be needed, the window mgr should
+	   call this function before */
+	modest_msg_edit_window_disconnect_signals (MODEST_WINDOW (obj));
 	
 	if (priv->draft_msg != NULL) {
 		TnyHeader *header = tny_msg_get_header (priv->draft_msg);
@@ -674,7 +682,7 @@ replace_with_attachments (ModestMsgEditWindow *self, GList *attachments)
 			g_object_unref (stream);
 
 			if (pixbuf != NULL) {
-				wp_text_buffer_replace_image (WP_TEXT_BUFFER (priv->text_buffer), cid, pixbuf);
+/* 				wp_text_buffer_replace_image (WP_TEXT_BUFFER (priv->text_buffer), cid, pixbuf); */
 				g_object_unref (pixbuf);
 			}
 		}

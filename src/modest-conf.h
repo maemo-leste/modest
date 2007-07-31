@@ -46,6 +46,8 @@ G_BEGIN_DECLS
 typedef struct _ModestConf        ModestConf;
 typedef struct _ModestConfClass   ModestConfClass;
 
+typedef guint ModestConfNotificationId; 
+
 typedef enum {
 	MODEST_CONF_VALUE_INT,
 	MODEST_CONF_VALUE_BOOL,
@@ -64,7 +66,10 @@ struct _ModestConf {
 
 struct _ModestConfClass {
 	GObjectClass parent_class;	
-	void (* key_changed) (ModestConf* self, const gchar *key, ModestConfEvent event);
+	void (* key_changed) (ModestConf* self, 
+			      const gchar *key, 
+			      ModestConfEvent event,
+			      ModestConfNotificationId id);
 };
 
 /**
@@ -294,6 +299,13 @@ gchar* modest_conf_key_escape (const gchar* str);
  */
 gchar* modest_conf_key_unescape (const gchar* str);
 
+
+ModestConfNotificationId modest_conf_listen_to_namespace (ModestConf *self,
+							  const gchar *namespace);
+
+void modest_conf_forget_namespace (ModestConf *self,
+				   const gchar *namespace,
+				   ModestConfNotificationId id);
 
 G_END_DECLS
 

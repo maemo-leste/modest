@@ -73,22 +73,56 @@
 #include <libgnomevfs/gnome-vfs-volume-monitor.h>
 
 /* 'private'/'protected' functions */
-static void modest_tny_account_store_class_init   (ModestTnyAccountStoreClass *klass);
-//static void modest_tny_account_store_init         (ModestTnyAccountStore *obj);
-static void modest_tny_account_store_finalize     (GObject *obj);
+static void    modest_tny_account_store_class_init   (ModestTnyAccountStoreClass *klass);
 
-/* implementations for tny-account-store-iface */
+static void    modest_tny_account_store_finalize     (GObject *obj);
+
 static void    modest_tny_account_store_instance_init (ModestTnyAccountStore *obj);
+
 static void    modest_tny_account_store_init          (gpointer g, gpointer iface_data);
 
+static void    modest_tny_account_store_base_init     (gpointer g_class);
 
-static void    get_server_accounts                    (TnyAccountStore *self, 
-						       TnyList *list, 
-						       TnyAccountType type);
+static void    on_account_inserted         (ModestAccountMgr *acc_mgr, 
+					    const gchar *account,
+					    gpointer user_data);
+
+static void    add_existing_accounts       (ModestTnyAccountStore *self);
+
+static void    insert_account              (ModestTnyAccountStore *self,
+					    const gchar *account,
+					    gboolean notify);
+
+static void    on_account_removed          (ModestAccountMgr *acc_mgr, 
+					    const gchar *account,
+					    gpointer user_data);
+
+static gchar*  get_password                (TnyAccount *account, 
+					    const gchar * prompt_not_used, 
+					    gboolean *cancel);
+
+static void    forget_password             (TnyAccount *account);
+
+static void    on_vfs_volume_mounted       (GnomeVFSVolumeMonitor *volume_monitor, 
+					    GnomeVFSVolume *volume, 
+					    gpointer user_data);
+
+static void    on_vfs_volume_unmounted     (GnomeVFSVolumeMonitor *volume_monitor, 
+					    GnomeVFSVolume *volume, 
+					    gpointer user_data);
+
+static void    modest_tny_account_store_forget_password_in_memory (ModestTnyAccountStore *self, 
+								   const gchar *server_account_name);
+
+static void    add_connection_specific_transport_accounts         (ModestTnyAccountStore *self,
+								   const gchar *account_name);
 
 /* list my signals */
 enum {
-	ACCOUNT_UPDATE_SIGNAL,
+	ACCOUNT_CHANGED_SIGNAL,
+	ACCOUNT_INSERTED_SIGNAL,
+	ACCOUNT_REMOVED_SIGNAL,
+
 	PASSWORD_REQUESTED_SIGNAL,
 	LAST_SIGNAL
 };
@@ -101,18 +135,17 @@ struct _ModestTnyAccountStorePrivate {
 	ModestAccountMgr   *account_mgr;
 	TnySessionCamel    *session;
 	TnyDevice          *device;
+
+	gulong acc_inserted_handler;
+	gulong acc_changed_handler;
+	gulong acc_removed_handler;
+	gulong volume_mounted_handler;
+	gulong volume_unmounted_handler;
 	
-	/* We cache the lists of accounts here.
-	 * They are created in our get_accounts_func() implementation. */
-	GSList             *store_accounts;
-	GSList             *transport_accounts;
-	
-	/* This is also contained in store_accounts,
-	 * but we cached it temporarily separately, 
-	 * because we create this while creating the transport accounts, 
-	 * but return it when requesting the store accounts: 
-	 */
-	GSList             *store_accounts_outboxes;
+	/* We cache the lists of accounts here */
+	TnyList             *store_accounts;
+	TnyList             *transport_accounts;
+	TnyList             *store_accounts_outboxes;
 };
 
 #define MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -132,7 +165,7 @@ modest_tny_account_store_get_type (void)
 	if (!my_type) {
 		static const GTypeInfo my_info = {
 			sizeof(ModestTnyAccountStoreClass),
-			NULL,		/* base init */
+			modest_tny_account_store_base_init,	/* base init */
 			NULL,		/* base finalize */
 			(GClassInitFunc) modest_tny_account_store_class_init,
 			NULL,		/* class finalize */
@@ -158,6 +191,65 @@ modest_tny_account_store_get_type (void)
 	return my_type;
 }
 
+
+static void
+modest_tny_account_store_base_init (gpointer g_class)
+{
+	static gboolean tny_account_store_initialized = FALSE;
+
+	if (!tny_account_store_initialized) {
+
+		signals[ACCOUNT_CHANGED_SIGNAL] =
+			g_signal_new ("account_changed",
+				      MODEST_TYPE_TNY_ACCOUNT_STORE,
+				      G_SIGNAL_RUN_FIRST,
+				      G_STRUCT_OFFSET (ModestTnyAccountStoreClass, account_changed),
+				      NULL, NULL,
+				      g_cclosure_marshal_VOID__OBJECT,
+				      G_TYPE_NONE, 1, TNY_TYPE_ACCOUNT);
+
+		signals[ACCOUNT_INSERTED_SIGNAL] =
+			g_signal_new ("account_inserted",
+				      MODEST_TYPE_TNY_ACCOUNT_STORE,
+				      G_SIGNAL_RUN_FIRST,
+				      G_STRUCT_OFFSET (ModestTnyAccountStoreClass, account_inserted),
+				      NULL, NULL,
+				      g_cclosure_marshal_VOID__OBJECT,
+				      G_TYPE_NONE, 1, TNY_TYPE_ACCOUNT);
+		
+		signals[ACCOUNT_REMOVED_SIGNAL] =
+			g_signal_new ("account_removed",
+				      MODEST_TYPE_TNY_ACCOUNT_STORE,
+				      G_SIGNAL_RUN_FIRST,
+				      G_STRUCT_OFFSET (ModestTnyAccountStoreClass, account_removed),
+				      NULL, NULL,
+				      g_cclosure_marshal_VOID__OBJECT,
+				      G_TYPE_NONE, 1, TNY_TYPE_ACCOUNT);
+		
+/* 		signals[TNY_ACCOUNT_STORE_CONNECTING_FINISHED] = */
+/* 			g_signal_new ("connecting_finished", */
+/* 				      TNY_TYPE_ACCOUNT_STORE, */
+/* 				      G_SIGNAL_RUN_FIRST, */
+/* 				      G_STRUCT_OFFSET (TnyAccountStoreIface, connecting_finished), */
+/* 				      NULL, NULL, */
+/* 				      g_cclosure_marshal_VOID__VOID,  */
+/* 				      G_TYPE_NONE, 0); */
+
+		signals[PASSWORD_REQUESTED_SIGNAL] =
+			g_signal_new ("password_requested",
+				      MODEST_TYPE_TNY_ACCOUNT_STORE,
+				      G_SIGNAL_RUN_FIRST,
+				      G_STRUCT_OFFSET(ModestTnyAccountStoreClass, password_requested),
+				      NULL, NULL,
+				      modest_marshal_VOID__STRING_POINTER_POINTER_POINTER_POINTER,
+				      G_TYPE_NONE, 5, G_TYPE_STRING, G_TYPE_POINTER, G_TYPE_POINTER, G_TYPE_POINTER,
+				      G_TYPE_POINTER);		
+
+		tny_account_store_initialized = TRUE;
+	}
+}
+
+
 static void
 modest_tny_account_store_class_init (ModestTnyAccountStoreClass *klass)
 {
@@ -169,42 +261,15 @@ modest_tny_account_store_class_init (ModestTnyAccountStoreClass *klass)
 
 	g_type_class_add_private (gobject_class,
 				  sizeof(ModestTnyAccountStorePrivate));
-
-	 signals[ACCOUNT_UPDATE_SIGNAL] =
- 		g_signal_new ("account_update",
-			      G_TYPE_FROM_CLASS (gobject_class),
-			      G_SIGNAL_RUN_FIRST,
-			      G_STRUCT_OFFSET(ModestTnyAccountStoreClass, account_update),
-			      NULL, NULL,
-			      g_cclosure_marshal_VOID__STRING,
-			      G_TYPE_NONE, 1, G_TYPE_STRING);
-	 
-	 signals[PASSWORD_REQUESTED_SIGNAL] =
-		 g_signal_new ("password_requested",
-			       G_TYPE_FROM_CLASS (gobject_class),
-			       G_SIGNAL_RUN_FIRST,
-			       G_STRUCT_OFFSET(ModestTnyAccountStoreClass, password_requested),
-			       NULL, NULL,
-			       modest_marshal_VOID__STRING_POINTER_POINTER_POINTER_POINTER,
-			       G_TYPE_NONE, 5, G_TYPE_STRING, G_TYPE_POINTER, G_TYPE_POINTER, G_TYPE_POINTER,
-			       G_TYPE_POINTER);
 }
-
-
      
-static void
-on_vfs_volume_mounted(GnomeVFSVolumeMonitor *volume_monitor, 
-	GnomeVFSVolume *volume, gpointer user_data);
-
-static void
-on_vfs_volume_unmounted(GnomeVFSVolumeMonitor *volume_monitor, 
-	GnomeVFSVolume *volume, gpointer user_data);
-
 static void
 modest_tny_account_store_instance_init (ModestTnyAccountStore *obj)
 {
-	ModestTnyAccountStorePrivate *priv =
-		MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(obj);
+	GnomeVFSVolumeMonitor* monitor = NULL;
+	ModestTnyAccountStorePrivate *priv;
+
+	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(obj);
 
 	priv->cache_dir              = NULL;
 	priv->account_mgr            = NULL;
@@ -215,169 +280,138 @@ modest_tny_account_store_instance_init (ModestTnyAccountStore *obj)
 	 * for passwords that are not remembered in the configuration,
          * so they need to be asked for from the user once in each session:
          */
-	priv->password_hash          = g_hash_table_new_full (g_str_hash, g_str_equal,
-							      g_free, g_free);
+	priv->password_hash = g_hash_table_new_full (g_str_hash, g_str_equal,
+						     g_free, g_free);
 							     
 	/* A hash-map of modest account names to dialog pointers,
 	 * so we can avoid showing the account settings twice for the same modest account: */				      
 	priv->account_settings_dialog_hash = g_hash_table_new_full (g_str_hash, g_str_equal, 
-		g_free, NULL);
+								    g_free, NULL);
 							      
 	/* Respond to volume mounts and unmounts, such 
 	 * as the insertion/removal of the memory card: */
-	GnomeVFSVolumeMonitor* monitor = 
-		gnome_vfs_get_volume_monitor();
-	g_signal_connect (G_OBJECT(monitor), "volume-mounted",
-			  G_CALLBACK(on_vfs_volume_mounted),
-			  obj);
-	g_signal_connect (G_OBJECT(monitor), "volume-unmounted",
-			  G_CALLBACK(on_vfs_volume_unmounted),
-			  obj);
+	monitor = gnome_vfs_get_volume_monitor();
+
+	priv->volume_mounted_handler = g_signal_connect (G_OBJECT(monitor), 
+							 "volume-mounted",
+							 G_CALLBACK(on_vfs_volume_mounted),
+							 obj);
+
+	priv->volume_unmounted_handler = g_signal_connect (G_OBJECT(monitor), "volume-unmounted",
+							   G_CALLBACK(on_vfs_volume_unmounted),
+							   obj);
 }
-
-static void
-account_list_free (GSList *accounts)
-{
-	GSList *cursor = accounts;
-
-	while (cursor) {
-		if (G_IS_OBJECT(cursor->data)) { /* check twice... */
-			const gchar *id = tny_account_get_id(TNY_ACCOUNT(cursor->data));
-			modest_runtime_verify_object_last_ref(cursor->data,id);
-		}			
-		g_object_unref (G_OBJECT(cursor->data));
-		cursor = cursor->next;
-	}
-	g_slist_free (accounts);
-}
-
-
 
 /* disconnect the list of TnyAccounts */
 static void
-account_list_disconnect (GSList *accounts)
+foreach_account_disconnect (gpointer data, 
+			    gpointer user_data)
 {
-	GSList *cursor = accounts;
-
-	while (cursor) {
-		if (TNY_IS_CAMEL_ACCOUNT(cursor->data))  /* check twice... */
-			tny_camel_account_set_online (TNY_CAMEL_ACCOUNT(cursor->data), FALSE, NULL);
-		cursor = g_slist_next (cursor);
-	}
+	tny_camel_account_set_online (TNY_CAMEL_ACCOUNT(data), FALSE, NULL);
 }
-
 
 
 static void
-recreate_all_accounts (ModestTnyAccountStore *self)
+foreach_account_append_to_list (gpointer data, 
+				gpointer user_data)
 {
-	/* printf ("DEBUG: %s\n", __FUNCTION__); */
-	
-	ModestTnyAccountStorePrivate *priv = 
-		MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
-	
-	if (priv->store_accounts_outboxes) {
-		account_list_free (priv->store_accounts_outboxes);
-		priv->store_accounts_outboxes = NULL;
-	}
-			
-			
-	if (priv->store_accounts) {
-		account_list_free (priv->store_accounts);
-		priv->store_accounts = NULL;
-	}
-	
-	get_server_accounts (TNY_ACCOUNT_STORE(self),
-					     NULL, TNY_ACCOUNT_TYPE_STORE);
-	
-	
-	if (priv->transport_accounts) {
-		account_list_free (priv->transport_accounts);
-		priv->transport_accounts = NULL;
-	}
-	
-	get_server_accounts (TNY_ACCOUNT_STORE(self), NULL,
-					     TNY_ACCOUNT_TYPE_TRANSPORT);
+	TnyList *list;
+
+	list = TNY_LIST (user_data);
+	tny_list_append (list, G_OBJECT (data));
 }
 
+/********************************************************************/
+/*           Control the state of the MMC local account             */
+/********************************************************************/
 static void
 on_vfs_volume_mounted(GnomeVFSVolumeMonitor *volume_monitor, 
-	GnomeVFSVolume *volume, gpointer user_data)
+		      GnomeVFSVolume *volume, 
+		      gpointer user_data)
 {
-	ModestTnyAccountStore *self = MODEST_TNY_ACCOUNT_STORE(user_data);
+	ModestTnyAccountStore *self;
+	ModestTnyAccountStorePrivate *priv;
+ 
+	gchar *uri = NULL;
+
+	self = MODEST_TNY_ACCOUNT_STORE(user_data);
+	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
 	
 	/* Check whether this was the external MMC1 card: */
-	gchar *uri = gnome_vfs_volume_get_activation_uri (volume);	
-	if (uri && (strcmp (uri, MODEST_MCC1_VOLUMEPATH_URI) == 0)) {
-		printf ("DEBUG: %s: MMC1 card mounted.\n", __FUNCTION__);
-		
-		/* TODO: Just add an account and emit (and respond to) 
-		 * TnyAccountStore::accountinserted signal?
-		 */
-		recreate_all_accounts (self);
-		
-		g_signal_emit (G_OBJECT(self), signals[ACCOUNT_UPDATE_SIGNAL], 0,
-			       NULL);
+	uri = gnome_vfs_volume_get_activation_uri (volume);
+
+	if (uri && (!strcmp (uri, MODEST_MCC1_VOLUMEPATH_URI))) {
+		TnyAccount *mmc_account;
+
+		mmc_account = modest_tny_account_new_for_local_folders (priv->account_mgr, 
+									priv->session, 
+									MODEST_MCC1_VOLUMEPATH);
+
+		/* Add to the list of store accounts */
+		tny_list_append (priv->store_accounts, G_OBJECT (mmc_account));
+
+		g_signal_emit (G_OBJECT (self), 
+			       signals [ACCOUNT_INSERTED_SIGNAL],
+			       0, mmc_account);
+		/* Free */
+		g_object_unref (mmc_account);
 	}
-	
 	g_free (uri);
 }
 
 static void
 on_vfs_volume_unmounted(GnomeVFSVolumeMonitor *volume_monitor, 
-	GnomeVFSVolume *volume, gpointer user_data)
+			GnomeVFSVolume *volume, 
+			gpointer user_data)
 {
-	ModestTnyAccountStore *self = MODEST_TNY_ACCOUNT_STORE(user_data);
+	ModestTnyAccountStore *self;
+	ModestTnyAccountStorePrivate *priv;
+	gchar *uri = NULL;
+
+	self = MODEST_TNY_ACCOUNT_STORE(user_data);
+	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
 	
 	/* Check whether this was the external MMC1 card: */
-	gchar *uri = gnome_vfs_volume_get_activation_uri (volume);
+	uri = gnome_vfs_volume_get_activation_uri (volume);
 	if (uri && (strcmp (uri, MODEST_MCC1_VOLUMEPATH_URI) == 0)) {
-		printf ("DEBUG: %s: MMC1 card unmounted.\n", __FUNCTION__);
-		
-		/* TODO: Just add an account and emit (and respond to) 
-		 * TnyAccountStore::accountinserted signal?
-		 */
-		recreate_all_accounts (self);
-		
-		g_signal_emit (G_OBJECT(self), signals[ACCOUNT_UPDATE_SIGNAL], 0,
-			       NULL);
-	}
-	
-	g_free (uri);
-}
+		TnyAccount *mmc_account = NULL;
+		gboolean found = FALSE;
+		TnyIterator *iter = NULL;
 
-static void
-on_account_removed (ModestAccountMgr *acc_mgr, 
-		    const gchar *account,
-		    gpointer user_data)
-{
-	TnyAccount *store_account = NULL, *transport_account = NULL;
-	ModestTnyAccountStore *self = MODEST_TNY_ACCOUNT_STORE(user_data);
-	
-	/* Get the server and the transport account */
-	store_account = 
-		modest_tny_account_store_get_server_account (self, account, TNY_ACCOUNT_TYPE_STORE);
-	transport_account = 
-		modest_tny_account_store_get_server_account (self, account, TNY_ACCOUNT_TYPE_TRANSPORT);
+		iter = tny_list_create_iterator (priv->store_accounts);
+		while (!tny_iterator_is_done (iter) && !found) {
+			TnyAccount *account;
 
-	/* Clear the cache */
-	tny_store_account_delete_cache (TNY_STORE_ACCOUNT (store_account));
+			account = TNY_ACCOUNT (tny_iterator_get_current (iter));
+			if (modest_tny_account_is_memory_card_account (account)) {
+				found = TRUE;
+				mmc_account = g_object_ref (account);
+			}
+			g_object_unref (account);
+			tny_iterator_next (iter);
+		}
+		g_object_unref (iter);
 
-	/* Notify the observers */
-	g_signal_emit (G_OBJECT (self),
-		       tny_account_store_signals [TNY_ACCOUNT_STORE_ACCOUNT_REMOVED],
-		       0, store_account);
-	g_signal_emit (G_OBJECT (self),
-		       tny_account_store_signals [TNY_ACCOUNT_STORE_ACCOUNT_REMOVED],
-		       0, transport_account);
+		if (found) {
+			/* Remove from the list */
+			tny_list_remove (priv->store_accounts, G_OBJECT (mmc_account));
 		       
 	/* Make sure that the account is reviewed from the View menu, etc: */
 	g_signal_emit (G_OBJECT(self), signals[ACCOUNT_UPDATE_SIGNAL], 0,
 			       NULL);
 
-	/* Frees */
-	g_object_unref (store_account);
-	g_object_unref (transport_account);
+			/* Notify observers */
+			g_signal_emit (G_OBJECT (self),
+				       signals [ACCOUNT_REMOVED_SIGNAL],
+				       0, mmc_account);
+
+			g_object_unref (mmc_account);
+		} else {
+			g_warning ("%s: there was no store account for the unmounted MMC",
+				   __FUNCTION__);
+		}
+	}
+	g_free (uri);
 }
 
 /**
@@ -400,9 +434,11 @@ modest_tny_account_store_forget_password_in_memory (ModestTnyAccountStore *self,
 }
 
 static void
-on_account_changed (ModestAccountMgr *acc_mgr, const gchar *account,
-		    const GSList *keys, gboolean server_account, gpointer user_data)
-
+on_account_changed (ModestAccountMgr *acc_mgr, 
+		    const gchar *account,
+		    const GSList *keys, 
+		    gboolean server_account, 
+		    gpointer user_data)
 {
 	printf ("DEBUG: modest: %s\n", __FUNCTION__);
 	
@@ -426,7 +462,7 @@ on_account_changed (ModestAccountMgr *acc_mgr, const gchar *account,
 	/* FIXME: make this more finegrained; changes do not really affect _all_
 	 * accounts
 	 */
-	recreate_all_accounts (self);
+/* 	recreate_all_accounts (self); */
 	
 	/* TODO: This doesn't actually work, because
 	 * a) The account name is not sent correctly per key:
@@ -442,20 +478,11 @@ on_account_changed (ModestAccountMgr *acc_mgr, const gchar *account,
 	}
 	#endif
 
-	g_signal_emit (G_OBJECT(self), signals[ACCOUNT_UPDATE_SIGNAL], 0,
-		       account);
+	g_signal_emit (G_OBJECT(self), signals[ACCOUNT_CHANGED_SIGNAL], 0, account);
 }
 
-
-static ModestTnyAccountStore*
-get_account_store_for_account (TnyAccount *account)
-{
-	return MODEST_TNY_ACCOUNT_STORE(g_object_get_data (G_OBJECT(account),
-							   "account_store"));
-}
-
-static 
-void on_account_settings_hide (GtkWidget *widget, gpointer user_data)
+static void 
+on_account_settings_hide (GtkWidget *widget, gpointer user_data)
 {
 	TnyAccount *account = (TnyAccount*)user_data;
 	
@@ -469,8 +496,8 @@ void on_account_settings_hide (GtkWidget *widget, gpointer user_data)
 		g_hash_table_remove (priv->account_settings_dialog_hash, modest_account_name);
 }
 
-static 
-gboolean on_idle_wrong_password_warning_only (gpointer user_data)
+static gboolean 
+on_idle_wrong_password_warning_only (gpointer user_data)
 {
 	gdk_threads_enter();
 	
@@ -486,8 +513,8 @@ gboolean on_idle_wrong_password_warning_only (gpointer user_data)
 	return FALSE; /* Don't show again. */
 }
 		
-static 
-gboolean on_idle_wrong_password (gpointer user_data)
+static gboolean 
+on_idle_wrong_password (gpointer user_data)
 { 
 	TnyAccount *account = (TnyAccount*)user_data;
 	/* This is easier than using a struct for the user_data: */
@@ -649,7 +676,8 @@ get_password (TnyAccount *account, const gchar * prompt_not_used, gboolean *canc
 		*cancel = FALSE;
 		
 	const gchar *server_account_name = tny_account_get_id (account);
-	account_store = TNY_ACCOUNT_STORE(get_account_store_for_account (account));
+	account_store = TNY_ACCOUNT_STORE(g_object_get_data (G_OBJECT(account),
+							     "account_store"));
 
 	if (!server_account_name || !account_store) {
 		g_warning ("modest: %s: could not retrieve account_store for account %s",
@@ -770,7 +798,8 @@ forget_password (TnyAccount *account)
 	gchar *pwd;
 	const gchar *key;
 	
-        account_store = TNY_ACCOUNT_STORE(get_account_store_for_account (account));
+        account_store = TNY_ACCOUNT_STORE(g_object_get_data (G_OBJECT(account),
+							     "account_store"));
 	self = MODEST_TNY_ACCOUNT_STORE (account_store);
         priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
 	key  = tny_account_get_id (account);
@@ -791,26 +820,11 @@ forget_password (TnyAccount *account)
 }
 
 static void
-destroy_password_hashtable (ModestTnyAccountStore *self)
-{
-	ModestTnyAccountStorePrivate *priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
-	
-	g_free (priv->cache_dir);
-	priv->cache_dir = NULL;
-	
-	if (priv->password_hash) {
-		g_hash_table_destroy (priv->password_hash);
-		priv->password_hash = NULL;
-	}
-}
-
-static void
 modest_tny_account_store_finalize (GObject *obj)
 {
+	GnomeVFSVolumeMonitor *volume_monitor;
 	ModestTnyAccountStore *self        = MODEST_TNY_ACCOUNT_STORE(obj);
 	ModestTnyAccountStorePrivate *priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
-	
-	//gboolean debug = modest_runtime_get_debug_flags() & MODEST_RUNTIME_DEBUG_DEBUG_OBJECTS;
 
 	g_free (priv->cache_dir);
 	priv->cache_dir = NULL;
@@ -819,10 +833,33 @@ modest_tny_account_store_finalize (GObject *obj)
 		g_hash_table_destroy (priv->password_hash);
 		priv->password_hash = NULL;
 	}
-	
-	destroy_password_hashtable (self);
+
+	/* Disconnect VFS signals */
+	volume_monitor = gnome_vfs_get_volume_monitor ();
+	if (g_signal_handler_is_connected (volume_monitor, 
+					   priv->volume_mounted_handler))
+		g_signal_handler_disconnect (volume_monitor, 
+					     priv->volume_mounted_handler);
+	if (g_signal_handler_is_connected (volume_monitor, 
+					   priv->volume_unmounted_handler))
+		g_signal_handler_disconnect (volume_monitor, 
+					     priv->volume_unmounted_handler);
 
 	if (priv->account_mgr) {
+		/* Disconnect signals */
+		if (g_signal_handler_is_connected (priv->account_mgr, 
+						   priv->acc_inserted_handler))
+			g_signal_handler_disconnect (priv->account_mgr, 
+						     priv->acc_inserted_handler);
+		if (g_signal_handler_is_connected (priv->account_mgr, 
+						   priv->acc_changed_handler))
+			g_signal_handler_disconnect (priv->account_mgr, 
+						     priv->acc_changed_handler);
+		if (g_signal_handler_is_connected (priv->account_mgr, 
+						   priv->acc_removed_handler))
+			g_signal_handler_disconnect (priv->account_mgr, 
+						     priv->acc_removed_handler);
+
 		g_object_unref (G_OBJECT(priv->account_mgr));
 		priv->account_mgr = NULL;
 	}
@@ -832,19 +869,24 @@ modest_tny_account_store_finalize (GObject *obj)
 		priv->device = NULL;
 	}
 
-	/* disconnect all accounts when we are destroyed */
-	g_debug ("modest: disconnecting all store accounts");
-	account_list_disconnect (priv->store_accounts);
-	g_debug ("modest: disconnecting all transport accounts");
-	account_list_disconnect (priv->transport_accounts);
-		
-	/* this includes the local folder */
-	account_list_free (priv->store_accounts);
-	priv->store_accounts = NULL;
-	
-	account_list_free (priv->transport_accounts);
-	priv->transport_accounts = NULL;
+	/* Destroy all accounts. Disconnect all accounts before they are destroyed */
+	if (priv->store_accounts) {
+		tny_list_foreach (priv->store_accounts, foreach_account_disconnect, NULL);
+		g_object_unref (priv->store_accounts);
+		priv->store_accounts = NULL;
+	}
 
+	if (priv->transport_accounts) {
+		tny_list_foreach (priv->transport_accounts, foreach_account_disconnect, NULL);
+		g_object_unref (priv->transport_accounts);
+		priv->transport_accounts = NULL;
+	}
+
+	if (priv->store_accounts_outboxes) {
+		g_object_unref (priv->store_accounts_outboxes);
+		priv->store_accounts_outboxes = NULL;
+	}
+		
 	if (priv->session) {
 		camel_object_unref (CAMEL_OBJECT(priv->session));
 		priv->session = NULL;
@@ -855,11 +897,12 @@ modest_tny_account_store_finalize (GObject *obj)
 
 
 ModestTnyAccountStore*
-modest_tny_account_store_new (ModestAccountMgr *account_mgr, TnyDevice *device) {
-
+modest_tny_account_store_new (ModestAccountMgr *account_mgr, 
+			      TnyDevice *device) 
+{
 	GObject *obj;
 	ModestTnyAccountStorePrivate *priv;
-// 	TnyList *list; 
+	TnyAccount *local_account = NULL;
 	
 	g_return_val_if_fail (account_mgr, NULL);
 	g_return_val_if_fail (device, NULL);
@@ -875,290 +918,40 @@ modest_tny_account_store_new (ModestAccountMgr *account_mgr, TnyDevice *device) 
 		g_warning ("failed to get TnySessionCamel");
 		return NULL;
 	}
-	
+
+	/* Set the ui locker */	
 	tny_session_camel_set_ui_locker (priv->session,	 tny_gtk_lockable_new ());
-	tny_session_camel_set_async_connecting (priv->session, TRUE);
 		
 	/* Connect signals */
-	g_signal_connect (G_OBJECT(account_mgr), "account_changed",
-				       G_CALLBACK (on_account_changed), obj);
-	g_signal_connect (G_OBJECT(account_mgr), "account_removed",
-				       G_CALLBACK (on_account_removed), obj);
+	priv->acc_inserted_handler = g_signal_connect (G_OBJECT(account_mgr), "account_inserted",
+						      G_CALLBACK (on_account_inserted), obj);
+	priv->acc_changed_handler = g_signal_connect (G_OBJECT(account_mgr), "account_changed",
+						      G_CALLBACK (on_account_changed), obj);
+	priv->acc_removed_handler = g_signal_connect (G_OBJECT(account_mgr), "account_removed",
+						      G_CALLBACK (on_account_removed), obj);
+
+	/* Create the lists of accounts */
+	priv->store_accounts = tny_simple_list_new ();
+	priv->transport_accounts = tny_simple_list_new ();
+	priv->store_accounts_outboxes = tny_simple_list_new ();
+
+	/* Create the local folders account */
+	local_account = 
+		modest_tny_account_new_for_local_folders (priv->account_mgr, priv->session, NULL);
+	tny_list_append (priv->store_accounts, G_OBJECT(local_account));
+	g_object_unref (local_account);	
+
+	/* Add the other remote accounts. Do this before adding the
+	   local account, because we need to add our outboxes to the
+	   global OUTBOX hosted in the local account */
+	add_existing_accounts (MODEST_TNY_ACCOUNT_STORE (obj));
 
 	return MODEST_TNY_ACCOUNT_STORE(obj);
 }
 
-/** Fill the TnyList from the appropriate cached GSList of accounts. */
 static void
-get_cached_accounts (TnyAccountStore *self, TnyList *list, TnyAccountType type)
-{
-	ModestTnyAccountStorePrivate *priv;
-	GSList                       *accounts, *cursor;
-	
-	priv     = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
-	accounts = (type == TNY_ACCOUNT_TYPE_STORE ? priv->store_accounts : priv->transport_accounts);
-
-	cursor = accounts;
-	while (cursor) {
-		if (cursor->data) {
-			GObject *object = G_OBJECT(cursor->data);
-			tny_list_prepend (list, object);
-		}
-			
-		cursor = cursor->next;
-	}
-}
-
-static void
-create_per_account_local_outbox_folders (TnyAccountStore *self)
-{
-	g_return_if_fail (self);
-	
-	ModestTnyAccountStorePrivate *priv = 
-		MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
-	
-	/* printf("DEBUG: %s: priv->store_accounts_outboxes = %p\n", __FUNCTION__, priv->store_accounts_outboxes); */
-	
-	GSList *accounts = NULL;
-	
-	GSList *account_names  = modest_account_mgr_account_names (priv->account_mgr, 
-		TRUE /* including disabled accounts */);
-	
-	GSList *iter = NULL;
-	for (iter = account_names; iter; iter = g_slist_next (iter)) {
-		
-		const gchar* account_name = (const gchar*)iter->data;
-		
-		/* Create a per-account local outbox folder (a _store_ account) 
-		 * for each _transport_ account: */
-		TnyAccount *tny_account_outbox =
-			modest_tny_account_new_for_per_account_local_outbox_folder (
-				priv->account_mgr, account_name, priv->session);
-				
-		accounts = g_slist_append (accounts, tny_account_outbox); /* cache it */
-	};
-
-	modest_account_mgr_free_account_names (account_names);
-	account_names = NULL;
-	
-	priv->store_accounts_outboxes = accounts;
-}
-
-/* This function fills the TnyList, and also stores a GSList of the accounts,
- * for caching purposes. It creates the TnyAccount objects if necessary.
- * The @list parameter may be NULL, if you just want to fill the cache.
- */
-static void
-get_server_accounts  (TnyAccountStore *self, TnyList *list, TnyAccountType type)
-{
-	g_return_if_fail (self);
-		
-	ModestTnyAccountStorePrivate *priv = 
-		MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
-		
-	/* Do nothing if the accounts are already cached: */
-	if (type == TNY_ACCOUNT_TYPE_STORE) {
-		if (priv->store_accounts)
-			return;
-	} else if (type == TNY_ACCOUNT_TYPE_TRANSPORT) {
-		if (priv->transport_accounts)
-			return;
-	}
-	
-	GSList *account_names = NULL, *cursor = NULL;
-	GSList *accounts = NULL;
-
-	/* These are account names, not server_account names */
-	account_names = modest_account_mgr_account_names (priv->account_mgr,FALSE);
-		
-	for (cursor = account_names; cursor; cursor = cursor->next) {
-		
-		gchar *account_name = (gchar*)cursor->data;
-		
-		/* we get the server_accounts for enabled accounts */
-		if (modest_account_mgr_get_enabled(priv->account_mgr, account_name)) {
-				
-			/* Add the account: */
-			TnyAccount *tny_account = 
-				modest_tny_account_new_from_account (priv->account_mgr,
-								     account_name,
-								     type, priv->session,
-								     get_password,
-								     forget_password);
-			if (tny_account) {
-				/* Forget any cached password for the account,
-				 * so that we use a new account if any.
-				 * TODO: Really we should do this in a more precise way in 
-				 * on_account_changed().
-				 */
-				modest_tny_account_store_forget_password_in_memory (
-					MODEST_TNY_ACCOUNT_STORE (self),  
-					tny_account_get_id (tny_account));
-				
-				g_object_set_data (G_OBJECT(tny_account), "account_store",
-						   (gpointer)self);
-				if (list)
-					tny_list_prepend (list, G_OBJECT(tny_account));
-				
-				accounts = g_slist_append (accounts, tny_account); /* cache it */		
-			} else
-				g_printerr ("modest: failed to create account for %s\n",
-					    account_name);
-			}
-	}
-	
-	if (type == TNY_ACCOUNT_TYPE_STORE) {		
-		/* Also add the Memory card account if it is mounted: */
-		gboolean mmc_is_mounted = FALSE;
-		GnomeVFSVolumeMonitor* monitor = 
-			gnome_vfs_get_volume_monitor();
-		GList* list_volumes = gnome_vfs_volume_monitor_get_mounted_volumes (monitor);
-		GList *iter = list_volumes;
-		while (iter) {
-			GnomeVFSVolume *volume = (GnomeVFSVolume*)iter->data;
-			if (volume) {
-				if (!mmc_is_mounted) {
-					gchar *uri = gnome_vfs_volume_get_activation_uri (volume);
-					if (uri && (strcmp (uri, MODEST_MCC1_VOLUMEPATH_URI) == 0)) {
-						mmc_is_mounted = TRUE;
-					}
-					g_free (uri);
-				}
-				
-				gnome_vfs_volume_unref(volume);
-			}
-			
-			iter = g_list_next (iter);
-		}
-		g_list_free (list_volumes);
-		
-		if (mmc_is_mounted) {
-			TnyAccount *tny_account =
-				modest_tny_account_new_for_local_folders (priv->account_mgr, 
-					priv->session, MODEST_MCC1_VOLUMEPATH);
-			if (list)
-				tny_list_prepend (list, G_OBJECT(tny_account));
-			accounts = g_slist_append (accounts, tny_account); /* cache it */
-		}
-	}
-
-	/* And add the connection-specific transport accounts, if any.
-	 * Note that these server account instances might never be used 
-	 * if their connections are never active: */
-	/* Look at each modest account: */
-	if (type == TNY_ACCOUNT_TYPE_TRANSPORT) {
-		GSList *iter_account_names = account_names;
-		while (iter_account_names) {
-			const gchar* account_name = (const gchar*)(iter_account_names->data);
-			GSList *list_specifics = modest_account_mgr_get_list (priv->account_mgr,
-				account_name, 
-				MODEST_ACCOUNT_CONNECTION_SPECIFIC_SMTP_LIST,
-				MODEST_CONF_VALUE_STRING, FALSE);
-				
-			/* Look at each connection-specific transport account for the 
-			 * modest account: */
-			GSList *iter = list_specifics;
-			while (iter) {
-				/* The list alternates between the connection name and the transport name: */
-				/* const gchar* this_connection_name = (const gchar*)(iter->data); */
-				iter = g_slist_next (iter);
-				if (iter) {
-					const gchar* transport_account_name = (const gchar*)(iter->data);
-					if (transport_account_name) {
-						TnyAccount * tny_account = NULL;
-						/* Add the account: */
-						tny_account = modest_tny_account_new_from_server_account_name (
-							priv->account_mgr, priv->session, transport_account_name);
-						if (tny_account) {
-							modest_tny_account_set_parent_modest_account_name_for_server_account (tny_account, account_name);
-							g_object_set_data (G_OBJECT(tny_account), "account_store",
-									   (gpointer)self);
-							if (list)
-								tny_list_prepend (list, G_OBJECT(tny_account));
-							
-							accounts = g_slist_append (accounts, tny_account); /* cache it */		
-						} else
-							g_printerr ("modest: failed to create smtp-specific account for %s\n",
-								    transport_account_name);
-					}
-				}
-				
-				iter = g_slist_next (iter);
-			}
-			
-			iter_account_names = g_slist_next (iter_account_names);
-		}		
-	}
-
-	/* free the account_names */
-	modest_account_mgr_free_account_names (account_names);
-	account_names = NULL;
-
-	/* We also create a per-account local outbox folder (a _store_ account) 
-	 * for each _transport_ account. */
-	if (type == TNY_ACCOUNT_TYPE_TRANSPORT) {
-		/* Now would be a good time to create the per-account local outbox folder 
-		 * _store_ accounts corresponding to each transport account: */
-		if (!priv->store_accounts_outboxes) {
-			create_per_account_local_outbox_folders	(self);
-		}
-	}
-	
-	/* But we only return the per-account local outbox folder when 
-	 * _store_ accounts are requested. */
-	if (type == TNY_ACCOUNT_TYPE_STORE) {
-		/* Create them if necessary, 
-		 * (which also requires creating the transport accounts, 
-		 * if necessary.) */
-		if (!priv->store_accounts_outboxes) {
-			create_per_account_local_outbox_folders	(self);
-		}
-	
-		/* Also add the local folder pseudo-account: */
-		TnyAccount *tny_account =
-			modest_tny_account_new_for_local_folders (priv->account_mgr, 
-				priv->session, NULL);
-					
-		/* Add them to the TnyList: */
-		if (priv->store_accounts_outboxes) {
-			GSList *iter = NULL;
-			for (iter = priv->store_accounts_outboxes; iter; iter = g_slist_next (iter)) {
-				TnyAccount *outbox_account = (TnyAccount*)iter->data;
-				if (list && outbox_account)
-					tny_list_prepend (list,  G_OBJECT(outbox_account));
-					
-				g_object_ref (outbox_account);
-				accounts = g_slist_append (accounts, outbox_account);
-			}
-		}
-		
-		/* Add a merged folder, merging all the per-account outbox folders: */
-		modest_tny_local_folders_account_add_merged_outbox_folders (
-			MODEST_TNY_LOCAL_FOLDERS_ACCOUNT (tny_account), priv->store_accounts_outboxes);
-			
-		if (priv->store_accounts_outboxes) {
-			/* We have finished with this temporary list, so free it: */
-			account_list_free (priv->store_accounts_outboxes);
-			priv->store_accounts_outboxes = NULL;
-		}
-		
-		if (list)
-			tny_list_prepend (list, G_OBJECT(tny_account));
-		accounts = g_slist_append (accounts, tny_account); /* cache it */	
-	}
-		
-	if (type == TNY_ACCOUNT_TYPE_STORE) {
-			/* Store the cache: */
-			priv->store_accounts = accounts;
-	} else if (type == TNY_ACCOUNT_TYPE_TRANSPORT) {
-			/* Store the cache: */
-			priv->transport_accounts = accounts;
-	}
-}	
-
-
-static void
-modest_tny_account_store_get_accounts  (TnyAccountStore *self, TnyList *list,
+modest_tny_account_store_get_accounts  (TnyAccountStore *self, 
+					TnyList *list,
 					TnyGetAccountsRequestType request_type)
 {
 	ModestTnyAccountStorePrivate *priv;
@@ -1168,34 +961,23 @@ modest_tny_account_store_get_accounts  (TnyAccountStore *self, TnyList *list,
 	
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
 	
-	if (request_type == TNY_ACCOUNT_STORE_BOTH) {
-		modest_tny_account_store_get_accounts (self, list,
-						       TNY_ACCOUNT_STORE_STORE_ACCOUNTS);
-		modest_tny_account_store_get_accounts (self, list,
-						       TNY_ACCOUNT_STORE_TRANSPORT_ACCOUNTS);
-
-		tny_session_camel_set_initialized (priv->session);
-
-		return;
+	switch (request_type) {
+	case TNY_ACCOUNT_STORE_BOTH:
+		tny_list_foreach (priv->store_accounts, foreach_account_append_to_list, list);
+		tny_list_foreach (priv->transport_accounts, foreach_account_append_to_list, list);
+		break;
+	case TNY_ACCOUNT_STORE_STORE_ACCOUNTS:
+		tny_list_foreach (priv->store_accounts, foreach_account_append_to_list, list);
+		break;
+	case TNY_ACCOUNT_STORE_TRANSPORT_ACCOUNTS:
+		tny_list_foreach (priv->transport_accounts, foreach_account_append_to_list, list);
+		break;
+	default:
+		g_return_if_reached ();
 	}
-	
-	if (request_type == TNY_ACCOUNT_STORE_STORE_ACCOUNTS)  {
-		if (!priv->store_accounts)
-			get_server_accounts (self, list, TNY_ACCOUNT_TYPE_STORE);
-		else
-			get_cached_accounts (self, list, TNY_ACCOUNT_TYPE_STORE);
 
-		tny_session_camel_set_initialized (priv->session);
-		
-	} else if (request_type == TNY_ACCOUNT_STORE_TRANSPORT_ACCOUNTS) {
-		if (!priv->transport_accounts)
-			get_server_accounts (self, list, TNY_ACCOUNT_TYPE_TRANSPORT);
-		else
-			get_cached_accounts (self, list, TNY_ACCOUNT_TYPE_TRANSPORT);
-
-		tny_session_camel_set_initialized (priv->session);
-	} else
-		g_return_if_reached (); /* incorrect req type */
+	/* Initialize session. Why do we need this ??? */
+	tny_session_camel_set_initialized (priv->session);
 }
 
 
@@ -1442,7 +1224,47 @@ modest_tny_account_store_get_session  (TnyAccountStore *self)
 	return MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE (self)->session;
 }
 
+static TnyAccount*
+get_tny_account_by (TnyList *accounts,
+		    ModestTnyAccountStoreQueryType type,
+		    const gchar *str)
+{
+	TnyIterator *iter = NULL;
+	gboolean found = FALSE;
+	TnyAccount *retval = NULL;
 
+	iter = tny_list_create_iterator (accounts);
+	while (!tny_iterator_is_done (iter) && !found) {
+		TnyAccount *tmp_account = NULL;
+		const gchar *val = NULL;
+
+		tmp_account = TNY_ACCOUNT (tny_iterator_get_current (iter));
+		switch (type) {
+		case MODEST_TNY_ACCOUNT_STORE_QUERY_ID:
+			val = tny_account_get_id (tmp_account);
+			break;
+		case MODEST_TNY_ACCOUNT_STORE_QUERY_URL:
+			val = tny_account_get_url_string (tmp_account);
+			break;
+		}
+		
+		if (type == MODEST_TNY_ACCOUNT_STORE_QUERY_URL && 
+		    tny_account_matches_url_string (tmp_account, str)) {
+			retval = g_object_ref (tmp_account);
+			found = TRUE;
+		} else {
+			if (strcmp (val, str) == 0) {
+				retval = g_object_ref (tmp_account);
+				found = TRUE;
+			}
+		}
+		g_object_unref (tmp_account);
+		tny_iterator_next (iter);
+	}
+	g_object_unref (iter);
+
+	return retval;
+}
 
 TnyAccount*
 modest_tny_account_store_get_tny_account_by (ModestTnyAccountStore *self, 
@@ -1451,84 +1273,34 @@ modest_tny_account_store_get_tny_account_by (ModestTnyAccountStore *self,
 {
 	TnyAccount *account = NULL;
 	ModestTnyAccountStorePrivate *priv;	
-	GSList *cursor;
-	const gchar *val = NULL;
-	TnyList* list; 
-	
 	
 	g_return_val_if_fail (self, NULL);
 	g_return_val_if_fail (str, NULL);
 	
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
-
-	/* fill the caches, as that may not have happened yet */
-	list = TNY_LIST(tny_simple_list_new());
-	modest_tny_account_store_get_accounts  (TNY_ACCOUNT_STORE(self),
-						list, TNY_ACCOUNT_STORE_BOTH);
-	g_object_unref (list);
-
-	
 	
 	/* Search in store accounts */
-	for (cursor = priv->store_accounts; cursor ; cursor = cursor->next) {
-		switch (type) {
-		case MODEST_TNY_ACCOUNT_STORE_QUERY_ID:
-			val = tny_account_get_id (TNY_ACCOUNT(cursor->data));
-			break;
-		case MODEST_TNY_ACCOUNT_STORE_QUERY_URL:
-			val = tny_account_get_url_string (TNY_ACCOUNT(cursor->data));
-			break;
-		}
-		
-		if (type == MODEST_TNY_ACCOUNT_STORE_QUERY_URL && 
-		    tny_account_matches_url_string (TNY_ACCOUNT(cursor->data), str)) {
-			account = TNY_ACCOUNT (cursor->data);
-			goto end;
-		} else {
-			if (strcmp (val, str) == 0) {
-				account = TNY_ACCOUNT(cursor->data);
-				goto end;
-			}
-		}
+	account = get_tny_account_by (priv->store_accounts, type, str);
+
+	/* If we already found something, no need to search the transport accounts */
+	if (!account) {
+		account = get_tny_account_by (priv->transport_accounts, type, str);
+
+		/* If we already found something, no need to search the
+		   per-account outbox accounts */
+		if (!account)
+			account = get_tny_account_by (priv->store_accounts_outboxes, type, str);
 	}
-		
-	/* if we already found something, no need to search the transport accounts */
-	for (cursor = priv->transport_accounts; !account && cursor ; cursor = cursor->next) {
-		switch (type) {
-		case MODEST_TNY_ACCOUNT_STORE_QUERY_ID:
-			val = tny_account_get_id (TNY_ACCOUNT(cursor->data));
-			break;
-		case MODEST_TNY_ACCOUNT_STORE_QUERY_URL:
-			val = tny_account_get_url_string (TNY_ACCOUNT(cursor->data));
-			break;
-		}
-		
-		if (type == MODEST_TNY_ACCOUNT_STORE_QUERY_URL && 
-		    tny_account_matches_url_string (TNY_ACCOUNT(cursor->data), val)) {
-			account = TNY_ACCOUNT (cursor->data);
-			goto end;
-		} else {
-			if (strcmp (val, str) == 0) {
-				account = TNY_ACCOUNT(cursor->data);
-				goto end;
-			}
-		}
+
+	/* Warn if nothing was found. This is generally unusual. */
+	if (!account) {
+		g_warning("%s: Failed to find account with %s=%s\n", 
+			  __FUNCTION__, 
+			  (type == MODEST_TNY_ACCOUNT_STORE_QUERY_ID) ? "ID" : "URL",			  
+			  str);
 	}
- end:
-	if (account)
-		g_object_ref (G_OBJECT(account));
-	else {
-		/* Warn if nothing was found. This is generally unusual. */
-		switch (type) {
-		case MODEST_TNY_ACCOUNT_STORE_QUERY_ID:
-			g_warning("%s: Failed to find account with ID=%s\n", __FUNCTION__, str);
-			break;
-		case MODEST_TNY_ACCOUNT_STORE_QUERY_URL:
-			g_warning("%s: Failed to find account with URL=%s\n", __FUNCTION__, str);
-			break;
-		}
-	}
-	
+
+	/* Returns a new reference to the account if found */	
 	return account;
 }
 
@@ -1538,9 +1310,10 @@ modest_tny_account_store_get_server_account (ModestTnyAccountStore *self,
 					     TnyAccountType type)
 {
 	ModestTnyAccountStorePrivate *priv = NULL;
-	TnyAccount *account = NULL;
-	GSList *account_list = NULL;
-	gboolean found = FALSE;
+	TnyAccount *retval = NULL;
+	TnyList *account_list = NULL;
+	TnyIterator *iter = NULL;
+	gboolean found;
 
 	g_return_val_if_fail (self, NULL);
 	g_return_val_if_fail (account_name, NULL);
@@ -1549,12 +1322,6 @@ modest_tny_account_store_get_server_account (ModestTnyAccountStore *self,
 			      NULL);
 	
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
-
-	/* Make sure that the tny accounts have been created:
-	 * TODO: We might want to do this in several places.
-	 */
-	if (!priv->store_accounts || !priv->transport_accounts)
-		recreate_all_accounts (self);
 
 	account_list = (type == TNY_ACCOUNT_TYPE_STORE) ? 
 		priv->store_accounts : 
@@ -1567,29 +1334,34 @@ modest_tny_account_store_get_server_account (ModestTnyAccountStore *self,
 	}
 	
 	/* Look for the server account */
-	while (account_list && !found) {
+	found = FALSE;
+	iter = tny_list_create_iterator (account_list);
+	while (!tny_iterator_is_done (iter) && !found) {
 		const gchar *modest_acc_name;
+		TnyAccount *tmp_account;
 
-		account = TNY_ACCOUNT (account_list->data);
+		tmp_account = TNY_ACCOUNT (tny_iterator_get_current (iter));
 		modest_acc_name = 
-			modest_tny_account_get_parent_modest_account_name_for_server_account (account);
+			modest_tny_account_get_parent_modest_account_name_for_server_account (tmp_account);
 		
-		if (!strcmp (account_name, modest_acc_name))
+		if (!strcmp (account_name, modest_acc_name)) {
 			found = TRUE;
-		else
-			account_list = g_slist_next (account_list);	
+			retval = g_object_ref (tmp_account);
+		}
+		/* Free and continue */
+		g_object_unref (tmp_account);
+		tny_iterator_next (iter);
 	}
 
 	if (!found) {
-		g_printerr ("modest: %s: could not get tny %s account for %s\n.  Number of server accounts of this type=%d\n", __FUNCTION__, 
+		g_printerr ("modest: %s: could not get tny %s account for %s\n." \
+			    "Number of server accounts of this type=%d\n", __FUNCTION__,
 			    (type == TNY_ACCOUNT_TYPE_STORE) ? "store" : "transport",
-			    account_name, g_slist_length (account_list));
-	} else {
-		/* Pick a reference */
-		g_object_ref (account);
+			    account_name, tny_list_get_length (account_list));
 	}
 
-	return account;
+	/* Returns a new reference */
+	return retval;
 }
 
 static TnyAccount*
@@ -1667,8 +1439,6 @@ modest_tny_account_store_get_transport_account_for_open_connection (ModestTnyAcc
 	/* If there is no connection-specific transport account (the common case), 
 	 * just get the regular transport account: */
 	if (!account) {
-		/* printf("DEBUG: %s: using regular transport account for account %s.\n", __FUNCTION__, account_name); */
-
 		/* The special local folders don't have transport accounts. */
 		if (strcmp (account_name, MODEST_LOCAL_FOLDERS_ACCOUNT_ID) == 0)
 			account = NULL;
@@ -1680,51 +1450,252 @@ modest_tny_account_store_get_transport_account_for_open_connection (ModestTnyAcc
 	return account;
 }
 
-gboolean
-modest_tny_account_is_virtual_local_folders (TnyAccount *self)
-{
-	/* We should make this more sophisticated if we ever use ModestTnyLocalFoldersAccount 
-	 * for anything else. */
-	return MODEST_IS_TNY_LOCAL_FOLDERS_ACCOUNT (self);
-}
-
-
-gboolean
-modest_tny_account_is_memory_card_account (TnyAccount *self)
-{
-	if (!self)
-		return FALSE;
-
-	const gchar* account_id = tny_account_get_id (self);
-	if (!account_id)
-		return FALSE;
-	
-	return (strcmp (account_id, MODEST_MMC_ACCOUNT_ID) == 0);
-}
-
 TnyAccount*
-modest_tny_account_store_get_local_folders_account (TnyAccountStore *self)
+modest_tny_account_store_get_local_folders_account (ModestTnyAccountStore *self)
 {
 	TnyAccount *account = NULL;
-	ModestTnyAccountStorePrivate *priv;	
-	GSList *cursor;
+	ModestTnyAccountStorePrivate *priv;
+	TnyIterator *iter;
+	gboolean found;
 
-	g_return_val_if_fail (self, NULL);
+	g_return_val_if_fail (MODEST_IS_TNY_ACCOUNT_STORE (self), NULL);
 	
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
 
-	for (cursor = priv->store_accounts; cursor ; cursor = cursor->next) {
-		TnyAccount *this_account = TNY_ACCOUNT(cursor->data);
-		if (modest_tny_account_is_virtual_local_folders (this_account)) {
-				 account = this_account;
-				 break;
-		}
-	}
+	found = FALSE;
+	iter = tny_list_create_iterator (priv->store_accounts);
+	while (!tny_iterator_is_done (iter) && !found) {
+		TnyAccount *tmp_account;
 
-	if (account)
-		g_object_ref (G_OBJECT(account));
-	
+		tmp_account = TNY_ACCOUNT (tny_iterator_get_current (iter));
+		if (modest_tny_account_is_virtual_local_folders (tmp_account)) {
+			account = g_object_ref (tmp_account);
+			found = TRUE;
+		}
+		g_object_unref (tmp_account);
+		tny_iterator_next (iter);
+	}
+	g_object_unref (iter);
+
+	/* Returns a new reference to the account */
 	return account;
 }
 
+/*********************************************************************************/
+static void
+add_existing_accounts (ModestTnyAccountStore *self)
+{
+	GSList *account_names = NULL, *iter = NULL;
+	ModestTnyAccountStorePrivate *priv = NULL;
+	
+	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
 
+	/* These are account names, not server_account names */
+	account_names = modest_account_mgr_account_names (priv->account_mgr, FALSE);
+
+	for (iter = account_names; iter != NULL; iter = g_slist_next (iter)) {
+		const gchar *account_name = (const gchar*) iter->data;
+		
+		/* Insert all enabled accounts without notifying */
+		if (modest_account_mgr_get_enabled (priv->account_mgr, account_name))
+			insert_account (self, account_name, FALSE);
+	}
+	modest_account_mgr_free_account_names (account_names);
+}
+
+static TnyAccount*
+create_tny_account (ModestTnyAccountStore *self,
+		    const gchar *name,
+		    TnyAccountType type)
+{
+	TnyAccount *account = NULL;
+	ModestTnyAccountStorePrivate *priv = NULL;
+	
+	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
+
+	account = modest_tny_account_new_from_account (priv->account_mgr,
+						       name, type, 
+						       priv->session,
+						       get_password,
+						       forget_password);
+
+	if (account) {
+		/* Forget any cached password for the account, so that
+		   we use a new account if any */
+		modest_tny_account_store_forget_password_in_memory (self, 
+								    tny_account_get_id (account));
+		/* Set the account store */				
+		g_object_set_data (G_OBJECT(account), "account_store", self);
+	} else {
+		g_printerr ("modest: failed to create account for %s\n", name);
+	}
+
+	return account;
+}
+
+/*
+ * This function will be used for both adding new accounts and for the
+ * initialization. In the initialization we do not want to emit
+ * signals so notify will be FALSE, in the case of account additions
+ * we do want to notify the observers
+ */
+static void
+insert_account (ModestTnyAccountStore *self,
+		const gchar *account,
+		gboolean notify)
+{
+	ModestTnyAccountStorePrivate *priv = NULL;
+	TnyAccount *store_account = NULL, *transport_account = NULL;
+	
+	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
+
+	/* Get the server and the transport account */
+	store_account = create_tny_account (self, account, TNY_ACCOUNT_TYPE_STORE);
+	transport_account = create_tny_account (self, account, TNY_ACCOUNT_TYPE_TRANSPORT);
+
+	/* Add to the list, and notify the observers */
+	if (store_account) {
+		tny_list_append (priv->store_accounts, G_OBJECT (store_account));
+		if (notify)
+			g_signal_emit (G_OBJECT (self), signals [ACCOUNT_INSERTED_SIGNAL], 0, store_account);
+		g_object_unref (store_account);
+	}
+
+	/* Add to the list, and notify the observers */
+	if (transport_account) {
+		TnyAccount *account_outbox = NULL, *local_account = NULL;
+		TnyFolder *per_account_outbox = NULL;
+		TnyList *folders;
+		TnyIterator *iter_folders;
+
+		/* Add account to the list */
+		tny_list_append (priv->transport_accounts, G_OBJECT (transport_account));
+
+		/* Add connection-specific transport accounts */
+		add_connection_specific_transport_accounts (self, account);
+
+		/* Create per account local outbox */
+		account_outbox = 
+			modest_tny_account_new_for_per_account_local_outbox_folder (priv->account_mgr, 
+										    account, 
+										    priv->session);
+		tny_list_append (priv->store_accounts_outboxes, G_OBJECT (account_outbox));
+
+		/* Get the outbox folder */
+		folders = tny_simple_list_new ();
+		tny_folder_store_get_folders (TNY_FOLDER_STORE (account_outbox),
+					      folders, NULL, NULL);
+		g_assert (tny_list_get_length (folders) == 1);
+		iter_folders = tny_list_create_iterator (folders);
+		per_account_outbox = TNY_FOLDER (tny_iterator_get_current (iter_folders));
+		g_object_unref (iter_folders);
+		g_object_unref (account_outbox);
+
+		/* Add the outbox of the new per-account-local-outbox
+		   account to the global local merged OUTBOX of the
+		   local folders account */
+		local_account = modest_tny_account_store_get_local_folders_account (MODEST_TNY_ACCOUNT_STORE (self));
+		modest_tny_local_folders_account_add_folder_to_outbox (MODEST_TNY_LOCAL_FOLDERS_ACCOUNT (local_account), 
+								       per_account_outbox);
+		g_object_unref (local_account);
+		g_object_unref (per_account_outbox);
+
+		/* Notify the observers */
+		if (notify)
+			g_signal_emit (G_OBJECT (self), signals [ACCOUNT_INSERTED_SIGNAL], 0, transport_account);
+		g_object_unref (transport_account);
+	}
+}
+
+static void
+on_account_inserted (ModestAccountMgr *acc_mgr, 
+		     const gchar *account,
+		     gpointer user_data)
+{
+	/* Insert the account and notify the observers */
+	insert_account (MODEST_TNY_ACCOUNT_STORE (user_data), account, TRUE);
+}
+
+static void
+on_account_removed (ModestAccountMgr *acc_mgr, 
+		    const gchar *account,
+		    gpointer user_data)
+{
+	TnyAccount *store_account = NULL, *transport_account = NULL;
+	ModestTnyAccountStore *self = MODEST_TNY_ACCOUNT_STORE(user_data);
+	
+	/* Get the server and the transport account */
+	store_account = 
+		modest_tny_account_store_get_server_account (self, account, TNY_ACCOUNT_TYPE_STORE);
+	transport_account = 
+		modest_tny_account_store_get_server_account (self, account, TNY_ACCOUNT_TYPE_TRANSPORT);
+
+	/* If there was any problem creating the account, for example,
+	   with the configuration system this could not exist */
+	if (store_account) {
+		/* Clear the cache */
+		tny_store_account_delete_cache (TNY_STORE_ACCOUNT (store_account));
+
+		/* Notify the observers */
+		g_signal_emit (G_OBJECT (self), signals [ACCOUNT_REMOVED_SIGNAL], 0, store_account);
+		g_object_unref (store_account);
+	} else {
+		g_warning ("There is no store account for account %s\n", account);
+	}
+
+	/* If there was any problem creating the account, for example,
+	   with the configuration system this could not exist */
+	if (transport_account) {
+		/* Notify the observers */
+		g_signal_emit (G_OBJECT (self), signals [ACCOUNT_REMOVED_SIGNAL], 0, transport_account);
+		g_object_unref (transport_account);
+	} else {
+		g_warning ("There is no transport account for account %s\n", account);
+	}
+}
+
+static void
+add_connection_specific_transport_accounts (ModestTnyAccountStore *self,
+					    const gchar *account_name)
+{
+	ModestTnyAccountStorePrivate *priv = NULL;
+	GSList *list_specifics = NULL, *iter = NULL;
+
+	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
+
+	list_specifics = modest_account_mgr_get_list (priv->account_mgr,
+						      account_name, 
+						      MODEST_ACCOUNT_CONNECTION_SPECIFIC_SMTP_LIST,
+						      MODEST_CONF_VALUE_STRING, FALSE);
+				
+	/* Look at each connection-specific transport account for the 
+	 * modest account: */
+	iter = list_specifics;
+	while (iter) {
+		/* The list alternates between the connection name and the transport name: */
+		iter = g_slist_next (iter);
+		if (iter) {
+			const gchar* transport_account_name = (const gchar*) (iter->data);
+			if (transport_account_name) {
+				TnyAccount * tny_account = NULL;
+				/* Add the account: */
+				tny_account = 
+					modest_tny_account_new_from_server_account_name (priv->account_mgr, 
+											 priv->session, 
+											 transport_account_name);
+				if (tny_account) {
+					modest_tny_account_set_parent_modest_account_name_for_server_account (tny_account, 
+													      account_name);
+					g_object_set_data (G_OBJECT(tny_account), 
+							   "account_store", 
+							   (gpointer)self);
+
+					tny_list_append (priv->transport_accounts, G_OBJECT (tny_account));
+				} else
+					g_printerr ("modest: failed to create smtp-specific account for %s\n",
+						    transport_account_name);
+			}
+		}				
+		iter = g_slist_next (iter);
+	}
+}

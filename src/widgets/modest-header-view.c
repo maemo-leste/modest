@@ -71,6 +71,10 @@ static gboolean     filter_row             (GtkTreeModel *model,
 					    GtkTreeIter *iter,
 					    gpointer data);
 
+static void         on_account_removed     (TnyAccountStore *self, 
+					    TnyAccount *account,
+					    gpointer user_data);
+
 static void          on_selection_changed   (GtkTreeSelection *sel,
 					     gpointer user_data);
 
@@ -104,13 +108,14 @@ struct _ModestHeaderViewPrivate {
 	ModestEmailClipboard *clipboard;
 
 	/* Filter tree model */
-	gchar               **hidding_ids;
-	guint                 n_selected;
+	gchar **hidding_ids;
+	guint   n_selected;
 
-	gint                  sort_colid[2][TNY_FOLDER_TYPE_NUM];
-	gint                  sort_type[2][TNY_FOLDER_TYPE_NUM];
+	gint    sort_colid[2][TNY_FOLDER_TYPE_NUM];
+	gint    sort_type[2][TNY_FOLDER_TYPE_NUM];
 
-	gulong                selection_changed_handler;
+	gulong  selection_changed_handler;
+	gulong  acc_removed_handler;
 };
 
 typedef struct _HeadersCountChangedHelper HeadersCountChangedHelper;
@@ -507,6 +512,7 @@ modest_header_view_init (ModestHeaderView *obj)
 	priv->hidding_ids = NULL;
 	priv->n_selected = 0;
 	priv->selection_changed_handler = 0;
+	priv->acc_removed_handler = 0;
 
 	/* Sort parameters */
 	for (j=0; j < 2; j++) {
@@ -524,14 +530,24 @@ modest_header_view_dispose (GObject *obj)
 {
 	ModestHeaderView        *self;
 	ModestHeaderViewPrivate *priv;
+	GtkTreeSelection *sel;
 	
 	self = MODEST_HEADER_VIEW(obj);
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
 
+	/* Free in the dispose to avoid unref cycles */
 	if (priv->folder) {
 		tny_folder_remove_observer (priv->folder, TNY_FOLDER_OBSERVER (obj));
 		g_object_unref (G_OBJECT (priv->folder));
 		priv->folder = NULL;
+	}
+
+	/* We need to do this here in the dispose because the
+	   selection won't exist when finalizing */
+	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW(self));
+	if (sel && g_signal_handler_is_connected (sel, priv->selection_changed_handler)) {
+		g_signal_handler_disconnect (sel, priv->selection_changed_handler);
+		priv->selection_changed_handler = 0;
 	}
 
 	G_OBJECT_CLASS(parent_class)->dispose (obj);
@@ -546,9 +562,10 @@ modest_header_view_finalize (GObject *obj)
 	self = MODEST_HEADER_VIEW(obj);
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
 
-	if (priv->selection_changed_handler) {
-		g_signal_handler_disconnect (self, priv->selection_changed_handler);
-		priv->selection_changed_handler = 0;
+	if (g_signal_handler_is_connected (modest_runtime_get_account_store (), 
+					   priv->acc_removed_handler)) {
+		g_signal_handler_disconnect (modest_runtime_get_account_store (), 
+					     priv->acc_removed_handler);
 	}
 
 	g_mutex_lock (priv->observers_lock);
@@ -590,8 +607,8 @@ modest_header_view_new (TnyFolder *folder, ModestHeaderViewStyle style)
 	
 	gtk_tree_view_set_rules_hint (GTK_TREE_VIEW(obj),
 				      TRUE); /* alternating row colors */
-	sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(self));
-	
+
+	sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(self));	
 	priv->selection_changed_handler =
 		g_signal_connect_after (sel, "changed",
 					G_CALLBACK(on_selection_changed), self);
@@ -602,6 +619,11 @@ modest_header_view_new (TnyFolder *folder, ModestHeaderViewStyle style)
 	g_signal_connect (self, "focus-in-event",
 			  G_CALLBACK(on_focus_in), NULL);
 	
+	priv->acc_removed_handler = g_signal_connect (modest_runtime_get_account_store (),
+						      "account_removed",
+						      G_CALLBACK (on_account_removed),
+						      self);
+
 	return GTK_WIDGET(self);
 }
 
@@ -1667,4 +1689,33 @@ modest_header_view_refilter (ModestHeaderView *header_view)
 	model = gtk_tree_view_get_model (GTK_TREE_VIEW (header_view));
 	if (GTK_IS_TREE_MODEL_FILTER (model))
 		gtk_tree_model_filter_refilter (GTK_TREE_MODEL_FILTER (model));
+}
+
+/* 
+ * Called when an account is removed. If I'm showing a folder of the
+ * account that has been removed then clear the view
+ */
+static void
+on_account_removed (TnyAccountStore *self, 
+		    TnyAccount *account,
+		    gpointer user_data)
+{
+	ModestHeaderViewPrivate *priv = NULL;
+
+	/* Ignore changes in transport accounts */
+	if (TNY_IS_TRANSPORT_ACCOUNT (account))
+		return;
+
+	g_print ("--------------------- HEADER ---------------\n");
+
+	priv = MODEST_HEADER_VIEW_GET_PRIVATE (user_data);
+
+	if (priv->folder) {
+		TnyAccount *my_account;
+
+		my_account = tny_folder_get_account (priv->folder);
+		if (my_account == account)
+			modest_header_view_clear (MODEST_HEADER_VIEW (user_data));
+		g_object_unref (account);
+	}
 }

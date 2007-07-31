@@ -90,8 +90,8 @@ struct _ModestWindowClass {
 	gboolean (*zoom_plus_func) (ModestWindow *self);
 	gboolean (*zoom_minus_func) (ModestWindow *self);
 	void (*show_toolbar_func) (ModestWindow *self, gboolean show_toolbar);
-	
 	void (*save_state_func) (ModestWindow *self);
+	void (*disconnect_signals_func) (ModestWindow *self);
 };
 
 /**
@@ -229,9 +229,12 @@ void modest_window_check_dimming_rules (ModestWindow *self);
  * dimming rules.
  * 
  **/
-void
-modest_window_check_dimming_rules_group (ModestWindow *self,
-					 const gchar *group_name);
+void modest_window_check_dimming_rules_group (ModestWindow *self,
+					      const gchar *group_name);
+
+
+void modest_window_disconnect_signals (ModestWindow *self);
+
 
 G_END_DECLS
 

@@ -173,7 +173,28 @@ typedef void (*ModestTnyAccountGetMmcAccountNameCallback) (TnyStoreAccount* self
  * calling the callback (if not NULL) to notify that the name is changed.
  * if the name was changed. The callback will not be called if the name was not changed.
  */
-void modest_tny_account_get_mmc_account_name (TnyStoreAccount* self, ModestTnyAccountGetMmcAccountNameCallback callback, gpointer user_data);
+void modest_tny_account_get_mmc_account_name (TnyStoreAccount* self, 
+					      ModestTnyAccountGetMmcAccountNameCallback callback, 
+					      gpointer user_data);
+
+
+/** modest_tny_account_is_virtual_local_folders:
+ * @self A TnyAccount.
+ * 
+ * A convenience function to identify whether TnyAccount 
+ * is the virtual local folders account, containing the folders from local_folders/
+ * and the outboxes from outboxes/<account-name>/.
+ **/
+gboolean modest_tny_account_is_virtual_local_folders (TnyAccount *self);
+
+/** modest_tny_account_is_memory_card_account:
+ * @self A TnyAccount.
+ * 
+ * A convenience function to identify whether TnyAccount 
+ * is the memory card account.
+ **/
+gboolean modest_tny_account_is_memory_card_account (TnyAccount *self);
+
 
 G_END_DECLS
 

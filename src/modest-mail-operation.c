@@ -1752,8 +1752,8 @@ new_name_valid_if_local_account (ModestMailOperationPrivate *priv,
 {
 	if (TNY_IS_ACCOUNT (into) && 
 	    modest_tny_account_is_virtual_local_folders (TNY_ACCOUNT (into)) &&
-	    modest_tny_local_folders_account_extra_folder_exists (MODEST_TNY_LOCAL_FOLDERS_ACCOUNT (into),
-								  new_name)) {
+	    modest_tny_local_folders_account_folder_name_in_use (MODEST_TNY_LOCAL_FOLDERS_ACCOUNT (into),
+								 new_name)) {
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 			     MODEST_MAIL_OPERATION_ERROR_FOLDER_RULES,
@@ -2636,7 +2636,6 @@ on_refresh_folder (TnyFolder   *folder,
 	}
 
 	/* Free */
-/* 	g_object_unref (helper->mail_op); */
 	g_slice_free   (RefreshAsyncHelper, helper);
 
 	/* Notify about operation end */
@@ -2695,7 +2694,7 @@ modest_mail_operation_refresh_folder  (ModestMailOperation *self,
 
 	/* Create the helper */
 	helper = g_slice_new0 (RefreshAsyncHelper);
-	helper->mail_op = g_object_ref (self);
+	helper->mail_op = self;
 	helper->user_callback = user_callback;
 	helper->user_data = user_data;
 

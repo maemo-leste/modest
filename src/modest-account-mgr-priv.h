@@ -51,10 +51,10 @@ struct _ModestAccountMgrPrivate {
 	ModestConf        *modest_conf;
 	
 	/* We store these as they change, and send notifications every X seconds: */
-	GSList *changed_conf_keys; 
-	guint timeout;
 	gulong key_changed_handler_uid;
 	GSList* busy_accounts;
+
+	GHashTable *notification_id_accounts;
 };
 
 #define MODEST_ACCOUNT_MGR_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \

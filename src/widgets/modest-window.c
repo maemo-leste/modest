@@ -39,15 +39,21 @@ static void modest_window_class_init (ModestWindowClass *klass);
 static void modest_window_init       (ModestWindow *obj);
 static void modest_window_finalize   (GObject *obj);
 
-static void        modest_window_set_zoom_default       (ModestWindow *window,
-							 gdouble zoom);
-static gdouble     modest_window_get_zoom_default       (ModestWindow *window);
-static gboolean    modest_window_zoom_plus_default      (ModestWindow *window);
-static gboolean    modest_window_zoom_minus_default     (ModestWindow *window);
-static void        modest_window_show_toolbar_default   (ModestWindow *window,
-							 gboolean show_toolbar);
+static gdouble  modest_window_get_zoom_default           (ModestWindow *window);
 
-static gboolean    on_key_pressed (GtkWidget *self, GdkEventKey *event, gpointer user_data);
+static gboolean modest_window_zoom_plus_default          (ModestWindow *window);
+
+static gboolean modest_window_zoom_minus_default         (ModestWindow *window);
+
+static void     modest_window_disconnect_signals_default (ModestWindow *self);
+
+static void     modest_window_show_toolbar_default       (ModestWindow *window,
+							  gboolean show_toolbar);
+
+static void     modest_window_set_zoom_default           (ModestWindow *window,
+							  gdouble zoom);
+
+static gboolean on_key_pressed (GtkWidget *self, GdkEventKey *event, gpointer user_data);
 
 
 /* list my signals  */
@@ -106,6 +112,7 @@ modest_window_class_init (ModestWindowClass *klass)
 	klass->zoom_plus_func = modest_window_zoom_plus_default;
 	klass->zoom_minus_func = modest_window_zoom_minus_default;
 	klass->show_toolbar_func = modest_window_show_toolbar_default;
+	klass->disconnect_signals_func = modest_window_disconnect_signals_default;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestWindowPrivate));
 }
@@ -265,6 +272,12 @@ modest_window_show_toolbar (ModestWindow *window,
 							     show_toolbar);
 }
 
+void 
+modest_window_disconnect_signals (ModestWindow *window)
+{
+	MODEST_WINDOW_GET_CLASS (window)->disconnect_signals_func (window);
+}
+
 
 /* Default implementations */
 
@@ -304,7 +317,11 @@ modest_window_show_toolbar_default (ModestWindow *window,
 	g_warning ("modest: You should implement %s", __FUNCTION__);
 }
 
-
+static void 
+modest_window_disconnect_signals_default (ModestWindow *self)
+{
+	g_warning ("modest: You should implement %s", __FUNCTION__);
+}
 
 void
 modest_window_save_state (ModestWindow *window)

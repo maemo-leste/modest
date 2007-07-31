@@ -338,7 +338,8 @@ modest_tny_folder_get_header_unique_id (TnyHeader *header)
 	return retval;
 }
 
-TnyAccount *modest_tny_folder_get_account (TnyFolder *folder)
+TnyAccount *
+modest_tny_folder_get_account (TnyFolder *folder)
 {
 	TnyAccount *account = NULL;
 	
@@ -347,12 +348,10 @@ TnyAccount *modest_tny_folder_get_account (TnyFolder *folder)
 		 * because it could be merging folders from multiple accounts.
 		 * So we assume that this is the local folders account: */
 		 
-		account = modest_tny_account_store_get_local_folders_account (
-			TNY_ACCOUNT_STORE (modest_runtime_get_account_store()));
+		account = modest_tny_account_store_get_local_folders_account (modest_runtime_get_account_store());
 	} else {
 		account = tny_folder_get_account (folder);
 	}
 	
 	return account;
 }
-
