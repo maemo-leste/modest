@@ -515,7 +515,8 @@ modest_platform_get_icon (const gchar *name)
 	GtkIconTheme *current_theme = NULL;
 
 	g_return_val_if_fail (name, NULL);
-	
+
+#if 0 /* do we still need this? */
 	if (g_str_has_suffix (name, ".png")) { /*FIXME: hack*/
 		pixbuf = gdk_pixbuf_new_from_file (name, &err);
 		if (!pixbuf) {
@@ -526,7 +527,7 @@ modest_platform_get_icon (const gchar *name)
 		}
 		return pixbuf;
 	}
-
+#endif /* */
 	current_theme = gtk_icon_theme_get_default ();
 	pixbuf = gtk_icon_theme_load_icon (current_theme, name, 26,
 					   GTK_ICON_LOOKUP_NO_SVG,
@@ -601,24 +602,28 @@ entry_changed (GtkEditable *editable,
 	       gpointer     user_data)
 {
 	gchar *chars;
+	GtkWidget *ok_button;
+	GList *buttons;
 
+	buttons = gtk_container_get_children (GTK_CONTAINER (GTK_DIALOG (user_data)->action_area));
+	ok_button = GTK_WIDGET (buttons->next->data);
+	
 	chars = gtk_editable_get_chars (editable, 0, -1);
 	g_return_if_fail (chars != NULL);
 
+	
 	/* Dimm OK button. Do not allow also the "/" */
-	if (strlen (chars) == 0 || strchr (chars, '/')) {
-		GtkWidget *ok_button;
-		GList *buttons;
-
-		buttons = gtk_container_get_children (GTK_CONTAINER (GTK_DIALOG (user_data)->action_area));
-		ok_button = GTK_WIDGET (buttons->next->data);
+	if (strlen (chars) == 0 || strchr (chars, '/')) 
 		gtk_widget_set_sensitive (ok_button, FALSE);
-
-		g_list_free (buttons);
-	} else if (g_utf8_strlen (chars,-1) >= 21)
+		
+	else if (g_utf8_strlen (chars,-1) >= 21)
 		hildon_banner_show_information  (gtk_widget_get_parent (GTK_WIDGET (user_data)), NULL,
-						 _CS("ckdg_ib_maximum_characters_reached"));		
+						 _CS("ckdg_ib_maximum_characters_reached"));
+	else /* explicitely enable it, because with a previous entry_changed, it might have been turned off */
+		gtk_widget_set_sensitive (ok_button, TRUE);
+		
 	/* Free */
+	g_list_free (buttons);
 	g_free (chars);
 }
 
