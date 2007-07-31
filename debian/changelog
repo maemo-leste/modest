@@ -1,3 +1,10 @@
+modest (1.0-2007.31-4) gutsy; urgency=low
+
+  * Fixes: NB#62792, NB#64627
+  * New changes and merges have been incorporated in this build.
+
+ -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Tue, 31 Jul 2007 16:09:24 +0300
+
 modest (1.0-2007.31-3) gutsy; urgency=low
 
   * Fixes: NB#64263, NB#64206, NB#64259, NB#64326, NB#63428, NB#64328
