@@ -236,15 +236,17 @@ modest_progress_bar_add_operation (ModestProgressObject *self,
 						 G_CALLBACK (on_progress_changed),
 						 me);
 	/* Set curent operation */
-	priv->current = mail_op;
+	if (priv->current == NULL) {
+		priv->current = mail_op;
 
-	/* Call progress_change handler to initialize progress message */
-	state = g_malloc0(sizeof(ModestMailOperationState));
-	state->done = 0;
-	state->total = 0;
-	state->op_type = modest_mail_operation_get_type_operation (mail_op);;
-/* 	on_progress_changed (mail_op, state, me); */
-	g_free(state);
+		/* Call progress_change handler to initialize progress message */
+		state = g_malloc0(sizeof(ModestMailOperationState));
+		state->done = 0;
+		state->total = 0;
+		state->op_type = modest_mail_operation_get_type_operation (mail_op);
+		on_progress_changed (mail_op, state, me);
+		g_free(state);
+	}
 
 	/* Add operation to obserbable objects list */
 	priv->observables = g_slist_prepend (priv->observables, data);
