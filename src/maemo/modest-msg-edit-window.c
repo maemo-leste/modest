@@ -82,7 +82,7 @@
 #define DEFAULT_SIZE_COMBOBOX_WIDTH 80
 #define DEFAULT_MAIN_VBOX_SPACING 6
 #define SUBJECT_MAX_LENGTH 1000
-#define IMAGE_MAX_WIDTH 608
+#define IMAGE_MAX_WIDTH 560
 #define DEFAULT_FONT_SCALE 1.5
 
 static void  modest_msg_edit_window_class_init   (ModestMsgEditWindowClass *klass);
@@ -239,6 +239,7 @@ struct _ModestMsgEditWindowPrivate {
 
 	GtkWidget   *scroll;
 	GtkWidget   *scroll_area;
+	gint        last_vadj_upper;
 
 	gint last_cid;
 	GList *attachments;
@@ -356,6 +357,8 @@ modest_msg_edit_window_init (ModestMsgEditWindow *obj)
 	priv->outbox_msg = NULL;
 	priv->clipboard_change_handler_id = 0;
 	priv->sent = FALSE;
+
+	priv->last_vadj_upper = 0;
 }
 
 
@@ -394,6 +397,40 @@ get_transports (void)
 	g_slist_free (accounts); /* only free the accounts, not the elements,
 				  * because they are used in the pairlist */
 	return transports;
+}
+
+void vadj_changed (GtkAdjustment *adj,
+		   ModestMsgEditWindow *window)
+{
+	ModestMsgEditWindowPrivate *priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
+
+	GdkRectangle rectangle, cursor_rectangle;
+	GtkTextIter position;
+	gboolean visible;
+	gint cursor_bottom;
+
+	/* We detect if cursor is visible using the full height, not only the center. This
+	   seems to work */
+	gtk_text_view_get_visible_rect (GTK_TEXT_VIEW (priv->msg_body), &rectangle);
+	gtk_text_buffer_get_iter_at_mark (GTK_TEXT_BUFFER (priv->text_buffer),
+					  &position,
+					  gtk_text_buffer_get_insert (GTK_TEXT_BUFFER (priv->text_buffer)));
+	gtk_text_view_get_iter_location (GTK_TEXT_VIEW (priv->msg_body), &position, &cursor_rectangle);
+
+	cursor_bottom = (cursor_rectangle.y + cursor_rectangle.height);
+	visible = (cursor_rectangle.y >= rectangle.y) && (cursor_bottom < (rectangle.y + rectangle.height));
+
+	if (gtk_widget_is_focus (priv->msg_body) && 
+	    !visible) {
+		if (priv->last_vadj_upper != adj->upper) {
+			GtkTextMark *insert;
+			
+			insert = gtk_text_buffer_get_insert (GTK_TEXT_BUFFER (priv->text_buffer));
+			gtk_text_view_scroll_to_mark (GTK_TEXT_VIEW (priv->msg_body), 
+						      insert, 0.1, FALSE, 0.0, 0.0);
+		}
+	}
+	priv->last_vadj_upper = adj->upper;
 }
 
 
@@ -540,6 +577,10 @@ init_window (ModestMsgEditWindow *obj)
 
 	gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (priv->scroll), main_vbox);
 	gtk_container_set_focus_vadjustment (GTK_CONTAINER (main_vbox), gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (priv->scroll)));
+	g_signal_connect (G_OBJECT (gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (priv->scroll))),
+			  "changed",
+			  G_CALLBACK (vadj_changed),
+			  obj);
 	gtk_widget_show_all (GTK_WIDGET(priv->scroll));
 	
 	window_box = gtk_vbox_new (FALSE, 0);
@@ -548,9 +589,6 @@ init_window (ModestMsgEditWindow *obj)
 	priv->scroll_area = modest_scroll_area_new (priv->scroll, priv->msg_body);
 	gtk_container_add (GTK_CONTAINER (frame), priv->scroll_area);
 	
-	gtk_container_set_focus_vadjustment (GTK_CONTAINER (priv->scroll_area), 
-					     gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (priv->scroll)));
-
 	priv->clipboard_change_handler_id = g_signal_connect (G_OBJECT (gtk_clipboard_get (GDK_SELECTION_PRIMARY)), "owner-change",
 							      G_CALLBACK (modest_msg_edit_window_clipboard_owner_change), obj);
 
