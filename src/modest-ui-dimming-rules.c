@@ -1818,32 +1818,27 @@ _msg_download_completed (ModestMainWindow *win)
 	return result;
 }
 
+static void 
+fill_list_of_caches (gpointer key, gpointer value, gpointer userdata)
+{
+	GSList **send_queues = (GSList **) userdata;
+	*send_queues = g_slist_prepend (*send_queues, value);
+}
+
 static gboolean
 _selected_msg_sent_in_progress (ModestWindow *win)
 {
+	ModestCacheMgr *cache_mgr;
+	GHashTable     *send_queue_cache;
+	GSList *send_queues = NULL, *node;
 	ModestTnySendQueue *send_queue = NULL;
 	GtkWidget *header_view = NULL;
-	ModestTnyAccountStore *acc_store = NULL;
-	TnyAccount *account = NULL;
 	TnyList *header_list = NULL;
 	TnyIterator *iter = NULL;
 	TnyHeader *header = NULL;
-	const gchar *account_name = NULL;
 	gboolean result = FALSE;
-	gchar *id = NULL;
+	gchar *msg_uid = NULL;
 	
-	/* Get transport account */
-	acc_store = modest_runtime_get_account_store();
-	account_name = modest_window_get_active_account (win);
-	
-	/* If no account defined, this action must be always dimmed  */
-	if (account_name == NULL) return FALSE;
-	account = modest_tny_account_store_get_transport_account_for_open_connection (acc_store, account_name);
-	if (!TNY_IS_TRANSPORT_ACCOUNT (account)) return FALSE;
-
-	/* Get send queue for current ransport account */
-	send_queue = modest_runtime_get_send_queue (TNY_TRANSPORT_ACCOUNT(account));
-	g_return_val_if_fail (MODEST_IS_TNY_SEND_QUEUE (send_queue), FALSE);
 
 	if (MODEST_IS_MAIN_WINDOW(win)) {
 		
@@ -1863,8 +1858,8 @@ _selected_msg_sent_in_progress (ModestWindow *win)
 		iter = tny_list_create_iterator (header_list);
 		header = TNY_HEADER (tny_iterator_get_current (iter));
 		if (header) {
-			/* Get message id */
-			id = g_strdup(tny_header_get_message_id (header));
+			/* Get message uid */
+			msg_uid = modest_tny_send_queue_get_msg_id (header);
 			g_object_unref (header);
 		}
 		
@@ -1873,20 +1868,32 @@ _selected_msg_sent_in_progress (ModestWindow *win)
 		/* Get message header */
 		header = modest_msg_view_window_get_header (MODEST_MSG_VIEW_WINDOW(win));
 		if (header) {
-			/* Get message id */
-			id = g_strdup(tny_header_get_message_id (header));
-
+			/* Get message uid */
+			msg_uid = modest_tny_send_queue_get_msg_id (header);
 			g_object_unref (header);
 		}
 	}
 
-	/* Check if msg id is being processed inside send queue */
-	result = modest_tny_send_queue_msg_is_being_sent (send_queue, id);
+	/* Search on send queues cache */
+	cache_mgr = modest_runtime_get_cache_mgr ();
+	send_queue_cache = modest_cache_mgr_get_cache (cache_mgr,
+						       MODEST_CACHE_MGR_CACHE_TYPE_SEND_QUEUE);
+	
+	g_hash_table_foreach (send_queue_cache, (GHFunc) fill_list_of_caches, &send_queues);
+	
+	for (node = send_queues; node != NULL && !result; node = g_slist_next (node)) {
+		send_queue = MODEST_TNY_SEND_QUEUE (node->data);
+
+		/* Check if msg uid is being processed inside send queue */
+		result = modest_tny_send_queue_msg_is_being_sent (send_queue, msg_uid);		
+	}
+
 
 	/* Free */
-	g_free(id);
+	g_free(msg_uid);
 	g_object_unref(header_list);
 	g_object_unref(iter);
+	g_slist_free (send_queues);
 
 	return result;
 }

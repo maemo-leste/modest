@@ -40,7 +40,7 @@
 #include <string.h>
 
 
-void 
+static void 
 fill_list_of_caches (gpointer key, gpointer value, gpointer userdata)
 {
 	GSList **send_queues = (GSList **) userdata;
