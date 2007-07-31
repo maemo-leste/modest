@@ -432,28 +432,17 @@ modest_tny_account_store_forget_password_in_memory (ModestTnyAccountStore *self,
 static void
 on_account_changed (ModestAccountMgr *acc_mgr, 
 		    const gchar *account,
-		    const GSList *keys, 
+		    const gchar *key, 
 		    gboolean server_account, 
 		    gpointer user_data)
 {
 	printf ("DEBUG: modest: %s\n", __FUNCTION__);
 	
 	ModestTnyAccountStore *self = MODEST_TNY_ACCOUNT_STORE(user_data);
-	
-	/*
-	printf ("DEBUG: %s\n", __FUNCTION__);
-	const GSList *iter = keys;
-	for (iter = keys; iter; iter = g_slist_next (iter)) {
-		printf ("  DEBUG: %s: key=%s\n", __FUNCTION__, (const gchar*)iter->data);
-	}
-	*/
-	
-	
+		
 	/* Ignore the change if it's a change in the last_updated value */
-	if (g_slist_length ((GSList *)keys) == 1 &&
-		g_str_has_suffix ((const gchar *) keys->data, MODEST_ACCOUNT_LAST_UPDATED)) {
+	if (key && g_str_has_suffix ((const gchar *) key, MODEST_ACCOUNT_LAST_UPDATED))
 		return;
-	}
 
 	/* FIXME: make this more finegrained; changes do not really affect _all_
 	 * accounts
@@ -468,7 +457,7 @@ on_account_changed (ModestAccountMgr *acc_mgr,
 	 */
 	#if 0
 	/* If a password has changed, then forget the previously cached password for this account: */
-	if (server_account && keys && g_slist_find_custom ((GSList *)keys, MODEST_ACCOUNT_PASSWORD, (GCompareFunc)strcmp)) {
+	if (server_account && key && g_slist_find_custom ((GSList *)keys, MODEST_ACCOUNT_PASSWORD, (GCompareFunc)strcmp)) {
 		printf ("DEBUG: %s: Forgetting cached password for account ID=%s\n", __FUNCTION__, account);
 		modest_tny_account_store_forget_password_in_memory (self,  account);
 	}
