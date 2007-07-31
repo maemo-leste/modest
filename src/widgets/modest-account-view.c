@@ -65,9 +65,8 @@ struct _ModestAccountViewPrivate {
 	ModestAccountMgr *account_mgr;
 
 	/* Signal handlers */
-	gulong acc_inserted_handler;
-	gulong acc_removed_handler;
-	gulong sig3;
+	gulong acc_inserted_handler, acc_removed_handler,
+		acc_busy_changed_handler, acc_changed_handler;
 };
 #define MODEST_ACCOUNT_VIEW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                  MODEST_TYPE_ACCOUNT_VIEW, \
@@ -121,7 +120,8 @@ modest_account_view_init (ModestAccountView *obj)
 	priv->account_mgr = NULL; 
 	priv->acc_inserted_handler = 0;
 	priv->acc_removed_handler = 0;
-	priv->sig3 = 0;
+	priv->acc_busy_changed_handler = 0;
+	priv->acc_changed_handler = 0;
 }
 
 static void
@@ -142,8 +142,10 @@ modest_account_view_finalize (GObject *obj)
 			g_signal_handler_disconnect (modest_runtime_get_account_store (), 
 						     priv->acc_removed_handler);
 
-		if (priv->sig3)
-			g_signal_handler_disconnect (priv->account_mgr, priv->sig3);
+		if (priv->acc_busy_changed_handler)
+			g_signal_handler_disconnect (priv->account_mgr, priv->acc_busy_changed_handler);
+		if (priv->acc_changed_handler)
+			g_signal_handler_disconnect (priv->account_mgr, priv->acc_changed_handler);
 		
 		g_object_unref (G_OBJECT(priv->account_mgr));
 		priv->account_mgr = NULL; 
@@ -313,34 +315,21 @@ on_account_removed (TnyAccountStore *account_store,
 }
 
 
-/* currently unused */
-#if 0 
 static void
-on_account_enable_toggled (GtkCellRendererToggle *cell_renderer, gchar *path,
-			   ModestAccountView *self)
+on_account_changed (ModestAccountMgr *obj, const gchar* account,
+		    const gchar* key, gboolean server_account,
+		    gpointer user_data)
 {
-	GtkTreeIter iter;
+	ModestAccountView *self;
 	ModestAccountViewPrivate *priv;
-	GtkTreeModel *model;
-	gchar *account_name;
-	gboolean enabled;
-	
-	priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE(self);
-	model = gtk_tree_view_get_model (GTK_TREE_VIEW(self));
-	
-	if (!gtk_tree_model_get_iter_from_string (model, &iter, path)) {
-		g_printerr ("modest: cannot find iterator\n");
-		return;
-	}
-	gtk_tree_model_get (model, &iter, MODEST_ACCOUNT_VIEW_IS_ENABLED_COLUMN, &enabled,
-			    MODEST_ACCOUNT_VIEW_NAME_COLUMN, &account_name,
-			    -1);
-	
-	/* toggle enabled / disabled */
-	modest_account_mgr_set_enabled (priv->account_mgr, account_name, !enabled);
-	g_free (account_name);
+
+	self = MODEST_ACCOUNT_VIEW (user_data);
+	priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE (self);
+
+	update_account_view (priv->account_mgr, self);
 }
-#endif
+
+
 
 static gboolean
 find_default_account(ModestAccountView *self, GtkTreeIter *iter)
@@ -492,8 +481,13 @@ init_view (ModestAccountView *self)
 						       "account_inserted",
 						       G_CALLBACK(on_account_inserted), self);
 	
-	priv->sig3 = g_signal_connect (G_OBJECT(priv->account_mgr), "account_busy_changed",
-							 G_CALLBACK(on_account_busy_changed), self);
+	priv->acc_busy_changed_handler = g_signal_connect (G_OBJECT(priv->account_mgr),
+							   "account_busy_changed",
+							   G_CALLBACK(on_account_busy_changed), self);
+
+	priv->acc_changed_handler = g_signal_connect (G_OBJECT(priv->account_mgr),
+						      "account_changed",
+						      G_CALLBACK(on_account_changed), self);
 }
 
 
