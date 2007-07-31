@@ -396,10 +396,6 @@ on_vfs_volume_unmounted(GnomeVFSVolumeMonitor *volume_monitor,
 			/* Remove from the list */
 			tny_list_remove (priv->store_accounts, G_OBJECT (mmc_account));
 		       
-	/* Make sure that the account is reviewed from the View menu, etc: */
-	g_signal_emit (G_OBJECT(self), signals[ACCOUNT_UPDATE_SIGNAL], 0,
-			       NULL);
-
 			/* Notify observers */
 			g_signal_emit (G_OBJECT (self),
 				       signals [ACCOUNT_REMOVED_SIGNAL],
