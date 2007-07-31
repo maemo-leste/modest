@@ -467,6 +467,10 @@ is_valid_insert (const gchar *text, gint len)
 		if (!quoted && ((c == g_utf8_get_char(",") || c == g_utf8_get_char (";")))) {
 			if ((next_c != 0) && (next_c != g_utf8_get_char ("\n")))
 				return FALSE;
+			else {
+			  current = g_utf8_next_char (next_current);
+			  continue;
+			}
 		}
 		if (c == 0x2022 || c == 0xfffc ||
 		    c == g_utf8_get_char ("\n") ||
@@ -535,6 +539,7 @@ modest_recpt_editor_on_insert_text (GtkTextBuffer *buffer,
 		g_signal_stop_emission_by_name (G_OBJECT (buffer), "insert-text");
 		gtk_text_buffer_insert (buffer, location, new_text, -1);
 		g_free (new_text);
+		return;
 	}
 
 	if (iter_has_recipient (location)) {
