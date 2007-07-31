@@ -49,7 +49,7 @@ static gboolean _purged_attach_selected (ModestWindow *win, gboolean all, Modest
 static gboolean _clipboard_is_empty (ModestWindow *win);
 static gboolean _invalid_clipboard_selected (ModestWindow *win, ModestDimmingRule *rule);
 static gboolean _already_opened_msg (ModestWindow *win, guint *n_messages);
-static gboolean _selected_msg_marked_as (ModestWindow *win, TnyHeaderFlags mask, gboolean opposite);
+static gboolean _selected_msg_marked_as (ModestWindow *win, TnyHeaderFlags mask, gboolean opposite, gboolean all);
 static gboolean _selected_folder_not_writeable (ModestMainWindow *win);
 static gboolean _selected_folder_is_snd_level (ModestMainWindow *win);
 static gboolean _selected_folder_is_any_of_type (ModestWindow *win, TnyFolderType types[], guint ntypes);
@@ -575,7 +575,7 @@ modest_ui_dimming_rules_on_mark_as_read_msg (ModestWindow *win, gpointer user_da
 		dimmed = _invalid_msg_selected (MODEST_MAIN_WINDOW(win), FALSE, user_data);
 	}
 	if (!dimmed) {
-		dimmed = _selected_msg_marked_as (win, flags, FALSE);
+		dimmed = _selected_msg_marked_as (win, flags, FALSE, TRUE);
 		if (dimmed)
 			modest_dimming_rule_set_notification (rule, "");
 	}	
@@ -600,7 +600,7 @@ modest_ui_dimming_rules_on_mark_as_unread_msg (ModestWindow *win, gpointer user_
 	if (!dimmed)
 		dimmed = _invalid_msg_selected (MODEST_MAIN_WINDOW(win), FALSE, user_data);
 	if (!dimmed) {
-		dimmed = _selected_msg_marked_as (win, flags, TRUE);
+		dimmed = _selected_msg_marked_as (win, flags, TRUE, TRUE);
 		if (dimmed)
 			modest_dimming_rule_set_notification (rule, "");
 	}
@@ -850,7 +850,7 @@ modest_ui_dimming_rules_on_remove_attachments (ModestWindow *win, gpointer user_
 
 	/* Check if the selected message in main window has attachments */
 	if (!dimmed && MODEST_IS_MAIN_WINDOW (win)) {
-		dimmed = _selected_msg_marked_as (win, TNY_HEADER_FLAG_ATTACHMENTS, TRUE);
+		dimmed = _selected_msg_marked_as (win, TNY_HEADER_FLAG_ATTACHMENTS, TRUE, FALSE);
 		if (dimmed)
 			modest_dimming_rule_set_notification (rule, _("mail_ib_unable_to_purge_attachments"));
 	}
@@ -1100,7 +1100,7 @@ _marked_as_deleted (ModestWindow *win)
 	flags = TNY_HEADER_FLAG_DELETED; 
 
 	/* Check dimmed rule */	
-	result = _selected_msg_marked_as (win, flags, FALSE);
+	result = _selected_msg_marked_as (win, flags, FALSE, FALSE);
 	
 	return result;
 }
@@ -1497,7 +1497,7 @@ _invalid_attach_selected (ModestWindow *win,
 	if (MODEST_IS_MAIN_WINDOW (win)) {
 		flags = TNY_HEADER_FLAG_ATTACHMENTS;
 		if (!result)
-			result = _selected_msg_marked_as (win, flags, TRUE);		
+			result = _selected_msg_marked_as (win, flags, TRUE, FALSE);		
 	}
 	else if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
 		
@@ -1697,7 +1697,8 @@ _already_opened_msg (ModestWindow *win,
 static gboolean
 _selected_msg_marked_as (ModestWindow *win, 
 			 TnyHeaderFlags mask, 
-			 gboolean opposite)
+			 gboolean opposite,
+			 gboolean all)
 {
 	ModestWindow *main_window = NULL;
 	GtkWidget *header_view = NULL;
@@ -1705,7 +1706,7 @@ _selected_msg_marked_as (ModestWindow *win,
 	TnyIterator *iter = NULL;
 	TnyHeader *header = NULL;
 	TnyHeaderFlags flags = 0;
-	gboolean result = FALSE;
+	gboolean result = TRUE;
 
 	if (MODEST_IS_MAIN_WINDOW (win))
 		main_window = win;
@@ -1733,7 +1734,7 @@ _selected_msg_marked_as (ModestWindow *win,
 	
 	/* Call the function for each header */
 	iter = tny_list_create_iterator (selected_headers);
-	while (!tny_iterator_is_done (iter) && !result) {
+	while (!tny_iterator_is_done (iter) && result) {
 		header = TNY_HEADER (tny_iterator_get_current (iter));
 		if (header) {
 			flags = tny_header_get_flags (header);
@@ -1747,6 +1748,9 @@ _selected_msg_marked_as (ModestWindow *win,
 
 		tny_iterator_next (iter);
 	}
+
+	if (all) 
+		result = result && tny_iterator_is_done (iter);
 
 	/* free */
 	if (selected_headers != NULL) 
