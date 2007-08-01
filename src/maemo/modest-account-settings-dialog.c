@@ -594,7 +594,7 @@ static GtkWidget* create_page_incoming (ModestAccountSettingsDialog *self)
 	/* The port widgets: */
 	/* TODO: There are various rules about this in the UI spec. */
 	if (!self->entry_incoming_port)
-		self->entry_incoming_port = GTK_WIDGET (hildon_number_editor_new (0, 65535));
+		self->entry_incoming_port = GTK_WIDGET (hildon_number_editor_new (1, 65535));
 	caption = hildon_caption_new (sizegroup, _("mcen_fi_emailsetup_port"), 
 		self->entry_incoming_port, NULL, HILDON_CAPTION_OPTIONAL);
 	gtk_widget_show (self->entry_incoming_port);
@@ -799,7 +799,7 @@ static GtkWidget* create_page_outgoing (ModestAccountSettingsDialog *self)
 	
 	/* The port widgets: */
 	if (!self->entry_outgoing_port)
-		self->entry_outgoing_port = GTK_WIDGET (hildon_number_editor_new (0, 65535));
+		self->entry_outgoing_port = GTK_WIDGET (hildon_number_editor_new (1, 65535));
 	caption = hildon_caption_new (sizegroup, _("mcen_fi_emailsetup_port"), 
 		self->entry_outgoing_port, NULL, HILDON_CAPTION_OPTIONAL);
 	gtk_widget_show (self->entry_outgoing_port);
