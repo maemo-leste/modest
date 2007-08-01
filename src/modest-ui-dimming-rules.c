@@ -51,7 +51,7 @@ static gboolean _purged_attach_selected (ModestWindow *win, gboolean all, Modest
 static gboolean _clipboard_is_empty (ModestWindow *win);
 static gboolean _invalid_clipboard_selected (ModestWindow *win, ModestDimmingRule *rule);
 static gboolean _already_opened_msg (ModestWindow *win, guint *n_messages);
-static gboolean _selected_msg_marked_as (ModestWindow *win, TnyHeaderFlags mask, gboolean opposite, gboolean all);
+static gboolean _selected_msg_marked_as (ModestMainWindow *win, TnyHeaderFlags mask, gboolean opposite, gboolean all);
 static gboolean _selected_folder_not_writeable (ModestMainWindow *win);
 static gboolean _selected_folder_is_snd_level (ModestMainWindow *win);
 static gboolean _selected_folder_is_any_of_type (ModestWindow *win, TnyFolderType types[], guint ntypes);
@@ -64,7 +64,8 @@ static gboolean _msg_download_in_progress (ModestMsgViewWindow *win);
 static gboolean _msg_download_completed (ModestMainWindow *win);
 static gboolean _selected_msg_sent_in_progress (ModestWindow *win);
 static gboolean _sending_in_progress (ModestWindow *win);
-static gboolean _marked_as_deleted (ModestWindow *win);
+static gboolean _message_is_marked_as_deleted (ModestMsgViewWindow *win);
+static gboolean _selected_message_is_marked_as_deleted (ModestMainWindow *win);
 static gboolean _invalid_folder_for_purge (ModestWindow *win, ModestDimmingRule *rule);
 static gboolean _transfer_mode_enabled (ModestWindow *win);
 
@@ -331,7 +332,7 @@ modest_ui_dimming_rules_on_open_msg (ModestWindow *win, gpointer user_data)
 		dimmed = _invalid_msg_selected (MODEST_MAIN_WINDOW(win), TRUE, user_data);
 	}
 	if (!dimmed) {
-		dimmed = _marked_as_deleted (win);
+		dimmed = _selected_message_is_marked_as_deleted (MODEST_MAIN_WINDOW (win));
 		if (dimmed)
 			modest_dimming_rule_set_notification (rule, _("mcen_ib_message_already_deleted"));
 	}
@@ -465,9 +466,10 @@ modest_ui_dimming_rules_on_delete_msg (ModestWindow *win, gpointer user_data)
 			}
 		}
 		if (!dimmed) {
-			dimmed = _marked_as_deleted (win);
-			if (dimmed)
+			dimmed = _selected_message_is_marked_as_deleted (MODEST_MAIN_WINDOW (win));
+			if (dimmed) {
 				modest_dimming_rule_set_notification (rule, _("mcen_ib_message_already_deleted"));
+			}
 		}
 		if (!dimmed) {
 			dimmed = _selected_msg_sent_in_progress (win);
@@ -482,16 +484,23 @@ modest_ui_dimming_rules_on_delete_msg (ModestWindow *win, gpointer user_data)
 				modest_dimming_rule_set_notification (rule, _("mail_ib_notavailable_downloading"));
 		}
 		if (!dimmed) {
-			dimmed = _marked_as_deleted (win);
+			dimmed = _message_is_marked_as_deleted (MODEST_MSG_VIEW_WINDOW (win));
 			if (dimmed)
 				modest_dimming_rule_set_notification (rule, _("mcen_ib_message_already_deleted"));
 		}
+		
+		/* Commented out, because deletion should be possible even when 
+		 * the message window has no header view model, which will be the 
+		 * case when it is not the selected message in the header view.
+		 */
+		/*
 		if (!dimmed) {
 			dimmed = !modest_msg_view_window_has_headers_model (MODEST_MSG_VIEW_WINDOW(win));
  			if (dimmed) {
 				modest_dimming_rule_set_notification (rule, _CS("ckct_ib_unable_to_delete"));
 			}
 		}
+		*/
 	}
 
 	return dimmed;
@@ -577,7 +586,7 @@ modest_ui_dimming_rules_on_mark_as_read_msg (ModestWindow *win, gpointer user_da
 		dimmed = _invalid_msg_selected (MODEST_MAIN_WINDOW(win), FALSE, user_data);
 	}
 	if (!dimmed) {
-		dimmed = _selected_msg_marked_as (win, flags, FALSE, TRUE);
+		dimmed = _selected_msg_marked_as (MODEST_MAIN_WINDOW(win), flags, FALSE, TRUE);
 		if (dimmed)
 			modest_dimming_rule_set_notification (rule, "");
 	}	
@@ -602,7 +611,7 @@ modest_ui_dimming_rules_on_mark_as_unread_msg (ModestWindow *win, gpointer user_
 	if (!dimmed)
 		dimmed = _invalid_msg_selected (MODEST_MAIN_WINDOW(win), FALSE, user_data);
 	if (!dimmed) {
-		dimmed = _selected_msg_marked_as (win, flags, TRUE, TRUE);
+		dimmed = _selected_msg_marked_as (MODEST_MAIN_WINDOW(win), flags, TRUE, TRUE);
 		if (dimmed)
 			modest_dimming_rule_set_notification (rule, "");
 	}
@@ -852,7 +861,7 @@ modest_ui_dimming_rules_on_remove_attachments (ModestWindow *win, gpointer user_
 
 	/* Check if the selected message in main window has attachments */
 	if (!dimmed && MODEST_IS_MAIN_WINDOW (win)) {
-		dimmed = _selected_msg_marked_as (win, TNY_HEADER_FLAG_ATTACHMENTS, TRUE, FALSE);
+		dimmed = _selected_msg_marked_as (MODEST_MAIN_WINDOW(win), TNY_HEADER_FLAG_ATTACHMENTS, TRUE, FALSE);
 		if (dimmed)
 			modest_dimming_rule_set_notification (rule, _("mail_ib_unable_to_purge_attachments"));
 	}
@@ -1093,8 +1102,28 @@ modest_ui_dimming_rules_on_add_to_contacts (ModestWindow *win, gpointer user_dat
 
 /* *********************** static utility functions ******************** */
 
+/* Returns whether the selected message is marked as deleted. */
 static gboolean 
-_marked_as_deleted (ModestWindow *win)
+_message_is_marked_as_deleted (ModestMsgViewWindow *win)
+{
+	g_return_val_if_fail (win, FALSE);
+	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW(win), FALSE);
+	
+	TnyHeader* header = modest_msg_view_window_get_header (win);
+	if (!header)
+		return FALSE;
+		
+	return (tny_header_get_flags (header) & TNY_HEADER_FLAG_DELETED);
+}
+
+
+
+/* Returns whether the selected message is marked as deleted.
+ * @param win The main window, or NULL if you want this function 
+ * to discover the main window itself, which is marginally less 
+ * efficient. */
+static gboolean 
+_selected_message_is_marked_as_deleted (ModestMainWindow *win)
 {
 	gboolean result = FALSE;
 	TnyHeaderFlags flags;
@@ -1500,7 +1529,7 @@ _invalid_attach_selected (ModestWindow *win,
 	if (MODEST_IS_MAIN_WINDOW (win)) {
 		flags = TNY_HEADER_FLAG_ATTACHMENTS;
 		if (!result)
-			result = _selected_msg_marked_as (win, flags, TRUE, FALSE);		
+			result = _selected_msg_marked_as (MODEST_MAIN_WINDOW (win), flags, TRUE, FALSE);		
 	}
 	else if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
 		
@@ -1697,13 +1726,17 @@ _already_opened_msg (ModestWindow *win,
 	return found;
 }
 
+/* Returns whether the selected message has these flags.
+ * @win: The main window, or NULL if you want this function 
+ * to discover the main window itself.
+ */
 static gboolean
-_selected_msg_marked_as (ModestWindow *win, 
+_selected_msg_marked_as (ModestMainWindow *win, 
 			 TnyHeaderFlags mask, 
 			 gboolean opposite,
 			 gboolean all)
 {
-	ModestWindow *main_window = NULL;
+	ModestMainWindow *main_window = NULL;
 	GtkWidget *header_view = NULL;
 	TnyList *selected_headers = NULL;
 	TnyIterator *iter = NULL;
@@ -1711,11 +1744,14 @@ _selected_msg_marked_as (ModestWindow *win,
 	TnyHeaderFlags flags = 0;
 	gboolean result = TRUE;
 
-	if (MODEST_IS_MAIN_WINDOW (win))
+    /* The caller can supply the main window if it knows it, 
+     * to save time, or we can get it here: */
+	if (win && MODEST_IS_MAIN_WINDOW (win))
 		main_window = win;
-	else
-		main_window = 
-			modest_window_mgr_get_main_window (modest_runtime_get_window_mgr ());		
+	else {
+		main_window = MODEST_MAIN_WINDOW (
+			modest_window_mgr_get_main_window (modest_runtime_get_window_mgr ()));
+	}	
 
 	/* TODO: Javi, what about if the main window does not
 	   exist?. Adding some code to avoid CRITICALs */

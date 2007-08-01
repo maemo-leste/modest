@@ -157,6 +157,10 @@ struct _ModestMsgViewWindowPrivate {
 	/* Optimized view enabled */
 	gboolean optimized_view;
 
+	/* A reference to the @model of the header view 
+	 * to allow selecting previous/next messages,
+	 * if the message is currently selected in the header view.
+	 */
 	GtkTreeModel *header_model;
 	GtkTreeRowReference *row_reference;
 	GtkTreeRowReference *next_row_reference;
@@ -739,7 +743,9 @@ modest_msg_view_window_get_header (ModestMsgViewWindow *self)
 	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (self), NULL);
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (self);
 
-	/* Message is not obtained from a treemodel (Attachment ?) */
+	/* If the message ws not obtained from a treemodel,
+	 * for instance if it was opened directly by the search UI:
+	 */
 	if (priv->header_model == NULL) {
 		msg = modest_msg_view_window_get_message (self);
 		header = tny_msg_get_header (msg);
@@ -747,7 +753,11 @@ modest_msg_view_window_get_header (ModestMsgViewWindow *self)
 		return header;
 	}
 
-	/* Get current message iter */
+	/* Get iter of the currently selected message in the header view: */
+	/* TODO: Why not just give this window a ref of the TnyHeader or TnyMessage,
+	 * instead of sometimes retrieving it from the header view?
+	 * Then we wouldn't be dependent on the message actually still being selected 
+	 * in the header view. murrayc. */
 	path = gtk_tree_row_reference_get_path (priv->row_reference);
 	g_return_val_if_fail (path != NULL, NULL);
 	gtk_tree_model_get_iter (priv->header_model, 
@@ -1015,7 +1025,7 @@ modest_msg_view_window_last_message_selected (ModestMsgViewWindow *window)
 				break;
 			gtk_tree_model_get (priv->header_model, &tmp_iter, TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN,
 					    &header, -1);
-			if (!(tny_header_get_flags(header)&TNY_HEADER_FLAG_DELETED)) {
+			if (!(tny_header_get_flags(header) & TNY_HEADER_FLAG_DELETED)) {
 				has_next = TRUE;
 				break;
 			}	

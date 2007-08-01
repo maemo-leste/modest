@@ -1,3 +1,34 @@
+2007-08-01  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/maemo/modest-msg-view-window.c:
+	(modest_msg_view_window_get_header),
+	(modest_msg_view_window_last_message_selected):
+	Added comments to explain the use of priv->header_model.
+	* src/modest-ui-dimming-rules.c:
+	(modest_ui_dimming_rules_on_open_msg),
+	(modest_ui_dimming_rules_on_mark_as_read_msg),
+	(modest_ui_dimming_rules_on_mark_as_unread_msg),
+	(modest_ui_dimming_rules_on_remove_attachments),
+	(_invalid_attach_selected), (_selected_msg_marked_as):
+	Renamed _marked_as_deleted() to _selected_message_is_marked_as_deleted(), 
+	and changed the parameter to a ModestMainWindow to make it clearer that 
+	it never uses any other kind of window.
+	Added _message_is_marked_as_deleted() for examining a ModestMsgViewWindow 
+	instead of the selected message.
+	I notice that much of the dimming code and the ModestMsgViewWindow code 
+	hard-codes the assumption that the viewed message is always selected in 
+	the header view. This does not seem wise or simple.
+
+	(modest_ui_dimming_rules_on_delete_msg): For a ModestMsgViewWindow, 
+	examine the actual message instead of whatever might be selected 
+	in the header view. This stops the delete toolbar button and menu item
+	from being dimmed when opening a message view the search UI, 
+	partially fixing projects.maemo.org bug NB#63811.
+
+	However, when actually deleting, I now get this warning:
+	"tny_header_set_flags: This is a header instance for a new message. 
+	Only priority and attachment flags are supported"
+
 2007-07-30  Johannes Schmid <johannes.schmid@openismus.com>
 
 	* src/modest-ui-actions.c: (modest_ui_actions_on_send):

@@ -318,6 +318,8 @@ modest_ui_actions_on_delete_message (GtkAction *action, ModestWindow *win)
 			return;
 	}
 	
+	/* Get the headers, either from the header view (if win is the main window),
+	 * or from the message view window: */
 	header_list = get_selected_headers (win);
 	if (!header_list) return;
 
