@@ -464,7 +464,7 @@ modest_tny_account_new_from_server_account_name (ModestAccountMgr *account_mgr,
 }
 
 
-
+#if 0
 gboolean
 modest_tny_account_update_from_server_account_name (TnyAccount *tny_account,
 						    ModestAccountMgr *account_mgr,
@@ -535,7 +535,7 @@ modest_tny_account_update_from_server_account_name (TnyAccount *tny_account,
 	modest_account_mgr_free_server_account_data (account_mgr, account_data);
 	return TRUE;
 }
-
+#endif
 
 
 

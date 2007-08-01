@@ -124,6 +124,7 @@ modest_tny_account_new_from_server_account_name (ModestAccountMgr *account_mgr,
 						 TnySessionCamel *session,
 						 const gchar* server_account_name);
 
+#if 0
 /**
  * modest_tny_account_new_from_server_account_name:
  * @tny_account: a valid tny account
@@ -137,7 +138,7 @@ modest_tny_account_new_from_server_account_name (ModestAccountMgr *account_mgr,
 gboolean modest_tny_account_update_from_server_account_name (TnyAccount *tny_account,
 							     ModestAccountMgr *account_mgr,
 							     const gchar *server_account_name);
-
+#endif
 
 /**
  * modest_tny_account_get_special_folder:

@@ -52,43 +52,109 @@ enum {
 static GObjectClass *parent_class = NULL;
 static guint signals[LAST_SIGNAL] = {0};
 
-/* /\* We signal key changes in batches, every X seconds: *\/ */
-/* static gboolean */
-/* on_timeout_notify_changes (gpointer data) */
-/* { */
-/* 	ModestAccountMgr *self = MODEST_ACCOUNT_MGR (data); */
-/* 	ModestAccountMgrPrivate *priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self); */
+/* is the account already in the queue? */
+static gboolean
+in_change_queue (GSList *change_queue, const gchar *account)
+{
+	GSList *cursor = change_queue;
+	while (cursor) {
+		const gchar *acc = cursor->data;
+		if (acc && strcmp (acc, account) == 0)
+			return TRUE;
+		cursor = g_slist_next (cursor);
+	}
+	return FALSE;
+}
+
+static GSList*
+add_to_change_queue (GSList *change_queue, const gchar *account_name)
+{
+	g_return_val_if_fail (account_name, change_queue);	
+	return g_slist_prepend (change_queue, g_strdup (account_name));
+}
+
+
+/* we don't need to track specific accounts, as in our UI case
+ * it's impossible to change two accounts within .5 seconds.
+ * still, we might want to allow that later, and then this func
+ * will come in handy */
+#if 0
+static GSList*
+remove_from_queue (GSList *change_queue, const gchar *account)
+{
+	GSList *cursor = change_queue;
+	while (cursor) {
+		const gchar *acc = cursor->data;
+		if (acc && strcmp (acc, account) == 0) {
+			g_free (acc);
+			return g_slist_delete_link (change_queue, cursor);
+		}
+		cursor = g_slist_next (cursor);
+	}
+	return change_queue;
+}
+#endif
+
+static gboolean
+on_timeout_notify_changes (gpointer data)
+{
+	ModestAccountMgr *self = MODEST_ACCOUNT_MGR (data);
+	ModestAccountMgrPrivate *priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
 		
-/* 	/\* TODO: Also store the account names, and notify one list for each account, */
-/* 	 * if anything uses the account names. *\/ */
+	GSList *cursor = priv->change_queue;
+	while (cursor) {
+		const gchar *account = cursor->data;
+		if (account)
+			g_signal_emit (G_OBJECT(self), signals[ACCOUNT_CHANGED_SIGNAL], 0, 
+				       account);
+		cursor = g_slist_next (cursor);
+	}
 	
-/* 	if (priv->changed_conf_keys) { */
-/* 		gchar *default_account =  */
-/* 				modest_account_mgr_get_default_account (self); */
-		
-/* 		/\* printf ("DEBUG: %s: priv->changed_conf_key length=%d\n",  */
-/* 			__FUNCTION__, g_slist_length (priv->changed_conf_keys)); *\/ */
-/* 		g_signal_emit (G_OBJECT(self), signals[ACCOUNT_CHANGED_SIGNAL], 0, */
-/* 				 default_account, priv->changed_conf_keys, FALSE); */
-			
-/* 		g_free (default_account); */
-		
-/* 		g_slist_foreach (priv->changed_conf_keys, (GFunc) g_free, NULL); */
-/* 		g_slist_free (priv->changed_conf_keys); */
-/* 		priv->changed_conf_keys = NULL; */
-/* 	} */
+	/* free our queue */
+	g_slist_foreach (priv->change_queue, (GFunc)g_free, NULL);
+	g_slist_free (priv->change_queue);
+	priv->change_queue = NULL;
+	priv->timeout = 0; /* hmmm */
 	
-/* 	return TRUE; /\* Call this again later. *\/ */
-/* } */
+	return FALSE; /* don't call me again */
+}
+
+
+/* little hack to retrieve the account name from a server account name,
+ * by relying on the convention for that. Note: this changes the
+ * string in-place
+ *
+ * server accounts look like fooID_transport or fooID_store
+ * FIXME: make the suffixes more explicit in the account setup
+ */
+static void
+get_account_name_from_server_account (gchar *server_account_name)
+{
+	static const gchar *t = "ID_transport";
+	static const gchar *s = "ID_store";
+	const guint len_t = strlen (t);
+	const guint len_s = strlen (s);
+	
+	guint len_a = strlen (server_account_name);
+		
+	if (g_str_has_suffix (server_account_name, t)) 
+		server_account_name [len_a - len_t] = '\0';
+	else if (g_str_has_suffix (server_account_name, s)) 
+		server_account_name [len_a - len_s] = '\0';
+}
+
+
 
 static void
 on_key_change (ModestConf *conf, const gchar *key, ModestConfEvent event,
 	       ModestConfNotificationId id, gpointer user_data)
 {
 	ModestAccountMgr *self = MODEST_ACCOUNT_MGR (user_data);
+	ModestAccountMgrPrivate *priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
+
 	gboolean is_account_key;
 	gboolean is_server_account;
-	gchar* account = NULL;
+	gchar* account_name = NULL;
 
 	/* there is only one not-really-account key which will still emit
 	 * a signal: a change in MODEST_CONF_DEFAULT_ACCOUNT */
@@ -100,7 +166,7 @@ on_key_change (ModestConf *conf, const gchar *key, ModestConfEvent event,
 			return;
 		} else {
 			g_signal_emit (G_OBJECT(self), signals[ACCOUNT_CHANGED_SIGNAL], 0, 
-				       default_account, key, FALSE);
+				       default_account);
 			g_free(default_account);
 			return;
 		}	
@@ -108,12 +174,17 @@ on_key_change (ModestConf *conf, const gchar *key, ModestConfEvent event,
 	
 	is_account_key = FALSE;
 	is_server_account = FALSE;
-	account = _modest_account_mgr_account_from_key (key, &is_account_key,
-							&is_server_account);
+	account_name = _modest_account_mgr_account_from_key (key, &is_account_key,
+							     &is_server_account);
 
 	/* if this is not an account-related key change, ignore */
-	if (!account)
+	if (!account_name)
 		return;
+
+	/* ignore server account changes */
+	if (is_server_account)
+		/* change in place: retrieve the parent account name */
+		get_account_name_from_server_account (account_name);
 
 	/* account was removed. Do not emit an account removed signal
 	   because it was already being done in the remove_account
@@ -121,7 +192,7 @@ on_key_change (ModestConf *conf, const gchar *key, ModestConfEvent event,
 	   account keys for the same reason */
 	if ((is_account_key || is_server_account) &&
 	    event == MODEST_CONF_EVENT_KEY_UNSET) {
-		g_free (account);
+		g_free (account_name);
 		return;
 	}
 
@@ -130,20 +201,24 @@ on_key_change (ModestConf *conf, const gchar *key, ModestConfEvent event,
 	if (is_server_account)
 		enabled = TRUE;
 	else
-		enabled = modest_account_mgr_get_enabled (self, account);
+		enabled = modest_account_mgr_get_enabled (self, account_name);
 
 	/* Notify is server account was changed, default account was changed
 	 * or when enabled/disabled changes:
 	 */
-	if (enabled ||
-	    g_str_has_suffix (key, MODEST_ACCOUNT_ENABLED) ||
+	if (!is_server_account)
+	if (enabled || g_str_has_suffix (key, MODEST_ACCOUNT_ENABLED) ||
 	    strcmp (key, MODEST_CONF_DEFAULT_ACCOUNT) == 0) {
-		g_signal_emit (G_OBJECT(self), signals[ACCOUNT_CHANGED_SIGNAL], 0, 
-			       account, key, is_server_account);
-		/* Store the key for later notification in our timeout callback.
-		 * Notifying for every key change would cause unnecessary work: */
+		if (!in_change_queue (priv->change_queue, account_name)) {
+			priv->change_queue = add_to_change_queue (priv->change_queue,
+								  account_name);
+			/* hmm, small race when this object is destroyed within
+			 * 500ms of the last change, and there are multiple timeouts... */
+			priv->timeout = g_timeout_add (500, (GSourceFunc)on_timeout_notify_changes,
+						       self);
+		}   
 	}
-	g_free (account);
+	g_free (account_name);
 }
 
 
@@ -204,8 +279,8 @@ modest_account_mgr_base_init (gpointer g_class)
 				      G_SIGNAL_RUN_FIRST,
 				      G_STRUCT_OFFSET(ModestAccountMgrClass,account_changed),
 				      NULL, NULL,
-				      modest_marshal_VOID__STRING_STRING_BOOLEAN,
-				      G_TYPE_NONE, 3, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_BOOLEAN);
+				      g_cclosure_marshal_VOID__STRING,
+				      G_TYPE_NONE, 1, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_BOOLEAN);
 
 		signals[ACCOUNT_BUSY_SIGNAL] =
 			g_signal_new ("account_busy_changed",
@@ -240,9 +315,11 @@ modest_account_mgr_init (ModestAccountMgr * obj)
 	ModestAccountMgrPrivate *priv =
 		MODEST_ACCOUNT_MGR_GET_PRIVATE (obj);
 
-	priv->modest_conf = NULL;
+	priv->modest_conf   = NULL;
 	priv->busy_accounts = NULL;
-
+	priv->change_queue  = NULL;
+	priv->timeout       = 0;
+	
 	priv->notification_id_accounts = g_hash_table_new_full (g_int_hash, g_int_equal, g_free, g_free);
 }
 
@@ -268,14 +345,11 @@ modest_account_mgr_finalize (GObject * obj)
 		g_object_unref (G_OBJECT(priv->modest_conf));
 		priv->modest_conf = NULL;
 	}
-	
-/* 	if (priv->timeout) */
-/* 		g_source_remove (priv->timeout); */
-		
-/* 	if (priv->changed_conf_keys) { */
-/* 		g_slist_foreach (priv->changed_conf_keys, (GFunc) g_free, NULL); */
-/* 		g_slist_free (priv->changed_conf_keys); */
-/* 	} */
+
+	if (priv->timeout)
+		g_source_remove (priv->timeout);
+	priv->timeout = 0;
+
 
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }

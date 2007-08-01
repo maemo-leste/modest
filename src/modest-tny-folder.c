@@ -163,10 +163,11 @@ modest_tny_folder_get_rules   (TnyFolder *folder)
 		}
 		g_object_unref (G_OBJECT(account));
 
-		/* Neither INBOX not ROOT folders should me moveable */
+		/* Neither INBOX nor ROOT, nor ARCHIVE folders should me moveable */
 		folder_type = modest_tny_folder_guess_folder_type (folder);
 		if ((folder_type ==  TNY_FOLDER_TYPE_INBOX) ||
-		    (folder_type == TNY_FOLDER_TYPE_ROOT)) {
+		    (folder_type == TNY_FOLDER_TYPE_ROOT) ||
+		    (folder_type == TNY_FOLDER_TYPE_ARCHIVE)) {
 			rules |= MODEST_FOLDER_RULES_FOLDER_NON_DELETABLE;
 			rules |= MODEST_FOLDER_RULES_FOLDER_NON_MOVEABLE;
 			rules |= MODEST_FOLDER_RULES_FOLDER_NON_RENAMEABLE;
@@ -175,6 +176,7 @@ modest_tny_folder_get_rules   (TnyFolder *folder)
 	return rules;
 }
 
+	
 
 gboolean
 modest_tny_folder_is_local_folder   (TnyFolder *folder)
@@ -187,21 +189,27 @@ modest_tny_folder_is_local_folder   (TnyFolder *folder)
 	 * We should do something more sophisticated if we 
 	 * ever use TnyMergeFolder for anything else.
 	 */
-	if (TNY_IS_MERGE_FOLDER (folder))
+	if (TNY_IS_MERGE_FOLDER (folder)) {
 		return TRUE;
-
+	}
+	
 	TnyAccount* account = tny_folder_get_account ((TnyFolder*)folder);
-	if (!account)
+	if (!account) {
+		g_warning ("folder without account");
 		return FALSE;
+	}
 	
 	/* Outbox is a special case, using a derived TnyAccount: */
 	if (MODEST_IS_TNY_OUTBOX_ACCOUNT (account)) {
+		//g_warning ("BUG: should not be reached");
+		/* should be handled with the MERGE_FOLDER above*/
 		g_object_unref (G_OBJECT(account));
 		return TRUE;
 	}
 
 	const gchar* account_id = tny_account_get_id (account);
 	if (!account_id) {
+		g_warning ("BUG: account without account id");
 		g_object_unref (G_OBJECT(account));
 		return FALSE;
 	}

@@ -54,6 +54,9 @@ struct _ModestAccountMgrPrivate {
 	gulong key_changed_handler_uid;
 	GSList* busy_accounts;
 
+	GSList* change_queue; /* list with all accounts that are changed */
+	guint timeout;
+	
 	GHashTable *notification_id_accounts;
 };
 

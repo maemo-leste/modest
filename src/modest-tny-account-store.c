@@ -474,33 +474,21 @@ update_tny_account_for_account (ModestTnyAccountStore *self, ModestAccountMgr *a
 
 static void
 on_account_changed (ModestAccountMgr *acc_mgr, 
-		    const gchar *account_name,
-		    const gchar *key, 
-		    gboolean server_account, 
+		    const gchar *account_name, 
 		    gpointer user_data)
 {
-	printf ("DEBUG: modest: %s\n", __FUNCTION__);
-	
 	ModestTnyAccountStore *self = MODEST_TNY_ACCOUNT_STORE(user_data);
-	
-	/* Ignore the change if it's a change in the last_updated value */
-	if (key && g_str_has_suffix ((const gchar *) key, MODEST_ACCOUNT_LAST_UPDATED))
-		return;
-	
-	if (!server_account && FALSE) { /* FIXME FALSE: turned off for now */
-		if (!update_tny_account_for_account (self, acc_mgr, account_name, TNY_ACCOUNT_TYPE_STORE))
-			g_warning ("%s: failed to update store account for %s", __FUNCTION__, account_name);
-		if (!update_tny_account_for_account (self, acc_mgr, account_name, TNY_ACCOUNT_TYPE_TRANSPORT))
-			g_warning ("%s: failed to update transport account for %s", __FUNCTION__, account_name);
-	}
 
-	/* TODO: This doesn't actually work, because
-	 * a) The account name is not sent correctly per key:
-	 * b) We should test the end of the key, not the whole keym
-	 * c) We don't seem to be getting all keys here.
-	 * Instead, we just forget the password for all accounts when we create them,
-	 * for now.
-	 */
+	g_debug ("DEBUG: modest: %s\n", __FUNCTION__);
+
+	/* Ignore the change if it's a change in the last_updated value */
+//	if (key && g_str_has_suffix ((const gchar *) key, MODEST_ACCOUNT_LAST_UPDATED))
+//		return;
+	
+	if (!update_tny_account_for_account (self, acc_mgr, account_name, TNY_ACCOUNT_TYPE_STORE))
+		g_warning ("%s: failed to update store account for %s", __FUNCTION__, account_name);
+	if (!update_tny_account_for_account (self, acc_mgr, account_name, TNY_ACCOUNT_TYPE_TRANSPORT))
+		g_warning ("%s: failed to update transport account for %s", __FUNCTION__, account_name);
 }
 
 static void 
@@ -1608,6 +1596,7 @@ insert_account (ModestTnyAccountStore *self,
 		tny_folder_store_get_folders (TNY_FOLDER_STORE (account_outbox),
 					      folders, NULL, NULL);
 		g_assert (tny_list_get_length (folders) == 1);
+		
 		iter_folders = tny_list_create_iterator (folders);
 		per_account_outbox = TNY_FOLDER (tny_iterator_get_current (iter_folders));
 		g_object_unref (iter_folders);

@@ -124,6 +124,8 @@ static gboolean     on_drag_motion         (GtkWidget      *widget,
 					    guint           time,
 					    gpointer        user_data);
 
+static void expand_root_items (ModestFolderView *self);
+
 static gint         expand_row_timeout     (gpointer data);
 
 static void         setup_drag_and_drop    (GtkTreeView *self);
@@ -420,8 +422,7 @@ text_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 			 * added to the model, not when the account is 
 			 * changed later, so get the name from the account
 			 * instance: */
-			item_name = g_strdup (tny_account_get_name (
-				TNY_ACCOUNT (instance)));
+			item_name = g_strdup (tny_account_get_name (TNY_ACCOUNT (instance)));
 			item_weight = 800;
 		} else {
 			item_name = g_strdup (fname);
@@ -833,7 +834,18 @@ static void
 on_account_changed (TnyAccountStore *account_store, TnyAccount *tny_account,
 		    gpointer user_data)
 {
-	g_warning ("%s: account_id = %s", __FUNCTION__, tny_account_get_id(tny_account));
+	ModestFolderView*  self;
+
+	self = MODEST_FOLDER_VIEW (user_data);
+	
+	/* Ignore transport account insertions, we're not showing them
+	   in the folder view */
+	if (TNY_IS_TRANSPORT_ACCOUNT (tny_account))
+		return;
+	
+	/* ugly hack to force a redraw */
+	modest_folder_view_update_model (self,
+					 account_store);
 }
 
 
@@ -926,6 +938,9 @@ modest_folder_view_on_map (ModestFolderView *self,
 			       signals[FOLDER_DISPLAY_NAME_CHANGED_SIGNAL], 0,
 			       NULL);
 	}
+
+	expand_root_items (self); 
+
 	return FALSE;
 }
 
@@ -1140,7 +1155,7 @@ modest_folder_view_update_model (ModestFolderView *self,
 	g_object_unref (model);
 	g_object_unref (filter_model);		
 	g_object_unref (sortable);
-
+	
 	/* Force a reselection of the INBOX next time the widget is shown */
 	priv->reselect = TRUE;
 			
