@@ -493,14 +493,13 @@ modest_ui_dimming_rules_on_delete_msg (ModestWindow *win, gpointer user_data)
 		 * the message window has no header view model, which will be the 
 		 * case when it is not the selected message in the header view.
 		 */
-		/*
+		
 		if (!dimmed) {
 			dimmed = !modest_msg_view_window_has_headers_model (MODEST_MSG_VIEW_WINDOW(win));
  			if (dimmed) {
 				modest_dimming_rule_set_notification (rule, _CS("ckct_ib_unable_to_delete"));
 			}
 		}
-		*/
 	}
 
 	return dimmed;
@@ -658,7 +657,30 @@ modest_ui_dimming_rules_on_main_window_move_to (ModestWindow *win, gpointer user
 	header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(win),
 							   MODEST_WIDGET_TYPE_HEADER_VIEW);
 	
-	/* Check diming rules for folders and messages transfer  */
+	/* Check diming rules for folders transfer  */
+	if (gtk_widget_is_focus (folder_view)) {
+		TnyFolderType types[5];
+		
+		types[0] = TNY_FOLDER_TYPE_DRAFTS; 
+		types[1] = TNY_FOLDER_TYPE_OUTBOX;
+		types[2] = TNY_FOLDER_TYPE_SENT;
+		types[3] = TNY_FOLDER_TYPE_ROOT; 
+		types[4] = TNY_FOLDER_TYPE_INBOX; 
+		
+		/* Apply folder rules */	
+		if (!dimmed) {
+			dimmed = _selected_folder_not_writeable (MODEST_MAIN_WINDOW(win));
+			if (dimmed)
+				modest_dimming_rule_set_notification (rule, _("emev_bd_unabletomove_items"));
+		}
+		if (!dimmed) {
+			dimmed = _selected_folder_is_any_of_type (win, types, 5);
+			if (dimmed)
+				modest_dimming_rule_set_notification (rule, _("emev_bd_unabletomove_itemsr"));
+		}
+	}
+	
+	/* Check diming rules for messages transfer  */
 	if (!dimmed) {
 		dimmed = _already_opened_msg (win, &n_messages);
 		if (dimmed) {
