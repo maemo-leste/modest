@@ -40,6 +40,7 @@
 #include <gtk/gtkhbox.h>
 #include <gtk/gtkvbox.h>
 #include <gtk/gtkstock.h>
+#include "modest-text-utils.h"
 
 #include <glib/gi18n.h>
 
@@ -155,15 +156,30 @@ on_range_error (GtkWidget *widget, HildonNumberEditorErrorType type, gpointer us
 static void
 on_response (GtkDialog *dialog, int response_id, gpointer user_data)
 {
+	const gchar *hostname;
 	ModestConnectionSpecificSmtpEditWindow *self = user_data;
 	ModestConnectionSpecificSmtpEditWindowPrivate *priv =
        		CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW_GET_PRIVATE (self);
 
+	hostname = gtk_entry_get_text (GTK_ENTRY (priv->entry_outgoingserver));
+
+	/* Don't close the dialog if a range error occured */
+	if(response_id == GTK_RESPONSE_OK) {
+		if (!modest_text_utils_validate_domain_name (hostname)) { 
+			g_signal_stop_emission_by_name (dialog, "response");
+			hildon_banner_show_information (NULL, NULL, _("mcen_ib_invalid_servername"));
+			gtk_widget_grab_focus (priv->entry_outgoingserver);
+			gtk_editable_select_region (GTK_EDITABLE (priv->entry_outgoingserver), 0, -1);
+			return;
+		}
+	}
+	
 	/* Don't close the dialog if a range error occured */
 	if(response_id == GTK_RESPONSE_OK && priv->range_error_occured)
 	{
 		g_signal_stop_emission_by_name (dialog, "response");
 		gtk_widget_grab_focus (priv->entry_port);
+		return;
 	}
 }
 
@@ -286,9 +302,9 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	
 	/* The port number widgets: */
 	if (!priv->entry_port)
-		priv->entry_port = GTK_WIDGET (hildon_number_editor_new (0, 65535));
+		priv->entry_port = GTK_WIDGET (hildon_number_editor_new (1, 65535));
 	caption = hildon_caption_new (sizegroup, 
-		_("mcen_li_emailsetup_smtp"), priv->entry_port, NULL, HILDON_CAPTION_OPTIONAL);
+		_("mcen_fi_emailsetup_port"), priv->entry_port, NULL, HILDON_CAPTION_OPTIONAL);
 	gtk_widget_add_events(GTK_WIDGET(priv->entry_port), GDK_FOCUS_CHANGE_MASK);
 	g_signal_connect(G_OBJECT(priv->entry_port), "range-error", G_CALLBACK(on_range_error), self);
 	g_signal_connect(G_OBJECT(priv->entry_port), "notify::value", G_CALLBACK(on_value_changed), self);
@@ -314,7 +330,7 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	
 	/* When this window is shown, hibernation should not be possible, 
 	 * because there is no sensible way to save the state: */
-    modest_window_mgr_prevent_hibernation_while_window_is_shown (
+	modest_window_mgr_prevent_hibernation_while_window_is_shown (
     	modest_runtime_get_window_mgr (), GTK_WINDOW (self)); 
 }
 
