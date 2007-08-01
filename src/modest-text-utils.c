@@ -1145,7 +1145,7 @@ modest_text_utils_validate_email_address (const gchar *email_address, const gcha
 		return FALSE;
 	do {
 		if (*c == '.') {
-			if (c == domain || *(c - 1) == '.') 
+			if (c == domain || *(c - 1) == '.' || *(c + 1) == '\0') 
 				return FALSE;
 			count++;
 		}
