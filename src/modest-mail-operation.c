@@ -824,20 +824,20 @@ modest_mail_operation_save_to_drafts_cb (ModestMailOperation *self,
 		goto end;
 	}
 
-	if (info->draft_msg != NULL) {
+	if (!priv->error)
+		tny_folder_add_msg (folder, msg, &(priv->error));
+
+	if ((!priv->error) && (info->draft_msg != NULL)) {
 		header = tny_msg_get_header (info->draft_msg);
 		src_folder = tny_header_get_folder (header); 
 		/* Remove the old draft expunging it */
 		tny_folder_remove_msg (src_folder, header, NULL);
 		tny_header_set_flags (header, TNY_HEADER_FLAG_DELETED);
 		tny_header_set_flags (header, TNY_HEADER_FLAG_SEEN);
-		tny_folder_sync (src_folder, TRUE, &(priv->error));  /* expunge */
+		tny_folder_sync_async (src_folder, TRUE, NULL, NULL, NULL);  /* expunge */
 		g_object_unref (header);
 	}
 	
-	if (!priv->error)
-		tny_folder_add_msg (folder, msg, &(priv->error));
-
 	if (!priv->error)
 		priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
 	else

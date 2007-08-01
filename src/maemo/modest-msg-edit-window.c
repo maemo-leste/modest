@@ -1270,8 +1270,7 @@ modest_msg_edit_window_get_msg_data (ModestMsgEditWindow *edit_window)
 	data->subject =  g_strdup (gtk_entry_get_text (GTK_ENTRY (priv->subject_field)));
 	if (priv->draft_msg) {
 		data->draft_msg = g_object_ref (priv->draft_msg);
-	} 
-	if (priv->outbox_msg) {
+	} else if (priv->outbox_msg) {
 		data->draft_msg = g_object_ref (priv->outbox_msg);
 	} else {
 		data->draft_msg = NULL;
