@@ -252,6 +252,8 @@ struct _ModestMsgEditWindowPrivate {
 
 	TnyMsg      *draft_msg;
 	TnyMsg      *outbox_msg;
+	gchar       *msg_uid;
+
 	gboolean    sent;
 };
 
@@ -355,6 +357,7 @@ modest_msg_edit_window_init (ModestMsgEditWindow *obj)
 
 	priv->draft_msg = NULL;
 	priv->outbox_msg = NULL;
+	priv->msg_uid = NULL;
 	priv->clipboard_change_handler_id = 0;
 	priv->sent = FALSE;
 
@@ -632,6 +635,10 @@ modest_msg_edit_window_finalize (GObject *obj)
 		g_object_unref (priv->outbox_msg);
 		priv->outbox_msg = NULL;
 	}
+	if (priv->msg_uid != NULL) {
+		g_free (priv->msg_uid);
+		priv->msg_uid = NULL;
+	}
 
 	/* This had to stay alive for as long as the combobox that used it: */
 	modest_pair_list_free (priv->from_field_protos);
@@ -852,6 +859,11 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg, gboolean preserve_is_rich)
 	text_buffer_can_undo (priv->text_buffer, FALSE, self);
 	text_buffer_can_redo (priv->text_buffer, FALSE, self);
 
+	if (priv->msg_uid) {
+		g_free (priv->msg_uid);
+		priv->msg_uid = NULL;
+	}
+
 	/* we should set a reference to the incoming message if it is a draft */
 	msg_folder = tny_msg_get_folder (msg);
 	if (msg_folder) {		
@@ -861,6 +873,7 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg, gboolean preserve_is_rich)
 				priv->draft_msg = g_object_ref(msg);
 			if (type == TNY_FOLDER_TYPE_OUTBOX)
 				priv->outbox_msg = g_object_ref(msg);
+			priv->msg_uid = modest_tny_folder_get_header_unique_id (header);
 		}
 		g_object_unref (msg_folder);
 	}
@@ -3100,6 +3113,11 @@ modest_msg_edit_window_set_draft (ModestMsgEditWindow *window,
 		header = tny_msg_get_header (draft);
 		if (TNY_IS_HEADER (header))
 			modest_window_mgr_register_header (mgr, header);
+		if (priv->msg_uid) {
+			g_free (priv->msg_uid);
+			priv->msg_uid = NULL;
+		}
+		priv->msg_uid = modest_tny_folder_get_header_unique_id (header);
 	}
 
 	priv->draft_msg = draft;
@@ -3134,4 +3152,15 @@ modest_msg_edit_window_add_part (ModestMsgEditWindow *window,
 	gtk_widget_set_no_show_all (priv->attachments_caption, FALSE);
 	gtk_widget_show_all (priv->attachments_caption);
 	gtk_text_buffer_set_modified (priv->text_buffer, TRUE);
+}
+
+const gchar*    
+modest_msg_edit_window_get_message_uid (ModestMsgEditWindow *window)
+{
+	ModestMsgEditWindowPrivate *priv;
+
+	g_return_val_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window), NULL);	
+	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
+
+	return priv->msg_uid;
 }

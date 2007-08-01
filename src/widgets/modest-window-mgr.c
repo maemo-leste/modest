@@ -283,11 +283,15 @@ compare_msguids (ModestWindow *win,
 {
 	const gchar *msg_uid;
 
-	if (!MODEST_IS_MSG_VIEW_WINDOW (win))
+	if ((!MODEST_IS_MSG_EDIT_WINDOW (win)) && (!MODEST_IS_MSG_VIEW_WINDOW (win)))
 		return 1;
 
 	/* Get message uid from msg window */
-	msg_uid = modest_msg_view_window_get_message_uid (MODEST_MSG_VIEW_WINDOW (win));
+	if (MODEST_IS_MSG_EDIT_WINDOW (win)) {
+		msg_uid = modest_msg_edit_window_get_message_uid (MODEST_MSG_EDIT_WINDOW (win));
+	} else {
+		msg_uid = modest_msg_view_window_get_message_uid (MODEST_MSG_VIEW_WINDOW (win));
+	}
 	
 	if (msg_uid && uid &&!strcmp (msg_uid, uid))
 		return 0;
@@ -325,7 +329,8 @@ modest_window_mgr_find_registered_header (ModestWindowMgr *self, TnyHeader *head
 	if (item) {
 		has_window = TRUE;
 		if (win) {
-			if (!MODEST_IS_MSG_VIEW_WINDOW(item->data))
+			if ((!MODEST_IS_MSG_VIEW_WINDOW(item->data)) && 
+			    (!MODEST_IS_MSG_EDIT_WINDOW (item->data)))
 				g_debug ("not a valid window!");
 			else {
 				g_debug ("found a window");
@@ -385,6 +390,19 @@ modest_window_mgr_register_window (ModestWindowMgr *self,
 			remove_uid (priv->preregistered_uids,
 				    modest_msg_view_window_get_message_uid
 				    (MODEST_MSG_VIEW_WINDOW (window)));
+	} else if (MODEST_IS_MSG_EDIT_WINDOW(window)) {
+		const gchar *uid = modest_msg_edit_window_get_message_uid
+			(MODEST_MSG_EDIT_WINDOW (window));
+
+		g_debug ("registering window for %s", uid);
+				
+		if (!has_uid (priv->preregistered_uids, uid)) 
+			g_debug ("weird: no uid for window (%s)", uid);
+
+		priv->preregistered_uids = 
+			remove_uid (priv->preregistered_uids,
+				    modest_msg_edit_window_get_message_uid
+				    (MODEST_MSG_EDIT_WINDOW (window)));
 	}
 	
 	/* Add to list. Keep a reference to the window */

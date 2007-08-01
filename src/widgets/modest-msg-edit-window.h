@@ -371,6 +371,17 @@ void            modest_msg_edit_window_set_sent            (ModestMsgEditWindow 
  */
 void            modest_msg_edit_window_set_draft           (ModestMsgEditWindow *window,
 							    TnyMsg *draft);
+/**
+ * modest_msg_edit_window_get_message_uid:
+ * @msg: an #ModestMsgEditWindow instance
+ * 
+ * gets the unique identifier for the message in this msg editor.
+ * This is the identifier of the draft or outbox message the editor was
+ * opened from. If it's a new message, then it returns %NULL
+ * 
+ * Returns: the id of the #TnyMsg being shown, or NULL in case of error
+ */
+const gchar*    modest_msg_edit_window_get_message_uid (ModestMsgEditWindow *window);
 
 G_END_DECLS
 
