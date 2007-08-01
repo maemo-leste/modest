@@ -851,6 +851,9 @@ static GtkWidget* create_page_outgoing (ModestAccountSettingsDialog *self)
 	return GTK_WIDGET (scrollwin);
 }
 
+
+
+	
 static gboolean
 check_data (ModestAccountSettingsDialog *self)
 {
@@ -871,8 +874,8 @@ check_data (ModestAccountSettingsDialog *self)
 			return FALSE;
 		}
 	}
-
-	/* Check that the email address is valud: */
+	
+	/* Check that the email address is valid: */
 	const gchar* email_address = gtk_entry_get_text (GTK_ENTRY (self->entry_user_email));
 	if ((!email_address) || (strlen(email_address) == 0))
 		return FALSE;
@@ -888,8 +891,39 @@ check_data (ModestAccountSettingsDialog *self)
 		return FALSE;
 	}
 
-	/* Find a suitable authentication method when secure authentication is desired */
+	/* make sure the domain name for the incoming server is valid */
 	const gchar* hostname = gtk_entry_get_text (GTK_ENTRY (self->entry_incomingserver));
+	if ((!hostname) || (strlen(hostname) == 0))
+		return FALSE;
+	if (!modest_text_utils_validate_domain_name (hostname)) {
+		/* Warn the user via a dialog: */
+		/*show_error (GTK_WINDOW (self), _("mcen_ib_invalid_email"));*/
+		hildon_banner_show_information (NULL, NULL, _("mcen_ib_invalid_servername"));
+                                         
+	        /* Return focus to the email address entry: */
+        	gtk_widget_grab_focus (self->entry_incomingserver);
+		gtk_editable_select_region (GTK_EDITABLE (self->entry_incomingserver), 0, -1);
+		return FALSE;
+	}
+
+	/* make sure the domain name for the outgoing server is valid */
+	const gchar* hostname2 = gtk_entry_get_text (GTK_ENTRY (self->entry_outgoingserver));
+	if ((!hostname2) || (strlen(hostname2) == 0))
+		return FALSE;
+	if (!modest_text_utils_validate_domain_name (hostname2)) {
+		/* Warn the user via a dialog: */
+		/*show_error (GTK_WINDOW (self), _("mcen_ib_invalid_email"));*/
+		hildon_banner_show_information (NULL, NULL, _("mcen_ib_invalid_servername"));
+                                         
+	        /* Return focus to the email address entry: */
+        	gtk_widget_grab_focus (self->entry_outgoingserver);
+		gtk_editable_select_region (GTK_EDITABLE (self->entry_outgoingserver), 0, -1);
+		return FALSE;
+	}
+
+		
+	/* Find a suitable authentication method when secure authentication is desired */
+
 	gint port_num = hildon_number_editor_get_value (
 			HILDON_NUMBER_EDITOR (self->entry_incoming_port));
 	const gchar* username = gtk_entry_get_text (GTK_ENTRY (self->entry_user_username));
@@ -942,11 +976,10 @@ check_data (ModestAccountSettingsDialog *self)
 			}
 		}
 	}
+	
+	
 
-	/* TODO: The UI Spec wants us to check that the servernames are valid, 
-	 * but does not specify how.
-	 */
-	 
+	
 	return TRUE;
 }
 /*

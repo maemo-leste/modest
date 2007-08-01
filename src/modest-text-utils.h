@@ -268,6 +268,17 @@ gchar* modest_text_utils_get_display_date (time_t date);
 gchar * modest_text_utils_get_display_size (guint64 size);
 
 
+
+/**
+ * modest_text_utils_validate_domain_name:
+ * @email_address: a NULL-terminated string
+ * 
+ * validates the domain name passed as argument
+ * 
+ * Returns: TRUE if the domain name is valid, FALSE otherwise
+ **/
+gboolean modest_text_utils_validate_domain_name (const gchar *domain);
+
 /**
  * modest_text_utils_validate_email_address:
  * @email_address: a string

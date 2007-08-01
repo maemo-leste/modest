@@ -79,7 +79,7 @@ struct _url_match_t {
 	{ "(file|rtsp|http|ftp|https)://[-A-Za-z0-9_$.+!*(),;:@%&=?/~#]+[-A-Za-z0-9_$%&=?/~#]",\
 	  NULL, NULL },\
 	{ "www\\.[-a-z0-9.]+[-a-z0-9](:[0-9]*)?(/[-A-Za-z0-9_$.+!*(),;:@%&=?/~#]*[^]}\\),?!;:\"]?)?",\
-	  NULL, "http://" },\
+			NULL, "http://" },				\
 	{ "ftp\\.[-a-z0-9.]+[-a-z0-9](:[0-9]*)?(/[-A-Za-z0-9_$.+!*(),;:@%&=?/~#]*[^]}\\),?!;:\"]?)?",\
 	  NULL, "ftp://" },\
 	{ "(voipto|callto|chatto|jabberto|xmpp):[-_a-z@0-9.\\+]+", \
@@ -1068,6 +1068,32 @@ modest_text_utils_get_display_date (time_t date)
 	
 	return g_strdup(date_buf);
 }
+
+
+gboolean
+modest_text_utils_validate_domain_name (const gchar *domain)
+{
+	gboolean valid = FALSE;
+	regex_t rx;
+	const gchar* domain_regex = "^[a-z0-9]([.]?[a-z0-9-])*[a-z0-9]$";
+
+	if (!domain)
+		return FALSE;
+	
+	/* domain name: all alphanum or '-' or '.',
+	 * but beginning/ending in alphanum */	
+	if (regcomp (&rx, domain_regex, REG_ICASE|REG_EXTENDED|REG_NOSUB)) {
+		g_warning ("BUG: error in regexp");
+		return FALSE;
+	}
+	
+	valid = (regexec (&rx, domain, 1, NULL, 0) == 0);
+	regfree (&rx);
+		
+	return valid;
+}
+
+
 
 gboolean
 modest_text_utils_validate_email_address (const gchar *email_address, const gchar **invalid_char_position)
