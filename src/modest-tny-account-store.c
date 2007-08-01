@@ -506,27 +506,20 @@ on_account_settings_hide (GtkWidget *widget, gpointer user_data)
 		g_hash_table_remove (priv->account_settings_dialog_hash, modest_account_name);
 }
 
-static gboolean 
-on_idle_wrong_password_warning_only (gpointer user_data)
+static void 
+show_password_warning_only ()
 {
-	gdk_threads_enter();
-	
 	ModestWindow *main_window = 
 				modest_window_mgr_get_main_window (modest_runtime_get_window_mgr ());
 				
 	/* Show an explanatory temporary banner: */
 	hildon_banner_show_information ( 
 		GTK_WIDGET(main_window), NULL, _("mcen_ib_username_pw_incorrect"));
-		
-	gdk_threads_leave();
-	
-	return FALSE; /* Don't show again. */
 }
 		
-static gboolean 
-on_idle_wrong_password (gpointer user_data)
+static void 
+show_wrong_password_dialog (TnyAccount *account)
 { 
-	TnyAccount *account = (TnyAccount*)user_data;
 	/* This is easier than using a struct for the user_data: */
 	ModestTnyAccountStore *self = modest_runtime_get_account_store();
 	ModestTnyAccountStorePrivate *priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
@@ -536,11 +529,7 @@ on_idle_wrong_password (gpointer user_data)
 	if (!modest_account_name) {
 		g_warning ("%s: modest_tny_account_get_parent_modest_account_name_for_server_account() failed.\n", 
 			__FUNCTION__);
-			
-		g_object_unref (account);
-		return FALSE;
 	}
-	
 	
 	/* Check whether this window is already open,
 	 * for instance because of a previous get_password() call: 
@@ -556,7 +545,6 @@ on_idle_wrong_password (gpointer user_data)
 	ModestWindow *main_window = 
 				modest_window_mgr_get_main_window (modest_runtime_get_window_mgr ());
 
-	gdk_threads_enter ();
 	gboolean created_dialog = FALSE;
 	if (!found || !dialog) {
 		dialog = modest_account_settings_dialog_new ();
@@ -585,75 +573,21 @@ on_idle_wrong_password (gpointer user_data)
 		 * though it is probably open already: */
 		gtk_window_present (GTK_WINDOW (dialog));
 	}
-	
-	g_object_unref (account);
-	gdk_threads_leave ();
-	
-	return FALSE; /* Dont' call this again. */
 }
 
-typedef struct 
-{
-	GMainLoop *loop;
-	ModestTnyAccountStore* account_store;
-	const gchar* server_account_id;
-	gchar **username;
-	gchar **password;
-	gboolean *cancel;
-	gboolean *remember;
-} IdlePasswordRequest;
 
-static gboolean 
-on_idle_request_password (gpointer user_data)
-{
-	gdk_threads_enter();
-	
-	IdlePasswordRequest* info = (IdlePasswordRequest*)user_data;
-	g_signal_emit (G_OBJECT(info->account_store), signals[PASSWORD_REQUESTED_SIGNAL], 0,
-			       info->server_account_id, /* server_account_name */
-			       info->username, info->password, info->cancel, info->remember);
-			       
-	if (info->loop)
-		g_main_loop_quit (info->loop);
-	
-	gdk_threads_leave();
-	
-	return FALSE; /* Don't call again. */
-}
 
 static void
-request_password_in_main_loop_and_wait (ModestTnyAccountStore *account_store, 
+request_password_and_wait (ModestTnyAccountStore *account_store, 
 					 const gchar* server_account_id,
 					 gchar **username,
 					 gchar **password,
 					 gboolean *cancel, 
 					 gboolean *remember)
 {
-	IdlePasswordRequest *data = g_slice_new0 (IdlePasswordRequest);
-	data->account_store = account_store;
-	data->server_account_id = server_account_id;
-	data->username = username;
-	data->password = password;
-	data->cancel = cancel;
-	data->remember = remember;
-
-	data->loop = g_main_loop_new (NULL, FALSE /* not running */);
-	
-	/* Cause the function to be run in an idle-handler, which is always 
-	 * in the main thread:
-	 */
-	g_idle_add (&on_idle_request_password, data);
-	
-	/* This main loop will run until the idle handler has stopped it: */
-	printf ("DEBUG: %s: before g_main_loop_run()\n", __FUNCTION__);
-	GDK_THREADS_LEAVE();
-	g_main_loop_run (data->loop);
-	GDK_THREADS_ENTER();
-	printf ("DEBUG: %s: after g_main_loop_run()\n", __FUNCTION__);
-	printf ("DEBUG: %s: Finished\n", __FUNCTION__);
-	g_main_loop_unref (data->loop);
-
-	g_slice_free (IdlePasswordRequest, data);
+			g_signal_emit (G_OBJECT(account_store), signals[PASSWORD_REQUESTED_SIGNAL], 0,
+			       server_account_id, /* server_account_name */
+			       username, password, cancel, remember);
 }
 
 /* This callback will be called by Tinymail when it needs the password
@@ -730,12 +664,8 @@ get_password (TnyAccount *account, const gchar * prompt_not_used, gboolean *canc
 			modest_server_account_get_has_password (priv->account_mgr, server_account_name);
 		printf ("DEBUG: modest: %s: settings_have_password=%d\n", __FUNCTION__, settings_have_password);
 		if (settings_have_password) {
-	
-			
 			/* The password must be wrong, so show the account settings dialog so it can be corrected: */
-			/* We show it in the main loop, because this function might not be in the main loop. */
-			g_object_ref (account); /* unrefed in the idle handler. */
-			g_idle_add (on_idle_wrong_password, account);
+			show_wrong_password_dialog (account);
 			
 			if (cancel)
 				*cancel = TRUE;
@@ -750,10 +680,10 @@ get_password (TnyAccount *account, const gchar * prompt_not_used, gboolean *canc
 		
 		if (already_asked) {
 			/* Show an info banner, before we show the protected password dialog: */
-			g_idle_add (on_idle_wrong_password_warning_only, NULL);
+			show_password_warning_only();
 		}
 		
-		request_password_in_main_loop_and_wait (self, account_id, 
+		request_password_and_wait (self, account_id, 
 			       &username, &pwd, cancel, &remember);
 		
 		if (!*cancel) {
@@ -1173,7 +1103,6 @@ modest_tny_account_store_alert (TnyAccountStore *self, TnyAccount *account, TnyA
 		 * Obviously, we need tinymail to use more specific error codes instead,
 		 * so we know what buttons to show. */
 	
-	 	/* TODO: Do this in the main context: */
 		GtkWidget *dialog = GTK_WIDGET (hildon_note_new_confirmation (GTK_WINDOW (main_window), 
 	 		prompt));
 		const int response = gtk_dialog_run (GTK_DIALOG (dialog));
@@ -1186,7 +1115,7 @@ modest_tny_account_store_alert (TnyAccountStore *self, TnyAccount *account, TnyA
 	
 	 } else {
 	 	/* Just show the error text and use the default response: */
-	 	modest_maemo_show_information_note_in_main_context_and_forget (GTK_WINDOW (main_window), 
+	 	modest_maemo_show_information_note_and_forget(GTK_WINDOW (main_window), 
 	 		prompt);
 	 }
 	

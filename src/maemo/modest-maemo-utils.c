@@ -550,6 +550,7 @@ on_hide (GtkDialog *dialog, gpointer user_data)
 }
 #endif
 
+#if 0 /* Not used now. */
 /* user_data for the idle callback: */
 typedef struct 
 {
@@ -578,6 +579,7 @@ void modest_maemo_show_information_note_in_main_context_and_forget (GtkWindow *p
 	
 	g_idle_add (on_idle_show_information, info);
 }
+#endif
 
 void modest_maemo_show_dialog_and_forget (GtkWindow *parent_window, GtkDialog *dialog)
 {

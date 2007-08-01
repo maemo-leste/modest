@@ -1,5 +1,15 @@
 2007-08-01  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-tny-account-store.c: (show_password_warning_only),
+	(show_wrong_password), (request_password_and_wait), (get_password),
+	(modest_tny_account_store_alert): Remove the (incomplete anyway) 
+	attempts to show UI only in the main context, which used g_idle_add() 
+	and mainloops, because tinymail now guarantees that it only calls these 
+	callbacks in the mainloop with the gdk lock. This makes everything much 
+	simpler.
+
+2007-08-01  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/modest-tny-account-store.c: (modest_tny_account_store_alert):
 	Handle TNY_ACCOUNT_ERROR_TRY_CONNECT_SERVICE_UNAVAILABLE in the same 
 	way as TNY_ACCOUNT_ERROR_TRY_CONNECT_HOST_LOOKUP_FAILED, showing an 
