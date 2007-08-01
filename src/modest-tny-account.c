@@ -198,52 +198,13 @@ on_connection_status_changed (TnyAccount *account, TnyConnectionStatus status, g
 	}
 }
 
-/* Camel options: */
-
-/* These seem to be listed in 
- * libtinymail-camel/camel-lite/camel/providers/imap/camel-imap-store.c 
- */
-#define MODEST_ACCOUNT_OPTION_SSL "use_ssl"
-#define MODEST_ACCOUNT_OPTION_SSL_NEVER "never"
-/* This is a tinymail camel-lite specific option, 
- * roughly equivalent to "always" in regular camel,
- * which is appropriate for a generic "SSL" connection option: */
-#define MODEST_ACCOUNT_OPTION_SSL_WRAPPED "wrapped"
-/* Not used in our UI so far: */
-#define MODEST_ACCOUNT_OPTION_SSL_WHEN_POSSIBLE "when-possible"
-/* This is a tinymailcamel-lite specific option that is not in regular camel. */
-#define MODEST_ACCOUNT_OPTION_SSL_TLS "tls"
-
-/* These seem to be listed in 
- * libtinymail-camel/camel-lite/camel/providers/imap/camel-imap-provider.c 
- */
-#define MODEST_ACCOUNT_OPTION_USE_LSUB "use_lsub" /* Show only subscribed folders */
-#define MODEST_ACCOUNT_OPTION_CHECK_ALL "check_all" /* Check for new messages in all folders */
 
 
-/* Posssible values for tny_account_set_secure_auth_mech().
- * These might be camel-specific.
- * Really, tinymail should use an enum.
- * camel_sasl_authtype() seems to list some possible values.
- */
- 
-/* Note that evolution does not offer these for IMAP: */
-#define MODEST_ACCOUNT_AUTH_PLAIN "PLAIN"
-#define MODEST_ACCOUNT_AUTH_ANONYMOUS "ANONYMOUS"
-
-/* Caeml's IMAP uses NULL instead for "Password".
- * Also, not that Evolution offers "Password" for IMAP, but "Login" for SMTP.*/
-#define MODEST_ACCOUNT_AUTH_PASSWORD "LOGIN" 
-#define MODEST_ACCOUNT_AUTH_CRAMMD5 "CRAM-MD5"
-
-
-		
 /**
- * modest_tny_account_new_from_server_account:
+ * create_tny_account:
  * @account_mgr: a valid account mgr instance
  * @session: A valid TnySessionCamel instance.
  * @account_data: the server account for which to create a corresponding tny account
- * @type: the type of account to create (TNY_ACCOUNT_TYPE_STORE or TNY_ACCOUNT_TYPE_TRANSPORT)
  * 
  * get a tnyaccount corresponding to the server_accounts (store or transport) for this account.
  * NOTE: this function does not set the camel session or the get/forget password functions
@@ -251,12 +212,10 @@ on_connection_status_changed (TnyAccount *account, TnyConnectionStatus status, g
  * Returns: a new TnyAccount or NULL in case of error.
  */
 static TnyAccount*
-modest_tny_account_new_from_server_account (ModestAccountMgr *account_mgr,
-					    TnySessionCamel *session,
-					    ModestServerAccountData *account_data)
+create_tny_account (ModestAccountMgr *account_mgr,
+		    TnySessionCamel *session,
+		    ModestServerAccountData *account_data)
 {
-	gchar *url = NULL;
-
 	g_return_val_if_fail (account_mgr, NULL);
 	g_return_val_if_fail (session, NULL);
 	g_return_val_if_fail (account_data, NULL);
@@ -295,7 +254,7 @@ modest_tny_account_new_from_server_account (ModestAccountMgr *account_mgr,
 	tny_account_set_id (tny_account, account_data->account_name);
 
 	/* This must be set quite early, or other set() functions will fail. */
-    tny_camel_account_set_session (TNY_CAMEL_ACCOUNT (tny_account), session);
+	tny_camel_account_set_session (TNY_CAMEL_ACCOUNT (tny_account), session);
     
 	/* Handle connection requests:
 	 * This (badly-named) signal will be called when we try to use an offline account. */
@@ -307,19 +266,80 @@ modest_tny_account_new_from_server_account (ModestAccountMgr *account_mgr,
 		modest_protocol_info_get_transport_store_protocol_name(account_data->proto);
 	tny_account_set_proto (tny_account, proto_name);
 
+	return tny_account;
+}
+
+
+
+/* Camel options: */
+
+/* These seem to be listed in 
+ * libtinymail-camel/camel-lite/camel/providers/imap/camel-imap-store.c 
+ */
+#define MODEST_ACCOUNT_OPTION_SSL "use_ssl"
+#define MODEST_ACCOUNT_OPTION_SSL_NEVER "never"
+/* This is a tinymail camel-lite specific option, 
+ * roughly equivalent to "always" in regular camel,
+ * which is appropriate for a generic "SSL" connection option: */
+#define MODEST_ACCOUNT_OPTION_SSL_WRAPPED "wrapped"
+/* Not used in our UI so far: */
+#define MODEST_ACCOUNT_OPTION_SSL_WHEN_POSSIBLE "when-possible"
+/* This is a tinymailcamel-lite specific option that is not in regular camel. */
+#define MODEST_ACCOUNT_OPTION_SSL_TLS "tls"
+
+/* These seem to be listed in 
+ * libtinymail-camel/camel-lite/camel/providers/imap/camel-imap-provider.c 
+ */
+#define MODEST_ACCOUNT_OPTION_USE_LSUB "use_lsub" /* Show only subscribed folders */
+#define MODEST_ACCOUNT_OPTION_CHECK_ALL "check_all" /* Check for new messages in all folders */
+
+/* Posssible values for tny_account_set_secure_auth_mech().
+ * These might be camel-specific.
+ * Really, tinymail should use an enum.
+ * camel_sasl_authtype() seems to list some possible values.
+ */
+ 
+/* Note that evolution does not offer these for IMAP: */
+#define MODEST_ACCOUNT_AUTH_PLAIN "PLAIN"
+#define MODEST_ACCOUNT_AUTH_ANONYMOUS "ANONYMOUS"
+
+/* Caeml's IMAP uses NULL instead for "Password".
+ * Also, not that Evolution offers "Password" for IMAP, but "Login" for SMTP.*/
+#define MODEST_ACCOUNT_AUTH_PASSWORD "LOGIN" 
+#define MODEST_ACCOUNT_AUTH_CRAMMD5 "CRAM-MD5"
+
+		
+/**
+ * update_tny_account:
+ * @account_mgr: a valid account mgr instance
+ * @account_data: the server account for which to create a corresponding tny account
+ * 
+ * get a tnyaccount corresponding to the server_accounts (store or transport) for this account.
+ * NOTE: this function does not set the camel session or the get/forget password functions
+ * 
+ * Returns: a new TnyAccount or NULL in case of error.
+ */
+static gboolean
+update_tny_account (TnyAccount *tny_account, ModestAccountMgr *account_mgr,
+		    ModestServerAccountData *account_data)
+{
+	gchar *url = NULL;
+	
+	g_return_val_if_fail (account_mgr, FALSE);
+	g_return_val_if_fail (account_data, FALSE);
+	g_return_val_if_fail (tny_account, FALSE);
+
+	tny_account_set_id (tny_account, account_data->account_name);
 	       
 	/* mbox and maildir accounts use a URI instead of the rest:
 	 * Note that this is not where we create the special local folders account.
 	 * We do that in modest_tny_account_new_for_local_folders() instead. */
-	if (account_data->uri)  {
+	if (account_data->uri)  
 		tny_account_set_url_string (TNY_ACCOUNT(tny_account), account_data->uri);
-/* 		g_message ("DEBUG: %s: local account-url:\n  %s", __FUNCTION__, account_data->uri); */
-	}
 	else {
 		/* Set camel-specific options: */
 		
 		/* Enable secure connection settings: */
-		/* printf("DEBUG: %s: security=%d\n", __FUNCTION__, account_data->security); */
 		const gchar* option_security = NULL;
 		switch (account_data->security) {
 		case MODEST_PROTOCOL_CONNECTION_NORMAL:
@@ -346,7 +366,7 @@ modest_tny_account_new_from_server_account (ModestAccountMgr *account_mgr,
 						      option_security);
 		
 		/* Secure authentication: */
-		/* printf("DEBUG: %s: secure-auth=%d\n", __FUNCTION__, account_data->secure_auth); */
+
 		const gchar* auth_mech_name = NULL;
 		switch (account_data->secure_auth) {
 		case MODEST_PROTOCOL_AUTH_NONE:
@@ -410,33 +430,114 @@ modest_tny_account_new_from_server_account (ModestAccountMgr *account_mgr,
 	/* FIXME: for debugging. 
 	 * Let's keep this because it is very useful for debugging. */
 	url = tny_account_get_url_string (TNY_ACCOUNT(tny_account));
-
-	printf ("DEBUG %s:\n  account-url: %s\n", __FUNCTION__, url);
+	g_debug ("%s:\n  account-url: %s\n", __FUNCTION__, url);
 
 	g_free (url);
-	/***********************/
-
-	return tny_account;
+	return TRUE;
 }
 
 TnyAccount*
 modest_tny_account_new_from_server_account_name (ModestAccountMgr *account_mgr,
-					    	TnySessionCamel *session,
-						const gchar *server_account_name)
+						 TnySessionCamel *session,
+						 const gchar *server_account_name)
 {
-	ModestServerAccountData *account_data = 
-		modest_account_mgr_get_server_account_data (account_mgr, 
-			server_account_name);
+	ModestServerAccountData *account_data;
+	TnyAccount *tny_account;
+	
+	g_return_val_if_fail (session, NULL);
+	g_return_val_if_fail (server_account_name, NULL);
+
+	account_data = 	modest_account_mgr_get_server_account_data (account_mgr, 
+								    server_account_name);
 	if (!account_data)
 		return NULL;
 
-	TnyAccount *result = modest_tny_account_new_from_server_account (
-		account_mgr, session, account_data);
-
+	tny_account = create_tny_account (account_mgr, session, account_data);
+	if (!tny_account)
+		g_warning ("%s: failed to create tny_account", __FUNCTION__);
+	else if (!update_tny_account (tny_account, account_mgr, account_data))
+		g_warning ("%s: failed to initialize tny_account", __FUNCTION__);
+	
 	modest_account_mgr_free_server_account_data (account_mgr, account_data);
 	
-	return result;
+	return tny_account;
 }
+
+
+
+gboolean
+modest_tny_account_update_from_server_account_name (TnyAccount *tny_account,
+						    ModestAccountMgr *account_mgr,
+						    const gchar *server_account_name)
+{
+	ModestServerAccountData *account_data;
+	gboolean valid_account_type;
+	
+	g_return_val_if_fail (tny_account, FALSE);
+	g_return_val_if_fail (server_account_name, FALSE);
+	
+	account_data =	modest_account_mgr_get_server_account_data (account_mgr, 
+								    server_account_name);
+	if (!account_data) {
+		g_warning ("%s: failed to get server account data for %s",
+			   __FUNCTION__, server_account_name);
+		return FALSE;
+	}
+
+	valid_account_type = FALSE;
+
+	/* you cannot change the protocol type of an existing account;
+	 * so double check we don't even try
+	 */
+	switch (account_data->proto) {
+	case MODEST_PROTOCOL_TRANSPORT_SENDMAIL:
+	case MODEST_PROTOCOL_TRANSPORT_SMTP:
+		if (!TNY_IS_CAMEL_TRANSPORT_ACCOUNT(tny_account))
+			g_warning ("%s: expecting transport account", __FUNCTION__);
+		else
+			valid_account_type = TRUE;
+		break;
+	case MODEST_PROTOCOL_STORE_POP:
+		if (!TNY_IS_CAMEL_POP_STORE_ACCOUNT(tny_account))
+			g_warning ("%s: expecting pop account", __FUNCTION__);
+		else
+			valid_account_type = TRUE;
+		break;
+	case MODEST_PROTOCOL_STORE_IMAP:
+		if (!TNY_IS_CAMEL_IMAP_STORE_ACCOUNT(tny_account))
+			g_warning ("%s: expecting imap account", __FUNCTION__);
+		else
+			valid_account_type = TRUE;
+		break;
+	case MODEST_PROTOCOL_STORE_MAILDIR:
+	case MODEST_PROTOCOL_STORE_MBOX:
+		if (!TNY_IS_CAMEL_STORE_ACCOUNT(tny_account))
+			g_warning ("%s: expecting store account", __FUNCTION__);
+		else
+			valid_account_type = TRUE;
+		break;
+	default:
+		g_warning ("invalid account type");
+	}
+
+	if (!valid_account_type) {
+		g_warning ("%s: protocol type cannot be changed", __FUNCTION__);
+		modest_account_mgr_free_server_account_data (account_mgr, account_data);
+		return FALSE;
+	}
+	
+	if (!update_tny_account (tny_account, account_mgr, account_data)) {
+		g_warning ("%s: failed to update account", __FUNCTION__);
+		modest_account_mgr_free_server_account_data (account_mgr, account_data);
+		return FALSE;
+	}
+
+	modest_account_mgr_free_server_account_data (account_mgr, account_data);
+	return TRUE;
+}
+
+
+
 
 
 /* we need these dummy functions, or tinymail will complain */
@@ -452,7 +553,8 @@ forget_pass_dummy (TnyAccount *account)
 }
 
 TnyAccount*
-modest_tny_account_new_from_account (ModestAccountMgr *account_mgr, const gchar *account_name,
+modest_tny_account_new_from_account (ModestAccountMgr *account_mgr,
+				     const gchar *account_name,
 				     TnyAccountType type,
 				     TnySessionCamel *session,
 				     TnyGetPassFunc get_pass_func,
@@ -468,7 +570,8 @@ modest_tny_account_new_from_account (ModestAccountMgr *account_mgr, const gchar 
 
 	account_data = modest_account_mgr_get_account_data (account_mgr, account_name);
 	if (!account_data) {
-		g_printerr ("modest: %s: cannot get account data for account %s\n", __FUNCTION__, account_name);
+		g_printerr ("modest: %s: cannot get account data for account %s\n",
+			    __FUNCTION__, account_name);
 		return NULL;
 	}
 
@@ -484,15 +587,15 @@ modest_tny_account_new_from_account (ModestAccountMgr *account_mgr, const gchar 
 		return NULL;
 	}
 	
-	tny_account = modest_tny_account_new_from_server_account (account_mgr, session, server_data);
+	tny_account = create_tny_account (account_mgr,session, server_data);
 	if (!tny_account) { 
 		g_printerr ("modest: failed to create tny account for %s (%s)\n",
 			    account_data->account_name, server_data->account_name);
 		modest_account_mgr_free_account_data (account_mgr, account_data);
 		return NULL;
-	}
-
-
+	} else
+		update_tny_account (tny_account, account_mgr, server_data);
+		
 	/* This name is what shows up in the folder view -- so for some POP/IMAP/... server
  	 * account, we set its name to the account of which it is part. */
  
@@ -508,22 +611,6 @@ modest_tny_account_new_from_account (ModestAccountMgr *account_mgr, const gchar 
         modest_tny_account_set_parent_modest_account_name_for_server_account (tny_account, account_name);
 
         modest_account_mgr_free_account_data (account_mgr, account_data);
-
-/*
-	 TnyAccountStore *astore = (TnyAccountStore *) modest_runtime_get_account_store ();
- 	 if (astore) {
-		TnyDevice *device = tny_account_store_get_device (astore);
-		GError *err = NULL;
-		g_object_set_data (G_OBJECT(tny_account), "account_store", (gpointer)astore);
-		tny_camel_account_set_online (TNY_CAMEL_ACCOUNT (tny_account),
-				tny_device_is_online (device), &err);
-		if (err) {
-			g_print ("%s: tny_camel_account_set_online() failed: %s\n", __FUNCTION__, err->message);
-			g_error_free (err);
-		}
-		g_object_unref (device);
-	 } 
-*/
 
 	return tny_account;
 }
