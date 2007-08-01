@@ -161,17 +161,14 @@ get_last_updated_string(ModestAccountMgr* account_mgr, ModestAccountData *accoun
 	/* FIXME: let's assume that 'last update' applies to the store account... */
 	gchar* last_updated_string;
 	time_t last_updated = account_data->store_account->last_updated;
-	if (!modest_account_mgr_account_is_busy(account_mgr, account_data->account_name))
-	{
+	if (!modest_account_mgr_account_is_busy(account_mgr, account_data->account_name)) {
 		if (last_updated > 0) 
-				last_updated_string = modest_text_utils_get_display_date(last_updated);
+			last_updated_string = modest_text_utils_get_display_date(last_updated);
 		else
-				last_updated_string = g_strdup (_("mcen_va_never"));
-	}
-	else
-	{
+			last_updated_string = g_strdup (_("mcen_va_never"));
+	} else 	{
 		/* FIXME: There should be a logical name in the UI specs */
-		last_updated_string = g_strdup(_("Refreshing..."));
+		last_updated_string = g_strdup(_("..."));
 	}
 	return last_updated_string;
 }
@@ -316,8 +313,8 @@ on_account_removed (TnyAccountStore *account_store,
 
 
 static void
-on_account_changed (ModestAccountMgr *obj, const gchar* account,
-		    const gchar* key, gboolean server_account,
+on_account_changed (TnyAccountStore *account_store, 
+		    TnyAccount *account,
 		    gpointer user_data)
 {
 	ModestAccountView *self;
@@ -326,6 +323,8 @@ on_account_changed (ModestAccountMgr *obj, const gchar* account,
 	self = MODEST_ACCOUNT_VIEW (user_data);
 	priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE (self);
 
+	g_warning ("account changed: %s", tny_account_get_id(account));
+	
 	update_account_view (priv->account_mgr, self);
 }
 

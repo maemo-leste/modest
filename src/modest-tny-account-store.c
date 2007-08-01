@@ -429,9 +429,52 @@ modest_tny_account_store_forget_password_in_memory (ModestTnyAccountStore *self,
 	}
 }
 
+
+static gboolean
+update_tny_account_for_account (ModestTnyAccountStore *self, ModestAccountMgr *acc_mgr,
+				const gchar *account_name, TnyAccountType type)
+{
+	ModestTnyAccountStorePrivate *priv;
+	TnyList* account_list;
+	gboolean found = FALSE;
+	TnyIterator *iter = NULL;
+
+	g_return_val_if_fail (self, FALSE);
+	g_return_val_if_fail (account_name, FALSE);
+	g_return_val_if_fail (type == TNY_ACCOUNT_TYPE_STORE || 
+			      type == TNY_ACCOUNT_TYPE_TRANSPORT,
+			      FALSE);
+
+	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
+	account_list = (type == TNY_ACCOUNT_TYPE_STORE ? priv->store_accounts : priv->transport_accounts);
+	
+	iter = tny_list_create_iterator (account_list);
+	while (!tny_iterator_is_done (iter) && !found) {
+		TnyAccount *tny_account;
+		tny_account = TNY_ACCOUNT (tny_iterator_get_current (iter));
+		if (tny_account) {
+			const gchar* parent_name =
+				modest_tny_account_get_parent_modest_account_name_for_server_account (tny_account);
+			if (parent_name && strcmp (parent_name, account_name) == 0) {
+				found = TRUE;
+				modest_tny_account_update_from_account (tny_account, acc_mgr, account_name, type);
+				g_signal_emit (G_OBJECT(self), signals[ACCOUNT_CHANGED_SIGNAL], 0, tny_account);
+			}
+			g_object_unref (tny_account);
+		}
+		tny_iterator_next (iter);
+	}
+
+	if (iter)
+		g_object_unref (iter);
+	
+	return found;
+}
+
+
 static void
 on_account_changed (ModestAccountMgr *acc_mgr, 
-		    const gchar *account,
+		    const gchar *account_name,
 		    const gchar *key, 
 		    gboolean server_account, 
 		    gpointer user_data)
@@ -439,31 +482,25 @@ on_account_changed (ModestAccountMgr *acc_mgr,
 	printf ("DEBUG: modest: %s\n", __FUNCTION__);
 	
 	ModestTnyAccountStore *self = MODEST_TNY_ACCOUNT_STORE(user_data);
-		
+	
 	/* Ignore the change if it's a change in the last_updated value */
 	if (key && g_str_has_suffix ((const gchar *) key, MODEST_ACCOUNT_LAST_UPDATED))
 		return;
-
-	/* FIXME: make this more finegrained; changes do not really affect _all_
-	 * accounts
-	 */
-/* 	recreate_all_accounts (self); */
 	
+	if (!server_account && FALSE) { /* FIXME FALSE: turned off for now */
+		if (!update_tny_account_for_account (self, acc_mgr, account_name, TNY_ACCOUNT_TYPE_STORE))
+			g_warning ("%s: failed to update store account for %s", __FUNCTION__, account_name);
+		if (!update_tny_account_for_account (self, acc_mgr, account_name, TNY_ACCOUNT_TYPE_TRANSPORT))
+			g_warning ("%s: failed to update transport account for %s", __FUNCTION__, account_name);
+	}
+
 	/* TODO: This doesn't actually work, because
 	 * a) The account name is not sent correctly per key:
 	 * b) We should test the end of the key, not the whole keym
 	 * c) We don't seem to be getting all keys here.
-	 * Instead, we just forget the password for all accounts when we create them, for now.
+	 * Instead, we just forget the password for all accounts when we create them,
+	 * for now.
 	 */
-	#if 0
-	/* If a password has changed, then forget the previously cached password for this account: */
-	if (server_account && key && g_slist_find_custom ((GSList *)keys, MODEST_ACCOUNT_PASSWORD, (GCompareFunc)strcmp)) {
-		printf ("DEBUG: %s: Forgetting cached password for account ID=%s\n", __FUNCTION__, account);
-		modest_tny_account_store_forget_password_in_memory (self,  account);
-	}
-	#endif
-
-	g_signal_emit (G_OBJECT(self), signals[ACCOUNT_CHANGED_SIGNAL], 0, account);
 }
 
 static void 
@@ -1146,7 +1183,7 @@ modest_tny_account_store_alert (TnyAccountStore *self, TnyAccount *account, TnyA
 		 * when it is a question.
 		 * Obviously, we need tinymail to use more specific error codes instead,
 		 * so we know what buttons to show. */
-	 
+	
 	 	/* TODO: Do this in the main context: */
 		GtkWidget *dialog = GTK_WIDGET (hildon_note_new_confirmation (GTK_WINDOW (main_window), 
 	 		prompt));

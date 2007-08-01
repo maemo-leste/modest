@@ -552,6 +552,55 @@ forget_pass_dummy (TnyAccount *account)
 	/* intentionally left blank */
 }
 
+
+
+gboolean
+modest_tny_account_update_from_account (TnyAccount *tny_account, ModestAccountMgr *account_mgr,
+					const gchar *account_name, TnyAccountType type) 
+{
+	ModestAccountData *account_data = NULL;
+	ModestServerAccountData *server_data = NULL;
+	
+	g_return_val_if_fail (tny_account, FALSE);
+	g_return_val_if_fail (account_mgr, FALSE);
+	g_return_val_if_fail (account_name, FALSE);
+	g_return_val_if_fail (type == TNY_ACCOUNT_TYPE_STORE || type == TNY_ACCOUNT_TYPE_TRANSPORT,
+			      FALSE);
+
+	account_data = modest_account_mgr_get_account_data (account_mgr, account_name);
+	if (!account_data) {
+		g_printerr ("modest: %s: cannot get account data for account %s\n",
+			    __FUNCTION__, account_name);
+		return FALSE;
+	}
+
+	if (type == TNY_ACCOUNT_TYPE_STORE && account_data->store_account)
+		server_data = account_data->store_account;
+	else if (type == TNY_ACCOUNT_TYPE_TRANSPORT && account_data->transport_account)
+		server_data = account_data->transport_account;
+	if (!server_data) {
+		g_printerr ("modest: no %s account defined for '%s'\n",
+			    type == TNY_ACCOUNT_TYPE_STORE ? "store" : "transport",
+			    account_data->display_name);
+		modest_account_mgr_free_account_data (account_mgr, account_data);
+		return FALSE;
+	}
+	
+	update_tny_account (tny_account, account_mgr, server_data);
+		
+	/* This name is what shows up in the folder view -- so for some POP/IMAP/... server
+ 	 * account, we set its name to the account of which it is part. */
+ 
+	if (account_data->display_name)
+		tny_account_set_name (tny_account, account_data->display_name);
+
+	modest_account_mgr_free_account_data (account_mgr, account_data);
+
+	return TRUE;
+}
+
+
+
 TnyAccount*
 modest_tny_account_new_from_account (ModestAccountMgr *account_mgr,
 				     const gchar *account_name,
@@ -567,6 +616,8 @@ modest_tny_account_new_from_account (ModestAccountMgr *account_mgr,
 	g_return_val_if_fail (account_mgr, NULL);
 	g_return_val_if_fail (account_name, NULL);
 	g_return_val_if_fail (session, NULL);
+	g_return_val_if_fail (type == TNY_ACCOUNT_TYPE_STORE || type == TNY_ACCOUNT_TYPE_TRANSPORT,
+			      NULL);
 
 	account_data = modest_account_mgr_get_account_data (account_mgr, account_name);
 	if (!account_data) {
@@ -607,9 +658,8 @@ modest_tny_account_new_from_account (ModestAccountMgr *account_mgr,
 	tny_account_set_pass_func (tny_account,
 				   get_pass_func ? get_pass_func: get_pass_dummy);
 	
-
-        modest_tny_account_set_parent_modest_account_name_for_server_account (tny_account, account_name);
-
+        modest_tny_account_set_parent_modest_account_name_for_server_account (tny_account,
+									      account_name);
         modest_account_mgr_free_account_data (account_mgr, account_data);
 
 	return tny_account;
@@ -994,10 +1044,10 @@ modest_tny_account_get_parent_modest_account_name_for_server_account (TnyAccount
 
 void 
 modest_tny_account_set_parent_modest_account_name_for_server_account (TnyAccount *self, 
-								      const gchar* parent_modest_acount_name)
+								      const gchar* parent_modest_account_name)
 {
 	g_object_set_data_full (G_OBJECT(self), "modest_account",
-				(gpointer) g_strdup (parent_modest_acount_name), g_free);
+				(gpointer) g_strdup (parent_modest_account_name), g_free);
 }
 
 gboolean

@@ -77,6 +77,10 @@ static void         on_account_inserted    (TnyAccountStore *self,
 					    TnyAccount *account,
 					    gpointer user_data);
 
+static void         on_account_changed    (TnyAccountStore *self, 
+					    TnyAccount *account,
+					    gpointer user_data);
+
 static gint         cmp_rows               (GtkTreeModel *tree_model, 
 					    GtkTreeIter *iter1, 
 					    GtkTreeIter *iter2,
@@ -152,6 +156,7 @@ struct _ModestFolderViewPrivate {
 	gulong                changed_signal;
 	gulong                account_inserted_signal;
 	gulong                account_removed_signal;
+	gulong		      account_changed_signal;
 	gulong                conf_key_signal;
 	
 	/* not unref this object, its a singlenton */
@@ -257,7 +262,8 @@ modest_folder_view_class_init (ModestFolderViewClass *klass)
 }
 
 /* Simplify checks for NULLs: */
-static gboolean strings_are_equal (const gchar *a, const gchar *b)
+static gboolean
+strings_are_equal (const gchar *a, const gchar *b)
 {
 	if (!a && !b)
 		return TRUE;
@@ -269,7 +275,8 @@ static gboolean strings_are_equal (const gchar *a, const gchar *b)
 		return FALSE;
 }
 
-static gboolean on_model_foreach_set_name(GtkTreeModel *model, GtkTreePath *path,  GtkTreeIter *iter, gpointer data)
+static gboolean
+on_model_foreach_set_name(GtkTreeModel *model, GtkTreePath *path,  GtkTreeIter *iter, gpointer data)
 {
 	GObject *instance = NULL;
 	
@@ -313,7 +320,8 @@ typedef struct
 	gchar *previous_name;
 } GetMmcAccountNameData;
 
-static void on_get_mmc_account_name (TnyStoreAccount* account, gpointer user_data)
+static void
+on_get_mmc_account_name (TnyStoreAccount* account, gpointer user_data)
 {
 	/* printf ("DEBU1G: %s: account name=%s\n", __FUNCTION__, tny_account_get_name (TNY_ACCOUNT(account))); */
 
@@ -695,6 +703,8 @@ modest_folder_view_finalize (GObject *obj)
 					     priv->account_inserted_signal);
 		g_signal_handler_disconnect (G_OBJECT(priv->account_store),
 					     priv->account_removed_signal);
+		g_signal_handler_disconnect (G_OBJECT(priv->account_store),
+					     priv->account_changed_signal);
 		g_object_unref (G_OBJECT(priv->account_store));
 		priv->account_store = NULL;
 	}
@@ -760,7 +770,10 @@ modest_folder_view_set_account_store (TnyAccountStoreView *self, TnyAccountStore
 						   priv->account_removed_signal))
 			g_signal_handler_disconnect (G_OBJECT (priv->account_store), 
 						     priv->account_removed_signal);
-
+		if (g_signal_handler_is_connected (G_OBJECT (priv->account_store), 
+						   priv->account_changed_signal))
+			g_signal_handler_disconnect (G_OBJECT (priv->account_store), 
+						     priv->account_changed_signal);
 		g_object_unref (G_OBJECT (priv->account_store));
 	}
 
@@ -774,11 +787,9 @@ modest_folder_view_set_account_store (TnyAccountStoreView *self, TnyAccountStore
 		g_signal_connect (G_OBJECT(account_store), "account_inserted",
 				  G_CALLBACK (on_account_inserted), self);
 
-
-/* 	g_signal_connect (G_OBJECT(account_store), "connecting_finished", */
-/* 				G_CALLBACK (on_accounts_reloaded), self); */
-
-/* 	on_accounts_reloaded (account_store, (gpointer ) self); */
+	priv->account_changed_signal =
+		g_signal_connect (G_OBJECT(account_store), "account_changed",
+				  G_CALLBACK (on_account_changed), self);
 
 	modest_folder_view_update_model (MODEST_FOLDER_VIEW (self), account_store);
 	
@@ -816,6 +827,16 @@ on_account_inserted (TnyAccountStore *account_store,
 	tny_list_append (TNY_LIST (gtk_tree_model_sort_get_model (GTK_TREE_MODEL_SORT (sort_model))),
 			 G_OBJECT (account));
 }
+
+
+static void
+on_account_changed (TnyAccountStore *account_store, TnyAccount *tny_account,
+		    gpointer user_data)
+{
+	g_warning ("%s: account_id = %s", __FUNCTION__, tny_account_get_id(tny_account));
+}
+
+
 
 static void
 on_account_removed (TnyAccountStore *account_store, 
