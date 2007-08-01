@@ -104,6 +104,11 @@ static void  text_buffer_apply_tag (GtkTextBuffer *buffer, GtkTextTag *tag,
 				    gpointer userdata);
 static void  text_buffer_delete_images_by_id (GtkTextBuffer *buffer, const gchar * image_id);
 static void  subject_field_changed (GtkEditable *editable, ModestMsgEditWindow *window);
+static void  subject_field_insert_text (GtkEditable *editable, 
+					gchar *new_text,
+					gint new_text_length,
+					gint *position,
+					ModestMsgEditWindow *window);
 static void  modest_msg_edit_window_color_button_change (ModestMsgEditWindow *window,
 							 gpointer userdata);
 static void  modest_msg_edit_window_size_change (GtkCheckMenuItem *menu_item,
@@ -563,6 +568,7 @@ init_window (ModestMsgEditWindow *obj)
 			  "changed", G_CALLBACK (recpt_field_changed), obj);
 	recpt_field_changed (modest_recpt_editor_get_buffer (MODEST_RECPT_EDITOR (priv->to_field)), MODEST_MSG_EDIT_WINDOW (obj));
 	g_signal_connect (G_OBJECT (priv->subject_field), "changed", G_CALLBACK (subject_field_changed), obj);
+	g_signal_connect (G_OBJECT (priv->subject_field), "insert-text", G_CALLBACK (subject_field_insert_text), obj);
 
 	g_signal_connect (G_OBJECT (priv->find_toolbar), "close", G_CALLBACK (modest_msg_edit_window_find_toolbar_close), obj);
 	g_signal_connect (G_OBJECT (priv->find_toolbar), "search", G_CALLBACK (modest_msg_edit_window_find_toolbar_search), obj);
@@ -2809,6 +2815,40 @@ subject_field_changed (GtkEditable *editable,
 	ModestMsgEditWindowPrivate *priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
 	update_window_title (window);
 	gtk_text_buffer_set_modified (priv->text_buffer, TRUE);
+}
+
+static void  
+subject_field_insert_text (GtkEditable *editable, 
+			   gchar *new_text,
+			   gint new_text_length,
+			   gint *position,
+			   ModestMsgEditWindow *window)
+{
+	GString *result = g_string_new ("");
+	gchar *current;
+	gint result_len = 0;
+
+	for (current = new_text; current != NULL && *current != '\0'; current = g_utf8_next_char (current)) {
+		gunichar c = g_utf8_get_char_validated (current, 8);
+		/* Invalid unichar, stop */
+		if (c == -1)
+			break;
+		/* a bullet */
+		if (c == 0x2022)
+			continue;
+		result = g_string_append_unichar (result, c);
+		result_len++;
+	}
+
+	if (MIN (result_len, 1000) != g_utf8_strlen (new_text, 1000)) {
+		g_signal_stop_emission_by_name (G_OBJECT (editable), "insert-text");
+		if (result_len > 0)
+			g_signal_emit_by_name (editable, "insert-text", 
+					       (gpointer) result->str, (gpointer) strlen (result->str), 
+					       (gpointer) position, (gpointer) window);
+	}
+	
+	g_string_free (result, TRUE);
 }
 
 gboolean
