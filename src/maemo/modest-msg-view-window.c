@@ -1978,7 +1978,7 @@ modest_msg_view_window_save_attachments (ModestMsgViewWindow *window, GList *mim
 			canceled = TRUE;
 		}
 	} else {
-		save_multiple_str = g_strdup_printf (_("FIXME: %d attachments"), 
+		save_multiple_str = g_strdup_printf (_FM("sfil_va_number_of_objects_attachments"), 
 						     g_list_length (mime_parts));
 	}
 	
