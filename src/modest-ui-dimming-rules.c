@@ -44,7 +44,9 @@
 
 static gboolean _folder_is_any_of_type (TnyFolder *folder, TnyFolderType types[], guint ntypes);
 static gboolean _invalid_msg_selected (ModestMainWindow *win, gboolean unique, ModestDimmingRule *rule);
-static gboolean _invalid_attach_selected (ModestWindow *win, gboolean unique, gboolean for_view, ModestDimmingRule *rule);
+static gboolean _invalid_attach_selected (ModestWindow *win, 
+					  gboolean unique, gboolean for_view, gboolean for_remove,
+					  ModestDimmingRule *rule);
 static gboolean _purged_attach_selected (ModestWindow *win, gboolean all, ModestDimmingRule *rule);
 static gboolean _clipboard_is_empty (ModestWindow *win);
 static gboolean _invalid_clipboard_selected (ModestWindow *win, ModestDimmingRule *rule);
@@ -785,7 +787,7 @@ modest_ui_dimming_rules_on_view_attachments (ModestWindow *win, gpointer user_da
 
 	/* Check dimmed rule */	
 	if (!dimmed) 
-		dimmed = _invalid_attach_selected (win, TRUE, TRUE, rule);			
+		dimmed = _invalid_attach_selected (win, TRUE, TRUE, FALSE, rule);			
 
 	if (!dimmed) {
 		dimmed = _purged_attach_selected (win, FALSE, NULL);
@@ -809,7 +811,7 @@ modest_ui_dimming_rules_on_save_attachments (ModestWindow *win, gpointer user_da
 
 	/* Check dimmed rule */	
 	if (!dimmed) 
-		dimmed = _invalid_attach_selected (win, FALSE, FALSE, rule);
+		dimmed = _invalid_attach_selected (win, FALSE, FALSE, FALSE, rule);
 
 	if (!dimmed) {
 		dimmed = _purged_attach_selected (win, FALSE, NULL);
@@ -838,7 +840,7 @@ modest_ui_dimming_rules_on_remove_attachments (ModestWindow *win, gpointer user_
 
 	/* Check in view window if there's any attachment selected */
 	if (!dimmed && MODEST_IS_MSG_VIEW_WINDOW (win)) {
-		dimmed = _invalid_attach_selected (win, FALSE, FALSE, NULL);
+		dimmed = _invalid_attach_selected (win, FALSE, FALSE, TRUE, NULL);
 		if (dimmed)
 			modest_dimming_rule_set_notification (rule, _("FIXME:no attachment selected"));
 	}
@@ -1485,6 +1487,7 @@ static gboolean
 _invalid_attach_selected (ModestWindow *win,
 			  gboolean unique,
 			  gboolean for_view,
+			  gboolean for_remove,
 			  ModestDimmingRule *rule) 
 {
 	GList *attachments, *node;
@@ -1519,14 +1522,14 @@ _invalid_attach_selected (ModestWindow *win,
 			for (node = attachments; node != NULL && !result; node = g_list_next (node)) {
 				TnyMimePart *mime_part = TNY_MIME_PART (node->data);
 				TnyList *nested_list = tny_simple_list_new ();
-				if (TNY_IS_MSG (mime_part)) {
+				if (!for_remove && TNY_IS_MSG (mime_part)) {
 					selected_messages = TRUE;
 					result = TRUE;
 				}
 				tny_mime_part_get_parts (mime_part, nested_list);
-				if (tny_list_get_length (nested_list) > 0) {
-				nested_attachments = TRUE;
-				result = TRUE;
+				if (!for_remove && tny_list_get_length (nested_list) > 0) {
+					nested_attachments = TRUE;
+					result = TRUE;
 				}
 				g_object_unref (nested_list);
 			}

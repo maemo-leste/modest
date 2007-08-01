@@ -831,7 +831,11 @@ html_adjustment_changed (GtkAdjustment *adj,
 	gboolean vadj_changed;
 	gint new_height;
 
+	g_signal_stop_emission_by_name (G_OBJECT (adj), "changed");
+
 	priv->html_scroll->requisition.height = html_vadj->upper;
+	if (html_vadj->upper == priv->html_scroll->allocation.height)
+		return;
 	priv->html_scroll->allocation.height = html_vadj->upper;
 
 	set_vadjustment_values (msg_view, &vadj_changed);

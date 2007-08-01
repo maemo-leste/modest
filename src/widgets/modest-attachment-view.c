@@ -173,27 +173,30 @@ modest_attachment_view_set_part_default (TnyMimePartView *self, TnyMimePart *mim
 
 	priv->size = 0;
 	priv->is_purged = tny_mime_part_is_purged (mime_part);
-	
-	if (priv->is_purged) {
-		filename = g_strdup( tny_mime_part_get_filename (mime_part));
-		if (filename == NULL)
-			filename = g_strdup ("");
-		file_icon_name = modest_platform_get_file_icon_name (NULL, NULL, NULL);
-	} else if (TNY_IS_MSG (mime_part)) {
+
+	if (TNY_IS_MSG (mime_part)) {
 		TnyHeader *header = tny_msg_get_header (TNY_MSG (mime_part));
 		if (TNY_IS_HEADER (header)) {
 			filename = g_strdup (tny_header_get_subject (header));
 			if (filename == NULL)
 				filename = g_strdup (_("mail_va_no_subject"));
-			file_icon_name = modest_platform_get_file_icon_name (NULL, tny_mime_part_get_content_type (mime_part), NULL);
+			if (priv->is_purged)
+				file_icon_name = modest_platform_get_file_icon_name (NULL, NULL, NULL);
+			else
+				file_icon_name = 
+					modest_platform_get_file_icon_name (
+						NULL, tny_mime_part_get_content_type (mime_part), NULL);
 			g_object_unref (header);
 		}
 	} else {
 		filename = g_strdup (tny_mime_part_get_filename (mime_part));
-		file_icon_name = modest_platform_get_file_icon_name (filename, 
-								     tny_mime_part_get_content_type (mime_part), 
-								     NULL);
-		show_size = TRUE;
+		if (priv->is_purged) {
+			file_icon_name = modest_platform_get_file_icon_name (NULL, NULL, NULL);
+		} else {
+			file_icon_name = modest_platform_get_file_icon_name (
+				filename, tny_mime_part_get_content_type (mime_part), NULL);
+			show_size = TRUE;
+		}
 	}
 
 	if (file_icon_name) {
