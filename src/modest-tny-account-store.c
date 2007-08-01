@@ -1085,6 +1085,7 @@ modest_tny_account_store_alert (TnyAccountStore *self, TnyAccount *account, TnyA
 			break;
 			
 		case TNY_ACCOUNT_ERROR_TRY_CONNECT_HOST_LOOKUP_FAILED:
+		case TNY_ACCOUNT_ERROR_TRY_CONNECT_SERVICE_UNAVAILABLE:
 			/* TODO: Show the appropriate message, depending on whether it's POP or IMAP: */
 			g_debug ("%s: Handling GError domain=%d, code=%d (lookup failed), message=%s", 
  				__FUNCTION__, error->domain, error->code, error->message);

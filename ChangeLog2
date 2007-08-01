@@ -1,5 +1,12 @@
 2007-08-01  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-tny-account-store.c: (modest_tny_account_store_alert):
+	Handle TNY_ACCOUNT_ERROR_TRY_CONNECT_SERVICE_UNAVAILABLE in the same 
+	way as TNY_ACCOUNT_ERROR_TRY_CONNECT_HOST_LOOKUP_FAILED, showing an 
+	error dialog, instead of ignoring it.
+
+2007-08-01  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/maemo/modest-msg-view-window.c:
 	(modest_msg_view_window_get_header),
 	(modest_msg_view_window_last_message_selected):
