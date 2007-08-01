@@ -374,7 +374,7 @@ on_progress_changed (ModestMailOperation  *mail_op,
 	if (priv->current == mail_op) {
 		gchar *msg = NULL;
 		
-		determined = (state->done > 0 && state->total > 0) && 
+		determined = (state->done > 0 && state->total > 1) && 
 			!(state->done == 1 && state->total == 100);
 
 		switch (state->op_type) {
