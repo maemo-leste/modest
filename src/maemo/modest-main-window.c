@@ -161,6 +161,9 @@ modest_main_window_on_folder_selection_changed (ModestFolderView *folder_view,
 						TnyFolderStore *folder_store, 
 						gboolean selected,
 						ModestMainWindow *main_window);
+						
+static void
+set_at_least_one_account_visible(ModestMainWindow *self);
 
 /* list my signals */
 enum {
@@ -399,8 +402,6 @@ modest_main_window_get_child_widget (ModestMainWindow *self,
 static void
 restore_settings (ModestMainWindow *self, gboolean do_folder_view_too)
 {
-	printf ("DEBUGDEBUG: %s\n", __FUNCTION__);
-	
 	ModestConf *conf;
 	ModestMainWindowPrivate *priv;
 
@@ -1253,7 +1254,7 @@ static void
 account_number_changed (TnyAccountStore *account_store, 
 			const gchar *account_name,
 			gpointer user_data)
-{
+{	
 	GSList *account_names, *iter, *accounts;
 	ModestMainWindow *self;
 	ModestMainWindowPrivate *priv;
@@ -1515,6 +1516,11 @@ account_number_changed (TnyAccountStore *account_store,
 	/* Frees */
 	g_slist_free (accounts);
 	g_free (default_account);
+
+
+	/* Make sure that at least one account is viewed if there are any 
+	 * accounts, for instance when adding the first account: */
+	set_at_least_one_account_visible (self);
 }
 
 /* 
@@ -2158,23 +2164,14 @@ on_queue_changed (ModestMailOperationQueue *queue,
 
 }
 
-static void 
-on_show_account_action_activated  (GtkAction *action,
-				   gpointer user_data)
+static void
+set_account_visible(ModestMainWindow *self, const gchar *acc_name)
 {
-	ModestAccountData *acc_data;
-	ModestMainWindow *self;
-	ModestMainWindowPrivate *priv;
-	ModestAccountMgr *mgr;
-	const gchar *acc_name;
-
-	self = MODEST_MAIN_WINDOW (user_data);
-	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
+	ModestMainWindowPrivate *priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
 
 	/* Get account data */
-	acc_name = gtk_action_get_name (action);
-	mgr = modest_runtime_get_account_mgr ();
-	acc_data = modest_account_mgr_get_account_data (mgr, acc_name);
+	ModestAccountMgr *mgr = modest_runtime_get_account_mgr ();
+	ModestAccountData *acc_data = modest_account_mgr_get_account_data (mgr, acc_name);
 
 	/* Set the new visible & active account */
 	if (acc_data && acc_data->store_account) { 
@@ -2188,6 +2185,41 @@ on_show_account_action_activated  (GtkAction *action,
 	/* Free */
 	if (acc_data)
 		modest_account_mgr_free_account_data (mgr, acc_data);
+}
+
+/* Make sure that at least one account is "viewed": */
+static void
+set_at_least_one_account_visible(ModestMainWindow *self)
+{
+	ModestMainWindowPrivate *priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
+	ModestAccountMgr *account_mgr = modest_runtime_get_account_mgr();
+
+	if (!(priv->folder_view)) {
+		/* It is too early to do this. */
+		return;	
+	}
+	
+	const gchar *active_server_account_name = 
+		modest_folder_view_get_account_id_of_visible_server_account (priv->folder_view);	
+	if (!active_server_account_name ||
+		!modest_account_mgr_account_exists (account_mgr, active_server_account_name, TRUE))
+	{
+		gchar* first_modest_name = modest_account_mgr_get_first_account_name (account_mgr);
+		if (first_modest_name) {
+			set_account_visible (self, first_modest_name);
+			g_free (first_modest_name);
+		}
+	}
+}
+
+static void 
+on_show_account_action_activated  (GtkAction *action,
+				   gpointer user_data)
+{
+	ModestMainWindow *self = MODEST_MAIN_WINDOW (user_data);
+
+	const gchar *acc_name = gtk_action_get_name (action);
+	set_account_visible (self, acc_name);
 }
 
 static void

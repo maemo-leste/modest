@@ -614,44 +614,55 @@ gint on_accounts_list_sort_by_title(gconstpointer a, gconstpointer b)
  	return g_utf8_collate((const gchar*)a, (const gchar*)b);
 }
 
-gboolean
-modest_account_mgr_set_first_account_as_default (ModestAccountMgr *self)
+/** Get the first one, alphabetically, by title. */
+gchar* 
+modest_account_mgr_get_first_account_name (ModestAccountMgr *self)
 {
-	gchar *old_default;
-	gboolean result = FALSE, found;
-	GSList* list_sorted, *iter;
 	const gchar* account_name = NULL;
 	GSList *account_names = modest_account_mgr_account_names (self, TRUE /* only enabled */);
 
 	/* Return TRUE if there is no account */
 	if (!account_names)
-		return TRUE;
-		
-	/* Get the first one, alphabetically, by title: */
-	old_default = modest_account_mgr_get_default_account (self);
-	list_sorted = g_slist_sort (account_names, on_accounts_list_sort_by_title);
+		return NULL;
 
-	iter = list_sorted;
-	found = FALSE;
+	/* Get the first one, alphabetically, by title: */
+	/* gchar *old_default = modest_account_mgr_get_default_account (self); */
+	GSList* list_sorted = g_slist_sort (account_names, on_accounts_list_sort_by_title);
+
+	GSList* iter = list_sorted;
+	gboolean found = FALSE;
 	while (iter && !found) {
 		account_name = (const gchar*)list_sorted->data;
 
-		if (old_default) {
-			/* The new should be different than the old one */
-			if (strcmp (old_default, account_name))
-				found = TRUE;
-		} else
+		if (account_name)
 			found = TRUE;
 
 		if (!found)
 			iter = g_slist_next (iter);
 	}
 
-	if (found && account_name)
-		result = modest_account_mgr_set_default_account (self, account_name);
-
+	gchar* result = NULL;
+	if (account_name)
+		result = g_strdup (account_name);
+		
 	modest_account_mgr_free_account_names (account_names);
 	account_names = NULL;
+
+	return result;
+}
+
+gboolean
+modest_account_mgr_set_first_account_as_default (ModestAccountMgr *self)
+{
+	gboolean result = FALSE;
+	
+	gchar* account_name = modest_account_mgr_get_first_account_name(self);
+	if (account_name) {
+		result = modest_account_mgr_set_default_account (self, account_name);
+		g_free (account_name);
+	}
+	else
+		result = TRUE; /* If there are no accounts then it's not a failure. */
 
 	return result;
 }

@@ -1,5 +1,18 @@
 2007-08-01  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-account-mgr-helpers.h:
+	* src/modest-account-mgr-helpers.c:
+	Added modest_account_mgr_get_first_account_name(), 
+	using code from modest_account_mgr_set_first_account_as_default().
+
+	* src/maemo/modest-main-window.c: Added set_at_least_one_account_visible().
+	(account_number_changed): Call set_at_least_one_account_visible() so that 
+	the first account is visible when first added, without the user having to 
+	use the View menu.
+	I do wonder how this worked before.
+
+2007-08-01  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/modest-tny-account-store.c: (show_password_warning_only),
 	(show_wrong_password), (request_password_and_wait), (get_password),
 	(modest_tny_account_store_alert): Remove the (incomplete anyway) 

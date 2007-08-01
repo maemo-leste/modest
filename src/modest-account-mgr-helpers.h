@@ -128,6 +128,10 @@ gboolean modest_account_mgr_unset_default_account  (ModestAccountMgr *self);
 gboolean
 modest_account_mgr_set_first_account_as_default  (ModestAccountMgr *self);
 
+/** Get the first one, alphabetically, by title. */
+gchar* 
+modest_account_mgr_get_first_account_name (ModestAccountMgr *self);
+
 /**
  * modest_account_mgr_free_account_data:
  * @self: a ModestAccountMgr instance
