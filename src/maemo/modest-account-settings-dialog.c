@@ -255,16 +255,22 @@ static GtkWidget* create_caption_new_with_asterisk(ModestAccountSettingsDialog *
 }
 
 static void
-on_entry_invalid_character (ModestValidatingEntry *self, const gchar* character, gpointer user_data)
+on_entry_invalid_account_title_character (ModestValidatingEntry *self, const gchar* character, gpointer user_data)
 {
-	/* ModestEasysetupWizardDialog *dialog = MODEST_EASYSETUP_WIZARD_DIALOG (user_data); */
-	/* We could add a special case for whitespace here 
-	if (character == NULL) ...
-	*/
-	/* TODO: Should this show just this one bad character or all the not-allowed characters? */
-	gchar *message = g_strdup_printf (_CS("ckdg_ib_illegal_characters_entered"), character);
+	gchar *message = g_strdup_printf (_CS("ckdg_ib_illegal_characters_entered"),
+					  "\\ / : * ? \" < > | ^");
 	show_error (GTK_WIDGET (self), message);
 }
+
+static void
+on_entry_invalid_fullname_character (ModestValidatingEntry *self, const gchar* character, gpointer user_data)
+{
+	gchar *message = g_strdup_printf (_CS("ckdg_ib_illegal_characters_entered"),
+					  "< >");
+	show_error (GTK_WIDGET (self), message);
+}
+
+
 
 static void
 on_entry_max (ModestValidatingEntry *self, gpointer user_data)
@@ -306,8 +312,7 @@ create_page_account_details (ModestAccountSettingsDialog *self)
 	list_prevent = g_list_append (list_prevent, ":");
 	list_prevent = g_list_append (list_prevent, "*");
 	list_prevent = g_list_append (list_prevent, "?");
-	list_prevent = g_list_append (list_prevent, "\""); /* The UI spec mentions “, but maybe means ", maybe both. */
-	list_prevent = g_list_append (list_prevent, "“");
+	list_prevent = g_list_append (list_prevent, "\"");
 	list_prevent = g_list_append (list_prevent, "<"); 
 	list_prevent = g_list_append (list_prevent, ">"); 
 	list_prevent = g_list_append (list_prevent, "|");
@@ -316,7 +321,7 @@ create_page_account_details (ModestAccountSettingsDialog *self)
 	 	MODEST_VALIDATING_ENTRY (self->entry_account_title), list_prevent);
 	g_list_free (list_prevent);
 	modest_validating_entry_set_func(MODEST_VALIDATING_ENTRY(self->entry_account_title),
-																	 on_entry_invalid_character, self);
+					 on_entry_invalid_account_title_character, self);
 	
 	/* Set max length as in the UI spec:
 	 * The UI spec seems to want us to show a dialog if we hit the maximum. */
@@ -412,6 +417,7 @@ create_page_user_details (ModestAccountSettingsDialog *self)
 	 
 	/* The name widgets: */
 	self->entry_user_name = GTK_WIDGET (modest_validating_entry_new ());
+
 	/* Auto-capitalization is the default, so let's turn it off: */
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (self->entry_user_name), HILDON_GTK_INPUT_MODE_FULL);
 	/* Set max length as in the UI spec:
@@ -425,7 +431,8 @@ create_page_user_details (ModestAccountSettingsDialog *self)
 	connect_for_modified (self, self->entry_user_name);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (caption);
-	
+
+
 	/* Prevent the use of some characters in the name, 
 	 * as required by our UI specification: */
 	GList *list_prevent = NULL;
@@ -434,6 +441,8 @@ create_page_user_details (ModestAccountSettingsDialog *self)
 	modest_validating_entry_set_unallowed_characters (
 	 	MODEST_VALIDATING_ENTRY (self->entry_user_name), list_prevent);
 	g_list_free (list_prevent);
+	modest_validating_entry_set_func(MODEST_VALIDATING_ENTRY(self->entry_user_name),
+					 on_entry_invalid_fullname_character, self);
 	
 	/* The username widgets: */	
 	self->entry_user_username = GTK_WIDGET (modest_validating_entry_new ());
@@ -874,7 +883,7 @@ check_data (ModestAccountSettingsDialog *self)
 			return FALSE;
 		}
 	}
-	
+
 	/* Check that the email address is valid: */
 	const gchar* email_address = gtk_entry_get_text (GTK_ENTRY (self->entry_user_email));
 	if ((!email_address) || (strlen(email_address) == 0))
