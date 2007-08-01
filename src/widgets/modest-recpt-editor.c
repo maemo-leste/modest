@@ -335,7 +335,7 @@ modest_recpt_editor_instance_init (GTypeInstance *instance, gpointer g_class)
 	priv->text_view = gtk_text_view_new ();
 	priv->recipients = NULL;
 
-	priv->scrolled_window = modest_scroll_text_new (GTK_TEXT_VIEW (priv->text_view), 5);
+	priv->scrolled_window = modest_scroll_text_new (GTK_TEXT_VIEW (priv->text_view), 1024);
 	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (priv->scrolled_window), GTK_POLICY_NEVER,
 					GTK_POLICY_AUTOMATIC);
 	gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (priv->scrolled_window), GTK_SHADOW_IN);
