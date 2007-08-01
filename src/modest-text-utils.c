@@ -964,7 +964,26 @@ modest_text_utils_get_display_address (gchar *address)
 	return address;
 }
 
+gchar *
+modest_text_utils_get_email_address (const gchar *full_address)
+{
+	const gchar *left, *right;
+	
+	if (!full_address)
+		return NULL;
+	
+	g_return_val_if_fail (g_utf8_validate (full_address, -1, NULL), NULL);
+	
+	left = g_strrstr_len (full_address, strlen(full_address), "<");
+	if (left == NULL)
+		return g_strdup (full_address);
 
+	right = g_strstr_len (left, strlen(left), ">");
+	if (right == NULL)
+		return g_strdup (full_address);
+
+	return g_strndup (left + 1, right - left - 1);
+}
 
 gint 
 modest_text_utils_get_subject_prefix_len (const gchar *sub)

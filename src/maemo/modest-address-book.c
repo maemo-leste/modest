@@ -130,6 +130,7 @@ modest_address_book_add_address (const gchar *address)
 {
 	OssoABookAccount *account = NULL;
 	GtkWidget *dialog = NULL;
+	gchar *email_address = NULL;
 
 	contact_model = osso_abook_contact_model_new ();
 	if (!open_addressbook ()) {
@@ -139,8 +140,11 @@ modest_address_book_add_address (const gchar *address)
 		}
 		return;
 	}
+
+	email_address = modest_text_utils_get_email_address (address);
 	
-	account = osso_abook_account_get (EVC_EMAIL, NULL, address);
+	account = osso_abook_account_get (EVC_EMAIL, NULL, email_address);
+	g_free (email_address);
 	if (account)
 	{
 		dialog = osso_abook_add_to_contacts_dialog_new (contact_model, account);

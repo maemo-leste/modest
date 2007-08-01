@@ -186,7 +186,7 @@ size_t modest_text_utils_strftime(char *s, size_t max, const char  *fmt, time_t 
 
 
 /**
- * modest_text_utils_get_display_addres:
+ * modest_text_utils_get_display_address:
  * @address: original address (UTF8 string)
  *
  * make a 'display address' from an address:
@@ -201,6 +201,21 @@ size_t modest_text_utils_strftime(char *s, size_t max, const char  *fmt, time_t 
  * NULL in case of error or if address == NULL
  */
 gchar* modest_text_utils_get_display_address (gchar *address);
+
+/**
+ * modest_text_utils_get_email_address:
+ * @full_address: original address (UTF8 string)
+ *
+ * make a 'foo@bar.cx' from an address:
+ * "Foo Bar <foo@bar.cx> (Bla)" --> "foo@bar.cx"
+ * If no "<...>" is found, then it returns the full
+ * strings.
+ * 
+ * Returns: a newly allocated string with the copy.
+ * 
+ * NULL in case of error or if address == NULL
+ */
+gchar* modest_text_utils_get_email_address (const gchar *email_address);
 
 
 /**
