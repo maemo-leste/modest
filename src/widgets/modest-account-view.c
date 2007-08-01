@@ -141,11 +141,15 @@ modest_account_view_finalize (GObject *obj)
 						   priv->acc_removed_handler))
 			g_signal_handler_disconnect (modest_runtime_get_account_store (), 
 						     priv->acc_removed_handler);
-
+		
+		if (g_signal_handler_is_connected (modest_runtime_get_account_store (),
+						   priv->acc_changed_handler))
+			g_signal_handler_disconnect (modest_runtime_get_account_store (), 
+						     priv->acc_changed_handler);
+		
 		if (priv->acc_busy_changed_handler)
 			g_signal_handler_disconnect (priv->account_mgr, priv->acc_busy_changed_handler);
-		if (priv->acc_changed_handler)
-			g_signal_handler_disconnect (priv->account_mgr, priv->acc_changed_handler);
+
 		
 		g_object_unref (G_OBJECT(priv->account_mgr));
 		priv->account_mgr = NULL; 
@@ -319,10 +323,10 @@ on_account_changed (TnyAccountStore *account_store,
 {
 	ModestAccountView *self;
 	ModestAccountViewPrivate *priv;
-
+	
 	self = MODEST_ACCOUNT_VIEW (user_data);
 	priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE (self);
-
+	
 	g_warning ("account changed: %s", tny_account_get_id(account));
 	
 	update_account_view (priv->account_mgr, self);
@@ -479,16 +483,15 @@ init_view (ModestAccountView *self)
 	priv->acc_inserted_handler = g_signal_connect (G_OBJECT (modest_runtime_get_account_store ()),
 						       "account_inserted",
 						       G_CALLBACK(on_account_inserted), self);
-	
+
+	priv->acc_inserted_handler = g_signal_connect (G_OBJECT (modest_runtime_get_account_store ()),
+						       "account_changed",
+						       G_CALLBACK(on_account_changed), self);
+
 	priv->acc_busy_changed_handler = g_signal_connect (G_OBJECT(priv->account_mgr),
 							   "account_busy_changed",
 							   G_CALLBACK(on_account_busy_changed), self);
-
-	priv->acc_changed_handler = g_signal_connect (G_OBJECT(priv->account_mgr),
-						      "account_changed",
-						      G_CALLBACK(on_account_changed), self);
 }
-
 
 
 ModestAccountView*
