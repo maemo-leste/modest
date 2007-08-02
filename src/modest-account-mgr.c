@@ -1097,7 +1097,7 @@ modest_account_mgr_set_list (ModestAccountMgr *self,
 }
 
 gboolean
-modest_account_mgr_account_exists (ModestAccountMgr * self, const gchar * name,
+modest_account_mgr_account_exists (ModestAccountMgr * self, const gchar* name,
 				   gboolean server_account)
 {
 	ModestAccountMgrPrivate *priv;
@@ -1106,7 +1106,7 @@ modest_account_mgr_account_exists (ModestAccountMgr * self, const gchar * name,
 	gboolean retval;
 	GError *err = NULL;
 
-	g_return_val_if_fail (MODEST_IS_ACCOUNT_MGR(self), FALSE);
+	g_return_val_if_fail (self, FALSE);
         g_return_val_if_fail (name, FALSE);
 
 	keyname = _modest_account_mgr_get_account_keyname (name, NULL, server_account);
@@ -1244,20 +1244,45 @@ _modest_account_mgr_account_from_key (const gchar *key, gboolean *is_account_key
 
 
 
+
+/* optimization: only with non-alphanum chars, escaping is needed */
+inline static gboolean
+is_alphanum (const gchar* str)
+{
+	const gchar *cursor;
+	for (cursor = str; cursor && *cursor; ++cursor) {
+		const char c = *cursor;
+		/* we cannot trust isalnum(3), because it might consider locales */
+		/*       numbers            ALPHA            alpha       */
+		if (!((c>=48 && c<=57)||(c>=65 && c<=90)||(c>=97 && c<=122)))
+			return FALSE;
+	}
+	return TRUE;
+}
+		
+
 /* must be freed by caller */
 gchar *
 _modest_account_mgr_get_account_keyname (const gchar *account_name, const gchar * name, gboolean server_account)
 {
-	gchar *retval = NULL;
-	
+	gchar *retval = NULL;	
 	gchar *namespace = server_account ? MODEST_SERVER_ACCOUNT_NAMESPACE : MODEST_ACCOUNT_NAMESPACE;
+	gchar *escaped_account_name, *escaped_name;
 	
 	if (!account_name)
 		return g_strdup (namespace);
 	
-	/* Always escape the conf keys, so that it is acceptable to gconf: */
-	gchar *escaped_account_name = account_name ? modest_conf_key_escape (account_name) : NULL;
-	gchar *escaped_name =  name ? modest_conf_key_escape (name) : NULL;
+	/* optimization: only escape names when need to be escaped */
+	if (is_alphanum (account_name))
+		escaped_account_name = (gchar*)account_name;
+	else
+		escaped_account_name = modest_conf_key_escape (account_name);
+	
+	if (is_alphanum (name))
+		escaped_name = (gchar*)name;
+	else
+		escaped_name = modest_conf_key_escape (name);
+	//////////////////////////////////////////////////////////////
 
 	if (escaped_account_name && escaped_name)
 		retval = g_strconcat (namespace, "/", escaped_account_name, "/", escaped_name, NULL);
@@ -1271,9 +1296,12 @@ _modest_account_mgr_get_account_keyname (const gchar *account_name, const gchar 
 		retval = NULL;
 	}
 
-	g_free (escaped_name);
-	g_free (escaped_account_name);
-
+	/* g_free is only needed if we actually allocated anything */
+	if (name != escaped_name)
+		g_free (escaped_name);
+	if (account_name != escaped_account_name)
+		g_free (escaped_account_name);
+	
 	return retval;
 }
 
@@ -1301,7 +1329,7 @@ compare_account_name(gconstpointer a, gconstpointer b)
 
 void 
 modest_account_mgr_set_account_busy(ModestAccountMgr* self, const gchar* account_name, 
-																		gboolean busy)
+				    gboolean busy)
 {
 	ModestAccountMgrPrivate* priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
 	if (busy)
