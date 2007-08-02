@@ -58,7 +58,6 @@
 #include "modest-mail-operation.h"
 
 #define KB 1024
-#define GET_SIZE_BUFFER_SIZE 128
 
 /* 
  * Remove all these #ifdef stuff when the tinymail's idle calls become
@@ -1955,101 +1954,6 @@ void modest_mail_operation_get_msg (ModestMailOperation *self,
 		/* Notify the queue */
 		modest_mail_operation_notify_end (self);
 	}
-}
-
-static gboolean
-idle_get_mime_part_size_cb (gpointer userdata)
-{
-	GetMimePartSizeInfo *idle_info;
-
-	idle_info = (GetMimePartSizeInfo *) userdata;
-
-	gdk_threads_enter ();
-	idle_info->callback (idle_info->mail_op,
-			     idle_info->size,
-			     idle_info->userdata);
-	gdk_threads_leave ();
-
-	g_object_unref (idle_info->mail_op);
-	g_slice_free (GetMimePartSizeInfo, idle_info);
-
-	return FALSE;
-}
-
-static gpointer
-get_mime_part_size_thread (gpointer thr_user_data)
-{
-	GetMimePartSizeInfo *info;
-	gchar read_buffer[GET_SIZE_BUFFER_SIZE];
-	TnyStream *stream;
-	gssize readed_size;
-	gssize total = 0;
-	ModestMailOperationPrivate *priv;
-
-	info = (GetMimePartSizeInfo *) thr_user_data;
-	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (info->mail_op);
-
-	stream = tny_camel_mem_stream_new ();
-	tny_mime_part_decode_to_stream (info->mime_part, stream);
-	tny_stream_reset (stream);
-	if (tny_stream_is_eos (stream)) {
-		tny_stream_close (stream);
-		stream = tny_mime_part_get_stream (info->mime_part);
-	}
-	
-	while (!tny_stream_is_eos (stream)) {
-		readed_size = tny_stream_read (stream, read_buffer, GET_SIZE_BUFFER_SIZE);
-		total += readed_size;
-	}
-
-	if (info->callback) {
-		GetMimePartSizeInfo *idle_info;
-
-		idle_info = g_slice_new0 (GetMimePartSizeInfo);
-		idle_info->mail_op = g_object_ref (info->mail_op);
-		idle_info->size = total;
-		idle_info->callback = info->callback;
-		idle_info->userdata = info->userdata;
-		g_idle_add (idle_get_mime_part_size_cb, idle_info);
-	}
-
-	g_idle_add (idle_notify_queue, g_object_ref (info->mail_op));
-
-	g_object_unref (info->mail_op);
-	g_object_unref (stream);
-	g_object_unref (info->mime_part);
-	g_slice_free  (GetMimePartSizeInfo, info);
-
-	return NULL;
-}
-
-void          
-modest_mail_operation_get_mime_part_size (ModestMailOperation *self,
-					  TnyMimePart *part,
-					  GetMimePartSizeCallback user_callback,
-					  gpointer user_data,
-					  GDestroyNotify notify)
-{
-	GetMimePartSizeInfo *info;
-	ModestMailOperationPrivate *priv;
-	GThread *thread;
-	
-	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
-	g_return_if_fail (TNY_IS_MIME_PART (part));
-	
-	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
-
-	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
-	info = g_slice_new0 (GetMimePartSizeInfo);
-	info->mail_op = g_object_ref (self);
-	info->mime_part = g_object_ref (part);
-	info->callback = user_callback;
-	info->userdata = user_data;
-
-	tny_camel_mem_stream_get_type ();
-
-	thread = g_thread_create (get_mime_part_size_thread, info, FALSE, NULL);
-
 }
 
 static void

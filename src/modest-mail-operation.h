@@ -537,21 +537,6 @@ void          modest_mail_operation_get_msgs_full   (ModestMailOperation *self,
 						     gpointer user_data,
 						     GDestroyNotify notify);
 
-/**
- * modest_mail_operation_get_mime_part_size:
- * @self: a #ModestMailOperation
- * @part: a #TnyMimePart
- * @user_callback: a #GetMimePartSizeAsyncUserCallback
- * @user_data: user data passed to the user callback
- *
- * gets the size of the mime part, simply getting all the stream.
- */
-void          modest_mail_operation_get_mime_part_size (ModestMailOperation *self,
-							TnyMimePart *part,
-							GetMimePartSizeCallback user_callback,
-							gpointer user_data,
-							GDestroyNotify notify);
-
 /* Functions to control mail operations */
 /**
  * modest_mail_operation_get_task_done:
