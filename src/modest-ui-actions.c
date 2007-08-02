@@ -2460,9 +2460,15 @@ void
 modest_ui_actions_on_delete_folder (GtkAction *action,
 				     ModestMainWindow *main_window)
 {
+	GtkWidget *folder_view;
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW(main_window));
 
 	delete_folder (main_window, FALSE);
+	folder_view = modest_main_window_get_child_widget (main_window,
+							   MODEST_WIDGET_TYPE_FOLDER_VIEW);
+	if (!folder_view)
+		return;
+	modest_folder_view_select_first_inbox_or_local (MODEST_FOLDER_VIEW (folder_view));
 }
 
 void 
