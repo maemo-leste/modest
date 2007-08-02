@@ -72,7 +72,13 @@ main (int argc, char *argv[])
 	}
 
 	win = modest_main_window_new ();
-
+			
+	if (!win) {
+		g_printerr ("modest: failed to create main window\n");
+		retval = 1;
+		goto cleanup;
+	}
+	
 	/* Usually, we only show the UI when we get the "top_application" D-Bus method.
 	 * This allows modest to start via D-Bus activation to provide a service, 
 	 * without showing the UI.
@@ -81,12 +87,6 @@ main (int argc, char *argv[])
 	 */
 	if (show_ui_without_top_application_method)
 		gtk_widget_show_all (GTK_WIDGET(win));
-		
-	if (!win) {
-		g_printerr ("modest: failed to create main window\n");
-		retval = 1;
-		goto cleanup;
-	}
 	
 	modest_window_mgr_register_window (modest_runtime_get_window_mgr(), 
 					   win);
