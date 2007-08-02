@@ -1768,7 +1768,6 @@ modest_msg_view_window_view_attachment (ModestMsgViewWindow *window, TnyMimePart
 
 	if (tny_mime_part_is_purged (mime_part)) {
 		g_object_unref (mime_part);
-		hildon_banner_show_information (NULL, NULL, _("mail_ib_attach_not_local"));
 		return;
 	}
 
