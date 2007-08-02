@@ -63,6 +63,7 @@
 #include "modest-ui-dimming-manager.h"
 #include "maemo/modest-osso-state-saving.h"
 #include "modest-text-utils.h"
+#include "modest-signal-mgr.h"
 
 #ifdef MODEST_HAVE_HILDON0_WIDGETS
 #include <hildon-widgets/hildon-program.h>
@@ -213,9 +214,9 @@ struct _ModestMainWindowPrivate {
 	guint progress_bar_timeout;
 
 	/* Signal handler UIDs */
-	gint queue_changed_handler_uid; 
 	GList *queue_err_signals;
-
+	GSList *sighandlers;
+	
 	ModestConfNotificationId notification_id;
 };
 #define MODEST_MAIN_WINDOW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -339,7 +340,7 @@ modest_main_window_init (ModestMainWindow *obj)
 	priv->optimized_view  = FALSE;
 	priv->send_receive_in_progress  = FALSE;
 	priv->progress_bar_timeout = 0;
-	priv->queue_changed_handler_uid = 0;
+	priv->sighandlers = NULL;
 }
 
 static void
@@ -349,6 +350,12 @@ modest_main_window_finalize (GObject *obj)
 
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(obj);
 
+	if (priv->notification_id) {
+		modest_conf_forget_namespace (modest_runtime_get_conf (),
+					      MODEST_CONF_NAMESPACE,
+					      priv->notification_id);
+	}
+	
 	/* Sanity check: shouldn't be needed, the window mgr should
 	   call this function before */
 	modest_main_window_disconnect_signals (MODEST_WINDOW (obj));
@@ -362,12 +369,6 @@ modest_main_window_finalize (GObject *obj)
 	if (priv->progress_bar_timeout > 0) {
 		g_source_remove (priv->progress_bar_timeout);
 		priv->progress_bar_timeout = 0;
-	}
-
-	if (priv->notification_id) {
-		modest_conf_forget_namespace (modest_runtime_get_conf (),
-					      MODEST_CONF_NAMESPACE,
-					      priv->notification_id);
 	}
 
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
@@ -643,15 +644,11 @@ _header_view_csm_menu_activated (GtkWidget *widget, gpointer user_data)
 static void
 modest_main_window_disconnect_signals (ModestWindow *self)
 {	
-	ModestMainWindowPrivate *priv;
-	
+	ModestMainWindowPrivate *priv;	
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
 
-	/* Disconnect signal handlers */
-	if (g_signal_handler_is_connected (modest_runtime_get_mail_operation_queue (),
-					   priv->queue_changed_handler_uid))
-		g_signal_handler_disconnect (modest_runtime_get_mail_operation_queue (),
-					     priv->queue_changed_handler_uid);
+	modest_signal_mgr_disconnect_all_and_destroy (priv->sighandlers);
+	priv->sighandlers = NULL;	
 }
 
 static void
@@ -665,76 +662,71 @@ connect_signals (ModestMainWindow *self)
 	parent_priv = MODEST_WINDOW_GET_PRIVATE(self);
 
 	/* folder view */
-	g_signal_connect (G_OBJECT(priv->folder_view), "key-press-event",
-			  G_CALLBACK(on_inner_widgets_key_pressed), self);
-	g_signal_connect (G_OBJECT(priv->folder_view), "folder_selection_changed",
-			  G_CALLBACK(modest_main_window_on_folder_selection_changed), self);
-	g_signal_connect (G_OBJECT(priv->folder_view), "folder-display-name-changed",
-			  G_CALLBACK(modest_ui_actions_on_folder_display_name_changed), self);
-	g_signal_connect (G_OBJECT (priv->folder_view), "focus-in-event", 
-			  G_CALLBACK (on_folder_view_focus_in), self);
+	
+	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,
+						       G_OBJECT(priv->folder_view), "key-press-event",
+						       G_CALLBACK(on_inner_widgets_key_pressed), self);
+	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,G_OBJECT(priv->folder_view), "folder_selection_changed",
+						       G_CALLBACK(modest_main_window_on_folder_selection_changed), self);
+	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,G_OBJECT(priv->folder_view), "folder-display-name-changed",
+						       G_CALLBACK(modest_ui_actions_on_folder_display_name_changed), self);
+	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,G_OBJECT (priv->folder_view), "focus-in-event", 
+						       G_CALLBACK (on_folder_view_focus_in), self);
 
 	/* Folder view CSM */
 	menu = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/FolderViewCSM");
 	gtk_widget_tap_and_hold_setup (GTK_WIDGET (priv->folder_view), menu, NULL, 0);
-	g_signal_connect (G_OBJECT(priv->folder_view), "tap-and-hold",
-			  G_CALLBACK(_folder_view_csm_menu_activated),
-			  self);
+	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers, G_OBJECT(priv->folder_view), "tap-and-hold",
+						       G_CALLBACK(_folder_view_csm_menu_activated),
+						       self);
 	/* header view */
-	g_signal_connect (G_OBJECT(priv->header_view), "header_selected",
-			  G_CALLBACK(modest_ui_actions_on_header_selected), self);
-	g_signal_connect (G_OBJECT(priv->header_view), "header_activated",
-			  G_CALLBACK(modest_ui_actions_on_header_activated), self);
-	g_signal_connect (G_OBJECT(priv->header_view), "item_not_found",
-			  G_CALLBACK(modest_ui_actions_on_item_not_found), self);
-	g_signal_connect (G_OBJECT(priv->header_view), "key-press-event",
-			  G_CALLBACK(on_inner_widgets_key_pressed), self);
-	g_signal_connect (G_OBJECT(priv->header_view), "msg_count_changed",
-			  G_CALLBACK(_on_msg_count_changed), self);
-	g_signal_connect (G_OBJECT (priv->header_view), "focus-in-event",
-			  G_CALLBACK (on_header_view_focus_in), self);
-
+	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,G_OBJECT(priv->header_view), "header_selected",
+						       G_CALLBACK(modest_ui_actions_on_header_selected), self);
+	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,G_OBJECT(priv->header_view), "header_activated",
+						       G_CALLBACK(modest_ui_actions_on_header_activated), self);
+	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,G_OBJECT(priv->header_view), "item_not_found",
+						       G_CALLBACK(modest_ui_actions_on_item_not_found), self);
+	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,G_OBJECT(priv->header_view), "key-press-event",
+						       G_CALLBACK(on_inner_widgets_key_pressed), self);
+	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,G_OBJECT(priv->header_view), "msg_count_changed",
+						       G_CALLBACK(_on_msg_count_changed), self);
+	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,G_OBJECT (priv->header_view), "focus-in-event",
+						       G_CALLBACK (on_header_view_focus_in), self);
+	
 	/* Header view CSM */
 	menu = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/HeaderViewCSM");
 	gtk_widget_tap_and_hold_setup (GTK_WIDGET (priv->header_view), menu, NULL, 0);
-	g_signal_connect (G_OBJECT(priv->header_view), "tap-and-hold",
-			  G_CALLBACK(_header_view_csm_menu_activated),
-			  self);
+	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,G_OBJECT(priv->header_view), "tap-and-hold",
+						       G_CALLBACK(_header_view_csm_menu_activated),
+						       self);
 	
 	/* window */
-	g_signal_connect (G_OBJECT (self), "window-state-event",
+	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,G_OBJECT (self), "window-state-event",
 			  G_CALLBACK (modest_main_window_window_state_event),
 			  NULL);
 	
 	/* Mail Operation Queue */
-	priv->queue_changed_handler_uid = 
-		g_signal_connect (G_OBJECT (modest_runtime_get_mail_operation_queue ()),
-				  "queue-changed", G_CALLBACK (on_queue_changed), self);
-
+	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,G_OBJECT (modest_runtime_get_mail_operation_queue ()),
+						       "queue-changed", G_CALLBACK (on_queue_changed), self);
+	
 	/* Track changes in the device name */
 	priv->notification_id =  modest_conf_listen_to_namespace (modest_runtime_get_conf (), 
 								  MODEST_CONF_NAMESPACE);
-	g_signal_connect (G_OBJECT(modest_runtime_get_conf ()),
-			  "key_changed", G_CALLBACK (on_configuration_key_changed), 
-			  self);
-
+	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,G_OBJECT(modest_runtime_get_conf ()),
+						       "key_changed", G_CALLBACK (on_configuration_key_changed), 
+						       self);
+	
 	/* Track account changes. We need to refresh the toolbar */
-	g_signal_connect (G_OBJECT (modest_runtime_get_account_store ()),
-			  "account_inserted", G_CALLBACK (account_number_changed),
-			  self);
-	g_signal_connect (G_OBJECT (modest_runtime_get_account_store ()),
-			  "account_removed", G_CALLBACK (account_number_changed),
-			  self);
-
+	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,G_OBJECT (modest_runtime_get_account_store ()),
+						       "account_inserted", G_CALLBACK (account_number_changed),
+						       self);
+	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,G_OBJECT (modest_runtime_get_account_store ()),
+						       "account_removed", G_CALLBACK (account_number_changed),
+						       self);
 	/* Account store */
-	g_signal_connect (G_OBJECT (modest_runtime_get_account_store()), 
-			  "password_requested",
-			  G_CALLBACK (modest_ui_actions_on_password_requested), self);
-			  
-/* 	/\* Device *\/ */
-/* 	g_signal_connect (G_OBJECT(modest_runtime_get_account_store()),  */
-/* 			  "connecting-finished", */
-/* 			  G_CALLBACK(on_account_store_connecting_finished), self); */
+	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,G_OBJECT (modest_runtime_get_account_store()), 
+						       "password_requested",
+						       G_CALLBACK (modest_ui_actions_on_password_requested), self);
 }
 
 #if 0

@@ -36,7 +36,7 @@
 #include "widgets/modest-main-window.h"
 #include "widgets/modest-msg-edit-window.h"
 #include "widgets/modest-msg-view-window.h"
-/* include other impl specific header files */
+
 
 /* 'private'/'protected' functions */
 static void modest_window_mgr_class_init (ModestWindowMgrClass *klass);
@@ -572,10 +572,10 @@ modest_window_mgr_unregister_window (ModestWindowMgr *self,
 
 	/* Disconnect all the window signals */
 	modest_window_disconnect_signals (window);
-
+	
 	/* Destroy the window */
 	gtk_widget_destroy (win->data);
-
+	
 	/* If there are no more windows registered then exit program */
 	if (priv->window_list == NULL) {
 		ModestConf *conf = modest_runtime_get_conf ();
@@ -683,11 +683,16 @@ ModestWindow*
 modest_window_mgr_get_main_window (ModestWindowMgr *self)
 {
 	ModestWindowMgrPrivate *priv;
-
+	
 	g_return_val_if_fail (MODEST_IS_WINDOW_MGR (self), NULL);
-
 	priv = MODEST_WINDOW_MGR_GET_PRIVATE (self);
 
+	/* create the main window, if it hasn't been created yet */
+	if (!priv->main_window) {
+		g_debug ("%s: creating main window\n", __FUNCTION__);
+		modest_window_mgr_register_window (self, modest_main_window_new ());
+	}
+	
 	return priv->main_window;
 }
 
