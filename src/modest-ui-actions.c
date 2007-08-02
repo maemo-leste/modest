@@ -3659,6 +3659,9 @@ modest_ui_actions_xfer_messages_from_move_to (TnyFolderStore *dst_folder,
 {
 	TnyList *headers = NULL;
 	gint response = 0;
+	TnyAccount *dst_account = NULL;
+	const gchar *proto_str = NULL;
+	gboolean dst_is_pop = FALSE;
 
 	if (!TNY_IS_FOLDER (dst_folder)) {
 		modest_platform_information_banner (GTK_WIDGET (win),
@@ -3667,8 +3670,24 @@ modest_ui_actions_xfer_messages_from_move_to (TnyFolderStore *dst_folder,
 		return;
 	}
 
+	dst_account = tny_folder_get_account (TNY_FOLDER (dst_folder));
+	proto_str = tny_account_get_proto (dst_account);
+	dst_is_pop = (modest_protocol_info_get_transport_store_protocol (proto_str) == 
+		      MODEST_PROTOCOL_STORE_POP);
+	g_object_unref (dst_account);
+
 	/* Get selected headers */
 	headers = get_selected_headers (MODEST_WINDOW (win));
+
+	if (dst_is_pop) {
+		modest_platform_information_banner (GTK_WIDGET (win),
+						    NULL,
+						    ngettext("mail_in_ui_folder_move_target_error",
+							     "mail_in_ui_folder_move_targets_error",
+							     tny_list_get_length (headers)));
+		g_object_unref (headers);
+		return;
+	}
 
 	/* Ask for user confirmation */
 	response = msgs_move_to_confirmation (GTK_WINDOW (win), 
