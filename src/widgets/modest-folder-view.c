@@ -834,18 +834,7 @@ static void
 on_account_changed (TnyAccountStore *account_store, TnyAccount *tny_account,
 		    gpointer user_data)
 {
-	ModestFolderView*  self;
-
-	self = MODEST_FOLDER_VIEW (user_data);
-	
-	/* Ignore transport account insertions, we're not showing them
-	   in the folder view */
-	if (TNY_IS_TRANSPORT_ACCOUNT (tny_account))
-		return;
-	
-	/* ugly hack to force a redraw */
-	modest_folder_view_update_model (self,
-					 account_store);
+	/* do nothing */
 }
 
 
