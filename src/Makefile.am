@@ -1,6 +1,6 @@
 #
 # Makefile.am
-# Time-stamp: <2007-06-23 15:17:46 (djcb)>
+# Time-stamp: <2007-08-02 16:13:34 (djcb)>
 
 SUBDIRS=$(MODEST_PLATFORM) widgets $(dbus_api)
 
@@ -78,6 +78,8 @@ modest_SOURCES=\
 	modest-runtime-priv.h\
 	modest-singletons.c\
 	modest-singletons.h\
+	modest-signal-mgr.h\
+	modest-signal-mgr.c\
 	modest-text-utils.c\
 	modest-text-utils.h\
 	modest-tny-account-store.c\
