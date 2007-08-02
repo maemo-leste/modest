@@ -82,6 +82,7 @@ struct _ModestProgressBarWidgetPrivate {
         GSList              *observables;
         ModestMailOperation *current;
 
+	guint count;
 	GtkWidget *progress_bar;
 };
 #define MODEST_PROGRESS_BAR_WIDGET_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -185,6 +186,7 @@ modest_progress_bar_widget_init (ModestProgressBarWidget *self)
 	req.height = 64;
 	gtk_progress_set_text_alignment (GTK_PROGRESS (priv->progress_bar), 0, 0.5);
 	gtk_progress_bar_set_ellipsize (GTK_PROGRESS_BAR (priv->progress_bar), PANGO_ELLIPSIZE_END);
+	gtk_progress_bar_set_pulse_step (GTK_PROGRESS_BAR (priv->progress_bar), 0.05);
 	gtk_widget_size_request (priv->progress_bar, &req);
 	gtk_container_add (GTK_CONTAINER (align), priv->progress_bar);
 	gtk_widget_size_request (align, &req);
@@ -238,6 +240,8 @@ modest_progress_bar_add_operation (ModestProgressObject *self,
 	/* Set curent operation */
 	if (priv->current == NULL) {
 		priv->current = mail_op;
+
+		priv->count = 0;
 
 		/* Call progress_change handler to initialize progress message */
 		state = g_malloc0(sizeof(ModestMailOperationState));
@@ -436,28 +440,47 @@ modest_progress_bar_widget_set_progress (ModestProgressBarWidget *self,
 					 gint total)
 {
 	ModestProgressBarWidgetPrivate *priv;
-	
+	gboolean determined = FALSE;
+
 	g_return_if_fail (MODEST_IS_PROGRESS_BAR_WIDGET(self));
 	g_return_if_fail (done <= total);
 	
 	priv = MODEST_PROGRESS_BAR_WIDGET_GET_PRIVATE (self);
 
+ 	priv->count++;
+
 	/* Set progress. Tinymail sometimes returns us 1/100 when it
 	   does not have any clue, NOTE that 1/100 could be also a
 	   valid progress (we will loose it), but it will be recovered
 	   once the done is greater than 1 */
-	if ((done == 0 && total == 0) || 
-	    (done == 1 && total == 100)) {
+	determined = (done > 0 && total > 1) && 
+		!(done == 1 && total == 100);
+/* 	if ((done == 0 && total == 0) ||  */
+/* 	    (done == 1 && total == 100)) { */
+	if (!determined) {
+		gtk_progress_bar_set_bar_style (GTK_PROGRESS_BAR (priv->progress_bar), /* Deprecated */
+						GTK_PROGRESS_CONTINUOUS);
 		gtk_progress_bar_pulse (GTK_PROGRESS_BAR (priv->progress_bar));
+		printf ("debug: %s:\n  undetermined progress (%i) changed (%i/%i) : %i\n", __FUNCTION__, 
+			(int) priv->progress_bar,
+			done, 
+			total,
+			priv->count);
 	} else {
 		gdouble percent = 0;
 		if (total != 0) /* Avoid division by zero. */
 			percent = (gdouble)done/(gdouble)total;
 
-		gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR (priv->progress_bar),
-						       percent);
-	}
+ 		gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR (priv->progress_bar),
+					       percent);
 
+		printf ("debug: %s:\n  determined progress (%i) changed (%i/%i) : %i\n", __FUNCTION__, 
+			(int) priv->progress_bar,
+			done, 
+			total,
+			priv->count);
+	}
+	
 	/* Set text */
 	gtk_progress_bar_set_text (GTK_PROGRESS_BAR (priv->progress_bar), message);
 }

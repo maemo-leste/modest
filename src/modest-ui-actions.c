@@ -45,6 +45,9 @@
 #include "modest-tny-platform-factory.h"
 #include "modest-platform.h"
 #include <tny-mime-part.h>
+#include <tny-camel-folder.h>
+#include <tny-camel-imap-folder.h>
+#include <tny-camel-pop-folder.h>
 
 #ifdef MODEST_PLATFORM_MAEMO
 #include "maemo/modest-osso-state-saving.h"
@@ -322,7 +325,7 @@ modest_ui_actions_on_delete_message (GtkAction *action, ModestWindow *win)
 	 * or from the message view window: */
 	header_list = get_selected_headers (win);
 	if (!header_list) return;
-
+			
 	/* Check if any of the headers are already opened, or in the process of being opened */
 	if (MODEST_IS_MAIN_WINDOW (win)) {
 		gboolean found;
@@ -383,6 +386,8 @@ modest_ui_actions_on_delete_message (GtkAction *action, ModestWindow *win)
 		GList *sel_list = NULL, *tmp = NULL;
 		GtkTreeRowReference *row_reference = NULL;
 		GtkTreePath *next_path = NULL;
+		TnyFolder *folder = NULL;
+		GError *err = NULL;
 
 		/* Find last selected row */			
 		if (MODEST_IS_MAIN_WINDOW (win)) {
@@ -426,6 +431,30 @@ modest_ui_actions_on_delete_message (GtkAction *action, ModestWindow *win)
 				gtk_tree_row_reference_free (row_reference);
 		}
 
+		/* Get folder from first header and sync it */
+		iter = tny_list_create_iterator (header_list);
+		header = TNY_HEADER (tny_iterator_get_current (iter));
+		folder = tny_header_get_folder (header);
+		if (TNY_IS_CAMEL_IMAP_FOLDER (folder))
+/* 			tny_folder_sync_async(folder, FALSE, NULL, NULL, NULL); /\* FALSE --> don't expunge *\/ */
+			tny_folder_sync (folder, FALSE, &err); /* FALSE --> don't expunge */
+/* 		else if (TNY_IS_CAMEL_POP_FOLDER (folder)) */
+/* 			tny_folder_sync_async(folder, FALSE, NULL, NULL, NULL); /\* TRUE --> dont expunge *\/ */
+/* 			tny_folder_sync (folder, TRUE, &err); /\* TRUE --> expunge *\/ */
+		else
+			/* local folders */
+/* 			tny_folder_sync_async(folder, TRUE, NULL, NULL, NULL); /\* TRUE --> expunge *\/ */
+			tny_folder_sync (folder, TRUE, &err); /* TRUE --> expunge */
+
+		if (err != NULL) {
+			printf ("DEBUG: %s: Error: code=%d, text=%s\n", __FUNCTION__, err->code, err->message);
+			g_error_free(err);
+		}
+
+		g_object_unref (header);
+		g_object_unref (iter);
+		g_object_unref (folder);
+		
 		/* Update toolbar dimming state */
 		modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (main_window));
 
@@ -4054,8 +4083,12 @@ modest_ui_actions_on_email_menu_activated (GtkAction *action,
 {
 	g_return_if_fail (MODEST_IS_WINDOW (window));
 
+	/* Init dimming rules init data */
+	
 	/* Update dimmed */	
 	modest_window_check_dimming_rules_group (window, "ModestMenuDimmingRules");	
+
+	/* Free dimming ruls init data */
 }
 
 void

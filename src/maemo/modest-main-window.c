@@ -1793,6 +1793,11 @@ _on_msg_count_changed (ModestHeaderView *header_view,
 	
 	printf ("DEBUG: %s: folder_empty=%d\n", __FUNCTION__, folder_empty);
 
+/*  	Check header removed  (hide marked as DELETED headers) */
+	if (changed & TNY_FOLDER_CHANGE_CHANGED_EXPUNGED_HEADERS) {
+		modest_header_view_refilter (MODEST_HEADER_VIEW(priv->header_view));
+	}
+
 	/* Set contents style of headers view */
 	if (folder_empty)  {
 		modest_main_window_set_contents_style (main_window,

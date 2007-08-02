@@ -130,6 +130,7 @@ typedef struct _XFerMsgAsyncHelper
 	TnyList *headers;
 	TnyFolder *dest_folder;
 	XferMsgsAsynUserCallback user_callback;	
+	gboolean delete;
 	gpointer user_data;
 } XFerMsgAsyncHelper;
 
@@ -2302,20 +2303,23 @@ modest_mail_operation_remove_msg (ModestMailOperation *self,  TnyHeader *header,
 
 	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
 
-
+	/* remove message from folder */
 	tny_folder_remove_msg (folder, header, &(priv->error));
-	if (!priv->error) {
-		tny_header_set_flags (header, TNY_HEADER_FLAG_DELETED);
-		tny_header_set_flags (header, TNY_HEADER_FLAG_SEEN);
+/* 	if (!priv->error) { */
+/* 		tny_header_set_flags (header, TNY_HEADER_FLAG_DELETED); */
+/* 		tny_header_set_flags (header, TNY_HEADER_FLAG_SEEN); */
 
-		if (TNY_IS_CAMEL_IMAP_FOLDER (folder))
-			tny_folder_sync(folder, FALSE, &(priv->error)); /* FALSE --> don't expunge */
-		else if (TNY_IS_CAMEL_POP_FOLDER (folder))
-			tny_folder_sync(folder, TRUE, &(priv->error)); /* TRUE --> expunge */
-		else
-			/* lcoal folders */
-			tny_folder_sync(folder, TRUE, &(priv->error)); /* TRUE --> expunge */
-	}
+/* 		if (TNY_IS_CAMEL_IMAP_FOLDER (folder)) */
+/* 			tny_folder_sync_async(folder, FALSE, NULL, NULL, NULL); /\* FALSE --> don't expunge *\/ */
+/* /\* 			tny_folder_sync (folder, FALSE, &(priv->error)); /\\* FALSE --> don't expunge *\\/ *\/ */
+/* 		else if (TNY_IS_CAMEL_POP_FOLDER (folder)) */
+/* 			tny_folder_sync_async(folder, FALSE, NULL, NULL, NULL); /\* TRUE --> dont expunge *\/ */
+/* /\* 			tny_folder_sync (folder, TRUE, &(priv->error)); /\\* TRUE --> expunge *\\/ *\/ */
+/* 		else */
+/* 			/\* local folders *\/ */
+/* 			tny_folder_sync_async(folder, TRUE, NULL, NULL, NULL); /\* TRUE --> expunge *\/ */
+/* /\* 			tny_folder_sync (folder, TRUE, &(priv->error)); /\\* TRUE --> expunge *\\/ *\/ */
+/* 	} */
 	
 	
 	/* Set status */
@@ -2372,6 +2376,8 @@ transfer_msgs_cb (TnyFolder *folder, gboolean cancelled, GError **err, gpointer 
 	XFerMsgAsyncHelper *helper;
 	ModestMailOperation *self;
 	ModestMailOperationPrivate *priv;
+	TnyIterator *iter = NULL;
+	TnyHeader *header = NULL;
 
 	helper = (XFerMsgAsyncHelper *) user_data;
 	self = helper->mail_op;
@@ -2393,6 +2399,23 @@ transfer_msgs_cb (TnyFolder *folder, gboolean cancelled, GError **err, gpointer 
 		priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
 	}
 
+	
+	/* Mark headers as deleted and seen */
+	if ((helper->delete) && 
+	    (priv->status == MODEST_MAIL_OPERATION_STATUS_SUCCESS)) {
+		iter = tny_list_create_iterator (helper->headers);
+		while (!tny_iterator_is_done (iter)) {
+			header = TNY_HEADER (tny_iterator_get_current (iter));
+			tny_header_set_flags (header, TNY_HEADER_FLAG_DELETED);
+			tny_header_set_flags (header, TNY_HEADER_FLAG_SEEN);
+			g_object_unref (header);
+
+			tny_iterator_next (iter);
+		}
+
+	}
+		
+
 	/* Notify about operation end */
 	modest_mail_operation_notify_end (self);
 
@@ -2404,11 +2427,17 @@ transfer_msgs_cb (TnyFolder *folder, gboolean cancelled, GError **err, gpointer 
 	}
 
 	/* Free */
-	g_object_unref (helper->headers);
-	g_object_unref (helper->dest_folder);
-	g_object_unref (helper->mail_op);
+	if (helper->headers)
+		g_object_unref (helper->headers);
+	if (helper->dest_folder)
+		g_object_unref (helper->dest_folder);
+	if (helper->mail_op)
+		g_object_unref (helper->mail_op);
+	if (folder)
+		g_object_unref (folder);
+	if (iter)
+		g_object_unref (iter);
 	g_slice_free   (XFerMsgAsyncHelper, helper);
-	g_object_unref (folder);
 
 }
 
@@ -2488,6 +2517,7 @@ modest_mail_operation_xfer_msgs (ModestMailOperation *self,
 	helper->headers = g_object_ref(headers);
 	helper->user_callback = user_callback;
 	helper->user_data = user_data;
+	helper->delete = delete_original;
 
 	/* Get account and set it into mail_operation */
 	priv->account = modest_tny_folder_get_account (src_folder);
