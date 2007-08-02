@@ -35,6 +35,7 @@
 #include <tny-camel-msg.h>
 #include <modest-tny-account.h>
 #include <modest-runtime.h>
+#include <modest-platform.h>
 #include <widgets/modest-window-mgr.h>
 #include <modest-marshal.h>
 #include <string.h> /* strcmp */
@@ -565,6 +566,8 @@ _on_msg_has_been_sent (TnySendQueue *self,
 	modest_tny_send_queue_info_free (item->data);
 	g_queue_delete_link (priv->queue, item);
 	priv->current = NULL;
+
+	modest_platform_information_banner (NULL, NULL, _("mcen_ib_message_sent"));
 
 	/* free */
 	g_free(msg_id);
