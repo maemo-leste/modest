@@ -66,6 +66,8 @@ struct _ModestWindowMgrPrivate {
 	GSList       *preregistered_uids;
 	GHashTable   *destroy_handlers;
 	GHashTable   *viewer_handlers;
+	
+	guint        closing_time;
 };
 #define MODEST_WINDOW_MGR_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                MODEST_TYPE_WINDOW_MGR, \
@@ -130,6 +132,8 @@ modest_window_mgr_init (ModestWindowMgr *obj)
 	priv->show_toolbars_fullscreen = FALSE;
 	priv->destroy_handlers = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, g_free);	
 	priv->viewer_handlers = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, g_free);
+
+	priv->closing_time = 0;
 }
 
 static void
@@ -518,6 +522,61 @@ disconnect_msg_changed (gpointer key,
 }
 
 
+
+/* interval before retrying to close the application */
+#define CLOSING_RETRY_INTERVAL 3000 
+/* interval before cancel whatever is left in the queue, and closing anyway */
+#define MAX_WAIT_FOR_CLOSING 30 * 1000 
+
+static gboolean
+on_quit_maybe (ModestWindowMgr *self)
+{
+	ModestWindowMgrPrivate *priv;
+	guint queue_num;
+	
+	priv = MODEST_WINDOW_MGR_GET_PRIVATE (self);
+
+	/* it seems, in the meantime some windows were
+	 * created. in that case, stop  'on_quit_maybe' */
+	if (priv->window_list) {
+		priv->closing_time = 0;
+		return FALSE;
+	}
+
+	if (priv->closing_time >= MAX_WAIT_FOR_CLOSING) {
+		/* we waited long enough: cancel all remaining operations */
+		g_debug ("%s: we waited long enough (%ds), cancelling queue and quiting",
+			 __FUNCTION__, priv->closing_time/1000);
+		/* FIXME: below gives me a lot of:
+		 * GLIB CRITICAL ** default - modest_mail_operation_cancel:
+		 *                     assertion `priv->account' failed
+		 * which means there is no account for the given operation
+		 * so, we're not trying to be nice, we're just quiting.
+		 */
+		//modest_mail_operation_queue_cancel_all
+		//	(modest_runtime_get_mail_operation_queue());
+	} else {
+	
+		/* if there is anything left in our operation queue,
+		 * wait another round
+		 */
+		queue_num = modest_mail_operation_queue_num_elements
+			(modest_runtime_get_mail_operation_queue()); 
+		if  (queue_num > 0) {
+			g_debug ("%s: waiting, there are still %d operation(s) queued",
+				 __FUNCTION__, queue_num);
+			priv->closing_time += CLOSING_RETRY_INTERVAL;
+			return TRUE;
+		}
+	}
+	
+	/* so: no windows left, nothing in the queue: quit */
+	priv->closing_time = 0;
+	gtk_main_quit ();
+	return FALSE;
+}
+
+
 void 
 modest_window_mgr_unregister_window (ModestWindowMgr *self, 
 				     ModestWindow *window)
@@ -578,20 +637,20 @@ modest_window_mgr_unregister_window (ModestWindowMgr *self,
 	
 	/* If there are no more windows registered then exit program */
 	if (priv->window_list == NULL) {
+		
 		ModestConf *conf = modest_runtime_get_conf ();
-
 		/* Save show toolbar status */
 		modest_conf_set_bool (conf, MODEST_CONF_SHOW_TOOLBAR_FULLSCREEN, 
 				      priv->show_toolbars_fullscreen, NULL);
 		modest_conf_set_bool (conf, MODEST_CONF_SHOW_TOOLBAR, 
 				      priv->show_toolbars, NULL);
 
-		/* Quit main loop */
-		/* FIXME: do we ever need to do this here? */
-		if (gtk_main_level() > 0)
-			gtk_main_quit ();
+		g_timeout_add (CLOSING_RETRY_INTERVAL,
+			       (GSourceFunc)on_quit_maybe, self);
 	}
 }
+
+
 
 void
 modest_window_mgr_set_fullscreen_mode (ModestWindowMgr *self,
