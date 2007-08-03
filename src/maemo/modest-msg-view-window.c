@@ -169,6 +169,9 @@ struct _ModestMsgViewWindowPrivate {
 	guint queue_change_handler;
 	guint account_removed_handler;
 
+	guint purge_timeout;
+	GtkWidget *remove_attachment_banner;
+
 	guint progress_bar_timeout;
 
 	gchar *msg_uid;
@@ -271,6 +274,8 @@ modest_msg_view_window_init (ModestMsgViewWindow *obj)
 
 	priv->optimized_view  = FALSE;
 	priv->progress_bar_timeout = 0;
+	priv->purge_timeout = 0;
+	priv->remove_attachment_banner = NULL;
 	priv->msg_uid = NULL;
 }
 
@@ -488,6 +493,17 @@ modest_msg_view_window_finalize (GObject *obj)
 	if (priv->progress_bar_timeout > 0) {
 		g_source_remove (priv->progress_bar_timeout);
 		priv->progress_bar_timeout = 0;
+	}
+
+	if (priv->remove_attachment_banner) {
+		gtk_widget_destroy (priv->remove_attachment_banner);
+		g_object_unref (priv->remove_attachment_banner);
+		priv->remove_attachment_banner = NULL;
+	}
+
+	if (priv->purge_timeout > 0) {
+		g_source_remove (priv->purge_timeout);
+		priv->purge_timeout = 0;
 	}
 
 	if (priv->row_reference) {
@@ -2054,6 +2070,23 @@ modest_msg_view_window_save_attachments (ModestMsgViewWindow *window, GList *mim
 	}
 }
 
+static gboolean
+show_remove_attachment_information (gpointer userdata)
+{
+	ModestMsgViewWindow *window = (ModestMsgViewWindow *) userdata;
+	ModestMsgViewWindowPrivate *priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
+
+	if (priv->remove_attachment_banner != NULL) {
+		gtk_widget_destroy (priv->remove_attachment_banner);
+		g_object_unref (priv->remove_attachment_banner);
+	}
+
+	priv->remove_attachment_banner = g_object_ref (
+		hildon_banner_show_animation (NULL, NULL, _("mcen_ib_removing_attachment")));
+
+	return FALSE;
+}
+
 void
 modest_msg_view_window_remove_attachments (ModestMsgViewWindow *window, gboolean get_all)
 {
@@ -2117,13 +2150,12 @@ modest_msg_view_window_remove_attachments (ModestMsgViewWindow *window, gboolean
 	if (response != GTK_RESPONSE_OK)
 		return;
 
+	priv->purge_timeout = g_timeout_add (2000, show_remove_attachment_information, window);
 /* 	folder = tny_msg_get_folder (msg); */
 /* 	tny_msg_uncache_attachments (msg); */
 /* 	tny_folder_refresh (folder, NULL); */
 /* 	g_object_unref (folder); */
 	
-	modest_platform_information_banner (NULL, NULL, _("mcen_ib_removing_attachment"));
-
 	for (node = mime_parts; node != NULL; node = g_list_next (node)) {
 		tny_mime_part_set_purged (TNY_MIME_PART (node->data));
 /* 		modest_msg_view_remove_attachment (MODEST_MSG_VIEW (priv->msg_view), node->data); */
@@ -2136,6 +2168,17 @@ modest_msg_view_window_remove_attachments (ModestMsgViewWindow *window, gboolean
 
 	g_list_foreach (mime_parts, (GFunc) g_object_unref, NULL);
 	g_list_free (mime_parts);
+
+	if (priv->purge_timeout > 0) {
+		g_source_remove (priv->purge_timeout);
+		priv->purge_timeout = 0;
+	}
+
+	if (priv->remove_attachment_banner) {
+		gtk_widget_destroy (priv->remove_attachment_banner);
+		g_object_unref (priv->remove_attachment_banner);
+		priv->remove_attachment_banner = NULL;
+	}
 
 
 }
