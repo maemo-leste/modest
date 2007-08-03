@@ -28,8 +28,14 @@
  */
 
 
+
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif /*_GNU_SOURCE*/
+#include <string.h> /* for strcasestr */
+
+
 #include <glib.h>
-#include <string.h>
 #include <stdlib.h>
 #include <glib/gi18n.h>
 #include <regex.h>
@@ -1068,6 +1074,54 @@ modest_text_utils_get_display_date (time_t date)
 	
 	return g_strdup(date_buf);
 }
+
+
+gboolean
+modest_text_utils_validate_folder_name (const gchar *folder_name)
+{
+	/* based on http://msdn2.microsoft.com/en-us/library/aa365247.aspx,
+	 * with some extras */
+	
+	guint len;
+	const gchar **cursor;
+	const gchar *forbidden_chars[] = {
+		"<", ">", ":", "\"", "/", "\\", "|", "?", "*", "^", "%", "$", NULL
+	};
+	const gchar *forbidden_names[] = { /* windows does not like these */
+		"CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6",
+		"COM7", "COM8", "COM9", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9",
+		".", "..", NULL
+	};
+	
+	/* cannot be NULL */
+	if (!folder_name) 
+		return FALSE;
+
+	/* cannot be empty */
+	len = strlen(folder_name);
+	if (len == 0)
+		return FALSE;
+	
+	/* cannot start or end with a space */
+	if (g_ascii_isspace(folder_name[0]) || g_ascii_isspace(folder_name[len - 1]))
+		return FALSE; 
+
+	/* cannot contain a forbidden char */
+	for (cursor = forbidden_chars; cursor && *cursor; ++cursor)
+		if (strstr(folder_name, *cursor) != NULL)
+			return FALSE;
+	
+	/* cannot contain a forbidden word */
+	if (len <= 4) {
+		for (cursor = forbidden_names; cursor && *cursor; ++cursor) {
+			g_warning ("%s", *cursor);
+			if (g_ascii_strcasecmp (folder_name, *cursor) == 0)
+				return FALSE;
+		}
+	}
+	return TRUE; /* it's valid! */
+}
+
 
 
 gboolean

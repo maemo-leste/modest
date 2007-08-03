@@ -292,6 +292,20 @@ gboolean modest_text_utils_validate_domain_name (const gchar *domain);
 gboolean     modest_text_utils_validate_email_address (const gchar *email_address, 
 						       const gchar **invalid_char_position);
 
+
+/**
+ * modest_text_utils_validate_folder_name:
+ * @folder_name: a string
+ * 
+ * validates the folder name passed as argument. a 'valid folder name'
+ * is a name which should be valid on both Unix and Windows file systems.
+ * of course, this might be stricter than strictly needed in some cases,
+ * but it's better to err on the safe side.
+ * 
+ * Returns: TRUE if the folder name is valid, FALSE otherwise
+ **/
+gboolean modest_text_utils_validate_folder_name (const gchar *folder_name);
+
 /**
  * modest_text_utils_validate_recipient:
  * @recipient: a string
