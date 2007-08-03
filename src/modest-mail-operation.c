@@ -2676,9 +2676,6 @@ modest_mail_operation_notify_end (ModestMailOperation *self)
 	/* We do not wrapp this emission because we assume that this
 	   function is always called from within the main lock */
 	state = modest_mail_operation_clone_state (self);
-	g_warning ("EXAMINE SITUATION: "
-			"self might be NULL after this function (%s) returns",
-			__FUNCTION__);
 	g_signal_emit (G_OBJECT (self), signals[PROGRESS_CHANGED_SIGNAL], 0, state, NULL);
 	g_slice_free (ModestMailOperationState, state);
 }
