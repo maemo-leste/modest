@@ -1655,6 +1655,12 @@ idle_readjust_scroll (ModestMsgView *view)
 		gtk_adjustment_changed (html_vadj);
 		gtk_widget_queue_resize (GTK_WIDGET (view));
 		gtk_widget_queue_draw (GTK_WIDGET (view));
+
+		/* Just another hack for making readjust really work. This forces an update
+		 * of the scroll, and then, make the scroll really update properly the
+		 * the size and not corrupt scrollable area */
+		gtk_adjustment_set_value (priv->vadj, 1.0);
+		gtk_adjustment_set_value (priv->vadj, 0.0);
 	}
 	g_object_unref (G_OBJECT (view));
 	return FALSE;
