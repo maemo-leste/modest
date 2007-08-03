@@ -2266,6 +2266,21 @@ modest_ui_actions_create_folder(GtkWidget *parent_window,
 		gboolean finished = FALSE;
 		gint result;
 		gchar *folder_name = NULL, *suggested_name = NULL;
+		const gchar *proto_str = NULL;
+		TnyAccount *account;
+
+		if (TNY_IS_ACCOUNT (parent_folder))
+			account = g_object_ref (parent_folder);
+		else
+			account = tny_folder_get_account (TNY_FOLDER (parent_folder));
+		proto_str = tny_account_get_proto (TNY_ACCOUNT (account));
+
+		if (proto_str && modest_protocol_info_get_transport_store_protocol (proto_str) ==
+		    MODEST_PROTOCOL_STORE_POP) {
+			finished = TRUE;
+			hildon_banner_show_information (NULL, NULL, _("mail_in_ui_folder_create_error"));
+		}
+		g_object_unref (account);
 
 		/* Run the new folder dialog */
 		while (!finished) {
