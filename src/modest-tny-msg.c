@@ -416,7 +416,7 @@ create_reply_forward_mail (TnyMsg *msg, TnyHeader *header, const gchar *from, co
 		header = tny_msg_get_header (msg);
 
 	if (msg != NULL)
-		body   = modest_tny_msg_find_body_part (msg, FALSE);
+		body   = modest_tny_msg_find_body_part (msg, !is_reply);
 
 	/* TODO: select the formatter from account prefs */
 	if (modest_conf_get_bool (modest_runtime_get_conf (), MODEST_CONF_PREFER_FORMATTED_TEXT, NULL))
@@ -439,10 +439,13 @@ create_reply_forward_mail (TnyMsg *msg, TnyHeader *header, const gchar *from, co
 		switch (type) {
 		case MODEST_TNY_MSG_FORWARD_TYPE_INLINE:
 		default:
-			new_msg = modest_formatter_inline  (formatter, body, header, attachments);
+			if (strcmp (tny_mime_part_get_content_type (body), "text/html")==0)
+				new_msg = modest_formatter_attach (formatter, msg, header);
+			else 
+				new_msg = modest_formatter_inline  (formatter, body, header, attachments);
 			break;
 		case MODEST_TNY_MSG_FORWARD_TYPE_ATTACHMENT:
-			new_msg = modest_formatter_attach (formatter, body, header);
+			new_msg = modest_formatter_attach (formatter, msg, header);
 			break;
 		}
 	}

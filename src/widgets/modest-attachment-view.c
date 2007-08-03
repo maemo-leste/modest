@@ -212,7 +212,7 @@ modest_attachment_view_set_part_default (TnyMimePartView *self, TnyMimePart *mim
 		TnyHeader *header = tny_msg_get_header (TNY_MSG (mime_part));
 		if (TNY_IS_HEADER (header)) {
 			filename = g_strdup (tny_header_get_subject (header));
-			if (filename == NULL)
+			if (filename == NULL || filename[0] == '\0')
 				filename = g_strdup (_("mail_va_no_subject"));
 			if (priv->is_purged)
 				file_icon_name = modest_platform_get_file_icon_name (NULL, NULL, NULL);

@@ -167,7 +167,7 @@ TnyMsg * modest_formatter_inline (ModestFormatter *self, TnyMimePart *part, TnyH
  *
  * Returns: a newly formatted #TnyMsg or NULL in case of error
  **/
-TnyMsg * modest_formatter_attach (ModestFormatter *self, TnyMimePart *part, TnyHeader *header);
+TnyMsg * modest_formatter_attach (ModestFormatter *self, TnyMsg *msg, TnyHeader *header);
 
 /**
  * modest_formatter_create_message:

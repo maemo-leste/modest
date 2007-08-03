@@ -248,9 +248,9 @@ modest_text_utils_derived_subject (const gchar *subject, const gchar *prefix)
 	gchar *tmp;
 
 	g_return_val_if_fail (prefix, NULL);
-	
-	if (!subject)
-		return g_strdup (prefix);
+
+	if (!subject || subject[0] == '\0')
+		subject = _("mail_va_no_subject");
 
 	tmp = g_strchug (g_strdup (subject));
 

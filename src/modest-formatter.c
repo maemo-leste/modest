@@ -168,12 +168,10 @@ modest_formatter_inline (ModestFormatter *self, TnyMimePart *body, TnyHeader *he
 }
 
 TnyMsg *
-modest_formatter_attach (ModestFormatter *self, TnyMimePart *body, TnyHeader *header)
+modest_formatter_attach (ModestFormatter *self, TnyMsg *msg, TnyHeader *header)
 {
 	TnyMsg *new_msg = NULL;
-	gchar *attach_text = NULL;
-	const gchar *subject;
-	TnyMimePart *body_part = NULL, *attach_part = NULL;
+	TnyMimePart *body_part = NULL;
 	ModestFormatterPrivate *priv;
 	TnyPlatformFactory *fact;
 
@@ -181,23 +179,14 @@ modest_formatter_attach (ModestFormatter *self, TnyMimePart *body, TnyHeader *he
 	/* Build new part */
 	new_msg     = modest_formatter_create_message (self, TRUE, TRUE);
 	body_part = modest_formatter_create_body_part (self, new_msg);
-	attach_part = tny_platform_factory_new_mime_part (fact);
 
 	/* Create the two parts */
 	priv = MODEST_FORMATTER_GET_PRIVATE (self);
-	attach_text = extract_text (self, body);
 	construct_from_text (body_part, "", priv->content_type);
 	g_object_unref (body_part);
-	construct_from_text (attach_part, (const gchar*) attach_text, priv->content_type);
-	subject = tny_header_get_subject (header);
-	tny_mime_part_set_filename (attach_part, subject ? subject : _("No subject"));
 
 	/* Add parts */
-	tny_mime_part_add_part (TNY_MIME_PART (new_msg), attach_part);
-	g_object_unref (attach_part);
-
-	/* Clean */
-	g_free (attach_text);
+	tny_mime_part_add_part (TNY_MIME_PART (new_msg), TNY_MIME_PART (msg));
 
 	return new_msg;
 }
