@@ -575,9 +575,14 @@ idle_create_msg_cb (gpointer idle_data)
 {
 	CreateMsgIdleInfo *info = (CreateMsgIdleInfo *) idle_data;
 
+	/* GDK LOCK: this one is here because we call this from a thread  */
+	/* callback could be 'send mail' or 'save to draft'; i dont knonw */
+	/* why these tow operations must serialized, i think it could be  */
+	/* removed */
 	gdk_threads_enter ();
 	info->callback (info->mail_op, info->msg, info->userdata);
 	gdk_threads_leave ();
+
 	g_object_unref (info->mail_op);
 	if (info->msg)
 		g_object_unref (info->msg);
@@ -1044,6 +1049,11 @@ idle_notify_progress (gpointer data)
 
 	state = modest_mail_operation_clone_state (mail_op);
 #ifdef TINYMAIL_IDLES_NOT_LOCKED_YET
+	/* GDK LOCK: this one is here because we call this from a thread  */
+	/* However, refresh_account operations call async operations on   */
+	/* on tinymail, which also emmit 'progress-changed' signal. This  */
+	/* may be is required to serialize executions of progress-changed'*/
+	/* signal handlers.                                               */
 	gdk_threads_enter ();
 #endif
 	g_signal_emit (G_OBJECT (mail_op), signals[PROGRESS_CHANGED_SIGNAL], 0, state, NULL);
@@ -1067,6 +1077,11 @@ idle_notify_progress_once (gpointer data)
 
 	pair = (ModestPair *) data;
 
+	/* GDK LOCK: this one is here because we call this from a thread  */
+	/* However, refresh_account operations call async operations on   */
+	/* on tinymail, which also emmit 'progress-changed' signal. This  */
+	/* may be is required to serialize executions of progress-changed'*/
+	/* signal handlers                                                */
 #ifdef TINYMAIL_IDLES_NOT_LOCKED_YET
 	gdk_threads_enter ();
 #endif
@@ -1122,6 +1137,10 @@ compare_headers_by_date (gconstpointer a,
 static gboolean 
 set_last_updated_idle (gpointer data)
 {
+	/* GDK LOCK: this one is here because we call this from a thread  */
+	/* and executed with g_idle_add_full during process of method     */
+	/* update_account_thread, to serialize access to LAST_UPDATED     */
+	/* property of each account                                       */
 	gdk_threads_enter ();
 
 	/* It does not matter if the time is not exactly the same than
@@ -1145,6 +1164,10 @@ idle_update_account_cb (gpointer data)
 
 	idle_info = (UpdateAccountInfo *) data;
 
+	/* GDK LOCK: this one is here because we call this from a thread  */
+	/* and executed with g_idle_add during update_account_thread, to  */
+	/* serialize the execution of refresh user callback (mainloop)    */
+	/* received as parameter in modest_mail_operation_update_account  */
 	gdk_threads_enter ();
 	idle_info->callback (idle_info->mail_op,
 			     idle_info->new_headers,
@@ -1664,6 +1687,11 @@ transfer_folder_status_cb (GObject *obj,
 
 	state = modest_mail_operation_clone_state (self);
 #ifdef TINYMAIL_IDLES_NOT_LOCKED_YET
+	/* GDK LOCK: this one is here because we call this from a thread  */
+	/* However, refresh_account operations call async operations on   */
+	/* on tinymail, which also emmit 'progress-changed' signal. This  */
+	/* may be is required to serialize executions of progress-changed'*/
+	/* signal handlers.                                               */
 	gdk_threads_enter ();
 #endif
 	g_signal_emit (G_OBJECT (self), signals[PROGRESS_CHANGED_SIGNAL], 0, state, NULL);
@@ -1712,6 +1740,9 @@ transfer_folder_cb (TnyFolder *folder,
 
 	/* If user defined callback function was defined, call it */
 	if (helper->user_callback) {
+		/* GDK LOCK: I think this one can be removed if Tinymail */
+		/* wraps the lock itself.                                */
+		/* This function is called as idle in tinymail.          */
 		gdk_threads_enter ();
 		helper->user_callback (priv->source, helper->user_data);
 		gdk_threads_leave ();
@@ -2033,6 +2064,11 @@ get_msg_status_cb (GObject *obj,
 	state->bytes_done = status->position;
 	state->bytes_total = status->of_total;
 #ifdef TINYMAIL_IDLES_NOT_LOCKED_YET
+	/* GDK LOCK: this one is here because we call this from a thread  */
+	/* However, refresh_account operations call async operations on   */
+	/* on tinymail, which also emmit 'progress-changed' signal. This  */
+	/* may be is required to serialize executions of progress-changed'*/
+	/* signal handlers.                                               */
 	gdk_threads_enter ();
 #endif
 	g_signal_emit (G_OBJECT (self), signals[PROGRESS_CHANGED_SIGNAL], 0, state, NULL);
@@ -2094,6 +2130,9 @@ get_msgs_full_destroyer (gpointer data)
 	info = (GetFullMsgsInfo *) data;
 
 	if (info->notify) {
+		/* GDK LOCK: this one is here because we call this from */
+		/* a thread.                                            */
+		/* It's used to free user_data, like pasted attachments */
 		gdk_threads_enter ();	
 		info->notify (info->user_data);
 		gdk_threads_leave ();
@@ -2360,6 +2399,11 @@ transfer_msgs_status_cb (GObject *obj,
 
 	state = modest_mail_operation_clone_state (self);
 #ifdef TINYMAIL_IDLES_NOT_LOCKED_YET
+	/* GDK LOCK: this one is here because we call this from a thread  */
+	/* However, refresh_account operations call async operations on   */
+	/* on tinymail, which also emmit 'progress-changed' signal. This  */
+	/* may be is required to serialize executions of progress-changed'*/
+	/* signal handlers.                                               */
 	gdk_threads_enter ();
 #endif
 	g_signal_emit (G_OBJECT (self), signals[PROGRESS_CHANGED_SIGNAL], 0, state, NULL);
@@ -2421,6 +2465,9 @@ transfer_msgs_cb (TnyFolder *folder, gboolean cancelled, GError **err, gpointer 
 
 	/* If user defined callback function was defined, call it */
 	if (helper->user_callback) {
+		/* GDK LOCK: I think this one can be removed if Tinymail */
+		/* wraps the lock itself.                                */
+		/* This function is called as idle in tinymail.          */
 		gdk_threads_enter ();
 		helper->user_callback (priv->source, helper->user_data);
 		gdk_threads_leave ();
@@ -2568,6 +2615,9 @@ on_refresh_folder (TnyFolder   *folder,
  out:
 	/* Call user defined callback, if it exists */
 	if (helper->user_callback) {
+		/* GDK LOCK: I think this one can be removed if Tinymail */
+		/* wraps the lock itself.                                */
+		/* This function is called as idle in tinymail.          */
 		gdk_threads_enter ();
 		helper->user_callback (self, folder, helper->user_data);
 		gdk_threads_leave ();
@@ -2606,6 +2656,11 @@ on_refresh_folder_status_update (GObject *obj,
 
 	state = modest_mail_operation_clone_state (self);
 #ifdef TINYMAIL_IDLES_NOT_LOCKED_YET
+	/* GDK LOCK: this one is here because we call this from a thread  */
+	/* However, refresh_account operations call async operations on   */
+	/* on tinymail, which also emmit 'progress-changed' signal. This  */
+	/* may be is required to serialize executions of progress-changed'*/
+	/* signal handlers.                                               */
 	gdk_threads_enter ();
 #endif
 	g_signal_emit (G_OBJECT (self), signals[PROGRESS_CHANGED_SIGNAL], 0, state, NULL);
