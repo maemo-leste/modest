@@ -2547,6 +2547,8 @@ on_refresh_folder (TnyFolder   *folder,
 	self = helper->mail_op;
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
 
+	g_return_if_fail(priv!=NULL);
+
 	if (*error) {
 		priv->error = g_error_copy (*error);
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
