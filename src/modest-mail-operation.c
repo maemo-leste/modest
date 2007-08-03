@@ -2578,6 +2578,7 @@ on_refresh_folder (TnyFolder   *folder,
 
 	/* Notify about operation end */
 	modest_mail_operation_notify_end (self);
+	g_object_unref(self);
 }
 
 static void
@@ -2632,7 +2633,7 @@ modest_mail_operation_refresh_folder  (ModestMailOperation *self,
 
 	/* Create the helper */
 	helper = g_slice_new0 (RefreshAsyncHelper);
-	helper->mail_op = self;
+	helper->mail_op = g_object_ref(self);
 	helper->user_callback = user_callback;
 	helper->user_data = user_data;
 
@@ -2675,6 +2676,9 @@ modest_mail_operation_notify_end (ModestMailOperation *self)
 	/* We do not wrapp this emission because we assume that this
 	   function is always called from within the main lock */
 	state = modest_mail_operation_clone_state (self);
+	g_warning ("EXAMINE SITUATION: "
+			"self might be NULL after this function (%s) returns",
+			__FUNCTION__);
 	g_signal_emit (G_OBJECT (self), signals[PROGRESS_CHANGED_SIGNAL], 0, state, NULL);
 	g_slice_free (ModestMailOperationState, state);
 }
