@@ -1114,7 +1114,6 @@ modest_text_utils_validate_folder_name (const gchar *folder_name)
 	/* cannot contain a forbidden word */
 	if (len <= 4) {
 		for (cursor = forbidden_names; cursor && *cursor; ++cursor) {
-			g_warning ("%s", *cursor);
 			if (g_ascii_strcasecmp (folder_name, *cursor) == 0)
 				return FALSE;
 		}

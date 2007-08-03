@@ -573,28 +573,16 @@ entry_insert_text (GtkEditable *editable,
 		hildon_banner_show_information  (gtk_widget_get_parent (GTK_WIDGET (data)), NULL,
 						 _CS("ckdg_ib_maximum_characters_reached"));
 	} else {
-		gboolean is_valid = FALSE;
-
-		if (!text)
-			is_valid = FALSE;
-		else if (strlen(text) == 0 && g_str_has_prefix (chars, " "))
-			is_valid = FALSE;
-		else
-			is_valid = !g_str_has_prefix(text, " ");
+		GtkWidget *ok_button;
+		GList *buttons;
 		
-		/* A blank space is not valid as first character */
-		if (is_valid) {
-			GtkWidget *ok_button;
-			GList *buttons;
-			
-			/* Show OK button */
-			buttons = gtk_container_get_children (GTK_CONTAINER (GTK_DIALOG (data)->action_area));
-			ok_button = GTK_WIDGET (buttons->next->data);
-				gtk_widget_set_sensitive (ok_button, TRUE);
-				g_list_free (buttons);
+		buttons = gtk_container_get_children (GTK_CONTAINER (GTK_DIALOG (data)->action_area));
+		ok_button = GTK_WIDGET (buttons->next->data);
 		
-		}
-
+		gtk_widget_set_sensitive (ok_button,
+					  modest_text_utils_validate_folder_name (chars));	
+		g_list_free (buttons);
+		
 		/* Write the text in the entry */
 		g_signal_handlers_block_by_func (editable,
 						 (gpointer) entry_insert_text, data);
@@ -621,15 +609,11 @@ entry_changed (GtkEditable *editable,
 	g_return_if_fail (chars != NULL);
 
 	
-	/* Dimm OK button. Do not allow also the "/" */
-	if (strlen (chars) == 0 || strchr (chars, '/')) 
-		gtk_widget_set_sensitive (ok_button, FALSE);
-		
-	else if (g_utf8_strlen (chars,-1) >= 21)
+	if (g_utf8_strlen (chars,-1) >= 21)
 		hildon_banner_show_information  (gtk_widget_get_parent (GTK_WIDGET (user_data)), NULL,
 						 _CS("ckdg_ib_maximum_characters_reached"));
-	else /* explicitely enable it, because with a previous entry_changed, it might have been turned off */
-		gtk_widget_set_sensitive (ok_button, TRUE);
+	else
+		gtk_widget_set_sensitive (ok_button, modest_text_utils_validate_folder_name(chars));
 		
 	/* Free */
 	g_list_free (buttons);
