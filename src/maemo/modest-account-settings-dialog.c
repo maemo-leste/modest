@@ -1040,10 +1040,10 @@ on_response (GtkDialog *wizard_dialog,
 				const gboolean enabled = 
 					modest_account_mgr_get_enabled (self->account_manager, self->account_name);
 				if (enabled)
-					show_error (GTK_WIDGET (self), _("mcen_ib_advsetup_settings_saved"));
+					show_error (NULL, _("mcen_ib_advsetup_settings_saved"));
 			}
 			else
-				show_error (GTK_WIDGET (self), _("mail_ib_setting_failed"));
+				show_error (NULL, _("mail_ib_setting_failed"));
 		}
 	}
 }
