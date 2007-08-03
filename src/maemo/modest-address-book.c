@@ -754,7 +754,6 @@ modest_address_book_check_names (ModestRecptEditor *recpt_editor, gboolean updat
 		gtk_widget_destroy (banner);
 		g_object_unref (G_OBJECT (banner));
 	}
-	modest_recpt_editor_grab_focus (recpt_editor);
 
 	g_slist_foreach (start_indexes, (GFunc) g_free, NULL);
 	g_slist_foreach (end_indexes, (GFunc) g_free, NULL);

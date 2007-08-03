@@ -847,6 +847,17 @@ modest_recpt_editor_grab_focus (ModestRecptEditor *recpt_editor)
 	gtk_widget_grab_focus (priv->text_view);
 }
 
+gboolean
+modest_recpt_editor_has_focus (ModestRecptEditor *recpt_editor)
+{
+	ModestRecptEditorPrivate *priv;
+	
+	g_return_val_if_fail (MODEST_IS_RECPT_EDITOR (recpt_editor), FALSE);
+	priv = MODEST_RECPT_EDITOR_GET_PRIVATE (recpt_editor);
+
+	return gtk_widget_is_focus (priv->text_view);
+}
+
 static void
 modest_recpt_editor_finalize (GObject *object)
 {
