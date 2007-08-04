@@ -1157,7 +1157,14 @@ modest_text_utils_validate_email_address (const gchar *email_address, const gcha
 
 	if (invalid_char_position != NULL)
 		*invalid_char_position = NULL;
-
+	
+	/* check that the email adress contains exactly one @ */
+	if (!strstr(email_address, "@") || 
+			(strstr(email_address, "@") != g_strrstr(email_address, "@")))
+	{
+		return FALSE;
+	}
+	
 	/* first we validate the name portion (name@domain) */
 	for (c = email_address;  *c;  c++) {
 		if (*c == '\"' && 

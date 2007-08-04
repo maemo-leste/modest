@@ -1,3 +1,11 @@
+2007-08-04  Johannes Schmid <johannes.schmid@openismus.com>
+
+	* src/modest-text-utils.c:
+	Fixed invalid jump due to incorrect string/pointer
+	operation. 
+	(See https://projects.maemo.org/trac/email/wiki/ValgrindErrors
+	for details)
+
 2007-08-01  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/modest-account-mgr-helpers.h:
