@@ -971,9 +971,13 @@ on_idle_connect_and_wait(gpointer user_data)
 	printf ("DEBUG: %s:\n", __FUNCTION__);
 	TnyDevice *device = modest_runtime_get_device();
 	if (!tny_device_is_online (device)) {
-		gdk_threads_enter();
+
+		/* This is a GDK lock because we are an idle callback and
+		 * tny_maemo_conic_device_connect can contain Gtk+ code */
+
+		gdk_threads_enter(); /* CHECKED */
 		tny_maemo_conic_device_connect (TNY_MAEMO_CONIC_DEVICE (device), NULL);
-		gdk_threads_leave();
+		gdk_threads_leave(); /* CHECKED */
 	}
 	
 	/* Allow the function that requested this idle callback to continue: */

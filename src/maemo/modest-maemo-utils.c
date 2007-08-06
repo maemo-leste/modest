@@ -283,9 +283,14 @@ on_idle_secure_auth_finished (gpointer user_data)
 	ModestGetSupportedAuthInfo *info = (ModestGetSupportedAuthInfo*)user_data;
 	/* Operation has finished, close the dialog. Control continues after
 	 * gtk_dialog_run in modest_maemo_utils_get_supported_secure_authentication_methods() */
-	gdk_threads_enter();
+
+	/* This is a GDK lock because we are an idle callback and
+	 * the code below is or does Gtk+ code */
+
+	gdk_threads_enter(); /* CHECKED */
 	gtk_dialog_response (GTK_DIALOG (info->dialog), GTK_RESPONSE_ACCEPT);
-	gdk_threads_leave();
+	gdk_threads_leave(); /* CHECKED */
+
 	return FALSE;
 }
 
@@ -298,8 +303,6 @@ on_camel_account_get_supported_secure_authentication (
 		
 	ModestGetSupportedAuthInfo *info = (ModestGetSupportedAuthInfo*)user_data;
 	g_return_if_fail (info);
-
-	gdk_threads_enter();
 
 	/* Free everything if the actual action was canceled */
 	if (info->cancel)
@@ -347,8 +350,7 @@ on_camel_account_get_supported_secure_authentication (
 				}
 				tny_iterator_next(iter);
 			}
-	
-			g_object_unref(auth_types);
+			g_object_unref (iter);
 
 			modest_pair_list_free (pairs);
 	
@@ -360,8 +362,6 @@ on_camel_account_get_supported_secure_authentication (
 		/* Close the dialog in a main thread */
 		g_idle_add(on_idle_secure_auth_finished, info);
 	}
-
-	gdk_threads_leave();
 }
 
 static void on_secure_auth_cancel(GtkWidget* dialog, int response, gpointer user_data)

@@ -57,7 +57,7 @@ main (int argc, char *argv[])
 		g_thread_init (NULL);
 
 	gdk_threads_init ();
-	gdk_threads_enter ();
+	gdk_threads_enter (); /* CHECKED */
 
 	if (!gtk_init_check(&argc, &argv)) {
 		g_printerr ("modest: failed to initialize gtk\n");
@@ -96,7 +96,7 @@ main (int argc, char *argv[])
 	retval = 0;
 
 cleanup:
-	gdk_threads_leave ();
+	gdk_threads_leave (); /* CHECKED */
 
 	if (!modest_init_uninit ()) {
 		g_printerr ("modest: modest_init_uninit failed\n");

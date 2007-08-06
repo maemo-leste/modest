@@ -259,13 +259,17 @@ on_idle_mail_to(gpointer user_data)
 				} else {
 			
 					tny_folder_add_msg (folder, msg, NULL); /* TODO: check err */
-					gdk_threads_enter ();
+
+					/* This is a GDK lock because we are an idle callback and
+ 	 				 * the code below is or does Gtk+ code */
+
+					gdk_threads_enter (); /* CHECKED */
 
 					ModestWindow *win = modest_msg_edit_window_new (msg, account_name, FALSE);
 					modest_window_mgr_register_window (modest_runtime_get_window_mgr (), win);
 					gtk_widget_show_all (GTK_WIDGET (win));
 
-					gdk_threads_leave ();
+					gdk_threads_leave (); /* CHECKED */
 				
 					g_object_unref (G_OBJECT(folder));
 					g_object_unref (win);
@@ -364,7 +368,10 @@ on_idle_compose_mail(gpointer user_data)
 			
 					tny_folder_add_msg (folder, msg, NULL); /* TODO: check err */
 
-					gdk_threads_enter ();
+					/* This is a GDK lock because we are an idle callback and
+ 	 				 * the code below is or does Gtk+ code */
+
+					gdk_threads_enter (); /* CHECKED */
 	
 					ModestWindow *win = modest_msg_edit_window_new (msg, account_name, FALSE);
 
@@ -386,7 +393,7 @@ on_idle_compose_mail(gpointer user_data)
 					modest_window_mgr_register_window (modest_runtime_get_window_mgr (), win);
 					gtk_widget_show_all (GTK_WIDGET (win));
 
-					gdk_threads_leave ();
+					gdk_threads_leave (); /* CHECKED */
 				
 					g_object_unref (G_OBJECT(folder));
 					g_object_unref (win);
@@ -563,8 +570,11 @@ on_idle_open_message (gpointer user_data)
 	msg_uid =  modest_tny_folder_get_header_unique_id(header); 
 	
 	win_mgr = modest_runtime_get_window_mgr ();
-		
-	gdk_threads_enter ();
+
+	/* This is a GDK lock because we are an idle callback and
+	 * the code below is or does Gtk+ code */
+
+	gdk_threads_enter (); /* CHECKED */
 
 	gboolean already_opened = FALSE;
 	ModestWindow *msg_view = NULL;
@@ -606,7 +616,7 @@ on_idle_open_message (gpointer user_data)
 		gtk_widget_show_all (GTK_WIDGET (msg_view));
 	}
 
-	gdk_threads_leave ();
+	gdk_threads_leave (); /* CHECKED */
 
 	g_object_unref (header);
 	g_object_unref (account);
@@ -722,7 +732,10 @@ on_idle_delete_message (gpointer user_data)
 	error = NULL;
 	res = OSSO_OK;
 	
-	gdk_threads_enter ();
+	/* This is a GDK lock because we are an idle callback and
+	 * the code below is or does Gtk+ code */
+
+	gdk_threads_enter (); /* CHECKED */
 	ModestWindow *win = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr ());
 	modest_do_message_delete (header, win);
 
@@ -740,7 +753,7 @@ on_idle_delete_message (gpointer user_data)
 			modest_ui_actions_refresh_message_window_after_delete (MODEST_MSG_VIEW_WINDOW (msg_view));
 	}
 	
-	gdk_threads_leave ();
+	gdk_threads_leave (); /* CHECKED */
 	
 	if (header)
 		g_object_unref (header);
@@ -802,7 +815,10 @@ on_idle_send_receive(gpointer user_data)
 {
 	ModestWindow *win;
 
-	gdk_threads_enter ();
+	/* This is a GDK lock because we are an idle callback and
+	 * the code below is or does Gtk+ code */
+
+	gdk_threads_enter (); /* CHECKED */
 
 	/* Pick the main window if it exists */
 	win = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr ());
@@ -816,7 +832,7 @@ on_idle_send_receive(gpointer user_data)
 	/* TODO: check the auto-update parameter in the configuration */
 	modest_ui_actions_do_send_receive_all (win);
 	
-	gdk_threads_leave ();
+	gdk_threads_leave (); /* CHECKED */
 	
 	return FALSE; /* Do not call this callback again. */
 }
@@ -841,7 +857,11 @@ static gboolean on_idle_top_application (gpointer user_data);
 static gboolean
 on_idle_open_default_inbox(gpointer user_data)
 {
-	gdk_threads_enter ();
+
+	/* This is a GDK lock because we are an idle callback and
+	 * the code below is or does Gtk+ code */
+
+	gdk_threads_enter (); /* CHECKED */
 	
 	ModestWindow *win = 
 		modest_window_mgr_get_main_window (modest_runtime_get_window_mgr ());
@@ -851,7 +871,7 @@ on_idle_open_default_inbox(gpointer user_data)
 							   MODEST_WIDGET_TYPE_FOLDER_VIEW);
 	modest_folder_view_select_first_inbox_or_local (MODEST_FOLDER_VIEW (folder_view));
 	
-	gdk_threads_leave ();
+	gdk_threads_leave (); /* CHECKED */
 	
 	/* This D-Bus method is obviously meant to result in the UI being visible,
 	 * so show it, by calling this idle handler directly: */
@@ -876,7 +896,11 @@ static gint on_open_default_inbox(GArray * arguments, gpointer data, osso_rpc_t 
 
 static gboolean on_idle_top_application (gpointer user_data)
 {
-	gdk_threads_enter ();
+
+	/* This is a GDK lock because we are an idle callback and
+	 * the code below is or does Gtk+ code */
+
+	gdk_threads_enter (); /* CHECKED */
 
 	ModestWindow *win = 
 		modest_window_mgr_get_main_window (modest_runtime_get_window_mgr ());
@@ -887,7 +911,7 @@ static gboolean on_idle_top_application (gpointer user_data)
 		gtk_window_present (GTK_WINDOW (win));
 	}
 
-	gdk_threads_leave ();
+	gdk_threads_leave (); /* CHECKED */
 	
 	return FALSE; /* Do not call this callback again. */
 }

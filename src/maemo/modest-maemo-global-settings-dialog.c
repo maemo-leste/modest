@@ -162,9 +162,14 @@ idle_select_default_focus (gpointer data)
 	/* Grab focus, we need to block in order to prevent a
 	   recursive call to this callback */
 	g_signal_handler_block (G_OBJECT (ppriv->notebook), priv->switch_handler);
-	gdk_threads_enter ();
+
+	/* This is a GDK lock because we are an idle callback and
+	 * the code below is or does Gtk+ code */
+
+	gdk_threads_enter (); /* CHECKED */
 	gtk_widget_grab_focus (helper->focus_widget);
-	gdk_threads_leave ();
+	gdk_threads_leave (); /* CHECKED */
+
 	g_signal_handler_unblock (G_OBJECT (ppriv->notebook), priv->switch_handler);
 	g_free (helper);
 

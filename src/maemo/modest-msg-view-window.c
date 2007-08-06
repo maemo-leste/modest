@@ -1888,21 +1888,27 @@ static gboolean
 idle_save_mime_part_show_result (SaveMimePartInfo *info)
 {
 	if (info->pairs != NULL) {
-		gdk_threads_enter ();
+		/* This is a GDK lock because we are an idle callback and
+	 	 * save_mime_parts_to_file_with_checks can contain Gtk+ code */
+
+		gdk_threads_enter (); /* CHECKED */
 		save_mime_parts_to_file_with_checks (info);
-		gdk_threads_leave ();
+		gdk_threads_leave (); /* CHECKED */
 	} else {
 		gboolean result;
 		result = info->result;
 
-		gdk_threads_enter ();
+		/* This is a GDK lock because we are an idle callback and
+	 	 * hildon_banner_show_information is or does Gtk+ code */
+
+		gdk_threads_enter (); /* CHECKED */
 		save_mime_part_info_free (info, TRUE);
 		if (result) {
 			hildon_banner_show_information (NULL, NULL, _CS("sfil_ib_saved"));
 		} else {
 			hildon_banner_show_information (NULL, NULL, _("mail_ib_file_operation_failed"));
 		}
-		gdk_threads_leave ();
+		gdk_threads_leave (); /* CHECKED */
 	}
 
 	return FALSE;
