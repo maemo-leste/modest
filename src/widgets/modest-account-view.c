@@ -114,7 +114,7 @@ static void
 modest_account_view_init (ModestAccountView *obj)
 {
  	ModestAccountViewPrivate *priv;
-
+	
 	priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE(obj);
 	
 	priv->account_mgr = NULL; 
@@ -295,6 +295,8 @@ on_account_inserted (TnyAccountStore *account_store,
 	ModestAccountView *self;
 	ModestAccountViewPrivate *priv;
 
+	g_return_if_fail (MODEST_IS_ACCOUNT_VIEW (user_data));
+
 	self = MODEST_ACCOUNT_VIEW (user_data);
 	priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE (self);
 
@@ -308,6 +310,8 @@ on_account_removed (TnyAccountStore *account_store,
 {
 	ModestAccountView *self;
 	ModestAccountViewPrivate *priv;
+
+	g_return_if_fail (MODEST_IS_ACCOUNT_VIEW (user_data));
 
 	self = MODEST_ACCOUNT_VIEW (user_data);
 	priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE (self);
@@ -324,6 +328,8 @@ on_account_changed (TnyAccountStore *account_store,
 	ModestAccountView *self;
 	ModestAccountViewPrivate *priv;
 	
+	g_return_if_fail (MODEST_IS_ACCOUNT_VIEW (user_data));
+
 	self = MODEST_ACCOUNT_VIEW (user_data);
 	priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE (self);
 	
@@ -355,6 +361,9 @@ static void
 on_account_default_toggled (GtkCellRendererToggle *cell_renderer, gchar *path,
 			   ModestAccountView *self)
 {
+
+	g_return_if_fail (MODEST_IS_ACCOUNT_VIEW (self));
+
 	gboolean is_default = gtk_cell_renderer_toggle_get_active (cell_renderer);
 	if (is_default) {
 		/* Do not allow an account to be marked non-default.
@@ -415,6 +424,7 @@ init_view (ModestAccountView *self)
 	GtkListStore *model;
 	GtkTreeViewColumn *column;
 	
+	g_return_if_fail (MODEST_IS_ACCOUNT_VIEW (self));
 	priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE(self);
 		
 	model = gtk_list_store_new (6,
