@@ -110,7 +110,8 @@ static void on_queue_changed   (ModestMailOperationQueue *queue,
 static gboolean on_zoom_minus_plus_not_implemented (ModestWindow *window);
 
 static void account_number_changed            (TnyAccountStore *account_store, 
-					       const gchar *account_name,
+/*  					       const gchar *account_name,  */
+					       TnyAccount *account,
 					       gpointer user_data);
 
 static gboolean on_inner_widgets_key_pressed  (GtkWidget *widget,
@@ -165,6 +166,7 @@ modest_main_window_on_folder_selection_changed (ModestFolderView *folder_view,
 						
 static void
 set_at_least_one_account_visible(ModestMainWindow *self);
+
 
 /* list my signals */
 enum {
@@ -1244,7 +1246,8 @@ compare_display_names (ModestAccountData *a,
 
 static void 
 account_number_changed (TnyAccountStore *account_store, 
-			const gchar *account_name,
+/* 			const gchar *account_name, */
+			TnyAccount *account,
 			gpointer user_data)
 {	
 	GSList *account_names, *iter, *accounts;
@@ -1259,6 +1262,9 @@ account_number_changed (TnyAccountStore *account_store,
 	GtkWidget *send_receive_button, *item;
 	GtkAction *send_receive_all = NULL;
 		
+	g_return_if_fail (MODEST_IS_MAIN_WINDOW (user_data));
+	g_return_if_fail (TNY_IS_ACCOUNT (account));
+
 	self = MODEST_MAIN_WINDOW (user_data);
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE (self);
 	parent_priv = MODEST_WINDOW_GET_PRIVATE (self);
@@ -2000,19 +2006,6 @@ set_toolbar_mode (ModestMainWindow *self,
 		
 		if (cancel_action)
 			gtk_action_set_visible (cancel_action, FALSE);
-/* 		if (priv->sort_toolitem) */
-/* 			gtk_widget_show (priv->sort_toolitem); */
-		
-/* 		if (priv->refresh_toolitem) */
-/* 			gtk_widget_show (priv->refresh_toolitem); */
-			
-/* 		if (priv->progress_toolitem) */
-/* 			gtk_tool_item_set_expand (GTK_TOOL_ITEM (priv->progress_toolitem), FALSE); */
-/* 		if (priv->progress_bar) */
-/* 			gtk_widget_hide (priv->progress_bar); */
-			
-/* 		if (priv->cancel_toolitem) */
-/* 			gtk_widget_hide (priv->cancel_toolitem); */
 
 		/* Hide toolbar if optimized view is enabled */
 		if (priv->optimized_view)
@@ -2031,20 +2024,6 @@ set_toolbar_mode (ModestMainWindow *self,
 		}
 		if (priv->progress_bar)
 			gtk_widget_show (priv->progress_bar);
-
-/* 		if (priv->sort_toolitem) */
-/* 			gtk_widget_hide (priv->sort_toolitem); */
-		
-/* 		if (priv->refresh_toolitem) */
-/* 			gtk_widget_hide (priv->refresh_toolitem); */
-		
-/* 		if (priv->progress_toolitem) */
-/* 			gtk_tool_item_set_expand (GTK_TOOL_ITEM (priv->progress_toolitem), TRUE); */
-/* 		if (priv->progress_bar) */
-/* 			gtk_widget_show (priv->progress_bar); */
-			
-/* 		if (priv->cancel_toolitem) */
-/* 			gtk_widget_show (priv->cancel_toolitem); */
 
 		/* Show toolbar if it's hiden (optimized view ) */
 		if (priv->optimized_view)
@@ -2105,7 +2084,6 @@ on_queue_changed (ModestMailOperationQueue *queue,
 	ModestToolBarModes mode;
 	GSList *tmp;
 	gboolean mode_changed = FALSE;
-/* 	ModestMailOperationStatus status; */
 
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW (self));
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
@@ -2113,7 +2091,6 @@ on_queue_changed (ModestMailOperationQueue *queue,
 	/* Get toolbar mode from operation id*/
 	op_type = modest_mail_operation_get_type_operation (mail_op);
 	switch (op_type) {
-/* 	case MODEST_MAIL_OPERATION_TYPE_SEND: */
 	case MODEST_MAIL_OPERATION_TYPE_RECEIVE:
 	case MODEST_MAIL_OPERATION_TYPE_OPEN:
 		mode = TOOLBAR_MODE_TRANSFER;
@@ -2131,8 +2108,9 @@ on_queue_changed (ModestMailOperationQueue *queue,
 	switch (type) {
 	case MODEST_MAIL_OPERATION_QUEUE_OPERATION_ADDED:
 		if (mode == TOOLBAR_MODE_TRANSFER) {
-			if (mode_changed)
+			if (mode_changed) {
 				set_toolbar_transfer_mode(self);		    
+			}
 			while (tmp) {
 				modest_progress_object_add_operation (MODEST_PROGRESS_OBJECT (tmp->data),
 								      mail_op);
@@ -2151,8 +2129,7 @@ on_queue_changed (ModestMailOperationQueue *queue,
 			
 			/* If no more operations are being observed, NORMAL mode is enabled again */
 			if (observers_empty (self)) {
-				set_toolbar_mode (self, TOOLBAR_MODE_NORMAL);
-				
+				set_toolbar_mode (self, TOOLBAR_MODE_NORMAL);				
 			}
 		}
 
@@ -2391,8 +2368,8 @@ modest_main_window_on_msg_view_window_msg_changed (ModestMsgViewWindow *view_win
 	GtkTreeModel *header_model = NULL;
  	GtkTreePath *path = NULL;
 
-	g_return_val_if_fail (MODEST_MSG_VIEW_WINDOW (view_window), FALSE);
-	g_return_val_if_fail (MODEST_MAIN_WINDOW (self), FALSE);
+	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (view_window), FALSE);
+	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW (self), FALSE);
 	g_return_val_if_fail (gtk_tree_row_reference_valid (row_reference), FALSE);
 
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE (self);
@@ -2410,3 +2387,4 @@ modest_main_window_on_msg_view_window_msg_changed (ModestMsgViewWindow *view_win
 
 	return TRUE;
 }
+
