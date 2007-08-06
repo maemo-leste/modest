@@ -1263,7 +1263,7 @@ account_number_changed (TnyAccountStore *account_store,
 	GtkAction *send_receive_all = NULL;
 		
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW (user_data));
-	g_return_if_fail (TNY_IS_ACCOUNT (account));
+/* 	g_return_if_fail (TNY_IS_ACCOUNT (account)); */
 
 	self = MODEST_MAIN_WINDOW (user_data);
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE (self);
