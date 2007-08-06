@@ -226,31 +226,25 @@ modest_progress_bar_add_operation (ModestProgressObject *self,
 	ModestProgressBarWidget *me = NULL;
 	ObservableData *data = NULL;
 	ModestProgressBarWidgetPrivate *priv = NULL;
-	ModestMailOperationState *state = NULL;
 	
 	me = MODEST_PROGRESS_BAR_WIDGET (self);
 	priv = MODEST_PROGRESS_BAR_WIDGET_GET_PRIVATE (me);
 
 	data = g_malloc0 (sizeof (ObservableData));
 	data->mail_op = g_object_ref (mail_op);
-	data->signal_handler = g_signal_connect (data->mail_op, 
+	data->signal_handler = g_signal_connect (data->mail_op,
 						 "progress-changed",
 						 G_CALLBACK (on_progress_changed),
 						 me);
 	/* Set curent operation */
-	if (priv->current == NULL) {
-		priv->current = mail_op;
-
-		priv->count = 0;
-
-		/* Call progress_change handler to initialize progress message */
-		state = g_malloc0(sizeof(ModestMailOperationState));
-		state->done = 0;
-		state->total = 0;
-		state->op_type = modest_mail_operation_get_type_operation (mail_op);
-		on_progress_changed (mail_op, state, me);
-		g_free(state);
-	}
+/* 	if (priv->current == NULL) { */
+	priv->current = mail_op;
+	
+	priv->count = 0;
+	
+	/* Call progress_change handler to initialize progress message */
+	modest_progress_bar_widget_set_undetermined_progress (MODEST_PROGRESS_BAR_WIDGET(self), mail_op);
+/* 	} */
 
 	/* Add operation to obserbable objects list */
 	priv->observables = g_slist_prepend (priv->observables, data);
@@ -406,8 +400,8 @@ on_progress_changed (ModestMailOperation  *mail_op,
 		
 		/* If we have byte information use it */
 		if ((state->bytes_done != 0) && (state->bytes_total != 0))
-			modest_progress_bar_widget_set_progress (self, msg, 
-								 state->bytes_done, 
+			modest_progress_bar_widget_set_progress (self, msg,
+								 state->bytes_done,
 								 state->bytes_total);
 		else
 			modest_progress_bar_widget_set_progress (self, msg,
@@ -485,3 +479,17 @@ modest_progress_bar_widget_set_progress (ModestProgressBarWidget *self,
 	gtk_progress_bar_set_text (GTK_PROGRESS_BAR (priv->progress_bar), message);
 }
 
+
+void
+modest_progress_bar_widget_set_undetermined_progress (ModestProgressBarWidget *self,
+						      ModestMailOperation *mail_op)
+{
+	ModestMailOperationState *state = NULL;
+
+	state = g_malloc0(sizeof(ModestMailOperationState));
+	state->done = 0;
+	state->total = 0;
+	state->op_type = modest_mail_operation_get_type_operation (mail_op);
+	on_progress_changed (mail_op, state, self);
+	g_free(state);
+}

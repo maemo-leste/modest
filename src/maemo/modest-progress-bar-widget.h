@@ -74,6 +74,9 @@ void modest_progress_bar_widget_set_progress (ModestProgressBarWidget *self,
 					      gint done,
 					      gint total);
 
+void
+modest_progress_bar_widget_set_undetermined_progress (ModestProgressBarWidget *self,
+						      ModestMailOperation *mail_op);
 
 
 G_END_DECLS

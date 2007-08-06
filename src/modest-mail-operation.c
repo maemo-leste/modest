@@ -1947,6 +1947,12 @@ void modest_mail_operation_get_msg (ModestMailOperation *self,
 	if (folder) {
 		/* Get account and set it into mail_operation */
 		priv->account = modest_tny_folder_get_account (TNY_FOLDER(folder));
+		
+		/* Check for cached messages */
+		if (tny_header_get_flags (header) & TNY_HEADER_FLAG_CACHED)
+			priv->op_type = MODEST_MAIL_OPERATION_TYPE_OPEN;
+		else 
+			priv->op_type = MODEST_MAIL_OPERATION_TYPE_RECEIVE;
 
 		helper = g_slice_new0 (GetMsgAsyncHelper);
 		helper->mail_op = self;
@@ -2148,6 +2154,12 @@ get_msgs_full_thread (gpointer thr_user_data)
 		header = TNY_HEADER (tny_iterator_get_current (iter));
 		folder = tny_header_get_folder (header);
 				
+		/* Check for cached messages */
+		if (tny_header_get_flags (header) & TNY_HEADER_FLAG_CACHED)
+			priv->op_type = MODEST_MAIL_OPERATION_TYPE_OPEN;
+		else 
+			priv->op_type = MODEST_MAIL_OPERATION_TYPE_RECEIVE;
+
 		/* Get message from folder */
 		if (folder) {
 			TnyMsg *msg;
