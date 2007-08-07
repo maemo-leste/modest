@@ -73,7 +73,7 @@ static void modest_mail_operation_finalize   (GObject *obj);
 static void     get_msg_cb (TnyFolder *folder, 
 			    gboolean cancelled, 
 			    TnyMsg *msg, 
-			    GError **err, 
+			    GError *err, 
 			    gpointer user_data);
 
 static void     get_msg_status_cb (GObject *obj,
@@ -1688,11 +1688,10 @@ transfer_folder_status_cb (GObject *obj,
 
 
 static void
-transfer_folder_cb (TnyFolder *folder, 
+transfer_folder_cb (TnyFolder *folder, gboolean cancelled, 
 		    TnyFolderStore *into, 
-		    gboolean cancelled, 
 		    TnyFolder *new_folder, 
-		    GError **err, 
+		    GError *err, 
 		    gpointer user_data)
 {
 	XFerMsgAsyncHelper *helper;
@@ -1705,8 +1704,8 @@ transfer_folder_cb (TnyFolder *folder,
 	self = helper->mail_op;
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
 
-	if (*err) {
-		priv->error = g_error_copy (*err);
+	if (err) {
+		priv->error = g_error_copy (err);
 		priv->done = 0;
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 	} else if (cancelled) {
@@ -1984,7 +1983,7 @@ static void
 get_msg_cb (TnyFolder *folder, 
 	    gboolean cancelled, 
 	    TnyMsg *msg, 
-	    GError **error, 
+	    GError *error, 
 	    gpointer user_data)
 {
 	GetMsgAsyncHelper *helper = NULL;
@@ -1998,8 +1997,8 @@ get_msg_cb (TnyFolder *folder,
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
 
 	/* Check errors and cancel */
-	if (*error) {
-		priv->error = g_error_copy (*error);
+	if (error) {
+		priv->error = g_error_copy (error);
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 	} else if (cancelled) {
 		priv->status = MODEST_MAIL_OPERATION_STATUS_CANCELED;
@@ -2410,7 +2409,7 @@ transfer_msgs_status_cb (GObject *obj,
 
 
 static void
-transfer_msgs_cb (TnyFolder *folder, gboolean cancelled, GError **err, gpointer user_data)
+transfer_msgs_cb (TnyFolder *folder, gboolean cancelled, GError *err, gpointer user_data)
 {
 	XFerMsgAsyncHelper *helper;
 	ModestMailOperation *self;
@@ -2423,8 +2422,8 @@ transfer_msgs_cb (TnyFolder *folder, gboolean cancelled, GError **err, gpointer 
 
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
 
-	if (*err) {
-		priv->error = g_error_copy (*err);
+	if (err) {
+		priv->error = g_error_copy (err);
 		priv->done = 0;
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;	
 	} else if (cancelled) {
@@ -2578,7 +2577,7 @@ modest_mail_operation_xfer_msgs (ModestMailOperation *self,
 static void
 on_refresh_folder (TnyFolder   *folder, 
 		   gboolean     cancelled, 
-		   GError     **error,
+		   GError     *error,
 		   gpointer     user_data)
 {
 	RefreshAsyncHelper *helper = NULL;
@@ -2591,8 +2590,8 @@ on_refresh_folder (TnyFolder   *folder,
 
 	g_return_if_fail(priv!=NULL);
 
-	if (*error) {
-		priv->error = g_error_copy (*error);
+	if (error) {
+		priv->error = g_error_copy (error);
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 		goto out;
 	}
