@@ -325,9 +325,12 @@ on_account_changed (TnyAccountStore *account_store,
 		    TnyAccount *account,
 		    gpointer user_data)
 {
-	ModestAccountView *self;
-	ModestAccountViewPrivate *priv;
-	
+	ModestAccountView *self = NULL;
+	ModestAccountViewPrivate *priv = NULL;
+	TnyTransportAccount *transport_account = NULL;
+	ModestTnySendQueue *send_queue = NULL;
+	const gchar *account_name = NULL;
+
 	g_return_if_fail (MODEST_IS_ACCOUNT_VIEW (user_data));
 
 	self = MODEST_ACCOUNT_VIEW (user_data);
@@ -335,7 +338,20 @@ on_account_changed (TnyAccountStore *account_store,
 	
 	g_warning ("account changed: %s", tny_account_get_id(account));
 	
+	/* Update account view */
 	update_account_view (priv->account_mgr, self);
+
+	/* Get transport account */
+	account_name = tny_account_get_name (account);
+	transport_account = (TnyTransportAccount *)
+		modest_tny_account_store_get_transport_account_for_open_connection (modest_runtime_get_account_store(),
+										    account_name);
+
+	/* Restart send queue */		
+	g_return_if_fail (TNY_IS_TRANSPORT_ACCOUNT(transport_account));
+	send_queue = modest_runtime_get_send_queue (transport_account);
+	g_return_if_fail (MODEST_IS_TNY_SEND_QUEUE(send_queue));
+	modest_tny_send_queue_try_to_send (send_queue);	
 }
 
 
