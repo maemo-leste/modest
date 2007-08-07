@@ -28,6 +28,7 @@
  */
 
 #include <modest-email-clipboard.h>
+#include <modest-tny-folder.h>
 
 /* 'private'/'protected' functions */
 static void modest_email_clipboard_class_init (ModestEmailClipboardClass * klass);
@@ -261,6 +262,8 @@ gboolean
 modest_email_clipboard_check_source_folder (ModestEmailClipboard *self,
 					    const TnyFolder *folder)
 {
+	TnyFolderType folder_type1;
+	TnyFolderType folder_type2;
 	ModestEmailClipboardPrivate *priv = NULL;;
 	const gchar *id1 = NULL;
 	const gchar *id2 = NULL;
@@ -275,8 +278,11 @@ modest_email_clipboard_check_source_folder (ModestEmailClipboard *self,
 
 	/* Check target and source folders */
 	id1 = tny_folder_get_id (priv->src);
-	id2 = tny_folder_get_id (TNY_FOLDER(folder));
-	same_folder = !g_ascii_strcasecmp (id1, id2);
+	id2 = tny_folder_get_id (TNY_FOLDER(folder));	
+	folder_type1 = modest_tny_folder_guess_folder_type (priv->src);
+	folder_type2 = modest_tny_folder_guess_folder_type (folder);
+	same_folder = ((folder_type1 == folder_type2) && 
+		       (!g_ascii_strcasecmp (id1, id2)));
 	
 	return same_folder;
 }
