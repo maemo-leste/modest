@@ -2136,6 +2136,9 @@ modest_folder_view_select_first_inbox_or_local (ModestFolderView *self)
 	/* Select the row and free */
 	gtk_tree_view_set_cursor (GTK_TREE_VIEW (self), path, NULL, FALSE);
 	gtk_tree_path_free (path);
+
+	/* set focus */
+	gtk_widget_grab_focus (GTK_WIDGET(self));
 }
 
 
