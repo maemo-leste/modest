@@ -1,3 +1,14 @@
+modest (1.0-2007.32-2) gutsy; urgency=low
+
+  * Fixes: NB#64084, NB#56201, NB#62702, NB#59316, NB#62011, NB#62789
+  * Fixes: NB#64630, NB#64842, NB#64055, NB#63055, NB#63702
+  * Automatic update of account on creation not working.
+  * the easy setup data contains errors - use gmail
+  * new mail Notification support not fully working.
+  * POP mail server may report errors about, incorrect password or account.
+
+ -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Wed,  8 Aug 2007 10:24:33 +0300
+
 modest (1.0-2007.32-1) gutsy; urgency=low
 
   * Fixes: NB#64931, NB#62820, NB#59427, NB#62261, NB#63026, NB#63748
