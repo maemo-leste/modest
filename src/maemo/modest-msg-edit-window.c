@@ -3032,7 +3032,6 @@ update_copy_cut_dimming (ModestMsgEditWindow *window)
 	gboolean has_selection = FALSE;
 	GtkWidget *focused = NULL;
 	gchar *selection = NULL;
-	guint i, j;
 
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
 	parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
