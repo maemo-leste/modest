@@ -3039,16 +3039,7 @@ update_copy_cut_dimming (ModestMsgEditWindow *window)
 	clipboard = gtk_clipboard_get (GDK_SELECTION_CLIPBOARD);
 	focused = gtk_window_get_focus (GTK_WINDOW (window));
 
-
-	if (GTK_IS_EDITABLE (focused)) {
-		gtk_editable_get_selection_bounds (GTK_EDITABLE (focused), 
-						   &i, &j);
-		
-		has_selection = i!= 0 && j != 0;
-	}
-
-/* 	has_selection = gtk_clipboard_wait_for_targets (clipboard, NULL, NULL); */
-/* 	has_selection = selection != NULL; */
+	has_selection = gtk_clipboard_wait_for_targets (clipboard, NULL, NULL);
 
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/EditMenu/CutMenu");
 	gtk_action_set_sensitive (action, (has_selection) && (!MODEST_IS_ATTACHMENTS_VIEW (focused)));
