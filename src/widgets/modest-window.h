@@ -40,7 +40,7 @@ G_BEGIN_DECLS
 #endif /*HAVE_CONFIG_H*/
 
 #include <gtk/gtk.h>
-
+ 
 /* 
  * admittedly, the ifdefs for gtk and maemo are rather ugly; still
  * this way is probably the easiest to maintain
@@ -65,6 +65,21 @@ typedef HildonWindowClass ModestWindowParentClass;
 #endif /*GTK_STOCK_FULLSCREEN*/
 
 #endif /*MODEST_PLATFORM_MAEMO */
+
+/* Dimmed state variables */
+typedef struct _DimmedState {	
+	guint    n_selected;
+	gboolean already_opened_msg;
+	gboolean any_marked_as_deleted;
+	gboolean all_marked_as_deleted;
+	gboolean any_marked_as_seen;
+	gboolean all_marked_as_seen;
+	gboolean any_marked_as_cached;
+	gboolean all_marked_as_cached;
+	gboolean any_has_attachments;
+	gboolean all_has_attachments;
+	gboolean sent_in_progress;
+} DimmedState;
 
 /* convenience macros */
 #define MODEST_TYPE_WINDOW             (modest_window_get_type())
@@ -187,6 +202,31 @@ void     modest_window_show_toolbar (ModestWindow *window,
  **/
 void     modest_window_save_state (ModestWindow *window);
 
+
+/**
+ * modest_window_set_dimming_state:
+ * @window: a #ModestWindow instance object
+ * @state: the #DimmedState state at specific time 
+ * 
+ * Set basic dimming variables from selected headers at
+ * specific moment.
+ **/
+void
+modest_window_set_dimming_state (ModestWindow *window,
+				 DimmedState *state);
+
+/**
+ * modest_window_set_dimming_state:
+ * @window: a #ModestWindow instance object
+ * 
+ * Set basic dimming variables from selected headers at
+ * specific moment.
+ * 
+ * @Returns: a  #DimmedState state saved previously. 
+ **/
+const DimmedState *
+modest_window_get_dimming_state (ModestWindow *window);
+				
 
 /**
  * modest_window_get_action:

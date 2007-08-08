@@ -4097,13 +4097,9 @@ modest_ui_actions_on_email_menu_activated (GtkAction *action,
 					  ModestWindow *window)
 {
 	g_return_if_fail (MODEST_IS_WINDOW (window));
-
-	/* Init dimming rules init data */
 	
 	/* Update dimmed */	
 	modest_window_check_dimming_rules_group (window, "ModestMenuDimmingRules");	
-
-	/* Free dimming ruls init data */
 }
 
 void

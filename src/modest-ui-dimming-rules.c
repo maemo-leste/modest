@@ -50,8 +50,8 @@ static gboolean _invalid_attach_selected (ModestWindow *win,
 static gboolean _purged_attach_selected (ModestWindow *win, gboolean all, ModestDimmingRule *rule);
 static gboolean _clipboard_is_empty (ModestWindow *win);
 static gboolean _invalid_clipboard_selected (ModestWindow *win, ModestDimmingRule *rule);
-static gboolean _already_opened_msg (ModestWindow *win, guint *n_messages);
-static gboolean _selected_msg_marked_as (ModestMainWindow *win, TnyHeaderFlags mask, gboolean opposite, gboolean all);
+/* static gboolean _already_opened_msg (ModestWindow *win, guint *n_messages); */
+/* static gboolean _selected_msg_marked_as (ModestMainWindow *win, TnyHeaderFlags mask, gboolean opposite, gboolean all); */
 static gboolean _selected_folder_not_writeable (ModestMainWindow *win);
 static gboolean _selected_folder_is_snd_level (ModestMainWindow *win);
 static gboolean _selected_folder_is_any_of_type (ModestWindow *win, TnyFolderType types[], guint ntypes);
@@ -64,10 +64,216 @@ static gboolean _msg_download_in_progress (ModestMsgViewWindow *win);
 static gboolean _msg_download_completed (ModestMainWindow *win);
 static gboolean _selected_msg_sent_in_progress (ModestWindow *win);
 static gboolean _sending_in_progress (ModestWindow *win);
-static gboolean _message_is_marked_as_deleted (ModestMsgViewWindow *win);
-static gboolean _selected_message_is_marked_as_deleted (ModestMainWindow *win);
+/* static gboolean _message_is_marked_as_deleted (ModestMsgViewWindow *win); */
+/* static gboolean _selected_message_is_marked_as_deleted (ModestMainWindow *win); */
 static gboolean _invalid_folder_for_purge (ModestWindow *win, ModestDimmingRule *rule);
 static gboolean _transfer_mode_enabled (ModestWindow *win);
+
+static void  fill_list_of_caches (gpointer key, gpointer value, gpointer userdata);
+
+
+static DimmedState *
+_define_main_window_dimming_state (ModestMainWindow *window)
+{
+	DimmedState *state = NULL;
+	GtkWidget *header_view = NULL;
+	TnyList *selected_headers = NULL;
+	TnyIterator *iter = NULL;
+	TnyHeader *header = NULL;
+	ModestCacheMgr *cache_mgr = NULL;
+	GHashTable *send_queue_cache = NULL;
+	ModestTnySendQueue *send_queue = NULL;
+	GSList *send_queues = NULL, *node = NULL;
+	ModestWindowMgr *mgr = NULL;
+	gboolean found = FALSE;
+	gchar *msg_uid = NULL;
+	TnyHeaderFlags flags;
+			
+	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW(window), NULL);
+
+	/* Init state */
+	state = g_slice_new0 (DimmedState);
+	state->n_selected = 0;
+	state->already_opened_msg = FALSE;
+	state->any_marked_as_deleted = FALSE;
+	state->all_marked_as_deleted = FALSE;
+	state->any_marked_as_seen = FALSE;
+	state->all_marked_as_seen = FALSE;
+	state->any_marked_as_cached = FALSE;
+	state->all_marked_as_cached = FALSE;
+	state->any_has_attachments = FALSE;
+	state->all_has_attachments = FALSE;
+	state->sent_in_progress = FALSE;
+
+	/* Get header view and selected headers */
+	header_view = modest_main_window_get_child_widget (window, MODEST_WIDGET_TYPE_HEADER_VIEW);
+	selected_headers = modest_header_view_get_selected_headers (MODEST_HEADER_VIEW(header_view));
+	if (!selected_headers) 
+		return state;
+
+	/* Examine selected headers */
+	iter = tny_list_create_iterator (selected_headers);
+	while (!tny_iterator_is_done (iter)) {
+		header = TNY_HEADER (tny_iterator_get_current (iter));
+		flags = tny_header_get_flags (header);
+		
+		/* No selected */
+		state->n_selected++;
+		
+		/* Already opened */
+		mgr = modest_runtime_get_window_mgr ();
+		if (!state->already_opened_msg)
+			state->already_opened_msg = modest_window_mgr_find_registered_header (mgr, header, NULL);
+		
+		/* Mark as deleted */
+		state->any_marked_as_deleted &= flags & TNY_HEADER_FLAG_DELETED;
+		if (!state->any_marked_as_deleted)
+			state->any_marked_as_deleted = flags & TNY_HEADER_FLAG_DELETED;
+		
+		/* Mark as seen */
+		state->any_marked_as_seen &= flags & TNY_HEADER_FLAG_SEEN;
+		if (!state->any_marked_as_seen)
+			state->any_marked_as_seen = flags & TNY_HEADER_FLAG_SEEN;
+		
+		/* Mark as cached */
+		state->any_marked_as_cached &= flags & TNY_HEADER_FLAG_CACHED;
+		if (!state->any_marked_as_cached)
+			state->any_marked_as_cached = flags & TNY_HEADER_FLAG_CACHED;
+
+		/* Mark has_attachments */
+		state->any_has_attachments &= flags & TNY_HEADER_FLAG_ATTACHMENTS;
+		if (!state->any_has_attachments)
+			state->any_has_attachments = flags & TNY_HEADER_FLAG_ATTACHMENTS;
+
+		/* sent in progress */
+		msg_uid = modest_tny_send_queue_get_msg_id (header);
+		if (!state->sent_in_progress) {
+			cache_mgr = modest_runtime_get_cache_mgr ();
+			send_queue_cache = modest_cache_mgr_get_cache (cache_mgr,
+								       MODEST_CACHE_MGR_CACHE_TYPE_SEND_QUEUE);
+			
+			g_hash_table_foreach (send_queue_cache, (GHFunc) fill_list_of_caches, &send_queues);
+			
+			for (node = send_queues; node != NULL && !found; node = g_slist_next (node)) {
+				send_queue = MODEST_TNY_SEND_QUEUE (node->data);
+				
+				/* Check if msg uid is being processed inside send queue */
+				found = modest_tny_send_queue_msg_is_being_sent (send_queue, msg_uid);		
+			}
+			state->sent_in_progress = found;
+		}
+
+		tny_iterator_next (iter);
+		g_object_unref (header);
+	}
+
+	/* Free */
+	g_free(msg_uid);
+	g_object_unref(selected_headers);
+	g_object_unref(iter);
+	g_slist_free (send_queues);
+	
+	return state;
+}
+
+static DimmedState *
+_define_msg_view_window_dimming_state (ModestMsgViewWindow *window)
+{
+	DimmedState *state = NULL;
+	TnyHeader *header = NULL;
+	ModestCacheMgr *cache_mgr = NULL;
+	GHashTable *send_queue_cache = NULL;
+	ModestTnySendQueue *send_queue = NULL;
+	GSList *send_queues = NULL, *node = NULL;
+	gboolean found = FALSE;
+	gchar *msg_uid = NULL;
+	TnyHeaderFlags flags;
+			
+	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW(window), NULL);
+
+	/* Init state */
+	state = g_slice_new0 (DimmedState);
+	state->n_selected = 0;
+	state->already_opened_msg = FALSE;
+	state->any_marked_as_deleted = FALSE;
+	state->all_marked_as_deleted = FALSE;
+	state->any_marked_as_seen = FALSE;
+	state->all_marked_as_seen = FALSE;
+	state->any_marked_as_cached = FALSE;
+	state->all_marked_as_cached = FALSE;
+	state->any_has_attachments = FALSE;
+	state->all_has_attachments = FALSE;
+	state->sent_in_progress = FALSE;
+
+	header = modest_msg_view_window_get_header (MODEST_MSG_VIEW_WINDOW(window));
+	g_return_val_if_fail (TNY_IS_HEADER(header), state);
+	flags = tny_header_get_flags (header);
+
+	/* Selected */
+	state->n_selected++;
+
+	/* Mark as deleted */
+	state->any_marked_as_deleted &= flags & TNY_HEADER_FLAG_DELETED;
+	if (!state->any_marked_as_deleted)
+		state->any_marked_as_deleted = flags & TNY_HEADER_FLAG_DELETED;
+	
+	/* Mark as seen */
+	state->any_marked_as_seen &= flags & TNY_HEADER_FLAG_SEEN;
+	if (!state->any_marked_as_seen)
+		state->any_marked_as_seen = flags & TNY_HEADER_FLAG_SEEN;
+	
+	/* Mark as cached */
+	state->any_marked_as_cached &= flags & TNY_HEADER_FLAG_CACHED;
+	if (!state->any_marked_as_cached)
+		state->any_marked_as_cached = flags & TNY_HEADER_FLAG_CACHED;
+	
+	/* Mark has_attachments */
+	state->any_has_attachments &= flags & TNY_HEADER_FLAG_ATTACHMENTS;
+	if (!state->any_has_attachments)
+		state->any_has_attachments = flags & TNY_HEADER_FLAG_ATTACHMENTS;
+	
+	/* sent in progress */
+	msg_uid = modest_tny_send_queue_get_msg_id (header);
+	if (!state->sent_in_progress) {
+		cache_mgr = modest_runtime_get_cache_mgr ();
+		send_queue_cache = modest_cache_mgr_get_cache (cache_mgr,
+							       MODEST_CACHE_MGR_CACHE_TYPE_SEND_QUEUE);
+		
+		g_hash_table_foreach (send_queue_cache, (GHFunc) fill_list_of_caches, &send_queues);
+		
+		for (node = send_queues; node != NULL && !found; node = g_slist_next (node)) {
+			send_queue = MODEST_TNY_SEND_QUEUE (node->data);
+			
+			/* Check if msg uid is being processed inside send queue */
+			found = modest_tny_send_queue_msg_is_being_sent (send_queue, msg_uid);		
+		}
+		state->sent_in_progress = found;
+	}
+	
+	/* Free */
+	g_free(msg_uid);
+	g_object_unref (header);
+	g_slist_free (send_queues);
+
+	return state;
+}
+
+   
+DimmedState *
+modest_ui_dimming_rules_define_dimming_state (ModestWindow *window)
+{
+	DimmedState *state = NULL;
+
+	g_return_val_if_fail (MODEST_IS_WINDOW(window), NULL);
+	
+	if (MODEST_IS_MAIN_WINDOW (window)) 
+		state = _define_main_window_dimming_state (MODEST_MAIN_WINDOW(window));
+	else if (MODEST_IS_MSG_VIEW_WINDOW (window)) {
+		state = _define_msg_view_window_dimming_state (MODEST_MSG_VIEW_WINDOW(window));		
+	}
+	
+	return state;
+}
 
 
 gboolean 
@@ -322,17 +528,19 @@ modest_ui_dimming_rules_on_open_msg (ModestWindow *win, gpointer user_data)
 {
 	ModestDimmingRule *rule = NULL;
 	gboolean dimmed = FALSE;
+	const DimmedState *state = NULL;
 
 	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW(win), FALSE);
 	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
 	rule = MODEST_DIMMING_RULE (user_data);
-		
+	state = modest_window_get_dimming_state (win);		
+
 	/* Check dimmed rule */	
 	if (!dimmed) {
 		dimmed = _invalid_msg_selected (MODEST_MAIN_WINDOW(win), TRUE, user_data);
 	}
 	if (!dimmed) {
-		dimmed = _selected_message_is_marked_as_deleted (MODEST_MAIN_WINDOW (win));
+		dimmed = state->any_marked_as_deleted;
 		if (dimmed)
 			modest_dimming_rule_set_notification (rule, _("mcen_ib_message_already_deleted"));
 	}
@@ -439,10 +647,12 @@ modest_ui_dimming_rules_on_delete_msg (ModestWindow *win, gpointer user_data)
 {
 	ModestDimmingRule *rule = NULL;
 	guint n_messages = 0;
+	const DimmedState *state = NULL;
 	gboolean dimmed = FALSE;
 
 	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
 	rule = MODEST_DIMMING_RULE (user_data);
+	state = modest_window_get_dimming_state (win);		
 	
 	/* Check dimmed rule */		
 	if (MODEST_IS_MAIN_WINDOW (win)) {
@@ -455,24 +665,25 @@ modest_ui_dimming_rules_on_delete_msg (ModestWindow *win, gpointer user_data)
 			dimmed = _invalid_msg_selected (MODEST_MAIN_WINDOW(win), FALSE, user_data);
 		}
 		if (!dimmed) {
-			dimmed = _already_opened_msg (win, &n_messages);
+			dimmed = state->already_opened_msg;
+			n_messages = state->n_selected;
  			if (dimmed) {
 				gchar *num = g_strdup_printf ("%d", n_messages);
 				gchar *message = g_strdup_printf(_("mcen_nc_unable_to_delete_n_messages"), num);
-/* 				modest_dimming_rule_set_notification (rule, _("mcen_nc_unable_to_delete_n_messages")); */
 				modest_dimming_rule_set_notification (rule, message);
  				g_free(message);
 				g_free(num);
 			}
+			
 		}
 		if (!dimmed) {
-			dimmed = _selected_message_is_marked_as_deleted (MODEST_MAIN_WINDOW (win));
+			dimmed = state->any_marked_as_deleted;
 			if (dimmed) {
 				modest_dimming_rule_set_notification (rule, _("mcen_ib_message_already_deleted"));
 			}
 		}
 		if (!dimmed) {
-			dimmed = _selected_msg_sent_in_progress (win);
+			dimmed = state->sent_in_progress;
 			if (dimmed)
 				modest_dimming_rule_set_notification (rule, _CS("ckct_ib_unable_to_delete"));
 		}
@@ -484,7 +695,7 @@ modest_ui_dimming_rules_on_delete_msg (ModestWindow *win, gpointer user_data)
 				modest_dimming_rule_set_notification (rule, _("mail_ib_notavailable_downloading"));
 		}
 		if (!dimmed) {
-			dimmed = _message_is_marked_as_deleted (MODEST_MSG_VIEW_WINDOW (win));
+			dimmed = state->any_marked_as_deleted;
 			if (dimmed)
 				modest_dimming_rule_set_notification (rule, _("mcen_ib_message_already_deleted"));
 		}
@@ -572,11 +783,13 @@ modest_ui_dimming_rules_on_mark_as_read_msg (ModestWindow *win, gpointer user_da
 {
  	ModestDimmingRule *rule = NULL;
 	TnyHeaderFlags flags;
+	const DimmedState *state = NULL;
 	gboolean dimmed = FALSE;
 
 	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW(win), FALSE);
 	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
 	rule = MODEST_DIMMING_RULE (user_data);
+	state = modest_window_get_dimming_state (win);		
 	
 	flags = TNY_HEADER_FLAG_SEEN; 
 
@@ -585,7 +798,7 @@ modest_ui_dimming_rules_on_mark_as_read_msg (ModestWindow *win, gpointer user_da
 		dimmed = _invalid_msg_selected (MODEST_MAIN_WINDOW(win), FALSE, user_data);
 	}
 	if (!dimmed) {
-		dimmed = _selected_msg_marked_as (MODEST_MAIN_WINDOW(win), flags, FALSE, TRUE);
+		dimmed = state->all_marked_as_seen;
 		if (dimmed)
 			modest_dimming_rule_set_notification (rule, "");
 	}	
@@ -598,11 +811,13 @@ modest_ui_dimming_rules_on_mark_as_unread_msg (ModestWindow *win, gpointer user_
 {
  	ModestDimmingRule *rule = NULL;
 	TnyHeaderFlags flags;
+	const DimmedState *state = NULL;
 	gboolean dimmed = FALSE;
 
 	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW(win), FALSE);
 	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
 	rule = MODEST_DIMMING_RULE (user_data);
+	state = modest_window_get_dimming_state (win);		
 	
 	flags = TNY_HEADER_FLAG_SEEN; 
 
@@ -610,7 +825,7 @@ modest_ui_dimming_rules_on_mark_as_unread_msg (ModestWindow *win, gpointer user_
 	if (!dimmed)
 		dimmed = _invalid_msg_selected (MODEST_MAIN_WINDOW(win), FALSE, user_data);
 	if (!dimmed) {
-		dimmed = _selected_msg_marked_as (MODEST_MAIN_WINDOW(win), flags, TRUE, TRUE);
+		dimmed = !state->any_marked_as_seen;
 		if (dimmed)
 			modest_dimming_rule_set_notification (rule, "");
 	}
@@ -640,22 +855,20 @@ gboolean
 modest_ui_dimming_rules_on_main_window_move_to (ModestWindow *win, gpointer user_data)
 {
 	GtkWidget *folder_view = NULL;
-	GtkWidget *header_view = NULL;
 	ModestDimmingRule *rule = NULL;
 	guint n_messages = 0;
+	const DimmedState *state = NULL;
 	gboolean dimmed = FALSE;
 	
 	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW(win), TRUE);
 	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
 	rule = MODEST_DIMMING_RULE (user_data);
+	state = modest_window_get_dimming_state (win);		
 	
 	/* Get the folder view */
 	folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(win),
 							   MODEST_WIDGET_TYPE_FOLDER_VIEW);
 
-	/* Get header view */
-	header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(win),
-							   MODEST_WIDGET_TYPE_HEADER_VIEW);
 	
 	/* Check diming rules for folders transfer  */
 	if (gtk_widget_is_focus (folder_view)) {
@@ -682,7 +895,8 @@ modest_ui_dimming_rules_on_main_window_move_to (ModestWindow *win, gpointer user
 	
 	/* Check diming rules for messages transfer  */
 	if (!dimmed) {
-		dimmed = _already_opened_msg (win, &n_messages);
+		dimmed = state->already_opened_msg;
+		n_messages = state->n_selected;
 		if (dimmed) {
 			gchar *message = g_strdup_printf(_("emev_bd_unabletomove_items"), n_messages);
 			modest_dimming_rule_set_notification (rule, message);
@@ -858,11 +1072,13 @@ gboolean
 modest_ui_dimming_rules_on_remove_attachments (ModestWindow *win, gpointer user_data)
 {
 	ModestDimmingRule *rule = NULL;
+	const DimmedState *state = NULL;
 	gboolean dimmed = FALSE;
 
 	g_return_val_if_fail (MODEST_IS_WINDOW(win), FALSE);
 	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
 	rule = MODEST_DIMMING_RULE (user_data);
+	state = modest_window_get_dimming_state (win);		
 
 	/* Check in main window if there's only one message selected */
 	if (!dimmed && MODEST_IS_MAIN_WINDOW (win)) {
@@ -883,7 +1099,7 @@ modest_ui_dimming_rules_on_remove_attachments (ModestWindow *win, gpointer user_
 
 	/* Check if the selected message in main window has attachments */
 	if (!dimmed && MODEST_IS_MAIN_WINDOW (win)) {
-		dimmed = _selected_msg_marked_as (MODEST_MAIN_WINDOW(win), TNY_HEADER_FLAG_ATTACHMENTS, TRUE, FALSE);
+		dimmed = state->any_has_attachments;
 		if (dimmed)
 			modest_dimming_rule_set_notification (rule, _("mail_ib_unable_to_purge_attachments"));
 	}
@@ -1053,17 +1269,20 @@ modest_ui_dimming_rules_on_cancel_sending (ModestWindow *win, gpointer user_data
  	ModestDimmingRule *rule = NULL;
 	TnyFolderType types[1];
 	guint n_messages = 0;
+	const DimmedState *state = NULL;
 	gboolean dimmed = FALSE;
 
 	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW(win), FALSE);
 	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
 	rule = MODEST_DIMMING_RULE (user_data);
+	state = modest_window_get_dimming_state (win);
 
 	types[0] = TNY_FOLDER_TYPE_OUTBOX; 
 
 	/* Check dimmed rules */	
 	if (!dimmed) {
-		dimmed = _already_opened_msg (win, &n_messages);
+		dimmed = state->already_opened_msg;
+		n_messages = state->n_selected;
  		if (dimmed) 
 			modest_dimming_rule_set_notification (rule, _("mcen_ib_message_unableto_cancel_send"));
 	}
@@ -1124,39 +1343,6 @@ modest_ui_dimming_rules_on_add_to_contacts (ModestWindow *win, gpointer user_dat
 
 /* *********************** static utility functions ******************** */
 
-/* Returns whether the selected message is marked as deleted. */
-static gboolean 
-_message_is_marked_as_deleted (ModestMsgViewWindow *win)
-{
-	g_return_val_if_fail (win, FALSE);
-	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW(win), FALSE);
-	
-	TnyHeader* header = modest_msg_view_window_get_header (win);
-	if (!header)
-		return FALSE;
-		
-	return (tny_header_get_flags (header) & TNY_HEADER_FLAG_DELETED);
-}
-
-
-
-/* Returns whether the selected message is marked as deleted.
- * @param win The main window, or NULL if you want this function 
- * to discover the main window itself, which is marginally less 
- * efficient. */
-static gboolean 
-_selected_message_is_marked_as_deleted (ModestMainWindow *win)
-{
-	gboolean result = FALSE;
-	TnyHeaderFlags flags;
-
-	flags = TNY_HEADER_FLAG_DELETED; 
-
-	/* Check dimmed rule */	
-	result = _selected_msg_marked_as (win, flags, FALSE, FALSE);
-	
-	return result;
-}
 
 static gboolean
 _selected_folder_not_writeable (ModestMainWindow *win)
@@ -1496,7 +1682,11 @@ static gboolean
 _invalid_clipboard_selected (ModestWindow *win,
 		       ModestDimmingRule *rule) 
 {
+	const DimmedState *state = NULL;
 	gboolean result = FALSE;
+
+	g_return_val_if_fail (MODEST_IS_WINDOW(win), FALSE);
+	state = modest_window_get_dimming_state (win);
 
 	if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
 		GtkClipboard *clipboard = NULL;
@@ -1516,16 +1706,13 @@ _invalid_clipboard_selected (ModestWindow *win,
 		
 		if (result)
 			modest_dimming_rule_set_notification (rule, "");
+		
+		if (selection != NULL) 
+			g_free(selection);
 	}		
 	else if (MODEST_IS_MAIN_WINDOW (win)) {
-		GtkWidget *header_view = NULL;
-
-		/* Get header view to check selected messages */
-		header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(win),
-								   MODEST_WIDGET_TYPE_HEADER_VIEW);
-	
 		/* Check dimming */
-		result = !modest_header_view_has_selected_headers (MODEST_HEADER_VIEW(header_view));		
+		result = state->n_selected == 0;
 		if (result)
 			modest_dimming_rule_set_notification (rule, _("mcen_ib_no_message_selected"));			
 	}
@@ -1546,12 +1733,16 @@ _invalid_attach_selected (ModestWindow *win,
 	TnyHeaderFlags flags;
 	gboolean nested_attachments = FALSE;
 	gboolean selected_messages = FALSE;
+	const DimmedState *state = NULL;
 	gboolean result = FALSE;
+
+	g_return_val_if_fail (MODEST_IS_WINDOW(win), FALSE);
+	state = modest_window_get_dimming_state (win);
 
 	if (MODEST_IS_MAIN_WINDOW (win)) {
 		flags = TNY_HEADER_FLAG_ATTACHMENTS;
 		if (!result)
-			result = _selected_msg_marked_as (MODEST_MAIN_WINDOW (win), flags, TRUE, FALSE);		
+			result = !state->any_has_attachments;
 	}
 	else if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
 		
@@ -1656,34 +1847,27 @@ _invalid_msg_selected (ModestMainWindow *win,
 		       gboolean unique,
 		       ModestDimmingRule *rule) 
 {
-	GtkWidget *header_view = NULL;		
 	GtkWidget *folder_view = NULL;
-	gboolean selected_headers = FALSE;
+	const DimmedState *state = NULL;
 	gboolean result = FALSE;
 
 	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW(win), FALSE);
 	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (rule), FALSE);
+	state = modest_window_get_dimming_state (MODEST_WINDOW(win));
 		
-	/* Get header view to check selected messages */
-	header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(win),
-							   MODEST_WIDGET_TYPE_HEADER_VIEW);
-	
 	/* Get folder view to check focus */
 	folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win),
 							   MODEST_WIDGET_TYPE_FOLDER_VIEW);
 
-	/* Get selected headers */
-	selected_headers = modest_header_view_has_selected_headers (MODEST_HEADER_VIEW(header_view));
-
 	/* Check dimmed rule (TODO: check focus on widgets */	
 	if (!result) {
-		result = ((!selected_headers) ||
+		result = ((state->n_selected == 0 ) ||
 			  (gtk_widget_is_focus (folder_view)));
 		if (result)
 			modest_dimming_rule_set_notification (rule, _("mcen_ib_no_message_selected"));
 	}
 	if (!result && unique) {
-		result = modest_header_view_count_selected_headers (MODEST_HEADER_VIEW(header_view)) > 1;
+		result = state->n_selected > 1;
 		if (result)
 			modest_dimming_rule_set_notification (rule, _("mcen_ib_select_one_message"));
 	}
@@ -1691,136 +1875,6 @@ _invalid_msg_selected (ModestMainWindow *win,
 	return result;
 }
 
-static gboolean
-_already_opened_msg (ModestWindow *win,
-		     guint *n_messages)
-{
-	//ModestWindow *window = NULL;
-	ModestWindowMgr *mgr = NULL;
-	GtkWidget *header_view = NULL;		
-	TnyList *selected_headers = NULL;
-	TnyIterator *iter = NULL;
-	TnyHeader *header = NULL;
-	gboolean found;
-
-	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW(win), FALSE);
-		
-	/* Get header view to check selected messages */
-	header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(win),
-							   MODEST_WIDGET_TYPE_HEADER_VIEW);
-
-
-	/* Check no selection */
-	if (!modest_header_view_has_selected_headers (MODEST_HEADER_VIEW(header_view)))
-	    return FALSE;
-	    
-	/* Get selected headers */
-	selected_headers = modest_header_view_get_selected_headers (MODEST_HEADER_VIEW(header_view));
-	if (selected_headers == NULL) 
-		return FALSE;
-
-	*n_messages = tny_list_get_length (selected_headers);
-
-	/* Check dimmed rule (TODO: check focus on widgets */	
-	mgr = modest_runtime_get_window_mgr ();
-	iter = tny_list_create_iterator (selected_headers);
-	found = FALSE;
-	while (!tny_iterator_is_done (iter)) {
-		header = TNY_HEADER (tny_iterator_get_current (iter));
-		if (header) {
-			found = modest_window_mgr_find_registered_header (mgr,header, NULL);
-		
-			g_object_unref (header);
-		}
-
-		tny_iterator_next (iter);
-
-		if (found)
-			break;
-	}
-		
-	/* free */
-	if (selected_headers != NULL) 
-		g_object_unref (selected_headers);
-	if (iter != NULL)
-		g_object_unref (iter);
-		
-	return found;
-}
-
-/* Returns whether the selected message has these flags.
- * @win: The main window, or NULL if you want this function 
- * to discover the main window itself.
- */
-static gboolean
-_selected_msg_marked_as (ModestMainWindow *win, 
-			 TnyHeaderFlags mask, 
-			 gboolean opposite,
-			 gboolean all)
-{
-	ModestMainWindow *main_window = NULL;
-	GtkWidget *header_view = NULL;
-	TnyList *selected_headers = NULL;
-	TnyIterator *iter = NULL;
-	TnyHeader *header = NULL;
-	TnyHeaderFlags flags = 0;
-	gboolean result = TRUE;
-
-    /* The caller can supply the main window if it knows it, 
-     * to save time, or we can get it here: */
-	if (win && MODEST_IS_MAIN_WINDOW (win))
-		main_window = win;
-	else {
-		main_window = MODEST_MAIN_WINDOW (
-			modest_window_mgr_get_main_window (modest_runtime_get_window_mgr ()));
-	}	
-
-	/* TODO: Javi, what about if the main window does not
-	   exist?. Adding some code to avoid CRITICALs */
-	if (!main_window)
-		return FALSE;
-
-	/* Get header view to check selected messages */
-	header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(main_window),
-							   MODEST_WIDGET_TYPE_HEADER_VIEW);
-
-	/* Check no selection */
-	if (!modest_header_view_has_selected_headers (MODEST_HEADER_VIEW(header_view)))
-	    return TRUE;
-
-	/* Get selected headers */
-	selected_headers = modest_header_view_get_selected_headers (MODEST_HEADER_VIEW(header_view));
-	if (selected_headers == NULL) 
-		return TRUE;
-	
-	/* Call the function for each header */
-	iter = tny_list_create_iterator (selected_headers);
-	while (!tny_iterator_is_done (iter) && result) {
-		header = TNY_HEADER (tny_iterator_get_current (iter));
-		if (header) {
-			flags = tny_header_get_flags (header);
-			if (opposite)
-				result = (flags & mask) == 0; 
-			else
-				result = (flags & mask) != 0; 
-
-			g_object_unref (header);
-		}
-
-		tny_iterator_next (iter);
-	}
-
-	if (all) 
-		result = result && tny_iterator_is_done (iter);
-
-	/* free */
-	if (selected_headers != NULL) 
-		g_object_unref (selected_headers);
-	if (iter != NULL)
-		g_object_unref (iter);
-
-	return result;
-}
 
 static gboolean
 _msg_download_in_progress (ModestMsgViewWindow *win)
@@ -1837,50 +1891,8 @@ _msg_download_in_progress (ModestMsgViewWindow *win)
 static gboolean
 _msg_download_completed (ModestMainWindow *win)
 {
-	GtkWidget *header_view = NULL;
-	TnyList *selected_headers = NULL;
-	TnyIterator *iter = NULL;
-	TnyHeader *header = NULL;
-	TnyHeaderFlags flags = 0;
-	gboolean result = FALSE;
-
-	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW (win), FALSE);
-
-
-	/* Get header view to check selected messages */
-	header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(win),
-							   MODEST_WIDGET_TYPE_HEADER_VIEW);
-
-	/* Check no selection */
-	if (!modest_header_view_has_selected_headers (MODEST_HEADER_VIEW(header_view)))
-	    return TRUE;
-
-	/* Get selected headers */
-	selected_headers = modest_header_view_get_selected_headers (MODEST_HEADER_VIEW(header_view));
-	if (selected_headers == NULL) 
-		return TRUE;
-
-	/* Check dimmed rule  */	
-	result = TRUE;
-	iter = tny_list_create_iterator (selected_headers);
-	while (!tny_iterator_is_done (iter) && result) {
-		header = TNY_HEADER (tny_iterator_get_current (iter));
-		if (header) {
-			flags = tny_header_get_flags (header);
-			/* TODO: is this the right flag?, it seems that some
-			   headers that have been previously downloaded do not
-			   come with it */
-			result = (flags & TNY_HEADER_FLAG_CACHED);
-
-			g_object_unref (header);
-		}
-
-		tny_iterator_next (iter);
-	}
-
-	g_object_unref (iter);
-
-	return result;
+	const DimmedState *state = modest_window_get_dimming_state (MODEST_WINDOW(win));
+	return state->any_marked_as_cached;
 }
 
 static void 
@@ -1893,74 +1905,8 @@ fill_list_of_caches (gpointer key, gpointer value, gpointer userdata)
 static gboolean
 _selected_msg_sent_in_progress (ModestWindow *win)
 {
-	ModestCacheMgr *cache_mgr;
-	GHashTable     *send_queue_cache;
-	GSList *send_queues = NULL, *node;
-	ModestTnySendQueue *send_queue = NULL;
-	GtkWidget *header_view = NULL;
-	TnyList *header_list = NULL;
-	TnyIterator *iter = NULL;
-	TnyHeader *header = NULL;
-	gboolean result = FALSE;
-	gchar *msg_uid = NULL;
-	
-
-	if (MODEST_IS_MAIN_WINDOW(win)) {
-		
-		/* Get header view to check selected messages */
-		header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(win),
-								   MODEST_WIDGET_TYPE_HEADER_VIEW);
-		
-		/* Check no selection */
-		if (!modest_header_view_has_selected_headers (MODEST_HEADER_VIEW(header_view)))
-		    return FALSE;
-
-		/* Get selected headers */
-		header_list = modest_header_view_get_selected_headers (MODEST_HEADER_VIEW(header_view));
-
-		/* Get message header */
-		if (!header_list) return FALSE;
-		iter = tny_list_create_iterator (header_list);
-		header = TNY_HEADER (tny_iterator_get_current (iter));
-		if (header) {
-			/* Get message uid */
-			msg_uid = modest_tny_send_queue_get_msg_id (header);
-			g_object_unref (header);
-		}
-		
-        } else if (MODEST_IS_MSG_VIEW_WINDOW(win)) {
-		
-		/* Get message header */
-		header = modest_msg_view_window_get_header (MODEST_MSG_VIEW_WINDOW(win));
-		if (header) {
-			/* Get message uid */
-			msg_uid = modest_tny_send_queue_get_msg_id (header);
-			g_object_unref (header);
-		}
-	}
-
-	/* Search on send queues cache */
-	cache_mgr = modest_runtime_get_cache_mgr ();
-	send_queue_cache = modest_cache_mgr_get_cache (cache_mgr,
-						       MODEST_CACHE_MGR_CACHE_TYPE_SEND_QUEUE);
-	
-	g_hash_table_foreach (send_queue_cache, (GHFunc) fill_list_of_caches, &send_queues);
-	
-	for (node = send_queues; node != NULL && !result; node = g_slist_next (node)) {
-		send_queue = MODEST_TNY_SEND_QUEUE (node->data);
-
-		/* Check if msg uid is being processed inside send queue */
-		result = modest_tny_send_queue_msg_is_being_sent (send_queue, msg_uid);		
-	}
-
-
-	/* Free */
-	g_free(msg_uid);
-	g_object_unref(header_list);
-	g_object_unref(iter);
-	g_slist_free (send_queues);
-
-	return result;
+	const DimmedState *state = modest_window_get_dimming_state (win);
+	return state->sent_in_progress;
 }
 
 
@@ -2070,3 +2016,4 @@ _transfer_mode_enabled (ModestWindow *win)
 
 	return result;
 }
+

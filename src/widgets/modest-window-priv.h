@@ -39,12 +39,12 @@ G_BEGIN_DECLS
 
 typedef struct _ModestWindowPrivate ModestWindowPrivate;
 struct _ModestWindowPrivate {
-	GtkUIManager         *ui_manager;
+	GtkUIManager            *ui_manager;
 	ModestUIDimmingManager  *ui_dimming_manager;
-	GtkWidget            *toolbar;
-	GtkWidget            *menubar;
-
-	gchar                *active_account;
+	GtkWidget               *toolbar;
+	GtkWidget               *menubar;
+	DimmedState             *dimming_state;
+	gchar                   *active_account;
 };
 
 #define MODEST_WINDOW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \

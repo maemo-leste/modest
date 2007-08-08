@@ -31,6 +31,7 @@
 #include "modest-dimming-rules-group-priv.h"
 #include "modest-dimming-rule.h"
 #include "modest-platform.h"
+#include "modest-ui-dimming-rules.h"
 
 static void modest_dimming_rules_group_class_init (ModestDimmingRulesGroupClass *klass);
 static void modest_dimming_rules_group_init       (ModestDimmingRulesGroup *obj);
@@ -41,6 +42,7 @@ static void _insensitive_press_callback (GtkWidget *widget, gpointer user_data);
 
 typedef struct _ModestDimmingRulesGroupPrivate ModestDimmingRulesGroupPrivate;
 struct _ModestDimmingRulesGroupPrivate {	
+	ModestWindow *window;
 	gchar *name;
 	gboolean notifications_enabled;
 	GHashTable *rules_map;
@@ -103,6 +105,8 @@ modest_dimming_rules_group_init (ModestDimmingRulesGroup *obj)
 	priv = MODEST_DIMMING_RULES_GROUP_GET_PRIVATE(obj);
 
 	priv->name = NULL;
+	priv->window = NULL;
+	priv->notifications_enabled = FALSE;
 	priv->rules_map = g_hash_table_new_full ((GHashFunc) g_str_hash,
 						 (GEqualFunc) g_str_equal,
 						 (GDestroyNotify) g_free,
@@ -177,6 +181,10 @@ modest_dimming_rules_group_add_rules (ModestDimmingRulesGroup *self,
 	
 	priv = MODEST_DIMMING_RULES_GROUP_GET_PRIVATE(self);
 
+	/* Set window to process dimming rules */
+	priv->window = MODEST_WINDOW (user_data);
+
+	/* Add dimming rules */
 	for (i=0; i < n_elements; i++) {
 		entry = modest_dimming_entries[i]; 
 		
@@ -193,7 +201,7 @@ modest_dimming_rules_group_add_rules (ModestDimmingRulesGroup *self,
 		if (widget == NULL) continue;
 
 		/* Create a new dimming rule */
-		dim_rule = modest_dimming_rule_new (MODEST_WINDOW(user_data),
+		dim_rule = modest_dimming_rule_new (priv->window,
 						    (ModestDimmingCallback) entry.callback,
 						    entry.action_path);
 		
@@ -223,11 +231,20 @@ void
 modest_dimming_rules_group_execute (ModestDimmingRulesGroup *self) 
 {
 	ModestDimmingRulesGroupPrivate *priv;
+	DimmedState *state = NULL;
 
 	g_return_if_fail (MODEST_IS_DIMMING_RULES_GROUP(self));
 	priv = MODEST_DIMMING_RULES_GROUP_GET_PRIVATE(self);
 
+	/* Init dimming rules init data */
+	state = modest_ui_dimming_rules_define_dimming_state (priv->window);	
+	modest_window_set_dimming_state (priv->window, state);
+
+	/* execute group dimming rules */
 	g_hash_table_foreach (priv->rules_map, _execute_dimming_rule, NULL);
+
+	/* Free dimming ruls init data */
+	modest_window_set_dimming_state (priv->window, NULL);
 }
 
 

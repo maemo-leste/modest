@@ -208,6 +208,34 @@ modest_window_check_dimming_rules_group (ModestWindow *self,
 	modest_ui_dimming_manager_process_dimming_rules_group (priv->ui_dimming_manager, group_name);
 }
 
+void
+modest_window_set_dimming_state (ModestWindow *window,
+				 DimmedState *state)
+{
+	ModestWindowPrivate *priv;	
+
+	g_return_if_fail (MODEST_IS_WINDOW (window));
+	priv = MODEST_WINDOW_GET_PRIVATE(window);
+
+	/* Free previous */
+	if (priv->dimming_state != NULL)
+		g_slice_free (DimmedState, priv->dimming_state);
+
+	/* Set new state */
+	priv->dimming_state = state;
+}
+
+const DimmedState *
+modest_window_get_dimming_state (ModestWindow *window)
+{
+	ModestWindowPrivate *priv;	
+
+	g_return_val_if_fail (MODEST_IS_WINDOW (window), NULL);
+	priv = MODEST_WINDOW_GET_PRIVATE(window);
+
+	return priv->dimming_state;
+}
+
 GtkAction *
 modest_window_get_action (ModestWindow *window, 
 			  const gchar *action_path) 

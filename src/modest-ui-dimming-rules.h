@@ -36,6 +36,9 @@
 
 G_BEGIN_DECLS
 
+/* Window dimming state */
+DimmedState *modest_ui_dimming_rules_define_dimming_state (ModestWindow *window);
+
 /* Menu & toolbar dimming rules */
 gboolean modest_ui_dimming_rules_on_new_msg (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_new_folder (ModestWindow *win, gpointer user_data);

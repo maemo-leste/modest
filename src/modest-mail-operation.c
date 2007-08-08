@@ -73,7 +73,7 @@ static void modest_mail_operation_finalize   (GObject *obj);
 static void     get_msg_cb (TnyFolder *folder, 
 			    gboolean cancelled, 
 			    TnyMsg *msg, 
-			    GError *err, 
+			    GError *rr, 
 			    gpointer user_data);
 
 static void     get_msg_status_cb (GObject *obj,
@@ -1362,7 +1362,6 @@ update_account_thread (gpointer thr_user_data)
 		goto out;
 
 	/* Perform send (if operation was not cancelled) */
-/* 	priv->op_type = MODEST_MAIL_OPERATION_TYPE_SEND; */
 	priv->done = 0;
 	priv->total = 0;
 	if (priv->account != NULL) 
@@ -1371,9 +1370,7 @@ update_account_thread (gpointer thr_user_data)
 	
 	send_queue = modest_runtime_get_send_queue (info->transport_account);
 	if (send_queue) {
-/* 		timeout = g_timeout_add (250, idle_notify_progress, info->mail_op); */
 		modest_tny_send_queue_try_to_send (send_queue);
-/* 		g_source_remove (timeout); */
 	} else {
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 			     MODEST_MAIL_OPERATION_ERROR_INSTANCE_CREATION_FAILED,
@@ -2593,6 +2590,8 @@ on_refresh_folder (TnyFolder   *folder,
 	if (error) {
 		priv->error = g_error_copy (error);
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
+		printf("DEBUG: %s: Operation error:\n %s", __FUNCTION__,
+		       error->message);
 		goto out;
 	}
 
@@ -2602,11 +2601,12 @@ on_refresh_folder (TnyFolder   *folder,
 			     MODEST_MAIL_OPERATION_ERROR_ITEM_NOT_FOUND,
 			     _("Error trying to refresh the contents of %s"),
 			     tny_folder_get_name (folder));
+		printf("DEBUG: %s: Operation cancelled.\n", __FUNCTION__);
 		goto out;
 	}
 
 	priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
- out:
+
 	/* Call user defined callback, if it exists */
 	if (helper->user_callback) {
 
@@ -2618,6 +2618,7 @@ on_refresh_folder (TnyFolder   *folder,
 		/* no gdk_threads_leave (), CHECKED */
 	}
 
+ out:
 	/* Free */
 	g_slice_free   (RefreshAsyncHelper, helper);
 
