@@ -88,7 +88,11 @@ _define_main_window_dimming_state (ModestMainWindow *window)
 	gboolean found = FALSE;
 	gchar *msg_uid = NULL;
 	TnyHeaderFlags flags;
-			
+	gboolean all_deleted = TRUE;
+	gboolean all_seen = TRUE;
+	gboolean all_cached = TRUE;
+	gboolean all_has_attach = TRUE;
+
 	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW(window), NULL);
 
 	/* Init state */
@@ -125,26 +129,31 @@ _define_main_window_dimming_state (ModestMainWindow *window)
 		if (!state->already_opened_msg)
 			state->already_opened_msg = modest_window_mgr_find_registered_header (mgr, header, NULL);
 		
-		/* Mark as deleted */
-		state->any_marked_as_deleted &= flags & TNY_HEADER_FLAG_DELETED;
+
+		/* Mark as deleted */		
+		all_deleted = all_deleted && (flags & TNY_HEADER_FLAG_DELETED);
+		state->all_marked_as_deleted = all_deleted;
 		if (!state->any_marked_as_deleted)
 			state->any_marked_as_deleted = flags & TNY_HEADER_FLAG_DELETED;
 		
 		/* Mark as seen */
-		state->any_marked_as_seen &= flags & TNY_HEADER_FLAG_SEEN;
+		all_seen = all_seen && (flags & TNY_HEADER_FLAG_SEEN);
+		state->all_marked_as_seen = all_seen;
 		if (!state->any_marked_as_seen)
 			state->any_marked_as_seen = flags & TNY_HEADER_FLAG_SEEN;
 		
 		/* Mark as cached */
-		state->any_marked_as_cached &= flags & TNY_HEADER_FLAG_CACHED;
+		all_cached = all_cached && (flags & TNY_HEADER_FLAG_CACHED);
+		state->all_marked_as_cached = all_cached;
 		if (!state->any_marked_as_cached)
 			state->any_marked_as_cached = flags & TNY_HEADER_FLAG_CACHED;
-
+		
 		/* Mark has_attachments */
-		state->any_has_attachments &= flags & TNY_HEADER_FLAG_ATTACHMENTS;
+		all_has_attach = all_has_attach && (flags & TNY_HEADER_FLAG_ATTACHMENTS);
+		state->all_has_attachments = all_has_attach;
 		if (!state->any_has_attachments)
 			state->any_has_attachments = flags & TNY_HEADER_FLAG_ATTACHMENTS;
-
+	
 		/* sent in progress */
 		msg_uid = modest_tny_send_queue_get_msg_id (header);
 		if (!state->sent_in_progress) {
@@ -188,6 +197,10 @@ _define_msg_view_window_dimming_state (ModestMsgViewWindow *window)
 	gboolean found = FALSE;
 	gchar *msg_uid = NULL;
 	TnyHeaderFlags flags;
+	gboolean all_deleted = TRUE;
+	gboolean all_seen = TRUE;
+	gboolean all_cached = TRUE;
+	gboolean all_has_attach = TRUE;
 			
 	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW(window), NULL);
 
@@ -212,23 +225,27 @@ _define_msg_view_window_dimming_state (ModestMsgViewWindow *window)
 	/* Selected */
 	state->n_selected++;
 
-	/* Mark as deleted */
-	state->any_marked_as_deleted &= flags & TNY_HEADER_FLAG_DELETED;
+	/* Mark as deleted */		
+	all_deleted = all_deleted && (flags & TNY_HEADER_FLAG_DELETED);
+	state->all_marked_as_deleted = all_deleted;
 	if (!state->any_marked_as_deleted)
 		state->any_marked_as_deleted = flags & TNY_HEADER_FLAG_DELETED;
 	
 	/* Mark as seen */
-	state->any_marked_as_seen &= flags & TNY_HEADER_FLAG_SEEN;
+	all_seen = all_seen && (flags & TNY_HEADER_FLAG_SEEN);
+	state->all_marked_as_seen = all_seen;
 	if (!state->any_marked_as_seen)
 		state->any_marked_as_seen = flags & TNY_HEADER_FLAG_SEEN;
 	
 	/* Mark as cached */
-	state->any_marked_as_cached &= flags & TNY_HEADER_FLAG_CACHED;
+	all_cached = all_cached && (flags & TNY_HEADER_FLAG_CACHED);
+	state->all_marked_as_cached = all_cached;
 	if (!state->any_marked_as_cached)
 		state->any_marked_as_cached = flags & TNY_HEADER_FLAG_CACHED;
 	
 	/* Mark has_attachments */
-	state->any_has_attachments &= flags & TNY_HEADER_FLAG_ATTACHMENTS;
+	all_has_attach = all_has_attach && (flags & TNY_HEADER_FLAG_ATTACHMENTS);
+	state->all_has_attachments = all_has_attach;
 	if (!state->any_has_attachments)
 		state->any_has_attachments = flags & TNY_HEADER_FLAG_ATTACHMENTS;
 	
