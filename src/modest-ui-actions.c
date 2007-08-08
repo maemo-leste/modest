@@ -144,6 +144,12 @@ download_uncached_messages (TnyList *header_list, GtkWindow *win,
 			    gboolean reply_fwd);
 
 
+static gint
+msgs_move_to_confirmation (GtkWindow *win,
+			   TnyFolder *dest_folder,
+			   TnyList *headers);
+
+
 static void
 run_account_setup_wizard (ModestWindow *win)
 {
@@ -2947,30 +2953,49 @@ modest_ui_actions_on_paste (GtkAction *action,
 
 		/* Create a new mail operation */
 		mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_RECEIVE, G_OBJECT(window));
-		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), 
-						 mail_op);
 		
 		/* Get destination folder */
 		folder_store = modest_folder_view_get_selected (MODEST_FOLDER_VIEW (focused_widget));
 
-		/* Launch notification */
-		inf_note = modest_platform_animation_banner (GTK_WIDGET (window), NULL, 
-							     _CS("ckct_nw_pasting"));
-		if (inf_note != NULL)  {
-			gtk_window_set_modal (GTK_WINDOW(inf_note), FALSE);
-			gtk_widget_show (GTK_WIDGET(inf_note));
-		}
-
 		/* transfer messages  */
 		if (data != NULL) {
-			modest_mail_operation_xfer_msgs (mail_op, 
-							 data,
-							 TNY_FOLDER (folder_store),
-							 delete,
-							 paste_msgs_cb,
-							 inf_note);
+			gint response = 0;
+
+			/* Ask for user confirmation */
+			response = msgs_move_to_confirmation (GTK_WINDOW (window), 
+							      TNY_FOLDER (folder_store), 
+							      data);
+			
+			if (response == GTK_RESPONSE_OK) {
+				/* Launch notification */
+				inf_note = modest_platform_animation_banner (GTK_WIDGET (window), NULL, 
+									     _CS("ckct_nw_pasting"));
+				if (inf_note != NULL)  {
+					gtk_window_set_modal (GTK_WINDOW(inf_note), FALSE);
+					gtk_widget_show (GTK_WIDGET(inf_note));
+				}
+
+				modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
+				modest_mail_operation_xfer_msgs (mail_op, 
+								 data,
+								 TNY_FOLDER (folder_store),
+								 delete,
+								 paste_msgs_cb,
+								 inf_note);				
+			} else {
+				g_object_unref (mail_op);
+			}
 			
 		} else if (src_folder != NULL) {			
+			/* Launch notification */
+			inf_note = modest_platform_animation_banner (GTK_WIDGET (window), NULL, 
+								     _CS("ckct_nw_pasting"));
+			if (inf_note != NULL)  {
+				gtk_window_set_modal (GTK_WINDOW(inf_note), FALSE);
+				gtk_widget_show (GTK_WIDGET(inf_note));
+			}
+			
+			modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
 			modest_mail_operation_xfer_folder (mail_op, 
 							   src_folder,
 							   folder_store,
