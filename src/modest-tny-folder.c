@@ -243,6 +243,19 @@ modest_tny_folder_is_memory_card_folder   (TnyFolder *folder)
 	return (strcmp (account_id, MODEST_MMC_ACCOUNT_ID) == 0);
 }	
 
+gboolean
+modest_tny_folder_is_remote_folder   (TnyFolder *folder)
+{
+	gboolean is_local = TRUE;
+
+	g_return_val_if_fail (folder, FALSE);
+	
+	is_local = ((modest_tny_folder_is_local_folder(folder)) ||
+		    (modest_tny_folder_is_memory_card_folder(folder)));
+
+
+	return !is_local;
+}
 
 TnyFolderType
 modest_tny_folder_get_local_or_mmc_folder_type  (TnyFolder *folder)

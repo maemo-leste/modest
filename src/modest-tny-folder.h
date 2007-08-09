@@ -84,6 +84,16 @@ TnyFolderType  modest_tny_folder_guess_folder_type   (const TnyFolder *folder);
 TnyFolderType  modest_tny_folder_guess_folder_type_from_name   (const gchar *folder_name);
 
 
+/**
+ * modest_tny_folder_is_remote_folder:
+ * @folder: a valid tnymail folder
+ * 
+ * checks if the folder is part of the "remote" account
+ *  
+ * Returns: TRUE if it's a remote folder, FALSE otherwise
+ */
+gboolean
+modest_tny_folder_is_remote_folder   (TnyFolder *folder);
 
 /**
  * modest_tny_folder_is_local_folder:

@@ -147,6 +147,7 @@ download_uncached_messages (TnyList *header_list, GtkWindow *win,
 static gint
 msgs_move_to_confirmation (GtkWindow *win,
 			   TnyFolder *dest_folder,
+			   gboolean delete,
 			   TnyList *headers);
 
 
@@ -2964,6 +2965,7 @@ modest_ui_actions_on_paste (GtkAction *action,
 			/* Ask for user confirmation */
 			response = msgs_move_to_confirmation (GTK_WINDOW (window), 
 							      TNY_FOLDER (folder_store), 
+							      delete,
 							      data);
 			
 			if (response == GTK_RESPONSE_OK) {
@@ -3436,14 +3438,15 @@ has_retrieved_msgs (TnyList *list)
 	gboolean found = FALSE;
 
 	iter = tny_list_create_iterator (list);
-	while (tny_iterator_is_done (iter) && !found) {
+	while (!tny_iterator_is_done (iter) && !found) {
 		TnyHeader *header;
 		TnyHeaderFlags flags = 0;
 
 		header = TNY_HEADER (tny_iterator_get_current (iter));
 		if (header) {
 			flags = tny_header_get_flags (header);
-			if (!(flags & TNY_HEADER_FLAG_PARTIAL))
+			if (flags & TNY_HEADER_FLAG_CACHED)
+/* 			if (!(flags & TNY_HEADER_FLAG_PARTIAL)) */
 				found = TRUE;
 
 			g_object_unref (header);
@@ -3466,12 +3469,14 @@ has_retrieved_msgs (TnyList *list)
 static gint
 msgs_move_to_confirmation (GtkWindow *win,
 			   TnyFolder *dest_folder,
+			   gboolean delete,
 			   TnyList *headers)
 {
 	gint response = GTK_RESPONSE_OK;
 
-	/* If the destination is a local folder */
-	if (modest_tny_folder_is_local_folder (dest_folder)) {
+	/* If the destination is a local folder (or MMC folder )*/
+	if (!modest_tny_folder_is_remote_folder (dest_folder)) {
+/* 	if (modest_tny_folder_is_local_folder (dest_folder)) { */
 		TnyFolder *src_folder = NULL;
 		TnyIterator *iter = NULL;
 		TnyHeader *header = NULL;
@@ -3491,18 +3496,22 @@ msgs_move_to_confirmation (GtkWindow *win,
 			return GTK_RESPONSE_CANCEL;
 
 		/* If the source is a remote folder */
-		if (!modest_tny_folder_is_local_folder (src_folder)) {
-			const gchar *message;
-			
-			if (has_retrieved_msgs (headers))
+/* 		if (!modest_tny_folder_is_local_folder (src_folder)) { */
+		if (modest_tny_folder_is_remote_folder (src_folder)) {
+			const gchar *message = NULL;
+			gboolean cached = has_retrieved_msgs (headers);
+			if (cached) 
 				message = ngettext ("mcen_nc_move_retrieve", "mcen_nc_move_retrieves",
 						    tny_list_get_length (headers));
 			else 
 				message = ngettext ("mcen_nc_move_header", "mcen_nc_move_headers",
 						    tny_list_get_length (headers));
-
-			response = modest_platform_run_confirmation_dialog (GTK_WINDOW (win),
-									    (const gchar *) message);
+			
+			if (cached && !delete)	
+				response = GTK_RESPONSE_OK;
+			else
+				response = modest_platform_run_confirmation_dialog (GTK_WINDOW (win),
+										    (const gchar *) message);
 		}
 		
 		g_object_unref (src_folder);
@@ -3761,6 +3770,7 @@ modest_ui_actions_xfer_messages_from_move_to (TnyFolderStore *dst_folder,
 	/* Ask for user confirmation */
 	response = msgs_move_to_confirmation (GTK_WINDOW (win), 
 					      TNY_FOLDER (dst_folder), 
+					      TRUE,
 					      headers);
 
 	/* Transfer messages */
