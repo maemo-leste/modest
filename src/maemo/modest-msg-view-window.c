@@ -89,6 +89,29 @@ static void modest_msg_view_window_show_toolbar   (ModestWindow *window,
 static void modest_msg_view_window_clipboard_owner_change (GtkClipboard *clipboard,
 							   GdkEvent *event,
 							   ModestMsgViewWindow *window);
+void modest_msg_view_window_on_row_changed(
+		GtkTreeModel *header_model,
+		GtkTreePath *arg1,
+		GtkTreeIter *arg2,
+		ModestMsgViewWindow *window);
+
+void modest_msg_view_window_on_row_deleted(
+		GtkTreeModel *header_model,
+		GtkTreePath *arg1,
+		ModestMsgViewWindow *window);
+
+void modest_msg_view_window_on_row_inserted(
+		GtkTreeModel *header_model,
+		GtkTreePath *arg1,
+		GtkTreeIter *arg2,
+		ModestMsgViewWindow *window);
+
+void modest_msg_view_window_on_row_reordered(
+		GtkTreeModel *header_model,
+		GtkTreePath *arg1,
+		GtkTreeIter *arg2,
+		gpointer arg3,
+		ModestMsgViewWindow *window);
 
 static void cancel_progressbar  (GtkToolButton *toolbutton,
 				 ModestMsgViewWindow *self);
@@ -581,6 +604,19 @@ modest_msg_view_window_new_with_header_model (TnyMsg *msg,
 	priv->next_row_reference = gtk_tree_row_reference_copy (row_reference);
 	select_next_valid_row (model, &(priv->next_row_reference), TRUE);
 
+	g_signal_connect (GTK_TREE_MODEL(model), "row-changed",
+			  G_CALLBACK (modest_msg_view_window_on_row_changed),
+			  window);
+	g_signal_connect (GTK_TREE_MODEL(model), "row-deleted",
+			  G_CALLBACK (modest_msg_view_window_on_row_deleted),
+			  window);
+	g_signal_connect (GTK_TREE_MODEL(model), "row-inserted",
+			  G_CALLBACK (modest_msg_view_window_on_row_inserted),
+			  window);
+	g_signal_connect (GTK_TREE_MODEL(model), "rows-reordered",
+			  G_CALLBACK (modest_msg_view_window_on_row_reordered),
+			  window);
+
 	modest_msg_view_window_update_priority (window);
 
 	/* Check toolbar dimming rules */
@@ -588,7 +624,6 @@ modest_msg_view_window_new_with_header_model (TnyMsg *msg,
 
 	return MODEST_WINDOW(window);
 }
-
 
 ModestWindow *
 modest_msg_view_window_new (TnyMsg *msg, 
@@ -735,6 +770,37 @@ modest_msg_view_window_new (TnyMsg *msg,
 	return MODEST_WINDOW(obj);
 }
 
+void modest_msg_view_window_on_row_changed(
+		GtkTreeModel *header_model,
+		GtkTreePath *arg1,
+		GtkTreeIter *arg2,
+		ModestMsgViewWindow *window){
+	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (window));
+}
+
+void modest_msg_view_window_on_row_deleted(
+		GtkTreeModel *header_model,
+		GtkTreePath *arg1,
+		ModestMsgViewWindow *window){
+	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (window));
+}
+
+void modest_msg_view_window_on_row_inserted(
+		GtkTreeModel *header_model,
+		GtkTreePath *arg1,
+		GtkTreeIter *arg2,
+		ModestMsgViewWindow *window){
+	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (window));
+}
+
+void modest_msg_view_window_on_row_reordered(
+		GtkTreeModel *header_model,
+		GtkTreePath *arg1,
+		GtkTreeIter *arg2,
+		gpointer arg3,
+		ModestMsgViewWindow *window){
+	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (window));
+}
 
 gboolean 
 modest_msg_view_window_toolbar_on_transfer_mode     (ModestMsgViewWindow *self)
@@ -1026,32 +1092,33 @@ modest_msg_view_window_last_message_selected (ModestMsgViewWindow *window)
 	GtkTreePath *path;
 	ModestMsgViewWindowPrivate *priv;
 	GtkTreeIter tmp_iter;
-	gboolean has_next = FALSE;
+	gboolean is_last_selected;
 
 	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (window), TRUE);
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
 
-	if (priv->header_model) {
-		path = gtk_tree_row_reference_get_path (priv->row_reference);
-		if (path == NULL) return FALSE;
-		while (!has_next) {
-			TnyHeader *header;
-			gtk_tree_path_next (path);
-			if (!gtk_tree_model_get_iter (priv->header_model, &tmp_iter, path))
-				break;
-			gtk_tree_model_get (priv->header_model, &tmp_iter, TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN,
-					    &header, -1);
-			if (!(tny_header_get_flags(header) & TNY_HEADER_FLAG_DELETED)) {
-				has_next = TRUE;
-				break;
-			}	
-		}
-		gtk_tree_path_free (path);
-		return !has_next;
-	} else {
+	/*if no model (so no rows at all), then virtually we are the last*/
+	if (!priv->header_model)
 		return TRUE;
+
+	path = gtk_tree_row_reference_get_path (priv->row_reference);
+	if (path == NULL)
+		return TRUE;
+
+	is_last_selected = TRUE;
+	while (is_last_selected) {
+		TnyHeader *header;
+		gtk_tree_path_next (path);
+		if (!gtk_tree_model_get_iter (priv->header_model, &tmp_iter, path))
+			break;
+		gtk_tree_model_get (priv->header_model, &tmp_iter,
+				TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN,
+				&header, -1);
+		if (!(tny_header_get_flags(header) & TNY_HEADER_FLAG_DELETED))
+			is_last_selected = FALSE;
 	}
-	
+	gtk_tree_path_free (path);
+	return is_last_selected;
 }
 
 gboolean
@@ -1070,53 +1137,46 @@ modest_msg_view_window_first_message_selected (ModestMsgViewWindow *window)
 {
 	GtkTreePath *path;
 	ModestMsgViewWindowPrivate *priv;
-	gboolean result;
+	gboolean is_first_selected;
 	GtkTreeIter tmp_iter;
+/*	gchar * path_string;*/
 
 	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (window), TRUE);
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
 
-	if (priv->header_model) {
-		gchar * path_string;
-		path = gtk_tree_row_reference_get_path (priv->row_reference);
-		if (!path)
-			return TRUE;
-
-		path_string = gtk_tree_path_to_string (path);
-		result = (strcmp (path_string, "0")==0);
-		if (result) {
-			g_free (path_string);
-			gtk_tree_path_free (path);
-			return result;
-		}
-
-		while (result) {
-			TnyHeader *header;
-
-			gtk_tree_path_prev (path);
-			
-			if (!gtk_tree_model_get_iter (priv->header_model, &tmp_iter, path))
-				break;
-			gtk_tree_model_get (priv->header_model, &tmp_iter, TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN,
-					    &header, -1);
-			if (!(tny_header_get_flags(header)&TNY_HEADER_FLAG_DELETED)) {
-				result = FALSE;
-				break;
-			}
-
-			path_string = gtk_tree_path_to_string (path);
-			if (strcmp(path_string, "0")==0) {
-				g_free (path_string);
-				break;
-			}
-			g_free (path_string);
-		}
-		gtk_tree_path_free (path);
-		return result;
-	} else {
+	/*if no model (so no rows at all), then virtually we are the first*/
+	if (!priv->header_model)
 		return TRUE;
+
+	path = gtk_tree_row_reference_get_path (priv->row_reference);
+	if (!path)
+		return TRUE;
+
+/*	path_string = gtk_tree_path_to_string (path);
+	is_first_selected = strcmp (path_string, "0");
+
+	g_free (path_string);
+	gtk_tree_path_free (path);
+
+	return is_first_selected;*/
+
+	is_first_selected = TRUE;
+	while (is_first_selected) {
+		TnyHeader *header;
+		if(!gtk_tree_path_prev (path))
+			break;
+		/* Here the 'if' is needless for logic, but let make sure
+		 * iter is valid for gtk_tree_model_get. */
+		if (!gtk_tree_model_get_iter (priv->header_model, &tmp_iter, path))
+			break;
+		gtk_tree_model_get (priv->header_model, &tmp_iter,
+				TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN,
+				&header, -1);
+		if (!(tny_header_get_flags(header) & TNY_HEADER_FLAG_DELETED))
+			is_first_selected = FALSE;
 	}
-	
+	gtk_tree_path_free (path);
+	return is_first_selected;
 }
 
 /**

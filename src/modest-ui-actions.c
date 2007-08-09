@@ -1348,14 +1348,17 @@ modest_ui_actions_on_next (GtkAction *action,
 	if (MODEST_IS_MAIN_WINDOW (window)) {
 		GtkWidget *header_view;
 
-		header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(window),
-								   MODEST_WIDGET_TYPE_HEADER_VIEW);
+		header_view = modest_main_window_get_child_widget (
+				MODEST_MAIN_WINDOW(window),
+				MODEST_WIDGET_TYPE_HEADER_VIEW);
 		if (!header_view)
 			return;
 	
-		modest_header_view_select_next (MODEST_HEADER_VIEW(header_view)); 
+		modest_header_view_select_next (
+				MODEST_HEADER_VIEW(header_view)); 
 	} else if (MODEST_IS_MSG_VIEW_WINDOW (window)) {
-		modest_msg_view_window_select_next_message (MODEST_MSG_VIEW_WINDOW (window));
+		modest_msg_view_window_select_next_message (
+				MODEST_MSG_VIEW_WINDOW (window));
 	} else {
 		g_return_if_reached ();
 	}
