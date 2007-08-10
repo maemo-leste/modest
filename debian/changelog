@@ -1,4 +1,4 @@
-modest (1.0-2007.32-3) gutsy; urgency=low
+modest (1.0-2007.33-1) gutsy; urgency=low
 
   * Fixes: NB#58460, NB#63124, NB#61815, NB#62450, NB#64866
   * Known issues: The MMC in modest does not work as expected.
