@@ -1,3 +1,10 @@
+modest (1.0-2007.32-3) gutsy; urgency=low
+
+  * Fixes: NB#58460, NB#63124, NB#61815, NB#62450, NB#64866
+  * Known issues: The MMC in modest does not work as expected.
+
+ -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Fri, 10 Aug 2007 15:09:52 +0300
+
 modest (1.0-2007.32-2) gutsy; urgency=low
 
   * Fixes: NB#64084, NB#56201, NB#62702, NB#59316, NB#62011, NB#62789
