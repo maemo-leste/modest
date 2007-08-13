@@ -1,3 +1,16 @@
+modest (1.0-2007.33-2) gutsy; urgency=low
+
+  * Fixes: NB#62502, NB#65013
+  * Known issues : moving folders from a remote to local account.
+  * Automatic update of account on creation unstable.
+  * the easy setup data contains errors - use gmail
+  * Account management is unstable, mainly for POP accounts.
+  * After deleting/moving mails, sometimes mails will reappear.
+  * new mail Notification support not fully working.
+  * POP mail server may report errors about, incorrect password or account.
+
+ -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Mon, 13 Aug 2007 15:14:43 +0300
+
 modest (1.0-2007.33-1) gutsy; urgency=low
 
   * Fixes: NB#58460, NB#63124, NB#61815, NB#62450
