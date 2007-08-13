@@ -1,5 +1,13 @@
 2007-08-13  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/widgets/modest-account-view.c: (on_account_changed):
+	Do not try to use the human-readable TnyAccount name instead of the 
+	ID of the modest account to get the transport account. And unref 
+	the transport account. This prevents a g_warning(), and a possible 
+	ref leak.
+
+2007-08-13  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/maemo/modest-platform.c:
 	(modest_platform_set_update_interval): Handle the new 
 	alarmd error to warn when alarmd is not running, as is the case in  

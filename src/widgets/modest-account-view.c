@@ -32,6 +32,7 @@
 
 #include <modest-account-mgr.h>
 #include <modest-account-mgr-helpers.h>
+#include <modest-tny-account.h>
 #include <modest-text-utils.h>
 #include <modest-runtime.h>
 
@@ -329,9 +330,10 @@ on_account_changed (TnyAccountStore *account_store,
 	ModestAccountViewPrivate *priv = NULL;
 	TnyTransportAccount *transport_account = NULL;
 	ModestTnySendQueue *send_queue = NULL;
-	const gchar *account_name = NULL;
 
 	g_return_if_fail (MODEST_IS_ACCOUNT_VIEW (user_data));
+	g_return_if_fail (account);
+	g_return_if_fail (TNY_IS_ACCOUNT (account));
 
 	self = MODEST_ACCOUNT_VIEW (user_data);
 	priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE (self);
@@ -342,16 +344,23 @@ on_account_changed (TnyAccountStore *account_store,
 	update_account_view (priv->account_mgr, self);
 
 	/* Get transport account */
-	account_name = tny_account_get_name (account);
-	transport_account = (TnyTransportAccount *)
+	const gchar *modest_account_name = 
+			modest_tny_account_get_parent_modest_account_name_for_server_account (account);
+	g_return_if_fail (modest_account_name);
+		
+	transport_account = (TnyTransportAccount*)
 		modest_tny_account_store_get_transport_account_for_open_connection (modest_runtime_get_account_store(),
-										    account_name);
+										    modest_account_name);
 
-	/* Restart send queue */		
-	g_return_if_fail (TNY_IS_TRANSPORT_ACCOUNT(transport_account));
-	send_queue = modest_runtime_get_send_queue (transport_account);
-	g_return_if_fail (MODEST_IS_TNY_SEND_QUEUE(send_queue));
-	modest_tny_send_queue_try_to_send (send_queue);	
+	/* Restart send queue */
+	if (transport_account) {	
+		g_return_if_fail (TNY_IS_TRANSPORT_ACCOUNT(transport_account));
+		send_queue = modest_runtime_get_send_queue (transport_account);
+		g_return_if_fail (MODEST_IS_TNY_SEND_QUEUE(send_queue));
+		modest_tny_send_queue_try_to_send (send_queue);
+		
+		g_object_unref (transport_account);
+	}
 }
 
 

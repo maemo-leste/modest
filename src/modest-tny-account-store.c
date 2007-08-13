@@ -1373,6 +1373,7 @@ modest_tny_account_store_get_transport_account_for_open_connection (ModestTnyAcc
 		return NULL;
 	
 	/*  Get the connection-specific transport acccount, if any: */
+	/* Note: This gives us a reference: */
 	TnyAccount *account =
 		get_smtp_specific_transport_account_for_open_connection (self, account_name);
 			
@@ -1382,11 +1383,14 @@ modest_tny_account_store_get_transport_account_for_open_connection (ModestTnyAcc
 		/* The special local folders don't have transport accounts. */
 		if (strcmp (account_name, MODEST_LOCAL_FOLDERS_ACCOUNT_ID) == 0)
 			account = NULL;
-		else
+		else {
+			/* Note: This gives us a reference: */
 			account = modest_tny_account_store_get_server_account (self, account_name, 
 						     TNY_ACCOUNT_TYPE_TRANSPORT);
+		}
 	}
-			     
+			
+	/* returns a reference. */     
 	return account;
 }
 
