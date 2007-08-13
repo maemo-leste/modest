@@ -115,11 +115,13 @@ _define_main_window_dimming_state (ModestMainWindow *window)
 	if (MODEST_IS_FOLDER_VIEW (focused_widget)) {
 		state->n_selected++;
 		return state;
+	} else if (MODEST_IS_HEADER_VIEW (focused_widget)) {
+		header_view = focused_widget;		
+	} else {
+		header_view = modest_main_window_get_child_widget (window, MODEST_WIDGET_TYPE_HEADER_VIEW);
 	}
 	
 	/* Get header view and selected headers */
-/* 	header_view = modest_main_window_get_child_widget (window, MODEST_WIDGET_TYPE_HEADER_VIEW); */
-	header_view = focused_widget;
 	selected_headers = modest_header_view_get_selected_headers (MODEST_HEADER_VIEW(header_view));
 	if (!selected_headers) 
 		return state;
