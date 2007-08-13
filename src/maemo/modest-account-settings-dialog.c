@@ -873,7 +873,7 @@ check_hildon_number_editor_and_warn_value_not_in_range (HildonNumberEditor *widg
 	g_return_val_if_fail (widget, FALSE);
 	
 	const gint port = hildon_number_editor_get_value (widget);
-	printf ("DEBUG: %s, port=%d\n", __FUNCTION__, port);
+	/* printf ("DEBUG: %s, port=%d\n", __FUNCTION__, port); */
 	if (port < PORT_MIN || 
 		port > PORT_MAX) {
 			
