@@ -1223,20 +1223,22 @@ gboolean modest_platform_set_update_interval (guint minutes)
 	if (!alarm_cookie) {
 	    /* Error */
 	    const alarm_error_t alarm_error = alarmd_get_error ();
-	    printf ("Error setting alarm event. Error code: '%d'\n", alarm_error);
+	    g_debug ("Error setting alarm event. Error code: '%d'\n", alarm_error);
 	    
 	    /* Give people some clue: */
 	    /* The alarm API should have a function for this: */
 	    if (alarm_error == ALARMD_ERROR_DBUS) {
-	    	printf ("  ALARMD_ERROR_DBUS: An error with D-Bus occurred, probably coudn't get a D-Bus connection.\n");
+	    	g_debug ("  ALARMD_ERROR_DBUS: An error with D-Bus occurred, probably coudn't get a D-Bus connection.\n");
 	    } else if (alarm_error == ALARMD_ERROR_CONNECTION) {
-	    	printf ("  ALARMD_ERROR_CONNECTION: Could not contact alarmd via D-Bus.\n");
+	    	g_debug ("  ALARMD_ERROR_CONNECTION: Could not contact alarmd via D-Bus.\n");
 	    } else if (alarm_error == ALARMD_ERROR_INTERNAL) {
-	    	printf ("  ALARMD_ERROR_INTERNAL: Some alarmd or libalarm internal error, possibly a version mismatch.\n");
+	    	g_debug ("  ALARMD_ERROR_INTERNAL: Some alarmd or libalarm internal error, possibly a version mismatch.\n");
 	    } else if (alarm_error == ALARMD_ERROR_MEMORY) {
-	    	printf ("  ALARMD_ERROR_MEMORY: A memory allocation failed.\n");
+	    	g_debug ("  ALARMD_ERROR_MEMORY: A memory allocation failed.\n");
 	    } else if (alarm_error == ALARMD_ERROR_ARGUMENT) {
-	    	printf ("  ALARMD_ERROR_ARGUMENT: An argument given by caller was invalid.\n");
+	    	g_debug ("  ALARMD_ERROR_ARGUMENT: An argument given by caller was invalid.\n");
+	    } else if (alarm_error == ALARMD_ERROR_NOT_RUNNING) {
+	    	g_debug ("  ALARMD_ERROR_NOT_RUNNING: alarmd is not running.\n");
 	    }
 	    
 	    return FALSE;

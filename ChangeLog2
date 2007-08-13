@@ -1,5 +1,13 @@
 2007-08-13  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/maemo/modest-platform.c:
+	(modest_platform_set_update_interval): Handle the new 
+	alarmd error to warn when alarmd is not running, as is the case in  
+	scratchbox for me now because 
+	"Module /usr/lib/alarmd/libretu.so initialization failed"
+
+2007-08-13  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/widgets/modest-header-view-render.c:
 	(_modest_header_view_compact_header_cell_data):
 	NULL some strings after freeing them, trying to deal with 
