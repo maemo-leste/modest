@@ -323,22 +323,27 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 	else
 		g_object_set (G_OBJECT (priority_cell), "pixbuf",
 			      NULL, NULL);
+			      
 	header = g_markup_printf_escaped ("%s", (subject && strlen (subject)) ? subject : _("mail_va_no_subject"));
 	g_free (subject);
+	subject = NULL;
 	g_object_set (G_OBJECT (subject_cell), "markup", header, NULL);
 	g_free (header);
+	header = NULL;
 	set_common_flags (subject_cell, flags);
 
 
-	/* fixme: we hardcode the color to #666666; instead we should use SecundaryTextColour from the
+	/* fixme: we hardcode the color to #666666; instead we should use SecondaryTextColour from the
 	 * theme (gtkrc file) */
 	
 	header = g_markup_printf_escaped ("<span size='small' foreground='#666666'>%s</span>", modest_text_utils_get_display_address (address));
 	g_free (address);
+	address = NULL;
 	g_object_set (G_OBJECT (recipient_cell),
 		      "markup", header,
 		      NULL);
 	g_free (header);
+	header = NULL;
 	set_common_flags (recipient_cell, flags);
 
 	if (header_mode == MODEST_HEADER_VIEW_COMPACT_HEADER_MODE_OUTBOX) {
@@ -353,12 +358,14 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 /* 			if (prior_flags == TNY_HEADER_FLAG_SUSPENDED_PRIORITY) */
 /* 				status = MODEST_TNY_SEND_QUEUE_SUSPENDED; */
 		}
+		
 		status_str = get_status_string (status);
 		display_date = g_strdup_printf("<span size='small' foreground='#666666'>%s</span>", status_str);
 		g_object_set (G_OBJECT (date_or_status_cell),
 			      "markup", display_date,
 			      NULL);
 		g_free (display_date);
+		display_date = NULL;
 	} else {
 		/* in some rare cases, mail might have no Date: field. it case,
 		 * don't show the date, instead of bogus 1/1/1970
@@ -373,10 +380,14 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 			      "markup", display_date,
 			      NULL);
 		g_free (tmp_date);
+		tmp_date = NULL;
 		g_free (display_date);
+		display_date = NULL;
 	}
+	
 	if (msg_header != NULL)
 		g_object_unref (msg_header);
+		
 	set_common_flags (date_or_status_cell, flags);
 }
 

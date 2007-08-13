@@ -1,5 +1,13 @@
 2007-08-13  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/widgets/modest-header-view-render.c:
+	(_modest_header_view_compact_header_cell_data):
+	NULL some strings after freeing them, trying to deal with 
+	the double deletion found in projects.maemo.org bug 64183, 
+	probably having no effect.
+
+2007-08-13  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/maemo/modest-account-settings-dialog.c:
 	(create_page_incoming), (create_page_outgoing): Use a define 
 	for the min and max port numbers.
