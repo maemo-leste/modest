@@ -116,6 +116,8 @@ struct _ModestHeaderViewPrivate {
 
 	gulong  selection_changed_handler;
 	gulong  acc_removed_handler;
+
+	gboolean empty;
 };
 
 typedef struct _HeadersCountChangedHelper HeadersCountChangedHelper;
@@ -508,6 +510,8 @@ modest_header_view_init (ModestHeaderView *obj)
 	priv->monitor	     = NULL;
 	priv->observers_lock = g_mutex_new ();
 
+	priv->empty  = TRUE;
+
 	priv->clipboard = modest_runtime_get_email_clipboard ();
 	priv->hidding_ids = NULL;
 	priv->n_selected = 0;
@@ -795,12 +799,12 @@ modest_header_view_get_columns (ModestHeaderView *self)
 }
 
 
-gboolean
-modest_header_view_is_empty (ModestHeaderView *self)
-{
-	g_return_val_if_fail (self, FALSE);
-	return FALSE; /* FIXME */
-}
+/* gboolean */
+/* modest_header_view_is_empty (ModestHeaderView *self) */
+/* { */
+/* 	g_return_val_if_fail (self, FALSE); */
+/* 	return FALSE; /\* FIXME *\/ */
+/* } */
 
 
 gboolean
@@ -1508,7 +1512,7 @@ static void
 folder_monitor_update (TnyFolderObserver *self, 
 		       TnyFolderChange *change)
 {
-	ModestHeaderViewPrivate *priv;
+	ModestHeaderViewPrivate *priv = NULL;
 	TnyFolderChangeChanged changed;
 	HeadersCountChangedHelper *helper = NULL;
 
@@ -1533,6 +1537,16 @@ folder_monitor_update (TnyFolderObserver *self,
 				 helper,
 				 idle_notify_headers_count_changed_destroy);
 	}	
+}
+
+gboolean
+modest_header_view_is_empty (ModestHeaderView *self)
+{
+	ModestHeaderViewPrivate *priv = NULL;
+		
+	priv = MODEST_HEADER_VIEW_GET_PRIVATE (MODEST_HEADER_VIEW (self));
+
+	return priv->empty;
 }
 
 void
@@ -1648,8 +1662,10 @@ filter_row (GtkTreeModel *model,
 		visible = !found;
 	}
 
-	/* Free */
  frees:
+	priv->empty = priv->empty && !visible;
+	
+	/* Free */
 	if (header)
 		g_object_unref (header);
 	g_free(id);
@@ -1660,7 +1676,7 @@ filter_row (GtkTreeModel *model,
 static void
 _clear_hidding_filter (ModestHeaderView *header_view) 
 {
-	ModestHeaderViewPrivate *priv;
+	ModestHeaderViewPrivate *priv = NULL;
 	guint i;
 	
 	g_return_if_fail (MODEST_IS_HEADER_VIEW (header_view));	
@@ -1676,9 +1692,13 @@ _clear_hidding_filter (ModestHeaderView *header_view)
 void 
 modest_header_view_refilter (ModestHeaderView *header_view)
 {
-	GtkTreeModel *model;
+	GtkTreeModel *model = NULL;
+	ModestHeaderViewPrivate *priv = NULL;
 
 	g_return_if_fail (MODEST_IS_HEADER_VIEW (header_view));
+	priv = MODEST_HEADER_VIEW_GET_PRIVATE(header_view);
+
+	priv->empty = TRUE;
 
 	/* Hide cut headers */
 	model = gtk_tree_view_get_model (GTK_TREE_VIEW (header_view));

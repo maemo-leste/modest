@@ -445,9 +445,9 @@ modest_ui_actions_on_delete_message (GtkAction *action, ModestWindow *win)
 		if (TNY_IS_CAMEL_IMAP_FOLDER (folder))
 /* 			tny_folder_sync_async(folder, FALSE, NULL, NULL, NULL); /\* FALSE --> don't expunge *\/ */
 			tny_folder_sync (folder, FALSE, &err); /* FALSE --> don't expunge */
-/* 		else if (TNY_IS_CAMEL_POP_FOLDER (folder)) */
+		else if (TNY_IS_CAMEL_POP_FOLDER (folder))
 /* 			tny_folder_sync_async(folder, FALSE, NULL, NULL, NULL); /\* TRUE --> dont expunge *\/ */
-/* 			tny_folder_sync (folder, TRUE, &err); /\* TRUE --> expunge *\/ */
+			tny_folder_sync (folder, TRUE, &err); /* TRUE --> expunge */
 		else
 			/* local folders */
 /* 			tny_folder_sync_async(folder, TRUE, NULL, NULL, NULL); /\* TRUE --> expunge *\/ */
@@ -1412,21 +1412,30 @@ new_messages_arrived (ModestMailOperation *self,
 		      gpointer user_data)
 {
 	ModestMainWindow *win = NULL;
+	GtkWidget *folder_view = NULL;
+	TnyFolderStore *folder = NULL;
 	gboolean folder_empty = FALSE;
 
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW (user_data));
 	win = MODEST_MAIN_WINDOW (user_data);
 
-	if (new_messages == 0)
-		return;
-	
 	/* Set contents style of headers view */
-	folder_empty = modest_main_window_get_style (win);
-	if (folder_empty) {
-		modest_main_window_set_contents_style (win,
+	if (modest_main_window_get_contents_style (win) == MODEST_MAIN_WINDOW_CONTENTS_STYLE_EMPTY) {
+		folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win), 
+								   MODEST_WIDGET_TYPE_FOLDER_VIEW);
+		folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW(folder_view));		
+		
+
+		folder_empty = (tny_folder_get_all_count (TNY_FOLDER (folder)) == 0);
+		
+		if (!folder_empty)
+			modest_main_window_set_contents_style (win,
 						       MODEST_MAIN_WINDOW_CONTENTS_STYLE_HEADERS);
 	}	
 
+	/* Notify new messages have been downloaded */
+	if (new_messages > 0)
+		modest_platform_on_new_msg ();
 }
 
 /*

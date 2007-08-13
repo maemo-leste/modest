@@ -1781,6 +1781,7 @@ _on_msg_count_changed (ModestHeaderView *header_view,
 {
 	printf ("DEBUG: %s\n", __FUNCTION__);
 	gboolean folder_empty = FALSE;
+	gboolean all_marked_as_deleted = FALSE;
 	TnyFolderChangeChanged changed;	
 	ModestMainWindowPrivate *priv;
 	
@@ -1804,6 +1805,10 @@ _on_msg_count_changed (ModestHeaderView *header_view,
 		modest_header_view_refilter (MODEST_HEADER_VIEW(priv->header_view));
 	}
 
+	/* Check if all messages are marked to be deleted */
+	all_marked_as_deleted = modest_header_view_is_empty (header_view);
+	folder_empty = folder_empty || all_marked_as_deleted ;
+	
 	/* Set contents style of headers view */
 	if (folder_empty)  {
 		modest_main_window_set_contents_style (main_window,

@@ -76,6 +76,7 @@ static DimmedState *
 _define_main_window_dimming_state (ModestMainWindow *window)
 {
 	DimmedState *state = NULL;
+	GtkWidget *focused_widget = NULL;
 	GtkWidget *header_view = NULL;
 	TnyList *selected_headers = NULL;
 	TnyIterator *iter = NULL;
@@ -109,8 +110,16 @@ _define_main_window_dimming_state (ModestMainWindow *window)
 	state->all_has_attachments = FALSE;
 	state->sent_in_progress = FALSE;
 
+	/* Get focused widget */
+	focused_widget = gtk_window_get_focus (GTK_WINDOW (window));
+	if (MODEST_IS_FOLDER_VIEW (focused_widget)) {
+		state->n_selected++;
+		return state;
+	}
+	
 	/* Get header view and selected headers */
-	header_view = modest_main_window_get_child_widget (window, MODEST_WIDGET_TYPE_HEADER_VIEW);
+/* 	header_view = modest_main_window_get_child_widget (window, MODEST_WIDGET_TYPE_HEADER_VIEW); */
+	header_view = focused_widget;
 	selected_headers = modest_header_view_get_selected_headers (MODEST_HEADER_VIEW(header_view));
 	if (!selected_headers) 
 		return state;
