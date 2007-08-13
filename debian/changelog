@@ -1,6 +1,7 @@
 modest (1.0-2007.33-2) gutsy; urgency=low
 
-  * Fixes: NB#62502, NB#65013
+  * Fixes: NB#62502, NB#65013, NB#65090, NB#57458, NB#63938, NB#64914
+  * Fixes: NB#64327
   * Known issues : moving folders from a remote to local account.
   * Automatic update of account on creation unstable.
   * the easy setup data contains errors - use gmail
