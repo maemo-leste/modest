@@ -1411,10 +1411,22 @@ new_messages_arrived (ModestMailOperation *self,
 		      gint new_messages,
 		      gpointer user_data)
 {
+	ModestMainWindow *win = NULL;
+	gboolean folder_empty = FALSE;
+
+	g_return_if_fail (MODEST_IS_MAIN_WINDOW (user_data));
+	win = MODEST_MAIN_WINDOW (user_data);
+
 	if (new_messages == 0)
 		return;
+	
+	/* Set contents style of headers view */
+	folder_empty = modest_main_window_get_style (win);
+	if (folder_empty) {
+		modest_main_window_set_contents_style (win,
+						       MODEST_MAIN_WINDOW_CONTENTS_STYLE_HEADERS);
+	}	
 
-	modest_platform_on_new_msg ();
 }
 
 /*
@@ -1463,7 +1475,7 @@ modest_ui_actions_do_send_receive (const gchar *account_name, ModestWindow *win)
 	   internally, so the progress objects will receive the proper
 	   progress information */
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
-	modest_mail_operation_update_account (mail_op, acc_name, new_messages_arrived, NULL);
+	modest_mail_operation_update_account (mail_op, acc_name, new_messages_arrived, win);
 	g_object_unref (G_OBJECT (mail_op));
 	
 	/* Free */

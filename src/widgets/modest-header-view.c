@@ -1521,11 +1521,6 @@ folder_monitor_update (TnyFolderObserver *self,
 	if (tny_folder_change_get_folder (change) != priv->folder)
 		return;
 
- 	/* Check header removed  (hide marked as DELETED headers) */
-/* 	if (changed & TNY_FOLDER_CHANGE_CHANGED_EXPUNGED_HEADERS) { */
-/* 		modest_header_view_refilter (MODEST_HEADER_VIEW(self)); */
-/* 	} */
-
 	/* Check folder count */
 	if ((changed & TNY_FOLDER_CHANGE_CHANGED_ADDED_HEADERS) ||
 	    (changed & TNY_FOLDER_CHANGE_CHANGED_EXPUNGED_HEADERS)) {
