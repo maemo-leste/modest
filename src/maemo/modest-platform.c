@@ -1198,17 +1198,18 @@ gboolean modest_platform_set_update_interval (guint minutes)
 	/* Specify what should happen when the alarm happens:
 	 * It should call this D-Bus method: */
 	 
-	/* Note: I am surpised that alarmd can't just use the modest.service file
-	 * for this. murrayc. */
-	event->dbus_path = g_strdup(PREFIX "/bin/modest");
-	
+	event->dbus_path = g_strdup(MODEST_DBUS_OBJECT);
 	event->dbus_interface = g_strdup (MODEST_DBUS_IFACE);
 	event->dbus_service = g_strdup (MODEST_DBUS_SERVICE);
 	event->dbus_name = g_strdup (MODEST_DBUS_METHOD_SEND_RECEIVE);
 
-	/* Otherwise, a dialog will be shown if exect_name or dbus_path is NULL,
-	even though we have specified no dialog text: */
-	event->flags = ALARM_EVENT_NO_DIALOG;
+	/* Use ALARM_EVENT_NO_DIALOG: Otherwise, a dialog will be shown if 
+	 * exec_name or dbus_path is NULL, even though we have specified no dialog text.
+	 * Also use ALARM_EVENT_ACTIVATION so that modest is started (without UI) to get emails 
+	 * This is why we want to use the Alarm API instead of just g_timeout_add().
+	 * (The old maemo email-client did this, though it isn't specified in the UI spec.)
+         */
+	event->flags = ALARM_EVENT_NO_DIALOG | ALARM_EVENT_ACTIVATION;
 	
 	alarm_cookie = alarm_event_add (event);
 

@@ -1436,9 +1436,11 @@ modest_dbus_req_filter (DBusConnection *con,
 	}
 	else {
 		/* Note that this mentions methods that were already handled in modest_dbus_req_handler(). */
+		/* 
 		g_debug ("  debug: %s: Unexpected (maybe already handled) D-Bus method:\n   Interface=%s, Member=%s\n", 
 			__FUNCTION__, dbus_message_get_interface (message),
 			dbus_message_get_member(message));
+		*/
 	}
 	
 	return (handled ? 

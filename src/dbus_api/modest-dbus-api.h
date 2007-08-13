@@ -37,7 +37,7 @@
  * so they are probably a good choice. */
 #define MODEST_DBUS_NAME    "modest"
 #define MODEST_DBUS_SERVICE "com.nokia."MODEST_DBUS_NAME
-#define MODEST_DBUS_OBJECT  "/com/nokia/"MODEST_DBUS_NAME
+#define MODEST_DBUS_OBJECT  "/com/nokia/"MODEST_DBUS_NAME /* Also known as a D-Bus Path. */
 #define MODEST_DBUS_IFACE   "com.nokia."MODEST_DBUS_NAME
 
 
