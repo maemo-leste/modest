@@ -1677,7 +1677,17 @@ transfer_folder_status_cb (GObject *obj,
 	 * which is already GDK locked by Tinymail */
 
 	/* no gdk_threads_enter (), CHECKED */
-	g_signal_emit (G_OBJECT (self), signals[PROGRESS_CHANGED_SIGNAL], 0, state, NULL);
+
+	/* * Bugfix by PVH
+ 	 * 
+ 	 * Javier: if I remove this one, tny_folder_copy_async does not hang anymore
+ 	 *
+ 	 * g_signal_emit (G_OBJECT (self), signals[PROGRESS_CHANGED_SIGNAL], 0, state, NULL); 
+ 	 * 
+ 	 * https://projects.maemo.org/bugzilla/show_bug.cgi?id=63060
+ 	 *
+ 	 * */
+
 	/* no gdk_threads_leave (), CHECKED */
 
 	g_slice_free (ModestMailOperationState, state);
