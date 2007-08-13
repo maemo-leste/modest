@@ -1,5 +1,16 @@
 2007-08-13  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/maemo/modest-account-settings-dialog.c:
+	(create_page_incoming), (create_page_outgoing): Use a define 
+	for the min and max port numbers.
+
+	(check_hildon_number_editor_and_warn_value_not_in_range),
+	(check_data): Do an extra check for an invalid port number, as needed 
+	in projects.maemo.org bug #64275, when the number is cleared, but this 
+	does not work due to bugs.maemo.org bug #1806.
+
+2007-08-13  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/dbus_api/modest-dbus-callbacks.c: (modest_dbus_req_filter):
 	Comment out the debug warning about the unexpected D-Bus methods. 
 	They are just annoying now.

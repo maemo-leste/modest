@@ -71,6 +71,9 @@
 
 #define EXAMPLE_EMAIL_ADDRESS "first.last@provider.com"
 
+#define PORT_MIN 1
+#define PORT_MAX 65535
+
 G_DEFINE_TYPE (ModestAccountSettingsDialog, modest_account_settings_dialog, GTK_TYPE_DIALOG);
 
 #define ACCOUNT_SETTINGS_DIALOG_GET_PRIVATE(o) \
@@ -601,9 +604,8 @@ static GtkWidget* create_page_incoming (ModestAccountSettingsDialog *self)
 	
 	
 	/* The port widgets: */
-	/* TODO: There are various rules about this in the UI spec. */
 	if (!self->entry_incoming_port)
-		self->entry_incoming_port = GTK_WIDGET (hildon_number_editor_new (1, 65535));
+		self->entry_incoming_port = GTK_WIDGET (hildon_number_editor_new (PORT_MIN, PORT_MAX));
 	caption = hildon_caption_new (sizegroup, _("mcen_fi_emailsetup_port"), 
 		self->entry_incoming_port, NULL, HILDON_CAPTION_OPTIONAL);
 	gtk_widget_show (self->entry_incoming_port);
@@ -808,7 +810,7 @@ static GtkWidget* create_page_outgoing (ModestAccountSettingsDialog *self)
 	
 	/* The port widgets: */
 	if (!self->entry_outgoing_port)
-		self->entry_outgoing_port = GTK_WIDGET (hildon_number_editor_new (1, 65535));
+		self->entry_outgoing_port = GTK_WIDGET (hildon_number_editor_new (PORT_MIN, PORT_MAX));
 	caption = hildon_caption_new (sizegroup, _("mcen_fi_emailsetup_port"), 
 		self->entry_outgoing_port, NULL, HILDON_CAPTION_OPTIONAL);
 	gtk_widget_show (self->entry_outgoing_port);
@@ -861,6 +863,37 @@ static GtkWidget* create_page_outgoing (ModestAccountSettingsDialog *self)
 }
 
 
+/** TODO: This doesn't work because hildon_number_editor_get_value() does not work until 
+ * focus has been lost:
+ * See https://bugs.maemo.org/show_bug.cgi?id=1806.
+ */
+static gboolean
+check_hildon_number_editor_and_warn_value_not_in_range (HildonNumberEditor *widget, gint min, gint max)
+{
+	g_return_val_if_fail (widget, FALSE);
+	
+	const gint port = hildon_number_editor_get_value (widget);
+	printf ("DEBUG: %s, port=%d\n", __FUNCTION__, port);
+	if (port < PORT_MIN || 
+		port > PORT_MAX) {
+			
+		/* Warn the user via a dialog: */
+		/*show_error (GTK_WINDOW (self), _("mcen_ib_invalid_email"));*/
+		gchar *message = g_strdup_printf (_CS("ckct_ib_set_a_value_within_range"), 
+				       min, 
+				       max);
+		hildon_banner_show_information (GTK_WIDGET (widget), NULL, message);
+		g_free (message);
+		message = NULL;
+
+		/* Return focus to the email address entry: */
+		gtk_widget_grab_focus (GTK_WIDGET (widget));
+		
+		return FALSE;
+	}
+	
+	return TRUE;
+}
 
 	
 static gboolean
@@ -922,18 +955,29 @@ check_data (ModestAccountSettingsDialog *self)
 	if (!modest_text_utils_validate_domain_name (hostname2)) {
 		/* Warn the user via a dialog: */
 		/*show_error (GTK_WINDOW (self), _("mcen_ib_invalid_email"));*/
-		hildon_banner_show_information (NULL, NULL, _("mcen_ib_invalid_servername"));
-                                         
-	        /* Return focus to the email address entry: */
-        	gtk_widget_grab_focus (self->entry_outgoingserver);
+		hildon_banner_show_information (self->entry_outgoingserver, NULL, _("mcen_ib_invalid_servername"));
+
+		/* Return focus to the email address entry: */
+		gtk_widget_grab_focus (self->entry_outgoingserver);
 		gtk_editable_select_region (GTK_EDITABLE (self->entry_outgoingserver), 0, -1);
+		return FALSE;
+	}
+	
+	/* Check that the port numbers are acceptable: */
+	if (!check_hildon_number_editor_and_warn_value_not_in_range ( 
+		HILDON_NUMBER_EDITOR (self->entry_incoming_port), PORT_MIN, PORT_MAX)){
+		return FALSE;
+	}
+		
+	if (!check_hildon_number_editor_and_warn_value_not_in_range ( 
+		HILDON_NUMBER_EDITOR (self->entry_outgoing_port), PORT_MIN, PORT_MAX)) {
 		return FALSE;
 	}
 
 		
 	/* Find a suitable authentication method when secure authentication is desired */
 
-	gint port_num = hildon_number_editor_get_value (
+	const gint port_num = hildon_number_editor_get_value (
 			HILDON_NUMBER_EDITOR (self->entry_incoming_port));
 	const gchar* username = gtk_entry_get_text (GTK_ENTRY (self->entry_user_username));
 
