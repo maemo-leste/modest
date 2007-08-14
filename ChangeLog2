@@ -1,6 +1,14 @@
 2007-08-14  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/modest-tny-account-store.c: (modest_tny_account_store_new):
+	Renabled the call to add_mmc_account() because I do not believe 
+	it could be the cause of the mentioned hang (in scratchbox, where 
+	there is no memory card), and because I have tested that it works 
+	on the device.
+	
+2007-08-14  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/modest-tny-account-store.c: (modest_tny_account_store_new):
 	Comment out part of the last commit because it apparently causes 
 	a hang.
 
