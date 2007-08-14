@@ -191,7 +191,7 @@ static void load_from_file (EasysetupCountryComboBox *self)
 	EasysetupCountryComboBoxPrivate *priv = COUNTRY_COMBO_BOX_GET_PRIVATE (self);
 	
 	/* Load the file one line at a time: */
-#ifndef MODEST_HILDON_VERSION_0
+#ifdef MODEST_HILDON_VERSION_0
 	const gchar* filepath = PROVIDER_DATA_DIR "/mcc_mapping";
 #else
 	/* This is the official version, in the 'operator-wizard-settings' package */

@@ -1181,18 +1181,23 @@ modest_ui_dimming_rules_on_cut (ModestWindow *win, gpointer user_data)
 
 	/* Check window specific dimming rules */
 	if (MODEST_IS_MAIN_WINDOW (win)) {
-		if (!dimmed) { 
-			dimmed = _selected_folder_is_empty (MODEST_MAIN_WINDOW(win));			
-			if (dimmed)
-				modest_dimming_rule_set_notification (rule, "");
-		}
-		if (!dimmed) {
-			dimmed = _selected_msg_sent_in_progress (win);
-			if (dimmed)
+		/* Get focused widget */
+		GtkWidget *focused = gtk_window_get_focus (GTK_WINDOW (win));
+		
+		if (MODEST_IS_HEADER_VIEW (focused)) {
+			if (!dimmed) { 
+				dimmed = _selected_folder_is_empty (MODEST_MAIN_WINDOW(win));			
+				if (dimmed)
+					modest_dimming_rule_set_notification (rule, "");
+			}
+			if (!dimmed) {
+				dimmed = _selected_msg_sent_in_progress (win);
+				if (dimmed)
 				modest_dimming_rule_set_notification (rule, _("mcen_ib_unable_to_cut_mess"));
+			}
 		}
 	}
-	
+
 	return dimmed;
 }
 
@@ -1212,15 +1217,20 @@ modest_ui_dimming_rules_on_copy (ModestWindow *win, gpointer user_data)
 	
 	/* Check window specific dimming rules */
 	if (MODEST_IS_MAIN_WINDOW (win)) {
-		if (!dimmed) {
-			dimmed = _selected_folder_is_empty (MODEST_MAIN_WINDOW(win));			
-			if (dimmed)
-				modest_dimming_rule_set_notification (rule, "");
-		}		
-		if (!dimmed) {
-			dimmed = _selected_msg_sent_in_progress (win);
-			if (dimmed)
-				modest_dimming_rule_set_notification (rule, _("mcen_ib_unable_to_cut_mess"));
+		/* Get focused widget */
+		GtkWidget *focused = gtk_window_get_focus (GTK_WINDOW (win));
+		
+		if (MODEST_IS_HEADER_VIEW (focused)) {
+			if (!dimmed) {
+				dimmed = _selected_folder_is_empty (MODEST_MAIN_WINDOW(win));			
+				if (dimmed)
+					modest_dimming_rule_set_notification (rule, "");
+			}		
+			if (!dimmed) {
+				dimmed = _selected_msg_sent_in_progress (win);
+				if (dimmed)
+					modest_dimming_rule_set_notification (rule, _("mcen_ib_unable_to_cut_mess"));
+			}
 		}
 	}
 		
