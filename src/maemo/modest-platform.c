@@ -744,8 +744,8 @@ launch_sort_headers_dialog (GtkWindow *parent_window,
 	modest_widget_memory_save (modest_runtime_get_conf (),
 				   G_OBJECT (header_view), MODEST_CONF_HEADER_VIEW_KEY);
 	
-	while (gtk_events_pending ())
-		gtk_main_iteration ();
+/* 	while (gtk_events_pending ()) */
+/* 		gtk_main_iteration (); */
 
 	/* free */
 	g_list_free(cols);	
