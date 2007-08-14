@@ -1400,6 +1400,7 @@ update_account_thread (gpointer thr_user_data)
 		idle_info->mail_op = g_object_ref (info->mail_op);
 		idle_info->new_headers = num_new_headers;
 		idle_info->callback = info->callback;
+		idle_info->user_data = info->user_data;
 		g_idle_add (idle_update_account_cb, idle_info);
 	}
 
