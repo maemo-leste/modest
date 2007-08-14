@@ -909,8 +909,13 @@ modest_tny_account_store_new (ModestAccountMgr *account_mgr,
 	GnomeVFSVolume *volume = gnome_vfs_volume_monitor_get_volume_for_path (monitor, 
 		MODEST_MCC1_VOLUMEPATH);
 	if (volume) {
+		printf ("%s: gnome_vfs_volume_monitor_get_volume_for_path(%s) returned something.\n", 
+			__FUNCTION__, MODEST_MCC1_VOLUMEPATH);
+		#if 0 /* Commented out because gnome_vfs_volume_monitor_get_volume_for_path() seems 
+			to report it as mounted even when the card is not inserted. */
 		/* It is mounted: */
 		add_mmc_account (MODEST_TNY_ACCOUNT_STORE (obj), FALSE /* don't emit the insert signal. */); 
+		#endif
 		gnome_vfs_volume_unref(volume);
 	}
 	
