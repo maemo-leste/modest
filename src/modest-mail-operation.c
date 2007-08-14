@@ -610,13 +610,18 @@ create_msg_thread (gpointer thread_data)
 
 	if (new_msg) {
 		TnyHeader *header;
+		TnyHeaderFlags flags = 0;
+
 		/* Set priority flags in message */
 		header = tny_msg_get_header (new_msg);
 		if (info->priority_flags != 0)
-			tny_header_set_flags (header, info->priority_flags);
-		if (info->attachments_list != NULL) {
-			tny_header_set_flags (header, TNY_HEADER_FLAG_ATTACHMENTS);
-		}
+			flags |= info->priority_flags;
+
+		/* Set attachment flags in message */
+		if (info->attachments_list != NULL)
+			flags |= TNY_HEADER_FLAG_ATTACHMENTS;
+
+		tny_header_set_flags (header, flags);
 		g_object_unref (G_OBJECT(header));
 	} else {
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
