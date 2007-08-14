@@ -290,6 +290,7 @@ modest_tny_account_store_instance_init (ModestTnyAccountStore *obj)
 							      
 	/* Respond to volume mounts and unmounts, such 
 	 * as the insertion/removal of the memory card: */
+	/* This is a singleton, so it does not need to be unrefed. */
 	monitor = gnome_vfs_get_volume_monitor();
 
 	priv->volume_mounted_handler = g_signal_connect (G_OBJECT(monitor), 
@@ -324,6 +325,32 @@ foreach_account_append_to_list (gpointer data,
 /********************************************************************/
 /*           Control the state of the MMC local account             */
 /********************************************************************/
+
+/** Only call this if the memory card is really mounted.
+ */ 
+static void
+add_mmc_account(ModestTnyAccountStore *self, gboolean emit_insert_signal)
+{
+	ModestTnyAccountStorePrivate *priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
+	g_return_if_fail (priv->session);
+	
+	TnyAccount *mmc_account = modest_tny_account_new_for_local_folders (priv->account_mgr, 
+									priv->session, 
+									MODEST_MCC1_VOLUMEPATH);
+
+	/* Add to the list of store accounts */
+	tny_list_append (priv->store_accounts, G_OBJECT (mmc_account));
+
+	if (emit_insert_signal) {
+		g_signal_emit (G_OBJECT (self), 
+			       signals [ACCOUNT_INSERTED_SIGNAL],
+			       0, mmc_account);
+	}
+
+	/* Free */
+	g_object_unref (mmc_account);
+}
+
 static void
 on_vfs_volume_mounted(GnomeVFSVolumeMonitor *volume_monitor, 
 		      GnomeVFSVolume *volume, 
@@ -341,21 +368,9 @@ on_vfs_volume_mounted(GnomeVFSVolumeMonitor *volume_monitor,
 	uri = gnome_vfs_volume_get_activation_uri (volume);
 
 	if (uri && (!strcmp (uri, MODEST_MCC1_VOLUMEPATH_URI))) {
-		TnyAccount *mmc_account;
-
-		mmc_account = modest_tny_account_new_for_local_folders (priv->account_mgr, 
-									priv->session, 
-									MODEST_MCC1_VOLUMEPATH);
-
-		/* Add to the list of store accounts */
-		tny_list_append (priv->store_accounts, G_OBJECT (mmc_account));
-
-		g_signal_emit (G_OBJECT (self), 
-			       signals [ACCOUNT_INSERTED_SIGNAL],
-			       0, mmc_account);
-		/* Free */
-		g_object_unref (mmc_account);
+		add_mmc_account (self, TRUE /* emit the insert signal. */);
 	}
+	
 	g_free (uri);
 }
 
@@ -881,11 +896,24 @@ modest_tny_account_store_new (ModestAccountMgr *account_mgr,
 	tny_list_append (priv->store_accounts, G_OBJECT(local_account));
 	g_object_unref (local_account);	
 
-	/* Add the other remote accounts. Do this before adding the
+	/* Add the other remote accounts. Do this after adding the
 	   local account, because we need to add our outboxes to the
 	   global OUTBOX hosted in the local account */
 	add_existing_accounts (MODEST_TNY_ACCOUNT_STORE (obj));
-
+	
+	
+	/* Create the memory card account if the card is mounted: */
+	
+	/* This is a singleton, so it does not need to be unrefed. */
+	GnomeVFSVolumeMonitor* monitor = gnome_vfs_get_volume_monitor();
+	GnomeVFSVolume *volume = gnome_vfs_volume_monitor_get_volume_for_path (monitor, 
+		MODEST_MCC1_VOLUMEPATH);
+	if (volume) {
+		/* It is mounted: */
+		add_mmc_account (MODEST_TNY_ACCOUNT_STORE (obj), FALSE /* don't emit the insert signal. */); 
+		gnome_vfs_volume_unref(volume);
+	}
+	
 	return MODEST_TNY_ACCOUNT_STORE(obj);
 }
 

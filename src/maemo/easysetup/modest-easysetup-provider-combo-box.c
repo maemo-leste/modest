@@ -144,7 +144,7 @@ easysetup_provider_combo_box_new (void)
 
 void easysetup_provider_combo_box_fill (EasysetupProviderComboBox *combobox, ModestPresets *presets, GSList * list_country_id)
 {	
-	/* If the list is empty then use mmc=0 to get the providers for all countries: */
+	/* If the list is empty then use mcc=0 to get the providers for all countries: */
 	GSList *list = list_country_id;
 	GSList *fake_list = NULL;
 	if (!list_country_id) {
