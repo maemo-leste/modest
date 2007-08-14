@@ -910,7 +910,11 @@ modest_tny_account_store_new (ModestAccountMgr *account_mgr,
 		MODEST_MCC1_VOLUMEPATH);
 	if (volume) {
 		/* It is mounted: */
+		
+		/* TODO: Reneable this. Apaprently it causes a hang: */
+		#if 0
 		add_mmc_account (MODEST_TNY_ACCOUNT_STORE (obj), FALSE /* don't emit the insert signal. */); 
+		#endif
 		gnome_vfs_volume_unref(volume);
 	}
 	

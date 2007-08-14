@@ -1,5 +1,11 @@
 2007-08-14  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-tny-account-store.c: (modest_tny_account_store_new):
+	Comment out part of the last commit because it apparently causes 
+	a hang.
+
+2007-08-14  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/modest-tny-account-store.c: Added the add_mmc_account() 
 	function to save some copy/pasting.
 	(modest_tny_account_store_new): If the memory card is mounted, 
