@@ -151,12 +151,19 @@ msgs_move_to_confirmation (GtkWindow *win,
 			   TnyList *headers);
 
 
-static void
-run_account_setup_wizard (ModestWindow *win)
+/* Show the account creation wizard dialog.
+ * returns: TRUE if an account was created. FALSE if the user cancelled.
+ */
+gboolean
+modest_run_account_setup_wizard (ModestWindow *win)
 {
+	gboolean result = FALSE;
 	ModestEasysetupWizardDialog *wizard;
 	
-	g_return_if_fail (MODEST_IS_WINDOW(win));
+	if (!win)
+		win = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr ());
+		
+	g_return_val_if_fail (MODEST_IS_WINDOW(win), FALSE);
 	
 	wizard = modest_easysetup_wizard_dialog_new ();
 	gtk_window_set_transient_for (GTK_WINDOW (wizard), GTK_WINDOW (win));
@@ -165,8 +172,17 @@ run_account_setup_wizard (ModestWindow *win)
 	 * be unusable, freezing the UI: */
 	/* gtk_window_set_modal (GTK_WINDOW (wizard), TRUE); */
 	
-	gtk_dialog_run (GTK_DIALOG (wizard));
+	gint dialog_response = gtk_dialog_run (GTK_DIALOG (wizard));
+	if (dialog_response == GTK_RESPONSE_CANCEL)
+		result = FALSE;
+	else {
+		/* Check whether an account was created: */
+		result = modest_account_mgr_has_accounts(modest_runtime_get_account_mgr(), TRUE);
+	}
+	
 	gtk_widget_destroy (GTK_WIDGET (wizard));
+
+	return result;
 }
 
 
@@ -568,7 +584,7 @@ modest_ui_actions_on_accounts (GtkAction *action, ModestWindow *win)
 	/* This is currently only implemented for Maemo */
 #ifdef MODEST_PLATFORM_MAEMO /* Defined in config.h */
 	if (!modest_account_mgr_has_accounts(modest_runtime_get_account_mgr(), TRUE)) {
-		run_account_setup_wizard (win);
+		modest_run_account_setup_wizard (win);
 		return;
 	} else 	{
 		/* Show the list of accounts: */
@@ -674,8 +690,9 @@ modest_ui_actions_on_new_msg (GtkAction *action, ModestWindow *win)
 
 	/* if there are no accounts yet, just show the wizard */
 	if (!modest_account_mgr_has_accounts (modest_runtime_get_account_mgr(), TRUE)) {
-			run_account_setup_wizard (win);
-			return;
+			const gboolean created = modest_run_account_setup_wizard (win);
+			if (!created)
+				return;
 	}
 	
 	account_name = modest_account_mgr_get_default_account (modest_runtime_get_account_mgr ());
@@ -810,8 +827,9 @@ open_msg_cb (ModestMailOperation *mail_op,
 	    (folder_type == TNY_FOLDER_TYPE_OUTBOX)) {
 		/* we cannot edit without a valid account... */
 		if (!modest_account_mgr_has_accounts(modest_runtime_get_account_mgr(), TRUE)) {
-			run_account_setup_wizard(parent_win);
-			goto cleanup;
+			const gboolean created = modest_run_account_setup_wizard(parent_win);
+			if (!created)
+				goto cleanup;
 		}
 		win = modest_msg_edit_window_new (msg, account, TRUE);
 		
@@ -1219,8 +1237,9 @@ reply_forward (ReplyForwardAction action, ModestWindow *win)
 
 	/* we need an account when editing */
 	if (!modest_account_mgr_has_accounts(modest_runtime_get_account_mgr(), TRUE)) {
-		run_account_setup_wizard (win);
-		return;
+		const gboolean created = modest_run_account_setup_wizard (win);
+		if (!created)
+			return;
 	}
 	
 	header_list = get_selected_headers (win);
@@ -2050,8 +2069,9 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 		
 	if (!account_name) {
 		/* Run account setup wizard */
-		run_account_setup_wizard(MODEST_WINDOW(edit_window));
-		return;
+		const gboolean created = modest_run_account_setup_wizard(MODEST_WINDOW(edit_window));
+		if (!created)
+			return;
 	}
 	
 	MsgData *data = modest_msg_edit_window_get_msg_data (edit_window);
@@ -2067,8 +2087,9 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 				       account_name));
 	if (!transport_account) {
 		/* Run account setup wizard */
-		run_account_setup_wizard(MODEST_WINDOW(edit_window));
-		return;
+		const gboolean created = modest_run_account_setup_wizard(MODEST_WINDOW(edit_window));
+		if (!created)
+			return;
 	}
 	
 	gchar *from = modest_account_mgr_get_from_string (account_mgr, account_name);

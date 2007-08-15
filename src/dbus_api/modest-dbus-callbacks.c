@@ -184,13 +184,30 @@ static gchar* uri_parse_mailto (const gchar* mailto, GSList** list_items_and_val
 }
 
 static gboolean
+check_and_offer_account_creation()
+{
+	if (!modest_account_mgr_has_accounts(modest_runtime_get_account_mgr(), TRUE)) {
+		const gboolean created = modest_run_account_setup_wizard (NULL);
+		if (!created) {
+			g_debug ("modest: %s: No account exists even after offering.\n", __FUNCTION__);
+			return FALSE;
+		}
+	}
+	
+	return TRUE;
+}
+
+
+static gboolean
 on_idle_mail_to(gpointer user_data)
 {
 	/* This is based on the implemenation of main.c:start_uil(): */
 	
+	if (!check_and_offer_account_creation ())
+		return FALSE;
+		
 	gchar *uri = (gchar*)user_data;
 	GSList *list_names_and_values = NULL;
-	gchar *to = uri_parse_mailto (uri, &list_names_and_values);
 	
 	/* Get the TnyTransportAccount so we can instantiate a mail operation: */
  	ModestAccountMgr *account_mgr = modest_runtime_get_account_mgr();
@@ -243,9 +260,12 @@ on_idle_mail_to(gpointer user_data)
 			}
 			
 			/* Create the message: */
+			gchar *to = uri_parse_mailto (uri, &list_names_and_values);
 			TnyMsg *msg  = modest_tny_msg_new (to, from, 
 				cc, bcc, subject, body, 
 				NULL /* attachments */);
+			g_free(to);
+			to = NULL;
 				
 			if (!msg) {
 				g_printerr ("modest: failed to create message\n");
@@ -288,8 +308,6 @@ on_idle_mail_to(gpointer user_data)
  	if (list_names_and_values)
  		g_slist_foreach (list_names_and_values, (GFunc)g_free, NULL);
  	g_slist_free (list_names_and_values);
- 	
- 	g_free(to);
 		
 	g_free(uri);
 	
@@ -319,6 +337,9 @@ static gint on_mail_to(GArray * arguments, gpointer data, osso_rpc_t * retval)
 static gboolean
 on_idle_compose_mail(gpointer user_data)
 {
+	if (!check_and_offer_account_creation ())
+		return FALSE;
+	
 	ComposeMailIdleData *idle_data = (ComposeMailIdleData*)user_data;
 	gchar **list = NULL;
 	gint i = 0;
@@ -857,7 +878,9 @@ static gboolean on_idle_top_application (gpointer user_data);
 static gboolean
 on_idle_open_default_inbox(gpointer user_data)
 {
-
+	if (!check_and_offer_account_creation ())
+		return FALSE;
+	
 	/* This is a GDK lock because we are an idle callback and
 	 * the code below is or does Gtk+ code */
 

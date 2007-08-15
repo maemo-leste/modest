@@ -1,5 +1,26 @@
 2007-08-15  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-ui-actions.h:
+	* src/modest-ui-actions.c: Renamed modest_run_account_setup_wizard() 
+	to modest_run_account_setup_wizard() and made it public.
+	* src/dbus_api/modest-dbus-callbacks.c:
+	(check_and_offer_account_creation), (on_idle_mail_to),
+	(on_idle_compose_mail), (on_idle_open_default_inbox):
+	Offer account creation if necessary, fixing projects.maemo.org 
+	bug NB#63713.
+
+2007-08-15  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/modest-ui-actions.c: (run_account_setup_wizard):
+	Return a gboolean to indicate success.
+	(modest_ui_actions_on_new_msg), (open_msg_cb), (reply_forward),
+	(modest_ui_actions_on_send): When offering account creation, only 
+	give up (return) if account creation failed. Otherwise continue 
+	with the original request. This fixed projects.maemo.org bug 
+	NB#64317. 
+
+2007-08-15  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/widgets/modest-recpt-editor.c:
 	(modest_recpt_editor_instance_init): Turn off hildon auto-capitalization,
 	to fix projects.maemo.org bug NB#63789.

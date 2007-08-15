@@ -453,5 +453,10 @@ void     modest_ui_actions_get_msgs_full_error_handler         (ModestMailOperat
  **/
 void modest_do_message_delete (TnyHeader *header, ModestWindow *win);
 
+/* Show the account creation wizard dialog.
+ * returns: TRUE if an account was created. FALSE if the user cancelled.
+ */
+gboolean modest_run_account_setup_wizard (ModestWindow *win);
+
 G_END_DECLS
 #endif /* __MODEST_UI_ACTIONS_H__ */
