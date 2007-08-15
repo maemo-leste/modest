@@ -1,3 +1,13 @@
+modest (1.0-2007.33-4) gutsy; urgency=low
+
+  * Fixes: NB#64682
+  * Known issues : "The connection must be active when starting modest"
+  * If mails are not retrieved, use 
+  * "run-standalone.sh /usr/bin/modest showui" on the terminal.
+  * UI difference is present when modest is run using run-standalone option.
+
+ -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Wed, 15 Aug 2007 15:47:30 +0300
+
 modest (1.0-2007.33-3) gutsy; urgency=low
 
   * Fixes: NB#63387, NB#63060, NB#64419, NB#62414, NB#64659, NB#61072
