@@ -333,6 +333,10 @@ modest_recpt_editor_instance_init (GTypeInstance *instance, gpointer g_class)
 	gtk_container_add (GTK_CONTAINER (priv->abook_button), abook_icon);
 
 	priv->text_view = gtk_text_view_new ();
+	/* Auto-capitalization is the default, so let's turn it off: */
+	hildon_gtk_text_view_set_input_mode (GTK_TEXT_VIEW (priv->text_view), 
+		HILDON_GTK_INPUT_MODE_FULL);
+	
 	priv->recipients = NULL;
 
 	priv->scrolled_window = modest_scroll_text_new (GTK_TEXT_VIEW (priv->text_view), 1024);
