@@ -850,6 +850,52 @@ modest_tny_account_store_finalize (GObject *obj)
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
+gboolean volume_path_is_mounted (const gchar* path)
+{
+	gboolean result = FALSE;
+
+	/* Get the monitor singleton: */
+	GnomeVFSVolumeMonitor *monitor = gnome_vfs_get_volume_monitor();
+
+	/* This seems like a simpler way to do this, but it returns a 	
+	 * GnomeVFSVolume even if the drive is not mounted: */
+	/*
+	GnomeVFSVolume *volume = gnome_vfs_volume_monitor_get_volume_for_path (monitor, 
+		MODEST_MCC1_VOLUMEPATH);
+	if (volume) {
+		gnome_vfs_volume_unref(volume);
+	}
+	*/
+
+	/* Get the mounted volumes from the monitor: */
+	GList *list = gnome_vfs_volume_monitor_get_mounted_volumes (monitor);
+	GList *iter = list;
+	for (iter = list; iter; iter = g_list_next (iter)) {
+		GnomeVFSVolume *volume = (GnomeVFSVolume*)iter->data;
+		if (volume) {
+			/*
+			char *display_name = 
+				gnome_vfs_volume_get_display_name (volume);
+			printf ("volume display name=%s\n", display_name);
+			*/
+
+			char *device_path = 
+				gnome_vfs_volume_get_device_path (volume);
+			/* printf ("  device path=%s\n", device_path); */
+			if (device_path && (strcmp (device_path, path) == 0))
+				result = TRUE;
+
+			/* g_free (display_name); */
+			g_free (device_path);
+
+			gnome_vfs_volume_unref (volume);
+		}
+	}
+
+	g_list_free (list);
+
+	return result;
+}
 
 ModestTnyAccountStore*
 modest_tny_account_store_new (ModestAccountMgr *account_mgr, 
@@ -905,18 +951,9 @@ modest_tny_account_store_new (ModestAccountMgr *account_mgr,
 	/* Create the memory card account if the card is mounted: */
 	
 	/* This is a singleton, so it does not need to be unrefed. */
-	GnomeVFSVolumeMonitor* monitor = gnome_vfs_get_volume_monitor();
-	GnomeVFSVolume *volume = gnome_vfs_volume_monitor_get_volume_for_path (monitor, 
-		MODEST_MCC1_VOLUMEPATH);
-	if (volume) {
-		printf ("%s: gnome_vfs_volume_monitor_get_volume_for_path(%s) returned something.\n", 
-			__FUNCTION__, MODEST_MCC1_VOLUMEPATH);
-		#if 0 /* Commented out because gnome_vfs_volume_monitor_get_volume_for_path() seems 
-			to report it as mounted even when the card is not inserted. */
+	if (volume_path_is_mounted (MODEST_MCC1_VOLUMEPATH)) {
 		/* It is mounted: */
 		add_mmc_account (MODEST_TNY_ACCOUNT_STORE (obj), FALSE /* don't emit the insert signal. */); 
-		#endif
-		gnome_vfs_volume_unref(volume);
 	}
 	
 	return MODEST_TNY_ACCOUNT_STORE(obj);

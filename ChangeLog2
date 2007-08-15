@@ -1,3 +1,9 @@
+2007-08-15  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/modest-tny-account-store.c: Added volume_path_is_mounted().
+	(modest_tny_account_store_new): Properly detect the memory card at 
+	startup, and add an account for it.
+
 2007-08-14  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/modest-tny-account-store.c: (modest_tny_account_store_new):
