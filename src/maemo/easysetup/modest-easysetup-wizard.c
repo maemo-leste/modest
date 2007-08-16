@@ -1329,6 +1329,30 @@ static void set_default_custom_servernames (ModestEasysetupWizardDialog *account
 	}
 }
 
+static gchar*
+get_entered_account_title (ModestEasysetupWizardDialog *account_wizard)
+{
+	const gchar* account_title = 
+		gtk_entry_get_text (GTK_ENTRY (account_wizard->entry_account_title));
+	if (!account_title || (strlen (account_title) == 0))
+		return NULL;
+	else {
+		/* Strip it of whitespace at the start and end: */
+		gchar *result = g_strdup (account_title);
+		result = g_strstrip (result);
+		
+		if (!result)
+			return NULL;
+			
+		if (strlen (result) == 0) {
+			g_free (result);
+			return NULL;	
+		}
+		
+		return result;
+	}
+}
+
 static gboolean
 on_before_next (ModestWizardDialog *dialog, GtkWidget *current_page, GtkWidget *next_page)
 {
@@ -1340,8 +1364,8 @@ on_before_next (ModestWizardDialog *dialog, GtkWidget *current_page, GtkWidget *
 	 */
 	if (current_page == account_wizard->page_account_details) {	
 		/* Check that the title is not already in use: */
-		const gchar* account_title = gtk_entry_get_text (GTK_ENTRY (account_wizard->entry_account_title));
-		if ((!account_title) || (strlen(account_title) == 0))
+		gchar* account_title = get_entered_account_title (account_wizard);
+		if (!account_title)
 			return FALSE;
 			
 		/* Aavoid a clash with an existing display name: */
@@ -1431,8 +1455,19 @@ static gboolean entry_is_empty (GtkWidget *entry)
 	const gchar* text = gtk_entry_get_text (GTK_ENTRY (entry));
 	if ((!text) || (strlen(text) == 0))
 		return TRUE;
-	else
-		return FALSE;
+	else {
+		/* Strip it of whitespace at the start and end: */
+		gchar *stripped = g_strdup (text);
+		stripped = g_strstrip (stripped);
+		
+		if (!stripped)
+			return TRUE;
+			
+		const gboolean result = (strlen (stripped) == 0);
+		
+		g_free (stripped);
+		return result;
+	}
 }
 
 static void
@@ -1541,7 +1576,7 @@ create_account (ModestEasysetupWizardDialog *self, gboolean enabled)
 {
 	ModestEasysetupWizardDialogPrivate *priv = WIZARD_DIALOG_GET_PRIVATE (self);
 	
-	const gchar* display_name = gtk_entry_get_text (GTK_ENTRY (self->entry_account_title));
+	gchar* display_name = get_entered_account_title (self);
 
 	/* Some checks: */
 	if (!display_name)
@@ -1551,8 +1586,10 @@ create_account (ModestEasysetupWizardDialog *self, gboolean enabled)
 	 * and changed that name accordingly, 
 	 * but let's check again just in case:
 	 */
-	if (modest_account_mgr_account_with_display_name_exists (self->account_manager, display_name)) 
+	if (modest_account_mgr_account_with_display_name_exists (self->account_manager, display_name)) {
+		g_free (display_name);
 		return FALSE;
+	}
 
 	/* Increment the non-user visible name if necessary, 
 	 * based on the display name: */
@@ -1623,8 +1660,10 @@ create_account (ModestEasysetupWizardDialog *self, gboolean enabled)
 				!modest_protocol_info_is_secure(protocol_security_incoming))
 		{
 				GList* methods = check_for_supported_auth_methods(self);
-				if (!methods)
+				if (!methods) {
+					g_free (display_name);
 					return FALSE;
+				}
 				else
 				  protocol_authentication_incoming = (ModestAuthProtocol) (GPOINTER_TO_INT(methods->data));
 		}
@@ -1654,6 +1693,7 @@ create_account (ModestEasysetupWizardDialog *self, gboolean enabled)
 	if (!created) {
 		/* TODO: Provide a Logical ID for the text: */
 		show_error (GTK_WIDGET (self), _("An error occurred while creating the incoming account."));
+		g_free (display_name);
 		return FALSE;	
 	}
 	
@@ -1729,6 +1769,7 @@ create_account (ModestEasysetupWizardDialog *self, gboolean enabled)
 	if (!created) {
 		/* TODO: Provide a Logical ID for the text: */
 		show_error (GTK_WIDGET (self), _("An error occurred while creating the outgoing account."));
+		g_free (display_name);
 		return FALSE;	
 	}
 	
@@ -1744,6 +1785,7 @@ create_account (ModestEasysetupWizardDialog *self, gboolean enabled)
 	if (!created) {
 		/* TODO: Provide a Logical ID for the text: */
 		show_error (GTK_WIDGET (self), _("An error occurred while creating the account."));
+		g_free (display_name);
 		return FALSE;	
 	}
 
@@ -1782,6 +1824,7 @@ create_account (ModestEasysetupWizardDialog *self, gboolean enabled)
 	self->saved_account_name = g_strdup (account_name);
 	
 	g_free (account_name);
-
+	g_free (display_name);
+	
 	return result;
 }

@@ -368,6 +368,31 @@ create_page_account_details (ModestAccountSettingsDialog *self)
 	return GTK_WIDGET (box);
 }
 
+static gchar*
+get_entered_account_title (ModestAccountSettingsDialog *dialog)
+{
+	const gchar* account_title = 
+		gtk_entry_get_text (GTK_ENTRY (dialog->entry_account_title));
+	if (!account_title || (strlen (account_title) == 0))
+		return NULL;
+	else {
+		/* Strip it of whitespace at the start and end: */
+		gchar *result = g_strdup (account_title);
+		result = g_strstrip (result);
+		
+		if (!result)
+			return NULL;
+			
+		if (strlen (result) == 0) {
+			g_free (result);
+			return NULL;	
+		}
+		
+		return result;
+	}
+}
+
+
 static void
 on_button_signature (GtkButton *button, gpointer user_data)
 {
@@ -380,10 +405,12 @@ on_button_signature (GtkButton *button, gpointer user_data)
 		gboolean use_signature = FALSE;
 		gchar *signature = modest_account_mgr_get_signature(self->account_manager, self->account_name, 
 			&use_signature);
-		const gchar* account_title = gtk_entry_get_text (GTK_ENTRY (self->entry_account_title));
+		gchar* account_title = get_entered_account_title (self);
 		modest_signature_editor_dialog_set_settings (
 			MODEST_SIGNATURE_EDITOR_DIALOG (self->signature_dialog), 
 			use_signature, signature, account_title);
+		g_free (account_title);
+		account_title = NULL;
 		g_free (signature);
 		signature = NULL;
 	}
@@ -900,8 +927,8 @@ static gboolean
 check_data (ModestAccountSettingsDialog *self)
 {
 	/* Check that the title is not already in use: */
-	const gchar* account_title = gtk_entry_get_text (GTK_ENTRY (self->entry_account_title));
-	if ((!account_title) || (strlen(account_title) == 0))
+	gchar* account_title = get_entered_account_title (self);
+	if (!account_title)
 		return FALSE; /* Should be prevented already anyway. */
 		
 	if (strcmp(account_title, self->original_account_title) != 0) {
@@ -913,14 +940,19 @@ check_data (ModestAccountSettingsDialog *self)
 			/* Warn the user via a dialog: */
 			hildon_banner_show_information(NULL, NULL, _("mail_ib_account_name_already_existing"));
 	        
+	        g_free (account_title);
 			return FALSE;
 		}
 	}
+	
+	g_free (account_title);
+	account_title  = NULL;
 
 	/* Check that the email address is valid: */
 	const gchar* email_address = gtk_entry_get_text (GTK_ENTRY (self->entry_user_email));
-	if ((!email_address) || (strlen(email_address) == 0))
+	if ((!email_address) || (strlen(email_address) == 0)) {
 		return FALSE;
+	}
 			
 	if (!modest_text_utils_validate_email_address (email_address, NULL)) {
 		/* Warn the user via a dialog: */
@@ -935,23 +967,27 @@ check_data (ModestAccountSettingsDialog *self)
 
 	/* make sure the domain name for the incoming server is valid */
 	const gchar* hostname = gtk_entry_get_text (GTK_ENTRY (self->entry_incomingserver));
-	if ((!hostname) || (strlen(hostname) == 0))
+	if ((!hostname) || (strlen(hostname) == 0)) {
 		return FALSE;
+	}
+	
 	if (!modest_text_utils_validate_domain_name (hostname)) {
 		/* Warn the user via a dialog: */
 		/*show_error (GTK_WINDOW (self), _("mcen_ib_invalid_email"));*/
 		hildon_banner_show_information (NULL, NULL, _("mcen_ib_invalid_servername"));
                                          
-	        /* Return focus to the email address entry: */
-        	gtk_widget_grab_focus (self->entry_incomingserver);
+		/* Return focus to the email address entry: */
+        gtk_widget_grab_focus (self->entry_incomingserver);
 		gtk_editable_select_region (GTK_EDITABLE (self->entry_incomingserver), 0, -1);
 		return FALSE;
 	}
 
 	/* make sure the domain name for the outgoing server is valid */
 	const gchar* hostname2 = gtk_entry_get_text (GTK_ENTRY (self->entry_outgoingserver));
-	if ((!hostname2) || (strlen(hostname2) == 0))
+	if ((!hostname2) || (strlen(hostname2) == 0)) {
 		return FALSE;
+	}
+	
 	if (!modest_text_utils_validate_domain_name (hostname2)) {
 		/* Warn the user via a dialog: */
 		/*show_error (GTK_WINDOW (self), _("mcen_ib_invalid_email"));*/
@@ -965,7 +1001,7 @@ check_data (ModestAccountSettingsDialog *self)
 	
 	/* Check that the port numbers are acceptable: */
 	if (!check_hildon_number_editor_and_warn_value_not_in_range ( 
-		HILDON_NUMBER_EDITOR (self->entry_incoming_port), PORT_MIN, PORT_MAX)){
+		HILDON_NUMBER_EDITOR (self->entry_incoming_port), PORT_MIN, PORT_MAX)) {
 		return FALSE;
 	}
 		
@@ -1029,9 +1065,6 @@ check_data (ModestAccountSettingsDialog *self)
 			}
 		}
 	}
-	
-	
-
 	
 	return TRUE;
 }
@@ -1509,17 +1542,22 @@ save_configuration (ModestAccountSettingsDialog *dialog)
 	
 	
 	/* Set the changed account title last, to simplify the previous code: */
-	const gchar* account_title = gtk_entry_get_text (GTK_ENTRY (dialog->entry_account_title));
-	if ((!account_title) || (strlen(account_title) == 0))
+	gchar* account_title = get_entered_account_title (dialog);
+	if (!account_title)
 		return FALSE; /* Should be prevented already anyway. */
 		
 	if (strcmp(account_title, account_name) != 0) {
 		/* Change the title: */
-		gboolean test = modest_account_mgr_set_string (dialog->account_manager, account_name,
+		const gboolean test = modest_account_mgr_set_string (dialog->account_manager, account_name,
 		MODEST_ACCOUNT_DISPLAY_NAME, account_title, FALSE /* not server account */);
-		if (!test)
+		if (!test) {
+			g_free (account_title);
 			return FALSE;
+		}
 	}
+	
+	g_free (account_title);
+	account_title = NULL;
 	
 	/* Save connection-specific SMTP server accounts: */
 	if (dialog->specific_window) {
@@ -1538,8 +1576,19 @@ static gboolean entry_is_empty (GtkWidget *entry)
 	const gchar* text = gtk_entry_get_text (GTK_ENTRY (entry));
 	if ((!text) || (strlen(text) == 0))
 		return TRUE;
-	else
-		return FALSE;
+	else {
+		/* Strip it of whitespace at the start and end: */
+		gchar *stripped = g_strdup (text);
+		stripped = g_strstrip (stripped);
+		
+		if (!stripped)
+			return TRUE;
+			
+		const gboolean result = (strlen (stripped) == 0);
+		
+		g_free (stripped);
+		return result;
+	}
 }
 
 static void

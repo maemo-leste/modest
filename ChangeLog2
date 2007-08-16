@@ -1,3 +1,15 @@
+2007-08-16  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/maemo/easysetup/modest-easysetup-wizard.c:
+	(get_entered_account_title), (on_before_next), (entry_is_empty),
+	(create_account):
+	* src/maemo/modest-account-settings-dialog.c:
+	(get_entered_account_title), (on_button_signature), (check_data),
+	(save_configuration), (entry_is_empty):
+	Strip the account title of whitespace at the start and end before 
+	using it or checking it. This means that an all-whitespace title 
+	is not allowed, fixing projects.maemo.org bug NB#64977.
+
 2007-08-15  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/modest-ui-actions.h:
