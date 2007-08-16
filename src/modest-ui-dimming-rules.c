@@ -726,15 +726,16 @@ modest_ui_dimming_rules_on_delete_msg (ModestWindow *win, gpointer user_data)
 				modest_dimming_rule_set_notification (rule, _("mcen_ib_message_already_deleted"));
 		}
 		
-		/* Commented out, because deletion should be possible even when 
-		 * the message window has no header view model, which will be the 
-		 * case when it is not the selected message in the header view.
+		/* The delete button should be dimmed when viewing an attachment,
+		 * but should be enabled when viewing a message from the list, 
+		 * or when viewing a search result.
 		 */
-		
 		if (!dimmed) {
-			dimmed = !modest_msg_view_window_has_headers_model (MODEST_MSG_VIEW_WINDOW(win));
- 			if (dimmed) {
-				modest_dimming_rule_set_notification (rule, _CS("ckct_ib_unable_to_delete"));
+			if (!modest_msg_view_window_is_search_result (MODEST_MSG_VIEW_WINDOW(win))) {
+				dimmed = !modest_msg_view_window_has_headers_model (MODEST_MSG_VIEW_WINDOW(win));
+ 				if (dimmed) {
+					modest_dimming_rule_set_notification (rule, _CS("ckct_ib_unable_to_delete"));
+				}
 			}
 		}
 	}

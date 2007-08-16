@@ -629,7 +629,7 @@ on_idle_open_message (gpointer user_data)
 			 * so we can open the same window again next time: */
 			msg_view = modest_msg_edit_window_new (msg, modest_account_name, TRUE);
 		} else {
-			msg_view = modest_msg_view_window_new (msg, modest_account_name,
+			msg_view = modest_msg_view_window_new_for_search_result (msg, modest_account_name,
 						       msg_uid);
 		}
 		

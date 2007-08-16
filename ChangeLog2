@@ -1,3 +1,26 @@
+2007-08-16  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/widgets/modest-msg-view-window.h:
+	* src/gnome/modest-msg-view-window.c:
+	* src/maemo/modest-msg-view-window.c:
+	Added modest_msg_view_window_construct().
+	(modest_msg_view_window_new_with_header_model),
+	Added modest_msg_view_window_new_for_search_result),
+	Renamed modest_msg_view_window_new() to 
+	modest_msg_view_window_new_for_attachment(),
+	and modest_msg_view_window_is_search_result(),
+	so we can explicitly know that the window is for an 
+	attachment or a search result or a message from the list.
+
+	(modest_msg_view_window_view_attachment):
+	* src/modest-ui-actions.c: (open_msg_cb): Use the renamed function.
+	* src/dbus_api/modest-dbus-callbacks.c: (on_idle_open_message):
+	Use modest_msg_view_window_new_for_search_result().
+
+	* src/modest-ui-dimming-rules.c:
+	(modest_ui_dimming_rules_on_delete_msg): Dim the delete button 
+	for search results, fixing projects.maemo.org bug NB#63811.
+
 2007-08-16  Armin Burgmeier  <armin@openismus.com>
 
 	* src/modest-ui-actions.c: Show a banner instead of a dialog when

@@ -69,30 +69,32 @@ GType        modest_msg_view_window_get_type    (void) G_GNUC_CONST;
 	
 
 /**
- * modest_msg_view_window_new:
+ * modest_msg_view_window_new_for_attachment:
  * @msg: an #TnyMsg instance
  * @modest_account_name: the account name 
  * 
- * instantiates a new #ModestMsgViewWindow widget. The account name is used to
+ * instantiates a new #ModestMsgViewWindow widget to view a message that is an
+ * attachment in another message.
+ * The account name is used to
  * set the proper account when choosing reply/forward from the msg view window
  *
  * Returns: a new #ModestMsgViewWindow, or NULL in case of error
  */
-ModestWindow*   modest_msg_view_window_new         (TnyMsg *msg, 
+ModestWindow*   modest_msg_view_window_new_for_attachment         (TnyMsg *msg, 
 						    const gchar *modest_account_name,
 						    const gchar *msg_uid);
 
 /**
  * modest_msg_view_window_new_with_header_model:
  * @msg: an #TnyMsg instance
- * @account: the account name 
+ * @modest_account_name: the account name 
  * @model: a #GtkTreeModel, with the format used by #ModestHeaderView
- * @iter: a #GtkTreeIter, pointing to the position of @msg in @model.
+ * @row_reference: a #GtkTreeRowReference, pointing to the position of @msg in @model.
  * 
  * instantiates a new #ModestMsgViewWindow widget. The account name is used to
  * set the proper account when choosing reply/forward from the msg view window.
  * This constructor also passes a reference to the @model of the header view
- * to allow selecting previous/next messages.
+ * to allow selecting previous/next messages in the message list when appropriate.
  *
  * Returns: a new #ModestMsgViewWindow, or NULL in case of error
  */
@@ -103,6 +105,23 @@ ModestWindow*   modest_msg_view_window_new_with_header_model (TnyMsg *msg,
 							      GtkTreeRowReference *row_reference);
 
 
+/**
+ * modest_msg_view_window_new_for_search_result:
+ * @msg: an #TnyMsg instance
+ * @modest_account_name: the account name 
+ * 
+ * instantiates a new #ModestMsgViewWindow widget. The account name is used to
+ * set the proper account when choosing reply/forward from the msg view window.
+ * This constructor marks the window as being for a search result, which should 
+ * cause some UI to be disabled, such as the previous/next buttons.
+ *
+ * Returns: a new #ModestMsgViewWindow, or NULL in case of error
+ */
+ModestWindow *
+modest_msg_view_window_new_for_search_result (TnyMsg *msg, 
+					      const gchar *modest_account_name,
+					      const gchar *msg_uid);
+					      
 /**
  * modest_msg_view_window_get_header:
  * @window: an #ModestMsgViewWindow instance
@@ -255,6 +274,15 @@ gboolean modest_msg_view_window_first_message_selected (ModestMsgViewWindow *win
  * Check if window has been created with a full headers model. 
 */
 gboolean modest_msg_view_window_has_headers_model (ModestMsgViewWindow *window);
+
+/**
+ * modest_msg_view_window_is_search_result:
+ * @window: a #ModestMsgViewWindow
+ *
+ * Check if window has been created to show a search result. 
+ */
+gboolean modest_msg_view_window_is_search_result (ModestMsgViewWindow *window);
+
 
 /**
  * modest_msg_view_window_get_folder_type:

@@ -862,10 +862,10 @@ open_msg_cb (ModestMailOperation *mail_op,
 										    row_reference);
 				gtk_tree_row_reference_free (row_reference);
 			} else {
-				win = modest_msg_view_window_new (msg, account, (const gchar*) uid);
+				win = modest_msg_view_window_new_for_attachment (msg, account, (const gchar*) uid);
 			}
 		} else {
-			win = modest_msg_view_window_new (msg, account, (const gchar*) uid);
+			win = modest_msg_view_window_new_for_attachment (msg, account, (const gchar*) uid);
 		}
 		g_free (uid);
 	}

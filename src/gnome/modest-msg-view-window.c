@@ -222,7 +222,7 @@ on_delete_event (GtkWidget *widget, GdkEvent *event, ModestMsgViewWindow *self)
 
 
 ModestWindow *
-modest_msg_view_window_new (TnyMsg *msg, 
+modest_msg_view_window_new_for_attachment (TnyMsg *msg, 
 			    const gchar *modest_account_name, 
 			    const gchar *msg_uid)
 {
@@ -346,7 +346,7 @@ modest_msg_view_window_new_with_header_model (TnyMsg *msg,
 	   actions */
 	g_message ("partially implemented %s", __FUNCTION__);
 
-	return modest_msg_view_window_new (msg, account);
+	return modest_msg_view_window_new_for_attachment (msg, account);
 }
 
 

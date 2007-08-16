@@ -180,6 +180,9 @@ struct _ModestMsgViewWindowPrivate {
 	/* Optimized view enabled */
 	gboolean optimized_view;
 
+	/* Whether this was created via the *_new_for_search_result() function. */
+	gboolean is_search_result;
+	
 	/* A reference to the @model of the header view 
 	 * to allow selecting previous/next messages,
 	 * if the message is currently selected in the header view.
@@ -583,54 +586,12 @@ select_next_valid_row (GtkTreeModel *model,
 	return retval;
 }
 
-ModestWindow *
-modest_msg_view_window_new_with_header_model (TnyMsg *msg, 
-					      const gchar *modest_account_name,
-					      const gchar *msg_uid,
-					      GtkTreeModel *model, 
-					      GtkTreeRowReference *row_reference)
-{
-	ModestMsgViewWindow *window = NULL;
-	ModestMsgViewWindowPrivate *priv = NULL;
-
-	window = MODEST_MSG_VIEW_WINDOW(modest_msg_view_window_new (msg, modest_account_name, msg_uid));
-	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (window), NULL);
-
-	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
-
-	g_object_ref (model);
-	priv->header_model = model;
-	priv->row_reference = gtk_tree_row_reference_copy (row_reference);
-	priv->next_row_reference = gtk_tree_row_reference_copy (row_reference);
-	select_next_valid_row (model, &(priv->next_row_reference), TRUE);
-
-	g_signal_connect (GTK_TREE_MODEL(model), "row-changed",
-			  G_CALLBACK (modest_msg_view_window_on_row_changed),
-			  window);
-	g_signal_connect (GTK_TREE_MODEL(model), "row-deleted",
-			  G_CALLBACK (modest_msg_view_window_on_row_deleted),
-			  window);
-	g_signal_connect (GTK_TREE_MODEL(model), "row-inserted",
-			  G_CALLBACK (modest_msg_view_window_on_row_inserted),
-			  window);
-	g_signal_connect (GTK_TREE_MODEL(model), "rows-reordered",
-			  G_CALLBACK (modest_msg_view_window_on_row_reordered),
-			  window);
-
-	modest_msg_view_window_update_priority (window);
-
-	/* Check toolbar dimming rules */
-	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (window));
-
-	return MODEST_WINDOW(window);
-}
-
-ModestWindow *
-modest_msg_view_window_new (TnyMsg *msg, 
+/* TODO: This should be in _init(), with the parameters as properties. */
+static void
+modest_msg_view_window_construct (ModestMsgViewWindow *self, TnyMsg *msg, 
 			    const gchar *modest_account_name,
 			    const gchar *msg_uid)
 {
-	ModestMsgViewWindow *self = NULL;
 	GObject *obj = NULL;
 	ModestMsgViewWindowPrivate *priv = NULL;
 	ModestWindowPrivate *parent_priv = NULL;
@@ -640,12 +601,11 @@ modest_msg_view_window_new (TnyMsg *msg,
 	GError *error = NULL;
 	GdkPixbuf *window_icon;
 
-	g_return_val_if_fail (msg, NULL);
+	g_return_if_fail (msg);
 	
-	obj = g_object_new(MODEST_TYPE_MSG_VIEW_WINDOW, NULL);
+	obj = G_OBJECT (self);
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE(obj);
 	parent_priv = MODEST_WINDOW_GET_PRIVATE(obj);
-	self = MODEST_MSG_VIEW_WINDOW (obj);
 
 	priv->msg_uid = g_strdup (msg_uid);
 
@@ -766,6 +726,86 @@ modest_msg_view_window_new (TnyMsg *msg,
 
 	/* Check toolbar dimming rules */
 	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (obj));
+	
+}
+
+ModestWindow *
+modest_msg_view_window_new_with_header_model (TnyMsg *msg, 
+					      const gchar *modest_account_name,
+					      const gchar *msg_uid,
+					      GtkTreeModel *model, 
+					      GtkTreeRowReference *row_reference)
+{
+	ModestMsgViewWindow *window = NULL;
+	ModestMsgViewWindowPrivate *priv = NULL;
+
+	window = g_object_new(MODEST_TYPE_MSG_VIEW_WINDOW, NULL);
+	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (window), NULL);
+	modest_msg_view_window_construct (window, msg, modest_account_name, msg_uid);
+
+	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
+
+	/* Remember the message list's TreeModel so we can detect changes 
+	 * and change the list selection when necessary: */
+	g_object_ref (model);
+	priv->header_model = model;
+	priv->row_reference = gtk_tree_row_reference_copy (row_reference);
+	priv->next_row_reference = gtk_tree_row_reference_copy (row_reference);
+	select_next_valid_row (model, &(priv->next_row_reference), TRUE);
+
+	g_signal_connect (GTK_TREE_MODEL(model), "row-changed",
+			  G_CALLBACK (modest_msg_view_window_on_row_changed),
+			  window);
+	g_signal_connect (GTK_TREE_MODEL(model), "row-deleted",
+			  G_CALLBACK (modest_msg_view_window_on_row_deleted),
+			  window);
+	g_signal_connect (GTK_TREE_MODEL(model), "row-inserted",
+			  G_CALLBACK (modest_msg_view_window_on_row_inserted),
+			  window);
+	g_signal_connect (GTK_TREE_MODEL(model), "rows-reordered",
+			  G_CALLBACK (modest_msg_view_window_on_row_reordered),
+			  window);
+
+	modest_msg_view_window_update_priority (window);
+
+	/* Check toolbar dimming rules */
+	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (window));
+
+	return MODEST_WINDOW(window);
+}
+
+ModestWindow *
+modest_msg_view_window_new_for_search_result (TnyMsg *msg, 
+					      const gchar *modest_account_name,
+					      const gchar *msg_uid)
+{
+	ModestMsgViewWindow *window = NULL;
+	ModestMsgViewWindowPrivate *priv = NULL;
+
+	window = g_object_new(MODEST_TYPE_MSG_VIEW_WINDOW, NULL);
+	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (window), NULL);
+	modest_msg_view_window_construct (window, msg, modest_account_name, msg_uid);
+
+	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
+
+	/* Remember that this is a search result, 
+	 * so we can disable some UI appropriately: */
+	priv->is_search_result = TRUE;
+
+	return MODEST_WINDOW(window);
+}
+
+ModestWindow *
+modest_msg_view_window_new_for_attachment (TnyMsg *msg, 
+			    const gchar *modest_account_name,
+			    const gchar *msg_uid)
+{
+	GObject *obj = NULL;
+	g_return_val_if_fail (msg, NULL);
+	
+	obj = g_object_new(MODEST_TYPE_MSG_VIEW_WINDOW, NULL);
+	modest_msg_view_window_construct (MODEST_MSG_VIEW_WINDOW (obj), 
+		msg, modest_account_name, msg_uid);
 
 	return MODEST_WINDOW(obj);
 }
@@ -825,7 +865,7 @@ modest_msg_view_window_get_header (ModestMsgViewWindow *self)
 	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (self), NULL);
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (self);
 
-	/* If the message ws not obtained from a treemodel,
+	/* If the message was not obtained from a treemodel,
 	 * for instance if it was opened directly by the search UI:
 	 */
 	if (priv->header_model == NULL) {
@@ -1130,6 +1170,17 @@ modest_msg_view_window_has_headers_model (ModestMsgViewWindow *window)
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
 
 	return priv->header_model != NULL;
+}
+
+gboolean
+modest_msg_view_window_is_search_result (ModestMsgViewWindow *window)
+{
+	ModestMsgViewWindowPrivate *priv;
+
+	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (window), TRUE);
+	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
+
+	return priv->is_search_result;
 }
 
 gboolean
@@ -1895,7 +1946,7 @@ modest_msg_view_window_view_attachment (ModestMsgViewWindow *window, TnyMimePart
 			gchar *account = g_strdup (modest_window_get_active_account (MODEST_WINDOW (window)));
 			if (!account)
 				account = modest_account_mgr_get_default_account (modest_runtime_get_account_mgr ());
-			msg_win = modest_msg_view_window_new (TNY_MSG (mime_part), account, NULL);
+			msg_win = modest_msg_view_window_new_for_attachment (TNY_MSG (mime_part), account, NULL);
 			modest_window_set_zoom (MODEST_WINDOW (msg_win), 
 						modest_window_get_zoom (MODEST_WINDOW (window)));
 			modest_window_mgr_register_window (mgr, msg_win);
