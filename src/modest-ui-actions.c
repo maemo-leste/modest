@@ -2403,7 +2403,7 @@ static void
 modest_ui_actions_rename_folder_error_handler (ModestMailOperation *mail_op,
 					       gpointer user_data)
 {
-	GObject *win = modest_mail_operation_get_source (mail_op);
+	ModestMainWindow *window = MODEST_MAIN_WINDOW (user_data);
 	const GError *error = NULL;
 	const gchar *message = NULL;
 	
@@ -2415,9 +2415,8 @@ modest_ui_actions_rename_folder_error_handler (ModestMailOperation *mail_op,
 		message = _("!!! FIXME: Unable to rename");
 	}
 	
-	/* Show notification dialog */
-	modest_platform_run_information_dialog ((win) ? GTK_WINDOW (win) : NULL, message);
-	g_object_unref (win);
+	modest_platform_information_banner (GTK_WIDGET (window), NULL,
+	                                    message);
 }
 
 void 
@@ -2465,11 +2464,10 @@ modest_ui_actions_on_rename_folder (GtkAction *action,
 			ModestMailOperation *mail_op;
 
 			mail_op = 
-				modest_mail_operation_new_with_error_handling (MODEST_MAIL_OPERATION_TYPE_INFO, 
+				modest_mail_operation_new_with_error_handling (MODEST_MAIL_OPERATION_TYPE_INFO,
 									       G_OBJECT(main_window),
 									       modest_ui_actions_rename_folder_error_handler,
-									       NULL);
-
+									       main_window);
 
 			modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
 							 mail_op);
@@ -2478,7 +2476,6 @@ modest_ui_actions_on_rename_folder (GtkAction *action,
 			
 			modest_folder_view_select_folder (MODEST_FOLDER_VIEW(folder_view),
 							  TNY_FOLDER(folder), TRUE);
-
 
 			modest_header_view_clear ((ModestHeaderView *) header_view);
  

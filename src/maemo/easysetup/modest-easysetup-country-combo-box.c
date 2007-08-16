@@ -213,7 +213,7 @@ static void load_from_file (EasysetupCountryComboBox *self)
 	}
 
 	GtkListStore *liststore = GTK_LIST_STORE (priv->model);
-			
+
 	/* We use the getline() GNU extension,
 	 * because it reads per line, which simplifies our code,
 	 * and it doesn't require us to hard-code a buffer length.
@@ -236,7 +236,7 @@ static void load_from_file (EasysetupCountryComboBox *self)
 			
 			if (previous_country) {
 				/* printf ("  debug: storing id=%d for country=%s\n", previous_id, previous_country); */
-				list = g_slist_append (list, GUINT_TO_POINTER (previous_id));
+				list = g_slist_prepend (list, GUINT_TO_POINTER (previous_id));
 			}
 			
 			/* Group multiple MMC IDs for the same country together:
@@ -270,14 +270,16 @@ static void load_from_file (EasysetupCountryComboBox *self)
 			}
 			
 			g_free (previous_country);
-			previous_country = g_strdup (country);
+			previous_country = country;
 			
 			const guint id = (guint)g_ascii_strtod(id_str, NULL); /* Note that this parses locale-independent text. */
 			previous_id = id;
 		}
+		else if (country) {
+			g_free (country);
+		}
 		
 		g_free (id_str);
-		g_free (country);
 	}
 	
 	/* Deal with the last country: */
@@ -289,7 +291,9 @@ static void load_from_file (EasysetupCountryComboBox *self)
 	GtkTreeIter iter;
 	gtk_list_store_append (liststore, &iter);
 	gtk_list_store_set(liststore, &iter, MODEL_COL_IDS, list, MODEL_COL_NAME, name_translated, -1);
-	
+
+	g_free(previous_country);
+
 	if (list) {
 	 	g_slist_free (list);
 		list = NULL;

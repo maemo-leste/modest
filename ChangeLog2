@@ -1,3 +1,13 @@
+2007-08-16  Armin Burgmeier  <armin@openismus.com>
+
+	* src/modest-ui-actions.c: Show a banner instead of a dialog when
+	renaming a folder fails, to stay consistent with what happens when
+	creating a folder fails.
+
+	* src/maemo/easysetup/modest-easysetup-country-combo-box.c: Optimized
+	slightly country loading from the mmc_mappings file, fixed a memory
+	leak.
+
 2007-08-16  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/modest-tny-account-store.c: (volume_path_is_mounted):
@@ -530,7 +540,7 @@
 2007-07-16  Armin Burgmeier  <armin@openismus.com>
 
 	* src/modest-ui-actions.c: Added a button to create a folder to the
-	move-to dialog. This fixes projects.maemo.org bug NB#.
+	move-to dialog. This fixes projects.maemo.org bug NB#59863.
 
 2007-07-16  Johannes Schmid <johannes.schmid@openismus.com>
 
