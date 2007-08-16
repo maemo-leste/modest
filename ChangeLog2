@@ -1,5 +1,11 @@
 2007-08-16  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-tny-account-store.c: (volume_path_is_mounted):
+	Check the GnomeVFSVolume activation path instead of the device path, 
+	so that the memory card is really really shown in the UI.
+
+2007-08-16  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/maemo/easysetup/modest-easysetup-wizard.c:
 	(get_entered_account_title), (on_before_next), (entry_is_empty),
 	(create_account):

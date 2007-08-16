@@ -852,7 +852,11 @@ modest_tny_account_store_finalize (GObject *obj)
 
 gboolean volume_path_is_mounted (const gchar* path)
 {
+	g_return_val_if_fail (path, FALSE);
+
 	gboolean result = FALSE;
+	gchar * path_as_uri = g_filename_to_uri (path, NULL, NULL);
+	g_return_val_if_fail (path_as_uri, FALSE);
 
 	/* Get the monitor singleton: */
 	GnomeVFSVolumeMonitor *monitor = gnome_vfs_get_volume_monitor();
@@ -877,22 +881,24 @@ gboolean volume_path_is_mounted (const gchar* path)
 			char *display_name = 
 				gnome_vfs_volume_get_display_name (volume);
 			printf ("volume display name=%s\n", display_name);
+			g_free (display_name);
 			*/
-
-			char *device_path = 
-				gnome_vfs_volume_get_device_path (volume);
-			/* printf ("  device path=%s\n", device_path); */
-			if (device_path && (strcmp (device_path, path) == 0))
+			
+			char *uri = 
+				gnome_vfs_volume_get_activation_uri (volume);
+			/* printf ("  uri=%s\n", uri); */
+			if (uri && (strcmp (uri, path_as_uri) == 0))
 				result = TRUE;
 
-			/* g_free (display_name); */
-			g_free (device_path);
+			g_free (uri);
 
 			gnome_vfs_volume_unref (volume);
 		}
 	}
 
 	g_list_free (list);
+
+	g_free (path_as_uri);
 
 	return result;
 }
