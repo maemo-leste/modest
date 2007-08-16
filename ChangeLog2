@@ -1,5 +1,24 @@
 2007-08-16  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-search.c: (modest_search_folder):
+	* src/modest-search.h: Rename ModestSearch::before to start_date 
+	and after to end_date, using the same names as the libogs struct 
+	fields.
+	* src/dbus_api/modest-dbus-callbacks.c: (on_dbus_method_search):
+	The start_date and end_date were swapped in the check. This 
+	fixes date range searches, fixing projects.maemo.org bug NB#63407.
+
+2007-08-16  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/maemo/modest-account-view-window.c:
+	Added (check_for_active_acount).
+	(on_delete_button_clicked), (on_edit_button_clicked):
+	When an account is doing something (such as refreshing), 
+	show the same warning for account deletion as for account 
+	editing, to fix projects.maemo.org bug NB#64588. 
+
+2007-08-16  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/widgets/modest-msg-view-window.h:
 	* src/gnome/modest-msg-view-window.c:
 	* src/maemo/modest-msg-view-window.c:

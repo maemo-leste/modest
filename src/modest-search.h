@@ -68,7 +68,7 @@ typedef struct {
 	const gchar *body;
 	
 	/* Other criteria: */
-	time_t before, after;
+	time_t start_date, end_date;
 	guint32 minsize;
 	ModestSearchFlags flags;
 #ifdef MODEST_HAVE_OGS

@@ -428,11 +428,11 @@ modest_search_folder (TnyFolder *folder, ModestSearch *search)
 			goto go_next;
 			
 		if (search->flags & MODEST_SEARCH_BEFORE)
-			if (!(t <= search->before))
+			if (!(t <= search->end_date))
 				goto go_next;
 
 		if (search->flags & MODEST_SEARCH_AFTER)
-			if (!(t >= search->after))
+			if (!(t >= search->start_date))
 				goto go_next;
 
 		if (search->flags & MODEST_SEARCH_SIZE)

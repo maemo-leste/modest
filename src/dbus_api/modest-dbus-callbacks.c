@@ -1143,8 +1143,8 @@ on_dbus_method_search (DBusConnection *con, DBusMessage *message)
 #endif
 
 	/* Other criteria: */
-	search.before = start_date;
-	search.after  = end_date;
+	search.start_date = start_date;
+	search.end_date  = end_date;
 	search.flags  = 0;
 
 	/* Text to serach for in various parts of the message: */
@@ -1170,12 +1170,12 @@ on_dbus_method_search (DBusConnection *con, DBusMessage *message)
 
 	if (sd_v > 0) {
 		search.flags |= MODEST_SEARCH_BEFORE;
-		search.before = start_date;
+		search.start_date = start_date;
 	}
 
 	if (ed_v > 0) {
 		search.flags |= MODEST_SEARCH_AFTER;
-		search.after = end_date;
+		search.end_date = end_date;
 	}
 
 	if (size_v > 0) {

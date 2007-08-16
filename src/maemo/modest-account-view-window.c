@@ -157,6 +157,37 @@ on_selection_changed (GtkTreeSelection *sel, ModestAccountViewWindow *self)
 	g_free (default_account_name);
 }
 
+/** Check whether any connections are active, and cancel them if 
+ * the user wishes.
+ * Returns TRUE is there was no problem, 
+ * or if an operation was cancelled so we can continue.
+ * Returns FALSE if the user chose to cancel his request instead.
+ */
+static gboolean
+check_for_active_acount (ModestAccountViewWindow *self, const gchar* account_name)
+{
+	/* Check whether any connections are active, and cancel them if 
+	 * the user wishes.
+	 */
+	ModestAccountMgr* mgr = modest_runtime_get_account_mgr ();
+	ModestMailOperationQueue* queue = modest_runtime_get_mail_operation_queue();
+	if (modest_account_mgr_account_is_busy(mgr, account_name)) {
+		GtkWidget *note = hildon_note_new_confirmation (GTK_WINDOW (self), 
+			_("emev_nc_disconnect_account"));
+		const int response = gtk_dialog_run (GTK_DIALOG(note));
+		gtk_widget_destroy (note);
+		if (response == GTK_RESPONSE_OK) {
+			/* FIXME: We should only cancel those of this account */
+			modest_mail_operation_queue_cancel_all(queue);
+			return TRUE;
+		}
+		else
+			return FALSE;
+	}
+	
+	return TRUE;
+}
+
 static void
 on_delete_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 {
@@ -174,40 +205,43 @@ on_delete_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 	if (account_name) {
 		gchar *account_title = modest_account_mgr_get_display_name(account_mgr, account_name);
 		
-		/* The warning text depends on the account type: */
-		gchar *txt = NULL;	
-		if (modest_account_mgr_get_store_protocol (account_mgr, account_name) 
-			== MODEST_PROTOCOL_STORE_POP) {
-			txt = g_strdup_printf (_("emev_nc_delete_mailbox"), 
-				account_title);
-		} else {
-			txt = g_strdup_printf (_("emev_nc_delete_mailboximap"), 
-				account_title);
+		if (check_for_active_acount (self, account_name)) {
+			/* The warning text depends on the account type: */
+			gchar *txt = NULL;	
+			if (modest_account_mgr_get_store_protocol (account_mgr, account_name) 
+				== MODEST_PROTOCOL_STORE_POP) {
+				txt = g_strdup_printf (_("emev_nc_delete_mailbox"), 
+					account_title);
+			} else {
+				txt = g_strdup_printf (_("emev_nc_delete_mailboximap"), 
+					account_title);
+			}
+			
+			GtkDialog *dialog = GTK_DIALOG (hildon_note_new_confirmation (GTK_WINDOW (self), 
+				txt));
+			gtk_window_set_transient_for (GTK_WINDOW (dialog), GTK_WINDOW (self));
+			g_free (txt);
+			txt = NULL;
+	
+			if (gtk_dialog_run (dialog) == GTK_RESPONSE_OK) {
+				/* Remove account. If it succeeds then it also removes
+				   the account from the ModestAccountView: */
+				  
+				gboolean is_default = FALSE;
+				gchar *default_account_name = modest_account_mgr_get_default_account (account_mgr);
+				if (default_account_name && (strcmp (default_account_name, account_name) == 0))
+					is_default = TRUE;
+				g_free (default_account_name);
+					
+				gboolean removed = modest_account_mgr_remove_account (account_mgr, account_name);
+				if (!removed) {
+					g_warning ("%s: modest_account_mgr_remove_account() failed.\n", __FUNCTION__);
+				}
+			}
+			gtk_widget_destroy (GTK_WIDGET (dialog));
+			g_free (account_title);
 		}
 		
-		GtkDialog *dialog = GTK_DIALOG (hildon_note_new_confirmation (GTK_WINDOW (self), 
-			txt));
-		gtk_window_set_transient_for (GTK_WINDOW (dialog), GTK_WINDOW (self));
-		g_free (txt);
-		txt = NULL;
-
-		if (gtk_dialog_run (dialog) == GTK_RESPONSE_OK) {
-			/* Remove account. If it succeeds then it also removes
-			   the account from the ModestAccountView: */
-			  
-			gboolean is_default = FALSE;
-			gchar *default_account_name = modest_account_mgr_get_default_account (account_mgr);
-			if (default_account_name && (strcmp (default_account_name, account_name) == 0))
-				is_default = TRUE;
-			g_free (default_account_name);
-				
-			gboolean removed = modest_account_mgr_remove_account (account_mgr, account_name);
-			if (!removed) {
-				g_warning ("%s: modest_account_mgr_remove_account() failed.\n", __FUNCTION__);
-			}
-		}
-		gtk_widget_destroy (GTK_WIDGET (dialog));
-		g_free (account_title);
 		g_free (account_name);
 	}
 }
@@ -224,26 +258,14 @@ on_edit_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 	/* Check whether any connections are active, and cancel them if 
 	 * the user wishes.
 	 */
-	ModestAccountMgr* mgr = modest_runtime_get_account_mgr ();
-	ModestMailOperationQueue* queue = modest_runtime_get_mail_operation_queue();
-	if (modest_account_mgr_account_is_busy(mgr, account_name)) {
-		GtkWidget *note = hildon_note_new_confirmation (GTK_WINDOW (self), 
-			_("emev_nc_disconnect_account"));
-		const int response = gtk_dialog_run (GTK_DIALOG(note));
-		gtk_widget_destroy (note);
-		if (response == GTK_RESPONSE_OK) {
-			/* FIXME: We should only cancel those of this account */
-			modest_mail_operation_queue_cancel_all(queue);
-		}
-		else
-			return;
-	}
+	if (check_for_active_acount (self, account_name)) {
 		
-	/* Show the Account Settings window: */
-	ModestAccountSettingsDialog *dialog = modest_account_settings_dialog_new ();
-	modest_account_settings_dialog_set_account_name (dialog, account_name);
-	
-	modest_maemo_show_dialog_and_forget (GTK_WINDOW (self), GTK_DIALOG (dialog));
+		/* Show the Account Settings window: */
+		ModestAccountSettingsDialog *dialog = modest_account_settings_dialog_new ();
+		modest_account_settings_dialog_set_account_name (dialog, account_name);
+		
+		modest_maemo_show_dialog_and_forget (GTK_WINDOW (self), GTK_DIALOG (dialog));
+	}
 	
 	g_free (account_name);
 }
