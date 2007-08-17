@@ -955,9 +955,18 @@ modest_ui_dimming_rules_on_view_window_move_to (ModestWindow *win, gpointer user
 		if (dimmed)
 			modest_dimming_rule_set_notification (rule, _("mail_ib_notavailable_downloading"));
 	}
+	
 	if (!dimmed) {
-		if (MODEST_IS_MSG_VIEW_WINDOW (win))
-			dimmed = !modest_msg_view_window_has_headers_model (MODEST_MSG_VIEW_WINDOW (win));
+		if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
+			/* The move_to button should be dimmed when viewing an attachment,
+			 * but should be enabled when viewing a message from the list, 
+			 * or when viewing a search result.
+			 */
+			if (!modest_msg_view_window_is_search_result (MODEST_MSG_VIEW_WINDOW(win))) {
+				dimmed = !modest_msg_view_window_has_headers_model (MODEST_MSG_VIEW_WINDOW (win));
+			}
+		}
+		
 		if (dimmed) 
 			modest_dimming_rule_set_notification (rule, _("mcen_ib_unable_to_move_mail_attachment"));
 	}

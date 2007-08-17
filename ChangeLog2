@@ -1,5 +1,12 @@
 2007-08-17  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-ui-dimming-rules.c:
+	(modest_ui_dimming_rules_on_view_window_move_to): 
+	Enable the Move To toolbar button for search results, fixing the 
+	last part of projects.maemo.org bug NB#63807.
+
+2007-08-17  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/dbus_api/modest-dbus-callbacks.c:
 	(check_and_offer_account_creation): Use gdk_thread_enter/leave(), 
 	because this is called from idle handlers, to fix hangs afte the 
