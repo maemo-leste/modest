@@ -1815,6 +1815,8 @@ create_account (ModestEasysetupWizardDialog *self, gboolean enabled)
 		MODEST_ACCOUNT_RETRIEVE, retrieve, FALSE /* not server account */);
 
 	/* Save the connection-specific SMTP server accounts. */
+        modest_account_mgr_set_use_connection_specific_smtp(self->account_manager, account_name,
+                gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(self->checkbox_outgoing_smtp_specific)));
 	gboolean result = TRUE;
 	if (self->specific_window)
 		result = modest_connection_specific_smtp_window_save_server_accounts (

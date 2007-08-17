@@ -123,6 +123,7 @@
  * That's not pretty, but it's nicer than dealing with escaping of a = separator if 
  * putting them both in one string. */
 #define MODEST_ACCOUNT_CONNECTION_SPECIFIC_SMTP_LIST "specific_smtp"
+#define MODEST_ACCOUNT_USE_CONNECTION_SPECIFIC_SMTP  "use_specific_smtp" /* boolean */
 
 /* server account keys */
 #define MODEST_ACCOUNT_PASSWORD          "password"          /* string */

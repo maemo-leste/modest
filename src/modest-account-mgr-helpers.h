@@ -243,12 +243,22 @@ gboolean modest_account_mgr_remove_connection_specific_smtp (ModestAccountMgr *s
 					 const gchar* connection_name);
 
 /**
- * modest_account_mgr_get_has_connection_specific_smtp
+ * modest_account_mgr_get_use_connection_specific_smtp
  * @self: a ModestAccountMgr instance
- * @name: the account name
- * @result: Whether this account uses any connection-specific smtp server accounts.
- */	
-gboolean modest_account_mgr_get_has_connection_specific_smtp (ModestAccountMgr *self, const gchar* account_name);
+ * @account_name: the account name
+ * @result: Whether this account should use connection-specific smtp server accounts.
+ */
+gboolean modest_account_mgr_get_use_connection_specific_smtp (ModestAccountMgr *self, const gchar* account_name);
+
+/**
+ * modest_account_mgr_set_use_connection_specific_smtp
+ * @self: a ModestAccountMgr instance
+ * @account_name: the account name
+ * @new_value: New value that indicates if if this account should use connection-specific smtp server accounts
+ * @result: TRUE if it succeeded, FALSE otherwise
+ */
+gboolean modest_account_mgr_set_use_connection_specific_smtp (ModestAccountMgr *self, const gchar* account_name,
+                                                              gboolean new_value);
 
 /**
  * modest_account_mgr_get_connection_specific_smtp

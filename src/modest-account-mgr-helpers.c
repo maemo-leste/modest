@@ -160,18 +160,17 @@ gboolean modest_account_mgr_remove_connection_specific_smtp (ModestAccountMgr *s
 	return TRUE;
 }
 
-gboolean modest_account_mgr_get_has_connection_specific_smtp (ModestAccountMgr *self, const gchar* account_name)
+gboolean modest_account_mgr_get_use_connection_specific_smtp (ModestAccountMgr *self, const gchar* account_name)
 {
-	GSList *list = modest_account_mgr_get_list (self, account_name, 
-							MODEST_ACCOUNT_CONNECTION_SPECIFIC_SMTP_LIST,
-						    MODEST_CONF_VALUE_STRING, FALSE);
-	if (!list)
-		return FALSE;
-	
-	/* TODO: Should we free the items too, or just the list? */
-	g_slist_free (list);
-	
-	return TRUE;
+	return modest_account_mgr_get_bool (self, account_name,
+                                            MODEST_ACCOUNT_USE_CONNECTION_SPECIFIC_SMTP, FALSE);
+}
+
+gboolean modest_account_mgr_set_use_connection_specific_smtp (ModestAccountMgr *self, const gchar* account_name,
+                                                              gboolean new_value)
+{
+        return modest_account_mgr_set_bool (self, account_name, MODEST_ACCOUNT_USE_CONNECTION_SPECIFIC_SMTP,
+                                            new_value, FALSE);
 }
 
 /**
