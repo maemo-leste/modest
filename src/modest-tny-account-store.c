@@ -1413,6 +1413,12 @@ get_smtp_specific_transport_account_for_open_connection (ModestTnyAccountStore *
 	
 	/*  Get the connection-specific transport acccount, if any: */
 	ModestAccountMgr *account_manager = modest_runtime_get_account_mgr ();
+
+        /* Check if this account has connection-specific SMTP enabled */
+        if (!modest_account_mgr_get_use_connection_specific_smtp (account_manager, account_name)) {
+                return NULL;
+        }
+
 	gchar* server_account_name = modest_account_mgr_get_connection_specific_smtp (account_manager, 
 		account_name, connection_name);
 
