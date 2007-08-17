@@ -186,22 +186,31 @@ static gchar* uri_parse_mailto (const gchar* mailto, GSList** list_items_and_val
 static gboolean
 check_and_offer_account_creation()
 {
+	gboolean result = TRUE;
+	
+	/* This is called from idle handlers, so lock gdk: */
+	gdk_threads_enter ();
+	
 	if (!modest_account_mgr_has_accounts(modest_runtime_get_account_mgr(), TRUE)) {
+		printf ("DEBUG1: %s\n", __FUNCTION__);
 		const gboolean created = modest_run_account_setup_wizard (NULL);
+		printf ("DEBUG1: %s\n", __FUNCTION__);
 		if (!created) {
 			g_debug ("modest: %s: No account exists even after offering.\n", __FUNCTION__);
-			return FALSE;
+			result = FALSE;
 		}
 	}
 	
-	return TRUE;
+	gdk_threads_leave ();
+	
+	return result;
 }
 
 
 static gboolean
 on_idle_mail_to(gpointer user_data)
 {
-	/* This is based on the implemenation of main.c:start_uil(): */
+	/* This is based on the implementation of main.c:start_uil(): */
 	
 	if (!check_and_offer_account_creation ())
 		return FALSE;
@@ -494,6 +503,14 @@ find_message_by_url (const char *uri,  TnyAccount **ac_out)
 		return NULL;
 	}
 
+	printf ("DEBUG: %s: uri=%s\n", __FUNCTION__, uri);
+	/* TODO: When tinymail is built with the extra DBC assertion checks, 
+	 * this will crash for local folders (such as drafts),
+	 * because tny_folder_get_url_string() (in add_hit())
+	 * returns mail:/home/murrayc/yaddayadda 
+	 * instead of mail://localhost/home/murrayc/yaddayadd,
+	 * but I'm not sure where that folder URI is built. murrayc.
+	 */
 	account = tny_account_store_find_account (TNY_ACCOUNT_STORE (astore),
 						  uri);
 	

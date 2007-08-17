@@ -1,3 +1,12 @@
+2007-08-17  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/dbus_api/modest-dbus-callbacks.c:
+	(check_and_offer_account_creation): Use gdk_thread_enter/leave(), 
+	because this is called from idle handlers, to fix hangs afte the 
+	wizard closes.
+	(find_message_by_url):  Added a TODO comment about a crash that 
+	happens when tinymail was built with DBC checks. 
+
 2007-08-16  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/modest-search.c: (modest_search_folder):
