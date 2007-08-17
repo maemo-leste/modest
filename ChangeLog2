@@ -1,5 +1,12 @@
 2007-08-17  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-tny-send-queue.c: (modest_tny_send_queue_get_msg_id):
+	Check for NULLs to prevent a crash when opening an email that is 
+	an attachment in another email, fixing projects.maemo.org bug 
+	NB#66012.
+
+2007-08-17  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/modest-ui-dimming-rules.c:
 	(modest_ui_dimming_rules_on_view_window_move_to): 
 	Enable the Move To toolbar button for search results, fixing the 
@@ -53,7 +60,7 @@
 	Use modest_msg_view_window_new_for_search_result().
 
 	* src/modest-ui-dimming-rules.c:
-	(modest_ui_dimming_rules_on_delete_msg): Dim the delete button 
+	(modest_ui_dimming_rules_on_delete_msg): Enable the delete button 
 	for search results, fixing projects.maemo.org bug NB#63811.
 
 2007-08-16  Armin Burgmeier  <armin@openismus.com>

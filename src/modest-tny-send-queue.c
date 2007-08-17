@@ -496,14 +496,18 @@ modest_tny_send_queue_get_msg_id (TnyHeader *header)
 		
 	/* Get message uid */
 	uid = tny_header_get_uid (header);
-	tmp = g_strsplit (uid, "__", 2);
-	if (tmp[1] != NULL) 
-		msg_uid = g_strconcat (tmp[0], "_", NULL);
-	else 
-		msg_uid = g_strdup(tmp[0]);
+	if (uid)
+		tmp = g_strsplit (uid, "__", 2);
+	
+	if (tmp) {
+		if (tmp[1] != NULL) 
+			msg_uid = g_strconcat (tmp[0], "_", NULL);
+		else 
+			msg_uid = g_strdup(tmp[0]);
 
-	/* free */
-	g_strfreev(tmp);
+		/* free */
+		g_strfreev(tmp);
+	}
 
 	return msg_uid;
 }
