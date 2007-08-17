@@ -95,6 +95,10 @@ static void          _clipboard_set_selected_data (ModestHeaderView *header_view
 
 static void          _clear_hidding_filter (ModestHeaderView *header_view);
 
+static void modest_header_view_notify_observers(
+		ModestHeaderView *header_view,
+		GtkTreeModel *model,
+		const gchar *tny_folder_id);
 
 typedef struct _ModestHeaderViewPrivate ModestHeaderViewPrivate;
 struct _ModestHeaderViewPrivate {
@@ -103,6 +107,10 @@ struct _ModestHeaderViewPrivate {
 
 	TnyFolderMonitor     *monitor;
 	GMutex               *observers_lock;
+
+	/*header-view-observer observer*/
+	GMutex *observer_list_lock;
+	GSList *observer_list;
 
 	/* not unref this object, its a singlenton */
 	ModestEmailClipboard *clipboard;
@@ -512,6 +520,9 @@ modest_header_view_init (ModestHeaderView *obj)
 
 	priv->empty  = TRUE;
 
+	priv->observer_list_lock = g_mutex_new();
+	priv->observer_list = NULL;
+
 	priv->clipboard = modest_runtime_get_email_clipboard ();
 	priv->hidding_ids = NULL;
 	priv->n_selected = 0;
@@ -571,6 +582,11 @@ modest_header_view_finalize (GObject *obj)
 		g_signal_handler_disconnect (modest_runtime_get_account_store (), 
 					     priv->acc_removed_handler);
 	}
+
+	/* There is no need to lock because there should not be any
+	 * reference to self now. */
+	g_mutex_free(priv->observer_list_lock);
+	g_slist_free(priv->observer_list);
 
 	g_mutex_lock (priv->observers_lock);
 	if (priv->monitor) {
@@ -946,6 +962,8 @@ modest_header_view_set_folder_intern (ModestHeaderView *self, TnyFolder *folder)
 
 	/* Set new model */
 	modest_header_view_set_model (GTK_TREE_VIEW (self), filter_model);
+	modest_header_view_notify_observers(self, GTK_TREE_MODEL(filter_model),
+			tny_folder_get_id(folder));
 	g_object_unref (G_OBJECT (filter_model));
 /* 	modest_header_view_set_model (GTK_TREE_VIEW (self), sortable); */
 /* 	g_object_unref (G_OBJECT (sortable)); */
@@ -1128,6 +1146,8 @@ modest_header_view_set_folder (ModestHeaderView *self,
 			priv->monitor = NULL;
 		}
 		modest_header_view_set_model (GTK_TREE_VIEW (self), NULL); 
+
+		modest_header_view_notify_observers(self, NULL, NULL);
 
 		g_mutex_unlock (priv->observers_lock);
 	}
@@ -1734,3 +1754,62 @@ on_account_removed (TnyAccountStore *self,
 		g_object_unref (account);
 	}
 }
+
+void modest_header_view_add_observer(
+		ModestHeaderView *header_view,
+		ModestHeaderViewObserver *observer)
+{
+	ModestHeaderViewPrivate *priv = NULL;
+
+	g_assert(MODEST_IS_HEADER_VIEW(header_view));
+	g_assert(observer != NULL);
+	g_assert(MODEST_IS_HEADER_VIEW_OBSERVER(observer));
+
+	priv = MODEST_HEADER_VIEW_GET_PRIVATE(header_view);
+
+	g_mutex_lock(priv->observer_list_lock);
+	priv->observer_list = g_slist_prepend(priv->observer_list, observer);
+	g_mutex_unlock(priv->observer_list_lock);
+}
+
+void modest_header_view_remove_observer(
+		ModestHeaderView *header_view,
+		ModestHeaderViewObserver *observer)
+{
+	ModestHeaderViewPrivate *priv = NULL;
+
+	g_assert(MODEST_IS_HEADER_VIEW(header_view));
+	g_assert(observer != NULL);
+	g_assert(MODEST_IS_HEADER_VIEW_OBSERVER(observer));
+
+	priv = MODEST_HEADER_VIEW_GET_PRIVATE(header_view);
+
+	g_mutex_lock(priv->observer_list_lock);
+	priv->observer_list = g_slist_remove(priv->observer_list, observer);
+	g_mutex_unlock(priv->observer_list_lock);
+}
+
+static void modest_header_view_notify_observers(
+		ModestHeaderView *header_view,
+		GtkTreeModel *model,
+		const gchar *tny_folder_id)
+{
+	ModestHeaderViewPrivate *priv = NULL;
+	GSList *iter;
+	ModestHeaderViewObserver *observer;
+
+	g_assert(MODEST_IS_HEADER_VIEW(header_view));
+
+	priv = MODEST_HEADER_VIEW_GET_PRIVATE(header_view);
+
+	g_mutex_lock(priv->observer_list_lock);
+	iter = priv->observer_list;
+	while(iter != NULL){
+		observer = MODEST_HEADER_VIEW_OBSERVER(iter->data);
+		modest_header_view_observer_update(observer, model,
+				tny_folder_id);
+		iter = g_slist_next(iter);
+	}
+	g_mutex_unlock(priv->observer_list_lock);
+}
+

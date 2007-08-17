@@ -33,6 +33,8 @@ libmodest_widgets_la_SOURCES=          \
 	modest-hbox-cell-renderer.h    \
 	modest-vbox-cell-renderer.c    \
 	modest-vbox-cell-renderer.h    \
+	modest-header-view-observer.c  \
+	modest-header-view-observer.h  \
 	modest-header-view-render.c    \
 	modest-header-view.c           \
 	modest-header-view.h           \

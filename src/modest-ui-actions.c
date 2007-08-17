@@ -855,11 +855,9 @@ open_msg_cb (ModestMailOperation *mail_op,
 				g_list_foreach (sel_list, (GFunc) gtk_tree_path_free, NULL);
 				g_list_free (sel_list);
 				
-				win = modest_msg_view_window_new_with_header_model (msg, 
-										    account,
-										    (const gchar*) uid,
-										    model, 
-										    row_reference);
+				win = modest_msg_view_window_new_with_header_model (
+						msg, account, (const gchar*) uid,
+						model, row_reference);
 				gtk_tree_row_reference_free (row_reference);
 			} else {
 				win = modest_msg_view_window_new_for_attachment (msg, account, (const gchar*) uid);

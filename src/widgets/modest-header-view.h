@@ -37,6 +37,7 @@
 #include <tny-header.h>
 #include <tny-gtk-header-list-model.h>
 #include "modest-mail-operation.h"
+#include "modest-header-view-observer.h"
 
 G_BEGIN_DECLS
 
@@ -384,6 +385,34 @@ modest_header_view_paste_selection (ModestHeaderView *header_view,
 				    gboolean *delete);
 
 void modest_header_view_refilter (ModestHeaderView *header_view);
+
+/**
+ * modest_header_view_add_observer:
+ * @header_view: a #ModestHeaderView
+ * @observer: The observer to notify.
+ * 
+ * Registers a new observer. Warning! Each added observer object must
+ * removed using @modest_header_view_remove_observer before destroying
+ * the observer, or at least when it is under destruction. Also you
+ * should care about that the observer's #update function might be
+ * called any time until the observer is removed.
+ **/
+void modest_header_view_add_observer(
+		ModestHeaderView *header_view,
+		ModestHeaderViewObserver *observer);
+
+/**
+ * modest_header_view_remove_observer:
+ * @header_view: a #ModestHeaderView
+ * @observer: The observer to remove.
+ * 
+ * Removes exactly one observer from the notification list. If you
+ * added an observer twice, you should call this remove funtion twice
+ * as well.
+ **/
+void modest_header_view_remove_observer(
+		ModestHeaderView *header_view,
+		ModestHeaderViewObserver *observer);
 
 G_END_DECLS
 
