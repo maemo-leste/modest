@@ -379,11 +379,35 @@ on_idle_compose_mail(gpointer user_data)
 		if (!from) {
 			g_printerr ("modest: no from address for account '%s'\n", account_name);
 		} else {
-	
+			/* Get the signature. 
+			 * TODO: This, like much of this function is copy/pasted from 
+			 * modest_ui_actions_on_new_msg(): */
+			gboolean use_signature = FALSE;
+			gchar *signature = modest_account_mgr_get_signature (modest_runtime_get_account_mgr (), account_name, &use_signature);
+		
+			gchar* blank_and_signature = NULL;
+			if (use_signature) {
+				blank_and_signature = g_strconcat ("\n", signature, NULL);
+			} else {
+				blank_and_signature = g_strdup ("");
+			}
+			g_free (signature);
+			
+			/* Add it to the body. */
+			gchar *body_with_sig = NULL;
+			if (!(idle_data->body))
+				body_with_sig = g_strdup (blank_and_signature);
+			else {
+				body_with_sig = g_strconcat (idle_data->body, blank_and_signature, NULL);
+			}
+				
 			/* Create the message: */
 			TnyMsg *msg  = modest_tny_msg_new (idle_data->to, from, 
-				idle_data->cc, idle_data->bcc, idle_data->subject, idle_data->body, 
+				idle_data->cc, idle_data->bcc, idle_data->subject, body_with_sig, 
 				NULL); /* NULL because m_t_m_n doesn't use it */
+				
+			g_free (body_with_sig);
+			g_free (blank_and_signature);
 				
 			if (!msg) {
 				g_printerr ("modest: failed to create message\n");
@@ -1395,26 +1419,29 @@ on_dbus_method_get_folders (DBusConnection *con, DBusMessage *message)
 		g_printerr ("modest: no account found\n");
 	}
 	
-	TnyAccount *account = NULL;
-	if (account_mgr) {
-		account = modest_tny_account_store_get_server_account (
-			modest_runtime_get_account_store(), account_name, 
-			TNY_ACCOUNT_TYPE_STORE);
-	}
-	
-	if (!account) {
-		g_printerr ("modest: failed to get tny account folder'%s'\n", account_name);
-	} 
-		
-	printf("DEBUG: %s: Getting folders for account name=%s\n", __FUNCTION__, account_name);
-	g_free (account_name);
-	account_name = NULL;
-	
 	GList *folder_names = NULL;
-	add_folders_to_list (TNY_FOLDER_STORE (account), &folder_names);
-
-	g_object_unref (account);
-	account = NULL;
+	
+	TnyAccount *account = NULL;
+	if (account_name) {
+		if (account_mgr) {
+			account = modest_tny_account_store_get_server_account (
+				modest_runtime_get_account_store(), account_name, 
+				TNY_ACCOUNT_TYPE_STORE);
+		}
+		
+		if (!account) {
+			g_printerr ("modest: failed to get tny account folder'%s'\n", account_name);
+		} 
+		
+		printf("DEBUG: %s: Getting folders for account name=%s\n", __FUNCTION__, account_name);
+		g_free (account_name);
+		account_name = NULL;
+		
+		add_folders_to_list (TNY_FOLDER_STORE (account), &folder_names);
+	
+		g_object_unref (account);
+		account = NULL;
+	}
 	
 	/* Also add the folders from the local folders account,
 	 * because they are (currently) used with all accounts:
@@ -1464,13 +1491,11 @@ modest_dbus_req_filter (DBusConnection *con,
 	if (dbus_message_is_method_call (message,
 					 MODEST_DBUS_IFACE,
 					 MODEST_DBUS_METHOD_SEARCH)) {
-		printf ("  DEBUG1: %s\n", __FUNCTION__);
 		on_dbus_method_search (con, message);
 		handled = TRUE;			 	
 	} else if (dbus_message_is_method_call (message,
 					 MODEST_DBUS_IFACE,
 					 MODEST_DBUS_METHOD_GET_FOLDERS)) {
-	    	printf ("  DEBUG2: %s\n", __FUNCTION__);
 		on_dbus_method_get_folders (con, message);
 		handled = TRUE;			 	
 	}

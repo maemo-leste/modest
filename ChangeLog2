@@ -1,5 +1,21 @@
 2007-08-17  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/dbus_api/modest-dbus-callbacks.c:
+	(on_dbus_method_get_folders): Avoid trying to get the account name 
+	when there are no accounts, to avoid critical g_warnings, fixing 
+	projects.maemo.org bug NB#65574.
+
+2007-08-17  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/modest-ui-actions.c: (modest_ui_actions_on_new_msg): 
+	Use modest_account_mgr_get_signature() instead of accessing gconf 
+	directly, to slightly simplify the code.
+	* src/dbus_api/modest-dbus-callbacks.c: (on_idle_compose_mail):
+	Append the signature also when opening via other applications, 
+	fixing projects.maemo.org bug NB#65828.
+
+2007-08-17  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/modest-tny-send-queue.c: (modest_tny_send_queue_get_msg_id):
 	Check for NULLs to prevent a crash when opening an email that is 
 	an attachment in another email, fixing projects.maemo.org bug 

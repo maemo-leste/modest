@@ -717,15 +717,16 @@ modest_ui_actions_on_new_msg (GtkAction *action, ModestWindow *win)
 		goto cleanup;
 	}
 
-	if (modest_account_mgr_get_bool (modest_runtime_get_account_mgr (), account_name,
-					 MODEST_ACCOUNT_USE_SIGNATURE, FALSE)) {
-		signature = modest_account_mgr_get_string (modest_runtime_get_account_mgr (), account_name,
-							   MODEST_ACCOUNT_SIGNATURE, FALSE);
+	gboolean use_signature = FALSE;
+	signature = modest_account_mgr_get_signature (modest_runtime_get_account_mgr (), account_name, &use_signature);
+
+	if (use_signature) {
 		blank_and_signature = g_strconcat ("\n", signature, NULL);
-		g_free (signature);
 	} else {
 		blank_and_signature = g_strdup ("");
 	}
+
+	g_free (signature);
 
 	msg = modest_tny_msg_new ("", from_str, "", "", "", blank_and_signature, NULL);
 	if (!msg) {
@@ -741,7 +742,7 @@ modest_ui_actions_on_new_msg (GtkAction *action, ModestWindow *win)
 	
 
 	/* Create and register edit window */
-	/* This is destroyed by TOOD. */
+	/* This is destroyed by TODO. */
 	msg_win = modest_msg_edit_window_new (msg, account_name, FALSE);
 	mgr = modest_runtime_get_window_mgr ();
 	modest_window_mgr_register_window (mgr, msg_win);
