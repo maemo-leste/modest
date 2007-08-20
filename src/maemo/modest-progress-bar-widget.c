@@ -330,12 +330,6 @@ modest_progress_bar_cancel_current_operation (ModestProgressObject *self)
 
 	if (priv->current == NULL) return;
 
-	/* If received canceled we shall show banner */
-	if (modest_mail_operation_get_type_operation (priv->current) ==
-	    MODEST_MAIL_OPERATION_TYPE_RECEIVE)
-		modest_platform_information_banner (NULL, NULL, 
-						    _("emev_ib_ui_pop3_msg_recv_cancel"));
-
 	modest_mail_operation_cancel (priv->current);
 }
 
@@ -347,12 +341,6 @@ modest_progress_bar_cancel_all_operations (ModestProgressObject *self)
 
 	me = MODEST_PROGRESS_BAR_WIDGET (self);
 	priv = MODEST_PROGRESS_BAR_WIDGET_GET_PRIVATE (me);
-
-	/* If received canceled we shall show banner */
-	if (priv->current && modest_mail_operation_get_type_operation (priv->current) ==
-	    MODEST_MAIL_OPERATION_TYPE_RECEIVE)
-		modest_platform_information_banner (NULL, NULL, 
-						    _("emev_ib_ui_pop3_msg_recv_cancel"));
 
 	/* Cancel all the mail operations */
 	modest_mail_operation_queue_cancel_all (modest_runtime_get_mail_operation_queue ());
