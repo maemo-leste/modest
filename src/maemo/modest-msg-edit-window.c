@@ -90,6 +90,7 @@ static void  modest_msg_edit_window_init         (ModestMsgEditWindow *obj);
 static void  modest_msg_edit_window_finalize     (GObject *obj);
 
 static gboolean msg_body_focus (GtkWidget *focus, GdkEventFocus *event, gpointer userdata);
+static void  body_changed (GtkTextBuffer *buffer, ModestMsgEditWindow *editor);
 static void  recpt_field_changed (GtkTextBuffer *buffer, ModestMsgEditWindow *editor);
 static void  send_insensitive_press (GtkWidget *widget, ModestMsgEditWindow *editor);
 static void  style_insensitive_press (GtkWidget *widget, ModestMsgEditWindow *editor);
@@ -543,6 +544,8 @@ init_window (ModestMsgEditWindow *obj)
 			  G_CALLBACK (text_buffer_can_undo), obj);
 	g_signal_connect (G_OBJECT (priv->text_buffer), "can-redo",
 			  G_CALLBACK (text_buffer_can_redo), obj);
+	g_signal_connect (G_OBJECT (priv->text_buffer), "changed",
+                          G_CALLBACK (body_changed), obj);
 	g_signal_connect (G_OBJECT (obj), "window-state-event",
 			  G_CALLBACK (modest_msg_edit_window_window_state_event),
 			  NULL);
@@ -2630,6 +2633,25 @@ text_buffer_delete_images_by_id (GtkTextBuffer *buffer, const gchar * image_id)
 	}
 }
 
+gboolean
+message_is_empty (ModestMsgEditWindow *window)
+{
+	ModestMsgEditWindowPrivate *priv = NULL;
+
+	g_return_val_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window), FALSE);
+	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
+
+	/** TODO: Add wpeditor API to tell us if there is any _visible_ text,
+	 * so we can ignore markup.
+	 */
+	GtkTextBuffer *buf = gtk_text_view_get_buffer (GTK_TEXT_VIEW (priv->msg_body));
+	gint count = 0;
+	if (buf)
+		count = gtk_text_buffer_get_char_count (buf);
+
+	return count == 0;
+}
+
 static gboolean
 msg_body_focus (GtkWidget *focus,
 		GdkEventFocus *event,
@@ -2647,12 +2669,18 @@ recpt_field_changed (GtkTextBuffer *buffer,
         update_send_dimming (editor);
 }
 
+static void
+body_changed (GtkTextBuffer *buffer, ModestMsgEditWindow *editor)
+{
+        update_send_dimming (editor);
+}
+
 static void  
 send_insensitive_press (GtkWidget *widget, ModestMsgEditWindow *editor)
 {
 	ModestMsgEditWindowPrivate *priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (editor);
         const gchar *subject = gtk_entry_get_text (GTK_ENTRY (priv->subject_field));
-        if (subject == NULL || subject[0] == '\0') {
+        if (message_is_empty(editor) || (subject == NULL || subject[0] == '\0')) {
                 hildon_banner_show_information (NULL, NULL, _("mcen_ib_subject_or_body_not_modified"));
         } else {
                 hildon_banner_show_information (NULL, NULL, _("mcen_ib_add_recipients_first"));
@@ -2842,25 +2870,6 @@ subject_field_insert_text (GtkEditable *editable,
 	g_string_free (result, TRUE);
 }
 
-gboolean
-message_is_empty (ModestMsgEditWindow *window)
-{
-	ModestMsgEditWindowPrivate *priv = NULL;
-
-	g_return_val_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window), FALSE);
-	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
-	
-	/** TODO: Add wpeditor API to tell us if there is any _visible_ text,
-	 * so we can ignore markup.
-	 */
-	GtkTextBuffer *buf = gtk_text_view_get_buffer (GTK_TEXT_VIEW (priv->msg_body));
-	gint count = 0;
-	if (buf)
-		count = gtk_text_buffer_get_char_count (buf);
-		
-	return count == 0;
-}
-	
 void
 modest_msg_edit_window_toggle_find_toolbar (ModestMsgEditWindow *window,
 					    gboolean show)
@@ -3124,9 +3133,9 @@ update_send_dimming (ModestMsgEditWindow *window)
 
 	dim = ((gtk_text_buffer_get_char_count (to_buffer) +
 		gtk_text_buffer_get_char_count (cc_buffer) +
-		gtk_text_buffer_get_char_count (bcc_buffer)) == 0);
-
-        dim = dim || (subject == NULL || subject[0] == '\0');
+		gtk_text_buffer_get_char_count (bcc_buffer)) == 0)
+          || (subject == NULL || subject[0] == '\0')
+          || message_is_empty(window);
 
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ToolbarSend");
 	gtk_action_set_sensitive (action, !dim);

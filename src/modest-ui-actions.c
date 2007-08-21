@@ -2090,22 +2090,6 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 	
 	gchar *from = modest_account_mgr_get_from_string (account_mgr, account_name);
 
-	if (data->plain_body == NULL || data->plain_body[0] == '\0') {
-		GtkResponseType response;
-		gchar *note_message;
-		gchar *note_subject = data->subject;
-		if (note_subject == NULL || note_subject[0] == '\0')
-			note_subject = _("mail_va_no_subject");
-		note_message = g_strdup_printf (_("emev_ni_ui_smtp_message_null"), note_subject);
-		response = modest_platform_run_confirmation_dialog (GTK_WINDOW (edit_window),
-								    note_message);
-		g_free (note_message);
-		if (response == GTK_RESPONSE_CANCEL) {
-			g_free (account_name);
-			return;
-		}
-	}
-
 	modest_platform_information_banner (NULL, NULL, _("mcen_ib_outbox_waiting_to_be_sent"));
 
 	/* Create the mail operation */
