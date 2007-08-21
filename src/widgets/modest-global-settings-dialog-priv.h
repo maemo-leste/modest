@@ -42,7 +42,6 @@ typedef struct _ModestGlobalSettingsState {
 	gint     size_limit;
 	gboolean play_sound;
 	gboolean prefer_formatted_text;
-	gboolean include_reply;
 } ModestGlobalSettingsState;
 
 typedef struct _ModestGlobalSettingsDialogPrivate ModestGlobalSettingsDialogPrivate;
@@ -64,8 +63,6 @@ struct _ModestGlobalSettingsDialogPrivate {
 	
 	ModestPairList *msg_format_list;
 	GtkWidget *msg_format;
-	
-	GtkWidget *include_reply;
 
 	gboolean   changed;
 	ModestGlobalSettingsState initial_state;

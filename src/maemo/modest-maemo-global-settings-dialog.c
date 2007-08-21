@@ -401,15 +401,6 @@ create_composing_page (ModestMaemoGlobalSettingsDialog *self)
 				      HILDON_CAPTION_MANDATORY);
 	gtk_box_pack_start (GTK_BOX (vbox), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
 
-	/* Reply */
-	ppriv->include_reply = gtk_check_button_new ();
-	caption = hildon_caption_new (size_group, 
-				      _("mcen_va_options_include_original_inreply"), 
-				      ppriv->include_reply, 
-				      NULL, 
-				      HILDON_CAPTION_MANDATORY);
-	gtk_box_pack_start (GTK_BOX (vbox), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
-
 	return vbox;
 }
 

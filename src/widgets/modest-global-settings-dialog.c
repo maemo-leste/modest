@@ -316,20 +316,6 @@ _modest_global_settings_dialog_load_conf (ModestGlobalSettingsDialog *self)
 	modest_combo_box_set_active_id (MODEST_COMBO_BOX (priv->msg_format), 
 					(gpointer) &combo_id);
 	priv->initial_state.prefer_formatted_text = checked;
-
-	/* Include reply */
-	value = modest_conf_get_int (conf, MODEST_CONF_REPLY_TYPE, &error);
-	if (error) {
-		g_error_free (error);
-		error = NULL;
-		value = MODEST_TNY_MSG_REPLY_TYPE_QUOTE;
-	}
-	if (value == MODEST_TNY_MSG_REPLY_TYPE_QUOTE)
-		checked = TRUE;
-	else
-		checked = FALSE;
-	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (priv->include_reply), checked);
-	priv->initial_state.include_reply = checked;
 }
 
 static void 
@@ -352,7 +338,6 @@ get_current_settings (ModestGlobalSettingsDialogPrivate *priv,
 	state->play_sound = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (priv->play_sound));
 	id = modest_combo_box_get_active_id (MODEST_COMBO_BOX (priv->msg_format));
 	state->prefer_formatted_text = (*id == MODEST_FILE_FORMAT_FORMATTED_TEXT) ? TRUE : FALSE;
-	state->include_reply = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (priv->include_reply));
 }
 
 gboolean
@@ -381,10 +366,6 @@ _modest_global_settings_dialog_save_conf (ModestGlobalSettingsDialog *self)
 	modest_conf_set_bool (conf, MODEST_CONF_PLAY_SOUND_MSG_ARRIVE, current_state.play_sound, NULL);
 	RETURN_FALSE_ON_ERROR(error);
 	modest_conf_set_bool (conf, MODEST_CONF_PREFER_FORMATTED_TEXT, current_state.prefer_formatted_text, NULL);
-	RETURN_FALSE_ON_ERROR(error);
-	modest_conf_set_int (conf, MODEST_CONF_REPLY_TYPE,
-			     (current_state.include_reply) ? MODEST_TNY_MSG_REPLY_TYPE_QUOTE : 
-			     MODEST_TNY_MSG_REPLY_TYPE_CITE, NULL);
 	RETURN_FALSE_ON_ERROR(error);
 
 	/* Apply changes */
@@ -441,8 +422,7 @@ settings_changed (ModestGlobalSettingsState initial_state,
 	    initial_state.update_interval != current_state.update_interval ||
 	    initial_state.size_limit != current_state.size_limit ||
 	    initial_state.play_sound != current_state.play_sound ||
-	    initial_state.prefer_formatted_text != current_state.prefer_formatted_text ||
-	    initial_state.include_reply != current_state.include_reply)
+	    initial_state.prefer_formatted_text != current_state.prefer_formatted_text)
 		return TRUE;
 	else
 		return FALSE;
