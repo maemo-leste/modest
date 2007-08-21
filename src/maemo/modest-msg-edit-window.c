@@ -141,6 +141,7 @@ static void update_paste_dimming (ModestMsgEditWindow *window);
 static void update_copy_cut_dimming (ModestMsgEditWindow *window);
 static void update_select_all_dimming (ModestMsgEditWindow *window);
 static void update_zoom_dimming (ModestMsgEditWindow *window);
+static void update_send_dimming (ModestMsgEditWindow *window);
 
 /* Find toolbar */
 static void modest_msg_edit_window_find_toolbar_search (GtkWidget *widget,
@@ -2643,30 +2644,19 @@ static void
 recpt_field_changed (GtkTextBuffer *buffer,
 		  ModestMsgEditWindow *editor)
 {
-	ModestWindowPrivate *parent_priv = MODEST_WINDOW_GET_PRIVATE (editor);
-	ModestMsgEditWindowPrivate *priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (editor);
-	GtkTextBuffer *to_buffer, *cc_buffer, *bcc_buffer;
-	gboolean dim = FALSE;
-	GtkAction *action;
-
-	to_buffer = modest_recpt_editor_get_buffer (MODEST_RECPT_EDITOR (priv->to_field));
-	cc_buffer = modest_recpt_editor_get_buffer (MODEST_RECPT_EDITOR (priv->cc_field));
-	bcc_buffer = modest_recpt_editor_get_buffer (MODEST_RECPT_EDITOR (priv->bcc_field));
-	
-	dim = ((gtk_text_buffer_get_char_count (to_buffer) + 
-		gtk_text_buffer_get_char_count (cc_buffer) +
-		gtk_text_buffer_get_char_count (bcc_buffer)) == 0);
-			
-	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ToolbarSend");
-	gtk_action_set_sensitive (action, !dim);
-	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/EmailMenu/SendMenu");
-	gtk_action_set_sensitive (action, !dim);
+        update_send_dimming (editor);
 }
 
 static void  
 send_insensitive_press (GtkWidget *widget, ModestMsgEditWindow *editor)
 {
-	hildon_banner_show_information (NULL, NULL, _("mcen_ib_add_recipients_first"));
+	ModestMsgEditWindowPrivate *priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (editor);
+        const gchar *subject = gtk_entry_get_text (GTK_ENTRY (priv->subject_field));
+        if (subject == NULL || subject[0] == '\0') {
+                hildon_banner_show_information (NULL, NULL, _("mcen_ib_subject_or_body_not_modified"));
+        } else {
+                hildon_banner_show_information (NULL, NULL, _("mcen_ib_add_recipients_first"));
+        }
 }
 
 static void
@@ -2815,6 +2805,7 @@ subject_field_changed (GtkEditable *editable,
 	ModestMsgEditWindowPrivate *priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
 	update_window_title (window);
 	gtk_text_buffer_set_modified (priv->text_buffer, TRUE);
+        update_send_dimming (window);
 }
 
 static void  
@@ -3114,6 +3105,33 @@ update_zoom_dimming (ModestMsgEditWindow *window)
 	dimmed = ! WP_IS_TEXT_VIEW (focused);
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/ViewMenu/ZoomMenu");
 	gtk_action_set_sensitive (action, !dimmed);
+}
+
+static void
+update_send_dimming (ModestMsgEditWindow *window)
+{
+        ModestWindowPrivate *parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
+        ModestMsgEditWindowPrivate *priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
+        GtkTextBuffer *to_buffer, *cc_buffer, *bcc_buffer;
+        const gchar *subject;
+	gboolean dim = FALSE;
+	GtkAction *action;
+
+	to_buffer = modest_recpt_editor_get_buffer (MODEST_RECPT_EDITOR (priv->to_field));
+	cc_buffer = modest_recpt_editor_get_buffer (MODEST_RECPT_EDITOR (priv->cc_field));
+	bcc_buffer = modest_recpt_editor_get_buffer (MODEST_RECPT_EDITOR (priv->bcc_field));
+        subject = gtk_entry_get_text (GTK_ENTRY (priv->subject_field));
+
+	dim = ((gtk_text_buffer_get_char_count (to_buffer) +
+		gtk_text_buffer_get_char_count (cc_buffer) +
+		gtk_text_buffer_get_char_count (bcc_buffer)) == 0);
+
+        dim = dim || (subject == NULL || subject[0] == '\0');
+
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ToolbarSend");
+	gtk_action_set_sensitive (action, !dim);
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/EmailMenu/SendMenu");
+	gtk_action_set_sensitive (action, !dim);
 }
 
 static void

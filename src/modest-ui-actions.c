@@ -2090,17 +2090,6 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 	
 	gchar *from = modest_account_mgr_get_from_string (account_mgr, account_name);
 
-	/* mail content checks and dialogs */
-	if (data->subject == NULL || data->subject[0] == '\0') {
-		GtkResponseType response;
-		response = modest_platform_run_confirmation_dialog (GTK_WINDOW (edit_window),
-								    _("mcen_nc_subject_is_empty_send"));
-		if (response == GTK_RESPONSE_CANCEL) {
-			g_free (account_name);
-			return;
-		}
-	}
-
 	if (data->plain_body == NULL || data->plain_body[0] == '\0') {
 		GtkResponseType response;
 		gchar *note_message;
