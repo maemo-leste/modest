@@ -1206,6 +1206,30 @@ modest_ui_dimming_rules_on_cut (ModestWindow *win, gpointer user_data)
 				modest_dimming_rule_set_notification (rule, _("mcen_ib_unable_to_cut_mess"));
 			}
 		}
+		else if (MODEST_IS_FOLDER_VIEW (focused)) {
+			TnyFolderType types[3];
+			
+			types[0] = TNY_FOLDER_TYPE_DRAFTS; 
+			types[1] = TNY_FOLDER_TYPE_OUTBOX;
+			types[2] = TNY_FOLDER_TYPE_SENT;
+			
+			/* Apply folder rules */	
+			if (!dimmed) {
+				dimmed = _selected_folder_not_writeable (MODEST_MAIN_WINDOW(win));
+				if (dimmed)
+					modest_dimming_rule_set_notification (rule, _("emev_bd_unabletomove_items"));
+			}
+			if (!dimmed) {
+				dimmed = _selected_folder_is_root_or_inbox (MODEST_MAIN_WINDOW(win));
+				if (dimmed)
+					modest_dimming_rule_set_notification (rule, _("emev_bd_unabletomove_itemsr"));
+			}
+			if (!dimmed) {
+				dimmed = _selected_folder_is_any_of_type (win, types, 3);
+				if (dimmed)
+					modest_dimming_rule_set_notification (rule, _("emev_bd_unabletomove_itemsr"));
+			}
+		}
 	}
 
 	return dimmed;
@@ -1239,7 +1263,14 @@ modest_ui_dimming_rules_on_copy (ModestWindow *win, gpointer user_data)
 			if (!dimmed) {
 				dimmed = _selected_msg_sent_in_progress (win);
 				if (dimmed)
-					modest_dimming_rule_set_notification (rule, _("mcen_ib_unable_to_cut_mess"));
+					modest_dimming_rule_set_notification (rule, _(""));
+			}
+		}
+		else if (MODEST_IS_FOLDER_VIEW (focused)) {
+			if (!dimmed) {
+				dimmed = _selected_folder_is_root (MODEST_MAIN_WINDOW(win));
+				if (dimmed)
+					modest_dimming_rule_set_notification (rule, _(""));
 			}
 		}
 	}
