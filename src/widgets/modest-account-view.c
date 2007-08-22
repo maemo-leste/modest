@@ -256,9 +256,9 @@ update_account_view (ModestAccountMgr *account_mgr, ModestAccountView *view)
 
 static void
 on_account_busy_changed(ModestAccountMgr *account_mgr, 
-			const gchar *account_name,
-			gboolean busy, 
-			ModestAccountView *self)
+                        const gchar *account_name,
+                        gboolean busy, 
+                        ModestAccountView *self)
 {
 	GtkListStore *model = GTK_LIST_STORE(gtk_tree_view_get_model (GTK_TREE_VIEW(self)));
 	GtkTreeIter iter;
@@ -485,10 +485,11 @@ init_view (ModestAccountView *self)
 	 *
 	 * djcb: indeed, they have been removed for post-bora, i added the ifdefs...
        	 */
-#ifdef MODEST_HILDON_VERSION_0	
+#ifdef MODEST_HAVE_HILDON0_WIDGETS
 	g_object_set(G_OBJECT(self), "allow-checkbox-mode", FALSE, NULL);
 	g_object_set(G_OBJECT(toggle_renderer), "checkbox-mode", FALSE, NULL);
-#endif /*MODEST_HILDON_VERSION_0 */
+#endif /* MODEST_HAVE_HILDON0_WIDGETS */
+
 	g_signal_connect (G_OBJECT(toggle_renderer), "toggled", G_CALLBACK(on_account_default_toggled),
 			  self);
 	

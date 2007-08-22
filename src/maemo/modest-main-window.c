@@ -96,6 +96,9 @@ static void restore_settings (ModestMainWindow *self,
 
 static void save_state (ModestWindow *self);
 
+static void
+update_menus (ModestMainWindow* self);
+
 static void modest_main_window_show_toolbar   (ModestWindow *window,
 					       gboolean show_toolbar);
 
@@ -109,10 +112,20 @@ static void on_queue_changed   (ModestMailOperationQueue *queue,
 
 static gboolean on_zoom_minus_plus_not_implemented (ModestWindow *window);
 
-static void account_number_changed            (TnyAccountStore *account_store, 
-/*  					       const gchar *account_name,  */
-					       TnyAccount *account,
-					       gpointer user_data);
+static void
+on_account_inserted (TnyAccountStore *accoust_store,
+                     TnyAccount *account,
+                     gpointer user_data);
+
+static void
+on_account_removed (TnyAccountStore *accoust_store,
+                    TnyAccount *account,
+                    gpointer user_data);
+
+static void
+on_account_changed (ModestAccountMgr* mgr,
+                    const gchar* account,
+                    gpointer user_data);
 
 static gboolean on_inner_widgets_key_pressed  (GtkWidget *widget,
 					       GdkEventKey *event,
@@ -451,6 +464,282 @@ save_state (ModestWindow *window)
 				   MODEST_CONF_FOLDER_VIEW_KEY);
 }
 
+static gint
+compare_display_names (ModestAccountData *a,
+		       ModestAccountData *b)
+{
+	return strcmp (a->display_name, b->display_name);
+}
+
+static void
+update_menus (ModestMainWindow* self)
+{	
+	GSList *account_names, *iter, *accounts;
+	ModestMainWindowPrivate *priv;
+	ModestWindowPrivate *parent_priv;
+	ModestAccountMgr *mgr;
+	gint i, num_accounts;
+	GtkActionGroup *action_group;
+	GList *groups;
+	gchar *default_account;
+	GtkWidget *send_receive_button, *item;
+	GtkAction *send_receive_all = NULL;
+
+	priv = MODEST_MAIN_WINDOW_GET_PRIVATE (self);
+	parent_priv = MODEST_WINDOW_GET_PRIVATE (self);
+
+	/* Get enabled account IDs */
+	mgr = modest_runtime_get_account_mgr ();
+	account_names = modest_account_mgr_account_names (mgr, TRUE);
+	iter = account_names;
+	accounts = NULL;
+
+	while (iter) {
+		ModestAccountData *account_data = 
+			modest_account_mgr_get_account_data (mgr, (gchar*) iter->data);
+		accounts = g_slist_prepend (accounts, account_data);
+
+		iter = iter->next;
+	}
+	modest_account_mgr_free_account_names (account_names);
+	account_names = NULL;
+
+	/* Order the list of accounts by its display name */
+	accounts = g_slist_sort (accounts, (GCompareFunc) compare_display_names);
+	num_accounts = g_slist_length (accounts);
+
+	send_receive_all = gtk_ui_manager_get_action (parent_priv->ui_manager, 
+						      "/MenuBar/ToolsMenu/ToolsSendReceiveMainMenu/ToolsSendReceiveAllMenu");
+	gtk_action_set_visible (send_receive_all, num_accounts > 1);
+
+	/* Delete old send&receive popup items. We can not just do a
+	   menu_detach because it does not work well with
+	   tap_and_hold */
+	if (priv->accounts_popup)
+		gtk_container_foreach (GTK_CONTAINER (priv->accounts_popup), 
+				       (GtkCallback) gtk_widget_destroy, NULL);
+
+	/* Delete old entries in the View menu. Do not free groups, it
+	   belongs to Gtk+ */
+	groups = gtk_ui_manager_get_action_groups (parent_priv->ui_manager);
+	while (groups) {
+		if (!strcmp (MODEST_MAIN_WINDOW_ACTION_GROUP_ADDITIONS,
+			     gtk_action_group_get_name (GTK_ACTION_GROUP (groups->data)))) {
+			gtk_ui_manager_remove_action_group (parent_priv->ui_manager, 
+							    GTK_ACTION_GROUP (groups->data));
+			groups = NULL;
+			/* Remove uis */
+			if (priv->merge_ids) {
+				for (i = 0; i < priv->merge_ids->len; i++)
+					gtk_ui_manager_remove_ui (parent_priv->ui_manager, priv->merge_ids->data[i]);
+				g_byte_array_free (priv->merge_ids, TRUE);
+			}
+			/* We need to call this in order to ensure
+			   that the new actions are added in the right
+			   order (alphabetical */
+			gtk_ui_manager_ensure_update (parent_priv->ui_manager);
+		} else 
+			groups = g_list_next (groups);
+	}
+	priv->merge_ids = g_byte_array_sized_new (num_accounts);
+
+	/* Get send receive button */
+	send_receive_button = gtk_ui_manager_get_widget (parent_priv->ui_manager,
+							  "/ToolBar/ToolbarSendReceive");
+
+	/* Create the menu */
+	if (num_accounts > 1) {
+		if (!priv->accounts_popup)
+			priv->accounts_popup = gtk_menu_new ();
+		item = gtk_menu_item_new_with_label (_("mcen_me_toolbar_sendreceive_all"));
+		gtk_menu_shell_append (GTK_MENU_SHELL (priv->accounts_popup), GTK_WIDGET (item));
+		g_signal_connect (G_OBJECT (item), 
+				  "activate", 
+				  G_CALLBACK (on_send_receive_csm_activated),
+				  NULL);
+		item = gtk_separator_menu_item_new ();
+		gtk_menu_shell_prepend (GTK_MENU_SHELL (priv->accounts_popup), GTK_WIDGET (item));
+	}
+
+	/* Create a new action group */
+	default_account = modest_account_mgr_get_default_account (mgr);
+	action_group = gtk_action_group_new (MODEST_MAIN_WINDOW_ACTION_GROUP_ADDITIONS);
+	for (i = 0; i < num_accounts; i++) {
+		gchar *display_name = NULL;
+		
+		ModestAccountData *account_data = (ModestAccountData *) g_slist_nth_data (accounts, i);
+
+		/* Create display name. The UI specification specifies a different format string 
+		 * to use for the default account, though both seem to be "%s", so 
+		 * I don't see what the point is. murrayc. */
+		if (default_account && account_data->account_name && 
+			!(strcmp (default_account, account_data->account_name) == 0)) {
+			display_name = g_strdup_printf (_("mcen_me_toolbar_sendreceive_default"), 
+							account_data->display_name);
+		}
+		else {
+			display_name = g_strdup_printf (_("mcen_me_toolbar_sendreceive_mailbox_n"), 
+							account_data->display_name);
+		}
+
+		/* Create action and add it to the action group. The
+		   action name must be the account name, this way we
+		   could know in the handlers the account to show */
+		if(account_data && account_data->account_name) {
+			gchar* item_name, *refresh_action_name;
+			guint8 merge_id = 0;
+			GtkAction *view_account_action, *refresh_account_action;
+
+			view_account_action = gtk_action_new (account_data->account_name,
+							      display_name, NULL, NULL);
+			gtk_action_group_add_action (action_group, view_account_action);
+
+			/* Add ui from account data. We allow 2^9-1 account
+			   changes in a single execution because we're
+			   downcasting the guint to a guint8 in order to use a
+			   GByteArray. It should be enough. */
+			item_name = g_strconcat (account_data->account_name, "Menu", NULL);
+			merge_id = (guint8) gtk_ui_manager_new_merge_id (parent_priv->ui_manager);
+			priv->merge_ids = g_byte_array_append (priv->merge_ids, &merge_id, 1);
+			gtk_ui_manager_add_ui (parent_priv->ui_manager,
+					       merge_id,
+					       "/MenuBar/ViewMenu/ViewMenuAdditions",
+					       item_name,
+					       account_data->account_name,
+					       GTK_UI_MANAGER_MENUITEM,
+					       FALSE);
+
+			/* Connect the action signal "activate" */
+			g_signal_connect (G_OBJECT (view_account_action),
+					  "activate",
+					  G_CALLBACK (on_show_account_action_activated),
+					  self);
+
+			/* Create the items for the Tools->Send&Receive submenu */
+			refresh_action_name = g_strconcat ("SendReceive", account_data->account_name, NULL);
+			refresh_account_action = gtk_action_new ((const gchar*) refresh_action_name, 
+								 display_name, NULL, NULL);
+			printf("DEBUG: %s: menu display_name=%s\n", __FUNCTION__, display_name);
+			gtk_action_group_add_action (action_group, refresh_account_action);
+
+			merge_id = (guint8) gtk_ui_manager_new_merge_id (parent_priv->ui_manager);
+			priv->merge_ids = g_byte_array_append (priv->merge_ids, &merge_id, 1);
+			gtk_ui_manager_add_ui (parent_priv->ui_manager, 
+					       merge_id,
+					       "/MenuBar/ToolsMenu/ToolsSendReceiveMainMenu/ToolsMenuAdditions",
+					       item_name,
+					       refresh_action_name,
+					       GTK_UI_MANAGER_MENUITEM,
+					       FALSE);
+			g_free (refresh_action_name);
+
+			g_signal_connect_data (G_OBJECT (refresh_account_action), 
+					       "activate", 
+					       G_CALLBACK (on_refresh_account_action_activated), 
+					       g_strdup (account_data->account_name),
+					       (GClosureNotify) g_free,
+					       0);
+
+			/* Create item and add it to the send&receive
+			   CSM. If there is only one account then
+			   it'll be no menu */
+			if (priv->accounts_popup) {
+				GtkWidget *label = gtk_label_new(NULL);
+				gtk_misc_set_alignment (GTK_MISC (label), 0.0, 0.5);
+				if (default_account && (strcmp(account_data->account_name, default_account) == 0))
+				{
+					gchar *escaped = g_markup_printf_escaped ("<b>%s</b>", display_name);
+					gtk_label_set_markup (GTK_LABEL (label), escaped);
+					g_free (escaped);
+				}
+				else
+				{
+					gtk_label_set_text (GTK_LABEL (label), display_name);
+				}
+
+				item = gtk_menu_item_new ();
+				gtk_container_add (GTK_CONTAINER (item), label);
+
+				gtk_menu_shell_prepend (GTK_MENU_SHELL (priv->accounts_popup), GTK_WIDGET (item));
+				g_signal_connect_data (G_OBJECT (item), 
+						       "activate", 
+						       G_CALLBACK (on_send_receive_csm_activated),
+						       g_strdup (account_data->account_name),
+						       (GClosureNotify) g_free,
+						       0);
+			}
+			g_free (item_name);
+		}
+
+		/* Frees */
+		g_free (display_name);
+	}
+
+	gtk_ui_manager_insert_action_group (parent_priv->ui_manager, action_group, 1);
+
+	/* We cannot do this in the loop above because this relies on the action
+	 * group being inserted. This makes the default account appear in bold.
+	 * I agree it is a rather ugly way, but I don't see another possibility. armin. */
+	for (i = 0; i < num_accounts; i++) {
+		ModestAccountData *account_data = (ModestAccountData *) g_slist_nth_data (accounts, i);
+
+		if(account_data->account_name && default_account &&
+		   strcmp (account_data->account_name, default_account) == 0) {
+			gchar *item_name = g_strconcat (account_data->account_name, "Menu", NULL);
+
+			gchar *path = g_strconcat ("/MenuBar/ViewMenu/ViewMenuAdditions/", item_name, NULL);
+			GtkWidget *item = gtk_ui_manager_get_widget (parent_priv->ui_manager, path);
+			g_free(path);
+
+			if (item) {
+				GtkWidget *child = gtk_bin_get_child (GTK_BIN (item));
+				if (GTK_IS_LABEL (child)) {
+					const gchar *cur_name = gtk_label_get_text (GTK_LABEL (child));
+					gchar *bold_name = g_markup_printf_escaped("<b>%s</b>", cur_name);
+					gtk_label_set_markup (GTK_LABEL (child), bold_name);
+					g_free (bold_name);
+				}
+			}
+
+			path = g_strconcat("/MenuBar/ToolsMenu/ToolsSendReceiveMainMenu/ToolsMenuAdditions/", item_name, NULL);
+			item = gtk_ui_manager_get_widget (parent_priv->ui_manager, path);
+			g_free (path);
+
+			if (item) {
+				GtkWidget *child = gtk_bin_get_child (GTK_BIN (item));
+				if (GTK_IS_LABEL (child)) {
+					const gchar *cur_name = gtk_label_get_text (GTK_LABEL (child));
+					gchar *bold_name = g_markup_printf_escaped("<b>%s</b>", cur_name);
+					gtk_label_set_markup (GTK_LABEL (child), bold_name);
+					g_free (bold_name);
+				}
+			}
+
+			g_free(item_name);
+		}
+
+		modest_account_mgr_free_account_data (mgr, account_data);
+	}
+
+	if (priv->accounts_popup) {
+		/* Mandatory in order to view the menu contents */
+		gtk_widget_show_all (priv->accounts_popup);
+
+		/* Setup tap_and_hold just if was not done before*/
+		if (!gtk_menu_get_attach_widget (GTK_MENU (priv->accounts_popup)))
+			gtk_widget_tap_and_hold_setup (send_receive_button, priv->accounts_popup, NULL, 0);
+	}
+
+	/* Frees */
+	g_slist_free (accounts);
+	g_free (default_account);
+
+
+	/* Make sure that at least one account is viewed if there are any 
+	 * accounts, for instance when adding the first account: */
+	set_at_least_one_account_visible (self);
+}
+
 static void
 wrap_in_scrolled_window (GtkWidget *win, GtkWidget *widget)
 {
@@ -720,11 +1009,18 @@ connect_signals (ModestMainWindow *self)
 	
 	/* Track account changes. We need to refresh the toolbar */
 	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,G_OBJECT (modest_runtime_get_account_store ()),
-						       "account_inserted", G_CALLBACK (account_number_changed),
+						       "account_inserted", G_CALLBACK (on_account_inserted),
 						       self);
 	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,G_OBJECT (modest_runtime_get_account_store ()),
-						       "account_removed", G_CALLBACK (account_number_changed),
+						       "account_removed", G_CALLBACK (on_account_removed),
 						       self);
+
+	/* We need to refresh the send & receive menu to change the bold
+	 * account when the default account changes. */
+	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,G_OBJECT (modest_runtime_get_account_mgr ()),
+	                                               "account_changed", G_CALLBACK (on_account_changed),
+	                                               self);
+
 	/* Account store */
 	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,G_OBJECT (modest_runtime_get_account_store()), 
 						       "password_requested",
@@ -1221,8 +1517,7 @@ modest_main_window_show_toolbar (ModestWindow *self,
 		gtk_widget_tap_and_hold_setup (GTK_WIDGET (reply_button), menu, NULL, 0);
 
 		/* Set send & receive button tap and hold menu */
-		account_number_changed (TNY_ACCOUNT_STORE (modest_runtime_get_account_store ()),
-				   NULL, self);
+		update_menus (MODEST_MAIN_WINDOW (self));
 	}
 
 	if (show_toolbar) {
@@ -1237,288 +1532,36 @@ modest_main_window_show_toolbar (ModestWindow *self,
 
 }
 
-static gint
-compare_display_names (ModestAccountData *a,
-		       ModestAccountData *b)
+static void
+on_account_inserted (TnyAccountStore *accoust_store,
+                     TnyAccount *account,
+                     gpointer user_data)
 {
-	return strcmp (a->display_name, b->display_name);
+	update_menus (MODEST_MAIN_WINDOW (user_data));
 }
 
-static void 
-account_number_changed (TnyAccountStore *account_store, 
-/* 			const gchar *account_name, */
-			TnyAccount *account,
-			gpointer user_data)
-{	
-	GSList *account_names, *iter, *accounts;
-	ModestMainWindow *self;
-	ModestMainWindowPrivate *priv;
-	ModestWindowPrivate *parent_priv;
-	ModestAccountMgr *mgr;
-	gint i, num_accounts;					
-	GtkActionGroup *action_group;
-	GList *groups;
-	gchar *default_account;
-	GtkWidget *send_receive_button, *item;
-	GtkAction *send_receive_all = NULL;
-		
-	g_return_if_fail (MODEST_IS_MAIN_WINDOW (user_data));
-/* 	g_return_if_fail (TNY_IS_ACCOUNT (account)); */
+static void
+on_account_changed (ModestAccountMgr* mgr,
+                    const gchar* account,
+                    gpointer user_data)
+{
+	gchar *default_account = modest_account_mgr_get_default_account (modest_runtime_get_account_mgr ());
 
-	self = MODEST_MAIN_WINDOW (user_data);
-	priv = MODEST_MAIN_WINDOW_GET_PRIVATE (self);
-	parent_priv = MODEST_WINDOW_GET_PRIVATE (self);
+	/* Actually, we only want to know when another account has become
+	 * the default account, but there is no default_account_changed
+	 * signal in ModestAccountMgr. */
+	if(strcmp(account, default_account) == 0)
+		update_menus (MODEST_MAIN_WINDOW (user_data));
 
-	/* Get enabled account IDs */
-	mgr = modest_runtime_get_account_mgr ();
-	account_names = modest_account_mgr_account_names (mgr, TRUE);
-	iter = account_names;
-	accounts = NULL;
-
-	while (iter) {
-		ModestAccountData *account_data = 
-			modest_account_mgr_get_account_data (mgr, (gchar*) iter->data);
-		accounts = g_slist_prepend (accounts, account_data);
-
-		iter = iter->next;
-	}
-	modest_account_mgr_free_account_names (account_names);
-	account_names = NULL;
-
-	/* Order the list of accounts by its display name */
-	accounts = g_slist_sort (accounts, (GCompareFunc) compare_display_names);
-	num_accounts = g_slist_length (accounts);
-
-	send_receive_all = gtk_ui_manager_get_action (parent_priv->ui_manager, 
-						      "/MenuBar/ToolsMenu/ToolsSendReceiveMainMenu/ToolsSendReceiveAllMenu");
-	gtk_action_set_visible (send_receive_all, num_accounts > 1);
-
-	/* Delete old send&receive popup items. We can not just do a
-	   menu_detach because it does not work well with
-	   tap_and_hold */
-	if (priv->accounts_popup)
-		gtk_container_foreach (GTK_CONTAINER (priv->accounts_popup), 
-				       (GtkCallback) gtk_widget_destroy, NULL);
-
-	/* Delete old entries in the View menu. Do not free groups, it
-	   belongs to Gtk+ */
-	groups = gtk_ui_manager_get_action_groups (parent_priv->ui_manager);
-	while (groups) {
-		if (!strcmp (MODEST_MAIN_WINDOW_ACTION_GROUP_ADDITIONS,
-			     gtk_action_group_get_name (GTK_ACTION_GROUP (groups->data)))) {
-			gtk_ui_manager_remove_action_group (parent_priv->ui_manager, 
-							    GTK_ACTION_GROUP (groups->data));
-			groups = NULL;
-			/* Remove uis */
-			if (priv->merge_ids) {
-				for (i = 0; i < priv->merge_ids->len; i++)
-					gtk_ui_manager_remove_ui (parent_priv->ui_manager, priv->merge_ids->data[i]);
-				g_byte_array_free (priv->merge_ids, TRUE);
-			}
-			/* We need to call this in order to ensure
-			   that the new actions are added in the right
-			   order (alphabetical */
-			gtk_ui_manager_ensure_update (parent_priv->ui_manager);
-		} else 
-			groups = g_list_next (groups);
-	}
-	priv->merge_ids = g_byte_array_sized_new (num_accounts);
-
-	/* Get send receive button */
-	send_receive_button = gtk_ui_manager_get_widget (parent_priv->ui_manager,
-							  "/ToolBar/ToolbarSendReceive");
-
-	/* Create the menu */
-	if (num_accounts > 1) {
-		if (!priv->accounts_popup)
-			priv->accounts_popup = gtk_menu_new ();
-		item = gtk_menu_item_new_with_label (_("mcen_me_toolbar_sendreceive_all"));
-		gtk_menu_shell_append (GTK_MENU_SHELL (priv->accounts_popup), GTK_WIDGET (item));
-		g_signal_connect (G_OBJECT (item), 
-				  "activate", 
-				  G_CALLBACK (on_send_receive_csm_activated),
-				  NULL);
-		item = gtk_separator_menu_item_new ();
-		gtk_menu_shell_prepend (GTK_MENU_SHELL (priv->accounts_popup), GTK_WIDGET (item));
-	}
-
-	/* Create a new action group */
-	default_account = modest_account_mgr_get_default_account (mgr);
-	action_group = gtk_action_group_new (MODEST_MAIN_WINDOW_ACTION_GROUP_ADDITIONS);
-	for (i = 0; i < num_accounts; i++) {
-		gchar *display_name = NULL;
-		
-		ModestAccountData *account_data = (ModestAccountData *) g_slist_nth_data (accounts, i);
-
-		/* Create display name. The UI specification specifies a different format string 
-		 * to use for the default account, though both seem to be "%s", so 
-		 * I don't see what the point is. murrayc. */
-		if (default_account && account_data->account_name && 
-			!(strcmp (default_account, account_data->account_name) == 0)) {
-			display_name = g_strdup_printf (_("mcen_me_toolbar_sendreceive_default"), 
-							account_data->display_name);
-		}
-		else {
-			display_name = g_strdup_printf (_("mcen_me_toolbar_sendreceive_mailbox_n"), 
-							account_data->display_name);
-		}
-
-		/* Create action and add it to the action group. The
-		   action name must be the account name, this way we
-		   could know in the handlers the account to show */
-		if(account_data && account_data->account_name) {
-			gchar* item_name, *refresh_action_name;
-			guint8 merge_id = 0;
-			GtkAction *view_account_action, *refresh_account_action;
-
-			view_account_action = gtk_action_new (account_data->account_name,
-							      display_name, NULL, NULL);
-			gtk_action_group_add_action (action_group, view_account_action);
-
-			/* Add ui from account data. We allow 2^9-1 account
-			   changes in a single execution because we're
-			   downcasting the guint to a guint8 in order to use a
-			   GByteArray. It should be enough. */
-			item_name = g_strconcat (account_data->account_name, "Menu", NULL);
-			merge_id = (guint8) gtk_ui_manager_new_merge_id (parent_priv->ui_manager);
-			priv->merge_ids = g_byte_array_append (priv->merge_ids, &merge_id, 1);
-			gtk_ui_manager_add_ui (parent_priv->ui_manager,
-					       merge_id,
-					       "/MenuBar/ViewMenu/ViewMenuAdditions",
-					       item_name,
-					       account_data->account_name,
-					       GTK_UI_MANAGER_MENUITEM,
-					       FALSE);
-
-			/* Connect the action signal "activate" */
-			g_signal_connect (G_OBJECT (view_account_action),
-					  "activate",
-					  G_CALLBACK (on_show_account_action_activated),
-					  self);
-
-			/* Create the items for the Tools->Send&Receive submenu */
-			refresh_action_name = g_strconcat ("SendReceive", account_data->account_name, NULL);
-			refresh_account_action = gtk_action_new ((const gchar*) refresh_action_name, 
-								 display_name, NULL, NULL);
-			printf("DEBUG: %s: menu display_name=%s\n", __FUNCTION__, display_name);
-			gtk_action_group_add_action (action_group, refresh_account_action);
-
-			merge_id = (guint8) gtk_ui_manager_new_merge_id (parent_priv->ui_manager);
-			priv->merge_ids = g_byte_array_append (priv->merge_ids, &merge_id, 1);
-			gtk_ui_manager_add_ui (parent_priv->ui_manager, 
-					       merge_id,
-					       "/MenuBar/ToolsMenu/ToolsSendReceiveMainMenu/ToolsMenuAdditions",
-					       item_name,
-					       refresh_action_name,
-					       GTK_UI_MANAGER_MENUITEM,
-					       FALSE);
-			g_free (refresh_action_name);
-
-			g_signal_connect_data (G_OBJECT (refresh_account_action), 
-					       "activate", 
-					       G_CALLBACK (on_refresh_account_action_activated), 
-					       g_strdup (account_data->account_name),
-					       (GClosureNotify) g_free,
-					       0);
-
-			/* Create item and add it to the send&receive
-			   CSM. If there is only one account then
-			   it'll be no menu */
-			if (priv->accounts_popup) {
-				GtkWidget *label = gtk_label_new(NULL);
-				gtk_misc_set_alignment (GTK_MISC (label), 0.0, 0.5);
-				if (default_account && (strcmp(account_data->account_name, default_account) == 0))
-				{
-					gchar *escaped = g_markup_printf_escaped ("<b>%s</b>", display_name);
-					gtk_label_set_markup (GTK_LABEL (label), escaped);
-					g_free (escaped);
-				}
-				else
-				{
-					gtk_label_set_text (GTK_LABEL (label), display_name);
-				}
-
-				item = gtk_menu_item_new ();
-				gtk_container_add (GTK_CONTAINER (item), label);
-
-				gtk_menu_shell_prepend (GTK_MENU_SHELL (priv->accounts_popup), GTK_WIDGET (item));
-				g_signal_connect_data (G_OBJECT (item), 
-						       "activate", 
-						       G_CALLBACK (on_send_receive_csm_activated),
-						       g_strdup (account_data->account_name),
-						       (GClosureNotify) g_free,
-						       0);
-			}
-			g_free (item_name);
-		}
-
-		/* Frees */
-		g_free (display_name);
-	}
-
-	gtk_ui_manager_insert_action_group (parent_priv->ui_manager, action_group, 1);
-
-	/* We cannot do this in the loop above because this relies on the action
-	 * group being inserted. This makes the default account appear in bold.
-	 * I agree it is a rather ugly way, but I don't see another possibility. armin. */
-	for (i = 0; i < num_accounts; i++) {
-		ModestAccountData *account_data = (ModestAccountData *) g_slist_nth_data (accounts, i);
-
-		if(account_data->account_name && default_account &&
-		   strcmp (account_data->account_name, default_account) == 0) {
-			gchar *item_name = g_strconcat (account_data->account_name, "Menu", NULL);
-
-			gchar *path = g_strconcat ("/MenuBar/ViewMenu/ViewMenuAdditions/", item_name, NULL);
-			GtkWidget *item = gtk_ui_manager_get_widget (parent_priv->ui_manager, path);
-			g_free(path);
-
-			if (item) {
-				GtkWidget *child = gtk_bin_get_child (GTK_BIN (item));
-				if (GTK_IS_LABEL (child)) {
-					const gchar *cur_name = gtk_label_get_text (GTK_LABEL (child));
-					gchar *bold_name = g_markup_printf_escaped("<b>%s</b>", cur_name);
-					gtk_label_set_markup (GTK_LABEL (child), bold_name);
-					g_free (bold_name);
-				}
-			}
-
-			path = g_strconcat("/MenuBar/ToolsMenu/ToolsSendReceiveMainMenu/ToolsMenuAdditions/", item_name, NULL);
-			item = gtk_ui_manager_get_widget (parent_priv->ui_manager, path);
-			g_free (path);
-
-			if (item) {
-				GtkWidget *child = gtk_bin_get_child (GTK_BIN (item));
-				if (GTK_IS_LABEL (child)) {
-					const gchar *cur_name = gtk_label_get_text (GTK_LABEL (child));
-					gchar *bold_name = g_markup_printf_escaped("<b>%s</b>", cur_name);
-					gtk_label_set_markup (GTK_LABEL (child), bold_name);
-					g_free (bold_name);
-				}
-			}
-
-			g_free(item_name);
-		}
-
-		modest_account_mgr_free_account_data (mgr, account_data);
-	}
-
-	if (priv->accounts_popup) {
-		/* Mandatory in order to view the menu contents */
-		gtk_widget_show_all (priv->accounts_popup);
-
-		/* Setup tap_and_hold just if was not done before*/
-		if (!gtk_menu_get_attach_widget (GTK_MENU (priv->accounts_popup)))
-			gtk_widget_tap_and_hold_setup (send_receive_button, priv->accounts_popup, NULL, 0);
-	}
-
-	/* Frees */
-	g_slist_free (accounts);
 	g_free (default_account);
+}
 
-
-	/* Make sure that at least one account is viewed if there are any 
-	 * accounts, for instance when adding the first account: */
-	set_at_least_one_account_visible (self);
+static void
+on_account_removed (TnyAccountStore *accoust_store,
+                     TnyAccount *account,
+                     gpointer user_data)
+{
+	update_menus (MODEST_MAIN_WINDOW (user_data));
 }
 
 /* 

@@ -175,39 +175,34 @@ void easysetup_provider_combo_box_fill (EasysetupProviderComboBox *combobox, Mod
 		while(iter_provider_names && *iter_provider_names && iter_provider_ids && *iter_provider_ids)
 		{
 			const gchar* provider_name = *iter_provider_names;
-			if(!provider_name)
-				continue;
-				
 			const gchar* provider_id = *iter_provider_ids;
-			if(!provider_id)
-				continue;
-			
+
 			/* Prevent duplicate providers: */
 			if (g_slist_find_custom (provider_ids_used_already, 
 				provider_id, (GCompareFunc)strcmp) == NULL) {
 				/* printf("debug: provider_name=%s\n", provider_name); */
-			
+
 				/* Add the row: */
 				GtkTreeIter iter;
 				gtk_list_store_append (liststore, &iter);
-				
+
 				gtk_list_store_set(liststore, &iter, 
 					MODEL_COL_ID, provider_id, 
 					MODEL_COL_NAME, provider_name, -1);
-				
-				provider_ids_used_already = g_slist_append (
+
+				provider_ids_used_already = g_slist_prepend (
 					provider_ids_used_already, (gpointer)g_strdup (provider_id));
 			}
-				
+
 			++iter_provider_names;
-			++iter_provider_ids;	
+			++iter_provider_ids;
 		}
-		
+
 		/* Free the result of modest_presets_get_providers()
 		 * as specified by its documentation: */
 		g_strfreev (provider_names);
 		g_strfreev (provider_ids);
-		
+
 		iter_ids = g_slist_next (iter_ids);
 	}
 	

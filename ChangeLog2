@@ -1,3 +1,16 @@
+2007-08-22 Armin Burgmeier  <armin@openismus.com>
+
+	* src/widgets/modest-account-view.c: Fix for bora by using
+	MODEST_HAVE_HILDON0_WIDGETS instead of MODEST_HILDON_VERSION_0. The
+	latter seems not be used anymore.
+
+	* src/maemo/easysetup/modest-easysetup-provider-combo-box.c: Some
+	minor optimizations.
+
+	* src/maemo/modest-main-window.c: Update menu items when the default
+	account changes so that the current default account is always bolded.
+	This fixes maemo.projects.org bug NB#66173.
+
 2007-08-17  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/dbus_api/modest-dbus-callbacks.c:
