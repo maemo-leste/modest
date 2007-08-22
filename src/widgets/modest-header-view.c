@@ -1343,6 +1343,7 @@ drag_data_get_cb (GtkWidget *widget, GdkDragContext *context,
 	source_row = get_selected_row (GTK_TREE_VIEW (widget), &model);
 	
 	if ((source_row == NULL) || (!gtk_tree_model_get_iter(model, &iter, source_row))) return;
+
 	switch (info) {
 	case MODEST_HEADER_ROW:
 		gtk_tree_set_row_drag_data (selection_data, model, source_row);

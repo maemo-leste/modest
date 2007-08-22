@@ -56,6 +56,17 @@
 #include <modest-widget-memory.h>
 #include <modest-ui-actions.h>
 
+#ifdef MODEST_PLATFORM_MAEMO
+#include <tny-maemo-conic-device.h>
+#ifdef MODEST_HAVE_HILDON0_WIDGETS
+#include <hildon-widgets/hildon-note.h>
+#include <hildon-widgets/hildon-banner.h>
+#else
+#include <hildon/hildon-note.h>
+#include <hildon/hildon-banner.h>
+#endif
+#endif
+
 /* 'private'/'protected' functions */
 static void modest_folder_view_class_init  (ModestFolderViewClass *klass);
 static void modest_folder_view_init        (ModestFolderView *obj);
@@ -1484,6 +1495,18 @@ tree_path_to_folder (GtkTreeModel *model, GtkTreePath *path)
 	return folder;
 }
 
+static void 
+show_banner_move_target_error ()
+{
+	ModestWindow *main_window;
+
+	main_window = modest_window_mgr_get_main_window(
+			modest_runtime_get_window_mgr());
+				
+	hildon_banner_show_information(GTK_WIDGET(main_window),
+			NULL, _("mail_in_ui_folder_move_target_error"));
+}
+
 /*
  * This function is used by drag_data_received_cb to manage drag and
  * drop of a header, i.e, and drag from the header view to the folder
@@ -1527,6 +1550,7 @@ drag_and_drop_from_header_view (GtkTreeModel *source_model,
 	folder = tree_path_to_folder (dest_model, dest_row);
 	if (!TNY_IS_FOLDER(folder)) {
 		g_warning ("BUG: %s could not get a valid folder", __FUNCTION__);
+		show_banner_move_target_error();
 		goto cleanup;
 	}
 	if (modest_tny_folder_get_rules(folder) & MODEST_FOLDER_RULES_FOLDER_NON_WRITEABLE) {
