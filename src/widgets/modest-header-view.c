@@ -1339,19 +1339,10 @@ drag_data_get_cb (GtkWidget *widget, GdkDragContext *context,
 	GtkTreeIter iter;
 	GtkTreePath *source_row = NULL;
 	GtkTreeSelection *sel = NULL;	
-	ModestWindowMgr *mgr = NULL;
-	TnyHeader *header = NULL;
 	
 	source_row = get_selected_row (GTK_TREE_VIEW (widget), &model);
 	
 	if ((source_row == NULL) || (!gtk_tree_model_get_iter(model, &iter, source_row))) return;
-	gtk_tree_model_get (model, &iter,
-			    TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN,
-			    &header, -1);
-	mgr = modest_runtime_get_window_mgr ();
-	if (modest_window_mgr_find_registered_header(mgr, header, NULL))
-		return;
-
 	switch (info) {
 	case MODEST_HEADER_ROW:
 		gtk_tree_set_row_drag_data (selection_data, model, source_row);

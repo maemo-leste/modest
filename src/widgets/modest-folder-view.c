@@ -1500,6 +1500,7 @@ drag_and_drop_from_header_view (GtkTreeModel *source_model,
 	TnyFolder *folder = NULL;
 	ModestMailOperation *mail_op = NULL;
 	GtkTreeIter source_iter;
+	ModestWindowMgr *mgr = NULL;
 
 	g_return_if_fail (GTK_IS_TREE_MODEL(source_model));
 	g_return_if_fail (GTK_IS_TREE_MODEL(dest_model));
@@ -1515,6 +1516,12 @@ drag_and_drop_from_header_view (GtkTreeModel *source_model,
 		g_warning ("BUG: %s could not get a valid header", __FUNCTION__);
 		goto cleanup;
 	}
+	
+	/* Check if the selected message is in msg-view. If it is than
+	 * do not enable drag&drop on that. */
+	mgr = modest_runtime_get_window_mgr ();
+	if (modest_window_mgr_find_registered_header(mgr, header, NULL))
+		goto cleanup;
 	
 	/* Get Folder */
 	folder = tree_path_to_folder (dest_model, dest_row);
