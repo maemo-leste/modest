@@ -1364,24 +1364,6 @@ modest_main_window_set_style (ModestMainWindow *self,
 		/* Reparent the contents widget to the main vbox */
 		gtk_widget_reparent (priv->contents_widget, priv->main_vbox);
 
-		if (modest_header_view_has_selected_headers (MODEST_HEADER_VIEW (priv->header_view))) {
-			TnyList *selection = modest_header_view_get_selected_headers (MODEST_HEADER_VIEW (priv->header_view));
-			TnyIterator *iterator = tny_list_create_iterator (selection);
-			TnyHeader *header;
-			tny_iterator_first (iterator);
-			header = TNY_HEADER (tny_iterator_get_current (iterator));
-			if (tny_header_get_subject (header))
-				gtk_window_set_title (GTK_WINDOW(self), tny_header_get_subject (header));
-			else
-				gtk_window_set_title (GTK_WINDOW (self), _("mail_va_no_subject"));
-			
-			if (header)
-				g_object_unref (header);
-
-			g_object_unref (iterator);
-			g_object_unref (selection);
-		}
-
 		break;
 	case MODEST_MAIN_WINDOW_STYLE_SPLIT:
 		/* Remove header view */
@@ -2310,27 +2292,6 @@ on_header_view_focus_in (GtkWidget *widget,
 	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW (userdata), FALSE);
 	main_window = MODEST_MAIN_WINDOW (userdata);
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE (main_window);
-
-	if (modest_header_view_has_selected_headers (MODEST_HEADER_VIEW (priv->header_view))) {
-		TnyList *selection = modest_header_view_get_selected_headers (MODEST_HEADER_VIEW (priv->header_view));
-		TnyIterator *iterator = tny_list_create_iterator (selection);
-		TnyHeader *header;
-
-		tny_iterator_first (iterator);
-		header = TNY_HEADER (tny_iterator_get_current (iterator));
-		
-		if (tny_header_get_subject (header))
-			gtk_window_set_title (GTK_WINDOW(main_window), tny_header_get_subject (header));
-		else
-			gtk_window_set_title (GTK_WINDOW (main_window), _("mail_va_no_subject"));
-
-		if (header)
-			g_object_unref (header);
-
-		g_object_unref (iterator);
-		g_object_unref (selection);
-	}
-
 
 	/* Update toolbar dimming state */
 	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (main_window));

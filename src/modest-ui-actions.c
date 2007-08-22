@@ -1721,15 +1721,6 @@ modest_ui_actions_on_header_selected (ModestHeaderView *header_view,
 	if (!gtk_widget_is_focus (GTK_WIDGET(header_view)))
 	    gtk_widget_grab_focus (GTK_WIDGET(header_view));
 
-	/* Update Main window title */
-	if (gtk_widget_is_focus (GTK_WIDGET(header_view))) {
-		const gchar *subject = tny_header_get_subject (header);
-		if (subject && strlen(subject) > 0)
-			gtk_window_set_title (GTK_WINDOW (main_window), subject);
-		else
-			gtk_window_set_title (GTK_WINDOW (main_window), _("mail_va_no_subject"));
-	}
-
 	/* Update toolbar dimming state */
 	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (main_window));
 }
