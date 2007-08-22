@@ -76,7 +76,7 @@
 
     <menu name="FormatMenu" action="Format">
       <menuitem name="SelectFontMenu" action="SelectFont"/>
-      <menuitem name="BulletedListMenu" action="ActionsBulletedList"/>
+<!--      <menuitem name="BulletedListMenu" action="ActionsBulletedList"/> -->
       <menu name="AlignmentMenu" action="Alignment">
          <menuitem name="AlignmentLeftMenu" action="AlignmentLeft"/>
          <menuitem name="AlignmentCenterMenu" action="AlignmentCenter"/>

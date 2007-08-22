@@ -1513,8 +1513,8 @@ text_buffer_refresh_attributes (WPTextBuffer *buffer, ModestMsgEditWindow *windo
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ActionsItalics");
 	modest_maemo_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action), buffer_format->italic);
 
-	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/FormatMenu/BulletedListMenu");
-	modest_maemo_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action), buffer_format->bullet);
+/* 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/FormatMenu/BulletedListMenu"); */
+/* 	modest_maemo_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action), buffer_format->bullet); */
 
 	g_signal_handlers_block_by_func (G_OBJECT (priv->font_color_button), 
 					 G_CALLBACK (modest_msg_edit_window_color_button_change),
@@ -2537,8 +2537,8 @@ update_dimmed (ModestMsgEditWindow *window)
 
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/FormatMenu/SelectFontMenu");
 	gtk_action_set_sensitive (action, rich_text && editor_focused);
-	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/FormatMenu/BulletedListMenu");
-	gtk_action_set_sensitive (action, rich_text && editor_focused);
+/* 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/FormatMenu/BulletedListMenu"); */
+/* 	gtk_action_set_sensitive (action, rich_text && editor_focused); */
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/FormatMenu/AlignmentMenu");
 	gtk_action_set_sensitive (action, rich_text && editor_focused);
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/FormatMenu/AlignmentMenu/AlignmentLeftMenu");
