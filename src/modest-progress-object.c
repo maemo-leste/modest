@@ -68,7 +68,7 @@ modest_progress_object_cancel_all_operations (ModestProgressObject *self)
 guint
 modest_progress_object_num_pending_operations (ModestProgressObject *self) 
 {
-	g_return_if_fail (MODEST_IS_PROGRESS_OBJECT(self));
+	g_return_val_if_fail (MODEST_IS_PROGRESS_OBJECT(self), 0);
 	
 	return MODEST_PROGRESS_OBJECT_GET_IFACE (self)->num_pending_operations_func (self);
 }
