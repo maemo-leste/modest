@@ -2428,6 +2428,7 @@ modest_ui_actions_on_rename_folder (GtkAction *action,
 									       G_OBJECT(main_window),
 									       modest_ui_actions_rename_folder_error_handler,
 									       main_window);
+			
 
 			modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
 							 mail_op);
@@ -3758,8 +3759,12 @@ modest_ui_actions_xfer_messages_from_move_to (TnyFolderStore *dst_folder,
 
 	dst_account = tny_folder_get_account (TNY_FOLDER (dst_folder));
 	proto_str = tny_account_get_proto (dst_account);
-	dst_is_pop = (modest_protocol_info_get_transport_store_protocol (proto_str) == 
-		      MODEST_PROTOCOL_STORE_POP);
+
+	/* tinymail will return NULL for local folders it seems */
+	dst_is_pop = proto_str &&
+		(modest_protocol_info_get_transport_store_protocol (proto_str) == 
+		 MODEST_PROTOCOL_STORE_POP);
+
 	g_object_unref (dst_account);
 
 	/* Get selected headers */
