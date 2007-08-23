@@ -1622,14 +1622,8 @@ drag_and_drop_from_folder_view (GtkTreeModel     *source_model,
 			forbidden = rules & MODEST_FOLDER_RULES_FOLDER_NON_MOVEABLE;
 			if (forbidden)
 				g_debug ("folder rules: cannot move that folder");
-			else
-				/* Dragging and dropping of remote folders to local
-				 * should not possible. Fixes NB#63563 */
-				forbidden = modest_tny_folder_is_remote_folder(
-						folder);
 			g_object_unref (folder);
 		}
-
 	}
 
 	
