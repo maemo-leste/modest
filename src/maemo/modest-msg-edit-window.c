@@ -2738,6 +2738,9 @@ modest_msg_edit_window_is_modified (ModestMsgEditWindow *editor)
 	return FALSE;
 }
 
+
+
+
 gboolean
 modest_msg_edit_window_check_names (ModestMsgEditWindow *window, gboolean add_to_addressbook)
 {

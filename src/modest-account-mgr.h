@@ -63,7 +63,7 @@ struct _ModestAccountMgrClass {
 	void (* account_removed)   (ModestAccountMgr *obj, 
 				    const gchar* account,
 				    gpointer user_data);
-
+	
 	void (* account_changed)   (ModestAccountMgr *obj, 
 				    const gchar* account,
 				    gpointer user_data);
