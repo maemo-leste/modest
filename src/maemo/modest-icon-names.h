@@ -41,7 +41,7 @@
 #define MODEST_APP_MSG_EDIT_ICON		"qgn_list_messagin_editor"
 
 #define MODEST_HEADER_ICON_READ			"qgn_list_messagin_mail"
-#define MODEST_HEADER_ICON_UNREAD		"qgn_list_messagin_mail_unread"
+#define MODEST_HEADER_ICON_UNREAD		""
 #define MODEST_HEADER_ICON_DELETED		"qgn_list_messagin_mail_deleted"
 #define MODEST_HEADER_ICON_ATTACH		"qgn_list_gene_attacpap"
 #define MODEST_HEADER_ICON_HIGH	                "qgn_list_messaging_high"

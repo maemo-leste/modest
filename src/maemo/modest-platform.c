@@ -525,6 +525,12 @@ modest_platform_get_icon (const gchar *name)
 
 	g_return_val_if_fail (name, NULL);
 
+	/* strlen == 0 is not really an error; it just
+	 * means the icon is not available
+	 */
+	if (!name || strlen(name) == 0)
+		return NULL;
+	
 #if 0 /* do we still need this? */
 	if (g_str_has_suffix (name, ".png")) { /*FIXME: hack*/
 		pixbuf = gdk_pixbuf_new_from_file (name, &err);
