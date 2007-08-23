@@ -1784,6 +1784,31 @@ new_name_valid_if_local_account (ModestMailOperationPrivate *priv,
 		return TRUE;
 }
 
+/**
+ * This function checks if @ancestor is an acestor of @folder and
+ * returns TRUE in that case
+ */
+static gboolean
+folder_is_ancestor (TnyFolder *folder,
+		    TnyFolderStore *ancestor)
+{
+	TnyFolder *tmp = NULL;
+	gboolean found = FALSE;
+
+	tmp = folder;
+	while (!found && tmp && !TNY_IS_ACCOUNT (tmp)) {
+		TnyFolderStore *folder_store;
+
+		folder_store = tny_folder_get_folder_store (tmp);
+		if (ancestor == folder_store)
+			found = TRUE;
+		else
+			tmp = g_object_ref (folder_store);
+		g_object_unref (folder_store);
+	}
+	return found;
+}
+
 void
 modest_mail_operation_xfer_folder (ModestMailOperation *self,
 				   TnyFolder *folder,
@@ -1798,6 +1823,7 @@ modest_mail_operation_xfer_folder (ModestMailOperation *self,
 
 	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
 	g_return_if_fail (TNY_IS_FOLDER (folder));
+	g_return_if_fail (TNY_IS_FOLDER_STORE (parent));
 
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
 
@@ -1814,7 +1840,6 @@ modest_mail_operation_xfer_folder (ModestMailOperation *self,
 	if ((gpointer) parent == (gpointer) folder ||
 	    (!TNY_IS_FOLDER_STORE (parent)) || 
 	    (rules & MODEST_FOLDER_RULES_FOLDER_NON_MOVEABLE)) {
-		printf("DEBUG: %s: Not allowing the move.\n", __FUNCTION__);
  		/* Set status failed and set an error */
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
@@ -1833,9 +1858,18 @@ modest_mail_operation_xfer_folder (ModestMailOperation *self,
 
 		/* Notify the queue */
 		modest_mail_operation_notify_end (self);
+	} else if (TNY_IS_FOLDER (parent) &&
+		   TNY_IS_FOLDER_STORE (folder) &&
+		   folder_is_ancestor (TNY_FOLDER (parent), TNY_FOLDER_STORE (folder))) {
+ 		/* Set status failed and set an error */
+		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
+		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
+			     MODEST_MAIL_OPERATION_ERROR_FOLDER_RULES,
+			     _("mail_in_ui_folder_copy_target_error"));
+
+		/* Notify the queue */
+		modest_mail_operation_notify_end (self);
 	} else {
-
-
 		/* Check that the new folder name is not used by any
 		   special local folder */
 		if (new_name_valid_if_local_account (priv, parent, 
