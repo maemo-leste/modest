@@ -56,17 +56,6 @@
 #include <modest-widget-memory.h>
 #include <modest-ui-actions.h>
 
-#ifdef MODEST_PLATFORM_MAEMO
-#include <tny-maemo-conic-device.h>
-#ifdef MODEST_HAVE_HILDON0_WIDGETS
-#include <hildon-widgets/hildon-note.h>
-#include <hildon-widgets/hildon-banner.h>
-#else
-#include <hildon/hildon-note.h>
-#include <hildon/hildon-banner.h>
-#endif
-#endif
-
 /* 'private'/'protected' functions */
 static void modest_folder_view_class_init  (ModestFolderViewClass *klass);
 static void modest_folder_view_init        (ModestFolderView *obj);
@@ -1503,7 +1492,7 @@ show_banner_move_target_error ()
 	main_window = modest_window_mgr_get_main_window(
 			modest_runtime_get_window_mgr());
 				
-	hildon_banner_show_information(GTK_WIDGET(main_window),
+	modest_platform_information_banner(GTK_WIDGET(main_window),
 			NULL, _("mail_in_ui_folder_move_target_error"));
 }
 
