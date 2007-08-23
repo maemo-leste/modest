@@ -143,11 +143,11 @@ static gboolean
 download_uncached_messages (TnyList *header_list, GtkWindow *win);
 
 
-static gint
+/*static gint
 msgs_move_to_confirmation (GtkWindow *win,
 			   TnyFolder *dest_folder,
 			   gboolean delete,
-			   TnyList *headers);
+			   TnyList *headers);*/
 
 
 /* Show the account creation wizard dialog.
@@ -3478,7 +3478,7 @@ has_retrieved_msgs (TnyList *list)
  * response. If it's other kind of movement the it always returns
  * GTK_RESPONSE_OK
  */
-static gint
+gint
 msgs_move_to_confirmation (GtkWindow *win,
 			   TnyFolder *dest_folder,
 			   gboolean delete,

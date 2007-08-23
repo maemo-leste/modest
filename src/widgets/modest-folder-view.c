@@ -1512,7 +1512,8 @@ drag_and_drop_from_header_view (GtkTreeModel *source_model,
 	TnyFolder *folder = NULL;
 	ModestMailOperation *mail_op = NULL;
 	GtkTreeIter source_iter;
-	ModestWindowMgr *mgr = NULL;
+	ModestWindowMgr *mgr = NULL; /*no need for unref*/
+	ModestWindow *main_win = NULL; /*no need for unref*/
 
 	g_return_if_fail (GTK_IS_TREE_MODEL(source_model));
 	g_return_if_fail (GTK_IS_TREE_MODEL(dest_model));
@@ -1534,7 +1535,7 @@ drag_and_drop_from_header_view (GtkTreeModel *source_model,
 	mgr = modest_runtime_get_window_mgr ();
 	if (modest_window_mgr_find_registered_header(mgr, header, NULL))
 		goto cleanup;
-	
+
 	/* Get Folder */
 	folder = tree_path_to_folder (dest_model, dest_row);
 	if (!TNY_IS_FOLDER(folder)) {
@@ -1547,6 +1548,13 @@ drag_and_drop_from_header_view (GtkTreeModel *source_model,
 		goto cleanup;
 	}
 	
+	headers = tny_simple_list_new ();
+	tny_list_append (headers, G_OBJECT (header));
+
+	main_win = modest_window_mgr_get_main_window(mgr);
+	if(msgs_move_to_confirmation(GTK_WINDOW(main_win), folder, TRUE, headers)
+			== GTK_RESPONSE_CANCEL)
+		goto cleanup;
 
 	/* Transfer message */
 	mail_op = modest_mail_operation_new_with_error_handling (MODEST_MAIL_OPERATION_TYPE_RECEIVE, 
@@ -1558,8 +1566,6 @@ drag_and_drop_from_header_view (GtkTreeModel *source_model,
 	g_signal_connect (G_OBJECT (mail_op), "progress-changed",
 			  G_CALLBACK (on_progress_changed), helper);
 
-	headers = tny_simple_list_new ();
-	tny_list_append (headers, G_OBJECT (header));
 	modest_mail_operation_xfer_msgs (mail_op, 
 					 headers, 
 					 folder, 
