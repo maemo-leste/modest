@@ -2081,7 +2081,7 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 	
 	gchar *from = modest_account_mgr_get_from_string (account_mgr, account_name);
 
-	modest_platform_information_banner (NULL, NULL, _("mcen_ib_outbox_waiting_to_be_sent"));
+/* 	modest_platform_information_banner (NULL, NULL, _("mcen_ib_outbox_waiting_to_be_sent")); */
 
 	/* Create the mail operation */
 	ModestMailOperation *mail_operation = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_SEND, G_OBJECT(edit_window));
@@ -3408,6 +3408,7 @@ create_move_to_dialog (GtkWindow *win,
 
 	/* Create folder view */
 	*tree_view = modest_platform_create_folder_view (NULL);
+/* 	*tree_view = modest_folder_view_new (NULL); */
 
 	g_signal_connect (G_OBJECT (new_button), "clicked", G_CALLBACK(create_move_to_dialog_on_new_folder), *tree_view);
 
@@ -3415,13 +3416,14 @@ create_move_to_dialog (GtkWindow *win,
 	   window (msg window for example) after the main window was
 	   closed, so we can not just get the model of the folder
 	   view */
-	if (MODEST_IS_FOLDER_VIEW (folder_view))
-		gtk_tree_view_set_model (GTK_TREE_VIEW (*tree_view),
-					 gtk_tree_view_get_model (GTK_TREE_VIEW (folder_view)));
-	else
+	if (MODEST_IS_FOLDER_VIEW (folder_view)) {
+		modest_folder_view_copy_model (MODEST_FOLDER_VIEW(folder_view), 
+					       MODEST_FOLDER_VIEW(*tree_view));
+	} else
 		modest_folder_view_update_model (MODEST_FOLDER_VIEW (*tree_view), 
 						 TNY_ACCOUNT_STORE (modest_runtime_get_account_store ()));
 
+	/* Hide special folders */
 	modest_folder_view_show_non_move_folders (MODEST_FOLDER_VIEW (*tree_view), FALSE);
 	
 	gtk_container_add (GTK_CONTAINER (scroll), *tree_view);
@@ -3815,7 +3817,6 @@ modest_ui_actions_xfer_messages_from_move_to (TnyFolderStore *dst_folder,
 	}
 	g_object_unref (headers);
 }
-
 
 /*
  * UI handler for the "Move to" action when invoked from the

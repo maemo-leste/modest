@@ -1820,12 +1820,14 @@ modest_mail_operation_xfer_folder (ModestMailOperation *self,
 	ModestMailOperationPrivate *priv = NULL;
 	ModestTnyFolderRules parent_rules = 0, rules; 
 	XFerMsgAsyncHelper *helper = NULL;
+	const gchar *folder_name = NULL;
 
 	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
 	g_return_if_fail (TNY_IS_FOLDER (folder));
 	g_return_if_fail (TNY_IS_FOLDER_STORE (parent));
 
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
+	folder_name = tny_folder_get_name (folder);
 
 	/* Get account and set it into mail_operation */
 	priv->account = modest_tny_folder_get_account (TNY_FOLDER(folder));
@@ -1840,6 +1842,7 @@ modest_mail_operation_xfer_folder (ModestMailOperation *self,
 	if ((gpointer) parent == (gpointer) folder ||
 	    (!TNY_IS_FOLDER_STORE (parent)) || 
 	    (rules & MODEST_FOLDER_RULES_FOLDER_NON_MOVEABLE)) {
+
  		/* Set status failed and set an error */
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
@@ -1848,8 +1851,10 @@ modest_mail_operation_xfer_folder (ModestMailOperation *self,
 
 		/* Notify the queue */
 		modest_mail_operation_notify_end (self);
+
 	} else if (TNY_IS_FOLDER (parent) && 
 		   (parent_rules & MODEST_FOLDER_RULES_FOLDER_NON_WRITEABLE)) {
+
  		/* Set status failed and set an error */
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
@@ -1858,6 +1863,7 @@ modest_mail_operation_xfer_folder (ModestMailOperation *self,
 
 		/* Notify the queue */
 		modest_mail_operation_notify_end (self);
+
 	} else if (TNY_IS_FOLDER (parent) &&
 		   TNY_IS_FOLDER_STORE (folder) &&
 		   folder_is_ancestor (TNY_FOLDER (parent), TNY_FOLDER_STORE (folder))) {
@@ -1869,31 +1875,52 @@ modest_mail_operation_xfer_folder (ModestMailOperation *self,
 
 		/* Notify the queue */
 		modest_mail_operation_notify_end (self);
-	} else {
+
+	} else if (TNY_IS_FOLDER_STORE (parent) &&
+		   modest_tny_folder_same_subfolder (parent, folder_name)) {
+		/* Check that the new folder name is not used by any
+		    parent subfolder */
+
+ 		/* Set status failed and set an error */
+		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
+		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
+			     MODEST_MAIL_OPERATION_ERROR_FOLDER_RULES,
+			     _("mail_in_ui_folder_move_target_error"));
+
+		/* Notify the queue */
+		modest_mail_operation_notify_end (self);
+		
+	} else if (!(new_name_valid_if_local_account (priv, parent, folder_name))) {
 		/* Check that the new folder name is not used by any
 		   special local folder */
-		if (new_name_valid_if_local_account (priv, parent, 
-						     tny_folder_get_name (folder))) {
-			/* Create the helper */
-			helper = g_slice_new0 (XFerMsgAsyncHelper);
-			helper->mail_op = g_object_ref(self);
-			helper->dest_folder = NULL;
-			helper->headers = NULL;
-			helper->user_callback = user_callback;
-			helper->user_data = user_data;
-			
-			/* Move/Copy folder */		
-			tny_folder_copy_async (folder,
-					       parent,
-					       tny_folder_get_name (folder),
+
+ 		/* Set status failed and set an error */
+		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
+		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
+			     MODEST_MAIL_OPERATION_ERROR_FOLDER_RULES,
+			     _("mail_in_ui_folder_move_target_error"));
+
+		/* Notify the queue */
+		modest_mail_operation_notify_end (self);
+	} else {
+		/* Create the helper */
+		helper = g_slice_new0 (XFerMsgAsyncHelper);
+		helper->mail_op = g_object_ref(self);
+		helper->dest_folder = NULL;
+		helper->headers = NULL;
+		helper->user_callback = user_callback;
+		helper->user_data = user_data;
+		
+		/* Move/Copy folder */		
+		tny_folder_copy_async (folder,
+				       parent,
+				       tny_folder_get_name (folder),
 					       delete_original,
-					       transfer_folder_cb,
-					       transfer_folder_status_cb,
-					       helper);
-		} else {
-			modest_mail_operation_notify_end (self);
-		}
-	}
+				       transfer_folder_cb,
+				       transfer_folder_status_cb,
+				       helper);
+	} 
+	
 }
 
 void

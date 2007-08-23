@@ -2328,13 +2328,48 @@ modest_folder_view_cut_selection (ModestFolderView *folder_view)
 }
 
 void
-modest_folder_view_show_non_move_folders (ModestFolderView *folder_view,
-				    gboolean show)
+modest_folder_view_copy_model (ModestFolderView *folder_view_src,
+			       ModestFolderView *folder_view_dst)
 {
+	GtkTreeModel *filter_model = NULL;
+	GtkTreeModel *model = NULL;
+	GtkTreeModel *new_filter_model = NULL;
+	
+	g_return_if_fail (MODEST_IS_FOLDER_VIEW (folder_view_src));
+	g_return_if_fail (MODEST_IS_FOLDER_VIEW (folder_view_dst));
+
+	/* Get src model*/
+	filter_model = gtk_tree_view_get_model (GTK_TREE_VIEW (folder_view_src));
+	model = gtk_tree_model_filter_get_model (GTK_TREE_MODEL_FILTER(filter_model));
+
+	/* Build new filter model */
+	new_filter_model = gtk_tree_model_filter_new (model, NULL);	
+	gtk_tree_model_filter_set_visible_func (GTK_TREE_MODEL_FILTER (new_filter_model),
+						filter_row,
+						folder_view_dst,
+						NULL);
+	/* Set copied model */
+	gtk_tree_view_set_model (GTK_TREE_VIEW (folder_view_dst), new_filter_model);
+
+	/* Free */
+	g_object_unref (new_filter_model);
+}
+
+void
+modest_folder_view_show_non_move_folders (ModestFolderView *folder_view,
+					  gboolean show)
+{
+	GtkTreeModel *model = NULL;
 	ModestFolderViewPrivate* priv = MODEST_FOLDER_VIEW_GET_PRIVATE(folder_view);
 	priv->show_non_move = show;
-	modest_folder_view_update_model(folder_view,
-																	TNY_ACCOUNT_STORE(modest_runtime_get_account_store()));
+/* 	modest_folder_view_update_model(folder_view, */
+/* 					TNY_ACCOUNT_STORE(modest_runtime_get_account_store())); */
+
+	/* Hide special folders */
+	model = gtk_tree_view_get_model (GTK_TREE_VIEW (folder_view));
+	if (GTK_IS_TREE_MODEL_FILTER (model)) {
+		gtk_tree_model_filter_refilter (GTK_TREE_MODEL_FILTER (model));
+	}
 }
 
 /* Returns FALSE if it did not selected anything */

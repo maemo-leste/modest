@@ -226,6 +226,19 @@ void
 modest_folder_view_show_non_move_folders (ModestFolderView *folder_view,
 				    gboolean show);
 
+/*
+ * modest_folder_view_copy_model:
+ * @folder_view_src: a #ModestFolderView
+ * @folder_view_dst: a #ModestFolderView
+ * 
+ * Get model from @folder_view_src and builds a new 
+ * #GtkTreeFilterModel object for that model. This copied
+ * model will be asigned to @folder_view_dst. 
+ **/
+void
+modest_folder_view_copy_model (ModestFolderView *folder_view_src,
+			       ModestFolderView *folder_view_dst);
+
 G_END_DECLS
 
 #endif /* __MODEST_FOLDER_VIEW_H__ */

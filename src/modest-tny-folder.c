@@ -32,6 +32,7 @@
 #include <string.h>
 #include <modest-tny-folder.h>
 #include <modest-tny-outbox-account.h>
+#include <tny-simple-list.h>
 #include <tny-camel-folder.h>
 #include <tny-merge-folder.h>
 #include <camel/camel-folder.h>
@@ -375,4 +376,42 @@ modest_tny_folder_get_account (TnyFolder *folder)
 	}
 	
 	return account;
+}
+
+gboolean 
+modest_tny_folder_same_subfolder (TnyFolderStore *parent,
+				  const gchar *new_name)
+{
+	TnyList *subfolders = NULL;
+	TnyIterator *iter = NULL;
+	TnyFolder *folder = NULL;
+	GError *err = NULL;
+	const gchar *name = NULL;
+	gboolean same_subfolder = FALSE;
+
+	g_return_val_if_fail (TNY_IS_FOLDER_STORE (parent), FALSE);
+
+	/* Get direct subfolders */
+	subfolders = tny_simple_list_new ();
+	tny_folder_store_get_folders (parent, subfolders, NULL, &err);
+
+	/* Check names */
+	iter = tny_list_create_iterator (subfolders);
+	while (!tny_iterator_is_done (iter) && !same_subfolder) {
+		folder = TNY_FOLDER(tny_iterator_get_current (iter));
+		name = tny_folder_get_name (folder);
+		
+		same_subfolder = !strcmp(name, new_name);
+
+		g_object_unref (folder);
+		tny_iterator_next(iter);
+	}
+	
+	/* free */
+	if (iter != NULL)
+		g_object_unref (iter);
+	if (subfolders != NULL)
+		g_object_unref (subfolders);
+		
+	return same_subfolder;
 }
