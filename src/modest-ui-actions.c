@@ -3440,6 +3440,7 @@ create_move_to_dialog (GtkWindow *win,
  * Returns TRUE if at least one of the headers of the list belongs to
  * a message that has been fully retrieved.
  */
+#if 0 /* no longer in use. delete in 2007.10 */
 static gboolean
 has_retrieved_msgs (TnyList *list)
 {
@@ -3468,6 +3469,8 @@ has_retrieved_msgs (TnyList *list)
 
 	return found;
 }
+#endif /* 0 */
+
 
 /*
  * Shows a confirmation dialog to the user when we're moving messages
@@ -3485,11 +3488,24 @@ msgs_move_to_confirmation (GtkWindow *win,
 
 	/* If the destination is a local folder (or MMC folder )*/
 	if (!modest_tny_folder_is_remote_folder (dest_folder)) {
-/* 	if (modest_tny_folder_is_local_folder (dest_folder)) { */
+
+		gboolean is_online;
+		TnyDevice *device;
+		
 		TnyFolder *src_folder = NULL;
 		TnyIterator *iter = NULL;
 		TnyHeader *header = NULL;
 
+		/* get the device */
+		
+		device = modest_runtime_get_device ();
+		if (device)
+			is_online = tny_device_is_online (device);
+		else {
+			g_warning ("failed to get tny device"); /* should not happend */
+			is_online = FALSE;
+		}
+				
 		/* Get source folder */
 		iter = tny_list_create_iterator (headers);
 		header = TNY_HEADER (tny_iterator_get_current (iter));
@@ -3505,23 +3521,15 @@ msgs_move_to_confirmation (GtkWindow *win,
 			return GTK_RESPONSE_CANCEL;
 
 		/* If the source is a remote folder */
-/* 		if (!modest_tny_folder_is_local_folder (src_folder)) { */
-		if (modest_tny_folder_is_remote_folder (src_folder)) {
+		if (!is_online && modest_tny_folder_is_remote_folder (src_folder)) {
+
 			const gchar *message = NULL;
-			gboolean cached = has_retrieved_msgs (headers);
-			if (cached) 
-				message = ngettext ("mcen_nc_move_retrieve", "mcen_nc_move_retrieves",
-						    tny_list_get_length (headers));
-			else 
-				message = ngettext ("mcen_nc_move_header", "mcen_nc_move_headers",
-						    tny_list_get_length (headers));
-			
-			if (cached && !delete)	
-				response = GTK_RESPONSE_OK;
-			else
-				response = modest_platform_run_confirmation_dialog (GTK_WINDOW (win),
-										    (const gchar *) message);
-		}
+			message = ngettext ("mcen_nc_get_msg", "mcen_nc_get_msgs",
+					    tny_list_get_length (headers));
+			response = modest_platform_run_confirmation_dialog (GTK_WINDOW (win),
+									    (const gchar *) message);
+		} else
+			response = GTK_RESPONSE_OK;
 		
 		g_object_unref (src_folder);
 	}
