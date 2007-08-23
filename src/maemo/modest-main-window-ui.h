@@ -103,8 +103,8 @@ static const GtkActionEntry modest_action_entries [] = {
 	{ "ToolsHelp", NULL, N_("mcen_me_inbox_help"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_help) },
 
 	/* Close */
-	{ "CloseWindow",          NULL,     N_("mcen_me_inbox_close_window"),               NULL, NULL,  G_CALLBACK (modest_ui_actions_on_close_window) },
-	{ "CloseAllWindows",      NULL,     N_("mcen_me_inbox_close_windows"),          NULL, NULL,  G_CALLBACK (modest_ui_actions_on_quit) },
+	{ "CloseWindow",          NULL,     N_("mcen_me_inbox_close_window"), "<CTRL>W", NULL,  G_CALLBACK (modest_ui_actions_on_close_window) },
+	{ "CloseAllWindows",      NULL,     N_("mcen_me_inbox_close_windows"), "<CTRL>Q", NULL,  G_CALLBACK (modest_ui_actions_on_quit) },
 
 
 	/* Toolbar items; they is some overlap with the menu items,
