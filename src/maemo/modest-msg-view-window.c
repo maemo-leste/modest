@@ -2315,7 +2315,7 @@ save_mime_parts_to_file_with_checks (SaveMimePartInfo *info)
 	if (modest_maemo_utils_file_exists (pair->filename)) {
 		GtkWidget *confirm_overwrite_dialog;
 		confirm_overwrite_dialog = hildon_note_new_confirmation (NULL,
-									 _("emev_nc_replace_files"));
+									 _FM("docm_nc_replace_file"));
 		if (gtk_dialog_run (GTK_DIALOG (confirm_overwrite_dialog)) != GTK_RESPONSE_OK) {
 			is_ok = FALSE;
 		}
