@@ -897,15 +897,15 @@ modest_platform_run_new_folder_dialog (GtkWindow *parent_window,
 
 gint
 modest_platform_run_rename_folder_dialog (GtkWindow *parent_window,
-					  TnyFolderStore *parent_folder,
-					  const gchar *suggested_name,
-					  gchar **folder_name)
+                                          TnyFolderStore *parent_folder,
+                                          const gchar *suggested_name,
+                                          gchar **folder_name)
 {
 	return modest_platform_run_folder_name_dialog (parent_window, 
-						       _("New folder name"),
-						       _("Enter new folder name:"),
-						       suggested_name,
-						       folder_name);
+                                                 dgettext("hildon-libs", "ckdg_ti_rename_folder"),
+                                                 dgettext("hildon-libs", "ckdg_fi_rename_name"),
+                                                 suggested_name,
+                                                 folder_name);
 }
 
 gint

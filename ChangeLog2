@@ -1,4 +1,11 @@
-2007-08-22 Armin Burgmeier  <armin@openismus.com>
+2007-08-24  Armin Burgmeier  <armin@openismus.com>
+
+	* src/maemo/modest-platform.c:
+	(modest_platform_run_rename_folder_dialog): Use logical IDs instead of
+	english text for strings in the rename folder dialog, fixing
+	projects.maemo.org bug NB#66338.
+
+2007-08-22  Armin Burgmeier  <armin@openismus.com>
 
 	* src/widgets/modest-account-view.c: Fix for bora by using
 	MODEST_HAVE_HILDON0_WIDGETS instead of MODEST_HILDON_VERSION_0. The
