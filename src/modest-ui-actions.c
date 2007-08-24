@@ -933,13 +933,23 @@ _modest_ui_actions_open (TnyList *headers, ModestWindow *win)
 	TnyList *not_opened_headers = NULL;
 	TnyHeaderFlags flags = 0;
 		
+	g_return_if_fail (headers != NULL);
+
+	/* Check that only one message is selected for opening */
+	if (tny_list_get_length (headers) != 1) {
+		modest_platform_run_information_dialog ((win) ? GTK_WINDOW (win) : NULL,
+							_("mcen_ib_select_one_message"));
+		return;
+	}
+
+
 	/* Look if we already have a message view for each header. If
 	   true, then remove the header from the list of headers to
 	   open */
 	mgr = modest_runtime_get_window_mgr ();
 	iter = tny_list_create_iterator (headers);
 	not_opened_headers = tny_simple_list_new ();
-
+	
 	while (!tny_iterator_is_done (iter)) {
 
 		ModestWindow *window = NULL;
@@ -1744,8 +1754,10 @@ modest_ui_actions_on_header_activated (ModestHeaderView *header_view,
 	if (!header)
 		return;
 
-	headers = tny_simple_list_new ();
-	tny_list_prepend (headers, G_OBJECT (header));
+
+/* 	headers = tny_simple_list_new (); */
+/* 	tny_list_prepend (headers, G_OBJECT (header)); */
+	headers = modest_header_view_get_selected_headers (header_view);
 
 	_modest_ui_actions_open (headers, MODEST_WINDOW (main_window));
 
