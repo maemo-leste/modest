@@ -485,6 +485,11 @@ modest_ui_dimming_rules_on_delete_folder (ModestWindow *win, gpointer user_data)
 		if (dimmed)
 			modest_dimming_rule_set_notification (rule, _("mail_in_ui_folder_delete_error"));
 	}
+	if (!dimmed) {
+		dimmed = _transfer_mode_enabled (win);
+		if (dimmed)
+			modest_dimming_rule_set_notification (rule, _CS("ckct_ib_unable_to_delete"));
+	}
 
 	return dimmed;
 }
@@ -2086,10 +2091,14 @@ _transfer_mode_enabled (ModestWindow *win)
 {
 	gboolean result = FALSE;
 
-	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (win), FALSE);
-	
-	/* Check dimming */
-	result = modest_msg_view_window_transfer_mode_enabled (MODEST_MSG_VIEW_WINDOW (win));
+        /* Check dimming */
+        if (MODEST_IS_MSG_VIEW_WINDOW(win)) {
+                result = modest_msg_view_window_transfer_mode_enabled (MODEST_MSG_VIEW_WINDOW (win));
+        } else if (MODEST_IS_MAIN_WINDOW(win)) {
+                result = modest_main_window_transfer_mode_enabled (MODEST_MAIN_WINDOW (win));
+        } else {
+                g_warning("_transfer_mode_enabled called with wrong window type");
+        }
 
 	return result;
 }

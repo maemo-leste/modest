@@ -2020,6 +2020,9 @@ set_toolbar_mode (ModestMainWindow *self,
 	/* Sets current toolbar mode */
 	priv->current_toolbar_mode = mode;
 
+        /* Checks the dimming rules */
+        modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (self));
+
 	/* Show and hide toolbar items */
 	switch (mode) {
 	case TOOLBAR_MODE_NORMAL:
@@ -2062,6 +2065,17 @@ set_toolbar_mode (ModestMainWindow *self,
 	default:
 		g_return_if_reached ();
 	}
+}
+
+gboolean
+modest_main_window_transfer_mode_enabled (ModestMainWindow *self)
+{
+	ModestMainWindowPrivate *priv;
+
+	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW (self), FALSE);
+	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
+
+	return priv->current_toolbar_mode == TOOLBAR_MODE_TRANSFER;
 }
 
 static void

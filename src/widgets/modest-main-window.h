@@ -220,6 +220,17 @@ gboolean  modest_main_window_on_msg_view_window_msg_changed (ModestMsgViewWindow
 							     GtkTreeRowReference *row_reference,
 							     ModestMainWindow *self);
 
+/**
+ * modest_main_window_transfer_mode_enabled:
+ * @window: a #ModestMainWindow
+ *
+ * Determines if some transfer operation is in progress.
+ *
+ * Returns: TRUE if transfer mode is enabled, FASE otherwise.
+*/
+gboolean
+modest_main_window_transfer_mode_enabled (ModestMainWindow *self);
+
 G_END_DECLS
 
 #endif /* __MODEST_MAIN_WINDOW_H__ */
