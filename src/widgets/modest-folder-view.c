@@ -1155,19 +1155,21 @@ modest_folder_view_update_model (ModestFolderView *self,
 static void
 on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 {
-	GtkTreeModel            *model;
-	TnyFolderStore          *folder = NULL;
-	GtkTreeIter             iter;
-	ModestFolderView        *tree_view;
-	ModestFolderViewPrivate *priv;
+	GtkTreeModel *model = NULL;
+	TnyFolderStore *folder = NULL;
+	GtkTreeIter iter;
+	ModestFolderView *tree_view = NULL;
+	ModestFolderViewPrivate *priv = NULL;
+	gboolean selected = FALSE;
 
 	g_return_if_fail (sel);
 	g_return_if_fail (user_data);
 	
 	priv = MODEST_FOLDER_VIEW_GET_PRIVATE(user_data);
 
-	if(!gtk_tree_selection_get_selected (sel, &model, &iter))
-		return;
+	selected = gtk_tree_selection_get_selected (sel, &model, &iter);
+/* 	if(!gtk_tree_selection_get_selected (sel, &model, &iter)) */
+/* 		return; */
 
 	/* Notify the display name observers */
 	g_signal_emit (G_OBJECT(user_data),
@@ -1175,14 +1177,17 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 		       NULL);
 
 	tree_view = MODEST_FOLDER_VIEW (user_data);
-	gtk_tree_model_get (model, &iter,
-			    TNY_GTK_FOLDER_STORE_TREE_MODEL_INSTANCE_COLUMN, &folder,
-			    -1);
 
-	/* If the folder is the same do not notify */
-	if (priv->cur_folder_store == folder && folder) {
-		g_object_unref (folder);
-		return;
+	if (selected) {
+		gtk_tree_model_get (model, &iter,
+				    TNY_GTK_FOLDER_STORE_TREE_MODEL_INSTANCE_COLUMN, &folder,
+				    -1);
+
+		/* If the folder is the same do not notify */
+		if (priv->cur_folder_store == folder && folder) {
+			g_object_unref (folder);
+			return;
+		}
 	}
 	
 	/* Current folder was unselected */
@@ -1193,6 +1198,7 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 		if (TNY_IS_FOLDER(priv->cur_folder_store))
 			tny_folder_sync_async (TNY_FOLDER(priv->cur_folder_store),
 					       FALSE, NULL, NULL, NULL);
+
 		/* FALSE --> don't expunge the messages */
 
 		g_object_unref (priv->cur_folder_store);

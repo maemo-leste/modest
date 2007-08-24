@@ -139,15 +139,14 @@ static void     _on_send_receive_progress_changed (ModestMailOperation  *mail_op
 						   ModestMailOperationState *state,
 						   gpointer user_data);
 
-static gboolean
-download_uncached_messages (TnyList *header_list, GtkWindow *win);
+static gboolean download_uncached_messages (TnyList *header_list, 
+					    GtkWindow *win);
 
 
-/*static gint
-msgs_move_to_confirmation (GtkWindow *win,
-			   TnyFolder *dest_folder,
-			   gboolean delete,
-			   TnyList *headers);*/
+/* static gint     msgs_move_to_confirmation (GtkWindow *win, */
+/* 					   TnyFolder *dest_folder, */
+/* 					   gboolean delete, */
+/* 					   TnyList *headers); */
 
 
 /* Show the account creation wizard dialog.
@@ -3431,20 +3430,47 @@ create_move_to_dialog (GtkWindow *win,
 
 	/* Create folder view */
 	*tree_view = modest_platform_create_folder_view (NULL);
-/* 	*tree_view = modest_folder_view_new (NULL); */
 
-	g_signal_connect (G_OBJECT (new_button), "clicked", G_CALLBACK(create_move_to_dialog_on_new_folder), *tree_view);
+	g_signal_connect (G_OBJECT (new_button), 
+			  "clicked", 
+			  G_CALLBACK(create_move_to_dialog_on_new_folder), 
+			  *tree_view);
 
 	/* It could happen that we're trying to move a message from a
 	   window (msg window for example) after the main window was
 	   closed, so we can not just get the model of the folder
 	   view */
 	if (MODEST_IS_FOLDER_VIEW (folder_view)) {
+		const gchar *visible_id = NULL;
+
 		modest_folder_view_copy_model (MODEST_FOLDER_VIEW(folder_view), 
 					       MODEST_FOLDER_VIEW(*tree_view));
-	} else
+
+		visible_id = 
+			modest_folder_view_get_account_id_of_visible_server_account (MODEST_FOLDER_VIEW(folder_view));
+
+		/* Show the same account than the one that is shown in the main window */
+		modest_folder_view_set_account_id_of_visible_server_account (MODEST_FOLDER_VIEW(*tree_view), 
+									     visible_id);
+	} else {
+		const gchar *active_account_name = NULL;
+		ModestAccountMgr *mgr = NULL;
+		ModestAccountData *acc_data = NULL;
+
 		modest_folder_view_update_model (MODEST_FOLDER_VIEW (*tree_view), 
 						 TNY_ACCOUNT_STORE (modest_runtime_get_account_store ()));
+
+		active_account_name = modest_window_get_active_account (MODEST_WINDOW (win));
+		mgr = modest_runtime_get_account_mgr ();
+		acc_data = modest_account_mgr_get_account_data (mgr, active_account_name);
+
+		/* Set the new visible & active account */
+		if (acc_data && acc_data->store_account) { 
+			modest_folder_view_set_account_id_of_visible_server_account (MODEST_FOLDER_VIEW (*tree_view),
+										     acc_data->store_account->account_name);
+			modest_account_mgr_free_account_data (mgr, acc_data);
+		}
+	}
 
 	/* Hide special folders */
 	modest_folder_view_show_non_move_folders (MODEST_FOLDER_VIEW (*tree_view), FALSE);
@@ -3871,6 +3897,7 @@ modest_ui_actions_on_main_window_move_to (GtkAction *action,
 
 	/* Get folder or messages to transfer */
 	if (gtk_widget_is_focus (folder_view)) {
+		GtkTreeSelection *sel;
 
 		/* Allow only to transfer folders to the local root folder */
 		if (TNY_IS_ACCOUNT (dst_folder) && 
@@ -3878,7 +3905,9 @@ modest_ui_actions_on_main_window_move_to (GtkAction *action,
 			goto end;
 		
 		/* Clean folder on header view before moving it */
-		modest_header_view_clear (MODEST_HEADER_VIEW (header_view)); 
+/* 		modest_header_view_clear (MODEST_HEADER_VIEW (header_view));  */
+		sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (folder_view));
+		gtk_tree_selection_unselect_all (sel);
 
 		if (TNY_IS_FOLDER (src_folder)) {
 			mail_op = 
