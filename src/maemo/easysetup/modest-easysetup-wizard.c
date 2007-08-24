@@ -70,6 +70,11 @@ G_DEFINE_TYPE (ModestEasysetupWizardDialog, modest_easysetup_wizard_dialog, MODE
 
 typedef struct _ModestEasysetupWizardDialogPrivate ModestEasysetupWizardDialogPrivate;
 
+/* global to make sure there is only one of this
+ * dialog at any time
+ */
+static ModestEasysetupWizardDialog *_instance = NULL;
+
 typedef enum {
 	MODEST_EASYSETUP_WIZARD_DIALOG_INCOMING_CHANGED = 0x01,
 	MODEST_EASYSETUP_WIZARD_DIALOG_OUTGOING_CHANGED = 0x02
@@ -140,6 +145,8 @@ modest_easysetup_wizard_dialog_finalize (GObject *object)
 	g_free (self->saved_account_name);
 	
 	G_OBJECT_CLASS (modest_easysetup_wizard_dialog_parent_class)->finalize (object);
+
+	_instance = NULL;
 }
 
 static void
@@ -1152,9 +1159,16 @@ modest_easysetup_wizard_dialog_init (ModestEasysetupWizardDialog *self)
 }
 
 ModestEasysetupWizardDialog*
-modest_easysetup_wizard_dialog_new (void)
-{
-	return g_object_new (MODEST_TYPE_EASYSETUP_WIZARD_DIALOG, NULL);
+modest_easysetup_wizard_dialog_new_or_present (void)
+{	
+	if (_instance) {
+		g_message ("%s: already instantiated; presenting\n",
+			   __FUNCTION__);
+		gtk_window_present (GTK_WINDOW(_instance));
+		return NULL;
+	}
+	
+	return _instance = g_object_new (MODEST_TYPE_EASYSETUP_WIZARD_DIALOG, NULL);
 }
 
 static void create_subsequent_customsetup_pages (ModestEasysetupWizardDialog *self)

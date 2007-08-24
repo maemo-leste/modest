@@ -71,10 +71,10 @@ main (int argc, char *argv[])
 		goto cleanup;
 	}
 
-	win = modest_main_window_new ();
-			
+	/* this will create & register the window */
+	win = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr());
 	if (!win) {
-		g_printerr ("modest: failed to create main window\n");
+		g_printerr ("modest: failed to get main window instance\n");
 		retval = 1;
 		goto cleanup;
 	}
@@ -88,9 +88,6 @@ main (int argc, char *argv[])
 	if (show_ui_without_top_application_method)
 		gtk_widget_show_all (GTK_WIDGET(win));
 	
-	modest_window_mgr_register_window (modest_runtime_get_window_mgr(), 
-					   win);
-	g_object_unref (win);
 	
 	gtk_main ();	
 	retval = 0;

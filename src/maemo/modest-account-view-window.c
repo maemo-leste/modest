@@ -262,8 +262,8 @@ on_edit_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 		
 		/* Show the Account Settings window: */
 		ModestAccountSettingsDialog *dialog = modest_account_settings_dialog_new ();
+
 		modest_account_settings_dialog_set_account_name (dialog, account_name);
-		
 		modest_maemo_show_dialog_and_forget (GTK_WINDOW (self), GTK_DIALOG (dialog));
 	}
 	
@@ -299,13 +299,15 @@ on_new_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 		gtk_window_present (GTK_WINDOW (priv->wizard));
 	} else {
 		/* Create and show the dialog: */
-		priv->wizard = modest_easysetup_wizard_dialog_new ();
-		
-		gtk_window_set_transient_for (GTK_WINDOW (priv->wizard), GTK_WINDOW (self));
-		
-		/* Destroy the dialog when it is closed: */
-		g_signal_connect (G_OBJECT (priv->wizard), "response", G_CALLBACK (on_wizard_response), self);
-		gtk_widget_show (GTK_WIDGET (priv->wizard));
+		priv->wizard = modest_easysetup_wizard_dialog_new_or_present ();
+		if (priv->wizard) {
+			gtk_window_set_transient_for (GTK_WINDOW (priv->wizard), GTK_WINDOW (self));
+			/* Destroy the dialog when it is closed: */
+			g_signal_connect (G_OBJECT (priv->wizard), "response", G_CALLBACK (on_wizard_response), self);
+			gtk_widget_show (GTK_WIDGET (priv->wizard));
+		} else
+			/* in this case, the existing one will be topped */
+			g_message ("%s: easysetup dialog already exists; ignoring", __FUNCTION__);
 	}
 }
 

@@ -196,7 +196,8 @@ check_and_offer_account_creation()
 		const gboolean created = modest_run_account_setup_wizard (NULL);
 		printf ("DEBUG1: %s\n", __FUNCTION__);
 		if (!created) {
-			g_debug ("modest: %s: No account exists even after offering.\n", __FUNCTION__);
+			g_debug ("modest: %s: no account exists even after offering, "
+				 "or account setup was already underway.\n", __FUNCTION__);
 			result = FALSE;
 		}
 	}

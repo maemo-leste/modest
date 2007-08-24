@@ -125,7 +125,12 @@ typedef struct {
 
 GType modest_easysetup_wizard_dialog_get_type (void);
 
-ModestEasysetupWizardDialog* modest_easysetup_wizard_dialog_new (void);
+/*
+ * NOTE: can be instantiated only once; after that, this function will
+ * return NULL, until the one before is destroyed; if it returns NULL
+ * it will gtk_window_present the existing one.
+ */
+ModestEasysetupWizardDialog* modest_easysetup_wizard_dialog_new_or_present (void);
 
 G_END_DECLS
 

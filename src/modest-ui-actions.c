@@ -164,9 +164,17 @@ modest_run_account_setup_wizard (ModestWindow *win)
 		
 	g_return_val_if_fail (MODEST_IS_WINDOW(win), FALSE);
 	
-	wizard = modest_easysetup_wizard_dialog_new ();
+	wizard = modest_easysetup_wizard_dialog_new_or_present ();
+
+	/* if wizard == NULL it means there is already a easy setup thingy running;
+	 * in that case, don't do anything here; the call above will present it instead */
+	if (!wizard) {
+		g_message ("%s: easysetup wizard already running", __FUNCTION__);
+		return FALSE;
+	}
+
 	gtk_window_set_transient_for (GTK_WINDOW (wizard), GTK_WINDOW (win));
-	
+
 	/* Don't make this a modal window, because secondary windows will then 
 	 * be unusable, freezing the UI: */
 	/* gtk_window_set_modal (GTK_WINDOW (wizard), TRUE); */
