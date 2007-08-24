@@ -40,6 +40,7 @@
 
 #define _FM(str) dgettext("hildon-fm",str)
 #define _CS(str) dgettext("hildon-common-strings",str)
+#define _HL(str) dgettext("hildon-libs",str)
 
 /* Forbidden char arrays */
 extern const gchar account_title_forbidden_chars[];

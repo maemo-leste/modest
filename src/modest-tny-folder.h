@@ -179,19 +179,17 @@ TnyAccount *modest_tny_folder_get_account (TnyFolder *folder);
 gchar* modest_tny_folder_get_header_unique_id (TnyHeader *header);
 
 /**
- * modest_tny_msg_get_header_unique_id:
+ * modest_tny_folder_has_subfolder_with_name:
  * @folder: a #TnyFolderStore 
- * @new_name: the new name to check into subfolders.
+ * @name: the name to check into subfolders.
  *   
  * This function check if subfolders of @folder has the same
- * name as @new_name.
+ * name as @name.
  *
- * Returns: TRUE if some subfolder has the name @new_name.
+ * Returns: TRUE if some subfolder has the name @name.
  **/
-gboolean modest_tny_folder_same_subfolder (TnyFolderStore *folder,
-					   const gchar *new_name);
-
-
+gboolean modest_tny_folder_has_subfolder_with_name (TnyFolderStore *folder,
+						    const gchar *name);
 
 
 G_END_DECLS

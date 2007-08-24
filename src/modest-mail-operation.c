@@ -1877,7 +1877,7 @@ modest_mail_operation_xfer_folder (ModestMailOperation *self,
 		modest_mail_operation_notify_end (self);
 
 	} else if (TNY_IS_FOLDER_STORE (parent) &&
-		   modest_tny_folder_same_subfolder (parent, folder_name)) {
+		   modest_tny_folder_has_subfolder_with_name (parent, folder_name)) {
 		/* Check that the new folder name is not used by any
 		    parent subfolder */
 

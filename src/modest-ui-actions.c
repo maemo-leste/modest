@@ -403,7 +403,6 @@ modest_ui_actions_on_delete_message (GtkAction *action, ModestWindow *win)
 					   tny_list_get_length(header_list)), desc);
 
 	/* Confirmation dialog */
-	printf("DEBUG: %s\n", __FUNCTION__);	
 	response = modest_platform_run_confirmation_dialog (GTK_WINDOW (win),
 							    message);
 	
@@ -2423,10 +2422,14 @@ modest_ui_actions_on_rename_folder (GtkAction *action,
 		gchar *folder_name;
 		gint response;
 		const gchar *current_name;
+		TnyFolderStore *parent;
 
 		current_name = tny_folder_get_name (TNY_FOLDER (folder));
-		response = modest_platform_run_rename_folder_dialog (GTK_WINDOW (main_window), NULL,
-								     current_name, &folder_name);
+		parent = tny_folder_get_folder_store (TNY_FOLDER (folder));
+		response = modest_platform_run_rename_folder_dialog (GTK_WINDOW (main_window), 
+								     parent, current_name, 
+								     &folder_name);
+		g_object_unref (parent);
 
 		if (response == GTK_RESPONSE_ACCEPT && strlen (folder_name) > 0) {
 			ModestMailOperation *mail_op;

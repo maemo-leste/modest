@@ -51,6 +51,7 @@
 #include <gtk/gtkmenuitem.h>
 #include <gtk/gtkmain.h>
 #include <modest-text-utils.h>
+#include "modest-tny-folder.h"
 #include <string.h>
 
 
@@ -760,8 +761,46 @@ launch_sort_headers_dialog (GtkWindow *parent_window,
 	g_list_free(cols);	
 }
 
+
+
+static void
+on_response (GtkDialog *dialog,
+	     gint response,
+	     gpointer user_data)
+{
+	GList *child_vbox, *child_hbox;
+	GtkWidget *hbox, *entry;
+	TnyFolderStore *parent;
+
+	if (response != GTK_RESPONSE_ACCEPT)
+		return;
+
+	/* Get entry */
+	child_vbox = gtk_container_get_children (GTK_CONTAINER (dialog->vbox));
+	hbox = child_vbox->data;
+	child_hbox = gtk_container_get_children (GTK_CONTAINER (hbox));
+	entry = child_hbox->next->data;
+
+	parent = TNY_FOLDER_STORE (user_data);
+
+	/* Look for another folder with the same name */
+	if (modest_tny_folder_has_subfolder_with_name (parent, 
+						       gtk_entry_get_text (GTK_ENTRY (entry)))) {
+		/* Show an error */
+		hildon_banner_show_information (gtk_widget_get_parent (GTK_WIDGET (dialog)), 
+						NULL, _CS("ckdg_ib_folder_already_exists"));
+		/* Select the text */
+		gtk_entry_select_region (GTK_ENTRY (entry), 0, -1);
+		gtk_widget_grab_focus (entry);
+		/* Do not close the dialog */
+		g_signal_stop_emission_by_name (dialog, "response");
+	}
+}
+
+
 static gint
 modest_platform_run_folder_name_dialog (GtkWindow *parent_window,
+					TnyFolderStore *parent,
 					const gchar *dialog_title,
 					const gchar *label_text,
 					const gchar *suggested_name,
@@ -797,6 +836,13 @@ modest_platform_run_folder_name_dialog (GtkWindow *parent_window,
 		gtk_entry_set_text (GTK_ENTRY (entry), _("mcen_ia_default_folder_name"));
 	gtk_entry_select_region (GTK_ENTRY (entry), 0, -1);
 
+	/* Connect to the response method to avoid closing the dialog
+	   when an invalid name is selected*/
+	g_signal_connect (dialog,
+			  "response",
+			  G_CALLBACK (on_response),
+			  parent);
+
 	/* Track entry changes */
 	g_signal_connect (entry,
 			  "insert-text",
@@ -819,6 +865,9 @@ modest_platform_run_folder_name_dialog (GtkWindow *parent_window,
 	gtk_widget_show_all (GTK_WIDGET(GTK_DIALOG(dialog)->vbox));
 	
 	gtk_window_set_transient_for (GTK_WINDOW (dialog), parent_window);
+
+
+
 	result = gtk_dialog_run (GTK_DIALOG(dialog));
 	if (result == GTK_RESPONSE_ACCEPT)
 		*folder_name = g_strdup (gtk_entry_get_text (GTK_ENTRY (entry)));
@@ -846,11 +895,8 @@ modest_platform_run_new_folder_dialog (GtkWindow *parent_window,
 		unsigned int i;
 		gchar num_str[3];
 
-		for(i = 0; i < 100; ++ i)
-		{
-			TnyList *list = tny_simple_list_new ();
-			TnyFolderStoreQuery *query = tny_folder_store_query_new ();
-			guint length;
+		for(i = 0; i < 100; ++ i) {
+			gboolean exists = FALSE;
 
 			sprintf(num_str, "%.2u", i);
 
@@ -860,16 +906,10 @@ modest_platform_run_new_folder_dialog (GtkWindow *parent_window,
 				real_suggested_name = g_strdup_printf (_("mcen_ia_default_folder_name_s"),
 				                                       num_str);
 
-			tny_folder_store_query_add_item (query, real_suggested_name,
-			                                 TNY_FOLDER_STORE_QUERY_OPTION_MATCH_ON_NAME);
+			exists = modest_tny_folder_has_subfolder_with_name (parent_folder,
+									    real_suggested_name);
 
-			tny_folder_store_get_folders (parent_folder, list, query, NULL);
-
-			length = tny_list_get_length (list);
-			g_object_unref (query);
-			g_object_unref (list);
-
-			if (length == 0)
+			if (!exists)
 				break;
 
 			g_free (real_suggested_name);
@@ -878,13 +918,12 @@ modest_platform_run_new_folder_dialog (GtkWindow *parent_window,
 		/* Didn't find a free number */
 		if (i == 100)
 			real_suggested_name = g_strdup (default_name);
-	}
-	else
-	{
+	} else {
 		real_suggested_name = suggested_name;
 	}
 
 	result = modest_platform_run_folder_name_dialog (parent_window, 
+							 parent_folder,
 	                                                 _("mcen_ti_new_folder"),
 	                                                 _("mcen_fi_new_folder_name"),
 	                                                 real_suggested_name,
@@ -901,11 +940,14 @@ modest_platform_run_rename_folder_dialog (GtkWindow *parent_window,
                                           const gchar *suggested_name,
                                           gchar **folder_name)
 {
+	g_return_val_if_fail (TNY_IS_FOLDER_STORE (parent_folder), GTK_RESPONSE_REJECT);
+
 	return modest_platform_run_folder_name_dialog (parent_window, 
-                                                 dgettext("hildon-libs", "ckdg_ti_rename_folder"),
-                                                 dgettext("hildon-libs", "ckdg_fi_rename_name"),
-                                                 suggested_name,
-                                                 folder_name);
+						       parent_folder,
+						       _HL("ckdg_ti_rename_folder"),
+						       _HL("ckdg_fi_rename_name"),
+						       suggested_name,
+						       folder_name);
 }
 
 gint
