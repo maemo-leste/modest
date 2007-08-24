@@ -1782,8 +1782,8 @@ folder_refreshed_cb (ModestMailOperation *mail_op,
 	ModestMainWindow *win = NULL;
 	GtkWidget *header_view;
 	TnyFolder *current_folder;
-	gboolean folder_empty = TRUE;
-	gboolean all_marked_as_deleted = TRUE;
+	gboolean folder_empty = FALSE;
+	gboolean all_marked_as_deleted = FALSE;
 
 	g_return_if_fail (TNY_IS_FOLDER (folder));
 
