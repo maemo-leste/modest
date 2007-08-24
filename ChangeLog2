@@ -1,5 +1,11 @@
 2007-08-24  Armin Burgmeier  <armin@openismus.com>
 
+	* src/modest-widget-memory.c: Always show the default account when the
+	application is started, as stated in the UI spec. This fixes
+	projects.maemo.org bug NB#66630.
+
+2007-08-24  Armin Burgmeier  <armin@openismus.com>
+
 	* src/maemo/modest-platform.c:
 	(modest_platform_run_rename_folder_dialog): Use logical IDs instead of
 	english text for strings in the rename folder dialog, fixing

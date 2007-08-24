@@ -499,9 +499,13 @@ restore_settings_folder_view (ModestConf *conf,
 			      ModestFolderView *folder_view,
 			      const gchar *name)
 {
-	gchar *key, *account_id;
+	gchar *key;
 
-	/* Restore the visible account */
+	/* Don't restore the visible account but always show the default account
+	 * as specified in section 4.1 of the email UI specification. See also
+	 * projects.maemo.org bug NB#66630. */
+#if 0
+  gchar *account_id;
 	key = _modest_widget_memory_get_keyname (name, "visible_server_account_id");
 
 	if (modest_conf_key_exists (conf, key, NULL)) {
@@ -510,6 +514,7 @@ restore_settings_folder_view (ModestConf *conf,
 									     (const gchar *) account_id);
 		g_free (account_id);
 	} else {
+#endif
 		ModestAccountMgr *mgr;
 		gchar *default_acc;
 
@@ -530,9 +535,11 @@ restore_settings_folder_view (ModestConf *conf,
 
 			g_free (default_acc);
 		}
+#if 0
 	}
 
 	g_free (key);
+#endif
 
 	return TRUE;
 }
