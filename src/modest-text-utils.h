@@ -41,6 +41,14 @@
 #define _FM(str) dgettext("hildon-fm",str)
 #define _CS(str) dgettext("hildon-common-strings",str)
 
+/* Forbidden char arrays */
+extern const gchar account_title_forbidden_chars[];
+extern const gchar folder_name_forbidden_chars[];
+extern const gchar user_name_forbidden_chars[];
+extern const guint ACCOUNT_TITLE_FORBIDDEN_CHARS_LENGTH;
+extern const guint FOLDER_NAME_FORBIDDEN_CHARS_LENGTH;
+extern const guint USER_NAME_FORBIDDEN_CHARS_LENGTH;
+
 /**
  * modest_text_utils_derived_subject:
  * @subject: a string which contains the original subject
@@ -367,5 +375,14 @@ gchar *      modest_text_utils_get_color_string (GdkColor *color);
  * Returns: a newly allocated UTF-8 string
  */
 gchar *      modest_text_utils_text_buffer_get_text (GtkTextBuffer *buffer);
+
+typedef enum {
+	ACCOUNT_TITLE_FORBIDDEN_CHARS,
+	FOLDER_NAME_FORBIDDEN_CHARS,
+	USER_NAME_FORBIDDEN_NAMES,
+} ModestTextUtilsForbiddenCharType;
+
+gboolean     modest_text_utils_is_forbidden_char (const gchar character,
+						  ModestTextUtilsForbiddenCharType type);
 
 #endif /* __MODEST_TEXT_UTILS_H__ */

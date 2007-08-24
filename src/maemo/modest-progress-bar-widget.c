@@ -443,11 +443,11 @@ modest_progress_bar_widget_set_progress (ModestProgressBarWidget *self,
 		gtk_progress_bar_set_bar_style (GTK_PROGRESS_BAR (priv->progress_bar), /* Deprecated */
 						GTK_PROGRESS_CONTINUOUS);
 		gtk_progress_bar_pulse (GTK_PROGRESS_BAR (priv->progress_bar));
-		printf ("debug: %s:\n  undetermined progress (%i) changed (%i/%i) : %i\n", __FUNCTION__, 
-			(int) priv->progress_bar,
-			done, 
-			total,
-			priv->count);
+/* 		printf ("debug: %s:\n  undetermined progress (%i) changed (%i/%i) : %i\n", __FUNCTION__,  */
+/* 			(int) priv->progress_bar, */
+/* 			done,  */
+/* 			total, */
+/* 			priv->count); */
 	} else {
 		gdouble percent = 0;
 		if (total != 0) /* Avoid division by zero. */
@@ -456,11 +456,11 @@ modest_progress_bar_widget_set_progress (ModestProgressBarWidget *self,
  		gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR (priv->progress_bar),
 					       percent);
 
-		printf ("debug: %s:\n  determined progress (%i) changed (%i/%i) : %i\n", __FUNCTION__, 
-			(int) priv->progress_bar,
-			done, 
-			total,
-			priv->count);
+/* 		printf ("debug: %s:\n  determined progress (%i) changed (%i/%i) : %i\n", __FUNCTION__,  */
+/* 			(int) priv->progress_bar, */
+/* 			done,  */
+/* 			total, */
+/* 			priv->count); */
 	}
 	
 	/* Set text */

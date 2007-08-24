@@ -96,6 +96,19 @@ struct _url_match_t {
 	  NULL, "mailto:"}\
 	}
 
+const gchar account_title_forbidden_chars[] = {
+	'\\', '/', ':', '*', '?', '\'', '<', '>', '|', '^'
+};
+const gchar folder_name_forbidden_chars[] = {
+	'<', '>', ':', '\'', '/', '\\', '|', '?', '*', '^', '%', '$'
+};
+const gchar user_name_forbidden_chars[] = {
+	'<', '>'
+};
+const guint ACCOUNT_TITLE_FORBIDDEN_CHARS_LENGTH = G_N_ELEMENTS (account_title_forbidden_chars);
+const guint FOLDER_NAME_FORBIDDEN_CHARS_LENGTH = G_N_ELEMENTS (folder_name_forbidden_chars);
+const guint USER_NAME_FORBIDDEN_CHARS_LENGTH = G_N_ELEMENTS (user_name_forbidden_chars);
+
 /* private */
 static gchar*   cite                    (const time_t sent_date, const gchar *from);
 static void     hyperlinkify_plain_text (GString *txt);
@@ -1083,10 +1096,8 @@ modest_text_utils_validate_folder_name (const gchar *folder_name)
 	 * with some extras */
 	
 	guint len;
-	const gchar **cursor;
-	const gchar *forbidden_chars[] = {
-		"<", ">", ":", "\"", "/", "\\", "|", "?", "*", "^", "%", "$", NULL
-	};
+	gint i;
+	const gchar **cursor = NULL;
 	const gchar *forbidden_names[] = { /* windows does not like these */
 		"CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6",
 		"COM7", "COM8", "COM9", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9",
@@ -1106,9 +1117,9 @@ modest_text_utils_validate_folder_name (const gchar *folder_name)
 	if (g_ascii_isspace(folder_name[0]) || g_ascii_isspace(folder_name[len - 1]))
 		return FALSE; 
 
-	/* cannot contain a forbidden char */
-	for (cursor = forbidden_chars; cursor && *cursor; ++cursor)
-		if (strstr(folder_name, *cursor) != NULL)
+	/* cannot contain a forbidden char */	
+	for (i = 0; i < len; i++)
+		if (modest_text_utils_is_forbidden_char (folder_name[i], FOLDER_NAME_FORBIDDEN_CHARS))
 			return FALSE;
 	
 	/* cannot contain a forbidden word */
@@ -1378,4 +1389,37 @@ modest_text_utils_text_buffer_get_text (GtkTextBuffer *buffer)
 
 	return g_string_free (result, FALSE);
 	
+}
+
+gboolean
+modest_text_utils_is_forbidden_char (const gchar character,
+				     ModestTextUtilsForbiddenCharType type)
+{
+	gint i, len;
+	const gchar *forbidden_chars = NULL;
+	
+	/* We need to get the length in the switch because the
+	   compiler needs to know the size at compile time */
+	switch (type) {
+	case ACCOUNT_TITLE_FORBIDDEN_CHARS:
+		forbidden_chars = account_title_forbidden_chars;
+		len = G_N_ELEMENTS (account_title_forbidden_chars);
+		break;
+	case FOLDER_NAME_FORBIDDEN_CHARS:
+		forbidden_chars = folder_name_forbidden_chars;
+		len = G_N_ELEMENTS (folder_name_forbidden_chars);
+		break;
+	case USER_NAME_FORBIDDEN_NAMES:
+		forbidden_chars = user_name_forbidden_chars;
+		len = G_N_ELEMENTS (user_name_forbidden_chars);
+		break;
+	default:
+		g_return_val_if_reached (TRUE);
+	}
+
+	for (i = 0; i < len ; i++)
+		if (forbidden_chars[i] == character)
+			return TRUE;
+
+	return FALSE; /* it's valid! */
 }

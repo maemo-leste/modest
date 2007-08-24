@@ -277,7 +277,6 @@ modest_maemo_global_settings_dialog_new (void)
 	return GTK_WIDGET(g_object_new(MODEST_TYPE_MAEMO_GLOBAL_SETTINGS_DIALOG, NULL));
 }
 
-
 /*
  * Creates the updating page
  */
@@ -351,7 +350,7 @@ create_updating_page (ModestMaemoGlobalSettingsDialog *self)
 	g_signal_connect (ppriv->size_limit, "range_error", G_CALLBACK (on_range_error), self);
 	caption = hildon_caption_new (size_group, 
 				      _("mcen_fi_advsetup_sizelimit"), 
-				      ppriv->size_limit, 
+				      ppriv->size_limit,
 				      NULL, 
 				      HILDON_CAPTION_MANDATORY);
 	gtk_box_pack_start (GTK_BOX (vbox_limit), caption, FALSE, FALSE, MODEST_MARGIN_HALF);

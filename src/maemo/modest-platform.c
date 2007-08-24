@@ -579,22 +579,25 @@ entry_insert_text (GtkEditable *editable,
 		hildon_banner_show_information  (gtk_widget_get_parent (GTK_WIDGET (data)), NULL,
 						 _CS("ckdg_ib_maximum_characters_reached"));
 	} else {
-		GtkWidget *ok_button;
-		GList *buttons;
-		
-		buttons = gtk_container_get_children (GTK_CONTAINER (GTK_DIALOG (data)->action_area));
-		ok_button = GTK_WIDGET (buttons->next->data);
-		
-		gtk_widget_set_sensitive (ok_button,
-					  modest_text_utils_validate_folder_name (chars));	
-		g_list_free (buttons);
-		
-		/* Write the text in the entry */
-		g_signal_handlers_block_by_func (editable,
-						 (gpointer) entry_insert_text, data);
-		gtk_editable_insert_text (editable, text, length, position);
-		g_signal_handlers_unblock_by_func (editable,
-						   (gpointer) entry_insert_text, data);
+		if (modest_text_utils_is_forbidden_char (*text, FOLDER_NAME_FORBIDDEN_CHARS)) {
+			/* Show an error */
+			gchar *tmp, *msg;
+			
+			tmp = g_strndup (folder_name_forbidden_chars, 
+					 FOLDER_NAME_FORBIDDEN_CHARS_LENGTH);
+			msg = g_strdup_printf (_CS("ckdg_ib_illegal_characters_entered"), tmp);
+			hildon_banner_show_information  (gtk_widget_get_parent (GTK_WIDGET (data)), 
+							 NULL, msg);
+			g_free (msg);
+			g_free (tmp);
+		} else {	
+			/* Write the text in the entry if it's valid */
+			g_signal_handlers_block_by_func (editable,
+							 (gpointer) entry_insert_text, data);
+			gtk_editable_insert_text (editable, text, length, position);
+			g_signal_handlers_unblock_by_func (editable,
+							   (gpointer) entry_insert_text, data);
+		}
 	}
 	/* Do not allow further processing */
 	g_signal_stop_emission_by_name (editable, "insert_text");

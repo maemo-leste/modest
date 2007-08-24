@@ -260,19 +260,30 @@ static GtkWidget* create_caption_new_with_asterisk(ModestAccountSettingsDialog *
 static void
 on_entry_invalid_account_title_character (ModestValidatingEntry *self, const gchar* character, gpointer user_data)
 {
-	gchar *message = g_strdup_printf (_CS("ckdg_ib_illegal_characters_entered"),
-					  "\\ / : * ? \" < > | ^");
-	show_error (GTK_WIDGET (self), message);
+	gchar *tmp, *msg;
+			
+	tmp = g_strndup (account_title_forbidden_chars, ACCOUNT_TITLE_FORBIDDEN_CHARS_LENGTH);
+	msg = g_strdup_printf (_CS("ckdg_ib_illegal_characters_entered"), tmp);
+
+	show_error (GTK_WIDGET (self), msg);
+
+	g_free (msg);
+	g_free (tmp);
 }
 
 static void
 on_entry_invalid_fullname_character (ModestValidatingEntry *self, const gchar* character, gpointer user_data)
 {
-	gchar *message = g_strdup_printf (_CS("ckdg_ib_illegal_characters_entered"),
-					  "< >");
-	show_error (GTK_WIDGET (self), message);
-}
+	gchar *tmp, *msg;
+			
+	tmp = g_strndup (user_name_forbidden_chars, USER_NAME_FORBIDDEN_CHARS_LENGTH);
+	msg = g_strdup_printf (_CS("ckdg_ib_illegal_characters_entered"), tmp);
 
+	show_error (GTK_WIDGET (self), msg);
+
+	g_free (msg);
+	g_free (tmp);
+}
 
 
 static void
