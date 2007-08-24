@@ -499,47 +499,31 @@ restore_settings_folder_view (ModestConf *conf,
 			      ModestFolderView *folder_view,
 			      const gchar *name)
 {
-	gchar *key;
-
 	/* Don't restore the visible account but always show the default account
-	 * as specified in section 4.1 of the email UI specification. See also
-	 * projects.maemo.org bug NB#66630. */
-#if 0
-  gchar *account_id;
-	key = _modest_widget_memory_get_keyname (name, "visible_server_account_id");
+	 * as specified in section 4.1 of the email UI specification */
+	ModestAccountMgr *mgr;
+	gchar *default_acc;
 
-	if (modest_conf_key_exists (conf, key, NULL)) {
-		account_id = modest_conf_get_string (conf, key, NULL);
-		modest_folder_view_set_account_id_of_visible_server_account (folder_view, 
-									     (const gchar *) account_id);
-		g_free (account_id);
-	} else {
-#endif
-		ModestAccountMgr *mgr;
-		gchar *default_acc;
+	/* If there is no visible account id in the
+	   configuration then pick the default account as
+	   visible account */
+	mgr = modest_runtime_get_account_mgr ();
+	default_acc = modest_account_mgr_get_default_account (mgr);
+	if (default_acc) {
+		ModestAccountData *acc_data;
+		const gchar *server_acc_id;
+		gchar *key = NULL;
 
-		/* If there is no visible account id in the
-		   configuration then pick the default account as
-		   visible account */
-		mgr = modest_runtime_get_account_mgr ();
-		default_acc = modest_account_mgr_get_default_account (mgr);
-		if (default_acc) {
-			ModestAccountData *acc_data;
-			const gchar *server_acc_id;
+		acc_data = modest_account_mgr_get_account_data (mgr, (const gchar*) default_acc);
+		server_acc_id = (const gchar *) acc_data->store_account->account_name;
+		key = _modest_widget_memory_get_keyname (name, "visible_server_account_id");
 
-			acc_data = modest_account_mgr_get_account_data (mgr, (const gchar*) default_acc);
-			server_acc_id = (const gchar *) acc_data->store_account->account_name;
+		modest_conf_set_string (conf, key, server_acc_id, NULL);
+		modest_folder_view_set_account_id_of_visible_server_account (folder_view, server_acc_id);
 
-			modest_conf_set_string (conf, key, server_acc_id, NULL);
-			modest_folder_view_set_account_id_of_visible_server_account (folder_view, server_acc_id);
-
-			g_free (default_acc);
-		}
-#if 0
+		g_free (key);
+		g_free (default_acc);
 	}
-
-	g_free (key);
-#endif
 
 	return TRUE;
 }
