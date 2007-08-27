@@ -1,3 +1,30 @@
+2007-08-27  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/maemo/modest-account-settings-dialog.c:
+	(modest_account_settings_dialog_init):
+	* src/maemo/modest-connection-specific-smtp-edit-window.c:
+	(modest_connection_specific_smtp_edit_window_init):
+	* src/maemo/modest-connection-specific-smtp-window.c:
+	(modest_connection_specific_smtp_window_init):
+	* src/maemo/modest-maemo-utils.c:
+	(modest_maemo_utils_get_supported_secure_authentication_methods):
+	* src/maemo/modest-platform.c:
+	(modest_platform_run_folder_name_dialog):
+	* src/maemo/modest-signature-editor-dialog.c:
+	(modest_signature_editor_dialog_init):
+	* src/modest-ui-actions.c: (modest_ui_actions_on_item_not_found),
+	(modest_ui_actions_on_password_requested), (create_move_to_dialog):
+	* src/widgets/modest-global-settings-dialog.c:
+	(modest_global_settings_dialog_init):
+	Replace all uses of GTK_STOCK_OK (and GTK_BUTTONS_OK) with 
+	mcen_bd_dialog_ok,
+	GTK_STOCK_CANCEL with mcen_bd_dialog_cancel,
+	GTK_STOCK_EDIT with mcen_bd_edit, and
+	GTK_STOCK_CLOSE with mcen_bd_close,
+	to fix projects.maemo.org bug NB#64995.
+	I strongly believe that Maemo's GTK+ should have the wanted translations 
+	instead of duplicating this in each application and complicating the code.
+
 2007-08-27  Armin Burgmeier  <armin@openismus.com>
 
 	* src/maemo/modest-msg-edit-window.c: Fixed a crash due to endless

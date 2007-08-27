@@ -317,8 +317,8 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	on_combo_security_changed (GTK_COMBO_BOX (priv->combo_outgoing_security), self);
 	
 	/* Add the buttons: */
-	gtk_dialog_add_button (GTK_DIALOG (self), GTK_STOCK_OK, GTK_RESPONSE_OK);
-	gtk_dialog_add_button (GTK_DIALOG (self), GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL);
+	gtk_dialog_add_button (GTK_DIALOG (self), _("mcen_bd_dialog_ok"), GTK_RESPONSE_OK);
+	gtk_dialog_add_button (GTK_DIALOG (self), _("mcen_bd_dialog_cancel"), GTK_RESPONSE_CANCEL);
 	
 	priv->is_dirty = FALSE;
 	priv->range_error_occured = FALSE;

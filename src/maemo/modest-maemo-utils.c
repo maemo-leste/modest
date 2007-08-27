@@ -440,9 +440,10 @@ GList* modest_maemo_utils_get_supported_secure_authentication_methods (ModestTra
 	info->cancel = FALSE;
 	info->error = NULL;
 	info->progress = gtk_progress_bar_new();
+	/* TODO: Need logical_ID for the title: */
 	info->dialog = gtk_dialog_new_with_buttons(_("Authentication"),
 	                                           parent_window, GTK_DIALOG_MODAL,
-	                                           GTK_STOCK_CANCEL,
+	                                           _("mcen_bd_dialog_cancel"),
 	                                           GTK_RESPONSE_REJECT,
 	                                           NULL);
 	//gtk_window_set_default_size(GTK_WINDOW(info->dialog), 300, 100);

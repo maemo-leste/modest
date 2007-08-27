@@ -1175,8 +1175,8 @@ modest_account_settings_dialog_init (ModestAccountSettingsDialog *self)
 	gtk_widget_show (GTK_WIDGET (self->notebook));
         
     /* Add the buttons: */
-    gtk_dialog_add_button (GTK_DIALOG(self), GTK_STOCK_OK, GTK_RESPONSE_OK);
-    gtk_dialog_add_button (GTK_DIALOG(self), GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL);
+    gtk_dialog_add_button (GTK_DIALOG(self), _("mcen_bd_dialog_ok"), GTK_RESPONSE_OK);
+    gtk_dialog_add_button (GTK_DIALOG(self), _("mcen_bd_dialog_cancel"), GTK_RESPONSE_CANCEL);
     
     /* Connect to the dialog's response signal: */
     /* We use connect-before 

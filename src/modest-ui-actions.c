@@ -1932,17 +1932,18 @@ modest_ui_actions_on_item_not_found (ModestHeaderView *header_view,ModestItemTyp
 		dialog = gtk_message_dialog_new (GTK_WINDOW (win),
 						 GTK_DIALOG_MODAL,
 						 GTK_MESSAGE_WARNING,
-						 GTK_BUTTONS_OK,
+						 GTK_BUTTONS_NONE,
 						 _("The %s you selected cannot be found"),
 						 item);
+		gtk_dialog_add_button (GTK_DIALOG (dialog),_("mcen_bd_dialog_ok"), GTK_RESPONSE_ACCEPT);
 		gtk_dialog_run (GTK_DIALOG(dialog));
 	} else {
 		dialog = gtk_dialog_new_with_buttons (_("Connection requested"),
 						      GTK_WINDOW (win),
 						      GTK_DIALOG_MODAL,
-						      GTK_STOCK_CANCEL,
+						      _("mcen_bd_dialog_cancel"),
 						      GTK_RESPONSE_REJECT,
-						      GTK_STOCK_OK,
+						      _("mcen_bd_dialog_ok"),
 						      GTK_RESPONSE_ACCEPT,
 						      NULL);
 		txt = g_strdup_printf (_("This %s is not available in offline mode.\n"
@@ -2626,9 +2627,9 @@ modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 	GtkWidget *dialog = gtk_dialog_new_with_buttons (_("mail_ti_password_protected"),
 					      NULL,
 					      GTK_DIALOG_MODAL,
-					      GTK_STOCK_OK,
+					      _("mcen_bd_dialog_ok"),
 					      GTK_RESPONSE_ACCEPT,
-					      GTK_STOCK_CANCEL,
+					      _("mcen_bd_dialog_cancel"),
 					      GTK_RESPONSE_REJECT,
 					      NULL);
 #else
@@ -3433,12 +3434,12 @@ create_move_to_dialog (GtkWindow *win,
 					      GTK_DIALOG_MODAL | GTK_DIALOG_NO_SEPARATOR | GTK_DIALOG_DESTROY_WITH_PARENT,
 	                                      NULL);
 
-	gtk_dialog_add_button (GTK_DIALOG (dialog), GTK_STOCK_OK, GTK_RESPONSE_ACCEPT);
+	gtk_dialog_add_button (GTK_DIALOG (dialog), _("mcen_bd_dialog_ok"), GTK_RESPONSE_ACCEPT);
 	/* We do this manually so GTK+ does not associate a response ID for
 	 * the button. */
-	new_button = gtk_button_new_from_stock (GTK_STOCK_NEW);
+	new_button = gtk_button_new_from_stock (_("mcen_bd_new"));
 	gtk_box_pack_end (GTK_BOX (GTK_DIALOG (dialog)->action_area), new_button, FALSE, FALSE, 0);
-	gtk_dialog_add_button (GTK_DIALOG (dialog), GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT);
+	gtk_dialog_add_button (GTK_DIALOG (dialog), _("mcen_bd_dialog_cancel"), GTK_RESPONSE_REJECT);
 
 	/* Create scrolled window */
 	scroll = gtk_scrolled_window_new (NULL, NULL);

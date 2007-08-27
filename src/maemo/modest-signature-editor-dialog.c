@@ -164,8 +164,8 @@ modest_signature_editor_dialog_init (ModestSignatureEditorDialog *self)
 	gtk_text_buffer_set_text (buffer, "--\n", -1); /* Default, as per the UI spec. */
 	
 	/* Add the buttons: */
-	gtk_dialog_add_button (GTK_DIALOG (self), GTK_STOCK_OK, GTK_RESPONSE_OK);
-	gtk_dialog_add_button (GTK_DIALOG (self), GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL);
+	gtk_dialog_add_button (GTK_DIALOG (self), _("mcen_bd_dialog_ok"), GTK_RESPONSE_OK);
+	gtk_dialog_add_button (GTK_DIALOG (self), _("mcen_bd_dialog_cancel"), GTK_RESPONSE_CANCEL);
 	
 	
 	gtk_widget_show (box);

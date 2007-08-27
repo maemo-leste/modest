@@ -428,13 +428,13 @@ modest_connection_specific_smtp_window_init (ModestConnectionSpecificSmtpWindow 
 	gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (hbox);
 	
-	priv->button_edit = gtk_button_new_from_stock (GTK_STOCK_EDIT);
+	priv->button_edit = gtk_button_new_from_stock (_("mcen_bd_edit"));
 	gtk_box_pack_start (GTK_BOX (hbox), priv->button_edit, TRUE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (priv->button_edit);
 	g_signal_connect (G_OBJECT (priv->button_edit), "clicked",
         	G_CALLBACK (on_button_edit), self);
 	
-	GtkWidget *button_cancel = gtk_button_new_from_stock (GTK_STOCK_CLOSE);
+	GtkWidget *button_cancel = gtk_button_new_from_stock (_("mcen_bd_close"));
 	gtk_box_pack_start (GTK_BOX (hbox), button_cancel, TRUE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (button_cancel);
 	g_signal_connect (G_OBJECT (button_cancel), "clicked",
