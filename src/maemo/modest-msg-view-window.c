@@ -2253,12 +2253,7 @@ static gboolean
 idle_save_mime_part_show_result (SaveMimePartInfo *info)
 {
 	if (info->pairs != NULL) {
-		/* This is a GDK lock because we are an idle callback and
-	 	 * save_mime_parts_to_file_with_checks can contain Gtk+ code */
-
-		gdk_threads_enter (); /* CHECKED */
-		save_mime_parts_to_file_with_checks (info);
-		gdk_threads_leave (); /* CHECKED */
+		save_mime_part_to_file (info);
 	} else {
 		gboolean result;
 		result = info->result;
@@ -2308,14 +2303,22 @@ save_mime_part_to_file (SaveMimePartInfo *info)
 static void
 save_mime_parts_to_file_with_checks (SaveMimePartInfo *info)
 {
-	SaveMimePartPair *pair;
 	gboolean is_ok = TRUE;
+        gint replaced_files = 0;
+        const GList *files = info->pairs;
+        const GList *iter;
 
-	pair = info->pairs->data;
-	if (modest_maemo_utils_file_exists (pair->filename)) {
+        for (iter = files; (iter != NULL) && (replaced_files < 2); iter = g_list_next(iter)) {
+                SaveMimePartPair *pair = iter->data;
+                if (modest_maemo_utils_file_exists (pair->filename)) {
+                        replaced_files++;
+                }
+        }
+	if (replaced_files) {
 		GtkWidget *confirm_overwrite_dialog;
-		confirm_overwrite_dialog = hildon_note_new_confirmation (NULL,
-									 _FM("docm_nc_replace_file"));
+                const gchar *message = (replaced_files == 1) ?
+                        _FM("docm_nc_replace_file") : _FM("docm_nc_replace_multiple");
+                confirm_overwrite_dialog = hildon_note_new_confirmation (NULL, message);
 		if (gtk_dialog_run (GTK_DIALOG (confirm_overwrite_dialog)) != GTK_RESPONSE_OK) {
 			is_ok = FALSE;
 		}
