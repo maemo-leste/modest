@@ -10,7 +10,7 @@ Here are some additional notes.
 
 Your editor may help you with this, for example for emacs:
 
-	(c-set-style "K&amp;R")
+	(c-set-style "K&R")
 	(setq tab-width 8)
 	(setq indent-tabs-mode t)
 	(setq c-basic-offset 8)
@@ -55,6 +55,3 @@ GLib/GTK+/GObject. Some things to remember:
   for NULL returns;
 * g_return_if_fail, g_return_if_reached and friends may be 'turned off', 
   ie. they are to be used for error checking,  but not for your programming logic
-
-
-
