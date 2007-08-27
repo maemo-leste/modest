@@ -156,22 +156,36 @@ gboolean
 modest_run_account_setup_wizard (ModestWindow *win)
 {
 	gboolean result = FALSE;
-	ModestEasysetupWizardDialog *wizard;
+	GtkDialog *wizard;
 	
-	if (!win)
-		win = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr ());
-		
-	g_return_val_if_fail (MODEST_IS_WINDOW(win), FALSE);
-	
-	wizard = modest_easysetup_wizard_dialog_new_or_present ();
-
-	/* if wizard == NULL it means there is already a easy setup thingy running;
-	 * in that case, don't do anything here; the call above will present it instead */
-	if (!wizard) {
-		g_message ("%s: easysetup wizard already running", __FUNCTION__);
+	wizard = modest_window_mgr_get_easysetup_dialog
+		(modest_runtime_get_window_mgr());
+	if (wizard) {
+		/* old wizard is active already; present it and
+		 * act as if the user cancelled the non-existing
+		 * new one
+		 */
+		printf ("wizard already active\n");
 		return FALSE;
-	}
+	} else {
+		/* there is no such wizard yet */
+		wizard = GTK_DIALOG(modest_easysetup_wizard_dialog_new ());
+		modest_window_mgr_set_easysetup_dialog
+			(modest_runtime_get_window_mgr(), GTK_DIALOG(wizard));
+	} 
 
+	
+	/* always present a main window in the background 
+	 * we do it here, so we cannot end up with to wizards (as this
+	 * function might be called in modest_window_mgr_get_main_window as well */
+	if (!win) 
+		win = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr());
+
+	/* make sure the mainwindow is visible */
+	gtk_widget_show_all (GTK_WIDGET(win));
+	gtk_window_present (GTK_WINDOW(win));
+
+	
 	gtk_window_set_transient_for (GTK_WINDOW (wizard), GTK_WINDOW (win));
 
 	/* Don't make this a modal window, because secondary windows will then 
@@ -188,6 +202,10 @@ modest_run_account_setup_wizard (ModestWindow *win)
 	
 	gtk_widget_destroy (GTK_WIDGET (wizard));
 
+	/* clear it from the window mgr */
+	modest_window_mgr_set_easysetup_dialog
+		(modest_runtime_get_window_mgr(), NULL);
+	
 	return result;
 }
 

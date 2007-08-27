@@ -125,8 +125,40 @@ gboolean       modest_window_mgr_get_fullscreen_mode   (ModestWindowMgr *self);
 void           modest_window_mgr_show_toolbars         (ModestWindowMgr *self,
 							gboolean show_toolbars,
 							gboolean fullscreen);
-
+/**
+ * modest_window_mgr_get_main_window:
+ * @self: a #ModestWindowMgr
+ *
+ * get the main window, or create if it's not there. don't destroy
+ * it.
+ *
+ * Returns: the main window or NULL in case of error
+ **/
 ModestWindow*  modest_window_mgr_get_main_window       (ModestWindowMgr *self);
+
+
+/**
+ * modest_window_mgr_get_easysetup_dialog:
+ * @self: a #ModestWindowMgr
+ *
+ * get the easysetup dialog; if it's NULL, there's no active dialog
+ *
+ * Returns: the easy setup dialog or NULL
+ **/
+GtkDialog*    modest_window_mgr_get_easysetup_dialog  (ModestWindowMgr *self);
+
+
+/**
+ * modest_window_mgr_get_easysetup_dialog:
+ * @self: a #ModestWindowMgr
+ *
+ * set the easysetup dialog; set it to NULL after destroying the dialog
+ *
+ * Returns: the easy setup dialog just set
+ **/
+GtkDialog*    modest_window_mgr_set_easysetup_dialog  (ModestWindowMgr *self,
+						       GtkDialog *dialog);
+
 
 /**
  * modest_window_mgr_prevent_hibernation_while_window_is_shown:

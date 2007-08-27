@@ -57,7 +57,10 @@ enum {
 typedef struct _ModestWindowMgrPrivate ModestWindowMgrPrivate;
 struct _ModestWindowMgrPrivate {
 	GList        *window_list;
+
 	ModestWindow *main_window;
+	GtkDialog    *easysetup_dialog;
+	
 	gboolean     fullscreen_mode;
 	gboolean     show_toolbars;
 	gboolean     show_toolbars_fullscreen;
@@ -123,7 +126,8 @@ modest_window_mgr_init (ModestWindowMgr *obj)
 	priv->window_list = NULL;
 	priv->main_window = NULL;
 	priv->fullscreen_mode = FALSE;
-
+	priv->easysetup_dialog = NULL;
+	
 	priv->preregistered_uids = NULL;
 
 	/* Could not initialize it from gconf, singletons are not
@@ -168,9 +172,17 @@ modest_window_mgr_finalize (GObject *obj)
 		priv->viewer_handlers = NULL;
 	}
 
+	if (priv->easysetup_dialog) {
+		g_warning ("%s: forgot to destroy an easysetup dialog somewhere",
+			   __FUNCTION__);
+		gtk_widget_destroy (GTK_WIDGET(priv->easysetup_dialog));
+		priv->easysetup_dialog = NULL;
+	}
+	
 	/* Do not unref priv->main_window because it does not hold a
 	   new reference */
 
+	
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
@@ -360,7 +372,7 @@ modest_window_mgr_register_window (ModestWindowMgr *self,
 	gint *handler_id;
 
 	g_return_if_fail (MODEST_IS_WINDOW_MGR (self));
-	g_return_if_fail (MODEST_IS_WINDOW (window));
+	g_return_if_fail (GTK_IS_WINDOW (window));
 
 	priv = MODEST_WINDOW_MGR_GET_PRIVATE (self);
 
@@ -379,6 +391,7 @@ modest_window_mgr_register_window (ModestWindowMgr *self,
 			priv->main_window = window;
 		}
 	}
+
 
 	/* remove from the list of pre-registered uids */
 	if (MODEST_IS_MSG_VIEW_WINDOW(window)) {
@@ -601,11 +614,13 @@ modest_window_mgr_unregister_window (ModestWindowMgr *self,
 		priv->main_window = NULL;
 
 		/* Disconnect all emissions of msg-changed */
-		g_hash_table_foreach (priv->viewer_handlers, 
-				      disconnect_msg_changed, 
-				      NULL);
-		g_hash_table_destroy (priv->viewer_handlers);
-		priv->viewer_handlers = NULL;
+		if (priv->viewer_handlers) {
+			g_hash_table_foreach (priv->viewer_handlers, 
+					      disconnect_msg_changed, 
+					      NULL);
+			g_hash_table_destroy (priv->viewer_handlers);
+			priv->viewer_handlers = NULL;
+		}
 	}
 
 	/* Remove the viewer window handler from the hash table. The
@@ -755,6 +770,31 @@ modest_window_mgr_get_main_window (ModestWindowMgr *self)
 	return priv->main_window;
 }
 
+
+GtkDialog*
+modest_window_mgr_get_easysetup_dialog (ModestWindowMgr *self)
+{
+	ModestWindowMgrPrivate *priv;
+	
+	g_return_val_if_fail (MODEST_IS_WINDOW_MGR (self), NULL);
+	priv = MODEST_WINDOW_MGR_GET_PRIVATE (self);
+
+	return priv->easysetup_dialog;
+}
+
+
+GtkDialog*
+modest_window_mgr_set_easysetup_dialog (ModestWindowMgr *self, GtkDialog *dialog)
+{
+	ModestWindowMgrPrivate *priv;
+	
+	g_return_val_if_fail (MODEST_IS_WINDOW_MGR (self), NULL);
+	priv = MODEST_WINDOW_MGR_GET_PRIVATE (self);
+
+	return priv->easysetup_dialog = dialog;
+}
+
+
 static void
 on_nonhibernating_window_hide(GtkWidget *widget, gpointer user_data)
 {
@@ -783,7 +823,8 @@ on_nonhibernating_window_show(GtkWidget *widget, gpointer user_data)
 		G_CALLBACK (on_nonhibernating_window_hide), self);
 }
 
-void modest_window_mgr_prevent_hibernation_while_window_is_shown (ModestWindowMgr *self,
+void
+modest_window_mgr_prevent_hibernation_while_window_is_shown (ModestWindowMgr *self,
 								  GtkWindow *window)
 {
 	g_return_if_fail (MODEST_IS_WINDOW_MGR (self));
@@ -797,7 +838,8 @@ void modest_window_mgr_prevent_hibernation_while_window_is_shown (ModestWindowMg
 	}
 }
 
-gboolean modest_window_mgr_get_hibernation_is_prevented (ModestWindowMgr *self)
+gboolean
+modest_window_mgr_get_hibernation_is_prevented (ModestWindowMgr *self)
 {
 	g_return_val_if_fail (MODEST_IS_WINDOW_MGR (self), FALSE);
 	
@@ -809,7 +851,8 @@ gboolean modest_window_mgr_get_hibernation_is_prevented (ModestWindowMgr *self)
 }
 
 
-void modest_window_mgr_save_state_for_all_windows (ModestWindowMgr *self)
+void
+modest_window_mgr_save_state_for_all_windows (ModestWindowMgr *self)
 {
 	g_return_if_fail (MODEST_IS_WINDOW_MGR (self));
 	

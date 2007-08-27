@@ -57,9 +57,9 @@ G_BEGIN_DECLS
 	(G_TYPE_CHECK_CLASS_CAST ((klass), \
 	MODEST_TYPE_EASYSETUP_WIZARD_DIALOG, ModestEasysetupWizardDialogClass))
 
-#define ACCOUNT_IS_WIZARD_DIALOG(obj) \
-	(G_TYPE_CHECK_INSTANCE_TYPE ((obj), \
-	MODEST_TYPE_EASYSETUP_WIZARD_DIALOG))
+#define MODEST_IS_EASYSETUP_WIZARD_DIALOG(obj) \
+	(G_TYPE_CHECK_INSTANCE_TYPE ((obj),				\
+				     MODEST_TYPE_EASYSETUP_WIZARD_DIALOG))
 
 #define MODEST_EASYSETUP_IS_WIZARD_DIALOG_CLASS(klass) \
 	(G_TYPE_CHECK_CLASS_TYPE ((klass), \
@@ -130,7 +130,7 @@ GType modest_easysetup_wizard_dialog_get_type (void);
  * return NULL, until the one before is destroyed; if it returns NULL
  * it will gtk_window_present the existing one.
  */
-ModestEasysetupWizardDialog* modest_easysetup_wizard_dialog_new_or_present (void);
+ModestEasysetupWizardDialog* modest_easysetup_wizard_dialog_new (void);
 
 G_END_DECLS
 
