@@ -60,6 +60,7 @@ static gboolean _selected_folder_is_MMC_or_POP_root (ModestMainWindow *win);
 static gboolean _selected_folder_is_root (ModestMainWindow *win);
 static gboolean _header_view_is_all_selected (ModestMainWindow *win);
 static gboolean _selected_folder_is_empty (ModestMainWindow *win);
+static gboolean _folder_view_has_focus (ModestWindow *win);
 static gboolean _selected_folder_is_same_as_source (ModestWindow *win);
 static gboolean _msg_download_in_progress (ModestMsgViewWindow *win);
 static gboolean _msg_download_completed (ModestMainWindow *win);
@@ -1027,6 +1028,13 @@ modest_ui_dimming_rules_on_paste_msgs (ModestWindow *win, gpointer user_data)
 			modest_dimming_rule_set_notification (rule, dgettext("hildon-common-strings", "ckct_ib_unable_to_paste_here"));
 	}
 	if (!dimmed) {
+		dimmed = !_folder_view_has_focus (win);
+		if (dimmed)
+			modest_dimming_rule_set_notification (rule,
+					dgettext("hildon-common-strings",
+					"ckct_ib_unable_to_paste_here"));
+	}
+	if (!dimmed) {
 		dimmed = _selected_folder_not_writeable (MODEST_MAIN_WINDOW(win));
 		if (dimmed) {
 			modest_dimming_rule_set_notification (rule, dgettext("hildon-common-strings", "ckct_ib_unable_to_paste_here"));
@@ -1624,6 +1632,25 @@ _selected_folder_is_empty (ModestMainWindow *win)
 	g_object_unref (folder);
 
 	return result;
+}
+
+static gboolean
+_folder_view_has_focus (ModestWindow *win)
+{
+	GtkWidget *folder_view = NULL;
+
+	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW(win), FALSE);
+
+	/* Get folder view */
+	folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(win),
+							   MODEST_WIDGET_TYPE_FOLDER_VIEW);
+	if (!folder_view)
+		return FALSE;
+
+	if(gtk_widget_is_focus(folder_view))
+		return TRUE;
+
+	return FALSE;
 }
 
 static gboolean
