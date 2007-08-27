@@ -174,13 +174,47 @@ modest_tny_send_queue_cancel (TnySendQueue *self, gboolean remove, GError **err)
 static void
 modest_tny_send_queue_add (TnySendQueue *self, TnyMsg *msg, GError **err)
 {
+	ModestTnySendQueuePrivate *priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE(self);
+	TnyHeader *header = NULL;
+	SendInfo *info = NULL;
+	GList* existing = NULL;
+	const gchar* msg_id = NULL;
+
 	g_return_if_fail (TNY_IS_SEND_QUEUE(self));
 	g_return_if_fail (TNY_IS_CAMEL_MSG(msg));
 
 	TNY_CAMEL_SEND_QUEUE_CLASS(parent_class)->add_func (self, msg, err); /* FIXME */
 
-	/* We cannot access the uid of the message here because it might 
-	 * just have been created. Wait for it being added to outbox. */
+	/* TODO: We cannot access the message ID of the message here because
+	 * it might  just have been created. Wait for it being added to outbox. */
+
+	header = tny_msg_get_header (msg);
+	msg_id = tny_header_get_message_id (header);
+	g_return_if_fail(msg_id != NULL);
+
+	/* Put newly added message in WAITING state */
+	existing = modest_tny_send_queue_lookup_info (MODEST_TNY_SEND_QUEUE(self), msg_id);
+	if(existing != NULL)
+	{
+		//g_assert(info->status == MODEST_TNY_SEND_QUEUE_SUSPENDED ||
+		//        info->status == MODEST_TNY_SEND_QUEUE_FAILED);
+
+		info = existing->data;
+		info->status = MODEST_TNY_SEND_QUEUE_WAITING;
+	}
+	else
+	{
+		
+		info = g_slice_new (SendInfo);
+
+		info->msg_id = strdup(msg_id);
+		info->status = MODEST_TNY_SEND_QUEUE_WAITING;
+		g_queue_push_tail (priv->queue, info);
+	}
+
+	g_signal_emit (self, signals[STATUS_CHANGED], 0, info->msg_id, info->status);
+
+	g_object_unref(G_OBJECT(header));
 }
 
 static void
@@ -279,61 +313,6 @@ modest_tny_send_queue_get_outbox (TnySendQueue *self)
 	return folder;
 }
 
-static void
-modest_tny_send_queue_update(TnyFolderObserver *self,
-                             TnyFolderChange *change)
-{
-	ModestTnySendQueuePrivate *priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE(self);
-	TnyHeader *header = NULL;
-	TnyMsg *msg = tny_folder_change_get_received_msg(change);
-	SendInfo *info = NULL;
-	GList* existing = NULL;
-	const gchar* msg_id = NULL;
-	TnyFolder* outbox = NULL;
-
-	if(msg)
-	{
-		outbox = tny_send_queue_get_outbox(TNY_SEND_QUEUE(self));
-		header = tny_msg_get_header(msg);
-
-		msg_id = tny_header_get_message_id (header);
-		g_assert(msg_id != NULL);
-
-		/* Put newly added message in WAITING state */
-		existing = modest_tny_send_queue_lookup_info (MODEST_TNY_SEND_QUEUE(self), msg_id);
-		if(existing != NULL)
-		{
-			//g_assert(info->status == MODEST_TNY_SEND_QUEUE_SUSPENDED ||
-			//        info->status == MODEST_TNY_SEND_QUEUE_FAILED);
-
-			info = existing->data;
-			info->status = MODEST_TNY_SEND_QUEUE_WAITING;
-		}
-		else
-		{
-			
-			info = g_slice_new (SendInfo);
-
-			info->msg_id = strdup(msg_id);
-			info->status = MODEST_TNY_SEND_QUEUE_WAITING;
-			g_queue_push_tail (priv->queue, info);
-		}
-
-		g_signal_emit (self, signals[STATUS_CHANGED], 0, info->msg_id, info->status);
-
-		g_object_unref(G_OBJECT(msg));
-		g_object_unref(G_OBJECT(header));
-		g_object_unref(G_OBJECT(outbox));
-	}
-}
-
-static void
-modest_tny_send_queue_folder_observer_init(gpointer g, gpointer iface_data)
-{
-	TnyFolderObserverIface *klass = (TnyFolderObserverIface *)g;
-	klass->update_func = modest_tny_send_queue_update;
-}
-
 GType
 modest_tny_send_queue_get_type (void)
 {
@@ -353,18 +332,9 @@ modest_tny_send_queue_get_type (void)
 			NULL
 		};
 		
-		static const GInterfaceInfo tny_folder_observer_info = {
-			(GInterfaceInitFunc) modest_tny_send_queue_folder_observer_init,
-			NULL,
-			NULL
-		};
-		
 		my_type = g_type_register_static (TNY_TYPE_CAMEL_SEND_QUEUE,
 						  "ModestTnySendQueue",
 						  &my_info, 0);
-
-		g_type_add_interface_static(my_type, TNY_TYPE_FOLDER_OBSERVER,
-			&tny_folder_observer_info);
 	}
 	return my_type;
 }
@@ -418,8 +388,6 @@ modest_tny_send_queue_finalize (GObject *obj)
 	g_queue_foreach (priv->queue, (GFunc)modest_tny_send_queue_info_free, NULL);
 	g_queue_free (priv->queue);
 
-	printf("Finalize called\n");
-
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
@@ -434,10 +402,6 @@ modest_tny_send_queue_new (TnyCamelTransportAccount *account)
 	
 	tny_camel_send_queue_set_transport_account (TNY_CAMEL_SEND_QUEUE(self),
 						    account); 
-
-	/* TODO: Does this produce cyclic references? */
-	tny_folder_add_observer(modest_tny_send_queue_get_outbox(TNY_SEND_QUEUE(self)),
-	                        TNY_FOLDER_OBSERVER(self));
 
 	/* Connect signals to control when a msg is being or has been sent */
 	g_signal_connect (G_OBJECT(self), "msg-sending",
