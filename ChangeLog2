@@ -1,3 +1,11 @@
+2007-08-27  Armin Burgmeier  <armin@openismus.com>
+
+	* src/modest-tny-send-queue.c: Implement TnyFolderObserver and
+	observe outbox for added messages to assign them a status. Previously,
+	this was done in modest_tny_send_queue_add(), but the message id might
+	not yet be known at that point. This reduces warnings when sending
+	mail, though I am not sure how this even worked before.
+
 2007-08-27  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/maemo/modest-account-settings-dialog.c:
