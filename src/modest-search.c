@@ -73,7 +73,7 @@ typedef struct
 	gint count_tries;
 } UtilIdleData;
 
-#define NUMBER_OF_TRIES = 10; /* Try approx every second, ten times. */
+#define NUMBER_OF_TRIES 10 /* Try approx every second, ten times. */
 
 static gboolean 
 on_timeout_check_account_is_online(gpointer user_data)
