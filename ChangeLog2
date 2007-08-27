@@ -1,3 +1,12 @@
+2007-08-27  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/modest-search.c: Added check_and_wait_for_account_is_online(), 
+	which checks every second, 10 times, to wait until the account is online 
+	so that we can use it, if the account is in the process of going online.
+	(modest_search_all_accounts): Use check_and_wait_for_account_is_online() 
+	so that searching works even when the application was not yet started before.
+	This fixes projects.maemo.org bug NB#63784, at least in scratchbox.
+
 2007-08-24  Armin Burgmeier  <armin@openismus.com>
 
 	* src/modest-widget-memory.c: Always show the default account when the

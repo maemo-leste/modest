@@ -207,7 +207,6 @@ check_and_offer_account_creation()
 	return result;
 }
 
-
 static gboolean
 on_idle_mail_to(gpointer user_data)
 {

@@ -65,6 +65,86 @@ g_strdup_or_null (const gchar *str)
 	return string;
 }
 
+typedef struct
+{
+	GMainLoop* loop;
+	TnyAccount *account;
+	gboolean is_online;
+	gint count_tries;
+} UtilIdleData;
+
+#define NUMBER_OF_TRIES = 10; /* Try approx every second, ten times. */
+
+static gboolean 
+on_timeout_check_account_is_online(gpointer user_data)
+{
+	printf ("DEBUG: %s:\n", __FUNCTION__);
+	UtilIdleData *data = (UtilIdleData*)user_data;
+	
+	gboolean stop_trying = FALSE;
+	if (data && data->account && 
+		(tny_account_get_connection_status (data->account) == TNY_CONNECTION_STATUS_CONNECTED) )
+	{
+		data->is_online = TRUE;
+		
+		stop_trying = TRUE;
+	}
+	else {
+		/* Give up if we have tried too many times: */
+		if (data->count_tries >= NUMBER_OF_TRIES)
+		{
+			stop_trying = TRUE;
+		}
+		else {
+			/* Wait for another timeout: */
+			++(data->count_tries);
+		}
+	}
+	
+	if (stop_trying) {
+		/* Allow the function that requested this idle callback to continue: */
+		if (data->loop)
+			g_main_loop_quit (data->loop);
+		
+		return FALSE; /* Don't call this again. */
+	} else {
+		return TRUE; /* Call this timeout callback again. */
+	}
+}
+
+/* Return TRUE immediately if the account is already online,
+ * otherwise check every second for NUMBER_OF_TRIES seconds and return TRUE as 
+ * soon as the account is online, or FALSE if the account does 
+ * not become online in the NUMBER_OF_TRIES seconds.
+ * This is useful when the D-Bus method was run immediately after 
+ * the application was started (when using D-Bus activation), 
+ * because the account usually takes a short time to go online.
+ */
+static gboolean
+check_and_wait_for_account_is_online(TnyAccount *account)
+{
+	if (tny_account_get_connection_status (account) == TNY_CONNECTION_STATUS_CONNECTED)
+		return TRUE;
+		
+	/* This blocks on the result: */
+	UtilIdleData *data = g_slice_new0 (UtilIdleData);
+	data->is_online = FALSE;
+		
+	GMainContext *context = NULL; /* g_main_context_new (); */
+	data->loop = g_main_loop_new (context, FALSE /* not running */);
+
+	g_timeout_add (1000, &on_timeout_check_account_is_online, data);
+
+	/* This main loop will run until the idle handler has stopped it: */
+	g_main_loop_run (data->loop);
+
+	g_main_loop_unref (data->loop);
+	/* g_main_context_unref (context); */
+
+	g_slice_free (UtilIdleData, data);
+	
+	return data->is_online;	
+}
 
 static GList*
 add_hit (GList *list, TnyHeader *header, TnyFolder *folder)
@@ -588,13 +668,20 @@ modest_search_all_accounts (ModestSearch *search)
 		if (account) {
 			/* g_debug ("DEBUG: %s: Searching account %s",
 		  	 __FUNCTION__, tny_account_get_name (account)); */
-			res = modest_search_account (account, search);
-			
-			if (res != NULL) {	
-				if (hits == NULL) {
-					hits = res;
-				} else {
-					hits = g_list_concat (hits, res);
+		  	 
+			/* Give the account time to go online if necessary, 
+			 * for instance if this is immediately after startup,
+			 * after D-Bus activation: */
+			if (check_and_wait_for_account_is_online (account)) {
+				/* Search: */
+				res = modest_search_account (account, search);
+				
+				if (res != NULL) {	
+					if (hits == NULL) {
+						hits = res;
+					} else {
+						hits = g_list_concat (hits, res);
+					}
 				}
 			}
 			

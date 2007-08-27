@@ -1,1 +1,10 @@
+2007-08-27  Murray Cumming,,,  <murrayc@murrayc-desktop>
+
+	reviewed by: <delete if not using a buddy>
+
+	* src/dbus_api/modest-dbus-callbacks.c:
+	* src/modest-search.c: (on_timeout_check_account_is_online),
+	(check_and_wait_for_account_is_online),
+	(modest_search_all_accounts):
+
 * please check the svn log instead
