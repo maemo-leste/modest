@@ -416,7 +416,7 @@ static gboolean attachment_view_focus_lost (
 		GdkEventFocus *event,
 		ModestMsgEditWindow *window)
 {
-	g_return_if_fail(MODEST_IS_MSG_EDIT_WINDOW(window));
+	g_return_val_if_fail(MODEST_IS_MSG_EDIT_WINDOW(window), FALSE);
 
 	update_remove_attachment_dimming(window);
 
@@ -2865,9 +2865,14 @@ subject_field_insert_text (GtkEditable *editable,
 	if (MIN (result_len, 1000) != g_utf8_strlen (new_text, 1000)) {
 		g_signal_stop_emission_by_name (G_OBJECT (editable), "insert-text");
 		if (result_len > 0)
+		{
+			/* Prevent endless recursion */
+			g_signal_handlers_block_by_func(G_OBJECT(editable), G_CALLBACK(subject_field_insert_text), window);
 			g_signal_emit_by_name (editable, "insert-text", 
-					       (gpointer) result->str, (gpointer) strlen (result->str), 
+					       (gpointer) result->str, (gpointer) result->len,
 					       (gpointer) position, (gpointer) window);
+		       g_signal_handlers_unblock_by_func(G_OBJECT(editable), G_CALLBACK(subject_field_insert_text), window);
+		}
 	}
 	
 	g_string_free (result, TRUE);

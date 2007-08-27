@@ -1,3 +1,8 @@
+2007-08-27  Armin Burgmeier  <armin@openismus.com>
+
+	* src/maemo/modest-msg-edit-window.c: Fixed a crash due to endless
+	recursion when entering text in the subject field.
+
 2007-08-27  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/modest-search.c: Added check_and_wait_for_account_is_online(), 
