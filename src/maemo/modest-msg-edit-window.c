@@ -139,6 +139,7 @@ static void modest_msg_edit_window_clipboard_owner_change (GtkClipboard *clipboa
 static void update_window_title (ModestMsgEditWindow *window);
 static void update_dimmed (ModestMsgEditWindow *window);
 static void update_paste_dimming (ModestMsgEditWindow *window);
+static void update_remove_attachment_dimming (ModestMsgEditWindow *window);
 static void update_copy_cut_dimming (ModestMsgEditWindow *window);
 static void update_select_all_dimming (ModestMsgEditWindow *window);
 static void update_zoom_dimming (ModestMsgEditWindow *window);
@@ -410,6 +411,18 @@ get_transports (void)
 	return transports;
 }
 
+static gboolean attachment_view_focus_leaved (
+		GtkWidget *widget,
+		GdkEventFocus *event,
+		ModestMsgEditWindow *window)
+{
+	g_assert(MODEST_IS_MSG_EDIT_WINDOW(window));
+
+	update_remove_attachment_dimming(window);
+
+	return FALSE;
+}
+
 void vadj_changed (GtkAdjustment *adj,
 		   ModestMsgEditWindow *window)
 {
@@ -491,6 +504,8 @@ init_window (ModestMsgEditWindow *obj)
 	gtk_container_add (GTK_CONTAINER (priv->add_attachment_button), attachment_icon);
 	gtk_box_pack_start (GTK_BOX (subject_box), priv->add_attachment_button, FALSE, FALSE, 0);
 	priv->attachments_view = modest_attachments_view_new (NULL);
+	g_signal_connect (G_OBJECT (priv->attachments_view), "focus-out-event",
+			  G_CALLBACK (attachment_view_focus_leaved), obj);
 	
 	priv->header_box = gtk_vbox_new (FALSE, 0);
 	
@@ -2791,25 +2806,10 @@ modest_msg_edit_window_clipboard_owner_change (GtkClipboard *clipboard,
 					       GdkEvent *event,
 					       ModestMsgEditWindow *window)
 {
-	ModestWindowPrivate *parent_priv;
-	ModestMsgEditWindowPrivate *priv;
-	GtkAction *action;
-	GList *selected_attachments = NULL;
-	gint n_att_selected = 0;
-
-	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
-	parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
-
 	if (!GTK_WIDGET_VISIBLE (window))
 		return;
 
-	selected_attachments = modest_attachments_view_get_selection (MODEST_ATTACHMENTS_VIEW (priv->attachments_view));
-	n_att_selected = g_list_length (selected_attachments);
-	g_list_free (selected_attachments);
-
-	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/AttachmentsMenu/RemoveAttachmentsMenu");
-	gtk_action_set_sensitive (action, n_att_selected == 1);
-	
+	update_remove_attachment_dimming (window);
 	update_copy_cut_dimming (window);
 	update_paste_dimming (window);
 }
@@ -3024,6 +3024,28 @@ modest_msg_edit_window_find_toolbar_close (GtkWidget *widget,
 	gtk_toggle_action_set_active (toggle, FALSE);
 }
 
+static void 
+update_remove_attachment_dimming (ModestMsgEditWindow *window)
+{
+	ModestWindowPrivate *parent_priv;
+	ModestMsgEditWindowPrivate *priv;
+	GtkAction *action;
+	GList *selected_attachments = NULL;
+	gint n_att_selected = 0;
+
+	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
+	parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
+
+	selected_attachments = modest_attachments_view_get_selection (
+			MODEST_ATTACHMENTS_VIEW (priv->attachments_view));
+	n_att_selected = g_list_length (selected_attachments);
+	g_list_free (selected_attachments);
+
+	action = gtk_ui_manager_get_action (
+			parent_priv->ui_manager,
+			"/MenuBar/AttachmentsMenu/RemoveAttachmentsMenu");
+	gtk_action_set_sensitive (action, n_att_selected == 1);
+}
 
 static void 
 update_copy_cut_dimming (ModestMsgEditWindow *window)
