@@ -49,11 +49,11 @@
 #endif /*HAVE_CONFIG_H */
 
 /* defines */
-#define FORWARD_STRING _("-----Forwarded Message-----")
-#define FROM_STRING _("From:")
-#define SENT_STRING _("Sent:")
-#define TO_STRING _("To:")
-#define	SUBJECT_STRING _("Subject:")
+#define FORWARD_STRING _("mcen_ia_editor_original_message")
+#define FROM_STRING _("mail_va_from")
+#define SENT_STRING _("mcen_fi_message_properties_sent")
+#define TO_STRING _("mail_va_to")
+#define	SUBJECT_STRING _("mail_va_subject")
 #define EMPTY_STRING ""
 
 /*
