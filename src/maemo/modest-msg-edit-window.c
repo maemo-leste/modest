@@ -411,12 +411,12 @@ get_transports (void)
 	return transports;
 }
 
-static gboolean attachment_view_focus_leaved (
+static gboolean attachment_view_focus_lost (
 		GtkWidget *widget,
 		GdkEventFocus *event,
 		ModestMsgEditWindow *window)
 {
-	g_assert(MODEST_IS_MSG_EDIT_WINDOW(window));
+	g_return_if_fail(MODEST_IS_MSG_EDIT_WINDOW(window));
 
 	update_remove_attachment_dimming(window);
 
@@ -505,7 +505,7 @@ init_window (ModestMsgEditWindow *obj)
 	gtk_box_pack_start (GTK_BOX (subject_box), priv->add_attachment_button, FALSE, FALSE, 0);
 	priv->attachments_view = modest_attachments_view_new (NULL);
 	g_signal_connect (G_OBJECT (priv->attachments_view), "focus-out-event",
-			  G_CALLBACK (attachment_view_focus_leaved), obj);
+			  G_CALLBACK (attachment_view_focus_lost), obj);
 	
 	priv->header_box = gtk_vbox_new (FALSE, 0);
 	
