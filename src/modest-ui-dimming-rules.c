@@ -58,6 +58,7 @@ static gboolean _selected_folder_is_any_of_type (ModestWindow *win, TnyFolderTyp
 static gboolean _selected_folder_is_root_or_inbox (ModestMainWindow *win);
 static gboolean _selected_folder_is_MMC_or_POP_root (ModestMainWindow *win);
 static gboolean _selected_folder_is_root (ModestMainWindow *win);
+static gboolean _header_view_is_all_selected (ModestMainWindow *win);
 static gboolean _selected_folder_is_empty (ModestMainWindow *win);
 static gboolean _selected_folder_is_same_as_source (ModestWindow *win);
 static gboolean _msg_download_in_progress (ModestMsgViewWindow *win);
@@ -1052,11 +1053,14 @@ modest_ui_dimming_rules_on_select_all (ModestWindow *win, gpointer user_data)
 	rule = MODEST_DIMMING_RULE (user_data);
 
 	/* Check dimmed rule */	
-	if (!dimmed) {
-		dimmed = _selected_folder_is_empty (MODEST_MAIN_WINDOW(win));			
-		if (dimmed)
-			modest_dimming_rule_set_notification (rule, "");
-	}
+	if (!dimmed)
+		dimmed = _selected_folder_is_empty (MODEST_MAIN_WINDOW(win));
+
+	if (!dimmed)
+		dimmed = _header_view_is_all_selected (MODEST_MAIN_WINDOW(win));
+
+	if (dimmed)
+		modest_dimming_rule_set_notification (rule, "");
 		
 	return dimmed;
 }
@@ -1558,6 +1562,36 @@ _selected_folder_is_MMC_or_POP_root (ModestMainWindow *win)
 	return result;
 }
 
+static gboolean
+_header_view_is_all_selected (ModestMainWindow *win)
+{
+	GtkTreeSelection *sel = NULL;
+	GtkTreeModel *model = NULL;
+	GtkTreeView *header_view = NULL;
+	gint count_sel, count_model;
+
+	header_view = GTK_TREE_VIEW(modest_main_window_get_child_widget(
+			win, MODEST_WIDGET_TYPE_HEADER_VIEW));
+	if(header_view == NULL)
+		return FALSE;
+	
+	model = gtk_tree_view_get_model(header_view);
+	if (model == NULL)
+		return FALSE;
+
+	sel = gtk_tree_view_get_selection(header_view);
+	if (sel == NULL)
+		return FALSE;
+
+	/* check if all the headers are selected or not */
+	count_sel = gtk_tree_selection_count_selected_rows (sel);
+	count_model = gtk_tree_model_iter_n_children(model, NULL);
+	if(count_sel == count_model != 0)
+		/*all header is selected*/
+		return TRUE;
+
+	return FALSE;
+}
 
 static gboolean
 _selected_folder_is_empty (ModestMainWindow *win)
