@@ -1,3 +1,13 @@
+2007-08-28  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/modest-search.c: (on_timeout_check_account_is_online):
+	Added some debug output to help me debug a problem on the N800.
+	(check_and_wait_for_account_is_online): Fail immediately if the 
+	device is offline.
+	modest_search_all_accounts(): Try the search even if the account does 
+	not seem to be online, because this can work sometimes, and should work 
+	with the cache if there is no active libconic connection.
+
 2007-08-27  Armin Burgmeier  <armin@openismus.com>
 
 	* src/modest-tny-send-queue.c: Implement TnyFolderObserver and

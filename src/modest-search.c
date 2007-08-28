@@ -81,6 +81,18 @@ on_timeout_check_account_is_online(gpointer user_data)
 	printf ("DEBUG: %s:\n", __FUNCTION__);
 	UtilIdleData *data = (UtilIdleData*)user_data;
 	
+	if (!data) {
+		g_warning ("%s: data is NULL.\n", __FUNCTION__);
+	}
+	
+	if (!(data->account)) {
+		g_warning ("%s: data->account is NULL.\n", __FUNCTION__);
+	}
+	
+	if (data && data->account) {
+		printf ("%s: tny_account_get_connection_status()==%d\n", __FUNCTION__, tny_account_get_connection_status (data->account));	
+	}
+	
 	gboolean stop_trying = FALSE;
 	if (data && data->account && 
 		(tny_account_get_connection_status (data->account) == TNY_CONNECTION_STATUS_CONNECTED) )
@@ -119,10 +131,18 @@ on_timeout_check_account_is_online(gpointer user_data)
  * This is useful when the D-Bus method was run immediately after 
  * the application was started (when using D-Bus activation), 
  * because the account usually takes a short time to go online.
+ * The return value is maybe not very useful.
  */
 static gboolean
 check_and_wait_for_account_is_online(TnyAccount *account)
 {
+	if (!tny_device_is_online (modest_runtime_get_device())) {
+		printf ("%s: device is offline.\n", __FUNCTION__);
+		return FALSE;
+	}
+		
+	printf ("%s: tny_account_get_connection_status()==%d\n", __FUNCTION__, tny_account_get_connection_status (account));
+	
 	if (tny_account_get_connection_status (account) == TNY_CONNECTION_STATUS_CONNECTED)
 		return TRUE;
 		
@@ -672,16 +692,16 @@ modest_search_all_accounts (ModestSearch *search)
 			/* Give the account time to go online if necessary, 
 			 * for instance if this is immediately after startup,
 			 * after D-Bus activation: */
-			if (check_and_wait_for_account_is_online (account)) {
-				/* Search: */
-				res = modest_search_account (account, search);
-				
-				if (res != NULL) {	
-					if (hits == NULL) {
-						hits = res;
-					} else {
-						hits = g_list_concat (hits, res);
-					}
+			check_and_wait_for_account_is_online (account);
+			
+			/* Search: */
+			res = modest_search_account (account, search);
+			
+			if (res != NULL) {	
+				if (hits == NULL) {
+					hits = res;
+				} else {
+					hits = g_list_concat (hits, res);
 				}
 			}
 			
