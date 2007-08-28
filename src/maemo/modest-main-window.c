@@ -1888,20 +1888,22 @@ modest_main_window_set_contents_style (ModestMainWindow *self,
 		break;
 	case MODEST_MAIN_WINDOW_CONTENTS_STYLE_DETAILS:
 	{
-		TnyFolderStore *selected_folderstore = 
-			modest_folder_view_get_selected (priv->folder_view);
-		if (TNY_IS_ACCOUNT (selected_folderstore)) {	
-		  priv->details_widget = create_details_widget (GTK_WIDGET (self),
+		/* if we're started without main win, there may not be a folder
+		 * view. this fixes a GLib-Critical */
+		if (priv->folder_view) {
+			TnyFolderStore *selected_folderstore = 
+				modest_folder_view_get_selected (priv->folder_view);
+			if (TNY_IS_ACCOUNT (selected_folderstore)) {	
+				priv->details_widget = create_details_widget (GTK_WIDGET (self),
 								TNY_ACCOUNT (selected_folderstore));
-
-			wrap_in_scrolled_window (priv->contents_widget, 
-					 priv->details_widget);
+				
+				wrap_in_scrolled_window (priv->contents_widget, 
+							 priv->details_widget);
+			}
+			g_object_unref (selected_folderstore);
+			modest_maemo_set_thumbable_scrollbar (GTK_SCROLLED_WINDOW(priv->contents_widget),
+							      FALSE);
 		}
-		g_object_unref (selected_folderstore);
-		modest_maemo_set_thumbable_scrollbar (GTK_SCROLLED_WINDOW(priv->contents_widget),
-						      FALSE);
-
-		
 		break;
 	}
 	case MODEST_MAIN_WINDOW_CONTENTS_STYLE_EMPTY:
@@ -1937,7 +1939,7 @@ on_configuration_key_changed (ModestConf* conf,
 			      ModestMainWindow *self)
 {
 	ModestMainWindowPrivate *priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
-	TnyAccount *account;
+	TnyAccount *account = NULL;
 
 	if (!key || 
 	    priv->notification_id != id ||
@@ -1946,10 +1948,10 @@ on_configuration_key_changed (ModestConf* conf,
 
 	if (priv->contents_style != MODEST_MAIN_WINDOW_CONTENTS_STYLE_DETAILS)
 		return;
-
-	account = (TnyAccount *) modest_folder_view_get_selected (priv->folder_view);
-	if (TNY_IS_ACCOUNT (account) &&
-	    !strcmp (tny_account_get_id (account), MODEST_LOCAL_FOLDERS_ACCOUNT_ID)) {
+	if (priv->folder_view) 
+		account = (TnyAccount *) modest_folder_view_get_selected (priv->folder_view);
+	if (account && TNY_IS_ACCOUNT (account) &&
+	    strcmp (tny_account_get_id (account), MODEST_LOCAL_FOLDERS_ACCOUNT_ID) == 0) {
 		GList *children;
 		GtkLabel *label;
 		const gchar *device_name;

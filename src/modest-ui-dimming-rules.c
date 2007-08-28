@@ -1544,6 +1544,9 @@ _selected_folder_is_MMC_or_POP_root (ModestMainWindow *win)
 
 	folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(win),
 							   MODEST_WIDGET_TYPE_FOLDER_VIEW);
+	if (!folder_view)
+		return FALSE;
+
 	/* Get selected folder as parent of new folder to create */
 	parent_folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW(folder_view));
 	if (!parent_folder)
@@ -1646,8 +1649,8 @@ _folder_view_has_focus (ModestWindow *win)
 							   MODEST_WIDGET_TYPE_FOLDER_VIEW);
 	if (!folder_view)
 		return FALSE;
-
-	if(gtk_widget_is_focus(folder_view))
+	
+	if (gtk_widget_is_focus(folder_view))
 		return TRUE;
 
 	return FALSE;

@@ -1647,6 +1647,8 @@ modest_do_refresh_current_folder(ModestWindow *win)
 		folder_view = 
 			modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win), 
 							     MODEST_WIDGET_TYPE_FOLDER_VIEW);
+		if (!folder_view)
+			return;
 
 		folder_store = modest_folder_view_get_selected (MODEST_FOLDER_VIEW (folder_view));
 
