@@ -198,13 +198,6 @@ modest_cache_mgr_get_cache   (ModestCacheMgr* self, ModestCacheMgrCacheType type
 }
 
 
-static gboolean
-always_true (gpointer key, gpointer value, gpointer user_data)
-{
-	return TRUE;
-}
-
-
 void
 modest_cache_mgr_flush (ModestCacheMgr *self, ModestCacheMgrCacheType type)
 {
@@ -213,13 +206,12 @@ modest_cache_mgr_flush (ModestCacheMgr *self, ModestCacheMgrCacheType type)
 	
 	g_return_if_fail (self);
 	g_return_if_fail (type >= 0 && type <= MODEST_CACHE_MGR_CACHE_TYPE_NUM);
-
+	
 	priv  = MODEST_CACHE_MGR_GET_PRIVATE(self);
 
 	cache = get_cache (priv, type);
 	if (cache)
-		g_hash_table_foreach_remove (cache, always_true, NULL);
-	/*  g_hash_table_remove_all (cache) in only available since GLIB 2.12 */
+		g_hash_table_destroy (cache);
 }
 
 
@@ -228,7 +220,7 @@ modest_cache_mgr_flush_all (ModestCacheMgr *self)
 {
 	int i;
 	g_return_if_fail (self);
-
+	
 	for (i = 0; i != MODEST_CACHE_MGR_CACHE_TYPE_NUM; ++i)
 		modest_cache_mgr_flush (self, i);	
 }

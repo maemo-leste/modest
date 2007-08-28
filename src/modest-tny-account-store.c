@@ -287,7 +287,7 @@ modest_tny_account_store_instance_init (ModestTnyAccountStore *obj)
 	 * so we can avoid showing the account settings twice for the same modest account: */				      
 	priv->account_settings_dialog_hash = g_hash_table_new_full (g_str_hash, g_str_equal, 
 								    g_free, NULL);
-							      
+	
 	/* Respond to volume mounts and unmounts, such 
 	 * as the insertion/removal of the memory card: */
 	/* This is a singleton, so it does not need to be unrefed. */
@@ -787,6 +787,11 @@ modest_tny_account_store_finalize (GObject *obj)
 	if (priv->password_hash) {
 		g_hash_table_destroy (priv->password_hash);
 		priv->password_hash = NULL;
+	}
+
+	if (priv->account_settings_dialog_hash) {
+		g_hash_table_destroy (priv->account_settings_dialog_hash);
+		priv->account_settings_dialog_hash = NULL;
 	}
 
 	/* Disconnect VFS signals */
@@ -1611,11 +1616,14 @@ insert_account (ModestTnyAccountStore *self,
 		folders = tny_simple_list_new ();
 		tny_folder_store_get_folders (TNY_FOLDER_STORE (account_outbox),
 					      folders, NULL, NULL);
-		g_assert (tny_list_get_length (folders) == 1);
+		if (tny_list_get_length (folders) != 1)
+			g_warning ("%s: there should be only one outbox folder, but found %d!",
+				   __FUNCTION__, tny_list_get_length (folders));
 		
 		iter_folders = tny_list_create_iterator (folders);
 		per_account_outbox = TNY_FOLDER (tny_iterator_get_current (iter_folders));
 		g_object_unref (iter_folders);
+		g_object_unref (folders);
 		g_object_unref (account_outbox);
 
 		/* Add the outbox of the new per-account-local-outbox
