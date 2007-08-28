@@ -2408,14 +2408,18 @@ modest_ui_actions_rename_folder_error_handler (ModestMailOperation *mail_op,
 	
 	/* Get error message */
 	error = modest_mail_operation_get_error (mail_op);
-	if (error != NULL && error->message != NULL) {
-		message = error->message;
-	} else {
-		message = _("!!! FIXME: Unable to rename");
+	if (!error)
+		g_return_if_reached ();
+
+	switch (error->code) {
+	case MODEST_MAIL_OPERATION_ERROR_FOLDER_EXISTS:
+		message = _CS("ckdg_ib_folder_already_exists");
+		break;
+	default:
+		g_return_if_reached ();
 	}
-	
-	modest_platform_information_banner (GTK_WIDGET (window), NULL,
-	                                    message);
+
+	modest_platform_information_banner (GTK_WIDGET (window), NULL, message);
 }
 
 void 
@@ -2465,6 +2469,7 @@ modest_ui_actions_on_rename_folder (GtkAction *action,
 
 		if (response == GTK_RESPONSE_ACCEPT && strlen (folder_name) > 0) {
 			ModestMailOperation *mail_op;
+			GtkTreeSelection *sel = NULL;
 
 			mail_op = 
 				modest_mail_operation_new_with_error_handling (MODEST_MAIL_OPERATION_TYPE_INFO,
@@ -2476,13 +2481,14 @@ modest_ui_actions_on_rename_folder (GtkAction *action,
 			modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
 							 mail_op);
 
-			modest_header_view_clear (MODEST_HEADER_VIEW (header_view));
-			
+			/* Clear the headers view */
+			sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (folder_view));
+			gtk_tree_selection_unselect_all (sel);
+
+			/* Select *after* the changes */
 			modest_folder_view_select_folder (MODEST_FOLDER_VIEW(folder_view),
 							  TNY_FOLDER(folder), TRUE);
 
-			modest_header_view_clear ((ModestHeaderView *) header_view);
- 
 			modest_mail_operation_rename_folder (mail_op,
 							     TNY_FOLDER (folder),
 							     (const gchar *) folder_name);
@@ -2544,7 +2550,15 @@ delete_folder (ModestMainWindow *main_window, gboolean move_to_trash)
 	g_free (message);
 
 	if (response == GTK_RESPONSE_OK) {
-		ModestMailOperation *mail_op = 
+		ModestMailOperation *mail_op;
+		GtkTreeSelection *sel;
+
+		/* Unselect the folder before deleting it to free the headers */
+		sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (folder_view));
+		gtk_tree_selection_unselect_all (sel);
+
+		/* Create the mail operation */
+		mail_op =
 			modest_mail_operation_new_with_error_handling (MODEST_MAIL_OPERATION_TYPE_DELETE, 
 								       G_OBJECT(main_window),
 								       modest_ui_actions_delete_folder_error_handler,
@@ -3926,7 +3940,6 @@ modest_ui_actions_on_main_window_move_to (GtkAction *action,
 			goto end;
 		
 		/* Clean folder on header view before moving it */
-/* 		modest_header_view_clear (MODEST_HEADER_VIEW (header_view));  */
 		sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (folder_view));
 		gtk_tree_selection_unselect_all (sel);
 

@@ -1470,7 +1470,7 @@ on_progress_changed (ModestMailOperation *mail_op,
 	gtk_drag_finish (helper->context, success, FALSE, helper->time);
 
 	/* Free the helper */
-	gtk_tree_path_free (helper->source_row);	
+	gtk_tree_path_free (helper->source_row);
 	g_slice_free (DndHelper, helper);
 }
 

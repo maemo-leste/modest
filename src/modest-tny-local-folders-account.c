@@ -103,8 +103,7 @@ modest_tny_local_folders_account_query_passes (TnyFolderStoreQuery *query, TnyFo
 {
 	gboolean retval = FALSE;
 
-	if (query && (tny_list_get_length (tny_folder_store_query_get_items (query)) > 0))
-	{
+	if (query && (tny_list_get_length (tny_folder_store_query_get_items (query)) > 0)) {
 		TnyList *items = tny_folder_store_query_get_items (query);
 		TnyIterator *iterator;
 		iterator = tny_list_create_iterator (items);
@@ -138,7 +137,7 @@ modest_tny_local_folders_account_query_passes (TnyFolderStoreQuery *query, TnyFo
 			tny_iterator_next (iterator);
 		}
 		 
-		g_object_unref (G_OBJECT (iterator));    
+		g_object_unref (G_OBJECT (iterator));
 		g_object_unref (G_OBJECT (items));
 	} else
 		retval = TRUE;
@@ -198,16 +197,26 @@ modest_tny_local_folders_account_folder_name_in_use (ModestTnyLocalFoldersAccoun
 	gboolean retval;
 	
 	/* Check that we're not trying to create/rename any folder
-	   with the same name that our OUTBOX */
+	   with the same name that our OUTBOX, DRAFT, SENT */
 	priv = TNY_LOCAL_FOLDERS_ACCOUNT_GET_PRIVATE (self);
 	down_name = g_utf8_strdown (name, strlen (name));
 
 	type_name = modest_local_folder_info_get_type_name (TNY_FOLDER_TYPE_OUTBOX);
-	if (!strcmp (type_name, down_name))
+	if (!strcmp (type_name, down_name)) {
 		retval = TRUE;
-	else
-		retval = FALSE;
-
+	} else {
+		type_name = modest_local_folder_info_get_type_name (TNY_FOLDER_TYPE_DRAFTS);
+		if (!strcmp (type_name, down_name)) {
+			retval = TRUE;
+		} else {
+			type_name = modest_local_folder_info_get_type_name (TNY_FOLDER_TYPE_SENT);
+			if (!strcmp (type_name, down_name)) {
+				retval = TRUE;
+			} else {
+				retval = FALSE;
+			}
+		}
+	}
 	g_free (down_name);
 
 	return retval;
