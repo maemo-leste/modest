@@ -63,7 +63,7 @@ struct _ModestFolderViewClass {
 
 	/* emitted when a folder is selected or unselected */
 	void     (*folder_selection_changed) (ModestFolderView* self,
-					      TnyFolder *folder,
+					      TnyFolderStore *folder,
 					      gboolean selected,
 					      gpointer user_data);
 

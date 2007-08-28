@@ -1315,17 +1315,26 @@ modest_platform_on_new_msg (void)
 #ifdef MODEST_HAVE_HILDON_NOTIFY
 	HildonNotification *not;
 
-	/* Create a new notification. FIXME put the right values, need
-	   some more specs */
+	/* Create a new notification. TODO: per-mail data needed */
 	not = hildon_notification_new ("TODO: (new email) Summary",
 				       "TODO: (new email) Description",
-				       "qgn_contact_group_chat_invitation",
-				       "system.note.dialog");
+				       "qgn_list_messagin_mail_unread",
+				       NULL);
 
-	/* Play sound SR-SND-18. TODO: play the right file */
-	/* TODO: Where is this declared? hildon_notification_set_sound (not, "/usr/share/sounds/ui-new_email.wav"); */
+	hildon_notification_add_dbus_action(not,
+					    "default",
+					    "Cancel",
+					    MODEST_DBUS_SERVICE,
+					    MODEST_DBUS_OBJECT,
+					    MODEST_DBUS_IFACE,
+					    MODEST_DBUS_METHOD_OPEN_DEFAULT_INBOX,
+					    -1);
+	
+	/* Play sound SR-SND-18 */
+	hildon_notification_set_sound (not, "/usr/share/sounds/ui-new_email.wav");
 
 	/* Set the led pattern */
+        notify_notification_set_hint_int32 (NOTIFY_NOTIFICATION (not), "dialog-type", 4);
 	notify_notification_set_hint_int32 (NOTIFY_NOTIFICATION (not), "led-pattern", 3);
 
 	/* Notify. We need to do this in an idle because this function

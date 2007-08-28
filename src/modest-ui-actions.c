@@ -2918,7 +2918,7 @@ modest_ui_actions_on_copy (GtkAction *action,
 
 	} else if (MODEST_IS_FOLDER_VIEW (focused_widget)) {
  		modest_folder_view_copy_selection (MODEST_FOLDER_VIEW (focused_widget));
-	}    
+	}
 
 	/* Show information banner if there was a copy to clipboard */
 	if(copied)
@@ -3483,6 +3483,103 @@ create_move_to_dialog_on_new_folder(GtkWidget *button, gpointer user_data)
 	                                 GTK_WIDGET (user_data));
 }
 
+/*
+ * This function is used to track changes in the selection of the
+ * folder view that is inside the "move to" dialog to enable/disable
+ * the OK button because we do not want the user to select a
+ * disallowed destination for a folder
+ */
+static void
+on_move_to_dialog_folder_selection_changed (ModestFolderView* self,
+					    TnyFolderStore *folder_store,
+					    gboolean selected,
+					    gpointer user_data)
+{
+	GtkWidget *dialog = NULL, *ok_button = NULL;
+	GList *children = NULL;
+	gboolean sensitive = TRUE, moving_folder = FALSE;
+	GtkWidget *folder_view = NULL;
+
+	if (!selected)
+		return;
+
+	/* Get the OK button */
+	dialog = gtk_widget_get_ancestor (GTK_WIDGET (self), GTK_TYPE_DIALOG);
+	if (!dialog)
+		return;
+
+	children = gtk_container_get_children (GTK_CONTAINER (GTK_DIALOG (dialog)->action_area));
+	ok_button = GTK_WIDGET (children->next->next->data);
+	g_list_free (children);
+
+	/* If it */
+	if (MODEST_IS_MAIN_WINDOW (user_data)) {
+		/* Get the widgets */
+		folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (user_data),
+								   MODEST_WIDGET_TYPE_FOLDER_VIEW);
+		if (gtk_widget_is_focus (folder_view))
+			moving_folder = TRUE;
+	}
+
+	if (moving_folder) {
+		TnyFolderStore *moved_folder = NULL, *parent = NULL;
+
+		/* Get the folder to move */
+		moved_folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW (folder_view));
+		
+		/* Check that we're not moving to the same folder */
+		if (TNY_IS_FOLDER (moved_folder)) {
+			parent = tny_folder_get_folder_store (TNY_FOLDER (moved_folder));
+			if (parent == folder_store)
+				sensitive = FALSE;
+			g_object_unref (parent);
+		} 
+
+		if (sensitive && TNY_IS_ACCOUNT (folder_store)) {
+			TnyAccount *local_account = NULL;
+			ModestTnyAccountStore *account_store;
+
+			account_store = modest_runtime_get_account_store ();
+			local_account = modest_tny_account_store_get_local_folders_account (account_store);
+
+			/* Do not allow to move to an account unless it's the
+			   local folders account */
+			if ((gpointer) local_account != (gpointer) folder_store)
+				sensitive = FALSE;
+			g_object_unref (local_account);
+		} 
+
+		if (sensitive && (moved_folder == folder_store)) {
+			/* Do not allow to move to itself */
+			sensitive = FALSE;
+		}
+		g_object_unref (moved_folder);
+	} else {
+		TnyHeader *header = NULL;
+		TnyFolder *src_folder = NULL;
+
+		/* Moving a message */
+		if (MODEST_IS_MSG_VIEW_WINDOW (user_data)) {
+			header = modest_msg_view_window_get_header (MODEST_MSG_VIEW_WINDOW (user_data));
+			src_folder = tny_header_get_folder (header);
+			g_object_unref (header);
+		} else {
+			src_folder = 
+				TNY_FOLDER (modest_folder_view_get_selected (MODEST_FOLDER_VIEW (folder_view)));
+		}
+
+		/* Do not allow to move the msg to the same folder */
+		/* Do not allow to move the msg to an account */
+		if ((gpointer) src_folder == (gpointer) folder_store ||
+		    TNY_IS_ACCOUNT (folder_store))
+			sensitive = FALSE;
+		g_object_unref (src_folder);
+	}
+
+	/* Set sensitivity of the OK button */
+	gtk_widget_set_sensitive (ok_button, sensitive);
+}
+
 static GtkWidget*
 create_move_to_dialog (GtkWindow *win,
 		       GtkWidget *folder_view,
@@ -3512,6 +3609,14 @@ create_move_to_dialog (GtkWindow *win,
 	/* Create folder view */
 	*tree_view = modest_platform_create_folder_view (NULL);
 
+	/* Track changes in the selection to disable the OK button
+	   whenever "Move to" is not possible */
+	g_signal_connect (*tree_view,
+			  "folder_selection_changed",
+			  G_CALLBACK (on_move_to_dialog_folder_selection_changed),
+			  win);
+
+	/* Listen to clicks on New button */
 	g_signal_connect (G_OBJECT (new_button), 
 			  "clicked", 
 			  G_CALLBACK(create_move_to_dialog_on_new_folder), 
