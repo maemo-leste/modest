@@ -44,6 +44,7 @@ struct _ModestWindowPrivate {
 	GtkWidget               *toolbar;
 	GtkWidget               *menubar;
 	DimmedState             *dimming_state;
+	gboolean                ui_dimming_enabled;
 	gchar                   *active_account;
 };
 

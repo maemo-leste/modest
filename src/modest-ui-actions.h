@@ -453,6 +453,12 @@ void     modest_ui_actions_get_msgs_full_error_handler         (ModestMailOperat
  **/
 void modest_do_message_delete (TnyHeader *header, ModestWindow *win);
 
+/** A convenience method, because deleting a message is 
+ * otherwise complicated, and it's best to change it in one place 
+ * when we change it.
+ **/
+void modest_do_messages_delete (TnyList *headers, ModestWindow *win);
+
 /* Show the account creation wizard dialog.
  * returns: TRUE if an account was created. FALSE if the user cancelled.
  */

@@ -274,6 +274,26 @@ void modest_window_check_dimming_rules_group (ModestWindow *self,
 					      const gchar *group_name);
 
 
+/**
+ * modest_window_enable_dimming:
+ * @self: a #ModestWindow instance object
+ * 
+ * Enables UI dimming rules checking.
+ *
+ **/
+void modest_window_enable_dimming (ModestWindow *self);
+
+
+/**
+ * modest_window_disable_dimming:
+ * @self: a #ModestWindow instance object
+ * 
+ * Disables UI dimming rules checking.
+ *
+ **/
+void modest_window_disable_dimming (ModestWindow *self);
+
+
 void modest_window_disconnect_signals (ModestWindow *self);
 
 

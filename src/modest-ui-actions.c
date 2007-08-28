@@ -143,11 +143,6 @@ static gboolean download_uncached_messages (TnyList *header_list,
 					    GtkWindow *win);
 
 
-/* static gint     msgs_move_to_confirmation (GtkWindow *win, */
-/* 					   TnyFolder *dest_folder, */
-/* 					   gboolean delete, */
-/* 					   TnyList *headers); */
-
 
 /* Show the account creation wizard dialog.
  * returns: TRUE if an account was created. FALSE if the user cancelled.
@@ -320,13 +315,31 @@ void modest_do_message_delete (TnyHeader *header, ModestWindow *win)
 	g_object_unref (G_OBJECT (mail_op));
 }
 
-static void
-headers_action_delete (TnyHeader *header,
-		       ModestWindow *win,
-		       gpointer user_data)
+/** A convenience method, because deleting a message is 
+ * otherwise complicated, and it's best to change it in one place 
+ * when we change it.
+ */
+void modest_do_messages_delete (TnyList *headers, ModestWindow *win)
 {
-	modest_do_message_delete (header, win);
+	ModestMailOperation *mail_op = NULL;
+	mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_DELETE, 
+		win ? G_OBJECT(win) : NULL);
+	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
+					 mail_op);
+	
+	/* Always delete. TODO: Move to trash still not supported */
+	modest_mail_operation_remove_msgs (mail_op, headers, FALSE);
+	g_object_unref (G_OBJECT (mail_op));
 }
+
+/* static void */
+/* headers_action_delete (TnyHeader *header, */
+/* 		       ModestWindow *win, */
+/* 		       gpointer user_data) */
+/* { */
+/* 	modest_do_message_delete (header, win); */
+
+/* } */
 
 /** After deleing a message that is currently visible in a window, 
  * show the next message from the list, or close the window if there are no more messages.
@@ -432,7 +445,6 @@ modest_ui_actions_on_delete_message (GtkAction *action, ModestWindow *win)
 		GList *sel_list = NULL, *tmp = NULL;
 		GtkTreeRowReference *row_reference = NULL;
 		GtkTreePath *next_path = NULL;
-		TnyFolder *folder = NULL;
 		GError *err = NULL;
 
 		/* Find last selected row */			
@@ -450,11 +462,21 @@ modest_ui_actions_on_delete_message (GtkAction *action, ModestWindow *win)
 			}
 		}
 		
-		/* Remove each header. If it's a view window header_view == NULL */
-		do_headers_action (win, headers_action_delete, header_view);
+		/* Disable window dimming management */
+		modest_window_disable_dimming (MODEST_WINDOW(win));
 
-		/* refresh the header view (removing marked-as-deleted)*/
- 		modest_header_view_refilter (MODEST_HEADER_VIEW(header_view)); 
+		/* Remove each header. If it's a view window header_view == NULL */
+/* 		do_headers_action (win, headers_action_delete, header_view); */
+		modest_do_messages_delete (header_list, win);
+		
+
+		/* Enable window dimming management */
+		gtk_tree_selection_unselect_all (sel);
+		modest_window_enable_dimming (MODEST_WINDOW(win));
+
+		/* FIXME: May be folder_monitor will also refilter treemode on EXPUNGE changes ? */
+		/* refresh the header view (removing marked-as-deleted) */
+/*  		modest_header_view_refilter (MODEST_HEADER_VIEW(header_view));  */
 		
 		if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
 			modest_ui_actions_refresh_message_window_after_delete (MODEST_MSG_VIEW_WINDOW (win));
@@ -477,29 +499,10 @@ modest_ui_actions_on_delete_message (GtkAction *action, ModestWindow *win)
 				gtk_tree_row_reference_free (row_reference);
 		}
 
-		/* Get folder from first header and sync it */
-		iter = tny_list_create_iterator (header_list);
-		header = TNY_HEADER (tny_iterator_get_current (iter));
-		folder = tny_header_get_folder (header);
-		if (TNY_IS_CAMEL_IMAP_FOLDER (folder))
-/* 			tny_folder_sync_async(folder, FALSE, NULL, NULL, NULL); /\* FALSE --> don't expunge *\/ */
-			tny_folder_sync (folder, FALSE, &err); /* FALSE --> don't expunge */
-		else if (TNY_IS_CAMEL_POP_FOLDER (folder))
-/* 			tny_folder_sync_async(folder, FALSE, NULL, NULL, NULL); /\* TRUE --> dont expunge *\/ */
-			tny_folder_sync (folder, TRUE, &err); /* TRUE --> expunge */
-		else
-			/* local folders */
-/* 			tny_folder_sync_async(folder, TRUE, NULL, NULL, NULL); /\* TRUE --> expunge *\/ */
-			tny_folder_sync (folder, TRUE, &err); /* TRUE --> expunge */
-
 		if (err != NULL) {
 			printf ("DEBUG: %s: Error: code=%d, text=%s\n", __FUNCTION__, err->code, err->message);
 			g_error_free(err);
 		}
-
-		g_object_unref (header);
-		g_object_unref (iter);
-		g_object_unref (folder);
 		
 		/* Update toolbar dimming state */
 		modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (main_window));
@@ -1834,7 +1837,7 @@ folder_refreshed_cb (ModestMailOperation *mail_op,
 	folder_empty = folder_empty || all_marked_as_deleted ;
 	if (folder_empty) {
 
-	printf ("DEBUG: %s: tny_folder_get_all_count() returned 0.\n", __FUNCTION__);
+		printf ("DEBUG: %s: tny_folder_get_all_count() returned 0.\n", __FUNCTION__);
 		modest_main_window_set_contents_style (win,
 						       MODEST_MAIN_WINDOW_CONTENTS_STYLE_EMPTY);
 	} else {
@@ -2119,8 +2122,6 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 	}
 	
 	gchar *from = modest_account_mgr_get_from_string (account_mgr, account_name);
-
-/* 	modest_platform_information_banner (NULL, NULL, _("mcen_ib_outbox_waiting_to_be_sent")); */
 
 	/* Create the mail operation */
 	ModestMailOperation *mail_operation = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_SEND, G_OBJECT(edit_window));
@@ -3110,16 +3111,25 @@ modest_ui_actions_on_select_all (GtkAction *action,
 		GtkWidget *header_view = focused_widget;
  		GtkTreeSelection *selection = NULL;
 		
-		if (!(MODEST_IS_HEADER_VIEW (focused_widget)))
+		if (!(MODEST_IS_HEADER_VIEW (focused_widget))) {
 			header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (window),
 									   MODEST_WIDGET_TYPE_HEADER_VIEW);
+		}
 				
+		/* Disable window dimming management */
+		modest_window_disable_dimming (MODEST_WINDOW(window));
+		
 		/* Select all messages */
 		selection = gtk_tree_view_get_selection (GTK_TREE_VIEW(header_view));
 		gtk_tree_selection_select_all (selection);
 
 		/* Set focuse on header view */
 		gtk_widget_grab_focus (header_view);
+
+
+		/* Enable window dimming management */
+		modest_window_enable_dimming (MODEST_WINDOW(window));
+		modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (window));
 	}
 
 }

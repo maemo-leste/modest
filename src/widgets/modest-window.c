@@ -129,6 +129,8 @@ modest_window_init (ModestWindow *obj)
 	priv->toolbar        = NULL;
 	priv->menubar        = NULL;
 
+	priv->dimming_state = NULL;
+	priv->ui_dimming_enabled = TRUE;
 	priv->active_account = NULL;
 
 	/* Connect signals */
@@ -193,7 +195,8 @@ modest_window_check_dimming_rules (ModestWindow *self)
 	g_return_if_fail (MODEST_IS_WINDOW (self));
 	priv = MODEST_WINDOW_GET_PRIVATE(self);
 
-	modest_ui_dimming_manager_process_dimming_rules (priv->ui_dimming_manager);
+	if (priv->ui_dimming_enabled)
+		modest_ui_dimming_manager_process_dimming_rules (priv->ui_dimming_manager);
 }
 
 void
@@ -205,7 +208,8 @@ modest_window_check_dimming_rules_group (ModestWindow *self,
 	g_return_if_fail (MODEST_IS_WINDOW (self));
 	priv = MODEST_WINDOW_GET_PRIVATE(self);
 
-	modest_ui_dimming_manager_process_dimming_rules_group (priv->ui_dimming_manager, group_name);
+	if (priv->ui_dimming_enabled)
+		modest_ui_dimming_manager_process_dimming_rules_group (priv->ui_dimming_manager, group_name);
 }
 
 void
@@ -234,6 +238,28 @@ modest_window_get_dimming_state (ModestWindow *window)
 	priv = MODEST_WINDOW_GET_PRIVATE(window);
 
 	return priv->dimming_state;
+}
+
+void
+modest_window_disable_dimming (ModestWindow *self)
+{
+	ModestWindowPrivate *priv;	
+
+	g_return_if_fail (MODEST_IS_WINDOW (self));
+	priv = MODEST_WINDOW_GET_PRIVATE(self);
+
+	priv->ui_dimming_enabled = FALSE;
+}
+
+void
+modest_window_enable_dimming (ModestWindow *self)
+{
+	ModestWindowPrivate *priv;	
+
+	g_return_if_fail (MODEST_IS_WINDOW (self));
+	priv = MODEST_WINDOW_GET_PRIVATE(self);
+
+	priv->ui_dimming_enabled = TRUE;
 }
 
 GtkAction *

@@ -932,6 +932,9 @@ modest_header_view_set_folder_intern (ModestHeaderView *self, TnyFolder *folder)
 	sortable = gtk_tree_model_sort_new_with_model (GTK_TREE_MODEL(headers));
 	g_object_unref (G_OBJECT (headers));
 
+	/* Init filter_row function to examine empty status */
+	priv->status  = HEADER_VIEW_INIT;
+
 	/* Create a tree model filter to hide and show rows for cut operations  */
 	filter_model = gtk_tree_model_filter_new (sortable, NULL);
 	gtk_tree_model_filter_set_visible_func (GTK_TREE_MODEL_FILTER (filter_model),
@@ -1688,7 +1691,7 @@ filter_row (GtkTreeModel *model,
 	}
 
  frees:
-	priv->status = priv->status && !visible;
+	priv->status = ((gboolean) priv->status) && !visible;
 	
 	/* Free */
 	if (header)

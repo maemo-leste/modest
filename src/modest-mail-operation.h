@@ -506,6 +506,21 @@ void          modest_mail_operation_remove_msg     (ModestMailOperation *self,
 						    gboolean remove_to_trash);
 
 /**
+ * modest_mail_operation_remove_msg:
+ * @self: a #ModestMailOperation
+ * @headers: the #TnyList of the messages to delete
+ * @remove_to_trash: TRUE to move it to trash or FALSE to delete it
+ * permanently
+ * 
+ * Deletes a list of messages. This operation is synchronous, so the
+ * #ModestMailOperation should not be added to any
+ * #ModestMailOperationQueue
+ **/
+void          modest_mail_operation_remove_msgs     (ModestMailOperation *self,
+						     TnyList *headers,
+						     gboolean remove_to_trash);
+
+/**
  * modest_mail_operation_get_msg:
  * @self: a #ModestMailOperation
  * @header_list: the #TnyHeader of the message to get
