@@ -1149,10 +1149,15 @@ gboolean modest_platform_connect_and_wait (GtkWindow *parent_window, TnyAccount 
 
 	g_slice_free (UtilIdleData, data);
 
-	gboolean result = tny_device_is_online (device);
+	const gboolean result = tny_device_is_online (device);
 
-	if (result)
+	if (result) {
+		/* Sleep for a moment because libconic seems to report a new connection
+		 * before that connection is actually usable.
+		 * See projects.maemo.org bug NB#66769. */ 
+		sleep (1); 
 		set_account_to_online (account);
+	}
 
 	return result;
 }

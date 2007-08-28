@@ -1,5 +1,10 @@
 2007-08-28  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/maemo/modest-platform.c: (modest_platform_connect_and_wait):
+	Added a sleep(1) in case it helps with bug #66769.
+
+2007-08-28  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/modest-search.c: (on_timeout_check_account_is_online),
 	(check_and_wait_for_account_is_online):
 	It is OK for local-folder and mmc accounts to be used when they 
