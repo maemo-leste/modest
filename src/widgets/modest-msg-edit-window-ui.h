@@ -57,25 +57,25 @@ static const GtkActionEntry modest_msg_edit_action_entries [] = {
 	{ "ActionsNewMessage", NULL, N_("mcen_me_viewer_newemail"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_new_msg) },
 	{ "ActionsSaveToDrafts", NULL, N_("mcen_me_editor_save_as_draft"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_save_to_drafts) },
 	{ "ActionsDelete", NULL, N_("mcen_me_inbox_delete"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_delete_message) },
-	{ "ActionsSend", NULL, N_("mcen_me_editor_send"),  NULL, NULL,  G_CALLBACK (modest_ui_actions_on_send) },
+	{ "ActionsSend", NULL, N_("mcen_me_editor_send"), "<CTRL>Return", NULL,  G_CALLBACK (modest_ui_actions_on_send) },
 /* 	{ "ActionsFontColor", GTK_STOCK_SELECT_COLOR, N_("Color"), NULL, N_("Change text color"), G_CALLBACK (modest_ui_actions_on_select_editor_color)}, */
 /* 	{ "BackgroundColor", GTK_STOCK_SELECT_COLOR, N_("Background color"), NULL, N_("Change background color"), G_CALLBACK (modest_ui_actions_on_select_editor_background_color)}, */
 	{ "InsertImage", NULL, N_("mcen_me_editor_attach_inlineimage"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_insert_image)},
 	{ "AttachFile", NULL, N_("mcen_me_editor_attachfile"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_attach_file)},
 	{ "RemoveAttachments", NULL, N_("mcen_me_inbox_remove_attachments"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_remove_attachments) },
-	{ "Undo", NULL, N_("mcen_me_inbox_undo"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_undo)},
+	{ "Undo", NULL, N_("mcen_me_inbox_undo"), "<CTRL>Z", NULL, G_CALLBACK (modest_ui_actions_on_undo)},
 	{ "Redo", NULL, N_("mcen_me_inbox_redo"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_redo)},
-	{ "Cut", NULL, N_("mcen_me_inbox_cut"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_cut)},
-	{ "Copy", NULL, N_("mcen_me_inbox_copy"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_copy)},
-	{ "Paste", NULL, N_("mcen_me_inbox_paste"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_paste)},
-	{ "SelectAll", NULL, N_("mcen_me_viewer_selectall"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_select_all)},
+	{ "Cut", NULL, N_("mcen_me_inbox_cut"),  "<CTRL>X", NULL, G_CALLBACK (modest_ui_actions_on_cut)},
+	{ "Copy", NULL, N_("mcen_me_inbox_copy"),  "<CTRL>C", NULL, G_CALLBACK (modest_ui_actions_on_copy)},
+	{ "Paste", NULL, N_("mcen_me_inbox_paste"),  "<CTRL>V", NULL, G_CALLBACK (modest_ui_actions_on_paste)},
+	{ "SelectAll", NULL, N_("mcen_me_viewer_selectall"),  "<CTRL>A", NULL, G_CALLBACK (modest_ui_actions_on_select_all)},
 	{ "SelectFont", NULL, N_("mcen_me_editor_font"), NULL, NULL, G_CALLBACK (modest_ui_actions_msg_edit_on_select_font)},
 	{ "SelectContacts", NULL, N_("mcen_me_editor_selectrecipients"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_select_contacts)},
 	{ "CheckNames", NULL, N_("mcen_me_editor_checknames"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_check_names)},
-	{ "CloseWindow", NULL, N_("mcen_me_inbox_close_window"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_close_window)},
-	{ "CloseAllWindows", NULL, N_("mcen_me_inbox_close_windows"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_quit) },
+	{ "CloseWindow", NULL, N_("mcen_me_inbox_close_window"), "<CTRL>W", NULL, G_CALLBACK (modest_ui_actions_on_close_window)},
+	{ "CloseAllWindows", NULL, N_("mcen_me_inbox_close_windows"), "<CTRL>Q", NULL, G_CALLBACK (modest_ui_actions_on_quit) },
 	{ "Help", NULL, N_("mcen_me_inbox_help"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_help) },
-	{ "SearchMessages",            NULL,      N_("mcen_me_inbox_search"),                      NULL, NULL,  G_CALLBACK (modest_ui_actions_on_search_messages) },
+	{ "SearchMessages", NULL, N_("mcen_me_inbox_search"), "<CTRL>E", NULL,  G_CALLBACK (modest_ui_actions_on_search_messages) },
 
 
 	/* KEY ACCELERATOR ACTIONS */
@@ -109,7 +109,7 @@ static const GtkToggleActionEntry modest_msg_edit_toggle_action_entries [] = {
 	{ "ActionsItalics", MODEST_TOOLBAR_ICON_ITALIC, NULL, NULL, NULL, G_CALLBACK (modest_ui_actions_on_toggle_italics), FALSE },
 
 	/* Find in page */
-	{ "FindInMessage", NULL, N_("mcen_me_viewer_find"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_toggle_find_in_page), FALSE },
+	{ "FindInMessage", NULL, N_("mcen_me_viewer_find"), "<CTRL>F", NULL, G_CALLBACK (modest_ui_actions_on_toggle_find_in_page), FALSE },
 
 };
 
