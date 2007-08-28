@@ -1,5 +1,16 @@
 2007-08-28  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-search.c: (on_timeout_check_account_is_online),
+	(check_and_wait_for_account_is_online):
+	It is OK for local-folder and mmc accounts to be used when they 
+	are in the _INIT folder, instead of waiting for them to change 
+	(they never do).
+	For POP and IMAP, wait from them to stop being _INIT, rather than 
+	waiting from them to be _CONNECTED, because that seems to be 
+	the status that causes the problems.
+
+2007-08-28  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/modest-search.c: (check_and_wait_for_account_is_online):
 	Actually pass the account to the timeout callback.
 

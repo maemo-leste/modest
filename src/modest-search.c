@@ -43,6 +43,8 @@
 #include <tny-list.h>
 #include <tny-iterator.h>
 #include <tny-simple-list.h>
+#include <tny-camel-imap-store-account.h>
+#include <tny-camel-pop-store-account.h>
 
 #include <libmodest-dbus-client/libmodest-dbus-client.h>
 
@@ -95,7 +97,9 @@ on_timeout_check_account_is_online(gpointer user_data)
 	
 	gboolean stop_trying = FALSE;
 	if (data && data->account && 
-		(tny_account_get_connection_status (data->account) == TNY_CONNECTION_STATUS_CONNECTED) )
+		/* We want to wait until TNY_CONNECTION_STATUS_INIT has changed to something else,
+		 * after which the account is likely to be usable, or never likely to be usable soon: */
+		(tny_account_get_connection_status (data->account) != TNY_CONNECTION_STATUS_INIT) )
 	{
 		data->is_online = TRUE;
 		
@@ -147,13 +151,20 @@ check_and_wait_for_account_is_online(TnyAccount *account)
 		printf ("DEBUG: %s: device is offline.\n", __FUNCTION__);
 		return FALSE;
 	}
+	
+	/* The local_folders account never seems to leave TNY_CONNECTION_STATUS_INIT,
+	 * so we avoid wait unnecessarily: */
+	if (!TNY_IS_CAMEL_POP_STORE_ACCOUNT (account) && 
+		!TNY_IS_CAMEL_IMAP_STORE_ACCOUNT (account) ) {
+		return TRUE;		
+	}
 		
 	printf ("DEBUG: %s: tny_account_get_connection_status()==%d\n", __FUNCTION__, tny_account_get_connection_status (account));
 	
-	/* TODO: The local_folders account never seems to leave TNY_CONNECTION_STATUS_INIT,
-	 * so we wait unnecessarily,
-	 * but that enum value isn't enough to get a message list from POP and IMAP. */
-	if (tny_account_get_connection_status (account) == TNY_CONNECTION_STATUS_CONNECTED)
+	/* The POP & IMAP store accounts seem to be TNY_CONNECTION_STATUS_DISCONNECTED, 
+	 * and that seems to be an OK time to use them. Maybe it's just TNY_CONNECTION_STATUS_INIT that 
+	 * we want to avoid. */
+	if (tny_account_get_connection_status (account) != TNY_CONNECTION_STATUS_INIT)
 		return TRUE;
 		
 	/* This blocks on the result: */
