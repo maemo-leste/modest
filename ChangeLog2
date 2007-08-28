@@ -1,5 +1,10 @@
 2007-08-28  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-search.c: (check_and_wait_for_account_is_online):
+	Actually pass the account to the timeout callback.
+
+2007-08-28  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/modest-search.c: (on_timeout_check_account_is_online):
 	Added some debug output to help me debug a problem on the N800.
 	(check_and_wait_for_account_is_online): Fail immediately if the 

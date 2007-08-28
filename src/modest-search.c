@@ -90,7 +90,7 @@ on_timeout_check_account_is_online(gpointer user_data)
 	}
 	
 	if (data && data->account) {
-		printf ("%s: tny_account_get_connection_status()==%d\n", __FUNCTION__, tny_account_get_connection_status (data->account));	
+		printf ("DEBUG: %s: tny_account_get_connection_status()==%d\n", __FUNCTION__, tny_account_get_connection_status (data->account));	
 	}
 	
 	gboolean stop_trying = FALSE;
@@ -117,6 +117,9 @@ on_timeout_check_account_is_online(gpointer user_data)
 		/* Allow the function that requested this idle callback to continue: */
 		if (data->loop)
 			g_main_loop_quit (data->loop);
+			
+		if (data->account)
+			g_object_unref (data->account);
 		
 		return FALSE; /* Don't call this again. */
 	} else {
@@ -136,19 +139,29 @@ on_timeout_check_account_is_online(gpointer user_data)
 static gboolean
 check_and_wait_for_account_is_online(TnyAccount *account)
 {
+	g_return_val_if_fail (account, FALSE);
+	
+	printf ("DEBUG: %s: account id=%s\n", __FUNCTION__, tny_account_get_id (account));
+	
 	if (!tny_device_is_online (modest_runtime_get_device())) {
-		printf ("%s: device is offline.\n", __FUNCTION__);
+		printf ("DEBUG: %s: device is offline.\n", __FUNCTION__);
 		return FALSE;
 	}
 		
-	printf ("%s: tny_account_get_connection_status()==%d\n", __FUNCTION__, tny_account_get_connection_status (account));
+	printf ("DEBUG: %s: tny_account_get_connection_status()==%d\n", __FUNCTION__, tny_account_get_connection_status (account));
 	
+	/* TODO: The local_folders account never seems to leave TNY_CONNECTION_STATUS_INIT,
+	 * so we wait unnecessarily,
+	 * but that enum value isn't enough to get a message list from POP and IMAP. */
 	if (tny_account_get_connection_status (account) == TNY_CONNECTION_STATUS_CONNECTED)
 		return TRUE;
 		
 	/* This blocks on the result: */
 	UtilIdleData *data = g_slice_new0 (UtilIdleData);
 	data->is_online = FALSE;
+	data->account = account;
+	g_object_ref (data->account);
+	data->count_tries = 0;
 		
 	GMainContext *context = NULL; /* g_main_context_new (); */
 	data->loop = g_main_loop_new (context, FALSE /* not running */);
