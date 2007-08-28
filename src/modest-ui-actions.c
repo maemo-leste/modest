@@ -139,8 +139,12 @@ static void     _on_send_receive_progress_changed (ModestMailOperation  *mail_op
 						   ModestMailOperationState *state,
 						   gpointer user_data);
 
-static gboolean download_uncached_messages (TnyList *header_list, 
-					    GtkWindow *win);
+static gint header_list_count_uncached_msgs (
+						TnyList *header_list, 
+						GtkWindow *win);
+static gboolean download_uncached_messages (
+						GtkWindow *win,
+						gint num_of_uncached_msgs);
 
 
 
@@ -1198,21 +1202,15 @@ cleanup:
 	free_reply_forward_helper (rf_helper);
 }
 
-/*
- * Checks a list of headers. If any of them are not currently
- * downloaded (CACHED) then it asks the user for permission to
- * download them.
- *
- * Returns FALSE if the user does not want to download the
- * messages. Returns TRUE if the user allowed the download or if all
- * of them are currently downloaded
+/* Checks a list of headers. If any of them are not currently
+ * downloaded (CACHED) then returns TRUE else returns FALSE.
  */
-static gboolean
-download_uncached_messages (TnyList *header_list, 
-			    GtkWindow *win)
+static gint
+header_list_count_uncached_msgs (
+				TnyList *header_list, 
+				GtkWindow *win)
 {
 	TnyIterator *iter;
-	gboolean retval;
 	gint uncached_messages = 0;
 
 	iter = tny_list_create_iterator (header_list);
@@ -1230,28 +1228,32 @@ download_uncached_messages (TnyList *header_list,
 	}
 	g_object_unref (iter);
 
-	/* Ask for user permission to download the messages */
-	retval = TRUE;
-	if (uncached_messages > 0) {
-                gboolean download = TRUE;
-                if (!tny_device_is_online (modest_runtime_get_device())) {
-			GtkResponseType response =
-				modest_platform_run_confirmation_dialog (GTK_WINDOW (win),
-									 ngettext("mcen_nc_get_msg",
-										  "mcen_nc_get_msgs",
-										  uncached_messages));
-                        if (response == GTK_RESPONSE_CANCEL) download = FALSE;
-                }
-		if (download) {
-			/* If a download will be necessary, make sure that we have a connection: */
-			retval = modest_platform_connect_and_wait(win, NULL);	
-                } else {
-			retval = FALSE;
-		}
-	}
-	return retval;
+	return uncached_messages;
 }
 
+/* Returns FALSE if the user does not want to download the
+ * messages. Returns TRUE if the user allowed the download.
+ */
+static gboolean
+download_uncached_messages (
+			GtkWindow *win,
+			gint num_of_uncached_msgs)
+{
+	/* Allways download if we are online. */
+	if (tny_device_is_online (modest_runtime_get_device()))
+		return TRUE;
+
+	/* If offline, then ask for user permission to download the messages */
+	GtkResponseType response;
+	response = modest_platform_run_confirmation_dialog (GTK_WINDOW (win),
+			ngettext("mcen_nc_get_msg",
+			"mcen_nc_get_msgs",
+			num_of_uncached_msgs));
+	if (response == GTK_RESPONSE_CANCEL)
+		return FALSE;
+
+	return modest_platform_connect_and_wait(win, NULL);	
+}
 
 /*
  * Common code for the reply and forward actions
@@ -1284,10 +1286,24 @@ reply_forward (ReplyForwardAction action, ModestWindow *win)
 				     (action == ACTION_FORWARD) ? MODEST_CONF_FORWARD_TYPE : MODEST_CONF_REPLY_TYPE,
 				     NULL);
 
-	/* Check that the messages have been previously downloaded */
-	do_retrieve = (action == ACTION_FORWARD) || (reply_forward_type != MODEST_TNY_MSG_REPLY_TYPE_CITE);
-	if (do_retrieve)
-		continue_download = download_uncached_messages (header_list, GTK_WINDOW (win));
+	/* check if we need to download msg before asking about it */
+	do_retrieve = (action == ACTION_FORWARD) ||
+			(reply_forward_type != MODEST_TNY_MSG_REPLY_TYPE_CITE);
+
+	if (do_retrieve){
+		gint num_of_unc_msgs;
+		/* check that the messages have been previously downloaded */
+		num_of_unc_msgs = header_list_count_uncached_msgs(
+								header_list,
+								GTK_WINDOW (win));
+		/* If there are any uncached message ask the user
+		 * whether he/she wants to download them. */
+		if (num_of_unc_msgs)
+			continue_download = download_uncached_messages (
+								GTK_WINDOW (win),
+								num_of_unc_msgs);
+	}
+
 	if (!continue_download) {
 		g_object_unref (header_list);
 		return;
@@ -2820,7 +2836,27 @@ modest_ui_actions_on_cut (GtkAction *action,
 		gtk_clipboard_set_can_store (clipboard, NULL, 0);
 		gtk_clipboard_store (clipboard);
 	} else if (MODEST_IS_HEADER_VIEW (focused_widget)) {
-		modest_header_view_cut_selection (MODEST_HEADER_VIEW (focused_widget));
+		TnyList *header_list = modest_header_view_get_selected_headers (
+				MODEST_HEADER_VIEW (focused_widget));
+		gboolean continue_download = FALSE;
+		gint num_of_unc_msgs;
+
+		num_of_unc_msgs = header_list_count_uncached_msgs(
+				header_list, GTK_WINDOW (window));
+
+		if (num_of_unc_msgs)
+			continue_download = download_uncached_messages(
+								GTK_WINDOW (window),
+								num_of_unc_msgs);
+
+		if (num_of_unc_msgs == 0 || continue_download) {
+/*			modest_platform_information_banner (
+					NULL, NULL, _CS("mcen_ib_getting_items"));*/
+			modest_header_view_cut_selection (
+					MODEST_HEADER_VIEW (focused_widget));
+		}
+
+		g_object_unref (header_list);
 	} else if (MODEST_IS_FOLDER_VIEW (focused_widget)) {
  		modest_folder_view_cut_selection (MODEST_FOLDER_VIEW (focused_widget));
 	}
@@ -2832,6 +2868,7 @@ modest_ui_actions_on_copy (GtkAction *action,
 {
 	GtkClipboard *clipboard;
 	GtkWidget *focused_widget;
+	gboolean copied = TRUE;
 
 	clipboard = gtk_clipboard_get (GDK_SELECTION_CLIPBOARD);
 	focused_widget = gtk_window_get_focus (GTK_WINDOW (window));
@@ -2855,39 +2892,38 @@ modest_ui_actions_on_copy (GtkAction *action,
 		gtk_clipboard_set_can_store (clipboard, NULL, 0);
 		gtk_clipboard_store (clipboard);
 	} else if (MODEST_IS_HEADER_VIEW (focused_widget)) {
-		TnyList *header_list = modest_header_view_get_selected_headers (MODEST_HEADER_VIEW (focused_widget));
-		TnyIterator *iter = tny_list_create_iterator (header_list);
-		TnyHeader *header = TNY_HEADER (tny_iterator_get_current (iter));
-		
-		gboolean ask = FALSE;
-		if (header) {
-			TnyFolder *folder = tny_header_get_folder (header);
-			TnyAccount *account = tny_folder_get_account (folder);
-			const gchar *proto_str = tny_account_get_proto (TNY_ACCOUNT (account));
-			/* If it's POP then ask */
-			ask = (modest_protocol_info_get_transport_store_protocol (proto_str) == 
-		       		MODEST_PROTOCOL_STORE_POP) ? TRUE : FALSE;
-			g_object_unref (account);
-			g_object_unref (folder);
-			g_object_unref (header);
-		}
+		TnyList *header_list = modest_header_view_get_selected_headers (
+				MODEST_HEADER_VIEW (focused_widget));
+		gboolean continue_download = FALSE;
+		gint num_of_unc_msgs;
 
-		g_object_unref (iter);
-		
-		/* Check that the messages have been previously downloaded */
-		gboolean continue_download = TRUE;
-		if (ask)
-			continue_download = download_uncached_messages (header_list, GTK_WINDOW (window));
-		if (continue_download)
-			modest_header_view_copy_selection (MODEST_HEADER_VIEW (focused_widget));
+		num_of_unc_msgs = header_list_count_uncached_msgs(
+								header_list,
+								GTK_WINDOW (window));
+
+		if (num_of_unc_msgs)
+			continue_download = download_uncached_messages(
+								GTK_WINDOW (window),
+								num_of_unc_msgs);
+
+		if (num_of_unc_msgs == 0 || continue_download) {
+			modest_platform_information_banner (
+					NULL, NULL, _CS("mcen_ib_getting_items"));
+			modest_header_view_copy_selection (
+					MODEST_HEADER_VIEW (focused_widget));
+		} else
+			copied = FALSE;
+
 		g_object_unref (header_list);
+
 	} else if (MODEST_IS_FOLDER_VIEW (focused_widget)) {
  		modest_folder_view_copy_selection (MODEST_FOLDER_VIEW (focused_widget));
 	}    
 
-	/* Show information banner */
-	modest_platform_information_banner (NULL, NULL, _CS("ecoc_ib_edwin_copied"));
-	
+	/* Show information banner if there was a copy to clipboard */
+	if(copied)
+		modest_platform_information_banner (
+				NULL, NULL, _CS("ecoc_ib_edwin_copied"));
 }
 
 void
