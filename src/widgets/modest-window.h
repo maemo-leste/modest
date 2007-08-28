@@ -79,6 +79,7 @@ typedef struct _DimmedState {
 	gboolean any_has_attachments;
 	gboolean all_has_attachments;
 	gboolean sent_in_progress;
+	gboolean all_selected;
 } DimmedState;
 
 /* convenience macros */

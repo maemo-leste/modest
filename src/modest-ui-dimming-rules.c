@@ -80,6 +80,7 @@ _define_main_window_dimming_state (ModestMainWindow *window)
 	DimmedState *state = NULL;
 	GtkWidget *focused_widget = NULL;
 	GtkWidget *header_view = NULL;
+	GtkTreeModel *model = NULL;
 	TnyList *selected_headers = NULL;
 	TnyIterator *iter = NULL;
 	TnyHeader *header = NULL;
@@ -111,6 +112,7 @@ _define_main_window_dimming_state (ModestMainWindow *window)
 	state->any_has_attachments = FALSE;
 	state->all_has_attachments = FALSE;
 	state->sent_in_progress = FALSE;
+	state->all_selected = FALSE;
 
 	/* Get focused widget */
 	focused_widget = gtk_window_get_focus (GTK_WINDOW (window));
@@ -187,6 +189,15 @@ _define_main_window_dimming_state (ModestMainWindow *window)
 
 		tny_iterator_next (iter);
 		g_object_unref (header);
+	}
+
+	/* check if all the headers are selected or not */
+	model = gtk_tree_view_get_model(GTK_TREE_VIEW(header_view));
+	if (model != NULL){
+		gint count;
+		count = gtk_tree_model_iter_n_children(model, NULL);
+		if(state->n_selected == count != 0)
+			state->all_selected = TRUE;
 	}
 
 	/* Free */
@@ -1576,32 +1587,13 @@ _selected_folder_is_MMC_or_POP_root (ModestMainWindow *win)
 static gboolean
 _header_view_is_all_selected (ModestMainWindow *win)
 {
-	GtkTreeSelection *sel = NULL;
-	GtkTreeModel *model = NULL;
-	GtkTreeView *header_view = NULL;
-	gint count_sel, count_model;
+	const DimmedState *state = NULL;
 
-	header_view = GTK_TREE_VIEW(modest_main_window_get_child_widget(
-			win, MODEST_WIDGET_TYPE_HEADER_VIEW));
-	if(header_view == NULL)
-		return FALSE;
-	
-	model = gtk_tree_view_get_model(header_view);
-	if (model == NULL)
-		return FALSE;
+	g_return_val_if_fail (MODEST_IS_WINDOW(win), FALSE);
 
-	sel = gtk_tree_view_get_selection(header_view);
-	if (sel == NULL)
-		return FALSE;
+	state = modest_window_get_dimming_state (MODEST_WINDOW(win));
 
-	/* check if all the headers are selected or not */
-	count_sel = gtk_tree_selection_count_selected_rows (sel);
-	count_model = gtk_tree_model_iter_n_children(model, NULL);
-	if(count_sel == count_model != 0)
-		/*all header is selected*/
-		return TRUE;
-
-	return FALSE;
+	return state->all_selected;
 }
 
 static gboolean
