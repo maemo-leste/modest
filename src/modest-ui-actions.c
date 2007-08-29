@@ -142,7 +142,7 @@ static void     _on_send_receive_progress_changed (ModestMailOperation  *mail_op
 static gint header_list_count_uncached_msgs (
 						TnyList *header_list, 
 						GtkWindow *win);
-static gboolean download_uncached_messages (
+static gboolean connect_to_get_msg (
 						GtkWindow *win,
 						gint num_of_uncached_msgs);
 
@@ -1235,7 +1235,7 @@ header_list_count_uncached_msgs (
  * messages. Returns TRUE if the user allowed the download.
  */
 static gboolean
-download_uncached_messages (
+connect_to_get_msg (
 			GtkWindow *win,
 			gint num_of_uncached_msgs)
 {
@@ -1299,7 +1299,7 @@ reply_forward (ReplyForwardAction action, ModestWindow *win)
 		/* If there are any uncached message ask the user
 		 * whether he/she wants to download them. */
 		if (num_of_unc_msgs)
-			continue_download = download_uncached_messages (
+			continue_download = connect_to_get_msg (
 								GTK_WINDOW (win),
 								num_of_unc_msgs);
 	}
@@ -2845,7 +2845,7 @@ modest_ui_actions_on_cut (GtkAction *action,
 				header_list, GTK_WINDOW (window));
 
 		if (num_of_unc_msgs)
-			continue_download = download_uncached_messages(
+			continue_download = connect_to_get_msg(
 								GTK_WINDOW (window),
 								num_of_unc_msgs);
 
@@ -2902,7 +2902,7 @@ modest_ui_actions_on_copy (GtkAction *action,
 								GTK_WINDOW (window));
 
 		if (num_of_unc_msgs)
-			continue_download = download_uncached_messages(
+			continue_download = connect_to_get_msg(
 								GTK_WINDOW (window),
 								num_of_unc_msgs);
 
@@ -3712,8 +3712,13 @@ has_retrieved_msgs (TnyList *list)
 /*
  * Shows a confirmation dialog to the user when we're moving messages
  * from a remote server to the local storage. Returns the dialog
- * response. If it's other kind of movement the it always returns
+ * response. If it's other kind of movement then it always returns
  * GTK_RESPONSE_OK
+ *
+ * This one is used by the next functions:
+ *	modest_ui_actions_xfer_messages_from_move_to
+ *	modest_ui_actions_on_paste			- commented out
+ *	drag_and_drop_from_header_view (for d&d in modest_folder_view.c)
  */
 gint
 msgs_move_to_confirmation (GtkWindow *win,
@@ -3723,54 +3728,41 @@ msgs_move_to_confirmation (GtkWindow *win,
 {
 	gint response = GTK_RESPONSE_OK;
 
-	/* If the destination is a local folder (or MMC folder )*/
-	if (!modest_tny_folder_is_remote_folder (dest_folder)) {
+	/* return with OK if the destination is a remote folder */
+	if (modest_tny_folder_is_remote_folder (dest_folder))
+		return GTK_RESPONSE_OK;
 
-		gboolean is_online;
-		TnyDevice *device;
-		
-		TnyFolder *src_folder = NULL;
-		TnyIterator *iter = NULL;
-		TnyHeader *header = NULL;
+	TnyFolder *src_folder = NULL;
+	TnyIterator *iter = NULL;
+	TnyHeader *header = NULL;
 
-		/* get the device */
-		
-		device = modest_runtime_get_device ();
-		if (device)
-			is_online = tny_device_is_online (device);
-		else {
-			g_warning ("failed to get tny device"); /* should not happend */
-			is_online = FALSE;
-		}
-				
-		/* Get source folder */
-		iter = tny_list_create_iterator (headers);
-		header = TNY_HEADER (tny_iterator_get_current (iter));
-		if (header) {
-			src_folder = tny_header_get_folder (header);
-			g_object_unref (header);
-		}
-
-		g_object_unref (iter);
-
-		/* if no src_folder, message may be an attahcment */
-		if (src_folder == NULL) 
-			return GTK_RESPONSE_CANCEL;
-
-		/* If the source is a remote folder */
-		if (!is_online && modest_tny_folder_is_remote_folder (src_folder)) {
-
-			const gchar *message = NULL;
-			message = ngettext ("mcen_nc_get_msg", "mcen_nc_get_msgs",
-					    tny_list_get_length (headers));
-			response = modest_platform_run_confirmation_dialog (GTK_WINDOW (win),
-									    (const gchar *) message);
-		} else
-			response = GTK_RESPONSE_OK;
-		
-		g_object_unref (src_folder);
+	/* Get source folder */
+	iter = tny_list_create_iterator (headers);
+	header = TNY_HEADER (tny_iterator_get_current (iter));
+	if (header) {
+		src_folder = tny_header_get_folder (header);
+		g_object_unref (header);
 	}
-	
+	g_object_unref (iter);
+
+	/* if no src_folder, message may be an attahcment */
+	if (src_folder == NULL) 
+		return GTK_RESPONSE_CANCEL;
+
+	/* If the source is a local or MMC folder */
+	if (!modest_tny_folder_is_remote_folder (src_folder)) {
+		g_object_unref (src_folder);
+		return GTK_RESPONSE_OK;
+	}
+	g_object_unref (src_folder);
+
+	/* now if offline we ask the user */
+	if(connect_to_get_msg(	GTK_WINDOW (win),
+					tny_list_get_length (headers)))
+		response = GTK_RESPONSE_OK;
+	else
+		response = GTK_RESPONSE_CANCEL;
+
 	return response;
 }
 
