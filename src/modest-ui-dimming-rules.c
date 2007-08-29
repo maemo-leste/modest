@@ -1201,10 +1201,12 @@ gboolean
 modest_ui_dimming_rules_on_cut (ModestWindow *win, gpointer user_data)
 {
 	ModestDimmingRule *rule = NULL;
+	const DimmedState *state = NULL;
 	gboolean dimmed = FALSE;
 	
 	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
 	rule = MODEST_DIMMING_RULE (user_data);
+	state = modest_window_get_dimming_state (win);
 
 	/* Check common dimming rules */
 	if (!dimmed) {
@@ -1225,7 +1227,12 @@ modest_ui_dimming_rules_on_cut (ModestWindow *win, gpointer user_data)
 			if (!dimmed) {
 				dimmed = _selected_msg_sent_in_progress (win);
 				if (dimmed)
-				modest_dimming_rule_set_notification (rule, _("mcen_ib_unable_to_cut_mess"));
+					modest_dimming_rule_set_notification (rule, _("mcen_ib_unable_to_cut_mess"));
+			}
+			if (!dimmed) {
+				dimmed = state->already_opened_msg;
+				if(dimmed)
+					modest_dimming_rule_set_notification (rule, _("mcen_ib_unable_to_cut_mess"));
 			}
 		}
 		else if (MODEST_IS_FOLDER_VIEW (focused)) {
@@ -1261,10 +1268,12 @@ gboolean
 modest_ui_dimming_rules_on_copy (ModestWindow *win, gpointer user_data)
 {
 	ModestDimmingRule *rule = NULL;
+	const DimmedState *state = NULL;
 	gboolean dimmed = FALSE;
 	
 	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
 	rule = MODEST_DIMMING_RULE (user_data);
+	state = modest_window_get_dimming_state (win);
 
 	/* Check common dimming rules */
 	if (!dimmed) {
@@ -1285,6 +1294,11 @@ modest_ui_dimming_rules_on_copy (ModestWindow *win, gpointer user_data)
 			if (!dimmed) {
 				dimmed = _selected_msg_sent_in_progress (win);
 				if (dimmed)
+					modest_dimming_rule_set_notification (rule, _(""));
+			}
+			if (!dimmed) {
+				dimmed = state->already_opened_msg;
+				if(dimmed)
 					modest_dimming_rule_set_notification (rule, _(""));
 			}
 		}
