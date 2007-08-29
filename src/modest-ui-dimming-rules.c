@@ -1303,8 +1303,19 @@ modest_ui_dimming_rules_on_copy (ModestWindow *win, gpointer user_data)
 			}
 		}
 		else if (MODEST_IS_FOLDER_VIEW (focused)) {
+			TnyFolderType types[3];
+			
+			types[0] = TNY_FOLDER_TYPE_DRAFTS; 
+			types[1] = TNY_FOLDER_TYPE_OUTBOX;
+			types[2] = TNY_FOLDER_TYPE_SENT;
+
 			if (!dimmed) {
 				dimmed = _selected_folder_is_root (MODEST_MAIN_WINDOW(win));
+				if (dimmed)
+					modest_dimming_rule_set_notification (rule, _(""));
+			}
+			if (!dimmed) {
+				dimmed = _selected_folder_is_any_of_type (win, types, 3);
 				if (dimmed)
 					modest_dimming_rule_set_notification (rule, _(""));
 			}
