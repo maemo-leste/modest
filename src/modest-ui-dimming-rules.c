@@ -53,7 +53,6 @@ static gboolean _invalid_clipboard_selected (ModestWindow *win, ModestDimmingRul
 /* static gboolean _already_opened_msg (ModestWindow *win, guint *n_messages); */
 /* static gboolean _selected_msg_marked_as (ModestMainWindow *win, TnyHeaderFlags mask, gboolean opposite, gboolean all); */
 static gboolean _selected_folder_not_writeable (ModestMainWindow *win);
-static gboolean _selected_folder_is_snd_level (ModestMainWindow *win);
 static gboolean _selected_folder_is_any_of_type (ModestWindow *win, TnyFolderType types[], guint ntypes);
 static gboolean _selected_folder_is_root_or_inbox (ModestMainWindow *win);
 static gboolean _selected_folder_is_MMC_or_POP_root (ModestMainWindow *win);
@@ -334,29 +333,6 @@ modest_ui_dimming_rules_on_new_msg (ModestWindow *win, gpointer user_data)
 			modest_dimming_rule_set_notification (rule, "");
 	}
 
-	return dimmed;
-}
-
-gboolean 
-modest_ui_dimming_rules_on_csm_new_folder (ModestWindow *win, gpointer user_data)
-{
-	ModestDimmingRule *rule = NULL;
-	gboolean dimmed = FALSE;
-
-	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW(win), FALSE);
-	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
-	rule = MODEST_DIMMING_RULE (user_data);
-
-	/* Check common new folder menu item dimming rules */	
-	dimmed = modest_ui_dimming_rules_on_new_folder (win, user_data);
-	
-	/* Check CSM specific dimming rules */
-	if (!dimmed) {
-		dimmed = _selected_folder_is_snd_level (MODEST_MAIN_WINDOW(win));
-		if (dimmed)
-			modest_dimming_rule_set_notification (rule, _("mail_in_ui_folder_create_error"));
-	}
-	
 	return dimmed;
 }
 
@@ -1759,49 +1735,6 @@ _folder_is_any_of_type (TnyFolder *folder,
 }
 
 static gboolean
-_selected_folder_is_snd_level (ModestMainWindow *win)
-{
-	GtkWidget *folder_view = NULL;
-	GtkTreeSelection *sel = NULL;
-	GtkTreeModel *model = NULL;
-	GtkTreePath *path = NULL;
-	GtkTreeIter iter;
- 	TnyFolderStore *folder = NULL;
-	gboolean result = FALSE;
-
-	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW(win), TRUE);
-
-	/*Get curent folder */
-	folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(win),
-							   MODEST_WIDGET_TYPE_FOLDER_VIEW);
-	/* If no folder view, always dimmed */
-	if (!folder_view) 
-		goto frees;
-
-	/* Get selected folder as parent of new folder to create */
-	folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW(folder_view));	
-	if (!(folder && TNY_IS_FOLDER(folder))) {
-		goto frees;
-	}
-	
-	/* Check folder level */
-	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW(folder_view));
-	if (!gtk_tree_selection_get_selected (sel, &model, &iter))
-		goto frees;
-	path = gtk_tree_model_get_path (model, &iter);
-	result = gtk_tree_path_get_depth (path) > 2;
-	
- frees:
-	if (folder != NULL)
-		g_object_unref (folder);
-	if (path != NULL)
-		gtk_tree_path_free (path);
-	
-	return result;
-
-}
-
-static gboolean
 _clipboard_is_empty (ModestWindow *win)
 {
 	gboolean result = FALSE;
@@ -1818,7 +1751,7 @@ _clipboard_is_empty (ModestWindow *win)
 
 static gboolean
 _invalid_clipboard_selected (ModestWindow *win,
-		       ModestDimmingRule *rule) 
+			     ModestDimmingRule *rule) 
 {
 	const DimmedState *state = NULL;
 	gboolean result = FALSE;
