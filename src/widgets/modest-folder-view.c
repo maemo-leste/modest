@@ -857,14 +857,37 @@ on_account_removed (TnyAccountStore *account_store,
 	self = MODEST_FOLDER_VIEW (user_data);
 	priv = MODEST_FOLDER_VIEW_GET_PRIVATE (self);
 
-	/* invalidate the cur_folder_* things */
-	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (self));
-	gtk_tree_selection_unselect_all (sel);
+	/* Invalidate the cur_folder_store only if the selected folder
+	   belongs to the account that is being removed */
+	if (priv->cur_folder_store) {
+		TnyAccount *selected_folder_account = NULL;
 
-	/* Invalidate row to select */
+		if (TNY_IS_FOLDER (priv->cur_folder_store)) {
+			selected_folder_account = 
+				tny_folder_get_account (TNY_FOLDER (priv->cur_folder_store));
+		} else {
+			selected_folder_account = 
+				TNY_ACCOUNT (g_object_ref (priv->cur_folder_store));
+		}
+
+		if (selected_folder_account == account) {
+			sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (self));
+			gtk_tree_selection_unselect_all (sel);
+		}
+		g_object_unref (selected_folder_account);
+	}
+
+	/* Invalidate row to select only if the folder to select
+	   belongs to the account that is being removed*/
 	if (priv->folder_to_select) {
-		g_object_unref (priv->folder_to_select);
-	    	priv->folder_to_select = NULL;
+		TnyAccount *folder_to_select_account = NULL;
+
+		folder_to_select_account = tny_folder_get_account (priv->folder_to_select);
+		if (folder_to_select_account == account) {
+			g_object_unref (priv->folder_to_select);
+			priv->folder_to_select = NULL;
+		}
+		g_object_unref (folder_to_select_account);
 	}
 
 	/* Remove the account from the model */
