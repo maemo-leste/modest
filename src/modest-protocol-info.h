@@ -108,8 +108,7 @@ modest_protocol_info_get_connection_protocol_pair_list ();
 	
 /**
  * modest_protocol_info_get_transport_store_protocol:
- * @name: the name of the  ModestTransportStoreProtocol
- * @proto_type: the type of protocol you want to have
+ * @name: the name of the  #ModestTransportStoreProtocol
  *
  * return the id of the protocol with the given name
  *  
@@ -117,6 +116,17 @@ modest_protocol_info_get_connection_protocol_pair_list ();
  */
 ModestTransportStoreProtocol
 modest_protocol_info_get_transport_store_protocol (const gchar* name);
+
+/**
+ * modest_protocol_info_get_auth_protocol:
+ * @name: The name of the #ModestAuthProtocol
+ *
+ * Returns the ID of the protocol with the given name
+ *
+ * Returns: The ID of the protocol or MODEST_PROTOCOL_AUTH_NONE
+ */
+ModestAuthProtocol
+modest_protocol_info_get_auth_protocol (const gchar* name);
 
 /**
  * modest_protocol_info_get_transport_store_protocol_name:

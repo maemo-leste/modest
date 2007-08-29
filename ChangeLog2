@@ -1,3 +1,17 @@
+2007-08-29  Armin Burgmeier  <armin@openismus.com>
+
+	* src/modest-protocol-info.h:
+	* src/modest-protocol-info.c: Added
+	modest_protocol_info_get_auth_protocol() to translate an
+	authentication protocol name to the corresponding enum value.
+
+	* src/maemo/modest-maemo-utils.c: Fixed supported auth protocol list
+	generation using the newly added function.
+
+	* src/maemo/modest-account-settings-dialog.c: Use the current element
+	when traversing through the list of supported authentication methods,
+	not always the first.
+
 2007-08-29   Murray Cumming  <murrayc@murrayc.com>
 
 	* src/maemo/easysetup/modest-easysetup-wizard.c:

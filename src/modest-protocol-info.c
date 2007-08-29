@@ -66,7 +66,6 @@ static const ProtocolInfo AuthProtocolMap[] = {
 	{ MODEST_PROTOCOL_AUTH_CRAMMD5,       MODEST_ACCOUNT_AUTH_MECH_VALUE_CRAMMD5, N_("Cram MD5") }
 };
 
-
 static ModestPairList*
 get_protocol_pair_list (const ProtocolInfo* map, guint size)
 {
@@ -85,6 +84,28 @@ get_protocol_pair_list (const ProtocolInfo* map, guint size)
 	return proto_list;
 }
 
+static gint
+get_protocol_by_name (const ProtocolInfo* map,
+                      guint size,
+                      const gchar* query_name,
+                      gint default_value,
+                      gboolean case_sensitive)
+{
+	guint i;
+
+	g_return_val_if_fail (map, default_value);
+
+	for(i = 0; i < size; ++i)
+	{
+		if((case_sensitive && strcmp(map[i].name, query_name) == 0) ||
+		   (!case_sensitive && g_ascii_strcasecmp(map[i].name, query_name) == 0))
+		{
+			return map[i].proto;
+		}
+	}
+
+	return default_value;
+}
 
 ModestPairList*
 modest_protocol_info_get_transport_store_protocol_pair_list ()
@@ -107,27 +128,25 @@ modest_protocol_info_get_connection_protocol_pair_list ()
 		G_N_ELEMENTS(ConnectionProtocolMap));
 }
 	
-
 ModestTransportStoreProtocol
 modest_protocol_info_get_transport_store_protocol (const gchar* name)
 {
-	const ProtocolInfo *map = TransportStoreProtocolMap;
-	const guint size = G_N_ELEMENTS(TransportStoreProtocolMap);
-	int i;
-	
-	g_return_val_if_fail (name, MODEST_PROTOCOL_TRANSPORT_STORE_UNKNOWN);
-	
-	g_return_val_if_fail (map, MODEST_PROTOCOL_TRANSPORT_STORE_UNKNOWN);
-
-	for (i = 0; i != size; ++i) {
-		const ProtocolInfo info = map[i];
-		if (strcmp(name, info.name) == 0)
-			return info.proto;
-	}
-	
-	return MODEST_PROTOCOL_TRANSPORT_STORE_UNKNOWN;
+	return get_protocol_by_name(TransportStoreProtocolMap,
+	                            G_N_ELEMENTS(TransportStoreProtocolMap),
+	                            name,
+	                            MODEST_PROTOCOL_TRANSPORT_STORE_UNKNOWN,
+	                            TRUE);
 }
 
+ModestAuthProtocol
+modest_protocol_info_get_auth_protocol (const gchar* name)
+{
+	return get_protocol_by_name(AuthProtocolMap,
+	                            G_N_ELEMENTS(AuthProtocolMap),
+	                            name,
+	                            MODEST_PROTOCOL_AUTH_NONE,
+	                            FALSE);
+}
 
 
 /* get either the name or the display_name for the protocol */

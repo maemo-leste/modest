@@ -1048,7 +1048,7 @@ check_data (ModestAccountSettingsDialog *self)
 				GList* method;
 				for (method = list_auth_methods; method != NULL; method = g_list_next(method))
 				{
-					ModestAuthProtocol proto = (ModestAuthProtocol)(GPOINTER_TO_INT(list_auth_methods->data));
+					ModestAuthProtocol proto = (ModestAuthProtocol)(GPOINTER_TO_INT(method->data));
 					// Allow secure methods, e.g MD5 only
 					if (modest_protocol_info_auth_is_secure(proto))
 					{

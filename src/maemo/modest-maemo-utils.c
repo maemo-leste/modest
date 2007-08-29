@@ -342,12 +342,11 @@ on_camel_account_get_supported_secure_authentication (
 				}
 
 				printf("DEBUG: %s: auth_name=%s\n", __FUNCTION__, auth_name);
-				ModestPair *matching = modest_pair_list_find_by_first_as_string (pairs, 
-					auth_name);
-				if (matching)
-	   			{
-					result = g_list_append (result, GINT_TO_POINTER((ModestConnectionProtocol)matching->first));
-				}
+
+				ModestAuthProtocol proto = modest_protocol_info_get_auth_protocol (auth_name);
+				if(proto != MODEST_PROTOCOL_AUTH_NONE)
+						result = g_list_prepend(result, GINT_TO_POINTER(proto));
+
 				tny_iterator_next(iter);
 			}
 			g_object_unref (iter);
