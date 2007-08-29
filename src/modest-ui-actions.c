@@ -3508,8 +3508,9 @@ on_move_to_dialog_folder_selection_changed (ModestFolderView* self,
 	GList *children = NULL;
 	gboolean ok_sensitive = TRUE, new_sensitive = TRUE;
 	gboolean moving_folder = FALSE;
-	gboolean is_remote_account = FALSE;
+	gboolean is_local_account = TRUE;
 	GtkWidget *folder_view = NULL;
+	ModestTnyFolderRules rules;
 
 	if (!selected)
 		return;
@@ -3532,23 +3533,26 @@ on_move_to_dialog_folder_selection_changed (ModestFolderView* self,
 		account_store = modest_runtime_get_account_store ();
 		local_account = modest_tny_account_store_get_local_folders_account (account_store);
 
-		if ((gpointer) local_account != (gpointer) folder_store)
-			is_remote_account = TRUE;
+		if ((gpointer) local_account != (gpointer) folder_store) {
+			is_local_account = FALSE;
+			/* New button should be dimmed on remote
+			   account root */
+			new_sensitive = FALSE;
+		}
 		g_object_unref (local_account);
 	}
 
-	/* New button should be dimmed on remote account root folder
-	 * and on inbox folder. */
-	if (is_remote_account)
-		new_sensitive = FALSE;
-
-	/* check if folder_store is an rmeote inbox folder */
-	if (TNY_IS_FOLDER (folder_store))
-		if (tny_folder_get_folder_type(TNY_FOLDER(folder_store))
-				== TNY_FOLDER_TYPE_INBOX)
+	/* Check the target folder rules */
+	if (TNY_IS_FOLDER (folder_store)) {
+		rules = modest_tny_folder_get_rules (TNY_FOLDER (folder_store));
+		if (rules & MODEST_FOLDER_RULES_FOLDER_NON_WRITEABLE) {
+			ok_sensitive = FALSE;
 			new_sensitive = FALSE;
+			goto end;
+		}
+	}
 
-	/* If it */
+	/* Check if we're moving a folder */
 	if (MODEST_IS_MAIN_WINDOW (user_data)) {
 		/* Get the widgets */
 		folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (user_data),
@@ -3574,7 +3578,7 @@ on_move_to_dialog_folder_selection_changed (ModestFolderView* self,
 		if (ok_sensitive && TNY_IS_ACCOUNT (folder_store)) {
 			/* Do not allow to move to an account unless it's the
 			   local folders account */
-			if (is_remote_account)
+			if (!is_local_account)
 				ok_sensitive = FALSE;
 		} 
 
@@ -3605,6 +3609,7 @@ on_move_to_dialog_folder_selection_changed (ModestFolderView* self,
 		g_object_unref (src_folder);
 	}
 
+ end:
 	/* Set sensitivity of the OK button */
 	gtk_widget_set_sensitive (ok_button, ok_sensitive);
 	/* Set sensitivity of the NEW button */
