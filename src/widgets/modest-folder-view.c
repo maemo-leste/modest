@@ -2204,8 +2204,6 @@ find_folder_iter (GtkTreeModel *model, GtkTreeIter *iter, GtkTreeIter *folder_it
 				    TNY_GTK_FOLDER_STORE_TREE_MODEL_NAME_COLUMN, &name,
 				    TNY_GTK_FOLDER_STORE_TREE_MODEL_TYPE_COLUMN, &type, 
 				    -1);		
-	
-		g_debug ("===> %s (%p ---- %p)", name, a_folder, folder);
 		g_free (name);
 
 		if (folder == a_folder) {
