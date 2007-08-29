@@ -936,6 +936,11 @@ modest_ui_dimming_rules_on_main_window_move_to (ModestWindow *win, gpointer user
 			dimmed = _invalid_msg_selected (MODEST_MAIN_WINDOW(win), FALSE, user_data);
 		
 	}
+	if (!dimmed) {
+		dimmed = _selected_msg_sent_in_progress (win);
+		if (dimmed)
+			modest_dimming_rule_set_notification (rule, _("sfil_ib_unable_to_move_selected_items"));
+	}
 	
 	return dimmed;
 }
