@@ -1,3 +1,11 @@
+2007-08-29  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/maemo/modest-platform.c: (modest_platform_connect_and_wait):
+	Removed the sleep(1) experiment because it does not seem to help, 
+	and I should not have checked the experiment in anyway.
+	The problem is maybe in the TnyAccount connected state - I will 
+	investigate that instead.
+
 2007-08-28  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/maemo/modest-platform.c: (modest_platform_connect_and_wait):
