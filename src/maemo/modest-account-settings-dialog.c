@@ -1028,15 +1028,18 @@ check_data (ModestAccountSettingsDialog *self)
 			HILDON_NUMBER_EDITOR (self->entry_incoming_port));
 	const gchar* username = gtk_entry_get_text (GTK_ENTRY (self->entry_user_username));
 
+	/*
 	const ModestConnectionProtocol protocol_security_incoming = modest_serversecurity_combo_box_get_active_serversecurity (
 		MODEST_SERVERSECURITY_COMBO_BOX (self->combo_incoming_security));
-
+	*/
 	/* If we use an encrypted protocol then there is no need to encrypt the password */
+	/* I don't think this is a good assumption. It overrides the user's request. murrayc: */
 	if (!modest_protocol_info_is_secure(protocol_security_incoming))
 	{
 		if (gtk_toggle_button_get_active (
 				GTK_TOGGLE_BUTTON (self->checkbox_incoming_auth))) {
 			GError *error = NULL;
+
 			GList *list_auth_methods = 
 				modest_maemo_utils_get_supported_secure_authentication_methods (self->incoming_protocol, 
 					hostname, port_num, username, GTK_WINDOW (self), &error);

@@ -182,9 +182,9 @@ static GList* check_for_supported_auth_methods(ModestEasysetupWizardDialog* acco
 	const gchar* username = gtk_entry_get_text(GTK_ENTRY(account_wizard->entry_user_username));
 	const ModestConnectionProtocol protocol_security_incoming = 
 					modest_serversecurity_combo_box_get_active_serversecurity (
-					MODEST_SERVERSECURITY_COMBO_BOX (
-					account_wizard->combo_incoming_security));
-	int port_num = get_serverport_incoming(protocol, protocol_security_incoming); 
+						MODEST_SERVERSECURITY_COMBO_BOX (
+							account_wizard->combo_incoming_security));
+	const int port_num = get_serverport_incoming(protocol, protocol_security_incoming); 
 	GList *list_auth_methods =
           modest_maemo_utils_get_supported_secure_authentication_methods (
                                                                       protocol, 
@@ -199,7 +199,9 @@ static GList* check_for_supported_auth_methods(ModestEasysetupWizardDialog* acco
 				list = g_list_append(list, GINT_TO_POINTER(auth));
 			}
 		}
+
 		g_list_free(list_auth_methods);
+
 		if (list)
 			return list;
 	}
@@ -210,8 +212,37 @@ static GList* check_for_supported_auth_methods(ModestEasysetupWizardDialog* acco
 		show_error (GTK_WIDGET(account_wizard), _("Could not discover supported secure authentication methods."));
 	}
 
-	if(error != NULL) g_error_free(error);
+	if(error != NULL)
+		g_error_free(error);
+
 	return NULL;
+}
+
+static gboolean check_has_supported_auth_methods(ModestEasysetupWizardDialog* account_wizard)
+{
+	GList* methods = check_for_supported_auth_methods(account_wizard);
+	if (!methods)
+	{
+		return FALSE;
+	}
+
+	g_list_free(methods);
+	return TRUE;
+}
+
+static ModestAuthProtocol check_first_supported_auth_method(ModestEasysetupWizardDialog* account_wizard)
+{
+	ModestAuthProtocol result = MODEST_PROTOCOL_AUTH_PASSWORD;
+
+	GList* methods = check_for_supported_auth_methods(account_wizard);
+	if (methods)
+	{
+		/* Use the first one: */
+		result = (ModestAuthProtocol) (GPOINTER_TO_INT(methods->data));
+		g_list_free(methods);
+	}
+
+	return result;
 }
 
 static void
@@ -1411,7 +1442,8 @@ on_before_next (ModestWizardDialog *dialog, GtkWidget *current_page, GtkWidget *
 	}
 	else if (next_page == account_wizard->page_custom_outgoing) {
 		set_default_custom_servernames (account_wizard);
-    /* Check if the server supports secure authentication */
+
+		/* Check if the server supports secure authentication */
 		const ModestConnectionProtocol security_incoming = 
 			modest_serversecurity_combo_box_get_active_serversecurity (
 																																 MODEST_SERVERSECURITY_COMBO_BOX (
@@ -1420,13 +1452,8 @@ on_before_next (ModestWizardDialog *dialog, GtkWidget *current_page, GtkWidget *
 			GTK_TOGGLE_BUTTON (account_wizard->checkbox_incoming_auth))
 				&& !modest_protocol_info_is_secure(security_incoming))
 		{
-				GList* methods = check_for_supported_auth_methods(account_wizard);
-				if (!methods)
-				{
-					g_list_free(methods);
+				if (!check_has_supported_auth_methods (account_wizard))
 					return FALSE;
-				}
-				g_list_free(methods);
 		}
 	}
 	
@@ -1659,18 +1686,12 @@ create_account (ModestEasysetupWizardDialog *self, gboolean enabled)
 		 */
 		
 		if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->checkbox_incoming_auth)) &&
-				!modest_protocol_info_is_secure(protocol_security_incoming))
-		{
-				GList* methods = check_for_supported_auth_methods(self);
-				if (!methods) {
-					g_free (display_name);
-					return FALSE;
-				}
-				else
-				  protocol_authentication_incoming = (ModestAuthProtocol) (GPOINTER_TO_INT(methods->data));
+				!modest_protocol_info_is_secure(protocol_security_incoming)) {
+			protocol_authentication_incoming = check_first_supported_auth_method (self);
 		}
-		else
+		else {
 			protocol_authentication_incoming = MODEST_PROTOCOL_AUTH_PASSWORD;
+		}
 	}
 	
 	/* First we add the 2 server accounts, and then we add the account that uses them.

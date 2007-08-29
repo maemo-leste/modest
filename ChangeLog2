@@ -1,3 +1,11 @@
+2007-08-29   Murray Cumming  <murrayc@murrayc.com>
+
+	* src/maemo/easysetup/modest-easysetup-wizard.c:
+	(check_first_supported_auth_method), (on_before_next),
+	(create_account):
+	* src/maemo/modest-account-settings-dialog.c: (check_data):
+	Some cleanup, to make the code clearer.
+
 2007-08-29  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/modest-tny-account-store.c: (modest_tny_account_store_alert):
