@@ -135,7 +135,7 @@ static gboolean     _clipboard_set_selected_data (ModestFolderView *folder_view,
 
 static void         _clear_hidding_filter (ModestFolderView *folder_view);
 
-static void          on_row_changed_maybe_select_folder (GtkTreeModel     *tree_model, 
+static void         on_row_inserted_maybe_select_folder (GtkTreeModel     *tree_model, 
 							 GtkTreePath      *path, 
 							 GtkTreeIter      *iter,
 							 ModestFolderView *self);
@@ -847,18 +847,25 @@ on_account_removed (TnyAccountStore *account_store,
 	ModestFolderView *self = NULL;
 	ModestFolderViewPrivate *priv;
 	GtkTreeModel *sort_model, *filter_model;
+	GtkTreeSelection *sel = NULL;
 
 	/* Ignore transport account removals, we're not showing them
 	   in the folder view */
 	if (TNY_IS_TRANSPORT_ACCOUNT (account))
 		return;
 
-	g_print ("--------------------- FOLDER ---------------\n");
-
 	self = MODEST_FOLDER_VIEW (user_data);
 	priv = MODEST_FOLDER_VIEW_GET_PRIVATE (self);
 
-	/* TODO: invalidate the cur_folder_* and folder_to_select things */
+	/* invalidate the cur_folder_* things */
+	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (self));
+	gtk_tree_selection_unselect_all (sel);
+
+	/* Invalidate row to select */
+	if (priv->folder_to_select) {
+		g_object_unref (priv->folder_to_select);
+	    	priv->folder_to_select = NULL;
+	}
 
 	/* Remove the account from the model */
 	filter_model = gtk_tree_view_get_model (GTK_TREE_VIEW (self));
@@ -1135,10 +1142,8 @@ modest_folder_view_update_model (ModestFolderView *self,
 
 	/* Set new model */
 	gtk_tree_view_set_model (GTK_TREE_VIEW(self), filter_model);
-	g_signal_connect (G_OBJECT(filter_model), "row-changed",
-			  (GCallback)on_row_changed_maybe_select_folder, self);
 	g_signal_connect (G_OBJECT(filter_model), "row-inserted",
-			  (GCallback)on_row_changed_maybe_select_folder, self);
+			  (GCallback) on_row_inserted_maybe_select_folder, self);
 
 
 	g_object_unref (model);
@@ -2225,8 +2230,8 @@ find_folder_iter (GtkTreeModel *model, GtkTreeIter *iter, GtkTreeIter *folder_it
 
 
 static void
-on_row_changed_maybe_select_folder (GtkTreeModel *tree_model, GtkTreePath  *path, GtkTreeIter *iter,
-				    ModestFolderView *self)
+on_row_inserted_maybe_select_folder (GtkTreeModel *tree_model, GtkTreePath  *path, GtkTreeIter *iter,
+				     ModestFolderView *self)
 {
 	ModestFolderViewPrivate *priv = NULL;
 	GtkTreeSelection *sel;

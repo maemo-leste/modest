@@ -2508,6 +2508,7 @@ modest_ui_actions_on_rename_folder (GtkAction *action,
 			modest_folder_view_select_folder (MODEST_FOLDER_VIEW(folder_view),
 							  TNY_FOLDER(folder), TRUE);
 
+			/* Actually rename the folder */
 			modest_mail_operation_rename_folder (mail_op,
 							     TNY_FOLDER (folder),
 							     (const gchar *) folder_name);
