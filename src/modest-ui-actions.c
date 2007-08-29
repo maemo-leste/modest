@@ -2460,21 +2460,16 @@ modest_ui_actions_on_rename_folder (GtkAction *action,
 		return;
 
 	folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW(folder_view));
+
 	if (!folder)
 		return;
 
-	/* Offer the connection dialog if necessary: */
-	if (!modest_platform_connect_and_wait_if_network_folderstore (NULL, folder)) {
-		g_object_unref (G_OBJECT (folder));
-		return;
-	}
-
-	
 	if (TNY_IS_FOLDER (folder)) {
 		gchar *folder_name;
 		gint response;
 		const gchar *current_name;
 		TnyFolderStore *parent;
+                gboolean do_rename = TRUE;
 
 		current_name = tny_folder_get_name (TNY_FOLDER (folder));
 		parent = tny_folder_get_folder_store (TNY_FOLDER (folder));
@@ -2483,7 +2478,16 @@ modest_ui_actions_on_rename_folder (GtkAction *action,
 								     &folder_name);
 		g_object_unref (parent);
 
-		if (response == GTK_RESPONSE_ACCEPT && strlen (folder_name) > 0) {
+                if (response != GTK_RESPONSE_ACCEPT || strlen (folder_name) == 0) {
+                        do_rename = FALSE;
+                } else if (modest_platform_is_network_folderstore(folder) &&
+                           !tny_device_is_online (modest_runtime_get_device())) {
+                        TnyAccount *account = tny_folder_get_account(TNY_FOLDER(folder));
+                        do_rename = modest_platform_connect_and_wait(GTK_WINDOW(main_window), account);
+                        g_object_unref(account);
+                }
+
+		if (do_rename) {
 			ModestMailOperation *mail_op;
 			GtkTreeSelection *sel = NULL;
 
@@ -2492,7 +2496,6 @@ modest_ui_actions_on_rename_folder (GtkAction *action,
 									       G_OBJECT(main_window),
 									       modest_ui_actions_rename_folder_error_handler,
 									       main_window);
-			
 
 			modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
 							 mail_op);
