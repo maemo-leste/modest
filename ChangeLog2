@@ -1,5 +1,13 @@
 2007-08-29  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-tny-account-store.c: (modest_tny_account_store_alert):
+	Use the mail_ni_ssl_certificate_error ("Secure connection failed") 
+	logical ID when the secure authentication method is not supported by 
+	the server, as requested by Mox on the wiki, though I hate not 
+	giving the user the clue.
+
+2007-08-29  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/modest-search.c: (modest_search_all_accounts):
 	* src/modest-platform.h:
 	* src/maemo/modest-platform.c: Moved and renamed 

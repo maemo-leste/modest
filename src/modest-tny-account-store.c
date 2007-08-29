@@ -1124,15 +1124,23 @@ modest_tny_account_store_alert (TnyAccountStore *self, TnyAccount *account, TnyA
 		case TNY_ACCOUNT_ERROR_TRY_CONNECT_AUTHENTICATION_NOT_SUPPORTED:
 			g_debug ("%s: Handling GError domain=%d, code=%d (authentication not supported), message=%s", 
  				__FUNCTION__, error->domain, error->code, error->message);
-			/* TODO: This needs a logical ID for the string: */
+			/*
+			A more helpful error message than what the UI spec wants
 			prompt = g_strdup_printf(
 				_("Incorrect Account Settings:\nThe secure authentication method is not supported.\n%s"), 
 				error->message);
+			*/
+
+			/* This is "Secure connection failed", even though the logical ID has _certificate_ in the name: */
+			prompt = g_strdup (_("mail_ni_ssl_certificate_error")); 
+                        
 			break;
 			
 		case TNY_ACCOUNT_ERROR_TRY_CONNECT_CERTIFICATE:
 			g_debug ("%s: Handling GError domain=%d, code=%d (certificatae), message=%s", 
  				__FUNCTION__, error->domain, error->code, error->message);
+
+			/* TODO: This needs a logical ID and/or some specified way to ask the different certificate questions: */
 			prompt = g_strdup_printf(
 				_("Certificate Problem:\n%s"), 
 				error->message);
@@ -1154,6 +1162,8 @@ modest_tny_account_store_alert (TnyAccountStore *self, TnyAccount *account, TnyA
 			
 			/* TODO: Remove the internal error message for the real release.
 			 * This is just so the testers can give us more information: */
+			/* However, I haven't seen this for a few weeks, so maybe the users 
+			 * will never see it. murrayc. */
 			/* prompt = _("Modest account not yet fully configured."); */
 			prompt = g_strdup_printf(
 				"%s\n (Internal error message, often very misleading):\n%s", 
