@@ -1306,6 +1306,7 @@ update_account_thread (gpointer thr_user_data)
 			if (G_UNLIKELY (!first_time))
 				tny_folder_poke_status (TNY_FOLDER (folder));
 		}
+
 		tny_folder_remove_observer (TNY_FOLDER (folder), TNY_FOLDER_OBSERVER (observer));
 		g_object_unref (observer);
 		observer = NULL;			
@@ -1841,6 +1842,7 @@ modest_mail_operation_xfer_folder (ModestMailOperation *self,
 	ModestTnyFolderRules parent_rules = 0, rules; 
 	XFerMsgAsyncHelper *helper = NULL;
 	const gchar *folder_name = NULL;
+	const gchar *error_msg;
 
 	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
 	g_return_if_fail (TNY_IS_FOLDER (folder));
@@ -1848,6 +1850,11 @@ modest_mail_operation_xfer_folder (ModestMailOperation *self,
 
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
 	folder_name = tny_folder_get_name (folder);
+
+	/* Set the error msg */
+	error_msg = (delete_original) ? 
+		_("mail_in_ui_folder_move_target_error") : 
+		_("mail_in_ui_folder_copy_target_error");
 
 	/* Get account and set it into mail_operation */
 	priv->account = modest_tny_folder_get_account (TNY_FOLDER(folder));
@@ -1867,7 +1874,7 @@ modest_mail_operation_xfer_folder (ModestMailOperation *self,
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 			     MODEST_MAIL_OPERATION_ERROR_FOLDER_RULES,
-			     _("mail_in_ui_folder_move_target_error"));
+			     error_msg);
 
 		/* Notify the queue */
 		modest_mail_operation_notify_end (self);
@@ -1879,7 +1886,7 @@ modest_mail_operation_xfer_folder (ModestMailOperation *self,
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 			     MODEST_MAIL_OPERATION_ERROR_FOLDER_RULES,
-			     _("FIXME: parent folder does not accept new folders"));
+			     error_msg);
 
 		/* Notify the queue */
 		modest_mail_operation_notify_end (self);
@@ -1891,7 +1898,7 @@ modest_mail_operation_xfer_folder (ModestMailOperation *self,
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 			     MODEST_MAIL_OPERATION_ERROR_FOLDER_RULES,
-			     _("mail_in_ui_folder_copy_target_error"));
+			     error_msg);
 
 		/* Notify the queue */
 		modest_mail_operation_notify_end (self);
@@ -1905,7 +1912,7 @@ modest_mail_operation_xfer_folder (ModestMailOperation *self,
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 			     MODEST_MAIL_OPERATION_ERROR_FOLDER_RULES,
-			     _("mail_in_ui_folder_move_target_error"));
+			     error_msg);
 
 		/* Notify the queue */
 		modest_mail_operation_notify_end (self);
@@ -1918,7 +1925,7 @@ modest_mail_operation_xfer_folder (ModestMailOperation *self,
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 			     MODEST_MAIL_OPERATION_ERROR_FOLDER_RULES,
-			     _("mail_in_ui_folder_move_target_error"));
+			     error_msg);
 
 		/* Notify the queue */
 		modest_mail_operation_notify_end (self);
