@@ -46,6 +46,7 @@
       <menuitem name="EmailContentsMenu"     action="EmailContents"/>
       <menuitem name="EmailPurgeAttachmentsMenu" action="EmailPurgeAttachments"/>
       <separator/>
+      <menuitem name="EmailRenameMenu" action="EmailRenameFolder"/>
       <menuitem name="EmailDeleteMenu" action="EmailDelete"/>
       <separator/>
       <menuitem name="EmailDetailsMenu" action="EmailDetails"/>
