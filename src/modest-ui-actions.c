@@ -1235,12 +1235,11 @@ header_list_count_uncached_msgs (
  * messages. Returns TRUE if the user allowed the download.
  */
 static gboolean
-connect_to_get_msg (
-			GtkWindow *win,
-			gint num_of_uncached_msgs)
+connect_to_get_msg (GtkWindow *win,
+		    gint num_of_uncached_msgs)
 {
 	/* Allways download if we are online. */
-	if (tny_device_is_online (modest_runtime_get_device()))
+	if (tny_device_is_online (modest_runtime_get_device ()))
 		return TRUE;
 
 	/* If offline, then ask for user permission to download the messages */

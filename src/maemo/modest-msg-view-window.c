@@ -1524,28 +1524,29 @@ message_reader (ModestMsgViewWindow *window,
 	if (tny_header_get_flags (header) & TNY_HEADER_FLAG_CACHED) {
 		op_type = MODEST_MAIL_OPERATION_TYPE_OPEN;
 	} else {
-		TnyFolder *folder;
-		GtkResponseType response;
-
 		op_type = MODEST_MAIL_OPERATION_TYPE_RECEIVE;
 
-		/* Ask the user if he wants to download the message */
-		response = modest_platform_run_confirmation_dialog (GTK_WINDOW (window),
-								    _("mcen_nc_get_msg"));
-		if (response == GTK_RESPONSE_CANCEL)
-			return FALSE;
-		
-		/* Offer the connection dialog if necessary */
-		/* FIXME: should this stuff go directly to the mail
-		   operation instead of spread it all over the
-		   code? */
-		folder = tny_header_get_folder (header);
-		if (folder) {
-			if (!modest_platform_connect_and_wait_if_network_folderstore (NULL, TNY_FOLDER_STORE (folder))) {
-				g_object_unref (folder);
+		/* Ask the user if he wants to download the message if
+		   we're not online */
+		if (!tny_device_is_online (modest_runtime_get_device())) {
+			TnyFolder *folder = NULL;
+			GtkResponseType response;
+
+			response = modest_platform_run_confirmation_dialog (GTK_WINDOW (window),
+									    _("mcen_nc_get_msg"));
+			if (response == GTK_RESPONSE_CANCEL)
 				return FALSE;
+		
+			/* Offer the connection dialog if necessary */
+			folder = tny_header_get_folder (header);
+			if (folder) {
+				if (!modest_platform_connect_and_wait_if_network_folderstore (NULL, 
+											      TNY_FOLDER_STORE (folder))) {
+					g_object_unref (folder);
+					return FALSE;
+				}
+				g_object_unref (folder);
 			}
-			g_object_unref (folder);
 		}
 	}
 
