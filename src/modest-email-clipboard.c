@@ -287,6 +287,52 @@ modest_email_clipboard_check_source_folder (ModestEmailClipboard *self,
 	return same_folder;
 }
 
+gboolean 
+modest_email_clipboard_headers_copied (ModestEmailClipboard *self)
+{
+	ModestEmailClipboardPrivate *priv = NULL;;
+	gboolean result = FALSE;
+
+	g_return_val_if_fail (MODEST_IS_EMAIL_CLIPBOARD (self), FALSE);
+	priv = MODEST_EMAIL_CLIPBOARD_GET_PRIVATE (self);
+
+	result = priv->selection != NULL;
+
+	return result;
+}
+
+gboolean 
+modest_email_clipboard_folder_copied (ModestEmailClipboard *self)
+{
+	ModestEmailClipboardPrivate *priv = NULL;;
+	gboolean result = FALSE;
+
+	g_return_val_if_fail (MODEST_IS_EMAIL_CLIPBOARD (self), FALSE);
+	priv = MODEST_EMAIL_CLIPBOARD_GET_PRIVATE (self);
+	
+	result = ((priv->selection == NULL) && (priv->src != NULL));
+	
+	return result; 
+}
+
+const gchar *
+modest_email_clipboard_get_folder_name (ModestEmailClipboard *self)
+{
+	ModestEmailClipboardPrivate *priv = NULL;;
+	const gchar *folder_name = NULL;
+
+	g_return_val_if_fail (MODEST_IS_EMAIL_CLIPBOARD (self), NULL);
+	priv = MODEST_EMAIL_CLIPBOARD_GET_PRIVATE (self);
+	
+	/* If cleared, return always FALSE*/
+	if (modest_email_clipboard_cleared (self)) return NULL;
+
+	/* Check target and source folders */
+	folder_name = tny_folder_get_name (priv->src);
+	
+	return folder_name;
+}
+
 const gchar **
 modest_email_clipboard_get_hidding_ids (ModestEmailClipboard *self,
 					guint *n_selected)

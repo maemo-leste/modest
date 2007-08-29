@@ -157,6 +157,37 @@ modest_email_clipboard_check_source_folder (ModestEmailClipboard *self,
 const gchar **modest_email_clipboard_get_hidding_ids (ModestEmailClipboard *self,
 						      guint *n_selected);
 
+/**
+ * modest_email_clipboard_get_folder_name:
+ * @self: a #ModestEmailClipboard singlenton instance.   
+ * 
+ * Gets the source folder name.
+ * 
+ * returns a const string with folder name, or NULL if data are not valid.
+ */
+const gchar *modest_email_clipboard_get_folder_name (ModestEmailClipboard *self);
+
+
+/**
+ * modest_email_clipboard_headers_copied:
+ * @self: a #ModestEmailClipboard singlenton instance.   
+ *
+ * Checks if clipboard has headers stored.
+ * 
+ * returns TRUE, if clipboard stores headers, FALSE otherwise.
+ */
+gboolean modest_email_clipboard_headers_copied (ModestEmailClipboard *self);
+
+/**
+ * modest_email_clipboard_headers_copied:
+ * @self: a #ModestEmailClipboard singlenton instance.   
+ *
+ * Checks if clipboard has one folder stored.
+ * 
+ * returns TRUE, if clipboard stores one folder, FALSE otherwise.
+ */
+gboolean modest_email_clipboard_folder_copied (ModestEmailClipboard *self);
+
 G_END_DECLS
 
 #endif /* __MODEST_EMAIL_CLIPBOARD_H__ */

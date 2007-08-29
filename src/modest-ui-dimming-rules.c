@@ -50,9 +50,10 @@ static gboolean _invalid_attach_selected (ModestWindow *win,
 static gboolean _purged_attach_selected (ModestWindow *win, gboolean all, ModestDimmingRule *rule);
 static gboolean _clipboard_is_empty (ModestWindow *win);
 static gboolean _invalid_clipboard_selected (ModestWindow *win, ModestDimmingRule *rule);
-/* static gboolean _already_opened_msg (ModestWindow *win, guint *n_messages); */
-/* static gboolean _selected_msg_marked_as (ModestMainWindow *win, TnyHeaderFlags mask, gboolean opposite, gboolean all); */
-static gboolean _selected_folder_not_writeable (ModestMainWindow *win);
+static gboolean _selected_folder_not_writeable (ModestMainWindow *win, gboolean for_paste);
+static gboolean _selected_folder_not_moveable (ModestMainWindow *win);
+static gboolean _selected_folder_not_renameable (ModestMainWindow *win);
+static gboolean _selected_folder_not_deletable (ModestMainWindow *win);
 static gboolean _selected_folder_is_any_of_type (ModestWindow *win, TnyFolderType types[], guint ntypes);
 static gboolean _selected_folder_is_root_or_inbox (ModestMainWindow *win);
 static gboolean _selected_folder_is_MMC_or_POP_root (ModestMainWindow *win);
@@ -65,12 +66,10 @@ static gboolean _msg_download_in_progress (ModestMsgViewWindow *win);
 static gboolean _msg_download_completed (ModestMainWindow *win);
 static gboolean _selected_msg_sent_in_progress (ModestWindow *win);
 static gboolean _sending_in_progress (ModestWindow *win);
-/* static gboolean _message_is_marked_as_deleted (ModestMsgViewWindow *win); */
-/* static gboolean _selected_message_is_marked_as_deleted (ModestMainWindow *win); */
 static gboolean _invalid_folder_for_purge (ModestWindow *win, ModestDimmingRule *rule);
 static gboolean _transfer_mode_enabled (ModestWindow *win);
-
-static void  fill_list_of_caches (gpointer key, gpointer value, gpointer userdata);
+static gboolean _selected_folder_has_subfolder_with_same_name (ModestWindow *win);
+static void fill_list_of_caches (gpointer key, gpointer value, gpointer userdata);
 
 
 static DimmedState *
@@ -378,7 +377,7 @@ modest_ui_dimming_rules_on_new_folder (ModestWindow *win, gpointer user_data)
 
 		/* Apply folder rules */	
 		if (!dimmed) {
-			dimmed = _selected_folder_not_writeable (MODEST_MAIN_WINDOW(win));
+			dimmed = _selected_folder_not_writeable (MODEST_MAIN_WINDOW(win), FALSE);
 			if (dimmed)
 				modest_dimming_rule_set_notification (rule, _("mail_in_ui_folder_create_error"));
 		}
@@ -462,7 +461,7 @@ modest_ui_dimming_rules_on_delete_folder (ModestWindow *win, gpointer user_data)
 		
 	/* Check dimmed rule */	
 	if (!dimmed) {
-		dimmed = _selected_folder_not_writeable (MODEST_MAIN_WINDOW(win));
+		dimmed = _selected_folder_not_deletable (MODEST_MAIN_WINDOW(win));
 		if (dimmed)
 			modest_dimming_rule_set_notification (rule, _("mail_in_ui_folder_delete_error"));
 	}
@@ -533,7 +532,7 @@ modest_ui_dimming_rules_on_rename_folder (ModestWindow *win, gpointer user_data)
 	
 	/* Check dimmed rule */	
 	if (!dimmed) {
-		dimmed = _selected_folder_not_writeable (MODEST_MAIN_WINDOW(win));
+		dimmed = _selected_folder_not_renameable (MODEST_MAIN_WINDOW(win));
 		if (dimmed)
 			modest_dimming_rule_set_notification (rule, "");
 	}
@@ -910,7 +909,7 @@ modest_ui_dimming_rules_on_main_window_move_to (ModestWindow *win, gpointer user
 		
 		/* Apply folder rules */	
 		if (!dimmed) {
-			dimmed = _selected_folder_not_writeable (MODEST_MAIN_WINDOW(win));
+			dimmed = _selected_folder_not_moveable (MODEST_MAIN_WINDOW(win));
 			if (dimmed)
 				modest_dimming_rule_set_notification (rule, _("emev_bd_unabletomove_items"));
 		}
@@ -1038,15 +1037,19 @@ modest_ui_dimming_rules_on_paste (ModestWindow *win, gpointer user_data)
 					"ckct_ib_unable_to_paste_here"));
 	}
 	if (!dimmed) {
-		dimmed = _selected_folder_not_writeable (MODEST_MAIN_WINDOW(win));
-		if (dimmed) {
+		dimmed = _selected_folder_not_writeable (MODEST_MAIN_WINDOW(win), TRUE);
+		if (dimmed) 
 			modest_dimming_rule_set_notification (rule, 
 							      dgettext("hildon-common-strings", 
 								       "ckct_ib_unable_to_paste_here"));
-		}
 	}
 	if (!dimmed) {
 		dimmed = _selected_folder_is_same_as_source (win);
+		if (dimmed)
+			modest_dimming_rule_set_notification (rule, _("mcen_ib_unable_to_copy_samefolder"));
+	}
+	if (!dimmed) {
+		dimmed = _selected_folder_has_subfolder_with_same_name (win);
 		if (dimmed)
 			modest_dimming_rule_set_notification (rule, _("mcen_ib_unable_to_copy_samefolder"));
 	}
@@ -1244,7 +1247,7 @@ modest_ui_dimming_rules_on_cut (ModestWindow *win, gpointer user_data)
 			
 			/* Apply folder rules */	
 			if (!dimmed) {
-				dimmed = _selected_folder_not_writeable (MODEST_MAIN_WINDOW(win));
+				dimmed = _selected_folder_not_deletable (MODEST_MAIN_WINDOW(win));
 				if (dimmed)
 					modest_dimming_rule_set_notification (rule, _("emev_bd_unabletomove_items"));
 			}
@@ -1469,7 +1472,59 @@ modest_ui_dimming_rules_on_add_to_contacts (ModestWindow *win, gpointer user_dat
 
 
 static gboolean
-_selected_folder_not_writeable (ModestMainWindow *win)
+_selected_folder_not_writeable (ModestMainWindow *win,
+				gboolean for_paste)
+{
+	GtkWidget *folder_view = NULL;
+	TnyFolderStore *parent_folder = NULL;
+	ModestEmailClipboard *clipboard = NULL;
+	ModestTnyFolderRules rules;
+	gboolean is_local_acc = FALSE;
+	gboolean xfer_folders = FALSE;
+	gboolean result = FALSE;
+
+	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW(win), FALSE);
+
+	/* Get folder view */
+	folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(win),
+							   MODEST_WIDGET_TYPE_FOLDER_VIEW);
+	/* If no folder view, always dimmed */
+	if (!folder_view)
+		return TRUE;
+	
+	/* Get selected folder as parent of new folder to create */
+	parent_folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW(folder_view));
+	if (!(parent_folder && TNY_IS_FOLDER(parent_folder))) {
+		/* If it's the local account and its transfering folders, then do not dim */		
+		if (TNY_IS_ACCOUNT (parent_folder)) {
+			is_local_acc = modest_tny_account_is_virtual_local_folders (TNY_ACCOUNT (parent_folder));
+			if (for_paste) {
+				clipboard = modest_runtime_get_email_clipboard ();
+				xfer_folders = modest_email_clipboard_folder_copied (clipboard);
+			}
+		}
+
+		if (for_paste) 
+			result = !(is_local_acc && xfer_folders); 
+		else
+			result = !is_local_acc;
+		goto frees;		
+	}
+	
+	/* Check dimmed rule */	
+	rules = modest_tny_folder_get_rules (TNY_FOLDER (parent_folder));
+	result = rules & MODEST_FOLDER_RULES_FOLDER_NON_WRITEABLE;
+
+	/* free */
+ frees:
+	if (parent_folder != NULL)
+		g_object_unref (parent_folder);
+
+	return result;
+}
+
+static gboolean
+_selected_folder_not_deletable (ModestMainWindow *win)
 {
 	GtkWidget *folder_view = NULL;
 	TnyFolderStore *parent_folder = NULL;
@@ -1488,17 +1543,90 @@ _selected_folder_not_writeable (ModestMainWindow *win)
 	/* Get selected folder as parent of new folder to create */
 	parent_folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW(folder_view));
 	if (!(parent_folder && TNY_IS_FOLDER(parent_folder))) {
-		if (parent_folder)
-			g_object_unref (parent_folder);
-		return TRUE;
+		result = TRUE;
+		goto frees;		
 	}
 	
 	/* Check dimmed rule */	
 	rules = modest_tny_folder_get_rules (TNY_FOLDER (parent_folder));
-	result = rules & MODEST_FOLDER_RULES_FOLDER_NON_WRITEABLE;
+	result = rules & MODEST_FOLDER_RULES_FOLDER_NON_DELETABLE;
 
 	/* free */
-	g_object_unref (parent_folder);
+ frees:
+	if (parent_folder != NULL)
+		g_object_unref (parent_folder);
+
+	return result;
+}
+
+static gboolean
+_selected_folder_not_moveable (ModestMainWindow *win)
+{
+	GtkWidget *folder_view = NULL;
+	TnyFolderStore *parent_folder = NULL;
+	ModestTnyFolderRules rules;
+	gboolean result = FALSE;
+
+	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW(win), FALSE);
+
+	/* Get folder view */
+	folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(win),
+							   MODEST_WIDGET_TYPE_FOLDER_VIEW);
+	/* If no folder view, always dimmed */
+	if (!folder_view)
+		return TRUE;
+	
+	/* Get selected folder as parent of new folder to create */
+	parent_folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW(folder_view));
+	if (!(parent_folder && TNY_IS_FOLDER(parent_folder))) {
+		result = TRUE;
+		goto frees;		
+	}
+	
+	/* Check dimmed rule */	
+	rules = modest_tny_folder_get_rules (TNY_FOLDER (parent_folder));
+	result = rules & MODEST_FOLDER_RULES_FOLDER_NON_MOVEABLE;
+
+	/* free */
+ frees:
+	if (parent_folder != NULL)
+		g_object_unref (parent_folder);
+
+	return result;
+}
+
+static gboolean
+_selected_folder_not_renameable (ModestMainWindow *win)
+{
+	GtkWidget *folder_view = NULL;
+	TnyFolderStore *parent_folder = NULL;
+	ModestTnyFolderRules rules;
+	gboolean result = FALSE;
+
+	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW(win), FALSE);
+
+	/* Get folder view */
+	folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(win),
+							   MODEST_WIDGET_TYPE_FOLDER_VIEW);
+	/* If no folder view, always dimmed */
+	if (!folder_view)
+		return TRUE;
+	
+	/* Get selected folder as parent of new folder to create */
+	parent_folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW(folder_view));
+	if (!(parent_folder && TNY_IS_FOLDER(parent_folder))) {
+		result = TRUE;
+		goto frees;		
+	}
+	
+	/* Check dimmed rule */	
+	rules = modest_tny_folder_get_rules (TNY_FOLDER (parent_folder));
+	result = rules & MODEST_FOLDER_RULES_FOLDER_NON_RENAMEABLE;
+
+	/* free */
+ frees:
+	if (parent_folder != NULL)
+		g_object_unref (parent_folder);
 
 	return result;
 }
@@ -2134,4 +2262,43 @@ _transfer_mode_enabled (ModestWindow *win)
 
 	return result;
 }
+
+static gboolean
+_selected_folder_has_subfolder_with_same_name (ModestWindow *win)
+{
+	GtkWidget *folder_view = NULL;
+	TnyFolderStore *folder = NULL;
+	ModestEmailClipboard *clipboard = NULL;
+	const gchar *folder_name = NULL;
+	gboolean result = FALSE;
+
+	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW(win), TRUE);
+
+	/*Get current parent folder */
+	folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(win),
+							   MODEST_WIDGET_TYPE_FOLDER_VIEW);
+	/* If no folder view, always dimmed */
+	if (!folder_view) return FALSE;
+	
+	/* Get selected folder as parent of new folder to create */
+	folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW(folder_view));	
+	if (!(folder && TNY_IS_FOLDER(folder))) goto frees;
+	
+	/* get modest clipboard and source folder */
+	clipboard = modest_runtime_get_email_clipboard ();
+	folder_name = modest_email_clipboard_get_folder_name (clipboard);
+	if (folder_name == NULL) goto frees;
+
+	/* Check source subfolders names */
+	result = modest_tny_folder_has_subfolder_with_name (folder, folder_name);
+	
+	
+	/* Free */
+ frees:
+	if (folder != NULL) 
+		g_object_unref (folder);
+
+
+	return result;
+}	
 
