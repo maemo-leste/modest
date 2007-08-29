@@ -455,7 +455,7 @@ menubar_to_menu (GtkUIManager *ui_manager)
 {
 	GtkWidget *main_menu;
 	GtkWidget *menubar;
-	GList *iter;
+	GList *iter, *children;
 
 	/* Create new main menu */
 	main_menu = gtk_menu_new();
@@ -463,15 +463,17 @@ menubar_to_menu (GtkUIManager *ui_manager)
 	/* Get the menubar from the UI manager */
 	menubar = gtk_ui_manager_get_widget (ui_manager, "/MenuBar");
 
-	iter = gtk_container_get_children (GTK_CONTAINER (menubar));
+	iter = children = gtk_container_get_children (GTK_CONTAINER (menubar));
 	while (iter) {
 		GtkWidget *menu;
 
 		menu = GTK_WIDGET (iter->data);
 		gtk_widget_reparent(menu, main_menu);
-
+		
 		iter = g_list_next (iter);
 	}
+	g_list_free (children);
+		     
 	return main_menu;
 }
 
