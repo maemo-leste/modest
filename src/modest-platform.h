@@ -307,6 +307,18 @@ GtkWidget *
 modest_platform_animation_banner (GtkWidget *parent,
 				  const gchar *annimation_name,
 				  const gchar *text);
+				  
+/* TODO: This isn't platform-dependent, so this isn't the best place for this. */
+/* Return TRUE immediately if the account is already online,
+ * otherwise check every second for NUMBER_OF_TRIES seconds and return TRUE as 
+ * soon as the account is online, or FALSE if the account does 
+ * not become online in the NUMBER_OF_TRIES seconds.
+ * This is useful when the D-Bus method was run immediately after 
+ * the application was started (when using D-Bus activation), 
+ * because the account usually takes a short time to go online.
+ * The return value is maybe not very useful.
+ */
+gboolean modest_platform_check_and_wait_for_account_is_online(TnyAccount *account);
 
 G_END_DECLS
 

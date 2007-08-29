@@ -1,5 +1,14 @@
 2007-08-29  Murray Cumming  <murrayc@murrayc.com>
 
+	* src/modest-search.c: (modest_search_all_accounts):
+	* src/modest-platform.h:
+	* src/maemo/modest-platform.c: Moved and renamed 
+	check_and_wait_for_account_is_online() to 
+	modest_platform_check_and_wait_for_account_is_online() so it 
+	can be used in more places.
+
+2007-08-29  Murray Cumming  <murrayc@murrayc.com>
+
 	* src/maemo/modest-platform.c: (modest_platform_connect_and_wait):
 	Removed the sleep(1) experiment because it does not seem to help, 
 	and I should not have checked the experiment in anyway.

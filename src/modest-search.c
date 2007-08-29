@@ -54,6 +54,7 @@
 #include "modest-tny-account.h"
 #include "modest-search.h"
 #include "modest-runtime.h"
+#include "modest-platform.h"
 
 static gchar *
 g_strdup_or_null (const gchar *str)
@@ -65,129 +66,6 @@ g_strdup_or_null (const gchar *str)
 	}
 
 	return string;
-}
-
-typedef struct
-{
-	GMainLoop* loop;
-	TnyAccount *account;
-	gboolean is_online;
-	gint count_tries;
-} UtilIdleData;
-
-#define NUMBER_OF_TRIES 10 /* Try approx every second, ten times. */
-
-static gboolean 
-on_timeout_check_account_is_online(gpointer user_data)
-{
-	printf ("DEBUG: %s:\n", __FUNCTION__);
-	UtilIdleData *data = (UtilIdleData*)user_data;
-	
-	if (!data) {
-		g_warning ("%s: data is NULL.\n", __FUNCTION__);
-	}
-	
-	if (!(data->account)) {
-		g_warning ("%s: data->account is NULL.\n", __FUNCTION__);
-	}
-	
-	if (data && data->account) {
-		printf ("DEBUG: %s: tny_account_get_connection_status()==%d\n", __FUNCTION__, tny_account_get_connection_status (data->account));	
-	}
-	
-	gboolean stop_trying = FALSE;
-	if (data && data->account && 
-		/* We want to wait until TNY_CONNECTION_STATUS_INIT has changed to something else,
-		 * after which the account is likely to be usable, or never likely to be usable soon: */
-		(tny_account_get_connection_status (data->account) != TNY_CONNECTION_STATUS_INIT) )
-	{
-		data->is_online = TRUE;
-		
-		stop_trying = TRUE;
-	}
-	else {
-		/* Give up if we have tried too many times: */
-		if (data->count_tries >= NUMBER_OF_TRIES)
-		{
-			stop_trying = TRUE;
-		}
-		else {
-			/* Wait for another timeout: */
-			++(data->count_tries);
-		}
-	}
-	
-	if (stop_trying) {
-		/* Allow the function that requested this idle callback to continue: */
-		if (data->loop)
-			g_main_loop_quit (data->loop);
-			
-		if (data->account)
-			g_object_unref (data->account);
-		
-		return FALSE; /* Don't call this again. */
-	} else {
-		return TRUE; /* Call this timeout callback again. */
-	}
-}
-
-/* Return TRUE immediately if the account is already online,
- * otherwise check every second for NUMBER_OF_TRIES seconds and return TRUE as 
- * soon as the account is online, or FALSE if the account does 
- * not become online in the NUMBER_OF_TRIES seconds.
- * This is useful when the D-Bus method was run immediately after 
- * the application was started (when using D-Bus activation), 
- * because the account usually takes a short time to go online.
- * The return value is maybe not very useful.
- */
-static gboolean
-check_and_wait_for_account_is_online(TnyAccount *account)
-{
-	g_return_val_if_fail (account, FALSE);
-	
-	printf ("DEBUG: %s: account id=%s\n", __FUNCTION__, tny_account_get_id (account));
-	
-	if (!tny_device_is_online (modest_runtime_get_device())) {
-		printf ("DEBUG: %s: device is offline.\n", __FUNCTION__);
-		return FALSE;
-	}
-	
-	/* The local_folders account never seems to leave TNY_CONNECTION_STATUS_INIT,
-	 * so we avoid wait unnecessarily: */
-	if (!TNY_IS_CAMEL_POP_STORE_ACCOUNT (account) && 
-		!TNY_IS_CAMEL_IMAP_STORE_ACCOUNT (account) ) {
-		return TRUE;		
-	}
-		
-	printf ("DEBUG: %s: tny_account_get_connection_status()==%d\n", __FUNCTION__, tny_account_get_connection_status (account));
-	
-	/* The POP & IMAP store accounts seem to be TNY_CONNECTION_STATUS_DISCONNECTED, 
-	 * and that seems to be an OK time to use them. Maybe it's just TNY_CONNECTION_STATUS_INIT that 
-	 * we want to avoid. */
-	if (tny_account_get_connection_status (account) != TNY_CONNECTION_STATUS_INIT)
-		return TRUE;
-		
-	/* This blocks on the result: */
-	UtilIdleData *data = g_slice_new0 (UtilIdleData);
-	data->is_online = FALSE;
-	data->account = account;
-	g_object_ref (data->account);
-	data->count_tries = 0;
-		
-	GMainContext *context = NULL; /* g_main_context_new (); */
-	data->loop = g_main_loop_new (context, FALSE /* not running */);
-
-	g_timeout_add (1000, &on_timeout_check_account_is_online, data);
-
-	/* This main loop will run until the idle handler has stopped it: */
-	g_main_loop_run (data->loop);
-
-	g_main_loop_unref (data->loop);
-	/* g_main_context_unref (context); */
-
-	g_slice_free (UtilIdleData, data);
-	
-	return data->is_online;	
 }
 
 static GList*
@@ -716,7 +594,7 @@ modest_search_all_accounts (ModestSearch *search)
 			/* Give the account time to go online if necessary, 
 			 * for instance if this is immediately after startup,
 			 * after D-Bus activation: */
-			check_and_wait_for_account_is_online (account);
+			modest_platform_check_and_wait_for_account_is_online (account);
 			
 			/* Search: */
 			res = modest_search_account (account, search);
