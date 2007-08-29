@@ -2537,7 +2537,8 @@ delete_folder (ModestMainWindow *main_window, gboolean move_to_trash)
 	GtkWidget *folder_view;
 	gint response;
 	gchar *message;
-	
+        gboolean do_delete = TRUE;
+
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW (main_window));
 
 	folder_view = modest_main_window_get_child_widget (main_window,
@@ -2555,12 +2556,6 @@ delete_folder (ModestMainWindow *main_window, gboolean move_to_trash)
 		return ;
 	}
 
-	/* Offer the connection dialog if necessary: */
-	if (!modest_platform_connect_and_wait_if_network_folderstore (NULL, folder)) {
-		g_object_unref (G_OBJECT (folder));
-		return;
-	}
-
 	/* Ask the user */	
 	message =  g_strdup_printf (_("mcen_nc_delete_folder_text"), 
 				    tny_folder_get_name (TNY_FOLDER (folder)));
@@ -2568,7 +2563,16 @@ delete_folder (ModestMainWindow *main_window, gboolean move_to_trash)
 							    (const gchar *) message);
 	g_free (message);
 
-	if (response == GTK_RESPONSE_OK) {
+        if (response != GTK_RESPONSE_OK) {
+                do_delete = FALSE;
+        } else if (modest_platform_is_network_folderstore(folder) &&
+                   !tny_device_is_online (modest_runtime_get_device())) {
+                TnyAccount *account = tny_folder_get_account(TNY_FOLDER(folder));
+                do_delete = modest_platform_connect_and_wait(GTK_WINDOW(main_window), account);
+                g_object_unref(account);
+        }
+
+	if (do_delete) {
 		ModestMailOperation *mail_op;
 		GtkTreeSelection *sel;
 
