@@ -26,9 +26,9 @@ ifneq (,$(findstring thumb,$(DEB_BUILD_OPTIONS)))
 endif
 
 LAUNCHER = no
-#ifneq (,$(findstring maemo-launcher,$(DEB_BUILD_OPTIONS)))
-#	LAUNCHER = yes
-#endif
+ifneq (,$(findstring maemo-launcher,$(DEB_BUILD_OPTIONS)))
+	LAUNCHER = yes
+endif
 
 ifeq "$(strip $(LAUNCHER))" "yes"
 	LAUNCHER_DEPENDS = -Vlauncher:Depends="maemo-launcher"
