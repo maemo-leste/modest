@@ -1360,10 +1360,12 @@ modest_platform_on_new_msg (void)
 	
 	/* Play sound SR-SND-18 */
 	hildon_notification_set_sound (not, "/usr/share/sounds/ui-new_email.wav");
+        notify_notification_set_hint_int32 (NOTIFY_NOTIFICATION (not), "dialog-type", 4);
 
 	/* Set the led pattern */
-        notify_notification_set_hint_int32 (NOTIFY_NOTIFICATION (not), "dialog-type", 4);
-	notify_notification_set_hint_int32 (NOTIFY_NOTIFICATION (not), "led-pattern", 3);
+	notify_notification_set_hint_string(NOTIFY_NOTIFICATION (not), 
+					    "led-pattern", 
+					    "PatternCommunicationEmail");
 
 	/* Notify. We need to do this in an idle because this function
 	   could be called from a thread */
