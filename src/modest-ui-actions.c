@@ -103,6 +103,11 @@ typedef struct _ReplyForwardHelper {
 	GtkWidget *parent_window;
 } ReplyForwardHelper;
 
+typedef struct _MoveToHelper {
+	ModestMailOperation *mail_op;
+	TnyFolder *folder;
+} MoveToHelper;
+
 typedef struct _PasteAsAttachmentHelper {
 	ModestMsgEditWindow *window;
 	GtkWidget *banner;
@@ -2974,6 +2979,7 @@ paste_msgs_cb (const GObject *object, gpointer user_data)
 	gtk_widget_destroy (GTK_WIDGET(user_data));
 }
 
+
 static void
 paste_as_attachment_free (gpointer data)
 {
@@ -3824,6 +3830,8 @@ void
 modest_ui_actions_move_folder_error_handler (ModestMailOperation *mail_op, 
 					     gpointer user_data)
 {
+	ModestMainWindow *main_window = NULL;
+	GtkWidget *folder_view = NULL;
 	GObject *win = modest_mail_operation_get_source (mail_op);
 	const GError *error = NULL;
 	const gchar *message = NULL;
@@ -3836,6 +3844,14 @@ modest_ui_actions_move_folder_error_handler (ModestMailOperation *mail_op,
 		message = _("mail_in_ui_folder_move_target_error");
 	}
 	
+	/* Disable next automatic folder selection */
+	if (MODEST_IS_MAIN_WINDOW (user_data)) {
+		main_window = MODEST_MAIN_WINDOW(user_data);
+		folder_view = modest_main_window_get_child_widget (main_window,
+							   MODEST_WIDGET_TYPE_FOLDER_VIEW);	
+		modest_folder_view_disable_next_folder_selection (MODEST_FOLDER_VIEW(folder_view));		
+	}
+
 	/* Show notification dialog */
 	modest_platform_run_information_dialog ((win) ? GTK_WINDOW (win) : NULL, message);
 	g_object_unref (win);
@@ -4134,14 +4150,15 @@ modest_ui_actions_on_main_window_move_to (GtkAction *action,
                           modest_mail_operation_new_with_error_handling (MODEST_MAIL_OPERATION_TYPE_RECEIVE,
                                                                          G_OBJECT(win),
                                                                          modest_ui_actions_move_folder_error_handler,
-                                                                         NULL);
+                                                                         win);
                         modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
                                                          mail_op);
 
 			/* Select *after* the changes */
-			modest_folder_view_select_folder (MODEST_FOLDER_VIEW(folder_view),
-							  TNY_FOLDER (src_folder), TRUE);
-
+			/* TODO: this function hangs UI after transfer */ 
+/* 			modest_folder_view_select_folder (MODEST_FOLDER_VIEW(folder_view), */
+/* 							  TNY_FOLDER (src_folder), TRUE); */
+			
                         modest_mail_operation_xfer_folder (mail_op,
                                                            TNY_FOLDER (src_folder),
                                                            dst_folder,

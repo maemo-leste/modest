@@ -356,9 +356,10 @@ text_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 	gint all = 0;
 	TnyFolderType type = TNY_FOLDER_TYPE_UNKNOWN;
 	GObject *instance = NULL;
-	
+
 	g_return_if_fail (column);
 	g_return_if_fail (tree_model);
+	g_return_if_fail (iter != NULL);
 
 	gtk_tree_model_get (tree_model, iter,
 			    TNY_GTK_FOLDER_STORE_TREE_MODEL_NAME_COLUMN, &fname,
@@ -463,7 +464,7 @@ text_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 			callback_data->previous_name = g_strdup (name); 
 
 		modest_tny_account_get_mmc_account_name (TNY_STORE_ACCOUNT (instance), 
-			on_get_mmc_account_name, callback_data);
+							 on_get_mmc_account_name, callback_data);
 	}
  			
 	g_object_unref (G_OBJECT (instance));
@@ -715,6 +716,7 @@ modest_folder_view_finalize (GObject *obj)
 		priv->query = NULL;
 	}
 
+/* 	modest_folder_view_disable_next_folder_selection (MODEST_FOLDER_VIEW(obj)); */
 	if (priv->folder_to_select) {
 		g_object_unref (G_OBJECT(priv->folder_to_select));
 	    	priv->folder_to_select = NULL;
@@ -884,6 +886,7 @@ on_account_removed (TnyAccountStore *account_store,
 
 		folder_to_select_account = tny_folder_get_account (priv->folder_to_select);
 		if (folder_to_select_account == account) {
+/* 			modest_folder_view_disable_next_folder_selection (self); */
 			g_object_unref (priv->folder_to_select);
 			priv->folder_to_select = NULL;
 		}
@@ -2280,11 +2283,28 @@ on_row_inserted_maybe_select_folder (GtkTreeModel *tree_model, GtkTreePath  *pat
 			gtk_tree_path_free (path);
 		
 		}
-		g_object_unref (priv->folder_to_select);
-		priv->folder_to_select = NULL;
+
+		/* Disable next */
+		modest_folder_view_disable_next_folder_selection (self);
+/* 		g_object_unref (priv->folder_to_select); */
+/* 		priv->folder_to_select = NULL; */
 	}
 }
 
+
+void
+modest_folder_view_disable_next_folder_selection (ModestFolderView *self) 
+{
+	ModestFolderViewPrivate *priv = NULL;
+
+	g_return_if_fail (MODEST_IS_FOLDER_VIEW (self));	
+	priv = MODEST_FOLDER_VIEW_GET_PRIVATE (self);
+
+	if (priv->folder_to_select)
+		g_object_unref(priv->folder_to_select);
+	
+	priv->folder_to_select = NULL;
+}
 
 gboolean
 modest_folder_view_select_folder (ModestFolderView *self, TnyFolder *folder, 

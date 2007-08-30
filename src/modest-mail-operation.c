@@ -305,6 +305,7 @@ modest_mail_operation_new_with_error_handling (ModestMailOperationTypeOperation 
 	
 	g_return_val_if_fail (error_handler != NULL, obj);
 	priv->error_checking = error_handler;
+	priv->error_checking_user_data = user_data;
 
 	return obj;
 }

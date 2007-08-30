@@ -176,8 +176,7 @@ void         modest_folder_view_select_first_inbox_or_local  (ModestFolderView *
  * Stores a #TnyList of selected folders in the own clibpoard of 
  * @self folder view.
  **/
-void 
-modest_folder_view_copy_selection (ModestFolderView *folder_view);
+void modest_folder_view_copy_selection (ModestFolderView *folder_view);
 
 /**
  * modest_folder_view_cut_selection:
@@ -187,8 +186,7 @@ modest_folder_view_copy_selection (ModestFolderView *folder_view);
  * @self folder view and filter them into folders tree model to
  * hide these rows in treeview.
  **/
-void 
-modest_folder_view_cut_selection (ModestFolderView *folder_view);
+void modest_folder_view_cut_selection (ModestFolderView *folder_view);
 
 
 /**
@@ -210,10 +208,7 @@ gboolean modest_folder_view_select_folder (ModestFolderView *self, TnyFolder *fo
  * 
  * Gets the selected folders to copy/cut.
  **/
-void
-modest_folder_view_paste_selection (ModestFolderView *folder_view,
-				    TnyList **folders,
-				    gboolean *delete);
+void modest_folder_view_paste_selection (ModestFolderView *folder_view, TnyList **folders, gboolean *delete);
 
 /*
  * modest_folder_view_show_non_move_folders:
@@ -222,9 +217,7 @@ modest_folder_view_paste_selection (ModestFolderView *folder_view,
  * 
  * Whether to show folders where no messages can be moved to 
  **/
-void
-modest_folder_view_show_non_move_folders (ModestFolderView *folder_view,
-				    gboolean show);
+void modest_folder_view_show_non_move_folders (ModestFolderView *folder_view, gboolean show);
 
 /*
  * modest_folder_view_copy_model:
@@ -235,9 +228,19 @@ modest_folder_view_show_non_move_folders (ModestFolderView *folder_view,
  * #GtkTreeFilterModel object for that model. This copied
  * model will be asigned to @folder_view_dst. 
  **/
-void
-modest_folder_view_copy_model (ModestFolderView *folder_view_src,
-			       ModestFolderView *folder_view_dst);
+void modest_folder_view_copy_model (ModestFolderView *folder_view_src, ModestFolderView *folder_view_dst);
+
+/*
+ * modest_folder_disable_next_folder_selection:
+ * @folder_view: a #ModestFolderView
+ * 
+ * Checks if folder_to_select private field is set and 
+ * unref it in this case, assigning it to NULL to avoid 
+ * next call to on_row_inserted_maybe_select_folder does 
+ * not select any folder.
+ * 
+ **/
+void modest_folder_view_disable_next_folder_selection (ModestFolderView *self);
 
 G_END_DECLS
 
