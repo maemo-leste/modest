@@ -96,6 +96,8 @@ static guint signals[LAST_SIGNAL] = {0};
 static int
 on_modest_tny_send_queue_compare_id(gconstpointer info, gconstpointer msg_id)
 {
+	g_return_val_if_fail (info && ((SendInfo*)info)->msg_id && msg_id, -1);
+	
 	return strcmp( ((SendInfo*)info)->msg_id, msg_id);
 }
 
@@ -244,12 +246,14 @@ _add_message (ModestTnySendQueue *self, TnyHeader *header)
 		
 		/* Check if it already exists on queue */
 		existing = modest_tny_send_queue_lookup_info (MODEST_TNY_SEND_QUEUE(self), msg_uid);
-		if(existing != NULL) return;
-	
+		if(existing != NULL)
+			break;
+		
 		/* Check if its being edited */
 		mgr = modest_runtime_get_window_mgr ();
 		editing = modest_window_mgr_find_registered_header (mgr, header, NULL);
-		if (editing) return;
+		if (editing)
+			break;
 		
 		/* Add new meesage info */
 		info = g_slice_new (SendInfo);
@@ -258,11 +262,10 @@ _add_message (ModestTnySendQueue *self, TnyHeader *header)
 		g_queue_push_tail (priv->queue, info);
 		break;
 	default:
-		goto frees;
+		break;
 	}
 
 	/* Free */
- frees:
 	g_free(msg_uid);
 }
 
@@ -534,13 +537,16 @@ _on_msg_start_sending (TnySendQueue *self,
 
 	/* Get status info */
 	item = modest_tny_send_queue_lookup_info (MODEST_TNY_SEND_QUEUE (self), msg_id);
-	g_return_if_fail (item != NULL);
-	info = item->data;
-	info->status = MODEST_TNY_SEND_QUEUE_SENDING;
-	
-	/* Set current status item */
-	g_signal_emit (self, signals[STATUS_CHANGED], 0, info->msg_id, info->status);
-	priv->current = item;
+	if (!item) 
+		g_warning  ("%s: item should not be NULL", __FUNCTION__);
+	else {
+		info = item->data;
+		info->status = MODEST_TNY_SEND_QUEUE_SENDING;
+		
+		/* Set current status item */
+		g_signal_emit (self, signals[STATUS_CHANGED], 0, info->msg_id, info->status);
+		priv->current = item;
+	}
 
 	/* free */
 	g_free (msg_id);
@@ -565,14 +571,17 @@ _on_msg_has_been_sent (TnySendQueue *self,
 	
 	/* Get status info */
 	item = modest_tny_send_queue_lookup_info (MODEST_TNY_SEND_QUEUE (self), msg_id);
-	g_return_if_fail(item != NULL);
+	if (!item)
+		g_warning ("%s: item should not be NULL", __FUNCTION__);
+	else {
 
-	/* Remove status info */
-	modest_tny_send_queue_info_free (item->data);
-	g_queue_delete_link (priv->queue, item);
-	priv->current = NULL;
-
-	modest_platform_information_banner (NULL, NULL, _("mcen_ib_message_sent"));
+		/* Remove status info */
+		modest_tny_send_queue_info_free (item->data);
+		g_queue_delete_link (priv->queue, item);
+		priv->current = NULL;
+		
+		modest_platform_information_banner (NULL, NULL, _("mcen_ib_message_sent"));
+	}
 
 	/* free */
 	g_free(msg_id);
@@ -600,10 +609,8 @@ _on_msg_error_happened (TnySendQueue *self,
 		info = g_slice_new (SendInfo);
 		info->msg_id = strdup(msg_uid);
 		g_queue_push_tail (priv->queue, info);
-	}
-	else {
+	} else
 		info = item->data;
-	} 
 
 	/* Keep in queue so that we remember that the opertion has failed */
 	/* and was not just cancelled */
