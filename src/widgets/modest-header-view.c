@@ -100,7 +100,10 @@ static void modest_header_view_notify_observers(
 		GtkTreeModel *model,
 		const gchar *tny_folder_id);
 
-
+static gboolean modest_header_view_on_expose_event(
+		GtkTreeView *header_view,
+		GdkEventExpose *event,
+		gpointer user_data);
 
 typedef enum {
 	HEADER_VIEW_NON_EMPTY,
@@ -652,6 +655,10 @@ modest_header_view_new (TnyFolder *folder, ModestHeaderViewStyle style)
 						      G_CALLBACK (on_account_removed),
 						      self);
 
+	g_signal_connect (self, "expose-event",
+			G_CALLBACK(modest_header_view_on_expose_event),
+			NULL);
+
 	return GTK_WIDGET(self);
 }
 
@@ -864,6 +871,28 @@ modest_header_view_get_style (ModestHeaderView *self)
 {
 	g_return_val_if_fail (self, FALSE);
 	return MODEST_HEADER_VIEW_GET_PRIVATE(self)->style;
+}
+
+/* This is used to automatically select the first header if the user
+ * has not selected any header yet. Fixes NB#58917.
+ */
+static gboolean modest_header_view_on_expose_event(
+		GtkTreeView *header_view,
+		GdkEventExpose *event,
+		gpointer user_data)
+{
+	GtkTreeSelection *sel;
+	GtkTreeModel *model;
+	GtkTreeIter tree_iter;
+
+	model = gtk_tree_view_get_model(header_view);
+
+	sel = gtk_tree_view_get_selection(header_view);
+	if(!gtk_tree_selection_count_selected_rows(sel))
+		if (gtk_tree_model_get_iter_first(model, &tree_iter))
+			gtk_tree_selection_select_iter(sel, &tree_iter);
+
+	return FALSE;
 }
 
 /* 
