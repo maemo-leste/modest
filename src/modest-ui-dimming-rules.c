@@ -360,11 +360,13 @@ modest_ui_dimming_rules_on_new_folder (ModestWindow *win, gpointer user_data)
 			dimmed = FALSE;
 		} else {
 			const gchar *proto_str = tny_account_get_proto (TNY_ACCOUNT (parent_folder));
-			/* If it's POP then dim */
-			dimmed = (modest_protocol_info_get_transport_store_protocol (proto_str) == 
-				  MODEST_PROTOCOL_STORE_POP) ? TRUE : FALSE;
-			if (dimmed)
-				modest_dimming_rule_set_notification (rule, _("mail_in_ui_folder_create_error"));
+			if (proto_str != NULL) {
+				/* If it's POP then dim */			
+				dimmed = (modest_protocol_info_get_transport_store_protocol (proto_str) == 
+					  MODEST_PROTOCOL_STORE_POP) ? TRUE : FALSE;
+				if (dimmed)
+					modest_dimming_rule_set_notification (rule, _("mail_in_ui_folder_create_error"));
+			}
 		}
 	} else {
 		/* TODO: the specs say that only one level of subfolder is allowed, is this true ? */
