@@ -4138,6 +4138,10 @@ modest_ui_actions_on_main_window_move_to (GtkAction *action,
                         modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
                                                          mail_op);
 
+			/* Select *after* the changes */
+			modest_folder_view_select_folder (MODEST_FOLDER_VIEW(folder_view),
+							  TNY_FOLDER (src_folder), TRUE);
+
                         modest_mail_operation_xfer_folder (mail_op,
                                                            TNY_FOLDER (src_folder),
                                                            dst_folder,
