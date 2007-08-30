@@ -4370,49 +4370,42 @@ modest_ui_actions_on_help (GtkAction *action,
 	const gchar *help_id = NULL;
 
 	if (MODEST_IS_MAIN_WINDOW (win)) {
-		const gchar *action_name;
-		action_name = gtk_action_get_name (action);
+		GtkWidget *folder_view;
+		TnyFolderStore *folder_store;
+		
+		/* Get selected folder */
+		folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win),
+								   MODEST_WIDGET_TYPE_FOLDER_VIEW);
+		folder_store = modest_folder_view_get_selected (MODEST_FOLDER_VIEW (folder_view));
 
-		if (!strcmp (action_name, "FolderViewCSMHelp") ||
-		    !strcmp (action_name, "HeaderViewCSMHelp")) {
-			GtkWidget *folder_view;
-			TnyFolderStore *folder_store;
-			/* Get selected folder */
-			folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win),
-									   MODEST_WIDGET_TYPE_FOLDER_VIEW);
-			folder_store = modest_folder_view_get_selected (MODEST_FOLDER_VIEW (folder_view));
-
-			/* Switch help_id */
-			if (TNY_IS_FOLDER (folder_store)) {
-				switch (modest_tny_folder_guess_folder_type (TNY_FOLDER (folder_store))) {
-				case TNY_FOLDER_TYPE_NORMAL:
-					help_id = "applications_email_managefolders";
-					break;
-				case TNY_FOLDER_TYPE_INBOX:
-					help_id = "applications_email_inbox";
-					break;
-				case TNY_FOLDER_TYPE_OUTBOX:
-					help_id = "applications_email_outbox";
-					break;
-				case TNY_FOLDER_TYPE_SENT:
-					help_id = "applications_email_sent";
-					break;
-				case TNY_FOLDER_TYPE_DRAFTS:
-					help_id = "applications_email_drafts";
-					break;
-				case TNY_FOLDER_TYPE_ARCHIVE:
-					help_id = "applications_email_managefolders";
-					break;
-				default:
-					help_id = "applications_email_managefolders";
-				}
-			} else {
-				help_id = "applications_email_mainview";	
+		/* Switch help_id */
+		if (TNY_IS_FOLDER (folder_store)) {
+			switch (modest_tny_folder_guess_folder_type (TNY_FOLDER (folder_store))) {
+			case TNY_FOLDER_TYPE_NORMAL:
+				help_id = "applications_email_managefolders";
+				break;
+			case TNY_FOLDER_TYPE_INBOX:
+				help_id = "applications_email_inbox";
+				break;
+			case TNY_FOLDER_TYPE_OUTBOX:
+				help_id = "applications_email_outbox";
+				break;
+			case TNY_FOLDER_TYPE_SENT:
+				help_id = "applications_email_sent";
+				break;
+			case TNY_FOLDER_TYPE_DRAFTS:
+				help_id = "applications_email_drafts";
+				break;
+			case TNY_FOLDER_TYPE_ARCHIVE:
+				help_id = "applications_email_managefolders";
+				break;
+			default:
+				help_id = "applications_email_managefolders";
 			}
-			g_object_unref (folder_store);
 		} else {
-			help_id = "applications_email_mainview";	
+			help_id = "applications_email_mainview";
 		}
+		g_object_unref (folder_store);
 	} else if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
 		help_id = "applications_email_viewer";
 	} else if (MODEST_IS_MSG_EDIT_WINDOW (win))
